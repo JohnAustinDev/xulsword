@@ -7,9 +7,9 @@ import nsILocalFile from '../components/nsILocalFile';
 import Dirs from './dirs';
 import { jsdump } from '../mutil';
 
-import type { PrefsPublic } from '../../type';
+import type { GType } from '../../type';
 
-const Prefs: typeof PrefsPublic & PrefsPrivate = {
+const Prefs: GType['Prefs'] & PrefsPrivate = {
   // True means write sources to disk after every change
   writeOnChange: false,
 
@@ -246,4 +246,4 @@ type PrefsPrivate = {
   writeStore: (aStore: string) => boolean;
 };
 
-export default Prefs as typeof PrefsPublic;
+export default Prefs as GType['Prefs'];

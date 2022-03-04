@@ -9,7 +9,7 @@ import Prefs from './modules/prefs';
 import { openDialog } from './window';
 
 import type {
-  CommandsPublic,
+  GType,
   LocationVKType,
   TextVKType,
   XulswordStatePref,
@@ -19,7 +19,7 @@ type CommandsPrivate = {
   browserWindow: BrowserWindow | null;
 };
 
-const Commands: typeof CommandsPublic & CommandsPrivate = {
+const Commands: GType['Commands'] & CommandsPrivate = {
   browserWindow: null,
 
   addRepositoryModule() {

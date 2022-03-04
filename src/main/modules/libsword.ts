@@ -8,11 +8,7 @@ import nsILocalFile from '../components/nsILocalFile';
 import Dirs from './dirs';
 import Prefs from './prefs';
 
-import type {
-  LibSwordPublic,
-  SwordFilterType,
-  SwordFilterValueType,
-} from '../../type';
+import type { GType, SwordFilterType, SwordFilterValueType } from '../../type';
 
 const { libxulsword } = require('libxulsword');
 
@@ -45,7 +41,7 @@ Valid for Dictionary modules:
       documentation) Preffered Bible module to use for Scripture references.
 */
 
-const LibSword: typeof LibSwordPublic & LibSwordPrivate = {
+const LibSword: GType['LibSword'] & LibSwordPrivate = {
   libsword: null, // reference to the libxulsword dynamic library
   initialized: false, // the LibSword (Cpp xulsword class) instance returned by libxulsword
   callback: null, // an object used to implement callbacks from Javascript
@@ -753,6 +749,6 @@ type LibSwordPrivate = {
 };
 
 // The LibSwordClass interface is only available in the main process directly through the LibSword object
-export type LibSwordClass = typeof LibSwordPublic & LibSwordPrivate;
+export type LibSwordClass = GType['LibSword'] & LibSwordPrivate;
 
-export default LibSword as typeof LibSwordPublic;
+export default LibSword as GType['LibSword'];

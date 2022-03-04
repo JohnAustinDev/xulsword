@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { GType } from '../type';
+import type { GTypeR } from '../type';
 import { GPublic } from '../type';
 
 // This G object is for use in renderer processes, and it shares the same
 // interface as a main process G object. Both G objects are built auto-
 // matically at runtime from the same GPublic declaration. Properties of
 // this object access data and objects via IPC to the main process G object.
-// Local readonly data is cached.
+// Local getter data is cached.
 
 const G = {
   cache: {},
@@ -14,15 +14,15 @@ const G = {
   reset() {
     this.cache = {};
   },
-} as GType;
+} as GTypeR;
 
 const entries = Object.entries(GPublic);
 entries.forEach((entry) => {
   const gPublic = GPublic as any;
   const Gx = G as any;
-  const [k, val] = entry;
-  const name = k as keyof GType;
-  if (val === 'readonly') {
+  const name = entry[0] as keyof GTypeR;
+  const value = entry[1] as any;
+  if (value === 'getter') {
     Object.defineProperty(G, name, {
       get() {
         if (!(name in G.cache)) {
@@ -31,17 +31,17 @@ entries.forEach((entry) => {
         return G.cache[name];
       },
     });
-  } else if (typeof val === 'function') {
+  } else if (typeof value === 'function') {
     Gx[name] = (...args: any[]) => {
       return window.ipc.renderer.sendSync('global', name, ...args);
     };
-  } else if (typeof val === 'object') {
-    const methods = Object.getOwnPropertyNames(val);
+  } else if (typeof value === 'object') {
+    const methods = Object.getOwnPropertyNames(value);
     methods.forEach((m) => {
       if (G[name] === undefined) {
         Gx[name] = {};
       }
-      if (gPublic[name][m] === 'readonly') {
+      if (gPublic[name][m] === 'getter') {
         const key = `${name}.${m}`;
         Object.defineProperty(Gx[name], m, {
           get() {
@@ -58,8 +58,8 @@ entries.forEach((entry) => {
       }
     });
   } else {
-    throw Error(`unhandled GPublic entry value ${val}`);
+    throw Error(`unhandled GPublic entry value ${value}`);
   }
 });
 
-export default G as unknown as GType;
+export default G as unknown as GTypeR;

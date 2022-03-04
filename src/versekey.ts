@@ -3,7 +3,7 @@ import i18next from 'i18next';
 import C from './constant';
 import { deepClone, dString } from './common';
 
-import type { GType, LibSwordPublic, LocationVKType, V11nType } from './type';
+import type { GType, LocationVKType, V11nType } from './type';
 import type RefParser from './refparse';
 
 type VerseKeyGtype = {
@@ -25,11 +25,11 @@ export default class VerseKey {
 
   #gfunctions: VerseKeyGtype;
 
-  #convertLocation: typeof LibSwordPublic['convertLocation'];
+  #convertLocation: GType['LibSword']['convertLocation'];
 
   constructor(
     parser: RefParser,
-    libswordConvertLocation: typeof LibSwordPublic['convertLocation'],
+    libswordConvertLocation: GType['LibSword']['convertLocation'],
     gfunction: VerseKeyGtype,
     location: LocationVKType | string,
     v11n?: V11nType

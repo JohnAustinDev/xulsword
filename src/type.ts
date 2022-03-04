@@ -11,6 +11,13 @@ declare global {
   }
 }
 
+export type WindowType = {
+  id: number;
+  name: string;
+  type: string;
+  options: Electron.BrowserWindowConstructorOptions;
+};
+
 // Default values for these keys must be set in the default
 // JSON Pref file or an error will be thrown.
 export interface XulswordStatePref {
@@ -224,14 +231,10 @@ export type DirsDirectories = {
   xsModsCommon: string;
 };
 
-export const DirsPublic = {
-  path: 'readonly' as unknown as DirsDirectories,
-};
-
 // Dummy func used as place holder
 const func = () => {};
 
-export const PrefsPublic = {
+const PrefsPublic = {
   getPrefOrCreate: func as unknown as (
     key: string,
     type: 'string' | 'number' | 'boolean' | 'complex',
@@ -267,7 +270,7 @@ export const PrefsPublic = {
   writeAllStores: func as unknown as () => void,
 };
 
-export const LibSwordPublic = {
+const LibSwordPublic = {
   initLibsword: func as unknown as () => boolean,
   libSwordReady: func as unknown as (caller: string) => boolean,
   hasBible: func as unknown as () => boolean,
@@ -365,7 +368,7 @@ export const LibSwordPublic = {
   translate: func as unknown as (text: string, localeName: string) => string,
 };
 
-export const CommandsPublic = {
+const CommandsPublic = {
   addRepositoryModule: func as unknown as () => void,
   addLocalModule: func as unknown as () => void,
   removeModule: func as unknown as () => void,
@@ -405,104 +408,85 @@ export const CommandsPublic = {
   ) => void,
 };
 
-// See electron shell api. Any electron shell property can be added
-// here and it will become available in G.
-export const ShellPublic = {
-  beep: func as unknown as () => void,
-};
-
-// Make data available to both main and renderer processes.
-export const DataPublic = {
-  write: func as unknown as (data: any) => void,
-  data: 'readonly' as unknown as any,
-  read: func as unknown as () => any,
-  readOnce: func as unknown as () => any,
-};
-
 // This GPublic object will be used at runtime to create two different
 // types of G objects sharing the same GType interface: one will be
 // available in the main process and the other in renderer processes.
 // The main process G properties access functions and data directly. But
 // renderer process G properties request data through IPC from the main
-// process G object. All readonly data of the Renderer G object is cached.
-// This cache can be cleared by G.reset().
+// process G object. All getter data of the Renderer G object is cached.
+// This cached data can be cleared by G.reset() in the renderer or
+// Cache.reset() in the main process.
 export const GPublic = {
-  // Global data for read only use
-  Books: 'readonly',
-  Book: 'readonly',
-  Tabs: 'readonly',
-  Tab: 'readonly',
-  ProgramConfig: 'readonly',
-  LocaleConfigs: 'readonly',
-  ModuleConfigs: 'readonly',
-  ModuleConfigDefault: 'readonly',
-  FontFaceConfigs: 'readonly',
-  FeatureModules: 'readonly',
-  BooksInModule: 'readonly',
-  BkChsInV11n: 'readonly',
-  OPSYS: 'readonly',
-  SystemFonts: 'readonly',
+  // GLOBAL GETTER DATA
+  // ------------------
+  /* eslint-disable prettier/prettier */
+  Books:               'getter' as unknown as BookType[],
+  Book:                'getter' as unknown as { [i: string]: BookType },
+  Tabs:                'getter' as unknown as TabType[],
+  Tab:                 'getter' as unknown as { [i: string]: TabType },
+  ProgramConfig:       'getter' as unknown as ConfigType,
+  LocaleConfigs:       'getter' as unknown as { [i: string]: ConfigType },
+  ModuleConfigs:       'getter' as unknown as { [i: string]: ConfigType },
+  ModuleConfigDefault: 'getter' as unknown as ConfigType,
+  FontFaceConfigs:     'getter' as unknown as { [i: string]: string },
+  FeatureModules:      'getter' as unknown as FeatureType,
+  BooksInModule:       'getter' as unknown as { [i: string]: string[] },
+  BkChsInV11n:         'getter' as unknown as { [key in V11nType]: { [i: string]: number }; },
+  OPSYS:               'getter' as unknown as NodeJS.Platform,
+  SystemFonts:         'getter' as unknown as string[],
+  /* eslint-enable prettier/prettier */
 
-  // Global functions
-  resolveHtmlPath: func as unknown,
-  inlineFile: func as unknown,
-  setGlobalMenuFromPref: func as unknown,
-  setGlobalStateFromPref: func as unknown,
-  openWindow: func as unknown,
-  openDialog: func as unknown,
-  globalReset: func as unknown,
-
-  // Global objects with methods and/or data
-  Prefs: PrefsPublic,
-  LibSword: LibSwordPublic,
-  Dirs: DirsPublic,
-  Commands: CommandsPublic,
-  Shell: ShellPublic,
-  Data: DataPublic,
-};
-
-export interface GType {
-  Books: BookType[];
-  Book: { [i: string]: BookType };
-  Tabs: TabType[];
-  Tab: { [i: string]: TabType };
-  ProgramConfig: ConfigType;
-  LocaleConfigs: { [i: string]: ConfigType };
-  ModuleConfigs: { [i: string]: ConfigType };
-  ModuleConfigDefault: ConfigType;
-  FontFaceConfigs: { [i: string]: string };
-  FeatureModules: FeatureType;
-  BooksInModule: { [i: string]: string[] };
-  BkChsInV11n: { [key in V11nType]: { [i: string]: number } };
-  OPSYS: 'string';
-  SystemFonts: string[];
-
-  resolveHtmlPath: (htmlfile: string) => string;
-  inlineFile: (path: string, encoding: 'base64' | 'utf8') => string;
-  setGlobalMenuFromPref: (menu?: Electron.Menu) => void;
+  // GLOBAL FUNCTIONS
+  // ----------------
+  resolveHtmlPath: func as unknown as (htmlfile: string) => string,
+  inlineFile: func as unknown as (
+    path: string,
+    encoding: 'base64' | 'utf8'
+  ) => string,
+  setGlobalMenuFromPref: func as unknown as (menu?: Electron.Menu) => void,
   // Caller win is overwritten when setGlobalStateFromPref is invoked by main process.
-  setGlobalStateFromPref: (
+  setGlobalStateFromPref: func as unknown as (
     win: null,
     prefs?: string | string[],
     unfocusedUpdate?: boolean
-  ) => void;
-  openWindow: (
+  ) => void,
+  openWindow: func as unknown as (
     type: string,
     params: Electron.BrowserWindowConstructorOptions
-  ) => number;
-  openDialog: (
+  ) => number,
+  openDialog: func as unknown as (
     type: string,
     params: Electron.BrowserWindowConstructorOptions
-  ) => any;
-  globalReset: () => void;
+  ) => any,
+  globalReset: func as unknown as (windowName?: Partial<WindowType>) => void,
 
-  Prefs: typeof PrefsPublic;
-  LibSword: typeof LibSwordPublic;
-  Dirs: typeof DirsPublic;
-  Commands: typeof CommandsPublic;
-  Shell: typeof ShellPublic;
-  Data: typeof DataPublic;
+  // GLOBAL OBJECTS
+  // --------------
+  Prefs: PrefsPublic,
+  LibSword: LibSwordPublic,
+  Dirs: {
+    path: 'getter' as unknown as DirsDirectories,
+  },
+  Commands: CommandsPublic,
+  // See electron shell api. Any electron shell property can be added
+  // here and it will become available in G.
+  Shell: {
+    beep: func as unknown as () => void,
+  },
+  // Make data available to both main and renderer processes.
+  Data: {
+    write: func as unknown as (data: any) => void,
+    data: 'getter' as unknown as any,
+    read: func as unknown as () => any,
+    readOnce: func as unknown as () => any,
+  },
+};
 
+export type GType = typeof GPublic;
+
+// The Renderer G object caches its returned data
+// and the cache can be cleared (reset).
+export type GTypeR = typeof GPublic & {
   cache: { [i: string]: any };
   reset: () => void;
-}
+};

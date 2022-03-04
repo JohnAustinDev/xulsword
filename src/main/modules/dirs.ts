@@ -5,9 +5,9 @@ import path from 'path';
 import C from '../../constant';
 import nsILocalFile from '../components/nsILocalFile';
 
-import type { DirsDirectories, DirsPublic } from '../../type';
+import type { DirsDirectories, GType } from '../../type';
 
-const Dirs = { path: {} } as typeof DirsPublic;
+const Dirs = { path: {} } as GType['Dirs'];
 
 Dirs.path.xsAsset = app.isPackaged
   ? path.join(process.resourcesPath, 'assets')
@@ -68,7 +68,7 @@ dirNames.forEach((dir) => {
 });
 
 // The DirsClass interface is only available in main process directly through the Dirs object
-type DirsClass = typeof DirsPublic &
+type DirsClass = GType['Dirs'] &
   {
     [key in keyof DirsDirectories]: nsILocalFile;
   };

@@ -60,7 +60,7 @@ ipcMain.on('global', (event: IpcMainEvent, name: string, ...args: any[]) => {
   if (name in GPublic) {
     const gPublic = GPublic as any;
     const g = G as any;
-    if (gPublic[name] === 'readonly') {
+    if (gPublic[name] === 'getter') {
       ret = g[name];
     } else if (typeof gPublic[name] === 'function') {
       if (name === 'setGlobalStateFromPref') {
@@ -69,7 +69,7 @@ ipcMain.on('global', (event: IpcMainEvent, name: string, ...args: any[]) => {
       ret = g[name](...args);
     } else if (typeof gPublic[name] === 'object') {
       const m = args.shift();
-      if (gPublic[name][m] === 'readonly') {
+      if (gPublic[name][m] === 'getter') {
         ret = g[name][m];
       } else if (typeof gPublic[name][m] === 'function') {
         if ('browserWindow' in g[name]) g[name].browserWindow = win;

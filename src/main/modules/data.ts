@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { DataPublic } from '../../type';
+import { GType } from '../../type';
 
 // Store temporary renderer data for use in the main process, and vice versa.
-const Data: typeof DataPublic & { datastore: any } = {
+const Data: GType['Data'] & { datastore: any } = {
   datastore: undefined,
 
   write(data: any) {
