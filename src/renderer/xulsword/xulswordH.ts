@@ -128,6 +128,8 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
     }
 
     case 'change': {
+      // Text inputs use input delay and filtering, meaning that the currentTarget
+      // will be the same element as target. So target.id must be used here.
       if (!('value' in es.target)) return;
       if (!('id' in es.target)) return;
       const { id, value } = es.target as any;
@@ -184,7 +186,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
             if (location) {
               const pvk = verseKey(location);
               let newloc;
-              if (currentId === 'chapter__input') {
+              if (id === 'chapter__input') {
                 pvk.chapter = Number(value);
                 newloc = chapterChange(pvk.location());
               } else {
@@ -195,7 +197,11 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
                 const s: Partial<XulswordState> = {
                   location: newloc,
                   selection: newloc,
-                  flagScroll: flagScroll.map(() => C.VSCROLL.chapter),
+                  flagScroll: flagScroll.map(() =>
+                    id === 'chapter__input'
+                      ? C.VSCROLL.chapter
+                      : C.VSCROLL.verse
+                  ),
                   bsreset,
                 };
                 return s;

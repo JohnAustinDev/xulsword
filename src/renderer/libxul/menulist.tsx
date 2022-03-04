@@ -47,7 +47,7 @@ function Menulist(props: MenulistProps) {
         multiple={props.multiple}
         size={props.size}
         value={props.value}
-        onChange={props.onChange}
+        onChange={() => {}}
       >
         {props.options}
         {props.children}

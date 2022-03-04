@@ -38,15 +38,15 @@ interface CheckboxProps extends XulProps {
 }
 
 function Checkbox(props: CheckboxProps) {
-  const { checked, disabled, label, tooltip, onChange } = props;
+  const { checked, disabled, label, tooltip } = props;
   return (
-    <Hbox {...addClass('checkbox', props)} title={tooltip} onChange={undefined}>
+    <Hbox {...addClass('checkbox', props)} title={tooltip}>
       <input
         id={`${props.id}__input`}
         checked={checked}
         disabled={disabled}
         type="checkbox"
-        onChange={onChange}
+        onChange={() => {}}
       />
       <Label flex="1" control={`${props.id}__input`} value={label} />
     </Hbox>

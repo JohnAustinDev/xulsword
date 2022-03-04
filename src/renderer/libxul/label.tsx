@@ -24,12 +24,7 @@ interface LabelProps extends XulProps {
   value: string;
 }
 function Label(props: LabelProps) {
-  let { control } = props;
-  if (typeof control === 'string') {
-    if (!control.includes('__')) control = `${props.control}__input`;
-  } else {
-    control = undefined;
-  }
+  const { control } = props;
 
   return (
     <label htmlFor={control} {...htmlAttribs('label', props)}>
