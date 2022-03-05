@@ -15,7 +15,7 @@ import Prefs from './modules/prefs';
 import LibSword from './modules/libsword';
 import Cache from '../cache';
 import nsILocalFile from './components/nsILocalFile';
-import { jsdump } from './mutil';
+import { ElectronWindow, jsdump } from './mutil';
 
 import type {
   TabType,
@@ -26,19 +26,10 @@ import type {
   BookGroupType,
   LocationVKType,
   XulswordStatePref,
+  WindowType,
 } from '../type';
 
 const fontList = require('font-list');
-
-setTimeout(() => {
-  fontList
-    .getFonts()
-    .then((fonts: string[]) => {
-      Cache.write(fonts, 'fontList');
-      return true;
-    })
-    .catch((err: any) => console.log(err));
-}, 2000);
 
 // These exported GPublic functions are called by the runtime
 // auto-generated G object.
@@ -412,9 +403,19 @@ export function verseKey(
   );
 }
 
+// If null is returned, fonts are loading, so another call is required.
 export function getSystemFonts() {
-  // System fonts are read asynchronously 2 seconds after startup
-  return Cache.has('fontList') ? Cache.read('fontList') : [];
+  if (!Cache.has('fontList')) {
+    fontList
+      .getFonts()
+      .then((fonts: string[]) => {
+        Cache.write(fonts, 'fontList');
+        return fonts;
+      })
+      .catch((err: any) => console.log(err));
+    return null;
+  }
+  return Cache.read('fontList');
 }
 
 export function setMenuFromPrefs(menu: Electron.Menu) {
@@ -461,12 +462,43 @@ export function setGlobalMenuFromPref(menu?: Electron.Menu) {
   if (m !== null) setMenuFromPrefs(m);
 }
 
-export function globalReset() {
-  Cache.clear();
+// If window is specified, only window(s) corresponding to the
+// window will be reset (and in that case the main process will
+// not be reset either).
+export function globalReset(
+  window?: Partial<WindowType> | 'parent' | 'self' | 'children',
+  caller?: BrowserWindow | null
+) {
+  const testwin: Partial<WindowType>[] = [];
+  if (!window) Cache.clear();
+  else if (window === 'parent') {
+    if (caller) testwin.push(ElectronWindow[caller.getParentWindow().id]);
+  } else if (window === 'self') {
+    if (caller) testwin.push(ElectronWindow[caller.id]);
+  } else if (window === 'children') {
+    if (caller)
+      testwin.concat(
+        caller.getChildWindows().map((w) => {
+          return ElectronWindow[w.id];
+        })
+      );
+  } else {
+    testwin.push(window);
+  }
   BrowserWindow.getAllWindows().forEach((w) => {
-    w.webContents.send('cache-reset');
-    w.webContents.send('module-reset');
-    w.webContents.send('component-reset');
+    let resetThisWindow = true;
+    if (testwin.length) {
+      const { name, type, id } = ElectronWindow[w.id];
+      resetThisWindow = testwin.some((tw) => {
+        const { name: n, type: t, id: i } = tw;
+        return name === n || type === t || id === i;
+      });
+    }
+    if (resetThisWindow) {
+      w.webContents.send('cache-reset');
+      w.webContents.send('module-reset');
+      w.webContents.send('component-reset');
+    }
   });
 }
 

@@ -1,3 +1,31 @@
-.chooseFont #chooseMod {
+.chooseFont .groupbox {
+  position: relative;
+}
+
+.chooseFont #module {
   margin-inline-end: 10px;
+}
+
+.chooseFont .picker-button {
+  margin: 0;
+}
+
+.chooserFont .picker-button .button-box {
+  padding: 3px;
+}
+
+.chooseFont .picker-button .button-icon {
+  display: block;
+  width: 60px;
+  height: 1.5em;
+}
+
+.chooseFont .picker-button .menu {
+  left: unset;
+}
+
+.chooseFont .picker-button .menu > * {
+  position: absolute;
+  top: -159px;
+  left: -233px;
 }

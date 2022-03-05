@@ -47,6 +47,7 @@ function Button(props: ButtonProps) {
   const {
     align,
     children,
+    checked,
     disabled,
     dir,
     dlgType,
@@ -79,7 +80,7 @@ function Button(props: ButtonProps) {
         )}
       </Box>
 
-      {props.type === 'menu' && children && (
+      {props.type === 'menu' && children && checked && (
         <div className="menu">{children}</div>
       )}
     </button>

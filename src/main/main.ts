@@ -65,7 +65,7 @@ ipcMain.on('global', (event: IpcMainEvent, name: string, ...args: any[]) => {
     } else if (typeof gPublic[name] === 'function') {
       if (name === 'setGlobalStateFromPref') {
         args[0] = win;
-      }
+      } else if (name === 'globalReset' && args[0]) args[1] = win;
       ret = g[name](...args);
     } else if (typeof gPublic[name] === 'object') {
       const m = args.shift();

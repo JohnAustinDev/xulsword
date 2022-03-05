@@ -21,15 +21,16 @@ function localeConfig(locale: string) {
 
   // All config properties should be present, having a valid value or null.
   // Read any values from locale's config.json file.
-  Object.entries(C.Config).forEach((entry) => {
-    const [key, val]: [string, { [i: string]: string | null }] = entry;
-    let r = val.localeConf;
-    if (val.localeConf !== null) {
-      r = i18next.exists(val.localeConf, toptions)
-        ? i18next.t(val.localeConf, toptions)
-        : '';
+  Object.entries(C.ConfigTemplate).forEach((entry) => {
+    const prop = entry[0] as keyof typeof C.ConfigTemplate;
+    const keyobj = entry[1];
+    let r = null;
+    if (keyobj.localeConf !== null) {
+      r = i18next.exists(keyobj.localeConf, toptions)
+        ? i18next.t(keyobj.localeConf, toptions)
+        : null;
     }
-    lconfig[key] = r;
+    lconfig[prop] = r;
   });
 
   lconfig.AssociatedLocale = locale;
@@ -195,16 +196,17 @@ function getModuleConfig(mod: string) {
       `getModuleConfig(modname) must not be called until LibSword is ready!`
     );
   }
-  const moduleConfig: ConfigType = {};
+  const moduleConfig = {} as ConfigType;
 
   // All config properties should be present, having a valid value or null.
   // Read values from module's .conf file
-  Object.entries(C.Config).forEach((entry) => {
-    const [prop, key] = entry;
+  Object.entries(C.ConfigTemplate).forEach((entry) => {
+    const prop = entry[0] as keyof typeof C.ConfigTemplate;
+    const keyobj = entry[1];
     let r = null;
-    if (key.modConf) {
+    if (keyobj.modConf) {
       if (mod !== 'LTR_DEFAULT') {
-        r = LibSword.getModuleInformation(mod, key.modConf);
+        r = LibSword.getModuleInformation(mod, keyobj.modConf);
         if (r === C.NOTFOUND) r = null;
       }
     }

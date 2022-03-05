@@ -10,6 +10,7 @@ import { dString } from '../../common';
 import C from '../../constant';
 import G from '../rg';
 import renderToRoot from '../rinit';
+import DynamicStyleSheet, { StyleType } from '../style';
 import {
   verseKey,
   jsdump,
@@ -119,9 +120,13 @@ export default class Xulsword extends React.Component {
     this.destroy = [];
 
     this.atextRefs = [];
-    s.panels.forEach((p) => {
+    s.panels.forEach(() => {
       this.atextRefs.push(React.createRef());
     });
+
+    const styleType: Partial<StyleType> | undefined =
+      G.Data.read('stylesheetData') || undefined;
+    DynamicStyleSheet.update(styleType);
   }
 
   componentDidMount() {

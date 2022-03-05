@@ -165,7 +165,17 @@ export type BookType = {
 };
 
 export type ConfigType = {
-  [index: string]: string | null;
+  [key in
+    | 'direction'
+    | 'fontFamily'
+    | 'fontSizeAdjust'
+    | 'lineHeight'
+    | 'fontSize'
+    | 'color'
+    | 'background'
+    | 'AssociatedModules'
+    | 'AssociatedLocale'
+    | 'PreferredCSSXHTML']: string | null;
 };
 
 export type FeatureType = {
@@ -458,7 +468,10 @@ export const GPublic = {
     type: string,
     params: Electron.BrowserWindowConstructorOptions
   ) => any,
-  globalReset: func as unknown as (windowName?: Partial<WindowType>) => void,
+  globalReset: func as unknown as (
+    window?: Partial<WindowType> | 'parent' | 'self' | 'children',
+    caller?: BrowserWindow | null
+  ) => void,
 
   // GLOBAL OBJECTS
   // --------------
@@ -473,12 +486,11 @@ export const GPublic = {
   Shell: {
     beep: func as unknown as () => void,
   },
-  // Make data available to both main and renderer processes.
+  // Make data available to all processes (main and renderer).
   Data: {
-    write: func as unknown as (data: any) => void,
-    data: 'getter' as unknown as any,
-    read: func as unknown as () => any,
-    readOnce: func as unknown as () => any,
+    write: func as unknown as (name: string, data: any) => void,
+    read: func as unknown as (name: string) => any,
+    readAndDelete: func as unknown as (name: string) => any,
   },
 };
 

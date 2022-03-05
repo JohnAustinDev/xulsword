@@ -1,25 +1,23 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { GType } from '../../type';
 
-// Store temporary renderer data for use in the main process, and vice versa.
-const Data: GType['Data'] & { datastore: any } = {
-  datastore: undefined,
+// Store temporary renderer data for use in the main process, and vice
+// versa. NOTE: Unless data needs to be shared between processes, it
+// is better to use the faster Cache module.
+const Data: GType['Data'] & { datastore: { [i: string]: any } } = {
+  datastore: {},
 
-  write(data: any) {
-    this.datastore = data;
+  write(name: string, data: any) {
+    this.datastore[name] = data;
   },
 
-  get data() {
-    return this.datastore || {};
+  read(name: string) {
+    return this.datastore[name];
   },
 
-  read() {
-    return this.data;
-  },
-
-  readOnce() {
-    const r = this.data;
-    this.datastore = undefined;
+  readAndDelete(name: string) {
+    const r = this.datastore[name];
+    delete this.datastore[name];
     return r;
   },
 };

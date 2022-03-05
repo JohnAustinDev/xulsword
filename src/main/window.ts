@@ -6,6 +6,7 @@ import { BrowserWindow, ipcMain } from 'electron';
 import { JSON_parse, JSON_stringify } from '../common';
 import Dirs from './modules/dirs';
 import Prefs from './modules/prefs';
+import { ElectronWindow } from './mutil';
 
 const i18nBackendRenderer = require('i18next-electron-fs-backend');
 
@@ -123,6 +124,7 @@ export function openDialog(
   const { show } = options;
   windowOptions(name, 'dialog', options);
   const win = new BrowserWindow(options);
+  ElectronWindow[win.id] = { id: win.id, name, type: 'dialog', options };
   win.loadURL(resolveHtmlPath(`${name}.html`));
   win.removeMenu();
   if (show) {
@@ -171,6 +173,7 @@ export function openWindow(
     if (ops?.openWithBounds) delete ops.openWithBounds;
   }
   const win = new BrowserWindow(options);
+  ElectronWindow[win.id] = { id: win.id, name, type: 'window', options };
   win.loadURL(resolveHtmlPath(`${name}.html`));
   // win.webContents.openDevTools();
   Prefs.setComplexValue(`Windows.w${win.id}`, { type: name, options });

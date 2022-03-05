@@ -290,12 +290,16 @@ export function getCSS(
   return result;
 }
 
-export function createStyleRule(selector: string, config: ConfigType) {
+export function createStyleRule(
+  selector: string,
+  config: Partial<ConfigType>
+): string {
   let rule = `${selector} {`;
-  Object.entries(C.Config).forEach((entry) => {
-    const [key, val]: [string, { [i: string]: string | null }] = entry;
-    if (val.CSS && config[key]) {
-      rule += `${val.CSS}: ${config[key]}; `;
+  Object.entries(C.ConfigTemplate).forEach((entry) => {
+    const prop = entry[0] as keyof typeof C.ConfigTemplate;
+    const keyobj = entry[1];
+    if (keyobj.CSS && config[prop]) {
+      rule += `${keyobj.CSS}: ${config[prop]}; `;
     }
   });
   rule += '}';

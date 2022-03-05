@@ -598,7 +598,7 @@ export default function handler(
     }
 
     case 'contextmenu': {
-      G.Data.write(getContextData(target));
+      G.Data.write('contextData', getContextData(target));
       break;
     }
 

@@ -2,8 +2,10 @@
 /* eslint-disable jsx-a11y/control-has-associated-label */
 import React from 'react';
 import i18n from 'i18next';
+import { ChromePicker as ColorPicker } from 'react-color';
 import type { ReactElementLike } from 'prop-types';
 import C from '../../constant';
+import { stringHash } from '../../common';
 import G from '../rg';
 import renderToRoot from '../rinit';
 import { windowArgument } from '../rutil';
@@ -16,7 +18,7 @@ import Checkbox from '../libxul/checkbox';
 import Spacer from '../libxul/spacer';
 import Menulist from '../libxul/menulist';
 import Grid, { Columns, Column, Rows, Row } from '../libxul/grid';
-import handlerH from './chooseFontH';
+import handlerH, { getModuleStyle } from './chooseFontH';
 import './chooseFont.css';
 
 import type { ModTypes } from '../../type';
@@ -31,13 +33,31 @@ const propTypes = {
 
 type ChooseFontWinProps = XulProps;
 
-type ChooseFontWinState = {
+type ColorType = {
+  r: number;
+  g: number;
+  b: number;
+  a: number;
+};
+
+type PickerColorType = {
+  rgb: ColorType;
+  hex: string;
+  hsl: { h: number; s: number; l: number; a: number };
+};
+
+export type ChooseFontWinState = {
   module: string | null;
   restoreDefault: boolean;
+  fontFamily: string;
   fontSize: string;
   lineHeight: string;
   makeDefault: boolean;
   restoreAllDefaults: boolean;
+  color: ColorType;
+  background: ColorType;
+  coloropen: boolean;
+  backgroundopen: boolean;
 };
 
 export default class ChooseFontWin extends React.Component {
@@ -55,10 +75,15 @@ export default class ChooseFontWin extends React.Component {
     const initialState: ChooseFontWinState = {
       module: '',
       restoreDefault: false,
+      fontFamily: '',
       fontSize: '1em',
       lineHeight: '1.6em',
       makeDefault: false,
       restoreAllDefaults: false,
+      color: { r: 50, g: 50, b: 50, a: 1 },
+      background: { r: 50, g: 50, b: 50, a: 1 },
+      coloropen: false,
+      backgroundopen: false,
     };
 
     const windowState = windowArgument(
@@ -73,19 +98,35 @@ export default class ChooseFontWin extends React.Component {
     this.handler = handlerH.bind(this);
   }
 
+  componentDidUpdate(_prevProps: any, prevState: ChooseFontWinState) {
+    const state = this.state as ChooseFontWinState;
+    const { module } = state;
+    if (module && stringHash(prevState) !== stringHash(state)) {
+      const style = getModuleStyle(state);
+      G.Data.write('stylesheetData', style);
+      G.globalReset('parent');
+      console.log(style);
+    }
+  }
+
   render() {
     const { handler } = this;
     const {
       module,
       restoreDefault,
+      fontFamily,
       fontSize,
       lineHeight,
       makeDefault,
       restoreAllDefaults,
+      color,
+      background,
+      coloropen,
+      backgroundopen,
     } = this.state as ChooseFontWinState;
 
     const showBackgroundRow = false;
-    const fontoptions: ReactElementLike[] | undefined = G.SystemFonts.map(
+    const fontOptions: ReactElementLike[] | undefined = G.SystemFonts.map(
       (font: string) => {
         return (
           <option key={font} value={font} label={font.replace(/['"]/g, '')} />
@@ -95,6 +136,10 @@ export default class ChooseFontWin extends React.Component {
 
     return (
       <Vbox>
+        <style>{`
+        #color .button-icon {
+          background-color: rgb(${color.r}, ${color.g}, ${color.b}, ${color.a});
+        }`}</style>
         <Groupbox caption={i18n.t('fontsAndColors.label')}>
           <Grid id="fontsGrid">
             <Columns>
@@ -106,11 +151,15 @@ export default class ChooseFontWin extends React.Component {
             <Rows>
               <Row>
                 <Label
-                  control="chooseMod"
+                  control="module"
                   value={`${i18n.t('chooseModule.label')}:`}
                 />
                 <Hbox pack="start" align="baseline">
-                  <Menulist id="chooseMod" value={module || undefined}>
+                  <Menulist
+                    id="module"
+                    value={module || undefined}
+                    onChange={handler}
+                  >
                     {Object.keys(C.SupportedModuleTypes).map((typ) => {
                       const type = typ as ModTypes;
                       return (
@@ -150,7 +199,8 @@ export default class ChooseFontWin extends React.Component {
                 />
                 <Menulist
                   id="fontFamily"
-                  options={fontoptions}
+                  value={fontFamily}
+                  options={fontOptions}
                   onChange={handler}
                 />
                 <Label
@@ -203,12 +253,20 @@ export default class ChooseFontWin extends React.Component {
                   value={`${i18n.t('textColor.label')}:`}
                   control="color"
                 />
-                {/* <colorpicker
-                    type="button"
-                    id="color"
-                    palettename="standard"
-                    onchange="chooseFont.update(event);"
-                  /> */}
+                <Button
+                  id="color"
+                  className="picker-button"
+                  type="menu"
+                  checked={coloropen}
+                  onClick={handler}
+                >
+                  <ColorPicker
+                    color={color}
+                    onChange={(c: PickerColorType) => {
+                      this.setState({ color: c.rgb });
+                    }}
+                  />
+                </Button>
               </Row>
               {showBackgroundRow && (
                 <Row>
@@ -218,12 +276,7 @@ export default class ChooseFontWin extends React.Component {
                     value={`${i18n.t('backgroundColor.label')}:`}
                     control="background"
                   />
-                  {/* <colorpicker
-                  type="button"
-                  id="background"
-                  palettename="standard"
-                  onchange="chooseFont.update(event);"
-                /> */}
+                  <ColorPicker id="background" onchange={handler} />
                 </Row>
               )}
               <Row>

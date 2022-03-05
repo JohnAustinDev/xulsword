@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint import/prefer-default-export: off, import/no-mutable-exports: off */
 
+import { WindowType } from '../type';
+
 export function jsdump(msg: string | Error) {
   if (
     process.env.NODE_ENV === 'development' ||
@@ -9,3 +11,5 @@ export function jsdump(msg: string | Error) {
     // eslint-disable-next-line no-console
     console.log(msg);
 }
+
+export const ElectronWindow: WindowType[] = [];

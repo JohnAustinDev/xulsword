@@ -9,7 +9,6 @@ import C from '../constant';
 import { JSON_parse } from '../common';
 import Cache from '../cache';
 import G from './rg';
-import DynamicStyleSheet from './style';
 import { jsdump } from './rutil';
 import { delayHandler } from './libxul/xul';
 
@@ -32,11 +31,9 @@ i18n.on('initialized', (options) => {
   }
   i18n.on('languageChanged', (lng) => {
     G.reset();
-    DynamicStyleSheet.update();
     return setHTMLClass(classes.concat(lng));
   });
 
-  DynamicStyleSheet.update();
   return setHTMLClass(classes.concat(options.lng));
 });
 

@@ -8,8 +8,23 @@ import Data from './modules/data';
 
 import type { ContextData, LocationVKType } from '../type';
 
+const noContextData: ContextData = {
+  search: null,
+  locationVK: null,
+  module: null,
+  tab: null,
+  lemma: null,
+  panelIndex: null,
+  bookmark: null,
+  isPinned: false,
+  selection: null,
+  selectionParsedVK: null,
+};
+
 export default function contextMenu(window: BrowserWindow): () => void {
-  const cm = Data as { data: ContextData };
+  const cm = () => {
+    return (Data.read('contextData') || noContextData) as ContextData;
+  };
 
   const options: contextMenuCreator.Options = {
     window,
@@ -37,57 +52,55 @@ export default function contextMenu(window: BrowserWindow): () => void {
 
     prepend: (actions, params) => [
       {
-        label: `${i18next.t('Search')}: ${cm.data.lemma}`,
-        visible: Boolean(cm.data.lemma),
+        label: `${i18next.t('Search')}: ${cm().lemma}`,
+        visible: Boolean(cm().lemma),
         click: ((data) => {
           return () => {
             if (data.search) Commands.search(data.search);
           };
-        })(cm.data),
+        })(cm()),
       },
       actions.separator(),
       {
         label: i18next.t('menu.help.about'),
-        visible: Object.keys(cm.data).length > 0,
-        enabled: Boolean(cm.data.tab || cm.data.module),
+        visible: Object.keys(cm()).length > 0,
+        enabled: Boolean(cm().tab || cm().module),
         click: ((data) => {
           return () => {
             const mod = data.module || data.tab;
             if (mod) Commands.openHelp(mod);
           };
-        })(cm.data),
+        })(cm()),
       },
       {
         label: i18next.t('menu.options.font'),
-        visible: Object.keys(cm.data).length > 0,
-        enabled: Boolean(cm.data.module),
+        visible: Object.keys(cm()).length > 0,
+        enabled: Boolean(cm().module),
         click: ((data) => {
           return () => {
             if (data.module) Commands.openFontsColors(data.module, window);
           };
-        })(cm.data),
+        })(cm()),
       },
       {
         label: i18next.t('menu.context.close'),
-        visible: Object.keys(cm.data).length > 0,
-        enabled: Boolean(
-          (cm.data.tab || cm.data.module) && cm.data.panelIndex !== null
-        ),
+        visible: Object.keys(cm()).length > 0,
+        enabled: Boolean((cm().tab || cm().module) && cm().panelIndex !== null),
         click: ((data) => {
           return () => {
             const mod = data.tab || data.module;
             if (mod && data.panelIndex !== null)
               setViewportTabs(data.panelIndex, mod, 'hide');
           };
-        })(cm.data),
+        })(cm()),
       },
     ],
 
     append: (actions, params) => [
       {
         label: i18next.t('Search'),
-        visible: Object.keys(cm.data).length > 0,
-        enabled: Boolean(cm.data.selection && cm.data.module),
+        visible: Object.keys(cm()).length > 0,
+        enabled: Boolean(cm().selection && cm().module),
         click: ((data) => {
           return () => {
             const { selection, module } = data;
@@ -98,12 +111,12 @@ export default function contextMenu(window: BrowserWindow): () => void {
                 type: 'SearchExactText',
               });
           };
-        })(cm.data),
+        })(cm()),
       },
       {
         label: i18next.t('menu.context.openSelectedRef'),
-        visible: Object.keys(cm.data).length > 0,
-        enabled: Boolean(cm.data.selectionParsedVK),
+        visible: Object.keys(cm()).length > 0,
+        enabled: Boolean(cm().selectionParsedVK),
         click: ((data) => {
           return () => {
             const loc = data.selectionParsedVK as LocationVKType;
@@ -111,12 +124,12 @@ export default function contextMenu(window: BrowserWindow): () => void {
               Commands.goToLocationVK(loc, loc);
             }
           };
-        })(cm.data),
+        })(cm()),
       },
       {
         label: i18next.t('menu.context.selectVerse'),
-        visible: Object.keys(cm.data).length > 0 && !cm.data.isPinned,
-        enabled: Boolean(cm.data.locationVK),
+        visible: Object.keys(cm()).length > 0 && !cm().isPinned,
+        enabled: Boolean(cm().locationVK),
         click: ((data) => {
           return () => {
             const { locationVK } = data;
@@ -124,13 +137,13 @@ export default function contextMenu(window: BrowserWindow): () => void {
               Commands.goToLocationVK(locationVK, locationVK);
             }
           };
-        })(cm.data),
+        })(cm()),
       },
       actions.separator(),
       {
         label: i18next.t('menu.bookmark.add'),
-        visible: Object.keys(cm.data).length > 0,
-        enabled: Boolean(cm.data.module && cm.data.locationVK),
+        visible: Object.keys(cm()).length > 0,
+        enabled: Boolean(cm().module && cm().locationVK),
         click: ((data) => {
           return () => {
             const { module, locationVK: location } = data;
@@ -142,12 +155,12 @@ export default function contextMenu(window: BrowserWindow): () => void {
               });
             }
           };
-        })(cm.data),
+        })(cm()),
       },
       {
         label: i18next.t('menu.usernote.add'),
-        visible: Object.keys(cm.data).length > 0,
-        enabled: Boolean(cm.data.module && cm.data.locationVK),
+        visible: Object.keys(cm()).length > 0,
+        enabled: Boolean(cm().module && cm().locationVK),
         click: ((data) => {
           return () => {
             const { module, locationVK: location } = data;
@@ -159,29 +172,29 @@ export default function contextMenu(window: BrowserWindow): () => void {
               });
             }
           };
-        })(cm.data),
+        })(cm()),
       },
 
       {
         label: i18next.t('menu.usernote.properties'),
-        visible: Object.keys(cm.data).length > 0,
-        enabled: Boolean(cm.data.bookmark),
+        visible: Object.keys(cm()).length > 0,
+        enabled: Boolean(cm().bookmark),
         click: ((data) => {
           return () => {
             if (data.bookmark)
               Commands.openDbItemPropertiesDialog(data.bookmark);
           };
-        })(cm.data),
+        })(cm()),
       },
       {
         label: i18next.t('menu.usernote.delete'),
-        visible: Object.keys(cm.data).length > 0,
-        enabled: Boolean(cm.data.bookmark),
+        visible: Object.keys(cm()).length > 0,
+        enabled: Boolean(cm().bookmark),
         click: ((data) => {
           return () => {
             if (data.bookmark) Commands.deleteDbItem(data.bookmark);
           };
-        })(cm.data),
+        })(cm()),
       },
     ],
   };
@@ -194,7 +207,7 @@ export default function contextMenu(window: BrowserWindow): () => void {
   const webContents = (win: any) => win.webContents || (win.id && win);
 
   const deleteTargetData = () => {
-    Data.readOnce(); // delete already used data
+    Data.readAndDelete('contextData'); // delete already used data
   };
 
   const removeDtdListener = () => {

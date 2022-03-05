@@ -2,6 +2,7 @@
 
 import type {
   BookGroupType,
+  ConfigType,
   LocationVKType,
   ModTypes,
   PlaceType,
@@ -31,7 +32,7 @@ const C = {
   //   localeConf = a locale config.json entry
   // It also specifies any corresponding CSS property if there is one.
 /* eslint-disable prettier/prettier */
-  Config: {
+  ConfigTemplate: {
     direction:        { modConf:"Direction",         localeConf:"Direction",      CSS:"direction" },
     fontFamily:       { modConf:"Font",              localeConf:"Font",           CSS:"font-family" },
     fontSizeAdjust:   { modConf:"FontSizeAdjust",    localeConf:"FontSizeAdjust", CSS:"font-size-adjust" },
@@ -41,9 +42,8 @@ const C = {
     background:       { modConf:"FontBackground",    localeConf:"FontBackground", CSS:"background" },
     AssociatedModules:{ modConf:null,                localeConf:"DefaultModule",  CSS:null },
     AssociatedLocale: { modConf:"Lang",              localeConf:null,             CSS:null },
-    StyleRule:        { modConf:null,                localeConf:null,             CSS:null },
     PreferredCSSXHTML:{ modConf:"PreferredCSSXHTML", localeConf:null,             CSS:null }
-  },
+  } as const,
   /* eslint-enable prettier/prettier */
 
   FallbackLanguage: {
