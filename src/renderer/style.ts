@@ -73,6 +73,7 @@ class DynamicStyleSheet {
       module: {},
       program: {},
     }) as StyleType;
+    const style = styleConfigs || prefStyleConfigs;
     const classPrefixes = ['cs'];
     if (sheet) {
       while (sheet.cssRules.length) {
@@ -82,19 +83,21 @@ class DynamicStyleSheet {
         Object.entries(this.style).forEach((entry) => {
           const type = entry[0] as keyof StyleType;
           const configobj = entry[1];
-          const configPref = getConfig(prefStyleConfigs, type, 'default');
-          const configArg = getConfig(styleConfigs, type, 'default');
           Object.entries(configobj).forEach((entry2) => {
             const [instance, config] = entry2;
             if (instance !== 'default') {
-              insertRule(sheet, prefix, instance, configArg || configPref);
+              insertRule(
+                sheet,
+                prefix,
+                instance,
+                getConfig(style, type, 'default')
+              );
               insertRule(sheet, prefix, instance, config);
               insertRule(
                 sheet,
                 prefix,
                 instance,
-                getConfig(styleConfigs, type, instance) ||
-                  getConfig(prefStyleConfigs, type, instance)
+                getConfig(style, type, instance)
               );
             }
           });
@@ -104,8 +107,7 @@ class DynamicStyleSheet {
         sheet,
         'cs',
         'LTR_DEFAULT',
-        getConfig(styleConfigs, 'module', 'default') ||
-          getConfig(prefStyleConfigs, 'module', 'default')
+        getConfig(style, 'module', 'default')
       );
       Object.entries(G.FontFaceConfigs).forEach((entry) => {
         const [name, src] = entry;

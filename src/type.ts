@@ -400,7 +400,7 @@ const CommandsPublic = {
   search: func as unknown as (search: SearchType) => void,
   copyPassage: func as unknown as () => void,
   openFontsColors: func as unknown as (
-    module?: string | null,
+    module: string,
     window?: BrowserWindow | null
   ) => void,
   openBookmarksManager: func as unknown as () => void,
@@ -443,7 +443,6 @@ export const GPublic = {
   BooksInModule:       'getter' as unknown as { [i: string]: string[] },
   BkChsInV11n:         'getter' as unknown as { [key in V11nType]: { [i: string]: number }; },
   OPSYS:               'getter' as unknown as NodeJS.Platform,
-  SystemFonts:         'getter' as unknown as string[],
   /* eslint-enable prettier/prettier */
 
   // GLOBAL FUNCTIONS
@@ -472,6 +471,7 @@ export const GPublic = {
     window?: Partial<WindowType> | 'parent' | 'self' | 'children',
     caller?: BrowserWindow | null
   ) => void,
+  getSystemFonts: func as unknown as () => Promise<string[]>,
 
   // GLOBAL OBJECTS
   // --------------

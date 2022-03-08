@@ -47,8 +47,9 @@ contextBridge.exposeInMainWorld('ipc', {
     // using ipcMain.handle(), returning a promise containing the result arg(s).
     invoke(channel, ...args) {
       if (validChannels.includes(channel)) {
-        ipcRenderer.invoke(channel, ...args);
-      } else throw Error(`ipc invoke bad channel: ${channel}`);
+        return ipcRenderer.invoke(channel, ...args);
+      }
+      throw Error(`ipc invoke bad channel: ${channel}`);
     },
 
     // Make a synchronous call to ipcMain, blocking the renderer until ipcMain

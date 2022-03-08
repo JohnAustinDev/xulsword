@@ -3,7 +3,13 @@
 
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
-import { app, BrowserWindow, ipcMain, IpcMainEvent } from 'electron';
+import {
+  app,
+  BrowserWindow,
+  ipcMain,
+  IpcMainEvent,
+  IpcMainInvokeEvent,
+} from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import i18n from 'i18next';
@@ -54,7 +60,11 @@ const installExtensions = async () => {
 };
 
 // Handle global variable calls from renderer
-ipcMain.on('global', (event: IpcMainEvent, name: string, ...args: any[]) => {
+function handleGlobal(
+  event: IpcMainEvent | IpcMainInvokeEvent,
+  name: string,
+  ...args: any[]
+) {
   let ret = null;
   const win = BrowserWindow.fromWebContents(event.sender);
   if (name in GPublic) {
@@ -84,8 +94,17 @@ ipcMain.on('global', (event: IpcMainEvent, name: string, ...args: any[]) => {
     throw Error(`Unhandled global ipc request: ${name}`);
   }
 
-  event.returnValue = ret;
+  return ret;
+}
+ipcMain.on('global', (event: IpcMainEvent, name: string, ...args: any[]) => {
+  event.returnValue = handleGlobal(event, name, ...args);
 });
+ipcMain.handle(
+  'global',
+  (event: IpcMainInvokeEvent, name: string, ...args: any[]) => {
+    return handleGlobal(event, name, ...args);
+  }
+);
 
 ipcMain.on('window', (event: IpcMainEvent, type: string, ...args: any[]) => {
   const win = BrowserWindow.fromWebContents(event.sender);

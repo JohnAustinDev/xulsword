@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react/static-property-placement */
 /* eslint-disable jsx-a11y/control-has-associated-label */
 import React from 'react';
@@ -18,10 +19,21 @@ import Checkbox from '../libxul/checkbox';
 import Spacer from '../libxul/spacer';
 import Menulist from '../libxul/menulist';
 import Grid, { Columns, Column, Rows, Row } from '../libxul/grid';
-import handlerH, { getModuleStyle } from './chooseFontH';
+import handlerH, {
+  extractModuleStyleState,
+  getStyleFromState,
+  startingState,
+} from './chooseFontH';
 import './chooseFont.css';
 
 import type { ModTypes } from '../../type';
+
+window.ipc.renderer.once('close', () => {
+  G.globalReset();
+  setTimeout(() => {
+    G.Data.readAndDelete('stylesheetData');
+  }, 3000);
+});
 
 const defaultProps = {
   ...xulDefaultProps,
@@ -33,7 +45,7 @@ const propTypes = {
 
 type ChooseFontWinProps = XulProps;
 
-type ColorType = {
+export type ColorType = {
   r: number;
   g: number;
   b: number;
@@ -46,19 +58,7 @@ type PickerColorType = {
   hsl: { h: number; s: number; l: number; a: number };
 };
 
-export type ChooseFontWinState = {
-  module: string | null;
-  restoreDefault: boolean;
-  fontFamily: string;
-  fontSize: string;
-  lineHeight: string;
-  makeDefault: boolean;
-  restoreAllDefaults: boolean;
-  color: ColorType;
-  background: ColorType;
-  coloropen: boolean;
-  backgroundopen: boolean;
-};
+export type ChooseFontWinState = typeof startingState;
 
 export default class ChooseFontWin extends React.Component {
   static defaultProps: typeof defaultProps;
@@ -72,73 +72,83 @@ export default class ChooseFontWin extends React.Component {
   constructor(props: ChooseFontWinProps) {
     super(props);
 
-    const initialState: ChooseFontWinState = {
-      module: '',
-      restoreDefault: false,
-      fontFamily: '',
-      fontSize: '1em',
-      lineHeight: '1.6em',
-      makeDefault: false,
-      restoreAllDefaults: false,
-      color: { r: 50, g: 50, b: 50, a: 1 },
-      background: { r: 50, g: 50, b: 50, a: 1 },
-      coloropen: false,
-      backgroundopen: false,
-    };
-
-    const windowState = windowArgument(
-      'chooseFontState'
-    ) as Partial<ChooseFontWinState>;
+    const { module } = windowArgument('chooseFontState') as { module: string };
 
     this.state = {
-      ...initialState,
-      ...windowState,
+      ...startingState,
+      ...extractModuleStyleState(module, startingState.style),
     };
 
     this.handler = handlerH.bind(this);
+
+    G.getSystemFonts()
+      .then((fonts) => {
+        this.setState({ fonts });
+        return fonts;
+      })
+      .catch((e) => console.log(e));
   }
 
   componentDidUpdate(_prevProps: any, prevState: ChooseFontWinState) {
     const state = this.state as ChooseFontWinState;
     const { module } = state;
-    if (module && stringHash(prevState) !== stringHash(state)) {
-      const style = getModuleStyle(state);
+    const style = getStyleFromState(state);
+    if (module && stringHash(state.style) !== stringHash(prevState.style)) {
       G.Data.write('stylesheetData', style);
       G.globalReset('parent');
-      console.log(style);
+      // console.log(style);
     }
   }
 
   render() {
+    const state = this.state as ChooseFontWinState;
     const { handler } = this;
     const {
       module,
       restoreDefault,
+      makeDefault,
+      restoreAllDefaults,
+      coloropen,
+      backgroundopen,
+      fonts,
       fontFamily,
       fontSize,
       lineHeight,
-      makeDefault,
-      restoreAllDefaults,
       color,
       background,
-      coloropen,
-      backgroundopen,
-    } = this.state as ChooseFontWinState;
+    } = state;
 
     const showBackgroundRow = false;
-    const fontOptions: ReactElementLike[] | undefined = G.SystemFonts.map(
+    const fontOptions: ReactElementLike[] | undefined = fonts.map(
       (font: string) => {
         return (
           <option key={font} value={font} label={font.replace(/['"]/g, '')} />
         );
       }
     );
+    fontOptions.unshift(
+      <option key="empty" value="" label={i18n.t('choose.label')} />
+    );
+
+    const nocolor = { r: 128, g: 128, b: 128, a: 128 };
+    const fc = color || nocolor;
+    const bc = background || nocolor;
+
+    const disabled = Boolean(
+      restoreDefault || makeDefault || restoreAllDefaults
+    );
+    const disableRD = Boolean(makeDefault || restoreAllDefaults);
+    const disableMD = Boolean(restoreDefault || restoreAllDefaults);
+    const disableAD = Boolean(restoreDefault || makeDefault);
 
     return (
       <Vbox>
         <style>{`
         #color .button-icon {
-          background-color: rgb(${color.r}, ${color.g}, ${color.b}, ${color.a});
+          background-color: rgb(${fc.r}, ${fc.g}, ${fc.b}, ${fc.a});
+        }
+        #background .button-icon {
+          background-color: rgb(${bc.r}, ${bc.g}, ${bc.b}, ${bc.a});
         }`}</style>
         <Groupbox caption={i18n.t('fontsAndColors.label')}>
           <Grid id="fontsGrid">
@@ -154,43 +164,43 @@ export default class ChooseFontWin extends React.Component {
                   control="module"
                   value={`${i18n.t('chooseModule.label')}:`}
                 />
-                <Hbox pack="start" align="baseline">
-                  <Menulist
-                    id="module"
-                    value={module || undefined}
-                    onChange={handler}
-                  >
-                    {Object.keys(C.SupportedModuleTypes).map((typ) => {
-                      const type = typ as ModTypes;
-                      return (
-                        <optgroup
-                          key={type}
-                          label={i18n.t(C.SupportedModuleTypes[type])}
-                        >
-                          {G.Tabs.map((tab) => {
-                            if (tab.type === type) {
-                              return (
-                                <option
-                                  className={tab.labelClass}
-                                  key={tab.module}
-                                  value={tab.module}
-                                  label={tab.label}
-                                />
-                              );
-                            }
-                            return null;
-                          }).filter(Boolean)}
-                        </optgroup>
-                      );
-                    })}
-                  </Menulist>
-                  <Checkbox
-                    id="restoreDefault"
-                    label={i18n.t('restoreDefault.label')}
-                    checked={restoreDefault}
-                    onChange={handler}
-                  />
-                </Hbox>
+                <Menulist
+                  id="module"
+                  value={module || ''}
+                  disabled={disabled}
+                  onChange={handler}
+                >
+                  {Object.keys(C.SupportedModuleTypes).map((typ) => {
+                    const type = typ as ModTypes;
+                    return (
+                      <optgroup
+                        key={type}
+                        label={i18n.t(C.SupportedModuleTypes[type])}
+                      >
+                        {G.Tabs.map((tab) => {
+                          if (tab.type === type) {
+                            return (
+                              <option
+                                className={tab.labelClass}
+                                key={tab.module}
+                                value={tab.module}
+                                label={tab.label}
+                              />
+                            );
+                          }
+                          return null;
+                        }).filter(Boolean)}
+                      </optgroup>
+                    );
+                  })}
+                </Menulist>
+                <Checkbox
+                  id="restoreDefault"
+                  label={i18n.t('restoreDefault.label')}
+                  checked={Boolean(restoreDefault)}
+                  disabled={disableRD}
+                  onChange={handler}
+                />
               </Row>
               <Row>
                 <Label
@@ -201,13 +211,20 @@ export default class ChooseFontWin extends React.Component {
                   id="fontFamily"
                   value={fontFamily}
                   options={fontOptions}
+                  disabled={disabled}
                   onChange={handler}
                 />
                 <Label
                   control="fontSize"
                   value={`${i18n.t('textSize.label')}:`}
                 />
-                <Menulist id="fontSize" value={fontSize} onChange={handler}>
+                <Menulist
+                  id="fontSize"
+                  value={fontSize}
+                  disabled={disabled}
+                  onChange={handler}
+                >
+                  <option value="" label={i18n.t('choose.label')} />
                   <option value="0.5em" label="0.5em" />
                   <option value="0.7em" label="0.7em" />
                   <option value="0.8em" label="0.8em" />
@@ -234,7 +251,13 @@ export default class ChooseFontWin extends React.Component {
                   value={`${i18n.t('lineHeight.label')}:`}
                   control="lineHeight"
                 />
-                <Menulist id="lineHeight" value={lineHeight} onChange={handler}>
+                <Menulist
+                  id="lineHeight"
+                  value={lineHeight}
+                  disabled={disabled}
+                  onChange={handler}
+                >
+                  <option value="" label={i18n.t('choose.label')} />
                   <option value="1.0em" label="1.0em" />
                   <option value="1.2em" label="1.2em" />
                   <option value="1.4em" label="1.4em" />
@@ -258,14 +281,18 @@ export default class ChooseFontWin extends React.Component {
                   className="picker-button"
                   type="menu"
                   checked={coloropen}
+                  disabled={disabled}
                   onClick={handler}
                 >
-                  <ColorPicker
-                    color={color}
-                    onChange={(c: PickerColorType) => {
-                      this.setState({ color: c.rgb });
-                    }}
-                  />
+                  {coloropen && (
+                    <ColorPicker
+                      color={fc}
+                      defaultView="rgb"
+                      onChange={(c: PickerColorType) => {
+                        this.setState({ color: c.rgb });
+                      }}
+                    />
+                  )}
                 </Button>
               </Row>
               {showBackgroundRow && (
@@ -276,14 +303,32 @@ export default class ChooseFontWin extends React.Component {
                     value={`${i18n.t('backgroundColor.label')}:`}
                     control="background"
                   />
-                  <ColorPicker id="background" onchange={handler} />
+                  <Button
+                    id="background"
+                    className="picker-button"
+                    type="menu"
+                    checked={backgroundopen}
+                    disabled={disabled}
+                    onClick={handler}
+                  >
+                    {backgroundopen && (
+                      <ColorPicker
+                        color={bc}
+                        defaultView="rgb"
+                        onChange={(c: PickerColorType) => {
+                          this.setState({ background: c.rgb });
+                        }}
+                      />
+                    )}
+                  </Button>
                 </Row>
               )}
               <Row>
                 <Checkbox
                   id="makeDefault"
                   label={i18n.t('makeDefault.label')}
-                  checked={makeDefault}
+                  checked={Boolean(makeDefault)}
+                  disabled={disableMD}
                   onChange={handler}
                 />
               </Row>
@@ -291,7 +336,8 @@ export default class ChooseFontWin extends React.Component {
                 <Checkbox
                   id="restoreAllDefaults"
                   label={i18n.t('restoreAllDefaults.label')}
-                  checked={restoreAllDefaults}
+                  checked={Boolean(restoreAllDefaults)}
+                  disabled={disableAD}
                   onChange={handler}
                 />
               </Row>

@@ -1,8 +1,10 @@
+html {
+  font-family: 'arial';
+  color: rgb(40, 40, 40);
+}
 html,
 body,
 #root {
-  font-family: 'arial';
-  color: rgb(40, 40, 40);
   height: 100%;
   margin: 0;
   overflow: hidden;

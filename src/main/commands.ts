@@ -100,7 +100,7 @@ const Commands: GType['Commands'] & CommandsPrivate = {
       title: i18n.t('fontsAndColors.label'),
       parent: window || this.browserWindow || undefined,
       width: 650,
-      height: 300,
+      height: 320,
       webPreferences: {
         additionalArguments: [
           JSON_stringify({

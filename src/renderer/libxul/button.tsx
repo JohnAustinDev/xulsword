@@ -34,6 +34,9 @@ const propTypes = {
 };
 
 interface ButtonProps extends XulProps {
+  // The 'checked' prop from is only used by button CSS, to
+  // open/close a button menu, use type=menu and render, or
+  // not, the button children.
   checked?: boolean | undefined;
   disabled?: boolean | undefined;
   dlgType?: string;
@@ -47,7 +50,6 @@ function Button(props: ButtonProps) {
   const {
     align,
     children,
-    checked,
     disabled,
     dir,
     dlgType,
@@ -80,7 +82,7 @@ function Button(props: ButtonProps) {
         )}
       </Box>
 
-      {props.type === 'menu' && children && checked && (
+      {props.type === 'menu' && children && (
         <div className="menu">{children}</div>
       )}
     </button>

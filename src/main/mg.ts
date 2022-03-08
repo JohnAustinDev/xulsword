@@ -110,10 +110,6 @@ class GClass implements GType {
     return process.platform;
   }
 
-  get SystemFonts() {
-    return getSystemFonts();
-  }
-
   setGlobalMenuFromPref(
     ...args: Parameters<GType['setGlobalMenuFromPref']>
   ): ReturnType<GType['setGlobalMenuFromPref']> {
@@ -154,6 +150,12 @@ class GClass implements GType {
     ...args: Parameters<GType['openWindow']>
   ): ReturnType<GType['openWindow']> {
     return openWindow(...args);
+  }
+
+  getSystemFonts(
+    ...args: Parameters<GType['getSystemFonts']>
+  ): ReturnType<GType['getSystemFonts']> {
+    return getSystemFonts(...args);
   }
 }
 

@@ -2,15 +2,14 @@
   position: relative;
 }
 
-.chooseFont #module {
-  margin-inline-end: 10px;
-}
-
 .chooseFont .picker-button {
   margin: 0;
 }
+.chooseFont .picker-button.disabled {
+  background-color: whitesmoke;
+}
 
-.chooserFont .picker-button .button-box {
+.chooseFont .picker-button .button-box {
   padding: 3px;
 }
 

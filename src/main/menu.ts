@@ -518,7 +518,11 @@ export default class MenuBuilder {
             {
               label: this.ts('fontsAndColors.label'),
               click: () => {
-                Commands.openFontsColors(null, this.mainWindow);
+                const panels = G.Prefs.getComplexValue(
+                  'xulsword.panels'
+                ) as XulswordStatePref['panels'];
+                const module = panels.find((m) => m) || G.Tabs[0].module;
+                Commands.openFontsColors(module, this.mainWindow);
               },
             },
           ],

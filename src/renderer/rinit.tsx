@@ -9,6 +9,7 @@ import C from '../constant';
 import { JSON_parse } from '../common';
 import Cache from '../cache';
 import G from './rg';
+import DynamicStyleSheet from './style';
 import { jsdump } from './rutil';
 import { delayHandler } from './libxul/xul';
 
@@ -140,6 +141,7 @@ export default function renderToRoot(
         )
       );
     });
+    DynamicStyleSheet.update(G.Data.read('stylesheetData'));
     return <React.Fragment key={reset}>{children}</React.Fragment>;
   }
 

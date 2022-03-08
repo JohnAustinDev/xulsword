@@ -406,16 +406,15 @@ export function verseKey(
 // If null is returned, fonts are loading, so another call is required.
 export function getSystemFonts() {
   if (!Cache.has('fontList')) {
-    fontList
+    return fontList
       .getFonts()
       .then((fonts: string[]) => {
         Cache.write(fonts, 'fontList');
         return fonts;
       })
       .catch((err: any) => console.log(err));
-    return null;
   }
-  return Cache.read('fontList');
+  return Promise.resolve(Cache.read('fontList'));
 }
 
 export function setMenuFromPrefs(menu: Electron.Menu) {
@@ -488,10 +487,12 @@ export function globalReset(
   BrowserWindow.getAllWindows().forEach((w) => {
     let resetThisWindow = true;
     if (testwin.length) {
-      const { name, type, id } = ElectronWindow[w.id];
       resetThisWindow = testwin.some((tw) => {
-        const { name: n, type: t, id: i } = tw;
-        return name === n || type === t || id === i;
+        return Object.entries(tw).every((entry) => {
+          const p = entry[0] as keyof WindowType;
+          const v = entry[1] as any;
+          return ElectronWindow[w.id][p] === v;
+        });
       });
     }
     if (resetThisWindow) {

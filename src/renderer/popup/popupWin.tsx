@@ -19,6 +19,7 @@ import {
   PopupParentProps,
 } from './popupParentH';
 import Popup from './popup';
+import '../viewport/atext.css';
 
 const defaultProps = {
   ...xulDefaultProps,

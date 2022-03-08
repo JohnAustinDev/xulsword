@@ -16,6 +16,7 @@ const G = {
   },
 } as GTypeR;
 
+const asyncFunc = ['getSystemFonts'];
 const entries = Object.entries(GPublic);
 entries.forEach((entry) => {
   const gPublic = GPublic as any;
@@ -33,6 +34,11 @@ entries.forEach((entry) => {
     });
   } else if (typeof value === 'function') {
     Gx[name] = (...args: any[]) => {
+      if (asyncFunc.includes(name)) {
+        return window.ipc.renderer
+          .invoke('global', name, ...args)
+          .catch((e: any) => console.error(e));
+      }
       return window.ipc.renderer.sendSync('global', name, ...args);
     };
   } else if (typeof value === 'object') {
@@ -53,6 +59,11 @@ entries.forEach((entry) => {
         });
       } else {
         Gx[name][m] = (...args: unknown[]) => {
+          if (asyncFunc.includes(name)) {
+            return window.ipc.renderer
+              .invoke('global', name, m, ...args)
+              .catch((e: any) => console.error(e));
+          }
           return window.ipc.renderer.sendSync('global', name, m, ...args);
         };
       }
