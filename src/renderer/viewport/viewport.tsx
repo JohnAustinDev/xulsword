@@ -1,3 +1,4 @@
+/* eslint-disable react/no-did-update-set-state */
 /* eslint-disable react/forbid-prop-types */
 /* eslint-disable no-continue */
 /* eslint-disable prefer-destructuring */
@@ -124,6 +125,14 @@ class Viewport extends React.Component implements PopupParent {
 
     this.popupParentHandler = popupParentHandlerH.bind(this);
     this.popupHandler = popupHandlerH.bind(this);
+  }
+
+  componentDidUpdate() {
+    const state = this.state as ViewportState;
+    const { popupParent } = state;
+    if (popupParent && !document.body.contains(popupParent)) {
+      this.setState({ popupParent: null });
+    }
   }
 
   componentWillUnmount() {
