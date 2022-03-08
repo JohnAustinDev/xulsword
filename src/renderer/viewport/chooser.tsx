@@ -140,9 +140,7 @@ class Chooser extends React.Component {
       props.selection &&
       C.SupportedBooks[bookGroup].includes(props.selection)
     ) {
-      setTimeout(() => {
-        this.startSlidingUp(null, 0, props.selection);
-      }, 0);
+      this.startSlidingUp(null, 0, props.selection);
     }
   }
 

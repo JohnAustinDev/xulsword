@@ -4,6 +4,7 @@
 import React from 'react';
 import i18n from 'i18next';
 import { ChromePicker as ColorPicker } from 'react-color';
+import Slider from 'react-input-slider';
 import type { ReactElementLike } from 'prop-types';
 import C from '../../constant';
 import { stringHash } from '../../common';
@@ -21,18 +22,16 @@ import Menulist from '../libxul/menulist';
 import Grid, { Columns, Column, Rows, Row } from '../libxul/grid';
 import handlerH, {
   extractModuleStyleState,
-  getStyleFromState,
   startingState,
+  setStateValue as setStateValueH,
 } from './chooseFontH';
 import './chooseFont.css';
 
 import type { ModTypes } from '../../type';
 
 window.ipc.renderer.once('close', () => {
+  G.Data.readAndDelete('stylesheetData');
   G.globalReset();
-  setTimeout(() => {
-    G.Data.readAndDelete('stylesheetData');
-  }, 3000);
 });
 
 const defaultProps = {
@@ -69,6 +68,8 @@ export default class ChooseFontWin extends React.Component {
 
   handler: (e: React.SyntheticEvent) => void;
 
+  setStateValue: (key: string, value?: any) => void;
+
   constructor(props: ChooseFontWinProps) {
     super(props);
 
@@ -80,6 +81,7 @@ export default class ChooseFontWin extends React.Component {
     };
 
     this.handler = handlerH.bind(this);
+    this.setStateValue = setStateValueH.bind(this);
 
     G.getSystemFonts()
       .then((fonts) => {
@@ -92,22 +94,21 @@ export default class ChooseFontWin extends React.Component {
   componentDidUpdate(_prevProps: any, prevState: ChooseFontWinState) {
     const state = this.state as ChooseFontWinState;
     const { module } = state;
-    const style = getStyleFromState(state);
     if (module && stringHash(state.style) !== stringHash(prevState.style)) {
-      G.Data.write('stylesheetData', style);
+      G.Data.write('stylesheetData', state.style);
       G.globalReset('parent');
-      // console.log(style);
+      console.log(state.style);
     }
   }
 
   render() {
     const state = this.state as ChooseFontWinState;
-    const { handler } = this;
+    const { handler, setStateValue } = this;
     const {
       module,
-      restoreDefault,
       makeDefault,
-      restoreAllDefaults,
+      removeModuleUserStyles,
+      removeAllUserStyles,
       coloropen,
       backgroundopen,
       fonts,
@@ -135,11 +136,11 @@ export default class ChooseFontWin extends React.Component {
     const bc = background || nocolor;
 
     const disabled = Boolean(
-      restoreDefault || makeDefault || restoreAllDefaults
+      removeModuleUserStyles || makeDefault || removeAllUserStyles
     );
-    const disableRD = Boolean(makeDefault || restoreAllDefaults);
-    const disableMD = Boolean(restoreDefault || restoreAllDefaults);
-    const disableAD = Boolean(restoreDefault || makeDefault);
+    const disableRD = Boolean(makeDefault || removeAllUserStyles);
+    const disableMD = Boolean(removeModuleUserStyles || removeAllUserStyles);
+    const disableAD = Boolean(removeModuleUserStyles || makeDefault);
 
     return (
       <Vbox>
@@ -195,9 +196,9 @@ export default class ChooseFontWin extends React.Component {
                   })}
                 </Menulist>
                 <Checkbox
-                  id="restoreDefault"
-                  label={i18n.t('restoreDefault.label')}
-                  checked={Boolean(restoreDefault)}
+                  id="removeModuleUserStyles"
+                  label={i18n.t('removeModuleUserStyles.label')}
+                  checked={Boolean(removeModuleUserStyles)}
                   disabled={disableRD}
                   onChange={handler}
                 />
@@ -218,31 +219,14 @@ export default class ChooseFontWin extends React.Component {
                   control="fontSize"
                   value={`${i18n.t('textSize.label')}:`}
                 />
-                <Menulist
-                  id="fontSize"
-                  value={fontSize}
+                <Slider
+                  axis="x"
+                  x={fontSize}
                   disabled={disabled}
-                  onChange={handler}
-                >
-                  <option value="" label={i18n.t('choose.label')} />
-                  <option value="0.5em" label="0.5em" />
-                  <option value="0.7em" label="0.7em" />
-                  <option value="0.8em" label="0.8em" />
-                  <option value="0.85em" label="0.85em" />
-                  <option value="0.9em" label="0.9em" />
-                  <option value="0.925em" label="0.925em" />
-                  <option value="0.95em" label="0.95em" />
-                  <option value="0.975em" label="0.975em" />
-                  <option value="1em" label="1em" />
-                  <option value="1.025em" label="1.025em" />
-                  <option value="1.05em" label="1.05em" />
-                  <option value="1.075em" label="1.075em" />
-                  <option value="1.1em" label="1.1em" />
-                  <option value="1.15em" label="1.15em" />
-                  <option value="1.2em" label="1.2em" />
-                  <option value="1.3em" label="1.3em" />
-                  <option value="1.5em" label="1.5em" />
-                </Menulist>
+                  onChange={(val) => {
+                    setStateValue('fontSize', val.x);
+                  }}
+                />
               </Row>
               <Row>
                 <Hbox />
@@ -251,23 +235,14 @@ export default class ChooseFontWin extends React.Component {
                   value={`${i18n.t('lineHeight.label')}:`}
                   control="lineHeight"
                 />
-                <Menulist
-                  id="lineHeight"
-                  value={lineHeight}
+                <Slider
+                  axis="x"
+                  x={lineHeight}
                   disabled={disabled}
-                  onChange={handler}
-                >
-                  <option value="" label={i18n.t('choose.label')} />
-                  <option value="1.0em" label="1.0em" />
-                  <option value="1.2em" label="1.2em" />
-                  <option value="1.4em" label="1.4em" />
-                  <option value="1.5em" label="1.5em" />
-                  <option value="1.6em" label="1.6em" />
-                  <option value="1.7em" label="1.7em" />
-                  <option value="1.8em" label="1.8em" />
-                  <option value="2.0em" label="2.0em" />
-                  <option value="2.5em" label="2.5em" />
-                </Menulist>
+                  onChange={(val) => {
+                    setStateValue('lineHeight', val.x);
+                  }}
+                />
               </Row>
               <Row>
                 <Hbox />
@@ -334,9 +309,9 @@ export default class ChooseFontWin extends React.Component {
               </Row>
               <Row>
                 <Checkbox
-                  id="restoreAllDefaults"
-                  label={i18n.t('restoreAllDefaults.label')}
-                  checked={Boolean(restoreAllDefaults)}
+                  id="removeAllUserStyles"
+                  label={i18n.t('removeAllUserStyles.label')}
+                  checked={Boolean(removeAllUserStyles)}
                   disabled={disableAD}
                   onChange={handler}
                 />

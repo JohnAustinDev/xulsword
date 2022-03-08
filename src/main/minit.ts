@@ -10,11 +10,12 @@ import C from '../constant';
 import VerseKey from '../versekey';
 import RefParser, { RefParserOptionsType } from '../refparse';
 import { isASCII, JSON_parse } from '../common';
+import Cache from '../cache';
 import Dirs from './modules/dirs';
 import Prefs from './modules/prefs';
 import LibSword from './modules/libsword';
-import Cache from '../cache';
 import nsILocalFile from './components/nsILocalFile';
+import { getFontFaceConfigs } from './config';
 import { ElectronWindow, jsdump } from './mutil';
 
 import type {
@@ -409,8 +410,9 @@ export function getSystemFonts() {
     return fontList
       .getFonts()
       .then((fonts: string[]) => {
-        Cache.write(fonts, 'fontList');
-        return fonts;
+        const allfonts = Object.keys(getFontFaceConfigs()).concat(fonts);
+        Cache.write(allfonts, 'fontList');
+        return allfonts;
       })
       .catch((err: any) => console.log(err));
   }

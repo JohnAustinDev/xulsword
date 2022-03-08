@@ -230,6 +230,8 @@ export function inlineFile(
     jpeg: 'image/jpeg',
     png: 'image/png',
     gif: 'image/gif',
+    ttf: 'font/ttf',
+    otf: 'font/otf',
   } as any;
   const contentType =
     // eslint-disable-next-line no-useless-escape

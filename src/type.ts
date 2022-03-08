@@ -450,7 +450,7 @@ export const GPublic = {
   resolveHtmlPath: func as unknown as (htmlfile: string) => string,
   inlineFile: func as unknown as (
     path: string,
-    encoding: 'base64' | 'utf8'
+    encoding: BufferEncoding
   ) => string,
   setGlobalMenuFromPref: func as unknown as (menu?: Electron.Menu) => void,
   // Caller win is overwritten when setGlobalStateFromPref is invoked by main process.

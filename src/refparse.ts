@@ -197,6 +197,7 @@ export default class RefParser {
         return false;
       });
     }
+    if (r.code) return r;
     if (this.onlyOsisCode) return null;
 
     const inbook = this.#getBookNameParts(book);

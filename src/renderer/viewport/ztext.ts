@@ -35,8 +35,7 @@ export function libswordText(props: AtextProps, n: number): LibSwordResponse {
   if (!module) return r;
 
   const { type } = G.Tab[module];
-  let moduleLocale = G.ModuleConfigs[module].AssociatedLocale;
-  if (moduleLocale === C.NOTFOUND) moduleLocale = '';
+  const moduleLocale = G.ModuleConfigs[module].AssociatedLocale;
 
   // Set SWORD filter options
   const options = {} as { [key in SwordFilterType]: SwordFilterValueType };

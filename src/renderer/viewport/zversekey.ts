@@ -55,7 +55,7 @@ export function getChapterHeading(props: {
   if (!props.location || !props.module) return { textHTML: '', intronotes: '' };
   const { book, chapter } = props.location;
   let l = G.ModuleConfigs[props.module]?.AssociatedLocale;
-  if (!l || l === C.NOTFOUND) l = i18next.language; // otherwise use current program locale
+  if (!l) l = i18next.language; // otherwise use current program locale
   const toptions = { lng: l, ns: 'common/books' };
 
   const intro = getIntroductions(props.module, `${book} ${chapter}`);
@@ -358,7 +358,7 @@ export function getNoteHTML(
 
         // Write cell #4: chapter and verse
         let lov = G.ModuleConfigs[mod].AssociatedLocale;
-        if (lov === C.NOTFOUND) lov = i18next.language;
+        if (!lov) lov = i18next.language;
         const modDirectionEntity =
           G.ModuleConfigs[mod] && G.ModuleConfigs[mod].direction === 'rtl'
             ? '&rlm;'

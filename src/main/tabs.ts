@@ -99,10 +99,8 @@ export default function setViewportTabs(
           const aLocale = moduleConfigs[a.module]?.AssociatedLocale;
           const bLocale = moduleConfigs[b.module]?.AssociatedLocale;
           const lng = Prefs.getCharPref(C.LOCALEPREF);
-          const aPriority =
-            aLocale && aLocale !== C.NOTFOUND ? (aLocale === lng ? 1 : 2) : 3;
-          const bPriority =
-            bLocale && bLocale !== C.NOTFOUND ? (bLocale === lng ? 1 : 2) : 3;
+          const aPriority = aLocale ? (aLocale === lng ? 1 : 2) : 3;
+          const bPriority = bLocale ? (bLocale === lng ? 1 : 2) : 3;
           if (aPriority !== bPriority) return aPriority > bPriority ? 1 : -1;
           // Type and Priority are same, then sort by label's alpha.
           return a.label > b.label ? 1 : -1;

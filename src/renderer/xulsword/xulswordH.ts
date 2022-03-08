@@ -164,6 +164,8 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
               location?.v11n || 'KJV'
             )?.location;
             // Check that the entered location exists.
+            if (newloc && !newloc.chapter) newloc.chapter = 1;
+            if (newloc && !newloc.verse) newloc.verse = 1;
             if (newloc && verseChange(newloc, 0)) {
               const s: Partial<XulswordState> = {
                 location: newloc,

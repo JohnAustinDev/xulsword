@@ -4,13 +4,13 @@ import type { ConfigType } from '../type';
 import { createStyleRule } from '../common';
 
 export type StyleType = {
-  [i in 'locale' | 'module' | 'program']: {
+  [i in 'locale' | 'module' | 'program']?: {
     [key in string | 'default']: Partial<ConfigType>;
   };
 };
 
 function getConfig(
-  styleType?: Partial<StyleType>,
+  styleType?: StyleType,
   type?: keyof StyleType,
   key?: string
 ): Partial<ConfigType> | null {
@@ -66,7 +66,7 @@ class DynamicStyleSheet {
     };
   }
 
-  update(styleConfigs?: Partial<StyleType>) {
+  update(styleConfigs?: StyleType) {
     const { sheet } = this;
     const prefStyleConfigs = G.Prefs.getPrefOrCreate('style', 'complex', {
       locale: {},
@@ -111,7 +111,12 @@ class DynamicStyleSheet {
       );
       Object.entries(G.FontFaceConfigs).forEach((entry) => {
         const [name, src] = entry;
-        const rule = `@font-face {font-family:'${name}'; src:url("'${src}'");}`;
+        let src2 = `'${src}'`;
+        const match = src.match(/^file:\/\/(.*$)/i);
+        if (match) {
+          src2 = G.inlineFile(match[1], 'base64');
+        }
+        const rule = `@font-face {font-family:'${name}'; src:url("${src2}");}`;
         sheet.insertRule(rule, sheet.cssRules.length);
       });
       console.log(sheet);

@@ -42,8 +42,6 @@ function localeConfig(locale: string) {
       lconfig.fontFamily = `'${lconfig.fontFamily}'`;
   }
 
-  // Make the CSS style rules for this locale, which may be appended to CSS stylesheets
-  lconfig.StyleRule = createStyleRule(`.cs-${locale}`, lconfig);
   return lconfig;
 }
 
@@ -66,9 +64,9 @@ export function getProgramConfig() {
   return ret;
 }
 
+// If a module config fontFamily specifies a URL to a font, rather
+// than a fontFamily, then parse the URL. Otherwise return null.
 function fontURL(mod: string) {
-  // if fontFamily specifies a font URL, rather than a fontFamily, then create a
-  // @font-face CSS entry and use it for this module.
   const url = LibSword.getModuleInformation(mod, 'Font').match(
     /(\w+:\/\/[^"')]+)\s*$/
   );
@@ -90,9 +88,11 @@ export function getFontFaceConfigs(): { [i: string]: string } {
       );
     }
 
+    // Look for xulsword local fonts, which may be included with some
+    // XSM modules.
     const ret = {} as { [i: string]: string };
     let fonts = Prefs.getComplexValue('global.fonts') as {
-      [i: string]: string;
+      [i: string]: { fontFamily: string; path: string };
     };
     const fontdir = Dirs.xsFonts.directoryEntries;
     let reread = false;
@@ -105,21 +105,26 @@ export function getFontFaceConfigs(): { [i: string]: string } {
       fonts = {};
       fontdir?.forEach((file) => {
         const font = new nsILocalFile(path.join(Dirs.path.xsFonts, file));
+        let fontFamily = 'dir';
         if (!font.isDirectory()) {
-          const fontFamily = getFontFamily(font.path);
-          if (fontFamily) fonts[file] = fontFamily;
-          else fonts[file] = 'unknown';
-        } else fonts[file] = 'dir';
+          const ff = getFontFamily(font.path);
+          if (ff) {
+            // replace is for BPG Sans Regular, because otherwise it doesn't load in Chrome
+            fontFamily = ff.replace(' GPL&GNU', '');
+          } else fontFamily = 'unknown';
+        }
+        fonts[file] = { fontFamily, path: font.path };
       });
       Prefs.setComplexValue('global.fonts', fonts);
     }
-    Object.entries(fonts).forEach((entry) => {
-      const [file, fontFamily] = entry;
-      ret[fontFamily] = `file://${file}`;
+
+    Object.values(fonts).forEach((info) => {
+      if (info.fontFamily !== 'unknown' && info.fontFamily !== 'dir')
+        ret[info.fontFamily] = `file://${info.path}`;
     });
 
-    // if fontFamily specifies a font URL, rather than a fontFamily, then create a
-    // @font-face CSS entry and use it for this module.
+    // Look for module config Font, which may be a URL or a fontFamily name.
+    // If ther is a URL, add the font to our list of available fonts.
     const mods = LibSword.getModuleList();
     const disable =
       !Prefs.getPrefOrCreate(
@@ -239,8 +244,7 @@ function getModuleConfig(mod: string) {
     if (!/'.*'/.test(moduleConfig.fontFamily))
       moduleConfig.fontFamily = `'${moduleConfig.fontFamily}'`;
   }
-  // Save the CSS style rules for this module, which can be appended to CSS stylesheets
-  moduleConfig.StyleRule = createStyleRule(`.cs-${mod}`, moduleConfig);
+
   return moduleConfig;
 }
 
