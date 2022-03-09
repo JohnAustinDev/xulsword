@@ -189,7 +189,7 @@ export function getTabs(): TabType[] {
         v11n: isVerseKey ? LibSword.getVerseSystem(module) : '',
         dir,
         label,
-        labelClass: `cs-${isASCII(label) ? 'LTR_DEFAULT' : module}`,
+        labelClass: isASCII(label) ? 'cs-LTR_DEFAULT' : `cs-${module}`,
         tabType,
         isVerseKey,
         isRTL: /^rt.?l$/i.test(
@@ -505,13 +505,27 @@ export function globalReset(
   });
 }
 
+// Pushes user preference changes to one or all windows to update their
+// state prefs. Some changes require more than simply updating state prefs,
+// to take full effect, such as those effecting locale or dynamic stylesheet;
+// so with the exception of LOCALEPREF, such preferences MUST be included
+// in the prefs argument or they will not take full effect. Normally only
+// the focused window is allowed to update other windows, otherwise loops
+// will occur. But to update all windows regardless, set unfocusedUpdate
+// to true if you're sure there can be no cycling for the operation.
 export function setGlobalStateFromPref(
   win: BrowserWindow | null,
   prefs?: string | string[],
   unfocusedUpdate = false
 ) {
-  // Normally only the focused window is allowed to update other windows,
-  // otherwise loops may occur.
+  const requiresReset = [C.LOCALEPREF, 'global.fontSize'];
+  const prefsArray = ((prefs && !Array.isArray(prefs) && [prefs]) || prefs) as
+    | string[]
+    | undefined;
+  const doReset = prefsArray
+    ? prefsArray.some((p) => requiresReset.includes(p))
+    : false;
+
   if (unfocusedUpdate || !win || win === BrowserWindow.getFocusedWindow()) {
     const lng = Prefs.getCharPref(C.LOCALEPREF);
     if (lng !== i18next.language) {
@@ -526,6 +540,8 @@ export function setGlobalStateFromPref(
         .catch((err: any) => {
           if (err) throw Error(err);
         });
+    } else if (doReset) {
+      globalReset();
     } else {
       BrowserWindow.getAllWindows().forEach((w) => {
         // Never update the calling window.

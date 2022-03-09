@@ -427,7 +427,7 @@ class Popup extends React.Component {
 
     const refbible = getRefBible(mod, type);
 
-    let cls = `userFontSize cs-program`;
+    let cls = `userFontBase`;
     if (isWindow) cls += ` ownWindow viewport`;
 
     return (
@@ -439,7 +439,7 @@ class Popup extends React.Component {
         ref={npopup}
       >
         <div
-          className="npopupTX cs-Program"
+          className="npopupTX"
           onClick={props.onPopupClick}
           onMouseDown={handler}
           onMouseMove={handler}

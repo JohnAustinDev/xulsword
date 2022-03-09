@@ -564,7 +564,7 @@ class Atext extends React.Component {
     }
 
     // Class list
-    let cls = `text text${panelIndex} columns${columns} userFontSize`;
+    let cls = `text text${panelIndex} columns${columns}`;
     cls += ' prev-disabled next-disabled';
     if (module) cls += ` ${G.Tab[module].tabType}`;
     if (module && G.Tab[module].isRTL) cls += ' rtl-text';
@@ -605,7 +605,7 @@ class Atext extends React.Component {
         </Box>
 
         <Vbox
-          className={`sb cs-${module}`}
+          className="sb"
           style={columns > 1 ? { columnCount: columns } : undefined}
           domref={this.sbref}
           pack="start"

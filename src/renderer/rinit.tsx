@@ -21,6 +21,7 @@ window.ipc.renderer.on('cache-reset', () => Cache.clear);
 i18n.on('initialized', (options) => {
   const arg = JSON_parse(window.shell.process.argv().at(-1));
   const classes = arg?.classes || ['unknown'];
+  classes.push('cs-locale');
   function setHTMLClass(classarray: string[]) {
     const html = document?.getElementsByTagName('html')[0];
     if (!html) return false;

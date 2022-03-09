@@ -12,17 +12,6 @@ body,
 html:not(.dialog) #root {
   background-image: url(../../assets/b2.png);
 }
-/* UI classes which are dynamically updated */
-.userFontSize {
-  font-size: 12px;
-  text-align: start;
-}
-
-/* Same as userFontSize but NOT dynamically updated */
-.fixedFontSize {
-  font-size: 12px;
-  text-align: start;
-}
 
 .RTL {
   direction: rtl;

@@ -269,7 +269,7 @@ function getRefHTML(
     ].join('.')}">`;
     html += verseKey(aText.location).readable();
     html += '</a>';
-    html += `<span class="crtext cs-${module}${
+    html += `<span class="crtext${
       G.ModuleConfigs[module].direction !== G.ProgramConfig.direction
         ? ' opposing-program-direction'
         : ''

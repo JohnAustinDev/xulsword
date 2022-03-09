@@ -427,7 +427,7 @@ class Viewport extends React.Component implements PopupParent {
             })}
           </div>
 
-          <Hbox className="textrow userFontSize" flex="1">
+          <Hbox className="textrow userFontBase" flex="1">
             {popupParent &&
               elemhtml &&
               elemhtml.length &&

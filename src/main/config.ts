@@ -3,7 +3,7 @@
 import path from 'path';
 import i18next from 'i18next';
 import C from '../constant';
-import { createStyleRule, deepClone } from '../common';
+import { deepClone } from '../common';
 import Dirs from './modules/dirs';
 import Prefs from './modules/prefs';
 import Cache from '../cache';
@@ -48,7 +48,7 @@ function localeConfig(locale: string) {
 export function getLocaleConfigs(): { [i: string]: ConfigType } {
   if (!Cache.has('localeConfigs')) {
     const ret = {} as { [i: string]: ConfigType };
-    ret.current = localeConfig(i18next.language);
+    ret.locale = localeConfig(i18next.language);
     Prefs.getComplexValue('global.locales').forEach((l: any) => {
       const [lang] = l;
       ret[lang] = localeConfig(lang);
@@ -60,7 +60,6 @@ export function getLocaleConfigs(): { [i: string]: ConfigType } {
 
 export function getProgramConfig() {
   const ret = deepClone(localeConfig(i18next.language));
-  ret.StyleRule = createStyleRule('.cs-Program', ret);
   return ret;
 }
 

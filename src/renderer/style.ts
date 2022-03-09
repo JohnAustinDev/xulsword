@@ -1,10 +1,10 @@
-import G from './rg';
-
 import type { ConfigType } from '../type';
 import { createStyleRule } from '../common';
+import C from '../constant';
+import G from './rg';
 
 export type StyleType = {
-  [i in 'locale' | 'module' | 'program']?: {
+  [i in 'locale' | 'module']?: {
     [key in string | 'default']: Partial<ConfigType>;
   };
 };
@@ -40,11 +40,11 @@ function insertRule(
 // stylesheet contains these CSS classes in this order:
 //   .cs-<locale> { a class for each installed locale }
 //   .cs-<module> { a class for each installed module }
-//   .cs-Program { the current program locale class }
+//   .cs-locale { the current program locale class }
 //   .cs-LTR_DEFAULT { the default LTR class which can be used for labels etc. }
 // When class rules are created, user preferences, if set, are also added in
 // the following order:
-//   1) User preference defaults for each rule type (module, locale, LTR_DEFAULT, Program)
+//   1) User preference defaults for each rule type (module, locale)
 //   2) Config values
 //   3) User preference values for each instance (of module or locale)
 class DynamicStyleSheet {
@@ -62,12 +62,13 @@ class DynamicStyleSheet {
         ...G.ModuleConfigs,
         default: G.ModuleConfigDefault,
       },
-      program: { default: G.ProgramConfig },
     };
   }
 
   update(styleConfigs?: StyleType) {
     const { sheet } = this;
+
+    // Create CSS classes and rules according to user pref style.
     const prefStyleConfigs = G.Prefs.getPrefOrCreate('style', 'complex', {
       locale: {},
       module: {},
@@ -103,12 +104,11 @@ class DynamicStyleSheet {
           });
         });
       });
-      insertRule(
-        sheet,
-        'cs',
-        'LTR_DEFAULT',
-        getConfig(style, 'module', 'default')
-      );
+
+      // Create LTR_DEFAULT class used for module labels.
+      insertRule(sheet, 'cs', 'LTR_DEFAULT', G.ModuleConfigDefault);
+
+      // Create font-face rules for xulsword's fonts.
       Object.entries(G.FontFaceConfigs).forEach((entry) => {
         const [name, src] = entry;
         let src2 = `'${src}'`;
@@ -119,7 +119,16 @@ class DynamicStyleSheet {
         const rule = `@font-face {font-family:'${name}'; src:url("${src2}");}`;
         sheet.insertRule(rule, sheet.cssRules.length);
       });
-      console.log(sheet);
+
+      // Create userFontBase rule according to global user pref.
+      const x = G.Prefs.getIntPref('global.fontSize'); // from 0 to 4
+      const px = C.UI.Atext.fontSize + C.UI.Atext.fontSizeOptionDelta * (x - 2);
+      sheet.insertRule(
+        `.userFontBase {font-size:${px}px; line-height:${C.UI.Atext.lineHeight}}`,
+        sheet.cssRules.length
+      );
+
+      // console.log(sheet);
     }
   }
 }

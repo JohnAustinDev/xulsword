@@ -469,7 +469,7 @@ function ChapterMenu(props: {
             key={[bkcode, ch].join('.')}
             data-book={bkcode}
             data-chapter={ch}
-            className="chaptermenucell cs-Program"
+            className="chaptermenucell"
             onMouseEnter={dlyhandler}
             onMouseLeave={handler}
           >
