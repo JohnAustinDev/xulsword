@@ -15,6 +15,7 @@ import log from 'electron-log';
 import i18n from 'i18next';
 import { GPublic } from '../type';
 import C from '../constant';
+import Data from './modules/data';
 import MenuBuilder from './menu';
 import { jsdump } from './mutil';
 import G from './mg';
@@ -75,7 +76,7 @@ function handleGlobal(
     } else if (typeof gPublic[name] === 'function') {
       if (name === 'setGlobalStateFromPref') {
         args[0] = win;
-      } else if (name === 'globalReset' && args[0]) args[1] = win;
+      } else if (name === 'globalReset' && args[0] && args[1]) args[2] = win;
       ret = g[name](...args);
     } else if (typeof gPublic[name] === 'object') {
       const m = args.shift();
@@ -110,17 +111,6 @@ ipcMain.on('window', (event: IpcMainEvent, type: string, ...args: any[]) => {
   const win = BrowserWindow.fromWebContents(event.sender);
   if (!win) return;
   switch (type) {
-    case 'add-context-menu': {
-      win.once(
-        'closed',
-        ((dlist: () => void) => {
-          return () => {
-            if (typeof dlist === 'function') dlist();
-          };
-        })(contextMenu(win))
-      );
-      break;
-    }
     case 'close': {
       win.close();
       break;
@@ -329,6 +319,12 @@ app.on('activate', () => {
   // dock icon is clicked and there are no other windows open.
   if (xsWindow.main === null) openMainWindow();
 });
+
+// Didn't see a better way to inject a troublesome contextMenu
+// dependency into openWindow().
+Data.write((win: BrowserWindow) => {
+  return contextMenu(win);
+}, 'contextMenuFunc');
 
 app
   .whenReady()

@@ -17,6 +17,10 @@ import './global-htm.css';
 
 window.ipc.renderer.on('cache-reset', () => Cache.clear);
 
+window.ipc.renderer.on('dynamic-stylesheet-reset', () =>
+  DynamicStyleSheet.update(G.Data.read('stylesheetData'))
+);
+
 // Set window type and language classes of the root html element.
 i18n.on('initialized', (options) => {
   const arg = JSON_parse(window.shell.process.argv().at(-1));
@@ -156,8 +160,6 @@ export default function renderToRoot(
       return true;
     })
     .catch((e: string | Error) => jsdump(e));
-
-  window.ipc.renderer.send('window', 'add-context-menu');
 
   window.ipc.renderer.on('close', () => {
     if (typeof unloadXUL === 'function') unloadXUL();

@@ -241,6 +241,12 @@ export type DirsDirectories = {
   xsModsCommon: string;
 };
 
+export type ResetType =
+  | 'cache-reset'
+  | 'module-reset'
+  | 'component-reset'
+  | 'dynamic-stylesheet-reset';
+
 // Dummy func used as place holder
 const func = () => {};
 
@@ -468,6 +474,7 @@ export const GPublic = {
     params: Electron.BrowserWindowConstructorOptions
   ) => any,
   globalReset: func as unknown as (
+    type?: ResetType,
     window?: Partial<WindowType> | 'parent' | 'self' | 'children',
     caller?: BrowserWindow | null
   ) => void,
@@ -488,7 +495,8 @@ export const GPublic = {
   },
   // Make data available to all processes (main and renderer).
   Data: {
-    write: func as unknown as (name: string, data: any) => void,
+    has: func as unknown as (name: string) => boolean,
+    write: func as unknown as (data: any, name: string) => void,
     read: func as unknown as (name: string) => any,
     readAndDelete: func as unknown as (name: string) => any,
   },

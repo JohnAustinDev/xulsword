@@ -28,6 +28,7 @@ import type {
   LocationVKType,
   XulswordStatePref,
   WindowType,
+  ResetType,
 } from '../type';
 
 const fontList = require('font-list');
@@ -463,10 +464,19 @@ export function setGlobalMenuFromPref(menu?: Electron.Menu) {
   if (m !== null) setMenuFromPrefs(m);
 }
 
-// If window is specified, only window(s) corresponding to the
-// window will be reset (and in that case the main process will
-// not be reset either).
+// If type is not specified then all resets will be called, otherwise only
+// the specified reset will be called. If window is specified, only window(s)
+// corresponding to the window will be reset (and in that case the main process
+// will also not be reset). If window is 'parent' | 'self' | 'children' then
+// caller must also be provided to supply the reference.
+const reset: ResetType[] = [
+  'cache-reset',
+  'module-reset',
+  'component-reset',
+  'dynamic-stylesheet-reset',
+];
 export function globalReset(
+  type?: ResetType,
   window?: Partial<WindowType> | 'parent' | 'self' | 'children',
   caller?: BrowserWindow | null
 ) {
@@ -498,9 +508,11 @@ export function globalReset(
       });
     }
     if (resetThisWindow) {
-      w.webContents.send('cache-reset');
-      w.webContents.send('module-reset');
-      w.webContents.send('component-reset');
+      reset.forEach((r) => {
+        // 'component-reset' also does 'dynamic-stylesheet-reset'
+        if (!type && type === 'dynamic-stylesheet-reset') return;
+        if (!type || type === r) w.webContents.send(r);
+      });
     }
   });
 }

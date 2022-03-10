@@ -256,7 +256,6 @@ const C = {
     Atext: {
       fontSize: 12.7, // px nominal font-size
       fontSizeOptionDelta: 1.3, // px step
-      lineHeight: '1.5em', // nominal line-height
       dictKeyInputDelay: 1000, // ms between keydown and update
       wheelScrollDelay: 300, // ms between UI updates while scrolling
       multiColWheelScrollDelay: 100,

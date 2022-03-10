@@ -4,6 +4,7 @@ import path from 'path';
 import fs from 'fs';
 import { BrowserWindow, ipcMain } from 'electron';
 import { JSON_parse, JSON_stringify } from '../common';
+import Data from './modules/data';
 import Dirs from './modules/dirs';
 import Prefs from './modules/prefs';
 import { ElectronWindow } from './mutil';
@@ -207,5 +208,17 @@ export function openWindow(
       };
     })(win.id)
   );
+  // Didn't see a better way to inject a troublesome contextMenu
+  // dependency into openWindow().
+  if (Data.has('contextMenuFunc')) {
+    win.once(
+      'closed',
+      ((dlist: () => void) => {
+        return () => {
+          if (typeof dlist === 'function') dlist();
+        };
+      })(Data.read('contextMenuFunc')(win))
+    );
+  }
   return win.id;
 }

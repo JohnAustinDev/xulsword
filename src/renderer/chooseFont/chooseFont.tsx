@@ -31,7 +31,7 @@ import type { ModTypes } from '../../type';
 
 window.ipc.renderer.once('close', () => {
   G.Data.readAndDelete('stylesheetData');
-  G.globalReset();
+  G.globalReset('dynamic-stylesheet-reset');
 });
 
 const defaultProps = {
@@ -95,9 +95,9 @@ export default class ChooseFontWin extends React.Component {
     const state = this.state as ChooseFontWinState;
     const { module } = state;
     if (module && stringHash(state.style) !== stringHash(prevState.style)) {
-      G.Data.write('stylesheetData', state.style);
-      G.globalReset('parent');
-      console.log(state.style);
+      G.Data.write(state.style, 'stylesheetData');
+      G.globalReset('dynamic-stylesheet-reset', 'parent');
+      // console.log(state.style);
     }
   }
 

@@ -9,17 +9,34 @@ export type StyleType = {
   };
 };
 
+// This default style fills missing config CSS entries.
+const defaultStyle: Partial<StyleType> = {
+  module: {
+    default: {
+      lineHeight: '1.4', // must be the same value as chooseFont slider's 50% value
+    },
+  },
+};
+
 function getConfig(
   styleType?: StyleType,
   type?: keyof StyleType,
   key?: string
 ): Partial<ConfigType> | null {
-  if (!styleType || !type || !key) return null;
-  const t0 = type in styleType ? styleType[type] : null;
-  if (t0) {
-    return key in t0 ? t0[key] : null;
+  let config: Partial<ConfigType> | null = null;
+  if (styleType && type && key) {
+    const type0 = styleType[type] || null;
+    if (type0 && key in type0) config = type0[key];
+    const typeDef = defaultStyle[type];
+    const configDef = typeDef && typeDef[key];
+    if (configDef) {
+      config = {
+        ...configDef,
+        ...config,
+      };
+    }
   }
-  return null;
+  return config;
 }
 
 function insertRule(
@@ -124,7 +141,7 @@ class DynamicStyleSheet {
       const x = G.Prefs.getIntPref('global.fontSize'); // from 0 to 4
       const px = C.UI.Atext.fontSize + C.UI.Atext.fontSizeOptionDelta * (x - 2);
       sheet.insertRule(
-        `.userFontBase {font-size:${px}px; line-height:${C.UI.Atext.lineHeight}}`,
+        `.userFontBase {font-size:${px}px;}`,
         sheet.cssRules.length
       );
 

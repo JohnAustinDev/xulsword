@@ -1,13 +1,19 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { GType } from '../../type';
 
-// Store temporary renderer data for use in the main process, and vice
-// versa. NOTE: Unless data needs to be shared between processes, it
-// is better to use the faster Cache module.
+// Store anything transferable for sharing between any processes.
+// NOTE: Don't use this in renderer processes unless data needs
+// to be shared between processes, otherwise it is better to use
+// the Cache module, which never uses IPC.
 const Data: GType['Data'] & { datastore: { [i: string]: any } } = {
   datastore: {},
 
-  write(name: string, data: any) {
+  has(name: string) {
+    return name in this.datastore;
+  },
+
+  // Argument order matches Cache, which may take multiple name args
+  write(data: any, name: string) {
     this.datastore[name] = data;
   },
 

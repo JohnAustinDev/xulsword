@@ -31,7 +31,7 @@ export const startingState = {
 
 const sliders = {
   fontSize: { min: 0.8, max: 1.2, steps: 16, unit: 'em' },
-  lineHeight: { min: 1.0, max: 1.75, steps: 16, unit: 'em' },
+  lineHeight: { min: 1, max: 1.8, steps: 16, unit: '' },
 } as const;
 
 // Return new CSS states that correspond to a particular module's
