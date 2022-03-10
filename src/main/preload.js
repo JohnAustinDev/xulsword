@@ -22,7 +22,7 @@ contextBridge.exposeInMainWorld('shell', {
 
 const validChannels = [
   'global', // to/from main for use by the G object
-  'window', // to main to perform window operations (move-to-back, close, etc.)
+  'did-finish-render', // to main when window has finished rendering
   'close', // from main upon window close
   'resize', // from main upon window resize
   'update-state-from-pref', // from main when state-prefs should be updated

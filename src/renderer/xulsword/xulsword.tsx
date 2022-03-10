@@ -543,6 +543,6 @@ Xulsword.propTypes = propTypes;
 renderToRoot(<Xulsword id="xulsword" />, () => {
   jsdump('Loading Xulsword!');
   setTimeout(() => {
-    window.ipc.renderer.send('window', 'move-to-back');
+    G.Window.moveToBack();
   }, 1);
 });

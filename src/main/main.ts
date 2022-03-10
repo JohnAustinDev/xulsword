@@ -107,41 +107,20 @@ ipcMain.handle(
   }
 );
 
-ipcMain.on('window', (event: IpcMainEvent, type: string, ...args: any[]) => {
+ipcMain.on('did-finish-render', (event: IpcMainEvent) => {
   const win = BrowserWindow.fromWebContents(event.sender);
   if (!win) return;
-  switch (type) {
-    case 'close': {
-      win.close();
-      break;
-    }
-    case 'title': {
-      win.setTitle(args[0]);
-      break;
-    }
-    case 'did-finish-render': {
-      if (win === xsWindow.main && process.env.START_MINIMIZED) {
-        win.minimize();
-      } else {
-        win.show();
-        win.focus();
-      }
-      if (win === xsWindow.main && xsWindow.splash) {
-        xsWindow.splash.close();
-      }
-      if (process.env.NODE_ENV === 'development')
-        win.webContents.openDevTools();
-      break;
-    }
-    case 'move-to-back': {
-      BrowserWindow.getAllWindows().forEach((w) => {
-        if (w !== win) w.moveTop();
-      });
-      break;
-    }
-    default:
-      throw Error(`Unknown window ipcMain event: '${type}'`);
+
+  if (win === xsWindow.main && process.env.START_MINIMIZED) {
+    win.minimize();
+  } else {
+    win.show();
+    win.focus();
   }
+  if (win === xsWindow.main && xsWindow.splash) {
+    xsWindow.splash.close();
+  }
+  if (process.env.NODE_ENV === 'development') win.webContents.openDevTools();
 });
 
 const openMainWindow = () => {
@@ -172,7 +151,7 @@ const openMainWindow = () => {
   }
 
   G.Prefs.setComplexValue(`Windows`, undefined);
-  const mainWin = BrowserWindow.fromId(G.openWindow('xulsword', options));
+  const mainWin = BrowserWindow.fromId(G.Window.open('xulsword', options));
 
   if (!mainWin) {
     return null;
@@ -202,7 +181,7 @@ const openMainWindow = () => {
   });
 
   persistedWindows.forEach((winid) => {
-    G.openWindow(winid.type, winid.options);
+    G.Window.open(winid.type, winid.options);
   });
 
   return mainWin;
@@ -268,7 +247,7 @@ const start = async () => {
 
   if (!(C.DEVELSPLASH === 1 && isDevelopment)) {
     xsWindow.splash = BrowserWindow.fromId(
-      G.openDialog(
+      G.Window.openDialog(
         'splash',
         isDevelopment && C.DEVELSPLASH === 2
           ? {
@@ -321,7 +300,7 @@ app.on('activate', () => {
 });
 
 // Didn't see a better way to inject a troublesome contextMenu
-// dependency into openWindow().
+// dependency into Window.open().
 Data.write((win: BrowserWindow) => {
   return contextMenu(win);
 }, 'contextMenuFunc');

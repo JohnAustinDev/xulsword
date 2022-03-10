@@ -265,7 +265,7 @@ export default function handler(
                 height: Math.round(b.height),
               },
             };
-            G.openWindow('viewportWin', options);
+            G.Window.open('viewportWin', options);
           }
           break;
         }

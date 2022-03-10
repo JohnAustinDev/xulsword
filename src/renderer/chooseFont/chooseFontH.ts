@@ -156,12 +156,12 @@ export default function handler(this: ChooseFontWin, e: React.SyntheticEvent) {
     case 'click': {
       switch (currentTarget.id) {
         case 'cancel': {
-          window.ipc.renderer.send('window', 'close');
+          G.Window.close();
           break;
         }
         case 'ok': {
           G.Prefs.setComplexValue('style', getStyleFromState(state));
-          window.ipc.renderer.send('window', 'close');
+          G.Window.close();
           break;
         }
         case 'background':

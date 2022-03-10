@@ -16,7 +16,7 @@ import Prefs from './modules/prefs';
 import LibSword from './modules/libsword';
 import nsILocalFile from './components/nsILocalFile';
 import { getFontFaceConfigs } from './config';
-import { ElectronWindow, jsdump } from './mutil';
+import { ElectronWindow, jsdump, getBrowserWindows } from './mutil';
 
 import type {
   TabType,
@@ -27,7 +27,7 @@ import type {
   BookGroupType,
   LocationVKType,
   XulswordStatePref,
-  WindowType,
+  WindowDescriptorType,
   ResetType,
 } from '../type';
 
@@ -477,43 +477,16 @@ const reset: ResetType[] = [
 ];
 export function globalReset(
   type?: ResetType,
-  window?: Partial<WindowType> | 'parent' | 'self' | 'children',
+  window?: Partial<WindowDescriptorType> | 'parent' | 'self' | 'children',
   caller?: BrowserWindow | null
 ) {
-  const testwin: Partial<WindowType>[] = [];
   if (!window) Cache.clear();
-  else if (window === 'parent') {
-    if (caller) testwin.push(ElectronWindow[caller.getParentWindow().id]);
-  } else if (window === 'self') {
-    if (caller) testwin.push(ElectronWindow[caller.id]);
-  } else if (window === 'children') {
-    if (caller)
-      testwin.concat(
-        caller.getChildWindows().map((w) => {
-          return ElectronWindow[w.id];
-        })
-      );
-  } else {
-    testwin.push(window);
-  }
-  BrowserWindow.getAllWindows().forEach((w) => {
-    let resetThisWindow = true;
-    if (testwin.length) {
-      resetThisWindow = testwin.some((tw) => {
-        return Object.entries(tw).every((entry) => {
-          const p = entry[0] as keyof WindowType;
-          const v = entry[1] as any;
-          return ElectronWindow[w.id][p] === v;
-        });
-      });
-    }
-    if (resetThisWindow) {
-      reset.forEach((r) => {
-        // 'component-reset' also does 'dynamic-stylesheet-reset'
-        if (!type && type === 'dynamic-stylesheet-reset') return;
-        if (!type || type === r) w.webContents.send(r);
-      });
-    }
+  getBrowserWindows(window, caller).forEach((win) => {
+    reset.forEach((r) => {
+      // 'component-reset' also does 'dynamic-stylesheet-reset'
+      if (!type && type === 'dynamic-stylesheet-reset') return;
+      if (!type || type === r) win.webContents.send(r);
+    });
   });
 }
 

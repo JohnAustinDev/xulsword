@@ -11,12 +11,19 @@ declare global {
   }
 }
 
-export type WindowType = {
+export type WindowDescriptorType = {
   id: number;
   name: string;
   type: string;
   options: Electron.BrowserWindowConstructorOptions;
 };
+
+export type WindowArgType =
+  | BrowserWindow
+  | Partial<WindowDescriptorType>
+  | 'parent'
+  | 'self'
+  | 'children';
 
 // Default values for these keys must be set in the default
 // JSON Pref file or an error will be thrown.
@@ -465,17 +472,9 @@ export const GPublic = {
     prefs?: string | string[],
     unfocusedUpdate?: boolean
   ) => void,
-  openWindow: func as unknown as (
-    type: string,
-    params: Electron.BrowserWindowConstructorOptions
-  ) => number,
-  openDialog: func as unknown as (
-    type: string,
-    params: Electron.BrowserWindowConstructorOptions
-  ) => any,
   globalReset: func as unknown as (
     type?: ResetType,
-    window?: Partial<WindowType> | 'parent' | 'self' | 'children',
+    window?: WindowArgType,
     caller?: BrowserWindow | null
   ) => void,
   getSystemFonts: func as unknown as () => Promise<string[]>,
@@ -499,6 +498,27 @@ export const GPublic = {
     write: func as unknown as (data: any, name: string) => void,
     read: func as unknown as (name: string) => any,
     readAndDelete: func as unknown as (name: string) => any,
+  },
+  Window: {
+    open: func as unknown as (
+      type: string,
+      params: Electron.BrowserWindowConstructorOptions
+    ) => number,
+    openDialog: func as unknown as (
+      type: string,
+      params: Electron.BrowserWindowConstructorOptions
+    ) => number,
+    setContentSize: func as unknown as (
+      width: number,
+      height: number,
+      window?: WindowArgType
+    ) => void,
+    setTitle: func as unknown as (
+      title: string,
+      window?: WindowArgType
+    ) => void,
+    moveToBack: func as unknown as (window?: WindowArgType) => void,
+    close: func as unknown as (window?: WindowArgType) => void,
   },
 };
 

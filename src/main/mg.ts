@@ -17,7 +17,7 @@ import {
   getFontFaceConfigs,
   getFeatureModules,
 } from './config';
-import { openDialog, openWindow, resolveHtmlPath } from './window';
+import Window, { resolveHtmlPath } from './window';
 import {
   setGlobalStateFromPref,
   getBooks,
@@ -49,6 +49,8 @@ class GClass implements GType {
 
   Data;
 
+  Window;
+
   constructor() {
     this.LibSword = LibSword;
     this.Prefs = Prefs;
@@ -56,6 +58,7 @@ class GClass implements GType {
     this.Commands = Commands;
     this.Shell = shell;
     this.Data = Data;
+    this.Window = Window;
   }
 
   get Books() {
@@ -138,18 +141,6 @@ class GClass implements GType {
     ...args: Parameters<GType['setGlobalStateFromPref']>
   ): ReturnType<GType['setGlobalStateFromPref']> {
     return setGlobalStateFromPref(...args);
-  }
-
-  openDialog(
-    ...args: Parameters<GType['openDialog']>
-  ): ReturnType<GType['openDialog']> {
-    return openDialog(...args);
-  }
-
-  openWindow(
-    ...args: Parameters<GType['openWindow']>
-  ): ReturnType<GType['openWindow']> {
-    return openWindow(...args);
   }
 
   getSystemFonts(

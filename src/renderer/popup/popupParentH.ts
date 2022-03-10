@@ -219,8 +219,7 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
           break;
         }
         case 'popupCloseLink': {
-          if (parent !== popupParent)
-            window.ipc.renderer.send('window', 'close');
+          if (parent !== popupParent) G.Window.close();
           else {
             const s: Partial<PopupParentState> = { popupParent: null };
             this.setState(s);
@@ -271,7 +270,7 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
                 height: Math.round(b.height),
               },
             };
-            G.openWindow('popupWin', options);
+            G.Window.open('popupWin', options);
             const s: Partial<PopupParentState> = { popupParent: null };
             this.setState(s);
           }

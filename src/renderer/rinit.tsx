@@ -21,10 +21,11 @@ window.ipc.renderer.on('dynamic-stylesheet-reset', () =>
   DynamicStyleSheet.update(G.Data.read('stylesheetData'))
 );
 
+const winArgs = JSON_parse(window.shell.process.argv().at(-1));
+
 // Set window type and language classes of the root html element.
 i18n.on('initialized', (options) => {
-  const arg = JSON_parse(window.shell.process.argv().at(-1));
-  const classes = arg?.classes || ['unknown'];
+  const classes = winArgs?.classes || ['unknown'];
   classes.push('cs-locale');
   function setHTMLClass(classarray: string[]) {
     const html = document?.getElementsByTagName('html')[0];
@@ -151,12 +152,19 @@ export default function renderToRoot(
   }
 
   i18nInit([namespace])
-    .then(() =>
-      render(<Reset>{component}</Reset>, document.getElementById('root'))
-    )
+    .then(() => {
+      return render(
+        <Reset>{component}</Reset>,
+        document.getElementById('root')
+      );
+    })
     .then(() => {
       if (typeof loadedXUL === 'function') loadedXUL();
-      window.ipc.renderer.send('window', 'did-finish-render');
+      if (winArgs.type === 'dialog') {
+        const b = document.getElementById('root')?.getBoundingClientRect();
+        if (b) G.Window.setContentSize(b.width, b.height);
+      }
+      window.ipc.renderer.send('did-finish-render');
       return true;
     })
     .catch((e: string | Error) => jsdump(e));

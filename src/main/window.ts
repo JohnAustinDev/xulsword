@@ -7,7 +7,9 @@ import { JSON_parse, JSON_stringify } from '../common';
 import Data from './modules/data';
 import Dirs from './modules/dirs';
 import Prefs from './modules/prefs';
-import { ElectronWindow } from './mutil';
+import { ElectronWindow, getBrowserWindows } from './mutil';
+
+import type { WindowArgType, GType } from '../type';
 
 const i18nBackendRenderer = require('i18next-electron-fs-backend');
 
@@ -53,6 +55,8 @@ function windowOptions(name: string, type: string, options: any) {
     'classes' in args && Array.isArray(args.classes)
       ? args.classes.concat([name, type])
       : [name, type];
+  args.name = name;
+  args.type = type;
   options.webPreferences.additionalArguments[0] = JSON_stringify(args);
   // Dialog windows have these defaults (while regular windows just
   // have Electron defaults).
@@ -62,6 +66,7 @@ function windowOptions(name: string, type: string, options: any) {
       resizable: false,
       fullscreenable: false,
       skipTaskbar: true,
+      useContentSize: true,
     }).forEach((entry) => {
       const [pro, val] = entry;
       if (!(pro in options)) {
@@ -116,109 +121,157 @@ function windowBounds(winx?: BrowserWindow) {
   };
 }
 
-// Dialog windows are not saved in user prefs and also get different
-// default options from windowOptions() than regular windows.
-export function openDialog(
-  name: string,
-  options: Electron.BrowserWindowConstructorOptions
-): number {
-  const { show } = options;
-  windowOptions(name, 'dialog', options);
-  const win = new BrowserWindow(options);
-  ElectronWindow[win.id] = { id: win.id, name, type: 'dialog', options };
-  win.loadURL(resolveHtmlPath(`${name}.html`));
-  win.removeMenu();
-  if (show) {
-    win.once('ready-to-show', () => {
-      win.show();
-      win.focus();
-    });
-  }
-  win.on('resize', () => {
-    const size = win.getSize();
-    win.webContents.send('resize', size);
-  });
-  windowInitI18n(win);
-  return win.id;
-}
+type WindowPrivate = {
+  browserWindow: BrowserWindow | null;
+};
 
-export function openWindow(
-  name: string,
-  options: Electron.BrowserWindowConstructorOptions
-): number {
-  const { show } = options;
-  windowOptions(name, 'window', options);
-  // Set bounds for viewport and popup type windows
-  if (name === 'viewportWin' || name === 'popupWin') {
-    let adj = {
-      h: 50,
-      t: 35,
-      w: 30,
-    };
-    if (name === 'popupWin') {
-      adj = {
-        h: 0,
-        t: 26,
-        w: 0,
+const Window: GType['Window'] & WindowPrivate = {
+  browserWindow: null,
+
+  open(
+    name: string,
+    options: Electron.BrowserWindowConstructorOptions
+  ): number {
+    const { show } = options;
+    windowOptions(name, 'window', options);
+    // Set bounds for viewport and popup type windows
+    if (name === 'viewportWin' || name === 'popupWin') {
+      // useContentSize is supposed to use width & height to set the
+      // webpage size rather than window size. If it did that, then
+      // adj would not be necessary. But useContentSize does nothing
+      // in Linux. Maybe it does on other opsys??
+      // options.useContentSize = true;
+      let adj = {
+        h: 50,
+        t: 35,
+        w: 30,
       };
+      if (name === 'popupWin') {
+        adj = {
+          h: 0,
+          t: 26,
+          w: 0,
+        };
+      }
+      const ops = options as any;
+      const xs = windowBounds();
+      const eb = ops?.openWithBounds;
+      if (xs && eb) {
+        options.width = eb.width + adj.w;
+        options.height = eb.height + adj.h;
+        options.x = xs.x + eb.x - adj.w / 2;
+        options.y = xs.y + eb.y - adj.h + adj.t;
+      }
+      if (ops?.openWithBounds) delete ops.openWithBounds;
     }
-    const ops = options as any;
-    const xs = windowBounds();
-    const eb = ops?.openWithBounds;
-    if (xs && eb) {
-      options.width = eb.width + adj.w;
-      options.height = eb.height + adj.h;
-      options.x = xs.x + eb.x - adj.w / 2;
-      options.y = xs.y + eb.y - adj.h + adj.t;
+    const win = new BrowserWindow(options);
+    ElectronWindow[win.id] = { id: win.id, name, type: 'window', options };
+    win.loadURL(resolveHtmlPath(`${name}.html`));
+    // win.webContents.openDevTools();
+    Prefs.setComplexValue(`Windows.w${win.id}`, { type: name, options });
+    windowInitI18n(win);
+    if (name === 'viewportWin' || name === 'popupWin') win.removeMenu();
+    if (show) {
+      win.once('ready-to-show', () => {
+        win.show();
+        win.focus();
+      });
     }
-    if (ops?.openWithBounds) delete ops.openWithBounds;
-  }
-  const win = new BrowserWindow(options);
-  ElectronWindow[win.id] = { id: win.id, name, type: 'window', options };
-  win.loadURL(resolveHtmlPath(`${name}.html`));
-  // win.webContents.openDevTools();
-  Prefs.setComplexValue(`Windows.w${win.id}`, { type: name, options });
-  windowInitI18n(win);
-  if (name === 'viewportWin' || name === 'popupWin') win.removeMenu();
-  if (show) {
-    win.once('ready-to-show', () => {
-      win.show();
-      win.focus();
+    win.on('resize', () => {
+      const args = Prefs.getComplexValue(`Windows.w${win.id}`);
+      const b = windowBounds(win);
+      args.options = { ...args.options, ...b };
+      Prefs.setComplexValue(`Windows.w${win.id}`, args);
+      const size = win.getSize();
+      win.webContents.send('resize', size);
     });
-  }
-  win.on('resize', () => {
-    const args = Prefs.getComplexValue(`Windows.w${win.id}`);
-    const b = windowBounds(win);
-    args.options = { ...args.options, ...b };
-    Prefs.setComplexValue(`Windows.w${win.id}`, args);
-    const size = win.getSize();
-    win.webContents.send('resize', size);
-  });
-  win.on('move', () => {
-    const args = Prefs.getComplexValue(`Windows.w${win.id}`);
-    const b = windowBounds(win);
-    args.options = { ...args.options, ...b };
-    Prefs.setComplexValue(`Windows.w${win.id}`, args);
-  });
-  win.once(
-    'closed',
-    ((id: number) => {
-      return () => {
-        Prefs.setComplexValue(`Windows.w${id}`, undefined);
-      };
-    })(win.id)
-  );
-  // Didn't see a better way to inject a troublesome contextMenu
-  // dependency into openWindow().
-  if (Data.has('contextMenuFunc')) {
+    win.on('move', () => {
+      const args = Prefs.getComplexValue(`Windows.w${win.id}`);
+      const b = windowBounds(win);
+      args.options = { ...args.options, ...b };
+      Prefs.setComplexValue(`Windows.w${win.id}`, args);
+    });
     win.once(
       'closed',
-      ((dlist: () => void) => {
+      ((id: number) => {
         return () => {
-          if (typeof dlist === 'function') dlist();
+          Prefs.setComplexValue(`Windows.w${id}`, undefined);
         };
-      })(Data.read('contextMenuFunc')(win))
+      })(win.id)
     );
-  }
-  return win.id;
-}
+    if (Data.has('contextMenuFunc')) {
+      win.once(
+        'closed',
+        ((dlist: () => void) => {
+          return () => {
+            if (typeof dlist === 'function') dlist();
+          };
+        })(Data.read('contextMenuFunc')(win))
+      );
+    }
+    return win.id;
+  },
+
+  // Dialog windows are not saved in user prefs and also get different
+  // default options from windowOptions() than regular windows.
+  openDialog(
+    name: string,
+    options: Electron.BrowserWindowConstructorOptions
+  ): number {
+    const { show } = options;
+    windowOptions(name, 'dialog', options);
+    const win = new BrowserWindow(options);
+    ElectronWindow[win.id] = { id: win.id, name, type: 'dialog', options };
+    win.loadURL(resolveHtmlPath(`${name}.html`));
+    win.removeMenu();
+    if (show) {
+      win.once('ready-to-show', () => {
+        win.show();
+        win.focus();
+      });
+    }
+    win.on('resize', () => {
+      const size = win.getSize();
+      win.webContents.send('resize', size);
+    });
+    windowInitI18n(win);
+    if (Data.has('contextMenuFunc')) {
+      win.once(
+        'closed',
+        ((dlist: () => void) => {
+          return () => {
+            if (typeof dlist === 'function') dlist();
+          };
+        })(Data.read('contextMenuFunc')(win))
+      );
+    }
+    return win.id;
+  },
+
+  setContentSize(width: number, height: number, window?: WindowArgType): void {
+    getBrowserWindows(window, this.browserWindow).forEach((win) => {
+      win.setContentSize(Math.round(width), Math.round(height));
+    });
+  },
+
+  close(window?: WindowArgType): void {
+    getBrowserWindows(window, this.browserWindow).forEach((win) => {
+      win.close();
+    });
+  },
+
+  moveToBack(window?: WindowArgType): void {
+    const back = getBrowserWindows(window, this.browserWindow);
+    BrowserWindow.getAllWindows().forEach((w) => {
+      if (!back.includes(w)) w.moveTop();
+    });
+  },
+
+  setTitle(title: string, window?: WindowArgType): void {
+    getBrowserWindows(window, this.browserWindow).forEach((win) => {
+      win.setTitle(title);
+    });
+  },
+};
+
+export default Window;

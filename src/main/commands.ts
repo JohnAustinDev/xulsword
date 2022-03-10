@@ -6,7 +6,7 @@ import C from '../constant';
 import { JSON_stringify } from '../common';
 import { verseKey, getTab, setGlobalStateFromPref, getTabs } from './minit';
 import Prefs from './modules/prefs';
-import { openDialog } from './window';
+import Window from './window';
 
 import type {
   GType,
@@ -99,8 +99,6 @@ const Commands: GType['Commands'] & CommandsPrivate = {
     const options = {
       title: i18n.t('fontsAndColors.label'),
       parent: window || this.browserWindow || undefined,
-      width: 650,
-      height: 320,
       webPreferences: {
         additionalArguments: [
           JSON_stringify({
@@ -111,7 +109,7 @@ const Commands: GType['Commands'] & CommandsPrivate = {
         ],
       },
     };
-    openDialog('chooseFont', options);
+    Window.openDialog('chooseFont', options);
   },
 
   openBookmarksManager() {

@@ -163,7 +163,7 @@ class Popup extends React.Component {
           }
         }
       }
-      if (title) window.ipc.renderer.send('window', 'title', title);
+      if (title) G.Window.setTitle(title);
     }
   }
 
