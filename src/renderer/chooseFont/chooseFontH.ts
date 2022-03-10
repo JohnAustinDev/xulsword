@@ -160,7 +160,7 @@ export default function handler(this: ChooseFontWin, e: React.SyntheticEvent) {
           break;
         }
         case 'ok': {
-          G.Prefs.setComplexValue('style', state.style);
+          G.Prefs.setComplexValue('style', getStyleFromState(state));
           window.ipc.renderer.send('window', 'close');
           break;
         }
