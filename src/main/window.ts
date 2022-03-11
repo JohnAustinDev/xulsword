@@ -3,13 +3,14 @@
 import path from 'path';
 import fs from 'fs';
 import { BrowserWindow, ipcMain } from 'electron';
-import { deepClone, JSON_parse, JSON_stringify } from '../common';
+import { JSON_parse, JSON_stringify } from '../common';
+import Cache from '../cache';
 import Data from './modules/data';
 import Dirs from './modules/dirs';
 import Prefs from './modules/prefs';
 import { ElectronWindow, getBrowserWindows } from './mutil';
 
-import type { WindowArgType, GType } from '../type';
+import type { WindowArgType, GType, ResetType } from '../type';
 
 const i18nBackendRenderer = require('i18next-electron-fs-backend');
 
@@ -26,6 +27,10 @@ if (process.env.NODE_ENV === 'development') {
   resolveHtmlPath = (htmlFileName: string) => {
     return `file://${path.resolve(__dirname, '../renderer/', htmlFileName)}`;
   };
+}
+
+export function resetMain() {
+  Cache.clear();
 }
 
 function xulswordWindow(): BrowserWindow | null {
@@ -244,6 +249,32 @@ const Window: GType['Window'] & WindowPrivate = {
   close(window?: WindowArgType): void {
     getBrowserWindows(window, this.browserWindow).forEach((win) => {
       win.close();
+    });
+  },
+
+  // If ResetType is not specified then all resets will be called, otherwise only
+  // the specified reset will be called. If window is specified, only matching
+  // window(s) will be reset, otherwise all will be reset. If neither is specified
+  // then all resets will be called on all windows plus the main process in addition.
+  reset(type?: ResetType, window?: WindowArgType) {
+    const windows = window
+      ? getBrowserWindows(window, this.browserWindow)
+      : getBrowserWindows('all');
+    if (!type && !window) resetMain();
+    windows.forEach((win) => {
+      if (win) {
+        const resets: ResetType[] = [
+          'cache-reset',
+          'module-reset',
+          'component-reset',
+          'dynamic-stylesheet-reset',
+        ];
+        resets.forEach((r) => {
+          // 'component-reset' also does 'dynamic-stylesheet-reset'
+          if (!type && r === 'dynamic-stylesheet-reset') return;
+          if (!type || type === r) win.webContents.send(r);
+        });
+      }
     });
   },
 

@@ -16,7 +16,8 @@ import Prefs from './modules/prefs';
 import LibSword from './modules/libsword';
 import nsILocalFile from './components/nsILocalFile';
 import { getFontFaceConfigs } from './config';
-import { ElectronWindow, jsdump, getBrowserWindows } from './mutil';
+import { jsdump } from './mutil';
+import Window, { resetMain } from './window';
 
 import type {
   TabType,
@@ -27,8 +28,6 @@ import type {
   BookGroupType,
   LocationVKType,
   XulswordStatePref,
-  WindowDescriptorType,
-  ResetType,
 } from '../type';
 
 const fontList = require('font-list');
@@ -464,32 +463,6 @@ export function setGlobalMenuFromPref(menu?: Electron.Menu) {
   if (m !== null) setMenuFromPrefs(m);
 }
 
-// If type is not specified then all resets will be called, otherwise only
-// the specified reset will be called. If window is specified, only window(s)
-// corresponding to the window will be reset (and in that case the main process
-// will also not be reset). If window is 'parent' | 'self' | 'children' then
-// caller must also be provided to supply the reference.
-const reset: ResetType[] = [
-  'cache-reset',
-  'module-reset',
-  'component-reset',
-  'dynamic-stylesheet-reset',
-];
-export function globalReset(
-  type?: ResetType,
-  window?: Partial<WindowDescriptorType> | 'parent' | 'self' | 'children',
-  caller?: BrowserWindow | null
-) {
-  if (!window) Cache.clear();
-  getBrowserWindows(window, caller).forEach((win) => {
-    reset.forEach((r) => {
-      // 'component-reset' also does 'dynamic-stylesheet-reset'
-      if (!type && type === 'dynamic-stylesheet-reset') return;
-      if (!type || type === r) win.webContents.send(r);
-    });
-  });
-}
-
 // Pushes user preference changes to one or all windows to update their
 // state prefs. Some changes require more than simply updating state prefs,
 // to take full effect, such as those effecting locale or dynamic stylesheet;
@@ -519,17 +492,19 @@ export function setGlobalStateFromPref(
         .then(() => i18next.changeLanguage(lng))
         .then(() => {
           // this does component-reset which updates state from pref
-          globalReset();
+          resetMain();
+          Window.reset();
           return true;
         })
         .catch((err: any) => {
           if (err) throw Error(err);
         });
     } else if (doReset) {
-      globalReset();
+      resetMain();
+      Window.reset();
     } else {
       BrowserWindow.getAllWindows().forEach((w) => {
-        // Never update the calling window.
+        // No need to update the calling window.
         if (!win || w !== win)
           w.webContents.send('update-state-from-pref', prefs);
       });

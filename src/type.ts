@@ -21,6 +21,7 @@ export type WindowDescriptorType = {
 export type WindowArgType =
   | BrowserWindow
   | Partial<WindowDescriptorType>
+  | 'all'
   | 'parent'
   | 'self'
   | 'children';
@@ -472,11 +473,7 @@ export const GPublic = {
     prefs?: string | string[],
     unfocusedUpdate?: boolean
   ) => void,
-  globalReset: func as unknown as (
-    type?: ResetType,
-    window?: WindowArgType,
-    caller?: BrowserWindow | null
-  ) => void,
+  resetMain: func as unknown as () => void,
   getSystemFonts: func as unknown as () => Promise<string[]>,
 
   // GLOBAL OBJECTS
@@ -515,6 +512,10 @@ export const GPublic = {
     ) => void,
     setTitle: func as unknown as (
       title: string,
+      window?: WindowArgType
+    ) => void,
+    reset: func as unknown as (
+      type?: ResetType,
       window?: WindowArgType
     ) => void,
     moveToBack: func as unknown as (window?: WindowArgType) => void,

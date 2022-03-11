@@ -17,7 +17,7 @@ import {
   getFontFaceConfigs,
   getFeatureModules,
 } from './config';
-import Window, { resolveHtmlPath } from './window';
+import Window, { resolveHtmlPath, resetMain } from './window';
 import {
   setGlobalStateFromPref,
   getBooks,
@@ -27,7 +27,6 @@ import {
   getBooksInModule,
   getBkChsInV11n,
   setGlobalMenuFromPref,
-  globalReset,
   getSystemFonts,
 } from './minit';
 
@@ -131,10 +130,10 @@ class GClass implements GType {
     return inlineFile(...args);
   }
 
-  globalReset(
-    ...args: Parameters<GType['globalReset']>
-  ): ReturnType<GType['globalReset']> {
-    return globalReset(...args);
+  resetMain(
+    ...args: Parameters<GType['resetMain']>
+  ): ReturnType<GType['resetMain']> {
+    return resetMain(...args);
   }
 
   setGlobalStateFromPref(

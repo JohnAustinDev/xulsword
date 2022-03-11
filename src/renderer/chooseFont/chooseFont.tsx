@@ -17,7 +17,6 @@ import Groupbox from '../libxul/groupbox';
 import Label from '../libxul/label';
 import Button from '../libxul/button';
 import Checkbox from '../libxul/checkbox';
-import Spacer from '../libxul/spacer';
 import Menulist from '../libxul/menulist';
 import Grid, { Columns, Column, Rows, Row } from '../libxul/grid';
 import handlerH, {
@@ -31,7 +30,7 @@ import type { ModTypes } from '../../type';
 
 window.ipc.renderer.once('close', () => {
   G.Data.readAndDelete('stylesheetData');
-  G.globalReset('dynamic-stylesheet-reset');
+  G.Window.reset('dynamic-stylesheet-reset');
 });
 
 const defaultProps = {
@@ -96,7 +95,7 @@ export default class ChooseFontWin extends React.Component {
     const { module } = state;
     if (module && stringHash(state.style) !== stringHash(prevState.style)) {
       G.Data.write(state.style, 'stylesheetData');
-      G.globalReset('dynamic-stylesheet-reset', 'parent');
+      G.Window.reset('dynamic-stylesheet-reset', 'parent');
       // console.log(state.style);
     }
   }

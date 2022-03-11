@@ -23,8 +23,8 @@ export function getBrowserWindows(
   winargs?: WindowArgType | null,
   caller?: BrowserWindow | null
 ): BrowserWindow[] {
-  const windows: BrowserWindow[] = [];
-  const testwin: Partial<WindowDescriptorType>[] = [];
+  let windows: BrowserWindow[] = [];
+  let testwin: Partial<WindowDescriptorType>[] = [];
   if (winargs === 'parent') {
     if (caller) {
       testwin.push(ElectronWindow[caller.getParentWindow().id]);
@@ -35,11 +35,11 @@ export function getBrowserWindows(
     }
   } else if (winargs === 'children') {
     if (caller)
-      testwin.concat(
-        caller.getChildWindows().map((w) => {
-          return ElectronWindow[w.id];
-        })
-      );
+      testwin = caller.getChildWindows().map((w) => {
+        return ElectronWindow[w.id];
+      });
+  } else if (winargs === 'all') {
+    windows = BrowserWindow.getAllWindows();
   } else if (winargs && 'loadURL' in winargs) {
     windows.push(winargs);
   } else if (winargs) {
@@ -59,5 +59,5 @@ export function getBrowserWindows(
       if (keep) windows.push(w);
     });
   }
-  return windows;
+  return windows.filter(Boolean);
 }
