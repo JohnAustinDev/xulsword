@@ -155,9 +155,9 @@ export default class ChooseFontWin extends React.Component {
           <Grid id="fontsGrid">
             <Columns>
               <Column width="min-content" />
-              <Column />
               <Column width="min-content" />
-              <Column />
+              <Column width="min-content" />
+              <Column width="min-content" />
             </Columns>
             <Rows>
               <Row>
@@ -319,8 +319,6 @@ export default class ChooseFontWin extends React.Component {
             </Rows>
           </Grid>
         </Groupbox>
-
-        <Spacer flex="1" />
 
         <Hbox className="dialogbuttons" flex="1" pack="end" align="end">
           <Button

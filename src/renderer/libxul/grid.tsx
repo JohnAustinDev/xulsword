@@ -94,46 +94,62 @@ const defaultProps = xulDefaultProps;
 const propTypes = xulPropTypes;
 
 function Grid(props: XulProps) {
+  function component(comp: any): { displayName: string; props: any } | null {
+    const c1 = comp as React.Component;
+    const p = c1 && typeof c1 === 'object' && 'props' in c1 ? c1.props : null;
+    const c2 = comp as any;
+    const displayName: string =
+      (c2 && typeof c2 === 'object' && 'type' in c2 && c2.type.displayName) ||
+      '';
+    if (p) {
+      return { displayName, props: p };
+    }
+    return null;
+  }
   function gridCells(
     parent: any,
     parentIndex: number,
     count: { Row: number; Column: number },
     cells: ReactElementLike[],
     template: { Row: string[]; Column: string[] }
-  ) {
-    const parent2 =
-      parent && typeof parent === 'object' && 'type' in parent ? parent : null;
-    if (parent2) {
-      const parentType: string = parent2.type?.displayName;
-      if (parentType === 'Row' || parentType === 'Column') {
+  ): boolean {
+    let success = false;
+    const parentComp = component(parent);
+    if (parentComp) {
+      const rtype = parentComp.displayName;
+      if (rtype === 'Row' || rtype === 'Column') {
+        const ctype = rtype === 'Row' ? 'Column' : 'Row';
         let dim = 'auto';
-        const p: RowProps | ColumnProps | null =
-          'props' in parent2 ? parent2.props : null;
-        if (p) {
-          if (p.flex) dim = `${p.flex.replace(/\D/, '')}fr`;
-          let x = '';
-          if (parentType === 'Column' && 'width' in p && p.width) x = p.width;
-          if (parentType === 'Row' && 'height' in p && p.height) x = p.height;
-          if (x) dim = /^\d+$/.test(x) ? x.concat('px') : x;
-          template[parentType].push(dim);
-          const { span: sp, children } = p;
-          const span = sp || 1;
-          const cellcount = React.Children.count(children);
-          React.Children.forEach(children, (cell, i) => {
+        const { flex, width, height, span: sp, children } = parentComp.props;
+        const span = sp || 1;
+        if (flex) dim = `${flex.replace(/\D/, '')}fr`;
+        let x = '';
+        if (rtype === 'Column' && width) x = width;
+        if (rtype === 'Row' && height) x = height;
+        if (x) dim = /^\d+$/.test(x) ? x.concat('px') : x;
+        template[rtype].push(dim);
+        let cellcount = 0;
+        React.Children.forEach(children, (cell) => {
+          if (component(cell)) cellcount += 1;
+        });
+        let i = -1;
+        React.Children.forEach(children, (cell) => {
+          if (component(cell)) {
+            i += 1;
             let myspan = span;
             if (i === cellcount - 1 && span === 1)
-              myspan = count[parentType] - cellcount + 1;
+              myspan = count[ctype] - cellcount + 1;
             const rc = parentIndex + 1;
             const cr = i + 1;
             const rcspan = 1;
             const crspan = myspan;
             cells.push(
               <div
-                key={[parentType, rc, cr].join('.')}
-                className={`grid-cell grid-${parentType.toLowerCase()}-cell`}
+                key={[rtype, rc, cr].join('.')}
+                className={`grid-cell grid-${rtype.toLowerCase()}-cell`}
                 style={{
                   gridArea:
-                    parentType === 'Row'
+                    rtype === 'Row'
                       ? `${rc} / ${cr} / ${rc + rcspan} / ${cr + crspan}`
                       : `${cr} / ${rc} / ${cr + crspan} / ${rc + rcspan}`,
                 }}
@@ -141,36 +157,42 @@ function Grid(props: XulProps) {
                 {cell}
               </div>
             );
-          });
-        }
+            success = true;
+          }
+        });
       }
     }
+    return success;
   }
 
   const count = { Column: 0, Row: 0 };
-  React.Children.forEach(props.children, (c) => {
-    const p: any = c && typeof c === 'object' && 'props' in c ? c.props : null;
-    const t: any = c && typeof c === 'object' && 'type' in c ? c.type : null;
-    if (p && t?.displayName === 'Columns') {
-      count.Column = React.Children.count(p.children);
-    }
-    if (p && t?.displayName === 'Rows') {
-      count.Row = React.Children.count(p.children);
+  React.Children.forEach(props.children, (gparent) => {
+    const c = component(gparent);
+    if (c) {
+      const name = c.displayName;
+      if (name === 'Columns' || name === 'Rows') {
+        React.Children.forEach(c.props.children, (cellparent) => {
+          const cc = component(cellparent);
+          if (cc) count[name === 'Rows' ? 'Row' : 'Column'] += 1;
+        });
+      }
     }
   });
 
   const gridcells: ReactElementLike[] = [];
   const gridtemplate = { Row: [], Column: [] };
+  const i = { Columns: 0, Rows: 0 };
   React.Children.forEach(props.children, (gparent) => {
-    const p = (
-      gparent && typeof gparent === 'object' && 'props' in gparent
-        ? gparent.props
-        : null
-    ) as XulProps | null;
-    if (p) {
-      React.Children.forEach(p.children, (cellparent, i) => {
-        gridCells(cellparent, i, count, gridcells, gridtemplate);
-      });
+    const c = component(gparent);
+    if (c) {
+      const name = c.displayName;
+      if (name === 'Columns' || name === 'Rows') {
+        React.Children.forEach(c.props.children, (cellparent) => {
+          if (gridCells(cellparent, i[name], count, gridcells, gridtemplate)) {
+            i[name] += 1;
+          }
+        });
+      }
     }
   });
 

@@ -160,11 +160,16 @@ export default function renderToRoot(
     })
     .then(() => {
       if (typeof loadedXUL === 'function') loadedXUL();
-      if (winArgs.type === 'dialog') {
-        const b = document.getElementById('root')?.getBoundingClientRect();
-        if (b) G.Window.setContentSize(b.width, b.height);
-      }
-      window.ipc.renderer.send('did-finish-render');
+      setTimeout(() => {
+        if (winArgs.type === 'dialog') {
+          const body = document.getElementsByTagName('body');
+          if (body.length) {
+            const b = body[0].getBoundingClientRect();
+            if (b) G.Window.setContentSize(b.width, b.height);
+          }
+        }
+        window.ipc.renderer.send('did-finish-render');
+      }, 1);
       return true;
     })
     .catch((e: string | Error) => jsdump(e));

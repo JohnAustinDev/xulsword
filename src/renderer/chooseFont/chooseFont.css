@@ -2,6 +2,10 @@
   position: relative;
 }
 
+.chooseFont select {
+  margin-inline-end: 16px;
+}
+
 .chooseFont .picker-button {
   margin: 0;
 }

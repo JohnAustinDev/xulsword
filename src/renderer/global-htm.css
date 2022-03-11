@@ -9,6 +9,12 @@ body,
   margin: 0;
   overflow: hidden;
 }
+html.dialog,
+html.dialog body,
+html.dialog #root {
+  height: unset;
+  width: fit-content;
+}
 html:not(.dialog) #root {
   background-image: url(../../assets/b2.png);
 }
