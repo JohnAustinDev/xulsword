@@ -11,11 +11,13 @@ declare global {
   }
 }
 
+export type WindowRegistryType = (WindowDescriptorType | null)[];
+
 export type WindowDescriptorType = {
-  id: number;
   name: string;
-  type: string;
-  options: Electron.BrowserWindowConstructorOptions;
+  id?: number;
+  type?: string;
+  options?: Electron.BrowserWindowConstructorOptions;
 };
 
 export type WindowArgType =
@@ -497,14 +499,7 @@ export const GPublic = {
     readAndDelete: func as unknown as (name: string) => any,
   },
   Window: {
-    open: func as unknown as (
-      type: string,
-      params: Electron.BrowserWindowConstructorOptions
-    ) => number,
-    openDialog: func as unknown as (
-      type: string,
-      params: Electron.BrowserWindowConstructorOptions
-    ) => number,
+    open: func as unknown as (arg: WindowDescriptorType) => number,
     setContentSize: func as unknown as (
       width: number,
       height: number,

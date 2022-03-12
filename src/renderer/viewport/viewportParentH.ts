@@ -212,7 +212,6 @@ export default function handler(
         case 'text-win': {
           const cols = atext?.dataset.columns;
           if (atext && cols !== undefined) {
-            const b = atext.getBoundingClientRect();
             // Save new window's XulswordState
             const xulswordState: Partial<XulswordState> = {};
             Object.entries(vpWinNotStatePref).forEach((entry) => {
@@ -258,14 +257,24 @@ export default function handler(
                   }),
                 ],
               },
-              openWithBounds: {
-                x: Math.round(b.x),
-                y: Math.round(b.y),
-                width: Math.round(b.width),
-                height: Math.round(b.height),
-              },
             };
-            G.Window.open('viewportWin', options);
+            // Calculate the content size ViewportWin should be created with:
+            const atextb = atext.getBoundingClientRect();
+            const textareab = document
+              .getElementsByClassName('textarea')[0]
+              ?.getBoundingClientRect();
+            const vpPadding = 15; // left padding of ViewportWin (assumes same as right and bottom)
+            const vpPaddingTop = 10; // top padding of ViewportWin
+            if (atextb && textareab) {
+              const o = options as any;
+              o.openWithBounds = {
+                x: Math.round(atextb.x - vpPadding),
+                y: Math.round(textareab.y - vpPaddingTop),
+                width: Math.round(atextb.width + 2 * vpPadding),
+                height: Math.round(textareab.height + vpPaddingTop + vpPadding),
+              };
+            }
+            G.Window.open({ name: 'viewportWin', options });
           }
           break;
         }

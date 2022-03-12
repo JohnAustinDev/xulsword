@@ -544,5 +544,5 @@ renderToRoot(<Xulsword id="xulsword" />, () => {
   jsdump('Loading Xulsword!');
   setTimeout(() => {
     G.Window.moveToBack();
-  }, 1);
+  }, 100);
 });

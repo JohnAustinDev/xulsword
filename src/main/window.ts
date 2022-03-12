@@ -8,9 +8,14 @@ import Cache from '../cache';
 import Data from './modules/data';
 import Dirs from './modules/dirs';
 import Prefs from './modules/prefs';
-import { ElectronWindow, getBrowserWindows } from './mutil';
 
-import type { WindowArgType, GType, ResetType } from '../type';
+import type {
+  WindowArgType,
+  GType,
+  ResetType,
+  WindowDescriptorType,
+  WindowRegistryType,
+} from '../type';
 
 const i18nBackendRenderer = require('i18next-electron-fs-backend');
 
@@ -33,43 +38,150 @@ export function resetMain() {
   Cache.clear();
 }
 
-function xulswordWindow(): BrowserWindow | null {
-  let win: BrowserWindow | null = null;
-  const windows = Prefs.getComplexValue(`Windows`);
-  Object.entries(windows).forEach((window) => {
-    const [ids, args] = window as any;
-    const id = Number(ids.substring(1));
-    if (!Number.isNaN(id) && args?.type && args.type === 'xulsword') {
-      win = BrowserWindow.fromId(id);
-    }
-  });
-  return win;
+// WindowRegistry value for a window will be null after window is closed.
+export const WindowRegistry: WindowRegistryType = [];
+function addWindowToRegistry(
+  win: BrowserWindow,
+  descriptor: WindowDescriptorType
+) {
+  descriptor.id = win.id;
+  WindowRegistry[win.id] = descriptor;
+  win.once(
+    'closed',
+    ((id: number) => {
+      return () => {
+        WindowRegistry[id] = null;
+      };
+    })(win.id)
+  );
 }
 
-function windowBounds(winx?: BrowserWindow) {
-  const win = winx || xulswordWindow();
-  if (!win) return null;
+// Return a list of BrowserWindow objects matching winargs. If winargs
+// is a string other than 'all', then caller must be a BrowserWindow
+// or else no windows will be returned. If winargs is a BrowserWindow,
+// it will be returned. If winargs is undefined or null, then caller
+// will be returned. Otherwise winargs is treated as a partial
+// WindowDescriptorType and any windows which match all its property
+// values will be returned.
+export function getBrowserWindows(
+  winargs?: WindowArgType | null,
+  caller?: BrowserWindow | null
+): BrowserWindow[] {
+  let testwin: Partial<WindowDescriptorType> | null = null;
+  if (winargs === 'parent') {
+    if (caller) {
+      return [caller.getParentWindow()];
+    }
+  } else if (winargs === 'self') {
+    if (caller) {
+      return [caller];
+    }
+  } else if (winargs === 'children') {
+    if (caller) return caller.getChildWindows();
+  } else if (winargs === 'all') {
+    return BrowserWindow.getAllWindows();
+  } else if (winargs && typeof winargs !== 'object') {
+    throw Error(`getBrowserWindows unexpected argument: '${winargs}'`);
+  } else if (winargs && 'loadURL' in winargs) {
+    return [winargs];
+  } else if (winargs) {
+    testwin = winargs;
+  } else if (caller) {
+    return [caller];
+  }
+  const windows: BrowserWindow[] = [];
+  BrowserWindow.getAllWindows().forEach((w) => {
+    if (
+      testwin &&
+      Object.entries(testwin).every((entry) => {
+        const p = entry[0] as keyof WindowDescriptorType;
+        const v = entry[1] as any;
+        const ew = WindowRegistry[w.id];
+        return ew && ew[p] === v;
+      })
+    )
+      windows.push(w);
+  });
+  return windows;
+}
+
+// Return a window content's width and height, and the
+// window's x and y position on the screen. When creating
+// new windows with useContentSize, these dimensions are
+// intended to recreate the window's exact size and location
+// on the screen. But there has been a long standing Electron
+// bug report #10388 and yAdj is an attempted workaround.
+function windowBounds(win: BrowserWindow) {
   const w = win.getNormalBounds();
   const c = win.getContentBounds();
+  const yAdj = process.platform === 'linux' ? -38 : 0;
   return {
     width: c.width,
     height: c.height,
-    x: c.x,
-    // The 12 works for Ubuntu 20 at least
-    y: w.y - (w.height - c.height) - 12,
+    x: w.x,
+    y: w.y + yAdj,
+    wLeft: c.x - w.x, // width of left window border
+    hTop: c.y - w.y, // width of top window border
   };
 }
 
-// All Windows are created with BrowserWindow.show = false.
-// This means that the window will be shown after the window's
-// custom 'did-finish-render' event.
-function windowOptions(
-  name: string,
-  type: string,
-  options: Electron.BrowserWindowConstructorOptions
-): void {
+function windowInitI18n(win: BrowserWindow) {
+  // Bind i18next-electron-fs-backend providing IPC to renderer processes
+  i18nBackendRenderer.mainBindings(ipcMain, win, fs);
+  // Unbind i18next-electron-fs-backend from window upon close to prevent
+  // access of closed window. Since the binding is anonymous, all are
+  // removed, and other windows get new ones added back.
+  win.once('close', () => {
+    i18nBackendRenderer.clearMainBindings(ipcMain);
+    BrowserWindow.getAllWindows().forEach((w) => {
+      if (w !== win) {
+        i18nBackendRenderer.mainBindings(ipcMain, w, fs);
+      }
+    });
+    if (win !== null) win.webContents.send('close');
+  });
+}
+
+function addWindowToPrefs(
+  win: BrowserWindow,
+  descriptor: WindowDescriptorType
+) {
+  // Remove any parent or there will JSON recursion problems
+  if (descriptor.options && 'parent' in descriptor.options)
+    delete descriptor.options.parent;
+  Prefs.setComplexValue(`Windows.w${win.id}`, descriptor, 'windows');
+  function updateBounds() {
+    const args = Prefs.getComplexValue(`Windows.w${win.id}`, 'windows');
+    const b = windowBounds(win);
+    args.options = { ...args.options, ...b };
+    Prefs.setComplexValue(`Windows.w${win.id}`, args, 'windows');
+  }
+  win.on('resize', () => {
+    updateBounds();
+  });
+  win.on('move', () => {
+    updateBounds();
+  });
+  win.once(
+    'closed',
+    ((id: number) => {
+      return () => {
+        Prefs.setComplexValue(`Windows.w${id}`, undefined, 'windows');
+      };
+    })(win.id)
+  );
+}
+
+// All Windows are created with BrowserWindow.show = false so they
+// will not be shown until the custom 'did-finish-render' event.
+function updateOptions(descriptor: WindowDescriptorType): void {
+  const { name, type } = descriptor;
+  let { options } = descriptor;
+  options = options || {};
+  descriptor.type = type || 'window';
   // All windows must have these same options.
   options.show = false;
+  options.useContentSize = true;
   options.icon = path.join(Dirs.path.xsAsset, 'icon.png');
   if (!options.webPreferences) options.webPreferences = {};
   options.webPreferences.preload = path.join(__dirname, 'preload.js');
@@ -92,69 +204,64 @@ function windowOptions(
   // have Electron defaults).
   if (type === 'dialog') {
     const ddef: Electron.BrowserWindowConstructorOptions = {
-      width: 50, // dialogs are auto-resized
-      height: 50, // dialogs are auto-resized
+      width: 50, // dialogs are auto-resized and then fixed
+      height: 50, // dialogs are auto-resized and then fixed
       resizable: false,
       fullscreenable: false,
-      skipTaskbar: true,
-      useContentSize: true,
+      // skipTaskbar: true,
     };
     Object.entries(ddef).forEach((entry) => {
       const [pro, val] = entry;
-      if (!(pro in options)) {
+      if (options && !(pro in options)) {
         const o = options as any;
         o[pro] = val;
       }
     });
   }
-  // Set bounds for viewport and popup type windows
+  // Set bounds for windows that should cover their source position
+  // within the main xulsword window.
   if (name === 'viewportWin' || name === 'popupWin') {
-    // useContentSize is supposed to use width & height to set the
-    // webpage size rather than window size. If it did that, then
-    // adj would not be necessary. But useContentSize does nothing
-    // in Linux. Maybe it does on other opsys??
-    // options.useContentSize = true;
-    let adj = {
-      h: 50,
-      t: 35,
-      w: 30,
-    };
-    if (name === 'popupWin') {
-      adj = {
-        h: 0,
-        t: 26,
-        w: 0,
-      };
+    const mainWindow = getBrowserWindows({ name: 'xulsword' })[0];
+    if (mainWindow) {
+      const xs = windowBounds(mainWindow);
+      const o = options as any;
+      const eb = o?.openWithBounds;
+      if (xs && eb) {
+        options.width = eb.width;
+        options.height = eb.height;
+        options.x = xs.x + eb.x + xs.wLeft;
+        options.y = xs.y + eb.y + xs.hTop;
+      }
+      if (o?.openWithBounds) delete o.openWithBounds;
     }
-    const ops = options as any;
-    const xs = windowBounds();
-    const eb = ops?.openWithBounds;
-    if (xs && eb) {
-      options.width = eb.width + adj.w;
-      options.height = eb.height + adj.h;
-      options.x = xs.x + eb.x - adj.w / 2;
-      options.y = xs.y + eb.y - adj.h + adj.t;
-    }
-    if (ops?.openWithBounds) delete ops.openWithBounds;
   }
   // console.log(options);
 }
 
-function windowInitI18n(win: BrowserWindow) {
-  // Bind i18next-electron-fs-backend providing IPC to renderer processes
-  i18nBackendRenderer.mainBindings(ipcMain, win, fs);
-  // Unbind i18next-electron-fs-backend from window upon close to prevent
-  // access of closed window. Since the binding is anonymous, all are
-  // removed, and other windows get new ones added back.
-  win.once('close', () => {
-    i18nBackendRenderer.clearMainBindings(ipcMain);
-    BrowserWindow.getAllWindows().forEach((w) => {
-      if (w !== win) {
-        i18nBackendRenderer.mainBindings(ipcMain, w, fs);
-      }
-    });
-    if (win !== null) win.webContents.send('close');
+function createWindow(descriptor: WindowDescriptorType): BrowserWindow {
+  const { name, type, options } = descriptor;
+  updateOptions(descriptor);
+  const win = new BrowserWindow(options);
+  addWindowToRegistry(win, descriptor);
+  win.loadURL(resolveHtmlPath(`${name}.html`));
+  // win.webContents.openDevTools();
+  windowInitI18n(win);
+  if (name === 'viewportWin' || name === 'popupWin' || type !== 'window')
+    win.removeMenu();
+  win.on('resize', () => {
+    win.webContents.send('resize', win.getSize());
   });
+  if (Data.has('contextMenuFunc')) {
+    win.once(
+      'closed',
+      ((dlist: () => void) => {
+        return () => {
+          if (typeof dlist === 'function') dlist();
+        };
+      })(Data.read('contextMenuFunc')(win))
+    );
+  }
+  return win;
 }
 
 type WindowPrivate = {
@@ -164,79 +271,9 @@ type WindowPrivate = {
 const Window: GType['Window'] & WindowPrivate = {
   browserWindow: null,
 
-  open(
-    name: string,
-    options: Electron.BrowserWindowConstructorOptions
-  ): number {
-    windowOptions(name, 'window', options);
-    const win = new BrowserWindow(options);
-    ElectronWindow[win.id] = { id: win.id, name, type: 'window', options };
-    win.loadURL(resolveHtmlPath(`${name}.html`));
-    // win.webContents.openDevTools();
-    Prefs.setComplexValue(`Windows.w${win.id}`, { type: name, options });
-    windowInitI18n(win);
-    if (name === 'viewportWin' || name === 'popupWin') win.removeMenu();
-    win.on('resize', () => {
-      const args = Prefs.getComplexValue(`Windows.w${win.id}`);
-      const b = windowBounds(win);
-      args.options = { ...args.options, ...b };
-      Prefs.setComplexValue(`Windows.w${win.id}`, args);
-      const size = win.getSize();
-      win.webContents.send('resize', size);
-    });
-    win.on('move', () => {
-      const args = Prefs.getComplexValue(`Windows.w${win.id}`);
-      const b = windowBounds(win);
-      args.options = { ...args.options, ...b };
-      Prefs.setComplexValue(`Windows.w${win.id}`, args);
-    });
-    win.once(
-      'closed',
-      ((id: number) => {
-        return () => {
-          Prefs.setComplexValue(`Windows.w${id}`, undefined);
-        };
-      })(win.id)
-    );
-    if (Data.has('contextMenuFunc')) {
-      win.once(
-        'closed',
-        ((dlist: () => void) => {
-          return () => {
-            if (typeof dlist === 'function') dlist();
-          };
-        })(Data.read('contextMenuFunc')(win))
-      );
-    }
-    return win.id;
-  },
-
-  // Dialog windows are not saved in user prefs and also get different
-  // default options from windowOptions() than regular windows.
-  openDialog(
-    name: string,
-    options: Electron.BrowserWindowConstructorOptions
-  ): number {
-    windowOptions(name, 'dialog', options);
-    const win = new BrowserWindow(options);
-    ElectronWindow[win.id] = { id: win.id, name, type: 'dialog', options };
-    win.loadURL(resolveHtmlPath(`${name}.html`));
-    win.removeMenu();
-    win.on('resize', () => {
-      const size = win.getSize();
-      win.webContents.send('resize', size);
-    });
-    windowInitI18n(win);
-    if (Data.has('contextMenuFunc')) {
-      win.once(
-        'closed',
-        ((dlist: () => void) => {
-          return () => {
-            if (typeof dlist === 'function') dlist();
-          };
-        })(Data.read('contextMenuFunc')(win))
-      );
-    }
+  open(descriptor: WindowDescriptorType): number {
+    const win = createWindow(descriptor);
+    if (descriptor.type === 'window') addWindowToPrefs(win, descriptor);
     return win.id;
   },
 

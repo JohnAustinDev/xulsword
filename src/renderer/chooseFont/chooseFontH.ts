@@ -12,7 +12,7 @@ import type { ChooseFontWinState, ColorType } from './chooseFont';
 export const startingState = {
   module: '' as string | null, // will be initialized by windowArgument()
   fonts: [], // will be initialized by getSystemFonts() Promise
-  style: (G.Prefs.getComplexValue('style') || {}) as StyleType,
+  style: G.Prefs.getComplexValue('style', 'style') as StyleType,
 
   coloropen: false as boolean,
   backgroundopen: false as boolean,
@@ -160,7 +160,7 @@ export default function handler(this: ChooseFontWin, e: React.SyntheticEvent) {
           break;
         }
         case 'ok': {
-          G.Prefs.setComplexValue('style', getStyleFromState(state));
+          G.Prefs.setComplexValue('style', getStyleFromState(state), 'style');
           G.Window.close();
           break;
         }

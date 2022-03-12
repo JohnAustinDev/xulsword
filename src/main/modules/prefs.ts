@@ -9,6 +9,25 @@ import { jsdump } from '../mutil';
 
 import type { GType } from '../../type';
 
+type StoreType = {
+  [i in string | 'prefs']: {
+    file: nsILocalFile;
+    data: any;
+  };
+};
+
+type PrefsPrivate = {
+  writeOnChange: boolean;
+  store: StoreType;
+  setPref: (
+    key: string,
+    type: string,
+    value: string | number | boolean | undefined,
+    aStore?: string
+  ) => boolean;
+  writeStore: (aStore: string) => boolean;
+};
+
 const Prefs: GType['Prefs'] & PrefsPrivate = {
   // True means write sources to disk after every change
   writeOnChange: false,
@@ -17,54 +36,54 @@ const Prefs: GType['Prefs'] & PrefsPrivate = {
   store: {},
 
   // Get a string pref value. Error if key is not String, or is missing from store.
-  getCharPref(key, aStore = 'default') {
+  getCharPref(key, aStore?) {
     return this.getPrefOrCreate(key, 'string', undefined, aStore) as string;
   },
 
   // Set a string pref value. Error if key is not String.
-  setCharPref(key, value, aStore = 'default') {
+  setCharPref(key, value, aStore?) {
     return this.setPref(key, 'string', value, aStore);
   },
 
   // Get a Boolean pref value. Error if key is not Boolean, or is missing from store.
-  getBoolPref(key, aStore = 'default') {
+  getBoolPref(key, aStore?) {
     return this.getPrefOrCreate(key, 'boolean', undefined, aStore) as boolean;
   },
 
   // Set a Boolean pref value. Error if key is not Boolean.
-  setBoolPref(key, value, aStore = 'default') {
+  setBoolPref(key, value, aStore?) {
     return this.setPref(key, 'boolean', value, aStore);
   },
 
   // Get a number pref value (does no need to be an integer). Error if key is not a number, or is missing from store.
-  getIntPref(key, aStore = 'default') {
+  getIntPref(key, aStore?) {
     return this.getPrefOrCreate(key, 'number', undefined, aStore) as number;
   },
 
   // Set a Boolean pref value. Error if key is not an number.
-  setIntPref(key, value, aStore = 'default') {
+  setIntPref(key, value, aStore?) {
     return this.setPref(key, 'number', value, aStore);
   },
 
   // Get a complex pref value. Error if key is not complex, or is missing from store.
-  getComplexValue(key, aStore = 'default') {
+  getComplexValue(key, aStore?) {
     return this.getPrefOrCreate(key, 'complex', undefined, aStore) as number;
   },
 
   // Set a Boolean pref value. Error if key is not an number.
-  setComplexValue(key, value, aStore = 'default') {
+  setComplexValue(key, value, aStore?) {
     return this.setPref(key, 'complex', value, aStore);
   },
 
   // Remove the key from a store
-  clearUserPref(key, aStore = 'default') {
+  clearUserPref(key, aStore?) {
     return this.setPref(key, 'undefined', undefined, aStore);
   },
 
   // Get a pref value and throw an error if it does not match type. If the key
   // is not found in the store, it will be added having value defval, and defval
   // will be returned. If defval is required but not supplied, an error is thrown.
-  getPrefOrCreate(key, type, defval, aStore = 'default') {
+  getPrefOrCreate(key, type, defval, aStore = 'prefs') {
     let p = this.getStore(aStore);
     if (p === null) return undefined;
 
@@ -101,15 +120,14 @@ const Prefs: GType['Prefs'] & PrefsPrivate = {
   },
 
   // Get persistent data from source json files
-  getStore(aStore = 'default') {
+  getStore(aStore = 'prefs') {
     // Create a new store if needed
     if (this.store === null || !(aStore in this.store)) {
-      const name = aStore === 'default' ? 'prefs' : aStore;
       this.store = {
         ...this.store,
         [aStore]: {
           file: new nsILocalFile(
-            path.join(Dirs.path.xsPrefD, name.concat('.json')),
+            path.join(Dirs.path.xsPrefD, aStore.concat('.json')),
             nsILocalFile.NO_CREATE
           ),
           data: null,
@@ -121,18 +139,19 @@ const Prefs: GType['Prefs'] & PrefsPrivate = {
 
     // Read the data unless it has already been read
     if (!s.data || typeof s.data !== 'object') {
-      // If there is no source file, copy the default
+      // If there is no store file, copy the default or create one.
       if (!s.file.exists()) {
-        const name = aStore === 'default' ? 'prefs' : aStore;
         const defFile = new nsILocalFile(
-          path.join(Dirs.path.xsPrefDefD, name.concat('.json')),
+          path.join(Dirs.path.xsPrefDefD, aStore.concat('.json')),
           nsILocalFile.NO_CREATE
         );
-
-        if (!defFile.exists())
-          throw Error(`Default pref file is missing: ${defFile.path}`);
-
-        defFile.copyTo(s.file.parent, s.file.leafName);
+        if (defFile.exists()) {
+          defFile.copyTo(s.file.parent, s.file.leafName);
+        } else if (aStore === 'prefs') {
+          throw Error(`Default prefs file is missing: ${defFile.path}`);
+        } else {
+          s.file.writeFile('{}');
+        }
       }
 
       if (s.file.exists()) {
@@ -152,13 +171,13 @@ const Prefs: GType['Prefs'] & PrefsPrivate = {
       }
     }
 
-    return s.data as { [index: string]: boolean | string | number };
+    return s.data;
   },
 
   // Write persistent data to source json files. If there is no data object
   // for the store, then there have been no set/gets on the store, and nothing
   // will be written. True is returned on success.
-  writeStore(aStore = 'default') {
+  writeStore(aStore = 'prefs') {
     if (!this.store) return false;
 
     const s = this.store[aStore];
@@ -186,7 +205,7 @@ const Prefs: GType['Prefs'] & PrefsPrivate = {
   // of the specified type. If this.writeOnChange is set, then the store will
   // be saved to disk immediately. Supported types are Javascript primitive
   // types and 'complex' for anything else.
-  setPref(key, type, value, aStore = 'default') {
+  setPref(key, type, value, aStore = 'prefs') {
     let p = this.getStore(aStore);
     let k = key;
     if (p === null) {
@@ -229,21 +248,6 @@ const Prefs: GType['Prefs'] & PrefsPrivate = {
 
     return true;
   },
-};
-
-type PrefsPrivate = {
-  writeOnChange: boolean;
-
-  store: { [i: string]: any };
-
-  setPref: (
-    key: string,
-    type: string,
-    value: string | number | boolean | undefined,
-    aStore: string
-  ) => boolean;
-
-  writeStore: (aStore: string) => boolean;
 };
 
 export default Prefs as GType['Prefs'];

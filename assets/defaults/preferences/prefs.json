@@ -4,12 +4,8 @@
   "MinUIversion": "3.10",
   "LibxulswordVersion": "1.4.5",
   "HelpEmailAddress": "",
-  "WindowsClosed": true,
-  "Windows": {},
-  "PersistedWindows": {},
+  "WindowsDidClose": true,
   "global": {
-    "modules": {},
-    "fonts": {},
     "fontSize": 2,
     "locale": "en",
     "locales": [
@@ -74,6 +70,5 @@
     "isPinned": [],
     "noteBoxHeight": [],
     "maximizeNoteBox": []
-  },
-  "style": {}
+  }
 }

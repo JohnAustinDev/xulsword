@@ -276,16 +276,21 @@ type ModulesPref = {
   };
 };
 
-// The pref 'global.modules' is used to cache costly module data.
+// The modules pref is used to cache costly module data.
 // If 'books' is in the pref-value, it is used, otherwise it is added
 // to the pref-value. IMPORTANT: If a module is ever updated or removed,
-// the global.modules pref MUST be reset or updated.
+// the modules pref MUST be reset or updated.
 export function getBooksInModule(): { [i: string]: string[] } {
   if (!Cache.has('booksInMdule')) {
     const modlist = LibSword.getModuleList();
     const availableBooks: { [i: string]: string[] } = {};
     if (modlist === C.NOMODULES) return availableBooks;
-    const prefmod: ModulesPref = Prefs.getComplexValue('global.modules');
+    const prefmod = Prefs.getPrefOrCreate(
+      'modules',
+      'complex',
+      {},
+      'modules'
+    ) as ModulesPref;
     const tabs = getTabs();
     const modules: string[] = [];
     tabs.forEach((t: TabType) => {
@@ -340,7 +345,7 @@ export function getBooksInModule(): { [i: string]: string[] } {
     Object.keys(prefmod).forEach((module) => {
       if (!modules.includes(module)) delete prefmod[module];
     });
-    Prefs.setComplexValue('global.modules', prefmod);
+    Prefs.setComplexValue('modules', prefmod, 'modules');
     Cache.write(availableBooks, 'booksInMdule');
   }
 

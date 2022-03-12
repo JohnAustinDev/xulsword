@@ -86,11 +86,15 @@ class DynamicStyleSheet {
     const { sheet } = this;
 
     // Create CSS classes and rules according to user pref style.
-    const prefStyleConfigs = G.Prefs.getPrefOrCreate('style', 'complex', {
-      locale: {},
-      module: {},
-      program: {},
-    }) as StyleType;
+    const prefStyleConfigs = G.Prefs.getPrefOrCreate(
+      'style',
+      'complex',
+      {
+        locale: {},
+        module: {},
+      },
+      'style'
+    ) as StyleType;
     const style = styleConfigs || prefStyleConfigs;
     const classPrefixes = ['cs'];
     if (sheet) {

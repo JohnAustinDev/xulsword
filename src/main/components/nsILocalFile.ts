@@ -162,7 +162,7 @@ export default class nsILocalFile {
   // encoded string to file.
   writeFile(str: string, options?: any) {
     const o = options || { encoding: 'utf8', mode: FPERM };
-    fs.writeFile(this.path, str, o);
+    fs.writeFileSync(this.path, str, o);
   }
 
   // Return the file name as a string.

@@ -109,7 +109,7 @@ const Commands: GType['Commands'] & CommandsPrivate = {
         ],
       },
     };
-    Window.openDialog('chooseFont', options);
+    Window.open({ name: 'chooseFont', type: 'dialog', options });
   },
 
   openBookmarksManager() {

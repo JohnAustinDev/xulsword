@@ -14,6 +14,7 @@ html.dialog body,
 html.dialog #root {
   height: unset;
   width: fit-content;
+  height: fit-content;
 }
 html:not(.dialog) #root {
   background-image: url(../../assets/b2.png);

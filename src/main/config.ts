@@ -75,10 +75,10 @@ function fontURL(mod: string) {
 }
 
 // Read fonts which are in xulsword's xsFonts directory.
-// The pref 'global.fonts' is used to cache costly font data.
+// The fonts pref is used to cache costly font data.
 // If 'font' is in the pref-value, it is used, otherwise it is added
 // to the pref-value. IMPORTANT: If a font is ever updated or removed,
-// the global.fonts pref MUST be reset or updated.
+// the fonts pref MUST be reset or updated.
 export function getFontFaceConfigs(): { [i: string]: string } {
   if (!Cache.has('fontFaceConfigs')) {
     if (!LibSword.libSwordReady('getFontFaceConfigs')) {
@@ -90,7 +90,7 @@ export function getFontFaceConfigs(): { [i: string]: string } {
     // Look for xulsword local fonts, which may be included with some
     // XSM modules.
     const ret = {} as { [i: string]: string };
-    let fonts = Prefs.getComplexValue('global.fonts') as {
+    let fonts = Prefs.getPrefOrCreate('fonts', 'complex', {}, 'fonts') as {
       [i: string]: { fontFamily: string; path: string };
     };
     const fontdir = Dirs.xsFonts.directoryEntries;
@@ -114,7 +114,7 @@ export function getFontFaceConfigs(): { [i: string]: string } {
         }
         fonts[file] = { fontFamily, path: font.path };
       });
-      Prefs.setComplexValue('global.fonts', fonts);
+      Prefs.setComplexValue('fonts', fonts, 'fonts');
     }
 
     Object.values(fonts).forEach((info) => {

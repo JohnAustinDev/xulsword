@@ -13,11 +13,12 @@ import {
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import i18n from 'i18next';
-import { GPublic } from '../type';
+import { GPublic, WindowRegistryType } from '../type';
 import C from '../constant';
 import Data from './modules/data';
 import MenuBuilder from './menu';
 import { jsdump } from './mutil';
+import { WindowRegistry } from './window';
 import G from './mg';
 import LibSword from './modules/libsword';
 import contextMenu from './contextMenu';
@@ -38,11 +39,6 @@ export default class AppUpdater {
     autoUpdater.checkForUpdatesAndNotify();
   }
 }
-
-const xsWindow = {
-  main: null as BrowserWindow | null,
-  splash: null as BrowserWindow | null,
-};
 
 const isDevelopment =
   process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
@@ -110,48 +106,59 @@ ipcMain.handle(
 ipcMain.on('did-finish-render', (event: IpcMainEvent) => {
   const win = BrowserWindow.fromWebContents(event.sender);
   if (!win) return;
+  const wd = WindowRegistry[win.id];
+  if (!wd) return;
+  const { name } = wd;
 
-  if (win === xsWindow.main && process.env.START_MINIMIZED) {
+  if (name === 'xulsword' && process.env.START_MINIMIZED) {
     win.minimize();
   } else {
     win.show();
     win.focus();
   }
-  if (win === xsWindow.main && xsWindow.splash) {
-    xsWindow.splash.close();
+  if (name === 'xulsword') {
+    setTimeout(() => {
+      G.Window.close({ name: 'splash' });
+    }, 1000);
   }
   if (process.env.NODE_ENV === 'development') win.webContents.openDevTools();
 });
 
 const openMainWindow = () => {
-  let options = {
+  let options: Electron.BrowserWindowConstructorOptions = {
     title: t('programTitle'),
     fullscreenable: true,
     width: 1024,
     height: 728,
   };
 
-  const windowsClosed = G.Prefs.getBoolPref(`WindowsClosed`);
-  G.Prefs.setBoolPref(`WindowsClosed`, false);
-  const persistWinPref = G.Prefs.getComplexValue(`PersistedWindows`);
-  type WindowArgs = { type: string; options: any };
-  const persistedWindows: WindowArgs[] = [];
+  const windowsDidClose = G.Prefs.getBoolPref(`WindowsDidClose`);
+  G.Prefs.setBoolPref(`WindowsDidClose`, false);
+  const persistWinPref = G.Prefs.getPrefOrCreate(
+    `PersistedWindows`,
+    'complex',
+    {},
+    'windows'
+  ) as WindowRegistryType | Record<string, never>;
+  const persistedWindows: WindowRegistryType = [];
   if (persistWinPref) {
-    G.Prefs.setComplexValue(`PersistedWindows`, undefined);
-    if (windowsClosed) {
+    G.Prefs.setComplexValue(`PersistedWindows`, {}, 'windows');
+    if (windowsDidClose) {
       Object.entries(persistWinPref).forEach((entry) => {
-        const args = entry[1] as WindowArgs;
-        if (args.type === 'xulsword') {
-          options = args.options;
+        const reg = entry[1] as WindowRegistryType[number];
+        if (reg && reg.name === 'xulsword') {
+          if (reg.options) options = reg.options;
         } else {
-          persistedWindows.push(args);
+          persistedWindows.push(reg);
         }
       });
     }
   }
 
-  G.Prefs.setComplexValue(`Windows`, undefined);
-  const mainWin = BrowserWindow.fromId(G.Window.open('xulsword', options));
+  G.Prefs.setComplexValue(`Windows`, {}, 'windows');
+  const mainWin = BrowserWindow.fromId(
+    G.Window.open({ name: 'xulsword', options })
+  );
 
   if (!mainWin) {
     return null;
@@ -167,7 +174,8 @@ const openMainWindow = () => {
     // Persist any open windows for the next restart
     G.Prefs.setComplexValue(
       `PersistedWindows`,
-      G.Prefs.getComplexValue(`Windows`)
+      G.Prefs.getComplexValue('Windows', 'windows'),
+      'windows'
     );
     // Close all other open windows
     BrowserWindow.getAllWindows().forEach((w) => {
@@ -176,12 +184,11 @@ const openMainWindow = () => {
   });
 
   mainWin.on('closed', () => {
-    xsWindow.main = null;
     jsdump('NOTE: mainWindow closed...');
   });
 
-  persistedWindows.forEach((winid) => {
-    G.Window.open(winid.type, winid.options);
+  persistedWindows.forEach((reg) => {
+    if (reg) G.Window.open(reg);
   });
 
   return mainWin;
@@ -246,9 +253,10 @@ const start = async () => {
   t = (key: string, options?: any) => i18n.t(key, options);
 
   if (!(C.DEVELSPLASH === 1 && isDevelopment)) {
-    xsWindow.splash = BrowserWindow.fromId(
-      G.Window.openDialog(
-        'splash',
+    G.Window.open({
+      name: 'splash',
+      type: 'dialog',
+      options:
         isDevelopment && C.DEVELSPLASH === 2
           ? {
               title: 'xulsword',
@@ -262,15 +270,15 @@ const start = async () => {
               alwaysOnTop: true,
               frame: false,
               transparent: true,
-            }
-      )
-    );
+              backgroundColor: '#FFFFFF00',
+            },
+    });
   }
 
   // Initialize napi libxulsword as LibSword
   LibSword.initLibsword();
 
-  xsWindow.main = openMainWindow();
+  openMainWindow();
 
   // Remove this if your app does not use auto updates
   // new AppUpdater();
@@ -281,7 +289,7 @@ const start = async () => {
  */
 
 app.on('window-all-closed', () => {
-  G.Prefs.setBoolPref(`WindowsClosed`, true);
+  G.Prefs.setBoolPref(`WindowsDidClose`, true);
 
   // Write all prefs to disk when app closes
   G.Prefs.writeAllStores();
@@ -296,7 +304,8 @@ app.on('window-all-closed', () => {
 app.on('activate', () => {
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
-  if (xsWindow.main === null) openMainWindow();
+  if (!WindowRegistry.some((wd) => wd && wd.name === 'xulsword'))
+    openMainWindow();
 });
 
 // Didn't see a better way to inject a troublesome contextMenu
