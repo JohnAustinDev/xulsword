@@ -139,9 +139,6 @@ if [ ! -e "$XULSWORD/Cpp/build" ]; then
   make
 fi
 
-# Set LD_LIBRARY_PATH for the libxulsword node-module build which currently requires it
-LD_LIBRARY_PATH="$XULSWORD/Cpp/build"
-
 # Now initialize node.js
 cd "$XULSWORD"
 yarn
