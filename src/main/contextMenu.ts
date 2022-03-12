@@ -21,6 +21,9 @@ const noContextData: ContextData = {
   selectionParsedVK: null,
 };
 
+const isDevelopment =
+  process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
+
 export default function contextMenu(window: BrowserWindow): () => void {
   const cm = () => {
     return (Data.read('contextData') || noContextData) as ContextData;
@@ -28,6 +31,8 @@ export default function contextMenu(window: BrowserWindow): () => void {
 
   const options: contextMenuCreator.Options = {
     window,
+
+    showInspectElement: isDevelopment,
 
     showSearchWithGoogle: false,
     showCopyImage: false,

@@ -25,9 +25,10 @@ import contextMenu from './contextMenu';
 
 const i18nBackendMain = require('i18next-fs-backend');
 
-let t: (key: string, options?: any) => string;
+const isDevelopment =
+  process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
 
-if (process.env.NODE_ENV === 'production') {
+if (isDevelopment) {
   const sourceMapSupport = require('source-map-support');
   sourceMapSupport.install();
 }
@@ -40,23 +41,7 @@ export default class AppUpdater {
   }
 }
 
-const isDevelopment =
-  process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
-
-const installExtensions = async () => {
-  const installer = require('electron-devtools-installer');
-  const forceDownload = !!process.env.UPGRADE_EXTENSIONS;
-  const extensions = ['REACT_DEVELOPER_TOOLS'];
-
-  return installer
-    .default(
-      extensions.map((name) => installer[name]),
-      forceDownload
-    )
-    .catch((e: Error) => jsdump(e));
-};
-
-// Handle global variable calls from renderer
+// Handle global variable calls from renderer processes
 function handleGlobal(
   event: IpcMainEvent | IpcMainInvokeEvent,
   name: string,
@@ -126,7 +111,7 @@ ipcMain.on('did-finish-render', (event: IpcMainEvent) => {
 
 const openMainWindow = () => {
   let options: Electron.BrowserWindowConstructorOptions = {
-    title: t('programTitle'),
+    title: i18n.t('programTitle'),
     fullscreenable: true,
     width: 1024,
     height: 728,
@@ -196,7 +181,17 @@ const openMainWindow = () => {
 
 const start = async () => {
   if (isDevelopment) {
-    await installExtensions();
+    await (async () => {
+      const installer = require('electron-devtools-installer');
+      const forceDownload = !!process.env.UPGRADE_EXTENSIONS;
+      const extensions = ['REACT_DEVELOPER_TOOLS'];
+      return installer
+        .default(
+          extensions.map((name) => installer[name]),
+          forceDownload
+        )
+        .catch((e: Error) => jsdump(e));
+    })();
   }
 
   let supportedLangs = G.Prefs.getComplexValue('global.locales').map(
@@ -250,8 +245,6 @@ const start = async () => {
     })
     .catch((e) => jsdump(e));
 
-  t = (key: string, options?: any) => i18n.t(key, options);
-
   if (!(C.DEVELSPLASH === 1 && isDevelopment)) {
     G.Window.open({
       name: 'splash',
@@ -284,9 +277,11 @@ const start = async () => {
   // new AppUpdater();
 };
 
-/**
- * Add event listeners...
- */
+// Didn't see a better way to inject a troublesome contextMenu
+// dependency into Window.open().
+Data.write((win: BrowserWindow) => {
+  return contextMenu(win);
+}, 'contextMenuFunc');
 
 app.on('window-all-closed', () => {
   G.Prefs.setBoolPref(`WindowsDidClose`, true);
@@ -307,12 +302,6 @@ app.on('activate', () => {
   if (!WindowRegistry.some((wd) => wd && wd.name === 'xulsword'))
     openMainWindow();
 });
-
-// Didn't see a better way to inject a troublesome contextMenu
-// dependency into Window.open().
-Data.write((win: BrowserWindow) => {
-  return contextMenu(win);
-}, 'contextMenuFunc');
 
 app
   .whenReady()

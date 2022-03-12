@@ -141,7 +141,7 @@ class DynamicStyleSheet {
         sheet.insertRule(rule, sheet.cssRules.length);
       });
 
-      // Create userFontBase rule according to global user pref.
+      // Create userFontBase rule according to the global.font user pref.
       const x = G.Prefs.getIntPref('global.fontSize'); // from 0 to 4
       const px = C.UI.Atext.fontSize + C.UI.Atext.fontSizeOptionDelta * (x - 2);
       sheet.insertRule(
