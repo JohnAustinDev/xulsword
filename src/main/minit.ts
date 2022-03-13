@@ -282,11 +282,11 @@ export function getBooksInModule(): { [i: string]: string[] } {
       {},
       'modules'
     ) as { [i: string]: string[] };
-    const mods = Object.keys(booksInModule);
-    if (
-      tabs.length !== mods.length ||
-      !tabs.every((t) => mods.includes(t.module))
-    ) {
+    const pb = Object.keys(booksInModule);
+    const tb = tabs
+      .filter((t) => t.v11n && (t.type === C.BIBLE || t.type === C.COMMENTARY))
+      .map((t) => t.module);
+    if (pb.length !== tb.length || !pb.every((t) => pb.includes(t))) {
       booksInModule = {};
     }
     if (!Object.keys(booksInModule).length) {

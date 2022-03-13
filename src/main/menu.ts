@@ -606,9 +606,8 @@ export default class MenuBuilder {
       ],
     };
 
-    const panelpref = 'xulsword.panels';
     const panelarray = G.Prefs.getComplexValue(
-      panelpref
+      'xulsword.panels'
     ) as XulswordStatePref['panels'];
     const subMenuWindows = {
       role: 'windowMenu',
@@ -625,8 +624,8 @@ export default class MenuBuilder {
                 return x > i ? null : panel || '';
               }
             );
-            G.Prefs.setComplexValue(panelpref, newpans);
-            G.setGlobalStateFromPref(null, panelpref);
+            G.Prefs.setComplexValue('xulsword.panels', newpans);
+            G.setGlobalStateFromPref(null, 'xulsword.panels');
           },
         };
       }),
