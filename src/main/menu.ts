@@ -521,7 +521,10 @@ export default class MenuBuilder {
                 const panels = G.Prefs.getComplexValue(
                   'xulsword.panels'
                 ) as XulswordStatePref['panels'];
-                const module = panels.find((m) => m) || G.Tabs[0].module;
+                const module =
+                  panels.find((m) => m) ||
+                  (G.Tabs[0] && G.Tabs[0].module) ||
+                  '';
                 Commands.openFontsColors(module, this.mainWindow);
               },
             },

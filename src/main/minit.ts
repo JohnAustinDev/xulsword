@@ -270,33 +270,27 @@ export function getBkChsInV11n() {
   return Cache.read('bkChsInV11n');
 }
 
-type ModulesPref = {
-  [i: string]: {
-    osis: string[];
-  };
-};
-
 // The modules pref is used to cache costly module data.
 // If 'books' is in the pref-value, it is used, otherwise it is added
-// to the pref-value. IMPORTANT: If a module is ever updated or removed,
-// the modules pref MUST be reset or updated.
+// to the pref-value.
 export function getBooksInModule(): { [i: string]: string[] } {
-  if (!Cache.has('booksInMdule')) {
-    const modlist = LibSword.getModuleList();
-    const availableBooks: { [i: string]: string[] } = {};
-    if (modlist === C.NOMODULES) return availableBooks;
-    const prefmod = Prefs.getPrefOrCreate(
-      'modules',
+  if (!Cache.has('booksInModule')) {
+    const tabs = getTabs();
+    let booksInModule = Prefs.getPrefOrCreate(
+      'booksInModule',
       'complex',
       {},
       'modules'
-    ) as ModulesPref;
-    const tabs = getTabs();
-    const modules: string[] = [];
-    tabs.forEach((t: TabType) => {
-      modules.push(t.module);
-      if (!(t.module in prefmod)) {
-        prefmod[t.module] = { osis: [] };
+    ) as { [i: string]: string[] };
+    const mods = Object.keys(booksInModule);
+    if (
+      tabs.length !== mods.length ||
+      !tabs.every((t) => mods.includes(t.module))
+    ) {
+      booksInModule = {};
+    }
+    if (!Object.keys(booksInModule).length) {
+      tabs.forEach((t: TabType) => {
         if (t.v11n && (t.type === C.BIBLE || t.type === C.COMMENTARY)) {
           const v11nbooks = Object.keys(getBkChsInV11n()[t.v11n]);
           // When references to missing books are requested from SWORD,
@@ -337,19 +331,15 @@ export function getBooksInModule(): { [i: string]: string[] } {
                 `Module: '${t.module}' contains book: '${bk}' which is not part of module's v11n: '${t.v11n}'.`
               );
           });
-          prefmod[t.module].osis = osis;
+          booksInModule[t.module] = osis;
         }
-      }
-      availableBooks[t.module] = prefmod[t.module].osis;
-    });
-    Object.keys(prefmod).forEach((module) => {
-      if (!modules.includes(module)) delete prefmod[module];
-    });
-    Prefs.setComplexValue('modules', prefmod, 'modules');
-    Cache.write(availableBooks, 'booksInMdule');
+      });
+    }
+    Prefs.setComplexValue('booksInModule', booksInModule, 'modules');
+    Cache.write(booksInModule, 'booksInModule');
   }
 
-  return Cache.read('booksInMdule');
+  return Cache.read('booksInModule');
 }
 
 // LibSword.getMaxChapter returns an unpredictable wrong number if
