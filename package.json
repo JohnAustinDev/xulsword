@@ -32,7 +32,7 @@
   "build": {
     "productName": "xulsword",
     "appId": "org.xulsword",
-    "asar": false,
+    "asar": true,
     "asarUnpack": "**\\*.{node,dll}",
     "files": [
       "dist",

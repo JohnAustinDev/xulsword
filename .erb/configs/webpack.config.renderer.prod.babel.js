@@ -148,7 +148,8 @@ export default merge(baseConfig, {
       },
     ],
   },
-
+/* This was commented out because the minifier caused problems in the main
+process, (see comment there) and is not really needed for an electron app.
   optimization: {
     minimize: true,
     minimizer: [
@@ -158,7 +159,7 @@ export default merge(baseConfig, {
       new CssMinimizerPlugin(),
     ],
   },
-
+*/
   plugins: [
     /**
      * Create global constants which can be configured at compile time.
