@@ -23,14 +23,14 @@ import handlerH, {
   extractModuleStyleState,
   startingState,
   setStateValue as setStateValueH,
+  preclose,
 } from './chooseFontH';
 import './chooseFont.css';
 
 import type { ModTypes } from '../../type';
 
 window.ipc.renderer.once('close', () => {
-  G.Data.readAndDelete('stylesheetData');
-  G.Window.reset('dynamic-stylesheet-reset');
+  preclose();
 });
 
 const defaultProps = {

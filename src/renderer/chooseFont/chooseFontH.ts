@@ -148,6 +148,11 @@ export function setStateValue(this: ChooseFontWin, key: string, value?: any) {
   });
 }
 
+export function preclose() {
+  G.Data.readAndDelete('stylesheetData');
+  G.Window.reset('dynamic-stylesheet-reset');
+}
+
 export default function handler(this: ChooseFontWin, e: React.SyntheticEvent) {
   const state = this.state as ChooseFontWinState;
   const target = e.target as HTMLElement;
@@ -156,11 +161,13 @@ export default function handler(this: ChooseFontWin, e: React.SyntheticEvent) {
     case 'click': {
       switch (currentTarget.id) {
         case 'cancel': {
+          preclose();
           G.Window.close();
           break;
         }
         case 'ok': {
           G.Prefs.setComplexValue('style', getStyleFromState(state), 'style');
+          preclose();
           G.Window.close();
           break;
         }
