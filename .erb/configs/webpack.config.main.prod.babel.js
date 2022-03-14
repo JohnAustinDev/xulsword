@@ -69,7 +69,6 @@ this problem!
       NODE_ENV: 'production',
       DEBUG_PROD: false,
       START_MINIMIZED: false,
-      LD_LIBRARY_PATH: webpackPaths.appPath,
     }),
   ],
 
