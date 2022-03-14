@@ -22,6 +22,10 @@ PKG_DEPS="build-essential git subversion libtool-bin cmake autoconf make pkg-con
 PKG_DEPS="$PKG_DEPS debhelper binutils gcc-multilib dpkg-dev"
 # for Clucene build
 PKG_DEPS="$PKG_DEPS debhelper libboost-dev"
+
+# BUID DEPENDENCIES (for cross compiling libxulsword as a Windows dll)
+PKG_DEPS="$PKG_DEPS mingw-w64"
+
 if [ $(dpkg -s $PKG_DEPS 2>&1 | grep "not installed" | wc -m) -ne 0 ]; then
   if [ "$CONTEXT" = "xsguest" ]; then
     sudo apt-get update
@@ -48,7 +52,6 @@ if [ "$CONTEXT" = "xsguest" ]; then
   cd "$XULSWORD"
   tar -xvzf ./archive.tgz
 fi
-
 
 # Install node.js using nvm so our dev environment can use the latest
 # LTS version of node.js. Then install yarn and dependant node modules.
@@ -79,6 +82,13 @@ if [ ! -e "$XULSWORD/Cpp/zlib" ]; then
   make DESTDIR="$XULSWORD/Cpp/install" install
   # create a symlink to zconf.h (which was just renamed by cmake) so CLucene will compile
   ln -s ./build/zconf.h ../zconf.h
+
+  # CROSS COMPILE to windows 64 bit dll
+  cd "$XULSWORD/Cpp"
+  mkdir ./zlib/build.64win
+  cd ./zlib/build.64win
+  cmake -G "Unix Makefiles" -D CMAKE_TOOLCHAIN_FILE="$XULSWORD/Cpp/windows/cmake-toolchain.64win" ..
+  make DESTDIR="$XULSWORD/Cpp/install.64win" install
 fi
 
 # Compile libclucene (local compilation is required to create libsword static library)
@@ -106,6 +116,13 @@ if [ ! -e "$XULSWORD/Cpp/clucene" ]; then
   # -D DISABLE_MULTITHREADING=ON causes compilation to fail
   cmake -G "Unix Makefiles" -D BUILD_STATIC_LIBRARIES=ON -D CMAKE_INCLUDE_PATH="$XULSWORD/Cpp/install/usr/local/include" -D CMAKE_LIBRARY_PATH="$XULSWORD/Cpp/install/usr/local/lib" ..
   make DESTDIR="$XULSWORD/Cpp/install" install
+
+  # CROSS COMPILE to windows 64 bit dll
+  cd "$XULSWORD/Cpp"
+  mkdir ./clucene/build.64win
+  cd ./clucene/build.64win
+  cmake -DCMAKE_TOOLCHAIN_FILE=$XULSWORD/Cpp/windows/cmake-toolchain.64win -D BUILD_STATIC_LIBRARIES=ON -D ZLIB_INCLUDE_DIR=$XULSWORD/Cpp/install.64win/usr/local/include -D ZLIB_LIBRARY=$XULSWORD/Cpp/install.64win/usr/local/lib -D Boost_INCLUDE_DIR="$XULSWORD/Cpp/clucene/boost/boost" ..
+  make DESTDIR="$XULSWORD/Cpp/install.64win" install
 fi
 
 # Compile libsword (local compilation is required to create libxulsword static library)

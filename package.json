@@ -45,7 +45,13 @@
       "hardenedRuntime": true,
       "entitlements": "assets/entitlements.mac.plist",
       "entitlementsInherit": "assets/entitlements.mac.plist",
-      "gatekeeperAssess": false
+      "gatekeeperAssess": false,
+      "extraFiles": [
+        {
+          "from": "./Cpp/build/libxulsword-static.dylib",
+          "to": "libxulsword-static.dylib"
+        }
+      ]
     },
     "dmg": {
       "contents": [
@@ -64,6 +70,12 @@
     "win": {
       "target": [
         "nsis"
+      ],
+      "extraFiles": [
+        {
+          "from": "./Cpp/build/libxulsword-static.dll",
+          "to": "libxulsword-static.dll"
+        }
       ]
     },
     "linux": {

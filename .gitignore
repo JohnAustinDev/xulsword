@@ -35,8 +35,8 @@ npm-debug.log.*
 Cpp/sword
 Cpp/zlib
 Cpp/clucene
-Cpp/build
-Cpp/install
+Cpp/build*
+Cpp/install*
 
 # For Windows...
 Cpp/cluceneMK/windows/lib/Release/
