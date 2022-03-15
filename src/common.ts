@@ -9,9 +9,10 @@ export function escapeRE(text: string) {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-export function copyProps(source: any, which: any) {
+// Return a new source object containing only certain keys.
+export function copyProps(source: any, keys: any) {
   const p: any = {};
-  Object.keys(which).forEach((k) => {
+  Object.keys(keys).forEach((k) => {
     p[k] = k in source ? source[k] : undefined;
   });
   return p;

@@ -500,6 +500,7 @@ export const GPublic = {
   },
   Window: {
     open: func as unknown as (arg: WindowDescriptorType) => number,
+    persistArgument: func as unknown as (argname: string, value: any) => void,
     setContentSize: func as unknown as (
       width: number,
       height: number,

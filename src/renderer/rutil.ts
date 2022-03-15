@@ -560,13 +560,13 @@ export function setStatePref(id: string, state: Partial<React.ComponentState>) {
   }, 1);
 }
 
-// Calling this function registers a update-state-from-pref listener that, when
-// called upon, will read component state Prefs and write them to new state.
-export function onSetWindowState(component: React.Component) {
+// Calling this function registers an update-state-from-pref listener that, when
+// called upon, will read component state Prefs and set them to state.
+export function onSetWindowState(component: React.Component, ignore?: any) {
   const listener = (prefs: string | string[]) => {
     const { id } = component.props as any;
     if (id) {
-      const state = getStatePref(id, prefs);
+      const state = getStatePref(id, prefs, ignore);
       const lng = G.Prefs.getCharPref(C.LOCALEPREF);
       if (lng !== i18next.language) {
         i18next
@@ -588,11 +588,10 @@ export function onSetWindowState(component: React.Component) {
 
 // Compare component state to lastStatePrefs and do nothing if they are the same.
 // Otherwise, persist the changed state properties to Prefs (ignoring any in
-// ignore) and then setGlobalMenuFromPref() will update the application menu to
-// keep them in sync. Returns true if any prefs were changed, false otherwise.
+// ignore). Returns true if any prefs were changed, false otherwise.
 export function setPrefFromState(
   id: string,
-  state: React.ComponentState,
+  state: Partial<React.ComponentState>,
   lastStatePrefs: { [i: string]: any },
   ignore?: { [i: string]: any }
 ): boolean {
@@ -619,6 +618,30 @@ export function setPrefFromState(
       }
     }
   });
-  if (prefsChanged) G.setGlobalMenuFromPref();
+  return prefsChanged;
+}
+
+export function setWinargsFromState(
+  argname: string,
+  state: Partial<React.ComponentState>,
+  lastStatePrefs: { [i: string]: any },
+  ignore?: { [i: string]: any }
+): boolean {
+  let prefsChanged = false;
+  Object.entries(state).forEach((entry) => {
+    const [name, value] = entry;
+    if (!ignore || !(name in ignore)) {
+      const type = typeof value;
+      const lastval = lastStatePrefs[name];
+      const thisval = type === 'object' ? deepClone(value) : value;
+      if (!compareObjects(lastval, thisval)) {
+        lastStatePrefs[name] = thisval;
+        prefsChanged = true;
+      }
+    }
+  });
+  if (prefsChanged) {
+    G.Window.persistArgument(argname, state);
+  }
   return prefsChanged;
 }

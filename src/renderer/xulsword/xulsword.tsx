@@ -128,6 +128,33 @@ export default class Xulsword extends React.Component {
     this.destroy.push(onSetWindowState(this));
   }
 
+  componentDidUpdate() {
+    const state = this.state as XulswordState;
+    const { location } = state;
+    const { id } = this.props as XulswordProps;
+    const { lastStatePref } = this;
+    if (id && setPrefFromState(id, state, lastStatePref, notStatePref)) {
+      G.setGlobalMenuFromPref();
+      G.setGlobalStateFromPref(
+        null,
+        ['location', 'selection', 'flagScroll', 'show'].map((p) => {
+          return `${id}.${p}`;
+        })
+      );
+    }
+
+    // Add page to history after a short delay
+    if (location) {
+      delayHandler.bind(this)(
+        () => {
+          this.addHistory();
+        },
+        C.UI.Xulsword.historyDelay,
+        'historyTO'
+      )();
+    }
+  }
+
   componentWillUnmount() {
     clearPending(this, ['historyTO', 'dictkeydownTO', 'wheelScrollTO']);
     this.destroy.forEach((func) => func());
@@ -244,7 +271,7 @@ export default class Xulsword extends React.Component {
   render() {
     const state = this.state as XulswordState;
     const props = this.props as XulswordProps;
-    const { atextRefs, handler, viewportParentHandler, lastStatePref } = this;
+    const { atextRefs, handler, viewportParentHandler } = this;
     const {
       location,
       selection,
@@ -267,27 +294,6 @@ export default class Xulsword extends React.Component {
       bsreset,
       vpreset,
     } = state;
-    const { id } = props;
-
-    if (id && setPrefFromState(id, state, lastStatePref, notStatePref)) {
-      G.setGlobalStateFromPref(
-        null,
-        ['location', 'selection', 'flagScroll', 'show'].map((p) => {
-          return `${id}.${p}`;
-        })
-      );
-    }
-
-    // Add page to history after a short delay
-    if (location) {
-      delayHandler.bind(this)(
-        () => {
-          this.addHistory();
-        },
-        C.UI.Xulsword.historyDelay,
-        'historyTO'
-      )();
-    }
 
     // Book options for Bookselect dropdown
     const bookset: Set<string> = new Set();

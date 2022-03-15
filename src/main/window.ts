@@ -277,6 +277,23 @@ const Window: GType['Window'] & WindowPrivate = {
     return win.id;
   },
 
+  persistArgument(argname: string, value: any) {
+    const win = getBrowserWindows('self', this.browserWindow);
+    if (win.length && win[0]) {
+      const pref = Prefs.getComplexValue(`Windows.w${win[0].id}`, 'windows');
+      const args = pref.options.webPreferences.additionalArguments[0];
+      if (args) {
+        const arg = JSON_parse(args);
+        if (typeof arg === 'object') {
+          arg[argname] = value;
+          pref.options.webPreferences.additionalArguments[0] =
+            JSON_stringify(arg);
+          Prefs.setComplexValue(`Windows.w${win[0].id}`, pref, 'windows');
+        }
+      }
+    }
+  },
+
   setContentSize(w: number, h: number, window?: WindowArgType): void {
     getBrowserWindows(window, this.browserWindow).forEach((win) => {
       win.setContentSize(Math.round(w), Math.round(h));

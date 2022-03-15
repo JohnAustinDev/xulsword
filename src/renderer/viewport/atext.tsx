@@ -26,6 +26,7 @@ import {
   scrollIntoView,
   setStatePref,
   windowArgument,
+  setWinargsFromState,
 } from '../rutil';
 import {
   xulDefaultProps,
@@ -126,6 +127,11 @@ export const atextInitialState = {
 
 export type AtextState = typeof atextInitialState;
 
+// Window arguments that are used to set initial state must be updated so
+// a component reset does not return state to the initial window argument
+// values.
+const resetState: Partial<AtextState>[] = [];
+
 // XUL Atext
 class Atext extends React.Component {
   static defaultProps: typeof defaultProps;
@@ -140,16 +146,18 @@ class Atext extends React.Component {
 
   nbref: React.RefObject<HTMLDivElement>;
 
+  lastSavedPref: { [i: string]: any };
+
   constructor(props: AtextProps) {
     super(props);
 
-    const windowState = windowArgument(
+    resetState[props.panelIndex] = windowArgument(
       `atext${props.panelIndex}State`
     ) as Partial<AtextState>;
 
     const s: AtextState = {
       ...atextInitialState,
-      ...windowState,
+      ...resetState[props.panelIndex],
     };
     this.state = s;
 
@@ -160,6 +168,8 @@ class Atext extends React.Component {
     this.writeLibSword2DOM = this.writeLibSword2DOM.bind(this);
     this.handler = handlerH.bind(this);
     this.bbMouseUp = this.bbMouseUp.bind(this);
+
+    this.lastSavedPref = {};
   }
 
   componentDidMount() {
@@ -168,6 +178,15 @@ class Atext extends React.Component {
 
   componentDidUpdate() {
     this.onUpdate();
+    const state = this.state as AtextState;
+    const { panelIndex } = this.props as AtextProps;
+    const { lastSavedPref } = this;
+    resetState[panelIndex] = copyProps(state, atextInitialState);
+    setWinargsFromState(
+      `atext${panelIndex}State`,
+      resetState[panelIndex],
+      lastSavedPref
+    );
   }
 
   componentWillUnmount() {
