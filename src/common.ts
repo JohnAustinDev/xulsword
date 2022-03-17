@@ -20,10 +20,11 @@ export function trim(source: any, keepkeys: any, dropInstead = false) {
         p[k] = k in source ? source[k] : undefined;
       }
     });
+  } else {
+    keep.forEach((k) => {
+      p[k] = k in source ? source[k] : undefined;
+    });
   }
-  keep.forEach((k) => {
-    p[k] = k in source ? source[k] : undefined;
-  });
   return p;
 }
 

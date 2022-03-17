@@ -153,9 +153,6 @@ html.chromedir-rtl .atext .text-win {
   padding: 0px 5px 0px 5px;
   margin: 8px;
 }
-.atext.pinned .nb {
-  background: white;
-}
 
 /* Header Links */
 .navlink {
@@ -302,6 +299,9 @@ html.chromedir-rtl .atext .text-win {
   display: table-row;
   padding-inline-end: 16px;
 }
+.fnrow > div {
+  padding: 2px 0;
+}
 .fncol1 {
   display: table-cell;
   width: 6px;
@@ -361,11 +361,14 @@ html.chromedir-rtl .fncol3 {
   display: table-cell;
   padding: 0px 4px 0px 4px;
   border: 1px solid transparent;
-  border-radius: 8px;
+  border-radius: 6px;
 }
 .fnselected .fncol5 {
   border: 1px outset yellow;
   background: rgb(255, 243, 255);
+}
+.pinned .fnselected .fncol5 {
+  background: white;
 }
 .crref {
   text-decoration: underline;

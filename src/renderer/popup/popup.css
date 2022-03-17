@@ -35,6 +35,9 @@ html.chromedir-rtl .npopup {
   box-shadow: 3px 3px 5px 6px #ccc;
   cursor: default;
 }
+.pinned .npopupTX {
+  background: rgb(248 246 248);
+}
 .popup-text {
   width: 100%;
   clear: both;
