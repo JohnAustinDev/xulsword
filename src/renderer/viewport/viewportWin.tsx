@@ -25,7 +25,7 @@ import { Hbox, Vbox } from '../libxul/boxes';
 import Viewport from './viewport';
 import viewportParentH, {
   closeMenupopups,
-  vpWinNotStatePref,
+  vpWindowState,
 } from './viewportParentH';
 
 import type { XulswordStatePref } from '../../type';
@@ -41,12 +41,20 @@ const propTypes = {
 
 export type ViewportWinProps = XulProps;
 
-export type ViewportWinState = XulswordStatePref & typeof vpWinNotStatePref;
+const defaults = {
+  history: [] as any[],
+  historyIndex: 0,
+  vpreset: 0,
+};
+
+export type ViewportWinState = XulswordStatePref &
+  typeof vpWindowState &
+  typeof defaults;
 
 // Window arguments that are used to set initial state must be updated locally
 // and in Prefs, so that component reset or program restart won't cause
 // reversion to initial state.
-let notStatePref = windowArgument('xulswordState') as typeof vpWinNotStatePref;
+let windowState = windowArgument('xulswordState') as typeof vpWindowState;
 
 export default class ViewportWin extends React.Component {
   static defaultProps: typeof defaultProps;
@@ -68,13 +76,14 @@ export default class ViewportWin extends React.Component {
 
     if (props.id !== 'xulsword')
       throw Error(`ViewportWin id must be 'xulsword'`);
-    const statePref = getStatePref(props.id, null) as Omit<
+    const statePref = getStatePref(props.id) as Omit<
       XulswordStatePref,
-      keyof typeof vpWinNotStatePref
+      keyof typeof vpWindowState
     >;
     const s: ViewportWinState = {
+      ...defaults,
       ...statePref,
-      ...notStatePref,
+      ...windowState,
     };
     this.state = s;
 
@@ -89,7 +98,7 @@ export default class ViewportWin extends React.Component {
   }
 
   componentDidMount() {
-    this.destroy.push(onSetWindowState(this, vpWinNotStatePref));
+    this.destroy.push(onSetWindowState(this, vpWindowState));
   }
 
   componentDidUpdate(
@@ -97,13 +106,13 @@ export default class ViewportWin extends React.Component {
     prevState: ViewportWinState
   ) {
     const state = this.state as ViewportWinState;
-    notStatePref = trim(state, vpWinNotStatePref);
-    const changedNotStatePref = diff(
-      trim(prevState, vpWinNotStatePref),
-      notStatePref
+    windowState = trim(state, vpWindowState);
+    const changedWindowState = diff(
+      trim(prevState, vpWindowState),
+      windowState
     );
-    if (changedNotStatePref)
-      G.Window.mergeComplexValue('xulswordState', changedNotStatePref);
+    if (changedWindowState)
+      G.Window.mergeComplexValue('xulswordState', changedWindowState);
     const { id } = this.props as ViewportWinProps;
     if (id) {
       const changedStatePref = diff(

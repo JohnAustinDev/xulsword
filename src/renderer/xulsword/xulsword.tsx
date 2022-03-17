@@ -94,7 +94,7 @@ export default class Xulsword extends React.Component {
     if (props.id !== 'xulsword') throw Error(`Xulsword id must be 'xulsword'`);
     const s: XulswordState = {
       ...notStatePref,
-      ...(getStatePref(props.id, null) as XulswordStatePref),
+      ...(getStatePref(props.id) as XulswordStatePref),
     };
     // If any statePrefPanelDefault arrays are still 0 length, fill them.
     const sx = s as any;

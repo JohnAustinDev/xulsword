@@ -497,20 +497,25 @@ export function getCompanionModules(mod: string) {
 
 // Return the values of component state Prefs. Component state Prefs are
 // permanently persisted component state values recorded in prefs.json
-// whose key begins with the component id. Prefs keys found in ignore
-// are ignored. If prefsToGet is undefined, all state prefs will be returned.
-// NOTE: The whole pref object (the property name following the id) is
-// returned if any of its descendants is requested.
-type StateLike = {
-  [i: string]: any;
-};
+// whose key begins with the component id. Pref keys found in ignore
+// are ignored. If prefsToGet is undefined or null, all state prefs will
+// be returned. NOTE: The whole pref object (the property name following
+// the id) is returned if any of its descendants is requested.
+type StateKeysType =
+  | {
+      [i: string]: any;
+    }
+  | string[];
 export function getStatePref(
   id: string,
   prefsToGet?: string | string[] | null,
-  ignore?: StateLike
-): StateLike {
-  const state: StateLike = {};
+  ignore?: StateKeysType
+) {
+  const state: StateKeysType = {};
   if (id) {
+    let ignoreKeys: string[] = [];
+    if (ignore)
+      ignoreKeys = Array.isArray(ignore) ? ignore : Object.keys(ignore);
     const idpref = G.Prefs.getComplexValue(id);
     let keys: undefined | string[];
     if (prefsToGet) {
@@ -527,10 +532,7 @@ export function getStatePref(
     }
     Object.entries(idpref).forEach((entry) => {
       const [key, value] = entry;
-      if (
-        (!ignore || !(key in ignore)) &&
-        (!prefsToGet || keys?.includes(key))
-      ) {
+      if (!ignoreKeys.includes(key) && (!prefsToGet || keys?.includes(key))) {
         state[key] = value;
       }
     });

@@ -25,9 +25,7 @@ import type ViewportWin from './viewportWin';
 import type { ViewportWinState } from './viewportWin';
 import type { AtextState } from './atext';
 
-export const vpWinNotStatePref = {
-  history: [] as any[],
-  historyIndex: 0,
+export const vpWindowState = {
   tabs: [] as (string[] | null)[],
   panels: [] as (string | null)[],
   ilModules: [] as (string | null)[],
@@ -35,7 +33,6 @@ export const vpWinNotStatePref = {
   isPinned: [true, true, true],
   noteBoxHeight: [] as number[],
   maximizeNoteBox: [] as number[],
-  vpreset: 0,
 };
 
 export function closeMenupopups(component: React.Component) {
@@ -214,8 +211,8 @@ export default function handler(
           if (atext && cols !== undefined) {
             // Save new window's XulswordState
             const xulswordState: Partial<XulswordState> = {};
-            Object.entries(vpWinNotStatePref).forEach((entry) => {
-              const name = entry[0] as keyof typeof vpWinNotStatePref;
+            Object.entries(vpWindowState).forEach((entry) => {
+              const name = entry[0] as keyof typeof vpWindowState;
               const nsp = xulswordState as any;
               nsp[name] = state[name];
             });

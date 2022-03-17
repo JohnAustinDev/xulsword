@@ -143,6 +143,37 @@ function windowInitI18n(win: BrowserWindow) {
   });
 }
 
+function persist(
+  argname: string,
+  value: any,
+  merge: boolean,
+  callingWin: BrowserWindow
+) {
+  const pref = Prefs.getComplexValue(`Windows.w${callingWin.id}`, 'windows');
+  const args = pref.options.webPreferences.additionalArguments[0];
+  if (args) {
+    const arg = JSON_parse(args);
+    if (typeof arg === 'object') {
+      if (merge) {
+        if (
+          !['undefined', 'object'].includes(typeof value) ||
+          Array.isArray(value)
+        )
+          throw Error(`Window: merge value is not a data object: ${value}`);
+        const origval = arg[argname];
+        if (
+          !['undefined', 'object'].includes(typeof origval) ||
+          Array.isArray(origval)
+        )
+          throw Error(`Window: merge target is not a data object: ${origval}`);
+        arg[argname] = { ...origval, ...value };
+      } else arg[argname] = value;
+      pref.options.webPreferences.additionalArguments[0] = JSON_stringify(arg);
+      Prefs.setComplexValue(`Windows.w${callingWin.id}`, pref, 'windows');
+    }
+  }
+}
+
 function addWindowToPrefs(
   win: BrowserWindow,
   descriptor: WindowDescriptorType
@@ -175,7 +206,10 @@ function addWindowToPrefs(
 
 // All Windows are created with BrowserWindow.show = false so they
 // will not be shown until the custom 'did-finish-render' event.
-function updateOptions(descriptor: WindowDescriptorType): void {
+function updateOptions(
+  descriptor: WindowDescriptorType,
+  parent: BrowserWindow
+): void {
   const { name, type } = descriptor;
   let { options } = descriptor;
   options = options || {};
@@ -220,28 +254,28 @@ function updateOptions(descriptor: WindowDescriptorType): void {
     });
   }
   // Set bounds for windows that should cover their source position
-  // within the main xulsword window.
-  if (name === 'viewportWin' || name === 'popupWin') {
-    const mainWindow = getBrowserWindows({ name: 'xulsword' })[0];
-    if (mainWindow) {
-      const xs = windowBounds(mainWindow);
-      const o = options as any;
-      const eb = o?.openWithBounds;
-      if (xs && eb) {
-        options.width = eb.width;
-        options.height = eb.height;
-        options.x = xs.x + eb.x + xs.wLeft;
-        options.y = xs.y + eb.y + xs.hTop;
-      }
-      if (o?.openWithBounds) delete o.openWithBounds;
+  // within the parent window.
+  if (parent && (name === 'viewportWin' || name === 'popupWin')) {
+    const xs = windowBounds(parent);
+    const o = options as any;
+    const eb = o?.openWithBounds;
+    if (xs && eb) {
+      options.width = eb.width;
+      options.height = eb.height;
+      options.x = xs.x + eb.x + xs.wLeft;
+      options.y = xs.y + eb.y + xs.hTop;
     }
+    if (o?.openWithBounds) delete o.openWithBounds;
   }
   // console.log(options);
 }
 
-function createWindow(descriptor: WindowDescriptorType): BrowserWindow {
+function createWindow(
+  descriptor: WindowDescriptorType,
+  parent: BrowserWindow
+): BrowserWindow {
   const { name, type, options } = descriptor;
-  updateOptions(descriptor);
+  updateOptions(descriptor, parent);
   const win = new BrowserWindow(options);
   addWindowToRegistry(win, descriptor);
   win.loadURL(resolveHtmlPath(`${name}.html`));
@@ -265,40 +299,9 @@ function createWindow(descriptor: WindowDescriptorType): BrowserWindow {
   return win;
 }
 
-function persist(
-  argname: string,
-  value: any,
-  merge: boolean,
-  callingWin: BrowserWindow
-) {
-  const pref = Prefs.getComplexValue(`Windows.w${callingWin.id}`, 'windows');
-  const args = pref.options.webPreferences.additionalArguments[0];
-  if (args) {
-    const arg = JSON_parse(args);
-    if (typeof arg === 'object') {
-      if (merge) {
-        if (
-          !['undefined', 'object'].includes(typeof value) ||
-          Array.isArray(value)
-        )
-          throw Error(`Window: merge value is not a data object: ${value}`);
-        const origval = arg[argname];
-        if (
-          !['undefined', 'object'].includes(typeof origval) ||
-          Array.isArray(origval)
-        )
-          throw Error(`Window: merge target is not a data object: ${origval}`);
-        arg[argname] = { ...origval, ...value };
-      } else arg[argname] = value;
-      pref.options.webPreferences.additionalArguments[0] = JSON_stringify(arg);
-      Prefs.setComplexValue(`Windows.w${callingWin.id}`, pref, 'windows');
-    }
-  }
-}
-
 const Window: GType['Window'] = {
   open(descriptor: WindowDescriptorType): number {
-    const win = createWindow(descriptor);
+    const win = createWindow(descriptor, arguments[1]);
     if (descriptor.type === 'window') addWindowToPrefs(win, descriptor);
     return win.id;
   },

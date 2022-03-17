@@ -148,10 +148,10 @@ export function clone(obj: any) {
 // Compare two data objects. Data objects have string keys with values that are
 // either primitives, arrays or other data objects. It returns all differences
 // in obj2 compared to obj1, or undefined if they share all the same values
-// recursively. Children greater than 'depth' recursion are compared exhastively
-// but returned entirely. Depth is 1 by default because React setState performs
-// shallow merging with existing state, meaning a partial state object would
-// overwrite a complete one, resulting in unexpected states.
+// recursively. Children greater than 'depth' recursion are compared exhaustively
+// but returned entirely if different in any way. Depth is 1 by default because
+// React setState performs shallow merging with existing state, meaning a partial
+// state object would overwrite a complete one, resulting in unexpected states.
 export function diff(obj1: any, obj2: any, depth = 1): any {
   let difference: any;
   const level = depth || 0;
@@ -168,8 +168,8 @@ export function diff(obj1: any, obj2: any, depth = 1): any {
     if (
       !Array.isArray(obj1) ||
       obj1.length !== obj2.length ||
-      !obj2.every((v) => {
-        return obj1.includes(v);
+      obj2.some((v, i) => {
+        return diff(obj1[i], v, depth - 1) !== undefined;
       })
     ) {
       difference = obj2;
