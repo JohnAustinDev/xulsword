@@ -26,10 +26,12 @@ import Viewport from './viewport';
 import viewportParentH, {
   closeMenupopups,
   vpWindowState,
+  noteboxBarHandler as noteboxBarHandlerH,
 } from './viewportParentH';
 
 import type { XulswordStatePref } from '../../type';
 import type Atext from './atext';
+import type { NoteboxBarHandlerType } from './viewportParentH';
 
 const defaultProps = {
   ...xulDefaultProps,
@@ -63,6 +65,8 @@ export default class ViewportWin extends React.Component {
 
   viewportParentHandler: any;
 
+  noteboxBarHandler: NoteboxBarHandlerType;
+
   dictkeydownTO: NodeJS.Timeout | undefined;
 
   wheelScrollTO: NodeJS.Timeout | undefined;
@@ -88,6 +92,7 @@ export default class ViewportWin extends React.Component {
     this.state = s;
 
     this.viewportParentHandler = viewportParentH.bind(this);
+    this.noteboxBarHandler = noteboxBarHandlerH.bind(this);
 
     this.destroy = [];
 
@@ -148,7 +153,7 @@ export default class ViewportWin extends React.Component {
       showChooser,
       vpreset,
     } = state;
-    const { atextRefs, viewportParentHandler } = this;
+    const { atextRefs, viewportParentHandler, noteboxBarHandler } = this;
 
     const short = true;
     console.log(
@@ -182,8 +187,9 @@ export default class ViewportWin extends React.Component {
             maximizeNoteBox={maximizeNoteBox}
             showChooser={false}
             ownWindow
-            parentHandler={viewportParentHandler}
             atextRefs={atextRefs}
+            eHandler={viewportParentHandler}
+            noteboxBarHandler={noteboxBarHandler}
           />
         </Hbox>
       </Vbox>

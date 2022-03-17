@@ -239,13 +239,14 @@ export const htmlAttribs = (className: string, props: any) => {
 // component instance would never be called.
 export const topHandle = (
   name: string,
-  func?: (e: any) => any,
+  func?: (e: React.SyntheticEvent) => any,
   props?: any
 ) => {
   return {
-    [name]: (e: any) => {
+    [name]: (e: React.SyntheticEvent) => {
       if (typeof func === 'function') func(e);
-      if (props && typeof props[name] === 'function') props[name](e);
+      if (!e.isPropagationStopped && props && typeof props[name] === 'function')
+        props[name](e);
     },
   };
 };

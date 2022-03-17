@@ -434,7 +434,7 @@ const cb: SetPrefCallbackType = (win, key, val, store) => {
     }
     keys.forEach((pkey) => {
       const basekey = pkey.split('.').slice(0, 2).join('.');
-      if (menuPref.includes(pkey)) keysToUpdate.push(pkey);
+      if (menuPref.includes(basekey)) keysToUpdate.push(pkey);
       else {
         Object.entries(C.GlobalState).forEach((entry) => {
           entry[1].forEach((k) => {

@@ -38,6 +38,7 @@ import '../libxul/xul.css';
 import './viewport.css';
 
 import type { LocationVKType } from '../../type';
+import { NoteboxBarHandlerType } from './viewportParentH';
 
 const defaultProps = {
   ...xulDefaultProps,
@@ -65,7 +66,8 @@ const propTypes = {
   maximizeNoteBox: PropTypes.arrayOf(PropTypes.number).isRequired,
   ownWindow: PropTypes.bool.isRequired,
 
-  parentHandler: PropTypes.func.isRequired,
+  eHandler: PropTypes.func.isRequired,
+  noteboxBarHandler: PropTypes.func.isRequired,
   atextRefs: PropTypes.arrayOf(PropTypes.object),
 };
 
@@ -85,7 +87,8 @@ type ViewportProps = PopupParentProps &
     maximizeNoteBox: number[];
     ownWindow: boolean;
 
-    parentHandler: (e: any) => void;
+    eHandler: (e: React.SyntheticEvent) => void;
+    noteboxBarHandler: NoteboxBarHandlerType;
     atextRefs: React.RefObject<Atext>[];
   };
 
@@ -158,7 +161,8 @@ class Viewport extends React.Component implements PopupParent {
       maximizeNoteBox,
       showChooser,
       ownWindow,
-      parentHandler,
+      eHandler,
+      noteboxBarHandler,
       atextRefs,
     } = this.props as ViewportProps;
     const { reset, elemhtml, eleminfo, gap, popupParent, popupReset } = this
@@ -372,8 +376,8 @@ class Viewport extends React.Component implements PopupParent {
       <Hbox
         {...addClass(`viewport ${cls}`, props)}
         style={{ minWidth: `${minWidth}px` }}
-        {...topHandle('onContextMenu', parentHandler)}
-        {...topHandle('onClick', parentHandler)}
+        {...topHandle('onContextMenu', eHandler)}
+        {...topHandle('onClick', eHandler)}
       >
         {!ownWindow && !showChooser && chooser !== 'genbook' && (
           <button type="button" className="open-chooser" />
@@ -388,11 +392,11 @@ class Viewport extends React.Component implements PopupParent {
             headingsModule={firstUnpinnedBible}
             bookGroups={bookGroups}
             availableBooks={availableBooks}
-            onCloseChooserClick={parentHandler}
+            onCloseChooserClick={eHandler}
           />
         )}
 
-        <Vbox className="textarea" flex="1" onKeyDown={parentHandler}>
+        <Vbox className="textarea" flex="1" onKeyDown={eHandler}>
           <div className="tabrow">
             {panels.map((_p: string | null, i: number) => {
               const tabWidth = tabWidths[i];
@@ -472,9 +476,9 @@ class Viewport extends React.Component implements PopupParent {
                     noteBoxHeight={noteBoxHeight[i]}
                     maximizeNoteBox={maximizeNoteBox[i]}
                     ownWindow={ownWindow}
-                    onMaximizeNoteBox={parentHandler}
+                    noteboxBarHandler={noteboxBarHandler}
                     onWheel={(e) => {
-                      parentHandler(e);
+                      eHandler(e);
                       popupParentHandler(e, panel);
                     }}
                     onMouseOut={(e) => popupParentHandler(e, panel)}

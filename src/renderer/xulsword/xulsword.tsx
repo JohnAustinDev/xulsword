@@ -32,12 +32,16 @@ import Bookselect from '../libxul/bookselect';
 import Spacer from '../libxul/spacer';
 import Textbox from '../libxul/textbox';
 import Viewport from '../viewport/viewport';
-import viewportParentH, { closeMenupopups } from '../viewport/viewportParentH';
+import viewportParentH, {
+  closeMenupopups,
+  noteboxBarHandler as noteboxBarHandlerH,
+} from '../viewport/viewportParentH';
 import handlerH from './xulswordH';
 import './xulsword.css';
 
 import type { HistoryVKType, XulswordStatePref } from '../../type';
 import type Atext from '../viewport/atext';
+import type { NoteboxBarHandlerType } from '../viewport/viewportParentH';
 
 const defaultProps = {
   ...xulDefaultProps,
@@ -78,6 +82,8 @@ export default class Xulsword extends React.Component {
 
   viewportParentHandler: any;
 
+  noteboxBarHandler: NoteboxBarHandlerType;
+
   historyTO: NodeJS.Timeout | undefined;
 
   dictkeydownTO: NodeJS.Timeout | undefined;
@@ -111,6 +117,7 @@ export default class Xulsword extends React.Component {
 
     this.handler = handlerH.bind(this);
     this.viewportParentHandler = viewportParentH.bind(this);
+    this.noteboxBarHandler = noteboxBarHandlerH.bind(this);
 
     this.destroy = [];
 
@@ -261,7 +268,8 @@ export default class Xulsword extends React.Component {
   render() {
     const state = this.state as XulswordState;
     const props = this.props as XulswordProps;
-    const { atextRefs, handler, viewportParentHandler } = this;
+    const { atextRefs, handler, viewportParentHandler, noteboxBarHandler } =
+      this;
     const {
       location,
       selection,
@@ -510,7 +518,6 @@ export default class Xulsword extends React.Component {
           <Viewport
             key={viewportReset.join('.')}
             id="main-viewport"
-            parentHandler={viewportParentHandler}
             location={location}
             selection={selection}
             tabs={tabs}
@@ -527,6 +534,8 @@ export default class Xulsword extends React.Component {
             showChooser={showChooser}
             ownWindow={false}
             atextRefs={atextRefs}
+            eHandler={viewportParentHandler}
+            noteboxBarHandler={noteboxBarHandler}
           />
         </Hbox>
       </Vbox>

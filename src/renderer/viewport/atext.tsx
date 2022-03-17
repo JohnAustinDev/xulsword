@@ -41,6 +41,7 @@ import '../libsword.css';
 import './atext.css';
 
 import type { LocationVKType, PlaceType, ShowType } from '../../type';
+import type { NoteboxBarHandlerType } from './viewportParentH';
 
 const memoize = require('memoizee');
 
@@ -60,7 +61,7 @@ const defaultProps = {
 
 const propTypes = {
   ...xulPropTypes,
-  onMaximizeNoteBox: PropTypes.func.isRequired,
+  noteboxBarHandler: PropTypes.func.isRequired,
   panelIndex: PropTypes.number.isRequired,
   columns: PropTypes.number.isRequired,
   location: PropTypes.object,
@@ -80,11 +81,7 @@ const propTypes = {
 
 // Atext's properties. NOTE: property types are used, but property values are not.
 const atextProps = {
-  onMaximizeNoteBox: (
-    _e: React.SyntheticEvent<any>,
-    _noteboxResizing?: number[],
-    _maximize?: boolean
-  ): void => {},
+  noteboxBarHandler: (() => {}) as NoteboxBarHandlerType,
   panelIndex: 0 as number,
   columns: 0 as number,
   location: null as LocationVKType | null,
@@ -527,15 +524,19 @@ class Atext extends React.Component {
   }
 
   // This is also called by onMouseMove when bb moves beyond min/max.
-  bbMouseUp(this: Atext, e: any, nbr?: number[], maximize?: boolean) {
+  bbMouseUp(
+    this: Atext,
+    e: React.SyntheticEvent,
+    nbr?: number[],
+    maximize?: boolean
+  ) {
     const { noteBoxResizing } = this.state as AtextState;
-    const props = this.props as AtextProps;
+    const { noteboxBarHandler } = this.props as AtextProps;
     if (noteBoxResizing === null) return;
     e.stopPropagation();
     const newnbr = nbr || noteBoxResizing;
     this.setState({ noteBoxResizing: null });
-    e.type = 'mouseup';
-    props.onMaximizeNoteBox(e, newnbr, maximize);
+    noteboxBarHandler(e, newnbr, maximize);
   }
 
   render() {

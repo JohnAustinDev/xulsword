@@ -57,6 +57,57 @@ export function closeMenupopups(component: React.Component) {
   }
 }
 
+export type NoteboxBarHandlerType = (
+  e: React.SyntheticEvent,
+  noteboxResizing?: number[],
+  maximize?: boolean
+) => void;
+
+// Handle certain notebox boundary bar events for Atext.
+export function noteboxBarHandler(
+  this: Xulsword | ViewportWin,
+  e: React.SyntheticEvent,
+  noteboxResizing?: number[],
+  maximize?: boolean
+) {
+  const target = e.target as HTMLElement;
+  const atext = ofClass(['atext'], target)?.element;
+  const index = Number(atext && atext.dataset.index);
+  if (atext && !Number.isNaN(index)) {
+    if (noteboxResizing === undefined) {
+      // The bb bar is being dragged while maximizeNoteBox > 0
+      // cancels maximizeNoteBox
+      this.setState((prevState) => {
+        let { maximizeNoteBox } = prevState as XulswordStatePref;
+        maximizeNoteBox = clone(maximizeNoteBox);
+        maximizeNoteBox[index] = 0;
+        return { maximizeNoteBox };
+      });
+    } else if (noteboxResizing && atext) {
+      // mouseup event handler for Atext.
+      this.setState((prevState: XulswordStatePref) => {
+        let { maximizeNoteBox, noteBoxHeight } = prevState;
+        maximizeNoteBox = clone(maximizeNoteBox);
+        noteBoxHeight = clone(noteBoxHeight);
+        const [initial, final] = noteboxResizing;
+        if (maximize === true) {
+          maximizeNoteBox[index] = noteBoxHeight[index];
+          const { columns: clsx } = atext.dataset;
+          const columns = Number(clsx);
+          let stopHeight = atext.clientHeight - C.UI.Atext.prevNextHeight;
+          if (columns === 1) stopHeight -= C.UI.Atext.bbTopMargin;
+          noteBoxHeight[index] = stopHeight;
+        } else if (maximize === false) {
+          noteBoxHeight[index] = C.UI.Atext.bbBottomMargin;
+        } else {
+          noteBoxHeight[index] += initial - final;
+        }
+        return { maximizeNoteBox, noteBoxHeight };
+      });
+    }
+  }
+}
+
 // Set viewportParent state or, if the target panel is pinned, the panel's
 // Atext.pin state will be updated instead. This setState should be called
 // any time the event handler modifies a C.PinProps state.
@@ -155,9 +206,7 @@ function setState(
 
 export default function handler(
   this: Xulsword | ViewportWin,
-  es: React.SyntheticEvent<any>,
-  noteboxResizing?: number[],
-  maximize?: boolean
+  es: React.SyntheticEvent<any>
 ) {
   const state = this.state as XulswordState | ViewportWinState;
   const { location } = state;
@@ -567,44 +616,6 @@ export default function handler(
         !ofClass(['nbc'], target)
       ) {
         aTextWheelScroll(e, atext, this);
-      }
-      break;
-    }
-
-    // mousemove events passed from Atext's handler. This event means
-    // the bb bar is being dragged while maximizeNoteBox > 0.
-    case 'mousemove': {
-      this.setState((prevState) => {
-        let { maximizeNoteBox } = prevState as XulswordStatePref;
-        maximizeNoteBox = clone(maximizeNoteBox);
-        maximizeNoteBox[index] = 0;
-        return { maximizeNoteBox };
-      });
-      break;
-    }
-
-    // mouseup events passed from Atext's handler.
-    case 'mouseup': {
-      if (noteboxResizing && atext) {
-        this.setState((prevState: XulswordStatePref) => {
-          let { maximizeNoteBox, noteBoxHeight } = prevState;
-          maximizeNoteBox = clone(maximizeNoteBox);
-          noteBoxHeight = clone(noteBoxHeight);
-          const [initial, final] = noteboxResizing;
-          if (maximize === true) {
-            maximizeNoteBox[index] = noteBoxHeight[index];
-            const { columns: clsx } = atext.dataset;
-            const columns = Number(clsx);
-            let stopHeight = atext.clientHeight - C.UI.Atext.prevNextHeight;
-            if (columns === 1) stopHeight -= C.UI.Atext.bbTopMargin;
-            noteBoxHeight[index] = stopHeight;
-          } else if (maximize === false) {
-            noteBoxHeight[index] = C.UI.Atext.bbBottomMargin;
-          } else {
-            noteBoxHeight[index] += initial - final;
-          }
-          return { maximizeNoteBox, noteBoxHeight };
-        });
       }
       break;
     }
