@@ -5,15 +5,14 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/media-has-caption */
 import React from 'react';
-import { copyProps } from '../../common';
+import C from '../../constant';
+import { trim, stringHash } from '../../common';
 import G from '../rg';
 import renderToRoot from '../rinit';
 import {
   clearPending,
   getStatePref,
   onSetWindowState,
-  setPrefFromState,
-  setWinargsFromState,
   windowArgument,
 } from '../rutil';
 import {
@@ -44,10 +43,10 @@ export type ViewportWinProps = XulProps;
 
 export type ViewportWinState = XulswordStatePref & typeof vpWinNotStatePref;
 
-// Window arguments that are used to set initial state must be updated so
-// a component reset does not return state to the initial window argument
-// values.
-let resetState = windowArgument('xulswordState') as typeof vpWinNotStatePref;
+// Window arguments that are used to set initial state must be updated locally
+// and in Prefs, so that component reset or program restart won't cause
+// reversion to initial state.
+let notStatePref = windowArgument('xulswordState') as typeof vpWinNotStatePref;
 
 export default class ViewportWin extends React.Component {
   static defaultProps: typeof defaultProps;
@@ -59,8 +58,6 @@ export default class ViewportWin extends React.Component {
   dictkeydownTO: NodeJS.Timeout | undefined;
 
   wheelScrollTO: NodeJS.Timeout | undefined;
-
-  lastSavedPref: { [i: string]: any };
 
   destroy: (() => void)[];
 
@@ -77,12 +74,11 @@ export default class ViewportWin extends React.Component {
     >;
     const s: ViewportWinState = {
       ...statePref,
-      ...resetState,
+      ...notStatePref,
     };
     this.state = s;
 
     this.viewportParentHandler = viewportParentH.bind(this);
-    this.lastSavedPref = {};
 
     this.destroy = [];
 
@@ -96,20 +92,25 @@ export default class ViewportWin extends React.Component {
     this.destroy.push(onSetWindowState(this, vpWinNotStatePref));
   }
 
-  componentDidUpdate() {
+  componentDidUpdate(
+    _prevProps: ViewportWinProps,
+    prevState: ViewportWinState
+  ) {
     const state = this.state as ViewportWinState;
     const { id } = this.props as ViewportWinProps;
-    const { lastSavedPref } = this;
-    resetState = copyProps(this.state, vpWinNotStatePref);
+    notStatePref = trim(state, vpWinNotStatePref);
+    if (
+      stringHash(notStatePref) !==
+      stringHash(trim(prevState, vpWinNotStatePref))
+    )
+      G.Window.persist('xulswordState', notStatePref);
     if (id) {
-      setWinargsFromState('xulswordState', resetState, lastSavedPref);
-      if (setPrefFromState(id, state, lastSavedPref, vpWinNotStatePref)) {
-        G.setGlobalStateFromPref(
-          null,
-          ['location', 'selection', 'flagScroll'].map((p) => {
-            return `${id}.${p}`;
-          })
-        );
+      const newGlobalPref = trim(state, C.GlobalState.xulsword);
+      if (
+        stringHash(newGlobalPref) !==
+        stringHash(trim(prevState, C.GlobalState.xulsword))
+      ) {
+        G.Prefs.mergeComplexValue(id, newGlobalPref);
       }
     }
   }

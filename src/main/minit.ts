@@ -5,14 +5,14 @@
 import path from 'path';
 import fs from 'fs';
 import i18next from 'i18next';
-import { BrowserWindow, Menu } from 'electron';
+import { BrowserWindow } from 'electron';
 import C from '../constant';
 import VerseKey from '../versekey';
 import RefParser, { RefParserOptionsType } from '../refparse';
 import { isASCII, JSON_parse } from '../common';
 import Cache from '../cache';
 import Dirs from './modules/dirs';
-import Prefs from './modules/prefs';
+import Prefs, { SetPrefCallbackType } from './modules/prefs';
 import LibSword from './modules/libsword';
 import nsILocalFile from './components/nsILocalFile';
 import { getFontFaceConfigs } from './config';
@@ -27,8 +27,8 @@ import type {
   GType,
   BookGroupType,
   LocationVKType,
-  XulswordStatePref,
 } from '../type';
+import Data from './modules/data';
 
 const fontList = require('font-list');
 
@@ -414,74 +414,39 @@ export function getSystemFonts() {
   return Promise.resolve(Cache.read('fontList'));
 }
 
-export function setMenuFromPrefs(menu: Electron.Menu) {
-  if (!menu.items) return;
-  menu.items.forEach((i) => {
-    if (i.id && i.type === 'checkbox') {
-      const [type, pi, mod] = i.id.split('_');
-      if (type === 'showtab') {
-        const panelIndex = Number(pi);
-        const pval = Prefs.getComplexValue(
-          'xulsword.tabs'
-        ) as XulswordStatePref['tabs'];
-        if (panelIndex === -1) {
-          i.checked = pval.every((p: any) => p?.includes(mod));
-        } else {
-          i.checked = Boolean(pval[panelIndex]?.includes(mod));
-        }
-      } else {
-        i.checked = Prefs.getBoolPref(i.id);
-      }
-    } else if (i.id && i.type === 'radio') {
-      const [pref, str] = i.id.split('_val_');
-      if (pref === 'xulsword.panels') {
-        const numPanels = Prefs.getComplexValue(pref).filter(
-          (m: string | null) => m || m === ''
-        ).length;
-        if (numPanels === Number(str)) i.checked = true;
-      } else if (str !== '') {
-        let val: string | number = str;
-        if (Number(str).toString() === str) val = Number(str);
-        const pval =
-          typeof val === 'number'
-            ? Prefs.getIntPref(pref)
-            : Prefs.getCharPref(pref);
-        if (pval === val) i.checked = true;
-      }
+// Push user preference changes to applicable windows with update-state-from-pref.
+// Some changes require more than simply updating state prefs to take full effect,
+// such as those effecting locale or dynamic stylesheet.
+const cb: SetPrefCallbackType = (win, key, val, store) => {
+  if (store === 'prefs') {
+    const updateLocale = key === C.LOCALEPREF;
+    const keysToUpdate: string[] = [];
+    const keys: string[] =
+      !key.includes('.') && typeof val === 'object'
+        ? Object.keys(val).map((k) => {
+            return `${key}.${k}`;
+          })
+        : [key];
+    // C.GlobalState and menuPref are base-key lists (id.property)
+    let menuPref: string[] = [];
+    if (Data.has('menuPref')) {
+      menuPref = Data.read('menuPref') as string[];
     }
-    if (i.submenu) setMenuFromPrefs(i.submenu);
-  });
-}
-
-export function setGlobalMenuFromPref(menu?: Electron.Menu) {
-  const m = menu || Menu.getApplicationMenu();
-  if (m !== null) setMenuFromPrefs(m);
-}
-
-// Pushes user preference changes to one or all windows to update their
-// state prefs. Some changes require more than simply updating state prefs,
-// to take full effect, such as those effecting locale or dynamic stylesheet;
-// so with the exception of LOCALEPREF, such preferences MUST be included
-// in the prefs argument or they will not take full effect. Normally only
-// the focused window is allowed to update other windows, otherwise loops
-// will occur. But to update all windows regardless, set unfocusedUpdate
-// to true if you're sure there can be no cycling for the operation.
-export function setGlobalStateFromPref(
-  win: BrowserWindow | null,
-  prefs?: string | string[],
-  unfocusedUpdate = false
-) {
-  const requiresReset = [C.LOCALEPREF, 'global.fontSize'];
-  const prefsArray = ((prefs && !Array.isArray(prefs) && [prefs]) || prefs) as
-    | string[]
-    | undefined;
-  const doReset = prefsArray
-    ? prefsArray.some((p) => requiresReset.includes(p))
-    : false;
-
-  if (unfocusedUpdate || !win || win === BrowserWindow.getFocusedWindow()) {
-    const lng = Prefs.getCharPref(C.LOCALEPREF);
-    if (lng !== i18next.language) {
+    keys.forEach((pkey) => {
+      const basekey = pkey.split('.').slice(0, 2).join('.');
+      if (menuPref.includes(pkey)) keysToUpdate.push(pkey);
+      else {
+        Object.entries(C.GlobalState).forEach((entry) => {
+          entry[1].forEach((k) => {
+            const gloskey = `${entry[0]}.${k}`;
+            if (basekey === gloskey) keysToUpdate.push(pkey);
+          });
+        });
+      }
+    });
+    const doReset = [C.LOCALEPREF, 'global.fontSize'].includes(key);
+    if (updateLocale) {
+      const lng = Prefs.getCharPref(C.LOCALEPREF);
       i18next
         .loadLanguages(lng)
         .then(() => i18next.changeLanguage(lng))
@@ -497,12 +462,15 @@ export function setGlobalStateFromPref(
     } else if (doReset) {
       resetMain();
       Window.reset();
-    } else {
+    } else if (keysToUpdate.length) {
       BrowserWindow.getAllWindows().forEach((w) => {
-        // No need to update the calling window.
         if (!win || w !== win)
-          w.webContents.send('update-state-from-pref', prefs);
+          w.webContents.send('update-state-from-pref', keysToUpdate);
       });
     }
   }
-}
+};
+let cbs: SetPrefCallbackType[] = [];
+if (Data.has('setPrefCallback')) cbs = Data.read('setPrefCallback');
+cbs.push(cb);
+Data.write(cbs, 'setPrefCallback');

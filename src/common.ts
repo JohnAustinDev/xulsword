@@ -9,10 +9,19 @@ export function escapeRE(text: string) {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-// Return a new source object containing only certain keys.
-export function copyProps(source: any, keys: any) {
+// Return a new source object retaining only certain keys from the original.
+export function trim(source: any, keepkeys: any, dropInstead = false) {
   const p: any = {};
-  Object.keys(keys).forEach((k) => {
+  const keep = Array.isArray(keepkeys) ? keepkeys : Object.keys(keepkeys);
+  if (dropInstead) {
+    const drop = keep;
+    Object.keys(source).forEach((k) => {
+      if (!drop.includes(k)) {
+        p[k] = k in source ? source[k] : undefined;
+      }
+    });
+  }
+  keep.forEach((k) => {
     p[k] = k in source ? source[k] : undefined;
   });
   return p;
@@ -121,25 +130,80 @@ export function deepClone(obj: any) {
   return JSON_parse(JSON_stringify(obj));
 }
 
-export function compareObjects(obj1: any, obj2: any, deep = false): boolean {
+// Copy a data object. Data objects have string keys with values that are
+// either primitives, arrays or other data objects.
+export function clone(obj: any) {
+  let copy: any;
+  if (obj === null || typeof obj !== 'object') copy = obj;
+  else if (Array.isArray(obj)) copy = obj.slice();
+  else {
+    copy = {};
+    Object.entries(obj).forEach((entry) => {
+      copy[entry[0]] = clone(entry[1]);
+    });
+  }
+  return copy;
+}
+
+// Compare two data objects. Data objects have string keys with values that are
+// either primitives, arrays or other data objects. It returns all differences
+// in obj2 compared to obj1, or undefined if they share all the same values
+// recursively. Children greater than 'depth' recursion are compared exhastively
+// but returned entirely. Depth is 1 by default because React setState performs
+// shallow merging with existing state, meaning a partial state object would
+// overwrite a complete one, resulting in unexpected states.
+export function diff(obj1: any, obj2: any, depth = 1): any {
+  let difference: any;
+  const level = depth || 0;
+  // Primatives
   if (
     obj1 === null ||
     obj2 === null ||
     typeof obj1 !== 'object' ||
     typeof obj2 !== 'object'
   ) {
-    return obj1 === obj2;
-  }
-  return (
-    Object.keys(obj1).length === Object.keys(obj2).length &&
-    Object.keys(obj1).every(
-      (key) =>
-        Object.prototype.hasOwnProperty.call(obj2, key) &&
-        (deep
-          ? compareObjects(obj1[key], obj2[key], true)
-          : obj1[key] === obj2[key])
+    if (obj1 !== obj2) difference = obj2;
+  } else if (Array.isArray(obj2)) {
+    // Arrays
+    if (
+      !Array.isArray(obj1) ||
+      obj1.length !== obj2.length ||
+      !obj2.every((v) => {
+        return obj1.includes(v);
+      })
+    ) {
+      difference = obj2;
+    }
+  } else {
+    // Data objects
+    let different = false;
+    Object.entries(obj2).forEach((entry2) => {
+      const [k2, v2] = entry2;
+      if (!(k2 in obj1)) {
+        different = true;
+        if (depth > 0) {
+          if (!difference) difference = {};
+          difference[k2] = v2;
+        }
+      } else {
+        const diff2 = diff(obj1[k2], v2, level - 1);
+        if (diff2 !== undefined) {
+          different = true;
+          if (depth > 0) {
+            if (!difference) difference = {};
+            difference[k2] = diff2;
+          }
+        }
+      }
+    });
+    if (different && depth <= 0) difference = obj2;
+    if (
+      difference === undefined &&
+      Object.keys(obj1).length !== Object.keys(obj2).length
     )
-  );
+      difference = {};
+  }
+  return difference;
 }
 
 // Searches an element and its ancestors for particular class-name(s).

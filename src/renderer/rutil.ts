@@ -8,7 +8,7 @@ import C from '../constant';
 import RefParser, { RefParserOptionsType } from '../refparse';
 import VerseKey from '../versekey';
 import { ElemInfo, getElementInfo } from '../libswordElemInfo';
-import { compareObjects, deepClone, JSON_parse, ofClass } from '../common';
+import { clone, JSON_parse, ofClass } from '../common';
 import G from './rg';
 
 import type {
@@ -352,11 +352,11 @@ function getTargetsFromSelection(
   info: typeof TargetInfo,
   selob: Selection
 ): boolean {
-  const info1 = deepClone(TargetInfo);
+  const info1 = clone(TargetInfo);
   const focusNode = selob.focusNode as HTMLElement | null;
   if (!getTargetsFromElement(info1, focusNode)) return false;
 
-  const info2 = deepClone(TargetInfo);
+  const info2 = clone(TargetInfo);
   const anchorNode = selob.anchorNode as HTMLElement | null;
   if (!getTargetsFromElement(info2, anchorNode)) return false;
 
@@ -454,7 +454,7 @@ export function getContextData(elem: HTMLElement): ContextData {
   let selection = null;
   let selectedLocationVK = null;
   const selob = getSelection();
-  const info = deepClone(TargetInfo) as typeof TargetInfo;
+  const info = clone(TargetInfo) as typeof TargetInfo;
   if (selob && !selob.isCollapsed && !/^\s*$/.test(selob.toString())) {
     selection = selob.toString();
     selectedLocationVK = parser.parse(selection, v11n)?.location || null;
@@ -496,152 +496,76 @@ export function getCompanionModules(mod: string) {
 }
 
 // Return the values of component state Prefs. Component state Prefs are
-// permanently persisted component state values. Component state prefs have
-// Pref names beginning with the component id. Prefs names found in ignore
+// permanently persisted component state values recorded in prefs.json
+// whose key begins with the component id. Prefs keys found in ignore
 // are ignored. If prefsToGet is undefined, all state prefs will be returned.
-// NOTE: The whole initial pref object (after the id) is returned if any of
-// its descendants is requested.
+// NOTE: The whole pref object (the property name following the id) is
+// returned if any of its descendants is requested.
+type StateLike = {
+  [i: string]: any;
+};
 export function getStatePref(
   id: string,
   prefsToGet?: string | string[] | null,
-  ignore?: any
-): {
-  [i: string]: any;
-} {
-  const store = G.Prefs.getStore();
-  if (!id || !store) {
-    return {};
-  }
-  let prefs: undefined | string[];
-  if (prefsToGet) {
-    if (!Array.isArray(prefsToGet)) prefs = [prefsToGet];
-    else {
-      prefs = prefsToGet;
+  ignore?: StateLike
+): StateLike {
+  const state: StateLike = {};
+  if (id) {
+    const idpref = G.Prefs.getComplexValue(id);
+    let keys: undefined | string[];
+    if (prefsToGet) {
+      if (!Array.isArray(prefsToGet)) keys = [prefsToGet];
+      else {
+        keys = prefsToGet;
+      }
+      keys = keys
+        .map((k) => {
+          const kp = k.split('.');
+          return kp[0] === id ? kp[1] : '';
+        })
+        .filter(Boolean);
     }
-    prefs = prefs.map((p) => {
-      return p.split('.')[1];
+    Object.entries(idpref).forEach((entry) => {
+      const [key, value] = entry;
+      if (
+        (!ignore || !(key in ignore)) &&
+        (!prefsToGet || keys?.includes(key))
+      ) {
+        state[key] = value;
+      }
     });
   }
-  const state: any = {};
-  Object.entries(store).forEach((entry) => {
-    const [canid, value] = entry;
-    if (canid === id && typeof value === 'object') {
-      Object.entries(value).forEach((entry2) => {
-        const [s, v] = entry2;
-        if (
-          (!ignore || !(s in ignore)) &&
-          (prefs === undefined || prefs.includes(s))
-        ) {
-          state[s] = v;
-        }
-      });
-    }
-  });
 
   return state;
 }
 
-// Write state to Prefs and then update all window states from statePrefs.
-export function setStatePref(id: string, state: Partial<React.ComponentState>) {
-  const prefs: string[] = [];
-  Object.entries(state).forEach((entry) => {
-    const [key, value] = entry;
-    if (value !== undefined) {
-      const pref = `${id}.${key}`;
-      if (typeof value === 'string') G.Prefs.setCharPref(pref, value);
-      else if (typeof value === 'number') G.Prefs.setIntPref(pref, value);
-      else if (typeof value === 'boolean') G.Prefs.setBoolPref(pref, value);
-      else G.Prefs.setComplexValue(pref, value);
-      prefs.push(pref);
-    }
-  });
-  setTimeout(() => {
-    G.setGlobalStateFromPref(null, prefs);
-  }, 1);
-}
-
-// Calling this function registers an update-state-from-pref listener that, when
-// called upon, will read component state Prefs and set them to state.
+// Calling this function sets a listener to update-state-from-pref. It will
+// read component state Prefs and locale, and will update component state
+// and window locale as needed.
 export function onSetWindowState(component: React.Component, ignore?: any) {
   const listener = (prefs: string | string[]) => {
     const { id } = component.props as any;
     if (id) {
-      const state = getStatePref(id, prefs, ignore);
+      const state = component.state as any;
+      const newstate = getStatePref(id, prefs, ignore);
+      Object.entries(newstate).forEach((entry) => {
+        const [p, v] = entry;
+        if (p in state && state[p] === v) delete newstate[p];
+      });
       const lng = G.Prefs.getCharPref(C.LOCALEPREF);
       if (lng !== i18next.language) {
         i18next
           .loadLanguages(lng)
           .then(() => i18next.changeLanguage(lng))
           .then(() => {
-            return component.setState(state);
+            if (Object.keys(newstate).length) component.setState(newstate);
+            return true;
           })
           .catch((err) => {
             throw Error(err);
           });
-      } else {
-        component.setState(state);
-      }
+      } else if (Object.keys(newstate).length) component.setState(newstate);
     }
   };
   return window.ipc.renderer.on('update-state-from-pref', listener);
-}
-
-// Compare component state to lastStatePrefs and do nothing if they are the same.
-// Otherwise, persist the changed state properties to Prefs (ignoring any in
-// ignore). Returns true if any prefs were changed, false otherwise.
-export function setPrefFromState(
-  id: string,
-  state: Partial<React.ComponentState>,
-  lastStatePrefs: { [i: string]: any },
-  ignore?: { [i: string]: any }
-): boolean {
-  let prefsChanged = false;
-  Object.entries(state).forEach((entry) => {
-    const [name, value] = entry;
-    if (!ignore || !(name in ignore)) {
-      const type = typeof value;
-      const pref = `${id}.${name}`;
-      const lastval = lastStatePrefs[pref];
-      const thisval = type === 'object' ? deepClone(value) : value;
-      if (!compareObjects(lastval, thisval)) {
-        if (type === 'string') {
-          G.Prefs.setCharPref(pref, value as string);
-        } else if (type === 'number') {
-          G.Prefs.setIntPref(pref, value as number);
-        } else if (type === 'boolean') {
-          G.Prefs.setBoolPref(pref, value as boolean);
-        } else {
-          G.Prefs.setComplexValue(pref, value);
-        }
-        lastStatePrefs[pref] = thisval;
-        prefsChanged = true;
-      }
-    }
-  });
-  return prefsChanged;
-}
-
-export function setWinargsFromState(
-  argname: string,
-  state: Partial<React.ComponentState>,
-  lastStatePrefs: { [i: string]: any },
-  ignore?: { [i: string]: any }
-): boolean {
-  let prefsChanged = false;
-  Object.entries(state).forEach((entry) => {
-    const [name, value] = entry;
-    if (!ignore || !(name in ignore)) {
-      const type = typeof value;
-      const lastval = lastStatePrefs[name];
-      const thisval = type === 'object' ? deepClone(value) : value;
-      if (!compareObjects(lastval, thisval)) {
-        lastStatePrefs[name] = thisval;
-        prefsChanged = true;
-      }
-    }
-  });
-  if (prefsChanged) {
-    G.Window.persistArgument(argname, state);
-  }
-  return prefsChanged;
 }

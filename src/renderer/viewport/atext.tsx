@@ -10,13 +10,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import i18next from 'i18next';
 import C from '../../constant';
-import {
-  compareObjects,
-  copyProps,
-  ofClass,
-  sanitizeHTML,
-  stringHash,
-} from '../../common';
+import { diff, trim, ofClass, sanitizeHTML, stringHash } from '../../common';
 import G from '../rg';
 import {
   clearPending,
@@ -24,9 +18,7 @@ import {
   getMaxChapter,
   libswordImgSrc,
   scrollIntoView,
-  setStatePref,
   windowArgument,
-  setWinargsFromState,
 } from '../rutil';
 import {
   xulDefaultProps,
@@ -127,10 +119,10 @@ export const atextInitialState = {
 
 export type AtextState = typeof atextInitialState;
 
-// Window arguments that are used to set initial state must be updated so
-// a component reset does not return state to the initial window argument
-// values.
-const resetState: Partial<AtextState>[] = [];
+// Window arguments that are used to set initial state must be updated locally
+// and in Prefs, so that component reset or program restart won't cause
+// reversion to initial state.
+const windowState: AtextState[] = [];
 
 // XUL Atext
 class Atext extends React.Component {
@@ -146,18 +138,16 @@ class Atext extends React.Component {
 
   nbref: React.RefObject<HTMLDivElement>;
 
-  lastSavedPref: { [i: string]: any };
-
   constructor(props: AtextProps) {
     super(props);
 
-    resetState[props.panelIndex] = windowArgument(
+    windowState[props.panelIndex] = windowArgument(
       `atext${props.panelIndex}State`
-    ) as Partial<AtextState>;
+    ) as AtextState;
 
     const s: AtextState = {
       ...atextInitialState,
-      ...resetState[props.panelIndex],
+      ...windowState[props.panelIndex],
     };
     this.state = s;
 
@@ -168,25 +158,19 @@ class Atext extends React.Component {
     this.writeLibSword2DOM = this.writeLibSword2DOM.bind(this);
     this.handler = handlerH.bind(this);
     this.bbMouseUp = this.bbMouseUp.bind(this);
-
-    this.lastSavedPref = {};
   }
 
   componentDidMount() {
     this.onUpdate();
   }
 
-  componentDidUpdate() {
+  componentDidUpdate(_prevProps: AtextProps, prevState: AtextState) {
     this.onUpdate();
     const state = this.state as AtextState;
     const { panelIndex } = this.props as AtextProps;
-    const { lastSavedPref } = this;
-    resetState[panelIndex] = copyProps(state, atextInitialState);
-    setWinargsFromState(
-      `atext${panelIndex}State`,
-      resetState[panelIndex],
-      lastSavedPref
-    );
+    windowState[panelIndex] = trim(state, atextInitialState);
+    const d = diff(trim(prevState, atextInitialState), windowState[panelIndex]);
+    if (d) G.Window.persist(`atext${panelIndex}State`, d);
   }
 
   componentWillUnmount() {
@@ -216,23 +200,22 @@ class Atext extends React.Component {
     const nbe = nbref !== null ? nbref.current : null;
 
     let newState: Partial<AtextState> = {};
-    const pinProps = copyProps(
+    const pinProps = trim(
       pin && isPinned ? pin : props,
       C.PinProps
     ) as typeof C.PinProps;
     const { selection, module } = pinProps;
-    if (!compareObjects(pinProps, pin))
-      newState = { ...newState, pin: pinProps };
+    if (diff(pin, pinProps)) newState = { ...newState, pin: pinProps };
     if (module && sbe && nbe) {
       const { type, isVerseKey } = G.Tab[module];
       // scrollProps are current props that effect scrolling
-      const scrollProps = copyProps(
+      const scrollProps = trim(
         { ...props, ...pinProps },
         C.ScrollProps[type]
       ) as Partial<AtextProps>;
       const scrollkey = stringHash(scrollProps);
       // libswordProps are current props that effect LibSword output
-      const libswordProps = copyProps(
+      const libswordProps = trim(
         {
           ...props,
           ...pinProps,
@@ -374,7 +357,10 @@ class Atext extends React.Component {
           } else {
             const fs = [];
             fs[panelIndex] = C.VSCROLL.none;
-            setStatePref('xulsword', { location: loc, flagScroll: fs });
+            G.Prefs.mergeComplexValue('xulsword', {
+              location: loc,
+              flagScroll: fs,
+            });
           }
         }
       } else if (update && type === C.DICTIONARY) {

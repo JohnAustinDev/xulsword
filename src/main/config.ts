@@ -3,7 +3,7 @@
 import path from 'path';
 import i18next from 'i18next';
 import C from '../constant';
-import { deepClone } from '../common';
+import { clone } from '../common';
 import Dirs from './modules/dirs';
 import Prefs from './modules/prefs';
 import Cache from '../cache';
@@ -59,7 +59,7 @@ export function getLocaleConfigs(): { [i: string]: ConfigType } {
 }
 
 export function getProgramConfig() {
-  const ret = deepClone(localeConfig(i18next.language));
+  const ret = clone(localeConfig(i18next.language));
   return ret;
 }
 

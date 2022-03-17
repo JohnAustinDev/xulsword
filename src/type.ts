@@ -291,8 +291,12 @@ const PrefsPublic = {
     value: any,
     aStore?: string
   ) => boolean,
+  mergeComplexValue: func as unknown as (
+    key: string,
+    obj: { [i: string]: any },
+    aStore?: string
+  ) => void,
   clearUserPref: func as unknown as (key: string, aStore?: string) => boolean,
-  getStore: func as unknown as (aStore?: string) => { [s: string]: any },
   writeAllStores: func as unknown as () => void,
 };
 
@@ -468,13 +472,6 @@ export const GPublic = {
     path: string,
     encoding: BufferEncoding
   ) => string,
-  setGlobalMenuFromPref: func as unknown as (menu?: Electron.Menu) => void,
-  // Caller win is overwritten when setGlobalStateFromPref is invoked by main process.
-  setGlobalStateFromPref: func as unknown as (
-    win: null,
-    prefs?: string | string[],
-    unfocusedUpdate?: boolean
-  ) => void,
   resetMain: func as unknown as () => void,
   getSystemFonts: func as unknown as () => Promise<string[]>,
 
@@ -500,7 +497,7 @@ export const GPublic = {
   },
   Window: {
     open: func as unknown as (arg: WindowDescriptorType) => number,
-    persistArgument: func as unknown as (argname: string, value: any) => void,
+    persist: func as unknown as (argname: string, value: any) => void,
     setContentSize: func as unknown as (
       width: number,
       height: number,

@@ -1,3 +1,4 @@
+/* eslint-disable prefer-rest-params */
 /* eslint-disable import/no-mutable-exports */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import path from 'path';
@@ -264,21 +265,15 @@ function createWindow(descriptor: WindowDescriptorType): BrowserWindow {
   return win;
 }
 
-type WindowPrivate = {
-  browserWindow: BrowserWindow | null;
-};
-
-const Window: GType['Window'] & WindowPrivate = {
-  browserWindow: null,
-
+const Window: GType['Window'] = {
   open(descriptor: WindowDescriptorType): number {
     const win = createWindow(descriptor);
     if (descriptor.type === 'window') addWindowToPrefs(win, descriptor);
     return win.id;
   },
 
-  persistArgument(argname: string, value: any) {
-    const win = getBrowserWindows('self', this.browserWindow);
+  persist(argname: string, value: any) {
+    const win = getBrowserWindows('self', arguments[2]);
     if (win.length && win[0]) {
       const pref = Prefs.getComplexValue(`Windows.w${win[0].id}`, 'windows');
       const args = pref.options.webPreferences.additionalArguments[0];
@@ -295,13 +290,13 @@ const Window: GType['Window'] & WindowPrivate = {
   },
 
   setContentSize(w: number, h: number, window?: WindowArgType): void {
-    getBrowserWindows(window, this.browserWindow).forEach((win) => {
+    getBrowserWindows(window, arguments[3]).forEach((win) => {
       win.setContentSize(Math.round(w), Math.round(h));
     });
   },
 
   close(window?: WindowArgType): void {
-    getBrowserWindows(window, this.browserWindow).forEach((win) => {
+    getBrowserWindows(window, arguments[1]).forEach((win) => {
       win.close();
     });
   },
@@ -312,7 +307,7 @@ const Window: GType['Window'] & WindowPrivate = {
   // then all resets will be called on all windows plus the main process in addition.
   reset(type?: ResetType, window?: WindowArgType) {
     const windows = window
-      ? getBrowserWindows(window, this.browserWindow)
+      ? getBrowserWindows(window, arguments[2])
       : getBrowserWindows('all');
     if (!type && !window) resetMain();
     windows.forEach((win) => {
@@ -333,14 +328,14 @@ const Window: GType['Window'] & WindowPrivate = {
   },
 
   moveToBack(window?: WindowArgType): void {
-    const back = getBrowserWindows(window, this.browserWindow);
+    const back = getBrowserWindows(window, arguments[1]);
     BrowserWindow.getAllWindows().forEach((w) => {
       if (!back.includes(w)) w.moveTop();
     });
   },
 
   setTitle(title: string, window?: WindowArgType): void {
-    getBrowserWindows(window, this.browserWindow).forEach((win) => {
+    getBrowserWindows(window, arguments[2]).forEach((win) => {
       win.setTitle(title);
     });
   },

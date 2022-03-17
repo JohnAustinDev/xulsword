@@ -7,7 +7,6 @@ import { GPublic } from '../type';
 // matically at runtime from the same GPublic declaration. Properties of
 // this object access data and objects via IPC to the main process G object.
 // Local getter data is cached.
-
 const G = {
   cache: {},
 

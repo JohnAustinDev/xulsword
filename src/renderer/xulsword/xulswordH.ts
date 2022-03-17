@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import C from '../../constant';
-import { ofClass } from '../../common';
+import { clone, ofClass } from '../../common';
 import { chapterChange, verseChange } from '../viewport/zversekey';
 import { refParser, verseKey } from '../rutil';
 import G from '../rg';
@@ -112,7 +112,8 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
         case 'crossrefs':
         case 'dictlinks': {
           this.setState((prevState: XulswordState) => {
-            const { show } = prevState;
+            let { show } = prevState;
+            show = clone(show);
             const id = currentId as keyof ShowType;
             show[id] = !show[id];
             return { show };

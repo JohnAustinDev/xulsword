@@ -295,6 +295,12 @@ const C = {
   MINPROGVERSTAG: null as any,
   MINVERSION: '1.0',
 
+  // These Pref keys are global so all windows will be kept in sync sharing the
+  // same values for each of these prefs, in addition to appliation menu prefs.
+  GlobalState: {
+    xulsword: ['location', 'selection', 'flagScroll', 'show'],
+  },
+
   // These Atext props can be 'pinned' to become independant state properties.
   // NOTE: property types are important, but property values are not.
   PinProps: {

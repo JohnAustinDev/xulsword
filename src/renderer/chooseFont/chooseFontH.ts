@@ -1,7 +1,7 @@
 /* eslint-disable import/no-duplicates */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import C from '../../constant';
-import { deepClone, ofClass } from '../../common';
+import { clone, ofClass } from '../../common';
 import G from '../rg';
 
 import type { ConfigType } from '../../type';
@@ -91,7 +91,7 @@ export function getStyleFromState(state: ChooseFontWinState): StyleType {
     module,
     style,
   } = state;
-  const newstyle = (style ? deepClone(style) : {}) as StyleType;
+  const newstyle = (style ? clone(style) : {}) as StyleType;
   function updateModuleStyle(modname: string | 'default', unset = false) {
     if (!('module' in newstyle) || !newstyle.module) newstyle.module = {};
     if (!(modname in newstyle.module) || !newstyle.module[modname])
@@ -137,7 +137,7 @@ export function getStyleFromState(state: ChooseFontWinState): StyleType {
 // value is undefined the value will be toggled.
 export function setStateValue(this: ChooseFontWin, key: string, value?: any) {
   this.setState((prevState: ChooseFontWinState) => {
-    const newState = deepClone(prevState);
+    const newState = clone(prevState);
     if (value === undefined) newState[key] = !newState[key];
     else newState[key] = value;
     const s: Partial<ChooseFontWinState> = {
@@ -195,7 +195,7 @@ export default function handler(this: ChooseFontWin, e: React.SyntheticEvent) {
           // Then the user has the choice to either save the new style or restore
           // the saved style by unchecking the checkbox.
           this.setState((prevState: ChooseFontWinState) => {
-            const newState = deepClone(prevState) as ChooseFontWinState;
+            const newState = clone(prevState) as ChooseFontWinState;
             let newStyle;
             const cbvalue = newState[targid];
             if (!cbvalue) {

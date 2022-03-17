@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import C from '../../constant';
-import { JSON_stringify, ofClass } from '../../common';
+import { clone, JSON_stringify, ofClass } from '../../common';
 import { getPopupInfo } from '../../libswordElemInfo';
 import G from '../rg';
 import { getContextModule } from '../rutil';
@@ -202,7 +202,7 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
         case 'dt':
         case 'dtl': {
           this.setState((prevState: PopupParentState) => {
-            let { elemhtml, eleminfo } = prevState;
+            let { elemhtml, eleminfo } = clone(prevState);
             if (elemhtml === null) elemhtml = [];
             if (eleminfo === null) eleminfo = [];
             elemhtml.push(elem.outerHTML);
@@ -228,7 +228,7 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
         }
         case 'popupBackLink': {
           this.setState((prevState: PopupParentState) => {
-            const { elemhtml, eleminfo } = prevState;
+            const { elemhtml, eleminfo } = clone(prevState);
             if (elemhtml && eleminfo) {
               elemhtml.pop();
               eleminfo.pop();
@@ -299,7 +299,7 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
         const t = select.element as HTMLSelectElement;
         const { value } = t;
         this.setState((prevState: PopupParentState) => {
-          const { elemhtml, eleminfo } = prevState;
+          const { elemhtml, eleminfo } = clone(prevState);
           if (
             t.dataset.module &&
             elemhtml &&

@@ -2,7 +2,13 @@
 /* eslint-disable new-cap */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-use-before-define */
-import { shell } from 'electron';
+import {
+  BrowserWindow,
+  ipcMain,
+  IpcMainEvent,
+  IpcMainInvokeEvent,
+  shell,
+} from 'electron';
 import { inlineFile } from './components/nsILocalFile';
 import Dirs from './modules/dirs';
 import Prefs from './modules/prefs';
@@ -19,18 +25,70 @@ import {
 } from './config';
 import Window, { resolveHtmlPath, resetMain } from './window';
 import {
-  setGlobalStateFromPref,
   getBooks,
   getBook,
   getTabs,
   getTab,
   getBooksInModule,
   getBkChsInV11n,
-  setGlobalMenuFromPref,
   getSystemFonts,
 } from './minit';
 
-import type { GType } from '../type';
+import { GPublic, GType } from '../type';
+
+// Methods of the following classes should not use rest parameters or default
+// values in their argument lists. This is because Function.length is used to
+// append the calling window, and it does not include rest parameter or default
+// arguments, so they would result in exceptions being thrown.
+const appendCallingWindow = ['Prefs', 'Window'];
+
+// Handle global variable calls from renderer processes
+function handleGlobal(
+  event: IpcMainEvent | IpcMainInvokeEvent,
+  name: string,
+  ...args: any[]
+) {
+  let ret = null;
+  const win = BrowserWindow.fromWebContents(event.sender);
+  if (name in GPublic) {
+    const gPublic = GPublic as any;
+    const g = G as any;
+    if (gPublic[name] === 'getter') {
+      ret = g[name];
+    } else if (typeof gPublic[name] === 'function') {
+      ret = g[name](...args);
+    } else if (typeof gPublic[name] === 'object') {
+      const m = args.shift();
+      if (gPublic[name][m] === 'getter') {
+        ret = g[name][m];
+      } else if (typeof gPublic[name][m] === 'function') {
+        if (
+          appendCallingWindow.includes(name) &&
+          typeof args[g[name][m].length] === 'undefined'
+        )
+          args[g[name][m].length] = win;
+        ret = g[name][m](...args);
+      } else {
+        throw Error(`Unhandled method type for ${name}.${m}`);
+      }
+    } else {
+      throw Error(`Unhandled global ${name} ipc type: ${gPublic[name]}`);
+    }
+  } else {
+    throw Error(`Unhandled global ipc request: ${name}`);
+  }
+
+  return ret;
+}
+ipcMain.on('global', (event: IpcMainEvent, name: string, ...args: any[]) => {
+  event.returnValue = handleGlobal(event, name, ...args);
+});
+ipcMain.handle(
+  'global',
+  (event: IpcMainInvokeEvent, name: string, ...args: any[]) => {
+    return handleGlobal(event, name, ...args);
+  }
+);
 
 // This G object is for use in the main process, and it shares the same
 // GPublic interface as the renderer's G object. Properties of this
@@ -112,12 +170,6 @@ class GClass implements GType {
     return process.platform;
   }
 
-  setGlobalMenuFromPref(
-    ...args: Parameters<GType['setGlobalMenuFromPref']>
-  ): ReturnType<GType['setGlobalMenuFromPref']> {
-    return setGlobalMenuFromPref(...args);
-  }
-
   resolveHtmlPath(
     ...args: Parameters<GType['resolveHtmlPath']>
   ): ReturnType<GType['resolveHtmlPath']> {
@@ -134,12 +186,6 @@ class GClass implements GType {
     ...args: Parameters<GType['resetMain']>
   ): ReturnType<GType['resetMain']> {
     return resetMain(...args);
-  }
-
-  setGlobalStateFromPref(
-    ...args: Parameters<GType['setGlobalStateFromPref']>
-  ): ReturnType<GType['setGlobalStateFromPref']> {
-    return setGlobalStateFromPref(...args);
   }
 
   getSystemFonts(

@@ -3,17 +3,11 @@
 
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
-import {
-  app,
-  BrowserWindow,
-  ipcMain,
-  IpcMainEvent,
-  IpcMainInvokeEvent,
-} from 'electron';
+import { app, BrowserWindow, ipcMain, IpcMainEvent } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import i18n from 'i18next';
-import { GPublic, WindowRegistryType } from '../type';
+import { WindowRegistryType } from '../type';
 import C from '../constant';
 import Data from './modules/data';
 import MenuBuilder from './menu';
@@ -40,53 +34,6 @@ export default class AppUpdater {
     autoUpdater.checkForUpdatesAndNotify();
   }
 }
-
-// Handle global variable calls from renderer processes
-function handleGlobal(
-  event: IpcMainEvent | IpcMainInvokeEvent,
-  name: string,
-  ...args: any[]
-) {
-  let ret = null;
-  const win = BrowserWindow.fromWebContents(event.sender);
-  if (name in GPublic) {
-    const gPublic = GPublic as any;
-    const g = G as any;
-    if (gPublic[name] === 'getter') {
-      ret = g[name];
-    } else if (typeof gPublic[name] === 'function') {
-      if (name === 'setGlobalStateFromPref') {
-        args[0] = win;
-      }
-      ret = g[name](...args);
-    } else if (typeof gPublic[name] === 'object') {
-      const m = args.shift();
-      if (gPublic[name][m] === 'getter') {
-        ret = g[name][m];
-      } else if (typeof gPublic[name][m] === 'function') {
-        if ('browserWindow' in g[name]) g[name].browserWindow = win;
-        ret = g[name][m](...args);
-      } else {
-        throw Error(`Unhandled method type for ${name}.${m}`);
-      }
-    } else {
-      throw Error(`Unhandled global ${name} ipc type: ${gPublic[name]}`);
-    }
-  } else {
-    throw Error(`Unhandled global ipc request: ${name}`);
-  }
-
-  return ret;
-}
-ipcMain.on('global', (event: IpcMainEvent, name: string, ...args: any[]) => {
-  event.returnValue = handleGlobal(event, name, ...args);
-});
-ipcMain.handle(
-  'global',
-  (event: IpcMainInvokeEvent, name: string, ...args: any[]) => {
-    return handleGlobal(event, name, ...args);
-  }
-);
 
 ipcMain.on('did-finish-render', (event: IpcMainEvent) => {
   const win = BrowserWindow.fromWebContents(event.sender);

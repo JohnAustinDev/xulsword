@@ -6,7 +6,7 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 import React from 'react';
 import i18n from 'i18next';
-import { dString } from '../../common';
+import { trim, dString, stringHash, diff } from '../../common';
 import C from '../../constant';
 import G from '../rg';
 import renderToRoot from '../rinit';
@@ -15,7 +15,6 @@ import {
   jsdump,
   onSetWindowState,
   getStatePref,
-  setPrefFromState,
   clearPending,
 } from '../rutil';
 import {
@@ -50,8 +49,8 @@ const propTypes = {
 
 export type XulswordProps = XulProps;
 
-// The following initial state values do not come from Prefs, but from
-// these constants. Neither are these state keys written to Prefs.
+// The following initial state values do not come from Prefs. Neither are
+// these state keys written to Prefs.
 const notStatePref = {
   historyMenupopup: undefined,
   bsreset: 0,
@@ -60,7 +59,7 @@ const notStatePref = {
 };
 
 // These are state pref panel arrays that don't require default values in
-// default prefs.js, since they could be variable size arrays.
+// default prefs.js. Their array size will be the same as panels array size.
 const statePrefPanelDefault: Partial<XulswordStatePref> = {
   isPinned: [false],
   flagScroll: [1],
@@ -84,8 +83,6 @@ export default class Xulsword extends React.Component {
   dictkeydownTO: NodeJS.Timeout | undefined;
 
   wheelScrollTO: NodeJS.Timeout | undefined;
-
-  lastStatePref: { [i: string]: any };
 
   destroy: (() => void)[];
 
@@ -114,7 +111,6 @@ export default class Xulsword extends React.Component {
 
     this.handler = handlerH.bind(this);
     this.viewportParentHandler = viewportParentH.bind(this);
-    this.lastStatePref = {};
 
     this.destroy = [];
 
@@ -128,22 +124,16 @@ export default class Xulsword extends React.Component {
     this.destroy.push(onSetWindowState(this));
   }
 
-  componentDidUpdate() {
+  componentDidUpdate(_prevProps: XulswordProps, prevState: XulswordState) {
     const state = this.state as XulswordState;
-    const { location } = state;
     const { id } = this.props as XulswordProps;
-    const { lastStatePref } = this;
-    if (id && setPrefFromState(id, state, lastStatePref, notStatePref)) {
-      G.setGlobalMenuFromPref();
-      G.setGlobalStateFromPref(
-        null,
-        ['location', 'selection', 'flagScroll', 'show'].map((p) => {
-          return `${id}.${p}`;
-        })
-      );
+    if (id) {
+      const newStatePref = trim(state, notStatePref, true);
+      const d = diff(trim(prevState, notStatePref, true), newStatePref);
+      if (d) G.Prefs.mergeComplexValue(id, d);
     }
-
     // Add page to history after a short delay
+    const { location } = state;
     if (location) {
       delayHandler.bind(this)(
         () => {

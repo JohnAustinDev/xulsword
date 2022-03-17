@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import i18next from 'i18next';
 import C from './constant';
-import { deepClone, dString } from './common';
+import { clone, dString } from './common';
 
 import type { GType, LocationVKType, V11nType } from './type';
 import type RefParser from './refparse';
@@ -40,7 +40,7 @@ export default class VerseKey {
     this.#loc =
       typeof location === 'string'
         ? this.setLocation(location, v11n)
-        : deepClone(location);
+        : clone(location);
     this.#v11nCurrent = v11n || this.#loc.v11n;
   }
 

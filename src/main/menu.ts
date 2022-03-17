@@ -15,6 +15,8 @@ import setViewportTabs from './tabs';
 
 import type { TabTypes, XulswordStatePref } from '../type';
 import { verseKey } from './minit';
+import Data from './modules/data';
+import Prefs, { SetPrefCallbackType } from './modules/prefs';
 
 type Modifiers =
   | 'CommandOrControl' // 'accel' in XUL
@@ -30,39 +32,94 @@ interface DarwinMenuItemConstructorOptions extends MenuItemConstructorOptions {
   submenu?: DarwinMenuItemConstructorOptions[] | Menu;
 }
 
+// Update Prefs
+function toggleSwitch(name: string | string[], value?: boolean) {
+  const a = Array.isArray(name) ? name : [name];
+  a.forEach((n) => {
+    const v = value === undefined ? !G.Prefs.getBoolPref(n) : value;
+    G.Prefs.setBoolPref(n, v);
+  });
+}
+
+// Update Prefs
+function radioSwitch(name: string | string[], value: any) {
+  const a = Array.isArray(name) ? name : [name];
+  a.forEach((n) => {
+    if (typeof value === 'number') {
+      G.Prefs.setIntPref(n, value);
+    } else if (typeof value === 'string') {
+      G.Prefs.setCharPref(n, value);
+    } else {
+      throw Error('radioSwitch supports number or string.');
+    }
+  });
+}
+
+const showtabs: [string, TabTypes][] = [
+  ['showtexttabs', 'Texts'],
+  ['showcommtabs', 'Comms'],
+  ['showbooktabs', 'Genbks'],
+  ['showdicttabs', 'Dicts'],
+];
+
+const panelLabels = (() => {
+  const labels: string[] = [];
+  const panels = G.Prefs.getComplexValue(
+    'xulsword.panels'
+  ) as XulswordStatePref['panels'];
+  panels.forEach((_panel: string | null, i: number) => {
+    labels.push(`menu.view.window${i + 1}`);
+  });
+  labels.push('menu.view.allwindows');
+  return labels;
+})();
+
+function buildTabMenus(menu: Menu) {
+  showtabs.forEach((showtab) => {
+    const [typekey, type] = showtab;
+    let disableParent = true;
+    panelLabels.forEach((pl) => {
+      const panelIndex =
+        pl === 'menu.view.allwindows'
+          ? -1
+          : Number(pl.substring(pl.length - 1)) - 1;
+      const tabmenu = menu.getMenuItemById(`menu_${typekey}_${pl}`);
+      const submenu = tabmenu?.submenu;
+      if (!submenu) throw Error(`No tabmenu: menu_${typekey}_${pl}`);
+      const { items } = submenu;
+      while (items[0].id !== `showAll_${typekey}_${pl}`) items.shift();
+      G.Tabs.reverse().forEach((t) => {
+        if (t.tabType === type) {
+          disableParent = false;
+          const newItem = new MenuItem({
+            id: `showtab_${panelIndex}_${t.module}`,
+            label: t.label + (t.description ? ` --- ${t.description}` : ''),
+            type: 'checkbox',
+            // icon: path.join(G.Dirs.path.xsAsset, 'icons', '16x16', `${tab}.png`),
+            click: () => {
+              setViewportTabs(panelIndex, t.module, 'toggle');
+            },
+          });
+          submenu.insert(0, newItem);
+        }
+      });
+    });
+    const parent = menu.getMenuItemById(`parent_${typekey}`);
+    if (parent) parent.enabled = !disableParent;
+  });
+}
+
 export default class MenuBuilder {
-  // Update Prefs, then setGlobalStateFromPref()
-  static toggleSwitch(name: string | string[], value?: boolean) {
-    const a = Array.isArray(name) ? name : [name];
-    a.forEach((n) => {
-      const v = value === undefined ? !G.Prefs.getBoolPref(n) : value;
-      G.Prefs.setBoolPref(n, v);
-    });
-    G.setGlobalStateFromPref(null, name);
-  }
-
-  // Update Prefs, then setGlobalStateFromPref()
-  static radioSwitch(name: string | string[], value: any) {
-    const a = Array.isArray(name) ? name : [name];
-    a.forEach((n) => {
-      if (typeof value === 'number') {
-        G.Prefs.setIntPref(n, value);
-      } else if (typeof value === 'string') {
-        G.Prefs.setCharPref(n, value);
-      } else {
-        throw Error('radioSwitch supports number or string.');
-      }
-    });
-    G.setGlobalStateFromPref(null, name);
-  }
-
   mainWindow: BrowserWindow;
 
   i18n: any;
 
+  menuPref: string[];
+
   constructor(mainWindow: BrowserWindow, i18n: any) {
     this.mainWindow = mainWindow;
     this.i18n = i18n;
+    this.menuPref = [];
   }
 
   buildMenu(): Menu {
@@ -72,65 +129,87 @@ export default class MenuBuilder {
         : this.buildDefaultTemplate();
 
     const menu = Menu.buildFromTemplate(template);
-    MenuBuilder.buildTabMenus(menu);
-    G.setGlobalMenuFromPref(menu);
+    buildTabMenus(menu);
+    this.updateMenuFromPref(menu);
+    // This callback updates the menu when applicable prefs change. If the
+    // calling window is undefined (main process) the menu will NOT be updated
+    // because it is assumed the menu initiated the change, and ignoring
+    // it prevents cycling.
+    const cb: SetPrefCallbackType = (win, key, val, store) => {
+      if (win && store === 'prefs') {
+        const keys: string[] = [];
+        if (!key.includes('.') && typeof val === 'object') {
+          Object.keys(val).forEach((k) => keys.push(`${key}.${k}`));
+        } else keys.push(key);
+        if (keys.some((k) => this.menuPref.includes(k))) {
+          this.updateMenuFromPref();
+        }
+      }
+    };
+    let cbs: SetPrefCallbackType[] = [];
+    if (Data.has('setPrefCallback')) cbs = Data.read('setPrefCallback');
+    cbs.push(cb);
+    Data.write(cbs, 'setPrefCallback');
+    // Inject this into pref callback so it knows which are menu prefs.
+    Data.write(this.menuPref, 'menuPref');
     Menu.setApplicationMenu(menu);
 
     return menu;
   }
 
-  static showtabs: [string, TabTypes][] = [
-    ['showtexttabs', 'Texts'],
-    ['showcommtabs', 'Comms'],
-    ['showbooktabs', 'Genbks'],
-    ['showdicttabs', 'Dicts'],
-  ];
-
-  static panelLabels = (() => {
-    const panelLabels: string[] = [];
-    const panels = G.Prefs.getComplexValue(
-      'xulsword.panels'
-    ) as XulswordStatePref['panels'];
-    panels.forEach((_panel: string | null, i: number) => {
-      panelLabels.push(`menu.view.window${i + 1}`);
-    });
-    panelLabels.push('menu.view.allwindows');
-    return panelLabels;
-  })();
-
-  static buildTabMenus(menu: Menu) {
-    MenuBuilder.showtabs.forEach((showtab) => {
-      const [typekey, type] = showtab;
-      let disableParent = true;
-      MenuBuilder.panelLabels.forEach((pl) => {
-        const panelIndex =
-          pl === 'menu.view.allwindows'
-            ? -1
-            : Number(pl.substring(pl.length - 1)) - 1;
-        const tabmenu = menu.getMenuItemById(`menu_${typekey}_${pl}`);
-        const submenu = tabmenu?.submenu;
-        if (!submenu) throw Error(`No tabmenu: menu_${typekey}_${pl}`);
-        const { items } = submenu;
-        while (items[0].id !== `showAll_${typekey}_${pl}`) items.shift();
-        G.Tabs.reverse().forEach((t) => {
-          if (t.tabType === type) {
-            disableParent = false;
-            const newItem = new MenuItem({
-              id: `showtab_${panelIndex}_${t.module}`,
-              label: t.label + (t.description ? ` --- ${t.description}` : ''),
-              type: 'checkbox',
-              // icon: path.join(G.Dirs.path.xsAsset, 'icons', '16x16', `${tab}.png`),
-              click: () => {
-                setViewportTabs(panelIndex, t.module, 'toggle');
-              },
-            });
-            submenu.insert(0, newItem);
+  // While updating the menu, a set of controlling Pref keys is collected.
+  // This set of keys will be monitored such that when one of them is changed,
+  // the menu will again be updated.
+  updateMenuFromPref(menux?: Menu | null) {
+    const menuPref: Set<string> = new Set();
+    function add(pref: string) {
+      menuPref.add(pref.split('.').slice(0, 2).join('.'));
+    }
+    function recurseMenu(menu: Electron.Menu) {
+      if (!menu.items) return;
+      menu.items.forEach((i) => {
+        if (i.id && i.type === 'checkbox') {
+          const [type, pi, mod] = i.id.split('_');
+          if (type === 'showtab') {
+            const panelIndex = Number(pi);
+            add('xulsword.tabs');
+            const pval = Prefs.getComplexValue(
+              'xulsword.tabs'
+            ) as XulswordStatePref['tabs'];
+            if (panelIndex === -1) {
+              i.checked = pval.every((p: any) => p?.includes(mod));
+            } else {
+              i.checked = Boolean(pval[panelIndex]?.includes(mod));
+            }
+          } else {
+            add(i.id);
+            i.checked = Prefs.getBoolPref(i.id);
           }
-        });
+        } else if (i.id && i.type === 'radio') {
+          const [pref, str] = i.id.split('_val_');
+          if (pref === 'xulsword.panels') {
+            add(pref);
+            const numPanels = Prefs.getComplexValue(pref).filter(
+              (m: string | null) => m || m === ''
+            ).length;
+            if (numPanels === Number(str)) i.checked = true;
+          } else if (str !== '') {
+            let val: string | number = str;
+            if (Number(str).toString() === str) val = Number(str);
+            add(pref);
+            const pval =
+              typeof val === 'number'
+                ? Prefs.getIntPref(pref)
+                : Prefs.getCharPref(pref);
+            if (pval === val) i.checked = true;
+          }
+        }
+        if (i.submenu) recurseMenu(i.submenu);
       });
-      const parent = menu.getMenuItemById(`parent_${typekey}`);
-      if (parent) parent.enabled = !disableParent;
-    });
+    }
+    const menu = menux || Menu.getApplicationMenu();
+    if (menu) recurseMenu(menu);
+    this.menuPref = Array.from(menuPref);
   }
 
   // Read locale key, appending & before shortcut key and escaping other &s.
@@ -333,7 +412,7 @@ export default class MenuBuilder {
             if (key === 'strongs') {
               keys.push(`xulsword.show.morph`); // switch these two together
             }
-            MenuBuilder.toggleSwitch(keys);
+            toggleSwitch(keys);
           },
         };
       });
@@ -349,7 +428,7 @@ export default class MenuBuilder {
             id: `xulsword.place.${name}_val_popup`,
             type: 'radio',
             click: () => {
-              MenuBuilder.radioSwitch(`xulsword.place.${name}`, 'popup');
+              radioSwitch(`xulsword.place.${name}`, 'popup');
             },
           },
           {
@@ -357,14 +436,14 @@ export default class MenuBuilder {
             id: `xulsword.place.${name}_val_notebox`,
             type: 'radio',
             click: () => {
-              MenuBuilder.radioSwitch(`xulsword.place.${name}`, 'notebox');
+              radioSwitch(`xulsword.place.${name}`, 'notebox');
             },
           },
         ],
       };
     });
 
-    const textTabs = MenuBuilder.showtabs.map((t) => {
+    const textTabs = showtabs.map((t) => {
       const [typekey, type] = t;
       return {
         id: `parent_${typekey}`,
@@ -376,7 +455,7 @@ export default class MenuBuilder {
           `${typekey}.png`
         ),
         submenu: [
-          ...MenuBuilder.panelLabels.map((pl: any) => {
+          ...panelLabels.map((pl: any) => {
             const panelIndex =
               pl === 'menu.view.allwindows'
                 ? -1
@@ -422,13 +501,13 @@ export default class MenuBuilder {
         {
           label: this.ts('menu.view.showAll'),
           click: () => {
-            MenuBuilder.toggleSwitch(allswitches, true);
+            toggleSwitch(allswitches, true);
           },
         },
         {
           label: this.ts('menu.view.hideAll'),
           click: () => {
-            MenuBuilder.toggleSwitch(allswitches, false);
+            toggleSwitch(allswitches, false);
           },
         },
         { type: 'separator' },
@@ -437,7 +516,7 @@ export default class MenuBuilder {
         ...textTabs,
         {
           label: this.ts('menu.view.showAll'),
-          submenu: MenuBuilder.panelLabels.map((pl: any) => {
+          submenu: panelLabels.map((pl: any) => {
             const panelIndex =
               pl === 'menu.view.allwindows'
                 ? -1
@@ -452,7 +531,7 @@ export default class MenuBuilder {
         },
         {
           label: this.ts('menu.view.hideAll'),
-          submenu: MenuBuilder.panelLabels.map((pl: any) => {
+          submenu: panelLabels.map((pl: any) => {
             const panelIndex =
               pl === 'menu.view.allwindows'
                 ? -1
@@ -479,7 +558,7 @@ export default class MenuBuilder {
               id: `global.fontSize_val_0`,
               type: 'radio',
               click: () => {
-                MenuBuilder.radioSwitch('global.fontSize', 0);
+                radioSwitch('global.fontSize', 0);
               },
             },
             {
@@ -487,7 +566,7 @@ export default class MenuBuilder {
               id: `global.fontSize_val_1`,
               type: 'radio',
               click: () => {
-                MenuBuilder.radioSwitch('global.fontSize', 1);
+                radioSwitch('global.fontSize', 1);
               },
             },
             {
@@ -495,7 +574,7 @@ export default class MenuBuilder {
               id: `global.fontSize_val_2`,
               type: 'radio',
               click: () => {
-                MenuBuilder.radioSwitch('global.fontSize', 2);
+                radioSwitch('global.fontSize', 2);
               },
             },
             {
@@ -503,7 +582,7 @@ export default class MenuBuilder {
               id: `global.fontSize_val_3`,
               type: 'radio',
               click: () => {
-                MenuBuilder.radioSwitch('global.fontSize', 3);
+                radioSwitch('global.fontSize', 3);
               },
             },
             {
@@ -511,7 +590,7 @@ export default class MenuBuilder {
               id: `global.fontSize_val_4`,
               type: 'radio',
               click: () => {
-                MenuBuilder.radioSwitch('global.fontSize', 4);
+                radioSwitch('global.fontSize', 4);
               },
             },
             { type: 'separator' },
@@ -538,7 +617,7 @@ export default class MenuBuilder {
               id: 'xulsword.show.hebvowelpoints',
               type: 'checkbox',
               click: () => {
-                MenuBuilder.toggleSwitch('xulsword.show.hebvowelpoints');
+                toggleSwitch('xulsword.show.hebvowelpoints');
               },
             },
             {
@@ -546,7 +625,7 @@ export default class MenuBuilder {
               id: 'xulsword.show.hebcantillation',
               type: 'checkbox',
               click: () => {
-                MenuBuilder.toggleSwitch('xulsword.show.hebcantillation');
+                toggleSwitch('xulsword.show.hebcantillation');
               },
             },
           ],
@@ -562,7 +641,7 @@ export default class MenuBuilder {
               type: 'radio',
               toolTip: lng,
               click: () => {
-                MenuBuilder.radioSwitch(C.LOCALEPREF, lng);
+                radioSwitch(C.LOCALEPREF, lng);
               },
             };
           }),
@@ -625,7 +704,6 @@ export default class MenuBuilder {
               }
             );
             G.Prefs.setComplexValue('xulsword.panels', newpans);
-            G.setGlobalStateFromPref(null, 'xulsword.panels');
           },
         };
       }),

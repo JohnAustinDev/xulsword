@@ -1,6 +1,6 @@
 /* eslint-disable import/no-duplicates */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { ofClass } from '../../common';
+import { clone, ofClass } from '../../common';
 import type Popup from './popup';
 import type { PopupState } from './popup';
 
@@ -10,7 +10,8 @@ export default function handler(this: Popup, e: React.MouseEvent) {
     case 'mousedown':
       if (ofClass(['draghandle'], target)) {
         this.setState((prevState: PopupState) => {
-          const { drag } = prevState;
+          let { drag } = prevState;
+          drag = clone(drag);
           if (!drag) return null;
           if (!drag.x[0]) drag.x[0] = e.clientX;
           if (!drag.y[0]) drag.y[0] = e.clientY;
@@ -28,7 +29,8 @@ export default function handler(this: Popup, e: React.MouseEvent) {
       const { drag } = this.state as PopupState;
       if (!drag || !drag.dragging) return;
       this.setState((prevState: PopupState) => {
-        const { drag: ndrag } = prevState;
+        let { drag: ndrag } = prevState;
+        ndrag = clone(ndrag);
         if (!ndrag || !ndrag.dragging) return null;
         ndrag.x[1] = e.clientX;
         ndrag.y[1] = e.clientY;
@@ -42,7 +44,8 @@ export default function handler(this: Popup, e: React.MouseEvent) {
       const { drag } = this.state as PopupState;
       if (!drag || !drag.dragging) return;
       this.setState((prevState: PopupState) => {
-        const { drag: ndrag } = prevState;
+        let { drag: ndrag } = prevState;
+        ndrag = clone(ndrag);
         if (!ndrag || !ndrag.dragging) return null;
         ndrag.dragging = false;
         return { drag: ndrag };

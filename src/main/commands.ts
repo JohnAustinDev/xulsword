@@ -1,10 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable prefer-rest-params */
-import { BrowserWindow } from 'electron';
 import i18n from 'i18next';
 import C from '../constant';
-import { JSON_stringify } from '../common';
-import { verseKey, getTab, setGlobalStateFromPref, getTabs } from './minit';
+import { clone, JSON_stringify } from '../common';
+import { verseKey, getTab, getTabs } from './minit';
 import Prefs from './modules/prefs';
 import Window from './window';
 
@@ -15,13 +14,7 @@ import type {
   XulswordStatePref,
 } from '../type';
 
-type CommandsPrivate = {
-  browserWindow: BrowserWindow | null;
-};
-
-const Commands: GType['Commands'] & CommandsPrivate = {
-  browserWindow: null,
-
+const Commands: GType['Commands'] = {
   addRepositoryModule() {
     console.log(`Action not implemented: addRepositoryModule`);
   },
@@ -98,7 +91,7 @@ const Commands: GType['Commands'] & CommandsPrivate = {
   openFontsColors(module, window) {
     const options = {
       title: i18n.t('fontsAndColors.label'),
-      parent: window || this.browserWindow || undefined,
+      parent: window || undefined,
       webPreferences: {
         additionalArguments: [
           JSON_stringify({
@@ -143,31 +136,21 @@ const Commands: GType['Commands'] & CommandsPrivate = {
   },
 
   goToLocationVK(
-    location: LocationVKType,
-    selection: LocationVKType,
-    flagScroll = C.VSCROLL.centerAlways
+    newlocation: LocationVKType,
+    newselection: LocationVKType,
+    newFlagScroll = C.VSCROLL.centerAlways
   ) {
     // To go to a verse system location without also changing xulsword's current
     // versekey module requires this location be converted into the current v11n.
-    const ploc = Prefs.getComplexValue(
-      'xulsword.location'
-    ) as XulswordStatePref['location'];
-    const panels = Prefs.getComplexValue(
-      'xulsword.panels'
-    ) as XulswordStatePref['panels'];
-    const loc = verseKey(location, ploc?.v11n || 'KJV');
-    const sel = verseKey(selection, ploc?.v11n || 'KJV');
-    Prefs.setComplexValue('xulsword.location', loc.location());
-    Prefs.setComplexValue('xulsword.selection', sel.location());
-    Prefs.setComplexValue(
-      'xulsword.flagScroll',
-      panels.map(() => flagScroll)
-    );
-    setGlobalStateFromPref(null, [
-      'xulsword.location',
-      'xulsword.selection',
-      'xulsword.flagScroll',
-    ]);
+    const xulsword = Prefs.getComplexValue('xulsword') as XulswordStatePref;
+    const { location, panels } = xulsword;
+    const newxulsword = clone(xulsword);
+    const loc = verseKey(newlocation, location?.v11n || 'KJV');
+    const sel = verseKey(newselection, location?.v11n || 'KJV');
+    newxulsword.location = loc.location();
+    newxulsword.selection = sel.location();
+    newxulsword.flagScroll = panels.map(() => newFlagScroll);
+    Prefs.mergeComplexValue('xulsword', newxulsword);
   },
 };
 

@@ -6,7 +6,7 @@ import C from '../../constant';
 import Cache from '../../cache';
 import {
   decodeOSISRef,
-  deepClone,
+  clone,
   escapeRE,
   JSON_stringify,
   ofClass,
@@ -120,7 +120,7 @@ function setState(
                   ilModule: 'ilModules',
                   modkey: 'keys',
                 } as const;
-                const ps = deepClone(prevState[map[key]]);
+                const ps = clone(prevState[map[key]]);
                 ps[panelIndex] = newPinProps[key];
                 s[map[key]] = ps;
                 break;
@@ -282,7 +282,8 @@ export default function handler(
           if (atext && panel) {
             const { columns } = atext.dataset;
             this.setState((prevState: XulswordStatePref) => {
-              const { isPinned: ip } = prevState;
+              const { isPinned: ipx } = prevState;
+              const ip = ipx.slice();
               const newv = ip[index];
               for (let x = index; x < Number(columns) + index; x += 1) {
                 ip[x] = !newv;
@@ -372,7 +373,9 @@ export default function handler(
         case 'notebox-maximizer': {
           if (atext) {
             this.setState((prevState: XulswordStatePref) => {
-              const { maximizeNoteBox, noteBoxHeight } = prevState;
+              let { maximizeNoteBox, noteBoxHeight } = prevState;
+              maximizeNoteBox = clone(maximizeNoteBox);
+              noteBoxHeight = clone(noteBoxHeight);
               if (maximizeNoteBox[index] > 0) {
                 noteBoxHeight[index] = maximizeNoteBox[index];
                 maximizeNoteBox[index] = 0;
@@ -575,7 +578,8 @@ export default function handler(
     // the bb bar is being dragged while maximizeNoteBox > 0.
     case 'mousemove': {
       this.setState((prevState) => {
-        const { maximizeNoteBox } = prevState as XulswordStatePref;
+        let { maximizeNoteBox } = prevState as XulswordStatePref;
+        maximizeNoteBox = clone(maximizeNoteBox);
         maximizeNoteBox[index] = 0;
         return { maximizeNoteBox };
       });
@@ -586,7 +590,9 @@ export default function handler(
     case 'mouseup': {
       if (noteboxResizing && atext) {
         this.setState((prevState: XulswordStatePref) => {
-          const { maximizeNoteBox, noteBoxHeight } = prevState;
+          let { maximizeNoteBox, noteBoxHeight } = prevState;
+          maximizeNoteBox = clone(maximizeNoteBox);
+          noteBoxHeight = clone(noteBoxHeight);
           const [initial, final] = noteboxResizing;
           if (maximize === true) {
             maximizeNoteBox[index] = noteBoxHeight[index];
