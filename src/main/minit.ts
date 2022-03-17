@@ -414,11 +414,11 @@ export function getSystemFonts() {
   return Promise.resolve(Cache.read('fontList'));
 }
 
-// Push user preference changes to applicable windows with update-state-from-pref.
-// Some changes require more than simply updating state prefs to take full effect,
-// such as those effecting locale or dynamic stylesheet.
+// Push user preference changes from the focused window to other windows using
+// update-state-from-pref. For some changes, more is done than simply updating
+// state prefs. For instance when changing locale or dynamic stylesheet.
 const cb: SetPrefCallbackType = (win, key, val, store) => {
-  if (store === 'prefs') {
+  if (store === 'prefs' && (!win || win === BrowserWindow.getFocusedWindow())) {
     const updateLocale = key === C.LOCALEPREF;
     const keysToUpdate: string[] = [];
     const keys: string[] =

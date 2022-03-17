@@ -340,18 +340,20 @@ class Atext extends React.Component {
         isVerseKey;
       if (doscroll) {
         sbe.dataset.scroll = scrollkey;
-        const location = versekeyScroll(
+        const endAndUpdateLoc = versekeyScroll(
           sbe,
           scrollProps as typeof C.ScrollPropsVK
         );
-        if (location) {
-          const loc = verseKey(location).location(libswordProps.location?.v11n);
+        if (endAndUpdateLoc) {
+          const location = verseKey(endAndUpdateLoc).location(
+            libswordProps.location?.v11n
+          );
           if (isPinned) {
             newState = {
               ...newState,
               pin: {
                 ...pinProps,
-                location: loc,
+                location,
                 flagScroll: C.VSCROLL.none,
               },
             };
@@ -359,7 +361,7 @@ class Atext extends React.Component {
             const fs = [];
             fs[panelIndex] = C.VSCROLL.none;
             G.Prefs.mergeComplexValue('xulsword', {
-              location: loc,
+              location,
               flagScroll: fs,
             });
           }

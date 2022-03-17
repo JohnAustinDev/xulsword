@@ -348,8 +348,7 @@ const C = {
     verse: 2, // put state verse at the top of the first panel
     center: 3, // put state verse in the middle of the first panel, unless verse is already visible or is verse 1
     centerAlways: 4, // try to put state verse in the middle of the first panel in any case
-    end: 5, // put state verse at the end of the last panel
-    endAndUpdate: 6, // put state verse at the end of the last panel, then change state to the resulting first visible verse
+    endAndUpdate: 5, // put state verse at the end of the last panel, then change state to the resulting first visible verse
   },
 
   // These Atext props are used to scroll text. If these props all have

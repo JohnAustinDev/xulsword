@@ -245,7 +245,11 @@ export const topHandle = (
   return {
     [name]: (e: React.SyntheticEvent) => {
       if (typeof func === 'function') func(e);
-      if (!e.isPropagationStopped && props && typeof props[name] === 'function')
+      if (
+        !e.isPropagationStopped() &&
+        props &&
+        typeof props[name] === 'function'
+      )
         props[name](e);
     },
   };

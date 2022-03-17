@@ -614,7 +614,6 @@ export function versekeyScroll(
         break;
       }
       // put selected verse at the end of the window or link
-      case C.VSCROLL.end:
       case C.VSCROLL.endAndUpdate: {
         sbe.scrollTop = vOffsetTop + v.offsetHeight - sbe.offsetHeight;
         if (flagScroll2 === C.VSCROLL.endAndUpdate) {
@@ -716,7 +715,6 @@ export function versekeyScroll(
         break;
       }
       // put selected verse at the end of the window or link, and don't change selection
-      case C.VSCROLL.end:
       case C.VSCROLL.endAndUpdate: {
         // put selected verse at the end of the window or link, then select first verse of link or verse 1
         // show all verses
