@@ -265,6 +265,37 @@ function createWindow(descriptor: WindowDescriptorType): BrowserWindow {
   return win;
 }
 
+function persist(
+  argname: string,
+  value: any,
+  merge: boolean,
+  callingWin: BrowserWindow
+) {
+  const pref = Prefs.getComplexValue(`Windows.w${callingWin.id}`, 'windows');
+  const args = pref.options.webPreferences.additionalArguments[0];
+  if (args) {
+    const arg = JSON_parse(args);
+    if (typeof arg === 'object') {
+      if (merge) {
+        if (
+          !['undefined', 'object'].includes(typeof value) ||
+          Array.isArray(value)
+        )
+          throw Error(`Window: merge value is not a data object: ${value}`);
+        const origval = arg[argname];
+        if (
+          !['undefined', 'object'].includes(typeof origval) ||
+          Array.isArray(origval)
+        )
+          throw Error(`Window: merge target is not a data object: ${origval}`);
+        arg[argname] = { ...origval, ...value };
+      } else arg[argname] = value;
+      pref.options.webPreferences.additionalArguments[0] = JSON_stringify(arg);
+      Prefs.setComplexValue(`Windows.w${callingWin.id}`, pref, 'windows');
+    }
+  }
+}
+
 const Window: GType['Window'] = {
   open(descriptor: WindowDescriptorType): number {
     const win = createWindow(descriptor);
@@ -272,21 +303,14 @@ const Window: GType['Window'] = {
     return win.id;
   },
 
-  persist(argname: string, value: any) {
+  setComplexValue(argname: string, value: any) {
     const win = getBrowserWindows('self', arguments[2]);
-    if (win.length && win[0]) {
-      const pref = Prefs.getComplexValue(`Windows.w${win[0].id}`, 'windows');
-      const args = pref.options.webPreferences.additionalArguments[0];
-      if (args) {
-        const arg = JSON_parse(args);
-        if (typeof arg === 'object') {
-          arg[argname] = value;
-          pref.options.webPreferences.additionalArguments[0] =
-            JSON_stringify(arg);
-          Prefs.setComplexValue(`Windows.w${win[0].id}`, pref, 'windows');
-        }
-      }
-    }
+    if (win && win[0]) persist(argname, value, false, win[0]);
+  },
+
+  mergeComplexValue(argname: string, value: any) {
+    const win = getBrowserWindows('self', arguments[2]);
+    if (win && win[0]) persist(argname, value, true, win[0]);
   },
 
   setContentSize(w: number, h: number, window?: WindowArgType): void {

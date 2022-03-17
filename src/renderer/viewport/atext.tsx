@@ -169,8 +169,12 @@ class Atext extends React.Component {
     const state = this.state as AtextState;
     const { panelIndex } = this.props as AtextProps;
     windowState[panelIndex] = trim(state, atextInitialState);
-    const d = diff(trim(prevState, atextInitialState), windowState[panelIndex]);
-    if (d) G.Window.persist(`atext${panelIndex}State`, d);
+    const changedState = diff(
+      trim(prevState, atextInitialState),
+      windowState[panelIndex]
+    );
+    if (changedState)
+      G.Window.mergeComplexValue(`atext${panelIndex}State`, changedState);
   }
 
   componentWillUnmount() {

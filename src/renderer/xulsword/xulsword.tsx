@@ -6,7 +6,7 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 import React from 'react';
 import i18n from 'i18next';
-import { trim, dString, stringHash, diff } from '../../common';
+import { trim, dString, diff } from '../../common';
 import C from '../../constant';
 import G from '../rg';
 import renderToRoot from '../rinit';

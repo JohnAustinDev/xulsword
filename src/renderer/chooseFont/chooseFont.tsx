@@ -7,7 +7,7 @@ import { ChromePicker as ColorPicker } from 'react-color';
 import Slider from 'react-input-slider';
 import type { ReactElementLike } from 'prop-types';
 import C from '../../constant';
-import { stringHash } from '../../common';
+import { diff } from '../../common';
 import G from '../rg';
 import renderToRoot from '../rinit';
 import { windowArgument } from '../rutil';
@@ -93,7 +93,7 @@ export default class ChooseFontWin extends React.Component {
   componentDidUpdate(_prevProps: any, prevState: ChooseFontWinState) {
     const state = this.state as ChooseFontWinState;
     const { module } = state;
-    if (module && stringHash(state.style) !== stringHash(prevState.style)) {
+    if (module && diff(prevState.style, state.style) !== undefined) {
       G.Data.write(state.style, 'stylesheetData');
       G.Window.reset('dynamic-stylesheet-reset', 'parent');
       // console.log(state.style);

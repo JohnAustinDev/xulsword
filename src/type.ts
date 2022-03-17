@@ -497,7 +497,11 @@ export const GPublic = {
   },
   Window: {
     open: func as unknown as (arg: WindowDescriptorType) => number,
-    persist: func as unknown as (argname: string, value: any) => void,
+    setComplexValue: func as unknown as (argname: string, value: any) => void,
+    mergeComplexValue: func as unknown as (
+      argname: string,
+      value: { [i: string]: any }
+    ) => void,
     setContentSize: func as unknown as (
       width: number,
       height: number,

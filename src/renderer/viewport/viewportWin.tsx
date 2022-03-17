@@ -6,7 +6,7 @@
 /* eslint-disable jsx-a11y/media-has-caption */
 import React from 'react';
 import C from '../../constant';
-import { trim, stringHash } from '../../common';
+import { trim, diff } from '../../common';
 import G from '../rg';
 import renderToRoot from '../rinit';
 import {
@@ -97,21 +97,20 @@ export default class ViewportWin extends React.Component {
     prevState: ViewportWinState
   ) {
     const state = this.state as ViewportWinState;
-    const { id } = this.props as ViewportWinProps;
     notStatePref = trim(state, vpWinNotStatePref);
-    if (
-      stringHash(notStatePref) !==
-      stringHash(trim(prevState, vpWinNotStatePref))
-    )
-      G.Window.persist('xulswordState', notStatePref);
+    const changedNotStatePref = diff(
+      trim(prevState, vpWinNotStatePref),
+      notStatePref
+    );
+    if (changedNotStatePref)
+      G.Window.mergeComplexValue('xulswordState', changedNotStatePref);
+    const { id } = this.props as ViewportWinProps;
     if (id) {
-      const newGlobalPref = trim(state, C.GlobalState.xulsword);
-      if (
-        stringHash(newGlobalPref) !==
-        stringHash(trim(prevState, C.GlobalState.xulsword))
-      ) {
-        G.Prefs.mergeComplexValue(id, newGlobalPref);
-      }
+      const changedStatePref = diff(
+        trim(prevState, C.GlobalState.xulsword),
+        trim(state, C.GlobalState.xulsword)
+      );
+      if (changedStatePref) G.Prefs.mergeComplexValue(id, changedStatePref);
     }
   }
 

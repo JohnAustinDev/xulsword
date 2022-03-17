@@ -3,6 +3,8 @@
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable react/static-property-placement */
 import React from 'react';
+import { diff } from '../../common';
+import G from '../rg';
 import renderToRoot from '../rinit';
 import { windowArgument } from '../rutil';
 import {
@@ -33,6 +35,8 @@ type PopupWinProps = PopupParentProps & XulProps;
 
 type PopupWinState = PopupParentState;
 
+let windowState = windowArgument('popupState') as Partial<PopupWinState>;
+
 export default class PopupWin extends React.Component implements PopupParent {
   static defaultProps: typeof defaultProps;
 
@@ -48,7 +52,6 @@ export default class PopupWin extends React.Component implements PopupParent {
       eleminfo: null,
       popupReset: 0,
     };
-    const windowState = windowArgument('popupState') as Partial<PopupWinState>;
 
     this.state = {
       ...initialState,
@@ -56,6 +59,13 @@ export default class PopupWin extends React.Component implements PopupParent {
     };
 
     this.popupHandler = popupHandlerH.bind(this);
+  }
+
+  componentDidRender(_prevProps: PopupWinProps, prevState: PopupWinState) {
+    const state = this.state as PopupWinState;
+    windowState = state;
+    const changedState = diff(prevState, state);
+    if (changedState) G.Window.mergeComplexValue('popupState', changedState);
   }
 
   render() {
