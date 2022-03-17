@@ -95,7 +95,7 @@ export default class ChooseFontWin extends React.Component {
     const { module } = state;
     if (module && diff(prevState.style, state.style) !== undefined) {
       G.Data.write(state.style, 'stylesheetData');
-      G.Window.reset('dynamic-stylesheet-reset', 'parent');
+      G.Window.reset('dynamic-stylesheet-reset');
       // console.log(state.style);
     }
   }
