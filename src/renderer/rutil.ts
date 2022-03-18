@@ -7,7 +7,7 @@ import i18next from 'i18next';
 import C from '../constant';
 import RefParser, { RefParserOptionsType } from '../refparse';
 import VerseKey from '../versekey';
-import { ElemInfo, getElementInfo } from '../libswordElemInfo';
+import { ElemInfo, getElementInfo, TitleFormat } from '../libswordElemInfo';
 import { clone, JSON_parse, ofClass } from '../common';
 import G from './rg';
 
@@ -231,51 +231,28 @@ export function findAVerseText(
   return Boolean(textvk.text);
 }
 
-// Return the module context in which the element resides, NOT the
-// module associated with the data of the element itself.
-export function getContextModule(elem: HTMLElement): string | null {
-  let p;
-
-  // first let's see if we're in a verse
-  let telem = elem as HTMLElement | null;
-  while (telem?.classList && !telem.classList.contains('vs')) {
-    telem = telem.parentNode as HTMLElement | null;
+// Return the module context in which the element resides.
+export function getContextModule(
+  elem: ParentNode | HTMLElement | EventTarget | null
+): string | null {
+  if (!elem) return null;
+  // get the first ancestor having one of these classes
+  const c = ofClass(
+    ['atext']
+      .concat(Object.keys(TitleFormat))
+      .concat(G.Tabs.map((t) => `cs-${t.module}`)),
+    elem
+  );
+  if (c) {
+    if (c.type === 'atext') {
+      return c.element.dataset.module || null;
+    }
+    if (c.type.startsWith('cs-')) {
+      return c.type.substring(3);
+    }
+    const p = getElementInfo(c.element);
+    return (p && p.mod) || null;
   }
-  if (telem) {
-    p = getElementInfo(telem);
-    if (p) return p.mod;
-  }
-
-  // then see if we're in a viewport window, and use its module
-  const atext = ofClass(['atext'], elem);
-  if (atext) return atext.element.dataset.module || null;
-
-  // are we in cross reference text?
-  telem = elem as HTMLElement | null;
-  while (telem?.classList && !telem.classList.contains('crtext')) {
-    telem = telem.parentNode as HTMLElement | null;
-  }
-  const match = telem?.className && telem?.className.match(/\bcs-(\S+)\b/);
-  if (match) return match[1];
-
-  // in a search lexicon list?
-  telem = elem as HTMLElement | null;
-  while (telem?.classList && !telem.classList.contains('snlist')) {
-    telem = telem.parentNode as HTMLElement | null;
-  }
-  if (telem && 'getAttribute' in telem)
-    return telem.getAttribute('contextModule');
-
-  // otherwise see if we're in a search results list
-  telem = elem as HTMLElement | null;
-  while (telem?.classList && !telem.classList.contains('slist')) {
-    telem = telem.parentNode as HTMLElement | null;
-  }
-  if (telem) {
-    p = getElementInfo(telem);
-    if (p) return p.mod;
-  }
-
   return null;
 }
 
@@ -328,7 +305,7 @@ function readDataFromElement(info: typeof TargetInfo, element: HTMLElement) {
 // Read target info from an element and its parents.
 function getTargetsFromElement(
   info: typeof TargetInfo,
-  element: HTMLElement | null
+  element: HTMLElement | ParentNode | EventTarget | null
 ): typeof TargetInfo {
   let elem = element as HTMLElement | null;
   while (elem) {
@@ -395,7 +372,9 @@ function getTargetsFromSelection(
 
 // Return contextual data for use by context menus.
 const parser = refParser({ uncertain: true });
-export function getContextData(elem: HTMLElement): ContextData {
+export function getContextData(
+  elem: HTMLElement | ParentNode | EventTarget
+): ContextData {
   const atextx = ofClass(['atext'], elem);
   const atext = atextx ? atextx.element : null;
   const tabx = ofClass(['tab'], elem);

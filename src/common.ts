@@ -213,9 +213,10 @@ export function diff(obj1: any, obj2: any, depth = 1): any {
 // not share any of the class-names, null is returned.
 export function ofClass(
   search: string | string[],
-  element: HTMLElement,
+  element: HTMLElement | ParentNode | EventTarget | null,
   selfonly = false
 ): { element: HTMLElement; type: string } | null {
+  if (!element || !('classList' in element)) return null;
   let elm = element;
   let typ;
   const s = Array.isArray(search) ? search : [search];

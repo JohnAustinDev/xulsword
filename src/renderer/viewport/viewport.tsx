@@ -376,7 +376,6 @@ class Viewport extends React.Component implements PopupParent {
       <Hbox
         {...addClass(`viewport ${cls}`, props)}
         style={{ minWidth: `${minWidth}px` }}
-        {...topHandle('onContextMenu', eHandler)}
         {...topHandle('onClick', eHandler)}
       >
         {!ownWindow && !showChooser && chooser !== 'genbook' && (

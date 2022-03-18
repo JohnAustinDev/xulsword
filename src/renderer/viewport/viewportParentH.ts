@@ -620,11 +620,6 @@ export default function handler(
       break;
     }
 
-    case 'contextmenu': {
-      G.Data.write(getContextData(target), 'contextData');
-      break;
-    }
-
     default:
       throw Error(`Unhandled handleViewport event type '${es.type}'`);
   }

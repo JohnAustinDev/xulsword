@@ -68,7 +68,8 @@ export function popupParentHandler(
       let openPopup = false;
       let gap = C.UI.Popup.openGap;
       const info = getPopupInfo(elem);
-      if (info && targ.type === 'sn') info.mod = getContextModule(elem) || null;
+      if (info && targ.type === 'sn')
+        info.mod = getContextModule(targ.element.parentNode);
       switch (targ.type) {
         case 'cr':
           if (place.crossrefs === 'popup') openPopup = true;
@@ -193,7 +194,8 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
       const elem = targ.element;
       const info = getPopupInfo(elem);
       const popupY = parent.getBoundingClientRect().y;
-      if (info && targ.type === 'sn') info.mod = getContextModule(elem) || null;
+      if (info && targ.type === 'sn')
+        info.mod = getContextModule(targ.element.parentNode);
       switch (targ.type) {
         case 'fn':
         case 'sn':

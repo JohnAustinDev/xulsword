@@ -10,7 +10,7 @@ import { JSON_parse } from '../common';
 import Cache from '../cache';
 import G from './rg';
 import DynamicStyleSheet from './style';
-import { jsdump } from './rutil';
+import { getContextData, jsdump } from './rutil';
 import { delayHandler } from './libxul/xul';
 
 import './global-htm.css';
@@ -148,14 +148,21 @@ export default function renderToRoot(
       );
     });
     DynamicStyleSheet.update(G.Data.read('stylesheetData'));
-    return <React.Fragment key={reset}>{children}</React.Fragment>;
+    const onContextMenu = (e: React.SyntheticEvent) => {
+      G.Data.write(getContextData(e.target), 'contextData');
+    };
+    return (
+      <div id="root" onContextMenu={onContextMenu} key={reset}>
+        {children}
+      </div>
+    );
   }
 
   i18nInit([namespace])
     .then(() => {
       return render(
         <Reset>{component}</Reset>,
-        document.getElementById('root')
+        document.getElementsByTagName('body')[0]
       );
     })
     .then(() => {
