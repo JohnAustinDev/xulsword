@@ -295,6 +295,7 @@ class Chooser extends React.Component {
                   align="center"
                   onMouseEnter={handler}
                   data-bookgroup={bg}
+                  data-v11n={v11n}
                 >
                   {useLabelImage[bg] && (
                     <div key={bg} className={`label ${bg}`} />
@@ -328,6 +329,7 @@ class Chooser extends React.Component {
               // This is the real BookGroupList...
             }
             <BookGroupList
+              className={!['ot', 'nt'].includes(bookGroup) ? 'other' : ''}
               bookGroup={bookGroup}
               selection={selection}
               availableBooks={availableBooks}
@@ -424,6 +426,7 @@ function BookGroupItem(
       {...addClass(['bookgroupitem'].concat(c), props)}
       {...topHandle('onMouseEnter', handler, props)}
       data-book={sName}
+      data-v11n={v11n}
     >
       <div className="label">{G.Book[sName].name}</div>
 
@@ -467,6 +470,7 @@ function ChapterMenu(props: {
             key={[bkcode, ch].join('.')}
             data-book={bkcode}
             data-chapter={ch}
+            data-v11n={v11n}
             className="chaptermenucell"
             onMouseEnter={dlyhandler}
             onMouseLeave={handler}

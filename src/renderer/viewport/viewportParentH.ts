@@ -18,7 +18,7 @@ import { delayHandler } from '../libxul/xul';
 import { textChange } from './ztext';
 import { aTextWheelScroll, chapterChange } from './zversekey';
 
-import type { BookGroupType, XulswordStatePref } from '../../type';
+import type { BookGroupType, V11nType, XulswordStatePref } from '../../type';
 import type Xulsword from '../xulsword/xulsword';
 import type { XulswordState } from '../xulsword/xulsword';
 import type ViewportWin from './viewportWin';
@@ -340,7 +340,7 @@ export default function handler(
           break;
         }
         case 'bookgroup': {
-          const { bookgroup } = targ.element.dataset;
+          const { bookgroup, v11n } = targ.element.dataset;
           const bg = bookgroup as BookGroupType;
           const bk = bookgroup ? G.Book[C.SupportedBooks[bg][0]] : null;
           if (bk) {
@@ -349,7 +349,7 @@ export default function handler(
                 book: bk.code,
                 chapter: 1,
                 verse: 1,
-                v11n: location?.v11n || 'KJV',
+                v11n: v11n as V11nType,
               },
               selection: null,
             });
@@ -357,14 +357,14 @@ export default function handler(
           break;
         }
         case 'bookgroupitem': {
-          const { book } = targ.element.dataset;
+          const { book, v11n } = targ.element.dataset;
           if (book && !targ.element.classList.contains('disabled')) {
             this.setState({
               location: {
                 book,
                 chapter: 1,
                 verse: 1,
-                v11n: location?.v11n || 'KJV',
+                v11n: v11n as V11nType,
               },
               selection: null,
             });
@@ -372,12 +372,12 @@ export default function handler(
           break;
         }
         case 'chaptermenucell': {
-          const { book, chapter } = targ.element.dataset;
+          const { book, chapter, v11n } = targ.element.dataset;
           if (book && chapter) {
             const newloc = chapterChange({
               book,
               chapter: Number(chapter),
-              v11n: location?.v11n || 'KJV',
+              v11n: v11n as V11nType,
             });
             if (newloc) {
               this.setState({

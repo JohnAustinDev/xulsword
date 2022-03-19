@@ -49,8 +49,8 @@
 .chooser .bookgroup.other {
   background-image: repeating-linear-gradient(
     45deg,
-    rgba(200, 200, 0, 0.5) 0 2px,
-    transparent 2px 4px
+    rgba(175, 145, 180, 0.25) 0 2px,
+    transparent 1px 4px
   );
 }
 .chooser .bookgroup.selected {
@@ -170,6 +170,13 @@ html.chromedir-rtl .bookgrouplist {
 }
 .bookgroupitem.selected {
   background: rgb(230, 200, 255);
+}
+.other .bookgroupitem.selected {
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(175, 145, 180, 0.25) 0 2px,
+    transparent 1px 4px
+  );
 }
 .bookgroupitem:hover {
   background: yellow;
