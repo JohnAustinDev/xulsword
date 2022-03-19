@@ -8,15 +8,14 @@ import {
   MenuItem,
 } from 'electron';
 import path from 'path';
-import C from '../constant';
 import G from './mg';
 import Commands, { newDbItemWithDefaults } from './commands';
 import setViewportTabs from './tabs';
 
-import type { TabTypes, XulswordStatePref } from '../type';
+import type { GlobalPref, TabTypes, XulswordStatePref } from '../type';
 import { verseKey } from './minit';
 import Data from './modules/data';
-import Prefs, { SetPrefCallbackType } from './modules/prefs';
+import Prefs, { PrefCallbackType } from './modules/prefs';
 
 type Modifiers =
   | 'CommandOrControl' // 'accel' in XUL
@@ -109,6 +108,85 @@ function buildTabMenus(menu: Menu) {
   });
 }
 
+// While updating the menu, a set of controlling Pref keys is collected.
+// This set of keys will be monitored such that when one of them is changed,
+// the menu will again be updated.
+function updateMenuFromPref(menux?: Menu | null) {
+  const panels = Prefs.getComplexValue(
+    'xulsword.panels'
+  ) as XulswordStatePref['panels'];
+  const menuPref: Set<string> = new Set();
+  function add(pref: string) {
+    menuPref.add(pref.split('.').slice(0, 2).join('.'));
+  }
+  function recurseMenu(menu: Electron.Menu) {
+    if (!menu.items) return;
+    menu.items.forEach((i) => {
+      if (i.id && i.type === 'checkbox') {
+        const [type, pi, mod] = i.id.split('_');
+        if (type === 'showtab') {
+          const panelIndex = Number(pi);
+          add('xulsword.tabs');
+          const pval = Prefs.getComplexValue(
+            'xulsword.tabs'
+          ) as XulswordStatePref['tabs'];
+          if (panelIndex === -1) {
+            i.checked = pval.every((p: any) => p?.includes(mod));
+          } else {
+            i.checked = Boolean(pval[panelIndex]?.includes(mod));
+          }
+        } else {
+          add(i.id);
+          i.checked = Prefs.getBoolPref(i.id);
+        }
+      } else if (i.id && i.type === 'radio') {
+        const [pref, str] = i.id.split('_val_');
+        if (pref === 'xulsword.panels') {
+          add(pref);
+          const numPanels = panels.filter(
+            (m: string | null) => m || m === ''
+          ).length;
+          if (numPanels === Number(str)) i.checked = true;
+        } else if (str !== '') {
+          let val: string | number = str;
+          if (Number(str).toString() === str) val = Number(str);
+          add(pref);
+          const pval =
+            typeof val === 'number'
+              ? Prefs.getIntPref(pref)
+              : Prefs.getCharPref(pref);
+          if (pval === val) i.checked = true;
+        }
+      }
+      if (i.submenu) recurseMenu(i.submenu);
+    });
+  }
+  const menu = menux || Menu.getApplicationMenu();
+  if (menu) recurseMenu(menu);
+  // To inject menuPref into pref callbacks.
+  Data.write(Array.from(menuPref), 'menuPref');
+}
+
+// This callback updates the menu when applicable prefs change. If the
+// calling window is undefined (main process) the menu will NOT be updated
+// because it is assumed the menu initiated the change, and ignoring
+// it prevents cycling.
+export const pushPrefsToMenu: PrefCallbackType = (win, key, val, store) => {
+  let menuPref: string[] = [];
+  if (Data.has('menuPref')) {
+    menuPref = Data.read('menuPref') as string[];
+  }
+  if (win && store === 'prefs') {
+    const keys: string[] = [];
+    if (!key.includes('.') && typeof val === 'object') {
+      Object.keys(val).forEach((k) => keys.push(`${key}.${k}`));
+    } else keys.push(key);
+    if (keys.some((k) => menuPref.includes(k))) {
+      updateMenuFromPref();
+    }
+  }
+};
+
 export default class MenuBuilder {
   mainWindow: BrowserWindow;
 
@@ -130,86 +208,10 @@ export default class MenuBuilder {
 
     const menu = Menu.buildFromTemplate(template);
     buildTabMenus(menu);
-    this.updateMenuFromPref(menu);
-    // This callback updates the menu when applicable prefs change. If the
-    // calling window is undefined (main process) the menu will NOT be updated
-    // because it is assumed the menu initiated the change, and ignoring
-    // it prevents cycling.
-    const cb: SetPrefCallbackType = (win, key, val, store) => {
-      if (win && store === 'prefs') {
-        const keys: string[] = [];
-        if (!key.includes('.') && typeof val === 'object') {
-          Object.keys(val).forEach((k) => keys.push(`${key}.${k}`));
-        } else keys.push(key);
-        if (keys.some((k) => this.menuPref.includes(k))) {
-          this.updateMenuFromPref();
-        }
-      }
-    };
-    let cbs: SetPrefCallbackType[] = [];
-    if (Data.has('setPrefCallback')) cbs = Data.read('setPrefCallback');
-    cbs.push(cb);
-    Data.write(cbs, 'setPrefCallback');
-    // Inject this into pref callback so it knows which are menu prefs.
-    Data.write(this.menuPref, 'menuPref');
+    updateMenuFromPref(menu);
     Menu.setApplicationMenu(menu);
 
     return menu;
-  }
-
-  // While updating the menu, a set of controlling Pref keys is collected.
-  // This set of keys will be monitored such that when one of them is changed,
-  // the menu will again be updated.
-  updateMenuFromPref(menux?: Menu | null) {
-    const menuPref: Set<string> = new Set();
-    function add(pref: string) {
-      menuPref.add(pref.split('.').slice(0, 2).join('.'));
-    }
-    function recurseMenu(menu: Electron.Menu) {
-      if (!menu.items) return;
-      menu.items.forEach((i) => {
-        if (i.id && i.type === 'checkbox') {
-          const [type, pi, mod] = i.id.split('_');
-          if (type === 'showtab') {
-            const panelIndex = Number(pi);
-            add('xulsword.tabs');
-            const pval = Prefs.getComplexValue(
-              'xulsword.tabs'
-            ) as XulswordStatePref['tabs'];
-            if (panelIndex === -1) {
-              i.checked = pval.every((p: any) => p?.includes(mod));
-            } else {
-              i.checked = Boolean(pval[panelIndex]?.includes(mod));
-            }
-          } else {
-            add(i.id);
-            i.checked = Prefs.getBoolPref(i.id);
-          }
-        } else if (i.id && i.type === 'radio') {
-          const [pref, str] = i.id.split('_val_');
-          if (pref === 'xulsword.panels') {
-            add(pref);
-            const numPanels = Prefs.getComplexValue(pref).filter(
-              (m: string | null) => m || m === ''
-            ).length;
-            if (numPanels === Number(str)) i.checked = true;
-          } else if (str !== '') {
-            let val: string | number = str;
-            if (Number(str).toString() === str) val = Number(str);
-            add(pref);
-            const pval =
-              typeof val === 'number'
-                ? Prefs.getIntPref(pref)
-                : Prefs.getCharPref(pref);
-            if (pval === val) i.checked = true;
-          }
-        }
-        if (i.submenu) recurseMenu(i.submenu);
-      });
-    }
-    const menu = menux || Menu.getApplicationMenu();
-    if (menu) recurseMenu(menu);
-    this.menuPref = Array.from(menuPref);
   }
 
   // Read locale key, appending & before shortcut key and escaping other &s.
@@ -547,6 +549,9 @@ export default class MenuBuilder {
       ],
     };
 
+    const locales = G.Prefs.getComplexValue(
+      'global.locales'
+    ) as GlobalPref['locales'];
     const subMenuOptions = {
       label: this.ts('menu.options'),
       submenu: [
@@ -633,15 +638,15 @@ export default class MenuBuilder {
         {
           label: this.ts('menu.options.language'),
           // accelerator: 'F1', cannot open main menu item
-          submenu: G.Prefs.getComplexValue('global.locales').map((l: any) => {
+          submenu: locales.map((l: any) => {
             const [lng, name] = l;
             return {
               label: name,
-              id: `${C.LOCALEPREF}_val_${lng}`,
+              id: `global.locale_val_${lng}`,
               type: 'radio',
               toolTip: lng,
               click: () => {
-                radioSwitch(C.LOCALEPREF, lng);
+                radioSwitch('global.locale', lng);
               },
             };
           }),

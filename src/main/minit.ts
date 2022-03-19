@@ -12,7 +12,7 @@ import RefParser, { RefParserOptionsType } from '../refparse';
 import { isASCII, JSON_parse } from '../common';
 import Cache from '../cache';
 import Dirs from './modules/dirs';
-import Prefs, { SetPrefCallbackType } from './modules/prefs';
+import Prefs, { PrefCallbackType } from './modules/prefs';
 import LibSword from './modules/libsword';
 import nsILocalFile from './components/nsILocalFile';
 import { getFontFaceConfigs } from './config';
@@ -27,6 +27,7 @@ import type {
   GType,
   BookGroupType,
   LocationVKType,
+  GlobalPref,
 } from '../type';
 import Data from './modules/data';
 
@@ -61,7 +62,7 @@ export function getBooks(): BookType[] {
     const stfile = path.join(
       Dirs.path.xsAsset,
       'locales',
-      Prefs.getCharPref(C.LOCALEPREF),
+      Prefs.getCharPref('global.locale'),
       'common',
       'books.json'
     );
@@ -366,7 +367,9 @@ export function refParser(options?: RefParserOptionsType): RefParser {
     },
   };
   const localesAccessor = () => {
-    const locs: string[][] = Prefs.getComplexValue('global.locales');
+    const locs = Prefs.getComplexValue(
+      'global.locales'
+    ) as GlobalPref['locales'];
     return locs.map((val) => val[0]);
   };
   return new RefParser(gfunctions, localesAccessor, options);
@@ -417,9 +420,9 @@ export function getSystemFonts() {
 // Push user preference changes from the focused window to other windows using
 // update-state-from-pref. For some changes, more is done than simply updating
 // state prefs. For instance when changing locale or dynamic stylesheet.
-const cb: SetPrefCallbackType = (win, key, val, store) => {
+export const pushPrefsToWindows: PrefCallbackType = (win, key, val, store) => {
   if (store === 'prefs' && (!win || win === BrowserWindow.getFocusedWindow())) {
-    const updateLocale = key === C.LOCALEPREF;
+    const updateLocale = key === 'global.locale';
     const keysToUpdate: string[] = [];
     const keys: string[] =
       !key.includes('.') && typeof val === 'object'
@@ -444,9 +447,9 @@ const cb: SetPrefCallbackType = (win, key, val, store) => {
         });
       }
     });
-    const doReset = [C.LOCALEPREF, 'global.fontSize'].includes(key);
+    const doReset = ['global.locale', 'global.fontSize'].includes(key);
     if (updateLocale) {
-      const lng = Prefs.getCharPref(C.LOCALEPREF);
+      const lng = Prefs.getCharPref('global.locale');
       i18next
         .loadLanguages(lng)
         .then(() => i18next.changeLanguage(lng))
@@ -470,7 +473,3 @@ const cb: SetPrefCallbackType = (win, key, val, store) => {
     }
   }
 };
-let cbs: SetPrefCallbackType[] = [];
-if (Data.has('setPrefCallback')) cbs = Data.read('setPrefCallback');
-cbs.push(cb);
-Data.write(cbs, 'setPrefCallback');

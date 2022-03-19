@@ -7,17 +7,55 @@ import { app, BrowserWindow, ipcMain, IpcMainEvent } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import i18n from 'i18next';
-import { WindowRegistryType } from '../type';
 import C from '../constant';
-import Data from './modules/data';
-import MenuBuilder from './menu';
+import G from './mg';
+import MenuBuilder, { pushPrefsToMenu } from './menu';
 import { jsdump } from './mutil';
 import { WindowRegistry } from './window';
-import G from './mg';
-import LibSword from './modules/libsword';
 import contextMenu from './contextMenu';
+import { pushPrefsToWindows } from './minit';
+import LibSword from './modules/libsword';
+import Data from './modules/data';
+
+import type { GlobalPref, WindowRegistryType } from '../type';
 
 const i18nBackendMain = require('i18next-fs-backend');
+
+// Get the available locale list
+const Locales = G.Prefs.getComplexValue(
+  'global.locales'
+) as GlobalPref['locales'];
+const AvailableLanguages = [
+  ...new Set(
+    Locales.map((l) => {
+      return l[0];
+    })
+      .map((l) => {
+        return [l, l.replace(/-.*$/, '')];
+      })
+      .flat()
+  ),
+];
+// Select the program's locale
+let Language = G.Prefs.getCharPref('global.locale');
+if (!Language) {
+  const oplng = 'en'; // webpack couldn't compile os-locale module
+  let matched = '';
+  Locales.forEach((l) => {
+    if (!matched && (l[0] === oplng || l[0].replace(/-.*$/, '') === oplng))
+      [matched] = l;
+  });
+  Language = matched || 'ru';
+  G.Prefs.setCharPref('global.locale', Language);
+}
+// Set program menu direction and Chromium locale. This must be done
+// before the app 'ready' event is fired, which happens even before
+// i18next or configs are initialized. Direction need not be forced
+// for locales in Chromium's list, like fa, but must be for ky-Arab.
+if ((Locales.find((l) => l[0] === Language) || [])[2] === 'rtl') {
+  app.commandLine.appendSwitch('force-ui-direction', 'rtl');
+}
+app.commandLine.appendSwitch('lang', Language.replace(/-.*$/, ''));
 
 const isDevelopment =
   process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
@@ -123,6 +161,8 @@ const openMainWindow = () => {
     if (reg) G.Window.open(reg);
   });
 
+  Data.write([pushPrefsToWindows, pushPrefsToMenu], 'setPrefCallback');
+
   return mainWin;
 };
 
@@ -140,31 +180,16 @@ const start = async () => {
         .catch((e: Error) => jsdump(e));
     })();
   }
-
-  let supportedLangs = G.Prefs.getComplexValue('global.locales').map(
-    (l: any) => {
-      return l[0];
-    }
-  );
-  supportedLangs = [
-    ...new Set(
-      supportedLangs.concat(
-        supportedLangs.map((l: any) => {
-          return l.replace(/-.*$/, '');
-        })
-      )
-    ),
-  ];
-
   // Initialize i18n
-  const lng: string = G.Prefs.getCharPref(C.LOCALEPREF);
   await i18n
     .use(i18nBackendMain)
     .init({
-      lng,
-      fallbackLng: isDevelopment ? 'cimode' : C.FallbackLanguage[lng] || ['en'],
-      supportedLngs: supportedLangs,
-      preload: supportedLangs,
+      lng: Language,
+      fallbackLng: isDevelopment
+        ? 'cimode'
+        : C.FallbackLanguage[Language] || ['en'],
+      supportedLngs: AvailableLanguages,
+      preload: AvailableLanguages,
 
       ns: ['xulsword', 'common/config', 'common/books', 'common/numbers'],
       defaultNS: 'xulsword',

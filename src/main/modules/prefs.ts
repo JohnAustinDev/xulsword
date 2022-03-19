@@ -9,10 +9,10 @@ import nsILocalFile from '../components/nsILocalFile';
 import Dirs from './dirs';
 import { jsdump } from '../mutil';
 
-import type { GType } from '../../type';
+import type { GType, PrefObject, PrefValue } from '../../type';
 import Data from './data';
 
-export type SetPrefCallbackType = (
+export type PrefCallbackType = (
   callingWin: BrowserWindow,
   key: string,
   value: any,
@@ -31,17 +31,26 @@ type PrefsPrivate = {
   store: StoreType;
   setPref: (
     key: string,
-    type: string,
-    value: string | number | boolean | undefined | { [i: string]: any },
+    type: 'string' | 'number' | 'boolean' | 'complex' | 'any' | 'merge',
+    value: PrefValue,
     aStore: string | undefined,
     callingWin: BrowserWindow
   ) => boolean;
   writeStore: (aStore: string) => boolean;
-  getStore: (aStore?: string) => { [s: string]: any };
+  getStore: (aStore: string) => PrefObject;
+  getKeyValueFromStore(
+    key: string,
+    throwIfMissing: boolean,
+    store: string
+  ): PrefValue;
+  isType: (
+    type: 'string' | 'number' | 'boolean' | 'complex' | 'any',
+    value: PrefValue
+  ) => boolean;
   callbacks: (
     callingWin: BrowserWindow,
     key: string,
-    obj: any,
+    value: PrefValue,
     aStore?: string
   ) => void;
 };
@@ -55,11 +64,18 @@ const Prefs: GType['Prefs'] & PrefsPrivate = {
 
   callbacks(w, key, obj, aStore) {
     if (Data.has('setPrefCallback')) {
-      const callback = Data.read('setPrefCallback') as SetPrefCallbackType[];
+      const callback = Data.read('setPrefCallback') as PrefCallbackType[];
       callback.forEach((cb) => {
         cb(w, key, obj, aStore || 'prefs');
       });
     }
+  },
+
+  has(key, type, aStore?) {
+    const value = this.getKeyValueFromStore(key, false, aStore || 'prefs');
+    if (value === undefined) return false;
+    if (!this.isType(type, value)) return false;
+    return true;
   },
 
   // Get a string pref value. Error if key is not String, or is missing from store.
@@ -113,9 +129,9 @@ const Prefs: GType['Prefs'] & PrefsPrivate = {
   },
 
   // Remove the key from a store
-  clearUserPref(key, aStore?) {
+  deleteUserPref(key, aStore?) {
     const w = arguments[2];
-    return this.setPref(key, 'undefined', undefined, aStore, w);
+    return this.setPref(key, 'any', undefined, aStore, w);
   },
 
   // Get a pref value and throw an error if it does not match type. If the key
@@ -124,43 +140,22 @@ const Prefs: GType['Prefs'] & PrefsPrivate = {
   getPrefOrCreate(key, type, defval, store?) {
     const aStore = store || 'prefs';
     const w = arguments[4];
-    let p = this.getStore(aStore);
-    if (p === null) return undefined;
+    const value = this.getKeyValueFromStore(key, defval === undefined, aStore);
 
-    let keyExists = true;
-    key.split('.').forEach((d) => {
-      if (!keyExists || !(d in p)) {
-        if (defval === undefined) {
-          throw Error(
-            `missing key and no default: '${key}' of '${aStore}' store`
-          );
-        }
-        keyExists = false;
-        return;
-      }
-      p = p[d];
-    });
-
-    let val = defval;
-    if (keyExists) {
-      val = p;
-    } else {
-      this.setPref(key, type, val, aStore, w);
-    }
-
-    let type2: string = type;
-    if (type === 'complex') type2 = 'object';
-    if (typeof val !== type2) {
+    const newval = value !== undefined ? value : defval;
+    if (newval !== value) {
+      this.setPref(key, type, newval, aStore, w);
+    } else if (!this.isType(type, newval)) {
       throw Error(
-        `type '${typeof val}' expected '${type2}': ${key} of ${aStore} store`
+        `type '${typeof newval}' expected '${type}': key='${key}' of store='${aStore}'`
       );
     }
 
-    return val;
+    return newval;
   },
 
   // Get persistent data from source json files
-  getStore(aStore = 'prefs') {
+  getStore(aStore) {
     // Create a new store if needed
     if (this.store === null || !(aStore in this.store)) {
       this.store = {
@@ -214,6 +209,43 @@ const Prefs: GType['Prefs'] & PrefsPrivate = {
     return s.data;
   },
 
+  getKeyValueFromStore(key, throwIfMissing, aStore) {
+    const stobj = this.getStore(aStore);
+    if (stobj === null) {
+      if (throwIfMissing) throw Error(`missing store: '${aStore}'`);
+      return undefined;
+    }
+    let keyExists = true;
+    let keyvalue = stobj as PrefObject | PrefValue;
+    key.split('.').forEach((d) => {
+      if (
+        !keyExists ||
+        !keyvalue ||
+        typeof keyvalue !== 'object' ||
+        Array.isArray(keyvalue) ||
+        !(d in keyvalue)
+      ) {
+        if (throwIfMissing) {
+          throw Error(`missing key: '${key}' of '${aStore}' store`);
+        }
+        keyExists = false;
+      } else {
+        keyvalue = keyvalue[d] as PrefValue;
+      }
+    });
+    return keyExists ? keyvalue : undefined;
+  },
+
+  isType(type, value) {
+    if (type !== 'any') {
+      const type2 = type === 'complex' ? 'object' : type;
+      if (typeof value !== type2) {
+        return false;
+      }
+    }
+    return true;
+  },
+
   // Write persistent data to source json files. If there is no data object
   // for the store, then there have been no set/gets on the store, and nothing
   // will be written. True is returned on success.
@@ -243,61 +275,59 @@ const Prefs: GType['Prefs'] & PrefsPrivate = {
   // Write a key value pair to a store. If the value is undefined, the key will
   // be removed from the store. An error is thrown if the value is not of the
   // specified type. If this.writeOnChange is set, then the store will be saved
-  // to disk immediately. Supported types are Javascript primitive types and
-  // 'complex' for anything else. If a change was successfully made, any
-  // callbacks registered in Data:setPrefCallback will be called after setting
-  // the new value.
+  // to disk immediately. Supported types are PrefValue. If a change was made,
+  // any callbacks registered in Data:setPrefCallback will be called after
+  // setting the new value.
   setPref(key, type, value, store, callingWin) {
+    // Get the store.
     const aStore = store || 'prefs';
     let p = this.getStore(aStore);
-    let k = key;
     if (p === null) {
       jsdump(`WARN: failed to set key ${key} in ${aStore}`);
       return false;
     }
-
+    // Test the value.
     if (type === 'merge') {
       if (
         !['undefined', 'object'].includes(typeof value) ||
         Array.isArray(value)
-      )
+      ) {
         throw Error(`Prefs: merge value is not a data object: ${value}`);
-    } else {
-      let type2 = type;
-      if (type === 'complex') type2 = 'object';
-      if (value !== undefined && typeof value !== type2) {
-        jsdump(`WARN: setPref wrong type: ${key}: ${typeof value} !== ${type}`);
-        return false;
       }
+    } else if (!this.isType(type, value)) {
+      jsdump(`WARN: setPref wrong type: ${key}: ${typeof value} !== ${type}`);
+      return false;
     }
-
-    let keyExists = true;
+    // Get (or create) the parent object of the key.
+    let k = key;
     key.split('.').forEach((d, i, a) => {
       k = d;
       if (i + 1 === a.length) return;
-      if (value === undefined) {
-        if (!(d in p) || !keyExists) {
-          keyExists = false;
-          return;
+      if (!(d in p)) p[d] = {};
+      const np = p[d];
+      if (np) {
+        if (typeof np !== 'object' || Array.isArray(np)) {
+          throw Error(
+            `Parent key is not a PrefObject: '${a.slice(0, i + 1).join('.')}'`
+          );
         }
-      } else if (!(d in p)) p[d] = {};
-      p = p[d];
+        p = np;
+      }
     });
-    if (value === undefined && !keyExists) return true;
-
+    // Check the current value and set to the new value only if needed.
     if (value === undefined) {
       if (k in p) delete p[k];
       else return true;
     } else if (diff(p[k], value) === undefined) {
       return true;
     } else if (type === 'merge') {
-      if (
-        !['undefined', 'object'].includes(typeof p[k]) ||
-        Array.isArray(p[k])
-      ) {
-        throw Error(`Prefs: merge target is not a data object: ${p[k]}`);
+      let pp = p[k];
+      if (!pp) pp = {};
+      if (typeof pp === 'object' && !Array.isArray(pp)) {
+        p[k] = { ...pp, ...clone(value) };
+      } else {
+        throw Error(`Prefs: merge target is not a PrefObject: '${pp}'`);
       }
-      p[k] = { ...p[k], ...clone(value) };
     } else p[k] = clone(value);
 
     // If not writeOnChange, then data is persisted only when app is closed.
@@ -305,8 +335,6 @@ const Prefs: GType['Prefs'] & PrefsPrivate = {
     if (this.writeOnChange) {
       success = this.writeStore(aStore);
     }
-
-    // Only doing callbacks if the pref value has changed.
     if (success) this.callbacks(callingWin, key, value, aStore);
 
     return success;

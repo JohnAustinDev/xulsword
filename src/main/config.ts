@@ -12,7 +12,7 @@ import LibSword from './modules/libsword';
 import { jsdump } from './mutil';
 // import getFontFamily from './fontfamily';
 
-import type { ConfigType, GType } from '../type';
+import type { ConfigType, GlobalPref, GType } from '../type';
 import getFontFamily from './fontfamily';
 
 function localeConfig(locale: string) {
@@ -33,7 +33,7 @@ function localeConfig(locale: string) {
     lconfig[prop] = r;
   });
 
-  lconfig.AssociatedLocale = locale;
+  lconfig.AssociatedLocale = locale || null;
 
   // Insure there are single quotes around font names
   if (lconfig.fontFamily) {
@@ -49,7 +49,10 @@ export function getLocaleConfigs(): { [i: string]: ConfigType } {
   if (!Cache.has('localeConfigs')) {
     const ret = {} as { [i: string]: ConfigType };
     ret.locale = localeConfig(i18next.language);
-    Prefs.getComplexValue('global.locales').forEach((l: any) => {
+    const locales = Prefs.getComplexValue(
+      'global.locales'
+    ) as GlobalPref['locales'];
+    locales.forEach((l: any) => {
       const [lang] = l;
       ret[lang] = localeConfig(lang);
     });
@@ -162,8 +165,12 @@ function getLocaleOfModule(module: string) {
   let ml: any = LibSword.getModuleInformation(module, 'Lang').toLowerCase();
   if (ml === C.NOTFOUND) ml = undefined;
 
+  const locales = Prefs.getComplexValue(
+    'global.locales'
+  ) as GlobalPref['locales'];
+
   let stop = false;
-  Prefs.getComplexValue('global.locales').forEach((l: any) => {
+  locales.forEach((l: any) => {
     const [locale] = l;
     if (stop) return;
     const lcs = locale.toLowerCase();
@@ -182,7 +189,7 @@ function getLocaleOfModule(module: string) {
   if (myLocale) return myLocale;
 
   const regex = new RegExp(`(^|s|,)+${module}(,|s|$)+`);
-  Prefs.getComplexValue('global.locales').forEach((l: any) => {
+  locales.forEach((l: any) => {
     const [locale] = l;
     const toptions = {
       lng: locale,

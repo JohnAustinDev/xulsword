@@ -13,7 +13,9 @@ import G from './rg';
 
 import type {
   ContextData,
+  GlobalPref,
   LocationVKType,
+  PrefObject,
   SearchType,
   TextVKType,
   V11nType,
@@ -125,7 +127,9 @@ export function refParser(options?: RefParserOptionsType): RefParser {
     },
   };
   const localesAccessor = () => {
-    const locs: string[][] = G.Prefs.getComplexValue('global.locales');
+    const locs = G.Prefs.getComplexValue(
+      'global.locales'
+    ) as GlobalPref['locales'];
     return locs.map((val) => val[0]);
   };
   return new RefParser(gfunctions, localesAccessor, options);
@@ -495,7 +499,7 @@ export function getStatePref(
     let ignoreKeys: string[] = [];
     if (ignore)
       ignoreKeys = Array.isArray(ignore) ? ignore : Object.keys(ignore);
-    const idpref = G.Prefs.getComplexValue(id);
+    const idpref = G.Prefs.getComplexValue(id) as PrefObject;
     let keys: undefined | string[];
     if (prefsToGet) {
       if (!Array.isArray(prefsToGet)) keys = [prefsToGet];
@@ -549,7 +553,7 @@ export function onSetWindowState(component: React.Component, ignore?: any) {
         }
       }
 
-      const lng = G.Prefs.getCharPref(C.LOCALEPREF);
+      const lng = G.Prefs.getCharPref('global.locale');
       if (lng !== i18next.language) {
         i18next
           .loadLanguages(lng)

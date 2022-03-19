@@ -89,7 +89,7 @@ export default function setViewportTabs(
         if (a.tabType === b.tabType) {
           const aLocale = moduleConfigs[a.module]?.AssociatedLocale;
           const bLocale = moduleConfigs[b.module]?.AssociatedLocale;
-          const lng = Prefs.getCharPref(C.LOCALEPREF);
+          const lng = Prefs.getCharPref('global.locale');
           const aPriority = aLocale ? (aLocale === lng ? 1 : 2) : 3;
           const bPriority = bLocale ? (bLocale === lng ? 1 : 2) : 3;
           if (aPriority !== bPriority) return aPriority > bPriority ? 1 : -1;

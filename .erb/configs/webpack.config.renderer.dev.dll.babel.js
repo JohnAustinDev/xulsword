@@ -46,6 +46,12 @@ export default merge(baseConfig, {
   stats: 'errors-only',
 
   plugins: [
+    // DllPlugin generated errors while trying to parse Find-VisualStudio.cs
+    // in node-gyp, so ingore *.cs files.
+    new webpack.IgnorePlugin({
+      resourceRegExp: /\.cs$/,
+    }),
+
     new webpack.DllPlugin({
       path: path.join(dist, '[name].json'),
       name: '[name]',

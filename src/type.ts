@@ -54,6 +54,12 @@ export interface XulswordStatePref {
   maximizeNoteBox: number[];
 }
 
+export type GlobalPref = {
+  fontSize: number;
+  locale: string;
+  locales: [string, string, string][];
+};
+
 export type SwordFilterType =
   | 'Headings'
   | 'Footnotes'
@@ -260,13 +266,27 @@ export type ResetType =
 // Dummy func used as place holder
 const func = () => {};
 
+export type PrefPrimative = number | string | boolean | null | undefined;
+export type PrefObject = {
+  [i: string]: PrefValue;
+};
+export type PrefValue =
+  | PrefPrimative
+  | PrefObject
+  | (PrefPrimative | PrefObject)[];
+
 const PrefsPublic = {
+  has: func as unknown as (
+    key: string,
+    type: 'string' | 'number' | 'boolean' | 'complex' | 'any',
+    aStore?: string
+  ) => boolean,
   getPrefOrCreate: func as unknown as (
     key: string,
     type: 'string' | 'number' | 'boolean' | 'complex',
     defval: any,
     aStore?: string
-  ) => any,
+  ) => PrefValue,
   getCharPref: func as unknown as (key: string, aStore?: string) => string,
   setCharPref: func as unknown as (
     key: string,
@@ -285,7 +305,7 @@ const PrefsPublic = {
     value: number,
     aStore?: string
   ) => boolean,
-  getComplexValue: func as unknown as (key: string, aStore?: string) => any,
+  getComplexValue: func as unknown as (key: string, aStore?: string) => unknown,
   setComplexValue: func as unknown as (
     key: string,
     value: any,
@@ -296,7 +316,7 @@ const PrefsPublic = {
     obj: { [i: string]: any },
     aStore?: string
   ) => void,
-  clearUserPref: func as unknown as (key: string, aStore?: string) => boolean,
+  deleteUserPref: func as unknown as (key: string, aStore?: string) => boolean,
   writeAllStores: func as unknown as () => void,
 };
 

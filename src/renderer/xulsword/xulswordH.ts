@@ -15,7 +15,7 @@ const parser = refParser();
 
 export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
   const state = this.state as XulswordState;
-  const target = es.target as HTMLElement;
+  const { target } = es;
   const currentId = es.currentTarget?.id;
   switch (es.type) {
     case 'click': {

@@ -13,6 +13,8 @@ import DynamicStyleSheet from './style';
 import { getContextData, jsdump } from './rutil';
 import { delayHandler } from './libxul/xul';
 
+import type { GlobalPref } from '../type';
+
 import './global-htm.css';
 
 window.ipc.renderer.on('cache-reset', () => Cache.clear);
@@ -45,20 +47,21 @@ i18n.on('initialized', (options) => {
 });
 
 async function i18nInit(namespaces: string[]) {
-  const lang = G.Prefs.getCharPref(C.LOCALEPREF);
+  const lang = G.Prefs.getCharPref('global.locale');
 
-  let supportedLangs = G.Prefs.getComplexValue('global.locales').map(
-    (l: string[]) => {
-      return l[0];
-    }
-  );
-  supportedLangs = [
+  const locales = G.Prefs.getComplexValue(
+    'global.locales'
+  ) as GlobalPref['locales'];
+  const supportedLangs = [
     ...new Set(
-      supportedLangs.concat(
-        supportedLangs.map((l: string) => {
-          return l.replace(/-.*$/, '');
+      locales
+        .map((l) => {
+          return l[0];
         })
-      )
+        .map((l) => {
+          return [l, l.replace(/-.*$/, '')];
+        })
+        .flat()
     ),
   ];
 
@@ -118,7 +121,7 @@ export default function renderToRoot(
     const [reset, setReset] = useState(0);
     useEffect(() => {
       return window.ipc.renderer.on('component-reset', () => {
-        const lng = G.Prefs.getCharPref(C.LOCALEPREF);
+        const lng = G.Prefs.getCharPref('global.locale');
         if (i18n.language !== lng) {
           i18n
             .loadLanguages(lng)
