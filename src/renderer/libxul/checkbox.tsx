@@ -10,14 +10,7 @@ import './xul.css';
 import './checkbox.css';
 
 // XUL button
-const defaultProps = {
-  ...xulDefaultProps,
-  checked: undefined,
-  disabled: undefined,
-  label: undefined,
-  tooltip: undefined,
-  onChange: undefined,
-};
+const defaultProps = xulDefaultProps;
 
 const propTypes = {
   ...xulPropTypes,

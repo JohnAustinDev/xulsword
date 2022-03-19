@@ -18,16 +18,10 @@ import './textbox.css';
 
 const defaultProps = {
   ...xulDefaultProps,
-  maxLength: undefined,
   multiline: false,
-  pattern: undefined,
   readonly: false,
-  inputRef: undefined,
   disabled: false,
-  timeout: undefined,
-  tooltip: undefined,
   type: 'text',
-  value: undefined,
 };
 
 const propTypes = {

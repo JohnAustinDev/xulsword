@@ -23,9 +23,7 @@ import {
 import Popup from './popup';
 import '../viewport/atext.css';
 
-const defaultProps = {
-  ...xulDefaultProps,
-};
+const defaultProps = xulDefaultProps;
 
 const propTypes = {
   ...xulPropTypes,

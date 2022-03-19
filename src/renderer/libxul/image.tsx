@@ -7,10 +7,8 @@ import { xulDefaultProps, xulPropTypes, XulProps, htmlAttribs } from './xul';
 import './xul.css';
 
 // XUL image
-const defaultProps = {
-  ...xulDefaultProps,
-  src: undefined,
-};
+const defaultProps = xulDefaultProps;
+
 const propTypes = {
   ...xulPropTypes,
   src: PropTypes.string,

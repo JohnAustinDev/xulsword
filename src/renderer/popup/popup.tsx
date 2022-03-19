@@ -46,16 +46,14 @@ function getRefBible(mod: string | null, type: string | null): string | null {
       `global.popup.selection.${mod}`,
       'string',
       refbible
-    );
+    ) as string;
   }
   return refbible;
 }
 
 const defaultProps = {
   ...xulDefaultProps,
-  gap: undefined,
   isWindow: false,
-  onMouseLeftPopup: undefined,
 };
 
 const propTypes = {

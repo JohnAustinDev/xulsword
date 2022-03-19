@@ -43,9 +43,7 @@ import type { HistoryVKType, XulswordStatePref } from '../../type';
 import type Atext from '../viewport/atext';
 import type { NoteboxBarHandlerType } from '../viewport/viewportParentH';
 
-const defaultProps = {
-  ...xulDefaultProps,
-};
+const defaultProps = xulDefaultProps;
 
 const propTypes = {
   ...xulPropTypes,

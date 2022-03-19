@@ -40,9 +40,7 @@ import './viewport.css';
 import type { LocationVKType } from '../../type';
 import { NoteboxBarHandlerType } from './viewportParentH';
 
-const defaultProps = {
-  ...xulDefaultProps,
-};
+const defaultProps = xulDefaultProps;
 
 const propTypes = {
   ...xulPropTypes,

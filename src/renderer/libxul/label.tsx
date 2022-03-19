@@ -9,7 +9,6 @@ import './xul.css';
 // XUL label
 const defaultProps = {
   ...xulDefaultProps,
-  control: undefined,
   value: '',
 };
 

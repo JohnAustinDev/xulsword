@@ -13,9 +13,6 @@ const defaultProps = {
   disabled: false,
   multiple: false,
   options: null,
-  size: undefined,
-  tooltip: undefined,
-  value: undefined,
 };
 
 const propTypes = {

@@ -36,10 +36,8 @@ const defaultProps = {
   selection: '',
   availableBooks: new Set(),
   hideUnavailableBooks: false,
-  headingsModule: undefined,
   v11n: 'KJV',
   type: 'bible',
-  onCloseChooserClick: undefined,
 };
 
 const propTypes = {

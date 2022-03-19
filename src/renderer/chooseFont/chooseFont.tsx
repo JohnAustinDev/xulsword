@@ -33,9 +33,7 @@ window.ipc.renderer.once('close', () => {
   preclose();
 });
 
-const defaultProps = {
-  ...xulDefaultProps,
-};
+const defaultProps = xulDefaultProps;
 
 const propTypes = {
   ...xulPropTypes,

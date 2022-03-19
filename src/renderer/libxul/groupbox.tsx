@@ -11,11 +11,7 @@ import './groupbox.css';
 import { Box, Hbox } from './boxes';
 
 // XUL deck
-const defaultProps = {
-  ...xulDefaultProps,
-  caption: undefined,
-  image: undefined,
-};
+const defaultProps = xulDefaultProps;
 
 const propTypes = {
   ...xulPropTypes,

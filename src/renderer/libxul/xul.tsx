@@ -3,39 +3,7 @@ import PropTypes from 'prop-types';
 import React from 'react';
 
 // Default prop values
-export const xulDefaultProps = {
-  align: undefined,
-  children: undefined,
-  className: undefined,
-  dir: undefined,
-  flex: undefined,
-  hidden: undefined,
-  height: undefined,
-  id: undefined,
-  lang: undefined,
-  orient: undefined,
-  pack: undefined,
-  domref: undefined,
-  style: undefined,
-  width: undefined,
-  title: undefined,
-
-  onClick: undefined,
-  onDoubleClick: undefined,
-  onChange: undefined,
-  onKeyDown: undefined,
-  onKeyUp: undefined,
-  onFocus: undefined,
-  onBlur: undefined,
-  onMouseDown: undefined,
-  onMouseOver: undefined,
-  onMouseOut: undefined,
-  onMouseMove: undefined,
-  onMouseUp: undefined,
-  onMouseLeave: undefined,
-  onWheel: undefined,
-  onContextMenu: undefined,
-};
+export const xulDefaultProps = {};
 
 // PropTypes checking for XUL attributes
 export const xulPropTypes = {

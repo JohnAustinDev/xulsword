@@ -20,9 +20,7 @@ import G from '../rg';
 import '../libxul/xul.css';
 import './tabs.css';
 
-const defaultProps = {
-  ...xulDefaultProps,
-};
+const defaultProps = xulDefaultProps;
 
 const propTypes = {
   ...xulPropTypes,

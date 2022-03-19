@@ -51,10 +51,7 @@ const parser = refParser({
 const defaultProps = {
   ...xulDefaultProps,
   options: [],
-  selection: undefined,
   disabled: false,
-  sizetopopup: undefined,
-  tooltip: undefined,
 };
 
 const propTypes = {

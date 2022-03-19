@@ -33,9 +33,7 @@ import type { XulswordStatePref } from '../../type';
 import type Atext from './atext';
 import type { NoteboxBarHandlerType } from './viewportParentH';
 
-const defaultProps = {
-  ...xulDefaultProps,
-};
+const defaultProps = xulDefaultProps;
 
 const propTypes = {
   ...xulPropTypes,

@@ -155,7 +155,7 @@ export default function renderToRoot(
       G.Data.write(getContextData(e.target), 'contextData');
     };
     return (
-      <div id="root" onContextMenu={onContextMenu} key={reset}>
+      <div id="reset" onContextMenu={onContextMenu} key={reset}>
         {children}
       </div>
     );
@@ -165,7 +165,7 @@ export default function renderToRoot(
     .then(() => {
       return render(
         <Reset>{component}</Reset>,
-        document.getElementsByTagName('body')[0]
+        document.getElementById('root')
       );
     })
     .then(() => {

@@ -12,12 +12,8 @@ import './button.css';
 // XUL button
 const defaultProps = {
   ...xulDefaultProps,
-  checked: undefined,
-  disabled: undefined,
   dlgType: '',
-  label: undefined,
   open: false,
-  tooltip: undefined,
   type: 'button',
 };
 

@@ -4,14 +4,16 @@ html {
 }
 html,
 body,
-#root {
+#root,
+#reset {
   height: 100%;
   margin: 0;
   overflow: hidden;
 }
 html.dialog,
 html.dialog body,
-html.dialog #root {
+html.dialog #root,
+html.dialog #reset {
   height: unset;
   width: fit-content;
   height: fit-content;
@@ -19,13 +21,13 @@ html.dialog #root {
 html:not(.dialog) #root {
   background-image: url(../../assets/b2.png);
 }
+html.dialog #root {
+  background-color: whitesmoke;
+  padding: 4px;
+}
 
 .userFontBase {
   line-height: 1; /* this acts as a minimum line-height */
-}
-
-.RTL {
-  direction: rtl;
 }
 
 /* Label */
@@ -34,10 +36,6 @@ html:not(.dialog) #root {
 }
 
 /* Dialog windows */
-html.dialog #root {
-  background-color: whitesmoke;
-  padding: 4px;
-}
 html.dialog select {
   height: 2em;
 }

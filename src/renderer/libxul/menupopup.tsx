@@ -9,9 +9,7 @@ import './xul.css';
 import './menupopup.css';
 
 // XUL menupopup
-const defaultProps = {
-  ...xulDefaultProps,
-};
+const defaultProps = xulDefaultProps;
 
 const propTypes = {
   ...xulPropTypes,
