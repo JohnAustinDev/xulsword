@@ -116,8 +116,11 @@ export function getMaxChapter(v11n: V11nType, vkeytext: string) {
 // chapter is not part of v11n, so check here first.
 // NOTE: mutil has this same function.
 export function getMaxVerse(v11n: V11nType, vkeytext: string) {
+  const { chapter } = verseKey(vkeytext, v11n);
   const maxch = getMaxChapter(v11n, vkeytext);
-  return maxch ? G.LibSword.getMaxVerse(v11n, vkeytext) : 0;
+  return chapter <= maxch && chapter > 0
+    ? G.LibSword.getMaxVerse(v11n, vkeytext)
+    : 0;
 }
 
 export function refParser(options?: RefParserOptionsType): RefParser {
