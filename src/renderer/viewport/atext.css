@@ -79,6 +79,7 @@ html[dir='rtl'] .atext .text-win {
   top: 0px;
   left: 0px;
   right: auto;
+  padding-inline-start: 12px;
 }
 html[dir='rtl'] .sbcontrols {
   left: auto;

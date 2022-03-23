@@ -7,6 +7,7 @@ import { app, BrowserWindow, ipcMain, IpcMainEvent } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import i18n from 'i18next';
+import Subscription from '../subscription';
 import C from '../constant';
 import G from './mg';
 import MenuBuilder, { pushPrefsToMenu } from './menu';
@@ -15,7 +16,6 @@ import { WindowRegistry } from './window';
 import contextMenu from './contextMenu';
 import { pushPrefsToWindows } from './minit';
 import LibSword from './modules/libsword';
-import Data from './modules/data';
 
 import type { GlobalPref, WindowRegistryType } from '../type';
 
@@ -137,6 +137,10 @@ const openMainWindow = () => {
   const menuBuilder = new MenuBuilder(mainWin, i18n);
   menuBuilder.buildMenu();
 
+  const endSubscriptions: (() => void)[] = [];
+  endSubscriptions.push(Subscription.subscribe('setPref', pushPrefsToWindows));
+  endSubscriptions.push(Subscription.subscribe('setPref', pushPrefsToMenu));
+
   if (isDevelopment)
     mainWin.on('ready-to-show', () => require('electron-debug')());
 
@@ -151,6 +155,7 @@ const openMainWindow = () => {
     BrowserWindow.getAllWindows().forEach((w) => {
       if (w !== mainWin) w.close();
     });
+    endSubscriptions.forEach((dispose) => dispose());
   });
 
   mainWin.on('closed', () => {
@@ -160,8 +165,6 @@ const openMainWindow = () => {
   persistedWindows.forEach((reg) => {
     if (reg) G.Window.open(reg);
   });
-
-  Data.write([pushPrefsToWindows, pushPrefsToMenu], 'setPrefCallback');
 
   return mainWin;
 };
@@ -249,17 +252,15 @@ const start = async () => {
   // new AppUpdater();
 };
 
-// Didn't see a better way to inject a troublesome contextMenu
-// dependency into Window.open().
-Data.write((win: BrowserWindow) => {
-  return contextMenu(win);
-}, 'contextMenuFunc');
+const endSubscription = Subscription.subscribe('createWindow', contextMenu);
 
 app.on('window-all-closed', () => {
   G.Prefs.setBoolPref(`WindowsDidClose`, true);
 
   // Write all prefs to disk when app closes
   G.Prefs.writeAllStores();
+
+  endSubscription();
 
   // Respect the OSX convention of having the application in memory even
   // after all windows have been closed

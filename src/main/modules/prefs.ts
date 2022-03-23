@@ -5,12 +5,12 @@ import { BrowserWindow } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import { clone, diff, JSON_parse, JSON_stringify } from '../../common';
+import Subscription from '../../subscription';
 import nsILocalFile from '../components/nsILocalFile';
 import Dirs from './dirs';
 import { jsdump } from '../mutil';
 
 import type { GType, PrefObject, PrefValue } from '../../type';
-import Data from './data';
 
 export type PrefCallbackType = (
   callingWin: BrowserWindow,
@@ -47,12 +47,6 @@ type PrefsPrivate = {
     type: 'string' | 'number' | 'boolean' | 'complex' | 'any',
     value: PrefValue
   ) => boolean;
-  callbacks: (
-    callingWin: BrowserWindow,
-    key: string,
-    value: PrefValue,
-    aStore?: string
-  ) => void;
 };
 
 const Prefs: GType['Prefs'] & PrefsPrivate = {
@@ -61,15 +55,6 @@ const Prefs: GType['Prefs'] & PrefsPrivate = {
 
   // Cache all persistent data
   store: {},
-
-  callbacks(w, key, obj, aStore) {
-    if (Data.has('setPrefCallback')) {
-      const callback = Data.read('setPrefCallback') as PrefCallbackType[];
-      callback.forEach((cb) => {
-        cb(w, key, obj, aStore || 'prefs');
-      });
-    }
-  },
 
   has(key, type, aStore?) {
     const value = this.getKeyValueFromStore(key, false, aStore || 'prefs');
@@ -276,8 +261,8 @@ const Prefs: GType['Prefs'] & PrefsPrivate = {
   // be removed from the store. An error is thrown if the value is not of the
   // specified type. If this.writeOnChange is set, then the store will be saved
   // to disk immediately. Supported types are PrefValue. If a change was made,
-  // any callbacks registered in Data:setPrefCallback will be called after
-  // setting the new value.
+  // any registered subscription callbacks will be called after setting the new
+  // value.
   setPref(key, type, value, store, callingWin) {
     // Get the store.
     const aStore = store || 'prefs';
@@ -329,13 +314,21 @@ const Prefs: GType['Prefs'] & PrefsPrivate = {
         throw Error(`Prefs: merge target is not a PrefObject: '${pp}'`);
       }
     } else p[k] = clone(value);
-
     // If not writeOnChange, then data is persisted only when app is closed.
     let success = true;
     if (this.writeOnChange) {
       success = this.writeStore(aStore);
     }
-    if (success) this.callbacks(callingWin, key, value, aStore);
+    // Call any registered callbacks if value was successfully changed.
+    if (success) {
+      const args: Parameters<PrefCallbackType> = [
+        callingWin,
+        key,
+        value,
+        aStore,
+      ];
+      Subscription.publish('setPref', ...args);
+    }
 
     return success;
   },

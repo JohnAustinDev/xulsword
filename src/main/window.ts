@@ -6,7 +6,7 @@ import fs from 'fs';
 import { BrowserWindow, ipcMain } from 'electron';
 import { JSON_parse, JSON_stringify } from '../common';
 import Cache from '../cache';
-import Data from './modules/data';
+import Subscription from '../subscription';
 import Dirs from './modules/dirs';
 import Prefs from './modules/prefs';
 
@@ -17,6 +17,7 @@ import type {
   WindowDescriptorType,
   WindowRegistryType,
 } from '../type';
+import type contextMenu from './contextMenu';
 
 const i18nBackendRenderer = require('i18next-electron-fs-backend');
 
@@ -293,16 +294,14 @@ function createWindow(
   win.on('resize', () => {
     win.webContents.send('resize', win.getSize());
   });
-  if (Data.has('contextMenuFunc')) {
-    win.once(
-      'closed',
-      ((dlist: () => void) => {
-        return () => {
-          if (typeof dlist === 'function') dlist();
-        };
-      })(Data.read('contextMenuFunc')(win))
-    );
-  }
+
+  const disposables: (() => void)[] = [];
+  const args: Parameters<typeof contextMenu> = [win, disposables];
+  Subscription.publish('createWindow', ...args);
+  win.once('closed', () => {
+    disposables.forEach((dispose) => dispose());
+  });
+
   return win;
 }
 

@@ -24,7 +24,10 @@ const noContextData: ContextData = {
 const isDevelopment =
   process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
 
-export default function contextMenu(window: BrowserWindow): () => void {
+export default function contextMenu(
+  window: BrowserWindow,
+  dispose: (() => void)[]
+): void {
   const cm = () => {
     return (Data.read('contextData') || noContextData) as ContextData;
   };
@@ -241,9 +244,5 @@ export default function contextMenu(window: BrowserWindow): () => void {
     });
   }
 
-  return () => {
-    disposables.forEach((dispose) => {
-      if (typeof dispose === 'function') dispose();
-    });
-  };
+  dispose.concat(disposables);
 }
