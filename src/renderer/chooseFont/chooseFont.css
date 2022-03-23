@@ -4,6 +4,7 @@
 
 .chooseFont select {
   margin-inline-end: 16px;
+  width: 200px;
 }
 
 .chooseFont .picker-button {

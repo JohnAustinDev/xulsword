@@ -61,8 +61,6 @@ export default class ChooseFontWin extends React.Component {
 
   static propTypes: typeof propTypes;
 
-  static fontlist: string[];
-
   handler: (e: React.SyntheticEvent) => void;
 
   setStateValue: (key: string, value?: any) => void;
@@ -79,11 +77,13 @@ export default class ChooseFontWin extends React.Component {
 
     this.handler = handlerH.bind(this);
     this.setStateValue = setStateValueH.bind(this);
+  }
 
+  componentDidMount() {
     G.getSystemFonts()
       .then((fonts) => {
         this.setState({ fonts });
-        return fonts;
+        return true;
       })
       .catch((e) => console.log(e));
   }
@@ -117,16 +117,20 @@ export default class ChooseFontWin extends React.Component {
     } = state;
 
     const showBackgroundRow = false;
-    const fontOptions: ReactElementLike[] | undefined = fonts.map(
-      (font: string) => {
-        return (
-          <option key={font} value={font} label={font.replace(/['"]/g, '')} />
-        );
-      }
-    );
-    fontOptions.unshift(
-      <option key="empty" value="" label={i18n.t('choose.label')} />
-    );
+    const fontOptions: ReactElementLike[] = [
+      <option key="empty" value="" label={i18n.t('choose.label')} />,
+    ];
+    if (fonts) {
+      fontOptions.splice(
+        1,
+        0,
+        ...fonts.map((font: string) => {
+          return (
+            <option key={font} value={font} label={font.replace(/['"]/g, '')} />
+          );
+        })
+      );
+    }
 
     const nocolor = { r: 128, g: 128, b: 128, a: 128 };
     const fc = color || nocolor;

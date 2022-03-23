@@ -173,11 +173,9 @@ export default class Xulsword extends React.Component {
     // Don't record multiple entries for the same chapter, and convert vlln
     // before comparing so duplicate history is not recorded when v11n
     // switches with a module having a different v11n.
-    if (history[historyIndex]) {
-      const locvk = verseKey(history[historyIndex].location, location.v11n);
-      if (location.book === locvk.book && location.chapter === locvk.chapter)
-        return;
-    }
+    const locvk = verseKey(history[historyIndex].location, location.v11n);
+    if (location.book === locvk.book && location.chapter === locvk.chapter)
+      return;
     this.setState((prevState: XulswordState) => {
       const newhistory = clone(prevState.history);
       newhistory.splice(prevState.historyIndex, 0, newhist);
