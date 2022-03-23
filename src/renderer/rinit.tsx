@@ -34,7 +34,6 @@ i18n.on('initialized', (options) => {
     if (!html) return false;
     html.className = classarray.join(' ');
     const dir = i18n.t('locale_direction');
-    html.classList.add(`chromedir-${dir}`);
     html.dir = dir;
     return true;
   }
@@ -164,7 +163,9 @@ export default function renderToRoot(
   i18nInit([namespace])
     .then(() => {
       return render(
-        <Reset>{component}</Reset>,
+        <React.StrictMode>
+          <Reset>{component}</Reset>
+        </React.StrictMode>,
         document.getElementById('root')
       );
     })

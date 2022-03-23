@@ -333,7 +333,7 @@ export function getBooksInModule(): { [i: string]: string[] } {
               );
           });
           booksInModule[t.module] = osis;
-        }
+        } else booksInModule[t.module] = [];
       });
     }
     Prefs.setComplexValue('booksInModule', booksInModule, 'modules');

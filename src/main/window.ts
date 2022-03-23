@@ -149,10 +149,14 @@ function persist(
   merge: boolean,
   callingWin: BrowserWindow
 ) {
-  const pref = Prefs.getComplexValue(`Windows.w${callingWin.id}`, 'windows');
-  const args = pref.options.webPreferences.additionalArguments[0];
-  if (args) {
-    const arg = JSON_parse(args);
+  const pref = Prefs.getComplexValue(
+    `Windows.w${callingWin.id}`,
+    'windows'
+  ) as WindowDescriptorType;
+  const args = pref?.options?.webPreferences?.additionalArguments;
+  const [argstring] = args || [''];
+  if (args && argstring) {
+    const arg = JSON_parse(argstring);
     if (typeof arg === 'object') {
       if (merge) {
         if (
@@ -168,7 +172,7 @@ function persist(
           throw Error(`Window: merge target is not a data object: ${origval}`);
         arg[argname] = { ...origval, ...value };
       } else arg[argname] = value;
-      pref.options.webPreferences.additionalArguments[0] = JSON_stringify(arg);
+      args[0] = JSON_stringify(arg);
       Prefs.setComplexValue(`Windows.w${callingWin.id}`, pref, 'windows');
     }
   }
@@ -183,7 +187,10 @@ function addWindowToPrefs(
     delete descriptor.options.parent;
   Prefs.setComplexValue(`Windows.w${win.id}`, descriptor, 'windows');
   function updateBounds() {
-    const args = Prefs.getComplexValue(`Windows.w${win.id}`, 'windows');
+    const args = Prefs.getComplexValue(
+      `Windows.w${win.id}`,
+      'windows'
+    ) as WindowDescriptorType;
     const b = windowBounds(win);
     args.options = { ...args.options, ...b };
     Prefs.setComplexValue(`Windows.w${win.id}`, args, 'windows');
@@ -198,7 +205,7 @@ function addWindowToPrefs(
     'closed',
     ((id: number) => {
       return () => {
-        Prefs.setComplexValue(`Windows.w${id}`, undefined, 'windows');
+        Prefs.deleteUserPref(`Windows.w${id}`, 'windows');
       };
     })(win.id)
   );

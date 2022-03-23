@@ -690,24 +690,25 @@ export default class MenuBuilder {
       ],
     };
 
-    const panelarray = G.Prefs.getComplexValue(
+    const initialPanels = G.Prefs.getComplexValue(
       'xulsword.panels'
     ) as XulswordStatePref['panels'];
     const subMenuWindows = {
       role: 'windowMenu',
       label: this.ts('menu.windows'),
-      submenu: panelarray.map((_p: string | null, i: number) => {
+      submenu: initialPanels.map((_p: string | null, i: number) => {
         const n = i + 1;
         return {
           label: this.ts(`menu.windows.${n}win`),
           id: `xulsword.panels_val_${n}`,
           type: 'radio',
           click: () => {
-            const newpans = panelarray.map(
-              (panel: string | null, x: number) => {
-                return x > i ? null : panel || '';
-              }
-            );
+            const panels = G.Prefs.getComplexValue(
+              'xulsword.panels'
+            ) as XulswordStatePref['panels'];
+            const newpans = panels.map((panel: string | null, x: number) => {
+              return x > i ? null : panel || '';
+            });
             G.Prefs.setComplexValue('xulsword.panels', newpans);
           },
         };

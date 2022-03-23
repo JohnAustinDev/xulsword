@@ -6,7 +6,7 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 import React from 'react';
 import i18n from 'i18next';
-import { trim, dString, diff } from '../../common';
+import { trim, dString, diff, clone } from '../../common';
 import C from '../../constant';
 import G from '../rg';
 import renderToRoot from '../rinit';
@@ -179,11 +179,12 @@ export default class Xulsword extends React.Component {
         return;
     }
     this.setState((prevState: XulswordState) => {
-      prevState.history.splice(prevState.historyIndex, 0, newhist);
-      if (prevState.history.length > C.UI.Xulsword.maxHistoryMenuLength) {
-        prevState.history.pop();
+      const newhistory = clone(prevState.history);
+      newhistory.splice(prevState.historyIndex, 0, newhist);
+      if (newhistory.length > C.UI.Xulsword.maxHistoryMenuLength) {
+        newhistory.pop();
       }
-      return { history: prevState.history };
+      return { history: newhistory };
     });
   };
 
@@ -363,7 +364,7 @@ export default class Xulsword extends React.Component {
               </Button>
               <Button
                 id="forward"
-                dir="reverse"
+                xuldir="reverse"
                 flex="40%"
                 onClick={handler}
                 disabled={navdisabled || historyIndex === 0}
@@ -463,7 +464,7 @@ export default class Xulsword extends React.Component {
               <Button
                 id="searchButton"
                 orient="horizontal"
-                dir="reverse"
+                xuldir="reverse"
                 disabled={searchDisabled}
                 onClick={handler}
                 label={i18n.t('searchBut.label')}

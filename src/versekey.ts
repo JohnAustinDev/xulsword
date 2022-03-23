@@ -213,26 +213,37 @@ export default class VerseKey {
     );
   }
 
-  // Return a readable string like 'Genesis 4:5-6'
+  // Return a readable string like 'Genesis 4:5-6'. Since book, chapter and
+  // verses may be either ltr or rtl characters, alone they will improperly effect
+  // the visual order of separating punctuation. The HTML <bdi> tag is intended for
+  // these situations. But, in order to return either HTML or UTF8, this function
+  // uses HTML entities instead.
   readable(v11n?: V11nType, notHTML = false): string {
     const tov11n = v11n || this.#v11nCurrent;
     const l = this.location(tov11n);
-    const guidir = i18next.dir();
-    let dc = guidir === 'rtl' ? '&rlm;' : '&lrm;';
+    const guidir = i18next.t('locale_direction').toLocaleLowerCase();
+    let d = guidir === 'rtl' ? '&rlm;' : '&lrm;';
     if (notHTML)
-      dc =
+      d =
         guidir === 'rtl'
           ? String.fromCharCode(8207)
           : String.fromCharCode(8206);
     const Book = this.#gfunctions.Book();
     const book = l.book && l.book in Book ? Book[l.book].name : l.book;
-    let ret = dc + l.chapter ? `${book}${dc} ${l.chapter}` : book;
+    const parts: string[] = ['', book];
+    if (l.chapter) {
+      parts.push(' ');
+      parts.push(l.chapter.toString());
+    }
     if (l.chapter && l.verse) {
-      ret += `${dc}:${l.verse}`;
+      parts.push(':');
+      parts.push(l.verse.toString());
       if (l.lastverse && l.lastverse > l.verse) {
-        ret += `${dc}-${l.lastverse}`;
+        parts.push('-');
+        parts.push(l.lastverse.toString());
       }
     }
-    return dString(ret);
+    parts.push('');
+    return dString(parts.join(d));
   }
 }

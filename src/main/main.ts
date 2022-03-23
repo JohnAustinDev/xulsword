@@ -112,7 +112,7 @@ const openMainWindow = () => {
   ) as WindowRegistryType | Record<string, never>;
   const persistedWindows: WindowRegistryType = [];
   if (persistWinPref) {
-    G.Prefs.setComplexValue(`PersistedWindows`, {}, 'windows');
+    G.Prefs.deleteUserPref(`PersistedWindows`, 'windows');
     if (windowsDidClose) {
       Object.entries(persistWinPref).forEach((entry) => {
         const reg = entry[1] as WindowRegistryType[number];

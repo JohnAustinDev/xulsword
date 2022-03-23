@@ -10,7 +10,8 @@ export const xulPropTypes = {
   align: PropTypes.oneOf(['start', 'center', 'end', 'baseline', 'stretch']),
   children: PropTypes.oneOfType([PropTypes.node, PropTypes.array]),
   className: PropTypes.string,
-  dir: PropTypes.oneOf(['reverse']),
+  dir: PropTypes.oneOf(['ltr', 'rtl', 'auto']),
+  xuldir: PropTypes.oneOf(['reverse']),
   flex: PropTypes.string,
   height: PropTypes.string,
   hidden: PropTypes.bool,
@@ -45,7 +46,7 @@ export const xulPropTypes = {
 
 // IDE TypeScript checking for props
 export interface XulProps {
-  align?: string | undefined;
+  align?: 'start' | 'center' | 'end' | 'baseline' | 'stretch' | undefined;
   children?:
     | React.ReactNode
     | React.ReactNode[]
@@ -55,14 +56,15 @@ export interface XulProps {
     | undefined
     | null;
   className?: string | undefined;
-  dir?: string | undefined;
+  dir?: 'ltr' | 'rtl' | 'auto' | undefined;
+  xuldir?: 'reverse' | undefined;
   flex?: string | undefined;
   height?: string | undefined;
   hidden?: boolean | undefined;
   id?: string | undefined;
   lang?: string | undefined;
-  orient?: string | undefined;
-  pack?: string | undefined;
+  orient?: 'horizontal' | 'vertical' | undefined;
+  pack?: 'start' | 'center' | 'end' | undefined;
   domref?: React.RefObject<any> | undefined;
   style?: React.CSSProperties | undefined;
   width?: string | undefined;
@@ -105,7 +107,7 @@ const events = [
   'onContextMenu',
 ];
 // const styles = ['width', 'height', 'flex'];
-const enums = ['align', 'dir', 'orient', 'pack', 'type'];
+const enums = ['align', 'xuldir', 'orient', 'pack', 'type'];
 const bools = ['checked', 'disabled', 'hidden', 'readonly'];
 // const cssAttribs = styles.concat(enums).concat(bools);
 
@@ -186,6 +188,7 @@ export const htmlAttribs = (className: string, props: any) => {
   if (props.lang) r.lang = props.lang;
   if (props.domref) r.ref = props.domref;
   if (props.title) r.title = props.title;
+  if (props.dir) r.dir = props.dir;
   const style = {
     ...xulStyle(props),
     ...props.style,
@@ -193,7 +196,6 @@ export const htmlAttribs = (className: string, props: any) => {
   if (Object.keys(style).length) {
     r.style = style;
   }
-
   Object.entries(props).forEach((entry) => {
     const [p, val] = entry;
     if (p.substring(0, 5) === 'data-') r[p] = val;

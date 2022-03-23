@@ -21,7 +21,7 @@
 .sb .hl .npopup span {
   color: black;
 }
-html.chromedir-rtl .npopup {
+html[dir='rtl'] .npopup {
   left: auto;
   right: 15px;
 }
@@ -48,8 +48,8 @@ html.chromedir-rtl .npopup {
   position: relative;
   width: 100%;
   height: 100%;
-  left: 0px;
-  right: 0px;
+  left: 0px !important;
+  right: 0px !important;
   margin: 0px;
   padding: 0px;
 }
@@ -62,11 +62,13 @@ html.chromedir-rtl .npopup {
 .popupheader {
   margin: 0px 0px 20px 0px;
 }
-.towindow {
-  float: left;
-  margin-inline-end: 10px;
-  margin-bottom: 5px;
+.popupheader > div {
+  margin-inline-end: 5px;
+}
+.popupheader .towindow {
   background: url('../images/towindow.png');
+  margin-inline-end: 10px;
+  flex-shrink: 0;
   width: 20px;
   height: 20px;
 }
@@ -75,7 +77,6 @@ html.chromedir-rtl .npopup {
 }
 .popupBackLink,
 .popupCloseLink {
-  float: left;
   color: blue;
   cursor: default;
 }
@@ -86,29 +87,15 @@ html.chromedir-rtl .npopup {
 }
 .draghandle {
   cursor: move;
-  float: left;
-  position: relative;
-  top: 6px;
-  margin-inline-start: 6px;
   background-image: url('../images/draghandle.png');
   height: 12px;
   width: 40px;
 }
-html.chromedir-rtl .towindow,
-html.chromedir-rtl .popupBackLink,
-html.chromedir-rtl .popupCloseLink,
-html.chromedir-rtl .draghandle {
-  float: right;
-}
 .popup-mod-select {
-  float: right;
   font-size: 0.8em;
   text-align: center;
   padding-top: 3px;
   margin-bottom: 15px;
-}
-html.chromedir-rtl .popup-mod-select {
-  float: left;
 }
 
 /* footnote styles */

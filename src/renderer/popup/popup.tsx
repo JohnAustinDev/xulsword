@@ -27,6 +27,7 @@ import G from '../rg';
 import { getCompanionModules, libswordImgSrc } from '../rutil';
 import { getIntroductions, getNoteHTML } from '../viewport/zversekey';
 import { getDictEntryHTML, getLemmaHTML } from '../viewport/zdictionary';
+import { Box, Hbox } from '../libxul/boxes';
 import popupH from './popupH';
 import '../libsword.css';
 import './popup.css';
@@ -375,7 +376,7 @@ class Popup extends React.Component {
         {mods.map((mod) => (
           <option
             key={[mod, selected].join('.')}
-            className={`pupselect cs-${G.Tab[mod].module}`}
+            className={`pupselect cs-${G.Tab[mod].labelClass}`}
             value={mod}
           >
             {G.Tab[mod].label}
@@ -425,7 +426,7 @@ class Popup extends React.Component {
 
     const refbible = getRefBible(mod, type);
 
-    let cls = `userFontBase`;
+    let cls = `userFontBase cs-locale`;
     if (isWindow) cls += ` ownWindow viewport`;
 
     return (
@@ -445,16 +446,20 @@ class Popup extends React.Component {
           onMouseLeave={props.onMouseLeftPopup}
           style={boxlocation}
         >
-          <div className="popupheader">
+          <Hbox pack="start" align="center" className="popupheader">
             {!isWindow && <div className="towindow" />}
             {elemhtml && elemhtml.length > 1 && (
-              <a className="popupBackLink">{i18next.t('back')}</a>
+              <div>
+                <a className="popupBackLink">{i18next.t('back')}</a>
+              </div>
             )}
             {elemhtml && elemhtml.length === 1 && (
-              <a className="popupCloseLink">{i18next.t('close')}</a>
+              <div>
+                <a className="popupCloseLink">{i18next.t('close')}</a>
+              </div>
             )}
             {!isWindow && <div className="draghandle" />}
-
+            <Box flex="1" />
             {refbible &&
               (type === 'cr' || type === 'sr') &&
               this.selector(allBibleModules, refbible, refbible)}
@@ -485,7 +490,7 @@ class Popup extends React.Component {
                 }
                 return null;
               })}
-          </div>
+          </Hbox>
 
           <div className="popup-text" />
         </div>

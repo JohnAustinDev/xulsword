@@ -224,12 +224,15 @@ class Chooser extends React.Component {
       this.stopSliding();
       return;
     }
-    this.setState((prevState: ChooserState) => {
-      let next = prevState.slideIndex[bookGroup] + rows;
-      if (next > maxindex) next = maxindex;
-      prevState.slideIndex[bookGroup] = next;
-      return prevState;
-    });
+    const mounted = this.rowHeight > 0;
+    if (mounted) {
+      this.setState((prevState: ChooserState) => {
+        let next = prevState.slideIndex[bookGroup] + rows;
+        if (next > maxindex) next = maxindex;
+        prevState.slideIndex[bookGroup] = next;
+        return prevState;
+      });
+    }
   }
 
   slideDown(rows = 1) {
@@ -240,12 +243,15 @@ class Chooser extends React.Component {
       return;
     }
 
-    this.setState((prevState: ChooserState) => {
-      let next = prevState.slideIndex[bookGroup] - rows;
-      if (next < 0) next = 0;
-      prevState.slideIndex[bookGroup] = next;
-      return prevState;
-    });
+    const mounted = this.rowHeight > 0;
+    if (mounted) {
+      this.setState((prevState: ChooserState) => {
+        let next = prevState.slideIndex[bookGroup] - rows;
+        if (next < 0) next = 0;
+        prevState.slideIndex[bookGroup] = next;
+        return prevState;
+      });
+    }
   }
 
   render() {

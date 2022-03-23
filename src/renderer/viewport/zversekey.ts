@@ -196,14 +196,14 @@ function getRefHTML(
           }
         }
       }
-      html += sep;
-      html += `<span class="fntext cs-${
-        isASCII(footnote) ? C.DEFAULTLOCALE : mod
-      }${
-        G.ModuleConfigs[mod].direction !== G.ProgramConfig.direction
+      const opd =
+        i18next.t('locale_direction') !== G.Tab[mod].dir
           ? ' opposing-program-direction'
-          : ''
-      }">${footnote}</span>`;
+          : '';
+      html += sep;
+      html += `<bdi><span class="fntext cs-${
+        isASCII(footnote) ? C.DEFAULTLOCALE : mod
+      }${opd}">${footnote}</span></bdi>`;
       sep = '<span class="cr-sep"></span>';
       return;
     }
@@ -256,11 +256,15 @@ function getRefHTML(
 
     const { module, location, text } = aText;
     const { book, chapter } = location;
+    const opd =
+      i18next.t('locale_direction') !== G.Tab[module].dir
+        ? ' opposing-program-direction'
+        : '';
     let { verse, lastverse } = location;
     if (!verse) verse = 1;
     if (!lastverse) lastverse = verse;
     html += sep;
-    html += `<a class="crref" data-title="${[
+    html += `<bdi><a class="crref" data-title="${[
       book,
       chapter,
       verse,
@@ -268,14 +272,10 @@ function getRefHTML(
       module,
     ].join('.')}">`;
     html += verseKey(aText.location).readable();
-    html += '</a>';
-    html += `<span class="crtext${
-      G.ModuleConfigs[module].direction !== G.ProgramConfig.direction
-        ? ' opposing-program-direction'
-        : ''
-    }">`;
+    html += '</a></bdi>';
+    html += `<bdi><span class="crtext${opd}">`;
     html += text + (module !== mod ? ` (${G.Tab[module].label})` : '');
-    html += '</span>';
+    html += '</span></bdi>';
 
     sep = '<span class="cr-sep"></span>';
   });
@@ -357,19 +357,10 @@ export function getNoteHTML(
         t += '<div class="fncol3">&nbsp;</div>';
 
         // Write cell #4: chapter and verse
-        let lov = G.ModuleConfigs[mod].AssociatedLocale;
-        if (!lov) lov = i18next.language;
-        const modDirectionEntity =
-          G.ModuleConfigs[mod] && G.ModuleConfigs[mod].direction === 'rtl'
-            ? '&rlm;'
-            : '&lrm;';
         t += '<div class="fncol4">';
         if (p.ch && p.vs) {
           t += `<a class="fnlink" data-title="${p.nid}.${p.bk}.${p.ch}.${p.vs}.${p.mod}">`;
-          t += `<i>${dString(p.ch, lov)}:${modDirectionEntity}${dString(
-            p.vs,
-            lov
-          )}</i>`;
+          t += `<i>${dString(p.ch)}<bdi>:</bdi>${dString(p.vs)}</i>`;
           t += '</a>';
           t += ' -';
         }
@@ -386,13 +377,9 @@ export function getNoteHTML(
 
           case 'fn':
             // If this is a footnote, then just write the body
-            t += `<span class="fntext cs-${
+            t += `<bdi><span class="fntext cs-${
               isASCII(body) ? C.DEFAULTLOCALE : mod
-            }${
-              G.ModuleConfigs[mod].direction !== G.ProgramConfig.direction
-                ? ' opposing-program-direction'
-                : ''
-            }">${body}</span>`;
+            }">${body}</span></bdi>`;
             break;
 
           case 'un': {
@@ -410,13 +397,9 @@ export function getNoteHTML(
                 ).Value;
               } catch (er) {}
               */
-            const de =
-              unmod && G.ModuleConfigs[unmod]?.direction === 'rtl'
-                ? '&rlm;'
-                : '&lrm;';
-            t += `<span class="noteBoxUserNote${
+            t += `<bdi><span class="noteBoxUserNote${
               unmod ? ` cs-${unmod}` : ''
-            }">${de}${body}${de}</span>`;
+            }">${body}</span></bdi>`;
             break;
           }
           default:

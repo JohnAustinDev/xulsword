@@ -32,7 +32,7 @@ button:not(.orient-vertical) .button-text {
   padding-right: 0px;
 }
 
-button:not(.orient-vertical).dir-reverse .button-text {
+button:not(.orient-vertical).xuldir-reverse .button-text {
   padding-left: 0px;
   padding-right: 4px;
 }
@@ -41,7 +41,7 @@ button.orient-vertical .button-text {
   padding-bottom: 0px;
 }
 
-button.orient-vertical.dir-reverse .button-text {
+button.orient-vertical.xuldir-reverse .button-text {
   padding-top: 0px;
   padding-bottom: 4px;
 }

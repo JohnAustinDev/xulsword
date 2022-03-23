@@ -29,7 +29,7 @@
   background: url(../images/pushpin0.png);
   z-index: 20;
 }
-html.chromedir-rtl .atext .text-pin {
+html[dir='rtl'] .atext .text-pin {
   float: right;
   left: auto;
   right: -8px;
@@ -44,11 +44,6 @@ html.chromedir-rtl .atext .text-pin {
 .atext.Genbks .text-pin {
   display: none;
 }
-html.chromedir-ltr .atext .text-pin,
-html.chromedir-ltr .atext .text-pin:hover,
-html.chromedir-ltr .atext.pinned .text-pin {
-  transform: scaleX(-1);
-}
 
 .atext .text-win {
   float: left;
@@ -58,7 +53,7 @@ html.chromedir-ltr .atext.pinned .text-pin {
   background: url(../images/towindow.png);
   z-index: 20;
 }
-html.chromedir-rtl .atext .text-win {
+html[dir='rtl'] .atext .text-win {
   float: right;
 }
 .atext .text-win:hover {
@@ -82,6 +77,12 @@ html.chromedir-rtl .atext .text-win {
 .atext .sbcontrols {
   position: absolute;
   top: 0px;
+  left: 0px;
+  right: auto;
+}
+html[dir='rtl'] .sbcontrols {
+  left: auto;
+  right: 0px;
 }
 
 .atext .nbc {
@@ -93,7 +94,7 @@ html.chromedir-rtl .atext .text-win {
   bottom: 0px;
   right: 0px;
 }
-.atext.rtl-text:not(.columns1) .nbc {
+.atext[dir='rtl']:not(.columns1) .nbc {
   right: auto;
   left: 0px;
 }
@@ -132,7 +133,7 @@ html.chromedir-rtl .atext .text-win {
   top: 8px;
   right: 42px;
 }
-.atext.rtl-text .notebox-maximizer {
+html[dir='rtl'] .notebox-maximizer {
   right: auto;
   left: 42px;
 }
@@ -204,7 +205,7 @@ html.chromedir-rtl .atext .text-win {
   font-weight: bold;
   color: rgb(110, 85, 110);
 }
-.atext.rtl-text .chaptitle {
+.sb[dir='rtl'] .chaptitle {
   float: right;
 }
 .chapbk,
@@ -226,7 +227,7 @@ html.chromedir-rtl .atext .text-win {
   min-width: 40px;
   color: rgb(110, 85, 110);
 }
-.atext.rtl-text .chapinfo {
+.sb[dir='rtl'] .chapinfo {
   float: left;
 }
 .listenlink {
@@ -288,6 +289,40 @@ html.chromedir-rtl .atext .text-win {
   background: yellow;
 }
 
+/* Verse-per-line button */
+.versePerLineButton {
+  position: relative;
+  display: block;
+  width: 0px;
+  height: 0px;
+}
+.versePerLineButton > div {
+  position: absolute;
+  top: 0px;
+  left: -25px;
+  background: url('../images/versePerLine.png');
+  background-position: 0px 0px;
+  width: 17px;
+  height: 20px;
+}
+.sb[dir='rtl'] .versePerLineButton > div {
+  left: auto;
+  right: -25px;
+  transform: scaleX(-1);
+}
+.verse-per-line .versePerLineButton > div {
+  background-position: -34px 0px;
+}
+.versePerLineButton > div:hover {
+  background-position: -17px 0px;
+}
+.verse-per-line .versePerLineButton > div:hover {
+  background-position: -51px 0px;
+}
+.verse-per-line .vs {
+  display: block;
+}
+
 /* Bible footnotes */
 .fntable {
   display: table;
@@ -341,7 +376,7 @@ html.chromedir-rtl .atext .text-win {
 .cropened .fncol3 {
   visibility: visible;
 }
-html.chromedir-rtl .fncol3 {
+html[dir='rtl'] .fncol3 {
   border-left: none;
   border-right: 1px solid rgb(150, 150, 150);
 }

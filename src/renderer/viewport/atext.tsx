@@ -223,11 +223,12 @@ class Atext extends React.Component {
         },
         C.LibSwordProps[type]
       ) as Partial<AtextProps>;
-      // NOTE: chapter has its own dataset attribute so is removed from writekey
+      // NOTE: chapter is stored separately from this hash, and
+      // verse doesn't effect libsword output
       const writekey = stringHash(
         {
           ...libswordProps,
-          location: { ...libswordProps.location, chapter: 0 },
+          location: { ...libswordProps.location, chapter: 0, verse: 0 },
         },
         panelIndex
       );
@@ -454,13 +455,16 @@ class Atext extends React.Component {
         if (chfirst && flag === 'prepend') {
           chfirst -= 1;
           location.chapter = chfirst;
+          location.verse = 1;
         }
         if (chlast && flag === 'append') {
           chlast += 1;
           location.chapter = chlast;
+          location.verse = 1;
         }
       }
       const response = libswordResponseMemoized(libswordProps, i);
+      // console.log(`${flag} panel ${i} ${verseKey(libswordProps.location).osisRef()}:`);
       let fntable = (!isDict ? nbe.firstChild : null) as HTMLElement | null;
       let sb;
       let nb;
@@ -501,7 +505,7 @@ class Atext extends React.Component {
       sbe.dataset.libsword = stringHash(
         {
           ...libswordProps,
-          location: { ...libswordProps.location, chapter: 0 },
+          location: { ...libswordProps.location, chapter: 0, verse: 0 },
         },
         i
       );
@@ -579,8 +583,6 @@ class Atext extends React.Component {
     let cls = `text text${panelIndex} columns${columns}`;
     cls += ' prev-disabled next-disabled';
     if (module) cls += ` ${G.Tab[module].tabType}`;
-    if (module && G.Tab[module].isRTL) cls += ' rtl-text';
-    if (appIsRTL) cls += ' chromedir-rtl';
     if (isPinned) cls += ' pinned';
     if (doMaximizeNB) cls += ' noteboxMaximized';
     if (versePerLine) cls += ' verse-per-line';
@@ -622,6 +624,7 @@ class Atext extends React.Component {
           domref={this.sbref}
           pack="start"
           flex="1"
+          dir={module && G.Tab[module].isRTL ? 'rtl' : 'ltr'}
         />
 
         <Vbox

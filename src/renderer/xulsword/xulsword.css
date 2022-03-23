@@ -93,10 +93,10 @@
 #forward .button-icon {
   background-image: url(../images/forward.png);
 }
-html.chromedir-rtl #back .button-icon {
+html[dir='rtl'] #back .button-icon {
   background-image: url(../images/forward.png);
 }
-html.chromedir-rtl #forward .button-icon {
+html[dir='rtl'] #forward .button-icon {
   background-image: url(../images/back.png);
 }
 #back.disabled .button-icon,

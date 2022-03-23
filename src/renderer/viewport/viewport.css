@@ -17,7 +17,7 @@
   left: 6px;
   z-index: 40;
 }
-html.chromedir-rtl .viewport .open-chooser {
+html[dir='rtl'] .viewport .open-chooser {
   left: auto;
   right: 6px;
 }
@@ -29,7 +29,7 @@ html.chromedir-rtl .viewport .open-chooser {
   padding-inline-end: 10px;
   float: left;
 }
-html.chromedir-rtl .viewport .chooser {
+html[dir='rtl'] .viewport .chooser {
   float: right;
 }
 .viewport.chooser-hidden .chooser {

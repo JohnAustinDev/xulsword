@@ -25,7 +25,10 @@
 }
 .chooser .chooser-container {
   position: relative;
-  padding: 6px 6px 6px 3px;
+  padding-top: 6px;
+  padding-inline-end: 6px;
+  padding-bottom: 6px;
+  padding-inline-start: 3px;
   border-inline-start: 2px solid rgb(175, 145, 180);
   border-top: 2px solid rgb(175, 145, 180);
   border-inline-end: 2px solid rgb(225, 195, 230);
@@ -65,9 +68,9 @@
   left: 9px;
   z-index: 50;
 }
-html.chromedir-rtl .chooser .close-chooser {
+html[dir='rtl'] .chooser .close-chooser {
   left: auto;
-  right: 11px;
+  right: 9px;
 }
 .chooser .close-chooser:hover {
   background: url(../images/close1.png);
@@ -80,11 +83,11 @@ html.chromedir-rtl .chooser .close-chooser {
   border-bottom-left-radius: 8px;
   padding: 8px 0px 8px 0px;
 }
-html.chromedir-rtl .chooser .bookgroup:first-child {
+html[dir='rtl'] .chooser .bookgroup:first-child {
   border-top-left-radius: 0;
   border-top-right-radius: 8px;
 }
-html.chromedir-rtl .chooser .bookgroup:last-child {
+html[dir='rtl'] .chooser .bookgroup:last-child {
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 8px;
 }
@@ -120,7 +123,7 @@ html.ug .label.nt {
   border-top-right-radius: 8px;
   border-bottom-right-radius: 8px;
 }
-html.chromedir-rtl .chooser .book-list {
+html[dir='rtl'] .chooser .book-list {
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;
   border-top-left-radius: 8px;
@@ -137,7 +140,7 @@ html.chromedir-rtl .chooser .book-list {
   border-top-right-radius: 8px;
   border-bottom-right-radius: 8px;
 }
-html.chromedir-rtl .bookgrouplist {
+html[dir='rtl'] .bookgrouplist {
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;
   border-top-left-radius: 8px;
@@ -213,13 +216,13 @@ html.chromedir-rtl .bookgrouplist {
   width: 15px;
   height: 13px;
 }
-html.chromedir-rtl .bookgroupitem .charrow {
+html[dir='rtl'] .bookgroupitem .charrow {
   background: url(../images/arrow-rtl.png);
 }
 .bookgroupitem:not(.disabled):hover .charrow {
   background: url(../images/arrow2.png);
 }
-html.chromedir-rtl .bookgroupitem:not(.disabled):hover .charrow {
+html[dir='rtl'] .bookgroupitem:not(.disabled):hover .charrow {
   background: url(../images/arrow2-rtl.png);
 }
 
@@ -236,7 +239,7 @@ html.chromedir-rtl .bookgroupitem:not(.disabled):hover .charrow {
   border-spacing: 0px 0px;
   z-index: 50;
 }
-html.chromedir-rtl .chaptermenu {
+html[dir='rtl'] .chaptermenu {
   left: auto;
   right: 100%;
 }
