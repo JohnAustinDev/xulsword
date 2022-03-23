@@ -7,7 +7,7 @@ const Subscription = {
   subscriptions: {} as { [i: string]: ((...args: any) => void)[] },
 
   // Register a callback for a subscription, and return a disposal function
-  // to be called then the callback isn't needed any longer (to prevent memory
+  // to be called when the callback isn't needed any longer (to prevent memory
   // leaks).
   subscribe(subscriptionName: string, callback: (...args: any) => void) {
     if (!(subscriptionName in this.subscriptions))

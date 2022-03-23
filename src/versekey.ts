@@ -15,7 +15,7 @@ type VerseKeyGtype = {
 // Keep a reference to a particular range of Bible verses up to a whole
 // chapter. Supports conversion between different verse systems.
 // IMPORTANT: This class depends on data from the calling process, requiring
-// that access functions are supplied from the calling process during creation.
+// access functions be supplied from the calling process during instantiation.
 export default class VerseKey {
   #loc: LocationVKType;
 

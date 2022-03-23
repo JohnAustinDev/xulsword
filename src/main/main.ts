@@ -162,8 +162,8 @@ const openMainWindow = () => {
     jsdump('NOTE: mainWindow closed...');
   });
 
-  persistedWindows.forEach((reg) => {
-    if (reg) G.Window.open(reg);
+  persistedWindows.forEach((windowDescriptor) => {
+    if (windowDescriptor) G.Window.open(windowDescriptor);
   });
 
   return mainWin;
