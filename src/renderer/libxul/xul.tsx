@@ -105,14 +105,17 @@ const events = [
   'onMouseLeave',
   'onWheel',
   'onContextMenu',
-];
+] as const;
 // const styles = ['width', 'height', 'flex'];
-const enums = ['align', 'xuldir', 'orient', 'pack', 'type'];
-const bools = ['checked', 'disabled', 'hidden', 'readonly'];
+const enums = ['align', 'xuldir', 'orient', 'pack', 'type'] as const;
+const bools = ['checked', 'disabled', 'hidden', 'readonly'] as const;
 // const cssAttribs = styles.concat(enums).concat(bools);
 
 // Returns props unchanged except having additional class name(s).
-export const addClass = (classes: string | string[], props: any) => {
+export const addClass = <P extends XulProps>(
+  classes: string | string[],
+  props: P
+): P => {
   const c = typeof classes === 'string' ? classes.split(' ') : classes;
   const cp = props.className ? props.className.split(' ') : [];
   const className = c.concat(cp).filter(Boolean).join(' ');
@@ -154,21 +157,31 @@ export const xulStyle = (props: any): React.CSSProperties | undefined => {
 
 // Convert certain XUL props to corresponding CSS classes, adding any
 // requested additional classes in the processes.
-export const xulClass = (classes: string | string[], props: any) => {
+export const xulClass = (
+  classes: string | string[],
+  props: XulProps & {
+    tooltip: string;
+    type: string;
+    checked: boolean;
+    disabled: boolean;
+    readonly: boolean;
+  }
+) => {
   const c0 = [props.tooltip ? 'tooltip' : ''];
   const c1 = Array.isArray(classes) ? classes : classes.split(/\s+/);
   const c2 = props.className ? props.className.split(/\s+/) : [];
   const c3 = enums.map((c) => (props[c] ? `${c}-${props[c]}` : ''));
-  const c4 = bools.map((c) =>
-    props[c] && !/^false$/i.test(props[c]) ? `${c}` : ''
-  );
+  const c4 = bools.map((c) => {
+    const v = props[c] as any;
+    return v && !/^false$/i.test(v) ? `${c}` : '';
+  });
   const set = [...new Set(c0.concat(c1, c2, c3, c4).filter(Boolean))];
   return { className: set.join(' ') };
 };
 
 // These XUL event listeners are registered on HTML elements
 export const xulEvents = (props: any): XulProps => {
-  const p: any = {};
+  const p: XulProps = {};
   events.forEach((x) => {
     if (props[x] !== undefined) p[x] = props[x];
   });
@@ -180,13 +193,14 @@ export const xulEvents = (props: any): XulProps => {
 // should only used on HTML elements (not on React components).
 export const htmlAttribs = (className: string, props: any) => {
   if (props === null) return {};
-  const r: any = {
+  const r = {
     ...xulClass(className, props),
     ...xulEvents(props),
   };
+  const a = r as any;
   if (props.id) r.id = props.id;
   if (props.lang) r.lang = props.lang;
-  if (props.domref) r.ref = props.domref;
+  if (props.domref) a.ref = props.domref;
   if (props.title) r.title = props.title;
   if (props.dir) r.dir = props.dir;
   const style = {
@@ -198,17 +212,17 @@ export const htmlAttribs = (className: string, props: any) => {
   }
   Object.entries(props).forEach((entry) => {
     const [p, val] = entry;
-    if (p.substring(0, 5) === 'data-') r[p] = val;
+    if (p.substring(0, 5) === 'data-') a[p] = val;
   });
 
   return r;
 };
 
-// Use topHandle() when a xulEvent is registered on a React component's top-
-// level element. Otherwise any event of that same type registered on a
-// component instance would never be called.
+// Use topHandle() when there is a xulEvent prop on a React component's top-
+// level element. Otherwise any event prop of that same type on an instance
+// of that component would never be called.
 export const topHandle = (
-  name: string,
+  name: typeof events[number],
   func?: (e: React.SyntheticEvent) => any,
   props?: any
 ) => {
