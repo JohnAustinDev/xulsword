@@ -84,7 +84,7 @@ function fontURL(mod: string) {
 // the fonts pref MUST be reset or updated.
 export function getFontFaceConfigs(): { [i: string]: string } {
   if (!Cache.has('fontFaceConfigs')) {
-    if (!LibSword.libSwordReady('getFontFaceConfigs')) {
+    if (!LibSword.isReady('getFontFaceConfigs')) {
       throw Error(
         `getFontFaceConfigs must not be run until LibSword is ready!`
       );
@@ -202,7 +202,7 @@ function getLocaleOfModule(module: string) {
 }
 
 function getModuleConfig(mod: string) {
-  if (!LibSword.libSwordReady('getModuleConfig') && mod !== 'LTR_DEFAULT') {
+  if (!LibSword.isReady('getModuleConfig') && mod !== 'LTR_DEFAULT') {
     throw Error(
       `getModuleConfig(modname) must not be called until LibSword is ready!`
     );
@@ -281,7 +281,7 @@ export function getModuleConfigDefault() {
 
 export function getModuleConfigs(): { [i: string]: ConfigType } {
   if (!Cache.has('moduleConfigs')) {
-    if (!LibSword.libSwordReady('getModuleConfigs')) {
+    if (!LibSword.isReady('getModuleConfigs')) {
       throw Error(
         `getModuleConfigs must not be called until LibSword is ready!`
       );

@@ -362,7 +362,7 @@ function getTargetsFromSelection(
       info2.lv && (!info1.lv || info2.lv > info1.lv) ? info2.lv : info1.lv;
 
     if (lv && !vs) vs = lv;
-    if ((vs && !lv) || lv < vs) lv = vs;
+    if (vs && (!lv || lv < vs)) lv = vs;
 
     if (vs) info1.vs = vs;
     if (lv) info1.lv = lv;
@@ -371,7 +371,8 @@ function getTargetsFromSelection(
   // save merged targ1 to target
   Object.keys(TargetInfo).forEach((key) => {
     const k = key as keyof typeof TargetInfo;
-    if (info[k] === null && info1[k] !== null) info[k] = info1[k];
+    const i1k = info1[k] as any;
+    if (info[k] === null && i1k !== null) info[k] = i1k;
   });
 
   return true;

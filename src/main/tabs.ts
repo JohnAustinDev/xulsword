@@ -141,5 +141,5 @@ export default function setViewportTabs(
     }
   });
 
-  Prefs.mergeComplexValue('xulsword', newxulsword);
+  Prefs.mergeValue('xulsword', newxulsword);
 }

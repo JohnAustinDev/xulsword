@@ -8,13 +8,14 @@ import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import i18n from 'i18next';
 import Subscription from '../subscription';
+import Cache from '../cache';
 import C from '../constant';
 import G from './mg';
 import MenuBuilder, { pushPrefsToMenu } from './menu';
 import { jsdump } from './mutil';
-import { WindowRegistry } from './window';
+import { WindowRegistry, pushPrefsToWindows } from './window';
 import contextMenu from './contextMenu';
-import { pushPrefsToWindows } from './minit';
+import { checkModulePrefs } from './minit';
 import LibSword from './modules/libsword';
 
 import type { GlobalPref, WindowRegistryType } from '../type';
@@ -137,9 +138,21 @@ const openMainWindow = () => {
   const menuBuilder = new MenuBuilder(mainWin, i18n);
   menuBuilder.buildMenu();
 
-  const endSubscriptions: (() => void)[] = [];
-  endSubscriptions.push(Subscription.subscribe('setPref', pushPrefsToWindows));
-  endSubscriptions.push(Subscription.subscribe('setPref', pushPrefsToMenu));
+  LibSword.init();
+  checkModulePrefs();
+
+  const subscriptions: (() => void)[] = [];
+  subscriptions.push(Subscription.subscribe('setPref', pushPrefsToWindows));
+  subscriptions.push(Subscription.subscribe('setPref', pushPrefsToMenu));
+  subscriptions.push(
+    Subscription.subscribe('resetMain', () => {
+      LibSword.quit();
+      Cache.clear();
+      LibSword.init();
+      checkModulePrefs();
+      menuBuilder.buildMenu();
+    })
+  );
 
   if (isDevelopment)
     mainWin.on('ready-to-show', () => require('electron-debug')());
@@ -155,7 +168,8 @@ const openMainWindow = () => {
     BrowserWindow.getAllWindows().forEach((w) => {
       if (w !== mainWin) w.close();
     });
-    endSubscriptions.forEach((dispose) => dispose());
+    subscriptions.forEach((dispose) => dispose());
+    LibSword.quit();
   });
 
   mainWin.on('closed', () => {
@@ -169,7 +183,7 @@ const openMainWindow = () => {
   return mainWin;
 };
 
-const start = async () => {
+const init = async () => {
   if (isDevelopment) {
     await (async () => {
       const installer = require('electron-devtools-installer');
@@ -183,7 +197,8 @@ const start = async () => {
         .catch((e: Error) => jsdump(e));
     })();
   }
-  // Initialize i18n
+  // Remove this if your app does not use auto updates
+  // new AppUpdater();
   await i18n
     .use(i18nBackendMain)
     .init({
@@ -220,39 +235,11 @@ const start = async () => {
     })
     .catch((e) => jsdump(e));
 
-  if (!(C.DEVELSPLASH === 1 && isDevelopment)) {
-    G.Window.open({
-      name: 'splash',
-      type: 'dialog',
-      options:
-        isDevelopment && C.DEVELSPLASH === 2
-          ? {
-              title: 'xulsword',
-              width: 500,
-              height: 400,
-            }
-          : {
-              title: 'xulsword',
-              width: 500,
-              height: 375,
-              alwaysOnTop: true,
-              frame: false,
-              transparent: true,
-              backgroundColor: '#FFFFFF00',
-            },
-    });
-  }
-
-  // Initialize napi libxulsword as LibSword
-  LibSword.initLibsword();
-
-  openMainWindow();
-
-  // Remove this if your app does not use auto updates
-  // new AppUpdater();
+  return i18n;
 };
 
-const endSubscription = Subscription.subscribe('createWindow', contextMenu);
+const subscriptions: (() => void)[] = [];
+subscriptions.push(Subscription.subscribe('createWindow', contextMenu));
 
 app.on('window-all-closed', () => {
   G.Prefs.setBoolPref(`WindowsDidClose`, true);
@@ -260,11 +247,10 @@ app.on('window-all-closed', () => {
   // Write all prefs to disk when app closes
   G.Prefs.writeAllStores();
 
-  endSubscription();
-
   // Respect the OSX convention of having the application in memory even
   // after all windows have been closed
   if (process.platform !== 'darwin') {
+    subscriptions.forEach((dispose) => dispose());
     app.quit();
   }
 });
@@ -278,7 +264,34 @@ app.on('activate', () => {
 
 app
   .whenReady()
-  .then(start)
+  .then(() => {
+    return init();
+  })
+  .then(() => {
+    if (!(C.DEVELSPLASH === 1 && isDevelopment)) {
+      G.Window.open({
+        name: 'splash',
+        type: 'dialog',
+        options:
+          isDevelopment && C.DEVELSPLASH === 2
+            ? {
+                title: 'xulsword',
+                width: 500,
+                height: 400,
+              }
+            : {
+                title: 'xulsword',
+                width: 500,
+                height: 375,
+                alwaysOnTop: true,
+                frame: false,
+                transparent: true,
+                backgroundColor: '#FFFFFF00',
+              },
+      });
+    }
+    return openMainWindow();
+  })
   .catch((e) => {
     throw e.stack;
   });

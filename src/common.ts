@@ -133,13 +133,14 @@ export function deepClone(obj: any) {
 
 // Copy a data object. Data objects have string keys with values that are
 // either primitives, arrays or other data objects.
-export function clone(obj: any) {
+export function clone<T extends unknown>(obj: T): T {
   let copy: any;
-  if (obj === null || typeof obj !== 'object') copy = obj;
+  if (obj === undefined || obj === null || typeof obj !== 'object') copy = obj;
   else if (Array.isArray(obj)) copy = obj.slice();
   else {
     copy = {};
-    Object.entries(obj).forEach((entry) => {
+    const o = obj as any;
+    Object.entries(o).forEach((entry) => {
       copy[entry[0]] = clone(entry[1]);
     });
   }

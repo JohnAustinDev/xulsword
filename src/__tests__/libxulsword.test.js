@@ -47,10 +47,10 @@ setCipherKey                test with xulsword
 jest.mock('../main/modules/dirs');
 
 beforeAll(() => {
-  LibSword.initLibsword();
+  LibSword.init();
 });
 afterAll(() => {
-  LibSword.quitLibsword();
+  LibSword.quit();
 });
 
 test('Modules loaded',      () => { expect(LibSword.getModuleList()).not.toMatch(/No Modules/); });
@@ -60,7 +60,7 @@ test('UZV module required', () => { expect(LibSword.getModuleList()).toMatch(/.*
 // Tests setting libxulsword bible locations
 /**
  * Assign and verify a bible location in either the specified version or the corresponding location
- * in a different one. 
+ * in a different one.
  * @param {number} testNumber - a zero-based integer indicating the test number
  * @param {string} setVersion - the version where the location is specified
  * @param {string} getVersion - the version used to verify proper setting (may be a mapped location)

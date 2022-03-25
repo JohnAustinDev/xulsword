@@ -25,6 +25,7 @@ const Commands: GType['Commands'] = {
 
   removeModule() {
     console.log(`Action not implemented: removeModule`);
+    Window.reset();
   },
 
   exportAudio() {
@@ -150,7 +151,7 @@ const Commands: GType['Commands'] = {
     newxulsword.location = loc.location();
     newxulsword.selection = sel.location();
     newxulsword.flagScroll = panels.map(() => newFlagScroll);
-    Prefs.mergeComplexValue('xulsword', newxulsword);
+    Prefs.mergeValue('xulsword', newxulsword);
   },
 };
 

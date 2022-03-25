@@ -737,6 +737,8 @@ export default class MenuBuilder {
           label: '&Reload',
           accelerator: 'Ctrl+R',
           click: () => {
+            // because role is 'reload', this handler isn't called
+            // (in Linux at least)
             this.mainWindow.webContents.reload();
           },
         },

@@ -135,7 +135,7 @@ export default class Xulsword extends React.Component {
     if (id) {
       const newStatePref = trim(state, notStatePref, true);
       const d = diff(trim(prevState, notStatePref, true), newStatePref);
-      if (d) G.Prefs.mergeComplexValue(id, d);
+      if (d) G.Prefs.mergeValue(id, d);
     }
     // Add page to history after a short delay
     const { location } = state;
@@ -173,9 +173,11 @@ export default class Xulsword extends React.Component {
     // Don't record multiple entries for the same chapter, and convert vlln
     // before comparing so duplicate history is not recorded when v11n
     // switches with a module having a different v11n.
-    const locvk = verseKey(history[historyIndex].location, location.v11n);
-    if (location.book === locvk.book && location.chapter === locvk.chapter)
-      return;
+    if (history[historyIndex]) {
+      const locvk = verseKey(history[historyIndex].location, location.v11n);
+      if (location.book === locvk.book && location.chapter === locvk.chapter)
+        return;
+    }
     this.setState((prevState: XulswordState) => {
       const newhistory = clone(prevState.history);
       newhistory.splice(prevState.historyIndex, 0, newhist);

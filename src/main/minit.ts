@@ -4,20 +4,18 @@
 /* eslint-disable import/no-mutable-exports */
 import path from 'path';
 import fs from 'fs';
-import i18next from 'i18next';
-import { BrowserWindow } from 'electron';
 import C from '../constant';
 import VerseKey from '../versekey';
 import RefParser, { RefParserOptionsType } from '../refparse';
-import { isASCII, JSON_parse } from '../common';
+import { clone, isASCII, JSON_parse } from '../common';
 import Cache from '../cache';
+import Subscription from '../subscription';
 import Dirs from './modules/dirs';
-import Prefs, { PrefCallbackType } from './modules/prefs';
+import Prefs from './modules/prefs';
 import LibSword from './modules/libsword';
 import nsILocalFile from './components/nsILocalFile';
 import { getFontFaceConfigs } from './config';
 import { jsdump } from './mutil';
-import Window, { resetMain } from './window';
 
 import type {
   TabType,
@@ -28,8 +26,8 @@ import type {
   BookGroupType,
   LocationVKType,
   GlobalPref,
+  XulswordStatePref,
 } from '../type';
-import Data from './modules/data';
 
 const fontList = require('font-list');
 
@@ -417,59 +415,47 @@ export function getSystemFonts() {
   return Promise.resolve(Cache.read('fontList'));
 }
 
-// Push user preference changes from the focused window to other windows using
-// update-state-from-pref. For some changes, more is done than simply updating
-// state prefs. For instance when changing locale or dynamic stylesheet.
-export const pushPrefsToWindows: PrefCallbackType = (win, key, val, store) => {
-  if (store === 'prefs' && (!win || win === BrowserWindow.getFocusedWindow())) {
-    const updateLocale = key === 'global.locale';
-    const keysToUpdate: string[] = [];
-    const keys: string[] =
-      !key.includes('.') && typeof val === 'object'
-        ? Object.keys(val).map((k) => {
-            return `${key}.${k}`;
-          })
-        : [key];
-    // C.GlobalState and menuPref are base-key lists (id.property)
-    let menuPref: string[] = [];
-    if (Data.has('menuPref')) {
-      menuPref = Data.read('menuPref') as string[];
-    }
-    keys.forEach((pkey) => {
-      const basekey = pkey.split('.').slice(0, 2).join('.');
-      if (menuPref.includes(basekey)) keysToUpdate.push(pkey);
-      else {
-        Object.entries(C.GlobalState).forEach((entry) => {
-          entry[1].forEach((k) => {
-            const gloskey = `${entry[0]}.${k}`;
-            if (basekey === gloskey) keysToUpdate.push(pkey);
-          });
-        });
-      }
+// SWORD modules may be installed/uninstalled outside of xulsword, so they
+// should be treated as unknown upon startup or reset. Normally, prefs should
+// only reference installed modules. So the target of such prefs must be
+// checked. If a referenced module is no longer installed, that pref is cleared.
+export function checkModulePrefs() {
+  const currmods: string[] = [];
+  const modlist = LibSword.getModuleList();
+  if (modlist !== C.NOMODULES) {
+    modlist.split('<nx>').forEach((mstring: string) => {
+      const [module] = mstring.split(';');
+      currmods.push(module);
     });
-    const doReset = ['global.locale', 'global.fontSize'].includes(key);
-    if (updateLocale) {
-      const lng = Prefs.getCharPref('global.locale');
-      i18next
-        .loadLanguages(lng)
-        .then(() => i18next.changeLanguage(lng))
-        .then(() => {
-          // this does component-reset which updates state from pref
-          resetMain();
-          Window.reset();
-          return true;
-        })
-        .catch((err: any) => {
-          if (err) throw Error(err);
-        });
-    } else if (doReset) {
-      resetMain();
-      Window.reset();
-    } else if (keysToUpdate.length) {
-      BrowserWindow.getAllWindows().forEach((w) => {
-        if (!win || w !== win)
-          w.webContents.send('update-state-from-pref', keysToUpdate);
-      });
-    }
   }
-};
+  const xulsword = Prefs.getComplexValue('xulsword') as XulswordStatePref;
+  const newxulsword = clone(xulsword);
+  const mps = ['panels', 'ilModules', 'mtModules'] as const;
+  mps.forEach((p) => {
+    newxulsword[p] = xulsword[p].map((m) => {
+      const n = p === 'panels' ? '' : null;
+      return m && !currmods.includes(m) ? n : m;
+    });
+  });
+  newxulsword.tabs.forEach((p, i) => {
+    if (p) {
+      newxulsword.tabs[i] = p.filter((m) => currmods.includes(m));
+    }
+  });
+  Prefs.setComplexValue('xulsword', newxulsword);
+  const popupsel = Prefs.getComplexValue(
+    'global.popup.selection'
+  ) as GlobalPref['popup']['selection'];
+  const newpopupsel = clone(popupsel);
+  Object.entries(newpopupsel).forEach((entry) => {
+    const [k, m] = entry;
+    if (!currmods.includes(m)) {
+      newpopupsel[k] = '';
+    }
+  });
+  Prefs.setComplexValue('global.popup.selection', newpopupsel);
+}
+
+export function resetMain() {
+  Subscription.publish('resetMain');
+}

@@ -115,14 +115,14 @@ export default class ViewportWin extends React.Component {
       windowState
     );
     if (changedWindowState)
-      G.Window.mergeComplexValue('xulswordState', changedWindowState);
+      G.Window.mergeValue('xulswordState', changedWindowState);
     const { id } = this.props as ViewportWinProps;
     if (id) {
       const changedStatePref = diff(
         trim(prevState, C.GlobalState.xulsword),
         trim(state, C.GlobalState.xulsword)
       );
-      if (changedStatePref) G.Prefs.mergeComplexValue(id, changedStatePref);
+      if (changedStatePref) G.Prefs.mergeValue(id, changedStatePref);
     }
   }
 

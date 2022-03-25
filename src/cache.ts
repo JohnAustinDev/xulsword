@@ -20,7 +20,7 @@ const Cache = {
 
   clear(...args: string[]) {
     const name = args.length ? args.join('+') : '';
-    if (!name) this.storage = {};
+    if (!args.length) this.storage = {};
     else if (name in this.storage) {
       delete this.storage[name];
     }

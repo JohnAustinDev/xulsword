@@ -13,8 +13,10 @@ Dirs.path.xsAsset = app.isPackaged
   ? path.join(process.resourcesPath, 'assets')
   : path.join(__dirname, '..', '..', '..', 'assets');
 
+// Packaged filename should be 'app.asar' if package.json has build.asar
+// set to true. Or it should be 'app' otherwise.
 Dirs.path.xsAsar = app.isPackaged
-  ? path.join(process.resourcesPath, 'app.asar') // should be 'app.asar' if package.json build.asar is true or 'app' otherwise
+  ? path.join(process.resourcesPath, 'app.asar')
   : path.join(__dirname, '..', '..', '..', 'build', 'app');
 
 Dirs.path.TmpD = app.getPath('temp');

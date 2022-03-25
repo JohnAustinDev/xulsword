@@ -108,7 +108,7 @@ const Prefs: GType['Prefs'] & PrefsPrivate = {
   },
 
   // Sets individual properties of a key, leaving the others untouched.
-  mergeComplexValue(key, obj, aStore?) {
+  mergeValue(key, obj, aStore?) {
     const callingWin = arguments[3];
     this.setPref(key, 'merge', obj, aStore, callingWin);
   },

@@ -43,11 +43,11 @@ function getRefBible(mod: string | null, type: string | null): string | null {
   }
   if (refbible && (type === 'cr' || type === 'sr')) {
     // default prefs.js doesn't have this key since mod is unknown
-    refbible = G.Prefs.getPrefOrCreate(
+    refbible = (G.Prefs.getPrefOrCreate(
       `global.popup.selection.${mod}`,
       'string',
       refbible
-    ) as string;
+    ) || refbible) as string;
   }
   return refbible;
 }

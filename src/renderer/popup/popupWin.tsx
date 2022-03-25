@@ -63,7 +63,7 @@ export default class PopupWin extends React.Component implements PopupParent {
     const state = this.state as PopupWinState;
     windowState = state;
     const changedState = diff(prevState, state);
-    if (changedState) G.Window.mergeComplexValue('popupState', changedState);
+    if (changedState) G.Window.mergeValue('popupState', changedState);
   }
 
   render() {

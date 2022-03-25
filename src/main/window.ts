@@ -3,11 +3,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import path from 'path';
 import fs from 'fs';
+import i18next from 'i18next';
 import { BrowserWindow, ipcMain } from 'electron';
 import { JSON_parse, JSON_stringify } from '../common';
-import Cache from '../cache';
+import C from '../constant';
 import Subscription from '../subscription';
 import Dirs from './modules/dirs';
+import Data from './modules/data';
 import Prefs from './modules/prefs';
 
 import type {
@@ -18,6 +20,7 @@ import type {
   WindowRegistryType,
 } from '../type';
 import type contextMenu from './contextMenu';
+import type { PrefCallbackType } from './modules/prefs';
 
 const i18nBackendRenderer = require('i18next-electron-fs-backend');
 
@@ -34,10 +37,6 @@ if (process.env.NODE_ENV === 'development') {
   resolveHtmlPath = (htmlFileName: string) => {
     return `file://${path.resolve(__dirname, '../renderer/', htmlFileName)}`;
   };
-}
-
-export function resetMain() {
-  Cache.clear();
 }
 
 // WindowRegistry value for a window will be null after window is closed.
@@ -317,7 +316,7 @@ const Window: GType['Window'] = {
     if (win && win[0]) persist(argname, value, false, win[0]);
   },
 
-  mergeComplexValue(argname: string, value: any) {
+  mergeValue(argname: string, value: any) {
     const win = getBrowserWindows('self', arguments[2]);
     if (win && win[0]) persist(argname, value, true, win[0]);
   },
@@ -342,7 +341,7 @@ const Window: GType['Window'] = {
     const windows = window
       ? getBrowserWindows(window, arguments[2])
       : getBrowserWindows('all');
-    if (!type && !window) resetMain();
+    if (!type && !window) Subscription.publish('resetMain');
     windows.forEach((win) => {
       if (win) {
         const resets: ResetType[] = [
@@ -375,3 +374,57 @@ const Window: GType['Window'] = {
 };
 
 export default Window;
+
+// Push user preference changes from the focused window to other windows using
+// update-state-from-pref. For some changes, more is done than simply updating
+// state prefs. For instance when changing locale or dynamic stylesheet.
+export const pushPrefsToWindows: PrefCallbackType = (win, key, val, store) => {
+  if (store === 'prefs' && (!win || win === BrowserWindow.getFocusedWindow())) {
+    const updateLocale = key === 'global.locale';
+    const keysToUpdate: string[] = [];
+    const keys: string[] =
+      !key.includes('.') && typeof val === 'object'
+        ? Object.keys(val).map((k) => {
+            return `${key}.${k}`;
+          })
+        : [key];
+    // C.GlobalState and menuPref are base-key lists (id.property)
+    let menuPref: string[] = [];
+    if (Data.has('menuPref')) {
+      menuPref = Data.read('menuPref') as string[];
+    }
+    keys.forEach((pkey) => {
+      const basekey = pkey.split('.').slice(0, 2).join('.');
+      if (menuPref.includes(basekey)) keysToUpdate.push(pkey);
+      else {
+        Object.entries(C.GlobalState).forEach((entry) => {
+          entry[1].forEach((k) => {
+            const gloskey = `${entry[0]}.${k}`;
+            if (basekey === gloskey) keysToUpdate.push(pkey);
+          });
+        });
+      }
+    });
+    const doReset = ['global.locale', 'global.fontSize'].includes(key);
+    if (updateLocale) {
+      const lng = Prefs.getCharPref('global.locale');
+      i18next
+        .loadLanguages(lng)
+        .then(() => i18next.changeLanguage(lng))
+        .then(() => {
+          Window.reset();
+          return true;
+        })
+        .catch((err: any) => {
+          if (err) throw Error(err);
+        });
+    } else if (doReset) {
+      Window.reset();
+    } else if (keysToUpdate.length) {
+      BrowserWindow.getAllWindows().forEach((w) => {
+        if (!win || w !== win)
+          w.webContents.send('update-state-from-pref', keysToUpdate);
+      });
+    }
+  }
+};

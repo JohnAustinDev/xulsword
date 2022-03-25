@@ -171,7 +171,7 @@ class Atext extends React.Component {
       windowState[panelIndex]
     );
     if (changedState)
-      G.Window.mergeComplexValue(`atext${panelIndex}State`, changedState);
+      G.Window.mergeValue(`atext${panelIndex}State`, changedState);
   }
 
   componentWillUnmount() {
@@ -361,7 +361,7 @@ class Atext extends React.Component {
           } else {
             const fs = [];
             fs[panelIndex] = C.VSCROLL.none;
-            G.Prefs.mergeComplexValue('xulsword', {
+            G.Prefs.mergeValue('xulsword', {
               location,
               flagScroll: fs,
             });

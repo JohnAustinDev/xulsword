@@ -23,7 +23,7 @@ import {
   getFontFaceConfigs,
   getFeatureModules,
 } from './config';
-import Window, { resolveHtmlPath, resetMain } from './window';
+import Window, { resolveHtmlPath } from './window';
 import {
   getBooks,
   getBook,
@@ -32,6 +32,7 @@ import {
   getBooksInModule,
   getBkChsInV11n,
   getSystemFonts,
+  resetMain,
 } from './minit';
 
 import { GPublic, GType } from '../type';

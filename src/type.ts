@@ -58,6 +58,11 @@ export type GlobalPref = {
   fontSize: number;
   locale: string;
   locales: [string, string, string][];
+  popup: {
+    selection: {
+      [i: string]: string;
+    };
+  };
 };
 
 export type SwordFilterType =
@@ -311,7 +316,7 @@ const PrefsPublic = {
     value: any,
     aStore?: string
   ) => boolean,
-  mergeComplexValue: func as unknown as (
+  mergeValue: func as unknown as (
     key: string,
     obj: { [i: string]: any },
     aStore?: string
@@ -321,9 +326,11 @@ const PrefsPublic = {
 };
 
 const LibSwordPublic = {
-  initLibsword: func as unknown as () => boolean,
-  libSwordReady: func as unknown as (caller: string) => boolean,
-  hasBible: func as unknown as () => boolean,
+  init: func as unknown as () => boolean,
+  quit: func as unknown as () => void,
+  pause: func as unknown as (callback: any) => void,
+  resume: func as unknown as () => void,
+  isReady: func as unknown as (caller: string) => boolean,
   getMaxChapter: func as unknown as (
     v11n: V11nType,
     vkeytext: string
@@ -354,9 +361,6 @@ const LibSwordPublic = {
     vkeytext: string,
     tov11n: V11nType
   ) => string,
-  quitLibsword: func as unknown as () => void,
-  pause: func as unknown as (callback: any) => void,
-  resume: func as unknown as () => void,
   getIntroductions: func as unknown as (
     vkeymod: string,
     bname: string
@@ -518,7 +522,7 @@ export const GPublic = {
   Window: {
     open: func as unknown as (arg: WindowDescriptorType) => number,
     setComplexValue: func as unknown as (argname: string, value: any) => void,
-    mergeComplexValue: func as unknown as (
+    mergeValue: func as unknown as (
       argname: string,
       value: { [i: string]: any }
     ) => void,
