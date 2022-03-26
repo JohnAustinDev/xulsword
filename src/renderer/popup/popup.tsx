@@ -22,35 +22,14 @@ import {
 import { FeatureType } from '../../type';
 import C from '../../constant';
 import { sanitizeHTML, stringHash } from '../../common';
-import { getPopupInfo } from '../../libswordElemInfo';
 import G from '../rg';
-import { getCompanionModules, libswordImgSrc } from '../rutil';
-import { getIntroductions, getNoteHTML } from '../viewport/zversekey';
-import { getDictEntryHTML, getLemmaHTML } from '../viewport/zdictionary';
+import { libswordImgSrc } from '../rutil';
 import { Box, Hbox } from '../libxul/boxes';
-import popupH from './popupH';
+import popupH, { getPopupHTML, getRefBible, getTopElement } from './popupH';
 import '../libsword.css';
 import './popup.css';
 
 import type { ElemInfo } from '../../libswordElemInfo';
-
-function getRefBible(mod: string | null, type: string | null): string | null {
-  let refbible = mod;
-  if (mod && type === 'sr' && G.Tab[mod]?.type !== C.BIBLE) {
-    const aref = getCompanionModules(mod);
-    const bible = aref.find((m) => G.Tab[m]?.type === C.BIBLE);
-    if (bible) refbible = bible;
-  }
-  if (refbible && (type === 'cr' || type === 'sr')) {
-    // default prefs.js doesn't have this key since mod is unknown
-    refbible = (G.Prefs.getPrefOrCreate(
-      `global.popup.selection.${mod}`,
-      'string',
-      refbible
-    ) || refbible) as string;
-  }
-  return refbible;
-}
 
 const defaultProps = {
   ...xulDefaultProps,
@@ -109,7 +88,6 @@ export interface PopupState {
 // element within which it will appear (usually the same element as
 // elemhtml[0] but this is not necessary), and isWindow should be
 // false (the default).
-
 class Popup extends React.Component {
   static defaultProps: typeof defaultProps;
 
@@ -130,7 +108,6 @@ class Popup extends React.Component {
 
     this.handler = popupH.bind(this);
     this.update = this.update.bind(this);
-    this.element = this.element.bind(this);
     this.setTitle = this.setTitle.bind(this);
     this.selector = this.selector.bind(this);
     this.positionPopup = this.positionPopup.bind(this);
@@ -164,27 +141,6 @@ class Popup extends React.Component {
       }
       if (title) G.Window.setTitle(title);
     }
-  }
-
-  element() {
-    const props = this.props as PopupProps;
-    const { elemhtml, eleminfo } = props;
-    if (!elemhtml || !elemhtml.length) return null;
-    const elemHTML = elemhtml[elemhtml.length - 1];
-    const reninfo =
-      eleminfo && eleminfo.length === elemhtml.length
-        ? eleminfo[eleminfo.length - 1]
-        : {};
-    const div = sanitizeHTML(document.createElement('div'), elemHTML);
-    const elem = div.firstChild as HTMLElement | null;
-    if (!elem)
-      throw Error(`Popup was given a malformed element: '${elemHTML}'`);
-    const info = { ...getPopupInfo(elem), ...reninfo };
-    if (!info)
-      throw Error(
-        `Neither Popup elemhtml or eleminfo provided info: '${elemHTML}'`
-      );
-    return { info, elem, elemHTML };
   }
 
   // Set root location of popup, and if it is overflowing the bottom of
@@ -235,121 +191,26 @@ class Popup extends React.Component {
   update() {
     const { npopup } = this;
     const props = this.props as PopupProps;
-    const { isWindow } = props;
+    const { elemhtml, eleminfo, isWindow } = props;
     const pts = npopup?.current?.getElementsByClassName('popup-text');
     if (!npopup.current || !pts) throw Error(`Popup.updateContent no npopup.`);
     const pt = pts[0] as HTMLElement;
-    const element = this.element();
+    const element = getTopElement(elemhtml, eleminfo);
     if (!element) return;
-    const { info, elem } = element;
-    const { type, reflist, bk, ch, mod, title } = info;
-
+    const { elem, info } = element;
+    const { type, reflist, bk, ch, mod } = info;
     const infokey = stringHash(type, reflist, bk, ch, mod);
     if (!pt.dataset.infokey || pt.dataset.infokey !== infokey) {
-      let html = '';
-      switch (type) {
-        case 'cr':
-        case 'fn':
-        case 'un': {
-          if (mod && bk && ch && title) {
-            // getChapterText must be called before getNotes
-            G.LibSword.getChapterText(mod, `${bk}.${ch}`);
-            const notes = G.LibSword.getNotes();
-            // a note element's title does not include type, but its nlist does
-            html = getNoteHTML(
-              notes,
-              type === 'cr' ? getRefBible(mod, type) || mod : mod,
-              null,
-              0,
-              true,
-              true,
-              `${type}.${title}`
-            );
-          }
-          break;
-        }
-
-        case 'sr': {
-          if (mod) {
-            const refbible = getRefBible(mod, type) || mod;
-            const mynote =
-              reflist && reflist[0] !== 'unavailable'
-                ? reflist.join(';')
-                : elem.innerHTML;
-            html = getNoteHTML(
-              `<div class="nlist" data-title="cr.1.0.0.0.${refbible}">${mynote}</div>`,
-              refbible,
-              null,
-              0,
-              true,
-              true
-            );
-          }
-          break;
-        }
-
-        case 'sn': {
-          if (mod) {
-            const snlist = Array.from(elem.classList);
-            if (snlist && snlist.length > 1) {
-              snlist.shift();
-              html = getLemmaHTML(snlist, elem.innerHTML, mod);
-            }
-          }
-          break;
-        }
-
-        case 'dtl':
-        case 'dt': {
-          if (reflist) {
-            const dnames: string[] = [];
-            let dword = '';
-            reflist.forEach((ref) => {
-              if (ref) {
-                const colon = ref.indexOf(':');
-                if (colon !== -1) dnames.push(ref.substring(0, colon));
-                if (!dword) dword = ref.substring(colon + 1);
-              }
-            });
-            html = getDictEntryHTML(dword, dnames.join(';'));
-          }
-          break;
-        }
-
-        case 'introlink': {
-          if (mod && bk && ch) {
-            const intro = getIntroductions(mod, `${bk}.${ch}`);
-            if (intro && intro.textHTML) html = intro.textHTML;
-          }
-          break;
-        }
-
-        case 'noticelink': {
-          if (mod) html = G.LibSword.getModuleInformation(mod, 'NoticeText');
-          break;
-        }
-
-        case 'unknown': {
-          console.log(`Unknown popup: '${elem.className}'`);
-          break;
-        }
-
-        default:
-          throw Error(`Unhandled popup type '${type}'.`);
-      }
-
+      const html = getPopupHTML(elem, info);
       pt.dataset.infokey = infokey;
       sanitizeHTML(pt, html);
       libswordImgSrc(pt);
-
       const parent = npopup.current.parentNode as HTMLElement | null;
       if (!isWindow && parent) {
         if (html) parent.classList.remove('empty');
         else parent.classList.add('empty');
       }
-
       if (isWindow) this.setTitle();
-
       this.positionPopup();
     }
   }
@@ -391,8 +252,8 @@ class Popup extends React.Component {
     const state = this.state as PopupState;
     const { handler, npopup } = this;
     const { drag } = state;
-    const { elemhtml, gap, isWindow } = props;
-    const element = this.element();
+    const { elemhtml, eleminfo, gap, isWindow } = props;
+    const element = getTopElement(elemhtml, eleminfo);
     const { info, elem } = element || {
       info: { mod: '', type: '' },
       elem: null,
@@ -443,6 +304,7 @@ class Popup extends React.Component {
           onMouseDown={handler}
           onMouseMove={handler}
           onMouseUp={handler}
+          onMouseOver={handler}
           onMouseLeave={props.onMouseLeftPopup}
           style={boxlocation}
         >

@@ -485,7 +485,6 @@ html[dir='rtl'] .fncol3 {
 .dictlist .keylist {
   margin-top: 10px;
   max-height: calc(100% - 13px);
-  overflow: auto;
 }
 .dictlist .dict-key {
   cursor: pointer;

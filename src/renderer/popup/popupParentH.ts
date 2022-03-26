@@ -9,6 +9,7 @@ import { delayHandler } from '../libxul/xul';
 
 import type { ElemInfo } from '../../libswordElemInfo';
 import type { PlaceType, ShowType } from '../../type';
+import { getPopupHTML } from './popupH';
 
 let WheelScrolling = false;
 
@@ -104,21 +105,25 @@ export function popupParentHandler(
         default:
       }
       if (openPopup && !popupParent) {
-        delayHandler.bind(this)(
-          (el: HTMLElement, ifo: ElemInfo, gp: number) => {
-            const s: Partial<PopupParentState> = {
-              elemhtml: [el.outerHTML],
-              eleminfo: [ifo || ({} as ElemInfo)],
-              gap: gp,
-              popupParent: el,
-            };
-            this.setState(s);
-          },
-          targ.type === 'sn'
-            ? C.UI.Popup.strongsOpenDelay
-            : C.UI.Popup.openDelay,
-          'popupDelayTO'
-        )(elem, info, gap);
+        if (getPopupHTML(elem, info)) {
+          delayHandler.bind(this)(
+            (el: HTMLElement, ifo: ElemInfo, gp: number) => {
+              const s: Partial<PopupParentState> = {
+                elemhtml: [el.outerHTML],
+                eleminfo: [ifo || ({} as ElemInfo)],
+                gap: gp,
+                popupParent: el,
+              };
+              this.setState(s);
+            },
+            targ.type === 'sn'
+              ? C.UI.Popup.strongsOpenDelay
+              : C.UI.Popup.openDelay,
+            'popupDelayTO'
+          )(elem, info, gap);
+        } else {
+          elem.classList.add('empty');
+        }
       }
       break;
     }
@@ -203,21 +208,23 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
         case 'sr':
         case 'dt':
         case 'dtl': {
-          this.setState((prevState: PopupParentState) => {
-            let { elemhtml, eleminfo } = clone(prevState);
-            if (elemhtml === null) elemhtml = [];
-            if (eleminfo === null) eleminfo = [];
-            elemhtml.push(elem.outerHTML);
-            eleminfo.push(info || ({} as ElemInfo));
-            // set the gap so as to position popup under the mouse
-            const gap = Math.round(e.clientY - popupY - 40);
-            const s: Partial<PopupParentState> = {
-              elemhtml,
-              eleminfo,
-              gap,
-            };
-            return s;
-          });
+          if (!targ.element.classList.contains('empty')) {
+            this.setState((prevState: PopupParentState) => {
+              let { elemhtml, eleminfo } = clone(prevState);
+              if (elemhtml === null) elemhtml = [];
+              if (eleminfo === null) eleminfo = [];
+              elemhtml.push(elem.outerHTML);
+              eleminfo.push(info || ({} as ElemInfo));
+              // set the gap so as to position popup under the mouse
+              const gap = Math.round(e.clientY - popupY - 40);
+              const s: Partial<PopupParentState> = {
+                elemhtml,
+                eleminfo,
+                gap,
+              };
+              return s;
+            });
+          }
           break;
         }
         case 'popupCloseLink': {

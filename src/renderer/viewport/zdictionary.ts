@@ -129,6 +129,17 @@ function replaceLinks(entry: string, mod: string) {
   return html;
 }
 
+const DictKeyTransform: { [i: string]: (key: string) => string } = {
+  StrongsHebrew: (key) => {
+    const t = '00000';
+    return t.substring(0, t.length - key.length) + key;
+  },
+  StrongsGreek: (key) => {
+    const t = '00000';
+    return t.substring(0, t.length - key.length) + key;
+  },
+};
+
 export function getDictEntryHTML(
   key: string,
   modules: string,
@@ -150,15 +161,16 @@ export function getDictEntryHTML(
   let html = '';
   let sep = '';
   mods.forEach((m) => {
+    const k = DictKeyTransform[m] ? DictKeyTransform[m](key) : key;
     let h = '';
     try {
-      h = G.LibSword.getDictionaryEntry(m, key);
+      h = G.LibSword.getDictionaryEntry(m, k);
     } catch (er) {
       h = '';
     }
     if (!h) {
       try {
-        h = G.LibSword.getDictionaryEntry(m, key.toUpperCase());
+        h = G.LibSword.getDictionaryEntry(m, k.toUpperCase());
       } catch (er) {
         h = '';
       }
@@ -168,12 +180,14 @@ export function getDictEntryHTML(
       html += h;
     } else {
       html = html.replace(/^(<br>)+/, '');
-      let dictTitle = G.LibSword.getModuleInformation(m, 'Description');
-      dictTitle =
-        dictTitle !== C.NOTFOUND
-          ? `<div class="dict-description">${dictTitle}</div>`
-          : '';
-      html += sep + dictTitle + h;
+      const dictTitle = G.LibSword.getModuleInformation(m, 'Description');
+      html += `${sep}
+      <div class="cs-${m}">${
+        dictTitle === C.NOTFOUND
+          ? ''
+          : `<div class="dict-description">${dictTitle}</div>`
+      }${h}
+      </div>`;
       sep = `<div class="dict-sep"></div>`;
     }
   });
@@ -181,8 +195,8 @@ export function getDictEntryHTML(
 
   // Add a heading
   html = `
-    <div class="cs-${mods[0]}">
-      <div class="dict-entry-heading cd-${mods[0]}">${key}:</div>
+    <div>
+      <div class="dict-entry-heading cs-${mods[0]}">${key}:</div>
       ${html}
     </div>`;
 

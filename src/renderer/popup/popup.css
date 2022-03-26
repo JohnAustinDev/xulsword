@@ -14,9 +14,6 @@
 .empty {
   cursor: help !important;
 }
-.empty > .npopup:not(.ownWindow) {
-  display: none;
-}
 .sb .hl .npopup div,
 .sb .hl .npopup span {
   color: black;

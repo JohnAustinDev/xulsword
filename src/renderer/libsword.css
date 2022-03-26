@@ -167,9 +167,9 @@ span[data-rend='small-caps'] {
 .number {
   font-weight: bold;
 }
-.def {
-  font-weight: bold;
-}
+/*
+.def {}
+*/
 /* Additions for xulsword */
 .sense {
   display: block;
