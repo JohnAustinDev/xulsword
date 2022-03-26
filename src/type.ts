@@ -60,7 +60,7 @@ export type GlobalPref = {
   locales: [string, string, string][];
   popup: {
     selection: {
-      [i: string]: string;
+      [k in keyof FeatureType]: string;
     };
   };
 };

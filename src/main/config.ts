@@ -12,7 +12,7 @@ import LibSword from './modules/libsword';
 import { jsdump } from './mutil';
 // import getFontFamily from './fontfamily';
 
-import type { ConfigType, GlobalPref, GType } from '../type';
+import type { ConfigType, FeatureType, GlobalPref, GType } from '../type';
 import getFontFamily from './fontfamily';
 
 function localeConfig(locale: string) {
@@ -343,7 +343,7 @@ export function getModuleConfigs(): { [i: string]: ConfigType } {
   return Cache.read('moduleConfigs');
 }
 
-export function getFeatureModules() {
+export function getFeatureModules(): FeatureType {
   if (!Cache.has('featureModules')) {
     // These are CrossWire SWORD standard module features
     const sword = {

@@ -4,6 +4,7 @@
 /* eslint-disable import/no-mutable-exports */
 import path from 'path';
 import fs from 'fs';
+import i18next from 'i18next';
 import C from '../constant';
 import VerseKey from '../versekey';
 import RefParser, { RefParserOptionsType } from '../refparse';
@@ -14,7 +15,7 @@ import Dirs from './modules/dirs';
 import Prefs from './modules/prefs';
 import LibSword from './modules/libsword';
 import nsILocalFile from './components/nsILocalFile';
-import { getFontFaceConfigs } from './config';
+import { getFeatureModules, getFontFaceConfigs } from './config';
 import { jsdump } from './mutil';
 
 import type {
@@ -27,6 +28,7 @@ import type {
   LocationVKType,
   GlobalPref,
   XulswordStatePref,
+  FeatureType,
 } from '../type';
 
 const fontList = require('font-list');
@@ -225,7 +227,9 @@ export function getTab(): { [i: string]: TabType } {
   return Cache.read('tab');
 }
 
-export function getBkChsInV11n() {
+export function getBkChsInV11n(): {
+  [key in V11nType]: { [i: string]: number };
+} {
   if (!Cache.has('bkChsInV11n')) {
     // Data was parsed from sword/include/*.h files
     /* eslint-disable prettier/prettier */
@@ -448,9 +452,28 @@ export function checkModulePrefs() {
   ) as GlobalPref['popup']['selection'];
   const newpopupsel = clone(popupsel);
   Object.entries(newpopupsel).forEach((entry) => {
-    const [k, m] = entry;
+    const k = entry[0] as keyof FeatureType;
+    const m = entry[1];
     if (!currmods.includes(m)) {
       newpopupsel[k] = '';
+    }
+  });
+  // If no pref has been set for popup.selection[feature] then choose a
+  // module from the available modules, if there are any.
+  const featureModules = getFeatureModules();
+  Object.entries(newpopupsel).forEach((entry) => {
+    const k = entry[0] as keyof FeatureType;
+    if (!entry[1] && k in featureModules) {
+      const ma = (
+        Array.isArray(featureModules[k]) ? featureModules[k] : []
+      ) as string[];
+      const sel =
+        C.LocalePreferredFeature[i18next.language === 'en' ? 'en' : 'ru'];
+      const preferred = (
+        k in sel && Array.isArray(sel[k]) ? sel[k] : []
+      ) as string[];
+      const selection = preferred.find((m) => m && ma.includes(m)) || ma[0];
+      newpopupsel[k] = selection;
     }
   });
   Prefs.setComplexValue('global.popup.selection', newpopupsel);

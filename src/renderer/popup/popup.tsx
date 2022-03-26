@@ -265,12 +265,6 @@ class Popup extends React.Component {
       if (G.Tabs[t].type === C.BIBLE) allBibleModules.push(G.Tabs[t].module);
     }
 
-    const textFeature: { [key in keyof FeatureType]?: RegExp } = {
-      hebrewDef: /S_H/,
-      greekDef: /S_G/,
-      greekParse: /SM_G/,
-    };
-
     let boxlocation;
     if (!isWindow) {
       const maxHeight = window.innerHeight / 2;
@@ -328,7 +322,7 @@ class Popup extends React.Component {
 
             {type === 'sn' &&
               elem &&
-              Object.entries(textFeature).map((entry) => {
+              Object.entries(C.SwordFeatureClasses).map((entry) => {
                 const feature = entry[0] as
                   | 'hebrewDef'
                   | 'greekDef'
