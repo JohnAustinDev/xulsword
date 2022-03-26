@@ -4,6 +4,17 @@ import G from '../rg';
 
 import type { SwordFilterType, SwordFilterValueType } from '../../type';
 
+const DictKeyTransform: { [i: string]: (key: string) => string } = {
+  StrongsHebrew: (key) => {
+    const t = '00000';
+    return t.substring(0, t.length - key.length) + key;
+  },
+  StrongsGreek: (key) => {
+    const t = '00000';
+    return t.substring(0, t.length - key.length) + key;
+  },
+};
+
 // class must be a string or a regular-expression to match a string
 function replaceTags(entry: string, tag: string, subclass?: string | RegExp) {
   const eTag = new RegExp(`<\\/${tag}[^>]*>`, 'g');
@@ -128,17 +139,6 @@ function replaceLinks(entry: string, mod: string) {
 
   return html;
 }
-
-const DictKeyTransform: { [i: string]: (key: string) => string } = {
-  StrongsHebrew: (key) => {
-    const t = '00000';
-    return t.substring(0, t.length - key.length) + key;
-  },
-  StrongsGreek: (key) => {
-    const t = '00000';
-    return t.substring(0, t.length - key.length) + key;
-  },
-};
 
 export function getDictEntryHTML(
   key: string,

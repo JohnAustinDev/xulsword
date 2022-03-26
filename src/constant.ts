@@ -3,6 +3,7 @@
 import type {
   BookGroupType,
   ConfigType,
+  GlobalPref,
   LocationVKType,
   ModTypes,
   PlaceType,
@@ -159,6 +160,23 @@ const C = {
     ]
   } as { [key in BookGroupType]: string[] },
   /* eslint-enable prettier/prettier */
+
+  GlobalPrefDefault: {
+    en: {
+      selection: {
+        hebrewDef: 'StrongsHebrew',
+        greekDef: 'StrongsGreek',
+        greekParse: '',
+      },
+    },
+    ru: {
+      selection: {
+        hebrewDef: 'StrongsHebrewRU',
+        greekDef: 'StrongsGreekRU',
+        greekParse: '',
+      },
+    },
+  } as const,
 
   BMFileReturn: '\r\n', // used in imported/exported bookmarks.txt because < 3.6 could only read files with this newline.
   DEFAULTLOCALE: 'en',
