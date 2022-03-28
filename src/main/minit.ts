@@ -286,9 +286,7 @@ export function getBooksInModule(): { [i: string]: string[] } {
       'modules'
     ) as { [i: string]: string[] };
     const pb = Object.keys(booksInModule);
-    const tb = tabs
-      .filter((t) => t.v11n && (t.type === C.BIBLE || t.type === C.COMMENTARY))
-      .map((t) => t.module);
+    const tb = tabs.map((t) => t.module);
     if (pb.length !== tb.length || !pb.every((t) => pb.includes(t))) {
       booksInModule = {};
     }

@@ -31,6 +31,20 @@ interface DarwinMenuItemConstructorOptions extends MenuItemConstructorOptions {
   submenu?: DarwinMenuItemConstructorOptions[] | Menu;
 }
 
+// Debug mode menu clicks allow menu to close, avoiding debugger lockup.
+function d(func: () => void): any {
+  if (
+    process.env.NODE_ENV === 'development' ||
+    process.env.DEBUG_PROD === 'true'
+  ) {
+    const dfunc = () => {
+      setTimeout(func, 100);
+    };
+    return dfunc;
+  }
+  return func;
+}
+
 // Update Prefs
 function toggleSwitch(name: string | string[], value?: boolean) {
   const a = Array.isArray(name) ? name : [name];
@@ -95,9 +109,9 @@ function buildTabMenus(menu: Menu) {
             label: t.label + (t.description ? ` --- ${t.description}` : ''),
             type: 'checkbox',
             // icon: path.join(G.Dirs.path.xsAsset, 'icons', '16x16', `${tab}.png`),
-            click: () => {
+            click: d(() => {
               setViewportTabs(panelIndex, t.module, 'toggle');
-            },
+            }),
           });
           submenu.insert(0, newItem);
         }
@@ -269,50 +283,50 @@ export default class MenuBuilder {
                 'newmodule.fromInternet.ak'
               ),
               accelerator: 'F2',
-              click: () => {
+              click: d(() => {
                 Commands.addRepositoryModule();
-              },
+              }),
             },
             {
               label: this.ts('newmodule.fromFile', 'newmodule.fromFile.ak'),
-              click: () => {
+              click: d(() => {
                 Commands.addLocalModule();
-              },
+              }),
             },
           ],
         },
         {
           label: this.ts('menu.removeModule.label', 'menu.removeModule.sc'),
-          click: () => {
+          click: d(() => {
             Commands.removeModule();
-          },
+          }),
         },
         { type: 'separator' },
         {
           label: this.ts('menu.exportAudio.label', 'menu.exportAudio.sc'),
-          click: () => {
+          click: d(() => {
             Commands.exportAudio();
-          },
+          }),
         },
         {
           label: this.ts('menu.importAudio.label', 'menu.importAudio.sc'),
-          click: () => {
+          click: d(() => {
             Commands.importAudio();
-          },
+          }),
         },
         { type: 'separator' },
         {
           label: this.ts('printSetupCmd.label', 'printSetupCmd.accesskey'),
-          click: () => {
+          click: d(() => {
             Commands.pageSetup();
-          },
+          }),
         },
         {
           label: this.ts('printPreviewCmd.label', 'printPreviewCmd.accesskey'),
           accelerator: this.tx('printCmd.commandkey', ['CommandOrControl']),
-          click: () => {
+          click: d(() => {
             Commands.printPreview();
-          },
+          }),
         },
         {
           label: this.ts('printCmd.label', 'printCmd.accesskey'),
@@ -320,9 +334,9 @@ export default class MenuBuilder {
             'CommandOrControl',
             'Shift',
           ]),
-          click: () => {
+          click: d(() => {
             Commands.print();
-          },
+          }),
         },
         { type: 'separator' },
         {
@@ -330,9 +344,9 @@ export default class MenuBuilder {
           accelerator: this.tx('printPassageCmd.commandkey', [
             'CommandOrControl',
           ]),
-          click: () => {
+          click: d(() => {
             Commands.printPassage();
-          },
+          }),
         },
         { type: 'separator' },
         {
@@ -341,9 +355,9 @@ export default class MenuBuilder {
             'quitApplicationCmdWin.label',
             'quitApplicationCmdWin.accesskey'
           ),
-          click: () => {
+          click: d(() => {
             this.mainWindow.close();
-          },
+          }),
         },
       ],
     };
@@ -358,9 +372,9 @@ export default class MenuBuilder {
           return {
             label: this.ts(`menu.edit.${ed}`),
             accelerator: this.tx(`menu.edit.${ed}.ac`, ['CommandOrControl']),
-            click: () => {
+            click: d(() => {
               if (!Commands.edit(ed)) this.mainWindow.webContents[ed]();
-            },
+            }),
           };
         })
         .concat([
@@ -368,17 +382,17 @@ export default class MenuBuilder {
           {
             label: this.ts('searchBut.label', 'SearchAccKey'),
             accelerator: this.tx('SearchCommandKey', ['CommandOrControl']),
-            click: () => {
+            click: d(() => {
               const search = {} as any;
               Commands.search(search);
-            },
+            }),
           },
           {
             label: this.ts('menu.copypassage', 'menu.copypassage.ak'),
             accelerator: this.tx('menu.copypassage.sc', ['CommandOrControl']),
-            click: () => {
+            click: d(() => {
               Commands.copyPassage();
-            },
+            }),
           },
         ]),
     };
@@ -409,13 +423,13 @@ export default class MenuBuilder {
           id: `xulsword.show.${key}`,
           type: 'checkbox',
           icon: path.join(G.Dirs.path.xsAsset, 'icons', '16x14', `${key}.png`),
-          click: () => {
+          click: d(() => {
             const keys = [`xulsword.show.${key}`];
             if (key === 'strongs') {
               keys.push(`xulsword.show.morph`); // switch these two together
             }
             toggleSwitch(keys);
-          },
+          }),
         };
       });
 
@@ -429,17 +443,17 @@ export default class MenuBuilder {
             label: this.ts('menu.view.popups'),
             id: `xulsword.place.${name}_val_popup`,
             type: 'radio',
-            click: () => {
+            click: d(() => {
               radioSwitch(`xulsword.place.${name}`, 'popup');
-            },
+            }),
           },
           {
             label: this.ts('menu.view.notebox'),
             id: `xulsword.place.${name}_val_notebox`,
             type: 'radio',
-            click: () => {
+            click: d(() => {
               radioSwitch(`xulsword.place.${name}`, 'notebox');
-            },
+            }),
           },
         ],
       };
@@ -469,16 +483,16 @@ export default class MenuBuilder {
                 {
                   id: `showAll_${typekey}_${pl}`,
                   label: this.ts('menu.view.showAll'),
-                  click: () => {
+                  click: d(() => {
                     setViewportTabs(panelIndex, type, 'show');
-                  },
+                  }),
                 },
                 {
                   id: `hideAll_${typekey}_${pl}`,
                   label: this.ts('menu.view.hideAll'),
-                  click: () => {
+                  click: d(() => {
                     setViewportTabs(panelIndex, type, 'hide');
-                  },
+                  }),
                 },
               ],
             };
@@ -495,22 +509,22 @@ export default class MenuBuilder {
         {
           label: 'Toggle &Full Screen',
           accelerator: 'F11',
-          click: () => {
+          click: d(() => {
             this.mainWindow.setFullScreen(!this.mainWindow.isFullScreen());
-          },
+          }),
         }, */
         ...textSwitches,
         {
           label: this.ts('menu.view.showAll'),
-          click: () => {
+          click: d(() => {
             toggleSwitch(allswitches, true);
-          },
+          }),
         },
         {
           label: this.ts('menu.view.hideAll'),
-          click: () => {
+          click: d(() => {
             toggleSwitch(allswitches, false);
-          },
+          }),
         },
         { type: 'separator' },
         ...displayLocation,
@@ -525,9 +539,9 @@ export default class MenuBuilder {
                 : Number(pl.substring(pl.length - 1)) - 1;
             return {
               label: this.ts(pl),
-              click: () => {
+              click: d(() => {
                 setViewportTabs(panelIndex, 'all', 'show');
-              },
+              }),
             };
           }),
         },
@@ -540,9 +554,9 @@ export default class MenuBuilder {
                 : Number(pl.substring(pl.length - 1)) - 1;
             return {
               label: this.ts(pl),
-              click: () => {
+              click: d(() => {
                 setViewportTabs(panelIndex, 'all', 'hide');
-              },
+              }),
             };
           }),
         },
@@ -562,46 +576,46 @@ export default class MenuBuilder {
               label: this.ts('menu.options.font1'),
               id: `global.fontSize_val_0`,
               type: 'radio',
-              click: () => {
+              click: d(() => {
                 radioSwitch('global.fontSize', 0);
-              },
+              }),
             },
             {
               label: this.ts('menu.options.font2'),
               id: `global.fontSize_val_1`,
               type: 'radio',
-              click: () => {
+              click: d(() => {
                 radioSwitch('global.fontSize', 1);
-              },
+              }),
             },
             {
               label: this.ts('menu.options.font3'),
               id: `global.fontSize_val_2`,
               type: 'radio',
-              click: () => {
+              click: d(() => {
                 radioSwitch('global.fontSize', 2);
-              },
+              }),
             },
             {
               label: this.ts('menu.options.font4'),
               id: `global.fontSize_val_3`,
               type: 'radio',
-              click: () => {
+              click: d(() => {
                 radioSwitch('global.fontSize', 3);
-              },
+              }),
             },
             {
               label: this.ts('menu.options.font5'),
               id: `global.fontSize_val_4`,
               type: 'radio',
-              click: () => {
+              click: d(() => {
                 radioSwitch('global.fontSize', 4);
-              },
+              }),
             },
             { type: 'separator' },
             {
               label: this.ts('fontsAndColors.label'),
-              click: () => {
+              click: d(() => {
                 const panels = G.Prefs.getComplexValue(
                   'xulsword.panels'
                 ) as XulswordStatePref['panels'];
@@ -610,7 +624,7 @@ export default class MenuBuilder {
                   (G.Tabs[0] && G.Tabs[0].module) ||
                   '';
                 Commands.openFontsColors(module, this.mainWindow);
-              },
+              }),
             },
           ],
         },
@@ -621,17 +635,17 @@ export default class MenuBuilder {
               label: this.ts('menu.options.hebVowel'),
               id: 'xulsword.show.hebvowelpoints',
               type: 'checkbox',
-              click: () => {
+              click: d(() => {
                 toggleSwitch('xulsword.show.hebvowelpoints');
-              },
+              }),
             },
             {
               label: this.ts('menu.options.hebCant'),
               id: 'xulsword.show.hebcantillation',
               type: 'checkbox',
-              click: () => {
+              click: d(() => {
                 toggleSwitch('xulsword.show.hebcantillation');
-              },
+              }),
             },
           ],
         },
@@ -645,9 +659,9 @@ export default class MenuBuilder {
               id: `global.locale_val_${lng}`,
               type: 'radio',
               toolTip: lng,
-              click: () => {
+              click: d(() => {
                 radioSwitch('global.locale', lng);
-              },
+              }),
             };
           }),
         },
@@ -668,16 +682,16 @@ export default class MenuBuilder {
           accelerator: this.tx('manBookmarksCmd.commandkey', [
             'CommandOrControl',
           ]),
-          click: () => {
+          click: d(() => {
             Commands.openBookmarksManager();
-          },
+          }),
         },
         {
           label: this.ts('menu.bookmark.add'),
           accelerator: this.tx('addCurPageAsCmd.commandkey', [
             'CommandOrControl',
           ]),
-          click: () => newDbItemWithDefaults(false, dummy),
+          click: d(() => newDbItemWithDefaults(false, dummy)),
         },
         {
           label: this.ts('menu.usernote.add'),
@@ -685,7 +699,7 @@ export default class MenuBuilder {
             'CommandOrControl',
             'Shift',
           ]),
-          click: () => newDbItemWithDefaults(true, dummy),
+          click: d(() => newDbItemWithDefaults(true, dummy)),
         },
       ],
     };
@@ -702,7 +716,7 @@ export default class MenuBuilder {
           label: this.ts(`menu.windows.${n}win`),
           id: `xulsword.panels_val_${n}`,
           type: 'radio',
-          click: () => {
+          click: d(() => {
             const panels = G.Prefs.getComplexValue(
               'xulsword.panels'
             ) as XulswordStatePref['panels'];
@@ -710,7 +724,7 @@ export default class MenuBuilder {
               return x > i ? null : panel || '';
             });
             G.Prefs.setComplexValue('xulsword.panels', newpans);
-          },
+          }),
         };
       }),
     };
@@ -721,9 +735,9 @@ export default class MenuBuilder {
       submenu: [
         {
           label: this.ts('menu.help.about'),
-          click: () => {
+          click: d(() => {
             Commands.openHelp();
-          },
+          }),
         },
       ],
     };
@@ -736,19 +750,19 @@ export default class MenuBuilder {
           role: 'reload',
           label: '&Reload',
           accelerator: 'Ctrl+R',
-          click: () => {
+          click: d(() => {
             // because role is 'reload', this handler isn't called
             // (in Linux at least)
             this.mainWindow.webContents.reload();
-          },
+          }),
         },
         {
           role: 'toggelDevTools',
           label: 'Toggle &Developer Tools',
           accelerator: 'Alt+Ctrl+I',
-          click: () => {
+          click: d(() => {
             this.mainWindow.webContents.toggleDevTools();
-          },
+          }),
         },
       ],
     };

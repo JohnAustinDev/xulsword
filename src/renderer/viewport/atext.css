@@ -348,8 +348,6 @@ html[dir='rtl'] .notebox-maximizer {
   width: 9px;
   height: 9px;
   background: url(../images/twisty-open.png);
-  position: relative;
-  top: -2px;
 }
 .cropened .crtwisty {
   background: url(../images/twisty-close.png);

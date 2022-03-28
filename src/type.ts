@@ -263,6 +263,7 @@ export type DirsDirectories = {
 };
 
 export type ResetType =
+  | 'all'
   | 'cache-reset'
   | 'module-reset'
   | 'component-reset'

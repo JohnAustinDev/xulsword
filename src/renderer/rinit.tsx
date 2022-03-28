@@ -19,6 +19,7 @@ import './global-htm.css';
 
 window.ipc.renderer.on('cache-reset', () => Cache.clear);
 
+DynamicStyleSheet.update(G.Data.read('stylesheetData'));
 window.ipc.renderer.on('dynamic-stylesheet-reset', () =>
   DynamicStyleSheet.update(G.Data.read('stylesheetData'))
 );
@@ -115,11 +116,15 @@ export default function renderToRoot(
   unloadXUL?: (() => void) | null,
   namespace = 'xulsword'
 ) {
+  function onContextMenu(e: React.SyntheticEvent) {
+    G.Data.write(getContextData(e.target), 'contextData');
+  }
   function Reset(props: React.ComponentProps<any>) {
     const { children } = props;
     const [reset, setReset] = useState(0);
     useEffect(() => {
       return window.ipc.renderer.on('component-reset', () => {
+        DynamicStyleSheet.update(G.Data.read('stylesheetData'));
         const lng = G.Prefs.getCharPref('global.locale');
         if (i18n.language !== lng) {
           i18n
@@ -149,10 +154,6 @@ export default function renderToRoot(
         )
       );
     });
-    DynamicStyleSheet.update(G.Data.read('stylesheetData'));
-    const onContextMenu = (e: React.SyntheticEvent) => {
-      G.Data.write(getContextData(e.target), 'contextData');
-    };
     return (
       <div id="reset" onContextMenu={onContextMenu} key={reset}>
         {children}

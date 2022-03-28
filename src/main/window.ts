@@ -6,6 +6,7 @@ import fs from 'fs';
 import i18next from 'i18next';
 import { BrowserWindow, ipcMain } from 'electron';
 import { JSON_parse, JSON_stringify } from '../common';
+import Cache from '../cache';
 import C from '../constant';
 import Subscription from '../subscription';
 import Dirs from './modules/dirs';
@@ -352,8 +353,9 @@ const Window: GType['Window'] = {
         ];
         resets.forEach((r) => {
           // 'component-reset' also does 'dynamic-stylesheet-reset'
-          if (!type && r === 'dynamic-stylesheet-reset') return;
-          if (!type || type === r) win.webContents.send(r);
+          if ((!type || type === 'all') && r === 'dynamic-stylesheet-reset')
+            return;
+          if (!type || type === 'all' || type === r) win.webContents.send(r);
         });
       }
     });
@@ -380,7 +382,6 @@ export default Window;
 // state prefs. For instance when changing locale or dynamic stylesheet.
 export const pushPrefsToWindows: PrefCallbackType = (win, key, val, store) => {
   if (store === 'prefs' && (!win || win === BrowserWindow.getFocusedWindow())) {
-    const updateLocale = key === 'global.locale';
     const keysToUpdate: string[] = [];
     const keys: string[] =
       !key.includes('.') && typeof val === 'object'
@@ -405,25 +406,26 @@ export const pushPrefsToWindows: PrefCallbackType = (win, key, val, store) => {
         });
       }
     });
-    const doReset = ['global.locale', 'global.fontSize'].includes(key);
-    if (updateLocale) {
+    if (key === 'global.locale') {
       const lng = Prefs.getCharPref('global.locale');
       i18next
         .loadLanguages(lng)
         .then(() => i18next.changeLanguage(lng))
         .then(() => {
-          Window.reset();
+          Cache.clear();
+          Window.reset('all', 'all');
           return true;
         })
         .catch((err: any) => {
           if (err) throw Error(err);
         });
-    } else if (doReset) {
-      Window.reset();
+    } else if (key === 'global.fontSize') {
+      Window.reset('dynamic-stylesheet-reset', 'all');
     } else if (keysToUpdate.length) {
       BrowserWindow.getAllWindows().forEach((w) => {
-        if (!win || w !== win)
+        if (!win || w !== win) {
           w.webContents.send('update-state-from-pref', keysToUpdate);
+        }
       });
     }
   }

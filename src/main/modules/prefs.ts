@@ -272,11 +272,15 @@ const Prefs: GType['Prefs'] & PrefsPrivate = {
       return false;
     }
     // Test the value.
+    let valueobj: PrefObject | undefined;
     if (type === 'merge') {
       if (
-        !['undefined', 'object'].includes(typeof value) ||
-        Array.isArray(value)
+        (value === undefined || typeof value === 'object') &&
+        !Array.isArray(value) &&
+        value !== null
       ) {
+        valueobj = value;
+      } else {
         throw Error(`Prefs: merge value is not a data object: ${value}`);
       }
     } else if (!this.isType(type, value)) {
@@ -309,7 +313,7 @@ const Prefs: GType['Prefs'] & PrefsPrivate = {
       let pp = p[k];
       if (!pp) pp = {};
       if (typeof pp === 'object' && !Array.isArray(pp)) {
-        p[k] = { ...pp, ...clone(value) };
+        p[k] = { ...pp, ...clone(valueobj) };
       } else {
         throw Error(`Prefs: merge target is not a PrefObject: '${pp}'`);
       }

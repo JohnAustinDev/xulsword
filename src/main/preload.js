@@ -58,6 +58,7 @@ contextBridge.exposeInMainWorld('ipc', {
     // renderer process.
     sendSync(channel, ...args) {
       if (validChannels.includes(channel)) {
+        // console.log({ channel, args });
         return ipcRenderer.sendSync(channel, ...args);
       }
       throw Error(`ipc sendSync bad channel: ${channel}`);
