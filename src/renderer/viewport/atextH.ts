@@ -2,11 +2,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import C from '../../constant';
-import { cleanDoubleClickSelection, getCSS, ofClass } from '../../common';
+import {
+  cleanDoubleClickSelection,
+  getCSS,
+  ofClass,
+  sanitizeHTML,
+} from '../../common';
 import { getElementInfo } from '../../libswordElemInfo';
 import G from '../rg';
 import { scrollIntoView } from '../rutil';
-import { aTextWheelScroll } from './zversekey';
+import { aTextWheelScroll, getRefHTML } from './zversekey';
 
 import type Atext from './atext';
 import type { AtextProps, AtextState } from './atext';
@@ -35,6 +40,7 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
   const target = es.target as HTMLElement;
   const atext = es.currentTarget as HTMLElement;
   const type = module ? G.Tab[module].type : '';
+  const panelIndex = Number(atext.dataset.index);
   switch (es.type) {
     case 'click': {
       const e = es as React.MouseEvent;
@@ -57,12 +63,34 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
       const p = getElementInfo(elem);
       switch (targ.type) {
         case 'cr':
-          if (!popupParent && p) {
-            const id = `w${index}.footnote.${p.type}.${p.nid}.${p.osisref}.${p.mod}`;
-            const cr = document.getElementById(id);
-            if (cr) {
-              cr.classList.toggle('cropened');
-              scroll2Note(atext, id);
+        case 'crtwisty':
+          if (!popupParent && module) {
+            let row;
+            let id;
+            if (targ.type === 'cr' && p) {
+              id = `w${index}.footnote.${p.type}.${p.nid}.${p.osisref}.${p.mod}`;
+              row = document.getElementById(id);
+            } else {
+              const rowx = ofClass(['fnrow'], elem);
+              if (rowx) row = rowx.element;
+            }
+            if (row) {
+              row.classList.toggle('cropened');
+              const col5 = ofClass('fncol5', row, 'descendant');
+              if (col5) {
+                const el = col5.element;
+                const refs = el.dataset.reflist;
+                if (refs) {
+                  let html;
+                  if (row.classList.contains('cropened')) {
+                    html = getRefHTML(refs, module, panelIndex, false, false);
+                  } else {
+                    html = getRefHTML(refs, module, panelIndex, false, true);
+                  }
+                  sanitizeHTML(el, html);
+                }
+              }
+              if (id) scroll2Note(atext, id);
             }
           }
           break;
@@ -84,13 +112,6 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
             return { versePerLine: !versePerLine };
           });
           break;
-
-        // Notebox cross-reference twisty toggle
-        case 'crtwisty': {
-          const row = ofClass(['fnrow'], elem);
-          if (row) row.element.classList.toggle('cropened');
-          break;
-        }
 
         case 'image-container': {
           const cont = elem;

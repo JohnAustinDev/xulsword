@@ -6,11 +6,15 @@
   margin: auto 0px 10px -6px;
   /* Make sure these npopup styles are NOT inherited from container! */
   text-align: start;
-  color: black;
   font-weight: normal;
   font-style: normal;
   text-indent: 0px;
 }
+.npopup,
+.npopup span {
+  color: black;
+}
+
 .empty {
   cursor: help !important;
 }

@@ -235,7 +235,7 @@ export type TabType = {
   tabType: TabTypes;
   isCommDir: boolean;
   isVerseKey: boolean;
-  isRTL: boolean;
+  direction: 'ltr' | 'rtl';
   index: number;
   description: string;
   conf: string;

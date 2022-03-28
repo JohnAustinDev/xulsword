@@ -193,9 +193,11 @@ export function getTabs(): TabType[] {
         labelClass: isASCII(label) ? 'cs-LTR_DEFAULT' : `cs-${module}`,
         tabType,
         isVerseKey,
-        isRTL: /^rt.?l$/i.test(
+        direction: /^rt.?l$/i.test(
           LibSword.getModuleInformation(module, 'Direction')
-        ),
+        )
+          ? 'rtl'
+          : 'ltr',
         index: i,
         description: LibSword.getModuleInformation(module, 'Description'),
         conf,

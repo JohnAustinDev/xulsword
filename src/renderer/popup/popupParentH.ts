@@ -60,7 +60,7 @@ export function popupParentHandler(
       const targ = ofClass(
         ['cr', 'fn', 'un', 'sn', 'sr', 'dt', 'dtl', 'introlink', 'noticelink'],
         target,
-        true
+        'self'
       );
       if (targ === null || targ.element.classList.contains('x-target_self'))
         return;

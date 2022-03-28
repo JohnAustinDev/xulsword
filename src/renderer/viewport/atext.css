@@ -341,7 +341,6 @@ html[dir='rtl'] .notebox-maximizer {
 .fncol1 {
   display: table-cell;
   width: 6px;
-  vertical-align: top;
   padding-top: 8px;
 }
 .crtwisty {
@@ -355,12 +354,11 @@ html[dir='rtl'] .notebox-maximizer {
 .fncol2 {
   display: table-cell;
   visibility: hidden;
-  vertical-align: top;
   padding-top: 12px;
 }
 .fndash {
   width: 6px;
-  height: 2px;
+  margin-top: 4px;
   border-top: 1px solid rgb(150, 150, 150);
 }
 .fncol3 {
@@ -383,7 +381,6 @@ html[dir='rtl'] .fncol3 {
   display: table-cell;
   text-align: end;
   white-space: nowrap;
-  vertical-align: top;
   padding-top: 2px;
 }
 .fnlink {

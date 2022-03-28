@@ -72,7 +72,6 @@ export function getPopupHTML(elem: HTMLElement, info: ElemInfo) {
           null,
           0,
           true,
-          true,
           `${type}.${title}`
         );
       }
@@ -94,7 +93,6 @@ export function getPopupHTML(elem: HTMLElement, info: ElemInfo) {
             refbible,
             null,
             0,
-            true,
             true
           );
         } else if (reflist && reflist[0]) {

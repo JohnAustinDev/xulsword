@@ -142,11 +142,12 @@ export function getChapterHeading(props: {
 // case after a comma). When necessary, this function will look through
 // other Bible versions until it finds a version that includes the
 // passage. It also takes care of verse system conversions in the process.
-function getRefHTML(
+export function getRefHTML(
   refsx: string,
   mod: string,
   w = 0,
-  keepTextNotes = false
+  keepTextNotes = false,
+  noVerseText = false
 ): string {
   const v11n = (mod in G.Tab && G.Tab[mod].v11n) || 'KJV';
 
@@ -197,9 +198,9 @@ function getRefHTML(
         }
       }
       const opd =
-        i18next.t('locale_direction') !== G.Tab[mod].dir
-          ? ' opposing-program-direction'
-          : '';
+        G.ProgramConfig.direction === G.Tab[mod].direction
+          ? ''
+          : ' opposing-program-direction';
       html += sep;
       html += `<bdi><span class="fntext cs-${
         isASCII(footnote) ? C.DEFAULTLOCALE : mod
@@ -252,14 +253,17 @@ function getRefHTML(
       module: mod,
       text: '',
     };
-    if (!findAVerseText(aText, tabs[w], keepTextNotes)) return;
+    if (!noVerseText && !findAVerseText(aText, tabs[w], keepTextNotes)) return;
 
-    const { module, location, text } = aText;
+    const { module, location } = aText;
+    let { text } = aText;
+    if (text && module !== mod) text += ` (${G.Tab[module].label})`;
+    else if (noVerseText) text = refsx;
     const { book, chapter } = location;
     const opd =
-      i18next.t('locale_direction') !== G.Tab[module].dir
-        ? ' opposing-program-direction'
-        : '';
+      G.ProgramConfig.direction === G.Tab[module].direction
+        ? ''
+        : ' opposing-program-direction';
     let { verse, lastverse } = location;
     if (!verse) verse = 1;
     if (!lastverse) lastverse = verse;
@@ -273,10 +277,7 @@ function getRefHTML(
     ].join('.')}">`;
     html += verseKey(aText.location).readable();
     html += '</a></bdi>';
-    html += `<bdi><span class="crtext${opd}">`;
-    html += text + (module !== mod ? ` (${G.Tab[module].label})` : '');
-    html += '</span></bdi>';
-
+    html += `<bdi><span class="crtext${opd}">${text}</span></bdi>`;
     sep = '<span class="cr-sep"></span>';
   });
 
@@ -295,7 +296,6 @@ export function getNoteHTML(
     | null, // null to show all types of notes
   wx = 0,
   openCRs = false,
-  keepTextNotes = false,
   keepOnlyNote = '' // title of a single note to keep
 ) {
   if (!notes) return '';
@@ -330,8 +330,7 @@ export function getNoteHTML(
   note.forEach((anote) => {
     const p = getElementInfo(anote);
     if (p && (!keepOnlyNote || p.title === keepOnlyNote)) {
-      const body = anote.replace(/(^<div[^>]+>|<\/div>$)/g, '');
-
+      const body = anote.replace(/(^(<div[^>]+>\s*)+|(<\/div>\s*)+$)/g, '');
       // Check if this note should be displayed, and if not then skip it
       const notetypes = { fn: 'footnotes', cr: 'crossrefs', un: 'usernotes' };
       Object.entries(notetypes).forEach((entry) => {
@@ -367,12 +366,14 @@ export function getNoteHTML(
         t += '</div>';
 
         // Write cell #5: note body
-        t += '<div class="fncol5">';
+        t += `<div class="fncol5"${
+          p.ntype === 'cr' ? ` data-reflist="${body}"` : ''
+        }>`;
 
         switch (p.ntype) {
           case 'cr':
             // If this is a cross reference, then parse the note body for references and display them
-            t += getRefHTML(body, mod, w, keepTextNotes);
+            t += getRefHTML(body, mod, w, false, true);
             break;
 
           case 'fn':

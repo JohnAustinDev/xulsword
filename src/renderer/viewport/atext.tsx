@@ -181,7 +181,7 @@ class Atext extends React.Component {
   // The render() function of the Atext component does not render the
   // actual text content from LibSword. This onUpdate function uses
   // LibSword to write text to the already rendered component's sb
-  // (scripture box) and nb (not box) divs. It first checks if sb
+  // (scripture box) and nb (note box) divs. It first checks if sb
   // already contains the necessary LibSword response and if not,
   // memoizes the required response and updates sb and nb contents.
   // It then does any srolling, highlighting, footnote adjustments
@@ -624,7 +624,7 @@ class Atext extends React.Component {
           domref={this.sbref}
           pack="start"
           flex="1"
-          dir={module && G.Tab[module].isRTL ? 'rtl' : 'ltr'}
+          dir={(module && G.Tab[module].direction) || 'auto'}
         />
 
         <Vbox

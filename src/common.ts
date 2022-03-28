@@ -208,31 +208,57 @@ export function diff(obj1: any, obj2: any, depth = 1): any {
   return difference;
 }
 
-// Searches an element and its ancestors for particular class-name(s).
-// It returns the first element having one of the class-names and the
-// class-name that was found. If the element and its ancestors do
-// not share any of the class-names, null is returned.
+// Searches an element and its ancestors or descendants, depending on
+// chosen mode, looking for particular class-name(s). Default mode is
+// ancestor-or-self which searches the element and all its ancestors
+// until a match is found. It returns the first element having one of
+// the class names and the class name that was found. If none of the
+// class names is found, null is returned.
 export function ofClass(
   search: string | string[],
   element: HTMLElement | ParentNode | EventTarget | null,
-  selfonly = false
+  mode?:
+    | 'self'
+    | 'ancestor'
+    | 'ancestor-or-self'
+    | 'descendant'
+    | 'descendant-or-self'
 ): { element: HTMLElement; type: string } | null {
+  const amode = mode || 'ancestor-or-self';
+  const searchclasses = Array.isArray(search) ? search : [search];
   if (!element || !('classList' in element)) return null;
-  let elm = element;
-  let typ;
-  const s = Array.isArray(search) ? search : [search];
-  while (
-    !selfonly &&
-    elm &&
-    // eslint-disable-next-line @typescript-eslint/no-loop-func
-    !s.some((x) => elm.classList && elm.classList.contains(x))
-  ) {
-    elm = elm.parentNode as HTMLElement;
+  let elm: HTMLElement | undefined = element;
+  let type: string | undefined;
+  let searchingself = true;
+  if (amode !== 'self') {
+    while (elm) {
+      const test = elm;
+      if (
+        (!searchingself || amode.includes('self')) &&
+        searchclasses.some((x) => test.classList && test.classList.contains(x))
+      ) {
+        break;
+      }
+      searchingself = false;
+      if (amode.includes('ancestor')) {
+        elm = elm.parentNode as HTMLElement | undefined;
+      } else {
+        let celm: HTMLElement | undefined;
+        elm.childNodes.forEach((chn) => {
+          const tst = ofClass(search, chn, 'descendant-or-self');
+          if (!celm && tst) celm = tst.element;
+        });
+        elm = celm;
+      }
+    }
   }
-  if (elm && elm.classList) {
-    typ = s.find((c) => elm.classList.contains(c));
+  const test = elm;
+  if (!test) return null;
+  if (test && test.classList) {
+    type = searchclasses.find((c) => test.classList.contains(c));
   }
-  return typ ? { element: elm, type: typ } : null;
+  if (!type) return null;
+  return { element: test, type };
 }
 
 // Replaces character with codes <32 with " " (these may occur in text/footnotes at times- code 30 is used for sure)

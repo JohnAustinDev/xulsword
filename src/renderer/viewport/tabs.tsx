@@ -195,7 +195,6 @@ class Tabs extends React.Component {
     if (ilModule === 'disabled') ilcls = 'disabled';
 
     let cls = `tabs${panelIndex}`;
-    if (module && G.Tab[module].isRTL) cls += ' rtl';
     if (isPinned) cls += ' pinned';
     if (multiTabMenupopup) cls += ' open';
 
