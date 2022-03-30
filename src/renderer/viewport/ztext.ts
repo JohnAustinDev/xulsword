@@ -13,13 +13,21 @@ import {
 } from './zversekey';
 import { getDictEntryHTML } from './zdictionary';
 
-import type { AtextProps, LibSwordResponse } from './atext';
+import type { AtextProps } from './atext';
 import type {
   LocationVKType,
+  PinPropsType,
   PlaceType,
   SwordFilterType,
   SwordFilterValueType,
 } from '../../type';
+
+export type LibSwordResponse = {
+  textHTML: string;
+  noteHTML: string;
+  notes: string;
+  intronotes: string;
+};
 
 export function addUserNotes(content: LibSwordResponse, props: AtextProps) {}
 
@@ -305,8 +313,8 @@ function genbookChange(atext: HTMLElement, next: boolean): string | null {
 export function textChange(
   atext: HTMLElement,
   next: boolean,
-  prevState?: typeof C.PinProps
-): typeof C.PinProps | null {
+  prevState?: PinPropsType
+): PinPropsType | null {
   const { columns: cx, module, index } = atext.dataset;
   const panelIndex = Number(index);
   const columns = Number(cx);
@@ -363,13 +371,17 @@ export function textChange(
   if (!prevState) return newPinProps;
   newPinProps.scroll = null;
   if (type === C.BIBLE && columns > 1) {
-    const skipLocalPanels: boolean[] = [];
+    const skipTextUpdate: boolean[] = [];
     atext.parentNode?.childNodes.forEach((_n, i) => {
-      skipLocalPanels[i] = panelIndex !== i;
+      skipTextUpdate[i] = panelIndex !== i;
     });
     newPinProps.scroll = next
       ? { verseAt: 'top' }
-      : { verseAt: 'bottom', skipWindows: true, skipLocalPanels };
+      : {
+          verseAt: 'bottom',
+          skipWindowUpdate: true,
+          skipTextUpdate,
+        };
   } else if (type === C.BIBLE || type === C.COMMENTARY) {
     newPinProps.scroll = { verseAt: 'top' };
   }

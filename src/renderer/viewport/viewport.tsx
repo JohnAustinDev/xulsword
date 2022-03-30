@@ -37,8 +37,12 @@ import Atext from './atext';
 import '../libxul/xul.css';
 import './viewport.css';
 
-import type { LocationVKType, ScrollType, XulswordStatePref } from '../../type';
-import { NoteboxBarHandlerType } from './viewportParentH';
+import type {
+  LocationVKType,
+  ScrollType,
+  XulswordStatePref,
+  NoteboxBarHandlerType,
+} from '../../type';
 
 const defaultProps = xulDefaultProps;
 

@@ -17,6 +17,7 @@
 
 .atext .hd {
   text-align: center;
+  height: 30px;
 }
 .atext .text-pin {
   float: left;

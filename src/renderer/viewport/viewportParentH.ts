@@ -13,17 +13,22 @@ import {
 } from '../../common';
 import { getElementInfo } from '../../libswordElemInfo';
 import G from '../rg';
-import { getContextData, scrollIntoView, verseKey } from '../rutil';
+import { scrollIntoView, verseKey } from '../rutil';
 import { delayHandler } from '../libxul/xul';
 import { textChange } from './ztext';
 import { aTextWheelScroll, chapterChange } from './zversekey';
 
-import type { BookGroupType, V11nType, XulswordStatePref } from '../../type';
+import type {
+  AtextStateType,
+  BookGroupType,
+  PinPropsType,
+  V11nType,
+  XulswordStatePref,
+} from '../../type';
 import type Xulsword from '../xulsword/xulsword';
 import type { XulswordState } from '../xulsword/xulsword';
 import type ViewportWin from './viewportWin';
 import type { ViewportWinState } from './viewportWin';
-import type { AtextState } from './atext';
 
 export const vpWindowState = {
   tabs: [] as (string[] | null)[],
@@ -57,12 +62,6 @@ export function closeMenupopups(component: React.Component) {
   }
 }
 
-export type NoteboxBarHandlerType = (
-  e: React.SyntheticEvent,
-  noteboxResizing?: number[],
-  maximize?: boolean
-) => void;
-
 // Handle certain notebox boundary bar events for Atext.
 export function noteboxBarHandler(
   this: Xulsword | ViewportWin,
@@ -85,6 +84,7 @@ export function noteboxBarHandler(
       });
     } else if (noteboxResizing && atext) {
       // mouseup event handler for Atext.
+      const hd = atext.firstChild as HTMLElement;
       this.setState((prevState: XulswordStatePref) => {
         let { maximizeNoteBox, noteBoxHeight } = prevState;
         maximizeNoteBox = clone(maximizeNoteBox);
@@ -94,7 +94,7 @@ export function noteboxBarHandler(
           maximizeNoteBox[index] = noteBoxHeight[index];
           const { columns: clsx } = atext.dataset;
           const columns = Number(clsx);
-          let stopHeight = atext.clientHeight - C.UI.Atext.prevNextHeight;
+          let stopHeight = atext.clientHeight - hd.offsetHeight;
           if (columns === 1) stopHeight -= C.UI.Atext.bbTopMargin;
           noteBoxHeight[index] = stopHeight;
         } else if (maximize === false) {
@@ -114,7 +114,7 @@ export function noteboxBarHandler(
 function setState(
   comp: Xulsword | ViewportWin,
   atext: HTMLElement,
-  func: (prevState: typeof C.PinProps) => Partial<typeof C.PinProps> | null
+  func: (prevState: PinPropsType) => Partial<PinPropsType> | null
 ) {
   const { index, ispinned } = atext.dataset;
   const panelIndex = Number(index);
@@ -123,19 +123,19 @@ function setState(
     comp.setState((prevState: XulswordState | ViewportWinState) => {
       const { location, selection, scroll, panels, ilModules, keys } =
         prevState;
-      const pinProps: typeof C.PinProps = {
+      const pinProps: PinPropsType = {
         location,
         selection,
         scroll,
-        module: panels[panelIndex],
-        ilModule: ilModules[panelIndex],
-        modkey: keys[panelIndex],
+        module: panels[panelIndex] || '',
+        ilModule: ilModules[panelIndex] || '',
+        modkey: keys[panelIndex] || '',
       };
       const newPinProps = func(pinProps);
       if (newPinProps) {
         const s: Partial<XulswordState> = {};
         Object.keys(C.PinProps).forEach((k: string) => {
-          const key = k as keyof typeof C.PinProps;
+          const key = k as keyof PinPropsType;
           if (key in newPinProps) {
             switch (key) {
               case 'location':
@@ -169,11 +169,11 @@ function setState(
   } else {
     const atextcomp = comp.atextRefs[panelIndex];
     if (atextcomp?.current) {
-      atextcomp.current.setState((prevState: AtextState) => {
+      atextcomp.current.setState((prevState: AtextStateType) => {
         if (prevState.pin) {
           const newPinProps = func(prevState.pin);
           if (newPinProps && prevState.pin) {
-            const s: Partial<AtextState> = {
+            const s: Partial<AtextStateType> = {
               pin: {
                 ...prevState.pin,
                 ...newPinProps,
@@ -261,14 +261,14 @@ export default function handler(
             xulswordState.panels = vpwPanels;
             xulswordState.tabs = vpwTabs;
             // Save new window's Atext states
-            const atextStates: { [i: string]: Partial<AtextState> } = {};
+            const atextStates: { [i: string]: Partial<AtextStateType> } = {};
             if ('atextRefs' in this) {
               vpwPanels.forEach((pnl, i) => {
                 if (pnl) {
                   const ref = this.atextRefs[i];
                   if (ref?.current) {
-                    const ats = ref.current.state as AtextState;
-                    const s: Partial<AtextState> = {
+                    const ats = ref.current.state as AtextStateType;
+                    const s: Partial<AtextStateType> = {
                       pin: ats.pin,
                       versePerLine: ats.versePerLine,
                     };
@@ -402,6 +402,7 @@ export default function handler(
         }
         case 'notebox-maximizer': {
           if (atext) {
+            const hd = atext.firstChild as HTMLElement;
             this.setState((prevState: XulswordStatePref) => {
               let { maximizeNoteBox, noteBoxHeight } = prevState;
               maximizeNoteBox = clone(maximizeNoteBox);
@@ -413,7 +414,7 @@ export default function handler(
                 maximizeNoteBox[index] = noteBoxHeight[index];
                 const { columns: clsx } = atext.dataset;
                 const columns = Number(clsx);
-                let stopHeight = atext.clientHeight - C.UI.Atext.prevNextHeight;
+                let stopHeight = atext.clientHeight - hd.offsetHeight;
                 if (columns === 1) stopHeight -= C.UI.Atext.bbTopMargin;
                 noteBoxHeight[index] = stopHeight;
               }
@@ -464,7 +465,7 @@ export default function handler(
         case 'prevchaplink':
         case 'nextchaplink': {
           if (atext) {
-            setState(this, atext, (prevState: typeof C.PinProps) => {
+            setState(this, atext, (prevState: PinPropsType) => {
               return textChange(atext, targ.type === 'nextchaplink', prevState);
             });
           }
@@ -478,7 +479,7 @@ export default function handler(
             elem.classList.contains('x-target_self') &&
             atext
           ) {
-            setState(this, atext, (prevState: typeof C.PinProps) => {
+            setState(this, atext, (prevState: PinPropsType) => {
               let { modkey } = prevState;
               const str = p.osisref as string;
               modkey = decodeOSISRef(str.replace(/^[^:]+:/, ''));
@@ -525,7 +526,7 @@ export default function handler(
                   location.v11n
                 ).location();
                 setState(this, atext, () => {
-                  const s: Partial<typeof C.PinProps> = {
+                  const s: Partial<PinPropsType> = {
                     location: newloc,
                     selection: newloc,
                     scroll: { verseAt: 'center' },

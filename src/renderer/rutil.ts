@@ -13,7 +13,7 @@ import G from './rg';
 
 import type {
   ContextData,
-  GlobalPref,
+  GlobalPrefType,
   LocationVKType,
   PrefObject,
   SearchType,
@@ -132,7 +132,7 @@ export function refParser(options?: RefParserOptionsType): RefParser {
   const localesAccessor = () => {
     const locs = G.Prefs.getComplexValue(
       'global.locales'
-    ) as GlobalPref['global']['locales'];
+    ) as GlobalPrefType['global']['locales'];
     return locs.map((val) => val[0]);
   };
   return new RefParser(gfunctions, localesAccessor, options);

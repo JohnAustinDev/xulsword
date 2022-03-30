@@ -1,12 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import type {
+  AtextPropsType,
   BookGroupType,
   ConfigType,
   FeatureType,
-  GlobalPref,
+  GlobalPrefType,
   LocationVKType,
   ModTypes,
+  PinPropsType,
   PlaceType,
   ScrollType,
   ShowType,
@@ -14,6 +16,7 @@ import type {
   SwordFilterValueType,
   TabTypes,
   V11nType,
+  XulswordStatePref,
 } from './type';
 
 // Common Global Constants
@@ -83,8 +86,6 @@ const C = {
   HARDRESET: 2,
   NEWINSTALLFILE: 'newInstalls.txt',
   MINPVERPAR: 'minMKVersion',
-  VERSIONTAG: null as any,
-  MINPROGVERSTAG: null as any,
   MINVERSION: '1.0',
 
   // ---------------------
@@ -93,13 +94,53 @@ const C = {
   DEVELSPLASH: 1 as 0 | 1 | 2, // 0 normal, 1 skip, 2 debug
   MAXVERSE: 176,
   MAXCHAPTER: 150,
-  BIBLE: 'Biblical Texts' as ModTypes,
-  DICTIONARY: 'Lexicons / Dictionaries' as ModTypes,
-  COMMENTARY: 'Commentaries' as ModTypes,
-  GENBOOK: 'Generic Books' as ModTypes,
+
+  // LibSword response constants
   NOTFOUND: 'Not Found',
   NOMODULES: 'No Modules',
   CONFSEP: '<nx>',
+
+  // xulsword UI constants
+  UI: {
+    Window: {
+      resizeDelay: 500, // ms between window resize and update
+    },
+    Xulsword: {
+      maxHistoryMenuLength: 20,
+      historyDelay: 1000, // ms before new location is saved
+    },
+    Viewport: {
+      minPanelWidth: 200, // px
+      TabTypeOrder: {
+        Texts: 1,
+        Comms: 2,
+        Genbks: 3,
+        Dicts: 4,
+      },
+    },
+    Chooser: {
+      bookgroupHoverDelay: 300, // ms until bookGroup is changed
+      mouseScrollMargin: 80, // px inward from top or bottom border
+      headingMenuOpenDelay: 400, // ms until BIble heading menu opens
+    },
+    Popup: {
+      openGap: 0, // open popup px below target element
+      strongsOpenGap: 80, // px
+      openDelay: 200, // ms between hover and popup opening
+      strongsOpenDelay: 750, // ms
+      wheelDeadTime: 1000, // ms of dead-time after wheel-scroll
+    },
+    Atext: {
+      fontSize: 12.7, // px nominal font-size
+      fontSizeOptionDelta: 1.3, // px step
+      dictKeyInputDelay: 1000, // ms between keydown and update
+      wheelScrollDelay: 300, // ms between UI updates while scrolling
+      multiColWheelScrollDelay: 100,
+      initialNoteboxHeight: 200, // px
+      bbTopMargin: 60, // px
+      bbBottomMargin: 30, // px
+    },
+  },
 
   // These are all the properties which Config type objects will have.
   // The Config object specifies keys into the following data sources:
@@ -252,56 +293,55 @@ const C = {
   NAMELOCALE: 13,
   NOTELOCALE: 14,
 
-  // xulsword UI constants
-  UI: {
-    Window: {
-      resizeDelay: 500, // ms between window resize and update
-    },
-    Xulsword: {
-      maxHistoryMenuLength: 20,
-      historyDelay: 1000, // ms before new location is saved
-    },
-    Viewport: {
-      minPanelWidth: 200, // px
-    },
-    Chooser: {
-      bookgroupHoverDelay: 300, // ms until bookGroup is changed
-      mouseScrollMargin: 80, // px inward from top or bottom border
-      headingMenuOpenDelay: 400, // ms until BIble heading menu opens
-    },
-    Popup: {
-      openGap: 0, // open popup px below target element
-      strongsOpenGap: 80, // px
-      openDelay: 200, // ms between hover and popup opening
-      strongsOpenDelay: 750, // ms
-      wheelDeadTime: 1000, // ms of dead-time after wheel-scroll
-    },
-    Atext: {
-      fontSize: 12.7, // px nominal font-size
-      fontSizeOptionDelta: 1.3, // px step
-      dictKeyInputDelay: 1000, // ms between keydown and update
-      wheelScrollDelay: 300, // ms between UI updates while scrolling
-      multiColWheelScrollDelay: 100,
-      prevNextHeight: 30, // px
-      bbTopMargin: 60, // px
-      bbBottomMargin: 30, // px
-    },
-  },
+  BIBLE: 'Biblical Texts' as ModTypes,
+  DICTIONARY: 'Lexicons / Dictionaries' as ModTypes,
+  COMMENTARY: 'Commentaries' as ModTypes,
+  GENBOOK: 'Generic Books' as ModTypes,
 
-  SwordFilterValues: [] as SwordFilterValueType[],
+  SupportedModuleTypes: {
+    'Biblical Texts': 'Texts',
+    Commentaries: 'Comms',
+    'Lexicons / Dictionaries': 'Dicts',
+    'Generic Books': 'Genbks',
+  } as { [key in ModTypes]: TabTypes },
 
-  SwordFilters: {} as { [key in SwordFilterType]: keyof ShowType },
+  SwordFilters: {
+    Headings: 'headings',
+    Footnotes: 'footnotes',
+    'Cross-references': 'crossrefs',
+    'Reference Material Links': 'dictlinks',
+    "Strong's Numbers": 'strongs',
+    'Morphological Tags': 'morph',
+    'Verse Numbers': 'versenums',
+    'Hebrew Cantillation': 'hebcantillation',
+    'Hebrew Vowel Points': 'hebvowelpoints',
+    'Words of Christ in Red': 'redwords',
+  } as { [key in SwordFilterType]: keyof ShowType },
 
-  SupportedModuleTypes: {} as { [key in ModTypes]: TabTypes },
+  SwordFilterValues: ['Off', 'On'] as SwordFilterValueType[],
 
-  AlwaysOn: {} as { [key in ModTypes]: SwordFilterType[] },
-
-  ModuleTypeOrder: {
-    Texts: 1,
-    Comms: 2,
-    Genbks: 3,
-    Dicts: 4,
-  },
+  // Lists for each module type of LibSword features that should be always on.
+  AlwaysOn: {
+    'Biblical Texts': [],
+    Commentaries: [
+      'Headings',
+      'Footnotes',
+      'Cross-references',
+      'Reference Material Links',
+    ],
+    'Lexicons / Dictionaries': [
+      'Headings',
+      'Footnotes',
+      'Cross-references',
+      'Reference Material Links',
+    ],
+    'Generic Books': [
+      'Headings',
+      'Footnotes',
+      'Cross-references',
+      'Reference Material Links',
+    ],
+  } as { [key in ModTypes]: SwordFilterType[] },
 
   SwordFeatureClasses: {
     hebrewDef: /S_H/,
@@ -329,47 +369,48 @@ const C = {
     'selection',
     'scroll',
     'show',
-  ] as (keyof GlobalPref['xulsword'])[],
-
-  // These Atext props are used by LibSword. If these props all have the same values
-  // as the previous rendering, the LibSword response will also be the same.
-  // NOTE: property types are important, but property values are not.
-  LibSwordPropsTexts: {
-    location: null as LocationVKType | null,
-    module: '',
-    show: {} as ShowType,
-    place: {} as PlaceType,
-    columns: 0,
-    ilModule: '',
-  },
-  LibSwordPropsComms: {
-    location: null as LocationVKType | null,
-    module: '',
-    show: {} as ShowType,
-    place: {} as PlaceType,
-  },
-  LibSwordPropsDicts: {
-    module: '',
-    modkey: '',
-    show: {} as ShowType,
-  },
-  LibSwordPropsGenbks: {
-    module: '',
-    modkey: '',
-    show: {} as ShowType,
-  },
-  LibSwordProps: {} as { [key in ModTypes]: { [i: string]: any } },
+  ] as (keyof GlobalPrefType['xulsword'])[],
 
   // These Atext props can be 'pinned' to become independant state properties.
   // NOTE: property types are important, but property values are not.
   PinProps: {
-    location: null as LocationVKType | null,
-    selection: null as LocationVKType | null,
-    scroll: null as ScrollType,
-    module: '' as string | null,
-    ilModule: '' as string | null,
-    modkey: '' as string | null,
-  },
+    location: null,
+    selection: null,
+    scroll: null,
+    module: '',
+    ilModule: '',
+    modkey: '',
+  } as PinPropsType,
+
+  // These Atext props are used by LibSword. If these props all have the same values
+  // as the previous rendering, the LibSword response will also be the same.
+  // NOTE: property types are important, but property values are not.
+  LibSwordProps: {
+    'Biblical Texts': {
+      location: null,
+      module: '',
+      show: {} as ShowType,
+      place: {} as PlaceType,
+      columns: 0,
+      ilModule: '',
+    },
+    Commentaries: {
+      location: null,
+      module: '',
+      show: {} as ShowType,
+      place: {} as PlaceType,
+    },
+    'Lexicons / Dictionaries': {
+      module: '',
+      modkey: '',
+      show: {} as ShowType,
+    },
+    'Generic Books': {
+      module: '',
+      modkey: '',
+      show: {} as ShowType,
+    },
+  } as { [key in ModTypes]: Partial<XulswordStatePref> },
 
   // These Atext props effect the verse scroll. If these props all have
   // the same values as the previous rendering, and the same is true of
@@ -377,59 +418,9 @@ const C = {
   // NOTE: property types are important, but property values are not.
   ScrollPropsVK: {
     module: '',
-    location: null as LocationVKType | null,
+    location: null,
+    scroll: null,
     columns: 0,
-    scroll: null as ScrollType,
-  },
+  } as Partial<AtextPropsType>,
 };
-
-C.VERSIONTAG = new RegExp(`${C.VERSIONPAR}\\s*=\\s*(.*)\\s*`, 'im');
-
-C.MINPROGVERSTAG = new RegExp(`${C.MINPVERPAR}\\s*=\\s*(.*)\\s*`, 'im');
-
-C.SwordFilters.Headings = 'headings';
-C.SwordFilters.Footnotes = 'footnotes';
-C.SwordFilters['Cross-references'] = 'crossrefs';
-C.SwordFilters['Reference Material Links'] = 'dictlinks';
-C.SwordFilters["Strong's Numbers"] = 'strongs';
-C.SwordFilters['Morphological Tags'] = 'morph';
-C.SwordFilters['Verse Numbers'] = 'versenums';
-C.SwordFilters['Hebrew Cantillation'] = 'hebcantillation';
-C.SwordFilters['Hebrew Vowel Points'] = 'hebvowelpoints';
-C.SwordFilters['Words of Christ in Red'] = 'redwords';
-
-C.SwordFilterValues.push('Off');
-C.SwordFilterValues.push('On');
-
-C.SupportedModuleTypes[C.BIBLE] = 'Texts';
-C.SupportedModuleTypes[C.COMMENTARY] = 'Comms';
-C.SupportedModuleTypes[C.DICTIONARY] = 'Dicts';
-C.SupportedModuleTypes[C.GENBOOK] = 'Genbks';
-
-C.LibSwordProps[C.BIBLE] = C.LibSwordPropsTexts;
-C.LibSwordProps[C.COMMENTARY] = C.LibSwordPropsComms;
-C.LibSwordProps[C.DICTIONARY] = C.LibSwordPropsDicts;
-C.LibSwordProps[C.GENBOOK] = C.LibSwordPropsGenbks;
-
-// Each module type may have LibSword features that should be always on.
-C.AlwaysOn[C.BIBLE] = [];
-C.AlwaysOn[C.COMMENTARY] = [
-  'Headings',
-  'Footnotes',
-  'Cross-references',
-  'Reference Material Links',
-];
-C.AlwaysOn[C.DICTIONARY] = [
-  'Headings',
-  'Footnotes',
-  'Cross-references',
-  'Reference Material Links',
-];
-C.AlwaysOn[C.GENBOOK] = [
-  'Headings',
-  'Footnotes',
-  'Cross-references',
-  'Reference Material Links',
-];
-
 export default C;

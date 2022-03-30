@@ -12,7 +12,7 @@ import G from './mg';
 import Commands, { newDbItemWithDefaults } from './commands';
 import setViewportTabs from './tabs';
 
-import type { GlobalPref, TabTypes, XulswordStatePref } from '../type';
+import type { GlobalPrefType, TabTypes, XulswordStatePref } from '../type';
 import { verseKey } from './minit';
 import Data from './modules/data';
 import Prefs, { PrefCallbackType } from './modules/prefs';
@@ -565,7 +565,7 @@ export default class MenuBuilder {
 
     const locales = G.Prefs.getComplexValue(
       'global.locales'
-    ) as GlobalPref['global']['locales'];
+    ) as GlobalPrefType['global']['locales'];
     const subMenuOptions = {
       label: this.ts('menu.options'),
       submenu: [

@@ -13,8 +13,9 @@ import G from '../rg';
 import { scrollIntoView } from '../rutil';
 import { aTextWheelScroll, getRefHTML } from './zversekey';
 
+import { AtextStateType } from '../../type';
 import type Atext from './atext';
-import type { AtextProps, AtextState } from './atext';
+import type { AtextProps } from './atext';
 
 let MatchingStrongs: {
   sheet: CSSStyleSheet;
@@ -107,7 +108,7 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
           break;
 
         case 'versePerLineButton':
-          this.setState((prevState: AtextState) => {
+          this.setState((prevState: AtextStateType) => {
             const { versePerLine } = prevState;
             return { versePerLine: !versePerLine };
           });
@@ -305,7 +306,7 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
     // start dragging the notebox resizing bar?
     case 'mousedown': {
       const e = es as React.MouseEvent;
-      const { noteBoxResizing } = this.state as AtextState;
+      const { noteBoxResizing } = this.state as AtextStateType;
       const targ = ofClass('bb', target);
       if (targ) {
         this.setState({ noteBoxResizing: [e.clientY, e.clientY] });
@@ -318,7 +319,7 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
     // notebox resize bar dragging...
     case 'mousemove': {
       const e = es as React.MouseEvent;
-      const { noteBoxResizing } = this.state as AtextState;
+      const { noteBoxResizing } = this.state as AtextStateType;
       const { noteBoxHeight, maximizeNoteBox, noteboxBar } = this
         .props as AtextProps;
       if (noteBoxResizing) {
@@ -328,6 +329,7 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
           e.preventDefault();
           const { columns: clsx } = targ.element.dataset;
           const columns = Number(clsx);
+          const hd = targ.element.firstChild as HTMLElement;
 
           if (maximizeNoteBox > 0) noteboxBar(e);
 
@@ -338,8 +340,7 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
           // e.clientY = noteBoxHeight + initial - nbHeightAtMouse
           // so set e.clientY = noteBoxHeight + initial - stopHeight
           const height = noteBoxHeight + initial - e.clientY;
-          let stopHeight =
-            targ.element.clientHeight - C.UI.Atext.prevNextHeight;
+          let stopHeight = targ.element.clientHeight - hd.offsetHeight;
           if (columns === 1) stopHeight -= C.UI.Atext.bbTopMargin;
           if (height >= stopHeight) {
             this.bbMouseUp(
@@ -369,7 +370,7 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
     }
 
     case 'mouseleave': {
-      const { noteBoxResizing } = this.state as AtextState;
+      const { noteBoxResizing } = this.state as AtextStateType;
       if (noteBoxResizing) {
         this.setState({ noteBoxResizing: null });
       }

@@ -121,7 +121,7 @@ export default class VerseKey {
         : 0;
     if (chapter < 1 || chapter > maxch) return false;
     if (verse) {
-      const maxv = 200; // slow: getMaxVerse(fromv11n, [b, c].join('.'));
+      const maxv = C.MAXVERSE; // slow: getMaxVerse(fromv11n, [b, c].join('.'));
       if (
         verse < 1 ||
         verse > maxv ||

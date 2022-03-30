@@ -76,7 +76,7 @@ export default function setViewportTabs(
   });
 
   // Sort tabs into the following order:
-  // - By module type (see C.ModuleTypeOrder)
+  // - By module type
   // - Modules matching the current locale
   // - Modules matching any installed locale
   // - By label alpha
@@ -96,7 +96,7 @@ export default function setViewportTabs(
           // Type and Priority are same, then sort by label's alpha.
           return a.label > b.label ? 1 : -1;
         }
-        const mto = C.ModuleTypeOrder as any;
+        const mto = C.UI.Viewport.TabTypeOrder as any;
         return mto[a.tabType] > mto[b.tabType] ? 1 : -1;
       });
     }

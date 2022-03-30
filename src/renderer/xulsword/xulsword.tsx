@@ -39,9 +39,13 @@ import viewportParentH, {
 import handlerH from './xulswordH';
 import './xulsword.css';
 
-import type { HistoryVKType, XulswordStatePref } from '../../type';
+import type {
+  HistoryVKType,
+  XulswordStateArgType,
+  XulswordStatePref,
+  NoteboxBarHandlerType,
+} from '../../type';
 import type Atext from '../viewport/atext';
-import type { NoteboxBarHandlerType } from '../viewport/viewportParentH';
 
 const defaultProps = xulDefaultProps;
 
@@ -64,7 +68,7 @@ const notStatePref = {
 // default prefs.js. Their array size will be the same as panels array size.
 const statePrefPanelDefault: Partial<XulswordStatePref> = {
   isPinned: [false],
-  noteBoxHeight: [200],
+  noteBoxHeight: [C.UI.Atext.initialNoteboxHeight],
   maximizeNoteBox: [0],
 };
 
@@ -133,11 +137,11 @@ export default class Xulsword extends React.Component {
     const state = this.state as XulswordState;
     const { id } = this.props as XulswordProps;
     const { scroll } = state;
-    if (id && !scroll?.skipWindows) {
+    if (id && !scroll?.skipWindowUpdate) {
       const newStatePref = trim(state, notStatePref, true);
       const d = diff(trim(prevState, notStatePref, true), newStatePref);
       if (d) {
-        if (d.scroll?.skipLocalPanels) delete d.scroll.skipLocalPanels;
+        if (d.scroll?.skipTextUpdate) delete d.scroll.skipTextUpdate;
         G.Prefs.mergeValue(id, d);
       }
       // Add page to history after a short delay
@@ -271,7 +275,7 @@ export default class Xulsword extends React.Component {
     );
   };
 
-  xulswordStateHandler(s: Partial<XulswordStatePref>): void {
+  xulswordStateHandler(s: XulswordStateArgType): void {
     this.setState(s);
   }
 

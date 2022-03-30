@@ -29,9 +29,12 @@ import viewportParentH, {
   noteboxBarHandler as noteboxBarHandlerH,
 } from './viewportParentH';
 
-import type { XulswordStatePref } from '../../type';
+import type {
+  XulswordStateArgType,
+  XulswordStatePref,
+  NoteboxBarHandlerType,
+} from '../../type';
 import type Atext from './atext';
-import type { NoteboxBarHandlerType } from './viewportParentH';
 
 const defaultProps = xulDefaultProps;
 
@@ -41,7 +44,7 @@ const propTypes = {
 
 export type ViewportWinProps = XulProps;
 
-const defaults = {
+const vpWinDefaults = {
   history: [] as any[],
   historyIndex: 0,
   vpreset: 0,
@@ -49,7 +52,7 @@ const defaults = {
 
 export type ViewportWinState = XulswordStatePref &
   typeof vpWindowState &
-  typeof defaults;
+  typeof vpWinDefaults;
 
 // Window arguments that are used to set initial state must be updated locally
 // and in Prefs, so that component reset or program restart won't cause
@@ -83,8 +86,8 @@ export default class ViewportWin extends React.Component {
       keyof typeof vpWindowState
     >;
     const s: ViewportWinState = {
-      ...defaults,
       ...statePref,
+      ...vpWinDefaults,
       ...windowState,
     };
     this.state = s;
@@ -111,7 +114,7 @@ export default class ViewportWin extends React.Component {
   ) {
     const state = this.state as ViewportWinState;
     const { scroll } = state;
-    if (!scroll?.skipWindows) {
+    if (!scroll?.skipWindowUpdate) {
       windowState = trim(state, vpWindowState);
       const changedWindowState = diff(
         trim(prevState, vpWindowState),
@@ -129,8 +132,8 @@ export default class ViewportWin extends React.Component {
           trim(state, C.GlobalXulsword)
         );
         if (changedStatePref) {
-          if (changedStatePref.scroll?.skipLocalPanels)
-            delete changedStatePref.scroll.skipLocalPanels;
+          if (changedStatePref.scroll?.skipTextUpdate)
+            delete changedStatePref.scroll.skipTextUpdate;
           G.Prefs.mergeValue(id, changedStatePref);
         }
       }
@@ -143,7 +146,7 @@ export default class ViewportWin extends React.Component {
     this.destroy = [];
   }
 
-  xulswordStateHandler(s: Partial<XulswordStatePref>): void {
+  xulswordStateHandler(s: XulswordStateArgType): void {
     this.setState(s);
   }
 

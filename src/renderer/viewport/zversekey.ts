@@ -11,6 +11,7 @@ import G from '../rg';
 import { delayHandler } from '../libxul/xul';
 
 import type {
+  AtextStateType,
   LocationVKType,
   ShowType,
   TextVKType,
@@ -19,7 +20,6 @@ import type {
 import type Xulsword from '../xulsword/xulsword';
 import type { XulswordState } from '../xulsword/xulsword';
 import type Atext from './atext';
-import type { AtextState } from './atext';
 import type ViewportWin from './viewportWin';
 import type { ViewportWinState } from './viewportWin';
 
@@ -577,15 +577,15 @@ export function versekeyScroll(
 function aTextWheelScroll2(
   count: number,
   atext: HTMLElement,
-  prevState: XulswordState | ViewportWinState | AtextState
+  prevState: XulswordState | ViewportWinState | AtextStateType
 ) {
   let ret:
     | Partial<XulswordState>
     | Partial<ViewportWinState>
-    | Partial<AtextState>
+    | Partial<AtextStateType>
     | null = null;
   const atextstate =
-    'pin' in prevState ? prevState : (null as AtextState | null);
+    'pin' in prevState ? prevState : (null as AtextStateType | null);
   const parentstate =
     'location' in prevState
       ? prevState
@@ -621,14 +621,14 @@ function aTextWheelScroll2(
       }
     }
     if (newloc) {
-      const skipLocalPanels: boolean[] = [];
-      skipLocalPanels[panelIndex] = columns === 1;
+      const skipTextUpdate: boolean[] = [];
+      skipTextUpdate[panelIndex] = columns === 1;
       if (parentstate) {
         ret = {
           location: newloc,
           scroll: {
             verseAt: 'top',
-            skipLocalPanels,
+            skipTextUpdate,
           },
         };
       }
@@ -637,7 +637,10 @@ function aTextWheelScroll2(
           pin: {
             ...atextstate.pin,
             location: newloc,
-            scroll: { verseAt: 'top', skipLocalPanels },
+            scroll: {
+              verseAt: 'top',
+              skipTextUpdate,
+            },
           },
         };
       }
@@ -658,7 +661,7 @@ export function aTextWheelScroll(
     delayHandler.bind(caller)(
       () => {
         caller.setState(
-          (prevState: XulswordState | ViewportWinState | AtextState) => {
+          (prevState: XulswordState | ViewportWinState | AtextStateType) => {
             const s = aTextWheelScroll2(WheelSteps, atext, prevState);
             WheelSteps = 0;
             return s;

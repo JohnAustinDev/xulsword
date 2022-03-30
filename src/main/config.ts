@@ -12,7 +12,7 @@ import LibSword from './modules/libsword';
 import { jsdump } from './mutil';
 // import getFontFamily from './fontfamily';
 
-import type { ConfigType, FeatureType, GlobalPref, GType } from '../type';
+import type { ConfigType, FeatureType, GlobalPrefType, GType } from '../type';
 import getFontFamily from './fontfamily';
 
 function localeConfig(locale: string) {
@@ -51,7 +51,7 @@ export function getLocaleConfigs(): { [i: string]: ConfigType } {
     ret.locale = localeConfig(i18next.language);
     const locales = Prefs.getComplexValue(
       'global.locales'
-    ) as GlobalPref['global']['locales'];
+    ) as GlobalPrefType['global']['locales'];
     locales.forEach((l: any) => {
       const [lang] = l;
       ret[lang] = localeConfig(lang);
@@ -167,7 +167,7 @@ function getLocaleOfModule(module: string) {
 
   const locales = Prefs.getComplexValue(
     'global.locales'
-  ) as GlobalPref['global']['locales'];
+  ) as GlobalPrefType['global']['locales'];
 
   let stop = false;
   locales.forEach((l: any) => {

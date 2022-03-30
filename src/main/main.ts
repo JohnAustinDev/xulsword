@@ -18,14 +18,14 @@ import contextMenu from './contextMenu';
 import { checkModulePrefs } from './minit';
 import LibSword from './modules/libsword';
 
-import type { GlobalPref, WindowRegistryType } from '../type';
+import type { GlobalPrefType, WindowRegistryType } from '../type';
 
 const i18nBackendMain = require('i18next-fs-backend');
 
 // Get the available locale list
 const Locales = G.Prefs.getComplexValue(
   'global.locales'
-) as GlobalPref['global']['locales'];
+) as GlobalPrefType['global']['locales'];
 const AvailableLanguages = [
   ...new Set(
     Locales.map((l) => {

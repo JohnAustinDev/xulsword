@@ -11,7 +11,7 @@ import PropTypes from 'prop-types';
 import i18next from 'i18next';
 import { getElementInfo } from '../../libswordElemInfo';
 import C from '../../constant';
-import { diff, trim, ofClass, sanitizeHTML, stringHash } from '../../common';
+import { diff, trim, sanitizeHTML, stringHash, clone } from '../../common';
 import G from '../rg';
 import {
   clearPending,
@@ -42,13 +42,11 @@ import '../libsword.css';
 import './atext.css';
 
 import type {
-  LocationVKType,
-  PlaceType,
-  ScrollType,
-  ShowType,
   XulswordStatePref,
+  AtextPropsType,
+  AtextStateType,
+  PinPropsType,
 } from '../../type';
-import type { NoteboxBarHandlerType } from './viewportParentH';
 
 const memoize = require('memoizee');
 
@@ -87,48 +85,18 @@ const propTypes = {
   ownWindow: PropTypes.bool,
 };
 
-// Atext's properties. NOTE: property types are used, but property values are not.
-const atextProps = {
-  noteboxBar: (() => {}) as NoteboxBarHandlerType,
-  xulswordState: (() => {}) as (s: Partial<XulswordStatePref>) => void,
-  panelIndex: 0 as number,
-  columns: 0 as number,
-  location: null as LocationVKType | null,
-  module: '' as string | undefined,
-  ilModule: '' as string | undefined,
-  ilModuleOption: [] as string[],
-  modkey: '' as string,
-  selection: null as LocationVKType | null,
-  scroll: null as ScrollType,
-  isPinned: false as boolean,
-  noteBoxHeight: 0 as number,
-  maximizeNoteBox: 0 as number,
-  show: {} as ShowType,
-  place: {} as PlaceType,
-  ownWindow: false as boolean,
-} as const;
+export type AtextProps = XulProps & AtextPropsType;
 
-export type AtextProps = XulProps & typeof atextProps;
-
-export type LibSwordResponse = {
-  textHTML: string;
-  noteHTML: string;
-  notes: string;
-  intronotes: string;
+export const atextInitialState: AtextStateType = {
+  pin: null,
+  versePerLine: false,
+  noteBoxResizing: null,
 };
-
-export const atextInitialState = {
-  pin: null as typeof C.PinProps | null,
-  versePerLine: false as boolean,
-  noteBoxResizing: null as number[] | null,
-};
-
-export type AtextState = typeof atextInitialState;
 
 // Window arguments that are used to set initial state must be updated locally
-// and in Prefs, so that component reset or program restart won't cause
+// and in Prefs, so that a component reset or program restart won't cause
 // reversion to initial state.
-const windowState: Partial<AtextState>[] = [];
+const windowState: Partial<AtextStateType>[] = [];
 
 // XUL Atext
 class Atext extends React.Component {
@@ -149,9 +117,9 @@ class Atext extends React.Component {
 
     windowState[props.panelIndex] = windowArgument(
       `atext${props.panelIndex}State`
-    ) as AtextState;
+    ) as AtextStateType;
 
-    const s: AtextState = {
+    const s: AtextStateType = {
       ...atextInitialState,
       ...windowState[props.panelIndex],
     };
@@ -170,10 +138,10 @@ class Atext extends React.Component {
     this.onUpdate();
   }
 
-  componentDidUpdate(_prevProps: AtextProps, prevState: AtextState) {
-    const state = this.state as AtextState;
+  componentDidUpdate(_prevProps: AtextProps, prevState: AtextStateType) {
     const { panelIndex, scroll } = this.props as AtextProps;
-    if (!(scroll?.skipLocalPanels && scroll.skipLocalPanels[panelIndex])) {
+    if (!(scroll?.skipTextUpdate && scroll.skipTextUpdate[panelIndex])) {
+      const state = this.state as AtextStateType;
       this.onUpdate();
       windowState[panelIndex] = trim(state, atextInitialState);
       const changedState = diff(
@@ -198,28 +166,51 @@ class Atext extends React.Component {
   // memoizes the required response and updates sb and nb contents.
   // It then does any srolling, highlighting, footnote adjustments
   // etc. which must wait until Atext contains the LibSword response.
-  // Finally, the pin state is updated if it has changed.  NOTE: the
-  // related hashes must be stored on the HTML element itself, because
-  // DOM elements may be silently replaced by React and storing it
-  // there insures the hashes are invalidated at the same time.
+  // Also, the pin state is updated if it has changed, and a few other
+  // things. NOTE: the related hashes must be stored on the HTML element
+  // itself, because DOM elements may be silently replaced by React and
+  // storing it there insures the hashes are invalidated at the same time.
   onUpdate() {
     const props = this.props as AtextProps;
-    const state = this.state as AtextState;
-    const { columns, isPinned, panelIndex } = props;
-    const { pin } = state as AtextState;
+    const state = this.state as AtextStateType;
+    const { columns, isPinned, panelIndex, noteBoxHeight, xulswordState } =
+      props;
+    const { pin } = state as AtextStateType;
     const { sbref, nbref } = this;
 
     const sbe = sbref !== null ? sbref.current : null;
     const nbe = nbref !== null ? nbref.current : null;
 
-    let newState: Partial<AtextState> = {};
+    let newState: Partial<AtextStateType> = {};
+
+    // Adjust note-box height if needed
+    const atext = sbe?.parentNode as HTMLElement | null | undefined;
+    if (atext) {
+      const hd = atext.firstChild as HTMLElement;
+      const maxHeight = atext.clientHeight - hd.offsetHeight;
+      if (noteBoxHeight > maxHeight) {
+        xulswordState((prevState) => {
+          const snew: Partial<XulswordStatePref> = {
+            noteBoxHeight: clone(prevState.noteBoxHeight),
+            maximizeNoteBox: clone(prevState.maximizeNoteBox),
+          };
+          if (!snew.noteBoxHeight) snew.noteBoxHeight = [];
+          if (!snew.maximizeNoteBox) snew.maximizeNoteBox = [];
+          snew.noteBoxHeight[panelIndex] = maxHeight;
+          if (snew.maximizeNoteBox[panelIndex])
+            snew.maximizeNoteBox[panelIndex] = 50;
+          return snew;
+        });
+      }
+    }
+    // Decide what needs to be updated...
     const pinProps = trim(
       pin && isPinned ? pin : props,
       C.PinProps
-    ) as typeof C.PinProps;
+    ) as PinPropsType;
     const { selection, module } = pinProps;
     if (diff(pin, pinProps)) newState = { ...newState, pin: pinProps };
-    if (module && sbe && nbe) {
+    if (module && atext && sbe && nbe) {
       const { type, isVerseKey } = G.Tab[module];
       // scrollProps are current props that effect scrolling
       const scrollProps = trim(
@@ -309,7 +300,6 @@ class Atext extends React.Component {
                 }
                 // Hide starting verses until the selected verse is visible above the notebox.
                 sib = sbe.firstChild as HTMLElement | null;
-                const atext = sbe.parentNode as HTMLElement;
                 const nbc = nbe.parentNode as HTMLElement;
                 while (v && sib) {
                   const offpage =
@@ -342,8 +332,8 @@ class Atext extends React.Component {
                 }
                 const info = (sib && getElementInfo(sib)) || null;
                 if (info) {
-                  const skipLocalPanels: boolean[] = [];
-                  skipLocalPanels[panelIndex] = true;
+                  const skipTextUpdate: boolean[] = [];
+                  skipTextUpdate[panelIndex] = true;
                   const location = verseKey(
                     [info.bk, info.ch, info.vs].join('.'),
                     libswordProps.location.v11n
@@ -354,14 +344,19 @@ class Atext extends React.Component {
                       pin: {
                         ...pinProps,
                         location,
-                        scroll: { verseAt: 'top', skipLocalPanels },
+                        scroll: {
+                          verseAt: 'top',
+                          skipTextUpdate,
+                        },
                       },
                     };
                   } else {
-                    const { xulswordState } = props;
                     xulswordState({
                       location,
-                      scroll: { verseAt: 'top', skipLocalPanels },
+                      scroll: {
+                        verseAt: 'top',
+                        skipTextUpdate,
+                      },
                     });
                   }
                 }
@@ -392,7 +387,8 @@ class Atext extends React.Component {
                 }
                 // Append chapters until text overflows
                 let append =
-                  Number(lastv && getElementInfo(lastv)?.ch) + 1 || 200;
+                  Number(lastv && getElementInfo(lastv)?.ch) + 1 ||
+                  C.MAXCHAPTER + 1;
                 const max = getMaxChapter(
                   G.Tab[module].v11n || 'KJV',
                   libswordProps.location.book
@@ -456,19 +452,15 @@ class Atext extends React.Component {
         }
         // PREV / NEXT LINKS
         setTimeout(() => {
-          const atextc = ofClass(['atext'], sbe);
-          if (atextc) {
-            const atext = atextc.element;
-            const prev = textChange(atext, false);
-            const next = textChange(atext, true);
-            const prevdis = atext.classList.contains('prev-disabled');
-            const nextdis = atext.classList.contains('next-disabled');
-            if ((!prev && !prevdis) || (prev && prevdis)) {
-              atext.classList.toggle('prev-disabled');
-            }
-            if ((!next && !nextdis) || (next && nextdis)) {
-              atext.classList.toggle('next-disabled');
-            }
+          const prev = textChange(atext, false);
+          const next = textChange(atext, true);
+          const prevdis = atext.classList.contains('prev-disabled');
+          const nextdis = atext.classList.contains('next-disabled');
+          if ((!prev && !prevdis) || (prev && prevdis)) {
+            atext.classList.toggle('prev-disabled');
+          }
+          if ((!next && !nextdis) || (next && nextdis)) {
+            atext.classList.toggle('next-disabled');
           }
         }, 1);
       }
@@ -555,7 +547,7 @@ class Atext extends React.Component {
     nbr?: number[],
     maximize?: boolean
   ) {
-    const { noteBoxResizing } = this.state as AtextState;
+    const { noteBoxResizing } = this.state as AtextStateType;
     const { noteboxBar } = this.props as AtextProps;
     if (noteBoxResizing === null) return;
     e.stopPropagation();
@@ -565,7 +557,7 @@ class Atext extends React.Component {
   }
 
   render() {
-    const state = this.state as AtextState;
+    const state = this.state as AtextStateType;
     const props = this.props as AtextProps;
     const { handler, bbMouseUp } = this;
     const { noteBoxResizing, versePerLine } = state;
@@ -628,7 +620,7 @@ class Atext extends React.Component {
           {!ownWindow && <div className="text-win" />}
         </div>
 
-        <Box className="hd" height={`${C.UI.Atext.prevNextHeight}px`}>
+        <Box className="hd">
           <div className="navlink">
             <span className="navlink-span">{prevArrow}</span>
             <a className="prevchaplink">{i18next.t('PrevChaptext')}</a>{' '}

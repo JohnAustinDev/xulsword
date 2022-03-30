@@ -13,7 +13,7 @@ import DynamicStyleSheet from './style';
 import { getContextData, jsdump } from './rutil';
 import { delayHandler } from './libxul/xul';
 
-import type { GlobalPref } from '../type';
+import type { GlobalPrefType } from '../type';
 
 import './global-htm.css';
 
@@ -51,7 +51,7 @@ async function i18nInit(namespaces: string[]) {
 
   const locales = G.Prefs.getComplexValue(
     'global.locales'
-  ) as GlobalPref['global']['locales'];
+  ) as GlobalPrefType['global']['locales'];
   const supportedLangs = [
     ...new Set(
       locales

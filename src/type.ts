@@ -28,14 +28,18 @@ export type WindowArgType =
   | 'self'
   | 'children';
 
-export type ScrollType =
-  | {
-      verseAt: 'top' | 'center' | 'bottom';
-      skipLocalPanels?: boolean[];
-      skipWindows?: boolean;
-    }
-  | null
-  | undefined;
+// - skipTextUpdate allows a speedup when Atext content does not need to be updated,
+// such as verseAt bottom: only the target panel needs to be fully rendered, then
+// a verseAt top scroll is done for all other Atext instances. NOTE: skipTextUpdate
+// only applies to the calling window; if skipTextUpdate is sent to other windows,
+// it will be removed and will have no effect.
+// - skipWindowUpdate prevents temporary states from being saved to Prefs or broadcast
+// to other windows.
+export type ScrollType = {
+  verseAt: 'top' | 'center' | 'bottom';
+  skipTextUpdate?: boolean[];
+  skipWindowUpdate?: boolean;
+} | null;
 
 // Default values for these keys must be set in the default
 // JSON Pref file or an error will be thrown. These values
@@ -65,11 +69,53 @@ export interface XulswordStatePref {
   maximizeNoteBox: number[];
 }
 
+export type AtextPropsType = Pick<
+  XulswordStatePref,
+  'location' | 'selection' | 'scroll' | 'show' | 'place'
+> & {
+  modkey: string;
+
+  module: string | undefined;
+  ilModule: string | undefined;
+  ilModuleOption: string[];
+
+  isPinned: boolean;
+  noteBoxHeight: number;
+  maximizeNoteBox: number;
+
+  panelIndex: number;
+  columns: number;
+  ownWindow: boolean;
+  noteboxBar: NoteboxBarHandlerType;
+  xulswordState: (s: XulswordStateArgType) => void;
+};
+
+export type AtextStateType = {
+  pin: PinPropsType | null;
+  versePerLine: boolean;
+  noteBoxResizing: number[] | null;
+};
+
+export type PinPropsType = Pick<
+  AtextPropsType,
+  'location' | 'selection' | 'scroll' | 'module' | 'ilModule' | 'modkey'
+>;
+
+export type XulswordStateArgType =
+  | Partial<XulswordStatePref>
+  | ((s: XulswordStatePref) => Partial<XulswordStatePref>);
+
+export type NoteboxBarHandlerType = (
+  e: React.SyntheticEvent,
+  noteboxResizing?: number[],
+  maximize?: boolean
+) => void;
+
 // Default values for these keys must be set in the default
 // JSON Pref file or an error will be thrown. These values
 // are always kept in sync between Prefs, the application menu
 // and all window states.
-export type GlobalPref = {
+export type GlobalPrefType = {
   global: {
     fontSize: number;
     locale: string;
