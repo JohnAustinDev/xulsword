@@ -358,7 +358,7 @@ html[dir='rtl'] .notebox-maximizer {
 }
 .fndash {
   width: 6px;
-  margin-top: 4px;
+  height: 0.3em;
   border-top: 1px solid rgb(150, 150, 150);
 }
 .fncol3 {

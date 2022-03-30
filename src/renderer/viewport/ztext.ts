@@ -307,7 +307,8 @@ export function textChange(
   next: boolean,
   prevState?: typeof C.PinProps
 ): typeof C.PinProps | null {
-  const { columns: cx, module } = atext.dataset;
+  const { columns: cx, module, index } = atext.dataset;
+  const panelIndex = Number(index);
   const columns = Number(cx);
   if (!columns || !module) return null;
   const { type } = G.Tab[module];
@@ -360,11 +361,17 @@ export function textChange(
     default:
   }
   if (!prevState) return newPinProps;
-  newPinProps.flagScroll = 0;
+  newPinProps.scroll = null;
   if (type === C.BIBLE && columns > 1) {
-    newPinProps.flagScroll = next ? C.VSCROLL.verse : C.VSCROLL.endAndUpdate;
+    const skipLocalPanels: boolean[] = [];
+    atext.parentNode?.childNodes.forEach((_n, i) => {
+      skipLocalPanels[i] = panelIndex !== i;
+    });
+    newPinProps.scroll = next
+      ? { verseAt: 'top' }
+      : { verseAt: 'bottom', skipWindows: true, skipLocalPanels };
   } else if (type === C.BIBLE || type === C.COMMENTARY) {
-    newPinProps.flagScroll = C.VSCROLL.chapter;
+    newPinProps.scroll = { verseAt: 'top' };
   }
   if (type === C.BIBLE) {
     newPinProps.selection = null;

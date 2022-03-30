@@ -9,6 +9,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import i18next from 'i18next';
+import { getElementInfo } from '../../libswordElemInfo';
 import C from '../../constant';
 import { diff, trim, ofClass, sanitizeHTML, stringHash } from '../../common';
 import G from '../rg';
@@ -40,7 +41,13 @@ import '../libxul/xul.css';
 import '../libsword.css';
 import './atext.css';
 
-import type { LocationVKType, PlaceType, ShowType } from '../../type';
+import type {
+  LocationVKType,
+  PlaceType,
+  ScrollType,
+  ShowType,
+  XulswordStatePref,
+} from '../../type';
 import type { NoteboxBarHandlerType } from './viewportParentH';
 
 const memoize = require('memoizee');
@@ -61,7 +68,8 @@ const defaultProps = {
 
 const propTypes = {
   ...xulPropTypes,
-  noteboxBarHandler: PropTypes.func.isRequired,
+  noteboxBar: PropTypes.func.isRequired,
+  xulswordState: PropTypes.func.isRequired,
   panelIndex: PropTypes.number.isRequired,
   columns: PropTypes.number.isRequired,
   location: PropTypes.object,
@@ -70,7 +78,7 @@ const propTypes = {
   ilModuleOption: PropTypes.arrayOf(PropTypes.string).isRequired,
   modkey: PropTypes.string,
   selection: PropTypes.object,
-  flagScroll: PropTypes.number,
+  scroll: PropTypes.object,
   isPinned: PropTypes.bool.isRequired,
   noteBoxHeight: PropTypes.number,
   maximizeNoteBox: PropTypes.number,
@@ -81,7 +89,8 @@ const propTypes = {
 
 // Atext's properties. NOTE: property types are used, but property values are not.
 const atextProps = {
-  noteboxBarHandler: (() => {}) as NoteboxBarHandlerType,
+  noteboxBar: (() => {}) as NoteboxBarHandlerType,
+  xulswordState: (() => {}) as (s: Partial<XulswordStatePref>) => void,
   panelIndex: 0 as number,
   columns: 0 as number,
   location: null as LocationVKType | null,
@@ -90,7 +99,7 @@ const atextProps = {
   ilModuleOption: [] as string[],
   modkey: '' as string,
   selection: null as LocationVKType | null,
-  flagScroll: 0 as number | undefined,
+  scroll: null as ScrollType,
   isPinned: false as boolean,
   noteBoxHeight: 0 as number,
   maximizeNoteBox: 0 as number,
@@ -119,7 +128,7 @@ export type AtextState = typeof atextInitialState;
 // Window arguments that are used to set initial state must be updated locally
 // and in Prefs, so that component reset or program restart won't cause
 // reversion to initial state.
-const windowState: AtextState[] = [];
+const windowState: Partial<AtextState>[] = [];
 
 // XUL Atext
 class Atext extends React.Component {
@@ -162,16 +171,19 @@ class Atext extends React.Component {
   }
 
   componentDidUpdate(_prevProps: AtextProps, prevState: AtextState) {
-    this.onUpdate();
     const state = this.state as AtextState;
-    const { panelIndex } = this.props as AtextProps;
-    windowState[panelIndex] = trim(state, atextInitialState);
-    const changedState = diff(
-      trim(prevState, atextInitialState),
-      windowState[panelIndex]
-    );
-    if (changedState)
-      G.Window.mergeValue(`atext${panelIndex}State`, changedState);
+    const { panelIndex, scroll } = this.props as AtextProps;
+    if (!(scroll?.skipLocalPanels && scroll.skipLocalPanels[panelIndex])) {
+      this.onUpdate();
+      windowState[panelIndex] = trim(state, atextInitialState);
+      const changedState = diff(
+        trim(prevState, atextInitialState),
+        windowState[panelIndex]
+      );
+      if (changedState) {
+        G.Window.mergeValue(`atext${panelIndex}State`, changedState);
+      }
+    }
   }
 
   componentWillUnmount() {
@@ -212,8 +224,8 @@ class Atext extends React.Component {
       // scrollProps are current props that effect scrolling
       const scrollProps = trim(
         { ...props, ...pinProps },
-        C.ScrollProps[type]
-      ) as Partial<AtextProps>;
+        C.ScrollPropsVK
+      ) as typeof C.ScrollPropsVK;
       const scrollkey = stringHash(scrollProps);
       // libswordProps are current props that effect LibSword output
       const libswordProps = trim(
@@ -223,204 +235,243 @@ class Atext extends React.Component {
         },
         C.LibSwordProps[type]
       ) as Partial<AtextProps>;
-      // NOTE: chapter is stored separately from this hash, and
-      // verse doesn't effect libsword output
+      const highlightkey = stringHash(libswordProps.location);
+      // NOTE: verse doesn't effect libsword output
       const writekey = stringHash(
         {
           ...libswordProps,
-          location: { ...libswordProps.location, chapter: 0, verse: 0 },
+          location: { ...libswordProps.location, verse: 0 },
         },
         panelIndex
       );
-      let update = false; // update current innerHTML?
-      if (!isVerseKey) {
-        update = writekey !== sbe.dataset.libsword;
-        if (update)
-          this.writeLibSword2DOM(libswordProps, panelIndex, 'overwrite');
-      } else if (libswordProps.location) {
-        let chfirst;
-        let chlast;
-        if ('chfirst' in sbe.dataset) chfirst = Number(sbe.dataset.chfirst);
-        if ('chlast' in sbe.dataset) chlast = Number(sbe.dataset.chlast);
-        update =
-          writekey !== sbe.dataset.libsword ||
-          !(
-            chfirst &&
-            chlast &&
-            libswordProps.location.chapter >= chfirst &&
-            libswordProps.location.chapter <= chlast
-          ) ||
-          chlast - chfirst > 10;
+      const done =
+        scrollProps.scroll?.verseAt === 'bottom' &&
+        (columns === 1 || type !== C.BIBLE);
+      if (libswordProps && !done) {
+        const update = writekey !== sbe.dataset.libsword;
         if (update) {
           this.writeLibSword2DOM(libswordProps, panelIndex, 'overwrite');
-          chfirst = Number(sbe.dataset.chfirst);
-          chlast = Number(sbe.dataset.chlast);
         }
-        // Prepare for Bible column scrolling if needed
-        if (
-          chfirst &&
-          chlast &&
-          columns > 1 &&
-          type === C.BIBLE &&
-          scrollProps.flagScroll !== C.VSCROLL.none &&
-          (update || scrollkey !== sbe.dataset.scroll)
-        ) {
-          const rtl = G.ModuleConfigs[module].direction === 'rtl';
-          let v = findVerseElement(
-            sbe,
-            libswordProps.location.chapter,
-            libswordProps.location.verse || 1
-          );
-          if (v) v.style.display = '';
-          let sib = v?.previousSibling as HTMLElement | null;
-          while (
-            v &&
-            sib &&
-            ((!rtl && v.offsetLeft < sbe.offsetWidth) ||
-              (rtl && v.offsetLeft >= 0))
-          ) {
-            if (sib.style && sib.style.display === 'none')
-              sib.style.display = '';
-            sib = sib.previousSibling as HTMLElement | null;
-          }
-          while (
-            chfirst >= 2 &&
-            v &&
-            ((!rtl && v.offsetLeft < sbe.offsetWidth) ||
-              (rtl && v.offsetLeft >= 0))
-          ) {
-            update = true;
-            this.writeLibSword2DOM(libswordProps, panelIndex, 'prepend');
-            v = findVerseElement(
+        // SCROLL
+        const scroll =
+          scrollProps.scroll &&
+          (update || scrollkey !== sbe.dataset.scroll) &&
+          isVerseKey;
+        if (scroll) {
+          sbe.dataset.scroll = scrollkey;
+          // Multi-column Bibles...
+          if (columns > 1 && type === C.BIBLE && libswordProps.location) {
+            const rtl = G.ModuleConfigs[module].direction === 'rtl';
+            const verse = libswordProps.location.verse || 1;
+            let v = findVerseElement(
               sbe,
               libswordProps.location.chapter,
-              libswordProps.location.verse || 1
+              verse
             );
-            chfirst -= 1;
-          }
-          const max = getMaxChapter(
-            G.Tab[module].v11n || 'KJV',
-            libswordProps.location.book
-          );
-          let last = sbe.lastChild as HTMLElement | null;
-          sib = v?.nextSibling as HTMLElement | null;
-          while (
-            sib &&
-            v &&
-            last &&
-            ((!rtl && last.offsetLeft - v.offsetLeft < sbe.offsetWidth) ||
-              (rtl && last.offsetLeft - v.offsetLeft >= 0))
-          ) {
-            if (sib.style && sib.style.display === 'none')
-              sib.style.display = '';
-            sib = sib.nextSibling as HTMLElement | null;
-          }
-          while (
-            chlast < max &&
-            v &&
-            last &&
-            ((!rtl && last.offsetLeft - v.offsetLeft < sbe.offsetWidth) ||
-              (rtl && last.offsetLeft - v.offsetLeft >= 0))
-          ) {
-            update = true;
-            this.writeLibSword2DOM(libswordProps, panelIndex, 'append');
-            v = findVerseElement(
-              sbe,
-              libswordProps.location.chapter,
-              libswordProps.location.verse || 1
-            );
-            last = sbe.lastChild as HTMLElement | null;
-            chlast += 1;
-          }
-        }
-      }
-      // SCROLL
-      const doscroll =
-        scrollProps.flagScroll !== C.VSCROLL.none &&
-        (update || scrollkey !== sbe.dataset.scroll) &&
-        isVerseKey;
-      if (doscroll) {
-        sbe.dataset.scroll = scrollkey;
-        const endAndUpdateLoc = versekeyScroll(
-          sbe,
-          scrollProps as typeof C.ScrollPropsVK
-        );
-        if (endAndUpdateLoc) {
-          const location = verseKey(endAndUpdateLoc).location(
-            libswordProps.location?.v11n
-          );
-          if (isPinned) {
-            newState = {
-              ...newState,
-              pin: {
-                ...pinProps,
-                location,
-                flagScroll: C.VSCROLL.none,
-              },
-            };
+            if (v) {
+              let sib: HTMLElement | null;
+              if (scrollProps.scroll?.verseAt === 'bottom') {
+                // MULTI-COLUMN SCROLL TO END, THEN UPDATE
+                // Insure all verses are visible
+                if (!update) {
+                  sib = sbe.firstChild as HTMLElement | null;
+                  while (sib) {
+                    if ('style' in sib) sib.style.display = '';
+                    sib = sib.nextSibling as HTMLElement | null;
+                  }
+                }
+                // Prepend chapters until the selected verse is off the page.
+                sib = sbe.firstChild as HTMLElement | null;
+                while (
+                  sib &&
+                  !('classList' in sib && sib.classList.contains('vs'))
+                ) {
+                  sib = sib.nextSibling as HTMLElement | null;
+                }
+                let prepend = Number(sib && getElementInfo(sib)?.ch) - 1 || 0;
+                while (
+                  v &&
+                  prepend > 0 &&
+                  ((!rtl && v.offsetLeft < sbe.offsetWidth) ||
+                    (rtl && v.offsetLeft >= 0))
+                ) {
+                  const pre = {
+                    ...libswordProps,
+                    location: { ...libswordProps.location, chapter: prepend },
+                  };
+                  this.writeLibSword2DOM(pre, panelIndex, 'prepend');
+                  v = findVerseElement(
+                    sbe,
+                    libswordProps.location.chapter,
+                    verse
+                  );
+                  prepend -= 1;
+                }
+                // Hide starting verses until the selected verse is visible above the notebox.
+                sib = sbe.firstChild as HTMLElement | null;
+                const atext = sbe.parentNode as HTMLElement;
+                const nbc = nbe.parentNode as HTMLElement;
+                while (v && sib) {
+                  const offpage =
+                    (!rtl && v.offsetLeft > sbe.offsetWidth) ||
+                    (rtl && v.offsetLeft <= 0);
+                  const undernb =
+                    v.offsetLeft > sbe.offsetWidth - 1.1 * nbe.offsetWidth &&
+                    v.offsetTop > atext.offsetHeight - nbc.offsetHeight;
+                  if (!offpage && !undernb) break;
+                  let finished;
+                  do {
+                    if (sib && 'style' in sib) sib.style.display = 'none';
+                    finished =
+                      !sib ||
+                      ('classList' in sib && sib.classList.contains('vs'));
+                    sib = sib?.nextSibling as HTMLElement | null;
+                  } while (!finished);
+                }
+                // Change state to first visible verse.
+                if (!sib) sib = sbe.firstChild as HTMLElement | null;
+                while (
+                  sib &&
+                  !(
+                    'classList' in sib &&
+                    sib.classList.contains('vs') &&
+                    sib.style.display !== 'none'
+                  )
+                ) {
+                  sib = sib.nextSibling as HTMLElement | null;
+                }
+                const info = (sib && getElementInfo(sib)) || null;
+                if (info) {
+                  const skipLocalPanels: boolean[] = [];
+                  skipLocalPanels[panelIndex] = true;
+                  const location = verseKey(
+                    [info.bk, info.ch, info.vs].join('.'),
+                    libswordProps.location.v11n
+                  ).location();
+                  if (isPinned) {
+                    newState = {
+                      ...newState,
+                      pin: {
+                        ...pinProps,
+                        location,
+                        scroll: { verseAt: 'top', skipLocalPanels },
+                      },
+                    };
+                  } else {
+                    const { xulswordState } = props;
+                    xulswordState({
+                      location,
+                      scroll: { verseAt: 'top', skipLocalPanels },
+                    });
+                  }
+                }
+              } else {
+                // MULTI-COLUMN SCROLL TO VERSE
+                // verseAt determines which sibling is placed at the top.
+                if (verse === 1 && scrollProps.scroll?.verseAt === 'top') {
+                  v = sbe.firstChild as HTMLElement | null;
+                } else if (scrollProps.scroll?.verseAt === 'center') {
+                  let d = 4;
+                  while (d && v) {
+                    v = v.previousSibling as HTMLElement | null;
+                    if (v && 'classList' in v && v.classList.contains('vs'))
+                      d -= 1;
+                  }
+                  if (!v) v = sbe.firstChild as HTMLElement | null;
+                }
+                // Hide all siblings preceding the selected one, to make it appear at the top.
+                sib = sbe.firstChild as HTMLElement | null;
+                let hide = true;
+                let lastv;
+                while (sib) {
+                  if (sib === v) hide = false;
+                  if ('style' in sib) sib.style.display = hide ? 'none' : '';
+                  if ('classList' in sib && sib.classList.contains('vs'))
+                    lastv = sib;
+                  sib = sib.nextSibling as HTMLElement | null;
+                }
+                // Append chapters until text overflows
+                let append =
+                  Number(lastv && getElementInfo(lastv)?.ch) + 1 || 200;
+                const max = getMaxChapter(
+                  G.Tab[module].v11n || 'KJV',
+                  libswordProps.location.book
+                );
+                while (append <= max && sbe.scrollWidth <= sbe.offsetWidth) {
+                  const app = {
+                    ...libswordProps,
+                    location: { ...libswordProps.location, chapter: append },
+                  };
+                  this.writeLibSword2DOM(app, panelIndex, 'append');
+                  append += 1;
+                }
+              }
+            }
           } else {
-            const fs = [];
-            fs[panelIndex] = C.VSCROLL.none;
-            G.Prefs.mergeValue('xulsword', {
-              location,
-              flagScroll: fs,
-            });
+            versekeyScroll(sbe, scrollProps);
           }
-        }
-      } else if (update && type === C.DICTIONARY) {
-        const { modkey } = libswordProps;
-        const id = `${stringHash(modkey)}.${panelIndex}`;
-        const keyelem = document.getElementById(id);
-        if (keyelem) {
-          scrollIntoView(keyelem, nbe, 40);
-          const dictlist = keyelem.parentNode?.parentNode as HTMLElement | null;
-          if (dictlist) {
-            const dki = dictlist.getElementsByClassName(
-              'dictkeyinput'
-            ) as unknown as HTMLInputElement[] | null;
-            if (dki) {
-              dki[0].focus();
-              dki[0].select();
+        } else if (update && type === C.DICTIONARY) {
+          const { modkey } = libswordProps;
+          const id = `${stringHash(modkey)}.${panelIndex}`;
+          const keyelem = document.getElementById(id);
+          if (keyelem) {
+            scrollIntoView(keyelem, nbe, 40);
+            const dictlist = keyelem.parentNode
+              ?.parentNode as HTMLElement | null;
+            if (dictlist) {
+              const dki = dictlist.getElementsByClassName(
+                'dictkeyinput'
+              ) as unknown as HTMLInputElement[] | null;
+              if (dki) {
+                dki[0].focus();
+                dki[0].select();
+              }
             }
           }
         }
-      }
-      // HIGHLIGHT
-      if (update && !isPinned && selection && type === C.BIBLE) {
-        highlight(sbe, selection, module);
-      }
-      // TRIM NOTES
-      if (columns > 1 && (update || doscroll)) {
-        const empty = !trimNotes(sbe, nbe);
-        const nbc = nbe.parentNode as any;
+        // HIGHLIGHT
         if (
-          (empty && !nbc.classList.contains('noteboxEmpty')) ||
-          (!empty && nbc.classList.contains('noteboxEmpty'))
+          (update || highlightkey !== sbe.dataset.highlightkey) &&
+          !isPinned &&
+          selection &&
+          type === C.BIBLE
         ) {
-          nbc.classList.toggle('noteboxEmpty');
+          highlight(sbe, selection, module);
+          sbe.dataset.highlightkey = highlightkey;
         }
-      }
-      // AUDIO LINKS
-      if (type === C.BIBLE) {
-        // window.setTimeout(function () {BibleTexts.updateAudioLinks(w);}, 0);
-      }
-      // PREV / NEXT LINKS
-      setTimeout(() => {
-        const atextc = ofClass(['atext'], sbe);
-        if (atextc) {
-          const atext = atextc.element;
-          const prev = textChange(atext, false);
-          const next = textChange(atext, true);
-          const prevdis = atext.classList.contains('prev-disabled');
-          const nextdis = atext.classList.contains('next-disabled');
-          if ((!prev && !prevdis) || (prev && prevdis)) {
-            atext.classList.toggle('prev-disabled');
-          }
-          if ((!next && !nextdis) || (next && nextdis)) {
-            atext.classList.toggle('next-disabled');
+        // TRIM NOTES
+        if (columns > 1 && (update || scroll)) {
+          const empty = !trimNotes(sbe, nbe);
+          const nbc = nbe.parentNode as any;
+          if (
+            (empty && !nbc.classList.contains('noteboxEmpty')) ||
+            (!empty && nbc.classList.contains('noteboxEmpty'))
+          ) {
+            nbc.classList.toggle('noteboxEmpty');
           }
         }
-      }, 1);
+        // AUDIO LINKS
+        if (type === C.BIBLE) {
+          // window.setTimeout(function () {BibleTexts.updateAudioLinks(w);}, 0);
+        }
+        // PREV / NEXT LINKS
+        setTimeout(() => {
+          const atextc = ofClass(['atext'], sbe);
+          if (atextc) {
+            const atext = atextc.element;
+            const prev = textChange(atext, false);
+            const next = textChange(atext, true);
+            const prevdis = atext.classList.contains('prev-disabled');
+            const nextdis = atext.classList.contains('next-disabled');
+            if ((!prev && !prevdis) || (prev && prevdis)) {
+              atext.classList.toggle('prev-disabled');
+            }
+            if ((!next && !nextdis) || (next && nextdis)) {
+              atext.classList.toggle('next-disabled');
+            }
+          }
+        }, 1);
+      }
     }
     if (Object.keys(newState).length) this.setState(newState);
   }
@@ -435,36 +486,12 @@ class Atext extends React.Component {
     const sbe = sbref !== null ? sbref.current : null;
     const nbe = nbref !== null ? nbref.current : null;
     if (sbe && nbe) {
-      const { location } = libswordProps;
+      const response = libswordResponseMemoized(libswordProps, i);
+      // eslint-disable-next-line prettier/prettier
+      // console.log(`${flag} panel ${i} ${verseKey(libswordProps.location || '').osisRef()}:`);
       const isDict =
         libswordProps.module &&
         G.Tab[libswordProps.module].type === C.DICTIONARY;
-      let chfirst;
-      let chlast;
-      let originalch;
-      if (location) {
-        originalch = location.chapter;
-        chfirst =
-          'chfirst' in sbe.dataset
-            ? Number(sbe.dataset.chfirst)
-            : location.chapter;
-        chlast =
-          'chlast' in sbe.dataset
-            ? Number(sbe.dataset.chlast)
-            : location.chapter;
-        if (chfirst && flag === 'prepend') {
-          chfirst -= 1;
-          location.chapter = chfirst;
-          location.verse = 1;
-        }
-        if (chlast && flag === 'append') {
-          chlast += 1;
-          location.chapter = chlast;
-          location.verse = 1;
-        }
-      }
-      const response = libswordResponseMemoized(libswordProps, i);
-      // console.log(`${flag} panel ${i} ${verseKey(libswordProps.location).osisRef()}:`);
       let fntable = (!isDict ? nbe.firstChild : null) as HTMLElement | null;
       let sb;
       let nb;
@@ -501,26 +528,18 @@ class Atext extends React.Component {
         sanitizeHTML(nbe, nb);
         libswordImgSrc(nbe);
       }
-      fntable = nbe.firstChild as HTMLElement | null;
-      sbe.dataset.libsword = stringHash(
-        {
-          ...libswordProps,
-          location: { ...libswordProps.location, chapter: 0, verse: 0 },
-        },
-        i
-      );
-      sbe.dataset.scroll = undefined;
-      if (location) {
-        if (flag === 'overwrite') {
-          sbe.dataset.chfirst = location.chapter.toString();
-          sbe.dataset.chlast = location.chapter.toString();
-        } else {
-          sbe.dataset.chfirst = chfirst ? chfirst.toString() : '999';
-          sbe.dataset.chlast = chlast ? chlast.toString() : '0';
-        }
-        if (originalch !== undefined) location.chapter = originalch;
+      if (flag === 'overwrite') {
+        sbe.dataset.libsword = stringHash(
+          {
+            ...libswordProps,
+            location: { ...libswordProps.location, verse: 0 },
+          },
+          i
+        );
+        sbe.dataset.scroll = undefined;
       }
       const nbc = nbe.parentNode as any;
+      fntable = nbe.firstChild as HTMLElement | null;
       if (
         (!fntable?.innerHTML && !nbc.classList.contains('noteboxEmpty')) ||
         (fntable?.innerHTML && nbc.classList.contains('noteboxEmpty'))
@@ -537,12 +556,12 @@ class Atext extends React.Component {
     maximize?: boolean
   ) {
     const { noteBoxResizing } = this.state as AtextState;
-    const { noteboxBarHandler } = this.props as AtextProps;
+    const { noteboxBar } = this.props as AtextProps;
     if (noteBoxResizing === null) return;
     e.stopPropagation();
     const newnbr = nbr || noteBoxResizing;
     this.setState({ noteBoxResizing: null });
-    noteboxBarHandler(e, newnbr, maximize);
+    noteboxBar(e, newnbr, maximize);
   }
 
   render() {

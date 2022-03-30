@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable import/no-duplicates */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-continue */
@@ -417,7 +418,7 @@ export function getNoteHTML(
 }
 
 // Returns true if v is a visible verse element, false otherwise. If
-// ignoreNotebox is true, v is considered visible even if its behind
+// ignoreNotebox is true, v is considered visible even if it's behind
 // the notebox (useful for multi-column scrolling to prevent notebox
 // flashing).
 function verseIsVisible(v: HTMLElement, ignoreNotebox = false): boolean {
@@ -432,6 +433,7 @@ function verseIsVisible(v: HTMLElement, ignoreNotebox = false): boolean {
   const { module, columns: clx } = atext.dataset;
   const columns = Number(clx);
   if (!module) return false;
+  const hd = sb.previousSibling as HTMLElement;
 
   // return false if we're not visible or being displayed
   const style = window.getComputedStyle(v);
@@ -441,7 +443,8 @@ function verseIsVisible(v: HTMLElement, ignoreNotebox = false): boolean {
   if (columns === 1) {
     return (
       v.offsetTop - sb.offsetTop >= sb.scrollTop &&
-      v.offsetTop - sb.offsetTop < sb.scrollTop + sb.offsetHeight - 30
+      v.offsetTop - sb.offsetTop <
+        sb.scrollTop + sb.offsetHeight - hd.offsetHeight
     );
   }
 
@@ -452,10 +455,12 @@ function verseIsVisible(v: HTMLElement, ignoreNotebox = false): boolean {
     if (v.offsetLeft > sb.offsetWidth) return false;
 
     // are we in the last visible column but under the footnote box?
+    const partialVerse = true;
     if (
       !ignoreNotebox &&
       v.offsetLeft > sb.offsetWidth - 1.1 * nb.offsetWidth &&
-      v.offsetTop + v.offsetHeight > atext.offsetHeight - nbc.offsetHeight
+      v.offsetTop + (partialVerse ? 0 : v.offsetHeight) >
+        atext.offsetHeight - nbc.offsetHeight - hd.offsetHeight
     ) {
       return false;
     }
@@ -480,20 +485,15 @@ function verseIsVisible(v: HTMLElement, ignoreNotebox = false): boolean {
   return true;
 }
 
-// Implement the Atext C.VSCROLL API (see constant.ts)
+// Implement Atext verse scroll for single column panels.
 export function versekeyScroll(
   sbe: HTMLElement,
-  scrollProps: {
-    module: string | undefined;
-    location: LocationVKType | null;
-    flagScroll: number;
-    columns: number;
-  }
-): LocationVKType | null {
-  const { module, location, flagScroll, columns } = scrollProps;
-  if (!location) return null;
+  scrollProps: typeof C.ScrollPropsVK
+) {
+  const { module, location, scroll } = scrollProps;
+  if (!location) return;
   const { book, chapter, verse } = location;
-  if (!verse || flagScroll === null || flagScroll === undefined) return null;
+  if (!verse || scroll === null || scroll === undefined) return;
 
   sbe.scrollLeft = 0; // commentary may have been non-zero
 
@@ -522,7 +522,7 @@ export function versekeyScroll(
   if (!v) v = vf;
 
   // if neither verse nor chapter has been found, return null
-  if (!v) return null;
+  if (!v) return;
 
   // perform appropriate scroll action
   let vOffsetTop = v.offsetTop;
@@ -532,7 +532,6 @@ export function versekeyScroll(
     if (vt && vt.offsetTop) vOffsetTop -= vt.offsetTop;
   }
 
-  let fs2 = flagScroll;
   // some special rules for commentaries
   if (module && G.Tab[module].type === C.COMMENTARY) {
     // if part of commentary element is already visible, don't rescroll
@@ -540,274 +539,39 @@ export function versekeyScroll(
       vOffsetTop < sbe.scrollTop &&
       vOffsetTop + v.offsetHeight > sbe.scrollTop + 20
     ) {
-      return null;
+      return;
     }
 
     // commentaries should never scroll verse to middle, only to top
-    if (
-      flagScroll === C.VSCROLL.center ||
-      flagScroll === C.VSCROLL.centerAlways
-    )
-      fs2 = C.VSCROLL.verse;
+    if (scroll.verseAt === 'center') scroll.verseAt = 'top';
   }
-  // if this is verse 1 then VSCROLL.verse and VSCROLL.center both become SCROLL.chapter
-  if (verse === 1 && (fs2 === C.VSCROLL.verse || fs2 === C.VSCROLL.center)) {
-    fs2 = C.VSCROLL.chapter;
-  }
-  const flagScroll2 = fs2;
+  // if this is verse 1 then center becomes top
+  if (verse === 1 && scroll.verseAt === 'center') scroll.verseAt = 'top';
 
   // scroll single column windows...
-  if (columns === 1) {
-    switch (flagScroll2) {
-      // scroll to top
-      case C.VSCROLL.chapter:
-        sbe.scrollTop = 0;
-        break;
-      // put selected verse at the top of the window or link
-      case C.VSCROLL.verse:
+  switch (scroll.verseAt) {
+    // put selected verse at the top of the window or link
+    case 'top': {
+      if (verse === 1) sbe.scrollTop = 0;
+      else sbe.scrollTop = vOffsetTop;
+      break;
+    }
+    // put selected verse in the middle of the window or link
+    case 'center': {
+      const middle = Math.round(
+        vOffsetTop - sbe.offsetHeight / 2 + v.offsetHeight / 2
+      );
+      if (vOffsetTop < middle) {
         sbe.scrollTop = vOffsetTop;
-        break;
-      // put selected verse in the middle of the window or link, unless verse is already entirely visible or verse 1
-      case C.VSCROLL.center:
-        if (
-          verse !== 1 &&
-          (vOffsetTop + v.offsetHeight > sbe.scrollTop + sbe.offsetHeight ||
-            vOffsetTop < sbe.scrollTop)
-        ) {
-          const middle = Math.round(
-            vOffsetTop - sbe.offsetHeight / 2 + v.offsetHeight / 2
-          );
-          // if beginning of verse is not showing then make it show
-          if (vOffsetTop < middle) {
-            sbe.scrollTop = vOffsetTop;
-          } else {
-            sbe.scrollTop = middle;
-          }
-        }
-        break;
-      // put selected verse in the middle of the window or link, even if verse is already visible or verse 1
-      case C.VSCROLL.centerAlways: {
-        const middle = Math.round(
-          vOffsetTop - sbe.offsetHeight / 2 + v.offsetHeight / 2
-        );
-        if (vOffsetTop < middle) {
-          sbe.scrollTop = vOffsetTop;
-        } else {
-          sbe.scrollTop = middle;
-        }
-        break;
+      } else {
+        sbe.scrollTop = middle;
       }
-      // put selected verse at the end of the window or link
-      case C.VSCROLL.endAndUpdate: {
-        sbe.scrollTop = vOffsetTop + v.offsetHeight - sbe.offsetHeight;
-        if (flagScroll2 === C.VSCROLL.endAndUpdate) {
-          let ffc = sbe.firstChild as HTMLElement | null;
-          while (ffc) {
-            const p = getElementInfo(ffc);
-            if (p) {
-              const { bk, ch, vs, type } = p;
-              if (
-                bk &&
-                ch &&
-                vs &&
-                type === 'vs' &&
-                ffc.offsetTop > sbe.scrollTop
-              )
-                return {
-                  book: bk,
-                  chapter: Number(ch),
-                  verse: Number(vs),
-                  v11n:
-                    (module && module in G.Tab && G.Tab[module].v11n) || 'KJV',
-                };
-            }
-            ffc = ffc.nextSibling as HTMLElement | null;
-          }
-        }
-        break;
-      }
-
-      default:
-        throw Error(`Unsupported flagScroll "${flagScroll2}"`);
+      break;
     }
+
+    default:
+      throw Error(`Unsupported single column scroll "${scroll.verseAt}"`);
   }
-
-  // or scroll multi-column windows...
-  else if (
-    !(flagScroll2 === C.VSCROLL.center && (verse === 1 || verseIsVisible(v)))
-  ) {
-    switch (flagScroll2) {
-      // scroll to top
-      case C.VSCROLL.chapter: {
-        // hide all verses previous to scroll verse's chapter
-        let vs = sbe.lastChild as HTMLElement | null;
-        let show = true;
-        while (vs) {
-          const p = getElementInfo(vs);
-          if (p && p.type === 'vs' && p.ch === chapter - 1) show = false;
-          // must always check for (vs.style) because pre-verse titles
-          // may begin with a Text node which will not have a style prop.
-          if (vs.style) vs.style.display = show ? '' : 'none';
-          vs = vs.previousSibling as HTMLElement | null;
-        }
-        break;
-      }
-      // put selected verse at the top of the window or link
-      case C.VSCROLL.verse: {
-        // Hide all verses before the scroll verse. If the scroll verse is immediately preceded by
-        // consecutive non-verse (heading) elements, then show them.
-        let vs = sbe.lastChild as HTMLElement | null;
-        let show = true;
-        let showhead = true;
-        while (vs) {
-          if (!show && showhead) {
-            const p = getElementInfo(vs);
-            const isverse = p && p.type === 'vs';
-            if (vs.style) vs.style.display = isverse ? 'none' : '';
-            if (isverse) showhead = false;
-          } else {
-            if (vs.style) vs.style.display = show ? '' : 'none';
-            if (vs === v) show = false;
-          }
-          vs = vs.previousSibling as HTMLElement | null;
-        }
-        break;
-      }
-      case C.VSCROLL.center:
-      case C.VSCROLL.centerAlways: {
-        // hide all elements before verse
-        let vs = sbe.firstChild as HTMLElement | null;
-        let show = false;
-        while (vs) {
-          if (vs === v) show = true;
-          if (vs.style) vs.style.display = show ? '' : 'none';
-          vs = vs.nextSibling as HTMLElement | null;
-        }
-        // show verse near middle of first column
-        let max = 10;
-        vs = v.previousSibling as HTMLElement | null;
-        if (vs) {
-          let h = 0;
-          do {
-            max -= 1;
-            if (vs.style) vs.style.display = '';
-            if (vs.offsetHeight) h += vs.offsetHeight;
-            vs = vs.previousSibling as HTMLElement | null;
-          } while (max && vs && h < sbe.offsetHeight / 2 - 20);
-          if (vs && vs.style) vs.style.display = 'none';
-        }
-        break;
-      }
-      // put selected verse at the end of the window or link, and don't change selection
-      case C.VSCROLL.endAndUpdate: {
-        // put selected verse at the end of the window or link, then select first verse of link or verse 1
-        // show all verses
-        let lc = sbe.lastChild as HTMLElement | null;
-        while (lc) {
-          if (lc.style) lc.style.display = '';
-          lc = lc.previousSibling as HTMLElement | null;
-        }
-        // hide verses until verse is visible
-        let fc = sbe.firstChild as HTMLElement | null;
-        while (fc && !verseIsVisible(v)) {
-          if (fc.style) fc.style.display = 'none';
-          fc = fc.nextSibling as HTMLElement | null;
-        }
-
-        if (flagScroll2 === C.VSCROLL.endAndUpdate) {
-          let ffc = sbe.firstChild as HTMLElement | null;
-          while (ffc) {
-            const p = getElementInfo(ffc);
-            if (p) {
-              const { bk, ch, vs, type } = p;
-              if (
-                bk &&
-                ch &&
-                vs &&
-                type === 'vs' &&
-                ffc.style &&
-                ffc.style.display !== 'none'
-              )
-                return {
-                  book: bk,
-                  chapter: Number(ch),
-                  verse: Number(vs),
-                  v11n:
-                    (module && module in G.Tab && G.Tab[module].v11n) || 'KJV',
-                };
-            }
-            ffc = ffc.nextSibling as HTMLElement | null;
-          }
-        }
-        break;
-      }
-      default:
-    }
-  }
-
-  return null;
-}
-
-// Set caller verse and scrollFlag state after wheel events.
-function aTextWheelScroll3(
-  atext: HTMLElement,
-  location: LocationVKType,
-  count: number
-): LocationVKType | null {
-  const { module, columns } = atext.dataset;
-  if (!module) return null;
-  const { type, v11n: tmp } = G.Tab[module];
-  const v11n = tmp || 'KJV';
-
-  if (type === C.GENBOOK) {
-    // GenBook scrolls differently than versekey modules
-    // TODO! Scroll GenBooks
-    // const scrollType = C.SCROLLTYPEDELTA;
-    const scrollDelta = count * 20; // scroll delta in pixels
-    return null;
-  }
-
-  const sb = atext.getElementsByClassName('sb')[0];
-
-  // get first verse which begins in window
-  let v = sb.firstChild as HTMLElement | null;
-  while (v && !verseIsVisible(v)) {
-    v = v.nextSibling as HTMLElement | null;
-  }
-  if (!v) return null;
-
-  // if this is a multi-column versekey window, shift the
-  // verse according to scroll wheel delta
-  if (Number(columns) > 1) {
-    let dv = count;
-    let nv = v;
-    while (dv > 0) {
-      if (nv) nv = nv.nextSibling as HTMLElement;
-      while (nv && !nv.classList?.contains('vs')) {
-        nv = nv.nextSibling as HTMLElement;
-      }
-      dv -= 1;
-      if (nv && nv.classList?.contains('vs')) v = nv;
-    }
-    while (dv < 0) {
-      if (nv) nv = nv.previousSibling as HTMLElement;
-      while (nv && !nv.classList?.contains('vs')) {
-        nv = nv.previousSibling as HTMLElement;
-      }
-      dv += 1;
-      if (nv && nv.classList?.contains('vs')) v = nv;
-    }
-  }
-  // Return location of target verse v
-  const p = getElementInfo(v);
-  if (p) {
-    const { bk: book, ch, vs: verse } = p;
-    const chapter = Number(ch);
-    if (book && chapter && verse) {
-      return verseKey({ book, chapter, verse, v11n }).location(location.v11n);
-    }
-  }
-  return null;
 }
 
 function aTextWheelScroll2(
@@ -815,30 +579,71 @@ function aTextWheelScroll2(
   atext: HTMLElement,
   prevState: XulswordState | ViewportWinState | AtextState
 ) {
-  const atextstate = 'pin' in prevState ? prevState : null;
-  const otherstate = 'location' in prevState ? prevState : null;
-  const location = atextstate?.pin?.location || otherstate?.location;
+  let ret:
+    | Partial<XulswordState>
+    | Partial<ViewportWinState>
+    | Partial<AtextState>
+    | null = null;
+  const atextstate =
+    'pin' in prevState ? prevState : (null as AtextState | null);
+  const parentstate =
+    'location' in prevState
+      ? prevState
+      : (null as XulswordState | ViewportWinState | null);
+  const location = atextstate?.pin?.location || parentstate?.location;
   if (location) {
-    const newloc = aTextWheelScroll3(atext, location, count);
+    const panelIndex = Number(atext.dataset.index);
+    const columns = Number(atext.dataset.columns);
+    const { module } = atext.dataset;
+    let newloc;
+    // Multi-column wheel scroll simply adds a verse delta to verse state.
+    if (columns > 1) newloc = verseChange(location, count);
+    // Single-column wheel scroll allows default browser smooth scroll for
+    // a certain period before updaing verse state to the new top verse.
+    else {
+      // get first verse which begins in window
+      const sb = atext.getElementsByClassName('sb')[0];
+      let v = sb.firstChild as HTMLElement | null;
+      while (v && !verseIsVisible(v)) {
+        v = v.nextSibling as HTMLElement | null;
+      }
+      if (!v) return null;
+      const p = getElementInfo(v);
+      if (p) {
+        const { bk: book, ch, vs: verse } = p;
+        const chapter = Number(ch);
+        const v11n = (module && module in G.Tab && G.Tab[module].v11n) || 'KJV';
+        if (book && chapter && verse) {
+          newloc = verseKey({ book, chapter, verse, v11n }).location(
+            location.v11n
+          );
+        }
+      }
+    }
     if (newloc) {
-      const { columns, index } = atext.dataset;
-      if (otherstate) {
-        const flagScroll = otherstate.flagScroll.map(() => C.VSCROLL.verse);
-        if (columns === '1') flagScroll[Number(index)] = C.VSCROLL.none;
-        return { location: newloc, flagScroll };
+      const skipLocalPanels: boolean[] = [];
+      skipLocalPanels[panelIndex] = columns === 1;
+      if (parentstate) {
+        ret = {
+          location: newloc,
+          scroll: {
+            verseAt: 'top',
+            skipLocalPanels,
+          },
+        };
       }
       if (atextstate?.pin) {
-        return {
+        ret = {
           pin: {
             ...atextstate.pin,
             location: newloc,
-            flagScroll: columns === '1' ? C.VSCROLL.none : C.VSCROLL.verse,
+            scroll: { verseAt: 'top', skipLocalPanels },
           },
         };
       }
     }
   }
-  return null;
+  return ret;
 }
 
 let WheelSteps = 0;
@@ -910,8 +715,10 @@ export function trimNotes(sbe: HTMLElement, nbe: HTMLElement): boolean {
   }
 
   // get last chapter/verse
+  const atext = sbe.parentNode as HTMLElement;
+  const multicol = atext.dataset.columns !== '1';
   let vl = sbe.lastChild as HTMLElement | null;
-  while (vl && !verseIsVisible(vl, true)) {
+  while (vl && !verseIsVisible(vl, !multicol)) {
     vl = vl.previousSibling as HTMLElement | null;
   }
 
@@ -961,9 +768,11 @@ export function findVerseElement(
   let c = sbe.firstChild as HTMLElement | null;
   while (c) {
     if (c.classList?.contains('vs') && c.dataset.title) {
-      const [, ch, vs] = c.dataset.title.split('.');
-      if (Number(ch) === chapter && Number(vs) === verse) {
-        return c;
+      const [, ch, vs, lv] = c.dataset.title.split('.');
+      if (Number(ch) === chapter) {
+        for (let x = Number(vs); x <= Number(lv); x += 1) {
+          if (x === verse) return c;
+        }
       }
     }
     c = c.nextSibling as HTMLElement | null;

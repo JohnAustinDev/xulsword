@@ -54,7 +54,7 @@ export type ViewportWinState = XulswordStatePref &
 // Window arguments that are used to set initial state must be updated locally
 // and in Prefs, so that component reset or program restart won't cause
 // reversion to initial state.
-let windowState = windowArgument('xulswordState') as typeof vpWindowState;
+let windowState = windowArgument('xulswordState');
 
 export default class ViewportWin extends React.Component {
   static defaultProps: typeof defaultProps;
@@ -91,6 +91,7 @@ export default class ViewportWin extends React.Component {
 
     this.viewportParentHandler = viewportParentH.bind(this);
     this.noteboxBarHandler = noteboxBarHandlerH.bind(this);
+    this.xulswordStateHandler = this.xulswordStateHandler.bind(this);
 
     this.destroy = [];
 
@@ -109,20 +110,30 @@ export default class ViewportWin extends React.Component {
     prevState: ViewportWinState
   ) {
     const state = this.state as ViewportWinState;
-    windowState = trim(state, vpWindowState);
-    const changedWindowState = diff(
-      trim(prevState, vpWindowState),
-      windowState
-    );
-    if (changedWindowState)
-      G.Window.mergeValue('xulswordState', changedWindowState);
-    const { id } = this.props as ViewportWinProps;
-    if (id) {
-      const changedStatePref = diff(
-        trim(prevState, C.GlobalState.xulsword),
-        trim(state, C.GlobalState.xulsword)
+    const { scroll } = state;
+    if (!scroll?.skipWindows) {
+      windowState = trim(state, vpWindowState);
+      const changedWindowState = diff(
+        trim(prevState, vpWindowState),
+        windowState
       );
-      if (changedStatePref) G.Prefs.mergeValue(id, changedStatePref);
+      if (changedWindowState) {
+        if (changedWindowState.scroll?.skipLocalPanels)
+          delete changedWindowState.scroll.skipLocalPanels;
+        G.Window.mergeValue('xulswordState', changedWindowState);
+      }
+      const { id } = this.props as ViewportWinProps;
+      if (id) {
+        const changedStatePref = diff(
+          trim(prevState, C.GlobalXulsword),
+          trim(state, C.GlobalXulsword)
+        );
+        if (changedStatePref) {
+          if (changedStatePref.scroll?.skipLocalPanels)
+            delete changedStatePref.scroll.skipLocalPanels;
+          G.Prefs.mergeValue(id, changedStatePref);
+        }
+      }
     }
   }
 
@@ -130,6 +141,10 @@ export default class ViewportWin extends React.Component {
     clearPending(this, ['dictkeydownTO', 'wheelScrollTO']);
     this.destroy.forEach((func) => func());
     this.destroy = [];
+  }
+
+  xulswordStateHandler(s: Partial<XulswordStatePref>): void {
+    this.setState(s);
   }
 
   render() {
@@ -144,14 +159,19 @@ export default class ViewportWin extends React.Component {
       panels,
       show,
       place,
-      flagScroll,
+      scroll,
       isPinned,
       noteBoxHeight,
       maximizeNoteBox,
       showChooser,
       vpreset,
     } = state;
-    const { atextRefs, viewportParentHandler, noteboxBarHandler } = this;
+    const {
+      atextRefs,
+      viewportParentHandler,
+      noteboxBarHandler,
+      xulswordStateHandler,
+    } = this;
 
     const short = true;
     console.log(
@@ -179,7 +199,7 @@ export default class ViewportWin extends React.Component {
             panels={panels}
             show={show}
             place={place}
-            flagScroll={flagScroll}
+            scroll={scroll}
             isPinned={isPinned}
             noteBoxHeight={noteBoxHeight}
             maximizeNoteBox={maximizeNoteBox}
@@ -188,6 +208,7 @@ export default class ViewportWin extends React.Component {
             atextRefs={atextRefs}
             eHandler={viewportParentHandler}
             noteboxBarHandler={noteboxBarHandler}
+            xulswordStateHandler={xulswordStateHandler}
           />
         </Hbox>
       </Vbox>

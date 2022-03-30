@@ -51,7 +51,7 @@ async function i18nInit(namespaces: string[]) {
 
   const locales = G.Prefs.getComplexValue(
     'global.locales'
-  ) as GlobalPref['locales'];
+  ) as GlobalPref['global']['locales'];
   const supportedLangs = [
     ...new Set(
       locales

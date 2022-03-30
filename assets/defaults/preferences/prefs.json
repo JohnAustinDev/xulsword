@@ -35,6 +35,9 @@
   "xulsword": {
     "location": null,
     "selection": null,
+    "scroll": {
+      "verseAt": "top"
+    },
 
     "keys": [],
 
@@ -66,7 +69,6 @@
     "ilModules": [],
     "mtModules": [],
 
-    "flagScroll": [],
     "isPinned": [],
     "noteBoxHeight": [],
     "maximizeNoteBox": []

@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import i18next from 'i18next';
 import C from './constant';
-import type { ConfigType } from './type';
+import type { ConfigType, PrefObject } from './type';
 import Cache from './cache';
 
 export function escapeRE(text: string) {
@@ -10,7 +10,11 @@ export function escapeRE(text: string) {
 }
 
 // Return a new source object retaining only certain keys from the original.
-export function trim(source: any, keepkeys: any, dropInstead = false) {
+export function trim<T extends { [i: string]: any }>(
+  source: T,
+  keepkeys: string[] | { [i: string]: any },
+  dropInstead = false
+): Partial<T> {
   const p: any = {};
   const keep = Array.isArray(keepkeys) ? keepkeys : Object.keys(keepkeys);
   if (dropInstead) {
@@ -154,7 +158,11 @@ export function clone<T extends unknown>(obj: T): T {
 // but returned entirely if different in any way. Depth is 1 by default because
 // React setState performs shallow merging with existing state, meaning a partial
 // state object would overwrite a complete one, resulting in unexpected states.
-export function diff(obj1: any, obj2: any, depth = 1): any {
+export function diff<T extends { [i: string]: any } | null>(
+  obj1: T,
+  obj2: T,
+  depth = 1
+): Partial<T> {
   let difference: any;
   const level = depth || 0;
   // Primatives

@@ -121,12 +121,12 @@ function setState(
   const isPinned = ispinned === 'true';
   if (!isPinned) {
     comp.setState((prevState: XulswordState | ViewportWinState) => {
-      const { location, selection, flagScroll, panels, ilModules, keys } =
+      const { location, selection, scroll, panels, ilModules, keys } =
         prevState;
       const pinProps: typeof C.PinProps = {
         location,
         selection,
-        flagScroll: flagScroll[panelIndex],
+        scroll,
         module: panels[panelIndex],
         ilModule: ilModules[panelIndex],
         modkey: keys[panelIndex],
@@ -139,25 +139,9 @@ function setState(
           if (key in newPinProps) {
             switch (key) {
               case 'location':
-              case 'selection': {
-                s[key] = newPinProps[key];
-                break;
-              }
-              case 'flagScroll': {
-                const mysf = newPinProps.flagScroll;
-                const fs: number[] = prevState.flagScroll.slice();
-                if (mysf !== undefined) {
-                  const ats = document.getElementsByClassName(`atext`);
-                  Array.from(ats).forEach((at) => {
-                    const a = at as HTMLElement;
-                    const { index: inx, columns: c } = a.dataset;
-                    if (mysf && inx && c) {
-                      fs[Number(inx)] =
-                        c && Number(c) > 1 ? mysf : C.VSCROLL.centerAlways;
-                    }
-                  });
-                }
-                s.flagScroll = fs;
+              case 'selection':
+              case 'scroll': {
+                s[key] = newPinProps[key] as any;
                 break;
               }
               case 'module':
@@ -169,7 +153,7 @@ function setState(
                   modkey: 'keys',
                 } as const;
                 const ps = clone(prevState[map[key]]);
-                ps[panelIndex] = newPinProps[key];
+                ps[panelIndex] = newPinProps[key] || null;
                 s[map[key]] = ps;
                 break;
               }
@@ -544,7 +528,7 @@ export default function handler(
                   const s: Partial<typeof C.PinProps> = {
                     location: newloc,
                     selection: newloc,
-                    flagScroll: C.VSCROLL.center,
+                    scroll: { verseAt: 'center' },
                   };
                   return s;
                 });

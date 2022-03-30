@@ -381,7 +381,10 @@ export default Window;
 // update-state-from-pref. For some changes, more is done than simply updating
 // state prefs. For instance when changing locale or dynamic stylesheet.
 export const pushPrefsToWindows: PrefCallbackType = (win, key, val, store) => {
-  if (store === 'prefs' && (!win || win === BrowserWindow.getFocusedWindow())) {
+  if (
+    (!store || store === 'prefs') &&
+    (!win || win === BrowserWindow.getFocusedWindow())
+  ) {
     const keysToUpdate: string[] = [];
     const keys: string[] =
       !key.includes('.') && typeof val === 'object'
@@ -398,11 +401,9 @@ export const pushPrefsToWindows: PrefCallbackType = (win, key, val, store) => {
       const basekey = pkey.split('.').slice(0, 2).join('.');
       if (menuPref.includes(basekey)) keysToUpdate.push(pkey);
       else {
-        Object.entries(C.GlobalState).forEach((entry) => {
-          entry[1].forEach((k) => {
-            const gloskey = `${entry[0]}.${k}`;
-            if (basekey === gloskey) keysToUpdate.push(pkey);
-          });
+        C.GlobalXulsword.forEach((k) => {
+          const gloskey = `xulsword.${k}`;
+          if (basekey === gloskey) keysToUpdate.push(pkey);
         });
       }
     });

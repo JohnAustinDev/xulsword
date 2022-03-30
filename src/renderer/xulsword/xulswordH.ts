@@ -51,17 +51,19 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
         case 'prevchap':
         case 'nextchap': {
           this.setState((prevState: XulswordState) => {
-            const { location, flagScroll } = prevState;
+            const { location } = prevState;
             if (location) {
+              const l = verseKey(location);
+              l.verse = 1;
               const newloc = chapterChange(
-                location,
+                l.location(),
                 currentId === 'prevchap' ? -1 : 1
               );
               if (newloc) {
                 const s: Partial<XulswordState> = {
                   location: newloc,
                   selection: null,
-                  flagScroll: flagScroll.map(() => C.VSCROLL.chapter),
+                  scroll: { verseAt: 'top' },
                 };
                 return s;
               }
@@ -73,7 +75,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
         case 'prevverse':
         case 'nextverse': {
           this.setState((prevState: XulswordState) => {
-            const { location, flagScroll } = prevState;
+            const { location } = prevState;
             if (location) {
               const newloc = verseChange(
                 location,
@@ -83,7 +85,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
                 const s: Partial<XulswordState> = {
                   location: newloc,
                   selection: newloc,
-                  flagScroll: flagScroll.map(() => C.VSCROLL.centerAlways),
+                  scroll: { verseAt: 'center' },
                 };
                 return s;
               }
@@ -137,7 +139,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
       switch (id) {
         case 'book__menulist__select': {
           this.setState((prevState: XulswordState) => {
-            const { flagScroll, location } = prevState;
+            const { location } = prevState;
             if (location) {
               const newloc = verseKey({
                 book: value,
@@ -148,7 +150,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
               const s: Partial<XulswordState> = {
                 location: newloc.location(),
                 selection: newloc.location(),
-                flagScroll: flagScroll.map(() => C.VSCROLL.center),
+                scroll: { verseAt: 'top' },
                 bsreset: prevState.bsreset + 1,
               };
               return s;
@@ -159,7 +161,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
         }
         case 'book__textbox__input': {
           this.setState((prevState: XulswordState) => {
-            const { flagScroll, location } = prevState;
+            const { location } = prevState;
             const newloc = parser.parse(
               value,
               location?.v11n || 'KJV'
@@ -170,8 +172,8 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
             if (newloc && verseChange(newloc, 0)) {
               const s: Partial<XulswordState> = {
                 location: newloc,
-                selection: newloc,
-                flagScroll: flagScroll.map(() => C.VSCROLL.center),
+                selection: newloc.verse === 1 ? null : newloc,
+                scroll: { verseAt: 'center' },
                 bsreset: prevState.bsreset + 1,
               };
               return s;
@@ -183,7 +185,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
         case 'chapter__input':
         case 'verse__input': {
           this.setState((prevState: XulswordState) => {
-            const { flagScroll, location } = prevState;
+            const { location } = prevState;
             // reset Bookselect on Enter key even if chapter doesn't change
             const bsreset = prevState.bsreset + 1;
             if (location) {
@@ -191,6 +193,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
               let newloc;
               if (id === 'chapter__input') {
                 pvk.chapter = Number(value);
+                pvk.verse = 1;
                 newloc = chapterChange(pvk.location());
               } else {
                 pvk.verse = Number(value);
@@ -200,11 +203,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
                 const s: Partial<XulswordState> = {
                   location: newloc,
                   selection: newloc,
-                  flagScroll: flagScroll.map(() =>
-                    id === 'chapter__input'
-                      ? C.VSCROLL.chapter
-                      : C.VSCROLL.verse
-                  ),
+                  scroll: { verseAt: 'top' },
                   bsreset,
                 };
                 return s;

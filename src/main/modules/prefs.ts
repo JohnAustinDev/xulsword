@@ -13,10 +13,10 @@ import { jsdump } from '../mutil';
 import type { GType, PrefObject, PrefValue } from '../../type';
 
 export type PrefCallbackType = (
-  callingWin: BrowserWindow,
+  callingWin: BrowserWindow | null,
   key: string,
   value: any,
-  store: string
+  store?: string
 ) => void;
 
 type StoreType = {

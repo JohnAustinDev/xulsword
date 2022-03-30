@@ -8,6 +8,7 @@ import type {
   LocationVKType,
   ModTypes,
   PlaceType,
+  ScrollType,
   ShowType,
   SwordFilterType,
   SwordFilterValueType,
@@ -321,22 +322,14 @@ const C = {
     },
   } as { [k in 'en' | 'ru']: Partial<FeatureType> },
 
-  // These Pref keys are global so all windows will be kept in sync sharing the
-  // same values for each of these prefs, in addition to appliation menu prefs.
-  GlobalState: {
-    xulsword: ['location', 'selection', 'flagScroll', 'show'],
-  },
-
-  // These Atext props can be 'pinned' to become independant state properties.
-  // NOTE: property types are important, but property values are not.
-  PinProps: {
-    location: null as LocationVKType | null,
-    selection: null as LocationVKType | null,
-    flagScroll: 0,
-    module: '' as string | null,
-    ilModule: '' as string | null,
-    modkey: '' as string | null,
-  },
+  // These xulsword Pref keys are global so all windows will be kept in sync sharing
+  // the same values for each of these prefs, in addition to other GlobalPref.
+  GlobalXulsword: [
+    'location',
+    'selection',
+    'scroll',
+    'show',
+  ] as (keyof GlobalPref['xulsword'])[],
 
   // These Atext props are used by LibSword. If these props all have the same values
   // as the previous rendering, the LibSword response will also be the same.
@@ -367,17 +360,18 @@ const C = {
   },
   LibSwordProps: {} as { [key in ModTypes]: { [i: string]: any } },
 
-  // Versekey (that is Bible and commentary) verse scrolling
-  VSCROLL: {
-    none: 0, // skip the scroll step (which comes after Atext render)
-    chapter: 1, // put state chapter heading at the top of the first panel
-    verse: 2, // put state verse at the top of the first panel
-    center: 3, // put state verse in the middle of the first panel, unless verse is already visible or is verse 1
-    centerAlways: 4, // try to put state verse in the middle of the first panel in any case
-    endAndUpdate: 5, // put state verse at the end of the last panel, then change state to the resulting first visible verse
+  // These Atext props can be 'pinned' to become independant state properties.
+  // NOTE: property types are important, but property values are not.
+  PinProps: {
+    location: null as LocationVKType | null,
+    selection: null as LocationVKType | null,
+    scroll: null as ScrollType,
+    module: '' as string | null,
+    ilModule: '' as string | null,
+    modkey: '' as string | null,
   },
 
-  // These Atext props are used to scroll text. If these props all have
+  // These Atext props effect the verse scroll. If these props all have
   // the same values as the previous rendering, and the same is true of
   // the LibSwordProps, then scrolling is also unnecessary.
   // NOTE: property types are important, but property values are not.
@@ -385,11 +379,8 @@ const C = {
     module: '',
     location: null as LocationVKType | null,
     columns: 0,
-    flagScroll: 0,
+    scroll: null as ScrollType,
   },
-  ScrollPropsDicts: {},
-  ScrollPropsGenbks: {},
-  ScrollProps: {} as { [key in ModTypes]: { [i: string]: any } },
 };
 
 C.VERSIONTAG = new RegExp(`${C.VERSIONPAR}\\s*=\\s*(.*)\\s*`, 'im');
@@ -419,11 +410,6 @@ C.LibSwordProps[C.BIBLE] = C.LibSwordPropsTexts;
 C.LibSwordProps[C.COMMENTARY] = C.LibSwordPropsComms;
 C.LibSwordProps[C.DICTIONARY] = C.LibSwordPropsDicts;
 C.LibSwordProps[C.GENBOOK] = C.LibSwordPropsGenbks;
-
-C.ScrollProps[C.BIBLE] = C.ScrollPropsVK;
-C.ScrollProps[C.COMMENTARY] = C.ScrollPropsVK;
-C.ScrollProps[C.DICTIONARY] = C.ScrollPropsDicts;
-C.ScrollProps[C.GENBOOK] = C.ScrollPropsGenbks;
 
 // Each module type may have LibSword features that should be always on.
 C.AlwaysOn[C.BIBLE] = [];

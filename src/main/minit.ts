@@ -371,7 +371,7 @@ export function refParser(options?: RefParserOptionsType): RefParser {
   const localesAccessor = () => {
     const locs = Prefs.getComplexValue(
       'global.locales'
-    ) as GlobalPref['locales'];
+    ) as GlobalPref['global']['locales'];
     return locs.map((val) => val[0]);
   };
   return new RefParser(gfunctions, localesAccessor, options);
@@ -449,7 +449,7 @@ export function checkModulePrefs() {
   Prefs.setComplexValue('xulsword', newxulsword);
   const popupsel = Prefs.getComplexValue(
     'global.popup.selection'
-  ) as GlobalPref['popup']['selection'];
+  ) as GlobalPref['global']['popup']['selection'];
   const newpopupsel = clone(popupsel);
   Object.entries(newpopupsel).forEach((entry) => {
     const k = entry[0] as keyof FeatureType;

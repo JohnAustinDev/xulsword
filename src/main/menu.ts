@@ -565,7 +565,7 @@ export default class MenuBuilder {
 
     const locales = G.Prefs.getComplexValue(
       'global.locales'
-    ) as GlobalPref['locales'];
+    ) as GlobalPref['global']['locales'];
     const subMenuOptions = {
       label: this.ts('menu.options'),
       submenu: [

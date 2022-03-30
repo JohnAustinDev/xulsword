@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable prefer-rest-params */
 import i18n from 'i18next';
-import C from '../constant';
 import { clone, JSON_stringify } from '../common';
 import { verseKey, getTab, getTabs } from './minit';
 import Prefs from './modules/prefs';
@@ -139,18 +138,18 @@ const Commands: GType['Commands'] = {
   goToLocationVK(
     newlocation: LocationVKType,
     newselection: LocationVKType,
-    newFlagScroll = C.VSCROLL.centerAlways
+    newScroll = { verseAt: 'center' }
   ) {
     // To go to a verse system location without also changing xulsword's current
     // versekey module requires this location be converted into the current v11n.
     const xulsword = Prefs.getComplexValue('xulsword') as XulswordStatePref;
-    const { location, panels } = xulsword;
+    const { location } = xulsword;
     const newxulsword = clone(xulsword);
     const loc = verseKey(newlocation, location?.v11n || 'KJV');
     const sel = verseKey(newselection, location?.v11n || 'KJV');
     newxulsword.location = loc.location();
     newxulsword.selection = sel.location();
-    newxulsword.flagScroll = panels.map(() => newFlagScroll);
+    newxulsword.scroll = newScroll;
     Prefs.mergeValue('xulsword', newxulsword);
   },
 };

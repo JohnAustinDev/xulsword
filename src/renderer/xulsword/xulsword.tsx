@@ -64,7 +64,6 @@ const notStatePref = {
 // default prefs.js. Their array size will be the same as panels array size.
 const statePrefPanelDefault: Partial<XulswordStatePref> = {
   isPinned: [false],
-  flagScroll: [1],
   noteBoxHeight: [200],
   maximizeNoteBox: [0],
 };
@@ -116,6 +115,7 @@ export default class Xulsword extends React.Component {
     this.handler = handlerH.bind(this);
     this.viewportParentHandler = viewportParentH.bind(this);
     this.noteboxBarHandler = noteboxBarHandlerH.bind(this);
+    this.xulswordStateHandler = this.xulswordStateHandler.bind(this);
 
     this.destroy = [];
 
@@ -132,21 +132,25 @@ export default class Xulsword extends React.Component {
   componentDidUpdate(_prevProps: XulswordProps, prevState: XulswordState) {
     const state = this.state as XulswordState;
     const { id } = this.props as XulswordProps;
-    if (id) {
+    const { scroll } = state;
+    if (id && !scroll?.skipWindows) {
       const newStatePref = trim(state, notStatePref, true);
       const d = diff(trim(prevState, notStatePref, true), newStatePref);
-      if (d) G.Prefs.mergeValue(id, d);
-    }
-    // Add page to history after a short delay
-    const { location } = state;
-    if (location) {
-      delayHandler.bind(this)(
-        () => {
-          this.addHistory();
-        },
-        C.UI.Xulsword.historyDelay,
-        'historyTO'
-      )();
+      if (d) {
+        if (d.scroll?.skipLocalPanels) delete d.scroll.skipLocalPanels;
+        G.Prefs.mergeValue(id, d);
+      }
+      // Add page to history after a short delay
+      const { location } = state;
+      if (location) {
+        delayHandler.bind(this)(
+          () => {
+            this.addHistory();
+          },
+          C.UI.Xulsword.historyDelay,
+          'historyTO'
+        )();
+      }
     }
   }
 
@@ -199,25 +203,28 @@ export default class Xulsword extends React.Component {
     )
       return;
     this.setState((prevState: XulswordState) => {
-      const { history, location, flagScroll } = prevState as XulswordState;
-      if (!location) return null;
-      // To update state to a history index without changing the selected
-      // modules, history needs to be converted to the current v11n.
-      const { location: hloc, selection: hsel } = history[index];
-      const newloc = verseKey(hloc, location.v11n).location();
-      const newsel = hsel ? verseKey(hsel, location.v11n).location() : null;
-      if (promote) {
-        const targ = history.splice(index, 1);
-        history.splice(0, 0, targ[0]);
+      let ret: Partial<XulswordState> | null = null;
+      const { history, location } = prevState as XulswordState;
+      if (location) {
+        // To update state to a history index without changing the selected
+        // modules, history needs to be converted to the current v11n.
+        const { location: hloc, selection: hsel } = history[index];
+        const newloc = verseKey(hloc, location.v11n).location();
+        const newsel = hsel ? verseKey(hsel, location.v11n).location() : null;
+        if (promote) {
+          const targ = history.splice(index, 1);
+          history.splice(0, 0, targ[0]);
+        }
+        ret = {
+          location: newloc,
+          selection: newsel,
+          scroll: { verseAt: 'center' },
+          history,
+          historyIndex: promote ? 0 : index,
+          historyMenupopup: undefined,
+        };
       }
-      return {
-        location: newloc,
-        selection: newsel,
-        flagScroll: flagScroll.map(() => C.VSCROLL.center),
-        history,
-        historyIndex: promote ? 0 : index,
-        historyMenupopup: undefined,
-      };
+      return ret;
     });
   };
 
@@ -264,11 +271,20 @@ export default class Xulsword extends React.Component {
     );
   };
 
+  xulswordStateHandler(s: Partial<XulswordStatePref>): void {
+    this.setState(s);
+  }
+
   render() {
     const state = this.state as XulswordState;
     const props = this.props as XulswordProps;
-    const { atextRefs, handler, viewportParentHandler, noteboxBarHandler } =
-      this;
+    const {
+      atextRefs,
+      handler,
+      viewportParentHandler,
+      noteboxBarHandler,
+      xulswordStateHandler,
+    } = this;
     const {
       location,
       selection,
@@ -283,7 +299,7 @@ export default class Xulsword extends React.Component {
       ilModules,
       mtModules,
       keys,
-      flagScroll,
+      scroll,
       isPinned,
       noteBoxHeight,
       maximizeNoteBox,
@@ -526,7 +542,7 @@ export default class Xulsword extends React.Component {
             show={show}
             place={place}
             keys={keys}
-            flagScroll={flagScroll}
+            scroll={scroll}
             isPinned={isPinned}
             noteBoxHeight={noteBoxHeight}
             maximizeNoteBox={maximizeNoteBox}
@@ -535,6 +551,7 @@ export default class Xulsword extends React.Component {
             atextRefs={atextRefs}
             eHandler={viewportParentHandler}
             noteboxBarHandler={noteboxBarHandler}
+            xulswordStateHandler={xulswordStateHandler}
           />
         </Hbox>
       </Vbox>

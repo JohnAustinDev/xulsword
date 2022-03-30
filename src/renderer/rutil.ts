@@ -132,7 +132,7 @@ export function refParser(options?: RefParserOptionsType): RefParser {
   const localesAccessor = () => {
     const locs = G.Prefs.getComplexValue(
       'global.locales'
-    ) as GlobalPref['locales'];
+    ) as GlobalPref['global']['locales'];
     return locs.map((val) => val[0]);
   };
   return new RefParser(gfunctions, localesAccessor, options);
@@ -541,22 +541,6 @@ export function onSetWindowState(component: React.Component, ignore?: any) {
         const [p, v] = entry;
         if (p in state && state[p] === v) delete newstate[p];
       });
-
-      // VSCROLL.none on a single panel (when location is sent from other windows)
-      // should not be obeyed because it is only intended for the one panel on the
-      // one window that the user is manually scrolling.
-      let { flagScroll } = 'flagScroll' in newstate ? newstate : state;
-      flagScroll = clone(flagScroll);
-      if (
-        'location' in newstate &&
-        flagScroll.filter((v: number) => v === C.VSCROLL.none).length === 1
-      ) {
-        const ns = flagScroll.find((v: number) => v !== C.VSCROLL.none);
-        if (ns !== undefined) {
-          newstate.flagScroll = flagScroll.map(() => ns);
-        }
-      }
-
       const lng = G.Prefs.getCharPref('global.locale');
       if (lng !== i18next.language) {
         i18next

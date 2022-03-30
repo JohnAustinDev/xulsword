@@ -25,7 +25,7 @@ const i18nBackendMain = require('i18next-fs-backend');
 // Get the available locale list
 const Locales = G.Prefs.getComplexValue(
   'global.locales'
-) as GlobalPref['locales'];
+) as GlobalPref['global']['locales'];
 const AvailableLanguages = [
   ...new Set(
     Locales.map((l) => {

@@ -51,7 +51,7 @@ export function getLocaleConfigs(): { [i: string]: ConfigType } {
     ret.locale = localeConfig(i18next.language);
     const locales = Prefs.getComplexValue(
       'global.locales'
-    ) as GlobalPref['locales'];
+    ) as GlobalPref['global']['locales'];
     locales.forEach((l: any) => {
       const [lang] = l;
       ret[lang] = localeConfig(lang);
@@ -167,7 +167,7 @@ function getLocaleOfModule(module: string) {
 
   const locales = Prefs.getComplexValue(
     'global.locales'
-  ) as GlobalPref['locales'];
+  ) as GlobalPref['global']['locales'];
 
   let stop = false;
   locales.forEach((l: any) => {

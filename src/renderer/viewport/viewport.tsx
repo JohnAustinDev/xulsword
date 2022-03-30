@@ -37,7 +37,7 @@ import Atext from './atext';
 import '../libxul/xul.css';
 import './viewport.css';
 
-import type { LocationVKType } from '../../type';
+import type { LocationVKType, ScrollType, XulswordStatePref } from '../../type';
 import { NoteboxBarHandlerType } from './viewportParentH';
 
 const defaultProps = xulDefaultProps;
@@ -46,6 +46,7 @@ const propTypes = {
   ...xulPropTypes,
   location: PropTypes.object,
   selection: PropTypes.object,
+  scroll: PropTypes.object,
 
   keys: PropTypes.arrayOf(PropTypes.string).isRequired,
 
@@ -58,7 +59,6 @@ const propTypes = {
   ilModules: PropTypes.arrayOf(PropTypes.string).isRequired,
   mtModules: PropTypes.arrayOf(PropTypes.string).isRequired,
 
-  flagScroll: PropTypes.arrayOf(PropTypes.number).isRequired,
   isPinned: PropTypes.arrayOf(PropTypes.bool).isRequired,
   noteBoxHeight: PropTypes.arrayOf(PropTypes.number).isRequired,
   maximizeNoteBox: PropTypes.arrayOf(PropTypes.number).isRequired,
@@ -66,6 +66,7 @@ const propTypes = {
 
   eHandler: PropTypes.func.isRequired,
   noteboxBarHandler: PropTypes.func.isRequired,
+  xulswordStateHandler: PropTypes.func.isRequired,
   atextRefs: PropTypes.arrayOf(PropTypes.object),
 };
 
@@ -73,13 +74,13 @@ type ViewportProps = PopupParentProps &
   XulProps & {
     location: LocationVKType | null;
     selection: LocationVKType | null;
+    scroll: ScrollType;
     keys: (string | undefined)[];
     showChooser: boolean;
     tabs: (string[] | undefined)[];
     panels: (string | null)[];
     ilModules: (string | undefined)[];
     mtModules: (string | undefined)[];
-    flagScroll: number[];
     isPinned: boolean[];
     noteBoxHeight: number[];
     maximizeNoteBox: number[];
@@ -87,6 +88,7 @@ type ViewportProps = PopupParentProps &
 
     eHandler: (e: React.SyntheticEvent) => void;
     noteboxBarHandler: NoteboxBarHandlerType;
+    xulswordStateHandler: (s: Partial<XulswordStatePref>) => void;
     atextRefs: React.RefObject<Atext>[];
   };
 
@@ -153,7 +155,7 @@ class Viewport extends React.Component implements PopupParent {
       panels,
       ilModules: ilModules0,
       mtModules,
-      flagScroll,
+      scroll,
       isPinned: isPinned0,
       noteBoxHeight,
       maximizeNoteBox,
@@ -161,6 +163,7 @@ class Viewport extends React.Component implements PopupParent {
       ownWindow,
       eHandler,
       noteboxBarHandler,
+      xulswordStateHandler,
       atextRefs,
     } = this.props as ViewportProps;
     const { reset, elemhtml, eleminfo, gap, popupParent, popupReset } = this
@@ -326,11 +329,11 @@ class Viewport extends React.Component implements PopupParent {
     const locs: LocationVKType[] = [];
     if (location) {
       const { book, chapter, verse: vs, v11n } = location;
-      panels.forEach((panel, i) => {
+      panels.forEach((panel) => {
         const tov11n = panel && G.Tab[panel].v11n;
-        // Verse is unnecessary when flagScroll <= 1, so keep it at 1 to
-        // prevent extra Atext render cycles.
-        const verse = (flagScroll[i] > 1 && vs) || 1;
+        // Verse is inconsequential when scroll is null, so then keep
+        // verse at 1 to prevent unnecessary Atext render cycles.
+        const verse = (scroll && vs) || 1;
         locs.push(
           verseKey(
             { book, chapter, verse, v11n },
@@ -468,12 +471,13 @@ class Viewport extends React.Component implements PopupParent {
                     columns={column}
                     show={show}
                     place={place}
-                    flagScroll={flagScroll[i]}
+                    scroll={scroll}
                     isPinned={isPinned[i]}
                     noteBoxHeight={noteBoxHeight[i]}
                     maximizeNoteBox={maximizeNoteBox[i]}
                     ownWindow={ownWindow}
-                    noteboxBarHandler={noteboxBarHandler}
+                    noteboxBar={noteboxBarHandler}
+                    xulswordState={xulswordStateHandler}
                     onWheel={(e) => {
                       eHandler(e);
                       popupParentHandler(e, panel);

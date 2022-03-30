@@ -28,11 +28,23 @@ export type WindowArgType =
   | 'self'
   | 'children';
 
+export type ScrollType =
+  | {
+      verseAt: 'top' | 'center' | 'bottom';
+      skipLocalPanels?: boolean[];
+      skipWindows?: boolean;
+    }
+  | null
+  | undefined;
+
 // Default values for these keys must be set in the default
-// JSON Pref file or an error will be thrown.
+// JSON Pref file or an error will be thrown. These values
+// are always kept in sync between Prefs, the application menu
+// the main xulsword window state.
 export interface XulswordStatePref {
   location: LocationVKType | null;
   selection: LocationVKType | null;
+  scroll: ScrollType;
 
   keys: (string | null)[];
 
@@ -48,20 +60,31 @@ export interface XulswordStatePref {
   ilModules: (string | null)[];
   mtModules: (string | null)[];
 
-  flagScroll: number[];
   isPinned: boolean[];
   noteBoxHeight: number[];
   maximizeNoteBox: number[];
 }
 
+// Default values for these keys must be set in the default
+// JSON Pref file or an error will be thrown. These values
+// are always kept in sync between Prefs, the application menu
+// and all window states.
 export type GlobalPref = {
-  fontSize: number;
-  locale: string;
-  locales: [string, string, string][];
-  popup: {
-    selection: {
-      [k in keyof FeatureType]: string;
+  global: {
+    fontSize: number;
+    locale: string;
+    locales: [string, string, string][];
+    popup: {
+      selection: {
+        [k in keyof FeatureType]: string;
+      };
     };
+  };
+  xulsword: {
+    location: LocationVKType | null;
+    selection: LocationVKType | null;
+    scroll: ScrollType;
+    show: ShowType;
   };
 };
 
@@ -459,7 +482,7 @@ const CommandsPublic = {
   goToLocationVK: func as unknown as (
     location: LocationVKType,
     selection: LocationVKType,
-    flagScroll?: number
+    scroll?: ScrollType
   ) => void,
 };
 
