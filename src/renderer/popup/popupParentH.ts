@@ -4,7 +4,7 @@ import C from '../../constant';
 import { clone, JSON_stringify, ofClass } from '../../common';
 import { getPopupInfo } from '../../libswordElemInfo';
 import G from '../rg';
-import { getContextModule } from '../rutil';
+import { getContextModule, scrollIntoView } from '../rutil';
 import { delayHandler } from '../libxul/xul';
 
 import type { ElemInfo } from '../../libswordElemInfo';
@@ -183,6 +183,8 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
           'sr',
           'dt',
           'dtl',
+          'gfn',
+          'crref',
           'popupCloseLink',
           'popupBackLink',
           'towindow',
@@ -224,6 +226,32 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
               };
               return s;
             });
+          }
+          break;
+        }
+        case 'gfn': {
+          if (info) {
+            const gfns = parent.getElementsByClassName('gfn');
+            Array.from(gfns).forEach((gfn: any) => {
+              if (gfn !== elem && gfn.dataset.title === info.title)
+                scrollIntoView(gfn, parent);
+            });
+          }
+          break;
+        }
+        case 'crref': {
+          if (info) {
+            const { bk, ch, vs, lv, mod } = info;
+            if (bk && ch && mod) {
+              const loc = {
+                book: bk,
+                chapter: Number(ch),
+                verse: vs || 1,
+                lastverse: lv || 1,
+                v11n: G.Tab[mod].v11n || 'KJV',
+              };
+              G.Commands.goToLocationVK(loc, loc);
+            }
           }
           break;
         }
