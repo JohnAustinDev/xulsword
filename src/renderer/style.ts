@@ -108,13 +108,16 @@ class DynamicStyleSheet {
           Object.entries(configobj).forEach((entry2) => {
             const [instance, config] = entry2;
             if (instance !== 'default') {
+              // Default for this type (module or locale default)
               insertRule(
                 sheet,
                 prefix,
                 instance,
                 getConfig(style, type, 'default')
               );
+              // Config for this type and instance (a module or locale config)
               insertRule(sheet, prefix, instance, config);
+              // User Pref for this type and instance
               insertRule(
                 sheet,
                 prefix,

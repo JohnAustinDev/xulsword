@@ -20,6 +20,7 @@
   height: 30px;
 }
 .atext .text-pin {
+  transform: scaleX(-1);
   float: left;
   width: 28px;
   height: 37px;
@@ -31,6 +32,7 @@
   z-index: 20;
 }
 html[dir='rtl'] .atext .text-pin {
+  transform: none;
   float: right;
   left: auto;
   right: -8px;

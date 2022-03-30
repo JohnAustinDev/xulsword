@@ -10,24 +10,15 @@
   font-style: normal;
   text-indent: 0px;
 }
-.npopup,
-.npopup span {
-  color: black;
-}
 
 .empty {
   cursor: help !important;
-}
-.sb .hl .npopup div,
-.sb .hl .npopup span {
-  color: black;
 }
 html[dir='rtl'] .npopup {
   left: auto;
   right: 15px;
 }
 .npopupTX {
-  font-size: 1.1em;
   overflow: auto;
   padding: 10px 20px 20px 14px;
   background: rgb(245, 220, 255);
@@ -40,6 +31,7 @@ html[dir='rtl'] .npopup {
   background: rgb(248 246 248);
 }
 .popup-text {
+  font-size: 1.1em;
   width: 100%;
   clear: both;
 }

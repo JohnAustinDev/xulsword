@@ -480,8 +480,6 @@ h3 {
   content: ' ';
 }
 .sb .hl,
-.sb .hl div,
-.sb .hl span,
 .sb .hl .wordsOfJesus {
   color: blue;
 }

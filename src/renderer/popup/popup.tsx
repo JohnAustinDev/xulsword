@@ -281,7 +281,7 @@ class Popup extends React.Component {
 
     const refbible = getRefBible(mod, type);
 
-    let cls = `userFontBase cs-locale`;
+    let cls = 'cs-locale';
     if (isWindow) cls += ` ownWindow viewport`;
 
     return (
@@ -293,7 +293,7 @@ class Popup extends React.Component {
         ref={npopup}
       >
         <div
-          className="npopupTX"
+          className="npopupTX userFontBase"
           onClick={props.onPopupClick}
           onMouseDown={handler}
           onMouseMove={handler}

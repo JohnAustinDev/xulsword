@@ -15,7 +15,7 @@ import { jsdump } from './mutil';
 import type { ConfigType, FeatureType, GlobalPrefType, GType } from '../type';
 import getFontFamily from './fontfamily';
 
-function localeConfig(locale: string) {
+export function localeConfig(locale: string) {
   const lconfig = {} as ConfigType;
   const toptions = { lng: locale, ns: 'common/config' };
 
@@ -48,7 +48,17 @@ function localeConfig(locale: string) {
 export function getLocaleConfigs(): { [i: string]: ConfigType } {
   if (!Cache.has('localeConfigs')) {
     const ret = {} as { [i: string]: ConfigType };
+    // Default locale config must have all CSS settings in order to
+    // override unrelated ancestor config CSS.
     ret.locale = localeConfig(i18next.language);
+    Object.entries(C.ConfigTemplate).forEach((entry) => {
+      const key = entry[0] as keyof ConfigType;
+      const typeobj = entry[1];
+      if (typeobj.CSS && !ret.locale[key]) {
+        const v = C.LocaleDefaultConfigCSS[key] || 'initial';
+        ret.locale[key] = `${v} !important`;
+      }
+    });
     const locales = Prefs.getComplexValue(
       'global.locales'
     ) as GlobalPrefType['global']['locales'];
@@ -59,11 +69,6 @@ export function getLocaleConfigs(): { [i: string]: ConfigType } {
     Cache.write(ret, 'localeConfigs');
   }
   return Cache.read('localeConfigs');
-}
-
-export function getProgramConfig() {
-  const ret = clone(localeConfig(i18next.language));
-  return ret;
 }
 
 // If a module config fontFamily specifies a URL to a font, rather

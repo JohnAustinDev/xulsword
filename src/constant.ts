@@ -162,6 +162,12 @@ const C = {
   } as { [key in keyof ConfigType]: { modConf: string | null, localeConf: string | null, CSS: string | null }},
   /* eslint-enable prettier/prettier */
 
+  // This should be the same as the global-html.css html rule.
+  LocaleDefaultConfigCSS: {
+    fontFamily: 'arial',
+    color: 'rgb(40, 40, 40)',
+  } as { [key in keyof ConfigType]: string },
+
   FallbackLanguage: {
     en: 'en',
     ru: 'en',

@@ -9,6 +9,7 @@ import {
   IpcMainInvokeEvent,
   shell,
 } from 'electron';
+import i18next from 'i18next';
 import { inlineFile } from './components/nsILocalFile';
 import Dirs from './modules/dirs';
 import Prefs from './modules/prefs';
@@ -16,12 +17,12 @@ import LibSword from './modules/libsword';
 import Commands from './commands';
 import Data from './modules/data';
 import {
-  getProgramConfig,
   getLocaleConfigs,
   getModuleConfigs,
   getModuleConfigDefault,
   getFontFaceConfigs,
   getFeatureModules,
+  localeConfig,
 } from './config';
 import Window, { resolveHtmlPath } from './window';
 import {
@@ -148,7 +149,7 @@ class GClass implements GType {
   }
 
   get ProgramConfig() {
-    return getProgramConfig();
+    return localeConfig(i18next.language);
   }
 
   get FontFaceConfigs() {

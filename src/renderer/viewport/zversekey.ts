@@ -292,13 +292,13 @@ export function getNoteHTML(
         [key in keyof ShowType]?: boolean;
       }
     | null, // null to show all types of notes
-  wx = 0,
+  panelIndex = 0,
   openCRs = false,
   keepOnlyNote = '' // title of a single note to keep
 ) {
   if (!notes) return '';
 
-  const w = wx || 0; // w is only needed for unique id creation
+  const index = panelIndex || 0; // w is only needed for unique id creation
 
   let note = notes.split(/(?=<div[^>]+class="nlist")/);
   note = note.sort((a: string, b: string) => {
@@ -338,7 +338,7 @@ export function getNoteHTML(
       });
       if (p.ntype) {
         // Display this note as a row in the main table
-        t += `<div id="w${w}.footnote.${p.title}" `;
+        t += `<div id="w${index}.footnote.${p.title}" `;
         t += `data-title="${p.nid}.${p.bk}.${p.ch}.${p.vs}.${p.mod}" `;
         t += `class="fnrow ${openCRs ? 'cropened' : ''}">`;
 
@@ -371,7 +371,7 @@ export function getNoteHTML(
         switch (p.ntype) {
           case 'cr':
             // If this is a cross reference, then parse the note body for references and display them
-            t += getRefHTML(body, mod, w, false, true);
+            t += getRefHTML(body, mod, index, false, !openCRs);
             break;
 
           case 'fn':
