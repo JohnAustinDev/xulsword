@@ -347,7 +347,6 @@ const Window: GType['Window'] = {
       if (win) {
         const resets: ResetType[] = [
           'cache-reset',
-          'module-reset',
           'component-reset',
           'dynamic-stylesheet-reset',
         ];

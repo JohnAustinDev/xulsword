@@ -393,6 +393,7 @@ const C = {
       place: {} as PlaceType,
       columns: 0,
       ilModule: '',
+      ilModuleOption: [],
     },
     Commentaries: {
       location: null,
@@ -410,7 +411,7 @@ const C = {
       modkey: '',
       show: {} as ShowType,
     },
-  } as { [key in ModTypes]: Partial<XulswordStatePref> },
+  } as { [key in ModTypes]: Partial<AtextPropsType> },
 
   // These Atext props effect the verse scroll. If these props all have
   // the same values as the previous rendering, and the same is true of

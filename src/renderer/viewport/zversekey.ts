@@ -11,6 +11,7 @@ import G from '../rg';
 import { delayHandler } from '../libxul/xul';
 
 import type {
+  AtextPropsType,
   AtextStateType,
   LocationVKType,
   ShowType,
@@ -47,21 +48,21 @@ export function getIntroductions(mod: string, vkeytext: string) {
   return { textHTML: intro, intronotes: notes };
 }
 
-export function getChapterHeading(props: {
-  location: LocationVKType | null;
-  module: string | undefined;
-  ilModuleOption: string[] | undefined;
-  ilModule: string | undefined;
-}) {
-  if (!props.location || !props.module) return { textHTML: '', intronotes: '' };
-  const { book, chapter } = props.location;
-  let l = G.ModuleConfigs[props.module]?.AssociatedLocale;
+export function getChapterHeading(
+  location: AtextPropsType['location'],
+  module: AtextPropsType['module'],
+  ilModuleOption: AtextPropsType['ilModuleOption'],
+  ilModule: AtextPropsType['ilModule']
+) {
+  if (!location || !module) return { textHTML: '', intronotes: '' };
+  const { book, chapter } = location;
+  let l = G.ModuleConfigs[module]?.AssociatedLocale;
   if (!l) l = i18next.language; // otherwise use current program locale
   const toptions = { lng: l, ns: 'common/books' };
 
-  const intro = getIntroductions(props.module, `${book} ${chapter}`);
+  const intro = getIntroductions(module, `${book} ${chapter}`);
 
-  let lt = G.LibSword.getModuleInformation(props.module, 'NoticeLink');
+  let lt = G.LibSword.getModuleInformation(module, 'NoticeLink');
   if (lt === C.NOTFOUND) lt = '';
   else lt = lt.replace('<a>', "<a class='noticelink'>");
 
@@ -72,11 +73,11 @@ export function getChapterHeading(props: {
     chapter === 1 ? ' chapterfirst' : ''
   } cs-${l}">`;
 
-  html += `<div class="chapnotice cs-${props.module}${!lt ? ' empty' : ''}">`;
+  html += `<div class="chapnotice cs-${module}${!lt ? ' empty' : ''}">`;
   html += `<div class="noticelink-c">${lt}</div>`;
   html += '<div class="noticetext">'; // contains a span with class cs-mod because LibSword.getModuleInformation doesn't supply the class
-  html += `<div class="cs-${props.module}">${
-    lt ? G.LibSword.getModuleInformation(props.module, 'NoticeText') : ''
+  html += `<div class="cs-${module}">${
+    lt ? G.LibSword.getModuleInformation(module, 'NoticeText') : ''
   }</div>`;
   html += '</div>';
   html += '<div class="head-line-break"></div>';
@@ -96,23 +97,19 @@ export function getChapterHeading(props: {
     book,
     chapter,
     1,
-    props.module,
+    module,
   ].join('.')}"></div>`;
   html += `<div class="introlink${
     !intro.textHTML ? ' empty' : ''
-  }" data-title="${[book, chapter, 1, props.module].join('.')}">${i18next.t(
+  }" data-title="${[book, chapter, 1, module].join('.')}">${i18next.t(
     'IntroLink',
     toptions
   )}</div>`;
-  if (
-    props.ilModule &&
-    props.ilModuleOption &&
-    props.ilModuleOption.length > 1
-  ) {
+  if (ilModule && ilModuleOption && ilModuleOption.length > 1) {
     html += '<div class="origselect">';
     html += '<select>';
-    props.ilModuleOption.forEach((m) => {
-      const selected = m === props.ilModule;
+    ilModuleOption.forEach((m) => {
+      const selected = m === ilModule;
       html += `<option class="origoption cs-${m}" value="${book}.1.1.${m}"${
         selected ? ' selected="selected"' : ''
       }>${G.Tab[m].label}</option>`;
@@ -128,7 +125,7 @@ export function getChapterHeading(props: {
 
   html += `<div class="introtext${
     !intro.textHTML ? ' empty' : ''
-  }" data-title="${[book, chapter, 1, props.module].join('.')}">${
+  }" data-title="${[book, chapter, 1, module].join('.')}">${
     intro.textHTML ? intro.textHTML : ''
   }</div>`;
 

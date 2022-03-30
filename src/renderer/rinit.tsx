@@ -188,5 +188,6 @@ export default function renderToRoot(
 
   window.ipc.renderer.on('close', () => {
     if (typeof unloadXUL === 'function') unloadXUL();
+    Cache.clear();
   });
 }

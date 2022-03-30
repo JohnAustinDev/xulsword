@@ -247,6 +247,8 @@ app.on('window-all-closed', () => {
   // Write all prefs to disk when app closes
   G.Prefs.writeAllStores();
 
+  Cache.clear();
+
   // Respect the OSX convention of having the application in memory even
   // after all windows have been closed
   if (process.platform !== 'darwin') {

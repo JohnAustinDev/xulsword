@@ -10,6 +10,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import i18next from 'i18next';
 import { getElementInfo } from '../../libswordElemInfo';
+import Cache from '../../cache';
 import C from '../../constant';
 import { diff, trim, sanitizeHTML, stringHash, clone } from '../../common';
 import G from '../rg';
@@ -47,17 +48,6 @@ import type {
   AtextStateType,
   PinPropsType,
 } from '../../type';
-
-const memoize = require('memoizee');
-
-const libswordResponseMemoized = memoize(libswordText, {
-  max: 100, // remember up to 100 LibSword responses
-  normalizer: (...args: any) =>
-    args.map((arg: any) => stringHash(arg)).join('+'),
-});
-window.ipc.renderer.on('module-reset', () => {
-  libswordResponseMemoized.clear();
-});
 
 const defaultProps = {
   ...xulDefaultProps,
@@ -163,7 +153,7 @@ class Atext extends React.Component {
   // LibSword to write text to the already rendered component's sb
   // (scripture box) and nb (note box) divs. It first checks if sb
   // already contains the necessary LibSword response and if not,
-  // memoizes the required response and updates sb and nb contents.
+  // caches the required response and updates sb and nb contents.
   // It then does any srolling, highlighting, footnote adjustments
   // etc. which must wait until Atext contains the LibSword response.
   // Also, the pin state is updated if it has changed, and a few other
@@ -478,7 +468,17 @@ class Atext extends React.Component {
     const sbe = sbref !== null ? sbref.current : null;
     const nbe = nbref !== null ? nbref.current : null;
     if (sbe && nbe) {
-      const response = libswordResponseMemoized(libswordProps, i);
+      const libswordHash = stringHash(
+        {
+          ...libswordProps,
+          location: { ...libswordProps.location, verse: 0 },
+        },
+        i
+      );
+      if (!Cache.has(libswordHash)) {
+        Cache.write(libswordText(libswordProps, i), libswordHash);
+      }
+      const response = Cache.read(libswordHash);
       // eslint-disable-next-line prettier/prettier
       // console.log(`${flag} panel ${i} ${verseKey(libswordProps.location || '').osisRef()}:`);
       const isDict =
@@ -521,13 +521,7 @@ class Atext extends React.Component {
         libswordImgSrc(nbe);
       }
       if (flag === 'overwrite') {
-        sbe.dataset.libsword = stringHash(
-          {
-            ...libswordProps,
-            location: { ...libswordProps.location, verse: 0 },
-          },
-          i
-        );
+        sbe.dataset.libsword = libswordHash;
         sbe.dataset.scroll = undefined;
       }
       const nbc = nbe.parentNode as any;

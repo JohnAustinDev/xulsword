@@ -15,11 +15,13 @@ import { getDictEntryHTML } from './zdictionary';
 
 import type { AtextProps } from './atext';
 import type {
+  AtextPropsType,
   LocationVKType,
   PinPropsType,
   PlaceType,
   SwordFilterType,
   SwordFilterValueType,
+  XulswordStatePref,
 } from '../../type';
 
 export type LibSwordResponse = {
@@ -29,9 +31,15 @@ export type LibSwordResponse = {
   intronotes: string;
 };
 
-export function addUserNotes(content: LibSwordResponse, props: AtextProps) {}
+export function addUserNotes(
+  content: LibSwordResponse,
+  props: Partial<AtextProps>
+) {}
 
-export function libswordText(props: AtextProps, n: number): LibSwordResponse {
+export function libswordText(
+  props: Partial<AtextPropsType>,
+  n: number
+): LibSwordResponse {
   const r = {
     headHTML: '',
     textHTML: '',
@@ -39,8 +47,9 @@ export function libswordText(props: AtextProps, n: number): LibSwordResponse {
     notes: '',
     intronotes: '',
   };
-  const { module, ilModule, location, modkey, place, show } = props;
-  if (!module) return r;
+  const { module, ilModule, ilModuleOption, location, modkey, place, show } =
+    props;
+  if (!module || !show) return r;
 
   const { type } = G.Tab[module];
   const moduleLocale = G.ModuleConfigs[module].AssociatedLocale;
@@ -199,49 +208,53 @@ export function libswordText(props: AtextProps, n: number): LibSwordResponse {
       let key = modkey;
       const keylist = Cache.read('keylist', module);
       if (!key || !keylist.includes(key)) [key] = keylist;
-      if (key === 'DailyDevotionToday') {
-        const today = new Date();
-        const mo = today.getMonth() + 1;
-        const dy = today.getDate();
-        key = `${mo < 10 ? '0' : ''}${String(mo)}.${dy < 10 ? '0' : ''}${dy}`;
-      }
+      if (key) {
+        if (key === 'DailyDevotionToday') {
+          const today = new Date();
+          const mo = today.getMonth() + 1;
+          const dy = today.getDate();
+          key = `${mo < 10 ? '0' : ''}${String(mo)}.${dy < 10 ? '0' : ''}${dy}`;
+        }
 
-      // Build and cache the selector list.
-      if (!Cache.has('keyHTML', module)) {
-        let html = '';
-        Cache.read('keylist', module).forEach((k1: any) => {
-          const id = `${stringHash(k1)}.0`;
-          html += `<div id="${id}" class="dict-key">${k1}</div>`;
-        });
-        Cache.write(html, 'keyHTML', module);
-      }
+        // Build and cache the selector list.
+        if (!Cache.has('keyHTML', module)) {
+          let html = '';
+          Cache.read('keylist', module).forEach((k1: any) => {
+            const id = `${stringHash(k1)}.0`;
+            html += `<div id="${id}" class="dict-key">${k1}</div>`;
+          });
+          Cache.write(html, 'keyHTML', module);
+        }
 
-      // Set the final results
-      const de = getDictEntryHTML(key, module, true);
-      r.textHTML += `<div class="dictentry">${de}</div>`;
-      const sel = new RegExp(`(dict-key)(">${escapeRE(key)}<)`);
-      const list = Cache.read('keyHTML', module)
-        .replace(sel, '$1 dictselectkey$2')
-        .replace(/(?<=id="[^"]+\.)0(?=")/g, n.toString());
-      r.noteHTML += `
+        // Set the final results
+        const de = getDictEntryHTML(key, module, true);
+        r.textHTML += `<div class="dictentry">${de}</div>`;
+        const sel = new RegExp(`(dict-key)(">${escapeRE(key)}<)`);
+        const list = Cache.read('keyHTML', module)
+          .replace(sel, '$1 dictselectkey$2')
+          .replace(/(?<=id="[^"]+\.)0(?=")/g, n.toString());
+        r.noteHTML += `
           <div class="dictlist">
             <div class="headerbox">
               <input type="text" value="${key}" class="cs-${module} dictkeyinput" spellcheck="false"/ >
             </div>
             <div class="keylist">${list}</div>
           </div>`;
+      }
       break;
     }
     case C.GENBOOK: {
-      r.textHTML += G.LibSword.getGenBookChapterText(module, modkey, options);
-      r.noteHTML += G.LibSword.getNotes();
+      if (modkey) {
+        r.textHTML += G.LibSword.getGenBookChapterText(module, modkey, options);
+        r.noteHTML += G.LibSword.getNotes();
+      }
       break;
     }
     default:
   }
 
   // Add usernotes to text
-  if (props.show.usernotes) addUserNotes(r, props);
+  if (show.usernotes) addUserNotes(r, props);
 
   // handle footnotes.
   // NOTE: This step is by far the slowest part of Atext render,
@@ -254,7 +267,7 @@ export function libswordText(props: AtextProps, n: number): LibSwordResponse {
     ];
     const shownb: any = {};
     notetypes.forEach((nt) => {
-      shownb[nt] = show[nt] && place[nt] === 'notebox';
+      shownb[nt] = show[nt] && place && place[nt] === 'notebox';
     });
     if (
       Object.keys(shownb).some((s) => {
@@ -277,8 +290,19 @@ export function libswordText(props: AtextProps, n: number): LibSwordResponse {
   }
 
   // Add chapter heading and intronotes
-  if (G.Tab[module].isVerseKey && show.headings && r.textHTML) {
-    const headInfo = getChapterHeading(props);
+  if (
+    G.Tab[module].isVerseKey &&
+    show.headings &&
+    r.textHTML &&
+    location &&
+    ilModuleOption
+  ) {
+    const headInfo = getChapterHeading(
+      location,
+      module,
+      ilModuleOption,
+      ilModule
+    );
     r.textHTML = headInfo.textHTML + r.textHTML;
     r.intronotes = headInfo.intronotes;
   }
