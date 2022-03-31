@@ -98,7 +98,14 @@ export type AtextStateType = {
 
 export type PinPropsType = Pick<
   AtextPropsType,
-  'location' | 'selection' | 'scroll' | 'module' | 'ilModule' | 'modkey'
+  | 'location'
+  | 'selection'
+  | 'scroll'
+  | 'show'
+  | 'place'
+  | 'module'
+  | 'ilModule'
+  | 'modkey'
 >;
 
 export type XulswordStateArgType =

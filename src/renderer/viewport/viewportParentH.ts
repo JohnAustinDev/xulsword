@@ -121,12 +121,22 @@ function setState(
   const isPinned = ispinned === 'true';
   if (!isPinned) {
     comp.setState((prevState: XulswordState | ViewportWinState) => {
-      const { location, selection, scroll, panels, ilModules, keys } =
-        prevState;
+      const {
+        location,
+        selection,
+        scroll,
+        show,
+        place,
+        panels,
+        ilModules,
+        keys,
+      } = prevState;
       const pinProps: PinPropsType = {
         location,
         selection,
         scroll,
+        show,
+        place,
         module: panels[panelIndex] || '',
         ilModule: ilModules[panelIndex] || '',
         modkey: keys[panelIndex] || '',
@@ -140,7 +150,9 @@ function setState(
             switch (key) {
               case 'location':
               case 'selection':
-              case 'scroll': {
+              case 'scroll':
+              case 'show':
+              case 'place': {
                 s[key] = newPinProps[key] as any;
                 break;
               }

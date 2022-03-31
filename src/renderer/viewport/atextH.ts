@@ -37,7 +37,9 @@ function scroll2Note(atext: HTMLElement, id: string) {
 
 export default function handler(this: Atext, es: React.SyntheticEvent) {
   const props = this.props as AtextProps;
-  const { isPinned, module, panelIndex: index, place } = props;
+  const { isPinned, module, panelIndex: index, place: pl } = props;
+  const { pin } = this.state as AtextStateType;
+  const place = isPinned && pin ? pin.place : pl;
   const target = es.target as HTMLElement;
   const atext = es.currentTarget as HTMLElement;
   const type = module ? G.Tab[module].type : '';

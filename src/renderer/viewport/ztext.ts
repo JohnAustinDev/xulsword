@@ -21,7 +21,6 @@ import type {
   PlaceType,
   SwordFilterType,
   SwordFilterValueType,
-  XulswordStatePref,
 } from '../../type';
 
 export type LibSwordResponse = {
@@ -257,8 +256,6 @@ export function libswordText(
   if (show.usernotes) addUserNotes(r, props);
 
   // handle footnotes.
-  // NOTE: This step is by far the slowest part of Atext render,
-  // particularly when crossrefs include many links.
   if (G.Tab[module].isVerseKey) {
     const notetypes: (keyof PlaceType)[] = [
       'footnotes',

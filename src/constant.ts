@@ -383,6 +383,8 @@ const C = {
     location: null,
     selection: null,
     scroll: null,
+    show: {} as ShowType,
+    place: {} as PlaceType,
     module: '',
     ilModule: '',
     modkey: '',

@@ -6,10 +6,11 @@ import { getPopupInfo } from '../../libswordElemInfo';
 import G from '../rg';
 import { getContextModule, scrollIntoView } from '../rutil';
 import { delayHandler } from '../libxul/xul';
+import { getPopupHTML } from './popupH';
 
 import type { ElemInfo } from '../../libswordElemInfo';
 import type { PlaceType, ShowType } from '../../type';
-import { getPopupHTML } from './popupH';
+import type Atext from '../viewport/atext';
 
 let WheelScrolling = false;
 
@@ -26,6 +27,8 @@ export interface PopupParent {
 export type PopupParentProps = {
   place: PlaceType;
   show: ShowType;
+  isPinned: boolean[];
+  atextRefs: React.RefObject<Atext>[];
 };
 
 export type PopupParentState = {
@@ -44,9 +47,15 @@ export function popupParentHandler(
 ) {
   const state = this.state as PopupParentState;
   const props = this.props as PopupParentProps;
-  const { place, show } = props;
   const target = es.target as HTMLElement;
   const type = module ? G.Tab[module].type : null;
+  const { place: pl, show: sh, atextRefs, isPinned } = props;
+  const atext = ofClass(['atext'], target);
+  const index = Number(atext?.element && atext.element.dataset.index) || 0;
+  const atr = ((atext && atextRefs[index].current) ||
+    null) as PopupParent | null;
+  const place = (atr && isPinned[index] && atr.state.pin.place) || pl;
+  const show = (atr && isPinned[index] && atr.state.pin.show) || sh;
   switch (es.type) {
     case 'mouseover': {
       const e = es as React.MouseEvent;

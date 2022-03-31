@@ -85,7 +85,6 @@ type ViewportProps = PopupParentProps &
     panels: (string | null)[];
     ilModules: (string | undefined)[];
     mtModules: (string | undefined)[];
-    isPinned: boolean[];
     noteBoxHeight: number[];
     maximizeNoteBox: number[];
     ownWindow: boolean;
@@ -93,7 +92,6 @@ type ViewportProps = PopupParentProps &
     eHandler: (e: React.SyntheticEvent) => void;
     noteboxBarHandler: NoteboxBarHandlerType;
     xulswordStateHandler: (s: Partial<XulswordStatePref>) => void;
-    atextRefs: React.RefObject<Atext>[];
   };
 
 type ViewportState = PopupParentState & {
