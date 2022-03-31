@@ -94,8 +94,8 @@ export function noteboxBarHandler(
           maximizeNoteBox[index] = noteBoxHeight[index];
           const { columns: clsx } = atext.dataset;
           const columns = Number(clsx);
-          let stopHeight = atext.clientHeight - hd.offsetHeight;
-          if (columns === 1) stopHeight -= C.UI.Atext.bbTopMargin;
+          let stopHeight = atext.offsetHeight - hd.offsetHeight;
+          if (columns === 1) stopHeight -= C.UI.Atext.bbSingleColTopMargin;
           noteBoxHeight[index] = stopHeight;
         } else if (maximize === false) {
           noteBoxHeight[index] = C.UI.Atext.bbBottomMargin;
@@ -426,8 +426,9 @@ export default function handler(
                 maximizeNoteBox[index] = noteBoxHeight[index];
                 const { columns: clsx } = atext.dataset;
                 const columns = Number(clsx);
-                let stopHeight = atext.clientHeight - hd.offsetHeight;
-                if (columns === 1) stopHeight -= C.UI.Atext.bbTopMargin;
+                let stopHeight = atext.offsetHeight - hd.offsetHeight;
+                if (columns === 1)
+                  stopHeight -= C.UI.Atext.bbSingleColTopMargin;
                 noteBoxHeight[index] = stopHeight;
               }
               return { maximizeNoteBox, noteBoxHeight };
@@ -523,31 +524,17 @@ export default function handler(
         }
         case 'fnlink':
         case 'crref': {
-          if (atext && location && p?.bk && p.ch) {
-            switch (type) {
-              case C.BIBLE:
-              case C.COMMENTARY: {
-                const newloc = verseKey(
-                  {
-                    book: p.bk,
-                    chapter: Number(p.ch),
-                    verse: p.vs,
-                    lastverse: p.lv,
-                    v11n: (p.mod && G.Tab[p.mod].v11n) || 'KJV',
-                  },
-                  location.v11n
-                ).location();
-                setState(this, atext, () => {
-                  const s: Partial<PinPropsType> = {
-                    location: newloc,
-                    selection: newloc,
-                    scroll: { verseAt: 'center' },
-                  };
-                  return s;
-                });
-                break;
-              }
-              default:
+          if (p) {
+            const { bk, ch, vs, lv, mod } = p;
+            if (bk && ch && mod) {
+              const loc = {
+                book: bk,
+                chapter: Number(ch),
+                verse: vs || 1,
+                lastverse: lv || 1,
+                v11n: G.Tab[mod].v11n || 'KJV',
+              };
+              G.Commands.goToLocationVK(loc, loc);
             }
           }
           break;

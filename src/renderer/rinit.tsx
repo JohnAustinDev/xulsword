@@ -74,9 +74,7 @@ async function i18nInit(namespaces: string[]) {
     .use(initReactI18next)
     .init({
       lng: lang,
-      fallbackLng: isDevelopment
-        ? 'cimode'
-        : C.FallbackLanguage[lang] || ['en'],
+      fallbackLng: C.FallbackLanguage[lang] || ['en'],
       supportedLngs: supportedLangs,
       preload: supportedLangs,
 

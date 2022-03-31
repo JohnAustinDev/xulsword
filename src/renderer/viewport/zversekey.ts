@@ -16,6 +16,7 @@ import type {
   LocationVKType,
   ShowType,
   TextVKType,
+  V11nType,
   XulswordStatePref,
 } from '../../type';
 import type Xulsword from '../xulsword/xulsword';
@@ -132,6 +133,21 @@ export function getChapterHeading(
   return { textHTML: html, intronotes: intro.intronotes };
 }
 
+function getFootnoteText(module: string, ref: string, noteID: string): string {
+  G.LibSword.getChapterText(module, ref);
+  const notes = G.LibSword.getNotes().split(/(?=<div[^>]+class="nlist")/);
+  for (let x = 0; x < notes.length; x += 1) {
+    const osisID = notes[x].match(/data-osisID="(.*?)"/); // getAttribute('data-osisID');
+    if (osisID && osisID[1] === ref + noteID) {
+      return notes[x].replace(/(^<div[^>]+>|<\/div>$)/g, '');
+      break;
+    }
+  }
+  return '';
+}
+
+const NoterefRE = /^\s*(([^:]+):)?([^!:]+)(!.*?)\s*$/;
+
 // This function tries to read a ";" separated list of Scripture
 // references and returns HTML of the reference texts. It looks for
 // osisRef type references as well as free hand references which
@@ -140,104 +156,75 @@ export function getChapterHeading(
 // case after a comma). When necessary, this function will look through
 // other Bible versions until it finds a version that includes the
 // passage. It also takes care of verse system conversions in the process.
-export function getRefHTML(
-  refsx: string,
-  mod: string,
-  w = 0,
-  keepTextNotes = false,
-  noVerseText = false
-): string {
-  const v11n = (mod in G.Tab && G.Tab[mod].v11n) || 'KJV';
-
-  // are there any commas? then add the sub refs to the list...
-  const refs = refsx.split(/\s*;\s*/);
-  for (let i = 0; i < refs.length; i += 1) {
-    const verses = refs[i].split(/\s*,\s*/);
-    if (verses.length !== 1) {
-      let r = 1;
-      for (let v = 0; v < verses.length; v += 1) {
-        refs.splice(i + 1 - r, r, verses[v]);
-        i += 1;
-        i -= r;
-        r = 0;
+export function resolveExtendedScripRef(
+  reflist: string | string[], // extended string scripture reference or array of regular refs
+  mod: string, // primary module to use
+  altmods?: string[] | null, // alternate modules to try if any
+  keepNotes?: boolean,
+  noText?: boolean
+): TextVKType[] {
+  let reflistA = Array.isArray(reflist) ? reflist : [];
+  if (typeof reflist === 'string') {
+    reflistA = reflist.split(/\s*;\s*/);
+    for (let i = 0; i < reflist.length; i += 1) {
+      // Are there any commas? then add the sub refs to the list...
+      const verses = reflist[i].split(/\s*,\s*/);
+      if (verses.length !== 1) {
+        let r = 1;
+        for (let v = 0; v < verses.length; v += 1) {
+          reflistA.splice(i + 1 - r, r, verses[v]);
+          i += 1;
+          i -= r;
+          r = 0;
+        }
       }
     }
   }
-
-  const tabs = G.Prefs.getComplexValue(
-    'xulsword.tabs'
-  ) as XulswordStatePref['tabs'];
-
+  const resolved: TextVKType[] = [];
   let bk = '';
   let ch = 0;
   let vs = 0;
-  let html = '';
-  let sep = '';
-  refs.forEach((ref) => {
-    if (!ref) return;
-
-    // is this a reference to a footnote?
-    if (ref.indexOf('!') !== -1) {
-      let footnote = '-----';
-      const m = ref.match(/^\s*(([^:]+):)?([^!:]+)(!.*?)\s*$/);
-      if (m) {
-        const rmod = m[1] ? m[2] : mod;
-        const rref = m[3];
-        const ext = m[4];
-        // find the footnote which is being referenced
-        G.LibSword.getChapterText(rmod, rref);
-        const notes = G.LibSword.getNotes().split(/(?=<div[^>]+class="nlist")/);
-        for (let x = 0; x < notes.length; x += 1) {
-          const osisID = notes[x].match(/data-osisID="(.*?)"/); // getAttribute('data-osisID');
-          if (osisID && osisID[1] === rref + ext) {
-            footnote = notes[x].replace(/(^<div[^>]+>|<\/div>$)/g, '');
-            break;
-          }
-        }
+  reflistA.forEach((r) => {
+    let m = mod;
+    let ref = r;
+    let noteID;
+    let text = '';
+    const noteref = ref.match(NoterefRE);
+    if (noteref) {
+      [, , m, ref, noteID] = noteref;
+      if (!m) m = mod;
+      if (!noText && m && noteID) {
+        text = getFootnoteText(m, ref, noteID);
       }
-      const opd =
-        G.ProgramConfig.direction === G.Tab[mod].direction
-          ? ''
-          : ' opposing-program-direction';
-      html += sep;
-      html += `<bdi><span class="fntext cs-${
-        isASCII(footnote) ? C.DEFAULTLOCALE : mod
-      }${opd}">${footnote}</span></bdi>`;
-      sep = '<span class="cr-sep"></span>';
-      return;
     }
-
-    // Try and parse out a complete reference
-    const r = verseKey(ref, (mod in G.Tab && G.Tab[mod].v11n) || undefined);
-
-    // if not, then try and manually parse it and fill in any missing values
-    // from the previous pass
-    if (bk && !r.book) {
+    const v11n = (m && m in G.Tab && G.Tab[m].v11n) || undefined;
+    const vk = verseKey(ref, v11n);
+    if (bk && !vk.book) {
       const ref2 = ref.replace(/[^\w\d:.-]+/g, '');
       const match = ref2.match(/^(\d+)(?::(\d+))?(?:-(\d+))?/);
       if (match) {
         const [, chvs1, vrs, chvs2] = match;
-        r.book = bk;
+        vk.book = bk;
         if (vrs) {
-          r.chapter = Number(chvs1);
-          r.verse = Number(vrs);
-          r.lastverse = chvs2 ? Number(chvs2) : null;
+          vk.chapter = Number(chvs1);
+          vk.verse = Number(vrs);
+          vk.lastverse = chvs2 ? Number(chvs2) : null;
         } else if (ch && vs) {
-          r.chapter = ch;
-          r.verse = Number(chvs1);
-          r.lastverse = chvs2 ? Number(chvs2) : null;
+          vk.chapter = ch;
+          vk.verse = Number(chvs1);
+          vk.lastverse = chvs2 ? Number(chvs2) : null;
         } else {
-          r.chapter = Number(chvs1);
-          r.verse = null;
-          r.lastverse = null;
+          vk.chapter = Number(chvs1);
+          vk.verse = null;
+          vk.lastverse = null;
         }
       }
     }
 
-    if (r.book) {
-      bk = r.book;
-      ch = r.chapter;
-      vs = r.verse || 0;
+    if (vk.book) {
+      bk = vk.book;
+      ch = vk.chapter;
+      vs = vk.verse || 0;
     } else {
       // then reset our context, since we may have missed something along the way
       bk = '';
@@ -245,41 +232,69 @@ export function getRefHTML(
       vs = 0;
       return;
     }
-
     const aText: TextVKType = {
-      location: r.location(v11n),
-      module: mod,
-      text: '',
+      location: vk.location(),
+      module: m,
+      text,
+      noteID,
     };
-    if (!noVerseText && !findAVerseText(aText, tabs[w], keepTextNotes)) return;
-
-    const { module, location } = aText;
-    let { text } = aText;
-    if (text && module !== mod) text += ` (${G.Tab[module].label})`;
-    else if (noVerseText) text = refsx;
-    const { book, chapter } = location;
-    const opd =
-      G.ProgramConfig.direction === G.Tab[module].direction
-        ? ''
-        : ' opposing-program-direction';
-    let { verse, lastverse } = location;
-    if (!verse) verse = 1;
-    if (!lastverse) lastverse = verse;
-    html += sep;
-    html += `<bdi><a class="crref" data-title="${[
-      book,
-      chapter,
-      verse,
-      lastverse,
-      module,
-    ].join('.')}">`;
-    html += verseKey(aText.location).readable();
-    html += '</a></bdi>';
-    html += `<bdi><span class="crtext${opd}">${text}</span></bdi>`;
-    sep = '<span class="cr-sep"></span>';
+    if (noteID || noText || findAVerseText(aText, altmods || null, keepNotes)) {
+      resolved.push(aText);
+    }
   });
 
-  return html;
+  return resolved;
+}
+
+export function getRefHTML(
+  refsx: string,
+  mod: string,
+  panelIndex = 0,
+  keepTextNotes = false,
+  noVerseText = false
+): string {
+  const tabs = G.Prefs.getComplexValue(
+    'xulsword.tabs'
+  ) as XulswordStatePref['tabs'];
+  const resolved = resolveExtendedScripRef(
+    refsx,
+    mod,
+    tabs[panelIndex],
+    keepTextNotes,
+    noVerseText
+  );
+  const html: string[] = [];
+  resolved.forEach((vktext) => {
+    const { location, module, text, noteID } = vktext;
+    const opd =
+      module in G.Tab && G.ProgramConfig.direction !== G.Tab[module].direction
+        ? ' opposing-program-direction'
+        : '';
+    let h = '';
+    if (noteID) {
+      h += `
+      <bdi>
+        <span class="fntext cs-${module || 'locale'}${opd}">${text}</span>
+      </bdi>`;
+    } else {
+      const { book, chapter, verse, lastverse } = location;
+      h += `
+      <bdi>
+        <a class="crref" data-title="${[
+          book,
+          chapter,
+          verse,
+          lastverse,
+          module,
+        ].join('.')}">${verseKey(location).readable()}</a>
+      </bdi>
+      <bdi>
+        <span class="crtext${opd}">${text}</span>
+      </bdi>`;
+    }
+    html.push(h);
+  });
+  return html.join('<span class="cr-sep"></span>');
 }
 
 // The 'notes' argument is an HTML string containing one or more nlist
@@ -371,13 +386,13 @@ export function getNoteHTML(
         switch (p.ntype) {
           case 'cr':
             // If this is a cross reference, then parse the note body for references and display them
-            t += getRefHTML(body, mod, index, false, !openCRs);
+            t += getRefHTML(body, mod, index, true, !openCRs);
             break;
 
           case 'fn':
             // If this is a footnote, then just write the body
             t += `<bdi><span class="fntext cs-${
-              isASCII(body) ? C.DEFAULTLOCALE : mod
+              mod || 'locale'
             }">${body}</span></bdi>`;
             break;
 

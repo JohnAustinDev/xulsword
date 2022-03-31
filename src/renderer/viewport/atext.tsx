@@ -177,7 +177,7 @@ class Atext extends React.Component {
     const atext = sbe?.parentNode as HTMLElement | null | undefined;
     if (atext) {
       const hd = atext.firstChild as HTMLElement;
-      const maxHeight = atext.clientHeight - hd.offsetHeight;
+      const maxHeight = atext.offsetHeight - hd.offsetHeight;
       if (noteBoxHeight > maxHeight) {
         xulswordState((prevState) => {
           const snew: Partial<XulswordStatePref> = {

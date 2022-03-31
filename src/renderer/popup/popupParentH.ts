@@ -78,8 +78,6 @@ export function popupParentHandler(
       let openPopup = false;
       let gap = C.UI.Popup.openGap;
       const info = getPopupInfo(elem);
-      if (info && targ.type === 'sn')
-        info.mod = getContextModule(targ.element.parentNode);
       switch (targ.type) {
         case 'cr':
           if (place.crossrefs === 'popup') openPopup = true;

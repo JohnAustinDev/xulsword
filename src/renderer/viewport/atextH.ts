@@ -342,24 +342,21 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
           // e.clientY = noteBoxHeight + initial - nbHeightAtMouse
           // so set e.clientY = noteBoxHeight + initial - stopHeight
           const height = noteBoxHeight + initial - e.clientY;
-          let stopHeight = targ.element.clientHeight - hd.offsetHeight;
-          if (columns === 1) stopHeight -= C.UI.Atext.bbTopMargin;
-          if (height >= stopHeight) {
+          let stopHeight = targ.element.offsetHeight - hd.offsetHeight;
+          if (columns === 1) stopHeight -= C.UI.Atext.bbSingleColTopMargin;
+          if (height >= stopHeight + 5) {
             this.bbMouseUp(
               e,
-              [initial, noteBoxHeight + initial - stopHeight + 5],
+              [initial, noteBoxHeight + initial - stopHeight],
               true
             );
           }
 
           // moved below the bottom?
-          else if (height <= C.UI.Atext.bbBottomMargin) {
+          else if (height <= C.UI.Atext.bbBottomMargin - 5) {
             this.bbMouseUp(
               e,
-              [
-                initial,
-                noteBoxHeight + initial - C.UI.Atext.bbBottomMargin - 5,
-              ],
+              [initial, noteBoxHeight + initial - C.UI.Atext.bbBottomMargin],
               false
             );
           }

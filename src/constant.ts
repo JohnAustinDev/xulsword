@@ -6,17 +6,14 @@ import type {
   ConfigType,
   FeatureType,
   GlobalPrefType,
-  LocationVKType,
   ModTypes,
   PinPropsType,
   PlaceType,
-  ScrollType,
   ShowType,
   SwordFilterType,
   SwordFilterValueType,
   TabTypes,
   V11nType,
-  XulswordStatePref,
 } from './type';
 
 // Common Global Constants
@@ -137,7 +134,7 @@ const C = {
       wheelScrollDelay: 300, // ms between UI updates while scrolling
       multiColWheelScrollDelay: 100,
       initialNoteboxHeight: 200, // px
-      bbTopMargin: 60, // px
+      bbSingleColTopMargin: 60, // px
       bbBottomMargin: 30, // px
     },
   },
@@ -172,17 +169,17 @@ const C = {
     en: 'en',
     ru: 'en',
     'crh-Cyrl': 'ru',
-    fa: 'ru',
+    fa: 'en',
     kk: 'ru',
     ko: 'en',
     kum: 'ru',
-    'ky-Arab': 'ru',
+    'ky-Arab': 'en',
     'ky-Cyrl': 'ru',
     'ru-CA': 'ru',
-    'tk-Latn': 'ru',
+    'tk-Latn': 'en',
     'tt-Cyrl': 'ru',
     'uz-Cyrl': 'ru',
-    'uz-Latn': 'ru',
+    'uz-Latn': 'en',
   } as { [i: string]: string },
 
   // SupportedV11ns are the versification systems supported by libxulsword's

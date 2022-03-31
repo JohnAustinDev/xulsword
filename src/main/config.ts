@@ -234,7 +234,7 @@ function getModuleConfig(mod: string) {
     const lom = getLocaleOfModule(mod);
     moduleConfig.AssociatedLocale = lom || null;
   } else {
-    moduleConfig.AssociatedLocale = C.DEFAULTLOCALE;
+    moduleConfig.AssociatedLocale = i18next.language;
     moduleConfig.AssociatedModules = null;
   }
 

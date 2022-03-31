@@ -219,6 +219,7 @@ export type TextVKType = {
   location: LocationVKType;
   module: string;
   text: string;
+  noteID?: string; // text of note with ID at location in module
 };
 
 export type HistoryVKType = {

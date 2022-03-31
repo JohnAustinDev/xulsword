@@ -39,7 +39,7 @@ export default class VerseKey {
     this.#gfunctions = gfunction;
     this.#loc =
       typeof location === 'string'
-        ? this.setLocation(location, v11n)
+        ? this.parseLocation(location, v11n)
         : clone(location);
     this.#v11nCurrent = v11n || this.#loc.v11n;
   }
@@ -51,7 +51,7 @@ export default class VerseKey {
   // segments. If the location cannot be read, book will be empty string and chapter,
   // verse and lastverse will be 0. If any range contains verses beyond the chapter, those
   // verses will not be included in the VerseKey.
-  setLocation(location: string, tov11n?: V11nType) {
+  parseLocation(location: string, tov11n?: V11nType) {
     const Tab = this.#gfunctions.Tab();
     let work;
     let loc = location.trim();
@@ -196,7 +196,7 @@ export default class VerseKey {
     const tov11n = v11n || this.#v11nCurrent;
     if (this.#loc.v11n === tov11n) return this.#loc;
     if (!this.#canConvertLocation(tov11n)) return this.#loc;
-    return this.setLocation(
+    return this.parseLocation(
       this.#convertLocation(
         this.#loc.v11n,
         [

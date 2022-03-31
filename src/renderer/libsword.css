@@ -489,13 +489,15 @@ h3 {
 .gfn {
   cursor: pointer;
 }
+.gfn {
+  font-size: 0.85em;
+}
 .cr:after,
 .fn:after,
 .un:after,
 .gfn {
   vertical-align: top;
   font-family: 'arial' !important;
-  font-size-adjust: 0.55 !important;
   line-height: 100% !important;
 }
 .cr:after {

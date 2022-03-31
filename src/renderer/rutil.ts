@@ -173,8 +173,8 @@ export function verseKey(
 export function findAVerseText(
   textvk: TextVKType,
   tabs: string[] | null,
-  keepNotes: boolean
-): boolean {
+  keepNotes = false
+): string {
   const vk = verseKey(textvk.location);
   // Is module a Bible, or is there a companion Bible?
   if (!(textvk.module in G.Tab) || G.Tab[textvk.module].type !== C.BIBLE) {
@@ -187,55 +187,32 @@ export function findAVerseText(
       textvk.location = vk.location();
     }
   }
-
-  // If we have a Bible, try it.
-  if (
-    textvk.module &&
-    textvk.module in G.Tab &&
-    G.Tab[textvk.module].type === C.BIBLE
-  ) {
-    textvk.text = G.LibSword.getVerseText(
-      textvk.module,
-      vk.osisRef(),
-      keepNotes
-    ).replace(/\n/g, ' ');
-    if (textvk.text && textvk.text.length > 7) {
-      return true;
-    }
-    textvk.text = '';
-  }
-
-  // Still no verse text. So now look at tabs...
   const { book } = vk;
-  for (let v = 0; v < G.Tabs.length; v += 1) {
-    const tab = G.Tabs[v];
-    if (tab.module !== C.BIBLE || !tab.v11n) continue;
-    const abooks = G.BooksInModule[tab.module];
-    let ab;
-    for (ab = 0; ab < abooks.length; ab += 1) {
-      if (abooks[ab] === book) break;
-    }
-    if (ab === abooks.length) continue;
-    const text = G.LibSword.getVerseText(
-      tab.module,
-      vk.osisRef(tab.v11n),
-      keepNotes
-    ).replace(/\n/g, ' ');
-    if (text && text.length > 7) {
-      // We have a valid result. If this version's tab is showing, then return it
-      // otherwise save this result (unless a valid result was already saved). If
-      // no visible tab match is found, this saved result will be returned.
-      if (!textvk.text) {
+  function tryText(mod: string) {
+    if (!mod || !(mod in G.Tab)) return;
+    const { module, type, v11n } = G.Tab[mod];
+    if (type === C.BIBLE && v11n && G.BooksInModule[module].includes(book)) {
+      const text = G.LibSword.getVerseText(
+        module,
+        vk.osisRef(v11n),
+        keepNotes
+      ).replace(/\n/g, ' ');
+      if (text && text.length > 7) {
         textvk.text = text;
-        textvk.module = tab.module;
-        vk.v11n = tab.v11n;
+        textvk.module = module;
+        vk.v11n = v11n;
         textvk.location = vk.location();
       }
-      if (tabs && tabs.includes(tab.module)) return true;
     }
   }
-
-  return Boolean(textvk.text);
+  tryText(textvk.module);
+  tabs?.forEach((m) => {
+    if (!textvk.text) tryText(m);
+  });
+  G.Tabs.forEach((t) => {
+    if (!textvk.text) tryText(t.module);
+  });
+  return textvk.text;
 }
 
 // Return the module context in which the element resides.

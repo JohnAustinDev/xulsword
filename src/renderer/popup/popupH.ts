@@ -6,7 +6,11 @@ import G from '../rg';
 import { getPopupInfo } from '../../libswordElemInfo';
 import { getCompanionModules, getContextModule } from '../rutil';
 import { getDictEntryHTML, getLemmaHTML } from '../viewport/zdictionary';
-import { getIntroductions, getNoteHTML } from '../viewport/zversekey';
+import {
+  getIntroductions,
+  getNoteHTML,
+  resolveExtendedScripRef,
+} from '../viewport/zversekey';
 
 import type { ElemInfo } from '../../libswordElemInfo';
 import type Popup from './popup';
@@ -54,6 +58,7 @@ export function getTopElement(
   return { info, elem, elemHTML };
 }
 
+// Get html for Popup target with the help of any extra info.
 export function getPopupHTML(elem: HTMLElement, info: ElemInfo) {
   const { type, reflist, bk, ch, mod, title } = info;
   let html = '';
@@ -79,36 +84,49 @@ export function getPopupHTML(elem: HTMLElement, info: ElemInfo) {
     }
 
     // An 'sr' class of reference is a textual link to either a scripture passage
-    // or, in some cases (such as StrongsHebrew module) to a dictionary entry.
+    // or, in some weird cases (such as StrongsHebrew module) to a dictionary entry.
     case 'sr': {
-      if (mod) {
-        const refbible = getRefBible(mod, type);
-        if (refbible) {
-          const mynote =
-            reflist && reflist[0] !== 'unavailable'
-              ? reflist.join(';')
-              : elem.innerHTML;
-          html = getNoteHTML(
-            `<div class="nlist" data-title="cr.1.0.0.0.${refbible}">${mynote}</div>`,
-            refbible,
-            null,
-            0,
-            true
-          );
-        } else if (reflist && reflist[0]) {
-          const key = reflist[0].replace(/^.*?:/, '');
-          html = getDictEntryHTML(key, mod);
+      let bibleMod = mod && getRefBible(mod, type);
+      const bibleReflist =
+        reflist && reflist[0] !== 'unavailable'
+          ? reflist.join(';')
+          : elem.innerHTML;
+      let norefmod = false;
+      if (!bibleMod) {
+        const def = G.ProgramConfig.AssociatedModules || '';
+        resolveExtendedScripRef(bibleReflist, '', def.split(/\s*,\s*/)).forEach(
+          (t) => {
+            if (!bibleMod && t.module) {
+              bibleMod = t.module;
+              norefmod = true;
+            }
+          }
+        );
+      }
+      if (bibleMod) {
+        html = getNoteHTML(
+          `<div class="nlist" data-title="cr.1.0.0.0.${bibleMod}">${bibleReflist}</div>`,
+          bibleMod,
+          null,
+          0,
+          true
+        );
+        if (norefmod) {
+          html = `<div class="norefmod">${html}</div>`;
         }
+      } else if (mod && reflist && reflist[0]) {
+        html = getDictEntryHTML(reflist[0].replace(/^.*?:/, ''), mod);
       }
       break;
     }
 
     case 'sn': {
-      if (mod) {
+      const m = mod || getContextModule(elem.parentNode);
+      if (m) {
         const snlist = Array.from(elem.classList);
         if (snlist && snlist.length > 1) {
           snlist.shift();
-          html = getLemmaHTML(snlist, elem.innerHTML, mod);
+          html = getLemmaHTML(snlist, elem.innerHTML, m);
         }
       }
       break;
@@ -164,11 +182,9 @@ export default function handler(this: Popup, e: React.MouseEvent) {
         target
       );
       if (targ) {
-        const info = getPopupInfo(targ.element);
-        if (info && targ.type === 'sn')
-          info.mod = getContextModule(targ.element.parentNode);
-        if (!getPopupHTML(targ.element, info))
+        if (!getPopupHTML(targ.element, getPopupInfo(targ.element))) {
           targ.element.classList.add('empty');
+        }
       }
       break;
     }

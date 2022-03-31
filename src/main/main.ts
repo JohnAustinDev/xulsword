@@ -203,9 +203,7 @@ const init = async () => {
     .use(i18nBackendMain)
     .init({
       lng: Language,
-      fallbackLng: isDevelopment
-        ? 'cimode'
-        : C.FallbackLanguage[Language] || ['en'],
+      fallbackLng: C.FallbackLanguage[Language] || ['en'],
       supportedLngs: AvailableLanguages,
       preload: AvailableLanguages,
 

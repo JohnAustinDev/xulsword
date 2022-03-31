@@ -411,6 +411,10 @@ html[dir='rtl'] .fncol3 {
 }
 .cropened .crref:after {
   content: ': ';
+  text-decoration: none;
+}
+.norefmod .cropened .crref:after {
+  content: '?: ';
 }
 .crtext {
   display: none;
