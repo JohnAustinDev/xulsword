@@ -112,6 +112,9 @@ html[dir='rtl'] .npopup {
   margin-inline-start: 10px;
   margin-inline-end: 0px;
 }
+html[dir='rtl'] .snbut {
+  float: left;
+}
 .snbut:after {
   display: inline-block;
   content: url(../images/search.png);
@@ -174,7 +177,7 @@ html[dir='rtl'] .npopup {
   font-weight: bold;
 }
 .markup_illuminated {
-  float: left;
+  float: inline-start;
   font-size: xx-large;
   padding: 4px 8px 0px 4px;
 }

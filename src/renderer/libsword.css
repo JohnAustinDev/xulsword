@@ -18,8 +18,7 @@
 .divineName {
   font-variant: small-caps;
 }
-.wordsOfJesus,
-.wordsOfJesus span {
+.wordsOfJesus {
   color: red;
 }
 .transChange {
@@ -353,7 +352,7 @@ h3 {
 }
 
 .osis2mod.x-right + .dtl {
-  float: right;
+  float: inline-end;
   clear: both;
 }
 
@@ -434,8 +433,8 @@ h3 {
 }
 /* CLASSES FROM OSIS-CONVERTER-MADE SWORD MODULES */
 .x-text-image {
-  float: right;
-  margin-right: 10px;
+  float: inline-end;
+  margin-inline-end: 10px;
   max-width: 50%;
 }
 .x-text-image img {
@@ -450,7 +449,7 @@ h3 {
 .x-p-first .line:first-child:first-letter,
 .x-p-first .item:first-child:first-letter {
   font-size: 4em;
-  float: left;
+  float: inline-start;
   margin-right: 10px;
 }
 .x-p-first .line:not(.x-item-ms):first-child {
@@ -463,13 +462,8 @@ h3 {
   font-size: smaller;
 }
 .x-selah {
-  float: right;
-  margin-left: 3em;
-}
-.sb[dir='rtl'] .x-selah {
-  float: left;
-  margin-left: 0;
-  margin-right: 3em;
+  float: inline-end;
+  margin-inline-start: 3em;
 }
 
 .versenum {

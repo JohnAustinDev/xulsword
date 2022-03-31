@@ -87,7 +87,7 @@ ipcMain.on('did-finish-render', (event: IpcMainEvent) => {
     win.show();
     win.focus();
   }
-  if (name === 'xulsword') {
+  if (name === 'xulsword' && !(isDevelopment && C.DEVELSPLASH === 2)) {
     setTimeout(() => {
       G.Window.close({ name: 'splash' });
     }, 1000);
