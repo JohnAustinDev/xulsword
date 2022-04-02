@@ -413,8 +413,15 @@ html[dir='rtl'] .fncol3 {
   content: ': ';
   text-decoration: none;
 }
-.norefmod .cropened .crref:after {
+.cropened .crref.possibleV11nMismatch:after {
   content: '?: ';
+}
+.crtext .alternate {
+  font-style: italic;
+}
+.crtext .anytab {
+  font-style: italic;
+  font-weight: bold;
 }
 .crtext {
   display: none;
@@ -430,7 +437,6 @@ html[dir='rtl'] .fncol3 {
 }
 .cr-sep:after {
   content: ';';
-  padding-inline-end: 0.5em;
 }
 .cropened .cr-sep {
   display: block;

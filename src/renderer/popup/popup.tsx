@@ -19,13 +19,13 @@ import {
   XulProps,
   xulPropTypes,
 } from '../libxul/xul';
-import { FeatureType } from '../../type';
 import C from '../../constant';
 import { sanitizeHTML, stringHash } from '../../common';
 import G from '../rg';
 import { libswordImgSrc } from '../rutil';
 import { Box, Hbox } from '../libxul/boxes';
-import popupH, { getPopupHTML, getRefBible, getTopElement } from './popupH';
+import { getRefBible } from '../viewport/zversekey';
+import popupH, { getPopupHTML, getTopElement } from './popupH';
 import '../libsword.css';
 import './popup.css';
 
@@ -258,7 +258,7 @@ class Popup extends React.Component {
       info: { mod: '', type: '' },
       elem: null,
     };
-    const { mod, type } = info;
+    const { mod, type, reflist } = info;
 
     const allBibleModules = [];
     for (let t = 0; t < G.Tabs.length; t += 1) {
@@ -279,7 +279,7 @@ class Popup extends React.Component {
       };
     }
 
-    const refbible = getRefBible(mod, type);
+    const bibleMod = getRefBible(mod, elem, reflist);
 
     let cls = 'cs-locale';
     if (isWindow) cls += ` ownWindow viewport`;
@@ -316,9 +316,9 @@ class Popup extends React.Component {
             )}
             {!isWindow && <div className="draghandle" />}
             <Box flex="1" />
-            {refbible &&
+            {bibleMod &&
               (type === 'cr' || type === 'sr') &&
-              this.selector(allBibleModules, refbible, refbible)}
+              this.selector(allBibleModules, bibleMod, bibleMod)}
 
             {type === 'sn' &&
               elem &&

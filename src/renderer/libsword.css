@@ -473,8 +473,11 @@ h3 {
 .versenum:after {
   content: ' ';
 }
-.sb .hl,
 .sb .hl .wordsOfJesus {
+  color: unset;
+}
+.sb .hl,
+.sb .hl {
   color: blue;
 }
 .cr,

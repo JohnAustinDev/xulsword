@@ -16,6 +16,7 @@ import type {
   GlobalPrefType,
   LocationVKType,
   PrefObject,
+  LookupInfo,
   SearchType,
   TextVKType,
   V11nType,
@@ -163,56 +164,6 @@ export function verseKey(
     versekey,
     v11n
   );
-}
-
-// If textvk module is not a Bible, or does not contain the location, then an alternate
-// module is used. First any companion module is checked, and if it does not have the
-// text, then visible tabs are searched in order. If still not found, all tabs are
-// searched in order. The textvk object reference is updated in place for any located
-// text and module. If a text was found, true is returned. Otherwise false is returned.
-export function findAVerseText(
-  textvk: TextVKType,
-  tabs: string[] | null,
-  keepNotes = false
-): string {
-  const vk = verseKey(textvk.location);
-  // Is module a Bible, or is there a companion Bible?
-  if (!(textvk.module in G.Tab) || G.Tab[textvk.module].type !== C.BIBLE) {
-    const bibles = getCompanionModules(textvk.module);
-    const bible = !bibles.length || !(bibles[0] in G.Tab) ? null : bibles[0];
-    const tov11n = bible && G.Tab[bible].v11n;
-    if (tov11n) {
-      vk.v11n = tov11n;
-      textvk.module = bible;
-      textvk.location = vk.location();
-    }
-  }
-  const { book } = vk;
-  function tryText(mod: string) {
-    if (!mod || !(mod in G.Tab)) return;
-    const { module, type, v11n } = G.Tab[mod];
-    if (type === C.BIBLE && v11n && G.BooksInModule[module].includes(book)) {
-      const text = G.LibSword.getVerseText(
-        module,
-        vk.osisRef(v11n),
-        keepNotes
-      ).replace(/\n/g, ' ');
-      if (text && text.length > 7) {
-        textvk.text = text;
-        textvk.module = module;
-        vk.v11n = v11n;
-        textvk.location = vk.location();
-      }
-    }
-  }
-  tryText(textvk.module);
-  tabs?.forEach((m) => {
-    if (!textvk.text) tryText(m);
-  });
-  G.Tabs.forEach((t) => {
-    if (!textvk.text) tryText(t.module);
-  });
-  return textvk.text;
 }
 
 // Return the module context in which the element resides.

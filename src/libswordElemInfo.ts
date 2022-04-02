@@ -181,7 +181,7 @@ export function getElementInfo(elem: string | HTMLElement): ElemInfo | null {
               }
               parsed = parsed.split(/ +/);
             } else if (type === 'sr') {
-              parsed = parsed.split(';');
+              parsed = parsed.split(/\s*;\s*/);
             } else {
               throw Error(`Unknown type of reflist: ${type}`);
             }

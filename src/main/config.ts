@@ -3,7 +3,6 @@
 import path from 'path';
 import i18next from 'i18next';
 import C from '../constant';
-import { clone } from '../common';
 import Dirs from './modules/dirs';
 import Prefs from './modules/prefs';
 import Cache from '../cache';
@@ -14,62 +13,6 @@ import { jsdump } from './mutil';
 
 import type { ConfigType, FeatureType, GlobalPrefType, GType } from '../type';
 import getFontFamily from './fontfamily';
-
-export function localeConfig(locale: string) {
-  const lconfig = {} as ConfigType;
-  const toptions = { lng: locale, ns: 'common/config' };
-
-  // All config properties should be present, having a valid value or null.
-  // Read any values from locale's config.json file.
-  Object.entries(C.ConfigTemplate).forEach((entry) => {
-    const prop = entry[0] as keyof typeof C.ConfigTemplate;
-    const keyobj = entry[1];
-    let r = null;
-    if (keyobj.localeConf !== null) {
-      r = i18next.exists(keyobj.localeConf, toptions)
-        ? i18next.t(keyobj.localeConf, toptions)
-        : null;
-    }
-    lconfig[prop] = r;
-  });
-
-  lconfig.AssociatedLocale = locale || null;
-
-  // Insure there are single quotes around font names
-  if (lconfig.fontFamily) {
-    lconfig.fontFamily = lconfig.fontFamily.replace(/"/g, "'");
-    if (!/'.*'/.test(lconfig.fontFamily))
-      lconfig.fontFamily = `'${lconfig.fontFamily}'`;
-  }
-
-  return lconfig;
-}
-
-export function getLocaleConfigs(): { [i: string]: ConfigType } {
-  if (!Cache.has('localeConfigs')) {
-    const ret = {} as { [i: string]: ConfigType };
-    // Default locale config must have all CSS settings in order to
-    // override unrelated ancestor config CSS.
-    ret.locale = localeConfig(i18next.language);
-    Object.entries(C.ConfigTemplate).forEach((entry) => {
-      const key = entry[0] as keyof ConfigType;
-      const typeobj = entry[1];
-      if (typeobj.CSS && !ret.locale[key]) {
-        const v = C.LocaleDefaultConfigCSS[key] || 'initial';
-        ret.locale[key] = `${v} !important`;
-      }
-    });
-    const locales = Prefs.getComplexValue(
-      'global.locales'
-    ) as GlobalPrefType['global']['locales'];
-    locales.forEach((l: any) => {
-      const [lang] = l;
-      ret[lang] = localeConfig(lang);
-    });
-    Cache.write(ret, 'localeConfigs');
-  }
-  return Cache.read('localeConfigs');
-}
 
 // If a module config fontFamily specifies a URL to a font, rather
 // than a fontFamily, then parse the URL. Otherwise return null.
@@ -346,6 +289,93 @@ export function getModuleConfigs(): { [i: string]: ConfigType } {
   }
 
   return Cache.read('moduleConfigs');
+}
+
+export function localeConfig(locale: string) {
+  const lconfig = {} as ConfigType;
+  const toptions = { lng: locale, ns: 'common/config' };
+  // All config properties should be present, having a valid value or null.
+  // Read any values from locale's config.json file.
+  Object.entries(C.ConfigTemplate).forEach((entry) => {
+    const prop = entry[0] as keyof typeof C.ConfigTemplate;
+    const keyobj = entry[1];
+    let r = null;
+    if (keyobj.localeConf !== null) {
+      r = i18next.exists(keyobj.localeConf, toptions)
+        ? i18next.t(keyobj.localeConf, toptions)
+        : null;
+    }
+    lconfig[prop] = r;
+  });
+  lconfig.AssociatedLocale = locale || null;
+  // Module associations...
+  const moduleconfigs = getModuleConfigs();
+  const { AssociatedModules } = lconfig;
+  const ams = (AssociatedModules && AssociatedModules.split(/\s*,\s*/)) || [];
+  lconfig.AssociatedModules = null;
+  const assocmods: Set<string> = new Set(
+    ams.filter((m) => Object.keys(moduleconfigs).includes(m))
+  );
+  // Associate with modules having configs that associate with this locale.
+  Object.entries(moduleconfigs).forEach((entry) => {
+    const [module, config] = entry;
+    if ('AssociatedLocale' in config && config.AssociatedLocale === locale) {
+      assocmods.add(module);
+    }
+  });
+  // Associate with modules sharing this exact locale
+  Object.entries(moduleconfigs).forEach((entry) => {
+    const [module] = entry;
+    if (LibSword.getModuleInformation(module, 'Lang') === locale) {
+      assocmods.add(module);
+    }
+  });
+  // Associate with modules sharing this locale's base language
+  Object.entries(moduleconfigs).forEach((entry) => {
+    const [module] = entry;
+    if (
+      LibSword.getModuleInformation(module, 'Lang').replace(/-.*$/, '') ===
+      locale.replace(/-.*$/, '')
+    ) {
+      assocmods.add(module);
+    }
+  });
+  if (assocmods.size) {
+    lconfig.AssociatedModules = Array.from(assocmods).join(',');
+  }
+  // Insure there are single quotes around font names
+  if (lconfig.fontFamily) {
+    lconfig.fontFamily = lconfig.fontFamily.replace(/"/g, "'");
+    if (!/'.*'/.test(lconfig.fontFamily))
+      lconfig.fontFamily = `'${lconfig.fontFamily}'`;
+  }
+  return lconfig;
+}
+
+export function getLocaleConfigs(): { [i: string]: ConfigType } {
+  if (!Cache.has('localeConfigs')) {
+    const ret = {} as { [i: string]: ConfigType };
+    // Default locale config must have all CSS settings in order to
+    // override unrelated ancestor config CSS.
+    ret.locale = localeConfig(i18next.language);
+    Object.entries(C.ConfigTemplate).forEach((entry) => {
+      const key = entry[0] as keyof ConfigType;
+      const typeobj = entry[1];
+      if (typeobj.CSS && !ret.locale[key]) {
+        const v = C.LocaleDefaultConfigCSS[key] || 'initial';
+        ret.locale[key] = `${v} !important`;
+      }
+    });
+    const locales = Prefs.getComplexValue(
+      'global.locales'
+    ) as GlobalPrefType['global']['locales'];
+    locales.forEach((l: any) => {
+      const [lang] = l;
+      ret[lang] = localeConfig(lang);
+    });
+    Cache.write(ret, 'localeConfigs');
+  }
+  return Cache.read('localeConfigs');
 }
 
 export function getFeatureModules(): FeatureType {

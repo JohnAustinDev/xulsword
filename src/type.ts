@@ -227,6 +227,15 @@ export type HistoryVKType = {
   selection: LocationVKType | null;
 };
 
+export type LookupInfo = {
+  refcompanion: boolean;
+  vkcompanion: boolean;
+  userpref: boolean;
+  alternate: boolean;
+  anytab: boolean;
+  possibleV11nMismatch: boolean;
+};
+
 export type ContextData = {
   search: SearchType | null;
   locationVK: LocationVKType | null;

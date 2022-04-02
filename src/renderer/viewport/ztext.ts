@@ -271,7 +271,7 @@ export function libswordText(
         return shownb[s];
       })
     )
-      r.noteHTML += getNoteHTML(r.notes, module, shownb, n);
+      r.noteHTML += getNoteHTML(r.notes, shownb, n);
   }
 
   // Localize verse numbers to match the module

@@ -1,41 +1,19 @@
 /* eslint-disable import/no-duplicates */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { clone, ofClass, sanitizeHTML } from '../../common';
-import C from '../../constant';
 import G from '../rg';
 import { getPopupInfo } from '../../libswordElemInfo';
-import { getCompanionModules, getContextModule } from '../rutil';
+import { getContextModule } from '../rutil';
 import { getDictEntryHTML, getLemmaHTML } from '../viewport/zdictionary';
 import {
   getIntroductions,
   getNoteHTML,
-  resolveExtendedScripRef,
+  getRefBible,
 } from '../viewport/zversekey';
 
 import type { ElemInfo } from '../../libswordElemInfo';
 import type Popup from './popup';
 import type { PopupState } from './popup';
-
-export function getRefBible(
-  mod: string | null,
-  type: string | null
-): string | null {
-  let refbible = mod && G.Tab[mod].type === C.BIBLE ? mod : null;
-  if (mod && !refbible && type === 'sr') {
-    const aref = getCompanionModules(mod);
-    const bible = aref.find((m) => G.Tab[m]?.type === C.BIBLE);
-    if (bible) refbible = bible;
-  }
-  if (refbible && (type === 'cr' || type === 'sr')) {
-    // default prefs.js doesn't have this key since mod is unknown
-    refbible = (G.Prefs.getPrefOrCreate(
-      `global.popup.selection.${mod}`,
-      'string',
-      refbible
-    ) || refbible) as string;
-  }
-  return refbible;
-}
 
 export function getTopElement(
   elemhtml: string[] | null,
@@ -71,14 +49,7 @@ export function getPopupHTML(elem: HTMLElement, info: ElemInfo) {
         G.LibSword.getChapterText(mod, `${bk}.${ch}`);
         const notes = G.LibSword.getNotes();
         // a note element's title does not include type, but its nlist does
-        html = getNoteHTML(
-          notes,
-          type === 'cr' ? getRefBible(mod, type) || mod : mod,
-          null,
-          0,
-          true,
-          `${type}.${title}`
-        );
+        html = getNoteHTML(notes, null, 0, true, `${type}.${title}`);
       }
       break;
     }
@@ -86,36 +57,22 @@ export function getPopupHTML(elem: HTMLElement, info: ElemInfo) {
     // An 'sr' class of reference is a textual link to either a scripture passage
     // or, in some weird cases (such as StrongsHebrew module) to a dictionary entry.
     case 'sr': {
-      let bibleMod = mod && getRefBible(mod, type);
-      const bibleReflist =
-        reflist && reflist[0] !== 'unavailable'
-          ? reflist.join(';')
-          : elem.innerHTML;
-      let norefmod = false;
-      if (!bibleMod) {
-        const def = G.ProgramConfig.AssociatedModules || '';
-        resolveExtendedScripRef(bibleReflist, '', def.split(/\s*,\s*/)).forEach(
-          (t) => {
-            if (!bibleMod && t.module) {
-              bibleMod = t.module;
-              norefmod = true;
-            }
-          }
-        );
-      }
-      if (bibleMod) {
-        html = getNoteHTML(
-          `<div class="nlist" data-title="cr.1.0.0.0.${bibleMod}">${bibleReflist}</div>`,
-          bibleMod,
-          null,
-          0,
-          true
-        );
-        if (norefmod) {
-          html = `<div class="norefmod">${html}</div>`;
+      if (mod) {
+        const bibleReflist =
+          reflist && reflist[0] !== 'unavailable'
+            ? reflist.join(';')
+            : elem && elem.innerHTML;
+        const bibleMod = getRefBible(mod, null, bibleReflist);
+        if (bibleMod) {
+          html = getNoteHTML(
+            `<div class="nlist" data-title="cr.1.0.0.0.${mod}">${bibleReflist}</div>`,
+            null,
+            0,
+            true
+          );
+        } else if (reflist && reflist[0]) {
+          html = getDictEntryHTML(reflist[0].replace(/^.*?:/, ''), mod);
         }
-      } else if (mod && reflist && reflist[0]) {
-        html = getDictEntryHTML(reflist[0].replace(/^.*?:/, ''), mod);
       }
       break;
     }

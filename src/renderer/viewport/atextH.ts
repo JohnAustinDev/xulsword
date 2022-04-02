@@ -43,7 +43,6 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
   const target = es.target as HTMLElement;
   const atext = es.currentTarget as HTMLElement;
   const type = module ? G.Tab[module].type : '';
-  const panelIndex = Number(atext.dataset.index);
   switch (es.type) {
     case 'click': {
       const e = es as React.MouseEvent;
@@ -86,9 +85,9 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
                 if (refs) {
                   let html;
                   if (row.classList.contains('cropened')) {
-                    html = getRefHTML(refs, module, panelIndex, false, false);
+                    html = getRefHTML(refs, module, false, false);
                   } else {
-                    html = getRefHTML(refs, module, panelIndex, false, true);
+                    html = getRefHTML(refs, module, false, true);
                   }
                   sanitizeHTML(el, html);
                 }
