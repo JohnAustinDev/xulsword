@@ -129,10 +129,9 @@ class Atext extends React.Component {
   }
 
   componentDidUpdate(_prevProps: AtextProps, prevState: AtextStateType) {
-    const { panelIndex, scroll } = this.props as AtextProps;
-    if (!(scroll?.skipTextUpdate && scroll.skipTextUpdate[panelIndex])) {
-      const state = this.state as AtextStateType;
-      this.onUpdate();
+    const { panelIndex } = this.props as AtextProps;
+    const state = this.state as AtextStateType;
+    if (this.onUpdate()) {
       windowState[panelIndex] = trim(state, atextInitialState);
       const changedState = diff(
         trim(prevState, atextInitialState),
@@ -166,18 +165,38 @@ class Atext extends React.Component {
     const { columns, isPinned, panelIndex, noteBoxHeight, xulswordState } =
       props;
     const { pin } = state as AtextStateType;
-    const { sbref, nbref } = this;
 
+    // Decide what needs to be updated...
+    // pinProps are the currently active props according to the panel's
+    // isPinned prop value.
+    const pinProps = trim(
+      pin && isPinned ? pin : props,
+      C.PinProps
+    ) as PinPropsType;
+    // scrollProps are current props that effect scrolling
+    const scrollProps = trim(
+      { ...props, ...pinProps },
+      C.ScrollPropsVK
+    ) as typeof C.ScrollPropsVK;
+    const { scroll } = scrollProps;
+    // skip all render side-effects if skipTextUpdate is set
+    if (scroll?.skipTextUpdate && scroll.skipTextUpdate[panelIndex])
+      return false;
+
+    let newState: Partial<AtextStateType> = diff(pin, pinProps)
+      ? { pin: pinProps }
+      : {};
+
+    const { sbref, nbref } = this;
     const sbe = sbref !== null ? sbref.current : null;
     const nbe = nbref !== null ? nbref.current : null;
-
-    let newState: Partial<AtextStateType> = {};
 
     // Adjust note-box height if needed
     const atext = sbe?.parentNode as HTMLElement | null | undefined;
     if (atext) {
       const hd = atext.firstChild as HTMLElement;
-      const maxHeight = atext.offsetHeight - hd.offsetHeight;
+      const maxHeight =
+        atext.offsetHeight - hd.offsetHeight + C.UI.Atext.bbTopMargin;
       if (noteBoxHeight > maxHeight) {
         xulswordState((prevState) => {
           const snew: Partial<XulswordStatePref> = {
@@ -193,20 +212,10 @@ class Atext extends React.Component {
         });
       }
     }
-    // Decide what needs to be updated...
-    const pinProps = trim(
-      pin && isPinned ? pin : props,
-      C.PinProps
-    ) as PinPropsType;
+
     const { selection, module } = pinProps;
-    if (diff(pin, pinProps)) newState = { ...newState, pin: pinProps };
     if (module && atext && sbe && nbe) {
       const { type, isVerseKey } = G.Tab[module];
-      // scrollProps are current props that effect scrolling
-      const scrollProps = trim(
-        { ...props, ...pinProps },
-        C.ScrollPropsVK
-      ) as typeof C.ScrollPropsVK;
       const scrollkey = stringHash(scrollProps);
       // libswordProps are current props that effect LibSword output
       const libswordProps = trim(
@@ -217,7 +226,8 @@ class Atext extends React.Component {
         C.LibSwordProps[type]
       ) as Partial<AtextProps>;
       const highlightkey = stringHash(libswordProps.location);
-      // NOTE: verse doesn't effect libsword output
+      // IMPORTANT: verse doesn't effect libsword output, so always remove
+      // it from stringHash for a big speedup.
       const writekey = stringHash(
         {
           ...libswordProps,
@@ -234,11 +244,11 @@ class Atext extends React.Component {
           this.writeLibSword2DOM(libswordProps, panelIndex, 'overwrite');
         }
         // SCROLL
-        const scroll =
+        const doscroll =
           scrollProps.scroll &&
           (update || scrollkey !== sbe.dataset.scroll) &&
           isVerseKey;
-        if (scroll) {
+        if (doscroll) {
           sbe.dataset.scroll = scrollkey;
           // Multi-column Bibles...
           if (columns > 1 && type === C.BIBLE && libswordProps.location) {
@@ -426,7 +436,7 @@ class Atext extends React.Component {
           sbe.dataset.highlightkey = highlightkey;
         }
         // TRIM NOTES
-        if (columns > 1 && (update || scroll)) {
+        if (columns > 1 && (update || doscroll)) {
           const empty = !trimNotes(sbe, nbe);
           const nbc = nbe.parentNode as any;
           if (
@@ -456,6 +466,7 @@ class Atext extends React.Component {
       }
     }
     if (Object.keys(newState).length) this.setState(newState);
+    return true;
   }
 
   // Write a LibSword response to the DOM.

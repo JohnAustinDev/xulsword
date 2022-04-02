@@ -341,7 +341,10 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
           // e.clientY = noteBoxHeight + initial - nbHeightAtMouse
           // so set e.clientY = noteBoxHeight + initial - stopHeight
           const height = noteBoxHeight + initial - e.clientY;
-          let stopHeight = targ.element.offsetHeight - hd.offsetHeight;
+          let stopHeight =
+            targ.element.offsetHeight -
+            hd.offsetHeight +
+            C.UI.Atext.bbTopMargin;
           if (columns === 1) stopHeight -= C.UI.Atext.bbSingleColTopMargin;
           if (height >= stopHeight + 5) {
             this.bbMouseUp(

@@ -134,7 +134,8 @@ const C = {
       wheelScrollDelay: 300, // ms between UI updates while scrolling
       multiColWheelScrollDelay: 100,
       initialNoteboxHeight: 200, // px
-      bbSingleColTopMargin: 60, // px
+      bbTopMargin: 10, // px the CSS margin of bb within its container
+      bbSingleColTopMargin: 60, // px an arbitrary extra margin value
       bbBottomMargin: 30, // px
     },
   },

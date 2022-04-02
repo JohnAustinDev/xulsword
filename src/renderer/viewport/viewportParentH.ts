@@ -94,7 +94,8 @@ export function noteboxBarHandler(
           maximizeNoteBox[index] = noteBoxHeight[index];
           const { columns: clsx } = atext.dataset;
           const columns = Number(clsx);
-          let stopHeight = atext.offsetHeight - hd.offsetHeight;
+          let stopHeight =
+            atext.offsetHeight - hd.offsetHeight + C.UI.Atext.bbTopMargin;
           if (columns === 1) stopHeight -= C.UI.Atext.bbSingleColTopMargin;
           noteBoxHeight[index] = stopHeight;
         } else if (maximize === false) {
@@ -426,7 +427,8 @@ export default function handler(
                 maximizeNoteBox[index] = noteBoxHeight[index];
                 const { columns: clsx } = atext.dataset;
                 const columns = Number(clsx);
-                let stopHeight = atext.offsetHeight - hd.offsetHeight;
+                let stopHeight =
+                  atext.offsetHeight - hd.offsetHeight + C.UI.Atext.bbTopMargin;
                 if (columns === 1)
                   stopHeight -= C.UI.Atext.bbSingleColTopMargin;
                 noteBoxHeight[index] = stopHeight;
