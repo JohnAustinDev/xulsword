@@ -565,7 +565,7 @@ export function getChapterHeading(
 ) {
   if (!location || !module) return { textHTML: '', intronotes: '' };
   const { book, chapter } = location;
-  let l = G.ModuleConfigs[module]?.AssociatedLocale;
+  let l = G.Tab[module].config.AssociatedLocale;
   if (!l) l = i18next.language; // otherwise use current program locale
   const toptions = { lng: l, ns: 'common/books' };
 
@@ -673,7 +673,7 @@ function verseIsVisible(v: HTMLElement, ignoreNotebox = false): boolean {
   }
 
   // multi-column windows...
-  if (G.ModuleConfigs[module].direction === 'ltr') {
+  if (G.Tab[module].config.direction === 'ltr') {
     // we are LTR
     // are we outside the visible columns?
     if (v.offsetLeft > sb.offsetWidth) return false;

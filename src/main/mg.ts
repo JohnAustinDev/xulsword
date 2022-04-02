@@ -18,7 +18,6 @@ import Commands from './commands';
 import Data from './modules/data';
 import {
   getLocaleConfigs,
-  getModuleConfigs,
   getModuleConfigDefault,
   getFontFaceConfigs,
   getFeatureModules,
@@ -138,10 +137,6 @@ class GClass implements GType {
 
   get LocaleConfigs() {
     return getLocaleConfigs();
-  }
-
-  get ModuleConfigs() {
-    return getModuleConfigs();
   }
 
   get ModuleConfigDefault() {

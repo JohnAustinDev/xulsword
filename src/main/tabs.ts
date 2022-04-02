@@ -3,7 +3,6 @@
 import C from '../constant';
 import { clone } from '../common';
 import Prefs from './modules/prefs';
-import { getModuleConfigs } from './config';
 import { getBooksInModule, getTab, getTabs } from './minit';
 
 import type { TabType, TabTypes, XulswordStatePref } from '../type';
@@ -15,7 +14,6 @@ export default function setViewportTabs(
 ): void {
   const Tabs = getTabs();
   const Tab = getTab();
-  const moduleConfigs = getModuleConfigs();
   const booksInModule = getBooksInModule();
   const xulsword = Prefs.getComplexValue('xulsword') as XulswordStatePref;
   const { location, mtModules, panels, tabs } = xulsword;
@@ -87,8 +85,8 @@ export default function setViewportTabs(
         const a = Tab[as];
         const b = Tab[bs];
         if (a.tabType === b.tabType) {
-          const aLocale = moduleConfigs[a.module]?.AssociatedLocale;
-          const bLocale = moduleConfigs[b.module]?.AssociatedLocale;
+          const aLocale = a.config.AssociatedLocale;
+          const bLocale = b.config.AssociatedLocale;
           const lng = Prefs.getCharPref('global.locale');
           const aPriority = aLocale ? (aLocale === lng ? 1 : 2) : 3;
           const bPriority = bLocale ? (bLocale === lng ? 1 : 2) : 3;

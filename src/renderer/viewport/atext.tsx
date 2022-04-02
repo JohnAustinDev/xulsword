@@ -242,7 +242,7 @@ class Atext extends React.Component {
           sbe.dataset.scroll = scrollkey;
           // Multi-column Bibles...
           if (columns > 1 && type === C.BIBLE && libswordProps.location) {
-            const rtl = G.ModuleConfigs[module].direction === 'rtl';
+            const rtl = G.Tab[module].config.direction === 'rtl';
             const verse = libswordProps.location.verse || 1;
             let v = findVerseElement(
               sbe,

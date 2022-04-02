@@ -313,17 +313,18 @@ export type TabType = {
   module: string;
   type: ModTypes;
   version: string;
+  config: ConfigType;
   lang: string;
-  dir: string;
+  direction: 'ltr' | 'rtl';
   v11n: V11nType | '';
   label: string;
   labelClass: string;
   tabType: TabTypes;
   isCommDir: boolean;
   isVerseKey: boolean;
-  direction: 'ltr' | 'rtl';
   index: number;
   description: string;
+  directory: string;
   conf: string;
   audio: { [index: string]: string };
   audioCode: string;
@@ -566,7 +567,6 @@ export const GPublic = {
   Tab:                 'getter' as unknown as { [i: string]: TabType },
   ProgramConfig:       'getter' as unknown as ConfigType,
   LocaleConfigs:       'getter' as unknown as { [i: string]: ConfigType },
-  ModuleConfigs:       'getter' as unknown as { [i: string]: ConfigType },
   ModuleConfigDefault: 'getter' as unknown as ConfigType,
   FontFaceConfigs:     'getter' as unknown as { [i: string]: string },
   FeatureModules:      'getter' as unknown as FeatureType,

@@ -73,12 +73,15 @@ class DynamicStyleSheet {
     const style = doc.createElement('style');
     doc.head.appendChild(style);
     this.sheet = style.sheet;
+    const module = { default: G.ModuleConfigDefault } as {
+      [i: string]: ConfigType;
+    };
+    G.Tabs.forEach((t) => {
+      module[t.module] = t.config;
+    });
     this.style = {
       locale: G.LocaleConfigs,
-      module: {
-        ...G.ModuleConfigs,
-        default: G.ModuleConfigDefault,
-      },
+      module,
     };
   }
 

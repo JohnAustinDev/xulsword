@@ -15,7 +15,11 @@ import Dirs from './modules/dirs';
 import Prefs from './modules/prefs';
 import LibSword from './modules/libsword';
 import nsILocalFile from './components/nsILocalFile';
-import { getFeatureModules, getFontFaceConfigs } from './config';
+import {
+  getFeatureModules,
+  getFontFaceConfigs,
+  getModuleConfig,
+} from './config';
 import { jsdump } from './mutil';
 
 import type {
@@ -122,6 +126,68 @@ export function getBook(): { [i: string]: BookType } {
   return Cache.read('book');
 }
 
+function versionCompare(v1: string | number, v2: string | number) {
+  const p1 = String(v1).split('.');
+  const p2 = String(v2).split('.');
+  do {
+    let n1: any = p1.shift();
+    let n2: any = p2.shift();
+    if (!n1) n1 = 0;
+    if (!n2) n2 = 0;
+    if (Number(n1) && Number(n2)) {
+      if (n1 < n2) return -1;
+      if (n1 > n2) return 1;
+    } else if (n1 < n2) {
+      return -1;
+    } else if (n1 > n2) {
+      return 1;
+    }
+  } while (p1.length || p2.length);
+
+  return 0;
+}
+
+function isModuleSupported(module: string, type: ModTypes): boolean {
+  if (Object.keys(C.SupportedModuleTypes).includes(type)) {
+    // Weed out incompatible module versions. The module installer shouldn't
+    // allow bad mods, but this is just in case.
+    let xsversion = LibSword.getModuleInformation(module, C.VERSIONPAR);
+    xsversion = xsversion !== C.NOTFOUND ? xsversion : C.MINVERSION;
+    let modminxsvers;
+    try {
+      modminxsvers = Prefs.getCharPref('MinXSMversion');
+    } catch (er) {
+      modminxsvers = C.MINVERSION;
+    }
+    if (versionCompare(xsversion, modminxsvers) < 0) {
+      jsdump(
+        `ERROR: Dropping module "${module}". xsversion:${xsversion} < modminxsvers:${modminxsvers}`
+      );
+    } else {
+      let xsengvers = LibSword.getModuleInformation(module, 'MinimumVersion');
+      xsengvers = xsengvers !== C.NOTFOUND ? xsengvers : '0';
+      let enginevers;
+      try {
+        enginevers = Prefs.getCharPref('EngineVersion');
+      } catch (er) {
+        enginevers = C.NOTFOUND;
+      }
+      if (
+        enginevers !== C.NOTFOUND &&
+        versionCompare(enginevers, xsengvers) < 0
+      ) {
+        jsdump(
+          `ERROR: Dropping module "${module}". enginevers:${enginevers} < xsengvers:${xsengvers}`
+        );
+      } else {
+        return true;
+      }
+    }
+  }
+  jsdump(`NOTE: Dropping module "${module}": type=${type}`);
+  return false;
+}
+
 export function getTabs(): TabType[] {
   if (!Cache.has('tabs')) {
     const tabs: TabType[] = [];
@@ -131,85 +197,88 @@ export function getTabs(): TabType[] {
     modlist.split('<nx>').forEach((mstring: string) => {
       const [module, mt] = mstring.split(';');
       const type = mt as ModTypes;
-      let label = LibSword.getModuleInformation(module, 'TabLabel');
-      if (label === C.NOTFOUND)
-        label = LibSword.getModuleInformation(module, 'Abbreviation');
-      if (label === C.NOTFOUND) label = module;
-      let tabType;
-      Object.entries(C.SupportedModuleTypes).forEach((entry) => {
-        const [longType, shortType] = entry;
-        if (longType === type) tabType = shortType;
-      });
-      if (!tabType) return;
+      if (isModuleSupported(module, type)) {
+        let label = LibSword.getModuleInformation(module, 'TabLabel');
+        if (label === C.NOTFOUND)
+          label = LibSword.getModuleInformation(module, 'Abbreviation');
+        if (label === C.NOTFOUND) label = module;
+        let tabType;
+        Object.entries(C.SupportedModuleTypes).forEach((entry) => {
+          const [longType, shortType] = entry;
+          if (longType === type) tabType = shortType;
+        });
+        if (!tabType) return;
 
-      // Find conf file. Look at file name, then search contents if necessary
-      const DIRSEP = process.platform === 'win32' ? '\\' : '/';
-      let p = LibSword.getModuleInformation(module, 'AbsoluteDataPath').replace(
-        /[\\/]/g,
-        DIRSEP
-      );
-      if (p.slice(-1) !== DIRSEP) p += DIRSEP;
-      const dir = p;
-      p = p.replace(/[\\/]modules[\\/].*?$/, `${DIRSEP}mods.d`);
-      let confFile = new nsILocalFile(
-        `${p + DIRSEP + module.toLowerCase()}.conf`
-      );
-      if (!confFile.exists()) {
-        confFile = new nsILocalFile(`${p + DIRSEP + module}.conf`);
+        // Find conf file. Look at file name, then search contents if necessary
+        const DIRSEP = process.platform === 'win32' ? '\\' : '/';
+        let p = LibSword.getModuleInformation(
+          module,
+          'AbsoluteDataPath'
+        ).replace(/[\\/]/g, DIRSEP);
+        if (p.slice(-1) !== DIRSEP) p += DIRSEP;
+        const dir = p;
+        p = p.replace(/[\\/]modules[\\/].*?$/, `${DIRSEP}mods.d`);
+        let confFile = new nsILocalFile(
+          `${p + DIRSEP + module.toLowerCase()}.conf`
+        );
         if (!confFile.exists()) {
-          const modRE = new RegExp(`^\\[${module}\\]`);
-          confFile = new nsILocalFile(p);
-          if (confFile.exists()) {
-            const files = confFile.directoryEntries;
-            files?.forEach((file) => {
-              const f = new nsILocalFile(confFile.path);
-              f.append(file);
-              if (!f.isDirectory() && /\.conf$/.test(f.leafName)) {
-                const cdata = f.readFile();
-                if (modRE.test(cdata)) confFile = f;
-              }
-            });
+          confFile = new nsILocalFile(`${p + DIRSEP + module}.conf`);
+          if (!confFile.exists()) {
+            const modRE = new RegExp(`^\\[${module}\\]`);
+            confFile = new nsILocalFile(p);
+            if (confFile.exists()) {
+              const files = confFile.directoryEntries;
+              files?.forEach((file) => {
+                const f = new nsILocalFile(confFile.path);
+                f.append(file);
+                if (!f.isDirectory() && /\.conf$/.test(f.leafName)) {
+                  const cdata = f.readFile();
+                  if (modRE.test(cdata)) confFile = f;
+                }
+              });
+            }
           }
         }
+        const conf = confFile.path;
+        if (!confFile.exists())
+          jsdump(
+            `WARNING: tab.conf bad path "${p}$/${module.toLowerCase()}.conf"`
+          );
+        const isCommDir =
+          confFile.path
+            .toLowerCase()
+            .indexOf(Dirs.path.xsModsCommon.toLowerCase()) === 0;
+        const isVerseKey = type === C.BIBLE || type === C.COMMENTARY;
+
+        const tab: TabType = {
+          module,
+          type,
+          version: LibSword.getModuleInformation(module, 'Version'),
+          config: getModuleConfig(module),
+          v11n: isVerseKey ? LibSword.getVerseSystem(module) : '',
+          directory: dir,
+          label,
+          labelClass: isASCII(label) ? 'cs-LTR_DEFAULT' : `cs-${module}`,
+          tabType,
+          isVerseKey,
+          direction: /^rt.?l$/i.test(
+            LibSword.getModuleInformation(module, 'Direction')
+          )
+            ? 'rtl'
+            : 'ltr',
+          index: i,
+          description: LibSword.getModuleInformation(module, 'Description'),
+          conf,
+          isCommDir,
+          audio: {}, // will be filled in later
+          audioCode: LibSword.getModuleInformation(module, 'AudioCode'),
+          lang: LibSword.getModuleInformation(module, 'Lang'),
+        };
+
+        tabs.push(tab);
+
+        i += 1;
       }
-      const conf = confFile.path;
-      if (!confFile.exists())
-        jsdump(
-          `WARNING: tab.conf bad path "${p}$/${module.toLowerCase()}.conf"`
-        );
-      const isCommDir =
-        confFile.path
-          .toLowerCase()
-          .indexOf(Dirs.path.xsModsCommon.toLowerCase()) === 0;
-      const isVerseKey = type === C.BIBLE || type === C.COMMENTARY;
-
-      const tab: TabType = {
-        module,
-        type,
-        version: LibSword.getModuleInformation(module, 'Version'),
-        v11n: isVerseKey ? LibSword.getVerseSystem(module) : '',
-        dir,
-        label,
-        labelClass: isASCII(label) ? 'cs-LTR_DEFAULT' : `cs-${module}`,
-        tabType,
-        isVerseKey,
-        direction: /^rt.?l$/i.test(
-          LibSword.getModuleInformation(module, 'Direction')
-        )
-          ? 'rtl'
-          : 'ltr',
-        index: i,
-        description: LibSword.getModuleInformation(module, 'Description'),
-        conf,
-        isCommDir,
-        audio: {}, // will be filled in later
-        audioCode: LibSword.getModuleInformation(module, 'AudioCode'),
-        lang: LibSword.getModuleInformation(module, 'Lang'),
-      };
-
-      tabs.push(tab);
-
-      i += 1;
     });
     Cache.write(tabs, 'tabs');
   }

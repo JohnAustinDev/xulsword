@@ -51,7 +51,7 @@ export function libswordText(
   if (!module || !show) return r;
 
   const { type } = G.Tab[module];
-  const moduleLocale = G.ModuleConfigs[module].AssociatedLocale;
+  const moduleLocale = G.Tab[module].config.AssociatedLocale;
 
   // Set SWORD filter options
   const options = {} as { [key in SwordFilterType]: SwordFilterValueType };

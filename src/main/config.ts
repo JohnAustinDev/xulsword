@@ -8,11 +8,9 @@ import Prefs from './modules/prefs';
 import Cache from '../cache';
 import nsILocalFile from './components/nsILocalFile';
 import LibSword from './modules/libsword';
-import { jsdump } from './mutil';
-// import getFontFamily from './fontfamily';
+import getFontFamily from './fontfamily';
 
 import type { ConfigType, FeatureType, GlobalPrefType, GType } from '../type';
-import getFontFamily from './fontfamily';
 
 // If a module config fontFamily specifies a URL to a font, rather
 // than a fontFamily, then parse the URL. Otherwise return null.
@@ -149,146 +147,64 @@ function getLocaleOfModule(module: string) {
   return myLocale;
 }
 
-function getModuleConfig(mod: string) {
+export function getModuleConfig(mod: string) {
   if (!LibSword.isReady('getModuleConfig') && mod !== 'LTR_DEFAULT') {
     throw Error(
       `getModuleConfig(modname) must not be called until LibSword is ready!`
     );
   }
-  const moduleConfig = {} as ConfigType;
+  if (!Cache.has(`moduleConfig${mod}`)) {
+    const moduleConfig = {} as ConfigType;
 
-  // All config properties should be present, having a valid value or null.
-  // Read values from module's .conf file
-  Object.entries(C.ConfigTemplate).forEach((entry) => {
-    const prop = entry[0] as keyof typeof C.ConfigTemplate;
-    const keyobj = entry[1];
-    let r = null;
-    if (keyobj.modConf) {
-      if (mod !== 'LTR_DEFAULT') {
-        r = LibSword.getModuleInformation(mod, keyobj.modConf);
-        if (r === C.NOTFOUND) r = null;
+    // All config properties should be present, having a valid value or null.
+    // Read values from module's .conf file
+    Object.entries(C.ConfigTemplate).forEach((entry) => {
+      const prop = entry[0] as keyof typeof C.ConfigTemplate;
+      const keyobj = entry[1];
+      let r = null;
+      if (keyobj.modConf) {
+        if (mod !== 'LTR_DEFAULT') {
+          r = LibSword.getModuleInformation(mod, keyobj.modConf);
+          if (r === C.NOTFOUND) r = null;
+        }
       }
-    }
-    moduleConfig[prop] = r;
-  });
+      moduleConfig[prop] = r;
+    });
 
-  // Assign associated locales
-  if (mod !== 'LTR_DEFAULT') {
-    const lom = getLocaleOfModule(mod);
-    moduleConfig.AssociatedLocale = lom || null;
-  } else {
-    moduleConfig.AssociatedLocale = i18next.language;
-    moduleConfig.AssociatedModules = null;
+    // Assign associated locales
+    if (mod !== 'LTR_DEFAULT') {
+      const lom = getLocaleOfModule(mod);
+      moduleConfig.AssociatedLocale = lom || null;
+    } else {
+      moduleConfig.AssociatedLocale = i18next.language;
+      moduleConfig.AssociatedModules = null;
+    }
+
+    // Normalize direction value
+    moduleConfig.direction =
+      moduleConfig.direction && moduleConfig.direction.search(/RtoL/i) !== -1
+        ? 'rtl'
+        : 'ltr';
+
+    // if fontFamily specifies a font URL, rather than a fontFamily, then create a
+    // @font-face CSS entry and use it for this module.
+    const url = fontURL(mod);
+    if (url) moduleConfig.fontFamily = url.name;
+
+    // Insure there are single quotes around font names
+    if (moduleConfig.fontFamily) {
+      moduleConfig.fontFamily = moduleConfig.fontFamily.replace(/"/g, "'");
+      if (!/'.*'/.test(moduleConfig.fontFamily))
+        moduleConfig.fontFamily = `'${moduleConfig.fontFamily}'`;
+    }
+    Cache.write(moduleConfig, `moduleConfig${mod}`);
   }
 
-  // Normalize direction value
-  moduleConfig.direction =
-    moduleConfig.direction && moduleConfig.direction.search(/RtoL/i) !== -1
-      ? 'rtl'
-      : 'ltr';
-
-  // if fontFamily specifies a font URL, rather than a fontFamily, then create a
-  // @font-face CSS entry and use it for this module.
-  const url = fontURL(mod);
-  if (url) moduleConfig.fontFamily = url.name;
-
-  // Insure there are single quotes around font names
-  if (moduleConfig.fontFamily) {
-    moduleConfig.fontFamily = moduleConfig.fontFamily.replace(/"/g, "'");
-    if (!/'.*'/.test(moduleConfig.fontFamily))
-      moduleConfig.fontFamily = `'${moduleConfig.fontFamily}'`;
-  }
-
-  return moduleConfig;
-}
-
-export function versionCompare(v1: string | number, v2: string | number) {
-  const p1 = String(v1).split('.');
-  const p2 = String(v2).split('.');
-  do {
-    let n1: any = p1.shift();
-    let n2: any = p2.shift();
-    if (!n1) n1 = 0;
-    if (!n2) n2 = 0;
-    if (Number(n1) && Number(n2)) {
-      if (n1 < n2) return -1;
-      if (n1 > n2) return 1;
-    } else if (n1 < n2) {
-      return -1;
-    } else if (n1 > n2) {
-      return 1;
-    }
-  } while (p1.length || p2.length);
-
-  return 0;
+  return Cache.read(`moduleConfig${mod}`);
 }
 
 export function getModuleConfigDefault() {
   return getModuleConfig('LTR_DEFAULT');
-}
-
-export function getModuleConfigs(): { [i: string]: ConfigType } {
-  if (!Cache.has('moduleConfigs')) {
-    if (!LibSword.isReady('getModuleConfigs')) {
-      throw Error(
-        `getModuleConfigs must not be called until LibSword is ready!`
-      );
-    }
-
-    const ret: GType['ModuleConfigs'] = {};
-
-    // Gets list of available modules
-    const mods = LibSword.getModuleList();
-    if (!mods || mods === C.NOMODULES) return ret;
-    const modules = mods.split(C.CONFSEP);
-
-    for (let m = 0; m < modules.length; m += 1) {
-      const [mod, type] = modules[m].split(';');
-
-      // Weed out unsupported module types
-      if (Object.keys(C.SupportedModuleTypes).includes(type)) {
-        // Weed out incompatible module versions. The module installer shouldn't
-        // allow bad mods, but this is just in case.
-        let xsversion = LibSword.getModuleInformation(mod, C.VERSIONPAR);
-        xsversion = xsversion !== C.NOTFOUND ? xsversion : C.MINVERSION;
-        let modminxsvers;
-        try {
-          modminxsvers = Prefs.getCharPref('MinXSMversion');
-        } catch (er) {
-          modminxsvers = C.MINVERSION;
-        }
-        if (versionCompare(xsversion, modminxsvers) < 0) {
-          jsdump(
-            `ERROR: Dropping module "${mod}". xsversion:${xsversion} < modminxsvers:${modminxsvers}`
-          );
-        } else {
-          let xsengvers = LibSword.getModuleInformation(mod, 'MinimumVersion');
-          xsengvers = xsengvers !== C.NOTFOUND ? xsengvers : '0';
-          let enginevers;
-          try {
-            enginevers = Prefs.getCharPref('EngineVersion');
-          } catch (er) {
-            enginevers = C.NOTFOUND;
-          }
-          if (
-            enginevers !== C.NOTFOUND &&
-            versionCompare(enginevers, xsengvers) < 0
-          ) {
-            jsdump(
-              `ERROR: Dropping module "${mod}". enginevers:${enginevers} < xsengvers:${xsengvers}`
-            );
-          } else {
-            ret[mod] = getModuleConfig(mod);
-          }
-        }
-      } else {
-        jsdump(`ERROR: Dropping module "${mod}". Unsupported type "${type}".`);
-      }
-    }
-    Cache.write(ret, 'moduleConfigs');
-  }
-
-  return Cache.read('moduleConfigs');
 }
 
 export function localeConfig(locale: string) {
@@ -309,35 +225,40 @@ export function localeConfig(locale: string) {
   });
   lconfig.AssociatedLocale = locale || null;
   // Module associations...
-  const moduleconfigs = getModuleConfigs();
+  const modules: string[] = [];
+  const mods = LibSword.getModuleList();
+  if (mods && mods !== C.NOMODULES) {
+    mods.split(C.CONFSEP).forEach((m) => {
+      const [mod] = m.split(';');
+      modules.push(mod);
+    });
+  }
   const { AssociatedModules } = lconfig;
   const ams = (AssociatedModules && AssociatedModules.split(/\s*,\s*/)) || [];
   lconfig.AssociatedModules = null;
   const assocmods: Set<string> = new Set(
-    ams.filter((m) => Object.keys(moduleconfigs).includes(m))
+    ams.filter((m) => Object.keys(modules).includes(m))
   );
   // Associate with modules having configs that associate with this locale.
-  Object.entries(moduleconfigs).forEach((entry) => {
-    const [module, config] = entry;
+  modules.forEach((m) => {
+    const config = getModuleConfig(m);
     if ('AssociatedLocale' in config && config.AssociatedLocale === locale) {
-      assocmods.add(module);
+      assocmods.add(m);
     }
   });
   // Associate with modules sharing this exact locale
-  Object.entries(moduleconfigs).forEach((entry) => {
-    const [module] = entry;
-    if (LibSword.getModuleInformation(module, 'Lang') === locale) {
-      assocmods.add(module);
+  modules.forEach((m) => {
+    if (LibSword.getModuleInformation(m, 'Lang') === locale) {
+      assocmods.add(m);
     }
   });
   // Associate with modules sharing this locale's base language
-  Object.entries(moduleconfigs).forEach((entry) => {
-    const [module] = entry;
+  modules.forEach((m) => {
     if (
-      LibSword.getModuleInformation(module, 'Lang').replace(/-.*$/, '') ===
+      LibSword.getModuleInformation(m, 'Lang').replace(/-.*$/, '') ===
       locale.replace(/-.*$/, '')
     ) {
-      assocmods.add(module);
+      assocmods.add(m);
     }
   });
   if (assocmods.size) {
