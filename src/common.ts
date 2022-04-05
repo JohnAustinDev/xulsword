@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import i18next from 'i18next';
 import C from './constant';
-import type { ConfigType, PrefObject } from './type';
+import type { ConfigType, PrefObject, PrefValue } from './type';
 import Cache from './cache';
 
 export function escapeRE(text: string) {
@@ -151,41 +151,42 @@ export function clone<T extends unknown>(obj: T): T {
   return copy;
 }
 
-// Compare two data objects. Data objects have string keys with values that are
-// either primitives, arrays or other data objects. It returns all differences
-// in obj2 compared to obj1, or undefined if they share all the same values
-// recursively. Children greater than 'depth' recursion are compared exhaustively
-// but returned entirely if different in any way. Depth is 1 by default because
-// React setState performs shallow merging with existing state, meaning a partial
-// state object would overwrite a complete one, resulting in unexpected states.
-export function diff<T extends { [i: string]: any } | null>(
-  obj1: T,
-  obj2: T,
+// Compare two PrefValues. It returns only the differences in pv2 compared to pv1,
+// or undefined if they share the same value (recursively). If there are children
+// greater than 'depth' recursion, they are compared exhaustively but returned entirely
+// if different in any way. Depth is 1 by default because React setState performs
+// shallow merging with existing state, meaning a partial state object overwrites
+// a complete one, resulting in unexpected states.
+export function diff<T extends PrefValue>(
+  pv1: T,
+  pv2: T,
   depth = 1
 ): Partial<T> {
   let difference: any;
   const level = depth || 0;
   // Primatives
   if (
-    obj1 === null ||
-    obj2 === null ||
-    typeof obj1 !== 'object' ||
-    typeof obj2 !== 'object'
+    pv1 === null ||
+    pv2 === null ||
+    typeof pv1 !== 'object' ||
+    typeof pv2 !== 'object'
   ) {
-    if (obj1 !== obj2) difference = obj2;
-  } else if (Array.isArray(obj2)) {
+    if (pv1 !== pv2) difference = pv2;
+  } else if (Array.isArray(pv2)) {
     // Arrays
     if (
-      !Array.isArray(obj1) ||
-      obj1.length !== obj2.length ||
-      obj2.some((v, i) => {
-        return diff(obj1[i], v, depth - 1) !== undefined;
+      !Array.isArray(pv1) ||
+      pv1.length !== pv2.length ||
+      pv2.some((v, i) => {
+        return diff(pv1[i], v, depth - 1) !== undefined;
       })
     ) {
-      difference = obj2;
+      difference = pv2;
     }
   } else {
     // Data objects
+    const obj1 = pv1 as PrefObject;
+    const obj2 = pv2 as PrefObject;
     let different = false;
     Object.entries(obj2).forEach((entry2) => {
       const [k2, v2] = entry2;
