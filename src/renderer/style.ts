@@ -136,14 +136,13 @@ class DynamicStyleSheet {
       insertRule(sheet, 'cs', 'LTR_DEFAULT', G.ModuleConfigDefault);
 
       // Create font-face rules for xulsword's fonts.
-      Object.entries(G.FontFaceConfigs).forEach((entry) => {
-        const [name, src] = entry;
-        let src2 = `'${src}'`;
-        const match = src.match(/^file:\/\/(.*$)/i);
-        if (match) {
-          src2 = G.inlineFile(match[1], 'base64');
+      G.ModuleFonts.forEach((font) => {
+        const { fontFamily, path, url } = font;
+        let url2 = url;
+        if (path) {
+          url2 = G.inlineFile(path, 'base64');
         }
-        const rule = `@font-face {font-family:'${name}'; src:url("${src2}");}`;
+        const rule = `@font-face {font-family:'${fontFamily}'; src:url("${url2}");}`;
         sheet.insertRule(rule, sheet.cssRules.length);
       });
 

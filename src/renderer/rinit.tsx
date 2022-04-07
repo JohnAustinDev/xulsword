@@ -152,6 +152,28 @@ export default function renderToRoot(
         )
       );
     });
+    useEffect(() => {
+      const root = document.getElementById('root');
+      if (root) {
+        root.ondragover = (e) => {
+          e.preventDefault();
+        };
+        root.ondrop = (e) => {
+          e.preventDefault();
+          if (e.dataTransfer) {
+            G.Commands.addLocalModule(
+              Array.from(e.dataTransfer.files).map((f) => f.path) || []
+            );
+          }
+        };
+      }
+      return () => {
+        if (root) {
+          root.ondrop = null;
+          root.ondragover = null;
+        }
+      };
+    });
     return (
       <div id="reset" onContextMenu={onContextMenu} key={reset}>
         {children}

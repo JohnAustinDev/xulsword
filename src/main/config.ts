@@ -10,7 +10,13 @@ import nsILocalFile from './components/nsILocalFile';
 import LibSword from './modules/libsword';
 import getFontFamily from './fontfamily';
 
-import type { ConfigType, FeatureType, GlobalPrefType, GType } from '../type';
+import type {
+  ConfigType,
+  FeatureType,
+  FontFaceType,
+  GlobalPrefType,
+} from '../type';
+import Data from './modules/data';
 
 // If a module config fontFamily specifies a URL to a font, rather
 // than a fontFamily, then parse the URL. Otherwise return null.
@@ -19,39 +25,34 @@ function fontURL(mod: string) {
     /(\w+:\/\/[^"')]+)\s*$/
   );
   return url
-    ? { name: `_${url[1].replace(/[^\w\d]/g, '_')}`, url: url[1] }
+    ? { fontFamily: `_${url[1].replace(/[^\w\d]/g, '_')}`, url: url[1] }
     : null;
 }
 
-// Read fonts which are in xulsword's xsFonts directory.
-// The fonts pref is used to cache costly font data.
-// If 'font' is in the pref-value, it is used, otherwise it is added
-// to the pref-value. IMPORTANT: If a font is ever updated or removed,
-// the fonts pref MUST be reset or updated.
-export function getFontFaceConfigs(): { [i: string]: string } {
-  if (!Cache.has('fontFaceConfigs')) {
-    if (!LibSword.isReady('getFontFaceConfigs')) {
-      throw Error(
-        `getFontFaceConfigs must not be run until LibSword is ready!`
-      );
-    }
-
+// Link to fonts which are in xulsword's xsFonts directory. Fonts
+// listed will appear in font option menus and will be available to
+// all modules. The fonts pref is used to cache costly font data.
+export function getModuleFonts(): FontFaceType[] {
+  if (!Cache.has('ModuleFonts')) {
     // Look for xulsword local fonts, which may be included with some
     // XSM modules.
-    const ret = {} as { [i: string]: string };
+    const ret = [] as FontFaceType[];
     let fonts = Prefs.getPrefOrCreate('fonts', 'complex', {}, 'fonts') as {
       [i: string]: { fontFamily: string; path: string };
     };
-    const fontdir = Dirs.xsFonts.directoryEntries;
-    let reread = false;
-    fontdir?.forEach((file) => {
-      if (!Object.keys(fonts).includes(file)) {
-        reread = true;
-      }
-    });
+    const fontfiles = Dirs.xsFonts.directoryEntries;
+    let reread = true;
+    if (
+      fontfiles.length === Object.keys(fonts).length &&
+      fontfiles?.every((f) => {
+        return Object.keys(fonts).includes(f);
+      })
+    ) {
+      reread = false;
+    }
     if (reread) {
       fonts = {};
-      fontdir?.forEach((file) => {
+      fontfiles?.forEach((file) => {
         const font = new nsILocalFile(path.join(Dirs.path.xsFonts, file));
         let fontFamily = 'dir';
         if (!font.isDirectory()) {
@@ -68,35 +69,30 @@ export function getFontFaceConfigs(): { [i: string]: string } {
 
     Object.values(fonts).forEach((info) => {
       if (info.fontFamily !== 'unknown' && info.fontFamily !== 'dir')
-        ret[info.fontFamily] = `file://${info.path}`;
+        ret.push({ fontFamily: info.fontFamily, path: info.path });
     });
 
-    // Look for module config Font, which may be a URL or a fontFamily name.
-    // If ther is a URL, add the font to our list of available fonts.
+    // Look for module config Font URL. A module's Font entry may be a URL or a
+    // fontFamily or font file name. All available font files were added above.
+    // But URLs should also be added if any module requests them.
     const mods = LibSword.getModuleList();
     const disable =
-      !Prefs.getPrefOrCreate(
-        'global.HaveInternetPermission',
-        'boolean',
-        false
-      ) &&
-      !Prefs.getPrefOrCreate(
-        'global.SessionHasInternetPermission',
-        'boolean',
-        false
+      !Prefs.getBoolPref('global.InternetPermission') &&
+      !(
+        Data.has('SessionInternetPermission') &&
+        Data.read('SessionInternetPermission')
       );
     if (!disable && mods && mods !== C.NOMODULES) {
       const modulelist = mods.split(C.CONFSEP);
       const modules = modulelist.map((m: string) => m.split(';')[0]);
       modules.forEach((m) => {
         const url = fontURL(m);
-        if (url) ret[url.name] = url.url;
+        if (url) ret.push({ fontFamily: url.fontFamily, url: url.url });
       });
     }
-    Cache.write(ret, 'fontFaceConfigs');
+    Cache.write(ret, 'ModuleFonts');
   }
-
-  return Cache.read('fontFaceConfigs');
+  return Cache.read('ModuleFonts');
 }
 
 // Return a locale (if any) to associate with a module:
@@ -148,11 +144,6 @@ function getLocaleOfModule(module: string) {
 }
 
 export function getModuleConfig(mod: string) {
-  if (!LibSword.isReady('getModuleConfig') && mod !== 'LTR_DEFAULT') {
-    throw Error(
-      `getModuleConfig(modname) must not be called until LibSword is ready!`
-    );
-  }
   if (!Cache.has(`moduleConfig${mod}`)) {
     const moduleConfig = {} as ConfigType;
 
@@ -186,14 +177,15 @@ export function getModuleConfig(mod: string) {
         ? 'rtl'
         : 'ltr';
 
-    // if fontFamily specifies a font URL, rather than a fontFamily, then create a
-    // @font-face CSS entry and use it for this module.
-    const url = fontURL(mod);
-    if (url) moduleConfig.fontFamily = url.name;
-
-    // Insure there are single quotes around font names
-    if (moduleConfig.fontFamily) {
-      moduleConfig.fontFamily = moduleConfig.fontFamily.replace(/"/g, "'");
+    // Insure there are single quotes around font names and that we have the actual
+    // font name and not a file name (which is used in some modules).
+    let { fontFamily } = moduleConfig;
+    if (fontFamily) {
+      const font = getModuleFonts().find(
+        (f) => fontFamily && f.path?.split('/').pop()?.includes(fontFamily)
+      );
+      if (font) fontFamily = font.fontFamily;
+      moduleConfig.fontFamily = fontFamily.replace(/"/g, "'");
       if (!/'.*'/.test(moduleConfig.fontFamily))
         moduleConfig.fontFamily = `'${moduleConfig.fontFamily}'`;
     }

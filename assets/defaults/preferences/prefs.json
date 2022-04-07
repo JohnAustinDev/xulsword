@@ -1,11 +1,8 @@
 {
-  "EngineVersion": "1.8.1",
-  "MinXSMversion": "1.0",
-  "MinUIversion": "3.10",
-  "LibxulswordVersion": "1.4.5",
   "HelpEmailAddress": "",
   "WindowsDidClose": true,
   "global": {
+    "InternetPermission": true,
     "fontSize": 2,
     "locale": "",
     "locales": [

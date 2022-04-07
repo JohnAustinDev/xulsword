@@ -14,9 +14,9 @@ declare global {
 export type WindowRegistryType = (WindowDescriptorType | null)[];
 
 export type WindowDescriptorType = {
-  name: string;
+  type: 'xulsword' | 'splash' | 'viewportWin' | 'popupWin' | 'chooseFont';
   id?: number;
-  type?: string;
+  category?: 'window' | 'dialog';
   options?: Electron.BrowserWindowConstructorOptions;
 };
 
@@ -285,6 +285,12 @@ export type ConfigType = {
     | 'PreferredCSSXHTML']: string | null;
 };
 
+export type FontFaceType = {
+  fontFamily: string;
+  path?: string;
+  url?: string;
+};
+
 export type FeatureType = {
   // SWORD standard
   strongsNumbers: string[];
@@ -306,6 +312,27 @@ export type ModTypes =
   | 'Commentaries'
   | 'Lexicons / Dictionaries'
   | 'Generic Books';
+
+export type SwordConfType = {
+  module: string;
+  DataPath: string;
+  MinimumVersion: string;
+  ModDrv:
+    | 'RawText'
+    | 'RawText4'
+    | 'zText'
+    | 'zText4'
+    | 'RawCom'
+    | 'RawCom4'
+    | 'zCom'
+    | 'zCom4'
+    | 'HREFCom'
+    | 'RawFiles'
+    | 'RawLD'
+    | 'RawLD4'
+    | 'zLD'
+    | 'RawGenBook';
+};
 
 export type TabTypes = 'Texts' | 'Comms' | 'Dicts' | 'Genbks';
 
@@ -415,8 +442,6 @@ const PrefsPublic = {
 const LibSwordPublic = {
   init: func as unknown as () => boolean,
   quit: func as unknown as () => void,
-  pause: func as unknown as (callback: any) => void,
-  resume: func as unknown as () => void,
   isReady: func as unknown as (caller: string) => boolean,
   getMaxChapter: func as unknown as (
     v11n: V11nType,
@@ -511,7 +536,7 @@ const LibSwordPublic = {
 
 const CommandsPublic = {
   addRepositoryModule: func as unknown as () => void,
-  addLocalModule: func as unknown as () => void,
+  addLocalModule: func as unknown as (paths?: string[] | string) => void,
   removeModule: func as unknown as () => void,
   exportAudio: func as unknown as () => void,
   importAudio: func as unknown as () => void,
@@ -568,7 +593,7 @@ export const GPublic = {
   ProgramConfig:       'getter' as unknown as ConfigType,
   LocaleConfigs:       'getter' as unknown as { [i: string]: ConfigType },
   ModuleConfigDefault: 'getter' as unknown as ConfigType,
-  FontFaceConfigs:     'getter' as unknown as { [i: string]: string },
+  ModuleFonts:     'getter' as unknown as FontFaceType[],
   FeatureModules:      'getter' as unknown as FeatureType,
   BooksInModule:       'getter' as unknown as { [i: string]: string[] },
   BkChsInV11n:         'getter' as unknown as { [key in V11nType]: { [i: string]: number }; },

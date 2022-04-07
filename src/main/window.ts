@@ -218,10 +218,10 @@ function updateOptions(
   descriptor: WindowDescriptorType,
   parent: BrowserWindow
 ): void {
-  const { name, type } = descriptor;
+  const { type, category } = descriptor;
   let { options } = descriptor;
   options = options || {};
-  descriptor.type = type || 'window';
+  descriptor.category = category || 'window';
   // All windows must have these same options.
   options.show = false;
   options.useContentSize = true;
@@ -239,13 +239,13 @@ function updateOptions(
       `Window additionalArguments must be a JSON_stringify { key: value } string.`
     );
   const args = JSON_parse(options.webPreferences.additionalArguments[0]);
-  args.classes = [name, type];
-  args.name = name;
-  args.type = type;
+  args.classes = [type, category];
+  args.name = type;
+  args.type = category;
   options.webPreferences.additionalArguments[0] = JSON_stringify(args);
   // Dialog windows have these defaults (while regular windows just
   // have Electron defaults).
-  if (type === 'dialog') {
+  if (category === 'dialog') {
     const ddef: Electron.BrowserWindowConstructorOptions = {
       width: 50, // dialogs are auto-resized and then fixed
       height: 50, // dialogs are auto-resized and then fixed
@@ -263,7 +263,7 @@ function updateOptions(
   }
   // Set bounds for windows that should cover their source position
   // within the parent window.
-  if (parent && (name === 'viewportWin' || name === 'popupWin')) {
+  if (parent && (type === 'viewportWin' || type === 'popupWin')) {
     const xs = windowBounds(parent);
     const o = options as any;
     const eb = o?.openWithBounds;
@@ -282,14 +282,14 @@ function createWindow(
   descriptor: WindowDescriptorType,
   parent: BrowserWindow
 ): BrowserWindow {
-  const { name, type, options } = descriptor;
+  const { type, category, options } = descriptor;
   updateOptions(descriptor, parent);
   const win = new BrowserWindow(options);
   addWindowToRegistry(win, descriptor);
-  win.loadURL(resolveHtmlPath(`${name}.html`));
+  win.loadURL(resolveHtmlPath(`${type}.html`));
   // win.webContents.openDevTools();
   windowInitI18n(win);
-  if (name === 'viewportWin' || name === 'popupWin' || type !== 'window')
+  if (type === 'viewportWin' || type === 'popupWin' || category !== 'window')
     win.removeMenu();
   win.on('resize', () => {
     win.webContents.send('resize', win.getSize());
@@ -308,7 +308,7 @@ function createWindow(
 const Window: GType['Window'] = {
   open(descriptor: WindowDescriptorType): number {
     const win = createWindow(descriptor, arguments[1]);
-    if (descriptor.type === 'window') addWindowToPrefs(win, descriptor);
+    if (descriptor.category === 'window') addWindowToPrefs(win, descriptor);
     return win.id;
   },
 

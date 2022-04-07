@@ -199,7 +199,7 @@ class Viewport extends React.Component implements PopupParent {
       const panelHasBible =
         tabbank &&
         tabbank.some((t) => {
-          return t && G.Tab[t].type === C.BIBLE;
+          return G.Tab[t].type === C.BIBLE;
         });
       if (panelHasBible && location?.book) {
         panelHasILOptions[i] = Boolean(

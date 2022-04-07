@@ -19,8 +19,11 @@ import { checkModulePrefs } from './minit';
 import LibSword from './modules/libsword';
 
 import type { GlobalPrefType, WindowRegistryType } from '../type';
+import { updateTabsAfterModuleInstall } from './tabs';
 
 const i18nBackendMain = require('i18next-fs-backend');
+
+LibSword.init();
 
 // Get the available locale list
 const Locales = G.Prefs.getComplexValue(
@@ -79,7 +82,7 @@ ipcMain.on('did-finish-render', (event: IpcMainEvent) => {
   if (!win) return;
   const wd = WindowRegistry[win.id];
   if (!wd) return;
-  const { name } = wd;
+  const { type: name } = wd;
 
   if (name === 'xulsword' && process.env.START_MINIMIZED) {
     win.minimize();
@@ -89,7 +92,7 @@ ipcMain.on('did-finish-render', (event: IpcMainEvent) => {
   }
   if (name === 'xulsword' && !(isDevelopment && C.DEVELSPLASH === 2)) {
     setTimeout(() => {
-      G.Window.close({ name: 'splash' });
+      G.Window.close({ type: 'splash' });
     }, 1000);
   }
   if (process.env.NODE_ENV === 'development') win.webContents.openDevTools();
@@ -117,7 +120,7 @@ const openMainWindow = () => {
     if (windowsDidClose) {
       Object.entries(persistWinPref).forEach((entry) => {
         const reg = entry[1] as WindowRegistryType[number];
-        if (reg && reg.name === 'xulsword') {
+        if (reg && reg.type === 'xulsword') {
           if (reg.options) options = reg.options;
         } else {
           persistedWindows.push(reg);
@@ -128,7 +131,7 @@ const openMainWindow = () => {
 
   G.Prefs.setComplexValue(`Windows`, {}, 'windows');
   const mainWin = BrowserWindow.fromId(
-    G.Window.open({ name: 'xulsword', options })
+    G.Window.open({ type: 'xulsword', options })
   );
 
   if (!mainWin) {
@@ -138,12 +141,15 @@ const openMainWindow = () => {
   const menuBuilder = new MenuBuilder(mainWin, i18n);
   menuBuilder.buildMenu();
 
-  LibSword.init();
+  // TODO! install command line modules (xulsword 2.0 newModule.js)
   checkModulePrefs();
 
   const subscriptions: (() => void)[] = [];
   subscriptions.push(Subscription.subscribe('setPref', pushPrefsToWindows));
   subscriptions.push(Subscription.subscribe('setPref', pushPrefsToMenu));
+  subscriptions.push(
+    Subscription.subscribe('modulesInstalled', updateTabsAfterModuleInstall)
+  );
   subscriptions.push(
     Subscription.subscribe('resetMain', () => {
       LibSword.quit();
@@ -258,7 +264,7 @@ app.on('window-all-closed', () => {
 app.on('activate', () => {
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
-  if (!WindowRegistry.some((wd) => wd && wd.name === 'xulsword'))
+  if (!WindowRegistry.some((wd) => wd && wd.type === 'xulsword'))
     openMainWindow();
 });
 
@@ -270,8 +276,8 @@ app
   .then(() => {
     if (!(C.DEVELSPLASH === 1 && isDevelopment)) {
       G.Window.open({
-        name: 'splash',
-        type: 'dialog',
+        type: 'splash',
+        category: 'dialog',
         options:
           isDevelopment && C.DEVELSPLASH === 2
             ? {

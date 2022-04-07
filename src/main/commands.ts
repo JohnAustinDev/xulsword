@@ -1,10 +1,15 @@
+/* eslint-disable new-cap */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable prefer-rest-params */
+import { dialog, OpenDialogSyncOptions, shell } from 'electron';
 import i18n from 'i18next';
 import { clone, JSON_stringify } from '../common';
 import { verseKey, getTab, getTabs } from './minit';
 import Prefs from './modules/prefs';
+import nsILocalFile from './components/nsILocalFile';
+import installZipModules from './installer';
 import Window from './window';
+import { jsdump } from './mutil';
 
 import type {
   GType,
@@ -18,8 +23,67 @@ const Commands: GType['Commands'] = {
     console.log(`Action not implemented: addRepositoryModule`);
   },
 
-  addLocalModule() {
-    console.log(`Action not implemented: addLocalModule`);
+  // Install one or more ZIP modules from the local file system. The paths
+  // argument may be one or more paths to installable ZIP files, or a single
+  // directory. If the directory ends with '/*' then all modules in that
+  // directory will be installed, otherwise the user will be asked to select
+  // one or more modules. If no paths are given, the user will be shown the
+  // file picker dialog with its default directory, and may select one or more
+  // modules to install. Thus, a dialog will only be shown if no paths argument
+  // is provided, or an existing directory path is provided.
+  addLocalModule(paths) {
+    const w = arguments[1];
+    const options: OpenDialogSyncOptions = {
+      title: i18n.t('menu.addNewModule.label'),
+      filters: [
+        {
+          name: 'ZIP, XSM, XSB',
+          extensions: ['zip', 'xsm', 'xsb'],
+        },
+      ],
+      properties: ['openFile', 'multiSelections'],
+    };
+    let installpaths: string[] | undefined;
+    if (paths && Array.isArray(paths)) {
+      // Array of file paths
+      installpaths = paths;
+    } else if (paths?.endsWith('/*')) {
+      // All modules in an existing directory
+      installpaths = [];
+      const file = new nsILocalFile(paths.substring(0, -2));
+      if (file.isDirectory()) {
+        file.directoryEntries?.forEach((f) => {
+          if (/\.(xsm|xsb|zip)$/i.test(f)) installpaths?.push(f);
+        });
+      }
+    } else if (paths) {
+      // Existing directory to make a selection or an existing module path
+      const file = new nsILocalFile(paths);
+      if (file.isDirectory()) {
+        options.defaultPath = paths;
+        installpaths = dialog.showOpenDialogSync(w, options);
+      } else installpaths = [paths];
+    } else {
+      // No paths argument was provided
+      installpaths = dialog.showOpenDialogSync(w, options);
+    }
+    const mods =
+      (installpaths &&
+        installpaths.filter((f) => /\.(xsm|xsb|zip)$/i.test(f))) ||
+      [];
+    installZipModules(mods)
+      .then((fails) => {
+        if (fails.length) {
+          shell.beep();
+          jsdump(
+            `ERROR: Module installation problems follow:\n${fails.join('\n')}`
+          );
+        }
+        return true;
+      })
+      .catch((ers) => {
+        throw Error(ers);
+      });
   },
 
   removeModule() {
@@ -102,7 +166,7 @@ const Commands: GType['Commands'] = {
         ],
       },
     };
-    Window.open({ name: 'chooseFont', type: 'dialog', options });
+    Window.open({ type: 'chooseFont', category: 'dialog', options });
   },
 
   openBookmarksManager() {

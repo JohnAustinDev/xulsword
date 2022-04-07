@@ -126,43 +126,12 @@ const LibSword: GType['LibSword'] & LibSwordPrivate = {
     jsdump('DELETED libxulsword object');
   },
 
-  // pause() saves LibSword info and closes LibSword so that it may be
-  // re-opened by another thread. pause() should only be called at the
-  // end of a thread, if LibSword has already been initialized. In this
-  // case, any required processing after pausing should be initiated
-  // by providing a callback function.
-  pause(callback) {
-    // If already paused, or not yet initialized, just run callback...
-    if (this.paused || !this.libxulsword) {
-      this.paused = true;
-      if (callback && typeof callback === 'function') callback();
-      return;
-    }
-
-    // Quit only after any currently pending calls to LibSword have been handled.
-    window.setTimeout(() => {
-      this.quit();
-      Cache.clear('libswordModueList');
-      this.paused = true;
-      if (callback && typeof callback === 'function') {
-        callback();
-      }
-    }, 1);
-  },
-
-  resume() {
-    if (!this.paused) return;
-    this.paused = false;
-    this.unlock();
-  },
-
-  isReady(caller) {
-    if (this.paused) {
-      jsdump(`ERROR: libsword paused, "${caller}" inaccessible.`);
-      return false;
-    }
-    if (!this.libxulsword) this.init();
-    return true;
+  isReady() {
+    if (this.libxulsword) return true;
+    jsdump(
+      `ERROR: libsword was called while uninitialized: ${new Error().stack}`
+    );
+    return false;
   },
 
   // Unlock encrypted SWORD modules

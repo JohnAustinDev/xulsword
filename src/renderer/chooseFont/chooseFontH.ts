@@ -11,7 +11,7 @@ import type { ChooseFontWinState, ColorType } from './chooseFont';
 
 export const startingState = {
   module: '' as string | null, // will be initialized by windowArgument()
-  fonts: [], // will be initialized by getSystemFonts() Promise
+  fonts: [] as string[], // will be initialized by getSystemFonts() Promise
   style: G.Prefs.getComplexValue('style', 'style') as StyleType,
 
   coloropen: false as boolean,
@@ -134,8 +134,12 @@ export function getStyleFromState(state: ChooseFontWinState): StyleType {
 }
 
 // Set a state value and also update state's style according to the result. If
-// value is undefined the value will be toggled.
-export function setStateValue(this: ChooseFontWin, key: string, value?: any) {
+// value is undefined, the value type is assumed to be boolean and will be toggled.
+export function setStateValue(
+  this: ChooseFontWin,
+  key: keyof ChooseFontWinState,
+  value?: ChooseFontWinState
+) {
   this.setState((prevState: ChooseFontWinState) => {
     const newState = clone(prevState);
     if (value === undefined) newState[key] = !newState[key];

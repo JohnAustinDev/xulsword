@@ -314,7 +314,7 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
                 height: Math.round(b.height),
               },
             };
-            G.Window.open({ name: 'popupWin', options });
+            G.Window.open({ type: 'popupWin', options });
             const s: Partial<PopupParentState> = { popupParent: null };
             this.setState(s);
           }

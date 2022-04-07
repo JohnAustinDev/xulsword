@@ -19,7 +19,7 @@ import Data from './modules/data';
 import {
   getLocaleConfigs,
   getModuleConfigDefault,
-  getFontFaceConfigs,
+  getModuleFonts,
   getFeatureModules,
   localeConfig,
 } from './config';
@@ -147,8 +147,8 @@ class GClass implements GType {
     return localeConfig(i18next.language);
   }
 
-  get FontFaceConfigs() {
-    return getFontFaceConfigs();
+  get ModuleFonts() {
+    return getModuleFonts();
   }
 
   get FeatureModules() {

@@ -73,12 +73,13 @@ export default class nsILocalFile {
 
   // Create a new directory or en empty file for this.path, depending on the
   // requested type. It does nothing if this.path already exists. The type
-  // must be supplied or an error is thrown.
-  create(type: number, permissions?: number) {
+  // must be supplied or an error is thrown. If the file is created, true is
+  // returned, false otherwise.
+  create(type: number, options?: any): boolean {
     if (this.path) {
       if (!this.exists()) {
         if (type === nsILocalFile.DIRECTORY_TYPE) {
-          fs.mkdirSync(this.path);
+          fs.mkdirSync(this.path, options);
         } else if (type === nsILocalFile.NORMAL_FILE_TYPE) {
           fs.writeFileSync(this.path, '');
         } else {
@@ -88,16 +89,17 @@ export default class nsILocalFile {
     } else {
       throw Error(`Cannot create before initWithPath`);
     }
+    return this.exists();
+  }
 
-    if (!this.exists()) {
-      throw Error(`Failed to create ${this.path}`);
-    }
+  clone(): nsILocalFile {
+    return new nsILocalFile(this.path);
   }
 
   // Creates a file. If it already exists, another name is tried (up to
   // max files) so as to create a unique file name. True is returned if
   // sucessful, false otherwise.
-  createUnique(type: number, permissions: number) {
+  createUnique(type: number, options?: any) {
     if (this.path) {
       const max = 999;
       let n = 0;
@@ -110,7 +112,7 @@ export default class nsILocalFile {
       } while (n <= max);
       if (!fs.existsSync(p)) {
         this.path = p;
-        this.create(type, permissions);
+        this.create(type, options);
         return fs.existsSync(p);
       }
       return false;
@@ -128,9 +130,9 @@ export default class nsILocalFile {
     return stats.isDirectory();
   }
 
-  get directoryEntries(): string[] | null {
+  get directoryEntries(): string[] {
     if (!this.isDirectory()) {
-      return null;
+      return [];
     }
     return fs.readdirSync(this.path, { encoding: 'utf-8' });
   }
@@ -160,9 +162,12 @@ export default class nsILocalFile {
 
   // This was not part of nsILocalFIle, but added for convenience. Writes UTF-8
   // encoded string to file.
-  writeFile(str: string, options?: any) {
-    const o = options || { encoding: 'utf8', mode: FPERM };
-    fs.writeFileSync(this.path, str, o);
+  writeFile(data: string | Buffer, options?: any) {
+    const o = options || { mode: FPERM };
+    if (typeof data === 'string' && !o.encoding) {
+      o.encoding = 'utf8';
+    }
+    fs.writeFileSync(this.path, data, o);
   }
 
   // Return the file name as a string.

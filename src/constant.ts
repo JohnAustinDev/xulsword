@@ -35,15 +35,6 @@ const C = {
   TOOLTIP_LEN: 96,
   DEFAULTS: 'defaults',
   PREFERENCES: 'preferences',
-  MODSD: 'mods.d',
-  MODS: 'modules',
-  LOCALE: 'locale',
-  LOCALED: 'locales.d',
-  CHROME: 'chrome',
-  FONTS: 'fonts',
-  AUDIO: 'audio',
-  BOOKMARKS: 'bookmarks',
-  VIDEO: 'video',
   MANIFEST_EXT: '.manifest',
   CONF_EXT: '.conf',
   EXTENSION_EXT: '.xpi',
@@ -54,7 +45,6 @@ const C = {
   PMSTOP: 1,
   APPLICATIONID: 'xulsword@xulsword.org',
   FIREFOXUID: 'ec8030f7-c20a-464f-9b0e-13a3a9e97384',
-  VERSIONPAR: 'xulswordVersion',
   LOCALE_SEARCH_SYMBOLS: {
     SINGLECharWildCard: '?',
     MULTICharWildCard: '*',
@@ -68,26 +58,17 @@ const C = {
     QUOTEEND: '"',
   },
   AUDMIME: { mp3: 'audio/mpeg', ogg: 'audio/ogg' },
-  LOCALEPREF: 'global.locale',
-  MSMOVE: 'mousemove',
-  MSOVER: 'mouseover',
-  MSOUT: 'mouseout',
   SEP: ',',
   TIMEOUT: 25,
   XSMODEXT: ['zip', 'xsm'],
   XSBMEXT: ['txt', 'xsb'],
   XSVIDEXT: ['wmv', 'mov', 'mpeg', 'mpg', 'avi'],
-  NOVALUE: -1,
-  NORESET: 0,
-  SOFTRESET: 1,
-  HARDRESET: 2,
-  NEWINSTALLFILE: 'newInstalls.txt',
-  MINPVERPAR: 'minMKVersion',
-  MINVERSION: '1.0',
 
   // ---------------------
   // USED BY XULSWORD 3.0:
   // ---------------------
+  SWORDEngineVersion: '1.8.1',
+
   DEVELSPLASH: 1 as 0 | 1 | 2, // 0 normal, 1 skip, 2 debug
   MAXVERSE: 176,
   MAXCHAPTER: 150,

@@ -63,7 +63,7 @@ export default class ChooseFontWin extends React.Component {
 
   handler: (e: React.SyntheticEvent) => void;
 
-  setStateValue: (key: string, value?: any) => void;
+  setStateValue: (key: keyof ChooseFontWinState, value?: any) => void;
 
   constructor(props: ChooseFontWinProps) {
     super(props);

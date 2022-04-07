@@ -15,11 +15,8 @@ import Dirs from './modules/dirs';
 import Prefs from './modules/prefs';
 import LibSword from './modules/libsword';
 import nsILocalFile from './components/nsILocalFile';
-import {
-  getFeatureModules,
-  getFontFaceConfigs,
-  getModuleConfig,
-} from './config';
+import { getFeatureModules, getModuleFonts, getModuleConfig } from './config';
+import { moduleUnsupported } from './installer';
 import { jsdump } from './mutil';
 
 import type {
@@ -126,66 +123,19 @@ export function getBook(): { [i: string]: BookType } {
   return Cache.read('book');
 }
 
-function versionCompare(v1: string | number, v2: string | number) {
-  const p1 = String(v1).split('.');
-  const p2 = String(v2).split('.');
-  do {
-    let n1: any = p1.shift();
-    let n2: any = p2.shift();
-    if (!n1) n1 = 0;
-    if (!n2) n2 = 0;
-    if (Number(n1) && Number(n2)) {
-      if (n1 < n2) return -1;
-      if (n1 > n2) return 1;
-    } else if (n1 < n2) {
-      return -1;
-    } else if (n1 > n2) {
-      return 1;
-    }
-  } while (p1.length || p2.length);
-
-  return 0;
-}
-
-function isModuleSupported(module: string, type: ModTypes): boolean {
-  if (Object.keys(C.SupportedModuleTypes).includes(type)) {
-    // Weed out incompatible module versions. The module installer shouldn't
-    // allow bad mods, but this is just in case.
-    let xsversion = LibSword.getModuleInformation(module, C.VERSIONPAR);
-    xsversion = xsversion !== C.NOTFOUND ? xsversion : C.MINVERSION;
-    let modminxsvers;
-    try {
-      modminxsvers = Prefs.getCharPref('MinXSMversion');
-    } catch (er) {
-      modminxsvers = C.MINVERSION;
-    }
-    if (versionCompare(xsversion, modminxsvers) < 0) {
-      jsdump(
-        `ERROR: Dropping module "${module}". xsversion:${xsversion} < modminxsvers:${modminxsvers}`
-      );
-    } else {
-      let xsengvers = LibSword.getModuleInformation(module, 'MinimumVersion');
-      xsengvers = xsengvers !== C.NOTFOUND ? xsengvers : '0';
-      let enginevers;
-      try {
-        enginevers = Prefs.getCharPref('EngineVersion');
-      } catch (er) {
-        enginevers = C.NOTFOUND;
-      }
-      if (
-        enginevers !== C.NOTFOUND &&
-        versionCompare(enginevers, xsengvers) < 0
-      ) {
-        jsdump(
-          `ERROR: Dropping module "${module}". enginevers:${enginevers} < xsengvers:${xsengvers}`
-        );
-      } else {
-        return true;
-      }
-    }
+export function tabSort(a: TabType, b: TabType) {
+  if (a.tabType === b.tabType) {
+    const aLocale = a.config.AssociatedLocale;
+    const bLocale = b.config.AssociatedLocale;
+    const lng = Prefs.getCharPref('global.locale');
+    const aPriority = aLocale ? (aLocale === lng ? 1 : 2) : 3;
+    const bPriority = bLocale ? (bLocale === lng ? 1 : 2) : 3;
+    if (aPriority !== bPriority) return aPriority > bPriority ? 1 : -1;
+    // Type and Priority are same, then sort by label's alpha.
+    return a.label > b.label ? 1 : -1;
   }
-  jsdump(`NOTE: Dropping module "${module}": type=${type}`);
-  return false;
+  const mto = C.UI.Viewport.TabTypeOrder as any;
+  return mto[a.tabType] > mto[b.tabType] ? 1 : -1;
 }
 
 export function getTabs(): TabType[] {
@@ -197,7 +147,7 @@ export function getTabs(): TabType[] {
     modlist.split('<nx>').forEach((mstring: string) => {
       const [module, mt] = mstring.split(';');
       const type = mt as ModTypes;
-      if (isModuleSupported(module, type)) {
+      if (moduleUnsupported(module).length === 0) {
         let label = LibSword.getModuleInformation(module, 'TabLabel');
         if (label === C.NOTFOUND)
           label = LibSword.getModuleInformation(module, 'Abbreviation');
@@ -280,7 +230,7 @@ export function getTabs(): TabType[] {
         i += 1;
       }
     });
-    Cache.write(tabs, 'tabs');
+    Cache.write(tabs.sort(tabSort), 'tabs');
   }
 
   return Cache.read('tabs');
@@ -479,7 +429,10 @@ export function getSystemFonts() {
     return fontList
       .getFonts()
       .then((fonts: string[]) => {
-        const allfonts = Object.keys(getFontFaceConfigs()).concat(fonts);
+        let allfonts = getModuleFonts()
+          .map((f) => f.fontFamily)
+          .concat(fonts);
+        allfonts = Array.from(new Set(allfonts));
         Cache.write(allfonts, 'fontList');
         return allfonts;
       })

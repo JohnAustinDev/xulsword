@@ -21,11 +21,11 @@ Dirs.path.ProfD = path.join(CrosswireRoot, '.crosswire', 'xulsword');
 // Dirs.path.xsPrefD = path.join(Dirs.path.ProfD, C.PREFERENCES);
 Dirs.path.xsResD = path.join(Dirs.path.ProfD, 'resources');
 Dirs.path.xsModsUser = path.join(Dirs.path.ProfD, 'resources');
-// Dirs.path.xsFonts = path.join(Dirs.path.xsResD, C.FONTS);
-// Dirs.path.xsAudio = path.join(Dirs.path.xsResD, C.AUDIO);
-// Dirs.path.xsBookmarks = path.join(Dirs.path.xsResD, C.BOOKMARKS);
-// Dirs.path.xsVideo = path.join(Dirs.path.xsResD, C.VIDEO);
-Dirs.path.xsLocale = path.join(Dirs.path.xsResD, C.LOCALED);
+// Dirs.path.xsFonts = path.join(Dirs.path.xsResD, 'fonts');
+// Dirs.path.xsAudio = path.join(Dirs.path.xsResD, 'audio');
+// Dirs.path.xsBookmarks = path.join(Dirs.path.xsResD, 'bookmarks');
+// Dirs.path.xsVideo = path.join(Dirs.path.xsResD, 'video');
+Dirs.path.xsLocale = path.join(Dirs.path.xsResD, 'locales.d');
 
 // Dirs.path.xsModsCommon = /^win32|darwin$/.test(process.platform)
 //   ? path.join(app.getPath('appData'), 'Sword')

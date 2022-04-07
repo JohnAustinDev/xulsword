@@ -8,6 +8,7 @@ import {
   MenuItem,
 } from 'electron';
 import path from 'path';
+import { clone } from '../common';
 import G from './mg';
 import Commands, { newDbItemWithDefaults } from './commands';
 import setViewportTabs from './tabs';
@@ -87,7 +88,8 @@ const panelLabels = (() => {
   return labels;
 })();
 
-function buildTabMenus(menu: Menu) {
+function buildModuleMenus(menu: Menu) {
+  const rgtabs = clone(G.Tabs).reverse();
   showtabs.forEach((showtab) => {
     const [typekey, type] = showtab;
     let disableParent = true;
@@ -101,7 +103,7 @@ function buildTabMenus(menu: Menu) {
       if (!submenu) throw Error(`No tabmenu: menu_${typekey}_${pl}`);
       const { items } = submenu;
       while (items[0].id !== `showAll_${typekey}_${pl}`) items.shift();
-      G.Tabs.reverse().forEach((t) => {
+      rgtabs.forEach((t) => {
         if (t.tabType === type) {
           disableParent = false;
           const newItem = new MenuItem({
@@ -145,7 +147,7 @@ function updateMenuFromPref(menux?: Menu | null) {
             'xulsword.tabs'
           ) as XulswordStatePref['tabs'];
           if (panelIndex === -1) {
-            i.checked = pval.every((p: any) => p?.includes(mod));
+            i.checked = pval.every((p: any) => !p || p.includes(mod));
           } else {
             i.checked = Boolean(pval[panelIndex]?.includes(mod));
           }
@@ -221,7 +223,7 @@ export default class MenuBuilder {
         : this.buildDefaultTemplate();
 
     const menu = Menu.buildFromTemplate(template);
-    buildTabMenus(menu);
+    buildModuleMenus(menu);
     updateMenuFromPref(menu);
     Menu.setApplicationMenu(menu);
 

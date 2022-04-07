@@ -317,7 +317,7 @@ export default function handler(
                 height: Math.round(textareab.height + vpPaddingTop + vpPadding),
               };
             }
-            G.Window.open({ name: 'viewportWin', options });
+            G.Window.open({ type: 'viewportWin', options });
           }
           break;
         }

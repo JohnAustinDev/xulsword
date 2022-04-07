@@ -228,6 +228,7 @@
     "yarn-deduplicate": "^3.1.0"
   },
   "dependencies": {
+    "adm-zip": "^0.5.9",
     "electron-context-menu": "^3.1.1",
     "electron-debug": "^3.2.0",
     "electron-log": "^4.3.5",
