@@ -7,6 +7,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import i18next from 'i18next';
+import C from '../../constant';
 import { ofClass } from '../../common';
 import {
   xulDefaultProps,
@@ -44,7 +45,6 @@ interface TabsProps extends XulProps {
 }
 
 interface TabsState {
-  multiTabDone: boolean;
   multiTabs: string[];
   multiTabMenupopup: any;
 }
@@ -61,7 +61,6 @@ class Tabs extends React.Component {
     super(props);
 
     this.state = {
-      multiTabDone: false,
       multiTabMenupopup: null,
       multiTabs: [],
     };
@@ -72,19 +71,10 @@ class Tabs extends React.Component {
     this.getMultiTabSelection = this.getMultiTabSelection.bind(this);
   }
 
-  // The multi-tab is built over a series of render cycles that start
-  // when this tabs component is mounted and end when its width fits
-  // the window width. Only when the tabs key prop changes will React
-  // instaniate a new tabs component and thus resize the tabs to the
-  // current window.
+  // Only when the tabs key prop changes will React instantiate a new tabs
+  // component and thus resize the tabs to the current window.
   componentDidMount() {
-    const { multiTabDone } = this.state as TabsState;
-    if (!multiTabDone) this.checkTabWidth();
-  }
-
-  componentDidUpdate() {
-    const { multiTabDone } = this.state as TabsState;
-    if (!multiTabDone) this.checkTabWidth();
+    this.checkTabWidth();
   }
 
   getTab(
@@ -113,41 +103,63 @@ class Tabs extends React.Component {
     );
   }
 
-  getMultiTabSelection() {
+  getMultiTabSelection(multiTabs: string[]) {
     const { module, mtModule } = this.props as TabsProps;
-    const { multiTabs } = this.state as TabsState;
     if (module && multiTabs.includes(module)) return module;
     if (mtModule && multiTabs.includes(mtModule)) return mtModule;
     if (multiTabs.length && multiTabs[0]) return multiTabs[0];
     return null;
   }
 
-  // Move 1 or 2 tabs to the multi-tab if there are any overflowing
+  // Move tabs to the multi-tab until there is no overflow.
   checkTabWidth() {
     const { tabsref } = this;
     const { tabs } = this.props as TabsProps;
     const { multiTabs } = this.state as TabsState;
     const newMultiTabs = multiTabs.slice();
     const tabsdiv = tabsref.current;
-    if (tabsdiv && tabsdiv.scrollWidth > tabsdiv.clientWidth) {
-      // Add 1 or 2 tabs to the multi-tab.
-      let nm = multiTabs.length ? 1 : 2;
-      let last: string | null = multiTabs[0];
-      for (let x = tabs.length - 1; nm && x !== -1; x -= 1) {
-        if (last) {
-          if (last === tabs[x]) {
-            last = null;
-          }
-        } else {
-          newMultiTabs.unshift(tabs[x]);
-          nm -= 1;
-        }
+    const tdivs = tabsdiv?.getElementsByClassName(
+      'reg-tab'
+    ) as HTMLCollectionOf<HTMLElement>;
+    const twids =
+      (tdivs &&
+        Array.from(tdivs).map(
+          (d) => d.offsetWidth + 2 * C.UI.Viewport.TabMargin
+        )) ||
+      [];
+    const iltab = tabsdiv?.getElementsByClassName(
+      'ilt-tab'
+    )[0] as HTMLElement | null;
+    const iltwidth =
+      (iltab && iltab.offsetWidth + 2 * C.UI.Viewport.TabMargin) || 0;
+    for (;;) {
+      // The future mts-tab width must be recalculated for each width check.
+      const mtsel = this.getMultiTabSelection(newMultiTabs);
+      const mtindex = mtsel !== null ? tabs.indexOf(mtsel) : -1;
+      const mtwidth = mtindex > -1 ? twids[mtindex] : 0;
+      // Get the index of the ntext tab to be moved.
+      const nextTabIndex = newMultiTabs.length
+        ? tabs.indexOf(newMultiTabs[0]) - 1
+        : tabs.length - 1;
+      if (nextTabIndex < 0) break;
+      const contentWidth =
+        C.UI.Viewport.TabRowMargin +
+        2 * C.UI.Viewport.TabMarginFirstLast +
+        twids.slice(0, nextTabIndex + 1).reduce((p, c) => p + c, 0) +
+        mtwidth +
+        iltwidth;
+      if (
+        !tabsdiv ||
+        tabs.length <= 2 ||
+        (newMultiTabs.length !== 1 && contentWidth <= tabsdiv.clientWidth)
+      ) {
+        break;
       }
-      if (nm === 0) {
-        this.setState({ multiTabs: newMultiTabs });
-      }
-    } else {
-      this.setState({ multiTabDone: true });
+      // Move next tab to the multi-tab.
+      newMultiTabs.unshift(tabs[nextTabIndex]);
+    }
+    if (multiTabs.length !== newMultiTabs.length) {
+      this.setState({ multiTabs: newMultiTabs });
     }
   }
 
@@ -170,7 +182,7 @@ class Tabs extends React.Component {
               return this.getTab(
                 m,
                 'mto-tab',
-                m === this.getMultiTabSelection() ? 'selected' : ''
+                m === this.getMultiTabSelection(multiTabs) ? 'selected' : ''
               );
             })}
           </Menupopup>
@@ -188,7 +200,7 @@ class Tabs extends React.Component {
     let ilTabLabel = i18next.t('ORIGLabelTab');
     if (!ilTabLabel) ilTabLabel = 'ilt';
 
-    const mtMod = this.getMultiTabSelection();
+    const mtMod = this.getMultiTabSelection(multiTabs);
 
     let ilcls = '';
     if (ilModule) ilcls = 'active';

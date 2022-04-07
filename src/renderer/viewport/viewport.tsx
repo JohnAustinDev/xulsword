@@ -403,7 +403,7 @@ class Viewport extends React.Component implements PopupParent {
             {panels.map((_p: string | null, i: number) => {
               const tabWidth = tabWidths[i];
               if (tabWidth) {
-                const width = `${Math.round(100 * (tabWidth / numPanels))}%`;
+                const width = `${100 * (tabWidth / numPanels)}%`;
                 const tabsi = tabs[i];
                 const key = stringHash(
                   i,
