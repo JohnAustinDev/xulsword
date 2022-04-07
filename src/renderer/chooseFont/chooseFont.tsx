@@ -24,6 +24,7 @@ import handlerH, {
   startingState,
   setStateValue as setStateValueH,
   preclose,
+  computedStyle,
 } from './chooseFontH';
 import './chooseFont.css';
 
@@ -109,11 +110,8 @@ export default class ChooseFontWin extends React.Component {
       coloropen,
       backgroundopen,
       fonts,
-      fontFamily,
       fontSize,
       lineHeight,
-      color,
-      background,
     } = state;
 
     const showBackgroundRow = false;
@@ -132,16 +130,27 @@ export default class ChooseFontWin extends React.Component {
       );
     }
 
-    const nocolor = { r: 128, g: 128, b: 128, a: 128 };
-    const fc = color || nocolor;
-    const bc = background || nocolor;
-
     const disabled = Boolean(
       removeModuleUserStyles || makeDefault || removeAllUserStyles
     );
     const disableRD = Boolean(makeDefault || removeAllUserStyles);
     const disableMD = Boolean(removeModuleUserStyles || removeAllUserStyles);
     const disableAD = Boolean(removeModuleUserStyles || makeDefault);
+
+    const compute: (keyof ChooseFontWinState)[] = [
+      'fontFamily',
+      'color',
+      'background',
+    ];
+    const computed = {} as ChooseFontWinState;
+    compute.forEach((key) => {
+      const x = computed as any;
+      x[key] = state[key] || computedStyle(module, key) || startingState[key];
+    });
+
+    const nocolor = { r: 128, g: 128, b: 128, a: 128 };
+    const fc = (!disabled && computed.color) || nocolor;
+    const bc = (!disabled && computed.background) || nocolor;
 
     return (
       <Vbox>
@@ -152,6 +161,7 @@ export default class ChooseFontWin extends React.Component {
         #background .button-icon {
           background-color: rgb(${bc.r}, ${bc.g}, ${bc.b}, ${bc.a});
         }`}</style>
+        <span id="styleTest" />
         <Groupbox caption={i18n.t('fontsAndColors.label')}>
           <Grid id="fontsGrid">
             <Columns>
@@ -211,7 +221,7 @@ export default class ChooseFontWin extends React.Component {
                 />
                 <Menulist
                   id="fontFamily"
-                  value={fontFamily}
+                  value={computed.fontFamily}
                   options={fontOptions}
                   disabled={disabled}
                   onChange={handler}

@@ -141,7 +141,7 @@ export function setStateValue(
   value?: ChooseFontWinState
 ) {
   this.setState((prevState: ChooseFontWinState) => {
-    const newState = clone(prevState);
+    const newState = clone(prevState) as any;
     if (value === undefined) newState[key] = !newState[key];
     else newState[key] = value;
     const s: Partial<ChooseFontWinState> = {
@@ -150,6 +150,28 @@ export function setStateValue(
     };
     return s;
   });
+}
+
+export function computedStyle(module: string | null, key: string) {
+  const st = document.getElementById('styleTest');
+  if (st && module) {
+    st.className = `cs-${module}`;
+    const cs = getComputedStyle(st);
+    if (key === 'fontFamily' && cs.fontFamily) {
+      return cs.fontFamily;
+    }
+    if (key === 'color' || key === 'background') {
+      const rgbaRE = /(\d+),\s*(\d+),\s*(\d+)(,\s*(\d+))?/;
+      const skey: keyof CSSStyleDeclaration =
+        key === 'color' ? key : `${key}Color`;
+      const [, r, g, b, , ax] = (cs[skey].match(rgbaRE) || []).map((n) =>
+        Number(n)
+      );
+      const a = ax || 1;
+      return !Number.isNaN(r) ? { r, g, b, a } : null;
+    }
+  }
+  return null;
 }
 
 export function preclose() {
