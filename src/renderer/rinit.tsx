@@ -5,6 +5,7 @@ import { render } from 'react-dom';
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import rendererBackend from 'i18next-electron-fs-backend';
+import Subscription from '../subscription';
 import C from '../constant';
 import { JSON_parse } from '../common';
 import Cache from '../cache';
@@ -120,6 +121,7 @@ export default function renderToRoot(
   function Reset(props: React.ComponentProps<any>) {
     const { children } = props;
     const [reset, setReset] = useState(0);
+    // IPC component-reset setup:
     useEffect(() => {
       return window.ipc.renderer.on('component-reset', () => {
         DynamicStyleSheet.update(G.Data.read('stylesheetData'));
@@ -140,6 +142,7 @@ export default function renderToRoot(
         }
       });
     });
+    // IPC resize setup:
     useEffect(() => {
       return window.ipc.renderer.on(
         'resize',
@@ -152,18 +155,45 @@ export default function renderToRoot(
         )
       );
     });
+    // Installer drag-and-drop setup:
     useEffect(() => {
       const root = document.getElementById('root');
       if (root) {
         root.ondragover = (e) => {
           e.preventDefault();
+          root.classList.add('dragover');
+        };
+        root.ondragleave = (e) => {
+          e.preventDefault();
+          if (!root.contains(e.relatedTarget as HTMLElement))
+            root.classList.remove('dragover');
         };
         root.ondrop = (e) => {
           e.preventDefault();
-          if (e.dataTransfer) {
-            G.Commands.addLocalModule(
+          root.classList.remove('dragover');
+          if (e.dataTransfer?.files.length) {
+            G.Window.modal(true, 'all');
+            G.Commands.installXulswordModules(
               Array.from(e.dataTransfer.files).map((f) => f.path) || []
-            );
+            )
+              .then((newmods) => {
+                if (newmods.errors.length) {
+                  window.ipc.shell.beep();
+                  jsdump(
+                    `ERROR: Module installation problems follow:\n${newmods.errors.join(
+                      '\n'
+                    )}`
+                  );
+                } else {
+                  Subscription.publish('modulesInstalled', newmods);
+                  jsdump('ALL FILES WERE SUCCESSFULLY INSTALLED!');
+                }
+                G.Window.modal(false, 'all');
+                return newmods;
+              })
+              .catch((err) => {
+                throw Error(err);
+              });
           }
         };
       }
@@ -171,6 +201,7 @@ export default function renderToRoot(
         if (root) {
           root.ondrop = null;
           root.ondragover = null;
+          root.ondragleave = null;
         }
       };
     });

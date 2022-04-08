@@ -5,6 +5,7 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/media-has-caption */
 import React from 'react';
+import Subscription from '../../subscription';
 import C from '../../constant';
 import { trim, diff } from '../../common';
 import G from '../rg';
@@ -27,6 +28,7 @@ import viewportParentH, {
   closeMenupopups,
   vpWindowState,
   noteboxBarHandler as noteboxBarHandlerH,
+  newModulesInstalled,
 } from './viewportParentH';
 
 import type {
@@ -106,6 +108,9 @@ export default class ViewportWin extends React.Component {
 
   componentDidMount() {
     this.destroy.push(onSetWindowState(this, vpWindowState));
+    this.destroy.push(
+      Subscription.subscribe('modulesInstalled', newModulesInstalled.bind(this))
+    );
   }
 
   componentDidUpdate(
@@ -176,13 +181,7 @@ export default class ViewportWin extends React.Component {
       xulswordStateHandler,
     } = this;
 
-    const short = true;
-    console.log(
-      `Rendering ViewportWin ${JSON.stringify({
-        ...state,
-        tabs: short ? 'not-printed' : tabs,
-      })}`
-    );
+    console.log(state);
 
     return (
       <Vbox

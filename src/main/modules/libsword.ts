@@ -120,10 +120,9 @@ const LibSword: GType['LibSword'] & LibSwordPrivate = {
         this.searchPointers[i] = null;
       });
       libxulsword.FreeLibXulsword();
+      jsdump('DELETED libxulsword object');
     }
     this.libxulsword = null;
-
-    jsdump('DELETED libxulsword object');
   },
 
   isReady() {

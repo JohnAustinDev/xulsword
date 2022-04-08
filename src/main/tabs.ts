@@ -1,12 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-nested-ternary */
-import C from '../constant';
-import { clone } from '../common';
+import { clone, tabSort } from '../common';
 import Prefs from './modules/prefs';
-import { getBooksInModule, getTab, getTabs, tabSort } from './minit';
+import { getBooksInModule, getTab, getTabs } from './minit';
 
 import type { TabType, TabTypes, XulswordStatePref } from '../type';
-import type { NewModulesType } from './installer';
 
 export default function setViewportTabs(
   panelIndex: number, // -1 selects all panels
@@ -127,25 +125,4 @@ export default function setViewportTabs(
   });
 
   Prefs.mergeValue('xulsword', newxulsword);
-}
-
-export function updateTabsAfterModuleInstall(newmods: NewModulesType) {
-  const panels = clone(
-    Prefs.getComplexValue('xulsword.panels')
-  ) as XulswordStatePref['panels'];
-  let x = 0;
-  newmods.modules
-    .sort((a, b) => {
-      const at = a.ModDrv.includes('Text');
-      const bt = b.ModDrv.includes('Text');
-      if (at && !bt) return -1;
-      if (!at && bt) return 1;
-      return a.module.localeCompare(b.module);
-    })
-    .forEach((conf) => {
-      setViewportTabs(-1, conf.module, 'show');
-      if (x < panels.length && panels[x] !== null) panels[x] = conf.module;
-      x += 1;
-    });
-  Prefs.setComplexValue('xulsword.panels', panels);
 }

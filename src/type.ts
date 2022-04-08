@@ -357,6 +357,14 @@ export type TabType = {
   audioCode: string;
 };
 
+export type NewModulesType = {
+  modules: SwordConfType[];
+  fonts: string[];
+  bookmarks: string[];
+  audio: string[];
+  errors: string[];
+};
+
 export type DirsDirectories = {
   TmpD: string;
   xsAsset: string;
@@ -392,7 +400,7 @@ export type PrefObject = {
 export type PrefValue =
   | PrefPrimative
   | PrefObject
-  | (PrefPrimative | PrefObject)[];
+  | (PrefPrimative | PrefObject | PrefValue)[];
 
 const PrefsPublic = {
   has: func as unknown as (
@@ -535,8 +543,11 @@ const LibSwordPublic = {
 };
 
 const CommandsPublic = {
-  addRepositoryModule: func as unknown as () => void,
-  addLocalModule: func as unknown as (paths?: string[] | string) => void,
+  openModuleDownloader: func as unknown as () => void,
+  installXulswordModules: func as unknown as (
+    paths?: string[] | string, // file, file[], directory/*, directory or undefined: choose files
+    toSharedModuleDir?: boolean
+  ) => Promise<NewModulesType>,
   removeModule: func as unknown as () => void,
   exportAudio: func as unknown as () => void,
   importAudio: func as unknown as () => void,
@@ -650,6 +661,7 @@ export const GPublic = {
       type?: ResetType,
       window?: WindowArgType
     ) => void,
+    modal: func as unknown as (modal: boolean, window?: WindowArgType) => void,
     moveToBack: func as unknown as (window?: WindowArgType) => void,
     close: func as unknown as (window?: WindowArgType) => void,
   },

@@ -334,6 +334,14 @@ const Window: GType['Window'] = {
     });
   },
 
+  // TODO! Disable all event handlers on a window to insure user input is bocked for
+  // a time, such as when LibSword is offline.
+  modal(modal?: boolean, window?: WindowArgType) {
+    getBrowserWindows(window, arguments[2]).forEach((win) => {
+      // IPC win to/from modal...
+    });
+  },
+
   // If ResetType is not specified then all resets will be called, otherwise only
   // the specified reset will be called. If window is specified, only matching
   // window(s) will be reset, otherwise all will be reset. If neither is specified

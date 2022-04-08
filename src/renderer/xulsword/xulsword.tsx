@@ -6,6 +6,7 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 import React from 'react';
 import i18n from 'i18next';
+import Subscription from '../../subscription';
 import { trim, dString, diff, clone } from '../../common';
 import C from '../../constant';
 import G from '../rg';
@@ -35,6 +36,7 @@ import Viewport from '../viewport/viewport';
 import viewportParentH, {
   closeMenupopups,
   noteboxBarHandler as noteboxBarHandlerH,
+  newModulesInstalled,
 } from '../viewport/viewportParentH';
 import handlerH from './xulswordH';
 import './xulsword.css';
@@ -44,6 +46,7 @@ import type {
   XulswordStateArgType,
   XulswordStatePref,
   NoteboxBarHandlerType,
+  NewModulesType,
 } from '../../type';
 import type Atext from '../viewport/atext';
 
@@ -131,6 +134,9 @@ export default class Xulsword extends React.Component {
 
   componentDidMount() {
     this.destroy.push(onSetWindowState(this));
+    this.destroy.push(
+      Subscription.subscribe('modulesInstalled', newModulesInstalled.bind(this))
+    );
   }
 
   componentDidUpdate(_prevProps: XulswordProps, prevState: XulswordState) {
@@ -337,17 +343,7 @@ export default class Xulsword extends React.Component {
       else viewportReset.push(m);
     });
 
-    const short = true;
-    console.log(
-      `Rendering Xulsword ${JSON.stringify({
-        ...state,
-        history: history.length,
-        tabs: short ? 'not_printed' : tabs,
-        show: short ? 'not_printed' : show,
-        place: short ? 'not_printed' : place,
-        historyMenupopup: !!historyMenupopup,
-      })}`
-    );
+    console.log(state);
 
     return (
       <Vbox
@@ -565,9 +561,11 @@ export default class Xulsword extends React.Component {
 Xulsword.defaultProps = defaultProps;
 Xulsword.propTypes = propTypes;
 
-renderToRoot(<Xulsword id="xulsword" />, () => {
+const loadxs = () => {
   jsdump('Loading Xulsword!');
   setTimeout(() => {
     G.Window.moveToBack();
   }, 100);
-});
+};
+
+renderToRoot(<Xulsword id="xulsword" />, loadxs);

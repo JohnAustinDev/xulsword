@@ -1,7 +1,7 @@
 /* eslint-disable new-cap */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable prefer-rest-params */
-import { dialog, OpenDialogSyncOptions, shell } from 'electron';
+import { dialog, OpenDialogReturnValue, OpenDialogSyncOptions } from 'electron';
 import i18n from 'i18next';
 import { clone, JSON_stringify } from '../common';
 import { verseKey, getTab, getTabs } from './minit';
@@ -9,18 +9,19 @@ import Prefs from './modules/prefs';
 import nsILocalFile from './components/nsILocalFile';
 import installZipModules from './installer';
 import Window from './window';
-import { jsdump } from './mutil';
 
 import type {
   GType,
   LocationVKType,
+  NewModulesType,
+  ScrollType,
   TextVKType,
   XulswordStatePref,
 } from '../type';
 
 const Commands: GType['Commands'] = {
-  addRepositoryModule() {
-    console.log(`Action not implemented: addRepositoryModule`);
+  openModuleDownloader() {
+    console.log(`Action not implemented: openModuleDownloader`);
   },
 
   // Install one or more ZIP modules from the local file system. The paths
@@ -31,58 +32,52 @@ const Commands: GType['Commands'] = {
   // file picker dialog with its default directory, and may select one or more
   // modules to install. Thus, a dialog will only be shown if no paths argument
   // is provided, or an existing directory path is provided.
-  addLocalModule(paths) {
-    const w = arguments[1];
+  async installXulswordModules(paths, toSharedModuleDir) {
+    const w = arguments[2];
+    const extensions = ['zip', 'xsm', 'xsb'];
     const options: OpenDialogSyncOptions = {
       title: i18n.t('menu.addNewModule.label'),
       filters: [
         {
-          name: 'ZIP, XSM, XSB',
-          extensions: ['zip', 'xsm', 'xsb'],
+          name: extensions.map((x) => x.toUpperCase()).join(', '),
+          extensions,
         },
       ],
       properties: ['openFile', 'multiSelections'],
     };
-    let installpaths: string[] | undefined;
-    if (paths && Array.isArray(paths)) {
-      // Array of file paths
-      installpaths = paths;
-    } else if (paths?.endsWith('/*')) {
-      // All modules in an existing directory
-      installpaths = [];
-      const file = new nsILocalFile(paths.substring(0, -2));
-      if (file.isDirectory()) {
-        file.directoryEntries?.forEach((f) => {
-          if (/\.(xsm|xsb|zip)$/i.test(f)) installpaths?.push(f);
-        });
-      }
-    } else if (paths) {
-      // Existing directory to make a selection or an existing module path
-      const file = new nsILocalFile(paths);
-      if (file.isDirectory()) {
-        options.defaultPath = paths;
-        installpaths = dialog.showOpenDialogSync(w, options);
-      } else installpaths = [paths];
-    } else {
-      // No paths argument was provided
-      installpaths = dialog.showOpenDialogSync(w, options);
+    const extRE = new RegExp(`\\.(${extensions.join('|')})$`, 'i');
+    function filter(fileArray: string[]): string[] {
+      return fileArray.filter((f) => extRE.test(f));
     }
-    const mods =
-      (installpaths &&
-        installpaths.filter((f) => /\.(xsm|xsb|zip)$/i.test(f))) ||
-      [];
-    installZipModules(mods)
-      .then((fails) => {
-        if (fails.length) {
-          shell.beep();
-          jsdump(
-            `ERROR: Module installation problems follow:\n${fails.join('\n')}`
-          );
+    if (paths) {
+      // Install array of file paths
+      if (Array.isArray(paths)) {
+        return installZipModules(filter(paths), toSharedModuleDir);
+      }
+      // Install all modules in a directory
+      if (paths.endsWith('/*')) {
+        const installpaths: string[] = [];
+        const file = new nsILocalFile(paths.substring(0, -2));
+        if (file.isDirectory()) {
+          installpaths.push(...filter(file.directoryEntries));
         }
-        return true;
+        return installZipModules(installpaths, toSharedModuleDir);
+      }
+      const file = new nsILocalFile(paths);
+      // ZIP file to install
+      if (!file.isDirectory()) {
+        return installZipModules(filter([file.path]), toSharedModuleDir);
+      }
+      // Choose from existing directory.
+      options.defaultPath = paths;
+    }
+    return dialog
+      .showOpenDialog(w, options)
+      .then((obj) => {
+        return installZipModules(obj.filePaths, toSharedModuleDir);
       })
-      .catch((ers) => {
-        throw Error(ers);
+      .catch((err) => {
+        throw Error(err);
       });
   },
 
@@ -120,32 +115,32 @@ const Commands: GType['Commands'] = {
   },
 
   undo(...args) {
-    console.log(`Action not implemented: undo(${JSON_stringify(arguments)})`);
+    console.log(`Action not implemented: undo(${JSON_stringify(args)})`);
     return false;
   },
 
   redo(...args) {
-    console.log(`Action not implemented: redo(${JSON_stringify(arguments)})`);
+    console.log(`Action not implemented: redo(${JSON_stringify(args)})`);
     return false;
   },
 
   cut(...args) {
-    console.log(`Action not implemented: cut(${JSON_stringify(arguments)})`);
+    console.log(`Action not implemented: cut(${JSON_stringify(args)})`);
     return false;
   },
 
   copy(...args) {
-    console.log(`Action not implemented: copy(${JSON_stringify(arguments)})`);
+    console.log(`Action not implemented: copy(${JSON_stringify(args)})`);
     return false;
   },
 
   paste(...args) {
-    console.log(`Action not implemented: paste(${JSON_stringify(arguments)})`);
+    console.log(`Action not implemented: paste(${JSON_stringify(args)})`);
     return false;
   },
 
   search(search) {
-    console.log(`Action not implemented: search(${JSON_stringify(arguments)})`);
+    console.log(`Action not implemented: search(${JSON_stringify(search)})`);
   },
 
   copyPassage() {
@@ -176,7 +171,7 @@ const Commands: GType['Commands'] = {
   openNewDbItemDialog(userNote: boolean, textvk: TextVKType) {
     console.log(
       `Action not implemented: openNewBookmarkDialog(${JSON_stringify(
-        arguments
+        userNote
       )})`
     );
   },
@@ -184,14 +179,14 @@ const Commands: GType['Commands'] = {
   openDbItemPropertiesDialog(bookmark) {
     console.log(
       `Action not implemented: openBookmarkPropertiesDialog(${JSON_stringify(
-        arguments
+        bookmark
       )})`
     );
   },
 
   deleteDbItem(bookmark) {
     console.log(
-      `Action not implemented: deleteBookmark(${JSON_stringify(arguments)})`
+      `Action not implemented: deleteBookmark(${JSON_stringify(bookmark)})`
     );
   },
 
@@ -202,7 +197,7 @@ const Commands: GType['Commands'] = {
   goToLocationVK(
     newlocation: LocationVKType,
     newselection: LocationVKType,
-    newScroll = { verseAt: 'center' }
+    newScroll: ScrollType | undefined
   ) {
     // To go to a verse system location without also changing xulsword's current
     // versekey module requires this location be converted into the current v11n.
@@ -213,7 +208,7 @@ const Commands: GType['Commands'] = {
     const sel = verseKey(newselection, location?.v11n || 'KJV');
     newxulsword.location = loc.location();
     newxulsword.selection = sel.location();
-    newxulsword.scroll = newScroll;
+    newxulsword.scroll = newScroll || { verseAt: 'center' };
     Prefs.mergeValue('xulsword', newxulsword);
   },
 };

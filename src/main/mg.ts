@@ -41,7 +41,7 @@ import { GPublic, GType } from '../type';
 // values in their argument lists. This is because Function.length is used to
 // append the calling window, and it does not include rest parameter or default
 // arguments, so they would result in exceptions being thrown.
-const appendCallingWindow = ['Prefs', 'Window'];
+const appendCallingWindow = ['Prefs', 'Window', 'Commands'];
 
 // Handle global variable calls from renderer processes
 function handleGlobal(

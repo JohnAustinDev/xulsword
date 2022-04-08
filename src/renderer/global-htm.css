@@ -25,6 +25,19 @@ html.dialog #root {
   background-color: whitesmoke;
   padding: 4px;
 }
+#root.dragover::before {
+  content: '';
+  display: block;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(175, 145, 180, 0.25) 0 2px,
+    transparent 1px 4px
+  );
+  z-index: 99;
+}
 
 .userFontBase {
   line-height: 1; /* this acts as a minimum line-height */

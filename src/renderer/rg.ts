@@ -15,7 +15,7 @@ const G = {
   },
 } as GTypeR;
 
-const asyncFunc = ['getSystemFonts'];
+const asyncFunc = ['getSystemFonts', 'installXulswordModules'];
 const entries = Object.entries(GPublic);
 entries.forEach((entry) => {
   const gPublic = GPublic as any;
@@ -58,7 +58,7 @@ entries.forEach((entry) => {
         });
       } else {
         Gx[name][m] = (...args: unknown[]) => {
-          if (asyncFunc.includes(name)) {
+          if (asyncFunc.includes(m)) {
             return window.ipc.renderer
               .invoke('global', name, m, ...args)
               .catch((e: any) => console.error(e));

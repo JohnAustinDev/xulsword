@@ -286,13 +286,13 @@ export default class MenuBuilder {
               ),
               accelerator: 'F2',
               click: d(() => {
-                Commands.addRepositoryModule();
+                Commands.openModuleDownloader();
               }),
             },
             {
               label: this.ts('newmodule.fromFile', 'newmodule.fromFile.ak'),
               click: d(() => {
-                Commands.addLocalModule();
+                Commands.installXulswordModules();
               }),
             },
           ],

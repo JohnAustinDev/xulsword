@@ -8,7 +8,7 @@ import i18next from 'i18next';
 import C from '../constant';
 import VerseKey from '../versekey';
 import RefParser, { RefParserOptionsType } from '../refparse';
-import { clone, isASCII, JSON_parse } from '../common';
+import { clone, isASCII, JSON_parse, tabSort } from '../common';
 import Cache from '../cache';
 import Subscription from '../subscription';
 import Dirs from './modules/dirs';
@@ -123,21 +123,6 @@ export function getBook(): { [i: string]: BookType } {
   return Cache.read('book');
 }
 
-export function tabSort(a: TabType, b: TabType) {
-  if (a.tabType === b.tabType) {
-    const aLocale = a.config.AssociatedLocale;
-    const bLocale = b.config.AssociatedLocale;
-    const lng = Prefs.getCharPref('global.locale');
-    const aPriority = aLocale ? (aLocale === lng ? 1 : 2) : 3;
-    const bPriority = bLocale ? (bLocale === lng ? 1 : 2) : 3;
-    if (aPriority !== bPriority) return aPriority > bPriority ? 1 : -1;
-    // Type and Priority are same, then sort by label's alpha.
-    return a.label > b.label ? 1 : -1;
-  }
-  const mto = C.UI.Viewport.TabTypeOrder as any;
-  return mto[a.tabType] > mto[b.tabType] ? 1 : -1;
-}
-
 export function getTabs(): TabType[] {
   if (!Cache.has('tabs')) {
     const tabs: TabType[] = [];
@@ -147,7 +132,7 @@ export function getTabs(): TabType[] {
     modlist.split('<nx>').forEach((mstring: string) => {
       const [module, mt] = mstring.split(';');
       const type = mt as ModTypes;
-      if (moduleUnsupported(module).length === 0) {
+      if (module && moduleUnsupported(module).length === 0) {
         let label = LibSword.getModuleInformation(module, 'TabLabel');
         if (label === C.NOTFOUND)
           label = LibSword.getModuleInformation(module, 'Abbreviation');
@@ -232,7 +217,6 @@ export function getTabs(): TabType[] {
     });
     Cache.write(tabs.sort(tabSort), 'tabs');
   }
-
   return Cache.read('tabs');
 }
 
@@ -423,7 +407,6 @@ export function verseKey(
   );
 }
 
-// If null is returned, fonts are loading, so another call is required.
 export function getSystemFonts() {
   if (!Cache.has('fontList')) {
     return fontList

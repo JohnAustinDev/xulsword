@@ -1,8 +1,7 @@
 /* eslint-disable no-continue */
 /* eslint-disable new-cap */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { getBrowserWindows } from './window';
-import Cache from '../cache';
+import Window, { getBrowserWindows } from './window';
 import Subscription from '../subscription';
 import C from '../constant';
 import nsILocalFile from './components/nsILocalFile';
@@ -10,20 +9,12 @@ import Dirs from './modules/dirs';
 import LibSword from './modules/libsword';
 import { jsdump } from './mutil';
 
-import type { ModTypes, SwordConfType } from '../type';
+import type { ModTypes, NewModulesType, SwordConfType } from '../type';
 
 const AdmZip = require('adm-zip');
 
 let progTot = 0;
 let progNow = 0;
-
-export type NewModulesType = {
-  modules: SwordConfType[];
-  fonts: string[];
-  bookmarks: string[];
-  audio: string[];
-  errors: string[];
-};
 
 type ZipEntryType = {
   entryName: string;
@@ -167,11 +158,11 @@ export function removeModule(
   return num;
 }
 
-async function install(
+function install(
   zipfile: string,
   entries: ZipEntryType[],
   sharedModuleDir = false
-): Promise<NewModulesType> {
+): NewModulesType {
   const results: NewModulesType = {
     modules: [],
     fonts: [],
@@ -320,6 +311,7 @@ async function install(
       }
       progNow += 1;
     });
+  getBrowserWindows({ type: 'xulsword' })[0].setProgressBar(progNow / progTot);
   return results;
 }
 
@@ -328,55 +320,51 @@ async function install(
 export default async function installZipModules(
   paths: string[],
   toSharedModuleDir = false
-): Promise<string[]> {
-  // First get a listing of the contents of all zip files (init the progress bar)
-  const xswin = getBrowserWindows({ type: 'xulsword' })[0];
-  const modules: { [i: string]: ZipEntryType[] } = {};
-  progTot = 0;
-  paths.forEach((f) => {
-    const zip = new AdmZip(f);
-    modules[f] = zip.getEntries();
-    progTot += modules[f].length;
-  });
-  // Then process each zip file asyncronously.
-  progNow = 0;
-  const progInterval = setInterval(() => {
-    xswin.setProgressBar(progNow / progTot);
-  }, 200);
-  LibSword.quit();
-  const promises: Promise<NewModulesType>[] = [];
-  Object.entries(modules).forEach((entry) => {
-    const [f, entries] = entry;
-    promises.push(install(f, entries, toSharedModuleDir));
-  });
-  const results = await Promise.allSettled(promises);
-  clearInterval(progInterval);
-  Cache.clear();
-  LibSword.init();
-  xswin.setProgressBar(-1);
-  // Gather results
-  const fails: string[] = [];
-  const newmods: NewModulesType = {
-    modules: [],
-    fonts: [],
-    bookmarks: [],
-    audio: [],
-    errors: [],
-  };
-  results.forEach((r) => {
-    if (r.status === 'fulfilled') {
-      Object.entries(r.value).forEach((nmt) => {
-        const key = nmt[0] as keyof NewModulesType;
-        const array = nmt[1] as any[];
-        newmods[key].push(...array);
+): Promise<NewModulesType> {
+  return new Promise((resolve) => {
+    const newmods: NewModulesType = {
+      modules: [],
+      fonts: [],
+      bookmarks: [],
+      audio: [],
+      errors: [],
+    };
+    if (paths.length) {
+      // First get a listing of the contents of all zip files (to init the progress bar)
+      const xswin = getBrowserWindows({ type: 'xulsword' })[0];
+      const modules: { [i: string]: ZipEntryType[] } = {};
+      progTot = 0;
+      paths.forEach((f) => {
+        const fobj = new nsILocalFile(f);
+        if (fobj.exists()) {
+          const zip = new AdmZip(f);
+          modules[f] = zip.getEntries();
+          progTot += modules[f].length;
+        } else {
+          newmods.errors.push(`File does not exist: '${f}'`);
+        }
       });
+      // Then process each zip file.
+      const modentries = Object.entries(modules);
+      if (modentries.length) {
+        progNow = 0;
+        LibSword.quit();
+        modentries.forEach((entry) => {
+          const [f, entries] = entry;
+          Object.entries(install(f, entries, toSharedModuleDir)).forEach(
+            (n) => {
+              const key = n[0] as keyof NewModulesType;
+              const array = n[1] as any[];
+              newmods[key].push(...array);
+            }
+          );
+        });
+        Subscription.publish('resetMain');
+        Window.reset('all', 'all');
+        Subscription.publish('modulesInstalled', newmods);
+        xswin.setProgressBar(-1);
+      }
     }
-    if (r.status === 'rejected') fails.push(r.reason);
+    resolve(newmods);
   });
-  if (newmods.errors.length) fails.push(...newmods.errors);
-  Subscription.publish('modulesInstalled', newmods);
-  if (!fails.length) {
-    jsdump('ALL FILES WERE SUCCESSFULLY INSTALLED!');
-  }
-  return fails;
 }

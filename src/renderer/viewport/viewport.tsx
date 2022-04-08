@@ -147,6 +147,7 @@ class Viewport extends React.Component implements PopupParent {
   render() {
     const { popupParentHandler, popupHandler } = this;
     const props = this.props as ViewportProps;
+    const state = this.state as ViewportState;
     const {
       location,
       selection,
@@ -168,8 +169,7 @@ class Viewport extends React.Component implements PopupParent {
       xulswordStateHandler,
       atextRefs,
     } = this.props as ViewportProps;
-    const { reset, elemhtml, eleminfo, gap, popupParent, popupReset } = this
-      .state as ViewportState;
+    const { reset, elemhtml, eleminfo, gap, popupParent, popupReset } = state;
 
     const chooser = panels.some((m) => m && G.Tab[m].type === C.GENBOOK)
       ? 'genbook'
@@ -367,13 +367,7 @@ class Viewport extends React.Component implements PopupParent {
     let cls = '';
     if (ownWindow) cls += ' ownWindow';
 
-    jsdump(
-      `Rendering Viewport ${JSON.stringify({
-        state: this.state,
-        ilModuleOptions,
-        ilMods: ilModules,
-      })}`
-    );
+    console.log(state);
 
     return (
       <Hbox

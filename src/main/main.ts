@@ -11,15 +11,19 @@ import Subscription from '../subscription';
 import Cache from '../cache';
 import C from '../constant';
 import G from './mg';
+import LibSword from './modules/libsword';
 import MenuBuilder, { pushPrefsToMenu } from './menu';
 import { jsdump } from './mutil';
 import { WindowRegistry, pushPrefsToWindows } from './window';
 import contextMenu from './contextMenu';
 import { checkModulePrefs } from './minit';
-import LibSword from './modules/libsword';
+import setViewportTabs from './tabs';
 
-import type { GlobalPrefType, WindowRegistryType } from '../type';
-import { updateTabsAfterModuleInstall } from './tabs';
+import type {
+  GlobalPrefType,
+  NewModulesType,
+  WindowRegistryType,
+} from '../type';
 
 const i18nBackendMain = require('i18next-fs-backend');
 
@@ -148,7 +152,11 @@ const openMainWindow = () => {
   subscriptions.push(Subscription.subscribe('setPref', pushPrefsToWindows));
   subscriptions.push(Subscription.subscribe('setPref', pushPrefsToMenu));
   subscriptions.push(
-    Subscription.subscribe('modulesInstalled', updateTabsAfterModuleInstall)
+    Subscription.subscribe('modulesInstalled', (newmods: NewModulesType) => {
+      newmods.modules.forEach((conf) => {
+        setViewportTabs(-1, conf.module, 'show');
+      });
+    })
   );
   subscriptions.push(
     Subscription.subscribe('resetMain', () => {

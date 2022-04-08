@@ -10,6 +10,7 @@ import {
   escapeRE,
   JSON_stringify,
   ofClass,
+  tabSort,
 } from '../../common';
 import { getElementInfo } from '../../libswordElemInfo';
 import G from '../rg';
@@ -21,6 +22,7 @@ import { aTextWheelScroll, chapterChange } from './zversekey';
 import type {
   AtextStateType,
   BookGroupType,
+  NewModulesType,
   PinPropsType,
   V11nType,
   XulswordStatePref,
@@ -60,6 +62,45 @@ export function closeMenupopups(component: React.Component) {
       return s;
     });
   }
+}
+
+export function newModulesInstalled(
+  this: Xulsword | ViewportWin,
+  newmods: NewModulesType
+) {
+  const sortedModConfs = newmods.modules.sort((a, b) =>
+    tabSort(G.Tab[a.module], G.Tab[b.module])
+  );
+  this.setState((prevState: XulswordState | ViewportWinState) => {
+    const ps = clone(prevState);
+    const { panels } = ps;
+    let { location } = ps;
+    let x = 0;
+    sortedModConfs.forEach((conf) => {
+      if (x < panels.length && panels[x] !== null) panels[x] = conf.module;
+      x += 1;
+    });
+    const { module } = sortedModConfs[0];
+    if (module) {
+      if (!location)
+        location = {
+          book: 'Gen',
+          chapter: 1,
+          v11n: G.Tab[module].v11n || 'KJV',
+        };
+      if (!G.BooksInModule[module].includes(location.book)) {
+        [location.book] = G.BooksInModule[module];
+        location.chapter = 1;
+      }
+    }
+    const s: Partial<XulswordState | ViewportWinState> = {
+      isPinned: prevState.panels.map(() => false),
+      location,
+      selection: null,
+      panels,
+    };
+    return s;
+  });
 }
 
 // Handle certain notebox boundary bar events for Atext.

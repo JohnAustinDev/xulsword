@@ -2,8 +2,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import i18next from 'i18next';
 import C from './constant';
-import type { ConfigType, PrefObject, PrefValue } from './type';
 import Cache from './cache';
+
+import type { ConfigType, PrefObject, PrefValue, TabType } from './type';
 
 export function escapeRE(text: string) {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -407,4 +408,21 @@ export function createStyleRule(
   });
   rule += '}';
   return rule;
+}
+
+export function tabSort(a: TabType, b: TabType) {
+  if (a.tabType === b.tabType) {
+    const aLocale = a.config.AssociatedLocale;
+    const bLocale = b.config.AssociatedLocale;
+    const lng = i18next.language;
+    /* eslint-disable no-nested-ternary */
+    const aPriority = aLocale ? (aLocale === lng ? 1 : 2) : 3;
+    const bPriority = bLocale ? (bLocale === lng ? 1 : 2) : 3;
+    /* eslint-enable no-nested-ternary */
+    if (aPriority !== bPriority) return aPriority > bPriority ? 1 : -1;
+    // Type and Priority are same, then sort by label's alpha.
+    return a.label > b.label ? 1 : -1;
+  }
+  const mto = C.UI.Viewport.TabTypeOrder as any;
+  return mto[a.tabType] > mto[b.tabType] ? 1 : -1;
 }
