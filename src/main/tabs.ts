@@ -14,9 +14,10 @@ export default function setViewportTabs(
   const Tabs = getTabs();
   const Tab = getTab();
   const booksInModule = getBooksInModule();
-  const xulsword = Prefs.getComplexValue('xulsword') as XulswordStatePref;
+  const xulsword = clone(
+    Prefs.getComplexValue('xulsword')
+  ) as XulswordStatePref;
   const { location, mtModules, panels, tabs } = xulsword;
-  const newxulsword = clone(xulsword) as XulswordStatePref;
   const panelIndexes =
     panelIndex === -1 ? panels.map((_p: any, i: number) => i) : [panelIndex];
 
@@ -51,35 +52,30 @@ export default function setViewportTabs(
   panelIndexes.forEach((pi: number) => {
     modules.forEach((m) => {
       if (m) {
-        const tabbank = tabs[pi];
-        const ntabbank = newxulsword.tabs[pi];
+        const oldbank = clone(xulsword.tabs[pi]);
+        const newbank = xulsword.tabs[pi];
         const show =
           doWhat2 === 'toggle'
-            ? !tabbank || !tabbank.includes(m.module)
+            ? !oldbank || !oldbank.includes(m.module)
             : doWhat2 === 'show';
-        if (show && (!tabbank || !tabbank.includes(m.module))) {
-          if (ntabbank) ntabbank.push(m.module);
+        if (show && (!oldbank || !oldbank.includes(m.module))) {
+          if (newbank) newbank.push(m.module);
           // if creating a tab bank, create the tab banks before it as well
           else
             panels.forEach((_p: any, i: number) => {
-              if (!newxulsword.tabs[i])
-                newxulsword.tabs[i] = i === pi ? [m.module] : [];
+              if (!xulsword.tabs[i])
+                xulsword.tabs[i] = i === pi ? [m.module] : [];
             });
-        } else if (!show && ntabbank && tabbank && tabbank.includes(m.module)) {
-          ntabbank.splice(ntabbank.indexOf(m.module), 1);
+        } else if (!show && newbank && oldbank && oldbank.includes(m.module)) {
+          newbank.splice(newbank.indexOf(m.module), 1);
         }
       }
     });
   });
 
-  // Sort tabs into the following order:
-  // - By module type
-  // - Modules matching the current locale
-  // - Modules matching any installed locale
-  // - By label alpha
-  newxulsword.tabs.forEach((tabbank, i: number) => {
+  xulsword.tabs.forEach((tabbank, i: number) => {
     if (tabbank) {
-      newxulsword.tabs[i] = tabbank
+      xulsword.tabs[i] = tabbank
         .filter(Boolean)
         .sort((a, b) => tabSort(Tab[a], Tab[b]));
     }
@@ -87,33 +83,33 @@ export default function setViewportTabs(
 
   // If user is setting tabs for a panel that is not open, then open it.
   if (panelIndexes.length === 1 && panels[panelIndexes[0]] === null)
-    newxulsword.panels[panelIndexes[0]] = '';
+    xulsword.panels[panelIndexes[0]] = '';
 
   // Insure a panel's module vars point to modules that are included in the
   // panel's tab bank, and rather than leave a panel's display module as
   // empty string, we can choose some module, and choose a book too if none
   // is already selected.
-  newxulsword.mtModules = mtModules.map((m: string | null, i: number) => {
-    const nvali = newxulsword.tabs[i];
+  xulsword.mtModules = mtModules.map((m: string | null, i: number) => {
+    const nvali = xulsword.tabs[i];
     return m && nvali && nvali.includes(m) ? m : null;
   });
   const used: any = {};
   panels.forEach((m: string | null, i: number) => {
-    const nvali = newxulsword.tabs[i];
+    const nvali = xulsword.tabs[i];
     if (m !== null && nvali && nvali.length && !nvali.includes(m)) {
-      newxulsword.panels[i] = '';
+      xulsword.panels[i] = '';
       let it = 0;
       let nextmod = nvali[it];
       while (nextmod in used && it + 1 < nvali.length) {
         it += 1;
         nextmod = nvali[it];
       }
-      newxulsword.panels[i] = nextmod;
+      xulsword.panels[i] = nextmod;
       used[nextmod] = true;
       if ((!location || !location.book) && nextmod && Tab[nextmod].isVerseKey) {
         const [book] = booksInModule[nextmod];
         if (book) {
-          newxulsword.location = {
+          xulsword.location = {
             book,
             chapter: 1,
             verse: 1,
@@ -124,5 +120,5 @@ export default function setViewportTabs(
     }
   });
 
-  Prefs.mergeValue('xulsword', newxulsword);
+  Prefs.mergeValue('xulsword', xulsword);
 }

@@ -38,6 +38,8 @@ Cpp/clucene
 Cpp/build*
 Cpp/install*
 
+.vscode/perl-lang/
+
 # For Windows...
 Cpp/cluceneMK/windows/lib/Release/
 Cpp/src/include/appInfo.h

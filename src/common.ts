@@ -140,9 +140,11 @@ export function deepClone(obj: any) {
 // either primitives, arrays or other data objects.
 export function clone<T extends unknown>(obj: T): T {
   let copy: any;
-  if (obj === undefined || obj === null || typeof obj !== 'object') copy = obj;
-  else if (Array.isArray(obj)) copy = obj.slice();
-  else {
+  if (obj === null || typeof obj !== 'object') copy = obj;
+  else if (Array.isArray(obj)) {
+    copy = [];
+    obj.forEach((p) => copy.push(clone(p)));
+  } else {
     copy = {};
     const o = obj as any;
     Object.entries(o).forEach((entry) => {
@@ -410,6 +412,11 @@ export function createStyleRule(
   return rule;
 }
 
+// Sort tabs into the following order:
+// - By module type
+// - Modules matching the current locale
+// - Modules matching any installed locale
+// - By label alpha
 export function tabSort(a: TabType, b: TabType) {
   if (a.tabType === b.tabType) {
     const aLocale = a.config.AssociatedLocale;

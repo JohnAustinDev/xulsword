@@ -293,14 +293,14 @@ const Prefs: GType['Prefs'] & PrefsPrivate = {
       k = d;
       if (i + 1 === a.length) return;
       if (!(d in p)) p[d] = {};
-      const np = p[d];
-      if (np) {
-        if (typeof np !== 'object' || Array.isArray(np)) {
+      const pd = p[d];
+      if (pd) {
+        if (typeof pd !== 'object' || Array.isArray(pd)) {
           throw Error(
             `Parent key is not a PrefObject: '${a.slice(0, i + 1).join('.')}'`
           );
         }
-        p = np;
+        p = pd;
       }
     });
     // Check the current value and set to the new value only if needed.
