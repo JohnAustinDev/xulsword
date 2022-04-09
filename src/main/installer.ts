@@ -1,6 +1,7 @@
 /* eslint-disable no-continue */
 /* eslint-disable new-cap */
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { BrowserWindow } from 'electron';
 import Window, { getBrowserWindows } from './window';
 import Subscription from '../subscription';
 import C from '../constant';
@@ -12,9 +13,6 @@ import { jsdump } from './mutil';
 import type { ModTypes, NewModulesType, SwordConfType } from '../type';
 
 const AdmZip = require('adm-zip');
-
-let progTot = 0;
-let progNow = 0;
 
 type ZipEntryType = {
   entryName: string;
@@ -158,168 +156,14 @@ export function removeModule(
   return num;
 }
 
-function install(
-  zipfile: string,
-  entries: ZipEntryType[],
-  sharedModuleDir = false
-): NewModulesType {
-  const results: NewModulesType = {
-    modules: [],
-    fonts: [],
-    bookmarks: [],
-    audio: [],
-    errors: [],
-  };
-  const confs = {} as { [i: string]: SwordConfType };
-  entries
-    .sort((a, b) => {
-      const ac = a.name.endsWith('.conf');
-      const bc = b.name.endsWith('.conf');
-      if (ac && !bc) return -1;
-      if (!ac && bc) return 1;
-      return a.name.localeCompare(b.name);
-    })
-    .forEach((entry) => {
-      if (!entry.entryName.endsWith('/')) {
-        jsdump(`Processing Entry:${zipfile}, ${entry.entryName}`);
-        const type = entry.entryName.split('/').shift();
-        switch (type) {
-          case 'mods.d': {
-            const moddest = new nsILocalFile(
-              sharedModuleDir ? Dirs.path.xsModsCommon : Dirs.path.xsModsUser
-            );
-            const confstr = entry.getData().toString('utf8');
-            const conf = parseModConfString(confstr);
-            const reasons = moduleUnsupported(conf);
-            const swmodpath = conf.DataPath && confModulePath(conf.DataPath);
-            if (!swmodpath) {
-              reasons.push(
-                `${conf.module}: Has non-standard module path '${conf.DataPath}'`
-              );
-            }
-            if (!reasons.length) {
-              moddest.append('mods.d');
-              if (!moddest.exists()) {
-                moddest.create(nsILocalFile.DIRECTORY_TYPE);
-              }
-              moddest.append(entry.name);
-              // Remove any existing module having this name.
-              if (moddest.exists() && !removeModule([conf.module])) {
-                results.errors.push(
-                  `${conf.module}: Could not remove existing module (shared=${sharedModuleDir})`
-                );
-              } else if (swmodpath) {
-                // Make sure module destination directory exists and is empty.
-                const destdir = new nsILocalFile(
-                  sharedModuleDir
-                    ? Dirs.path.xsModsCommon
-                    : Dirs.path.xsModsUser
-                );
-                destdir.append(swmodpath);
-                if (destdir.exists()) {
-                  destdir.remove(true);
-                }
-                if (
-                  destdir.exists() ||
-                  !destdir.create(nsILocalFile.DIRECTORY_TYPE, {
-                    recursive: true,
-                  })
-                ) {
-                  results.errors.push(
-                    `${conf.module}: Failed to create new module destination directory: '${destdir.path}'`
-                  );
-                } else {
-                  // Copy config file to mods.d
-                  moddest.writeFile(confstr);
-                  confs[conf.module] = conf;
-                  results.modules.push(conf);
-                }
-              }
-            } else {
-              results.errors.push(...reasons);
-            }
-            break;
-          }
-
-          case 'modules': {
-            const conf = Object.values(confs).find((c) => {
-              const swmodpath = confModulePath(c.DataPath);
-              return swmodpath && entry.entryName.startsWith(swmodpath);
-            });
-            const swmodpath = conf && confModulePath(conf.DataPath);
-            if (conf && swmodpath) {
-              const destdir = new nsILocalFile(
-                sharedModuleDir ? Dirs.path.xsModsCommon : Dirs.path.xsModsUser
-              );
-              destdir.append(swmodpath);
-              // If this module is to be installed, the destination directory has already been
-              // succesfully created, otherwise silently skip.
-              if (destdir.exists()) {
-                const parts = entry.entryName
-                  .substring(swmodpath.length + 1)
-                  .split('/');
-                parts.forEach((p, i) => {
-                  destdir.append(p);
-                  if (i === parts.length - 1) {
-                    destdir.writeFile(entry.getData());
-                  } else if (!destdir.exists()) {
-                    destdir.create(nsILocalFile.DIRECTORY_TYPE);
-                  }
-                });
-              }
-            } else {
-              results.errors.push(
-                `File does not belong to any module: ${entry.entryName}`
-              );
-            }
-            break;
-          }
-
-          case 'fonts': {
-            const fontsdir = Dirs.xsFonts;
-            fontsdir.append(entry.name);
-            fontsdir.writeFile(entry.getData());
-            results.fonts.push(entry.name);
-            break;
-          }
-
-          case 'bookmarks': {
-            const bmdir = Dirs.xsBookmarks;
-            bmdir.append(entry.name);
-            bmdir.writeFile(entry.getData());
-            results.bookmarks.push(entry.name);
-            break;
-          }
-
-          case 'audio': {
-            // TODO! audio install
-            results.audio.push(entry.name);
-            break;
-          }
-
-          case 'chrome':
-          case 'locale':
-          case 'video':
-            // No longer supported, just ignore without error...
-            break;
-
-          default:
-            jsdump(
-              `WARNING: Unknown module component: ${zipfile}/${entry.name}`
-            );
-        }
-      }
-      progNow += 1;
-    });
-  getBrowserWindows({ type: 'xulsword' })[0].setProgressBar(progNow / progTot);
-  return results;
-}
-
-// Installs an array of zip modules and returns an error string if there are
-// errors, or the empty string otherwise.
-export default async function installZipModules(
+// Installs an array of xulsword module files either to the xulsword module directory,
+// or the shared SWORD module directory. Errors will be reported (not thrown) if a file
+// does not exist or there is a problem during installation. If progressWin is prov-
+// ided then progress will be reported to that window.
+export default async function installList(
   paths: string[],
-  toSharedModuleDir = false
+  toSharedDir = false,
+  progressWin?: BrowserWindow
 ): Promise<NewModulesType> {
   return new Promise((resolve) => {
     const newmods: NewModulesType = {
@@ -332,37 +176,175 @@ export default async function installZipModules(
     if (paths.length) {
       // First get a listing of the contents of all zip files (to init the progress bar)
       const xswin = getBrowserWindows({ type: 'xulsword' })[0];
-      const modules: { [i: string]: ZipEntryType[] } = {};
-      progTot = 0;
+      const zipEntries: ZipEntryType[] = [];
       paths.forEach((f) => {
-        const fobj = new nsILocalFile(f);
-        if (fobj.exists()) {
-          const zip = new AdmZip(f);
-          modules[f] = zip.getEntries();
-          progTot += modules[f].length;
+        const zipfile = new nsILocalFile(f);
+        if (zipfile.exists()) {
+          zipEntries.push(...new AdmZip(f).getEntries());
         } else {
           newmods.errors.push(`File does not exist: '${f}'`);
         }
       });
-      // Then process each zip file.
-      const modentries = Object.entries(modules);
-      if (modentries.length) {
-        progNow = 0;
+      const progTot = zipEntries.length;
+      let progNow = 0;
+      progressWin?.webContents.send('progress', 0);
+      const updateProgress = (prognow: number) => {
+        const progress = prognow < 0 ? -1 : prognow / progTot;
+        xswin.setProgressBar(progress);
+        // Window progress closure is handled by the window.
+        if (progress >= 0) {
+          progressWin?.webContents.send('progress', Math.round(progress * 100));
+        }
+      };
+      updateProgress(0);
+      // Then process each zip file entry.
+      if (zipEntries.length) {
+        const sortedZipEntries = zipEntries.sort((a, b) => {
+          const ac = a.name.endsWith('.conf');
+          const bc = b.name.endsWith('.conf');
+          if (ac && !bc) return -1;
+          if (!ac && bc) return 1;
+          return 0;
+        });
         LibSword.quit();
-        modentries.forEach((entry) => {
-          const [f, entries] = entry;
-          Object.entries(install(f, entries, toSharedModuleDir)).forEach(
-            (n) => {
-              const key = n[0] as keyof NewModulesType;
-              const array = n[1] as any[];
-              newmods[key].push(...array);
+        const confs = {} as { [i: string]: SwordConfType };
+        sortedZipEntries.forEach((entry) => {
+          if (!entry.entryName.endsWith('/')) {
+            // jsdump(`Processing Entry: ${entry.entryName}`);
+            const type = entry.entryName.split('/').shift();
+            switch (type) {
+              case 'mods.d': {
+                const moddest = new nsILocalFile(
+                  toSharedDir ? Dirs.path.xsModsCommon : Dirs.path.xsModsUser
+                );
+                const confstr = entry.getData().toString('utf8');
+                const conf = parseModConfString(confstr);
+                const reasons = moduleUnsupported(conf);
+                const swmodpath =
+                  conf.DataPath && confModulePath(conf.DataPath);
+                if (!swmodpath) {
+                  reasons.push(
+                    `${conf.module}: Has non-standard module path '${conf.DataPath}'`
+                  );
+                }
+                if (!reasons.length) {
+                  moddest.append('mods.d');
+                  if (!moddest.exists()) {
+                    moddest.create(nsILocalFile.DIRECTORY_TYPE);
+                  }
+                  moddest.append(entry.name);
+                  // Remove any existing module having this name.
+                  if (moddest.exists() && !removeModule([conf.module])) {
+                    newmods.errors.push(
+                      `${conf.module}: Could not remove existing module (shared=${toSharedDir})`
+                    );
+                  } else if (swmodpath) {
+                    // Make sure module destination directory exists and is empty.
+                    const destdir = new nsILocalFile(
+                      toSharedDir
+                        ? Dirs.path.xsModsCommon
+                        : Dirs.path.xsModsUser
+                    );
+                    destdir.append(swmodpath);
+                    if (destdir.exists()) {
+                      destdir.remove(true);
+                    }
+                    if (
+                      destdir.exists() ||
+                      !destdir.create(nsILocalFile.DIRECTORY_TYPE, {
+                        recursive: true,
+                      })
+                    ) {
+                      newmods.errors.push(
+                        `${conf.module}: Failed to create new module destination directory: '${destdir.path}'`
+                      );
+                    } else {
+                      // Copy config file to mods.d
+                      moddest.writeFile(confstr);
+                      confs[conf.module] = conf;
+                      newmods.modules.push(conf);
+                    }
+                  }
+                } else {
+                  newmods.errors.push(...reasons);
+                }
+                break;
+              }
+
+              case 'modules': {
+                const conf = Object.values(confs).find((c) => {
+                  const swmodpath = confModulePath(c.DataPath);
+                  return swmodpath && entry.entryName.startsWith(swmodpath);
+                });
+                const swmodpath = conf && confModulePath(conf.DataPath);
+                if (conf && swmodpath) {
+                  const destdir = new nsILocalFile(
+                    toSharedDir ? Dirs.path.xsModsCommon : Dirs.path.xsModsUser
+                  );
+                  destdir.append(swmodpath);
+                  // If this module is to be installed, the destination directory has already been
+                  // succesfully created, otherwise silently skip.
+                  if (destdir.exists()) {
+                    const parts = entry.entryName
+                      .substring(swmodpath.length + 1)
+                      .split('/');
+                    parts.forEach((p, i) => {
+                      destdir.append(p);
+                      if (i === parts.length - 1) {
+                        destdir.writeFile(entry.getData());
+                      } else if (!destdir.exists()) {
+                        destdir.create(nsILocalFile.DIRECTORY_TYPE);
+                      }
+                    });
+                  }
+                } else {
+                  newmods.errors.push(
+                    `File does not belong to any module: ${entry.entryName}`
+                  );
+                }
+                break;
+              }
+
+              case 'fonts': {
+                const fontsdir = Dirs.xsFonts;
+                fontsdir.append(entry.name);
+                fontsdir.writeFile(entry.getData());
+                newmods.fonts.push(entry.name);
+                break;
+              }
+
+              case 'bookmarks': {
+                const bmdir = Dirs.xsBookmarks;
+                bmdir.append(entry.name);
+                bmdir.writeFile(entry.getData());
+                newmods.bookmarks.push(entry.name);
+                break;
+              }
+
+              case 'audio': {
+                // TODO! audio install
+                newmods.audio.push(entry.name);
+                break;
+              }
+
+              case 'chrome':
+              case 'locale':
+              case 'video':
+                // No longer supported, just ignore without error...
+                break;
+
+              default:
+                jsdump(`WARNING: Unknown module component: ${entry.name}`);
             }
-          );
+          }
+          progNow += 1;
+          // The average module is say 7 entries
+          if (progNow % 7 === 0) updateProgress(progNow);
         });
         Subscription.publish('resetMain');
         Window.reset('all', 'all');
         Subscription.publish('modulesInstalled', newmods);
-        xswin.setProgressBar(-1);
+        updateProgress(-1);
       }
     }
     resolve(newmods);

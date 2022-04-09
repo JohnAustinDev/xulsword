@@ -25,6 +25,7 @@ const validChannels = [
   'did-finish-render', // to main when window has finished rendering
   'close', // from main upon window close
   'resize', // from main upon window resize
+  'progress', // from main for progress meter
   'update-state-from-pref', // from main when state-prefs should be updated
   'component-reset', // from main when window top react component should be remounted
   'cache-reset', // from main when caches should be cleared

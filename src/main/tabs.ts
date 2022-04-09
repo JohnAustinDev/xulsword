@@ -87,34 +87,42 @@ export default function setViewportTabs(
 
   // Insure a panel's module vars point to modules that are included in the
   // panel's tab bank, and rather than leave a panel's display module as
-  // empty string, we can choose some module, and choose a book too if none
-  // is already selected.
+  // empty string, if we can choose some module, and a book too if none
+  // is selected, then do so.
   xulsword.mtModules = mtModules.map((m: string | null, i: number) => {
     const nvali = xulsword.tabs[i];
     return m && nvali && nvali.includes(m) ? m : null;
   });
   const used: any = {};
   panels.forEach((m: string | null, i: number) => {
-    const nvali = xulsword.tabs[i];
-    if (m !== null && nvali && nvali.length && !nvali.includes(m)) {
-      xulsword.panels[i] = '';
-      let it = 0;
-      let nextmod = nvali[it];
-      while (nextmod in used && it + 1 < nvali.length) {
-        it += 1;
-        nextmod = nvali[it];
-      }
-      xulsword.panels[i] = nextmod;
-      used[nextmod] = true;
-      if ((!location || !location.book) && nextmod && Tab[nextmod].isVerseKey) {
-        const [book] = booksInModule[nextmod];
-        if (book) {
-          xulsword.location = {
-            book,
-            chapter: 1,
-            verse: 1,
-            v11n: Tab[nextmod].v11n || 'KJV',
-          };
+    const tabBanki = xulsword.tabs[i];
+    if (m !== null) {
+      if (!tabBanki || !tabBanki.length) {
+        xulsword.panels[i] = '';
+      } else if (!tabBanki.includes(m)) {
+        xulsword.panels[i] = '';
+        let it = 0;
+        let nextmod = tabBanki[it];
+        while (nextmod in used && it + 1 < tabBanki.length) {
+          it += 1;
+          nextmod = tabBanki[it];
+        }
+        xulsword.panels[i] = nextmod;
+        used[nextmod] = true;
+        if (
+          (!location || !location.book) &&
+          nextmod &&
+          Tab[nextmod].isVerseKey
+        ) {
+          const [book] = booksInModule[nextmod];
+          if (book) {
+            xulsword.location = {
+              book,
+              chapter: 1,
+              verse: 1,
+              v11n: Tab[nextmod].v11n || 'KJV',
+            };
+          }
         }
       }
     }

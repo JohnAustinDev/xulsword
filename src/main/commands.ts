@@ -1,19 +1,18 @@
 /* eslint-disable new-cap */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable prefer-rest-params */
-import { dialog, OpenDialogReturnValue, OpenDialogSyncOptions } from 'electron';
+import { dialog, OpenDialogSyncOptions } from 'electron';
 import i18n from 'i18next';
 import { clone, JSON_stringify } from '../common';
 import { verseKey, getTab, getTabs } from './minit';
 import Prefs from './modules/prefs';
 import nsILocalFile from './components/nsILocalFile';
-import installZipModules from './installer';
+import installList from './installer';
 import Window from './window';
 
 import type {
   GType,
   LocationVKType,
-  NewModulesType,
   ScrollType,
   TextVKType,
   XulswordStatePref,
@@ -27,13 +26,10 @@ const Commands: GType['Commands'] = {
   // Install one or more ZIP modules from the local file system. The paths
   // argument may be one or more paths to installable ZIP files, or a single
   // directory. If the directory ends with '/*' then all modules in that
-  // directory will be installed, otherwise the user will be asked to select
-  // one or more modules. If no paths are given, the user will be shown the
-  // file picker dialog with its default directory, and may select one or more
-  // modules to install. Thus, a dialog will only be shown if no paths argument
+  // directory will be installed. A dialog will be shown if no paths argument
   // is provided, or an existing directory path is provided.
-  async installXulswordModules(paths, toSharedModuleDir) {
-    const w = arguments[2];
+  async installXulswordModules(paths, toSharedDir) {
+    const progwin = arguments[2];
     const extensions = ['zip', 'xsm', 'xsb'];
     const options: OpenDialogSyncOptions = {
       title: i18n.t('menu.addNewModule.label'),
@@ -52,7 +48,7 @@ const Commands: GType['Commands'] = {
     if (paths) {
       // Install array of file paths
       if (Array.isArray(paths)) {
-        return installZipModules(filter(paths), toSharedModuleDir);
+        return installList(filter(paths), toSharedDir, progwin);
       }
       // Install all modules in a directory
       if (paths.endsWith('/*')) {
@@ -61,20 +57,20 @@ const Commands: GType['Commands'] = {
         if (file.isDirectory()) {
           installpaths.push(...filter(file.directoryEntries));
         }
-        return installZipModules(installpaths, toSharedModuleDir);
+        return installList(installpaths, toSharedDir, progwin);
       }
       const file = new nsILocalFile(paths);
       // ZIP file to install
       if (!file.isDirectory()) {
-        return installZipModules(filter([file.path]), toSharedModuleDir);
+        return installList(filter([file.path]), toSharedDir, progwin);
       }
       // Choose from existing directory.
       options.defaultPath = paths;
     }
     return dialog
-      .showOpenDialog(w, options)
+      .showOpenDialog(progwin, options)
       .then((obj) => {
-        return installZipModules(obj.filePaths, toSharedModuleDir);
+        return installList(obj.filePaths, toSharedDir, progwin);
       })
       .catch((err) => {
         throw Error(err);

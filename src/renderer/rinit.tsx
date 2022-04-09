@@ -5,6 +5,7 @@ import { render } from 'react-dom';
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import rendererBackend from 'i18next-electron-fs-backend';
+import ReactProgressMeter from 'react-progress-meter';
 import Subscription from '../subscription';
 import C from '../constant';
 import { JSON_parse } from '../common';
@@ -17,6 +18,7 @@ import { delayHandler } from './libxul/xul';
 import type { GlobalPrefType } from '../type';
 
 import './global-htm.css';
+import { Hbox } from './libxul/boxes';
 
 window.ipc.renderer.on('cache-reset', () => Cache.clear);
 
@@ -121,6 +123,8 @@ export default function renderToRoot(
   function Reset(props: React.ComponentProps<any>) {
     const { children } = props;
     const [reset, setReset] = useState(0);
+    const [overlay, setOverlay] = useState('');
+    const [progress, setProgress] = useState(-1);
     // IPC component-reset setup:
     useEffect(() => {
       return window.ipc.renderer.on('component-reset', () => {
@@ -161,16 +165,15 @@ export default function renderToRoot(
       if (root) {
         root.ondragover = (e) => {
           e.preventDefault();
-          root.classList.add('dragover');
+          setOverlay('installing');
         };
         root.ondragleave = (e) => {
           e.preventDefault();
-          if (!root.contains(e.relatedTarget as HTMLElement))
-            root.classList.remove('dragover');
+          if (!root.contains(e.relatedTarget as HTMLElement)) setOverlay('');
         };
         root.ondrop = (e) => {
           e.preventDefault();
-          root.classList.remove('dragover');
+          setOverlay('installing');
           if (e.dataTransfer?.files.length) {
             G.Window.modal(true, 'all');
             G.Commands.installXulswordModules(
@@ -178,7 +181,7 @@ export default function renderToRoot(
             )
               .then((newmods) => {
                 if (newmods.errors.length) {
-                  window.ipc.shell.beep();
+                  G.Shell.beep();
                   jsdump(
                     `ERROR: Module installation problems follow:\n${newmods.errors.join(
                       '\n'
@@ -189,6 +192,8 @@ export default function renderToRoot(
                   jsdump('ALL FILES WERE SUCCESSFULLY INSTALLED!');
                 }
                 G.Window.modal(false, 'all');
+                setProgress(-1);
+                setOverlay('');
                 return newmods;
               })
               .catch((err) => {
@@ -205,10 +210,33 @@ export default function renderToRoot(
         }
       };
     });
+    // Progress meter:
+    useEffect(() => {
+      return window.ipc.renderer.on('progress', (prog: number) => {
+        setProgress(prog);
+      });
+    });
+    let color = 'lime';
+    if (progress < 85) color = 'yellow';
+    if (progress < 33) color = 'red';
     return (
-      <div id="reset" onContextMenu={onContextMenu} key={reset}>
-        {children}
-      </div>
+      <>
+        {(progress || overlay) && (
+          <Hbox id="overlay" className={overlay} pack="center" align="center">
+            {progress !== -1 && (
+              <ReactProgressMeter
+                currentProgress={progress}
+                width="250px"
+                color={color}
+                show
+              />
+            )}
+          </Hbox>
+        )}
+        <div id="reset" onContextMenu={onContextMenu} key={reset}>
+          {children}
+        </div>
+      </>
     );
   }
 
