@@ -2,11 +2,49 @@
 import PropTypes from 'prop-types';
 import React from 'react';
 
+export const xulEvents = [
+  'onClick',
+  'onDoubleClick',
+  'onChange',
+  'onKeyDown',
+  'onKeyUp',
+  'onFocus',
+  'onBlur',
+  'onMouseDown',
+  'onMouseOver',
+  'onMouseOut',
+  'onMouseMove',
+  'onMouseUp',
+  'onMouseEnter',
+  'onMouseLeave',
+  'onWheel',
+  'onContextMenu',
+] as const;
+
+export const xulCaptureEvents = [
+  'onClickCapture',
+  'onDoubleClickCapture',
+  'onChangeCapture',
+  'onKeyDownCapture',
+  'onKeyUpCapture',
+  'onFocusCapture',
+  'onBlurCapture',
+  'onMouseDownCapture',
+  'onMouseOverCapture',
+  'onMouseOutCapture',
+  'onMouseMoveCapture',
+  'onMouseUpCapture',
+  'onMouseEnterCapture',
+  'onMouseLeaveCapture',
+  'onWheelCapture',
+  'onContextMenuCapture',
+] as const;
+
 // Default prop values
 export const xulDefaultProps = {};
 
 // PropTypes checking for XUL attributes
-export const xulPropTypes = {
+export const xulPropTypes: any = {
   align: PropTypes.oneOf(['start', 'center', 'end', 'baseline', 'stretch']),
   children: PropTypes.oneOfType([PropTypes.node, PropTypes.array]),
   className: PropTypes.string,
@@ -25,27 +63,16 @@ export const xulPropTypes = {
   ),
   width: PropTypes.string,
   title: PropTypes.string,
-
-  onClick: PropTypes.func,
-  onDoubleClick: PropTypes.func,
-  onChange: PropTypes.func,
-  onKeyDown: PropTypes.func,
-  onKeyUp: PropTypes.func,
-  onFocus: PropTypes.func,
-  onBlur: PropTypes.func,
-  onMouseDown: PropTypes.func,
-  onMouseOver: PropTypes.func,
-  onMouseOut: PropTypes.func,
-  onMouseMove: PropTypes.func,
-  onMouseUp: PropTypes.func,
-  onMouseEnter: PropTypes.func,
-  onMouseLeave: PropTypes.func,
-  onWheel: PropTypes.func,
-  onContextMenu: PropTypes.func,
 };
+xulEvents.forEach((ev: string) => {
+  xulPropTypes[ev] = PropTypes.func;
+});
+xulCaptureEvents.forEach((ev: string) => {
+  xulPropTypes[ev] = PropTypes.func;
+});
 
 // IDE TypeScript checking for props
-export interface XulProps {
+export type XulProps = {
   align?: 'start' | 'center' | 'end' | 'baseline' | 'stretch' | undefined;
   children?:
     | React.ReactNode
@@ -69,43 +96,15 @@ export interface XulProps {
   style?: React.CSSProperties | undefined;
   width?: string | undefined;
   title?: string | undefined;
+} & {
+  [k in typeof xulEvents[number]]?: (e: React.SyntheticEvent<any>) => void;
+} &
+  {
+    [k in typeof xulCaptureEvents[number]]?: (
+      e: React.SyntheticEvent<any>
+    ) => void;
+  };
 
-  onClick?: (e: React.SyntheticEvent<any>) => void;
-  onDoubleClick?: (e: React.SyntheticEvent<any>) => void;
-  onChange?: (e: React.ChangeEvent<any>) => void;
-  onKeyDown?: (e: React.KeyboardEvent<any>) => void;
-  onKeyUp?: (e: React.KeyboardEvent<any>) => void;
-  onFocus?: (e: React.SyntheticEvent<any>) => void;
-  onBlur?: (e: React.SyntheticEvent<any>) => void;
-  onMouseDown?: (e: React.SyntheticEvent<any>) => void;
-  onMouseOver?: (e: React.SyntheticEvent<any>) => void;
-  onMouseOut?: (e: React.SyntheticEvent<any>) => void;
-  onMouseMove?: (e: React.SyntheticEvent<any>) => void;
-  onMouseUp?: (e: React.SyntheticEvent<any>) => void;
-  onMouseEnter?: (e: React.SyntheticEvent<any>) => void;
-  onMouseLeave?: (e: React.SyntheticEvent<any>) => void;
-  onWheel?: (e: React.SyntheticEvent<any>) => void;
-  onContextMenu?: (e: React.SyntheticEvent<any>) => void;
-}
-
-const events = [
-  'onClick',
-  'onDoubleClick',
-  'onChange',
-  'onKeyDown',
-  'onKeyUp',
-  'onFocus',
-  'onBlur',
-  'onMouseDown',
-  'onMouseOver',
-  'onMouseOut',
-  'onMouseMove',
-  'onMouseUp',
-  'onMouseEnter',
-  'onMouseLeave',
-  'onWheel',
-  'onContextMenu',
-] as const;
 // const styles = ['width', 'height', 'flex'];
 const enums = ['align', 'xuldir', 'orient', 'pack', 'type'] as const;
 const bools = ['checked', 'disabled', 'hidden', 'readonly'] as const;
@@ -179,15 +178,6 @@ export const xulClass = (
   return { className: set.join(' ') };
 };
 
-// These XUL event listeners are registered on HTML elements
-export const xulEvents = (props: any): XulProps => {
-  const p: XulProps = {};
-  events.forEach((x) => {
-    if (props[x] !== undefined) p[x] = props[x];
-  });
-  return p;
-};
-
 // Convert all props to corresponding HTML element attribtues.
 // This must be used to pass props to all HTML elements but
 // should only used on HTML elements (not on React components).
@@ -195,8 +185,13 @@ export const htmlAttribs = (className: string, props: any) => {
   if (props === null) return {};
   const r = {
     ...xulClass(className, props),
-    ...xulEvents(props),
-  };
+  } as XulProps;
+  xulEvents.forEach((x) => {
+    if (props[x] !== undefined) r[x] = props[x];
+  });
+  xulCaptureEvents.forEach((x) => {
+    if (props[x] !== undefined) r[x] = props[x];
+  });
   const a = r as any;
   if (props.id) r.id = props.id;
   if (props.lang) r.lang = props.lang;
@@ -222,7 +217,7 @@ export const htmlAttribs = (className: string, props: any) => {
 // level element. Otherwise any event prop of that same type on an instance
 // of that component would never be called.
 export const topHandle = (
-  name: typeof events[number],
+  name: typeof xulEvents[number] | typeof xulCaptureEvents[number],
   func?: (e: React.SyntheticEvent) => any,
   props?: any
 ) => {

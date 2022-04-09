@@ -1,6 +1,12 @@
+/* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable import/no-mutable-exports */
-import React, { ReactElement, useEffect, useState } from 'react';
+import React, {
+  ReactElement,
+  SyntheticEvent,
+  useEffect,
+  useState,
+} from 'react';
 import { render } from 'react-dom';
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
@@ -13,9 +19,9 @@ import Cache from '../cache';
 import G from './rg';
 import DynamicStyleSheet from './style';
 import { getContextData, jsdump } from './rutil';
-import { delayHandler } from './libxul/xul';
+import { delayHandler, xulCaptureEvents, xulEvents } from './libxul/xul';
 
-import type { GlobalPrefType } from '../type';
+import type { GlobalPrefType, ModalType } from '../type';
 
 import './global-htm.css';
 import { Hbox } from './libxul/boxes';
@@ -123,7 +129,10 @@ export default function renderToRoot(
   function Reset(props: React.ComponentProps<any>) {
     const { children } = props;
     const [reset, setReset] = useState(0);
-    const [overlay, setOverlay] = useState('');
+    const [modal, setModal] = useState('off') as [
+      ModalType,
+      (a: ModalType) => void
+    ];
     const [progress, setProgress] = useState(-1);
     // IPC component-reset setup:
     useEffect(() => {
@@ -159,22 +168,34 @@ export default function renderToRoot(
         )
       );
     });
+    // Progress meter:
+    useEffect(() => {
+      return window.ipc.renderer.on('progress', (prog: number) => {
+        setProgress(prog);
+      });
+    });
+    // Modal overlay:
+    useEffect(() => {
+      return window.ipc.renderer.on('modal', (cssclass: ModalType) => {
+        setModal(cssclass);
+      });
+    });
     // Installer drag-and-drop setup:
     useEffect(() => {
       const root = document.getElementById('root');
       if (root) {
         root.ondragover = (e) => {
           e.preventDefault();
-          setOverlay('installing');
+          setModal('installing');
         };
         root.ondragleave = (e) => {
           e.preventDefault();
-          if (!root.contains(e.relatedTarget as HTMLElement)) setOverlay('');
+          if (!root.contains(e.relatedTarget as HTMLElement)) setModal('off');
         };
         root.ondrop = (e) => {
           e.preventDefault();
           if (e.dataTransfer?.files.length) {
-            G.Window.modal(true, 'all');
+            G.Window.modal('installing', 'not-self');
             G.Commands.installXulswordModules(
               Array.from(e.dataTransfer.files).map((f) => f.path) || []
             )
@@ -190,15 +211,14 @@ export default function renderToRoot(
                   Subscription.publish('modulesInstalled', newmods);
                   jsdump('ALL FILES WERE SUCCESSFULLY INSTALLED!');
                 }
-                G.Window.modal(false, 'all');
-                setOverlay('');
+                G.Window.modal('off', 'all');
                 return newmods;
               })
               .catch((err) => {
                 throw Error(err);
               });
           } else {
-            setOverlay('');
+            setModal('off');
           }
         };
       }
@@ -210,19 +230,29 @@ export default function renderToRoot(
         }
       };
     });
-    // Progress meter:
-    useEffect(() => {
-      return window.ipc.renderer.on('progress', (prog: number) => {
-        setProgress(prog);
+    const ismodal = progress !== -1 || modal !== 'off';
+    const modalProps: any = {};
+    if (ismodal) {
+      xulCaptureEvents.forEach((e) => {
+        modalProps[e] = (ev: SyntheticEvent) => {
+          ev.preventDefault();
+          ev.stopPropagation();
+        };
       });
-    });
+    }
     let color = 'lime';
     if (progress < 85) color = 'yellow';
     if (progress < 33) color = 'red';
     return (
       <>
-        {(progress !== -1 || overlay) && (
-          <Hbox id="overlay" className={overlay} pack="center" align="center">
+        {ismodal && (
+          <Hbox
+            id="overlay"
+            className={modal}
+            pack="center"
+            align="center"
+            {...modalProps}
+          >
             {progress !== -1 && (
               <ReactProgressMeter
                 currentProgress={progress}
@@ -233,7 +263,12 @@ export default function renderToRoot(
             )}
           </Hbox>
         )}
-        <div id="reset" onContextMenu={onContextMenu} key={reset}>
+        <div
+          id="reset"
+          onContextMenu={onContextMenu}
+          key={reset}
+          {...modalProps}
+        >
           {children}
         </div>
       </>

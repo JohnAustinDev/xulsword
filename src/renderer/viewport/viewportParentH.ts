@@ -71,36 +71,57 @@ export function newModulesInstalled(
   const sortedModConfs = newmods.modules.sort((a, b) =>
     tabSort(G.Tab[a.module], G.Tab[b.module])
   );
-  this.setState((prevState: XulswordState | ViewportWinState) => {
-    const ps = clone(prevState);
-    const { panels } = ps;
-    let { location } = ps;
-    let x = 0;
-    sortedModConfs.forEach((conf) => {
-      if (x < panels.length && panels[x] !== null) panels[x] = conf.module;
-      x += 1;
-    });
-    const { module } = sortedModConfs[0];
-    if (module) {
-      if (!location)
-        location = {
-          book: 'Gen',
-          chapter: 1,
-          v11n: G.Tab[module].v11n || 'KJV',
-        };
-      if (!G.BooksInModule[module].includes(location.book)) {
-        [location.book] = G.BooksInModule[module];
-        location.chapter = 1;
+  if (sortedModConfs.length) {
+    this.setState((prevState: XulswordState | ViewportWinState) => {
+      const ps = clone(prevState);
+      const { panels, isPinned } = ps;
+      let { location } = ps;
+      // Replace current module choices with newly installed modules
+      // without breaking multi-column panels.
+      let panelIndex = 0;
+      sortedModConfs.forEach((conf) => {
+        const current = panels[panelIndex];
+        if (panelIndex < panels.length) {
+          for (;;) {
+            if (panelIndex >= panels.length || panels[panelIndex] === null) {
+              panelIndex += 1;
+              break;
+            }
+            if (panels[panelIndex] === current) {
+              // Unpin panels that have changed.
+              if (panels[panelIndex] !== conf.module) {
+                isPinned[panelIndex] = false;
+              }
+              panels[panelIndex] = conf.module;
+              panelIndex += 1;
+            } else break;
+          }
+        }
+      });
+      // If a Bible is showing, make sure location is included in it.
+      const v11nmod = panels.find((m) => m && G.Tab[m].v11n);
+      const v11n = (v11nmod && G.Tab[v11nmod].v11n) as V11nType;
+      if (v11n && v11nmod) {
+        if (!location)
+          location = {
+            book: 'Gen',
+            chapter: 1,
+            v11n,
+          };
+        if (!G.BooksInModule[v11nmod].includes(location.book)) {
+          [location.book] = G.BooksInModule[v11nmod];
+          location.chapter = 1;
+        }
       }
-    }
-    const s: Partial<XulswordState | ViewportWinState> = {
-      isPinned: prevState.panels.map(() => false),
-      location,
-      selection: null,
-      panels,
-    };
-    return s;
-  });
+      const s: Partial<XulswordState | ViewportWinState> = {
+        isPinned,
+        location,
+        panels,
+        selection: null,
+      };
+      return s;
+    });
+  }
 }
 
 // Handle certain notebox boundary bar events for Atext.
@@ -303,14 +324,14 @@ export default function handler(
               const nsp = xulswordState as any;
               nsp[name] = state[name];
             });
-            // Set new window's unused tabs & panels to undefined
+            // Set new window's unused tabs & panels to null
             const vpwPanels: any[] = [];
             const vpwTabs: any[] = [];
             xulswordState.panels?.forEach((pnl, i) => {
               const { tabs: tbs } = xulswordState;
-              vpwTabs[i] = index === i && tbs && tbs[i] ? tbs[i] : undefined;
+              vpwTabs[i] = index === i && tbs && tbs[i] ? tbs[i] : null;
               vpwPanels[i] =
-                index <= i && i < index + Number(cols) ? pnl : undefined;
+                index <= i && i < index + Number(cols) ? pnl : null;
             });
             xulswordState.panels = vpwPanels;
             xulswordState.tabs = vpwTabs;

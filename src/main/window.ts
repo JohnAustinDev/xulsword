@@ -19,6 +19,7 @@ import type {
   ResetType,
   WindowDescriptorType,
   WindowRegistryType,
+  ModalType,
 } from '../type';
 import type contextMenu from './contextMenu';
 import type { PrefCallbackType } from './modules/prefs';
@@ -77,6 +78,14 @@ export function getBrowserWindows(
   } else if (winargs === 'self') {
     if (caller) {
       return [caller];
+    }
+  } else if (winargs === 'not-self') {
+    if (caller) {
+      const others: BrowserWindow[] = [];
+      BrowserWindow.getAllWindows().forEach((w) => {
+        if (w !== caller) others.push(w);
+      });
+      return others;
     }
   } else if (winargs === 'children') {
     if (caller) return caller.getChildWindows();
@@ -282,7 +291,7 @@ function createWindow(
   descriptor: WindowDescriptorType,
   parent: BrowserWindow
 ): BrowserWindow {
-  const { type, category, options } = descriptor;
+  const { type, options } = descriptor;
   updateOptions(descriptor, parent);
   const win = new BrowserWindow(options);
   addWindowToRegistry(win, descriptor);
@@ -331,11 +340,11 @@ const Window: GType['Window'] = {
     });
   },
 
-  // TODO! Disable all event handlers on a window to insure user input is bocked for
+  // Disable all event handlers on a window to insure user input is bocked for
   // a time, such as when LibSword is offline.
-  modal(modal?: boolean, window?: WindowArgType) {
+  modal(modal?: ModalType, window?: WindowArgType) {
     getBrowserWindows(window, arguments[2]).forEach((win) => {
-      // IPC win to/from modal...
+      win.webContents.send('modal', modal || '');
     });
   },
 

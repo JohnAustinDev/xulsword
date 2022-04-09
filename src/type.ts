@@ -26,7 +26,10 @@ export type WindowArgType =
   | 'all'
   | 'parent'
   | 'self'
+  | 'not-self'
   | 'children';
+
+export type ModalType = 'off' | 'installing' | 'transparent';
 
 // - skipTextUpdate allows a speedup when Atext content does not need to be updated,
 // such as verseAt bottom: only the target panel needs to be fully rendered, then
@@ -661,7 +664,10 @@ export const GPublic = {
       type?: ResetType,
       window?: WindowArgType
     ) => void,
-    modal: func as unknown as (modal: boolean, window?: WindowArgType) => void,
+    modal: func as unknown as (
+      modal: ModalType,
+      window?: WindowArgType
+    ) => void,
     moveToBack: func as unknown as (window?: WindowArgType) => void,
     close: func as unknown as (window?: WindowArgType) => void,
   },

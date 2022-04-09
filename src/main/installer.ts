@@ -159,7 +159,7 @@ export function removeModule(
 // Installs an array of xulsword module files either to the xulsword module directory,
 // or the shared SWORD module directory. Errors will be reported (not thrown) if a file
 // does not exist or there is a problem during installation. If progressWin is prov-
-// ided then progress will be reported to that window.
+// ided, then progress will be reported to that window.
 export default async function installList(
   paths: string[],
   toSharedDir = false,
