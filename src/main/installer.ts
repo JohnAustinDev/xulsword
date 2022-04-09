@@ -189,10 +189,12 @@ export default async function installList(
       let progNow = 0;
       progressWin?.webContents.send('progress', 0);
       const updateProgress = (prognow: number) => {
-        const progress = prognow < 0 ? -1 : prognow / progTot;
-        xswin.setProgressBar(progress);
-        // Window progress closure is handled by the window.
-        if (progress >= 0) {
+        if (prognow === -1) {
+          xswin.setProgressBar(-1);
+          progressWin?.webContents.send('progress', -1);
+        } else {
+          const progress = prognow / progTot;
+          xswin.setProgressBar(progress);
           progressWin?.webContents.send('progress', Math.round(progress * 100));
         }
       };
@@ -338,7 +340,6 @@ export default async function installList(
             }
           }
           progNow += 1;
-          // The average module is say 7 entries
           if (progNow % 7 === 0) updateProgress(progNow);
         });
         Subscription.publish('resetMain');

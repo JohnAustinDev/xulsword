@@ -296,9 +296,11 @@ export function getBooksInModule(): { [i: string]: string[] } {
       booksInModule = {};
     }
     if (!Object.keys(booksInModule).length) {
+      const bkChsInV11n = getBkChsInV11n();
+      const book = getBook();
       tabs.forEach((t: TabType) => {
         if (t.v11n && (t.type === C.BIBLE || t.type === C.COMMENTARY)) {
-          const v11nbooks = Object.keys(getBkChsInV11n()[t.v11n]);
+          const v11nbooks = Object.keys(bkChsInV11n[t.v11n]);
           // When references to missing books are requested from SWORD,
           // the previous (or last?) book in the module is usually quietly
           // used and read from instead! The exception seems to be when a
@@ -308,14 +310,10 @@ export function getBooksInModule(): { [i: string]: string[] } {
           // results are returned, test two verses to make sure they are
           // different and are not the empty string, to determine whether
           // the book is missing from the module.
-          // NOTE: All books are checked for each module, even those not
-          // present in a module's versification system; but since results
-          // are cached to disk, it's not too slow anyway, and many of the
-          // supported books are not present in any supported v11n,
-          // why not check them all and log any weirdness.
           const fake = LibSword.getVerseText(t.module, 'FAKE 1:1', false);
           const osis: string[] = [];
-          getBooks().forEach((bk: BookType) => {
+          v11nbooks.forEach((code: string) => {
+            const bk = book[code];
             const verse1 = LibSword.getVerseText(
               t.module,
               `${bk.code} 1:1`,
@@ -330,12 +328,6 @@ export function getBooksInModule(): { [i: string]: string[] } {
               if (!verse2 || verse1 === verse2) return;
             }
             osis.push(bk.code);
-          });
-          osis.forEach((bk) => {
-            if (!v11nbooks.includes(bk))
-              jsdump(
-                `Module: '${t.module}' contains book: '${bk}' which is not part of module's v11n: '${t.v11n}'.`
-              );
           });
           booksInModule[t.module] = osis;
         } else booksInModule[t.module] = [];

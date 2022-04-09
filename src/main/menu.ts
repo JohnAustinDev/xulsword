@@ -221,12 +221,10 @@ export default class MenuBuilder {
       process.platform === 'darwin'
         ? this.buildDarwinTemplate()
         : this.buildDefaultTemplate();
-
     const menu = Menu.buildFromTemplate(template);
     buildModuleMenus(menu);
     updateMenuFromPref(menu);
     Menu.setApplicationMenu(menu);
-
     return menu;
   }
 

@@ -14,7 +14,11 @@ import G from './mg';
 import LibSword from './modules/libsword';
 import MenuBuilder, { pushPrefsToMenu } from './menu';
 import { jsdump } from './mutil';
-import { WindowRegistry, pushPrefsToWindows } from './window';
+import {
+  WindowRegistry,
+  pushPrefsToWindows,
+  getBrowserWindows,
+} from './window';
 import contextMenu from './contextMenu';
 import { checkModulePrefs } from './minit';
 import setViewportTabs from './tabs';
@@ -164,7 +168,11 @@ const openMainWindow = () => {
       Cache.clear();
       LibSword.init();
       checkModulePrefs();
+      const xswin = getBrowserWindows({ type: 'xulsword' })[0];
       menuBuilder.buildMenu();
+      BrowserWindow.getAllWindows().forEach((win) => {
+        if (win !== xswin) win.removeMenu();
+      });
     })
   );
 

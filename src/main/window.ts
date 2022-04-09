@@ -289,19 +289,16 @@ function createWindow(
   win.loadURL(resolveHtmlPath(`${type}.html`));
   // win.webContents.openDevTools();
   windowInitI18n(win);
-  if (type === 'viewportWin' || type === 'popupWin' || category !== 'window')
-    win.removeMenu();
+  if (type !== 'xulsword') win.removeMenu();
   win.on('resize', () => {
     win.webContents.send('resize', win.getSize());
   });
-
   const disposables: (() => void)[] = [];
   const args: Parameters<typeof contextMenu> = [win, disposables];
   Subscription.publish('createWindow', ...args);
   win.once('closed', () => {
     disposables.forEach((dispose) => dispose());
   });
-
   return win;
 }
 

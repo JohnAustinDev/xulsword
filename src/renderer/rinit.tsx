@@ -173,7 +173,6 @@ export default function renderToRoot(
         };
         root.ondrop = (e) => {
           e.preventDefault();
-          setOverlay('installing');
           if (e.dataTransfer?.files.length) {
             G.Window.modal(true, 'all');
             G.Commands.installXulswordModules(
@@ -192,13 +191,14 @@ export default function renderToRoot(
                   jsdump('ALL FILES WERE SUCCESSFULLY INSTALLED!');
                 }
                 G.Window.modal(false, 'all');
-                setProgress(-1);
                 setOverlay('');
                 return newmods;
               })
               .catch((err) => {
                 throw Error(err);
               });
+          } else {
+            setOverlay('');
           }
         };
       }
@@ -221,7 +221,7 @@ export default function renderToRoot(
     if (progress < 33) color = 'red';
     return (
       <>
-        {(progress || overlay) && (
+        {(progress !== -1 || overlay) && (
           <Hbox id="overlay" className={overlay} pack="center" align="center">
             {progress !== -1 && (
               <ReactProgressMeter

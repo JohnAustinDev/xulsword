@@ -8,7 +8,7 @@ import { verseKey, getTab, getTabs } from './minit';
 import Prefs from './modules/prefs';
 import nsILocalFile from './components/nsILocalFile';
 import installList from './installer';
-import Window from './window';
+import Window, { getBrowserWindows } from './window';
 
 import type {
   GType,
@@ -29,7 +29,7 @@ const Commands: GType['Commands'] = {
   // directory will be installed. A dialog will be shown if no paths argument
   // is provided, or an existing directory path is provided.
   async installXulswordModules(paths, toSharedDir) {
-    const progwin = arguments[2];
+    const progwin = arguments[2] || getBrowserWindows({ type: 'xulsword' })[0];
     const extensions = ['zip', 'xsm', 'xsb'];
     const options: OpenDialogSyncOptions = {
       title: i18n.t('menu.addNewModule.label'),
@@ -52,12 +52,12 @@ const Commands: GType['Commands'] = {
       }
       // Install all modules in a directory
       if (paths.endsWith('/*')) {
-        const installpaths: string[] = [];
+        const list: string[] = [];
         const file = new nsILocalFile(paths.substring(0, -2));
         if (file.isDirectory()) {
-          installpaths.push(...filter(file.directoryEntries));
+          list.push(...filter(file.directoryEntries));
         }
-        return installList(installpaths, toSharedDir, progwin);
+        return installList(list, toSharedDir, progwin);
       }
       const file = new nsILocalFile(paths);
       // ZIP file to install
