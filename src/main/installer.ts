@@ -276,7 +276,9 @@ export default async function installList(
               case 'modules': {
                 const conf = Object.values(confs).find((c) => {
                   const swmodpath = confModulePath(c.DataPath);
-                  return swmodpath && entry.entryName.startsWith(swmodpath);
+                  return (
+                    swmodpath && entry.entryName.startsWith(`${swmodpath}/`)
+                  );
                 });
                 const swmodpath = conf && confModulePath(conf.DataPath);
                 if (conf && swmodpath) {
@@ -298,6 +300,15 @@ export default async function installList(
                         destdir.create(nsILocalFile.DIRECTORY_TYPE);
                       }
                     });
+                    if (!destdir.exists()) {
+                      newmods.errors.push(
+                        `Failed to copy module file" ${destdir.path}`
+                      );
+                    }
+                  } else {
+                    newmods.errors.push(
+                      `Module directory does not exist: ${destdir.path}`
+                    );
                   }
                 } else {
                   newmods.errors.push(
