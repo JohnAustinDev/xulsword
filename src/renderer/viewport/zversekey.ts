@@ -362,7 +362,10 @@ export function getRefHTML(
     if (direction !== G.ProgramConfig.direction) {
       crtext.push('opposing-program-direction');
     }
-    const fntext = crtext.splice(0, 1, 'fntext');
+    const fntext = ['fntext'];
+    if (direction !== G.ProgramConfig.direction) {
+      fntext.push('opposing-program-direction');
+    }
     const altlabel = ['altlabel', labelClass];
     cc = ['alternate', 'anytab'];
     cc.forEach((c) => {
@@ -492,14 +495,15 @@ export function getNoteHTML(
             t += getRefHTML(body, m, keepNotes, !openCRs, info);
             break;
           }
-
-          case 'fn':
+          case 'fn': {
             // If this is a footnote, then just write the body
-            t += `<bdi><span class="fntext cs-${
-              p.mod || 'locale'
-            }">${body}</span></bdi>`;
+            let opdir = '';
+            if (p.mod && G.Tab[p.mod].direction !== G.ProgramConfig.direction) {
+              opdir = ' opposing-program-direction';
+            }
+            t += `<bdi><span class="fntext${opdir}">${body}</span></bdi>`;
             break;
-
+          }
           case 'un': {
             // If this is a usernote, then add direction entities and style
             const unmod = null;

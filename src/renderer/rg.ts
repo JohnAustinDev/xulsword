@@ -53,7 +53,8 @@ entries.forEach((entry) => {
           ckey
         );
       }
-      return Cache.read(ckey);
+      const retval = Cache.read(ckey);
+      return asyncFuncs.includes(name) ? Promise.resolve(retval) : retval;
     };
   } else if (typeof value === 'object') {
     const methods = Object.getOwnPropertyNames(value);
@@ -98,7 +99,8 @@ entries.forEach((entry) => {
               ckey
             );
           }
-          return Cache.read(ckey);
+          const retval = Cache.read(ckey);
+          return asyncFuncs.includes(name) ? Promise.resolve(retval) : retval;
         };
       } else {
         throw Error(

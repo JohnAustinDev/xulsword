@@ -214,7 +214,7 @@ export default class Xulsword extends React.Component {
       return;
     this.setState((prevState: XulswordState) => {
       let ret: Partial<XulswordState> | null = null;
-      const { history, location } = prevState as XulswordState;
+      const { history, location } = clone(prevState) as XulswordState;
       if (location) {
         // To update state to a history index without changing the selected
         // modules, history needs to be converted to the current v11n.
@@ -497,7 +497,6 @@ export default class Xulsword extends React.Component {
               orient="vertical"
               checked={show.headings}
               onClick={handler}
-              label={i18n.t('headingsButton.label')}
               tooltip={i18n.t('headingsButton.tooltip')}
             />
             <Button
@@ -505,7 +504,6 @@ export default class Xulsword extends React.Component {
               orient="vertical"
               checked={show.footnotes}
               onClick={handler}
-              label={i18n.t('notesButton.label')}
               tooltip={i18n.t('notesButton.tooltip')}
             />
             <Button
@@ -513,7 +511,6 @@ export default class Xulsword extends React.Component {
               orient="vertical"
               checked={show.crossrefs}
               onClick={handler}
-              label={i18n.t('crossrefsButton.label')}
               tooltip={i18n.t('crossrefsButton.tooltip')}
             />
             <Button
@@ -521,7 +518,6 @@ export default class Xulsword extends React.Component {
               orient="vertical"
               checked={show.dictlinks}
               onClick={handler}
-              label={i18n.t('dictButton.label')}
               tooltip={i18n.t('dictButton.tooltip')}
             />
           </Hbox>
