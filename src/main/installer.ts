@@ -2,8 +2,7 @@
 /* eslint-disable new-cap */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { BrowserWindow } from 'electron';
-import Window, { getBrowserWindows } from './window';
-import Subscription from '../subscription';
+import { getBrowserWindows } from './window';
 import C from '../constant';
 import nsILocalFile from './components/nsILocalFile';
 import Dirs from './modules/dirs';
@@ -351,11 +350,8 @@ export default async function installList(
             }
           }
           progNow += 1;
-          if (progNow % 7 === 0) updateProgress(progNow);
+          updateProgress(progNow);
         });
-        Subscription.publish('resetMain');
-        Window.reset('all', 'all');
-        Subscription.publish('modulesInstalled', newmods);
         updateProgress(-1);
       }
     }

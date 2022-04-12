@@ -21,7 +21,7 @@ import DynamicStyleSheet from './style';
 import { getContextData, jsdump } from './rutil';
 import { delayHandler, xulCaptureEvents, xulEvents } from './libxul/xul';
 
-import type { GlobalPrefType, ModalType } from '../type';
+import type { GlobalPrefType, ModalType, NewModulesType } from '../type';
 
 import './global-htm.css';
 import { Hbox } from './libxul/boxes';
@@ -174,6 +174,12 @@ export default function renderToRoot(
         setProgress(prog);
       });
     });
+    // New modules installed:
+    useEffect(() => {
+      return window.ipc.renderer.on('newmods', (newmods: NewModulesType) => {
+        Subscription.publish('modulesInstalled', newmods);
+      });
+    });
     // Modal overlay:
     useEffect(() => {
       return window.ipc.renderer.on('modal', (cssclass: ModalType) => {
@@ -195,28 +201,11 @@ export default function renderToRoot(
         root.ondrop = (e) => {
           e.preventDefault();
           if (e.dataTransfer?.files.length) {
-            G.Window.modal('installing', 'not-self');
             G.Commands.installXulswordModules(
               Array.from(e.dataTransfer.files).map((f) => f.path) || []
-            )
-              .then((newmods) => {
-                if (newmods.errors.length) {
-                  G.Shell.beep();
-                  jsdump(
-                    `ERROR: Module installation problems follow:\n${newmods.errors.join(
-                      '\n'
-                    )}`
-                  );
-                } else {
-                  Subscription.publish('modulesInstalled', newmods);
-                  jsdump('ALL FILES WERE SUCCESSFULLY INSTALLED!');
-                }
-                G.Window.modal('off', 'all');
-                return newmods;
-              })
-              .catch((err) => {
-                throw Error(err);
-              });
+            ).catch((err) => {
+              throw Error(err);
+            });
           } else {
             setModal('off');
           }
@@ -240,9 +229,6 @@ export default function renderToRoot(
         };
       });
     }
-    let color = 'lime';
-    if (progress < 85) color = 'yellow';
-    if (progress < 33) color = 'red';
     return (
       <>
         {ismodal && (
@@ -257,7 +243,7 @@ export default function renderToRoot(
               <ReactProgressMeter
                 currentProgress={progress}
                 width="250px"
-                color={color}
+                color="navy"
                 show
               />
             )}

@@ -1,8 +1,9 @@
 /* eslint-disable new-cap */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable prefer-rest-params */
-import { dialog, OpenDialogSyncOptions } from 'electron';
+import { BrowserWindow, dialog, OpenDialogSyncOptions, shell } from 'electron';
 import i18n from 'i18next';
+import Subscription from '../subscription';
 import { clone, JSON_stringify } from '../common';
 import { verseKey, getTab, getTabs } from './minit';
 import Prefs from './modules/prefs';
@@ -17,6 +18,7 @@ import type {
   TextVKType,
   XulswordStatePref,
 } from '../type';
+import { jsdump } from './mutil';
 
 const Commands: GType['Commands'] = {
   openModuleDownloader() {
@@ -45,10 +47,34 @@ const Commands: GType['Commands'] = {
     function filter(fileArray: string[]): string[] {
       return fileArray.filter((f) => extRE.test(f));
     }
+    async function modalInstall(
+      zippaths: string[],
+      progressWin?: BrowserWindow
+    ) {
+      Window.modal('transparent', 'all');
+      Window.modal('installing', progressWin);
+      const newmods = await installList(zippaths, toSharedDir, progressWin);
+      if (newmods.errors.length) {
+        shell.beep();
+        jsdump(
+          `ERROR: Module installation problems follow:\n${newmods.errors.join(
+            '\n'
+          )}`
+        );
+      } else {
+        jsdump('ALL FILES WERE SUCCESSFULLY INSTALLED!');
+      }
+      Subscription.publish('resetMain');
+      Window.reset('all', 'all');
+      Subscription.publish('modulesInstalled', newmods);
+      progwin.webContents.send('newmods', newmods);
+      Window.modal('off', 'all');
+      return newmods;
+    }
     if (paths) {
       // Install array of file paths
       if (Array.isArray(paths)) {
-        return installList(filter(paths), toSharedDir, progwin);
+        return modalInstall(filter(paths), progwin);
       }
       // Install all modules in a directory
       if (paths.endsWith('/*')) {
@@ -57,12 +83,12 @@ const Commands: GType['Commands'] = {
         if (file.isDirectory()) {
           list.push(...filter(file.directoryEntries));
         }
-        return installList(list, toSharedDir, progwin);
+        return modalInstall(list, progwin);
       }
       const file = new nsILocalFile(paths);
       // ZIP file to install
       if (!file.isDirectory()) {
-        return installList(filter([file.path]), toSharedDir, progwin);
+        return modalInstall(filter([file.path]), progwin);
       }
       // Choose from existing directory.
       options.defaultPath = paths;
@@ -70,7 +96,7 @@ const Commands: GType['Commands'] = {
     return dialog
       .showOpenDialog(progwin, options)
       .then((obj) => {
-        return installList(obj.filePaths, toSharedDir, progwin);
+        return modalInstall(obj.filePaths, progwin);
       })
       .catch((err) => {
         throw Error(err);

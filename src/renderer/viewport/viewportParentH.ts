@@ -83,11 +83,9 @@ export function newModulesInstalled(
         const current = panels[panelIndex];
         if (panelIndex < panels.length) {
           for (;;) {
-            if (panelIndex >= panels.length || panels[panelIndex] === null) {
-              panelIndex += 1;
-              break;
-            }
-            if (panels[panelIndex] === current) {
+            if (panelIndex >= panels.length) break;
+            else if (panels[panelIndex] === null) panelIndex += 1;
+            else if (panels[panelIndex] === current) {
               // Unpin panels that have changed.
               if (panels[panelIndex] !== conf.module) {
                 isPinned[panelIndex] = false;
