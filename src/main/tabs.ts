@@ -13,7 +13,6 @@ export default function setViewportTabs(
 ): void {
   const Tabs = getTabs();
   const Tab = getTab();
-  const booksInModule = getBooksInModule();
   const xulsword = clone(
     Prefs.getComplexValue('xulsword')
   ) as XulswordStatePref;
@@ -114,7 +113,7 @@ export default function setViewportTabs(
           nextmod &&
           Tab[nextmod].isVerseKey
         ) {
-          const [book] = booksInModule[nextmod];
+          const [book] = getBooksInModule(nextmod);
           if (book) {
             xulsword.location = {
               book,

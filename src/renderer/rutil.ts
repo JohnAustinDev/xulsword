@@ -8,7 +8,7 @@ import C from '../constant';
 import RefParser, { RefParserOptionsType } from '../refparse';
 import VerseKey from '../versekey';
 import { ElemInfo, getElementInfo, TitleFormat } from '../libswordElemInfo';
-import { clone, JSON_parse, ofClass } from '../common';
+import { clone, diff, JSON_parse, ofClass } from '../common';
 import G from './rg';
 
 import type {
@@ -463,25 +463,22 @@ export function onSetWindowState(component: React.Component, ignore?: any) {
   const listener = (prefs: string | string[]) => {
     const { id } = component.props as any;
     if (id) {
-      const state = component.state as any;
-      const newstate = getStatePref(id, prefs, ignore);
-      Object.entries(newstate).forEach((entry) => {
-        const [p, v] = entry;
-        if (p in state && state[p] === v) delete newstate[p];
-      });
-      const lng = G.Prefs.getCharPref('global.locale');
-      if (lng !== i18next.language) {
-        i18next
-          .loadLanguages(lng)
-          .then(() => i18next.changeLanguage(lng))
-          .then(() => {
-            if (Object.keys(newstate).length) component.setState(newstate);
-            return true;
-          })
-          .catch((err) => {
-            throw Error(err);
-          });
-      } else if (Object.keys(newstate).length) component.setState(newstate);
+      const changed = diff(component.state, getStatePref(id, prefs, ignore));
+      if (changed && Object.keys(changed).length) {
+        const lng = G.Prefs.getCharPref('global.locale');
+        if (lng !== i18next.language) {
+          i18next
+            .loadLanguages(lng)
+            .then(() => i18next.changeLanguage(lng))
+            .then(() => {
+              component.setState(changed);
+              return true;
+            })
+            .catch((err) => {
+              throw Error(err);
+            });
+        } else component.setState(changed);
+      }
     }
   };
   return window.ipc.renderer.on('update-state-from-pref', listener);

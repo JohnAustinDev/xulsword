@@ -19,7 +19,7 @@ import Cache from '../cache';
 import G from './rg';
 import DynamicStyleSheet from './style';
 import { getContextData, jsdump } from './rutil';
-import { delayHandler, xulCaptureEvents, xulEvents } from './libxul/xul';
+import { delayHandler, xulCaptureEvents } from './libxul/xul';
 
 import type { GlobalPrefType, ModalType, NewModulesType } from '../type';
 
@@ -48,7 +48,7 @@ i18n.on('initialized', (options) => {
     return true;
   }
   i18n.on('languageChanged', (lng) => {
-    G.reset();
+    Cache.clear();
     return setHTMLClass(classes.concat(lng));
   });
 
@@ -150,7 +150,7 @@ export default function renderToRoot(
               throw Error(err);
             });
         } else {
-          G.reset();
+          Cache.clear();
           setReset(reset + 1);
         }
       });

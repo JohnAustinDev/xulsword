@@ -34,8 +34,6 @@ export const xulCaptureEvents = [
   'onMouseOutCapture',
   'onMouseMoveCapture',
   'onMouseUpCapture',
-  'onMouseEnterCapture',
-  'onMouseLeaveCapture',
   'onWheelCapture',
   'onContextMenuCapture',
 ] as const;

@@ -4,7 +4,7 @@
 /* eslint-disable jsx-a11y/media-has-caption */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
-import React from 'react';
+import React, { SyntheticEvent } from 'react';
 import i18n from 'i18next';
 import Subscription from '../../subscription';
 import { trim, dString, diff, clone } from '../../common';
@@ -322,7 +322,7 @@ export default class Xulsword extends React.Component {
     const bookset: Set<string> = new Set();
     panels.forEach((m, i) => {
       if (m && !isPinned[i] && G.Tab[m].isVerseKey) {
-        G.BooksInModule[m].forEach((bk) => bookset.add(bk));
+        G.getBooksInModule(m).forEach((bk) => bookset.add(bk));
       }
     });
     const booklist = [...bookset].sort((a: string, b: string) => {
@@ -469,7 +469,7 @@ export default class Xulsword extends React.Component {
                 type="search"
                 maxLength="24"
                 onChange={handler}
-                onKeyUp={(e) => {
+                onKeyUp={(e: React.KeyboardEvent) => {
                   if (e.key === 'Enter') {
                     const b = document.getElementById('searchButton');
                     if (b) b.click();

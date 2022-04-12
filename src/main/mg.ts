@@ -37,11 +37,12 @@ import {
 
 import { GPublic, GType } from '../type';
 
-// Methods of the following classes should not use rest parameters or default
-// values in their argument lists. This is because Function.length is used to
-// append the calling window, and it does not include rest parameter or default
-// arguments, so they would result in exceptions being thrown.
-const appendCallingWindow = ['Prefs', 'Window', 'Commands'];
+// Methods of the following classes must not use rest parameters or default
+// values in their function definition's argument lists. This is because
+// Function.length is used to append the calling window, and Function.length
+// does not include rest parameters or default arguments, so this would result
+// in runtime exceptions being thrown.
+const includeCallingWindow = ['Prefs', 'Window', 'Commands'];
 
 // Handle global variable calls from renderer processes
 function handleGlobal(
@@ -64,10 +65,11 @@ function handleGlobal(
         ret = g[name][m];
       } else if (typeof gPublic[name][m] === 'function') {
         if (
-          appendCallingWindow.includes(name) &&
+          includeCallingWindow.includes(name) &&
           typeof args[g[name][m].length] === 'undefined'
-        )
+        ) {
           args[g[name][m].length] = win;
+        }
         ret = g[name][m](...args);
       } else {
         throw Error(`Unhandled method type for ${name}.${m}`);
@@ -93,7 +95,7 @@ ipcMain.handle(
 
 // This G object is for use in the main process, and it shares the same
 // GPublic interface as the renderer's G object. Properties of this
-// object may directly access main process data and modules.
+// object directly access main process data and modules.
 class GClass implements GType {
   LibSword;
 
@@ -155,10 +157,6 @@ class GClass implements GType {
     return getFeatureModules();
   }
 
-  get BooksInModule() {
-    return getBooksInModule();
-  }
-
   get BkChsInV11n() {
     return getBkChsInV11n();
   }
@@ -189,6 +187,12 @@ class GClass implements GType {
     ...args: Parameters<GType['getSystemFonts']>
   ): ReturnType<GType['getSystemFonts']> {
     return getSystemFonts(...args);
+  }
+
+  getBooksInModule(
+    ...args: Parameters<GType['getBooksInModule']>
+  ): ReturnType<GType['getBooksInModule']> {
+    return getBooksInModule(...args);
   }
 }
 

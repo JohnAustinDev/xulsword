@@ -1,22 +1,25 @@
+/* eslint-disable new-cap */
 /* eslint-disable prettier/prettier */
-import fs from 'fs';
+import nsILocalFile from './components/nsILocalFile';
 import { jsdump } from './mutil';
 
 // return a font file's fontFamily value
 export default function getFontFamily(fontpath) {
-  const data = [];
 
-  const fd = fs.openSync(fontpath, 'r');
-  if (!fd) return null;
+  const fontfile = new nsILocalFile(fontpath);
+  const buff = fontfile.readBuf();
+  if (!buff) return null;
 
   let stop = false;
+  let index = 0;
   const read8 = () => {
-    const r = Buffer.alloc(1);
-    if (!fs.readSync(fd, r)) {
+    if (index === buff.byteLength) {
       stop = true;
       return null;
     }
-    return r[0];
+    const byte = buff[index];
+    index += 1;
+    return byte;
   };
 
   // decimal to character
@@ -38,6 +41,7 @@ export default function getFontFamily(fontpath) {
   const ttf = chr(0) + chr(1) + chr(0) + chr(0);
   const cff = 'OTTO';
 
+  const data = [];
   for (let b = 0; b < 6 && !stop; b += 1) {
     data.push(read8());
   }

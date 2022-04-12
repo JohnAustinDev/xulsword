@@ -1,44 +1,59 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { GTypeR } from '../type';
+import { stringHash } from 'common';
+import Cache from '../cache';
 import { GPublic } from '../type';
 
 // This G object is for use in renderer processes, and it shares the same
 // interface as a main process G object. Both G objects are built auto-
 // matically at runtime from the same GPublic declaration. Properties of
 // this object access data and objects via IPC to the main process G object.
-// Local getter data is cached.
-const G = {
-  cache: {},
+// All getter and readonly data is cached locally.
+const G = {} as typeof GPublic;
 
-  reset() {
-    this.cache = {};
-  },
-} as GTypeR;
+// These global functions and object methods are asynchronous and return promises.
+const asyncFuncs = ['getSystemFonts', 'installXulswordModules'];
 
-const asyncFunc = ['getSystemFonts', 'installXulswordModules'];
 const entries = Object.entries(GPublic);
 entries.forEach((entry) => {
-  const gPublic = GPublic as any;
+  const GPublicx = GPublic as any;
   const Gx = G as any;
-  const name = entry[0] as keyof GTypeR;
+  const name = entry[0] as keyof typeof GPublic;
   const value = entry[1] as any;
   if (value === 'getter') {
+    const ckey = `G.${name} cache`;
     Object.defineProperty(G, name, {
       get() {
-        if (!(name in G.cache)) {
-          G.cache[name] = window.ipc.renderer.sendSync('global', name);
+        // console.log(`${ckey}${!Cache.has(ckey) ? ' miss' : ''}`);
+        if (!Cache.has(ckey)) {
+          Cache.write(window.ipc.renderer.sendSync('global', name), ckey);
         }
-        return G.cache[name];
+        return Cache.read(ckey);
       },
     });
   } else if (typeof value === 'function') {
-    Gx[name] = (...args: any[]) => {
-      if (asyncFunc.includes(name)) {
-        return window.ipc.renderer
-          .invoke('global', name, ...args)
-          .catch((e: any) => console.error(e));
+    const readonly = value();
+    Gx[name] = (...args: unknown[]) => {
+      const ckey = `G.${name}(${stringHash(...args)})${
+        readonly ? ' cache' : ''
+      }`;
+      // console.log(`${ckey}${readonly && !Cache.has(ckey) ? ' miss' : ''}`);
+      if (!readonly) Cache.clear(ckey);
+      if (!Cache.has(ckey)) {
+        if (asyncFuncs.includes(name)) {
+          return window.ipc.renderer
+            .invoke('global', name, ...args)
+            .then((result: unknown) => {
+              Cache.write(result, ckey);
+              return result;
+            })
+            .catch((e: any) => console.error(e));
+        }
+        Cache.write(
+          window.ipc.renderer.sendSync('global', name, ...args),
+          ckey
+        );
       }
-      return window.ipc.renderer.sendSync('global', name, ...args);
+      return Cache.read(ckey);
     };
   } else if (typeof value === 'object') {
     const methods = Object.getOwnPropertyNames(value);
@@ -46,30 +61,54 @@ entries.forEach((entry) => {
       if (G[name] === undefined) {
         Gx[name] = {};
       }
-      if (gPublic[name][m] === 'getter') {
-        const key = `${name}.${m}`;
+      if (GPublicx[name][m] === 'getter') {
+        const ckey = `G.${name}.${m} cache`;
+        // console.log(`${ckey}${!Cache.has(ckey) ? ' miss' : ''}`);
         Object.defineProperty(Gx[name], m, {
           get() {
-            if (!(key in G.cache)) {
-              G.cache[key] = window.ipc.renderer.sendSync('global', name, m);
+            if (!Cache.has(ckey)) {
+              Cache.write(
+                window.ipc.renderer.sendSync('global', name, m),
+                ckey
+              );
             }
-            return G.cache[key];
+            return Cache.read(ckey);
           },
         });
-      } else {
+      } else if (typeof GPublicx[name][m] === 'function') {
+        const readonly = GPublicx[name][m]();
         Gx[name][m] = (...args: unknown[]) => {
-          if (asyncFunc.includes(m)) {
-            return window.ipc.renderer
-              .invoke('global', name, m, ...args)
-              .catch((e: any) => console.error(e));
+          const ckey = `G.${name}.${m}(${stringHash(...args)})${
+            readonly ? ' cache' : ''
+          }`;
+          // console.log(`${ckey}${readonly && !Cache.has(ckey) ? ' miss' : ''}`);
+          if (!readonly) Cache.clear(ckey);
+          if (!Cache.has(ckey)) {
+            if (asyncFuncs.includes(m)) {
+              return window.ipc.renderer
+                .invoke('global', name, m, ...args)
+                .then((result: unknown) => {
+                  Cache.write(result, ckey);
+                  return result;
+                })
+                .catch((e: any) => console.error(e));
+            }
+            Cache.write(
+              window.ipc.renderer.sendSync('global', name, m, ...args),
+              ckey
+            );
           }
-          return window.ipc.renderer.sendSync('global', name, m, ...args);
+          return Cache.read(ckey);
         };
+      } else {
+        throw Error(
+          `Unhandled GPublic ${name}.${m} type ${typeof GPublicx[name][m]}`
+        );
       }
     });
   } else {
-    throw Error(`unhandled GPublic entry value ${value}`);
+    throw Error(`Unhandled GPublic ${name} value ${value}`);
   }
 });
 
-export default G as unknown as GTypeR;
+export default G;

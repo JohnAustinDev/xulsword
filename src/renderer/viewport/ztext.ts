@@ -73,8 +73,7 @@ export function libswordText(
       if (
         location &&
         module &&
-        module in G.BooksInModule &&
-        G.BooksInModule[module].includes(location.book)
+        G.getBooksInModule(module).includes(location.book)
       ) {
         const { book, chapter } = location;
         if (ilModule) {
@@ -99,8 +98,7 @@ export function libswordText(
       if (
         location &&
         module &&
-        module in G.BooksInModule &&
-        G.BooksInModule[module].includes(location.book)
+        G.getBooksInModule(module).includes(location.book)
       ) {
         const { book, chapter } = location;
         r.textHTML += G.LibSword.getChapterText(

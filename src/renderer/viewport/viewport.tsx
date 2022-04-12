@@ -22,7 +22,7 @@ import {
   PopupParentProps,
 } from '../popup/popupParentH';
 import G from '../rg';
-import { clearPending, verseKey, jsdump } from '../rutil';
+import { clearPending, verseKey } from '../rutil';
 import {
   addClass,
   xulDefaultProps,
@@ -187,7 +187,7 @@ class Viewport extends React.Component implements PopupParent {
     const availableBooks = new Set();
     panels.forEach((m, i) => {
       if (m && !isPinned[i] && G.Tab[m].isVerseKey) {
-        G.BooksInModule[m].forEach((bk) => availableBooks.add(bk));
+        G.getBooksInModule(m).forEach((bk) => availableBooks.add(bk));
       }
     });
 
@@ -360,7 +360,7 @@ class Viewport extends React.Component implements PopupParent {
         ['ot', 'nt'].includes(bg) ||
         panels.some(
           (p) =>
-            p && G.BooksInModule[p].some((bk) => G.Book[bk].bookGroup === bg)
+            p && G.getBooksInModule(p).some((bk) => G.Book[bk].bookGroup === bg)
         )
     );
 

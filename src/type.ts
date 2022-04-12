@@ -393,8 +393,9 @@ export type ResetType =
   | 'component-reset'
   | 'dynamic-stylesheet-reset';
 
-// Dummy func used as place holder
+// GPublic funcs used as descriptors/place-holders
 const func = () => {};
+const funcRO = () => 'readonly';
 
 export type PrefPrimative = number | string | boolean | null | undefined;
 export type PrefObject = {
@@ -454,11 +455,14 @@ const LibSwordPublic = {
   init: func as unknown as () => boolean,
   quit: func as unknown as () => void,
   isReady: func as unknown as (caller: string) => boolean,
-  getMaxChapter: func as unknown as (
+  getMaxChapter: funcRO as unknown as (
     v11n: V11nType,
     vkeytext: string
   ) => number,
-  getMaxVerse: func as unknown as (v11n: V11nType, vkeytext: string) => number,
+  getMaxVerse: funcRO as unknown as (
+    v11n: V11nType,
+    vkeytext: string
+  ) => number,
   getChapterText: func as unknown as (
     modname: string,
     vkeytext: string,
@@ -478,8 +482,8 @@ const LibSwordPublic = {
     vkeytext: string,
     keepTextNotes: boolean
   ) => string,
-  getVerseSystem: func as unknown as (modname: string) => V11nType,
-  convertLocation: func as unknown as (
+  getVerseSystem: funcRO as unknown as (modname: string) => V11nType,
+  convertLocation: funcRO as unknown as (
     fromv11n: V11nType,
     vkeytext: string,
     tov11n: V11nType
@@ -493,14 +497,14 @@ const LibSwordPublic = {
     key: string,
     options?: { [key in SwordFilterType]?: SwordFilterValueType }
   ) => string,
-  getAllDictionaryKeys: func as unknown as (lexdictmod: string) => string,
+  getAllDictionaryKeys: funcRO as unknown as (lexdictmod: string) => string,
   getGenBookChapterText: func as unknown as (
     gbmod: string,
     treekey: string,
     options?: { [key in SwordFilterType]?: SwordFilterValueType }
   ) => string,
-  getGenBookTableOfContents: func as unknown as (gbmod: string) => string,
-  luceneEnabled: func as unknown as (modname: string) => boolean,
+  getGenBookTableOfContents: funcRO as unknown as (gbmod: string) => string,
+  luceneEnabled: funcRO as unknown as (modname: string) => boolean,
   search: func as unknown as (
     modname: string,
     srchstr: string,
@@ -533,8 +537,8 @@ const LibSwordPublic = {
     cipherKey: string,
     useSecModule: boolean
   ) => void,
-  getModuleList: func as unknown as () => string,
-  getModuleInformation: func as unknown as (
+  getModuleList: funcRO as unknown as () => string,
+  getModuleInformation: funcRO as unknown as (
     modname: string,
     paramname: string
   ) => string,
@@ -542,7 +546,7 @@ const LibSwordPublic = {
     tarGzPath: string,
     aDirPath: string
   ) => void,
-  translate: func as unknown as (text: string, localeName: string) => string,
+  translate: funcRO as unknown as (text: string, localeName: string) => string,
 };
 
 const CommandsPublic = {
@@ -593,9 +597,8 @@ const CommandsPublic = {
 // available in the main process and the other in renderer processes.
 // The main process G properties access functions and data directly. But
 // renderer process G properties request data through IPC from the main
-// process G object. All getter data of the Renderer G object is cached.
-// This cached data can be cleared by G.reset() in the renderer or
-// Cache.reset() in the main process.
+// process G object. All getter and readonly data of the Renderer G
+// object is cached.
 export const GPublic = {
   // GLOBAL GETTER DATA
   // ------------------
@@ -607,22 +610,22 @@ export const GPublic = {
   ProgramConfig:       'getter' as unknown as ConfigType,
   LocaleConfigs:       'getter' as unknown as { [i: string]: ConfigType },
   ModuleConfigDefault: 'getter' as unknown as ConfigType,
-  ModuleFonts:     'getter' as unknown as FontFaceType[],
+  ModuleFonts:         'getter' as unknown as FontFaceType[],
   FeatureModules:      'getter' as unknown as FeatureType,
-  BooksInModule:       'getter' as unknown as { [i: string]: string[] },
   BkChsInV11n:         'getter' as unknown as { [key in V11nType]: { [i: string]: number }; },
   OPSYS:               'getter' as unknown as NodeJS.Platform,
   /* eslint-enable prettier/prettier */
 
   // GLOBAL FUNCTIONS
   // ----------------
-  resolveHtmlPath: func as unknown as (htmlfile: string) => string,
-  inlineFile: func as unknown as (
+  resolveHtmlPath: funcRO as unknown as (htmlfile: string) => string,
+  inlineFile: funcRO as unknown as (
     path: string,
     encoding: BufferEncoding
   ) => string,
   resetMain: func as unknown as () => void,
-  getSystemFonts: func as unknown as () => Promise<string[]>,
+  getSystemFonts: funcRO as unknown as () => Promise<string[]>,
+  getBooksInModule: funcRO as unknown as (module: string) => string[],
 
   // GLOBAL OBJECTS
   // --------------
@@ -674,10 +677,3 @@ export const GPublic = {
 };
 
 export type GType = typeof GPublic;
-
-// The Renderer G object caches its returned data
-// and the cache can be cleared (reset).
-export type GTypeR = typeof GPublic & {
-  cache: { [i: string]: any };
-  reset: () => void;
-};

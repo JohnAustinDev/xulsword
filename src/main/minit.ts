@@ -281,63 +281,43 @@ export function getBkChsInV11n(): {
 // The modules pref is used to cache costly module data.
 // If 'books' is in the pref-value, it is used, otherwise it is added
 // to the pref-value.
-export function getBooksInModule(): { [i: string]: string[] } {
-  if (!Cache.has('booksInModule')) {
-    const tabs = getTabs();
-    let booksInModule = Prefs.getPrefOrCreate(
-      'booksInModule',
-      'complex',
-      {},
-      'modules'
-    ) as { [i: string]: string[] };
-    const pb = Object.keys(booksInModule);
-    const tb = tabs.map((t) => t.module);
-    if (pb.length !== tb.length || !pb.every((t) => pb.includes(t))) {
-      booksInModule = {};
-    }
-    if (!Object.keys(booksInModule).length) {
-      const bkChsInV11n = getBkChsInV11n();
-      const book = getBook();
-      tabs.forEach((t: TabType) => {
-        if (t.v11n && (t.type === C.BIBLE || t.type === C.COMMENTARY)) {
-          const v11nbooks = Object.keys(bkChsInV11n[t.v11n]);
-          // When references to missing books are requested from SWORD,
-          // the previous (or last?) book in the module is usually quietly
-          // used and read from instead! The exception seems to be when a
-          // reference to the first (or following?) missing book(s) after
-          // the last included book of a module is requested, which
-          // correctly returns an empty string. In any case, when ambiguous
-          // results are returned, test two verses to make sure they are
-          // different and are not the empty string, to determine whether
-          // the book is missing from the module.
-          const fake = LibSword.getVerseText(t.module, 'FAKE 1:1', false);
-          const osis: string[] = [];
-          v11nbooks.forEach((code: string) => {
-            const bk = book[code];
-            const verse1 = LibSword.getVerseText(
-              t.module,
-              `${bk.code} 1:1`,
-              false
-            );
-            if (!verse1 || verse1 === fake) {
-              const verse2 = LibSword.getVerseText(
-                t.module,
-                `${bk.code} 1:2`,
-                false
-              );
-              if (!verse2 || verse1 === verse2) return;
-            }
-            osis.push(bk.code);
-          });
-          booksInModule[t.module] = osis;
-        } else booksInModule[t.module] = [];
+export function getBooksInModule(module: string): string[] {
+  if (!Cache.has('booksInModule', module)) {
+    const bkChsInV11n = getBkChsInV11n();
+    const book = getBook();
+    const t = getTab()[module];
+    const osis: string[] = [];
+    if (t && t.v11n && (t.type === C.BIBLE || t.type === C.COMMENTARY)) {
+      const v11nbooks = Object.keys(bkChsInV11n[t.v11n]);
+      // When references to missing books are requested from SWORD,
+      // the previous (or last?) book in the module is usually quietly
+      // used and read from instead! The exception seems to be when a
+      // reference to the first (or following?) missing book(s) after
+      // the last included book of a module is requested, which
+      // correctly returns an empty string. In any case, when ambiguous
+      // results are returned, test two verses to make sure they are
+      // different and are not the empty string, to determine whether
+      // the book is missing from the module.
+      const fake = LibSword.getVerseText(t.module, 'FAKE 1:1', false);
+
+      v11nbooks.forEach((code: string) => {
+        const bk = book[code];
+        const verse1 = LibSword.getVerseText(t.module, `${bk.code} 1:1`, false);
+        if (!verse1 || verse1 === fake) {
+          const verse2 = LibSword.getVerseText(
+            t.module,
+            `${bk.code} 1:2`,
+            false
+          );
+          if (!verse2 || verse1 === verse2) return;
+        }
+        osis.push(bk.code);
       });
     }
-    Prefs.setComplexValue('booksInModule', booksInModule, 'modules');
-    Cache.write(booksInModule, 'booksInModule');
+    Cache.write(osis, 'booksInModule', module);
   }
 
-  return Cache.read('booksInModule');
+  return Cache.read('booksInModule', module);
 }
 
 // LibSword.getMaxChapter returns an unpredictable wrong number if

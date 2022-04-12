@@ -16,6 +16,8 @@ import Menulist from './menulist';
 import Spacer from './spacer';
 import './xul.css';
 
+import type { BookGroupType } from '../../type';
+
 const defaultProps = {
   ...xulDefaultProps,
   book: 'Gen',
@@ -25,6 +27,7 @@ const defaultProps = {
   trans: [],
   disabled: false,
   sizetopopup: 'none',
+  books: ['ot', 'nt'],
 };
 
 const propTypes = {
@@ -36,6 +39,7 @@ const propTypes = {
   trans: PropTypes.arrayOf(PropTypes.string),
   disabled: PropTypes.bool,
   sizetopopup: PropTypes.oneOf(['none', 'always']),
+  books: PropTypes.arrayOf(PropTypes.string),
 };
 
 interface BibleselectProps extends XulProps {
@@ -46,6 +50,7 @@ interface BibleselectProps extends XulProps {
   trans: string[];
   disabled: boolean;
   sizetopopup: string;
+  books: (BookGroupType | string)[];
 }
 
 interface BibleselectState {
@@ -115,7 +120,7 @@ class Bibleselect extends React.Component {
   render() {
     const { book, chapter, verse, lastverse, trans } = this
       .state as BibleselectState;
-    const { trans: translist } = this.props as BibleselectProps;
+    const { books, trans: translist } = this.props as BibleselectProps;
 
     const { id: pid, disabled, sizetopopup } = this.props as BibleselectProps;
 
@@ -128,30 +133,27 @@ class Bibleselect extends React.Component {
 
     const translationOptions = tops.map((m) => {
       const t = G.Tab[m];
-      let description = G.LibSword.getModuleInformation(
-        t.module,
-        'Description'
-      );
-      if (description === C.NOTFOUND) description = '';
       return (
         <option key={m} className={`cs-${t.module}`} value={t.module}>
           <span className="name">{`${t.label}`}</span>
-          {description && (
-            <span className="description">{`${description}`}</span>
+          {t.description && (
+            <span className="description">{`${t.description}`}</span>
           )}
         </option>
       );
     });
 
     // Bible book options
-    const books: Set<string> = new Set();
-    tops.forEach((m) => {
-      G.BooksInModule[m].forEach((bk) => books.add(bk));
-    });
-    const booklist = [...books].sort((a: string, b: string) => {
-      if (G.Book[a].index < G.Book[b].index) return -1;
-      if (G.Book[a].index > G.Book[b].index) return 1;
-      return 0;
+    const booklist: string[] = [];
+    books.forEach((bkbg: BookGroupType | string) => {
+      const bg = (
+        C.SupportedBookGroups.includes(bkbg as BookGroupType) ? bkbg : null
+      ) as BookGroupType | null;
+      if (bg) {
+        booklist.push(...C.SupportedBooks[bg]);
+      } else {
+        booklist.push(bkbg);
+      }
     });
 
     // Bible chapter options

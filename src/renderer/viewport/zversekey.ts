@@ -171,7 +171,7 @@ export function findVerseKeyText(
     const isOK =
       (type === C.BIBLE && commentaries !== 'only') ||
       (type === C.COMMENTARY && commentaries);
-    if (isOK && v11n && G.BooksInModule[module].includes(book)) {
+    if (isOK && v11n && G.getBooksInModule(module).includes(book)) {
       const text = G.LibSword.getVerseText(
         module,
         vk.osisRef(v11n),

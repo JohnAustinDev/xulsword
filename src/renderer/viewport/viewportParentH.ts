@@ -106,8 +106,11 @@ export function newModulesInstalled(
             chapter: 1,
             v11n,
           };
-        if (!G.BooksInModule[v11nmod].includes(location.book)) {
-          [location.book] = G.BooksInModule[v11nmod];
+        if (
+          !location.book ||
+          !G.getBooksInModule(v11nmod).includes(location.book)
+        ) {
+          [location.book] = G.getBooksInModule(v11nmod);
           location.chapter = 1;
         }
       }
