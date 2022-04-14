@@ -53,7 +53,7 @@ GBFXHTMLXS::GBFXHTMLXS() {
 
   //addTokenSubstitute("Rf", ")</small></font>");
   addTokenSubstitute("FA", "<font color=\"#800000\">"); // for ASV footnotes to mark text
-  addTokenSubstitute("Rx", "</a>");
+  addTokenSubstitute("Rx", "</span>");
   addTokenSubstitute("FI", "<i>"); // italics begin
   addTokenSubstitute("Fi", "</i>");
   addTokenSubstitute("FB", "<b>"); // bold begin
@@ -176,7 +176,7 @@ bool GBFXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
     }
 
     else if (!strcmp(tag.getName(), "RX")) {
-      buf += "<a href=\"";
+      buf += "<span href=\"";
       for (tok = token + 3; *tok; tok++) {
         if(*tok != '<' && *tok+1 != 'R' && *tok+2 != 'x') {
           buf += *tok;

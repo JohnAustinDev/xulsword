@@ -228,26 +228,26 @@ bool ThMLXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
         SWBuf value = tag.getAttribute("value");
         if (tag.getAttribute("type") && !strcmp(tag.getAttribute("type"), "morph")) { //&gt;
           if(value.length())
-            buf.appendFormatted("<small><em>(<a href=\"passagestudy.jsp?action=showMorph&type=Greek&value=%s\">%s</a>)</em></small>",
+            buf.appendFormatted("<small><em>(<span href=\"passagestudy.jsp?action=showMorph&type=Greek&value=%s\">%s</span>)</em></small>",
               URL::encode(value.c_str()).c_str(),
               value.c_str());
         }
         else if (tag.getAttribute("type") && !strcmp(tag.getAttribute("type"), "lemma")) { //&gt;
           if(value.length())
             // empty "type=" is deliberate.
-            buf.appendFormatted("<small><em>&lt;<a href=\"passagestudy.jsp?action=showStrongs&type=&value=%s\">%s</a>&gt;</em></small>",
+            buf.appendFormatted("<small><em>&lt;<span href=\"passagestudy.jsp?action=showStrongs&type=&value=%s\">%s</span>&gt;</em></small>",
               URL::encode(value.c_str()).c_str(),
               value.c_str());
         }
         else if (tag.getAttribute("type") && !strcmp(tag.getAttribute("type"), "Strongs")) {
           char ch = *value;
           value<<1;
-          buf.appendFormatted("<small><em>&lt;<a href=\"passagestudy.jsp?action=showStrongs&type=%s&value=%s\">",
+          buf.appendFormatted("<small><em>&lt;<span href=\"passagestudy.jsp?action=showStrongs&type=%s&value=%s\">",
                   ((ch == 'H') ? "Hebrew" : "Greek"),
                   URL::encode(value.c_str()).c_str());
 
           buf += (value.length()) ? value.c_str() : "";
-          buf += "</a>&gt;</em></small>";
+          buf += "</span>&gt;</em></small>";
         }
         else if (tag.getAttribute("type") && !strcmp(tag.getAttribute("type"), "Dict")) {
           buf += (tag.isEndTag() ? "</b>" : "<b>");
@@ -303,15 +303,15 @@ bool ThMLXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
       if (!tag.isEndTag()) {
         if (!tag.isEmpty()) {
           if (tag.getAttribute("passage")) {
-            buf.appendFormatted("<a class=\"sr\" data-title=\"%s.%s\">", tag.getAttribute("passage"), userData->module->getName());
+            buf.appendFormatted("<span class=\"sr\" data-title=\"%s.%s\">", tag.getAttribute("passage"), userData->module->getName());
           }
           else {
-            buf.appendFormatted("<a class=\"sr\" data-title=\"unavailable.%s\">", userData->module->getName());
+            buf.appendFormatted("<span class=\"sr\" data-title=\"unavailable.%s\">", userData->module->getName());
           }
         }
       }
       if (tag.isEndTag()) { //  </scripRef>
-       buf.append("</a>");
+       buf.append("</span>");
       }
     }
     else if (tag.getName() && !strcmp(tag.getName(), "div")) {
