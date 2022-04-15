@@ -258,7 +258,7 @@ class Popup extends React.Component {
       info: { mod: '', type: '' },
       elem: null,
     };
-    const { mod, type, reflist } = info;
+    const { mod, type } = info;
 
     const allBibleModules = [];
     for (let t = 0; t < G.Tabs.length; t += 1) {
@@ -279,7 +279,7 @@ class Popup extends React.Component {
       };
     }
 
-    const bibleMod = getRefBible(mod, elem, reflist);
+    const bibleMod = mod && getRefBible(mod);
 
     let cls = 'cs-locale';
     if (isWindow) cls += ` ownWindow viewport`;

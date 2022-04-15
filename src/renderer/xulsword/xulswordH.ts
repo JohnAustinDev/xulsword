@@ -1,17 +1,15 @@
 /* eslint-disable import/no-duplicates */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
-import C from '../../constant';
+import RefParser from '../../refparse';
 import { clone, ofClass } from '../../common';
 import { chapterChange, verseChange } from '../viewport/zversekey';
-import { refParser, verseKey } from '../rutil';
+import { verseKey } from '../rutil';
 import G from '../rg';
 
 import type { ShowType } from '../../type';
 import type Xulsword from './xulsword';
 import type { XulswordState } from './xulsword';
-
-const parser = refParser();
 
 export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
   const state = this.state as XulswordState;
@@ -162,9 +160,9 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
         case 'book__textbox__input': {
           this.setState((prevState: XulswordState) => {
             const { location } = prevState;
-            const newloc = parser.parse(
+            const newloc = new RefParser().parse(
               value,
-              location?.v11n || 'KJV'
+              location?.v11n || null
             )?.location;
             // Check that the entered location exists.
             if (newloc && !newloc.chapter) newloc.chapter = 1;

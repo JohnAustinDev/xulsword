@@ -337,43 +337,29 @@ export function getMaxVerse(v11n: V11nType, vkeytext: string) {
   return maxch ? LibSword.getMaxVerse(v11n, vkeytext) : 0;
 }
 
-export function refParser(options?: RefParserOptionsType): RefParser {
-  const gfunctions = {
-    Book: () => {
-      return getBook();
-    },
-  };
-  const localesAccessor = () => {
-    const locs = Prefs.getComplexValue(
-      'global.locales'
-    ) as GlobalPrefType['global']['locales'];
-    return locs.map((val) => val[0]);
-  };
-  return new RefParser(gfunctions, localesAccessor, options);
-}
-
 export function verseKey(
   versekey: LocationVKType | string,
-  v11n?: V11nType
+  v11n?: V11nType,
+  options?: RefParserOptionsType
 ): VerseKey {
-  const lscl = (fromv11n: V11nType, vkeytext: string, tov11n: V11nType) => {
-    return LibSword.convertLocation(fromv11n, vkeytext, tov11n);
-  };
-  const gfunctions = {
-    Book: () => {
-      return getBook();
-    },
-    BkChsInV11n: () => {
-      return getBkChsInV11n();
-    },
-    Tab: () => {
-      return getTab();
-    },
-  };
   return new VerseKey(
-    refParser({ noOsisCode: true }),
-    lscl,
-    gfunctions,
+    new RefParser(options),
+    getBkChsInV11n(),
+    {
+      convertLocation: (
+        fromv11n: V11nType,
+        vkeytext: string,
+        tov11n: V11nType
+      ) => {
+        return LibSword.convertLocation(fromv11n, vkeytext, tov11n);
+      },
+      Book: () => {
+        return getBook();
+      },
+      Tab: () => {
+        return getTab();
+      },
+    },
     versekey,
     v11n
   );

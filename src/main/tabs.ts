@@ -114,12 +114,13 @@ export default function setViewportTabs(
           Tab[nextmod].isVerseKey
         ) {
           const [book] = getBooksInModule(nextmod);
-          if (book) {
+          const v11n = Tab[nextmod].v11n || null;
+          if (book && v11n) {
             xulsword.location = {
               book,
               chapter: 1,
               verse: 1,
-              v11n: Tab[nextmod].v11n || 'KJV',
+              v11n,
             };
           }
         }

@@ -9,11 +9,12 @@ import {
 } from 'electron';
 import path from 'path';
 import { clone } from '../common';
+import C from '../constant';
 import G from './mg';
 import Commands, { newDbItemWithDefaults } from './commands';
 import setViewportTabs from './tabs';
 
-import type { GlobalPrefType, TabTypes, XulswordStatePref } from '../type';
+import type { TabTypes, XulswordStatePref } from '../type';
 import { verseKey } from './minit';
 import Data from './modules/data';
 import Prefs, { PrefCallbackType } from './modules/prefs';
@@ -563,9 +564,6 @@ export default class MenuBuilder {
       ],
     };
 
-    const locales = G.Prefs.getComplexValue(
-      'global.locales'
-    ) as GlobalPrefType['global']['locales'];
     const subMenuOptions = {
       label: this.ts('menu.options'),
       submenu: [
@@ -652,7 +650,7 @@ export default class MenuBuilder {
         {
           label: this.ts('menu.options.language'),
           // accelerator: 'F1', cannot open main menu item
-          submenu: locales.map((l: any) => {
+          submenu: C.Locales.map((l: any) => {
             const [lng, name] = l;
             return {
               label: name,
@@ -670,7 +668,7 @@ export default class MenuBuilder {
 
     const dummy = {
       location: verseKey('Gen.1.1').location(),
-      module: 'KJV',
+      module: 'FOO',
       text: '',
     };
 

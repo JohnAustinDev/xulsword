@@ -78,7 +78,7 @@ class Bibleselect extends React.Component {
     const chapter = ch ? ch.toString() : '1';
     const verse = vs ? vs.toString() : '1';
     const lastverse = lv ? lv.toString() : '1';
-    const trans = props.trans[1] || 'KJV';
+    const trans = props.trans[1] || '';
     const s: BibleselectState = {
       book,
       chapter,
@@ -126,6 +126,9 @@ class Bibleselect extends React.Component {
 
     const { handleChange } = this;
 
+    const tab = (trans && G.Tab[trans]) || null;
+    const v11n = (tab && tab.v11n) || null;
+
     // Bible translation options
     const tops = translist.length
       ? translist
@@ -157,8 +160,7 @@ class Bibleselect extends React.Component {
     });
 
     // Bible chapter options
-    const mc =
-      trans in G.Tab ? getMaxChapter(G.Tab[trans].v11n || 'KJV', book) : 0;
+    const mc = v11n ? getMaxChapter(v11n, book) : 0;
     const chapters = [];
     for (let x = 1; x <= mc; x += 1) {
       chapters.push(
@@ -169,10 +171,7 @@ class Bibleselect extends React.Component {
     }
 
     // Bible verse options
-    const mv =
-      trans in G.Tab
-        ? getMaxVerse(G.Tab[trans].v11n || 'KJV', `${book}.${chapter}`)
-        : 0;
+    const mv = v11n ? getMaxVerse(v11n, `${book}.${chapter}`) : 0;
     const verses = [];
     for (let x = 1; x <= mv; x += 1) {
       verses.push(

@@ -4,7 +4,7 @@
 /* eslint-disable no-continue */
 import i18next from 'i18next';
 import C from '../../constant';
-import { dString, getLocalizedChapterTerm } from '../../common';
+import { clone, dString, getLocalizedChapterTerm } from '../../common';
 import { getElementInfo } from '../../libswordElemInfo';
 import {
   getCompanionModules,
@@ -30,84 +30,48 @@ import type Atext from './atext';
 import type ViewportWin from './viewportWin';
 import type { ViewportWinState } from './viewportWin';
 
+// Return modules of all types that are associated with the
+// current locale and tab settings.
 function alternateModules() {
   const am = G.ProgramConfig.AssociatedModules;
-  const locale = am ? am.split(',') : [];
+  const alternates = new Set(am ? am.split(',') : undefined);
   const tabs = G.Prefs.getComplexValue(
     'xulsword.tabs'
   ) as XulswordStatePref['tabs'];
-  const flat = tabs.flat().filter((m) => m) as string[];
-  return locale.concat(flat);
+  tabs.forEach((tbk) => {
+    if (tbk) tbk.forEach((t) => alternates.add(t));
+  });
+  return Array.from(alternates);
 }
 
+// Return an installed Bible module to be referenced for a given source module.
+// If no particular Bible reference can be found then null is returned.
+// An info object will also be populated with info about the match.
 export function getRefBible(
-  mod: string | null,
-  elem?: HTMLElement | null,
-  reflist?: string | string[] | null,
+  srcmodule: string,
   info?: Partial<LookupInfo>
 ): string | null {
   const inf = (typeof info === 'object' ? info : {}) as Partial<LookupInfo>;
   // Information collected during this search:
-  inf.refcompanion = false;
+  inf.companion = false;
   inf.userpref = false;
-  inf.possibleV11nMismatch = false;
   // Is mod a Bible?
-  let refbible = mod && G.Tab[mod].type === C.BIBLE ? mod : null;
+  let refbible =
+    srcmodule && G.Tab[srcmodule].type === C.BIBLE ? srcmodule : null;
   // Otherwise does mod have a Bible companion?
-  if (!refbible && mod) {
-    const aref = getCompanionModules(mod);
+  if (!refbible) {
+    const aref = getCompanionModules(srcmodule);
     const bible = aref.find((m) => G.Tab[m]?.type === C.BIBLE);
     if (bible) {
       refbible = bible;
-      inf.refcompanion = true;
+      inf.companion = true;
     }
   }
-  // Otherwise can the bibleReflist text be returned from any installed Bible?
-  // NOTE: this results in a questionable result when the v11n is unknown.
-  if (!refbible) {
-    let bibleReflist: string | string[] = '';
-    if (reflist) {
-      if (Array.isArray(reflist)) {
-        bibleReflist = reflist[0] !== 'unavailable' ? reflist : '';
-      } else {
-        bibleReflist = reflist;
-      }
-    }
-    if (!bibleReflist && elem) {
-      bibleReflist = elem.innerHTML || '';
-    }
-    if (bibleReflist) {
-      const v11n = (mod && mod in G.Tab && G.Tab[mod].v11n) || undefined;
-      const v11nmod = (v11n && mod) || '';
-      resolveExtendedScripRef(
-        bibleReflist,
-        v11nmod,
-        alternateModules(),
-        true,
-        false,
-        false,
-        inf
-      ).forEach((textvk) => {
-        if (!refbible && textvk.module) {
-          refbible = textvk.module;
-          const lookupKeys: (keyof LookupInfo)[] = [
-            'vkcompanion',
-            'alternate',
-            'anytab',
-          ];
-          lookupKeys.forEach((key) => {
-            if (key in textvk) inf[key] = textvk[key];
-          });
-          inf.possibleV11nMismatch = true;
-        }
-      });
-    }
-  }
-  // Finally, if we have a refbible, then has the user chosen an alternate
-  // for it, to be used in its place?
   if (refbible) {
+    // Finally, if we have a refbible, then has the user chosen an alternate
+    // for it, to be used in its place?
     const userprefBible = G.Prefs.getPrefOrCreate(
-      `global.popup.selection.${mod}`,
+      `global.popup.selection.${srcmodule}`,
       'string',
       refbible
     ) as string;
@@ -115,286 +79,312 @@ export function getRefBible(
       refbible = userprefBible;
       inf.userpref = true;
     }
+    return refbible;
   }
-  return refbible;
+  return null;
 }
 
-// If textvk module is not acceptable (as being a Bible or Commentary according to
-// the commentary argument) or if it does not contain the text, then alternate mod-
-// ules may be checked. First any companion modules are tried, unless altModules is set
-// to false. Then altModules are searched in order. If still a text is not found, and
-// findAny is set, then all tabs are searched in order. The textvk object reference
-// is updated to contain any located text and module. If a text string was found,
-// (meaning a string longer than 7 characters since modules may use various empty
-// verse place-holders, it is returned, or else the empty string is returned. LookupInfo
-// data is also returned via an info object if supplied.
-export function findVerseKeyText(
-  textvk: TextVKType,
-  altModules: string[] | null | false,
-  keepNotes = true,
-  commentaries: boolean | 'only' | null | undefined,
-  findAny = true,
-  info?: Partial<LookupInfo>
-): string {
-  const i = (typeof info === 'object' ? info : {}) as LookupInfo;
-  // Information collected during this search:
-  i.vkcompanion = false;
-  i.alternate = false;
-  i.anytab = false;
-  const vk = verseKey(textvk.location);
-  // Is module acceptable, or if not, is there a companion which is?
-  const mtype = textvk.module in G.Tab && G.Tab[textvk.module].type;
-  const modOK =
-    (mtype === C.BIBLE && commentaries !== 'only') ||
-    (mtype === C.COMMENTARY && commentaries);
-  if (!modOK && altModules !== false) {
-    const companions = getCompanionModules(textvk.module);
-    const compOK = companions.find((comp) => {
-      const ctype = comp in G.Tab && G.Tab[comp].type;
-      return (
-        (ctype === C.BIBLE && commentaries !== 'only') ||
-        (ctype === C.COMMENTARY && commentaries)
-      );
-    });
-    const tov11n = compOK && G.Tab[compOK].v11n;
-    if (tov11n) {
-      vk.v11n = tov11n;
-      textvk.module = compOK;
-      textvk.location = vk.location();
-      i.vkcompanion = true;
-    }
-  }
-  const { book } = vk;
-  function tryText(mod: string) {
-    if (!mod || !(mod in G.Tab)) return;
-    const { module, type, v11n } = G.Tab[mod];
-    const isOK =
-      (type === C.BIBLE && commentaries !== 'only') ||
-      (type === C.COMMENTARY && commentaries);
-    if (isOK && v11n && G.getBooksInModule(module).includes(book)) {
-      const text = G.LibSword.getVerseText(
-        module,
-        vk.osisRef(v11n),
-        keepNotes
-      ).replace(/\n/g, ' ');
-      if (text && text.length > 7) {
-        textvk.text = text;
-        textvk.module = module;
-        vk.v11n = v11n;
-        textvk.location = vk.location();
+function getFootnoteText(location: LocationVKType, module: string): string {
+  const { book, chapter, verse, subid } = location;
+  if (subid) {
+    G.LibSword.getChapterText(module, `${book} ${chapter}`);
+    const notes = G.LibSword.getNotes().split(/(?=<div[^>]+class="nlist")/);
+    for (let x = 0; x < notes.length; x += 1) {
+      const osisID = notes[x].match(/data-osisID="(.*?)"/); // getAttribute('data-osisID');
+      if (osisID && osisID[1] === `${book}.${chapter}.${verse}!${subid}`) {
+        return notes[x].replace(/(^<div[^>]+>|<\/div>$)/g, '');
       }
-    }
-  }
-  tryText(textvk.module);
-  if (altModules) {
-    altModules?.forEach((m) => {
-      if (!textvk.text) {
-        tryText(m);
-        i.alternate = true;
-      }
-    });
-    if (findAny) {
-      G.Tabs.forEach((t) => {
-        if (!textvk.text) {
-          tryText(t.module);
-          i.anytab = true;
-        }
-      });
-    }
-  }
-  return textvk.text;
-}
-
-function getFootnoteText(module: string, ref: string, noteID: string): string {
-  G.LibSword.getChapterText(module, ref);
-  const notes = G.LibSword.getNotes().split(/(?=<div[^>]+class="nlist")/);
-  for (let x = 0; x < notes.length; x += 1) {
-    const osisID = notes[x].match(/data-osisID="(.*?)"/); // getAttribute('data-osisID');
-    if (osisID && osisID[1] === ref + noteID) {
-      return notes[x].replace(/(^<div[^>]+>|<\/div>$)/g, '');
-      break;
     }
   }
   return '';
 }
 
-const NoterefRE = /^\s*(([^:]+):)?([^!:]+)(!.*?)\s*$/;
-
-// This function tries to read a ";" separated list of Scripture
-// references and returns HTML of the reference texts. It looks for
-// osisRef type references as well as free hand references which
-// may include commas. It will supply missing book, chapter, and verse
-// information using previously read information (as is often the
-// case after a comma). When necessary, this function will look through
-// other Bible versions until it finds a version that includes the
-// passage. It also takes care of verse system conversions in the process.
-export function resolveExtendedScripRef(
-  reflist: string | string[], // extended scripture reference string or array of regular refs
-  mod: string, // primary module to use for text and v11n of reflist
-  altModules?: string[] | null | false, // alternate modules to try if any
-  keepNotes = true,
-  commentaries?: boolean | 'only' | null,
-  parseOnly?: boolean, // parse reflist to location array but don't resolve modules
+// Given a LocationVKType and target module, this function attempts to return
+// a TextVKType object using LibSword. Even if the target module is not an
+// acceptable reference (because it's not a Bible or Commentary according to
+// the commentary argument) or even if it does not contain the location's text,
+// alternate modules may be searched for the text if location does not include
+// a subid. First any companion modules are tried, unless altModules is set to
+// false. Then altModules are searched in order. If still a text is not found,
+// and findAny is set, then all tabs are searched in order. The returned text
+// will also include textual notes if keepNotes is true. If no text was found
+// (meaning a string longer than 7 characters since modules may use various
+// empty verse place-holders) then null is returned. LookupInfo data is also
+// returned via an info object if supplied.
+export function locationVKText(
+  locationx: LocationVKType,
+  targetmodx: string | null,
+  altModules?: string[] | null | false,
+  keepNotesx?: boolean,
+  commentaries?: boolean | 'only' | null | undefined,
+  findAny?: boolean,
   info?: Partial<LookupInfo>
-): (TextVKType & Partial<LookupInfo>)[] {
-  let reflistA = Array.isArray(reflist) ? reflist : [];
-  if (typeof reflist === 'string') {
-    reflistA = reflist.split(/\s*;\s*/);
-    for (let i = 0; i < reflist.length; i += 1) {
-      // Are there any commas? then add the sub refs to the list...
-      const verses = reflist[i].split(/\s*,\s*/);
-      if (verses.length !== 1) {
-        let r = 1;
-        for (let v = 0; v < verses.length; v += 1) {
-          reflistA.splice(i + 1 - r, r, verses[v]);
-          i += 1;
-          i -= r;
-          r = 0;
-        }
-      }
+): TextVKType | null {
+  const keepNotes = keepNotesx === undefined ? true : keepNotesx;
+  const i = (typeof info === 'object' ? info : {}) as LookupInfo;
+  // Information collected during this search:
+  // i.companion = true should not be changed.
+  i.alternate = false;
+  i.anytab = false;
+  i.possibleV11nMismatch = false;
+  const tab = G.Tab;
+  // Is module acceptable, or if not, is there a companion which is?
+  let targetmod = targetmodx;
+  let location = locationx;
+  const mtype = targetmod && targetmod in tab && tab[targetmod].type;
+  const modOK =
+    (mtype === C.BIBLE && commentaries !== 'only') ||
+    (mtype === C.COMMENTARY && commentaries);
+  if (!location.subid && targetmod && !modOK && altModules !== false) {
+    const companions = getCompanionModules(targetmod);
+    const compOK = companions.find((comp) => {
+      const ctype = comp in tab && tab[comp].type;
+      return (
+        (ctype === C.BIBLE && commentaries !== 'only') ||
+        (ctype === C.COMMENTARY && commentaries)
+      );
+    });
+    const tov11n = compOK && tab[compOK].v11n;
+    if (tov11n) {
+      targetmod = compOK;
+      location = verseKey(location).location(tov11n);
+      i.companion = true;
     }
   }
-  const resolved: TextVKType[] = [];
-  let bk = '';
-  let ch = 0;
-  let vs = 0;
-  reflistA.forEach((r) => {
-    let m = mod;
-    let ref = r;
-    let noteID;
-    let text = '';
-    const noteref = ref.match(NoterefRE);
-    if (noteref) {
-      [, , m, ref, noteID] = noteref;
-      if (!m) m = mod;
-      if (!parseOnly && m && noteID) {
-        text = getFootnoteText(m, ref, noteID);
+  function tryText(loc: LocationVKType, mod: string): TextVKType | null {
+    if (!mod || !(mod in tab)) return null;
+    const { module, type, v11n } = tab[mod];
+    const { book } = loc;
+    const isOK =
+      (type === C.BIBLE && commentaries !== 'only') ||
+      (type === C.COMMENTARY && commentaries);
+    if (isOK && v11n && G.getBooksInModule(module).includes(book)) {
+      let text;
+      const modloc = verseKey(loc);
+      if (loc.subid) {
+        text = getFootnoteText(loc, mod);
+      } else {
+        text = G.LibSword.getVerseText(
+          module,
+          modloc.osisRef(v11n),
+          keepNotes
+        ).replace(/\n/g, ' ');
+      }
+      if (text && text.length > 7) {
+        return {
+          location: modloc.location(v11n),
+          module,
+          text,
+        };
       }
     }
-    const v11n = (m && m in G.Tab && G.Tab[m].v11n) || undefined;
-    const vk = verseKey(ref, v11n);
-    if (bk && !vk.book) {
-      const ref2 = ref.replace(/[^\w\d:.-]+/g, '');
-      const match = ref2.match(/^(\d+)(?::(\d+))?(?:-(\d+))?/);
+    return null;
+  }
+  if (!location.v11n && targetmod && tab[targetmod]) {
+    location.v11n = tab[targetmod].v11n || null;
+  }
+  let result = (targetmod && tryText(location, targetmod)) || null;
+  if (!result && altModules && !location.subid) {
+    altModules.forEach((m) => {
+      if (!result) {
+        result = tryText(location, m);
+        if (result) {
+          i.alternate = true;
+          i.possibleV11nMismatch = !location.v11n;
+        }
+      }
+    });
+    if (!result && findAny) {
+      G.Tabs.forEach((t) => {
+        if (!result) {
+          result = tryText(location, t.module);
+          if (result) {
+            i.anytab = true;
+            i.possibleV11nMismatch = !location.v11n;
+          }
+        }
+      });
+    }
+  }
+  return result;
+}
+
+const NoterefRE = /^\s*(([^:]+):)?([^!:]+)!(.*?)\s*$/;
+
+// This function tries to read a ";" separated list of Scripture
+// references and returns an array of TextVKType objects, one for
+// each individual reference in the extended reference. It parses
+// osisRef type references as well as free hand references which
+// may include commas. It will supply missing book, chapter and verse
+// values using previously read information (as is often required
+// following commas). Initial context may be supplied using the
+// context argument. Segments which fail to parse as Scripture
+// references are silently ignored.
+export function parseExtendedVKRef(
+  extref: string,
+  context?: LocationVKType,
+  locales?: string[]
+): (LocationVKType | string)[] {
+  const reflistA = extref.split(/\s*;\s*/);
+  for (let i = 0; i < reflistA.length; i += 1) {
+    // Commas may be used to reference multiple verses, chapters, or ranges.
+    // Whether a number or range is interpereted as verse or chapter depends
+    // on context.
+    const commas = reflistA[i].split(/\s*,\s*/);
+    reflistA.splice(i, 1, ...commas);
+    i += commas.length - 1;
+  }
+  const results: (LocationVKType | string)[] = [];
+  let bk = context?.book || '';
+  let ch = context?.chapter || 0;
+  let vs = context?.verse || 0;
+  reflistA.forEach((r) => {
+    let ref = r;
+    let noteID;
+    const noteref = ref.match(NoterefRE);
+    if (noteref) {
+      [, , , ref, noteID] = noteref;
+    }
+    const options = locales && locales.length ? { locales } : undefined;
+    const vk = verseKey(ref, null, options);
+    if (!vk.book && bk) {
+      const match = ref
+        .replace(/[^\s\p{L}\p{N}:-]/gu, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .match(/^(\d+)(?:\s*:\s*(\d+))?(?:\s*-\s*(\d+))?/);
       if (match) {
         const [, chvs1, vrs, chvs2] = match;
         vk.book = bk;
         if (vrs) {
+          // chapter:verse
           vk.chapter = Number(chvs1);
           vk.verse = Number(vrs);
           vk.lastverse = chvs2 ? Number(chvs2) : null;
         } else if (ch && vs) {
+          // we're in verse context, so numbers are verses.
           vk.chapter = ch;
           vk.verse = Number(chvs1);
           vk.lastverse = chvs2 ? Number(chvs2) : null;
         } else {
+          // we're in book or chapter context, so numbers are chapters.
           vk.chapter = Number(chvs1);
           vk.verse = null;
           vk.lastverse = null;
         }
       }
     }
-
     if (vk.book) {
+      const location = vk.location();
+      if (noteID) location.subid = noteID;
+      results.push(location);
       bk = vk.book;
       ch = vk.chapter;
       vs = vk.verse || 0;
     } else {
-      // then reset our context, since we may have missed something along the way
+      results.push(ref);
+      // otherwise remove our context, since we may have missed something along the way
       bk = '';
       ch = 0;
       vs = 0;
-      return;
-    }
-    const aText: TextVKType & Partial<LookupInfo> = {
-      location: vk.location(),
-      module: m,
-      text,
-      noteID,
-      ...info,
-    };
-    if (
-      noteID ||
-      parseOnly ||
-      findVerseKeyText(
-        aText,
-        altModules || null,
-        keepNotes,
-        commentaries,
-        true,
-        aText
-      )
-    ) {
-      resolved.push(aText);
     }
   });
-
-  return resolved;
+  return results;
 }
 
+// Return an HTML Scripture reference list representing an extended reference.
+// An extended reference is a textual reference comprising a list of Scripture
+// references separated by semicolons and/or commas. If show is false, only
+// a list of reference links will be returned, without the contents of each
+// reference.
 export function getRefHTML(
   extref: string,
-  mod: string,
-  keepNotes = true,
-  parseOnly = false,
+  targetmod: string,
+  context: LocationVKType,
+  show?: boolean,
+  keepNotes?: boolean,
   info?: Partial<LookupInfo>
 ): string {
-  const inf = typeof info === 'object' ? info : {};
-  const resolved = resolveExtendedScripRef(
-    extref,
-    mod,
-    alternateModules(),
-    keepNotes,
-    false,
-    parseOnly,
-    inf
-  );
+  const { Tab } = G;
+  const locale =
+    (targetmod in Tab && Tab[targetmod].config.AssociatedLocale) ||
+    i18next.language;
+  const list = parseExtendedVKRef(extref, context, [locale]);
+  const alternates = alternateModules();
+  const mod = targetmod || alternates[0] || '';
   const html: string[] = [];
-  resolved.forEach((vktext) => {
-    const { location, module, text, noteID } = vktext;
-    const { direction, label, labelClass } = G.Tab[module];
-    const crref = ['crref'];
-    let cc: (keyof LookupInfo)[] = ['possibleV11nMismatch'];
-    cc.forEach((c) => {
-      if (vktext[c]) crref.push(c);
-    });
-    const crtext = ['crtext', `cs-${module || 'locale'}`];
-    if (direction !== G.ProgramConfig.direction) {
-      crtext.push('opposing-program-direction');
-    }
-    const fntext = ['fntext'];
-    if (direction !== G.ProgramConfig.direction) {
-      fntext.push('opposing-program-direction');
-    }
-    const altlabel = ['altlabel', labelClass];
-    cc = ['alternate', 'anytab'];
-    cc.forEach((c) => {
-      if (vktext[c]) altlabel.push(c);
-    });
-    const alt = cc.some((c) => vktext[c])
-      ? ` <bdi><span class="${altlabel.join(' ')}">(${label})</span></bdi>`
-      : '';
+  list.forEach((locOrStr) => {
     let h = '';
-    if (noteID) {
+    if (typeof locOrStr === 'string') {
       h += `
       <bdi>
-        <span class="${fntext.join(' ')}">${text}${alt}</span>
+        <span class="crref-miss">${locOrStr}</span>: ?
       </bdi>`;
     } else {
-      const { book, chapter, verse, lastverse } = location;
-      h += `
-      <bdi>
-        <a class="${crref.join(' ')}" data-title="${[
-        book,
-        chapter,
-        verse,
-        lastverse,
-        module,
-      ].join('.')}">${verseKey(location).readable()}</a>
-      </bdi>
-      <bdi>
-        <span class="${crtext.join(' ')}">${text}${alt}</span>
-      </bdi>`;
+      const inf = typeof info === 'object' ? clone(info) : {};
+      let resolve: TextVKType = {
+        location: locOrStr,
+        module: mod,
+        text: '',
+      };
+      if (show || locOrStr.subid) {
+        const r = locationVKText(
+          locOrStr,
+          mod,
+          alternates,
+          keepNotes,
+          false,
+          true,
+          inf
+        );
+        if (r) resolve = r;
+      }
+      const { location, module, text } = resolve;
+      if (module && location.book) {
+        const { subid: noteID } = location;
+        const { direction, label, labelClass } = G.Tab[module];
+        const crref = ['crref'];
+        const crtext = ['crtext', `cs-${module || 'locale'}`];
+        if (direction !== G.ProgramConfig.direction) {
+          crtext.push('opposing-program-direction');
+        }
+        const fntext = ['fntext'];
+        if (direction !== G.ProgramConfig.direction) {
+          fntext.push('opposing-program-direction');
+        }
+        const altlabel = ['altlabel', labelClass];
+        const cc: (keyof LookupInfo)[] = ['alternate', 'anytab'];
+        cc.forEach((c) => {
+          if (inf[c]) altlabel.push(c);
+        });
+        const alt = cc.some((c) => inf[c])
+          ? ` <bdi><span class="${altlabel.join(' ')}">(${label})</span></bdi>`
+          : '';
+        if (noteID) {
+          h += `
+          <bdi>
+            <span class="${fntext.join(' ')}">${text}${alt}</span>
+          </bdi>`;
+        } else {
+          const { book, chapter, verse, lastverse } = location;
+          const q = inf.possibleV11nMismatch
+            ? '<span class="possibleV11nMismatch">?</span>'
+            : '';
+          h += `
+          <bdi>
+            <a class="${crref.join(' ')}" data-title="${[
+            book,
+            chapter,
+            verse,
+            lastverse || verse,
+            module,
+          ].join('.')}">${verseKey(location).readable()}</a>${q}:
+          </bdi>
+          <bdi>
+            <span class="${crtext.join(' ')}">${text}${alt}</span>
+          </bdi>`;
+        }
+      }
     }
     html.push(h);
   });
@@ -446,7 +436,10 @@ export function getNoteHTML(
   note.forEach((anote) => {
     const p = getElementInfo(anote);
     if (p && (!keepOnlyThisNote || p.title === keepOnlyThisNote)) {
-      const body = anote.replace(/(^(<div[^>]+>\s*)+|(<\/div>\s*)+$)/g, '');
+      const innerHTML = anote.replace(
+        /(^(<div[^>]+>\s*)+|(<\/div>\s*)+$)/g,
+        ''
+      );
       // Check if this note should be displayed, and if not then skip it
       const notetypes = { fn: 'footnotes', cr: 'crossrefs', un: 'usernotes' };
       Object.entries(notetypes).forEach((entry) => {
@@ -483,16 +476,28 @@ export function getNoteHTML(
 
         // Write cell #5: note body
         t += `<div class="fncol5"${
-          p.ntype === 'cr' ? ` data-reflist="${body}"` : ''
+          p.ntype === 'cr' ? ` data-reflist="${innerHTML}"` : ''
         }>`;
 
         switch (p.ntype) {
           case 'cr': {
             // If this is a cross reference, then parse the note body for references and display them
             const info = {} as Partial<LookupInfo>;
-            const m = (p.mod && getRefBible(p.mod, null, body, info)) || '';
             const keepNotes = false;
-            t += getRefHTML(body, m, keepNotes, !openCRs, info);
+            const context: LocationVKType = {
+              book: p.bk || '',
+              chapter: Number(p.ch),
+              verse: p.vs,
+              v11n: null,
+            };
+            t += getRefHTML(
+              innerHTML,
+              p.mod || '',
+              context,
+              openCRs,
+              keepNotes,
+              info
+            );
             break;
           }
           case 'fn': {
@@ -501,7 +506,7 @@ export function getNoteHTML(
             if (p.mod && G.Tab[p.mod].direction !== G.ProgramConfig.direction) {
               opdir = ' opposing-program-direction';
             }
-            t += `<bdi><span class="fntext${opdir}">${body}</span></bdi>`;
+            t += `<bdi><span class="fntext${opdir}">${innerHTML}</span></bdi>`;
             break;
           }
           case 'un': {
@@ -521,7 +526,7 @@ export function getNoteHTML(
               */
             t += `<bdi><span class="noteBoxUserNote${
               unmod ? ` cs-${unmod}` : ''
-            }">${body}</span></bdi>`;
+            }">${innerHTML}</span></bdi>`;
             break;
           }
           default:
@@ -837,10 +842,11 @@ function aTextWheelScroll2(
       }
       if (!v) return null;
       const p = getElementInfo(v);
-      if (p) {
+      const t = (module && G.Tab[module]) || null;
+      const v11n = (t && t.v11n) || null;
+      if (p && v11n) {
         const { bk: book, ch, vs: verse } = p;
         const chapter = Number(ch);
-        const v11n = (module && module in G.Tab && G.Tab[module].v11n) || 'KJV';
         if (book && chapter && verse) {
           newloc = verseKey({ book, chapter, verse, v11n }).location(
             location.v11n
@@ -1013,13 +1019,13 @@ export function findVerseElement(
 
 // For versekey modules only. Change to a particular bk.ch or change
 // the passed chapter by a delta if possible. Returns null if a requested
-// change is not possible. NOTE: This function currently considers changes
-// between books as not possible, although this could be done.
+// change cannot be done with certainty. NOTE: This function currently
+// returns changes between books as null, although this could be coded in.
 export function chapterChange(
   location: LocationVKType | null,
   chDelta?: number
 ): LocationVKType | null {
-  if (!location) return null;
+  if (!location || !location.v11n) return null;
   const { book } = location;
   let { chapter } = location;
   if (chDelta) chapter += chDelta;
@@ -1034,7 +1040,7 @@ export function chapterChange(
 
 // For versekey modules only. Change to a particular bk.ch.vs or change
 // the passed verse by a delta if possible. Returns null if a requested
-// change is not possible.
+// change cannot be done with certainty.
 export function verseChange(
   location: LocationVKType | null,
   vsDelta?: number
@@ -1042,7 +1048,7 @@ export function verseChange(
   if (!location) return null;
   let { book, chapter, verse } = location;
   const { v11n } = location;
-  if (!verse) return null;
+  if (!verse || !v11n) return null;
   if (vsDelta) verse += vsDelta;
   const maxvs = getMaxVerse(v11n, [book, chapter].join('.'));
   let ps;
@@ -1085,12 +1091,14 @@ export function pageChange(
     });
     if (firstVerse) {
       const ei = getElementInfo(firstVerse);
-      if (ei && (Number(ei.ch) !== 1 || ei.vs !== 1)) {
+      const t = (ei && ei.mod && G.Tab[ei.mod]) || null;
+      const v11n = t?.v11n || null;
+      if (ei && ei.bk && v11n && (Number(ei.ch) !== 1 || ei.vs !== 1)) {
         return {
-          book: ei.bk || 'Gen',
+          book: ei.bk,
           chapter: Number(ei.ch),
           verse: ei.vs,
-          v11n: (ei.mod && ei.mod in G.Tab && G.Tab[ei.mod].v11n) || 'KJV',
+          v11n,
         };
       }
     }
@@ -1103,17 +1111,18 @@ export function pageChange(
       });
     if (lastVerse) {
       const ei = getElementInfo(lastVerse);
-      if (ei) {
-        const v11n = (ei.mod && ei.mod in G.Tab && G.Tab[ei.mod].v11n) || 'KJV';
+      const t = (ei && ei.mod && G.Tab[ei.mod]) || null;
+      const v11n = t?.v11n || null;
+      if (ei && ei.bk && v11n) {
         const vk = verseKey({
-          book: ei.bk || 'Gen',
+          book: ei.bk,
           chapter: Number(ei.ch),
           verse: ei.vs,
           v11n,
         });
         if (
-          vk.chapter !== getMaxChapter(v11n, vk.osisRef()) ||
-          vk.verse !== getMaxVerse(v11n, vk.osisRef())
+          vk.chapter <= getMaxChapter(v11n, vk.osisRef()) &&
+          (!vk.verse || vk.verse <= getMaxVerse(v11n, vk.osisRef()))
         )
           return vk.location();
       }

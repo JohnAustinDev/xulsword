@@ -13,7 +13,7 @@ import G from '../rg';
 import { scrollIntoView } from '../rutil';
 import { aTextWheelScroll, getRefHTML } from './zversekey';
 
-import { AtextStateType } from '../../type';
+import { AtextStateType, LocationVKType } from '../../type';
 import type Atext from './atext';
 import type { AtextProps } from './atext';
 
@@ -36,13 +36,6 @@ function scroll2Note(atext: HTMLElement, id: string) {
 }
 
 export default function handler(this: Atext, es: React.SyntheticEvent) {
-  const props = this.props as AtextProps;
-  const { isPinned, module, panelIndex: index, place: pl } = props;
-  const { pin } = this.state as AtextStateType;
-  const place = isPinned && pin ? pin.place : pl;
-  const target = es.target as HTMLElement;
-  const atext = es.currentTarget as HTMLElement;
-  const type = module ? G.Tab[module].type : '';
   switch (es.type) {
     case 'click': {
       const e = es as React.MouseEvent;
@@ -55,9 +48,13 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
           'image-container',
           'dictkeyinput',
         ],
-        target
+        es.target
       );
       if (targ === null) return;
+      const props = this.props as AtextProps;
+      const { module, panelIndex: index } = props;
+      const target = es.target as HTMLElement;
+      const atext = es.currentTarget as HTMLElement;
       e.preventDefault();
       let popupParent: any = ofClass(['npopup'], target);
       popupParent = popupParent ? popupParent.element : null;
@@ -82,12 +79,18 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
               if (col5) {
                 const el = col5.element;
                 const refs = el.dataset.reflist;
+                const context: LocationVKType = {
+                  book: (p && p.bk) || '',
+                  chapter: (p && Number(p.ch)) || 0,
+                  verse: (p && p.vs) || null,
+                  v11n: null,
+                };
                 if (refs) {
                   let html;
                   if (row.classList.contains('cropened')) {
-                    html = getRefHTML(refs, module, false, false);
+                    html = getRefHTML(refs, module, context, true, false);
                   } else {
-                    html = getRefHTML(refs, module, false, true);
+                    html = getRefHTML(refs, module, context, false, false);
                   }
                   sanitizeHTML(el, html);
                 }
@@ -163,6 +166,7 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
       if (selob) {
         let searchtext = selob.toString();
         searchtext = cleanDoubleClickSelection(searchtext);
+        const { module } = this.props as AtextProps;
         if (module && searchtext && !/^\s*$/.test(searchtext)) {
           G.Commands.search({ module, searchtext, type: 'SearchAnyWord' });
         }
@@ -171,8 +175,18 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
     }
 
     case 'mouseover': {
-      const targ = ofClass(['cr', 'fn', 'sn', 'un', 'image-container'], target);
+      const targ = ofClass(
+        ['cr', 'fn', 'sn', 'un', 'image-container'],
+        es.target
+      );
       if (targ === null) return;
+      const props = this.props as AtextProps;
+      const { isPinned, module, panelIndex: index, place: pl } = props;
+      const { pin } = this.state as AtextStateType;
+      const place = isPinned && pin ? pin.place : pl;
+      const target = es.target as HTMLElement;
+      const atext = es.currentTarget as HTMLElement;
+      const type = module ? G.Tab[module].type : '';
       let popupParent: any = ofClass(['npopup'], target);
       popupParent = popupParent ? popupParent.element : null;
       const elem = targ.element;
@@ -277,6 +291,7 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
     case 'mouseout': {
       const e = es as React.MouseEvent;
       // Remove any footnote hilighting
+      const atext = es.currentTarget as HTMLElement;
       if (atext) {
         const nbc = atext.lastChild as HTMLElement;
         Array.from(nbc.getElementsByClassName('fnselected')).forEach((note) => {
@@ -298,8 +313,13 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
 
     case 'wheel': {
       const e = es as React.WheelEvent;
-      if (isPinned && type !== C.DICTIONARY && !ofClass(['nbc'], target)) {
-        aTextWheelScroll(e, atext, this);
+      const { isPinned, module } = this.props as AtextProps;
+      if (isPinned && module) {
+        const atext = es.currentTarget as HTMLElement;
+        const { type } = G.Tab[module];
+        if (atext && type !== C.DICTIONARY && !ofClass(['nbc'], es.target)) {
+          aTextWheelScroll(e, atext, this);
+        }
       }
       break;
     }
@@ -308,7 +328,7 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
     case 'mousedown': {
       const e = es as React.MouseEvent;
       const { noteBoxResizing } = this.state as AtextStateType;
-      const targ = ofClass('bb', target);
+      const targ = ofClass('bb', es.target);
       if (targ) {
         this.setState({ noteBoxResizing: [e.clientY, e.clientY] });
         return;
@@ -324,7 +344,7 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
       const { noteBoxHeight, maximizeNoteBox, noteboxBar } = this
         .props as AtextProps;
       if (noteBoxResizing) {
-        const targ = ofClass('atext', target);
+        const targ = ofClass('atext', es.target);
         if (targ) {
           e.stopPropagation();
           e.preventDefault();

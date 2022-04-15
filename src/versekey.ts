@@ -7,8 +7,8 @@ import type { GType, LocationVKType, V11nType } from './type';
 import type RefParser from './refparse';
 
 type VerseKeyGtype = {
+  convertLocation: GType['LibSword']['convertLocation'];
   Book: () => GType['Book'];
-  BkChsInV11n: () => GType['BkChsInV11n'];
   Tab: () => GType['Tab'];
 };
 
@@ -17,25 +17,25 @@ type VerseKeyGtype = {
 // IMPORTANT: This class depends on data from the calling process, requiring
 // access functions be supplied from the calling process during instantiation.
 export default class VerseKey {
-  #loc: LocationVKType;
-
-  #v11nCurrent: V11nType;
-
   #parser: RefParser;
+
+  #bkChsInV11n: GType['BkChsInV11n'];
 
   #gfunctions: VerseKeyGtype;
 
-  #convertLocation: GType['LibSword']['convertLocation'];
+  #loc: LocationVKType;
+
+  #v11nCurrent: V11nType | null;
 
   constructor(
     parser: RefParser,
-    libswordConvertLocation: GType['LibSword']['convertLocation'],
+    bkChsInV11n: GType['BkChsInV11n'],
     gfunction: VerseKeyGtype,
     location: LocationVKType | string,
-    v11n?: V11nType
+    v11n?: V11nType | null
   ) {
     this.#parser = parser;
-    this.#convertLocation = libswordConvertLocation;
+    this.#bkChsInV11n = bkChsInV11n;
     this.#gfunctions = gfunction;
     this.#loc =
       typeof location === 'string'
@@ -47,23 +47,23 @@ export default class VerseKey {
   // Accept any osisRef work prefix and then look for an OSIS ref book code. If the
   // reference starts with a book code, the following string patterns are parsed:
   // code, code 1, code 1:1, code 1:1-1, code 1:1 - code 1:1, code.1, code.1.1, code.1.1.1
-  // Otherwise the string will be parsed using parseLocation() on up to two dash separated
-  // segments. If the location cannot be read, book will be empty string and chapter,
-  // verse and lastverse will be 0. If any range contains verses beyond the chapter, those
-  // verses will not be included in the VerseKey.
-  parseLocation(location: string, tov11n?: V11nType) {
+  // Otherwise the string will be parsed using parseLocation() for up to two dash separated
+  // segments. If a location cannot be parsed, book will be empty string and chapter will
+  // be 0. If any range contains verses beyond the chapter, those verses will not be
+  // included in the VerseKey.
+  parseLocation(location: string, tov11n?: V11nType | null) {
     const Tab = this.#gfunctions.Tab();
     let work;
     let loc = location.trim();
-    const match = loc.match(/^(\S+):(.*)$/);
+    const match = loc.match(/^(\w[\w\d]+):(.*)$/);
     if (match) [, work, loc] = match;
     const workv11n = work && work in Tab && Tab[work].v11n;
     const code = loc.match(/^([\w\d]+)\./);
     let book = '';
     let chapter = 0;
-    let verse = 0 as number | null | undefined;
-    let lastverse = 0 as number | null | undefined;
-    let v11n = workv11n || tov11n || 'KJV';
+    let verse = null as number | null | undefined;
+    let lastverse = null as number | null | undefined;
+    let v11n = workv11n || tov11n || null;
     if (
       code &&
       C.SupportedBookGroups.some((bg) => {
@@ -94,8 +94,8 @@ export default class VerseKey {
     }
     return {
       book,
-      chapter: chapter || 1,
-      verse: verse || null,
+      chapter,
+      verse,
       lastverse: lastverse || verse || null,
       v11n,
     };
@@ -106,18 +106,18 @@ export default class VerseKey {
   // if the book is not included in tov11n. Also LibSword only converts
   // between systems in C.SupportedV11nMaps. So these things must be
   // checked before ever calling LibSword.
-  #canConvertLocation(tov11n: V11nType) {
+  #doConvertLocation(tov11n: V11nType) {
     const fromv11n = this.#loc.v11n;
     if (fromv11n === tov11n) return false;
+    if (!fromv11n || !tov11n) return false;
     if (!(fromv11n in C.SupportedV11nMaps)) return false;
     if (!C.SupportedV11nMaps[fromv11n].includes(tov11n)) return false;
     const { book, chapter, verse, lastverse } = this.#loc;
-    const bkChsInV11n = this.#gfunctions.BkChsInV11n();
-    if (!(tov11n in bkChsInV11n)) return false;
-    if (!(book in bkChsInV11n[tov11n])) return false;
+    if (!(tov11n in this.#bkChsInV11n)) return false;
+    if (!(book in this.#bkChsInV11n[tov11n])) return false;
     const maxch =
-      fromv11n in bkChsInV11n && book in bkChsInV11n[fromv11n]
-        ? bkChsInV11n[fromv11n][book]
+      fromv11n in this.#bkChsInV11n && book in this.#bkChsInV11n[fromv11n]
+        ? this.#bkChsInV11n[fromv11n][book]
         : 0;
     if (chapter < 1 || chapter > maxch) return false;
     if (verse) {
@@ -181,7 +181,7 @@ export default class VerseKey {
   // code.ch
   // code.ch.vs
   // code.ch.vs.lv (this is not valid according to the OSIS spec, but is used by xulsword)
-  osisRef(v11n?: V11nType): string {
+  osisRef(v11n?: V11nType | null): string {
     const tov11n = v11n || this.#v11nCurrent;
     const l = this.location(tov11n);
     const bk = l.book;
@@ -192,12 +192,13 @@ export default class VerseKey {
   }
 
   // Return LocationVKType according to a particular v11n.
-  location(v11n?: V11nType): LocationVKType {
+  location(v11n?: V11nType | null): LocationVKType {
     const tov11n = v11n || this.#v11nCurrent;
+    if (!tov11n || !this.#loc.v11n) return this.#loc;
     if (this.#loc.v11n === tov11n) return this.#loc;
-    if (!this.#canConvertLocation(tov11n)) return this.#loc;
+    if (!this.#doConvertLocation(tov11n)) return this.#loc;
     return this.parseLocation(
-      this.#convertLocation(
+      this.#gfunctions.convertLocation(
         this.#loc.v11n,
         [
           this.#loc.book,
@@ -219,6 +220,7 @@ export default class VerseKey {
   // these situations. But, in order to return either HTML or UTF8, this function
   // uses HTML entities instead.
   readable(v11n?: V11nType, notHTML = false): string {
+    const Book = this.#gfunctions.Book();
     const tov11n = v11n || this.#v11nCurrent;
     const l = this.location(tov11n);
     const guidir = i18next.t('locale_direction').toLocaleLowerCase();
@@ -228,7 +230,6 @@ export default class VerseKey {
         guidir === 'rtl'
           ? String.fromCharCode(8207)
           : String.fromCharCode(8206);
-    const Book = this.#gfunctions.Book();
     const book = l.book && l.book in Book ? Book[l.book].name : l.book;
     const parts: string[] = ['', book];
     if (l.chapter) {

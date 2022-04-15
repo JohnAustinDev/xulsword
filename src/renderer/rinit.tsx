@@ -58,15 +58,11 @@ i18n.on('initialized', (options) => {
 async function i18nInit(namespaces: string[]) {
   const lang = G.Prefs.getCharPref('global.locale');
 
-  const locales = G.Prefs.getComplexValue(
-    'global.locales'
-  ) as GlobalPrefType['global']['locales'];
   const supportedLangs = [
     ...new Set(
-      locales
-        .map((l) => {
-          return l[0];
-        })
+      C.Locales.map((l) => {
+        return l[0];
+      })
         .map((l) => {
           return [l, l.replace(/-.*$/, '')];
         })

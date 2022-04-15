@@ -353,13 +353,15 @@ export function textChange(
           | undefined;
         if (firstVerse) {
           const p = getElementInfo(firstVerse);
-          if (p && p.bk && p.ch && module && module in G.Tab) {
-            const mv11n = G.Tab[module].v11n || 'KJV';
+          const t = (module && G.Tab[module]) || null;
+          const v11n = t?.v11n || null;
+          const chapter = p && !Number.isNaN(Number(p.ch)) ? Number(p.ch) : 0;
+          if (p && p.bk && chapter && v11n) {
             const vk: LocationVKType = {
               book: p.bk,
-              chapter: Number(p.ch),
+              chapter,
               verse: 1,
-              v11n: mv11n,
+              v11n,
             };
             if (next) {
               location = chapterChange(vk, 1);

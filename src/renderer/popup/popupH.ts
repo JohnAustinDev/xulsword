@@ -2,15 +2,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { clone, ofClass, sanitizeHTML } from '../../common';
 import G from '../rg';
-import { getPopupInfo } from '../../libswordElemInfo';
+import { getElementInfo, getPopupInfo } from '../../libswordElemInfo';
 import { getContextModule } from '../rutil';
 import { getDictEntryHTML, getLemmaHTML } from '../viewport/zdictionary';
 import {
   getIntroductions,
   getNoteHTML,
-  getRefBible,
+  parseExtendedVKRef,
 } from '../viewport/zversekey';
 
+import { LocationVKType } from '../../type';
 import type { ElemInfo } from '../../libswordElemInfo';
 import type Popup from './popup';
 import type { PopupState } from './popup';
@@ -37,7 +38,11 @@ export function getTopElement(
 }
 
 // Get html for Popup target with the help of any extra info.
-export function getPopupHTML(elem: HTMLElement, info: ElemInfo) {
+export function getPopupHTML(
+  elem: HTMLElement,
+  info: ElemInfo,
+  testonly?: boolean // is elem renderable as a popup?
+) {
   const { type, reflist, bk, ch, mod, title } = info;
   let html = '';
   switch (type) {
@@ -49,7 +54,7 @@ export function getPopupHTML(elem: HTMLElement, info: ElemInfo) {
         G.LibSword.getChapterText(mod, `${bk}.${ch}`);
         const notes = G.LibSword.getNotes();
         // a note element's title does not include type, but its nlist does
-        html = getNoteHTML(notes, null, 0, true, `${type}.${title}`);
+        html = getNoteHTML(notes, null, 0, !testonly, `${type}.${title}`);
       }
       break;
     }
@@ -58,17 +63,46 @@ export function getPopupHTML(elem: HTMLElement, info: ElemInfo) {
     // or, in some weird cases (such as StrongsHebrew module) to a dictionary entry.
     case 'sr': {
       if (mod) {
-        const bibleReflist =
-          reflist && reflist[0] !== 'unavailable'
-            ? reflist.join(';')
-            : elem && elem.innerHTML;
-        const bibleMod = getRefBible(mod, null, bibleReflist);
-        if (bibleMod) {
+        const bibleReflist = reflist
+          ? reflist.join(';')
+          : elem && elem.innerHTML;
+        // Getting original context of an sr span is tricky since popup
+        // copies the span locally. So write data-context when possible.
+        let si = info;
+        if (!si.vs) {
+          let pp;
+          if (elem.dataset.context) {
+            pp = getElementInfo(
+              `<span class="vs" data-title="${elem.dataset.context}">`
+            );
+          } else {
+            const vstarg = ofClass(['vs'], elem);
+            if (vstarg) {
+              pp = getElementInfo(vstarg.element);
+              if (pp) {
+                const { bk: b, ch: c, vs: v, lv: l, mod: m } = pp;
+                elem.dataset.context = `${b}.${c}.${v}.${l}.${m}`;
+              }
+            }
+          }
+          if (pp) si = pp;
+        }
+        const { bk: bk2, ch: ch2, vs: vs2 } = si;
+        const context: LocationVKType = {
+          book: bk2 || '',
+          chapter: !Number.isNaN(Number(ch2)) ? Number(ch2) : 0,
+          verse: vs2,
+          v11n: null,
+        };
+        const parsed = parseExtendedVKRef(bibleReflist, context);
+        if (parsed.length) {
+          const { book, chapter, verse } = context;
+          const dt = `cr.1.${book || 0}.${chapter || 0}.${verse || 0}.${mod}`;
           html = getNoteHTML(
-            `<div class="nlist" data-title="cr.1.0.0.0.${mod}">${bibleReflist}</div>`,
+            `<div class="nlist" data-title="${dt}">${bibleReflist}</div>`,
             null,
             0,
-            true
+            !testonly
           );
         } else if (reflist && reflist[0]) {
           html = getDictEntryHTML(reflist[0].replace(/^.*?:/, ''), mod);
@@ -135,13 +169,23 @@ export default function handler(this: Popup, e: React.MouseEvent) {
   switch (e.type) {
     case 'mouseover': {
       const targ = ofClass(
-        ['cr', 'fn', 'un', 'sn', 'sr', 'dt', 'dtl', 'introlink', 'noticelink'],
+        [
+          'npopup',
+          'cr',
+          'fn',
+          'un',
+          'sn',
+          'sr',
+          'dt',
+          'dtl',
+          'introlink',
+          'noticelink',
+        ],
         target
       );
-      if (targ) {
-        if (!getPopupHTML(targ.element, getPopupInfo(targ.element))) {
-          targ.element.classList.add('empty');
-        }
+      if (!targ || targ.type === 'npopup') return;
+      if (!getPopupHTML(targ.element, getPopupInfo(targ.element), true)) {
+        targ.element.classList.add('empty');
       }
       break;
     }

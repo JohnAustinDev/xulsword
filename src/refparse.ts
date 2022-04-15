@@ -1,13 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import i18next from 'i18next';
+import Cache from './cache';
 import C from './constant';
-import { escapeRE, iString } from './common';
+import { iString } from './common';
 
-import type { BookGroupType, LocationVKType, GType, V11nType } from './type';
-
-type RefParserGtype = {
-  Book: () => GType['Book'];
-};
+import type { BookGroupType, LocationVKType, V11nType } from './type';
 
 type IdentifyBookType = {
   code: string;
@@ -20,32 +17,30 @@ type BookNamePartsType = {
   locale: string | null;
 };
 
+type LocalizedBookType = {
+  [locale: string]: {
+    [code: string]: [string[], string[], string[]];
+  };
+};
+
 export type RefParserOptionsType = {
-  noOsisCode?: boolean; // don't search for OSIS book codes
+  locales?: string[]; // search just these locales for book names (default is all locales)
 
   onlyOsisCode?: boolean; // search OSIS book codes and not locales
-
-  noOtherLocale?: boolean; // search just the program locale, and no others
 
   noVariations?: boolean; // don't consider a locale's CODEVariations entry
 
   exactMatch?: boolean; // locale books must match exactly (case insensitive), instead of allowing unmatched suffixes
 
-  uncertain?: boolean; // if multiple different book codes are matched, the first is still returned, instead of null
+  uncertain?: boolean; // if multiple different book codes are matched, the first is returned, instead of null
 };
 
-// Parse human readable Bible reference strings into LocationVKType or
-// null if the string is not an understandable reference.
-// IMPORTANT: This class depends on data from the calling process, requiring
-// that access functions are supplied from the calling process during creation.
+// Parse human readable Bible reference strings into LocationVKType
+// or null if the string is not an understandable reference.
 export default class RefParser {
-  #locales: string[];
-
-  noOsisCode: boolean;
+  locales: string[];
 
   onlyOsisCode: boolean;
-
-  noOtherLocale: boolean;
 
   noVariations: boolean;
 
@@ -53,24 +48,50 @@ export default class RefParser {
 
   uncertain: boolean;
 
-  gfunctions: RefParserGtype;
+  osisString: string;
 
-  localesAccessor: () => string[];
+  osisStringLC: string;
 
-  constructor(
-    gfunctions: RefParserGtype,
-    localesAccessor: () => string[],
-    options?: RefParserOptionsType
-  ) {
-    this.gfunctions = gfunctions;
-    this.localesAccessor = localesAccessor;
-    this.#locales = [];
-    this.noOsisCode = false;
+  localizedBooks: LocalizedBookType;
+
+  constructor(options?: RefParserOptionsType) {
+    this.locales = C.Locales.map((l) => l[0]);
     this.onlyOsisCode = false;
-    this.noOtherLocale = false;
     this.noVariations = false;
     this.exactMatch = false;
     this.uncertain = false;
+    this.osisString = C.SupportedBookGroups.reduce((p, bg) => {
+      return `${p}${C.SupportedBooks[bg].join('.')}.`;
+    }, '.');
+    this.osisStringLC = this.osisString.toLowerCase();
+    if (!i18next.isInitialized) {
+      throw Error('Cannot use RefParser until i18next has initialized');
+    }
+    if (!Cache.has('RefParseLocale')) {
+      const rpl = {} as LocalizedBookType;
+      C.Locales.forEach((locarray) => {
+        const [loc] = locarray;
+        rpl[loc] = {};
+        const toptions = { lng: loc, ns: 'common/books' };
+        ['ot', 'nt'].forEach((bgs) => {
+          const bg = bgs as BookGroupType;
+          C.SupportedBooks[bg].forEach((code) => {
+            const keys = [code, `Long${code}`, `${code}Variations`];
+            rpl[loc][code] = keys.map((key) => {
+              let str = '';
+              // Must test for key's existence. Using return === key as the
+              // existence check gives false fails: ex. Job === Job.
+              if (i18next.exists(key, toptions)) {
+                str = i18next.t(key, toptions);
+              }
+              return str ? str.split(/\s*,\s*/) : [];
+            }) as any;
+          });
+        });
+      });
+      Cache.write(rpl, 'RefParseLocale');
+    }
+    this.localizedBooks = Cache.read('RefParseLocale');
     if (options) {
       Object.entries(options).forEach((entry) => {
         const name = entry[0] as keyof RefParserOptionsType;
@@ -80,137 +101,140 @@ export default class RefParser {
     }
   }
 
-  // Search through each book name (including short, long, + variations) of a locale.
+  // Search through each book name (including short, long and variations) of each
+  // locale looking for matches to inbook. The number of matches found is returned.
+  // If exact is true, inbook must match exactly (but case insensetive) and upon the
+  // first match, searching will stop and 1 is returned. If exact is false. inbook
+  // may have any suffix(es) and still be considered a match, and all locales are
+  // searched exhaustively and all matches are returned.
   #compareAgainstLocale(
     exact: boolean,
     inbook: BookNamePartsType,
     bookInfo: IdentifyBookType
   ): number {
-    let locales = this.#locales;
-    // If there is an inbook.locale, make sure it is always searched, and first.
+    let { locales } = this;
+    // If there is an inbook.locale (where getBookNameParts() was succesfull), make
+    // sure that it is always searched first.
     if (inbook.locale) {
-      if (!locales.includes(inbook.locale)) locales.unshift(inbook.locale);
-      else if (locales.length > 1) {
-        locales = locales.filter((l) => l !== inbook.locale);
-        locales.unshift(inbook.locale);
-      }
+      locales = locales.filter((l) => l !== inbook.locale);
+      locales.unshift(inbook.locale);
     }
-    const book = this.gfunctions.Book();
-    const bgs: BookGroupType[] = ['ot', 'nt'];
-    let count = 0;
+    const codes: Set<string> = new Set();
     locales.forEach((loc) => {
-      const toptions = { lng: loc, ns: 'common/books' };
-      bgs.forEach((bg: BookGroupType) => {
-        C.SupportedBooks[bg].forEach((bk) => {
-          const keys = [book[bk].code, `Long${book[bk].code}`];
-          if (!this.noVariations) keys.push(`${book[bk].code}Variations`);
-          const list = keys.map((k) => {
-            const r = i18next.t(k, toptions);
-            return !r ? null : r.trim().split(/\s*,\s*/);
-          });
-          let s;
-          let l;
-          let isMatch = false;
-          list.forEach((a) => {
-            if (isMatch || a === null) return;
-            a.forEach((v) => {
-              if (isMatch || !v) return;
-              const testbook = this.#getBookNameParts(v, loc);
-              if (inbook.number === testbook.number) {
-                if (testbook.name.length < inbook.name.length) {
-                  s = testbook.name;
-                  l = inbook.name;
+      // Currently xulsword locales only include ot and nt books.
+      ['ot', 'nt'].forEach((bgs) => {
+        const bg = bgs as BookGroupType;
+        C.SupportedBooks[bg].forEach((code) => {
+          if (codes.size && exact) return;
+          let codeMatches = false;
+          this.localizedBooks[loc][code].forEach((lnamea, i) => {
+            if (codeMatches || (i === 2 && this.noVariations)) return;
+            lnamea.forEach((lname) => {
+              if (codeMatches || !lname) return;
+              const test = this.#getBookNameParts(lname, loc);
+              if (inbook.number === test.number) {
+                let s;
+                let l;
+                // Don't allow swapping of variations, which may be abbreviated.
+                if (test.name.length < inbook.name.length && i !== 2) {
+                  s = test.name.toLowerCase();
+                  l = inbook.name.toLowerCase();
                 } else {
-                  s = inbook.name;
-                  l = testbook.name;
+                  s = inbook.name.toLowerCase();
+                  l = test.name.toLowerCase();
                 }
-                const sre = exact
-                  ? new RegExp(`^${escapeRE(s)}$`, 'i')
-                  : new RegExp(`^${escapeRE(s)}`, 'i');
-                if (sre.test(l)) isMatch = true;
+                codeMatches = exact ? s === l : l.startsWith(s);
+                // console.log(`codeMatches=${codeMatches}, exact:${exact}, inbook:${inbook.name}, s:${s}, l:${l}`);
               }
             });
           });
-          if (isMatch) {
-            if (bookInfo.code !== book[bk].code) {
-              bookInfo.code = book[bk].code;
-              count += 1;
+          if (codeMatches) {
+            codes.add(code);
+            if (!bookInfo.code) {
+              bookInfo.code = code;
+              bookInfo.locale = loc;
             }
           }
         });
       });
     });
-
-    return count;
+    return codes.size;
   }
 
-  // Some book names may have a space between a name and a number (ie 1st Corinthians).
-  // This separates the name and number (ie '1' and 'Corinthians'). If the name has no
-  // number associated with it, 0 is returned as number.
+  // Some book names may have a space between a name and a number (ie
+  // 1st Corinthians). This separates the name and number (ie '1' and
+  // 'Corinthians'). If the name has no number associated with it, 0
+  // is returned as number. Since both digits and ordinals (ie 'First')
+  // may be localized, one or more localized searches is done. If
+  // alocale is provided, that one is searched, otherwise all of the
+  // parser's locales are searched. NOTE: Currently only localized
+  // digits are supported, not localized ordinals, although this
+  // function could do that if ordinals were added to xulsword's locales.
   #getBookNameParts(string: string, alocale?: string): BookNamePartsType {
     let name = string;
     name = name.trim();
+    const ckey = `getBookNameParts(${string}, ${alocale})`;
+    if (!Cache.has(ckey)) {
+      let locale: string | null = null;
+      const locales = alocale ? [alocale] : this.locales;
+      locales.forEach((loc) => {
+        const test = iString(name, loc);
+        if (test === name) return;
+        name = test;
+        locale = loc;
+      });
 
-    let locale: string | null = null;
-    const locales = alocale ? [alocale] : this.#locales;
-    locales.forEach((loc) => {
-      const test = iString(name, loc);
-      if (test === name) return;
-      name = test;
-      locale = loc;
-    });
+      const parts = name.split(' ');
 
-    const parts = name.split(' ');
-
-    let number = 0;
-    const namea: string[] = [];
-    parts.forEach((p) => {
-      const digit = p.match(/(\d+)/);
-      if (!digit) {
-        namea.push(p);
-      } else {
-        number = Number(digit[1]);
-        if (parts.length === 1) {
-          namea.push(p.replace(digit[1], ''));
+      let number = 0;
+      const namea: string[] = [];
+      parts.forEach((p) => {
+        const digit = p.match(/(\d+)/);
+        if (!digit) {
+          namea.push(p);
+        } else {
+          number = Number(digit[1]);
+          if (parts.length === 1) {
+            namea.push(p.replace(digit[1], ''));
+          }
         }
-      }
-    });
-
-    return { number, name: namea.join(' '), locale };
+      });
+      Cache.write({ number, name: namea.join(' '), locale }, ckey);
+    }
+    return Cache.read(ckey);
   }
 
-  // Takes a string and tries to parse out a localized book name. If a book name
-  // is found, the OSIS book code and any default modules for the successful
-  // locale are recorded. If parsing is unsuccessful, null is returned.
+  // Takes a string and tries to parse out a localized book name. If a book
+  // name is found, the locale of the matched book is returned. If parsing
+  // is unsuccessful, null is returned.
   #identifyBook(book: string): IdentifyBookType | null {
     const r: IdentifyBookType = { code: '', locale: null };
-
-    if (!this.noOsisCode) {
-      C.SupportedBookGroups.some((bg) => {
-        const bk = C.SupportedBooks[bg].find(
-          (b) => b.toLowerCase() === book.toLowerCase()
-        );
-        if (bk) {
-          r.code = bk;
-          return true;
-        }
-        return false;
-      });
+    let osisi = this.osisStringLC.indexOf(`.${book.toLowerCase()}.`);
+    osisi += 1;
+    if (osisi) {
+      const code = this.osisString.substring(
+        osisi,
+        this.osisString.indexOf('.', osisi)
+      );
+      r.code = code;
+      return r;
     }
-    if (r.code) return r;
     if (this.onlyOsisCode) return null;
 
     const inbook = this.#getBookNameParts(book);
 
-    // Look for exact match and if not found maybe look for partial match.
+    // Look for exact match.
     let count = this.#compareAgainstLocale(true, inbook, r);
-    if (!this.uncertain && count > 1) return null;
-    if (!this.exactMatch) {
-      if (!count) count = this.#compareAgainstLocale(false, inbook, r);
-      if (!this.uncertain && count > 1) return null;
+    if (count || this.exactMatch) {
+      return count && r && r.code ? r : null;
+    }
+    // Otherwise try matching with wildcard suffix.
+    count = this.#compareAgainstLocale(false, inbook, r);
+    if (count) {
+      return (this.uncertain || count === 1) && r && r.code ? r : null;
     }
 
-    return r && r.code ? r : null;
+    return null;
   }
 
   // Tries to parse a readable reference string to return an OSIS book code,
@@ -219,10 +243,10 @@ export default class RefParser {
   // while missing verse and lastverse are returned as null.
   parse(
     text2parse: string,
-    v11n: V11nType
+    v11n: V11nType | null
   ): { location: LocationVKType; locale: string | null } | null {
     let text = text2parse;
-    text = text.replace(/[^\s\p{L}\p{N}:-]/gu, '');
+    text = text.replace(/[^\s\p{L}\p{N}:-]/gu, ' ');
     text = text.replace(/\s+/g, ' ');
     text = text.trim();
 
@@ -241,50 +265,55 @@ export default class RefParser {
       locale: null,
     };
 
-    let has1chap;
-    let shft; // book=1, chap=2, verse=3, lastverse=4
+    let has1chap = false;
+    let shft = 0; // book=1, chap=2, verse=3, lastverse=4
     /* eslint-disable prettier/prettier */
     let p = null;
-    if (p === null) {p = text.match(/^(.+?)\s+(\d+):(\d+)-(\d+)$/); shft=0; has1chap=false;} // book 1:2-3
-    if (p === null) {p = text.match(/^(.+?)\s+(\d+):(\d+)$/);       shft=0; has1chap=false;} // book 4:5
-    if (p === null) {p = text.match(/^(.+?)\s+(\d+)$/);             shft=0; has1chap=false;} // book 6
-    if (p === null) {p = text.match(/^(.+?)\s+[v|V].*(\d+)$/);      shft=0; has1chap=true; } // book v6 THIS VARIES WITH LOCALE!
-    if (p === null) {p = text.match(/^(\d+)$/);                     shft=2; has1chap=false;} // 6
-    if (p === null) {p = text.match(/^(\d+):(\d+)-(\d+)$/);         shft=1; has1chap=false;} // 1:2-3
-    if (p === null) {p = text.match(/^(\d+):(\d+)$/);               shft=1; has1chap=false;} // 4:5
-    if (p === null) {p = text.match(/^(\d+)-(\d+)$/);               shft=2; has1chap=false;} // 4-5
-    if (p === null) {p = text.match(/^(.*?)$/);                     shft=0; has1chap=false;} // book
+    if (p === null) {p = text.match(/^(.+?)\s+(\d+)\s*:\s*(\d+)\s*-\s*(\d+)$/);               } // book 1:2-3
+    if (p === null) {p = text.match(/^(.+?)\s+(\d+)\s*:\s*(\d+)$/);                           } // book 4:5
+    if (p === null) {p = text.match(/^(.+?)\s+(\d+)$/);                                       } // book 6
+    if (p === null) {p = text.match(/^(.+?)\s+[v|V].*(\d+)$/);          if (p) has1chap=true; } // book v6 THIS VARIES WITH LOCALE!
+    if (p === null) {p = text.match(/^(\d+)$/);                         if (p) shft=1;        } // 6
+    if (p === null) {p = text.match(/^(\d+)\s*:\s*(\d+)\s*-\s*(\d+)$/); if (p) shft=1;        } // 1:2-3
+    if (p === null) {p = text.match(/^(\d+)\s*:\s*(\d+)$/);             if (p) shft=1;        } // 4:5
+    if (p === null) {p = text.match(/^(\d+)\s*-\s*(\d+)$/);             if (p) shft=2;        } // 4-5
+    if (p === null) {p = text.match(/^(.*?)$/);                                               } // book
     /* eslint-enable prettier/prettier */
     // jsdump("parsed:" + parsed + " match type:" + m + "\n");
 
     if (p) {
       while (shft) {
-        p.splice(1, 0);
+        p.splice(1, 0, '');
         shft -= 1;
       }
       if (has1chap) p.splice(2, 0, '1'); // insert chapter=1 if book has only one chapter
       if (p[1]) {
-        this.#locales = this.noOtherLocale
-          ? [i18next.language]
-          : this.localesAccessor();
+        // gfunctions allows RefParser to function correctly even after reset.
         const idbk = this.#identifyBook(p[1]);
         if (idbk) {
           r.location.book = idbk.code;
           if (idbk.locale) r.locale = idbk.locale;
           if (p[2]) {
-            r.location.chapter = Number(p[2]);
+            const ch = Number(p[2]);
+            if (ch > C.MAXCHAPTER) return null;
+            r.location.chapter = ch;
           }
           if (p[3]) {
-            r.location.verse = Number(p[3]);
+            const vs = Number(p[3]);
+            if (vs > C.MAXVERSE) return null;
+            r.location.verse = vs;
           }
           if (p[4]) {
-            r.location.lastverse = Number(p[4]);
+            const lv = Number(p[4]);
+            if (lv > C.MAXVERSE) return null;
+            if (r.location.verse && lv >= r.location.verse) {
+              r.location.lastverse = lv;
+            }
           }
           return r;
         }
       }
     }
-
     return null;
   }
 }

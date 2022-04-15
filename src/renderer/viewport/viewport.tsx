@@ -8,7 +8,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react/static-property-placement */
 /* eslint-disable react/jsx-props-no-spreading */
-import React from 'react';
+import React, { SyntheticEvent } from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import C from '../../constant';
@@ -474,13 +474,19 @@ class Viewport extends React.Component implements PopupParent {
                     ownWindow={ownWindow}
                     noteboxBar={noteboxBarHandler}
                     xulswordState={xulswordStateHandler}
-                    onWheel={(e) => {
+                    onWheel={(e: SyntheticEvent) => {
                       eHandler(e);
                       popupParentHandler(e, panel);
                     }}
-                    onMouseOut={(e) => popupParentHandler(e, panel)}
-                    onMouseOver={(e) => popupParentHandler(e, panel)}
-                    onMouseMove={(e) => popupParentHandler(e, panel)}
+                    onMouseOut={(e: SyntheticEvent) =>
+                      popupParentHandler(e, panel)
+                    }
+                    onMouseOver={(e: SyntheticEvent) =>
+                      popupParentHandler(e, panel)
+                    }
+                    onMouseMove={(e: SyntheticEvent) =>
+                      popupParentHandler(e, panel)
+                    }
                     ref={atextRefs[i]}
                   />
                 );

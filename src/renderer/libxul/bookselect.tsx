@@ -7,8 +7,9 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import i18next from 'i18next';
+import RefParser from '../../refparse';
 import G from '../rg';
-import { refParser } from '../rutil';
 import {
   addClass,
   xulDefaultProps,
@@ -23,12 +24,6 @@ import Menulist from './menulist';
 import Textbox from './textbox';
 import './xul.css';
 import './bookselect.css';
-
-const parser = refParser({
-  noOsisCode: true,
-  noOtherLocale: true,
-  noVariations: true,
-});
 
 // XUL Bookselect
 // This component contains an overlapping Textbox and Menulist.
@@ -84,12 +79,21 @@ class Bookselect extends React.Component {
 
   textInput: React.RefObject<HTMLInputElement>;
 
+  parser: RefParser;
+
   constructor(props: BookselectProps) {
     super(props);
 
     this.state = { book: props.selection, pattern: /.*/, autocomp: true };
 
     this.textInput = React.createRef();
+
+    // noVariations is important for autocomplete because some
+    // variations are short abbreviations.
+    this.parser = new RefParser({
+      locales: [i18next.language],
+      noVariations: true,
+    });
 
     this.getBookOptions = this.getBookOptions.bind(this);
     this.textboxChange = this.textboxChange.bind(this);
@@ -165,7 +169,7 @@ class Bookselect extends React.Component {
   textboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { autocomp } = this.state as BookselectState;
     if (autocomp) {
-      const loc = parser.parse(e.target.value, 'KJV')?.location;
+      const loc = this.parser.parse(e.target.value, null)?.location;
       if (loc) {
         this.setState({
           book: loc.book,

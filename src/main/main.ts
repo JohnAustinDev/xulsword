@@ -23,23 +23,15 @@ import contextMenu from './contextMenu';
 import { checkModulePrefs } from './minit';
 import setViewportTabs from './tabs';
 
-import type {
-  GlobalPrefType,
-  NewModulesType,
-  WindowRegistryType,
-} from '../type';
+import type { NewModulesType, WindowRegistryType } from '../type';
 
 const i18nBackendMain = require('i18next-fs-backend');
 
 LibSword.init();
 
-// Get the available locale list
-const Locales = G.Prefs.getComplexValue(
-  'global.locales'
-) as GlobalPrefType['global']['locales'];
 const AvailableLanguages = [
   ...new Set(
-    Locales.map((l) => {
+    C.Locales.map((l) => {
       return l[0];
     })
       .map((l) => {
@@ -53,7 +45,7 @@ let Language = G.Prefs.getCharPref('global.locale');
 if (!Language) {
   const oplng = 'en'; // webpack couldn't compile os-locale module
   let matched = '';
-  Locales.forEach((l) => {
+  C.Locales.forEach((l) => {
     if (!matched && (l[0] === oplng || l[0].replace(/-.*$/, '') === oplng))
       [matched] = l;
   });
@@ -64,7 +56,7 @@ if (!Language) {
 // before the app 'ready' event is fired, which happens even before
 // i18next or configs are initialized. Direction need not be forced
 // for locales in Chromium's list, like fa, but must be for ky-Arab.
-if ((Locales.find((l) => l[0] === Language) || [])[2] === 'rtl') {
+if ((C.Locales.find((l) => l[0] === Language) || [])[2] === 'rtl') {
   app.commandLine.appendSwitch('force-ui-direction', 'rtl');
 }
 app.commandLine.appendSwitch('lang', Language.replace(/-.*$/, ''));

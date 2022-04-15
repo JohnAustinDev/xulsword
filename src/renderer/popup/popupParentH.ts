@@ -45,34 +45,34 @@ export function popupParentHandler(
   es: React.SyntheticEvent,
   module: string | undefined
 ) {
-  const state = this.state as PopupParentState;
-  const props = this.props as PopupParentProps;
-  const target = es.target as HTMLElement;
-  const type = module ? G.Tab[module].type : null;
-  const { place: pl, show: sh, atextRefs, isPinned } = props;
-  const atext = ofClass(['atext'], target);
-  const index = Number(atext?.element && atext.element.dataset.index) || 0;
-  const atr = ((atext && atextRefs[index].current) ||
-    null) as PopupParent | null;
-  const place = (atr && isPinned[index] && atr.state.pin.place) || pl;
-  const show = (atr && isPinned[index] && atr.state.pin.show) || sh;
   switch (es.type) {
     case 'mouseover': {
-      const e = es as React.MouseEvent;
-      const { popupDelayTO } = this;
-      const { popupParent } = state;
-      if (popupDelayTO) clearTimeout(popupDelayTO);
-      const ppar = ofClass(['npopup'], target);
+      const ppar = ofClass(['npopup'], es.target);
       const parent = ppar?.element;
       // Only mouseovers outside of a popup which are not 'x-target_self' are handled here.
       if (parent) return;
       const targ = ofClass(
         ['cr', 'fn', 'un', 'sn', 'sr', 'dt', 'dtl', 'introlink', 'noticelink'],
-        target,
+        es.target,
         'self'
       );
-      if (targ === null || targ.element.classList.contains('x-target_self'))
-        return;
+      if (targ === null) return;
+      if (targ.element.classList.contains('x-target_self')) return;
+      const state = this.state as PopupParentState;
+      const props = this.props as PopupParentProps;
+      const target = es.target as HTMLElement;
+      const type = module ? G.Tab[module].type : null;
+      const { place: pl, show: sh, atextRefs, isPinned } = props;
+      const atext = ofClass(['atext'], target);
+      const index = Number(atext?.element && atext.element.dataset.index) || 0;
+      const atr = ((atext && atextRefs[index].current) ||
+        null) as PopupParent | null;
+      const place = (atr && isPinned[index] && atr.state.pin.place) || pl;
+      const show = (atr && isPinned[index] && atr.state.pin.show) || sh;
+      const e = es as React.MouseEvent;
+      const { popupDelayTO } = this;
+      const { popupParent } = state;
+      if (popupDelayTO) clearTimeout(popupDelayTO);
       e.preventDefault();
       const elem = targ.element;
       let openPopup = false;
@@ -112,7 +112,7 @@ export function popupParentHandler(
         default:
       }
       if (openPopup && !popupParent) {
-        if (getPopupHTML(elem, info)) {
+        if (getPopupHTML(elem, info, true)) {
           delayHandler.bind(this)(
             (el: HTMLElement, ifo: ElemInfo, gp: number) => {
               const s: Partial<PopupParentState> = {
@@ -175,10 +175,6 @@ export function popupParentHandler(
 }
 
 export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
-  const state = this.state as PopupParentState;
-  const { popupParent, popupHold } = state;
-  const target = es.target as HTMLElement;
-  const parent = popupParent || document.getElementById('root');
   switch (es.type) {
     case 'click': {
       const e = es as React.MouseEvent;
@@ -199,10 +195,14 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
           'snbut',
           'npopup',
         ],
-        target
+        es.target
       );
+      if (!targ) return;
+      const state = this.state as PopupParentState;
+      const { popupParent } = state;
+      const parent = popupParent || document.getElementById('root');
       // Require popup or window parent but don't search beyond npopup when testing type
-      if (!parent || targ === null || targ.type === 'npopup') return;
+      if (!parent || targ.type === 'npopup') return;
       e.preventDefault();
       e.stopPropagation();
       const elem = targ.element;
@@ -249,13 +249,14 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
         case 'crref': {
           if (info) {
             const { bk, ch, vs, lv, mod } = info;
-            if (bk && ch && mod) {
+            const v11n = (mod && G.Tab[mod].v11n) || null;
+            if (bk && ch && mod && v11n) {
               const loc = {
                 book: bk,
                 chapter: Number(ch),
                 verse: vs || 1,
                 lastverse: lv || 1,
-                v11n: G.Tab[mod].v11n || 'KJV',
+                v11n,
               };
               G.Commands.goToLocationVK(loc, loc);
             }
@@ -338,7 +339,7 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
     }
 
     case 'change': {
-      const select = ofClass(['popup-mod-select'], target);
+      const select = ofClass(['popup-mod-select'], es.target);
       if (select) {
         const t = select.element as HTMLSelectElement;
         const { value } = t;
@@ -373,9 +374,8 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
           return s;
         });
       } else {
-        throw Error(
-          `Unhandled popupHandler change event: '${target.className}'`
-        );
+        const trg = es.target as HTMLElement;
+        throw Error(`Unhandled popupHandler change event: '${trg.className}'`);
       }
       break;
     }
@@ -389,6 +389,7 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
     }
 
     case 'mousemove': {
+      const { popupHold } = this.state as PopupParentState;
       if (popupHold) {
         const s: Partial<PopupParentState> = { popupHold: false };
         this.setState(s);
@@ -397,6 +398,8 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
     }
 
     case 'mouseleave': {
+      const { popupParent, popupHold } = this.state as PopupParentState;
+      const parent = popupParent || document.getElementById('root');
       if (parent && !popupHold) {
         const s: Partial<PopupParentState> = { popupParent: null };
         this.setState(s);

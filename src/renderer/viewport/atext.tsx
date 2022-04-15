@@ -389,10 +389,10 @@ class Atext extends React.Component {
                 let append =
                   Number(lastv && getElementInfo(lastv)?.ch) + 1 ||
                   C.MAXCHAPTER + 1;
-                const max = getMaxChapter(
-                  G.Tab[module].v11n || 'KJV',
-                  libswordProps.location.book
-                );
+                const v11n = G.Tab[module].v11n || null;
+                const max = v11n
+                  ? getMaxChapter(v11n, libswordProps.location.book)
+                  : 0;
                 while (append <= max && sbe.scrollWidth <= sbe.offsetWidth) {
                   const app = {
                     ...libswordProps,

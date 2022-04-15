@@ -153,7 +153,7 @@ export function getElementInfo(elem: string | HTMLElement): ElemInfo | null {
         if (
           typeof parsed === 'string' &&
           parsed.indexOf('.') === -1 &&
-          Number(parsed)
+          !Number.isNaN(Number(parsed))
         ) {
           r[p] = Number(parsed) as any;
           return;
@@ -165,9 +165,9 @@ export function getElementInfo(elem: string | HTMLElement): ElemInfo | null {
             parsed = decodeURIComponent(parsed) as any;
           }
 
-          // fix incorrect dictionary osisRefs for backward compatibility to <2.23
-          if (p === 'osisref' && ['dtl', 'dt'].includes(type)) {
-            parsed = parsed.replace(/(^|\s)([^.:]+)\./g, '$1$2:');
+          // remove unavaiable
+          if (p === 'osisref' && type === 'fn' && parsed === 'unavailable') {
+            parsed = null;
           }
 
           // convert reflist into arrays
@@ -185,11 +185,12 @@ export function getElementInfo(elem: string | HTMLElement): ElemInfo | null {
             } else {
               throw Error(`Unknown type of reflist: ${type}`);
             }
-
             // decode properties which need decodeOSISRef
             for (let x = 0; x < parsed.length; x += 1) {
               parsed[x] = decodeOSISRef(parsed[x]);
             }
+            // remove unavailable
+            if (Array.isArray(parsed) && parsed[0] === 'unavailable') parsed = null;
           }
 
           if (p === 'ch') parsed = decodeOSISRef(parsed);

@@ -13,12 +13,9 @@ import G from './rg';
 
 import type {
   ContextData,
-  GlobalPrefType,
   LocationVKType,
   PrefObject,
-  LookupInfo,
   SearchType,
-  TextVKType,
   V11nType,
 } from '../type';
 
@@ -124,43 +121,29 @@ export function getMaxVerse(v11n: V11nType, vkeytext: string) {
     : 0;
 }
 
-export function refParser(options?: RefParserOptionsType): RefParser {
-  const gfunctions = {
-    Book: () => {
-      return G.Book;
-    },
-  };
-  const localesAccessor = () => {
-    const locs = G.Prefs.getComplexValue(
-      'global.locales'
-    ) as GlobalPrefType['global']['locales'];
-    return locs.map((val) => val[0]);
-  };
-  return new RefParser(gfunctions, localesAccessor, options);
-}
-
 export function verseKey(
   versekey: LocationVKType | string,
-  v11n?: V11nType
+  v11n?: V11nType | null,
+  options?: RefParserOptionsType
 ): VerseKey {
-  const lscl = (fromv11n: V11nType, vkeytext: string, tov11n: V11nType) => {
-    return G.LibSword.convertLocation(fromv11n, vkeytext, tov11n);
-  };
-  const gfunctions = {
-    Book: () => {
-      return G.Book;
-    },
-    BkChsInV11n: () => {
-      return G.BkChsInV11n;
-    },
-    Tab: () => {
-      return G.Tab;
-    },
-  };
   return new VerseKey(
-    refParser({ noOsisCode: true }),
-    lscl,
-    gfunctions,
+    new RefParser(options),
+    G.BkChsInV11n,
+    {
+      convertLocation: (
+        fromv11n: V11nType,
+        vkeytext: string,
+        tov11n: V11nType
+      ) => {
+        return G.LibSword.convertLocation(fromv11n, vkeytext, tov11n);
+      },
+      Book: () => {
+        return G.Book;
+      },
+      Tab: () => {
+        return G.Tab;
+      },
+    },
     versekey,
     v11n
   );
@@ -307,7 +290,6 @@ function getTargetsFromSelection(
 }
 
 // Return contextual data for use by context menus.
-const parser = refParser({ uncertain: true });
 export function getContextData(
   elem: HTMLElement | ParentNode | EventTarget
 ): ContextData {
@@ -335,7 +317,7 @@ export function getContextData(
 
   const v11n =
     (contextModule && contextModule in G.Tab && G.Tab[contextModule].v11n) ||
-    'KJV';
+    null;
 
   let search: SearchType | null = null;
   let lemma = null;
@@ -372,14 +354,15 @@ export function getContextData(
   const info = clone(TargetInfo) as typeof TargetInfo;
   if (selob && !selob.isCollapsed && !/^\s*$/.test(selob.toString())) {
     selection = selob.toString();
-    selectedLocationVK = parser.parse(selection, v11n)?.location || null;
+    selectedLocationVK =
+      new RefParser({ uncertain: true }).parse(selection, v11n)?.location ||
+      null;
     getTargetsFromSelection(info, selob);
   } else {
     getTargetsFromElement(info, elem);
   }
 
-  const iv11n =
-    (info.mod && info.mod in G.Tab && G.Tab[info.mod].v11n) || 'KJV';
+  const iv11n = (info.mod && info.mod in G.Tab && G.Tab[info.mod].v11n) || null;
   const locationVK = info.bk
     ? {
         v11n: iv11n,

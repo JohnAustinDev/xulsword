@@ -107,12 +107,8 @@ function getLocaleOfModule(module: string) {
   let ml: any = LibSword.getModuleInformation(module, 'Lang').toLowerCase();
   if (ml === C.NOTFOUND) ml = undefined;
 
-  const locales = Prefs.getComplexValue(
-    'global.locales'
-  ) as GlobalPrefType['global']['locales'];
-
   let stop = false;
-  locales.forEach((l: any) => {
+  C.Locales.forEach((l: any) => {
     const [locale] = l;
     if (stop) return;
     const lcs = locale.toLowerCase();
@@ -131,7 +127,7 @@ function getLocaleOfModule(module: string) {
   if (myLocale) return myLocale;
 
   const regex = new RegExp(`(^|s|,)+${module}(,|s|$)+`);
-  locales.forEach((l: any) => {
+  C.Locales.forEach((l: any) => {
     const [locale] = l;
     const toptions = {
       lng: locale,
@@ -279,10 +275,7 @@ export function getLocaleConfigs(): { [i: string]: ConfigType } {
         ret.locale[key] = `${v} !important`;
       }
     });
-    const locales = Prefs.getComplexValue(
-      'global.locales'
-    ) as GlobalPrefType['global']['locales'];
-    locales.forEach((l: any) => {
+    C.Locales.forEach((l: any) => {
       const [lang] = l;
       ret[lang] = localeConfig(lang);
     });

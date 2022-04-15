@@ -5,22 +5,6 @@
     "InternetPermission": true,
     "fontSize": 2,
     "locale": "",
-    "locales": [
-      ["en", "English", "ltr"],
-      ["ru", "Русский", "ltr"],
-      ["ru-CA", "Русский для Востока", "ltr"],
-      ["crh-Cyrl", "Русский/Крымскотатарский", "ltr"],
-      ["fa", "فارسی", "rtl"],
-      ["kk", "Қазақша", "ltr"],
-      ["ko", "한국어", "ltr"],
-      ["kum", "Къумукъ", "ltr"],
-      ["ky-Cyrl", "Кыргызча", "ltr"],
-      ["ky-Arab", "قىرعىزچا", "rtl"],
-      ["tk-Latn", "Түркменче", "ltr"],
-      ["tt-Cyrl", "Татар теле", "ltr"],
-      ["uz-Latn", "O‘zbekcha", "ltr"],
-      ["uz-Cyrl", "Ўзбекча", "ltr"]
-    ],
     "popup": {
       "selection": {
         "hebrewDef": "",

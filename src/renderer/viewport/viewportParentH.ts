@@ -80,12 +80,15 @@ export function newModulesInstalled(
       // without breaking multi-column panels.
       let panelIndex = 0;
       sortedModConfs.forEach((conf) => {
-        const current = panels[panelIndex];
+        let current = panels[panelIndex];
         if (panelIndex < panels.length) {
           for (;;) {
-            if (panelIndex >= panels.length) break;
-            else if (panels[panelIndex] === null) panelIndex += 1;
-            else if (panels[panelIndex] === current) {
+            if (panelIndex >= panels.length) {
+              break;
+            } else if (panels[panelIndex] === null) {
+              panelIndex += 1;
+              current = panels[panelIndex];
+            } else if (panels[panelIndex] === current) {
               // Unpin panels that have changed.
               if (panels[panelIndex] !== conf.module) {
                 isPinned[panelIndex] = false;
@@ -455,8 +458,8 @@ export default function handler(
             chapter: c,
             verse: v,
           } = targ.element.dataset;
-          const v11n = (m && G.Tab[m].v11n) || 'KJV';
-          if (location && m && b && v) {
+          const v11n = (m && G.Tab[m].v11n) || null;
+          if (location && m && b && v && v11n) {
             const newloc = verseKey(
               { book: b, chapter: Number(c), verse: Number(v), v11n },
               location.v11n
@@ -591,13 +594,16 @@ export default function handler(
         case 'crref': {
           if (p) {
             const { bk, ch, vs, lv, mod } = p;
-            if (bk && ch && mod) {
+            const t = (mod && G.Tab[mod]) || null;
+            const v11n = t?.v11n || null;
+            const chapter = !Number.isNaN(Number(ch)) ? Number(ch) : 0;
+            if (bk && ch && mod && v11n) {
               const loc = {
                 book: bk,
-                chapter: Number(ch),
+                chapter,
                 verse: vs || 1,
                 lastverse: lv || 1,
-                v11n: G.Tab[mod].v11n || 'KJV',
+                v11n,
               };
               G.Commands.goToLocationVK(loc, loc);
             }

@@ -150,6 +150,23 @@ const C = {
     color: 'rgb(40, 40, 40)',
   } as { [key in keyof ConfigType]: string },
 
+  Locales: [
+    ['en', 'English', 'ltr'],
+    ['ru', 'Русский', 'ltr'],
+    ['ru-CA', 'Русский для Востока', 'ltr'],
+    ['crh-Cyrl', 'Русский/Крымскотатарский', 'ltr'],
+    ['fa', 'فارسی', 'rtl'],
+    ['kk', 'Қазақша', 'ltr'],
+    ['ko', '한국어', 'ltr'],
+    ['kum', 'Къумукъ', 'ltr'],
+    ['ky-Cyrl', 'Кыргызча', 'ltr'],
+    ['ky-Arab', 'قىرعىزچا', 'rtl'],
+    ['tk-Latn', 'Түркменче', 'ltr'],
+    ['tt-Cyrl', 'Татар теле', 'ltr'],
+    ['uz-Latn', 'O‘zbekcha', 'ltr'],
+    ['uz-Cyrl', 'Ўзбекча', 'ltr'],
+  ] as const,
+
   FallbackLanguage: {
     en: 'en',
     ru: 'en',

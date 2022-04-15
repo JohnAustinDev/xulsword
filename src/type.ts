@@ -211,18 +211,18 @@ export type V11nType =
   | 'Segond';
 
 export type LocationVKType = {
-  v11n: V11nType;
   book: string;
   chapter: number;
+  v11n: V11nType | null;
   verse?: number | null;
   lastverse?: number | null;
+  subid?: string | null;
 };
 
 export type TextVKType = {
   location: LocationVKType;
   module: string;
   text: string;
-  noteID?: string; // text of note with ID at location in module
 };
 
 export type HistoryVKType = {
@@ -231,8 +231,7 @@ export type HistoryVKType = {
 };
 
 export type LookupInfo = {
-  refcompanion: boolean;
-  vkcompanion: boolean;
+  companion: boolean;
   userpref: boolean;
   alternate: boolean;
   anytab: boolean;

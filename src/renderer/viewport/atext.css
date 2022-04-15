@@ -410,12 +410,12 @@ html[dir='rtl'] .fncol3 {
   cursor: pointer;
   color: blue;
 }
-.cropened .crref:after {
-  content: ': ';
-  text-decoration: none;
+.cropened span.possibleV11nMismatch {
+  font-size: xx-small;
+  vertical-align: super;
 }
-.cropened .crref.possibleV11nMismatch:after {
-  content: '?: ';
+.crref-miss {
+  color: blue;
 }
 .crtext .alternate {
   font-style: italic;

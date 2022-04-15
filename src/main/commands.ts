@@ -226,8 +226,8 @@ const Commands: GType['Commands'] = {
     const xulsword = Prefs.getComplexValue('xulsword') as XulswordStatePref;
     const { location } = xulsword;
     const newxulsword = clone(xulsword);
-    const loc = verseKey(newlocation, location?.v11n || 'KJV');
-    const sel = verseKey(newselection, location?.v11n || 'KJV');
+    const loc = verseKey(newlocation, location?.v11n || undefined);
+    const sel = verseKey(newselection, location?.v11n || undefined);
     newxulsword.location = loc.location();
     newxulsword.selection = sel.location();
     newxulsword.scroll = newScroll || { verseAt: 'center' };
@@ -268,7 +268,7 @@ export function newDbItemWithDefaults(
           sel?.lastverse ||
           loc?.lastverse ||
           null,
-        v11n: textvk?.location?.v11n || loc?.v11n || 'KJV',
+        v11n: textvk?.location?.v11n || loc?.v11n || null,
       },
     };
 
