@@ -478,7 +478,7 @@ h3 {
 }
 .sb .hl,
 .sb .hl {
-  color: blue;
+  color: blue !important;
 }
 .cr,
 .fn,

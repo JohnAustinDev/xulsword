@@ -151,7 +151,7 @@ export function getTabs(): TabType[] {
           'AbsoluteDataPath'
         ).replace(/[\\/]/g, DIRSEP);
         if (p.slice(-1) !== DIRSEP) p += DIRSEP;
-        const dir = p;
+        const directory = p;
         p = p.replace(/[\\/]modules[\\/].*?$/, `${DIRSEP}mods.d`);
         let confFile = new nsILocalFile(
           `${p + DIRSEP + module.toLowerCase()}.conf`
@@ -174,7 +174,7 @@ export function getTabs(): TabType[] {
             }
           }
         }
-        const conf = confFile.path;
+        const confPath = confFile.path;
         if (!confFile.exists())
           jsdump(
             `WARNING: tab.conf bad path "${p}$/${module.toLowerCase()}.conf"`
@@ -184,6 +184,9 @@ export function getTabs(): TabType[] {
             .toLowerCase()
             .indexOf(Dirs.path.xsModsCommon.toLowerCase()) === 0;
         const isVerseKey = type === C.BIBLE || type === C.COMMENTARY;
+        const obs = LibSword.getModuleInformation(module, 'Obsoletes');
+        const obsoletes: string[] =
+          obs !== C.NOTFOUND ? obs.split(C.CONFSEP) : [];
 
         const tab: TabType = {
           module,
@@ -191,7 +194,7 @@ export function getTabs(): TabType[] {
           version: LibSword.getModuleInformation(module, 'Version'),
           config: getModuleConfig(module),
           v11n: isVerseKey ? LibSword.getVerseSystem(module) : '',
-          directory: dir,
+          directory,
           label,
           labelClass: isASCII(label) ? 'cs-LTR_DEFAULT' : `cs-${module}`,
           tabType,
@@ -203,11 +206,12 @@ export function getTabs(): TabType[] {
             : 'ltr',
           index: i,
           description: LibSword.getModuleInformation(module, 'Description'),
-          conf,
+          confPath,
           isCommDir,
           audio: {}, // will be filled in later
           audioCode: LibSword.getModuleInformation(module, 'AudioCode'),
           lang: LibSword.getModuleInformation(module, 'Lang'),
+          obsoletes,
         };
 
         tabs.push(tab);
@@ -226,6 +230,12 @@ export function getTab(): { [i: string]: TabType } {
     const tabs = getTabs();
     tabs.forEach((t) => {
       tab[t.module] = t;
+      // Create virtual tabs for obsoleted modules, so pre-existing bookmarks
+      // etc. may continue to work. NOTE: It would be good to update such
+      // references the next time they are referenced.
+      t.obsoletes.forEach((om) => {
+        tab[om] = t;
+      });
     });
     Cache.write(tab, 'tab');
   }

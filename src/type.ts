@@ -303,7 +303,7 @@ export type FeatureType = {
   dailyDevotion: { [i: string]: string };
   glossary: string[];
   images: string[];
-  noParagraphs: string[]; // should be typeset as verse-per-line
+  noParagraphs: string[];
   // xulsword features
   greek: string[];
   hebrew: string[];
@@ -315,10 +315,32 @@ export type ModTypes =
   | 'Lexicons / Dictionaries'
   | 'Generic Books';
 
+type SwordConfLocalized = {
+  [locale: string]: string;
+};
+
 export type SwordConfType = {
   module: string;
   DataPath: string;
   MinimumVersion: string;
+  PreferredCSSXHTML: string;
+  KeySort: string;
+  TextSource: string;
+  About: SwordConfLocalized;
+  Abbreviation: SwordConfLocalized;
+  Description: SwordConfLocalized;
+  Copyright: SwordConfLocalized;
+  CopyrightHolder: SwordConfLocalized;
+  CopyrightDate: SwordConfLocalized;
+  CopyrightNotes: SwordConfLocalized;
+  CopyrightContactName: SwordConfLocalized;
+  CopyrightContactNotes: SwordConfLocalized;
+  CopyrightContactAddress: SwordConfLocalized;
+  CopyrightContactEmail: SwordConfLocalized;
+  ShortPromo: SwordConfLocalized;
+  ShortCopyright: SwordConfLocalized;
+  DistributionNotes: SwordConfLocalized;
+  UnlockInfo: SwordConfLocalized;
   ModDrv:
     | 'RawText'
     | 'RawText4'
@@ -334,6 +356,12 @@ export type SwordConfType = {
     | 'RawLD4'
     | 'zLD'
     | 'RawGenBook';
+  DisplayLevel: number;
+  Obsoletes: string[];
+  Feature: string[];
+  GlobalOptionFilter: string[];
+  History: [string, SwordConfLocalized][];
+  errors: string[];
 };
 
 export type TabTypes = 'Texts' | 'Comms' | 'Dicts' | 'Genbks';
@@ -354,9 +382,10 @@ export type TabType = {
   index: number;
   description: string;
   directory: string;
-  conf: string;
+  confPath: string;
   audio: { [index: string]: string };
   audioCode: string;
+  obsoletes: string[];
 };
 
 export type NewModulesType = {
@@ -453,7 +482,7 @@ const PrefsPublic = {
 const LibSwordPublic = {
   init: func as unknown as () => boolean,
   quit: func as unknown as () => void,
-  isReady: func as unknown as (caller: string) => boolean,
+  isReady: func as unknown as () => boolean,
   getMaxChapter: funcRO as unknown as (
     v11n: V11nType,
     vkeytext: string

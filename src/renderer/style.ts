@@ -1,5 +1,4 @@
 import type { ConfigType } from '../type';
-import { createStyleRule } from '../common';
 import C from '../constant';
 import G from './rg';
 
@@ -18,6 +17,7 @@ const defaultStyle: Partial<StyleType> = {
   },
 };
 
+// Return a config object corresponding to a styleType object's type and key.
 function getConfig(
   styleType?: StyleType,
   type?: keyof StyleType,
@@ -39,15 +39,66 @@ function getConfig(
   return config;
 }
 
+function createStyleRule(
+  selector: string,
+  config: Partial<ConfigType>,
+  important?: boolean
+): string {
+  let rule = `${selector} {`;
+  Object.entries(C.ConfigTemplate).forEach((entry) => {
+    const prop = entry[0] as keyof typeof C.ConfigTemplate;
+    const keyobj = entry[1];
+    if (keyobj.CSS && config[prop]) {
+      rule += `${keyobj.CSS}: ${config[prop]}${
+        important ? ' !important' : ''
+      }; `;
+    }
+  });
+  rule += '}';
+  return rule;
+}
+
 function insertRule(
   sheet: CSSStyleSheet,
   prefix: string,
   instance: string,
-  config?: Partial<ConfigType> | null
+  config?: Partial<ConfigType> | null,
+  important?: boolean
 ) {
   if (config) {
-    const r = createStyleRule(`.${prefix}-${instance}`, config);
+    const r = createStyleRule(`.${prefix}-${instance}`, config, important);
     if (r) sheet.insertRule(r, sheet.cssRules.length);
+  }
+}
+
+function insertModuleCSS(
+  sheet: CSSStyleSheet,
+  prefix: string,
+  module: string,
+  path: string
+) {
+  const css = G.inlineFile(path, 'utf8').substring(
+    'data:text/css;utf8,'.length
+  );
+  const m = css.replace(/[\n\r]+/g, '').match(/[^{]+\{[^}]*\}/g);
+  if (m) {
+    m.forEach((rule) => {
+      const selrul = rule.split(/(?={)/);
+      if (selrul) {
+        const [sel, rul] = selrul;
+        const newsel = sel
+          .split(',')
+          .map((s) => {
+            return s
+              ? `.${prefix}-${module} ${s.trim()}, ${s.trim()}.${prefix}-${module}`
+              : '';
+          })
+          .join(', ');
+        if (rul) {
+          sheet.insertRule(`${newsel} ${rul.trim()}`);
+        }
+      }
+    });
   }
 }
 
@@ -118,14 +169,24 @@ class DynamicStyleSheet {
                 instance,
                 getConfig(style, type, 'default')
               );
-              // Config for this type and instance (a module or locale config)
+              // Config for this type and instance (particular module or locale config)
               insertRule(sheet, prefix, instance, config);
+              // This module's PreferredCSSXHTML if provided.
+              if (type === 'module' && config.PreferredCSSXHTML) {
+                insertModuleCSS(
+                  sheet,
+                  prefix,
+                  instance,
+                  config.PreferredCSSXHTML
+                );
+              }
               // User Pref for this type and instance
               insertRule(
                 sheet,
                 prefix,
                 instance,
-                getConfig(style, type, instance)
+                getConfig(style, type, instance),
+                true
               );
             }
           });

@@ -237,6 +237,7 @@ export function inlineFile(
     gif: 'image/gif',
     ttf: 'font/ttf',
     otf: 'font/otf',
+    css: 'text/css',
   } as any;
   const contentType =
     // eslint-disable-next-line no-useless-escape

@@ -174,6 +174,7 @@ export default function renderToRoot(
     useEffect(() => {
       return window.ipc.renderer.on('newmods', (newmods: NewModulesType) => {
         Subscription.publish('modulesInstalled', newmods);
+        G.Window.reset('all', 'self');
       });
     });
     // Modal overlay:

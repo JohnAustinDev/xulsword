@@ -11,6 +11,11 @@ import { jsdump } from './mutil';
 
 import type { ModTypes, NewModulesType, SwordConfType } from '../type';
 
+// CrossWire SWORD Standard TODOS:
+// TODO! DisplayLevel: GenBook standard display's context levels
+// TODO! CrossWire wiki mentions LangSortOrder! Report change to KeySort
+// TODO! UnlockInfo: Display instructions for obtaining an unlock key
+
 const AdmZip = require('adm-zip');
 
 type ZipEntryType = {
@@ -21,24 +26,95 @@ type ZipEntryType = {
   toString: () => string;
 };
 
-export function parseModConfString(conf: string): SwordConfType {
+export function parseSwordConf(config: string | nsILocalFile): SwordConfType {
+  const conf = typeof config === 'string' ? config : config.readFile();
+  const errors = [];
   const lines = conf.split(/[\n\r]+/);
   const r = {} as SwordConfType;
+  C.SwordConf.repeatable.forEach((en) => {
+    r[en] = [];
+  });
+  const nameRE = /^\[([A-Za-z0-9_]+)\]\s*$/;
+  const commentRE = /^(#.*|\s*)$/;
   for (let x = 0; x < lines.length; x += 1) {
     const l = lines[x];
     let m;
-    if (x === 0) {
-      m = l.match(/^\[([\w\d]+)\]\s*$/);
+    if (commentRE.test(l)) {
+      // ignore comments
+    } else if (nameRE.test(l)) {
+      m = l.match(nameRE);
       if (m) [, r.module] = m;
     } else {
-      m = l.match(/^(\w+)\s*=\s*(.*?)\s*$/);
+      m = l.match(/^([A-Za-z0-9_.]+)\s*=\s*(.*?)\s*$/);
       if (m) {
-        const entry = m[1] as keyof SwordConfType;
-        const value = m[2] as any;
-        r[entry] = value;
+        const entry = m[1] as any;
+        let value = m[2] as string;
+        const entryBase = entry.substring(0, entry.indexOf('_')) || entry;
+        // Handle line continuation.
+        if (
+          C.SwordConf.continuation.includes(entryBase) &&
+          value.endsWith('\\')
+        ) {
+          const contRE = /[\s*]\\$/;
+          let nval = value.replace(contRE, '');
+          for (;;) {
+            x += 1;
+            nval += lines[x];
+            if (!nval.endsWith('\\')) break;
+            nval = nval.replace(contRE, '');
+          }
+          value = nval;
+        }
+        // Check for HTML where it shouldn't be.
+        const htmlTags = value.match(/<\w+[^>]*>/g);
+        if (htmlTags) {
+          if (!C.SwordConf.htmllink.includes(entryBase)) {
+            errors.push(`Config entry '${entry}' should not contain HTML.`);
+          }
+          if (htmlTags.find((t) => !t.match(/<a\s+href="[^"]*"\s*>/))) {
+            errors.push(
+              `HTML in entry '${entry}' can only be anchor tags with an href attribute.`
+            );
+          }
+        }
+        // Check for RTF where it shouldn't be.
+        const rtfControlWords = value.match(/\\\w[\w\d]*/);
+        if (rtfControlWords) {
+          if (!C.SwordConf.rtf.includes(entryBase)) {
+            errors.push(
+              `Warning: Config entry '${entry}' should not contain RTF.`
+            );
+          }
+        }
+        // Save the value according to value type.
+        if (entryBase === 'History') {
+          const [, version, locale] = entry.split('_');
+          if (version) {
+            if (!r.History) r.History = [];
+            r.History.push([version, { [locale || 'en']: value }]);
+          }
+        } else if (C.SwordConf.repeatable.includes(entry)) {
+          const ent = entry as typeof C.SwordConf.repeatable[number];
+          r[ent].push(value);
+        } else if (C.SwordConf.integer.includes(entry)) {
+          const ent = entry as typeof C.SwordConf.integer[number];
+          r[ent] = Number(value);
+        } else if (C.SwordConf.string.includes(entry)) {
+          const ent = entry as typeof C.SwordConf.string[number];
+          const v = value as SwordConfType['ModDrv'];
+          r[ent] = v;
+        } else if (C.SwordConf.localization.includes(entryBase)) {
+          const ent = entryBase as typeof C.SwordConf.localization[number];
+          const v = value;
+          const loc = entry.substring(entryBase.length + 1) || 'en';
+          if (!r[ent]) r[ent] = {};
+          r[ent][loc] = v;
+        }
       }
     }
   }
+  r.errors = errors.map((er) => `${r.module}: ${er}`);
+  // console.log(r);
   return r;
 }
 
@@ -137,7 +213,7 @@ export function removeModule(
         const f = moddir.clone();
         f.append(conf);
         if (!f.isDirectory() && f.path.endsWith('.conf')) {
-          const c = parseModConfString(f.readFile());
+          const c = parseSwordConf(f);
           if (c.module === m) {
             f.remove();
             const modulePath = confModulePath(c.DataPath);
@@ -207,6 +283,15 @@ export default async function installList(
           if (!ac && bc) return 1;
           return 0;
         });
+        const installed: string[] = [];
+        if (LibSword.isReady()) {
+          const mods: string = LibSword.getModuleList();
+          if (mods !== C.NOMODULES) {
+            mods.split(C.CONFSEP).forEach((ms) => {
+              installed.push(ms.split(';')[0]);
+            });
+          }
+        }
         LibSword.quit();
         const confs = {} as { [i: string]: SwordConfType };
         sortedZipEntries.forEach((entry) => {
@@ -219,7 +304,7 @@ export default async function installList(
                   toSharedDir ? Dirs.path.xsModsCommon : Dirs.path.xsModsUser
                 );
                 const confstr = entry.getData().toString('utf8');
-                const conf = parseModConfString(confstr);
+                const conf = parseSwordConf(confstr);
                 const reasons = moduleUnsupported(conf);
                 const swmodpath =
                   conf.DataPath && confModulePath(conf.DataPath);
@@ -229,6 +314,7 @@ export default async function installList(
                   );
                 }
                 if (!reasons.length) {
+                  reasons.push(...conf.errors);
                   moddest.append('mods.d');
                   if (!moddest.exists()) {
                     moddest.create(nsILocalFile.DIRECTORY_TYPE);
@@ -237,9 +323,20 @@ export default async function installList(
                   // Remove any existing module having this name.
                   if (moddest.exists() && !removeModule([conf.module])) {
                     newmods.errors.push(
-                      `${conf.module}: Could not remove existing module (shared=${toSharedDir})`
+                      `${conf.module}: Could not remove existing module.`
                     );
                   } else if (swmodpath) {
+                    // Remove any module(s) obsoleted by this module.
+                    if (conf.Obsoletes.length) {
+                      const obsoletes = conf.Obsoletes.filter((m) => {
+                        return installed.includes(m);
+                      });
+                      if (obsoletes.length && !removeModule(obsoletes)) {
+                        newmods.errors.push(
+                          `${conf.module}: Could not remove obsoleted module(s).`
+                        );
+                      }
+                    }
                     // Make sure module destination directory exists and is empty.
                     const destdir = new nsILocalFile(
                       toSharedDir
@@ -301,12 +398,12 @@ export default async function installList(
                     });
                     if (!destdir.exists()) {
                       newmods.errors.push(
-                        `Failed to copy module file" ${destdir.path}`
+                        `${conf.module}: Failed to copy module file" ${destdir.path}`
                       );
                     }
                   } else {
                     newmods.errors.push(
-                      `Module directory does not exist: ${destdir.path}`
+                      `${conf.module}: Module directory does not exist: ${destdir.path}`
                     );
                   }
                 } else {

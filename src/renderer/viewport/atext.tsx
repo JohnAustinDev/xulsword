@@ -601,7 +601,11 @@ class Atext extends React.Component {
     if (module) cls += ` ${G.Tab[module].tabType}`;
     if (isPinned) cls += ' pinned';
     if (doMaximizeNB) cls += ' noteboxMaximized';
-    if (versePerLine) cls += ' verse-per-line';
+    if (
+      versePerLine ||
+      (module && G.FeatureModules.noParagraphs.includes(module))
+    )
+      cls += ' verse-per-line';
 
     return (
       <Vbox

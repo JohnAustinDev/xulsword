@@ -158,6 +158,16 @@ export function getModuleConfig(mod: string) {
       moduleConfig[prop] = r;
     });
 
+    // Make any PreferredCSSXHTML into a full path
+    if (moduleConfig.PreferredCSSXHTML) {
+      const p = LibSword.getModuleInformation(
+        mod,
+        'AbsoluteDataPath'
+      ).replaceAll('\\', '/');
+      const p2 = `${p}${p.slice(-1) === '/' ? '' : '/'}`;
+      moduleConfig.PreferredCSSXHTML = `${p2}${moduleConfig.PreferredCSSXHTML}`;
+    }
+
     // Assign associated locales
     if (mod !== 'LTR_DEFAULT') {
       const lom = getLocaleOfModule(mod);
@@ -296,7 +306,7 @@ export function getFeatureModules(): FeatureType {
       dailyDevotion: {} as { [i: string]: string },
       glossary: [] as string[],
       images: [] as string[],
-      noParagraphs: [] as string[], // should be typeset as verse-per-line
+      noParagraphs: [] as string[],
     };
     // These are xulsword features that use certain modules
     const xulsword = {
