@@ -2,9 +2,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-continue */
 /* eslint-disable new-cap */
+import log from 'electron-log';
 import C from '../../constant';
 import Cache from '../../cache';
-import { jsdump } from '../mutil';
 import nsILocalFile from '../components/nsILocalFile';
 import Dirs from './dirs';
 import Prefs from './prefs';
@@ -65,7 +65,7 @@ const LibSword: GType['LibSword'] & LibSwordPrivate = {
   init() {
     if (this.libxulsword) return false;
 
-    jsdump('Initializing libsword...');
+    log.verbose('Initializing libsword...');
 
     this.moduleDirectory = Dirs.path.xsModsUser;
 
@@ -83,7 +83,7 @@ const LibSword: GType['LibSword'] & LibSwordPrivate = {
       }
     }
 
-    jsdump(`module directory: ${this.moduleDirectory}`);
+    log.verbose(`module directory: ${this.moduleDirectory}`);
 
     // These functions are used by C++ to call, and receive results from,
     // Javascript functions. This method provides a way for special tasks,
@@ -107,7 +107,7 @@ const LibSword: GType['LibSword'] & LibSwordPrivate = {
       this.ReportProgress,
       this.localeDirectory
     );
-    jsdump(`CREATED libxulsword object`);
+    log.verbose(`CREATED libxulsword object`);
 
     return true;
   },
@@ -120,16 +120,14 @@ const LibSword: GType['LibSword'] & LibSwordPrivate = {
         this.searchPointers[i] = null;
       });
       libxulsword.FreeLibXulsword();
-      jsdump('DELETED libxulsword object');
+      log.verbose('DELETED libxulsword object');
     }
     this.libxulsword = null;
   },
 
   isReady() {
     if (this.libxulsword) return true;
-    jsdump(
-      `ERROR: libsword was called while uninitialized: ${new Error().stack}`
-    );
+    log.error(`libsword was called while uninitialized: ${new Error().stack}`);
     return false;
   },
 
@@ -170,7 +168,7 @@ const LibSword: GType['LibSword'] & LibSwordPrivate = {
 
       if (cipherKey) msg += `${mod}(${cipherKey}) `;
     }
-    jsdump(`Opening:${msg}\n`);
+    log.verbose(`Unlocking: ${msg}\n`);
   },
 
   // reports last error logged by previous LibSword call

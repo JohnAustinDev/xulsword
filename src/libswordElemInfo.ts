@@ -136,7 +136,6 @@ export function getElementInfo(elem: string | HTMLElement): ElemInfo | null {
     // eslint-disable-next-line no-continue
     if (!m) continue;
     unmatched = false;
-    // jsdump("i=" + i + "\n" + uneval(m));
     const entries = Object.entries(TitleFormat[type][i]);
     entries.forEach((entry) => {
       const [prop, value] = entry;
@@ -202,8 +201,6 @@ export function getElementInfo(elem: string | HTMLElement): ElemInfo | null {
     break;
   }
   if (unmatched) return null;
-
-  // jsdump(uneval(r));
 
   return r;
 }

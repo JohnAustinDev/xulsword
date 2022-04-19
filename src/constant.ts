@@ -16,6 +16,9 @@ import type {
   V11nType,
 } from './type';
 
+const isDevelopment =
+  process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
+
 // Common Global Constants
 const C = {
   // --------------------------
@@ -67,9 +70,18 @@ const C = {
   // ---------------------
   // USED BY XULSWORD 3.0:
   // ---------------------
+  DEVELSPLASH: 1 as 0 | 1 | 2, // 0 normal, 1 skip, 2 debug
+  // preload.js must be kept in sync with LogLevel.
+  LogLevel: (isDevelopment ? 'debug' : 'info') as
+    | 'error'
+    | 'warn'
+    | 'info'
+    | 'verbose'
+    | 'debug'
+    | 'silly',
+
   SWORDEngineVersion: '1.8.1',
 
-  DEVELSPLASH: 1 as 0 | 1 | 2, // 0 normal, 1 skip, 2 debug
   MAXVERSE: 176,
   MAXCHAPTER: 150,
 

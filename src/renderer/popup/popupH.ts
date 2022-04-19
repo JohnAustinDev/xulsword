@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { clone, ofClass, sanitizeHTML } from '../../common';
 import G from '../rg';
+import log from '../log';
 import { getElementInfo, getPopupInfo } from '../../libswordElemInfo';
 import { getContextModule } from '../rutil';
 import { getDictEntryHTML, getLemmaHTML } from '../viewport/zdictionary';
@@ -154,7 +155,7 @@ export function getPopupHTML(
     }
 
     case 'unknown': {
-      console.log(`Unknown popup: '${elem.className}'`);
+      log.warn(`Unknown popup: '${elem.className}'`);
       break;
     }
 

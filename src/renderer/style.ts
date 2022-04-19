@@ -1,6 +1,7 @@
 import type { ConfigType } from '../type';
 import C from '../constant';
 import G from './rg';
+import log from './log';
 
 export type StyleType = {
   [i in 'locale' | 'module']?: {
@@ -215,7 +216,7 @@ class DynamicStyleSheet {
         sheet.cssRules.length
       );
 
-      // console.log(sheet);
+      log.silly('Stylesheet: ', sheet);
     }
   }
 }

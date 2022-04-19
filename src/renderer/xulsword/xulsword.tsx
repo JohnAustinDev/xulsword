@@ -4,16 +4,16 @@
 /* eslint-disable jsx-a11y/media-has-caption */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
-import React, { SyntheticEvent } from 'react';
+import React from 'react';
 import i18n from 'i18next';
 import Subscription from '../../subscription';
 import { trim, dString, diff, clone } from '../../common';
 import C from '../../constant';
 import G from '../rg';
 import renderToRoot from '../rinit';
+import log from '../log';
 import {
   verseKey,
-  jsdump,
   onSetWindowState,
   getStatePref,
   clearPending,
@@ -46,7 +46,6 @@ import type {
   XulswordStateArgType,
   XulswordStatePref,
   NoteboxBarHandlerType,
-  NewModulesType,
 } from '../../type';
 import type Atext from '../viewport/atext';
 
@@ -343,7 +342,7 @@ export default class Xulsword extends React.Component {
       else viewportReset.push(m);
     });
 
-    console.log(state);
+    log.debug('xulsword state: ', state);
 
     return (
       <Vbox
@@ -558,7 +557,7 @@ Xulsword.defaultProps = defaultProps;
 Xulsword.propTypes = propTypes;
 
 const loadxs = () => {
-  jsdump('Loading Xulsword!');
+  log.verbose('Loading Xulsword!');
   setTimeout(() => {
     G.Window.moveToBack();
   }, 100);

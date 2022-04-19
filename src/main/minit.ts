@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable new-cap */
 /* eslint-disable import/no-mutable-exports */
+import log from 'electron-log';
 import path from 'path';
 import fs from 'fs';
 import i18next from 'i18next';
@@ -17,7 +18,6 @@ import LibSword from './modules/libsword';
 import nsILocalFile from './components/nsILocalFile';
 import { getFeatureModules, getModuleFonts, getModuleConfig } from './config';
 import { moduleUnsupported } from './installer';
-import { jsdump } from './mutil';
 
 import type {
   TabType,
@@ -63,7 +63,7 @@ export function getBooks(): BookType[] {
     const stfile = path.join(
       Dirs.path.xsAsset,
       'locales',
-      Prefs.getCharPref('global.locale'),
+      i18next.language,
       'common',
       'books.json'
     );
@@ -176,8 +176,8 @@ export function getTabs(): TabType[] {
         }
         const confPath = confFile.path;
         if (!confFile.exists())
-          jsdump(
-            `WARNING: tab.conf bad path "${p}$/${module.toLowerCase()}.conf"`
+          log.warn(
+            `tab config file bad path "${p}$/${module.toLowerCase()}.conf"`
           );
         const isCommDir =
           confFile.path
@@ -387,7 +387,7 @@ export function getSystemFonts() {
         Cache.write(allfonts, 'fontList');
         return allfonts;
       })
-      .catch((err: any) => console.log(err));
+      .catch((err: any) => log.error(err));
   }
   return Promise.resolve(Cache.read('fontList'));
 }

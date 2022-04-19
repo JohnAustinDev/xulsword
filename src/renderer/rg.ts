@@ -2,6 +2,7 @@
 import { stringHash } from 'common';
 import Cache from '../cache';
 import { GPublic } from '../type';
+import log from './log';
 
 // This G object is for use in renderer processes, and it shares the same
 // interface as a main process G object. Both G objects are built auto-
@@ -23,7 +24,7 @@ entries.forEach((entry) => {
     const ckey = `G.${name} cache`;
     Object.defineProperty(G, name, {
       get() {
-        // console.log(`${ckey}${!Cache.has(ckey) ? ' miss' : ''}`);
+        log.silly(`${ckey}${!Cache.has(ckey) ? ' miss' : ''}`);
         if (!Cache.has(ckey)) {
           Cache.write(window.ipc.renderer.sendSync('global', name), ckey);
         }
@@ -36,7 +37,7 @@ entries.forEach((entry) => {
       const ckey = `G.${name}(${stringHash(...args)})${
         readonly ? ' cache' : ''
       }`;
-      // console.log(`${ckey}${readonly && !Cache.has(ckey) ? ' miss' : ''}`);
+      log.silly(`${ckey}${readonly && !Cache.has(ckey) ? ' miss' : ''}`);
       if (!readonly) Cache.clear(ckey);
       if (!Cache.has(ckey)) {
         if (asyncFuncs.includes(name)) {
@@ -46,7 +47,7 @@ entries.forEach((entry) => {
               Cache.write(result, ckey);
               return result;
             })
-            .catch((e: any) => console.error(e));
+            .catch((err: Error) => log.error(err));
         }
         Cache.write(
           window.ipc.renderer.sendSync('global', name, ...args),
@@ -64,7 +65,7 @@ entries.forEach((entry) => {
       }
       if (GPublicx[name][m] === 'getter') {
         const ckey = `G.${name}.${m} cache`;
-        // console.log(`${ckey}${!Cache.has(ckey) ? ' miss' : ''}`);
+        log.silly(`${ckey}${!Cache.has(ckey) ? ' miss' : ''}`);
         Object.defineProperty(Gx[name], m, {
           get() {
             if (!Cache.has(ckey)) {
@@ -82,7 +83,7 @@ entries.forEach((entry) => {
           const ckey = `G.${name}.${m}(${stringHash(...args)})${
             readonly ? ' cache' : ''
           }`;
-          // console.log(`${ckey}${readonly && !Cache.has(ckey) ? ' miss' : ''}`);
+          log.silly(`${ckey}${readonly && !Cache.has(ckey) ? ' miss' : ''}`);
           if (!readonly) Cache.clear(ckey);
           if (!Cache.has(ckey)) {
             if (asyncFuncs.includes(m)) {
@@ -92,7 +93,7 @@ entries.forEach((entry) => {
                   Cache.write(result, ckey);
                   return result;
                 })
-                .catch((e: any) => console.error(e));
+                .catch((err: Error) => log.error(err));
             }
             Cache.write(
               window.ipc.renderer.sendSync('global', name, m, ...args),

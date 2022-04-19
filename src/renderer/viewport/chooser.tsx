@@ -168,7 +168,7 @@ class Chooser extends React.Component {
     let max = 0;
     if (container && slider) {
       const sliderRows = slider.clientHeight / rowHeight;
-      max = Math.round(sliderRows - container.clientHeight / rowHeight);
+      max = sliderRows - container.clientHeight / rowHeight;
       if (max < 0) max = 0;
     }
     return max;
@@ -213,14 +213,13 @@ class Chooser extends React.Component {
         ? G.Book[showBook]
         : null;
     if (shbk && shbk.bookGroup === bookGroup) {
-      const c = shbk.indexInBookGroup - this.numChooserRows() + 3;
-      if (slideIndex[bookGroup] > c) {
+      if (slideIndex[bookGroup] === 0) {
         this.stopSliding();
         return;
       }
     }
     const maxindex = this.maxScrollIndex();
-    if (slideIndex[bookGroup] > maxindex) {
+    if (slideIndex[bookGroup] === maxindex) {
       this.stopSliding();
       return;
     }
@@ -238,7 +237,7 @@ class Chooser extends React.Component {
   slideDown(rows = 1) {
     const { bookGroup, slideIndex } = this.state as ChooserState;
 
-    if (slideIndex[bookGroup] < 0) {
+    if (slideIndex[bookGroup] === 0) {
       this.stopSliding();
       return;
     }

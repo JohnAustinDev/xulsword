@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable prefer-rest-params */
 import { BrowserWindow, dialog, OpenDialogSyncOptions, shell } from 'electron';
+import log from 'electron-log';
 import i18n from 'i18next';
 import Subscription from '../subscription';
 import { clone, JSON_stringify } from '../common';
@@ -18,11 +19,10 @@ import type {
   TextVKType,
   XulswordStatePref,
 } from '../type';
-import { jsdump } from './mutil';
 
 const Commands: GType['Commands'] = {
   openModuleDownloader() {
-    console.log(`Action not implemented: openModuleDownloader`);
+    log.info(`Action not implemented: openModuleDownloader`);
   },
 
   // Install one or more ZIP modules from the local file system. The paths
@@ -56,13 +56,11 @@ const Commands: GType['Commands'] = {
       const newmods = await installList(zippaths, toSharedDir, progressWin);
       if (newmods.errors.length) {
         shell.beep();
-        jsdump(
-          `ERROR: Module installation problems follow:\n${newmods.errors.join(
-            '\n'
-          )}`
+        log.error(
+          `Module installation problems follow:\n${newmods.errors.join('\n')}`
         );
       } else {
-        jsdump('ALL FILES WERE SUCCESSFULLY INSTALLED!');
+        log.info('ALL FILES WERE SUCCESSFULLY INSTALLED!');
       }
       Subscription.publish('resetMain');
       Window.reset('all', 'all');
@@ -104,32 +102,32 @@ const Commands: GType['Commands'] = {
   },
 
   removeModule() {
-    console.log(`Action not implemented: removeModule`);
+    log.info(`Action not implemented: removeModule`);
     Window.reset();
   },
 
   exportAudio() {
-    console.log(`Action not implemented: exportAudio`);
+    throw Error(`Action not implemented: exportAudio`);
   },
 
   importAudio() {
-    console.log(`Action not implemented: importAudio`);
+    log.error(`Action not implemented: importAudio`);
   },
 
   pageSetup() {
-    console.log(`Action not implemented: pageSetup`);
+    log.info(`Action not implemented: pageSetup`);
   },
 
   printPreview() {
-    console.log(`Action not implemented: printPreview`);
+    log.info(`Action not implemented: printPreview`);
   },
 
   printPassage() {
-    console.log(`Action not implemented: printPassage`);
+    log.info(`Action not implemented: printPassage`);
   },
 
   print() {
-    console.log(`Action not implemented: print`);
+    log.info(`Action not implemented: print`);
   },
 
   edit(which, ...args) {
@@ -137,36 +135,36 @@ const Commands: GType['Commands'] = {
   },
 
   undo(...args) {
-    console.log(`Action not implemented: undo(${JSON_stringify(args)})`);
+    log.info(`Action not implemented: undo(${JSON_stringify(args)})`);
     return false;
   },
 
   redo(...args) {
-    console.log(`Action not implemented: redo(${JSON_stringify(args)})`);
+    log.info(`Action not implemented: redo(${JSON_stringify(args)})`);
     return false;
   },
 
   cut(...args) {
-    console.log(`Action not implemented: cut(${JSON_stringify(args)})`);
+    log.info(`Action not implemented: cut(${JSON_stringify(args)})`);
     return false;
   },
 
   copy(...args) {
-    console.log(`Action not implemented: copy(${JSON_stringify(args)})`);
+    log.info(`Action not implemented: copy(${JSON_stringify(args)})`);
     return false;
   },
 
   paste(...args) {
-    console.log(`Action not implemented: paste(${JSON_stringify(args)})`);
+    log.info(`Action not implemented: paste(${JSON_stringify(args)})`);
     return false;
   },
 
   search(search) {
-    console.log(`Action not implemented: search(${JSON_stringify(search)})`);
+    log.info(`Action not implemented: search(${JSON_stringify(search)})`);
   },
 
   copyPassage() {
-    console.log(`Action not implemented: copyPassage`);
+    log.info(`Action not implemented: copyPassage`);
   },
 
   openFontsColors(module, window) {
@@ -187,11 +185,11 @@ const Commands: GType['Commands'] = {
   },
 
   openBookmarksManager() {
-    console.log(`Action not implemented: openBookmarksManager()`);
+    log.info(`Action not implemented: openBookmarksManager()`);
   },
 
   openNewDbItemDialog(userNote: boolean, textvk: TextVKType) {
-    console.log(
+    log.info(
       `Action not implemented: openNewBookmarkDialog(${JSON_stringify(
         userNote
       )})`
@@ -199,7 +197,7 @@ const Commands: GType['Commands'] = {
   },
 
   openDbItemPropertiesDialog(bookmark) {
-    console.log(
+    log.info(
       `Action not implemented: openBookmarkPropertiesDialog(${JSON_stringify(
         bookmark
       )})`
@@ -207,13 +205,13 @@ const Commands: GType['Commands'] = {
   },
 
   deleteDbItem(bookmark) {
-    console.log(
+    log.info(
       `Action not implemented: deleteBookmark(${JSON_stringify(bookmark)})`
     );
   },
 
   openHelp(module) {
-    console.log(`Action not implemented: openHelp()`);
+    log.info(`Action not implemented: openHelp()`);
   },
 
   goToLocationVK(

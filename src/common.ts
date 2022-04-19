@@ -4,7 +4,7 @@ import i18next from 'i18next';
 import C from './constant';
 import Cache from './cache';
 
-import type { ConfigType, PrefObject, PrefValue, TabType } from './type';
+import type { PrefObject, PrefValue, TabType } from './type';
 
 export function escapeRE(text: string) {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

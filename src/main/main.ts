@@ -1,9 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint global-require: off, no-console: off */
 
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
-import { app, BrowserWindow, ipcMain, IpcMainEvent } from 'electron';
+import { app, dialog, BrowserWindow, ipcMain, IpcMainEvent } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import i18n from 'i18next';
@@ -13,7 +12,6 @@ import C from '../constant';
 import G from './mg';
 import LibSword from './modules/libsword';
 import MenuBuilder, { pushPrefsToMenu } from './menu';
-import { jsdump } from './mutil';
 import {
   WindowRegistry,
   pushPrefsToWindows,
@@ -26,6 +24,15 @@ import setViewportTabs from './tabs';
 import type { NewModulesType, WindowRegistryType } from '../type';
 
 const i18nBackendMain = require('i18next-fs-backend');
+const installer = require('electron-devtools-installer');
+const sourceMapSupport = require('source-map-support');
+const electronDebug = require('electron-debug');
+
+const isDevelopment =
+  process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
+
+log.transports.console.level = C.LogLevel;
+log.transports.file.level = C.LogLevel;
 
 LibSword.init();
 
@@ -61,11 +68,7 @@ if ((C.Locales.find((l) => l[0] === Language) || [])[2] === 'rtl') {
 }
 app.commandLine.appendSwitch('lang', Language.replace(/-.*$/, ''));
 
-const isDevelopment =
-  process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
-
 if (isDevelopment) {
-  const sourceMapSupport = require('source-map-support');
   sourceMapSupport.install();
 }
 
@@ -95,7 +98,6 @@ ipcMain.on('did-finish-render', (event: IpcMainEvent) => {
       G.Window.close({ type: 'splash' });
     }, 1000);
   }
-  if (process.env.NODE_ENV === 'development') win.webContents.openDevTools();
 });
 
 const openMainWindow = () => {
@@ -168,8 +170,7 @@ const openMainWindow = () => {
     })
   );
 
-  if (isDevelopment)
-    mainWin.on('ready-to-show', () => require('electron-debug')());
+  if (isDevelopment) mainWin.on('ready-to-show', () => electronDebug());
 
   mainWin.on('close', () => {
     // Persist any open windows for the next restart
@@ -187,7 +188,7 @@ const openMainWindow = () => {
   });
 
   mainWin.on('closed', () => {
-    jsdump('NOTE: mainWindow closed...');
+    log.verbose('mainWindow closed...');
   });
 
   persistedWindows.forEach((windowDescriptor) => {
@@ -200,7 +201,6 @@ const openMainWindow = () => {
 const init = async () => {
   if (isDevelopment) {
     await (async () => {
-      const installer = require('electron-devtools-installer');
       const forceDownload = !!process.env.UPGRADE_EXTENSIONS;
       const extensions = ['REACT_DEVELOPER_TOOLS'];
       return installer
@@ -208,7 +208,7 @@ const init = async () => {
           extensions.map((name) => installer[name]),
           forceDownload
         )
-        .catch((e: Error) => jsdump(e));
+        .catch((e: Error) => log.error(e));
     })();
   }
   // Remove this if your app does not use auto updates
@@ -245,8 +245,44 @@ const init = async () => {
         escapeValue: false, // not needed for react as it escapes by default
       },
     })
-    .catch((e) => jsdump(e));
+    .catch((e) => log.error(e));
 
+  log.catchErrors({
+    showDialog: false,
+    onError(error, versions, submitIssue) {
+      // eslint-disable-next-line promise/no-promise-in-callback
+      dialog
+        .showMessageBox({
+          title: i18n.t('error-detected'),
+          message: error.message,
+          detail: error.stack,
+          type: 'error',
+          buttons: ['Ignore', 'Report', 'Exit'],
+        })
+        .then((result) => {
+          if (result.response === 1 && submitIssue) {
+            submitIssue(
+              'https://github.com/JohnAustinDev/xulsword/issues/new',
+              {
+                title: `Error report for ${versions?.app || 'unknown'}`,
+                body:
+                  `Error:\n\`\`\`${error.stack}\n\`\`\`\n` +
+                  `OS: ${versions?.os || 'unknown'}`,
+              }
+            );
+            return result;
+          }
+
+          if (result.response === 2) {
+            app.quit();
+          }
+          return result;
+        })
+        .catch((err) => {
+          throw Error(err);
+        });
+    },
+  });
   return i18n;
 };
 

@@ -9,7 +9,9 @@ import {
   IpcMainInvokeEvent,
   shell,
 } from 'electron';
+import log from 'electron-log';
 import i18next from 'i18next';
+import { GPublic, GType } from '../type';
 import { inlineFile } from './components/nsILocalFile';
 import Dirs from './modules/dirs';
 import Prefs from './modules/prefs';
@@ -34,8 +36,6 @@ import {
   getSystemFonts,
   resetMain,
 } from './minit';
-
-import { GPublic, GType } from '../type';
 
 // Methods of the following classes must not use rest parameters or default
 // values in their function definition's argument lists. This is because

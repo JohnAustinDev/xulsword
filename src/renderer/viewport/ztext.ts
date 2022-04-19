@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-
 import C from '../../constant';
 import Cache from '../../cache';
 import { dString, escapeRE, stringHash } from '../../common';
 import { getElementInfo } from '../../libswordElemInfo';
 import G from '../rg';
+import log from '../log';
 import {
   getNoteHTML,
   getChapterHeading,
@@ -321,7 +321,7 @@ function dictionaryChange(atext: HTMLElement, next: boolean): string | null {
 // TODO!
 // Change a general book to the previous or next chapter.
 function genbookChange(atext: HTMLElement, next: boolean): string | null {
-  console.log(`genbookChange not implemented yet.`);
+  log.info(`genbookChange not implemented yet.`);
   return null;
 }
 

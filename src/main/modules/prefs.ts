@@ -2,13 +2,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable new-cap */
 import { BrowserWindow } from 'electron';
+import log from 'electron-log';
 import path from 'path';
 import fs from 'fs';
 import { clone, diff, JSON_parse, JSON_stringify } from '../../common';
 import Subscription from '../../subscription';
 import nsILocalFile from '../components/nsILocalFile';
 import Dirs from './dirs';
-import { jsdump } from '../mutil';
 
 import type { GType, PrefObject, PrefValue } from '../../type';
 
@@ -243,7 +243,7 @@ const Prefs: GType['Prefs'] & PrefsPrivate = {
     const json = JSON_stringify(s.data, null, 2);
     if (json) {
       fs.writeFileSync(s.file.path, json);
-      jsdump(`NOTE: Persisted store: ${s.file.path}`);
+      log.info(`Persisted store: ${s.file.path}`);
     } else {
       throw Error(`failed to write store: ${s.file.path}`);
     }
@@ -268,7 +268,7 @@ const Prefs: GType['Prefs'] & PrefsPrivate = {
     const aStore = store || 'prefs';
     let p = this.getStore(aStore);
     if (p === null) {
-      jsdump(`WARN: failed to set key ${key} in ${aStore}`);
+      log.warn(`Failed to set key ${key} in ${aStore}`);
       return false;
     }
     // Test the value.
@@ -284,7 +284,7 @@ const Prefs: GType['Prefs'] & PrefsPrivate = {
         throw Error(`Prefs: merge value is not a data object: ${value}`);
       }
     } else if (!this.isType(type, value)) {
-      jsdump(`WARN: setPref wrong type: ${key}: ${typeof value} !== ${type}`);
+      log.warn(`setPref wrong type: ${key}: ${typeof value} !== ${type}`);
       return false;
     }
     // Get (or create) the parent object of the key.

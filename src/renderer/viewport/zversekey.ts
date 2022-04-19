@@ -301,7 +301,7 @@ export function getRefHTML(
   extref: string,
   targetmod: string,
   context: LocationVKType,
-  show?: boolean,
+  showText?: boolean,
   keepNotes?: boolean,
   info?: Partial<LookupInfo>
 ): string {
@@ -327,7 +327,7 @@ export function getRefHTML(
         module: mod,
         text: '',
       };
-      if (show || locOrStr.subid) {
+      if (showText || locOrStr.subid) {
         const r = locationVKText(
           locOrStr,
           mod,
@@ -378,7 +378,9 @@ export function getRefHTML(
             verse,
             lastverse || verse,
             module,
-          ].join('.')}">${verseKey(location).readable()}</a>${q}:
+          ].join('.')}">${verseKey(location).readable()}</a>${q}${
+            text ? ':' : ''
+          }
           </bdi>
           <bdi>
             <span class="${crtext.join(' ')}">${text}${alt}</span>

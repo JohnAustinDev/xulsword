@@ -11,6 +11,7 @@ import { diff } from '../../common';
 import G from '../rg';
 import renderToRoot from '../rinit';
 import { windowArgument } from '../rutil';
+import log from '../log';
 import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
 import { Hbox, Vbox } from '../libxul/boxes';
 import Groupbox from '../libxul/groupbox';
@@ -86,7 +87,7 @@ export default class ChooseFontWin extends React.Component {
         this.setState({ fonts });
         return true;
       })
-      .catch((e) => console.log(e));
+      .catch((err: Error) => log.error(err));
   }
 
   componentDidUpdate(_prevProps: any, prevState: ChooseFontWinState) {
@@ -95,7 +96,7 @@ export default class ChooseFontWin extends React.Component {
     if (module && diff(prevState.style, state.style) !== undefined) {
       G.Data.write(state.style, 'stylesheetData');
       G.Window.reset('dynamic-stylesheet-reset');
-      // console.log(state.style);
+      log.silly('componentDidUpdate style:', state.style);
     }
   }
 

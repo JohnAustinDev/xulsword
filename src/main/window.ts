@@ -1,6 +1,7 @@
 /* eslint-disable prefer-rest-params */
 /* eslint-disable import/no-mutable-exports */
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import log from 'electron-log';
 import path from 'path';
 import fs from 'fs';
 import i18next from 'i18next';
@@ -284,7 +285,7 @@ function updateOptions(
     }
     if (o?.openWithBounds) delete o.openWithBounds;
   }
-  // console.log(options);
+  log.silly('Window options:', options);
 }
 
 function createWindow(
@@ -295,8 +296,14 @@ function createWindow(
   updateOptions(descriptor, parent);
   const win = new BrowserWindow(options);
   addWindowToRegistry(win, descriptor);
-  win.loadURL(resolveHtmlPath(`${type}.html`));
-  // win.webContents.openDevTools();
+  win
+    .loadURL(resolveHtmlPath(`${type}.html`))
+    .then(() => {
+      return setTimeout(() => win.webContents.openDevTools(), 1000);
+    })
+    .catch((err) => {
+      log.error(err);
+    });
   windowInitI18n(win);
   if (type !== 'xulsword') win.removeMenu();
   win.on('resize', () => {

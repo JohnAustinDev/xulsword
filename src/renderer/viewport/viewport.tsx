@@ -23,6 +23,7 @@ import {
 } from '../popup/popupParentH';
 import G from '../rg';
 import { clearPending, verseKey } from '../rutil';
+import log from '../log';
 import {
   addClass,
   xulDefaultProps,
@@ -367,7 +368,7 @@ class Viewport extends React.Component implements PopupParent {
     let cls = '';
     if (ownWindow) cls += ' ownWindow';
 
-    console.log(state);
+    log.debug('viewport state: ', state);
 
     return (
       <Hbox

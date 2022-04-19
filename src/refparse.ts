@@ -144,7 +144,6 @@ export default class RefParser {
                   l = test.name.toLowerCase();
                 }
                 codeMatches = exact ? s === l : l.startsWith(s);
-                // console.log(`codeMatches=${codeMatches}, exact:${exact}, inbook:${inbook.name}, s:${s}, l:${l}`);
               }
             });
           });
@@ -279,7 +278,6 @@ export default class RefParser {
     if (p === null) {p = text.match(/^(\d+)\s*-\s*(\d+)$/);             if (p) shft=2;        } // 4-5
     if (p === null) {p = text.match(/^(.*?)$/);                                               } // book
     /* eslint-enable prettier/prettier */
-    // jsdump("parsed:" + parsed + " match type:" + m + "\n");
 
     if (p) {
       while (shft) {

@@ -16,6 +16,7 @@ import {
   onSetWindowState,
   windowArgument,
 } from '../rutil';
+import log from '../log';
 import {
   topHandle,
   xulDefaultProps,
@@ -181,7 +182,7 @@ export default class ViewportWin extends React.Component {
       xulswordStateHandler,
     } = this;
 
-    console.log(state);
+    log.debug('viewportWin state: ', state);
 
     return (
       <Vbox

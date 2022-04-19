@@ -269,7 +269,7 @@ class Popup extends React.Component {
     if (!isWindow) {
       const maxHeight = window.innerHeight / 2;
       const leftd = drag && drag.x[0] ? drag.x[1] - drag.x[0] : 0;
-      const left = window.shell.process.argv()[0] === 'search' ? leftd : 'auto';
+      const left = window.main.process.argv()[0] === 'search' ? leftd : 'auto';
       let top = gap || 0;
       if (drag) top += drag.adjustment + (drag.y[1] || 0) - (drag.y[0] || 0);
       boxlocation = {

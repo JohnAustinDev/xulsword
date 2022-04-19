@@ -1,7 +1,7 @@
 /* eslint-disable new-cap */
 /* eslint-disable prettier/prettier */
+import log from 'electron-log';
 import nsILocalFile from './components/nsILocalFile';
-import { jsdump } from './mutil';
 
 // return a font file's fontFamily value
 export default function getFontFamily(fontpath) {
@@ -56,7 +56,7 @@ export default function getFontFamily(fontpath) {
   } else if (isCFF) {
     format = 'opentype';
   } else {
-    jsdump(`ERROR: "${fontpath}" cannot be interpreted as OpenType font.`);
+    log.warn(`"${fontpath}" cannot be interpreted as OpenType font.`);
     return null;
   }
 
@@ -85,8 +85,8 @@ export default function getFontFamily(fontpath) {
   // read the Naming Table
   tag = 'name';
   if (!tags[tag]) {
-    jsdump(
-      `Error: "${fontpath}" is missing the required OpenType ${tag} table.`
+    log.warn(
+      `"${fontpath}" is missing the required OpenType ${tag} table.`
     );
     return null;
   }
@@ -122,8 +122,8 @@ export default function getFontFamily(fontpath) {
     if (aString.nameID === 1) break; // fontFamily
   }
   if (!aString || aString.nameID !== 1) {
-    jsdump(
-      `Error: "${fontpath}" is missing the required OpenType fontFamily string.`
+    log.warn(
+      `"${fontpath}" is missing the required OpenType fontFamily string.`
     );
     return null;
   }
@@ -155,8 +155,8 @@ export default function getFontFamily(fontpath) {
     case 3: // Windows
     case 4: // Custom
     default: {
-      jsdump(
-        `WARNING: "${fontpath}: ${format}" font string's platform decoding is not implemented, assuming utf16.`
+      log.warn(
+        `"${fontpath}: ${format}" font string's platform decoding is not implemented, assuming utf16.`
       );
       const u16 = [];
       for (let i = 0; i < u8.length; i += 2) {
@@ -167,7 +167,7 @@ export default function getFontFamily(fontpath) {
   }
 
   if (familyName) {
-    jsdump(`INFO: Read ${familyName}; ${fontpath}`);
+    log.verbose(`Read font ${familyName}: ${fontpath}`);
   }
   return familyName;
 }

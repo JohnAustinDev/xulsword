@@ -1,6 +1,7 @@
 /* eslint-disable no-continue */
 import C from '../../constant';
 import G from '../rg';
+import log from '../log';
 
 import type { SwordFilterType, SwordFilterValueType } from '../../type';
 
@@ -287,7 +288,7 @@ export function getStrongsModAndKey(snclass: string): {
 
     default: {
       // meaning of tag is unknown
-      console.log(`Unknown Strongs type: '${type}'`);
+      log.warn(`Unknown Strongs type: '${type}'`);
       key = null;
     }
   }

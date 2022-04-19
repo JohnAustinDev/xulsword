@@ -8,6 +8,7 @@ import {
   ofClass,
   sanitizeHTML,
 } from '../../common';
+import log from '../log';
 import { getElementInfo } from '../../libswordElemInfo';
 import G from '../rg';
 import { scrollIntoView } from '../rutil';
@@ -281,7 +282,7 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
               msg += `\n${m}=${val || 'null'}`;
             });
           }
-          console.log(msg);
+          log.warn(msg);
         }
         elem.style.cursor = okay === false ? 'help' : 'default';
       }

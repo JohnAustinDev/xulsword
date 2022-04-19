@@ -22,6 +22,7 @@ import {
   scrollIntoView,
   windowArgument,
 } from '../rutil';
+import log from '../log';
 import {
   xulDefaultProps,
   xulPropTypes,
@@ -490,8 +491,11 @@ class Atext extends React.Component {
         Cache.write(libswordText(libswordProps, i), libswordHash);
       }
       const response = Cache.read(libswordHash);
-      // eslint-disable-next-line prettier/prettier
-      // console.log(`${flag} panel ${i} ${verseKey(libswordProps.location || '').osisRef()}:`);
+      log.silly(
+        `${flag} panel ${i} ${verseKey(
+          libswordProps.location || ''
+        ).osisRef()}:`
+      );
       const isDict =
         libswordProps.module &&
         G.Tab[libswordProps.module].type === C.DICTIONARY;

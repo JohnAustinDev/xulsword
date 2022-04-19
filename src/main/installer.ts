@@ -2,12 +2,12 @@
 /* eslint-disable new-cap */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { BrowserWindow } from 'electron';
+import log from 'electron-log';
 import { getBrowserWindows } from './window';
 import C from '../constant';
 import nsILocalFile from './components/nsILocalFile';
 import Dirs from './modules/dirs';
 import LibSword from './modules/libsword';
-import { jsdump } from './mutil';
 
 import type { ModTypes, NewModulesType, SwordConfType } from '../type';
 
@@ -42,6 +42,7 @@ export function parseSwordConf(config: string | nsILocalFile): SwordConfType {
     if (commentRE.test(l)) {
       // ignore comments
     } else if (nameRE.test(l)) {
+      // name might not be at the top of the file
       m = l.match(nameRE);
       if (m) [, r.module] = m;
     } else {
@@ -101,20 +102,18 @@ export function parseSwordConf(config: string | nsILocalFile): SwordConfType {
           r[ent] = Number(value);
         } else if (C.SwordConf.string.includes(entry)) {
           const ent = entry as typeof C.SwordConf.string[number];
-          const v = value as SwordConfType['ModDrv'];
-          r[ent] = v;
+          r[ent] = value as SwordConfType['ModDrv'];
         } else if (C.SwordConf.localization.includes(entryBase)) {
           const ent = entryBase as typeof C.SwordConf.localization[number];
-          const v = value;
           const loc = entry.substring(entryBase.length + 1) || 'en';
           if (!r[ent]) r[ent] = {};
-          r[ent][loc] = v;
+          r[ent][loc] = value;
         }
       }
     }
   }
   r.errors = errors.map((er) => `${r.module}: ${er}`);
-  // console.log(r);
+  log.silly(`${r.module} conf: `, r);
   return r;
 }
 
@@ -296,7 +295,7 @@ export default async function installList(
         const confs = {} as { [i: string]: SwordConfType };
         sortedZipEntries.forEach((entry) => {
           if (!entry.entryName.endsWith('/')) {
-            // jsdump(`Processing Entry: ${entry.entryName}`);
+            log.silly(`Processing Entry: ${entry.entryName}`);
             const type = entry.entryName.split('/').shift();
             switch (type) {
               case 'mods.d': {
@@ -443,7 +442,7 @@ export default async function installList(
                 break;
 
               default:
-                jsdump(`WARNING: Unknown module component: ${entry.name}`);
+                newmods.errors.push(`Unknown module component: ${entry.name}`);
             }
           }
           progNow += 1;

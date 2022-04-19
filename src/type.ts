@@ -2,14 +2,50 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 import type { BrowserWindow } from 'electron';
+import type ElectronLog from 'electron-log';
 
 declare global {
-  interface Window {
-    api: any;
-    ipc: any;
-    shell: any;
+  export interface Window {
+    api: { i18nextElectronBackend: any };
+    ipc: WinIpcType;
+    main: WinMainType;
   }
 }
+type RendererChannels =
+  | 'global'
+  | 'did-finish-render'
+  | 'close'
+  | 'resize'
+  | 'progress'
+  | 'modal'
+  | 'newmods'
+  | 'update-state-from-pref'
+  | 'component-reset'
+  | 'cache-reset'
+  | 'dynamic-stylesheet-reset';
+export type WinIpcType = {
+  renderer: {
+    send: (channel: RendererChannels, ...args: any[]) => void;
+    invoke: (channel: RendererChannels, ...args: any[]) => any;
+    sendSync: (channel: RendererChannels, ...args: any[]) => any;
+    on: (
+      channel: RendererChannels,
+      func: (...args: any[]) => any
+    ) => () => void;
+    once: (
+      channel: RendererChannels,
+      func: (...args: any[]) => any
+    ) => () => void;
+  };
+};
+export type WinMainType = {
+  log: ElectronLog.LogFunctions;
+  process: {
+    NODE_ENV: () => NodeJS.ProcessEnv['NODE_ENV'];
+    DEBUG_PROD: () => NodeJS.ProcessEnv['DEBUG_PROD'];
+    argv: () => string[];
+  };
+};
 
 export type WindowRegistryType = (WindowDescriptorType | null)[];
 

@@ -18,13 +18,14 @@ import { JSON_parse } from '../common';
 import Cache from '../cache';
 import G from './rg';
 import DynamicStyleSheet from './style';
-import { getContextData, jsdump } from './rutil';
+import { getContextData } from './rutil';
+import log from './log';
 import { delayHandler, xulCaptureEvents } from './libxul/xul';
+import { Hbox } from './libxul/boxes';
 
-import type { GlobalPrefType, ModalType, NewModulesType } from '../type';
+import type { ModalType, NewModulesType } from '../type';
 
 import './global-htm.css';
-import { Hbox } from './libxul/boxes';
 
 window.ipc.renderer.on('cache-reset', () => Cache.clear);
 
@@ -33,7 +34,7 @@ window.ipc.renderer.on('dynamic-stylesheet-reset', () =>
   DynamicStyleSheet.update(G.Data.read('stylesheetData'))
 );
 
-const winArgs = JSON_parse(window.shell.process.argv().at(-1));
+const winArgs = JSON_parse(window.main.process.argv().at(-1) || '{}');
 
 // Set window type and language classes of the root html element.
 i18n.on('initialized', (options) => {
@@ -71,8 +72,8 @@ async function i18nInit(namespaces: string[]) {
   ];
 
   const isDevelopment =
-    window.shell.process.NODE_ENV() === 'development' ||
-    window.shell.process.DEBUG_PROD() === 'true';
+    window.main.process.NODE_ENV() === 'development' ||
+    window.main.process.DEBUG_PROD() === 'true';
 
   await i18n
     .use(rendererBackend)
@@ -281,7 +282,7 @@ export default function renderToRoot(
       }, 1);
       return true;
     })
-    .catch((e: string | Error) => jsdump(e));
+    .catch((e: string | Error) => log.error(e));
 
   window.ipc.renderer.on('close', () => {
     if (typeof unloadXUL === 'function') unloadXUL();

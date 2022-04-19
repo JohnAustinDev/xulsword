@@ -1,11 +1,19 @@
+const log = require('electron-log');
 const { contextBridge, ipcRenderer } = require('electron');
 const backend = require('i18next-electron-fs-backend');
+
+const isDevelopment =
+  process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
+
+const level = isDevelopment ? 'debug' : 'info';
+log.transports.console.level = level;
+log.transports.file.level = level;
 
 contextBridge.exposeInMainWorld('api', {
   i18nextElectronBackend: backend.preloadBindings(ipcRenderer, process),
 });
 
-contextBridge.exposeInMainWorld('shell', {
+contextBridge.exposeInMainWorld('main', {
   process: {
     NODE_ENV() {
       return process.env.NODE_ENV;
@@ -60,7 +68,6 @@ contextBridge.exposeInMainWorld('ipc', {
     // renderer process.
     sendSync(channel, ...args) {
       if (validChannels.includes(channel)) {
-        // console.log({ channel, args });
         return ipcRenderer.sendSync(channel, ...args);
       }
       throw Error(`ipc sendSync bad channel: ${channel}`);
