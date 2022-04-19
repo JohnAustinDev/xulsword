@@ -299,7 +299,13 @@ function createWindow(
   win
     .loadURL(resolveHtmlPath(`${type}.html`))
     .then(() => {
-      return setTimeout(() => win.webContents.openDevTools(), 1000);
+      if (
+        process.env.NODE_ENV === 'development' ||
+        process.env.DEBUG_PROD === 'true'
+      ) {
+        return setTimeout(() => win.webContents.openDevTools(), 1000);
+      }
+      return null;
     })
     .catch((err) => {
       log.error(err);
