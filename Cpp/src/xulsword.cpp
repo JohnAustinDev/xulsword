@@ -654,7 +654,9 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
         int lbr = chapHTML.rfind("<br />");
         if (lbr != -1 && chapHTML.length()-1-lbr > 64) verseHTML.append("<br />");
       }
+      verseHTML.appendFormatted("<span class=\"cs-%s\">", module->getName());
       verseHTML.append(module->renderText(Value->second));
+      verseHTML.append("</span>");
     }
 
     int vNum = myVerseKey->getVerse();
