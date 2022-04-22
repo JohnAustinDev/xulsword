@@ -7,8 +7,10 @@
   border-left-color: ThreeDLightShadow;
   background-color: white;
 }
-.bookselect:focus-within {
-  border-color: rgb(226, 159, 34);
+.bookselect:focus-within .stack > div:first-child {
+  outline: rgba(45, 114, 210, 0.6) auto 2px;
+  outline-offset: 2px;
+  -moz-outline-radius: 6px;
 }
 
 .bookselect,

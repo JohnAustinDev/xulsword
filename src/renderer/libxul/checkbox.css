@@ -1,6 +1,7 @@
 .checkbox {
   align-items: baseline;
 }
-.checkbox:focus .label {
-  border: 1px dotted rgb(226, 159, 34);
+
+.checkbox input {
+  margin-inline-end: 0.5em;
 }

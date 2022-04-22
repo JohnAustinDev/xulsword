@@ -91,8 +91,10 @@ html[dir='rtl'] .sbcontrols {
 }
 
 .atext .nbc {
-  width: 100%;
   background-color: inherit;
+  margin: 0px 8px 8px 8px;
+  /* fixed width is required for multi-column panels */
+  width: calc(100% - 16px);
 }
 .atext:not(.columns1) .nbc {
   position: absolute;
@@ -109,11 +111,6 @@ html[dir='rtl'] .sbcontrols {
   display: none;
 }
 
-.atext .nbc > div:first-child {
-  height: 16px;
-  width: 100%;
-}
-
 .atext .bb {
   position: relative;
   border: 1px outset rgb(150, 150, 150);
@@ -122,7 +119,7 @@ html[dir='rtl'] .sbcontrols {
   border-radius: 4px;
   cursor: N-resize;
   width: 100%;
-  margin: 10px 60px 0px 60px;
+  margin: 10px 60px 10px 60px;
 }
 .atext .bb.moving {
   border: 1px dashed rgb(150, 150, 150);
@@ -157,7 +154,6 @@ html[dir='rtl'] .notebox-maximizer {
   border: 2px solid rgb(150, 150, 150);
   border-radius: 8px;
   padding: 0px 5px 0px 5px;
-  margin: 8px;
 }
 
 /* Header Links */

@@ -466,9 +466,6 @@ h3 {
   margin-inline-start: 3em;
 }
 
-.versenum {
-  vertical-align: top;
-}
 .versenum:before,
 .versenum:after {
   content: ' ';

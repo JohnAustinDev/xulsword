@@ -47,7 +47,7 @@ html[dir='rtl'] .npopup {
   padding: 0px;
 }
 .ownWindow .npopupTX {
-  height: calc(100% - 22px); /* 22 = 2*(10 + 1) */
+  height: 100%;
   padding: 10px 14px;
 }
 

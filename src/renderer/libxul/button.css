@@ -50,12 +50,6 @@
   background-color: lightgrey;
 }
 
-/* .......... focused state .......... */
-
-.xsbutton:focus .button-box {
-  border: 1px dotted rgb(226, 159, 34);
-}
-
 /* .......... active/open/checked state .......... */
 
 .xsbutton:hover:active,

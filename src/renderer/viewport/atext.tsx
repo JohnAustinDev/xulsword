@@ -656,7 +656,7 @@ class Atext extends React.Component {
           height={`${noteBoxHeight}px`}
           style={
             columns > 1
-              ? { width: `calc(${100 / columns}% - 10px)` }
+              ? { width: `calc(${100 / columns}% - 24px)` }
               : undefined
           }
         >
