@@ -27,7 +27,11 @@ const Commands: GType['Commands'] = {
       title: i18n.t('menu.addNewModule.label'),
       parent: win || undefined,
     };
-    Window.open({ type: 'moduleDownloader', category: 'dialog', options });
+    Window.open({
+      type: 'moduleDownloader',
+      category: 'dialog-window',
+      options,
+    });
   },
 
   // Install one or more ZIP modules from the local file system. The paths

@@ -1,0 +1,7 @@
+.moduleDownloader .language-pane .groupbox-body {
+  padding: 0;
+}
+
+.moduleDownloader .button-stack > * {
+  margin: 6px 0;
+}

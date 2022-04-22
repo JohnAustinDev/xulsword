@@ -25,10 +25,10 @@ import { Hbox } from './libxul/boxes';
 
 import type { ModalType, NewModulesType } from '../type';
 
-import './global-htm.css';
 import 'normalize.css/normalize.css';
 import '@blueprintjs/icons/lib/css/blueprint-icons.css';
 import '@blueprintjs/core/lib/css/blueprint.css';
+import './global-htm.css';
 
 window.ipc.renderer.on('cache-reset', () => Cache.clear);
 

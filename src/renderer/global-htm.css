@@ -17,7 +17,8 @@ html.dialog #reset {
 html:not(.dialog) #root {
   background-image: url(../../assets/b2.png);
 }
-html.dialog #root {
+html.dialog #root,
+html.dialog-window #root {
   background-color: whitesmoke;
   padding: 4px;
 }
@@ -57,6 +58,11 @@ html.dialog select {
   font-size: 14px;
   min-width: 80px;
   padding: 3px 0;
+}
+.dialogbuttons .bp4-button {
+  font-size: 14px;
+  min-width: 80px;
+  margin: 8px;
 }
 
 /* Grid */

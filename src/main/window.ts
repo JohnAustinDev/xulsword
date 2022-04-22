@@ -253,8 +253,8 @@ function updateOptions(
   args.name = type;
   args.type = category;
   options.webPreferences.additionalArguments[0] = JSON_stringify(args);
-  // Dialog windows have these defaults (while regular windows just
-  // have Electron defaults).
+  // Dialog windows have these defaults (while regular windows and dialog-
+  // windows just have Electron defaults).
   if (category === 'dialog') {
     const ddef: Electron.BrowserWindowConstructorOptions = {
       width: 50, // dialogs are auto-resized and then fixed

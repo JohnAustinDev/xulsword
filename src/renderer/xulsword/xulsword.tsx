@@ -7,7 +7,7 @@
 import React from 'react';
 import i18n from 'i18next';
 import Subscription from '../../subscription';
-import { trim, dString, diff, clone } from '../../common';
+import { keep, dString, diff, clone, drop } from '../../common';
 import C from '../../constant';
 import G from '../rg';
 import renderToRoot from '../rinit';
@@ -143,8 +143,8 @@ export default class Xulsword extends React.Component {
     const { id } = this.props as XulswordProps;
     const { scroll } = state;
     if (id && !scroll?.skipWindowUpdate) {
-      const newStatePref = trim(state, notStatePref, true);
-      const d = diff(trim(prevState, notStatePref, true), newStatePref);
+      const newStatePref = drop(state, notStatePref);
+      const d = diff(drop(prevState, notStatePref), newStatePref);
       if (d) {
         if (d.scroll?.skipTextUpdate) delete d.scroll.skipTextUpdate;
         G.Prefs.mergeValue(id, d);

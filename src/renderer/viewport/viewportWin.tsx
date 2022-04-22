@@ -7,7 +7,7 @@
 import React from 'react';
 import Subscription from '../../subscription';
 import C from '../../constant';
-import { trim, diff } from '../../common';
+import { keep, diff } from '../../common';
 import G from '../rg';
 import renderToRoot from '../rinit';
 import {
@@ -121,9 +121,9 @@ export default class ViewportWin extends React.Component {
     const state = this.state as ViewportWinState;
     const { scroll } = state;
     if (!scroll?.skipWindowUpdate) {
-      windowState = trim(state, vpWindowState);
+      windowState = keep(state, vpWindowState);
       const changedWindowState = diff(
-        trim(prevState, vpWindowState),
+        keep(prevState, vpWindowState),
         windowState
       );
       if (changedWindowState) {
@@ -134,8 +134,8 @@ export default class ViewportWin extends React.Component {
       const { id } = this.props as ViewportWinProps;
       if (id) {
         const changedStatePref = diff(
-          trim(prevState, C.GlobalXulsword),
-          trim(state, C.GlobalXulsword)
+          keep(prevState, C.GlobalXulsword),
+          keep(state, C.GlobalXulsword)
         );
         if (changedStatePref) {
           if (changedStatePref.scroll?.skipTextUpdate)

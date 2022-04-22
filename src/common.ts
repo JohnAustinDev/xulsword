@@ -10,27 +10,35 @@ export function escapeRE(text: string) {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-// Return a new source object retaining only certain keys from the original.
-export function trim<T extends { [i: string]: any }>(
+// Return a new source object keeping only certain keys from the original.
+export function keep<T extends { [i: string]: any }>(
   source: T,
   keepkeys: string[] | { [i: string]: any },
   dropInstead = false
 ): Partial<T> {
   const p: any = {};
-  const keep = Array.isArray(keepkeys) ? keepkeys : Object.keys(keepkeys);
+  const pkeep = Array.isArray(keepkeys) ? keepkeys : Object.keys(keepkeys);
   if (dropInstead) {
-    const drop = keep;
+    const pdrop = pkeep;
     Object.keys(source).forEach((k) => {
-      if (!drop.includes(k)) {
+      if (!pdrop.includes(k)) {
         p[k] = k in source ? source[k] : undefined;
       }
     });
   } else {
-    keep.forEach((k) => {
+    pkeep.forEach((k) => {
       p[k] = k in source ? source[k] : undefined;
     });
   }
   return p;
+}
+
+// Return a new source object dropping certain keys from the original.
+export function drop<T extends { [i: string]: any }>(
+  source: T,
+  dropkeys: string[] | { [i: string]: any }
+): Partial<T> {
+  return keep(source, dropkeys, true);
 }
 
 // Decode an osisRef that was encoded using _(\d+)_ encoding, where

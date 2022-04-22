@@ -58,7 +58,10 @@ export type WindowDescriptorType = {
     | 'chooseFont'
     | 'moduleDownloader';
   id?: number;
-  category?: 'window' | 'dialog';
+  category?:
+    | 'window' // Regular window
+    | 'dialog' // Has parent, not persisted, size is fit-to-content, not-resizable
+    | 'dialog-window'; // Has parent, not persisted, resizable
   options?: Electron.BrowserWindowConstructorOptions;
 };
 

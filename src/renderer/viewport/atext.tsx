@@ -12,7 +12,7 @@ import i18next from 'i18next';
 import { getElementInfo } from '../../libswordElemInfo';
 import Cache from '../../cache';
 import C from '../../constant';
-import { diff, trim, sanitizeHTML, stringHash, clone } from '../../common';
+import { diff, keep, sanitizeHTML, stringHash, clone } from '../../common';
 import G from '../rg';
 import {
   clearPending,
@@ -133,9 +133,9 @@ class Atext extends React.Component {
     const { panelIndex } = this.props as AtextProps;
     const state = this.state as AtextStateType;
     if (this.onUpdate()) {
-      windowState[panelIndex] = trim(state, atextInitialState);
+      windowState[panelIndex] = keep(state, atextInitialState);
       const changedState = diff(
-        trim(prevState, atextInitialState),
+        keep(prevState, atextInitialState),
         windowState[panelIndex]
       );
       if (changedState) {
@@ -170,12 +170,12 @@ class Atext extends React.Component {
     // Decide what needs to be updated...
     // pinProps are the currently active props according to the panel's
     // isPinned prop value.
-    const pinProps = trim(
+    const pinProps = keep(
       pin && isPinned ? pin : props,
       C.PinProps
     ) as PinPropsType;
     // scrollProps are current props that effect scrolling
-    const scrollProps = trim(
+    const scrollProps = keep(
       { ...props, ...pinProps },
       C.ScrollPropsVK
     ) as typeof C.ScrollPropsVK;
@@ -219,7 +219,7 @@ class Atext extends React.Component {
       const { type, isVerseKey } = G.Tab[module];
       const scrollkey = stringHash(scrollProps);
       // libswordProps are current props that effect LibSword output
-      const libswordProps = trim(
+      const libswordProps = keep(
         {
           ...props,
           ...pinProps,
