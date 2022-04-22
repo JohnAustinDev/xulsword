@@ -8,7 +8,7 @@ import Label from './label';
 import Image from './image';
 import './xul.css';
 import './groupbox.css';
-import { Box, Hbox } from './boxes';
+import { Hbox, Vbox } from './boxes';
 
 // XUL deck
 const defaultProps = xulDefaultProps;
@@ -27,7 +27,7 @@ type GroupboxProps = XulProps & {
 function Groupbox(props: GroupboxProps) {
   const { caption, image } = props;
   return (
-    <div className="groupbox">
+    <Vbox {...props} {...addClass('groupbox', props)}>
       <Hbox className="groupbox-title" align="start" pack="start">
         {caption && (
           <>
@@ -36,10 +36,10 @@ function Groupbox(props: GroupboxProps) {
           </>
         )}
       </Hbox>
-      <Box orient="vertical" {...addClass('groupbox-body', props)}>
+      <Vbox {...addClass('groupbox-body', props)} flex="1">
         {props.children}
-      </Box>
-    </div>
+      </Vbox>
+    </Vbox>
   );
 }
 Groupbox.defaultProps = defaultProps;

@@ -33,12 +33,12 @@
 #textnav .bookselect {
   height: 24px;
 }
-#textnav button {
+#textnav .xsbutton {
   margin: 0px;
   margin-inline-end: 7px;
 }
-#textnav button,
-#textnav button * {
+#textnav .xsbutton,
+#textnav .xsbutton * {
   padding: 0px;
 }
 #nextchap .button-icon,
@@ -53,12 +53,12 @@
   background: url(../images/smallButtonDecrement.png);
   margin-top: 1px;
 }
-#textnav button .button-icon {
+#textnav .xsbutton .button-icon {
   width: 15px;
   height: 8px;
   background-position: 0px 0px;
 }
-#textnav button:hover .button-icon {
+#textnav .xsbutton:hover .button-icon {
   background-position: -15px 0px;
 }
 #textnav .textbox input {
@@ -66,7 +66,7 @@
 }
 
 /* MAIN WINDOW HISTORY BUTTONS */
-#historyButtons button {
+#historyButtons .xsbutton {
   padding: 2px;
 }
 #historyButtons .button-box {
@@ -154,7 +154,7 @@ html[dir='rtl'] #forward .button-icon {
 #optionButtons {
   padding-top: 2px;
 }
-#optionButtons button {
+#optionButtons .xsbutton {
   padding: 2px;
   color: black;
 }

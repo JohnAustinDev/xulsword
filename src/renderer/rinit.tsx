@@ -11,7 +11,7 @@ import { render } from 'react-dom';
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import rendererBackend from 'i18next-electron-fs-backend';
-import ReactProgressMeter from 'react-progress-meter';
+import { ProgressBar } from '@blueprintjs/core';
 import Subscription from '../subscription';
 import C from '../constant';
 import { JSON_parse } from '../common';
@@ -26,6 +26,9 @@ import { Hbox } from './libxul/boxes';
 import type { ModalType, NewModulesType } from '../type';
 
 import './global-htm.css';
+import 'normalize.css/normalize.css';
+import '@blueprintjs/icons/lib/css/blueprint-icons.css';
+import '@blueprintjs/core/lib/css/blueprint.css';
 
 window.ipc.renderer.on('cache-reset', () => Cache.clear);
 
@@ -238,11 +241,12 @@ export default function renderToRoot(
             {...modalProps}
           >
             {progress !== -1 && (
-              <ReactProgressMeter
-                currentProgress={progress}
-                width="250px"
-                color="navy"
-                show
+              <ProgressBar
+                className="modal-progressbar"
+                value={progress}
+                intent="primary"
+                animate
+                stripes
               />
             )}
           </Hbox>

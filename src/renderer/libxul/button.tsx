@@ -58,7 +58,7 @@ function Button(props: ButtonProps) {
   const packx = pack !== undefined ? pack : 'center';
   return (
     <button
-      {...htmlAttribs(`button ${dlgType}`, props)}
+      {...htmlAttribs(`xsbutton ${dlgType}`, props)}
       disabled={disabled}
       type="button"
       title={tooltip}
@@ -74,7 +74,7 @@ function Button(props: ButtonProps) {
         <div className="button-icon" />
 
         {props.label !== undefined && (
-          <Label className="button-text" value={label} />
+          <Label className="button-text" value={label || ''} />
         )}
       </Box>
 

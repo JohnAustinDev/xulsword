@@ -269,7 +269,7 @@ export default async function installList(
         } else {
           const progress = prognow / progTot;
           xswin.setProgressBar(progress);
-          progressWin?.webContents.send('progress', Math.round(progress * 100));
+          progressWin?.webContents.send('progress', progress);
         }
       };
       updateProgress(0);

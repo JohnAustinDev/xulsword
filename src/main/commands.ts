@@ -22,7 +22,12 @@ import type {
 
 const Commands: GType['Commands'] = {
   openModuleDownloader() {
-    log.info(`Action not implemented: openModuleDownloader`);
+    const win = arguments[1] || getBrowserWindows({ type: 'xulsword' })[0];
+    const options = {
+      title: i18n.t('menu.addNewModule.label'),
+      parent: win || undefined,
+    };
+    Window.open({ type: 'moduleDownloader', category: 'dialog', options });
   },
 
   // Install one or more ZIP modules from the local file system. The paths
@@ -167,10 +172,11 @@ const Commands: GType['Commands'] = {
     log.info(`Action not implemented: copyPassage`);
   },
 
-  openFontsColors(module, window) {
+  openFontsColors(module) {
+    const win = arguments[1] || getBrowserWindows({ type: 'xulsword' })[0];
     const options = {
       title: i18n.t('fontsAndColors.label'),
-      parent: window || undefined,
+      parent: win || undefined,
       webPreferences: {
         additionalArguments: [
           JSON_stringify({

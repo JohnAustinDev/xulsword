@@ -34,7 +34,7 @@
 .tabs .mts-tab {
   padding-inline-end: 0px;
 }
-.tabs .mts-tab .button {
+.tabs .mts-tab .xsbutton {
   float: right;
   width: 12px;
   height: 12px;
@@ -46,22 +46,22 @@
 .tabs .mts-tab .button-box {
   border: none !important;
 }
-html[dir='rtl'] .tabs .mts-tab .button {
+html[dir='rtl'] .tabs .mts-tab .xsbutton {
   float: left;
 }
-.tabs .mts-tab .button .menu {
+.tabs .mts-tab .xsbutton .menu {
   left: auto;
   right: calc(-5px - 100%);
 }
-html[dir='rtl'] .tabs .mts-tab .button .menu {
+html[dir='rtl'] .tabs .mts-tab .xsbutton .menu {
   left: calc(-5px - 100%);
   right: auto;
 }
-.tabs .mts-tab .button .menupopup {
+.tabs .mts-tab .xsbutton .menupopup {
   transform: translateX(-100%);
   overflow: auto;
 }
-html[dir='rtl'] .tabs .mts-tab .button .menupopup {
+html[dir='rtl'] .tabs .mts-tab .xsbutton .menupopup {
   transform: translateX(90%);
 }
 .tabs .mts-tab .button-icon {

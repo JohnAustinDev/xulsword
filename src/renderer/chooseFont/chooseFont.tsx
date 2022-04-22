@@ -4,7 +4,7 @@
 import React from 'react';
 import i18n from 'i18next';
 import { ChromePicker as ColorPicker } from 'react-color';
-import Slider from 'react-input-slider';
+import { Slider } from '@blueprintjs/core';
 import type { ReactElementLike } from 'prop-types';
 import C from '../../constant';
 import { diff } from '../../common';
@@ -232,12 +232,14 @@ export default class ChooseFontWin extends React.Component {
                   value={`${i18n.t('textSize.label')}:`}
                 />
                 <Slider
-                  axis="x"
-                  x={fontSize}
+                  min={0}
+                  max={100}
+                  value={fontSize}
                   disabled={disabled}
                   onChange={(val) => {
-                    setStateValue('fontSize', val.x);
+                    setStateValue('fontSize', val);
                   }}
+                  labelRenderer={false}
                 />
               </Row>
               <Row>
@@ -248,12 +250,14 @@ export default class ChooseFontWin extends React.Component {
                   control="lineHeight"
                 />
                 <Slider
-                  axis="x"
-                  x={lineHeight}
+                  min={0}
+                  max={100}
+                  value={lineHeight}
                   disabled={disabled}
                   onChange={(val) => {
-                    setStateValue('lineHeight', val.x);
+                    setStateValue('lineHeight', val);
                   }}
+                  labelRenderer={false}
                 />
               </Row>
               <Row>

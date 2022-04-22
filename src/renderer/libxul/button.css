@@ -1,4 +1,4 @@
-button {
+.xsbutton {
   margin: 1px 5px 2px 5px;
   border: 1px solid;
   border-radius: 4px;
@@ -11,56 +11,56 @@ button {
   text-shadow: none;
 }
 
-button {
+.xsbutton {
   font-size: 11px;
 }
 
-.button-box {
+.xsbutton .button-box {
   border: 1px solid transparent;
 }
 
-.button-icon {
+.xsbutton .button-icon {
   display: none;
 }
 
-.button-text {
+.xsbutton .button-text {
   display: inline-block;
   padding: 0px;
 }
-button:not(.orient-vertical) .button-text {
+.xsbutton:not(.orient-vertical) .button-text {
   padding-left: 4px;
   padding-right: 0px;
 }
 
-button:not(.orient-vertical).xuldir-reverse .button-text {
+.xsbutton:not(.orient-vertical).xuldir-reverse .button-text {
   padding-left: 0px;
   padding-right: 4px;
 }
-button.orient-vertical .button-text {
+.xsbutton.orient-vertical .button-text {
   padding-top: 4px;
   padding-bottom: 0px;
 }
 
-button.orient-vertical.xuldir-reverse .button-text {
+.xsbutton.orient-vertical.xuldir-reverse .button-text {
   padding-top: 0px;
   padding-bottom: 4px;
 }
 
-button:active {
+.xsbutton:active {
   background-color: lightgrey;
 }
 
 /* .......... focused state .......... */
 
-button:focus .button-box {
+.xsbutton:focus .button-box {
   border: 1px dotted rgb(226, 159, 34);
 }
 
 /* .......... active/open/checked state .......... */
 
-button:hover:active,
-button.open,
-button.checked {
+.xsbutton:hover:active,
+.xsbutton.open,
+.xsbutton.checked {
   border-top-color: ThreeDLightShadow;
   border-right-color: ThreeDLightShadow;
   border-bottom-color: ThreeDLightShadow;
@@ -70,8 +70,8 @@ button.checked {
 
 /* .......... disabled state .......... */
 
-button.disabled,
-button.disabled:hover:active {
+.xsbutton.disabled,
+.xsbutton.disabled:hover:active {
   border-top-color: ThreeDHighlight;
   border-right-color: ThreeDLightShadow;
   border-bottom-color: ThreeDLightShadow;
@@ -81,7 +81,7 @@ button.disabled:hover:active {
 
 /* ::::: menu/menu-button buttons ::::: */
 
-.button .menu {
+.xsbutton .menu {
   position: relative;
   left: 50%;
 }

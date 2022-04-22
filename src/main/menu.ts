@@ -621,7 +621,7 @@ export default class MenuBuilder {
                   panels.find((m) => m) ||
                   (G.Tabs[0] && G.Tabs[0].module) ||
                   '';
-                Commands.openFontsColors(module, this.mainWindow);
+                Commands.openFontsColors(module);
               }),
             },
           ],

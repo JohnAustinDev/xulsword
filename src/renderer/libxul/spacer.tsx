@@ -18,9 +18,7 @@ const propTypes = {
   orient: PropTypes.oneOf(['horizontal', 'vertical']),
 };
 
-interface SpacerProps extends XulProps {
-  orient?: string;
-}
+type SpacerProps = XulProps;
 
 function Spacer(props: SpacerProps) {
   return <div {...htmlAttribs('spacer', props)}>{props.children}</div>;

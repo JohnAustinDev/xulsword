@@ -86,7 +86,7 @@ export default function contextMenu(
         enabled: Boolean(cm().module),
         click: ((data) => {
           return () => {
-            if (data.module) Commands.openFontsColors(data.module, window);
+            if (data.module) Commands.openFontsColors(data.module);
           };
         })(cm()),
       },

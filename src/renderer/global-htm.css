@@ -40,8 +40,10 @@ html.dialog #root {
 #overlay.installing {
   background-color: rgba(0, 0, 0, 0.5);
 }
-#overlay .showProgress {
-  font-size: 0.35em;
+#overlay .modal-progressbar {
+  width: 80%;
+  max-width: 300px;
+  background: rgb(87, 73, 95);
 }
 
 .userFontBase {
@@ -57,12 +59,14 @@ html.dialog #root {
 html.dialog select {
   height: 2em;
 }
-html.dialog .dialogbuttons .button {
+.dialogbuttons .xsbutton {
   font-size: 14px;
   min-width: 80px;
   padding: 3px 0;
 }
-html.dialog .grid {
+
+/* Grid */
+html .grid {
   align-items: center;
   justify-items: start;
 }

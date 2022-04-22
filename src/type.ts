@@ -50,7 +50,13 @@ export type WinMainType = {
 export type WindowRegistryType = (WindowDescriptorType | null)[];
 
 export type WindowDescriptorType = {
-  type: 'xulsword' | 'splash' | 'viewportWin' | 'popupWin' | 'chooseFont';
+  type:
+    | 'xulsword'
+    | 'splash'
+    | 'viewportWin'
+    | 'popupWin'
+    | 'chooseFont'
+    | 'moduleDownloader';
   id?: number;
   category?: 'window' | 'dialog';
   options?: Electron.BrowserWindowConstructorOptions;
@@ -637,10 +643,7 @@ const CommandsPublic = {
   paste: func as unknown as (...args: any) => boolean,
   search: func as unknown as (search: SearchType) => void,
   copyPassage: func as unknown as () => void,
-  openFontsColors: func as unknown as (
-    module: string,
-    window?: BrowserWindow | null
-  ) => void,
+  openFontsColors: func as unknown as (module: string) => void,
   openBookmarksManager: func as unknown as () => void,
   openNewDbItemDialog: func as unknown as (
     userNote: boolean,

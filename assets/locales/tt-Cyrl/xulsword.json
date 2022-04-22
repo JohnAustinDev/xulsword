@@ -16,6 +16,7 @@
    "edit.properties.keybinding" : "I",
    "editMenu.accesskey" : "",
    "editMenu.label" : "Texrir",
+   "error-detected" : "Обнаружена проблема. Сообщить об этой проблеме нажмите “{{v1}}”.",
    "fileMenu.accesskey" : "",
    "fileMenu.label" : "Dosye",
    "locale_direction" : "ltr",
