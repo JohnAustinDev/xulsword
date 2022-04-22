@@ -47,7 +47,7 @@ function Button(props: ButtonProps) {
     align,
     children,
     disabled,
-    dir,
+    xuldir,
     dlgType,
     label,
     orient,
@@ -68,7 +68,7 @@ function Button(props: ButtonProps) {
         flex="1"
         align={alignx}
         pack={packx}
-        dir={dir}
+        xuldir={xuldir}
         orient={orient}
       >
         <div className="button-icon" />

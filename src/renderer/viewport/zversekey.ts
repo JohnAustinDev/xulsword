@@ -328,23 +328,23 @@ export function getRefHTML(
         text: '',
       };
       if (showText || locOrStr.subid) {
-        const r = locationVKText(
-          locOrStr,
-          mod,
-          alternates,
-          keepNotes,
-          false,
-          true,
-          inf
-        );
-        if (r) resolve = r;
+        resolve =
+          locationVKText(
+            locOrStr,
+            mod,
+            alternates,
+            keepNotes,
+            false,
+            true,
+            inf
+          ) || resolve;
       }
       const { location, module, text } = resolve;
       if (module && location.book) {
         const { subid: noteID } = location;
         const { direction, label, labelClass } = G.Tab[module];
         const crref = ['crref'];
-        const crtext = ['crtext', `cs-${module || 'locale'}`];
+        const crtext = ['crtext'];
         if (direction !== G.ProgramConfig.direction) {
           crtext.push('opposing-program-direction');
         }
@@ -362,29 +362,24 @@ export function getRefHTML(
           : '';
         if (noteID) {
           h += `
-          <bdi>
-            <span class="${fntext.join(' ')}">${text}${alt}</span>
-          </bdi>`;
+          <bdi><span class="${fntext.join(' ')}">${text}${alt}</span></bdi>`;
         } else {
           const { book, chapter, verse, lastverse } = location;
           const q = inf.possibleV11nMismatch
             ? '<span class="possibleV11nMismatch">?</span>'
             : '';
           h += `
-          <bdi>
-            <a class="${crref.join(' ')}" data-title="${[
+          <bdi><a class="${crref.join(' ')}" data-title="${[
             book,
             chapter,
             verse,
             lastverse || verse,
             module,
           ].join('.')}">${verseKey(location).readable()}</a>${q}${
-            text ? ':' : ''
-          }
-          </bdi>
-          <bdi>
-            <span class="${crtext.join(' ')}">${text}${alt}</span>
-          </bdi>`;
+            text ? ': ' : ''
+          }</bdi><bdi><span class="${crtext.join(
+            ' '
+          )}">${text}${alt}</span></bdi>`;
         }
       }
     }
