@@ -1,6 +1,5 @@
 /* eslint-disable no-nested-ternary */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable new-cap */
 /* eslint-disable import/no-mutable-exports */
 import log from 'electron-log';
 import path from 'path';
@@ -12,10 +11,10 @@ import RefParser, { RefParserOptionsType } from '../refparse';
 import { clone, isASCII, JSON_parse, tabSort } from '../common';
 import Cache from '../cache';
 import Subscription from '../subscription';
-import Dirs from './modules/dirs';
-import Prefs from './modules/prefs';
-import LibSword from './modules/libsword';
-import nsILocalFile from './components/nsILocalFile';
+import Dirs from './components/dirs';
+import Prefs from './components/prefs';
+import LibSword from './components/libsword';
+import LocalFile from './components/localFile';
 import { getFeatureModules, getModuleFonts, getModuleConfig } from './config';
 import { moduleUnsupported } from './installer';
 
@@ -153,18 +152,18 @@ export function getTabs(): TabType[] {
         if (p.slice(-1) !== DIRSEP) p += DIRSEP;
         const directory = p;
         p = p.replace(/[\\/]modules[\\/].*?$/, `${DIRSEP}mods.d`);
-        let confFile = new nsILocalFile(
+        let confFile = new LocalFile(
           `${p + DIRSEP + module.toLowerCase()}.conf`
         );
         if (!confFile.exists()) {
-          confFile = new nsILocalFile(`${p + DIRSEP + module}.conf`);
+          confFile = new LocalFile(`${p + DIRSEP + module}.conf`);
           if (!confFile.exists()) {
             const modRE = new RegExp(`^\\[${module}\\]`);
-            confFile = new nsILocalFile(p);
+            confFile = new LocalFile(p);
             if (confFile.exists()) {
               const files = confFile.directoryEntries;
               files?.forEach((file) => {
-                const f = new nsILocalFile(confFile.path);
+                const f = new LocalFile(confFile.path);
                 f.append(file);
                 if (!f.isDirectory() && /\.conf$/.test(f.leafName)) {
                   const cdata = f.readFile();

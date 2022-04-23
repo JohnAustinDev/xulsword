@@ -1,14 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable new-cap */
-/* eslint-disable @typescript-eslint/naming-convention */
 import fs from 'fs';
 import path from 'path';
 
 const FPERM = 0o666;
 const DPERM = 0o666;
 
-export default class nsILocalFile {
-  // The file system location for this nsILocalFile instance.
+export default class LocalFile {
+  // The file system location for this LocalFile instance.
   path = '';
 
   static NO_CREATE = 0;
@@ -24,7 +22,7 @@ export default class nsILocalFile {
     }
   }
 
-  // Set the absolute path of the nsILocalFile
+  // Set the absolute path of the LocalFile
   initWithPath(aPath: string, createType?: number) {
     if (path.isAbsolute(aPath)) {
       this.path = aPath;
@@ -47,12 +45,12 @@ export default class nsILocalFile {
   // Copy this.path to a directory as leafName. If leafName is falsey, then
   // this.leafName will be used. Destination file will be overwritten if it
   // already exists.
-  copyTo(dirObj: nsILocalFile, leafName?: string) {
+  copyTo(dirObj: LocalFile, leafName?: string) {
     const name = leafName || this.leafName;
 
-    const newFile = new nsILocalFile(
+    const newFile = new LocalFile(
       path.join(dirObj.path, name),
-      nsILocalFile.NO_CREATE
+      LocalFile.NO_CREATE
     );
 
     if (this.exists() && dirObj.exists()) {
@@ -63,7 +61,7 @@ export default class nsILocalFile {
       );
     }
 
-    // Return the new nsILocalFile
+    // Return the new LocalFile
     if (!newFile.exists()) {
       throw Error(`ERROR: copyTo failed: ${newFile.path}`);
     }
@@ -78,9 +76,9 @@ export default class nsILocalFile {
   create(type: number, options?: any): boolean {
     if (this.path) {
       if (!this.exists()) {
-        if (type === nsILocalFile.DIRECTORY_TYPE) {
+        if (type === LocalFile.DIRECTORY_TYPE) {
           fs.mkdirSync(this.path, options);
-        } else if (type === nsILocalFile.NORMAL_FILE_TYPE) {
+        } else if (type === LocalFile.NORMAL_FILE_TYPE) {
           fs.writeFileSync(this.path, '');
         } else {
           throw Error(`Unsupported file type ${type}`);
@@ -92,8 +90,8 @@ export default class nsILocalFile {
     return this.exists();
   }
 
-  clone(): nsILocalFile {
-    return new nsILocalFile(this.path);
+  clone(): LocalFile {
+    return new LocalFile(this.path);
   }
 
   // Creates a file. If it already exists, another name is tried (up to
@@ -137,7 +135,7 @@ export default class nsILocalFile {
     return fs.readdirSync(this.path, { encoding: 'utf-8' });
   }
 
-  // This was not part of nsILocalFile, but added for convenience. Reads UTF-8
+  // This was not part of LocalFile, but added for convenience. Reads UTF-8
   // encoded file contents and returns as string.
   readFile(options?: any): string {
     const ops = options || {};
@@ -145,7 +143,7 @@ export default class nsILocalFile {
     return fs.readFileSync(this.path, ops) as unknown as string;
   }
 
-  // This was not part of nsILocalFile, but added for convenience.
+  // This was not part of LocalFile, but added for convenience.
   readBuf(options?: any): Buffer {
     const ops = options || {};
     ops.encoding = null;
@@ -160,7 +158,7 @@ export default class nsILocalFile {
     return fs.statSync(this.path, options);
   }
 
-  // This was not part of nsILocalFIle, but added for convenience. Writes UTF-8
+  // This was not part of LocalFile, but added for convenience. Writes UTF-8
   // encoded string to file.
   writeFile(data: string | Buffer, options?: any) {
     const o = options || { mode: FPERM };
@@ -175,15 +173,15 @@ export default class nsILocalFile {
     return path.basename(this.path);
   }
 
-  // Return the parent directory as an nsILocalFile.
+  // Return the parent directory as a LocalFile.
   get parent() {
-    return new nsILocalFile(path.dirname(this.path), nsILocalFile.NO_CREATE);
+    return new LocalFile(path.dirname(this.path), LocalFile.NO_CREATE);
   }
 }
 
 // creates only allowable file types
 export function createSafeFile(
-  nsIFile: nsILocalFile,
+  nsIFile: LocalFile,
   perm: number,
   createUnique = false
 ) {
@@ -194,15 +192,15 @@ export function createSafeFile(
     return false;
   }
 
-  if (createUnique) nsIFile.createUnique(nsILocalFile.NORMAL_FILE_TYPE, perm);
-  else nsIFile.create(nsILocalFile.NORMAL_FILE_TYPE, perm);
+  if (createUnique) nsIFile.createUnique(LocalFile.NORMAL_FILE_TYPE, perm);
+  else nsIFile.create(LocalFile.NORMAL_FILE_TYPE, perm);
 
   return true;
 }
 
 // writes to only allowable file types
 export function writeSafeFile(
-  nsIFile: nsILocalFile,
+  nsIFile: LocalFile,
   str: string,
   overwrite: boolean,
   toEncoding = 'utf8'
@@ -229,7 +227,7 @@ export function inlineFile(
   fpath: string,
   encoding = 'base64' as BufferEncoding
 ): string {
-  const file = new nsILocalFile(fpath);
+  const file = new LocalFile(fpath);
   const mimeTypes = {
     jpg: 'image/jpeg',
     jpeg: 'image/jpeg',

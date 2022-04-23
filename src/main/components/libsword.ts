@@ -1,11 +1,10 @@
 /* eslint-disable no-underscore-dangle */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-continue */
-/* eslint-disable new-cap */
 import log from 'electron-log';
 import C from '../../constant';
 import Cache from '../../cache';
-import nsILocalFile from '../components/nsILocalFile';
+import LocalFile from './localFile';
 import Dirs from './dirs';
 import Prefs from './prefs';
 
@@ -72,12 +71,12 @@ const LibSword: GType['LibSword'] & LibSwordPrivate = {
     this.localeDirectory = Dirs.path.xsLocale;
 
     // copy locale defaults if needed
-    const localeConf = new nsILocalFile(this.localeDirectory);
+    const localeConf = new LocalFile(this.localeDirectory);
     localeConf.append('locales.conf');
     if (!localeConf.exists()) {
       const def = Dirs.xsDefaults;
       def.append('locales.conf');
-      const locdir = new nsILocalFile(this.localeDirectory);
+      const locdir = new LocalFile(this.localeDirectory);
       if (def.exists()) {
         def.copyTo(locdir);
       }

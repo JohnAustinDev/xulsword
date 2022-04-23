@@ -26,7 +26,7 @@
   by all of xulsword's unpinned windows etc.
 */
 
-import LibSword from '../main/modules/libsword';
+import LibSword from '../main/components/libsword';
 import C from '../constant';
 
 const Location = {

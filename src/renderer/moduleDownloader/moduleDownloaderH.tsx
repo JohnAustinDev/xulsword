@@ -1,5 +1,3 @@
 import { SyntheticEvent } from 'react';
 
-function handler(e: SyntheticEvent) {}
-
-export default handler;
+export default function handler(e: SyntheticEvent) {}

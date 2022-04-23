@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-nested-ternary */
 import { clone, tabSort } from '../common';
-import Prefs from './modules/prefs';
+import Prefs from './components/prefs';
 import { getBooksInModule, getTab, getTabs } from './minit';
 
 import type { TabType, TabTypes, XulswordStatePref } from '../type';

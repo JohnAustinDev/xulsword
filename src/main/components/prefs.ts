@@ -1,13 +1,12 @@
 /* eslint-disable prefer-rest-params */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable new-cap */
 import { BrowserWindow } from 'electron';
 import log from 'electron-log';
 import path from 'path';
 import fs from 'fs';
 import { clone, diff, JSON_parse, JSON_stringify } from '../../common';
 import Subscription from '../../subscription';
-import nsILocalFile from '../components/nsILocalFile';
+import LocalFile from './localFile';
 import Dirs from './dirs';
 
 import type { GType, PrefObject, PrefValue } from '../../type';
@@ -21,7 +20,7 @@ export type PrefCallbackType = (
 
 type StoreType = {
   [i in string | 'prefs']: {
-    file: nsILocalFile;
+    file: LocalFile;
     data: any;
   };
 };
@@ -146,9 +145,9 @@ const Prefs: GType['Prefs'] & PrefsPrivate = {
       this.store = {
         ...this.store,
         [aStore]: {
-          file: new nsILocalFile(
+          file: new LocalFile(
             path.join(Dirs.path.xsPrefD, aStore.concat('.json')),
-            nsILocalFile.NO_CREATE
+            LocalFile.NO_CREATE
           ),
           data: null,
         },
@@ -161,9 +160,9 @@ const Prefs: GType['Prefs'] & PrefsPrivate = {
     if (!s.data || typeof s.data !== 'object') {
       // If there is no store file, copy the default or create one.
       if (!s.file.exists()) {
-        const defFile = new nsILocalFile(
+        const defFile = new LocalFile(
           path.join(Dirs.path.xsPrefDefD, aStore.concat('.json')),
-          nsILocalFile.NO_CREATE
+          LocalFile.NO_CREATE
         );
         if (defFile.exists()) {
           defFile.copyTo(s.file.parent, s.file.leafName);

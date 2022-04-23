@@ -4,7 +4,7 @@ import contextMenuCreator from 'electron-context-menu';
 import i18next from 'i18next';
 import Commands, { newDbItemWithDefaults } from './commands';
 import setViewportTabs from './tabs';
-import Data from './modules/data';
+import Data from './components/data';
 
 import type { ContextData, LocationVKType } from '../type';
 

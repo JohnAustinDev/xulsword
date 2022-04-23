@@ -10,9 +10,9 @@ import { JSON_parse, JSON_stringify } from '../common';
 import Cache from '../cache';
 import C from '../constant';
 import Subscription from '../subscription';
-import Dirs from './modules/dirs';
-import Data from './modules/data';
-import Prefs from './modules/prefs';
+import Dirs from './components/dirs';
+import Data from './components/data';
+import Prefs from './components/prefs';
 
 import type {
   WindowArgType,
@@ -23,7 +23,8 @@ import type {
   ModalType,
 } from '../type';
 import type contextMenu from './contextMenu';
-import type { PrefCallbackType } from './modules/prefs';
+import type { PrefCallbackType } from './components/prefs';
+import LocalFile from './components/localFile';
 
 const i18nBackendRenderer = require('i18next-electron-fs-backend');
 
@@ -351,6 +352,30 @@ const Window: GType['Window'] = {
     getBrowserWindows(window, arguments[1]).forEach((win) => {
       win.close();
     });
+  },
+
+  // Create a new temp directory for the window that gets deleted when
+  // the window closes.
+  tmpDir(window?: WindowArgType): string {
+    const win = getBrowserWindows(window, arguments[1])[0];
+    const w = win as any;
+    if (w.xstmpDir) return w.xstmpDir;
+    const dir = Dirs.TmpD;
+    dir.append(`xulsword_${String(Math.round(10000 * Math.random()))}`);
+    if (dir.exists()) dir.remove(true);
+    dir.create(LocalFile.DIRECTORY_TYPE);
+    if (!dir.exists()) return '';
+    win.once(
+      'closed',
+      ((d) => {
+        return () => {
+          const f = new LocalFile(d);
+          if (f.exists()) f.remove(true);
+        };
+      })(dir.path)
+    );
+    w.xstmpDir = dir.path;
+    return dir.path;
   },
 
   // Disable all event handlers on a window to insure user input is bocked for

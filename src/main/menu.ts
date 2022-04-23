@@ -16,8 +16,8 @@ import setViewportTabs from './tabs';
 
 import type { TabTypes, XulswordStatePref } from '../type';
 import { verseKey } from './minit';
-import Data from './modules/data';
-import Prefs, { PrefCallbackType } from './modules/prefs';
+import Data from './components/data';
+import Prefs, { PrefCallbackType } from './components/prefs';
 
 type Modifiers =
   | 'CommandOrControl' // 'accel' in XUL

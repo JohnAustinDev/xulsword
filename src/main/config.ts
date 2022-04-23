@@ -1,22 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable new-cap */
 import path from 'path';
 import i18next from 'i18next';
 import C from '../constant';
-import Dirs from './modules/dirs';
-import Prefs from './modules/prefs';
+import Dirs from './components/dirs';
+import Prefs from './components/prefs';
 import Cache from '../cache';
-import nsILocalFile from './components/nsILocalFile';
-import LibSword from './modules/libsword';
+import LocalFile from './components/localFile';
+import LibSword from './components/libsword';
 import getFontFamily from './fontfamily';
 
-import type {
-  ConfigType,
-  FeatureType,
-  FontFaceType,
-  GlobalPrefType,
-} from '../type';
-import Data from './modules/data';
+import type { ConfigType, FeatureType, FontFaceType } from '../type';
+import Data from './components/data';
 
 // If a module config fontFamily specifies a URL to a font, rather
 // than a fontFamily, then parse the URL. Otherwise return null.
@@ -53,7 +47,7 @@ export function getModuleFonts(): FontFaceType[] {
     if (reread) {
       fonts = {};
       fontfiles?.forEach((file) => {
-        const font = new nsILocalFile(path.join(Dirs.path.xsFonts, file));
+        const font = new LocalFile(path.join(Dirs.path.xsFonts, file));
         let fontFamily = 'dir';
         if (!font.isDirectory()) {
           const ff = getFontFamily(font.path);

@@ -1,4 +1,3 @@
-/* eslint-disable new-cap */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable prefer-rest-params */
 import { BrowserWindow, dialog, OpenDialogSyncOptions, shell } from 'electron';
@@ -7,8 +6,8 @@ import i18n from 'i18next';
 import Subscription from '../subscription';
 import { clone, JSON_stringify } from '../common';
 import { verseKey, getTab, getTabs } from './minit';
-import Prefs from './modules/prefs';
-import nsILocalFile from './components/nsILocalFile';
+import Prefs from './components/prefs';
+import LocalFile from './components/localFile';
 import installList from './installer';
 import Window, { getBrowserWindows } from './window';
 
@@ -86,13 +85,13 @@ const Commands: GType['Commands'] = {
       // Install all modules in a directory
       if (paths.endsWith('/*')) {
         const list: string[] = [];
-        const file = new nsILocalFile(paths.substring(0, -2));
+        const file = new LocalFile(paths.substring(0, -2));
         if (file.isDirectory()) {
           list.push(...filter(file.directoryEntries));
         }
         return modalInstall(list, progwin);
       }
-      const file = new nsILocalFile(paths);
+      const file = new LocalFile(paths);
       // ZIP file to install
       if (!file.isDirectory()) {
         return modalInstall(filter([file.path]), progwin);

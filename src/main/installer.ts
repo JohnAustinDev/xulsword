@@ -1,15 +1,19 @@
 /* eslint-disable no-continue */
-/* eslint-disable new-cap */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { BrowserWindow } from 'electron';
 import log from 'electron-log';
 import { getBrowserWindows } from './window';
 import C from '../constant';
-import nsILocalFile from './components/nsILocalFile';
-import Dirs from './modules/dirs';
-import LibSword from './modules/libsword';
+import LocalFile from './components/localFile';
+import Dirs from './components/dirs';
+import LibSword from './components/libsword';
 
-import type { ModTypes, NewModulesType, SwordConfType } from '../type';
+import type {
+  ModTypes,
+  NewModulesType,
+  SwordConfType,
+  ZipEntryType,
+} from '../type';
 
 // CrossWire SWORD Standard TODOS:
 // TODO! DisplayLevel: GenBook standard display's context levels
@@ -18,15 +22,7 @@ import type { ModTypes, NewModulesType, SwordConfType } from '../type';
 
 const AdmZip = require('adm-zip');
 
-type ZipEntryType = {
-  entryName: string;
-  name: string;
-  isDirectory: boolean;
-  getData: () => Buffer;
-  toString: () => string;
-};
-
-export function parseSwordConf(config: string | nsILocalFile): SwordConfType {
+export function parseSwordConf(config: string | LocalFile): SwordConfType {
   const conf = typeof config === 'string' ? config : config.readFile();
   const errors = [];
   const lines = conf.split(/[\n\r]+/);
@@ -202,7 +198,7 @@ export function removeModule(
   let num = 0;
   const ma = Array.isArray(modules) ? modules : [modules];
   ma.forEach((m) => {
-    const moddir = new nsILocalFile(
+    const moddir = new LocalFile(
       sharedModuleDir ? Dirs.path.xsModsCommon : Dirs.path.xsModsUser
     );
     moddir.append('mods.d');
@@ -252,7 +248,7 @@ export default async function installList(
       const xswin = getBrowserWindows({ type: 'xulsword' })[0];
       const zipEntries: ZipEntryType[] = [];
       paths.forEach((f) => {
-        const zipfile = new nsILocalFile(f);
+        const zipfile = new LocalFile(f);
         if (zipfile.exists()) {
           zipEntries.push(...new AdmZip(f).getEntries());
         } else {
@@ -299,7 +295,7 @@ export default async function installList(
             const type = entry.entryName.split('/').shift();
             switch (type) {
               case 'mods.d': {
-                const moddest = new nsILocalFile(
+                const moddest = new LocalFile(
                   toSharedDir ? Dirs.path.xsModsCommon : Dirs.path.xsModsUser
                 );
                 const confstr = entry.getData().toString('utf8');
@@ -316,7 +312,7 @@ export default async function installList(
                   reasons.push(...conf.errors);
                   moddest.append('mods.d');
                   if (!moddest.exists()) {
-                    moddest.create(nsILocalFile.DIRECTORY_TYPE);
+                    moddest.create(LocalFile.DIRECTORY_TYPE);
                   }
                   moddest.append(entry.name);
                   // Remove any existing module having this name.
@@ -337,7 +333,7 @@ export default async function installList(
                       }
                     }
                     // Make sure module destination directory exists and is empty.
-                    const destdir = new nsILocalFile(
+                    const destdir = new LocalFile(
                       toSharedDir
                         ? Dirs.path.xsModsCommon
                         : Dirs.path.xsModsUser
@@ -348,7 +344,7 @@ export default async function installList(
                     }
                     if (
                       destdir.exists() ||
-                      !destdir.create(nsILocalFile.DIRECTORY_TYPE, {
+                      !destdir.create(LocalFile.DIRECTORY_TYPE, {
                         recursive: true,
                       })
                     ) {
@@ -377,7 +373,7 @@ export default async function installList(
                 });
                 const swmodpath = conf && confModulePath(conf.DataPath);
                 if (conf && swmodpath) {
-                  const destdir = new nsILocalFile(
+                  const destdir = new LocalFile(
                     toSharedDir ? Dirs.path.xsModsCommon : Dirs.path.xsModsUser
                   );
                   destdir.append(swmodpath);
@@ -392,7 +388,7 @@ export default async function installList(
                       if (i === parts.length - 1) {
                         destdir.writeFile(entry.getData());
                       } else if (!destdir.exists()) {
-                        destdir.create(nsILocalFile.DIRECTORY_TYPE);
+                        destdir.create(LocalFile.DIRECTORY_TYPE);
                       }
                     });
                     if (!destdir.exists()) {

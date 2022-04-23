@@ -7,7 +7,7 @@
 import React from 'react';
 import i18n from 'i18next';
 import Subscription from '../../subscription';
-import { keep, dString, diff, clone, drop } from '../../common';
+import { dString, diff, clone, drop } from '../../common';
 import C from '../../constant';
 import G from '../rg';
 import renderToRoot from '../rinit';

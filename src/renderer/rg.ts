@@ -12,7 +12,12 @@ import log from './log';
 const G = {} as typeof GPublic;
 
 // These global functions and object methods are asynchronous and return promises.
-const asyncFuncs = ['getSystemFonts', 'installXulswordModules'];
+const asyncFuncs = [
+  'getSystemFonts',
+  'installXulswordModules',
+  'crossWireMasterRepoList',
+  'repositoryListing',
+];
 
 const entries = Object.entries(GPublic);
 entries.forEach((entry) => {

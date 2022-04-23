@@ -1,5 +1,5 @@
 /* eslint-disable prettier/prettier */
-import LibSword from '../main/modules/libsword';
+import LibSword from '../main/components/libsword';
 import Location from './location';
 
 // JavaScript Document

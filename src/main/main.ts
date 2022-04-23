@@ -10,9 +10,10 @@ import Subscription from '../subscription';
 import Cache from '../cache';
 import C from '../constant';
 import G from './mg';
-import LibSword from './modules/libsword';
+import LibSword from './components/libsword';
+import Downloader from './components/downloader';
 import MenuBuilder, { pushPrefsToMenu } from './menu';
-import {
+import Window, {
   WindowRegistry,
   pushPrefsToWindows,
   getBrowserWindows,
@@ -21,7 +22,11 @@ import contextMenu from './contextMenu';
 import { checkModulePrefs } from './minit';
 import setViewportTabs from './tabs';
 
-import type { NewModulesType, WindowRegistryType } from '../type';
+import type {
+  NewModulesType,
+  SwordConfType,
+  WindowRegistryType,
+} from '../type';
 
 const i18nBackendMain = require('i18next-fs-backend');
 const installer = require('electron-devtools-installer');
@@ -97,6 +102,23 @@ ipcMain.on('did-finish-render', (event: IpcMainEvent) => {
     setTimeout(() => {
       G.Window.close({ type: 'splash' });
     }, 1000);
+  }
+  if (name === 'moduleDownloader') {
+    const tmpdir = Window.tmpDir(win);
+    Downloader.crossWireMasterRepoList(tmpdir)
+      .then((repolist) => {
+        const promises: Promise<SwordConfType[]>[] = [];
+        repolist.forEach((repo) => {
+          promises.push(Downloader.repositoryListing(repo, tmpdir));
+        });
+        return Promise.allSettled(promises);
+      })
+      .then((repores) => {
+        return repores;
+      })
+      .catch((er) => {
+        log.warn(er);
+      });
   }
 });
 

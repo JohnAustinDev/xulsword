@@ -1,12 +1,11 @@
-/* eslint-disable new-cap */
 /* eslint-disable prettier/prettier */
 import log from 'electron-log';
-import nsILocalFile from './components/nsILocalFile';
+import LocalFile from './components/localFile';
 
 // return a font file's fontFamily value
 export default function getFontFamily(fontpath) {
 
-  const fontfile = new nsILocalFile(fontpath);
+  const fontfile = new LocalFile(fontpath);
   const buff = fontfile.readBuf();
   if (!buff) return null;
 

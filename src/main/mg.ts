@@ -1,5 +1,4 @@
 /* eslint-disable class-methods-use-this */
-/* eslint-disable new-cap */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-use-before-define */
 import {
@@ -9,15 +8,15 @@ import {
   IpcMainInvokeEvent,
   shell,
 } from 'electron';
-import log from 'electron-log';
 import i18next from 'i18next';
 import { GPublic, GType } from '../type';
-import { inlineFile } from './components/nsILocalFile';
-import Dirs from './modules/dirs';
-import Prefs from './modules/prefs';
-import LibSword from './modules/libsword';
+import { inlineFile } from './components/localFile';
+import Dirs from './components/dirs';
+import Prefs from './components/prefs';
+import LibSword from './components/libsword';
 import Commands from './commands';
-import Data from './modules/data';
+import Data from './components/data';
+import Downloader from './components/downloader';
 import {
   getLocaleConfigs,
   getModuleConfigDefault,
@@ -111,6 +110,8 @@ class GClass implements GType {
 
   Window;
 
+  Downloader;
+
   constructor() {
     this.LibSword = LibSword;
     this.Prefs = Prefs;
@@ -119,6 +120,7 @@ class GClass implements GType {
     this.Shell = shell;
     this.Data = Data;
     this.Window = Window;
+    this.Downloader = Downloader;
   }
 
   get Books() {

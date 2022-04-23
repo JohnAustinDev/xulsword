@@ -407,6 +407,7 @@ export type SwordConfType = {
   GlobalOptionFilter: string[];
   History: [string, SwordConfLocalized][];
   errors: string[];
+  SourceRepository: string;
 };
 
 export type TabTypes = 'Texts' | 'Comms' | 'Dicts' | 'Genbks';
@@ -458,6 +459,20 @@ export type DirsDirectories = {
   xsVideo: string;
   xsLocale: string;
   xsModsCommon: string;
+};
+
+export type MasterRepoEntry = {
+  name: string;
+  domain: string;
+  path: string;
+};
+
+export type ZipEntryType = {
+  entryName: string;
+  name: string;
+  isDirectory: boolean;
+  getData: () => Buffer;
+  toString: () => string;
 };
 
 export type ResetType =
@@ -717,6 +732,15 @@ export const GPublic = {
     read: func as unknown as (name: string) => any,
     readAndDelete: func as unknown as (name: string) => any,
   },
+  Downloader: {
+    crossWireMasterRepoList: funcRO as unknown as (
+      tmpdir: string
+    ) => Promise<MasterRepoEntry[]>,
+    repositoryListing: funcRO as unknown as (
+      repo: MasterRepoEntry,
+      tmpdir: string
+    ) => Promise<SwordConfType[]>,
+  },
   Window: {
     open: func as unknown as (arg: WindowDescriptorType) => number,
     setComplexValue: func as unknown as (argname: string, value: any) => void,
@@ -733,6 +757,7 @@ export const GPublic = {
       title: string,
       window?: WindowArgType
     ) => void,
+    tmpDir: func as unknown as (window?: WindowArgType) => string,
     reset: func as unknown as (
       type?: ResetType,
       window?: WindowArgType

@@ -1,9 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable new-cap */
 import { app } from 'electron';
 import path from 'path';
 import C from '../../constant';
-import nsILocalFile from '../components/nsILocalFile';
+import LocalFile from './localFile';
 
 import type { DirsDirectories, GType } from '../../type';
 
@@ -49,12 +48,12 @@ Dirs.path.xsModsCommon = /^win32|darwin$/.test(process.platform)
   ? path.join(app.getPath('appData'), 'Sword')
   : path.join(app.getPath('home'), '.sword');
 
-// Add getters for nsiLocalFiles.
+// Add getters for LocalFiles.
 const dirNames = Object.getOwnPropertyNames(Dirs.path);
 dirNames.forEach((dir) => {
   Object.defineProperty(Dirs, dir, {
     get() {
-      return new nsILocalFile(this.path[dir], nsILocalFile.NO_CREATE);
+      return new LocalFile(this.path[dir], LocalFile.NO_CREATE);
     },
   });
 });
@@ -65,14 +64,14 @@ dirNames.forEach((dir) => {
   if (!noCreate.includes(dir)) {
     const dirs = Dirs as any;
     const f = dirs[dir];
-    f.create(nsILocalFile.DIRECTORY_TYPE);
+    f.create(LocalFile.DIRECTORY_TYPE);
   }
 });
 
 // The DirsClass interface is only available in main process directly through the Dirs object
 type DirsClass = GType['Dirs'] &
   {
-    [key in keyof DirsDirectories]: nsILocalFile;
+    [key in keyof DirsDirectories]: LocalFile;
   };
 
 export default Dirs as DirsClass;
