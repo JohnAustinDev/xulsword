@@ -16,6 +16,7 @@
   top: 2px;
   left: 6px;
   z-index: 40;
+  border: none;
 }
 html[dir='rtl'] .viewport .open-chooser {
   left: auto;

@@ -42,6 +42,8 @@
   padding: 0;
   background: transparent;
   border: none;
+  outline: unset;
+  outline-offset: unset;
 }
 .tabs .mts-tab .button-box {
   border: none !important;
@@ -75,6 +77,7 @@ html[dir='rtl'] .tabs .mts-tab .xsbutton .menupopup {
   margin: 1px 2px;
   padding: 0 0 4px 0;
   font-size: 1em;
+  box-sizing: content-box;
 }
 .tabs .mto-tab.selected {
   display: none;
