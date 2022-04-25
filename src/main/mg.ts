@@ -41,7 +41,7 @@ import {
 // Function.length is used to append the calling window, and Function.length
 // does not include rest parameters or default arguments, so this would result
 // in runtime exceptions being thrown.
-const includeCallingWindow = ['Prefs', 'Window', 'Commands'];
+const includeCallingWindow = ['Prefs', 'Window', 'Commands', 'Downloader'];
 
 // Handle global variable calls from renderer processes
 function handleGlobal(

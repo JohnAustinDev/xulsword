@@ -4,6 +4,8 @@
 import React from 'react';
 import i18n from 'i18next';
 import { Button } from '@blueprintjs/core';
+import log from '../log';
+import G from '../rg';
 import renderToRoot from '../rinit';
 import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
 import { Hbox, Vbox, Box } from '../libxul/boxes';
@@ -37,10 +39,15 @@ type ModuleDownloaderState = {
   moduleSourcePanelHeight: number;
 };
 
+// This is global so repositories are only loaded once, when the window opens.
+let RepositoriesDownloaded = false;
+
 export default class ModuleDownloader extends React.Component {
   static defaultProps: typeof defaultProps;
 
   static propTypes: typeof propTypes;
+
+  destroy: (() => void)[];
 
   handler: (e: React.SyntheticEvent) => void;
 
@@ -58,12 +65,45 @@ export default class ModuleDownloader extends React.Component {
 
       languageListOpen: true,
       languageListPanelWidth: 180,
-      moduleSourceOpen: false,
+      moduleSourceOpen: true,
       moduleSourcePanelHeight: 350,
     };
     this.state = s;
 
+    this.destroy = [];
     this.handler = handlerH.bind(this);
+  }
+
+  componentDidMount() {
+    if (!RepositoriesDownloaded) {
+      RepositoriesDownloaded = false;
+      G.Downloader.crossWireMasterRepoList()
+        .then((repos) => {
+          // TODO!: update repo table
+          console.log(repos);
+          return G.Downloader.repositoryListing(repos);
+        })
+        .then((confs) => {
+          // TODO!: update module table
+          console.log(confs);
+          return true;
+        })
+        .catch((er) => log.warn(er));
+    }
+    this.destroy.push(
+      window.ipc.renderer.on('progress', (prog: number, id?: string) => {
+        if (id) {
+          // TODO!: show progress in repo table
+          console.log(`${id}: ${prog}`);
+        }
+      })
+    );
+  }
+
+  componentWillUnmount() {
+    // clearPending(this, ['historyTO', 'dictkeydownTO', 'wheelScrollTO']);
+    this.destroy.forEach((func) => func());
+    this.destroy = [];
   }
 
   render() {

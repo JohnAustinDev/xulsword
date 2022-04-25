@@ -461,10 +461,11 @@ export type DirsDirectories = {
   xsModsCommon: string;
 };
 
-export type MasterRepoEntry = {
-  name: string;
+export type Download = {
   domain: string;
   path: string;
+  file: string;
+  name?: string;
 };
 
 export type ZipEntryType = {
@@ -733,13 +734,18 @@ export const GPublic = {
     readAndDelete: func as unknown as (name: string) => any,
   },
   Downloader: {
-    crossWireMasterRepoList: funcRO as unknown as (
-      tmpdir: string
-    ) => Promise<MasterRepoEntry[]>,
+    crossWireMasterRepoList: funcRO as unknown as () => Promise<Download[]>,
     repositoryListing: funcRO as unknown as (
-      repo: MasterRepoEntry,
-      tmpdir: string
-    ) => Promise<SwordConfType[]>,
+      repos: Download[]
+    ) => Promise<(SwordConfType[] | string)[]>,
+    ftp: func as unknown as (
+      download: Download,
+      tmpdir?: string | null, // returns a Buffer if tmpdir is null/undefined
+      progress?: (prog: number) => void // returns progress to calling window
+    ) => Promise<string | Buffer>,
+    untargz: func as unknown as (
+      pathOrBuffer: string | Buffer
+    ) => Promise<{ header: any; content: Buffer }[]>,
   },
   Window: {
     open: func as unknown as (arg: WindowDescriptorType) => number,

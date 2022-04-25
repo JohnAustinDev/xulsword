@@ -103,23 +103,6 @@ ipcMain.on('did-finish-render', (event: IpcMainEvent) => {
       G.Window.close({ type: 'splash' });
     }, 1000);
   }
-  if (name === 'moduleDownloader') {
-    const tmpdir = Window.tmpDir(win);
-    Downloader.crossWireMasterRepoList(tmpdir)
-      .then((repolist) => {
-        const promises: Promise<SwordConfType[]>[] = [];
-        repolist.forEach((repo) => {
-          promises.push(Downloader.repositoryListing(repo, tmpdir));
-        });
-        return Promise.allSettled(promises);
-      })
-      .then((repores) => {
-        return repores;
-      })
-      .catch((er) => {
-        log.warn(er);
-      });
-  }
 });
 
 const openMainWindow = () => {

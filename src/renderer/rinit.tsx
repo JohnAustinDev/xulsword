@@ -170,8 +170,8 @@ export default function renderToRoot(
     });
     // Progress meter:
     useEffect(() => {
-      return window.ipc.renderer.on('progress', (prog: number) => {
-        setProgress(prog);
+      return window.ipc.renderer.on('progress', (prog: number, id?: string) => {
+        if (!id) setProgress(prog);
       });
     });
     // New modules installed:

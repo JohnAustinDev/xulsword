@@ -333,12 +333,12 @@ const Window: GType['Window'] = {
   },
 
   setComplexValue(argname: string, value: any) {
-    const win = getBrowserWindows('self', arguments[2]);
+    const win = arguments[2] || null;
     if (win && win[0]) persist(argname, value, false, win[0]);
   },
 
   mergeValue(argname: string, value: any) {
-    const win = getBrowserWindows('self', arguments[2]);
+    const win = arguments[2] || null;
     if (win && win[0]) persist(argname, value, true, win[0]);
   },
 
