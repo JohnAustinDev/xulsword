@@ -367,10 +367,14 @@ type SwordConfLocalized = {
 export type SwordConfType = {
   module: string;
   DataPath: string;
+  DistributionLicense: string;
   MinimumVersion: string;
   PreferredCSSXHTML: string;
   KeySort: string;
+  Scope: string;
+  SourceType: string;
   TextSource: string;
+  Version: string;
   About: SwordConfLocalized;
   Abbreviation: SwordConfLocalized;
   Description: SwordConfLocalized;
@@ -402,12 +406,15 @@ export type SwordConfType = {
     | 'zLD'
     | 'RawGenBook';
   DisplayLevel: number;
+  InstallSize: number;
+  Versification: V11nType;
   Obsoletes: string[];
   Feature: string[];
   GlobalOptionFilter: string[];
   History: [string, SwordConfLocalized][];
   errors: string[];
-  SourceRepository: string;
+  sourceRepository: string;
+  moduleType: ModTypes;
 };
 
 export type TabTypes = 'Texts' | 'Comms' | 'Dicts' | 'Genbks';

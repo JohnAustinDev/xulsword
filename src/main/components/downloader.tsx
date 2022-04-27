@@ -47,7 +47,7 @@ const Downloader: GType['Downloader'] = {
     const outfile =
       (tmpdir && new LocalFile(tmpdir).append(name || file)) || null;
     const ftp = new FTP();
-    const filepath = [path, file].join('/').replaceAll('//', '/');
+    const filepath = ['/', path, file].join('/').replaceAll('//', '/');
     return new Promise((resolve, reject) => {
       let downloaded: string | Buffer;
       ftp.on('ready', () => {
@@ -102,7 +102,7 @@ const Downloader: GType['Downloader'] = {
         else resolve(downloaded);
       });
       try {
-        log.info(`Connecting ftp: ${domain}/${filepath}`);
+        log.info(`Connecting: ${domain}${filepath}`);
         ftp.connect({ host: domain });
       } catch (er) {
         reject(er);
@@ -155,25 +155,25 @@ const Downloader: GType['Downloader'] = {
       path: '/pub/sword/',
       file: 'masterRepoList.conf',
     };
-    const fbuffer = await this.ftp(mr);
-    const result: Download[] = [];
-    if (fbuffer && typeof fbuffer !== 'string') {
-      const fstring = fbuffer.toString('utf8');
-      const regex = 'FTPSource=([^|]+)\\|([^|]+)\\|([^|]+)\\s*[\\n\\r]';
-      fstring.match(new RegExp(regex, 'g'))?.forEach((mx: string) => {
-        const m = mx.match(new RegExp(regex));
-        if (m) {
-          result.push({
-            name: m[1],
-            domain: m[2],
-            path: m[3],
-            file: 'mods.d.tar.gz',
-          });
-        }
-      });
-    }
-    log.debug(result);
-    return result;
+    return this.ftp(mr).then((fbuffer) => {
+      const result: Download[] = [];
+      if (fbuffer && typeof fbuffer !== 'string') {
+        const fstring = fbuffer.toString('utf8');
+        const regex = 'FTPSource=([^|]+)\\|([^|]+)\\|([^|]+)\\s*[\\n\\r]';
+        fstring.match(new RegExp(regex, 'g'))?.forEach((mx: string) => {
+          const m = mx.match(new RegExp(regex));
+          if (m) {
+            result.push({
+              name: m[1],
+              domain: m[2],
+              path: m[3],
+              file: 'mods.d.tar.gz',
+            });
+          }
+        });
+      }
+      return result;
+    });
   },
 
   // Takes SWORD repositories as mods.d.tar.gz download array and, for
@@ -183,6 +183,9 @@ const Downloader: GType['Downloader'] = {
   async repositoryListing(repositories) {
     const callingWin = arguments[1] || null;
     const promises = repositories.map((repo) => {
+      if (repo.domain.match(/^file:/i)) {
+        return Promise.reject(new Error('TODO!: Local file repositories'));
+      }
       const progress = (prog: number) => {
         callingWin?.webContents.send('progress', prog, repo.name || 'unknown');
       };
@@ -196,7 +199,7 @@ const Downloader: GType['Downloader'] = {
             const { header, content: buffer } = r;
             if (header.name.endsWith('.conf')) {
               const conf = parseSwordConf(buffer.toString('utf8'));
-              conf.SourceRepository = repo.name || 'unknown';
+              conf.sourceRepository = repo.name || 'no-name';
               confs.push(conf);
             }
           });

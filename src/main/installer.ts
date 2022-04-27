@@ -108,6 +108,11 @@ export function parseSwordConf(config: string | LocalFile): SwordConfType {
       }
     }
   }
+  r.moduleType = 'Generic Books';
+  if (r.DataPath.includes('/texts/')) r.moduleType = 'Biblical Texts';
+  else if (r.DataPath.includes('/comments/')) r.moduleType = 'Commentaries';
+  else if (r.DataPath.includes('/lexdict/'))
+    r.moduleType = 'Lexicons / Dictionaries';
   r.errors = errors.map((er) => `${r.module}: ${er}`);
   log.silly(`${r.module} conf: `, r);
   return r;

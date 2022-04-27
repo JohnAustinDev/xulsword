@@ -1,6 +1,7 @@
 {
   "HelpEmailAddress": "",
   "WindowsDidClose": true,
+
   "global": {
     "InternetPermission": true,
     "fontSize": 2,
@@ -13,6 +14,7 @@
       }
     }
   },
+
   "xulsword": {
     "location": null,
     "selection": null,
@@ -53,5 +55,14 @@
     "isPinned": [],
     "noteBoxHeight": [],
     "maximizeNoteBox": []
+  },
+
+  "downloader": {
+    "language": "",
+    "languageListOpen": true,
+    "languageListPanelWidth": 180,
+    "customRepos": [],
+    "repoListOpen": true,
+    "repoListPanelHeight": 350
   }
 }

@@ -1,18 +1,24 @@
+/* eslint-disable import/order */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react/static-property-placement */
 /* eslint-disable jsx-a11y/control-has-associated-label */
 import React from 'react';
 import i18n from 'i18next';
 import { Button } from '@blueprintjs/core';
+import { clone, diff, drop } from '../../common';
 import log from '../log';
 import G from '../rg';
 import renderToRoot from '../rinit';
+import { getStatePref, onSetWindowState } from '../rutil';
 import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
 import { Hbox, Vbox, Box } from '../libxul/boxes';
 import Groupbox from '../libxul/groupbox';
 import Spacer from '../libxul/spacer';
+import RepositoryTable, { DataColumns } from './repositoryTable';
 import handlerH from './moduleDownloaderH';
 import './moduleDownloader.css';
+
+import type { Download } from '../../type';
 
 const defaultProps = {
   ...xulDefaultProps,
@@ -22,25 +28,33 @@ const propTypes = {
   ...xulPropTypes,
 };
 
-type ModuleDownloaderProps = XulProps;
+export type DownloaderProps = XulProps;
 
-type ModuleDownloaderState = {
+type DownloaderStatePref = {
   language: string | null;
-  module: string[] | null;
-  moduleSource: string[] | null;
-
-  showModuleInfo: boolean;
-  downloading: boolean;
-  polling: boolean;
-
   languageListOpen: boolean;
   languageListPanelWidth: number;
-  moduleSourceOpen: boolean;
-  moduleSourcePanelHeight: number;
+
+  customRepos: Download[];
+  repoListOpen: boolean;
+  repoListPanelHeight: number;
 };
 
-// This is global so repositories are only loaded once, when the window opens.
-let RepositoriesDownloaded = false;
+// The following initial state values do not come from Prefs. Neither are
+// these state keys written to Prefs.
+const notStatePref = {
+  module: null as string[] | null,
+  showModuleInfo: false,
+  downloading: false,
+
+  repoTableData: DataColumns.map(() => []) as (string | number)[][],
+  selectedRepos: undefined as { rows: [number, number] }[] | undefined,
+};
+
+// Save table data between resets, but don't save to prefs.
+let RepoTableData = notStatePref.repoTableData;
+
+export type DownloaderState = DownloaderStatePref & typeof notStatePref;
 
 export default class ModuleDownloader extends React.Component {
   static defaultProps: typeof defaultProps;
@@ -51,22 +65,14 @@ export default class ModuleDownloader extends React.Component {
 
   handler: (e: React.SyntheticEvent) => void;
 
-  constructor(props: ModuleDownloaderProps) {
+  constructor(props: DownloaderProps) {
     super(props);
 
-    const s: ModuleDownloaderState = {
-      language: null,
-      module: null,
-      moduleSource: null,
-
-      showModuleInfo: false,
-      downloading: false,
-      polling: false,
-
-      languageListOpen: true,
-      languageListPanelWidth: 180,
-      moduleSourceOpen: true,
-      moduleSourcePanelHeight: 350,
+    if (props.id !== 'downloader') throw Error(`ID must be 'downloader'`);
+    const s: DownloaderState = {
+      ...notStatePref,
+      ...(getStatePref(props.id) as DownloaderStatePref),
+      repoTableData: RepoTableData,
     };
     this.state = s;
 
@@ -75,29 +81,40 @@ export default class ModuleDownloader extends React.Component {
   }
 
   componentDidMount() {
-    if (!RepositoriesDownloaded) {
-      RepositoriesDownloaded = false;
-      G.Downloader.crossWireMasterRepoList()
-        .then((repos) => {
-          // TODO!: update repo table
-          console.log(repos);
-          return G.Downloader.repositoryListing(repos);
-        })
-        .then((confs) => {
-          // TODO!: update module table
-          console.log(confs);
+    if (!RepoTableData[0].length) {
+      this.getTableData()
+        .then((data) => {
+          RepoTableData = data;
           return true;
         })
         .catch((er) => log.warn(er));
     }
+    this.destroy.push(onSetWindowState(this));
     this.destroy.push(
       window.ipc.renderer.on('progress', (prog: number, id?: string) => {
-        if (id) {
-          // TODO!: show progress in repo table
-          console.log(`${id}: ${prog}`);
+        const state = this.state as DownloaderState;
+        const repoIndex = state.repoTableData.findIndex((i) => i[0] === id);
+        if (id && repoIndex !== -1 && prog === -1) {
+          this.setState((prevState: DownloaderState) => {
+            const repoTableData = clone(prevState.repoTableData);
+            repoTableData[repoIndex][3] = 'ready';
+            return { repoTableData };
+          });
         }
       })
     );
+  }
+
+  componentDidUpdate(_prevProps: any, prevState: DownloaderState) {
+    const state = this.state as DownloaderState;
+    const { id } = this.props as DownloaderProps;
+    if (id) {
+      const newStatePref = drop(state, notStatePref);
+      const d = diff(drop(prevState, notStatePref), newStatePref);
+      if (d) {
+        G.Prefs.mergeValue(id, d);
+      }
+    }
   }
 
   componentWillUnmount() {
@@ -106,32 +123,63 @@ export default class ModuleDownloader extends React.Component {
     this.destroy = [];
   }
 
+  getTableData() {
+    return G.Downloader.crossWireMasterRepoList()
+      .then((repos) => {
+        const { customRepos } = this.state as DownloaderState;
+        const repoTableData: DownloaderState['repoTableData'] = [];
+        customRepos.concat(repos).forEach((repo, i) => {
+          repoTableData.push([
+            repo.name || `unknown${i}`,
+            repo.domain,
+            repo.path,
+            'loading',
+          ]);
+        });
+        this.setState({ repoTableData } as DownloaderState);
+        return G.Downloader.repositoryListing(repos);
+      })
+      .then((confs) => {
+        const { repoTableData } = this.state as DownloaderState;
+        confs.forEach((c, i) => {
+          repoTableData[i][3] = typeof c === 'string' ? c : 'on';
+        });
+        this.setState({ repoTableData } as DownloaderState);
+        return repoTableData;
+      });
+  }
+
   render() {
-    const state = this.state as ModuleDownloaderState;
+    const state = this.state as DownloaderState;
     const {
       language,
-      module,
-      moduleSource,
-      downloading,
-      polling,
       languageListOpen,
       languageListPanelWidth,
+
+      module,
+      downloading,
       showModuleInfo,
-      moduleSourceOpen,
-      moduleSourcePanelHeight,
+
+      repoListOpen,
+      repoListPanelHeight,
+      repoTableData,
+      selectedRepos,
     } = state;
     const { handler } = this;
+
+    const loading = repoTableData.map((r) => r[3] === 'loading');
 
     const disable = {
       download: !module,
       moduleInfo: !module,
       moduleInfoBack: false,
       cancel: !downloading,
-      repoToggle: !moduleSource,
+      repoToggle: !selectedRepos?.length,
       repoAdd: false,
-      repoDelete: !moduleSource,
-      repoCancel: !polling,
+      repoDelete: !selectedRepos?.length,
+      repoCancel: !loading.find((l) => l),
     };
+
     return (
       <Vbox flex="1" height="100%">
         <Hbox className="language-pane" flex="1">
@@ -206,16 +254,23 @@ export default class ModuleDownloader extends React.Component {
           </Groupbox>
         </Hbox>
 
-        {moduleSourceOpen && (
+        {repoListOpen && (
           <>
             <Spacer id="moduleSourceSizer" width="10" />
             <Groupbox
               caption={i18n.t('moduleSources.label')}
-              height={`${moduleSourcePanelHeight}`}
+              height={`${repoListPanelHeight}`}
               orient="horizontal"
               flex="1"
             >
-              <Box flex="1" />
+              <Box flex="1" onClick={handler}>
+                <RepositoryTable
+                  key={loading.join('.')}
+                  data={repoTableData}
+                  loading={loading}
+                  selectedRegions={selectedRepos}
+                />
+              </Box>
               <Vbox className="button-stack" pack="center" onClick={handler}>
                 <Button
                   id="repoToggle"
@@ -248,13 +303,13 @@ export default class ModuleDownloader extends React.Component {
         )}
 
         <Hbox className="dialogbuttons" pack="end" align="end">
-          {moduleSourceOpen && (
-            <Button onClick={() => this.setState({ moduleSourceOpen: false })}>
+          {repoListOpen && (
+            <Button onClick={() => this.setState({ repoListOpen: false })}>
               {i18n.t('less.label')}
             </Button>
           )}
-          {!moduleSourceOpen && (
-            <Button onClick={() => this.setState({ moduleSourceOpen: true })}>
+          {!repoListOpen && (
+            <Button onClick={() => this.setState({ repoListOpen: true })}>
               {i18n.t('moduleSources.label')}
             </Button>
           )}
@@ -273,4 +328,4 @@ export default class ModuleDownloader extends React.Component {
 ModuleDownloader.defaultProps = defaultProps;
 ModuleDownloader.propTypes = propTypes;
 
-renderToRoot(<ModuleDownloader />);
+renderToRoot(<ModuleDownloader id="downloader" />);
