@@ -62,6 +62,7 @@
     "languageListOpen": true,
     "languageListPanelWidth": 180,
     "customRepos": [],
+    "disabledRepos": [],
     "repoListOpen": true,
     "repoListPanelHeight": 350
   }

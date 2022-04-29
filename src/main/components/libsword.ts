@@ -2,18 +2,26 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-continue */
 import log from 'electron-log';
+import path from 'path';
+import { downloadKey, isRepoLocal } from '../../common';
 import C from '../../constant';
 import Cache from '../../cache';
 import LocalFile from './localFile';
 import Dirs from './dirs';
 import Prefs from './prefs';
 
-import type { GType, SwordFilterType, SwordFilterValueType } from '../../type';
+import type {
+  Download,
+  DownloaderStatePref,
+  GType,
+  SwordFilterType,
+  SwordFilterValueType,
+} from '../../type';
 
 const { libxulsword } = require('libxulsword');
 
 type LibSwordPrivate = {
-  moduleDirectory: string;
+  moduleDirectories: string[];
   localeDirectory: string;
   checkCipherKeys: string[];
 
@@ -55,7 +63,7 @@ const LibSword: GType['LibSword'] & LibSwordPrivate = {
   libxulsword: null, // object returned by libxulsword node API module
   paused: false,
 
-  moduleDirectory: '',
+  moduleDirectories: [],
   localeDirectory: '',
 
   checkCipherKeys: [],
@@ -66,7 +74,27 @@ const LibSword: GType['LibSword'] & LibSwordPrivate = {
 
     log.verbose('Initializing libsword...');
 
-    this.moduleDirectory = Dirs.path.xsModsUser;
+    this.moduleDirectories = [Dirs.path.xsModsUser];
+    const customRepos = Prefs.getComplexValue(
+      'downloader.customRepos'
+    ) as DownloaderStatePref['customRepos'];
+    const disabledRepos = Prefs.getComplexValue(
+      'downloader.disabledRepos'
+    ) as DownloaderStatePref['disabledRepos'];
+    customRepos.forEach((repo: Download) => {
+      const p = repo.path.replace(/^file:\/\//i, '');
+      if (
+        !disabledRepos.includes(downloadKey(repo)) &&
+        isRepoLocal(repo) &&
+        path.isAbsolute(p)
+      ) {
+        const dir = new LocalFile(p);
+        const test = dir.clone().append('mods.d');
+        if (test.exists() && test.isDirectory()) {
+          this.moduleDirectories.push(dir.path);
+        }
+      }
+    });
 
     this.localeDirectory = Dirs.path.xsLocale;
 
@@ -82,7 +110,7 @@ const LibSword: GType['LibSword'] & LibSwordPrivate = {
       }
     }
 
-    log.verbose(`module directory: ${this.moduleDirectory}`);
+    log.verbose(`module directories: ${this.moduleDirectories}`);
 
     // These functions are used by C++ to call, and receive results from,
     // Javascript functions. This method provides a way for special tasks,
@@ -100,7 +128,7 @@ const LibSword: GType['LibSword'] & LibSwordPrivate = {
 
     // Get our xulsword instance...
     this.libxulsword = libxulsword.GetXulsword(
-      this.moduleDirectory,
+      this.moduleDirectories.join(', '),
       this.UpperCase,
       this.ThrowJSError,
       this.ReportProgress,

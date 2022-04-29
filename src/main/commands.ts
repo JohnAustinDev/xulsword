@@ -39,7 +39,7 @@ const Commands: GType['Commands'] = {
   // directory will be installed. A dialog will be shown if no paths argument
   // is provided, or an existing directory path is provided.
   async installXulswordModules(paths, toSharedDir) {
-    const progwin = arguments[2] || getBrowserWindows({ type: 'xulsword' })[0];
+    const progwin = getBrowserWindows({ type: 'xulsword' })[0];
     const extensions = ['zip', 'xsm', 'xsb'];
     const options: OpenDialogSyncOptions = {
       title: i18n.t('menu.addNewModule.label'),

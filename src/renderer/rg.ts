@@ -51,10 +51,9 @@ entries.forEach((entry) => {
           return window.ipc.renderer
             .invoke('global', name, ...args)
             .then((result: unknown) => {
-              Cache.write(result, ckey);
+              if (!Cache.has(ckey)) Cache.write(result, ckey);
               return result;
-            })
-            .catch((err: Error) => log.error(err));
+            });
         }
         Cache.write(
           window.ipc.renderer.sendSync('global', name, ...args),
@@ -97,10 +96,9 @@ entries.forEach((entry) => {
               return window.ipc.renderer
                 .invoke('global', name, m, ...args)
                 .then((result: unknown) => {
-                  Cache.write(result, ckey);
+                  if (!Cache.has(ckey)) Cache.write(result, ckey);
                   return result;
-                })
-                .catch((err: Error) => log.error(err));
+                });
             }
             Cache.write(
               window.ipc.renderer.sendSync('global', name, m, ...args),
@@ -108,7 +106,7 @@ entries.forEach((entry) => {
             );
           }
           const retval = Cache.read(ckey);
-          return asyncFuncs.includes(name) ? Promise.resolve(retval) : retval;
+          return asyncFuncs.includes(m) ? Promise.resolve(retval) : retval;
         };
       } else {
         throw Error(

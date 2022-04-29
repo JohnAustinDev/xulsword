@@ -117,6 +117,18 @@ export interface XulswordStatePref {
   maximizeNoteBox: number[];
 }
 
+export interface DownloaderStatePref {
+  language: string | null;
+  languageListOpen: boolean;
+  languageListPanelWidth: number;
+
+  repoColumns: number[]; // TODO! implement flexible table
+  customRepos: Download[];
+  disabledRepos: string[];
+  repoListOpen: boolean;
+  repoListPanelHeight: number;
+}
+
 export type AtextPropsType = Pick<
   XulswordStatePref,
   'location' | 'selection' | 'scroll' | 'show' | 'place'
@@ -473,6 +485,7 @@ export type Download = {
   path: string;
   file: string;
   name?: string;
+  disabled?: boolean;
 };
 
 export type ZipEntryType = {
@@ -741,8 +754,8 @@ export const GPublic = {
     readAndDelete: func as unknown as (name: string) => any,
   },
   Downloader: {
-    crossWireMasterRepoList: funcRO as unknown as () => Promise<Download[]>,
-    repositoryListing: funcRO as unknown as (
+    crossWireMasterRepoList: func as unknown as () => Promise<Download[]>,
+    repositoryListing: func as unknown as (
       repos: Download[]
     ) => Promise<(SwordConfType[] | string)[]>,
     ftp: func as unknown as (
@@ -750,6 +763,7 @@ export const GPublic = {
       tmpdir?: string | null, // returns a Buffer if tmpdir is null/undefined
       progress?: (prog: number) => void // returns progress to calling window
     ) => Promise<string | Buffer>,
+    ftpCancel: func as unknown as () => void,
     untargz: func as unknown as (
       pathOrBuffer: string | Buffer
     ) => Promise<{ header: any; content: Buffer }[]>,

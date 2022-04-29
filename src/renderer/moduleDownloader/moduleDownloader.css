@@ -5,3 +5,12 @@
 .moduleDownloader .button-stack > * {
   margin: 6px 0;
 }
+
+.repositorytable .bp4-table-cell-col-3 {
+  text-align: center;
+  font-size: 18px;
+}
+
+.repositorytable .repo-custom {
+  border: 1px dotted rgb(0 132 255);
+}

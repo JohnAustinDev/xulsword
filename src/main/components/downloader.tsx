@@ -1,8 +1,10 @@
+/* eslint-disable promise/param-names */
 /* eslint-disable prefer-rest-params */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import fs from 'fs';
 import log from 'electron-log';
 import { Stream, Readable } from 'stream';
+import { downloadKey, isRepoLocal } from '../../common';
 import { parseSwordConf } from '../installer';
 import LocalFile from './localFile';
 
@@ -33,6 +35,8 @@ function streamToBuffer(stream: Readable, cbx?: any): Promise<Buffer> {
   });
 }
 
+let CancelFTP = false;
+
 const Downloader: GType['Downloader'] = {
   // Download a file using FTP and either save it to tmpdir returning the
   // new file path, or, if tmpdir is undefined, return the contents of the
@@ -43,13 +47,19 @@ const Downloader: GType['Downloader'] = {
     tmpdir?: string | null,
     progress?: (prog: number) => void
   ): Promise<string | Buffer> {
-    const { domain, path, file, name } = download;
-    const outfile =
-      (tmpdir && new LocalFile(tmpdir).append(name || file)) || null;
-    const ftp = new FTP();
-    const filepath = ['/', path, file].join('/').replaceAll('//', '/');
-    return new Promise((resolve, reject) => {
-      let downloaded: string | Buffer;
+    if (CancelFTP) return '';
+    return new Promise((resolve, reject0) => {
+      const { domain, path, file, name } = download;
+      const outfile =
+        (tmpdir && new LocalFile(tmpdir).append(name || file)) || null;
+      const ftp = new FTP();
+      const filepath = ['', path, file].join('/').replaceAll('//', '/');
+      let cancelTO: NodeJS.Timeout | null = null;
+      const reject = (er: Error | string) => {
+        if (cancelTO) clearInterval(cancelTO);
+        reject0(er);
+      };
+      let downloaded: string | Buffer = '';
       ftp.on('ready', () => {
         const get = (size?: number) => {
           ftp.get(filepath, (err: Error, stream: any) => {
@@ -86,28 +96,39 @@ const Downloader: GType['Downloader'] = {
           });
         };
         if (progress) {
-          ftp.size(filepath, (err: string, sizex: number) => {
-            let size = sizex;
+          ftp.size(filepath, (err: string, size: number) => {
             if (err) {
               reject(err);
-              size = 0;
-            }
-            get(size);
+            } else get(size);
           });
         } else get();
       });
-      ftp.on('error', (er: Error) => reject(er));
+      ftp.on('error', (er: Error) => {
+        ftp.destroy();
+        reject(er);
+      });
       ftp.once('close', (er: Error) => {
+        if (cancelTO) clearInterval(cancelTO);
         if (er) reject(er);
         else resolve(downloaded);
       });
       try {
         log.info(`Connecting: ${domain}${filepath}`);
         ftp.connect({ host: domain });
-      } catch (er) {
+        cancelTO = setInterval(() => {
+          if (CancelFTP) {
+            ftp.destroy();
+            reject('Canceled');
+          }
+        }, 300);
+      } catch (er: any) {
         reject(er);
       }
     });
+  },
+
+  ftpCancel() {
+    CancelFTP = true;
   },
 
   // Take a tar.gz or tar file as a Buffer or else a file path string to
@@ -155,6 +176,7 @@ const Downloader: GType['Downloader'] = {
       path: '/pub/sword/',
       file: 'masterRepoList.conf',
     };
+    CancelFTP = false;
     return this.ftp(mr).then((fbuffer) => {
       const result: Download[] = [];
       if (fbuffer && typeof fbuffer !== 'string') {
@@ -172,6 +194,7 @@ const Downloader: GType['Downloader'] = {
           }
         });
       }
+      CancelFTP = false;
       return result;
     });
   },
@@ -182,12 +205,11 @@ const Downloader: GType['Downloader'] = {
   // Progress on each repository is reported to the calling window.
   async repositoryListing(repositories) {
     const callingWin = arguments[1] || null;
+    CancelFTP = false;
     const promises = repositories.map((repo) => {
-      if (repo.domain.match(/^file:/i)) {
-        return Promise.reject(new Error('TODO!: Local file repositories'));
-      }
+      if (isRepoLocal(repo) || repo.disabled) return Promise.resolve('');
       const progress = (prog: number) => {
-        callingWin?.webContents.send('progress', prog, repo.name || 'unknown');
+        callingWin?.webContents.send('progress', prog, downloadKey(repo));
       };
       return this.ftp(repo, null, progress)
         .then((buf) => {
@@ -210,10 +232,9 @@ const Downloader: GType['Downloader'] = {
       const ret: (SwordConfType[] | string)[] = [];
       results.forEach((result) => {
         if (result.status === 'fulfilled') ret.push(result.value);
-        else {
-          ret.push(result.reason);
-        }
+        else ret.push(result.reason);
       });
+      CancelFTP = false;
       return ret;
     });
   },

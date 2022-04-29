@@ -162,34 +162,36 @@ export function getDictEntryHTML(
   let html = '';
   let sep = '';
   mods.forEach((m) => {
-    const k = DictKeyTransform[m] ? DictKeyTransform[m](key) : key;
-    let h = '';
-    try {
-      h = G.LibSword.getDictionaryEntry(m, k);
-    } catch (er) {
-      h = '';
-    }
-    if (!h) {
+    if (m in G.Tab && G.Tab[m].type === C.DICTIONARY) {
+      const k = DictKeyTransform[m] ? DictKeyTransform[m](key) : key;
+      let h = '';
       try {
-        h = G.LibSword.getDictionaryEntry(m, k.toUpperCase());
+        h = G.LibSword.getDictionaryEntry(m, k);
       } catch (er) {
         h = '';
       }
-    }
-    if (h) h = markup2html(replaceLinks(h, m), m);
-    if (mods.length === 1) {
-      html += h;
-    } else {
-      html = html.replace(/^(<br>)+/, '');
-      const dictTitle = G.LibSword.getModuleInformation(m, 'Description');
-      html += `${sep}
-      <div class="cs-${m}">${
-        dictTitle === C.NOTFOUND
-          ? ''
-          : `<div class="dict-description">${dictTitle}</div>`
-      }${h}
-      </div>`;
-      sep = `<div class="dict-sep"></div>`;
+      if (!h) {
+        try {
+          h = G.LibSword.getDictionaryEntry(m, k.toUpperCase());
+        } catch (er) {
+          h = '';
+        }
+      }
+      if (h) h = markup2html(replaceLinks(h, m), m);
+      if (mods.length === 1) {
+        html += h;
+      } else {
+        html = html.replace(/^(<br>)+/, '');
+        const dictTitle = G.LibSword.getModuleInformation(m, 'Description');
+        html += `${sep}
+        <div class="cs-${m}">${
+          dictTitle === C.NOTFOUND
+            ? ''
+            : `<div class="dict-description">${dictTitle}</div>`
+        }${h}
+        </div>`;
+        sep = `<div class="dict-sep"></div>`;
+      }
     }
   });
   if (!html) return '';

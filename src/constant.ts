@@ -90,6 +90,10 @@ const C = {
   NOMODULES: 'No Modules',
   CONFSEP: '<nx>',
 
+  Downloader: {
+    localDomain: 'localhost',
+  },
+
   // xulsword UI constants
   UI: {
     Window: {

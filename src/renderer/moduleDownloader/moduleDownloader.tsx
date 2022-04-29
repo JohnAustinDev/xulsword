@@ -1,11 +1,20 @@
+/* eslint-disable class-methods-use-this */
+/* eslint-disable react/sort-comp */
 /* eslint-disable import/order */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react/static-property-placement */
 /* eslint-disable jsx-a11y/control-has-associated-label */
 import React from 'react';
 import i18n from 'i18next';
-import { Button } from '@blueprintjs/core';
-import { clone, diff, drop } from '../../common';
+import { Button, IToastProps, Position, Toaster } from '@blueprintjs/core';
+import {
+  diff,
+  downloadKey,
+  drop,
+  isRepoLocal,
+  regionsToRows,
+  rowToDownload,
+} from '../../common';
 import log from '../log';
 import G from '../rg';
 import renderToRoot from '../rinit';
@@ -14,11 +23,14 @@ import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
 import { Hbox, Vbox, Box } from '../libxul/boxes';
 import Groupbox from '../libxul/groupbox';
 import Spacer from '../libxul/spacer';
-import RepositoryTable, { DataColumns } from './repositoryTable';
+import RepositoryTable from './repositoryTable';
 import handlerH from './moduleDownloaderH';
 import './moduleDownloader.css';
 
-import type { Download } from '../../type';
+import type { Download, DownloaderStatePref, SwordConfType } from '../../type';
+import type { RepoDataType } from './repositoryTable';
+
+export type ModuleRawDataType = (string | SwordConfType[])[];
 
 const defaultProps = {
   ...xulDefaultProps,
@@ -30,16 +42,6 @@ const propTypes = {
 
 export type DownloaderProps = XulProps;
 
-type DownloaderStatePref = {
-  language: string | null;
-  languageListOpen: boolean;
-  languageListPanelWidth: number;
-
-  customRepos: Download[];
-  repoListOpen: boolean;
-  repoListPanelHeight: number;
-};
-
 // The following initial state values do not come from Prefs. Neither are
 // these state keys written to Prefs.
 const notStatePref = {
@@ -47,12 +49,14 @@ const notStatePref = {
   showModuleInfo: false,
   downloading: false,
 
-  repoTableData: DataColumns.map(() => []) as (string | number)[][],
+  repoTableData: [] as RepoDataType[],
   selectedRepos: undefined as { rows: [number, number] }[] | undefined,
+  renderRepoTable: 0,
 };
 
-// Save table data between resets, but don't save to prefs.
-let RepoTableData = notStatePref.repoTableData;
+// Save table data between resets, but don't save it to prefs.
+let RepoTableData: RepoDataType[] = [];
+let RawModuleData: ModuleRawDataType | null = null;
 
 export type DownloaderState = DownloaderStatePref & typeof notStatePref;
 
@@ -64,6 +68,8 @@ export default class ModuleDownloader extends React.Component {
   destroy: (() => void)[];
 
   handler: (e: React.SyntheticEvent) => void;
+
+  toaster: Toaster | undefined;
 
   constructor(props: DownloaderProps) {
     super(props);
@@ -78,28 +84,49 @@ export default class ModuleDownloader extends React.Component {
 
     this.destroy = [];
     this.handler = handlerH.bind(this);
+    this.onCellEdited = this.onCellEdited.bind(this);
+    this.loadRepos = this.loadRepos.bind(this);
+    this.repoDataReady = this.repoDataReady.bind(this);
+    this.loadModuleTable = this.loadModuleTable.bind(this);
+    this.setRepoTableState = this.setRepoTableState.bind(this);
   }
 
   componentDidMount() {
-    if (!RepoTableData[0].length) {
-      this.getTableData()
-        .then((data) => {
-          RepoTableData = data;
-          return true;
-        })
-        .catch((er) => log.warn(er));
+    // Download data for the repository and module tables
+    if (!RepoTableData.length) {
+      RepoTableData = [];
+      RawModuleData = [];
+      G.Downloader.crossWireMasterRepoList()
+        .then(this.loadRepos)
+        .then(this.repoDataReady)
+        .then(this.loadModuleTable)
+        .catch(() => {
+          this.addToast({
+            message: 'Unable to download Master Repository List.',
+          });
+          // Failed to load master list, so just load local repos.
+          RepoTableData = [];
+          RawModuleData = [];
+          // eslint-disable-next-line promise/no-nesting
+          this.loadRepos()
+            .then(this.repoDataReady)
+            .then(this.loadModuleTable)
+            .catch((err) => log.warn(err));
+        });
     }
     this.destroy.push(onSetWindowState(this));
+    // Setup progress handlers
     this.destroy.push(
       window.ipc.renderer.on('progress', (prog: number, id?: string) => {
         const state = this.state as DownloaderState;
-        const repoIndex = state.repoTableData.findIndex((i) => i[0] === id);
+        const { repoTableData } = state;
+        const repoIndex = repoTableData.findIndex(
+          (i) => downloadKey(rowToDownload(i)) === id
+        );
         if (id && repoIndex !== -1 && prog === -1) {
-          this.setState((prevState: DownloaderState) => {
-            const repoTableData = clone(prevState.repoTableData);
-            repoTableData[repoIndex][3] = 'ready';
-            return { repoTableData };
-          });
+          repoTableData[repoIndex][4].off = false;
+          repoTableData[repoIndex][3] = RepositoryTable.on;
+          this.setRepoTableState(repoTableData);
         }
       })
     );
@@ -118,35 +145,117 @@ export default class ModuleDownloader extends React.Component {
   }
 
   componentWillUnmount() {
-    // clearPending(this, ['historyTO', 'dictkeydownTO', 'wheelScrollTO']);
+    // Save custom repositories and repository settings
+    const { repoTableData } = this.state as DownloaderState;
+    const customRepos: Download[] = [];
+    const disabledRepos: string[] = [];
+    repoTableData.forEach((r) => {
+      const dl = rowToDownload(r);
+      if (r[4].custom) {
+        customRepos.push(dl);
+      }
+      if (r[4].off) {
+        disabledRepos.push(downloadKey(dl));
+      }
+    });
+    const pref = {
+      customRepos,
+      disabledRepos,
+    };
+    G.Prefs.mergeValue('downloader', pref);
     this.destroy.forEach((func) => func());
     this.destroy = [];
   }
 
-  getTableData() {
-    return G.Downloader.crossWireMasterRepoList()
-      .then((repos) => {
-        const { customRepos } = this.state as DownloaderState;
-        const repoTableData: DownloaderState['repoTableData'] = [];
-        customRepos.concat(repos).forEach((repo, i) => {
-          repoTableData.push([
-            repo.name || `unknown${i}`,
-            repo.domain,
-            repo.path,
-            'loading',
-          ]);
-        });
-        this.setState({ repoTableData } as DownloaderState);
-        return G.Downloader.repositoryListing(repos);
-      })
-      .then((confs) => {
-        const { repoTableData } = this.state as DownloaderState;
-        confs.forEach((c, i) => {
-          repoTableData[i][3] = typeof c === 'string' ? c : 'on';
-        });
-        this.setState({ repoTableData } as DownloaderState);
-        return repoTableData;
+  onCellEdited(row: number, col: number, value: string) {
+    this.setState((prevState: DownloaderState) => {
+      const { repoTableData } = prevState;
+      repoTableData[row][col] = value;
+      return { repoTableData };
+    });
+  }
+
+  async loadRepos(repos?: Download[]) {
+    const { customRepos, disabledRepos } = this.state as DownloaderState;
+    const repoTableData: RepoDataType[] = [];
+    const allrepos = customRepos.concat(repos || []);
+    allrepos.forEach((repo, i) => {
+      const disabled = disabledRepos.includes(downloadKey(repo));
+      repo.disabled = disabled;
+      const loading = isRepoLocal(repo)
+        ? RepositoryTable.on
+        : RepositoryTable.loading;
+      repoTableData.push([
+        repo.name || '',
+        repo.domain,
+        repo.path,
+        disabled ? RepositoryTable.off : loading,
+        { custom: i < customRepos.length, off: disabled, failed: false },
+      ]);
+    });
+    this.setRepoTableState(repoTableData);
+    return G.Downloader.repositoryListing(allrepos);
+  }
+
+  // Apply new raw repository listing data to state. If rows is undefined, a
+  // complete listing including every row must be supplied, otherwise, the
+  // rawModuleData need only contain data for the given row(s).
+  repoDataReady(rawModuleData: (string | SwordConfType[])[], rows?: boolean[]) {
+    const { repoTableData } = this.state as DownloaderState;
+    if (!rows) RawModuleData = rawModuleData;
+    if (RawModuleData) {
+      RawModuleData.forEach((repoin, i) => {
+        if (rows && !rows[i]) return;
+        let repo = repoin;
+        if (rows) {
+          const rpo = rawModuleData.shift();
+          if (rpo) repo = rpo;
+        }
+        if (!repoTableData[i][4].off) {
+          repoTableData[i][4].failed = false;
+          if (typeof repo === 'string') {
+            if (!isRepoLocal(repoTableData[i])) {
+              repoTableData[i][4].failed = true;
+            }
+            if (repo) {
+              this.addToast({ message: repo });
+            }
+          }
+          repoTableData[i][4].off = false;
+          repoTableData[i][3] = RepositoryTable.on;
+        }
       });
+      this.setRepoTableState(repoTableData);
+    }
+    return true;
+  }
+
+  setRepoTableState(repoTableData: RepoDataType[]) {
+    this.setState((prevState: DownloaderState) => {
+      let { renderRepoTable } = prevState;
+      RepoTableData = prevState.repoTableData;
+      renderRepoTable += 1;
+      return {
+        repoTableData,
+        renderRepoTable,
+      } as DownloaderState;
+    });
+  }
+
+  loadModuleTable() {
+    return true;
+  }
+
+  refHandlers = {
+    toaster: (ref: Toaster) => {
+      this.toaster = ref;
+    },
+  };
+
+  addToast(toast: IToastProps) {
+    toast.timeout = 5000;
+    toast.intent = 'warning';
+    if (this.toaster) this.toaster.show(toast);
   }
 
   render() {
@@ -164,24 +273,35 @@ export default class ModuleDownloader extends React.Component {
       repoListPanelHeight,
       repoTableData,
       selectedRepos,
+      renderRepoTable,
     } = state;
-    const { handler } = this;
+    const { handler, onCellEdited } = this;
 
-    const loading = repoTableData.map((r) => r[3] === 'loading');
+    const loading = repoTableData.map((r) => r[3] === RepositoryTable.loading);
 
     const disable = {
       download: !module,
       moduleInfo: !module,
       moduleInfoBack: false,
-      cancel: !downloading,
+      moduleCancel: !downloading,
       repoToggle: !selectedRepos?.length,
       repoAdd: false,
-      repoDelete: !selectedRepos?.length,
+      repoDelete:
+        !selectedRepos ||
+        !regionsToRows(selectedRepos).every(
+          (r) => repoTableData[r] && repoTableData[r][4].custom
+        ),
       repoCancel: !loading.find((l) => l),
     };
 
     return (
       <Vbox flex="1" height="100%">
+        <Toaster
+          canEscapeKeyClear
+          position={Position.TOP}
+          usePortal
+          ref={this.refHandlers.toaster}
+        />
         <Hbox className="language-pane" flex="1">
           {languageListOpen && (
             <>
@@ -223,12 +343,13 @@ export default class ModuleDownloader extends React.Component {
               {showModuleInfo && <div id="moduleInfo">Module Information</div>}
               {!showModuleInfo && <Box>Module Table</Box>}
             </Hbox>
-            <Vbox className="button-stack" pack="center" onClick={handler}>
+            <Vbox className="button-stack" pack="center">
               <Button
                 id="download"
                 icon="download"
                 intent="primary"
                 disabled={disable.download}
+                onClick={handler}
               />
               {!showModuleInfo && (
                 <Button
@@ -236,6 +357,7 @@ export default class ModuleDownloader extends React.Component {
                   icon="info-sign"
                   intent="primary"
                   disabled={disable.moduleInfo}
+                  onClick={handler}
                 />
               )}
               {showModuleInfo && (
@@ -243,11 +365,17 @@ export default class ModuleDownloader extends React.Component {
                   id="moduleInfoBack"
                   intent="primary"
                   disabled={disable.moduleInfoBack}
+                  onClick={handler}
                 >
                   {i18n.t('back.label')}
                 </Button>
               )}
-              <Button id="cancel" intent="primary" disabled={disable.cancel}>
+              <Button
+                id="moduleCancel"
+                intent="primary"
+                disabled={disable.moduleCancel}
+                onClick={handler}
+              >
                 {i18n.t('cancel.label')}
               </Button>
             </Vbox>
@@ -264,36 +392,43 @@ export default class ModuleDownloader extends React.Component {
               flex="1"
             >
               <Box flex="1" onClick={handler}>
-                <RepositoryTable
-                  key={loading.join('.')}
-                  data={repoTableData}
-                  loading={loading}
-                  selectedRegions={selectedRepos}
-                />
+                {!!repoTableData.length && (
+                  <RepositoryTable
+                    key={renderRepoTable}
+                    data={repoTableData}
+                    loading={loading}
+                    selectedRegions={selectedRepos}
+                    onCellChange={onCellEdited}
+                  />
+                )}
               </Box>
-              <Vbox className="button-stack" pack="center" onClick={handler}>
+              <Vbox className="button-stack" pack="center">
                 <Button
                   id="repoToggle"
                   icon="tick"
                   intent="primary"
                   disabled={disable.repoToggle}
+                  onClick={handler}
                 />
                 <Button
                   id="repoAdd"
                   icon="add"
                   intent="primary"
                   disabled={disable.repoAdd}
+                  onClick={handler}
                 />
                 <Button
                   id="repoDelete"
                   icon="delete"
                   intent="primary"
                   disabled={disable.repoDelete}
+                  onClick={handler}
                 />
                 <Button
                   id="repoCancel"
                   intent="primary"
                   disabled={disable.repoCancel}
+                  onClick={handler}
                 >
                   {i18n.t('cancel.label')}
                 </Button>

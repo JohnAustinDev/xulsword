@@ -1,10 +1,14 @@
+/* eslint-disable import/order */
+/* eslint-disable no-nested-ternary */
 /* eslint-disable no-bitwise */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import i18next from 'i18next';
 import C from './constant';
 import Cache from './cache';
 
-import type { PrefObject, PrefValue, TabType } from './type';
+import type { Region } from '@blueprintjs/table';
+import type { Download, PrefObject, PrefValue, TabType } from './type';
+import type { RepoDataType } from './renderer/moduleDownloader/repositoryTable';
 
 export function escapeRE(text: string) {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -414,14 +418,43 @@ export function tabSort(a: TabType, b: TabType) {
     const aLocale = a.config.AssociatedLocale;
     const bLocale = b.config.AssociatedLocale;
     const lng = i18next.language;
-    /* eslint-disable no-nested-ternary */
     const aPriority = aLocale ? (aLocale === lng ? 1 : 2) : 3;
     const bPriority = bLocale ? (bLocale === lng ? 1 : 2) : 3;
-    /* eslint-enable no-nested-ternary */
     if (aPriority !== bPriority) return aPriority > bPriority ? 1 : -1;
     // Type and Priority are same, then sort by label's alpha.
     return a.label > b.label ? 1 : -1;
   }
   const mto = C.UI.Viewport.TabTypeOrder as any;
   return mto[a.tabType] > mto[b.tabType] ? 1 : -1;
+}
+
+export function isRepoLocal(repo: Download | RepoDataType): boolean {
+  if (Array.isArray(repo)) return repo[1] === C.Downloader.localDomain;
+  return repo.domain === C.Downloader.localDomain;
+}
+
+export function downloadKey(dl: Download): string {
+  return [dl.name, dl.domain, dl.path, dl.file].join('.');
+}
+
+export function regionsToRows(regions: Region[]): number[] {
+  const sels: Set<number> = new Set();
+  regions?.forEach((region) => {
+    if (region.rows) {
+      for (let r = region.rows[0]; r <= region.rows[1]; r += 1) {
+        sels.add(r);
+      }
+    }
+  });
+  return Array.from(sels).sort((a, b) => (a < b ? 1 : a > b ? -1 : 0));
+}
+
+export function rowToDownload(row: RepoDataType): Download {
+  return {
+    name: row[0],
+    domain: row[1],
+    path: row[2],
+    file: 'mods.d.tar.gz',
+    disabled: row[4].off,
+  };
 }
