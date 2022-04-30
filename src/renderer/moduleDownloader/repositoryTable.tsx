@@ -1,3 +1,4 @@
+/* eslint-disable import/order */
 /* eslint-disable no-nested-ternary */
 /* eslint-disable class-methods-use-this */
 /* eslint-disable @typescript-eslint/no-use-before-define */
@@ -21,6 +22,8 @@ import {
 } from '@blueprintjs/table';
 import { xulDefaultProps, xulPropTypes } from '../libxul/xul';
 import '@blueprintjs/table/lib/css/table.css';
+
+import type { IIndexedResizeCallback } from '@blueprintjs/table/lib/esm/interactions/resizable';
 
 export type RepoDataInfo = {
   custom: boolean;
@@ -148,6 +151,8 @@ const propTypes = {
   data: PropTypes.arrayOf(PropTypes.array).isRequired,
   loading: PropTypes.arrayOf(PropTypes.bool),
   selectedRegions: PropTypes.array,
+  columnWidths: PropTypes.arrayOf(PropTypes.number),
+  onColumnWidthChanged: PropTypes.func,
   onCellChange: PropTypes.func,
 };
 
@@ -155,6 +160,8 @@ type TableProps = {
   data: RepoDataType[];
   loading: boolean[];
   selectedRegions: Region[];
+  columnWidths: number[];
+  onColumnWidthChanged: IIndexedResizeCallback;
   onCellChange: (row: number, col: number, value: string) => void;
 };
 
@@ -270,8 +277,9 @@ class RepositoryTable extends React.Component {
 
   render() {
     const state = this.state as TableState;
+    const props = this.props as TableProps;
     const { columns: cols } = state;
-    const { data, selectedRegions } = this.props as TableProps;
+    const { data, selectedRegions, columnWidths, onColumnWidthChanged } = props;
     const numRows = data.length;
     const columns = cols.map((col) =>
       col.getColumn(
@@ -286,12 +294,13 @@ class RepositoryTable extends React.Component {
       <Table
         className="repositorytable"
         numRows={numRows}
-        columnWidths={[null, null, null, 50]}
+        columnWidths={columnWidths}
         selectedRegions={selectedRegions}
         selectionModes={SelectionModes.ROWS_ONLY}
         enableMultipleSelection
         enableRowResizing={false}
         enableRowHeader={false}
+        onColumnWidthChanged={onColumnWidthChanged}
       >
         {columns}
       </Table>

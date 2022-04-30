@@ -434,7 +434,7 @@ export function isRepoLocal(repo: Download | RepoDataType): boolean {
 }
 
 export function downloadKey(dl: Download): string {
-  return [dl.name, dl.domain, dl.path, dl.file].join('.');
+  return `[${[dl.name, dl.domain, dl.path, dl.file].join('][')}]`;
 }
 
 export function regionsToRows(regions: Region[]): number[] {

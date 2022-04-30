@@ -4,6 +4,11 @@
 
 .moduleDownloader .button-stack > * {
   margin: 6px 0;
+  margin-inline-start: 10px;
+}
+
+.repositoryTableCont {
+  overflow: hidden;
 }
 
 .repositorytable .bp4-table-cell-col-3 {

@@ -49,7 +49,7 @@ export const xulPropTypes: any = {
   dir: PropTypes.oneOf(['ltr', 'rtl', 'auto']),
   xuldir: PropTypes.oneOf(['reverse']),
   flex: PropTypes.string,
-  height: PropTypes.string,
+  height: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   hidden: PropTypes.bool,
   id: PropTypes.string,
   lang: PropTypes.string,
@@ -59,7 +59,7 @@ export const xulPropTypes: any = {
   style: PropTypes.objectOf(
     PropTypes.oneOfType([PropTypes.string, PropTypes.number])
   ),
-  width: PropTypes.string,
+  width: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   title: PropTypes.string,
 };
 xulEvents.forEach((ev: string) => {
@@ -84,7 +84,7 @@ export type XulProps = {
   dir?: 'ltr' | 'rtl' | 'auto' | undefined;
   xuldir?: 'reverse' | undefined;
   flex?: string | undefined;
-  height?: string | undefined;
+  height?: string | number | undefined;
   hidden?: boolean | undefined;
   id?: string | undefined;
   lang?: string | undefined;
@@ -92,7 +92,7 @@ export type XulProps = {
   pack?: 'start' | 'center' | 'end' | undefined;
   domref?: React.RefObject<any> | undefined;
   style?: React.CSSProperties | undefined;
-  width?: string | undefined;
+  width?: string | number | undefined;
   title?: string | undefined;
 } & {
   [k in typeof xulEvents[number]]?: (e: React.SyntheticEvent<any>) => void;
@@ -133,15 +133,11 @@ export const xulStyle = (props: any): React.CSSProperties | undefined => {
   const s = {} as React.CSSProperties;
   // width
   if (props.width !== undefined)
-    s.width = /^\d+$/.test(props.width)
-      ? props.width.concat('px')
-      : props.width;
+    s.width = /^\d+$/.test(props.width) ? `${props.width}px` : props.width;
 
   // height
   if (props.height !== undefined)
-    s.height = /^\d+$/.test(props.width)
-      ? props.height.concat('px')
-      : props.height;
+    s.height = /^\d+$/.test(props.height) ? `${props.height}px` : props.height;
 
   // flex
   if (props.flex !== undefined) {

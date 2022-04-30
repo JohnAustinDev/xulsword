@@ -122,7 +122,7 @@ export interface DownloaderStatePref {
   languageListOpen: boolean;
   languageListPanelWidth: number;
 
-  repoColumns: number[]; // TODO! implement flexible table
+  repoColumnWidths: number[];
   customRepos: Download[];
   disabledRepos: string[];
   repoListOpen: boolean;

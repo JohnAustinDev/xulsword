@@ -61,6 +61,12 @@
     "language": "",
     "languageListOpen": true,
     "languageListPanelWidth": 180,
+    "repoColumnWidths": [
+      124,
+      145,
+      343,
+      67
+    ],
     "customRepos": [],
     "disabledRepos": [],
     "repoListOpen": true,

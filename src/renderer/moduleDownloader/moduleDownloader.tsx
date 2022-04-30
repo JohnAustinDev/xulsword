@@ -23,6 +23,7 @@ import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
 import { Hbox, Vbox, Box } from '../libxul/boxes';
 import Groupbox from '../libxul/groupbox';
 import Spacer from '../libxul/spacer';
+import DragSizer from '../libxul/dragsizer';
 import RepositoryTable from './repositoryTable';
 import handlerH from './moduleDownloaderH';
 import './moduleDownloader.css';
@@ -71,6 +72,8 @@ export default class ModuleDownloader extends React.Component {
 
   toaster: Toaster | undefined;
 
+  repositoryTableContainerRef: React.RefObject<HTMLDivElement>;
+
   constructor(props: DownloaderProps) {
     super(props);
 
@@ -82,12 +85,16 @@ export default class ModuleDownloader extends React.Component {
     };
     this.state = s;
 
+    this.repositoryTableContainerRef = React.createRef();
+
     this.destroy = [];
     this.handler = handlerH.bind(this);
     this.onCellEdited = this.onCellEdited.bind(this);
+    this.onColumnWidthChanged = this.onColumnWidthChanged.bind(this);
     this.loadRepos = this.loadRepos.bind(this);
     this.repoDataReady = this.repoDataReady.bind(this);
     this.loadModuleTable = this.loadModuleTable.bind(this);
+    this.sizeRepoTableToWindow = this.sizeRepoTableToWindow.bind(this);
     this.setRepoTableState = this.setRepoTableState.bind(this);
   }
 
@@ -114,19 +121,19 @@ export default class ModuleDownloader extends React.Component {
             .catch((err) => log.warn(err));
         });
     }
+    this.sizeRepoTableToWindow();
     this.destroy.push(onSetWindowState(this));
     // Setup progress handlers
     this.destroy.push(
       window.ipc.renderer.on('progress', (prog: number, id?: string) => {
-        const state = this.state as DownloaderState;
-        const { repoTableData } = state;
+        const { repoTableData } = this.state as DownloaderState;
         const repoIndex = repoTableData.findIndex(
           (i) => downloadKey(rowToDownload(i)) === id
         );
         if (id && repoIndex !== -1 && prog === -1) {
           repoTableData[repoIndex][4].off = false;
           repoTableData[repoIndex][3] = RepositoryTable.on;
-          this.setRepoTableState(repoTableData);
+          this.setRepoTableState({ repoTableData });
         }
       })
     );
@@ -145,26 +152,28 @@ export default class ModuleDownloader extends React.Component {
   }
 
   componentWillUnmount() {
-    // Save custom repositories and repository settings
-    const { repoTableData } = this.state as DownloaderState;
-    const customRepos: Download[] = [];
-    const disabledRepos: string[] = [];
-    repoTableData.forEach((r) => {
-      const dl = rowToDownload(r);
-      if (r[4].custom) {
-        customRepos.push(dl);
-      }
-      if (r[4].off) {
-        disabledRepos.push(downloadKey(dl));
-      }
-    });
-    const pref = {
-      customRepos,
-      disabledRepos,
-    };
-    G.Prefs.mergeValue('downloader', pref);
     this.destroy.forEach((func) => func());
     this.destroy = [];
+  }
+
+  sizeRepoTableToWindow() {
+    // Size tables to window
+    const state = this.state as DownloaderState;
+    const { repositoryTableContainerRef } = this;
+    if (repositoryTableContainerRef.current) {
+      const table =
+        repositoryTableContainerRef.current as HTMLDivElement | null;
+      if (table) {
+        const w = table.clientWidth;
+        const t = state.repoColumnWidths.reduce((p, c) => p + c, 0);
+        const repoColumnWidths = state.repoColumnWidths.map((cw) => {
+          return w * (cw / t);
+        });
+        this.setRepoTableState({
+          repoColumnWidths,
+        });
+      }
+    }
   }
 
   onCellEdited(row: number, col: number, value: string) {
@@ -173,6 +182,16 @@ export default class ModuleDownloader extends React.Component {
       repoTableData[row][col] = value;
       return { repoTableData };
     });
+  }
+
+  onColumnWidthChanged(index: number, size: number): void {
+    const state = this.state as DownloaderState;
+    const repoColumnWidths = state.repoColumnWidths.slice();
+    repoColumnWidths[index] = size;
+    this.setRepoTableState({
+      repoColumnWidths,
+    });
+    this.sizeRepoTableToWindow();
   }
 
   async loadRepos(repos?: Download[]) {
@@ -193,7 +212,7 @@ export default class ModuleDownloader extends React.Component {
         { custom: i < customRepos.length, off: disabled, failed: false },
       ]);
     });
-    this.setRepoTableState(repoTableData);
+    this.setRepoTableState({ repoTableData });
     return G.Downloader.repositoryListing(allrepos);
   }
 
@@ -225,18 +244,20 @@ export default class ModuleDownloader extends React.Component {
           repoTableData[i][3] = RepositoryTable.on;
         }
       });
-      this.setRepoTableState(repoTableData);
+      this.setRepoTableState({ repoTableData });
     }
     return true;
   }
 
-  setRepoTableState(repoTableData: RepoDataType[]) {
+  setRepoTableState(s: Partial<DownloaderState>) {
+    // Two steps must be used for statePrefs to be written to Prefs
+    // before the reset will read them.
+    this.setState(s);
     this.setState((prevState: DownloaderState) => {
       let { renderRepoTable } = prevState;
       RepoTableData = prevState.repoTableData;
       renderRepoTable += 1;
       return {
-        repoTableData,
         renderRepoTable,
       } as DownloaderState;
     });
@@ -271,11 +292,17 @@ export default class ModuleDownloader extends React.Component {
 
       repoListOpen,
       repoListPanelHeight,
+      repoColumnWidths,
       repoTableData,
       selectedRepos,
       renderRepoTable,
     } = state;
-    const { handler, onCellEdited } = this;
+    const {
+      handler,
+      onCellEdited,
+      onColumnWidthChanged,
+      repositoryTableContainerRef,
+    } = this;
 
     const loading = repoTableData.map((r) => r[3] === RepositoryTable.loading);
 
@@ -284,7 +311,6 @@ export default class ModuleDownloader extends React.Component {
       moduleInfo: !module,
       moduleInfoBack: false,
       moduleCancel: !downloading,
-      repoToggle: !selectedRepos?.length,
       repoAdd: false,
       repoDelete:
         !selectedRepos ||
@@ -308,7 +334,7 @@ export default class ModuleDownloader extends React.Component {
               <Groupbox
                 caption={i18n.t('menu.options.language')}
                 orient="vertical"
-                width={`${languageListPanelWidth}`}
+                width={languageListPanelWidth}
               >
                 <Box flex="1" />
                 <Button
@@ -318,7 +344,13 @@ export default class ModuleDownloader extends React.Component {
                   onClick={() => this.setState({ languageListOpen: false })}
                 />
               </Groupbox>
-              <Spacer id="languageListSizer" width="10" />
+              <DragSizer
+                onDragStart={() => state.languageListPanelWidth}
+                onDrag={(w: number) =>
+                  this.setState({ languageListPanelWidth: w })
+                }
+                orient="vertical"
+              />
             </>
           )}
           {!languageListOpen && (
@@ -384,32 +416,37 @@ export default class ModuleDownloader extends React.Component {
 
         {repoListOpen && (
           <>
-            <Spacer id="moduleSourceSizer" width="10" />
+            <DragSizer
+              onDragStart={() => state.repoListPanelHeight}
+              onDrag={(h: number) => this.setState({ repoListPanelHeight: h })}
+              orient="horizontal"
+              shrink
+            />
             <Groupbox
               caption={i18n.t('moduleSources.label')}
-              height={`${repoListPanelHeight}`}
+              height={repoListPanelHeight}
               orient="horizontal"
               flex="1"
             >
-              <Box flex="1" onClick={handler}>
+              <Box
+                className="repositoryTableCont"
+                flex="1"
+                domref={repositoryTableContainerRef}
+                onClick={handler}
+              >
                 {!!repoTableData.length && (
                   <RepositoryTable
                     key={renderRepoTable}
                     data={repoTableData}
                     loading={loading}
                     selectedRegions={selectedRepos}
+                    columnWidths={repoColumnWidths}
+                    onColumnWidthChanged={onColumnWidthChanged}
                     onCellChange={onCellEdited}
                   />
                 )}
               </Box>
               <Vbox className="button-stack" pack="center">
-                <Button
-                  id="repoToggle"
-                  icon="tick"
-                  intent="primary"
-                  disabled={disable.repoToggle}
-                  onClick={handler}
-                />
                 <Button
                   id="repoAdd"
                   icon="add"
