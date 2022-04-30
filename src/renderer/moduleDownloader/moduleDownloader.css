@@ -7,8 +7,17 @@
   margin-inline-start: 10px;
 }
 
-.repositoryTableCont {
-  overflow: hidden;
+.repo-groupbox {
+  overflow: visible;
+}
+.repo-groupbox > div,
+.repo-groupbox > div > div {
+  overflow-x: visible;
+  overflow-y: hidden;
+}
+
+.repositorytable .bp4-table-quadrant-scroll-container {
+  overflow-x: hidden;
 }
 
 .repositorytable .bp4-table-cell-col-3 {

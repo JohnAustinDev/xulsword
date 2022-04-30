@@ -117,13 +117,13 @@ html[dir='rtl'] .sbcontrols {
   background: rgb(233, 233, 233);
   height: 4px;
   border-radius: 4px;
-  cursor: N-resize;
+  cursor: ns-resize;
   width: 100%;
   margin: 10px 60px 10px 60px;
 }
 .atext .bb.moving {
   border: 1px dashed rgb(150, 150, 150);
-  background: rgb(233, 233, 20);
+  background: #1e90ff;
   z-index: 80;
 }
 

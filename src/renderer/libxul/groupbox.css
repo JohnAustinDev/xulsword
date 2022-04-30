@@ -3,17 +3,18 @@
   padding: 5px;
 }
 
-.groupbox .groupbox-body {
-  padding: 10px;
-}
-
-.groupbox .caption {
+.groupbox .groupbox-title {
   margin-bottom: 2px;
   font-weight: bold;
+  overflow-y: visible;
 }
 
 .groupbox .caption-text {
   margin-top: 0;
   margin-bottom: 0;
   margin-inline-start: 1px;
+}
+
+.groupbox .groupbox-body {
+  padding: 10px;
 }

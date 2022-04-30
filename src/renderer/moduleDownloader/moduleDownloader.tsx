@@ -423,6 +423,7 @@ export default class ModuleDownloader extends React.Component {
               shrink
             />
             <Groupbox
+              className="repo-groupbox"
               caption={i18n.t('moduleSources.label')}
               height={repoListPanelHeight}
               orient="horizontal"
