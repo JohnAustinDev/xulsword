@@ -91,7 +91,7 @@ const C = {
   CONFSEP: '<nx>',
 
   Downloader: {
-    localDomain: 'localhost',
+    localfile: 'file://',
   },
 
   // xulsword UI constants

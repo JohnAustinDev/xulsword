@@ -429,8 +429,8 @@ export function tabSort(a: TabType, b: TabType) {
 }
 
 export function isRepoLocal(repo: Download | RepoDataType): boolean {
-  if (Array.isArray(repo)) return repo[1] === C.Downloader.localDomain;
-  return repo.domain === C.Downloader.localDomain;
+  if (Array.isArray(repo)) return repo[1] === C.Downloader.localfile;
+  return repo.domain === C.Downloader.localfile;
 }
 
 export function downloadKey(dl: Download): string {

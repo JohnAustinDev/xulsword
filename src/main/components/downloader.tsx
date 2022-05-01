@@ -2,9 +2,11 @@
 /* eslint-disable prefer-rest-params */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import fs from 'fs';
+import fpath from 'path';
 import log from 'electron-log';
 import { Stream, Readable } from 'stream';
 import { downloadKey, isRepoLocal } from '../../common';
+import C from '../../constant';
 import { parseSwordConf } from '../installer';
 import LocalFile from './localFile';
 
@@ -57,6 +59,7 @@ const Downloader: GType['Downloader'] = {
       let cancelTO: NodeJS.Timeout | null = null;
       const reject = (er: Error | string) => {
         if (cancelTO) clearInterval(cancelTO);
+        ftp.destroy();
         reject0(er);
       };
       let downloaded: string | Buffer = '';
@@ -64,10 +67,10 @@ const Downloader: GType['Downloader'] = {
         const get = (size?: number) => {
           ftp.get(filepath, (err: Error, stream: any) => {
             if (err) {
-              reject(err);
+              reject(err.message);
               ftp.end();
             } else if (!stream) {
-              reject(new Error(`No ftp stream: ${filepath}}`));
+              reject(`No ftp stream: ${filepath}`);
               ftp.end();
             } else {
               if (progress && size) {
@@ -79,8 +82,8 @@ const Downloader: GType['Downloader'] = {
                 });
               }
               if (!outfile) {
-                streamToBuffer(stream, (er: string, buffer: Buffer) => {
-                  if (er) reject(er);
+                streamToBuffer(stream, (er: any, buffer: Buffer) => {
+                  if (er) reject(er.message);
                   else downloaded = buffer;
                 });
               }
@@ -96,20 +99,19 @@ const Downloader: GType['Downloader'] = {
           });
         };
         if (progress) {
-          ftp.size(filepath, (err: string, size: number) => {
+          ftp.size(filepath, (err: any, size: number) => {
             if (err) {
-              reject(err);
+              reject(err.message);
             } else get(size);
           });
         } else get();
       });
       ftp.on('error', (er: Error) => {
-        ftp.destroy();
-        reject(er);
+        reject(er.message);
       });
       ftp.once('close', (er: Error) => {
         if (cancelTO) clearInterval(cancelTO);
-        if (er) reject(er);
+        if (er) reject(er.message);
         else resolve(downloaded);
       });
       try {
@@ -117,12 +119,11 @@ const Downloader: GType['Downloader'] = {
         ftp.connect({ host: domain });
         cancelTO = setInterval(() => {
           if (CancelFTP) {
-            ftp.destroy();
             reject('Canceled');
           }
         }, 300);
       } catch (er: any) {
-        reject(er);
+        reject(er.message);
       }
     });
   },
@@ -201,13 +202,24 @@ const Downloader: GType['Downloader'] = {
 
   // Takes SWORD repositories as mods.d.tar.gz download array and, for
   // each repository, returns either an array of SwordConfType objects
-  // (one for each module in the repository) or a string error message.
+  // (one for each module in the repository) or a string which is an
+  // error message except in two special cases: An empty string is
+  // returned if the repository is disabled, and C.Downloader.modsd
+  // string is returned if the respository is an existing mods.d directory.
   // Progress on each repository is reported to the calling window.
   async repositoryListing(repositories) {
     const callingWin = arguments[1] || null;
     CancelFTP = false;
     const promises = repositories.map((repo) => {
-      if (isRepoLocal(repo) || repo.disabled) return Promise.resolve('');
+      if (repo.disabled) return Promise.resolve('');
+      if (isRepoLocal(repo)) {
+        if (fpath.isAbsolute(repo.path)) {
+          if (new LocalFile(repo.path).append('mods.d').exists()) {
+            return Promise.resolve('mods.d');
+          }
+        }
+        return Promise.resolve(`Directory not found: ${repo.path}/'mods.d'`);
+      }
       const progress = (prog: number) => {
         callingWin?.webContents.send('progress', prog, downloadKey(repo));
       };

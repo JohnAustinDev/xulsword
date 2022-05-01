@@ -8,6 +8,7 @@ import React from 'react';
 import i18n from 'i18next';
 import { Button, IToastProps, Position, Toaster } from '@blueprintjs/core';
 import {
+  clone,
   diff,
   downloadKey,
   drop,
@@ -25,11 +26,12 @@ import Groupbox from '../libxul/groupbox';
 import Spacer from '../libxul/spacer';
 import DragSizer from '../libxul/dragsizer';
 import RepositoryTable from './repositoryTable';
-import handlerH from './moduleDownloaderH';
+import handlerH, { switchRepo as switchRepoH } from './moduleDownloaderH';
 import './moduleDownloader.css';
 
 import type { Download, DownloaderStatePref, SwordConfType } from '../../type';
 import type { RepoDataType } from './repositoryTable';
+import C from 'constant';
 
 export type ModuleRawDataType = (string | SwordConfType[])[];
 
@@ -68,6 +70,8 @@ export default class ModuleDownloader extends React.Component {
 
   destroy: (() => void)[];
 
+  switchRepo;
+
   handler: (e: React.SyntheticEvent) => void;
 
   toaster: Toaster | undefined;
@@ -88,6 +92,7 @@ export default class ModuleDownloader extends React.Component {
     this.repositoryTableContainerRef = React.createRef();
 
     this.destroy = [];
+    this.switchRepo = switchRepoH.bind(this);
     this.handler = handlerH.bind(this);
     this.onCellEdited = this.onCellEdited.bind(this);
     this.onColumnWidthChanged = this.onColumnWidthChanged.bind(this);
@@ -177,11 +182,20 @@ export default class ModuleDownloader extends React.Component {
   }
 
   onCellEdited(row: number, col: number, value: string) {
-    this.setState((prevState: DownloaderState) => {
-      const { repoTableData } = prevState;
-      repoTableData[row][col] = value;
-      return { repoTableData };
-    });
+    const state = clone(this.state) as DownloaderState;
+    const { repoTableData, customRepos } = state;
+    const crindex = customRepos.findIndex(
+      (r) => downloadKey(r) === downloadKey(rowToDownload(repoTableData[row]))
+    );
+    if (crindex !== -1) {
+      customRepos.splice(crindex, 1);
+    }
+    repoTableData[row][col] = value;
+    customRepos.push(rowToDownload(repoTableData[row]));
+    this.setState({ repoTableData, customRepos });
+    if ((col === 1 || col === 2) && !repoTableData[row][4].off) {
+      setTimeout(() => this.switchRepo([row], true), 100);
+    }
   }
 
   onColumnWidthChanged(index: number, size: number): void {
@@ -232,10 +246,8 @@ export default class ModuleDownloader extends React.Component {
         }
         if (!repoTableData[i][4].off) {
           repoTableData[i][4].failed = false;
-          if (typeof repo === 'string') {
-            if (!isRepoLocal(repoTableData[i])) {
-              repoTableData[i][4].failed = true;
-            }
+          if (typeof repo === 'string' && repo !== 'mods.d') {
+            repoTableData[i][4].failed = true;
             if (repo) {
               this.addToast({ message: repo });
             }
@@ -415,11 +427,14 @@ export default class ModuleDownloader extends React.Component {
         </Hbox>
 
         {repoListOpen && (
-          <>
+          <div>
             <DragSizer
               onDragStart={() => state.repoListPanelHeight}
-              onDrag={(h: number) => this.setState({ repoListPanelHeight: h })}
+              onDragEnd={(h: number) =>
+                this.setState({ repoListPanelHeight: h })
+              }
               orient="horizontal"
+              lift
               shrink
             />
             <Groupbox
@@ -472,7 +487,7 @@ export default class ModuleDownloader extends React.Component {
                 </Button>
               </Vbox>
             </Groupbox>
-          </>
+          </div>
         )}
 
         <Hbox className="dialogbuttons" pack="end" align="end">

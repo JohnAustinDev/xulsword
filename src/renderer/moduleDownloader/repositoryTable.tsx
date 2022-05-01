@@ -263,7 +263,7 @@ class RepositoryTable extends React.Component {
   }
 
   isValidValid(value: string) {
-    return /^[a-zA-Z0-9/._-]*$/.test(value);
+    return /^[a-zA-Z0-9/ :/._-]*$/.test(value);
   }
 
   sortColumn(columnIndex: number, comparator: (a: any, b: any) => number) {

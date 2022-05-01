@@ -1,25 +1,42 @@
 .dragsizer {
-  background: rgb(233, 233, 233);
-  border: 1px outset rgba(150, 150, 150, 0.2);
-  border-radius: 4px;
-  z-index: 80;
-}
-
-.dragsizer.dragging {
-  border: 1px dashed rgb(150, 150, 150);
-  background: #1e90ff;
+  position: relative;
 }
 
 .dragsizer.vertical {
   width: 4px;
   height: 95%;
   margin: auto 6px auto 6px;
-  cursor: ew-resize;
 }
 
 .dragsizer.horizontal {
   width: 95%;
   height: 4px;
   margin: 6px auto 6px auto;
+}
+
+.dragsizer > div {
+  position: absolute;
+  background: rgb(233, 233, 233);
+  border: 1px outset rgba(150, 150, 150, 0.2);
+  border-radius: 4px;
+  z-index: 80;
+}
+
+.dragsizer.vertical > div {
+  cursor: ew-resize;
+  width: 4px;
+  top: 0px;
+  bottom: 0px;
+}
+
+.dragsizer.horizontal > div {
   cursor: ns-resize;
+  height: 4px;
+  left: 0px;
+  right: 0px;
+}
+
+.dragsizer > .dragging {
+  border: 1px dashed rgb(150, 150, 150);
+  background: #1e90ff;
 }

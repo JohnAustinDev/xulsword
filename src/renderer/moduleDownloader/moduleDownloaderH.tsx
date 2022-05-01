@@ -18,9 +18,14 @@ import type { Download } from '../../type';
 import type ModuleDownloader from './moduleDownloader';
 import type { DownloaderState } from './moduleDownloader';
 
-function toggleRepo(mdcomponent: ModuleDownloader, rows: number[]) {
-  const { disabledRepos: dr, repoTableData } =
-    mdcomponent.state as DownloaderState;
+// Enable or disable a repository. If onOrOff is undefined it will be toggled.
+// If onOrOff is true it will be enabled, otherwise disabled.
+export function switchRepo(
+  this: ModuleDownloader,
+  rows: number[],
+  onOrOff?: boolean
+) {
+  const { disabledRepos: dr, repoTableData } = this.state as DownloaderState;
   const newTableData = clone(repoTableData);
   const disabledRepos = dr.slice();
   const reload: boolean[] = repoTableData.map(() => false);
@@ -30,14 +35,11 @@ function toggleRepo(mdcomponent: ModuleDownloader, rows: number[]) {
     const disabledIndex = disabledRepos.findIndex((drs) => {
       return drs === rowkey;
     });
-    if (repoTableData[r][4].off) {
+    if (onOrOff === true || repoTableData[r][4].off) {
       newTableData[r][4].off = false;
       if (disabledIndex !== -1) disabledRepos.splice(disabledIndex, 1);
-      const onOrLoading = !isLocal
-        ? RepositoryTable.loading
-        : RepositoryTable.on;
-      newTableData[r][3] = onOrLoading;
-      reload[r] = onOrLoading === RepositoryTable.loading;
+      newTableData[r][3] = RepositoryTable.loading;
+      reload[r] = true;
     } else {
       if (!isLocal && newTableData[r][3] === RepositoryTable.loading) {
         G.Downloader.ftpCancel();
@@ -47,7 +49,7 @@ function toggleRepo(mdcomponent: ModuleDownloader, rows: number[]) {
       newTableData[r][3] = RepositoryTable.off;
     }
   });
-  mdcomponent.setRepoTableState({
+  this.setRepoTableState({
     repoTableData: newTableData,
     disabledRepos,
   });
@@ -62,7 +64,7 @@ function toggleRepo(mdcomponent: ModuleDownloader, rows: number[]) {
     )
       .then((rawModuleData) => {
         if (!rawModuleData) return false;
-        return mdcomponent.repoDataReady(rawModuleData, reload);
+        return this.repoDataReady(rawModuleData, reload);
       })
       .catch((er) => log.warn(er));
   }
@@ -89,7 +91,7 @@ export default function handler(this: ModuleDownloader, ev: SyntheticEvent) {
           const customRepos = clone(cr);
           const newrow: RepoDataType = [
             '?',
-            C.Downloader.localDomain,
+            C.Downloader.localfile,
             '?',
             RepositoryTable.off,
             { custom: true, off: true, failed: false },
@@ -160,7 +162,7 @@ export default function handler(this: ModuleDownloader, ev: SyntheticEvent) {
         }
         if (row > -1 && col === 3) {
           // Click checkbox
-          toggleRepo(this, [row]);
+          this.switchRepo([row]);
         }
       }
       break;

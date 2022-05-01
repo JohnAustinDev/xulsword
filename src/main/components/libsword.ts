@@ -82,13 +82,12 @@ const LibSword: GType['LibSword'] & LibSwordPrivate = {
       'downloader.disabledRepos'
     ) as DownloaderStatePref['disabledRepos'];
     customRepos.forEach((repo: Download) => {
-      const p = repo.path.replace(/^file:\/\//i, '');
       if (
         !disabledRepos.includes(downloadKey(repo)) &&
         isRepoLocal(repo) &&
-        path.isAbsolute(p)
+        path.isAbsolute(repo.path)
       ) {
-        const dir = new LocalFile(p);
+        const dir = new LocalFile(repo.path);
         const test = dir.clone().append('mods.d');
         if (test.exists() && test.isDirectory()) {
           this.moduleDirectories.push(dir.path);
