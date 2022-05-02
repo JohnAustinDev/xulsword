@@ -111,29 +111,16 @@ html[dir='rtl'] .sbcontrols {
   display: none;
 }
 
-.atext .bb {
-  position: relative;
-  border: 1px outset rgb(150, 150, 150);
-  background: rgb(233, 233, 233);
-  height: 4px;
-  border-radius: 4px;
-  cursor: ns-resize;
-  width: 100%;
-  margin: 10px 60px 10px 60px;
+.atext .dragsizer {
+  width: 75%;
 }
-.atext .bb.moving {
-  border: 1px dashed rgb(150, 150, 150);
-  background: #1e90ff;
-  z-index: 80;
-}
-
 .atext .notebox-maximizer {
   position: absolute;
   background: url(../images/max.png);
   width: 15px;
   height: 14px;
-  top: 8px;
-  right: 42px;
+  top: 0px;
+  right: 5px;
 }
 html[dir='rtl'] .notebox-maximizer {
   right: auto;

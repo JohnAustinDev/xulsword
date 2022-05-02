@@ -9,33 +9,40 @@ import PropTypes from 'prop-types';
 import { xulDefaultProps, xulPropTypes, XulProps } from './xul';
 import './dragsizer.css';
 
+export type DragSizerVal = {
+  mousePos: number; // mouse position
+  sizerPos: number; // sizer position (never < min or > max)
+  isMinMax: boolean | null; // false = is-min, true = is-max, null or undefined = neither.
+};
+
 const defaultProps = {
   ...xulDefaultProps,
-  min: 50,
-  max: 500,
+  min: 0,
+  max: null,
   shrink: false,
   lift: false,
 };
 
+// NOTE: onDragStart plus either onDragging or onDragEnd must be
+// implemented in order for the DragSizer to work. If onDragging
+// is provided, it is be responsible for moving the sizer.
 const propTypes = {
   ...xulPropTypes,
   onDragStart: PropTypes.func.isRequired,
-  onDrag: PropTypes.func,
+  onDragging: PropTypes.func,
   onDragEnd: PropTypes.func,
   min: PropTypes.number,
   max: PropTypes.number,
   shrink: PropTypes.bool,
-  lift: PropTypes.bool,
 };
 
 interface DragSizerProps extends XulProps {
-  onDragStart: () => number;
-  onDrag?: (value: number) => void;
-  onDragEnd?: (value: number | null) => void;
+  onDragStart: (e: React.MouseEvent) => number;
+  onDragging?: (e: React.MouseEvent, value: DragSizerVal) => void;
+  onDragEnd?: (e: React.MouseEvent, value: DragSizerVal) => void;
   min: number;
-  max: number;
+  max: number | null;
   shrink: boolean; // moving in positive direction redices the stateProp value
-  lift: boolean;
 }
 
 interface DragSizerState {
@@ -88,7 +95,7 @@ class DragSizer extends React.Component {
 
   onMouseDown(e: React.MouseEvent) {
     const { onDragStart, orient } = this.props as DragSizerProps;
-    const dragging = onDragStart();
+    const dragging = onDragStart(e);
     e.preventDefault();
     this.setState({
       dragging,
@@ -101,16 +108,11 @@ class DragSizer extends React.Component {
     const { dragging } = this.state as DragSizerState;
     if (dragging !== null) {
       e.preventDefault();
-      const { onDrag, orient, lift } = props;
-      const value = this.currentValue(e);
-      if (value !== null) {
-        const sizer = this.sizerRef.current as HTMLDivElement | undefined;
-        if (lift && sizer) {
-          sizer.style[orient === 'vertical' ? 'left' : 'top'] = `${
-            dragging - value
-          }px`;
-        }
-        if (onDrag) onDrag(value);
+      const { onDragging } = props;
+      const value = this.setSizerValue(e);
+      if (value) {
+        if (value.sizerPos && onDragging) onDragging(e, value);
+        if (value.isMinMax !== null) this.onMouseUp(e);
       }
     }
   }
@@ -119,30 +121,42 @@ class DragSizer extends React.Component {
     const props = this.props as DragSizerProps;
     const { dragging } = this.state as DragSizerState;
     if (dragging !== null) {
+      const { orient, onDragging, onDragEnd } = props;
       e.preventDefault();
-      const value = this.currentValue(e);
-      const { lift, orient } = props;
-      const sizer = this.sizerRef.current as HTMLDivElement | undefined;
-      if (lift && sizer && value !== null) {
-        sizer.style[orient === 'vertical' ? 'left' : 'top'] = '0px';
+      const value = this.setSizerValue(e);
+      if (!onDragging) {
+        const sizerElem = this.sizerRef.current as HTMLDivElement | undefined;
+        if (sizerElem) {
+          sizerElem.style[orient === 'vertical' ? 'left' : 'top'] = `0px`;
+        }
       }
       this.setState({ dragging: null });
-      const { onDragEnd } = props;
-      if (value !== null && onDragEnd) onDragEnd(value);
+      if (value && onDragEnd) onDragEnd(e, value);
     }
   }
 
-  currentValue(e: React.MouseEvent): number | null {
-    const props = this.props as DragSizerProps;
+  setSizerValue(e: React.MouseEvent): DragSizerVal | null {
     const { dragging, startpos } = this.state as DragSizerState;
-    const { orient, shrink, min, max } = props;
     if (dragging !== null) {
+      const props = this.props as DragSizerProps;
+      const { orient, shrink, min, max, onDragging } = props;
       e.preventDefault();
       const delta = (orient === 'vertical' ? e.clientX : e.clientY) - startpos;
       const value = dragging + (shrink ? -1 * delta : delta);
-      if (value >= min && value <= max) {
-        return value;
+      let sizer = value;
+      if (sizer < min) sizer = min;
+      if (max && sizer > max) sizer = max;
+      let isMinMax = null;
+      if (value < min - 5) isMinMax = false;
+      if (max && value > max + 5) isMinMax = true;
+      const sizerElem = this.sizerRef.current as HTMLDivElement | undefined;
+      // If onDragging is not implemented, then top will be used to move the sizer.
+      if (!onDragging && sizerElem) {
+        sizerElem.style[orient === 'vertical' ? 'left' : 'top'] = `${
+          dragging - value
+        }px`;
       }
+      return { mousePos: value, sizerPos: sizer, isMinMax };
     }
     return null;
   }
@@ -152,18 +166,12 @@ class DragSizer extends React.Component {
     const state = this.state as DragSizerState;
     const { sizerRef, onMouseDown } = this;
     const { dragging } = state;
-    const { orient, lift } = props;
-
-    const c1 = ['dragsizer'];
-    c1.push(orient === 'vertical' ? 'vertical' : 'horizontal');
-    const c2 = [];
-    if (dragging !== null) c2.push('dragging');
-    if (lift) c2.push('lift');
+    const { orient } = props;
 
     return (
-      <div className={c1.join(' ')}>
+      <div className={`dragsizer ${orient || 'horizontal'}`}>
         <div
-          className={c2.join(' ')}
+          className={(dragging && 'dragging') || ''}
           ref={sizerRef}
           onMouseDown={onMouseDown}
         />

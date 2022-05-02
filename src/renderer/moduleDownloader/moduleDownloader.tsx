@@ -24,14 +24,13 @@ import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
 import { Hbox, Vbox, Box } from '../libxul/boxes';
 import Groupbox from '../libxul/groupbox';
 import Spacer from '../libxul/spacer';
-import DragSizer from '../libxul/dragsizer';
+import DragSizer, { DragSizerVal } from '../libxul/dragsizer';
 import RepositoryTable from './repositoryTable';
 import handlerH, { switchRepo as switchRepoH } from './moduleDownloaderH';
 import './moduleDownloader.css';
 
 import type { Download, DownloaderStatePref, SwordConfType } from '../../type';
 import type { RepoDataType } from './repositoryTable';
-import C from 'constant';
 
 export type ModuleRawDataType = (string | SwordConfType[])[];
 
@@ -358,9 +357,11 @@ export default class ModuleDownloader extends React.Component {
               </Groupbox>
               <DragSizer
                 onDragStart={() => state.languageListPanelWidth}
-                onDrag={(w: number) =>
-                  this.setState({ languageListPanelWidth: w })
+                onDragging={(_e: React.MouseEvent, v: DragSizerVal) =>
+                  this.setState({ languageListPanelWidth: v.sizerPos })
                 }
+                min={75}
+                max={250}
                 orient="vertical"
               />
             </>
@@ -430,11 +431,10 @@ export default class ModuleDownloader extends React.Component {
           <div>
             <DragSizer
               onDragStart={() => state.repoListPanelHeight}
-              onDragEnd={(h: number) =>
-                this.setState({ repoListPanelHeight: h })
+              onDragEnd={(_e: React.MouseEvent, v: DragSizerVal) =>
+                this.setState({ repoListPanelHeight: v.sizerPos })
               }
               orient="horizontal"
-              lift
               shrink
             />
             <Groupbox

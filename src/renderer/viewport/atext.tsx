@@ -30,6 +30,7 @@ import {
   addClass,
   topHandle,
 } from '../libxul/xul';
+import DragSizer from '../libxul/dragsizer';
 import { Vbox, Hbox, Box } from '../libxul/boxes';
 import { libswordText, textChange } from './ztext';
 import {
@@ -43,12 +44,7 @@ import '../libxul/xul.css';
 import '../libsword.css';
 import './atext.css';
 
-import type {
-  XulswordStatePref,
-  AtextPropsType,
-  AtextStateType,
-  PinPropsType,
-} from '../../type';
+import type { AtextPropsType, AtextStateType, PinPropsType } from '../../type';
 
 const defaultProps = {
   ...xulDefaultProps,
@@ -57,7 +53,7 @@ const defaultProps = {
 
 const propTypes = {
   ...xulPropTypes,
-  noteboxBar: PropTypes.func.isRequired,
+  bbDragEnd: PropTypes.func.isRequired,
   xulswordState: PropTypes.func.isRequired,
   panelIndex: PropTypes.number.isRequired,
   columns: PropTypes.number.isRequired,
@@ -70,7 +66,7 @@ const propTypes = {
   scroll: PropTypes.object,
   isPinned: PropTypes.bool.isRequired,
   noteBoxHeight: PropTypes.number,
-  maximizeNoteBox: PropTypes.number,
+  maximizeNoteBox: PropTypes.bool,
   show: PropTypes.object.isRequired,
   place: PropTypes.object.isRequired,
   ownWindow: PropTypes.bool,
@@ -81,7 +77,7 @@ export type AtextProps = XulProps & AtextPropsType;
 export const atextInitialState: AtextStateType = {
   pin: null,
   versePerLine: false,
-  noteBoxResizing: null,
+  maxNoteBoxHeight: null,
 };
 
 // Window arguments that are used to set initial state must be updated locally
@@ -122,7 +118,6 @@ class Atext extends React.Component {
     this.onUpdate = this.onUpdate.bind(this);
     this.writeLibSword2DOM = this.writeLibSword2DOM.bind(this);
     this.handler = handlerH.bind(this);
-    this.bbMouseUp = this.bbMouseUp.bind(this);
   }
 
   componentDidMount() {
@@ -163,9 +158,8 @@ class Atext extends React.Component {
   onUpdate() {
     const props = this.props as AtextProps;
     const state = this.state as AtextStateType;
-    const { columns, isPinned, panelIndex, noteBoxHeight, xulswordState } =
-      props;
-    const { pin } = state as AtextStateType;
+    const { columns, isPinned, panelIndex, xulswordState } = props;
+    const { pin, maxNoteBoxHeight } = state as AtextStateType;
 
     // Decide what needs to be updated...
     // pinProps are the currently active props according to the panel's
@@ -192,26 +186,13 @@ class Atext extends React.Component {
     const sbe = sbref !== null ? sbref.current : null;
     const nbe = nbref !== null ? nbref.current : null;
 
-    // Adjust note-box height if needed
+    // Adjust maxNoteBoxHeight height if needed
     const atext = sbe?.parentNode as HTMLElement | null | undefined;
     if (atext) {
       const hd = atext.firstChild as HTMLElement;
-      const maxHeight =
-        atext.offsetHeight - hd.offsetHeight + C.UI.Atext.bbTopMargin;
-      if (noteBoxHeight > maxHeight) {
-        xulswordState((prevState) => {
-          const snew: Partial<XulswordStatePref> = {
-            noteBoxHeight: clone(prevState.noteBoxHeight),
-            maximizeNoteBox: clone(prevState.maximizeNoteBox),
-          };
-          if (!snew.noteBoxHeight) snew.noteBoxHeight = [];
-          if (!snew.maximizeNoteBox) snew.maximizeNoteBox = [];
-          snew.noteBoxHeight[panelIndex] = maxHeight;
-          if (snew.maximizeNoteBox[panelIndex])
-            snew.maximizeNoteBox[panelIndex] = 50;
-          return snew;
-        });
-      }
+      let maxHeight = atext.offsetHeight - hd.offsetHeight;
+      if (columns === 1) maxHeight -= C.UI.Atext.bbSingleColTopMargin;
+      if (maxHeight !== maxNoteBoxHeight) newState.maxNoteBoxHeight = maxHeight;
     }
 
     const { selection, module } = pinProps;
@@ -549,35 +530,20 @@ class Atext extends React.Component {
     }
   }
 
-  // This is also called by onMouseMove when bb moves beyond min/max.
-  bbMouseUp(
-    this: Atext,
-    e: React.SyntheticEvent,
-    nbr?: number[],
-    maximize?: boolean
-  ) {
-    const { noteBoxResizing } = this.state as AtextStateType;
-    const { noteboxBar } = this.props as AtextProps;
-    if (noteBoxResizing === null) return;
-    e.stopPropagation();
-    const newnbr = nbr || noteBoxResizing;
-    this.setState({ noteBoxResizing: null });
-    noteboxBar(e, newnbr, maximize);
-  }
-
   render() {
     const state = this.state as AtextStateType;
     const props = this.props as AtextProps;
-    const { handler, bbMouseUp } = this;
-    const { noteBoxResizing, versePerLine } = state;
+    const { handler } = this;
+    const { maxNoteBoxHeight, versePerLine } = state;
     const {
       columns,
       isPinned,
-      maximizeNoteBox,
       module,
       panelIndex,
-      noteBoxHeight,
       ownWindow,
+      noteBoxHeight,
+      maximizeNoteBox,
+      bbDragEnd,
     } = props;
 
     // Header logic etc.
@@ -591,13 +557,13 @@ class Atext extends React.Component {
     const isVerseKey = module && G.Tab[module].isVerseKey;
 
     // Notebox height
-    const doMaximizeNB =
-      noteBoxResizing === null && columns !== 1 && maximizeNoteBox > 0;
-    let bbtop;
-    if (noteBoxResizing !== null) {
-      const [initial, current] = noteBoxResizing;
-      bbtop = { top: `${current - initial}px` };
-    }
+    const doMaximizeNB = columns !== 1 && maximizeNoteBox;
+    let realNoteBoxHeight = noteBoxHeight;
+    if (
+      maxNoteBoxHeight &&
+      (doMaximizeNB || realNoteBoxHeight > maxNoteBoxHeight)
+    )
+      realNoteBoxHeight = maxNoteBoxHeight;
 
     // Class list
     let cls = `text text${panelIndex} columns${columns}`;
@@ -618,11 +584,7 @@ class Atext extends React.Component {
         {...topHandle('onClick', handler, props)}
         {...topHandle('onWheel', handler, props)}
         {...topHandle('onMouseOver', handler, props)}
-        {...topHandle('onMouseLeave', handler, props)}
         {...topHandle('onMouseOut', handler, props)}
-        {...topHandle('onMouseDown', handler, props)}
-        {...topHandle('onMouseMove', handler, props)}
-        {...topHandle('onMouseUp', bbMouseUp, props)}
         data-index={panelIndex}
         data-module={module}
         data-columns={columns}
@@ -653,7 +615,7 @@ class Atext extends React.Component {
 
         <Vbox
           className="nbc"
-          height={`${noteBoxHeight}px`}
+          height={realNoteBoxHeight}
           style={
             columns > 1
               ? { width: `calc(${100 / columns}% - 24px)` }
@@ -661,7 +623,13 @@ class Atext extends React.Component {
           }
         >
           <Hbox>
-            <div className={`bb ${bbtop ? 'moving' : ''}`} style={bbtop} />
+            <DragSizer
+              onDragStart={() => realNoteBoxHeight}
+              onDragEnd={bbDragEnd}
+              min={C.UI.Atext.bbBottomMargin}
+              max={maxNoteBoxHeight}
+              shrink
+            />
             <div className="notebox-maximizer" />
           </Hbox>
           <div className="nb" ref={this.nbref} />

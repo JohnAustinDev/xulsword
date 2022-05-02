@@ -31,6 +31,7 @@ import type Xulsword from '../xulsword/xulsword';
 import type { XulswordState } from '../xulsword/xulsword';
 import type ViewportWin from './viewportWin';
 import type { ViewportWinState } from './viewportWin';
+import type { DragSizerVal } from '../libxul/dragsizer';
 
 export const vpWindowState = {
   tabs: [] as (string[] | null)[],
@@ -39,7 +40,7 @@ export const vpWindowState = {
   mtModules: [] as (string | null)[],
   isPinned: [true, true, true],
   noteBoxHeight: [] as number[],
-  maximizeNoteBox: [] as number[],
+  maximizeNoteBox: [] as boolean[],
 };
 
 export function closeMenupopups(component: React.Component) {
@@ -128,50 +129,21 @@ export function newModulesInstalled(
   }
 }
 
-// Handle certain notebox boundary bar events for Atext.
-export function noteboxBarHandler(
+export function bbDragEnd(
   this: Xulsword | ViewportWin,
-  e: React.SyntheticEvent,
-  noteboxResizing?: number[],
-  maximize?: boolean
+  e: React.MouseEvent,
+  value: DragSizerVal
 ) {
   const target = e.target as HTMLElement;
   const atext = ofClass(['atext'], target)?.element;
   const index = Number(atext && atext.dataset.index);
   if (atext && !Number.isNaN(index)) {
-    if (noteboxResizing === undefined) {
-      // The bb bar is being dragged while maximizeNoteBox > 0
-      // cancels maximizeNoteBox
-      this.setState((prevState) => {
-        let { maximizeNoteBox } = prevState as XulswordStatePref;
-        maximizeNoteBox = clone(maximizeNoteBox);
-        maximizeNoteBox[index] = 0;
-        return { maximizeNoteBox };
-      });
-    } else if (noteboxResizing && atext) {
-      // mouseup event handler for Atext.
-      const hd = atext.firstChild as HTMLElement;
-      this.setState((prevState: XulswordStatePref) => {
-        let { maximizeNoteBox, noteBoxHeight } = prevState;
-        maximizeNoteBox = clone(maximizeNoteBox);
-        noteBoxHeight = clone(noteBoxHeight);
-        const [initial, final] = noteboxResizing;
-        if (maximize === true) {
-          maximizeNoteBox[index] = noteBoxHeight[index];
-          const { columns: clsx } = atext.dataset;
-          const columns = Number(clsx);
-          let stopHeight =
-            atext.offsetHeight - hd.offsetHeight + C.UI.Atext.bbTopMargin;
-          if (columns === 1) stopHeight -= C.UI.Atext.bbSingleColTopMargin;
-          noteBoxHeight[index] = stopHeight;
-        } else if (maximize === false) {
-          noteBoxHeight[index] = C.UI.Atext.bbBottomMargin;
-        } else {
-          noteBoxHeight[index] += initial - final;
-        }
-        return { maximizeNoteBox, noteBoxHeight };
-      });
-    }
+    let { noteBoxHeight, maximizeNoteBox } = this.state as XulswordStatePref;
+    noteBoxHeight = noteBoxHeight.slice();
+    maximizeNoteBox = maximizeNoteBox.slice();
+    maximizeNoteBox[index] = value.isMinMax === true;
+    noteBoxHeight[index] = value.sizerPos;
+    this.setState({ noteBoxHeight, maximizeNoteBox } as XulswordStatePref);
   }
 }
 
@@ -481,23 +453,16 @@ export default function handler(
         }
         case 'notebox-maximizer': {
           if (atext) {
-            const hd = atext.firstChild as HTMLElement;
             this.setState((prevState: XulswordStatePref) => {
               let { maximizeNoteBox, noteBoxHeight } = prevState;
               maximizeNoteBox = clone(maximizeNoteBox);
               noteBoxHeight = clone(noteBoxHeight);
-              if (maximizeNoteBox[index] > 0) {
-                noteBoxHeight[index] = maximizeNoteBox[index];
-                maximizeNoteBox[index] = 0;
-              } else {
-                maximizeNoteBox[index] = noteBoxHeight[index];
-                const { columns: clsx } = atext.dataset;
-                const columns = Number(clsx);
-                let stopHeight =
-                  atext.offsetHeight - hd.offsetHeight + C.UI.Atext.bbTopMargin;
-                if (columns === 1)
-                  stopHeight -= C.UI.Atext.bbSingleColTopMargin;
-                noteBoxHeight[index] = stopHeight;
+              maximizeNoteBox[index] = !maximizeNoteBox[index];
+              if (
+                !maximizeNoteBox[index] &&
+                noteBoxHeight[index] > C.UI.Atext.initialNoteboxHeight
+              ) {
+                noteBoxHeight[index] = C.UI.Atext.initialNoteboxHeight;
               }
               return { maximizeNoteBox, noteBoxHeight };
             });

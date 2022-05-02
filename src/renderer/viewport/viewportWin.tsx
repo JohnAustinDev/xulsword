@@ -28,15 +28,11 @@ import Viewport from './viewport';
 import viewportParentH, {
   closeMenupopups,
   vpWindowState,
-  noteboxBarHandler as noteboxBarHandlerH,
+  bbDragEnd as bbDragEndH,
   newModulesInstalled,
 } from './viewportParentH';
 
-import type {
-  XulswordStateArgType,
-  XulswordStatePref,
-  NoteboxBarHandlerType,
-} from '../../type';
+import type { XulswordStateArgType, XulswordStatePref } from '../../type';
 import type Atext from './atext';
 
 const defaultProps = xulDefaultProps;
@@ -69,7 +65,7 @@ export default class ViewportWin extends React.Component {
 
   viewportParentHandler: any;
 
-  noteboxBarHandler: NoteboxBarHandlerType;
+  bbDragEnd: (e: React.MouseEvent, value: any) => void;
 
   dictkeydownTO: NodeJS.Timeout | undefined;
 
@@ -96,7 +92,7 @@ export default class ViewportWin extends React.Component {
     this.state = s;
 
     this.viewportParentHandler = viewportParentH.bind(this);
-    this.noteboxBarHandler = noteboxBarHandlerH.bind(this);
+    this.bbDragEnd = bbDragEndH.bind(this);
     this.xulswordStateHandler = this.xulswordStateHandler.bind(this);
 
     this.destroy = [];
@@ -178,7 +174,7 @@ export default class ViewportWin extends React.Component {
     const {
       atextRefs,
       viewportParentHandler,
-      noteboxBarHandler,
+      bbDragEnd,
       xulswordStateHandler,
     } = this;
 
@@ -210,7 +206,7 @@ export default class ViewportWin extends React.Component {
             ownWindow
             atextRefs={atextRefs}
             eHandler={viewportParentHandler}
-            noteboxBarHandler={noteboxBarHandler}
+            bbDragEnd={bbDragEnd}
             xulswordStateHandler={xulswordStateHandler}
           />
         </Hbox>

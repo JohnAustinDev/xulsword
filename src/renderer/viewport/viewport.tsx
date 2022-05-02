@@ -38,12 +38,7 @@ import Atext from './atext';
 import '../libxul/xul.css';
 import './viewport.css';
 
-import type {
-  LocationVKType,
-  ScrollType,
-  XulswordStatePref,
-  NoteboxBarHandlerType,
-} from '../../type';
+import type { LocationVKType, ScrollType, XulswordStatePref } from '../../type';
 
 const defaultProps = xulDefaultProps;
 
@@ -66,11 +61,11 @@ const propTypes = {
 
   isPinned: PropTypes.arrayOf(PropTypes.bool).isRequired,
   noteBoxHeight: PropTypes.arrayOf(PropTypes.number).isRequired,
-  maximizeNoteBox: PropTypes.arrayOf(PropTypes.number).isRequired,
+  maximizeNoteBox: PropTypes.arrayOf(PropTypes.bool).isRequired,
   ownWindow: PropTypes.bool.isRequired,
 
   eHandler: PropTypes.func.isRequired,
-  noteboxBarHandler: PropTypes.func.isRequired,
+  bbDragEnd: PropTypes.func.isRequired,
   xulswordStateHandler: PropTypes.func.isRequired,
   atextRefs: PropTypes.arrayOf(PropTypes.object),
 };
@@ -87,11 +82,11 @@ type ViewportProps = PopupParentProps &
     ilModules: (string | undefined)[];
     mtModules: (string | undefined)[];
     noteBoxHeight: number[];
-    maximizeNoteBox: number[];
+    maximizeNoteBox: boolean[];
     ownWindow: boolean;
 
     eHandler: (e: React.SyntheticEvent) => void;
-    noteboxBarHandler: NoteboxBarHandlerType;
+    bbDragEnd: (e: React.MouseEvent, value: any) => void;
     xulswordStateHandler: (s: Partial<XulswordStatePref>) => void;
   };
 
@@ -166,7 +161,7 @@ class Viewport extends React.Component implements PopupParent {
       showChooser,
       ownWindow,
       eHandler,
-      noteboxBarHandler,
+      bbDragEnd,
       xulswordStateHandler,
       atextRefs,
     } = this.props as ViewportProps;
@@ -473,7 +468,7 @@ class Viewport extends React.Component implements PopupParent {
                     noteBoxHeight={noteBoxHeight[i]}
                     maximizeNoteBox={maximizeNoteBox[i]}
                     ownWindow={ownWindow}
-                    noteboxBar={noteboxBarHandler}
+                    bbDragEnd={bbDragEnd}
                     xulswordState={xulswordStateHandler}
                     onWheel={(e: SyntheticEvent) => {
                       eHandler(e);

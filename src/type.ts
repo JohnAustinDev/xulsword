@@ -3,6 +3,7 @@
 
 import type { BrowserWindow } from 'electron';
 import type ElectronLog from 'electron-log';
+import React from 'react';
 
 declare global {
   export interface Window {
@@ -114,7 +115,7 @@ export interface XulswordStatePref {
 
   isPinned: boolean[];
   noteBoxHeight: number[];
-  maximizeNoteBox: number[];
+  maximizeNoteBox: boolean[];
 }
 
 export interface DownloaderStatePref {
@@ -141,19 +142,19 @@ export type AtextPropsType = Pick<
 
   isPinned: boolean;
   noteBoxHeight: number;
-  maximizeNoteBox: number;
+  maximizeNoteBox: boolean;
 
   panelIndex: number;
   columns: number;
   ownWindow: boolean;
-  noteboxBar: NoteboxBarHandlerType;
+  bbDragEnd: (e: React.MouseEvent, value: any) => void;
   xulswordState: (s: XulswordStateArgType) => void;
 };
 
 export type AtextStateType = {
   pin: PinPropsType | null;
   versePerLine: boolean;
-  noteBoxResizing: number[] | null;
+  maxNoteBoxHeight: number | null;
 };
 
 export type PinPropsType = Pick<
@@ -171,12 +172,6 @@ export type PinPropsType = Pick<
 export type XulswordStateArgType =
   | Partial<XulswordStatePref>
   | ((s: XulswordStatePref) => Partial<XulswordStatePref>);
-
-export type NoteboxBarHandlerType = (
-  e: React.SyntheticEvent,
-  noteboxResizing?: number[],
-  maximize?: boolean
-) => void;
 
 // Default values for these keys must be set in the default
 // JSON Pref file or an error will be thrown. These values

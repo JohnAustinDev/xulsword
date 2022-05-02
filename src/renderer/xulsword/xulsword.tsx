@@ -35,7 +35,7 @@ import Textbox from '../libxul/textbox';
 import Viewport from '../viewport/viewport';
 import viewportParentH, {
   closeMenupopups,
-  noteboxBarHandler as noteboxBarHandlerH,
+  bbDragEnd as bbDragEndH,
   newModulesInstalled,
 } from '../viewport/viewportParentH';
 import handlerH from './xulswordH';
@@ -45,7 +45,6 @@ import type {
   HistoryVKType,
   XulswordStateArgType,
   XulswordStatePref,
-  NoteboxBarHandlerType,
 } from '../../type';
 import type Atext from '../viewport/atext';
 
@@ -71,7 +70,7 @@ const notStatePref = {
 const statePrefPanelDefault: Partial<XulswordStatePref> = {
   isPinned: [false],
   noteBoxHeight: [C.UI.Atext.initialNoteboxHeight],
-  maximizeNoteBox: [0],
+  maximizeNoteBox: [false],
 };
 
 export type XulswordState = typeof notStatePref & XulswordStatePref;
@@ -85,7 +84,7 @@ export default class Xulsword extends React.Component {
 
   viewportParentHandler: any;
 
-  noteboxBarHandler: NoteboxBarHandlerType;
+  bbDragEnd: (e: React.MouseEvent, value: any) => void;
 
   historyTO: NodeJS.Timeout | undefined;
 
@@ -120,7 +119,7 @@ export default class Xulsword extends React.Component {
 
     this.handler = handlerH.bind(this);
     this.viewportParentHandler = viewportParentH.bind(this);
-    this.noteboxBarHandler = noteboxBarHandlerH.bind(this);
+    this.bbDragEnd = bbDragEndH.bind(this);
     this.xulswordStateHandler = this.xulswordStateHandler.bind(this);
 
     this.destroy = [];
@@ -291,7 +290,7 @@ export default class Xulsword extends React.Component {
       atextRefs,
       handler,
       viewportParentHandler,
-      noteboxBarHandler,
+      bbDragEnd,
       xulswordStateHandler,
     } = this;
     const {
@@ -545,7 +544,7 @@ export default class Xulsword extends React.Component {
             ownWindow={false}
             atextRefs={atextRefs}
             eHandler={viewportParentHandler}
-            noteboxBarHandler={noteboxBarHandler}
+            bbDragEnd={bbDragEnd}
             xulswordStateHandler={xulswordStateHandler}
           />
         </Hbox>
