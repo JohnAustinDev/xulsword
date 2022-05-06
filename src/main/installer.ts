@@ -261,7 +261,7 @@ export async function installList(
                     );
                   } else if (swmodpath) {
                     // Remove any module(s) obsoleted by this module.
-                    if (conf.Obsoletes.length) {
+                    if (conf.Obsoletes?.length) {
                       const obsoletes = conf.Obsoletes.filter((m) => {
                         return installed.includes(m);
                       });

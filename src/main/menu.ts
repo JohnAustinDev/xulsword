@@ -285,7 +285,7 @@ export default class MenuBuilder {
               ),
               accelerator: 'F2',
               click: d(() => {
-                Commands.openModuleDownloader();
+                Commands.openModuleManager();
               }),
             },
             {

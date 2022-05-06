@@ -8,7 +8,7 @@ import { clone, JSON_stringify } from '../common';
 import { verseKey, getTab, getTabs } from './minit';
 import Prefs from './components/prefs';
 import LocalFile from './components/localFile';
-import installList from './installer';
+import { installList } from './installer';
 import Window, { getBrowserWindows } from './window';
 
 import type {
@@ -20,14 +20,14 @@ import type {
 } from '../type';
 
 const Commands: GType['Commands'] = {
-  openModuleDownloader() {
+  openModuleManager() {
     const win = arguments[1] || getBrowserWindows({ type: 'xulsword' })[0];
     const options = {
       title: i18n.t('menu.addNewModule.label'),
       parent: win || undefined,
     };
     Window.open({
-      type: 'moduleDownloader',
+      type: 'moduleManager',
       category: 'dialog-window',
       options,
     });

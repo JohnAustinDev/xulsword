@@ -57,7 +57,7 @@ export type WindowDescriptorType = {
     | 'viewportWin'
     | 'popupWin'
     | 'chooseFont'
-    | 'moduleDownloader';
+    | 'moduleManager';
   id?: number;
   category?:
     | 'window' // Regular window
@@ -654,7 +654,7 @@ const LibSwordPublic = {
 };
 
 const CommandsPublic = {
-  openModuleDownloader: func as unknown as () => void,
+  openModuleManager: func as unknown as () => void,
   installXulswordModules: func as unknown as (
     paths?: string[] | string, // file, file[], directory/*, directory or undefined: choose files
     toSharedModuleDir?: boolean

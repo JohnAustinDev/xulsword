@@ -1,3 +1,4 @@
+/* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable no-nested-ternary */
 /* eslint-disable class-methods-use-this */
 /* eslint-disable react/sort-comp */
@@ -28,13 +29,18 @@ import G from '../rg';
 import log from '../log';
 import renderToRoot from '../rinit';
 import { getStatePref, onSetWindowState } from '../rutil';
-import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
+import {
+  addClass,
+  xulDefaultProps,
+  XulProps,
+  xulPropTypes,
+} from '../libxul/xul';
 import { Hbox, Vbox, Box } from '../libxul/boxes';
 import Groupbox from '../libxul/groupbox';
 import Table from '../libxul/table';
 import Spacer from '../libxul/spacer';
 import DragSizer, { DragSizerVal } from '../libxul/dragsizer';
-import './moduleDownloader.css';
+import './moduleManager.css';
 
 // TODO!: showModuleInfo
 
@@ -182,7 +188,7 @@ export interface ManagerStatePref {
 
 export type ManagerState = ManagerStatePref & typeof notStatePref;
 
-export default class ModuleDownloader extends React.Component {
+export default class ModuleManager extends React.Component {
   static defaultProps: typeof defaultProps;
 
   static propTypes: typeof propTypes;
@@ -215,7 +221,7 @@ export default class ModuleDownloader extends React.Component {
     const s: ManagerState = {
       ...notStatePref,
       ...(getStatePref(props.id) as ManagerStatePref),
-      ...ModuleDownloader.saved,
+      ...ModuleManager.saved,
     };
     this.state = s;
 
@@ -245,9 +251,9 @@ export default class ModuleDownloader extends React.Component {
 
   componentDidMount() {
     // Download data for the repository and module tables
-    if (!ModuleDownloader.saved.repoTableData.length) {
-      ModuleDownloader.saved.repoTableData = [];
-      ModuleDownloader.saved.rawModuleData = [];
+    if (!ModuleManager.saved.repoTableData.length) {
+      ModuleManager.saved.repoTableData = [];
+      ModuleManager.saved.rawModuleData = [];
       G.Downloader.crossWireMasterRepoList()
         .then((repos) => {
           const allrepos = this.loadRepositoryTable(repos);
@@ -263,8 +269,8 @@ export default class ModuleDownloader extends React.Component {
             message: 'Unable to download Master Repository List.',
           });
           // Failed to load master list, so just load local repos.
-          ModuleDownloader.saved.repoTableData = [];
-          ModuleDownloader.saved.rawModuleData = [];
+          ModuleManager.saved.repoTableData = [];
+          ModuleManager.saved.rawModuleData = [];
           // eslint-disable-next-line promise/no-nesting
           G.Downloader.repositoryListing(this.loadRepositoryTable())
             .then((listing) => {
@@ -431,7 +437,7 @@ export default class ModuleDownloader extends React.Component {
     const { repoTableData } = this.state as ManagerState;
     rawModuleData.forEach((listing, i) => {
       if (listing !== null) {
-        ModuleDownloader.saved.rawModuleData[i] = listing;
+        ModuleManager.saved.rawModuleData[i] = listing;
         if (repoTableData[i][RepCol.iState] === ON) {
           repoTableData[i][0].intent = intent(3, 'primary');
           if (typeof listing === 'string' && listing !== 'mods.d') {
@@ -601,7 +607,7 @@ export default class ModuleDownloader extends React.Component {
     }
   }
 
-  eventHandler(this: ModuleDownloader, ev: SyntheticEvent) {
+  eventHandler(this: ModuleManager, ev: SyntheticEvent) {
     switch (ev.type) {
       case 'click': {
         const e = ev as React.MouseEvent;
@@ -618,7 +624,7 @@ export default class ModuleDownloader extends React.Component {
             const installed: SwordConfType[] = [];
             repoTableData.forEach((rtd, i) => {
               if (isRepoLocal(rtd[0].repo)) {
-                const data = ModuleDownloader.saved.rawModuleData[i];
+                const data = ModuleManager.saved.rawModuleData[i];
                 if (Array.isArray(data)) data.forEach((c) => installed.push(c));
               }
             });
@@ -687,7 +693,7 @@ export default class ModuleDownloader extends React.Component {
               .state as ManagerState;
             const newTableData = clone(repoTableData);
             const newCustomRepos = clone(customRepos);
-            const rawdata = ModuleDownloader.saved.rawModuleData;
+            const rawdata = ModuleManager.saved.rawModuleData;
             const rows = (repository && regionsToRows(repository)) || [];
             rows.reverse().forEach((r) => {
               if (repoTableData[r][0].repo.custom) {
@@ -741,7 +747,7 @@ export default class ModuleDownloader extends React.Component {
               // LanguageTable
               this.rowSelect(e, 'language', row);
               const { langTableData } = this.state as ManagerState;
-              const data = ModuleDownloader.saved.rawModuleData;
+              const data = ModuleManager.saved.rawModuleData;
               const code = langTableData[row][0];
               this.loadModuleTable(code, data);
             } else if (table && table.type === 'moduletable') {
@@ -811,7 +817,7 @@ export default class ModuleDownloader extends React.Component {
       const renderTable = Tables[table][0];
       const tableData = Tables[table][1];
       let render = prevState[renderTable];
-      ModuleDownloader.saved[tableData] = prevState[tableData] as any;
+      ModuleManager.saved[tableData] = prevState[tableData] as any;
       render += 1;
       return {
         [renderTable]: render,
@@ -833,6 +839,7 @@ export default class ModuleDownloader extends React.Component {
 
   render() {
     const state = this.state as ManagerState;
+    const props = this.props as ManagerProps;
     const {
       language,
       langTableData,
@@ -875,7 +882,7 @@ export default class ModuleDownloader extends React.Component {
     };
 
     return (
-      <Vbox flex="1" height="100%">
+      <Vbox {...addClass('modulemanager', props)} flex="1" height="100%">
         <Toaster
           canEscapeKeyClear
           position={Position.TOP}
@@ -1064,13 +1071,13 @@ export default class ModuleDownloader extends React.Component {
     );
   }
 }
-ModuleDownloader.defaultProps = defaultProps;
-ModuleDownloader.propTypes = propTypes;
-ModuleDownloader.saved = {
+ModuleManager.defaultProps = defaultProps;
+ModuleManager.propTypes = propTypes;
+ModuleManager.saved = {
   repoTableData: [],
   modTableData: [],
   langTableData: [],
   rawModuleData: [],
 };
 
-renderToRoot(<ModuleDownloader id="downloader" />);
+renderToRoot(<ModuleManager id="downloader" />);

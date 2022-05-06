@@ -16,7 +16,7 @@ import type {
   SwordFilterType,
   SwordFilterValueType,
 } from '../../type';
-import type { ManagerStatePref } from '../../renderer/moduleDownloader/moduleDownloader';
+import type { ManagerStatePref } from '../../renderer/moduleManager/moduleManager';
 
 const { libxulsword } = require('libxulsword');
 

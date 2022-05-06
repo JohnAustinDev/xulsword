@@ -1,0 +1,19 @@
+.modulemanager .language-pane .groupbox-body {
+  padding: 0;
+}
+
+.modulemanager .button-stack > * {
+  margin: 6px 0;
+  margin-inline-start: 10px;
+}
+
+.repository-table .bp4-table-cell-col-4,
+.module-table .bp4-table-cell-col-14,
+.module-table .bp4-table-cell-col-14 {
+  text-align: center;
+  font-size: 18px;
+}
+
+.repository-table .custom-repo {
+  border: 1px dotted rgb(0 132 255);
+}
