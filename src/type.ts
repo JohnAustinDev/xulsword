@@ -118,18 +118,6 @@ export interface XulswordStatePref {
   maximizeNoteBox: boolean[];
 }
 
-export interface DownloaderStatePref {
-  language: string | null;
-  languageListOpen: boolean;
-  languageListPanelWidth: number;
-
-  repoColumnWidths: number[];
-  customRepos: Download[];
-  disabledRepos: string[];
-  repoListOpen: boolean;
-  repoListPanelHeight: number;
-}
-
 export type AtextPropsType = Pick<
   XulswordStatePref,
   'location' | 'selection' | 'scroll' | 'show' | 'place'
@@ -372,31 +360,31 @@ type SwordConfLocalized = {
 };
 
 export type SwordConfType = {
-  module: string;
   DataPath: string;
-  DistributionLicense: string;
-  MinimumVersion: string;
-  PreferredCSSXHTML: string;
-  KeySort: string;
-  Scope: string;
-  SourceType: string;
-  TextSource: string;
-  Version: string;
-  About: SwordConfLocalized;
-  Abbreviation: SwordConfLocalized;
-  Description: SwordConfLocalized;
-  Copyright: SwordConfLocalized;
-  CopyrightHolder: SwordConfLocalized;
-  CopyrightDate: SwordConfLocalized;
-  CopyrightNotes: SwordConfLocalized;
-  CopyrightContactName: SwordConfLocalized;
-  CopyrightContactNotes: SwordConfLocalized;
-  CopyrightContactAddress: SwordConfLocalized;
-  CopyrightContactEmail: SwordConfLocalized;
-  ShortPromo: SwordConfLocalized;
-  ShortCopyright: SwordConfLocalized;
-  DistributionNotes: SwordConfLocalized;
-  UnlockInfo: SwordConfLocalized;
+  DistributionLicense?: string;
+  Lang?: string;
+  MinimumVersion?: string;
+  PreferredCSSXHTML?: string;
+  KeySort?: string;
+  Scope?: string;
+  SourceType?: string;
+  TextSource?: string;
+  Version?: string;
+  About?: SwordConfLocalized;
+  Abbreviation?: SwordConfLocalized;
+  Description?: SwordConfLocalized;
+  Copyright?: SwordConfLocalized;
+  CopyrightHolder?: SwordConfLocalized;
+  CopyrightDate?: SwordConfLocalized;
+  CopyrightNotes?: SwordConfLocalized;
+  CopyrightContactName?: SwordConfLocalized;
+  CopyrightContactNotes?: SwordConfLocalized;
+  CopyrightContactAddress?: SwordConfLocalized;
+  CopyrightContactEmail?: SwordConfLocalized;
+  ShortPromo?: SwordConfLocalized;
+  ShortCopyright?: SwordConfLocalized;
+  DistributionNotes?: SwordConfLocalized;
+  UnlockInfo?: SwordConfLocalized;
   ModDrv:
     | 'RawText'
     | 'RawText4'
@@ -412,16 +400,21 @@ export type SwordConfType = {
     | 'RawLD4'
     | 'zLD'
     | 'RawGenBook';
-  DisplayLevel: number;
-  InstallSize: number;
-  Versification: V11nType;
-  Obsoletes: string[];
-  Feature: string[];
-  GlobalOptionFilter: string[];
-  History: [string, SwordConfLocalized][];
+  DisplayLevel?: number;
+  InstallSize?: number;
+  Versification?: V11nType;
+  Obsoletes?: string[];
+  Feature?: string[];
+  GlobalOptionFilter?: string[];
+  History?: [string, SwordConfLocalized][];
+
+  module: string;
   errors: string[];
-  sourceRepository: string;
+  sourceRepository: Download;
   moduleType: ModTypes;
+  custom: boolean | null;
+  installed: boolean;
+  shared: boolean;
 };
 
 export type TabTypes = 'Texts' | 'Comms' | 'Dicts' | 'Genbks';
@@ -475,12 +468,19 @@ export type DirsDirectories = {
   xsModsCommon: string;
 };
 
+export type Repository = Download & {
+  disabled?: boolean;
+  custom?: boolean;
+  builtin?: boolean;
+};
+
+export type RepositoryListing = SwordConfType[] | string | null;
+
 export type Download = {
   domain: string;
   path: string;
   file: string;
   name?: string;
-  disabled?: boolean;
 };
 
 export type ZipEntryType = {
@@ -751,17 +751,38 @@ export const GPublic = {
   Downloader: {
     crossWireMasterRepoList: func as unknown as () => Promise<Download[]>,
     repositoryListing: func as unknown as (
-      repos: Download[]
-    ) => Promise<(SwordConfType[] | string)[]>,
+      repos: (Repository | null)[]
+    ) => Promise<RepositoryListing[]>,
     ftp: func as unknown as (
       download: Download,
       tmpdir?: string | null, // returns a Buffer if tmpdir is null/undefined
-      progress?: (prog: number) => void // returns progress to calling window
-    ) => Promise<string | Buffer>,
+      progress?: ((prog: number) => void) | null, // returns progress to calling window
+      ftpConnection?: any
+    ) => Promise<string | Buffer>, // path or file Buffer
+    ftpDir: func as unknown as (
+      download: Download,
+      tmpdir?: string | null, // returns a Buffer if tmpdir is null/undefined
+      progress?: ((prog: number) => void) | null, // returns progress to calling window
+      ftpConnection?: any
+    ) => Promise<string | Buffer>, // path or zip buffer
     ftpCancel: func as unknown as () => void,
     untargz: func as unknown as (
       pathOrBuffer: string | Buffer
     ) => Promise<{ header: any; content: Buffer }[]>,
+  },
+  Module: {
+    download: func as unknown as (
+      module: string,
+      repository: Repository
+    ) => Promise<boolean>,
+    clearDownload: func as unknown as (module?: string) => boolean,
+    saveDownload: func as unknown as (path: string, module?: string) => boolean,
+    remove: func as unknown as (module: string, repoPath: string) => boolean,
+    move: func as unknown as (
+      module: string,
+      fromRepo: string,
+      toRepo: string
+    ) => boolean,
   },
   Window: {
     open: func as unknown as (arg: WindowDescriptorType) => number,

@@ -1,16 +1,21 @@
+/* eslint-disable prefer-rest-params */
 /* eslint-disable no-continue */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { BrowserWindow } from 'electron';
 import log from 'electron-log';
-import { getBrowserWindows } from './window';
+import { downloadKey, parseSwordConf } from '../common';
 import C from '../constant';
+import { getBrowserWindows } from './window';
 import LocalFile from './components/localFile';
 import Dirs from './components/dirs';
 import LibSword from './components/libsword';
+import Downloader from './components/downloader';
 
 import type {
+  GType,
   ModTypes,
   NewModulesType,
+  Repository,
   SwordConfType,
   ZipEntryType,
 } from '../type';
@@ -20,103 +25,7 @@ import type {
 // TODO! CrossWire wiki mentions LangSortOrder! Report change to KeySort
 // TODO! UnlockInfo: Display instructions for obtaining an unlock key
 
-const AdmZip = require('adm-zip');
-
-export function parseSwordConf(config: string | LocalFile): SwordConfType {
-  const conf = typeof config === 'string' ? config : config.readFile();
-  const errors = [];
-  const lines = conf.split(/[\n\r]+/);
-  const r = {} as SwordConfType;
-  C.SwordConf.repeatable.forEach((en) => {
-    r[en] = [];
-  });
-  const nameRE = /^\[([A-Za-z0-9_]+)\]\s*$/;
-  const commentRE = /^(#.*|\s*)$/;
-  for (let x = 0; x < lines.length; x += 1) {
-    const l = lines[x];
-    let m;
-    if (commentRE.test(l)) {
-      // ignore comments
-    } else if (nameRE.test(l)) {
-      // name might not be at the top of the file
-      m = l.match(nameRE);
-      if (m) [, r.module] = m;
-    } else {
-      m = l.match(/^([A-Za-z0-9_.]+)\s*=\s*(.*?)\s*$/);
-      if (m) {
-        const entry = m[1] as any;
-        let value = m[2] as string;
-        const entryBase = entry.substring(0, entry.indexOf('_')) || entry;
-        // Handle line continuation.
-        if (
-          C.SwordConf.continuation.includes(entryBase) &&
-          value.endsWith('\\')
-        ) {
-          const contRE = /[\s*]\\$/;
-          let nval = value.replace(contRE, '');
-          for (;;) {
-            x += 1;
-            nval += lines[x];
-            if (!nval.endsWith('\\')) break;
-            nval = nval.replace(contRE, '');
-          }
-          value = nval;
-        }
-        // Check for HTML where it shouldn't be.
-        const htmlTags = value.match(/<\w+[^>]*>/g);
-        if (htmlTags) {
-          if (!C.SwordConf.htmllink.includes(entryBase)) {
-            errors.push(`Config entry '${entry}' should not contain HTML.`);
-          }
-          if (htmlTags.find((t) => !t.match(/<a\s+href="[^"]*"\s*>/))) {
-            errors.push(
-              `HTML in entry '${entry}' can only be anchor tags with an href attribute.`
-            );
-          }
-        }
-        // Check for RTF where it shouldn't be.
-        const rtfControlWords = value.match(/\\\w[\w\d]*/);
-        if (rtfControlWords) {
-          if (!C.SwordConf.rtf.includes(entryBase)) {
-            errors.push(
-              `Warning: Config entry '${entry}' should not contain RTF.`
-            );
-          }
-        }
-        // Save the value according to value type.
-        if (entryBase === 'History') {
-          const [, version, locale] = entry.split('_');
-          if (version) {
-            if (!r.History) r.History = [];
-            r.History.push([version, { [locale || 'en']: value }]);
-          }
-        } else if (C.SwordConf.repeatable.includes(entry)) {
-          const ent = entry as typeof C.SwordConf.repeatable[number];
-          r[ent].push(value);
-        } else if (C.SwordConf.integer.includes(entry)) {
-          const ent = entry as typeof C.SwordConf.integer[number];
-          r[ent] = Number(value);
-        } else if (C.SwordConf.string.includes(entry)) {
-          const ent = entry as typeof C.SwordConf.string[number];
-          r[ent] = value as SwordConfType['ModDrv'];
-        } else if (C.SwordConf.localization.includes(entryBase)) {
-          const ent = entryBase as typeof C.SwordConf.localization[number];
-          const loc = entry.substring(entryBase.length + 1) || 'en';
-          if (!r[ent]) r[ent] = {};
-          r[ent][loc] = value;
-        }
-      }
-    }
-  }
-  r.moduleType = 'Generic Books';
-  if (r.DataPath.includes('/texts/')) r.moduleType = 'Biblical Texts';
-  else if (r.DataPath.includes('/comments/')) r.moduleType = 'Commentaries';
-  else if (r.DataPath.includes('/lexdict/'))
-    r.moduleType = 'Lexicons / Dictionaries';
-  r.errors = errors.map((er) => `${r.module}: ${er}`);
-  log.silly(`${r.module} conf: `, r);
-  return r;
-}
+const ZIP = require('adm-zip');
 
 function versionCompare(v1: string | number, v2: string | number) {
   const p1 = String(v1).split('.');
@@ -195,17 +104,19 @@ export function confModulePath(aDataPath: string): string | null {
 }
 
 // Remove one or more modules from either the user module directory or the shared one.
-// Returns the number of modules succesfully removed.
+// Returns the number of modules succesfully removed. If moveTo is an existing path,
+// the removed modules will be copied there first.
 export function removeModule(
   modules: string | string[],
-  sharedModuleDir = false
+  repositoryPath: string,
+  moveTo?: string
 ): number {
+  let move = (moveTo && new LocalFile(moveTo)) || null;
+  if (move && (!move.exists() || !move.isDirectory())) move = null;
   let num = 0;
   const ma = Array.isArray(modules) ? modules : [modules];
   ma.forEach((m) => {
-    const moddir = new LocalFile(
-      sharedModuleDir ? Dirs.path.xsModsCommon : Dirs.path.xsModsUser
-    );
+    const moddir = new LocalFile(repositoryPath);
     moddir.append('mods.d');
     const subs = moddir.directoryEntries;
     if (subs) {
@@ -215,11 +126,28 @@ export function removeModule(
         if (!f.isDirectory() && f.path.endsWith('.conf')) {
           const c = parseSwordConf(f);
           if (c.module === m) {
+            if (move) {
+              const tomodsd = move.clone().append('mods.d');
+              tomodsd.create(LocalFile.DIRECTORY_TYPE);
+              f.copyTo(tomodsd);
+            }
             f.remove();
             const modulePath = confModulePath(c.DataPath);
             if (modulePath) {
               const md = moddir.clone();
               md.append(modulePath);
+              if (move) {
+                const to = move.clone();
+                const dirs = modulePath.split('/').filter(Boolean);
+                dirs.pop();
+                dirs.forEach((sub) => {
+                  to.append(sub);
+                  if (!to.exists()) {
+                    to.create(LocalFile.DIRECTORY_TYPE);
+                  }
+                });
+                md.copyTo(to, null, true);
+              }
               if (md.exists()) md.remove(true);
               num += 1;
             }
@@ -235,7 +163,7 @@ export function removeModule(
 // or the shared SWORD module directory. Errors will be reported (not thrown) if a file
 // does not exist or there is a problem during installation. If progressWin is prov-
 // ided, then progress will be reported to that window.
-export default async function installList(
+export async function installList(
   paths: string[],
   toSharedDir = false,
   progressWin?: BrowserWindow
@@ -248,6 +176,9 @@ export default async function installList(
       audio: [],
       errors: [],
     };
+    const repoPath = toSharedDir
+      ? Dirs.path.xsModsCommon
+      : Dirs.path.xsModsUser;
     if (paths.length) {
       // First get a listing of the contents of all zip files (to init the progress bar)
       const xswin = getBrowserWindows({ type: 'xulsword' })[0];
@@ -255,7 +186,7 @@ export default async function installList(
       paths.forEach((f) => {
         const zipfile = new LocalFile(f);
         if (zipfile.exists()) {
-          zipEntries.push(...new AdmZip(f).getEntries());
+          zipEntries.push(...new ZIP(f).getEntries());
         } else {
           newmods.errors.push(`File does not exist: '${f}'`);
         }
@@ -321,7 +252,10 @@ export default async function installList(
                   }
                   moddest.append(entry.name);
                   // Remove any existing module having this name.
-                  if (moddest.exists() && !removeModule([conf.module])) {
+                  if (
+                    moddest.exists() &&
+                    !removeModule([conf.module], repoPath)
+                  ) {
                     newmods.errors.push(
                       `${conf.module}: Could not remove existing module.`
                     );
@@ -331,7 +265,10 @@ export default async function installList(
                       const obsoletes = conf.Obsoletes.filter((m) => {
                         return installed.includes(m);
                       });
-                      if (obsoletes.length && !removeModule(obsoletes)) {
+                      if (
+                        obsoletes.length &&
+                        !removeModule(obsoletes, repoPath)
+                      ) {
                         newmods.errors.push(
                           `${conf.module}: Could not remove obsoleted module(s).`
                         );
@@ -455,3 +392,60 @@ export default async function installList(
     resolve(newmods);
   });
 }
+
+let Downloads: { [module: string]: Buffer } = {};
+
+const Module: GType['Module'] = {
+  async download(module: string, repository: Repository): Promise<boolean> {
+    const callingWin = arguments[2] || null;
+    const progress = (prog: number) => {
+      callingWin?.webContents.send(
+        'progress',
+        prog,
+        [downloadKey(repository), module].join('.')
+      );
+    };
+    return Downloader.ftpDir(repository, null, progress).then((buf) => {
+      if (typeof buf !== 'string') Downloads[module] = buf;
+      return true;
+    });
+  },
+
+  clearDownload(module?: string): boolean {
+    if (!module) {
+      Downloads = {};
+      return true;
+    }
+    if (module in Downloads) {
+      delete Downloads[module];
+      return true;
+    }
+    return false;
+  },
+
+  saveDownload(path: string, module?: string): boolean {
+    const modules = module ? [module] : [];
+    if (!module) {
+      modules.concat(Object.keys(Downloads));
+    }
+    const outdir = new LocalFile(path);
+    if (outdir.exists() && outdir.isDirectory()) {
+      modules.forEach((mod) => {
+        const zip = new ZIP(Downloads[mod]);
+        zip.extractAllTo(outdir.path, true);
+      });
+      return true;
+    }
+    return false;
+  },
+
+  remove(module: string, repoPath: string): boolean {
+    return !!removeModule([module], repoPath);
+  },
+
+  move(module: string, fromRepo: string, toRepo: string): boolean {
+    return !!removeModule([module], fromRepo, toRepo);
+  },
+};
+
+export default Module;

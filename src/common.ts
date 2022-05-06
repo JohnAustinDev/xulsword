@@ -7,8 +7,15 @@ import C from './constant';
 import Cache from './cache';
 
 import type { Region } from '@blueprintjs/table';
-import type { Download, PrefObject, PrefValue, TabType } from './type';
-import type { RepoDataType } from './renderer/moduleDownloader/repositoryTable';
+import type {
+  Download,
+  PrefObject,
+  PrefValue,
+  Repository,
+  SwordConfType,
+  TabType,
+} from './type';
+import type LocalFile from './main/components/localFile';
 
 export function escapeRE(text: string) {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -428,7 +435,103 @@ export function tabSort(a: TabType, b: TabType) {
   return mto[a.tabType] > mto[b.tabType] ? 1 : -1;
 }
 
-export function isRepoLocal(repo: Download | RepoDataType): boolean {
+export function parseSwordConf(config: string | LocalFile): SwordConfType {
+  const conf = typeof config === 'string' ? config : config.readFile();
+  const errors = [];
+  const lines = conf.split(/[\n\r]+/);
+  const r = {} as SwordConfType;
+  C.SwordConf.repeatable.forEach((en) => {
+    r[en] = [];
+  });
+  const nameRE = /^\[([A-Za-z0-9_]+)\]\s*$/;
+  const commentRE = /^(#.*|\s*)$/;
+  for (let x = 0; x < lines.length; x += 1) {
+    const l = lines[x];
+    let m;
+    if (commentRE.test(l)) {
+      // ignore comments
+    } else if (nameRE.test(l)) {
+      // name might not be at the top of the file
+      m = l.match(nameRE);
+      if (m) [, r.module] = m;
+    } else {
+      m = l.match(/^([A-Za-z0-9_.]+)\s*=\s*(.*?)\s*$/);
+      if (m) {
+        const entry = m[1] as any;
+        let value = m[2] as string;
+        const entryBase = entry.substring(0, entry.indexOf('_')) || entry;
+        // Handle line continuation.
+        if (
+          C.SwordConf.continuation.includes(entryBase) &&
+          value.endsWith('\\')
+        ) {
+          const contRE = /[\s*]\\$/;
+          let nval = value.replace(contRE, '');
+          for (;;) {
+            x += 1;
+            nval += lines[x];
+            if (!nval.endsWith('\\')) break;
+            nval = nval.replace(contRE, '');
+          }
+          value = nval;
+        }
+        // Check for HTML where it shouldn't be.
+        const htmlTags = value.match(/<\w+[^>]*>/g);
+        if (htmlTags) {
+          if (!C.SwordConf.htmllink.includes(entryBase)) {
+            errors.push(`Config entry '${entry}' should not contain HTML.`);
+          }
+          if (htmlTags.find((t) => !t.match(/<a\s+href="[^"]*"\s*>/))) {
+            errors.push(
+              `HTML in entry '${entry}' can only be anchor tags with an href attribute.`
+            );
+          }
+        }
+        // Check for RTF where it shouldn't be.
+        const rtfControlWords = value.match(/\\\w[\w\d]*/);
+        if (rtfControlWords) {
+          if (!C.SwordConf.rtf.includes(entryBase)) {
+            errors.push(
+              `Warning: Config entry '${entry}' should not contain RTF.`
+            );
+          }
+        }
+        // Save the value according to value type.
+        if (entryBase === 'History') {
+          const [, version, locale] = entry.split('_');
+          if (version) {
+            if (!r.History) r.History = [];
+            r.History.push([version, { [locale || 'en']: value }]);
+          }
+        } else if (C.SwordConf.repeatable.includes(entry)) {
+          const ent = entry as typeof C.SwordConf.repeatable[number];
+          r[ent]?.push(value);
+        } else if (C.SwordConf.integer.includes(entry)) {
+          const ent = entry as typeof C.SwordConf.integer[number];
+          r[ent] = Number(value);
+        } else if (C.SwordConf.string.includes(entry)) {
+          const ent = entry as typeof C.SwordConf.string[number];
+          r[ent] = value as SwordConfType['ModDrv'];
+        } else if (C.SwordConf.localization.includes(entryBase)) {
+          const ent = entryBase as typeof C.SwordConf.localization[number];
+          const loc = entry.substring(entryBase.length + 1) || 'en';
+          const obj = r[ent] || {};
+          obj[loc] = value;
+          r[ent] = obj;
+        }
+      }
+    }
+  }
+  r.moduleType = 'Generic Books';
+  if (r.DataPath.includes('/texts/')) r.moduleType = 'Biblical Texts';
+  else if (r.DataPath.includes('/comments/')) r.moduleType = 'Commentaries';
+  else if (r.DataPath.includes('/lexdict/'))
+    r.moduleType = 'Lexicons / Dictionaries';
+  r.errors = errors.map((er) => `${r.module}: ${er}`);
+  return r;
+}
+
+export function isRepoLocal(repo: Download | Repository): boolean {
   if (Array.isArray(repo)) return repo[1] === C.Downloader.localfile;
   return repo.domain === C.Downloader.localfile;
 }
@@ -447,14 +550,4 @@ export function regionsToRows(regions: Region[]): number[] {
     }
   });
   return Array.from(sels).sort((a, b) => (a < b ? 1 : a > b ? -1 : 0));
-}
-
-export function rowToDownload(row: RepoDataType): Download {
-  return {
-    name: row[0],
-    domain: row[1],
-    path: row[2],
-    file: 'mods.d.tar.gz',
-    disabled: row[4].off,
-  };
 }

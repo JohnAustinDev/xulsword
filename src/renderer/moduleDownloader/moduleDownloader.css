@@ -7,24 +7,13 @@
   margin-inline-start: 10px;
 }
 
-.repo-groupbox {
-  overflow: visible;
-}
-.repo-groupbox > div,
-.repo-groupbox > div > div {
-  overflow-x: visible;
-  overflow-y: hidden;
-}
-
-.repositorytable .bp4-table-quadrant-scroll-container {
-  overflow-x: hidden;
-}
-
-.repositorytable .bp4-table-cell-col-3 {
+.repositorytable .bp4-table-cell-col-4,
+.moduletable .bp4-table-cell-col-14,
+.moduletable .bp4-table-cell-col-14 {
   text-align: center;
   font-size: 18px;
 }
 
-.repositorytable .repo-custom {
+.repository-table .custom-repo {
   border: 1px dotted rgb(0 132 255);
 }

@@ -12,11 +12,11 @@ import Prefs from './prefs';
 
 import type {
   Download,
-  DownloaderStatePref,
   GType,
   SwordFilterType,
   SwordFilterValueType,
 } from '../../type';
+import type { ManagerStatePref } from '../../renderer/moduleDownloader/moduleDownloader';
 
 const { libxulsword } = require('libxulsword');
 
@@ -77,10 +77,10 @@ const LibSword: GType['LibSword'] & LibSwordPrivate = {
     this.moduleDirectories = [Dirs.path.xsModsUser];
     const customRepos = Prefs.getComplexValue(
       'downloader.customRepos'
-    ) as DownloaderStatePref['customRepos'];
+    ) as ManagerStatePref['customRepos'];
     const disabledRepos = Prefs.getComplexValue(
       'downloader.disabledRepos'
-    ) as DownloaderStatePref['disabledRepos'];
+    ) as ManagerStatePref['disabledRepos'];
     customRepos.forEach((repo: Download) => {
       if (
         !disabledRepos.includes(downloadKey(repo)) &&

@@ -58,9 +58,11 @@
   },
 
   "downloader": {
-    "language": "",
-    "languageListOpen": true,
-    "languageListPanelWidth": 180,
+    "languageTableOpen": true,
+    "languageTableWidth": 180,
+    "repoTableOpen": true,
+    "repoTableHeight": 350,
+    "modColumnWidths": [300, 300, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 300, 300],
     "repoColumnWidths": [
       124,
       145,
@@ -68,8 +70,6 @@
       67
     ],
     "customRepos": [],
-    "disabledRepos": [],
-    "repoListOpen": true,
-    "repoListPanelHeight": 350
+    "disabledRepos": []
   }
 }

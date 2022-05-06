@@ -1,0 +1,18 @@
+/*
+.width-resizable,
+.width-resizable > div {
+  overflow-x: visible;
+  overflow-y: hidden;
+}
+.width-resizable .bp4-table-quadrant-scroll-container  {
+  overflow-x: hidden;
+}
+*/
+
+.table.width-resizable {
+  overflow: hidden;
+}
+
+.table.width-resizable > div {
+  width: max-content;
+}

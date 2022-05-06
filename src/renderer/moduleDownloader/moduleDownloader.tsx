@@ -1,38 +1,144 @@
+/* eslint-disable no-nested-ternary */
 /* eslint-disable class-methods-use-this */
 /* eslint-disable react/sort-comp */
 /* eslint-disable import/order */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react/static-property-placement */
 /* eslint-disable jsx-a11y/control-has-associated-label */
-import React from 'react';
+import React, { SyntheticEvent } from 'react';
 import i18n from 'i18next';
-import { Button, IToastProps, Position, Toaster } from '@blueprintjs/core';
+import {
+  Button,
+  Intent,
+  IToastProps,
+  Position,
+  Toaster,
+} from '@blueprintjs/core';
 import {
   clone,
   diff,
   downloadKey,
   drop,
   isRepoLocal,
+  ofClass,
   regionsToRows,
-  rowToDownload,
 } from '../../common';
-import log from '../log';
+import C from '../../constant';
 import G from '../rg';
+import log from '../log';
 import renderToRoot from '../rinit';
 import { getStatePref, onSetWindowState } from '../rutil';
 import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
 import { Hbox, Vbox, Box } from '../libxul/boxes';
 import Groupbox from '../libxul/groupbox';
+import Table from '../libxul/table';
 import Spacer from '../libxul/spacer';
 import DragSizer, { DragSizerVal } from '../libxul/dragsizer';
-import RepositoryTable from './repositoryTable';
-import handlerH, { switchRepo as switchRepoH } from './moduleDownloaderH';
 import './moduleDownloader.css';
 
-import type { Download, DownloaderStatePref, SwordConfType } from '../../type';
-import type { RepoDataType } from './repositoryTable';
+// TODO!: showModuleInfo
 
-export type ModuleRawDataType = (string | SwordConfType[])[];
+import type {
+  ModTypes,
+  PrefObject,
+  Repository,
+  RepositoryListing,
+  SwordConfType,
+} from '../../type';
+import type { TCellInfo } from '../libxul/table';
+
+const Tables = {
+  repository: ['renderRepoTable', 'repoTableData', 'repoColumnWidths'],
+  language: ['renderLangTable', 'langTableData'],
+  module: ['renderModTable', 'modTableData', 'modColumnWidths'],
+} as const;
+
+type TModuleTableRow = [
+  TModCellInfo,
+  ModTypes | 'XSM' | 'audio',
+  string,
+  string,
+  string,
+  string,
+  string,
+  string,
+  string,
+  string,
+  string,
+  string,
+  string,
+  typeof ON | typeof OFF,
+  typeof ON | typeof OFF
+];
+
+type TRepositoryTableRow = [
+  TRepCellInfo,
+  string,
+  string,
+  string,
+  typeof ON | typeof OFF
+];
+
+type TRepCellInfo = TCellInfo & {
+  repo: Repository;
+};
+
+type TModCellInfo = TCellInfo & {
+  repo: Repository;
+};
+
+const ON = '☑';
+const OFF = '☐';
+const ModCol = {
+  iType: 1,
+  iName: 3,
+  iShared: 13,
+  iInstalled: 14,
+  iAlwaysVisible: [1, 2, 13, 14] as number[],
+} as const;
+const RepCol = {
+  iName: 1,
+  iDomain: 2,
+  iPath: 3,
+  iState: 4,
+} as const;
+
+function repositoryToRow(repo: Repository): TRepositoryTableRow {
+  return [
+    { repo },
+    repo.name || '?',
+    repo.domain,
+    repo.path,
+    repo.disabled ? ON : OFF,
+  ];
+}
+
+function loading(columnIndex: number) {
+  return (_ri: number, ci: number) => {
+    return ci === columnIndex;
+  };
+}
+
+function editable() {
+  return (_ri: number, ci: number) => {
+    return ci < 3;
+  };
+}
+
+function intent(columnIndex: number, theIntent: Intent) {
+  return (_ri: number, ci: number) => {
+    return ci === columnIndex ? theIntent : 'none';
+  };
+}
+
+G.Module.clearDownload();
+const Action = {
+  download: {} as { [module: string]: Promise<boolean> },
+  remove: new Set() as Set<string>,
+  share: {} as { [module: string]: boolean },
+};
+
+export type RowSelection = { rows: [number, number] }[] | undefined;
 
 const defaultProps = {
   ...xulDefaultProps,
@@ -42,113 +148,168 @@ const propTypes = {
   ...xulPropTypes,
 };
 
-export type DownloaderProps = XulProps;
+export type ManagerProps = XulProps;
 
 // The following initial state values do not come from Prefs. Neither are
 // these state keys written to Prefs.
 const notStatePref = {
-  module: null as string[] | null,
-  showModuleInfo: false,
-  downloading: false,
+  language: undefined as RowSelection,
+  langTableData: [] as string[][],
+  renderLangTable: 0,
 
-  repoTableData: [] as RepoDataType[],
-  selectedRepos: undefined as { rows: [number, number] }[] | undefined,
+  module: undefined as RowSelection,
+  modTableData: [] as TModuleTableRow[],
+  renderModTable: 0,
+  showModuleInfo: false,
+
+  repository: undefined as RowSelection,
+  repoTableData: [] as TRepositoryTableRow[],
   renderRepoTable: 0,
 };
 
-// Save table data between resets, but don't save it to prefs.
-let RepoTableData: RepoDataType[] = [];
-let RawModuleData: ModuleRawDataType | null = null;
+export interface ManagerStatePref {
+  languageTableOpen: boolean;
+  languageTableWidth: number;
 
-export type DownloaderState = DownloaderStatePref & typeof notStatePref;
+  modColumnWidths: number[];
+
+  repoColumnWidths: number[];
+  customRepos: Repository[];
+  disabledRepos: string[];
+  repoTableOpen: boolean;
+  repoTableHeight: number;
+}
+
+export type ManagerState = ManagerStatePref & typeof notStatePref;
 
 export default class ModuleDownloader extends React.Component {
   static defaultProps: typeof defaultProps;
 
   static propTypes: typeof propTypes;
 
+  // Save table data between resets, but don't save it to prefs.
+  static saved: {
+    repoTableData: TRepositoryTableRow[];
+    rawModuleData: RepositoryListing[];
+    modTableData: TModuleTableRow[];
+    langTableData: string[][];
+  };
+
   destroy: (() => void)[];
-
-  switchRepo;
-
-  handler: (e: React.SyntheticEvent) => void;
 
   toaster: Toaster | undefined;
 
-  repositoryTableContainerRef: React.RefObject<HTMLDivElement>;
+  tableRef: {
+    repository: React.RefObject<HTMLDivElement>;
+    module: React.RefObject<HTMLDivElement>;
+  };
 
-  constructor(props: DownloaderProps) {
+  onRepoColumnWidthChanged;
+
+  onModColumnWidthChanged;
+
+  constructor(props: ManagerProps) {
     super(props);
 
     if (props.id !== 'downloader') throw Error(`ID must be 'downloader'`);
-    const s: DownloaderState = {
+    const s: ManagerState = {
       ...notStatePref,
-      ...(getStatePref(props.id) as DownloaderStatePref),
-      repoTableData: RepoTableData,
+      ...(getStatePref(props.id) as ManagerStatePref),
+      ...ModuleDownloader.saved,
     };
     this.state = s;
 
-    this.repositoryTableContainerRef = React.createRef();
+    this.tableRef = {
+      repository: React.createRef(),
+      module: React.createRef(),
+    };
 
     this.destroy = [];
-    this.switchRepo = switchRepoH.bind(this);
-    this.handler = handlerH.bind(this);
+    this.switchRepo = this.switchRepo.bind(this);
+    this.eventHandler = this.eventHandler.bind(this);
     this.onCellEdited = this.onCellEdited.bind(this);
-    this.onColumnWidthChanged = this.onColumnWidthChanged.bind(this);
-    this.loadRepos = this.loadRepos.bind(this);
-    this.repoDataReady = this.repoDataReady.bind(this);
+    this.onRepoColumnWidthChanged = this.onColumnWidthChanged.bind(
+      this,
+      'repository'
+    );
+    this.onModColumnWidthChanged = this.onColumnWidthChanged.bind(
+      this,
+      'module'
+    );
+    this.loadRepositoryTable = this.loadRepositoryTable.bind(this);
+    this.updateRepositoryLists = this.updateRepositoryLists.bind(this);
     this.loadModuleTable = this.loadModuleTable.bind(this);
-    this.sizeRepoTableToWindow = this.sizeRepoTableToWindow.bind(this);
-    this.setRepoTableState = this.setRepoTableState.bind(this);
+    this.sizeTableToWindow = this.sizeTableToWindow.bind(this);
+    this.setTableState = this.setTableState.bind(this);
   }
 
   componentDidMount() {
     // Download data for the repository and module tables
-    if (!RepoTableData.length) {
-      RepoTableData = [];
-      RawModuleData = [];
+    if (!ModuleDownloader.saved.repoTableData.length) {
+      ModuleDownloader.saved.repoTableData = [];
+      ModuleDownloader.saved.rawModuleData = [];
       G.Downloader.crossWireMasterRepoList()
-        .then(this.loadRepos)
-        .then(this.repoDataReady)
-        .then(this.loadModuleTable)
+        .then((repos) => {
+          const allrepos = this.loadRepositoryTable(repos);
+          return G.Downloader.repositoryListing(allrepos);
+        })
+        .then((listing) => {
+          const data = this.updateRepositoryLists(listing);
+          const code = this.loadLanguageTable(data);
+          return this.loadModuleTable(code, data);
+        })
         .catch(() => {
           this.addToast({
             message: 'Unable to download Master Repository List.',
           });
           // Failed to load master list, so just load local repos.
-          RepoTableData = [];
-          RawModuleData = [];
+          ModuleDownloader.saved.repoTableData = [];
+          ModuleDownloader.saved.rawModuleData = [];
           // eslint-disable-next-line promise/no-nesting
-          this.loadRepos()
-            .then(this.repoDataReady)
-            .then(this.loadModuleTable)
+          G.Downloader.repositoryListing(this.loadRepositoryTable())
+            .then((listing) => {
+              const data = this.updateRepositoryLists(listing);
+              const code = this.loadLanguageTable(data);
+              return this.loadModuleTable(code, data);
+            })
             .catch((err) => log.warn(err));
         });
     }
-    this.sizeRepoTableToWindow();
+    this.sizeTableToWindow('repository');
+    this.sizeTableToWindow('module');
     this.destroy.push(onSetWindowState(this));
     // Setup progress handlers
     this.destroy.push(
       window.ipc.renderer.on('progress', (prog: number, id?: string) => {
-        const { repoTableData } = this.state as DownloaderState;
+        const state = this.state as ManagerState;
+        const { repoTableData, modTableData } = state;
         const repoIndex = repoTableData.findIndex(
-          (i) => downloadKey(rowToDownload(i)) === id
+          (r) => downloadKey(r[0].repo) === id
         );
         if (id && repoIndex !== -1 && prog === -1) {
-          repoTableData[repoIndex][4].off = false;
-          repoTableData[repoIndex][3] = RepositoryTable.on;
-          this.setRepoTableState({ repoTableData });
+          repoTableData[repoIndex][0].loading = false;
+          this.setTableState('repository');
+        }
+        const modIndex = modTableData.findIndex((r) => {
+          const { repo } = r[0];
+          const module = r[ModCol.iName];
+          return [downloadKey(repo), module].join('.') === id;
+        });
+        if (id && modIndex !== -1 && prog === -1) {
+          modTableData[modIndex][0].loading = false;
+          this.setTableState('module');
         }
       })
     );
   }
 
-  componentDidUpdate(_prevProps: any, prevState: DownloaderState) {
-    const state = this.state as DownloaderState;
-    const { id } = this.props as DownloaderProps;
+  componentDidUpdate(_prevProps: any, prevState: ManagerState) {
+    const state = this.state as ManagerState;
+    const { id } = this.props as ManagerProps;
     if (id) {
-      const newStatePref = drop(state, notStatePref);
-      const d = diff(drop(prevState, notStatePref), newStatePref);
+      const newStatePref = drop(state, notStatePref) as PrefObject;
+      const prvStatePref = drop(prevState, notStatePref) as PrefObject;
+      const d = diff(prvStatePref, newStatePref);
       if (d) {
         G.Prefs.mergeValue(id, d);
       }
@@ -160,122 +321,502 @@ export default class ModuleDownloader extends React.Component {
     this.destroy = [];
   }
 
-  sizeRepoTableToWindow() {
-    // Size tables to window
-    const state = this.state as DownloaderState;
-    const { repositoryTableContainerRef } = this;
-    if (repositoryTableContainerRef.current) {
-      const table =
-        repositoryTableContainerRef.current as HTMLDivElement | null;
-      if (table) {
-        const w = table.clientWidth;
-        const t = state.repoColumnWidths.reduce((p, c) => p + c, 0);
-        const repoColumnWidths = state.repoColumnWidths.map((cw) => {
+  sizeTableToWindow(table: keyof typeof Tables) {
+    const state = this.state as ManagerState;
+    if (table === 'language') return;
+    const prop = Tables[table][2];
+    const columnWidths = state[prop];
+    const { tableRef } = this;
+    if (tableRef[table].current) {
+      const atable = tableRef[table].current as HTMLDivElement | null;
+      if (atable) {
+        const w = atable.clientWidth;
+        const t = columnWidths.reduce((p, c) => (p + c === -1 ? 0 : c), 0);
+        const newColumnWidths = columnWidths.map((cw) => {
           return w * (cw / t);
         });
-        this.setRepoTableState({
-          repoColumnWidths,
+        this.setTableState(table, {
+          [prop]: newColumnWidths,
         });
       }
     }
   }
 
+  onColumnWidthChanged(
+    table: keyof typeof Tables,
+    index: number,
+    size: number
+  ): void {
+    const state = this.state as ManagerState;
+    if (table === 'language') return;
+    const prop = Tables[table][2];
+    const newColumnWidths = state[prop].slice();
+    newColumnWidths[index] = size;
+    this.setTableState(table, {
+      [prop]: newColumnWidths,
+    });
+    this.sizeTableToWindow(table);
+  }
+
   onCellEdited(row: number, col: number, value: string) {
-    const state = clone(this.state) as DownloaderState;
+    const state = clone(this.state) as ManagerState;
     const { repoTableData, customRepos } = state;
     const crindex = customRepos.findIndex(
-      (r) => downloadKey(r) === downloadKey(rowToDownload(repoTableData[row]))
+      (r) => downloadKey(r) === downloadKey(repoTableData[row][0].repo)
     );
     if (crindex !== -1) {
       customRepos.splice(crindex, 1);
     }
     repoTableData[row][col] = value;
-    customRepos.push(rowToDownload(repoTableData[row]));
+    customRepos.push(repoTableData[row][0].repo);
     this.setState({ repoTableData, customRepos });
-    if ((col === 1 || col === 2) && !repoTableData[row][4].off) {
+    if ((col === 1 || col === 2) && repoTableData[row][RepCol.iState] === OFF) {
       setTimeout(() => this.switchRepo([row], true), 100);
     }
   }
 
-  onColumnWidthChanged(index: number, size: number): void {
-    const state = this.state as DownloaderState;
-    const repoColumnWidths = state.repoColumnWidths.slice();
-    repoColumnWidths[index] = size;
-    this.setRepoTableState({
-      repoColumnWidths,
+  // Load the repository table with built-in repositories, then user-custom
+  // repositories, and then others passed in as repos[]. It returns the array
+  // of repositories used to create the table.
+  loadRepositoryTable(repos?: Repository[]): Repository[] {
+    const { customRepos, disabledRepos } = this.state as ManagerState;
+    const repoTableData: TRepositoryTableRow[] = [];
+    const builtinRepos: Repository[] = [
+      {
+        name: 'Shared',
+        domain: 'file://',
+        path: G.Dirs.path.xsModsCommon,
+        file: '',
+        builtin: true,
+        disabled: false,
+        custom: false,
+      },
+      {
+        name: 'Profile',
+        domain: 'file://',
+        path: G.Dirs.path.xsModsUser,
+        file: '',
+        builtin: true,
+        disabled: false,
+        custom: false,
+      },
+    ];
+    customRepos.forEach((cr) => {
+      cr.custom = true;
     });
-    this.sizeRepoTableToWindow();
-  }
-
-  async loadRepos(repos?: Download[]) {
-    const { customRepos, disabledRepos } = this.state as DownloaderState;
-    const repoTableData: RepoDataType[] = [];
-    const allrepos = customRepos.concat(repos || []);
-    allrepos.forEach((repo, i) => {
-      const disabled = disabledRepos.includes(downloadKey(repo));
+    const allrepos = builtinRepos.concat(customRepos, repos || []);
+    allrepos.forEach((repo) => {
+      let disabled = false;
+      if (!repo.builtin) {
+        disabled = disabledRepos.includes(downloadKey(repo));
+      }
       repo.disabled = disabled;
-      const loading = isRepoLocal(repo)
-        ? RepositoryTable.on
-        : RepositoryTable.loading;
+      const canedit = repo.custom ? editable() : false;
+      const isloading = repo.disabled ? false : loading(3);
       repoTableData.push([
+        { loading: isloading, editable: canedit, repo },
         repo.name || '',
         repo.domain,
         repo.path,
-        disabled ? RepositoryTable.off : loading,
-        { custom: i < customRepos.length, off: disabled, failed: false },
+        repo.disabled ? OFF : ON,
       ]);
     });
-    this.setRepoTableState({ repoTableData });
-    return G.Downloader.repositoryListing(allrepos);
+    this.setTableState('repository', { repoTableData });
+    return allrepos;
   }
 
-  // Apply new raw repository listing data to state. If rows is undefined, a
-  // complete listing including every row must be supplied, otherwise, the
-  // rawModuleData need only contain data for the given row(s).
-  repoDataReady(rawModuleData: (string | SwordConfType[])[], rows?: boolean[]) {
-    const { repoTableData } = this.state as DownloaderState;
-    if (!rows) RawModuleData = rawModuleData;
-    if (RawModuleData) {
-      RawModuleData.forEach((repoin, i) => {
-        if (rows && !rows[i]) return;
-        let repo = repoin;
-        if (rows) {
-          const rpo = rawModuleData.shift();
-          if (rpo) repo = rpo;
-        }
-        if (!repoTableData[i][4].off) {
-          repoTableData[i][4].failed = false;
-          if (typeof repo === 'string' && repo !== 'mods.d') {
-            repoTableData[i][4].failed = true;
-            if (repo) {
-              this.addToast({ message: repo });
+  // Update raw module data and the repository table after receiving repositoryListing.
+  // It returns updated rawModuleData.
+  updateRepositoryLists(rawModuleData: RepositoryListing[]) {
+    const { repoTableData } = this.state as ManagerState;
+    rawModuleData.forEach((listing, i) => {
+      if (listing !== null) {
+        ModuleDownloader.saved.rawModuleData[i] = listing;
+        if (repoTableData[i][RepCol.iState] === ON) {
+          repoTableData[i][0].intent = intent(3, 'primary');
+          if (typeof listing === 'string' && listing !== 'mods.d') {
+            repoTableData[i][0].intent = intent(3, 'danger');
+            if (listing) {
+              this.addToast({ message: listing });
             }
           }
-          repoTableData[i][4].off = false;
-          repoTableData[i][3] = RepositoryTable.on;
-        }
+        } else repoTableData[i][0].intent = intent(3, 'none');
+      }
+    });
+    this.setTableState('repository', { repoTableData });
+    return rawModuleData;
+  }
+
+  // Load language table with all languages found in the raw data, keeping
+  // the selected language the same or else selecting the first one. It
+  // returns the selected language code, or null if the table is empty.
+  loadLanguageTable(rawModuleData: RepositoryListing[]): string | null {
+    const { language, langTableData } = this.state as ManagerState;
+    const row = (language && regionsToRows(language)) || [];
+    const code = row.length && langTableData[row[0]][0];
+    const langs: Set<string> = new Set();
+    rawModuleData.forEach((reporow) => {
+      if (reporow && typeof reporow !== 'string') {
+        reporow.forEach((c) =>
+          langs.add((c.Lang && c.Lang.replace(/-.*$/, '')) || '?')
+        );
+      }
+    });
+    const newTableData = [Array.from(langs).sort()];
+    let sel = (code && newTableData.findIndex((r) => r[0] === code)) || 0;
+    if (sel === -1) sel = 0;
+    this.setTableState('language', {
+      langTableData: newTableData,
+      language: [{ rows: [sel, sel] }],
+    } as Partial<ManagerState>);
+    return code || null;
+  }
+
+  // Load the module table with modules sharing the language code,
+  // or else with all modules if the code is null or undefined.
+  loadModuleTable(fcode: string | null, rawModuleData: RepositoryListing[]) {
+    const data: TModuleTableRow[] = [];
+    const hostedRepoMods = rawModuleData
+      .map((rmd) => {
+        if (typeof rmd === 'string') return '';
+        return (rmd && rmd.map((c) => c.module)) || null;
+      })
+      .flat()
+      .filter(Boolean);
+    const uniqueElements = new Set(hostedRepoMods);
+    const multiples = hostedRepoMods.filter((item) => {
+      if (uniqueElements.has(item)) {
+        uniqueElements.delete(item);
+        return false;
+      }
+      return true;
+    });
+    multiples.forEach((m) => {
+      this.addToast({
+        message: `Found more than one ${m} module.`,
       });
-      this.setRepoTableState({ repoTableData });
+    });
+    const { repoTableData } = this.state as ManagerState;
+    rawModuleData.forEach((listing, i) => {
+      if (listing && typeof listing !== 'string') {
+        listing.forEach((c) => {
+          const code = (c.Lang && c.Lang.replace(/-.*$/, '')) || '?';
+          if (
+            (!fcode || fcode !== code) &&
+            (!isRepoLocal(c.sourceRepository) ||
+              !hostedRepoMods.includes(c.module))
+          ) {
+            data.push([
+              { repo: repoTableData[i][0].repo },
+              c.moduleType,
+              (c.Description &&
+                (c.Description[i18n.language] || c.Description.en)) ||
+                '?',
+              c.module,
+              c.sourceRepository.name ||
+                `${c.sourceRepository.domain}/${c.sourceRepository.path}`,
+              c.Version || '?',
+              (c.InstallSize && c.InstallSize.toString()) || '?',
+              (c.Feature && c.Feature.join(' ')) || '?',
+              c.Versification || 'KJV',
+              c.Scope || '?',
+              (c.Copyright && (c.Copyright[i18n.language] || c.Copyright.en)) ||
+                '?',
+              c.DistributionLicense || '?',
+              c.SourceType || '?',
+              c.shared ? ON : OFF,
+              c.installed ? ON : OFF,
+            ]);
+          }
+        });
+      }
+    });
+    const taborder = [C.BIBLE, C.COMMENTARY, C.GENBOOK, C.DICTIONARY];
+    const modTableData = data.sort((a, b) => {
+      const ta = taborder.indexOf(a[ModCol.iType] as ModTypes);
+      const tb = taborder.indexOf(b[ModCol.iType] as ModTypes);
+      if (ta > tb) return 1;
+      if (ta < tb) return -1;
+      return a[2].localeCompare(b[2]);
+    });
+    this.setTableState('module', { modTableData } as Partial<ManagerState>);
+    return true;
+  }
+
+  rowSelect(e: React.MouseEvent, table: keyof typeof Tables, row: number) {
+    const tableSel = table;
+    this.setState((prevState: ManagerState) => {
+      const selection = prevState[tableSel];
+      const isSelected = selection?.find((r) => r.rows[0] === row);
+      const selected =
+        e.ctrlKey && !isSelected && selection ? clone(selection) : [];
+      if (!isSelected) selected.push({ rows: [row, row] });
+      return { [tableSel]: selected };
+    });
+  }
+
+  // Enable or disable a repository. If onOrOff is undefined it will be toggled.
+  // If onOrOff is true it will be enabled, otherwise disabled.
+  switchRepo(rows: number[], onOrOff?: boolean) {
+    const { disabledRepos: dr, repoTableData: repoTableDataWas } = this
+      .state as ManagerState;
+    const repoTableData = clone(repoTableDataWas);
+    const disabledRepos = dr.slice();
+    const reload = repoTableData.map(() => false);
+    rows.forEach((r) => {
+      const unswitchable = repoTableDataWas[r][0].repo.builtin;
+      if (!unswitchable && repoTableDataWas[r][RepCol.iState] === ON) {
+        const rowkey = downloadKey(repoTableDataWas[r][0].repo);
+        const disabledIndex = disabledRepos.findIndex((drs) => {
+          return drs === rowkey;
+        });
+        if (onOrOff === true || repoTableDataWas[r][RepCol.iState] === OFF) {
+          repoTableData[r][RepCol.iState] = ON;
+          if (disabledIndex !== -1) disabledRepos.splice(disabledIndex, 1);
+          repoTableData[r][0].loading = true;
+          reload[r] = true;
+        } else {
+          if (repoTableData[r][0].loading) {
+            G.Downloader.ftpCancel();
+            repoTableData[r][0].loading = false;
+          }
+          if (disabledIndex === -1) disabledRepos.push(rowkey);
+          repoTableData[r][RepCol.iState] = OFF;
+        }
+      }
+    });
+    this.setTableState('repository', {
+      repoTableData,
+      disabledRepos,
+    });
+    if (reload.some((r) => r)) {
+      const repos = repoTableData.map((r, i) => (reload[i] ? r[0].repo : null));
+      G.Downloader.repositoryListing(repos)
+        .then((listing) => {
+          const data = this.updateRepositoryLists(listing);
+          const code = this.loadLanguageTable(data);
+          return this.loadModuleTable(code, data);
+        })
+        .catch((er) => log.warn(er));
+    }
+  }
+
+  eventHandler(this: ModuleDownloader, ev: SyntheticEvent) {
+    switch (ev.type) {
+      case 'click': {
+        const e = ev as React.MouseEvent;
+        switch (e.currentTarget.id) {
+          case 'cancel': {
+            G.Window.close();
+            break;
+          }
+          case 'ok': {
+            const { repoTableData } = this.state as ManagerState;
+            const sharedDir = G.Dirs.path.xsModsCommon;
+            const appmodDir = G.Dirs.path.xsModsUser;
+            // Get list of all modules found in local repositories.
+            const installed: SwordConfType[] = [];
+            repoTableData.forEach((rtd, i) => {
+              if (isRepoLocal(rtd[0].repo)) {
+                const data = ModuleDownloader.saved.rawModuleData[i];
+                if (Array.isArray(data)) data.forEach((c) => installed.push(c));
+              }
+            });
+            // Remove modules
+            Action.remove.forEach((module) => {
+              const conf = installed.find((c) => c.module === module);
+              if (conf) {
+                if (!G.Module.remove(module, conf.sourceRepository.path)) {
+                  log.warn(
+                    `Failed to remove ${module} from ${conf.sourceRepository.path}`
+                  );
+                }
+              }
+            });
+            // Move modules
+            Object.entries(Action.share).forEach((entry) => {
+              const [module, isShared] = entry;
+              const conf = installed.find((c) => c.module === module);
+              const dir = isShared ? sharedDir : appmodDir;
+              if (conf && conf.sourceRepository.path !== dir) {
+                if (!G.Module.move(module, conf.sourceRepository.path, dir)) {
+                  log.warn(
+                    `Failed to move ${module} from ${conf.sourceRepository.path} to ${dir}`
+                  );
+                }
+              }
+            });
+            // Install downloaded modules
+            return Promise.allSettled(Object.values(Action.download))
+              .then((results) => {
+                results.forEach((result) => {
+                  if (result.status !== 'fulfilled') log.warn(result.reason);
+                });
+                Object.keys(Action.download).forEach((module) => {
+                  const path = Action.share[module] ? sharedDir : appmodDir;
+                  G.Module.saveDownload(path, module);
+                });
+                return G.Window.close();
+              })
+              .catch((er) => log.warn(er));
+          }
+          case 'repoAdd': {
+            const state = this.state as ManagerState;
+            const { customRepos, repoTableData } = state as ManagerState;
+            const repo: Repository = {
+              name: '?',
+              domain: C.Downloader.localfile,
+              path: '?',
+              file: 'mods.d.tar.gz',
+              disabled: true,
+              custom: true,
+              builtin: false,
+            };
+            const row = repositoryToRow(repo);
+            row[0].classes = ['custom-repo'];
+            repoTableData.unshift(row);
+            customRepos.push(repo);
+            this.setTableState('repository', {
+              customRepos,
+              repoTableData,
+            });
+            break;
+          }
+          case 'repoDelete': {
+            const { customRepos, repoTableData, repository } = this
+              .state as ManagerState;
+            const newTableData = clone(repoTableData);
+            const newCustomRepos = clone(customRepos);
+            const rawdata = ModuleDownloader.saved.rawModuleData;
+            const rows = (repository && regionsToRows(repository)) || [];
+            rows.reverse().forEach((r) => {
+              if (repoTableData[r][0].repo.custom) {
+                newTableData.splice(r, 1);
+                rawdata.splice(r, 1);
+                const crIndex = customRepos.findIndex(
+                  (ro) =>
+                    downloadKey(ro) === downloadKey(repoTableData[r][0].repo)
+                );
+                if (crIndex !== -1) {
+                  newCustomRepos.splice(crIndex, 1);
+                }
+              }
+            });
+            this.setTableState('repository', {
+              customRepos: newCustomRepos,
+              repoTableData: newTableData,
+            });
+            const code = this.loadLanguageTable(rawdata);
+            this.loadModuleTable(code, rawdata);
+            break;
+          }
+          case 'repoCancel':
+          case 'moduleCancel': {
+            G.Downloader.ftpCancel();
+            break;
+          }
+          default:
+        }
+        // Handle table cell clicks
+        const cell = ofClass(['bp4-table-cell'], e.target);
+        if (cell) {
+          const rowm = cell.element.className.match(
+            /bp4-table-cell-row-(\d+)\b/
+          );
+          const row = rowm ? Number(rowm[1]) : -1;
+          const colm = cell.element.className.match(
+            /bp4-table-cell-col-(\d+)\b/
+          );
+          const col = colm ? Number(colm[1]) : -1;
+          if (row !== -1 && col !== -1) {
+            const table = ofClass(
+              ['languagetable', 'moduletable', 'repositorytable'],
+              cell.element
+            );
+            if (table && table.type === 'repositorytable') {
+              // RepositoryTable
+              if (row > -1 && col < 3) this.rowSelect(e, 'repository', row);
+              if (col === 3) this.switchRepo([row]);
+            } else if (table && table.type === 'languagetable') {
+              // LanguageTable
+              this.rowSelect(e, 'language', row);
+              const { langTableData } = this.state as ManagerState;
+              const data = ModuleDownloader.saved.rawModuleData;
+              const code = langTableData[row][0];
+              this.loadModuleTable(code, data);
+            } else if (table && table.type === 'moduletable') {
+              // ModuleTable
+              this.rowSelect(e, 'module', row);
+              const state = this.state as ManagerState;
+              const { modTableData } = state as ManagerState;
+              const module = modTableData[row][ModCol.iName] as string;
+              const was = modTableData[row][col];
+              const is = was === ON ? OFF : ON;
+              if (col === ModCol.iInstalled) {
+                // Column: installed
+                modTableData[row][col] = is;
+                const { repo } = modTableData[row][0];
+                if (is === OFF) {
+                  Action.remove.add(module);
+                  if (module in Action.download) {
+                    G.Module.clearDownload(module);
+                    delete Action.download[module];
+                    modTableData[row][0].loading = false;
+                    modTableData[row][0].intent = intent(13, 'none');
+                  }
+                } else {
+                  Action.share[module] =
+                    modTableData[row][ModCol.iShared] === ON;
+                  if (Action.remove.has(module)) Action.remove.delete(module);
+                  modTableData[row][0].loading = loading(13);
+                  Action.download[module] = G.Module.download(
+                    module,
+                    repo
+                  ).then((dl) => {
+                    modTableData[row][0].intent = intent(
+                      13,
+                      dl ? 'primary' : 'danger'
+                    );
+                    return dl;
+                  });
+                }
+                this.setTableState('module', {
+                  modTableData,
+                } as Partial<ManagerState>);
+              } else if (col === ModCol.iShared) {
+                // Column: shared
+                modTableData[row][col] = is;
+                Action.share[module] = is === ON;
+                this.setTableState('module', {
+                  modTableData,
+                } as Partial<ManagerState>);
+              }
+            }
+          }
+        }
+        break;
+      }
+      default:
+        throw Error(`Unhandled moddown event type ${ev.type}`);
     }
     return true;
   }
 
-  setRepoTableState(s: Partial<DownloaderState>) {
+  // Set table state, save the data for window re-renders, and re-render the table.
+  setTableState(table: keyof typeof Tables, s?: Partial<ManagerState>) {
     // Two steps must be used for statePrefs to be written to Prefs
     // before the reset will read them.
-    this.setState(s);
-    this.setState((prevState: DownloaderState) => {
-      let { renderRepoTable } = prevState;
-      RepoTableData = prevState.repoTableData;
-      renderRepoTable += 1;
+    if (s) this.setState(s);
+    this.setState((prevState: ManagerState) => {
+      const renderTable = Tables[table][0];
+      const tableData = Tables[table][1];
+      let render = prevState[renderTable];
+      ModuleDownloader.saved[tableData] = prevState[tableData] as any;
+      render += 1;
       return {
-        renderRepoTable,
-      } as DownloaderState;
+        [renderTable]: render,
+      };
     });
-  }
-
-  loadModuleTable() {
-    return true;
   }
 
   refHandlers = {
@@ -291,44 +832,46 @@ export default class ModuleDownloader extends React.Component {
   }
 
   render() {
-    const state = this.state as DownloaderState;
+    const state = this.state as ManagerState;
     const {
       language,
-      languageListOpen,
-      languageListPanelWidth,
+      langTableData,
+      languageTableOpen,
+      languageTableWidth,
+      renderLangTable,
 
       module,
-      downloading,
+      modTableData,
+      modColumnWidths,
       showModuleInfo,
+      renderModTable,
 
-      repoListOpen,
-      repoListPanelHeight,
+      repository,
+      repoTableOpen,
+      repoTableHeight,
       repoColumnWidths,
       repoTableData,
-      selectedRepos,
       renderRepoTable,
     } = state;
     const {
-      handler,
+      eventHandler,
       onCellEdited,
-      onColumnWidthChanged,
-      repositoryTableContainerRef,
+      onRepoColumnWidthChanged,
+      onModColumnWidthChanged,
+      tableRef,
     } = this;
 
-    const loading = repoTableData.map((r) => r[3] === RepositoryTable.loading);
-
     const disable = {
-      download: !module,
       moduleInfo: !module,
       moduleInfoBack: false,
-      moduleCancel: !downloading,
+      moduleCancel: !modTableData.find((r) => r[0].loading),
       repoAdd: false,
       repoDelete:
-        !selectedRepos ||
-        !regionsToRows(selectedRepos).every(
-          (r) => repoTableData[r] && repoTableData[r][4].custom
+        !repository ||
+        !regionsToRows(repository).every(
+          (r) => repoTableData[r] && repoTableData[r][0].repo.custom
         ),
-      repoCancel: !loading.find((l) => l),
+      repoCancel: !modTableData.find((r) => r[0].loading),
     };
 
     return (
@@ -340,14 +883,20 @@ export default class ModuleDownloader extends React.Component {
           ref={this.refHandlers.toaster}
         />
         <Hbox className="language-pane" flex="1">
-          {languageListOpen && (
+          {languageTableOpen && (
             <>
               <Groupbox
                 caption={i18n.t('menu.options.language')}
                 orient="vertical"
-                width={languageListPanelWidth}
+                width={languageTableWidth}
               >
-                <Box flex="1" />
+                <Box flex="1" onClick={eventHandler}>
+                  <Table
+                    key={renderLangTable}
+                    data={langTableData}
+                    selectedRegions={language}
+                  />
+                </Box>
                 <Button
                   id="languageListClose"
                   icon="chevron-left"
@@ -356,7 +905,7 @@ export default class ModuleDownloader extends React.Component {
                 />
               </Groupbox>
               <DragSizer
-                onDragStart={() => state.languageListPanelWidth}
+                onDragStart={() => state.languageTableWidth}
                 onDragging={(_e: React.MouseEvent, v: DragSizerVal) =>
                   this.setState({ languageListPanelWidth: v.sizerPos })
                 }
@@ -366,7 +915,7 @@ export default class ModuleDownloader extends React.Component {
               />
             </>
           )}
-          {!languageListOpen && (
+          {!languageTableOpen && (
             <Groupbox orient="vertical">
               <Vbox flex="1">
                 <Button
@@ -386,23 +935,29 @@ export default class ModuleDownloader extends React.Component {
           >
             <Hbox flex="1">
               {showModuleInfo && <div id="moduleInfo">Module Information</div>}
-              {!showModuleInfo && <Box>Module Table</Box>}
+              {!showModuleInfo && (
+                <Box flex="1">
+                  <Table
+                    className="module-table"
+                    key={renderModTable}
+                    data={modTableData}
+                    selectedRegions={module}
+                    columnWidths={modColumnWidths}
+                    domref={tableRef.module}
+                    onColumnWidthChanged={onModColumnWidthChanged}
+                    onClick={eventHandler}
+                  />
+                </Box>
+              )}
             </Hbox>
             <Vbox className="button-stack" pack="center">
-              <Button
-                id="download"
-                icon="download"
-                intent="primary"
-                disabled={disable.download}
-                onClick={handler}
-              />
               {!showModuleInfo && (
                 <Button
                   id="moduleInfo"
                   icon="info-sign"
                   intent="primary"
                   disabled={disable.moduleInfo}
-                  onClick={handler}
+                  onClick={eventHandler}
                 />
               )}
               {showModuleInfo && (
@@ -410,7 +965,7 @@ export default class ModuleDownloader extends React.Component {
                   id="moduleInfoBack"
                   intent="primary"
                   disabled={disable.moduleInfoBack}
-                  onClick={handler}
+                  onClick={eventHandler}
                 >
                   {i18n.t('back.label')}
                 </Button>
@@ -419,7 +974,7 @@ export default class ModuleDownloader extends React.Component {
                 id="moduleCancel"
                 intent="primary"
                 disabled={disable.moduleCancel}
-                onClick={handler}
+                onClick={eventHandler}
               >
                 {i18n.t('cancel.label')}
               </Button>
@@ -427,10 +982,10 @@ export default class ModuleDownloader extends React.Component {
           </Groupbox>
         </Hbox>
 
-        {repoListOpen && (
+        {repoTableOpen && (
           <div>
             <DragSizer
-              onDragStart={() => state.repoListPanelHeight}
+              onDragStart={() => state.repoTableHeight}
               onDragEnd={(_e: React.MouseEvent, v: DragSizerVal) =>
                 this.setState({ repoListPanelHeight: v.sizerPos })
               }
@@ -438,27 +993,23 @@ export default class ModuleDownloader extends React.Component {
               shrink
             />
             <Groupbox
-              className="repo-groupbox"
               caption={i18n.t('moduleSources.label')}
-              height={repoListPanelHeight}
+              height={repoTableHeight}
               orient="horizontal"
               flex="1"
             >
-              <Box
-                className="repositoryTableCont"
-                flex="1"
-                domref={repositoryTableContainerRef}
-                onClick={handler}
-              >
+              <Box flex="1">
                 {!!repoTableData.length && (
-                  <RepositoryTable
+                  <Table
+                    className="repository-table"
                     key={renderRepoTable}
                     data={repoTableData}
-                    loading={loading}
-                    selectedRegions={selectedRepos}
+                    selectedRegions={repository}
                     columnWidths={repoColumnWidths}
-                    onColumnWidthChanged={onColumnWidthChanged}
-                    onCellChange={onCellEdited}
+                    domref={tableRef.repository}
+                    onClick={eventHandler}
+                    onColumnWidthChanged={onRepoColumnWidthChanged}
+                    onEditableCellChanged={onCellEdited}
                   />
                 )}
               </Box>
@@ -468,20 +1019,20 @@ export default class ModuleDownloader extends React.Component {
                   icon="add"
                   intent="primary"
                   disabled={disable.repoAdd}
-                  onClick={handler}
+                  onClick={eventHandler}
                 />
                 <Button
                   id="repoDelete"
                   icon="delete"
                   intent="primary"
                   disabled={disable.repoDelete}
-                  onClick={handler}
+                  onClick={eventHandler}
                 />
                 <Button
                   id="repoCancel"
                   intent="primary"
                   disabled={disable.repoCancel}
-                  onClick={handler}
+                  onClick={eventHandler}
                 >
                   {i18n.t('cancel.label')}
                 </Button>
@@ -491,21 +1042,21 @@ export default class ModuleDownloader extends React.Component {
         )}
 
         <Hbox className="dialogbuttons" pack="end" align="end">
-          {repoListOpen && (
+          {repoTableOpen && (
             <Button onClick={() => this.setState({ repoListOpen: false })}>
               {i18n.t('less.label')}
             </Button>
           )}
-          {!repoListOpen && (
+          {!repoTableOpen && (
             <Button onClick={() => this.setState({ repoListOpen: true })}>
               {i18n.t('moduleSources.label')}
             </Button>
           )}
           <Spacer flex="1" />
-          <Button id="cancel" onClick={handler}>
+          <Button id="cancel" onClick={eventHandler}>
             {i18n.t('cancel.label')}
           </Button>
-          <Button id="ok" onClick={handler}>
+          <Button id="ok" onClick={eventHandler}>
             {i18n.t('ok.label')}
           </Button>
         </Hbox>
@@ -515,5 +1066,11 @@ export default class ModuleDownloader extends React.Component {
 }
 ModuleDownloader.defaultProps = defaultProps;
 ModuleDownloader.propTypes = propTypes;
+ModuleDownloader.saved = {
+  repoTableData: [],
+  modTableData: [],
+  langTableData: [],
+  rawModuleData: [],
+};
 
 renderToRoot(<ModuleDownloader id="downloader" />);

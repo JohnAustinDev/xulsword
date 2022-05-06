@@ -35,13 +35,20 @@ import {
   getSystemFonts,
   resetMain,
 } from './minit';
+import Module from './installer';
 
 // Methods of the following classes must not use rest parameters or default
 // values in their function definition's argument lists. This is because
 // Function.length is used to append the calling window, and Function.length
 // does not include rest parameters or default arguments, so this would result
 // in runtime exceptions being thrown.
-const includeCallingWindow = ['Prefs', 'Window', 'Commands', 'Downloader'];
+const includeCallingWindow = [
+  'Prefs',
+  'Window',
+  'Commands',
+  'Downloader',
+  'Module',
+];
 
 // Handle global variable calls from renderer processes
 function handleGlobal(
@@ -112,6 +119,8 @@ class GClass implements GType {
 
   Downloader;
 
+  Module;
+
   constructor() {
     this.LibSword = LibSword;
     this.Prefs = Prefs;
@@ -121,6 +130,7 @@ class GClass implements GType {
     this.Data = Data;
     this.Window = Window;
     this.Downloader = Downloader;
+    this.Module = Module;
   }
 
   get Books() {

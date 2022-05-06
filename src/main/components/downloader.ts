@@ -1,3 +1,4 @@
+/* eslint-disable promise/no-promise-in-callback */
 /* eslint-disable promise/param-names */
 /* eslint-disable prefer-rest-params */
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -5,18 +6,33 @@ import fs from 'fs';
 import fpath from 'path';
 import log from 'electron-log';
 import { Stream, Readable } from 'stream';
-import { downloadKey, isRepoLocal } from '../../common';
-import C from '../../constant';
-import { parseSwordConf } from '../installer';
+import { downloadKey, isRepoLocal, parseSwordConf } from '../../common';
 import LocalFile from './localFile';
 
-import type { GType, Download, SwordConfType } from '../../type';
+import type {
+  GType,
+  Download,
+  SwordConfType,
+  RepositoryListing,
+} from '../../type';
+
+type ListType = {
+  type: 'd' | '-';
+  name: string;
+  path: string;
+  size: number; // bytes
+  date: any;
+};
 
 const FTP = require('ftp');
 
 const GUNZIP = require('gunzip-maybe');
 
 const TAR = require('tar-stream');
+
+const ZIP = require('adm-zip');
+
+let CancelFTP = false;
 
 function streamToBuffer(stream: Readable, cbx?: any): Promise<Buffer> {
   const buf: any[] = [];
@@ -37,7 +53,63 @@ function streamToBuffer(stream: Readable, cbx?: any): Promise<Buffer> {
   });
 }
 
-let CancelFTP = false;
+function connect(domain: string, reject: (er: Error) => void): any {
+  const ftp = new FTP();
+  let cancelTO: NodeJS.Timeout | null = null;
+  const reject0 = (err: Error) => {
+    if (cancelTO) clearInterval(cancelTO);
+    ftp.destroy();
+    reject(err);
+  };
+  ftp.on('error', (er: Error) => {
+    reject0(er);
+  });
+  ftp.on('close', (er: Error) => {
+    if (cancelTO) clearInterval(cancelTO);
+    if (er) reject0(er);
+  });
+  try {
+    log.info(`Connecting: ${domain}`);
+    ftp.connect({ host: domain });
+    cancelTO = setInterval(() => {
+      if (CancelFTP) {
+        reject0(new Error('Canceled'));
+      }
+    }, 300);
+  } catch (er: any) {
+    reject0(er);
+  }
+  return ftp;
+}
+
+async function list(
+  ftp: any,
+  dirpath: string,
+  recurse: boolean
+): Promise<ListType[]> {
+  const result: ListType[] = [];
+  return new Promise((resolve, reject) => {
+    ftp.list(dirpath, false, (err: Error, listing: ListType[]) => {
+      if (err) reject(err);
+      else {
+        const listpromises: Promise<ListType[]>[] = [];
+        listing.forEach((l) => {
+          l.path = dirpath;
+          result.push(l);
+          if (recurse && l.type === 'd') {
+            listpromises.push(list(ftp, l.path, true));
+          }
+        });
+        if (listpromises) {
+          Promise.all(listpromises)
+            .then((r) => resolve(result.concat(r.flat())))
+            .catch((er) => reject(er));
+        }
+        resolve(result);
+      }
+    });
+  });
+}
 
 const Downloader: GType['Downloader'] = {
   // Download a file using FTP and either save it to tmpdir returning the
@@ -47,31 +119,22 @@ const Downloader: GType['Downloader'] = {
   async ftp(
     download: Download,
     tmpdir?: string | null,
-    progress?: (prog: number) => void
+    progress?: ((prog: number) => void) | null,
+    connection?: any
   ): Promise<string | Buffer> {
     if (CancelFTP) return '';
-    return new Promise((resolve, reject0) => {
+    return new Promise((resolve, reject) => {
       const { domain, path, file, name } = download;
+      const ftp = connection || connect(domain, reject);
       const outfile =
         (tmpdir && new LocalFile(tmpdir).append(name || file)) || null;
-      const ftp = new FTP();
       const filepath = ['', path, file].join('/').replaceAll('//', '/');
-      let cancelTO: NodeJS.Timeout | null = null;
-      const reject = (er: Error | string) => {
-        if (cancelTO) clearInterval(cancelTO);
-        ftp.destroy();
-        reject0(er);
-      };
-      let downloaded: string | Buffer = '';
       ftp.on('ready', () => {
         const get = (size?: number) => {
           ftp.get(filepath, (err: Error, stream: any) => {
             if (err) {
-              reject(err.message);
-              ftp.end();
-            } else if (!stream) {
-              reject(`No ftp stream: ${filepath}`);
-              ftp.end();
+              reject(err);
+              if (!connection) ftp.end();
             } else {
               if (progress && size) {
                 let current = 0;
@@ -83,17 +146,17 @@ const Downloader: GType['Downloader'] = {
               }
               if (!outfile) {
                 streamToBuffer(stream, (er: any, buffer: Buffer) => {
-                  if (er) reject(er.message);
-                  else downloaded = buffer;
+                  if (er) reject(er);
+                  else resolve(buffer);
                 });
               }
               stream.once('close', () => {
                 if (progress && size) progress(-1);
                 if (outfile) {
                   stream.pipe(fs.createWriteStream(outfile.path));
-                  downloaded = outfile.path;
+                  resolve(outfile.path);
                 }
-                ftp.end();
+                if (!connection) ftp.end();
               });
             }
           });
@@ -101,35 +164,71 @@ const Downloader: GType['Downloader'] = {
         if (progress) {
           ftp.size(filepath, (err: any, size: number) => {
             if (err) {
-              reject(err.message);
+              reject(err);
             } else get(size);
           });
         } else get();
       });
-      ftp.on('error', (er: Error) => {
-        reject(er.message);
-      });
-      ftp.once('close', (er: Error) => {
-        if (cancelTO) clearInterval(cancelTO);
-        if (er) reject(er.message);
-        else resolve(downloaded);
-      });
-      try {
-        log.info(`Connecting: ${domain}${filepath}`);
-        ftp.connect({ host: domain });
-        cancelTO = setInterval(() => {
-          if (CancelFTP) {
-            reject('Canceled');
-          }
-        }, 300);
-      } catch (er: any) {
-        reject(er.message);
-      }
     });
   },
 
   ftpCancel() {
     CancelFTP = true;
+  },
+
+  // Download a directory using FTP and either copy it to tmpdir returning the
+  // new directory path, or, if tmpdir is undefined, return the contents of the
+  // directory as a zip Buffer. If a progress function is provided, it will be
+  // used to report progress.
+  async ftpDir(
+    download: Download,
+    tmpdir?: string | null,
+    progress?: ((prog: number) => void) | null,
+    connection?: any
+  ): Promise<string | Buffer> {
+    if (CancelFTP) return '';
+    return new Promise((resolve, reject) => {
+      const { domain, path, file, name } = download;
+      const ftp = connection || connect(domain, reject);
+      const outfile =
+        (tmpdir && new LocalFile(tmpdir).append(name || file)) || null;
+      const dirpath = ['', path, file].join('/').replaceAll('//', '/');
+      ftp.on('ready', async () => {
+        const listing = await list(ftp, dirpath, true);
+        let current = 0;
+        const total = listing.reduce((p, c) => p + c.size, 0);
+        if (progress) progress(0);
+        const bufpromises: Promise<string | Buffer>[] = [];
+        listing.forEach((l) => {
+          const dl = {
+            domain: download.domain,
+            path: l.path,
+            file: l.name,
+          };
+          bufpromises.push(
+            this.ftp(dl, null, null, ftp).then((buf) => {
+              current += l.size;
+              if (progress) progress(current / total);
+              return buf;
+            })
+          );
+        });
+        const zip = new ZIP();
+        Promise.all(bufpromises)
+          .then((bufs) => {
+            if (progress) progress(-1);
+            bufs.forEach((b, i) =>
+              zip.addFile(fpath.join(listing[i].path, listing[i].name), b)
+            );
+            if (outfile) {
+              zip.extractAllTo(outfile.path, true);
+              return resolve(outfile.path);
+            }
+            return resolve(zip.toBuffer());
+          })
+          .catch((er) => reject(er));
+      });
+    });
   },
 
   // Take a tar.gz or tar file as a Buffer or else a file path string to
@@ -200,22 +299,35 @@ const Downloader: GType['Downloader'] = {
     });
   },
 
-  // Takes SWORD repositories as mods.d.tar.gz download array and, for
-  // each repository, returns either an array of SwordConfType objects
-  // (one for each module in the repository) or a string which is an
-  // error message except in two special cases: An empty string is
-  // returned if the repository is disabled, and C.Downloader.modsd
-  // string is returned if the respository is an existing mods.d directory.
+  // Takes an array of SWORD repositories and returns:
+  // - An array of SwordConfType objects, one for each module in the repository.
+  // - Or a string error message if there was an error.
+  // - Or the empty string if the repository is disabled.
+  // - Or null if the repository was null.
+  // - Or the C.Downloader.modsd string if the repository is a local mods.d directory.
   // Progress on each repository is reported to the calling window.
   async repositoryListing(repositories) {
     const callingWin = arguments[1] || null;
     CancelFTP = false;
     const promises = repositories.map((repo) => {
+      if (repo === null) return Promise.resolve(null);
       if (repo.disabled) return Promise.resolve('');
       if (isRepoLocal(repo)) {
         if (fpath.isAbsolute(repo.path)) {
-          if (new LocalFile(repo.path).append('mods.d').exists()) {
-            return Promise.resolve('mods.d');
+          const modsd = new LocalFile(repo.path).append('mods.d');
+          if (modsd.exists() && modsd.isDirectory()) {
+            const confs: SwordConfType[] = [];
+            modsd.directoryEntries.forEach((de) => {
+              const f = modsd.clone().append(de);
+              if (!f.isDirectory() && f.path.endsWith('.conf')) {
+                const conf = parseSwordConf(f);
+                conf.sourceRepository = repo;
+                conf.custom = repo.custom || null;
+                conf.installed = true;
+                confs.push(conf);
+              }
+            });
+            return Promise.resolve(confs);
           }
         }
         return Promise.resolve(`Directory not found: ${repo.path}/'mods.d'`);
@@ -233,7 +345,8 @@ const Downloader: GType['Downloader'] = {
             const { header, content: buffer } = r;
             if (header.name.endsWith('.conf')) {
               const conf = parseSwordConf(buffer.toString('utf8'));
-              conf.sourceRepository = repo.name || 'no-name';
+              conf.sourceRepository = repo;
+              conf.custom = repo.custom || null;
               confs.push(conf);
             }
           });
@@ -241,7 +354,7 @@ const Downloader: GType['Downloader'] = {
         });
     });
     return Promise.allSettled(promises).then((results) => {
-      const ret: (SwordConfType[] | string)[] = [];
+      const ret: RepositoryListing[] = [];
       results.forEach((result) => {
         if (result.status === 'fulfilled') ret.push(result.value);
         else ret.push(result.reason);

@@ -1,3 +1,4 @@
+/* eslint-disable react/jsx-no-bind */
 /* eslint-disable import/order */
 /* eslint-disable no-nested-ternary */
 /* eslint-disable class-methods-use-this */
@@ -7,7 +8,7 @@
 /* eslint-disable react/static-property-placement */
 /* eslint-disable max-classes-per-file */
 /* eslint-disable react/jsx-props-no-spreading */
-import * as React from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { Intent, Menu, MenuItem } from '@blueprintjs/core';
 import {
@@ -16,78 +17,97 @@ import {
   ColumnHeaderCell,
   EditableCell,
   Region,
+  RegionCardinality,
   SelectionModes,
-  Table,
+  Table as BPTable,
   Utils,
 } from '@blueprintjs/table';
-import { xulDefaultProps, xulPropTypes } from '../libxul/xul';
+import { addClass, xulDefaultProps, XulProps, xulPropTypes } from './xul';
 import '@blueprintjs/table/lib/css/table.css';
+import './table.css';
 
 import type { IIndexedResizeCallback } from '@blueprintjs/table/lib/esm/interactions/resizable';
+import { Box } from './boxes';
 
-export type RepoDataInfo = {
-  custom: boolean;
-  off: boolean; // required even though RepoDataType[3] is similar (but it may also be 'loading')
-  failed: boolean;
+export type TData = TDataRow[];
+
+export type TDataRow = [TCellInfo, ...any];
+
+export type TColInfo = TCellInfo[];
+
+export type TCellInfo = {
+  loading?: boolean | ((rowIndex: number, colIndex: number) => boolean);
+  editable?: boolean | ((rowIndex: number, colIndex: number) => boolean);
+  intent?: Intent | ((rowIndex: number, colIndex: number) => Intent);
+  classes?: string[] | ((rowIndex: number, colIndex: number) => string[]);
 };
 
-export type RepoDataType = [string, string, string, string, RepoDataInfo];
+type TCellValidator = (
+  rowIndex: number,
+  columnIndex: number
+) => (val: string) => void;
 
-type ICellValidator = (
+type TCellSetter = (
   rowIndex: number,
   columnIndex: number
 ) => (val: string) => void;
-type ICellSetter = (
+
+type TCellLookup = (
   rowIndex: number,
   columnIndex: number
-) => (val: string) => void;
-type ICellLookup = (
-  rowIndex: number,
-  columnIndex: number
-) => { value: any; loading: boolean; info: RepoDataInfo };
-type ISortCallback = (
+) => { value: any; info: TCellInfo };
+
+type TSortCallback = (
   columnIndex: number,
   comparator: (a: any, b: any) => number
 ) => void;
-interface ISortableColumn {
+
+interface TSortableColumn {
   getColumn(
-    getCellData: ICellLookup,
-    sortColumn: ISortCallback,
-    cellValidator: ICellValidator,
-    cellSetter: ICellSetter,
+    getCellData: TCellLookup,
+    sortColumn: TSortCallback,
+    cellValidator: TCellValidator,
+    cellSetter: TCellSetter,
     state: TableState
   ): JSX.Element;
 }
 
-abstract class AbstractSortableColumn implements ISortableColumn {
+abstract class AbstractSortableColumn implements TSortableColumn {
   constructor(protected name: string, protected index: number) {}
 
   public getColumn(
-    getCellData: ICellLookup,
-    sortColumn: ISortCallback,
-    cellValidator: ICellValidator,
-    cellSetter: ICellSetter,
+    getCellData: TCellLookup,
+    sortColumn: TSortCallback,
+    cellValidator: TCellValidator,
+    cellSetter: TCellSetter,
     state: TableState
   ) {
     const cellRenderer = (rowIndex: number, columnIndex: number) => {
-      const { value, loading, info } = getCellData(rowIndex, columnIndex);
-      let intent: Intent = 'none';
-      if (columnIndex === 3) {
-        if (!info.off) intent = 'success';
-        if (info.failed) intent = 'danger';
+      const { value, info } = getCellData(rowIndex, columnIndex);
+      let { editable, loading, intent, classes } = info;
+      if (typeof editable === 'function') {
+        editable = editable(rowIndex, columnIndex);
       }
-      const classes = info.custom ? 'repo-custom' : '';
-      if (columnIndex < 3 && info.custom) {
-        const dataKey = RepositoryTable.dataKey(rowIndex, columnIndex);
+      if (typeof loading === 'function') {
+        loading = loading(rowIndex, columnIndex);
+      }
+      if (typeof intent === 'function') {
+        intent = intent(rowIndex, columnIndex);
+      }
+      if (typeof classes === 'function') {
+        classes = classes(rowIndex, columnIndex);
+      }
+      if (editable) {
+        const dataKey = Table.dataKey(rowIndex, columnIndex);
         const val =
           dataKey in state.sparseCellData
             ? state.sparseCellData[dataKey]
             : value;
         return (
           <EditableCell
-            className={classes}
+            className={classes?.join(' ')}
             value={val == null ? '' : val}
-            intent={state.sparseCellIntent[dataKey] || intent}
+            intent={state.sparseCellIntent[dataKey] || info.intent || 'none'}
             truncated
             loading={loading}
             onCancel={cellValidator(rowIndex, columnIndex)}
@@ -97,14 +117,18 @@ abstract class AbstractSortableColumn implements ISortableColumn {
         );
       }
       return (
-        <Cell className={classes} intent={intent} truncated loading={loading}>
+        <Cell
+          className={classes?.join(' ')}
+          intent={intent || 'none'}
+          truncated
+          loading={loading}
+        >
           {value}
         </Cell>
       );
     };
     const menuRenderer = this.renderMenu.bind(this, sortColumn);
     const columnHeaderCellRenderer = () => (
-      // eslint-disable-next-line react/jsx-no-bind
       <ColumnHeaderCell name={this.name} menuRenderer={menuRenderer} />
     );
     return (
@@ -117,7 +141,7 @@ abstract class AbstractSortableColumn implements ISortableColumn {
     );
   }
 
-  protected abstract renderMenu(sortColumn: ISortCallback): JSX.Element;
+  protected abstract renderMenu(sortColumn: TSortCallback): JSX.Element;
 }
 
 class TextSortableColumn extends AbstractSortableColumn {
@@ -128,7 +152,7 @@ class TextSortableColumn extends AbstractSortableColumn {
     return a.toString().localeCompare(b);
   }
 
-  protected renderMenu(sortColumn: ISortCallback) {
+  protected renderMenu(sortColumn: TSortCallback) {
     const sortAsc = () =>
       sortColumn(this.index, (a, b) => TextSortableColumn.compare(a, b));
     const sortDesc = () =>
@@ -144,48 +168,57 @@ class TextSortableColumn extends AbstractSortableColumn {
 
 const defaultProps = {
   ...xulDefaultProps,
+  columnHeadings: undefined,
+  columnInfo: undefined,
+  columnWidths: undefined,
+  cellInfo: undefined,
+  selectedRegions: undefined,
+  selectionModes: SelectionModes.ROWS_ONLY,
+  enableMultipleSelection: false,
+  onColumnWidthChanged: undefined,
+  onEditableCellChanged: undefined,
 };
 
 const propTypes = {
   ...xulPropTypes,
-  data: PropTypes.arrayOf(PropTypes.array).isRequired,
-  loading: PropTypes.arrayOf(PropTypes.bool),
-  selectedRegions: PropTypes.array,
+  columnHeadings: PropTypes.arrayOf(PropTypes.string),
+  columnInfo: PropTypes.arrayOf(PropTypes.object),
   columnWidths: PropTypes.arrayOf(PropTypes.number),
+  // rowHeadings: PropTypes.arrayOf(PropTypes.string),
+  data: PropTypes.arrayOf(PropTypes.array).isRequired,
+  cellInfo: PropTypes.arrayOf(PropTypes.arrayOf(PropTypes.object)),
+  selectedRegions: PropTypes.array,
+  selectionModes: PropTypes.any,
+  enableMultipleSelection: PropTypes.bool,
   onColumnWidthChanged: PropTypes.func,
-  onCellChange: PropTypes.func,
+  onEditableCellChanged: PropTypes.func,
 };
 
-type TableProps = {
-  data: RepoDataType[];
-  loading: boolean[];
-  selectedRegions: Region[];
-  columnWidths: number[];
-  onColumnWidthChanged: IIndexedResizeCallback;
-  onCellChange: (row: number, col: number, value: string) => void;
+type TableProps = XulProps & {
+  columnHeadings?: string[];
+  columnInfo?: TColInfo;
+  columnWidths?: number[]; // -1 = hide column
+  // rowHeadings?: string[];
+  data: TData;
+  cellInfo?: TCellInfo[][]; // sparse arrays
+  selectedRegions?: Region[];
+  selectionModes: RegionCardinality[];
+  enableMultipleSelection: boolean;
+  onColumnWidthChanged?: IIndexedResizeCallback;
+  onEditableCellChanged?: (row: number, col: number, value: string) => void;
 };
 
 type TableState = {
-  columns: ISortableColumn[];
+  columns: TSortableColumn[];
   sortedIndexMap: number[];
   sparseCellData: { [i: string]: string };
   sparseCellIntent: { [i: string]: Intent };
 };
 
-class RepositoryTable extends React.Component {
+class Table extends React.Component {
   static defaultProps: typeof defaultProps;
 
   static propTypes: typeof propTypes;
-
-  static columns: ['', '', '', ''];
-
-  static on: '☑';
-
-  static off: '☐';
-
-  static loading: 'loading';
-
-  static failed: 'failed';
 
   static dataKey = (rowIndex: number, columnIndex: number) => {
     return `${rowIndex}-${columnIndex}`;
@@ -193,11 +226,18 @@ class RepositoryTable extends React.Component {
 
   constructor(props: TableProps) {
     super(props);
+    const { data, columnHeadings } = props;
 
+    // Create new columns, one for each column of data (minus
+    // the data's info column).
+    const columns = [];
+    for (let c = 0; c < data[0].length - 1; c += 1) {
+      columns.push(
+        new TextSortableColumn((columnHeadings && columnHeadings[c]) || '', c)
+      );
+    }
     const s: TableState = {
-      columns: RepositoryTable.columns.map((nm, ix) => {
-        return new TextSortableColumn(nm, ix);
-      }) as ISortableColumn[],
+      columns,
       sortedIndexMap: [],
       sparseCellData: {},
       sparseCellIntent: {},
@@ -214,16 +254,19 @@ class RepositoryTable extends React.Component {
 
   getCellData(rowIndex: number, columnIndex: number) {
     const { sortedIndexMap } = this.state as TableState;
-    const { data, loading } = this.props as TableProps;
+    const { data, columnInfo, cellInfo } = this.props as TableProps;
     const sortedRowIndex = sortedIndexMap[rowIndex];
     let srowIndex = rowIndex;
     if (sortedRowIndex != null) {
       srowIndex = sortedRowIndex;
     }
     return {
-      value: data[srowIndex][columnIndex],
-      loading: loading[srowIndex] && columnIndex === 3,
-      info: data[srowIndex][4],
+      value: data[srowIndex][columnIndex + 1],
+      info: {
+        ...((columnInfo && columnInfo[columnIndex]) || {}),
+        ...data[rowIndex][0],
+        ...((cellInfo && cellInfo[rowIndex][columnIndex]) || {}),
+      },
     };
   }
 
@@ -242,8 +285,8 @@ class RepositoryTable extends React.Component {
   }
 
   cellSetter(rowIndex: number, columnIndex: number) {
-    const dataKey = RepositoryTable.dataKey(rowIndex, columnIndex);
-    const { onCellChange } = this.props as TableProps;
+    const dataKey = Table.dataKey(rowIndex, columnIndex);
+    const { onEditableCellChanged: onCellChange } = this.props as TableProps;
     return (value: string) => {
       const intent = this.isValidValid(value) ? null : Intent.DANGER;
       this.setSparseState('sparseCellData', dataKey, value);
@@ -254,7 +297,7 @@ class RepositoryTable extends React.Component {
   }
 
   cellValidator(rowIndex: number, columnIndex: number) {
-    const dataKey = RepositoryTable.dataKey(rowIndex, columnIndex);
+    const dataKey = Table.dataKey(rowIndex, columnIndex);
     return (value: string) => {
       const intent = this.isValidValid(value) ? null : Intent.DANGER;
       this.setSparseState('sparseCellData', dataKey, value);
@@ -279,56 +322,53 @@ class RepositoryTable extends React.Component {
     const state = this.state as TableState;
     const props = this.props as TableProps;
     const { columns: cols } = state;
-    const { data, selectedRegions, columnWidths, onColumnWidthChanged } = props;
+    const { selectionModes } = props;
+    const {
+      data,
+      selectedRegions,
+      enableMultipleSelection,
+      columnWidths,
+      onColumnWidthChanged,
+    } = props;
     const numRows = data.length;
-    const columns = cols.map((col) =>
-      col.getColumn(
-        this.getCellData,
-        this.sortColumn,
-        this.cellValidator,
-        this.cellSetter,
-        state
-      )
-    );
+    const columns = cols
+      .map((col, i) => {
+        if (!(columnWidths && columnWidths[i] === -1))
+          return col.getColumn(
+            this.getCellData,
+            this.sortColumn,
+            this.cellValidator,
+            this.cellSetter,
+            state
+          );
+        return null;
+      })
+      .filter(Boolean) as JSX.Element[];
+
+    const classes = ['table'];
+    if (onColumnWidthChanged) classes.push('width-resizable');
+
     return (
-      <Table
-        className="repositorytable"
-        numRows={numRows}
-        columnWidths={columnWidths}
-        selectedRegions={selectedRegions}
-        selectionModes={SelectionModes.ROWS_ONLY}
-        enableMultipleSelection
-        enableRowResizing={false}
-        enableRowHeader={false}
-        onColumnWidthChanged={onColumnWidthChanged}
-      >
-        {columns}
-      </Table>
+      <Box {...addClass(classes, props)}>
+        <div>
+          <BPTable
+            numRows={numRows}
+            columnWidths={columnWidths?.filter((w) => w !== -1)}
+            selectedRegions={selectedRegions}
+            selectionModes={selectionModes}
+            enableMultipleSelection={enableMultipleSelection}
+            enableRowResizing={false}
+            enableRowHeader={false}
+            onColumnWidthChanged={onColumnWidthChanged}
+          >
+            {columns}
+          </BPTable>
+        </div>
+      </Box>
     );
   }
 }
-RepositoryTable.defaultProps = defaultProps;
-RepositoryTable.propTypes = propTypes;
-RepositoryTable.columns = ['', '', '', ''];
-RepositoryTable.on = '☑';
-RepositoryTable.off = '☐';
-RepositoryTable.loading = 'loading';
-RepositoryTable.failed = 'failed';
+Table.defaultProps = defaultProps;
+Table.propTypes = propTypes;
 
-export default RepositoryTable;
-
-/*
-export const DataConfColumns: (keyof SwordConfType)[] = [
-  'moduleType',
-  'Description',
-  'module',
-  'sourceRepository',
-  'Version',
-  'InstallSize',
-  'Feature',
-  'Versification',
-  'Scope',
-  'Copyright',
-  'DistributionLicense',
-  'SourceType',
-]; */
+export default Table;

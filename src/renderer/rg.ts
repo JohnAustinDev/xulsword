@@ -14,11 +14,12 @@ const G = {} as typeof GPublic;
 // These global functions and object methods are asynchronous and return promises.
 const asyncFuncs = [
   'getSystemFonts',
-  'installXulswordModules',
-  'crossWireMasterRepoList',
-  'repositoryListing',
-  'ftp',
-  'untargz',
+  'CommandsPublic.installXulswordModules',
+  'Downloader.crossWireMasterRepoList',
+  'Downloader.repositoryListing',
+  'Downloader.ftp',
+  'Downloader.untargz',
+  'Module.download',
 ];
 
 const entries = Object.entries(GPublic);
@@ -92,7 +93,7 @@ entries.forEach((entry) => {
           log.silly(`${ckey}${readonly && !Cache.has(ckey) ? ' miss' : ''}`);
           if (!readonly) Cache.clear(ckey);
           if (!Cache.has(ckey)) {
-            if (asyncFuncs.includes(m)) {
+            if (asyncFuncs.includes([name, m].join('.'))) {
               return window.ipc.renderer
                 .invoke('global', name, m, ...args)
                 .then((result: unknown) => {
@@ -106,7 +107,9 @@ entries.forEach((entry) => {
             );
           }
           const retval = Cache.read(ckey);
-          return asyncFuncs.includes(m) ? Promise.resolve(retval) : retval;
+          return asyncFuncs.includes([name, m].join('.'))
+            ? Promise.resolve(retval)
+            : retval;
         };
       } else {
         throw Error(

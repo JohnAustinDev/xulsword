@@ -43,21 +43,31 @@ export default class LocalFile {
   }
 
   // Copy this.path to a directory as leafName. If leafName is falsey, then
-  // this.leafName will be used. Destination file will be overwritten if it
-  // already exists.
-  copyTo(dirObj: LocalFile, leafName?: string) {
+  // this.leafName will be used. If recursive is set, a directory's contents
+  // will be copied. Destination file will be overwritten if it already exists.
+  copyTo(dir: LocalFile, leafName?: string | null, recursive = false) {
     const name = leafName || this.leafName;
 
     const newFile = new LocalFile(
-      path.join(dirObj.path, name),
+      path.join(dir.path, name),
       LocalFile.NO_CREATE
     );
 
-    if (this.exists() && dirObj.exists()) {
-      fs.copyFileSync(this.path, newFile.path);
+    if (this.exists() && dir.exists()) {
+      if (this.isDirectory()) {
+        newFile.create(LocalFile.DIRECTORY_TYPE);
+        if (recursive) {
+          this.directoryEntries.forEach((d) => {
+            const f = this.clone().append(d);
+            f.copyTo(newFile, null, true);
+          });
+        }
+      } else {
+        fs.copyFileSync(this.path, newFile.path);
+      }
     } else {
       throw new Error(
-        `ERROR: copyTo source and destination dir must exist: ${this.path} -> ${dirObj.path}`
+        `ERROR: copyTo source and destination dir must exist: ${this.path} -> ${dir.path}`
       );
     }
 
