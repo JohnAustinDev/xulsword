@@ -55,7 +55,7 @@ type TCellSetter = (
 type TCellLookup = (
   rowIndex: number,
   columnIndex: number
-) => { value: any; info: TCellInfo; allColumnsIndex: number };
+) => { value: any; info: TCellInfo; dataColumnIndex: number };
 
 type TSortCallback = (
   columnIndex: number,
@@ -83,23 +83,25 @@ abstract class AbstractSortableColumn implements TSortableColumn {
     state: TableState
   ) {
     const cellRenderer = (rowIndex: number, columnIndex: number) => {
-      const { value, info, allColumnsIndex } = getCellData(
+      const { value, info, dataColumnIndex } = getCellData(
         rowIndex,
         columnIndex
       );
       let { editable, loading, intent, classes } = info;
       if (typeof editable === 'function') {
-        editable = editable(rowIndex, allColumnsIndex);
+        editable = editable(rowIndex, dataColumnIndex);
       }
       if (typeof loading === 'function') {
-        loading = loading(rowIndex, allColumnsIndex);
+        loading = loading(rowIndex, dataColumnIndex);
       }
       if (typeof intent === 'function') {
-        intent = intent(rowIndex, allColumnsIndex);
+        intent = intent(rowIndex, dataColumnIndex);
       }
       if (typeof classes === 'function') {
-        classes = classes(rowIndex, allColumnsIndex);
+        classes = classes(rowIndex, dataColumnIndex);
       }
+      if (!classes) classes = [];
+      classes.push(`data-column-${dataColumnIndex}`);
       if (editable) {
         const dataKey = Table.dataKey(rowIndex, columnIndex);
         const val =
@@ -265,18 +267,17 @@ class Table extends React.Component {
     const { data, columnInfo, cellInfo } = props;
     const sortedRowIndex = rowIndexMap[rowIndex];
     let dataRowIndex = rowIndex;
-    let dataColIndex = columnIndex;
+    let dataColumnIndex = columnIndex;
     if (sortedRowIndex != null) dataRowIndex = sortedRowIndex;
-    dataColIndex = this.columnIndexToDataMap[columnIndex];
-    const allColumnsIndex = dataColIndex - 1;
+    dataColumnIndex = this.columnIndexToDataMap[columnIndex];
     return {
-      value: data[dataRowIndex][dataColIndex],
+      value: data[dataRowIndex][dataColumnIndex],
       info: {
-        ...((columnInfo && columnInfo[allColumnsIndex]) || {}),
+        ...((columnInfo && columnInfo[dataColumnIndex]) || {}),
         ...data[dataRowIndex][0],
-        ...((cellInfo && cellInfo[dataRowIndex][allColumnsIndex]) || {}),
+        ...((cellInfo && cellInfo[dataRowIndex][dataColumnIndex]) || {}),
       },
-      allColumnsIndex,
+      dataColumnIndex,
     };
   }
 

@@ -126,7 +126,7 @@ const LanCol = {
 } as const;
 const ModCol = {
   iType: 1,
-  iName: 3,
+  iName: 2,
   iShared: 13,
   iInstalled: 14,
   iAlwaysVisible: [1, 2, 13, 14] as number[],
@@ -425,9 +425,9 @@ export default class ModuleManager extends React.Component {
         disabled = disabledRepos.includes(downloadKey(repo));
       }
       repo.disabled = disabled;
-      const css = classes([3], ['checkbox-column']);
+      const css = classes([RepCol.iState], ['checkbox-column']);
       const canedit = repo.custom ? editable() : false;
-      const isloading = repo.disabled ? false : loading(3);
+      const isloading = repo.disabled ? false : loading(RepCol.iState);
       const on = repo.builtin ? ALWAYS_ON : ON;
       repoTableData.push([
         { loading: isloading, editable: canedit, classes: css, repo },
@@ -449,13 +449,13 @@ export default class ModuleManager extends React.Component {
       if (listing === null) return;
       if (typeof listing === 'string') {
         this.addToast({ message: listing });
-        repoTableData[i][0].intent = intent(3, 'danger');
+        repoTableData[i][0].intent = intent(RepCol.iState, 'danger');
         return;
       }
       if (Array.isArray(listing)) {
         ModuleManager.saved.rawModuleData[i] = listing;
         if ([ON, ALWAYS_ON].includes(repoTableData[i][RepCol.iState])) {
-          repoTableData[i][0].intent = intent(3, 'success');
+          repoTableData[i][0].intent = intent(RepCol.iState, 'success');
         }
       }
     });
@@ -532,7 +532,10 @@ export default class ModuleManager extends React.Component {
             (!isRepoLocal(c.sourceRepository) ||
               !repoModules.includes(c.module))
           ) {
-            const css = classes([12, 13], ['checkbox-column']);
+            const css = classes(
+              [ModCol.iShared, ModCol.iInstalled],
+              ['checkbox-column']
+            );
             data.push([
               { repo: repoTableData[i][0].repo, classes: css },
               c.moduleType,
@@ -609,7 +612,7 @@ export default class ModuleManager extends React.Component {
             G.Downloader.ftpCancel();
             repoTableData[r][0].loading = false;
           }
-          repoTableData[r][0].intent = intent(3, 'none');
+          repoTableData[r][0].intent = intent(RepCol.iState, 'none');
         }
       }
     });
@@ -701,7 +704,11 @@ export default class ModuleManager extends React.Component {
               builtin: false,
             };
             const row = repositoryToRow(repo);
-            row[0].classes = classes([3], ['checkbox-column'], ['custom-repo']);
+            row[0].classes = classes(
+              [RepCol.iState],
+              ['checkbox-column'],
+              ['custom-repo']
+            );
             row[0].editable = editable();
             repoTableData.unshift(row);
             customRepos.push(repo);
@@ -749,14 +756,11 @@ export default class ModuleManager extends React.Component {
         // Handle table cell clicks
         const cell = ofClass(['bp4-table-cell'], e.target);
         if (cell) {
-          // TODO! Fix this bug classes wont work for cell recognition
           const rowm = cell.element.className.match(
             /bp4-table-cell-row-(\d+)\b/
           );
           const row = rowm ? Number(rowm[1]) : -1;
-          const colm = cell.element.className.match(
-            /bp4-table-cell-col-(\d+)\b/
-          );
+          const colm = cell.element.className.match(/data-column-(\d+)\b/);
           const col = colm ? Number(colm[1]) : -1;
           if (row !== -1 && col !== -1) {
             const table = ofClass(
@@ -765,8 +769,9 @@ export default class ModuleManager extends React.Component {
             );
             if (table && table.type === 'repository') {
               // RepositoryTable
-              if (row > -1 && col < 3) this.rowSelect(e, 'repository', row);
-              if (col === 3) this.switchRepo([row]);
+              if (row > -1 && col < RepCol.iState)
+                this.rowSelect(e, 'repository', row);
+              if (col === RepCol.iState) this.switchRepo([row]);
             } else if (table && table.type === 'language') {
               // LanguageTable
               this.rowSelect(e, 'language', row);
@@ -791,23 +796,36 @@ export default class ModuleManager extends React.Component {
                     G.Module.clearDownload(module);
                     delete Action.download[module];
                     modTableData[row][0].loading = false;
-                    modTableData[row][0].intent = intent(13, 'none');
+                    modTableData[row][0].intent = intent(
+                      ModCol.iInstalled,
+                      'none'
+                    );
                   }
                 } else {
                   Action.share[module] =
                     modTableData[row][ModCol.iShared] === ON;
                   if (Action.remove.has(module)) Action.remove.delete(module);
-                  modTableData[row][0].loading = loading(13);
-                  Action.download[module] = G.Module.download(
-                    module,
-                    repo
-                  ).then((dl) => {
-                    modTableData[row][0].intent = intent(
-                      13,
-                      dl ? 'success' : 'danger'
-                    );
-                    return dl;
-                  });
+                  modTableData[row][0].loading = loading(ModCol.iInstalled);
+                  Action.download[module] = G.Module.download(module, repo)
+                    .then((dl) => {
+                      modTableData[row][0].intent = intent(
+                        ModCol.iInstalled,
+                        dl ? 'success' : 'danger'
+                      );
+                      this.setTableState('module');
+                      return dl;
+                    })
+                    .catch((er) => {
+                      this.addToast({
+                        message: `${er.message.replace(/^.*Error:/, '')}`,
+                      });
+                      modTableData[row][0].intent = intent(
+                        ModCol.iInstalled,
+                        'danger'
+                      );
+                      this.setTableState('module');
+                      return false;
+                    });
                 }
                 this.setTableState('module', {
                   modTableData,
@@ -1141,7 +1159,12 @@ function classes(
   wholeRowClasses?: string[]
 ) {
   return (_ri: number, ci: number) => {
-    return columnIndexArray.includes(ci) ? theClasses : wholeRowClasses || [];
+    const cs = wholeRowClasses || [];
+    if (columnIndexArray.includes(ci))
+      theClasses.forEach((c) => {
+        if (!cs.includes(c)) cs.push(c);
+      });
+    return cs;
   };
 }
 

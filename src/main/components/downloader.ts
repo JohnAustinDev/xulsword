@@ -203,7 +203,7 @@ async function ftpDir(
       (tmpdir && new LocalFile(tmpdir).append(name || file)) || null;
     const dirpath = ['', path, file].join('/').replaceAll('//', '/');
     c.on('ready', async () => {
-      const listing = await list(ftp, dirpath, true);
+      const listing = await list(c, dirpath, true);
       let current = 0;
       const total = listing.reduce((p, ct) => p + ct.size, 0);
       if (progress) progress(0);
@@ -215,7 +215,7 @@ async function ftpDir(
           file: l.name,
         };
         bufpromises.push(
-          ftp(dl, null, null, ftp).then((result) => {
+          ftp(dl, null, null, c).then((result) => {
             current += l.size;
             if (progress) progress(current / total);
             return result;
