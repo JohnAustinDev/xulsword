@@ -324,16 +324,9 @@ const C = {
   SwordFilterValues: ['Off', 'On'] as SwordFilterValueType[],
 
   SwordConf: {
+    // default is string
     repeatable: ['Obsoletes', 'Feature', 'GlobalOptionFilter'],
     integer: ['DisplayLevel'],
-    string: [
-      'module',
-      'DataPath',
-      'ModDrv',
-      'MinimumVersion',
-      'PreferredCSSXHTML',
-      'KeySort',
-    ],
     continuation: [
       'About',
       'Copyright',

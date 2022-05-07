@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable no-nested-ternary */
 /* eslint-disable class-methods-use-this */
@@ -43,6 +44,7 @@ import DragSizer, { DragSizerVal } from '../libxul/dragsizer';
 import './moduleManager.css';
 
 // TODO!: showModuleInfo
+// TODO!: support remote repos w/o mods.d.tar.gz
 
 import type {
   ModTypes,
@@ -55,9 +57,13 @@ import type { TCellInfo } from '../libxul/table';
 
 const Tables = {
   repository: ['renderRepoTable', 'repoTableData', 'repoColumnWidths'],
-  language: ['renderLangTable', 'langTableData'],
+  language: ['renderLangTable', 'langTableData', null],
   module: ['renderModTable', 'modTableData', 'modColumnWidths'],
 } as const;
+
+type TLanguageTableRow = [TCellInfo, string];
+
+const LanguageTableHeadings = [''];
 
 type TModuleTableRow = [
   TModCellInfo,
@@ -77,13 +83,32 @@ type TModuleTableRow = [
   typeof ON | typeof OFF
 ];
 
+const ModuleTableHeadings = [
+  'Type',
+  'About',
+  'Code',
+  'Repository',
+  'Version',
+  'Size',
+  'Features',
+  'Versification',
+  'Scope',
+  'Copyright',
+  'Distribution License',
+  'Source Type',
+  'Shared',
+  'Installed',
+];
+
 type TRepositoryTableRow = [
   TRepCellInfo,
   string,
   string,
   string,
-  typeof ON | typeof OFF
+  typeof ON | typeof OFF | typeof ALWAYS_ON
 ];
+
+const RepositoryTableHeadings = ['', '', '', ''];
 
 type TRepCellInfo = TCellInfo & {
   repo: Repository;
@@ -95,6 +120,10 @@ type TModCellInfo = TCellInfo & {
 
 const ON = '☑';
 const OFF = '☐';
+const ALWAYS_ON = '￭';
+const LanCol = {
+  iName: 1,
+} as const;
 const ModCol = {
   iType: 1,
   iName: 3,
@@ -108,34 +137,6 @@ const RepCol = {
   iPath: 3,
   iState: 4,
 } as const;
-
-function repositoryToRow(repo: Repository): TRepositoryTableRow {
-  return [
-    { repo },
-    repo.name || '?',
-    repo.domain,
-    repo.path,
-    repo.disabled ? ON : OFF,
-  ];
-}
-
-function loading(columnIndex: number) {
-  return (_ri: number, ci: number) => {
-    return ci === columnIndex;
-  };
-}
-
-function editable() {
-  return (_ri: number, ci: number) => {
-    return ci < 3;
-  };
-}
-
-function intent(columnIndex: number, theIntent: Intent) {
-  return (_ri: number, ci: number) => {
-    return ci === columnIndex ? theIntent : 'none';
-  };
-}
 
 G.Module.clearDownload();
 const Action = {
@@ -160,7 +161,7 @@ export type ManagerProps = XulProps;
 // these state keys written to Prefs.
 const notStatePref = {
   language: undefined as RowSelection,
-  langTableData: [] as string[][],
+  langTableData: [] as TLanguageTableRow[],
   renderLangTable: 0,
 
   module: undefined as RowSelection,
@@ -198,7 +199,7 @@ export default class ModuleManager extends React.Component {
     repoTableData: TRepositoryTableRow[];
     rawModuleData: RepositoryListing[];
     modTableData: TModuleTableRow[];
-    langTableData: string[][];
+    langTableData: TLanguageTableRow[];
   };
 
   destroy: (() => void)[];
@@ -214,6 +215,10 @@ export default class ModuleManager extends React.Component {
 
   onModColumnWidthChanged;
 
+  sState: (
+    s: Partial<ManagerState> | ((prevState: ManagerState) => void)
+  ) => void;
+
   constructor(props: ManagerProps) {
     super(props);
 
@@ -221,7 +226,9 @@ export default class ModuleManager extends React.Component {
     const s: ManagerState = {
       ...notStatePref,
       ...(getStatePref(props.id) as ManagerStatePref),
-      ...ModuleManager.saved,
+      langTableData: ModuleManager.saved.langTableData,
+      modTableData: ModuleManager.saved.modTableData,
+      repoTableData: ModuleManager.saved.repoTableData,
     };
     this.state = s;
 
@@ -247,6 +254,7 @@ export default class ModuleManager extends React.Component {
     this.loadModuleTable = this.loadModuleTable.bind(this);
     this.sizeTableToWindow = this.sizeTableToWindow.bind(this);
     this.setTableState = this.setTableState.bind(this);
+    this.sState = this.setState.bind(this);
   }
 
   componentDidMount() {
@@ -264,9 +272,9 @@ export default class ModuleManager extends React.Component {
           const code = this.loadLanguageTable(data);
           return this.loadModuleTable(code, data);
         })
-        .catch(() => {
+        .catch((er: Error) => {
           this.addToast({
-            message: 'Unable to download Master Repository List.',
+            message: `Unable to download Master Repository List (${er.message})`,
           });
           // Failed to load master list, so just load local repos.
           ModuleManager.saved.repoTableData = [];
@@ -337,9 +345,9 @@ export default class ModuleManager extends React.Component {
       const atable = tableRef[table].current as HTMLDivElement | null;
       if (atable) {
         const w = atable.clientWidth;
-        const t = columnWidths.reduce((p, c) => (p + c === -1 ? 0 : c), 0);
+        const t = columnWidths.reduce((p, c) => p + (c === -1 ? 0 : c), 0);
         const newColumnWidths = columnWidths.map((cw) => {
-          return w * (cw / t);
+          return cw === -1 ? -1 : w * (cw / t);
         });
         this.setTableState(table, {
           [prop]: newColumnWidths,
@@ -375,7 +383,7 @@ export default class ModuleManager extends React.Component {
     }
     repoTableData[row][col] = value;
     customRepos.push(repoTableData[row][0].repo);
-    this.setState({ repoTableData, customRepos });
+    this.sState({ repoTableData, customRepos });
     if ((col === 1 || col === 2) && repoTableData[row][RepCol.iState] === OFF) {
       setTimeout(() => this.switchRepo([row], true), 100);
     }
@@ -417,14 +425,16 @@ export default class ModuleManager extends React.Component {
         disabled = disabledRepos.includes(downloadKey(repo));
       }
       repo.disabled = disabled;
+      const css = classes([3], ['checkbox-column']);
       const canedit = repo.custom ? editable() : false;
       const isloading = repo.disabled ? false : loading(3);
+      const on = repo.builtin ? ALWAYS_ON : ON;
       repoTableData.push([
-        { loading: isloading, editable: canedit, repo },
+        { loading: isloading, editable: canedit, classes: css, repo },
         repo.name || '',
         repo.domain,
         repo.path,
-        repo.disabled ? OFF : ON,
+        repo.disabled ? OFF : on,
       ]);
     });
     this.setTableState('repository', { repoTableData });
@@ -436,61 +446,71 @@ export default class ModuleManager extends React.Component {
   updateRepositoryLists(rawModuleData: RepositoryListing[]) {
     const { repoTableData } = this.state as ManagerState;
     rawModuleData.forEach((listing, i) => {
-      if (listing !== null) {
+      if (listing === null) return;
+      if (typeof listing === 'string') {
+        this.addToast({ message: listing });
+        repoTableData[i][0].intent = intent(3, 'danger');
+        return;
+      }
+      if (Array.isArray(listing)) {
         ModuleManager.saved.rawModuleData[i] = listing;
-        if (repoTableData[i][RepCol.iState] === ON) {
-          repoTableData[i][0].intent = intent(3, 'primary');
-          if (typeof listing === 'string' && listing !== 'mods.d') {
-            repoTableData[i][0].intent = intent(3, 'danger');
-            if (listing) {
-              this.addToast({ message: listing });
-            }
-          }
-        } else repoTableData[i][0].intent = intent(3, 'none');
+        if ([ON, ALWAYS_ON].includes(repoTableData[i][RepCol.iState])) {
+          repoTableData[i][0].intent = intent(3, 'success');
+        }
       }
     });
     this.setTableState('repository', { repoTableData });
-    return rawModuleData;
+    return ModuleManager.saved.rawModuleData;
   }
 
   // Load language table with all languages found in the raw data, keeping
   // the selected language the same or else selecting the first one. It
   // returns the selected language code, or null if the table is empty.
-  loadLanguageTable(rawModuleData: RepositoryListing[]): string | null {
+  loadLanguageTable(rawModuleData: RepositoryListing[]): string {
     const { language, langTableData } = this.state as ManagerState;
-    const row = (language && regionsToRows(language)) || [];
-    const code = row.length && langTableData[row[0]][0];
-    const langs: Set<string> = new Set();
+    let code = 'en';
+    const row = (language && regionsToRows(language)[0]) || 0;
+    if (row < langTableData.length) {
+      code = langTableData[row][LanCol.iName];
+    }
+    const langs: Set<string> = new Set(code);
     rawModuleData.forEach((reporow) => {
-      if (reporow && typeof reporow !== 'string') {
-        reporow.forEach((c) =>
-          langs.add((c.Lang && c.Lang.replace(/-.*$/, '')) || '?')
-        );
+      if (Array.isArray(reporow)) {
+        reporow.forEach((c) => {
+          const l = c.Lang || 'en';
+          langs.add(l.replace(/-.*$/, ''));
+        });
       }
     });
-    const newTableData = [Array.from(langs).sort()];
-    let sel = (code && newTableData.findIndex((r) => r[0] === code)) || 0;
-    if (sel === -1) sel = 0;
+    const newTableData: TLanguageTableRow[] = [];
+    const langlist = Array.from(langs).sort();
+    langlist.forEach((l) => newTableData.push([{}, l]));
+    let isel =
+      (code && newTableData.findIndex((r) => r[LanCol.iName] === code)) || -1;
+    if (isel === -1 && newTableData.length) {
+      isel = 0;
+      code = newTableData[0][LanCol.iName];
+    }
     this.setTableState('language', {
       langTableData: newTableData,
-      language: [{ rows: [sel, sel] }],
+      language: isel === -1 ? undefined : [{ rows: [isel, isel] }],
     } as Partial<ManagerState>);
-    return code || null;
+    return code;
   }
 
   // Load the module table with modules sharing the language code,
   // or else with all modules if the code is null or undefined.
   loadModuleTable(fcode: string | null, rawModuleData: RepositoryListing[]) {
     const data: TModuleTableRow[] = [];
-    const hostedRepoMods = rawModuleData
-      .map((rmd) => {
-        if (typeof rmd === 'string') return '';
-        return (rmd && rmd.map((c) => c.module)) || null;
+    const repoModules = rawModuleData
+      .map((row) => {
+        if (!Array.isArray(row)) return null;
+        return row.map((c) => c.module);
       })
-      .flat()
-      .filter(Boolean);
-    const uniqueElements = new Set(hostedRepoMods);
-    const multiples = hostedRepoMods.filter((item) => {
+      .filter(Boolean)
+      .flat();
+    const uniqueElements = new Set(repoModules);
+    const multiples = repoModules.filter((item) => {
       if (uniqueElements.has(item)) {
         uniqueElements.delete(item);
         return false;
@@ -504,16 +524,17 @@ export default class ModuleManager extends React.Component {
     });
     const { repoTableData } = this.state as ManagerState;
     rawModuleData.forEach((listing, i) => {
-      if (listing && typeof listing !== 'string') {
+      if (Array.isArray(listing)) {
         listing.forEach((c) => {
           const code = (c.Lang && c.Lang.replace(/-.*$/, '')) || '?';
           if (
             (!fcode || fcode !== code) &&
             (!isRepoLocal(c.sourceRepository) ||
-              !hostedRepoMods.includes(c.module))
+              !repoModules.includes(c.module))
           ) {
+            const css = classes([12, 13], ['checkbox-column']);
             data.push([
-              { repo: repoTableData[i][0].repo },
+              { repo: repoTableData[i][0].repo, classes: css },
               c.moduleType,
               (c.Description &&
                 (c.Description[i18n.language] || c.Description.en)) ||
@@ -551,7 +572,7 @@ export default class ModuleManager extends React.Component {
 
   rowSelect(e: React.MouseEvent, table: keyof typeof Tables, row: number) {
     const tableSel = table;
-    this.setState((prevState: ManagerState) => {
+    this.sState((prevState) => {
       const selection = prevState[tableSel];
       const isSelected = selection?.find((r) => r.rows[0] === row);
       const selected =
@@ -568,26 +589,27 @@ export default class ModuleManager extends React.Component {
       .state as ManagerState;
     const repoTableData = clone(repoTableDataWas);
     const disabledRepos = dr.slice();
-    const reload = repoTableData.map(() => false);
     rows.forEach((r) => {
       const unswitchable = repoTableDataWas[r][0].repo.builtin;
-      if (!unswitchable && repoTableDataWas[r][RepCol.iState] === ON) {
+      if (!unswitchable) {
         const rowkey = downloadKey(repoTableDataWas[r][0].repo);
         const disabledIndex = disabledRepos.findIndex((drs) => {
           return drs === rowkey;
         });
         if (onOrOff === true || repoTableDataWas[r][RepCol.iState] === OFF) {
           repoTableData[r][RepCol.iState] = ON;
+          repoTableData[r][0].repo.disabled = false;
           if (disabledIndex !== -1) disabledRepos.splice(disabledIndex, 1);
-          repoTableData[r][0].loading = true;
-          reload[r] = true;
+          repoTableData[r][0].loading = loading(3);
         } else {
+          repoTableData[r][RepCol.iState] = OFF;
+          repoTableData[r][0].repo.disabled = true;
+          if (disabledIndex === -1) disabledRepos.push(rowkey);
           if (repoTableData[r][0].loading) {
             G.Downloader.ftpCancel();
             repoTableData[r][0].loading = false;
           }
-          if (disabledIndex === -1) disabledRepos.push(rowkey);
-          repoTableData[r][RepCol.iState] = OFF;
+          repoTableData[r][0].intent = intent(3, 'none');
         }
       }
     });
@@ -595,16 +617,16 @@ export default class ModuleManager extends React.Component {
       repoTableData,
       disabledRepos,
     });
-    if (reload.some((r) => r)) {
-      const repos = repoTableData.map((r, i) => (reload[i] ? r[0].repo : null));
-      G.Downloader.repositoryListing(repos)
-        .then((listing) => {
-          const data = this.updateRepositoryLists(listing);
-          const code = this.loadLanguageTable(data);
-          return this.loadModuleTable(code, data);
-        })
-        .catch((er) => log.warn(er));
-    }
+    const repos = repoTableData.map((r, i) =>
+      rows.includes(i) ? r[0].repo : null
+    );
+    G.Downloader.repositoryListing(repos)
+      .then((listing) => {
+        const data = this.updateRepositoryLists(listing);
+        const code = this.loadLanguageTable(data);
+        return this.loadModuleTable(code, data);
+      })
+      .catch((er) => log.warn(er));
   }
 
   eventHandler(this: ModuleManager, ev: SyntheticEvent) {
@@ -679,7 +701,8 @@ export default class ModuleManager extends React.Component {
               builtin: false,
             };
             const row = repositoryToRow(repo);
-            row[0].classes = ['custom-repo'];
+            row[0].classes = classes([3], ['checkbox-column'], ['custom-repo']);
+            row[0].editable = editable();
             repoTableData.unshift(row);
             customRepos.push(repo);
             this.setTableState('repository', {
@@ -726,6 +749,7 @@ export default class ModuleManager extends React.Component {
         // Handle table cell clicks
         const cell = ofClass(['bp4-table-cell'], e.target);
         if (cell) {
+          // TODO! Fix this bug classes wont work for cell recognition
           const rowm = cell.element.className.match(
             /bp4-table-cell-row-(\d+)\b/
           );
@@ -736,21 +760,20 @@ export default class ModuleManager extends React.Component {
           const col = colm ? Number(colm[1]) : -1;
           if (row !== -1 && col !== -1) {
             const table = ofClass(
-              ['languagetable', 'moduletable', 'repositorytable'],
+              ['language', 'module', 'repository'],
               cell.element
             );
-            if (table && table.type === 'repositorytable') {
+            if (table && table.type === 'repository') {
               // RepositoryTable
               if (row > -1 && col < 3) this.rowSelect(e, 'repository', row);
               if (col === 3) this.switchRepo([row]);
-            } else if (table && table.type === 'languagetable') {
+            } else if (table && table.type === 'language') {
               // LanguageTable
               this.rowSelect(e, 'language', row);
               const { langTableData } = this.state as ManagerState;
-              const data = ModuleManager.saved.rawModuleData;
-              const code = langTableData[row][0];
-              this.loadModuleTable(code, data);
-            } else if (table && table.type === 'moduletable') {
+              const code = langTableData[row][LanCol.iName];
+              this.loadModuleTable(code, ModuleManager.saved.rawModuleData);
+            } else if (table && table.type === 'module') {
               // ModuleTable
               this.rowSelect(e, 'module', row);
               const state = this.state as ManagerState;
@@ -781,7 +804,7 @@ export default class ModuleManager extends React.Component {
                   ).then((dl) => {
                     modTableData[row][0].intent = intent(
                       13,
-                      dl ? 'primary' : 'danger'
+                      dl ? 'success' : 'danger'
                     );
                     return dl;
                   });
@@ -812,8 +835,8 @@ export default class ModuleManager extends React.Component {
   setTableState(table: keyof typeof Tables, s?: Partial<ManagerState>) {
     // Two steps must be used for statePrefs to be written to Prefs
     // before the reset will read them.
-    if (s) this.setState(s);
-    this.setState((prevState: ManagerState) => {
+    if (s) this.sState(s);
+    this.sState((prevState) => {
       const renderTable = Tables[table][0];
       const tableData = Tables[table][1];
       let render = prevState[renderTable];
@@ -878,7 +901,7 @@ export default class ModuleManager extends React.Component {
         !regionsToRows(repository).every(
           (r) => repoTableData[r] && repoTableData[r][0].repo.custom
         ),
-      repoCancel: !modTableData.find((r) => r[0].loading),
+      repoCancel: !repoTableData.find((r) => r[0].loading),
     };
 
     return (
@@ -889,7 +912,7 @@ export default class ModuleManager extends React.Component {
           usePortal
           ref={this.refHandlers.toaster}
         />
-        <Hbox className="language-pane" flex="1">
+        <Hbox flex="1">
           {languageTableOpen && (
             <>
               <Groupbox
@@ -899,7 +922,9 @@ export default class ModuleManager extends React.Component {
               >
                 <Box flex="1" onClick={eventHandler}>
                   <Table
+                    className="language"
                     key={renderLangTable}
+                    columnHeadings={LanguageTableHeadings}
                     data={langTableData}
                     selectedRegions={language}
                   />
@@ -908,13 +933,13 @@ export default class ModuleManager extends React.Component {
                   id="languageListClose"
                   icon="chevron-left"
                   fill
-                  onClick={() => this.setState({ languageListOpen: false })}
+                  onClick={() => this.sState({ languageTableOpen: false })}
                 />
               </Groupbox>
               <DragSizer
                 onDragStart={() => state.languageTableWidth}
-                onDragging={(_e: React.MouseEvent, v: DragSizerVal) =>
-                  this.setState({ languageListPanelWidth: v.sizerPos })
+                onDragEnd={(_e: React.MouseEvent, v: DragSizerVal) =>
+                  this.sState({ languageTableWidth: v.sizerPos })
                 }
                 min={75}
                 max={250}
@@ -929,7 +954,7 @@ export default class ModuleManager extends React.Component {
                   id="languageListOpen"
                   icon="chevron-right"
                   style={{ height: '100%' }}
-                  onClick={() => this.setState({ languageListOpen: true })}
+                  onClick={() => this.sState({ languageTableOpen: true })}
                 />
               </Vbox>
             </Groupbox>
@@ -943,18 +968,18 @@ export default class ModuleManager extends React.Component {
             <Hbox flex="1">
               {showModuleInfo && <div id="moduleInfo">Module Information</div>}
               {!showModuleInfo && (
-                <Box flex="1">
-                  <Table
-                    className="module-table"
-                    key={renderModTable}
-                    data={modTableData}
-                    selectedRegions={module}
-                    columnWidths={modColumnWidths}
-                    domref={tableRef.module}
-                    onColumnWidthChanged={onModColumnWidthChanged}
-                    onClick={eventHandler}
-                  />
-                </Box>
+                <Table
+                  flex="1"
+                  className="module"
+                  key={renderModTable}
+                  data={modTableData}
+                  selectedRegions={module}
+                  columnHeadings={ModuleTableHeadings}
+                  columnWidths={modColumnWidths}
+                  domref={tableRef.module}
+                  onColumnWidthChanged={onModColumnWidthChanged}
+                  onClick={eventHandler}
+                />
               )}
             </Hbox>
             <Vbox className="button-stack" pack="center">
@@ -994,7 +1019,7 @@ export default class ModuleManager extends React.Component {
             <DragSizer
               onDragStart={() => state.repoTableHeight}
               onDragEnd={(_e: React.MouseEvent, v: DragSizerVal) =>
-                this.setState({ repoListPanelHeight: v.sizerPos })
+                this.sState({ repoTableHeight: v.sizerPos })
               }
               orient="horizontal"
               shrink
@@ -1008,10 +1033,12 @@ export default class ModuleManager extends React.Component {
               <Box flex="1">
                 {!!repoTableData.length && (
                   <Table
-                    className="repository-table"
+                    flex="1"
+                    className="repository"
                     key={renderRepoTable}
                     data={repoTableData}
                     selectedRegions={repository}
+                    columnHeadings={RepositoryTableHeadings}
                     columnWidths={repoColumnWidths}
                     domref={tableRef.repository}
                     onClick={eventHandler}
@@ -1050,12 +1077,12 @@ export default class ModuleManager extends React.Component {
 
         <Hbox className="dialogbuttons" pack="end" align="end">
           {repoTableOpen && (
-            <Button onClick={() => this.setState({ repoListOpen: false })}>
+            <Button onClick={() => this.sState({ repoTableOpen: false })}>
               {i18n.t('less.label')}
             </Button>
           )}
           {!repoTableOpen && (
-            <Button onClick={() => this.setState({ repoListOpen: true })}>
+            <Button onClick={() => this.sState({ repoTableOpen: true })}>
               {i18n.t('moduleSources.label')}
             </Button>
           )}
@@ -1079,5 +1106,43 @@ ModuleManager.saved = {
   langTableData: [],
   rawModuleData: [],
 };
+
+function repositoryToRow(repo: Repository): TRepositoryTableRow {
+  return [
+    { repo },
+    repo.name || '?',
+    repo.domain,
+    repo.path,
+    repo.disabled ? ON : OFF,
+  ];
+}
+
+function loading(columnIndex: number) {
+  return (_ri: number, ci: number) => {
+    return ci === columnIndex;
+  };
+}
+
+function editable() {
+  return (_ri: number, ci: number) => {
+    return ci < 3;
+  };
+}
+
+function intent(columnIndex: number, theIntent: Intent) {
+  return (_ri: number, ci: number) => {
+    return ci === columnIndex ? theIntent : 'none';
+  };
+}
+
+function classes(
+  columnIndexArray: number[],
+  theClasses: string[],
+  wholeRowClasses?: string[]
+) {
+  return (_ri: number, ci: number) => {
+    return columnIndexArray.includes(ci) ? theClasses : wholeRowClasses || [];
+  };
+}
 
 renderToRoot(<ModuleManager id="downloader" />);

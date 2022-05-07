@@ -24,8 +24,7 @@ const defaultProps = {
 };
 
 // NOTE: onDragStart plus either onDragging or onDragEnd must be
-// implemented in order for the DragSizer to work. If onDragging
-// is provided, it is be responsible for moving the sizer.
+// implemented in order for the DragSizer to work.
 const propTypes = {
   ...xulPropTypes,
   onDragStart: PropTypes.func.isRequired,
@@ -127,7 +126,7 @@ class DragSizer extends React.Component {
       if (!onDragging) {
         const sizerElem = this.sizerRef.current as HTMLDivElement | undefined;
         if (sizerElem) {
-          sizerElem.style[orient === 'vertical' ? 'left' : 'top'] = `0px`;
+          sizerElem.style[orient === 'vertical' ? 'right' : 'top'] = `0px`;
         }
       }
       this.setState({ dragging: null });
@@ -140,23 +139,27 @@ class DragSizer extends React.Component {
     if (dragging !== null) {
       const props = this.props as DragSizerProps;
       const { orient, shrink, min, max, onDragging } = props;
-      e.preventDefault();
-      const delta = (orient === 'vertical' ? e.clientX : e.clientY) - startpos;
-      const value = dragging + (shrink ? -1 * delta : delta);
-      let sizer = value;
-      if (sizer < min) sizer = min;
-      if (max && sizer > max) sizer = max;
-      let isMinMax = null;
-      if (value < min - 5) isMinMax = false;
-      if (max && value > max + 5) isMinMax = true;
       const sizerElem = this.sizerRef.current as HTMLDivElement | undefined;
-      // If onDragging is not implemented, then top will be used to move the sizer.
-      if (!onDragging && sizerElem) {
-        sizerElem.style[orient === 'vertical' ? 'left' : 'top'] = `${
-          dragging - value
-        }px`;
+      e.preventDefault();
+      if (sizerElem) {
+        // If onDragging is not implemented, then top will be used to move the sizer.
+        const usetop = !onDragging;
+        const delta =
+          (orient === 'vertical' ? e.clientX : e.clientY) - startpos;
+        const value = dragging + (shrink && usetop ? -1 * delta : delta);
+        let sizer = value;
+        if (sizer < min) sizer = min;
+        if (max && sizer > max) sizer = max;
+        let isMinMax = null;
+        if (value < min - 5) isMinMax = false;
+        if (max && value > max + 5) isMinMax = true;
+        if (usetop) {
+          sizerElem.style[orient === 'vertical' ? 'right' : 'top'] = `${
+            dragging - value
+          }px`;
+        }
+        return { mousePos: value, sizerPos: sizer, isMinMax };
       }
-      return { mousePos: value, sizerPos: sizer, isMinMax };
     }
     return null;
   }

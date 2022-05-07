@@ -509,15 +509,16 @@ export function parseSwordConf(config: string | LocalFile): SwordConfType {
         } else if (C.SwordConf.integer.includes(entry)) {
           const ent = entry as typeof C.SwordConf.integer[number];
           r[ent] = Number(value);
-        } else if (C.SwordConf.string.includes(entry)) {
-          const ent = entry as typeof C.SwordConf.string[number];
-          r[ent] = value as SwordConfType['ModDrv'];
         } else if (C.SwordConf.localization.includes(entryBase)) {
           const ent = entryBase as typeof C.SwordConf.localization[number];
           const loc = entry.substring(entryBase.length + 1) || 'en';
           const obj = r[ent] || {};
           obj[loc] = value;
           r[ent] = obj;
+        } else {
+          // default is string;
+          const rx = r as any;
+          rx[entry] = value;
         }
       }
     }

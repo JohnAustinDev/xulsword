@@ -755,20 +755,15 @@ export const GPublic = {
     ) => Promise<RepositoryListing[]>,
     ftp: func as unknown as (
       download: Download,
-      tmpdir?: string | null, // returns a Buffer if tmpdir is null/undefined
-      progress?: ((prog: number) => void) | null, // returns progress to calling window
-      ftpConnection?: any
-    ) => Promise<string | Buffer>, // path or file Buffer
+      tmpdir: string,
+      progress?: ((prog: number) => void) | null
+    ) => Promise<string | null>, // path, or null if canceled
     ftpDir: func as unknown as (
       download: Download,
-      tmpdir?: string | null, // returns a Buffer if tmpdir is null/undefined
-      progress?: ((prog: number) => void) | null, // returns progress to calling window
-      ftpConnection?: any
-    ) => Promise<string | Buffer>, // path or zip buffer
+      tmpdir: string,
+      progress?: ((prog: number) => void) | null
+    ) => Promise<string | null>, // path, or null if canceled
     ftpCancel: func as unknown as () => void,
-    untargz: func as unknown as (
-      pathOrBuffer: string | Buffer
-    ) => Promise<{ header: any; content: Buffer }[]>,
   },
   Module: {
     download: func as unknown as (

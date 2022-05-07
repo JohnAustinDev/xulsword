@@ -55,7 +55,7 @@ type TCellSetter = (
 type TCellLookup = (
   rowIndex: number,
   columnIndex: number
-) => { value: any; info: TCellInfo };
+) => { value: any; info: TCellInfo; allColumnsIndex: number };
 
 type TSortCallback = (
   columnIndex: number,
@@ -83,19 +83,22 @@ abstract class AbstractSortableColumn implements TSortableColumn {
     state: TableState
   ) {
     const cellRenderer = (rowIndex: number, columnIndex: number) => {
-      const { value, info } = getCellData(rowIndex, columnIndex);
+      const { value, info, allColumnsIndex } = getCellData(
+        rowIndex,
+        columnIndex
+      );
       let { editable, loading, intent, classes } = info;
       if (typeof editable === 'function') {
-        editable = editable(rowIndex, columnIndex);
+        editable = editable(rowIndex, allColumnsIndex);
       }
       if (typeof loading === 'function') {
-        loading = loading(rowIndex, columnIndex);
+        loading = loading(rowIndex, allColumnsIndex);
       }
       if (typeof intent === 'function') {
-        intent = intent(rowIndex, columnIndex);
+        intent = intent(rowIndex, allColumnsIndex);
       }
       if (typeof classes === 'function') {
-        classes = classes(rowIndex, columnIndex);
+        classes = classes(rowIndex, allColumnsIndex);
       }
       if (editable) {
         const dataKey = Table.dataKey(rowIndex, columnIndex);
@@ -181,7 +184,7 @@ const defaultProps = {
 
 const propTypes = {
   ...xulPropTypes,
-  columnHeadings: PropTypes.arrayOf(PropTypes.string),
+  columnHeadings: PropTypes.arrayOf(PropTypes.string).isRequired,
   columnInfo: PropTypes.arrayOf(PropTypes.object),
   columnWidths: PropTypes.arrayOf(PropTypes.number),
   // rowHeadings: PropTypes.arrayOf(PropTypes.string),
@@ -195,7 +198,7 @@ const propTypes = {
 };
 
 type TableProps = XulProps & {
-  columnHeadings?: string[];
+  columnHeadings: string[];
   columnInfo?: TColInfo;
   columnWidths?: number[]; // -1 = hide column
   // rowHeadings?: string[];
@@ -210,7 +213,7 @@ type TableProps = XulProps & {
 
 type TableState = {
   columns: TSortableColumn[];
-  sortedIndexMap: number[];
+  rowIndexMap: number[];
   sparseCellData: { [i: string]: string };
   sparseCellIntent: { [i: string]: Intent };
 };
@@ -224,25 +227,29 @@ class Table extends React.Component {
     return `${rowIndex}-${columnIndex}`;
   };
 
+  columnIndexToDataMap: number[];
+
   constructor(props: TableProps) {
     super(props);
-    const { data, columnHeadings } = props;
+    const { columnHeadings } = props;
 
     // Create new columns, one for each column of data (minus
     // the data's info column).
     const columns = [];
-    for (let c = 0; c < data[0].length - 1; c += 1) {
+    for (let c = 0; c < columnHeadings.length; c += 1) {
       columns.push(
         new TextSortableColumn((columnHeadings && columnHeadings[c]) || '', c)
       );
     }
     const s: TableState = {
       columns,
-      sortedIndexMap: [],
+      rowIndexMap: [],
       sparseCellData: {},
       sparseCellIntent: {},
     };
     this.state = s;
+
+    this.columnIndexToDataMap = [];
 
     this.getCellData = this.getCellData.bind(this);
     this.sortColumn = this.sortColumn.bind(this);
@@ -253,20 +260,23 @@ class Table extends React.Component {
   }
 
   getCellData(rowIndex: number, columnIndex: number) {
-    const { sortedIndexMap } = this.state as TableState;
-    const { data, columnInfo, cellInfo } = this.props as TableProps;
-    const sortedRowIndex = sortedIndexMap[rowIndex];
-    let srowIndex = rowIndex;
-    if (sortedRowIndex != null) {
-      srowIndex = sortedRowIndex;
-    }
+    const props = this.props as TableProps;
+    const { rowIndexMap } = this.state as TableState;
+    const { data, columnInfo, cellInfo } = props;
+    const sortedRowIndex = rowIndexMap[rowIndex];
+    let dataRowIndex = rowIndex;
+    let dataColIndex = columnIndex;
+    if (sortedRowIndex != null) dataRowIndex = sortedRowIndex;
+    dataColIndex = this.columnIndexToDataMap[columnIndex];
+    const allColumnsIndex = dataColIndex - 1;
     return {
-      value: data[srowIndex][columnIndex + 1],
+      value: data[dataRowIndex][dataColIndex],
       info: {
-        ...((columnInfo && columnInfo[columnIndex]) || {}),
-        ...data[rowIndex][0],
-        ...((cellInfo && cellInfo[rowIndex][columnIndex]) || {}),
+        ...((columnInfo && columnInfo[allColumnsIndex]) || {}),
+        ...data[dataRowIndex][0],
+        ...((cellInfo && cellInfo[dataRowIndex][allColumnsIndex]) || {}),
       },
+      allColumnsIndex,
     };
   }
 
@@ -333,37 +343,40 @@ class Table extends React.Component {
     const numRows = data.length;
     const columns = cols
       .map((col, i) => {
-        if (!(columnWidths && columnWidths[i] === -1))
-          return col.getColumn(
-            this.getCellData,
-            this.sortColumn,
-            this.cellValidator,
-            this.cellSetter,
-            state
-          );
-        return null;
+        if (columnWidths && columnWidths[i] === -1) return null;
+        return col.getColumn(
+          this.getCellData,
+          this.sortColumn,
+          this.cellValidator,
+          this.cellSetter,
+          state
+        );
       })
       .filter(Boolean) as JSX.Element[];
+    if (columnWidths) {
+      this.columnIndexToDataMap = [];
+      columnWidths?.forEach((w, i) => {
+        if (w !== -1) this.columnIndexToDataMap.push(i + 1);
+      });
+    } else this.columnIndexToDataMap = columns.map((_c, i) => i + 1);
 
     const classes = ['table'];
     if (onColumnWidthChanged) classes.push('width-resizable');
 
     return (
       <Box {...addClass(classes, props)}>
-        <div>
-          <BPTable
-            numRows={numRows}
-            columnWidths={columnWidths?.filter((w) => w !== -1)}
-            selectedRegions={selectedRegions}
-            selectionModes={selectionModes}
-            enableMultipleSelection={enableMultipleSelection}
-            enableRowResizing={false}
-            enableRowHeader={false}
-            onColumnWidthChanged={onColumnWidthChanged}
-          >
-            {columns}
-          </BPTable>
-        </div>
+        <BPTable
+          numRows={numRows}
+          columnWidths={columnWidths?.filter((w) => w !== -1)}
+          selectedRegions={selectedRegions}
+          selectionModes={selectionModes}
+          enableMultipleSelection={enableMultipleSelection}
+          enableRowResizing={false}
+          enableRowHeader={false}
+          onColumnWidthChanged={onColumnWidthChanged}
+        >
+          {columns}
+        </BPTable>
       </Box>
     );
   }

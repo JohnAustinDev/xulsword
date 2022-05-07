@@ -1,18 +1,22 @@
-/*
-.width-resizable,
-.width-resizable > div {
-  overflow-x: visible;
-  overflow-y: hidden;
+.table {
+  position: relative;
+  width: 100%;
+  height: 100%;
 }
-.width-resizable .bp4-table-quadrant-scroll-container  {
+
+.table .bp4-table-container {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  height: 100%;
   overflow-x: hidden;
-}
-*/
-
-.table.width-resizable {
-  overflow: hidden;
-}
-
-.table.width-resizable > div {
+  overflow-y: auto;
   width: max-content;
+}
+.table:not(.width-resizable) .bp4-table-container {
+  width: 100%;
+}
+
+.table .bp4-table-quadrant-scroll-container {
+  overflow-x: hidden;
 }
