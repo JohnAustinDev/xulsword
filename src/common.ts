@@ -541,6 +541,10 @@ export function downloadKey(dl: Download): string {
   return `[${[dl.name, dl.domain, dl.path, dl.file].join('][')}]`;
 }
 
+export function modrepKey(module: string, repository: Repository): string {
+  return [downloadKey(repository), module].join('.');
+}
+
 export function regionsToRows(regions: Region[]): number[] {
   const sels: Set<number> = new Set();
   regions?.forEach((region) => {

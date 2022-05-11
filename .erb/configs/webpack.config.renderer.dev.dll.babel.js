@@ -49,7 +49,7 @@ export default merge(baseConfig, {
     // DllPlugin generated errors while trying to parse Find-VisualStudio.cs
     // in node-gyp, so ingore *.cs files.
     new webpack.IgnorePlugin({
-      resourceRegExp: /\.cs$/,
+      resourceRegExp: /(@types|\.cs$)/,
     }),
 
     new webpack.DllPlugin({

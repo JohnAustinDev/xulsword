@@ -1,10 +1,14 @@
+/* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable promise/no-promise-in-callback */
 /* eslint-disable promise/param-names */
 /* eslint-disable prefer-rest-params */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import fs from 'fs';
 import fpath from 'path';
 import log from 'electron-log';
+import FTP, { ListingElement } from 'ftp';
+import GUNZIP from 'gunzip-maybe';
+import TAR from 'tar-stream';
+import ZIP from 'adm-zip';
 import { Stream, Readable } from 'stream';
 import { downloadKey, isRepoLocal, parseSwordConf } from '../../common';
 import LocalFile from './localFile';
@@ -16,23 +20,9 @@ import type {
   RepositoryListing,
 } from '../../type';
 
-type ListType = {
-  type: 'd' | '-';
-  name: string;
-  path: string;
-  size: number; // bytes
-  date: any;
-};
+type ListingElementR = ListingElement & { dirpath: string };
 
-const FTP = require('ftp');
-
-const GUNZIP = require('gunzip-maybe');
-
-const TAR = require('tar-stream');
-
-const ZIP = require('adm-zip');
-
-let CancelFTP = false;
+let CancelFTP = true;
 
 function streamToBuffer(stream: Readable, cbx?: any): Promise<Buffer> {
   const buf: any[] = [];
@@ -53,198 +43,227 @@ function streamToBuffer(stream: Readable, cbx?: any): Promise<Buffer> {
   });
 }
 
-function connect(domain: string, reject: (er: Error) => void): any {
-  const c = new FTP();
-  let cancelTO: NodeJS.Timeout | null = null;
-  const reject0 = (err: Error) => {
-    if (cancelTO) clearInterval(cancelTO);
-    c.destroy();
-    reject(err);
-  };
-  c.on('error', (er: Error) => {
-    reject0(er);
+// Make an FTP connection to a remote server, run an arbitrary
+// function with it, and return an arbitrary promise. Returns
+// null if canceled.
+export async function connect<Retval>(
+  domain: string,
+  func: (c: FTP) => Promise<Retval>
+): Promise<Retval | null> {
+  if (CancelFTP) return null;
+  return new Promise((resolve, reject) => {
+    const c = new FTP();
+    let cancelTO: NodeJS.Timeout | null = null;
+    const reject0 = (err: Error) => {
+      if (cancelTO) clearInterval(cancelTO);
+      c.destroy();
+      reject(err);
+    };
+    c.on('error', (er: Error) => {
+      reject0(er);
+    });
+    c.on('close', (er: boolean) => {
+      if (cancelTO) clearInterval(cancelTO);
+      if (er) reject0(new Error(`Error during connection close.`));
+    });
+    c.on('ready', () => {
+      const resultPromise = func(c);
+      c.end();
+      resolve(resultPromise);
+    });
+    try {
+      log.info(`Connecting: ${domain}`);
+      c.connect({ host: domain });
+      cancelTO = setInterval(() => {
+        if (CancelFTP) {
+          if (cancelTO) clearInterval(cancelTO);
+          c.destroy();
+          resolve(null);
+        }
+      }, 300);
+    } catch (er: any) {
+      reject0(er);
+    }
   });
-  c.on('close', (er: Error) => {
-    if (cancelTO) clearInterval(cancelTO);
-    if (er) reject0(er);
-  });
-  try {
-    log.info(`Connecting: ${domain}`);
-    c.connect({ host: domain });
-    cancelTO = setInterval(() => {
-      if (CancelFTP) {
-        reject0(new Error('Canceled'));
-      }
-    }, 300);
-  } catch (er: any) {
-    reject0(er);
-  }
-  return c;
 }
 
-async function list(
-  connection: any,
+// Take an FTP connection and directory path and returns a promise for a
+// recursive listing of the directory's contents (unless norecurse is set
+// which will only list the contents of the directory itself).
+// NOTE: May never resolve if connection is canceled.
+export async function list(
+  c: FTP,
   dirpath: string,
-  recurse: boolean
-): Promise<ListType[]> {
-  const result: ListType[] = [];
+  basepath?: string,
+  norecurse?: boolean
+): Promise<ListingElementR[] | null> {
+  if (CancelFTP) return null;
+  let result: ListingElementR[] | null = [];
   return new Promise((resolve, reject) => {
-    connection.list(dirpath, false, (err: Error, listing: ListType[]) => {
+    c.list(dirpath, false, (err: Error, listing: ListingElement[]) => {
       if (err) reject(err);
       else {
-        const listpromises: Promise<ListType[]>[] = [];
-        listing.forEach((l) => {
-          l.path = dirpath;
-          result.push(l);
-          if (recurse && l.type === 'd') {
-            listpromises.push(list(connection, l.path, true));
+        listing.forEach(async (lx) => {
+          const l = lx as ListingElementR;
+          l.dirpath = basepath || '';
+          if (result) {
+            result.push(l);
+            if (!norecurse && l.type === 'd') {
+              const subl = await list(
+                c,
+                fpath.join(dirpath, l.name),
+                fpath.join(l.dirpath, l.name)
+              );
+              if (subl === null) result = null;
+              else result.concat(subl);
+            }
           }
         });
-        if (listpromises) {
-          Promise.all(listpromises)
-            .then((r) => resolve(result.concat(r.flat())))
-            .catch((er) => reject(er));
-        }
         resolve(result);
       }
     });
   });
 }
 
-// Download a file using FTP and either save it to tmpdir returning the
-// new file path, or, if tmpdir is undefined, return the contents of the
-// file as a Buffer. If FTP was canceled null is returned. If a progress
-// function is provided, it will be used to report progress.
-async function ftp(
-  download: Download,
-  tmpdir?: string | null,
+// Takes an FTP connection and downloads a directory, returning it
+// as a zip object promise. If canceled, null is returned. If a
+// progress function is provided, it will be used to report progress.
+// If zipObj is provided, the downloaded directory will be added to it.
+export async function getDir(
+  c: FTP,
+  dirpath: string,
   progress?: ((prog: number) => void) | null,
-  connection?: any
-): Promise<Buffer | string | null> {
+  zipObj?: ZIP
+): Promise<ZIP | null> {
+  if (!CancelFTP) {
+    const listing = await list(c, dirpath);
+    if (listing) {
+      const buffers = await getFiles(
+        c,
+        listing.map((l) => fpath.join(dirpath, l.dirpath, l.name)),
+        progress
+      );
+      if (buffers) {
+        const zip = zipObj || new ZIP();
+        listing.forEach((l, i) => {
+          zip.addFile(fpath.join(l.dirpath, l.name), buffers[i]);
+        });
+        return zip;
+      }
+    }
+  }
+  return null;
+}
+
+// Take an FTP connection and filepath and return a Buffer promise.
+// Progress is reported if a progress function is provided. Returns
+// null if canceled.
+export async function getFile(
+  c: FTP,
+  filepath: string,
+  progress?: ((p: number) => void) | null
+): Promise<Buffer | null> {
   if (CancelFTP) {
     if (progress) progress(-1);
     return null;
   }
   return new Promise((resolve, reject) => {
-    const reject0 = (err: Error) => {
-      if (progress) progress(-1);
-      reject(err);
-    };
-    const { domain, path, file, name } = download;
-    const c = connection || connect(domain, reject0);
-    const outfile =
-      (tmpdir && new LocalFile(tmpdir).append(name || file)) || null;
-    const filepath = ['', path, file].join('/').replaceAll('//', '/');
-    c.on('ready', () => {
-      const get = (size?: number) => {
-        c.get(filepath, (err: Error, stream: any) => {
-          if (err) {
-            reject0(err);
-            if (!connection) c.end();
-          } else {
-            if (progress && size) {
-              let current = 0;
-              progress(0);
-              stream.on('data', (chunk: Buffer) => {
-                current += chunk.length;
-                progress(current / size);
-              });
-            }
-            if (!outfile) {
-              streamToBuffer(stream, (er: any, buffer: Buffer) => {
-                if (er) reject0(er);
-                else resolve(buffer);
-              });
-            }
-            stream.once('close', () => {
-              if (progress && size) progress(-1);
-              if (outfile) {
-                stream.pipe(fs.createWriteStream(outfile.path));
-                resolve(outfile.path);
-              }
-              if (!connection) c.end();
+    const getnow = (size?: number) => {
+      c.get(filepath, (err: Error, stream: any) => {
+        if (err) {
+          reject(err);
+        } else {
+          if (progress && size) {
+            let current = 0;
+            progress(0);
+            stream.on('data', (chunk: Buffer) => {
+              current += chunk.length;
+              progress(current / size);
             });
           }
-        });
-      };
-      if (progress) {
-        c.size(filepath, (err: any, size: number) => {
-          if (err) {
-            reject0(err);
-          } else get(size);
-        });
-      } else get();
-    });
+          streamToBuffer(stream, (er: any, buffer: Buffer) => {
+            if (er) reject(er);
+            else resolve(buffer);
+          });
+          stream.once('close', () => {
+            if (progress && size) progress(-1);
+          });
+        }
+      });
+    };
+    if (progress) {
+      c.size(filepath, (err: any, size: number) => {
+        if (err) {
+          reject(err);
+        } else getnow(size);
+      });
+    } else getnow();
   });
 }
 
-// Download a directory using FTP and either copy it to tmpdir returning the
-// new directory path, or, if tmpdir is undefined, return the contents of the
-// directory as a zip Buffer. If canceled, null is returned. If a progress
-// function is provided, it will be used to report progress.
-async function ftpDir(
-  download: Download,
-  tmpdir?: string | null,
-  progress?: ((prog: number) => void) | null,
-  connection?: any
-): Promise<Buffer | string | null> {
+// Takes an FTP connection and downloads an array of files, returning a
+// Buffer array promise. If FTP was canceled null is returned. If a
+// progress function is provided, it will be used to report progress.
+export async function getFiles(
+  c: FTP,
+  files: string[],
+  progress?: ((prog: number) => void) | null
+): Promise<Buffer[] | null> {
   if (CancelFTP) {
     if (progress) progress(-1);
     return null;
   }
-  return new Promise((resolve, reject) => {
-    const reject0 = (err: Error) => {
+  if (progress) progress(0);
+  const total = files.length;
+  let prog = 0;
+  const bufpromises = files.map((f) =>
+    getFile(c, f).then((b) => {
+      prog += 1;
+      if (progress) progress(prog / total);
+      return b;
+    })
+  );
+  return Promise.all(bufpromises)
+    .then((bufs) => {
       if (progress) progress(-1);
-      reject(err);
-    };
-    const { domain, path, file, name } = download;
-    const c = connection || connect(domain, reject0);
-    const outfile =
-      (tmpdir && new LocalFile(tmpdir).append(name || file)) || null;
-    const dirpath = ['', path, file].join('/').replaceAll('//', '/');
-    c.on('ready', async () => {
-      const listing = await list(c, dirpath, true);
-      let current = 0;
-      const total = listing.reduce((p, ct) => p + ct.size, 0);
-      if (progress) progress(0);
-      const bufpromises: Promise<Buffer | string | null>[] = [];
-      listing.forEach((l) => {
-        const dl = {
-          domain: download.domain,
-          path: l.path,
-          file: l.name,
-        };
-        bufpromises.push(
-          ftp(dl, null, null, c).then((result) => {
-            current += l.size;
-            if (progress) progress(current / total);
-            return result;
-          })
-        );
-      });
-      Promise.all(bufpromises)
-        .then((result) => {
-          if (progress) progress(-1);
-          if (result.some((r) => r === null)) return resolve(null);
-          const zip = new ZIP();
-          result.forEach((b, i) =>
-            zip.addFile(fpath.join(listing[i].path, listing[i].name), b)
-          );
-          if (outfile) {
-            zip.extractAllTo(outfile.path, true);
-            return resolve(outfile.path);
-          }
-          return resolve(zip.toBuffer());
-        })
-        .catch((er) => reject0(er));
+      if (bufs.includes(null)) return null;
+      return bufs as Buffer[];
+    })
+    .catch(() => {
+      if (progress) progress(-1);
+      return [];
     });
-  });
+}
+
+export async function ftpFile(
+  download: Download,
+  progress?: ((prog: number) => void) | null
+): Promise<Buffer | null> {
+  if (CancelFTP) return null;
+  const { domain, path, file } = download;
+  const onready = async (c: FTP) => {
+    return getFile(c, fpath.join(path, file), progress);
+  };
+  return connect(domain, onready);
+}
+
+export async function ftpFiles(
+  directory: Download,
+  filepaths: string[],
+  progress?: ((prog: number) => void) | null
+): Promise<Buffer[] | null> {
+  if (CancelFTP) return null;
+  const { domain } = directory;
+  const onready = async (c: FTP) => {
+    return getFiles(c, filepaths, progress);
+  };
+  return connect(domain, onready);
 }
 
 // Take a tar.gz or tar file as a Buffer or else a file path string,
 // and decode it, returning the contents as an array of
 // { header, buffer }.
-async function untargz(
+export async function untargz(
   inp: Buffer | string
 ): Promise<{ header: any; content: Buffer }[]> {
   const result: { header: any; content: Buffer }[] = [];
@@ -280,6 +299,10 @@ async function untargz(
   return result;
 }
 
+export function ftpCancel(value?: boolean) {
+  CancelFTP = !!value;
+}
+
 const Downloader: GType['Downloader'] = {
   // Return the CrossWire master repository list as a Download
   // object array.
@@ -289,8 +312,8 @@ const Downloader: GType['Downloader'] = {
       path: '/pub/sword/',
       file: 'masterRepoList.conf',
     };
-    CancelFTP = false;
-    return ftp(mr).then((fbuffer) => {
+    ftpCancel(false);
+    return ftpFile(mr).then((fbuffer) => {
       const result: Download[] = [];
       if (fbuffer && typeof fbuffer !== 'string') {
         const fstring = fbuffer.toString('utf8');
@@ -307,13 +330,12 @@ const Downloader: GType['Downloader'] = {
           }
         });
       }
-      CancelFTP = false;
       return result;
     });
   },
 
-  // Takes an array of SWORD repositories and returns:
-  // - An array of SwordConfType objects
+  // Takes an array of SWORD repositories and returns an array containing:
+  // - SwordConfType objects from reading mods.d.tar.gz.
   // - Or a string error message if there was an error
   // - Or null if the repository was null or disabled
   // Progress on each repository is separately reported to the calling
@@ -321,15 +343,15 @@ const Downloader: GType['Downloader'] = {
   // been completely handled.
   async repositoryListing(repositories) {
     const callingWin = arguments[1] || null;
-    CancelFTP = false;
-    const promises = repositories.map((repo) => {
-      if (repo === null) return Promise.resolve(null);
+    ftpCancel(false);
+    const promises = repositories.map(async (repo) => {
+      if (repo === null) return null;
       const progress = (prog: number) => {
         callingWin?.webContents.send('progress', prog, downloadKey(repo));
       };
       if (repo.disabled) {
         progress(-1);
-        return Promise.resolve(null);
+        return null;
       }
       if (isRepoLocal(repo)) {
         if (fpath.isAbsolute(repo.path)) {
@@ -341,70 +363,45 @@ const Downloader: GType['Downloader'] = {
               if (!f.isDirectory() && f.path.endsWith('.conf')) {
                 const conf = parseSwordConf(f);
                 conf.sourceRepository = repo;
-                conf.custom = repo.custom || null;
-                conf.installed = true;
                 confs.push(conf);
               }
             });
             progress(-1);
-            return Promise.resolve(confs);
+            return confs;
           }
         }
         progress(-1);
-        return Promise.resolve(`Directory not found: ${repo.path}/mods.d`);
+        return `Directory not found: ${repo.path}/mods.d`;
       }
-      return ftp(repo, null, progress)
-        .then((result) => {
-          if (result === null) throw new Error(`Canceled`);
-          if (typeof result === 'string')
-            throw new Error(`ftp returned string when tmpdir was null`);
-          return untargz(result);
-        })
-        .then((files) => {
-          const confs: SwordConfType[] = [];
-          files.forEach((r) => {
-            const { header, content: buffer } = r;
-            if (header.name.endsWith('.conf')) {
-              const conf = parseSwordConf(buffer.toString('utf8'));
-              conf.sourceRepository = repo;
-              conf.custom = repo.custom || null;
-              confs.push(conf);
-            }
-          });
-          return confs;
-        });
+      const targzbuf = await ftpFile(repo, progress);
+      if (targzbuf === null) return 'canceled';
+      const files = await untargz(targzbuf);
+      const confs: SwordConfType[] = [];
+      files.forEach((r) => {
+        const { header, content: buffer } = r;
+        if (header.name.endsWith('.conf')) {
+          const cobj = parseSwordConf(buffer.toString('utf8'));
+          cobj.sourceRepository = repo;
+          confs.push(cobj);
+        }
+      });
+      return confs;
     });
     return Promise.allSettled(promises).then((results) => {
       const ret: RepositoryListing[] = [];
+      let canceled = false;
       results.forEach((result) => {
-        if (result.status === 'fulfilled') ret.push(result.value);
-        else ret.push(result.reason.toString());
+        if (result.status === 'fulfilled') {
+          if (result.value === 'canceled') canceled = true;
+          ret.push(result.value);
+        } else ret.push(result.reason.toString());
       });
-      CancelFTP = false;
-      return ret;
+      return canceled ? null : ret;
     });
   },
 
-  // Returns the downloaded file's path, or null if canceled.
-  ftp(
-    download: Download,
-    tmpdir: string,
-    progress?: ((prog: number) => void) | null
-  ): Promise<string | null> {
-    return ftp(download, tmpdir, progress) as Promise<string | null>;
-  },
-
-  // Returns the downloaded directory's path, or null if canceled.
-  ftpDir(
-    download: Download,
-    tmpdir: string,
-    progress?: ((prog: number) => void) | null
-  ): Promise<string | null> {
-    return ftpDir(download, tmpdir, progress) as Promise<string | null>;
-  },
-
   ftpCancel() {
-    CancelFTP = true;
+    ftpCancel(true);
   },
 };
 

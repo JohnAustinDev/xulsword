@@ -1,15 +1,19 @@
 /* eslint-disable prefer-rest-params */
 /* eslint-disable no-continue */
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import fpath from 'path';
 import { BrowserWindow } from 'electron';
+import ZIP from 'adm-zip';
+import FTP from 'ftp';
 import log from 'electron-log';
-import { downloadKey, parseSwordConf } from '../common';
+import { isRepoLocal, modrepKey, parseSwordConf } from '../common';
+import Subscription from '../subscription';
 import C from '../constant';
-import { getBrowserWindows } from './window';
+import Window, { getBrowserWindows } from './window';
 import LocalFile from './components/localFile';
 import Dirs from './components/dirs';
 import LibSword from './components/libsword';
-import Downloader from './components/downloader';
+import { connect, ftpCancel, getFile, getDir } from './components/downloader';
 
 import type {
   GType,
@@ -24,8 +28,6 @@ import type {
 // TODO! DisplayLevel: GenBook standard display's context levels
 // TODO! CrossWire wiki mentions LangSortOrder! Report change to KeySort
 // TODO! UnlockInfo: Display instructions for obtaining an unlock key
-
-const ZIP = require('adm-zip');
 
 function versionCompare(v1: string | number, v2: string | number) {
   const p1 = String(v1).split('.');
@@ -393,58 +395,130 @@ export async function installList(
   });
 }
 
-let Downloads: { [module: string]: Buffer } = {};
+let Downloads: { [modrepoKey: string]: ZIP } = {};
 
 const Module: GType['Module'] = {
-  async download(module: string, repository: Repository): Promise<boolean> {
+  // Download a SWORD module from a repository and save it as a zip buffer
+  // for later installation by saveDownload. Returns the number of files if
+  // successful or null if canceled.
+  async download(
+    module: string,
+    repository: Repository
+  ): Promise<number | null> {
     const callingWin = arguments[2] || null;
-    const progress = (prog: number) => {
-      callingWin?.webContents.send(
-        'progress',
-        prog,
-        [downloadKey(repository), module].join('.')
+    ftpCancel(false);
+    const onready = async (c: FTP) => {
+      const modrepk = modrepKey(module, repository);
+      const progress = (prog: number) => {
+        callingWin?.webContents.send('progress', prog, modrepk);
+      };
+      const confpath = fpath.join(
+        repository.path,
+        'mods.d',
+        `${module.toLocaleLowerCase()}.conf`
       );
+      const confBuffer = await getFile(c, confpath);
+      if (!confBuffer) return null;
+      const conf = parseSwordConf(confBuffer.toString('utf8'));
+      const datapath = confModulePath(conf.DataPath);
+
+      // TODO! How to do more than one c.func in a row!!!!
+      const confBuffer2 = await getFile(c, confpath.replace(/[^\/\.]+(?=\.[^\.]+)$/, 'uzv'));
+      if (!confBuffer2) return null;
+      const conf2 = parseSwordConf(confBuffer.toString('utf8'));
+      const datapath2 = confModulePath(conf.DataPath);
+      console.log(datapath, datapath2);
+
+      if (datapath) {
+        const modpath = fpath.join(repository.path, datapath);
+        const zip = new ZIP();
+        zip.addFile(confpath, confBuffer);
+        const zipo = await getDir(c, modpath, progress, zip);
+        if (!zipo) return null;
+        Downloads[modrepk] = zipo;
+        return zipo.getEntries().length;
+      }
+      return 0;
     };
-    return Downloader.ftpDir(repository, null, progress).then((buf) => {
-      if (typeof buf !== 'string') Downloads[module] = buf;
-      return true;
-    });
+    return connect(repository.domain, onready);
   },
 
-  clearDownload(module?: string): boolean {
+  clearDownload(module?: string, repository?: Repository): boolean {
     if (!module) {
       Downloads = {};
       return true;
     }
-    if (module in Downloads) {
-      delete Downloads[module];
-      return true;
+    if (repository) {
+      const key = modrepKey(module, repository);
+      if (key in Downloads) {
+        delete Downloads[key];
+        return true;
+      }
     }
     return false;
   },
 
-  saveDownload(path: string, module?: string): boolean {
-    const modules = module ? [module] : [];
-    if (!module) {
-      modules.concat(Object.keys(Downloads));
-    }
-    const outdir = new LocalFile(path);
-    if (outdir.exists() && outdir.isDirectory()) {
-      modules.forEach((mod) => {
-        const zip = new ZIP(Downloads[mod]);
-        zip.extractAllTo(outdir.path, true);
-      });
-      return true;
+  async saveDownloads(
+    saves: { module: string; fromRepo: Repository; toRepo: Repository }[]
+  ): Promise<NewModulesType> {
+    const mainwin = getBrowserWindows({ type: 'xulsword' })[0];
+    Window.modal('installing', mainwin);
+    mainwin?.webContents.send('progress', 0);
+    const progTotal = Object.values(Downloads).length;
+    let prog = 0;
+    const newmods: NewModulesType = {
+      modules: [],
+      fonts: [],
+      audio: [],
+      bookmarks: [],
+      errors: [],
+    };
+    const promises: Promise<boolean>[] = Object.entries(Downloads).map(
+      (entry) => {
+        return new Promise((resolve, reject) => {
+          const [modrepok, zipo] = entry;
+          const save = saves.find(
+            (s) => modrepKey(s.module, s.fromRepo) === modrepok
+          );
+          if (zipo && save && isRepoLocal(save.toRepo)) {
+            const repo = new LocalFile(save.toRepo.path);
+            if (repo.exists() && repo.isDirectory()) {
+              zipo.extractAllTo(repo.path, true);
+              // TODO!: Read zip and add contents to newmods
+              prog += 1;
+              mainwin?.webContents.send('progress', prog / progTotal);
+              return resolve(true);
+            }
+          }
+          prog += 1;
+          mainwin?.webContents.send('progress', prog / progTotal);
+          return resolve(false);
+        });
+      }
+    );
+    return Promise.all(promises).then(() => {
+      mainwin?.webContents.send('progress', -1);
+      Subscription.publish('resetMain');
+      Window.reset('all', 'all');
+      Subscription.publish('modulesInstalled', newmods);
+      mainwin.webContents.send('newmods', newmods);
+      Window.modal('off', 'all');
+      return newmods;
+    });
+  },
+
+  remove(module: string, repo: Repository): boolean {
+    if (isRepoLocal(repo)) {
+      return !!removeModule([module], repo.path);
     }
     return false;
   },
 
-  remove(module: string, repoPath: string): boolean {
-    return !!removeModule([module], repoPath);
-  },
-
-  move(module: string, fromRepo: string, toRepo: string): boolean {
-    return !!removeModule([module], fromRepo, toRepo);
+  move(module: string, fromRepo: Repository, toRepo: Repository): boolean {
+    if (isRepoLocal(fromRepo) && isRepoLocal(toRepo)) {
+      return !!removeModule([module], fromRepo.path, toRepo.path);
+    }
+    return false;
   },
 };
 

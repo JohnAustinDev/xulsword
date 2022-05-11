@@ -270,8 +270,12 @@ class Table extends React.Component {
     let dataColumnIndex = columnIndex;
     if (sortedRowIndex != null) dataRowIndex = sortedRowIndex;
     dataColumnIndex = this.columnIndexToDataMap[columnIndex];
+    let value = data[dataRowIndex][dataColumnIndex];
+    if (typeof value === 'function') {
+      value = value(dataRowIndex, dataColumnIndex);
+    }
     return {
-      value: data[dataRowIndex][dataColumnIndex],
+      value,
       info: {
         ...((columnInfo && columnInfo[dataColumnIndex]) || {}),
         ...data[dataRowIndex][0],

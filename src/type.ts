@@ -412,9 +412,6 @@ export type SwordConfType = {
   errors: string[];
   sourceRepository: Download;
   moduleType: ModTypes;
-  custom: boolean | null;
-  installed: boolean;
-  shared: boolean;
 };
 
 export type TabTypes = 'Texts' | 'Comms' | 'Dicts' | 'Genbks';
@@ -749,34 +746,31 @@ export const GPublic = {
     readAndDelete: func as unknown as (name: string) => any,
   },
   Downloader: {
-    crossWireMasterRepoList: func as unknown as () => Promise<Download[]>,
+    crossWireMasterRepoList: func as unknown as () => Promise<
+      Download[] | null
+    >,
     repositoryListing: func as unknown as (
       repos: (Repository | null)[]
-    ) => Promise<RepositoryListing[]>,
-    ftp: func as unknown as (
-      download: Download,
-      tmpdir: string,
-      progress?: ((prog: number) => void) | null
-    ) => Promise<string | null>, // path, or null if canceled
-    ftpDir: func as unknown as (
-      download: Download,
-      tmpdir: string,
-      progress?: ((prog: number) => void) | null
-    ) => Promise<string | null>, // path, or null if canceled
+    ) => Promise<RepositoryListing[] | null>,
     ftpCancel: func as unknown as () => void,
   },
   Module: {
     download: func as unknown as (
       module: string,
       repository: Repository
-    ) => Promise<boolean>,
-    clearDownload: func as unknown as (module?: string) => boolean,
-    saveDownload: func as unknown as (path: string, module?: string) => boolean,
-    remove: func as unknown as (module: string, repoPath: string) => boolean,
+    ) => Promise<number | null>,
+    clearDownload: func as unknown as (
+      module?: string,
+      repository?: Repository
+    ) => boolean,
+    saveDownloads: func as unknown as (
+      saves: { module: string; fromRepo: Repository; toRepo: Repository }[]
+    ) => Promise<NewModulesType>,
+    remove: func as unknown as (module: string, repo: Repository) => boolean,
     move: func as unknown as (
       module: string,
-      fromRepo: string,
-      toRepo: string
+      fromRepo: Repository,
+      toRepo: Repository
     ) => boolean,
   },
   Window: {

@@ -17,9 +17,8 @@ const asyncFuncs = [
   'CommandsPublic.installXulswordModules',
   'Downloader.crossWireMasterRepoList',
   'Downloader.repositoryListing',
-  'Downloader.ftp',
-  'Downloader.untargz',
   'Module.download',
+  'Module.saveDownloads',
 ];
 
 const entries = Object.entries(GPublic);

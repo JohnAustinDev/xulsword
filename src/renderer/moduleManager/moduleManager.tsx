@@ -22,6 +22,7 @@ import {
   downloadKey,
   drop,
   isRepoLocal,
+  modrepKey,
   ofClass,
   regionsToRows,
 } from '../../common';
@@ -79,7 +80,7 @@ type TModuleTableRow = [
   string,
   string,
   string,
-  typeof ON | typeof OFF,
+  () => typeof ON | typeof OFF | '',
   typeof ON | typeof OFF
 ];
 
@@ -115,6 +116,7 @@ type TRepCellInfo = TCellInfo & {
 };
 
 type TModCellInfo = TCellInfo & {
+  shared: boolean;
   repo: Repository;
 };
 
@@ -122,11 +124,21 @@ const ON = '☑';
 const OFF = '☐';
 const ALWAYS_ON = '￭';
 const LanCol = {
-  iName: 1,
+  iCode: 1,
 } as const;
 const ModCol = {
   iType: 1,
-  iName: 2,
+  iAbout: 2,
+  iModule: 3,
+  iRepoName: 4,
+  iVersion: 5,
+  iSize: 6,
+  iFeatures: 7,
+  iVersification: 8,
+  iScope: 9,
+  iCopyright: 10,
+  iLicense: 11,
+  iSourceType: 12,
   iShared: 13,
   iInstalled: 14,
   iAlwaysVisible: [1, 2, 13, 14] as number[],
@@ -138,14 +150,36 @@ const RepCol = {
   iState: 4,
 } as const;
 
-G.Module.clearDownload();
-const Action = {
-  download: {} as { [module: string]: Promise<boolean> },
-  remove: new Set() as Set<string>,
-  share: {} as { [module: string]: boolean },
-};
+const builtinRepos: Repository[] = [
+  {
+    name: 'Shared',
+    domain: 'file://',
+    path: G.Dirs.path.xsModsCommon,
+    file: '',
+    builtin: true,
+    disabled: false,
+    custom: false,
+  },
+  {
+    name: '',
+    domain: 'file://',
+    path: G.Dirs.path.xsModsUser,
+    file: '',
+    builtin: true,
+    disabled: false,
+    custom: false,
+  },
+];
 
-export type RowSelection = { rows: [number, number] }[] | undefined;
+G.Module.clearDownload();
+const Downloads: {
+  [modrepoKey: string]: {
+    nfiles: Promise<number | null>;
+    failed: boolean;
+  };
+} = {};
+
+export type RowSelection = { rows: [number, number] }[];
 
 const defaultProps = {
   ...xulDefaultProps,
@@ -160,16 +194,16 @@ export type ManagerProps = XulProps;
 // The following initial state values do not come from Prefs. Neither are
 // these state keys written to Prefs.
 const notStatePref = {
-  language: undefined as RowSelection,
+  language: [] as RowSelection,
   langTableData: [] as TLanguageTableRow[],
   renderLangTable: 0,
 
-  module: undefined as RowSelection,
+  module: [] as RowSelection,
   modTableData: [] as TModuleTableRow[],
   renderModTable: 0,
   showModuleInfo: false,
 
-  repository: undefined as RowSelection,
+  repository: [] as RowSelection,
   repoTableData: [] as TRepositoryTableRow[],
   renderRepoTable: 0,
 };
@@ -197,7 +231,9 @@ export default class ModuleManager extends React.Component {
   // Save table data between resets, but don't save it to prefs.
   static saved: {
     repoTableData: TRepositoryTableRow[];
-    rawModuleData: RepositoryListing[];
+    repositoryListings: RepositoryListing[];
+    moduleData: { [module: string]: TModuleTableRow };
+    moduleLangData: { [langcode: string]: TModuleTableRow[] };
     modTableData: TModuleTableRow[];
     langTableData: TLanguageTableRow[];
   };
@@ -255,22 +291,24 @@ export default class ModuleManager extends React.Component {
     this.sizeTableToWindow = this.sizeTableToWindow.bind(this);
     this.setTableState = this.setTableState.bind(this);
     this.sState = this.setState.bind(this);
+    this.moduleTableData = this.moduleTableData.bind(this);
   }
 
   componentDidMount() {
     // Download data for the repository and module tables
     if (!ModuleManager.saved.repoTableData.length) {
       ModuleManager.saved.repoTableData = [];
-      ModuleManager.saved.rawModuleData = [];
+      ModuleManager.saved.repositoryListings = [];
       G.Downloader.crossWireMasterRepoList()
         .then((repos) => {
+          if (!repos) throw new Error(`Canceled`);
           const allrepos = this.loadRepositoryTable(repos);
           return G.Downloader.repositoryListing(allrepos);
         })
         .then((listing) => {
-          const data = this.updateRepositoryLists(listing);
-          const code = this.loadLanguageTable(data);
-          return this.loadModuleTable(code, data);
+          if (!listing) throw new Error(`Canceled`);
+          this.updateRepositoryLists(listing);
+          return this.loadModuleTable(this.loadLanguageTable());
         })
         .catch((er: Error) => {
           this.addToast({
@@ -278,13 +316,13 @@ export default class ModuleManager extends React.Component {
           });
           // Failed to load master list, so just load local repos.
           ModuleManager.saved.repoTableData = [];
-          ModuleManager.saved.rawModuleData = [];
+          ModuleManager.saved.repositoryListings = [];
           // eslint-disable-next-line promise/no-nesting
           G.Downloader.repositoryListing(this.loadRepositoryTable())
             .then((listing) => {
-              const data = this.updateRepositoryLists(listing);
-              const code = this.loadLanguageTable(data);
-              return this.loadModuleTable(code, data);
+              if (!listing) throw new Error(`Canceled`);
+              this.updateRepositoryLists(listing);
+              return this.loadModuleTable(this.loadLanguageTable());
             })
             .catch((err) => log.warn(err));
         });
@@ -306,7 +344,7 @@ export default class ModuleManager extends React.Component {
         }
         const modIndex = modTableData.findIndex((r) => {
           const { repo } = r[0];
-          const module = r[ModCol.iName];
+          const module = r[ModCol.iModule];
           return [downloadKey(repo), module].join('.') === id;
         });
         if (id && modIndex !== -1 && prog === -1) {
@@ -395,26 +433,6 @@ export default class ModuleManager extends React.Component {
   loadRepositoryTable(repos?: Repository[]): Repository[] {
     const { customRepos, disabledRepos } = this.state as ManagerState;
     const repoTableData: TRepositoryTableRow[] = [];
-    const builtinRepos: Repository[] = [
-      {
-        name: 'Shared',
-        domain: 'file://',
-        path: G.Dirs.path.xsModsCommon,
-        file: '',
-        builtin: true,
-        disabled: false,
-        custom: false,
-      },
-      {
-        name: 'Profile',
-        domain: 'file://',
-        path: G.Dirs.path.xsModsUser,
-        file: '',
-        builtin: true,
-        disabled: false,
-        custom: false,
-      },
-    ];
     customRepos.forEach((cr) => {
       cr.custom = true;
     });
@@ -445,144 +463,197 @@ export default class ModuleManager extends React.Component {
   // It returns updated rawModuleData.
   updateRepositoryLists(rawModuleData: RepositoryListing[]) {
     const { repoTableData } = this.state as ManagerState;
+    const { repositoryListings } = ModuleManager.saved;
     rawModuleData.forEach((listing, i) => {
       if (listing === null) return;
       if (typeof listing === 'string') {
         this.addToast({ message: listing });
         repoTableData[i][0].intent = intent(RepCol.iState, 'danger');
+        if (!Array.isArray(repositoryListings[i])) repositoryListings[i] = null;
         return;
       }
       if (Array.isArray(listing)) {
-        ModuleManager.saved.rawModuleData[i] = listing;
+        repositoryListings[i] = listing;
         if ([ON, ALWAYS_ON].includes(repoTableData[i][RepCol.iState])) {
           repoTableData[i][0].intent = intent(RepCol.iState, 'success');
         }
       }
     });
     this.setTableState('repository', { repoTableData });
-    return ModuleManager.saved.rawModuleData;
+    return true;
   }
 
-  // Load language table with all languages found in the raw data, keeping
-  // the selected language the same or else selecting the first one. It
-  // returns the selected language code, or null if the table is empty.
-  loadLanguageTable(rawModuleData: RepositoryListing[]): string {
-    const { language, langTableData } = this.state as ManagerState;
-    let code = 'en';
-    const row = (language && regionsToRows(language)[0]) || 0;
-    if (row < langTableData.length) {
-      code = langTableData[row][LanCol.iName];
-    }
-    const langs: Set<string> = new Set(code);
-    rawModuleData.forEach((reporow) => {
-      if (Array.isArray(reporow)) {
-        reporow.forEach((c) => {
+  // Load language table with all languages found in the saved repositoryListings
+  // data, keeping the selection the same when possible. It returns the new
+  // selection.
+  loadLanguageTable(): RowSelection {
+    const state = this.state as ManagerState;
+    const { language, langTableData, repoTableData } = state;
+    const { repositoryListings } = ModuleManager.saved;
+    const selectedRowIndexes = regionsToRows(language);
+    const selectedcodes = langTableData
+      .filter((_r, i) => selectedRowIndexes.includes(i))
+      .map((r) => r[LanCol.iCode]);
+    const langs: Set<string> = new Set();
+    repositoryListings.forEach((listing, i) => {
+      if (Array.isArray(listing) && repoTableData[i][RepCol.iState] === ON) {
+        listing.forEach((c) => {
           const l = c.Lang || 'en';
           langs.add(l.replace(/-.*$/, ''));
         });
       }
     });
-    const newTableData: TLanguageTableRow[] = [];
     const langlist = Array.from(langs).sort();
+    const newTableData: TLanguageTableRow[] = [];
     langlist.forEach((l) => newTableData.push([{}, l]));
-    let isel =
-      (code && newTableData.findIndex((r) => r[LanCol.iName] === code)) || -1;
-    if (isel === -1 && newTableData.length) {
-      isel = 0;
-      code = newTableData[0][LanCol.iName];
-    }
+    const newlanguage: RowSelection = [];
+    newTableData.forEach((r, i) => {
+      if (selectedcodes?.includes(r[LanCol.iCode])) {
+        newlanguage.push({ rows: [i, i] });
+      }
+    });
     this.setTableState('language', {
       langTableData: newTableData,
-      language: isel === -1 ? undefined : [{ rows: [isel, isel] }],
+      language: newlanguage,
     } as Partial<ManagerState>);
-    return code;
+    return newlanguage;
   }
 
   // Load the module table with modules sharing the language code,
-  // or else with all modules if the code is null or undefined.
-  loadModuleTable(fcode: string | null, rawModuleData: RepositoryListing[]) {
-    const data: TModuleTableRow[] = [];
-    const repoModules = rawModuleData
-      .map((row) => {
-        if (!Array.isArray(row)) return null;
-        return row.map((c) => c.module);
-      })
-      .filter(Boolean)
-      .flat();
-    const uniqueElements = new Set(repoModules);
-    const multiples = repoModules.filter((item) => {
-      if (uniqueElements.has(item)) {
-        uniqueElements.delete(item);
-        return false;
-      }
-      return true;
-    });
-    multiples.forEach((m) => {
-      this.addToast({
-        message: `Found more than one ${m} module.`,
-      });
-    });
+  // or else with all modules if the code is null.
+  loadModuleTable(languageSelection: RowSelection) {
+    // Insure there is one moduleData row object for each module in
+    // each repository. The same object should be reused throughout
+    // the lifetime of the window, so user interactions will be recorded.
     const { repoTableData } = this.state as ManagerState;
-    rawModuleData.forEach((listing, i) => {
+    ModuleManager.saved.moduleLangData = { allmodules: [] };
+    const { moduleData, moduleLangData, repositoryListings } =
+      ModuleManager.saved;
+    const externModules: { [modunique: string]: string } = {};
+    const localModules: { [modunique: string]: string } = {};
+    repositoryListings.forEach((listing, i) => {
       if (Array.isArray(listing)) {
         listing.forEach((c) => {
-          const code = (c.Lang && c.Lang.replace(/-.*$/, '')) || '?';
-          if (
-            (!fcode || fcode !== code) &&
-            (!isRepoLocal(c.sourceRepository) ||
-              !repoModules.includes(c.module))
-          ) {
-            const css = classes(
-              [ModCol.iShared, ModCol.iInstalled],
-              ['checkbox-column']
-            );
-            data.push([
-              { repo: repoTableData[i][0].repo, classes: css },
-              c.moduleType,
+          const { repo } = repoTableData[i][0];
+          const repokey = downloadKey(repo);
+          const modkey = [repokey, c.module].join('.');
+          const modunique = [c.module, c.Version].join('.');
+          const repoIsLocal = isRepoLocal(c.sourceRepository);
+          if (repoIsLocal) localModules[modunique] = repokey;
+          else externModules[modunique] = repokey;
+          if (!(modkey in moduleData)) {
+            const d = [] as unknown as TModuleTableRow;
+            d[0] = {
+              repo,
+              shared: repokey === downloadKey(builtinRepos[0]),
+              classes: classes(
+                [ModCol.iShared, ModCol.iInstalled],
+                ['checkbox-column']
+              ),
+            };
+            d[ModCol.iType] = c.moduleType;
+            d[ModCol.iAbout] =
               (c.Description &&
                 (c.Description[i18n.language] || c.Description.en)) ||
-                '?',
-              c.module,
-              c.sourceRepository.name ||
-                `${c.sourceRepository.domain}/${c.sourceRepository.path}`,
-              c.Version || '?',
-              (c.InstallSize && c.InstallSize.toString()) || '?',
-              (c.Feature && c.Feature.join(' ')) || '?',
-              c.Versification || 'KJV',
-              c.Scope || '?',
+              '?';
+            d[ModCol.iModule] = c.module;
+            d[ModCol.iRepoName] = repo.name || `${repo.domain}/${repo.path}`;
+            d[ModCol.iVersion] = c.Version || '?';
+            d[ModCol.iSize] =
+              (c.InstallSize && c.InstallSize.toString()) || '?';
+            d[ModCol.iFeatures] = (c.Feature && c.Feature.join(', ')) || '?';
+            d[ModCol.iVersification] = c.Versification || 'KJV';
+            d[ModCol.iScope] = c.Scope || '?';
+            d[ModCol.iCopyright] =
               (c.Copyright && (c.Copyright[i18n.language] || c.Copyright.en)) ||
-                '?',
-              c.DistributionLicense || '?',
-              c.SourceType || '?',
-              c.shared ? ON : OFF,
-              c.installed ? ON : OFF,
-            ]);
+              '?';
+            d[ModCol.iLicense] = c.DistributionLicense || '?';
+            d[ModCol.iSourceType] = c.SourceType || '?';
+            d[ModCol.iShared] = () => {
+              if (d[ModCol.iInstalled] === OFF) return '';
+              return d[0].shared ? ON : OFF;
+            };
+            d[ModCol.iInstalled] = repoIsLocal ? ON : OFF;
+            moduleData[modkey] = d;
           }
         });
       }
     });
+    // Installed modules (ie those in local repos) which are from enabled
+    // remote repositories are not included in moduleLangData. Rather the
+    // 'installed' box is checked on the corresponding remote repository
+    //  module. Also, modules in disabled repositories are not included.
+    repositoryListings.forEach((listing, i) => {
+      if (Array.isArray(listing) && repoTableData[i][RepCol.iState] === ON) {
+        listing.forEach((c) => {
+          const { repo } = repoTableData[i][0];
+          const repokey = downloadKey(repo);
+          const modkey = [repokey, c.module].join('.');
+          const modrow = moduleData[modkey];
+          const modunique = [
+            modrow[ModCol.iModule],
+            modrow[ModCol.iVersion],
+          ].join('.');
+          const repoIsLocal = isRepoLocal(repo);
+          if (repoIsLocal && modunique in externModules) return;
+          if (!repoIsLocal && modunique in localModules) {
+            modrow[ModCol.iInstalled] = ON;
+          }
+          const code = (c.Lang && c.Lang.replace(/-.*$/, '')) || 'en';
+          if (!(code in moduleLangData)) moduleLangData[code] = [];
+          moduleLangData[code].push(modrow);
+          moduleLangData.allmodules.push(modrow);
+        });
+      }
+    });
+    let { language } = this.state as ManagerState;
+    if (languageSelection) language = languageSelection;
+    this.setTableState('module', {
+      modTableData: this.moduleTableData(language),
+    });
+    return true;
+  }
+
+  moduleTableData(languageSelection: RowSelection): TModuleTableRow[] {
+    const { langTableData } = this.state as ManagerState;
+    const rows = regionsToRows(languageSelection);
+    const codes: string[] = [];
+    rows.forEach((r) => {
+      codes.push(langTableData[r][LanCol.iCode]);
+    });
+    const { moduleLangData } = ModuleManager.saved;
+    // Select the appropriate moduleLangData lists.
+    let tableData: TModuleTableRow[] = moduleLangData.allmodules;
+    if (codes.length) {
+      tableData = Object.entries(moduleLangData)
+        .filter((ent) => codes.includes(ent[0]))
+        .map((ent) => ent[1])
+        .flat();
+    }
+    // Return sorted rows.
     const taborder = [C.BIBLE, C.COMMENTARY, C.GENBOOK, C.DICTIONARY];
-    const modTableData = data.sort((a, b) => {
+    return tableData.sort((a: TModuleTableRow, b: TModuleTableRow) => {
       const ta = taborder.indexOf(a[ModCol.iType] as ModTypes);
       const tb = taborder.indexOf(b[ModCol.iType] as ModTypes);
       if (ta > tb) return 1;
       if (ta < tb) return -1;
-      return a[2].localeCompare(b[2]);
+      return a[ModCol.iModule].localeCompare(b[ModCol.iModule]);
     });
-    this.setTableState('module', { modTableData } as Partial<ManagerState>);
-    return true;
   }
 
   rowSelect(e: React.MouseEvent, table: keyof typeof Tables, row: number) {
     const tableSel = table;
+    let newselection: RowSelection = [];
     this.sState((prevState) => {
       const selection = prevState[tableSel];
       const isSelected = selection?.find((r) => r.rows[0] === row);
       const selected =
         e.ctrlKey && !isSelected && selection ? clone(selection) : [];
       if (!isSelected) selected.push({ rows: [row, row] });
+      newselection = clone(selected);
       return { [tableSel]: selected };
     });
+    return newselection;
   }
 
   // Enable or disable a repository. If onOrOff is undefined it will be toggled.
@@ -625,9 +696,9 @@ export default class ModuleManager extends React.Component {
     );
     G.Downloader.repositoryListing(repos)
       .then((listing) => {
-        const data = this.updateRepositoryLists(listing);
-        const code = this.loadLanguageTable(data);
-        return this.loadModuleTable(code, data);
+        if (!listing) throw new Error(`Canceled`);
+        this.updateRepositoryLists(listing);
+        return this.loadModuleTable(this.loadLanguageTable());
       })
       .catch((er) => log.warn(er));
   }
@@ -643,50 +714,87 @@ export default class ModuleManager extends React.Component {
           }
           case 'ok': {
             const { repoTableData } = this.state as ManagerState;
-            const sharedDir = G.Dirs.path.xsModsCommon;
-            const appmodDir = G.Dirs.path.xsModsUser;
-            // Get list of all modules found in local repositories.
+            const { moduleData } = ModuleManager.saved;
+            // Get a list of all currently installed modules (those found in any
+            // enabled local repository).
             const installed: SwordConfType[] = [];
             repoTableData.forEach((rtd, i) => {
               if (isRepoLocal(rtd[0].repo)) {
-                const data = ModuleManager.saved.rawModuleData[i];
-                if (Array.isArray(data)) data.forEach((c) => installed.push(c));
-              }
-            });
-            // Remove modules
-            Action.remove.forEach((module) => {
-              const conf = installed.find((c) => c.module === module);
-              if (conf) {
-                if (!G.Module.remove(module, conf.sourceRepository.path)) {
-                  log.warn(
-                    `Failed to remove ${module} from ${conf.sourceRepository.path}`
-                  );
+                const listing = ModuleManager.saved.repositoryListings[i];
+                if (Array.isArray(listing)) {
+                  listing.forEach((c) => installed.push(c));
                 }
               }
             });
-            // Move modules
-            Object.entries(Action.share).forEach((entry) => {
-              const [module, isShared] = entry;
+            // Remove modules
+            Object.values(moduleData).forEach((row) => {
+              if (row[ModCol.iInstalled] === OFF) {
+                const module = row[ModCol.iModule];
+                const { repo } = row[0];
+                const modrepok = modrepKey(module, repo);
+                const conf = installed.find((c) => c.module === module);
+                if (modrepok in Downloads) {
+                  if (!G.Module.clearDownload(module, repo)) {
+                    log.warn(`Failed to clear ${module} from downloads`);
+                  }
+                } else if (conf) {
+                  if (!G.Module.remove(conf.module, conf.sourceRepository)) {
+                    log.warn(
+                      `Failed to remove ${module} from ${conf.sourceRepository.path}`
+                    );
+                  }
+                }
+              }
+            });
+            // Move modules (between the shared and xulsword builtins).
+            Object.values(moduleData).forEach((row) => {
+              const { shared } = row[0];
+              const module = row[ModCol.iModule];
               const conf = installed.find((c) => c.module === module);
-              const dir = isShared ? sharedDir : appmodDir;
-              if (conf && conf.sourceRepository.path !== dir) {
-                if (!G.Module.move(module, conf.sourceRepository.path, dir)) {
+              const toDir = builtinRepos[shared ? 0 : 1];
+              const fromKey = conf && downloadKey(conf.sourceRepository);
+              const toKey = downloadKey(toDir);
+              if (conf && fromKey !== toKey) {
+                if (!G.Module.move(module, conf.sourceRepository, toDir)) {
                   log.warn(
-                    `Failed to move ${module} from ${conf.sourceRepository.path} to ${dir}`
+                    `Failed to move ${module} from ${fromKey} to ${toKey}`
                   );
                 }
               }
             });
             // Install downloaded modules
-            return Promise.allSettled(Object.values(Action.download))
+            const downloadKeys = Object.keys(Downloads);
+            return Promise.allSettled(Object.values(Downloads.nfiles))
               .then((results) => {
-                results.forEach((result) => {
+                const saves: {
+                  module: string;
+                  fromRepo: Repository;
+                  toRepo: Repository;
+                }[] = [];
+                results.forEach((result, i) => {
                   if (result.status !== 'fulfilled') log.warn(result.reason);
+                  else if (result.value) {
+                    const modrepok = downloadKeys[i];
+                    const dot = modrepok ? modrepok.lastIndexOf('.') : -1;
+                    if (dot === -1) return;
+                    const module = modrepok.substring(dot + 1);
+                    const repokey = modrepok.substring(0, dot);
+                    const row = Object.values(moduleData).find((r) => {
+                      return (
+                        downloadKey(r[0].repo) === repokey &&
+                        r[ModCol.iModule] === module
+                      );
+                    });
+                    if (row && row[ModCol.iInstalled]) {
+                      saves.push({
+                        module: row[ModCol.iModule],
+                        fromRepo: row[0].repo,
+                        toRepo: builtinRepos[row[0].shared ? 0 : 1],
+                      });
+                    }
+                  }
                 });
-                Object.keys(Action.download).forEach((module) => {
-                  const path = Action.share[module] ? sharedDir : appmodDir;
-                  G.Module.saveDownload(path, module);
-                });
+                G.Module.saveDownloads(saves);
                 return G.Window.close();
               })
               .catch((er) => log.warn(er));
@@ -723,7 +831,7 @@ export default class ModuleManager extends React.Component {
               .state as ManagerState;
             const newTableData = clone(repoTableData);
             const newCustomRepos = clone(customRepos);
-            const rawdata = ModuleManager.saved.rawModuleData;
+            const rawdata = ModuleManager.saved.repositoryListings;
             const rows = (repository && regionsToRows(repository)) || [];
             rows.reverse().forEach((r) => {
               if (repoTableData[r][0].repo.custom) {
@@ -742,8 +850,7 @@ export default class ModuleManager extends React.Component {
               customRepos: newCustomRepos,
               repoTableData: newTableData,
             });
-            const code = this.loadLanguageTable(rawdata);
-            this.loadModuleTable(code, rawdata);
+            this.loadModuleTable(this.loadLanguageTable());
             break;
           }
           case 'repoCancel':
@@ -769,74 +876,46 @@ export default class ModuleManager extends React.Component {
             );
             if (table && table.type === 'repository') {
               // RepositoryTable
-              if (row > -1 && col < RepCol.iState)
-                this.rowSelect(e, 'repository', row);
               if (col === RepCol.iState) this.switchRepo([row]);
+              else if (row > -1 && col < RepCol.iState) {
+                this.rowSelect(e, 'repository', row);
+              }
             } else if (table && table.type === 'language') {
               // LanguageTable
-              this.rowSelect(e, 'language', row);
-              const { langTableData } = this.state as ManagerState;
-              const code = langTableData[row][LanCol.iName];
-              this.loadModuleTable(code, ModuleManager.saved.rawModuleData);
+              this.loadModuleTable(this.rowSelect(e, 'language', row));
             } else if (table && table.type === 'module') {
               // ModuleTable
-              this.rowSelect(e, 'module', row);
               const state = this.state as ManagerState;
               const { modTableData } = state as ManagerState;
-              const module = modTableData[row][ModCol.iName] as string;
-              const was = modTableData[row][col];
-              const is = was === ON ? OFF : ON;
-              if (col === ModCol.iInstalled) {
+              if (col === ModCol.iInstalled && !modTableData[row][0].loading) {
+                const was = modTableData[row][col];
+                const is = was === ON ? OFF : ON;
                 // Column: installed
-                modTableData[row][col] = is;
-                const { repo } = modTableData[row][0];
-                if (is === OFF) {
-                  Action.remove.add(module);
-                  if (module in Action.download) {
-                    G.Module.clearDownload(module);
-                    delete Action.download[module];
-                    modTableData[row][0].loading = false;
-                    modTableData[row][0].intent = intent(
-                      ModCol.iInstalled,
-                      'none'
-                    );
-                  }
+                if (is === ON) {
+                  const k = modrepKey(
+                    modTableData[row][ModCol.iModule],
+                    modTableData[row][0].repo
+                  );
+                  if (k in Downloads && !Downloads[k].failed) {
+                    modTableData[row][ModCol.iInstalled] = ON;
+                    this.setTableState('module', { modTableData });
+                  } else this.download(row);
                 } else {
-                  Action.share[module] =
-                    modTableData[row][ModCol.iShared] === ON;
-                  if (Action.remove.has(module)) Action.remove.delete(module);
-                  modTableData[row][0].loading = loading(ModCol.iInstalled);
-                  Action.download[module] = G.Module.download(module, repo)
-                    .then((dl) => {
-                      modTableData[row][0].intent = intent(
-                        ModCol.iInstalled,
-                        dl ? 'success' : 'danger'
-                      );
-                      this.setTableState('module');
-                      return dl;
-                    })
-                    .catch((er) => {
-                      this.addToast({
-                        message: `${er.message.replace(/^.*Error:/, '')}`,
-                      });
-                      modTableData[row][0].intent = intent(
-                        ModCol.iInstalled,
-                        'danger'
-                      );
-                      this.setTableState('module');
-                      return false;
-                    });
+                  modTableData[row][col] = OFF;
+                  modTableData[row][0].intent = intent(
+                    ModCol.iInstalled,
+                    'none'
+                  );
+                  this.setTableState('module', { modTableData });
                 }
-                this.setTableState('module', {
-                  modTableData,
-                } as Partial<ManagerState>);
               } else if (col === ModCol.iShared) {
                 // Column: shared
-                modTableData[row][col] = is;
-                Action.share[module] = is === ON;
+                modTableData[row][0].shared = !modTableData[row][0].shared;
                 this.setTableState('module', {
                   modTableData,
                 } as Partial<ManagerState>);
+              } else {
+                this.rowSelect(e, 'module', row);
               }
             }
           }
@@ -849,16 +928,50 @@ export default class ModuleManager extends React.Component {
     return true;
   }
 
+  download(row: number): void {
+    const { modTableData } = ModuleManager.saved;
+    const module = modTableData[row][ModCol.iModule] as string;
+    const { repo } = modTableData[row][0];
+    modTableData[row][0].loading = loading(ModCol.iInstalled);
+    this.setTableState('module', { modTableData });
+    const modrepk = modrepKey(module, repo);
+    const nfiles = G.Module.download(module, repo)
+      .then((dl) => {
+        modTableData[row][0].loading = false;
+        let newintent: Intent = 'success';
+        if (dl === null) {
+          this.addToast({ message: `Canceled` });
+          newintent = 'danger';
+        } else {
+          modTableData[row][ModCol.iInstalled] = ON;
+          Downloads[modrepk].failed = false;
+        }
+        modTableData[row][0].intent = intent(ModCol.iInstalled, newintent);
+        this.setTableState('module', { modTableData });
+        return dl;
+      })
+      .catch((er) => {
+        log.error(er);
+        modTableData[row][0].loading = false;
+        modTableData[row][0].intent = intent(ModCol.iInstalled, 'danger');
+        this.setTableState('module', { modTableData });
+        return null;
+      });
+    Downloads[modrepk] = { nfiles, failed: true };
+  }
+
   // Set table state, save the data for window re-renders, and re-render the table.
   setTableState(table: keyof typeof Tables, s?: Partial<ManagerState>) {
+    const renderTable = Tables[table][0];
+    const tableData = Tables[table][1];
+    const state = this.state as ManagerState;
     // Two steps must be used for statePrefs to be written to Prefs
     // before the reset will read them.
     if (s) this.sState(s);
+    const tableDataVal = ((s && s[tableData]) || state[tableData]) as any;
+    ModuleManager.saved[tableData] = tableDataVal;
     this.sState((prevState) => {
-      const renderTable = Tables[table][0];
-      const tableData = Tables[table][1];
       let render = prevState[renderTable];
-      ModuleManager.saved[tableData] = prevState[tableData] as any;
       render += 1;
       return {
         [renderTable]: render,
@@ -979,7 +1092,7 @@ export default class ModuleManager extends React.Component {
           )}
 
           <Groupbox
-            caption={i18n.t('menu.addNewModule.label')}
+            caption={i18n.t('chooseModule.label')}
             orient="horizontal"
             flex="1"
           >
@@ -1122,7 +1235,9 @@ ModuleManager.saved = {
   repoTableData: [],
   modTableData: [],
   langTableData: [],
-  rawModuleData: [],
+  repositoryListings: [],
+  moduleData: {},
+  moduleLangData: {},
 };
 
 function repositoryToRow(repo: Repository): TRepositoryTableRow {
