@@ -364,7 +364,7 @@ export default class Xulsword extends React.Component {
                   !history.length ||
                   historyIndex === history.length - 1
                 }
-                label={i18n.t('history.back.label')}
+                label={i18n.t('back.label')}
                 tooltip={i18n.t('history.back.tooltip')}
               />
               <Button

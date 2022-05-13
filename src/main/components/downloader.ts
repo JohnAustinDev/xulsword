@@ -1,3 +1,4 @@
+/* eslint-disable promise/no-nesting */
 /* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable promise/no-promise-in-callback */
 /* eslint-disable promise/param-names */
@@ -8,7 +9,6 @@ import log from 'electron-log';
 import FTP, { ListingElement } from 'ftp';
 import GUNZIP from 'gunzip-maybe';
 import TAR from 'tar-stream';
-import ZIP from 'adm-zip';
 import { Stream, Readable } from 'stream';
 import { downloadKey, isRepoLocal, parseSwordConf } from '../../common';
 import LocalFile from './localFile';
@@ -20,25 +20,24 @@ import type {
   RepositoryListing,
 } from '../../type';
 
-type ListingElementR = ListingElement & { dirpath: string };
+type ListingElementR = ListingElement & { subdir: string };
 
 let CancelFTP = true;
 
-function streamToBuffer(stream: Readable, cbx?: any): Promise<Buffer> {
+function streamToBuffer(stream: Readable): Promise<Buffer> {
   const buf: any[] = [];
-  const cb = cbx || (() => {});
   return new Promise((resolve, reject) => {
     stream.on('data', (chunk) => {
       buf.push(chunk);
     });
     stream.on('end', () => {
+      log.silly(`stream on-end.`);
       const buffer = Buffer.concat(buf);
       resolve(buffer);
-      cb(null, buffer);
     });
     stream.on('error', (err) => {
+      log.silly(`stream on-error: '${err}'.`);
       reject(err);
-      cb(err);
     });
   });
 }
@@ -55,27 +54,41 @@ export async function connect<Retval>(
     const c = new FTP();
     let cancelTO: NodeJS.Timeout | null = null;
     const reject0 = (err: Error) => {
+      log.silly(`ftp connect reject: '${err}.`);
       if (cancelTO) clearInterval(cancelTO);
       c.destroy();
       reject(err);
     };
     c.on('error', (er: Error) => {
+      log.silly(`ftp connect on-error: '${er}'.`);
       reject0(er);
     });
     c.on('close', (er: boolean) => {
+      log.silly(`ftp connect on-close: '${er}'.`);
       if (cancelTO) clearInterval(cancelTO);
       if (er) reject0(new Error(`Error during connection close.`));
     });
+    c.on('greeting', (msg: string) => {
+      log.silly(`ftp connect on-greeting: '${msg}'.`);
+    });
+    c.on('end', () => {
+      log.silly(`ftp connect on-end.`);
+    });
     c.on('ready', () => {
-      const resultPromise = func(c);
-      c.end();
-      resolve(resultPromise);
+      log.silly(`ftp connect on-ready.`);
+      func(c)
+        .then((result: Retval) => {
+          c.end();
+          return resolve(result);
+        })
+        .catch((er) => reject(er));
     });
     try {
       log.info(`Connecting: ${domain}`);
       c.connect({ host: domain });
       cancelTO = setInterval(() => {
         if (CancelFTP) {
+          log.silly(`ftp cancel.`);
           if (cancelTO) clearInterval(cancelTO);
           c.destroy();
           resolve(null);
@@ -87,68 +100,78 @@ export async function connect<Retval>(
   });
 }
 
-// Take an FTP connection and directory path and returns a promise for a
-// recursive listing of the directory's contents (unless norecurse is set
-// which will only list the contents of the directory itself).
-// NOTE: May never resolve if connection is canceled.
-export async function list(
-  c: FTP,
-  dirpath: string,
-  basepath?: string,
-  norecurse?: boolean
-): Promise<ListingElementR[] | null> {
-  if (CancelFTP) return null;
-  let result: ListingElementR[] | null = [];
+async function listP(c: FTP, dirpath: string): Promise<ListingElement[]> {
   return new Promise((resolve, reject) => {
     c.list(dirpath, false, (err: Error, listing: ListingElement[]) => {
       if (err) reject(err);
-      else {
-        listing.forEach(async (lx) => {
-          const l = lx as ListingElementR;
-          l.dirpath = basepath || '';
-          if (result) {
-            result.push(l);
-            if (!norecurse && l.type === 'd') {
-              const subl = await list(
-                c,
-                fpath.join(dirpath, l.name),
-                fpath.join(l.dirpath, l.name)
-              );
-              if (subl === null) result = null;
-              else result.concat(subl);
-            }
-          }
-        });
-        resolve(result);
-      }
+      else resolve(listing);
     });
   });
 }
 
+// Takes an FTP connection and directory path and returns a promise for a
+// recursive listing of the directory's contents (unless norecurse is set
+// which will only list the contents of the directory itself).
+export async function list(
+  c: FTP,
+  dirpath: string,
+  basepath = '',
+  maxdepth = 5,
+  depth = 1
+): Promise<ListingElementR[] | null> {
+  if (CancelFTP) return null;
+  const promises: Promise<ListingElementR[] | null>[] = [];
+  const listing = (await listP(c, dirpath)) as ListingElementR[];
+  listing.forEach((file) => {
+    file.subdir = basepath;
+  });
+  promises.push(Promise.resolve(listing as ListingElementR[]));
+  if (depth < maxdepth) {
+    const subs = listing.filter((f) => f.type === 'd');
+    const proms = subs.map((f) =>
+      list(
+        c,
+        fpath.join(dirpath, f.name),
+        fpath.join(basepath, f.name),
+        maxdepth,
+        depth + 1
+      )
+    );
+    promises.push(...proms);
+  }
+  return Promise.all(promises).then((lists) => {
+    log.silly(`list(${dirpath}):`, lists);
+    if (lists.includes(null)) return null;
+    return lists.flat() as ListingElementR[];
+  });
+}
+
 // Takes an FTP connection and downloads a directory, returning it
-// as a zip object promise. If canceled, null is returned. If a
+// as path/data object promise. If canceled, null is returned. If a
 // progress function is provided, it will be used to report progress.
-// If zipObj is provided, the downloaded directory will be added to it.
 export async function getDir(
   c: FTP,
   dirpath: string,
-  progress?: ((prog: number) => void) | null,
-  zipObj?: ZIP
-): Promise<ZIP | null> {
+  skipPathRegex: RegExp,
+  progress?: ((prog: number) => void) | null
+): Promise<{ listing: ListingElementR; buffer: Buffer }[] | null> {
   if (!CancelFTP) {
     const listing = await list(c, dirpath);
     if (listing) {
+      const files = listing.filter(
+        (l) =>
+          l.type === '-' &&
+          !skipPathRegex.test(fpath.join(dirpath, l.subdir, l.name))
+      );
       const buffers = await getFiles(
         c,
-        listing.map((l) => fpath.join(dirpath, l.dirpath, l.name)),
+        files.map((l) => fpath.join(dirpath, l.subdir, l.name)),
         progress
       );
       if (buffers) {
-        const zip = zipObj || new ZIP();
-        listing.forEach((l, i) => {
-          zip.addFile(fpath.join(l.dirpath, l.name), buffers[i]);
+        return files.map((l, i) => {
+          return { listing: l, buffer: buffers[i] };
         });
-        return zip;
       }
     }
   }
@@ -168,25 +191,27 @@ export async function getFile(
     return null;
   }
   return new Promise((resolve, reject) => {
-    const getnow = (size?: number) => {
+    log.silly(`getFile(${filepath})`);
+    const getWithProgress = (size?: number) => {
       c.get(filepath, (err: Error, stream: any) => {
         if (err) {
           reject(err);
         } else {
-          if (progress && size) {
-            let current = 0;
+          if (progress) {
             progress(0);
-            stream.on('data', (chunk: Buffer) => {
-              current += chunk.length;
-              progress(current / size);
-            });
+            if (size) {
+              let current = 0;
+              stream.on('data', (chunk: Buffer) => {
+                current += chunk.length;
+                progress(current / size);
+              });
+            }
           }
-          streamToBuffer(stream, (er: any, buffer: Buffer) => {
-            if (er) reject(er);
-            else resolve(buffer);
-          });
+          const buff = streamToBuffer(stream);
           stream.once('close', () => {
-            if (progress && size) progress(-1);
+            if (progress) progress(-1);
+            resolve(buff);
+            log.silly(`DONE getFile(${filepath})`);
           });
         }
       });
@@ -195,9 +220,9 @@ export async function getFile(
       c.size(filepath, (err: any, size: number) => {
         if (err) {
           reject(err);
-        } else getnow(size);
+        } else getWithProgress(size);
       });
-    } else getnow();
+    } else getWithProgress();
   });
 }
 
@@ -229,9 +254,9 @@ export async function getFiles(
       if (bufs.includes(null)) return null;
       return bufs as Buffer[];
     })
-    .catch(() => {
+    .catch((er) => {
       if (progress) progress(-1);
-      return [];
+      throw er;
     });
 }
 
@@ -265,7 +290,7 @@ export async function ftpFiles(
 // { header, buffer }.
 export async function untargz(
   inp: Buffer | string
-): Promise<{ header: any; content: Buffer }[]> {
+): Promise<{ header: TAR.Headers; content: Buffer }[]> {
   const result: { header: any; content: Buffer }[] = [];
   let stream: Stream | null = null;
   if (typeof inp === 'string') {
@@ -282,11 +307,12 @@ export async function untargz(
     return new Promise((resolve, reject) => {
       extract.on(
         'entry',
-        (header: any, stream2: Readable, next: () => void) => {
-          streamToBuffer(stream2, (err: string, content: Buffer) => {
-            if (err) reject(err);
-            else result.push({ header, content });
-          });
+        (header: TAR.Headers, stream2: Readable, next: () => void) => {
+          streamToBuffer(stream2)
+            .then((content: Buffer) => {
+              return result.push({ header, content });
+            })
+            .catch((er) => reject(er));
           stream2.on('end', () => next());
           stream2.resume(); // just auto drain the stream
         }
@@ -335,9 +361,9 @@ const Downloader: GType['Downloader'] = {
   },
 
   // Takes an array of SWORD repositories and returns an array containing:
-  // - SwordConfType objects from reading mods.d.tar.gz.
-  // - Or a string error message if there was an error
-  // - Or null if the repository was null or disabled
+  // - SwordConfType object array from reading mods.d.tar.gz.
+  // - Or a string error message if there was an error or canceled.
+  // - Or null if the repository was null or disabled.
   // Progress on each repository is separately reported to the calling
   // window, but results are not returned until all repositories have
   // been completely handled.
@@ -373,14 +399,35 @@ const Downloader: GType['Downloader'] = {
         progress(-1);
         return `Directory not found: ${repo.path}/mods.d`;
       }
-      const targzbuf = await ftpFile(repo, progress);
-      if (targzbuf === null) return 'canceled';
-      const files = await untargz(targzbuf);
+      let files: { header: { name: string }; content: Buffer }[] | null = [];
+      try {
+        const targzbuf = await ftpFile(repo, progress);
+        if (targzbuf === null) return 'Canceled';
+        files = await untargz(targzbuf);
+      } catch {
+        // If there is no mods.d.tar.gz, then download every conf file.
+        const getfiles = async (c: FTP) => {
+          const listing = await list(c, fpath.join(repo.path, 'mods.d'), '', 1);
+          if (listing === null) return null;
+          const bufs = await getFiles(
+            c,
+            listing.map((l) => fpath.join(repo.path, 'mods.d', l.name)),
+            progress
+          );
+          if (bufs === null) return null;
+          bufs.forEach((b, i) => {
+            files?.push({ header: { name: listing[i].name }, content: b });
+          });
+          return files;
+        };
+        files = await connect(repo.domain, getfiles);
+      }
+      if (!files) return 'Canceled';
       const confs: SwordConfType[] = [];
       files.forEach((r) => {
         const { header, content: buffer } = r;
         if (header.name.endsWith('.conf')) {
-          const cobj = parseSwordConf(buffer.toString('utf8'));
+          const cobj = parseSwordConf(buffer.toString('utf8'), header.name);
           cobj.sourceRepository = repo;
           confs.push(cobj);
         }
@@ -389,14 +436,11 @@ const Downloader: GType['Downloader'] = {
     });
     return Promise.allSettled(promises).then((results) => {
       const ret: RepositoryListing[] = [];
-      let canceled = false;
       results.forEach((result) => {
-        if (result.status === 'fulfilled') {
-          if (result.value === 'canceled') canceled = true;
-          ret.push(result.value);
-        } else ret.push(result.reason.toString());
+        if (result.status === 'fulfilled') ret.push(result.value);
+        else ret.push(result.reason.toString());
       });
-      return canceled ? null : ret;
+      return ret;
     });
   },
 

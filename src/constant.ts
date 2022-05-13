@@ -325,19 +325,7 @@ const C = {
 
   SwordConf: {
     // default is string
-    repeatable: ['Obsoletes', 'Feature', 'GlobalOptionFilter'],
-    integer: ['DisplayLevel'],
-    continuation: [
-      'About',
-      'Copyright',
-      'CopyrightNotes',
-      'CopyrightContactName',
-      'CopyrightContactNotes',
-      'CopyrightContactAddress',
-      'DistributionNotes',
-      'TextSource',
-      'UnlockInfo',
-    ],
+    integer: ['DisplayLevel', 'InstallSize'],
     localization: [
       'About',
       'Abbreviation',
@@ -355,8 +343,20 @@ const C = {
       'DistributionNotes',
       'UnlockInfo',
     ],
-    htmllink: ['ShortPromo', 'UnlockInfo'],
+    repeatable: ['Obsoletes', 'Feature', 'GlobalOptionFilter'],
+    continuation: [
+      'About',
+      'Copyright',
+      'CopyrightNotes',
+      'CopyrightContactName',
+      'CopyrightContactNotes',
+      'CopyrightContactAddress',
+      'DistributionNotes',
+      'TextSource',
+      'UnlockInfo',
+    ],
     rtf: ['About', 'UnlockInfo'],
+    htmllink: ['ShortPromo', 'UnlockInfo'],
   } as const,
 
   // bookmark/personal-note fields

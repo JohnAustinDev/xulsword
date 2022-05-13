@@ -8,6 +8,29 @@
   font-size: 18px;
 }
 
-.repository .custom-repo {
+.language.closed .groupbox {
+  border: none;
+  padding-left: 0;
+  padding-right: 0;
+}
+.language.closed .groupbox-body {
+  padding: 0;
+}
+
+#languageListClose {
+  margin-top: 10px;
+}
+
+.module-deck {
+  position: relative;
+}
+.module-deck .info {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  overflow: auto;
+}
+
+#repository .custom-repo {
   border: 1px dotted rgb(0 132 255);
 }

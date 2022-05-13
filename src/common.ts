@@ -12,6 +12,7 @@ import type {
   PrefObject,
   PrefValue,
   Repository,
+  SwordConfLocalized,
   SwordConfType,
   TabType,
 } from './type';
@@ -76,9 +77,18 @@ export function decodeOSISRef(aRef: string) {
 
 // This function should always be used when writing to innerHTML. It
 // may be updated to improve security at some point.
-export function sanitizeHTML(parent: HTMLElement, html: string) {
-  parent.innerHTML = html;
-  return parent;
+export function sanitizeHTML<T extends string | HTMLElement>(
+  parentOrHtml: T,
+  html?: string
+): T {
+  const sanitize = (s?: string): string => {
+    return s || '';
+  };
+  if (typeof parentOrHtml === 'string') {
+    return sanitize(parentOrHtml) as T;
+  }
+  parentOrHtml.innerHTML = sanitize(html);
+  return parentOrHtml;
 }
 
 // Return a hash number for a string.
@@ -435,11 +445,15 @@ export function tabSort(a: TabType, b: TabType) {
   return mto[a.tabType] > mto[b.tabType] ? 1 : -1;
 }
 
-export function parseSwordConf(config: string | LocalFile): SwordConfType {
+export function parseSwordConf(
+  config: string | LocalFile,
+  filename?: string
+): SwordConfType {
   const conf = typeof config === 'string' ? config : config.readFile();
   const errors = [];
   const lines = conf.split(/[\n\r]+/);
-  const r = {} as SwordConfType;
+  const r = { filename } as SwordConfType;
+  if (typeof config !== 'string') r.filename = config.leafName;
   C.SwordConf.repeatable.forEach((en) => {
     r[en] = [];
   });
@@ -532,6 +546,94 @@ export function parseSwordConf(config: string | LocalFile): SwordConfType {
   return r;
 }
 
+export function moduleInfoHTML(configs: SwordConfType[]): string {
+  const esc = (s: string): string => {
+    return s.replace(/[&<>"']/g, (m) => {
+      switch (m) {
+        case '&':
+          return '&amp;';
+        case '<':
+          return '&lt;';
+        case '>':
+          return '&gt;';
+        case '"':
+          return '&quot;';
+        default:
+          return '&#039;';
+      }
+    });
+  };
+  const gethtml = (c: SwordConfType): string => {
+    const fields: (keyof SwordConfType)[] = [
+      'module',
+      'Version',
+      'Lang',
+      'ShortPromo',
+      'ShortCopyright',
+      'UnlockInfo',
+      'About',
+      'Copyright',
+      'CopyrightDate',
+      'CopyrightHolder',
+      'CopyrightNotes',
+      'DistributionLicense',
+      'CopyrightContactName',
+      'CopyrightContactAddress',
+      'CopyrightContactEmail',
+      'CopyrightContactNotes',
+      'History',
+    ];
+    const sc = C.SwordConf;
+    const lang = i18next.language;
+    return fields
+      .map((f) => {
+        if (c[f]) {
+          const sf = f as any;
+          let value: string;
+          if (sc.localization.includes(sf)) {
+            const v = c[f] as SwordConfLocalized;
+            value = lang in v ? v[lang] : v.en;
+          } else if (sc.repeatable.includes(sf)) {
+            const v = c[f] as string[];
+            value = v.join(', ');
+          } else if (sc.integer.includes(sf)) {
+            const v = c[f] as number;
+            value = v.toString();
+          } else if (sf === 'History') {
+            const v = c[f] as [string, SwordConfLocalized][];
+            value = v
+              .map((x) => {
+                const vers = esc(x[0]);
+                const desc = esc(lang in x[1] ? x[1][lang] : x[1].en);
+                return `<div>Version ${vers}: ${desc}</div>`;
+              })
+              .join('');
+          } else value = c[f]?.toString() || '';
+          if (sc.rtf.includes(sf)) {
+            value = esc(value).replace(
+              /\\qc\b([^\\]+)(?=\\)/g,
+              '<div class="rtf-qc">$1</div>'
+            );
+            value = value.replace(/\\par\b/g, '<br>');
+            value = value.replace(/\\pard\b/g, '');
+          }
+          const noesc = [sc.htmllink, 'History', sc.rtf].flat();
+          if (!noesc.includes(sf)) {
+            value = esc(value);
+          }
+          return `<div class="${f}">${value}</div>`;
+        }
+        return '';
+      })
+      .join('');
+  };
+  const html: string[] = [];
+  configs.forEach((conf) => {
+    html.push(gethtml(conf));
+  });
+  return html.join(`<div class="separator"/>`);
+}
+
 export function isRepoLocal(repo: Download | Repository): boolean {
   if (Array.isArray(repo)) return repo[1] === C.Downloader.localfile;
   return repo.domain === C.Downloader.localfile;
@@ -545,7 +647,7 @@ export function modrepKey(module: string, repository: Repository): string {
   return [downloadKey(repository), module].join('.');
 }
 
-export function regionsToRows(regions: Region[]): number[] {
+export function selectionToRows(regions: Region[]): number[] {
   const sels: Set<number> = new Set();
   regions?.forEach((region) => {
     if (region.rows) {

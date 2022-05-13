@@ -115,14 +115,8 @@ export const addClass = <P extends XulProps>(
 ): P => {
   const c = typeof classes === 'string' ? classes.split(' ') : classes;
   const cp = props.className ? props.className.split(' ') : [];
-  const className = c.concat(cp).filter(Boolean).join(' ');
-  const r: any = {};
-  Object.entries(props).forEach((entry) => {
-    if (entry[1] !== undefined) {
-      [, r[entry[0]]] = entry;
-    }
-  });
-  r.className = className;
+  const r: P = { ...props };
+  r.className = c.concat(cp).filter(Boolean).join(' ');
   return r;
 };
 

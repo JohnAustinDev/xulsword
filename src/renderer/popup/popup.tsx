@@ -306,7 +306,7 @@ class Popup extends React.Component {
             {!isWindow && <div className="towindow" />}
             {elemhtml && elemhtml.length > 1 && (
               <div>
-                <a className="popupBackLink">{i18next.t('back')}</a>
+                <a className="popupBackLink">{i18next.t('back.label')}</a>
               </div>
             )}
             {elemhtml && elemhtml.length === 1 && (

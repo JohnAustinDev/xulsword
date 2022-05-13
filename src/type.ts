@@ -355,7 +355,7 @@ export type ModTypes =
   | 'Lexicons / Dictionaries'
   | 'Generic Books';
 
-type SwordConfLocalized = {
+export type SwordConfLocalized = {
   [locale: string]: string;
 };
 
@@ -412,6 +412,7 @@ export type SwordConfType = {
   errors: string[];
   sourceRepository: Download;
   moduleType: ModTypes;
+  filename: string;
 };
 
 export type TabTypes = 'Texts' | 'Comms' | 'Dicts' | 'Genbks';
@@ -751,7 +752,7 @@ export const GPublic = {
     >,
     repositoryListing: func as unknown as (
       repos: (Repository | null)[]
-    ) => Promise<RepositoryListing[] | null>,
+    ) => Promise<RepositoryListing[]>,
     ftpCancel: func as unknown as () => void,
   },
   Module: {

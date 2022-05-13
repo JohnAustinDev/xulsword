@@ -225,11 +225,15 @@ class Table extends React.Component {
 
   static propTypes: typeof propTypes;
 
+  static scrollTop: { [id: string]: number };
+
   static dataKey = (rowIndex: number, columnIndex: number) => {
     return `${rowIndex}-${columnIndex}`;
   };
 
   columnIndexToDataMap: number[];
+
+  tableRef: React.RefObject<HTMLDivElement>;
 
   constructor(props: TableProps) {
     super(props);
@@ -253,12 +257,46 @@ class Table extends React.Component {
 
     this.columnIndexToDataMap = [];
 
+    this.tableRef = React.createRef();
+
     this.getCellData = this.getCellData.bind(this);
     this.sortColumn = this.sortColumn.bind(this);
     this.cellValidator = this.cellValidator.bind(this);
     this.cellSetter = this.cellSetter.bind(this);
     this.setArrayState = this.setArrayState.bind(this);
     this.setSparseState = this.setSparseState.bind(this);
+  }
+
+  componentDidMount() {
+    const { domref, id } = this.props as TableProps;
+    // Scroll table to last position.
+    const tableRef = domref || this.tableRef;
+    const t = tableRef.current;
+    if (t) {
+      const parent = t.getElementsByClassName(
+        'bp4-table-quadrant-scroll-container'
+      )[0];
+      if (parent) {
+        let top = 0;
+        if (id && id in Table.scrollTop) top = Table.scrollTop[id] - 30;
+        parent.scrollTop = top;
+      }
+    }
+  }
+
+  componentWillUnmount() {
+    const { id, domref } = this.props as TableProps;
+    // Save scroll position.
+    const tableRef = domref || this.tableRef;
+    const t = tableRef.current;
+    if (t) {
+      const parent = t.getElementsByClassName(
+        'bp4-table-quadrant-scroll-container'
+      )[0];
+      if (parent && id) {
+        Table.scrollTop[id] = parent.scrollTop;
+      }
+    }
   }
 
   getCellData(rowIndex: number, columnIndex: number) {
@@ -345,6 +383,7 @@ class Table extends React.Component {
       columnWidths,
       onColumnWidthChanged,
     } = props;
+    let { tableRef } = this;
     const numRows = data.length;
     const columns = cols
       .map((col, i) => {
@@ -368,8 +407,11 @@ class Table extends React.Component {
     const classes = ['table'];
     if (onColumnWidthChanged) classes.push('width-resizable');
 
+    // If parent uses domref, don't clobber it, use it.
+    if (props.domref) tableRef = props.domref;
+
     return (
-      <Box {...addClass(classes, props)}>
+      <Box domref={tableRef} {...addClass(classes, props)}>
         <BPTable
           numRows={numRows}
           columnWidths={columnWidths?.filter((w) => w !== -1)}
@@ -388,5 +430,6 @@ class Table extends React.Component {
 }
 Table.defaultProps = defaultProps;
 Table.propTypes = propTypes;
+Table.scrollTop = {};
 
 export default Table;

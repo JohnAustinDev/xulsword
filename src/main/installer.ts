@@ -105,16 +105,21 @@ export function confModulePath(aDataPath: string): string | null {
   return subs.length === requiredSubs ? subs.join('/') : null;
 }
 
-// Remove one or more modules from either the user module directory or the shared one.
-// Returns the number of modules succesfully removed. If moveTo is an existing path,
-// the removed modules will be copied there first.
-export function removeModule(
+// Move or remove one or more modules. Returns the number of modules
+// succesfully (re)moved. If moveTo is set, the removed modules will
+// be moved (copied) there if it is an existing path, otherwise nothing
+// will be done and 0 is returned.
+export function moveRemoveModule(
   modules: string | string[],
   repositoryPath: string,
   moveTo?: string
 ): number {
   let move = (moveTo && new LocalFile(moveTo)) || null;
   if (move && (!move.exists() || !move.isDirectory())) move = null;
+  if (moveTo && move === null) {
+    log.error(`Destination does not exist: '${moveTo}'.`);
+    return 0;
+  }
   let num = 0;
   const ma = Array.isArray(modules) ? modules : [modules];
   ma.forEach((m) => {
@@ -136,7 +141,7 @@ export function removeModule(
             f.remove();
             const modulePath = confModulePath(c.DataPath);
             if (modulePath) {
-              const md = moddir.clone();
+              const md = new LocalFile(repositoryPath);
               md.append(modulePath);
               if (move) {
                 const to = move.clone();
@@ -237,7 +242,10 @@ export async function installList(
                   toSharedDir ? Dirs.path.xsModsCommon : Dirs.path.xsModsUser
                 );
                 const confstr = entry.getData().toString('utf8');
-                const conf = parseSwordConf(confstr);
+                const conf = parseSwordConf(
+                  confstr,
+                  entry.entryName.split('/').pop()
+                );
                 const reasons = moduleUnsupported(conf);
                 const swmodpath =
                   conf.DataPath && confModulePath(conf.DataPath);
@@ -256,7 +264,7 @@ export async function installList(
                   // Remove any existing module having this name.
                   if (
                     moddest.exists() &&
-                    !removeModule([conf.module], repoPath)
+                    !moveRemoveModule([conf.module], repoPath)
                   ) {
                     newmods.errors.push(
                       `${conf.module}: Could not remove existing module.`
@@ -269,7 +277,7 @@ export async function installList(
                       });
                       if (
                         obsoletes.length &&
-                        !removeModule(obsoletes, repoPath)
+                        !moveRemoveModule(obsoletes, repoPath)
                       ) {
                         newmods.errors.push(
                           `${conf.module}: Could not remove obsoleted module(s).`
@@ -412,31 +420,35 @@ const Module: GType['Module'] = {
       const progress = (prog: number) => {
         callingWin?.webContents.send('progress', prog, modrepk);
       };
-      const confpath = fpath.join(
-        repository.path,
-        'mods.d',
-        `${module.toLocaleLowerCase()}.conf`
-      );
-      const confBuffer = await getFile(c, confpath);
-      if (!confBuffer) return null;
-      const conf = parseSwordConf(confBuffer.toString('utf8'));
-      const datapath = confModulePath(conf.DataPath);
-
-      // TODO! How to do more than one c.func in a row!!!!
-      const confBuffer2 = await getFile(c, confpath.replace(/[^\/\.]+(?=\.[^\.]+)$/, 'uzv'));
-      if (!confBuffer2) return null;
-      const conf2 = parseSwordConf(confBuffer.toString('utf8'));
-      const datapath2 = confModulePath(conf.DataPath);
-      console.log(datapath, datapath2);
-
-      if (datapath) {
-        const modpath = fpath.join(repository.path, datapath);
-        const zip = new ZIP();
-        zip.addFile(confpath, confBuffer);
-        const zipo = await getDir(c, modpath, progress, zip);
-        if (!zipo) return null;
-        Downloads[modrepk] = zipo;
-        return zipo.getEntries().length;
+      let confname = `${module.toLocaleLowerCase()}.conf`;
+      let confpath = fpath.join(repository.path, 'mods.d', confname);
+      let confbuf;
+      try {
+        confbuf = await getFile(c, confpath);
+      } catch {
+        confname = `${module}.conf`;
+        confpath = fpath.join(repository.path, 'mods.d', confname);
+        confbuf = await getFile(c, confpath);
+      }
+      if (confbuf) {
+        const conf = parseSwordConf(confbuf.toString('utf8'), confname);
+        const datapath = confModulePath(conf.DataPath);
+        if (datapath) {
+          const modpath = fpath.join(repository.path, datapath);
+          const modfiles = await getDir(c, modpath, /\/lucene\//, progress);
+          if (modfiles && modfiles.length) {
+            const zip = new ZIP();
+            zip.addFile(fpath.join('mods.d', confname), confbuf);
+            modfiles.forEach((fp) => {
+              zip.addFile(
+                fpath.join(datapath, fp.listing.subdir, fp.listing.name),
+                fp.buffer
+              );
+            });
+            Downloads[modrepk] = zip;
+            return zip.getEntries().length;
+          }
+        }
       }
       return 0;
     };
@@ -509,14 +521,14 @@ const Module: GType['Module'] = {
 
   remove(module: string, repo: Repository): boolean {
     if (isRepoLocal(repo)) {
-      return !!removeModule([module], repo.path);
+      return !!moveRemoveModule([module], repo.path);
     }
     return false;
   },
 
   move(module: string, fromRepo: Repository, toRepo: Repository): boolean {
     if (isRepoLocal(fromRepo) && isRepoLocal(toRepo)) {
-      return !!removeModule([module], fromRepo.path, toRepo.path);
+      return !!moveRemoveModule([module], fromRepo.path, toRepo.path);
     }
     return false;
   },
