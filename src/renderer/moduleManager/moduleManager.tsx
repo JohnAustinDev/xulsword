@@ -48,6 +48,7 @@ import './moduleManager.css';
 
 // TODO!: showModuleInfo
 // TODO!: Add XSM and audio support
+// TODO!: return newmods
 
 import type {
   ModTypes,
@@ -164,7 +165,7 @@ const builtinRepos: Repository[] = [
     custom: false,
   },
   {
-    name: '',
+    name: i18n.t('programTitle'),
     domain: 'file://',
     path: G.Dirs.path.xsModsUser,
     file: '',
@@ -324,10 +325,11 @@ export default class ModuleManager extends React.Component {
           return repos;
         })
         .catch(async (er: Error) => {
+          log.warn(er);
           this.addToast({
-            message: `Unable to download Master Repository List (${er.message})`,
+            message: `Unable to download Master Repository List`,
           });
-          // Failed to load master list, so just load local repos.
+          // Failed to load the master list, so just load local repos.
           ModuleManager.saved.repoTableData = [];
           ModuleManager.saved.repositoryListings = [];
           const listing = await G.Downloader.repositoryListing(
@@ -337,7 +339,7 @@ export default class ModuleManager extends React.Component {
         });
     }
     this.destroy.push(onSetWindowState(this));
-    // Setup progress handlers
+    // Initiate progress handlers
     this.destroy.push(
       window.ipc.renderer.on('progress', (prog: number, id?: string) => {
         const state = this.state as ManagerState;
@@ -445,7 +447,7 @@ export default class ModuleManager extends React.Component {
 
   // Load the repository table with built-in repositories, then user-custom
   // repositories, and then others passed in as repos[]. It returns the array
-  // of repositories used to create the table.
+  // of repositories that was used to create the table.
   loadRepositoryTable(repos?: Repository[]): Repository[] {
     const { customRepos, disabledRepos } = this.state as ManagerState;
     const repoTableData: TRepositoryTableRow[] = [];
@@ -464,7 +466,13 @@ export default class ModuleManager extends React.Component {
       const isloading = repo.disabled ? false : loading(RepCol.iState);
       const on = repo.builtin ? ALWAYS_ON : ON;
       repoTableData.push([
-        { loading: isloading, editable: canedit, classes: css, repo },
+        {
+          loading: isloading,
+          editable: canedit,
+          classes: css,
+          repo,
+          tooltip: tooltip('VALUE', [RepCol.iState]),
+        },
         repo.name || '',
         repo.domain,
         repo.path,
@@ -578,6 +586,7 @@ export default class ModuleManager extends React.Component {
                 [ModCol.iShared, ModCol.iInstalled],
                 ['checkbox-column']
               ),
+              tooltip: tooltip('VALUE', [ModCol.iShared, ModCol.iInstalled]),
               conf: c,
             };
             d[ModCol.iType] = c.moduleType;
@@ -1373,6 +1382,12 @@ function classes(
         if (!cs.includes(c)) cs.push(c);
       });
     return cs;
+  };
+}
+
+function tooltip(atooltip: string, slipColumnIndexArray: number[]) {
+  return (_ri: number, ci: number) => {
+    return slipColumnIndexArray.includes(ci) ? undefined : atooltip;
   };
 }
 

@@ -266,9 +266,9 @@ export default function renderToRoot(
   i18nInit([namespace])
     .then(() => {
       return render(
-        <React.StrictMode>
+
           <Reset>{component}</Reset>
-        </React.StrictMode>,
+,
         document.getElementById('root')
       );
     })

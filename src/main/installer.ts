@@ -4,7 +4,6 @@
 import fpath from 'path';
 import { BrowserWindow } from 'electron';
 import ZIP from 'adm-zip';
-import FTP from 'ftp';
 import log from 'electron-log';
 import { isRepoLocal, modrepKey, parseSwordConf } from '../common';
 import Subscription from '../subscription';
@@ -13,7 +12,7 @@ import Window, { getBrowserWindows } from './window';
 import LocalFile from './components/localFile';
 import Dirs from './components/dirs';
 import LibSword from './components/libsword';
-import { connect, ftpCancel, getFile, getDir } from './components/downloader';
+import { ftpCancel, getFile, getDir } from './components/downloader';
 
 import type {
   GType,
@@ -415,44 +414,47 @@ const Module: GType['Module'] = {
   ): Promise<number | null> {
     const callingWin = arguments[2] || null;
     ftpCancel(false);
-    const onready = async (c: FTP) => {
-      const modrepk = modrepKey(module, repository);
-      const progress = (prog: number) => {
-        callingWin?.webContents.send('progress', prog, modrepk);
-      };
-      let confname = `${module.toLocaleLowerCase()}.conf`;
-      let confpath = fpath.join(repository.path, 'mods.d', confname);
-      let confbuf;
-      try {
-        confbuf = await getFile(c, confpath);
-      } catch {
-        confname = `${module}.conf`;
-        confpath = fpath.join(repository.path, 'mods.d', confname);
-        confbuf = await getFile(c, confpath);
-      }
-      if (confbuf) {
-        const conf = parseSwordConf(confbuf.toString('utf8'), confname);
-        const datapath = confModulePath(conf.DataPath);
-        if (datapath) {
-          const modpath = fpath.join(repository.path, datapath);
-          const modfiles = await getDir(c, modpath, /\/lucene\//, progress);
-          if (modfiles && modfiles.length) {
-            const zip = new ZIP();
-            zip.addFile(fpath.join('mods.d', confname), confbuf);
-            modfiles.forEach((fp) => {
-              zip.addFile(
-                fpath.join(datapath, fp.listing.subdir, fp.listing.name),
-                fp.buffer
-              );
-            });
-            Downloads[modrepk] = zip;
-            return zip.getEntries().length;
-          }
+    const modrepk = modrepKey(module, repository);
+    const progress = (prog: number) => {
+      log.silly(`progress ${prog}`);
+      callingWin?.webContents.send('progress', prog, modrepk);
+    };
+    let confname = `${module.toLocaleLowerCase()}.conf`;
+    let confpath = fpath.join(repository.path, 'mods.d', confname);
+    let confbuf;
+    try {
+      confbuf = await getFile(repository.domain, confpath);
+    } catch {
+      confname = `${module}.conf`;
+      confpath = fpath.join(repository.path, 'mods.d', confname);
+      confbuf = await getFile(repository.domain, confpath);
+    }
+    if (confbuf) {
+      const conf = parseSwordConf(confbuf.toString('utf8'), confname);
+      const datapath = confModulePath(conf.DataPath);
+      if (datapath) {
+        const modpath = fpath.join(repository.path, datapath);
+        const modfiles = await getDir(
+          repository.domain,
+          modpath,
+          /\/lucene\//,
+          progress
+        );
+        if (modfiles && modfiles.length) {
+          const zip = new ZIP();
+          zip.addFile(fpath.join('mods.d', confname), confbuf);
+          modfiles.forEach((fp) => {
+            zip.addFile(
+              fpath.join(datapath, fp.listing.subdir, fp.listing.name),
+              fp.buffer
+            );
+          });
+          Downloads[modrepk] = zip;
+          return zip.getEntries().length;
         }
       }
-      return 0;
-    };
-    return connect(repository.domain, onready);
+    }
+    return 0;
   },
 
   clearDownload(module?: string, repository?: Repository): boolean {

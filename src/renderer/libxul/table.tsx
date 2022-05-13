@@ -40,6 +40,9 @@ export type TCellInfo = {
   editable?: boolean | ((rowIndex: number, colIndex: number) => boolean);
   intent?: Intent | ((rowIndex: number, colIndex: number) => Intent);
   classes?: string[] | ((rowIndex: number, colIndex: number) => string[]);
+  tooltip?:
+    | string
+    | ((rowIndex: number, colIndex: number) => string | undefined);
 };
 
 type TCellValidator = (
@@ -87,7 +90,7 @@ abstract class AbstractSortableColumn implements TSortableColumn {
         rowIndex,
         columnIndex
       );
-      let { editable, loading, intent, classes } = info;
+      let { editable, loading, intent, classes, tooltip } = info;
       if (typeof editable === 'function') {
         editable = editable(rowIndex, dataColumnIndex);
       }
@@ -96,6 +99,9 @@ abstract class AbstractSortableColumn implements TSortableColumn {
       }
       if (typeof intent === 'function') {
         intent = intent(rowIndex, dataColumnIndex);
+      }
+      if (typeof tooltip === 'function') {
+        tooltip = tooltip(rowIndex, dataColumnIndex);
       }
       if (typeof classes === 'function') {
         classes = classes(rowIndex, dataColumnIndex);
@@ -106,15 +112,16 @@ abstract class AbstractSortableColumn implements TSortableColumn {
         const dataKey = Table.dataKey(rowIndex, columnIndex);
         const val =
           dataKey in state.sparseCellData
-            ? state.sparseCellData[dataKey]
-            : value;
+            ? state.sparseCellData[dataKey] || ''
+            : value || '';
         return (
           <EditableCell
             className={classes?.join(' ')}
-            value={val == null ? '' : val}
+            value={val}
             intent={state.sparseCellIntent[dataKey] || info.intent || 'none'}
             truncated
             loading={loading}
+            tooltip={tooltip === 'VALUE' ? val : tooltip}
             onCancel={cellValidator(rowIndex, columnIndex)}
             onChange={cellValidator(rowIndex, columnIndex)}
             onConfirm={cellSetter(rowIndex, columnIndex)}
@@ -126,6 +133,7 @@ abstract class AbstractSortableColumn implements TSortableColumn {
           className={classes?.join(' ')}
           intent={intent || 'none'}
           truncated
+          tooltip={tooltip === 'VALUE' ? value.toString() : tooltip}
           loading={loading}
         >
           {value}

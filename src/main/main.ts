@@ -11,9 +11,8 @@ import Cache from '../cache';
 import C from '../constant';
 import G from './mg';
 import LibSword from './components/libsword';
-import Downloader from './components/downloader';
 import MenuBuilder, { pushPrefsToMenu } from './menu';
-import Window, {
+import {
   WindowRegistry,
   pushPrefsToWindows,
   getBrowserWindows,
@@ -22,11 +21,7 @@ import contextMenu from './contextMenu';
 import { checkModulePrefs } from './minit';
 import setViewportTabs from './tabs';
 
-import type {
-  NewModulesType,
-  SwordConfType,
-  WindowRegistryType,
-} from '../type';
+import type { NewModulesType, WindowRegistryType } from '../type';
 
 const i18nBackendMain = require('i18next-fs-backend');
 const installer = require('electron-devtools-installer');
