@@ -72,7 +72,7 @@ const C = {
   // ---------------------
   DEVELSPLASH: 1 as 0 | 1 | 2, // 0 normal, 1 skip, 2 debug
   // preload.js must be kept in sync with LogLevel.
-  LogLevel: (isDevelopment ? 'silly' : 'info') as
+  LogLevel: (isDevelopment ? 'debug' : 'info') as
     | 'error'
     | 'warn'
     | 'info'
@@ -94,7 +94,7 @@ const C = {
     localfile: 'file://',
   },
 
-  FTPMaxConnectionsPerDomain: 30,
+  FTPMaxConnectionsPerDomain: 36, // 40 is absolute max
 
   // xulsword UI constants
   UI: {

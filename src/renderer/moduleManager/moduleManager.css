@@ -34,3 +34,8 @@
 #repository .custom-repo {
   border: 1px dotted rgb(0 132 255);
 }
+
+.progress-container {
+  height: 100%;
+  padding: 10px;
+}

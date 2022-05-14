@@ -419,6 +419,7 @@ const Module: GType['Module'] = {
       log.silly(`progress ${prog}`);
       callingWin?.webContents.send('progress', prog, modrepk);
     };
+    progress(0);
     let confname = `${module.toLocaleLowerCase()}.conf`;
     let confpath = fpath.join(repository.path, 'mods.d', confname);
     let confbuf;
@@ -427,19 +428,30 @@ const Module: GType['Module'] = {
     } catch {
       confname = `${module}.conf`;
       confpath = fpath.join(repository.path, 'mods.d', confname);
-      confbuf = await getFile(repository.domain, confpath);
+      try {
+        confbuf = await getFile(repository.domain, confpath);
+      } catch (er) {
+        progress(-1);
+        return Promise.reject(er);
+      }
     }
     if (confbuf) {
       const conf = parseSwordConf(confbuf.toString('utf8'), confname);
       const datapath = confModulePath(conf.DataPath);
       if (datapath) {
         const modpath = fpath.join(repository.path, datapath);
-        const modfiles = await getDir(
-          repository.domain,
-          modpath,
-          /\/lucene\//,
-          progress
-        );
+        let modfiles;
+        try {
+          modfiles = await getDir(
+            repository.domain,
+            modpath,
+            /\/lucene\//,
+            progress
+          );
+        } catch (er) {
+          progress(-1);
+          return Promise.reject(er);
+        }
         if (modfiles && modfiles.length) {
           const zip = new ZIP();
           zip.addFile(fpath.join('mods.d', confname), confbuf);
@@ -454,7 +466,8 @@ const Module: GType['Module'] = {
         }
       }
     }
-    return 0;
+    progress(-1);
+    return null;
   },
 
   clearDownload(module?: string, repository?: Repository): boolean {

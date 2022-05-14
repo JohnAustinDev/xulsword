@@ -14,6 +14,7 @@ import {
   Intent,
   IToastProps,
   Position,
+  ProgressBar,
   Toaster,
 } from '@blueprintjs/core';
 import {
@@ -46,9 +47,11 @@ import Spacer from '../libxul/spacer';
 import DragSizer, { DragSizerVal } from '../libxul/dragsizer';
 import './moduleManager.css';
 
-// TODO!: showModuleInfo
+// TODO!: showModuleInfo CSS
+// TODO!: Add new custom repos and new modules are created!
 // TODO!: Add XSM and audio support
 // TODO!: return newmods
+// TODO!: Fix column sort and add column selector to menu.s
 
 import type {
   ModTypes,
@@ -210,6 +213,7 @@ const notStatePref = {
   repository: [] as RowSelection,
   repoTableData: [] as TRepositoryTableRow[],
   renderRepoTable: 0,
+  progress: null as number[] | null,
 };
 
 export interface ManagerStatePref {
@@ -315,26 +319,47 @@ export default class ModuleManager extends React.Component {
       ModuleManager.saved.repositoryListings = [];
       G.Downloader.crossWireMasterRepoList()
         .then((repos) => {
-          if (!repos) throw new Error(`Canceled`);
+          if (!repos) throw new Error(`Master Repository List canceled.`);
           const allrepos = this.loadRepositoryTable(repos);
+          const loads = allrepos.filter((r) => r && !r.disabled);
+          this.setState({ progress: [0, loads.length] });
           allrepos.forEach(async (_r, i) => {
             const arepo = allrepos.map((r, i2) => (i2 === i ? r : null));
-            const listing = await G.Downloader.repositoryListing(arepo);
+            let listing: RepositoryListing[] = [];
+            try {
+              listing = await G.Downloader.repositoryListing(arepo);
+            } catch (er) {
+              log.warn(er);
+              this.setState((prevState: ManagerState) => {
+                const p = prevState.progress ? prevState.progress[0] : null;
+                if (p) {
+                  return {
+                    progress: [p - arepo.filter(Boolean).length, loads.length],
+                  };
+                }
+                return null;
+              });
+            }
             return handleListing(listing);
           });
           return repos;
         })
         .catch(async (er: Error) => {
+          // Failed to load the master list, so just load local repos.
           log.warn(er);
           this.addToast({
             message: `Unable to download Master Repository List`,
           });
-          // Failed to load the master list, so just load local repos.
           ModuleManager.saved.repoTableData = [];
           ModuleManager.saved.repositoryListings = [];
-          const listing = await G.Downloader.repositoryListing(
-            this.loadRepositoryTable()
-          );
+          let listing: RepositoryListing[] = [];
+          try {
+            listing = await G.Downloader.repositoryListing(
+              this.loadRepositoryTable()
+            );
+          } catch (err) {
+            log.warn(err);
+          }
           return handleListing(listing);
         });
     }
@@ -343,14 +368,28 @@ export default class ModuleManager extends React.Component {
     this.destroy.push(
       window.ipc.renderer.on('progress', (prog: number, id?: string) => {
         const state = this.state as ManagerState;
-        const { repoTableData, modTableData } = state;
+        const { repoTableData, modTableData, progress } = state;
         const repoIndex = repoTableData.findIndex(
           (r) => downloadKey(r[0].repo) === id
         );
         const repdrow = repoTableData[repoIndex];
-        if (id && repoIndex !== -1 && repdrow && prog === -1) {
+        if (
+          id &&
+          repoIndex !== -1 &&
+          repdrow &&
+          prog === -1 &&
+          repdrow[0].loading
+        ) {
           repdrow[0].loading = false;
-          this.setTableState('repository');
+          let newprog = null;
+          if (progress) {
+            const [p, t] = progress;
+            newprog = p + 1 === t ? null : [p + 1, t];
+          }
+          this.setTableState('repository', {
+            repoTableData,
+            progress: newprog,
+          });
         }
         const modIndex = modTableData.findIndex((r) => {
           const { repo } = r[0];
@@ -493,12 +532,16 @@ export default class ModuleManager extends React.Component {
       const drow = repoTableData[i];
       if (drow) {
         if (typeof listing === 'string') {
-          this.addToast({ message: listing });
-          drow[0].intent = intent(RepCol.iState, 'danger');
-          drow[0].loading = false;
-          if (!Array.isArray(repositoryListings[i])) {
-            repositoryListings[i] = null;
-          }
+          drow[0].repo.disabled = true;
+          drow[RepCol.iState] = OFF;
+          if (drow[0].loading) {
+            this.addToast({ message: listing });
+            drow[0].intent = intent(RepCol.iState, 'danger');
+            drow[0].loading = false;
+            if (!Array.isArray(repositoryListings[i])) {
+              repositoryListings[i] = null;
+            }
+          } else log.warn(listing);
           return;
         }
         if (Array.isArray(listing)) {
@@ -714,7 +757,7 @@ export default class ModuleManager extends React.Component {
           return drs === rowkey;
         });
         if (onOrOff === true || drowWas[RepCol.iState] === OFF) {
-          drow[RepCol.iState] = ON;
+          drow[RepCol.iState] = drow[0].repo.builtin ? ALWAYS_ON : ON;
           drow[0].repo.disabled = false;
           if (disabledIndex !== -1) disabledRepos.splice(disabledIndex, 1);
           drow[0].loading = loading(RepCol.iState);
@@ -817,6 +860,7 @@ export default class ModuleManager extends React.Component {
                 if (modrepok in Downloads) {
                   if (!G.Module.clearDownload(module, repo)) {
                     log.warn(`Failed to clear ${module} from downloads`);
+                    Downloads[modrepok].failed = true;
                   }
                 } else if (conf) {
                   if (!G.Module.remove(conf.module, conf.sourceRepository)) {
@@ -843,7 +887,12 @@ export default class ModuleManager extends React.Component {
                 }
               }
             });
-            // Install downloaded modules
+            // Install succesfully downloaded modules
+            Object.keys(Downloads).forEach((k) => {
+              if (Downloads[k].failed) {
+                delete Downloads[k];
+              }
+            });
             const downloadKeys = Object.keys(Downloads);
             const promises = Object.values(Downloads).map((v) => v.nfiles);
             return Promise.allSettled(promises)
@@ -935,9 +984,32 @@ export default class ModuleManager extends React.Component {
             this.loadModuleTable(this.loadLanguageTable());
             break;
           }
-          case 'repoCancel':
+          case 'repoCancel': {
+            G.Downloader.ftpCancel();
+            const { repoTableData } = this.state as ManagerState;
+            repoTableData.forEach((r) => {
+              if (r[0].loading) {
+                r[0].loading = false;
+                r[0].intent = intent(RepCol.iState, 'danger');
+                r[0].repo.disabled = true;
+                r[RepCol.iState] = OFF;
+                this.setTableState('repository', { progress: null });
+              }
+            });
+            break;
+          }
           case 'moduleCancel': {
             G.Downloader.ftpCancel();
+            ModuleManager.saved.moduleLangData.allmodules?.forEach((r) => {
+              if (r[0].loading) {
+                r[0].loading = false;
+                r[0].intent = intent(ModCol.iInstalled, 'danger');
+                r[ModCol.iInstalled] = OFF;
+                const modrepk = modrepKey(r[ModCol.iModule], r[0].repo);
+                if (modrepk in Downloads) Downloads[modrepk].failed = true;
+                this.setTableState('module');
+              }
+            });
             break;
           }
           case 'repository': {
@@ -1025,7 +1097,7 @@ export default class ModuleManager extends React.Component {
           return dl;
         })
         .catch((er) => {
-          log.error(er);
+          log.warn(er);
           drow[0].loading = false;
           drow[0].intent = intent(ModCol.iInstalled, 'danger');
           this.setTableState('module', { modTableData });
@@ -1088,6 +1160,7 @@ export default class ModuleManager extends React.Component {
       repoColumnWidths,
       repoTableData,
       renderRepoTable,
+      progress,
     } = state;
     const {
       eventHandler,
@@ -1105,7 +1178,7 @@ export default class ModuleManager extends React.Component {
       repoDelete:
         !repository ||
         !selectionToRows(repository).every(
-          (r) => repoTableData[r] && repoTableData[r][0].repo.custom
+          (r) => repoTableData[r] && repoTableData[r][0]?.repo?.custom
         ),
       repoCancel: !repoTableData.find((r) => r[0].loading),
     };
@@ -1305,7 +1378,17 @@ export default class ModuleManager extends React.Component {
               {i18n.t('moduleSources.label')}
             </Button>
           )}
-          <Spacer flex="1" />
+          {!progress && <Spacer flex="1" />}
+          {progress && (
+            <Hbox className="progress-container" align="center" flex="1">
+              <ProgressBar
+                value={progress[0] / progress[1]}
+                intent="primary"
+                animate
+                stripes
+              />
+            </Hbox>
+          )}
           <Button id="cancel" onClick={eventHandler}>
             {i18n.t('cancel.label')}
           </Button>
@@ -1360,7 +1443,7 @@ function loading(columnIndex: number) {
 
 function editable() {
   return (_ri: number, ci: number) => {
-    return ci < 3;
+    return ci < RepCol.iState;
   };
 }
 
@@ -1376,7 +1459,7 @@ function classes(
   wholeRowClasses?: string[]
 ) {
   return (_ri: number, ci: number) => {
-    const cs = wholeRowClasses || [];
+    const cs = wholeRowClasses?.slice() || [];
     if (columnIndexArray.includes(ci))
       theClasses.forEach((c) => {
         if (!cs.includes(c)) cs.push(c);

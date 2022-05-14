@@ -108,12 +108,18 @@ abstract class AbstractSortableColumn implements TSortableColumn {
       }
       if (!classes) classes = [];
       classes.push(`data-column-${dataColumnIndex}`);
+      tooltip = (
+        tooltip !== 'VALUE' ? tooltip : typeof value === 'string' ? value : ''
+      ) as string;
       if (editable) {
         const dataKey = Table.dataKey(rowIndex, columnIndex);
         const val =
           dataKey in state.sparseCellData
             ? state.sparseCellData[dataKey] || ''
             : value || '';
+        tooltip = (
+          tooltip !== 'VALUE' ? tooltip : typeof val === 'string' ? val : ''
+        ) as string;
         return (
           <EditableCell
             className={classes?.join(' ')}
@@ -121,7 +127,7 @@ abstract class AbstractSortableColumn implements TSortableColumn {
             intent={state.sparseCellIntent[dataKey] || info.intent || 'none'}
             truncated
             loading={loading}
-            tooltip={tooltip === 'VALUE' ? val : tooltip}
+            tooltip={tooltip}
             onCancel={cellValidator(rowIndex, columnIndex)}
             onChange={cellValidator(rowIndex, columnIndex)}
             onConfirm={cellSetter(rowIndex, columnIndex)}
@@ -133,7 +139,7 @@ abstract class AbstractSortableColumn implements TSortableColumn {
           className={classes?.join(' ')}
           intent={intent || 'none'}
           truncated
-          tooltip={tooltip === 'VALUE' ? value.toString() : tooltip}
+          tooltip={tooltip}
           loading={loading}
         >
           {value}
