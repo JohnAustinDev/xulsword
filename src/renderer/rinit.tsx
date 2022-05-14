@@ -3,6 +3,7 @@
 /* eslint-disable import/no-mutable-exports */
 import React, {
   ReactElement,
+  StrictMode,
   SyntheticEvent,
   useEffect,
   useState,
@@ -266,9 +267,9 @@ export default function renderToRoot(
   i18nInit([namespace])
     .then(() => {
       return render(
-
+        <StrictMode>
           <Reset>{component}</Reset>
-,
+        </StrictMode>,
         document.getElementById('root')
       );
     })

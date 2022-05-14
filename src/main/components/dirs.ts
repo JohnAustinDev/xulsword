@@ -67,6 +67,10 @@ dirNames.forEach((dir) => {
     f.create(LocalFile.DIRECTORY_TYPE);
   }
 });
+['xsModsUser', 'xsModsCommon'].forEach((r) => {
+  const d = Dirs as any;
+  d[r].append('mods.d').create(LocalFile.DIRECTORY_TYPE);
+});
 
 // The DirsClass interface is only available in main process directly through the Dirs object
 type DirsClass = GType['Dirs'] &

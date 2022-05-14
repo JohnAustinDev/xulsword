@@ -48,6 +48,7 @@ import DragSizer, { DragSizerVal } from '../libxul/dragsizer';
 import './moduleManager.css';
 
 // TODO!: showModuleInfo CSS
+// TODO!: Production ModuleManager cancel toast does not work. Console errors throwm without Internet.
 // TODO!: Add new custom repos and new modules are created!
 // TODO!: Add XSM and audio support
 // TODO!: return newmods
