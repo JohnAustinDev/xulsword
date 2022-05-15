@@ -27,20 +27,26 @@ let CancelFTP = true;
 export function ftpCancel(value?: boolean) {
   CancelFTP = !!value;
   if (CancelFTP) {
-    Object.keys(connections).forEach((domain) => resetFTP(domain, true));
+    resetFTP(null, true);
     log.info(`All FTP connections were canceled.`);
   }
 }
 
-function resetFTP(domain: string, quiet = false) {
-  connections[domain].forEach((c) => c.destroy());
-  delete connections[domain];
-  freeConnections[domain].forEach((c) => c.destroy());
-  delete freeConnections[domain];
-  waitingFuncs[domain].forEach(() => {
-    if (!quiet) log.error(`Dropping neglected FTP function.`);
-    delete waitingFuncs[domain];
-  });
+export function resetFTP(domain?: string | null, quiet = false) {
+  if (domain) {
+    if (domain in connections) {
+      connections[domain].forEach((c) => c.destroy());
+      delete connections[domain];
+      freeConnections[domain].forEach((c) => c.destroy());
+      delete freeConnections[domain];
+      waitingFuncs[domain].forEach(() => {
+        if (!quiet) log.error(`Dropping neglected FTP function.`);
+        delete waitingFuncs[domain];
+      });
+    }
+  } else {
+    Object.keys(connections).forEach((d) => resetFTP(d, quiet));
+  }
 }
 
 // Use an FTP connection to a remote server to run an arbitrary
@@ -101,7 +107,8 @@ export async function connect<Retval>(
                 next(c);
               } else {
                 freeConnections[domain].push(c);
-                if (!connections[domain].length) resetFTP(domain);
+                // We're freeing all connections when Module.clearDownload() is called.
+                // if (!connections[domain].length) resetFTP(domain);
               }
               resolveOnce(result);
             }

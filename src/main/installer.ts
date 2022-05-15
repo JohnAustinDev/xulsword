@@ -12,7 +12,7 @@ import Window, { getBrowserWindows } from './window';
 import LocalFile from './components/localFile';
 import Dirs from './components/dirs';
 import LibSword from './components/libsword';
-import { ftpCancel, getFile, getDir } from './components/downloader';
+import { ftpCancel, getFile, getDir, resetFTP } from './components/downloader';
 
 import type {
   GType,
@@ -472,10 +472,12 @@ const Module: GType['Module'] = {
 
   clearDownload(module?: string, repository?: Repository): boolean {
     if (!module) {
+      resetFTP();
       Downloads = {};
       return true;
     }
     if (repository) {
+      resetFTP(repository.domain);
       const key = modrepKey(module, repository);
       if (key in Downloads) {
         delete Downloads[key];

@@ -124,7 +124,7 @@ abstract class AbstractSortableColumn implements TSortableColumn {
           <EditableCell
             className={classes?.join(' ')}
             value={val}
-            intent={state.sparseCellIntent[dataKey] || info.intent || 'none'}
+            intent={state.sparseCellIntent[dataKey] || intent || 'none'}
             truncated
             loading={loading}
             tooltip={tooltip}
@@ -353,26 +353,26 @@ class Table extends React.Component {
 
   cellSetter(rowIndex: number, columnIndex: number) {
     const dataKey = Table.dataKey(rowIndex, columnIndex);
-    const { onEditableCellChanged: onCellChange } = this.props as TableProps;
+    const { onEditableCellChanged } = this.props as TableProps;
     return (value: string) => {
-      const intent = this.isValidValid(value) ? null : Intent.DANGER;
+      const intent = this.isValid(value) ? null : Intent.DANGER;
       this.setSparseState('sparseCellData', dataKey, value);
       this.setSparseState('sparseCellIntent', dataKey, intent);
-      if (!intent && typeof onCellChange === 'function')
-        onCellChange(rowIndex, columnIndex, value);
+      if (!intent && typeof onEditableCellChanged === 'function')
+        onEditableCellChanged(rowIndex, columnIndex, value);
     };
   }
 
   cellValidator(rowIndex: number, columnIndex: number) {
     const dataKey = Table.dataKey(rowIndex, columnIndex);
     return (value: string) => {
-      const intent = this.isValidValid(value) ? null : Intent.DANGER;
+      const intent = this.isValid(value) ? null : Intent.DANGER;
       this.setSparseState('sparseCellData', dataKey, value);
       this.setSparseState('sparseCellIntent', dataKey, intent);
     };
   }
 
-  isValidValid(value: string) {
+  isValid(value: string) {
     return /^[a-zA-Z0-9/ :/._-]*$/.test(value);
   }
 

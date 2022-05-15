@@ -635,7 +635,6 @@ export function moduleInfoHTML(configs: SwordConfType[]): string {
 }
 
 export function isRepoLocal(repo: Download | Repository): boolean {
-  if (Array.isArray(repo)) return repo[1] === C.Downloader.localfile;
   return repo.domain === C.Downloader.localfile;
 }
 

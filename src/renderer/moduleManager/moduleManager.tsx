@@ -476,10 +476,16 @@ export default class ModuleManager extends React.Component {
       if (crindex !== -1) {
         customRepos.splice(crindex, 1);
       }
-      drow[col] = value;
+      if (col + 1 === RepCol.iDomain) drow[0].repo.domain = value;
+      else if (col + 1 === RepCol.iName) drow[0].repo.name = value;
+      else if (col + 1 === RepCol.iPath) drow[0].repo.path = value;
+      drow[col + 1] = value;
       customRepos.push(drow[0].repo);
-      this.sState({ repoTableData, customRepos });
-      if ((col === 1 || col === 2) && drow[RepCol.iState] === OFF) {
+      this.setTableState('repository', { repoTableData, customRepos });
+      if (
+        (col === RepCol.iDomain || col === RepCol.iPath) &&
+        drow[RepCol.iState] === OFF
+      ) {
         setTimeout(() => this.switchRepo([row], true), 100);
       }
     }
@@ -533,16 +539,13 @@ export default class ModuleManager extends React.Component {
       const drow = repoTableData[i];
       if (drow) {
         if (typeof listing === 'string') {
-          drow[0].repo.disabled = true;
-          drow[RepCol.iState] = OFF;
-          if (drow[0].loading) {
-            this.addToast({ message: listing });
-            drow[0].intent = intent(RepCol.iState, 'danger');
-            drow[0].loading = false;
-            if (!Array.isArray(repositoryListings[i])) {
-              repositoryListings[i] = null;
-            }
-          } else log.warn(listing);
+          this.addToast({ message: listing });
+          if (!drow[0].repo.disabled) this.switchRepo([i], false);
+          drow[0].intent = intent(RepCol.iState, 'danger');
+          drow[0].loading = false;
+          if (!Array.isArray(repositoryListings[i])) {
+            repositoryListings[i] = null;
+          }
           return;
         }
         if (Array.isArray(listing)) {
@@ -934,6 +937,7 @@ export default class ModuleManager extends React.Component {
           case 'repoAdd': {
             const state = this.state as ManagerState;
             const { customRepos, repoTableData } = state as ManagerState;
+            const rawdata = ModuleManager.saved.repositoryListings;
             const repo: Repository = {
               name: '?',
               domain: C.Downloader.localfile,
@@ -951,11 +955,13 @@ export default class ModuleManager extends React.Component {
             );
             row[0].editable = editable();
             repoTableData.unshift(row);
+            rawdata.unshift(null);
             customRepos.push(repo);
             this.setTableState('repository', {
               customRepos,
               repoTableData,
             });
+            this.switchRepo([0], false);
             break;
           }
           case 'repoDelete': {
@@ -988,12 +994,11 @@ export default class ModuleManager extends React.Component {
           case 'repoCancel': {
             G.Downloader.ftpCancel();
             const { repoTableData } = this.state as ManagerState;
-            repoTableData.forEach((r) => {
+            repoTableData.forEach((r, i) => {
               if (r[0].loading) {
+                if (r[RepCol.iState] !== OFF) this.switchRepo([i], false);
                 r[0].loading = false;
                 r[0].intent = intent(RepCol.iState, 'danger');
-                r[0].repo.disabled = true;
-                r[RepCol.iState] = OFF;
                 this.setTableState('repository', { progress: null });
               }
             });
@@ -1427,12 +1432,15 @@ function clickedCell(e: React.MouseEvent) {
 }
 
 function repositoryToRow(repo: Repository): TRepositoryTableRow {
+  const on = builtinRepos.map((r) => downloadKey(r)).includes(downloadKey(repo))
+    ? ALWAYS_ON
+    : ON;
   return [
     { repo },
     repo.name || '?',
     repo.domain,
     repo.path,
-    repo.disabled ? ON : OFF,
+    repo.disabled ? on : OFF,
   ];
 }
 
@@ -1475,4 +1483,8 @@ function tooltip(atooltip: string, slipColumnIndexArray: number[]) {
   };
 }
 
-renderToRoot(<ModuleManager id="downloader" />);
+function onunload() {
+  G.Module.clearDownload(); // closes all FTP connections
+}
+
+renderToRoot(<ModuleManager id="downloader" />, null, onunload);
