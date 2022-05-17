@@ -28,7 +28,7 @@ const Commands: GType['Commands'] = {
     };
     Window.open({
       type: 'moduleManager',
-      category: 'dialog-window',
+      category: 'window',
       options,
     });
   },

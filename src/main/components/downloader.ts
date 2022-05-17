@@ -491,7 +491,8 @@ export async function untargz(
 const Downloader: GType['Downloader'] = {
   // Return a promise for the CrossWire master repository list as an
   // array of Download objects. These can be passed to repositoryListing()
-  // for retrieval of each repository's complete set of config files.
+  // for retrieval of each repository's complete set of config files. A
+  // string is returned if there were errors or the operation was canceled.
   async crossWireMasterRepoList() {
     const mr = {
       domain: 'ftp.crosswire.org',
@@ -500,11 +501,11 @@ const Downloader: GType['Downloader'] = {
     };
     ftpCancel(false);
     const result: Download[] | null = [];
-    let fbuffer;
+    let fbuffer: Buffer | null;
     try {
       fbuffer = await getFile(mr.domain, fpath.join(mr.path, mr.file));
-    } catch (er) {
-      return Promise.reject(er);
+    } catch (er: any) {
+      return Promise.resolve(er.toString());
     }
     if (fbuffer) {
       const fstring = fbuffer.toString('utf8');
@@ -522,7 +523,7 @@ const Downloader: GType['Downloader'] = {
       });
       return result;
     }
-    return null;
+    return 'Canceled';
   },
 
   // Takes an array of SWORD repositories and returns a mapped array containing:
@@ -602,7 +603,7 @@ const Downloader: GType['Downloader'] = {
             }
           } catch (err: any) {
             if (progress) progress(-1);
-            return Promise.reject(err);
+            return Promise.resolve(err.toString());
           }
         }
         if (files) {

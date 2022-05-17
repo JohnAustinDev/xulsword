@@ -407,11 +407,11 @@ let Downloads: { [modrepoKey: string]: ZIP } = {};
 const Module: GType['Module'] = {
   // Download a SWORD module from a repository and save it as a zip buffer
   // for later installation by saveDownload. Returns the number of files if
-  // successful or null if canceled.
+  // successful or a string message if error or canceled.
   async download(
     module: string,
     repository: Repository
-  ): Promise<number | null> {
+  ): Promise<number | string> {
     const callingWin = arguments[2] || null;
     ftpCancel(false);
     const modrepk = modrepKey(module, repository);
@@ -430,9 +430,9 @@ const Module: GType['Module'] = {
       confpath = fpath.join(repository.path, 'mods.d', confname);
       try {
         confbuf = await getFile(repository.domain, confpath);
-      } catch (er) {
+      } catch (er: any) {
         progress(-1);
-        return Promise.reject(er);
+        return Promise.resolve(er.toString());
       }
     }
     if (confbuf) {
@@ -448,9 +448,9 @@ const Module: GType['Module'] = {
             /\/lucene\//,
             progress
           );
-        } catch (er) {
+        } catch (er: any) {
           progress(-1);
-          return Promise.reject(er);
+          return Promise.resolve(er.toString());
         }
         if (modfiles && modfiles.length) {
           const zip = new ZIP();
@@ -467,7 +467,7 @@ const Module: GType['Module'] = {
       }
     }
     progress(-1);
-    return null;
+    return 'Canceled';
   },
 
   clearDownload(module?: string, repository?: Repository): boolean {

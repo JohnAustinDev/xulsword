@@ -48,11 +48,9 @@ import DragSizer, { DragSizerVal } from '../libxul/dragsizer';
 import './moduleManager.css';
 
 // TODO!: showModuleInfo CSS
-// TODO!: Production ModuleManager cancel toast does not work. Console errors throwm without Internet.
-// TODO!: Add new custom repos and new modules are created!
+// TODO!: CHECK FIX: Production ModuleManager cancel toast does not work. Console errors thrown without Internet.
 // TODO!: Add XSM and audio support
 // TODO!: return newmods
-// TODO!: Fix column sort and add column selector to menu.s
 
 import type {
   ModTypes,
@@ -62,6 +60,7 @@ import type {
   SwordConfType,
 } from '../../type';
 import type { TCellInfo } from '../libxul/table';
+import { Utils } from '@blueprintjs/table';
 
 const Tables = {
   repository: ['renderRepoTable', 'repoTableData', 'repoColumnWidths'],
@@ -221,6 +220,7 @@ export interface ManagerStatePref {
   languageTableOpen: boolean;
   languageTableWidth: number;
 
+  modColumnOrder: number[];
   modColumnWidths: number[];
 
   repoColumnWidths: number[];
@@ -297,6 +297,8 @@ export default class ModuleManager extends React.Component {
       this,
       'module'
     );
+    this.onColumnsReordered = this.onColumnsReordered.bind(this);
+    this.onColumnToggle = this.onColumnToggle.bind(this);
     this.loadRepositoryTable = this.loadRepositoryTable.bind(this);
     this.updateRepositoryLists = this.updateRepositoryLists.bind(this);
     this.loadModuleTable = this.loadModuleTable.bind(this);
@@ -320,7 +322,11 @@ export default class ModuleManager extends React.Component {
       ModuleManager.saved.repositoryListings = [];
       G.Downloader.crossWireMasterRepoList()
         .then((repos) => {
-          if (!repos) throw new Error(`Master Repository List canceled.`);
+          if (typeof repos === 'string') {
+            const msg =
+              repos === 'Canceled' ? `Master Repository List canceled.` : repos;
+            throw new Error(msg);
+          }
           const allrepos = this.loadRepositoryTable(repos);
           const loads = allrepos.filter((r) => r && !r.disabled);
           this.setState({ progress: [0, loads.length] });
@@ -450,19 +456,60 @@ export default class ModuleManager extends React.Component {
     }
   }
 
+  onColumnToggle(toggleColIndex: number, menuColIndex: number) {
+    this.sState((prevState) => {
+      let { modColumnWidths, modColumnOrder } = prevState;
+      modColumnWidths = modColumnWidths.slice();
+      modColumnOrder = modColumnOrder.slice();
+      if (modColumnWidths[toggleColIndex] === -1) {
+        modColumnWidths[toggleColIndex] = 150;
+        const iofmc = modColumnOrder.indexOf(menuColIndex);
+        modColumnOrder.splice(iofmc + 1, 0, toggleColIndex);
+      } else {
+        modColumnWidths[toggleColIndex] = -1;
+        const indexOftc = modColumnOrder.indexOf(toggleColIndex);
+        modColumnOrder.splice(indexOftc, 1);
+      }
+      return { modColumnWidths, modColumnOrder };
+    });
+  }
+
   onColumnWidthChanged(
     table: keyof typeof Tables,
-    index: number,
+    visibleIndex: number,
     size: number
   ): void {
     const state = this.state as ManagerState;
     if (table === 'language') return;
     const prop = Tables[table][2];
+    const visible = state[prop]
+      .map((v, x) => (v === -1 ? null : x))
+      .filter((v) => v !== null) as number[];
+    const i0 = visible[visibleIndex];
+    const i1 = visible[visibleIndex + 1];
     const newColumnWidths = state[prop].slice();
-    newColumnWidths[index] = size;
+    const delta = size - newColumnWidths[i0];
+    newColumnWidths[i0] += delta;
+    newColumnWidths[i1] -= delta;
     this.setTableState(table, {
       [prop]: newColumnWidths,
     });
+  }
+
+  onColumnsReordered(
+    oldVisibleIndex: number,
+    newVisibleIndex: number,
+    length: number
+  ) {
+    const { modColumnOrder: mco } = this.state as ManagerState;
+    if (oldVisibleIndex === newVisibleIndex) return;
+    const modColumnOrder = Utils.reorderArray(
+      mco,
+      oldVisibleIndex,
+      newVisibleIndex,
+      length
+    );
+    this.sState({ modColumnOrder });
   }
 
   onCellEdited(row: number, col: number, value: string) {
@@ -540,7 +587,7 @@ export default class ModuleManager extends React.Component {
       if (drow) {
         if (typeof listing === 'string') {
           this.addToast({ message: listing });
-          if (!drow[0].repo.disabled) this.switchRepo([i], false);
+          if (drow[RepCol.iState] !== OFF) this.switchRepo([i], false);
           drow[0].intent = intent(RepCol.iState, 'danger');
           drow[0].loading = false;
           if (!Array.isArray(repositoryListings[i])) {
@@ -640,22 +687,21 @@ export default class ModuleManager extends React.Component {
             d[ModCol.iAbout] =
               (c.Description &&
                 (c.Description[i18n.language] || c.Description.en)) ||
-              '?';
+              '';
             d[ModCol.iModule] = c.module;
             d[ModCol.iRepoName] =
               repo.name ||
               (repoIsLocal ? repo.path : `${repo.domain}/${repo.path}`);
-            d[ModCol.iVersion] = c.Version || '?';
-            d[ModCol.iSize] =
-              (c.InstallSize && c.InstallSize.toString()) || '?';
-            d[ModCol.iFeatures] = (c.Feature && c.Feature.join(', ')) || '?';
+            d[ModCol.iVersion] = c.Version || '';
+            d[ModCol.iSize] = (c.InstallSize && c.InstallSize.toString()) || '';
+            d[ModCol.iFeatures] = (c.Feature && c.Feature.join(', ')) || '';
             d[ModCol.iVersification] = c.Versification || 'KJV';
-            d[ModCol.iScope] = c.Scope || '?';
+            d[ModCol.iScope] = c.Scope || '';
             d[ModCol.iCopyright] =
               (c.Copyright && (c.Copyright[i18n.language] || c.Copyright.en)) ||
-              '?';
-            d[ModCol.iLicense] = c.DistributionLicense || '?';
-            d[ModCol.iSourceType] = c.SourceType || '?';
+              '';
+            d[ModCol.iLicense] = c.DistributionLicense || '';
+            d[ModCol.iSourceType] = c.SourceType || '';
             d[ModCol.iShared] = () => {
               if (d[ModCol.iInstalled] === OFF) return '';
               return d[0].shared ? ON : OFF;
@@ -1087,12 +1133,13 @@ export default class ModuleManager extends React.Component {
       drow[0].loading = loading(ModCol.iInstalled);
       this.setTableState('module', { modTableData });
       const modrepk = modrepKey(module, repo);
-      const nfiles = G.Module.download(module, repo)
-        .then((dl) => {
+      const nfiles = (async () => {
+        try {
+          const dl = await G.Module.download(module, repo);
           drow[0].loading = false;
           let newintent: Intent = 'success';
-          if (dl === null) {
-            this.addToast({ message: `Canceled` });
+          if (typeof dl === 'string') {
+            this.addToast({ message: dl });
             newintent = 'danger';
           } else {
             drow[ModCol.iInstalled] = ON;
@@ -1100,15 +1147,15 @@ export default class ModuleManager extends React.Component {
           }
           drow[0].intent = intent(ModCol.iInstalled, newintent);
           this.setTableState('module', { modTableData });
-          return dl;
-        })
-        .catch((er) => {
+          return typeof dl === 'string' ? null : dl;
+        } catch (er) {
           log.warn(er);
           drow[0].loading = false;
           drow[0].intent = intent(ModCol.iInstalled, 'danger');
           this.setTableState('module', { modTableData });
           return null;
-        });
+        }
+      })();
       Downloads[modrepk] = { nfiles, failed: true };
     }
   }
@@ -1156,6 +1203,7 @@ export default class ModuleManager extends React.Component {
 
       module,
       modTableData,
+      modColumnOrder,
       modColumnWidths,
       showModuleInfo,
       renderModTable,
@@ -1173,6 +1221,8 @@ export default class ModuleManager extends React.Component {
       onCellEdited,
       onRepoColumnWidthChanged,
       onModColumnWidthChanged,
+      onColumnToggle,
+      onColumnsReordered,
       tableRef,
     } = this;
 
@@ -1273,9 +1323,13 @@ export default class ModuleManager extends React.Component {
                   data={modTableData}
                   selectedRegions={module}
                   columnHeadings={ModuleTableHeadings}
+                  columnOrder={modColumnOrder}
                   columnWidths={modColumnWidths}
+                  enableColumnReordering
                   domref={tableRef.module}
+                  onColumnsReordered={onColumnsReordered}
                   onColumnWidthChanged={onModColumnWidthChanged}
+                  onColumnToggle={onColumnToggle}
                   onClick={eventHandler}
                 />
               )}

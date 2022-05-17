@@ -748,7 +748,7 @@ export const GPublic = {
   },
   Downloader: {
     crossWireMasterRepoList: func as unknown as () => Promise<
-      Download[] | null
+      Download[] | string
     >,
     repositoryListing: func as unknown as (
       repos: (Repository | null)[]
@@ -759,7 +759,7 @@ export const GPublic = {
     download: func as unknown as (
       module: string,
       repository: Repository
-    ) => Promise<number | null>,
+    ) => Promise<number | string>,
     clearDownload: func as unknown as (
       module?: string,
       repository?: Repository

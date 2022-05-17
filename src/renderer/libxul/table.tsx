@@ -10,7 +10,7 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Intent, Menu, MenuItem } from '@blueprintjs/core';
+import { Intent, Menu, MenuDivider, MenuItem } from '@blueprintjs/core';
 import {
   Cell,
   Column,
@@ -71,6 +71,7 @@ interface TSortableColumn {
     sortColumn: TSortCallback,
     cellValidator: TCellValidator,
     cellSetter: TCellSetter,
+    props: TableProps,
     state: TableState
   ): JSX.Element;
 }
@@ -83,6 +84,7 @@ abstract class AbstractSortableColumn implements TSortableColumn {
     sortColumn: TSortCallback,
     cellValidator: TCellValidator,
     cellSetter: TCellSetter,
+    props: TableProps,
     state: TableState
   ) {
     const cellRenderer = (rowIndex: number, columnIndex: number) => {
@@ -146,7 +148,7 @@ abstract class AbstractSortableColumn implements TSortableColumn {
         </Cell>
       );
     };
-    const menuRenderer = this.renderMenu.bind(this, sortColumn);
+    const menuRenderer = this.renderMenu.bind(this, sortColumn, props);
     const columnHeaderCellRenderer = () => (
       <ColumnHeaderCell name={this.name} menuRenderer={menuRenderer} />
     );
@@ -160,7 +162,10 @@ abstract class AbstractSortableColumn implements TSortableColumn {
     );
   }
 
-  protected abstract renderMenu(sortColumn: TSortCallback): JSX.Element;
+  protected abstract renderMenu(
+    sortColumn: TSortCallback,
+    props: TableProps
+  ): JSX.Element;
 }
 
 class TextSortableColumn extends AbstractSortableColumn {
@@ -171,15 +176,45 @@ class TextSortableColumn extends AbstractSortableColumn {
     return a.toString().localeCompare(b);
   }
 
-  protected renderMenu(sortColumn: TSortCallback) {
+  protected renderMenu(sortColumn: TSortCallback, props: TableProps) {
+    const { onColumnToggle, columnHeadings, columnWidths } = props;
     const sortAsc = () =>
       sortColumn(this.index, (a, b) => TextSortableColumn.compare(a, b));
     const sortDesc = () =>
       sortColumn(this.index, (a, b) => TextSortableColumn.compare(b, a));
+    const items: JSX.Element[] = [];
+    if (columnWidths && onColumnToggle) {
+      items.push(<MenuDivider key="divider.1" />);
+      items.push(
+        <MenuItem
+          key={['delete', this.index].join('.')}
+          icon="delete"
+          text={columnHeadings[this.index]}
+          onClick={() => onColumnToggle(this.index, this.index)}
+        />
+      );
+      if (columnHeadings.some((h, i) => h && columnWidths[i] === -1)) {
+        items.push(<MenuDivider key="divider.2" />);
+      }
+      columnHeadings.forEach((heading, i) => {
+        if (heading && columnWidths[i] === -1) {
+          items.push(
+            <MenuItem
+              key={['add', heading].join('.')}
+              icon="plus"
+              text={heading}
+              onClick={() => onColumnToggle(i, this.index)}
+            />
+          );
+        }
+        return null;
+      });
+    }
     return (
       <Menu>
         <MenuItem icon="sort-asc" onClick={sortAsc} />
         <MenuItem icon="sort-desc" onClick={sortDesc} />
+        {items}
       </Menu>
     );
   }
@@ -190,11 +225,15 @@ const defaultProps = {
   columnHeadings: undefined,
   columnInfo: undefined,
   columnWidths: undefined,
+  columnOrder: undefined,
   cellInfo: undefined,
   selectedRegions: undefined,
   selectionModes: SelectionModes.ROWS_ONLY,
   enableMultipleSelection: false,
+  enableColumnReordering: false,
+  onColumnsReordered: undefined,
   onColumnWidthChanged: undefined,
+  onColumnToggle: undefined,
   onEditableCellChanged: undefined,
 };
 
@@ -203,33 +242,45 @@ const propTypes = {
   columnHeadings: PropTypes.arrayOf(PropTypes.string).isRequired,
   columnInfo: PropTypes.arrayOf(PropTypes.object),
   columnWidths: PropTypes.arrayOf(PropTypes.number),
+  columnOrder: PropTypes.arrayOf(PropTypes.number),
   // rowHeadings: PropTypes.arrayOf(PropTypes.string),
   data: PropTypes.arrayOf(PropTypes.array).isRequired,
   cellInfo: PropTypes.arrayOf(PropTypes.arrayOf(PropTypes.object)),
   selectedRegions: PropTypes.array,
   selectionModes: PropTypes.any,
   enableMultipleSelection: PropTypes.bool,
+  enableColumnReordering: PropTypes.bool,
+  onColumnsReordered: PropTypes.func,
   onColumnWidthChanged: PropTypes.func,
   onEditableCellChanged: PropTypes.func,
+  onColumnToggle: PropTypes.func,
 };
 
 type TableProps = XulProps & {
   columnHeadings: string[];
   columnInfo?: TColInfo;
   columnWidths?: number[]; // -1 = hide column
+  columnOrder?: number[];
   // rowHeadings?: string[];
   data: TData;
   cellInfo?: TCellInfo[][]; // sparse arrays
   selectedRegions?: Region[];
   selectionModes: RegionCardinality[];
   enableMultipleSelection: boolean;
+  enableColumnReordering: boolean;
+  onColumnsReordered?: (
+    oldIndex: number,
+    newIndex: number,
+    length: number
+  ) => void;
   onColumnWidthChanged?: IIndexedResizeCallback;
   onEditableCellChanged?: (row: number, col: number, value: string) => void;
+  onColumnToggle?: (toggleColumnIndex: number, menuColumnIndex: number) => void;
 };
 
 type TableState = {
   columns: TSortableColumn[];
-  rowIndexMap: number[];
+  sortedIndexMap: number[];
   sparseCellData: { [i: string]: string };
   sparseCellIntent: { [i: string]: Intent };
 };
@@ -249,6 +300,8 @@ class Table extends React.Component {
 
   tableRef: React.RefObject<HTMLDivElement>;
 
+  sState: (s: Partial<TableState> | ((prevState: TableState) => void)) => void;
+
   constructor(props: TableProps) {
     super(props);
     const { columnHeadings } = props;
@@ -263,7 +316,7 @@ class Table extends React.Component {
     }
     const s: TableState = {
       columns,
-      rowIndexMap: [],
+      sortedIndexMap: [],
       sparseCellData: {},
       sparseCellIntent: {},
     };
@@ -273,11 +326,11 @@ class Table extends React.Component {
 
     this.tableRef = React.createRef();
 
+    this.sState = this.setState.bind(this);
     this.getCellData = this.getCellData.bind(this);
     this.sortColumn = this.sortColumn.bind(this);
     this.cellValidator = this.cellValidator.bind(this);
     this.cellSetter = this.cellSetter.bind(this);
-    this.setArrayState = this.setArrayState.bind(this);
     this.setSparseState = this.setSparseState.bind(this);
   }
 
@@ -315,9 +368,9 @@ class Table extends React.Component {
 
   getCellData(rowIndex: number, columnIndex: number) {
     const props = this.props as TableProps;
-    const { rowIndexMap } = this.state as TableState;
+    const { sortedIndexMap } = this.state as TableState;
     const { data, columnInfo, cellInfo } = props;
-    const sortedRowIndex = rowIndexMap[rowIndex];
+    const sortedRowIndex = sortedIndexMap[rowIndex];
     let dataRowIndex = rowIndex;
     let dataColumnIndex = columnIndex;
     if (sortedRowIndex != null) dataRowIndex = sortedRowIndex;
@@ -337,18 +390,10 @@ class Table extends React.Component {
     };
   }
 
-  setArrayState<T>(key: string, index: number, value: T) {
-    this.setState((prevState: any) => {
-      const values = prevState[key].slice() as T[];
-      values[index] = value;
-      return { [key]: values };
-    });
-  }
-
   setSparseState<T>(stateKey: string, dataKey: string, value: T) {
     const stateData = (this.state as any)[stateKey] as { [key: string]: T };
     const values = { ...stateData, [dataKey]: value };
-    this.setState({ [stateKey]: values });
+    this.sState({ [stateKey]: values });
   }
 
   cellSetter(rowIndex: number, columnIndex: number) {
@@ -380,43 +425,46 @@ class Table extends React.Component {
     const { data } = this.props as TableProps;
     const sortedIndexMap = Utils.times(data.length, (i: number) => i);
     sortedIndexMap.sort((a: number, b: number) => {
-      return comparator(data[a][columnIndex], data[b][columnIndex]);
+      return comparator(data[a][columnIndex + 1], data[b][columnIndex + 1]);
     });
-    this.setState({ sortedIndexMap });
+    this.sState({ sortedIndexMap });
   }
 
   render() {
     const state = this.state as TableState;
     const props = this.props as TableProps;
     const { columns: cols } = state;
-    const { selectionModes } = props;
+    const { columnOrder, selectionModes } = props;
     const {
       data,
       selectedRegions,
       enableMultipleSelection,
+      enableColumnReordering,
       columnWidths,
+      onColumnsReordered,
       onColumnWidthChanged,
     } = props;
     let { tableRef } = this;
     const numRows = data.length;
-    const columns = cols
-      .map((col, i) => {
-        if (columnWidths && columnWidths[i] === -1) return null;
-        return col.getColumn(
-          this.getCellData,
-          this.sortColumn,
-          this.cellValidator,
-          this.cellSetter,
-          state
+    const order = columnOrder?.slice();
+    const columns: JSX.Element[] = [];
+    this.columnIndexToDataMap = [];
+    cols.forEach((_c, i) => {
+      if (!columnWidths || columnWidths[i] !== -1) {
+        const io = order && order.length ? (order.shift() as number) : i;
+        columns.push(
+          cols[io].getColumn(
+            this.getCellData,
+            this.sortColumn,
+            this.cellValidator,
+            this.cellSetter,
+            props,
+            state
+          )
         );
-      })
-      .filter(Boolean) as JSX.Element[];
-    if (columnWidths) {
-      this.columnIndexToDataMap = [];
-      columnWidths?.forEach((w, i) => {
-        if (w !== -1) this.columnIndexToDataMap.push(i + 1);
-      });
-    } else this.columnIndexToDataMap = columns.map((_c, i) => i + 1);
+        this.columnIndexToDataMap.push(io + 1);
+      }
+    });
 
     const classes = ['table'];
     if (onColumnWidthChanged) classes.push('width-resizable');
@@ -434,6 +482,8 @@ class Table extends React.Component {
           enableMultipleSelection={enableMultipleSelection}
           enableRowResizing={false}
           enableRowHeader={false}
+          enableColumnReordering={enableColumnReordering}
+          onColumnsReordered={onColumnsReordered}
           onColumnWidthChanged={onColumnWidthChanged}
         >
           {columns}

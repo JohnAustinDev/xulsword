@@ -19,7 +19,6 @@ const propTypes = {
   disabled: PropTypes.bool,
   label: PropTypes.string,
   tooltip: PropTypes.string,
-  onChange: PropTypes.func,
 };
 
 interface CheckboxProps extends XulProps {
@@ -27,7 +26,6 @@ interface CheckboxProps extends XulProps {
   disabled?: boolean | undefined;
   label?: string | undefined;
   tooltip?: string | undefined;
-  onChange?: (e: React.ChangeEvent) => void | undefined;
 }
 
 function Checkbox(props: CheckboxProps) {
@@ -41,7 +39,7 @@ function Checkbox(props: CheckboxProps) {
         type="checkbox"
         onChange={() => {}}
       />
-      <Label flex="1" control={`${props.id}__input`} value={label} />
+      <Label flex="1" control={`${props.id}__input`} value={label || ''} />
     </Hbox>
   );
 }
