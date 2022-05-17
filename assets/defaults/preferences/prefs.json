@@ -64,6 +64,7 @@
     "repoTableHeight": 350,
     "modColumnWidths": [300, 300, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 300, 300],
     "modColumnOrder": [0, 1, 12, 13],
+    "modRowSort": { "index": 0, "direction": "ascending" },
     "repoColumnWidths": [
       124,
       145,

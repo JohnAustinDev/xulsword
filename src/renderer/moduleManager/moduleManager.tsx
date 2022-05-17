@@ -47,8 +47,6 @@ import DragSizer, { DragSizerVal } from '../libxul/dragsizer';
 import './moduleManager.css';
 
 // TODO!: showModuleInfo CSS
-// TODO!: Sort must be stored to state and prefs.
-// TODO!: CHECK FIX: Production ModuleManager cancel toast does not work. Console errors thrown without Internet.
 // TODO!: Add XSM and audio support
 // TODO!: return newmods
 
@@ -222,6 +220,7 @@ export interface ManagerStatePref {
 
   modColumnOrder: number[];
   modColumnWidths: number[];
+  modRowSort: { index: number; direction: 'ascending' | 'descending' };
 
   repoColumnWidths: number[];
   customRepos: Repository[];
@@ -299,6 +298,7 @@ export default class ModuleManager extends React.Component {
     );
     this.onColumnsReordered = this.onColumnsReordered.bind(this);
     this.onColumnToggle = this.onColumnToggle.bind(this);
+    this.onModRowSort = this.onModRowSort.bind(this);
     this.loadRepositoryTable = this.loadRepositoryTable.bind(this);
     this.updateRepositoryLists = this.updateRepositoryLists.bind(this);
     this.loadModuleTable = this.loadModuleTable.bind(this);
@@ -536,6 +536,10 @@ export default class ModuleManager extends React.Component {
         setTimeout(() => this.switchRepo([row], true), 100);
       }
     }
+  }
+
+  onModRowSort(index: number, direction: 'ascending' | 'descending') {
+    this.sState({ modRowSort: { index, direction } });
   }
 
   // Load the repository table with built-in repositories, then user-custom
@@ -1205,6 +1209,7 @@ export default class ModuleManager extends React.Component {
       modTableData,
       modColumnOrder,
       modColumnWidths,
+      modRowSort,
       showModuleInfo,
       renderModTable,
 
@@ -1223,6 +1228,7 @@ export default class ModuleManager extends React.Component {
       onModColumnWidthChanged,
       onColumnToggle,
       onColumnsReordered,
+      onModRowSort,
       tableRef,
     } = this;
 
@@ -1325,11 +1331,13 @@ export default class ModuleManager extends React.Component {
                   columnHeadings={ModuleTableHeadings}
                   columnOrder={modColumnOrder}
                   columnWidths={modColumnWidths}
+                  rowSort={modRowSort}
                   enableColumnReordering
                   domref={tableRef.module}
                   onColumnsReordered={onColumnsReordered}
                   onColumnWidthChanged={onModColumnWidthChanged}
                   onColumnToggle={onColumnToggle}
+                  onRowSort={onModRowSort}
                   onClick={eventHandler}
                 />
               )}
@@ -1477,7 +1485,7 @@ function clickedCell(e: React.MouseEvent) {
   let row = -1;
   let col = -1;
   if (cell) {
-    const rowm = cell.element.className.match(/bp4-table-cell-row-(\d+)\b/);
+    const rowm = cell.element.className.match(/data-row-(\d+)\b/);
     row = rowm ? Number(rowm[1]) : -1;
     const colm = cell.element.className.match(/data-column-(\d+)\b/);
     col = colm ? Number(colm[1]) : -1;

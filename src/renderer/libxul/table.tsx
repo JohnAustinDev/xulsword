@@ -58,7 +58,12 @@ type TCellSetter = (
 type TCellLookup = (
   rowIndex: number,
   columnIndex: number
-) => { value: any; info: TCellInfo; dataColumnIndex: number };
+) => {
+  value: any;
+  info: TCellInfo;
+  dataRowIndex: number;
+  dataColumnIndex: number;
+};
 
 type TSortCallback = (
   columnIndex: number,
@@ -88,7 +93,7 @@ abstract class AbstractSortableColumn implements TSortableColumn {
     state: TableState
   ) {
     const cellRenderer = (rowIndex: number, columnIndex: number) => {
-      const { value, info, dataColumnIndex } = getCellData(
+      const { value, info, dataRowIndex, dataColumnIndex } = getCellData(
         rowIndex,
         columnIndex
       );
@@ -109,7 +114,7 @@ abstract class AbstractSortableColumn implements TSortableColumn {
         classes = classes(rowIndex, dataColumnIndex);
       }
       if (!classes) classes = [];
-      classes.push(`data-column-${dataColumnIndex}`);
+      classes.push(`data-row-${dataRowIndex} data-column-${dataColumnIndex}`);
       tooltip = (
         tooltip !== 'VALUE' ? tooltip : typeof value === 'string' ? value : ''
       ) as string;
@@ -177,11 +182,15 @@ class TextSortableColumn extends AbstractSortableColumn {
   }
 
   protected renderMenu(sortColumn: TSortCallback, props: TableProps) {
-    const { onColumnToggle, columnHeadings, columnWidths } = props;
-    const sortAsc = () =>
+    const { onColumnToggle, onRowSort, columnHeadings, columnWidths } = props;
+    const sortAsc = () => {
       sortColumn(this.index, (a, b) => TextSortableColumn.compare(a, b));
-    const sortDesc = () =>
+      if (onRowSort) onRowSort(this.index, 'ascending');
+    };
+    const sortDesc = () => {
       sortColumn(this.index, (a, b) => TextSortableColumn.compare(b, a));
+      if (onRowSort) onRowSort(this.index, 'descending');
+    };
     const items: JSX.Element[] = [];
     if (columnWidths && onColumnToggle) {
       items.push(<MenuDivider key="divider.1" />);
@@ -226,6 +235,7 @@ const defaultProps = {
   columnInfo: undefined,
   columnWidths: undefined,
   columnOrder: undefined,
+  rowSort: undefined,
   cellInfo: undefined,
   selectedRegions: undefined,
   selectionModes: SelectionModes.ROWS_ONLY,
@@ -234,6 +244,7 @@ const defaultProps = {
   onColumnsReordered: undefined,
   onColumnWidthChanged: undefined,
   onColumnToggle: undefined,
+  onRowSort: undefined,
   onEditableCellChanged: undefined,
 };
 
@@ -243,6 +254,7 @@ const propTypes = {
   columnInfo: PropTypes.arrayOf(PropTypes.object),
   columnWidths: PropTypes.arrayOf(PropTypes.number),
   columnOrder: PropTypes.arrayOf(PropTypes.number),
+  rowSort: PropTypes.arrayOf(PropTypes.object),
   // rowHeadings: PropTypes.arrayOf(PropTypes.string),
   data: PropTypes.arrayOf(PropTypes.array).isRequired,
   cellInfo: PropTypes.arrayOf(PropTypes.arrayOf(PropTypes.object)),
@@ -252,8 +264,9 @@ const propTypes = {
   enableColumnReordering: PropTypes.bool,
   onColumnsReordered: PropTypes.func,
   onColumnWidthChanged: PropTypes.func,
-  onEditableCellChanged: PropTypes.func,
   onColumnToggle: PropTypes.func,
+  onRowSort: PropTypes.func,
+  onEditableCellChanged: PropTypes.func,
 };
 
 type TableProps = XulProps & {
@@ -261,6 +274,7 @@ type TableProps = XulProps & {
   columnInfo?: TColInfo;
   columnWidths?: number[]; // -1 = hide column
   columnOrder?: number[];
+  rowSort?: { index: number; direction: 'ascending' | 'descending' };
   // rowHeadings?: string[];
   data: TData;
   cellInfo?: TCellInfo[][]; // sparse arrays
@@ -274,8 +288,9 @@ type TableProps = XulProps & {
     length: number
   ) => void;
   onColumnWidthChanged?: IIndexedResizeCallback;
-  onEditableCellChanged?: (row: number, col: number, value: string) => void;
   onColumnToggle?: (toggleColumnIndex: number, menuColumnIndex: number) => void;
+  onRowSort?: (column: number, direction: 'ascending' | 'descending') => void;
+  onEditableCellChanged?: (row: number, col: number, value: string) => void;
 };
 
 type TableState = {
@@ -304,7 +319,7 @@ class Table extends React.Component {
 
   constructor(props: TableProps) {
     super(props);
-    const { columnHeadings } = props;
+    const { columnHeadings, rowSort } = props;
 
     // Create new columns, one for each column of data (minus
     // the data's info column).
@@ -320,6 +335,17 @@ class Table extends React.Component {
       sparseCellData: {},
       sparseCellIntent: {},
     };
+    if (rowSort) {
+      const { index, direction } = rowSort;
+      const col = columns[index];
+      if (col !== undefined) {
+        if (direction === 'ascending') {
+          this.sortColumn(index, (a, b) => TextSortableColumn.compare(a, b), s);
+        } else {
+          this.sortColumn(index, (a, b) => TextSortableColumn.compare(b, a), s);
+        }
+      }
+    }
     this.state = s;
 
     this.columnIndexToDataMap = [];
@@ -386,6 +412,7 @@ class Table extends React.Component {
         ...data[dataRowIndex][0],
         ...((cellInfo && cellInfo[dataRowIndex][dataColumnIndex]) || {}),
       },
+      dataRowIndex,
       dataColumnIndex,
     };
   }
@@ -421,13 +448,20 @@ class Table extends React.Component {
     return /^[a-zA-Z0-9/ :/._-]*$/.test(value);
   }
 
-  sortColumn(columnIndex: number, comparator: (a: any, b: any) => number) {
+  sortColumn(
+    columnIndex: number,
+    comparator: (a: any, b: any) => number,
+    s?: Pick<TableState, 'sortedIndexMap'>
+  ) {
     const { data } = this.props as TableProps;
     const sortedIndexMap = Utils.times(data.length, (i: number) => i);
     sortedIndexMap.sort((a: number, b: number) => {
       return comparator(data[a][columnIndex + 1], data[b][columnIndex + 1]);
     });
-    this.sState({ sortedIndexMap });
+    if (s) s.sortedIndexMap = sortedIndexMap;
+    else {
+      this.sState({ sortedIndexMap });
+    }
   }
 
   render() {
