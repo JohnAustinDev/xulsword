@@ -28,11 +28,12 @@ const installer = require('electron-devtools-installer');
 const sourceMapSupport = require('source-map-support');
 const electronDebug = require('electron-debug');
 
-const isDevelopment =
-  process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
-
-log.transports.console.level = C.LogLevel;
-log.transports.file.level = C.LogLevel;
+const logLevel = C.isDevelopment ? C.DevLogLevel : 'info';
+log.transports.console.level = logLevel;
+log.transports.file.level = logLevel;
+log.info(
+  `isDevelopment='${C.isDevelopment}' DEBUG_PROD='${process.env.DEBUG_PROD}' XULSWORD_ENV='${process.env.XULSWORD_ENV}'`
+);
 
 LibSword.init();
 
@@ -68,7 +69,10 @@ if ((C.Locales.find((l) => l[0] === Language) || [])[2] === 'rtl') {
 }
 app.commandLine.appendSwitch('lang', Language.replace(/-.*$/, ''));
 
-if (isDevelopment) {
+if (
+  process.env.NODE_ENV === 'development' ||
+  process.env.DEBUG_PROD === 'true'
+) {
   sourceMapSupport.install();
 }
 
@@ -93,7 +97,7 @@ ipcMain.on('did-finish-render', (event: IpcMainEvent) => {
     win.show();
     win.focus();
   }
-  if (name === 'xulsword' && !(isDevelopment && C.DEVELSPLASH === 2)) {
+  if (name === 'xulsword' && !(C.isDevelopment && C.DevSplash === 2)) {
     setTimeout(() => {
       G.Window.close({ type: 'splash' });
     }, 1000);
@@ -170,7 +174,12 @@ const openMainWindow = () => {
     })
   );
 
-  if (isDevelopment) mainWin.on('ready-to-show', () => electronDebug());
+  if (
+    process.env.NODE_ENV === 'development' ||
+    process.env.DEBUG_PROD === 'true'
+  ) {
+    mainWin.on('ready-to-show', () => electronDebug());
+  }
 
   mainWin.on('close', () => {
     // Persist any open windows for the next restart
@@ -199,7 +208,10 @@ const openMainWindow = () => {
 };
 
 const init = async () => {
-  if (isDevelopment) {
+  if (
+    process.env.NODE_ENV === 'development' ||
+    process.env.DEBUG_PROD === 'true'
+  ) {
     await (async () => {
       const forceDownload = !!process.env.UPGRADE_EXTENSIONS;
       const extensions = ['REACT_DEVELOPER_TOOLS'];
@@ -234,7 +246,7 @@ const init = async () => {
         // jsonIndent to use when storing json files
         jsonIndent: 2,
       },
-      saveMissing: isDevelopment,
+      saveMissing: C.isDevelopment,
       saveMissingTo: 'current',
 
       react: {
@@ -318,12 +330,12 @@ app
     return init();
   })
   .then(() => {
-    if (!(C.DEVELSPLASH === 1 && isDevelopment)) {
+    if (!(C.isDevelopment && C.DevSplash === 1)) {
       G.Window.open({
         type: 'splash',
         category: 'dialog',
         options:
-          isDevelopment && C.DEVELSPLASH === 2
+          C.isDevelopment && C.DevSplash === 2
             ? {
                 title: 'xulsword',
                 width: 500,

@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import type { LogLevel } from 'electron-log';
 import type {
   AtextPropsType,
   BookGroupType,
@@ -16,8 +17,21 @@ import type {
   V11nType,
 } from './type';
 
+// Environment variables:
+// - NODE_ENV - Set in package.json to control the build process
+//     ('development' or 'production').
+// - DEBUG_PROD - Set by you to 'true' BEFORE packaging to enable
+//     dev source maps and dev-tools in a production build (but the
+//     main process is still not accesible via current vscode config).
+// - XULSWORD_ENV - Set by you to 'production' to debug production
+//     only behaviour, like i18n, splash and log, in the dev
+//     environment (including the main process debugging via vscode).
 const isDevelopment =
-  process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
+  typeof process === 'undefined'
+    ? window.main.process.NODE_ENV() === 'development' &&
+      window.main.process.XULSWORD_ENV() !== 'production'
+    : process.env.NODE_ENV === 'development' &&
+      process.env.XULSWORD_ENV !== 'production';
 
 // Common Global Constants
 const C = {
@@ -70,15 +84,13 @@ const C = {
   // ---------------------
   // USED BY XULSWORD 3.0:
   // ---------------------
-  DEVELSPLASH: 1 as 0 | 1 | 2, // 0 normal, 1 skip, 2 debug
-  // preload.js must be kept in sync with LogLevel.
-  LogLevel: (isDevelopment ? 'debug' : 'info') as
-    | 'error'
-    | 'warn'
-    | 'info'
-    | 'verbose'
-    | 'debug'
-    | 'silly',
+  isDevelopment,
+
+  DevLogLevel: 'debug' as LogLevel,
+
+  DevToolsopen: false,
+
+  DevSplash: 1 as 0 | 1 | 2, // 0 normal, 1 skip, 2 debug
 
   SWORDEngineVersion: '1.8.1',
 

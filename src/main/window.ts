@@ -301,8 +301,9 @@ function createWindow(
     .loadURL(resolveHtmlPath(`${type}.html`))
     .then(() => {
       if (
-        process.env.NODE_ENV === 'development' ||
-        process.env.DEBUG_PROD === 'true'
+        C.DevToolsopen &&
+        (process.env.NODE_ENV === 'development' ||
+          process.env.DEBUG_PROD === 'true')
       ) {
         return setTimeout(() => win.webContents.openDevTools(), 1000);
       }

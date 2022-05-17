@@ -1,13 +1,5 @@
-const log = require('electron-log');
 const { contextBridge, ipcRenderer } = require('electron');
 const backend = require('i18next-electron-fs-backend');
-
-const isDevelopment =
-  process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
-
-const level = isDevelopment ? 'debug' : 'info';
-log.transports.console.level = level;
-log.transports.file.level = level;
 
 contextBridge.exposeInMainWorld('api', {
   i18nextElectronBackend: backend.preloadBindings(ipcRenderer, process),
@@ -15,15 +7,15 @@ contextBridge.exposeInMainWorld('api', {
 
 contextBridge.exposeInMainWorld('main', {
   process: {
-    NODE_ENV() {
-      return process.env.NODE_ENV;
-    },
-    DEBUG_PROD() {
-      return process.env.DEBUG_PROD;
-    },
     argv() {
       // argv[?] = window name ('main', 'splash' etc.)
       return process.argv;
+    },
+    NODE_ENV() {
+      return process.env.NODE_ENV;
+    },
+    XULSWORD_ENV() {
+      return process.env.XULSWORD_ENV;
     },
   },
 });

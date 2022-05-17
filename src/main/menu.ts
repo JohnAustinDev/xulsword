@@ -35,10 +35,7 @@ interface DarwinMenuItemConstructorOptions extends MenuItemConstructorOptions {
 
 // Debug mode menu clicks allow menu to close, avoiding debugger lockup.
 function d(func: () => void): any {
-  if (
-    process.env.NODE_ENV === 'development' ||
-    process.env.DEBUG_PROD === 'true'
-  ) {
+  if (C.isDevelopment) {
     const dfunc = () => {
       setTimeout(func, 100);
     };
@@ -778,8 +775,9 @@ export default class MenuBuilder {
     if (
       process.env.NODE_ENV === 'development' ||
       process.env.DEBUG_PROD === 'true'
-    )
+    ) {
       applicationMenuTemplate.push(subMenuDev);
+    }
 
     return applicationMenuTemplate;
   }

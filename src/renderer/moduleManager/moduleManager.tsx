@@ -31,9 +31,8 @@ import {
 } from '../../common';
 import C from '../../constant';
 import G from '../rg';
-import log from '../log';
 import renderToRoot from '../rinit';
-import { getStatePref, onSetWindowState } from '../rutil';
+import { log, getStatePref, onSetWindowState } from '../rutil';
 import {
   addClass,
   xulDefaultProps,
@@ -48,6 +47,7 @@ import DragSizer, { DragSizerVal } from '../libxul/dragsizer';
 import './moduleManager.css';
 
 // TODO!: showModuleInfo CSS
+// TODO!: Sort must be stored to state and prefs.
 // TODO!: CHECK FIX: Production ModuleManager cancel toast does not work. Console errors thrown without Internet.
 // TODO!: Add XSM and audio support
 // TODO!: return newmods

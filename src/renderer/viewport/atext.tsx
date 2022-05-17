@@ -12,9 +12,10 @@ import i18next from 'i18next';
 import { getElementInfo } from '../../libswordElemInfo';
 import Cache from '../../cache';
 import C from '../../constant';
-import { diff, keep, sanitizeHTML, stringHash, clone } from '../../common';
+import { diff, keep, sanitizeHTML, stringHash } from '../../common';
 import G from '../rg';
 import {
+  log,
   clearPending,
   verseKey,
   getMaxChapter,
@@ -22,7 +23,6 @@ import {
   scrollIntoView,
   windowArgument,
 } from '../rutil';
-import log from '../log';
 import {
   xulDefaultProps,
   xulPropTypes,

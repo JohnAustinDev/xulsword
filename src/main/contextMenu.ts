@@ -2,6 +2,7 @@
 import { BrowserWindow } from 'electron';
 import contextMenuCreator from 'electron-context-menu';
 import i18next from 'i18next';
+import C from '../constant';
 import Commands, { newDbItemWithDefaults } from './commands';
 import setViewportTabs from './tabs';
 import Data from './components/data';
@@ -21,9 +22,6 @@ const noContextData: ContextData = {
   selectionParsedVK: null,
 };
 
-const isDevelopment =
-  process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
-
 export default function contextMenu(
   window: BrowserWindow,
   dispose: (() => void)[]
@@ -35,7 +33,10 @@ export default function contextMenu(
   const options: contextMenuCreator.Options = {
     window,
 
-    showInspectElement: isDevelopment,
+    showInspectElement: Boolean(
+      process.env.NODE_ENV === 'development' ||
+        process.env.DEBUG_PROD === 'true'
+    ),
 
     showSearchWithGoogle: false,
     showCopyImage: false,

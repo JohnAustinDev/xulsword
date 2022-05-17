@@ -1,6 +1,7 @@
 /* eslint-disable class-methods-use-this */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-use-before-define */
+import Log, { LogLevel } from 'electron-log';
 import {
   BrowserWindow,
   ipcMain,
@@ -205,6 +206,10 @@ class GClass implements GType {
     ...args: Parameters<GType['getBooksInModule']>
   ): ReturnType<GType['getBooksInModule']> {
     return getBooksInModule(...args);
+  }
+
+  log(...args: Parameters<GType['log']>): ReturnType<GType['log']> {
+    return Log[args.shift() as LogLevel](args);
   }
 }
 

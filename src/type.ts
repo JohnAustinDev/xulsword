@@ -40,10 +40,9 @@ export type WinIpcType = {
   };
 };
 export type WinMainType = {
-  log: ElectronLog.LogFunctions;
   process: {
-    NODE_ENV: () => NodeJS.ProcessEnv['NODE_ENV'];
-    DEBUG_PROD: () => NodeJS.ProcessEnv['DEBUG_PROD'];
+    NODE_ENV: () => string;
+    XULSWORD_ENV: () => string;
     argv: () => string[];
   };
 };
@@ -725,6 +724,7 @@ export const GPublic = {
   resetMain: func as unknown as () => void,
   getSystemFonts: funcRO as unknown as () => Promise<string[]>,
   getBooksInModule: funcRO as unknown as (module: string) => string[],
+  log: func as unknown as (type: ElectronLog.LogLevel, ...args: any) => void,
 
   // GLOBAL OBJECTS
   // --------------

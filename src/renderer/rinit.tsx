@@ -19,8 +19,7 @@ import { JSON_parse } from '../common';
 import Cache from '../cache';
 import G from './rg';
 import DynamicStyleSheet from './style';
-import { getContextData } from './rutil';
-import log from './log';
+import { log, getContextData } from './rutil';
 import { delayHandler, xulCaptureEvents } from './libxul/xul';
 import { Hbox } from './libxul/boxes';
 
@@ -75,10 +74,6 @@ async function i18nInit(namespaces: string[]) {
     ),
   ];
 
-  const isDevelopment =
-    window.main.process.NODE_ENV() === 'development' ||
-    window.main.process.DEBUG_PROD() === 'true';
-
   await i18n
     .use(rendererBackend)
     .use(initReactI18next)
@@ -90,7 +85,7 @@ async function i18nInit(namespaces: string[]) {
 
       ns: namespaces.concat(['common/books', 'common/numbers']),
 
-      debug: isDevelopment,
+      debug: C.isDevelopment,
 
       backend: {
         // path where resources get loaded from

@@ -8,10 +8,9 @@ import {
   ofClass,
   sanitizeHTML,
 } from '../../common';
-import log from '../log';
 import { getElementInfo } from '../../libswordElemInfo';
 import G from '../rg';
-import { scrollIntoView } from '../rutil';
+import { log, scrollIntoView } from '../rutil';
 import { aTextWheelScroll, getRefHTML } from './zversekey';
 
 import { AtextStateType, LocationVKType } from '../../type';

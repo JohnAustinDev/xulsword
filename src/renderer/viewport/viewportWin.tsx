@@ -11,12 +11,12 @@ import { keep, diff } from '../../common';
 import G from '../rg';
 import renderToRoot from '../rinit';
 import {
+  log,
   clearPending,
   getStatePref,
   onSetWindowState,
   windowArgument,
 } from '../rutil';
-import log from '../log';
 import {
   topHandle,
   xulDefaultProps,

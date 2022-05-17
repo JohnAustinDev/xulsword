@@ -1,8 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { stringHash } from 'common';
+import C from 'constant';
 import Cache from '../cache';
 import { GPublic } from '../type';
-import log from './log';
+
+function silly(msg: string) {
+  if (C.isDevelopment && C.DevLogLevel === 'silly') {
+    // eslint-disable-next-line no-console
+    console.log(msg);
+  }
+}
 
 // This G object is for use in renderer processes, and it shares the same
 // interface as a main process G object. Both G objects are built auto-
@@ -31,7 +38,7 @@ entries.forEach((entry) => {
     const ckey = `G.${name} cache`;
     Object.defineProperty(G, name, {
       get() {
-        log.silly(`${ckey}${!Cache.has(ckey) ? ' miss' : ''}`);
+        silly(`${ckey}${!Cache.has(ckey) ? ' miss' : ''}`);
         if (!Cache.has(ckey)) {
           Cache.write(window.ipc.renderer.sendSync('global', name), ckey);
         }
@@ -44,7 +51,7 @@ entries.forEach((entry) => {
       const ckey = `G.${name}(${stringHash(...args)})${
         readonly ? ' cache' : ''
       }`;
-      log.silly(`${ckey}${readonly && !Cache.has(ckey) ? ' miss' : ''}`);
+      silly(`${ckey}${readonly && !Cache.has(ckey) ? ' miss' : ''}`);
       if (!readonly) Cache.clear(ckey);
       if (!Cache.has(ckey)) {
         if (asyncFuncs.includes(name)) {
@@ -71,7 +78,7 @@ entries.forEach((entry) => {
       }
       if (GPublicx[name][m] === 'getter') {
         const ckey = `G.${name}.${m} cache`;
-        log.silly(`${ckey}${!Cache.has(ckey) ? ' miss' : ''}`);
+        silly(`${ckey}${!Cache.has(ckey) ? ' miss' : ''}`);
         Object.defineProperty(Gx[name], m, {
           get() {
             if (!Cache.has(ckey)) {
@@ -89,7 +96,7 @@ entries.forEach((entry) => {
           const ckey = `G.${name}.${m}(${stringHash(...args)})${
             readonly ? ' cache' : ''
           }`;
-          log.silly(`${ckey}${readonly && !Cache.has(ckey) ? ' miss' : ''}`);
+          silly(`${ckey}${readonly && !Cache.has(ckey) ? ' miss' : ''}`);
           if (!readonly) Cache.clear(ckey);
           if (!Cache.has(ckey)) {
             if (asyncFuncs.includes([name, m].join('.'))) {

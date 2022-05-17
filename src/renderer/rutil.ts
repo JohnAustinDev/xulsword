@@ -1,3 +1,4 @@
+/* eslint-disable import/order */
 /* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable no-continue */
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -11,6 +12,7 @@ import VerseKey from '../versekey';
 import { ElemInfo, getElementInfo, TitleFormat } from '../libswordElemInfo';
 import { clone, diff, JSON_parse, ofClass } from '../common';
 
+import type ElectronLog from 'electron-log';
 import type {
   ContextData,
   LocationVKType,
@@ -18,6 +20,41 @@ import type {
   SearchType,
   V11nType,
 } from '../type';
+
+// Filter now to save IPC calls.
+function alog(type: ElectronLog.LogLevel, ...args: any[]) {
+  const levels = ['error', 'warn', 'info', 'verbose', 'debug', 'silly'];
+  const l1 = levels.indexOf(type);
+  const l2 = levels.indexOf(C.isDevelopment ? C.DevLogLevel : 'info');
+  if (type && l1 <= l2) {
+    // eslint-disable-next-line no-console
+    if (C.isDevelopment) console.log(...args);
+    else G.log(type, ...args);
+  }
+}
+export const log = {
+  error: (...args) => {
+    alog('error', ...args);
+  },
+  warn: (...args) => {
+    alog('warn', ...args);
+  },
+  info: (...args) => {
+    alog('info', ...args);
+  },
+  verbose: (...args) => {
+    alog('verbose', ...args);
+  },
+  debug: (...args) => {
+    alog('debug', ...args);
+  },
+  silly: (...args) => {
+    alog('silly', ...args);
+  },
+  log: (...args) => {
+    alog('info', ...args);
+  },
+} as ElectronLog.LogFunctions;
 
 // This function will retrieve the last argument passed to a window (as
 // webPreferences.additionalArguments) look for a particular key, and

@@ -22,8 +22,7 @@ import {
   PopupParentProps,
 } from '../popup/popupParentH';
 import G from '../rg';
-import { clearPending, verseKey } from '../rutil';
-import log from '../log';
+import { log, clearPending, verseKey } from '../rutil';
 import {
   addClass,
   xulDefaultProps,
