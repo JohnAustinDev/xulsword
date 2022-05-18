@@ -112,6 +112,7 @@ const C = {
   UI: {
     Window: {
       resizeDelay: 500, // ms between window resize and update
+      persistentTypes: ['moduleManager'],
     },
     Xulsword: {
       maxHistoryMenuLength: 20,

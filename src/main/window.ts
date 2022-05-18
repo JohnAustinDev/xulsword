@@ -194,7 +194,7 @@ function addWindowToPrefs(
   win: BrowserWindow,
   descriptor: WindowDescriptorType
 ) {
-  // Remove any parent or there will JSON recursion problems
+  // Remove any parent or there will be JSON recursion problems
   if (descriptor.options && 'parent' in descriptor.options)
     delete descriptor.options.parent;
   Prefs.setComplexValue(`Windows.w${win.id}`, descriptor, 'windows');
@@ -217,6 +217,13 @@ function addWindowToPrefs(
     'closed',
     ((id: number) => {
       return () => {
+        if (C.UI.Window.persistentTypes.includes(descriptor.type)) {
+          Prefs.setComplexValue(
+            `PersistentTypes.${descriptor.type}`,
+            Prefs.getComplexValue(`Windows.w${id}`, 'windows'),
+            'windows'
+          );
+        }
         Prefs.deleteUserPref(`Windows.w${id}`, 'windows');
       };
     })(win.id)
@@ -225,10 +232,29 @@ function addWindowToPrefs(
 
 // All Windows are created with BrowserWindow.show = false so they
 // will not be shown until the custom 'did-finish-render' event.
+// This function modifies descriptor.options in place.
 function updateOptions(
   descriptor: WindowDescriptorType,
   parent: BrowserWindow
 ): void {
+  let persistentTypesOptions: Electron.BrowserWindowConstructorOptions = {};
+  if (
+    C.UI.Window.persistentTypes.includes(descriptor.type) &&
+    Prefs.has(
+      `PersistentTypes.${descriptor.type}.options`,
+      'complex',
+      'windows'
+    )
+  ) {
+    persistentTypesOptions = Prefs.getComplexValue(
+      `PersistentTypes.${descriptor.type}.options`,
+      'windows'
+    ) as Electron.BrowserWindowConstructorOptions;
+  }
+  descriptor.options = {
+    ...(persistentTypesOptions || {}),
+    ...(descriptor.options || {}),
+  };
   const { type, category } = descriptor;
   let { options } = descriptor;
   options = options || {};
@@ -286,15 +312,15 @@ function updateOptions(
     }
     if (o?.openWithBounds) delete o.openWithBounds;
   }
-  log.silly('Window options:', options);
 }
 
 function createWindow(
   descriptor: WindowDescriptorType,
   parent: BrowserWindow
 ): BrowserWindow {
-  const { type, options } = descriptor;
   updateOptions(descriptor, parent);
+  const { type, options } = descriptor;
+  log.silly('Window options:', options);
   const win = new BrowserWindow(options);
   addWindowToRegistry(win, descriptor);
   win

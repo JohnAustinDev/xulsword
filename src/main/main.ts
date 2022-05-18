@@ -115,14 +115,14 @@ const openMainWindow = () => {
   const windowsDidClose = G.Prefs.getBoolPref(`WindowsDidClose`);
   G.Prefs.setBoolPref(`WindowsDidClose`, false);
   const persistWinPref = G.Prefs.getPrefOrCreate(
-    `PersistedWindows`,
+    `OpenOnStartup`,
     'complex',
     {},
     'windows'
   ) as WindowRegistryType | Record<string, never>;
   const persistedWindows: WindowRegistryType = [];
   if (persistWinPref) {
-    G.Prefs.deleteUserPref(`PersistedWindows`, 'windows');
+    G.Prefs.deleteUserPref(`OpenOnStartup`, 'windows');
     if (windowsDidClose) {
       Object.entries(persistWinPref).forEach((entry) => {
         const reg = entry[1] as WindowRegistryType[number];
@@ -184,7 +184,7 @@ const openMainWindow = () => {
   mainWin.on('close', () => {
     // Persist any open windows for the next restart
     G.Prefs.setComplexValue(
-      `PersistedWindows`,
+      `OpenOnStartup`,
       G.Prefs.getComplexValue('Windows', 'windows'),
       'windows'
     );
