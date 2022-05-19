@@ -438,6 +438,10 @@ export type TabType = {
   obsoletes: string[];
 };
 
+export type RowSelection = { rows: [number, number] }[];
+
+export type RowSort = { index: number; direction: 'ascending' | 'descending' };
+
 export type NewModulesType = {
   modules: SwordConfType[];
   fonts: string[];
@@ -760,13 +764,13 @@ export const GPublic = {
       module: string,
       repository: Repository
     ) => Promise<number | string>,
+    saveDownloads: func as unknown as (
+      saves: { module: string; fromRepo: Repository; toRepo: Repository }[]
+    ) => Promise<NewModulesType>,
     clearDownload: func as unknown as (
       module?: string,
       repository?: Repository
     ) => boolean,
-    saveDownloads: func as unknown as (
-      saves: { module: string; fromRepo: Repository; toRepo: Repository }[]
-    ) => Promise<NewModulesType>,
     remove: func as unknown as (module: string, repo: Repository) => boolean,
     move: func as unknown as (
       module: string,
@@ -799,6 +803,7 @@ export const GPublic = {
       modal: ModalType,
       window?: WindowArgType
     ) => void,
+    moveToFront: func as unknown as (window?: WindowArgType) => void,
     moveToBack: func as unknown as (window?: WindowArgType) => void,
     close: func as unknown as (window?: WindowArgType) => void,
   },

@@ -2,7 +2,7 @@
 /* eslint-disable no-continue */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import fpath from 'path';
-import { BrowserWindow } from 'electron';
+import { BrowserWindow, shell } from 'electron';
 import ZIP from 'adm-zip';
 import log from 'electron-log';
 import { isRepoLocal, modrepKey, parseSwordConf } from '../common';
@@ -20,7 +20,6 @@ import type {
   NewModulesType,
   Repository,
   SwordConfType,
-  ZipEntryType,
 } from '../type';
 
 // CrossWire SWORD Standard TODOS:
@@ -165,14 +164,16 @@ export function moveRemoveModule(
   return num;
 }
 
-// Installs an array of xulsword module files either to the xulsword module directory,
-// or the shared SWORD module directory. Errors will be reported (not thrown) if a file
-// does not exist or there is a problem during installation. If progressWin is prov-
-// ided, then progress will be reported to that window.
-export async function installList(
-  paths: string[],
-  toSharedDir = false,
-  progressWin?: BrowserWindow
+// Install an array of xulsword module zip objects. Errors will be
+// reported via NewModulesType (not thrown) if there are problems
+// to report during installation. Progress will be sent via IPC to
+// the xulsword window. NOTE: destdir will be ignored when installing
+// xulsword specific module components. NOTE-2: LibSword should be ready
+// upon entering this function, but it will be quit before modules
+// are installed, then other functions are responsible for restarting it.
+export async function installZIPs(
+  zips: ZIP[],
+  destdirs?: string | string[]
 ): Promise<NewModulesType> {
   return new Promise((resolve) => {
     const newmods: NewModulesType = {
@@ -182,37 +183,45 @@ export async function installList(
       audio: [],
       errors: [],
     };
-    const repoPath = toSharedDir
-      ? Dirs.path.xsModsCommon
-      : Dirs.path.xsModsUser;
-    if (paths.length) {
-      // First get a listing of the contents of all zip files (to init the progress bar)
+    if (zips.length) {
+      // Get installed module list.
+      const installed: { module: string; dir: string }[] = [];
+      if (LibSword.isReady()) {
+        const mods: string = LibSword.getModuleList();
+        if (mods !== C.NOMODULES) {
+          mods.split(C.CONFSEP).forEach((ms) => {
+            const module = ms.split(';')[0];
+            let dir = LibSword.getModuleInformation(
+              module,
+              'AbsoluteDataPath'
+            ).replace(/\/modules\/.*$/, '');
+            dir = fpath.resolve(dir).split(fpath.sep).join('/');
+            installed.push({ module, dir });
+          });
+        }
+      }
+      LibSword.quit();
+      // Initialize progress reporter
       const xswin = getBrowserWindows({ type: 'xulsword' })[0];
-      const zipEntries: ZipEntryType[] = [];
-      paths.forEach((f) => {
-        const zipfile = new LocalFile(f);
-        if (zipfile.exists()) {
-          zipEntries.push(...new ZIP(f).getEntries());
-        } else {
-          newmods.errors.push(`File does not exist: '${f}'`);
-        }
-      });
-      const progTot = zipEntries.length;
+      let progTot = 0;
       let progNow = 0;
-      progressWin?.webContents.send('progress', 0);
-      const updateProgress = (prognow: number) => {
-        if (prognow === -1) {
-          xswin.setProgressBar(-1);
-          progressWin?.webContents.send('progress', -1);
-        } else {
-          const progress = prognow / progTot;
-          xswin.setProgressBar(progress);
-          progressWin?.webContents.send('progress', progress);
-        }
+      const progress = (prog: number) => {
+        xswin.setProgressBar(prog);
+        xswin.webContents.send('progress', prog);
       };
-      updateProgress(0);
-      // Then process each zip file entry.
-      if (zipEntries.length) {
+      progress(0);
+      zips.forEach((zip) => {
+        progTot += zip.getEntryCount();
+      });
+      // Process each zip file entry.
+      zips.forEach((zip, i) => {
+        let destdir = Dirs.path.xsModsUser;
+        if (typeof destdirs === 'string') {
+          destdir = destdirs;
+        } else if (Array.isArray(destdirs)) {
+          destdir = destdirs[i];
+        }
+        const zipEntries = zip.getEntries();
         const sortedZipEntries = zipEntries.sort((a, b) => {
           const ac = a.name.endsWith('.conf');
           const bc = b.name.endsWith('.conf');
@@ -220,16 +229,6 @@ export async function installList(
           if (!ac && bc) return 1;
           return 0;
         });
-        const installed: string[] = [];
-        if (LibSword.isReady()) {
-          const mods: string = LibSword.getModuleList();
-          if (mods !== C.NOMODULES) {
-            mods.split(C.CONFSEP).forEach((ms) => {
-              installed.push(ms.split(';')[0]);
-            });
-          }
-        }
-        LibSword.quit();
         const confs = {} as { [i: string]: SwordConfType };
         sortedZipEntries.forEach((entry) => {
           if (!entry.entryName.endsWith('/')) {
@@ -237,9 +236,7 @@ export async function installList(
             const type = entry.entryName.split('/').shift();
             switch (type) {
               case 'mods.d': {
-                const moddest = new LocalFile(
-                  toSharedDir ? Dirs.path.xsModsCommon : Dirs.path.xsModsUser
-                );
+                const dest = new LocalFile(destdir);
                 const confstr = entry.getData().toString('utf8');
                 const conf = parseSwordConf(
                   confstr,
@@ -253,17 +250,23 @@ export async function installList(
                     `${conf.module}: Has non-standard module path '${conf.DataPath}'`
                   );
                 }
+                if (!dest.exists() || !dest.isDirectory()) {
+                  reasons.push(
+                    `${conf.module}: Destination directory does not exist '${dest.path}`
+                  );
+                }
                 if (!reasons.length) {
                   reasons.push(...conf.errors);
-                  moddest.append('mods.d');
-                  if (!moddest.exists()) {
-                    moddest.create(LocalFile.DIRECTORY_TYPE);
+                  const confdest = dest.clone();
+                  confdest.append('mods.d');
+                  if (!confdest.exists()) {
+                    confdest.create(LocalFile.DIRECTORY_TYPE);
                   }
-                  moddest.append(entry.name);
+                  confdest.append(entry.name);
                   // Remove any existing module having this name.
                   if (
-                    moddest.exists() &&
-                    !moveRemoveModule([conf.module], repoPath)
+                    confdest.exists() &&
+                    !moveRemoveModule([conf.module], destdir)
                   ) {
                     newmods.errors.push(
                       `${conf.module}: Could not remove existing module.`
@@ -272,39 +275,37 @@ export async function installList(
                     // Remove any module(s) obsoleted by this module.
                     if (conf.Obsoletes?.length) {
                       const obsoletes = conf.Obsoletes.filter((m) => {
-                        return installed.includes(m);
+                        return installed.find((ins) => ins.module === m);
                       });
-                      if (
-                        obsoletes.length &&
-                        !moveRemoveModule(obsoletes, repoPath)
-                      ) {
-                        newmods.errors.push(
-                          `${conf.module}: Could not remove obsoleted module(s).`
+                      obsoletes.forEach((om) => {
+                        const omdir = installed.find(
+                          (ins) => ins.module === om
                         );
-                      }
+                        if (omdir && !moveRemoveModule(om, omdir.dir)) {
+                          newmods.errors.push(
+                            `${conf.module}: Could not remove obsoleted module(s).`
+                          );
+                        }
+                      });
                     }
                     // Make sure module destination directory exists and is empty.
-                    const destdir = new LocalFile(
-                      toSharedDir
-                        ? Dirs.path.xsModsCommon
-                        : Dirs.path.xsModsUser
-                    );
-                    destdir.append(swmodpath);
-                    if (destdir.exists()) {
-                      destdir.remove(true);
+                    const moddest = dest.clone();
+                    moddest.append(swmodpath);
+                    if (moddest.exists()) {
+                      moddest.remove(true);
                     }
                     if (
-                      destdir.exists() ||
-                      !destdir.create(LocalFile.DIRECTORY_TYPE, {
+                      moddest.exists() ||
+                      !moddest.create(LocalFile.DIRECTORY_TYPE, {
                         recursive: true,
                       })
                     ) {
                       newmods.errors.push(
-                        `${conf.module}: Failed to create new module destination directory: '${destdir.path}'`
+                        `${conf.module}: Failed to create new module destination directory: '${moddest.path}'`
                       );
                     } else {
                       // Copy config file to mods.d
-                      moddest.writeFile(confstr);
+                      confdest.writeFile(confstr);
                       confs[conf.module] = conf;
                       newmods.modules.push(conf);
                     }
@@ -324,32 +325,30 @@ export async function installList(
                 });
                 const swmodpath = conf && confModulePath(conf.DataPath);
                 if (conf && swmodpath) {
-                  const destdir = new LocalFile(
-                    toSharedDir ? Dirs.path.xsModsCommon : Dirs.path.xsModsUser
-                  );
-                  destdir.append(swmodpath);
+                  const moddest = new LocalFile(destdir);
+                  moddest.append(swmodpath);
                   // If this module is to be installed, the destination directory has already been
                   // succesfully created, otherwise silently skip.
-                  if (destdir.exists()) {
+                  if (moddest.exists()) {
                     const parts = entry.entryName
                       .substring(swmodpath.length + 1)
                       .split('/');
-                    parts.forEach((p, i) => {
-                      destdir.append(p);
-                      if (i === parts.length - 1) {
-                        destdir.writeFile(entry.getData());
-                      } else if (!destdir.exists()) {
-                        destdir.create(LocalFile.DIRECTORY_TYPE);
+                    parts.forEach((p, ix) => {
+                      moddest.append(p);
+                      if (ix === parts.length - 1) {
+                        moddest.writeFile(entry.getData());
+                      } else if (!moddest.exists()) {
+                        moddest.create(LocalFile.DIRECTORY_TYPE);
                       }
                     });
-                    if (!destdir.exists()) {
+                    if (!moddest.exists()) {
                       newmods.errors.push(
-                        `${conf.module}: Failed to copy module file" ${destdir.path}`
+                        `${conf.module}: Failed to copy module file" ${moddest.path}`
                       );
                     }
                   } else {
                     newmods.errors.push(
-                      `${conf.module}: Module directory does not exist: ${destdir.path}`
+                      `${conf.module}: Module directory does not exist: ${moddest.path}`
                     );
                   }
                 } else {
@@ -393,19 +392,64 @@ export async function installList(
             }
           }
           progNow += 1;
-          updateProgress(progNow);
+          const prog = progNow / progTot;
+          if (Math.floor(100 * prog) % 2 === 0) progress(prog);
         });
-        updateProgress(-1);
-      }
+      });
+      progress(-1);
     }
     resolve(newmods);
   });
 }
 
+// Install an array of zip modules from either filepaths or ZIP objects.
+// When destdir is unspecified, xsModsUser is used.
+export async function modalInstall(
+  zipmods: (ZIP | string)[],
+  destdir?: string | string[]
+) {
+  const xswin = getBrowserWindows({ type: 'xulsword' })[0];
+  Window.modal('transparent', 'all');
+  Window.modal('installing', xswin);
+  const zips: (ZIP | null)[] = [];
+  zipmods.forEach((zipmod) => {
+    if (typeof zipmod === 'string') {
+      const zipfile = new LocalFile(zipmod);
+      if (zipfile.exists()) {
+        zips.push(new ZIP(zipmod));
+      } else {
+        log.warn(`Zip module does not exist: '${zipfile.path}'`);
+        zips.push(null);
+      }
+    } else {
+      zips.push(zipmod);
+    }
+  });
+  const z = zips.filter(Boolean) as ZIP[];
+  const d = Array.isArray(destdir)
+    ? destdir.filter((_d, i) => zips[i])
+    : destdir;
+  const newmods = await installZIPs(z, d);
+  if (newmods.errors.length) {
+    shell.beep();
+    log.error(
+      `Module installation problems follow:\n${newmods.errors.join('\n')}`
+    );
+  } else {
+    log.info('ALL FILES WERE SUCCESSFULLY INSTALLED!');
+  }
+  Subscription.publish('resetMain');
+  Window.reset('all', 'all');
+  Subscription.publish('modulesInstalled', newmods);
+  xswin.webContents.send('newmods', newmods);
+  Window.modal('off', 'all');
+  return newmods;
+}
+
 let Downloads: { [modrepoKey: string]: ZIP } = {};
 
 const Module: GType['Module'] = {
-  // Download a SWORD module from a repository and save it as a zip buffer
+  // Download a SWORD module from a repository and save it as a zip object
   // for later installation by saveDownload. Returns the number of files if
   // successful or a string message if error or canceled.
   async download(
@@ -470,6 +514,27 @@ const Module: GType['Module'] = {
     return 'Canceled';
   },
 
+  async saveDownloads(
+    saves: { module: string; fromRepo: Repository; toRepo: Repository }[]
+  ): Promise<NewModulesType> {
+    const zipobj: ZIP[] = [];
+    const destdir: string[] = [];
+    Object.entries(Downloads).forEach((entry) => {
+      const [modrepok, zipo] = entry;
+      const save = saves.find(
+        (s) => modrepKey(s.module, s.fromRepo) === modrepok
+      );
+      if (zipo && save && isRepoLocal(save.toRepo)) {
+        const repo = new LocalFile(save.toRepo.path);
+        if (repo.exists() && repo.isDirectory()) {
+          zipobj.push(zipo);
+          destdir.push(repo.path);
+        }
+      }
+    });
+    return modalInstall(zipobj, destdir);
+  },
+
   clearDownload(module?: string, repository?: Repository): boolean {
     if (!module) {
       resetFTP();
@@ -485,55 +550,6 @@ const Module: GType['Module'] = {
       }
     }
     return false;
-  },
-
-  async saveDownloads(
-    saves: { module: string; fromRepo: Repository; toRepo: Repository }[]
-  ): Promise<NewModulesType> {
-    const mainwin = getBrowserWindows({ type: 'xulsword' })[0];
-    Window.modal('installing', mainwin);
-    mainwin?.webContents.send('progress', 0);
-    const progTotal = Object.values(Downloads).length;
-    let prog = 0;
-    const newmods: NewModulesType = {
-      modules: [],
-      fonts: [],
-      audio: [],
-      bookmarks: [],
-      errors: [],
-    };
-    const promises: Promise<boolean>[] = Object.entries(Downloads).map(
-      (entry) => {
-        return new Promise((resolve, reject) => {
-          const [modrepok, zipo] = entry;
-          const save = saves.find(
-            (s) => modrepKey(s.module, s.fromRepo) === modrepok
-          );
-          if (zipo && save && isRepoLocal(save.toRepo)) {
-            const repo = new LocalFile(save.toRepo.path);
-            if (repo.exists() && repo.isDirectory()) {
-              zipo.extractAllTo(repo.path, true);
-              // TODO!: Read zip and add contents to newmods
-              prog += 1;
-              mainwin?.webContents.send('progress', prog / progTotal);
-              return resolve(true);
-            }
-          }
-          prog += 1;
-          mainwin?.webContents.send('progress', prog / progTotal);
-          return resolve(false);
-        });
-      }
-    );
-    return Promise.all(promises).then(() => {
-      mainwin?.webContents.send('progress', -1);
-      Subscription.publish('resetMain');
-      Window.reset('all', 'all');
-      Subscription.publish('modulesInstalled', newmods);
-      mainwin.webContents.send('newmods', newmods);
-      Window.modal('off', 'all');
-      return newmods;
-    });
   },
 
   remove(module: string, repo: Repository): boolean {

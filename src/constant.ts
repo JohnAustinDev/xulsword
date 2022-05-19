@@ -106,7 +106,8 @@ const C = {
     localfile: 'file://',
   },
 
-  FTPMaxConnectionsPerDomain: 36, // 40 is absolute max
+  FTPMaxConnectionsPerDomain: 29, // 40 is absolute max. 36 failed on crosswire.org
+  FTPMaxConnections: 48,
 
   // xulsword UI constants
   UI: {

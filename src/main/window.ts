@@ -439,6 +439,13 @@ const Window: GType['Window'] = {
     });
   },
 
+  moveToFront(window?: WindowArgType): void {
+    const front = getBrowserWindows(window, arguments[1]);
+    BrowserWindow.getAllWindows().forEach((w) => {
+      if (front.includes(w)) w.moveTop();
+    });
+  },
+
   moveToBack(window?: WindowArgType): void {
     const back = getBrowserWindows(window, arguments[1]);
     BrowserWindow.getAllWindows().forEach((w) => {

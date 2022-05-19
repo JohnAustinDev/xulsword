@@ -114,7 +114,7 @@ abstract class AbstractSortableColumn implements TSortableColumn {
         classes = classes(rowIndex, dataColumnIndex);
       }
       if (!classes) classes = [];
-      classes.push(`data-row-${dataRowIndex} data-column-${dataColumnIndex}`);
+      classes.push(`data-row-${dataRowIndex} data-col-${dataColumnIndex}`);
       tooltip = (
         tooltip !== 'VALUE' ? tooltip : typeof value === 'string' ? value : ''
       ) as string;

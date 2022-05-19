@@ -28,6 +28,7 @@ import {
   ofClass,
   selectionToRows,
   sanitizeHTML,
+  rowsToSelection,
 } from '../../common';
 import C from '../../constant';
 import G from '../rg';
@@ -47,23 +48,28 @@ import DragSizer, { DragSizerVal } from '../libxul/dragsizer';
 import './moduleManager.css';
 
 // TODO!: showModuleInfo CSS
+// TODO!: Replace DOM conversion to ref
+// TODO!: Improve state names/paths
+// TODO!: Split code into two files.
 // TODO!: Add XSM and audio support
-// TODO!: return newmods
 
 import type {
   ModTypes,
   PrefObject,
   Repository,
   RepositoryListing,
+  RowSelection,
+  RowSort,
   SwordConfType,
 } from '../../type';
 import type { TCellInfo } from '../libxul/table';
 import { Utils } from '@blueprintjs/table';
 
 const Tables = {
-  repository: ['renderRepoTable', 'repoTableData', 'repoColumnWidths'],
-  language: ['renderLangTable', 'langTableData', null],
-  module: ['renderModTable', 'modTableData', 'modColumnWidths'],
+  // eslint-disable-next-line prettier/prettier
+  repository: ['renderRepoTable', 'repoTableData', 'repoColumnWidths', 'repoRowSort'],
+  language: ['renderLangTable', 'langTableData', null, 'langRowSort'],
+  module: ['renderModTable', 'modTableData', 'modColumnWidths', 'modRowSort'],
 } as const;
 
 type TLanguageTableRow = [TCellInfo, string];
@@ -184,8 +190,6 @@ const Downloads: {
   };
 } = {};
 
-export type RowSelection = { rows: [number, number] }[];
-
 const defaultProps = {
   ...xulDefaultProps,
 };
@@ -217,16 +221,18 @@ const notStatePref = {
 export interface ManagerStatePref {
   languageTableOpen: boolean;
   languageTableWidth: number;
+  langRowSort: RowSort;
 
   modColumnOrder: number[];
   modColumnWidths: number[];
-  modRowSort: { index: number; direction: 'ascending' | 'descending' };
+  modRowSort: RowSort;
 
   repoColumnWidths: number[];
   customRepos: Repository[];
   disabledRepos: string[];
   repoTableOpen: boolean;
   repoTableHeight: number;
+  repoRowSort: RowSort;
 }
 
 export type ManagerState = ManagerStatePref & typeof notStatePref;
@@ -261,6 +267,12 @@ export default class ModuleManager extends React.Component {
 
   onModColumnWidthChanged;
 
+  onLangRowSort;
+
+  onModRowSort;
+
+  onRepoRowSort;
+
   sState: (
     s: Partial<ManagerState> | ((prevState: ManagerState) => void)
   ) => void;
@@ -285,9 +297,19 @@ export default class ModuleManager extends React.Component {
     };
 
     this.destroy = [];
+
+    this.sizeTableToParent = this.sizeTableToParent.bind(this);
+    this.onColumnToggle = this.onColumnToggle.bind(this);
+    this.onColumnsReordered = this.onColumnsReordered.bind(this);
+    this.onCellEdited = this.onCellEdited.bind(this);
+    this.onLangRowSort = this.onRowSort.bind(this, 'language');
+    this.onModRowSort = this.onRowSort.bind(this, 'module');
+    this.onRepoRowSort = this.onRowSort.bind(this, 'repository');
+    this.sortedTableMap = this.sortedTableMap.bind(this);
+    this.selectionToDataRows = this.selectionToDataRows.bind(this);
+    this.rowSelect = this.rowSelect.bind(this);
     this.switchRepo = this.switchRepo.bind(this);
     this.eventHandler = this.eventHandler.bind(this);
-    this.onCellEdited = this.onCellEdited.bind(this);
     this.onRepoColumnWidthChanged = this.onColumnWidthChanged.bind(
       this,
       'repository'
@@ -296,16 +318,12 @@ export default class ModuleManager extends React.Component {
       this,
       'module'
     );
-    this.onColumnsReordered = this.onColumnsReordered.bind(this);
-    this.onColumnToggle = this.onColumnToggle.bind(this);
-    this.onModRowSort = this.onModRowSort.bind(this);
     this.loadRepositoryTable = this.loadRepositoryTable.bind(this);
     this.updateRepositoryLists = this.updateRepositoryLists.bind(this);
     this.loadModuleTable = this.loadModuleTable.bind(this);
-    this.sizeTableToParent = this.sizeTableToParent.bind(this);
+    this.moduleTableData = this.moduleTableData.bind(this);
     this.setTableState = this.setTableState.bind(this);
     this.sState = this.setState.bind(this);
-    this.moduleTableData = this.moduleTableData.bind(this);
   }
 
   componentDidMount() {
@@ -446,11 +464,15 @@ export default class ModuleManager extends React.Component {
         const w = atable.clientWidth;
         const t = columnWidths.reduce((p, c) => p + (c === -1 ? 0 : c), 0);
         if (Math.abs(w - t) > 2) {
-          this.setTableState(table, {
-            [columnWidthsProp]: columnWidths.map((cw) => {
-              return cw === -1 ? -1 : w * (cw / t);
-            }),
-          });
+          this.setTableState(
+            table,
+            {
+              [columnWidthsProp]: columnWidths.map((cw) => {
+                return cw === -1 ? -1 : w * (cw / t);
+              }),
+            },
+            true
+          );
         }
       }
     }
@@ -538,8 +560,83 @@ export default class ModuleManager extends React.Component {
     }
   }
 
-  onModRowSort(index: number, direction: 'ascending' | 'descending') {
-    this.sState({ modRowSort: { index, direction } });
+  onRowSort(
+    table: keyof typeof Tables,
+    index: number,
+    direction: 'ascending' | 'descending'
+  ) {
+    let rowsort = {};
+    const xRowSort = Tables[table][3];
+    if (xRowSort) {
+      rowsort = { [xRowSort]: { index, direction } };
+    }
+    this.setTableState(table, { ...rowsort, [table]: [] }, true);
+  }
+
+  sortedTableMap(
+    table: keyof typeof Tables,
+    map: number[] // [datarow, tablerow, datacol, tablecol]
+  ): number[] {
+    const { tableRef } = this;
+    const ret = map.map((v) => (Number.isNaN(v) ? -1 : v));
+    const drow = 'data-row-';
+    const trow = 'bp4-table-cell-row-';
+    const dcol = 'data-col-';
+    const tcol = 'bp4-table-cell-col-';
+    const convert = [
+      [0, 1, drow, trow],
+      [1, 0, trow, drow],
+      [2, 3, dcol, tcol],
+      [3, 2, tcol, dcol],
+    ] as [number, number, string, string][];
+    const t = tableRef[table].current;
+    if (t) {
+      convert.forEach((c) => {
+        if (ret[c[0]] !== -1 && ret[c[1]] === -1) {
+          const r = t.getElementsByClassName(`${c[2]}${ret[c[0]]}`)[0];
+          if (r) {
+            const re = new RegExp(`\\b${c[3]}(\\d+)\\b`);
+            const m = r.className.match(re);
+            ret[c[1]] = m ? Number(m[1]) : -1;
+          }
+        }
+      });
+    }
+    return ret;
+  }
+
+  selectionToDataRows(
+    table: keyof typeof Tables,
+    regions: RowSelection
+  ): number[] {
+    const tablerows = selectionToRows(regions);
+    return tablerows
+      .map((tr) => this.sortedTableMap(table, [-1, tr, -1, -1])[0])
+      .sort((a, b) => (a > b ? 1 : a < b ? -1 : 0));
+  }
+
+  rowSelect(e: React.MouseEvent, table: keyof typeof Tables, row: number) {
+    const state = this.state as ManagerState;
+    const tableSel = table;
+    const selection = state[tableSel];
+    const rows = selectionToRows(selection);
+    const isSelected = rows.includes(row);
+    let newSelection;
+    if (selection.length && (e.ctrlKey || e.shiftKey)) {
+      const prev = rows.filter((r) => r < row).pop();
+      const start = prev === undefined || e.ctrlKey ? row : prev;
+      for (let x = start; x <= row; x += 1) {
+        if (!isSelected) rows.push(x);
+        else if (rows.includes(x)) {
+          rows.splice(rows.indexOf(x), 1);
+        }
+      }
+      newSelection = rowsToSelection(rows);
+    } else {
+      newSelection = rowsToSelection(isSelected ? [] : [row]);
+    }
+    this.setTableState(table, { [tableSel]: newSelection }, true);
+    return newSelection;
   }
 
   // Load the repository table with built-in repositories, then user-custom
@@ -618,7 +715,7 @@ export default class ModuleManager extends React.Component {
     const state = this.state as ManagerState;
     const { language, langTableData, repoTableData } = state;
     const { repositoryListings } = ModuleManager.saved;
-    const selectedRowIndexes = selectionToRows(language);
+    const selectedRowIndexes = this.selectionToDataRows('language', language);
     const selectedcodes = langTableData
       .filter((_r, i) => selectedRowIndexes.includes(i))
       .map((r) => r[LanCol.iCode]);
@@ -718,8 +815,9 @@ export default class ModuleManager extends React.Component {
     });
     // Installed modules (ie those in local repos) which are from enabled
     // remote repositories are not included in moduleLangData. Rather the
-    // 'installed' box is checked on the corresponding remote repository
-    //  module. Also, modules in disabled repositories are not included.
+    // their 'installed' and 'shared' boxes are applied to the corresponding
+    // remote repository module. Also, modules in disabled repositories
+    // are not included.
     repositoryListings.forEach((listing, i) => {
       const drow = repoTableData[i];
       if (drow && Array.isArray(listing) && drow[RepCol.iState] !== OFF) {
@@ -735,6 +833,10 @@ export default class ModuleManager extends React.Component {
           if (repoIsLocal && modunique in enabledExternRepoMods) return;
           if (!repoIsLocal && modunique in localModules) {
             modrow[ModCol.iInstalled] = ON;
+            const modrepok = `${localModules[modunique]}.${c.module}`;
+            if (modrepok in moduleData) {
+              modrow[0].shared = moduleData[modrepok][0].shared;
+            }
           }
           const code = (c.Lang && c.Lang.replace(/-.*$/, '')) || 'en';
           if (!(code in moduleLangData)) moduleLangData[code] = [];
@@ -743,9 +845,13 @@ export default class ModuleManager extends React.Component {
         });
       }
     });
-    this.setTableState('module', {
-      modTableData: this.moduleTableData(languageSelection),
-    });
+    this.setTableState(
+      'module',
+      {
+        modTableData: this.moduleTableData(languageSelection),
+      },
+      true
+    );
     return true;
   }
 
@@ -753,7 +859,7 @@ export default class ModuleManager extends React.Component {
   moduleTableData(filter?: RowSelection): TModuleTableRow[] {
     const state = this.state as ManagerState;
     const { langTableData } = state;
-    const rows = selectionToRows(filter || []);
+    const rows = this.selectionToDataRows('language', filter || []);
     const codes: string[] = [];
     rows.forEach((r) => {
       if (langTableData[r]) {
@@ -782,18 +888,6 @@ export default class ModuleManager extends React.Component {
     });
   }
 
-  rowSelect(e: React.MouseEvent, table: keyof typeof Tables, row: number) {
-    const state = this.state as ManagerState;
-    const tableSel = table;
-    const selection = state[tableSel];
-    const isSelected = selection?.find((r) => r.rows[0] === row);
-    const selected =
-      e.ctrlKey && !isSelected && selection ? clone(selection) : [];
-    if (!isSelected) selected.push({ rows: [row, row] });
-    this.sState({ [tableSel]: selected });
-    return selected;
-  }
-
   // Enable or disable a repository. If onOrOff is undefined it will be toggled.
   // If onOrOff is true it will be enabled, otherwise disabled.
   switchRepo(rows: number[], onOrOff?: boolean) {
@@ -810,7 +904,10 @@ export default class ModuleManager extends React.Component {
         const disabledIndex = disabledRepos.findIndex((drs) => {
           return drs === rowkey;
         });
-        if (onOrOff === true || drowWas[RepCol.iState] === OFF) {
+        if (
+          onOrOff !== false &&
+          (onOrOff === true || drowWas[RepCol.iState] === OFF)
+        ) {
           drow[RepCol.iState] = drow[0].repo.builtin ? ALWAYS_ON : ON;
           drow[0].repo.disabled = false;
           if (disabledIndex !== -1) disabledRepos.splice(disabledIndex, 1);
@@ -827,10 +924,14 @@ export default class ModuleManager extends React.Component {
         }
       }
     });
-    this.setTableState('repository', {
-      repoTableData,
-      disabledRepos,
-    });
+    this.setTableState(
+      'repository',
+      {
+        repoTableData,
+        disabledRepos,
+      },
+      true
+    );
     const repos = repoTableData.map((r, i) =>
       rows.includes(i) ? r[0].repo : null
     );
@@ -852,25 +953,35 @@ export default class ModuleManager extends React.Component {
         const e = ev as React.MouseEvent;
         switch (e.currentTarget.id) {
           case 'languageListClose': {
-            this.setTableState('module', {
-              languageTableOpen: false,
-              modTableData: this.moduleTableData([]),
-            });
+            this.setTableState(
+              'module',
+              {
+                languageTableOpen: false,
+                modTableData: this.moduleTableData([]),
+              },
+              true
+            );
             break;
           }
           case 'languageListOpen': {
-            const { language } = this.state as ManagerState;
-            this.setTableState('module', {
-              languageTableOpen: true,
-              modTableData: this.moduleTableData(language),
-            });
+            // Cannot retain selection without making moduleTableData() an async
+            // function, because selectionToDataRows() needs a rendered table.
+            this.setTableState(
+              'module',
+              {
+                language: [],
+                languageTableOpen: true,
+                modTableData: this.moduleTableData([]),
+              },
+              true
+            );
             break;
           }
           case 'moduleInfo': {
             const div = document.getElementById('moduleInfo');
             if (div) {
               const { module, modTableData } = this.state as ManagerState;
-              const confs = selectionToRows(module)
+              const confs = this.selectionToDataRows('module', module)
                 .map((r) => {
                   return (modTableData[r] && modTableData[r][0].conf) || null;
                 })
@@ -891,6 +1002,7 @@ export default class ModuleManager extends React.Component {
             break;
           }
           case 'ok': {
+            G.Window.moveToFront({ type: 'xulsword' });
             const { repoTableData } = this.state as ManagerState;
             const { moduleData } = ModuleManager.saved;
             // Get a list of all currently installed modules (those found in any
@@ -1020,7 +1132,10 @@ export default class ModuleManager extends React.Component {
             const newTableData = clone(repoTableData);
             const newCustomRepos = clone(customRepos);
             const rawdata = ModuleManager.saved.repositoryListings;
-            const rows = (repository && selectionToRows(repository)) || [];
+            const rows =
+              (repository &&
+                this.selectionToDataRows('repository', repository)) ||
+              [];
             rows.reverse().forEach((r) => {
               const drow = repoTableData[r];
               if (drow && drow[0].repo.custom) {
@@ -1063,55 +1178,98 @@ export default class ModuleManager extends React.Component {
                 r[ModCol.iInstalled] = OFF;
                 const modrepk = modrepKey(r[ModCol.iModule], r[0].repo);
                 if (modrepk in Downloads) Downloads[modrepk].failed = true;
-                this.setTableState('module');
+                this.setTableState('module', null, true);
               }
             });
             break;
           }
           case 'repository': {
-            const { repoTableData } = this.state as ManagerState;
-            const [row, col] = clickedCell(e);
-            const builtin =
-              repoTableData[row] && repoTableData[row][0].repo.builtin;
-            if (!builtin && col === RepCol.iState) this.switchRepo([row]);
-            else if (row > -1 && col < RepCol.iState) {
-              this.rowSelect(e, 'repository', row);
+            const { repository, repoTableData } = this.state as ManagerState;
+            const [row, trow, col] = clickedCell(e);
+            if (row !== -1) {
+              const builtin =
+                repoTableData[row] && repoTableData[row][0].repo.builtin;
+              if (!builtin && col === RepCol.iState) {
+                const onOrOff = repoTableData[row][RepCol.iState] === OFF;
+                const selrows = selectionToRows(repository);
+                const toggleTableRows = selrows.includes(trow)
+                  ? selrows
+                  : [trow];
+                const toggleDataRows = toggleTableRows.map((r) => {
+                  return this.sortedTableMap('repository', [-1, r])[0];
+                });
+                this.switchRepo(toggleDataRows, onOrOff);
+              } else if (row > -1 && col < RepCol.iState) {
+                this.rowSelect(e, 'repository', trow);
+              }
             }
             break;
           }
           case 'language': {
-            const [row] = clickedCell(e);
-            this.loadModuleTable(this.rowSelect(e, 'language', row));
+            const [, trow] = clickedCell(e);
+            if (trow !== -1) {
+              this.loadModuleTable(this.rowSelect(e, 'language', trow));
+            }
             break;
           }
           case 'module': {
-            const [row, col] = clickedCell(e);
-            const state = this.state as ManagerState;
-            const { modTableData } = state as ManagerState;
-            const drow = modTableData[row];
-            if (drow && col === ModCol.iInstalled && !drow[0].loading) {
-              const was = drow[col];
-              const is = was === ON ? OFF : ON;
-              // Installed column clicks
-              if (is === ON) {
-                const k = modrepKey(drow[ModCol.iModule], drow[0].repo);
-                if (k in Downloads && !Downloads[k].failed) {
-                  drow[ModCol.iInstalled] = ON;
-                  this.setTableState('module', { modTableData });
-                } else this.download(row);
+            const [row, trow, col] = clickedCell(e);
+            if (row !== -1) {
+              const state = this.state as ManagerState;
+              const { module, modTableData } = state as ManagerState;
+              const drow = modTableData[row];
+              if (drow && col === ModCol.iInstalled && !drow[0].loading) {
+                const was = drow[col];
+                const is = was === ON ? OFF : ON;
+                const selrows = selectionToRows(module);
+                const toggleTableRows = selrows.includes(trow)
+                  ? selrows
+                  : [trow];
+                const toggleDataRows = toggleTableRows.map((r) => {
+                  return this.sortedTableMap('module', [-1, r, -1, -1])[0];
+                });
+                // Installed column clicks
+                if (is === ON) {
+                  const newDLRows: number[] = [];
+                  toggleDataRows.forEach((r) => {
+                    const rrow = modTableData[r];
+                    if (rrow) {
+                      const k = modrepKey(rrow[ModCol.iModule], rrow[0].repo);
+                      if (k in Downloads && !Downloads[k].failed) {
+                        rrow[ModCol.iInstalled] = ON;
+                        this.setTableState('module', { modTableData }, true);
+                      } else newDLRows.push(r);
+                    }
+                  });
+                  if (newDLRows.length) this.download(newDLRows);
+                } else {
+                  toggleDataRows.forEach((r) => {
+                    const rrow = modTableData[r];
+                    if (rrow) {
+                      rrow[col] = OFF;
+                      rrow[0].intent = intent(ModCol.iInstalled, 'none');
+                    }
+                  });
+                  this.setTableState('module', { modTableData }, true);
+                }
+              } else if (drow && col === ModCol.iShared) {
+                // Shared column clicks
+                const is = !drow[0].shared;
+                const selrows = selectionToRows(module);
+                const toggleTableRows = selrows.includes(trow)
+                  ? selrows
+                  : [trow];
+                const toggleDataRows = toggleTableRows.map((r) => {
+                  return this.sortedTableMap('module', [-1, r])[0];
+                });
+                toggleDataRows.forEach((r) => {
+                  const rrow = modTableData[r];
+                  if (rrow) rrow[0].shared = is;
+                });
+                this.setTableState('module', { modTableData }, true);
               } else {
-                drow[col] = OFF;
-                drow[0].intent = intent(ModCol.iInstalled, 'none');
-                this.setTableState('module', { modTableData });
+                this.rowSelect(e, 'module', trow);
               }
-            } else if (drow && col === ModCol.iShared) {
-              // Shared column clicks
-              drow[0].shared = !drow[0].shared;
-              this.setTableState('module', {
-                modTableData,
-              } as Partial<ManagerState>);
-            } else {
-              this.rowSelect(e, 'module', row);
             }
             break;
           }
@@ -1128,44 +1286,50 @@ export default class ModuleManager extends React.Component {
     return true;
   }
 
-  download(row: number): void {
+  download(rows: number[]): void {
     const { modTableData } = ModuleManager.saved;
-    const drow = modTableData[row];
-    if (drow) {
-      const module = drow[ModCol.iModule] as string;
-      const { repo } = drow[0];
-      drow[0].loading = loading(ModCol.iInstalled);
-      this.setTableState('module', { modTableData });
-      const modrepk = modrepKey(module, repo);
-      const nfiles = (async () => {
-        try {
-          const dl = await G.Module.download(module, repo);
-          drow[0].loading = false;
-          let newintent: Intent = 'success';
-          if (typeof dl === 'string') {
-            this.addToast({ message: dl });
-            newintent = 'danger';
-          } else {
-            drow[ModCol.iInstalled] = ON;
-            Downloads[modrepk].failed = false;
+    rows.forEach((row) => {
+      const drow = modTableData[row];
+      if (drow) {
+        const module = drow[ModCol.iModule] as string;
+        const { repo } = drow[0];
+        drow[0].loading = loading(ModCol.iInstalled);
+        const modrepk = modrepKey(module, repo);
+        const nfiles = (async () => {
+          try {
+            const dl = await G.Module.download(module, repo);
+            drow[0].loading = false;
+            let newintent: Intent = 'success';
+            if (typeof dl === 'string') {
+              this.addToast({ message: dl });
+              newintent = 'danger';
+            } else {
+              drow[ModCol.iInstalled] = ON;
+              Downloads[modrepk].failed = false;
+            }
+            drow[0].intent = intent(ModCol.iInstalled, newintent);
+            this.setTableState('module', { modTableData });
+            return typeof dl === 'string' ? null : dl;
+          } catch (er) {
+            log.warn(er);
+            drow[0].loading = false;
+            drow[0].intent = intent(ModCol.iInstalled, 'danger');
+            this.setTableState('module', { modTableData });
+            return null;
           }
-          drow[0].intent = intent(ModCol.iInstalled, newintent);
-          this.setTableState('module', { modTableData });
-          return typeof dl === 'string' ? null : dl;
-        } catch (er) {
-          log.warn(er);
-          drow[0].loading = false;
-          drow[0].intent = intent(ModCol.iInstalled, 'danger');
-          this.setTableState('module', { modTableData });
-          return null;
-        }
-      })();
-      Downloads[modrepk] = { nfiles, failed: true };
-    }
+        })();
+        Downloads[modrepk] = { nfiles, failed: true };
+      }
+    });
+    this.setTableState('module', { modTableData });
   }
 
   // Set table state, save the data for window re-renders, and re-render the table.
-  setTableState(table: keyof typeof Tables, s?: Partial<ManagerState>) {
+  setTableState(
+    table: keyof typeof Tables,
+    s?: Partial<ManagerState> | null,
+    reset?: boolean
+  ) {
     const renderTable = Tables[table][0];
     const tableData = Tables[table][1];
     const state = this.state as ManagerState;
@@ -1174,13 +1338,15 @@ export default class ModuleManager extends React.Component {
     if (s) this.sState(s);
     const tableDataVal = ((s && s[tableData]) || state[tableData]) as any;
     ModuleManager.saved[tableData] = tableDataVal;
-    this.sState((prevState) => {
-      let render = prevState[renderTable];
-      render += 1;
-      return {
-        [renderTable]: render,
-      };
-    });
+    if (reset) {
+      this.sState((prevState) => {
+        let render = prevState[renderTable];
+        render += 1;
+        return {
+          [renderTable]: render,
+        };
+      });
+    }
   }
 
   refHandlers = {
@@ -1203,6 +1369,7 @@ export default class ModuleManager extends React.Component {
       langTableData,
       languageTableOpen,
       languageTableWidth,
+      langRowSort,
       renderLangTable,
 
       module,
@@ -1218,6 +1385,7 @@ export default class ModuleManager extends React.Component {
       repoTableHeight,
       repoColumnWidths,
       repoTableData,
+      repoRowSort,
       renderRepoTable,
       progress,
     } = state;
@@ -1228,7 +1396,10 @@ export default class ModuleManager extends React.Component {
       onModColumnWidthChanged,
       onColumnToggle,
       onColumnsReordered,
+      onLangRowSort,
       onModRowSort,
+      onRepoRowSort,
+      selectionToDataRows,
       tableRef,
     } = this;
 
@@ -1239,7 +1410,7 @@ export default class ModuleManager extends React.Component {
       repoAdd: false,
       repoDelete:
         !repository ||
-        !selectionToRows(repository).every(
+        !selectionToDataRows('repository', repository).every(
           (r) => repoTableData[r] && repoTableData[r][0]?.repo?.custom
         ),
       repoCancel: !repoTableData.find((r) => r[0].loading),
@@ -1269,9 +1440,11 @@ export default class ModuleManager extends React.Component {
                     id="language"
                     key={renderLangTable}
                     columnHeadings={LanguageTableHeadings}
+                    rowSort={langRowSort}
                     data={langTableData}
                     selectedRegions={language}
                     domref={tableRef.language}
+                    onRowSort={onLangRowSort}
                     onClick={eventHandler}
                   />
                 </Box>
@@ -1400,7 +1573,9 @@ export default class ModuleManager extends React.Component {
                     selectedRegions={repository}
                     columnHeadings={RepositoryTableHeadings}
                     columnWidths={repoColumnWidths}
+                    rowSort={repoRowSort}
                     domref={tableRef.repository}
+                    onRowSort={onRepoRowSort}
                     onClick={eventHandler}
                     onColumnWidthChanged={onRepoColumnWidthChanged}
                     onEditableCellChanged={onCellEdited}
@@ -1482,15 +1657,21 @@ ModuleManager.saved = {
 
 function clickedCell(e: React.MouseEvent) {
   const cell = ofClass(['bp4-table-cell'], e.target);
-  let row = -1;
-  let col = -1;
+  let datarow = -1;
+  let datacol = -1;
+  let tablerow = -1;
+  let tablecol = -1;
   if (cell) {
-    const rowm = cell.element.className.match(/data-row-(\d+)\b/);
-    row = rowm ? Number(rowm[1]) : -1;
-    const colm = cell.element.className.match(/data-column-(\d+)\b/);
-    col = colm ? Number(colm[1]) : -1;
+    const rowd = cell.element.className.match(/data-row-(\d+)\b/);
+    datarow = rowd ? Number(rowd[1]) : -1;
+    const cold = cell.element.className.match(/data-col-(\d+)\b/);
+    datacol = cold ? Number(cold[1]) : -1;
+    const rowt = cell.element.className.match(/bp4-table-cell-row-(\d+)\b/);
+    tablerow = rowt ? Number(rowt[1]) : -1;
+    const colt = cell.element.className.match(/bp4-table-cell-col-(\d+)\b/);
+    tablecol = colt ? Number(colt[1]) : -1;
   }
-  return [row, col];
+  return [datarow, tablerow, datacol, tablecol];
 }
 
 function repositoryToRow(repo: Repository): TRepositoryTableRow {

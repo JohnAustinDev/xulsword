@@ -21,7 +21,7 @@ const G = {} as typeof GPublic;
 // These global functions and object methods are asynchronous and return promises.
 const asyncFuncs = [
   'getSystemFonts',
-  'CommandsPublic.installXulswordModules',
+  'Commands.installXulswordModules',
   'Downloader.crossWireMasterRepoList',
   'Downloader.repositoryListing',
   'Module.download',

@@ -1,14 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable prefer-rest-params */
-import { BrowserWindow, dialog, OpenDialogSyncOptions, shell } from 'electron';
+import { dialog, OpenDialogSyncOptions } from 'electron';
 import log from 'electron-log';
 import i18n from 'i18next';
-import Subscription from '../subscription';
 import { clone, JSON_stringify } from '../common';
 import { verseKey, getTab, getTabs } from './minit';
 import Prefs from './components/prefs';
 import LocalFile from './components/localFile';
-import { installList } from './installer';
+import { modalInstall } from './installer';
 import Window, { getBrowserWindows } from './window';
 
 import type {
@@ -38,8 +37,7 @@ const Commands: GType['Commands'] = {
   // directory. If the directory ends with '/*' then all modules in that
   // directory will be installed. A dialog will be shown if no paths argument
   // is provided, or an existing directory path is provided.
-  async installXulswordModules(paths, toSharedDir) {
-    const progwin = getBrowserWindows({ type: 'xulsword' })[0];
+  async installXulswordModules(paths) {
     const extensions = ['zip', 'xsm', 'xsb'];
     const options: OpenDialogSyncOptions = {
       title: i18n.t('menu.addNewModule.label'),
@@ -55,32 +53,10 @@ const Commands: GType['Commands'] = {
     function filter(fileArray: string[]): string[] {
       return fileArray.filter((f) => extRE.test(f));
     }
-    async function modalInstall(
-      zippaths: string[],
-      progressWin?: BrowserWindow
-    ) {
-      Window.modal('transparent', 'all');
-      Window.modal('installing', progressWin);
-      const newmods = await installList(zippaths, toSharedDir, progressWin);
-      if (newmods.errors.length) {
-        shell.beep();
-        log.error(
-          `Module installation problems follow:\n${newmods.errors.join('\n')}`
-        );
-      } else {
-        log.info('ALL FILES WERE SUCCESSFULLY INSTALLED!');
-      }
-      Subscription.publish('resetMain');
-      Window.reset('all', 'all');
-      Subscription.publish('modulesInstalled', newmods);
-      progwin.webContents.send('newmods', newmods);
-      Window.modal('off', 'all');
-      return newmods;
-    }
     if (paths) {
       // Install array of file paths
       if (Array.isArray(paths)) {
-        return modalInstall(filter(paths), progwin);
+        return modalInstall(filter(paths));
       }
       // Install all modules in a directory
       if (paths.endsWith('/*')) {
@@ -89,20 +65,21 @@ const Commands: GType['Commands'] = {
         if (file.isDirectory()) {
           list.push(...filter(file.directoryEntries));
         }
-        return modalInstall(list, progwin);
+        return modalInstall(list);
       }
       const file = new LocalFile(paths);
       // ZIP file to install
       if (!file.isDirectory()) {
-        return modalInstall(filter([file.path]), progwin);
+        return modalInstall(filter([file.path]));
       }
       // Choose from existing directory.
       options.defaultPath = paths;
     }
+    const progwin = getBrowserWindows({ type: 'xulsword' })[0];
     return dialog
       .showOpenDialog(progwin, options)
       .then((obj) => {
-        return modalInstall(obj.filePaths, progwin);
+        return modalInstall(obj.filePaths);
       })
       .catch((err) => {
         throw Error(err);

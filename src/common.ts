@@ -15,6 +15,7 @@ import type {
   SwordConfLocalized,
   SwordConfType,
   TabType,
+  RowSelection,
 } from './type';
 import type LocalFile from './main/components/localFile';
 
@@ -655,5 +656,23 @@ export function selectionToRows(regions: Region[]): number[] {
       }
     }
   });
-  return Array.from(sels).sort((a, b) => (a < b ? 1 : a > b ? -1 : 0));
+  return Array.from(sels).sort((a, b) => (a > b ? 1 : a < b ? -1 : 0));
+}
+
+export function rowsToSelection(rows: number[]): RowSelection {
+  const unique = new Set(rows);
+  const sorted = Array.from(unique).sort((a: number, b: number) =>
+    a > b ? 1 : a < b ? -1 : 0
+  );
+  const selection: RowSelection = [];
+  for (let i = 0; i < sorted.length; i += 1) {
+    const s = sorted[i];
+    let e = sorted[i];
+    while (sorted[i + 1] === e + 1) {
+      i += 1;
+      e = sorted[i];
+    }
+    selection.push({ rows: [s, e] });
+  }
+  return selection;
 }

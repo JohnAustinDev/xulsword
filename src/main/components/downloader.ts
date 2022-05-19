@@ -126,7 +126,10 @@ export async function connect<Retval>(
         connections[domain].push(c);
         log.debug(`ftp connect on-ready-free ${domain}.`);
         runFunc(c);
-      } else if (connections[domain].length < C.FTPMaxConnectionsPerDomain) {
+      } else if (
+        connections[domain].length < C.FTPMaxConnectionsPerDomain &&
+        Object.values(connections).flat().length < C.FTPMaxConnections
+      ) {
         c = new FTP();
         connections[domain].push(c);
         c.on('error', (er: Error) => {
