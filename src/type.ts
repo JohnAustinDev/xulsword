@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-
 import type { BrowserWindow } from 'electron';
 import type ElectronLog from 'electron-log';
 import React from 'react';
@@ -354,9 +353,17 @@ export type ModTypes =
   | 'Lexicons / Dictionaries'
   | 'Generic Books';
 
+export type XSModTypes = 'XSM' | 'XSM_audio';
+
 export type SwordConfLocalized = {
   [locale: string]: string;
 };
+
+export type SwordConfAudioChapters = {
+  bk: string;
+  ch1: number;
+  ch2: number;
+}[];
 
 export type SwordConfType = {
   DataPath: string;
@@ -407,10 +414,20 @@ export type SwordConfType = {
   GlobalOptionFilter?: string[];
   History?: [string, SwordConfLocalized][];
 
+  // Non-standard XSM (xulsword module) entries
+  NameXSM?: string;
+  SwordModules?: string[];
+  SwordVersions?: string[];
+
+  // Non-standard XSM audio module entries. These modules also have
+  // ModDrv as 'audio' and DataPath as a URL value.
+  AudioChapters?: SwordConfAudioChapters;
+
+  // Extra helper additions
   module: string;
   errors: string[];
   sourceRepository: Download;
-  moduleType: ModTypes;
+  moduleType: ModTypes | XSModTypes;
   filename: string;
 };
 
@@ -439,8 +456,6 @@ export type TabType = {
 };
 
 export type RowSelection = { rows: [number, number] }[];
-
-export type RowSort = { index: number; direction: 'ascending' | 'descending' };
 
 export type NewModulesType = {
   modules: SwordConfType[];
@@ -473,6 +488,7 @@ export type Repository = Download & {
   disabled?: boolean;
   custom?: boolean;
   builtin?: boolean;
+  url?: string;
 };
 
 export type RepositoryListing = SwordConfType[] | string | null;
@@ -761,6 +777,10 @@ export const GPublic = {
   },
   Module: {
     download: func as unknown as (
+      module: string,
+      repository: Repository
+    ) => Promise<number | string>,
+    downloadXSM: func as unknown as (
       module: string,
       repository: Repository
     ) => Promise<number | string>,

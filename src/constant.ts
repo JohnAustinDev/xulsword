@@ -360,6 +360,7 @@ const C = {
       'UnlockInfo',
     ],
     repeatable: ['Obsoletes', 'Feature', 'GlobalOptionFilter'],
+    delimited: { SwordModules: /;/, SwordVersions: /;/ },
     continuation: [
       'About',
       'Copyright',

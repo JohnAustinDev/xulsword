@@ -13,6 +13,9 @@
   overflow-y: auto;
   width: max-content;
 }
+.table .bp4-table-container:focus {
+  outline: none;
+}
 .table:not(.width-resizable) .bp4-table-container {
   width: 100%;
 }

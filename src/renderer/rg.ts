@@ -25,6 +25,7 @@ const asyncFuncs = [
   'Downloader.crossWireMasterRepoList',
   'Downloader.repositoryListing',
   'Module.download',
+  'Module.downloadXSM',
   'Module.saveDownloads',
 ];
 

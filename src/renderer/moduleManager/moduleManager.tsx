@@ -1,34 +1,24 @@
-/* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable react/jsx-props-no-spreading */
-/* eslint-disable no-nested-ternary */
-/* eslint-disable class-methods-use-this */
-/* eslint-disable react/sort-comp */
-/* eslint-disable import/order */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react/static-property-placement */
 /* eslint-disable jsx-a11y/control-has-associated-label */
-import React, { SyntheticEvent } from 'react';
+import React from 'react';
 import i18n from 'i18next';
 import {
   Button,
-  Intent,
   IToastProps,
   Position,
   ProgressBar,
   Toaster,
 } from '@blueprintjs/core';
 import {
-  clone,
   diff,
   downloadKey,
   drop,
   isRepoLocal,
   modrepKey,
-  moduleInfoHTML,
-  ofClass,
   selectionToRows,
   sanitizeHTML,
-  rowsToSelection,
 } from '../../common';
 import C from '../../constant';
 import G from '../rg';
@@ -42,15 +32,21 @@ import {
 } from '../libxul/xul';
 import { Hbox, Vbox, Box } from '../libxul/boxes';
 import Groupbox from '../libxul/groupbox';
-import Table from '../libxul/table';
+import Table, {
+  TonCellClick,
+  TonColumnHide,
+  TonColumnsReordered,
+  TonColumnWidthChanged,
+  TonEditableCellChanged,
+  TonRowsReordered,
+  TsortRowsByColumn,
+} from '../libxul/table';
 import Spacer from '../libxul/spacer';
 import DragSizer, { DragSizerVal } from '../libxul/dragsizer';
+import * as H from './moduleManagerH';
 import './moduleManager.css';
 
 // TODO!: showModuleInfo CSS
-// TODO!: Replace DOM conversion to ref
-// TODO!: Improve state names/paths
-// TODO!: Split code into two files.
 // TODO!: Add XSM and audio support
 
 import type {
@@ -59,136 +55,31 @@ import type {
   Repository,
   RepositoryListing,
   RowSelection,
-  RowSort,
-  SwordConfType,
 } from '../../type';
-import type { TCellInfo } from '../libxul/table';
-import { Utils } from '@blueprintjs/table';
-
-const Tables = {
-  // eslint-disable-next-line prettier/prettier
-  repository: ['renderRepoTable', 'repoTableData', 'repoColumnWidths', 'repoRowSort'],
-  language: ['renderLangTable', 'langTableData', null, 'langRowSort'],
-  module: ['renderModTable', 'modTableData', 'modColumnWidths', 'modRowSort'],
-} as const;
-
-type TLanguageTableRow = [TCellInfo, string];
-
-const LanguageTableHeadings = [''];
-
-type TModuleTableRow = [
-  TModCellInfo,
-  ModTypes | 'XSM' | 'audio',
-  string,
-  string,
-  string,
-  string,
-  string,
-  string,
-  string,
-  string,
-  string,
-  string,
-  string,
-  () => typeof ON | typeof OFF | '',
-  typeof ON | typeof OFF
-];
-
-const ModuleTableHeadings = [
-  'Type',
-  'About',
-  'Code',
-  'Repository',
-  'Version',
-  'Size',
-  'Features',
-  'Versification',
-  'Scope',
-  'Copyright',
-  'Distribution License',
-  'Source Type',
-  'Shared',
-  'Installed',
-];
-
-type TRepositoryTableRow = [
-  TRepCellInfo,
-  string,
-  string,
-  string,
-  typeof ON | typeof OFF | typeof ALWAYS_ON
-];
-
-const RepositoryTableHeadings = ['', '', '', ''];
-
-type TRepCellInfo = TCellInfo & {
-  repo: Repository;
-};
-
-type TModCellInfo = TCellInfo & {
-  shared: boolean;
-  repo: Repository;
-  conf: SwordConfType;
-};
-
-const ON = '☑';
-const OFF = '☐';
-const ALWAYS_ON = '￭';
-const LanCol = {
-  iCode: 1,
-} as const;
-const ModCol = {
-  iType: 1,
-  iAbout: 2,
-  iModule: 3,
-  iRepoName: 4,
-  iVersion: 5,
-  iSize: 6,
-  iFeatures: 7,
-  iVersification: 8,
-  iScope: 9,
-  iCopyright: 10,
-  iLicense: 11,
-  iSourceType: 12,
-  iShared: 13,
-  iInstalled: 14,
-  iAlwaysVisible: [1, 2, 13, 14] as number[],
-} as const;
-const RepCol = {
-  iName: 1,
-  iDomain: 2,
-  iPath: 3,
-  iState: 4,
-} as const;
-
-const builtinRepos: Repository[] = [
-  {
-    name: 'Shared',
-    domain: 'file://',
-    path: G.Dirs.path.xsModsCommon,
-    file: '',
-    builtin: true,
-    disabled: false,
-    custom: false,
-  },
-  {
-    name: i18n.t('programTitle'),
-    domain: 'file://',
-    path: G.Dirs.path.xsModsUser,
-    file: '',
-    builtin: true,
-    disabled: false,
-    custom: false,
-  },
-];
+import {
+  ALWAYS_ON,
+  builtinRepos,
+  classes,
+  editable,
+  intent,
+  LanCol,
+  LanguageTableHeadings,
+  loading,
+  ModCol,
+  ModuleTableHeadings,
+  OFF,
+  ON,
+  RepCol,
+  RepositoryTableHeadings,
+  Saved,
+  Tables,
+  TLanguageTableRow,
+  TModuleTableRow,
+  tooltip,
+  TRepositoryTableRow,
+} from './moduleManagerH';
 
 G.Module.clearDownload();
-const Downloads: {
-  [modrepoKey: string]: {
-    nfiles: Promise<number | null>;
-    failed: boolean;
-  };
-} = {};
 
 const defaultProps = {
   ...xulDefaultProps,
@@ -203,36 +94,49 @@ export type ManagerProps = XulProps;
 // The following initial state values do not come from Prefs. Neither are
 // these state keys written to Prefs.
 const notStatePref = {
-  language: [] as RowSelection,
-  langTableData: [] as TLanguageTableRow[],
-  renderLangTable: 0,
-
-  module: [] as RowSelection,
-  modTableData: [] as TModuleTableRow[],
-  renderModTable: 0,
-  showModuleInfo: '',
-
-  repository: [] as RowSelection,
-  repoTableData: [] as TRepositoryTableRow[],
-  renderRepoTable: 0,
   progress: null as number[] | null,
+  showModuleInfo: '',
+  tables: {
+    language: {
+      data: [] as TLanguageTableRow[],
+      render: 0,
+    },
+
+    module: {
+      data: [] as TModuleTableRow[],
+      render: 0,
+    },
+
+    repository: {
+      data: [] as TRepositoryTableRow[],
+      render: 0,
+    },
+  },
 };
 
 export interface ManagerStatePref {
-  languageTableOpen: boolean;
-  languageTableWidth: number;
-  langRowSort: RowSort;
-
-  modColumnOrder: number[];
-  modColumnWidths: number[];
-  modRowSort: RowSort;
-
-  repoColumnWidths: number[];
+  language: {
+    selection: RowSelection;
+    rowSort: TsortRowsByColumn;
+    open: boolean;
+    width: number;
+  };
+  module: {
+    selection: RowSelection;
+    rowSort: TsortRowsByColumn;
+    columnOrder: number[];
+    columnWidths: number[];
+  };
+  repository: {
+    selection: RowSelection;
+    rowSort: TsortRowsByColumn;
+    open: boolean;
+    columnWidths: number[];
+    height: number;
+  };
+  xulswordRepos: Repository[];
   customRepos: Repository[];
   disabledRepos: string[];
-  repoTableOpen: boolean;
-  repoTableHeight: number;
-  repoRowSort: RowSort;
 }
 
 export type ManagerState = ManagerStatePref & typeof notStatePref;
@@ -242,36 +146,47 @@ export default class ModuleManager extends React.Component {
 
   static propTypes: typeof propTypes;
 
-  // Save table data between resets, but don't save it to prefs.
-  static saved: {
-    repoTableData: TRepositoryTableRow[];
-    repositoryListings: RepositoryListing[];
-    moduleData: { [modrepKey: string]: TModuleTableRow };
-    moduleLangData: { [langcode: string]: TModuleTableRow[] };
-    modTableData: TModuleTableRow[];
-    langTableData: TLanguageTableRow[];
-    scrollTop: { repository: number; language: number; module: number };
-  };
-
   destroy: (() => void)[];
 
   toaster: Toaster | undefined;
 
   tableRef: {
-    repository: React.RefObject<HTMLDivElement>;
-    module: React.RefObject<HTMLDivElement>;
-    language: React.RefObject<HTMLDivElement>;
+    [table in typeof Tables[number]]: React.RefObject<HTMLDivElement>;
   };
 
-  onRepoColumnWidthChanged;
+  refHandlers = {
+    toaster: (ref: Toaster) => {
+      this.toaster = ref;
+    },
+  };
 
-  onModColumnWidthChanged;
+  onRowsReordered: { [table: string]: TonRowsReordered };
 
-  onLangRowSort;
+  onColumnWidthChanged: { [table: string]: TonColumnWidthChanged };
 
-  onModRowSort;
+  onColumnHide: TonColumnHide;
 
-  onRepoRowSort;
+  onColumnsReordered: TonColumnsReordered;
+
+  onRepoCellClick: TonCellClick;
+
+  onLangCellClick: TonCellClick;
+
+  onModCellClick: TonCellClick;
+
+  onCellEdited: TonEditableCellChanged;
+
+  selectionToDataRows;
+
+  rowSelect;
+
+  switchRepo;
+
+  download;
+
+  eventHandler;
+
+  setTableState;
 
   sState: (
     s: Partial<ManagerState> | ((prevState: ManagerState) => void)
@@ -284,60 +199,61 @@ export default class ModuleManager extends React.Component {
     const s: ManagerState = {
       ...notStatePref,
       ...(getStatePref(props.id) as ManagerStatePref),
-      langTableData: ModuleManager.saved.langTableData,
-      modTableData: ModuleManager.saved.modTableData,
-      repoTableData: ModuleManager.saved.repoTableData,
     };
+    s.tables.language.data = Saved.language.data;
+    s.tables.module.data = Saved.module.data;
+    s.tables.repository.data = Saved.repository.data;
     this.state = s;
 
-    this.tableRef = {
-      repository: React.createRef(),
-      module: React.createRef(),
-      language: React.createRef(),
-    };
+    this.tableRef = {} as typeof this.tableRef;
+    Tables.forEach((t: typeof Tables[number]) => {
+      this.tableRef[t] = React.createRef();
+    });
 
     this.destroy = [];
 
-    this.sizeTableToParent = this.sizeTableToParent.bind(this);
-    this.onColumnToggle = this.onColumnToggle.bind(this);
-    this.onColumnsReordered = this.onColumnsReordered.bind(this);
-    this.onCellEdited = this.onCellEdited.bind(this);
-    this.onLangRowSort = this.onRowSort.bind(this, 'language');
-    this.onModRowSort = this.onRowSort.bind(this, 'module');
-    this.onRepoRowSort = this.onRowSort.bind(this, 'repository');
-    this.sortedTableMap = this.sortedTableMap.bind(this);
-    this.selectionToDataRows = this.selectionToDataRows.bind(this);
-    this.rowSelect = this.rowSelect.bind(this);
-    this.switchRepo = this.switchRepo.bind(this);
-    this.eventHandler = this.eventHandler.bind(this);
-    this.onRepoColumnWidthChanged = this.onColumnWidthChanged.bind(
-      this,
-      'repository'
-    );
-    this.onModColumnWidthChanged = this.onColumnWidthChanged.bind(
-      this,
-      'module'
-    );
     this.loadRepositoryTable = this.loadRepositoryTable.bind(this);
     this.updateRepositoryLists = this.updateRepositoryLists.bind(this);
     this.loadModuleTable = this.loadModuleTable.bind(this);
     this.moduleTableData = this.moduleTableData.bind(this);
-    this.setTableState = this.setTableState.bind(this);
+    this.onColumnHide = H.onColumnHide.bind(this);
+    this.onColumnsReordered = H.onColumnsReordered.bind(this);
+    this.selectionToDataRows = H.selectionToDataRows.bind(this);
+    this.rowSelect = H.rowSelect.bind(this);
+    this.onRepoCellClick = H.onRepoCellClick.bind(this);
+    this.onLangCellClick = H.onLangCellClick.bind(this);
+    this.onModCellClick = H.onModCellClick.bind(this);
+    this.onCellEdited = H.onCellEdited.bind(this);
+    this.switchRepo = H.switchRepo.bind(this);
+    this.download = H.download.bind(this);
+    this.eventHandler = H.eventHandler.bind(this);
+    this.setTableState = H.setTableState.bind(this);
+    this.onRowsReordered = {
+      language: H.onRowsReordered.bind(this, 'language'),
+      module: H.onRowsReordered.bind(this, 'module'),
+      repository: H.onRowsReordered.bind(this, 'repository'),
+    };
+    this.onColumnWidthChanged = {
+      language: H.columnWidthChanged.bind(this, 'language'),
+      module: H.columnWidthChanged.bind(this, 'module'),
+      repository: H.columnWidthChanged.bind(this, 'repository'),
+    };
+    this.sizeTableToParent = this.sizeTableToParent.bind(this);
     this.sState = this.setState.bind(this);
   }
 
   componentDidMount() {
     const handleListing = (listing: RepositoryListing[]) => {
       this.updateRepositoryLists(listing);
-      let language = this.loadLanguageTable();
-      const { languageTableOpen } = this.state as ManagerState;
-      if (!languageTableOpen) language = [];
-      return this.loadModuleTable(language);
+      let langselection = this.loadLanguageTable();
+      const { language } = this.state as ManagerState;
+      if (!language.open) langselection = [];
+      return this.loadModuleTable(langselection);
     };
     // Download data for the repository and module tables
-    if (!ModuleManager.saved.repoTableData.length) {
-      ModuleManager.saved.repoTableData = [];
-      ModuleManager.saved.repositoryListings = [];
+    if (!Saved.repository.data.length) {
+      Saved.repository.data = [];
+      Saved.repositoryListings = [];
       G.Downloader.crossWireMasterRepoList()
         .then((repos) => {
           if (typeof repos === 'string') {
@@ -375,8 +291,8 @@ export default class ModuleManager extends React.Component {
           this.addToast({
             message: `Unable to download Master Repository List`,
           });
-          ModuleManager.saved.repoTableData = [];
-          ModuleManager.saved.repositoryListings = [];
+          Saved.repository.data = [];
+          Saved.repositoryListings = [];
           let listing: RepositoryListing[] = [];
           try {
             listing = await G.Downloader.repositoryListing(
@@ -393,11 +309,12 @@ export default class ModuleManager extends React.Component {
     this.destroy.push(
       window.ipc.renderer.on('progress', (prog: number, id?: string) => {
         const state = this.state as ManagerState;
-        const { repoTableData, modTableData, progress } = state;
-        const repoIndex = repoTableData.findIndex(
+        const { progress } = state;
+        const { repository, module } = state.tables;
+        const repoIndex = repository.data.findIndex(
           (r) => downloadKey(r[0].repo) === id
         );
-        const repdrow = repoTableData[repoIndex];
+        const repdrow = repository.data[repoIndex];
         if (
           id &&
           repoIndex !== -1 &&
@@ -411,17 +328,16 @@ export default class ModuleManager extends React.Component {
             const [p, t] = progress;
             newprog = p + 1 === t ? null : [p + 1, t];
           }
-          this.setTableState('repository', {
-            repoTableData,
+          this.setTableState('repository', null, repository.data, false, {
             progress: newprog,
           });
         }
-        const modIndex = modTableData.findIndex((r) => {
+        const modIndex = module.data.findIndex((r) => {
           const { repo } = r[0];
-          const module = r[ModCol.iModule];
-          return [downloadKey(repo), module].join('.') === id;
+          const mod = r[ModCol.iModule];
+          return [downloadKey(repo), mod].join('.') === id;
         });
-        const moddrow = modTableData[modIndex];
+        const moddrow = module.data[modIndex];
         if (id && modIndex !== -1 && moddrow && prog === -1) {
           moddrow[0].loading = false;
           this.setTableState('module');
@@ -452,11 +368,10 @@ export default class ModuleManager extends React.Component {
     this.destroy = [];
   }
 
-  sizeTableToParent(table: keyof typeof Tables) {
+  sizeTableToParent(table: typeof Tables[number]) {
     const state = this.state as ManagerState;
     if (table === 'language') return;
-    const columnWidthsProp = Tables[table][2];
-    const columnWidths = state[columnWidthsProp];
+    let { columnWidths } = state[table];
     const { tableRef } = this;
     if (tableRef[table].current) {
       const atable = tableRef[table].current as HTMLDivElement | null;
@@ -464,191 +379,31 @@ export default class ModuleManager extends React.Component {
         const w = atable.clientWidth;
         const t = columnWidths.reduce((p, c) => p + (c === -1 ? 0 : c), 0);
         if (Math.abs(w - t) > 2) {
-          this.setTableState(
-            table,
-            {
-              [columnWidthsProp]: columnWidths.map((cw) => {
-                return cw === -1 ? -1 : w * (cw / t);
-              }),
-            },
-            true
-          );
+          columnWidths = columnWidths.map((cw) => {
+            return cw === -1 ? -1 : w * (cw / t);
+          });
+          this.setTableState(table, { columnWidths }, null, true);
         }
       }
     }
   }
 
-  onColumnToggle(toggleColIndex: number, menuColIndex: number) {
-    this.sState((prevState) => {
-      let { modColumnWidths, modColumnOrder } = prevState;
-      modColumnWidths = modColumnWidths.slice();
-      modColumnOrder = modColumnOrder.slice();
-      if (modColumnWidths[toggleColIndex] === -1) {
-        modColumnWidths[toggleColIndex] = 150;
-        const iofmc = modColumnOrder.indexOf(menuColIndex);
-        modColumnOrder.splice(iofmc + 1, 0, toggleColIndex);
-      } else {
-        modColumnWidths[toggleColIndex] = -1;
-        const indexOftc = modColumnOrder.indexOf(toggleColIndex);
-        modColumnOrder.splice(indexOftc, 1);
-      }
-      return { modColumnWidths, modColumnOrder };
-    });
-  }
-
-  onColumnWidthChanged(
-    table: keyof typeof Tables,
-    visibleIndex: number,
-    size: number
-  ): void {
-    const state = this.state as ManagerState;
-    if (table === 'language') return;
-    const prop = Tables[table][2];
-    const visible = state[prop]
-      .map((v, x) => (v === -1 ? null : x))
-      .filter((v) => v !== null) as number[];
-    const i0 = visible[visibleIndex];
-    const i1 = visible[visibleIndex + 1];
-    const newColumnWidths = state[prop].slice();
-    const delta = size - newColumnWidths[i0];
-    newColumnWidths[i0] += delta;
-    newColumnWidths[i1] -= delta;
-    this.setTableState(table, {
-      [prop]: newColumnWidths,
-    });
-  }
-
-  onColumnsReordered(
-    oldVisibleIndex: number,
-    newVisibleIndex: number,
-    length: number
-  ) {
-    const { modColumnOrder: mco } = this.state as ManagerState;
-    if (oldVisibleIndex === newVisibleIndex) return;
-    const modColumnOrder = Utils.reorderArray(
-      mco,
-      oldVisibleIndex,
-      newVisibleIndex,
-      length
-    );
-    this.sState({ modColumnOrder });
-  }
-
-  onCellEdited(row: number, col: number, value: string) {
-    const state = clone(this.state) as ManagerState;
-    const { repoTableData, customRepos } = state;
-    const drow = repoTableData[row];
-    if (drow) {
-      const crindex = customRepos.findIndex(
-        (r) => downloadKey(r) === downloadKey(drow[0].repo)
-      );
-      if (crindex !== -1) {
-        customRepos.splice(crindex, 1);
-      }
-      if (col + 1 === RepCol.iDomain) drow[0].repo.domain = value;
-      else if (col + 1 === RepCol.iName) drow[0].repo.name = value;
-      else if (col + 1 === RepCol.iPath) drow[0].repo.path = value;
-      drow[col + 1] = value;
-      customRepos.push(drow[0].repo);
-      this.setTableState('repository', { repoTableData, customRepos });
-      if (
-        (col === RepCol.iDomain || col === RepCol.iPath) &&
-        drow[RepCol.iState] === OFF
-      ) {
-        setTimeout(() => this.switchRepo([row], true), 100);
-      }
-    }
-  }
-
-  onRowSort(
-    table: keyof typeof Tables,
-    index: number,
-    direction: 'ascending' | 'descending'
-  ) {
-    let rowsort = {};
-    const xRowSort = Tables[table][3];
-    if (xRowSort) {
-      rowsort = { [xRowSort]: { index, direction } };
-    }
-    this.setTableState(table, { ...rowsort, [table]: [] }, true);
-  }
-
-  sortedTableMap(
-    table: keyof typeof Tables,
-    map: number[] // [datarow, tablerow, datacol, tablecol]
-  ): number[] {
-    const { tableRef } = this;
-    const ret = map.map((v) => (Number.isNaN(v) ? -1 : v));
-    const drow = 'data-row-';
-    const trow = 'bp4-table-cell-row-';
-    const dcol = 'data-col-';
-    const tcol = 'bp4-table-cell-col-';
-    const convert = [
-      [0, 1, drow, trow],
-      [1, 0, trow, drow],
-      [2, 3, dcol, tcol],
-      [3, 2, tcol, dcol],
-    ] as [number, number, string, string][];
-    const t = tableRef[table].current;
-    if (t) {
-      convert.forEach((c) => {
-        if (ret[c[0]] !== -1 && ret[c[1]] === -1) {
-          const r = t.getElementsByClassName(`${c[2]}${ret[c[0]]}`)[0];
-          if (r) {
-            const re = new RegExp(`\\b${c[3]}(\\d+)\\b`);
-            const m = r.className.match(re);
-            ret[c[1]] = m ? Number(m[1]) : -1;
-          }
-        }
-      });
-    }
-    return ret;
-  }
-
-  selectionToDataRows(
-    table: keyof typeof Tables,
-    regions: RowSelection
-  ): number[] {
-    const tablerows = selectionToRows(regions);
-    return tablerows
-      .map((tr) => this.sortedTableMap(table, [-1, tr, -1, -1])[0])
-      .sort((a, b) => (a > b ? 1 : a < b ? -1 : 0));
-  }
-
-  rowSelect(e: React.MouseEvent, table: keyof typeof Tables, row: number) {
-    const state = this.state as ManagerState;
-    const tableSel = table;
-    const selection = state[tableSel];
-    const rows = selectionToRows(selection);
-    const isSelected = rows.includes(row);
-    let newSelection;
-    if (selection.length && (e.ctrlKey || e.shiftKey)) {
-      const prev = rows.filter((r) => r < row).pop();
-      const start = prev === undefined || e.ctrlKey ? row : prev;
-      for (let x = start; x <= row; x += 1) {
-        if (!isSelected) rows.push(x);
-        else if (rows.includes(x)) {
-          rows.splice(rows.indexOf(x), 1);
-        }
-      }
-      newSelection = rowsToSelection(rows);
-    } else {
-      newSelection = rowsToSelection(isSelected ? [] : [row]);
-    }
-    this.setTableState(table, { [tableSel]: newSelection }, true);
-    return newSelection;
-  }
-
-  // Load the repository table with built-in repositories, then user-custom
-  // repositories, and then others passed in as repos[]. It returns the array
-  // of repositories that was used to create the table.
+  // Load the repository table with all built-in repositories, xulsword
+  // repositories, user-custom repositories, and those passed of repos
+  // (which normally come from the CrossWire Master Repository List).
+  // It returns the array of repositories that was used to create the table.
   loadRepositoryTable(repos?: Repository[]): Repository[] {
-    const { customRepos, disabledRepos } = this.state as ManagerState;
+    const state = this.state as ManagerState;
+    const { xulswordRepos, customRepos, disabledRepos } = state;
     const repoTableData: TRepositoryTableRow[] = [];
     customRepos.forEach((cr) => {
       cr.custom = true;
     });
-    const allrepos = builtinRepos.concat(customRepos, repos || []);
+    const allrepos = builtinRepos.concat(
+      xulswordRepos,
+      customRepos,
+      repos || []
+    );
     allrepos.forEach((repo) => {
       let disabled = false;
       if (!repo.builtin) {
@@ -673,18 +428,19 @@ export default class ModuleManager extends React.Component {
         repo.disabled ? OFF : on,
       ]);
     });
-    this.setTableState('repository', { repoTableData });
+    this.setTableState('repository', null, repoTableData, false);
     return allrepos;
   }
 
   // Update raw module data and the repository table after receiving repositoryListing.
   // It returns updated rawModuleData.
   updateRepositoryLists(rawModuleData: RepositoryListing[]) {
-    const { repoTableData } = this.state as ManagerState;
-    const { repositoryListings } = ModuleManager.saved;
+    const state = this.state as ManagerState;
+    const { repository } = state.tables;
+    const { repositoryListings } = Saved;
     rawModuleData.forEach((listing, i) => {
       if (listing === null) return;
-      const drow = repoTableData[i];
+      const drow = repository.data[i];
       if (drow) {
         if (typeof listing === 'string') {
           this.addToast({ message: listing });
@@ -704,7 +460,7 @@ export default class ModuleManager extends React.Component {
         }
       }
     });
-    this.setTableState('repository', { repoTableData });
+    this.setTableState('repository', null, repository.data, false);
     return true;
   }
 
@@ -713,18 +469,19 @@ export default class ModuleManager extends React.Component {
   // selection.
   loadLanguageTable(): RowSelection {
     const state = this.state as ManagerState;
-    const { language, langTableData, repoTableData } = state;
-    const { repositoryListings } = ModuleManager.saved;
-    const selectedRowIndexes = this.selectionToDataRows('language', language);
-    const selectedcodes = langTableData
+    const { language: langtable, repository: repotable } = state.tables;
+    const { selection } = state.language;
+    const { repositoryListings } = Saved;
+    const selectedRowIndexes = this.selectionToDataRows('language', selection);
+    const selectedcodes = langtable.data
       .filter((_r, i) => selectedRowIndexes.includes(i))
       .map((r) => r[LanCol.iCode]);
     const langs: Set<string> = new Set();
     repositoryListings.forEach((listing, i) => {
       if (
         Array.isArray(listing) &&
-        repoTableData[i] &&
-        repoTableData[i][RepCol.iState] !== OFF
+        repotable.data[i] &&
+        repotable.data[i][RepCol.iState] !== OFF
       ) {
         listing.forEach((c) => {
           const l = c.Lang || 'en';
@@ -741,27 +498,30 @@ export default class ModuleManager extends React.Component {
         newlanguage.push({ rows: [i, i] });
       }
     });
-    this.setTableState('language', {
-      langTableData: newTableData,
-      language: newlanguage,
-    } as Partial<ManagerState>);
+    this.setTableState(
+      'language',
+      { selection: newlanguage },
+      newTableData,
+      false
+    );
     return newlanguage;
   }
 
   // Load the module table with modules sharing the language code,
   // or else with all modules if the code is null.
   loadModuleTable(languageSelection?: RowSelection) {
+    const state = this.state as ManagerState;
     // Insure there is one moduleData row object for each module in
     // each repository. The same object should be reused throughout
     // the lifetime of the window, so user interactions will be recorded.
-    const { repoTableData } = this.state as ManagerState;
-    ModuleManager.saved.moduleLangData = { allmodules: [] };
-    const { moduleData, moduleLangData, repositoryListings } =
-      ModuleManager.saved;
+    const { repository: repotable } = state.tables;
+    Saved.moduleLangData = { allmodules: [] };
+    const { moduleData, moduleLangData, repositoryListings } = Saved;
     const enabledExternRepoMods: { [modunique: string]: string } = {};
+    const enabledXulswordRepoMods: { [modunique: string]: string } = {};
     const localModules: { [modunique: string]: string } = {};
     repositoryListings.forEach((listing, i) => {
-      const drow = repoTableData[i];
+      const drow = repotable.data[i];
       if (drow && Array.isArray(listing)) {
         listing.forEach((c) => {
           const { repo } = drow[0];
@@ -770,8 +530,12 @@ export default class ModuleManager extends React.Component {
           const modunique = [c.module, c.Version].join('.');
           const repoIsLocal = isRepoLocal(c.sourceRepository);
           if (repoIsLocal) localModules[modunique] = repokey;
-          else if (drow[RepCol.iState] !== OFF)
+          else if (drow[RepCol.iState] !== OFF) {
             enabledExternRepoMods[modunique] = repokey;
+            if (c.NameXSM) {
+              enabledXulswordRepoMods[modunique] = repokey;
+            }
+          }
           if (!(modrepk in moduleData)) {
             const d = [] as unknown as TModuleTableRow;
             d[0] = {
@@ -817,9 +581,11 @@ export default class ModuleManager extends React.Component {
     // remote repositories are not included in moduleLangData. Rather the
     // their 'installed' and 'shared' boxes are applied to the corresponding
     // remote repository module. Also, modules in disabled repositories
-    // are not included.
+    // are not included. If a xulsword module repository is enabled, its
+    // modules will replace the listings of modules with the same name in
+    // regular repositories.
     repositoryListings.forEach((listing, i) => {
-      const drow = repoTableData[i];
+      const drow = repotable.data[i];
       if (drow && Array.isArray(listing) && drow[RepCol.iState] !== OFF) {
         listing.forEach((c) => {
           const { repo } = drow[0];
@@ -830,7 +596,13 @@ export default class ModuleManager extends React.Component {
             modrow[ModCol.iVersion],
           ].join('.');
           const repoIsLocal = isRepoLocal(repo);
-          if (repoIsLocal && modunique in enabledExternRepoMods) return;
+          if (
+            repoIsLocal &&
+            (modunique in enabledExternRepoMods ||
+              modunique in enabledXulswordRepoMods)
+          )
+            return;
+          if (modunique in enabledXulswordRepoMods && !c.NameXSM) return;
           if (!repoIsLocal && modunique in localModules) {
             modrow[ModCol.iInstalled] = ON;
             const modrepok = `${localModules[modunique]}.${c.module}`;
@@ -847,9 +619,8 @@ export default class ModuleManager extends React.Component {
     });
     this.setTableState(
       'module',
-      {
-        modTableData: this.moduleTableData(languageSelection),
-      },
+      null,
+      this.moduleTableData(languageSelection),
       true
     );
     return true;
@@ -858,15 +629,15 @@ export default class ModuleManager extends React.Component {
   // Return sorted and filtered (by language selection) module table data.
   moduleTableData(filter?: RowSelection): TModuleTableRow[] {
     const state = this.state as ManagerState;
-    const { langTableData } = state;
+    const { language: langtable } = state.tables;
     const rows = this.selectionToDataRows('language', filter || []);
     const codes: string[] = [];
     rows.forEach((r) => {
-      if (langTableData[r]) {
-        codes.push(langTableData[r][LanCol.iCode]);
+      if (langtable.data[r]) {
+        codes.push(langtable.data[r][LanCol.iCode]);
       }
     });
-    const { moduleLangData } = ModuleManager.saved;
+    const { moduleLangData } = Saved;
     // Select the appropriate moduleLangData lists.
     let tableData: TModuleTableRow[] = moduleLangData.allmodules;
     if (codes.length) {
@@ -888,473 +659,6 @@ export default class ModuleManager extends React.Component {
     });
   }
 
-  // Enable or disable a repository. If onOrOff is undefined it will be toggled.
-  // If onOrOff is true it will be enabled, otherwise disabled.
-  switchRepo(rows: number[], onOrOff?: boolean) {
-    const { disabledRepos: dr, repoTableData: repoTableDataWas } = this
-      .state as ManagerState;
-    const repoTableData = clone(repoTableDataWas);
-    const disabledRepos = dr.slice();
-    rows.forEach((r) => {
-      const drowWas = repoTableDataWas[r];
-      const drow = repoTableData[r];
-      const unswitchable = !drowWas || drowWas[0].repo.builtin;
-      if (drow && !unswitchable) {
-        const rowkey = downloadKey(drowWas[0].repo);
-        const disabledIndex = disabledRepos.findIndex((drs) => {
-          return drs === rowkey;
-        });
-        if (
-          onOrOff !== false &&
-          (onOrOff === true || drowWas[RepCol.iState] === OFF)
-        ) {
-          drow[RepCol.iState] = drow[0].repo.builtin ? ALWAYS_ON : ON;
-          drow[0].repo.disabled = false;
-          if (disabledIndex !== -1) disabledRepos.splice(disabledIndex, 1);
-          drow[0].loading = loading(RepCol.iState);
-        } else {
-          drow[RepCol.iState] = OFF;
-          drow[0].repo.disabled = true;
-          if (disabledIndex === -1) disabledRepos.push(rowkey);
-          if (drow[0].loading) {
-            G.Downloader.ftpCancel();
-            drow[0].loading = false;
-          }
-          drow[0].intent = intent(RepCol.iState, 'none');
-        }
-      }
-    });
-    this.setTableState(
-      'repository',
-      {
-        repoTableData,
-        disabledRepos,
-      },
-      true
-    );
-    const repos = repoTableData.map((r, i) =>
-      rows.includes(i) ? r[0].repo : null
-    );
-    G.Downloader.repositoryListing(repos)
-      .then((listing) => {
-        if (!listing) throw new Error(`Canceled`);
-        this.updateRepositoryLists(listing);
-        let language = this.loadLanguageTable();
-        const { languageTableOpen } = this.state as ManagerState;
-        if (!languageTableOpen) language = [];
-        return this.loadModuleTable(language);
-      })
-      .catch((er) => log.warn(er));
-  }
-
-  eventHandler(this: ModuleManager, ev: SyntheticEvent) {
-    switch (ev.type) {
-      case 'click': {
-        const e = ev as React.MouseEvent;
-        switch (e.currentTarget.id) {
-          case 'languageListClose': {
-            this.setTableState(
-              'module',
-              {
-                languageTableOpen: false,
-                modTableData: this.moduleTableData([]),
-              },
-              true
-            );
-            break;
-          }
-          case 'languageListOpen': {
-            // Cannot retain selection without making moduleTableData() an async
-            // function, because selectionToDataRows() needs a rendered table.
-            this.setTableState(
-              'module',
-              {
-                language: [],
-                languageTableOpen: true,
-                modTableData: this.moduleTableData([]),
-              },
-              true
-            );
-            break;
-          }
-          case 'moduleInfo': {
-            const div = document.getElementById('moduleInfo');
-            if (div) {
-              const { module, modTableData } = this.state as ManagerState;
-              const confs = this.selectionToDataRows('module', module)
-                .map((r) => {
-                  return (modTableData[r] && modTableData[r][0].conf) || null;
-                })
-                .filter(Boolean);
-              const s: Partial<ManagerState> = {
-                showModuleInfo: moduleInfoHTML(confs),
-              };
-              this.setState(s);
-            }
-            break;
-          }
-          case 'moduleInfoBack': {
-            this.setState({ showModuleInfo: '' });
-            break;
-          }
-          case 'cancel': {
-            G.Window.close();
-            break;
-          }
-          case 'ok': {
-            G.Window.moveToFront({ type: 'xulsword' });
-            const { repoTableData } = this.state as ManagerState;
-            const { moduleData } = ModuleManager.saved;
-            // Get a list of all currently installed modules (those found in any
-            // enabled local repository).
-            const installed: SwordConfType[] = [];
-            repoTableData.forEach((rtd, i) => {
-              if (isRepoLocal(rtd[0].repo)) {
-                const listing = ModuleManager.saved.repositoryListings[i];
-                if (Array.isArray(listing)) {
-                  listing.forEach((c) => installed.push(c));
-                }
-              }
-            });
-            // Remove modules
-            Object.values(moduleData).forEach((row) => {
-              if (row[ModCol.iInstalled] === OFF) {
-                const module = row[ModCol.iModule];
-                const { repo } = row[0];
-                const modrepok = modrepKey(module, repo);
-                const conf = installed.find((c) => c.module === module);
-                if (modrepok in Downloads) {
-                  if (!G.Module.clearDownload(module, repo)) {
-                    log.warn(`Failed to clear ${module} from downloads`);
-                    Downloads[modrepok].failed = true;
-                  }
-                } else if (conf) {
-                  if (!G.Module.remove(conf.module, conf.sourceRepository)) {
-                    log.warn(
-                      `Failed to remove ${module} from ${conf.sourceRepository.path}`
-                    );
-                  }
-                }
-              }
-            });
-            // Move modules (between the shared and xulsword builtins).
-            Object.values(moduleData).forEach((row) => {
-              const { shared } = row[0];
-              const module = row[ModCol.iModule];
-              const conf = installed.find((c) => c.module === module);
-              const toDir = builtinRepos[shared ? 0 : 1];
-              const fromKey = conf && downloadKey(conf.sourceRepository);
-              const toKey = downloadKey(toDir);
-              if (conf && fromKey !== toKey) {
-                if (!G.Module.move(module, conf.sourceRepository, toDir)) {
-                  log.warn(
-                    `Failed to move ${module} from ${fromKey} to ${toKey}`
-                  );
-                }
-              }
-            });
-            // Install succesfully downloaded modules
-            Object.keys(Downloads).forEach((k) => {
-              if (Downloads[k].failed) {
-                delete Downloads[k];
-              }
-            });
-            const downloadKeys = Object.keys(Downloads);
-            const promises = Object.values(Downloads).map((v) => v.nfiles);
-            return Promise.allSettled(promises)
-              .then((results) => {
-                const saves: {
-                  module: string;
-                  fromRepo: Repository;
-                  toRepo: Repository;
-                }[] = [];
-                results.forEach((result, i) => {
-                  if (result.status !== 'fulfilled') log.warn(result.reason);
-                  else if (result.value) {
-                    const modrepok = downloadKeys[i];
-                    const dot = modrepok ? modrepok.lastIndexOf('.') : -1;
-                    if (dot === -1) return;
-                    const module = modrepok.substring(dot + 1);
-                    const repokey = modrepok.substring(0, dot);
-                    const row = Object.values(moduleData).find((r) => {
-                      return (
-                        downloadKey(r[0].repo) === repokey &&
-                        r[ModCol.iModule] === module
-                      );
-                    });
-                    if (row && row[ModCol.iInstalled]) {
-                      saves.push({
-                        module: row[ModCol.iModule],
-                        fromRepo: row[0].repo,
-                        toRepo: builtinRepos[row[0].shared ? 0 : 1],
-                      });
-                    }
-                  }
-                });
-                G.Module.saveDownloads(saves);
-                return G.Window.close();
-              })
-              .catch((er) => log.warn(er));
-          }
-          case 'repoAdd': {
-            const state = this.state as ManagerState;
-            const { customRepos, repoTableData } = state as ManagerState;
-            const rawdata = ModuleManager.saved.repositoryListings;
-            const repo: Repository = {
-              name: '?',
-              domain: C.Downloader.localfile,
-              path: '?',
-              file: 'mods.d.tar.gz',
-              disabled: true,
-              custom: true,
-              builtin: false,
-            };
-            const row = repositoryToRow(repo);
-            row[0].classes = classes(
-              [RepCol.iState],
-              ['checkbox-column'],
-              ['custom-repo']
-            );
-            row[0].editable = editable();
-            repoTableData.unshift(row);
-            rawdata.unshift(null);
-            customRepos.push(repo);
-            this.setTableState('repository', {
-              customRepos,
-              repoTableData,
-            });
-            this.switchRepo([0], false);
-            break;
-          }
-          case 'repoDelete': {
-            const { customRepos, repoTableData, repository } = this
-              .state as ManagerState;
-            const newTableData = clone(repoTableData);
-            const newCustomRepos = clone(customRepos);
-            const rawdata = ModuleManager.saved.repositoryListings;
-            const rows =
-              (repository &&
-                this.selectionToDataRows('repository', repository)) ||
-              [];
-            rows.reverse().forEach((r) => {
-              const drow = repoTableData[r];
-              if (drow && drow[0].repo.custom) {
-                newTableData.splice(r, 1);
-                rawdata.splice(r, 1);
-                const crIndex = customRepos.findIndex(
-                  (ro) => downloadKey(ro) === downloadKey(drow[0].repo)
-                );
-                if (crIndex !== -1) {
-                  newCustomRepos.splice(crIndex, 1);
-                }
-              }
-            });
-            this.setTableState('repository', {
-              customRepos: newCustomRepos,
-              repoTableData: newTableData,
-            });
-            this.loadModuleTable(this.loadLanguageTable());
-            break;
-          }
-          case 'repoCancel': {
-            G.Downloader.ftpCancel();
-            const { repoTableData } = this.state as ManagerState;
-            repoTableData.forEach((r, i) => {
-              if (r[0].loading) {
-                if (r[RepCol.iState] !== OFF) this.switchRepo([i], false);
-                r[0].loading = false;
-                r[0].intent = intent(RepCol.iState, 'danger');
-                this.setTableState('repository', { progress: null });
-              }
-            });
-            break;
-          }
-          case 'moduleCancel': {
-            G.Downloader.ftpCancel();
-            ModuleManager.saved.moduleLangData.allmodules?.forEach((r) => {
-              if (r[0].loading) {
-                r[0].loading = false;
-                r[0].intent = intent(ModCol.iInstalled, 'danger');
-                r[ModCol.iInstalled] = OFF;
-                const modrepk = modrepKey(r[ModCol.iModule], r[0].repo);
-                if (modrepk in Downloads) Downloads[modrepk].failed = true;
-                this.setTableState('module', null, true);
-              }
-            });
-            break;
-          }
-          case 'repository': {
-            const { repository, repoTableData } = this.state as ManagerState;
-            const [row, trow, col] = clickedCell(e);
-            if (row !== -1) {
-              const builtin =
-                repoTableData[row] && repoTableData[row][0].repo.builtin;
-              if (!builtin && col === RepCol.iState) {
-                const onOrOff = repoTableData[row][RepCol.iState] === OFF;
-                const selrows = selectionToRows(repository);
-                const toggleTableRows = selrows.includes(trow)
-                  ? selrows
-                  : [trow];
-                const toggleDataRows = toggleTableRows.map((r) => {
-                  return this.sortedTableMap('repository', [-1, r])[0];
-                });
-                this.switchRepo(toggleDataRows, onOrOff);
-              } else if (row > -1 && col < RepCol.iState) {
-                this.rowSelect(e, 'repository', trow);
-              }
-            }
-            break;
-          }
-          case 'language': {
-            const [, trow] = clickedCell(e);
-            if (trow !== -1) {
-              this.loadModuleTable(this.rowSelect(e, 'language', trow));
-            }
-            break;
-          }
-          case 'module': {
-            const [row, trow, col] = clickedCell(e);
-            if (row !== -1) {
-              const state = this.state as ManagerState;
-              const { module, modTableData } = state as ManagerState;
-              const drow = modTableData[row];
-              if (drow && col === ModCol.iInstalled && !drow[0].loading) {
-                const was = drow[col];
-                const is = was === ON ? OFF : ON;
-                const selrows = selectionToRows(module);
-                const toggleTableRows = selrows.includes(trow)
-                  ? selrows
-                  : [trow];
-                const toggleDataRows = toggleTableRows.map((r) => {
-                  return this.sortedTableMap('module', [-1, r, -1, -1])[0];
-                });
-                // Installed column clicks
-                if (is === ON) {
-                  const newDLRows: number[] = [];
-                  toggleDataRows.forEach((r) => {
-                    const rrow = modTableData[r];
-                    if (rrow) {
-                      const k = modrepKey(rrow[ModCol.iModule], rrow[0].repo);
-                      if (k in Downloads && !Downloads[k].failed) {
-                        rrow[ModCol.iInstalled] = ON;
-                        this.setTableState('module', { modTableData }, true);
-                      } else newDLRows.push(r);
-                    }
-                  });
-                  if (newDLRows.length) this.download(newDLRows);
-                } else {
-                  toggleDataRows.forEach((r) => {
-                    const rrow = modTableData[r];
-                    if (rrow) {
-                      rrow[col] = OFF;
-                      rrow[0].intent = intent(ModCol.iInstalled, 'none');
-                    }
-                  });
-                  this.setTableState('module', { modTableData }, true);
-                }
-              } else if (drow && col === ModCol.iShared) {
-                // Shared column clicks
-                const is = !drow[0].shared;
-                const selrows = selectionToRows(module);
-                const toggleTableRows = selrows.includes(trow)
-                  ? selrows
-                  : [trow];
-                const toggleDataRows = toggleTableRows.map((r) => {
-                  return this.sortedTableMap('module', [-1, r])[0];
-                });
-                toggleDataRows.forEach((r) => {
-                  const rrow = modTableData[r];
-                  if (rrow) rrow[0].shared = is;
-                });
-                this.setTableState('module', { modTableData }, true);
-              } else {
-                this.rowSelect(e, 'module', trow);
-              }
-            }
-            break;
-          }
-          default:
-            throw Error(
-              `Unhandled ModuleManager click event ${e.currentTarget.id}`
-            );
-        }
-        break;
-      }
-      default:
-        throw Error(`Unhandled ModuleManager event type ${ev.type}`);
-    }
-    return true;
-  }
-
-  download(rows: number[]): void {
-    const { modTableData } = ModuleManager.saved;
-    rows.forEach((row) => {
-      const drow = modTableData[row];
-      if (drow) {
-        const module = drow[ModCol.iModule] as string;
-        const { repo } = drow[0];
-        drow[0].loading = loading(ModCol.iInstalled);
-        const modrepk = modrepKey(module, repo);
-        const nfiles = (async () => {
-          try {
-            const dl = await G.Module.download(module, repo);
-            drow[0].loading = false;
-            let newintent: Intent = 'success';
-            if (typeof dl === 'string') {
-              this.addToast({ message: dl });
-              newintent = 'danger';
-            } else {
-              drow[ModCol.iInstalled] = ON;
-              Downloads[modrepk].failed = false;
-            }
-            drow[0].intent = intent(ModCol.iInstalled, newintent);
-            this.setTableState('module', { modTableData });
-            return typeof dl === 'string' ? null : dl;
-          } catch (er) {
-            log.warn(er);
-            drow[0].loading = false;
-            drow[0].intent = intent(ModCol.iInstalled, 'danger');
-            this.setTableState('module', { modTableData });
-            return null;
-          }
-        })();
-        Downloads[modrepk] = { nfiles, failed: true };
-      }
-    });
-    this.setTableState('module', { modTableData });
-  }
-
-  // Set table state, save the data for window re-renders, and re-render the table.
-  setTableState(
-    table: keyof typeof Tables,
-    s?: Partial<ManagerState> | null,
-    reset?: boolean
-  ) {
-    const renderTable = Tables[table][0];
-    const tableData = Tables[table][1];
-    const state = this.state as ManagerState;
-    // Two steps must be used for statePrefs to be written to Prefs
-    // before the reset will read them.
-    if (s) this.sState(s);
-    const tableDataVal = ((s && s[tableData]) || state[tableData]) as any;
-    ModuleManager.saved[tableData] = tableDataVal;
-    if (reset) {
-      this.sState((prevState) => {
-        let render = prevState[renderTable];
-        render += 1;
-        return {
-          [renderTable]: render,
-        };
-      });
-    }
-  }
-
-  refHandlers = {
-    toaster: (ref: Toaster) => {
-      this.toaster = ref;
-    },
-  };
-
   addToast(toast: IToastProps) {
     toast.timeout = 5000;
     toast.intent = 'warning';
@@ -1364,56 +668,37 @@ export default class ModuleManager extends React.Component {
   render() {
     const state = this.state as ManagerState;
     const props = this.props as ManagerProps;
+    const { language, module, repository, showModuleInfo, progress } = state;
     const {
-      language,
-      langTableData,
-      languageTableOpen,
-      languageTableWidth,
-      langRowSort,
-      renderLangTable,
-
-      module,
-      modTableData,
-      modColumnOrder,
-      modColumnWidths,
-      modRowSort,
-      showModuleInfo,
-      renderModTable,
-
-      repository,
-      repoTableOpen,
-      repoTableHeight,
-      repoColumnWidths,
-      repoTableData,
-      repoRowSort,
-      renderRepoTable,
-      progress,
-    } = state;
+      language: langtable,
+      module: modtable,
+      repository: repotable,
+    } = state.tables;
     const {
       eventHandler,
       onCellEdited,
-      onRepoColumnWidthChanged,
-      onModColumnWidthChanged,
-      onColumnToggle,
+      onColumnHide,
       onColumnsReordered,
-      onLangRowSort,
-      onModRowSort,
-      onRepoRowSort,
+      onLangCellClick,
+      onModCellClick,
+      onRepoCellClick,
+      onRowsReordered,
+      onColumnWidthChanged,
       selectionToDataRows,
       tableRef,
     } = this;
 
     const disable = {
-      moduleInfo: !selectionToRows(module).length,
+      moduleInfo: !selectionToRows(module.selection).length,
       moduleInfoBack: false,
-      moduleCancel: !modTableData.find((r) => r[0].loading),
+      moduleCancel: !modtable.data.find((r) => r[0].loading),
       repoAdd: false,
       repoDelete:
         !repository ||
-        !selectionToDataRows('repository', repository).every(
-          (r) => repoTableData[r] && repoTableData[r][0]?.repo?.custom
+        !selectionToDataRows('repository', repository.selection).every(
+          (r) => repotable.data[r] && repotable.data[r][0]?.repo?.custom
         ),
-      repoCancel: !repoTableData.find((r) => r[0].loading),
+      repoCancel: !repotable.data.find((r) => r[0].loading),
     };
 
     return (
@@ -1426,26 +711,26 @@ export default class ModuleManager extends React.Component {
         />
         <Hbox
           flex="1"
-          className={`language ${languageTableOpen ? 'open' : 'closed'}`}
+          className={`language ${language.open ? 'open' : 'closed'}`}
         >
-          {languageTableOpen && (
+          {language.open && (
             <>
               <Groupbox
                 caption={i18n.t('menu.options.language')}
                 orient="vertical"
-                width={languageTableWidth}
+                width={language.width}
               >
                 <Box flex="1">
                   <Table
                     id="language"
-                    key={renderLangTable}
+                    key={langtable.render}
                     columnHeadings={LanguageTableHeadings}
-                    rowSort={langRowSort}
-                    data={langTableData}
-                    selectedRegions={language}
+                    sortRowsByColumn={language.rowSort}
+                    data={langtable.data}
+                    selectedRegions={language.selection}
                     domref={tableRef.language}
-                    onRowSort={onLangRowSort}
-                    onClick={eventHandler}
+                    onRowsReordered={onRowsReordered.language}
+                    onCellClick={onLangCellClick}
                   />
                 </Box>
                 <Button
@@ -1456,9 +741,11 @@ export default class ModuleManager extends React.Component {
                 />
               </Groupbox>
               <DragSizer
-                onDragStart={() => state.languageTableWidth}
+                onDragStart={() => state.language.width}
                 onDragEnd={(_e: React.MouseEvent, v: DragSizerVal) =>
-                  this.sState({ languageTableWidth: v.sizerPos })
+                  this.sState({
+                    language: { ...state.language, width: v.sizerPos },
+                  })
                 }
                 min={75}
                 max={250}
@@ -1466,7 +753,7 @@ export default class ModuleManager extends React.Component {
               />
             </>
           )}
-          {!languageTableOpen && (
+          {!language.open && (
             <Groupbox caption=" " orient="vertical">
               <Vbox flex="1">
                 <Button
@@ -1498,20 +785,20 @@ export default class ModuleManager extends React.Component {
                 <Table
                   flex="1"
                   id="module"
-                  key={renderModTable}
-                  data={modTableData}
-                  selectedRegions={module}
+                  key={modtable.render}
+                  data={modtable.data}
+                  selectedRegions={module.selection}
                   columnHeadings={ModuleTableHeadings}
-                  columnOrder={modColumnOrder}
-                  columnWidths={modColumnWidths}
-                  rowSort={modRowSort}
+                  columnOrder={module.columnOrder}
+                  columnWidths={module.columnWidths}
+                  sortRowsByColumn={module.rowSort}
                   enableColumnReordering
                   domref={tableRef.module}
                   onColumnsReordered={onColumnsReordered}
-                  onColumnWidthChanged={onModColumnWidthChanged}
-                  onColumnToggle={onColumnToggle}
-                  onRowSort={onModRowSort}
-                  onClick={eventHandler}
+                  onColumnHide={onColumnHide}
+                  onCellClick={onModCellClick}
+                  onColumnWidthChanged={onColumnWidthChanged.module}
+                  onRowsReordered={onRowsReordered.module}
                 />
               )}
             </Hbox>
@@ -1547,38 +834,40 @@ export default class ModuleManager extends React.Component {
           </Groupbox>
         </Hbox>
 
-        {repoTableOpen && (
+        {repository.open && (
           <div>
             <DragSizer
-              onDragStart={() => state.repoTableHeight}
+              onDragStart={() => state.repository.height}
               onDragEnd={(_e: React.MouseEvent, v: DragSizerVal) =>
-                this.sState({ repoTableHeight: v.sizerPos })
+                this.sState({
+                  repository: { ...state.repository, height: v.sizerPos },
+                })
               }
               orient="horizontal"
               shrink
             />
             <Groupbox
               caption={i18n.t('moduleSources.label')}
-              height={repoTableHeight}
+              height={repository.height}
               orient="horizontal"
               flex="1"
             >
               <Box flex="1">
-                {!!repoTableData.length && (
+                {!!repotable.data.length && (
                   <Table
                     flex="1"
                     id="repository"
-                    key={renderRepoTable}
-                    data={repoTableData}
-                    selectedRegions={repository}
+                    key={repotable.render}
+                    data={repotable.data}
+                    selectedRegions={repository.selection}
                     columnHeadings={RepositoryTableHeadings}
-                    columnWidths={repoColumnWidths}
-                    rowSort={repoRowSort}
+                    columnWidths={repository.columnWidths}
+                    sortRowsByColumn={repository.rowSort}
                     domref={tableRef.repository}
-                    onRowSort={onRepoRowSort}
-                    onClick={eventHandler}
-                    onColumnWidthChanged={onRepoColumnWidthChanged}
                     onEditableCellChanged={onCellEdited}
+                    onCellClick={onRepoCellClick}
+                    onRowsReordered={onRowsReordered.repository}
+                    onColumnWidthChanged={onColumnWidthChanged.repository}
                   />
                 )}
               </Box>
@@ -1611,13 +900,23 @@ export default class ModuleManager extends React.Component {
         )}
 
         <Hbox className="dialogbuttons" pack="end" align="end">
-          {repoTableOpen && (
-            <Button onClick={() => this.sState({ repoTableOpen: false })}>
+          {repository.open && (
+            <Button
+              onClick={() =>
+                this.sState({
+                  repository: { ...state.repository, open: false },
+                })
+              }
+            >
               {i18n.t('less.label')}
             </Button>
           )}
-          {!repoTableOpen && (
-            <Button onClick={() => this.sState({ repoTableOpen: true })}>
+          {!repository.open && (
+            <Button
+              onClick={() =>
+                this.sState({ repository: { ...state.repository, open: true } })
+              }
+            >
               {i18n.t('moduleSources.label')}
             </Button>
           )}
@@ -1645,86 +944,6 @@ export default class ModuleManager extends React.Component {
 }
 ModuleManager.defaultProps = defaultProps;
 ModuleManager.propTypes = propTypes;
-ModuleManager.saved = {
-  repoTableData: [],
-  modTableData: [],
-  langTableData: [],
-  repositoryListings: [],
-  moduleData: {},
-  moduleLangData: {},
-  scrollTop: { repository: 0, language: 0, module: 0 },
-};
-
-function clickedCell(e: React.MouseEvent) {
-  const cell = ofClass(['bp4-table-cell'], e.target);
-  let datarow = -1;
-  let datacol = -1;
-  let tablerow = -1;
-  let tablecol = -1;
-  if (cell) {
-    const rowd = cell.element.className.match(/data-row-(\d+)\b/);
-    datarow = rowd ? Number(rowd[1]) : -1;
-    const cold = cell.element.className.match(/data-col-(\d+)\b/);
-    datacol = cold ? Number(cold[1]) : -1;
-    const rowt = cell.element.className.match(/bp4-table-cell-row-(\d+)\b/);
-    tablerow = rowt ? Number(rowt[1]) : -1;
-    const colt = cell.element.className.match(/bp4-table-cell-col-(\d+)\b/);
-    tablecol = colt ? Number(colt[1]) : -1;
-  }
-  return [datarow, tablerow, datacol, tablecol];
-}
-
-function repositoryToRow(repo: Repository): TRepositoryTableRow {
-  const on = builtinRepos.map((r) => downloadKey(r)).includes(downloadKey(repo))
-    ? ALWAYS_ON
-    : ON;
-  return [
-    { repo },
-    repo.name || '?',
-    repo.domain,
-    repo.path,
-    repo.disabled ? on : OFF,
-  ];
-}
-
-function loading(columnIndex: number) {
-  return (_ri: number, ci: number) => {
-    return ci === columnIndex;
-  };
-}
-
-function editable() {
-  return (_ri: number, ci: number) => {
-    return ci < RepCol.iState;
-  };
-}
-
-function intent(columnIndex: number, theIntent: Intent) {
-  return (_ri: number, ci: number) => {
-    return ci === columnIndex ? theIntent : 'none';
-  };
-}
-
-function classes(
-  columnIndexArray: number[],
-  theClasses: string[],
-  wholeRowClasses?: string[]
-) {
-  return (_ri: number, ci: number) => {
-    const cs = wholeRowClasses?.slice() || [];
-    if (columnIndexArray.includes(ci))
-      theClasses.forEach((c) => {
-        if (!cs.includes(c)) cs.push(c);
-      });
-    return cs;
-  };
-}
-
-function tooltip(atooltip: string, slipColumnIndexArray: number[]) {
-  return (_ri: number, ci: number) => {
-    return slipColumnIndexArray.includes(ci) ? undefined : atooltip;
-  };
-}
 
 function onunload() {
   G.Module.clearDownload(); // closes all FTP connections

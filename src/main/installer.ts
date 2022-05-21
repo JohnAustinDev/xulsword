@@ -449,6 +449,13 @@ export async function modalInstall(
 let Downloads: { [modrepoKey: string]: ZIP } = {};
 
 const Module: GType['Module'] = {
+  async downloadXSM(
+    module: string,
+    repository: Repository
+  ): Promise<number | string> {
+    // TODO! finish this.
+  },
+
   // Download a SWORD module from a repository and save it as a zip object
   // for later installation by saveDownload. Returns the number of files if
   // successful or a string message if error or canceled.

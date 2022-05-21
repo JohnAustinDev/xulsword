@@ -58,20 +58,44 @@
   },
 
   "downloader": {
-    "languageTableOpen": true,
-    "languageTableWidth": 180,
-    "repoTableOpen": true,
-    "repoTableHeight": 350,
-    "modColumnWidths": [300, 300, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 300, 300],
-    "modColumnOrder": [0, 1, 12, 13],
-    "langRowSort": { "index": 0, "direction": "ascending" },
-    "modRowSort": { "index": 0, "direction": "ascending" },
-    "repoRowSort": { "index": 0, "direction": "ascending" },
-    "repoColumnWidths": [
-      124,
-      145,
-      343,
-      67
+    "language": {
+      "open": true,
+      "selection": [],
+      "rowSort": { "tableColIndex": 0, "direction": "ascending" },
+      "width": 180
+    },
+    "module": {
+      "selection": [],
+      "columnOrder": [0, 1, 12, 13],
+      "columnWidths": [300, 300, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 300, 300],
+      "rowSort": { "tableColIndex": 0, "direction": "ascending" }
+    },
+    "repository": {
+      "open": true,
+      "selection": [],
+      "columnWidths": [124, 145, 343, 67],
+      "rowSort": { "tableColIndex": 0, "direction": "ascending" },
+      "height": 350
+    },
+    "xulswordRepos": [
+      {
+        "name": "IBT XSM",
+        "domain": "ftp.ibt.org.ru",
+        "path": "/pub/modxsm",
+        "file": "mods.d.tar.gz",
+        "builtin": false,
+        "disabled": false,
+        "custom": false
+      },
+      {
+        "name": "IBT Audio",
+        "domain": "ftp.ibt.org.ru",
+        "path": "/pub/audio",
+        "file": "mods.d.tar.gz",
+        "builtin": false,
+        "disabled": false,
+        "custom": false
+      }
     ],
     "customRepos": [],
     "disabledRepos": []
