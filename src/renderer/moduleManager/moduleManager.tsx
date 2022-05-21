@@ -39,7 +39,7 @@ import Table, {
   TonColumnWidthChanged,
   TonEditableCellChanged,
   TonRowsReordered,
-  TsortRowsByColumn,
+  TinitialRowSort,
 } from '../libxul/table';
 import Spacer from '../libxul/spacer';
 import DragSizer, { DragSizerVal } from '../libxul/dragsizer';
@@ -116,21 +116,22 @@ const notStatePref = {
 
 export interface ManagerStatePref {
   language: {
-    selection: RowSelection;
-    rowSort: TsortRowsByColumn;
     open: boolean;
+    selection: RowSelection;
+    rowSort: TinitialRowSort;
     width: number;
   };
   module: {
     selection: RowSelection;
-    rowSort: TsortRowsByColumn;
-    columnOrder: number[];
+    rowSort: TinitialRowSort;
+    visibleColumns: number[];
     columnWidths: number[];
   };
   repository: {
-    selection: RowSelection;
-    rowSort: TsortRowsByColumn;
     open: boolean;
+    selection: RowSelection;
+    rowSort: TinitialRowSort;
+    visibleColumns: number[];
     columnWidths: number[];
     height: number;
   };
@@ -189,7 +190,9 @@ export default class ModuleManager extends React.Component {
   setTableState;
 
   sState: (
-    s: Partial<ManagerState> | ((prevState: ManagerState) => void)
+    s:
+      | Partial<ManagerState>
+      | ((prevState: ManagerState) => Partial<ManagerState>)
   ) => void;
 
   constructor(props: ManagerProps) {
@@ -312,7 +315,7 @@ export default class ModuleManager extends React.Component {
         const { progress } = state;
         const { repository, module } = state.tables;
         const repoIndex = repository.data.findIndex(
-          (r) => downloadKey(r[0].repo) === id
+          (r) => downloadKey(r[RepCol.iInfo].repo) === id
         );
         const repdrow = repository.data[repoIndex];
         if (
@@ -320,9 +323,9 @@ export default class ModuleManager extends React.Component {
           repoIndex !== -1 &&
           repdrow &&
           prog === -1 &&
-          repdrow[0].loading
+          repdrow[RepCol.iInfo].loading
         ) {
-          repdrow[0].loading = false;
+          repdrow[RepCol.iInfo].loading = false;
           let newprog = null;
           if (progress) {
             const [p, t] = progress;
@@ -333,13 +336,13 @@ export default class ModuleManager extends React.Component {
           });
         }
         const modIndex = module.data.findIndex((r) => {
-          const { repo } = r[0];
+          const { repo } = r[ModCol.iInfo];
           const mod = r[ModCol.iModule];
           return [downloadKey(repo), mod].join('.') === id;
         });
         const moddrow = module.data[modIndex];
         if (id && modIndex !== -1 && moddrow && prog === -1) {
-          moddrow[0].loading = false;
+          moddrow[ModCol.iInfo].loading = false;
           this.setTableState('module');
         }
       })
@@ -371,16 +374,21 @@ export default class ModuleManager extends React.Component {
   sizeTableToParent(table: typeof Tables[number]) {
     const state = this.state as ManagerState;
     if (table === 'language') return;
+    const { visibleColumns } = state[table];
     let { columnWidths } = state[table];
     const { tableRef } = this;
     if (tableRef[table].current) {
       const atable = tableRef[table].current as HTMLDivElement | null;
       if (atable) {
         const w = atable.clientWidth;
-        const t = columnWidths.reduce((p, c) => p + (c === -1 ? 0 : c), 0);
+        const t = columnWidths
+          .filter((_w, i) => !visibleColumns || visibleColumns.includes(i))
+          .reduce((p, c) => p + c, 0);
         if (Math.abs(w - t) > 2) {
-          columnWidths = columnWidths.map((cw) => {
-            return cw === -1 ? -1 : w * (cw / t);
+          columnWidths = columnWidths.map((cw, i) => {
+            return !visibleColumns || visibleColumns.includes(i)
+              ? w * (cw / t)
+              : cw;
           });
           this.setTableState(table, { columnWidths }, null, true);
         }
@@ -415,6 +423,10 @@ export default class ModuleManager extends React.Component {
       const isloading = repo.disabled ? false : loading(RepCol.iState);
       const on = repo.builtin ? ALWAYS_ON : ON;
       repoTableData.push([
+        repo.name || '',
+        repo.domain,
+        repo.path,
+        repo.disabled ? OFF : on,
         {
           loading: isloading,
           editable: canedit,
@@ -422,10 +434,6 @@ export default class ModuleManager extends React.Component {
           repo,
           tooltip: tooltip('VALUE', [RepCol.iState]),
         },
-        repo.name || '',
-        repo.domain,
-        repo.path,
-        repo.disabled ? OFF : on,
       ]);
     });
     this.setTableState('repository', null, repoTableData, false);
@@ -445,8 +453,8 @@ export default class ModuleManager extends React.Component {
         if (typeof listing === 'string') {
           this.addToast({ message: listing });
           if (drow[RepCol.iState] !== OFF) this.switchRepo([i], false);
-          drow[0].intent = intent(RepCol.iState, 'danger');
-          drow[0].loading = false;
+          drow[RepCol.iInfo].intent = intent(RepCol.iState, 'danger');
+          drow[RepCol.iInfo].loading = false;
           if (!Array.isArray(repositoryListings[i])) {
             repositoryListings[i] = null;
           }
@@ -455,7 +463,7 @@ export default class ModuleManager extends React.Component {
         if (Array.isArray(listing)) {
           repositoryListings[i] = listing;
           if ([ON, ALWAYS_ON].includes(drow[RepCol.iState])) {
-            drow[0].intent = intent(RepCol.iState, 'success');
+            drow[RepCol.iInfo].intent = intent(RepCol.iState, 'success');
           }
         }
       }
@@ -491,7 +499,7 @@ export default class ModuleManager extends React.Component {
     });
     const langlist = Array.from(langs).sort();
     const newTableData: TLanguageTableRow[] = [];
-    langlist.forEach((l) => newTableData.push([{}, l]));
+    langlist.forEach((l) => newTableData.push([l, {}]));
     const newlanguage: RowSelection = [];
     newTableData.forEach((r, i) => {
       if (selectedcodes?.includes(r[LanCol.iCode])) {
@@ -524,7 +532,7 @@ export default class ModuleManager extends React.Component {
       const drow = repotable.data[i];
       if (drow && Array.isArray(listing)) {
         listing.forEach((c) => {
-          const { repo } = drow[0];
+          const { repo } = drow[RepCol.iInfo];
           const repokey = downloadKey(repo);
           const modrepk = modrepKey(c.module, repo);
           const modunique = [c.module, c.Version].join('.');
@@ -538,7 +546,7 @@ export default class ModuleManager extends React.Component {
           }
           if (!(modrepk in moduleData)) {
             const d = [] as unknown as TModuleTableRow;
-            d[0] = {
+            d[ModCol.iInfo] = {
               repo,
               shared: repokey === downloadKey(builtinRepos[0]),
               classes: classes(
@@ -569,7 +577,7 @@ export default class ModuleManager extends React.Component {
             d[ModCol.iSourceType] = c.SourceType || '';
             d[ModCol.iShared] = () => {
               if (d[ModCol.iInstalled] === OFF) return '';
-              return d[0].shared ? ON : OFF;
+              return d[ModCol.iInfo].shared ? ON : OFF;
             };
             d[ModCol.iInstalled] = repoIsLocal ? ON : OFF;
             moduleData[modrepk] = d;
@@ -588,7 +596,7 @@ export default class ModuleManager extends React.Component {
       const drow = repotable.data[i];
       if (drow && Array.isArray(listing) && drow[RepCol.iState] !== OFF) {
         listing.forEach((c) => {
-          const { repo } = drow[0];
+          const { repo } = drow[RepCol.iInfo];
           const modrepk = modrepKey(c.module, repo);
           const modrow = moduleData[modrepk];
           const modunique = [
@@ -607,7 +615,8 @@ export default class ModuleManager extends React.Component {
             modrow[ModCol.iInstalled] = ON;
             const modrepok = `${localModules[modunique]}.${c.module}`;
             if (modrepok in moduleData) {
-              modrow[0].shared = moduleData[modrepok][0].shared;
+              modrow[ModCol.iInfo].shared =
+                moduleData[modrepok][ModCol.iInfo].shared;
             }
           }
           const code = (c.Lang && c.Lang.replace(/-.*$/, '')) || 'en';
@@ -691,14 +700,15 @@ export default class ModuleManager extends React.Component {
     const disable = {
       moduleInfo: !selectionToRows(module.selection).length,
       moduleInfoBack: false,
-      moduleCancel: !modtable.data.find((r) => r[0].loading),
+      moduleCancel: !modtable.data.find((r) => r[ModCol.iInfo].loading),
       repoAdd: false,
       repoDelete:
-        !repository ||
+        !repository.selection.length ||
         !selectionToDataRows('repository', repository.selection).every(
-          (r) => repotable.data[r] && repotable.data[r][0]?.repo?.custom
+          (r) =>
+            repotable.data[r] && repotable.data[r][RepCol.iInfo]?.repo?.custom
         ),
-      repoCancel: !repotable.data.find((r) => r[0].loading),
+      repoCancel: !repotable.data.find((r) => r[RepCol.iInfo].loading),
     };
 
     return (
@@ -725,7 +735,7 @@ export default class ModuleManager extends React.Component {
                     id="language"
                     key={langtable.render}
                     columnHeadings={LanguageTableHeadings}
-                    sortRowsByColumn={language.rowSort}
+                    initialRowSort={language.rowSort}
                     data={langtable.data}
                     selectedRegions={language.selection}
                     domref={tableRef.language}
@@ -789,9 +799,9 @@ export default class ModuleManager extends React.Component {
                   data={modtable.data}
                   selectedRegions={module.selection}
                   columnHeadings={ModuleTableHeadings}
-                  columnOrder={module.columnOrder}
+                  visibleColumns={module.visibleColumns}
                   columnWidths={module.columnWidths}
-                  sortRowsByColumn={module.rowSort}
+                  initialRowSort={module.rowSort}
                   enableColumnReordering
                   domref={tableRef.module}
                   onColumnsReordered={onColumnsReordered}
@@ -862,7 +872,7 @@ export default class ModuleManager extends React.Component {
                     selectedRegions={repository.selection}
                     columnHeadings={RepositoryTableHeadings}
                     columnWidths={repository.columnWidths}
-                    sortRowsByColumn={repository.rowSort}
+                    initialRowSort={repository.rowSort}
                     domref={tableRef.repository}
                     onEditableCellChanged={onCellEdited}
                     onCellClick={onRepoCellClick}

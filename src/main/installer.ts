@@ -2,7 +2,7 @@
 /* eslint-disable no-continue */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import fpath from 'path';
-import { BrowserWindow, shell } from 'electron';
+import { shell } from 'electron';
 import ZIP from 'adm-zip';
 import log from 'electron-log';
 import { isRepoLocal, modrepKey, parseSwordConf } from '../common';
@@ -454,6 +454,7 @@ const Module: GType['Module'] = {
     repository: Repository
   ): Promise<number | string> {
     // TODO! finish this.
+    return 'downloadXSM not implemented';
   },
 
   // Download a SWORD module from a repository and save it as a zip object

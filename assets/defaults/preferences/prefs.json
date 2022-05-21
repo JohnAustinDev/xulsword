@@ -61,20 +61,21 @@
     "language": {
       "open": true,
       "selection": [],
-      "rowSort": { "tableColIndex": 0, "direction": "ascending" },
+      "rowSort": { "dataColIndex": 0, "direction": "ascending" },
       "width": 180
     },
     "module": {
       "selection": [],
-      "columnOrder": [0, 1, 12, 13],
-      "columnWidths": [300, 300, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 300, 300],
-      "rowSort": { "tableColIndex": 0, "direction": "ascending" }
+      "rowSort": { "dataColIndex": 0, "direction": "ascending" },
+      "visibleColumns": [0, 1, 12, 13],
+      "columnWidths": [80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80]
     },
     "repository": {
       "open": true,
       "selection": [],
+      "rowSort": { "dataColIndex": 2, "direction": "ascending" },
+      "visibleColumns": [0, 1, 2, 3],
       "columnWidths": [124, 145, 343, 67],
-      "rowSort": { "tableColIndex": 0, "direction": "ascending" },
       "height": 350
     },
     "xulswordRepos": [

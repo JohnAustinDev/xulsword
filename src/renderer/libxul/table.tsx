@@ -36,27 +36,24 @@ import './table.css';
 import { Box } from './boxes';
 import { ofClass } from 'common';
 
-export type TsortRowsByColumn = {
-  tableColIndex: number;
+export type TinitialRowSort = {
+  column: number;
   direction: 'ascending' | 'descending';
 };
 
 export type TonRowsReordered = (
-  byColumn: TColumnLocation,
+  column: number,
   direction: 'ascending' | 'descending',
   tableToDataRowMap: number[]
 ) => void;
 
 export type TonColumnsReordered = (
-  oldTableColIndex: number,
-  newTableColIndex: number,
+  oldColumn: number,
+  newColumn: number,
   length: number
 ) => void;
 
-export type TonColumnWidthChanged = (
-  column: TColumnLocation,
-  size: number
-) => void;
+export type TonColumnWidthChanged = (column: number, size: number) => void;
 
 export type TonCellClick = (e: React.MouseEvent, cell: TCellLocation) => void;
 
@@ -67,7 +64,7 @@ export type TonEditableCellChanged = (
 
 export type TonColumnHide = (
   toggleDataColumn: number,
-  targetTableColumn: number
+  targetColumn: number
 ) => void;
 
 export type TRowLocation = {
@@ -75,16 +72,11 @@ export type TRowLocation = {
   tableRowIndex: number;
 };
 
-export type TColumnLocation = {
-  dataColIndex: number;
-  tableColIndex: number;
-};
-
-export type TCellLocation = TRowLocation & TColumnLocation;
+export type TCellLocation = TRowLocation & { column: number };
 
 export type TData = TDataRow[];
 
-export type TDataRow = [TCellInfo, ...any];
+export type TDataRow = [...unknown[], TCellInfo];
 
 export type TCellInfo = {
   loading?: boolean | ((rowIndex: number, colIndex: number) => boolean);
@@ -106,15 +98,14 @@ type TCellSetter = (
   columnIndex: number
 ) => (val: string) => void;
 
-type TCellLookup = (
-  rowIndex: number,
-  columnIndex: number
-) => {
+type TCellLookupResult = {
   value: any;
   info: TCellInfo;
   row: TRowLocation;
-  col: TColumnLocation;
+  dataCol: number;
 };
+
+type TCellLookup = (rowIndex: number, columnIndex: number) => TCellLookupResult;
 
 type TSortCallback = (
   columnIndex: number,
@@ -147,28 +138,28 @@ abstract class AbstractSortableColumn implements TSortableColumn {
     state: TableState
   ) {
     const cellRenderer = (tableRowIndex: number, tableColIndex: number) => {
-      const { value, info, row, col } = getCellData(
+      const { value, info, row, dataCol } = getCellData(
         tableRowIndex,
         tableColIndex
       );
       let { editable, loading, intent, classes, tooltip } = info;
       if (typeof editable === 'function') {
-        editable = editable(row.dataRowIndex, col.dataColIndex);
+        editable = editable(row.dataRowIndex, dataCol);
       }
       if (typeof loading === 'function') {
-        loading = loading(row.dataRowIndex, col.dataColIndex);
+        loading = loading(row.dataRowIndex, dataCol);
       }
       if (typeof intent === 'function') {
-        intent = intent(row.dataRowIndex, col.dataColIndex);
+        intent = intent(row.dataRowIndex, dataCol);
       }
       if (typeof tooltip === 'function') {
-        tooltip = tooltip(row.dataRowIndex, col.dataColIndex);
+        tooltip = tooltip(row.dataRowIndex, dataCol);
       }
       if (typeof classes === 'function') {
-        classes = classes(row.dataRowIndex, col.dataColIndex);
+        classes = classes(row.dataRowIndex, dataCol);
       }
       if (!classes) classes = [];
-      classes.push(`data-row-${row.dataRowIndex} data-col-${col.dataColIndex}`);
+      classes.push(`data-row-${row.dataRowIndex} data-col-${dataCol}`);
       tooltip = (
         tooltip !== 'VALUE' ? tooltip : typeof value === 'string' ? value : ''
       ) as string;
@@ -246,7 +237,7 @@ class TextSortableColumn extends AbstractSortableColumn {
     columnHide: TonColumnHide,
     props: TableProps
   ) {
-    const { onColumnHide, columnHeadings, columnWidths } = props;
+    const { onColumnHide, columnHeadings, visibleColumns } = props;
     const sortAsc = () => {
       sortColumn(this.index, 'ascending', (a, b) =>
         TextSortableColumn.compare(a, b)
@@ -258,21 +249,25 @@ class TextSortableColumn extends AbstractSortableColumn {
       );
     };
     const items: JSX.Element[] = [];
-    if (columnWidths && onColumnHide) {
-      items.push(<MenuDivider key="divider.1" />);
-      items.push(
-        <MenuItem
-          key={['delete', this.index].join('.')}
-          icon="delete"
-          text={columnHeadings[this.index]}
-          onClick={() => columnHide(this.index, this.index)}
-        />
-      );
-      if (columnHeadings.some((h, i) => h && columnWidths[i] === -1)) {
+    if (onColumnHide) {
+      if (columnHeadings[this.index]) {
+        items.push(<MenuDivider key="divider.1" />);
+        items.push(
+          <MenuItem
+            key={['delete', this.index].join('.')}
+            icon="delete"
+            text={columnHeadings[this.index]}
+            onClick={() => columnHide(this.index, this.index)}
+          />
+        );
+      }
+      if (
+        columnHeadings.some((h, i) => h && visibleColumns?.indexOf(i) === -1)
+      ) {
         items.push(<MenuDivider key="divider.2" />);
       }
       columnHeadings.forEach((heading, i) => {
-        if (heading && columnWidths[i] === -1) {
+        if (heading && visibleColumns?.indexOf(i) === -1) {
           items.push(
             <MenuItem
               key={['add', heading].join('.')}
@@ -298,8 +293,8 @@ class TextSortableColumn extends AbstractSortableColumn {
 const defaultProps = {
   ...xulDefaultProps,
   columnWidths: undefined,
-  columnOrder: undefined,
-  sortRowsByColumn: undefined,
+  visibleColumns: undefined,
+  sortRowsByDataColumn: undefined,
   selectedRegions: undefined,
   selectionModes: SelectionModes.ROWS_ONLY,
   enableMultipleSelection: false,
@@ -311,7 +306,6 @@ const defaultProps = {
   onColumnHide: undefined,
   onEditableCellChanged: undefined,
   onCellClick: undefined,
-  onSelection: undefined,
 };
 
 const propTypes = {
@@ -319,9 +313,9 @@ const propTypes = {
   data: PropTypes.arrayOf(PropTypes.array).isRequired,
   columnHeadings: PropTypes.arrayOf(PropTypes.string).isRequired,
   columnWidths: PropTypes.arrayOf(PropTypes.number),
-  columnOrder: PropTypes.arrayOf(PropTypes.number),
-  sortRowsByColumn: PropTypes.shape({
-    tableColumnIndex: PropTypes.number,
+  visibleColumns: PropTypes.arrayOf(PropTypes.number),
+  initialRowSort: PropTypes.shape({
+    dataColumnIndex: PropTypes.number,
     direction: PropTypes.oneOf(['ascending', 'descending']),
   }),
   selectedRegions: PropTypes.array,
@@ -340,10 +334,9 @@ const propTypes = {
 type TableProps = XulProps & {
   data: TData;
   columnHeadings: string[];
-  columnWidths?: number[]; // -1 = hide column
-  columnOrder?: number[]; // tableColIndex[]
-  // sortRowsByColumn effects constructor sort only
-  sortRowsByColumn?: TsortRowsByColumn;
+  columnWidths?: number[];
+  visibleColumns?: number[];
+  initialRowSort?: TinitialRowSort;
   selectedRegions?: Region[];
   selectionModes?: RegionCardinality[];
   enableMultipleSelection?: boolean;
@@ -375,23 +368,18 @@ class Table extends React.Component {
     return `${rowIndex}-${columnIndex}`;
   };
 
-  columnIndexToDataMap: number[];
-
   tableRef: React.RefObject<HTMLDivElement>;
 
   sState: (s: Partial<TableState> | ((prevState: TableState) => void)) => void;
 
   constructor(props: TableProps) {
     super(props);
-    const { columnHeadings, sortRowsByColumn: rowSort } = props;
+    const { columnHeadings, initialRowSort, visibleColumns } = props;
 
-    // Create new columns, one for each column of data (minus
-    // the data's info column).
+    // Create new columns, one for each heading.
     const columns = [];
     for (let c = 0; c < columnHeadings.length; c += 1) {
-      columns.push(
-        new TextSortableColumn((columnHeadings && columnHeadings[c]) || '', c)
-      );
+      columns.push(new TextSortableColumn(columnHeadings[c] || '', c));
     }
     const s: TableState = {
       columns,
@@ -399,30 +387,22 @@ class Table extends React.Component {
       sparseCellData: {},
       sparseCellIntent: {},
     };
-    if (rowSort) {
-      const { tableColIndex: index, direction } = rowSort;
-      const col = columns[index];
-      if (col !== undefined) {
-        if (direction === 'ascending') {
-          this.sortColumn(
-            index,
-            direction,
-            (a, b) => TextSortableColumn.compare(a, b),
-            s
-          );
-        } else {
-          this.sortColumn(
-            index,
-            direction,
-            (a, b) => TextSortableColumn.compare(b, a),
-            s
-          );
-        }
+    if (initialRowSort) {
+      const { column, direction } = initialRowSort;
+      const columnInstanceIndex = visibleColumns?.indexOf(column) ?? column;
+      const columnObj = columns[columnInstanceIndex];
+      if (columnObj !== undefined) {
+        this.sortColumn(
+          columnInstanceIndex,
+          direction,
+          direction === 'ascending'
+            ? (a, b) => TextSortableColumn.compare(a, b)
+            : (a, b) => TextSortableColumn.compare(b, a),
+          s
+        );
       }
     }
     this.state = s;
-
-    this.columnIndexToDataMap = [];
 
     this.tableRef = React.createRef();
 
@@ -433,13 +413,12 @@ class Table extends React.Component {
     this.cellValidator = this.cellValidator.bind(this);
     this.cellSetter = this.cellSetter.bind(this);
     this.setSparseState = this.setSparseState.bind(this);
-    this.onColumnWidthChangedXS = this.onColumnWidthChangedXS.bind(this);
     this.onCellClick = this.onCellClick.bind(this);
   }
 
   componentDidMount() {
     const { domref, id } = this.props as TableProps;
-    // Scroll table to last position.
+    // Scroll table to previously saved position.
     const tableRef = domref || this.tableRef;
     const t = tableRef.current;
     if (t) {
@@ -476,37 +455,22 @@ class Table extends React.Component {
     return ret;
   }
 
-  mapTableColumn(tableColIndex: number): TColumnLocation {
-    const { columnIndexToDataMap } = this;
-    const ret: TColumnLocation = {
-      dataColIndex: tableColIndex,
-      tableColIndex,
-    };
-    if (columnIndexToDataMap.length) {
-      ret.dataColIndex = columnIndexToDataMap[tableColIndex];
-    }
-    return ret;
-  }
-
-  getCellData(tableRowIndex: number, tableColumnIndex: number) {
+  getCellData(tableRowIndex: number, column: number): TCellLookupResult {
     const props = this.props as TableProps;
-    const { data } = props;
+    const { data, visibleColumns } = props;
     const row = this.mapTableRow(tableRowIndex);
-    const col = this.mapTableColumn(tableColumnIndex);
-    let value = data[row.dataRowIndex][col.dataColIndex];
+    const dataCol = (visibleColumns && visibleColumns[column]) ?? column;
+    const datarow = data[row.dataRowIndex];
+    let value = datarow[dataCol];
     if (typeof value === 'function') {
-      value = value(row.dataRowIndex, col.dataColIndex);
+      value = value(row.dataRowIndex, dataCol);
     }
-    return {
-      value,
-      info: data[row.dataRowIndex][0],
-      row,
-      col,
-    };
+    const info = datarow[datarow.length - 1] as TCellInfo;
+    return { value, info, row, dataCol };
   }
 
-  cellSetter(tableRowindex: number, tableColumnIndex: number) {
-    const dataKey = Table.dataKey(tableRowindex, tableColumnIndex);
+  cellSetter(tableRowindex: number, column: number) {
+    const dataKey = Table.dataKey(tableRowindex, column);
     const { onEditableCellChanged } = this.props as TableProps;
     return (value: string) => {
       const intent = this.isValid(value) ? null : Intent.DANGER;
@@ -516,7 +480,7 @@ class Table extends React.Component {
         onEditableCellChanged(
           {
             ...this.mapTableRow(tableRowindex),
-            ...this.mapTableColumn(tableColumnIndex),
+            column,
           },
           value
         );
@@ -542,14 +506,7 @@ class Table extends React.Component {
     this.sState({ [stateKey]: values });
   }
 
-  onColumnWidthChangedXS(tableColIndex: number, size: number) {
-    const { onColumnWidthChanged } = this.props as TableProps;
-    if (onColumnWidthChanged) {
-      onColumnWidthChanged(this.mapTableColumn(tableColIndex), size);
-    }
-  }
-
-  // Unlike column order, which is solely determined by the columnOrder
+  // Unlike column order, which is solely determined by the visibleColumns
   // prop, row order is part of the table state as sortedIndexMap. When
   // a column is sorted, the new mapping is returned via onRowsReordered
   // so that ancestor elements may have the new order.
@@ -559,43 +516,40 @@ class Table extends React.Component {
     comparator: (a: any, b: any) => number,
     s?: Pick<TableState, 'sortedIndexMap'>
   ) {
-    const { data, onRowsReordered } = this.props as TableProps;
+    const state = this.state as TableState;
+    const dataCol = columnInstanceIndex;
+    const sim = state?.sortedIndexMap || [];
+    const { data, visibleColumns, onRowsReordered } = this.props as TableProps;
     const sortedIndexMap = Utils.times(data.length, (i: number) => i);
     sortedIndexMap.sort((a: number, b: number) => {
-      return comparator(
-        data[a][columnInstanceIndex + 1],
-        data[b][columnInstanceIndex + 1]
-      );
+      return comparator(data[a][dataCol], data[b][dataCol]);
     });
-    if (s) s.sortedIndexMap = sortedIndexMap;
-    else {
-      this.sState({ sortedIndexMap });
-    }
-    if (onRowsReordered) {
-      const tableColIndex = sortedIndexMap.indexOf(columnInstanceIndex + 1);
-      onRowsReordered(
-        { tableColIndex, dataColIndex: columnInstanceIndex + 1 },
-        direction,
-        sortedIndexMap
-      );
+    if (
+      sim.length !== sortedIndexMap.length ||
+      sim.some((sm, i) => sm !== sortedIndexMap[i])
+    ) {
+      if (s) s.sortedIndexMap = sortedIndexMap;
+      else {
+        this.sState({ sortedIndexMap });
+      }
+      if (onRowsReordered) {
+        const column = visibleColumns?.indexOf(dataCol) ?? columnInstanceIndex;
+        onRowsReordered(column, direction, sortedIndexMap);
+      }
     }
   }
 
   // Like column order, column hiding is entirely controlled by the
-  // columnWidths prop (a value of -1 hides a column). So onColumnHide
-  // is responsible for updating the columnWidths prop to effect the
-  // change to the table.
+  // visibleColumns prop. So onColumnHide is responsible for updating
+  // the columnWidths prop to effect the change to the table.
   columnHide(toggleColumnInstance: number, targetColumnInstance: number) {
-    const { onColumnHide } = this.props as TableProps;
-    const { columnIndexToDataMap } = this;
+    const { visibleColumns, onColumnHide } = this.props as TableProps;
+    const toggleDataCol = toggleColumnInstance;
+    const targetDataCol = targetColumnInstance;
     if (onColumnHide) {
-      const targetTableColumn = columnIndexToDataMap.indexOf(
-        targetColumnInstance + 1
-      );
-      onColumnHide(
-        toggleColumnInstance + 1,
-        this.mapTableColumn(targetTableColumn).tableColIndex
-      );
+      const targetColumn =
+        visibleColumns?.indexOf(targetDataCol) ?? targetDataCol;
+      onColumnHide(toggleDataCol, targetColumn);
     }
   }
 
@@ -607,60 +561,56 @@ class Table extends React.Component {
         const rowt = cell.element.className.match(/bp4-table-cell-row-(\d+)\b/);
         const tableRowIndex = rowt ? Number(rowt[1]) : -1;
         const colt = cell.element.className.match(/bp4-table-cell-col-(\d+)\b/);
-        const tableColIndex = colt ? Number(colt[1]) : -1;
+        const column = colt ? Number(colt[1]) : -1;
         onCellClick(e as React.MouseEvent, {
           ...this.mapTableRow(tableRowIndex),
-          ...this.mapTableColumn(tableColIndex),
+          column,
         });
       }
     }
+    e.stopPropagation();
   }
 
   render() {
     const state = this.state as TableState;
     const props = this.props as TableProps;
-    const { columns: cols } = state;
-    const { columnOrder, selectionModes, onColumnsReordered } = props;
+    const { columns } = state;
     const {
       data,
+      columnHeadings,
+      visibleColumns,
+      columnWidths,
       selectedRegions,
+      selectionModes,
       enableMultipleSelection,
       enableColumnReordering,
-      columnWidths,
+      onColumnsReordered,
       onColumnWidthChanged,
     } = props;
-    const { onColumnWidthChangedXS, onCellClick } = this;
+    const { onCellClick } = this;
     let { tableRef } = this;
     const numRows = data.length;
-    // Column order is wholly determined by the columnOrder prop. If the user
-    // reorders a column, the action is reported via onColumnsReordered and
-    // then the columnOrder prop must be updated to effect the actual change.
-    const order = columnOrder?.slice();
-    const columns: JSX.Element[] = [];
-    this.columnIndexToDataMap = [];
-    const orderedColumnWidths: number[] | undefined = columnWidths
-      ? []
-      : undefined;
-    cols.forEach((_c, i) => {
-      if (!columnWidths || columnWidths[i] !== -1) {
-        const io = order && order.length ? (order.shift() as number) : i;
-        if (orderedColumnWidths && columnWidths) {
-          orderedColumnWidths.push(columnWidths[io]);
-        }
-        columns.push(
-          cols[io].getColumn(
-            this.getCellData,
-            this.sortColumn,
-            this.columnHide,
-            this.cellValidator,
-            this.cellSetter,
-            props,
-            state
-          )
-        );
-        this.columnIndexToDataMap.push(io + 1);
-      }
-    });
+    // Column order and visiblity are wholly determined by the visibleColumns
+    // prop. If the user reorders or hides a column, the action is reported via
+    // onColumnsReordered and onColumnHide, and the visibleColumns prop must be
+    // updated to effect any actual change.
+    const tableVisibleColumns =
+      visibleColumns || columnHeadings.map((_h, i) => i);
+    const tableColumns = tableVisibleColumns.map((cii) =>
+      columns[cii].getColumn(
+        this.getCellData,
+        this.sortColumn,
+        this.columnHide,
+        this.cellValidator,
+        this.cellSetter,
+        props,
+        state
+      )
+    );
+    let tableColumnWidths: number[] | undefined;
+    if (columnWidths) {
+      tableColumnWidths = tableVisibleColumns.map((cii) => columnWidths[cii]);
+    }
 
     const classes = ['table'];
     if (onColumnWidthChanged) classes.push('width-resizable');
@@ -687,7 +637,7 @@ class Table extends React.Component {
       >
         <BPTable
           numRows={numRows}
-          columnWidths={orderedColumnWidths}
+          columnWidths={tableColumnWidths}
           selectedRegions={selectedRegions}
           selectionModes={selectionModes}
           enableMultipleSelection={enableMultipleSelection}
@@ -695,9 +645,9 @@ class Table extends React.Component {
           enableRowHeader={false}
           enableFocusedCell={false}
           onColumnsReordered={onColumnsReordered}
-          onColumnWidthChanged={onColumnWidthChangedXS}
+          onColumnWidthChanged={onColumnWidthChanged}
         >
-          {columns}
+          {tableColumns}
         </BPTable>
       </Box>
     );
