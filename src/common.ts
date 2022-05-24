@@ -521,8 +521,8 @@ export function parseSwordConf(
         } else if (entryBase === 'AudioChapters') {
           r.AudioChapters = JSON_parse(value);
         } else if (Object.keys(C.SwordConf.delimited).includes(entry)) {
-          const ent = entry as keyof typeof C.SwordConf.delimited;
-          r[ent] = value.split(C.SwordConf.delimited[ent]);
+          // const ent = entry as keyof typeof C.SwordConf.delimited;
+          // r[ent] = value.split(C.SwordConf.delimited[ent]);
         } else if (C.SwordConf.repeatable.includes(entry)) {
           const ent = entry as typeof C.SwordConf.repeatable[number];
           r[ent]?.push(value);
@@ -545,7 +545,7 @@ export function parseSwordConf(
   }
   r.moduleType = 'Generic Books';
   if ((r.ModDrv as any) === 'audio') r.moduleType = 'XSM_audio';
-  else if (r.NameXSM) r.moduleType = 'XSM';
+  else if (r.DataPath.endsWith('.xsm')) r.moduleType = 'XSM';
   else if (r.DataPath.includes('/texts/')) r.moduleType = 'Biblical Texts';
   else if (r.DataPath.includes('/comments/')) r.moduleType = 'Commentaries';
   else if (r.DataPath.includes('/lexdict/'))

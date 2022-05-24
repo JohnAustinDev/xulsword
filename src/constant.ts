@@ -108,6 +108,8 @@ const C = {
 
   FTPMaxConnectionsPerDomain: 29, // 40 is absolute max. 36 failed on crosswire.org
   FTPMaxConnections: 48,
+  FTPUserName: 'anonymous', // TODO!: How to set: 'xulsword@xulsword.org',
+  HTTPUserAgent: 'xulsword@xulsword.org',
 
   // xulsword UI constants
   UI: {

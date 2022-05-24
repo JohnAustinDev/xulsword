@@ -4,6 +4,7 @@
 /* eslint-disable promise/param-names */
 /* eslint-disable prefer-rest-params */
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { session } from 'electron';
 import fpath from 'path';
 import log from 'electron-log';
 import FTP, { ListingElement } from 'ftp';
@@ -162,7 +163,7 @@ export async function connect<Retval>(
         });
         try {
           log.debug(`Connecting: ${domain}`);
-          c.connect({ host: domain });
+          c.connect({ host: domain, user: C.FTPUserName });
         } catch (er: any) {
           removeConnection(c);
           rejectOnce(er);
@@ -641,3 +642,43 @@ const Downloader: GType['Downloader'] = {
 };
 
 export default Downloader;
+
+export async function downloadFileHTTP(
+  url: string,
+  dest: LocalFile | string,
+  progress?: ((p: number) => void) | null
+): Promise<LocalFile | string> {
+  return new Promise((resolve, reject) => {
+    const ses = session.fromPartition('persist:audio', { cache: false });
+    ses.setUserAgent(C.HTTPUserAgent);
+    const destpath = typeof dest === 'string' ? dest : dest.path;
+    const destFile = new LocalFile(destpath);
+    ses.setDownloadPath(fpath.dirname(destpath));
+    // TODO!: Get this to work with GenBook UTF8 paths.
+    ses.on('will-download', (_event, item) => {
+      item.setSavePath(destpath);
+      item.on('updated', (_e, state) => {
+        if (state === 'interrupted') {
+          resolve('Download is interrupted but can be resumed');
+        } else if (state === 'progressing') {
+          if (item.isPaused()) {
+            resolve('Download is paused');
+          } else if (progress) {
+            progress(item.getReceivedBytes() / item.getTotalBytes());
+          }
+        }
+      });
+      item.once('done', (_e, state) => {
+        if (state === 'completed') {
+          resolve(destFile);
+        } else {
+          const er = new Error(`Download failed: ${state}`);
+          reject(er);
+          log.error(er);
+        }
+      });
+    });
+    log.debug(`Downloading: '${url}'`);
+    ses.downloadURL(url);
+  });
+}

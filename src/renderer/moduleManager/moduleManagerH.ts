@@ -29,6 +29,7 @@ import type {
 } from '../../type';
 import type ModuleManager from './moduleManager';
 import type { ManagerState } from './moduleManager';
+import type { BibleselectSelection } from '../libxul/bibleselect';
 
 export const Tables = ['language', 'module', 'repository'] as const;
 
@@ -451,7 +452,10 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
           break;
         }
         case 'ok': {
-          G.Window.moveToFront({ type: 'xulsword' });
+          G.Window.moveToBack();
+          // Remove selection from persisted state.
+          this.setTableState('module', { selection: [] });
+          this.setTableState('repository', { selection: [] });
           const state = this.state as ManagerState;
           const { repository: repotable } = state.tables;
           const { moduleData } = Saved;
@@ -751,46 +755,107 @@ export function download(this: ModuleManager, rows: number[]): void {
       const module = drow[ModCol.iModule] as string;
       const { repo } = drow[ModCol.iInfo];
       const modrepk = modrepKey(module, repo);
-      if (drow[ModCol.iInfo].conf.moduleType === 'XSM') {
+      const { moduleType } = drow[ModCol.iInfo].conf;
+      const loadingrows: TModuleTableRow[] = [];
+      let xsmZipFileOrURL: string = drow[ModCol.iInfo].conf.DataPath;
+      if (moduleType === 'XSM') {
         const { moduleData } = Saved;
         Object.values(moduleData)
           .filter((r) => {
             return (
-              r[ModCol.iInfo].conf.NameXSM === drow[ModCol.iInfo].conf.NameXSM
+              r[ModCol.iInfo].conf.DataPath === drow[ModCol.iInfo].conf.DataPath
             );
           })
           .forEach((r: TModuleTableRow) => {
             r[ModCol.iInfo].loading = loading(ModCol.iInstalled);
+            loadingrows.push(r);
           });
+      } else if (moduleType === 'XSM_audio') {
+        drow[ModCol.iInfo].loading = loading(ModCol.iInstalled);
+        loadingrows.push(drow);
       } else {
         drow[ModCol.iInfo].loading = loading(ModCol.iInstalled);
+        loadingrows.push(drow);
       }
       const nfiles = (async () => {
         try {
           if (drow[ModCol.iInfo].conf.moduleType === 'XSM_audio') {
-            // TODO!: Finish this audio dialog and url setting.
-            // const bookch = await ;
-            // .url = ;
+            const { AudioChapters } = drow[ModCol.iInfo].conf;
+            if (AudioChapters) {
+              const audio: BibleselectSelection | null = await new Promise(
+                (resolve) => {
+                  const {
+                    bk: book,
+                    ch1: chapter,
+                    ch2: lastchapter,
+                  } = AudioChapters[0];
+                  const books = Array.from(
+                    new Set(AudioChapters.map((v) => v.bk))
+                  );
+                  const chapters: number[] = [];
+                  for (let x = 1; x <= lastchapter; x += 1) {
+                    if (x >= chapter) chapters.push(x);
+                  }
+                  this.sState({
+                    showChapterDialog: {
+                      conf: drow[ModCol.iInfo].conf,
+                      selection: { book, chapter, lastchapter: chapter },
+                      initialSelection: { book, chapter, lastchapter: chapter },
+                      options: {
+                        trans: [],
+                        books,
+                        chapters,
+                        lastchapters: chapters,
+                        verses: [],
+                        lastverses: [],
+                      },
+                      chapters: AudioChapters,
+                      callback: (result) => resolve(result),
+                    },
+                  });
+                }
+              );
+              if (audio) {
+                const { book, chapter, lastchapter } = audio;
+                xsmZipFileOrURL += `&bk=${book}&ch=${chapter}&cl=${lastchapter}`;
+              } else {
+                throw new Error(`Audio module download canceled.`);
+              }
+            } else {
+              throw new Error(
+                `Audio config is missing AudioChapters: '${
+                  drow[ModCol.iModule]
+                }'`
+              );
+            }
           }
           const dl = await (drow[ModCol.iInfo].conf.moduleType.startsWith('XSM')
-            ? G.Module.downloadXSM(module, repo)
+            ? G.Module.downloadXSM(module, xsmZipFileOrURL, repo)
             : G.Module.download(module, repo));
-          drow[ModCol.iInfo].loading = false;
+          loadingrows.forEach((r) => {
+            r[ModCol.iInfo].loading = false;
+          });
           let newintent: Intent = 'success';
           if (typeof dl === 'string') {
             this.addToast({ message: dl });
             newintent = 'danger';
           } else {
-            drow[ModCol.iInstalled] = ON;
+            loadingrows.forEach((r) => {
+              r[ModCol.iInstalled] = ON;
+            });
             Downloads[modrepk].failed = false;
           }
-          drow[ModCol.iInfo].intent = intent(ModCol.iInstalled, newintent);
+          loadingrows.forEach((r) => {
+            r[ModCol.iInfo].intent = intent(ModCol.iInstalled, newintent);
+          });
           this.setTableState('module', null, modtable.data, true);
           return typeof dl === 'string' ? null : dl;
-        } catch (er) {
-          log.warn(er);
-          drow[ModCol.iInfo].loading = false;
-          drow[ModCol.iInfo].intent = intent(ModCol.iInstalled, 'danger');
+        } catch (er: any) {
+          this.addToast({ message: er.message });
+          loadingrows.forEach((r) => {
+            r[ModCol.iInfo].loading = false;
+            r[ModCol.iInfo].intent = intent(ModCol.iInstalled, 'danger');
+          });
           this.setTableState('module', null, modtable.data, true);
           return null;
         }

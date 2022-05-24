@@ -386,7 +386,7 @@ const Window: GType['Window'] = {
   tmpDir(window?: WindowArgType): string {
     const win = getBrowserWindows(window, arguments[1])[0];
     const w = win as any;
-    if (w.xstmpDir) return w.xstmpDir;
+    if (w && 'xstmpDir' in w) return w.xstmpDir;
     const dir = Dirs.TmpD;
     dir.append(`xulsword_${String(Math.round(10000 * Math.random()))}`);
     if (dir.exists()) dir.remove(true);

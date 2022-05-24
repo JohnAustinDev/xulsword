@@ -268,6 +268,22 @@ export type HistoryVKType = {
   selection: LocationVKType | null;
 };
 
+export type AudioFile = {
+  audioCode: string;
+  book: string;
+  chapter: number;
+  file: string;
+  type: 'mp3' | 'ogg';
+};
+
+export type GenBookAudioFile = {
+  audioCode: string;
+  path: string[];
+  file: string;
+  type: 'mp3' | 'ogg';
+  genbook: true;
+};
+
 export type LookupInfo = {
   companion: boolean;
   userpref: boolean;
@@ -414,10 +430,10 @@ export type SwordConfType = {
   GlobalOptionFilter?: string[];
   History?: [string, SwordConfLocalized][];
 
-  // Non-standard XSM (xulsword module) entries
-  NameXSM?: string;
-  SwordModules?: string[];
-  SwordVersions?: string[];
+  // Non-standard XSM (xulsword modules) have 'name.xsm' for DataPath
+  // NameXSM?: string;
+  // SwordModules?: string[];
+  // SwordVersions?: string[];
 
   // Non-standard XSM audio module entries. These modules also have
   // ModDrv as 'audio' and DataPath as a URL value.
@@ -461,7 +477,7 @@ export type NewModulesType = {
   modules: SwordConfType[];
   fonts: string[];
   bookmarks: string[];
-  audio: string[];
+  audio: (AudioFile | GenBookAudioFile)[];
   errors: string[];
 };
 
@@ -488,7 +504,6 @@ export type Repository = Download & {
   disabled?: boolean;
   custom?: boolean;
   builtin?: boolean;
-  url?: string;
 };
 
 export type RepositoryListing = SwordConfType[] | string | null;
@@ -782,6 +797,7 @@ export const GPublic = {
     ) => Promise<number | string>,
     downloadXSM: func as unknown as (
       module: string,
+      zipFileOrURL: string,
       repository: Repository
     ) => Promise<number | string>,
     saveDownloads: func as unknown as (

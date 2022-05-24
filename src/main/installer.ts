@@ -12,9 +12,17 @@ import Window, { getBrowserWindows } from './window';
 import LocalFile from './components/localFile';
 import Dirs from './components/dirs';
 import LibSword from './components/libsword';
-import { ftpCancel, getFile, getDir, resetFTP } from './components/downloader';
+import {
+  ftpCancel,
+  getFile,
+  getDir,
+  resetFTP,
+  downloadFileHTTP,
+} from './components/downloader';
 
 import type {
+  AudioFile,
+  GenBookAudioFile,
   GType,
   ModTypes,
   NewModulesType,
@@ -376,8 +384,59 @@ export async function installZIPs(
               }
 
               case 'audio': {
-                // TODO! audio install
-                newmods.audio.push(entry.name);
+                const audio = Dirs.xsAudio;
+                const parts = fpath.posix.parse(entry.entryName);
+                const audiotype = parts.ext.substring(1).toLowerCase();
+                if (/^\d+$/.test(parts.name)) {
+                  // Bible audio files...
+                  const chapter = Number(parts.name.replace(/^0+(?!$)/, ''));
+                  const dirs = parts.dir.split('/');
+                  const book = dirs.pop();
+                  const audioCode = dirs.pop();
+                  if (
+                    audioCode &&
+                    book &&
+                    !Number.isNaN(chapter) &&
+                    (audiotype === 'mp3' || audiotype === 'ogg')
+                  ) {
+                    audio.append(audioCode);
+                    if (!audio.exists()) {
+                      audio.create(LocalFile.DIRECTORY_TYPE);
+                    }
+                    audio.append(book);
+                    if (!audio.exists()) {
+                      audio.create(LocalFile.DIRECTORY_TYPE);
+                    }
+                    audio.append(entry.name);
+                    audio.writeFile(entry.getData());
+                    const ret: AudioFile = {
+                      audioCode,
+                      book,
+                      chapter,
+                      file: parts.base,
+                      type: audiotype,
+                    };
+                    newmods.audio.push(ret);
+                  }
+                } else {
+                  // Genbook audio files...
+                  const path = parts.dir.split('/');
+                  path.shift(); // don't need language code
+                  const audioCode = path.shift();
+                  if (
+                    audioCode &&
+                    (audiotype === 'mp3' || audiotype === 'ogg')
+                  ) {
+                    const n: GenBookAudioFile = {
+                      genbook: true,
+                      audioCode,
+                      path,
+                      file: parts.base,
+                      type: audiotype,
+                    };
+                    newmods.audio.push(n);
+                  }
+                }
                 break;
               }
 
@@ -451,10 +510,56 @@ let Downloads: { [modrepoKey: string]: ZIP } = {};
 const Module: GType['Module'] = {
   async downloadXSM(
     module: string,
+    zipFileOrURL: string,
     repository: Repository
   ): Promise<number | string> {
-    // TODO! finish this.
-    return 'downloadXSM not implemented';
+    const callingWin = arguments[3] || null;
+    ftpCancel(false);
+    const modrepk = modrepKey(module, repository);
+    const progress = (prog: number) => {
+      log.silly(`progress ${prog}`);
+      callingWin?.webContents.send('progress', prog, modrepk);
+    };
+    progress(0);
+    let message = 'Canceled';
+    if (/^https?:\/\//i.test(zipFileOrURL)) {
+      try {
+        const tmpdir = new LocalFile(Window.tmpDir(callingWin));
+        if (tmpdir.exists()) {
+          log.debug(`downloadFileHTTP`, zipFileOrURL, tmpdir.path);
+          const dlfile = await downloadFileHTTP(
+            zipFileOrURL,
+            tmpdir.append(module),
+            progress
+          );
+          if (typeof dlfile !== 'string') {
+            Downloads[modrepk] = new ZIP(dlfile.path);
+            return 1;
+          }
+          message = dlfile;
+        } else {
+          throw new Error(`Could not create tmp directory: '${tmpdir.path}'`);
+        }
+      } catch (err: any) {
+        progress(-1);
+        return Promise.resolve(err.toString());
+      }
+    } else {
+      try {
+        const fp = fpath.posix.join(repository.path, zipFileOrURL);
+        log.debug(`downloadXSM`, repository.domain, fp);
+        const zipBuf = await getFile(repository.domain, fp, progress);
+        if (zipBuf) {
+          Downloads[modrepk] = new ZIP(zipBuf);
+          return 1;
+        }
+      } catch (er: any) {
+        progress(-1);
+        return Promise.resolve(er.toString());
+      }
+    }
+    progress(-1);
+    return message;
   },
 
   // Download a SWORD module from a repository and save it as a zip object

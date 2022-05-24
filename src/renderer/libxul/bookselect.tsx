@@ -105,10 +105,11 @@ class Bookselect extends React.Component {
   getBookOptions = (): PropTypes.ReactElementLike[] => {
     const { options } = this.props as BookselectProps;
     const { book } = this.state as BookselectState;
+    const { Book } = G;
     const books = options.map((bk) => {
       return (
         <option key={bk} value={bk}>
-          {bk in G.Book ? G.Book[bk].longname : bk}
+          {bk in Book ? Book[bk].longname : bk}
         </option>
       );
     });

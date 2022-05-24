@@ -1,3 +1,5 @@
+/* eslint-disable no-nested-ternary */
+/* eslint-disable react/forbid-prop-types */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react/static-property-placement */
 /* eslint-disable react/destructuring-assignment */
@@ -5,6 +7,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import { clone, ofClass } from '../../common';
 import C from '../../constant';
 import G from '../rg';
 import { getMaxChapter, getMaxVerse } from '../rutil';
@@ -18,50 +21,89 @@ import './xul.css';
 
 import type { BookGroupType } from '../../type';
 
+export type BibleselectSelection = {
+  tran?: string;
+  book?: string;
+  chapter?: number;
+  lastchapter?: number;
+  verse?: number;
+  lastverse?: number;
+};
+
+// If left undefined, valid lists will be automatically created. Otherwise
+// only the listed options will be provided. If there are no options (an
+// empty array) then the corresponding selector will be hidden.
+export type BibleselectOptions = {
+  trans?: string[];
+  books?: string[];
+  chapters?: number[];
+  lastchapters?: number[];
+  verses?: number[];
+  lastverses?: number[];
+};
+
 const defaultProps = {
   ...xulDefaultProps,
-  book: 'Gen',
-  chapter: 1,
-  verse: 1,
-  lastverse: 1,
-  trans: [],
+  initialSelection: {
+    tran: 'KJV',
+    book: 'Gen',
+    chapter: 1,
+    lastChapter: undefined,
+    verse: 1,
+    lastverse: 1,
+  },
+  options: {
+    trans: [],
+    books: undefined,
+    chapters: undefined,
+    verses: undefined,
+    lastChapters: [],
+    lastverses: undefined,
+  },
   disabled: false,
   sizetopopup: 'none',
-  books: ['ot', 'nt'],
+  onSelectionChange: undefined,
 };
 
 const propTypes = {
   ...xulPropTypes,
-  book: PropTypes.string,
-  chapter: PropTypes.number,
-  verse: PropTypes.number,
-  lastverse: PropTypes.number,
-  trans: PropTypes.arrayOf(PropTypes.string),
+  initialSelection: PropTypes.shape({
+    tran: PropTypes.string,
+    book: PropTypes.string,
+    chapter: PropTypes.number,
+    verse: PropTypes.number,
+    lastchapter: PropTypes.number,
+    lastverse: PropTypes.number,
+  }),
+  options: PropTypes.shape({
+    trans: PropTypes.arrayOf(PropTypes.string),
+    books: PropTypes.arrayOf(PropTypes.string),
+    chapters: PropTypes.arrayOf(PropTypes.number),
+    verses: PropTypes.arrayOf(PropTypes.number),
+    lastchapters: PropTypes.arrayOf(PropTypes.number),
+    lastverses: PropTypes.arrayOf(PropTypes.number),
+  }),
   disabled: PropTypes.bool,
   sizetopopup: PropTypes.oneOf(['none', 'always']),
-  books: PropTypes.arrayOf(PropTypes.string),
+  onSelectionChange: PropTypes.func,
 };
 
 interface BibleselectProps extends XulProps {
-  book: string;
-  chapter: number;
-  verse: number;
-  lastverse: number;
-  trans: string[];
+  initialSelection: BibleselectSelection;
+  options: BibleselectOptions;
   disabled: boolean;
   sizetopopup: string;
-  books: (BookGroupType | string)[];
+  onSelectionChange: (
+    e: BibleselectChangeEvents,
+    selection: BibleselectSelection
+  ) => void;
 }
 
 interface BibleselectState {
-  book: string;
-  chapter: string;
-  verse: string;
-  lastverse: string;
-  trans: string;
+  selection: BibleselectSelection;
 }
 
-type BSevent =
+export type BibleselectChangeEvents =
   | React.ChangeEvent<HTMLInputElement>
   | React.ChangeEvent<HTMLSelectElement>;
 
@@ -73,68 +115,81 @@ class Bibleselect extends React.Component {
 
   constructor(props: BibleselectProps) {
     super(props);
-    const { book: bk, chapter: ch, verse: vs, lastverse: lv } = props;
-    const book = bk || 'Gen';
-    const chapter = ch ? ch.toString() : '1';
-    const verse = vs ? vs.toString() : '1';
-    const lastverse = lv ? lv.toString() : '1';
-    const trans = props.trans[1] || '';
-    const s: BibleselectState = {
-      book,
-      chapter,
-      verse,
-      lastverse,
-      trans,
-    };
-    this.state = s;
+
+    const { initialSelection } = props;
+    this.state = { selection: initialSelection } as BibleselectState;
 
     this.handleChange = this.handleChange.bind(this);
   }
 
-  handleChange(e: BSevent, onChange?: (e: BSevent) => void) {
-    if (e.target.classList.contains('bsbook')) {
-      this.setState({
-        book: e.target.value,
-      });
-    } else if (e.target.classList.contains('bschapter')) {
-      this.setState({
-        chapter: e.target.value,
-      });
-    } else if (e.target.classList.contains('bsverse')) {
-      this.setState({
-        verse: e.target.value,
-      });
-    } else if (e.target.classList.contains('bslastverse')) {
-      this.setState({
-        lastverse: e.target.value,
-      });
-    } else if (e.target.classList.contains('bstrans')) {
-      this.setState({
-        trans: e.target.value,
-      });
+  handleChange(e: BibleselectChangeEvents) {
+    const cls = ofClass(
+      [
+        'bstrans',
+        'bsbook',
+        'bschapter',
+        'bslastchapter',
+        'bsverse',
+        'bslastverse',
+      ],
+      e.target
+    );
+    if (cls) {
+      let { selection } = this.state as BibleselectState;
+      selection = clone(selection);
+      const { onSelectionChange } = this.props as BibleselectProps;
+      const { value } = e.target;
+      switch (cls.type) {
+        case 'bstrans': {
+          selection.tran = value;
+          break;
+        }
+        case 'bsbook': {
+          selection.book = value;
+          break;
+        }
+        case 'bschapter': {
+          selection.chapter = Number(value);
+          break;
+        }
+        case 'bslastchapter': {
+          selection.lastchapter = Number(value);
+          break;
+        }
+        case 'bsverse': {
+          selection.verse = Number(value);
+          break;
+        }
+        case 'bslastverse': {
+          selection.lastverse = Number(value);
+          break;
+        }
+        default:
+          throw new Error(`Unexpected Bibleselect class: '${cls.type}'`);
+      }
+      this.setState({ selection });
+      if (typeof onSelectionChange === 'function') {
+        onSelectionChange(e, selection);
+      }
     }
-
-    if (typeof onChange === 'function') onChange(e);
   }
 
   render() {
-    const { book, chapter, verse, lastverse, trans } = this
-      .state as BibleselectState;
-    const { books, trans: translist } = this.props as BibleselectProps;
-
-    const { id: pid, disabled, sizetopopup } = this.props as BibleselectProps;
-
+    const props = this.props as BibleselectProps;
+    const { selection } = this.state as BibleselectState;
+    const { book, chapter, verse, lastverse, lastchapter, tran } = selection;
+    const { options, disabled, sizetopopup } = props;
+    const { trans, books, chapters, lastchapters, verses, lastverses } =
+      options;
     const { handleChange } = this;
 
-    const tab = (trans && G.Tab[trans]) || null;
-    const v11n = (tab && tab.v11n) || null;
+    const tab = (tran && G.Tab[tran]) || null;
+    const v11n = (tab && tab.v11n) || 'KJV';
 
     // Bible translation options
-    const tops = translist.length
-      ? translist
-      : G.Tabs.filter((t) => t.type === C.BIBLE).map((t) => t.module);
-
-    const translationOptions = tops.map((m) => {
+    const nt =
+      trans || G.Tabs.filter((t) => t.type === C.BIBLE).map((t) => t.module);
+    const newtrans = nt.map((m) => {
       const t = G.Tab[m];
       return (
         <option key={m} className={`cs-${t.module}`} value={t.module}>
@@ -147,103 +202,152 @@ class Bibleselect extends React.Component {
     });
 
     // Bible book options
-    const booklist: string[] = [];
-    books.forEach((bkbg: BookGroupType | string) => {
+    const nb = books || ['ot', 'nt'];
+    const bookset: Set<string> = new Set();
+    nb.forEach((bkbg: BookGroupType | string) => {
       const bg = (
         C.SupportedBookGroups.includes(bkbg as BookGroupType) ? bkbg : null
       ) as BookGroupType | null;
       if (bg) {
-        booklist.push(...C.SupportedBooks[bg]);
+        C.SupportedBooks[bg].forEach((b) => bookset.add(b));
       } else {
-        booklist.push(bkbg);
+        bookset.add(bkbg);
       }
     });
+    const { Book } = G;
+    const newbooks = Array.from(bookset)
+      .sort((a, b) => {
+        const aa = Book[a];
+        const bb = Book[b];
+        if (!aa) return -1;
+        if (!bb) return 1;
+        return aa.index > bb.index ? 1 : aa.index < bb.index ? -1 : 0;
+      })
+      .filter((code) => Book[code]);
 
     // Bible chapter options
-    const mc = v11n ? getMaxChapter(v11n, book) : 0;
-    const chapters = [];
-    for (let x = 1; x <= mc; x += 1) {
-      chapters.push(
-        <option key={x} value={x}>
-          {x}
-        </option>
-      );
+    let mc = chapters;
+    if (!mc) {
+      mc = [];
+      for (
+        let x = 1;
+        x <= (v11n && book ? getMaxChapter(v11n, book) : 0);
+        x += 1
+      ) {
+        mc.push(x);
+      }
     }
+    const newchapters = mc.map((ch) => (
+      <option key={ch} value={ch}>
+        {ch}
+      </option>
+    ));
+
+    // Bible last chapter options
+    if (lastchapters) mc = lastchapters;
+    const newlastchapters = mc.map((ch) => (
+      <option key={ch} value={ch}>
+        {ch}
+      </option>
+    ));
 
     // Bible verse options
-    const mv = v11n ? getMaxVerse(v11n, `${book}.${chapter}`) : 0;
-    const verses = [];
-    for (let x = 1; x <= mv; x += 1) {
-      verses.push(
-        <option key={x} value={x}>
-          {x}
-        </option>
-      );
+    let mv = verses;
+    if (!mv) {
+      mv = [];
+      for (
+        let x = 1;
+        x <= (v11n ? getMaxVerse(v11n, `${book}.${chapter}`) : 0);
+        x += 1
+      ) {
+        mv.push(x);
+      }
     }
+    const newverses = mv.map((vs) => (
+      <option key={vs} value={vs}>
+        {vs}
+      </option>
+    ));
 
     // Bible last-verse options
-    const lastverses = [];
-    for (let x = Number(verse); x <= mv; x += 1) {
-      lastverses.push(
-        <option key={x} value={x}>
-          {x}
-        </option>
-      );
-    }
+    if (lastverses) mv = lastverses;
+    const newlastverses = mv.map((vs) => (
+      <option key={vs} value={vs}>
+        {vs}
+      </option>
+    ));
 
     return (
       <Hbox {...addClass('bibleselect', this.props)}>
-        <Bookselect
-          id={`${pid}__bsbook`}
-          className="bsbook"
-          selection={book}
-          options={booklist}
-          disabled={disabled}
-          sizetopopup={sizetopopup}
-          onChange={handleChange}
-        />
+        {newbooks.length > 0 && (
+          <Bookselect
+            className="bsbook"
+            selection={book}
+            options={newbooks}
+            sizetopopup={sizetopopup}
+            disabled={disabled}
+            onChange={handleChange}
+          />
+        )}
 
-        <Menulist
-          id={`${pid}__bschapter`}
-          className="bschapter"
-          disabled={disabled}
-          value={chapter.toString()}
-          options={chapters}
-          onChange={handleChange}
-        />
+        {newchapters.length > 0 && (
+          <Menulist
+            className="bschapter"
+            value={(chapter || 1).toString()}
+            options={newchapters}
+            disabled={disabled}
+            onChange={handleChange}
+          />
+        )}
 
-        <Label className="colon" value=":" />
+        {newverses.length > 0 && (
+          <>
+            <Label className="colon" value=":" />
+            <Menulist
+              className="bsverse"
+              value={(verse || 1).toString()}
+              options={newverses}
+              disabled={disabled}
+              onChange={handleChange}
+            />
+          </>
+        )}
 
-        <Menulist
-          id={`${pid}__bsverse`}
-          className="bsverse"
-          disabled={disabled}
-          value={verse.toString()}
-          options={verses}
-          onChange={handleChange}
-        />
+        {((newverses.length > 0 && newlastverses.length > 0) ||
+          (newchapters.length > 0 && newlastchapters.length > 0)) && (
+          <Label className="dash" value="&#8211;" />
+        )}
+        {newlastverses.length > 0 && (
+          <Menulist
+            className="bslastverse"
+            value={(lastverse || verse || 1).toString()}
+            options={newlastverses}
+            disabled={disabled}
+            onChange={handleChange}
+          />
+        )}
+        {newlastchapters.length > 0 && (
+          <Menulist
+            className="bslastchapter"
+            value={(lastchapter || chapter || 1).toString()}
+            options={newlastchapters}
+            disabled={disabled}
+            onChange={handleChange}
+          />
+        )}
 
-        <Label className="dash" value="&#8211;" />
-
-        <Menulist
-          id={`${pid}__bslastverse`}
-          className="bslastverse"
-          disabled={disabled}
-          value={lastverse.toString()}
-          options={lastverses}
-          onChange={handleChange}
-        />
-
-        <Spacer width="27px" />
-
-        <Menulist
-          id={`${pid}__bstrans`}
-          className="bstrans"
-          disabled={disabled}
-          value={trans}
-          options={translationOptions}
-          onChange={handleChange}
-        />
+        {newtrans.length > 0 && (
+          <>
+            <Spacer width="27px" />
+            <Menulist
+              className="bstrans"
+              value={tran}
+              options={newtrans}
+              disabled={disabled}
+              onChange={handleChange}
+            />
+          </>
+        )}
       </Hbox>
     );
   }

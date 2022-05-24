@@ -1,3 +1,4 @@
+/* eslint-disable no-nested-ternary */
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react/static-property-placement */
@@ -6,6 +7,8 @@ import React from 'react';
 import i18n from 'i18next';
 import {
   Button,
+  Classes,
+  Dialog,
   IToastProps,
   Position,
   ProgressBar,
@@ -32,6 +35,11 @@ import {
 } from '../libxul/xul';
 import { Hbox, Vbox, Box } from '../libxul/boxes';
 import Groupbox from '../libxul/groupbox';
+import Bibleselect, {
+  BibleselectChangeEvents,
+  BibleselectOptions,
+  BibleselectSelection,
+} from '../libxul/bibleselect';
 import Table, {
   TonCellClick,
   TonColumnHide,
@@ -42,12 +50,14 @@ import Table, {
   TinitialRowSort,
 } from '../libxul/table';
 import Spacer from '../libxul/spacer';
+import Label from '../libxul/label';
 import DragSizer, { DragSizerVal } from '../libxul/dragsizer';
 import * as H from './moduleManagerH';
 import './moduleManager.css';
 
 // TODO!: showModuleInfo CSS
-// TODO!: Add XSM and audio support
+// TODO!: ModuleNanager Locale
+// TODO!: ModuleManager RTL
 
 import type {
   ModTypes,
@@ -55,6 +65,8 @@ import type {
   Repository,
   RepositoryListing,
   RowSelection,
+  SwordConfAudioChapters,
+  SwordConfType,
 } from '../../type';
 import {
   ALWAYS_ON,
@@ -96,6 +108,14 @@ export type ManagerProps = XulProps;
 const notStatePref = {
   progress: null as number[] | null,
   showModuleInfo: '',
+  showChapterDialog: null as {
+    conf: SwordConfType;
+    selection: BibleselectSelection;
+    initialSelection: BibleselectSelection;
+    options: BibleselectOptions;
+    chapters: SwordConfAudioChapters;
+    callback: (result: BibleselectSelection | null) => void;
+  } | null,
   tables: {
     language: {
       data: [] as TLanguageTableRow[],
@@ -242,6 +262,9 @@ export default class ModuleManager extends React.Component {
       repository: H.columnWidthChanged.bind(this, 'repository'),
     };
     this.sizeTableToParent = this.sizeTableToParent.bind(this);
+    this.dialogOnChange = this.dialogOnChange.bind(this);
+    this.dialogClose = this.dialogClose.bind(this);
+    this.dialogAccept = this.dialogAccept.bind(this);
     this.sState = this.setState.bind(this);
   }
 
@@ -308,7 +331,7 @@ export default class ModuleManager extends React.Component {
         });
     }
     this.destroy.push(onSetWindowState(this));
-    // Initiate progress handlers
+    // Instantiate progress handlers
     this.destroy.push(
       window.ipc.renderer.on('progress', (prog: number, id?: string) => {
         const state = this.state as ManagerState;
@@ -342,7 +365,18 @@ export default class ModuleManager extends React.Component {
         });
         const moddrow = module.data[modIndex];
         if (id && modIndex !== -1 && moddrow && prog === -1) {
-          moddrow[ModCol.iInfo].loading = false;
+          if (moddrow[ModCol.iInfo].conf.DataPath) {
+            Object.values(module.data)
+              .filter((r) => {
+                return (
+                  r[ModCol.iInfo].conf.DataPath ===
+                  moddrow[ModCol.iInfo].conf.DataPath
+                );
+              })
+              .forEach((r: TModuleTableRow) => {
+                r[ModCol.iInfo].loading = false;
+              });
+          } else moddrow[ModCol.iInfo].loading = false;
           this.setTableState('module');
         }
       })
@@ -540,7 +574,7 @@ export default class ModuleManager extends React.Component {
           if (repoIsLocal) localModules[modunique] = repokey;
           else if (drow[RepCol.iState] !== OFF) {
             enabledExternRepoMods[modunique] = repokey;
-            if (c.NameXSM) {
+            if (c.moduleType.startsWith('XSM')) {
               enabledXulswordRepoMods[modunique] = repokey;
             }
           }
@@ -610,7 +644,12 @@ export default class ModuleManager extends React.Component {
               modunique in enabledXulswordRepoMods)
           )
             return;
-          if (modunique in enabledXulswordRepoMods && !c.NameXSM) return;
+          if (
+            modunique in enabledXulswordRepoMods &&
+            !c.moduleType.startsWith('XSM')
+          ) {
+            return;
+          }
           if (!repoIsLocal && modunique in localModules) {
             modrow[ModCol.iInstalled] = ON;
             const modrepok = `${localModules[modunique]}.${c.module}`;
@@ -668,6 +707,66 @@ export default class ModuleManager extends React.Component {
     });
   }
 
+  dialogOnChange(_e: BibleselectChangeEvents, selection: BibleselectSelection) {
+    const { showChapterDialog } = this.state as ManagerState;
+    if (showChapterDialog) {
+      const { book, chapter, lastchapter } = selection;
+      const { options, chapters: allchs } = showChapterDialog;
+      const { trans, books, verses, lastverses } = options;
+      if (book && chapter !== undefined && lastchapter !== undefined) {
+        const newselection: BibleselectSelection = {
+          book,
+          chapter,
+          lastchapter,
+        };
+        const chset: Set<number> = new Set();
+        allchs.forEach((v) => {
+          if (v.bk === book) {
+            for (let x = v.ch1; x <= v.ch2; x += 1) {
+              chset.add(x);
+            }
+          }
+        });
+        const chapters = Array.from(chset).sort((a, b) =>
+          a > b ? 1 : a < b ? -1 : 0
+        );
+        const lastchapters = chapters.filter((c) => c >= chapter);
+        const newoptions: BibleselectOptions = {
+          trans,
+          books,
+          chapters,
+          lastchapters,
+          verses,
+          lastverses,
+        };
+        this.sState({
+          showChapterDialog: {
+            ...showChapterDialog,
+            selection: newselection,
+            options: newoptions,
+          },
+        });
+      }
+    }
+  }
+
+  dialogClose() {
+    const { showChapterDialog } = this.state as ManagerState;
+    if (showChapterDialog) {
+      showChapterDialog.callback(null);
+      this.sState({ showChapterDialog: null });
+    }
+  }
+
+  dialogAccept() {
+    const { showChapterDialog } = this.state as ManagerState;
+    if (showChapterDialog) {
+      const { selection } = showChapterDialog;
+      showChapterDialog.callback(selection);
+      this.sState({ showChapterDialog: null });
+    }
+  }
+
   addToast(toast: IToastProps) {
     toast.timeout = 5000;
     toast.intent = 'warning';
@@ -677,7 +776,14 @@ export default class ModuleManager extends React.Component {
   render() {
     const state = this.state as ManagerState;
     const props = this.props as ManagerProps;
-    const { language, module, repository, showModuleInfo, progress } = state;
+    const {
+      language,
+      module,
+      repository,
+      showModuleInfo,
+      showChapterDialog,
+      progress,
+    } = state;
     const {
       language: langtable,
       module: modtable,
@@ -694,7 +800,10 @@ export default class ModuleManager extends React.Component {
       onRowsReordered,
       onColumnWidthChanged,
       selectionToDataRows,
+      dialogClose,
+      dialogAccept,
       tableRef,
+      dialogOnChange,
     } = this;
 
     const disable = {
@@ -711,6 +820,14 @@ export default class ModuleManager extends React.Component {
       repoCancel: !repotable.data.find((r) => r[RepCol.iInfo].loading),
     };
 
+    let dialogmod = '';
+    let dialogText = '';
+    if (showChapterDialog) {
+      dialogmod = showChapterDialog.conf.module;
+      const ab = showChapterDialog.conf.Description;
+      if (ab) dialogText = ab[i18n.language] || ab.en;
+    }
+
     return (
       <Vbox {...addClass('modulemanager', props)} flex="1" height="100%">
         <Toaster
@@ -719,6 +836,28 @@ export default class ModuleManager extends React.Component {
           usePortal
           ref={this.refHandlers.toaster}
         />
+        {showChapterDialog && (
+          <Dialog isOpen onClose={dialogClose}>
+            <div className={Classes.DIALOG_BODY}>
+              <Vbox>
+                <Label value={dialogmod} />
+                <div>{dialogText}</div>
+                <Bibleselect
+                  height="2em"
+                  initialSelection={showChapterDialog.initialSelection}
+                  options={showChapterDialog.options}
+                  onSelectionChange={dialogOnChange}
+                />
+              </Vbox>
+            </div>
+            <div className={Classes.DIALOG_FOOTER}>
+              <div className={Classes.DIALOG_FOOTER_ACTIONS}>
+                <Button onClick={dialogClose}>{i18n.t('cancel.label')}</Button>
+                <Button onClick={dialogAccept}>{i18n.t('ok.label')}</Button>
+              </div>
+            </div>
+          </Dialog>
+        )}
         <Hbox
           flex="1"
           className={`language ${language.open ? 'open' : 'closed'}`}

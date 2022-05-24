@@ -91,7 +91,7 @@
       {
         "name": "IBT Audio",
         "domain": "ftp.ibt.org.ru",
-        "path": "/pub/audio",
+        "path": "/pub/modaudio",
         "file": "mods.d.tar.gz",
         "builtin": false,
         "disabled": false,

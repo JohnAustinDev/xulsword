@@ -33,6 +33,9 @@
 #textnav .bookselect {
   height: 26px;
 }
+#textnav .bookselect .textbox {
+  width: 184px;
+}
 #textnav .xsbutton {
   margin: 0px;
   margin-inline-end: 7px;
