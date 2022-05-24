@@ -40,6 +40,7 @@
    "closeCmd.label" : "بستن",
    "crossrefsButton.label" : "مراجع دوجانبه",
    "crossrefsButton.tooltip" : "کلید نمایش مراجع دوجانبه",
+   "dialog.confirmDelete" : "مطمئن هستید که انجام دهید؟",
    "dictButton.label" : "لغتنامه",
    "dictButton.tooltip" : "نمایش لینکهای لغتنامه",
    "dlgFrom" : "ذخیره از",
@@ -167,6 +168,7 @@
    "newmodule.fromFile.ak" : "",
    "newmodule.fromInternet" : "از اینترنت",
    "newmodule.fromInternet.ak" : "",
+   "no.label" : "خیر",
    "notesButton.label" : "پاورقی‌ها",
    "notesButton.tooltip" : "کلید نمایش پاورقی‌ها",
    "ok.label" : "تأیید",
@@ -188,6 +190,7 @@
    "searchBut.label" : "جستجو",
    "searchbox.tooltip" : "تطبیق هر واژه‌ای که در پایان دارای ' * ' باشد. تطبیق هر حرفی که دارای ' ؟ ' می‌باشد.",
    "viewMenu.accesskey" : "",
-   "viewMenu.label" : "نما"
+   "viewMenu.label" : "نما",
+   "yes.label" : "بلی"
 }
 

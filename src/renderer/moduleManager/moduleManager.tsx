@@ -6,7 +6,7 @@
 import React from 'react';
 import i18n from 'i18next';
 import {
-  Button,
+  Button as BPButton,
   Classes,
   Dialog,
   IToastProps,
@@ -837,7 +837,7 @@ export default class ModuleManager extends React.Component {
           ref={this.refHandlers.toaster}
         />
         {showChapterDialog && (
-          <Dialog isOpen onClose={dialogClose}>
+          <Dialog isOpen>
             <div className={Classes.DIALOG_BODY}>
               <Vbox>
                 <Label value={dialogmod} />
@@ -852,8 +852,10 @@ export default class ModuleManager extends React.Component {
             </div>
             <div className={Classes.DIALOG_FOOTER}>
               <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                <Button onClick={dialogClose}>{i18n.t('cancel.label')}</Button>
-                <Button onClick={dialogAccept}>{i18n.t('ok.label')}</Button>
+                <BPButton onClick={dialogClose}>
+                  {i18n.t('cancel.label')}
+                </BPButton>
+                <BPButton onClick={dialogAccept}>{i18n.t('ok.label')}</BPButton>
               </div>
             </div>
           </Dialog>
@@ -882,7 +884,7 @@ export default class ModuleManager extends React.Component {
                     onCellClick={onLangCellClick}
                   />
                 </Box>
-                <Button
+                <BPButton
                   id="languageListClose"
                   icon="chevron-left"
                   fill
@@ -905,7 +907,7 @@ export default class ModuleManager extends React.Component {
           {!language.open && (
             <Groupbox caption=" " orient="vertical">
               <Vbox flex="1">
-                <Button
+                <BPButton
                   id="languageListOpen"
                   icon="chevron-right"
                   style={{ height: '100%' }}
@@ -953,7 +955,7 @@ export default class ModuleManager extends React.Component {
             </Hbox>
             <Vbox className="button-stack" pack="center">
               {!showModuleInfo && (
-                <Button
+                <BPButton
                   id="moduleInfo"
                   icon="info-sign"
                   intent="primary"
@@ -962,23 +964,23 @@ export default class ModuleManager extends React.Component {
                 />
               )}
               {showModuleInfo && (
-                <Button
+                <BPButton
                   id="moduleInfoBack"
                   intent="primary"
                   disabled={disable.moduleInfoBack}
                   onClick={eventHandler}
                 >
                   {i18n.t('back.label')}
-                </Button>
+                </BPButton>
               )}
-              <Button
+              <BPButton
                 id="moduleCancel"
                 intent="primary"
                 disabled={disable.moduleCancel}
                 onClick={eventHandler}
               >
                 {i18n.t('cancel.label')}
-              </Button>
+              </BPButton>
             </Vbox>
           </Groupbox>
         </Hbox>
@@ -1021,28 +1023,28 @@ export default class ModuleManager extends React.Component {
                 )}
               </Box>
               <Vbox className="button-stack" pack="center">
-                <Button
+                <BPButton
                   id="repoAdd"
                   icon="add"
                   intent="primary"
                   disabled={disable.repoAdd}
                   onClick={eventHandler}
                 />
-                <Button
+                <BPButton
                   id="repoDelete"
                   icon="delete"
                   intent="primary"
                   disabled={disable.repoDelete}
                   onClick={eventHandler}
                 />
-                <Button
+                <BPButton
                   id="repoCancel"
                   intent="primary"
                   disabled={disable.repoCancel}
                   onClick={eventHandler}
                 >
                   {i18n.t('cancel.label')}
-                </Button>
+                </BPButton>
               </Vbox>
             </Groupbox>
           </div>
@@ -1050,7 +1052,7 @@ export default class ModuleManager extends React.Component {
 
         <Hbox className="dialogbuttons" pack="end" align="end">
           {repository.open && (
-            <Button
+            <BPButton
               onClick={() =>
                 this.sState({
                   repository: { ...state.repository, open: false },
@@ -1058,16 +1060,16 @@ export default class ModuleManager extends React.Component {
               }
             >
               {i18n.t('less.label')}
-            </Button>
+            </BPButton>
           )}
           {!repository.open && (
-            <Button
+            <BPButton
               onClick={() =>
                 this.sState({ repository: { ...state.repository, open: true } })
               }
             >
               {i18n.t('moduleSources.label')}
-            </Button>
+            </BPButton>
           )}
           {!progress && <Spacer flex="1" />}
           {progress && (
@@ -1080,12 +1082,12 @@ export default class ModuleManager extends React.Component {
               />
             </Hbox>
           )}
-          <Button id="cancel" onClick={eventHandler}>
+          <BPButton id="cancel" onClick={eventHandler}>
             {i18n.t('cancel.label')}
-          </Button>
-          <Button id="ok" onClick={eventHandler}>
+          </BPButton>
+          <BPButton id="ok" onClick={eventHandler}>
             {i18n.t('ok.label')}
-          </Button>
+          </BPButton>
         </Hbox>
       </Vbox>
     );

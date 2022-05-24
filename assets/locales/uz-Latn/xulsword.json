@@ -41,6 +41,7 @@
    "closeCmd.label" : "Yopish",
    "crossrefsButton.label" : "Mazmunan o‘xshash oyatlar",
    "crossrefsButton.tooltip" : "Mazmunan o‘xshash oyatlarning ro‘yxatini yoqish va o‘chirish",
+   "dialog.confirmDelete" : "Qaroringiz qat’iymi?",
    "dictButton.label" : "Lug‘at",
    "dictButton.tooltip" : "Lug‘at linklarini yoqish va o‘chirish",
    "dlgFrom" : "Audioni quyidagi manbadan ko‘chiring",
@@ -171,6 +172,7 @@
    "newmodule.fromFile.ak" : "",
    "newmodule.fromInternet" : "Internetdan ko‘chirish",
    "newmodule.fromInternet.ak" : "",
+   "no.label" : "Yo‘q",
    "notesButton.label" : "Izohlar",
    "notesButton.tooltip" : "Izohlarni yoqish va o‘chirish",
    "ok.label" : "Mayli",
@@ -196,6 +198,7 @@
    "textColor.label" : "Rang",
    "textSize.label" : "Harflarning kattaligi",
    "viewMenu.accesskey" : "",
-   "viewMenu.label" : "Ko‘rinish"
+   "viewMenu.label" : "Ko‘rinish",
+   "yes.label" : "Ha"
 }
 

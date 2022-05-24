@@ -41,6 +41,7 @@
    "closeCmd.label" : "Ёпиш",
    "crossrefsButton.label" : "Мазмунан ўхшаш оятлар",
    "crossrefsButton.tooltip" : "Мазмунан ўхшаш оятларнинг рўйхатини ёқиш ва ўчириш",
+   "dialog.confirmDelete" : "Қарорингиз қатъийми?",
    "dictButton.label" : "Луғат",
    "dictButton.tooltip" : "Луғат линкларини ёқиш ва ўчириш",
    "dlgFrom" : "Аудиони қуйидаги манбадан кўчиринг",
@@ -171,6 +172,7 @@
    "newmodule.fromFile.ak" : "",
    "newmodule.fromInternet" : "Интернетдан кўчириш",
    "newmodule.fromInternet.ak" : "",
+   "no.label" : "Йўқ",
    "notesButton.label" : "Изоҳлар",
    "notesButton.tooltip" : "Изоҳларни ёқиш ва ўчириш",
    "ok.label" : "Майли",
@@ -196,6 +198,7 @@
    "textColor.label" : "Ранг",
    "textSize.label" : "Ҳарфларнинг катталиги",
    "viewMenu.accesskey" : "",
-   "viewMenu.label" : "Кўриниш"
+   "viewMenu.label" : "Кўриниш",
+   "yes.label" : "Ҳа"
 }
 

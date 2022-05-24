@@ -1,8 +1,8 @@
 {
   "name": "xulsword",
   "productName": "xulsword",
-  "version": "3.0.0",
-  "description": "Accessible Bible study software created with node.js",
+  "version": "4.0.0",
+  "description": "Accessible Bible study software.",
   "main": "./dist/main/main.js",
   "author": {
     "name": "John Austin",

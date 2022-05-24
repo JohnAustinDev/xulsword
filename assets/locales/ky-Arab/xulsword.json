@@ -39,6 +39,7 @@
    "closeCmd.label" : "جابۇۇ",
    "crossrefsButton.label" : "جارىش اياتتار",
    "crossrefsButton.tooltip" : "شارىش اياتتاردى كۅرسۅتۉۉ.",
+   "dialog.confirmDelete" : "ماقۇلسۇزبۇ؟",
    "dictButton.label" : "سۅزدۉك",
    "dictButton.tooltip" : "سۅزدۉكتۉن ۇلامالارىن كۅرسۅتۉۉ.",
    "dlgFrom" : "كۅچۉرۉپ الۇۇ",
@@ -166,6 +167,7 @@
    "newmodule.fromFile.ak" : "",
    "newmodule.fromInternet" : "ىنتەرنەتتەن",
    "newmodule.fromInternet.ak" : "",
+   "no.label" : "جوق",
    "notesButton.label" : "شىلتەمە",
    "notesButton.tooltip" : "شىلتەمەلەردى كۅرسۅتۉۉ.",
    "ok.label" : "ماقۇل",
@@ -187,6 +189,7 @@
    "searchBut.label" : "ىزدۅۅ",
    "searchbox.tooltip" : "٭ – بئر نەچە تامعانى قوشۇپ تابات، ? – بىر تامعانى كوشۇپ تابات",
    "viewMenu.accesskey" : "",
-   "viewMenu.label" : "كۅرسۅتۉۉ"
+   "viewMenu.label" : "كۅرسۅتۉۉ",
+   "yes.label" : "ووبا"
 }
 

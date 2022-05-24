@@ -4,7 +4,7 @@
 import React from 'react';
 import i18n from 'i18next';
 import { ChromePicker as ColorPicker } from 'react-color';
-import { Slider } from '@blueprintjs/core';
+import { Classes, Dialog, Slider, Button as BPButton } from '@blueprintjs/core';
 import type { ReactElementLike } from 'prop-types';
 import C from '../../constant';
 import { diff } from '../../common';
@@ -112,6 +112,7 @@ export default class ChooseFontWin extends React.Component {
       fonts,
       fontSize,
       lineHeight,
+      ruSureDialog,
     } = state;
 
     const showBackgroundRow = false;
@@ -161,6 +162,23 @@ export default class ChooseFontWin extends React.Component {
         #background .button-icon {
           background-color: rgb(${bc.r}, ${bc.g}, ${bc.b}, ${bc.a});
         }`}</style>
+        {ruSureDialog && (
+          <Dialog isOpen>
+            <div className={Classes.DIALOG_BODY}>
+              {i18n.t('dialog.confirmDelete')}
+            </div>
+            <div className={Classes.DIALOG_FOOTER}>
+              <div className={Classes.DIALOG_FOOTER_ACTIONS}>
+                <BPButton onClick={() => ruSureDialog(false)}>
+                  {i18n.t('no.label')}
+                </BPButton>
+                <BPButton onClick={() => ruSureDialog(true)}>
+                  {i18n.t('yes.label')}
+                </BPButton>
+              </div>
+            </div>
+          </Dialog>
+        )}
         <span id="styleTest" />
         <Groupbox caption={i18n.t('fontsAndColors.label')}>
           <Grid id="fontsGrid">

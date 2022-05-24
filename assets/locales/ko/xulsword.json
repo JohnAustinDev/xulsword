@@ -40,6 +40,7 @@
    "closeCmd.label" : "닫기",
    "crossrefsButton.label" : "상호 참조",
    "crossrefsButton.tooltip" : "상호 참조 표시/감춤",
+   "dialog.confirmDelete" : "계속 하시겠습니까?",
    "dictButton.label" : "사전",
    "dictButton.tooltip" : "사전 표시/감춤",
    "dlgFrom" : "원본 오디오파일 위치",
@@ -167,6 +168,7 @@
    "newmodule.fromFile.ak" : "",
    "newmodule.fromInternet" : "인터넷으로 부터",
    "newmodule.fromInternet.ak" : "",
+   "no.label" : "아니오",
    "notesButton.label" : "각 주",
    "notesButton.tooltip" : "각 주 표시/감춤",
    "ok.label" : "확인",
@@ -188,6 +190,7 @@
    "searchBut.label" : "찾기",
    "searchbox.tooltip" : "'단어 뒤에 ''*''를 붙여 보세요. 단어 중 ''?'' 혹은 ''~''를 넣어 보세요.'",
    "viewMenu.accesskey" : "",
-   "viewMenu.label" : "보기"
+   "viewMenu.label" : "보기",
+   "yes.label" : "예"
 }
 

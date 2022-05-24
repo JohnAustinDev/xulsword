@@ -44,6 +44,7 @@
    "closeCmd.label" : "Закрыть",
    "crossrefsButton.label" : "перекрестные ссылки",
    "crossrefsButton.tooltip" : "Подключать отображение перекрестных ссылок",
+   "dialog.confirmDelete" : "Вы уверены?",
    "dictButton.label" : "словарь",
    "dictButton.tooltip" : "Показать ссылки словарей",
    "dlgFrom" : "Сохранение из",
@@ -174,6 +175,7 @@
    "newmodule.fromFile.ak" : "",
    "newmodule.fromInternet" : "Загрузить из интернета",
    "newmodule.fromInternet.ak" : "",
+   "no.label" : "Нет",
    "notesButton.label" : "сноски",
    "notesButton.tooltip" : "Подключать отображение сносок",
    "ok.label" : "ОК",
@@ -199,6 +201,7 @@
    "textColor.label" : "Цвета",
    "textSize.label" : "Размер",
    "viewMenu.accesskey" : "",
-   "viewMenu.label" : "Вид"
+   "viewMenu.label" : "Вид",
+   "yes.label" : "Да"
 }
 

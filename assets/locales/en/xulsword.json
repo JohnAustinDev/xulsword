@@ -44,6 +44,7 @@
    "closeCmd.label" : "Close",
    "crossrefsButton.label" : "cross refs",
    "crossrefsButton.tooltip" : "Toggle display of cross references.",
+   "dialog.confirmDelete" : "Are you sure?",
    "dictButton.label" : "dictionary",
    "dictButton.tooltip" : "Show dictionary links.",
    "dlgFrom" : "Import audio from",
@@ -174,6 +175,7 @@
    "newmodule.fromFile.ak" : "f",
    "newmodule.fromInternet" : "From the Internet",
    "newmodule.fromInternet.ak" : "I",
+   "no.label" : "No",
    "notesButton.label" : "footnotes",
    "notesButton.tooltip" : "Toggle display of footnotes.",
    "ok.label" : "OK",
@@ -199,6 +201,7 @@
    "textColor.label" : "Color",
    "textSize.label" : "Size",
    "viewMenu.accesskey" : "V",
-   "viewMenu.label" : "View"
+   "viewMenu.label" : "View",
+   "yes.label" : "Yes"
 }
 

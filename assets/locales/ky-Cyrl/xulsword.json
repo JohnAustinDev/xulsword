@@ -39,6 +39,7 @@
    "closeCmd.label" : "Жабуу",
    "crossrefsButton.label" : "Шилтеме",
    "crossrefsButton.tooltip" : "Шилтемелерди (мазмундаш аяттары) көрсөтүү",
+   "dialog.confirmDelete" : "Макулсузбу?",
    "dictButton.label" : "Сөздүк",
    "dictButton.tooltip" : "Сөздүктүн уламаларын көрсөтүү",
    "dlgFrom" : "Көчүрүп алуу",
@@ -166,6 +167,7 @@
    "newmodule.fromFile.ak" : "",
    "newmodule.fromInternet" : "Интернеттен",
    "newmodule.fromInternet.ak" : "",
+   "no.label" : "Жок",
    "notesButton.label" : "Түшөрмө",
    "notesButton.tooltip" : "Түшөрмөлөрдү көрсөтүү",
    "ok.label" : "Макул",
@@ -187,6 +189,7 @@
    "searchBut.label" : "Издөө",
    "searchbox.tooltip" : "* - бир нече тамганы кошуп табат, ? – бир тамганы кошуп табат",
    "viewMenu.accesskey" : "",
-   "viewMenu.label" : "Көрсөтүү"
+   "viewMenu.label" : "Көрсөтүү",
+   "yes.label" : "Ооба"
 }
 

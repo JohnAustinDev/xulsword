@@ -39,6 +39,7 @@
    "closeCmd.label" : "Жабу",
    "crossrefsButton.label" : "Сілтемелер",
    "crossrefsButton.tooltip" : "Ұқсас аяттарды көрсетіп-жасыру.",
+   "dialog.confirmDelete" : "Осылай еткіңіз келетініне сенімдісіз бе?",
    "dictButton.label" : "сөздік",
    "dictButton.tooltip" : "Сөздікпен байланыстарды көрсет.",
    "dlgFrom" : "Мынадан",
@@ -166,6 +167,7 @@
    "newmodule.fromFile.ak" : "",
    "newmodule.fromInternet" : "Интернеттен",
    "newmodule.fromInternet.ak" : "",
+   "no.label" : "Жоқ",
    "notesButton.label" : "Түсініктемелер",
    "notesButton.tooltip" : "Сілтемелерді көрсетіп-жасыру.",
    "ok.label" : "OK",
@@ -187,6 +189,7 @@
    "searchBut.label" : "Іздеу",
    "searchbox.tooltip" : "' * '-мен аяқталатын сөздердің бәрін келтір. Әр жеке әріпті ' ? '-мен алмастыр.",
    "viewMenu.accesskey" : "",
-   "viewMenu.label" : "Көру"
+   "viewMenu.label" : "Көру",
+   "yes.label" : "Иә"
 }
 

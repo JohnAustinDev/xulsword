@@ -43,6 +43,7 @@
    "closeCmd.label" : "ýap",
    "crossrefsButton.label" : "çatryklaýyn salgylanmalar",
    "crossrefsButton.tooltip" : "çatryklaýyn salgylanmalary görkezmek",
+   "dialog.confirmDelete" : "tassyklaýaňyzmy?",
    "dictButton.label" : "sözlük",
    "dictButton.tooltip" : "sözlügiň salgylanmalaryny görkezmek",
    "dlgFrom" : "-dan almak",
@@ -173,6 +174,7 @@
    "newmodule.fromFile.ak" : "",
    "newmodule.fromInternet" : "internetden täze moduly indermek",
    "newmodule.fromInternet.ak" : "",
+   "no.label" : "ýok",
    "notesButton.label" : "çykgytlar",
    "notesButton.tooltip" : "çykgytlary görkezmek",
    "ok.label" : "bolýar",
@@ -198,6 +200,7 @@
    "textColor.label" : "Reňkleri",
    "textSize.label" : "Razmeri/ölçegi",
    "viewMenu.accesskey" : "",
-   "viewMenu.label" : "görnüş"
+   "viewMenu.label" : "görnüş",
+   "yes.label" : "hawa"
 }
 

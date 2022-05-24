@@ -11,6 +11,7 @@
    "cancel.label" : "Waz kiç",
    "close" : "Yap",
    "closeCmd.label" : "Yap",
+   "dialog.confirmDelete" : "Are you sure?",
    "dlgFrom" : "Şunnan Saqlana",
    "dlgTo" : "Şunda",
    "edit.properties.keybinding" : "I",
@@ -76,6 +77,7 @@
    "menu.windows.sc" : "",
    "newmodule.fromFile.ak" : "",
    "newmodule.fromInternet.ak" : "",
+   "no.label" : "Yuq",
    "ok.label" : "Temam",
    "print.printpassage.sc" : "",
    "printCmd.accesskey" : "",
@@ -92,6 +94,7 @@
    "quitApplicationCmdWin.label" : "Çıq",
    "searchBut.label" : "найти",
    "viewMenu.accesskey" : "",
-   "viewMenu.label" : "Küríním"
+   "viewMenu.label" : "Küríním",
+   "yes.label" : "Eyí"
 }
 

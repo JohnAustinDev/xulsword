@@ -21,6 +21,8 @@ export const startingState = {
   removeModuleUserStyles: null as StyleType | null,
   removeAllUserStyles: null as StyleType | null,
 
+  ruSureDialog: null as ((yes: boolean) => void) | null,
+
   // These are initial (unset) user style setting values:
   fontFamily: '' as string, // Shows text: 'Choose...'
   color: null as ColorType | null, // will be grey
@@ -121,7 +123,6 @@ export function getStyleFromState(state: ChooseFontWinState): StyleType {
     });
   }
   if (removeAllUserStyles) {
-    // TODO! ARE YOU SURE DIALOG
     if ('module' in newstyle) delete newstyle.module;
   } else if (makeDefault) {
     updateModuleStyle('default');
@@ -192,9 +193,21 @@ export default function handler(this: ChooseFontWin, e: React.SyntheticEvent) {
           break;
         }
         case 'ok': {
-          G.Prefs.setComplexValue('style', getStyleFromState(state), 'style');
-          preclose();
-          G.Window.close();
+          const okConfirmed = () => {
+            G.Prefs.setComplexValue('style', getStyleFromState(state), 'style');
+            preclose();
+            G.Window.close();
+          };
+          const { removeAllUserStyles } = state;
+          if (removeAllUserStyles) {
+            const s: Partial<ChooseFontWinState> = {
+              ruSureDialog: (yes: boolean) => {
+                if (yes) okConfirmed();
+                this.setState({ ruSureDialog: null });
+              },
+            };
+            this.setState(s);
+          } else okConfirmed();
           break;
         }
         case 'background':
