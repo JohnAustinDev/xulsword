@@ -9,6 +9,7 @@ import {
   clone,
   downloadKey,
   isRepoLocal,
+  JSON_parse,
   modrepKey,
   moduleInfoHTML,
   rowsToSelection,
@@ -113,7 +114,11 @@ export type TModCellInfo = TCellInfo & {
   conf: SwordConfType;
 };
 
-export type TLanguageTableRow = [string, TCellInfo];
+export type TLangCellInfo = TCellInfo & {
+  code: string;
+};
+
+export type TLanguageTableRow = [string, TLangCellInfo];
 
 export type TModuleTableRow = [
   ModTypes | XSModTypes,
@@ -928,6 +933,33 @@ export function repositoryToRow(repo: Repository): TRepositoryTableRow {
     repo.disabled ? on : OFF,
     { repo },
   ];
+}
+
+let languageNames: {
+  en: { [code: string]: string };
+  self: { [code: string]: string };
+};
+export function getLangReadable(code: string): string {
+  if (/^en(-*|_*)$/.test(code)) return 'English';
+  if (!code || code === '?' || /^\s*$/.test(code)) return '?';
+  if (!languageNames) {
+    const path = `${G.Dirs.path.xsAsset}/locales/languageNames.json`;
+    const json = G.inlineFile(path, 'utf8', true);
+    languageNames = JSON_parse(json);
+  }
+  let name = code;
+  if (i18n.language.split('-').shift() === 'en') {
+    name =
+      code in languageNames.en
+        ? languageNames.en[code]
+        : languageNames.self[code];
+  } else {
+    name =
+      code in languageNames.self
+        ? languageNames.self[code]
+        : languageNames.en[code];
+  }
+  return name || code;
 }
 
 // The following functions return custom callbacks meant to be sent

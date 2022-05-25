@@ -496,7 +496,6 @@ export type DirsDirectories = {
   xsAudio: string;
   xsBookmarks: string;
   xsVideo: string;
-  xsLocale: string;
   xsModsCommon: string;
 };
 
@@ -682,7 +681,10 @@ const LibSwordPublic = {
     tarGzPath: string,
     aDirPath: string
   ) => void,
-  translate: funcRO as unknown as (text: string, localeName: string) => string,
+  translate: funcRO as unknown as (
+    lookup: string,
+    localeFile: string
+  ) => string,
 };
 
 const CommandsPublic = {
@@ -754,7 +756,8 @@ export const GPublic = {
   resolveHtmlPath: funcRO as unknown as (htmlfile: string) => string,
   inlineFile: funcRO as unknown as (
     path: string,
-    encoding: BufferEncoding
+    encoding: BufferEncoding,
+    noHeader?: boolean
   ) => string,
   resetMain: func as unknown as () => void,
   getSystemFonts: funcRO as unknown as () => Promise<string[]>,

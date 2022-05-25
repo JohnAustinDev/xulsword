@@ -73,6 +73,7 @@ import {
   builtinRepos,
   classes,
   editable,
+  getLangReadable,
   intent,
   LanCol,
   LanguageTableHeadings,
@@ -517,7 +518,7 @@ export default class ModuleManager extends React.Component {
     const selectedRowIndexes = this.selectionToDataRows('language', selection);
     const selectedcodes = langtable.data
       .filter((_r, i) => selectedRowIndexes.includes(i))
-      .map((r) => r[LanCol.iCode]);
+      .map((r) => r[LanCol.iInfo].code);
     const langs: Set<string> = new Set();
     repositoryListings.forEach((listing, i) => {
       if (
@@ -533,10 +534,12 @@ export default class ModuleManager extends React.Component {
     });
     const langlist = Array.from(langs).sort();
     const newTableData: TLanguageTableRow[] = [];
-    langlist.forEach((l) => newTableData.push([l, {}]));
+    langlist.forEach((l) =>
+      newTableData.push([getLangReadable(l), { code: l }])
+    );
     const newlanguage: RowSelection = [];
     newTableData.forEach((r, i) => {
-      if (selectedcodes?.includes(r[LanCol.iCode])) {
+      if (selectedcodes?.includes(r[LanCol.iInfo].code)) {
         newlanguage.push({ rows: [i, i] });
       }
     });
@@ -682,7 +685,7 @@ export default class ModuleManager extends React.Component {
     const codes: string[] = [];
     rows.forEach((r) => {
       if (langtable.data[r]) {
-        codes.push(langtable.data[r][LanCol.iCode]);
+        codes.push(langtable.data[r][LanCol.iInfo].code);
       }
     });
     const { moduleLangData } = Saved;

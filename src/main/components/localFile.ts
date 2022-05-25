@@ -235,7 +235,8 @@ export function writeSafeFile(
 
 export function inlineFile(
   fpath: string,
-  encoding = 'base64' as BufferEncoding
+  encoding = 'base64' as BufferEncoding,
+  noHeader = false
 ): string {
   const file = new LocalFile(fpath);
   const mimeTypes = {
@@ -250,7 +251,9 @@ export function inlineFile(
   const contentType =
     // eslint-disable-next-line no-useless-escape
     mimeTypes[fpath.replace(/^.*\.([^\.]+)$/, '$1').toLowerCase()];
-  if (!file.exists() || !contentType) return '';
+  if (!file.exists() || (!noHeader && !contentType)) return '';
   const rawbuf = file.readBuf();
-  return `data:${contentType};${encoding},${rawbuf.toString(encoding)}`;
+  return noHeader
+    ? rawbuf.toString(encoding)
+    : `data:${contentType};${encoding},${rawbuf.toString(encoding)}`;
 }

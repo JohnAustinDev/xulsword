@@ -62,13 +62,28 @@
       "open": true,
       "selection": [],
       "rowSort": { "dataColIndex": 0, "direction": "ascending" },
-      "width": 180
+      "width": 150
     },
     "module": {
       "selection": [],
       "rowSort": { "dataColIndex": 0, "direction": "ascending" },
       "visibleColumns": [0, 1, 12, 13],
-      "columnWidths": [80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80]
+      "columnWidths": [
+        127,
+        190,
+        80,
+        80,
+        80,
+        80,
+        80,
+        80,
+        80,
+        80,
+        80,
+        80,
+        88,
+        103
+      ]
     },
     "repository": {
       "open": true,

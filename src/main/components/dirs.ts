@@ -42,8 +42,6 @@ Dirs.path.xsBookmarks = path.join(Dirs.path.xsResD, 'bookmarks');
 
 Dirs.path.xsVideo = path.join(Dirs.path.xsResD, 'video');
 
-Dirs.path.xsLocale = path.join(Dirs.path.xsResD, 'locales.d');
-
 Dirs.path.xsModsCommon = /^win32|darwin$/.test(process.platform)
   ? path.join(app.getPath('appData'), 'Sword')
   : path.join(app.getPath('home'), '.sword');

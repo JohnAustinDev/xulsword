@@ -22,7 +22,6 @@ const { libxulsword } = require('libxulsword');
 
 type LibSwordPrivate = {
   moduleDirectories: string[];
-  localeDirectory: string;
   checkCipherKeys: string[];
 
   libxulsword: null | Record<string, unknown>;
@@ -64,7 +63,6 @@ const LibSword: GType['LibSword'] & LibSwordPrivate = {
   paused: false,
 
   moduleDirectories: [],
-  localeDirectory: '',
 
   checkCipherKeys: [],
   searchPointers: [],
@@ -95,20 +93,6 @@ const LibSword: GType['LibSword'] & LibSwordPrivate = {
       }
     });
 
-    this.localeDirectory = Dirs.path.xsLocale;
-
-    // copy locale defaults if needed
-    const localeConf = new LocalFile(this.localeDirectory);
-    localeConf.append('locales.conf');
-    if (!localeConf.exists()) {
-      const def = Dirs.xsDefaults;
-      def.append('locales.conf');
-      const locdir = new LocalFile(this.localeDirectory);
-      if (def.exists()) {
-        def.copyTo(locdir);
-      }
-    }
-
     log.verbose(`module directories: ${this.moduleDirectories}`);
 
     // These functions are used by C++ to call, and receive results from,
@@ -130,8 +114,7 @@ const LibSword: GType['LibSword'] & LibSwordPrivate = {
       this.moduleDirectories.join(', '),
       this.UpperCase,
       this.ThrowJSError,
-      this.ReportProgress,
-      this.localeDirectory
+      this.ReportProgress
     );
     log.verbose(`CREATED libxulsword object`);
 
@@ -659,10 +642,10 @@ DEFINITION OF A 'XULSWORD REFERENCE':
    ***************************************************************************** */
   // getLanguageName
   // Returns a localized readable utf8 string correpsonding to the language code.
-  // Returns null if the information is not available
-  translate(text, localeName) {
+  // Returns the code if the information is not available
+  translate(lookup, localeFile) {
     if (!this.isReady()) return null;
-    const cdata = libxulsword.Translate(text, localeName);
+    const cdata = libxulsword.Translate(lookup, localeFile);
     this.checkerror();
     return cdata;
   },
