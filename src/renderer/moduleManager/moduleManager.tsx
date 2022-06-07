@@ -78,6 +78,7 @@ import {
   LanCol,
   LanguageTableHeadings,
   loading,
+  modclasses,
   ModCol,
   ModuleTableHeadings,
   OFF,
@@ -479,6 +480,7 @@ export default class ModuleManager extends React.Component {
   // It returns updated rawModuleData.
   updateRepositoryLists(rawModuleData: RepositoryListing[]) {
     const state = this.state as ManagerState;
+    const { progress } = state;
     const { repository } = state.tables;
     const { repositoryListings } = Saved;
     rawModuleData.forEach((listing, i) => {
@@ -493,6 +495,12 @@ export default class ModuleManager extends React.Component {
           if (!Array.isArray(repositoryListings[i])) {
             repositoryListings[i] = null;
           }
+          let newprog = null;
+          if (progress) {
+            const [p, t] = progress;
+            newprog = p + 1 === t ? null : [p + 1, t];
+          }
+          this.sState({ progress: newprog });
           return;
         }
         if (Array.isArray(listing)) {
@@ -586,10 +594,7 @@ export default class ModuleManager extends React.Component {
             d[ModCol.iInfo] = {
               repo,
               shared: repokey === downloadKey(builtinRepos[0]),
-              classes: classes(
-                [ModCol.iShared, ModCol.iInstalled],
-                ['checkbox-column']
-              ),
+              classes: modclasses(),
               tooltip: tooltip('VALUE', [ModCol.iShared, ModCol.iInstalled]),
               conf: c,
             };
@@ -613,7 +618,6 @@ export default class ModuleManager extends React.Component {
             d[ModCol.iLicense] = c.DistributionLicense || '';
             d[ModCol.iSourceType] = c.SourceType || '';
             d[ModCol.iShared] = () => {
-              if (d[ModCol.iInstalled] === OFF) return '';
               return d[ModCol.iInfo].shared ? ON : OFF;
             };
             d[ModCol.iInstalled] = repoIsLocal ? ON : OFF;
@@ -623,11 +627,11 @@ export default class ModuleManager extends React.Component {
       }
     });
     // Installed modules (ie those in local repos) which are from enabled
-    // remote repositories are not included in moduleLangData. Rather the
-    // their 'installed' and 'shared' boxes are applied to the corresponding
+    // remote repositories are not included in moduleLangData. Rather their
+    // 'installed' and 'shared' checkboxes are applied to the corresponding
     // remote repository module. Also, modules in disabled repositories
     // are not included. If a xulsword module repository is enabled, its
-    // modules will replace the listings of modules with the same name in
+    // modules will replace the listings of modules having the same name in
     // regular repositories.
     repositoryListings.forEach((listing, i) => {
       const drow = repotable.data[i];

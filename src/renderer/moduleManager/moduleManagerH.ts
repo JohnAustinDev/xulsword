@@ -133,7 +133,7 @@ export type TModuleTableRow = [
   string,
   string,
   string,
-  () => typeof ON | typeof OFF | '',
+  () => typeof ON | typeof OFF,
   typeof ON | typeof OFF,
   TModCellInfo
 ];
@@ -193,20 +193,19 @@ export function onColumnHide(
   toggleDataColumn: number,
   targetColumn: number
 ) {
-  this.sState((prevState) => {
-    const table = 'module';
-    const tablestate = prevState[table];
-    let { visibleColumns } = tablestate;
-    visibleColumns = visibleColumns.slice();
-    const wasHidden = visibleColumns.indexOf(toggleDataColumn) === -1;
-    if (wasHidden) {
-      visibleColumns.splice(targetColumn + 1, 0, toggleDataColumn);
-    } else {
-      visibleColumns.splice(visibleColumns.indexOf(toggleDataColumn), 1);
-    }
-    tablestate.visibleColumns = visibleColumns;
-    return { [table]: tablestate };
-  });
+  const state = this.state as ManagerState;
+  const table = 'module';
+  const tablestate = state[table];
+  let { visibleColumns } = tablestate;
+  visibleColumns = visibleColumns.slice();
+  const wasHidden = visibleColumns.indexOf(toggleDataColumn) === -1;
+  if (wasHidden) {
+    visibleColumns.splice(targetColumn + 1, 0, toggleDataColumn);
+  } else {
+    visibleColumns.splice(visibleColumns.indexOf(toggleDataColumn), 1);
+  }
+  tablestate.visibleColumns = visibleColumns;
+  this.sState({ [table]: tablestate });
 }
 
 export function columnWidthChanged(
@@ -255,14 +254,14 @@ export function onRowsReordered(
   direction: 'ascending' | 'descending',
   tableToDataRowMap: number[]
 ) {
+  const state = this.state as ManagerState;
   // Update our tableToDataRowMap based on the new sorting.
-  const drm = Saved[table].tableToDataRowMap;
   Saved[table].tableToDataRowMap = tableToDataRowMap;
-  const render =
-    drm.length !== tableToDataRowMap.length ||
-    drm.some((r, i) => r !== (tableToDataRowMap[i] ?? i));
-  // Update initial rowSort for next Table component reset.
-  this.setTableState(table, { rowSort: { column, direction } }, null, render);
+  // Update initial rowSort for the next Table component reset.
+  const { rowSort } = state[table];
+  if (rowSort.column !== column || rowSort.direction !== direction) {
+    this.setTableState(table, { rowSort: { column, direction } }, null, true);
+  }
 }
 
 export function onLangCellClick(
@@ -331,7 +330,9 @@ export function onModCellClick(
     );
     toggleDataRows.forEach((r) => {
       const rrow = modtable.data[r];
-      if (rrow) rrow[ModCol.iInfo].shared = is;
+      if (rrow && rrow[ModCol.iInstalled] === ON) {
+        rrow[ModCol.iInfo].shared = is;
+      }
     });
     this.setTableState('module', null, modtable.data, true);
   } else {
@@ -994,6 +995,19 @@ export function classes(
       theClasses.forEach((c) => {
         if (!cs.includes(c)) cs.push(c);
       });
+    return cs;
+  };
+}
+
+export function modclasses() {
+  return (ri: number, ci: number) => {
+    const cs: string[] = [];
+    if ([ModCol.iShared, ModCol.iInstalled].includes(ci as any))
+      cs.push('checkbox-column');
+    const drow = Saved.module.data[ri];
+    if (drow && ci === ModCol.iShared && drow[ModCol.iInstalled] === OFF) {
+      cs.push('disabled');
+    }
     return cs;
   };
 }

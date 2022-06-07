@@ -64,7 +64,7 @@ export type TonEditableCellChanged = (
 
 export type TonColumnHide = (
   toggleDataColumn: number,
-  targetColumn: number
+  targetDataColumn: number
 ) => void;
 
 export type TRowLocation = {
@@ -126,7 +126,7 @@ interface TSortableColumn {
 }
 
 abstract class AbstractSortableColumn implements TSortableColumn {
-  constructor(protected name: string, protected index: number) {}
+  constructor(protected name: string, protected dataColIndex: number) {}
 
   public getColumn(
     getCellData: TCellLookup,
@@ -211,7 +211,7 @@ abstract class AbstractSortableColumn implements TSortableColumn {
       <Column
         cellRenderer={cellRenderer}
         columnHeaderCellRenderer={columnHeaderCellRenderer}
-        key={this.index}
+        key={this.dataColIndex}
         name={this.name}
       />
     );
@@ -226,9 +226,9 @@ abstract class AbstractSortableColumn implements TSortableColumn {
 
 class TextSortableColumn extends AbstractSortableColumn {
   static compare(a: any, b: any) {
-    if (!a && b) return -1;
-    if (a && !b) return 1;
-    if (!a && !b) return 0;
+    if (a === undefined && b !== undefined) return -1;
+    if (b === undefined && a !== undefined) return 1;
+    if (a === undefined && b === undefined) return 0;
     return a.toString().localeCompare(b);
   }
 
@@ -238,26 +238,28 @@ class TextSortableColumn extends AbstractSortableColumn {
     props: TableProps
   ) {
     const { onColumnHide, columnHeadings, visibleColumns } = props;
+    const tableColumnIndex =
+      visibleColumns?.indexOf(this.dataColIndex) ?? this.dataColIndex;
     const sortAsc = () => {
-      sortColumn(this.index, 'ascending', (a, b) =>
+      sortColumn(tableColumnIndex, 'ascending', (a, b) =>
         TextSortableColumn.compare(a, b)
       );
     };
     const sortDesc = () => {
-      sortColumn(this.index, 'descending', (a, b) =>
+      sortColumn(tableColumnIndex, 'descending', (a, b) =>
         TextSortableColumn.compare(b, a)
       );
     };
     const items: JSX.Element[] = [];
     if (onColumnHide) {
-      if (columnHeadings[this.index]) {
+      if (columnHeadings[this.dataColIndex]) {
         items.push(<MenuDivider key="divider.1" />);
         items.push(
           <MenuItem
-            key={['delete', this.index].join('.')}
+            key={['delete', this.dataColIndex].join('.')}
             icon="delete"
-            text={columnHeadings[this.index]}
-            onClick={() => columnHide(this.index, this.index)}
+            text={columnHeadings[this.dataColIndex]}
+            onClick={() => columnHide(this.dataColIndex, this.dataColIndex)}
           />
         );
       }
@@ -273,7 +275,7 @@ class TextSortableColumn extends AbstractSortableColumn {
               key={['add', heading].join('.')}
               icon="plus"
               text={heading}
-              onClick={() => columnHide(i, this.index)}
+              onClick={() => columnHide(i, this.dataColIndex)}
             />
           );
         }
@@ -389,11 +391,14 @@ class Table extends React.Component {
     };
     if (initialRowSort) {
       const { column, direction } = initialRowSort;
-      const columnInstanceIndex = visibleColumns?.indexOf(column) ?? column;
-      const columnObj = columns[columnInstanceIndex];
+      const dataCol =
+        visibleColumns && column in visibleColumns
+          ? visibleColumns[column]
+          : column;
+      const columnObj = columns[dataCol];
       if (columnObj !== undefined) {
         this.sortColumn(
-          columnInstanceIndex,
+          column,
           direction,
           direction === 'ascending'
             ? (a, b) => TextSortableColumn.compare(a, b)
@@ -508,18 +513,21 @@ class Table extends React.Component {
 
   // Unlike column order, which is solely determined by the visibleColumns
   // prop, row order is part of the table state as sortedIndexMap. When
-  // a column is sorted, the new mapping is returned via onRowsReordered
+  // a column is sorted, the new mapping is reported via onRowsReordered
   // so that ancestor elements may have the new order.
   sortColumn(
-    columnInstanceIndex: number,
+    tableColumnIndex: number,
     direction: 'ascending' | 'descending',
     comparator: (a: any, b: any) => number,
     s?: Pick<TableState, 'sortedIndexMap'>
   ) {
     const state = this.state as TableState;
-    const dataCol = columnInstanceIndex;
     const sim = state?.sortedIndexMap || [];
     const { data, visibleColumns, onRowsReordered } = this.props as TableProps;
+    const dataCol =
+      visibleColumns && tableColumnIndex in visibleColumns
+        ? visibleColumns[tableColumnIndex]
+        : tableColumnIndex;
     const sortedIndexMap = Utils.times(data.length, (i: number) => i);
     sortedIndexMap.sort((a: number, b: number) => {
       return comparator(data[a][dataCol], data[b][dataCol]);
@@ -533,8 +541,7 @@ class Table extends React.Component {
         this.sState({ sortedIndexMap });
       }
       if (onRowsReordered) {
-        const column = visibleColumns?.indexOf(dataCol) ?? columnInstanceIndex;
-        onRowsReordered(column, direction, sortedIndexMap);
+        onRowsReordered(tableColumnIndex, direction, sortedIndexMap);
       }
     }
   }
@@ -593,7 +600,7 @@ class Table extends React.Component {
     // Column order and visiblity are wholly determined by the visibleColumns
     // prop. If the user reorders or hides a column, the action is reported via
     // onColumnsReordered and onColumnHide, and the visibleColumns prop must be
-    // updated to effect any actual change.
+    // updated to effect the actual change.
     const tableVisibleColumns =
       visibleColumns || columnHeadings.map((_h, i) => i);
     const tableColumns = tableVisibleColumns.map((cii) =>

@@ -7,6 +7,9 @@
   text-align: center;
   font-size: 18px;
 }
+.checkbox-column.disabled {
+  color: rgba(100, 100, 100, 0.4);
+}
 
 .language.closed .groupbox:first-child {
   border: none;
