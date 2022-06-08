@@ -530,7 +530,8 @@ const Downloader: GType['Downloader'] = {
     return 'Canceled';
   },
 
-  // Takes an array of SWORD repositories and returns a mapped array containing:
+  // Takes an array of local and remote SWORD repositories and returns a mapped
+  // array containing:
   // - SwordConfType object array if mods.d.tar.gz or config files were found.
   // - Or a string error message if there was an error or was canceled.
   // - Or null if the repository was null or disabled.
@@ -578,7 +579,7 @@ const Downloader: GType['Downloader'] = {
             files = await untargz(targzbuf);
           } else value = 'Canceled';
         } catch (er: any) {
-          // If there is no mods.d.tar.gz, then download every conf file.
+          // If there was no mods.d.tar.gz, then download every conf file.
           let listing: ListingElementR[] | null = null;
           let bufs: Buffer[] | null = null;
           try {

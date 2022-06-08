@@ -98,6 +98,7 @@ export const ModuleTableHeadings = [
   'Source Type',
   'Shared',
   'Installed',
+  'Remove',
 ];
 
 export const RepositoryTableHeadings = ['', '', '', ''];
@@ -119,7 +120,6 @@ export type TLangCellInfo = TCellInfo & {
 export type TLanguageTableRow = [string, TLangCellInfo];
 
 export type TModuleTableRow = [
-  ModTypes | XSModTypes,
   string,
   string,
   string,
@@ -131,7 +131,9 @@ export type TModuleTableRow = [
   string,
   string,
   string,
-  () => typeof ON | typeof OFF,
+  string,
+  (dataRow: number, dataCol: number) => typeof ON | typeof OFF,
+  typeof ON | typeof OFF,
   typeof ON | typeof OFF,
   TModCellInfo
 ];
@@ -168,7 +170,8 @@ export const ModCol = {
   iSourceType: 11,
   iShared: 12,
   iInstalled: 13,
-  iInfo: 14,
+  iRemove: 14,
+  iInfo: 15,
 } as const;
 
 export const RepCol = {
@@ -286,9 +289,16 @@ export function onModCellClick(
   const { module: modtable } = state.tables;
   const { selection, visibleColumns } = module;
   const { dataRowIndex: row, column, tableRowIndex } = cell;
-  const col = visibleColumns[column];
+  let col = visibleColumns[column];
   const drow = modtable.data[row];
-  if (drow && col === ModCol.iInstalled && !drow[ModCol.iInfo].loading) {
+  if (
+    drow &&
+    !drow[ModCol.iInfo].loading &&
+    (col === ModCol.iInstalled ||
+      (col === ModCol.iRemove && drow[ModCol.iInstalled] === ON))
+  ) {
+    col = ModCol.iInstalled;
+    // Installed column clicks
     const was = drow[col];
     const is = was === ON ? OFF : ON;
     const selrows = selectionToRows(selection);
@@ -298,12 +308,12 @@ export function onModCellClick(
     const toggleDataRows = toggleTableRows.map(
       (r) => Saved.module.tableToDataRowMap[r] ?? r
     );
-    // Installed column clicks
     if (is === ON) {
       const newDLRows: number[] = [];
       toggleDataRows.forEach((r) => {
         const rrow = modtable.data[r];
         if (rrow) {
+          rrow[ModCol.iRemove] = OFF;
           const k = modrepKey(rrow[ModCol.iModule], rrow[ModCol.iInfo].repo);
           if (k in Downloads && !Downloads[k].failed) {
             rrow[ModCol.iInstalled] = ON;
@@ -316,6 +326,7 @@ export function onModCellClick(
       toggleDataRows.forEach((r) => {
         const rrow = modtable.data[r];
         if (rrow) {
+          rrow[ModCol.iRemove] = ON;
           rrow[col] = OFF;
           rrow[ModCol.iInfo].intent = intent(ModCol.iInstalled, 'none');
         }
@@ -859,7 +870,7 @@ export function download(this: ModuleManager, rows: number[]): void {
               );
             }
           }
-          const dl = await (drow[ModCol.iInfo].conf.moduleType.startsWith('XSM')
+          const dl = await (drow[ModCol.iInfo].conf.xsmType !== 'none'
             ? G.Module.downloadXSM(module, xsmZipFileOrURL, repo)
             : G.Module.download(module, repo));
           loadingrows.forEach((r) => {
@@ -999,18 +1010,22 @@ export function classes(
 export function modclasses() {
   return (ri: number, ci: number) => {
     const cs: string[] = [];
-    if ([ModCol.iShared, ModCol.iInstalled].includes(ci as any))
+    if ([ModCol.iShared, ModCol.iInstalled, ModCol.iRemove].includes(ci as any))
       cs.push('checkbox-column');
     const drow = Saved.module.data[ri];
-    if (drow && ci === ModCol.iShared && drow[ModCol.iInstalled] === OFF) {
+    if (
+      drow &&
+      (ci === ModCol.iShared || ci === ModCol.iRemove) &&
+      drow[ModCol.iInstalled] === OFF
+    ) {
       cs.push('disabled');
     }
     return cs;
   };
 }
 
-export function tooltip(atooltip: string, slipColumnIndexArray: number[]) {
+export function tooltip(atooltip: string, skipColumnIndexArray: number[]) {
   return (_ri: number, ci: number) => {
-    return slipColumnIndexArray.includes(ci) ? undefined : atooltip;
+    return skipColumnIndexArray.includes(ci) ? undefined : atooltip;
   };
 }

@@ -542,6 +542,7 @@ export function parseSwordConf(
       }
     }
   }
+  r.xsmType = 'none';
   if ((r.ModDrv as any) === 'audio') r.xsmType = 'XSM_audio';
   else if (r.DataPath.endsWith('.xsm')) r.xsmType = 'XSM';
   r.moduleType = 'Generic Books';

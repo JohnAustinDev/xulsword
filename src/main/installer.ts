@@ -221,7 +221,7 @@ export async function installZIPs(
       zips.forEach((zip) => {
         progTot += zip.getEntryCount();
       });
-      // Process each zip file entry.
+      // Process each zip file.
       zips.forEach((zip, i) => {
         let destdir = Dirs.path.xsModsUser;
         if (typeof destdirs === 'string') {

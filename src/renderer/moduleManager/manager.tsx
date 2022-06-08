@@ -54,8 +54,8 @@ import DragSizer, { DragSizerVal } from '../libxul/dragsizer';
 import * as H from './managerH';
 import './manager.css';
 
-// TODO!: showModuleInfo CSS
-// TODO!: ModuleNanager Locale
+// TODO!: How to handle local audio repository?
+// TODO!: ModuleManager Locale
 // TODO!: ModuleManager RTL
 
 import type {
@@ -494,8 +494,7 @@ export default class ModuleManager extends React.Component {
     return allrepos;
   }
 
-  // Update raw module data and the repository table after receiving repositoryListing.
-  // It returns updated rawModuleData.
+  // Update the repository table after receiving new repositoryListings.
   updateRepositoryLists(rawModuleData: RepositoryListing[]) {
     const state = this.state as ManagerState;
     const { progress } = state;
@@ -583,8 +582,8 @@ export default class ModuleManager extends React.Component {
   loadModuleTable(languageSelection?: RowSelection) {
     const state = this.state as ManagerState;
     // Insure there is one moduleData row object for each module in
-    // each repository. The same object should be reused throughout
-    // the lifetime of the window, so user interactions will be recorded.
+    // each repository (local and remote). The same object should be reused
+    // throughout the lifetime of the window, so user interactions will be recorded.
     const { repository: repotable } = state.tables;
     Saved.moduleLangData = { allmodules: [] };
     const { moduleData, moduleLangData, repositoryListings } = Saved;
@@ -598,14 +597,24 @@ export default class ModuleManager extends React.Component {
           const { repo } = drow[RepCol.iInfo];
           const repokey = downloadKey(repo);
           const modrepk = modrepKey(c.module, repo);
-          const modunique = [c.module, c.Version].join('.');
+          const modunique = [
+            c.module,
+            c.Version,
+            c.xsmType === 'XSM_audio',
+          ].join('.');
           const repoIsLocal = isRepoLocal(c.sourceRepository);
           if (repoIsLocal) localModules[modunique] = repokey;
           else if (drow[RepCol.iState] !== OFF) {
             enabledExternRepoMods[modunique] = repokey;
-            if (c.moduleType.startsWith('XSM')) {
+            if (c.xsmType !== 'none') {
               enabledXulswordRepoMods[modunique] = repokey;
             }
+          }
+          let mtype = c.moduleType as string;
+          if (c.xsmType === 'XSM') {
+            mtype = `XSM ${mtype}`;
+          } else if (c.xsmType === 'XSM_audio') {
+            mtype = `XSM Audio`;
           }
           if (!(modrepk in moduleData)) {
             const d = [] as unknown as TModuleTableRow;
@@ -613,10 +622,14 @@ export default class ModuleManager extends React.Component {
               repo,
               shared: repokey === downloadKey(builtinRepos[0]),
               classes: modclasses(),
-              tooltip: tooltip('VALUE', [ModCol.iShared, ModCol.iInstalled]),
+              tooltip: tooltip('VALUE', [
+                ModCol.iShared,
+                ModCol.iInstalled,
+                ModCol.iRemove,
+              ]),
               conf: c,
             };
-            d[ModCol.iType] = c.moduleType;
+            d[ModCol.iType] = mtype;
             d[ModCol.iAbout] =
               (c.Description &&
                 (c.Description[i18n.language] || c.Description.en)) ||
@@ -635,10 +648,11 @@ export default class ModuleManager extends React.Component {
               '';
             d[ModCol.iLicense] = c.DistributionLicense || '';
             d[ModCol.iSourceType] = c.SourceType || '';
-            d[ModCol.iShared] = () => {
-              return d[ModCol.iInfo].shared ? ON : OFF;
+            d[ModCol.iShared] = (dataRow: number) => {
+              return Saved.module.data[dataRow][ModCol.iInfo].shared ? ON : OFF;
             };
             d[ModCol.iInstalled] = repoIsLocal ? ON : OFF;
+            d[ModCol.iRemove] = OFF;
             moduleData[modrepk] = d;
           }
         });
@@ -659,23 +673,13 @@ export default class ModuleManager extends React.Component {
           const modrepk = modrepKey(c.module, repo);
           const modrow = moduleData[modrepk];
           const modunique = [
-            modrow[ModCol.iModule],
-            modrow[ModCol.iVersion],
+            c.module,
+            c.Version,
+            c.xsmType === 'XSM_audio',
           ].join('.');
           const repoIsLocal = isRepoLocal(repo);
-          if (
-            repoIsLocal &&
-            (modunique in enabledExternRepoMods ||
-              modunique in enabledXulswordRepoMods)
-          )
-            return;
-          if (
-            modunique in enabledXulswordRepoMods &&
-            !c.moduleType.startsWith('XSM')
-          ) {
-            return;
-          }
-          if (!repoIsLocal && modunique in localModules) {
+          const remoteSrcOfLocalMod = !repoIsLocal && modunique in localModules;
+          if (remoteSrcOfLocalMod) {
             modrow[ModCol.iInstalled] = ON;
             const modrepok = `${localModules[modunique]}.${c.module}`;
             if (modrepok in moduleData) {
@@ -683,10 +687,18 @@ export default class ModuleManager extends React.Component {
                 moduleData[modrepok][ModCol.iInfo].shared;
             }
           }
-          const code = (c.Lang && c.Lang.replace(/-.*$/, '')) || 'en';
-          if (!(code in moduleLangData)) moduleLangData[code] = [];
-          moduleLangData[code].push(modrow);
-          moduleLangData.allmodules.push(modrow);
+          const localModFromRemote =
+            repoIsLocal &&
+            (modunique in enabledExternRepoMods ||
+              modunique in enabledXulswordRepoMods);
+          const regularModWithXSM =
+            modunique in enabledXulswordRepoMods && c.xsmType === 'none';
+          if (!localModFromRemote && !regularModWithXSM) {
+            const code = (c.Lang && c.Lang.replace(/-.*$/, '')) || 'en';
+            if (!(code in moduleLangData)) moduleLangData[code] = [];
+            moduleLangData[code].push(modrow);
+            moduleLangData.allmodules.push(modrow);
+          }
         });
       }
     });

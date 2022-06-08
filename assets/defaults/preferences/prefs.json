@@ -67,7 +67,7 @@
     "module": {
       "selection": [],
       "rowSort": { "dataColIndex": 0, "direction": "ascending" },
-      "visibleColumns": [0, 1, 12, 13],
+      "visibleColumns": [0, 1, 13],
       "columnWidths": [
         127,
         190,
@@ -82,7 +82,8 @@
         80,
         80,
         88,
-        103
+        103,
+        80
       ]
     },
     "repository": {
@@ -128,7 +129,7 @@
     "module": {
       "selection": [],
       "rowSort": { "dataColIndex": 0, "direction": "ascending" },
-      "visibleColumns": [0, 1, 13],
+      "visibleColumns": [0, 1, 12, 14],
       "columnWidths": [
         127,
         190,
@@ -143,7 +144,8 @@
         80,
         80,
         88,
-        103
+        103,
+        80
       ]
     },
     "repository": null

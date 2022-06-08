@@ -370,7 +370,7 @@ export type ModTypes =
   | 'Lexicons / Dictionaries'
   | 'Generic Books';
 
-export type XSModTypes = 'XSM' | 'XSM_audio';
+export type XSModTypes = 'XSM' | 'XSM_audio' | 'none';
 
 export type SwordConfLocalized = {
   [locale: string]: string;
