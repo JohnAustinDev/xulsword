@@ -9,15 +9,13 @@ import {
   clone,
   downloadKey,
   isRepoLocal,
-  JSON_parse,
   modrepKey,
-  moduleInfoHTML,
   rowsToSelection,
   selectionToRows,
 } from '../../common';
 import C from '../../constant';
 import G from '../rg';
-import { log } from '../rutil';
+import { log, moduleInfoHTML } from '../rutil';
 import { TCellInfo, TCellLocation } from '../libxul/table';
 
 import type {
@@ -761,10 +759,10 @@ export function download(this: ModuleManager, rows: number[]): void {
       const module = drow[ModCol.iModule] as string;
       const { repo } = drow[ModCol.iInfo];
       const modrepk = modrepKey(module, repo);
-      const { moduleType } = drow[ModCol.iInfo].conf;
+      const { xsmType } = drow[ModCol.iInfo].conf;
       const loadingrows: TModuleTableRow[] = [];
       let xsmZipFileOrURL: string = drow[ModCol.iInfo].conf.DataPath;
-      if (moduleType === 'XSM') {
+      if (xsmType === 'XSM') {
         const { moduleData } = Saved;
         Object.values(moduleData)
           .filter((r) => {
@@ -776,7 +774,7 @@ export function download(this: ModuleManager, rows: number[]): void {
             r[ModCol.iInfo].loading = loading(ModCol.iInstalled);
             loadingrows.push(r);
           });
-      } else if (moduleType === 'XSM_audio') {
+      } else if (xsmType === 'XSM_audio') {
         drow[ModCol.iInfo].loading = loading(ModCol.iInstalled);
         loadingrows.push(drow);
       } else {
@@ -785,7 +783,7 @@ export function download(this: ModuleManager, rows: number[]): void {
       }
       const nfiles = (async () => {
         try {
-          if (drow[ModCol.iInfo].conf.moduleType === 'XSM_audio') {
+          if (drow[ModCol.iInfo].conf.xsmType === 'XSM_audio') {
             const { AudioChapters } = drow[ModCol.iInfo].conf;
             if (AudioChapters) {
               const audio: BibleselectSelection | null = await new Promise(
@@ -934,33 +932,6 @@ export function repositoryToRow(repo: Repository): TRepositoryTableRow {
     repo.disabled ? on : OFF,
     { repo },
   ];
-}
-
-let languageNames: {
-  en: { [code: string]: string };
-  self: { [code: string]: string };
-};
-export function getLangReadable(code: string): string {
-  if (/^en(-*|_*)$/.test(code)) return 'English';
-  if (!code || code === '?' || /^\s*$/.test(code)) return '?';
-  if (!languageNames) {
-    const path = `${G.Dirs.path.xsAsset}/locales/languageNames.json`;
-    const json = G.inlineFile(path, 'utf8', true);
-    languageNames = JSON_parse(json);
-  }
-  let name = code;
-  if (i18n.language.split('-').shift() === 'en') {
-    name =
-      code in languageNames.en
-        ? languageNames.en[code]
-        : languageNames.self[code];
-  } else {
-    name =
-      code in languageNames.self
-        ? languageNames.self[code]
-        : languageNames.en[code];
-  }
-  return name || code;
 }
 
 // The following functions return custom callbacks meant to be sent

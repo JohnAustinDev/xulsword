@@ -26,7 +26,7 @@ import {
 import C from '../../constant';
 import G from '../rg';
 import renderToRoot from '../rinit';
-import { log, getStatePref, onSetWindowState } from '../rutil';
+import { log, getStatePref, onSetWindowState, getLangReadable } from '../rutil';
 import {
   addClass,
   xulDefaultProps,
@@ -73,7 +73,6 @@ import {
   builtinRepos,
   classes,
   editable,
-  getLangReadable,
   intent,
   LanCol,
   LanguageTableHeadings,

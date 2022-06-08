@@ -12,7 +12,6 @@ import type {
   PrefObject,
   PrefValue,
   Repository,
-  SwordConfLocalized,
   SwordConfType,
   TabType,
   RowSelection,
@@ -543,103 +542,14 @@ export function parseSwordConf(
       }
     }
   }
+  if ((r.ModDrv as any) === 'audio') r.xsmType = 'XSM_audio';
+  else if (r.DataPath.endsWith('.xsm')) r.xsmType = 'XSM';
   r.moduleType = 'Generic Books';
-  if ((r.ModDrv as any) === 'audio') r.moduleType = 'XSM_audio';
-  else if (r.DataPath.endsWith('.xsm')) r.moduleType = 'XSM';
-  else if (r.DataPath.includes('/texts/')) r.moduleType = 'Biblical Texts';
-  else if (r.DataPath.includes('/comments/')) r.moduleType = 'Commentaries';
-  else if (r.DataPath.includes('/lexdict/'))
-    r.moduleType = 'Lexicons / Dictionaries';
+  if (r.ModDrv.includes('Text')) r.moduleType = 'Biblical Texts';
+  else if (r.ModDrv.includes('Com')) r.moduleType = 'Commentaries';
+  else if (r.ModDrv.includes('LD')) r.moduleType = 'Lexicons / Dictionaries';
   r.errors = errors.map((er) => `${r.module}: ${er}`);
   return r;
-}
-
-export function moduleInfoHTML(configs: SwordConfType[]): string {
-  const esc = (s: string): string => {
-    return s.replace(/[&<>"']/g, (m) => {
-      switch (m) {
-        case '&':
-          return '&amp;';
-        case '<':
-          return '&lt;';
-        case '>':
-          return '&gt;';
-        case '"':
-          return '&quot;';
-        default:
-          return '&#039;';
-      }
-    });
-  };
-  const gethtml = (c: SwordConfType): string => {
-    const fields: (keyof SwordConfType)[] = [
-      'module',
-      'Version',
-      'Lang',
-      'ShortPromo',
-      'ShortCopyright',
-      'UnlockInfo',
-      'About',
-      'Copyright',
-      'CopyrightDate',
-      'CopyrightHolder',
-      'CopyrightNotes',
-      'DistributionLicense',
-      'CopyrightContactName',
-      'CopyrightContactAddress',
-      'CopyrightContactEmail',
-      'CopyrightContactNotes',
-      'History',
-    ];
-    const sc = C.SwordConf;
-    const lang = i18next.language;
-    return fields
-      .map((f) => {
-        if (c[f]) {
-          const sf = f as any;
-          let value: string;
-          if (sc.localization.includes(sf)) {
-            const v = c[f] as SwordConfLocalized;
-            value = lang in v ? v[lang] : v.en;
-          } else if (sc.repeatable.includes(sf)) {
-            const v = c[f] as string[];
-            value = v.join(', ');
-          } else if (sc.integer.includes(sf)) {
-            const v = c[f] as number;
-            value = v.toString();
-          } else if (sf === 'History') {
-            const v = c[f] as [string, SwordConfLocalized][];
-            value = v
-              .map((x) => {
-                const vers = esc(x[0]);
-                const desc = esc(lang in x[1] ? x[1][lang] : x[1].en);
-                return `<div>Version ${vers}: ${desc}</div>`;
-              })
-              .join('');
-          } else value = c[f]?.toString() || '';
-          if (sc.rtf.includes(sf)) {
-            value = esc(value).replace(
-              /\\qc\b([^\\]+)(?=\\)/g,
-              '<div class="rtf-qc">$1</div>'
-            );
-            value = value.replace(/\\par\b/g, '<br>');
-            value = value.replace(/\\pard\b/g, '');
-          }
-          const noesc = [sc.htmllink, 'History', sc.rtf].flat();
-          if (!noesc.includes(sf)) {
-            value = esc(value);
-          }
-          return `<div class="${f}">${value}</div>`;
-        }
-        return '';
-      })
-      .join('');
-  };
-  const html: string[] = [];
-  configs.forEach((conf) => {
-    html.push(gethtml(conf));
-  });
-  return html.join(`<div class="separator"/>`);
 }
 
 export function isRepoLocal(repo: Download | Repository): boolean {

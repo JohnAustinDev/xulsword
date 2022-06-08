@@ -89,3 +89,38 @@ html .groupbox {
   margin-bottom: 4px;
   font-weight: bold;
 }
+
+/* Module Information */
+.module-info > div {
+  margin-bottom: 5px;
+}
+.module-info .module,
+.module-info .Version,
+.module-info .Lang,
+.module-info .moduleType,
+.module-info .Copyright,
+.module-info .CopyrightDate,
+.module-info .CopyrightHolder {
+  display: inline;
+  margin-inline-end: 4px;
+}
+.module-info .Version::before {
+  content: '(';
+}
+.module-info .Version::after {
+  content: ')';
+}
+.module-info .moduleType::after {
+  content: '';
+  display: block;
+}
+.module-info .ShortPromo,
+.module-info .ShortCopyright,
+.module-info .About {
+  width: 100%;
+  text-align: center;
+}
+.module-info .separator {
+  margin: 20px 10px;
+  border: 1px solid gray;
+}
