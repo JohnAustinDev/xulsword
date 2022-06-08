@@ -87,8 +87,16 @@ const Commands: GType['Commands'] = {
   },
 
   removeModule() {
-    log.info(`Action not implemented: removeModule`);
-    Window.reset();
+    const win = arguments[1] || getBrowserWindows({ type: 'xulsword' })[0];
+    const options = {
+      title: i18n.t('menu.removeModule.label'),
+      parent: win || undefined,
+    };
+    Window.open({
+      type: 'removeModule',
+      category: 'window',
+      options,
+    });
   },
 
   exportAudio() {

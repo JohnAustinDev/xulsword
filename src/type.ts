@@ -55,7 +55,8 @@ export type WindowDescriptorType = {
     | 'viewportWin'
     | 'popupWin'
     | 'chooseFont'
-    | 'moduleManager';
+    | 'moduleManager'
+    | 'removeModule';
   id?: number;
   category?:
     | 'window' // Regular window

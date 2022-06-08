@@ -26,8 +26,8 @@ import type {
   SwordConfType,
   XSModTypes,
 } from '../../type';
-import type ModuleManager from './moduleManager';
-import type { ManagerState } from './moduleManager';
+import type ModuleManager from './manager';
+import type { ManagerState } from './manager';
 import type { BibleselectSelection } from '../libxul/bibleselect';
 
 export const Tables = ['language', 'module', 'repository'] as const;
@@ -214,15 +214,18 @@ export function columnWidthChanged(
 ): void {
   const state = this.state as ManagerState;
   if (table === 'language') return;
-  let { columnWidths } = state[table];
-  columnWidths = columnWidths.slice();
-  const { visibleColumns } = state[table];
-  const dcol0 = visibleColumns[column];
-  const dcol2 = visibleColumns[column + 1];
-  const delta = size - columnWidths[dcol0];
-  columnWidths[dcol0] += delta;
-  columnWidths[dcol2] -= delta;
-  this.setTableState(table, { columnWidths }, null, true);
+  const tbl = state[table];
+  if (tbl) {
+    let { columnWidths } = tbl;
+    columnWidths = columnWidths.slice();
+    const { visibleColumns } = tbl;
+    const dcol0 = visibleColumns[column];
+    const dcol2 = visibleColumns[column + 1];
+    const delta = size - columnWidths[dcol0];
+    columnWidths[dcol0] += delta;
+    columnWidths[dcol2] -= delta;
+    this.setTableState(table, { columnWidths }, null, true);
+  }
 }
 
 export function onColumnsReordered(
@@ -253,12 +256,15 @@ export function onRowsReordered(
   tableToDataRowMap: number[]
 ) {
   const state = this.state as ManagerState;
-  // Update our tableToDataRowMap based on the new sorting.
-  Saved[table].tableToDataRowMap = tableToDataRowMap;
-  // Update initial rowSort for the next Table component reset.
-  const { rowSort } = state[table];
-  if (rowSort.column !== column || rowSort.direction !== direction) {
-    this.setTableState(table, { rowSort: { column, direction } }, null, true);
+  const tbl = state[table];
+  if (tbl) {
+    // Update our tableToDataRowMap based on the new sorting.
+    Saved[table].tableToDataRowMap = tableToDataRowMap;
+    // Update initial rowSort for the next Table component reset.
+    const { rowSort } = tbl;
+    if (rowSort.column !== column || rowSort.direction !== direction) {
+      this.setTableState(table, { rowSort: { column, direction } }, null, true);
+    }
   }
 }
 
@@ -345,24 +351,26 @@ export function onRepoCellClick(
 ) {
   const state = this.state as ManagerState;
   const { repository } = state;
-  const { repository: repotable } = state.tables;
-  const { selection, visibleColumns } = repository;
-  const { dataRowIndex: row, column, tableRowIndex } = cell;
-  const col = visibleColumns[column];
-  const builtin =
-    repotable.data[row] && repotable.data[row][RepCol.iInfo].repo.builtin;
-  if (!builtin && col === RepCol.iState) {
-    const onOrOff = repotable.data[row][RepCol.iState] === OFF;
-    const selrows = selectionToRows(selection);
-    const toggleTableRows = selrows.includes(tableRowIndex)
-      ? selrows
-      : [tableRowIndex];
-    const toggleDataRows = toggleTableRows.map(
-      (r) => Saved.repository.tableToDataRowMap[r] ?? r
-    );
-    this.switchRepo(toggleDataRows, onOrOff);
-  } else if (row > -1 && col < RepCol.iState) {
-    this.rowSelect(e, 'repository', tableRowIndex);
+  if (repository) {
+    const { repository: repotable } = state.tables;
+    const { selection, visibleColumns } = repository;
+    const { dataRowIndex: row, column, tableRowIndex } = cell;
+    const col = visibleColumns[column];
+    const builtin =
+      repotable.data[row] && repotable.data[row][RepCol.iInfo].repo.builtin;
+    if (!builtin && col === RepCol.iState) {
+      const onOrOff = repotable.data[row][RepCol.iState] === OFF;
+      const selrows = selectionToRows(selection);
+      const toggleTableRows = selrows.includes(tableRowIndex)
+        ? selrows
+        : [tableRowIndex];
+      const toggleDataRows = toggleTableRows.map(
+        (r) => Saved.repository.tableToDataRowMap[r] ?? r
+      );
+      this.switchRepo(toggleDataRows, onOrOff);
+    } else if (row > -1 && col < RepCol.iState) {
+      this.rowSelect(e, 'repository', tableRowIndex);
+    }
   }
 }
 
@@ -373,33 +381,36 @@ export function onCellEdited(
 ) {
   const table = 'repository';
   const state = this.state as ManagerState;
-  const { customRepos } = state;
-  const newCustomRepos = clone(customRepos);
-  const tablestate = state.tables[table];
-  const { visibleColumns } = state[table];
-  const row = cell.dataRowIndex;
-  const col = visibleColumns[cell.column];
-  const drow = tablestate.data[row];
-  if (table === 'repository' && drow) {
-    const crindex = newCustomRepos.findIndex(
-      (r) => downloadKey(r) === downloadKey(drow[RepCol.iInfo].repo)
-    );
-    if (crindex !== -1) {
-      newCustomRepos.splice(crindex, 1);
-    }
-    if (col === RepCol.iDomain) drow[RepCol.iInfo].repo.domain = value;
-    else if (col === RepCol.iName) drow[RepCol.iInfo].repo.name = value;
-    else if (col === RepCol.iPath) drow[RepCol.iInfo].repo.path = value;
-    drow[col] = value;
-    newCustomRepos.push(drow[RepCol.iInfo].repo);
-    this.setTableState('repository', null, tablestate.data, false, {
-      customRepos: newCustomRepos,
-    });
-    if (
-      (col === RepCol.iDomain || col === RepCol.iPath) &&
-      drow[RepCol.iState] === OFF
-    ) {
-      setTimeout(() => this.switchRepo([row], true), 100);
+  const { repositories } = state;
+  const tbl = state[table];
+  if (repositories && tbl) {
+    const newCustomRepos = clone(repositories.custom);
+    const tablestate = state.tables[table];
+    const { visibleColumns } = tbl;
+    const row = cell.dataRowIndex;
+    const col = visibleColumns[cell.column];
+    const drow = tablestate.data[row];
+    if (table === 'repository' && drow) {
+      const crindex = newCustomRepos.findIndex(
+        (r) => downloadKey(r) === downloadKey(drow[RepCol.iInfo].repo)
+      );
+      if (crindex !== -1) {
+        newCustomRepos.splice(crindex, 1);
+      }
+      if (col === RepCol.iDomain) drow[RepCol.iInfo].repo.domain = value;
+      else if (col === RepCol.iName) drow[RepCol.iInfo].repo.name = value;
+      else if (col === RepCol.iPath) drow[RepCol.iInfo].repo.path = value;
+      drow[col] = value;
+      newCustomRepos.push(drow[RepCol.iInfo].repo);
+      this.setTableState('repository', null, tablestate.data, false, {
+        repositories: { ...repositories, custom: newCustomRepos },
+      });
+      if (
+        (col === RepCol.iDomain || col === RepCol.iPath) &&
+        drow[RepCol.iState] === OFF
+      ) {
+        setTimeout(() => this.switchRepo([row], true), 100);
+      }
     }
   }
 }
@@ -556,63 +567,69 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
         }
         case 'repoAdd': {
           const state = this.state as ManagerState;
-          const { customRepos } = state;
-          const newCustomRepos = clone(customRepos);
-          const { repository: repotables } = state.tables;
-          const rawdata = Saved.repositoryListings;
-          const repo: Repository = {
-            name: '?',
-            domain: C.Downloader.localfile,
-            path: '?',
-            file: 'mods.d.tar.gz',
-            disabled: true,
-            custom: true,
-            builtin: false,
-          };
-          const row = repositoryToRow(repo);
-          row[RepCol.iInfo].classes = classes(
-            [RepCol.iState],
-            ['checkbox-column'],
-            ['custom-repo']
-          );
-          row[RepCol.iInfo].editable = editable();
-          repotables.data.unshift(row);
-          rawdata.unshift(null);
-          newCustomRepos.push(repo);
-          this.setTableState('repository', null, repotables.data, true, {
-            customRepos: newCustomRepos,
-          });
-          this.switchRepo([0], false);
+          const { repositories } = state;
+          if (repositories) {
+            const newCustomRepos = clone(repositories.custom);
+            const { repository: repotables } = state.tables;
+            const rawdata = Saved.repositoryListings;
+            const repo: Repository = {
+              name: '?',
+              domain: C.Downloader.localfile,
+              path: '?',
+              file: 'mods.d.tar.gz',
+              disabled: true,
+              custom: true,
+              builtin: false,
+            };
+            const row = repositoryToRow(repo);
+            row[RepCol.iInfo].classes = classes(
+              [RepCol.iState],
+              ['checkbox-column'],
+              ['custom-repo']
+            );
+            row[RepCol.iInfo].editable = editable();
+            repotables.data.unshift(row);
+            rawdata.unshift(null);
+            newCustomRepos.push(repo);
+            this.setTableState('repository', null, repotables.data, true, {
+              repositories: { ...repositories, custom: newCustomRepos },
+            });
+            this.switchRepo([0], false);
+          }
           break;
         }
         case 'repoDelete': {
           const state = this.state as ManagerState;
-          const { customRepos, repository } = state;
-          const newCustomRepos = clone(customRepos);
-          const { repository: repotable } = state.tables;
-          const { selection } = repository;
-          const repotableData = clone(repotable.data);
-          const { repositoryListings } = Saved;
-          const rows =
-            (repository && this.selectionToDataRows('repository', selection)) ||
-            [];
-          rows.reverse().forEach((r) => {
-            const drow = repotable.data[r];
-            if (drow && drow[RepCol.iInfo].repo.custom) {
-              repotableData.splice(r, 1);
-              repositoryListings.splice(r, 1);
-              const crIndex = customRepos.findIndex(
-                (ro) => downloadKey(ro) === downloadKey(drow[RepCol.iInfo].repo)
-              );
-              if (crIndex !== -1) {
-                newCustomRepos.splice(crIndex, 1);
+          const { repositories, repository } = state;
+          if (repositories && repository) {
+            const newCustomRepos = clone(repositories.custom);
+            const { repository: repotable } = state.tables;
+            const { selection } = repository;
+            const repotableData = clone(repotable.data);
+            const { repositoryListings } = Saved;
+            const rows =
+              (repository &&
+                this.selectionToDataRows('repository', selection)) ||
+              [];
+            rows.reverse().forEach((r) => {
+              const drow = repotable.data[r];
+              if (drow && drow[RepCol.iInfo].repo.custom) {
+                repotableData.splice(r, 1);
+                repositoryListings.splice(r, 1);
+                const crIndex = repositories.custom.findIndex(
+                  (ro) =>
+                    downloadKey(ro) === downloadKey(drow[RepCol.iInfo].repo)
+                );
+                if (crIndex !== -1) {
+                  newCustomRepos.splice(crIndex, 1);
+                }
               }
-            }
-          });
-          this.setTableState('repository', null, repotableData, true, {
-            customRepos: newCustomRepos,
-          });
-          this.loadModuleTable(this.loadLanguageTable());
+            });
+            this.setTableState('repository', null, repotableData, true, {
+              repositories: { ...repositories, custom: newCustomRepos },
+            });
+            this.loadModuleTable(this.loadLanguageTable());
+          }
           break;
         }
         case 'repoCancel': {
@@ -668,25 +685,29 @@ export function rowSelect(
   row: number
 ) {
   const state = this.state as ManagerState;
-  const { selection } = state[table];
-  const rows = selectionToRows(selection);
-  const isSelected = rows.includes(row);
-  let newSelection;
-  if (selection.length && (e.ctrlKey || e.shiftKey)) {
-    const prev = rows.filter((r) => r < row).pop();
-    const start = prev === undefined || e.ctrlKey ? row : prev;
-    for (let x = start; x <= row; x += 1) {
-      if (!isSelected) rows.push(x);
-      else if (rows.includes(x)) {
-        rows.splice(rows.indexOf(x), 1);
+  const tbl = state[table];
+  if (tbl) {
+    const { selection } = tbl;
+    const rows = selectionToRows(selection);
+    const isSelected = rows.includes(row);
+    let newSelection;
+    if (selection.length && (e.ctrlKey || e.shiftKey)) {
+      const prev = rows.filter((r) => r < row).pop();
+      const start = prev === undefined || e.ctrlKey ? row : prev;
+      for (let x = start; x <= row; x += 1) {
+        if (!isSelected) rows.push(x);
+        else if (rows.includes(x)) {
+          rows.splice(rows.indexOf(x), 1);
+        }
       }
+      newSelection = rowsToSelection(rows);
+    } else {
+      newSelection = rowsToSelection(isSelected ? [] : [row]);
     }
-    newSelection = rowsToSelection(rows);
-  } else {
-    newSelection = rowsToSelection(isSelected ? [] : [row]);
+    this.setTableState(table, { selection: newSelection }, null, false);
+    return newSelection;
   }
-  this.setTableState(table, { selection: newSelection }, null, false);
-  return newSelection;
+  return [];
 }
 
 // Enable or disable a repository. If onOrOff is undefined it will be toggled.
@@ -697,55 +718,60 @@ export function switchRepo(
   onOrOff?: boolean
 ) {
   const state = this.state as ManagerState;
-  const { disabledRepos: dr } = state;
-  const { repository: repotable } = state.tables;
-  const repoTableData = clone(repotable.data);
-  const disabledRepos = dr.slice();
-  rows.forEach((r) => {
-    const drowWas = repotable.data[r];
-    const drow = repoTableData[r];
-    const unswitchable = !drowWas || drowWas[RepCol.iInfo].repo.builtin;
-    if (drow && !unswitchable) {
-      const rowkey = downloadKey(drowWas[RepCol.iInfo].repo);
-      const disabledIndex = disabledRepos.findIndex((drs) => {
-        return drs === rowkey;
-      });
-      if (
-        onOrOff !== false &&
-        (onOrOff === true || drowWas[RepCol.iState] === OFF)
-      ) {
-        drow[RepCol.iState] = drow[RepCol.iInfo].repo.builtin ? ALWAYS_ON : ON;
-        drow[RepCol.iInfo].repo.disabled = false;
-        if (disabledIndex !== -1) disabledRepos.splice(disabledIndex, 1);
-        drow[RepCol.iInfo].loading = loading(RepCol.iState);
-      } else {
-        drow[RepCol.iState] = OFF;
-        drow[RepCol.iInfo].repo.disabled = true;
-        if (disabledIndex === -1) disabledRepos.push(rowkey);
-        if (drow[RepCol.iInfo].loading) {
-          G.Downloader.ftpCancel();
-          drow[RepCol.iInfo].loading = false;
+  const { repositories } = state;
+  if (repositories) {
+    const { disabled: dr } = repositories;
+    const { repository: repotable } = state.tables;
+    const repoTableData = clone(repotable.data);
+    const disabledRepos = dr.slice();
+    rows.forEach((r) => {
+      const drowWas = repotable.data[r];
+      const drow = repoTableData[r];
+      const unswitchable = !drowWas || drowWas[RepCol.iInfo].repo.builtin;
+      if (drow && !unswitchable) {
+        const rowkey = downloadKey(drowWas[RepCol.iInfo].repo);
+        const disabledIndex = disabledRepos.findIndex((drs) => {
+          return drs === rowkey;
+        });
+        if (
+          onOrOff !== false &&
+          (onOrOff === true || drowWas[RepCol.iState] === OFF)
+        ) {
+          drow[RepCol.iState] = drow[RepCol.iInfo].repo.builtin
+            ? ALWAYS_ON
+            : ON;
+          drow[RepCol.iInfo].repo.disabled = false;
+          if (disabledIndex !== -1) disabledRepos.splice(disabledIndex, 1);
+          drow[RepCol.iInfo].loading = loading(RepCol.iState);
+        } else {
+          drow[RepCol.iState] = OFF;
+          drow[RepCol.iInfo].repo.disabled = true;
+          if (disabledIndex === -1) disabledRepos.push(rowkey);
+          if (drow[RepCol.iInfo].loading) {
+            G.Downloader.ftpCancel();
+            drow[RepCol.iInfo].loading = false;
+          }
+          drow[RepCol.iInfo].intent = intent(RepCol.iState, 'none');
         }
-        drow[RepCol.iInfo].intent = intent(RepCol.iState, 'none');
       }
-    }
-  });
-  this.setTableState('repository', null, repoTableData, true, {
-    disabledRepos,
-  });
-  const repos = repoTableData.map((r, i) =>
-    rows.includes(i) ? r[RepCol.iInfo].repo : null
-  );
-  G.Downloader.repositoryListing(repos)
-    .then((listing) => {
-      if (!listing) throw new Error(`Canceled`);
-      this.updateRepositoryLists(listing);
-      let selection = this.loadLanguageTable();
-      const { language } = this.state as ManagerState;
-      if (!language.open) selection = [];
-      return this.loadModuleTable(selection);
-    })
-    .catch((er) => log.warn(er));
+    });
+    this.setTableState('repository', null, repoTableData, true, {
+      repositories: { ...repositories, disabled: disabledRepos },
+    });
+    const repos = repoTableData.map((r, i) =>
+      rows.includes(i) ? r[RepCol.iInfo].repo : null
+    );
+    G.Downloader.repositoryListing(repos)
+      .then((listing) => {
+        if (!listing) throw new Error(`Canceled`);
+        this.updateRepositoryLists(listing);
+        let selection = this.loadLanguageTable();
+        const { language } = this.state as ManagerState;
+        if (!language.open) selection = [];
+        return this.loadModuleTable(selection);
+      })
+      .catch((er) => log.warn(er));
+  }
 }
 
 // Start async repository module downloads corresponding to a given

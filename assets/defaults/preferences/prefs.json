@@ -57,7 +57,7 @@
     "maximizeNoteBox": []
   },
 
-  "downloader": {
+  "moduleManager": {
     "language": {
       "open": true,
       "selection": [],
@@ -93,27 +93,59 @@
       "columnWidths": [124, 145, 343, 67],
       "height": 350
     },
-    "xulswordRepos": [
-      {
-        "name": "IBT XSM",
-        "domain": "ftp.ibt.org.ru",
-        "path": "/pub/modxsm",
-        "file": "mods.d.tar.gz",
-        "builtin": false,
-        "disabled": false,
-        "custom": false
-      },
-      {
-        "name": "IBT Audio",
-        "domain": "ftp.ibt.org.ru",
-        "path": "/pub/modaudio",
-        "file": "mods.d.tar.gz",
-        "builtin": false,
-        "disabled": false,
-        "custom": false
-      }
-    ],
-    "customRepos": [],
-    "disabledRepos": []
+    "repositories": {
+      "xulsword": [
+        {
+          "name": "IBT XSM",
+          "domain": "ftp.ibt.org.ru",
+          "path": "/pub/modxsm",
+          "file": "mods.d.tar.gz",
+          "builtin": false,
+          "disabled": false,
+          "custom": false
+        },
+        {
+          "name": "IBT Audio",
+          "domain": "ftp.ibt.org.ru",
+          "path": "/pub/modaudio",
+          "file": "mods.d.tar.gz",
+          "builtin": false,
+          "disabled": false,
+          "custom": false
+        }
+      ],
+      "custom": [],
+      "disabled": []
+    }
+  },
+  "removeModule": {
+    "language": {
+      "open": true,
+      "selection": [],
+      "rowSort": { "dataColIndex": 0, "direction": "ascending" },
+      "width": 150
+    },
+    "module": {
+      "selection": [],
+      "rowSort": { "dataColIndex": 0, "direction": "ascending" },
+      "visibleColumns": [0, 1, 13],
+      "columnWidths": [
+        127,
+        190,
+        80,
+        80,
+        80,
+        80,
+        80,
+        80,
+        80,
+        80,
+        80,
+        80,
+        88,
+        103
+      ]
+    },
+    "repository": null
   }
 }

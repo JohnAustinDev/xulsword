@@ -16,7 +16,7 @@ import type {
   SwordFilterType,
   SwordFilterValueType,
 } from '../../type';
-import type { ManagerStatePref } from '../../renderer/moduleManager/moduleManager';
+import type { ManagerStatePref } from '../../renderer/moduleManager/manager';
 
 const { libxulsword } = require('libxulsword');
 
@@ -73,25 +73,25 @@ const LibSword: GType['LibSword'] & LibSwordPrivate = {
     log.verbose('Initializing libsword...');
 
     this.moduleDirectories = [Dirs.path.xsModsUser];
-    const customRepos = Prefs.getComplexValue(
-      'downloader.customRepos'
-    ) as ManagerStatePref['customRepos'];
-    const disabledRepos = Prefs.getComplexValue(
-      'downloader.disabledRepos'
-    ) as ManagerStatePref['disabledRepos'];
-    customRepos.forEach((repo: Download) => {
-      if (
-        !disabledRepos.includes(downloadKey(repo)) &&
-        isRepoLocal(repo) &&
-        path.isAbsolute(repo.path)
-      ) {
-        const dir = new LocalFile(repo.path);
-        const test = dir.clone().append('mods.d');
-        if (test.exists() && test.isDirectory()) {
-          this.moduleDirectories.push(dir.path);
+    const repos = Prefs.getComplexValue(
+      'moduleManager.repositories'
+    ) as ManagerStatePref['repositories'];
+    if (repos) {
+      const { custom, disabled } = repos;
+      custom.forEach((repo: Download) => {
+        if (
+          !disabled.includes(downloadKey(repo)) &&
+          isRepoLocal(repo) &&
+          path.isAbsolute(repo.path)
+        ) {
+          const dir = new LocalFile(repo.path);
+          const test = dir.clone().append('mods.d');
+          if (test.exists() && test.isDirectory()) {
+            this.moduleDirectories.push(dir.path);
+          }
         }
-      }
-    });
+      });
+    }
 
     log.verbose(`module directories: ${this.moduleDirectories}`);
 
