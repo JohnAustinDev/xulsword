@@ -54,7 +54,7 @@ import DragSizer, { DragSizerVal } from '../libxul/dragsizer';
 import * as H from './managerH';
 import './manager.css';
 
-// TODO!: How to handle local audio repository?
+// TODO!: Turning off eBible.org repo throws exception.
 // TODO!: ModuleManager Locale
 // TODO!: ModuleManager RTL
 
@@ -475,8 +475,10 @@ export default class ModuleManager extends React.Component {
         const canedit = repo.custom ? editable() : false;
         const isloading = repo.disabled ? false : loading(RepCol.iState);
         const on = repo.builtin ? ALWAYS_ON : ON;
+        const reponame =
+          repo.name && i18n.exists(repo.name) ? i18n.t(repo.name) : repo.name;
         repoTableData.push([
-          repo.name || '',
+          reponame || '',
           repo.domain,
           repo.path,
           repo.disabled ? OFF : on,
@@ -533,7 +535,7 @@ export default class ModuleManager extends React.Component {
   }
 
   // Load language table with all languages found in the saved repositoryListings
-  // data, keeping the selection the same when possible. It returns the new
+  // data, keeping the selection the same if possible. It returns the new
   // selection.
   loadLanguageTable(): RowSelection {
     const state = this.state as ManagerState;
@@ -572,7 +574,7 @@ export default class ModuleManager extends React.Component {
       'language',
       { selection: newlanguage },
       newTableData,
-      false
+      true
     );
     return newlanguage;
   }

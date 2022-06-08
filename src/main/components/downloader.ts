@@ -530,7 +530,7 @@ const Downloader: GType['Downloader'] = {
     return 'Canceled';
   },
 
-  // Takes an array of local and remote SWORD repositories and returns a mapped
+  // Takes an array of local and remote SWORD or XSM repositories and returns a mapped
   // array containing:
   // - SwordConfType object array if mods.d.tar.gz or config files were found.
   // - Or a string error message if there was an error or was canceled.

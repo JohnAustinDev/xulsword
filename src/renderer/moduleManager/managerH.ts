@@ -10,6 +10,7 @@ import {
   downloadKey,
   isRepoLocal,
   modrepKey,
+  ofClass,
   rowsToSelection,
   selectionToRows,
 } from '../../common';
@@ -19,12 +20,10 @@ import { log, moduleInfoHTML } from '../rutil';
 import { TCellInfo, TCellLocation } from '../libxul/table';
 
 import type {
-  ModTypes,
   Repository,
   RepositoryListing,
   RowSelection,
   SwordConfType,
-  XSModTypes,
 } from '../../type';
 import type ModuleManager from './manager';
 import type { ManagerState } from './manager';
@@ -59,7 +58,7 @@ export const Saved = {
   },
 };
 
-// These local repositories cannot be disabled or deleted.
+// These local repositories cannot be disabled, deleted or changed.
 export const builtinRepos: Repository[] = [
   {
     name: 'Shared',
@@ -71,9 +70,18 @@ export const builtinRepos: Repository[] = [
     custom: false,
   },
   {
-    name: i18n.t('programTitle'),
+    name: 'programTitle',
     domain: 'file://',
     path: G.Dirs.path.xsModsUser,
+    file: '',
+    builtin: true,
+    disabled: false,
+    custom: false,
+  },
+  {
+    name: 'Audio',
+    domain: 'file://',
+    path: G.Dirs.path.xsAudio,
     file: '',
     builtin: true,
     disabled: false,
@@ -284,74 +292,77 @@ export function onModCellClick(
   e: React.MouseEvent,
   cell: TCellLocation
 ) {
-  const state = this.state as ManagerState;
-  const { module } = state as ManagerState;
-  const { module: modtable } = state.tables;
-  const { selection, visibleColumns } = module;
-  const { dataRowIndex: row, column, tableRowIndex } = cell;
-  let col = visibleColumns[column];
-  const drow = modtable.data[row];
-  if (
-    drow &&
-    !drow[ModCol.iInfo].loading &&
-    (col === ModCol.iInstalled ||
-      (col === ModCol.iRemove && drow[ModCol.iInstalled] === ON))
-  ) {
-    col = ModCol.iInstalled;
-    // Installed column clicks
-    const was = drow[col];
-    const is = was === ON ? OFF : ON;
-    const selrows = selectionToRows(selection);
-    const toggleTableRows = selrows.includes(tableRowIndex)
-      ? selrows
-      : [tableRowIndex];
-    const toggleDataRows = toggleTableRows.map(
-      (r) => Saved.module.tableToDataRowMap[r] ?? r
-    );
-    if (is === ON) {
-      const newDLRows: number[] = [];
+  const disabled = ofClass(['disabled'], e.target);
+  if (!disabled) {
+    const state = this.state as ManagerState;
+    const { module } = state as ManagerState;
+    const { module: modtable } = state.tables;
+    const { selection, visibleColumns } = module;
+    const { dataRowIndex: row, column, tableRowIndex } = cell;
+    let col = visibleColumns[column];
+    const drow = modtable.data[row];
+    if (
+      drow &&
+      !drow[ModCol.iInfo].loading &&
+      (col === ModCol.iInstalled ||
+        (col === ModCol.iRemove && drow[ModCol.iInstalled] === ON))
+    ) {
+      col = ModCol.iInstalled;
+      // Installed column clicks
+      const was = drow[col];
+      const is = was === ON ? OFF : ON;
+      const selrows = selectionToRows(selection);
+      const toggleTableRows = selrows.includes(tableRowIndex)
+        ? selrows
+        : [tableRowIndex];
+      const toggleDataRows = toggleTableRows.map(
+        (r) => Saved.module.tableToDataRowMap[r] ?? r
+      );
+      if (is === ON) {
+        const newDLRows: number[] = [];
+        toggleDataRows.forEach((r) => {
+          const rrow = modtable.data[r];
+          if (rrow) {
+            rrow[ModCol.iRemove] = OFF;
+            const k = modrepKey(rrow[ModCol.iModule], rrow[ModCol.iInfo].repo);
+            if (k in Downloads && !Downloads[k].failed) {
+              rrow[ModCol.iInstalled] = ON;
+              this.setTableState('module', null, modtable.data, true);
+            } else newDLRows.push(r);
+          }
+        });
+        if (newDLRows.length) this.download(newDLRows);
+      } else {
+        toggleDataRows.forEach((r) => {
+          const rrow = modtable.data[r];
+          if (rrow) {
+            rrow[ModCol.iRemove] = ON;
+            rrow[col] = OFF;
+            rrow[ModCol.iInfo].intent = intent(ModCol.iInstalled, 'none');
+          }
+        });
+        this.setTableState('module', null, modtable.data, true);
+      }
+    } else if (drow && col === ModCol.iShared) {
+      // Shared column clicks
+      const is = !drow[ModCol.iInfo].shared;
+      const selrows = selectionToRows(selection);
+      const toggleTableRows = selrows.includes(tableRowIndex)
+        ? selrows
+        : [tableRowIndex];
+      const toggleDataRows = toggleTableRows.map(
+        (r) => Saved.module.tableToDataRowMap[r] ?? r
+      );
       toggleDataRows.forEach((r) => {
         const rrow = modtable.data[r];
-        if (rrow) {
-          rrow[ModCol.iRemove] = OFF;
-          const k = modrepKey(rrow[ModCol.iModule], rrow[ModCol.iInfo].repo);
-          if (k in Downloads && !Downloads[k].failed) {
-            rrow[ModCol.iInstalled] = ON;
-            this.setTableState('module', null, modtable.data, true);
-          } else newDLRows.push(r);
-        }
-      });
-      if (newDLRows.length) this.download(newDLRows);
-    } else {
-      toggleDataRows.forEach((r) => {
-        const rrow = modtable.data[r];
-        if (rrow) {
-          rrow[ModCol.iRemove] = ON;
-          rrow[col] = OFF;
-          rrow[ModCol.iInfo].intent = intent(ModCol.iInstalled, 'none');
+        if (rrow && rrow[ModCol.iInstalled] === ON) {
+          rrow[ModCol.iInfo].shared = is;
         }
       });
       this.setTableState('module', null, modtable.data, true);
+    } else {
+      this.rowSelect(e, 'module', tableRowIndex);
     }
-  } else if (drow && col === ModCol.iShared) {
-    // Shared column clicks
-    const is = !drow[ModCol.iInfo].shared;
-    const selrows = selectionToRows(selection);
-    const toggleTableRows = selrows.includes(tableRowIndex)
-      ? selrows
-      : [tableRowIndex];
-    const toggleDataRows = toggleTableRows.map(
-      (r) => Saved.module.tableToDataRowMap[r] ?? r
-    );
-    toggleDataRows.forEach((r) => {
-      const rrow = modtable.data[r];
-      if (rrow && rrow[ModCol.iInstalled] === ON) {
-        rrow[ModCol.iInfo].shared = is;
-      }
-    });
-    this.setTableState('module', null, modtable.data, true);
-  } else {
-    this.rowSelect(e, 'module', tableRowIndex);
   }
 }
 
@@ -502,7 +513,9 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
               const module = row[ModCol.iModule];
               const { repo } = row[ModCol.iInfo];
               const modrepok = modrepKey(module, repo);
-              const conf = installed.find((c) => c.module === module);
+              const conf = installed.find(
+                (c) => modrepKey(c.module, c.sourceRepository) === modrepok
+              );
               if (modrepok in Downloads) {
                 if (!G.Module.clearDownload(module, repo)) {
                   log.warn(`Failed to clear ${module} from downloads`);
@@ -519,17 +532,22 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
           });
           // Move modules (between the shared and xulsword builtins).
           Object.values(moduleData).forEach((row) => {
-            const { shared } = row[ModCol.iInfo];
-            const module = row[ModCol.iModule];
-            const conf = installed.find((c) => c.module === module);
-            const toDir = builtinRepos[shared ? 0 : 1];
-            const fromKey = conf && downloadKey(conf.sourceRepository);
-            const toKey = downloadKey(toDir);
-            if (conf && fromKey !== toKey) {
-              if (!G.Module.move(module, conf.sourceRepository, toDir)) {
-                log.warn(
-                  `Failed to move ${module} from ${fromKey} to ${toKey}`
-                );
+            if (row[ModCol.iInfo].conf.xsmType !== 'XSM_audio') {
+              const { shared, repo } = row[ModCol.iInfo];
+              const module = row[ModCol.iModule];
+              const modrepok = modrepKey(module, repo);
+              const conf = installed.find(
+                (c) => modrepKey(c.module, c.sourceRepository) === modrepok
+              );
+              const toDir = builtinRepos[shared ? 0 : 1];
+              const fromKey = conf && downloadKey(conf.sourceRepository);
+              const toKey = downloadKey(toDir);
+              if (conf && fromKey !== toKey) {
+                if (!G.Module.move(module, conf.sourceRepository, toDir)) {
+                  log.warn(
+                    `Failed to move ${module} from ${fromKey} to ${toKey}`
+                  );
+                }
               }
             }
           });
@@ -924,7 +942,8 @@ export function setTableState(
 ) {
   const state = this.state as ManagerState;
   const news: Partial<ManagerState> = s || {};
-  if (tableState) {
+  // Ignore new tableState if it is null (meaning table doesn't exist).
+  if (tableState && state[table] !== null) {
     news[table] = { ...state[table], ...tableState } as any;
   }
   if (tableData) {
@@ -1017,6 +1036,11 @@ export function modclasses() {
       drow &&
       (ci === ModCol.iShared || ci === ModCol.iRemove) &&
       drow[ModCol.iInstalled] === OFF
+    ) {
+      cs.push('disabled');
+    } else if (
+      ci === ModCol.iShared &&
+      drow[ModCol.iInfo].conf.xsmType === 'XSM_audio'
     ) {
       cs.push('disabled');
     }

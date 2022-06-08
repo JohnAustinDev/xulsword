@@ -114,7 +114,8 @@ export function confModulePath(aDataPath: string): string | null {
 // Move or remove one or more modules. Returns the number of modules
 // succesfully (re)moved. If moveTo is set, the removed modules will
 // be moved (copied) there if it is an existing path, otherwise nothing
-// will be done and 0 is returned.
+// will be done and 0 is returned. NOTE: audio modules only and always
+// exist in the xsAudio directory and cannot be moved.
 export function moveRemoveModule(
   modules: string | string[],
   repositoryPath: string,
@@ -139,30 +140,39 @@ export function moveRemoveModule(
         if (!f.isDirectory() && f.path.endsWith('.conf')) {
           const c = parseSwordConf(f);
           if (c.module === m) {
-            if (move) {
+            if (move && repositoryPath !== Dirs.path.xsAudio) {
               const tomodsd = move.clone().append('mods.d');
               tomodsd.create(LocalFile.DIRECTORY_TYPE);
               f.copyTo(tomodsd);
             }
             f.remove();
-            const modulePath = confModulePath(c.DataPath);
-            if (modulePath) {
-              const md = new LocalFile(repositoryPath);
-              md.append(modulePath);
-              if (move) {
-                const to = move.clone();
-                const dirs = modulePath.split('/').filter(Boolean);
-                dirs.pop();
-                dirs.forEach((sub) => {
-                  to.append(sub);
-                  if (!to.exists()) {
-                    to.create(LocalFile.DIRECTORY_TYPE);
-                  }
-                });
-                md.copyTo(to, null, true);
+            if (repositoryPath === Dirs.path.xsAudio) {
+              const audiodir = new LocalFile(repositoryPath);
+              audiodir.append(c.module);
+              if (audiodir.isDirectory()) {
+                audiodir.remove(true);
               }
-              if (md.exists()) md.remove(true);
               num += 1;
+            } else {
+              const modulePath = confModulePath(c.DataPath);
+              if (modulePath) {
+                const md = new LocalFile(repositoryPath);
+                md.append(modulePath);
+                if (move) {
+                  const to = move.clone();
+                  const dirs = modulePath.split('/').filter(Boolean);
+                  dirs.pop();
+                  dirs.forEach((sub) => {
+                    to.append(sub);
+                    if (!to.exists()) {
+                      to.create(LocalFile.DIRECTORY_TYPE);
+                    }
+                  });
+                  md.copyTo(to, null, true);
+                }
+                if (md.exists()) md.remove(true);
+                num += 1;
+              }
             }
           }
         }
@@ -387,12 +397,13 @@ export async function installZIPs(
                 const audio = Dirs.xsAudio;
                 const parts = fpath.posix.parse(entry.entryName);
                 const audiotype = parts.ext.substring(1).toLowerCase();
+                let audioCode: string | undefined;
                 if (/^\d+$/.test(parts.name)) {
                   // Bible audio files...
                   const chapter = Number(parts.name.replace(/^0+(?!$)/, ''));
                   const dirs = parts.dir.split('/');
                   const book = dirs.pop();
-                  const audioCode = dirs.pop();
+                  audioCode = dirs.pop();
                   if (
                     audioCode &&
                     book &&
@@ -417,12 +428,12 @@ export async function installZIPs(
                       type: audiotype,
                     };
                     newmods.audio.push(ret);
-                  }
+                  } else audioCode = undefined;
                 } else {
                   // Genbook audio files...
                   const path = parts.dir.split('/');
                   path.shift(); // don't need language code
-                  const audioCode = path.shift();
+                  audioCode = path.shift();
                   if (
                     audioCode &&
                     (audiotype === 'mp3' || audiotype === 'ogg')
@@ -435,6 +446,17 @@ export async function installZIPs(
                       type: audiotype,
                     };
                     newmods.audio.push(n);
+                  } else audioCode = undefined;
+                }
+                // Write a config file to allow repository listing
+                if (audioCode) {
+                  const conf = Dirs.xsAudio;
+                  conf.append('mods.d');
+                  conf.append(`${audioCode.toLowerCase()}.conf`);
+                  if (!conf.exists()) {
+                    conf.writeFile(
+                      `[${audioCode}]\nDataPath=./${audioCode}/\nModDrv=audio\n`
+                    );
                   }
                 }
                 break;
@@ -523,6 +545,7 @@ const Module: GType['Module'] = {
     progress(0);
     let message = 'Canceled';
     if (/^https?:\/\//i.test(zipFileOrURL)) {
+      // Audio XSM download (http)
       try {
         const tmpdir = new LocalFile(Window.tmpDir(callingWin));
         if (tmpdir.exists()) {
@@ -545,6 +568,7 @@ const Module: GType['Module'] = {
         return Promise.resolve(err.toString());
       }
     } else {
+      // Regular XSM download (ftp)
       try {
         const fp = fpath.posix.join(repository.path, zipFileOrURL);
         log.debug(`downloadXSM`, repository.domain, fp);

@@ -61,12 +61,12 @@
     "language": {
       "open": true,
       "selection": [],
-      "rowSort": { "dataColIndex": 0, "direction": "ascending" },
+      "rowSort": { "column": 0, "direction": "ascending" },
       "width": 150
     },
     "module": {
       "selection": [],
-      "rowSort": { "dataColIndex": 0, "direction": "ascending" },
+      "rowSort": { "column": 0, "direction": "ascending" },
       "visibleColumns": [0, 1, 13],
       "columnWidths": [
         127,
@@ -89,10 +89,10 @@
     "repository": {
       "open": true,
       "selection": [],
-      "rowSort": { "dataColIndex": 2, "direction": "ascending" },
+      "rowSort": { "column": 2, "direction": "ascending" },
       "visibleColumns": [0, 1, 2, 3],
       "columnWidths": [124, 145, 343, 67],
-      "height": 350
+      "height": 200
     },
     "repositories": {
       "xulsword": [
@@ -121,18 +121,25 @@
   },
   "removeModule": {
     "language": {
-      "open": true,
+      "open": false,
       "selection": [],
-      "rowSort": { "dataColIndex": 0, "direction": "ascending" },
+      "rowSort": { "column": 0, "direction": "ascending" },
       "width": 150
     },
     "module": {
       "selection": [],
-      "rowSort": { "dataColIndex": 0, "direction": "ascending" },
-      "visibleColumns": [0, 1, 12, 14],
+      "rowSort": { "column": 0, "direction": "ascending" },
+      "visibleColumns": [
+        0,
+        1,
+        2,
+        12,
+        14
+      ],
       "columnWidths": [
-        127,
-        190,
+        150,
+        225,
+        71,
         80,
         80,
         80,
@@ -142,10 +149,9 @@
         80,
         80,
         80,
-        80,
-        88,
+        105,
         103,
-        80
+        95
       ]
     },
     "repository": null

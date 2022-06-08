@@ -527,7 +527,7 @@ export function getLangReadable(code: string): string {
         ? languageNames.self[code2]
         : languageNames.en[code2];
   }
-  return name;
+  return name || code;
 }
 
 export function moduleInfoHTML(configs: SwordConfType[]): string {

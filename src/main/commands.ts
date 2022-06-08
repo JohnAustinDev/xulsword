@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable prefer-rest-params */
 import { dialog, OpenDialogSyncOptions } from 'electron';
+import { BrowserWindowConstructorOptions } from 'electron/main';
 import log from 'electron-log';
 import i18n from 'i18next';
 import { clone, JSON_stringify } from '../common';
@@ -21,7 +22,7 @@ import type {
 const Commands: GType['Commands'] = {
   openModuleManager() {
     const win = arguments[1] || getBrowserWindows({ type: 'xulsword' })[0];
-    const options = {
+    const options: BrowserWindowConstructorOptions = {
       title: i18n.t('menu.addNewModule.label'),
       parent: win || undefined,
     };

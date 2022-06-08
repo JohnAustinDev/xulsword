@@ -65,7 +65,7 @@ dirNames.forEach((dir) => {
     f.create(LocalFile.DIRECTORY_TYPE);
   }
 });
-['xsModsUser', 'xsModsCommon'].forEach((r) => {
+['xsModsUser', 'xsModsCommon', 'xsAudio'].forEach((r) => {
   const d = Dirs as any;
   d[r].append('mods.d').create(LocalFile.DIRECTORY_TYPE);
 });
