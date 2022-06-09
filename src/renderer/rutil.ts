@@ -614,11 +614,11 @@ export function moduleInfoHTML(configs: SwordConfType[]): string {
           } else value = c[f]?.toString() || '';
           if (sc.rtf.includes(sf)) {
             value = esc(value).replace(
-              /\\qc\b([^\\]+)(?=\\)/g,
+              /\\qc([^\\]+)(?=\\)/g,
               '<div class="rtf-qc">$1</div>'
             );
-            value = value.replace(/\\par\b/g, '<br>');
-            value = value.replace(/\\pard\b/g, '');
+            value = value.replaceAll('\\par', '<br>');
+            value = value.replaceAll('\\pard', '');
           }
           const noesc = [sc.htmllink, 'History', sc.rtf].flat();
           if (!noesc.includes(sf)) {

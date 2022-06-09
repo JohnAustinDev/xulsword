@@ -479,13 +479,12 @@ export function parseSwordConf(
           C.SwordConf.continuation.includes(entryBase) &&
           value.endsWith('\\')
         ) {
-          const contRE = /[\s*]\\$/;
-          let nval = value.replace(contRE, '');
+          let nval = value.substring(0, value.length - 1);
           for (;;) {
             x += 1;
             nval += lines[x];
             if (!nval.endsWith('\\')) break;
-            nval = nval.replace(contRE, '');
+            nval = nval.substring(0, nval.length - 1);
           }
           value = nval;
         }

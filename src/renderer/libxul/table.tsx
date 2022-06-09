@@ -454,9 +454,11 @@ class Table extends React.Component {
   }
 
   mapTableRow(tableRowIndex: number): TRowLocation {
+    const { data } = this.props as TableProps;
     const { sortedIndexMap } = this.state as TableState;
     const ret: TRowLocation = { dataRowIndex: tableRowIndex, tableRowIndex };
-    if (sortedIndexMap.length) ret.dataRowIndex = sortedIndexMap[tableRowIndex];
+    if (sortedIndexMap.length && sortedIndexMap.length === data.length)
+      ret.dataRowIndex = sortedIndexMap[tableRowIndex];
     return ret;
   }
 
