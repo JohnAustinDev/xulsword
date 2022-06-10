@@ -340,6 +340,9 @@ function createWindow(
     });
   windowInitI18n(win);
   if (type !== 'xulsword') win.removeMenu();
+  win.webContents.on('did-create-window', (lwin) => {
+    lwin.removeMenu();
+  });
   win.on('resize', () => {
     win.webContents.send('resize', win.getSize());
   });

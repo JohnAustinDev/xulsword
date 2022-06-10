@@ -116,7 +116,7 @@
         }
       ],
       "custom": [],
-      "disabled": []
+      "disabled": null
     }
   },
   "removeModule": {

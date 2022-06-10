@@ -752,7 +752,15 @@ export function switchRepo(
     const { disabled: dr } = repositories;
     const { repository: repotable } = state.tables;
     const repoTableData = clone(repotable.data);
-    const disabledRepos = dr.slice();
+    const disabledRepos = dr
+      ? dr.slice()
+      : repoTableData
+          .map((r) =>
+            r[RepCol.iInfo].repo.disabled
+              ? downloadKey(r[RepCol.iInfo].repo)
+              : ''
+          )
+          .filter(Boolean);
     rows.forEach((r) => {
       const drowWas = repotable.data[r];
       const drow = repoTableData[r];

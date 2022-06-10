@@ -612,17 +612,21 @@ export function moduleInfoHTML(configs: SwordConfType[]): string {
               })
               .join('');
           } else value = c[f]?.toString() || '';
+          if (![sc.htmllink, 'History'].flat().includes(sf)) {
+            value = esc(value);
+          } else {
+            value = value.replace(/<a[^>]*>/g, (m) => {
+              if (m.includes('target="_blank"')) return m;
+              return m.replace(/( target="[^"]*"|(?=>))/, ' target="_blank"');
+            });
+          }
           if (sc.rtf.includes(sf)) {
-            value = esc(value).replace(
+            value = value.replace(
               /\\qc([^\\]+)(?=\\)/g,
               '<div class="rtf-qc">$1</div>'
             );
-            value = value.replaceAll('\\par', '<br>');
             value = value.replaceAll('\\pard', '');
-          }
-          const noesc = [sc.htmllink, 'History', sc.rtf].flat();
-          if (!noesc.includes(sf)) {
-            value = esc(value);
+            value = value.replaceAll('\\par', '<br>');
           }
           return `<div class="${f}">${value}</div>`;
         }

@@ -363,8 +363,10 @@ const C = {
     ],
     repeatable: ['Obsoletes', 'Feature', 'GlobalOptionFilter'],
     delimited: { SwordModules: /;/, SwordVersions: /;/ },
+    // ShortCopyright is currently non-standard here, but used by NASB
     continuation: [
       'About',
+      'ShortCopyright',
       'Copyright',
       'CopyrightNotes',
       'CopyrightContactName',
@@ -375,7 +377,8 @@ const C = {
       'UnlockInfo',
     ],
     rtf: ['About', 'UnlockInfo'],
-    htmllink: ['ShortPromo', 'UnlockInfo'],
+    // About is currently non-standard here, but used by NASB
+    htmllink: ['ShortPromo', 'UnlockInfo', 'About'],
   } as const,
 
   // bookmark/personal-note fields

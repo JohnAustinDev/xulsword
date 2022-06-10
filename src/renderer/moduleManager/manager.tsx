@@ -54,7 +54,6 @@ import DragSizer, { DragSizerVal } from '../libxul/dragsizer';
 import * as H from './managerH';
 import './manager.css';
 
-// TODO!: Turning off eBible.org repo throws exception.
 // TODO!: ModuleManager Locale
 // TODO!: ModuleManager RTL
 
@@ -158,7 +157,7 @@ export interface ManagerStatePref {
   repositories: {
     xulsword: Repository[];
     custom: Repository[];
-    disabled: string[];
+    disabled: string[] | null;
   } | null;
 }
 
@@ -453,7 +452,7 @@ export default class ModuleManager extends React.Component {
   loadRepositoryTable(repos?: Repository[]): Repository[] {
     const state = this.state as ManagerState;
     const { repositories } = state;
-    let disabled: string[] = [];
+    let disabled: string[] | null = [];
     let allrepos = builtinRepos;
     if (repositories) {
       disabled = repositories.disabled;
@@ -461,16 +460,17 @@ export default class ModuleManager extends React.Component {
       custom.forEach((cr) => {
         cr.custom = true;
       });
+      repos?.forEach((rr) => {
+        rr.disabled = true;
+      });
       allrepos = allrepos.concat(xulsword, custom, repos || []);
     }
     if ('repository' in state) {
       const repoTableData: TRepositoryTableRow[] = [];
       allrepos.forEach((repo) => {
-        let dis = false;
-        if (!repo.builtin) {
-          dis = disabled.includes(downloadKey(repo));
+        if (disabled && !repo.builtin) {
+          repo.disabled = disabled.includes(downloadKey(repo)) || false;
         }
-        repo.disabled = dis;
         const css = classes([RepCol.iState], ['checkbox-column']);
         const canedit = repo.custom ? editable() : false;
         const isloading = repo.disabled ? false : loading(RepCol.iState);

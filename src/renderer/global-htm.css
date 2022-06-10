@@ -115,10 +115,13 @@ html .groupbox {
   display: block;
 }
 .module-info .ShortPromo,
-.module-info .ShortCopyright,
-.module-info .About {
+.module-info .ShortCopyright {
   width: 100%;
   text-align: center;
+}
+.module-info .History > div {
+  text-indent: -2em;
+  margin-inline-start: 2em;
 }
 .module-info .separator {
   margin: 20px 10px;
