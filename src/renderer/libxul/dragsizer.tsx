@@ -142,11 +142,14 @@ class DragSizer extends React.Component {
       const sizerElem = this.sizerRef.current as HTMLDivElement | undefined;
       e.preventDefault();
       if (sizerElem) {
+        const rtlcontext = getComputedStyle(sizerElem).direction;
+        const shrink2 =
+          orient === 'vertical' && rtlcontext === 'rtl' ? !shrink : shrink;
         // If onDragging is not implemented, then top will be used to move the sizer.
         const usetop = !onDragging;
         const delta =
           (orient === 'vertical' ? e.clientX : e.clientY) - startpos;
-        const value = dragging + (shrink && usetop ? -1 * delta : delta);
+        const value = dragging + (shrink2 ? -1 * delta : delta);
         let sizer = value;
         if (sizer < min) sizer = min;
         if (max && sizer > max) sizer = max;
@@ -155,7 +158,7 @@ class DragSizer extends React.Component {
         if (max && value > max + 5) isMinMax = true;
         if (usetop) {
           sizerElem.style[orient === 'vertical' ? 'right' : 'top'] = `${
-            dragging - value
+            shrink ? delta : -1 * delta
           }px`;
         }
         return { mousePos: value, sizerPos: sizer, isMinMax };

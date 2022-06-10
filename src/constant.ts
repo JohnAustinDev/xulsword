@@ -19,13 +19,13 @@ import type {
 
 // Environment variables:
 // - NODE_ENV - Set in package.json to control the build process
-//     ('development' or 'production').
+//     (will be set to either 'development' or 'production').
 // - DEBUG_PROD - Set by you to 'true' BEFORE packaging to enable
 //     dev source maps and dev-tools in a production build (but the
 //     main process is still not accesible via current vscode config).
-// - XULSWORD_ENV - Set by you to 'production' to debug production
-//     only behaviour, like i18n, splash and log, in the dev
-//     environment (including the main process debugging via vscode).
+// - XULSWORD_ENV - Set by you to 'production' for debugging production
+//     only behaviour, like i18n, splash and log, in a development
+//     environment (including main process debugging via vscode).
 const isDevelopment =
   typeof process === 'undefined'
     ? window.main.process.NODE_ENV() === 'development' &&
@@ -35,55 +35,6 @@ const isDevelopment =
 
 // Common Global Constants
 const C = {
-  // --------------------------
-  // USED ONLY BY XULSWORD 2.0:
-  // --------------------------
-  BMFileReturn: '\r\n', // used in imported/exported bookmarks.txt because < 3.6 could only read files with this newline.
-  DEFAULTLOCALE: 'en',
-  DLGSTD: 'centerscreen,modal,resizable',
-  DLGALERT: 0,
-  DLGQUEST: 1,
-  DLGINFO: 2,
-  DLGOK: 0,
-  DLGOKCANCEL: 1,
-  DLGYESNO: 2,
-  WESTERNVS: 'KJV',
-  EASTERNVS: 'Synodal',
-  TOOLTIP_LEN: 96,
-  DEFAULTS: 'defaults',
-  PREFERENCES: 'preferences',
-  MANIFEST_EXT: '.manifest',
-  CONF_EXT: '.conf',
-  EXTENSION_EXT: '.xpi',
-  PMSTD: 'centerscreen, dependent',
-  PMSPLASH: 'alwaysRaised,centerscreen',
-  PMMODAL: 'alwaysRaised,centerscreen,modal',
-  PMNORMAL: 0,
-  PMSTOP: 1,
-  APPLICATIONID: 'xulsword@xulsword.org',
-  FIREFOXUID: 'ec8030f7-c20a-464f-9b0e-13a3a9e97384',
-  LOCALE_SEARCH_SYMBOLS: {
-    SINGLECharWildCard: '?',
-    MULTICharWildCard: '*',
-    AND: '&&',
-    OR: '||',
-    NOT: '!',
-    SIMILAR: '~',
-    GROUPSTART: '(',
-    GROUPEND: ')',
-    QUOTESTART: '"',
-    QUOTEEND: '"',
-  },
-  AUDMIME: { mp3: 'audio/mpeg', ogg: 'audio/ogg' },
-  SEP: ',',
-  TIMEOUT: 25,
-  XSMODEXT: ['zip', 'xsm'],
-  XSBMEXT: ['txt', 'xsb'],
-  XSVIDEXT: ['wmv', 'mov', 'mpeg', 'mpg', 'avi'],
-
-  // ---------------------
-  // USED BY XULSWORD 3.0:
-  // ---------------------
   isDevelopment,
 
   DevLogLevel: 'debug' as LogLevel,
@@ -93,6 +44,8 @@ const C = {
   DevSplash: 1 as 0 | 1 | 2, // 0 normal, 1 skip, 2 debug
 
   SWORDEngineVersion: '1.8.1',
+
+  APPLICATIONID: 'xulsword@xulsword.org',
 
   MAXVERSE: 176,
   MAXCHAPTER: 150,
@@ -381,22 +334,39 @@ const C = {
     htmllink: ['ShortPromo', 'UnlockInfo', 'About'],
   } as const,
 
-  // bookmark/personal-note fields
-  TYPE: 0,
-  NAME: 1,
-  NOTE: 2,
-  BOOK: 3,
-  CHAPTER: 4,
-  VERSE: 5,
-  LASTVERSE: 6,
-  MODULE: 7,
-  LOCATION: 8,
-  BMTEXT: 9,
-  ICON: 10,
-  CREATIONDATE: 11,
-  VISITEDDATE: 12,
-  NAMELOCALE: 13,
-  NOTELOCALE: 14,
+  LOCALE_SEARCH_SYMBOLS: {
+    SINGLECharWildCard: '?',
+    MULTICharWildCard: '*',
+    AND: '&&',
+    OR: '||',
+    NOT: '!',
+    SIMILAR: '~',
+    GROUPSTART: '(',
+    GROUPEND: ')',
+    QUOTESTART: '"',
+    QUOTEEND: '"',
+  },
+
+  BM: {
+    // used in imported/exported bookmarks.txt because < 3.6 could only read files with this newline.
+    FileReturn: '\r\n',
+    // bookmark and personal-note fields (do not change, or user exported data will become incompatible)
+    TYPE: 0,
+    NAME: 1,
+    NOTE: 2,
+    BOOK: 3,
+    CHAPTER: 4,
+    VERSE: 5,
+    LASTVERSE: 6,
+    MODULE: 7,
+    LOCATION: 8,
+    BMTEXT: 9,
+    ICON: 10,
+    CREATIONDATE: 11,
+    VISITEDDATE: 12,
+    NAMELOCALE: 13,
+    NOTELOCALE: 14,
+  },
 
   // Lists for each module type of LibSword features that should be always on.
   AlwaysOn: {

@@ -23,7 +23,6 @@ Dirs.path.xsModsUser = path.join(Dirs.path.ProfD, 'resources');
 // Dirs.path.xsAudio = path.join(Dirs.path.xsResD, 'audio');
 // Dirs.path.xsBookmarks = path.join(Dirs.path.xsResD, 'bookmarks');
 // Dirs.path.xsVideo = path.join(Dirs.path.xsResD, 'video');
-Dirs.path.xsLocale = path.join(Dirs.path.xsResD, 'locales.d');
 
 // Dirs.path.xsModsCommon = /^win32|darwin$/.test(process.platform)
 //   ? path.join(app.getPath('appData'), 'Sword')

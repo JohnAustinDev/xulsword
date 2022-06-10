@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { app } from 'electron';
 import path from 'path';
-import C from '../../constant';
 import LocalFile from './localFile';
 
 import type { DirsDirectories, GType } from '../../type';
@@ -22,13 +21,13 @@ Dirs.path.TmpD = app.getPath('temp');
 
 Dirs.path.xsProgram = path.join(process.resourcesPath, '..');
 
-Dirs.path.xsDefaults = path.join(Dirs.path.xsAsset, C.DEFAULTS);
+Dirs.path.xsDefaults = path.join(Dirs.path.xsAsset, 'defaults');
 
-Dirs.path.xsPrefDefD = path.join(Dirs.path.xsDefaults, C.PREFERENCES);
+Dirs.path.xsPrefDefD = path.join(Dirs.path.xsDefaults, 'preferences');
 
 Dirs.path.ProfD = app.getPath('userData');
 
-Dirs.path.xsPrefD = path.join(Dirs.path.ProfD, C.PREFERENCES);
+Dirs.path.xsPrefD = path.join(Dirs.path.ProfD, 'preferences');
 
 Dirs.path.xsResD = path.join(Dirs.path.ProfD, 'resources');
 

@@ -638,11 +638,16 @@ class Table extends React.Component {
     // a focused cell at all times, like a spreadsheet. But we want a table containing
     // interactive components and onFocusedCell doesn't seem to work well for that.
     // So a click handler is used, which also provides the event.
+    // - RTL direction tables become completely broken. So direction must be set to
+    // 'ltr' or tables will become broken with RTL locales. However, for xulsword,
+    // most table data is still LTR even when the locale is not, so forcing all
+    // tables to LTR has so far been an acceptable solution.
     return (
       <Box
         {...topHandle('onClick', onCellClick)}
         domref={tableRef}
         {...addClass(classes, props)}
+        dir="ltr"
       >
         <BPTable
           numRows={numRows}
