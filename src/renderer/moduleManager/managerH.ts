@@ -114,7 +114,7 @@ export function ModuleTableHeadings() {
   ];
 }
 
-export const RepositoryTableHeadings = ['', '', '', ''];
+export const RepositoryTableHeadings = ['', '', '', 'icon:folder-open'];
 
 export type TRepCellInfo = TCellInfo & {
   repo: Repository;
