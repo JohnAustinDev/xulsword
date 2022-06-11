@@ -59,55 +59,60 @@ export const Saved = {
 };
 
 // These local repositories cannot be disabled, deleted or changed.
-export const builtinRepos: Repository[] = [
-  {
-    name: 'Shared',
-    domain: 'file://',
-    path: G.Dirs.path.xsModsCommon,
-    file: '',
-    builtin: true,
-    disabled: false,
-    custom: false,
-  },
-  {
-    name: 'programTitle',
-    domain: 'file://',
-    path: G.Dirs.path.xsModsUser,
-    file: '',
-    builtin: true,
-    disabled: false,
-    custom: false,
-  },
-  {
-    name: 'Audio',
-    domain: 'file://',
-    path: G.Dirs.path.xsAudio,
-    file: '',
-    builtin: true,
-    disabled: false,
-    custom: false,
-  },
-];
+// Implemented as a function to allow i18n to initialize.
+export function builtinRepos(): Repository[] {
+  return [
+    {
+      name: 'Shared',
+      domain: 'file://',
+      path: G.Dirs.path.xsModsCommon,
+      file: '',
+      builtin: true,
+      disabled: false,
+      custom: false,
+    },
+    {
+      name: i18n.t('programTitle'),
+      domain: 'file://',
+      path: G.Dirs.path.xsModsUser,
+      file: '',
+      builtin: true,
+      disabled: false,
+      custom: false,
+    },
+    {
+      name: i18n.t('audio.label'),
+      domain: 'file://',
+      path: G.Dirs.path.xsAudio,
+      file: '',
+      builtin: true,
+      disabled: false,
+      custom: false,
+    },
+  ];
+}
 
 export const LanguageTableHeadings = [''];
 
-export const ModuleTableHeadings = [
-  'Type',
-  'About',
-  'Code',
-  'Repository',
-  'Version',
-  'Size',
-  'Features',
-  'Versification',
-  'Scope',
-  'Copyright',
-  'Distribution License',
-  'Source Type',
-  'Shared',
-  'Installed',
-  'Remove',
-];
+export function ModuleTableHeadings() {
+  return [
+    '',
+    '',
+    i18n.t('name.label'),
+    'Repository',
+    'Version',
+    'Size',
+    'Features',
+    'Versification',
+    'Scope',
+    'Copyright',
+    'Distribution License',
+    'Source Type',
+    'icon:folder-shared',
+    'icon:cloud-download',
+    'icon:delete',
+  ];
+}
 
 export const RepositoryTableHeadings = ['', '', '', ''];
 
@@ -489,68 +494,6 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
           break;
         }
         case 'ok': {
-          G.Window.moveToBack();
-          // Remove selection from persisted state.
-          this.setTableState('module', { selection: [] });
-          this.setTableState('repository', { selection: [] });
-          const state = this.state as ManagerState;
-          const { repository: repotable } = state.tables;
-          const { moduleData } = Saved;
-          // Get a list of all currently installed modules (those found in any
-          // enabled local repository).
-          const installed: SwordConfType[] = [];
-          repotable.data.forEach((rtd, i) => {
-            if (isRepoLocal(rtd[RepCol.iInfo].repo)) {
-              const listing = Saved.repositoryListings[i];
-              if (Array.isArray(listing)) {
-                listing.forEach((c) => installed.push(c));
-              }
-            }
-          });
-          // Remove modules
-          Object.values(moduleData).forEach((row) => {
-            if (row[ModCol.iInstalled] === OFF) {
-              const module = row[ModCol.iModule];
-              const { repo } = row[ModCol.iInfo];
-              const modrepok = modrepKey(module, repo);
-              const conf = installed.find(
-                (c) => modrepKey(c.module, c.sourceRepository) === modrepok
-              );
-              if (modrepok in Downloads) {
-                if (!G.Module.clearDownload(module, repo)) {
-                  log.warn(`Failed to clear ${module} from downloads`);
-                  Downloads[modrepok].failed = true;
-                }
-              } else if (conf) {
-                if (!G.Module.remove(conf.module, conf.sourceRepository)) {
-                  log.warn(
-                    `Failed to remove ${module} from ${conf.sourceRepository.path}`
-                  );
-                }
-              }
-            }
-          });
-          // Move modules (between the shared and xulsword builtins).
-          Object.values(moduleData).forEach((row) => {
-            if (row[ModCol.iInfo].conf.xsmType !== 'XSM_audio') {
-              const { shared, repo } = row[ModCol.iInfo];
-              const module = row[ModCol.iModule];
-              const modrepok = modrepKey(module, repo);
-              const conf = installed.find(
-                (c) => modrepKey(c.module, c.sourceRepository) === modrepok
-              );
-              const toDir = builtinRepos[shared ? 0 : 1];
-              const fromKey = conf && downloadKey(conf.sourceRepository);
-              const toKey = downloadKey(toDir);
-              if (conf && fromKey !== toKey) {
-                if (!G.Module.move(module, conf.sourceRepository, toDir)) {
-                  log.warn(
-                    `Failed to move ${module} from ${fromKey} to ${toKey}`
-                  );
-                }
-              }
-            }
-          });
           // Install succesfully downloaded modules
           Object.keys(Downloads).forEach((k) => {
             if (Downloads[k].failed) {
@@ -561,6 +504,68 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
           const promises = Object.values(Downloads).map((v) => v.nfiles);
           return Promise.allSettled(promises)
             .then((results) => {
+              G.Window.moveToBack();
+              // Remove selection from persisted state.
+              this.setTableState('module', { selection: [] });
+              this.setTableState('repository', { selection: [] });
+              const state = this.state as ManagerState;
+              const { repository: repotable } = state.tables;
+              const { moduleData } = Saved;
+              // Get a list of all currently installed modules (those found in any
+              // enabled local repository).
+              const installed: SwordConfType[] = [];
+              repotable.data.forEach((rtd, i) => {
+                if (isRepoLocal(rtd[RepCol.iInfo].repo)) {
+                  const listing = Saved.repositoryListings[i];
+                  if (Array.isArray(listing)) {
+                    listing.forEach((c) => installed.push(c));
+                  }
+                }
+              });
+              // Remove modules
+              Object.values(moduleData).forEach((row) => {
+                if (row[ModCol.iInstalled] === OFF) {
+                  const module = row[ModCol.iModule];
+                  const { repo } = row[ModCol.iInfo];
+                  const modrepok = modrepKey(module, repo);
+                  const conf = installed.find(
+                    (c) => modrepKey(c.module, c.sourceRepository) === modrepok
+                  );
+                  if (modrepok in Downloads) {
+                    if (!G.Module.clearDownload(module, repo)) {
+                      log.warn(`Failed to clear ${module} from downloads`);
+                      Downloads[modrepok].failed = true;
+                    }
+                  } else if (conf) {
+                    if (!G.Module.remove(conf.module, conf.sourceRepository)) {
+                      log.warn(
+                        `Failed to remove ${module} from ${conf.sourceRepository.path}`
+                      );
+                    }
+                  }
+                }
+              });
+              // Move modules (between the shared and xulsword builtins).
+              Object.values(moduleData).forEach((row) => {
+                if (row[ModCol.iInfo].conf.xsmType !== 'XSM_audio') {
+                  const { shared, repo } = row[ModCol.iInfo];
+                  const module = row[ModCol.iModule];
+                  const modrepok = modrepKey(module, repo);
+                  const conf = installed.find(
+                    (c) => modrepKey(c.module, c.sourceRepository) === modrepok
+                  );
+                  const toDir = builtinRepos()[shared ? 0 : 1];
+                  const fromKey = conf && downloadKey(conf.sourceRepository);
+                  const toKey = downloadKey(toDir);
+                  if (conf && fromKey !== toKey) {
+                    if (!G.Module.move(module, conf.sourceRepository, toDir)) {
+                      log.warn(
+                        `Failed to move ${module} from ${fromKey} to ${toKey}`
+                      );
+                    }
+                  }
+                }
+              });
               const saves: {
                 module: string;
                 fromRepo: Repository;
@@ -584,7 +589,7 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
                     saves.push({
                       module: row[ModCol.iModule],
                       fromRepo: row[ModCol.iInfo].repo,
-                      toRepo: builtinRepos[row[ModCol.iInfo].shared ? 0 : 1],
+                      toRepo: builtinRepos()[row[ModCol.iInfo].shared ? 0 : 1],
                     });
                   }
                 }
@@ -813,6 +818,7 @@ export function switchRepo(
 
 // Start async repository module downloads corresponding to a given
 // set of module table rows.
+let activeDownloads = 0;
 export function download(this: ModuleManager, rows: number[]): void {
   const state = this.state as ManagerState;
   const { module: modtable } = state.tables;
@@ -916,6 +922,7 @@ export function download(this: ModuleManager, rows: number[]): void {
             r[ModCol.iInfo].intent = intent(ModCol.iInstalled, newintent);
           });
           this.setTableState('module', null, modtable.data, true);
+          activeDownloads -= 1;
           return typeof dl === 'string' ? null : dl;
         } catch (er: any) {
           this.addToast({ message: er.message });
@@ -924,13 +931,21 @@ export function download(this: ModuleManager, rows: number[]): void {
             r[ModCol.iInfo].intent = intent(ModCol.iInstalled, 'danger');
           });
           this.setTableState('module', null, modtable.data, true);
+          activeDownloads -= 1;
           return null;
         }
       })();
       Downloads[modrepk] = { nfiles, failed: true };
+      activeDownloads += 1;
     }
   });
-  this.setTableState('module', null, modtable.data, true);
+  this.setTableState('module', null, modtable.data, true, { okdisabled: true });
+  Promise.all(Object.values(Downloads).map((v) => v.nfiles))
+    .then(() => {
+      if (activeDownloads < 1) this.sState({ okdisabled: false });
+      return true;
+    })
+    .catch((er) => log.warn(er));
 }
 
 // Set table state, save the data for window re-renders, and re-render the table.
@@ -986,7 +1001,9 @@ export function selectionToDataRows(
 
 // Create a new repository table row from a Repository object.
 export function repositoryToRow(repo: Repository): TRepositoryTableRow {
-  const on = builtinRepos.map((r) => downloadKey(r)).includes(downloadKey(repo))
+  const on = builtinRepos()
+    .map((r) => downloadKey(r))
+    .includes(downloadKey(repo))
     ? ALWAYS_ON
     : ON;
   return [

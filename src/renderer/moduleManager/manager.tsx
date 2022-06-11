@@ -54,8 +54,9 @@ import DragSizer, { DragSizerVal } from '../libxul/dragsizer';
 import * as H from './managerH';
 import './manager.css';
 
-// TODO!: ModuleManager Locale
-// TODO!: ModuleManager RTL
+// TODO!: Hide builtin repositories in table
+// TODO!: Remove header tooltips
+// TODO!: unchecking installed mod and rechecking re-downloads it? What about 'remove' column?
 
 import type {
   ModTypes,
@@ -115,6 +116,7 @@ const notStatePref = {
     chapters: SwordConfAudioChapters;
     callback: (result: BibleselectSelection | null) => void;
   } | null,
+  okdisabled: false,
   tables: {
     language: {
       data: [] as TLanguageTableRow[],
@@ -453,7 +455,7 @@ export default class ModuleManager extends React.Component {
     const state = this.state as ManagerState;
     const { repositories } = state;
     let disabled: string[] | null = [];
-    let allrepos = builtinRepos;
+    let allrepos = builtinRepos();
     if (repositories) {
       disabled = repositories.disabled;
       const { xulsword, custom } = repositories;
@@ -475,10 +477,14 @@ export default class ModuleManager extends React.Component {
         const canedit = repo.custom ? editable() : false;
         const isloading = repo.disabled ? false : loading(RepCol.iState);
         const on = repo.builtin ? ALWAYS_ON : ON;
+        let lng = i18n.language;
+        if (!['en', 'ru'].includes(lng)) lng = C.FallbackLanguage[lng];
         const reponame =
-          repo.name && i18n.exists(repo.name) ? i18n.t(repo.name) : repo.name;
+          repo.name && repo.name.includes(' | ')
+            ? repo.name.split(' | ')[lng === 'ru' ? 1 : 0]
+            : repo.name || '';
         repoTableData.push([
-          reponame || '',
+          reponame,
           repo.domain,
           repo.path,
           repo.disabled ? OFF : on,
@@ -612,17 +618,17 @@ export default class ModuleManager extends React.Component {
               enabledXulswordRepoMods[modunique] = repokey;
             }
           }
-          let mtype = c.moduleType as string;
+          let mtype: string = c.moduleType;
           if (c.xsmType === 'XSM') {
-            mtype = `XSM ${mtype}`;
+            mtype = `XSM ${i18n.t(C.SupportedModuleTypes[mtype as ModTypes])}`;
           } else if (c.xsmType === 'XSM_audio') {
-            mtype = `XSM Audio`;
+            mtype = `XSM ${i18n.t('audio.label')}`;
           }
           if (!(modrepk in moduleData)) {
             const d = [] as unknown as TModuleTableRow;
             d[ModCol.iInfo] = {
               repo,
-              shared: repokey === downloadKey(builtinRepos[0]),
+              shared: repokey === downloadKey(builtinRepos()[0]),
               classes: modclasses(),
               tooltip: tooltip('VALUE', [
                 ModCol.iShared,
@@ -822,6 +828,7 @@ export default class ModuleManager extends React.Component {
       showModuleInfo,
       showChapterDialog,
       progress,
+      okdisabled,
     } = state;
     const {
       language: langtable,
@@ -978,7 +985,7 @@ export default class ModuleManager extends React.Component {
                   key={modtable.render}
                   data={modtable.data}
                   selectedRegions={module.selection}
-                  columnHeadings={ModuleTableHeadings}
+                  columnHeadings={ModuleTableHeadings()}
                   visibleColumns={module.visibleColumns}
                   columnWidths={module.columnWidths}
                   initialRowSort={module.rowSort}
@@ -1124,7 +1131,7 @@ export default class ModuleManager extends React.Component {
           <BPButton id="cancel" onClick={eventHandler}>
             {i18n.t('cancel.label')}
           </BPButton>
-          <BPButton id="ok" onClick={eventHandler}>
+          <BPButton id="ok" disabled={okdisabled} onClick={eventHandler}>
             {i18n.t('ok.label')}
           </BPButton>
         </Hbox>

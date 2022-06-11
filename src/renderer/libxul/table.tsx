@@ -11,7 +11,7 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Intent, Menu, MenuDivider, MenuItem } from '@blueprintjs/core';
+import { Icon, Intent, Menu, MenuDivider, MenuItem } from '@blueprintjs/core';
 import {
   Cell,
   Column,
@@ -205,7 +205,21 @@ abstract class AbstractSortableColumn implements TSortableColumn {
       props
     );
     const columnHeaderCellRenderer = () => (
-      <ColumnHeaderCell name={this.name} menuRenderer={menuRenderer} />
+      <ColumnHeaderCell
+        className={[
+          `data-col-${this.dataColIndex}`,
+          this.name ? '' : 'no-name',
+          this.name?.startsWith('icon:') ? 'header-icon' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+        name={(this.name?.startsWith('icon:') ? '' : this.name) || 'x'}
+        menuRenderer={menuRenderer}
+      >
+        {this.name.startsWith('icon:') && (
+          <Icon icon={this.name.substring(5) as any} size={20} intent="none" />
+        )}
+      </ColumnHeaderCell>
     );
     return (
       <Column
@@ -252,7 +266,10 @@ class TextSortableColumn extends AbstractSortableColumn {
     };
     const items: JSX.Element[] = [];
     if (onColumnHide) {
-      if (columnHeadings[this.dataColIndex]) {
+      if (
+        columnHeadings[this.dataColIndex] &&
+        !columnHeadings[this.dataColIndex].startsWith('icon:')
+      ) {
         items.push(<MenuDivider key="divider.1" />);
         items.push(
           <MenuItem
@@ -264,17 +281,20 @@ class TextSortableColumn extends AbstractSortableColumn {
         );
       }
       if (
-        columnHeadings.some((h, i) => h && visibleColumns?.indexOf(i) === -1)
+        columnHeadings.some(
+          (h, i) =>
+            h && !h.startsWith('icon:') && visibleColumns?.indexOf(i) === -1
+        )
       ) {
         items.push(<MenuDivider key="divider.2" />);
       }
-      columnHeadings.forEach((heading, i) => {
-        if (heading && visibleColumns?.indexOf(i) === -1) {
+      columnHeadings.forEach((h, i) => {
+        if (h && !h.startsWith('icon:') && visibleColumns?.indexOf(i) === -1) {
           items.push(
             <MenuItem
-              key={['add', heading].join('.')}
+              key={['add', h].join('.')}
               icon="plus"
-              text={heading}
+              text={h}
               onClick={() => columnHide(i, this.dataColIndex)}
             />
           );

@@ -97,7 +97,7 @@
     "repositories": {
       "xulsword": [
         {
-          "name": "IBT XSM",
+          "name": "IBT XSM | ИПБ XSM",
           "domain": "ftp.ibt.org.ru",
           "path": "/pub/modxsm",
           "file": "mods.d.tar.gz",
@@ -106,7 +106,7 @@
           "custom": false
         },
         {
-          "name": "IBT Audio",
+          "name": "IBT Audio | ИПБ Аудио",
           "domain": "ftp.ibt.org.ru",
           "path": "/pub/modaudio",
           "file": "mods.d.tar.gz",
