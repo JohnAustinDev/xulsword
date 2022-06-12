@@ -24,23 +24,18 @@
   overflow-x: hidden;
 }
 
-/* Without text, reorder-handle is mangled, so needs a workaround */
-.bp4-table-column-headers .no-name .bp4-table-column-name,
-.bp4-table-column-headers .header-icon .bp4-table-column-name {
-  color: transparent;
+.bp4-table-column-headers .no-name .bp4-table-column-name-text,
+.bp4-table-column-headers .header-icon .bp4-table-column-name-text {
+  height: 30px;
 }
+
 /* header-icon types don't have headings, so remove the extra space */
 .bp4-table-column-headers .header-icon .bp4-popover-target {
   position: relative;
   top: 5px;
   left: -10px;
 }
-.bp4-table-column-headers
-  .header-icon.bp4-table-last-in-row
-  .bp4-popover-target {
-  left: -20px;
-}
-.bp4-table-column-headers .header-icon .bp4-icon {
+.bp4-table-column-headers .header-icon .bp4-table-header-content .bp4-icon {
   display: block;
   position: absolute;
   top: -24px;

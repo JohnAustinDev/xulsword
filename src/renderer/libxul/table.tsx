@@ -213,7 +213,7 @@ abstract class AbstractSortableColumn implements TSortableColumn {
         ]
           .filter(Boolean)
           .join(' ')}
-        name={(this.name?.startsWith('icon:') ? '' : this.name) || 'x'}
+        name={(this.name?.startsWith('icon:') ? '' : this.name) || ''}
         menuRenderer={menuRenderer}
       >
         {this.name.startsWith('icon:') && (

@@ -73,8 +73,9 @@ html .grid {
 
 /* Groupbox */
 html .groupbox {
-  border: 1px solid rgb(200, 200, 200);
+  border: 2px solid rgb(200, 200, 200);
   border-radius: 4px;
+  background: rgba(125, 125, 125, 0.1);
   margin-top: 1em;
 }
 .groupbox .caption-text {
