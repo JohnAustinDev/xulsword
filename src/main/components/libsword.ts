@@ -80,7 +80,7 @@ const LibSword: GType['LibSword'] & LibSwordPrivate = {
       const { custom, disabled } = repos;
       custom.forEach((repo: Download) => {
         if (
-          !disabled.includes(downloadKey(repo)) &&
+          !disabled?.includes(downloadKey(repo)) &&
           isRepoLocal(repo) &&
           path.isAbsolute(repo.path)
         ) {

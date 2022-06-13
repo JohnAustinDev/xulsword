@@ -54,10 +54,6 @@ import DragSizer, { DragSizerVal } from '../libxul/dragsizer';
 import * as H from './managerH';
 import './manager.css';
 
-// TODO!: Hide builtin repositories in table
-// TODO!: Remove header tooltips
-// TODO!: unchecking installed mod and rechecking re-downloads it? What about 'remove' column?
-
 import type {
   ModTypes,
   PrefObject,
@@ -605,26 +601,31 @@ export default class ModuleManager extends React.Component {
           const { repo } = drow[RepCol.iInfo];
           const repokey = downloadKey(repo);
           const modrepk = modrepKey(c.module, repo);
+          // Different audio and SWORD modules might share the same name,
+          // so include XSM_audio in key.
           const modunique = [
             c.module,
             c.Version,
             c.xsmType === 'XSM_audio',
           ].join('.');
           const repoIsLocal = isRepoLocal(c.sourceRepository);
-          if (repoIsLocal) localModules[modunique] = repokey;
+          if (repoIsLocal && drow[RepCol.iState] !== OFF)
+            localModules[modunique] = repokey;
           else if (drow[RepCol.iState] !== OFF) {
             enabledExternRepoMods[modunique] = repokey;
             if (c.xsmType !== 'none') {
               enabledXulswordRepoMods[modunique] = repokey;
             }
           }
-          let mtype: string = c.moduleType;
-          if (c.xsmType === 'XSM') {
-            mtype = `XSM ${i18n.t(C.SupportedModuleTypes[mtype as ModTypes])}`;
-          } else if (c.xsmType === 'XSM_audio') {
-            mtype = `XSM ${i18n.t('audio.label')}`;
-          }
           if (!(modrepk in moduleData)) {
+            let mtype: string = c.moduleType;
+            if (c.xsmType === 'XSM') {
+              mtype = `XSM ${i18n.t(
+                C.SupportedModuleTypes[mtype as ModTypes]
+              )}`;
+            } else if (c.xsmType === 'XSM_audio') {
+              mtype = `XSM ${i18n.t('audio.label')}`;
+            }
             const d = [] as unknown as TModuleTableRow;
             d[ModCol.iInfo] = {
               repo,
@@ -670,9 +671,8 @@ export default class ModuleManager extends React.Component {
     // remote repositories are not included in moduleLangData. Rather their
     // 'installed' and 'shared' checkboxes are applied to the corresponding
     // remote repository module. Also, modules in disabled repositories
-    // are not included. If a xulsword module repository is enabled, its
-    // modules will replace the listings of modules having the same name in
-    // regular repositories.
+    // are not included. If a xulsword module repository is enabled, any
+    // correpsonding modules in regular repositories will not be listed.
     repositoryListings.forEach((listing, i) => {
       const drow = repotable.data[i];
       if (drow && Array.isArray(listing) && drow[RepCol.iState] !== OFF) {

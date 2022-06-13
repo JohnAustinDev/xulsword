@@ -63,7 +63,7 @@ export const Saved = {
 export function builtinRepos(): Repository[] {
   return [
     {
-      name: 'Shared',
+      name: 'Shared | Общий',
       domain: 'file://',
       path: G.Dirs.path.xsModsCommon,
       file: '',
@@ -309,9 +309,9 @@ export function onModCellClick(
     if (
       drow &&
       !drow[ModCol.iInfo].loading &&
-      (col === ModCol.iInstalled ||
-        (col === ModCol.iRemove && drow[ModCol.iInstalled] === ON))
+      (col === ModCol.iInstalled || col === ModCol.iRemove)
     ) {
+      const remove = col === ModCol.iRemove;
       col = ModCol.iInstalled;
       // Installed column clicks
       const was = drow[col];
@@ -330,7 +330,7 @@ export function onModCellClick(
           if (rrow) {
             rrow[ModCol.iRemove] = OFF;
             const k = modrepKey(rrow[ModCol.iModule], rrow[ModCol.iInfo].repo);
-            if (k in Downloads && !Downloads[k].failed) {
+            if (remove || (k in Downloads && !Downloads[k].failed)) {
               rrow[ModCol.iInstalled] = ON;
               this.setTableState('module', null, modtable.data, true);
             } else newDLRows.push(r);
@@ -554,14 +554,18 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
                   const conf = installed.find(
                     (c) => modrepKey(c.module, c.sourceRepository) === modrepok
                   );
-                  const toDir = builtinRepos()[shared ? 0 : 1];
-                  const fromKey = conf && downloadKey(conf.sourceRepository);
-                  const toKey = downloadKey(toDir);
-                  if (conf && fromKey !== toKey) {
-                    if (!G.Module.move(module, conf.sourceRepository, toDir)) {
-                      log.warn(
-                        `Failed to move ${module} from ${fromKey} to ${toKey}`
-                      );
+                  if (conf?.sourceRepository.builtin) {
+                    const toDir = builtinRepos()[shared ? 0 : 1];
+                    const fromKey = conf && downloadKey(conf.sourceRepository);
+                    const toKey = downloadKey(toDir);
+                    if (conf && fromKey !== toKey) {
+                      if (
+                        !G.Module.move(module, conf.sourceRepository, toDir)
+                      ) {
+                        log.warn(
+                          `Failed to move ${module} from ${fromKey} to ${toKey}`
+                        );
+                      }
                     }
                   }
                 }
@@ -1057,11 +1061,7 @@ export function modclasses() {
     if ([ModCol.iShared, ModCol.iInstalled, ModCol.iRemove].includes(ci as any))
       cs.push('checkbox-column');
     const drow = Saved.module.data[ri];
-    if (
-      drow &&
-      (ci === ModCol.iShared || ci === ModCol.iRemove) &&
-      drow[ModCol.iInstalled] === OFF
-    ) {
+    if (drow && drow[ModCol.iInstalled] === OFF && ci === ModCol.iShared) {
       cs.push('disabled');
     } else if (
       ci === ModCol.iShared &&

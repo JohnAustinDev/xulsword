@@ -36,6 +36,7 @@
 
 #repository .custom-repo {
   border: 1px dotted rgb(0 132 255);
+  border-right: none;
 }
 
 .progress-container {

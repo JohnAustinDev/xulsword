@@ -443,7 +443,7 @@ export type SwordConfType = {
   // Extra helper additions
   module: string;
   errors: string[];
-  sourceRepository: Download;
+  sourceRepository: Repository;
   moduleType: ModTypes;
   xsmType: XSModTypes;
   filename: string;
