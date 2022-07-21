@@ -59,8 +59,9 @@ export function getPopupHTML(
       break;
     }
 
-    // An 'sr' class of reference is a textual link to either a scripture passage
-    // or, in some weird cases (such as StrongsHebrew module) to a dictionary entry.
+    // An 'sr' class of reference is a textual link to either a versekey passage,
+    // footnote, or, in some weird cases (such as StrongsHebrew module) to a
+    // dictionary entry.
     case 'sr': {
       if (mod) {
         const bibleReflist = reflist

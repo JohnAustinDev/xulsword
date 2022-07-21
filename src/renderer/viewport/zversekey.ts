@@ -209,7 +209,7 @@ export function locationVKText(
   return result;
 }
 
-const NoterefRE = /^\s*(([^:]+):)?([^!:]+)!(.*?)\s*$/;
+const NoterefRE = /^\s*([^!]+)!(.*?)\s*$/;
 
 // This function tries to read a ";" separated list of Scripture
 // references and returns an array of TextVKType objects, one for
@@ -243,7 +243,7 @@ export function parseExtendedVKRef(
     let noteID;
     const noteref = ref.match(NoterefRE);
     if (noteref) {
-      [, , , ref, noteID] = noteref;
+      [, ref, noteID] = noteref;
     }
     const options = locales && locales.length ? { locales } : undefined;
     const vk = verseKey(ref, null, options);
@@ -294,7 +294,7 @@ export function parseExtendedVKRef(
 
 // Return an HTML Scripture reference list representing an extended reference.
 // An extended reference is a textual reference comprising a list of Scripture
-// references separated by semicolons and/or commas. If show is false, only
+// references separated by semicolons and/or commas. If showText is false, only
 // a list of reference links will be returned, without the contents of each
 // reference.
 export function getRefHTML(
@@ -487,9 +487,12 @@ export function getNoteHTML(
               verse: p.vs,
               v11n: null,
             };
+            const tmod = /^[\w\d]+:/.test(innerHTML)
+              ? innerHTML.split(':')[0]
+              : p.mod;
             t += getRefHTML(
               innerHTML,
-              p.mod || '',
+              tmod || '',
               context,
               openCRs,
               keepNotes,
@@ -541,7 +544,7 @@ export function getNoteHTML(
 
 // Turns headings on before reading introductions
 export function getIntroductions(mod: string, vkeytext: string) {
-  if (!(mod in G.Tab) || G.Tab[mod].isVerseKey) {
+  if (!(mod in G.Tab) || !G.Tab[mod].isVerseKey) {
     return { textHTML: '', intronotes: '' };
   }
 

@@ -352,7 +352,7 @@ h3 {
 }
 
 .osis2mod.x-right + .dtl {
-  float: inline-end;
+  float: right;
   clear: both;
 }
 

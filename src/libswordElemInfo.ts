@@ -52,6 +52,7 @@ type ElemTypesType = {
   fnrow: Value[]; // notebox note-list row
   fnlink: Value[]; // notebox note-list row source link
   crref: Value[]; // notebox note-list cross-reference link
+  introlink: Value[]; // versekey chapter introduction link
   listenlink: Value[]; // audio link
 };
 
@@ -80,6 +81,7 @@ export const TitleFormat: ElemTypesType = {
             { re:new RegExp(/^(un)\.([^.]*)\.[^.]*\.(.*)\.(\d+)\.([^.]+)$/),                    ntype:1, nid:2, bk:null, ch:3,     vs:4,    lv:4,    mod:5 } ],
   slist:  [ { re:new RegExp(/^([^.]*)\.([^.]*)$/),                                                              bk:null, ch:1,     vs:null, lv:null, mod:2 },
             { re:new RegExp(/^(([^.]*)\.(\d+)\.(\d+))\.([^.]*)$/),                                              bk:2,    ch:3,     vs:4,    lv:4,    mod:5, osisref:1 } ],
+  introlink:  [ { re:new RegExp(/^(([^.]*)\.(\d+)\.(\d+))\.([^.]*)$/),                                          bk:2,    ch:3,     vs:4,    lv:4,    mod:5, osisref:1 } ],
   listenlink: [ { re:new RegExp(/^(([^.]+)\.(.*?)\.(\d+))\.([^.]+)$/),                                          bk:2,    ch:3,     vs:4,    lv:4,    mod:5, osisref:1 } ],
 };
 
