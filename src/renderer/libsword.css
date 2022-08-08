@@ -289,6 +289,12 @@ h3 {
 .p-start.x-level-5 {
   width: 7.5em;
 }
+.p-start.x-right {
+  width: 50%;
+  height: 2em;
+  float: left;
+  clear: left;
+}
 
 /* paragraph types */
 .x-center {
