@@ -599,7 +599,13 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
     else if (!strcmp(tag.getName(), "title")) {
       if ((!tag.isEndTag()) && (!tag.isEmpty())) {
         SWBuf mclass;
-        if (tag.getAttribute("level") && !strcmp(tag.getAttribute("level"), "2")) {
+        if (tag.getAttribute("level") && !strcmp(tag.getAttribute("level"), "4")) {
+          mclass.set("head4");
+        }
+        else if (tag.getAttribute("level") && !strcmp(tag.getAttribute("level"), "3")) {
+          mclass.set("head3");
+        }
+        else if (tag.getAttribute("level") && !strcmp(tag.getAttribute("level"), "2")) {
           mclass.set("head2");
         }
         else {mclass.set("head1");}

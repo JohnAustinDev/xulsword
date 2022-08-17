@@ -196,50 +196,75 @@ span.sense-level-2 {
 }
 
 /* Xulsword OSIS filter specific CSS */
-.head1.main {
-  font-size: 1.5em !important;
-  color: rgb(110, 85, 110) !important;
-  text-align: center;
-  font-weight: bold;
-  margin-top: 2em;
-  margin-bottom: 1em;
-  clear: both;
-}
 .head1,
+.head2,
+.head3,
+.head4,
 h1,
 h2,
-h3 {
-  font-size: 1.4em !important;
+h3,
+h4 {
   color: rgb(110, 85, 110) !important;
   text-align: center;
   font-weight: bold;
-  margin-top: 2em;
-  margin-bottom: 1em;
   clear: both;
-}
-.head2 {
-  font-size: 1.2em !important;
-  color: rgb(110, 85, 110) !important;
-  text-align: center;
-  font-weight: bold;
-  font-style: italic;
   margin-top: 0.5em;
   margin-bottom: 0.5em;
-  clear: both;
 }
+.head3,
+.head4,
+h3,
+h4 {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+.head2:not(.main),
+.head3:not(.main),
+.head4:not(.main) {
+  font-style: italic;
+}
+.head1,
+h1 {
+  font-size: 1.4em !important;
+  margin-top: 2em;
+  margin-bottom: 1em;
+}
+.head2,
+h2 {
+  font-size: 1.2em !important;
+}
+.head3,
+h3 {
+  font-size: 1.1em !important;
+}
+.head4,
+h4 {
+  font-size: 1em !important;
+}
+.head1.main {
+  font-size: 1.5em !important;
+  margin-top: 2em;
+  margin-bottom: 1em;
+}
+.head2.main {
+  font-size: 1.3em !important;
+}
+.head3.main {
+  font-size: 1.2em !important;
+}
+.head4.main {
+  font-size: 1.1em !important;
+}
+
 .rtl-panel .head2 {
   text-align: right;
 }
-.head1 h1,
-.head1 h2,
-.head1 h3,
-.head2 h1,
-.head2 h2,
-.head2 h3 {
+*[class*='head'] h1,
+*[class*='head'] h2,
+*[class*='head'] h3 {
   font-size: inherit;
 }
-.interB .head1,
-.interB .head2 {
+.interB *[class*='head'] {
   display: none;
 }
 .canonical {
@@ -430,8 +455,6 @@ h3 {
 }
 .image-container {
   text-align: center;
-  overflow-y: auto;
-  overflow-x: auto;
 }
 .image-container img {
   width: 100%;
