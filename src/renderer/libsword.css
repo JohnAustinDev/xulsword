@@ -259,12 +259,12 @@ h4 {
 .rtl-panel .head2 {
   text-align: right;
 }
-*[class*='head'] h1,
-*[class*='head'] h2,
-*[class*='head'] h3 {
+*[class^='head'] h1,
+*[class^='head'] h2,
+*[class^='head'] h3 {
   font-size: inherit;
 }
-.interB *[class*='head'] {
+.interB *[class^='head'] {
   display: none;
 }
 .canonical {
