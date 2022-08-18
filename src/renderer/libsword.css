@@ -230,6 +230,7 @@ span.sense-level-2 {
 }
 .head4 {
   font-size: 1em !important;
+  color: inherit;
 }
 .head1.main {
   font-size: 1.5em !important;
@@ -246,9 +247,6 @@ span.sense-level-2 {
   font-size: 1.1em !important;
 }
 
-.rtl-panel .head2 {
-  text-align: right;
-}
 .text *[class^='head'] h1,
 .text *[class^='head'] h2 {
   font-size: inherit;
