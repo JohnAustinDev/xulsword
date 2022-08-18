@@ -641,14 +641,14 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
           outText("\">", buf, u);
         }
         else {
-          outHtmlTag("<h3", buf, u);
+          outHtmlTag("<h1", buf, u);
           if (mclass.length()) {
             outText(" class=\"", buf, u);
             outText(mclass, buf, u);
             outText("\"", buf, u);
           }
           outText(">", buf, u);
-          tag.setAttribute("pushed", "h3");
+          tag.setAttribute("pushed", "h1");
         }
         u->titleStack->push(tag.toString());
       }
@@ -661,7 +661,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
             outHtmlTag((SWBuf)"</" + pushed + ">", buf, u);
           }
           else {
-            outHtmlTag("</h3>", buf, u);
+            outHtmlTag("</h1>", buf, u);
           }
         }
       }

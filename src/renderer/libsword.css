@@ -199,11 +199,7 @@ span.sense-level-2 {
 .head1,
 .head2,
 .head3,
-.head4,
-h1,
-h2,
-h3,
-h4 {
+.head4 {
   color: rgb(110, 85, 110) !important;
   text-align: center;
   font-weight: bold;
@@ -212,9 +208,7 @@ h4 {
   margin-bottom: 0.5em;
 }
 .head3,
-.head4,
-h3,
-h4 {
+.head4 {
   margin-top: 0;
   margin-bottom: 0;
 }
@@ -223,22 +217,18 @@ h4 {
 .head4:not(.main) {
   font-style: italic;
 }
-.head1,
-h1 {
+.head1 {
   font-size: 1.4em !important;
   margin-top: 2em;
   margin-bottom: 1em;
 }
-.head2,
-h2 {
+.head2 {
   font-size: 1.2em !important;
 }
-.head3,
-h3 {
+.head3 {
   font-size: 1.1em !important;
 }
-.head4,
-h4 {
+.head4 {
   font-size: 1em !important;
 }
 .head1.main {
@@ -259,9 +249,8 @@ h4 {
 .rtl-panel .head2 {
   text-align: right;
 }
-*[class^='head'] h1,
-*[class^='head'] h2,
-*[class^='head'] h3 {
+.text *[class^='head'] h1,
+.text *[class^='head'] h2 {
   font-size: inherit;
 }
 .interB *[class^='head'] {
