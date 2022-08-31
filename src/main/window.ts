@@ -519,3 +519,19 @@ export const pushPrefsToWindows: PrefCallbackType = (win, key, val, store) => {
     }
   }
 };
+
+// Publish any subscription on the main process (window == null) or on any
+// other window or group of windows.
+export function publishSubscription(
+  window: BrowserWindow[] | WindowDescriptorType | null,
+  subscription: string,
+  ...args: any
+) {
+  if (window === null) Subscription.publish(subscription, ...args);
+  else {
+    const win = Array.isArray(window) ? window : getBrowserWindows(window);
+    win.forEach((w) => {
+      w.webContents.send('publish-subscription', subscription, ...args);
+    });
+  }
+}

@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 // Subscribe to and publish callback opportunities. It cannot be used to provide callbacks
-// between processes, but it may be used to avoid dependency cycles. For similar multi-
-// process functionality, use IPC.
+// between processes, but it may be used to avoid dependency cycles. For multi-process
+// publication functionality, use G.publishSubscription.
 const Subscription = {
   subscriptions: {} as { [i: string]: ((...args: any) => void)[] },
 

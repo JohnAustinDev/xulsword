@@ -39,6 +39,7 @@ const Commands: GType['Commands'] = {
   // directory will be installed. A dialog will be shown if no paths argument
   // is provided, or an existing directory path is provided.
   async installXulswordModules(paths) {
+    const win = arguments[1] || getBrowserWindows({ type: 'xulsword' })[0];
     const extensions = ['zip', 'xsm', 'xsb'];
     const options: OpenDialogSyncOptions = {
       title: i18n.t('menu.addNewModule.label'),
@@ -57,7 +58,7 @@ const Commands: GType['Commands'] = {
     if (paths) {
       // Install array of file paths
       if (Array.isArray(paths)) {
-        return modalInstall(filter(paths));
+        return modalInstall(filter(paths), undefined, win);
       }
       // Install all modules in a directory
       if (paths.endsWith('/*')) {
@@ -66,12 +67,12 @@ const Commands: GType['Commands'] = {
         if (file.isDirectory()) {
           list.push(...filter(file.directoryEntries));
         }
-        return modalInstall(list);
+        return modalInstall(list, undefined, win);
       }
       const file = new LocalFile(paths);
       // ZIP file to install
       if (!file.isDirectory()) {
-        return modalInstall(filter([file.path]));
+        return modalInstall(filter([file.path]), undefined, win);
       }
       // Choose from existing directory.
       options.defaultPath = paths;
@@ -80,7 +81,7 @@ const Commands: GType['Commands'] = {
     return dialog
       .showOpenDialog(progwin, options)
       .then((obj) => {
-        return modalInstall(obj.filePaths);
+        return modalInstall(obj.filePaths, undefined, win);
       })
       .catch((err) => {
         throw Error(err);
@@ -88,7 +89,7 @@ const Commands: GType['Commands'] = {
   },
 
   removeModule() {
-    const win = arguments[1] || getBrowserWindows({ type: 'xulsword' })[0];
+    const win = arguments[0] || getBrowserWindows({ type: 'xulsword' })[0];
     const options = {
       title: i18n.t('menu.removeModule.label'),
       parent: win || undefined,

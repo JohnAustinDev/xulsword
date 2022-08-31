@@ -2,13 +2,13 @@
 /* eslint-disable no-continue */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import fpath from 'path';
-import { shell } from 'electron';
+import { BrowserWindow, ipcMain, IpcMainEvent, shell } from 'electron';
 import ZIP from 'adm-zip';
 import log from 'electron-log';
 import { isRepoLocal, modrepKey, parseSwordConf } from '../common';
 import Subscription from '../subscription';
 import C from '../constant';
-import Window, { getBrowserWindows } from './window';
+import Window, { getBrowserWindows, publishSubscription } from './window';
 import LocalFile from './components/localFile';
 import Dirs from './components/dirs';
 import LibSword from './components/libsword';
@@ -487,7 +487,8 @@ export async function installZIPs(
 // When destdir is unspecified, xsModsUser is used.
 export async function modalInstall(
   zipmods: (ZIP | string)[],
-  destdir?: string | string[]
+  destdir?: string | string[],
+  targWin?: Electron.BrowserWindow
 ) {
   const xswin = getBrowserWindows({ type: 'xulsword' })[0];
   Window.modal('transparent', 'all');
@@ -520,10 +521,19 @@ export async function modalInstall(
     log.info('ALL FILES WERE SUCCESSFULLY INSTALLED!');
   }
   Subscription.publish('resetMain');
-  Window.reset('all', 'all');
   Subscription.publish('modulesInstalled', newmods);
-  xswin.webContents.send('newmods', newmods);
+  // reload was necessary to get dynamic CSS to take effect
+  if (targWin) {
+    Window.reset('all', xswin);
+    targWin.webContents.reload();
+  } else {
+    xswin.webContents.reload();
+  }
   Window.modal('off', 'all');
+  ipcMain.once('did-finish-render', (event: IpcMainEvent) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    if (win) publishSubscription([win], 'modulesInstalled', newmods);
+  });
   return newmods;
 }
 

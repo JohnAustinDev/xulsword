@@ -27,11 +27,11 @@ const validChannels = [
   'resize', // from main upon window resize
   'progress', // from main for progress meter
   'modal', // from main to make windows temporarily modal
-  'newmods', // from main when new modules are installed
   'update-state-from-pref', // from main when state-prefs should be updated
   'component-reset', // from main when window top react component should be remounted
   'cache-reset', // from main when caches should be cleared
   'dynamic-stylesheet-reset', // from main when dynamic stylesheet should be re-created
+  'publish-subscription', // from main when a renderer subscription should be published
 ];
 
 contextBridge.exposeInMainWorld('ipc', {

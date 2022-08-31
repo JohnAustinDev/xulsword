@@ -25,7 +25,7 @@ import {
   getFeatureModules,
   localeConfig,
 } from './config';
-import Window, { resolveHtmlPath } from './window';
+import Window, { publishSubscription, resolveHtmlPath } from './window';
 import {
   getBooks,
   getBook,
@@ -210,6 +210,12 @@ class GClass implements GType {
 
   log(...args: Parameters<GType['log']>): ReturnType<GType['log']> {
     return Log[args.shift() as LogLevel](args);
+  }
+
+  publishSubscription(
+    ...args: Parameters<GType['publishSubscription']>
+  ): ReturnType<GType['publishSubscription']> {
+    return publishSubscription(...args);
   }
 }
 

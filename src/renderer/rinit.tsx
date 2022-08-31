@@ -170,12 +170,14 @@ export default function renderToRoot(
         if (!id) setProgress(prog);
       });
     });
-    // New modules installed:
+    // Publish a subscription:
     useEffect(() => {
-      return window.ipc.renderer.on('newmods', (newmods: NewModulesType) => {
-        Subscription.publish('modulesInstalled', newmods);
-        G.Window.reset('all', 'self');
-      });
+      return window.ipc.renderer.on(
+        'publish-subscription',
+        (subscription: string, ...args: any) => {
+          Subscription.publish(subscription, ...args);
+        }
+      );
     });
     // Modal overlay:
     useEffect(() => {

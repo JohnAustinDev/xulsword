@@ -18,11 +18,11 @@ type RendererChannels =
   | 'resize'
   | 'progress'
   | 'modal'
-  | 'newmods'
   | 'update-state-from-pref'
   | 'component-reset'
   | 'cache-reset'
-  | 'dynamic-stylesheet-reset';
+  | 'dynamic-stylesheet-reset'
+  | 'publish-subscription';
 export type WinIpcType = {
   renderer: {
     send: (channel: RendererChannels, ...args: any[]) => void;
@@ -765,6 +765,11 @@ export const GPublic = {
   getSystemFonts: funcRO as unknown as () => Promise<string[]>,
   getBooksInModule: funcRO as unknown as (module: string) => string[],
   log: func as unknown as (type: ElectronLog.LogLevel, ...args: any) => void,
+  publishSubscription: func as unknown as (
+    arg: WindowDescriptorType | null,
+    subscriptionName: string,
+    ...args: any
+  ) => void,
 
   // GLOBAL OBJECTS
   // --------------
