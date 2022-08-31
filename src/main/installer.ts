@@ -491,8 +491,9 @@ export async function modalInstall(
   targWin?: Electron.BrowserWindow
 ) {
   const xswin = getBrowserWindows({ type: 'xulsword' })[0];
+  const tgwin = targWin || xswin;
   Window.modal('transparent', 'all');
-  Window.modal('installing', xswin);
+  Window.modal('installing', tgwin);
   const zips: (ZIP | null)[] = [];
   zipmods.forEach((zipmod) => {
     if (typeof zipmod === 'string') {

@@ -113,13 +113,13 @@ html[dir='rtl'] .tabs .mts-tab .xsbutton .menupopup {
   border-top-color: rgba(100, 245, 245, 0.2);
 }
 .tabs .tabTexts > .border {
-  border-top-color: rgba(235, 50, 80, 0.8);
+  border-top-color: rgba(170, 40, 60, 0.8);
 }
 .tabs .tabComms > .border {
   border-top-color: rgba(100, 100, 255, 0.8);
 }
 .tabs .tabDicts > .border {
-  border-top-color: rgba(255, 255, 0, 0.8);
+  border-top-color: rgba(204, 204, 0, 0.8);
 }
 .tabs .tabGenbks > .border {
   border-top-color: rgba(100, 245, 245, 0.8);
