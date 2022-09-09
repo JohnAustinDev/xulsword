@@ -871,6 +871,17 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
           outHtmlTag("</div>", buf, u);
       }
     }
+    else if (!strcmp(tag.getName(), "caption")) {
+      if (!tag.isEndTag()) {
+        outHtmlTag(SWBuf().appendFormatted("<div class=\"caption %s %s\">",
+            (tag.getAttribute("type") ? tag.getAttribute("type"):""),
+            (tag.getAttribute("subType") ? tag.getAttribute("subType"):"")
+          ).c_str(), buf, u);
+      }
+      else {
+        outHtmlTag("</div>", buf, u);
+      }
+    }
 
     // ok to leave these in
     else if (!strcmp(tag.getName(), "div")) {

@@ -403,6 +403,9 @@ span.sense-level-2 {
 .x-navmenu .item {
   margin-bottom: 0;
 }
+.x-list.x-navmenu > div {
+  height: 1em;
+}
 .x-PM {
 }
 .verse-per-line .p-end,
@@ -447,6 +450,11 @@ span.sense-level-2 {
   width: 100%;
   margin: 20px 0px 20px 0px;
 }
+.image-container + .caption {
+  margin-top: -20px;
+  margin-bottom: 2em;
+}
+
 /* CLASSES FROM OSIS-CONVERTER-MADE SWORD MODULES */
 .x-text-image {
   float: inline-end;
