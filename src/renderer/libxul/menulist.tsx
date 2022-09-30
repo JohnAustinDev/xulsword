@@ -32,12 +32,11 @@ interface MenulistProps extends XulProps {
   size?: number | undefined;
   tooltip?: string | undefined;
   value?: string | undefined;
-  onChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void;
 }
 
 function Menulist(props: MenulistProps) {
   return (
-    <Box {...addClass('menulist', props)} title={props.tooltip}>
+    <Box {...addClass('menulist', props)}>
       <select
         id={props.id ? `${props.id}__select` : undefined}
         disabled={props.disabled}

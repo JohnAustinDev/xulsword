@@ -7,7 +7,6 @@ import { Hbox } from './boxes';
 import Label from './label';
 import { xulDefaultProps, xulPropTypes, XulProps, addClass } from './xul';
 import './xul.css';
-import './checkbox.css';
 
 // XUL button
 const defaultProps = xulDefaultProps;
@@ -29,9 +28,9 @@ interface CheckboxProps extends XulProps {
 }
 
 function Checkbox(props: CheckboxProps) {
-  const { checked, disabled, label, tooltip } = props;
+  const { checked, disabled, label } = props;
   return (
-    <Hbox {...addClass('checkbox', props)} title={tooltip}>
+    <Hbox {...addClass('checkbox', props)}>
       <input
         id={`${props.id}__input`}
         checked={checked}

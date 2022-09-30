@@ -6,6 +6,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import type { ReactElementLike } from 'prop-types';
+import { component } from '../rutil';
 import { xulDefaultProps, xulPropTypes, XulProps, htmlAttribs } from './xul';
 import './xul.css';
 import './grid.css';
@@ -94,18 +95,6 @@ const defaultProps = xulDefaultProps;
 const propTypes = xulPropTypes;
 
 function Grid(props: XulProps) {
-  function component(comp: any): { displayName: string; props: any } | null {
-    const c1 = comp as React.Component;
-    const p = c1 && typeof c1 === 'object' && 'props' in c1 ? c1.props : null;
-    const c2 = comp as any;
-    const displayName: string =
-      (c2 && typeof c2 === 'object' && 'type' in c2 && c2.type.displayName) ||
-      '';
-    if (p) {
-      return { displayName, props: p };
-    }
-    return null;
-  }
   function gridCells(
     parent: any,
     parentIndex: number,
@@ -197,6 +186,7 @@ function Grid(props: XulProps) {
   });
 
   const gridProps = {
+    ...props,
     style: {
       display: 'grid',
       gridTemplateColumns: gridtemplate.Column.join(' '),

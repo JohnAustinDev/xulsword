@@ -56,10 +56,11 @@ export type WindowDescriptorType = {
     | 'popupWin'
     | 'chooseFont'
     | 'moduleManager'
-    | 'removeModule';
+    | 'removeModule'
+    | 'search';
   id?: number;
   category?:
-    | 'window' // Regular window
+    | 'window' // Parent optional, persisted, resizable
     | 'dialog' // Has parent, not persisted, size is fit-to-content, not-resizable
     | 'dialog-window'; // Has parent, not persisted, resizable
   options?: Electron.BrowserWindowConstructorOptions;

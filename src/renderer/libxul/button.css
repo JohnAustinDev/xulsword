@@ -17,6 +17,7 @@
 
 .xsbutton .button-box {
   border: 1px solid transparent;
+  height: 100%;
 }
 
 .xsbutton .button-icon {

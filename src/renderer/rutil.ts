@@ -59,6 +59,20 @@ export const log = {
   },
 } as ElectronLog.LogFunctions;
 
+export function component(
+  comp: any
+): { displayName: string; props: any } | null {
+  const c1 = comp as React.Component;
+  const p = c1 && typeof c1 === 'object' && 'props' in c1 ? c1.props : null;
+  const c2 = comp as any;
+  const displayName: string =
+    (c2 && typeof c2 === 'object' && 'type' in c2 && c2.type.displayName) || '';
+  if (p) {
+    return { displayName, props: p };
+  }
+  return null;
+}
+
 // This function will retrieve the last argument passed to a window (as
 // webPreferences.additionalArguments) look for a particular key, and
 // return its value if found. Xulsword passes these arguments in a single
@@ -477,11 +491,11 @@ export function getStatePref(
 // Calling this function sets a listener to update-state-from-pref. It will
 // read component state Prefs and locale, and will update component state
 // and window locale as needed.
-export function onSetWindowState(component: React.Component, ignore?: any) {
+export function onSetWindowState(c: React.Component, ignore?: any) {
   const listener = (prefs: string | string[]) => {
-    const { id } = component.props as any;
+    const { id } = c.props as any;
     if (id) {
-      const changed = diff(component.state, getStatePref(id, prefs, ignore));
+      const changed = diff(c.state, getStatePref(id, prefs, ignore));
       if (changed && Object.keys(changed).length) {
         const lng = G.Prefs.getCharPref('global.locale');
         if (lng !== i18next.language) {
@@ -489,13 +503,13 @@ export function onSetWindowState(component: React.Component, ignore?: any) {
             .loadLanguages(lng)
             .then(() => i18next.changeLanguage(lng))
             .then(() => {
-              component.setState(changed);
+              c.setState(changed);
               return true;
             })
             .catch((err) => {
               throw Error(err);
             });
-        } else component.setState(changed);
+        } else c.setState(changed);
       }
     }
   };

@@ -43,17 +43,8 @@ interface ButtonProps extends XulProps {
 }
 
 function Button(props: ButtonProps) {
-  const {
-    align,
-    children,
-    disabled,
-    xuldir,
-    dlgType,
-    label,
-    orient,
-    pack,
-    tooltip,
-  } = props;
+  const { align, children, disabled, xuldir, dlgType, label, orient, pack } =
+    props;
   const alignx = align !== undefined ? align : 'center';
   const packx = pack !== undefined ? pack : 'center';
   return (
@@ -61,7 +52,6 @@ function Button(props: ButtonProps) {
       {...htmlAttribs(`xsbutton ${dlgType}`, props)}
       disabled={disabled}
       type="button"
-      title={tooltip}
     >
       <Box
         className="button-box"
@@ -76,6 +66,7 @@ function Button(props: ButtonProps) {
         {props.label !== undefined && (
           <Label className="button-text" value={label || ''} />
         )}
+        {children}
       </Box>
 
       {props.type === 'menu' && children && (

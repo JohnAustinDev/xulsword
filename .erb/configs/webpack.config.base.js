@@ -14,7 +14,8 @@ export const xulswordWindows = [
   'popup/popupWin',
   'chooseFont',
   'moduleManager',
-  'removeModule'
+  'removeModule',
+  'search'
 ];
 
 export default {

@@ -6,7 +6,6 @@ import i18n from 'i18next';
 import { ChromePicker as ColorPicker } from 'react-color';
 import { Classes, Dialog, Slider, Button as BPButton } from '@blueprintjs/core';
 import type { ReactElementLike } from 'prop-types';
-import C from '../../constant';
 import { diff } from '../../common';
 import G from '../rg';
 import renderToRoot from '../rinit';
@@ -18,6 +17,7 @@ import Label from '../libxul/label';
 import Button from '../libxul/button';
 import Checkbox from '../libxul/checkbox';
 import Menulist from '../libxul/menulist';
+import ModuleMenu from '../libxul/modulemenu';
 import Grid, { Columns, Column, Rows, Row } from '../libxul/grid';
 import handlerH, {
   extractModuleStyleState,
@@ -27,8 +27,6 @@ import handlerH, {
   computedStyle,
 } from './chooseFontH';
 import './chooseFont.css';
-
-import type { ModTypes } from '../../type';
 
 window.ipc.renderer.once('close', () => {
   preclose();
@@ -194,36 +192,12 @@ export default class ChooseFontWin extends React.Component {
                   control="module"
                   value={`${i18n.t('chooseModule.label')}:`}
                 />
-                <Menulist
+                <ModuleMenu
                   id="module"
                   value={module || ''}
                   disabled={disabled}
                   onChange={handler}
-                >
-                  {Object.keys(C.SupportedModuleTypes).map((typ) => {
-                    const type = typ as ModTypes;
-                    return (
-                      <optgroup
-                        key={type}
-                        label={i18n.t(C.SupportedModuleTypes[type])}
-                      >
-                        {G.Tabs.map((tab) => {
-                          if (tab.type === type) {
-                            return (
-                              <option
-                                className={tab.labelClass}
-                                key={tab.module}
-                                value={tab.module}
-                                label={tab.label}
-                              />
-                            );
-                          }
-                          return null;
-                        }).filter(Boolean)}
-                      </optgroup>
-                    );
-                  })}
-                </Menulist>
+                />
                 <Checkbox
                   id="removeModuleUserStyles"
                   label={i18n.t('removeModuleUserStyles.label')}

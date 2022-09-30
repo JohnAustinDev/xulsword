@@ -211,6 +211,7 @@ export const htmlAttribs = (className: string, props: any) => {
   if (props.domref) a.ref = props.domref;
   if (props.title) r.title = props.title;
   if (props.dir) r.dir = props.dir;
+  if (props.tooltip) r.title = props.tooltip;
   const style = {
     ...xulStyle(props),
     ...props.style,

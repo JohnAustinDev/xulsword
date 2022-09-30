@@ -20,6 +20,7 @@ import Spacer from './spacer';
 import './xul.css';
 
 import type { BookGroupType } from '../../type';
+import ModuleMenu from './modulemenu';
 
 export type BibleselectSelection = {
   tran?: string;
@@ -122,7 +123,8 @@ class Bibleselect extends React.Component {
     this.handleChange = this.handleChange.bind(this);
   }
 
-  handleChange(e: BibleselectChangeEvents) {
+  handleChange(es: React.SyntheticEvent) {
+    const e = es as BibleselectChangeEvents;
     const cls = ofClass(
       [
         'bstrans',
@@ -185,21 +187,6 @@ class Bibleselect extends React.Component {
 
     const tab = (tran && G.Tab[tran]) || null;
     const v11n = (tab && tab.v11n) || 'KJV';
-
-    // Bible translation options
-    const nt =
-      trans || G.Tabs.filter((t) => t.type === C.BIBLE).map((t) => t.module);
-    const newtrans = nt.map((m) => {
-      const t = G.Tab[m];
-      return (
-        <option key={m} className={`cs-${t.module}`} value={t.module}>
-          <span className="name">{`${t.label}`}</span>
-          {t.description && (
-            <span className="description">{`${t.description}`}</span>
-          )}
-        </option>
-      );
-    });
 
     // Bible book options
     const nb = books || ['ot', 'nt'];
@@ -335,19 +322,14 @@ class Bibleselect extends React.Component {
             onChange={handleChange}
           />
         )}
-
-        {newtrans.length > 0 && (
-          <>
-            <Spacer width="27px" />
-            <Menulist
-              className="bstrans"
-              value={tran}
-              options={newtrans}
-              disabled={disabled}
-              onChange={handleChange}
-            />
-          </>
-        )}
+        <Spacer width="27px" />
+        <ModuleMenu
+          className="bstrans"
+          value={tran}
+          types={[C.BIBLE]}
+          disabled={disabled}
+          onChange={handleChange}
+        />
       </Hbox>
     );
   }

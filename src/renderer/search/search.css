@@ -1,0 +1,98 @@
+.searchwin {
+  height: 100%;
+  padding: 10px;
+}
+
+.search-grid .groupbox {
+  margin: 0 0 0 0;
+}
+.search-grid {
+  gap: 10px 10px;
+}
+.search-grid.less .grid-row-cell:not(:first-of-type) {
+  height: 0px;
+  overflow: hidden;
+}
+.search-grid > .grid-row-cell:nth-of-type(2) .groupbox {
+  min-width: 360px;
+}
+.search-grid > .grid-row-cell:nth-of-type(2) label {
+  white-space: unset;
+}
+#scopeselect {
+  padding-inline-start: 18px;
+}
+#scopeselect select {
+  width: 100%;
+}
+.searchType,
+#searchtype,
+#scoperadio {
+  height: 100%;
+}
+
+#moreLess {
+  margin-inline-end: 15px;
+}
+#moreLess label {
+  height: 0px;
+  overflow: hidden;
+}
+.less #moreLess label:first-of-type {
+  height: unset;
+}
+.more #moreLess label:not(:first-of-type) {
+  height: unset;
+}
+
+.searchtext {
+  position: relative;
+  margin-bottom: 20px;
+}
+.searchtextLabel {
+  padding-top: 5px;
+}
+.searchtext > .modulemenu {
+  position: absolute;
+  width: 100%;
+  top: 100%;
+}
+.modulemenu select {
+  margin: 0 5px;
+  width: 100%;
+}
+
+#helpButton .button-icon {
+  display: block;
+  background-image: url('../images/help.png');
+  width: 27px;
+  height: 27px;
+}
+#helpButton:hover .button-icon {
+  background-position-x: 27px;
+}
+
+.searchType > div:nth-child(2) {
+  top: -5px;
+  left: -5px;
+  width: calc(100% + 10px);
+  height: calc(100% + 10px);
+  background: rgb(220, 220, 220);
+  border: 2px solid grey;
+  border-radius: 8px;
+  box-shadow: 6px 7px 5px 0px #6c5172;
+  opacity: 0.8;
+}
+.searchType > div:nth-child(3) {
+  width: 100%;
+  height: 100%;
+}
+
+.resultBox {
+  border: 2px solid rgb(200, 170, 205);
+  border-radius: 4px;
+  background: white;
+}
+.resultBox > div {
+  padding: 5px;
+}

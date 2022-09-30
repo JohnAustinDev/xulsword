@@ -155,7 +155,15 @@ const Commands: GType['Commands'] = {
   },
 
   search(search) {
-    log.info(`Action not implemented: search(${JSON_stringify(search)})`);
+    const options = {
+      title: `${i18n.t('search.label')} "${search.searchtext}"`,
+      width: 800,
+      height: 630,
+      webPreferences: {
+        additionalArguments: [JSON_stringify({ search })],
+      },
+    };
+    Window.open({ type: 'search', category: 'window', options });
   },
 
   copyPassage() {

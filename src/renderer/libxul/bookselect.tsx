@@ -184,8 +184,9 @@ class Bookselect extends React.Component {
     e.stopPropagation();
   };
 
-  selectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    this.setState({ book: e.target.value, pattern: /.*/, autocomp: true });
+  selectChange = (e: React.SyntheticEvent) => {
+    const es = e as React.ChangeEvent<HTMLSelectElement>;
+    this.setState({ book: es.target.value, pattern: /.*/, autocomp: true });
   };
 
   render() {
