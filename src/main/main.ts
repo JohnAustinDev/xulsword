@@ -135,7 +135,7 @@ const openMainWindow = () => {
     }
   }
 
-  G.Prefs.setComplexValue(`Windows`, {}, 'windows');
+  G.Prefs.setComplexValue(`OpenWindows`, {}, 'windows');
   const mainWin = BrowserWindow.fromId(
     G.Window.open({ type: 'xulsword', options })
   );
@@ -185,7 +185,7 @@ const openMainWindow = () => {
     // Persist any open windows for the next restart
     G.Prefs.setComplexValue(
       `OpenOnStartup`,
-      G.Prefs.getComplexValue('Windows', 'windows'),
+      G.Prefs.getComplexValue('OpenWindows', 'windows'),
       'windows'
     );
     // Close all other open windows

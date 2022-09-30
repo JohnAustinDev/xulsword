@@ -162,7 +162,7 @@ function persist(
   callingWin: BrowserWindow
 ) {
   const pref = Prefs.getComplexValue(
-    `Windows.w${callingWin.id}`,
+    `OpenWindows.w${callingWin.id}`,
     'windows'
   ) as WindowDescriptorType;
   const args = pref?.options?.webPreferences?.additionalArguments;
@@ -185,7 +185,7 @@ function persist(
         arg[argname] = { ...origval, ...value };
       } else arg[argname] = value;
       args[0] = JSON_stringify(arg);
-      Prefs.setComplexValue(`Windows.w${callingWin.id}`, pref, 'windows');
+      Prefs.setComplexValue(`OpenWindows.w${callingWin.id}`, pref, 'windows');
     }
   }
 }
@@ -197,15 +197,15 @@ function addWindowToPrefs(
   // Remove any parent or there will be JSON recursion problems
   if (descriptor.options && 'parent' in descriptor.options)
     delete descriptor.options.parent;
-  Prefs.setComplexValue(`Windows.w${win.id}`, descriptor, 'windows');
+  Prefs.setComplexValue(`OpenWindows.w${win.id}`, descriptor, 'windows');
   function updateBounds() {
     const args = Prefs.getComplexValue(
-      `Windows.w${win.id}`,
+      `OpenWindows.w${win.id}`,
       'windows'
     ) as WindowDescriptorType;
     const b = windowBounds(win);
     args.options = { ...args.options, ...b };
-    Prefs.setComplexValue(`Windows.w${win.id}`, args, 'windows');
+    Prefs.setComplexValue(`OpenWindows.w${win.id}`, args, 'windows');
   }
   win.on('resize', () => {
     updateBounds();
@@ -220,11 +220,11 @@ function addWindowToPrefs(
         if (C.UI.Window.persistentTypes.includes(descriptor.type)) {
           Prefs.setComplexValue(
             `PersistentTypes.${descriptor.type}`,
-            Prefs.getComplexValue(`Windows.w${id}`, 'windows'),
+            Prefs.getComplexValue(`OpenWindows.w${id}`, 'windows'),
             'windows'
           );
         }
-        Prefs.deleteUserPref(`Windows.w${id}`, 'windows');
+        Prefs.deleteUserPref(`OpenWindows.w${id}`, 'windows');
       };
     })(win.id)
   );
@@ -364,12 +364,12 @@ const Window: GType['Window'] = {
 
   setComplexValue(argname: string, value: any) {
     const win = arguments[2] || null;
-    if (win && win[0]) persist(argname, value, false, win[0]);
+    if (win) persist(argname, value, false, win);
   },
 
   mergeValue(argname: string, value: any) {
     const win = arguments[2] || null;
-    if (win && win[0]) persist(argname, value, true, win[0]);
+    if (win) persist(argname, value, true, win);
   },
 
   setContentSize(w: number, h: number, window?: WindowArgType): void {

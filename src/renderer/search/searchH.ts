@@ -8,27 +8,6 @@ import type { LocationVKType, SearchType } from '../../type';
 import type { SearchWinState } from './search';
 import type SearchWin from './search';
 
-export const startingState = {
-  module: '' as string, // search module
-  searchtext: '' as string, // search text
-  searchtype: 'SearchExactText' as SearchType['type'], // type of search to do
-  scoperadio: 'all' as 'all' | 'ot' | 'nt' | 'book' | 'other', // scope radio value
-  scopeselect: 'gospel' as
-    | 'custom'
-    | 'pentateuch'
-    | 'history'
-    | 'wisdom'
-    | 'prophets'
-    | 'gospel'
-    | 'letters', // scope select value
-  moreLess: false as boolean, // more / less state
-  displayBible: '' as string, // current module of Bible search
-  results: [] as LocationVKType[],
-  pageindex: 0 as number, // first results index to show
-  progress: 0 as number, // between 0 and 1
-  progressLabel: '' as string, // changing progress label
-};
-
 export default function handler(this: SearchWin, e: React.SyntheticEvent) {
   const state = this.state as SearchWinState;
   const target = e.target as HTMLElement;

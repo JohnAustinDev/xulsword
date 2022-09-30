@@ -23,8 +23,8 @@ contextBridge.exposeInMainWorld('main', {
 const validChannels = [
   'global', // to/from main for use by the G object
   'did-finish-render', // to main when window has finished rendering
-  'close', // from main upon window close
-  'resize', // from main upon window resize
+  'close', // from main when renderer window is being closed
+  'resize', // from main when renderer window is being resized
   'progress', // from main for progress meter
   'modal', // from main to make windows temporarily modal
   'update-state-from-pref', // from main when state-prefs should be updated

@@ -4,7 +4,7 @@
 import React from 'react';
 import i18n from 'i18next';
 import { ProgressBar } from '@blueprintjs/core';
-import { clone, dString } from '../../common';
+import { clone, diff, drop, dString } from '../../common';
 import C from '../../constant';
 import G from '../rg';
 import renderToRoot from '../rinit';
@@ -21,10 +21,10 @@ import Textbox from '../libxul/textbox';
 import Spacer from '../libxul/spacer';
 import Stack from '../libxul/stack';
 import ModuleMenu from '../libxul/modulemenu';
-import handlerH, { startingState } from './searchH';
+import handlerH from './searchH';
 import './search.css';
 
-import type { GlobalPrefType, SearchType } from '../../type';
+import type { GlobalPrefType, LocationVKType, SearchType } from '../../type';
 
 const ResultsPerPage = 30;
 
@@ -36,9 +36,38 @@ const propTypes = {
 
 type SearchWinProps = XulProps;
 
-export type SearchWinState = typeof startingState;
+const initialState = {
+  module: '' as string, // search module
+  searchtext: '' as string, // search text
+  searchtype: 'SearchExactText' as SearchType['type'], // type of search to do
+  scoperadio: 'all' as 'all' | 'ot' | 'nt' | 'book' | 'other', // scope radio value
+  scopeselect: 'gospel' as
+    | 'custom'
+    | 'pentateuch'
+    | 'history'
+    | 'wisdom'
+    | 'prophets'
+    | 'gospel'
+    | 'letters', // scope select value
+  moreLess: false as boolean, // more / less state
+  displayBible: '' as string, // current module of Bible search
+  results: [] as LocationVKType[],
+  pageindex: 0 as number, // first results index to show
+  progress: 0 as number, // between 0 and 1
+  progressLabel: '' as string, // changing progress label
+};
 
-let resetState: null | SearchWinState = null;
+// These state properties will not be persisted if xulsword is closed.
+const noPersist = [
+  'results',
+  'pageindex',
+  'progress',
+  'progressLabel',
+] as (keyof SearchWinState)[];
+
+let resetState = null as null | SearchWinState;
+
+export type SearchWinState = typeof initialState;
 
 const searchArg = windowArgument('search') as SearchType;
 
@@ -55,7 +84,7 @@ export default class SearchWin extends React.Component {
     const abible = G.Tabs.find((t) => t.type === C.BIBLE);
 
     const s: SearchWinState = {
-      ...startingState,
+      ...initialState,
       module: searchArg.module,
       searchtext: searchArg.searchtext,
       searchtype: searchArg.type,
@@ -76,12 +105,15 @@ export default class SearchWin extends React.Component {
 
   componentDidMount() {}
 
-  componentDidUpdate(prevProps: any, prevState: SearchWinState) {
+  componentDidUpdate(_prevProps: any, prevState: SearchWinState) {
     resetState = clone(this.state) as SearchWinState;
-  }
-
-  componentWillUnmount() {
-    G.Window.setComplexValue('pstate', this.state);
+    const pstate = drop(this.state, noPersist) as Partial<SearchWinState>;
+    if (diff(prevState, pstate)) {
+      noPersist.forEach((p) => {
+        pstate[p] = initialState[p] as any;
+      });
+      G.Window.setComplexValue('pstate', pstate);
+    }
   }
 
   render() {
@@ -130,7 +162,7 @@ export default class SearchWin extends React.Component {
       'xulsword.location'
     ) as GlobalPrefType['xulsword']['location'];
 
-    const searchindex = G.Tab[module].type === C.BIBLE;
+    const searchindex = module && G.Tab[module].type === C.BIBLE;
 
     const lasti =
       results.length - pageindex < ResultsPerPage
