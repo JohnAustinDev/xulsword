@@ -4,6 +4,7 @@ import C from 'constant';
 import Cache from '../cache';
 import { GPublic } from '../type';
 
+// Cannot use log without dependency cycle
 function silly(msg: string) {
   if (C.isDevelopment && C.DevLogLevel === 'silly') {
     // eslint-disable-next-line no-console
@@ -15,7 +16,7 @@ function silly(msg: string) {
 // interface as a main process G object. Both G objects are built auto-
 // matically at runtime from the same GPublic declaration. Properties of
 // this object access data and objects via IPC to the main process G object.
-// All getter and readonly data is cached locally.
+// All getter and cacheable data is cached locally.
 const G = {} as typeof GPublic;
 
 // These global functions and object methods are asynchronous and return promises.
@@ -27,6 +28,7 @@ const asyncFuncs = [
   'Module.download',
   'Module.downloadXSM',
   'Module.saveDownloads',
+  'LibSword.searchIndexBuild',
 ];
 
 const entries = Object.entries(GPublic);
@@ -47,13 +49,17 @@ entries.forEach((entry) => {
       },
     });
   } else if (typeof value === 'function') {
-    const readonly = value();
+    const cacheable = value();
     Gx[name] = (...args: unknown[]) => {
       const ckey = `G.${name}(${stringHash(...args)})${
-        readonly ? ' cache' : ''
+        cacheable ? ' cache' : ''
       }`;
-      silly(`${ckey}${readonly && !Cache.has(ckey) ? ' miss' : ''}`);
-      if (!readonly) Cache.clear(ckey);
+      silly(
+        `${asyncFuncs.includes(name) ? 'async ' : ''}${ckey}${
+          cacheable && !Cache.has(ckey) ? ' miss' : ''
+        }`
+      );
+      if (!cacheable) Cache.clear(ckey);
       if (!Cache.has(ckey)) {
         if (asyncFuncs.includes(name)) {
           return window.ipc.renderer
@@ -92,13 +98,17 @@ entries.forEach((entry) => {
           },
         });
       } else if (typeof GPublicx[name][m] === 'function') {
-        const readonly = GPublicx[name][m]();
+        const cacheable = GPublicx[name][m]();
         Gx[name][m] = (...args: unknown[]) => {
           const ckey = `G.${name}.${m}(${stringHash(...args)})${
-            readonly ? ' cache' : ''
+            cacheable ? ' cache' : ''
           }`;
-          silly(`${ckey}${readonly && !Cache.has(ckey) ? ' miss' : ''}`);
-          if (!readonly) Cache.clear(ckey);
+          silly(
+            `${
+              asyncFuncs.includes([name, m].join('.')) ? 'async ' : ''
+            }${ckey}${cacheable && !Cache.has(ckey) ? ' miss' : ''}`
+          );
+          if (!cacheable) Cache.clear(ckey);
           if (!Cache.has(ckey)) {
             if (asyncFuncs.includes([name, m].join('.'))) {
               return window.ipc.renderer

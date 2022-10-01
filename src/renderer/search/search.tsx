@@ -8,7 +8,7 @@ import { clone, diff, drop, dString } from '../../common';
 import C from '../../constant';
 import G from '../rg';
 import renderToRoot from '../rinit';
-import { windowArgument } from '../rutil';
+import { log, windowArgument } from '../rutil';
 import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
 import { Box, Hbox, Vbox } from '../libxul/boxes';
 import Groupbox from '../libxul/groupbox';
@@ -162,7 +162,7 @@ export default class SearchWin extends React.Component {
       'xulsword.location'
     ) as GlobalPrefType['xulsword']['location'];
 
-    const searchindex = module && G.Tab[module].type === C.BIBLE;
+    const searchindex = module && G.LibSword.luceneEnabled(module);
 
     const lasti =
       results.length - pageindex < ResultsPerPage
@@ -350,15 +350,17 @@ export default class SearchWin extends React.Component {
               </Vbox>
             )}
           </Hbox>
-          <Hbox pack="start">
-            <div>
+          <Hbox className="searchStatus" pack="start" align="center">
+            <Box>
               <span>{searchStatus}</span>
-            </div>
+            </Box>
             <Spacer flex="1" />
             {progress > 0 && (
               <>
-                <Label value={progressLabel} />
-                <ProgressBar value={progress} />
+                <Hbox align="center">
+                  <Label value={`${progressLabel}:`} />
+                  <ProgressBar value={progress} />
+                </Hbox>
                 <Button
                   id="stopSearch"
                   label={i18n.t('stop.label')}

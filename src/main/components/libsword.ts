@@ -547,10 +547,11 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // Before starting to build a new search index, call 'searchIndexDelete()'
   // CAUTION: Do not call any LibSword functions other than getPercentComplete until
   // getPercentComplete returns 100!
-  searchIndexBuild(modname) {
-    if (!this.isReady()) return;
-    libxulsword.SearchIndexBuild(modname);
+  async searchIndexBuild(modname) {
+    if (!this.isReady()) return false;
+    await libxulsword.SearchIndexBuild(modname);
     this.checkerror();
+    return true;
   },
 
   /* *****************************************************************************

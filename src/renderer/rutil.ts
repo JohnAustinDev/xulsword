@@ -27,9 +27,9 @@ import type {
 // Filter now to save IPC calls.
 function alog(type: ElectronLog.LogLevel, ...args: any[]) {
   const levels = ['error', 'warn', 'info', 'verbose', 'debug', 'silly'];
-  const l1 = levels.indexOf(type);
-  const l2 = levels.indexOf(C.isDevelopment ? C.DevLogLevel : 'info');
-  if (type && l1 <= l2) {
+  const lcall = levels.indexOf(type);
+  const lprog = levels.indexOf(C.isDevelopment ? C.DevLogLevel : 'info');
+  if (type && lprog <= lcall) {
     // eslint-disable-next-line no-console
     if (C.isDevelopment) console.log(...args);
     else G.log(type, ...args);

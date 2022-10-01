@@ -96,3 +96,14 @@
 .resultBox > div {
   padding: 5px;
 }
+
+.searchStatus span {
+  white-space: nowrap;
+}
+.searchStatus > div {
+  margin: 0 10px;
+}
+.searchStatus .bp4-progress-bar {
+  margin-inline-start: 5px;
+  width: 200px;
+}

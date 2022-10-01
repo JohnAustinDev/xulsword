@@ -1,5 +1,6 @@
 /* eslint-disable import/no-duplicates */
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import i18n from 'i18next';
 import C from '../../constant';
 import { clone, ofClass } from '../../common';
 import G from '../rg';
@@ -7,6 +8,11 @@ import G from '../rg';
 import type { LocationVKType, SearchType } from '../../type';
 import type { SearchWinState } from './search';
 import type SearchWin from './search';
+import { log } from '../rutil';
+
+async function search(s: SearchWinState) {
+  return false;
+}
 
 export default function handler(this: SearchWin, e: React.SyntheticEvent) {
   const state = this.state as SearchWinState;
@@ -25,12 +31,37 @@ export default function handler(this: SearchWin, e: React.SyntheticEvent) {
           break;
         }
         case 'searchButton': {
+          search(state);
           break;
         }
         case 'helpButton': {
           break;
         }
         case 'createIndexButton': {
+          const { module } = state;
+          if (module && G.Tab[module]) {
+            G.Window.modal('installing', 'all');
+            const s: Partial<SearchWinState> = {
+              results: [],
+              pageindex: 0,
+              progress: 0.01,
+              progressLabel: i18n.t('BuildingIndex'),
+            };
+            this.setState(s);
+            if (G.LibSword.luceneEnabled(module)) {
+              G.LibSword.searchIndexDelete(module);
+            }
+            G.LibSword.searchIndexBuild(module)
+              .then(() => {
+                G.Window.modal('off', 'all');
+                this.setState({ progress: 0 });
+                return search(state);
+              })
+              .catch((er: Error) => {
+                G.Window.modal('off', 'all');
+                log.error(er);
+              });
+          }
           break;
         }
         case 'pagefirst': {
