@@ -4,7 +4,7 @@
 import React from 'react';
 import i18n from 'i18next';
 import { ProgressBar } from '@blueprintjs/core';
-import { clone, diff, drop, dString } from '../../common';
+import { clone, diff, drop, dString, stringHash } from '../../common';
 import C from '../../constant';
 import G from '../rg';
 import renderToRoot from '../rinit';
@@ -21,12 +21,10 @@ import Textbox from '../libxul/textbox';
 import Spacer from '../libxul/spacer';
 import Stack from '../libxul/stack';
 import ModuleMenu from '../libxul/modulemenu';
-import handlerH from './searchH';
+import handlerH, { search, ResultsPerPage } from './searchH';
 import './search.css';
 
 import type { GlobalPrefType, LocationVKType, SearchType } from '../../type';
-
-const ResultsPerPage = 30;
 
 const defaultProps = xulDefaultProps;
 
@@ -53,7 +51,7 @@ const initialState = {
   displayBible: '' as string, // current module of Bible search
   results: [] as LocationVKType[],
   pageindex: 0 as number, // first results index to show
-  progress: 0 as number, // between 0 and 1
+  progress: 0 as number, // -1=indeterminate, 0=hidden, 1=complete
   progressLabel: '' as string, // changing progress label
 };
 
@@ -78,6 +76,10 @@ export default class SearchWin extends React.Component {
 
   handler: (e: React.SyntheticEvent) => void;
 
+  resref: React.RefObject<HTMLDivElement>;
+
+  lexref: React.RefObject<HTMLDivElement>;
+
   constructor(props: SearchWinProps) {
     super(props);
 
@@ -101,18 +103,52 @@ export default class SearchWin extends React.Component {
     this.state = resetState || pstate || s;
 
     this.handler = handlerH.bind(this);
+
+    this.resref = React.createRef();
+    this.lexref = React.createRef();
   }
 
-  componentDidMount() {}
+  componentDidMount() {
+    search(this);
+  }
 
   componentDidUpdate(_prevProps: any, prevState: SearchWinState) {
-    resetState = clone(this.state) as SearchWinState;
-    const pstate = drop(this.state, noPersist) as Partial<SearchWinState>;
+    const state = this.state as SearchWinState;
+    resetState = clone(state);
+    const pstate = drop(state, noPersist) as Partial<SearchWinState>;
     if (diff(prevState, pstate)) {
       noPersist.forEach((p) => {
         pstate[p] = initialState[p] as any;
       });
       G.Window.setComplexValue('pstate', pstate);
+    }
+
+    const { displayBible, module, pageindex } = state;
+    const { resref, lexref } = this;
+    const res = resref !== null ? resref.current : null;
+    if (res && module) {
+      const dModule = G.Tab[module].type === C.BIBLE ? displayBible : module;
+      const dResult = stringHash(state.results);
+
+      if (res.dataset.results !== dResult || res.dataset.module !== dModule) {
+        // build lexicon from results and module
+        const lex = lexref !== null ? lexref.current : null;
+        if (lex) {
+          // TODO!
+        }
+      }
+
+      if (
+        res.dataset.results !== dResult ||
+        res.dataset.module !== dModule ||
+        res.dataset.pageindex !== pageindex.toString()
+      ) {
+        // build page from results, module and pageindex
+      }
+
+      res.dataset.results = dResult;
+      res.dataset.module = dModule;
+      res.dataset.pageindex = pageindex.toString();
     }
   }
 
@@ -179,6 +215,7 @@ export default class SearchWin extends React.Component {
       searchStatus = i18n.t('searchStatusAll', { v1: dString(results.length) });
     }
 
+    // TODO!: Popup
     return (
       <Vbox className="searchwin">
         <Hbox pack="center">
@@ -214,6 +251,7 @@ export default class SearchWin extends React.Component {
                   </Vbox>
                   <Button
                     id="searchButton"
+                    disabled={progress !== 0}
                     label={i18n.t('searchBut.label')}
                     tooltip={i18n.t('search.tooltip')}
                     onClick={handler}
@@ -328,7 +366,7 @@ export default class SearchWin extends React.Component {
           <Hbox flex="1">
             <Vbox className="resultBox" flex="1">
               <Hbox>
-                <Box flex="1" id="lexiconResults" />
+                <Box flex="1" id="lexiconResults" domref={this.lexref} />
                 <ModuleMenu
                   id="displayBible"
                   value={displayBible}
@@ -337,7 +375,7 @@ export default class SearchWin extends React.Component {
                   onChange={handler}
                 />
               </Hbox>
-              <Box flex="1" id="searchResults" />
+              <Box flex="1" id="searchResults" domref={this.resref} />
             </Vbox>
             {results.length > ResultsPerPage && (
               <Vbox>
@@ -355,18 +393,11 @@ export default class SearchWin extends React.Component {
               <span>{searchStatus}</span>
             </Box>
             <Spacer flex="1" />
-            {progress > 0 && (
-              <>
-                <Hbox align="center">
-                  <Label value={`${progressLabel}:`} />
-                  <ProgressBar value={progress} />
-                </Hbox>
-                <Button
-                  id="stopSearch"
-                  label={i18n.t('stop.label')}
-                  onClick={handler}
-                />
-              </>
+            {progress !== 0 && (
+              <Hbox align="center">
+                <Label value={`${progressLabel}:`} />
+                <ProgressBar value={progress === -1 ? undefined : progress} />
+              </Hbox>
             )}
           </Hbox>
         </Vbox>

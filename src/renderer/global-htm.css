@@ -28,7 +28,7 @@ html.dialog-window #root {
   height: 100%;
   z-index: 999;
 }
-#overlay.installing {
+#overlay.darkened {
   background-color: rgba(0, 0, 0, 0.5);
 }
 #overlay .modal-progressbar {

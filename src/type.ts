@@ -75,7 +75,7 @@ export type WindowArgType =
   | 'not-self'
   | 'children';
 
-export type ModalType = 'off' | 'installing' | 'transparent';
+export type ModalType = 'off' | 'darkened' | 'transparent';
 
 // - skipTextUpdate allows a speedup when Atext content does not need to be updated,
 // such as verseAt bottom: only the target panel needs to be fully rendered, then

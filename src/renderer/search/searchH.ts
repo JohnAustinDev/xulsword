@@ -10,8 +10,32 @@ import type { SearchWinState } from './search';
 import type SearchWin from './search';
 import { log } from '../rutil';
 
-async function search(s: SearchWinState) {
-  return false;
+export const ResultsPerPage = 30;
+
+export async function search(sthis: SearchWin) {
+  const state = sthis.state as SearchWinState;
+  const { module, displayBible: db } = state;
+  if (state.progress !== 0) return false;
+  if (!/\w\w/.test(state.searchtext)) return false;
+  if (!module) return false;
+
+  const hasIndex = G.LibSword.luceneEnabled(module);
+  const isBible = G.Tab[module].type === C.BIBLE;
+  const displayBible = isBible ? module : db;
+
+  const s: Partial<SearchWinState> = {
+    results: [],
+    pageindex: 0,
+    progress: hasIndex ? 0 : 0.01,
+    progressLabel: i18n.t('SEARCHING'),
+    displayBible,
+  };
+  sthis.setState(s);
+  // TODO!: Search
+
+  s.progress = 0;
+  sthis.setState(s);
+  return true;
 }
 
 export default function handler(this: SearchWin, e: React.SyntheticEvent) {
@@ -31,7 +55,7 @@ export default function handler(this: SearchWin, e: React.SyntheticEvent) {
           break;
         }
         case 'searchButton': {
-          search(state);
+          search(this);
           break;
         }
         case 'helpButton': {
@@ -40,43 +64,56 @@ export default function handler(this: SearchWin, e: React.SyntheticEvent) {
         case 'createIndexButton': {
           const { module } = state;
           if (module && G.Tab[module]) {
-            G.Window.modal('installing', 'all');
+            G.Window.modal('darkened', 'all');
             const s: Partial<SearchWinState> = {
               results: [],
               pageindex: 0,
-              progress: 0.01,
+              progress: -1,
               progressLabel: i18n.t('BuildingIndex'),
             };
             this.setState(s);
             if (G.LibSword.luceneEnabled(module)) {
               G.LibSword.searchIndexDelete(module);
             }
-            G.LibSword.searchIndexBuild(module)
-              .then(() => {
-                G.Window.modal('off', 'all');
-                this.setState({ progress: 0 });
-                return search(state);
-              })
-              .catch((er: Error) => {
-                G.Window.modal('off', 'all');
-                log.error(er);
-              });
+            // The timeout allows UI to catch up before indexing begins,
+            // which is still required even though indexing is anync.
+            setTimeout(() => {
+              G.LibSword.searchIndexBuild(module)
+                .then(() => {
+                  G.Window.modal('off', 'all');
+                  this.setState({ progress: 0 });
+                  return search(this);
+                })
+                .catch((er: Error) => {
+                  log.error(er);
+                  G.Window.modal('off', 'all');
+                });
+            }, 100);
           }
           break;
         }
         case 'pagefirst': {
+          this.setState({ pageindex: 0 });
           break;
         }
         case 'pagelast': {
+          let pageindex = state.results.length - ResultsPerPage;
+          if (pageindex < 0) pageindex = 0;
+          this.setState({ pageindex });
           break;
         }
         case 'pageprev': {
+          let pageindex = state.pageindex - ResultsPerPage;
+          if (pageindex < 0) pageindex = 0;
+          this.setState({ pageindex });
           break;
         }
         case 'pagenext': {
-          break;
-        }
-        case 'stopSearch': {
+          let pageindex = state.pageindex + ResultsPerPage;
+          if (pageindex >= state.results.length)
+            pageindex = state.results.length - ResultsPerPage;
+          if (pageindex < 0) pageindex = 0;
+          this.setState({ pageindex });
           break;
         }
 

@@ -191,7 +191,7 @@ export default function renderToRoot(
       if (root) {
         root.ondragover = (e) => {
           e.preventDefault();
-          setModal('installing');
+          setModal('darkened');
         };
         root.ondragleave = (e) => {
           e.preventDefault();

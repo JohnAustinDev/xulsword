@@ -493,7 +493,7 @@ export async function modalInstall(
   const xswin = getBrowserWindows({ type: 'xulsword' })[0];
   const tgwin = targWin || xswin;
   Window.modal('transparent', 'all');
-  Window.modal('installing', tgwin);
+  Window.modal('darkened', tgwin);
   const zips: (ZIP | null)[] = [];
   zipmods.forEach((zipmod) => {
     if (typeof zipmod === 'string') {
