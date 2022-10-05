@@ -250,6 +250,11 @@ export type V11nType =
   | 'NRSV'
   | 'Segond';
 
+export type LocationSKType = {
+  module: string;
+  key: string;
+};
+
 export type LocationVKType = {
   book: string;
   chapter: number;
@@ -650,7 +655,7 @@ const LibSwordPublic = {
     type: number,
     flags: number,
     newsearch: boolean
-  ) => number,
+  ) => Promise<number>,
   getSearchPointer: func as unknown as () => any,
   getSearchVerses: func as unknown as (modname: string) => void,
   getSearchResults: func as unknown as (
@@ -727,6 +732,10 @@ const CommandsPublic = {
     location: LocationVKType,
     selection: LocationVKType,
     scroll?: ScrollType
+  ) => void,
+  goToLocationSK: func as unknown as (
+    location: LocationSKType,
+    scroll?: ScrollType | undefined
   ) => void,
 };
 

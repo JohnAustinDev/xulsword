@@ -1,14 +1,17 @@
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+/* eslint-disable jsx-a11y/click-events-have-key-events */
+/* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react/static-property-placement */
 /* eslint-disable jsx-a11y/control-has-associated-label */
 import React from 'react';
 import i18n from 'i18next';
 import { ProgressBar } from '@blueprintjs/core';
-import { clone, diff, drop, dString, stringHash } from '../../common';
+import { clone, diff, drop, dString, sanitizeHTML } from '../../common';
 import C from '../../constant';
 import G from '../rg';
 import renderToRoot from '../rinit';
-import { log, windowArgument } from '../rutil';
+import { windowArgument } from '../rutil';
 import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
 import { Box, Hbox, Vbox } from '../libxul/boxes';
 import Groupbox from '../libxul/groupbox';
@@ -21,10 +24,17 @@ import Textbox from '../libxul/textbox';
 import Spacer from '../libxul/spacer';
 import Stack from '../libxul/stack';
 import ModuleMenu from '../libxul/modulemenu';
-import handlerH, { search, ResultsPerPage } from './searchH';
+import handlerH, {
+  search,
+  searchArg,
+  hilightStrongs,
+  formatResult,
+  lexicon,
+  strongsCSS,
+} from './searchH';
 import './search.css';
 
-import type { GlobalPrefType, LocationVKType, SearchType } from '../../type';
+import type { GlobalPrefType, SearchType } from '../../type';
 
 const defaultProps = xulDefaultProps;
 
@@ -49,7 +59,7 @@ const initialState = {
     | 'letters', // scope select value
   moreLess: false as boolean, // more / less state
   displayBible: '' as string, // current module of Bible search
-  results: [] as LocationVKType[],
+  count: 0 as number, // count and page-result are returned at different times
   pageindex: 0 as number, // first results index to show
   progress: 0 as number, // -1=indeterminate, 0=hidden, 1=complete
   progressLabel: '' as string, // changing progress label
@@ -66,8 +76,6 @@ const noPersist = [
 let resetState = null as null | SearchWinState;
 
 export type SearchWinState = typeof initialState;
-
-const searchArg = windowArgument('search') as SearchType;
 
 export default class SearchWin extends React.Component {
   static defaultProps: typeof defaultProps;
@@ -95,10 +103,15 @@ export default class SearchWin extends React.Component {
           ? searchArg.module
           : abible?.module ?? '',
     };
+    // Adjustments for special startup situations
     if (searchArg?.scope) {
       s.scoperadio = 'other';
       s.scopeselect = 'custom';
     }
+    if (!s.moreLess && s.module && !G.LibSword.luceneEnabled(s.module)) {
+      s.moreLess = true;
+    }
+
     const pstate = windowArgument('pstate') as SearchWinState;
     this.state = resetState || pstate || s;
 
@@ -123,30 +136,63 @@ export default class SearchWin extends React.Component {
       G.Window.setComplexValue('pstate', pstate);
     }
 
-    const { displayBible, module, pageindex } = state;
+    const { displayBible, module, pageindex, count, searchtext } = state;
     const { resref, lexref } = this;
     const res = resref !== null ? resref.current : null;
+    const lex = lexref !== null ? lexref.current : null;
     if (res && module) {
       const dModule = G.Tab[module].type === C.BIBLE ? displayBible : module;
-      const dResult = stringHash(state.results);
 
-      if (res.dataset.results !== dResult || res.dataset.module !== dModule) {
-        // build lexicon from results and module
-        const lex = lexref !== null ? lexref.current : null;
-        if (lex) {
-          // TODO!
+      let dModuleIsStrongs = false;
+      if (
+        res.dataset.count !== count.toString() ||
+        res.dataset.module !== dModule ||
+        res.dataset.pageindex !== pageindex.toString()
+      ) {
+        strongsCSS.added.forEach((r) => {
+          strongsCSS.sheet.deleteRule(r);
+        });
+        strongsCSS.added = [];
+        if (!count) {
+          sanitizeHTML(res, '');
+        } else {
+          // build a page from results, module and pageindex
+          if (G.Tab[dModule].isVerseKey) {
+            dModuleIsStrongs = /Strongs/i.test(
+              G.LibSword.getModuleInformation(dModule, 'Feature') +
+                G.LibSword.getModuleInformation(dModule, 'GlobalOptionFilter')
+            );
+          }
+          const result = G.LibSword.getSearchResults(
+            dModule,
+            pageindex,
+            C.UI.Search.resultsPerPage,
+            dModuleIsStrongs,
+            null
+          );
+          sanitizeHTML(res, result);
+          formatResult(res, state);
+          if (dModuleIsStrongs && /lemma:/.test(searchtext)) {
+            hilightStrongs(searchtext.match(/lemma:\s*\S+/g));
+          }
         }
       }
 
       if (
-        res.dataset.results !== dResult ||
-        res.dataset.module !== dModule ||
-        res.dataset.pageindex !== pageindex.toString()
+        dModuleIsStrongs &&
+        lex &&
+        (res.dataset.count !== count.toString() ||
+          res.dataset.module !== dModule)
       ) {
-        // build page from results, module and pageindex
+        // build a lexicon for the search
+        if (!count) {
+          sanitizeHTML(lex, '');
+        } else {
+          lexicon(lex, state);
+        }
       }
 
-      res.dataset.results = dResult;
+      res.dataset.count = count.toString();
       res.dataset.module = dModule;
       res.dataset.pageindex = pageindex.toString();
     }
@@ -161,7 +207,7 @@ export default class SearchWin extends React.Component {
       searchtype,
       scoperadio,
       scopeselect,
-      results,
+      count,
       moreLess,
       pageindex,
       progress,
@@ -201,18 +247,20 @@ export default class SearchWin extends React.Component {
     const searchindex = module && G.LibSword.luceneEnabled(module);
 
     const lasti =
-      results.length - pageindex < ResultsPerPage
-        ? results.length
-        : pageindex + ResultsPerPage;
+      count - pageindex < C.UI.Search.resultsPerPage
+        ? count
+        : pageindex + C.UI.Search.resultsPerPage;
     let searchStatus = '';
-    if (results.length > ResultsPerPage) {
+    if (count > C.UI.Search.resultsPerPage) {
       searchStatus = i18n.t('searchStatusPage', {
         v1: dString(pageindex + 1),
         v2: dString(lasti),
-        v3: dString(results.length),
+        v3: dString(count),
       });
     } else {
-      searchStatus = i18n.t('searchStatusAll', { v1: dString(results.length) });
+      searchStatus = i18n.t('searchStatusAll', {
+        v1: dString(count || 0),
+      });
     }
 
     // TODO!: Popup
@@ -246,6 +294,7 @@ export default class SearchWin extends React.Component {
                       value={searchtext}
                       tooltip={i18n.t('searchbox.tooltip')}
                       maxLength="60"
+                      onChange={handler}
                     />
                     <ModuleMenu id="module" value={module} onChange={handler} />
                   </Vbox>
@@ -362,22 +411,31 @@ export default class SearchWin extends React.Component {
 
         <Spacer height={moreLess ? '20' : '10'} />
 
-        <Vbox flex="1">
+        <Vbox className="result-container" flex="1">
           <Hbox flex="1">
             <Vbox className="resultBox" flex="1">
               <Hbox>
-                <Box flex="1" id="lexiconResults" domref={this.lexref} />
-                <ModuleMenu
-                  id="displayBible"
-                  value={displayBible}
-                  types={[C.BIBLE]}
-                  disabled={!module || G.Tab[module].type !== C.BIBLE}
-                  onChange={handler}
-                />
+                <Box flex="1">
+                  <div
+                    id="lexiconResults"
+                    ref={this.lexref}
+                    onClick={handler}
+                  />
+                </Box>
+                {module && G.Tab[module].type === C.BIBLE && (
+                  <ModuleMenu
+                    id="displayBible"
+                    value={displayBible}
+                    types={[C.BIBLE]}
+                    disabled={!module || G.Tab[module].type !== C.BIBLE}
+                    onChange={handler}
+                  />
+                )}
               </Hbox>
-              <Box flex="1" id="searchResults" domref={this.resref} />
+              <Spacer orient="horizontal" />
+              <div id="searchResults" ref={this.resref} onClick={handler} />
             </Vbox>
-            {results.length > ResultsPerPage && (
+            {count > C.UI.Search.resultsPerPage && (
               <Vbox>
                 <Button id="pagefirst" onClick={handler} />
                 <Spacer orient="vertical" flex="1" />

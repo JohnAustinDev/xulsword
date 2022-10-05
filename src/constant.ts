@@ -108,6 +108,23 @@ const C = {
       bbSingleColTopMargin: 100, // px an arbitrary extra margin value
       bbBottomMargin: 20, // px
     },
+    Search: {
+      resultsPerPage: 30, // search results per page
+      maxLexiconSearchResults: 500, // max number search results used for lexicon
+      symbol: {
+        // [UI-default-symbol, Clucene-symbol]
+        SINGLECharWildCard: ['?', '?'],
+        MULTICharWildCard: ['*', '*'],
+        AND: ['&&', 'AND '],
+        OR: ['||', 'OR '],
+        NOT: ['!', 'NOT '],
+        SIMILAR: ['~', '~ '],
+        GROUPSTART: ['(', '('],
+        GROUPEND: [')', ')'],
+        QUOTESTART: ['"', '"'],
+        QUOTEEND: ['"', '"'],
+      },
+    },
   },
 
   // These are all the properties which Config type objects will have.

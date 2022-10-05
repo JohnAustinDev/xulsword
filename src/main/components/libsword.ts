@@ -482,9 +482,9 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   //  -5 - a compound search
   // flags are many useful flags as defined in regex.h
   // newsearch should be set to false if you want the search results added to the previous results
-  search(modname, srchstr, scope, type, flags, newsearch) {
+  async search(modname, srchstr, scope, type, flags, newsearch) {
     if (!this.isReady()) return null;
-    const intgr = libxulsword.Search(
+    const intgr = await libxulsword.Search(
       modname,
       srchstr,
       scope,
@@ -493,6 +493,9 @@ DEFINITION OF A 'XULSWORD REFERENCE':
       newsearch
     );
     this.checkerror();
+    log.debug(
+      `search: modname=${modname} srchstr=${srchstr} scope=${scope} type=${type} flags=${flags} newsearch=${newsearch} intgr=${intgr}`
+    );
     return intgr;
   },
 
@@ -517,6 +520,10 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // search() must be called before results can be read.
   getSearchResults(modname, first, num, keepStrongs, searchPointer) {
     if (!this.isReady()) return null;
+
+    log.debug(
+      `getSearchResults: modname=${modname} first=${first} num=${num} keepStrongs=${keepStrongs} searchPointer=${searchPointer}`
+    );
 
     // if a searchPointer is given, make sure it has not been freed by LibSword.pause() etc.
     if (searchPointer && this.searchPointers.indexOf(searchPointer) === -1)

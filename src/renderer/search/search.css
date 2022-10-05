@@ -88,15 +88,29 @@
   height: 100%;
 }
 
+.result-container,
+.result-container > div,
+.result-container > div > div {
+  overflow: hidden;
+}
 .resultBox {
   border: 2px solid rgb(200, 170, 205);
   border-radius: 4px;
   background: white;
+  width: 100%;
 }
 .resultBox > div {
   padding: 5px;
 }
 
+#searchResults {
+  overflow-x: auto;
+  overflow-y: auto;
+}
+
+.searchStatus {
+  flex-basis: 2em;
+}
 .searchStatus span {
   white-space: nowrap;
 }
@@ -106,4 +120,91 @@
 .searchStatus .bp4-progress-bar {
   margin-inline-start: 5px;
   width: 200px;
+}
+
+/* Lexicon Results */
+#lexiconResults {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+.resultBox .hbox .box {
+  overflow: hidden;
+}
+.resultBox .spacer {
+  height: 0;
+  border-bottom: 1px solid #cccccc;
+  margin: 0 10px 10px 10px;
+  padding: 0;
+}
+.resultBox > .hbox > div:first-of-type {
+  flex-basis: 0;
+}
+#displayBible {
+  display: block;
+}
+
+/* Search Results */
+.resultBox .searchterm {
+  color: red;
+}
+/* This rule is dynamically copied by Javascript */
+.matchingStrongs {
+  color: red;
+}
+.resultBox .slist,
+.resultBox .snlist {
+  white-space: nowrap;
+  margin: 2px;
+}
+.resultBox .slist > a,
+.resultBox .snlist a {
+  color: blue;
+  font-size: inherit;
+  display: inline-block;
+  position: relative;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.resultBox .slist > span:first-of-type {
+  padding-left: 4px;
+  padding-right: 4px;
+}
+.resultBox .slist > span,
+.resultBox .snlist span {
+  display: inline-block;
+}
+
+.resultBox .strongs-type:after {
+  content: '-';
+  padding-left: 4px;
+  padding-right: 4px;
+}
+.resultBox .lex-total:before {
+  content: '[';
+  padding: 0px;
+}
+.resultBox .lex-total:after {
+  content: ']:';
+  padding-inline-end: 4px;
+}
+.resultBox .lex-count:before {
+  content: '(';
+}
+.resultBox .lex-count:after {
+  content: '),';
+  margin-inline-end: 0.3em;
+}
+.resultBox .lex-count:last-child:after {
+  content: ')';
+  margin-inline-end: 0.3em;
+}
+.resultBox a.sn span {
+  text-decoration: underline;
+}
+
+/* PRINTING STYLES */
+@media print {
+  .resultBox .slist {
+    white-space: normal;
+  }
 }

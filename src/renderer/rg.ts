@@ -29,6 +29,7 @@ const asyncFuncs = [
   'Module.downloadXSM',
   'Module.saveDownloads',
   'LibSword.searchIndexBuild',
+  'LibSword.search',
 ];
 
 const entries = Object.entries(GPublic);

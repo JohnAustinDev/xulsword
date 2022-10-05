@@ -13,6 +13,7 @@ import Window, { getBrowserWindows } from './window';
 
 import type {
   GType,
+  LocationSKType,
   LocationVKType,
   ScrollType,
   TextVKType,
@@ -216,6 +217,20 @@ const Commands: GType['Commands'] = {
 
   openHelp(module) {
     log.info(`Action not implemented: openHelp()`);
+  },
+
+  goToLocationSK(location: LocationSKType, scroll?: ScrollType | undefined) {
+    const xulsword = Prefs.getComplexValue('xulsword') as XulswordStatePref;
+    const newxulsword = clone(xulsword);
+    const { panels, keys } = newxulsword;
+    let p = panels.findIndex((m) => m && m === location.module);
+    if (p === -1) {
+      p = 0;
+      panels[p] = location.module;
+    }
+    keys[p] = location.key;
+    newxulsword.scroll = scroll || { verseAt: 'center' };
+    Prefs.mergeValue('xulsword', newxulsword);
   },
 
   goToLocationVK(
