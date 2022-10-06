@@ -242,44 +242,62 @@ export function getTab(): { [i: string]: TabType } {
 }
 
 export function getBkChsInV11n(): {
-  [key in V11nType]: { [i: string]: number };
+  [key in V11nType]: [string, number][];
 } {
   if (!Cache.has('bkChsInV11n')) {
-    // Data was parsed from sword/include/*.h files
+    // Data was parsed from sword/include/*.h files using /util/readCanons.pl
+    const sameAsKJV = {
+      KJV: { ot: 0, nt: 0 },
+      Calvin: { ot: 1, nt: 1 },
+      Catholic: { ot: 0, nt: 1 },
+      Catholic2: { ot: 0, nt: 1 },
+      DarbyFr: { ot: 1, nt: 1 },
+      German: { ot: 0, nt: 1 },
+      KJVA: { ot: 0, nt: 1 },
+      Leningrad: { ot: 0, nt: 1 },
+      Luther: { ot: 0, nt: 0 },
+      LXX: { ot: 0, nt: 1 },
+      MT: { ot: 0, nt: 1 },
+      NRSV: { ot: 1, nt: 1 },
+      NRSVA: { ot: 0, nt: 1 },
+      Orthodox: { ot: 0, nt: 1 },
+      Segond: { ot: 1, nt: 1 },
+      Synodal: { ot: 0, nt: 0 },
+      SynodalProt: { ot: 0, nt: 1 },
+      Vulg: { ot: 0, nt: 0 },
+    };
     /* eslint-disable prettier/prettier */
     const bkChsInV11n: GType['BkChsInV11n'] = {
-        Calvin:{ntSameAsKJV:1,otSameAsKJV:1},
-        Catholic:{ntSameAsKJV:1,'1Chr':29,'1Kgs':22,'1Macc':16,'1Sam':31,'2Chr':36,'2Kgs':25,'2Macc':15,'2Sam':24,Amos:9,Bar:6,Dan:14,Deut:34,Eccl:12,Esth:10,Exod:40,Ezek:48,Ezra:10,Gen:50,Hab:3,Hag:2,Hos:14,Isa:66,Jdt:16,Jer:52,Job:42,Joel:4,Jonah:4,Josh:24,Judg:21,Lam:5,Lev:27,Mal:3,Mic:7,Nah:3,Neh:13,Num:36,Obad:1,Prov:31,Ps:150,Ruth:4,Sir:51,Song:8,Tob:14,Wis:19,Zech:14,Zeph:3},
-        Catholic2:{ntSameAsKJV:1,'1Chr':29,'1Kgs':22,'1Macc':16,'1Sam':31,'2Chr':36,'2Kgs':25,'2Macc':15,'2Sam':24,Amos:9,Bar:6,Dan:14,Deut:34,Eccl:12,Esth:16,Exod:40,Ezek:48,Ezra:10,Gen:50,Hab:3,Hag:2,Hos:14,Isa:66,Jdt:16,Jer:52,Job:42,Joel:4,Jonah:4,Josh:24,Judg:21,Lam:5,Lev:27,Mal:3,Mic:7,Nah:3,Neh:13,Num:36,Obad:1,Prov:31,Ps:150,Ruth:4,Sir:51,Song:8,Tob:14,Wis:19,Zech:14,Zeph:3},
-        DarbyFr:{ntSameAsKJV:1,otSameAsKJV:1},
-        German:{ntSameAsKJV:1,'1Chr':29,'1Kgs':22,'1Sam':31,'2Chr':36,'2Kgs':25,'2Sam':24,Amos:9,Dan:12,Deut:34,Eccl:12,Esth:10,Exod:40,Ezek:48,Ezra:10,Gen:50,Hab:3,Hag:2,Hos:14,Isa:66,Jer:52,Job:42,Joel:4,Jonah:4,Josh:24,Judg:21,Lam:5,Lev:27,Mal:3,Mic:7,Nah:3,Neh:13,Num:36,Obad:1,Prov:31,Ps:150,Ruth:4,Song:8,Zech:14,Zeph:3},
-        KJV:{'1Cor':16,'1John':5,'1Pet':5,'1Thess':5,'1Tim':6,'2Cor':13,'2John':1,'2Pet':3,'2Thess':3,'2Tim':4,'3John':1,Acts:28,Col:4,Eph:6,Gal:6,Heb:13,Jas:5,John:21,Jude:1,Luke:24,Mark:16,Matt:28,Phil:4,Phlm:1,Rev:22,Rom:16,Titus:3,'1Chr':29,'1Kgs':22,'1Sam':31,'2Chr':36,'2Kgs':25,'2Sam':24,Amos:9,Dan:12,Deut:34,Eccl:12,Esth:10,Exod:40,Ezek:48,Ezra:10,Gen:50,Hab:3,Hag:2,Hos:14,Isa:66,Jer:52,Job:42,Joel:3,Jonah:4,Josh:24,Judg:21,Lam:5,Lev:27,Mal:4,Mic:7,Nah:3,Neh:13,Num:36,Obad:1,Prov:31,Ps:150,Ruth:4,Song:8,Zech:14,Zeph:3},
-        KJVA:{ntSameAsKJV:1,'1Chr':29,'1Esd':9,'1Kgs':22,'1Macc':16,'1Sam':31,'2Chr':36,'2Esd':16,'2Kgs':25,'2Macc':15,'2Sam':24,AddEsth:16,Amos:9,Bar:6,Bel:1,Dan:12,Deut:34,Eccl:12,Esth:10,Exod:40,Ezek:48,Ezra:10,Gen:50,Hab:3,Hag:2,Hos:14,Isa:66,Jdt:16,Jer:52,Job:42,Joel:3,Jonah:4,Josh:24,Judg:21,Lam:5,Lev:27,Mal:4,Mic:7,Nah:3,Neh:13,Num:36,Obad:1,PrAzar:1,PrMan:1,Prov:31,Ps:150,Ruth:4,Sir:51,Song:8,Sus:1,Tob:14,Wis:19,Zech:14,Zeph:3},
-        LXX:{ntSameAsKJV:1,'1Chr':29,'1En':108,'1Esd':9,'1Kgs':22,'1Macc':16,'1Sam':31,'2Chr':36,'2Kgs':25,'2Macc':15,'2Sam':24,'3Macc':7,'4Macc':18,Amos:9,Bar:5,Bel:1,Dan:12,Deut:34,Eccl:12,EpJer:1,Esth:16,Exod:40,Ezek:48,Ezra:10,Gen:50,Hab:3,Hag:2,Hos:14,Isa:66,Jdt:16,Jer:52,Job:42,Joel:4,Jonah:4,Josh:24,Judg:21,Lam:5,Lev:27,Mal:4,Mic:7,Nah:3,Neh:13,Num:36,Obad:1,Odes:14,PrAzar:1,PrMan:1,Prov:31,Ps:151,PssSol:18,Ruth:4,Sir:51,Song:8,Sus:1,Tob:14,Wis:19,Zech:14,Zeph:3},
-        Leningrad:{ntSameAsKJV:1,'1Chr':29,'1Kgs':22,'1Sam':31,'2Chr':36,'2Kgs':25,'2Sam':24,Amos:9,Dan:12,Deut:34,Eccl:12,Esth:10,Exod:40,Ezek:48,Ezra:10,Gen:50,Hab:3,Hag:2,Hos:14,Isa:66,Jer:52,Job:42,Joel:4,Jonah:4,Josh:24,Judg:21,Lam:5,Lev:27,Mal:3,Mic:7,Nah:3,Neh:13,Num:36,Obad:1,Prov:31,Ps:150,Ruth:4,Song:8,Zech:14,Zeph:3},
-        Luther:{'1Cor':16,'1John':5,'1Pet':5,'1Thess':5,'1Tim':6,'2Cor':13,'2John':1,'2Pet':3,'2Thess':3,'2Tim':4,'3John':1,Acts:28,Col:4,Eph:6,Gal:6,Heb:13,Jas:5,John:21,Jude:1,Luke:24,Mark:16,Matt:28,Phil:4,Phlm:1,Rev:22,Rom:16,Titus:3,'1Chr':29,'1Kgs':22,'1Macc':16,'1Sam':31,'2Chr':36,'2Kgs':25,'2Macc':15,'2Sam':24,AddDan:3,AddEsth:7,Amos:9,Bar:6,Dan:12,Deut:34,Eccl:12,Esth:10,Exod:40,Ezek:48,Ezra:10,Gen:50,Hab:3,Hag:2,Hos:14,Isa:66,Jdt:16,Jer:52,Job:42,Joel:4,Jonah:4,Josh:24,Judg:21,Lam:5,Lev:27,Mal:3,Mic:7,Nah:3,Neh:13,Num:36,Obad:1,PrMan:1,Prov:31,Ps:150,Ruth:4,Sir:51,Song:8,Tob:14,Wis:19,Zech:14,Zeph:3},
-        MT:{ntSameAsKJV:1,'1Chr':29,'1Kgs':22,'1Sam':31,'2Chr':36,'2Kgs':25,'2Sam':24,Amos:9,Dan:12,Deut:34,Eccl:12,Esth:10,Exod:40,Ezek:48,Ezra:10,Gen:50,Hab:3,Hag:2,Hos:14,Isa:66,Jer:52,Job:42,Joel:4,Jonah:4,Josh:24,Judg:21,Lam:5,Lev:27,Mal:3,Mic:7,Nah:3,Neh:13,Num:36,Obad:1,Prov:31,Ps:150,Ruth:4,Song:8,Zech:14,Zeph:3},
-        NRSV:{ntSameAsKJV:1,otSameAsKJV:1},
-        NRSVA:{ntSameAsKJV:1,'1Chr':29,'1Esd':9,'1Kgs':22,'1Macc':16,'1Sam':31,'2Chr':36,'2Esd':16,'2Kgs':25,'2Macc':15,'2Sam':24,'3Macc':7,'4Macc':18,AddPs:1,Amos:9,Bar:6,Bel:1,Dan:12,Deut:34,Eccl:12,Esth:10,EsthGr:16,Exod:40,Ezek:48,Ezra:10,Gen:50,Hab:3,Hag:2,Hos:14,Isa:66,Jdt:16,Jer:52,Job:42,Joel:3,Jonah:4,Josh:24,Judg:21,Lam:5,Lev:27,Mal:4,Mic:7,Nah:3,Neh:13,Num:36,Obad:1,PrAzar:1,PrMan:1,Prov:31,Ps:150,Ruth:4,Sir:51,Song:8,Sus:1,Tob:14,Wis:19,Zech:14,Zeph:3},
-        Orthodox:{ntSameAsKJV:1,'1Chr':29,'1Esd':9,'1Kgs':22,'1Macc':16,'1Sam':31,'2Chr':36,'2Kgs':25,'2Macc':15,'2Sam':24,'3Macc':7,'4Macc':18,Amos:9,Bar:5,Bel:1,Dan:12,Deut:34,Eccl:12,EpJer:1,Esth:16,Exod:40,Ezek:48,Ezra:10,Gen:50,Hab:3,Hag:2,Hos:14,Isa:66,Jdt:16,Jer:52,Job:42,Joel:4,Jonah:4,Josh:24,Judg:21,Lam:5,Lev:27,Mal:4,Mic:7,Nah:3,Neh:13,Num:36,Obad:1,PrMan:1,Prov:31,Ps:151,Ruth:4,Sir:51,Song:8,Sus:1,Tob:14,Wis:19,Zech:14,Zeph:3},
-        Segond:{ntSameAsKJV:1,otSameAsKJV:1},
-        Synodal:{'1Cor':16,'1John':5,'1Pet':5,'1Thess':5,'1Tim':6,'2Cor':13,'2John':1,'2Pet':3,'2Thess':3,'2Tim':4,'3John':1,Acts:28,Col:4,Eph:6,Gal:6,Heb:13,Jas:5,John:21,Jude:1,Luke:24,Mark:16,Matt:28,Phil:4,Phlm:1,Rev:22,Rom:16,Titus:3,'1Chr':29,'1Esd':9,'1Kgs':22,'1Macc':16,'1Sam':31,'2Chr':36,'2Esd':16,'2Kgs':25,'2Macc':15,'2Sam':24,'3Macc':7,Amos:9,Bar:5,Dan:14,Deut:34,Eccl:12,EpJer:1,Esth:10,Exod:40,Ezek:48,Ezra:10,Gen:50,Hab:3,Hag:2,Hos:14,Isa:66,Jdt:16,Jer:52,Job:42,Joel:3,Jonah:4,Josh:24,Judg:21,Lam:5,Lev:27,Mal:4,Mic:7,Nah:3,Neh:13,Num:36,Obad:1,PrMan:1,Prov:31,Ps:151,Ruth:4,Sir:51,Song:8,Tob:14,Wis:19,Zech:14,Zeph:3},
-        SynodalProt:{ntSameAsKJV:1,'1Chr':29,'1Kgs':22,'1Sam':31,'2Chr':36,'2Kgs':25,'2Sam':24,Amos:9,Dan:12,Deut:34,Eccl:12,Esth:10,Exod:40,Ezek:48,Ezra:10,Gen:50,Hab:3,Hag:2,Hos:14,Isa:66,Jer:52,Job:42,Joel:3,Jonah:4,Josh:24,Judg:21,Lam:5,Lev:27,Mal:4,Mic:7,Nah:3,Neh:13,Num:36,Obad:1,Prov:31,Ps:150,Ruth:4,Song:8,Zech:14,Zeph:3},
-        Vulg:{'1Cor':16,'1Esd':9,'1John':5,'1Pet':5,'1Thess':5,'1Tim':6,'2Cor':13,'2Esd':16,'2John':1,'2Pet':3,'2Thess':3,'2Tim':4,'3John':1,Acts:28,AddPs:1,Col:4,EpLao:1,Eph:6,Gal:6,Heb:13,Jas:5,John:21,Jude:1,Luke:24,Mark:16,Matt:28,Phil:4,Phlm:1,PrMan:1,Rev:22,Rom:16,Titus:3,'1Chr':29,'1Kgs':22,'1Macc':16,'1Sam':31,'2Chr':36,'2Kgs':25,'2Macc':15,'2Sam':24,Amos:9,Bar:6,Dan:14,Deut:34,Eccl:12,Esth:16,Exod:40,Ezek:48,Ezra:10,Gen:50,Hab:3,Hag:2,Hos:14,Isa:66,Jdt:16,Jer:52,Job:42,Joel:3,Jonah:4,Josh:24,Judg:21,Lam:5,Lev:27,Mal:4,Mic:7,Nah:3,Neh:13,Num:36,Obad:1,Prov:31,Ps:150,Ruth:4,Sir:51,Song:8,Tob:14,Wis:19,Zech:14,Zeph:3},
-      }
+      KJV:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['Ruth',4],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['1Chr',29],['2Chr',36],['Ezra',10],['Neh',13],['Esth',10],['Job',42],['Ps',150],['Prov',31],['Eccl',12],['Song',8],['Isa',66],['Jer',52],['Lam',5],['Ezek',48],['Dan',12],['Hos',14],['Joel',3],['Amos',9],['Obad',1],['Jonah',4],['Mic',7],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',4],['Matt',28],['Mark',16],['Luke',24],['John',21],['Acts',28],['Rom',16],['1Cor',16],['2Cor',13],['Gal',6],['Eph',6],['Phil',4],['Col',4],['1Thess',5],['2Thess',3],['1Tim',6],['2Tim',4],['Titus',3],['Phlm',1],['Heb',13],['Jas',5],['1Pet',5],['2Pet',3],['1John',5],['2John',1],['3John',1],['Jude',1],['Rev',22]],
+      Calvin:[],
+      Catholic:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['Ruth',4],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['1Chr',29],['2Chr',36],['Ezra',10],['Neh',13],['Tob',14],['Jdt',16],['Esth',10],['1Macc',16],['2Macc',15],['Job',42],['Ps',150],['Prov',31],['Eccl',12],['Song',8],['Wis',19],['Sir',51],['Isa',66],['Jer',52],['Lam',5],['Bar',6],['Ezek',48],['Dan',14],['Hos',14],['Joel',4],['Amos',9],['Obad',1],['Jonah',4],['Mic',7],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',3]],
+      Catholic2:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['Ruth',4],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['1Chr',29],['2Chr',36],['Ezra',10],['Neh',13],['Tob',14],['Jdt',16],['Esth',16],['1Macc',16],['2Macc',15],['Job',42],['Ps',150],['Prov',31],['Eccl',12],['Song',8],['Wis',19],['Sir',51],['Isa',66],['Jer',52],['Lam',5],['Bar',6],['Ezek',48],['Dan',14],['Hos',14],['Joel',4],['Amos',9],['Obad',1],['Jonah',4],['Mic',7],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',3]],
+      DarbyFr:[],
+      German:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['Ruth',4],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['1Chr',29],['2Chr',36],['Ezra',10],['Neh',13],['Esth',10],['Job',42],['Ps',150],['Prov',31],['Eccl',12],['Song',8],['Isa',66],['Jer',52],['Lam',5],['Ezek',48],['Dan',12],['Hos',14],['Joel',4],['Amos',9],['Obad',1],['Jonah',4],['Mic',7],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',3]],
+      KJVA:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['Ruth',4],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['1Chr',29],['2Chr',36],['Ezra',10],['Neh',13],['Esth',10],['Job',42],['Ps',150],['Prov',31],['Eccl',12],['Song',8],['Isa',66],['Jer',52],['Lam',5],['Ezek',48],['Dan',12],['Hos',14],['Joel',3],['Amos',9],['Obad',1],['Jonah',4],['Mic',7],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',4],['1Esd',9],['2Esd',16],['Tob',14],['Jdt',16],['AddEsth',16],['Wis',19],['Sir',51],['Bar',6],['PrAzar',1],['Sus',1],['Bel',1],['PrMan',1],['1Macc',16],['2Macc',15]],
+      Leningrad:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['Isa',66],['Jer',52],['Ezek',48],['Hos',14],['Joel',4],['Amos',9],['Obad',1],['Jonah',4],['Mic',7],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',3],['1Chr',29],['2Chr',36],['Ps',150],['Job',42],['Prov',31],['Ruth',4],['Song',8],['Eccl',12],['Lam',5],['Esth',10],['Dan',12],['Ezra',10],['Neh',13]],
+      Luther:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['Ruth',4],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['1Chr',29],['2Chr',36],['Ezra',10],['Neh',13],['Esth',10],['Job',42],['Ps',150],['Prov',31],['Eccl',12],['Song',8],['Isa',66],['Jer',52],['Lam',5],['Ezek',48],['Dan',12],['Hos',14],['Joel',4],['Amos',9],['Obad',1],['Jonah',4],['Mic',7],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',3],['Jdt',16],['Wis',19],['Tob',14],['Sir',51],['Bar',6],['1Macc',16],['2Macc',15],['AddEsth',7],['AddDan',3],['PrMan',1],['Matt',28],['Mark',16],['Luke',24],['John',21],['Acts',28],['Rom',16],['1Cor',16],['2Cor',13],['Gal',6],['Eph',6],['Phil',4],['Col',4],['1Thess',5],['2Thess',3],['1Tim',6],['2Tim',4],['Titus',3],['Phlm',1],['1Pet',5],['2Pet',3],['1John',5],['2John',1],['3John',1],['Heb',13],['Jas',5],['Jude',1],['Rev',22]],
+      LXX:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['Ruth',4],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['1Chr',29],['2Chr',36],['1Esd',9],['Ezra',10],['Neh',13],['Esth',16],['Jdt',16],['Tob',14],['1Macc',16],['2Macc',15],['3Macc',7],['4Macc',18],['Ps',151],['PrMan',1],['Prov',31],['Eccl',12],['Song',8],['Job',42],['Wis',19],['Sir',51],['PssSol',18],['Hos',14],['Amos',9],['Mic',7],['Joel',4],['Obad',1],['Jonah',4],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',4],['Isa',66],['Jer',52],['Bar',5],['Lam',5],['EpJer',1],['Ezek',48],['PrAzar',1],['Sus',1],['Dan',12],['Bel',1],['1En',108],['Odes',14]],
+      MT:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['Isa',66],['Jer',52],['Ezek',48],['Hos',14],['Joel',4],['Amos',9],['Obad',1],['Jonah',4],['Mic',7],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',3],['Ps',150],['Job',42],['Prov',31],['Ruth',4],['Song',8],['Eccl',12],['Lam',5],['Esth',10],['Dan',12],['Ezra',10],['Neh',13],['1Chr',29],['2Chr',36]],
+      NRSV:[],
+      NRSVA:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['Ruth',4],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['1Chr',29],['2Chr',36],['Ezra',10],['Neh',13],['Esth',10],['Job',42],['Ps',150],['Prov',31],['Eccl',12],['Song',8],['Isa',66],['Jer',52],['Lam',5],['Ezek',48],['Dan',12],['Hos',14],['Joel',3],['Amos',9],['Obad',1],['Jonah',4],['Mic',7],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',4],['Tob',14],['Jdt',16],['EsthGr',16],['Wis',19],['Sir',51],['Bar',6],['PrAzar',1],['Sus',1],['Bel',1],['1Macc',16],['2Macc',15],['1Esd',9],['PrMan',1],['AddPs',1],['3Macc',7],['2Esd',16],['4Macc',18]],
+      Orthodox:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['Ruth',4],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['1Chr',29],['2Chr',36],['1Esd',9],['Ezra',10],['Neh',13],['Tob',14],['Jdt',16],['Esth',16],['1Macc',16],['2Macc',15],['3Macc',7],['Ps',151],['PrMan',1],['Job',42],['Prov',31],['Eccl',12],['Song',8],['Wis',19],['Sir',51],['Hos',14],['Amos',9],['Mic',7],['Joel',4],['Obad',1],['Jonah',4],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',4],['Isa',66],['Jer',52],['Bar',5],['Lam',5],['EpJer',1],['Ezek',48],['Sus',1],['Dan',12],['Bel',1],['4Macc',18]],
+      Segond:[],
+      Synodal:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['Ruth',4],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['1Chr',29],['2Chr',36],['PrMan',1],['Ezra',10],['Neh',13],['1Esd',9],['Tob',14],['Jdt',16],['Esth',10],['Job',42],['Ps',151],['Prov',31],['Eccl',12],['Song',8],['Wis',19],['Sir',51],['Isa',66],['Jer',52],['Lam',5],['EpJer',1],['Bar',5],['Ezek',48],['Dan',14],['Hos',14],['Joel',3],['Amos',9],['Obad',1],['Jonah',4],['Mic',7],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',4],['1Macc',16],['2Macc',15],['3Macc',7],['2Esd',16],['Matt',28],['Mark',16],['Luke',24],['John',21],['Acts',28],['Jas',5],['1Pet',5],['2Pet',3],['1John',5],['2John',1],['3John',1],['Jude',1],['Rom',16],['1Cor',16],['2Cor',13],['Gal',6],['Eph',6],['Phil',4],['Col',4],['1Thess',5],['2Thess',3],['1Tim',6],['2Tim',4],['Titus',3],['Phlm',1],['Heb',13],['Rev',22]],
+      SynodalProt:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['Ruth',4],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['1Chr',29],['2Chr',36],['Ezra',10],['Neh',13],['Esth',10],['Job',42],['Ps',150],['Prov',31],['Eccl',12],['Song',8],['Isa',66],['Jer',52],['Lam',5],['Ezek',48],['Dan',12],['Hos',14],['Joel',3],['Amos',9],['Obad',1],['Jonah',4],['Mic',7],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',4]],
+      Vulg:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['Ruth',4],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['1Chr',29],['2Chr',36],['Ezra',10],['Neh',13],['Tob',14],['Jdt',16],['Esth',16],['Job',42],['Ps',150],['Prov',31],['Eccl',12],['Song',8],['Wis',19],['Sir',51],['Isa',66],['Jer',52],['Lam',5],['Bar',6],['Ezek',48],['Dan',14],['Hos',14],['Joel',3],['Amos',9],['Obad',1],['Jonah',4],['Mic',7],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',4],['1Macc',16],['2Macc',15],['Matt',28],['Mark',16],['Luke',24],['John',21],['Acts',28],['Rom',16],['1Cor',16],['2Cor',13],['Gal',6],['Eph',6],['Phil',4],['Col',4],['1Thess',5],['2Thess',3],['1Tim',6],['2Tim',4],['Titus',3],['Phlm',1],['Heb',13],['Jas',5],['1Pet',5],['2Pet',3],['1John',5],['2John',1],['3John',1],['Jude',1],['Rev',22],['PrMan',1],['1Esd',9],['2Esd',16],['AddPs',1],['EpLao',1]],
+    };
     /* eslint-enable prettier/prettier */
-    Object.entries(bkChsInV11n).forEach((entry) => {
-      const [k, val] = entry;
-      const key = k as keyof typeof bkChsInV11n;
-      ['otSameAsKJV', 'ntSameAsKJV'].forEach((sk) => {
-        const bg = sk.substring(0, 2) as BookGroupType;
-        if (sk in val) {
-          delete val[sk];
-          C.SupportedBooks[bg].forEach((bk) => {
-            bkChsInV11n[key][bk] = bkChsInV11n.KJV[bk];
-          });
-        }
-      });
+    const kjvot = bkChsInV11n.KJV.slice(0, 39);
+    const kjvnt = bkChsInV11n.KJV.slice(39);
+    Object.keys(bkChsInV11n).forEach((k) => {
+      const v11n = k as keyof typeof bkChsInV11n;
+      if (sameAsKJV[v11n].ot) {
+        bkChsInV11n[v11n].splice(0, 0, ...kjvot);
+      }
+      if (sameAsKJV[v11n].nt) {
+        bkChsInV11n[v11n].splice(-1, 0, ...kjvnt);
+      }
     });
     Cache.write(bkChsInV11n, 'bkChsInV11n');
   }
@@ -297,7 +315,7 @@ export function getBooksInModule(module: string): string[] {
     const t = getTab()[module];
     const osis: string[] = [];
     if (t && t.v11n && (t.type === C.BIBLE || t.type === C.COMMENTARY)) {
-      const v11nbooks = Object.keys(bkChsInV11n[t.v11n]);
+      const v11nbooks = bkChsInV11n[t.v11n].map((x) => x[0]);
       // When references to missing books are requested from SWORD,
       // the previous (or last?) book in the module is usually quietly
       // used and read from instead! The exception seems to be when a
@@ -336,8 +354,8 @@ export function getMaxChapter(v11n: V11nType, vkeytext: string) {
   const [book] = vkeytext.split(/[\s.:]/);
   const bkChsInV11n = getBkChsInV11n();
   if (!(v11n in bkChsInV11n)) return 0;
-  if (!(book in bkChsInV11n[v11n])) return 0;
-  return bkChsInV11n[v11n][book];
+  const v = bkChsInV11n[v11n].find((x) => x[0] === book);
+  return v ? v[1] : 0;
 }
 
 // NOTE: rutil has this same function.

@@ -39,6 +39,7 @@ Cpp/build*
 Cpp/install*
 
 .vscode/perl-lang/
+.vstags
 
 # For Windows...
 Cpp/cluceneMK/windows/lib/Release/

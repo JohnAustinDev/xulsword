@@ -155,8 +155,8 @@ export function scrollIntoView(
 export function getMaxChapter(v11n: V11nType, vkeytext: string) {
   const [book] = vkeytext.split(/[\s.:]/);
   if (!(v11n in G.BkChsInV11n)) return 0;
-  if (!(book in G.BkChsInV11n[v11n])) return 0;
-  return G.BkChsInV11n[v11n][book];
+  const b = G.BkChsInV11n[v11n].find((x) => x[0] === book);
+  return b ? b[1] : 0;
 }
 
 // LibSword.getMaxVerse returns an erroneous number if vkeytext's

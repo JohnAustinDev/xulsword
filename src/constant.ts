@@ -205,6 +205,9 @@ const C = {
     'MT',
     'Catholic',
     'Catholic2',
+    'DarbyFr',
+    'Segond',
+    'Calvin',
   ] as V11nType[],
 
   // SupportedV11nMaps show which verse-systems may currently be mapped to

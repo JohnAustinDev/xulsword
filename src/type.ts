@@ -655,7 +655,7 @@ const LibSwordPublic = {
     type: number,
     flags: number,
     newsearch: boolean
-  ) => Promise<number>,
+  ) => Promise<number | null>,
   getSearchPointer: func as unknown as () => any,
   getSearchVerses: func as unknown as (modname: string) => void,
   getSearchResults: func as unknown as (
@@ -759,7 +759,7 @@ export const GPublic = {
   ModuleConfigDefault: 'getter' as unknown as ConfigType,
   ModuleFonts:         'getter' as unknown as FontFaceType[],
   FeatureModules:      'getter' as unknown as FeatureType,
-  BkChsInV11n:         'getter' as unknown as { [key in V11nType]: { [i: string]: number }; },
+  BkChsInV11n:         'getter' as unknown as { [key in V11nType]: [string, number][]; },
   OPSYS:               'getter' as unknown as NodeJS.Platform,
   /* eslint-enable prettier/prettier */
 

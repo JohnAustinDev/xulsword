@@ -114,11 +114,11 @@ export default class VerseKey {
     if (!C.SupportedV11nMaps[fromv11n].includes(tov11n)) return false;
     const { book, chapter, verse, lastverse } = this.#loc;
     if (!(tov11n in this.#bkChsInV11n)) return false;
-    if (!(book in this.#bkChsInV11n[tov11n])) return false;
-    const maxch =
-      fromv11n in this.#bkChsInV11n && book in this.#bkChsInV11n[fromv11n]
-        ? this.#bkChsInV11n[fromv11n][book]
-        : 0;
+    if (!this.#bkChsInV11n[tov11n].some((x) => x[0] === book)) return false;
+    const bkfo =
+      fromv11n in this.#bkChsInV11n &&
+      this.#bkChsInV11n[fromv11n].find((x) => x[0] === book);
+    const maxch: number = bkfo ? bkfo[1] : 0;
     if (chapter < 1 || chapter > maxch) return false;
     if (verse) {
       const maxv = C.MAXVERSE; // slow: getMaxVerse(fromv11n, [b, c].join('.'));
