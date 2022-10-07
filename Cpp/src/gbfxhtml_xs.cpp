@@ -109,13 +109,13 @@ bool GBFXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
       SWCATCH ( ... ) { }
       if (vkey) {
         buf.trimEnd();
-        char stag[45]="<span class='sn %s%s' id=\"\">"; // weird id is only to make stag uniquely identifiable for steps below
-        int stlen = 27; // length of stag string
+        char stag[61]="<span class=\"sn %s%s\" data-title=\"%s.%s%s\" >";
+        int stlen = 43; // length of stag string
         int p2 = buf.length();
         int p1 = p2;
         bool p2fixed = true;
         bool p1fixed = false;
-        bool append = false;
+        bool addToPrevious = false;
         int si = stlen;
 
         for (int i = buf.length()-1; i>=0; i--) {
@@ -138,8 +138,8 @@ bool GBFXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
               continue;
             }
             if (I == stag[si]) {
-              if (I=='\'') {
-                append = true;
+              if (I=='"') {
+                addToPrevious = true;
                 p1 -= (stlen-si+1);
                 break;
               }
@@ -153,13 +153,20 @@ bool GBFXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
         }
         if (!p1fixed) {p1 = 0;}
         if (!p2fixed) {p2 = 0;}
-        char opentag[128];
-        if (append) {
-          sprintf(opentag, " %s%s", styp.c_str(), token+tl);
+
+        if (addToPrevious) {
+          char appendTitle[128];
+          sprintf(appendTitle, ".%s%s", styp.c_str(), token+tl);
+          buf.insert(p1, appendTitle);
+          char appendClass[128];
+          sprintf(appendClass, " %s%s", styp.c_str(), token+tl);
+          while (buf.charAt(p1) != '"') {p1--;}
+          buf.insert(p1-13, appendClass);
         }
-        else {sprintf(opentag, stag, styp.c_str(), token+tl);}
-        buf.insert(p1, opentag);
-        if (!append) {
+        else {
+          char opentag[128];
+          sprintf(opentag, stag, styp.c_str(), token+tl, userData->module->getName(), styp.c_str(), token+tl);
+          buf.insert(p1, opentag);
           p2 = p2 + strlen(opentag);
           buf.insert(p2, "</span>");
         }

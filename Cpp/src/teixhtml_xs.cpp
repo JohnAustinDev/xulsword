@@ -390,10 +390,11 @@ bool TEIXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
               }
             } while (++i < count);
           }
+          SWBuf snumdot = snumbers;
           snumbers.replaceBytes(".", ' '); // Changed in xulsword 3+
           if (!tag.isEmpty() && (tag.getAttribute("lemma") || tag.getAttribute("morph"))) {
             SWBuf tmp;
-            tmp.appendFormatted("<span class=\"sn %s\">", snumbers.c_str());
+            tmp.appendFormatted("<span class=\"sn %s\" data-title=\"%s.%s\">", snumbers.c_str(), userData->module->getName(), snumdot.c_str());
             outHtmlTag(tmp, buf, u);
             u->w = "keep";
           }

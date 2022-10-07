@@ -216,7 +216,12 @@ bool ThMLXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
           if (!error) {buf.insert(insertIndex, opentag);}
         }
         else {
-          sprintf(opentag, "<span class='sn %s_%s'>", mytype, tag.getAttribute("value"));
+          sprintf(opentag, "<span class='sn %s_%s' data-title='%s.%s_%s'>",
+            mytype,
+            tag.getAttribute("value"),
+            userData->module->getName(),
+            mytype,
+            tag.getAttribute("value"));
           if (!error) {
             buf.insert(insertIndex, opentag);
             buf.append("</span>");
