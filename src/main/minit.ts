@@ -296,7 +296,7 @@ export function getBkChsInV11n(): {
         bkChsInV11n[v11n].splice(0, 0, ...kjvot);
       }
       if (sameAsKJV[v11n].nt) {
-        bkChsInV11n[v11n].splice(-1, 0, ...kjvnt);
+        bkChsInV11n[v11n].push(...kjvnt);
       }
     });
     Cache.write(bkChsInV11n, 'bkChsInV11n');

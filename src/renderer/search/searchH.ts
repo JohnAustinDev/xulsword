@@ -13,6 +13,7 @@ import { log, verseKey, windowArgument } from '../rutil';
 import { getStrongsModAndKey } from '../viewport/zdictionary';
 
 import type {
+  BookGroupType,
   GlobalPrefType,
   LocationVKType,
   SearchType,
@@ -58,45 +59,75 @@ export function getLuceneSearchText(searchtext0: string) {
   return searchtext;
 }
 
-function scopeBooks(scope: string, module?: string) {
-  let books: string[] = [];
-  if (!scope && module) {
-    books = G.getBooksInModule(module);
-  } else {
-    scope.split(/\s+/).forEach((seg) => {
-      const bk = seg.split('-');
-      const beg = bk[0] in G.Book ? G.Book[bk[0]].index : 0;
-      const end =
-        bk.length === 2 && bk[1] in G.Book ? G.Book[bk[1]].index : beg;
+// Return an array of book codes from a KJV book-scope string.
+function scopeBooks(scope: string): string[] {
+  const books: string[] = [];
+  scope.split(/\s+/).forEach((seg) => {
+    const bk = seg.split('-');
+    let beg = bk[0] in G.Book ? G.Book[bk[0]].index : -1;
+    const end = bk.length === 2 && bk[1] in G.Book ? G.Book[bk[1]].index : beg;
+    if (beg === -1) beg = end;
+    if (beg !== -1) {
       for (let i = beg; i <= end; i += 1) {
         books.push(G.Books[i].code);
       }
-    });
-  }
+    }
+  });
   return books;
 }
 
-function fullScope(module?: string) {
-  if (module && module in G.Tab && G.Tab[module].isVerseKey) {
-    const books = G.getBooksInModule(module);
-    let first = G.Book.Gen.index;
-    let last = G.Book.Rev.index;
-    books.forEach((bk) => {
-      if (G.Book[bk].index < first) first = G.Book[bk].index;
-      if (G.Book[bk].index > last) last = G.Book[bk].index;
-    });
-    return `${G.Books[first].code}-${G.Books[last].code}`;
+// Return the minimal number of continuous module-order book segments
+// as an array (for example: [Gen-Mal, John-Rev]) or, if single is set,
+// an array of individual books in module-order is returned. Input is
+// 'all' | BookGroupType | KJV-book-scope.
+function getScopes(
+  input: 'all' | BookGroupType | string,
+  module: string,
+  single = false
+): string[] {
+  const scopes: string[] = [];
+  function continuation(start: any, end: any, skip: any) {
+    if (!skip) {
+      if (start && start === end) scopes.push(start);
+      else if (start && end) scopes.push(`${start}-${end}`);
+    }
   }
-  return 'Gen-Rev';
+  if (module && module in G.Tab && G.Tab[module].isVerseKey) {
+    const scopebooks = scopeBooks(input);
+    const modbooks = G.getBooksInModule(module); // are in v11n order
+
+    let contStart: string | null = null;
+    let contEnd: string | null = null;
+    modbooks.forEach((bk) => {
+      let keep = false;
+      if (input === 'all') keep = true;
+      else if (C.SupportedBookGroups.includes(input as BookGroupType)) {
+        keep = C.SupportedBooks[input as BookGroupType].some((b) => b === bk);
+      } else {
+        keep = scopebooks.some((b) => b === bk);
+      }
+      if (keep) {
+        if (single) scopes.push(bk);
+        if (!contStart) contStart = bk;
+        contEnd = bk;
+      } else {
+        continuation(contStart, contEnd, single);
+        contStart = null;
+        contEnd = null;
+      }
+    });
+    continuation(contStart, contEnd, single);
+  }
+  return scopes;
 }
 
 export async function search(sthis: SearchWin) {
   const state = sthis.state as SearchWinState;
-  const { module, displayBible: db } = state;
+  const { module, displayBible: db, searchtext } = state;
   let { searchtype } = state;
   if (state.progress !== 0) return false;
   if (!/\S\S/.test(state.searchtext)) return false;
-  if (!module) return false;
+  if (!module || !(module in G.Tab)) return false;
 
   const hasIndex = G.LibSword.luceneEnabled(module);
   const isBible = G.Tab[module].type === C.BIBLE;
@@ -109,17 +140,16 @@ export async function search(sthis: SearchWin) {
   const s: Partial<SearchWinState> = {
     count: 0,
     pageindex: 0,
-    progress: hasIndex ? 0 : 0.01,
+    progress: 0,
     progressLabel: '',
     displayBible,
   };
-  sthis.setState(s);
 
-  // TODO!: Change window title to new search
+  G.Window.setTitle(`${i18n.t('search.label')} "${searchtext}"`);
 
   // Replace UI search symbols with Clucene recognized search symbols,
   // and prepare the query string according to search type.
-  let searchtext = getLuceneSearchText(state.searchtext);
+  let searchtextLS = getLuceneSearchText(state.searchtext);
 
   let libSwordSearchType = libSwordSearchTypes.REGEX;
   if (G.LibSword.luceneEnabled(module)) {
@@ -127,7 +157,7 @@ export async function search(sthis: SearchWin) {
 
     // If Lucene special operators are present, always search advanced.
     if (
-      searchtext.search(
+      searchtextLS.search(
         /(\+|-|&&|\|\||!|\(|\)|{|}|\[|\]|\^|"|~|\*|\?|:|\\|AND|OR|NOT)/
       ) !== -1
     ) {
@@ -137,12 +167,12 @@ export async function search(sthis: SearchWin) {
 
     switch (searchtype) {
       case 'SearchAnyWord':
-        searchtext = searchtext.replace(/ /gm, ' AND ');
+        searchtextLS = searchtextLS.replace(/ /gm, ' AND ');
         break;
 
       case 'SearchSimilar':
-        searchtext = searchtext.replace(/\s*$/, '~');
-        searchtext = searchtext.replace(/ /gm, '~ AND ');
+        searchtextLS = searchtextLS.replace(/\s*$/, '~');
+        searchtextLS = searchtextLS.replace(/ /gm, '~ AND ');
         break;
 
       case 'SearchExactText':
@@ -158,135 +188,123 @@ export async function search(sthis: SearchWin) {
     s.searchtype = searchtype;
   }
 
-  // Prepare the search scope (empty-string for non-versekey modules or search-all)
-  let scope = '';
-  if (G.Tab[module].type === C.BIBLE || G.Tab[module].type === C.COMMENTARY) {
+  // Prepare the search scope (is empty-string for non-versekey modules)
+  let scopes = [''];
+  if (G.Tab[module].isVerseKey) {
+    scopes = [];
     const { scoperadio, scopeselect } = state;
-    const location = G.Prefs.getComplexValue(
-      'xulsword.location'
-    ) as GlobalPrefType['xulsword']['location'];
-    const values = {
-      all: fullScope(module),
-      ot: 'Gen-Mal',
-      nt: 'Matt-Rev',
-      book: location?.book ?? 'Gen',
-      other: 'other',
-    };
-    scope = values[scoperadio];
-    if (scope === 'other') {
-      if (scopeselect === 'custom') {
-        scope = searchArg?.scope ?? '';
-      } else if (i18n.exists(`search.${scopeselect}.books`)) {
-        scope = i18n.t(`search.${scopeselect}.books`);
+    const bookByBook = libSwordSearchType !== libSwordSearchTypes.LUCENE;
+    switch (scoperadio) {
+      case 'all':
+      case 'ot':
+      case 'nt': {
+        scopes = getScopes(scoperadio, module, bookByBook);
+        break;
       }
+      case 'book': {
+        const location = G.Prefs.getComplexValue(
+          'xulsword.location'
+        ) as GlobalPrefType['xulsword']['location'];
+        if (location?.book) {
+          scopes = getScopes(location.book, module, bookByBook);
+        }
+        break;
+      }
+      case 'other': {
+        scopes = getScopes(scopeselect, module, bookByBook);
+        break;
+      }
+      default:
     }
-    if (/^\s*$/.test(scope)) scope = fullScope(module);
   }
 
   // get Search flags
   // BUG NOTE: FLAGS = 2 DOESNT WORK FOR NON-ENGLISH/NON-LUCENE SEARCHES
   let flags = 2; // Turn "Ignore Case" flag on.
-  if (searchtype === 'SearchSimilar' || /~/.test(searchtext)) {
+  if (searchtype === 'SearchSimilar' || /~/.test(searchtextLS)) {
     flags |= 2048; // Turn on Sort By Relevance flag
   }
 
-  // There are two different methods of searching: search piecemeal
-  // book by book with progress bar, or, search the entire scope using
-  // Clucene without showing any progress bar.
-  if (
-    libSwordSearchType !== libSwordSearchTypes.LUCENE &&
-    (G.Tab[module].type === C.BIBLE || G.Tab[module].type === C.COMMENTARY)
-  ) {
-    // get array of books to search from scope param
-    // example Scope=Gen Ps.0-Ps.150 Matt-Rev
-    // NOTE: scope params must be in KJV book order!
-    sthis.setState(s);
-    s.count = await slowSearch(
-      sthis,
-      module,
-      searchtext,
-      scope,
-      libSwordSearchType,
-      flags
-    );
-    sthis.setState(s);
-  } else {
-    s.count = await G.LibSword.search(
-      module,
-      searchtext,
-      scope,
-      libSwordSearchType,
-      flags,
-      true
-    );
-    sthis.setState(s);
-  }
+  s.count = await libSwordSearch(
+    sthis,
+    searchtextLS,
+    scopes,
+    libSwordSearchType,
+    flags
+  );
+
+  sthis.setState(s);
 
   return true;
 }
 
-async function slowSearch(
+async function libSwordSearch(
   sthis: SearchWin,
-  module: string,
   searchtext: string,
-  scope: string,
+  scopes: string[],
   libswordSearchType: number,
   flags: number
 ): Promise<number> {
-  const books = scopeBooks(scope, module);
+  const { module } = sthis.state as SearchWinState;
+
   let isnew = true;
-  const funcs = books.map((bk, i) => {
+  const funcs = scopes.map((scope, i) => {
     return async () => {
       const count = await G.LibSword.search(
         module,
         searchtext,
-        bk,
+        scope,
         libswordSearchType,
         flags,
         isnew
       );
       isnew = false;
-      const s: Partial<SearchWinState> = {
-        progress: i / books.length,
-        progressLabel: G.Book[bk].name,
-      };
-      sthis.setState(s);
+      if (scopes.length > 1) {
+        const s: Partial<SearchWinState> = {
+          progress: (i + 1) / scopes.length,
+          progressLabel: scope in G.Book ? G.Book[scope].name : scope,
+        };
+        sthis.setState(s);
+      }
       return count;
     };
   });
   let grandTotal = 0;
   for (const func of funcs) {
-    grandTotal = await func();
+    const c = await func();
+    if (c !== null) grandTotal = c;
   }
   return grandTotal;
 }
 
 function createSearchIndex(sthis: SearchWin, module: string) {
-  G.Window.modal('darkened', 'all');
-  const s: Partial<SearchWinState> = {
-    count: 0,
-    pageindex: 0,
-    progress: -1,
-    progressLabel: i18n.t('BuildingIndex'),
-  };
-  sthis.setState(s);
-  if (G.LibSword.luceneEnabled(module)) {
-    G.LibSword.searchIndexDelete(module);
+  if (module && module in G.Tab) {
+    G.Window.modal('darkened', 'all');
+    const s: Partial<SearchWinState> = {
+      count: 0,
+      pageindex: 0,
+      progress: -1,
+      progressLabel: i18n.t('BuildingIndex'),
+    };
+    sthis.setState(s);
+    if (G.LibSword.luceneEnabled(module)) {
+      G.LibSword.searchIndexDelete(module);
+    }
+    // The timeout allows UI to catch up before indexing begins,
+    // which is still required even though indexing is anync.
+    setTimeout(() => {
+      G.LibSword.searchIndexBuild(module)
+        .then(() => {
+          G.Window.modal('off', 'all');
+          sthis.setState({ progress: 0 });
+          return search(sthis);
+        })
+        .catch((er: Error) => {
+          log.error(er);
+          G.Window.modal('off', 'all');
+        });
+    }, 100);
   }
-  // The timeout allows UI to catch up before indexing begins,
-  // which is still required even though indexing is anync.
-  setTimeout(() => {
-    G.LibSword.searchIndexBuild(module)
-      .then(() => {
-        G.Window.modal('off', 'all');
-        sthis.setState({ progress: 0 });
-        return search(sthis);
-      })
-      .catch((er: Error) => {
-        log.error(er);
-        G.Window.modal('off', 'all');
-      });
-  }, 100);
 }
 
 export function formatResult(div: HTMLDivElement, state: SearchWinState) {
@@ -458,8 +476,12 @@ export function hilightStrongs(strongs: RegExpMatchArray | null) {
 
 export function lexicon(lexdiv: HTMLDivElement, state: SearchWinState) {
   const { searchtext, searchtype, module, displayBible, count } = state;
-  const dModule = G.Tab[module].type === C.BIBLE ? displayBible : module;
+  const dModule =
+    !module || !(module in G.Tab) || G.Tab[module].type === C.BIBLE
+      ? displayBible
+      : module;
   const strongs: RegExpMatchArray | null = searchtext.match(/lemma:\s*\S+/g);
+  if (!dModule || !(dModule in G.Tab)) return;
 
   lexdiv.style.display = 'none'; // might this speed things up??
   const list: HTMLSpanElement[] = [];
@@ -501,41 +523,32 @@ export function lexicon(lexdiv: HTMLDivElement, state: SearchWinState) {
       });
 
       // format and save the results
+      const lexlist = document.createElement('p');
+      list.push(lexlist);
+      lexlist.className = 'lexlist';
+
       const dictinfo = getStrongsModAndKey(c);
-      const slist = document.createElement('span');
-      list.push(slist);
-      slist.className = 'slist';
-      if (dictinfo.key) {
-        slist.dataset.title = `${encodeURIComponent(dictinfo.key)}.${
-          dictinfo.mod
-        }`;
-      }
       const strongNum = c.replace('S_', '');
 
-      const a = slist.appendChild(document.createElement('a'));
-      if (dictinfo.mod && dictinfo.key) a.className = `sn ${c}`;
+      const a = lexlist.appendChild(document.createElement('span'));
+      if (dictinfo.mod && dictinfo.key) {
+        a.className = `sn ${c}`;
+      }
+      a.dataset.title = [dModule, c].join('.');
       a.textContent = strongNum;
-      a.id = `strongslink.${dModule}.lemma:${strongNum}`;
 
-      const span1 = slist.appendChild(document.createElement('span'));
-      span1.className = 'lex-total';
+      const span1 = lexlist.appendChild(document.createElement('span'));
       span1.textContent = `${dString(1)}-${dString(
         count > C.UI.Search.maxLexiconSearchResults
           ? C.UI.Search.maxLexiconSearchResults
           : count
       )}`;
 
-      const span2 = slist.appendChild(document.createElement('span'));
+      const span2 = lexlist.appendChild(document.createElement('span'));
       span2.className = `cs-${dModule}`;
-      snlex.forEach((snl) => {
-        const child1 = span2.appendChild(document.createElement('span'));
-        child1.className = 'lex-text';
-        child1.textContent = snl.text;
-
-        const child2 = span2.appendChild(document.createElement('span'));
-        child2.className = 'lex-count';
-        child2.textContent = snl.count.toString();
-      });
+      span2.textContent = snlex
+        .map((snl) => `${snl.text}(${snl.count.toString()})`)
+        .join(', ');
     });
   } else {
     // Otherwise searching for strings. Find all corresponding Strong's numbers.
@@ -544,12 +557,11 @@ export function lexicon(lexdiv: HTMLDivElement, state: SearchWinState) {
     Array.from(lexdiv.getElementsByClassName('searchterm')).forEach((term) => {
       const p = term.parentNode as HTMLElement;
       if (p) {
-        const sclass = p.className.match(/(^|\s)S_(G|H)(\d+)(\s|$)/g);
+        const re = '\\bS_(G|H)\\d+\\b';
+        const sclass = p.className.match(new RegExp(re, 'g'));
         if (sclass && sclass.length) {
           sclass.forEach((sc) => {
-            const [, mclass, mtypex] = Array.from(
-              sc.match(/(?:^|\s)(S_(G|H)\d+)(?:\s|$)/) || []
-            );
+            const [mclass, mtypex] = Array.from(sc.match(new RegExp(re)) || []);
             const mtype = mtypex as keyof typeof strongsLists;
             let j;
             for (j = 0; j < strongsLists[mtype].length; j += 1) {
@@ -575,45 +587,34 @@ export function lexicon(lexdiv: HTMLDivElement, state: SearchWinState) {
       });
 
       if (stsa.length) {
-        const snlist = document.createElement('span');
-        list.push(snlist);
-        snlist.className = 'snlist';
-        snlist.dataset.conmod = dModule;
+        const lexlist = document.createElement('p');
+        list.push(lexlist);
+        lexlist.className = 'lexlist';
 
         let mtype = '';
         if (hg === 'H') mtype = i18n.t('ORIGLabelOT');
         if (hg === 'G') mtype = i18n.t('ORIGLabelNT');
 
-        const span3 = snlist.appendChild(document.createElement('span'));
-        span3.className = 'strongs-type';
-        span3.textContent = mtype;
-
-        const span4 = snlist.appendChild(document.createElement('span'));
-        span4.className = 'lex-total';
+        const sns: string[] = [];
+        stsa.forEach((sts: Sts) => {
+          const strongNum = sts.strongs.replace('S_', '');
+          const sti = getStrongsModAndKey(sts.strongs);
+          const cls = sti.mod && sti.key ? ` class="sn ${sts.strongs}"` : '';
+          sns.push(
+            `<span${cls} data-title="${[
+              dModule,
+              ...sts.strongs.split(' '),
+            ].join('.')}">${strongNum}</span>(${sts.count.toString()})`
+          );
+        });
         const c =
           count > C.UI.Search.maxLexiconSearchResults
             ? C.UI.Search.maxLexiconSearchResults
             : count;
-        span4.textContent = `${dString(1)}-${dString(c)}`;
-
-        const span5 = snlist.appendChild(document.createElement('span'));
-        span5.className = 'cs-locale';
-
-        stsa.forEach((sts: Sts) => {
-          const strongNum = sts.strongs.replace('S_', '');
-          const sti = getStrongsModAndKey(sts.strongs);
-
-          const a = span5.appendChild(document.createElement('a'));
-          if (sti.mod && sti.key) a.className = `sn ${sts.strongs}`;
-          a.id = ['strongslink', dModule, `lemma:${strongNum}`].join('.');
-          const span6 = a.appendChild(document.createElement('span'));
-          span6.className = 'lex-text';
-          span6.textContent = strongNum;
-
-          const span7 = span5.appendChild(document.createElement('span'));
-          span7.className = 'lex-count';
-          span7.textContent = sts.count.toString();
-        });
+        sanitizeHTML(
+          lexlist,
+          `${mtype} - [${dString(1)}-${dString(c)}]: ${sns.join(', ')}`
+        );
       }
     });
   }
@@ -623,10 +624,13 @@ export function lexicon(lexdiv: HTMLDivElement, state: SearchWinState) {
     lexdiv.removeChild(lexdiv.firstChild);
   }
   if (!list.length) {
-    sanitizeHTML(lexdiv, '');
+    lexdiv.innerHTML = '';
   } else {
-    list.forEach((ns) => {
+    list.forEach((ns, i) => {
       lexdiv.appendChild(ns);
+      if (i < list.length - 1) {
+        lexdiv.appendChild(document.createElement('div'));
+      }
     });
   }
   lexdiv.style.display = ''; // was set to 'none' earlier
@@ -658,6 +662,10 @@ export default function handler(this: SearchWin, e: React.SyntheticEvent) {
         case 'createIndexButton': {
           const { module } = state;
           if (module && G.Tab[module]) {
+            const s: Partial<SearchWinState> = {
+              searchtype: 'SearchAnyWord',
+            };
+            this.setState(s);
             createSearchIndex(this, module);
           }
           break;
@@ -706,14 +714,6 @@ export default function handler(this: SearchWin, e: React.SyntheticEvent) {
               if (module && module in G.Tab) {
                 G.Commands.goToLocationSK({ module, key: p.join('.') });
               }
-              break;
-            }
-            case 'strongslink': {
-              G.Commands.search({
-                module: p.shift() as string,
-                searchtext: p.join('.'),
-                type: 'SearchAdvanced',
-              });
               break;
             }
             default:

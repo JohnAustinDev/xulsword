@@ -3,7 +3,9 @@
     ".babelrc": "jsonc",
     ".eslintrc": "jsonc",
     ".prettierrc": "jsonc",
-    ".eslintignore": "ignore"
+    ".eslintignore": "ignore",
+    "*.tcc": "cpp",
+    "string": "cpp"
   },
 
   "javascript.validate.enable": false,

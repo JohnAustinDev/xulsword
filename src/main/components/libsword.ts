@@ -484,6 +484,9 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // newsearch should be set to false if you want the search results added to the previous results
   async search(modname, srchstr, scope, type, flags, newsearch) {
     if (!this.isReady()) return null;
+    // IMPORTANT:
+    // VerseKey module searches require a non-empty book-scope, which may contain a single range.
+    // If the book(s) given in the scope value do not exist in the module, SWORD may crash!
     const intgr = await libxulsword.Search(
       modname,
       srchstr,

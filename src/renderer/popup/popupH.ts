@@ -3,7 +3,7 @@
 import { clone, ofClass, sanitizeHTML } from '../../common';
 import G from '../rg';
 import { getElementInfo, getPopupInfo } from '../../libswordElemInfo';
-import { log, getContextModule } from '../rutil';
+import { log } from '../rutil';
 import { getDictEntryHTML, getLemmaHTML } from '../viewport/zdictionary';
 import {
   getIntroductions,
@@ -113,12 +113,11 @@ export function getPopupHTML(
     }
 
     case 'sn': {
-      const m = mod || getContextModule(elem.parentNode);
-      if (m) {
+      if (mod) {
         const snlist = Array.from(elem.classList);
         if (snlist && snlist.length > 1) {
           snlist.shift();
-          html = getLemmaHTML(snlist, elem.innerHTML, m);
+          html = getLemmaHTML(snlist, elem.innerHTML, mod);
         }
       }
       break;

@@ -31,20 +31,6 @@
   height: 100%;
 }
 
-#moreLess {
-  margin-inline-end: 15px;
-}
-#moreLess label {
-  height: 0px;
-  overflow: hidden;
-}
-.less #moreLess label:first-of-type {
-  height: unset;
-}
-.more #moreLess label:not(:first-of-type) {
-  height: unset;
-}
-
 .searchtext {
   position: relative;
   margin-bottom: 20px;
@@ -57,19 +43,9 @@
   width: 100%;
   top: 100%;
 }
-.modulemenu select {
+.searchtext > .modulemenu select {
   margin: 0 5px;
   width: 100%;
-}
-
-#helpButton .button-icon {
-  display: block;
-  background-image: url('../images/help.png');
-  width: 27px;
-  height: 27px;
-}
-#helpButton:hover .button-icon {
-  background-position-x: 27px;
 }
 
 .searchType > div:nth-child(2) {
@@ -93,6 +69,9 @@
 .result-container > div > div {
   overflow: hidden;
 }
+.result-container button {
+  margin: 5px;
+}
 .resultBox {
   border: 2px solid rgb(200, 170, 205);
   border-radius: 4px;
@@ -101,6 +80,13 @@
 }
 .resultBox > div {
   padding: 5px;
+}
+.resultBox .modulemenu {
+  float: right;
+  margin: 0 5px 5px 5px;
+}
+html[dir='rtl'] .resultBox .modulemenu {
+  float: left;
 }
 
 #searchResults {
@@ -127,8 +113,14 @@
   overflow-x: auto;
   overflow-y: hidden;
 }
-.resultBox .hbox .box {
-  overflow: hidden;
+#lexiconResults .sn {
+  color: blue;
+  text-decoration: underline;
+}
+.resultBox > div:first-child {
+  padding-inline-start: calc(5em + 5px);
+  overflow-y: auto;
+  max-height: 25%;
 }
 .resultBox .spacer {
   height: 0;
@@ -136,14 +128,23 @@
   margin: 0 10px 10px 10px;
   padding: 0;
 }
-.resultBox > .hbox > div:first-of-type {
-  flex-basis: 0;
+.resultBox .lexlist {
+  text-indent: -5em;
+  margin: 2px 2px 5px 2px;
 }
-#displayBible {
-  display: block;
+.resultBox .lexlist a {
+  color: blue;
+  font-size: inherit;
+  position: relative;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 /* Search Results */
+.resultBox #searchResults {
+  flex-basis: 0;
+  flex-grow: 1;
+}
 .resultBox .searchterm {
   color: red;
 }
@@ -151,53 +152,27 @@
 .matchingStrongs {
   color: red;
 }
-.resultBox .slist,
-.resultBox .snlist {
+.resultBox .slist {
   white-space: nowrap;
+}
+.resultBox .slist {
   margin: 2px;
 }
-.resultBox .slist > a,
-.resultBox .snlist a {
+.resultBox .slist > a {
   color: blue;
   font-size: inherit;
-  display: inline-block;
   position: relative;
   text-decoration: underline;
   cursor: pointer;
+}
+.resultBox .slist div {
+  display: inline-block;
 }
 .resultBox .slist > span:first-of-type {
   padding-left: 4px;
   padding-right: 4px;
 }
-.resultBox .slist > span,
-.resultBox .snlist span {
-  display: inline-block;
-}
 
-.resultBox .strongs-type:after {
-  content: '-';
-  padding-left: 4px;
-  padding-right: 4px;
-}
-.resultBox .lex-total:before {
-  content: '[';
-  padding: 0px;
-}
-.resultBox .lex-total:after {
-  content: ']:';
-  padding-inline-end: 4px;
-}
-.resultBox .lex-count:before {
-  content: '(';
-}
-.resultBox .lex-count:after {
-  content: '),';
-  margin-inline-end: 0.3em;
-}
-.resultBox .lex-count:last-child:after {
-  content: ')';
-  margin-inline-end: 0.3em;
-}
 .resultBox a.sn span {
   text-decoration: underline;
 }

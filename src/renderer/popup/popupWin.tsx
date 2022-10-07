@@ -18,7 +18,8 @@ import {
   popupHandler as popupHandlerH,
   PopupParent,
   PopupParentState,
-  PopupParentProps,
+  ViewportPopupProps,
+  PopupParentInitState,
 } from './popupParentH';
 import Popup from './popup';
 import '../viewport/atext.css';
@@ -29,7 +30,7 @@ const propTypes = {
   ...xulPropTypes,
 };
 
-type PopupWinProps = PopupParentProps & XulProps;
+type PopupWinProps = ViewportPopupProps & XulProps;
 
 type PopupWinState = PopupParentState;
 
@@ -40,19 +41,13 @@ export default class PopupWin extends React.Component implements PopupParent {
 
   static propTypes: typeof propTypes;
 
-  popupHandler: (e: React.SyntheticEvent) => void;
+  popupHandler: typeof popupHandlerH;
 
   constructor(props: PopupWinProps) {
     super(props);
 
-    const initialState: PopupWinState = {
-      elemhtml: null,
-      eleminfo: null,
-      popupReset: 0,
-    };
-
     this.state = {
-      ...initialState,
+      ...PopupParentInitState,
       ...windowState,
     };
 
@@ -62,7 +57,10 @@ export default class PopupWin extends React.Component implements PopupParent {
   componentDidUpdate(_prevProps: PopupWinProps, prevState: PopupWinState) {
     const state = this.state as PopupWinState;
     windowState = state;
-    const changedState = diff(prevState, state);
+    const changedState = diff(
+      { ...prevState, popupParent: null },
+      { ...state, popupParent: null }
+    );
     if (changedState) G.Window.mergeValue('popupState', changedState);
   }
 

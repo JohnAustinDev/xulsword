@@ -102,7 +102,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
             G.Commands.search({
               module,
               searchtext,
-              type: 'SearchExactText',
+              type: 'SearchAnyWord',
             });
           }
           break;

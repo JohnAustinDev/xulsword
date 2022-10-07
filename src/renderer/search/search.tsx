@@ -4,19 +4,26 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react/static-property-placement */
 /* eslint-disable jsx-a11y/control-has-associated-label */
-import React from 'react';
+import React, { SyntheticEvent } from 'react';
+import ReactDOM from 'react-dom';
 import i18n from 'i18next';
-import { ProgressBar } from '@blueprintjs/core';
+import { ProgressBar, Button as BPButton } from '@blueprintjs/core';
 import { clone, diff, drop, dString, sanitizeHTML } from '../../common';
 import C from '../../constant';
 import G from '../rg';
 import renderToRoot from '../rinit';
 import { windowArgument } from '../rutil';
+import {
+  PopupParent,
+  PopupParentState,
+  popupParentHandler as popupParentHandlerH,
+  popupHandler as popupHandlerH,
+  PopupParentInitState,
+} from '../popup/popupParentH';
 import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
 import { Box, Hbox, Vbox } from '../libxul/boxes';
 import Groupbox from '../libxul/groupbox';
 import Label from '../libxul/label';
-import Button from '../libxul/button';
 import Menulist from '../libxul/menulist';
 import Radio from '../libxul/radio';
 import Grid, { Column, Columns, Row, Rows } from '../libxul/grid';
@@ -34,7 +41,8 @@ import handlerH, {
 } from './searchH';
 import './search.css';
 
-import type { GlobalPrefType, SearchType } from '../../type';
+import type { BookGroupType, GlobalPrefType, SearchType } from '../../type';
+import Popup from '../popup/popup';
 
 const defaultProps = xulDefaultProps;
 
@@ -48,15 +56,8 @@ const initialState = {
   module: '' as string, // search module
   searchtext: '' as string, // search text
   searchtype: 'SearchExactText' as SearchType['type'], // type of search to do
-  scoperadio: 'all' as 'all' | 'ot' | 'nt' | 'book' | 'other', // scope radio value
-  scopeselect: 'gospel' as
-    | 'custom'
-    | 'pentateuch'
-    | 'history'
-    | 'wisdom'
-    | 'prophets'
-    | 'gospel'
-    | 'letters', // scope select value
+  scoperadio: 'all' as typeof ScopeRadioOptions[number], // scope radio value
+  scopeselect: 'gospel' as BookGroupType | typeof ScopeSelectOptions[number], // scope select value
   moreLess: false as boolean, // more / less state
   displayBible: '' as string, // current module of Bible search
   count: 0 as number, // count and page-result are returned at different times
@@ -65,24 +66,55 @@ const initialState = {
   progressLabel: '' as string, // changing progress label
 };
 
+const ScopeRadioOptions = ['all', 'book', 'ot', 'nt', 'other'] as const;
+
+const ScopeSelectOptions = [
+  'pentateuch',
+  'history',
+  'wisdom',
+  'prophets',
+  'gospel',
+  'letters',
+] as const;
+
+const Scopemap = {
+  pentateuch: 'Gen-Deut',
+  history: 'Josh-Esth',
+  wisdom: 'Job-Song',
+  prophets: 'Isa-Mal',
+  gospel: 'Matt-John',
+  letters: 'Acts-Rev',
+};
+
 // These state properties will not be persisted if xulsword is closed.
-const noPersist = [
-  'results',
-  'pageindex',
-  'progress',
-  'progressLabel',
-] as (keyof SearchWinState)[];
+const noPersist = ['results', 'pageindex', 'progress', 'progressLabel'].concat(
+  Object.keys(PopupParentInitState)
+) as (
+  | keyof typeof PopupParentInitState
+  | 'results'
+  | 'pageindex'
+  | 'progress'
+  | 'progressLabel'
+)[];
 
 let resetState = null as null | SearchWinState;
 
-export type SearchWinState = typeof initialState;
+export type SearchWinState = PopupParentState & typeof initialState;
 
-export default class SearchWin extends React.Component {
+export default class SearchWin extends React.Component implements PopupParent {
   static defaultProps: typeof defaultProps;
 
   static propTypes: typeof propTypes;
 
-  handler: (e: React.SyntheticEvent) => void;
+  handler: typeof handlerH;
+
+  popupParentHandler: typeof popupParentHandlerH;
+
+  popupHandler: typeof popupHandlerH;
+
+  popupDelayTO: PopupParent['popupDelayTO'];
+
+  popupUnblockTO: PopupParent['popupUnblockTO'];
 
   resref: React.RefObject<HTMLDivElement>;
 
@@ -94,6 +126,7 @@ export default class SearchWin extends React.Component {
     const abible = G.Tabs.find((t) => t.type === C.BIBLE);
 
     const s: SearchWinState = {
+      ...PopupParentInitState,
       ...initialState,
       module: searchArg.module,
       searchtext: searchArg.searchtext,
@@ -103,10 +136,12 @@ export default class SearchWin extends React.Component {
           ? searchArg.module
           : abible?.module ?? '',
     };
+    s.gap = C.UI.Search.popupGap;
     // Adjustments for special startup situations
+    if (!(s.module in G.Tab)) s.module = '';
     if (searchArg?.scope) {
       s.scoperadio = 'other';
-      s.scopeselect = 'custom';
+      s.scopeselect = searchArg.scope as any;
     }
     if (!s.moreLess && s.module && !G.LibSword.luceneEnabled(s.module)) {
       s.moreLess = true;
@@ -116,6 +151,8 @@ export default class SearchWin extends React.Component {
     this.state = resetState || pstate || s;
 
     this.handler = handlerH.bind(this);
+    this.popupParentHandler = popupParentHandlerH.bind(this);
+    this.popupHandler = popupHandlerH.bind(this);
 
     this.resref = React.createRef();
     this.lexref = React.createRef();
@@ -128,10 +165,20 @@ export default class SearchWin extends React.Component {
   componentDidUpdate(_prevProps: any, prevState: SearchWinState) {
     const state = this.state as SearchWinState;
     resetState = clone(state);
-    const pstate = drop(state, noPersist) as Partial<SearchWinState>;
-    if (diff(prevState, pstate)) {
+    const pstate = drop(state, noPersist) as Omit<
+      SearchWinState,
+      typeof noPersist[number]
+    >;
+    const psx = pstate as any;
+    const isx = initialState as any;
+    if (
+      diff(
+        { ...prevState, popupParent: null },
+        { ...pstate, popupParent: null }
+      )
+    ) {
       noPersist.forEach((p) => {
-        pstate[p] = initialState[p] as any;
+        psx[p] = isx[p];
       });
       G.Window.setComplexValue('pstate', pstate);
     }
@@ -142,7 +189,6 @@ export default class SearchWin extends React.Component {
     const lex = lexref !== null ? lexref.current : null;
     if (res && module) {
       const dModule = G.Tab[module].type === C.BIBLE ? displayBible : module;
-
       let dModuleIsStrongs = false;
       if (
         res.dataset.count !== count.toString() ||
@@ -179,13 +225,12 @@ export default class SearchWin extends React.Component {
       }
 
       if (
-        dModuleIsStrongs &&
         lex &&
         (res.dataset.count !== count.toString() ||
           res.dataset.module !== dModule)
       ) {
         // build a lexicon for the search
-        if (!count) {
+        if (!count || !dModuleIsStrongs) {
           sanitizeHTML(lex, '');
         } else {
           lexicon(lex, state);
@@ -200,7 +245,7 @@ export default class SearchWin extends React.Component {
 
   render() {
     const state = this.state as SearchWinState;
-    const { handler } = this;
+    const { handler, popupHandler, popupParentHandler } = this;
     const {
       module,
       searchtext,
@@ -213,6 +258,11 @@ export default class SearchWin extends React.Component {
       progress,
       progressLabel,
       displayBible,
+      popupParent,
+      popupReset,
+      eleminfo,
+      gap,
+      elemhtml,
     } = state;
 
     const searchTypes: SearchType['type'][] = [
@@ -222,20 +272,32 @@ export default class SearchWin extends React.Component {
       'SearchAdvanced',
     ];
 
-    const scopeSelectOptions: typeof scopeselect[] = [
-      'pentateuch',
-      'history',
-      'wisdom',
-      'prophets',
-      'gospel',
-      'letters',
-    ];
-    if (searchArg.scope) scopeSelectOptions.unshift('custom');
+    const sos = ScopeSelectOptions.slice() as SearchWinState['scopeselect'][];
 
-    const scopeOptions = scopeSelectOptions.map((option) => {
+    if (searchArg.scope) sos.unshift(searchArg.scope as any);
+    C.SupportedBookGroups.forEach((bg) => {
+      if (
+        module &&
+        !['ot', 'nt'].includes(bg) &&
+        G.getBooksInModule(module).some((bk) =>
+          C.SupportedBooks[bg].includes(bk)
+        )
+      ) {
+        sos.push(bg);
+      }
+    });
+
+    const scopeOptions = sos.map((option) => {
       return (
-        <option key={option} value={option}>
-          {option === 'custom' ? searchArg.scope : i18n.t(`${option}.label`)}
+        <option
+          key={option}
+          value={
+            option in Scopemap
+              ? Scopemap[option as keyof typeof Scopemap]
+              : option
+          }
+        >
+          {i18n.exists(`${option}.label`) ? i18n.t(`${option}.label`) : option}
         </option>
       );
     });
@@ -263,9 +325,25 @@ export default class SearchWin extends React.Component {
       });
     }
 
-    // TODO!: Popup
     return (
       <Vbox className="searchwin">
+        {popupParent &&
+          elemhtml &&
+          elemhtml.length &&
+          ReactDOM.createPortal(
+            <Popup
+              key={[gap, elemhtml.length, popupReset].join('.')}
+              elemhtml={elemhtml}
+              eleminfo={eleminfo}
+              gap={gap}
+              onMouseMove={popupHandler}
+              onPopupClick={popupHandler}
+              onSelectChange={popupHandler}
+              onMouseLeftPopup={popupHandler}
+              onPopupContextMenu={popupHandler}
+            />,
+            popupParent
+          )}
         <Hbox pack="center">
           <Grid
             className={['search-grid', moreLess ? 'more' : 'less'].join(' ')}
@@ -277,10 +355,10 @@ export default class SearchWin extends React.Component {
             <Rows>
               <Row>
                 <Groupbox align="center">
-                  <Button id="moreLess" orient="vertical" onClick={handler}>
-                    <Label value={i18n.t('more.label')} />
-                    <Label value={i18n.t('less.label')} />
-                  </Button>
+                  <BPButton id="moreLess" onClick={handler}>
+                    {!moreLess && <Label value={i18n.t('more.label')} />}
+                    {moreLess && <Label value={i18n.t('less.label')} />}
+                  </BPButton>
                   <Spacer flex="1" orient="horizontal" />
                   <Hbox className="searchtextLabel" align="start">
                     <Label
@@ -298,15 +376,15 @@ export default class SearchWin extends React.Component {
                     />
                     <ModuleMenu id="module" value={module} onChange={handler} />
                   </Vbox>
-                  <Button
+                  <BPButton
                     id="searchButton"
-                    disabled={progress !== 0}
-                    label={i18n.t('searchBut.label')}
-                    tooltip={i18n.t('search.tooltip')}
+                    disabled={progress !== 0 || !module}
                     onClick={handler}
-                  />
+                  >
+                    {i18n.t('searchBut.label')}
+                  </BPButton>
                   <Spacer flex="1" orient="horizontal" />
-                  <Button id="helpButton" onClick={handler} />
+                  <BPButton id="helpButton" icon="help" onClick={handler} />
                 </Groupbox>
               </Row>
               <Row>
@@ -336,11 +414,9 @@ export default class SearchWin extends React.Component {
                     <>
                       <Vbox />
                       <Vbox align="center">
-                        <Button
-                          id="createIndexButton"
-                          label={i18n.t('createIndex.label')}
-                          onClick={handler}
-                        />
+                        <BPButton id="createIndexButton" onClick={handler}>
+                          {i18n.t('createIndex.label')}
+                        </BPButton>
                       </Vbox>
                     </>
                   )}
@@ -365,9 +441,10 @@ export default class SearchWin extends React.Component {
                         />
                         <Radio
                           name="scope"
-                          checked={scoperadio === location?.book ?? ''}
-                          value={location?.book ?? ''}
+                          checked={scoperadio === 'book'}
+                          value="book"
                           label={i18n.t('search.currentBook')}
+                          disabled={!location?.book}
                         />
                       </Row>
                       <Row>
@@ -413,15 +490,15 @@ export default class SearchWin extends React.Component {
 
         <Vbox className="result-container" flex="1">
           <Hbox flex="1">
-            <Vbox className="resultBox" flex="1">
-              <Hbox>
-                <Box flex="1">
-                  <div
-                    id="lexiconResults"
-                    ref={this.lexref}
-                    onClick={handler}
-                  />
-                </Box>
+            <Vbox
+              className="resultBox"
+              flex="1"
+              data-context={displayBible}
+              onMouseOut={popupParentHandler}
+              onMouseOver={popupParentHandler}
+              onMouseMove={popupParentHandler}
+            >
+              <div>
                 {module && G.Tab[module].type === C.BIBLE && (
                   <ModuleMenu
                     id="displayBible"
@@ -431,18 +508,27 @@ export default class SearchWin extends React.Component {
                     onChange={handler}
                   />
                 )}
-              </Hbox>
+                <span id="lexiconResults" ref={this.lexref} onClick={handler} />
+              </div>
               <Spacer orient="horizontal" />
               <div id="searchResults" ref={this.resref} onClick={handler} />
             </Vbox>
             {count > C.UI.Search.resultsPerPage && (
               <Vbox>
-                <Button id="pagefirst" onClick={handler} />
+                <BPButton
+                  id="pagefirst"
+                  icon="double-chevron-up"
+                  onClick={handler}
+                />
                 <Spacer orient="vertical" flex="1" />
-                <Button id="pageprev" onClick={handler} />
-                <Button id="pagenext" onClick={handler} />
+                <BPButton id="pageprev" icon="chevron-up" onClick={handler} />
+                <BPButton id="pagenext" icon="chevron-down" onClick={handler} />
                 <Spacer orient="vertical" flex="1" />
-                <Button id="pagelast" onClick={handler} />
+                <BPButton
+                  id="pagelast"
+                  icon="double-chevron-down"
+                  onClick={handler}
+                />
               </Vbox>
             )}
           </Hbox>
@@ -466,4 +552,6 @@ export default class SearchWin extends React.Component {
 SearchWin.defaultProps = defaultProps;
 SearchWin.propTypes = propTypes;
 
-renderToRoot(<SearchWin height="100%" />);
+renderToRoot(<SearchWin height="100%" />, null, null, {
+  noResetOnResize: true,
+});

@@ -4,7 +4,7 @@ import C from '../../constant';
 import { clone, JSON_stringify, ofClass } from '../../common';
 import { getPopupInfo } from '../../libswordElemInfo';
 import G from '../rg';
-import { getContextModule, scrollIntoView } from '../rutil';
+import { scrollIntoView } from '../rutil';
 import { delayHandler } from '../libxul/xul';
 import { getPopupHTML } from './popupH';
 
@@ -18,32 +18,34 @@ export interface PopupParent {
   state: React.ComponentState;
   props: React.ComponentProps<any>;
   setState: React.Component['setState'];
-  popupHandler: typeof popupHandler;
   popupDelayTO?: NodeJS.Timeout | undefined | null;
   popupUnblockTO?: NodeJS.Timeout | undefined;
+  popupHandler: typeof popupHandler;
   popupParentHandler?: typeof popupParentHandler;
 }
 
-export type PopupParentProps = {
+export const PopupParentInitState = {
+  elemhtml: [] as string[] | null, // popup target element html
+  eleminfo: [] as ElemInfo[] | null, // popup target element info
+  gap: 0 as number, // gap between target element and top of popup
+  popupHold: false as boolean, // hold popup open
+  popupParent: null as HTMLElement | null, // popup location
+  popupReset: 0 as number, // increment this to re-mount popup
+};
+
+export type PopupParentState = typeof PopupParentInitState;
+
+export type ViewportPopupProps = {
   place: PlaceType;
   show: ShowType;
   isPinned: boolean[];
   atextRefs: React.RefObject<Atext>[];
 };
 
-export type PopupParentState = {
-  elemhtml: string[] | null; // popup target element html
-  eleminfo: ElemInfo[] | null; // popup target element info
-  popupReset: number; // increment this to re-mount popup
-  gap?: number; // gap between target element and top of popup
-  popupHold?: boolean; // hold popup open
-  popupParent?: HTMLElement | null; // popup location
-};
-
 export function popupParentHandler(
   this: PopupParent,
   es: React.SyntheticEvent,
-  module: string | undefined
+  module?: string
 ) {
   switch (es.type) {
     case 'mouseover': {
@@ -59,16 +61,18 @@ export function popupParentHandler(
       if (targ === null) return;
       if (targ.element.classList.contains('x-target_self')) return;
       const state = this.state as PopupParentState;
-      const props = this.props as PopupParentProps;
+      const props = this.props as Partial<ViewportPopupProps>;
       const target = es.target as HTMLElement;
       const type = module ? G.Tab[module].type : null;
       const { place: pl, show: sh, atextRefs, isPinned } = props;
       const atext = ofClass(['atext'], target);
       const index = Number(atext?.element && atext.element.dataset.index) || 0;
-      const atr = ((atext && atextRefs[index].current) ||
+      const atr = ((atext && atextRefs && atextRefs[index].current) ||
         null) as PopupParent | null;
-      const place = (atr && isPinned[index] && atr.state.pin.place) || pl;
-      const show = (atr && isPinned[index] && atr.state.pin.show) || sh;
+      const place: PlaceType | undefined =
+        (atr && isPinned && isPinned[index] && atr.state.pin.place) || pl;
+      const show: ShowType | undefined =
+        (atr && isPinned && isPinned[index] && atr.state.pin.show) || sh;
       const e = es as React.MouseEvent;
       const { popupDelayTO } = this;
       const { popupParent } = state;
@@ -80,16 +84,17 @@ export function popupParentHandler(
       const info = getPopupInfo(elem);
       switch (targ.type) {
         case 'cr':
-          if (place.crossrefs === 'popup') openPopup = true;
+          if (!place || place.crossrefs === 'popup') openPopup = true;
           break;
         case 'fn':
           // genbk fn are already embedded in the text
-          if (place.footnotes === 'popup' && type !== C.GENBOOK) {
+          if ((!place || place.footnotes === 'popup') && type !== C.GENBOOK) {
             openPopup = true;
           }
           break;
         case 'un':
           if (
+            !place ||
             place.usernotes === 'popup' ||
             (module && !G.Tab[module].isVerseKey)
           ) {
@@ -97,7 +102,7 @@ export function popupParentHandler(
           }
           break;
         case 'sn':
-          if (show.strongs) {
+          if (!show || show.strongs) {
             openPopup = true;
             gap = C.UI.Popup.strongsOpenGap;
           }
@@ -208,8 +213,6 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
       const elem = targ.element;
       const info = getPopupInfo(elem);
       const popupY = parent.getBoundingClientRect().y;
-      if (info && targ.type === 'sn')
-        info.mod = getContextModule(targ.element.parentNode);
       switch (targ.type) {
         case 'fn':
         case 'sn':

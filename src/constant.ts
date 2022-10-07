@@ -109,6 +109,7 @@ const C = {
       bbBottomMargin: 20, // px
     },
     Search: {
+      popupGap: 100, // px between link and popup
       resultsPerPage: 30, // search results per page
       maxLexiconSearchResults: 500, // max number search results used for lexicon
       symbol: {

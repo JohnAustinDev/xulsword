@@ -23,8 +23,30 @@ my @V11NS = (
   'Calvin',
 );
 
-my $NTKJV= join('|', ('Calvin', 'Catholic', 'Catholic2', 'DarbyFr', 'German', 'KJVA', 'LXX', 'Leningrad', 'MT', 'NRSV', 'NRSVA', 'Orthodox', 'Segond', 'SynodalProt'));
-my $OTKJV = join('|', ('Calvin', 'NRSV', 'Segond', 'DarbyFr'));
+my $NT_IS_KJV = join('|', (
+  'Calvin',
+  'Catholic',
+  'Catholic2',
+  'DarbyFr',
+  'German',
+  'KJVA',
+  'LXX',
+  'Leningrad',
+  'MT',
+  'NRSV',
+  'NRSVA',
+  'Orthodox',
+  'Segond',
+  'SynodalProt'
+));
+
+my $OT_IS_KJV = join('|', (
+  'Calvin',
+  'NRSV',
+  'Segond',
+  'DarbyFr'
+));
+
 my $INDIR = "../Cpp/sword/include";
 opendir(IND, $INDIR) || die;
 my @files = readdir(IND);
@@ -44,19 +66,26 @@ foreach my $f (sort @files) {
         $v = '';
       }
     }
-    my @m;
-    my $ot = $v11n =~ /^($OTKJV)$/ ? 1 : 0;
-    my $nt = $v11n =~ /^($NTKJV)$/ ? 1 : 0;
-    push(@m, map('[\''.@{$_}[0].'\','.@{$_}[1].']', @{&readCanonFile("$INDIR/$f")}));
+    my $ot = $v11n =~ /^($OT_IS_KJV)$/ ? 1 : 0;
+    my $nt = $v11n =~ /^($NT_IS_KJV)$/ ? 1 : 0;
+    my @m = map(
+      '[\''.@{$_}[0].'\','.@{$_}[1].']',
+      @{&readCanonFile("$INDIR/$f")}
+    );
+
     $data .= "$v11n:[".join(',', @m)."],\n";
     $tests .= "$v11n: { ot: $ot, nt: $nt },\n";
   }
 }
+
 print $data;
 print $tests;
+
 foreach my $t (@V11NS) {
   if ($t) {print "ERROR: Did not read $t\n";}
 }
+
+###############################################################################
 
 sub readCanonFile($) {
   my $file = shift;

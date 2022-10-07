@@ -19,7 +19,8 @@ import {
   popupHandler as popupHandlerH,
   PopupParent,
   PopupParentState,
-  PopupParentProps,
+  ViewportPopupProps,
+  PopupParentInitState,
 } from '../popup/popupParentH';
 import G from '../rg';
 import { log, clearPending, verseKey } from '../rutil';
@@ -69,7 +70,7 @@ const propTypes = {
   atextRefs: PropTypes.arrayOf(PropTypes.object),
 };
 
-type ViewportProps = PopupParentProps &
+type ViewportProps = ViewportPopupProps &
   XulProps & {
     location: LocationVKType | null;
     selection: LocationVKType | null;
@@ -98,27 +99,19 @@ class Viewport extends React.Component implements PopupParent {
 
   static propTypes: typeof propTypes;
 
-  popupParentHandler: (
-    es: React.SyntheticEvent,
-    module: string | undefined
-  ) => void;
+  popupParentHandler: typeof popupParentHandlerH;
 
-  popupHandler: (e: React.SyntheticEvent) => void;
+  popupHandler: typeof popupHandlerH;
 
-  popupDelayTO: NodeJS.Timeout | undefined | null;
+  popupDelayTO: PopupParent['popupDelayTO'];
 
-  popupUnblockTO: NodeJS.Timeout | undefined;
+  popupUnblockTO: PopupParent['popupUnblockTO'];
 
   constructor(props: ViewportProps) {
     super(props);
 
     const s: ViewportState = {
-      elemhtml: [],
-      eleminfo: [],
-      gap: 0,
-      popupHold: false,
-      popupParent: null,
-      popupReset: 0,
+      ...PopupParentInitState,
       reset: 0,
     };
     this.state = s;
@@ -140,7 +133,7 @@ class Viewport extends React.Component implements PopupParent {
   }
 
   render() {
-    const { popupParentHandler, popupHandler } = this;
+    const { popupHandler } = this;
     const props = this.props as ViewportProps;
     const state = this.state as ViewportState;
     const {
@@ -471,16 +464,16 @@ class Viewport extends React.Component implements PopupParent {
                     xulswordState={xulswordStateHandler}
                     onWheel={(e: SyntheticEvent) => {
                       eHandler(e);
-                      popupParentHandler(e, panel);
+                      this.popupParentHandler(e, panel);
                     }}
                     onMouseOut={(e: SyntheticEvent) =>
-                      popupParentHandler(e, panel)
+                      this.popupParentHandler(e, panel)
                     }
                     onMouseOver={(e: SyntheticEvent) =>
-                      popupParentHandler(e, panel)
+                      this.popupParentHandler(e, panel)
                     }
                     onMouseMove={(e: SyntheticEvent) =>
-                      popupParentHandler(e, panel)
+                      this.popupParentHandler(e, panel)
                     }
                     ref={atextRefs[i]}
                   />

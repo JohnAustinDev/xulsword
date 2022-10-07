@@ -113,12 +113,20 @@ async function i18nInit(namespaces: string[]) {
 
 const delayHandlerThis = {};
 
+type RenderOptions = { namespace: string; noResetOnResize: boolean };
+
 export default function renderToRoot(
   component: ReactElement,
   loadedXUL?: (() => void) | null,
   unloadXUL?: (() => void) | null,
-  namespace = 'xulsword'
+  options?: Partial<RenderOptions>
 ) {
+  const ops: RenderOptions = {
+    namespace: 'xulsword',
+    noResetOnResize: false,
+    ...(options || {}),
+  };
+
   function onContextMenu(e: React.SyntheticEvent) {
     G.Data.write(getContextData(e.target), 'contextData');
   }
@@ -153,16 +161,19 @@ export default function renderToRoot(
     });
     // IPC resize setup:
     useEffect(() => {
-      return window.ipc.renderer.on(
-        'resize',
-        delayHandler.bind(delayHandlerThis)(
-          () => {
-            setReset(reset + 1);
-          },
-          C.UI.Window.resizeDelay,
-          'resizeTO'
-        )
-      );
+      if (!ops.noResetOnResize) {
+        return window.ipc.renderer.on(
+          'resize',
+          delayHandler.bind(delayHandlerThis)(
+            () => {
+              setReset(reset + 1);
+            },
+            C.UI.Window.resizeDelay,
+            'resizeTO'
+          )
+        );
+      }
+      return () => {};
     });
     // Progress meter:
     useEffect(() => {
@@ -261,7 +272,7 @@ export default function renderToRoot(
     );
   }
 
-  i18nInit([namespace])
+  i18nInit([ops.namespace])
     .then(() => {
       return render(
         <StrictMode>

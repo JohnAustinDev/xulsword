@@ -275,7 +275,7 @@ export function getLocaleConfigs(): { [i: string]: ConfigType } {
       const key = entry[0] as keyof ConfigType;
       const typeobj = entry[1];
       if (typeobj.CSS && !ret.locale[key]) {
-        const v = C.LocaleDefaultConfigCSS[key] || 'initial';
+        const v = C.LocaleDefaultConfigCSS[key] || 'inherit';
         ret.locale[key] = v;
       }
     });

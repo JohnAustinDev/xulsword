@@ -44,6 +44,7 @@ type ElemTypesType = {
   cr: Value[]; // cross-reference note marker in verse-key modules (may include a list of references)
   un: Value[]; // user note marker
   sr: Value[]; // scripture reference link
+  sn: Value[]; // Strong's number span
   dt: Value[]; // x-glossary link
   dtl: Value[]; // x-glosslink link or dictionary target-self link
   snbut: Value[]; // strong's number search button
@@ -67,6 +68,7 @@ export const TitleFormat: ElemTypesType = {
             { re:new RegExp(/^((([^.]+)\.(\d+)\.(\d+))(;.*?)?)\.([^.]+)$/),                         reflist:1, bk:3,    ch:4,     vs:5,    lv:5,     mod:7, osisref:2 },
             { re:new RegExp(/^((([^.]+)\.(\d+)\.(\d+)\s*-\s*[^.]+\.\d+\.(\d+))(;.*?)?)\.([^.]+)$/), reflist:1, bk:3,    ch:4,     vs:5,    lv:6,     mod:8, osisref:2 },
             { re:new RegExp(/^(.*?)\.([^.]+)$/),                                                    reflist:1, bk:null, ch:null,  vs:null, lv:null,  mod:2 } ],
+  sn:     [ { re:new RegExp(/^([^.]+)\.(.*)$/),                                                     reflist:2, bk:null, ch:null,  vs:null, lv:null,  mod:1 } ],
   gfn:    [ { re:new RegExp (/^(\d+)\.(fn|cr)\.(.*?)$/),                                           ntype:2, nid:1,                                   mod:3 } ],
   // dt and dtl allow [:.] as delineator for backward compatibility < 2.23 ([:] is correct)
   dt:     [ { re:new RegExp(/^((([^:.]+)[:.]([^.]+))(\s+[^:.]+[:.][^.]+)?)\.([^.]+)$/),      reflist:1, bk:null, ch:4,    vs:null, lv:null, mod:3, osisref:2 } ],
@@ -183,6 +185,8 @@ export function getElementInfo(elem: string | HTMLElement): ElemInfo | null {
               parsed = parsed.split(/ +/);
             } else if (type === 'sr') {
               parsed = parsed.split(/\s*;\s*/);
+            } else if (type === 'sn') {
+              parsed = parsed.split(/\s*\.\s*/);
             } else {
               throw Error(`Unknown type of reflist: ${type}`);
             }
