@@ -10,7 +10,7 @@ import G from './rg';
 import RefParser, { RefParserOptionsType } from '../refparse';
 import VerseKey from '../versekey';
 import { ElemInfo, getElementInfo, TitleFormat } from '../libswordElemInfo';
-import { clone, diff, JSON_parse, ofClass } from '../common';
+import { clone, diff, JSON_parse, JSON_stringify, ofClass } from '../common';
 
 import type ElectronLog from 'electron-log';
 import type {
@@ -32,7 +32,7 @@ function alog(type: ElectronLog.LogLevel, ...args: any[]) {
   if (type && lprog <= lcall) {
     // eslint-disable-next-line no-console
     if (C.isDevelopment) console.log(...args);
-    else G.log(type, ...args);
+    else G.log(type, ...args.map((x) => JSON_stringify(x)));
   }
 }
 export const log = {

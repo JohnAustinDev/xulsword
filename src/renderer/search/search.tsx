@@ -38,6 +38,7 @@ import handlerH, {
   formatResult,
   lexicon,
   strongsCSS,
+  getSearchResults,
 } from './searchH';
 import './search.css';
 
@@ -188,50 +189,13 @@ export default class SearchWin extends React.Component implements PopupParent {
     const { resref, lexref } = this;
     const res = resref !== null ? resref.current : null;
     const lex = lexref !== null ? lexref.current : null;
-    if (res && module) {
-      if (res.dataset.count !== count.toString()) {
-        strongsCSS.added.forEach((r) => {
-          strongsCSS.sheet.deleteRule(r);
-        });
-        strongsCSS.added = [];
-      }
+    if (lex === null || res === null || !module) return;
 
-      const dModule = G.Tab[module].type === C.BIBLE ? displayBible : module;
-      let dModuleIsStrongs = false;
+    function lexup(dModule: string, dModuleIsStrongs: boolean) {
+      if (lex === null || res === null) return;
       if (
         res.dataset.count !== count.toString() ||
-        res.dataset.module !== dModule ||
-        res.dataset.pageindex !== pageindex.toString()
-      ) {
-        if (!dModule || !count) {
-          sanitizeHTML(res, '');
-        } else {
-          // build a page from results, module and pageindex
-          if (G.Tab[dModule].isVerseKey) {
-            dModuleIsStrongs = /Strongs/i.test(
-              G.LibSword.getModuleInformation(dModule, 'Feature') +
-                G.LibSword.getModuleInformation(dModule, 'GlobalOptionFilter')
-            );
-          }
-          if (dModuleIsStrongs && /lemma:/.test(searchtext)) {
-            hilightStrongs(searchtext.match(/lemma:\s*\S+/g));
-          }
-          const result = G.LibSword.getSearchResults(
-            dModule,
-            pageindex,
-            C.UI.Search.resultsPerPage,
-            dModuleIsStrongs,
-            null
-          );
-          sanitizeHTML(res, result);
-          formatResult(res, state);
-        }
-      }
-
-      if (
-        lex &&
-        (res.dataset.count !== count.toString() ||
-          res.dataset.module !== dModule)
+        res.dataset.module !== dModule
       ) {
         // build a lexicon for the search
         if (!dModule || !count || !dModuleIsStrongs) {
@@ -240,11 +204,59 @@ export default class SearchWin extends React.Component implements PopupParent {
           lexicon(lex, state);
         }
       }
-
       res.dataset.count = count.toString();
       res.dataset.module = dModule;
       res.dataset.pageindex = pageindex.toString();
     }
+
+    if (res.dataset.count !== count.toString()) {
+      strongsCSS.added.forEach((r) => {
+        strongsCSS.sheet.deleteRule(r);
+      });
+      strongsCSS.added = [];
+    }
+
+    const dModule = G.Tab[module].type === C.BIBLE ? displayBible : module;
+    let dModuleIsStrongs = false;
+    if (
+      res.dataset.count !== count.toString() ||
+      res.dataset.module !== dModule ||
+      res.dataset.pageindex !== pageindex.toString()
+    ) {
+      if (!dModule || !count) {
+        sanitizeHTML(res, '');
+      } else {
+        // build a page from results, module and pageindex
+        if (G.Tab[dModule].isVerseKey) {
+          dModuleIsStrongs = /Strongs/i.test(
+            G.LibSword.getModuleInformation(dModule, 'Feature') +
+              G.LibSword.getModuleInformation(dModule, 'GlobalOptionFilter')
+          );
+        }
+        if (dModuleIsStrongs && /lemma:/.test(searchtext)) {
+          hilightStrongs(searchtext.match(/lemma:\s*\S+/g));
+        }
+        getSearchResults(
+          dModule,
+          pageindex,
+          C.UI.Search.resultsPerPage,
+          dModuleIsStrongs,
+          null
+        )
+          .then((result) => {
+            sanitizeHTML(res, result);
+            formatResult(res, state);
+            return lexup(dModule, dModuleIsStrongs);
+          })
+          .catch((er) => {
+            log.warn(er);
+            sanitizeHTML(res, '');
+          });
+        return;
+      }
+    }
+
+    lexup(dModule, dModuleIsStrongs);
   }
 
   render() {
@@ -526,15 +538,27 @@ export default class SearchWin extends React.Component implements PopupParent {
                 <BPButton
                   id="pagefirst"
                   icon="double-chevron-up"
+                  disabled={progress !== 0}
                   onClick={handler}
                 />
                 <Spacer orient="vertical" flex="1" />
-                <BPButton id="pageprev" icon="chevron-up" onClick={handler} />
-                <BPButton id="pagenext" icon="chevron-down" onClick={handler} />
+                <BPButton
+                  id="pageprev"
+                  icon="chevron-up"
+                  disabled={progress !== 0}
+                  onClick={handler}
+                />
+                <BPButton
+                  id="pagenext"
+                  icon="chevron-down"
+                  disabled={progress !== 0}
+                  onClick={handler}
+                />
                 <Spacer orient="vertical" flex="1" />
                 <BPButton
                   id="pagelast"
                   icon="double-chevron-down"
+                  disabled={progress !== 0}
                   onClick={handler}
                 />
               </Vbox>

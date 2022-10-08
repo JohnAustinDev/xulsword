@@ -6,7 +6,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import i18n from 'i18next';
 import { getElementInfo } from '../../libswordElemInfo';
-import { dString, escapeRE, getCSS, sanitizeHTML } from '../../common';
+import {
+  dString,
+  escapeRE,
+  getCSS,
+  sanitizeHTML,
+  stringHash,
+} from '../../common';
 import C from '../../constant';
 import G from '../rg';
 import { log, verseKey, windowArgument } from '../rutil';
@@ -37,6 +43,19 @@ const libSwordSearchTypes = {
 };
 
 export const searchArg = windowArgument('search') as SearchType;
+
+export const strongsCSS = {
+  css: getCSS('.matchingStrongs {'),
+  sheet: document.styleSheets[document.styleSheets.length - 1],
+  added: [] as number[],
+};
+
+type LibSwordSearchType = [string, string, string[], number, number];
+const LibSwordSearch = {
+  sthis: null as SearchWin | null,
+  params: null as LibSwordSearchType | null,
+  hash: '',
+};
 
 export function getLuceneSearchText(searchtext0: string) {
   let searchtext = searchtext0;
@@ -122,6 +141,7 @@ function getScopes(
 }
 
 export async function search(sthis: SearchWin) {
+  LibSwordSearch.sthis = sthis;
   const state = sthis.state as SearchWinState;
   const { module, displayBible: db, searchtext } = state;
   let { searchtype } = state;
@@ -226,7 +246,7 @@ export async function search(sthis: SearchWin) {
   }
 
   s.count = await libSwordSearch(
-    sthis,
+    module,
     searchtextLS,
     scopes,
     libSwordSearchType,
@@ -239,15 +259,26 @@ export async function search(sthis: SearchWin) {
 }
 
 async function libSwordSearch(
-  sthis: SearchWin,
+  module: string,
   searchtext: string,
   scopes: string[],
   libswordSearchType: number,
   flags: number
 ): Promise<number> {
-  const { module } = sthis.state as SearchWinState;
   let funcs: (() => Promise<number | null>)[] = [];
   if (module && module in G.Tab) {
+    // Simultaneous searchers would conflate them so both would give
+    // incorrect results. So make other windows modal if scopes.length > 1.
+    if (scopes.length > 1) G.Window.modal('transparent', 'not-self');
+    // Save search arguments and hash for LibSword search validation.
+    LibSwordSearch.params = [
+      module,
+      searchtext,
+      scopes,
+      libswordSearchType,
+      flags,
+    ];
+    LibSwordSearch.hash = stringHash(LibSwordSearch.params);
     let isnew = true;
     funcs = scopes.map((scope, i) => {
       return async () => {
@@ -257,15 +288,16 @@ async function libSwordSearch(
           scope,
           libswordSearchType,
           flags,
-          isnew
+          isnew,
+          LibSwordSearch.hash
         );
         isnew = false;
-        if (scopes.length > 1) {
+        if (scopes.length > 1 && LibSwordSearch.sthis) {
           const s: Partial<SearchWinState> = {
             progress: (i + 1) / scopes.length,
             progressLabel: scope in G.Book ? G.Book[scope].name : scope,
           };
-          sthis.setState(s);
+          LibSwordSearch.sthis.setState(s);
         }
         return count;
       };
@@ -276,7 +308,51 @@ async function libSwordSearch(
     const c = await func();
     if (c !== null) grandTotal = c;
   }
+
+  if (scopes.length > 1) {
+    G.Window.modal('off', 'not-self');
+    if (LibSwordSearch.sthis) {
+      const s: Partial<SearchWinState> = {
+        progress: 0,
+        progressLabel: '',
+      };
+      LibSwordSearch.sthis.setState(s);
+    }
+  }
+
   return grandTotal;
+}
+
+// When multiple search windows are open and paging events switch from
+// one page to another, fresh search results must be generated.
+export async function getSearchResults(
+  mod: string,
+  i: number,
+  maxPage: number,
+  keepstrings: boolean,
+  ptr: any
+): Promise<string> {
+  let r = G.LibSword.getSearchResults(
+    mod,
+    i,
+    maxPage,
+    keepstrings,
+    ptr,
+    LibSwordSearch.hash
+  );
+  if (r === null) {
+    await libSwordSearch(...(LibSwordSearch.params as LibSwordSearchType));
+    r = G.LibSword.getSearchResults(
+      mod,
+      i,
+      maxPage,
+      keepstrings,
+      ptr,
+      LibSwordSearch.hash
+    );
+  }
+
+  return r || '';
 }
 
 function createSearchIndex(sthis: SearchWin, module: string) {
@@ -463,12 +539,6 @@ function getSearchMatches(
   return matches;
 }
 
-export const strongsCSS = {
-  css: getCSS('.matchingStrongs {'),
-  sheet: document.styleSheets[document.styleSheets.length - 1],
-  added: [] as number[],
-};
-
 export function hilightStrongs(strongs: RegExpMatchArray | null) {
   strongsCSS.added.forEach((r) => {
     strongsCSS.sheet.deleteRule(r);
@@ -488,7 +558,7 @@ export function hilightStrongs(strongs: RegExpMatchArray | null) {
   });
 }
 
-export function lexicon(lexdiv: HTMLDivElement, state: SearchWinState) {
+export async function lexicon(lexdiv: HTMLDivElement, state: SearchWinState) {
   const { searchtext, searchtype, module, displayBible, count } = state;
   const dModule =
     !module || !(module in G.Tab) || G.Tab[module].type === C.BIBLE
@@ -501,7 +571,7 @@ export function lexicon(lexdiv: HTMLDivElement, state: SearchWinState) {
   sanitizeHTML(
     lexdiv,
     markSearchMatches(
-      G.LibSword.getSearchResults(
+      await getSearchResults(
         dModule,
         0,
         C.UI.Search.maxLexiconSearchResults,

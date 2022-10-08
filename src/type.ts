@@ -654,7 +654,8 @@ const LibSwordPublic = {
     scope: string,
     type: number,
     flags: number,
-    newsearch: boolean
+    newsearch: boolean,
+    hash: string
   ) => Promise<number | null>,
   getSearchPointer: func as unknown as () => any,
   getSearchVerses: func as unknown as (modname: string) => void,
@@ -663,8 +664,9 @@ const LibSwordPublic = {
     first: number,
     num: number,
     keepStrongs: boolean,
-    searchPointer: any
-  ) => string,
+    searchPointer: any,
+    searchHash: string
+  ) => string | null,
   searchIndexDelete: func as unknown as (modname: string) => void,
   searchIndexBuild: func as unknown as (modname: string) => Promise<boolean>,
   setGlobalOption: func as unknown as (

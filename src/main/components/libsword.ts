@@ -37,6 +37,7 @@ type LibSwordPrivate = {
 
   unlock: () => void;
   checkerror: () => void;
+  searchHash: string;
 };
 
 /*
@@ -66,6 +67,8 @@ const LibSword: GType['LibSword'] & LibSwordPrivate = {
 
   checkCipherKeys: [],
   searchPointers: [],
+
+  searchHash: '',
 
   init() {
     if (this.libxulsword) return false;
@@ -482,7 +485,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   //  -5 - a compound search
   // flags are many useful flags as defined in regex.h
   // newsearch should be set to false if you want the search results added to the previous results
-  async search(modname, srchstr, scope, type, flags, newsearch) {
+  async search(modname, srchstr, scope, type, flags, newsearch, searchHash) {
     if (!this.isReady()) return null;
     // IMPORTANT:
     // VerseKey module searches require a non-empty book-scope, which may contain a single range.
@@ -499,6 +502,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
     log.debug(
       `search: modname=${modname} srchstr=${srchstr} scope=${scope} type=${type} flags=${flags} newsearch=${newsearch} intgr=${intgr}`
     );
+    this.searchHash = searchHash;
     return intgr;
   },
 
@@ -521,8 +525,17 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // getSearchResults
   // Will return the verse texts from previous search.
   // search() must be called before results can be read.
-  getSearchResults(modname, first, num, keepStrongs, searchPointer) {
+  // null will be returned if the requested search results are gone or LibSword is not ready.
+  getSearchResults(
+    modname,
+    first,
+    num,
+    keepStrongs,
+    searchPointer,
+    searchHash
+  ) {
     if (!this.isReady()) return null;
+    if (searchHash !== this.searchHash) return null;
 
     log.debug(
       `getSearchResults: modname=${modname} first=${first} num=${num} keepStrongs=${keepStrongs} searchPointer=${searchPointer}`
