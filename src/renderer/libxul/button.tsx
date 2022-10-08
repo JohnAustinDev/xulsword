@@ -66,7 +66,7 @@ function Button(props: ButtonProps) {
         {props.label !== undefined && (
           <Label className="button-text" value={label || ''} />
         )}
-        {children}
+        {props.type !== 'menu' && children}
       </Box>
 
       {props.type === 'menu' && children && (

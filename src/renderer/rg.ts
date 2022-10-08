@@ -28,6 +28,8 @@ const asyncFuncs = [
   'Module.download',
   'Module.downloadXSM',
   'Module.saveDownloads',
+  'Module.remove',
+  'Module.move',
   'LibSword.searchIndexBuild',
   'LibSword.search',
 ];

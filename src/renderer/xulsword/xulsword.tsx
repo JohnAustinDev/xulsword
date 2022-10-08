@@ -36,7 +36,7 @@ import Viewport from '../viewport/viewport';
 import viewportParentH, {
   closeMenupopups,
   bbDragEnd as bbDragEndH,
-  newModulesInstalled,
+  showNewModules,
 } from '../viewport/viewportParentH';
 import handlerH from './xulswordH';
 import './xulsword.css';
@@ -133,7 +133,7 @@ export default class Xulsword extends React.Component {
   componentDidMount() {
     this.destroy.push(onSetWindowState(this));
     this.destroy.push(
-      Subscription.subscribe('modulesInstalled', newModulesInstalled.bind(this))
+      Subscription.subscribe('modulesInstalled', showNewModules.bind(this))
     );
   }
 

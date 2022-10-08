@@ -473,21 +473,27 @@ export const pushPrefsToWindows: PrefCallbackType = (win, key, val, store) => {
     (!store || store === 'prefs') &&
     (!win || win === BrowserWindow.getFocusedWindow())
   ) {
-    const keysToUpdate: string[] = [];
+    // Get the list of passed keys
     const keys: string[] =
       !key.includes('.') && typeof val === 'object'
         ? Object.keys(val).map((k) => {
             return `${key}.${k}`;
           })
         : [key];
-    // C.GlobalState and menuPref are base-key lists (id.property)
-    let menuPref: string[] = [];
+
+    // Collect a list of keys that may result in push updates.
+    // C.GlobalState and pushPrefs have <id>.<property> format.
+    const pushPrefs: string[] = ['xulsword.keys'];
     if (Data.has('menuPref')) {
-      menuPref = Data.read('menuPref') as string[];
+      // menuPref is auto-generated during menu build
+      pushPrefs.push(...(Data.read('menuPref') as string[]));
     }
+
+    // Build the list of keys that will push updates
+    const keysToUpdate: string[] = [];
     keys.forEach((pkey) => {
       const basekey = pkey.split('.').slice(0, 2).join('.');
-      if (menuPref.includes(basekey)) keysToUpdate.push(pkey);
+      if (pushPrefs.includes(basekey)) keysToUpdate.push(pkey);
       else {
         C.GlobalXulsword.forEach((k) => {
           const gloskey = `xulsword.${k}`;

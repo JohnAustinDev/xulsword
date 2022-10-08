@@ -115,7 +115,10 @@ export function confModulePath(aDataPath: string): string | null {
 // succesfully (re)moved. If moveTo is set, the removed modules will
 // be moved (copied) there if it is an existing path, otherwise nothing
 // will be done and 0 is returned. NOTE: audio modules only and always
-// exist in the xsAudio directory and cannot be moved.
+// exist in the xsAudio directory and cannot be moved. NOTE-2: LibSword
+// can be ready upon entering this function, but it will be quit before
+// modules are removed, then other functions are responsible for
+// restarting it.
 export function moveRemoveModule(
   modules: string | string[],
   repositoryPath: string,
@@ -127,6 +130,7 @@ export function moveRemoveModule(
     log.error(`Destination does not exist: '${moveTo}'.`);
     return 0;
   }
+  LibSword.quit();
   let num = 0;
   const ma = Array.isArray(modules) ? modules : [modules];
   ma.forEach((m) => {
@@ -488,12 +492,18 @@ export async function installZIPs(
 export async function modalInstall(
   zipmods: (ZIP | string)[],
   destdir?: string | string[],
-  targWin?: Electron.BrowserWindow
+  targWin?: Electron.BrowserWindow | null,
+  xenterModal?: boolean,
+  xexitModal?: boolean
 ) {
+  const enterModal = xenterModal ?? true; // default is to enter Modal at entry
+  const exitModal = xexitModal ?? true; // default is to exit Modal on exit
   const xswin = getBrowserWindows({ type: 'xulsword' })[0];
   const tgwin = targWin || xswin;
-  Window.modal('transparent', 'all');
-  Window.modal('darkened', tgwin);
+  if (enterModal) {
+    Window.modal('transparent', 'all');
+    Window.modal('darkened', tgwin);
+  }
   const zips: (ZIP | null)[] = [];
   zipmods.forEach((zipmod) => {
     if (typeof zipmod === 'string') {
@@ -523,6 +533,7 @@ export async function modalInstall(
   }
   Subscription.publish('resetMain');
   Subscription.publish('modulesInstalled', newmods);
+
   // reload was necessary to get dynamic CSS to take effect
   if (targWin) {
     Window.reset('all', xswin);
@@ -530,9 +541,17 @@ export async function modalInstall(
   } else {
     xswin.webContents.reload();
   }
-  Window.modal('off', 'all');
+
+  if (exitModal) {
+    getBrowserWindows({ type: 'search' }).forEach((w) => {
+      w.webContents.reload();
+    });
+    Window.modal('off', 'all');
+  }
+
   ipcMain.once('did-finish-render', (event: IpcMainEvent) => {
     const win = BrowserWindow.fromWebContents(event.sender);
+    // So the calling window can show the newly installed modules.
     if (win) publishSubscription([win], 'modulesInstalled', newmods);
   });
   return newmods;
@@ -663,7 +682,9 @@ const Module: GType['Module'] = {
   },
 
   async saveDownloads(
-    saves: { module: string; fromRepo: Repository; toRepo: Repository }[]
+    saves: { module: string; fromRepo: Repository; toRepo: Repository }[],
+    enterModal?: boolean,
+    exitModal?: boolean
   ): Promise<NewModulesType> {
     const zipobj: ZIP[] = [];
     const destdir: string[] = [];
@@ -680,7 +701,63 @@ const Module: GType['Module'] = {
         }
       }
     });
-    return modalInstall(zipobj, destdir);
+    return modalInstall(zipobj, destdir, null, enterModal, exitModal);
+  },
+
+  async remove(
+    modules: { name: string; repo: Repository }[],
+    enterModal?: boolean,
+    exitModal?: boolean
+  ): Promise<boolean[]> {
+    const results: boolean[] | PromiseLike<boolean[]> = [];
+
+    if (enterModal) Window.modal('darkened', 'all');
+
+    modules.forEach((module) => {
+      const { name, repo } = module;
+      if (isRepoLocal(repo)) {
+        results.push(!!moveRemoveModule([name], repo.path));
+      }
+    });
+
+    if (exitModal) {
+      Subscription.publish('resetMain');
+      getBrowserWindows({ type: 'search' }).forEach((w) => {
+        w.webContents.reload();
+      });
+      Window.reset('all', 'all');
+      Window.modal('off', 'all');
+    }
+
+    return results;
+  },
+
+  async move(
+    modules: { name: string; fromRepo: Repository; toRepo: Repository }[],
+    enterModal?: boolean,
+    exitModal?: boolean
+  ): Promise<boolean[]> {
+    const results: boolean[] | PromiseLike<boolean[]> = [];
+
+    if (enterModal) Window.modal('darkened', 'all');
+
+    modules.forEach((module) => {
+      const { name, fromRepo, toRepo } = module;
+      if (isRepoLocal(fromRepo) && isRepoLocal(toRepo)) {
+        results.push(!!moveRemoveModule([name], fromRepo.path, toRepo.path));
+      }
+    });
+
+    if (exitModal) {
+      Subscription.publish('resetMain');
+      getBrowserWindows({ type: 'search' }).forEach((w) => {
+        w.webContents.reload();
+      });
+      Window.reset('all', 'all');
+      Window.modal('off', 'all');
+    }
+
+    return results;
   },
 
   clearDownload(module?: string, repository?: Repository): boolean {
@@ -696,20 +773,6 @@ const Module: GType['Module'] = {
         delete Downloads[key];
         return true;
       }
-    }
-    return false;
-  },
-
-  remove(module: string, repo: Repository): boolean {
-    if (isRepoLocal(repo)) {
-      return !!moveRemoveModule([module], repo.path);
-    }
-    return false;
-  },
-
-  move(module: string, fromRepo: Repository, toRepo: Repository): boolean {
-    if (isRepoLocal(fromRepo) && isRepoLocal(toRepo)) {
-      return !!moveRemoveModule([module], fromRepo.path, toRepo.path);
     }
     return false;
   },

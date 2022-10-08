@@ -246,29 +246,31 @@ async function libSwordSearch(
   flags: number
 ): Promise<number> {
   const { module } = sthis.state as SearchWinState;
-
-  let isnew = true;
-  const funcs = scopes.map((scope, i) => {
-    return async () => {
-      const count = await G.LibSword.search(
-        module,
-        searchtext,
-        scope,
-        libswordSearchType,
-        flags,
-        isnew
-      );
-      isnew = false;
-      if (scopes.length > 1) {
-        const s: Partial<SearchWinState> = {
-          progress: (i + 1) / scopes.length,
-          progressLabel: scope in G.Book ? G.Book[scope].name : scope,
-        };
-        sthis.setState(s);
-      }
-      return count;
-    };
-  });
+  let funcs: (() => Promise<number | null>)[] = [];
+  if (module && module in G.Tab) {
+    let isnew = true;
+    funcs = scopes.map((scope, i) => {
+      return async () => {
+        const count = await G.LibSword.search(
+          module,
+          searchtext,
+          scope,
+          libswordSearchType,
+          flags,
+          isnew
+        );
+        isnew = false;
+        if (scopes.length > 1) {
+          const s: Partial<SearchWinState> = {
+            progress: (i + 1) / scopes.length,
+            progressLabel: scope in G.Book ? G.Book[scope].name : scope,
+          };
+          sthis.setState(s);
+        }
+        return count;
+      };
+    });
+  }
   let grandTotal = 0;
   for (const func of funcs) {
     const c = await func();
@@ -309,54 +311,61 @@ function createSearchIndex(sthis: SearchWin, module: string) {
 
 export function formatResult(div: HTMLDivElement, state: SearchWinState) {
   const { module, displayBible, searchtext, searchtype } = state;
-  const dModule = G.Tab[module].type === C.BIBLE ? displayBible : module;
-  Array.from(div.getElementsByClassName('slist')).forEach((slist) => {
-    const p = getElementInfo(slist as HTMLElement);
+  const dModule =
+    !module || !(module in G.Tab) || G.Tab[module].type === C.BIBLE
+      ? displayBible
+      : module;
+  if (module && module in G.Tab && dModule && dModule in G.Tab) {
+    Array.from(div.getElementsByClassName('slist')).forEach((slist) => {
+      const p = getElementInfo(slist as HTMLElement);
 
-    // Add the reference link to each result
-    const span = document.createElement('span');
-    span.innerHTML = '-';
-    slist.insertBefore(span, slist.firstChild);
-    const a = document.createElement('a');
-    slist.insertBefore(a, slist.firstChild);
-    const type = (p?.mod && G.Tab[p.mod].type) || C.BIBLE;
-    switch (type) {
-      case C.BIBLE:
-      case C.COMMENTARY: {
-        if (a && p?.osisref) {
-          // Translate from module to DisplayBible
-          const vsys = G.LibSword.getVerseSystem(module);
-          const v = verseKey(p.osisref, vsys);
-          sanitizeHTML(a, v.readable(G.LibSword.getVerseSystem(dModule)));
-          a.className = 'cs-locale';
-          a.id = ['verselink', vsys, v.osisRef()].join('.');
+      // Add the reference link to each result
+      const span = document.createElement('span');
+      span.innerHTML = '-';
+      slist.insertBefore(span, slist.firstChild);
+      const a = document.createElement('a');
+      slist.insertBefore(a, slist.firstChild);
+      const type = (p?.mod && G.Tab[p.mod].type) || C.BIBLE;
+      switch (type) {
+        case C.BIBLE:
+        case C.COMMENTARY: {
+          if (a && p?.osisref) {
+            // Translate from module to DisplayBible
+            const vsys = G.LibSword.getVerseSystem(module);
+            const v = verseKey(p.osisref, vsys);
+            sanitizeHTML(a, v.readable(G.LibSword.getVerseSystem(dModule)));
+            a.className = 'cs-locale';
+            a.id = ['verselink', vsys, v.osisRef()].join('.');
+          }
+          break;
         }
-        break;
+
+        case C.GENBOOK:
+        case C.DICTIONARY: {
+          if (p?.ch && p?.mod) {
+            sanitizeHTML(a, p.ch.toString());
+            a.className = `cs-${p.mod}`;
+            // p.ch may contain . so careful using split('.')!
+            a.id = ['keylink', p.mod, encodeURIComponent(p.ch.toString())].join(
+              '.'
+            );
+          }
+          break;
+        }
+        default:
       }
 
-      case C.GENBOOK:
-      case C.DICTIONARY: {
-        if (p?.ch && p?.mod) {
-          sanitizeHTML(a, p.ch.toString());
-          a.className = `cs-${p.mod}`;
-          // p.ch may contain . so careful using split('.')!
-          a.id = ['keylink', p.mod, p.ch].join('.');
-        }
-        break;
-      }
-      default:
-    }
-
-    // Apply hilight class to search result matches
-    const lastChild = slist.lastChild as HTMLElement;
-    sanitizeHTML(
-      lastChild,
-      markSearchMatches(
-        lastChild.innerHTML,
-        getSearchMatches(searchtext, searchtype)
-      )
-    );
-  });
+      // Apply hilight class to search result matches
+      const lastChild = slist.lastChild as HTMLElement;
+      sanitizeHTML(
+        lastChild,
+        markSearchMatches(
+          lastChild.innerHTML,
+          getSearchMatches(searchtext, searchtype)
+        )
+      );
+    });
+  }
 }
 
 function markSearchMatches(
@@ -461,8 +470,13 @@ export const strongsCSS = {
 };
 
 export function hilightStrongs(strongs: RegExpMatchArray | null) {
+  strongsCSS.added.forEach((r) => {
+    strongsCSS.sheet.deleteRule(r);
+  });
+  strongsCSS.added = [];
   strongs?.forEach((s) => {
     const c = `S_${s.replace(/lemma:\s*/, '')}`;
+    log.debug(`Adding sn class: ${c}`);
     const index = strongsCSS.sheet.cssRules.length;
     if (strongsCSS.css) {
       strongsCSS.sheet.insertRule(
@@ -480,7 +494,6 @@ export function lexicon(lexdiv: HTMLDivElement, state: SearchWinState) {
     !module || !(module in G.Tab) || G.Tab[module].type === C.BIBLE
       ? displayBible
       : module;
-  const strongs: RegExpMatchArray | null = searchtext.match(/lemma:\s*\S+/g);
   if (!dModule || !(dModule in G.Tab)) return;
 
   lexdiv.style.display = 'none'; // might this speed things up??
@@ -500,6 +513,7 @@ export function lexicon(lexdiv: HTMLDivElement, state: SearchWinState) {
   );
 
   // If searching for a Strong's number, collect all its translations.
+  const strongs: RegExpMatchArray | null = searchtext.match(/lemma:\s*\S+/g);
   if (strongs) {
     strongs.forEach((s) => {
       const c = `S_${s.replace(/lemma:\s*/, '')}`;
@@ -538,11 +552,11 @@ export function lexicon(lexdiv: HTMLDivElement, state: SearchWinState) {
       a.textContent = strongNum;
 
       const span1 = lexlist.appendChild(document.createElement('span'));
-      span1.textContent = `${dString(1)}-${dString(
+      span1.textContent = ` - [${dString(1)}-${dString(
         count > C.UI.Search.maxLexiconSearchResults
           ? C.UI.Search.maxLexiconSearchResults
           : count
-      )}`;
+      )}]: `;
 
       const span2 = lexlist.appendChild(document.createElement('span'));
       span2.className = `cs-${dModule}`;
@@ -712,7 +726,10 @@ export default function handler(this: SearchWin, e: React.SyntheticEvent) {
             case 'keylink': {
               const module = p.shift();
               if (module && module in G.Tab) {
-                G.Commands.goToLocationSK({ module, key: p.join('.') });
+                G.Commands.goToLocationSK({
+                  module,
+                  key: decodeURIComponent(p.shift() || ''),
+                });
               }
               break;
             }
@@ -728,15 +745,20 @@ export default function handler(this: SearchWin, e: React.SyntheticEvent) {
     }
     case 'change': {
       const targid = currentTarget.id as keyof SearchWinState;
+      const se = target as any;
       switch (targid) {
-        case 'searchtext':
         case 'module':
         case 'displayBible':
+        case 'searchtext':
         case 'searchtype':
         case 'scoperadio':
         case 'scopeselect': {
-          const se = target as any;
-          this.setState({ [targid]: se.value });
+          if (
+            !['module', 'displayBible'].includes(targid) ||
+            (se.value && se.value in G.Tab)
+          ) {
+            this.setState({ [targid]: se.value });
+          }
           e.stopPropagation();
           break;
         }

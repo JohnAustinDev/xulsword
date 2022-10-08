@@ -65,7 +65,7 @@ export function closeMenupopups(component: React.Component) {
   }
 }
 
-export function newModulesInstalled(
+export function showNewModules(
   this: Xulsword | ViewportWin,
   newmods: NewModulesType
 ) {

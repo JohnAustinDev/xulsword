@@ -502,8 +502,17 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
           });
           const downloadKeys = Object.keys(Downloads);
           const promises = Object.values(Downloads).map((v) => v.nfiles);
+          let downloadResults: PromiseSettledResult<number | null>[] = [];
+          const installed: SwordConfType[] = [];
+          const removeMods: { name: string; repo: Repository }[] = [];
+          const moveMods: {
+            name: any;
+            fromRepo: any;
+            toRepo: Repository;
+          }[] = [];
           return Promise.allSettled(promises)
-            .then((results) => {
+            .then((dlr) => {
+              downloadResults = dlr;
               G.Window.moveToBack();
               // Remove selection from persisted state.
               this.setTableState('module', { selection: [] });
@@ -513,7 +522,6 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
               const { moduleData } = Saved;
               // Get a list of all currently installed modules (those found in any
               // enabled local repository).
-              const installed: SwordConfType[] = [];
               repotable.data.forEach((rtd, i) => {
                 if (isRepoLocal(rtd[RepCol.iInfo].repo)) {
                   const listing = Saved.repositoryListings[i];
@@ -537,47 +545,62 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
                       Downloads[modrepok].failed = true;
                     }
                   } else if (conf) {
-                    if (!G.Module.remove(conf.module, conf.sourceRepository)) {
-                      log.warn(
-                        `Failed to remove ${module} from ${conf.sourceRepository.path}`
-                      );
-                    }
+                    removeMods.push({
+                      name: conf.module,
+                      repo: conf.sourceRepository,
+                    });
                   }
                 }
               });
+              return G.Module.remove(removeMods, true, false);
+            })
+            .then((removeResult) => {
+              removeResult.forEach((r, i) => {
+                if (!r) log.warn(`Failed to remove module: ${removeMods[i]}`);
+              });
               // Move modules (between the shared and xulsword builtins).
+              const { moduleData } = Saved;
               Object.values(moduleData).forEach((row) => {
                 if (row[ModCol.iInfo].conf.xsmType !== 'XSM_audio') {
                   const { shared, repo } = row[ModCol.iInfo];
                   const module = row[ModCol.iModule];
-                  const modrepok = modrepKey(module, repo);
-                  const conf = installed.find(
-                    (c) => modrepKey(c.module, c.sourceRepository) === modrepok
-                  );
-                  if (conf?.sourceRepository.builtin) {
-                    const toDir = builtinRepos()[shared ? 0 : 1];
-                    const fromKey = conf && downloadKey(conf.sourceRepository);
-                    const toKey = downloadKey(toDir);
-                    if (conf && fromKey !== toKey) {
-                      if (
-                        !G.Module.move(module, conf.sourceRepository, toDir)
-                      ) {
-                        log.warn(
-                          `Failed to move ${module} from ${fromKey} to ${toKey}`
-                        );
+                  if (!removeMods.map((m) => m.name).includes(module)) {
+                    const modrepok = modrepKey(module, repo);
+                    const conf = installed.find(
+                      (c) =>
+                        modrepKey(c.module, c.sourceRepository) === modrepok
+                    );
+                    if (conf?.sourceRepository.builtin) {
+                      const toRepo = builtinRepos()[shared ? 0 : 1];
+                      const fromKey =
+                        conf && downloadKey(conf.sourceRepository);
+                      const toKey = downloadKey(toRepo);
+                      if (conf && fromKey !== toKey) {
+                        moveMods.push({
+                          name: module,
+                          fromRepo: conf.sourceRepository,
+                          toRepo,
+                        });
                       }
                     }
                   }
                 }
+              });
+              return G.Module.move(moveMods, false, false);
+            })
+            .then((moveResult) => {
+              moveResult.forEach((r, i) => {
+                if (!r) log.warn(`Failed to move module: ${moveMods[i]}`);
               });
               const saves: {
                 module: string;
                 fromRepo: Repository;
                 toRepo: Repository;
               }[] = [];
-              results.forEach((result, i) => {
-                if (result.status !== 'fulfilled') log.warn(result.reason);
-                else if (result.value) {
+              const { moduleData } = Saved;
+              downloadResults.forEach((dlr, i) => {
+                if (dlr.status !== 'fulfilled') log.warn(dlr.reason);
+                else if (dlr.value) {
                   const modrepok = downloadKeys[i];
                   const dot = modrepok ? modrepok.lastIndexOf('.') : -1;
                   if (dot === -1) return;
@@ -598,10 +621,15 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
                   }
                 }
               });
-              G.Module.saveDownloads(saves);
+              return G.Module.saveDownloads(saves, false, true);
+            })
+            .then(() => {
               return G.Window.close();
             })
-            .catch((er) => log.warn(er));
+            .catch((er) => {
+              // TODO!: Exit modal on fail
+              log.warn(er);
+            });
         }
         case 'repoAdd': {
           const state = this.state as ManagerState;

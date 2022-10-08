@@ -29,7 +29,7 @@ import viewportParentH, {
   closeMenupopups,
   vpWindowState,
   bbDragEnd as bbDragEndH,
-  newModulesInstalled,
+  showNewModules,
 } from './viewportParentH';
 
 import type { XulswordStateArgType, XulswordStatePref } from '../../type';
@@ -98,7 +98,7 @@ export default class ViewportWin extends React.Component {
     this.destroy = [];
 
     this.atextRefs = [];
-    s.panels.forEach((p) => {
+    s.panels.forEach(() => {
       this.atextRefs.push(React.createRef());
     });
   }
@@ -106,7 +106,7 @@ export default class ViewportWin extends React.Component {
   componentDidMount() {
     this.destroy.push(onSetWindowState(this, vpWindowState));
     this.destroy.push(
-      Subscription.subscribe('modulesInstalled', newModulesInstalled.bind(this))
+      Subscription.subscribe('modulesInstalled', showNewModules.bind(this))
     );
   }
 

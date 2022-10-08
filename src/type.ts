@@ -821,18 +821,24 @@ export const GPublic = {
       repository: Repository
     ) => Promise<number | string>,
     saveDownloads: func as unknown as (
-      saves: { module: string; fromRepo: Repository; toRepo: Repository }[]
+      saves: { module: string; fromRepo: Repository; toRepo: Repository }[],
+      enterModal?: boolean,
+      exitModal?: boolean
     ) => Promise<NewModulesType>,
     clearDownload: func as unknown as (
       module?: string,
       repository?: Repository
     ) => boolean,
-    remove: func as unknown as (module: string, repo: Repository) => boolean,
+    remove: func as unknown as (
+      modules: { name: string; repo: Repository }[],
+      enterModal?: boolean,
+      exitModal?: boolean
+    ) => Promise<boolean[]>,
     move: func as unknown as (
-      module: string,
-      fromRepo: Repository,
-      toRepo: Repository
-    ) => boolean,
+      modules: { name: string; fromRepo: Repository; toRepo: Repository }[],
+      enterModal?: boolean,
+      exitModal?: boolean
+    ) => Promise<boolean[]>,
   },
   Window: {
     open: func as unknown as (arg: WindowDescriptorType) => number,

@@ -4,7 +4,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react/static-property-placement */
 /* eslint-disable jsx-a11y/control-has-associated-label */
-import React, { SyntheticEvent } from 'react';
+import React from 'react';
 import ReactDOM from 'react-dom';
 import i18n from 'i18next';
 import { ProgressBar, Button as BPButton } from '@blueprintjs/core';
@@ -12,7 +12,7 @@ import { clone, diff, drop, dString, sanitizeHTML } from '../../common';
 import C from '../../constant';
 import G from '../rg';
 import renderToRoot from '../rinit';
-import { windowArgument } from '../rutil';
+import { log, windowArgument } from '../rutil';
 import {
   PopupParent,
   PopupParentState,
@@ -132,13 +132,14 @@ export default class SearchWin extends React.Component implements PopupParent {
       searchtext: searchArg.searchtext,
       searchtype: searchArg.type,
       displayBible:
-        searchArg.module && G.Tab[searchArg.module].type === C.BIBLE
+        searchArg.module &&
+        searchArg.module in G.Tab &&
+        G.Tab[searchArg.module].type === C.BIBLE
           ? searchArg.module
           : abible?.module ?? '',
     };
-    s.gap = C.UI.Search.popupGap;
     // Adjustments for special startup situations
-    if (!(s.module in G.Tab)) s.module = '';
+    if (!(s.module in G.Tab)) s.module = abible?.module || '';
     if (searchArg?.scope) {
       s.scoperadio = 'other';
       s.scopeselect = searchArg.scope as any;
@@ -188,6 +189,13 @@ export default class SearchWin extends React.Component implements PopupParent {
     const res = resref !== null ? resref.current : null;
     const lex = lexref !== null ? lexref.current : null;
     if (res && module) {
+      if (res.dataset.count !== count.toString()) {
+        strongsCSS.added.forEach((r) => {
+          strongsCSS.sheet.deleteRule(r);
+        });
+        strongsCSS.added = [];
+      }
+
       const dModule = G.Tab[module].type === C.BIBLE ? displayBible : module;
       let dModuleIsStrongs = false;
       if (
@@ -195,11 +203,7 @@ export default class SearchWin extends React.Component implements PopupParent {
         res.dataset.module !== dModule ||
         res.dataset.pageindex !== pageindex.toString()
       ) {
-        strongsCSS.added.forEach((r) => {
-          strongsCSS.sheet.deleteRule(r);
-        });
-        strongsCSS.added = [];
-        if (!count) {
+        if (!dModule || !count) {
           sanitizeHTML(res, '');
         } else {
           // build a page from results, module and pageindex
@@ -208,6 +212,9 @@ export default class SearchWin extends React.Component implements PopupParent {
               G.LibSword.getModuleInformation(dModule, 'Feature') +
                 G.LibSword.getModuleInformation(dModule, 'GlobalOptionFilter')
             );
+          }
+          if (dModuleIsStrongs && /lemma:/.test(searchtext)) {
+            hilightStrongs(searchtext.match(/lemma:\s*\S+/g));
           }
           const result = G.LibSword.getSearchResults(
             dModule,
@@ -218,9 +225,6 @@ export default class SearchWin extends React.Component implements PopupParent {
           );
           sanitizeHTML(res, result);
           formatResult(res, state);
-          if (dModuleIsStrongs && /lemma:/.test(searchtext)) {
-            hilightStrongs(searchtext.match(/lemma:\s*\S+/g));
-          }
         }
       }
 
@@ -230,7 +234,7 @@ export default class SearchWin extends React.Component implements PopupParent {
           res.dataset.module !== dModule)
       ) {
         // build a lexicon for the search
-        if (!count || !dModuleIsStrongs) {
+        if (!dModule || !count || !dModuleIsStrongs) {
           sanitizeHTML(lex, '');
         } else {
           lexicon(lex, state);
@@ -414,7 +418,11 @@ export default class SearchWin extends React.Component implements PopupParent {
                     <>
                       <Vbox />
                       <Vbox align="center">
-                        <BPButton id="createIndexButton" onClick={handler}>
+                        <BPButton
+                          id="createIndexButton"
+                          disabled={progress !== 0}
+                          onClick={handler}
+                        >
                           {i18n.t('createIndex.label')}
                         </BPButton>
                       </Vbox>
