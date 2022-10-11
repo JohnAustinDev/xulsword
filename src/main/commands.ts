@@ -167,6 +167,14 @@ const Commands: GType['Commands'] = {
     Window.open({ type: 'search', category: 'window', options });
   },
 
+  searchHelp() {
+    const options = {
+      width: 800,
+      title: `${i18n.t('searchHelp.title')}`,
+    };
+    Window.open({ type: 'searchHelp', category: 'dialog-window', options });
+  },
+
   copyPassage() {
     log.info(`Action not implemented: copyPassage`);
   },

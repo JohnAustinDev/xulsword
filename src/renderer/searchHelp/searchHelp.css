@@ -1,0 +1,46 @@
+html.dialog-window #root {
+  padding: 10px;
+  width: 100%;
+  height: 100%;
+}
+.helpPane {
+  height: 100%;
+  overflow: auto;
+  padding: 10px;
+  background: white;
+  border: 2px solid rgb(200, 170, 205);
+  border-radius: 4px;
+}
+.helpPane > div {
+  margin-bottom: 10px;
+}
+.helpPane > div > div {
+  margin-bottom: 5px;
+}
+#searchTypes {
+  font-size: larger;
+  font-weight: bold;
+}
+.typeName {
+  font-weight: bold;
+}
+table {
+  border-collapse: collapse;
+  border: 2px solid rgb(200, 170, 205);
+  border-radius: 4px;
+}
+.odd-row {
+  background: rgb(245, 245, 245);
+}
+.even-row {
+  background: rgb(230, 230, 230);
+}
+td {
+  padding: 5px;
+}
+.col0 {
+  text-align: center;
+}
+#caseMessage {
+  margin-top: 1em;
+}

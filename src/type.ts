@@ -57,7 +57,8 @@ export type WindowDescriptorType = {
     | 'chooseFont'
     | 'moduleManager'
     | 'removeModule'
-    | 'search';
+    | 'search'
+    | 'searchHelp';
   id?: number;
   category?:
     | 'window' // Parent optional, persisted, resizable
@@ -720,6 +721,7 @@ const CommandsPublic = {
   copy: func as unknown as (...args: any) => boolean,
   paste: func as unknown as (...args: any) => boolean,
   search: func as unknown as (search: SearchType) => void,
+  searchHelp: func as unknown as () => void,
   copyPassage: func as unknown as () => void,
   openFontsColors: func as unknown as (module: string) => void,
   openBookmarksManager: func as unknown as () => void,

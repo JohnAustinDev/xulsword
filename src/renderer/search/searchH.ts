@@ -741,6 +741,7 @@ export default function handler(this: SearchWin, e: React.SyntheticEvent) {
           break;
         }
         case 'helpButton': {
+          G.Commands.searchHelp();
           break;
         }
         case 'createIndexButton': {

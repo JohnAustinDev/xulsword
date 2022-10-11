@@ -422,7 +422,7 @@ export default class SearchWin extends React.Component implements PopupParent {
                         checked={searchtype === st}
                         value={st}
                         label={i18n.t(`${st}.label`)}
-                        tooltip={i18n.t(`${st}.tooltip`)}
+                        tooltip={i18n.t(`${st}.description`)}
                       />
                     ))}
                   </Groupbox>
