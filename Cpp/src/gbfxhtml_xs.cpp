@@ -77,9 +77,9 @@ GBFXHTMLXS::GBFXHTMLXS() {
   addTokenSubstitute("CM", "<br /><br />"); //  paragraph <!P> is a non showing comment that can be changed in the front end to <P> if desired
   addTokenSubstitute("CG", ""); //  ???
   addTokenSubstitute("CT", ""); // ???
-  addTokenSubstitute("JR", "<div align=\"right\">"); // right align begin
-  addTokenSubstitute("JC", "<div align=\"center\">"); // center align begin
-  addTokenSubstitute("JL", "</div>"); // align end
+  addTokenSubstitute("JR", ""); // right align begin (was <div align=\"right\">)
+  addTokenSubstitute("JC", ""); // center align begin (was <div align=\"center\">)
+  addTokenSubstitute("JL", ""); // align end (</div>)
 
   renderNoteNumbers = false;
 }
