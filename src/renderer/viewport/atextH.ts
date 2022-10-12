@@ -161,14 +161,16 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
     }
 
     case 'dblclick': {
-      // Get selected text
-      const selob = window.getSelection();
-      if (selob) {
-        let searchtext = selob.toString();
-        searchtext = cleanDoubleClickSelection(searchtext);
-        const { module } = this.props as AtextProps;
-        if (module && searchtext && !/^\s*$/.test(searchtext)) {
-          G.Commands.search({ module, searchtext, type: 'SearchAnyWord' });
+      if (ofClass(['sb'], es.target)) {
+        // Get selected text
+        const selob = window.getSelection();
+        if (selob) {
+          let searchtext = selob.toString();
+          searchtext = cleanDoubleClickSelection(searchtext);
+          const { module } = this.props as AtextProps;
+          if (module && searchtext && !/^\s*$/.test(searchtext)) {
+            G.Commands.search({ module, searchtext, type: 'SearchAnyWord' });
+          }
         }
       }
       break;

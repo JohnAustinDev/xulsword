@@ -23,7 +23,7 @@ import { log, getContextData } from './rutil';
 import { delayHandler, xulCaptureEvents } from './libxul/xul';
 import { Hbox } from './libxul/boxes';
 
-import type { ModalType, NewModulesType } from '../type';
+import type { ModalType } from '../type';
 
 import 'normalize.css/normalize.css';
 import '@blueprintjs/icons/lib/css/blueprint-icons.css';
