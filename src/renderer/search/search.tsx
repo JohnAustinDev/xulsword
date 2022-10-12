@@ -61,7 +61,7 @@ const initialState = {
   scopeselect: 'gospel' as BookGroupType | typeof ScopeSelectOptions[number], // scope select value
   moreLess: false as boolean, // more / less state
   displayBible: '' as string, // current module of Bible search
-  count: 0 as number, // count and page-result are returned at different times
+  results: null as number | null, // count and page-result are returned at different times
   pageindex: 0 as number, // first results index to show
   progress: 0 as number, // -1=indeterminate, 0=hidden, 1=complete
   progressLabel: '' as string, // changing progress label
@@ -185,20 +185,21 @@ export default class SearchWin extends React.Component implements PopupParent {
       G.Window.setComplexValue('pstate', pstate);
     }
 
-    const { displayBible, module, pageindex, count, searchtext } = state;
+    const { displayBible, module, pageindex, results, searchtext } = state;
     const { resref, lexref } = this;
     const res = resref !== null ? resref.current : null;
     const lex = lexref !== null ? lexref.current : null;
-    if (lex === null || res === null || !module) return;
+    if (res === null || !module) return;
+    const count = results || 0;
 
-    function lexup(dModule: string, dModuleIsStrongs: boolean) {
+    function lexupdate(dModule: string, dModuleIsStrongs: boolean) {
       if (lex === null || res === null) return;
       if (
         res.dataset.count !== count.toString() ||
         res.dataset.module !== dModule
       ) {
         // build a lexicon for the search
-        if (!dModule || !count || !dModuleIsStrongs) {
+        if (!dModule || !results || !dModuleIsStrongs) {
           sanitizeHTML(lex, '');
         } else {
           lexicon(lex, state);
@@ -223,7 +224,7 @@ export default class SearchWin extends React.Component implements PopupParent {
       res.dataset.module !== dModule ||
       res.dataset.pageindex !== pageindex.toString()
     ) {
-      if (!dModule || !count) {
+      if (!dModule || !results) {
         sanitizeHTML(res, '');
       } else {
         // build a page from results, module and pageindex
@@ -240,13 +241,12 @@ export default class SearchWin extends React.Component implements PopupParent {
           dModule,
           pageindex,
           C.UI.Search.resultsPerPage,
-          dModuleIsStrongs,
-          null
+          dModuleIsStrongs
         )
           .then((result) => {
             sanitizeHTML(res, result);
             formatResult(res, state);
-            return lexup(dModule, dModuleIsStrongs);
+            return lexupdate(dModule, dModuleIsStrongs);
           })
           .catch((er) => {
             log.warn(er);
@@ -256,7 +256,7 @@ export default class SearchWin extends React.Component implements PopupParent {
       }
     }
 
-    lexup(dModule, dModuleIsStrongs);
+    lexupdate(dModule, dModuleIsStrongs);
   }
 
   render() {
@@ -268,7 +268,7 @@ export default class SearchWin extends React.Component implements PopupParent {
       searchtype,
       scoperadio,
       scopeselect,
-      count,
+      results,
       moreLess,
       pageindex,
       progress,
@@ -324,6 +324,7 @@ export default class SearchWin extends React.Component implements PopupParent {
 
     const searchindex = module && G.LibSword.luceneEnabled(module);
 
+    const count = results || 0;
     const lasti =
       count - pageindex < C.UI.Search.resultsPerPage
         ? count
@@ -337,7 +338,7 @@ export default class SearchWin extends React.Component implements PopupParent {
       });
     } else {
       searchStatus = i18n.t('searchStatusAll', {
-        v1: dString(count || 0),
+        v1: dString(count),
       });
     }
 
@@ -518,8 +519,8 @@ export default class SearchWin extends React.Component implements PopupParent {
               onMouseOver={popupParentHandler}
               onMouseMove={popupParentHandler}
             >
-              <div>
-                {module && G.Tab[module].type === C.BIBLE && (
+              {module && G.Tab[module].type === C.BIBLE && (
+                <div>
                   <ModuleMenu
                     id="displayBible"
                     value={displayBible}
@@ -527,9 +528,13 @@ export default class SearchWin extends React.Component implements PopupParent {
                     disabled={!module || G.Tab[module].type !== C.BIBLE}
                     onChange={handler}
                   />
-                )}
-                <span id="lexiconResults" ref={this.lexref} onClick={handler} />
-              </div>
+                  <span
+                    id="lexiconResults"
+                    ref={this.lexref}
+                    onClick={handler}
+                  />
+                </div>
+              )}
               <Spacer orient="horizontal" />
               <div id="searchResults" ref={this.resref} onClick={handler} />
             </Vbox>

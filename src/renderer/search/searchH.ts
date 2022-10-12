@@ -6,13 +6,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import i18n from 'i18next';
 import { getElementInfo } from '../../libswordElemInfo';
-import {
-  dString,
-  escapeRE,
-  getCSS,
-  sanitizeHTML,
-  stringHash,
-} from '../../common';
+import { dString, escapeRE, getCSS, sanitizeHTML } from '../../common';
 import C from '../../constant';
 import G from '../rg';
 import { log, verseKey, windowArgument } from '../rutil';
@@ -54,7 +48,7 @@ type LibSwordSearchType = [string, string, string[], number, number];
 const LibSwordSearch = {
   sthis: null as SearchWin | null,
   params: null as LibSwordSearchType | null,
-  hash: '',
+  id: '',
 };
 
 export function getLuceneSearchText(searchtext0: string) {
@@ -158,7 +152,7 @@ export async function search(sthis: SearchWin) {
   }
 
   const s: Partial<SearchWinState> = {
-    count: 0,
+    results: 0,
     pageindex: 0,
     progress: 0,
     progressLabel: '',
@@ -245,7 +239,7 @@ export async function search(sthis: SearchWin) {
     flags |= 2048; // Turn on Sort By Relevance flag
   }
 
-  s.count = await libSwordSearch(
+  s.results = await libSwordSearch(
     module,
     searchtextLS,
     scopes,
@@ -264,13 +258,12 @@ async function libSwordSearch(
   scopes: string[],
   libswordSearchType: number,
   flags: number
-): Promise<number> {
-  let funcs: (() => Promise<number | null>)[] = [];
+): Promise<number | null> {
+  let grandTotal = null;
   if (module && module in G.Tab) {
-    // Simultaneous searchers would conflate them so both would give
-    // incorrect results. So make other windows modal if scopes.length > 1.
+    // Only one active search is allowed at a time, so make other windows
+    // modal if scopes.length > 1.
     if (scopes.length > 1) G.Window.modal('transparent', 'not-self');
-    // Save search arguments and hash for LibSword search validation.
     LibSwordSearch.params = [
       module,
       searchtext,
@@ -278,9 +271,9 @@ async function libSwordSearch(
       libswordSearchType,
       flags,
     ];
-    LibSwordSearch.hash = stringHash(LibSwordSearch.params);
-    let isnew = true;
-    funcs = scopes.map((scope, i) => {
+    const id = new Date().getTime().toString();
+    LibSwordSearch.id = id;
+    const funcs = scopes.map((scope, i) => {
       return async () => {
         const count = await G.LibSword.search(
           module,
@@ -288,10 +281,9 @@ async function libSwordSearch(
           scope,
           libswordSearchType,
           flags,
-          isnew,
-          LibSwordSearch.hash
+          i === 0,
+          id
         );
-        isnew = false;
         if (scopes.length > 1 && LibSwordSearch.sthis) {
           const s: Partial<SearchWinState> = {
             progress: (i + 1) / scopes.length,
@@ -302,54 +294,75 @@ async function libSwordSearch(
         return count;
       };
     });
-  }
-  let grandTotal = 0;
-  for (const func of funcs) {
-    const c = await func();
-    if (c !== null) grandTotal = c;
+
+    grandTotal = 0;
+    for (const func of funcs) {
+      grandTotal = await func();
+      if (grandTotal === null) break;
+    }
+
+    // Now be sure to free the search engine and reset modal and progress.
+    G.LibSword.getSearchResults(module, 0, 0, false, id);
+    if (scopes.length > 1) {
+      G.Window.modal('off', 'not-self');
+      if (LibSwordSearch.sthis) {
+        const s: Partial<SearchWinState> = {
+          progress: 0,
+          progressLabel: '',
+        };
+        LibSwordSearch.sthis.setState(s);
+      }
+    }
   }
 
-  if (scopes.length > 1) {
-    G.Window.modal('off', 'not-self');
-    if (LibSwordSearch.sthis) {
-      const s: Partial<SearchWinState> = {
-        progress: 0,
-        progressLabel: '',
-      };
-      LibSwordSearch.sthis.setState(s);
-    }
+  // If the result was null, the search engine was busy, so wait a
+  // second for it to free up and try again.
+  if (grandTotal === null) {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const r = libSwordSearch(
+          module,
+          searchtext,
+          scopes,
+          libswordSearchType,
+          flags
+        );
+        resolve(r);
+      }, 1000);
+    });
   }
 
   return grandTotal;
 }
 
 // When multiple search windows are open and paging events switch from
-// one page to another, fresh search results must be generated.
+// one page to another, fresh search results are generated.
 export async function getSearchResults(
   mod: string,
   i: number,
   maxPage: number,
-  keepstrings: boolean,
-  ptr: any
+  keepstrings: boolean
 ): Promise<string> {
   let r = G.LibSword.getSearchResults(
     mod,
     i,
     maxPage,
     keepstrings,
-    ptr,
-    LibSwordSearch.hash
+    LibSwordSearch.id
   );
   if (r === null) {
-    await libSwordSearch(...(LibSwordSearch.params as LibSwordSearchType));
-    r = G.LibSword.getSearchResults(
-      mod,
-      i,
-      maxPage,
-      keepstrings,
-      ptr,
-      LibSwordSearch.hash
+    const c = await libSwordSearch(
+      ...(LibSwordSearch.params as LibSwordSearchType)
     );
+    if (c !== null) {
+      r = G.LibSword.getSearchResults(
+        mod,
+        i,
+        maxPage,
+        keepstrings,
+        LibSwordSearch.id
+      );
+    }
   }
 
   return r || '';
@@ -359,7 +372,7 @@ function createSearchIndex(sthis: SearchWin, module: string) {
   if (module && module in G.Tab) {
     G.Window.modal('darkened', 'all');
     const s: Partial<SearchWinState> = {
-      count: 0,
+      results: 0,
       pageindex: 0,
       progress: -1,
       progressLabel: i18n.t('BuildingIndex'),
@@ -559,25 +572,28 @@ export function hilightStrongs(strongs: RegExpMatchArray | null) {
 }
 
 export async function lexicon(lexdiv: HTMLDivElement, state: SearchWinState) {
-  const { searchtext, searchtype, module, displayBible, count } = state;
+  const { searchtext, searchtype, module, displayBible, results } = state;
   const dModule =
     !module || !(module in G.Tab) || G.Tab[module].type === C.BIBLE
       ? displayBible
       : module;
   if (!dModule || !(dModule in G.Tab)) return;
 
+  if (results === null) {
+    sanitizeHTML(lexdiv, '');
+    return;
+  }
+
   lexdiv.style.display = 'none'; // might this speed things up??
+  const total =
+    results > C.UI.Search.maxLexiconSearchResults
+      ? C.UI.Search.maxLexiconSearchResults
+      : results;
   const list: HTMLSpanElement[] = [];
   sanitizeHTML(
     lexdiv,
     markSearchMatches(
-      await getSearchResults(
-        dModule,
-        0,
-        C.UI.Search.maxLexiconSearchResults,
-        true,
-        null
-      ),
+      await getSearchResults(dModule, 0, total, true),
       getSearchMatches(searchtext, searchtype)
     )
   );
@@ -622,11 +638,7 @@ export async function lexicon(lexdiv: HTMLDivElement, state: SearchWinState) {
       a.textContent = strongNum;
 
       const span1 = lexlist.appendChild(document.createElement('span'));
-      span1.textContent = ` - [${dString(1)}-${dString(
-        count > C.UI.Search.maxLexiconSearchResults
-          ? C.UI.Search.maxLexiconSearchResults
-          : count
-      )}]: `;
+      span1.textContent = ` - [${dString(1)}-${dString(total)}]: `;
 
       const span2 = lexlist.appendChild(document.createElement('span'));
       span2.className = `cs-${dModule}`;
@@ -691,13 +703,9 @@ export async function lexicon(lexdiv: HTMLDivElement, state: SearchWinState) {
             ].join('.')}">${strongNum}</span>(${sts.count.toString()})`
           );
         });
-        const c =
-          count > C.UI.Search.maxLexiconSearchResults
-            ? C.UI.Search.maxLexiconSearchResults
-            : count;
         sanitizeHTML(
           lexlist,
-          `${mtype} - [${dString(1)}-${dString(c)}]: ${sns.join(', ')}`
+          `${mtype} - [${dString(1)}-${dString(total)}]: ${sns.join(', ')}`
         );
       }
     });
@@ -724,6 +732,8 @@ export default function handler(this: SearchWin, e: React.SyntheticEvent) {
   const state = this.state as SearchWinState;
   const target = e.target as HTMLElement;
   const currentTarget = e.currentTarget as HTMLElement;
+  const { results } = state;
+  const count = results || 0;
   switch (e.type) {
     case 'click': {
       switch (currentTarget.id) {
@@ -760,7 +770,7 @@ export default function handler(this: SearchWin, e: React.SyntheticEvent) {
           break;
         }
         case 'pagelast': {
-          let pageindex = state.count - C.UI.Search.resultsPerPage;
+          let pageindex = count - C.UI.Search.resultsPerPage;
           if (pageindex < 0) pageindex = 0;
           this.setState({ pageindex });
           break;
@@ -773,8 +783,8 @@ export default function handler(this: SearchWin, e: React.SyntheticEvent) {
         }
         case 'pagenext': {
           let pageindex = state.pageindex + C.UI.Search.resultsPerPage;
-          if (pageindex >= state.count)
-            pageindex = state.count - C.UI.Search.resultsPerPage;
+          if (pageindex >= count)
+            pageindex = count - C.UI.Search.resultsPerPage;
           if (pageindex < 0) pageindex = 0;
           this.setState({ pageindex });
           break;

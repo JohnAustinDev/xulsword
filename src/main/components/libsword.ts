@@ -27,7 +27,6 @@ type LibSwordPrivate = {
   libxulsword: null | Record<string, unknown>;
   paused: boolean;
 
-  searchPointers: any[];
   upperCaseResult: string;
   throwMsg: string;
 
@@ -37,7 +36,8 @@ type LibSwordPrivate = {
 
   unlock: () => void;
   checkerror: () => void;
-  searchHash: string;
+  searchingID: string;
+  searchedID: string;
 };
 
 /*
@@ -66,9 +66,9 @@ const LibSword: GType['LibSword'] & LibSwordPrivate = {
   moduleDirectories: [],
 
   checkCipherKeys: [],
-  searchPointers: [],
 
-  searchHash: '',
+  searchedID: '',
+  searchingID: '',
 
   init() {
     if (this.libxulsword) return false;
@@ -126,11 +126,6 @@ const LibSword: GType['LibSword'] & LibSwordPrivate = {
 
   quit() {
     if (this.libxulsword) {
-      this.searchPointers.forEach((sp, i) => {
-        if (!sp) return;
-        libxulsword.FreeSearchPointer(sp, 'searchPointer');
-        this.searchPointers[i] = null;
-      });
       libxulsword.FreeLibXulsword();
       log.verbose('DELETED libxulsword object');
     }
@@ -462,6 +457,74 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   /* *****************************************************************************
    * SEARCHING: USE THESE TO SEARCH MODULES:
    ***************************************************************************** */
+  // search
+  // NOTE: LibSword runs in the main process, while multiple renderer processes
+  // handle events asynchronously. To prevent search corruption, a search must
+  // be followed by a corresponding read passing the same hash value. Until
+  // then, any further search calls will immediately return null, until the
+  // expected read is performed.
+  //
+  // Returns the number of matches found
+  // modname is the module to search
+  // srchstr is the string search query
+  // scope is the scope of the search. For example: 'Gen', or 'Matt-Rev'.
+  // type is the type of search which can take one of the following values:
+  // >=0 - regex (use C++ regex matching)
+  //  -1 - phrase (only matches EXACTLY the text- including punctuation etc!)
+  //  -2 - multiword (match verses containing all words in any form or order)
+  //  -3 - entryAttribute (eg. Word//Strongs/G1234/) NOT TESTED.
+  //  -4 - Lucene fast indexed search (if index is available)
+  //  -5 - a compound search
+  // flags are many useful flags as defined in regex.h
+  // newsearch is set to add new search results to the previous results
+  async search(modname, srchstr, scope, type, flags, newsearch, searchID) {
+    if (
+      this.isReady() &&
+      ((newsearch && !this.searchingID) ||
+        (!newsearch && searchID === this.searchedID))
+    ) {
+      this.searchingID = searchID;
+      // IMPORTANT:
+      // VerseKey module searches require a non-empty book-scope, which may
+      // contain a single range. If the book(s) given in the scope value do
+      // not exist in the module, SWORD may crash!
+      const intgr = await libxulsword.Search(
+        modname,
+        srchstr,
+        scope,
+        type,
+        flags,
+        newsearch
+      );
+      this.checkerror();
+      this.searchedID = searchID;
+      log.debug(
+        `search: modname=${modname} srchstr=${srchstr} scope=${scope} type=${type} flags=${flags} newsearch=${newsearch} searchID=${searchID} intgr=${intgr}`
+      );
+      return intgr;
+    }
+    return null;
+  },
+
+  // getSearchResults
+  // Will return a range of verse texts from the searchID search, or null if
+  // searchID results are unavailable or the engine is not ready. The search()
+  // function must be called with the matching searchID before results can be
+  // returned.
+  getSearchResults(modname, first, num, keepStrongs, searchID) {
+    if (this.isReady() && searchID === this.searchedID) {
+      this.searchingID = '';
+
+      log.debug(
+        `getSearchResults: modname=${modname} first=${first} num=${num} keepStrongs=${keepStrongs} searchID=${searchID}`
+      );
+
+      if (!num) return ''; // no reason to call libxulsword
+      return libxulsword.GetSearchResults(modname, first, num, keepStrongs);
+    }
+    return null;
+  },
+
   // luceneEnabled
   // Will return true if indexed searching is available for the current module, false otherwise.
   luceneEnabled(modname) {
@@ -469,93 +532,6 @@ DEFINITION OF A 'XULSWORD REFERENCE':
     const enabled = libxulsword.LuceneEnabled(modname);
     this.checkerror();
     return enabled;
-  },
-
-  // search
-  // Returns the number of matches found
-  // Mod is the version to search
-  // Srchstr is the string you want to search for.
-  // Scope is the scope of the search. For example: 'Gen', or 'Matt-Rev'.
-  // type is the type of search which can take one of the following values:
-  // >=0 - regex (use C++ regex matching)
-  //  -1 - phrase (only matches EXACTLY the text- including punctuation etc!)
-  //  -2 - multiword (match verses that contain all the words in any form or order)
-  //  -3 - entryAttribute (eg. Word//Strongs/G1234/) NOT TESTED.
-  //  -4 - Lucene fast indexed search (if index is available)
-  //  -5 - a compound search
-  // flags are many useful flags as defined in regex.h
-  // newsearch should be set to false if you want the search results added to the previous results
-  async search(modname, srchstr, scope, type, flags, newsearch, searchHash) {
-    if (!this.isReady()) return null;
-    // IMPORTANT:
-    // VerseKey module searches require a non-empty book-scope, which may contain a single range.
-    // If the book(s) given in the scope value do not exist in the module, SWORD may crash!
-    const intgr = await libxulsword.Search(
-      modname,
-      srchstr,
-      scope,
-      type,
-      flags,
-      newsearch
-    );
-    this.checkerror();
-    log.debug(
-      `search: modname=${modname} srchstr=${srchstr} scope=${scope} type=${type} flags=${flags} newsearch=${newsearch} intgr=${intgr}`
-    );
-    this.searchHash = searchHash;
-    return intgr;
-  },
-
-  // getSearchPointer
-  // Returns an index to a pointer for a newly created copy of LibSword's internal search results ListKey object.
-  getSearchPointer() {
-    if (!this.isReady()) return null;
-    const searchPointer = libxulsword.GetSearchPointer();
-    this.checkerror();
-    this.searchPointers.push(searchPointer);
-    return searchPointer;
-  },
-
-  // getSearchVerses
-  // UNEMPLEMENTED AS YET. Returns a list of verse addresses which matched the previous search.
-  getSearchVerses(modname) {
-    return null;
-  },
-
-  // getSearchResults
-  // Will return the verse texts from previous search.
-  // search() must be called before results can be read.
-  // null will be returned if the requested search results are gone or LibSword is not ready.
-  getSearchResults(
-    modname,
-    first,
-    num,
-    keepStrongs,
-    searchPointer,
-    searchHash
-  ) {
-    if (!this.isReady()) return null;
-    if (searchHash !== this.searchHash) return null;
-
-    log.debug(
-      `getSearchResults: modname=${modname} first=${first} num=${num} keepStrongs=${keepStrongs} searchPointer=${searchPointer}`
-    );
-
-    // if a searchPointer is given, make sure it has not been freed by LibSword.pause() etc.
-    if (searchPointer && this.searchPointers.indexOf(searchPointer) === -1)
-      return null;
-
-    if (searchPointer) {
-      if (this.searchPointers.indexOf(searchPointer) === -1) return null;
-      return libxulsword.GetSearchResults(
-        modname,
-        first,
-        num,
-        keepStrongs,
-        searchPointer
-      );
-    }
-    return libxulsword.GetSearchResults(modname, first, num, keepStrongs);
   },
 
   // searchIndexDelete
@@ -575,6 +551,12 @@ DEFINITION OF A 'XULSWORD REFERENCE':
     await libxulsword.SearchIndexBuild(modname);
     this.checkerror();
     return true;
+  },
+
+  // getSearchVerses
+  // UNEMPLEMENTED AS YET. Returns a list of verse addresses which matched the previous search.
+  getSearchVerses(modname) {
+    return null;
   },
 
   /* *****************************************************************************

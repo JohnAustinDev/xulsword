@@ -658,14 +658,12 @@ const LibSwordPublic = {
     newsearch: boolean,
     hash: string
   ) => Promise<number | null>,
-  getSearchPointer: func as unknown as () => any,
   getSearchVerses: func as unknown as (modname: string) => void,
   getSearchResults: func as unknown as (
     modname: string,
     first: number,
     num: number,
     keepStrongs: boolean,
-    searchPointer: any,
     searchHash: string
   ) => string | null,
   searchIndexDelete: func as unknown as (modname: string) => void,
