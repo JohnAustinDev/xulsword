@@ -12,9 +12,13 @@
 #player {
   margin-top: 2px;
   height: 34px; /* specified to allow for player's height */
+  padding: 0 3px;
 }
 #player {
   padding-inline-start: 6px;
+}
+.flex-button button {
+  margin: 0 3px;
 }
 
 /* MAIN WINDOW CONFIGURATIONS */
@@ -68,66 +72,6 @@
   text-align: center;
 }
 
-/* MAIN WINDOW HISTORY BUTTONS */
-#historyButtons .xsbutton {
-  padding: 2px;
-}
-#historyButtons .button-box {
-  padding: 2px 30px;
-}
-#historypopup menuitem.selected {
-  margin: 2px 4px;
-  background-color: Highlight;
-  color: HighlightText;
-}
-#back,
-#forward {
-  margin-left: 5px;
-  margin-right: 5px;
-}
-#back .button-icon,
-#forward .button-icon {
-  display: block;
-  height: 14px;
-  width: 22px;
-  background-position: 0px 0px;
-  background-image: url(../images/back.png);
-}
-#forward .button-icon {
-  background-image: url(../images/forward.png);
-}
-html[dir='rtl'] #back .button-icon {
-  background-image: url(../images/forward.png);
-}
-html[dir='rtl'] #forward .button-icon {
-  background-image: url(../images/back.png);
-}
-#back.disabled .button-icon,
-#forward.disabled .button-icon {
-  background-position: -44px 0px;
-}
-#back:not(.disabled):hover .button-icon,
-#forward:not(.disabled):hover .button-icon {
-  background-position: -22px 0px;
-}
-#historymenu .button-box {
-  padding: 2px 10px;
-}
-#historymenu .button-icon {
-  display: block;
-  height: 14px;
-  width: 40px;
-  background-position: 0px 0px;
-  background-image: url(../images/historymenu.png);
-  background-repeat: no-repeat;
-}
-#historymenu.disabled .button-icon {
-  background-position: -80px 0px;
-}
-#historymenu:not(.disabled):hover .button-icon {
-  background-position: -40px 0px;
-}
-
 /* MAIN WINDOW SEARCH BUTTON */
 #search-tool {
   padding-bottom: 0px;
@@ -136,66 +80,16 @@ html[dir='rtl'] #forward .button-icon {
   padding-top: 3px;
   margin-left: 0px;
 }
-#searchButton {
-  padding: 2px;
-}
-#searchButton .button-box {
-  padding: 1px;
-}
-#searchButton .button-icon {
-  display: block;
-  width: 30px;
-  height: 18px;
-  background-image: url(../images/search.png);
-  background-position: 0px 0px;
-}
-#searchButton.disabled .button-icon {
-  background-position: -30px 0px;
-}
 
 /* MAIN WINDOW TOGGLE BUTTONS */
 #optionButtons {
-  padding-top: 2px;
+  margin-top: 2px;
 }
-#optionButtons .xsbutton {
-  padding: 2px;
-  color: black;
+#optionButtons button {
+  margin: 0 5px;
 }
-#optionButtons .button-box {
-  padding: 4px 6px;
-}
-#optionButtons button.checked {
-  color: blue;
-}
-#optionButtons .button.disabled {
-  color: grey;
-}
-#crossrefs .button-icon {
-  background: url(../images/crossrefs.png);
-}
-#footnotes .button-icon {
-  background: url(../images/footnotes.png);
-}
-#headings .button-icon {
-  background: url(../images/headings.png);
-}
-#dictlinks .button-icon {
-  background: url(../images/dict.png);
-}
-#optionButtons .button-icon {
-  display: block;
-  width: 32px;
-  height: 28px;
-  background-position: -32px 0px;
-}
-#optionButtons button.checked .button-icon {
-  background-position: 0px 0px;
-}
-#optionButtons button.disabled .button-icon {
-  background-position: -32px 0px;
-}
-#optionButtons .button-text {
-  white-space: nowrap;
+#optionButtons button.off {
+  opacity: 0.5;
 }
 
 .videoHelpMenuItem {

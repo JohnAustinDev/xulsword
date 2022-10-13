@@ -395,6 +395,7 @@ export default class SearchWin extends React.Component implements PopupParent {
                   </Vbox>
                   <BPButton
                     id="searchButton"
+                    icon="search"
                     disabled={progress !== 0 || !module}
                     onClick={handler}
                   >

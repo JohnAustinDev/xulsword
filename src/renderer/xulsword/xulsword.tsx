@@ -6,6 +6,7 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 import React from 'react';
 import i18n from 'i18next';
+import { Button as BPButton, Icon } from '@blueprintjs/core';
 import Subscription from '../../subscription';
 import { dString, diff, clone, drop } from '../../common';
 import C from '../../constant';
@@ -27,7 +28,7 @@ import {
   xulPropTypes,
 } from '../libxul/xul';
 import Button from '../libxul/button';
-import { Hbox, Vbox } from '../libxul/boxes';
+import { Box, Hbox, Vbox } from '../libxul/boxes';
 import Menupopup from '../libxul/menupopup';
 import Bookselect from '../libxul/bookselect';
 import Spacer from '../libxul/spacer';
@@ -341,6 +342,9 @@ export default class Xulsword extends React.Component {
       else viewportReset.push(m);
     });
 
+    const left = i18n.t('locale_direction') === 'ltr' ? 'left' : 'right';
+    const right = i18n.t('locale_direction') !== 'ltr' ? 'left' : 'right';
+
     log.debug('xulsword state: ', state);
 
     return (
@@ -355,36 +359,52 @@ export default class Xulsword extends React.Component {
 
           <Vbox id="navigator-tool" pack="start">
             <Hbox id="historyButtons" align="center">
-              <Button
-                id="back"
+              <Box
                 flex="40%"
-                onClick={handler}
-                disabled={
-                  navdisabled ||
-                  !history.length ||
-                  historyIndex === history.length - 1
-                }
-                label={i18n.t('back.label')}
-                tooltip={i18n.t('history.back.tooltip')}
-              />
-              <Button
-                id="historymenu"
-                type="menu"
-                onClick={handler}
-                disabled={navdisabled || history.length <= 1}
-                tooltip={i18n.t('history.all.tooltip')}
+                className="flex-button"
+                title={i18n.t('history.back.tooltip')}
               >
-                {historyMenupopup}
-              </Button>
-              <Button
-                id="forward"
-                xuldir="reverse"
+                <BPButton
+                  id="back"
+                  icon={`chevron-${left}`}
+                  onClick={handler}
+                  disabled={
+                    navdisabled ||
+                    !history.length ||
+                    historyIndex === history.length - 1
+                  }
+                >
+                  {i18n.t('back.label')}
+                </BPButton>
+              </Box>
+              <Box
+                className="flex-button"
+                title={i18n.t('history.all.tooltip')}
+              >
+                <BPButton
+                  id="historymenu"
+                  icon={`double-chevron-${left}`}
+                  rightIcon={`double-chevron-${right}`}
+                  onClick={handler}
+                  disabled={navdisabled || history.length <= 1}
+                >
+                  {historyMenupopup || <span />}
+                </BPButton>
+              </Box>
+              <Box
                 flex="40%"
-                onClick={handler}
-                disabled={navdisabled || historyIndex === 0}
-                label={i18n.t('history.forward.label')}
-                tooltip={i18n.t('history.forward.tooltip')}
-              />
+                className="flex-button"
+                title={i18n.t('history.forward.tooltip')}
+              >
+                <BPButton
+                  id="forward"
+                  rightIcon={`chevron-${right}`}
+                  onClick={handler}
+                  disabled={navdisabled || historyIndex === 0}
+                >
+                  {i18n.t('history.forward.label')}
+                </BPButton>
+              </Box>
             </Hbox>
 
             <Hbox id="player" pack="start" align="center" hidden>
@@ -475,48 +495,49 @@ export default class Xulsword extends React.Component {
                 }}
                 tooltip={i18n.t('searchbox.tooltip')}
               />
-              <Button
-                id="searchButton"
-                orient="horizontal"
-                xuldir="reverse"
-                disabled={searchDisabled}
-                onClick={handler}
-                label={i18n.t('searchBut.label')}
-                tooltip={i18n.t('search.tooltip')}
-              />
+              <Box className="flex-button" title={i18n.t('search.tooltip')}>
+                <BPButton
+                  id="searchButton"
+                  icon="search"
+                  disabled={searchDisabled}
+                  onClick={handler}
+                >
+                  {i18n.t('searchBut.label')}
+                </BPButton>
+              </Box>
             </Vbox>
           </Hbox>
 
           <Spacer flex="1" orient="vertical" />
 
           <Hbox id="optionButtons" align="start">
-            <Button
+            <BPButton
               id="headings"
-              orient="vertical"
-              checked={show.headings}
+              className={show.headings ? 'on' : 'off'}
+              icon={<Icon icon="widget-header" size={28} />}
               onClick={handler}
-              tooltip={i18n.t('headingsButton.tooltip')}
+              title={i18n.t('headingsButton.tooltip')}
             />
-            <Button
+            <BPButton
               id="footnotes"
-              orient="vertical"
-              checked={show.footnotes}
+              className={show.footnotes ? 'on' : 'off'}
+              icon={<Icon icon="manually-entered-data" size={28} />}
               onClick={handler}
-              tooltip={i18n.t('notesButton.tooltip')}
+              title={i18n.t('notesButton.tooltip')}
             />
-            <Button
+            <BPButton
               id="crossrefs"
-              orient="vertical"
-              checked={show.crossrefs}
+              className={show.crossrefs ? 'on' : 'off'}
+              icon={<Icon icon="link" size={28} />}
               onClick={handler}
-              tooltip={i18n.t('crossrefsButton.tooltip')}
+              title={i18n.t('crossrefsButton.tooltip')}
             />
-            <Button
+            <BPButton
               id="dictlinks"
-              orient="vertical"
-              checked={show.dictlinks}
+              className={show.dictlinks ? 'on' : 'off'}
+              icon={<Icon icon="search-template" size={28} />}
               onClick={handler}
-              tooltip={i18n.t('dictButton.tooltip')}
+              title={i18n.t('dictButton.tooltip')}
             />
           </Hbox>
 

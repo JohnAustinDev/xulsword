@@ -420,7 +420,7 @@ export default class MenuBuilder {
           label: this.ts(`menu.view.${key}`),
           id: `xulsword.show.${key}`,
           type: 'checkbox',
-          icon: path.join(G.Dirs.path.xsAsset, 'icons', '16x14', `${key}.png`),
+          icon: path.join(G.Dirs.path.xsAsset, 'icons', '16x16', `${key}.png`),
           click: d(() => {
             const keys = [`xulsword.show.${key}`];
             if (key === 'strongs') {

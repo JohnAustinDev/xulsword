@@ -98,6 +98,12 @@ html .groupbox {
   width: 100%;
 }
 
+/* Buttons */
+.flex-button button {
+  width: 100%;
+  height: 100%;
+}
+
 /* Module Information */
 .module-info {
   background: rgba(255, 255, 255, 0.8);
