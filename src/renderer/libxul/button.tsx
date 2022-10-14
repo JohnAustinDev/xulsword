@@ -3,8 +3,9 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Box } from './boxes';
-import Label from './label';
+import { Button as BPButton } from '@blueprintjs/core';
+import type { ButtonProps as BPButtonProps } from '@blueprintjs/core';
+import { keep } from '../../common';
 import { xulDefaultProps, xulPropTypes, XulProps, htmlAttribs } from './xul';
 import './xul.css';
 import './button.css';
@@ -12,70 +13,74 @@ import './button.css';
 // XUL button
 const defaultProps = {
   ...xulDefaultProps,
-  dlgType: '',
-  open: false,
-  type: 'button',
+  fill: false,
+  checked: false,
+  dlgType: undefined,
 };
 
 const propTypes = {
   ...xulPropTypes,
-  // eslint-disable-next-line react/no-unused-prop-types
+  fill: PropTypes.bool,
   checked: PropTypes.bool,
-  disabled: PropTypes.bool,
-  dlgType: PropTypes.oneOf(['accept', 'cancel', '']),
-  label: PropTypes.string,
-  open: PropTypes.bool,
-  tooltip: PropTypes.string,
-  type: PropTypes.oneOf(['button', 'menu']),
+  dlgType: PropTypes.string,
 };
 
-interface ButtonProps extends XulProps {
-  // The 'checked' prop from is only used by button CSS, to
-  // open/close a button menu, use type=menu and render, or
-  // not, the button children.
-  checked?: boolean | undefined;
-  disabled?: boolean | undefined;
-  dlgType?: string;
-  label?: string | undefined;
-  open?: boolean;
-  tooltip?: string | undefined;
-  type?: string | undefined;
-}
+type ButtonProps = Omit<XulProps, 'align' | 'orient' | 'pack'> &
+  BPButtonProps & {
+    fill?: boolean | undefined; // true causes button to fill its parent container
+    checked?: boolean | undefined; // only does button CSS styling
+    dlgType?: string; // only does button CSS styling
+  };
 
 function Button(props: ButtonProps) {
-  const { align, children, disabled, xuldir, dlgType, label, orient, pack } =
-    props;
-  const alignx = align !== undefined ? align : 'center';
-  const packx = pack !== undefined ? pack : 'center';
+  const { checked, children, disabled, dlgType, fill } = props;
+  const cls: string[] = ['button', checked ? 'on' : 'off'];
+  if (dlgType) cls.push(dlgType);
+  if (fill) cls.push('fill');
+  const bpprops = [
+    'active',
+    'alignText',
+    'disabled',
+    'elementRef',
+    'fill',
+    'icon',
+    'intent',
+    'large',
+    'loading',
+    'minimal',
+    'outlined',
+    'rightIcon',
+    'small',
+    'text',
+    'type',
+  ];
   return (
-    <button
-      {...htmlAttribs(`xsbutton ${dlgType}`, props)}
-      disabled={disabled}
-      type="button"
+    <div
+      {...htmlAttribs(cls.join(' '), props)}
+      {...(disabled ? { onClick: undefined, onClickCapture: undefined } : {})}
     >
-      <Box
-        className="button-box"
-        flex="1"
-        align={alignx}
-        pack={packx}
-        xuldir={xuldir}
-        orient={orient}
-      >
-        <div className="button-icon" />
-
-        {props.label !== undefined && (
-          <Label className="button-text" value={label || ''} />
-        )}
-        {props.type !== 'menu' && children}
-      </Box>
-
-      {props.type === 'menu' && children && (
-        <div className="menu">{children}</div>
-      )}
-    </button>
+      <div className="button-box">
+        <BPButton {...keep(props, bpprops)}>{children}</BPButton>
+      </div>
+    </div>
   );
 }
 Button.defaultProps = defaultProps;
 Button.propTypes = propTypes;
 
 export default Button;
+
+export function AnchorButton(props: XulProps & { disabled: boolean }) {
+  const { disabled } = props;
+  return (
+    <a
+      type="button"
+      {...htmlAttribs('anchorbutton', props)}
+      {...(disabled ? { onClick: undefined, onClickCapture: undefined } : {})}
+    >
+      {props.children}
+    </a>
+  );
+}
+AnchorButton.defaultProps = { ...xulDefaultProps, disabled: false };
+AnchorButton.propTypes = { ...xulPropTypes, disabled: PropTypes.bool };

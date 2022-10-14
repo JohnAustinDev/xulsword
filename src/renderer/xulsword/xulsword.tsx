@@ -6,7 +6,7 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 import React from 'react';
 import i18n from 'i18next';
-import { Button as BPButton, Icon } from '@blueprintjs/core';
+import { Icon } from '@blueprintjs/core';
 import Subscription from '../../subscription';
 import { dString, diff, clone, drop } from '../../common';
 import C from '../../constant';
@@ -27,7 +27,7 @@ import {
   XulProps,
   xulPropTypes,
 } from '../libxul/xul';
-import Button from '../libxul/button';
+import Button, { AnchorButton } from '../libxul/button';
 import { Box, Hbox, Vbox } from '../libxul/boxes';
 import Menupopup from '../libxul/menupopup';
 import Bookselect from '../libxul/bookselect';
@@ -359,12 +359,8 @@ export default class Xulsword extends React.Component {
 
           <Vbox id="navigator-tool" pack="start">
             <Hbox id="historyButtons" align="center">
-              <Box
-                flex="40%"
-                className="flex-button"
-                title={i18n.t('history.back.tooltip')}
-              >
-                <BPButton
+              <Box flex="40%" title={i18n.t('history.back.tooltip')}>
+                <Button
                   id="back"
                   icon={`chevron-${left}`}
                   onClick={handler}
@@ -375,13 +371,10 @@ export default class Xulsword extends React.Component {
                   }
                 >
                   {i18n.t('back.label')}
-                </BPButton>
+                </Button>
               </Box>
-              <Box
-                className="flex-button"
-                title={i18n.t('history.all.tooltip')}
-              >
-                <BPButton
+              <Box title={i18n.t('history.all.tooltip')}>
+                <Button
                   id="historymenu"
                   icon={`double-chevron-${left}`}
                   rightIcon={`double-chevron-${right}`}
@@ -389,31 +382,25 @@ export default class Xulsword extends React.Component {
                   disabled={navdisabled || history.length <= 1}
                 >
                   {historyMenupopup || <span />}
-                </BPButton>
+                </Button>
               </Box>
-              <Box
-                flex="40%"
-                className="flex-button"
-                title={i18n.t('history.forward.tooltip')}
-              >
-                <BPButton
+              <Box flex="40%" title={i18n.t('history.forward.tooltip')}>
+                <Button
                   id="forward"
                   rightIcon={`chevron-${right}`}
                   onClick={handler}
                   disabled={navdisabled || historyIndex === 0}
                 >
                   {i18n.t('history.forward.label')}
-                </BPButton>
+                </Button>
               </Box>
             </Hbox>
 
             <Hbox id="player" pack="start" align="center" hidden>
               <audio controls onEnded={handler} onCanPlay={handler} />
-              <Button
-                id="closeplayer"
-                onClick={handler}
-                label={i18n.t('closeCmd.label')}
-              />
+              <Button id="closeplayer" onClick={handler}>
+                {i18n.t('closeCmd.label')}
+              </Button>
             </Hbox>
 
             <Hbox id="textnav" align="center">
@@ -432,25 +419,26 @@ export default class Xulsword extends React.Component {
                 width="50px"
                 maxLength="3"
                 pattern={/^[0-9]+$/}
-                value={location ? dString(location.chapter) : ''}
+                value={location?.chapter ? dString(location.chapter) : ''}
                 timeout="600"
                 disabled={navdisabled}
                 key={`c${location?.chapter}`}
                 onChange={handler}
                 onClick={handler}
               />
-              <Vbox width="28px">
-                <Button
+              <Vbox>
+                <AnchorButton
                   id="nextchap"
                   disabled={navdisabled}
                   onClick={handler}
                 />
-                <Button
+                <AnchorButton
                   id="prevchap"
                   disabled={navdisabled}
                   onClick={handler}
                 />
               </Vbox>
+              <span>:</span>
               <Textbox
                 id="verse"
                 key={`v${location?.verse}`}
@@ -463,13 +451,13 @@ export default class Xulsword extends React.Component {
                 onChange={handler}
                 onClick={handler}
               />
-              <Vbox width="28px">
-                <Button
+              <Vbox>
+                <AnchorButton
                   id="nextverse"
                   disabled={navdisabled}
                   onClick={handler}
                 />
-                <Button
+                <AnchorButton
                   id="prevverse"
                   disabled={navdisabled}
                   onClick={handler}
@@ -481,7 +469,7 @@ export default class Xulsword extends React.Component {
           <Spacer flex="1" orient="vertical" />
 
           <Hbox id="search-tool">
-            <Vbox pack="start">
+            <Vbox pack="start" align="center">
               <Textbox
                 id="searchText"
                 type="search"
@@ -493,17 +481,17 @@ export default class Xulsword extends React.Component {
                     if (b) b.click();
                   }
                 }}
-                tooltip={i18n.t('searchbox.tooltip')}
+                title={i18n.t('searchbox.tooltip')}
               />
-              <Box className="flex-button" title={i18n.t('search.tooltip')}>
-                <BPButton
+              <Box title={i18n.t('search.tooltip')}>
+                <Button
                   id="searchButton"
                   icon="search"
                   disabled={searchDisabled}
                   onClick={handler}
                 >
                   {i18n.t('searchBut.label')}
-                </BPButton>
+                </Button>
               </Box>
             </Vbox>
           </Hbox>
@@ -511,30 +499,30 @@ export default class Xulsword extends React.Component {
           <Spacer flex="1" orient="vertical" />
 
           <Hbox id="optionButtons" align="start">
-            <BPButton
+            <Button
               id="headings"
-              className={show.headings ? 'on' : 'off'}
+              checked={show.headings}
               icon={<Icon icon="widget-header" size={28} />}
               onClick={handler}
               title={i18n.t('headingsButton.tooltip')}
             />
-            <BPButton
+            <Button
               id="footnotes"
-              className={show.footnotes ? 'on' : 'off'}
+              checked={show.footnotes}
               icon={<Icon icon="manually-entered-data" size={28} />}
               onClick={handler}
               title={i18n.t('notesButton.tooltip')}
             />
-            <BPButton
+            <Button
               id="crossrefs"
-              className={show.crossrefs ? 'on' : 'off'}
+              checked={show.crossrefs}
               icon={<Icon icon="link" size={28} />}
               onClick={handler}
               title={i18n.t('crossrefsButton.tooltip')}
             />
-            <BPButton
+            <Button
               id="dictlinks"
-              className={show.dictlinks ? 'on' : 'off'}
+              checked={show.dictlinks}
               icon={<Icon icon="search-template" size={28} />}
               onClick={handler}
               title={i18n.t('dictButton.tooltip')}

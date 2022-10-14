@@ -54,15 +54,16 @@ html a:hover {
 html.dialog select {
   height: 2em;
 }
-.dialogbuttons .xsbutton {
+.dialogbuttons .button {
   font-size: 14px;
-  min-width: 80px;
-  padding: 3px 0;
+  flex-basis: 60px;
+  padding: 5px;
+  margin: 0;
+  margin-inline-start: 10px;
+  white-space: nowrap;
 }
-.dialogbuttons .bp4-button {
-  font-size: 14px;
-  min-width: 80px;
-  margin: 8px;
+.dialogbuttons .button:first-child {
+  margin-inline-start: 0;
 }
 
 /* Grid */
@@ -96,12 +97,6 @@ html .groupbox {
 }
 .groupbox .groupbox-body {
   width: 100%;
-}
-
-/* Buttons */
-.flex-button button {
-  width: 100%;
-  height: 100%;
 }
 
 /* Module Information */

@@ -17,14 +17,12 @@ const propTypes = {
   checked: PropTypes.bool,
   disabled: PropTypes.bool,
   label: PropTypes.string,
-  tooltip: PropTypes.string,
 };
 
 interface CheckboxProps extends XulProps {
   checked?: boolean | undefined;
   disabled?: boolean | undefined;
   label?: string | undefined;
-  tooltip?: string | undefined;
 }
 
 function Checkbox(props: CheckboxProps) {

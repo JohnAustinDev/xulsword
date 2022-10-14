@@ -14,22 +14,19 @@
   background-color: whitesmoke;
 }
 
-.chooseFont .picker-button .button-box {
-  padding: 3px;
-}
-
-.chooseFont .picker-button .button-icon {
+.chooseFont .picker-button .color-box {
   display: block;
   width: 60px;
   height: 1.5em;
+  margin: 3px;
 }
 
-.chooseFont .picker-button .menu {
-  left: unset;
-}
-
-.chooseFont .picker-button .menu > * {
+.chooseFont .picker-button .color-box > div {
   position: absolute;
-  top: -159px;
-  left: -233px;
+  top: 0px;
+  right: 50%;
+}
+html[dir='rtl'].chooseFont .picker-button .color-box > div {
+  right: unset;
+  left: 50%;
 }

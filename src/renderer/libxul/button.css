@@ -1,82 +1,19 @@
-.xsbutton {
-  margin: 1px 5px 2px 5px;
-  border: 1px solid;
-  border-radius: 4px;
-  border-top-color: ThreeDHighlight;
-  border-right-color: ThreeDLightShadow;
-  border-bottom-color: ThreeDLightShadow;
-  border-left-color: ThreeDHighlight;
+.button {
+  margin: 5px;
+}
+.button .button-box {
   background-color: white;
-  color: ButtonText;
-  text-shadow: none;
+  width: fit-content;
+  height: fit-content;
 }
 
-.xsbutton {
-  font-size: 11px;
-}
-
-.xsbutton .button-box {
-  border: 1px solid transparent;
+.button.fill,
+.button.fill .button-box,
+.button.fill .button-box > button {
+  width: 100%;
   height: 100%;
 }
 
-.xsbutton .button-icon {
-  display: none;
-}
-
-.xsbutton .button-text {
-  display: inline-block;
-  padding: 0px;
-}
-.xsbutton:not(.orient-vertical) .button-text {
-  padding-left: 4px;
-  padding-right: 0px;
-}
-
-.xsbutton:not(.orient-vertical).xuldir-reverse .button-text {
-  padding-left: 0px;
-  padding-right: 4px;
-}
-.xsbutton.orient-vertical .button-text {
-  padding-top: 4px;
-  padding-bottom: 0px;
-}
-
-.xsbutton.orient-vertical.xuldir-reverse .button-text {
-  padding-top: 0px;
-  padding-bottom: 4px;
-}
-
-.xsbutton:active {
-  background-color: lightgrey;
-}
-
-/* .......... active/open/checked state .......... */
-
-.xsbutton:hover:active,
-.xsbutton.open,
-.xsbutton.checked {
-  border-top-color: ThreeDLightShadow;
-  border-right-color: ThreeDLightShadow;
-  border-bottom-color: ThreeDLightShadow;
-  border-left-color: ThreeDLightShadow;
-  color: ButtonText;
-}
-
-/* .......... disabled state .......... */
-
-.xsbutton.disabled,
-.xsbutton.disabled:hover:active {
-  border-top-color: ThreeDHighlight;
-  border-right-color: ThreeDLightShadow;
-  border-bottom-color: ThreeDLightShadow;
-  border-left-color: ThreeDHighlight;
-  color: GrayText;
-}
-
-/* ::::: menu/menu-button buttons ::::: */
-
-.xsbutton .menu {
-  position: relative;
-  left: 50%;
+.button.on .bp4-icon {
+  color: #000bff;
 }

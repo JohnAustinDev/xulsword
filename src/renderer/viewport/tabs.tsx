@@ -15,7 +15,7 @@ import {
   XulProps,
   htmlAttribs,
 } from '../libxul/xul';
-import Button from '../libxul/button';
+import { AnchorButton } from '../libxul/button';
 import Menupopup from '../libxul/menupopup';
 import G from '../rg';
 import '../libxul/xul.css';
@@ -230,9 +230,9 @@ class Tabs extends React.Component {
             mtMod,
             'mts-tab',
             module === mtMod ? 'active' : '',
-            <Button type="menu" onClick={this.multiTabButtonClick}>
+            <AnchorButton onClick={this.multiTabButtonClick}>
               {multiTabMenupopup}
-            </Button>
+            </AnchorButton>
           )}
         {!isPinned &&
           (ilModule === 'disabled' || ilModuleOption[0]) &&

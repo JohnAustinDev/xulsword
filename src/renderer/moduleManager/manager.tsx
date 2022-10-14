@@ -6,7 +6,6 @@
 import React from 'react';
 import i18n from 'i18next';
 import {
-  Button as BPButton,
   Classes,
   Dialog,
   IToastProps,
@@ -32,6 +31,7 @@ import {
   XulProps,
   xulPropTypes,
 } from '../libxul/xul';
+import Button from '../libxul/button';
 import { Hbox, Vbox, Box } from '../libxul/boxes';
 import Groupbox from '../libxul/groupbox';
 import Bibleselect, {
@@ -898,10 +898,8 @@ export default class ModuleManager extends React.Component {
             </div>
             <div className={Classes.DIALOG_FOOTER}>
               <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                <BPButton onClick={dialogClose}>
-                  {i18n.t('cancel.label')}
-                </BPButton>
-                <BPButton onClick={dialogAccept}>{i18n.t('ok.label')}</BPButton>
+                <Button onClick={dialogClose}>{i18n.t('cancel.label')}</Button>
+                <Button onClick={dialogAccept}>{i18n.t('ok.label')}</Button>
               </div>
             </div>
           </Dialog>
@@ -930,10 +928,9 @@ export default class ModuleManager extends React.Component {
                     onCellClick={onLangCellClick}
                   />
                 </Box>
-                <BPButton
+                <Button
                   id="languageListClose"
                   icon="chevron-left"
-                  fill
                   onClick={eventHandler}
                 />
               </Groupbox>
@@ -953,7 +950,7 @@ export default class ModuleManager extends React.Component {
           {!language.open && (
             <Groupbox caption=" " orient="vertical">
               <Vbox flex="1">
-                <BPButton
+                <Button
                   id="languageListOpen"
                   icon="chevron-right"
                   style={{ height: '100%' }}
@@ -1001,7 +998,7 @@ export default class ModuleManager extends React.Component {
             </Hbox>
             <Vbox className="button-stack" pack="center">
               {!showModuleInfo && (
-                <BPButton
+                <Button
                   id="moduleInfo"
                   icon="info-sign"
                   intent="primary"
@@ -1010,23 +1007,23 @@ export default class ModuleManager extends React.Component {
                 />
               )}
               {showModuleInfo && (
-                <BPButton
+                <Button
                   id="moduleInfoBack"
                   intent="primary"
                   disabled={disable.moduleInfoBack}
                   onClick={eventHandler}
                 >
                   {i18n.t('back.label')}
-                </BPButton>
+                </Button>
               )}
-              <BPButton
+              <Button
                 id="moduleCancel"
                 intent="primary"
                 disabled={disable.moduleCancel}
                 onClick={eventHandler}
               >
                 {i18n.t('cancel.label')}
-              </BPButton>
+              </Button>
             </Vbox>
           </Groupbox>
         </Hbox>
@@ -1069,28 +1066,28 @@ export default class ModuleManager extends React.Component {
                 )}
               </Box>
               <Vbox className="button-stack" pack="center">
-                <BPButton
+                <Button
                   id="repoAdd"
                   icon="add"
                   intent="primary"
                   disabled={disable.repoAdd}
                   onClick={eventHandler}
                 />
-                <BPButton
+                <Button
                   id="repoDelete"
                   icon="delete"
                   intent="primary"
                   disabled={disable.repoDelete}
                   onClick={eventHandler}
                 />
-                <BPButton
+                <Button
                   id="repoCancel"
                   intent="primary"
                   disabled={disable.repoCancel}
                   onClick={eventHandler}
                 >
                   {i18n.t('cancel.label')}
-                </BPButton>
+                </Button>
               </Vbox>
             </Groupbox>
           </div>
@@ -1098,7 +1095,9 @@ export default class ModuleManager extends React.Component {
 
         <Hbox className="dialogbuttons" pack="end" align="end">
           {repository && repository.open && (
-            <BPButton
+            <Button
+              flex="1"
+              fill
               onClick={() =>
                 this.sState({
                   repository: { ...repository, open: false },
@@ -1106,20 +1105,22 @@ export default class ModuleManager extends React.Component {
               }
             >
               {i18n.t('less.label')}
-            </BPButton>
+            </Button>
           )}
           {repository && !repository.open && (
-            <BPButton
+            <Button
+              flex="1"
+              fill
               onClick={() =>
                 this.sState({ repository: { ...repository, open: true } })
               }
             >
               {i18n.t('moduleSources.label')}
-            </BPButton>
+            </Button>
           )}
-          {!progress && <Spacer flex="1" />}
+          {!progress && <Spacer flex="10" />}
           {progress && (
-            <Hbox className="progress-container" align="center" flex="1">
+            <Hbox className="progress-container" align="center" flex="10">
               <ProgressBar
                 value={progress[0] / progress[1]}
                 intent="primary"
@@ -1128,12 +1129,18 @@ export default class ModuleManager extends React.Component {
               />
             </Hbox>
           )}
-          <BPButton id="cancel" onClick={eventHandler}>
+          <Button id="cancel" flex="1" fill onClick={eventHandler}>
             {i18n.t('cancel.label')}
-          </BPButton>
-          <BPButton id="ok" disabled={okdisabled} onClick={eventHandler}>
+          </Button>
+          <Button
+            id="ok"
+            disabled={okdisabled}
+            flex="1"
+            fill
+            onClick={eventHandler}
+          >
             {i18n.t('ok.label')}
-          </BPButton>
+          </Button>
         </Hbox>
       </Vbox>
     );

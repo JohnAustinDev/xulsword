@@ -172,14 +172,12 @@ export const xulStyle = (props: any): React.CSSProperties | undefined => {
 export const xulClass = (
   classes: string | string[],
   props: XulProps & {
-    tooltip: string;
     type: string;
     checked: boolean;
     disabled: boolean;
     readonly: boolean;
   }
 ) => {
-  const c0 = [props.tooltip ? 'tooltip' : ''];
   const c1 = Array.isArray(classes) ? classes : classes.split(/\s+/);
   const c2 = props.className ? props.className.split(/\s+/) : [];
   const c3 = enums.map((c) => (props[c] ? `${c}-${props[c]}` : ''));
@@ -187,7 +185,7 @@ export const xulClass = (
     const v = props[c] as any;
     return v && !/^false$/i.test(v) ? `${c}` : '';
   });
-  const set = [...new Set(c0.concat(c1, c2, c3, c4).filter(Boolean))];
+  const set = [...new Set(c1.concat(c1, c2, c3, c4).filter(Boolean))];
   return { className: set.join(' ') };
 };
 
@@ -211,7 +209,6 @@ export const htmlAttribs = (className: string, props: any) => {
   if (props.domref) a.ref = props.domref;
   if (props.title) r.title = props.title;
   if (props.dir) r.dir = props.dir;
-  if (props.tooltip) r.title = props.tooltip;
   const style = {
     ...xulStyle(props),
     ...props.style,

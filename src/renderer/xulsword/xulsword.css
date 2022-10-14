@@ -6,98 +6,63 @@
 }
 #xulsword .controlbar .start-spacer {
   width: 15px;
-  min-width: 15px;
 }
-#historyButtons,
-#player {
-  margin-top: 2px;
-  height: 34px; /* specified to allow for player's height */
-  padding: 0 3px;
-}
-#player {
-  padding-inline-start: 6px;
-}
-.flex-button button {
-  margin: 0 3px;
-}
-
-/* MAIN WINDOW CONFIGURATIONS */
-#quit,
-#xulsword:not(.libSwordLoadFailed) #newmodule {
-  display: block !important;
+#xulsword .controlbar .button,
+#xulsword .controlbar .button > div,
+#xulsword .controlbar button {
+  width: 100%;
 }
 #xulsword .controlbar .textbox {
   font-size: 15px;
 }
+#xulsword .controlbar #search-tool .vbox > div {
+  width: 100%;
+}
+#xulsword .controlbar #book,
+#xulsword .controlbar #chapter,
+#xulsword .controlbar #verse {
+  margin-bottom: 0;
+  margin-top: 0;
+}
 
-/* MAIN WINDOW NAVIGATOR BUTTONS */
-#textnav {
-  padding: 2px 0px 2px 5px;
+#navigator-tool {
+  min-width: 312px;
 }
+
 #textnav .bookselect {
-  height: 26px;
+  min-width: 190px;
 }
-#textnav .bookselect .textbox {
-  width: 184px;
+#textnav > span {
+  padding-inline-start: 4px;
 }
-#textnav .xsbutton {
-  margin: 0px;
-  margin-inline-end: 7px;
-}
-#textnav .xsbutton,
-#textnav .xsbutton * {
-  padding: 0px;
-}
-#nextchap .button-icon,
-#nextverse .button-icon {
+#textnav #nextchap,
+#textnav #nextverse {
   display: block;
   background: url(../images/smallButtonIncrement.png);
   margin-bottom: 1px;
 }
-#prevchap .button-icon,
-#prevverse .button-icon {
+#textnav #prevchap,
+#textnav #prevverse {
   display: block;
   background: url(../images/smallButtonDecrement.png);
   margin-top: 1px;
 }
-#textnav .xsbutton .button-icon {
+#textnav .anchorbutton {
   width: 15px;
   height: 8px;
   background-position: 0px 0px;
 }
-#textnav .xsbutton:hover .button-icon {
+#textnav .anchorbutton:hover {
   background-position: -15px 0px;
 }
 #textnav .textbox input {
   text-align: center;
 }
 
-/* MAIN WINDOW SEARCH BUTTON */
-#search-tool {
-  padding-bottom: 0px;
-}
-#search-tool > .vbox {
-  padding-top: 3px;
-  margin-left: 0px;
+#searchButton {
+  margin: 0;
 }
 
-/* MAIN WINDOW TOGGLE BUTTONS */
-#optionButtons {
-  margin-top: 2px;
-}
-#optionButtons button {
-  margin: 0 5px;
-}
 #optionButtons button.off {
   opacity: 0.5;
-}
-
-.videoHelpMenuItem {
-  list-style-image: url(../images/videohelp.png) !important;
-}
-
-#printBrowser {
-  /*Fixes a Gecko print preview bug where
-  scroll bar was not appearing*/
-  overflow: auto;
 }

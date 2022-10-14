@@ -34,7 +34,6 @@ const propTypes = {
   inputRef: PropTypes.object,
   disabled: PropTypes.bool,
   timeout: PropTypes.string,
-  tooltip: PropTypes.string,
   type: PropTypes.oneOf(['search', 'text']),
   value: PropTypes.string,
 };
@@ -47,7 +46,6 @@ interface TextboxProps extends XulProps {
   inputRef?: React.RefObject<HTMLInputElement> | undefined;
   disabled?: boolean;
   timeout?: string | undefined;
-  tooltip?: string | undefined;
   type?: string;
   value?: string | undefined;
 }

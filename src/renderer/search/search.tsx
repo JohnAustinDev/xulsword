@@ -7,7 +7,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import i18n from 'i18next';
-import { ProgressBar, Button as BPButton } from '@blueprintjs/core';
+import { ProgressBar } from '@blueprintjs/core';
 import { clone, diff, drop, dString, sanitizeHTML } from '../../common';
 import C from '../../constant';
 import G from '../rg';
@@ -20,6 +20,7 @@ import {
   popupHandler as popupHandlerH,
   PopupParentInitState,
 } from '../popup/popupParentH';
+import Button from '../libxul/button';
 import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
 import { Box, Hbox, Vbox } from '../libxul/boxes';
 import Groupbox from '../libxul/groupbox';
@@ -59,7 +60,7 @@ const initialState = {
   searchtype: 'SearchExactText' as SearchType['type'], // type of search to do
   scoperadio: 'all' as typeof ScopeRadioOptions[number], // scope radio value
   scopeselect: 'gospel' as BookGroupType | typeof ScopeSelectOptions[number], // scope select value
-  moreLess: false as boolean, // more / less state
+  moreLess: true as boolean, // more / less state
   displayBible: '' as string, // current module of Bible search
   results: null as number | null, // count and page-result are returned at different times
   pageindex: 0 as number, // first results index to show
@@ -372,10 +373,10 @@ export default class SearchWin extends React.Component implements PopupParent {
             <Rows>
               <Row>
                 <Groupbox align="center">
-                  <BPButton id="moreLess" onClick={handler}>
+                  <Button id="moreLess" onClick={handler}>
                     {!moreLess && <Label value={i18n.t('more.label')} />}
                     {moreLess && <Label value={i18n.t('less.label')} />}
-                  </BPButton>
+                  </Button>
                   <Spacer flex="1" orient="horizontal" />
                   <Hbox className="searchtextLabel" align="start">
                     <Label
@@ -387,22 +388,22 @@ export default class SearchWin extends React.Component implements PopupParent {
                     <Textbox
                       id="searchtext"
                       value={searchtext}
-                      tooltip={i18n.t('searchbox.tooltip')}
+                      title={i18n.t('searchbox.tooltip')}
                       maxLength="60"
                       onChange={handler}
                     />
                     <ModuleMenu id="module" value={module} onChange={handler} />
                   </Vbox>
-                  <BPButton
+                  <Button
                     id="searchButton"
                     icon="search"
                     disabled={progress !== 0 || !module}
                     onClick={handler}
                   >
                     {i18n.t('searchBut.label')}
-                  </BPButton>
+                  </Button>
                   <Spacer flex="1" orient="horizontal" />
-                  <BPButton id="helpButton" icon="help" onClick={handler} />
+                  <Button id="helpButton" icon="help" onClick={handler} />
                 </Groupbox>
               </Row>
               <Row>
@@ -424,7 +425,7 @@ export default class SearchWin extends React.Component implements PopupParent {
                         checked={searchtype === st}
                         value={st}
                         label={i18n.t(`${st}.label`)}
-                        tooltip={i18n.t(`${st}.description`)}
+                        title={i18n.t(`${st}.description`)}
                       />
                     ))}
                   </Groupbox>
@@ -432,13 +433,13 @@ export default class SearchWin extends React.Component implements PopupParent {
                     <>
                       <Vbox />
                       <Vbox align="center">
-                        <BPButton
+                        <Button
                           id="createIndexButton"
                           disabled={progress !== 0}
                           onClick={handler}
                         >
                           {i18n.t('createIndex.label')}
-                        </BPButton>
+                        </Button>
                       </Vbox>
                     </>
                   )}
@@ -541,27 +542,27 @@ export default class SearchWin extends React.Component implements PopupParent {
             </Vbox>
             {count > C.UI.Search.resultsPerPage && (
               <Vbox>
-                <BPButton
+                <Button
                   id="pagefirst"
                   icon="double-chevron-up"
                   disabled={progress !== 0}
                   onClick={handler}
                 />
                 <Spacer orient="vertical" flex="1" />
-                <BPButton
+                <Button
                   id="pageprev"
                   icon="chevron-up"
                   disabled={progress !== 0}
                   onClick={handler}
                 />
-                <BPButton
+                <Button
                   id="pagenext"
                   icon="chevron-down"
                   disabled={progress !== 0}
                   onClick={handler}
                 />
                 <Spacer orient="vertical" flex="1" />
-                <BPButton
+                <Button
                   id="pagelast"
                   icon="double-chevron-down"
                   disabled={progress !== 0}

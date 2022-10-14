@@ -323,6 +323,7 @@ function createWindow(
   log.silly('Window options:', options);
   const win = new BrowserWindow(options);
   addWindowToRegistry(win, descriptor);
+  win.webContents.openDevTools();
   win
     .loadURL(resolveHtmlPath(`${type}.html`))
     .then(() => {

@@ -14,7 +14,7 @@ import G from './mg';
 import Commands, { newDbItemWithDefaults } from './commands';
 import setViewportTabs from './tabs';
 
-import type { TabTypes, XulswordStatePref } from '../type';
+import type { SearchType, TabTypes, XulswordStatePref } from '../type';
 import { verseKey } from './minit';
 import Data from './components/data';
 import Prefs, { PrefCallbackType } from './components/prefs';
@@ -381,7 +381,11 @@ export default class MenuBuilder {
             label: this.ts('searchBut.label', 'SearchAccKey'),
             accelerator: this.tx('SearchCommandKey', ['CommandOrControl']),
             click: d(() => {
-              const search = {} as any;
+              const search: SearchType = {
+                module: G.Tabs[0].module,
+                searchtext: '',
+                type: 'SearchAnyWord',
+              };
               Commands.search(search);
             }),
           },

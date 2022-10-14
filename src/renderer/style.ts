@@ -97,6 +97,7 @@ function insertModuleCSS(
           .join(', ');
         if (rul) {
           sheet.insertRule(`${newsel} ${rul.trim()}`);
+          log.debug(`Added CSS rule: ${newsel} ${rul.trim()}`);
         }
       }
     });

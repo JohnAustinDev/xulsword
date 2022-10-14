@@ -55,7 +55,6 @@ const propTypes = {
   selection: PropTypes.string,
   disabled: PropTypes.bool,
   sizetopopup: PropTypes.string,
-  tooltip: PropTypes.string,
 };
 
 interface BookselectProps extends XulProps {
@@ -63,7 +62,6 @@ interface BookselectProps extends XulProps {
   selection?: string | undefined;
   disabled?: boolean | undefined;
   sizetopopup?: string | undefined;
-  tooltip?: string | undefined;
 }
 
 interface BookselectState {
@@ -203,7 +201,7 @@ class Bookselect extends React.Component {
     }
 
     return (
-      <Box {...addClass('bookselect', props)} title={props.tooltip}>
+      <Box {...addClass('bookselect', props)}>
         <Stack>
           <Box style={xulStyle(props)}>
             <Menulist
@@ -214,7 +212,7 @@ class Bookselect extends React.Component {
               onChange={this.selectChange}
             />
           </Box>
-          <Hbox style={xulStyle(this.props)}>
+          <Box style={xulStyle(props)}>
             <Textbox
               id={`${props.id}__textbox`}
               value={bookName}
@@ -226,8 +224,8 @@ class Bookselect extends React.Component {
               onBlur={this.focusChange}
               inputRef={this.textInput}
             />
-            <Spacer width="20px" />
-          </Hbox>
+            <Spacer />
+          </Box>
         </Stack>
       </Box>
     );

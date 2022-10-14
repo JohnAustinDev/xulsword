@@ -21,7 +21,6 @@ const propTypes = {
   multiple: PropTypes.bool,
   options: PropTypes.arrayOf(PropTypes.element),
   size: PropTypes.number,
-  tooltip: PropTypes.string,
   value: PropTypes.string,
 };
 
@@ -30,7 +29,6 @@ interface MenulistProps extends XulProps {
   multiple?: boolean;
   options?: PropTypes.ReactElementLike[];
   size?: number | undefined;
-  tooltip?: string | undefined;
   value?: string | undefined;
 }
 

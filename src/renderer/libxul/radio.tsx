@@ -14,7 +14,6 @@ import './xul.css';
 const defaultProps = {
   ...xulDefaultProps,
   disabled: false,
-  tooltip: '',
 };
 
 const propTypes = {
@@ -24,7 +23,6 @@ const propTypes = {
   disabled: PropTypes.bool,
   label: PropTypes.string,
   value: PropTypes.string,
-  tooltip: PropTypes.string,
 };
 
 interface RadioProps extends XulProps {
@@ -33,7 +31,6 @@ interface RadioProps extends XulProps {
   disabled?: boolean | undefined;
   label: string;
   value: string;
-  tooltip?: string;
 }
 
 function Radio(props: RadioProps) {

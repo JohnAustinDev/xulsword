@@ -4,7 +4,7 @@
 import React from 'react';
 import i18n from 'i18next';
 import { ChromePicker as ColorPicker } from 'react-color';
-import { Classes, Dialog, Slider, Button as BPButton } from '@blueprintjs/core';
+import { Classes, Dialog, Slider } from '@blueprintjs/core';
 import type { ReactElementLike } from 'prop-types';
 import { diff } from '../../common';
 import G from '../rg';
@@ -14,11 +14,12 @@ import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
 import { Hbox, Vbox } from '../libxul/boxes';
 import Groupbox from '../libxul/groupbox';
 import Label from '../libxul/label';
-import Button from '../libxul/button';
+import Button, { AnchorButton } from '../libxul/button';
 import Checkbox from '../libxul/checkbox';
 import Menulist from '../libxul/menulist';
 import ModuleMenu from '../libxul/modulemenu';
 import Grid, { Columns, Column, Rows, Row } from '../libxul/grid';
+import Spacer from '../libxul/spacer';
 import handlerH, {
   extractModuleStyleState,
   startingState,
@@ -154,10 +155,10 @@ export default class ChooseFontWin extends React.Component {
     return (
       <Vbox>
         <style>{`
-        #color .button-icon {
+        #color .color-box {
           background-color: rgb(${fc.r}, ${fc.g}, ${fc.b}, ${fc.a});
         }
-        #background .button-icon {
+        #background .color-box {
           background-color: rgb(${bc.r}, ${bc.g}, ${bc.b}, ${bc.a});
         }`}</style>
         {ruSureDialog && (
@@ -165,16 +166,16 @@ export default class ChooseFontWin extends React.Component {
             <div className={Classes.DIALOG_BODY}>
               {i18n.t('dialog.confirmDelete')}
             </div>
-            <div className={Classes.DIALOG_FOOTER}>
-              <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                <BPButton onClick={() => ruSureDialog(false)}>
-                  {i18n.t('no.label')}
-                </BPButton>
-                <BPButton onClick={() => ruSureDialog(true)}>
-                  {i18n.t('yes.label')}
-                </BPButton>
-              </div>
-            </div>
+            <Hbox className="dialogbuttons" pack="end" align="end">
+              <Spacer flex="10" />
+              <Button flex="1" fill onClick={() => ruSureDialog(false)}>
+                {i18n.t('no.label')}
+              </Button>
+              <Button flex="1" fill onClick={() => ruSureDialog(true)}>
+                {i18n.t('yes.label')}
+              </Button>
+              <Spacer width="10px" />
+            </Hbox>
           </Dialog>
         )}
         <span id="styleTest" />
@@ -261,20 +262,20 @@ export default class ChooseFontWin extends React.Component {
                 <Button
                   id="color"
                   className="picker-button"
-                  type="menu"
-                  checked={coloropen}
                   disabled={disabled}
                   onClick={handler}
                 >
-                  {coloropen && (
-                    <ColorPicker
-                      color={fc}
-                      defaultView="rgb"
-                      onChange={(c: PickerColorType) => {
-                        this.setState({ color: c.rgb });
-                      }}
-                    />
-                  )}
+                  <div className="color-box">
+                    {coloropen && (
+                      <ColorPicker
+                        color={fc}
+                        defaultView="rgb"
+                        onChange={(c: PickerColorType) => {
+                          this.setState({ color: c.rgb });
+                        }}
+                      />
+                    )}
+                  </div>
                 </Button>
               </Row>
               {showBackgroundRow && (
@@ -288,20 +289,20 @@ export default class ChooseFontWin extends React.Component {
                   <Button
                     id="background"
                     className="picker-button"
-                    type="menu"
-                    checked={backgroundopen}
                     disabled={disabled}
                     onClick={handler}
                   >
-                    {backgroundopen && (
-                      <ColorPicker
-                        color={bc}
-                        defaultView="rgb"
-                        onChange={(c: PickerColorType) => {
-                          this.setState({ background: c.rgb });
-                        }}
-                      />
-                    )}
+                    <div className="color-box">
+                      {backgroundopen && (
+                        <ColorPicker
+                          color={bc}
+                          defaultView="rgb"
+                          onChange={(c: PickerColorType) => {
+                            this.setState({ background: c.rgb });
+                          }}
+                        />
+                      )}
+                    </div>
                   </Button>
                 </Row>
               )}
@@ -327,13 +328,14 @@ export default class ChooseFontWin extends React.Component {
           </Grid>
         </Groupbox>
 
-        <Hbox className="dialogbuttons" flex="1" pack="end" align="end">
-          <Button
-            id="cancel"
-            label={i18n.t('cancel.label')}
-            onClick={handler}
-          />
-          <Button id="ok" label={i18n.t('ok.label')} onClick={handler} />
+        <Hbox className="dialogbuttons" pack="end" align="end">
+          <Spacer flex="10" />
+          <Button id="cancel" flex="1" fill onClick={handler}>
+            {i18n.t('cancel.label')}
+          </Button>
+          <Button id="ok" flex="1" fill onClick={handler}>
+            {i18n.t('ok.label')}
+          </Button>
         </Hbox>
       </Vbox>
     );

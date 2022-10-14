@@ -26,6 +26,7 @@
   border-bottom: 2px solid rgb(200, 170, 205);
   border-top-right-radius: 4px;
   border-top-left-radius: 4px;
+  cursor: pointer;
 }
 .tabs .tab .border {
   border-top: 2px solid transparent;
@@ -34,40 +35,17 @@
 .tabs .mts-tab {
   padding-inline-end: 0px;
 }
-.tabs .mts-tab .xsbutton {
-  float: right;
-  width: 12px;
-  height: 12px;
-  margin: 2px;
-  padding: 0;
-  background: transparent;
-  border: none;
-  outline: unset;
-  outline-offset: unset;
-}
-.tabs .mts-tab .button-box {
-  border: none !important;
-}
-html[dir='rtl'] .tabs .mts-tab .xsbutton {
-  float: left;
-}
-.tabs .mts-tab .xsbutton .menu {
-  left: auto;
-  right: calc(-5px - 100%);
-}
-html[dir='rtl'] .tabs .mts-tab .xsbutton .menu {
-  left: calc(-5px - 100%);
-  right: auto;
-}
-.tabs .mts-tab .xsbutton .menupopup {
-  transform: translateX(-100%);
+.tabs .mts-tab .anchorbutton .menupopup {
+  top: 17px;
+  right: 0px;
   overflow: auto;
 }
-html[dir='rtl'] .tabs .mts-tab .xsbutton .menupopup {
-  transform: translateX(90%);
+html[dir='rtl'] .tabs .mts-tab .anchorbutton,
+menupopup {
+  right: unset;
+  left: 0px;
 }
-.tabs .mts-tab .button-icon {
-  display: block;
+.tabs .mts-tab .anchorbutton {
   width: 12px;
   height: 12px;
   background-image: url(../images/dropdown-menu.png);
