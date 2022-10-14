@@ -6,10 +6,6 @@
   margin: 6px 0;
   margin-inline-start: 10px;
 }
-.modulemanager .button-stack .button-box,
-.modulemanager .button-stack button {
-  width: 100%;
-}
 
 .checkbox-column {
   text-align: center;
@@ -26,14 +22,6 @@
 }
 .language.closed .groupbox:first-child .groupbox-body {
   padding: 0;
-}
-.language.closed .button-box,
-.language.closed button {
-  height: 100%;
-}
-.language.open .button-box,
-.language.open button {
-  width: 100%;
 }
 
 #languageListClose {

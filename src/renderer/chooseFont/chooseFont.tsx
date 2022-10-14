@@ -14,7 +14,7 @@ import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
 import { Hbox, Vbox } from '../libxul/boxes';
 import Groupbox from '../libxul/groupbox';
 import Label from '../libxul/label';
-import Button, { AnchorButton } from '../libxul/button';
+import Button from '../libxul/button';
 import Checkbox from '../libxul/checkbox';
 import Menulist from '../libxul/menulist';
 import ModuleMenu from '../libxul/modulemenu';
@@ -168,10 +168,10 @@ export default class ChooseFontWin extends React.Component {
             </div>
             <Hbox className="dialogbuttons" pack="end" align="end">
               <Spacer flex="10" />
-              <Button flex="1" fill onClick={() => ruSureDialog(false)}>
+              <Button flex="1" fill="x" onClick={() => ruSureDialog(false)}>
                 {i18n.t('no.label')}
               </Button>
-              <Button flex="1" fill onClick={() => ruSureDialog(true)}>
+              <Button flex="1" fill="x" onClick={() => ruSureDialog(true)}>
                 {i18n.t('yes.label')}
               </Button>
               <Spacer width="10px" />
@@ -330,10 +330,10 @@ export default class ChooseFontWin extends React.Component {
 
         <Hbox className="dialogbuttons" pack="end" align="end">
           <Spacer flex="10" />
-          <Button id="cancel" flex="1" fill onClick={handler}>
+          <Button id="cancel" flex="1" fill="x" onClick={handler}>
             {i18n.t('cancel.label')}
           </Button>
-          <Button id="ok" flex="1" fill onClick={handler}>
+          <Button id="ok" flex="1" fill="x" onClick={handler}>
             {i18n.t('ok.label')}
           </Button>
         </Hbox>

@@ -13,22 +13,22 @@ import './button.css';
 // XUL button
 const defaultProps = {
   ...xulDefaultProps,
-  fill: false,
+  fill: undefined,
   checked: false,
   dlgType: undefined,
 };
 
 const propTypes = {
   ...xulPropTypes,
-  fill: PropTypes.bool,
+  fill: PropTypes.oneOf(['xy', 'x', 'y']),
   checked: PropTypes.bool,
   dlgType: PropTypes.string,
 };
 
 type ButtonProps = Omit<XulProps, 'align' | 'orient' | 'pack'> &
-  BPButtonProps & {
-    fill?: boolean | undefined; // true causes button to fill its parent container
-    checked?: boolean | undefined; // only does button CSS styling
+  Omit<BPButtonProps, 'fill'> & {
+    fill?: 'xy' | 'x' | 'y'; // to fill container in x, y or both directions
+    checked?: boolean; // only does button CSS styling
     dlgType?: string; // only does button CSS styling
   };
 
@@ -36,13 +36,12 @@ function Button(props: ButtonProps) {
   const { checked, children, disabled, dlgType, fill } = props;
   const cls: string[] = ['button', checked ? 'on' : 'off'];
   if (dlgType) cls.push(dlgType);
-  if (fill) cls.push('fill');
+  if (fill) cls.push(`fill-${fill}`);
   const bpprops = [
     'active',
     'alignText',
     'disabled',
     'elementRef',
-    'fill',
     'icon',
     'intent',
     'large',
@@ -60,7 +59,9 @@ function Button(props: ButtonProps) {
       {...(disabled ? { onClick: undefined, onClickCapture: undefined } : {})}
     >
       <div className="button-box">
-        <BPButton {...keep(props, bpprops)}>{children}</BPButton>
+        <BPButton {...keep(props, bpprops)} fill={!!fill}>
+          {children}
+        </BPButton>
       </div>
     </div>
   );

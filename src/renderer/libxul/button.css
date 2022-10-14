@@ -7,9 +7,16 @@
   height: fit-content;
 }
 
-.button.fill,
-.button.fill .button-box,
-.button.fill .button-box > button {
+.button.fill-x .button-box,
+.button.fill-x .button-box > button {
+  width: 100%;
+}
+.button.fill-y .button-box,
+.button.fill-y .button-box > button {
+  height: 100%;
+}
+.button.fill-xy .button-box,
+.button.fill-xy .button-box > button {
   width: 100%;
   height: 100%;
 }

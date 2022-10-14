@@ -931,6 +931,7 @@ export default class ModuleManager extends React.Component {
                 <Button
                   id="languageListClose"
                   icon="chevron-left"
+                  fill="x"
                   onClick={eventHandler}
                 />
               </Groupbox>
@@ -953,6 +954,7 @@ export default class ModuleManager extends React.Component {
                 <Button
                   id="languageListOpen"
                   icon="chevron-right"
+                  fill="y"
                   style={{ height: '100%' }}
                   onClick={eventHandler}
                 />
@@ -1002,6 +1004,7 @@ export default class ModuleManager extends React.Component {
                   id="moduleInfo"
                   icon="info-sign"
                   intent="primary"
+                  fill="x"
                   disabled={disable.moduleInfo}
                   onClick={eventHandler}
                 />
@@ -1010,6 +1013,7 @@ export default class ModuleManager extends React.Component {
                 <Button
                   id="moduleInfoBack"
                   intent="primary"
+                  fill="x"
                   disabled={disable.moduleInfoBack}
                   onClick={eventHandler}
                 >
@@ -1019,6 +1023,7 @@ export default class ModuleManager extends React.Component {
               <Button
                 id="moduleCancel"
                 intent="primary"
+                fill="x"
                 disabled={disable.moduleCancel}
                 onClick={eventHandler}
               >
@@ -1070,6 +1075,7 @@ export default class ModuleManager extends React.Component {
                   id="repoAdd"
                   icon="add"
                   intent="primary"
+                  fill="x"
                   disabled={disable.repoAdd}
                   onClick={eventHandler}
                 />
@@ -1077,12 +1083,14 @@ export default class ModuleManager extends React.Component {
                   id="repoDelete"
                   icon="delete"
                   intent="primary"
+                  fill="x"
                   disabled={disable.repoDelete}
                   onClick={eventHandler}
                 />
                 <Button
                   id="repoCancel"
                   intent="primary"
+                  fill="x"
                   disabled={disable.repoCancel}
                   onClick={eventHandler}
                 >
@@ -1097,7 +1105,7 @@ export default class ModuleManager extends React.Component {
           {repository && repository.open && (
             <Button
               flex="1"
-              fill
+              fill="x"
               onClick={() =>
                 this.sState({
                   repository: { ...repository, open: false },
@@ -1110,7 +1118,7 @@ export default class ModuleManager extends React.Component {
           {repository && !repository.open && (
             <Button
               flex="1"
-              fill
+              fill="x"
               onClick={() =>
                 this.sState({ repository: { ...repository, open: true } })
               }
@@ -1129,14 +1137,14 @@ export default class ModuleManager extends React.Component {
               />
             </Hbox>
           )}
-          <Button id="cancel" flex="1" fill onClick={eventHandler}>
+          <Button id="cancel" flex="1" fill="x" onClick={eventHandler}>
             {i18n.t('cancel.label')}
           </Button>
           <Button
             id="ok"
             disabled={okdisabled}
             flex="1"
-            fill
+            fill="x"
             onClick={eventHandler}
           >
             {i18n.t('ok.label')}
