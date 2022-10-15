@@ -13,7 +13,6 @@ import {
   XulProps,
 } from './xul';
 import { Box } from './boxes';
-import './xul.css';
 import './textbox.css';
 
 const defaultProps = {

@@ -13,7 +13,6 @@ import C from '../../constant';
 import G from '../rg';
 import { addClass, xulDefaultProps, xulPropTypes, XulProps } from './xul';
 import Menulist from './menulist';
-import './xul.css';
 
 import type { ModTypes } from '../../type';
 

@@ -18,7 +18,6 @@ import {
 import { AnchorButton } from '../libxul/button';
 import Menupopup from '../libxul/menupopup';
 import G from '../rg';
-import '../libxul/xul.css';
 import './tabs.css';
 
 const defaultProps = xulDefaultProps;

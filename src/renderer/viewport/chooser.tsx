@@ -24,7 +24,6 @@ import {
   delayHandler,
   topHandle,
 } from '../libxul/xul';
-import '../libxul/xul.css';
 import handlerH from './chooserH';
 import './chooser.css';
 

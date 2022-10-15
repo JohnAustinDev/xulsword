@@ -6,7 +6,7 @@ import PropTypes from 'prop-types';
 import { Hbox } from './boxes';
 import Label from './label';
 import { xulDefaultProps, xulPropTypes, XulProps, addClass } from './xul';
-import './xul.css';
+import './checkbox.css';
 
 // XUL button
 const defaultProps = xulDefaultProps;

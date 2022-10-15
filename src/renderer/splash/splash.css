@@ -1,0 +1,85 @@
+html.splash,
+.splash body,
+.splash #root {
+  overflow: hidden;
+  margin: 0;
+  padding: 0 !important;
+}
+
+#layer1 {
+  background-image: url(../../../assets/splash.png);
+  background-repeat: no-repeat;
+  width: 500px;
+  height: 375px;
+}
+
+#layer2 {
+  background-repeat: no-repeat;
+  width: 100%;
+  height: 100%;
+}
+
+.splash-text {
+  font-size: 14px;
+  color: rgb(77, 37, 143);
+}
+
+html.en #layer2 {
+  background-image: url('../../../assets/locales/en/splash-overlay.png');
+}
+
+html.ru #layer2 {
+  background-image: url('../../../assets/locales/ru/splash-overlay.png');
+}
+
+html.crh-Cyrl #layer2 {
+  background-image: url('../../../assets/locales/crh-Cyrl/splash-overlay.png');
+}
+
+html.fa #layer2 {
+  background-image: url('../../../assets/locales/fa/splash-overlay.png');
+}
+
+html.kk #layer2 {
+  background-image: url('../../../assets/locales/kk/splash-overlay.png');
+}
+
+html.ko #layer2 {
+  background-image: url('../../../assets/locales/ko/splash-overlay.png');
+}
+
+html.kum #layer2 {
+  background-image: url('../../../assets/locales/kum/splash-overlay.png');
+}
+
+html.ky-Arab #layer2 {
+  background-image: url('../../../assets/locales/ky-Arab/splash-overlay.png');
+}
+
+html.ky-Cyrl #layer2 {
+  background-image: url('../../../assets/locales/ky-Cyrl/splash-overlay.png');
+}
+
+html.ru-CA #layer2 {
+  background-image: url('../../../assets/locales/ru-CA/splash-overlay.png');
+}
+
+html.tk-Latn #layer2 {
+  background-image: url('../../../assets/locales/tk-Latn/splash-overlay.png');
+}
+
+html.tt-Cyrl #layer2 {
+  background-image: url('../../../assets/locales/tt-Cyrl/splash-overlay.png');
+}
+
+html.ug #layer2 {
+  background-image: url('../../../assets/locales/ug/splash-overlay.png');
+}
+
+html.uz-Cyrl #layer2 {
+  background-image: url('../../../assets/locales/uz-Cyrl/splash-overlay.png');
+}
+
+html.uz-Latn #layer2 {
+  background-image: url('../../../assets/locales/uz-Latn/splash-overlay.png');
+}

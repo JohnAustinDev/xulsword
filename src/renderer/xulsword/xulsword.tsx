@@ -358,50 +358,53 @@ export default class Xulsword extends React.Component {
           <Spacer className="start-spacer" orient="vertical" />
 
           <Vbox id="navigator-tool" pack="start">
-            <Hbox id="historyButtons" align="center">
-              <Box flex="40%" title={i18n.t('history.back.tooltip')}>
-                <Button
-                  id="back"
-                  icon={`chevron-${left}`}
-                  onClick={handler}
-                  disabled={
-                    navdisabled ||
-                    !history.length ||
-                    historyIndex === history.length - 1
-                  }
-                >
-                  {i18n.t('back.label')}
+            {true && (
+              <Hbox id="historyButtons" align="center">
+                <Box flex="40%" title={i18n.t('history.back.tooltip')}>
+                  <Button
+                    id="back"
+                    icon={`chevron-${left}`}
+                    onClick={handler}
+                    disabled={
+                      navdisabled ||
+                      !history.length ||
+                      historyIndex === history.length - 1
+                    }
+                  >
+                    {i18n.t('back.label')}
+                  </Button>
+                </Box>
+                <Box title={i18n.t('history.all.tooltip')}>
+                  <Button
+                    id="historymenu"
+                    icon={`double-chevron-${left}`}
+                    rightIcon={`double-chevron-${right}`}
+                    onClick={handler}
+                    disabled={navdisabled || history.length <= 1}
+                  >
+                    {historyMenupopup || <span />}
+                  </Button>
+                </Box>
+                <Box flex="40%" title={i18n.t('history.forward.tooltip')}>
+                  <Button
+                    id="forward"
+                    rightIcon={`chevron-${right}`}
+                    onClick={handler}
+                    disabled={navdisabled || historyIndex === 0}
+                  >
+                    {i18n.t('history.forward.label')}
+                  </Button>
+                </Box>
+              </Hbox>
+            )}
+            {false && (
+              <Hbox id="player" pack="start" align="center">
+                <audio controls onEnded={handler} onCanPlay={handler} />
+                <Button id="closeplayer" onClick={handler}>
+                  {i18n.t('close.label')}
                 </Button>
-              </Box>
-              <Box title={i18n.t('history.all.tooltip')}>
-                <Button
-                  id="historymenu"
-                  icon={`double-chevron-${left}`}
-                  rightIcon={`double-chevron-${right}`}
-                  onClick={handler}
-                  disabled={navdisabled || history.length <= 1}
-                >
-                  {historyMenupopup || <span />}
-                </Button>
-              </Box>
-              <Box flex="40%" title={i18n.t('history.forward.tooltip')}>
-                <Button
-                  id="forward"
-                  rightIcon={`chevron-${right}`}
-                  onClick={handler}
-                  disabled={navdisabled || historyIndex === 0}
-                >
-                  {i18n.t('history.forward.label')}
-                </Button>
-              </Box>
-            </Hbox>
-
-            <Hbox id="player" pack="start" align="center" hidden>
-              <audio controls onEnded={handler} onCanPlay={handler} />
-              <Button id="closeplayer" onClick={handler}>
-                {i18n.t('closeCmd.label')}
-              </Button>
-            </Hbox>
+              </Hbox>
+            )}
 
             <Hbox id="textnav" align="center">
               <Bookselect

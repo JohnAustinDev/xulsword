@@ -4,7 +4,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { xulDefaultProps, xulPropTypes, XulProps, htmlAttribs } from './xul';
-import './xul.css';
+import './label.css';
 
 // XUL label
 const defaultProps = {

@@ -17,7 +17,6 @@ import { Hbox } from './boxes';
 import Label from './label';
 import Menulist from './menulist';
 import Spacer from './spacer';
-import './xul.css';
 
 import type { BookGroupType } from '../../type';
 import ModuleMenu from './modulemenu';

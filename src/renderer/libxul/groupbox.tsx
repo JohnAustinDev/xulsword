@@ -7,7 +7,6 @@ import { keep, drop } from '../../common';
 import { addClass, xulDefaultProps, xulPropTypes, XulProps } from './xul';
 import Label from './label';
 import Image from './image';
-import './xul.css';
 import './groupbox.css';
 import { Box, Hbox, Vbox } from './boxes';
 

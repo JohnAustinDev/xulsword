@@ -4,7 +4,7 @@ import renderToRoot from '../rinit';
 import { Hbox, Vbox } from '../libxul/boxes';
 import Label from '../libxul/label';
 import Stack from '../libxul/stack';
-import '../about/about.css';
+import './splash.css';
 
 renderToRoot(
   <Vbox id="mainbox" width="500" height="375">

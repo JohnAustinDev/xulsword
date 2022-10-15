@@ -223,8 +223,20 @@ const Commands: GType['Commands'] = {
     );
   },
 
-  openHelp(module) {
-    log.info(`Action not implemented: openHelp()`);
+  openAbout(modules) {
+    const tab = getTab();
+    const modlabel =
+      modules && modules.length
+        ? ` ${(tab && modules[0] in tab && tab[modules[0]].label) || module}`
+        : '';
+    const options = {
+      width: 800,
+      title: `${i18n.t('menu.help.about')}${modlabel}`,
+      webPreferences: {
+        additionalArguments: [JSON_stringify({ modules })],
+      },
+    };
+    Window.open({ type: 'about', category: 'dialog-window', options });
   },
 
   goToLocationSK(location: LocationSKType, scroll?: ScrollType | undefined) {

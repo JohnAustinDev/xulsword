@@ -5,7 +5,6 @@
 import React from 'react';
 import { Vbox } from './boxes';
 import { addClass, xulDefaultProps, xulPropTypes, XulProps } from './xul';
-import './xul.css';
 import './menupopup.css';
 
 // XUL menupopup

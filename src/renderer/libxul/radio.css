@@ -1,0 +1,7 @@
+.radio.box {
+  align-items: baseline;
+}
+
+.radio input {
+  margin-inline-end: 0.4em;
+}

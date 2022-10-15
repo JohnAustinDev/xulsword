@@ -45,9 +45,9 @@ html a:hover {
   color: blue;
 }
 
-/* Label */
-.label {
-  white-space: nowrap;
+/* All XUL elements */
+.hidden {
+  visibility: hidden;
 }
 
 /* Dialog windows */

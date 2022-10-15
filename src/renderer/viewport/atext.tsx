@@ -40,7 +40,6 @@ import {
   findVerseElement,
 } from './zversekey';
 import handlerH from './atextH';
-import '../libxul/xul.css';
 import '../libsword.css';
 import './atext.css';
 

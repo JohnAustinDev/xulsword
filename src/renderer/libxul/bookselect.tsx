@@ -17,12 +17,11 @@ import {
   XulProps,
   xulStyle,
 } from './xul';
-import { Box, Hbox } from './boxes';
+import { Box } from './boxes';
 import Spacer from './spacer';
 import Stack from './stack';
 import Menulist from './menulist';
 import Textbox from './textbox';
-import './xul.css';
 import './bookselect.css';
 
 // XUL Bookselect

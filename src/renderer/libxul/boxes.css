@@ -1,24 +1,3 @@
-.checkbox.box,
-.radio.box {
-  align-items: baseline;
-}
-
-.checkbox input,
-.radio input {
-  margin-inline-end: 0.4em;
-}
-
-.stack {
-  position: relative;
-  height: 100%;
-}
-
-.stack > *:not(:first-child) {
-  position: absolute;
-  left: 0;
-  top: 0;
-}
-
 .box {
   display: flex;
   justify-content: space-around;
@@ -34,10 +13,6 @@
 .hbox,
 .orient-horizontal {
   flex-direction: row;
-}
-
-.hidden {
-  display: none;
 }
 
 .pack-start {

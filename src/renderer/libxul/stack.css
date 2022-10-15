@@ -1,0 +1,9 @@
+.stack {
+  position: relative;
+}
+
+.stack > *:not(:first-child) {
+  position: absolute;
+  left: 0;
+  top: 0;
+}

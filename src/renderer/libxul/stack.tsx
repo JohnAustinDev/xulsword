@@ -3,7 +3,7 @@
 
 import React from 'react';
 import { xulDefaultProps, xulPropTypes, XulProps, htmlAttribs } from './xul';
-import './xul.css';
+import './stack.css';
 
 // XUL stack
 const defaultProps = xulDefaultProps;

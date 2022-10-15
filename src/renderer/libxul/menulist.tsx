@@ -5,7 +5,6 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { addClass, xulDefaultProps, xulPropTypes, XulProps } from './xul';
 import { Box } from './boxes';
-import './xul.css';
 
 // XUL menulist
 const defaultProps = {

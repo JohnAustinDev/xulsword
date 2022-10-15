@@ -77,7 +77,7 @@ export default function contextMenu(
         click: ((data) => {
           return () => {
             const mod = data.module || data.tab;
-            if (mod) Commands.openHelp(mod);
+            if (mod) Commands.openAbout(mod);
           };
         })(cm()),
       },

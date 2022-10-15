@@ -58,7 +58,8 @@ export type WindowDescriptorType = {
     | 'moduleManager'
     | 'removeModule'
     | 'search'
-    | 'searchHelp';
+    | 'searchHelp'
+    | 'about';
   id?: number;
   category?:
     | 'window' // Parent optional, persisted, resizable
@@ -729,7 +730,7 @@ const CommandsPublic = {
   ) => void,
   openDbItemPropertiesDialog: func as unknown as (bookmark: unknown) => void,
   deleteDbItem: func as unknown as (bookmark: unknown) => void,
-  openHelp: func as unknown as (module?: string) => void,
+  openAbout: func as unknown as (modules?: string[]) => void,
   goToLocationVK: func as unknown as (
     location: LocationVKType,
     selection: LocationVKType,

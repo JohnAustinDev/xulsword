@@ -8,7 +8,6 @@ import PropTypes from 'prop-types';
 import type { ReactElementLike } from 'prop-types';
 import { component } from '../rutil';
 import { xulDefaultProps, xulPropTypes, XulProps, htmlAttribs } from './xul';
-import './xul.css';
 import './grid.css';
 
 // XUL columns

@@ -35,7 +35,6 @@ import { Hbox, Vbox } from '../libxul/boxes';
 import Chooser from './chooser';
 import Tabs from './tabs';
 import Atext from './atext';
-import '../libxul/xul.css';
 import './viewport.css';
 
 import type { LocationVKType, ScrollType, XulswordStatePref } from '../../type';

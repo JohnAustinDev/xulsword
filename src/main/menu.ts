@@ -735,7 +735,7 @@ export default class MenuBuilder {
         {
           label: this.ts('menu.help.about'),
           click: d(() => {
-            Commands.openHelp();
+            Commands.openAbout();
           }),
         },
       ],
