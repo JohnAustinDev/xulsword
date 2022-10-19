@@ -56,7 +56,7 @@ connection.
 
 # Compilation instructions for Linux
 
-**Linux (Ubuntu Xenial/Bionic)**: Run build.sh
+**Linux (Ubuntu Xenial/Bionic)**: Run init.sh
 
 **Cross-compiled to Linux 64/32 bit**: On MS-Windows, Linux, or MAC install
 [VirtualBox](https://www.virtualbox.org/wiki/Downloads) and
@@ -64,17 +64,15 @@ connection.
 
 `$ vagrant up`
 
-Linux builds will appear in the `/build-out` directory.
-
 ---
 
-# Compilation instructions for MAC OSX El Capitan:
+# (OUTDATED) Compilation instructions for MAC OSX El Capitan:
 
 Install Firefox and Homebrew. Then run build.sh.
 
 ---
 
-# Compilation instructions for MS-Windows
+# (OUTDATED) Compilation instructions for MS-Windows
 
 ## Build requirements
 

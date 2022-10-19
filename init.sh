@@ -14,7 +14,8 @@ EXTRAS=IBTXulsword
 LIB_EXT=$([ $(uname | grep Darwin) ] && echo "dylib" || echo "so")
 
 if [ -e /vagrant ]; then CONTEXT="xsguest"; else CONTEXT="host"; fi
-if [ -e /vagrant ]; then XULSWORD="$HOME/src/xulsword"; else XULSWORD="$( cd "$(dirname "$0")" ; pwd -P )"; fi
+if [ "$CONTEXT" = "xsguest" ]; then XULSWORD="$HOME/src/xulsword"; else XULSWORD="$( cd "$(dirname "$0")" ; pwd -P )"; fi
+export CPP="$XULSWORD/Cpp"
 
 # BUILD DEPENDENCIES (Ubuntu Xenial & Bionic)
 PKG_DEPS="build-essential git subversion libtool-bin cmake autoconf make pkg-config zip curl"
@@ -22,6 +23,8 @@ PKG_DEPS="build-essential git subversion libtool-bin cmake autoconf make pkg-con
 PKG_DEPS="$PKG_DEPS debhelper binutils gcc-multilib dpkg-dev"
 # for Clucene build
 PKG_DEPS="$PKG_DEPS debhelper libboost-dev"
+# for VM build
+if [ "$CONTEXT" = "xsguest" ]; then PKG_DEPS="$PKG_DEPS libxshmfence1 libglu1 libnss3-dev libgdk-pixbuf2.0-dev libgtk-3-dev libxss-dev libasound2"; fi
 
 # BUID DEPENDENCIES (for cross compiling libxulsword as a Windows dll)
 PKG_DEPS="$PKG_DEPS mingw-w64"
@@ -43,7 +46,8 @@ if [ $(dpkg -s $PKG_DEPS 2>&1 | grep "not installed" | wc -m) -ne 0 ]; then
   fi
 fi
 
-# If this is a xulsword guest, then copy host's xulsword code, but build everything within the VM
+# If this is a guest VM, then copy host code to VM and build
+# everything within the VM so as not to modify any host build files.
 if [ "$CONTEXT" = "xsguest" ]; then
   if [ -e "$XULSWORD" ]; then rm -rf "$XULSWORD/*"; fi
   if [ ! -e "$XULSWORD" ]; then mkdir -p "$XULSWORD"; fi
@@ -159,4 +163,3 @@ fi
 # Now initialize node.js
 cd "$XULSWORD"
 yarn
-

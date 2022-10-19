@@ -21,6 +21,9 @@ node_modules
 build/app/dist
 build/release
 .erb/dll
+archive.tgz
+libxulsword/build/
+libxulsword/yarn.lock
 
 .idea
 npm-debug.log.*
