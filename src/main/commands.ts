@@ -230,7 +230,8 @@ const Commands: GType['Commands'] = {
         ? ` ${(tab && modules[0] in tab && tab[modules[0]].label) || module}`
         : '';
     const options = {
-      width: 800,
+      width: 510,
+      height: 425,
       title: `${i18n.t('menu.help.about')}${modlabel}`,
       webPreferences: {
         additionalArguments: [JSON_stringify({ modules })],

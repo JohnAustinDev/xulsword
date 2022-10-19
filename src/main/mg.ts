@@ -35,6 +35,7 @@ import {
   getBkChsInV11n,
   getSystemFonts,
   resetMain,
+  getSwordConf,
 } from './minit';
 import Module from './installer';
 
@@ -148,6 +149,10 @@ class GClass implements GType {
 
   get Tab() {
     return getTab();
+  }
+
+  get SwordConf() {
+    return getSwordConf();
   }
 
   get LocaleConfigs() {

@@ -445,6 +445,8 @@ export function tabSort(a: TabType, b: TabType) {
   return mto[a.tabType] > mto[b.tabType] ? 1 : -1;
 }
 
+// Return a SwordConfType object from a config LocalFile, or else from
+// the string contents of a config file plus the config file's name.
 export function parseSwordConf(
   config: string | LocalFile,
   filename?: string

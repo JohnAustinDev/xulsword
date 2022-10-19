@@ -757,6 +757,7 @@ export const GPublic = {
   Book:                'getter' as unknown as { [i: string]: BookType },
   Tabs:                'getter' as unknown as TabType[],
   Tab:                 'getter' as unknown as { [i: string]: TabType },
+  SwordConf:           'getter' as unknown as { [mod: string]: SwordConfType },
   ProgramConfig:       'getter' as unknown as ConfigType,
   LocaleConfigs:       'getter' as unknown as { [i: string]: ConfigType },
   ModuleConfigDefault: 'getter' as unknown as ConfigType,
@@ -842,6 +843,10 @@ export const GPublic = {
       enterModal?: boolean,
       exitModal?: boolean
     ) => Promise<boolean[]>,
+    writeConf: func as unknown as (
+      confFilePath: string,
+      contents: string
+    ) => void,
   },
   Window: {
     open: func as unknown as (arg: WindowDescriptorType) => number,

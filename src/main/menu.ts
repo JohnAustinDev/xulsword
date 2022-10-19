@@ -382,7 +382,7 @@ export default class MenuBuilder {
             accelerator: this.tx('SearchCommandKey', ['CommandOrControl']),
             click: d(() => {
               const search: SearchType = {
-                module: G.Tabs[0].module,
+                module: (G.Tabs.length && G.Tabs[0].module) || '',
                 searchtext: '',
                 type: 'SearchAnyWord',
               };

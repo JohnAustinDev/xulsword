@@ -150,6 +150,15 @@ const openMainWindow = () => {
   // TODO! install command line modules (xulsword 2.0 newModule.js)
   checkModulePrefs();
 
+  G.Data.write(
+    `${app.getName()} ${app.getVersion()} (${app.getLocale()}) ${
+      process.platform
+    }-${process.arch}, el:${process.versions.electron}, ch:${
+      process.versions.chrome
+    }`,
+    'buildInfo'
+  );
+
   const subscriptions: (() => void)[] = [];
   subscriptions.push(Subscription.subscribe('setPref', pushPrefsToWindows));
   subscriptions.push(Subscription.subscribe('setPref', pushPrefsToMenu));

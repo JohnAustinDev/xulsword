@@ -18,7 +18,7 @@ const Data: GType['Data'] & { datastore: { [i: string]: any } } = {
   },
 
   read(name: string) {
-    return this.datastore[name];
+    return name && name in this.datastore ? this.datastore[name] : null;
   },
 
   readAndDelete(name: string) {

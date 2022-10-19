@@ -776,6 +776,20 @@ const Module: GType['Module'] = {
     }
     return false;
   },
+
+  writeConf(confFilePath: string, contents: string) {
+    if (
+      contents &&
+      confFilePath.match(/\bmods\.d\b/) &&
+      confFilePath.endsWith('.conf')
+    ) {
+      const conf = new LocalFile(confFilePath);
+      if (conf.exists()) {
+        conf.writeFile(contents);
+        Subscription.publish('resetMain');
+      }
+    }
+  },
 };
 
 export default Module;

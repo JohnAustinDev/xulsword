@@ -8,7 +8,7 @@ import i18next from 'i18next';
 import C from '../constant';
 import VerseKey from '../versekey';
 import RefParser, { RefParserOptionsType } from '../refparse';
-import { clone, isASCII, JSON_parse, tabSort } from '../common';
+import { clone, isASCII, JSON_parse, parseSwordConf, tabSort } from '../common';
 import Cache from '../cache';
 import Subscription from '../subscription';
 import Dirs from './components/dirs';
@@ -29,6 +29,7 @@ import type {
   GlobalPrefType,
   XulswordStatePref,
   FeatureType,
+  SwordConfType,
 } from '../type';
 
 const fontList = require('font-list');
@@ -239,6 +240,19 @@ export function getTab(): { [i: string]: TabType } {
     Cache.write(tab, 'tab');
   }
   return Cache.read('tab');
+}
+
+export function getSwordConf(): { [mod: string]: SwordConfType } {
+  const swordConf: { [mod: string]: SwordConfType } = {};
+  getTabs().forEach((t) => {
+    if (t.module && t.confPath) {
+      const f = new LocalFile(t.confPath);
+      if (f.exists()) {
+        swordConf[t.module] = parseSwordConf(f);
+      }
+    }
+  });
+  return swordConf;
 }
 
 export function getBkChsInV11n(): {

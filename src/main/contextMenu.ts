@@ -3,6 +3,7 @@ import { BrowserWindow } from 'electron';
 import contextMenuCreator from 'electron-context-menu';
 import i18next from 'i18next';
 import C from '../constant';
+import G from './mg';
 import Commands, { newDbItemWithDefaults } from './commands';
 import setViewportTabs from './tabs';
 import Data from './components/data';
@@ -77,7 +78,17 @@ export default function contextMenu(
         click: ((data) => {
           return () => {
             const mod = data.module || data.tab;
-            if (mod) Commands.openAbout(mod);
+            if (mod) {
+              const mods = [mod];
+              if (mod && mod in G.Tab) {
+                G.LibSword.getModuleInformation(mod, 'Companion')
+                  .split(/\s*,\s*/)
+                  .forEach((c) => {
+                    if (c && c in G.Tab) mods.push(c);
+                  });
+              }
+              Commands.openAbout(mods);
+            }
           };
         })(cm()),
       },

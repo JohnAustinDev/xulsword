@@ -1,10 +1,96 @@
 html.about,
-.about body,
-.about #root {
+html.about body,
+html.about #root {
   min-width: 500px;
   min-height: 375px;
+  padding: 0px;
 }
 
 #mainbox {
   height: 100%;
+}
+#mainbox > div:first-child {
+  margin: 4px;
+  margin-bottom: 0;
+}
+
+#contributors.hide > div {
+  background-color: transparent;
+  padding-top: 52%;
+}
+#contributors.show > div {
+  background-color: rgba(0, 0, 0, 0.5);
+  padding-top: 3%;
+  transition: background-color 2s, padding-top 2s;
+}
+#contributors > div {
+  height: 250px;
+  width: 298px;
+  overflow: hidden;
+  margin: 80px 98px 10px 98px;
+  color: white;
+  border-radius: 8px;
+  text-align: center;
+}
+#contributors .label {
+  display: block;
+  height: 1.2em;
+}
+
+.modules {
+  overflow: auto;
+  flex-grow: 1;
+  flex-shrink: 1;
+}
+
+.linklist ul {
+  column-count: 3;
+  column-fill: balance;
+  margin: 10px;
+  background-color: white;
+  border-radius: 8px;
+}
+
+.modlist {
+  margin: 20px 10px;
+  padding: 5px;
+  background-color: white;
+  border-radius: 8px;
+}
+.modlist > div:nth-child(3),
+.modlist > div:nth-child(4) {
+  background-color: whitesmoke;
+}
+.modlist > div:nth-child(4) > * {
+  margin-inline-start: 10px;
+}
+.modlist > div:nth-child(4) {
+  margin-bottom: 10px;
+}
+.modlist .head1 {
+  margin-top: 0;
+  margin-bottom: 0;
+  padding-top: 5px;
+}
+.modlist .module-info .Lang,
+.modlist .module-info .moduleType {
+  display: block;
+  text-align: center;
+}
+.modlist .button {
+  display: inline-block;
+}
+.modlist textarea {
+  background-color: #80808030;
+  width: calc(100% - 10px);
+  font-family: courier;
+  font-size: 13px;
+  line-height: 100%;
+}
+.modlist textarea.editable {
+  background-color: white;
+}
+
+.dialogbuttons {
+  background-color: whitesmoke;
 }
