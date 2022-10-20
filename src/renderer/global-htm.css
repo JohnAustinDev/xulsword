@@ -54,6 +54,9 @@ html a:hover {
 html.dialog select {
   height: 2em;
 }
+.dialogbuttons {
+  margin: 0 10px;
+}
 .dialogbuttons .button {
   font-size: 14px;
   flex-basis: 60px;

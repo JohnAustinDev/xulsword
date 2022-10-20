@@ -97,5 +97,6 @@ html.about #root {
 }
 
 .dialogbuttons {
+  margin: 0;
   background-color: whitesmoke;
 }

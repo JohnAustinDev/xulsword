@@ -7,6 +7,8 @@
   border-bottom-color: ThreeDHighlight;
   border-left-color: ThreeDLightShadow;
   background-color: white;
+  width: fit-content;
+  height: fit-content;
 }
 .bookselect:focus-within .stack > div:first-child {
   outline: rgba(45, 114, 210, 0.6) auto 2px;
@@ -16,6 +18,7 @@
 
 .bookselect .stack {
   width: 100%;
+  height: fit-content;
 }
 
 .bookselect .stack > div {
@@ -26,8 +29,12 @@
 .bookselect .stack > div:first-child > .menulist {
   width: 100%;
 }
+.bookselect .stack > div:nth-child(2) {
+  height: 100%;
+}
 .bookselect .spacer {
   width: 24px;
+  min-width: 24px;
 }
 
 .bookselect .textbox {

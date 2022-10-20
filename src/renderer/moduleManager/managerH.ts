@@ -27,7 +27,7 @@ import type {
 } from '../../type';
 import type ModuleManager from './manager';
 import type { ManagerState } from './manager';
-import type { BibleselectSelection } from '../libxul/bibleselect';
+import type { VKSelection } from '../libxul/vkselect';
 
 export const Tables = ['language', 'module', 'repository'] as const;
 
@@ -887,39 +887,37 @@ export function download(this: ModuleManager, rows: number[]): void {
           if (drow[ModCol.iInfo].conf.xsmType === 'XSM_audio') {
             const { AudioChapters } = drow[ModCol.iInfo].conf;
             if (AudioChapters) {
-              const audio: BibleselectSelection | null = await new Promise(
-                (resolve) => {
-                  const {
-                    bk: book,
-                    ch1: chapter,
-                    ch2: lastchapter,
-                  } = AudioChapters[0];
-                  const books = Array.from(
-                    new Set(AudioChapters.map((v) => v.bk))
-                  );
-                  const chapters: number[] = [];
-                  for (let x = 1; x <= lastchapter; x += 1) {
-                    if (x >= chapter) chapters.push(x);
-                  }
-                  this.sState({
-                    showChapterDialog: {
-                      conf: drow[ModCol.iInfo].conf,
-                      selection: { book, chapter, lastchapter: chapter },
-                      initialSelection: { book, chapter, lastchapter: chapter },
-                      options: {
-                        trans: [],
-                        books,
-                        chapters,
-                        lastchapters: chapters,
-                        verses: [],
-                        lastverses: [],
-                      },
-                      chapters: AudioChapters,
-                      callback: (result) => resolve(result),
-                    },
-                  });
+              const audio: VKSelection | null = await new Promise((resolve) => {
+                const {
+                  bk: book,
+                  ch1: chapter,
+                  ch2: lastchapter,
+                } = AudioChapters[0];
+                const books = Array.from(
+                  new Set(AudioChapters.map((v) => v.bk))
+                );
+                const chapters: number[] = [];
+                for (let x = 1; x <= lastchapter; x += 1) {
+                  if (x >= chapter) chapters.push(x);
                 }
-              );
+                this.sState({
+                  showChapterDialog: {
+                    conf: drow[ModCol.iInfo].conf,
+                    selection: { book, chapter, lastchapter: chapter },
+                    initialSelection: { book, chapter, lastchapter: chapter },
+                    options: {
+                      vkmods: [],
+                      books,
+                      chapters,
+                      lastchapters: chapters,
+                      verses: [],
+                      lastverses: [],
+                    },
+                    chapters: AudioChapters,
+                    callback: (result) => resolve(result),
+                  },
+                });
+              });
               if (audio) {
                 const { book, chapter, lastchapter } = audio;
                 xsmZipFileOrURL += `&bk=${book}&ch=${chapter}&cl=${lastchapter}`;

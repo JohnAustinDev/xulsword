@@ -51,7 +51,9 @@ class ModuleMenu extends React.Component {
     const props = this.props as ModuleMenuProps;
     const { description, modules, types } = props;
 
-    const mtabs = modules.length ? modules.map((m) => G.Tab[m]) : G.Tabs;
+    const mtabs = modules.length
+      ? modules.filter((m) => m in G.Tab).map((m) => G.Tab[m])
+      : G.Tabs;
 
     return (
       <Menulist {...addClass('modulemenu', props)}>

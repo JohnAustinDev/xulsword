@@ -316,14 +316,17 @@ export default class AboutWin extends React.Component {
           </div>
         )}
         <Hbox className="dialogbuttons" pack="end" align="end">
-          {modules.length && (
-            <Button id="showModules" flex="1" fill="x" onClick={handler}>
-              {showModules
-                ? i18n.t('back.label')
-                : i18n.t('chooseModule.label')}
-            </Button>
+          {!!modules.length && (
+            <>
+              <Button id="showModules" flex="1" fill="x" onClick={handler}>
+                {showModules
+                  ? i18n.t('back.label')
+                  : i18n.t('chooseModule.label')}
+              </Button>
+
+              <Spacer flex="10" />
+            </>
           )}
-          <Spacer flex="10" />
           {contributors.length && (
             <Button
               id="showContributors"

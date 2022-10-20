@@ -34,11 +34,11 @@ import {
 import Button from '../libxul/button';
 import { Hbox, Vbox, Box } from '../libxul/boxes';
 import Groupbox from '../libxul/groupbox';
-import Bibleselect, {
-  BibleselectChangeEvents,
-  BibleselectOptions,
-  BibleselectSelection,
-} from '../libxul/bibleselect';
+import VKSelect, {
+  VKSelectChangeEvents,
+  VKSelectOptions,
+  VKSelection,
+} from '../libxul/vkselect';
 import Table from '../libxul/table';
 import Spacer from '../libxul/spacer';
 import Label from '../libxul/label';
@@ -89,11 +89,11 @@ const notStatePref = {
   showModuleInfo: '',
   showChapterDialog: null as {
     conf: SwordConfType;
-    selection: BibleselectSelection;
-    initialSelection: BibleselectSelection;
-    options: BibleselectOptions;
+    selection: VKSelection;
+    initialSelection: VKSelection;
+    options: VKSelectOptions;
     chapters: SwordConfAudioChapters;
-    callback: (result: BibleselectSelection | null) => void;
+    callback: (result: VKSelection | null) => void;
   } | null,
   okdisabled: false,
   tables: {
@@ -738,14 +738,14 @@ export default class ModuleManager extends React.Component {
     });
   }
 
-  dialogOnChange(_e: BibleselectChangeEvents, selection: BibleselectSelection) {
+  dialogOnChange(_e: VKSelectChangeEvents, selection: VKSelection) {
     const { showChapterDialog } = this.state as ManagerState;
     if (showChapterDialog) {
       const { book, chapter, lastchapter } = selection;
       const { options, chapters: allchs } = showChapterDialog;
-      const { trans, books, verses, lastverses } = options;
+      const { vkmods: trans, books, verses, lastverses } = options;
       if (book && chapter !== undefined && lastchapter !== undefined) {
-        const newselection: BibleselectSelection = {
+        const newselection: VKSelection = {
           book,
           chapter,
           lastchapter,
@@ -762,8 +762,8 @@ export default class ModuleManager extends React.Component {
           a > b ? 1 : a < b ? -1 : 0
         );
         const lastchapters = chapters.filter((c) => c >= chapter);
-        const newoptions: BibleselectOptions = {
-          trans,
+        const newoptions: VKSelectOptions = {
+          vkmods: trans,
           books,
           chapters,
           lastchapters,
@@ -874,7 +874,7 @@ export default class ModuleManager extends React.Component {
               <Vbox>
                 <Label value={dialogmod} />
                 <div>{dialogText}</div>
-                <Bibleselect
+                <VKSelect
                   height="2em"
                   initialSelection={showChapterDialog.initialSelection}
                   options={showChapterDialog.options}
@@ -882,12 +882,15 @@ export default class ModuleManager extends React.Component {
                 />
               </Vbox>
             </div>
-            <div className={Classes.DIALOG_FOOTER}>
-              <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                <Button onClick={dialogClose}>{i18n.t('cancel.label')}</Button>
-                <Button onClick={dialogAccept}>{i18n.t('ok.label')}</Button>
-              </div>
-            </div>
+            <Hbox className="dialogbuttons" pack="end" align="end">
+              <Spacer flex="10" />
+              <Button id="cancel" flex="1" fill="x" onClick={dialogClose}>
+                {i18n.t('cancel.label')}
+              </Button>
+              <Button id="ok" flex="1" fill="x" onClick={dialogAccept}>
+                {i18n.t('ok.label')}
+              </Button>
+            </Hbox>
           </Dialog>
         )}
         <Hbox

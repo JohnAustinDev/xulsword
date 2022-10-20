@@ -17,48 +17,49 @@ import { Hbox } from './boxes';
 import Label from './label';
 import Menulist from './menulist';
 import Spacer from './spacer';
+import './vkselect.css';
 
 import type { BookGroupType } from '../../type';
 import ModuleMenu from './modulemenu';
 
-export type BibleselectSelection = {
-  tran?: string;
+export type VKSelection = {
   book?: string;
   chapter?: number;
   lastchapter?: number;
   verse?: number;
   lastverse?: number;
+  vkmod?: string;
 };
 
 // If left undefined, valid lists will be automatically created. Otherwise
 // only the listed options will be provided. If there are no options (an
 // empty array) then the corresponding selector will be hidden.
-export type BibleselectOptions = {
-  trans?: string[];
+export type VKSelectOptions = {
   books?: string[];
   chapters?: number[];
   lastchapters?: number[];
   verses?: number[];
   lastverses?: number[];
+  vkmods?: string[];
 };
 
 const defaultProps = {
   ...xulDefaultProps,
   initialSelection: {
-    tran: 'KJV',
     book: 'Gen',
     chapter: 1,
     lastChapter: undefined,
     verse: 1,
     lastverse: 1,
+    vkmod: 'KJV',
   },
   options: {
-    trans: [],
     books: undefined,
     chapters: undefined,
-    verses: undefined,
     lastChapters: [],
+    verses: undefined,
     lastverses: undefined,
+    vkmods: [],
   },
   disabled: false,
   sizetopopup: 'none',
@@ -68,65 +69,62 @@ const defaultProps = {
 const propTypes = {
   ...xulPropTypes,
   initialSelection: PropTypes.shape({
-    tran: PropTypes.string,
     book: PropTypes.string,
     chapter: PropTypes.number,
     verse: PropTypes.number,
     lastchapter: PropTypes.number,
     lastverse: PropTypes.number,
+    vkmod: PropTypes.string,
   }),
   options: PropTypes.shape({
-    trans: PropTypes.arrayOf(PropTypes.string),
     books: PropTypes.arrayOf(PropTypes.string),
     chapters: PropTypes.arrayOf(PropTypes.number),
     verses: PropTypes.arrayOf(PropTypes.number),
     lastchapters: PropTypes.arrayOf(PropTypes.number),
     lastverses: PropTypes.arrayOf(PropTypes.number),
+    vkmods: PropTypes.arrayOf(PropTypes.string),
   }),
   disabled: PropTypes.bool,
   sizetopopup: PropTypes.oneOf(['none', 'always']),
   onSelectionChange: PropTypes.func,
 };
 
-interface BibleselectProps extends XulProps {
-  initialSelection: BibleselectSelection;
-  options: BibleselectOptions;
+interface VKSelectProps extends XulProps {
+  initialSelection: VKSelection;
+  options: VKSelectOptions;
   disabled: boolean;
   sizetopopup: string;
-  onSelectionChange: (
-    e: BibleselectChangeEvents,
-    selection: BibleselectSelection
-  ) => void;
+  onSelectionChange: (e: VKSelectChangeEvents, selection: VKSelection) => void;
 }
 
-interface BibleselectState {
-  selection: BibleselectSelection;
+interface VKSelectState {
+  selection: VKSelection;
 }
 
-export type BibleselectChangeEvents =
+export type VKSelectChangeEvents =
   | React.ChangeEvent<HTMLInputElement>
   | React.ChangeEvent<HTMLSelectElement>;
 
 // React Bibleselect
-class Bibleselect extends React.Component {
+class VKSelect extends React.Component {
   static defaultProps: typeof defaultProps;
 
   static propTypes: typeof propTypes;
 
-  constructor(props: BibleselectProps) {
+  constructor(props: VKSelectProps) {
     super(props);
 
     const { initialSelection } = props;
-    this.state = { selection: initialSelection } as BibleselectState;
+    this.state = { selection: initialSelection } as VKSelectState;
 
     this.handleChange = this.handleChange.bind(this);
   }
 
   handleChange(es: React.SyntheticEvent) {
-    const e = es as BibleselectChangeEvents;
+    const e = es as VKSelectChangeEvents;
     const cls = ofClass(
       [
-        'bstrans',
+        'bsvkmod',
         'bsbook',
         'bschapter',
         'bslastchapter',
@@ -136,13 +134,13 @@ class Bibleselect extends React.Component {
       e.target
     );
     if (cls) {
-      let { selection } = this.state as BibleselectState;
+      let { selection } = this.state as VKSelectState;
       selection = clone(selection);
-      const { onSelectionChange } = this.props as BibleselectProps;
+      const { onSelectionChange } = this.props as VKSelectProps;
       const { value } = e.target;
       switch (cls.type) {
-        case 'bstrans': {
-          selection.tran = value;
+        case 'bsvkmod': {
+          selection.vkmod = value;
           break;
         }
         case 'bsbook': {
@@ -176,15 +174,15 @@ class Bibleselect extends React.Component {
   }
 
   render() {
-    const props = this.props as BibleselectProps;
-    const { selection } = this.state as BibleselectState;
-    const { book, chapter, verse, lastverse, lastchapter, tran } = selection;
+    const props = this.props as VKSelectProps;
+    const { selection } = this.state as VKSelectState;
+    const { book, chapter, verse, lastverse, lastchapter, vkmod } = selection;
     const { options, disabled, sizetopopup } = props;
-    const { trans, books, chapters, lastchapters, verses, lastverses } =
+    const { books, chapters, lastchapters, verses, lastverses, vkmods } =
       options;
     const { handleChange } = this;
 
-    const tab = (tran && G.Tab[tran]) || null;
+    const tab = (vkmod && G.Tab[vkmod]) || null;
     const v11n = (tab && tab.v11n) || 'KJV';
 
     // Bible book options
@@ -263,8 +261,14 @@ class Bibleselect extends React.Component {
       </option>
     ));
 
+    // Bible module options
+    let newvkmods: string[] | null = vkmods || null;
+    if (!newvkmods) {
+      newvkmods = G.Tabs.filter((t) => t.type === C.BIBLE).map((t) => t.module);
+    }
+
     return (
-      <Hbox {...addClass('bibleselect', this.props)}>
+      <Hbox pack="start" align="center" {...addClass('vkselect', this.props)}>
         {newbooks.length > 0 && (
           <Bookselect
             className="bsbook"
@@ -321,19 +325,22 @@ class Bibleselect extends React.Component {
             onChange={handleChange}
           />
         )}
-        <Spacer width="27px" />
-        <ModuleMenu
-          className="bstrans"
-          value={tran}
-          types={[C.BIBLE]}
-          disabled={disabled}
-          onChange={handleChange}
-        />
+        {newvkmods.length > 0 && (
+          <>
+            <ModuleMenu
+              className="bsvkmod"
+              value={vkmod}
+              modules={newvkmods}
+              disabled={disabled}
+              onChange={handleChange}
+            />
+          </>
+        )}
       </Hbox>
     );
   }
 }
-Bibleselect.defaultProps = defaultProps;
-Bibleselect.propTypes = propTypes;
+VKSelect.defaultProps = defaultProps;
+VKSelect.propTypes = propTypes;
 
-export default Bibleselect;
+export default VKSelect;
