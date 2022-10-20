@@ -39,15 +39,7 @@ import Bibleselect, {
   BibleselectOptions,
   BibleselectSelection,
 } from '../libxul/bibleselect';
-import Table, {
-  TonCellClick,
-  TonColumnHide,
-  TonColumnsReordered,
-  TonColumnWidthChanged,
-  TonEditableCellChanged,
-  TonRowsReordered,
-  TinitialRowSort,
-} from '../libxul/table';
+import Table from '../libxul/table';
 import Spacer from '../libxul/spacer';
 import Label from '../libxul/label';
 import DragSizer, { DragSizerVal } from '../libxul/dragsizer';
@@ -63,29 +55,20 @@ import type {
   SwordConfAudioChapters,
   SwordConfType,
 } from '../../type';
-import {
-  ALWAYS_ON,
-  builtinRepos,
-  classes,
-  editable,
-  intent,
-  LanCol,
-  LanguageTableHeadings,
-  loading,
-  modclasses,
-  ModCol,
-  ModuleTableHeadings,
-  OFF,
-  ON,
-  RepCol,
-  RepositoryTableHeadings,
-  Saved,
-  Tables,
+import type {
   TLanguageTableRow,
   TModuleTableRow,
-  tooltip,
   TRepositoryTableRow,
 } from './managerH';
+import type {
+  TonCellClick,
+  TonColumnHide,
+  TonColumnsReordered,
+  TonColumnWidthChanged,
+  TonEditableCellChanged,
+  TonRowsReordered,
+  TinitialRowSort,
+} from '../libxul/table';
 
 G.Module.clearDownload();
 
@@ -171,7 +154,7 @@ export default class ModuleManager extends React.Component {
   toaster: Toaster | undefined;
 
   tableRef: {
-    [table in typeof Tables[number]]: React.RefObject<HTMLDivElement>;
+    [table in typeof H.Tables[number]]: React.RefObject<HTMLDivElement>;
   };
 
   refHandlers = {
@@ -222,13 +205,13 @@ export default class ModuleManager extends React.Component {
       ...notStatePref,
       ...(getStatePref(props.id) as ManagerStatePref),
     };
-    s.tables.language.data = Saved.language.data;
-    s.tables.module.data = Saved.module.data;
-    s.tables.repository.data = Saved.repository.data;
+    s.tables.language.data = H.Saved.language.data;
+    s.tables.module.data = H.Saved.module.data;
+    s.tables.repository.data = H.Saved.repository.data;
     this.state = s;
 
     this.tableRef = {} as typeof this.tableRef;
-    Tables.forEach((t: typeof Tables[number]) => {
+    H.Tables.forEach((t: typeof H.Tables[number]) => {
       this.tableRef[t] = React.createRef();
     });
 
@@ -276,8 +259,8 @@ export default class ModuleManager extends React.Component {
       return this.loadModuleTable(langselection);
     };
     const loadLocalRepos = async () => {
-      Saved.repository.data = [];
-      Saved.repositoryListings = [];
+      H.Saved.repository.data = [];
+      H.Saved.repositoryListings = [];
       let listing: RepositoryListing[] = [];
       try {
         listing = await G.Downloader.repositoryListing(
@@ -289,11 +272,11 @@ export default class ModuleManager extends React.Component {
       return handleListing(listing);
     };
     // Download data for the repository and module tables
-    if (!Saved.repository.data.length) {
+    if (!H.Saved.repository.data.length) {
       const { repositories } = this.state as ManagerState;
       if (repositories) {
-        Saved.repository.data = [];
-        Saved.repositoryListings = [];
+        H.Saved.repository.data = [];
+        H.Saved.repositoryListings = [];
         G.Downloader.crossWireMasterRepoList()
           .then((repos) => {
             if (typeof repos === 'string') {
@@ -348,7 +331,7 @@ export default class ModuleManager extends React.Component {
         const { progress } = state;
         const { repository, module } = state.tables;
         const repoIndex = repository.data.findIndex(
-          (r) => downloadKey(r[RepCol.iInfo].repo) === id
+          (r) => downloadKey(r[H.RepCol.iInfo].repo) === id
         );
         const repdrow = repository.data[repoIndex];
         if (
@@ -356,9 +339,9 @@ export default class ModuleManager extends React.Component {
           repoIndex !== -1 &&
           repdrow &&
           prog === -1 &&
-          repdrow[RepCol.iInfo].loading
+          repdrow[H.RepCol.iInfo].loading
         ) {
-          repdrow[RepCol.iInfo].loading = false;
+          repdrow[H.RepCol.iInfo].loading = false;
           let newprog = null;
           if (progress) {
             const [p, t] = progress;
@@ -369,24 +352,24 @@ export default class ModuleManager extends React.Component {
           });
         }
         const modIndex = module.data.findIndex((r) => {
-          const { repo } = r[ModCol.iInfo];
-          const mod = r[ModCol.iModule];
+          const { repo } = r[H.ModCol.iInfo];
+          const mod = r[H.ModCol.iModule];
           return [downloadKey(repo), mod].join('.') === id;
         });
         const moddrow = module.data[modIndex];
         if (id && modIndex !== -1 && moddrow && prog === -1) {
-          if (moddrow[ModCol.iInfo].conf.DataPath) {
+          if (moddrow[H.ModCol.iInfo].conf.DataPath) {
             Object.values(module.data)
               .filter((r) => {
                 return (
-                  r[ModCol.iInfo].conf.DataPath ===
-                  moddrow[ModCol.iInfo].conf.DataPath
+                  r[H.ModCol.iInfo].conf.DataPath ===
+                  moddrow[H.ModCol.iInfo].conf.DataPath
                 );
               })
               .forEach((r: TModuleTableRow) => {
-                r[ModCol.iInfo].loading = false;
+                r[H.ModCol.iInfo].loading = false;
               });
-          } else moddrow[ModCol.iInfo].loading = false;
+          } else moddrow[H.ModCol.iInfo].loading = false;
           this.setTableState('module');
         }
       })
@@ -415,7 +398,7 @@ export default class ModuleManager extends React.Component {
     this.destroy = [];
   }
 
-  sizeTableToParent(table: typeof Tables[number]) {
+  sizeTableToParent(table: typeof H.Tables[number]) {
     const state = this.state as ManagerState;
     if (table === 'language') return;
     const tbl = state[table];
@@ -451,7 +434,7 @@ export default class ModuleManager extends React.Component {
     const state = this.state as ManagerState;
     const { repositories } = state;
     let disabled: string[] | null = [];
-    let allrepos = builtinRepos();
+    let allrepos = H.builtinRepos();
     if (repositories) {
       disabled = repositories.disabled;
       const { xulsword, custom } = repositories;
@@ -469,10 +452,10 @@ export default class ModuleManager extends React.Component {
         if (disabled && !repo.builtin) {
           repo.disabled = disabled.includes(downloadKey(repo)) || false;
         }
-        const css = classes([RepCol.iState], ['checkbox-column']);
-        const canedit = repo.custom ? editable() : false;
-        const isloading = repo.disabled ? false : loading(RepCol.iState);
-        const on = repo.builtin ? ALWAYS_ON : ON;
+        const css = H.classes([H.RepCol.iState], ['checkbox-column']);
+        const canedit = repo.custom ? H.editable() : false;
+        const isloading = repo.disabled ? false : H.loading(H.RepCol.iState);
+        const on = repo.builtin ? H.ALWAYS_ON : H.ON;
         let lng = i18n.language;
         if (!['en', 'ru'].includes(lng)) lng = C.FallbackLanguage[lng];
         const reponame =
@@ -483,13 +466,13 @@ export default class ModuleManager extends React.Component {
           reponame,
           repo.domain,
           repo.path,
-          repo.disabled ? OFF : on,
+          repo.disabled ? H.OFF : on,
           {
             loading: isloading,
             editable: canedit,
             classes: css,
             repo,
-            tooltip: tooltip('VALUE', [RepCol.iState]),
+            tooltip: H.tooltip('VALUE', [H.RepCol.iState]),
           },
         ]);
       });
@@ -503,16 +486,16 @@ export default class ModuleManager extends React.Component {
     const state = this.state as ManagerState;
     const { progress } = state;
     const { repository } = state.tables;
-    const { repositoryListings } = Saved;
+    const { repositoryListings } = H.Saved;
     rawModuleData.forEach((listing, i) => {
       if (listing === null) return;
       const drow = repository.data[i];
       if (drow) {
         if (typeof listing === 'string') {
           this.addToast({ message: listing });
-          if (drow[RepCol.iState] !== OFF) this.switchRepo([i], false);
-          drow[RepCol.iInfo].intent = intent(RepCol.iState, 'danger');
-          drow[RepCol.iInfo].loading = false;
+          if (drow[H.RepCol.iState] !== H.OFF) this.switchRepo([i], false);
+          drow[H.RepCol.iInfo].intent = H.intent(H.RepCol.iState, 'danger');
+          drow[H.RepCol.iInfo].loading = false;
           if (!Array.isArray(repositoryListings[i])) {
             repositoryListings[i] = null;
           }
@@ -526,8 +509,8 @@ export default class ModuleManager extends React.Component {
         }
         if (Array.isArray(listing)) {
           repositoryListings[i] = listing;
-          if ([ON, ALWAYS_ON].includes(drow[RepCol.iState])) {
-            drow[RepCol.iInfo].intent = intent(RepCol.iState, 'success');
+          if ([H.ON, H.ALWAYS_ON].includes(drow[H.RepCol.iState])) {
+            drow[H.RepCol.iInfo].intent = H.intent(H.RepCol.iState, 'success');
           }
         }
       }
@@ -543,17 +526,17 @@ export default class ModuleManager extends React.Component {
     const state = this.state as ManagerState;
     const { language: langtable, repository: repotable } = state.tables;
     const { selection } = state.language;
-    const { repositoryListings } = Saved;
+    const { repositoryListings } = H.Saved;
     const selectedRowIndexes = this.selectionToDataRows('language', selection);
     const selectedcodes = langtable.data
       .filter((_r, i) => selectedRowIndexes.includes(i))
-      .map((r) => r[LanCol.iInfo].code);
+      .map((r) => r[H.LanCol.iInfo].code);
     const langs: Set<string> = new Set();
     repositoryListings.forEach((listing, i) => {
       if (
         Array.isArray(listing) &&
         repotable.data[i] &&
-        repotable.data[i][RepCol.iState] !== OFF
+        repotable.data[i][H.RepCol.iState] !== H.OFF
       ) {
         listing.forEach((c) => {
           const l = c.Lang || 'en';
@@ -568,7 +551,7 @@ export default class ModuleManager extends React.Component {
     );
     const newlanguage: RowSelection = [];
     newTableData.forEach((r, i) => {
-      if (selectedcodes?.includes(r[LanCol.iInfo].code)) {
+      if (selectedcodes?.includes(r[H.LanCol.iInfo].code)) {
         newlanguage.push({ rows: [i, i] });
       }
     });
@@ -589,8 +572,8 @@ export default class ModuleManager extends React.Component {
     // each repository (local and remote). The same object should be reused
     // throughout the lifetime of the window, so user interactions will be recorded.
     const { repository: repotable } = state.tables;
-    Saved.moduleLangData = { allmodules: [] };
-    const { moduleData, moduleLangData, repositoryListings } = Saved;
+    H.Saved.moduleLangData = { allmodules: [] };
+    const { moduleData, moduleLangData, repositoryListings } = H.Saved;
     const enabledExternRepoMods: { [modunique: string]: string } = {};
     const enabledXulswordRepoMods: { [modunique: string]: string } = {};
     const localModules: { [modunique: string]: string } = {};
@@ -598,7 +581,7 @@ export default class ModuleManager extends React.Component {
       const drow = repotable.data[i];
       if (drow && Array.isArray(listing)) {
         listing.forEach((c) => {
-          const { repo } = drow[RepCol.iInfo];
+          const { repo } = drow[H.RepCol.iInfo];
           const repokey = downloadKey(repo);
           const modrepk = modrepKey(c.module, repo);
           // Different audio and SWORD modules might share the same name,
@@ -609,9 +592,9 @@ export default class ModuleManager extends React.Component {
             c.xsmType === 'XSM_audio',
           ].join('.');
           const repoIsLocal = isRepoLocal(c.sourceRepository);
-          if (repoIsLocal && drow[RepCol.iState] !== OFF)
+          if (repoIsLocal && drow[H.RepCol.iState] !== H.OFF)
             localModules[modunique] = repokey;
-          else if (drow[RepCol.iState] !== OFF) {
+          else if (drow[H.RepCol.iState] !== H.OFF) {
             enabledExternRepoMods[modunique] = repokey;
             if (c.xsmType !== 'none') {
               enabledXulswordRepoMods[modunique] = repokey;
@@ -627,41 +610,44 @@ export default class ModuleManager extends React.Component {
               mtype = `XSM ${i18n.t('audio.label')}`;
             }
             const d = [] as unknown as TModuleTableRow;
-            d[ModCol.iInfo] = {
+            d[H.ModCol.iInfo] = {
               repo,
-              shared: repokey === downloadKey(builtinRepos()[0]),
-              classes: modclasses(),
-              tooltip: tooltip('VALUE', [
-                ModCol.iShared,
-                ModCol.iInstalled,
-                ModCol.iRemove,
+              shared: repokey === downloadKey(H.builtinRepos()[0]),
+              classes: H.modclasses(),
+              tooltip: H.tooltip('VALUE', [
+                H.ModCol.iShared,
+                H.ModCol.iInstalled,
+                H.ModCol.iRemove,
               ]),
               conf: c,
             };
-            d[ModCol.iType] = mtype;
-            d[ModCol.iAbout] =
+            d[H.ModCol.iType] = mtype;
+            d[H.ModCol.iAbout] =
               (c.Description &&
                 (c.Description[i18n.language] || c.Description.en)) ||
               '';
-            d[ModCol.iModule] = c.module;
-            d[ModCol.iRepoName] =
+            d[H.ModCol.iModule] = c.module;
+            d[H.ModCol.iRepoName] =
               repo.name ||
               (repoIsLocal ? repo.path : `${repo.domain}/${repo.path}`);
-            d[ModCol.iVersion] = c.Version || '';
-            d[ModCol.iSize] = (c.InstallSize && c.InstallSize.toString()) || '';
-            d[ModCol.iFeatures] = (c.Feature && c.Feature.join(', ')) || '';
-            d[ModCol.iVersification] = c.Versification || 'KJV';
-            d[ModCol.iScope] = c.Scope || '';
-            d[ModCol.iCopyright] =
+            d[H.ModCol.iVersion] = c.Version || '';
+            d[H.ModCol.iSize] =
+              (c.InstallSize && c.InstallSize.toString()) || '';
+            d[H.ModCol.iFeatures] = (c.Feature && c.Feature.join(', ')) || '';
+            d[H.ModCol.iVersification] = c.Versification || 'KJV';
+            d[H.ModCol.iScope] = c.Scope || '';
+            d[H.ModCol.iCopyright] =
               (c.Copyright && (c.Copyright[i18n.language] || c.Copyright.en)) ||
               '';
-            d[ModCol.iLicense] = c.DistributionLicense || '';
-            d[ModCol.iSourceType] = c.SourceType || '';
-            d[ModCol.iShared] = (dataRow: number) => {
-              return Saved.module.data[dataRow][ModCol.iInfo].shared ? ON : OFF;
+            d[H.ModCol.iLicense] = c.DistributionLicense || '';
+            d[H.ModCol.iSourceType] = c.SourceType || '';
+            d[H.ModCol.iShared] = (dataRow: number) => {
+              return H.Saved.module.data[dataRow][H.ModCol.iInfo].shared
+                ? H.ON
+                : H.OFF;
             };
-            d[ModCol.iInstalled] = repoIsLocal ? ON : OFF;
-            d[ModCol.iRemove] = OFF;
+            d[H.ModCol.iInstalled] = repoIsLocal ? H.ON : H.OFF;
+            d[H.ModCol.iRemove] = H.OFF;
             moduleData[modrepk] = d;
           }
         });
@@ -675,9 +661,9 @@ export default class ModuleManager extends React.Component {
     // correpsonding modules in regular repositories will not be listed.
     repositoryListings.forEach((listing, i) => {
       const drow = repotable.data[i];
-      if (drow && Array.isArray(listing) && drow[RepCol.iState] !== OFF) {
+      if (drow && Array.isArray(listing) && drow[H.RepCol.iState] !== H.OFF) {
         listing.forEach((c) => {
-          const { repo } = drow[RepCol.iInfo];
+          const { repo } = drow[H.RepCol.iInfo];
           const modrepk = modrepKey(c.module, repo);
           const modrow = moduleData[modrepk];
           const modunique = [
@@ -688,11 +674,11 @@ export default class ModuleManager extends React.Component {
           const repoIsLocal = isRepoLocal(repo);
           const remoteSrcOfLocalMod = !repoIsLocal && modunique in localModules;
           if (remoteSrcOfLocalMod) {
-            modrow[ModCol.iInstalled] = ON;
+            modrow[H.ModCol.iInstalled] = H.ON;
             const modrepok = `${localModules[modunique]}.${c.module}`;
             if (modrepok in moduleData) {
-              modrow[ModCol.iInfo].shared =
-                moduleData[modrepok][ModCol.iInfo].shared;
+              modrow[H.ModCol.iInfo].shared =
+                moduleData[modrepok][H.ModCol.iInfo].shared;
             }
           }
           const localModFromRemote =
@@ -727,10 +713,10 @@ export default class ModuleManager extends React.Component {
     const codes: string[] = [];
     rows.forEach((r) => {
       if (langtable.data[r]) {
-        codes.push(langtable.data[r][LanCol.iInfo].code);
+        codes.push(langtable.data[r][H.LanCol.iInfo].code);
       }
     });
-    const { moduleLangData } = Saved;
+    const { moduleLangData } = H.Saved;
     // Select the appropriate moduleLangData lists.
     let tableData: TModuleTableRow[] = moduleLangData.allmodules;
     if (codes.length) {
@@ -742,12 +728,12 @@ export default class ModuleManager extends React.Component {
     // Return sorted rows.
     const taborder = [C.BIBLE, C.COMMENTARY, C.GENBOOK, C.DICTIONARY];
     return tableData.sort((a: TModuleTableRow, b: TModuleTableRow) => {
-      const ta = taborder.indexOf(a[ModCol.iType] as ModTypes);
-      const tb = taborder.indexOf(b[ModCol.iType] as ModTypes);
+      const ta = taborder.indexOf(a[H.ModCol.iType] as ModTypes);
+      const tb = taborder.indexOf(b[H.ModCol.iType] as ModTypes);
       if (ta > tb) return 1;
       if (ta < tb) return -1;
-      const ma = a[ModCol.iModule];
-      const mb = b[ModCol.iModule];
+      const ma = a[H.ModCol.iModule];
+      const mb = b[H.ModCol.iModule];
       return (ma && mb && ma.localeCompare(mb)) || 0;
     });
   }
@@ -855,15 +841,15 @@ export default class ModuleManager extends React.Component {
     const disable = {
       moduleInfo: !selectionToRows(module.selection).length,
       moduleInfoBack: false,
-      moduleCancel: !modtable.data.find((r) => r[ModCol.iInfo].loading),
+      moduleCancel: !modtable.data.find((r) => r[H.ModCol.iInfo].loading),
       repoAdd: false,
       repoDelete:
         !repository?.selection.length ||
         !selectionToDataRows('repository', repository.selection).every(
           (r) =>
-            repotable.data[r] && repotable.data[r][RepCol.iInfo]?.repo?.custom
+            repotable.data[r] && repotable.data[r][H.RepCol.iInfo]?.repo?.custom
         ),
-      repoCancel: !repotable.data.find((r) => r[RepCol.iInfo].loading),
+      repoCancel: !repotable.data.find((r) => r[H.RepCol.iInfo].loading),
     };
 
     let dialogmod = '';
@@ -919,7 +905,7 @@ export default class ModuleManager extends React.Component {
                   <Table
                     id="language"
                     key={langtable.render}
-                    columnHeadings={LanguageTableHeadings}
+                    columnHeadings={H.LanguageTableHeadings}
                     initialRowSort={language.rowSort}
                     data={langtable.data}
                     selectedRegions={language.selection}
@@ -984,7 +970,7 @@ export default class ModuleManager extends React.Component {
                   key={modtable.render}
                   data={modtable.data}
                   selectedRegions={module.selection}
-                  columnHeadings={ModuleTableHeadings()}
+                  columnHeadings={H.ModuleTableHeadings()}
                   visibleColumns={module.visibleColumns}
                   columnWidths={module.columnWidths}
                   initialRowSort={module.rowSort}
@@ -1059,7 +1045,7 @@ export default class ModuleManager extends React.Component {
                     key={repotable.render}
                     data={repotable.data}
                     selectedRegions={repository.selection}
-                    columnHeadings={RepositoryTableHeadings}
+                    columnHeadings={H.RepositoryTableHeadings}
                     columnWidths={repository.columnWidths}
                     initialRowSort={repository.rowSort}
                     domref={tableRef.repository}
