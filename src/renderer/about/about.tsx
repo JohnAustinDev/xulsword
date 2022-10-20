@@ -1,3 +1,4 @@
+/* eslint-disable react/no-did-update-set-state */
 /* eslint-disable react/no-array-index-key */
 /* eslint-disable jsx-a11y/anchor-is-valid */
 /* eslint-disable @typescript-eslint/no-use-before-define */
@@ -14,7 +15,7 @@ import Stack from '../libxul/stack';
 import Button from '../libxul/button';
 import Spacer from '../libxul/spacer';
 import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
-import '../libsword.css'; // .head1
+import '../libsword.css'; // about uses .head1
 import '../splash/splash.css';
 import './about.css';
 
@@ -24,15 +25,16 @@ const propTypes = xulPropTypes;
 
 type AboutWinProps = XulProps;
 
-const startingState = {
+const initialState = {
   showContributors: false as boolean,
   showModules: false as boolean,
-  modules: [] as string[], // list of module names to show
-  showConf: -1 as number, // modules index of a module conf to show, if any
-  edit: false as boolean, // is that conf editable or not
+  modules: [] as string[], // list of module names to be shown when showModules is true
+  focusModule: -1 as number, // modules index of a module to be given initial focus, if any
+  showConf: -1 as number, // modules index of a module config file to show, if any
+  editConf: false as boolean, // is the showConf config file to be editable or not
 };
 
-type AboutWinState = typeof startingState;
+export type AboutWinState = typeof initialState;
 
 export default class AboutWin extends React.Component {
   static defaultProps: typeof defaultProps;
@@ -46,22 +48,36 @@ export default class AboutWin extends React.Component {
   constructor(props: AboutWinProps) {
     super(props);
 
-    const ms = windowArgument('modules') as string[] | null;
-    const modules = (ms?.length && ms) || G.Tabs.map((t) => t.module);
+    const argState = windowArgument(
+      'aboutWinState'
+    ) as Partial<AboutWinState> | null;
 
     const s: AboutWinState = {
-      ...startingState,
-      ...(modules && modules.length ? { modules } : {}),
+      ...initialState,
+      ...(argState || {}),
     };
+    // When no modules are specified, show them all.
+    if (!s.modules.length) {
+      s.modules = G.Tabs.map((t) => t.module);
+    }
     this.state = s;
 
     this.textarea = React.createRef();
     this.modulesdiv = React.createRef();
 
+    this.checkFocus = this.checkFocus.bind(this);
     this.handler = this.handler.bind(this);
   }
 
-  handler = (e: React.SyntheticEvent) => {
+  componentDidMount() {
+    this.checkFocus();
+  }
+
+  componentDidUpdate() {
+    this.checkFocus();
+  }
+
+  handler(e: React.SyntheticEvent) {
     switch (e.type) {
       case 'click': {
         const state = this.state as AboutWinState;
@@ -88,7 +104,7 @@ export default class AboutWin extends React.Component {
           case 'more': {
             const s: Partial<AboutWinState> = {
               showConf: modules.indexOf(m),
-              edit: false,
+              editConf: false,
             };
             this.setState(s);
             break;
@@ -96,14 +112,14 @@ export default class AboutWin extends React.Component {
           case 'less': {
             const s: Partial<AboutWinState> = {
               showConf: -1,
-              edit: false,
+              editConf: false,
             };
             this.setState(s);
             break;
           }
           case 'edit': {
             const s: Partial<AboutWinState> = {
-              edit: true,
+              editConf: true,
             };
             this.setState(s);
             break;
@@ -114,7 +130,7 @@ export default class AboutWin extends React.Component {
               if (textarea?.current?.value) {
                 G.Module.writeConf(G.Tab[m].confPath, textarea?.current?.value);
                 const s: Partial<AboutWinState> = {
-                  edit: false,
+                  editConf: false,
                 };
                 this.setState(s);
               }
@@ -135,14 +151,25 @@ export default class AboutWin extends React.Component {
       }
       default:
     }
-  };
+  }
+
+  checkFocus() {
+    const state = this.state as AboutWinState;
+    const { modules, focusModule } = state;
+    if (modules.length && focusModule !== -1 && modules[focusModule]) {
+      const me = document.getElementById(`mod_${modules[focusModule]}`);
+      if (me) {
+        me.scrollIntoView();
+        this.setState({ focusModule: -1 });
+      }
+    }
+  }
 
   render() {
     const state = this.state as AboutWinState;
-    const { modules, showModules, showContributors, showConf, edit } = state;
+    const { modules, showModules, showContributors, showConf, editConf } =
+      state;
     const { handler, textarea, modulesdiv } = this;
-
-    const build = G.Data.read('buildInfo');
 
     const contributors: string[] =
       (G.Prefs.getComplexValue('Contributors') as string[]) || [];
@@ -165,7 +192,10 @@ export default class AboutWin extends React.Component {
               <Vbox id="layer2" flex="1" pack="end">
                 <Hbox align="center">
                   <Vbox flex="1" pack="start" align="center">
-                    <Label className="splash-text" value={build} />
+                    <Label
+                      className="splash-text"
+                      value={G.Data.read('buildInfo')}
+                    />
                     <Label
                       className="splash-text"
                       value={i18n.t('producedBy')}
@@ -175,7 +205,9 @@ export default class AboutWin extends React.Component {
               </Vbox>
               <Vbox
                 id="contributors"
-                className={showContributors ? 'show' : 'hide'}
+                className={
+                  contributors.length && showContributors ? 'show' : 'hide'
+                }
                 flex="1"
               >
                 <div>
@@ -190,28 +222,33 @@ export default class AboutWin extends React.Component {
         )}
         {showModules && (
           <div className="modules" ref={modulesdiv}>
-            {['Texts', 'Comms', 'Dicts', 'Genbks'].map((t) => (
-              <div key={`lt${t}`} className="linklist">
-                {modules.some((m) => G.Tab[m].tabType === t) && (
-                  <div className="head1">{i18n.t(t)}:</div>
-                )}
-                <ul>
-                  {modules
-                    ?.sort((a, b) =>
-                      G.Tab[a].label.localeCompare(G.Tab[b].label)
-                    )
-                    .map((m) =>
-                      G.Tab[m].tabType === t ? (
-                        <li key={`lm${m}`}>
-                          <a href={`#mod_${m}`} className={`cs-${m}`}>
-                            {G.Tab[m].label}
-                          </a>
-                        </li>
-                      ) : null
-                    )}
-                </ul>
-              </div>
-            ))}
+            {modules.length > 4 &&
+              ['Texts', 'Comms', 'Dicts', 'Genbks'].map((t) => (
+                <div key={`lt${t}`} className="linklist">
+                  {modules.some((m) => G.Tab[m].tabType === t) && (
+                    <>
+                      <div className="head1">{i18n.t(t)}</div>
+                      <div className="listbox">
+                        <ul>
+                          {modules
+                            ?.sort((a, b) =>
+                              G.Tab[a].label.localeCompare(G.Tab[b].label)
+                            )
+                            .map((m) =>
+                              G.Tab[m].tabType === t ? (
+                                <li key={`lm${m}`}>
+                                  <a href={`#mod_${m}`} className={`cs-${m}`}>
+                                    {G.Tab[m].label}
+                                  </a>
+                                </li>
+                              ) : null
+                            )}
+                        </ul>
+                      </div>
+                    </>
+                  )}
+                </div>
+              ))}
             {modules?.map((m, i) => (
               <div id={`mod_${m}`} className="modlist" key={`ml${m}`}>
                 <div className="head1">
@@ -244,7 +281,7 @@ export default class AboutWin extends React.Component {
                       </Button>
                       <Button
                         id={`save.${m}`}
-                        disabled={!edit}
+                        disabled={!editConf}
                         onClick={handler}
                       >
                         {i18n.t('save.label')}
@@ -261,12 +298,12 @@ export default class AboutWin extends React.Component {
                     />
                     <textarea
                       id={`ta.${m}`}
-                      className={edit ? 'editable' : 'readonly'}
+                      className={editConf ? 'editable' : 'readonly'}
                       autoComplete="off"
                       autoCorrect="off"
                       spellCheck={false}
                       wrap="off"
-                      readOnly={!edit}
+                      readOnly={!editConf}
                       rows={conftext.length}
                       ref={textarea}
                     >
@@ -279,21 +316,27 @@ export default class AboutWin extends React.Component {
           </div>
         )}
         <Hbox className="dialogbuttons" pack="end" align="end">
-          <Button id="showModules" flex="1" fill="x" onClick={handler}>
-            {showModules ? i18n.t('back.label') : i18n.t('chooseModule.label')}
-          </Button>
+          {modules.length && (
+            <Button id="showModules" flex="1" fill="x" onClick={handler}>
+              {showModules
+                ? i18n.t('back.label')
+                : i18n.t('chooseModule.label')}
+            </Button>
+          )}
           <Spacer flex="10" />
-          <Button
-            id="showContributors"
-            hidden={showModules}
-            flex="1"
-            fill="x"
-            onClick={handler}
-          >
-            {showContributors
-              ? i18n.t('back.label')
-              : i18n.t('contributors.label')}
-          </Button>
+          {contributors.length && (
+            <Button
+              id="showContributors"
+              hidden={showModules}
+              flex="1"
+              fill="x"
+              onClick={handler}
+            >
+              {showContributors
+                ? i18n.t('back.label')
+                : i18n.t('contributors.label')}
+            </Button>
+          )}
           <Spacer flex="10" />
           <Button id="close" flex="1" fill="x" onClick={handler}>
             {i18n.t('close.label')}

@@ -9,6 +9,7 @@ import setViewportTabs from './tabs';
 import Data from './components/data';
 
 import type { ContextData, LocationVKType } from '../type';
+import type { AboutWinState } from '../renderer/about/about';
 
 const noContextData: ContextData = {
   search: null,
@@ -79,15 +80,22 @@ export default function contextMenu(
           return () => {
             const mod = data.module || data.tab;
             if (mod) {
-              const mods = [mod];
+              const modules = [mod];
               if (mod && mod in G.Tab) {
                 G.LibSword.getModuleInformation(mod, 'Companion')
                   .split(/\s*,\s*/)
                   .forEach((c) => {
-                    if (c && c in G.Tab) mods.push(c);
+                    if (c && c in G.Tab) modules.push(c);
                   });
               }
-              Commands.openAbout(mods);
+              const s: Partial<AboutWinState> = {
+                showModules: true,
+                modules,
+                focusModule: 0,
+                showConf: -1,
+                editConf: false,
+              };
+              Commands.openAbout(s);
             }
           };
         })(cm()),

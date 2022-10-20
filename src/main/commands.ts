@@ -19,6 +19,7 @@ import type {
   TextVKType,
   XulswordStatePref,
 } from '../type';
+import type { AboutWinState } from '../renderer/about/about';
 
 const Commands: GType['Commands'] = {
   openModuleManager() {
@@ -223,18 +224,18 @@ const Commands: GType['Commands'] = {
     );
   },
 
-  openAbout(modules) {
+  openAbout(state?: Partial<AboutWinState>) {
     const tab = getTab();
-    const modlabel =
-      modules && modules.length
-        ? ` ${(tab && modules[0] in tab && tab[modules[0]].label) || module}`
+    const label =
+      state?.modules && state.modules.length
+        ? (tab && state.modules[0] in tab && tab[state.modules[0]].label) || ''
         : '';
     const options = {
       width: 510,
       height: 425,
-      title: `${i18n.t('menu.help.about')}${modlabel}`,
+      title: `${i18n.t('menu.help.about')} ${label}`,
       webPreferences: {
-        additionalArguments: [JSON_stringify({ modules })],
+        additionalArguments: [JSON_stringify({ aboutWinState: state || {} })],
       },
     };
     Window.open({ type: 'about', category: 'dialog-window', options });

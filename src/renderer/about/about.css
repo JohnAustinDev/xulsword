@@ -13,6 +13,11 @@ html.about #root {
   margin: 4px;
   margin-bottom: 0;
 }
+#mainbox .head1 {
+  margin-top: 0;
+  margin-bottom: 0;
+  padding-top: 5px;
+}
 
 #contributors.hide > div {
   background-color: transparent;
@@ -43,12 +48,16 @@ html.about #root {
   flex-shrink: 1;
 }
 
+.linklist .listbox {
+  background-color: white;
+  border-radius: 8px;
+  border: 2px solid rgb(200, 170, 205);
+  margin: 10px 10px 20px 10px;
+  padding: 10px;
+}
 .linklist ul {
   column-count: 3;
   column-fill: balance;
-  margin: 10px;
-  background-color: white;
-  border-radius: 8px;
 }
 
 .modlist {
@@ -56,6 +65,7 @@ html.about #root {
   padding: 5px;
   background-color: white;
   border-radius: 8px;
+  border: 2px solid rgb(200, 170, 205);
 }
 .modlist > div:nth-child(3),
 .modlist > div:nth-child(4) {
@@ -66,11 +76,6 @@ html.about #root {
 }
 .modlist > div:nth-child(4) {
   margin-bottom: 10px;
-}
-.modlist .head1 {
-  margin-top: 0;
-  margin-bottom: 0;
-  padding-top: 5px;
 }
 .modlist .module-info .Lang,
 .modlist .module-info .moduleType {

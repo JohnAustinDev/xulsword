@@ -4,6 +4,8 @@ import type { BrowserWindow } from 'electron';
 import type ElectronLog from 'electron-log';
 import React from 'react';
 
+import type { AboutWinState } from './renderer/about/about';
+
 declare global {
   export interface Window {
     api: { i18nextElectronBackend: any };
@@ -730,7 +732,9 @@ const CommandsPublic = {
   ) => void,
   openDbItemPropertiesDialog: func as unknown as (bookmark: unknown) => void,
   deleteDbItem: func as unknown as (bookmark: unknown) => void,
-  openAbout: func as unknown as (modules?: string[]) => void,
+  openAbout: func as unknown as (
+    aboutWinState?: Partial<AboutWinState>
+  ) => void,
   goToLocationVK: func as unknown as (
     location: LocationVKType,
     selection: LocationVKType,
