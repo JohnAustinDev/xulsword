@@ -187,7 +187,12 @@ const openMainWindow = () => {
     process.env.NODE_ENV === 'development' ||
     process.env.DEBUG_PROD === 'true'
   ) {
-    mainWin.on('ready-to-show', () => electronDebug());
+    mainWin.on('ready-to-show', () =>
+      electronDebug({
+        showDevTools: false,
+        devToolsMode: 'undocked',
+      })
+    );
   }
 
   mainWin.on('close', () => {

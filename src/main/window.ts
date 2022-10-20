@@ -324,24 +324,7 @@ function createWindow(
   const win = new BrowserWindow(options);
   addWindowToRegistry(win, descriptor);
   // win.webContents.openDevTools({ mode: 'detach' });
-  win
-    .loadURL(resolveHtmlPath(`${type}.html`))
-    .then(() => {
-      if (
-        C.DevToolsopen &&
-        (process.env.NODE_ENV === 'development' ||
-          process.env.DEBUG_PROD === 'true')
-      ) {
-        return setTimeout(
-          () => win.webContents.openDevTools({ mode: 'detach' }),
-          1000
-        );
-      }
-      return null;
-    })
-    .catch((err) => {
-      log.error(err);
-    });
+  win.loadURL(resolveHtmlPath(`${type}.html`));
   windowInitI18n(win);
   if (type !== 'xulsword') win.removeMenu();
   win.webContents.on('did-create-window', (lwin) => {
