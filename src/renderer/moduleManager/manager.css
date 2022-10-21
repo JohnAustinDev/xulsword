@@ -47,3 +47,12 @@
   height: 100%;
   padding: 10px;
 }
+
+.moduleManager .bp4-dialog-body .label {
+  white-space: unset;
+  margin-bottom: 10px;
+}
+.moduleManager .bp4-dialog-body .label:first-child {
+  font-size: large;
+  margin-bottom: 20px;
+}

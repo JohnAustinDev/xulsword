@@ -546,6 +546,7 @@ export function getLangReadable(code: string): string {
 
 export function moduleInfoHTML(configs: SwordConfType[]): string {
   const esc = (s: string): string => {
+    if (!s) return '';
     return s.replace(/[&<>"']/g, (m) => {
       switch (m) {
         case '&':

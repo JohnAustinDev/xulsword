@@ -729,6 +729,25 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
           });
           break;
         }
+        case 'internet.yes':
+        case 'internet.no': {
+          const allow = e.currentTarget.id === 'internet.yes';
+          const cb = document.getElementById(
+            'internet.rememberChoice__input'
+          ) as HTMLInputElement | null;
+          if (cb && cb.checked) {
+            G.Prefs.setBoolPref('global.InternetPermission', allow);
+          }
+          const s: Partial<ManagerState> = {
+            internetPermission: allow,
+          };
+          this.setState(s);
+          if (allow) this.loadManagerTables();
+          // If the answer is no, then close the window, as there is
+          // nothing else to be done here.
+          else G.Window.close();
+          break;
+        }
         default:
           throw Error(
             `Unhandled ModuleManager click event ${e.currentTarget.id}`

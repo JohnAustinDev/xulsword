@@ -10,7 +10,6 @@ import LibSword from './components/libsword';
 import getFontFamily from './fontfamily';
 
 import type { ConfigType, FeatureType, FontFaceType } from '../type';
-import Data from './components/data';
 
 // If a module config fontFamily specifies a URL to a font, rather
 // than a fontFamily, then parse the URL. Otherwise return null.
@@ -70,13 +69,11 @@ export function getModuleFonts(): FontFaceType[] {
     // fontFamily or font file name. All available font files were added above.
     // But URLs should also be added if any module requests them.
     const mods = LibSword.getModuleList();
-    const disable =
-      !Prefs.getBoolPref('global.InternetPermission') &&
-      !(
-        Data.has('SessionInternetPermission') &&
-        Data.read('SessionInternetPermission')
-      );
-    if (!disable && mods && mods !== C.NOMODULES) {
+    if (
+      Prefs.getBoolPref('global.InternetPermission') &&
+      mods &&
+      mods !== C.NOMODULES
+    ) {
       const modulelist = mods.split(C.CONFSEP);
       const modules = modulelist.map((m: string) => m.split(';')[0]);
       modules.forEach((m) => {

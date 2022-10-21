@@ -43,6 +43,7 @@ import Table from '../libxul/table';
 import Spacer from '../libxul/spacer';
 import Label from '../libxul/label';
 import DragSizer, { DragSizerVal } from '../libxul/dragsizer';
+import Checkbox from '../libxul/checkbox';
 import * as H from './managerH';
 import './manager.css';
 
@@ -112,6 +113,7 @@ const notStatePref = {
       render: 0,
     },
   },
+  internetPermission: false as boolean,
 };
 
 export interface ManagerStatePref {
@@ -208,6 +210,7 @@ export default class ModuleManager extends React.Component {
     s.tables.language.data = H.Saved.language.data;
     s.tables.module.data = H.Saved.module.data;
     s.tables.repository.data = H.Saved.repository.data;
+    s.internetPermission = G.Prefs.getBoolPref('global.InternetPermission');
     this.state = s;
 
     this.tableRef = {} as typeof this.tableRef;
@@ -251,6 +254,35 @@ export default class ModuleManager extends React.Component {
   }
 
   componentDidMount() {
+    const state = this.state as ManagerState;
+    const { repositories } = state;
+    // If we are managing external repositories, Internet is required.
+    if (repositories && !state.internetPermission) return;
+    this.loadManagerTables();
+  }
+
+  componentDidUpdate(_prevProps: any, prevState: ManagerState) {
+    const state = this.state as ManagerState;
+    if (!state.internetPermission) return;
+    const { id } = this.props as ManagerProps;
+    if (id) {
+      const newStatePref = drop(state, notStatePref) as PrefObject;
+      const prvStatePref = drop(prevState, notStatePref) as PrefObject;
+      const d = diff(prvStatePref, newStatePref);
+      if (d) {
+        G.Prefs.mergeValue(id, d);
+      }
+    }
+    this.sizeTableToParent('repository');
+    this.sizeTableToParent('module');
+  }
+
+  componentWillUnmount() {
+    this.destroy.forEach((func) => func());
+    this.destroy = [];
+  }
+
+  loadManagerTables() {
     const handleListing = (listing: RepositoryListing[]) => {
       this.updateRepositoryLists(listing);
       let langselection = this.loadLanguageTable();
@@ -376,26 +408,6 @@ export default class ModuleManager extends React.Component {
     );
     this.sizeTableToParent('repository');
     this.sizeTableToParent('module');
-  }
-
-  componentDidUpdate(_prevProps: any, prevState: ManagerState) {
-    const state = this.state as ManagerState;
-    const { id } = this.props as ManagerProps;
-    if (id) {
-      const newStatePref = drop(state, notStatePref) as PrefObject;
-      const prvStatePref = drop(prevState, notStatePref) as PrefObject;
-      const d = diff(prvStatePref, newStatePref);
-      if (d) {
-        G.Prefs.mergeValue(id, d);
-      }
-    }
-    this.sizeTableToParent('repository');
-    this.sizeTableToParent('module');
-  }
-
-  componentWillUnmount() {
-    this.destroy.forEach((func) => func());
-    this.destroy = [];
   }
 
   sizeTableToParent(table: typeof H.Tables[number]) {
@@ -815,6 +827,8 @@ export default class ModuleManager extends React.Component {
       showChapterDialog,
       progress,
       okdisabled,
+      repositories,
+      internetPermission,
     } = state;
     const {
       language: langtable,
@@ -860,285 +874,316 @@ export default class ModuleManager extends React.Component {
       if (ab) dialogText = ab[i18n.language] || ab.en;
     }
 
-    return (
-      <Vbox {...addClass('modulemanager', props)} flex="1" height="100%">
-        <Toaster
-          canEscapeKeyClear
-          position={Position.TOP}
-          usePortal
-          ref={this.refHandlers.toaster}
-        />
-        {showChapterDialog && (
-          <Dialog isOpen>
-            <div className={Classes.DIALOG_BODY}>
-              <Vbox>
-                <Label value={dialogmod} />
-                <div>{dialogText}</div>
-                <VKSelect
-                  height="2em"
-                  initialSelection={showChapterDialog.initialSelection}
-                  options={showChapterDialog.options}
-                  onSelectionChange={dialogOnChange}
-                />
-              </Vbox>
-            </div>
-            <Hbox className="dialogbuttons" pack="end" align="end">
-              <Spacer flex="10" />
-              <Button id="cancel" flex="1" fill="x" onClick={dialogClose}>
-                {i18n.t('cancel.label')}
-              </Button>
-              <Button id="ok" flex="1" fill="x" onClick={dialogAccept}>
-                {i18n.t('ok.label')}
-              </Button>
-            </Hbox>
-          </Dialog>
-        )}
-        <Hbox
-          flex="1"
-          className={`language ${language.open ? 'open' : 'closed'}`}
-        >
-          {language.open && (
-            <>
-              <Groupbox
-                caption={i18n.t('menu.options.language')}
-                orient="vertical"
-                width={language.width}
-              >
-                <Box flex="1">
-                  <Table
-                    id="language"
-                    key={langtable.render}
-                    columnHeadings={H.LanguageTableHeadings}
-                    initialRowSort={language.rowSort}
-                    data={langtable.data}
-                    selectedRegions={language.selection}
-                    domref={tableRef.language}
-                    onRowsReordered={onRowsReordered.language}
-                    onCellClick={onLangCellClick}
+    // If we are managing external repositories, Internet permission is required.
+    if (!repositories || state.internetPermission)
+      return (
+        <Vbox {...addClass('modulemanager', props)} flex="1" height="100%">
+          <Toaster
+            canEscapeKeyClear
+            position={Position.TOP}
+            usePortal
+            ref={this.refHandlers.toaster}
+          />
+          {showChapterDialog && (
+            <Dialog isOpen>
+              <div className={Classes.DIALOG_BODY}>
+                <Vbox>
+                  <Label value={dialogmod} />
+                  <div>{dialogText}</div>
+                  <VKSelect
+                    height="2em"
+                    initialSelection={showChapterDialog.initialSelection}
+                    options={showChapterDialog.options}
+                    onSelectionChange={dialogOnChange}
                   />
-                </Box>
-                <Button
-                  id="languageListClose"
-                  icon="chevron-left"
-                  fill="x"
-                  onClick={eventHandler}
-                />
-              </Groupbox>
-              <DragSizer
-                onDragStart={() => state.language.width}
-                onDragEnd={(_e: React.MouseEvent, v: DragSizerVal) =>
-                  this.sState({
-                    language: { ...state.language, width: v.sizerPos },
-                  })
-                }
-                min={75}
-                max={250}
-                orient="vertical"
-              />
-            </>
-          )}
-          {!language.open && (
-            <Groupbox caption=" " orient="vertical">
-              <Vbox flex="1">
-                <Button
-                  id="languageListOpen"
-                  icon="chevron-right"
-                  fill="y"
-                  style={{ height: '100%' }}
-                  onClick={eventHandler}
-                />
-              </Vbox>
-            </Groupbox>
-          )}
-
-          <Groupbox
-            caption={i18n.t('chooseModule.label')}
-            orient="horizontal"
-            flex="1"
-          >
-            <Hbox className="module-deck" flex="1">
-              {showModuleInfo && (
-                <div
-                  className="info"
-                  // eslint-disable-next-line react/no-danger
-                  dangerouslySetInnerHTML={{
-                    __html: sanitizeHTML(showModuleInfo),
-                  }}
-                />
-              )}
-              {!showModuleInfo && (
-                <Table
-                  flex="1"
-                  id="module"
-                  key={modtable.render}
-                  data={modtable.data}
-                  selectedRegions={module.selection}
-                  columnHeadings={H.ModuleTableHeadings()}
-                  visibleColumns={module.visibleColumns}
-                  columnWidths={module.columnWidths}
-                  initialRowSort={module.rowSort}
-                  enableColumnReordering
-                  domref={tableRef.module}
-                  onColumnsReordered={onColumnsReordered}
-                  onColumnHide={onColumnHide}
-                  onCellClick={onModCellClick}
-                  onColumnWidthChanged={onColumnWidthChanged.module}
-                  onRowsReordered={onRowsReordered.module}
-                />
-              )}
-            </Hbox>
-            <Vbox className="button-stack" pack="center">
-              {!showModuleInfo && (
-                <Button
-                  id="moduleInfo"
-                  icon="info-sign"
-                  intent="primary"
-                  fill="x"
-                  disabled={disable.moduleInfo}
-                  onClick={eventHandler}
-                />
-              )}
-              {showModuleInfo && (
-                <Button
-                  id="moduleInfoBack"
-                  intent="primary"
-                  fill="x"
-                  disabled={disable.moduleInfoBack}
-                  onClick={eventHandler}
-                >
-                  {i18n.t('back.label')}
+                </Vbox>
+              </div>
+              <Hbox className="dialogbuttons" pack="end" align="end">
+                <Spacer flex="10" />
+                <Button id="cancel" flex="1" fill="x" onClick={dialogClose}>
+                  {i18n.t('cancel.label')}
                 </Button>
-              )}
-              <Button
-                id="moduleCancel"
-                intent="primary"
-                fill="x"
-                disabled={disable.moduleCancel}
-                onClick={eventHandler}
-              >
-                {i18n.t('cancel.label')}
-              </Button>
-            </Vbox>
-          </Groupbox>
-        </Hbox>
+                <Button id="ok" flex="1" fill="x" onClick={dialogAccept}>
+                  {i18n.t('ok.label')}
+                </Button>
+              </Hbox>
+            </Dialog>
+          )}
+          <Hbox
+            flex="1"
+            className={`language ${language.open ? 'open' : 'closed'}`}
+          >
+            {language.open && (
+              <>
+                <Groupbox
+                  caption={i18n.t('menu.options.language')}
+                  orient="vertical"
+                  width={language.width}
+                >
+                  <Box flex="1">
+                    <Table
+                      id="language"
+                      key={langtable.render}
+                      columnHeadings={H.LanguageTableHeadings}
+                      initialRowSort={language.rowSort}
+                      data={langtable.data}
+                      selectedRegions={language.selection}
+                      domref={tableRef.language}
+                      onRowsReordered={onRowsReordered.language}
+                      onCellClick={onLangCellClick}
+                    />
+                  </Box>
+                  <Button
+                    id="languageListClose"
+                    icon="chevron-left"
+                    fill="x"
+                    onClick={eventHandler}
+                  />
+                </Groupbox>
+                <DragSizer
+                  onDragStart={() => state.language.width}
+                  onDragEnd={(_e: React.MouseEvent, v: DragSizerVal) =>
+                    this.sState({
+                      language: { ...state.language, width: v.sizerPos },
+                    })
+                  }
+                  min={75}
+                  max={250}
+                  orient="vertical"
+                />
+              </>
+            )}
+            {!language.open && (
+              <Groupbox caption=" " orient="vertical">
+                <Vbox flex="1">
+                  <Button
+                    id="languageListOpen"
+                    icon="chevron-right"
+                    fill="y"
+                    style={{ height: '100%' }}
+                    onClick={eventHandler}
+                  />
+                </Vbox>
+              </Groupbox>
+            )}
 
-        {repository && repository.open && (
-          <div>
-            <DragSizer
-              onDragStart={() => repository.height}
-              onDragEnd={(_e: React.MouseEvent, v: DragSizerVal) =>
-                this.sState({
-                  repository: { ...repository, height: v.sizerPos },
-                })
-              }
-              orient="horizontal"
-              shrink
-            />
             <Groupbox
-              caption={i18n.t('moduleSources.label')}
-              height={repository.height}
+              caption={i18n.t('chooseModule.label')}
               orient="horizontal"
               flex="1"
             >
-              <Box flex="1">
-                {!!repotable.data.length && (
-                  <Table
-                    flex="1"
-                    id="repository"
-                    key={repotable.render}
-                    data={repotable.data}
-                    selectedRegions={repository.selection}
-                    columnHeadings={H.RepositoryTableHeadings}
-                    columnWidths={repository.columnWidths}
-                    initialRowSort={repository.rowSort}
-                    domref={tableRef.repository}
-                    onEditableCellChanged={onCellEdited}
-                    onCellClick={onRepoCellClick}
-                    onRowsReordered={onRowsReordered.repository}
-                    onColumnWidthChanged={onColumnWidthChanged.repository}
+              <Hbox className="module-deck" flex="1">
+                {showModuleInfo && (
+                  <div
+                    className="info"
+                    // eslint-disable-next-line react/no-danger
+                    dangerouslySetInnerHTML={{
+                      __html: sanitizeHTML(showModuleInfo),
+                    }}
                   />
                 )}
-              </Box>
+                {!showModuleInfo && (
+                  <Table
+                    flex="1"
+                    id="module"
+                    key={modtable.render}
+                    data={modtable.data}
+                    selectedRegions={module.selection}
+                    columnHeadings={H.ModuleTableHeadings()}
+                    visibleColumns={module.visibleColumns}
+                    columnWidths={module.columnWidths}
+                    initialRowSort={module.rowSort}
+                    enableColumnReordering
+                    domref={tableRef.module}
+                    onColumnsReordered={onColumnsReordered}
+                    onColumnHide={onColumnHide}
+                    onCellClick={onModCellClick}
+                    onColumnWidthChanged={onColumnWidthChanged.module}
+                    onRowsReordered={onRowsReordered.module}
+                  />
+                )}
+              </Hbox>
               <Vbox className="button-stack" pack="center">
+                {!showModuleInfo && (
+                  <Button
+                    id="moduleInfo"
+                    icon="info-sign"
+                    intent="primary"
+                    fill="x"
+                    disabled={disable.moduleInfo}
+                    onClick={eventHandler}
+                  />
+                )}
+                {showModuleInfo && (
+                  <Button
+                    id="moduleInfoBack"
+                    intent="primary"
+                    fill="x"
+                    disabled={disable.moduleInfoBack}
+                    onClick={eventHandler}
+                  >
+                    {i18n.t('back.label')}
+                  </Button>
+                )}
                 <Button
-                  id="repoAdd"
-                  icon="add"
+                  id="moduleCancel"
                   intent="primary"
                   fill="x"
-                  disabled={disable.repoAdd}
-                  onClick={eventHandler}
-                />
-                <Button
-                  id="repoDelete"
-                  icon="delete"
-                  intent="primary"
-                  fill="x"
-                  disabled={disable.repoDelete}
-                  onClick={eventHandler}
-                />
-                <Button
-                  id="repoCancel"
-                  intent="primary"
-                  fill="x"
-                  disabled={disable.repoCancel}
+                  disabled={disable.moduleCancel}
                   onClick={eventHandler}
                 >
                   {i18n.t('cancel.label')}
                 </Button>
               </Vbox>
             </Groupbox>
-          </div>
-        )}
+          </Hbox>
 
-        <Hbox className="dialogbuttons" pack="end" align="end">
           {repository && repository.open && (
-            <Button
-              flex="1"
-              fill="x"
-              onClick={() =>
-                this.sState({
-                  repository: { ...repository, open: false },
-                })
-              }
-            >
-              {i18n.t('less.label')}
-            </Button>
-          )}
-          {repository && !repository.open && (
-            <Button
-              flex="1"
-              fill="x"
-              onClick={() =>
-                this.sState({ repository: { ...repository, open: true } })
-              }
-            >
-              {i18n.t('moduleSources.label')}
-            </Button>
-          )}
-          {!progress && <Spacer flex="10" />}
-          {progress && (
-            <Hbox className="progress-container" align="center" flex="10">
-              <ProgressBar
-                value={progress[0] / progress[1]}
-                intent="primary"
-                animate
-                stripes
+            <div>
+              <DragSizer
+                onDragStart={() => repository.height}
+                onDragEnd={(_e: React.MouseEvent, v: DragSizerVal) =>
+                  this.sState({
+                    repository: { ...repository, height: v.sizerPos },
+                  })
+                }
+                orient="horizontal"
+                shrink
               />
-            </Hbox>
+              <Groupbox
+                caption={i18n.t('moduleSources.label')}
+                height={repository.height}
+                orient="horizontal"
+                flex="1"
+              >
+                <Box flex="1">
+                  {!!repotable.data.length && (
+                    <Table
+                      flex="1"
+                      id="repository"
+                      key={repotable.render}
+                      data={repotable.data}
+                      selectedRegions={repository.selection}
+                      columnHeadings={H.RepositoryTableHeadings}
+                      columnWidths={repository.columnWidths}
+                      initialRowSort={repository.rowSort}
+                      domref={tableRef.repository}
+                      onEditableCellChanged={onCellEdited}
+                      onCellClick={onRepoCellClick}
+                      onRowsReordered={onRowsReordered.repository}
+                      onColumnWidthChanged={onColumnWidthChanged.repository}
+                    />
+                  )}
+                </Box>
+                <Vbox className="button-stack" pack="center">
+                  <Button
+                    id="repoAdd"
+                    icon="add"
+                    intent="primary"
+                    fill="x"
+                    disabled={disable.repoAdd}
+                    onClick={eventHandler}
+                  />
+                  <Button
+                    id="repoDelete"
+                    icon="delete"
+                    intent="primary"
+                    fill="x"
+                    disabled={disable.repoDelete}
+                    onClick={eventHandler}
+                  />
+                  <Button
+                    id="repoCancel"
+                    intent="primary"
+                    fill="x"
+                    disabled={disable.repoCancel}
+                    onClick={eventHandler}
+                  >
+                    {i18n.t('cancel.label')}
+                  </Button>
+                </Vbox>
+              </Groupbox>
+            </div>
           )}
-          <Button id="cancel" flex="1" fill="x" onClick={eventHandler}>
-            {i18n.t('cancel.label')}
-          </Button>
-          <Button
-            id="ok"
-            disabled={okdisabled}
-            flex="1"
-            fill="x"
-            onClick={eventHandler}
-          >
-            {i18n.t('ok.label')}
-          </Button>
-        </Hbox>
+
+          <Hbox className="dialogbuttons" pack="end" align="end">
+            {repository && repository.open && (
+              <Button
+                flex="1"
+                fill="x"
+                onClick={() =>
+                  this.sState({
+                    repository: { ...repository, open: false },
+                  })
+                }
+              >
+                {i18n.t('less.label')}
+              </Button>
+            )}
+            {repository && !repository.open && (
+              <Button
+                flex="1"
+                fill="x"
+                onClick={() =>
+                  this.sState({ repository: { ...repository, open: true } })
+                }
+              >
+                {i18n.t('moduleSources.label')}
+              </Button>
+            )}
+            {!progress && <Spacer flex="10" />}
+            {progress && (
+              <Hbox className="progress-container" align="center" flex="10">
+                <ProgressBar
+                  value={progress[0] / progress[1]}
+                  intent="primary"
+                  animate
+                  stripes
+                />
+              </Hbox>
+            )}
+            <Button id="cancel" flex="1" fill="x" onClick={eventHandler}>
+              {i18n.t('cancel.label')}
+            </Button>
+            <Button
+              id="ok"
+              disabled={okdisabled}
+              flex="1"
+              fill="x"
+              onClick={eventHandler}
+            >
+              {i18n.t('ok.label')}
+            </Button>
+          </Hbox>
+        </Vbox>
+      );
+    // If Internet permission is needed but has not been granted, then ask for it.
+    return (
+      <Vbox {...addClass('modulemanager', props)} flex="1" height="100%">
+        <Dialog isOpen>
+          <div className={Classes.DIALOG_BODY}>
+            <Vbox>
+              <Label value={i18n.t('allowInternet.title')} />
+              <Label value={i18n.t('allowInternet.message')} />
+              <Label value={i18n.t('allowInternet.continue')} />
+            </Vbox>
+          </div>
+          <Hbox className="dialogbuttons" pack="end" align="center">
+            <Spacer width="10px" />
+            <Checkbox
+              id="internet.rememberChoice"
+              initial={false}
+              label={i18n.t('rememberChoice.label')}
+            />
+            <Spacer flex="10" />
+            <Button id="internet.yes" flex="1" fill="x" onClick={eventHandler}>
+              {i18n.t('yes.label')}
+            </Button>
+            <Button id="internet.no" flex="1" fill="x" onClick={eventHandler}>
+              {i18n.t('no.label')}
+            </Button>
+          </Hbox>
+        </Dialog>
       </Vbox>
     );
   }
