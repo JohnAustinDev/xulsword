@@ -1,6 +1,5 @@
 /* eslint-disable prefer-rest-params */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { BrowserWindow } from 'electron';
 import log from 'electron-log';
 import path from 'path';
 import fs from 'fs';
@@ -12,7 +11,7 @@ import Dirs from './dirs';
 import type { GType, PrefObject, PrefValue } from '../../type';
 
 export type PrefCallbackType = (
-  callingWin: BrowserWindow | null,
+  callingWinID: number,
   key: string,
   value: any,
   store?: string
@@ -33,7 +32,7 @@ type PrefsPrivate = {
     type: 'string' | 'number' | 'boolean' | 'complex' | 'any' | 'merge',
     value: PrefValue,
     aStore: string | undefined,
-    callingWin: BrowserWindow
+    callingWinID: number
   ) => boolean;
   writeStore: (aStore: string) => boolean;
   getStore: (aStore: string) => PrefObject;
@@ -69,8 +68,7 @@ const Prefs: GType['Prefs'] & PrefsPrivate = {
 
   // Set a string pref value. Error if key is not String.
   setCharPref(key, value, aStore?) {
-    const w = arguments[3];
-    return this.setPref(key, 'string', value, aStore, w);
+    return this.setPref(key, 'string', value, aStore, arguments[3] ?? -1);
   },
 
   // Get a Boolean pref value. Error if key is not Boolean, or is missing from store.
@@ -80,8 +78,7 @@ const Prefs: GType['Prefs'] & PrefsPrivate = {
 
   // Set a Boolean pref value. Error if key is not Boolean.
   setBoolPref(key, value, aStore?) {
-    const w = arguments[3];
-    return this.setPref(key, 'boolean', value, aStore, w);
+    return this.setPref(key, 'boolean', value, aStore, arguments[3] ?? -1);
   },
 
   // Get a number pref value (does no need to be an integer). Error if key is not a number, or is missing from store.
@@ -91,8 +88,7 @@ const Prefs: GType['Prefs'] & PrefsPrivate = {
 
   // Set a Boolean pref value. Error if key is not an number.
   setIntPref(key, value, aStore?) {
-    const w = arguments[3];
-    return this.setPref(key, 'number', value, aStore, w);
+    return this.setPref(key, 'number', value, aStore, arguments[3] ?? -1);
   },
 
   // Get a complex pref value. Error if key is not complex, or is missing from store.
@@ -102,20 +98,17 @@ const Prefs: GType['Prefs'] & PrefsPrivate = {
 
   // Set a Boolean pref value. Error if key is not an number.
   setComplexValue(key, value, aStore?) {
-    const w = arguments[3];
-    return this.setPref(key, 'complex', value, aStore, w);
+    return this.setPref(key, 'complex', value, aStore, arguments[3] ?? -1);
   },
 
   // Sets individual properties of a key, leaving the others untouched.
   mergeValue(key, obj, aStore?) {
-    const callingWin = arguments[3];
-    this.setPref(key, 'merge', obj, aStore, callingWin);
+    this.setPref(key, 'merge', obj, aStore, arguments[3] ?? -1);
   },
 
   // Remove the key from a store
   deleteUserPref(key, aStore?) {
-    const w = arguments[2];
-    return this.setPref(key, 'any', undefined, aStore, w);
+    return this.setPref(key, 'any', undefined, aStore, arguments[2] ?? -1);
   },
 
   // Get a pref value and throw an error if it does not match type. If the key
@@ -123,12 +116,11 @@ const Prefs: GType['Prefs'] & PrefsPrivate = {
   // will be returned. If defval is required but not supplied, an error is thrown.
   getPrefOrCreate(key, type, defval, store?) {
     const aStore = store || 'prefs';
-    const w = arguments[4];
     const value = this.getKeyValueFromStore(key, defval === undefined, aStore);
 
     const newval = value !== undefined ? value : defval;
     if (newval !== value) {
-      this.setPref(key, type, newval, aStore, w);
+      this.setPref(key, type, newval, aStore, arguments[4] ?? -1);
     } else if (!this.isType(type, newval)) {
       throw Error(
         `type '${typeof newval}' expected '${type}': key='${key}' of store='${aStore}'`
@@ -262,7 +254,7 @@ const Prefs: GType['Prefs'] & PrefsPrivate = {
   // to disk immediately. Supported types are PrefValue. If a change was made,
   // any registered subscription callbacks will be called after setting the new
   // value.
-  setPref(key, type, value, store, callingWin) {
+  setPref(key, type, value, store, callingWinID) {
     // Get the store.
     const aStore = store || 'prefs';
     let p = this.getStore(aStore);
@@ -325,7 +317,7 @@ const Prefs: GType['Prefs'] & PrefsPrivate = {
     // Call any registered callbacks if value was successfully changed.
     if (success) {
       const args: Parameters<PrefCallbackType> = [
-        callingWin,
+        callingWinID,
         key,
         value,
         aStore,

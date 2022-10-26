@@ -2,7 +2,7 @@
 import { stringHash } from 'common';
 import C from 'constant';
 import Cache from '../cache';
-import { GPublic } from '../type';
+import { GPublic, GType } from '../type';
 
 // Cannot use log without dependency cycle
 function silly(msg: string) {
@@ -18,20 +18,18 @@ function silly(msg: string) {
 // this object access data and objects via IPC to the main process G object.
 // All getter and cacheable data is cached locally.
 const G = {} as typeof GPublic;
-
-// These global functions and object methods are asynchronous and return promises.
-const asyncFuncs = [
-  'getSystemFonts',
-  'Commands.installXulswordModules',
-  'Downloader.crossWireMasterRepoList',
-  'Downloader.repositoryListing',
-  'Module.download',
-  'Module.downloadXSM',
-  'Module.saveDownloads',
-  'Module.remove',
-  'Module.move',
-  'LibSword.searchIndexBuild',
-  'LibSword.search',
+const asyncFuncs: [
+  [keyof GType, (keyof GType['getSystemFonts'])[]],
+  [keyof GType, (keyof GType['Commands'])[]],
+  [keyof GType, (keyof GType['Downloader'])[]],
+  [keyof GType, (keyof GType['Module'])[]],
+  [keyof GType, (keyof GType['LibSword'])[]]
+] = [
+  ['getSystemFonts', []],
+  ['Commands', ['installXulswordModules']],
+  ['Downloader', ['crossWireMasterRepoList', 'repositoryListing']],
+  ['Module', ['download', 'downloadXSM', 'installDownloads', 'remove', 'move']],
+  ['LibSword', ['searchIndexBuild', 'search']],
 ];
 
 const entries = Object.entries(GPublic);
@@ -58,13 +56,15 @@ entries.forEach((entry) => {
         cacheable ? ' cache' : ''
       }`;
       silly(
-        `${asyncFuncs.includes(name) ? 'async ' : ''}${ckey}${
-          cacheable && !Cache.has(ckey) ? ' miss' : ''
-        }`
+        `${
+          (asyncFuncs as [string, string[]][]).some((en) => en[0] === name)
+            ? 'async '
+            : ''
+        }${ckey}${cacheable && !Cache.has(ckey) ? ' miss' : ''}`
       );
       if (!cacheable) Cache.clear(ckey);
       if (!Cache.has(ckey)) {
-        if (asyncFuncs.includes(name)) {
+        if ((asyncFuncs as [string, string[]][]).some((en) => en[0] === name)) {
           return window.ipc.renderer
             .invoke('global', name, ...args)
             .then((result: unknown) => {
@@ -78,7 +78,9 @@ entries.forEach((entry) => {
         );
       }
       const retval = Cache.read(ckey);
-      return asyncFuncs.includes(name) ? Promise.resolve(retval) : retval;
+      return (asyncFuncs as [string, string[]][]).some((en) => en[0] === name)
+        ? Promise.resolve(retval)
+        : retval;
     };
   } else if (typeof value === 'object') {
     const methods = Object.getOwnPropertyNames(value);
@@ -108,12 +110,20 @@ entries.forEach((entry) => {
           }`;
           silly(
             `${
-              asyncFuncs.includes([name, m].join('.')) ? 'async ' : ''
+              (asyncFuncs as [string, string[]][]).some(
+                (en) => en[0] === name && en[1].includes(m)
+              )
+                ? 'async '
+                : ''
             }${ckey}${cacheable && !Cache.has(ckey) ? ' miss' : ''}`
           );
           if (!cacheable) Cache.clear(ckey);
           if (!Cache.has(ckey)) {
-            if (asyncFuncs.includes([name, m].join('.'))) {
+            if (
+              (asyncFuncs as [string, string[]][]).some(
+                (en) => en[0] === name && en[1].includes(m)
+              )
+            ) {
               return window.ipc.renderer
                 .invoke('global', name, m, ...args)
                 .then((result: unknown) => {
@@ -127,7 +137,9 @@ entries.forEach((entry) => {
             );
           }
           const retval = Cache.read(ckey);
-          return asyncFuncs.includes([name, m].join('.'))
+          return (asyncFuncs as [string, string[]][]).some(
+            (en) => en[0] === name && en[1].includes(m)
+          )
             ? Promise.resolve(retval)
             : retval;
         };

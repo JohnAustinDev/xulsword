@@ -5,7 +5,12 @@ import fpath from 'path';
 import { BrowserWindow, ipcMain, IpcMainEvent, shell } from 'electron';
 import ZIP from 'adm-zip';
 import log from 'electron-log';
-import { isRepoLocal, modrepKey, parseSwordConf } from '../common';
+import {
+  isRepoLocal,
+  modrepKey,
+  parseSwordConf,
+  versionCompare,
+} from '../common';
 import Subscription from '../subscription';
 import C from '../constant';
 import Window, { getBrowserWindows, publishSubscription } from './window';
@@ -24,6 +29,7 @@ import type {
   AudioFile,
   GenBookAudioFile,
   GType,
+  ModalType,
   ModTypes,
   NewModulesType,
   Repository,
@@ -34,27 +40,6 @@ import type {
 // TODO! DisplayLevel: GenBook standard display's context levels
 // TODO! CrossWire wiki mentions LangSortOrder! Report change to KeySort
 // TODO! UnlockInfo: Display instructions for obtaining an unlock key
-
-function versionCompare(v1: string | number, v2: string | number) {
-  const p1 = String(v1).split('.');
-  const p2 = String(v2).split('.');
-  do {
-    let n1: any = p1.shift();
-    let n2: any = p2.shift();
-    if (!n1) n1 = 0;
-    if (!n2) n2 = 0;
-    if (Number(n1) && Number(n2)) {
-      if (n1 < n2) return -1;
-      if (n1 > n2) return 1;
-    } else if (n1 < n2) {
-      return -1;
-    } else if (n1 > n2) {
-      return 1;
-    }
-  } while (p1.length || p2.length);
-
-  return 0;
-}
 
 // Return the ModTypes type derived from a module config's ModDrv entry,
 // or return null if it's not a ModTypes type.
@@ -88,11 +73,11 @@ export function moduleUnsupported(module: string | SwordConfType): string[] {
   if (type && Object.keys(C.SupportedModuleTypes).includes(type)) {
     if (versionCompare(C.SWORDEngineVersion, minimumVersion) < 0) {
       reasons.push(
-        `${module2}: Requires SWORD engine version ${minimumVersion} or greater (using ${C.SWORDEngineVersion})`
+        `${module2} failed: Requires SWORD engine version ${minimumVersion} or greater (using ${C.SWORDEngineVersion})`
       );
     }
   } else {
-    reasons.push(`${module2}: Is unsupported type '${type || moddrv}'`);
+    reasons.push(`${module2} failed: Is unsupported type '${type || moddrv}'`);
   }
   return reasons;
 }
@@ -224,12 +209,12 @@ export async function installZIPs(
       }
       LibSword.quit();
       // Initialize progress reporter
-      const xswin = getBrowserWindows({ type: 'xulsword' })[0];
       let progTot = 0;
       let progNow = 0;
       const progress = (prog: number) => {
-        xswin.setProgressBar(prog);
-        xswin.webContents.send('progress', prog);
+        const xswin = getBrowserWindows({ type: 'xulsword' })[0];
+        xswin?.setProgressBar(prog);
+        xswin?.webContents.send('progress', prog);
       };
       progress(0);
       zips.forEach((zip) => {
@@ -264,73 +249,89 @@ export async function installZIPs(
                   confstr,
                   entry.entryName.split('/').pop()
                 );
+                // Look for any problems with the module itself
                 const reasons = moduleUnsupported(conf);
                 const swmodpath =
                   conf.DataPath && confModulePath(conf.DataPath);
                 if (!swmodpath) {
                   reasons.push(
-                    `${conf.module}: Has non-standard module path '${conf.DataPath}'`
+                    `${conf.module} failed: Has non-standard module path '${conf.DataPath}'`
                   );
                 }
                 if (!dest.exists() || !dest.isDirectory()) {
                   reasons.push(
-                    `${conf.module}: Destination directory does not exist '${dest.path}`
+                    `${conf.module} failed: Destination directory does not exist '${dest.path}`
                   );
                 }
+                if (conf.errors.length) reasons.push(...conf.errors);
+                // If module is ok, prepare target config location and look for problems there
+                const confdest = dest.clone();
                 if (!reasons.length) {
-                  reasons.push(...conf.errors);
-                  const confdest = dest.clone();
                   confdest.append('mods.d');
                   if (!confdest.exists()) {
                     confdest.create(LocalFile.DIRECTORY_TYPE);
                   }
                   confdest.append(entry.name);
-                  // Remove any existing module having this name.
+                  // Remove any existing module having this name unless it would be downgraded.
+                  if (confdest.exists()) {
+                    const existing = parseSwordConf(confdest);
+                    const replace =
+                      versionCompare(
+                        conf.Version ?? 0,
+                        existing.Version ?? 0
+                      ) !== -1;
+                    if (!replace) {
+                      reasons.push(
+                        `${conf.module} ${
+                          conf.Version ?? 0
+                        } failed: Will not overwrite newer module: ${
+                          existing.module
+                        } ${existing.Version}`
+                      );
+                    } else if (!moveRemoveModule([conf.module], destdir)) {
+                      reasons.push(
+                        `${conf.module} failed: Could not remove existing module.`
+                      );
+                    }
+                  }
+                }
+                // If module and target is ok, check valid swmodpath, remove obsoletes,
+                // create module directory path, and if still ok, copy config file.
+                if (!reasons.length && swmodpath) {
+                  // Remove any module(s) obsoleted by this module.
+                  if (conf.Obsoletes?.length) {
+                    const obsoletes = conf.Obsoletes.filter((m) => {
+                      return installed.find((ins) => ins.module === m);
+                    });
+                    obsoletes.forEach((om) => {
+                      const omdir = installed.find((ins) => ins.module === om);
+                      if (omdir && !moveRemoveModule(om, omdir.dir)) {
+                        newmods.errors.push(
+                          `${conf.module} warning: Could not remove obsoleted module(s).`
+                        );
+                      }
+                    });
+                  }
+                  // Make sure module destination directory exists and is empty.
+                  const moddest = dest.clone();
+                  moddest.append(swmodpath);
+                  if (moddest.exists()) {
+                    moddest.remove(true);
+                  }
                   if (
-                    confdest.exists() &&
-                    !moveRemoveModule([conf.module], destdir)
+                    moddest.exists() ||
+                    !moddest.create(LocalFile.DIRECTORY_TYPE, {
+                      recursive: true,
+                    })
                   ) {
                     newmods.errors.push(
-                      `${conf.module}: Could not remove existing module.`
+                      `${conf.module} failed: Could not create module directory: '${moddest.path}'`
                     );
-                  } else if (swmodpath) {
-                    // Remove any module(s) obsoleted by this module.
-                    if (conf.Obsoletes?.length) {
-                      const obsoletes = conf.Obsoletes.filter((m) => {
-                        return installed.find((ins) => ins.module === m);
-                      });
-                      obsoletes.forEach((om) => {
-                        const omdir = installed.find(
-                          (ins) => ins.module === om
-                        );
-                        if (omdir && !moveRemoveModule(om, omdir.dir)) {
-                          newmods.errors.push(
-                            `${conf.module}: Could not remove obsoleted module(s).`
-                          );
-                        }
-                      });
-                    }
-                    // Make sure module destination directory exists and is empty.
-                    const moddest = dest.clone();
-                    moddest.append(swmodpath);
-                    if (moddest.exists()) {
-                      moddest.remove(true);
-                    }
-                    if (
-                      moddest.exists() ||
-                      !moddest.create(LocalFile.DIRECTORY_TYPE, {
-                        recursive: true,
-                      })
-                    ) {
-                      newmods.errors.push(
-                        `${conf.module}: Failed to create new module destination directory: '${moddest.path}'`
-                      );
-                    } else {
-                      // Copy config file to mods.d
-                      confdest.writeFile(confstr);
-                      confs[conf.module] = conf;
-                      newmods.modules.push(conf);
-                    }
+                  } else {
+                    // Copy config file to mods.d
+                    confdest.writeFile(confstr);
+                    confs[conf.module] = conf;
+                    newmods.modules.push(conf);
                   }
                 } else {
                   newmods.errors.push(...reasons);
@@ -365,17 +366,15 @@ export async function installZIPs(
                     });
                     if (!moddest.exists()) {
                       newmods.errors.push(
-                        `${conf.module}: Failed to copy module file" ${moddest.path}`
+                        `${conf.module} failed: Could not copy module file: " ${moddest.path}`
                       );
                     }
                   } else {
-                    newmods.errors.push(
-                      `${conf.module}: Module directory does not exist: ${moddest.path}`
-                    );
+                    // Error already generated during config file copy
                   }
                 } else {
                   newmods.errors.push(
-                    `File does not belong to any module: ${entry.entryName}`
+                    `file will not be installed: ${entry.entryName}`
                   );
                 }
                 break;
@@ -473,7 +472,9 @@ export async function installZIPs(
                 break;
 
               default:
-                newmods.errors.push(`Unknown module component: ${entry.name}`);
+                newmods.errors.push(
+                  `Warning: Unknown module component: ${entry.name}`
+                );
             }
           }
           progNow += 1;
@@ -491,19 +492,8 @@ export async function installZIPs(
 // When destdir is unspecified, xsModsUser is used.
 export async function modalInstall(
   zipmods: (ZIP | string)[],
-  destdir?: string | string[],
-  targWin?: Electron.BrowserWindow | null,
-  xenterModal?: boolean,
-  xexitModal?: boolean
+  destdir?: string | string[]
 ) {
-  const enterModal = xenterModal ?? true; // default is to enter Modal at entry
-  const exitModal = xexitModal ?? true; // default is to exit Modal on exit
-  const xswin = getBrowserWindows({ type: 'xulsword' })[0];
-  const tgwin = targWin || xswin;
-  if (enterModal) {
-    Window.modal('transparent', 'all');
-    Window.modal('darkened', tgwin);
-  }
   const zips: (ZIP | null)[] = [];
   zipmods.forEach((zipmod) => {
     if (typeof zipmod === 'string') {
@@ -534,25 +524,11 @@ export async function modalInstall(
   Subscription.publish('resetMain');
   Subscription.publish('modulesInstalled', newmods);
 
-  // reload was necessary to get dynamic CSS to take effect
-  if (targWin) {
-    Window.reset('all', xswin);
-    targWin.webContents.reload();
-  } else {
-    xswin.webContents.reload();
-  }
-
-  if (exitModal) {
-    getBrowserWindows({ type: 'search' }).forEach((w) => {
-      w.webContents.reload();
-    });
-    Window.modal('off', 'all');
-  }
-
   ipcMain.once('did-finish-render', (event: IpcMainEvent) => {
-    const win = BrowserWindow.fromWebContents(event.sender);
+    let win = BrowserWindow.fromWebContents(event.sender);
     // So the calling window can show the newly installed modules.
-    if (win) publishSubscription([win], 'modulesInstalled', newmods);
+    if (win) publishSubscription({ id: win.id }, 'modulesInstalled', newmods);
+    win = null;
   });
   return newmods;
 }
@@ -560,24 +536,40 @@ export async function modalInstall(
 let Downloads: { [modrepoKey: string]: ZIP } = {};
 
 const Module: GType['Module'] = {
+  modal(modal: boolean, callingWinID?: number) {
+    if (modal) {
+      BrowserWindow.getAllWindows().forEach((w) => {
+        const t: ModalType = w.id === callingWinID ? 'darkened' : 'transparent';
+        Window.modal(t, { id: w.id });
+      });
+      return;
+    }
+    Subscription.publish('resetMain');
+    BrowserWindow.getAllWindows().forEach((w) => {
+      w.webContents.reload();
+    });
+  },
+
   async downloadXSM(
     module: string,
     zipFileOrURL: string,
     repository: Repository
   ): Promise<number | string> {
-    const callingWin = arguments[3] || null;
+    const callingWinID = (arguments[3] ?? -1) as number;
     ftpCancel(false);
     const modrepk = modrepKey(module, repository);
     const progress = (prog: number) => {
-      log.silly(`progress ${prog}`);
-      callingWin?.webContents.send('progress', prog, modrepk);
+      log.silly(`XSM progress ${modrepk}: ${prog}`);
+      let w = BrowserWindow.fromId(callingWinID);
+      w?.webContents.send('progress', prog, modrepk);
+      w = null;
     };
     progress(0);
     let message = 'Canceled';
     if (/^https?:\/\//i.test(zipFileOrURL)) {
       // Audio XSM download (http)
       try {
-        const tmpdir = new LocalFile(Window.tmpDir(callingWin));
+        const tmpdir = new LocalFile(Window.tmpDir({ id: callingWinID }));
         if (tmpdir.exists()) {
           log.debug(`downloadFileHTTP`, zipFileOrURL, tmpdir.path);
           const dlfile = await downloadFileHTTP(
@@ -623,12 +615,14 @@ const Module: GType['Module'] = {
     module: string,
     repository: Repository
   ): Promise<number | string> {
-    const callingWin = arguments[2] || null;
+    const callingWinID = (arguments[2] ?? -1) as number;
     ftpCancel(false);
     const modrepk = modrepKey(module, repository);
     const progress = (prog: number) => {
-      log.silly(`progress ${prog}`);
-      callingWin?.webContents.send('progress', prog, modrepk);
+      log.silly(`SWORD progress ${modrepk}: ${prog}`);
+      let w = BrowserWindow.fromId(callingWinID);
+      w?.webContents.send('progress', prog, modrepk);
+      w = null;
     };
     progress(0);
     let confname = `${module.toLocaleLowerCase()}.conf`;
@@ -681,16 +675,14 @@ const Module: GType['Module'] = {
     return 'Canceled';
   },
 
-  async saveDownloads(
-    saves: { module: string; fromRepo: Repository; toRepo: Repository }[],
-    enterModal?: boolean,
-    exitModal?: boolean
+  async installDownloads(
+    installs: { module: string; fromRepo: Repository; toRepo: Repository }[]
   ): Promise<NewModulesType> {
     const zipobj: ZIP[] = [];
     const destdir: string[] = [];
     Object.entries(Downloads).forEach((entry) => {
       const [modrepok, zipo] = entry;
-      const save = saves.find(
+      const save = installs.find(
         (s) => modrepKey(s.module, s.fromRepo) === modrepok
       );
       if (zipo && save && isRepoLocal(save.toRepo)) {
@@ -701,18 +693,26 @@ const Module: GType['Module'] = {
         }
       }
     });
-    return modalInstall(zipobj, destdir, null, enterModal, exitModal);
+    let result: Promise<NewModulesType> | null = null;
+    if (zipobj.length && destdir.length) {
+      result = modalInstall(zipobj, destdir);
+    }
+
+    return (
+      result || {
+        modules: [],
+        fonts: [],
+        bookmarks: [],
+        audio: [],
+        errors: ['No Downloads to install'],
+      }
+    );
   },
 
   async remove(
-    modules: { name: string; repo: Repository }[],
-    enterModal?: boolean,
-    exitModal?: boolean
+    modules: { name: string; repo: Repository }[]
   ): Promise<boolean[]> {
     const results: boolean[] | PromiseLike<boolean[]> = [];
-
-    if (enterModal) Window.modal('darkened', 'all');
-
     modules.forEach((module) => {
       const { name, repo } = module;
       if (isRepoLocal(repo)) {
@@ -720,42 +720,19 @@ const Module: GType['Module'] = {
       }
     });
 
-    if (exitModal) {
-      Subscription.publish('resetMain');
-      getBrowserWindows({ type: 'search' }).forEach((w) => {
-        w.webContents.reload();
-      });
-      Window.reset('all', 'all');
-      Window.modal('off', 'all');
-    }
-
     return results;
   },
 
   async move(
-    modules: { name: string; fromRepo: Repository; toRepo: Repository }[],
-    enterModal?: boolean,
-    exitModal?: boolean
+    modules: { name: string; fromRepo: Repository; toRepo: Repository }[]
   ): Promise<boolean[]> {
     const results: boolean[] | PromiseLike<boolean[]> = [];
-
-    if (enterModal) Window.modal('darkened', 'all');
-
     modules.forEach((module) => {
       const { name, fromRepo, toRepo } = module;
       if (isRepoLocal(fromRepo) && isRepoLocal(toRepo)) {
         results.push(!!moveRemoveModule([name], fromRepo.path, toRepo.path));
       }
     });
-
-    if (exitModal) {
-      Subscription.publish('resetMain');
-      getBrowserWindows({ type: 'search' }).forEach((w) => {
-        w.webContents.reload();
-      });
-      Window.reset('all', 'all');
-      Window.modal('off', 'all');
-    }
 
     return results;
   },

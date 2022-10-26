@@ -18,6 +18,7 @@ import type {
   LocationVKType,
   ModTypes,
   PrefObject,
+  Repository,
   SearchType,
   SwordConfLocalized,
   SwordConfType,
@@ -29,7 +30,8 @@ function alog(type: ElectronLog.LogLevel, ...args: any[]) {
   const levels = ['error', 'warn', 'info', 'verbose', 'debug', 'silly'];
   const lcall = levels.indexOf(type);
   const lprog = levels.indexOf(C.isDevelopment ? C.DevLogLevel : 'info');
-  if (type && lprog <= lcall) {
+  const skip = lprog < lcall;
+  if (type && !skip) {
     // eslint-disable-next-line no-console
     if (C.isDevelopment) console.log(...args);
     else G.log(type, ...args.map((x) => JSON_stringify(x)));
@@ -568,6 +570,7 @@ export function moduleInfoHTML(configs: SwordConfType[]): string {
       'moduleType',
       'module',
       'Version',
+      'sourceRepository',
       'ShortPromo',
       'ShortCopyright',
       'About',
@@ -626,7 +629,11 @@ export function moduleInfoHTML(configs: SwordConfType[]): string {
                 return `<div>Version ${vers}: ${desc}</div>`;
               })
               .join('');
+          } else if (sf === 'sourceRepository') {
+            const v = c[f] as Repository;
+            value = v.name || '';
           } else value = c[f]?.toString() || '';
+
           if (![sc.htmllink, 'History'].flat().includes(sf)) {
             value = esc(value);
           } else {

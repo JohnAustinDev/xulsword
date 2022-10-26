@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable prefer-rest-params */
-import { dialog, OpenDialogSyncOptions } from 'electron';
+import { BrowserWindow, dialog, OpenDialogSyncOptions } from 'electron';
 import { BrowserWindowConstructorOptions } from 'electron/main';
 import log from 'electron-log';
 import i18n from 'i18next';
@@ -8,13 +8,14 @@ import { clone, JSON_stringify } from '../common';
 import { verseKey, getTab, getTabs } from './minit';
 import Prefs from './components/prefs';
 import LocalFile from './components/localFile';
-import { modalInstall } from './installer';
+import Module, { modalInstall } from './installer';
 import Window, { getBrowserWindows } from './window';
 
 import type {
   GType,
   LocationSKType,
   LocationVKType,
+  NewModulesType,
   ScrollType,
   TextVKType,
   XulswordStatePref,
@@ -23,7 +24,9 @@ import type { AboutWinState } from '../renderer/about/about';
 
 const Commands: GType['Commands'] = {
   openModuleManager() {
-    const win = arguments[1] || getBrowserWindows({ type: 'xulsword' })[0];
+    let win: BrowserWindow | null =
+      BrowserWindow.fromId(arguments[1] ?? -1) ||
+      getBrowserWindows({ type: 'xulsword' })[0];
     const options: BrowserWindowConstructorOptions = {
       title: i18n.t('menu.addNewModule.label'),
       parent: win || undefined,
@@ -33,6 +36,7 @@ const Commands: GType['Commands'] = {
       category: 'window',
       options,
     });
+    win = null;
   },
 
   // Install one or more ZIP modules from the local file system. The paths
@@ -41,7 +45,10 @@ const Commands: GType['Commands'] = {
   // directory will be installed. A dialog will be shown if no paths argument
   // is provided, or an existing directory path is provided.
   async installXulswordModules(paths) {
-    const win = arguments[1] || getBrowserWindows({ type: 'xulsword' })[0];
+    let win: BrowserWindow | null = BrowserWindow.fromId(arguments[1] ?? -1);
+    if (!win) [win] = getBrowserWindows({ type: 'xulsword' });
+    const winid = win ? win.id : -1;
+    win = null;
     const extensions = ['zip', 'xsm', 'xsb'];
     const options: OpenDialogSyncOptions = {
       title: i18n.t('menu.addNewModule.label'),
@@ -57,33 +64,45 @@ const Commands: GType['Commands'] = {
     function filter(fileArray: string[]): string[] {
       return fileArray.filter((f) => extRE.test(f));
     }
+    Module.modal(true, winid);
+    let result: Promise<NewModulesType> | null = null;
     if (paths) {
       // Install array of file paths
       if (Array.isArray(paths)) {
-        return modalInstall(filter(paths), undefined, win);
+        result = modalInstall(filter(paths), undefined);
       }
       // Install all modules in a directory
-      if (paths.endsWith('/*')) {
+      else if (paths.endsWith('/*')) {
         const list: string[] = [];
         const file = new LocalFile(paths.substring(0, -2));
         if (file.isDirectory()) {
           list.push(...filter(file.directoryEntries));
         }
-        return modalInstall(list, undefined, win);
+        result = modalInstall(list, undefined);
+      } else {
+        const file = new LocalFile(paths);
+        // ZIP file to install
+        if (!file.isDirectory()) {
+          result = modalInstall(filter([file.path]), undefined);
+        } else {
+          // Choose from existing directory.
+          options.defaultPath = paths;
+        }
       }
-      const file = new LocalFile(paths);
-      // ZIP file to install
-      if (!file.isDirectory()) {
-        return modalInstall(filter([file.path]), undefined, win);
-      }
-      // Choose from existing directory.
-      options.defaultPath = paths;
+    }
+    if (result) {
+      Module.modal(false);
+      return result;
     }
     const progwin = getBrowserWindows({ type: 'xulsword' })[0];
     return dialog
       .showOpenDialog(progwin, options)
       .then((obj) => {
-        return modalInstall(obj.filePaths, undefined, win);
+        return modalInstall(obj.filePaths, undefined);
+      })
+      .then((r) => {
+        Module.modal(false);
+        return r;
       })
       .catch((err) => {
         throw Error(err);
@@ -91,7 +110,9 @@ const Commands: GType['Commands'] = {
   },
 
   removeModule() {
-    const win = arguments[0] || getBrowserWindows({ type: 'xulsword' })[0];
+    let win: BrowserWindow | null =
+      BrowserWindow.fromId(arguments[0] ?? -1) ||
+      getBrowserWindows({ type: 'xulsword' })[0];
     const options = {
       title: i18n.t('menu.removeModule.label'),
       parent: win || undefined,
@@ -101,6 +122,7 @@ const Commands: GType['Commands'] = {
       category: 'window',
       options,
     });
+    win = null;
   },
 
   exportAudio() {
@@ -181,7 +203,9 @@ const Commands: GType['Commands'] = {
   },
 
   openFontsColors(module) {
-    const win = arguments[1] || getBrowserWindows({ type: 'xulsword' })[0];
+    let win: BrowserWindow | null =
+      BrowserWindow.fromId(arguments[1] ?? -1) ||
+      getBrowserWindows({ type: 'xulsword' })[0];
     const options = {
       title: i18n.t('fontsAndColors.label'),
       parent: win || undefined,
@@ -196,6 +220,7 @@ const Commands: GType['Commands'] = {
       },
     };
     Window.open({ type: 'chooseFont', category: 'dialog', options });
+    win = null;
   },
 
   openBookmarksManager() {

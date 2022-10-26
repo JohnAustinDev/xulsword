@@ -59,7 +59,7 @@ function handleGlobal(
   ...args: any[]
 ) {
   let ret = null;
-  const win = BrowserWindow.fromWebContents(event.sender);
+  const win = BrowserWindow.fromWebContents(event.sender)?.id ?? -1;
   if (name in GPublic) {
     const gPublic = GPublic as any;
     const g = G as any;

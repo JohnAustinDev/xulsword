@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import type { BrowserWindow } from 'electron';
 import type ElectronLog from 'electron-log';
 import React from 'react';
 
@@ -51,7 +50,8 @@ export type WinMainType = {
 export type WindowRegistryType = (WindowDescriptorType | null)[];
 
 export type WindowDescriptorType = {
-  type:
+  id?: number;
+  type?:
     | 'xulsword'
     | 'splash'
     | 'viewportWin'
@@ -62,7 +62,6 @@ export type WindowDescriptorType = {
     | 'search'
     | 'searchHelp'
     | 'about';
-  id?: number;
   category?:
     | 'window' // Parent optional, persisted, resizable
     | 'dialog' // Has parent, not persisted, size is fit-to-content, not-resizable
@@ -71,7 +70,6 @@ export type WindowDescriptorType = {
 };
 
 export type WindowArgType =
-  | BrowserWindow
   | Partial<WindowDescriptorType>
   | 'all'
   | 'parent'
@@ -383,7 +381,7 @@ export type ModTypes =
 export type XSModTypes = 'XSM' | 'XSM_audio' | 'none';
 
 export type SwordConfLocalized = {
-  [locale: string]: string;
+  [locale: string | 'locale' | 'en']: string;
 };
 
 export type SwordConfAudioChapters = {
@@ -443,8 +441,8 @@ export type SwordConfType = {
 
   // Non-standard XSM (xulsword modules) have 'name.xsm' for DataPath
   // NameXSM?: string;
-  // SwordModules?: string[];
-  // SwordVersions?: string[];
+  SwordModules?: string[];
+  SwordVersions?: string[];
 
   // Non-standard XSM audio module entries. These modules also have
   // ModDrv as 'audio' and DataPath as a URL value.
@@ -784,7 +782,7 @@ export const GPublic = {
   getBooksInModule: funcCACHE as unknown as (module: string) => string[],
   log: func as unknown as (type: ElectronLog.LogLevel, ...args: any) => void,
   publishSubscription: func as unknown as (
-    arg: WindowDescriptorType | null,
+    arg: WindowDescriptorType | WindowDescriptorType[],
     subscriptionName: string,
     ...args: any
   ) => void,
@@ -819,6 +817,7 @@ export const GPublic = {
     ftpCancel: func as unknown as () => void,
   },
   Module: {
+    modal: func as unknown as (modal: boolean, callingWinID?: number) => void,
     download: func as unknown as (
       module: string,
       repository: Repository
@@ -828,24 +827,18 @@ export const GPublic = {
       zipFileOrURL: string,
       repository: Repository
     ) => Promise<number | string>,
-    saveDownloads: func as unknown as (
-      saves: { module: string; fromRepo: Repository; toRepo: Repository }[],
-      enterModal?: boolean,
-      exitModal?: boolean
+    installDownloads: func as unknown as (
+      installs: { module: string; fromRepo: Repository; toRepo: Repository }[]
     ) => Promise<NewModulesType>,
     clearDownload: func as unknown as (
       module?: string,
       repository?: Repository
     ) => boolean,
     remove: func as unknown as (
-      modules: { name: string; repo: Repository }[],
-      enterModal?: boolean,
-      exitModal?: boolean
+      modules: { name: string; repo: Repository }[]
     ) => Promise<boolean[]>,
     move: func as unknown as (
-      modules: { name: string; fromRepo: Repository; toRepo: Repository }[],
-      enterModal?: boolean,
-      exitModal?: boolean
+      modules: { name: string; fromRepo: Repository; toRepo: Repository }[]
     ) => Promise<boolean[]>,
     writeConf: func as unknown as (
       confFilePath: string,
@@ -853,6 +846,7 @@ export const GPublic = {
     ) => void,
   },
   Window: {
+    id: funcCACHE as unknown as () => number,
     open: func as unknown as (arg: WindowDescriptorType) => number,
     setComplexValue: func as unknown as (argname: string, value: any) => void,
     mergeValue: func as unknown as (
@@ -868,7 +862,7 @@ export const GPublic = {
       title: string,
       window?: WindowArgType
     ) => void,
-    tmpDir: func as unknown as (window?: WindowArgType) => string,
+    tmpDir: func as unknown as (window?: WindowArgType | null) => string,
     reset: func as unknown as (
       type?: ResetType,
       window?: WindowArgType

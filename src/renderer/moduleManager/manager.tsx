@@ -8,6 +8,7 @@ import i18n from 'i18next';
 import {
   Classes,
   Dialog,
+  Intent,
   IToastProps,
   Position,
   ProgressBar,
@@ -96,7 +97,6 @@ const notStatePref = {
     chapters: SwordConfAudioChapters;
     callback: (result: VKSelection | null) => void;
   } | null,
-  okdisabled: false,
   tables: {
     language: {
       data: [] as TLanguageTableRow[],
@@ -189,11 +189,14 @@ export default class ModuleManager extends React.Component {
 
   download;
 
+  checkForModuleUpdates;
+
   eventHandler;
 
   setTableState;
 
   sState: (
+    // sState is just for better TypeScript functionality
     s:
       | Partial<ManagerState>
       | ((prevState: ManagerState) => Partial<ManagerState>)
@@ -234,6 +237,7 @@ export default class ModuleManager extends React.Component {
     this.onCellEdited = H.onCellEdited.bind(this);
     this.switchRepo = H.switchRepo.bind(this);
     this.download = H.download.bind(this);
+    this.checkForModuleUpdates = H.checkForModuleUpdates.bind(this);
     this.eventHandler = H.eventHandler.bind(this);
     this.setTableState = H.setTableState.bind(this);
     this.onRowsReordered = {
@@ -285,6 +289,7 @@ export default class ModuleManager extends React.Component {
   loadManagerTables() {
     const handleListing = (listing: RepositoryListing[]) => {
       this.updateRepositoryLists(listing);
+      this.checkForModuleUpdates(listing);
       let langselection = this.loadLanguageTable();
       const { language } = this.state as ManagerState;
       if (!language.open) langselection = [];
@@ -319,37 +324,18 @@ export default class ModuleManager extends React.Component {
               throw new Error(msg);
             }
             const allrepos = this.loadRepositoryTable(repos);
-            const loads = allrepos.filter((r) => r && !r.disabled);
-            this.setState({ progress: [0, loads.length] });
-            allrepos.forEach(async (_r, i) => {
-              const arepo = allrepos.map((r, i2) => (i2 === i ? r : null));
-              let listing: RepositoryListing[] = [];
-              try {
-                listing = await G.Downloader.repositoryListing(arepo);
-              } catch (er) {
-                log.warn(er);
-                this.setState((prevState: ManagerState) => {
-                  const p = prevState.progress ? prevState.progress[0] : null;
-                  if (p) {
-                    return {
-                      progress: [
-                        p - arepo.filter(Boolean).length,
-                        loads.length,
-                      ],
-                    };
-                  }
-                  return null;
-                });
-              }
-              return handleListing(listing);
-            });
-            return repos;
+            return G.Downloader.repositoryListing(allrepos);
+          })
+          .then((listing) => {
+            return handleListing(listing);
           })
           .catch(async (er: Error) => {
             // Failed to load the master list, so just load local repos.
             log.warn(er);
             this.addToast({
               message: `Unable to download Master Repository List`,
+              timeout: 5000,
+              intent: Intent.WARNING,
             });
             return loadLocalRepos();
           });
@@ -360,49 +346,54 @@ export default class ModuleManager extends React.Component {
     this.destroy.push(
       window.ipc.renderer.on('progress', (prog: number, id?: string) => {
         const state = this.state as ManagerState;
-        const { progress } = state;
-        const { repository, module } = state.tables;
-        const repoIndex = repository.data.findIndex(
-          (r) => downloadKey(r[H.RepCol.iInfo].repo) === id
-        );
-        const repdrow = repository.data[repoIndex];
-        if (
-          id &&
-          repoIndex !== -1 &&
-          repdrow &&
-          prog === -1 &&
-          repdrow[H.RepCol.iInfo].loading
-        ) {
-          repdrow[H.RepCol.iInfo].loading = false;
-          let newprog = null;
-          if (progress) {
-            const [p, t] = progress;
-            newprog = p + 1 === t ? null : [p + 1, t];
+        if (id) {
+          // Set total progress bar
+          let { downloads } = H.active;
+          const di = downloads.findIndex((d) => d[0] === id);
+          if (di === -1) downloads.push([id, prog]);
+          else downloads[di][1] = prog;
+          if (downloads.every((d) => d[1] === -1)) downloads = [];
+          const progress = !downloads.length
+            ? null
+            : [
+                downloads.reduce((p, c) => p + (c[1] === -1 ? 1 : c[1]), 0),
+                downloads.length,
+              ];
+          this.sState({ progress });
+          log.silly(`Total progress: ${progress}`, downloads);
+          H.active.downloads = downloads;
+          // Set individual repository progress bars
+          const { repository, module } = state.tables;
+          const repoIndex = repository.data.findIndex(
+            (r) => downloadKey(r[H.RepCol.iInfo].repo) === id
+          );
+          const repdrow = repository.data[repoIndex];
+          if (repdrow && prog === -1 && repdrow[H.RepCol.iInfo].loading) {
+            repdrow[H.RepCol.iInfo].loading = false;
+            this.setTableState('repository', null, repository.data, false);
           }
-          this.setTableState('repository', null, repository.data, false, {
-            progress: newprog,
+          // Set individual module progress bars
+          const modIndex = module.data.findIndex((r) => {
+            const { repo } = r[H.ModCol.iInfo];
+            const mod = r[H.ModCol.iModule];
+            return [downloadKey(repo), mod].join('.') === id;
           });
-        }
-        const modIndex = module.data.findIndex((r) => {
-          const { repo } = r[H.ModCol.iInfo];
-          const mod = r[H.ModCol.iModule];
-          return [downloadKey(repo), mod].join('.') === id;
-        });
-        const moddrow = module.data[modIndex];
-        if (id && modIndex !== -1 && moddrow && prog === -1) {
-          if (moddrow[H.ModCol.iInfo].conf.DataPath) {
-            Object.values(module.data)
-              .filter((r) => {
-                return (
-                  r[H.ModCol.iInfo].conf.DataPath ===
-                  moddrow[H.ModCol.iInfo].conf.DataPath
-                );
-              })
-              .forEach((r: TModuleTableRow) => {
-                r[H.ModCol.iInfo].loading = false;
-              });
-          } else moddrow[H.ModCol.iInfo].loading = false;
-          this.setTableState('module');
+          const moddrow = module.data[modIndex];
+          if (moddrow && prog === -1) {
+            if (moddrow[H.ModCol.iInfo].conf.xsmType !== 'none') {
+              Object.values(module.data)
+                .filter((r) => {
+                  return (
+                    r[H.ModCol.iInfo].conf.DataPath ===
+                    moddrow[H.ModCol.iInfo].conf.DataPath
+                  );
+                })
+                .forEach((r: TModuleTableRow) => {
+                  r[H.ModCol.iInfo].loading = false;
+                });
+            } else moddrow[H.ModCol.iInfo].loading = false;
+            this.setTableState('module');
+          }
         }
       })
     );
@@ -504,7 +495,11 @@ export default class ModuleManager extends React.Component {
       const drow = repository.data[i];
       if (drow) {
         if (typeof listing === 'string') {
-          this.addToast({ message: listing });
+          this.addToast({
+            message: listing,
+            timeout: 5000,
+            intent: Intent.WARNING,
+          });
           if (drow[H.RepCol.iState] !== H.OFF) this.switchRepo([i], false);
           drow[H.RepCol.iInfo].intent = H.intent(H.RepCol.iState, 'danger');
           drow[H.RepCol.iInfo].loading = false;
@@ -811,8 +806,6 @@ export default class ModuleManager extends React.Component {
   }
 
   addToast(toast: IToastProps) {
-    toast.timeout = 5000;
-    toast.intent = 'warning';
     if (this.toaster) this.toaster.show(toast);
   }
 
@@ -826,7 +819,6 @@ export default class ModuleManager extends React.Component {
       showModuleInfo,
       showChapterDialog,
       progress,
-      okdisabled,
       repositories,
       internetPermission,
     } = state;
@@ -875,7 +867,7 @@ export default class ModuleManager extends React.Component {
     }
 
     // If we are managing external repositories, Internet permission is required.
-    if (!repositories || state.internetPermission)
+    if (!repositories || internetPermission)
       return (
         <Vbox {...addClass('modulemanager', props)} flex="1" height="100%">
           <Toaster
@@ -1147,7 +1139,7 @@ export default class ModuleManager extends React.Component {
             </Button>
             <Button
               id="ok"
-              disabled={okdisabled}
+              disabled={progress !== null}
               flex="1"
               fill="x"
               onClick={eventHandler}

@@ -182,15 +182,15 @@ function updateMenuFromPref(menux?: Menu | null) {
 }
 
 // This callback updates the menu when applicable prefs change. If the
-// calling window is undefined (main process) the menu will NOT be updated
+// calling window is -1 (main process) the menu will NOT be updated
 // because it is assumed the menu initiated the change, and ignoring
 // it prevents cycling.
-export const pushPrefsToMenu: PrefCallbackType = (win, key, val, store) => {
+export const pushPrefsToMenu: PrefCallbackType = (winid, key, val, store) => {
   let menuPref: string[] = [];
   if (Data.has('menuPref')) {
     menuPref = Data.read('menuPref') as string[];
   }
-  if (win && store === 'prefs') {
+  if (winid !== -1 && store === 'prefs') {
     const keys: string[] = [];
     if (!key.includes('.') && typeof val === 'object') {
       Object.keys(val).forEach((k) => keys.push(`${key}.${k}`));

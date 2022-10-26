@@ -4,7 +4,7 @@
 /* eslint-disable promise/param-names */
 /* eslint-disable prefer-rest-params */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { session } from 'electron';
+import { BrowserWindow, session } from 'electron';
 import fpath from 'path';
 import log from 'electron-log';
 import FTP, { ListingElement } from 'ftp';
@@ -539,13 +539,15 @@ const Downloader: GType['Downloader'] = {
   // window, but results are not returned until all repositories have
   // been completely handled.
   async repositoryListing(repositories) {
-    const callingWin = arguments[1] || null;
+    const callingWinID = (arguments[1] ?? -1) as number;
     ftpCancel(false);
     const promises = repositories.map(async (repo) => {
       const progress = (prog: number) => {
         if (!repo) return;
-        log.debug(`progress ${prog}`);
-        callingWin?.webContents.send('progress', prog, downloadKey(repo));
+        const dlk = downloadKey(repo);
+        log.debug(`REPO progress ${dlk}: ${prog}`);
+        const w = BrowserWindow.fromId(callingWinID);
+        w?.webContents.send('progress', prog, dlk);
       };
       let value = null;
       if (repo && !repo.disabled) {

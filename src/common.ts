@@ -2,7 +2,7 @@
 /* eslint-disable no-nested-ternary */
 /* eslint-disable no-bitwise */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import i18next from 'i18next';
+import i18n from 'i18next';
 import C from './constant';
 import Cache from './cache';
 
@@ -15,6 +15,7 @@ import type {
   SwordConfType,
   TabType,
   RowSelection,
+  SwordConfLocalized,
 } from './type';
 import type LocalFile from './main/components/localFile';
 
@@ -331,17 +332,14 @@ function getLocalizedNumerals(locale: string): string[] | null {
     const toptions = { lng: locale, ns: 'common/numbers' };
     for (let i = 0; i <= 9; i += 1) {
       const key = `n${i}`;
-      if (
-        i18next.exists(key, toptions) &&
-        !/^\s*$/.test(i18next.t(key, toptions))
-      ) {
+      if (i18n.exists(key, toptions) && !/^\s*$/.test(i18n.t(key, toptions))) {
         if (l === null) {
           l = [];
           for (let x = 0; x <= 9; x += 1) {
             l.push(x.toString());
           }
         }
-        l[i] = i18next.t(key, toptions);
+        l[i] = i18n.t(key, toptions);
       }
     }
     Cache.write(l, 'locnums', locale);
@@ -350,7 +348,7 @@ function getLocalizedNumerals(locale: string): string[] | null {
 }
 
 export function dString(string: string | number, locale?: string) {
-  const loc = locale || i18next.language;
+  const loc = locale || i18n.language;
   const l = getLocalizedNumerals(loc);
   let s = string.toString();
   if (l !== null) {
@@ -363,7 +361,7 @@ export function dString(string: string | number, locale?: string) {
 
 // converts any localized digits in a string into ASCII digits
 export function iString(locstring: string | number, locale?: string) {
-  const loc = locale || i18next.language;
+  const loc = locale || i18n.language;
   const l = getLocalizedNumerals(loc);
   let s = locstring.toString();
   if (l !== null) {
@@ -386,8 +384,8 @@ export function getLocalizedChapterTerm(
     lng: locale,
     ns: 'common/books',
   };
-  const r1 = i18next.exists(k1, toptions) && i18next.t(k1, toptions);
-  return r1 && !/^\s*$/.test(r1) ? r1 : i18next.t(k2, toptions);
+  const r1 = i18n.exists(k1, toptions) && i18n.t(k1, toptions);
+  return r1 && !/^\s*$/.test(r1) ? r1 : i18n.t(k2, toptions);
 }
 
 // Removes white-space, trailing or leading punctuation, "x" (note symbol),
@@ -434,7 +432,7 @@ export function tabSort(a: TabType, b: TabType) {
   if (a.tabType === b.tabType) {
     const aLocale = a.config.AssociatedLocale;
     const bLocale = b.config.AssociatedLocale;
-    const lng = i18next.language;
+    const lng = i18n.language;
     const aPriority = aLocale ? (aLocale === lng ? 1 : 2) : 3;
     const bPriority = bLocale ? (bLocale === lng ? 1 : 2) : 3;
     if (aPriority !== bPriority) return aPriority > bPriority ? 1 : -1;
@@ -459,7 +457,7 @@ export function parseSwordConf(
   C.SwordConf.repeatable.forEach((en) => {
     r[en] = [];
   });
-  const nameRE = /^\[([A-Za-z0-9_]+)\]\s*$/;
+  const nameRE = /^\[([A-Za-z0-9_-]+)\]\s*$/;
   const commentRE = /^(#.*|\s*)$/;
   for (let x = 0; x < lines.length; x += 1) {
     const l = lines[x];
@@ -514,15 +512,21 @@ export function parseSwordConf(
         // Save the value according to value type.
         if (entryBase === 'History') {
           const [, version, locale] = entry.split('_');
+          const loc = locale || 'en';
           if (version) {
             if (!r.History) r.History = [];
-            r.History.push([version, { [locale || 'en']: value }]);
+            const eold = r.History.find((y) => y[0] === version);
+            const enew = eold || [version as string, {}];
+            enew[1][loc || 'en'] = value;
+            if (loc === i18n.language || (loc === 'en' && !enew[1].locale))
+              enew[1].locale = value;
+            if (!eold) r.History.push(enew);
           }
         } else if (entryBase === 'AudioChapters') {
           r.AudioChapters = JSON_parse(value);
         } else if (Object.keys(C.SwordConf.delimited).includes(entry)) {
-          // const ent = entry as keyof typeof C.SwordConf.delimited;
-          // r[ent] = value.split(C.SwordConf.delimited[ent]);
+          const ent = entry as keyof typeof C.SwordConf.delimited;
+          r[ent] = value.split(C.SwordConf.delimited[ent]);
         } else if (C.SwordConf.repeatable.includes(entry)) {
           const ent = entry as typeof C.SwordConf.repeatable[number];
           r[ent]?.push(value);
@@ -532,9 +536,13 @@ export function parseSwordConf(
         } else if (C.SwordConf.localization.includes(entryBase)) {
           const ent = entryBase as typeof C.SwordConf.localization[number];
           const loc = entry.substring(entryBase.length + 1) || 'en';
-          const obj = r[ent] || {};
-          obj[loc] = value;
-          r[ent] = obj;
+          if (!(ent in r)) r[ent] = {};
+          const o = r[ent];
+          if (o) {
+            o[loc] = value;
+            if (loc === i18n.language || (loc === 'en' && !o.locale))
+              o.locale = value;
+          }
         } else {
           // default is string;
           const rx = r as any;
@@ -552,6 +560,29 @@ export function parseSwordConf(
   else if (r.ModDrv.includes('LD')) r.moduleType = 'Lexicons / Dictionaries';
   r.errors = errors.map((er) => `${r.module}: ${er}`);
   return r;
+}
+
+// Compare \d.\d.\d type version numbers (like SWORD modules).
+// Returns -1 if v1 < v2, 1 of v1 > v2 and 0 if they are the same.
+export function versionCompare(v1: string | number, v2: string | number) {
+  const p1 = String(v1).split('.');
+  const p2 = String(v2).split('.');
+  do {
+    let n1: any = p1.shift();
+    let n2: any = p2.shift();
+    if (!n1) n1 = 0;
+    if (!n2) n2 = 0;
+    if (Number(n1) && Number(n2)) {
+      if (n1 < n2) return -1;
+      if (n1 > n2) return 1;
+    } else if (n1 < n2) {
+      return -1;
+    } else if (n1 > n2) {
+      return 1;
+    }
+  } while (p1.length || p2.length);
+
+  return 0;
 }
 
 export function isRepoLocal(repo: Download | Repository): boolean {

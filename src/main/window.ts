@@ -45,20 +45,21 @@ if (process.env.NODE_ENV === 'development') {
 
 // WindowRegistry value for a window will be null after window is closed.
 export const WindowRegistry: WindowRegistryType = [];
-function addWindowToRegistry(
-  win: BrowserWindow,
-  descriptor: WindowDescriptorType
-) {
-  descriptor.id = win.id;
-  WindowRegistry[win.id] = descriptor;
-  win.once(
-    'closed',
-    ((id: number) => {
-      return () => {
-        WindowRegistry[id] = null;
-      };
-    })(win.id)
-  );
+function addWindowToRegistry(winid: number, descriptor: WindowDescriptorType) {
+  let win = BrowserWindow.fromId(winid);
+  if (win) {
+    descriptor.id = winid;
+    WindowRegistry[winid] = descriptor;
+    win.once(
+      'closed',
+      ((id: number) => {
+        return () => {
+          WindowRegistry[id] = null;
+        };
+      })(winid)
+    );
+  }
+  win = null;
 }
 
 // Return a list of BrowserWindow objects matching winargs. If winargs
@@ -67,11 +68,15 @@ function addWindowToRegistry(
 // it will be returned. If winargs is undefined or null, then caller
 // will be returned. Otherwise winargs is treated as a partial
 // WindowDescriptorType and any windows which match all its property
-// values will be returned.
+// values will be returned. IMPORTANT: Returned BrowserWindow array
+// may need to be set to [] after use, to prevent memory leaks after
+// a window is closed.
 export function getBrowserWindows(
   winargs?: WindowArgType | null,
-  caller?: BrowserWindow | null
+  callerid?: number | null
 ): BrowserWindow[] {
+  const cid = callerid ?? null;
+  const caller = cid !== null ? BrowserWindow.fromId(cid) : null;
   let testwin: Partial<WindowDescriptorType> | null = null;
   if (winargs === 'parent') {
     if (caller) {
@@ -95,8 +100,6 @@ export function getBrowserWindows(
     return BrowserWindow.getAllWindows();
   } else if (winargs && typeof winargs !== 'object') {
     throw Error(`getBrowserWindows unexpected argument: '${winargs}'`);
-  } else if (winargs && 'loadURL' in winargs) {
-    return [winargs];
   } else if (winargs) {
     testwin = winargs;
   } else if (caller) {
@@ -124,45 +127,52 @@ export function getBrowserWindows(
 // intended to recreate the window's exact size and location
 // on the screen. But there has been a long standing Electron
 // bug report #10388 and yAdj is an attempted workaround.
-function windowBounds(win: BrowserWindow) {
-  const w = win.getNormalBounds();
-  const c = win.getContentBounds();
-  const yAdj = process.platform === 'linux' ? -38 : 0;
-  return {
-    width: c.width,
-    height: c.height,
-    x: w.x,
-    y: w.y + yAdj,
-    wLeft: c.x - w.x, // width of left window border
-    hTop: c.y - w.y, // width of top window border
-  };
+function windowBounds(winid: number) {
+  const win = BrowserWindow.fromId(winid);
+  if (win) {
+    const w = win.getNormalBounds();
+    const c = win.getContentBounds();
+    const yAdj = process.platform === 'linux' ? -38 : 0;
+    return {
+      width: c.width,
+      height: c.height,
+      x: w.x,
+      y: w.y + yAdj,
+      wLeft: c.x - w.x, // width of left window border
+      hTop: c.y - w.y, // width of top window border
+    };
+  }
+  return null;
 }
 
-function windowInitI18n(win: BrowserWindow) {
-  // Bind i18next-electron-fs-backend providing IPC to renderer processes
-  i18nBackendRenderer.mainBindings(ipcMain, win, fs);
-  // Unbind i18next-electron-fs-backend from window upon close to prevent
-  // access of closed window. Since the binding is anonymous, all are
-  // removed, and other windows get new ones added back.
-  win.once('close', () => {
-    i18nBackendRenderer.clearMainBindings(ipcMain);
-    BrowserWindow.getAllWindows().forEach((w) => {
-      if (w !== win) {
-        i18nBackendRenderer.mainBindings(ipcMain, w, fs);
-      }
+function windowInitI18n(winid: number) {
+  const win = BrowserWindow.fromId(winid);
+  if (win) {
+    // Bind i18next-electron-fs-backend providing IPC to renderer processes
+    i18nBackendRenderer.mainBindings(ipcMain, win, fs);
+    // Unbind i18next-electron-fs-backend from window upon close to prevent
+    // access of closed window. Since the binding is anonymous, all are
+    // removed, and other windows get new ones added back.
+    win.once('close', () => {
+      i18nBackendRenderer.clearMainBindings(ipcMain);
+      BrowserWindow.getAllWindows().forEach((w) => {
+        if (w !== win) {
+          i18nBackendRenderer.mainBindings(ipcMain, w, fs);
+        }
+      });
+      if (win !== null) win.webContents.send('close');
     });
-    if (win !== null) win.webContents.send('close');
-  });
+  }
 }
 
 function persist(
   argname: string,
   value: any,
   merge: boolean,
-  callingWin: BrowserWindow
+  callingWinID: number
 ) {
   const pref = Prefs.getComplexValue(
-    `OpenWindows.w${callingWin.id}`,
+    `OpenWindows.w${callingWinID}`,
     'windows'
   ) as WindowDescriptorType;
   const args = pref?.options?.webPreferences?.additionalArguments;
@@ -185,49 +195,49 @@ function persist(
         arg[argname] = { ...origval, ...value };
       } else arg[argname] = value;
       args[0] = JSON_stringify(arg);
-      Prefs.setComplexValue(`OpenWindows.w${callingWin.id}`, pref, 'windows');
+      Prefs.setComplexValue(`OpenWindows.w${callingWinID}`, pref, 'windows');
     }
   }
 }
 
-function addWindowToPrefs(
-  win: BrowserWindow,
-  descriptor: WindowDescriptorType
-) {
+function addWindowToPrefs(winid: number, descriptor: WindowDescriptorType) {
   // Remove any parent or there will be JSON recursion problems
   if (descriptor.options && 'parent' in descriptor.options)
     delete descriptor.options.parent;
-  Prefs.setComplexValue(`OpenWindows.w${win.id}`, descriptor, 'windows');
+  Prefs.setComplexValue(`OpenWindows.w${winid}`, descriptor, 'windows');
   function updateBounds() {
     const args = Prefs.getComplexValue(
-      `OpenWindows.w${win.id}`,
+      `OpenWindows.w${winid}`,
       'windows'
     ) as WindowDescriptorType;
-    const b = windowBounds(win);
+    const b = windowBounds(winid);
     args.options = { ...args.options, ...b };
-    Prefs.setComplexValue(`OpenWindows.w${win.id}`, args, 'windows');
+    Prefs.setComplexValue(`OpenWindows.w${winid}`, args, 'windows');
   }
-  win.on('resize', () => {
-    updateBounds();
-  });
-  win.on('move', () => {
-    updateBounds();
-  });
-  win.once(
-    'closed',
-    ((id: number) => {
-      return () => {
-        if (C.UI.Window.persistentTypes.includes(descriptor.type)) {
-          Prefs.setComplexValue(
-            `PersistentTypes.${descriptor.type}`,
-            Prefs.getComplexValue(`OpenWindows.w${id}`, 'windows'),
-            'windows'
-          );
-        }
-        Prefs.deleteUserPref(`OpenWindows.w${id}`, 'windows');
-      };
-    })(win.id)
-  );
+  const win = BrowserWindow.fromId(winid);
+  if (win) {
+    win.on('resize', () => {
+      updateBounds();
+    });
+    win.on('move', () => {
+      updateBounds();
+    });
+    win.once(
+      'closed',
+      ((id: number) => {
+        return () => {
+          if (C.UI.Window.persistentTypes.includes(descriptor.type || '')) {
+            Prefs.setComplexValue(
+              `PersistentTypes.${descriptor.type}`,
+              Prefs.getComplexValue(`OpenWindows.w${id}`, 'windows'),
+              'windows'
+            );
+          }
+          Prefs.deleteUserPref(`OpenWindows.w${id}`, 'windows');
+        };
+      })(winid)
+    );
+  }
 }
 
 // All Windows are created with BrowserWindow.show = false so they
@@ -235,11 +245,11 @@ function addWindowToPrefs(
 // This function modifies descriptor.options in place.
 function updateOptions(
   descriptor: WindowDescriptorType,
-  parent: BrowserWindow
+  sizeToWinID: number
 ): void {
   let persistentTypesOptions: Electron.BrowserWindowConstructorOptions = {};
   if (
-    C.UI.Window.persistentTypes.includes(descriptor.type) &&
+    C.UI.Window.persistentTypes.includes(descriptor.type || '') &&
     Prefs.has(
       `PersistentTypes.${descriptor.type}.options`,
       'complex',
@@ -300,8 +310,8 @@ function updateOptions(
   }
   // Set bounds for windows that should cover their source position
   // within the parent window.
-  if (parent && (type === 'viewportWin' || type === 'popupWin')) {
-    const xs = windowBounds(parent);
+  if (sizeToWinID !== -1 && (type === 'viewportWin' || type === 'popupWin')) {
+    const xs = windowBounds(sizeToWinID);
     const o = options as any;
     const eb = o?.openWithBounds;
     if (xs && eb) {
@@ -316,16 +326,19 @@ function updateOptions(
 
 function createWindow(
   descriptor: WindowDescriptorType,
-  parent: BrowserWindow
-): BrowserWindow {
-  updateOptions(descriptor, parent);
+  sizeToWinID?: number
+): number {
+  updateOptions(descriptor, sizeToWinID ?? -1);
   const { type, options } = descriptor;
   log.silly('Window options:', options);
   const win = new BrowserWindow(options);
-  addWindowToRegistry(win, descriptor);
+  // Remove any parent or there will be JSON recursion problems
+  if (descriptor.options && 'parent' in descriptor.options)
+    delete descriptor.options.parent;
+  addWindowToRegistry(win.id, descriptor);
   // win.webContents.openDevTools({ mode: 'detach' });
   win.loadURL(resolveHtmlPath(`${type}.html`));
-  windowInitI18n(win);
+  windowInitI18n(win.id);
   if (type !== 'xulsword') win.removeMenu();
   win.webContents.on('did-create-window', (lwin) => {
     lwin.removeMenu();
@@ -339,24 +352,33 @@ function createWindow(
   win.once('closed', () => {
     disposables.forEach((dispose) => dispose());
   });
-  return win;
+  return win.id;
 }
 
 const Window: GType['Window'] = {
+  id(): number {
+    const callingWinID = arguments[0];
+    if (callingWinID) {
+      const win = getBrowserWindows({ id: callingWinID });
+      if (win && win.length) return win[0].id;
+    }
+    return -1;
+  },
+
   open(descriptor: WindowDescriptorType): number {
-    const win = createWindow(descriptor, arguments[1]);
-    if (descriptor.category === 'window') addWindowToPrefs(win, descriptor);
-    return win.id;
+    const winid = createWindow(descriptor, arguments[1] ?? -1);
+    if (descriptor.category === 'window') addWindowToPrefs(winid, descriptor);
+    const o = descriptor.options;
+    if (o && o.parent) o.parent = undefined;
+    return winid;
   },
 
   setComplexValue(argname: string, value: any) {
-    const win = arguments[2] || null;
-    if (win) persist(argname, value, false, win);
+    persist(argname, value, false, arguments[2] ?? -1);
   },
 
   mergeValue(argname: string, value: any) {
-    const win = arguments[2] || null;
-    if (win) persist(argname, value, true, win);
+    persist(argname, value, true, arguments[2] ?? -1);
   },
 
   setContentSize(w: number, h: number, window?: WindowArgType): void {
@@ -373,15 +395,21 @@ const Window: GType['Window'] = {
 
   // Create a new temp directory for the window that gets deleted when
   // the window closes.
-  tmpDir(window?: WindowArgType): string {
-    const win = getBrowserWindows(window, arguments[1])[0];
+  tmpDir(window?: WindowArgType | null): string {
+    let win: BrowserWindow | null = getBrowserWindows(window, arguments[1])[0];
     const w = win as any;
-    if (w && 'xstmpDir' in w) return w.xstmpDir;
+    if (w && 'xstmpDir' in w) {
+      win = null;
+      return w.xstmpDir;
+    }
     const dir = Dirs.TmpD;
     dir.append(`xulsword_${String(Math.round(10000 * Math.random()))}`);
     if (dir.exists()) dir.remove(true);
     dir.create(LocalFile.DIRECTORY_TYPE);
-    if (!dir.exists()) return '';
+    if (!dir.exists()) {
+      win = null;
+      return '';
+    }
     win.once(
       'closed',
       ((d) => {
@@ -392,6 +420,7 @@ const Window: GType['Window'] = {
       })(dir.path)
     );
     w.xstmpDir = dir.path;
+    win = null;
     return dir.path;
   },
 
@@ -408,7 +437,7 @@ const Window: GType['Window'] = {
   // window(s) will be reset, otherwise all will be reset. If neither is specified
   // then all resets will be called on all windows plus the main process in addition.
   reset(type?: ResetType, window?: WindowArgType) {
-    const windows = window
+    let windows = window
       ? getBrowserWindows(window, arguments[2])
       : getBrowserWindows('all');
     if (!type && !window) Subscription.publish('resetMain');
@@ -427,6 +456,7 @@ const Window: GType['Window'] = {
         });
       }
     });
+    windows = [];
   },
 
   moveToFront(window?: WindowArgType): void {
@@ -452,13 +482,19 @@ const Window: GType['Window'] = {
 
 export default Window;
 
-// Push user preference changes from the focused window to other windows using
-// update-state-from-pref. For some changes, more is done than simply updating
-// state prefs. For instance when changing locale or dynamic stylesheet.
-export const pushPrefsToWindows: PrefCallbackType = (win, key, val, store) => {
+// Push user preference changes from the winid focused window, or from the main
+// process (winid === -1) to other windows using update-state-from-pref. For some
+// changes, more is done than simply updating state prefs. For instance when
+// changing locale or dynamic stylesheet.
+export const pushPrefsToWindows: PrefCallbackType = (
+  winid,
+  key,
+  val,
+  store
+) => {
   if (
     (!store || store === 'prefs') &&
-    (!win || win === BrowserWindow.getFocusedWindow())
+    (winid === -1 || winid === BrowserWindow.getFocusedWindow()?.id)
   ) {
     // Get the list of passed keys
     const keys: string[] =
@@ -505,7 +541,7 @@ export const pushPrefsToWindows: PrefCallbackType = (win, key, val, store) => {
       Window.reset('dynamic-stylesheet-reset', 'all');
     } else if (keysToUpdate.length) {
       BrowserWindow.getAllWindows().forEach((w) => {
-        if (!win || w !== win) {
+        if (winid === -1 || w.id !== winid) {
           w.webContents.send('update-state-from-pref', keysToUpdate);
         }
       });
@@ -513,18 +549,22 @@ export const pushPrefsToWindows: PrefCallbackType = (win, key, val, store) => {
   }
 };
 
-// Publish any subscription on the main process (window == null) or on any
+// Publish any subscription on the main process (window.id === -1) or on any
 // other window or group of windows.
 export function publishSubscription(
-  window: BrowserWindow[] | WindowDescriptorType | null,
+  window: WindowDescriptorType | WindowDescriptorType[],
   subscription: string,
   ...args: any
 ) {
-  if (window === null) Subscription.publish(subscription, ...args);
-  else {
-    const win = Array.isArray(window) ? window : getBrowserWindows(window);
-    win.forEach((w) => {
-      w.webContents.send('publish-subscription', subscription, ...args);
-    });
-  }
+  const wins = Array.isArray(window) ? window : [window];
+  wins.forEach((w) => {
+    if (w.id === -1) {
+      Subscription.publish(subscription, ...args);
+    } else {
+      const win = getBrowserWindows(w);
+      win.forEach((wx) =>
+        wx.webContents.send('publish-subscription', subscription, ...args)
+      );
+    }
+  });
 }

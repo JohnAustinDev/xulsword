@@ -13,7 +13,9 @@ import {
   ofClass,
   rowsToSelection,
   selectionToRows,
+  versionCompare,
 } from '../../common';
+import Subscription from '../../subscription';
 import C from '../../constant';
 import G from '../rg';
 import { log, moduleInfoHTML } from '../rutil';
@@ -195,12 +197,24 @@ export const RepCol = {
   iInfo: 4,
 } as const;
 
-const Downloads: {
+export const Downloads: {
   [modrepoKey: string]: {
     nfiles: Promise<number | null>;
     failed: boolean;
   };
 } = {};
+
+export const ModuleUpdates: {
+  install: boolean;
+  from: {
+    conf: SwordConfType;
+    repo: Repository;
+  };
+  to: {
+    conf: SwordConfType;
+    repo: Repository;
+  };
+}[] = [];
 
 export function onColumnHide(
   this: ModuleManager,
@@ -494,9 +508,23 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
           break;
         }
         case 'ok': {
-          // Install succesfully downloaded modules
+          // Remove any failed downloads
           Object.keys(Downloads).forEach((k) => {
             if (Downloads[k].failed) {
+              const amui = ModuleUpdates.findIndex(
+                (mud) => k === modrepKey(mud.to.conf.module, mud.to.repo)
+              );
+              if (amui !== -1) ModuleUpdates.splice(amui, 1);
+              delete Downloads[k];
+            }
+          });
+          // Remove updates that have not received permission
+          Object.keys(Downloads).forEach((k) => {
+            const amui = ModuleUpdates.findIndex(
+              (mud) => k === modrepKey(mud.to.conf.module, mud.to.repo)
+            );
+            if (amui !== -1 && !ModuleUpdates[amui].install) {
+              ModuleUpdates.splice(amui, 1);
               delete Downloads[k];
             }
           });
@@ -532,8 +560,11 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
               });
               // Remove modules
               Object.values(moduleData).forEach((row) => {
-                if (row[ModCol.iInstalled] === OFF) {
-                  const module = row[ModCol.iModule];
+                const module = row[ModCol.iModule];
+                if (
+                  row[ModCol.iInstalled] === OFF &&
+                  !ModuleUpdates.some((mud) => mud.to.conf.module)
+                ) {
                   const { repo } = row[ModCol.iInfo];
                   const modrepok = modrepKey(module, repo);
                   const conf = installed.find(
@@ -552,7 +583,14 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
                   }
                 }
               });
-              return G.Module.remove(removeMods, true, false);
+              ModuleUpdates.forEach((mud) => {
+                removeMods.push({
+                  name: mud.from.conf.module,
+                  repo: mud.from.repo,
+                });
+              });
+              G.Module.modal(true, G.Window.id());
+              return G.Module.remove(removeMods);
             })
             .then((removeResult) => {
               removeResult.forEach((r, i) => {
@@ -586,13 +624,13 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
                   }
                 }
               });
-              return G.Module.move(moveMods, false, false);
+              return G.Module.move(moveMods);
             })
             .then((moveResult) => {
               moveResult.forEach((r, i) => {
                 if (!r) log.warn(`Failed to move module: ${moveMods[i]}`);
               });
-              const saves: {
+              const install: {
                 module: string;
                 fromRepo: Repository;
                 toRepo: Repository;
@@ -602,33 +640,67 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
                 if (dlr.status !== 'fulfilled') log.warn(dlr.reason);
                 else if (dlr.value) {
                   const modrepok = downloadKeys[i];
-                  const dot = modrepok ? modrepok.lastIndexOf('.') : -1;
-                  if (dot === -1) return;
-                  const module = modrepok.substring(dot + 1);
-                  const repokey = modrepok.substring(0, dot);
-                  const row = Object.values(moduleData).find((r) => {
-                    return (
-                      downloadKey(r[ModCol.iInfo].repo) === repokey &&
-                      r[ModCol.iModule] === module
-                    );
-                  });
-                  if (row && row[ModCol.iInstalled]) {
-                    saves.push({
-                      module: row[ModCol.iModule],
-                      fromRepo: row[ModCol.iInfo].repo,
-                      toRepo: builtinRepos()[row[ModCol.iInfo].shared ? 0 : 1],
+                  const mud = ModuleUpdates.find(
+                    (x) => modrepok === modrepKey(x.to.conf.module, x.to.repo)
+                  );
+                  // Install module updates
+                  if (mud) {
+                    install.push({
+                      module: mud.to.conf.module,
+                      fromRepo: mud.to.repo,
+                      toRepo: mud.from.repo,
                     });
+                  } else {
+                    // Install user's selection(s)
+                    const dot = modrepok ? modrepok.lastIndexOf('.') : -1;
+                    if (dot === -1) return;
+                    const module = modrepok.substring(dot + 1);
+                    const repokey = modrepok.substring(0, dot);
+                    const row = Object.values(moduleData).find((r) => {
+                      return (
+                        downloadKey(r[ModCol.iInfo].repo) === repokey &&
+                        r[ModCol.iModule] === module
+                      );
+                    });
+                    if (row && row[ModCol.iInstalled]) {
+                      install.push({
+                        module: row[ModCol.iModule],
+                        fromRepo: row[ModCol.iInfo].repo,
+                        toRepo:
+                          builtinRepos()[row[ModCol.iInfo].shared ? 0 : 1],
+                      });
+                    }
                   }
                 }
               });
-              return G.Module.saveDownloads(saves, false, true);
+              return G.Module.installDownloads(install);
             })
-            .then(() => {
-              return G.Window.close();
+            .then((newmods) => {
+              G.Window.modal('off', 'self');
+              if (newmods.errors.length) {
+                const message = newmods.errors.join('\n');
+                if (/(failed|warning)/i.test(message)) {
+                  const fail = /fail/i.test(message);
+                  this.addToast({
+                    message,
+                    timeout: -1,
+                    icon: fail ? 'error' : 'warning-sign',
+                    intent: fail ? Intent.DANGER : Intent.WARNING,
+                    onDismiss: () => {
+                      G.Module.modal(false);
+                      G.Window.close();
+                    },
+                  });
+                  return false;
+                }
+              }
+              G.Module.modal(false);
+              G.Window.close();
+              return true;
             })
             .catch((er) => {
-              // TODO!: Exit modal on fail
               log.warn(er);
+              G.Module.modal(false);
             });
         }
         case 'repoAdd': {
@@ -851,13 +923,17 @@ export function switchRepo(
     this.setTableState('repository', null, repoTableData, true, {
       repositories: { ...repositories, disabled: disabledRepos },
     });
-    const repos = repoTableData.map((r, i) =>
-      rows.includes(i) ? r[RepCol.iInfo].repo : null
-    );
-    G.Downloader.repositoryListing(repos)
+    G.Downloader.repositoryListing(
+      repoTableData.map((r, i) =>
+        rows.includes(i) && !r[RepCol.iInfo].repo.disabled
+          ? r[RepCol.iInfo].repo
+          : null
+      )
+    )
       .then((listing) => {
         if (!listing) throw new Error(`Canceled`);
         this.updateRepositoryLists(listing);
+        this.checkForModuleUpdates(listing);
         let selection = this.loadLanguageTable();
         const { language } = this.state as ManagerState;
         if (!language.open) selection = [];
@@ -867,9 +943,12 @@ export function switchRepo(
   }
 }
 
+export const active = {
+  downloads: [] as [string, number][],
+};
+
 // Start async repository module downloads corresponding to a given
 // set of module table rows.
-let activeDownloads = 0;
 export function download(this: ModuleManager, rows: number[]): void {
   const state = this.state as ManagerState;
   const { module: modtable } = state.tables;
@@ -957,10 +1036,14 @@ export function download(this: ModuleManager, rows: number[]): void {
           loadingrows.forEach((r) => {
             r[ModCol.iInfo].loading = false;
           });
-          let newintent: Intent = 'success';
+          let newintent: Intent = Intent.SUCCESS;
           if (typeof dl === 'string') {
-            this.addToast({ message: dl });
-            newintent = 'danger';
+            this.addToast({
+              message: dl,
+              timeout: 5000,
+              intent: Intent.WARNING,
+            });
+            newintent = Intent.DANGER;
           } else {
             loadingrows.forEach((r) => {
               r[ModCol.iInstalled] = ON;
@@ -971,30 +1054,170 @@ export function download(this: ModuleManager, rows: number[]): void {
             r[ModCol.iInfo].intent = intent(ModCol.iInstalled, newintent);
           });
           this.setTableState('module', null, modtable.data, true);
-          activeDownloads -= 1;
           return typeof dl === 'string' ? null : dl;
         } catch (er: any) {
-          this.addToast({ message: er.message });
+          this.addToast({
+            message: er.message,
+            timeout: 5000,
+            intent: Intent.WARNING,
+          });
           loadingrows.forEach((r) => {
             r[ModCol.iInfo].loading = false;
-            r[ModCol.iInfo].intent = intent(ModCol.iInstalled, 'danger');
+            r[ModCol.iInfo].intent = intent(ModCol.iInstalled, Intent.DANGER);
           });
           this.setTableState('module', null, modtable.data, true);
-          activeDownloads -= 1;
           return null;
         }
       })();
       Downloads[modrepk] = { nfiles, failed: true };
-      activeDownloads += 1;
     }
   });
-  this.setTableState('module', null, modtable.data, true, { okdisabled: true });
-  Promise.all(Object.values(Downloads).map((v) => v.nfiles))
-    .then(() => {
-      if (activeDownloads < 1) this.sState({ okdisabled: false });
-      return true;
-    })
-    .catch((er) => log.warn(er));
+  this.setTableState('module', null, modtable.data, true);
+}
+
+// Check enabled repository listings for installed modules that have
+// newer versions available, or have been obsoleted. Begin downloading
+// the updates, but ask whether to replace each installed module with
+// the update before doing so. This function should be called after
+// updateRepositoryLists().
+export function checkForModuleUpdates(
+  this: ModuleManager,
+  rawModuleData: RepositoryListing[]
+) {
+  const state = this.state as ManagerState;
+  const { repository } = state.tables;
+  const { repositoryListings } = Saved;
+  const installed: SwordConfType[] = [];
+  // Get installed modules
+  repository.data.forEach((rtd, i) => {
+    if (isRepoLocal(rtd[RepCol.iInfo].repo)) {
+      const listing = repositoryListings[i];
+      if (Array.isArray(listing)) {
+        listing.forEach((c) => installed.push(c));
+      }
+    }
+  });
+  // Search new rawModuleData for possible updates
+  const moduleUpdates: typeof ModuleUpdates = [];
+  installed.forEach((inst) => {
+    const candidates: typeof ModuleUpdates = [];
+    if (ModuleUpdates.some((mud) => mud.from.conf.module === inst.module)) {
+      return;
+    }
+    rawModuleData.forEach((listing, i) => {
+      const { repo } = repository.data[i][RepCol.iInfo];
+      if (listing && Array.isArray(listing)) {
+        listing.forEach((avail) => {
+          if (
+            avail.xsmType !== 'XSM_audio' &&
+            // module is to be obsoleted
+            (avail.Obsoletes?.includes(inst.module) ||
+              // module is to be replaced by a newer version
+              (avail.xsmType !== 'XSM' &&
+                avail.module === inst.module &&
+                versionCompare(avail.Version ?? 0, inst.Version ?? 0) === 1) ||
+              // module is to be replaced by an XSM module containing a newer
+              // version, as long as we don't downgrade any installed modules
+              (avail.xsmType === 'XSM' &&
+                avail.SwordModules?.some(
+                  (swm, x) =>
+                    inst.module === swm &&
+                    versionCompare(
+                      (avail.SwordVersions && avail.SwordVersions[x]) ?? 0,
+                      inst.Version ?? 0
+                    ) === 1
+                ) &&
+                !avail.SwordModules?.some(
+                  (swm, x) =>
+                    versionCompare(
+                      installed.find((im) => im.module === swm)?.Version ?? 0,
+                      (avail.SwordVersions && avail.SwordVersions[x]) ?? 0
+                    ) === 1
+                )))
+          ) {
+            candidates.push({
+              from: {
+                conf: inst,
+                repo: inst.sourceRepository,
+              },
+              to: {
+                conf: avail,
+                repo,
+              },
+              install: false,
+            });
+          }
+        });
+      }
+    });
+    // Choose the first candidate with the highest version number, XSM modules first.
+    const version = (x: typeof ModuleUpdates[number]): string => {
+      let v = '0';
+      if (x.to.conf.xsmType === 'XSM') {
+        const i =
+          x.to.conf.SwordModules?.findIndex((m) => m === inst.module) ?? -1;
+        if (i !== -1 && x.to.conf.SwordVersions)
+          v = `2.${x.to.conf.SwordVersions[i] ?? '0'}`;
+      } else {
+        v = `1.${x.to.conf.Version ?? 0}`;
+      }
+      return v;
+    };
+    candidates.sort((a, b) => versionCompare(version(b), version(a)));
+    if (candidates.length) moduleUpdates.push(candidates[0]);
+  });
+  // Show a toast to ask permission to install each update.
+  moduleUpdates.forEach((mud) => {
+    const abbr =
+      (mud.to.conf.Abbreviation?.locale || mud.to.conf.module) ?? '?';
+    const rn = mud.to.repo.name;
+    const reponame =
+      rn && rn.includes(' | ')
+        ? rn.split(' | ')[i18n.language === 'ru' ? 1 : 0]
+        : rn || '';
+    const history =
+      mud.to.conf.History?.filter(
+        (h) => versionCompare(h[0], mud.from.conf.Version ?? 0) === 1
+      )
+        .map((h) => h[1].locale)
+        .join('\n') ?? '';
+    this.addToast({
+      timeout: -1,
+      intent: Intent.SUCCESS,
+      message: `${abbr} ${mud.to.conf.Version}: ${history} (${reponame} ${mud.to.conf.module})`,
+      action: {
+        onClick: () => {
+          mud.install = true;
+        },
+        text: i18n.t('yes.label'),
+      },
+      icon: 'confirm',
+    });
+  });
+  // Download each update.
+  moduleUpdates.forEach((mud) => {
+    const modrepk = modrepKey(mud.to.conf.module, mud.to.repo);
+    const n = (
+      mud.to.conf.xsmType === 'XSM'
+        ? G.Module.downloadXSM(
+            mud.to.conf.module,
+            mud.to.conf.DataPath,
+            mud.to.repo
+          )
+        : G.Module.download(mud.to.conf.module, mud.to.repo)
+    )
+      .then((nx) => {
+        if (typeof nx === 'string') return null;
+        if (nx && modrepk in Downloads) Downloads[modrepk].failed = false;
+        return nx;
+      })
+      .catch((er) => {
+        log.info(er);
+        return null;
+      });
+    Downloads[modrepk] = { nfiles: n, failed: true };
+  });
+  ModuleUpdates.push(...moduleUpdates);
 }
 
 // Set table state, save the data for window re-renders, and re-render the table.
@@ -1019,7 +1242,8 @@ export function setTableState(
     news[table] = { ...state[table], ...tableState } as any;
   }
   if (tableData) {
-    state.tables[table].data = tableData;
+    news.tables = { ...state.tables };
+    news.tables[table].data = tableData;
     Saved[table].data = tableData;
   }
   if (Object.keys(news).length) this.sState(news);

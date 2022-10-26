@@ -85,7 +85,7 @@ export default class AppUpdater {
 }
 
 ipcMain.on('did-finish-render', (event: IpcMainEvent) => {
-  const win = BrowserWindow.fromWebContents(event.sender);
+  let win = BrowserWindow.fromWebContents(event.sender);
   if (!win) return;
   const wd = WindowRegistry[win.id];
   if (!wd) return;
@@ -102,6 +102,7 @@ ipcMain.on('did-finish-render', (event: IpcMainEvent) => {
       G.Window.close({ type: 'splash' });
     }, 1000);
   }
+  win = null;
 });
 
 const openMainWindow = () => {
