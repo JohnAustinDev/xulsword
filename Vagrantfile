@@ -6,10 +6,10 @@ VAGRANTFILE_API_VERSION = "2"
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
-  config.vm.box = "ubuntu/bionic64"
+  config.vm.box = "ubuntu/focal64"
   
 # Uncomment the following line to build 32 bit Linux instead of 64 bit
-#  config.vm.box = "ubuntu/bionic64"
+#  config.vm.box = "ubuntu/focal64"
 
   config.vm.provision :shell, :path => "init.sh", privileged: false
   
