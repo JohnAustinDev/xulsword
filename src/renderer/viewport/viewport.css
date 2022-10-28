@@ -15,7 +15,7 @@
   height: 16px;
   top: 2px;
   left: 6px;
-  z-index: 40;
+  z-index: 7;
   border: none;
 }
 html[dir='rtl'] .viewport .open-chooser {

@@ -356,13 +356,13 @@ function createWindow(
 }
 
 const Window: GType['Window'] = {
-  id(): number {
+  description(): WindowDescriptorType {
     const callingWinID = arguments[0];
     if (callingWinID) {
       const win = getBrowserWindows({ id: callingWinID });
-      if (win && win.length) return win[0].id;
+      if (win && win.length) return WindowRegistry[win[0].id] || {};
     }
-    return -1;
+    return {};
   },
 
   open(descriptor: WindowDescriptorType): number {
@@ -549,22 +549,22 @@ export const pushPrefsToWindows: PrefCallbackType = (
   }
 };
 
-// Publish any subscription on the main process (window.id === -1) or on any
-// other window or group of windows.
+// Publish any subscription on the main process and/or any other window
+// or group of windows.
 export function publishSubscription(
-  window: WindowDescriptorType | WindowDescriptorType[],
+  main: boolean,
+  renderers: WindowArgType | WindowArgType[],
   subscription: string,
   ...args: any
 ) {
-  const wins = Array.isArray(window) ? window : [window];
-  wins.forEach((w) => {
-    if (w.id === -1) {
-      Subscription.publish(subscription, ...args);
-    } else {
-      const win = getBrowserWindows(w);
-      win.forEach((wx) =>
-        wx.webContents.send('publish-subscription', subscription, ...args)
-      );
-    }
+  if (main) Subscription.publish(subscription, ...args);
+  const done: number[] = [];
+  (Array.isArray(renderers) ? renderers : [renderers]).forEach((r) => {
+    getBrowserWindows(r).forEach((w) => {
+      if (!done.includes(w.id)) {
+        done.push(w.id);
+        w.webContents.send('publish-subscription', subscription, ...args);
+      }
+    });
   });
 }

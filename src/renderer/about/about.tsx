@@ -315,7 +315,7 @@ export default class AboutWin extends React.Component {
             ))}
           </div>
         )}
-        <Hbox className="dialogbuttons" pack="end" align="end">
+        <Hbox className="dialog-buttons" pack="end" align="end">
           {!!modules.length && (
             <>
               <Button id="showModules" flex="1" fill="x" onClick={handler}>
@@ -352,4 +352,4 @@ export default class AboutWin extends React.Component {
 AboutWin.defaultProps = defaultProps;
 AboutWin.propTypes = propTypes;
 
-renderToRoot(<AboutWin />, null, null, { noResetOnResize: true });
+renderToRoot(<AboutWin />, null, null, { resetOnResize: false });

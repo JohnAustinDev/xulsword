@@ -782,7 +782,8 @@ export const GPublic = {
   getBooksInModule: funcCACHE as unknown as (module: string) => string[],
   log: func as unknown as (type: ElectronLog.LogLevel, ...args: any) => void,
   publishSubscription: func as unknown as (
-    arg: WindowDescriptorType | WindowDescriptorType[],
+    main: boolean,
+    windows: WindowArgType | WindowArgType[],
     subscriptionName: string,
     ...args: any
   ) => void,
@@ -828,7 +829,8 @@ export const GPublic = {
       repository: Repository
     ) => Promise<number | string>,
     installDownloads: func as unknown as (
-      installs: { module: string; fromRepo: Repository; toRepo: Repository }[]
+      installs: { module: string; fromRepo: Repository; toRepo: Repository }[],
+      callingWinID?: number
     ) => Promise<NewModulesType>,
     clearDownload: func as unknown as (
       module?: string,
@@ -846,7 +848,7 @@ export const GPublic = {
     ) => void,
   },
   Window: {
-    id: funcCACHE as unknown as () => number,
+    description: funcCACHE as unknown as () => WindowDescriptorType,
     open: func as unknown as (arg: WindowDescriptorType) => number,
     setComplexValue: func as unknown as (argname: string, value: any) => void,
     mergeValue: func as unknown as (

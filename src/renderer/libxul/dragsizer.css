@@ -38,5 +38,5 @@
 .dragsizer > .dragging {
   border: 1px dashed rgb(150, 150, 150);
   background: #1e90ff;
-  z-index: 80;
+  z-index: 10;
 }

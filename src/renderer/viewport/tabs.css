@@ -6,7 +6,7 @@
   text-align: end;
   vertical-align: bottom;
   white-space: nowrap;
-  z-index: 10;
+  z-index: 4;
   font-size: 0.9em;
 }
 .tabs.open {

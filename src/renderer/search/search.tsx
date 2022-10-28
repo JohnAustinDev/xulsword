@@ -592,5 +592,5 @@ SearchWin.defaultProps = defaultProps;
 SearchWin.propTypes = propTypes;
 
 renderToRoot(<SearchWin height="100%" />, null, null, {
-  noResetOnResize: true,
+  resetOnResize: false,
 });

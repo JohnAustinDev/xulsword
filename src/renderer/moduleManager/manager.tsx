@@ -6,8 +6,6 @@
 import React from 'react';
 import i18n from 'i18next';
 import {
-  Classes,
-  Dialog,
   Intent,
   IToastProps,
   Position,
@@ -45,6 +43,7 @@ import Spacer from '../libxul/spacer';
 import Label from '../libxul/label';
 import DragSizer, { DragSizerVal } from '../libxul/dragsizer';
 import Checkbox from '../libxul/checkbox';
+import Dialog from '../libxul/dialog';
 import * as H from './managerH';
 import './manager.css';
 
@@ -89,7 +88,7 @@ export type ManagerProps = XulProps;
 const notStatePref = {
   progress: null as number[] | null,
   showModuleInfo: '',
-  showChapterDialog: null as {
+  showAudioDialog: null as {
     conf: SwordConfType;
     selection: VKSelection;
     initialSelection: VKSelection;
@@ -746,10 +745,10 @@ export default class ModuleManager extends React.Component {
   }
 
   dialogOnChange(_e: VKSelectChangeEvents, selection: VKSelection) {
-    const { showChapterDialog } = this.state as ManagerState;
-    if (showChapterDialog) {
+    const { showAudioDialog } = this.state as ManagerState;
+    if (showAudioDialog) {
       const { book, chapter, lastchapter } = selection;
-      const { options, chapters: allchs } = showChapterDialog;
+      const { options, chapters: allchs } = showAudioDialog;
       const { vkmods: trans, books, verses, lastverses } = options;
       if (book && chapter !== undefined && lastchapter !== undefined) {
         const newselection: VKSelection = {
@@ -778,8 +777,8 @@ export default class ModuleManager extends React.Component {
           lastverses,
         };
         this.sState({
-          showChapterDialog: {
-            ...showChapterDialog,
+          showAudioDialog: {
+            ...showAudioDialog,
             selection: newselection,
             options: newoptions,
           },
@@ -789,19 +788,19 @@ export default class ModuleManager extends React.Component {
   }
 
   dialogClose() {
-    const { showChapterDialog } = this.state as ManagerState;
-    if (showChapterDialog) {
-      showChapterDialog.callback(null);
-      this.sState({ showChapterDialog: null });
+    const { showAudioDialog } = this.state as ManagerState;
+    if (showAudioDialog) {
+      showAudioDialog.callback(null);
+      this.sState({ showAudioDialog: null });
     }
   }
 
   dialogAccept() {
-    const { showChapterDialog } = this.state as ManagerState;
-    if (showChapterDialog) {
-      const { selection } = showChapterDialog;
-      showChapterDialog.callback(selection);
-      this.sState({ showChapterDialog: null });
+    const { showAudioDialog } = this.state as ManagerState;
+    if (showAudioDialog) {
+      const { selection } = showAudioDialog;
+      showAudioDialog.callback(selection);
+      this.sState({ showAudioDialog: null });
     }
   }
 
@@ -817,7 +816,7 @@ export default class ModuleManager extends React.Component {
       module,
       repository,
       showModuleInfo,
-      showChapterDialog,
+      showAudioDialog,
       progress,
       repositories,
       internetPermission,
@@ -858,14 +857,6 @@ export default class ModuleManager extends React.Component {
       repoCancel: !repotable.data.find((r) => r[H.RepCol.iInfo].loading),
     };
 
-    let dialogmod = '';
-    let dialogText = '';
-    if (showChapterDialog) {
-      dialogmod = showChapterDialog.conf.module;
-      const ab = showChapterDialog.conf.Description;
-      if (ab) dialogText = ab[i18n.language] || ab.en;
-    }
-
     // If we are managing external repositories, Internet permission is required.
     if (!repositories || internetPermission)
       return (
@@ -876,30 +867,32 @@ export default class ModuleManager extends React.Component {
             usePortal
             ref={this.refHandlers.toaster}
           />
-          {showChapterDialog && (
-            <Dialog isOpen>
-              <div className={Classes.DIALOG_BODY}>
+          {showAudioDialog && (
+            <Dialog
+              body={
                 <Vbox>
-                  <Label value={dialogmod} />
-                  <div>{dialogText}</div>
+                  <Label value={showAudioDialog.conf.module} />
+                  <div>{showAudioDialog.conf.Description?.locale}</div>
                   <VKSelect
                     height="2em"
-                    initialSelection={showChapterDialog.initialSelection}
-                    options={showChapterDialog.options}
+                    initialSelection={showAudioDialog.initialSelection}
+                    options={showAudioDialog.options}
                     onSelectionChange={dialogOnChange}
                   />
                 </Vbox>
-              </div>
-              <Hbox className="dialogbuttons" pack="end" align="end">
-                <Spacer flex="10" />
-                <Button id="cancel" flex="1" fill="x" onClick={dialogClose}>
-                  {i18n.t('cancel.label')}
-                </Button>
-                <Button id="ok" flex="1" fill="x" onClick={dialogAccept}>
-                  {i18n.t('ok.label')}
-                </Button>
-              </Hbox>
-            </Dialog>
+              }
+              buttons={
+                <>
+                  <Spacer flex="10" />
+                  <Button id="cancel" flex="1" fill="x" onClick={dialogClose}>
+                    {i18n.t('cancel.label')}
+                  </Button>
+                  <Button id="ok" flex="1" fill="x" onClick={dialogAccept}>
+                    {i18n.t('ok.label')}
+                  </Button>
+                </>
+              }
+            />
           )}
           <Hbox
             flex="1"
@@ -1040,6 +1033,7 @@ export default class ModuleManager extends React.Component {
                   })
                 }
                 orient="horizontal"
+                min={200}
                 shrink
               />
               <Groupbox
@@ -1098,7 +1092,7 @@ export default class ModuleManager extends React.Component {
             </div>
           )}
 
-          <Hbox className="dialogbuttons" pack="end" align="end">
+          <Hbox className="dialog-buttons" pack="end" align="end">
             {repository && repository.open && (
               <Button
                 flex="1"
@@ -1152,30 +1146,37 @@ export default class ModuleManager extends React.Component {
     // If Internet permission is needed but has not been granted, then ask for it.
     return (
       <Vbox {...addClass('modulemanager', props)} flex="1" height="100%">
-        <Dialog isOpen>
-          <div className={Classes.DIALOG_BODY}>
+        <Dialog
+          body={
             <Vbox>
               <Label value={i18n.t('allowInternet.title')} />
               <Label value={i18n.t('allowInternet.message')} />
               <Label value={i18n.t('allowInternet.continue')} />
             </Vbox>
-          </div>
-          <Hbox className="dialogbuttons" pack="end" align="center">
-            <Spacer width="10px" />
-            <Checkbox
-              id="internet.rememberChoice"
-              initial={false}
-              label={i18n.t('rememberChoice.label')}
-            />
-            <Spacer flex="10" />
-            <Button id="internet.yes" flex="1" fill="x" onClick={eventHandler}>
-              {i18n.t('yes.label')}
-            </Button>
-            <Button id="internet.no" flex="1" fill="x" onClick={eventHandler}>
-              {i18n.t('no.label')}
-            </Button>
-          </Hbox>
-        </Dialog>
+          }
+          buttons={
+            <>
+              <Spacer width="10px" />
+              <Checkbox
+                id="internet.rememberChoice"
+                initial={false}
+                label={i18n.t('rememberChoice.label')}
+              />
+              <Spacer flex="10" />
+              <Button
+                id="internet.yes"
+                flex="1"
+                fill="x"
+                onClick={eventHandler}
+              >
+                {i18n.t('yes.label')}
+              </Button>
+              <Button id="internet.no" flex="1" fill="x" onClick={eventHandler}>
+                {i18n.t('no.label')}
+              </Button>
+            </>
+          }
+        />
       </Vbox>
     );
   }

@@ -15,7 +15,6 @@ import {
   selectionToRows,
   versionCompare,
 } from '../../common';
-import Subscription from '../../subscription';
 import C from '../../constant';
 import G from '../rg';
 import { log, moduleInfoHTML } from '../rutil';
@@ -456,7 +455,10 @@ export function onCellEdited(
   }
 }
 
-export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
+export async function eventHandler(
+  this: ModuleManager,
+  ev: React.SyntheticEvent
+) {
   switch (ev.type) {
     case 'click': {
       const e = ev as React.MouseEvent;
@@ -518,7 +520,7 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
               delete Downloads[k];
             }
           });
-          // Remove updates that have not received permission
+          // Remove updates that have not received ok to install
           Object.keys(Downloads).forEach((k) => {
             const amui = ModuleUpdates.findIndex(
               (mud) => k === modrepKey(mud.to.conf.module, mud.to.repo)
@@ -530,7 +532,6 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
           });
           const downloadKeys = Object.keys(Downloads);
           const promises = Object.values(Downloads).map((v) => v.nfiles);
-          let downloadResults: PromiseSettledResult<number | null>[] = [];
           const installed: SwordConfType[] = [];
           const removeMods: { name: string; repo: Repository }[] = [];
           const moveMods: {
@@ -538,170 +539,148 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
             fromRepo: any;
             toRepo: Repository;
           }[] = [];
-          return Promise.allSettled(promises)
-            .then((dlr) => {
-              downloadResults = dlr;
-              G.Window.moveToBack();
-              // Remove selection from persisted state.
-              this.setTableState('module', { selection: [] });
-              this.setTableState('repository', { selection: [] });
-              const state = this.state as ManagerState;
-              const { repository: repotable } = state.tables;
-              const { moduleData } = Saved;
-              // Get a list of all currently installed modules (those found in any
-              // enabled local repository).
-              repotable.data.forEach((rtd, i) => {
-                if (isRepoLocal(rtd[RepCol.iInfo].repo)) {
-                  const listing = Saved.repositoryListings[i];
-                  if (Array.isArray(listing)) {
-                    listing.forEach((c) => installed.push(c));
-                  }
+
+          const downloadResults = await Promise.allSettled(promises);
+          G.Window.moveToBack();
+          // Remove selection from persisted state.
+          this.setTableState('module', { selection: [] });
+          this.setTableState('repository', { selection: [] });
+          const state = this.state as ManagerState;
+          const { repository: repotable } = state.tables;
+          const { moduleData } = Saved;
+          // Get a list of all currently installed modules (those found in any
+          // enabled local repository).
+          repotable.data.forEach((rtd, i) => {
+            if (isRepoLocal(rtd[RepCol.iInfo].repo)) {
+              const listing = Saved.repositoryListings[i];
+              if (Array.isArray(listing)) {
+                listing.forEach((c) => installed.push(c));
+              }
+            }
+          });
+
+          // Remove modules
+          Object.values(moduleData).forEach((row) => {
+            const module = row[ModCol.iModule];
+            if (
+              row[ModCol.iInstalled] === OFF &&
+              !ModuleUpdates.some((mud) => mud.to.conf.module)
+            ) {
+              const { repo } = row[ModCol.iInfo];
+              const modrepok = modrepKey(module, repo);
+              const conf = installed.find(
+                (c) => modrepKey(c.module, c.sourceRepository) === modrepok
+              );
+              if (modrepok in Downloads) {
+                if (!G.Module.clearDownload(module, repo)) {
+                  log.warn(`Failed to clear ${module} from downloads`);
+                  Downloads[modrepok].failed = true;
                 }
-              });
-              // Remove modules
-              Object.values(moduleData).forEach((row) => {
+              } else if (conf) {
+                removeMods.push({
+                  name: conf.module,
+                  repo: conf.sourceRepository,
+                });
+              }
+            }
+          });
+          ModuleUpdates.forEach((mud) => {
+            removeMods.push({
+              name: mud.from.conf.module,
+              repo: mud.from.repo,
+            });
+          });
+          G.Module.modal(true, 0); // 0 is xulsword window
+          try {
+            const removeResult = await G.Module.remove(removeMods);
+            removeResult.forEach((r, i) => {
+              if (!r) log.warn(`Failed to remove module: ${removeMods[i]}`);
+            });
+
+            // Move modules (between the shared and xulsword builtins).
+            Object.values(moduleData).forEach((row) => {
+              if (row[ModCol.iInfo].conf.xsmType !== 'XSM_audio') {
+                const { shared, repo } = row[ModCol.iInfo];
                 const module = row[ModCol.iModule];
-                if (
-                  row[ModCol.iInstalled] === OFF &&
-                  !ModuleUpdates.some((mud) => mud.to.conf.module)
-                ) {
-                  const { repo } = row[ModCol.iInfo];
+                if (!removeMods.map((m) => m.name).includes(module)) {
                   const modrepok = modrepKey(module, repo);
                   const conf = installed.find(
                     (c) => modrepKey(c.module, c.sourceRepository) === modrepok
                   );
-                  if (modrepok in Downloads) {
-                    if (!G.Module.clearDownload(module, repo)) {
-                      log.warn(`Failed to clear ${module} from downloads`);
-                      Downloads[modrepok].failed = true;
-                    }
-                  } else if (conf) {
-                    removeMods.push({
-                      name: conf.module,
-                      repo: conf.sourceRepository,
-                    });
-                  }
-                }
-              });
-              ModuleUpdates.forEach((mud) => {
-                removeMods.push({
-                  name: mud.from.conf.module,
-                  repo: mud.from.repo,
-                });
-              });
-              G.Module.modal(true, G.Window.id());
-              return G.Module.remove(removeMods);
-            })
-            .then((removeResult) => {
-              removeResult.forEach((r, i) => {
-                if (!r) log.warn(`Failed to remove module: ${removeMods[i]}`);
-              });
-              // Move modules (between the shared and xulsword builtins).
-              const { moduleData } = Saved;
-              Object.values(moduleData).forEach((row) => {
-                if (row[ModCol.iInfo].conf.xsmType !== 'XSM_audio') {
-                  const { shared, repo } = row[ModCol.iInfo];
-                  const module = row[ModCol.iModule];
-                  if (!removeMods.map((m) => m.name).includes(module)) {
-                    const modrepok = modrepKey(module, repo);
-                    const conf = installed.find(
-                      (c) =>
-                        modrepKey(c.module, c.sourceRepository) === modrepok
-                    );
-                    if (conf?.sourceRepository.builtin) {
-                      const toRepo = builtinRepos()[shared ? 0 : 1];
-                      const fromKey =
-                        conf && downloadKey(conf.sourceRepository);
-                      const toKey = downloadKey(toRepo);
-                      if (conf && fromKey !== toKey) {
-                        moveMods.push({
-                          name: module,
-                          fromRepo: conf.sourceRepository,
-                          toRepo,
-                        });
-                      }
-                    }
-                  }
-                }
-              });
-              return G.Module.move(moveMods);
-            })
-            .then((moveResult) => {
-              moveResult.forEach((r, i) => {
-                if (!r) log.warn(`Failed to move module: ${moveMods[i]}`);
-              });
-              const install: {
-                module: string;
-                fromRepo: Repository;
-                toRepo: Repository;
-              }[] = [];
-              const { moduleData } = Saved;
-              downloadResults.forEach((dlr, i) => {
-                if (dlr.status !== 'fulfilled') log.warn(dlr.reason);
-                else if (dlr.value) {
-                  const modrepok = downloadKeys[i];
-                  const mud = ModuleUpdates.find(
-                    (x) => modrepok === modrepKey(x.to.conf.module, x.to.repo)
-                  );
-                  // Install module updates
-                  if (mud) {
-                    install.push({
-                      module: mud.to.conf.module,
-                      fromRepo: mud.to.repo,
-                      toRepo: mud.from.repo,
-                    });
-                  } else {
-                    // Install user's selection(s)
-                    const dot = modrepok ? modrepok.lastIndexOf('.') : -1;
-                    if (dot === -1) return;
-                    const module = modrepok.substring(dot + 1);
-                    const repokey = modrepok.substring(0, dot);
-                    const row = Object.values(moduleData).find((r) => {
-                      return (
-                        downloadKey(r[ModCol.iInfo].repo) === repokey &&
-                        r[ModCol.iModule] === module
-                      );
-                    });
-                    if (row && row[ModCol.iInstalled]) {
-                      install.push({
-                        module: row[ModCol.iModule],
-                        fromRepo: row[ModCol.iInfo].repo,
-                        toRepo:
-                          builtinRepos()[row[ModCol.iInfo].shared ? 0 : 1],
+                  if (conf?.sourceRepository.builtin) {
+                    const toRepo = builtinRepos()[shared ? 0 : 1];
+                    const fromKey = conf && downloadKey(conf.sourceRepository);
+                    const toKey = downloadKey(toRepo);
+                    if (conf && fromKey !== toKey) {
+                      moveMods.push({
+                        name: module,
+                        fromRepo: conf.sourceRepository,
+                        toRepo,
                       });
                     }
                   }
                 }
-              });
-              return G.Module.installDownloads(install);
-            })
-            .then((newmods) => {
-              G.Window.modal('off', 'self');
-              if (newmods.errors.length) {
-                const message = newmods.errors.join('\n');
-                if (/(failed|warning)/i.test(message)) {
-                  const fail = /fail/i.test(message);
-                  this.addToast({
-                    message,
-                    timeout: -1,
-                    icon: fail ? 'error' : 'warning-sign',
-                    intent: fail ? Intent.DANGER : Intent.WARNING,
-                    onDismiss: () => {
-                      G.Module.modal(false);
-                      G.Window.close();
-                    },
+              }
+            });
+            const moveResult = await G.Module.move(moveMods);
+            moveResult.forEach((r, i) => {
+              if (!r) log.warn(`Failed to move module: ${moveMods[i]}`);
+            });
+
+            // Install modules
+            const install: {
+              module: string;
+              fromRepo: Repository;
+              toRepo: Repository;
+            }[] = [];
+            downloadResults.forEach((dlr, i) => {
+              if (dlr.status !== 'fulfilled') log.warn(dlr.reason);
+              else if (dlr.value) {
+                const modrepok = downloadKeys[i];
+                const mud = ModuleUpdates.find(
+                  (x) => modrepok === modrepKey(x.to.conf.module, x.to.repo)
+                );
+                // ...updated modules
+                if (mud) {
+                  install.push({
+                    module: mud.to.conf.module,
+                    fromRepo: mud.to.repo,
+                    toRepo: mud.from.repo,
                   });
-                  return false;
+                } else {
+                  // ...user seleced modules
+                  const dot = modrepok ? modrepok.lastIndexOf('.') : -1;
+                  if (dot === -1) return;
+                  const module = modrepok.substring(dot + 1);
+                  const repokey = modrepok.substring(0, dot);
+                  const row = Object.values(moduleData).find((r) => {
+                    return (
+                      downloadKey(r[ModCol.iInfo].repo) === repokey &&
+                      r[ModCol.iModule] === module
+                    );
+                  });
+                  if (row && row[ModCol.iInstalled]) {
+                    install.push({
+                      module: row[ModCol.iModule],
+                      fromRepo: row[ModCol.iInfo].repo,
+                      toRepo: builtinRepos()[row[ModCol.iInfo].shared ? 0 : 1],
+                    });
+                  }
                 }
               }
-              G.Module.modal(false);
-              G.Window.close();
-              return true;
-            })
-            .catch((er) => {
-              log.warn(er);
-              G.Module.modal(false);
             });
+            G.Module.installDownloads(install, 0)
+              .then(() => G.Module.modal(false))
+              .catch((er) => {
+                log.warn(er);
+                G.Module.modal(false);
+              });
+            G.Window.close();
+          } catch (er) {
+            log.warn(er);
+            G.Module.modal(false);
+          }
+          break;
         }
         case 'repoAdd': {
           const state = this.state as ManagerState;
@@ -999,7 +978,7 @@ export function download(this: ModuleManager, rows: number[]): void {
                   if (x >= chapter) chapters.push(x);
                 }
                 this.sState({
-                  showChapterDialog: {
+                  showAudioDialog: {
                     conf: drow[ModCol.iInfo].conf,
                     selection: { book, chapter, lastchapter: chapter },
                     initialSelection: { book, chapter, lastchapter: chapter },

@@ -6,7 +6,7 @@
   position: relative; /* get z-index to work */
   background: url(../../../assets/b2.png) repeat;
   opacity: 0.7;
-  z-index: 30;
+  z-index: 6;
 }
 .chooser .fadetop {
   height: 32px;
@@ -66,7 +66,7 @@
   height: 15px;
   top: 13px;
   left: 9px;
-  z-index: 50;
+  z-index: 8;
 }
 html[dir='rtl'] .chooser .close-chooser {
   left: auto;
@@ -231,7 +231,7 @@ html[dir='rtl'] .bookgroupitem:not(.disabled):hover .charrow {
   border-collapse: separate;
   border-spacing: 3px 1px;
   border-spacing: 0px 0px;
-  z-index: 50;
+  z-index: 8;
 }
 html[dir='rtl'] .chaptermenu {
   left: auto;
@@ -285,7 +285,7 @@ html[dir='rtl'] .chaptermenu {
   color: blue;
   box-shadow: 2px 2px 3px 2px #bbb;
   border-radius: 6px;
-  z-index: 60;
+  z-index: 9;
 }
 .chaptermenu.show .headingmenu {
   visibility: visible;

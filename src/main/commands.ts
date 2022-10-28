@@ -45,10 +45,12 @@ const Commands: GType['Commands'] = {
   // directory will be installed. A dialog will be shown if no paths argument
   // is provided, or an existing directory path is provided.
   async installXulswordModules(paths) {
-    let win: BrowserWindow | null = BrowserWindow.fromId(arguments[1] ?? -1);
-    if (!win) [win] = getBrowserWindows({ type: 'xulsword' });
-    const winid = win ? win.id : -1;
-    win = null;
+    let callingWin: BrowserWindow | null = BrowserWindow.fromId(
+      arguments[1] ?? -1
+    );
+    if (!callingWin) [callingWin] = getBrowserWindows({ type: 'xulsword' });
+    const callingWinID = callingWin ? callingWin.id : -1;
+    callingWin = null;
     const extensions = ['zip', 'xsm', 'xsb'];
     const options: OpenDialogSyncOptions = {
       title: i18n.t('menu.addNewModule.label'),
@@ -64,12 +66,12 @@ const Commands: GType['Commands'] = {
     function filter(fileArray: string[]): string[] {
       return fileArray.filter((f) => extRE.test(f));
     }
-    Module.modal(true, winid);
+    Module.modal(true, callingWinID);
     let result: Promise<NewModulesType> | null = null;
     if (paths) {
       // Install array of file paths
       if (Array.isArray(paths)) {
-        result = modalInstall(filter(paths), undefined);
+        result = modalInstall(filter(paths), undefined, callingWinID);
       }
       // Install all modules in a directory
       else if (paths.endsWith('/*')) {
@@ -78,12 +80,12 @@ const Commands: GType['Commands'] = {
         if (file.isDirectory()) {
           list.push(...filter(file.directoryEntries));
         }
-        result = modalInstall(list, undefined);
+        result = modalInstall(list, undefined, callingWinID);
       } else {
         const file = new LocalFile(paths);
         // ZIP file to install
         if (!file.isDirectory()) {
-          result = modalInstall(filter([file.path]), undefined);
+          result = modalInstall(filter([file.path]), undefined, callingWinID);
         } else {
           // Choose from existing directory.
           options.defaultPath = paths;
@@ -98,7 +100,7 @@ const Commands: GType['Commands'] = {
     return dialog
       .showOpenDialog(progwin, options)
       .then((obj) => {
-        return modalInstall(obj.filePaths, undefined);
+        return modalInstall(obj.filePaths, undefined, callingWinID);
       })
       .then((r) => {
         Module.modal(false);

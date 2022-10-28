@@ -26,7 +26,7 @@ html.dialog-window #root {
   position: absolute;
   width: 100%;
   height: 100%;
-  z-index: 999;
+  z-index: 13;
 }
 #overlay.darkened {
   background-color: rgba(0, 0, 0, 0.5);
@@ -54,10 +54,12 @@ html a:hover {
 html.dialog select {
   height: 2em;
 }
-.dialogbuttons {
+
+/* Dialog windows and Dialog elements */
+.dialog-buttons {
   margin: 0 10px;
 }
-.dialogbuttons .button {
+.dialog-buttons .button {
   font-size: 14px;
   flex-basis: 60px;
   padding: 5px;
@@ -65,8 +67,11 @@ html.dialog select {
   margin-inline-start: 10px;
   white-space: nowrap;
 }
-.dialogbuttons .button:first-child {
+.dialog-buttons .button:first-child {
   margin-inline-start: 0;
+}
+.dialog.modulesInstalled .bp4-tag {
+  margin-bottom: 4px;
 }
 
 /* Grid */

@@ -4,7 +4,7 @@
 import React from 'react';
 import i18n from 'i18next';
 import { ChromePicker as ColorPicker } from 'react-color';
-import { Classes, Dialog, Slider } from '@blueprintjs/core';
+import { Classes, Slider } from '@blueprintjs/core';
 import type { ReactElementLike } from 'prop-types';
 import { diff } from '../../common';
 import G from '../rg';
@@ -18,6 +18,7 @@ import Button from '../libxul/button';
 import Checkbox from '../libxul/checkbox';
 import Menulist from '../libxul/menulist';
 import ModuleMenu from '../libxul/modulemenu';
+import Dialog from '../libxul/dialog';
 import Grid, { Columns, Column, Rows, Row } from '../libxul/grid';
 import Spacer from '../libxul/spacer';
 import handlerH, {
@@ -162,21 +163,21 @@ export default class ChooseFontWin extends React.Component {
           background-color: rgb(${bc.r}, ${bc.g}, ${bc.b}, ${bc.a});
         }`}</style>
         {ruSureDialog && (
-          <Dialog isOpen>
-            <div className={Classes.DIALOG_BODY}>
-              {i18n.t('dialog.confirmDelete')}
-            </div>
-            <Hbox className="dialogbuttons" pack="end" align="end">
-              <Spacer flex="10" />
-              <Button flex="1" fill="x" onClick={() => ruSureDialog(false)}>
-                {i18n.t('no.label')}
-              </Button>
-              <Button flex="1" fill="x" onClick={() => ruSureDialog(true)}>
-                {i18n.t('yes.label')}
-              </Button>
-              <Spacer width="10px" />
-            </Hbox>
-          </Dialog>
+          <Dialog
+            body={i18n.t('dialog.confirmDelete')}
+            buttons={
+              <>
+                <Spacer flex="10" />
+                <Button flex="1" fill="x" onClick={() => ruSureDialog(false)}>
+                  {i18n.t('no.label')}
+                </Button>
+                <Button flex="1" fill="x" onClick={() => ruSureDialog(true)}>
+                  {i18n.t('yes.label')}
+                </Button>
+                <Spacer width="10px" />
+              </>
+            }
+          />
         )}
         <span id="styleTest" />
         <Groupbox caption={i18n.t('fontsAndColors.label')}>
@@ -328,7 +329,7 @@ export default class ChooseFontWin extends React.Component {
           </Grid>
         </Groupbox>
 
-        <Hbox className="dialogbuttons" pack="end" align="end">
+        <Hbox className="dialog-buttons" pack="end" align="end">
           <Spacer flex="10" />
           <Button id="cancel" flex="1" fill="x" onClick={handler}>
             {i18n.t('cancel.label')}

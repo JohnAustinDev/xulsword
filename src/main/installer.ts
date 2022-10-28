@@ -2,7 +2,7 @@
 /* eslint-disable no-continue */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import fpath from 'path';
-import { BrowserWindow, ipcMain, IpcMainEvent, shell } from 'electron';
+import { BrowserWindow } from 'electron';
 import ZIP from 'adm-zip';
 import log from 'electron-log';
 import {
@@ -13,7 +13,7 @@ import {
 } from '../common';
 import Subscription from '../subscription';
 import C from '../constant';
-import Window, { getBrowserWindows, publishSubscription } from './window';
+import Window, { getBrowserWindows } from './window';
 import LocalFile from './components/localFile';
 import Dirs from './components/dirs';
 import LibSword from './components/libsword';
@@ -73,11 +73,11 @@ export function moduleUnsupported(module: string | SwordConfType): string[] {
   if (type && Object.keys(C.SupportedModuleTypes).includes(type)) {
     if (versionCompare(C.SWORDEngineVersion, minimumVersion) < 0) {
       reasons.push(
-        `${module2} failed: Requires SWORD engine version ${minimumVersion} or greater (using ${C.SWORDEngineVersion})`
+        `${module2} failed: Requires SWORD engine version > ${minimumVersion} (using ${C.SWORDEngineVersion}).`
       );
     }
   } else {
-    reasons.push(`${module2} failed: Is unsupported type '${type || moddrv}'`);
+    reasons.push(`${module2} failed: Unsupported type '${type || moddrv}'.`);
   }
   return reasons;
 }
@@ -112,7 +112,7 @@ export function moveRemoveModule(
   let move = (moveTo && new LocalFile(moveTo)) || null;
   if (move && (!move.exists() || !move.isDirectory())) move = null;
   if (moveTo && move === null) {
-    log.error(`Destination does not exist: '${moveTo}'.`);
+    log.error(`Destination does not exist '${moveTo}'.`);
     return 0;
   }
   LibSword.quit();
@@ -180,7 +180,8 @@ export function moveRemoveModule(
 // are installed, then other functions are responsible for restarting it.
 export async function installZIPs(
   zips: ZIP[],
-  destdirs?: string | string[]
+  destdirs?: string | string[],
+  callingWinID?: number
 ): Promise<NewModulesType> {
   return new Promise((resolve) => {
     const newmods: NewModulesType = {
@@ -212,9 +213,12 @@ export async function installZIPs(
       let progTot = 0;
       let progNow = 0;
       const progress = (prog: number) => {
-        const xswin = getBrowserWindows({ type: 'xulsword' })[0];
-        xswin?.setProgressBar(prog);
-        xswin?.webContents.send('progress', prog);
+        let w = BrowserWindow.fromId(callingWinID ?? -1);
+        if (w) {
+          w?.setProgressBar(prog);
+          w?.webContents.send('progress', prog);
+          w = null;
+        }
       };
       progress(0);
       zips.forEach((zip) => {
@@ -255,12 +259,12 @@ export async function installZIPs(
                   conf.DataPath && confModulePath(conf.DataPath);
                 if (!swmodpath) {
                   reasons.push(
-                    `${conf.module} failed: Has non-standard module path '${conf.DataPath}'`
+                    `${conf.module} failed: Has non-standard module path '${conf.DataPath}'.`
                   );
                 }
                 if (!dest.exists() || !dest.isDirectory()) {
                   reasons.push(
-                    `${conf.module} failed: Destination directory does not exist '${dest.path}`
+                    `${conf.module} failed: Destination directory does not exist '${dest.path}.`
                   );
                 }
                 if (conf.errors.length) reasons.push(...conf.errors);
@@ -284,9 +288,9 @@ export async function installZIPs(
                       reasons.push(
                         `${conf.module} ${
                           conf.Version ?? 0
-                        } failed: Will not overwrite newer module: ${
+                        } failed: Will not overwrite newer module ${
                           existing.module
-                        } ${existing.Version}`
+                        } ${existing.Version}.`
                       );
                     } else if (!moveRemoveModule([conf.module], destdir)) {
                       reasons.push(
@@ -325,7 +329,7 @@ export async function installZIPs(
                     })
                   ) {
                     newmods.errors.push(
-                      `${conf.module} failed: Could not create module directory: '${moddest.path}'`
+                      `${conf.module} failed: Could not create module directory '${moddest.path}'.`
                     );
                   } else {
                     // Copy config file to mods.d
@@ -366,7 +370,7 @@ export async function installZIPs(
                     });
                     if (!moddest.exists()) {
                       newmods.errors.push(
-                        `${conf.module} failed: Could not copy module file: " ${moddest.path}`
+                        `${conf.module} failed: Could not copy file " ${moddest.path}.`
                       );
                     }
                   } else {
@@ -374,7 +378,7 @@ export async function installZIPs(
                   }
                 } else {
                   newmods.errors.push(
-                    `file will not be installed: ${entry.entryName}`
+                    `file will not be installed: ${entry.entryName}.`
                   );
                 }
                 break;
@@ -473,7 +477,7 @@ export async function installZIPs(
 
               default:
                 newmods.errors.push(
-                  `Warning: Unknown module component: ${entry.name}`
+                  `Warning: Unknown module component ${entry.name}.`
                 );
             }
           }
@@ -492,7 +496,8 @@ export async function installZIPs(
 // When destdir is unspecified, xsModsUser is used.
 export async function modalInstall(
   zipmods: (ZIP | string)[],
-  destdir?: string | string[]
+  destdir?: string | string[],
+  callingWinID?: number
 ) {
   const zips: (ZIP | null)[] = [];
   zipmods.forEach((zipmod) => {
@@ -501,7 +506,7 @@ export async function modalInstall(
       if (zipfile.exists()) {
         zips.push(new ZIP(zipmod));
       } else {
-        log.warn(`Zip module does not exist: '${zipfile.path}'`);
+        log.warn(`Zip module does not exist: '${zipfile.path}'.`);
         zips.push(null);
       }
     } else {
@@ -512,24 +517,8 @@ export async function modalInstall(
   const d = Array.isArray(destdir)
     ? destdir.filter((_d, i) => zips[i])
     : destdir;
-  const newmods = await installZIPs(z, d);
-  if (newmods.errors.length) {
-    shell.beep();
-    log.error(
-      `Module installation problems follow:\n${newmods.errors.join('\n')}`
-    );
-  } else {
-    log.info('ALL FILES WERE SUCCESSFULLY INSTALLED!');
-  }
-  Subscription.publish('resetMain');
-  Subscription.publish('modulesInstalled', newmods);
-
-  ipcMain.once('did-finish-render', (event: IpcMainEvent) => {
-    let win = BrowserWindow.fromWebContents(event.sender);
-    // So the calling window can show the newly installed modules.
-    if (win) publishSubscription({ id: win.id }, 'modulesInstalled', newmods);
-    win = null;
-  });
+  const newmods = await installZIPs(z, d, callingWinID);
+  Subscription.publish('modulesInstalled', newmods, callingWinID);
   return newmods;
 }
 
@@ -583,7 +572,7 @@ const Module: GType['Module'] = {
           }
           message = dlfile;
         } else {
-          throw new Error(`Could not create tmp directory: '${tmpdir.path}'`);
+          throw new Error(`Could not create tmp directory '${tmpdir.path}'.`);
         }
       } catch (err: any) {
         progress(-1);
@@ -676,7 +665,8 @@ const Module: GType['Module'] = {
   },
 
   async installDownloads(
-    installs: { module: string; fromRepo: Repository; toRepo: Repository }[]
+    installs: { module: string; fromRepo: Repository; toRepo: Repository }[],
+    callingWinID?: number
   ): Promise<NewModulesType> {
     const zipobj: ZIP[] = [];
     const destdir: string[] = [];
@@ -695,7 +685,7 @@ const Module: GType['Module'] = {
     });
     let result: Promise<NewModulesType> | null = null;
     if (zipobj.length && destdir.length) {
-      result = modalInstall(zipobj, destdir);
+      result = modalInstall(zipobj, destdir, callingWinID);
     }
 
     return (
@@ -704,7 +694,7 @@ const Module: GType['Module'] = {
         fonts: [],
         bookmarks: [],
         audio: [],
-        errors: ['No Downloads to install'],
+        errors: ['No Downloads to install.'],
       }
     );
   },

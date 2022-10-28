@@ -2,7 +2,14 @@
 
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
-import { app, dialog, BrowserWindow, ipcMain, IpcMainEvent } from 'electron';
+import {
+  app,
+  dialog,
+  BrowserWindow,
+  ipcMain,
+  IpcMainEvent,
+  shell,
+} from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import i18n from 'i18next';
@@ -16,6 +23,7 @@ import {
   WindowRegistry,
   pushPrefsToWindows,
   getBrowserWindows,
+  publishSubscription,
 } from './window';
 import contextMenu from './contextMenu';
 import { checkModulePrefs } from './minit';
@@ -84,25 +92,42 @@ export default class AppUpdater {
   }
 }
 
+let ModulesInstalled: {
+  callingWinID: number;
+  newmods: NewModulesType;
+} | null = null;
 ipcMain.on('did-finish-render', (event: IpcMainEvent) => {
-  let win = BrowserWindow.fromWebContents(event.sender);
-  if (!win) return;
-  const wd = WindowRegistry[win.id];
-  if (!wd) return;
-  const { type: name } = wd;
-
-  if (name === 'xulsword' && process.env.START_MINIMIZED) {
-    win.minimize();
-  } else {
-    win.show();
-    win.focus();
+  let callingWin = BrowserWindow.fromWebContents(event.sender);
+  if (!callingWin) return;
+  const wd = WindowRegistry[callingWin.id];
+  if (!wd) {
+    callingWin = null;
+    return;
   }
-  if (name === 'xulsword' && !(C.isDevelopment && C.DevSplash === 2)) {
+
+  if (ModulesInstalled?.callingWinID === callingWin.id) {
+    publishSubscription(
+      false,
+      { id: callingWin.id },
+      'modulesInstalled',
+      ModulesInstalled.newmods
+    );
+    ModulesInstalled = null;
+  }
+
+  const { type } = wd;
+  if (type === 'xulsword' && process.env.START_MINIMIZED) {
+    callingWin.minimize();
+  } else {
+    callingWin.show();
+    callingWin.focus();
+  }
+  if (type === 'xulsword' && !(C.isDevelopment && C.DevSplash === 2)) {
     setTimeout(() => {
       G.Window.close({ type: 'splash' });
     }, 1000);
   }
-  win = null;
+  callingWin = null;
 });
 
 const openMainWindow = () => {
@@ -164,11 +189,33 @@ const openMainWindow = () => {
   subscriptions.push(Subscription.subscribe('setPref', pushPrefsToWindows));
   subscriptions.push(Subscription.subscribe('setPref', pushPrefsToMenu));
   subscriptions.push(
-    Subscription.subscribe('modulesInstalled', (newmods: NewModulesType) => {
-      newmods.modules.forEach((conf) => {
-        setViewportTabs(-1, conf.module, 'show');
-      });
-    })
+    Subscription.subscribe(
+      'modulesInstalled',
+      (newmods: NewModulesType, callingWinID?: number) => {
+        if (
+          newmods.errors.length &&
+          newmods.errors.some((msg) => /(failed|warning)/i.test(msg))
+        ) {
+          log.error(
+            `Module installation problems follow:\n${newmods.errors.join('\n')}`
+          );
+        } else if (!newmods.errors.length) {
+          log.info('ALL FILES WERE SUCCESSFULLY INSTALLED!');
+        }
+        Subscription.publish('resetMain');
+        newmods.modules.forEach((conf) => {
+          setViewportTabs(-1, conf.module, 'show');
+        });
+        if (typeof callingWinID !== 'undefined') {
+          // The next time callingWin is reloaded, did-finish-render
+          // will publish modulesInstalled on that window.
+          ModulesInstalled = {
+            callingWinID,
+            newmods,
+          };
+        }
+      }
+    )
   );
   subscriptions.push(
     Subscription.subscribe('resetMain', () => {

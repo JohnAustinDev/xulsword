@@ -1,6 +1,6 @@
 .npopup {
   position: absolute;
-  z-index: 100;
+  z-index: 12;
   background-color: transparent !important;
   width: calc(100% - 20px);
   left: 15px;
