@@ -818,7 +818,6 @@ export const GPublic = {
     ftpCancel: func as unknown as () => void,
   },
   Module: {
-    modal: func as unknown as (modal: boolean, callingWinID?: number) => void,
     download: func as unknown as (
       module: string,
       repository: Repository
@@ -848,7 +847,9 @@ export const GPublic = {
     ) => void,
   },
   Window: {
-    description: funcCACHE as unknown as () => WindowDescriptorType,
+    description: funcCACHE as unknown as (
+      window?: WindowArgType
+    ) => WindowDescriptorType,
     open: func as unknown as (arg: WindowDescriptorType) => number,
     setComplexValue: func as unknown as (argname: string, value: any) => void,
     mergeValue: func as unknown as (
@@ -870,8 +871,7 @@ export const GPublic = {
       window?: WindowArgType
     ) => void,
     modal: func as unknown as (
-      modal: ModalType,
-      window?: WindowArgType
+      modal: ModalType | { modal: ModalType; window: WindowArgType }[]
     ) => void,
     moveToFront: func as unknown as (window?: WindowArgType) => void,
     moveToBack: func as unknown as (window?: WindowArgType) => void,

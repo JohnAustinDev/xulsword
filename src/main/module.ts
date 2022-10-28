@@ -13,7 +13,7 @@ import {
 } from '../common';
 import Subscription from '../subscription';
 import C from '../constant';
-import Window, { getBrowserWindows } from './window';
+import Window from './window';
 import LocalFile from './components/localFile';
 import Dirs from './components/dirs';
 import LibSword from './components/libsword';
@@ -29,7 +29,6 @@ import type {
   AudioFile,
   GenBookAudioFile,
   GType,
-  ModalType,
   ModTypes,
   NewModulesType,
   Repository,
@@ -177,7 +176,8 @@ export function moveRemoveModule(
 // the xulsword window. NOTE: destdir will be ignored when installing
 // xulsword specific module components. NOTE-2: LibSword should be ready
 // upon entering this function, but it will be quit before modules
-// are installed, then other functions are responsible for restarting it.
+// are installed, then another function must be responsible for
+// restarting it.
 export async function installZIPs(
   zips: ZIP[],
   destdirs?: string | string[],
@@ -494,30 +494,53 @@ export async function installZIPs(
 
 // Install an array of zip modules from either filepaths or ZIP objects.
 // When destdir is unspecified, xsModsUser is used.
+// Module installation requirements:
+// 1) All windows must be set to modal before calling modalInstall() or
+//    moveRemoveModule().
+// 2) Inside installZIPs or moveRemoveModule LibSword.quit() happens.
+// 3) Modules are removed, moved and/or installed, and progress is reported to
+//    callingWin.
+// 4) 'modulesInstalled' subscription is run on the main process to start LibSword,
+//    updateGlobalModulePrefs, and update xulsword main menu.
+// 5) Windows are all reloaded, for CSS and search-options etc. to get updated.
+// 6) When the callingWin sends did-finish-render to the main process, then the
+//   'modulesInstalled' subscription is run on the callingWin window, where
+//    errors/warnings are reported and new modules may be shown etc.
 export async function modalInstall(
   zipmods: (ZIP | string)[],
   destdir?: string | string[],
   callingWinID?: number
 ) {
-  const zips: (ZIP | null)[] = [];
-  zipmods.forEach((zipmod) => {
-    if (typeof zipmod === 'string') {
-      const zipfile = new LocalFile(zipmod);
-      if (zipfile.exists()) {
-        zips.push(new ZIP(zipmod));
+  let newmods: NewModulesType;
+  if (zipmods.length) {
+    const zips: (ZIP | null)[] = [];
+    zipmods.forEach((zipmod) => {
+      if (typeof zipmod === 'string') {
+        const zipfile = new LocalFile(zipmod);
+        if (zipfile.exists()) {
+          zips.push(new ZIP(zipmod));
+        } else {
+          log.warn(`Zip module does not exist: '${zipfile.path}'.`);
+          zips.push(null);
+        }
       } else {
-        log.warn(`Zip module does not exist: '${zipfile.path}'.`);
-        zips.push(null);
+        zips.push(zipmod);
       }
-    } else {
-      zips.push(zipmod);
-    }
-  });
-  const z = zips.filter(Boolean) as ZIP[];
-  const d = Array.isArray(destdir)
-    ? destdir.filter((_d, i) => zips[i])
-    : destdir;
-  const newmods = await installZIPs(z, d, callingWinID);
+    });
+    const z = zips.filter(Boolean) as ZIP[];
+    const d = Array.isArray(destdir)
+      ? destdir.filter((_d, i) => zips[i])
+      : destdir;
+    newmods = await installZIPs(z, d, callingWinID);
+  } else {
+    newmods = {
+      modules: [],
+      fonts: [],
+      bookmarks: [],
+      audio: [],
+      errors: ['No zipmods to install.'],
+    };
+  }
   Subscription.publish('modulesInstalled', newmods, callingWinID);
   return newmods;
 }
@@ -525,20 +548,6 @@ export async function modalInstall(
 let Downloads: { [modrepoKey: string]: ZIP } = {};
 
 const Module: GType['Module'] = {
-  modal(modal: boolean, callingWinID?: number) {
-    if (modal) {
-      BrowserWindow.getAllWindows().forEach((w) => {
-        const t: ModalType = w.id === callingWinID ? 'darkened' : 'transparent';
-        Window.modal(t, { id: w.id });
-      });
-      return;
-    }
-    Subscription.publish('resetMain');
-    BrowserWindow.getAllWindows().forEach((w) => {
-      w.webContents.reload();
-    });
-  },
-
   async downloadXSM(
     module: string,
     zipFileOrURL: string,
@@ -664,6 +673,7 @@ const Module: GType['Module'] = {
     return 'Canceled';
   },
 
+  // Set windows to modal before calling this function!
   async installDownloads(
     installs: { module: string; fromRepo: Repository; toRepo: Repository }[],
     callingWinID?: number
@@ -683,22 +693,12 @@ const Module: GType['Module'] = {
         }
       }
     });
-    let result: Promise<NewModulesType> | null = null;
-    if (zipobj.length && destdir.length) {
-      result = modalInstall(zipobj, destdir, callingWinID);
-    }
-
-    return (
-      result || {
-        modules: [],
-        fonts: [],
-        bookmarks: [],
-        audio: [],
-        errors: ['No Downloads to install.'],
-      }
-    );
+    return modalInstall(zipobj, destdir, callingWinID);
   },
 
+  // Set windows to modal before calling this function!
+  // After this function, if installDownloads() will not be called,
+  // then modulesInstalled must be published on the main process.
   async remove(
     modules: { name: string; repo: Repository }[]
   ): Promise<boolean[]> {
@@ -713,6 +713,9 @@ const Module: GType['Module'] = {
     return results;
   },
 
+  // Set windows to modal before calling this function!
+  // After this function, if installDownloads() will not be called,
+  // then modulesInstalled must be published on the main process.
   async move(
     modules: { name: string; fromRepo: Repository; toRepo: Repository }[]
   ): Promise<boolean[]> {

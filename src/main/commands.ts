@@ -4,18 +4,18 @@ import { BrowserWindow, dialog, OpenDialogSyncOptions } from 'electron';
 import { BrowserWindowConstructorOptions } from 'electron/main';
 import log from 'electron-log';
 import i18n from 'i18next';
+import Subscription from '../subscription';
 import { clone, JSON_stringify } from '../common';
 import { verseKey, getTab, getTabs } from './minit';
 import Prefs from './components/prefs';
 import LocalFile from './components/localFile';
-import Module, { modalInstall } from './installer';
+import { modalInstall } from './module';
 import Window, { getBrowserWindows } from './window';
 
 import type {
   GType,
   LocationSKType,
   LocationVKType,
-  NewModulesType,
   ScrollType,
   TextVKType,
   XulswordStatePref,
@@ -66,49 +66,37 @@ const Commands: GType['Commands'] = {
     function filter(fileArray: string[]): string[] {
       return fileArray.filter((f) => extRE.test(f));
     }
-    Module.modal(true, callingWinID);
-    let result: Promise<NewModulesType> | null = null;
+    Window.modal([
+      { modal: 'transparent', window: 'all' },
+      { modal: 'darkened', window: { type: 'xulsword' } },
+    ]);
     if (paths) {
       // Install array of file paths
       if (Array.isArray(paths)) {
-        result = modalInstall(filter(paths), undefined, callingWinID);
+        return modalInstall(filter(paths), undefined, callingWinID);
       }
       // Install all modules in a directory
-      else if (paths.endsWith('/*')) {
+      if (paths.endsWith('/*')) {
         const list: string[] = [];
         const file = new LocalFile(paths.substring(0, -2));
         if (file.isDirectory()) {
           list.push(...filter(file.directoryEntries));
         }
-        result = modalInstall(list, undefined, callingWinID);
-      } else {
-        const file = new LocalFile(paths);
-        // ZIP file to install
-        if (!file.isDirectory()) {
-          result = modalInstall(filter([file.path]), undefined, callingWinID);
-        } else {
-          // Choose from existing directory.
-          options.defaultPath = paths;
-        }
+        return modalInstall(list, undefined, callingWinID);
       }
+      const file = new LocalFile(paths);
+      // ZIP file to install
+      if (!file.isDirectory()) {
+        return modalInstall(filter([file.path]), undefined, callingWinID);
+      }
+      // Choose from existing directory.
+      options.defaultPath = paths;
     }
-    if (result) {
-      Module.modal(false);
-      return result;
-    }
-    const progwin = getBrowserWindows({ type: 'xulsword' })[0];
-    return dialog
-      .showOpenDialog(progwin, options)
-      .then((obj) => {
-        return modalInstall(obj.filePaths, undefined, callingWinID);
-      })
-      .then((r) => {
-        Module.modal(false);
-        return r;
-      })
-      .catch((err) => {
-        throw Error(err);
-      });
+    const obj = await dialog.showOpenDialog(
+      getBrowserWindows({ type: 'xulsword' })[0],
+      options
+    );
+    return modalInstall(obj.filePaths, undefined, callingWinID);
   },
 
   removeModule() {

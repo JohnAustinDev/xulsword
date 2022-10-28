@@ -26,7 +26,7 @@ import {
   publishSubscription,
 } from './window';
 import contextMenu from './contextMenu';
-import { checkModulePrefs } from './minit';
+import { updateGlobalModulePrefs } from './minit';
 import setViewportTabs from './tabs';
 
 import type { NewModulesType, WindowRegistryType } from '../type';
@@ -96,6 +96,7 @@ let ModulesInstalled: {
   callingWinID: number;
   newmods: NewModulesType;
 } | null = null;
+
 ipcMain.on('did-finish-render', (event: IpcMainEvent) => {
   let callingWin = BrowserWindow.fromWebContents(event.sender);
   if (!callingWin) return;
@@ -174,7 +175,7 @@ const openMainWindow = () => {
   menuBuilder.buildMenu();
 
   // TODO! install command line modules (xulsword 2.0 newModule.js)
-  checkModulePrefs();
+  updateGlobalModulePrefs();
 
   G.Data.write(
     `${app.getName()} ${app.getVersion()} (${app.getLocale()}) ${
@@ -188,6 +189,15 @@ const openMainWindow = () => {
   const subscriptions: (() => void)[] = [];
   subscriptions.push(Subscription.subscribe('setPref', pushPrefsToWindows));
   subscriptions.push(Subscription.subscribe('setPref', pushPrefsToMenu));
+  subscriptions.push(
+    Subscription.subscribe('resetMain', () => {
+      LibSword.quit();
+      Cache.clear();
+      LibSword.init();
+      updateGlobalModulePrefs();
+      menuBuilder.buildMenu();
+    })
+  );
   subscriptions.push(
     Subscription.subscribe(
       'modulesInstalled',
@@ -206,29 +216,19 @@ const openMainWindow = () => {
         newmods.modules.forEach((conf) => {
           setViewportTabs(-1, conf.module, 'show');
         });
-        if (typeof callingWinID !== 'undefined') {
-          // The next time callingWin is reloaded, did-finish-render
-          // will publish modulesInstalled on that window.
-          ModulesInstalled = {
-            callingWinID,
-            newmods,
-          };
-        }
+        // When callingWin is finished reloading, did-finish-render
+        // will publish modulesInstalled on that window.
+        ModulesInstalled = !callingWinID
+          ? null
+          : {
+              callingWinID,
+              newmods,
+            };
+        BrowserWindow.getAllWindows().forEach((w) => {
+          w.webContents.reload();
+        });
       }
     )
-  );
-  subscriptions.push(
-    Subscription.subscribe('resetMain', () => {
-      LibSword.quit();
-      Cache.clear();
-      LibSword.init();
-      checkModulePrefs();
-      const xswin = getBrowserWindows({ type: 'xulsword' })[0];
-      menuBuilder.buildMenu();
-      BrowserWindow.getAllWindows().forEach((win) => {
-        if (win !== xswin) win.removeMenu();
-      });
-    })
   );
 
   if (

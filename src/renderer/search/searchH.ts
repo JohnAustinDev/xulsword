@@ -263,7 +263,8 @@ async function libSwordSearch(
   if (module && module in G.Tab) {
     // Only one active search is allowed at a time, so make other windows
     // modal if scopes.length > 1.
-    if (scopes.length > 1) G.Window.modal('transparent', 'not-self');
+    if (scopes.length > 1)
+      G.Window.modal([{ modal: 'transparent', window: 'not-self' }]);
     LibSwordSearch.params = [
       module,
       searchtext,
@@ -304,7 +305,7 @@ async function libSwordSearch(
     // Now be sure to free the search engine and reset modal and progress.
     G.LibSword.getSearchResults(module, 0, 0, false, id);
     if (scopes.length > 1) {
-      G.Window.modal('off', 'not-self');
+      G.Window.modal([{ modal: 'off', window: 'not-self' }]);
       if (LibSwordSearch.sthis) {
         const s: Partial<SearchWinState> = {
           progress: 0,
@@ -370,7 +371,7 @@ export async function getSearchResults(
 
 function createSearchIndex(sthis: SearchWin, module: string) {
   if (module && module in G.Tab) {
-    G.Window.modal('darkened', 'all');
+    G.Window.modal([{ modal: 'darkened', window: 'all' }]);
     const s: Partial<SearchWinState> = {
       results: 0,
       pageindex: 0,
@@ -386,13 +387,13 @@ function createSearchIndex(sthis: SearchWin, module: string) {
     setTimeout(() => {
       G.LibSword.searchIndexBuild(module)
         .then(() => {
-          G.Window.modal('off', 'all');
+          G.Window.modal([{ modal: 'off', window: 'all' }]);
           sthis.setState({ progress: 0 });
           return search(sthis);
         })
         .catch((er: Error) => {
           log.error(er);
-          G.Window.modal('off', 'all');
+          G.Window.modal([{ modal: 'off', window: 'all' }]);
         });
     }, 100);
   }

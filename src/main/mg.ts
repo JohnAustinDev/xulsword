@@ -37,7 +37,7 @@ import {
   resetMain,
   getSwordConf,
 } from './minit';
-import Module from './installer';
+import Module from './module';
 
 // Methods of the following classes must not use rest parameters or default
 // values in their function definition's argument lists. This is because

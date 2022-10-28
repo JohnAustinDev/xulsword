@@ -510,88 +510,92 @@ export async function eventHandler(
           break;
         }
         case 'ok': {
-          // Remove any failed downloads
-          Object.keys(Downloads).forEach((k) => {
-            if (Downloads[k].failed) {
+          G.Window.modal([
+            { modal: 'transparent', window: 'all' },
+            { modal: 'darkened', window: { type: 'xulsword' } },
+          ]);
+          try {
+            // Remove any failed downloads
+            Object.keys(Downloads).forEach((k) => {
+              if (Downloads[k].failed) {
+                const amui = ModuleUpdates.findIndex(
+                  (mud) => k === modrepKey(mud.to.conf.module, mud.to.repo)
+                );
+                if (amui !== -1) ModuleUpdates.splice(amui, 1);
+                delete Downloads[k];
+              }
+            });
+            // Remove updates that have not received ok to install
+            Object.keys(Downloads).forEach((k) => {
               const amui = ModuleUpdates.findIndex(
                 (mud) => k === modrepKey(mud.to.conf.module, mud.to.repo)
               );
-              if (amui !== -1) ModuleUpdates.splice(amui, 1);
-              delete Downloads[k];
-            }
-          });
-          // Remove updates that have not received ok to install
-          Object.keys(Downloads).forEach((k) => {
-            const amui = ModuleUpdates.findIndex(
-              (mud) => k === modrepKey(mud.to.conf.module, mud.to.repo)
-            );
-            if (amui !== -1 && !ModuleUpdates[amui].install) {
-              ModuleUpdates.splice(amui, 1);
-              delete Downloads[k];
-            }
-          });
-          const downloadKeys = Object.keys(Downloads);
-          const promises = Object.values(Downloads).map((v) => v.nfiles);
-          const installed: SwordConfType[] = [];
-          const removeMods: { name: string; repo: Repository }[] = [];
-          const moveMods: {
-            name: any;
-            fromRepo: any;
-            toRepo: Repository;
-          }[] = [];
-
-          const downloadResults = await Promise.allSettled(promises);
-          G.Window.moveToBack();
-          // Remove selection from persisted state.
-          this.setTableState('module', { selection: [] });
-          this.setTableState('repository', { selection: [] });
-          const state = this.state as ManagerState;
-          const { repository: repotable } = state.tables;
-          const { moduleData } = Saved;
-          // Get a list of all currently installed modules (those found in any
-          // enabled local repository).
-          repotable.data.forEach((rtd, i) => {
-            if (isRepoLocal(rtd[RepCol.iInfo].repo)) {
-              const listing = Saved.repositoryListings[i];
-              if (Array.isArray(listing)) {
-                listing.forEach((c) => installed.push(c));
+              if (amui !== -1 && !ModuleUpdates[amui].install) {
+                ModuleUpdates.splice(amui, 1);
+                delete Downloads[k];
               }
-            }
-          });
-
-          // Remove modules
-          Object.values(moduleData).forEach((row) => {
-            const module = row[ModCol.iModule];
-            if (
-              row[ModCol.iInstalled] === OFF &&
-              !ModuleUpdates.some((mud) => mud.to.conf.module)
-            ) {
-              const { repo } = row[ModCol.iInfo];
-              const modrepok = modrepKey(module, repo);
-              const conf = installed.find(
-                (c) => modrepKey(c.module, c.sourceRepository) === modrepok
-              );
-              if (modrepok in Downloads) {
-                if (!G.Module.clearDownload(module, repo)) {
-                  log.warn(`Failed to clear ${module} from downloads`);
-                  Downloads[modrepok].failed = true;
-                }
-              } else if (conf) {
-                removeMods.push({
-                  name: conf.module,
-                  repo: conf.sourceRepository,
-                });
-              }
-            }
-          });
-          ModuleUpdates.forEach((mud) => {
-            removeMods.push({
-              name: mud.from.conf.module,
-              repo: mud.from.repo,
             });
-          });
-          G.Module.modal(true, 0); // 0 is xulsword window
-          try {
+            const downloadKeys = Object.keys(Downloads);
+            const promises = Object.values(Downloads).map((v) => v.nfiles);
+            const installed: SwordConfType[] = [];
+            const removeMods: { name: string; repo: Repository }[] = [];
+            const moveMods: {
+              name: any;
+              fromRepo: any;
+              toRepo: Repository;
+            }[] = [];
+
+            const downloadResults = await Promise.allSettled(promises);
+            G.Window.moveToBack();
+            // Remove selection from persisted state.
+            this.setTableState('module', { selection: [] });
+            this.setTableState('repository', { selection: [] });
+            const state = this.state as ManagerState;
+            const { repository: repotable } = state.tables;
+            const { moduleData } = Saved;
+            // Get a list of all currently installed modules (those found in any
+            // enabled local repository).
+            repotable.data.forEach((rtd, i) => {
+              if (isRepoLocal(rtd[RepCol.iInfo].repo)) {
+                const listing = Saved.repositoryListings[i];
+                if (Array.isArray(listing)) {
+                  listing.forEach((c) => installed.push(c));
+                }
+              }
+            });
+
+            // Remove modules
+            Object.values(moduleData).forEach((row) => {
+              const module = row[ModCol.iModule];
+              if (
+                row[ModCol.iInstalled] === OFF &&
+                !ModuleUpdates.some((mud) => mud.to.conf.module)
+              ) {
+                const { repo } = row[ModCol.iInfo];
+                const modrepok = modrepKey(module, repo);
+                const conf = installed.find(
+                  (c) => modrepKey(c.module, c.sourceRepository) === modrepok
+                );
+                if (modrepok in Downloads) {
+                  if (!G.Module.clearDownload(module, repo)) {
+                    log.warn(`Failed to clear ${module} from downloads`);
+                    Downloads[modrepok].failed = true;
+                  }
+                } else if (conf) {
+                  removeMods.push({
+                    name: conf.module,
+                    repo: conf.sourceRepository,
+                  });
+                }
+              }
+            });
+            ModuleUpdates.forEach((mud) => {
+              removeMods.push({
+                name: mud.from.conf.module,
+                repo: mud.from.repo,
+              });
+            });
+
             const removeResult = await G.Module.remove(removeMods);
             removeResult.forEach((r, i) => {
               if (!r) log.warn(`Failed to remove module: ${removeMods[i]}`);
@@ -648,7 +652,7 @@ export async function eventHandler(
                     toRepo: mud.from.repo,
                   });
                 } else {
-                  // ...user seleced modules
+                  // ...user selected modules
                   const dot = modrepok ? modrepok.lastIndexOf('.') : -1;
                   if (dot === -1) return;
                   const module = modrepok.substring(dot + 1);
@@ -669,16 +673,14 @@ export async function eventHandler(
                 }
               }
             });
-            G.Module.installDownloads(install, 0)
-              .then(() => G.Module.modal(false))
-              .catch((er) => {
-                log.warn(er);
-                G.Module.modal(false);
-              });
+            G.Module.installDownloads(
+              install,
+              G.Window.description({ type: 'xulsword' }).id
+            );
             G.Window.close();
           } catch (er) {
             log.warn(er);
-            G.Module.modal(false);
+            G.Window.modal([{ modal: 'off', window: 'all' }]);
           }
           break;
         }

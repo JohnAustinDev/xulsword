@@ -340,9 +340,6 @@ function createWindow(
   win.loadURL(resolveHtmlPath(`${type}.html`));
   windowInitI18n(win.id);
   if (type !== 'xulsword') win.removeMenu();
-  win.webContents.on('did-create-window', (lwin) => {
-    lwin.removeMenu();
-  });
   win.on('resize', () => {
     win.webContents.send('resize', win.getSize());
   });
@@ -356,13 +353,9 @@ function createWindow(
 }
 
 const Window: GType['Window'] = {
-  description(): WindowDescriptorType {
-    const callingWinID = arguments[0];
-    if (callingWinID) {
-      const win = getBrowserWindows({ id: callingWinID });
-      if (win && win.length) return WindowRegistry[win[0].id] || {};
-    }
-    return {};
+  description(window?: WindowArgType): WindowDescriptorType {
+    const win = getBrowserWindows(window, arguments[1])[0];
+    return WindowRegistry[win.id] || {};
   },
 
   open(descriptor: WindowDescriptorType): number {
@@ -426,10 +419,21 @@ const Window: GType['Window'] = {
 
   // Disable all event handlers on a window to insure user input is bocked for
   // a time, such as when LibSword is offline.
-  modal(modal?: ModalType, window?: WindowArgType) {
-    getBrowserWindows(window, arguments[2]).forEach((win) => {
-      win.webContents.send('modal', modal || '');
-    });
+  modal(modalx: ModalType | { modal: ModalType; window: WindowArgType }[]) {
+    const done: number[] = [];
+    (Array.isArray(modalx) ? modalx : [{ modal: modalx, window: arguments[1] }])
+      .reverse()
+      .forEach((obj) => {
+        const { modal, window } = obj;
+        getBrowserWindows(window)
+          .reverse()
+          .forEach((win) => {
+            if (!done.includes(win.id)) {
+              done.push(win.id);
+              win.webContents.send('modal', modal || '');
+            }
+          });
+      });
   },
 
   // If ResetType is not specified then all resets will be called, otherwise only

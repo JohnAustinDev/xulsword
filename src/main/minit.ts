@@ -16,7 +16,7 @@ import Prefs from './components/prefs';
 import LibSword from './components/libsword';
 import LocalFile from './components/localFile';
 import { getFeatureModules, getModuleFonts, getModuleConfig } from './config';
-import { moduleUnsupported } from './installer';
+import { moduleUnsupported } from './module';
 
 import type {
   TabType,
@@ -423,11 +423,9 @@ export function getSystemFonts() {
   return Promise.resolve(Cache.read('fontList'));
 }
 
-// SWORD modules may be installed/uninstalled outside of xulsword, so they
-// should be treated as unknown upon startup or reset. Normally, prefs should
-// only reference installed modules. So the target of such prefs must be
-// checked. If a referenced module is no longer installed, that pref is cleared.
-export function checkModulePrefs() {
+// Xulsword state prefs and other global prefs should only reference
+// installed modules or be ''.  This function insures that is the case.
+export function updateGlobalModulePrefs() {
   const currmods: string[] = [];
   const modlist = LibSword.getModuleList();
   if (modlist !== C.NOMODULES) {
