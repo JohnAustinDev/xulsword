@@ -286,13 +286,15 @@ export default class ModuleManager extends React.Component {
   }
 
   loadManagerTables() {
+    const { repositories } = this.state as ManagerState;
     const handleListing = (listing: RepositoryListing[]) => {
       this.updateRepositoryLists(listing);
-      this.checkForModuleUpdates(listing);
       let langselection = this.loadLanguageTable();
       const { language } = this.state as ManagerState;
       if (!language.open) langselection = [];
-      return this.loadModuleTable(langselection);
+      const success = this.loadModuleTable(langselection);
+      if (repositories) this.checkForModuleUpdates(listing);
+      return success;
     };
     const loadLocalRepos = async () => {
       H.Saved.repository.data = [];
@@ -309,7 +311,6 @@ export default class ModuleManager extends React.Component {
     };
     // Download data for the repository and module tables
     if (!H.Saved.repository.data.length) {
-      const { repositories } = this.state as ManagerState;
       if (repositories) {
         H.Saved.repository.data = [];
         H.Saved.repositoryListings = [];

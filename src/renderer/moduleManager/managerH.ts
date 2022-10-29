@@ -203,7 +203,7 @@ export const Downloads: {
   };
 } = {};
 
-export const ModuleUpdates: {
+export type ModuleUpdates = {
   install: boolean;
   from: {
     conf: SwordConfType;
@@ -213,7 +213,7 @@ export const ModuleUpdates: {
     conf: SwordConfType;
     repo: Repository;
   };
-}[] = [];
+};
 
 export function onColumnHide(
   this: ModuleManager,
@@ -317,66 +317,37 @@ export function onModCellClick(
     const { module: modtable } = state.tables;
     const { selection, visibleColumns } = module;
     const { dataRowIndex: row, column, tableRowIndex } = cell;
-    let col = visibleColumns[column];
+    const col = visibleColumns[column];
     const drow = modtable.data[row];
     if (
       drow &&
       !drow[ModCol.iInfo].loading &&
       (col === ModCol.iInstalled || col === ModCol.iRemove)
     ) {
-      const remove = col === ModCol.iRemove;
-      col = ModCol.iInstalled;
-      // Installed column clicks
+      // iInstalled and iRemove column clicks
       const was = drow[col];
-      const is = was === ON ? OFF : ON;
+      const is = was !== ON;
       const selrows = selectionToRows(selection);
-      const toggleTableRows = selrows.includes(tableRowIndex)
-        ? selrows
-        : [tableRowIndex];
-      const toggleDataRows = toggleTableRows.map(
-        (r) => Saved.module.tableToDataRowMap[r] ?? r
+      modtableUpdate(
+        this,
+        col === ModCol.iRemove ? !is : is,
+        (selrows.includes(tableRowIndex) ? selrows : [tableRowIndex]).map(
+          (r) => Saved.module.tableToDataRowMap[r] ?? r
+        ),
+        col === ModCol.iRemove
       );
-      if (is === ON) {
-        const newDLRows: number[] = [];
-        toggleDataRows.forEach((r) => {
-          const rrow = modtable.data[r];
-          if (rrow) {
-            rrow[ModCol.iRemove] = OFF;
-            const k = modrepKey(rrow[ModCol.iModule], rrow[ModCol.iInfo].repo);
-            if (remove || (k in Downloads && !Downloads[k].failed)) {
-              rrow[ModCol.iInstalled] = ON;
-              this.setTableState('module', null, modtable.data, true);
-            } else newDLRows.push(r);
-          }
-        });
-        if (newDLRows.length) this.download(newDLRows);
-      } else {
-        toggleDataRows.forEach((r) => {
-          const rrow = modtable.data[r];
-          if (rrow) {
-            rrow[ModCol.iRemove] = ON;
-            rrow[col] = OFF;
-            rrow[ModCol.iInfo].intent = intent(ModCol.iInstalled, 'none');
-          }
-        });
-        this.setTableState('module', null, modtable.data, true);
-      }
     } else if (drow && col === ModCol.iShared) {
       // Shared column clicks
       const is = !drow[ModCol.iInfo].shared;
       const selrows = selectionToRows(selection);
-      const toggleTableRows = selrows.includes(tableRowIndex)
-        ? selrows
-        : [tableRowIndex];
-      const toggleDataRows = toggleTableRows.map(
-        (r) => Saved.module.tableToDataRowMap[r] ?? r
-      );
-      toggleDataRows.forEach((r) => {
-        const rrow = modtable.data[r];
-        if (rrow && rrow[ModCol.iInstalled] === ON) {
-          rrow[ModCol.iInfo].shared = is;
-        }
-      });
+      (selrows.includes(tableRowIndex) ? selrows : [tableRowIndex])
+        .map((r) => Saved.module.tableToDataRowMap[r] ?? r)
+        .forEach((r) => {
+          const rrow = modtable.data[r];
+          if (rrow && rrow[ModCol.iInstalled] === ON) {
+            rrow[ModCol.iInfo].shared = is;
+          }
+        });
       this.setTableState('module', null, modtable.data, true);
     } else {
       this.rowSelect(e, 'module', tableRowIndex);
@@ -517,23 +488,7 @@ export async function eventHandler(
           try {
             // Remove any failed downloads
             Object.keys(Downloads).forEach((k) => {
-              if (Downloads[k].failed) {
-                const amui = ModuleUpdates.findIndex(
-                  (mud) => k === modrepKey(mud.to.conf.module, mud.to.repo)
-                );
-                if (amui !== -1) ModuleUpdates.splice(amui, 1);
-                delete Downloads[k];
-              }
-            });
-            // Remove updates that have not received ok to install
-            Object.keys(Downloads).forEach((k) => {
-              const amui = ModuleUpdates.findIndex(
-                (mud) => k === modrepKey(mud.to.conf.module, mud.to.repo)
-              );
-              if (amui !== -1 && !ModuleUpdates[amui].install) {
-                ModuleUpdates.splice(amui, 1);
-                delete Downloads[k];
-              }
+              if (Downloads[k].failed) delete Downloads[k];
             });
             const downloadKeys = Object.keys(Downloads);
             const promises = Object.values(Downloads).map((v) => v.nfiles);
@@ -567,10 +522,7 @@ export async function eventHandler(
             // Remove modules
             Object.values(moduleData).forEach((row) => {
               const module = row[ModCol.iModule];
-              if (
-                row[ModCol.iInstalled] === OFF &&
-                !ModuleUpdates.some((mud) => mud.to.conf.module)
-              ) {
+              if (row[ModCol.iInstalled] === OFF) {
                 const { repo } = row[ModCol.iInfo];
                 const modrepok = modrepKey(module, repo);
                 const conf = installed.find(
@@ -588,12 +540,6 @@ export async function eventHandler(
                   });
                 }
               }
-            });
-            ModuleUpdates.forEach((mud) => {
-              removeMods.push({
-                name: mud.from.conf.module,
-                repo: mud.from.repo,
-              });
             });
 
             const removeResult = await G.Module.remove(removeMods);
@@ -641,35 +587,22 @@ export async function eventHandler(
               if (dlr.status !== 'fulfilled') log.warn(dlr.reason);
               else if (dlr.value) {
                 const modrepok = downloadKeys[i];
-                const mud = ModuleUpdates.find(
-                  (x) => modrepok === modrepKey(x.to.conf.module, x.to.repo)
-                );
-                // ...updated modules
-                if (mud) {
+                const dot = modrepok ? modrepok.lastIndexOf('.') : -1;
+                if (dot === -1) return;
+                const module = modrepok.substring(dot + 1);
+                const repokey = modrepok.substring(0, dot);
+                const row = Object.values(moduleData).find((r) => {
+                  return (
+                    downloadKey(r[ModCol.iInfo].repo) === repokey &&
+                    r[ModCol.iModule] === module
+                  );
+                });
+                if (row && row[ModCol.iInstalled]) {
                   install.push({
-                    module: mud.to.conf.module,
-                    fromRepo: mud.to.repo,
-                    toRepo: mud.from.repo,
+                    module: row[ModCol.iModule],
+                    fromRepo: row[ModCol.iInfo].repo,
+                    toRepo: builtinRepos()[row[ModCol.iInfo].shared ? 0 : 1],
                   });
-                } else {
-                  // ...user selected modules
-                  const dot = modrepok ? modrepok.lastIndexOf('.') : -1;
-                  if (dot === -1) return;
-                  const module = modrepok.substring(dot + 1);
-                  const repokey = modrepok.substring(0, dot);
-                  const row = Object.values(moduleData).find((r) => {
-                    return (
-                      downloadKey(r[ModCol.iInfo].repo) === repokey &&
-                      r[ModCol.iModule] === module
-                    );
-                  });
-                  if (row && row[ModCol.iInstalled]) {
-                    install.push({
-                      module: row[ModCol.iModule],
-                      fromRepo: row[ModCol.iInfo].repo,
-                      toRepo: builtinRepos()[row[ModCol.iInfo].shared ? 0 : 1],
-                    });
-                  }
                 }
               }
             });
@@ -914,11 +847,12 @@ export function switchRepo(
       .then((listing) => {
         if (!listing) throw new Error(`Canceled`);
         this.updateRepositoryLists(listing);
-        this.checkForModuleUpdates(listing);
         let selection = this.loadLanguageTable();
         const { language } = this.state as ManagerState;
         if (!language.open) selection = [];
-        return this.loadModuleTable(selection);
+        const success = this.loadModuleTable(selection);
+        if (repositories) this.checkForModuleUpdates(listing);
+        return success;
       })
       .catch((er) => log.warn(er));
   }
@@ -1079,12 +1013,9 @@ export function checkForModuleUpdates(
     }
   });
   // Search new rawModuleData for possible updates
-  const moduleUpdates: typeof ModuleUpdates = [];
+  const moduleUpdates: ModuleUpdates[] = [];
   installed.forEach((inst) => {
-    const candidates: typeof ModuleUpdates = [];
-    if (ModuleUpdates.some((mud) => mud.from.conf.module === inst.module)) {
-      return;
-    }
+    const candidates: ModuleUpdates[] = [];
     rawModuleData.forEach((listing, i) => {
       const { repo } = repository.data[i][RepCol.iInfo];
       if (listing && Array.isArray(listing)) {
@@ -1132,7 +1063,7 @@ export function checkForModuleUpdates(
       }
     });
     // Choose the first candidate with the highest version number, XSM modules first.
-    const version = (x: typeof ModuleUpdates[number]): string => {
+    const version = (x: ModuleUpdates): string => {
       let v = '0';
       if (x.to.conf.xsmType === 'XSM') {
         const i =
@@ -1165,40 +1096,84 @@ export function checkForModuleUpdates(
     this.addToast({
       timeout: -1,
       intent: Intent.SUCCESS,
-      message: `${abbr} ${mud.to.conf.Version}: ${history} (${reponame} ${mud.to.conf.module})`,
+      message: `${abbr} ${mud.to.conf.Version}: ${history} (${reponame}, ${mud.to.conf.module})`,
       action: {
         onClick: () => {
           mud.install = true;
         },
         text: i18n.t('yes.label'),
       },
+      onDismiss: () =>
+        setTimeout(() => {
+          if (!mud.install) {
+            installModuleUpdates(this, [mud], false);
+          }
+        }, 100),
       icon: 'confirm',
     });
   });
   // Download each update.
+  installModuleUpdates(this, moduleUpdates, true);
+}
+
+function installModuleUpdates(
+  xthis: ModuleManager,
+  moduleUpdates: ModuleUpdates[],
+  on: boolean
+) {
+  const state = xthis.state as ManagerState;
+  const { module: modtable } = state.tables;
+  const ons: boolean[] = [];
+  const rows: number[] = [];
   moduleUpdates.forEach((mud) => {
-    const modrepk = modrepKey(mud.to.conf.module, mud.to.repo);
-    const n = (
-      mud.to.conf.xsmType === 'XSM'
-        ? G.Module.downloadXSM(
-            mud.to.conf.module,
-            mud.to.conf.DataPath,
-            mud.to.repo
-          )
-        : G.Module.download(mud.to.conf.module, mud.to.repo)
-    )
-      .then((nx) => {
-        if (typeof nx === 'string') return null;
-        if (nx && modrepk in Downloads) Downloads[modrepk].failed = false;
-        return nx;
-      })
-      .catch((er) => {
-        log.info(er);
-        return null;
-      });
-    Downloads[modrepk] = { nfiles: n, failed: true };
+    const row = (which: 'from' | 'to') =>
+      modtable.data.findIndex(
+        (r: TModuleTableRow) =>
+          mud[which].repo.name === r[ModCol.iRepoName] &&
+          mud[which].conf.module === r[ModCol.iModule] &&
+          mud[which].conf.Version === r[ModCol.iVersion]
+      );
+    // Turn off local repository module
+    ons.push(!on);
+    rows.push(row('from'));
+    // Turn on external update module
+    ons.push(on);
+    rows.push(row('to'));
   });
-  ModuleUpdates.push(...moduleUpdates);
+  modtableUpdate(xthis, ons, rows);
+}
+
+function modtableUpdate(
+  xthis: ModuleManager,
+  on: boolean | boolean[],
+  modtableRowIndexes: number[],
+  isInstalled = false
+) {
+  const state = xthis.state as ManagerState;
+  const { module: modtable } = state.tables;
+  modtableRowIndexes.forEach((mtri, i) => {
+    if (mtri !== -1) {
+      const row = modtable.data[mtri];
+      // Installed column clicks
+      if (Array.isArray(on) ? on[i] : on) {
+        row[ModCol.iRemove] = OFF;
+        const k = modrepKey(row[ModCol.iModule], row[ModCol.iInfo].repo);
+        if (
+          isInstalled ||
+          isRepoLocal(row[ModCol.iInfo].repo) ||
+          (k in Downloads && !Downloads[k].failed)
+        ) {
+          row[ModCol.iInstalled] = ON;
+        } else xthis.download([mtri]);
+      } else {
+        row[ModCol.iRemove] = ON;
+        row[ModCol.iInstalled] = OFF;
+        row[ModCol.iInfo].intent = intent(ModCol.iInstalled, 'none');
+      }
+    }
+  });
+  if (modtableRowIndexes.length)
+    xthis.setTableState('module', null, modtable.data, true);
 }
 
 // Set table state, save the data for window re-renders, and re-render the table.
