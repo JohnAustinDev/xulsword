@@ -446,13 +446,12 @@ export function tabSort(a: TabType, b: TabType) {
 // the string contents of a config file plus the config file's name.
 export function parseSwordConf(
   config: string | LocalFile,
-  filename?: string
+  filename: string
 ): SwordConfType {
   const conf = typeof config === 'string' ? config : config.readFile();
   const errors = [];
   const lines = conf.split(/[\n\r]+/);
   const r = { filename } as SwordConfType;
-  if (typeof config !== 'string') r.filename = config.leafName;
   C.SwordConf.repeatable.forEach((en) => {
     r[en] = [];
   });

@@ -33,6 +33,7 @@ import {
 import type {
   AudioFile,
   Download,
+  FTPDownload,
   GenBookAudioFile,
   GType,
   ModTypes,
@@ -46,6 +47,7 @@ import type {
 // TODO! DisplayLevel: GenBook standard display's context levels
 // TODO! CrossWire wiki mentions LangSortOrder! Report change to KeySort
 // TODO! UnlockInfo: Display instructions for obtaining an unlock key
+// TODO! CrossWire Eusebian_vs and Eusebian_num share a single conf file. Support this?
 
 let Downloads: { [downloadKey: string]: ZIP } = {};
 
@@ -135,7 +137,7 @@ export function moveRemoveModule(
         const f = moddir.clone();
         f.append(conf);
         if (!f.isDirectory() && f.path.endsWith('.conf')) {
-          const c = parseSwordConf(f);
+          const c = parseSwordConf(f, f.leafName);
           if (c.module === m) {
             if (move && repositoryPath !== Dirs.path.xsAudio) {
               const tomodsd = move.clone().append('mods.d');
@@ -258,10 +260,7 @@ export async function installZIPs(
               case 'mods.d': {
                 const dest = new LocalFile(destdir);
                 const confstr = entry.getData().toString('utf8');
-                const conf = parseSwordConf(
-                  confstr,
-                  entry.entryName.split('/').pop()
-                );
+                const conf = parseSwordConf(confstr, entry.name);
                 // Look for any problems with the module itself
                 const reasons = moduleUnsupported(conf);
                 const swmodpath =
@@ -287,7 +286,7 @@ export async function installZIPs(
                   confdest.append(entry.name);
                   // Remove any existing module having this name unless it would be downgraded.
                   if (confdest.exists()) {
-                    const existing = parseSwordConf(confdest);
+                    const existing = parseSwordConf(confdest, entry.name);
                     const replace =
                       versionCompare(
                         conf.Version ?? 0,
@@ -559,35 +558,38 @@ const Module: GType['Module'] = {
   // array of Download objects. These can be passed to repositoryListing()
   // for retrieval of each repository's complete set of config files. A
   // string is returned if there were errors or the operation was canceled.
-  async crossWireMasterRepoList() {
+  async crossWireMasterRepoList(): Promise<Repository[] | string> {
     const mr = {
       domain: 'ftp.crosswire.org',
       path: '/pub/sword/',
       file: 'masterRepoList.conf',
+      name: 'CrossWire Master List',
     };
-    const result: Repository[] | null = [];
-    let fbuffer: Buffer | null;
+    const cancelkey = downloadKey(mr);
+    const result: Repository[] | string = [];
+    let fbuffer: Buffer;
     try {
-      fbuffer = await getFile(mr.domain, fpath.join(mr.path, mr.file));
+      fbuffer = await getFile(
+        mr.domain,
+        fpath.join(mr.path, mr.file),
+        cancelkey
+      );
     } catch (er: any) {
-      return Promise.resolve(er.toString());
+      return er.message;
     }
-    if (fbuffer) {
-      const fstring = fbuffer.toString('utf8');
-      const regex = 'FTPSource=([^|]+)\\|([^|]+)\\|([^|]+)\\s*[\\n\\r]';
-      fstring.match(new RegExp(regex, 'g'))?.forEach((mx: string) => {
-        const m = mx.match(new RegExp(regex));
-        if (m) {
-          result.push({
-            name: m[1],
-            domain: m[2],
-            path: m[3],
-          });
-        }
-      });
-      return result;
-    }
-    return 'Canceled';
+    const fstring = fbuffer.toString('utf8');
+    const regex = 'FTPSource=([^|]+)\\|([^|]+)\\|([^|]+)\\s*[\\n\\r]';
+    fstring.match(new RegExp(regex, 'g'))?.forEach((mx: string) => {
+      const m = mx.match(new RegExp(regex));
+      if (m) {
+        result.push({
+          name: m[1],
+          domain: m[2],
+          path: m[3],
+        });
+      }
+    });
+    return result;
   },
 
   // Takes an array of local and remote SWORD or XSM repositories and returns a mapped
@@ -598,13 +600,15 @@ const Module: GType['Module'] = {
   // Progress on each repository is separately reported to the calling
   // window, but results are not returned until all repositories have
   // been completely handled.
-  async repositoryListing(manifests) {
+  async repositoryListing(
+    manifests: (FTPDownload | null)[]
+  ): Promise<(RepositoryListing | string)[]> {
     const callingWinID = (arguments[1] ?? -1) as number;
     const promises = manifests.map(async (manifest) => {
       const progress = (prog: number) => {
         if (!manifest) return;
         const dlk = downloadKey(manifest);
-        log.debug(`REPO progress ${dlk}: ${prog}`);
+        log.silly(`REPO progress ${dlk}: ${prog}`);
         const w = BrowserWindow.fromId(callingWinID);
         w?.webContents.send('progress', prog, dlk);
       };
@@ -618,7 +622,7 @@ const Module: GType['Module'] = {
               modsd.directoryEntries.forEach((de) => {
                 const f = modsd.clone().append(de);
                 if (!f.isDirectory() && f.path.endsWith('.conf')) {
-                  const conf = parseSwordConf(f);
+                  const conf = parseSwordConf(f, de);
                   conf.sourceRepository = manifest;
                   confs.push(conf);
                 }
@@ -626,19 +630,18 @@ const Module: GType['Module'] = {
               value = confs;
             } else value = `Directory not found: ${manifest.path}/mods.d`;
           } else value = `Path not absolute: ${manifest.path}/mods.d`;
-          if (progress) progress(-1);
           return value;
         }
         let files: { header: { name: string }; content: Buffer }[] | null = [];
+        const cancelkey = downloadKey(manifest);
         try {
           const targzbuf = await getFile(
             manifest.domain,
             fpath.join(manifest.path, manifest.file),
+            cancelkey,
             progress
           );
-          if (targzbuf) {
-            files = await untargz(targzbuf);
-          } else value = 'Canceled';
+          files = await untargz(targzbuf);
         } catch (er: any) {
           // If there was no SwordRepoManifest, then download every conf file.
           let listing: ListingElementR[] | null = null;
@@ -648,38 +651,43 @@ const Module: GType['Module'] = {
             listing = await list(
               manifest.domain,
               fpath.join(manifest.path, 'mods.d'),
+              cancelkey,
               '',
               1
             );
-            if (listing) {
-              bufs = await getFiles(
-                manifest.domain,
-                listing.map((l) => fpath.join(manifest.path, 'mods.d', l.name)),
-                progress
-              );
-            }
-            if (bufs) {
-              bufs.forEach((b, i) => {
-                if (files && listing) {
-                  files.push({ header: { name: listing[i].name }, content: b });
-                }
-              });
-            } else {
-              value = 'Canceled';
-            }
+            bufs = await getFiles(
+              manifest.domain,
+              listing.map((l) => fpath.join(manifest.path, 'mods.d', l.name)),
+              cancelkey,
+              progress
+            );
+            bufs.forEach((b, i) => {
+              if (files && listing) {
+                files.push({ header: { name: listing[i].name }, content: b });
+              }
+            });
           } catch (err: any) {
             if (progress) progress(-1);
-            return Promise.resolve(err.toString());
+            return err.toString();
           }
         }
+
         if (files) {
           const confs: SwordConfType[] = [];
           files.forEach((r) => {
             const { header, content: buffer } = r;
             if (header.name.endsWith('.conf')) {
-              const cobj = parseSwordConf(buffer.toString('utf8'), header.name);
+              const cobj = parseSwordConf(
+                buffer.toString('utf8'),
+                header.name.replace(/^.*?mods\.d\//, '')
+              );
               cobj.sourceRepository = manifest;
               confs.push(cobj);
+              /*
+              if (cobj.module === 'Kapingamarangi') {
+                log.info('Kapingamarangi: ', buffer.toString('utf8'));
+              }
+              */
             }
           });
           value = confs;
@@ -688,31 +696,16 @@ const Module: GType['Module'] = {
       if (progress) progress(-1);
       return value;
     });
+
     return Promise.allSettled(promises).then((results) => {
-      const ret: RepositoryListing[] = [];
+      const ret: (RepositoryListing | string)[] = [];
       results.forEach((result) => {
-        if (result.status === 'fulfilled') ret.push(result.value);
-        else ret.push(result.reason.toString());
+        if (result.status === 'fulfilled')
+          ret.push(result.value as RepositoryListing);
+        else ret.push(result.reason.toString() as string);
       });
       return ret;
     });
-  },
-
-  cancel(downloadOrURLs?: (Download | string)[]): number {
-    if (!downloadOrURLs) {
-      return httpCancel() + ftpCancel();
-    }
-    let cancelled = 0;
-    downloadOrURLs?.forEach((dor) => {
-      if (typeof dor === 'string' && C.URLRE.test(dor)) {
-        cancelled += httpCancel(dor);
-      } else if (typeof dor === 'string') {
-        cancelled += ftpCancel(dor);
-      } else {
-        cancelled += ftpCancel(downloadKey(dor));
-      }
-    });
-    return cancelled;
   },
 
   async downloadXSM(
@@ -731,48 +724,47 @@ const Module: GType['Module'] = {
       w?.webContents.send('progress', prog, downloadkey);
       w = null;
     };
-    progress(0);
-    let message = 'Canceled';
     if (typeof downloadX === 'string') {
       // Audio XSM download (http)
+      progress(0);
       try {
         const tmpdir = new LocalFile(Window.tmpDir({ id: callingWinID }));
         if (tmpdir.exists()) {
-          log.debug(`downloadFileHTTP`, pathOrURL, tmpdir.path);
+          log.silly(`downloadFileHTTP`, pathOrURL, tmpdir.path);
           const dlfile = await getFileHTTP(
             pathOrURL,
             tmpdir.append(module),
             progress
           );
-          if (typeof dlfile !== 'string') {
-            Downloads[downloadkey] = new ZIP(dlfile.path);
-            return 1;
-          }
-          message = dlfile;
-        } else {
-          throw new Error(`Could not create tmp directory '${tmpdir.path}'.`);
+          Downloads[downloadkey] = new ZIP(dlfile.path);
+          progress(-1);
+          return 1;
         }
+        throw new Error(`Could not create tmp directory '${tmpdir.path}'.`);
       } catch (err: any) {
         progress(-1);
         return Promise.resolve(err.toString());
       }
-    } else {
-      // Regular XSM download (ftp)
-      try {
-        const fp = fpath.posix.join(repository.path, pathOrURL);
-        log.debug(`downloadXSM`, repository.domain, fp);
-        const zipBuf = await getFile(repository.domain, fp, progress);
-        if (zipBuf) {
-          Downloads[downloadkey] = new ZIP(zipBuf);
-          return 1;
-        }
-      } catch (er: any) {
-        progress(-1);
-        return Promise.resolve(er.toString());
-      }
     }
-    progress(-1);
-    return message;
+
+    // Regular XSM download (ftp)
+    progress(0);
+    const fp = fpath.posix.join(repository.path, pathOrURL);
+    log.silly(`downloadXSM`, repository.domain, fp);
+    try {
+      const zipBuf = await getFile(
+        repository.domain,
+        fp,
+        downloadkey,
+        progress
+      );
+      Downloads[downloadkey] = new ZIP(zipBuf);
+      progress(-1);
+      return 1;
+    } catch (er: any) {
+      progress(-1);
+      return Promise.resolve(er.toString());
+    }
   },
 
   // Download a SWORD module from a repository and save it as a zip object
@@ -780,9 +772,10 @@ const Module: GType['Module'] = {
   // successful or a string message if error or canceled.
   async download(
     module: string,
-    repository: Repository
+    repository: Repository,
+    confname: string
   ): Promise<number | string> {
-    const callingWinID = (arguments[2] ?? -1) as number;
+    const callingWinID = (arguments[3] ?? -1) as number;
     const downloadX = { ...repository, file: module };
     const downloadkey = downloadKey(downloadX);
     const progress = (prog: number) => {
@@ -792,54 +785,86 @@ const Module: GType['Module'] = {
       w = null;
     };
     progress(0);
-    let confname = `${module.toLocaleLowerCase()}.conf`;
-    let confpath = fpath.join(repository.path, 'mods.d', confname);
+    // Download config file
+    const confpath = fpath.join(repository.path, 'mods.d', confname);
     let confbuf;
     try {
-      confbuf = await getFile(repository.domain, confpath);
-    } catch {
-      confname = `${module}.conf`;
-      confpath = fpath.join(repository.path, 'mods.d', confname);
-      try {
-        confbuf = await getFile(repository.domain, confpath);
-      } catch (er: any) {
-        progress(-1);
-        return Promise.resolve(er.toString());
-      }
+      confbuf = await getFile(repository.domain, confpath, downloadkey);
+    } catch (er: any) {
+      log.verbose(er);
+      progress(-1);
+      return Promise.resolve(er.message);
     }
-    if (confbuf) {
-      const conf = parseSwordConf(confbuf.toString('utf8'), confname);
-      const datapath = confModulePath(conf.DataPath);
-      if (datapath) {
-        const modpath = fpath.join(repository.path, datapath);
-        let modfiles;
-        try {
-          modfiles = await getDir(
-            repository.domain,
-            modpath,
-            /\/lucene\//,
-            progress
-          );
-        } catch (er: any) {
-          progress(-1);
-          return Promise.resolve(er.toString());
-        }
-        if (modfiles && modfiles.length) {
-          const zip = new ZIP();
-          zip.addFile(fpath.join('mods.d', confname), confbuf);
-          modfiles.forEach((fp) => {
-            zip.addFile(
-              fpath.join(datapath, fp.listing.subdir, fp.listing.name),
-              fp.buffer
-            );
-          });
-          Downloads[downloadkey] = zip;
-          return zip.getEntries().length;
-        }
+    const conf = parseSwordConf(confbuf.toString('utf8'), confname);
+
+    // Download module contents
+    const datapath = confModulePath(conf.DataPath);
+    if (datapath) {
+      const modpath = fpath.join(repository.path, datapath);
+      let modfiles;
+      try {
+        modfiles = await getDir(
+          repository.domain,
+          modpath,
+          /\/lucene\//,
+          downloadkey,
+          progress
+        );
+      } catch (er: any) {
+        log.verbose(er);
+        progress(-1);
+        return Promise.resolve(er.message);
       }
+      const zip = new ZIP();
+      zip.addFile(fpath.join('mods.d', confname), confbuf);
+      modfiles.forEach((fp) => {
+        zip.addFile(
+          fpath.join(datapath, fp.listing.subdir, fp.listing.name),
+          fp.buffer
+        );
+      });
+      Downloads[downloadkey] = zip;
+      progress(-1);
+      return zip.getEntries().length;
     }
     progress(-1);
-    return 'Canceled';
+    return `Unexpected DataPath in ${confname}: ${conf.DataPath}`;
+  },
+
+  // Cancel in-process downloads and/or previous downloads.
+  // IMPORTANT: cancel() should also always be called when a session
+  // is finished, to delete all waiting connections.
+  cancel(downloadOrURLorKeys?: (Download | string)[]): number {
+    let canceled = 0;
+    if (!downloadOrURLorKeys) {
+      canceled += httpCancel();
+      canceled += ftpCancel();
+      destroyFTPconnection();
+      canceled += Object.keys(Downloads).length;
+      Downloads = {};
+      return canceled;
+    }
+    downloadOrURLorKeys?.forEach((dor) => {
+      let cnt = 0;
+      if (typeof dor === 'string' && C.URLRE.test(dor)) {
+        // URL
+        cnt += httpCancel(dor);
+      } else if (typeof dor === 'string') {
+        // download key
+        cnt += ftpCancel(dor);
+      } else {
+        // download
+        cnt += ftpCancel(downloadKey(dor));
+      }
+      log.verbose(`Module.cancel(${downloadKey(dor)}) = ${cnt}`);
+      const key = downloadKey(dor);
+      if (key in Downloads) {
+        delete Downloads[key];
+        cnt += 1;
+      }
+      canceled += cnt;
+    });
+    return canceled;
   },
 
   // Set windows to modal before calling this function!
@@ -862,6 +887,7 @@ const Module: GType['Module'] = {
         }
       }
     });
+    Downloads = {};
     return modalInstall(zipobj, destdir, callingWinID);
   },
 
@@ -897,26 +923,6 @@ const Module: GType['Module'] = {
     });
 
     return results;
-  },
-
-  clearDownload(downloads?: (Download | string)[]): number {
-    let cleared = 0;
-    if (!downloads) {
-      ftpCancel();
-      httpCancel();
-      destroyFTPconnection();
-      cleared = Object.keys(Downloads).length;
-      Downloads = {};
-    } else {
-      downloads.forEach((dl) => {
-        const key = downloadKey(dl);
-        if (key in Downloads) {
-          delete Downloads[key];
-          cleared += 1;
-        }
-      });
-    }
-    return cleared;
   },
 
   writeConf(confFilePath: string, contents: string) {

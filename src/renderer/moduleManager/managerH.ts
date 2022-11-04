@@ -7,7 +7,6 @@ import { Intent } from '@blueprintjs/core';
 import { Utils } from '@blueprintjs/table';
 import {
   clone,
-  downloadKey,
   isRepoLocal,
   keyToDownload,
   modrepKey,
@@ -19,7 +18,7 @@ import {
 } from '../../common';
 import C from '../../constant';
 import G from '../rg';
-import { log, moduleInfoHTML } from '../rutil';
+import { log } from '../rutil';
 import { TCellInfo, TCellLocation } from '../libxul/table';
 
 import type {
@@ -198,10 +197,7 @@ export const RepCol = {
 } as const;
 
 export const Downloads: {
-  [downloadKey: string]: {
-    nfiles: Promise<number | null>;
-    failed: boolean;
-  };
+  [downloadKey: string]: Promise<number | null>;
 } = {};
 
 export type ModuleUpdates = {
@@ -254,7 +250,7 @@ export function columnWidthChanged(
     const delta = size - columnWidths[dcol0];
     columnWidths[dcol0] += delta;
     columnWidths[dcol2] -= delta;
-    this.setTableState(table, { columnWidths }, null, true);
+    setTableState(this, table, { columnWidths }, null, true);
   }
 }
 
@@ -275,7 +271,7 @@ export function onColumnsReordered(
       newTableColIndex,
       length
     ) || [];
-  this.setTableState('module', { visibleColumns }, null, true);
+  setTableState(this, 'module', { visibleColumns }, null, true);
 }
 
 export function onRowsReordered(
@@ -293,7 +289,13 @@ export function onRowsReordered(
     // Update initial rowSort for the next Table component reset.
     const { rowSort } = tbl;
     if (rowSort.column !== column || rowSort.direction !== direction) {
-      this.setTableState(table, { rowSort: { column, direction } }, null, true);
+      setTableState(
+        this,
+        table,
+        { rowSort: { column, direction } },
+        null,
+        true
+      );
     }
   }
 }
@@ -303,7 +305,7 @@ export function onLangCellClick(
   e: React.MouseEvent,
   cell: TCellLocation
 ) {
-  this.loadModuleTable(this.rowSelect(e, 'language', cell.tableRowIndex));
+  this.loadModuleTable(rowSelect(this, e, 'language', cell.tableRowIndex));
 }
 
 export function onModCellClick(
@@ -320,14 +322,10 @@ export function onModCellClick(
     const { dataRowIndex: row, column, tableRowIndex } = cell;
     const col = visibleColumns[column];
     const drow = modtable.data[row];
-    if (
-      drow &&
-      !drow[ModCol.iInfo].loading &&
-      (col === ModCol.iInstalled || col === ModCol.iRemove)
-    ) {
+    if (drow && (col === ModCol.iInstalled || col === ModCol.iRemove)) {
       // iInstalled and iRemove column clicks
-      const was = drow[col];
-      const is = was !== ON;
+      const was = drow[col] === ON || drow[ModCol.iInfo].loading;
+      const is = !was;
       const selrows = selectionToRows(selection);
       modtableUpdate(
         this,
@@ -349,9 +347,9 @@ export function onModCellClick(
             rrow[ModCol.iInfo].shared = is;
           }
         });
-      this.setTableState('module', null, modtable.data, true);
+      setTableState(this, 'module', null, modtable.data, true);
     } else {
-      this.rowSelect(e, 'module', tableRowIndex);
+      rowSelect(this, e, 'module', tableRowIndex);
     }
   }
 }
@@ -371,17 +369,16 @@ export function onRepoCellClick(
     const builtin =
       repotable.data[row] && repotable.data[row][RepCol.iInfo].repo.builtin;
     if (!builtin && col === RepCol.iState) {
-      const onOrOff = repotable.data[row][RepCol.iState] === OFF;
       const selrows = selectionToRows(selection);
-      const toggleTableRows = selrows.includes(tableRowIndex)
-        ? selrows
-        : [tableRowIndex];
-      const toggleDataRows = toggleTableRows.map(
-        (r) => Saved.repository.tableToDataRowMap[r] ?? r
+      switchRepo(
+        this,
+        (selrows.includes(tableRowIndex) ? selrows : [tableRowIndex]).map(
+          (r) => Saved.repository.tableToDataRowMap[r] ?? r
+        ),
+        repotable.data[row][RepCol.iState] === OFF
       );
-      this.switchRepo(toggleDataRows, onOrOff);
     } else if (row > -1 && col < RepCol.iState) {
-      this.rowSelect(e, 'repository', tableRowIndex);
+      rowSelect(this, e, 'repository', tableRowIndex);
     }
   }
 }
@@ -414,14 +411,14 @@ export function onCellEdited(
       else if (col === RepCol.iPath) drow[RepCol.iInfo].repo.path = value;
       drow[col] = value;
       newCustomRepos.push(drow[RepCol.iInfo].repo);
-      this.setTableState('repository', null, tablestate.data, false, {
+      setTableState(this, 'repository', null, tablestate.data, false, {
         repositories: { ...repositories, custom: newCustomRepos },
       });
       if (
         (col === RepCol.iDomain || col === RepCol.iPath) &&
         drow[RepCol.iState] === OFF
       ) {
-        setTimeout(() => this.switchRepo([row], true), 100);
+        setTimeout(() => switchRepo(this, [row], true), 100);
       }
     }
   }
@@ -434,21 +431,36 @@ export async function eventHandler(
   switch (ev.type) {
     case 'click': {
       const e = ev as React.MouseEvent;
-      switch (e.currentTarget.id) {
+      const [id, idext] = e.currentTarget.id.split('.');
+      switch (id) {
         case 'languageListClose': {
           const state = this.state as ManagerState;
-          this.setTableState('module', null, this.moduleTableData([]), true, {
-            language: { ...state.language, open: false },
-          });
+          setTableState(
+            this,
+            'module',
+            null,
+            this.filterModuleTable([]),
+            true,
+            {
+              language: { ...state.language, open: false },
+            }
+          );
           break;
         }
         case 'languageListOpen': {
           const state = this.state as ManagerState;
           // Cannot retain selection without making moduleTableData() an async
           // function, because selectionToDataRows() needs a rendered table.
-          this.setTableState('module', null, this.moduleTableData([]), true, {
-            language: { ...state.language, selection: [], open: true },
-          });
+          setTableState(
+            this,
+            'module',
+            null,
+            this.filterModuleTable([]),
+            true,
+            {
+              language: { ...state.language, selection: [], open: true },
+            }
+          );
           break;
         }
         case 'moduleInfo': {
@@ -458,23 +470,22 @@ export async function eventHandler(
             const { module } = state;
             const { module: modtable } = state.tables;
             const { selection } = module;
-            const confs = this.selectionToDataRows('module', selection)
+            const mods = selectionToDataRows('module', selection)
               .map((r) => {
                 return (
-                  (modtable.data[r] && modtable.data[r][ModCol.iInfo].conf) ||
-                  null
+                  (modtable.data[r] && modtable.data[r][ModCol.iModule]) || null
                 );
               })
-              .filter(Boolean);
+              .filter(Boolean) as string[];
             const s: Partial<ManagerState> = {
-              showModuleInfo: moduleInfoHTML(confs),
+              showModuleInfo: mods,
             };
             this.setState(s);
           }
           break;
         }
         case 'moduleInfoBack': {
-          this.setState({ showModuleInfo: '' });
+          this.setState({ showModuleInfo: [] });
           break;
         }
         case 'cancel': {
@@ -489,10 +500,10 @@ export async function eventHandler(
           try {
             // Remove any failed downloads
             Object.keys(Downloads).forEach((k) => {
-              if (Downloads[k].failed) delete Downloads[k];
+              if (!Downloads[k]) delete Downloads[k];
             });
             const downloadKeys = Object.keys(Downloads);
-            const promises = Object.values(Downloads).map((v) => v.nfiles);
+            const promises = Object.values(Downloads);
             const installed: SwordConfType[] = [];
             const removeMods: { name: string; repo: Repository }[] = [];
             const moveMods: {
@@ -502,10 +513,9 @@ export async function eventHandler(
             }[] = [];
 
             const downloadResults = await Promise.allSettled(promises);
-            G.Window.moveToBack();
-            // Remove selection from persisted state.
-            this.setTableState('module', { selection: [] });
-            this.setTableState('repository', { selection: [] });
+            // Don't persist table selections.
+            setTableState(this, 'module', { selection: [] });
+            setTableState(this, 'repository', { selection: [] });
             const state = this.state as ManagerState;
             const { repository: repotable } = state.tables;
             const { moduleData } = Saved;
@@ -521,23 +531,15 @@ export async function eventHandler(
             });
 
             // Remove modules
-            const clearMods: Download[] = [];
             Object.values(moduleData).forEach((row) => {
-              const module = row[ModCol.iModule];
               if (row[ModCol.iInstalled] === OFF) {
-                const { repo, conf } = row[ModCol.iInfo];
-                const downloadkey = downloadKey(
-                  conf.xsmType === 'XSM_audio'
-                    ? conf.DataPath
-                    : { ...repo, file: module }
-                );
+                const module = row[ModCol.iModule];
+                const { repo } = row[ModCol.iInfo];
                 const modrepkey = modrepKey(module, repo);
                 const lconf = installed.find(
                   (c) => modrepKey(c.module, c.sourceRepository) === modrepkey
                 );
-                if (downloadkey in Downloads) {
-                  clearMods.push(downloadkey);
-                } else if (lconf) {
+                if (lconf) {
                   removeMods.push({
                     name: lconf.module,
                     repo: lconf.sourceRepository,
@@ -545,15 +547,6 @@ export async function eventHandler(
                 }
               }
             });
-            if (clearMods.length) {
-              const cleared = G.Module.clearDownload(clearMods);
-              if (cleared !== clearMods.length) {
-                log.warn(
-                  `Failed to clear ${clearMods.length - cleared} downloads`
-                );
-              }
-            }
-
             const removeResult = await G.Module.remove(removeMods);
             removeResult.forEach((r, i) => {
               if (!r) log.warn(`Failed to remove module: ${removeMods[i]}`);
@@ -595,8 +588,7 @@ export async function eventHandler(
             const install: Parameters<GType['Module']['installDownloads']>[0] =
               [];
             downloadResults.forEach((dlr, i) => {
-              if (dlr.status !== 'fulfilled') log.warn(dlr.reason);
-              else if (dlr.value) {
+              if (dlr.status === 'fulfilled' && dlr.value) {
                 const dl = keyToDownload(downloadKeys[i]);
                 const modrepkey =
                   typeof dl === 'string' ? '' : modrepKey(dl.file, dl);
@@ -606,7 +598,7 @@ export async function eventHandler(
                     : modrepkey ===
                         modrepKey(r[ModCol.iModule], r[ModCol.iInfo].repo);
                 });
-                if (row && row[ModCol.iInstalled]) {
+                if (row && row[ModCol.iInstalled] === ON) {
                   install.push({
                     download: dl,
                     toRepo: builtinRepos()[row[ModCol.iInfo].shared ? 0 : 1],
@@ -620,7 +612,7 @@ export async function eventHandler(
             );
             G.Window.close();
           } catch (er) {
-            log.warn(er);
+            log.error(er);
             G.Window.modal([{ modal: 'off', window: 'all' }]);
           }
           break;
@@ -650,10 +642,10 @@ export async function eventHandler(
             repotables.data.unshift(row);
             rawdata.unshift(null);
             newCustomRepos.push(repo);
-            this.setTableState('repository', null, repotables.data, true, {
+            setTableState(this, 'repository', null, repotables.data, true, {
               repositories: { ...repositories, custom: newCustomRepos },
             });
-            this.switchRepo([0], false);
+            switchRepo(this, [0], false);
           }
           break;
         }
@@ -667,8 +659,7 @@ export async function eventHandler(
             const repotableData = clone(repotable.data);
             const { repositoryListings } = Saved;
             const rows =
-              (repository &&
-                this.selectionToDataRows('repository', selection)) ||
+              (repository && selectionToDataRows('repository', selection)) ||
               [];
             rows.reverse().forEach((r) => {
               const drow = repotable.data[r];
@@ -684,7 +675,7 @@ export async function eventHandler(
                 }
               }
             });
-            this.setTableState('repository', null, repotableData, true, {
+            setTableState(this, 'repository', null, repotableData, true, {
               repositories: { ...repositories, custom: newCustomRepos },
             });
             this.loadModuleTable(this.loadLanguageTable());
@@ -692,55 +683,52 @@ export async function eventHandler(
           break;
         }
         case 'repoCancel': {
-          const repos = Object.keys(Downloads)
-            .filter((d) => {
-              const dlo = keyToDownload(d);
-              return (
-                typeof dlo !== 'string' && dlo.file === C.SwordRepoManifest
-              );
-            })
-            .map((d) => keyToDownload(d));
-          G.Module.cancel(repos);
           const state = this.state as ManagerState;
           const { repository: repotable } = state.tables;
-          repotable.data.forEach((r, i) => {
-            if (r[RepCol.iInfo].loading) {
-              if (r[RepCol.iState] !== OFF) this.switchRepo([i], false);
-              r[RepCol.iInfo].loading = false;
-              r[RepCol.iInfo].intent = intent(RepCol.iState, 'danger');
-              this.sState({ progress: null });
-            }
-          });
+          G.Module.cancel(
+            repotable.data
+              .map((r, ri) =>
+                r[RepCol.iInfo].loading !== false && r[RepCol.iState] !== OFF
+                  ? ri
+                  : null
+              )
+              .filter((ri) => ri !== null)
+              .map((rix) => {
+                const ri = rix as number;
+                const r = repotable.data[ri];
+                r[RepCol.iInfo].intent = intent(RepCol.iState, 'warning');
+                return {
+                  ...r[RepCol.iInfo].repo,
+                  file: C.SwordRepoManifest,
+                };
+              })
+          );
+          setTableState(this, 'repository', null, repotable.data, true);
           break;
         }
         case 'moduleCancel': {
-          const mods = Object.keys(Downloads)
-            .filter((d) => {
-              const dlo = keyToDownload(d);
-              return !(
-                typeof dlo !== 'string' && dlo.file === C.SwordRepoManifest
-              );
-            })
-            .map((d) => keyToDownload(d));
-          G.Module.cancel(mods);
-          Saved.moduleLangData.allmodules?.forEach((r) => {
-            if (r[ModCol.iInfo].loading) {
-              r[ModCol.iInfo].loading = false;
-              r[ModCol.iInfo].intent = intent(ModCol.iInstalled, 'danger');
-              r[ModCol.iInstalled] = OFF;
-              const modrepk = modrepKey(
-                r[ModCol.iModule],
-                r[ModCol.iInfo].repo
-              );
-              if (modrepk in Downloads) Downloads[modrepk].failed = true;
-              this.setTableState('module', null, null, true);
-            }
-          });
+          const state = this.state as ManagerState;
+          const { module: modtable } = state.tables;
+          G.Module.cancel(
+            modtable.data
+              .map((r, ri) => (r[ModCol.iInfo].loading ? ri : null))
+              .filter((ri) => ri !== null)
+              .map((rix) => {
+                const ri = rix as number;
+                const r = modtable.data[ri];
+                r[ModCol.iInfo].intent = intent(ModCol.iInstalled, 'warning');
+                return r[ModCol.iInfo].conf.xsmType === 'XSM_audio'
+                  ? r[ModCol.iInfo].conf.DataPath
+                  : {
+                      ...r[ModCol.iInfo].repo,
+                      file: r[ModCol.iModule],
+                    };
+              })
+          );
           break;
         }
-        case 'internet.yes':
-        case 'internet.no': {
-          const allow = e.currentTarget.id === 'internet.yes';
+        case 'internet': {
+          const allow = idext === 'yes';
           const cb = document.getElementById(
             'internet.rememberChoice__input'
           ) as HTMLInputElement | null;
@@ -751,10 +739,26 @@ export async function eventHandler(
             internetPermission: allow,
           };
           this.setState(s);
-          if (allow) this.loadManagerTables();
+          if (allow) this.loadTables();
           // If the answer is no, then close the window, as there is
           // nothing else to be done here.
           else G.Window.close();
+          break;
+        }
+        case 'more': {
+          this.setState((prevState: ManagerState) => {
+            const s: Partial<ManagerState> = {
+              showConfIndex: prevState.showModuleInfo.indexOf(idext),
+            };
+            return s;
+          });
+          break;
+        }
+        case 'less': {
+          const s: Partial<ManagerState> = {
+            showConfIndex: -1,
+          };
+          this.setState(s);
           break;
         }
         default:
@@ -767,18 +771,17 @@ export async function eventHandler(
     default:
       throw Error(`Unhandled ModuleManager event type ${ev.type}`);
   }
-  return true;
 }
 
 // Select or unselect a row of a table. If the ctrl or shift key is pressed,
 // the current selection will be modified accordingly.
 export function rowSelect(
-  this: ModuleManager,
+  xthis: ModuleManager,
   e: React.MouseEvent,
   table: typeof Tables[number],
   row: number
 ) {
-  const state = this.state as ManagerState;
+  const state = xthis.state as ManagerState;
   const tbl = state[table];
   if (tbl) {
     const { selection } = tbl;
@@ -798,27 +801,21 @@ export function rowSelect(
     } else {
       newSelection = rowsToSelection(isSelected ? [] : [row]);
     }
-    this.setTableState(table, { selection: newSelection }, null, false);
+    setTableState(xthis, table, { selection: newSelection }, null, false);
     return newSelection;
   }
   return [];
 }
 
-// Enable or disable a repository. If onOrOff is undefined it will be toggled.
-// If onOrOff is true it will be enabled, otherwise disabled.
-export function switchRepo(
-  this: ModuleManager,
-  rows: number[],
-  onOrOff?: boolean
-) {
-  const state = this.state as ManagerState;
+function getDisabledRepos(xthis: ModuleManager) {
+  const state = xthis.state as ManagerState;
   const { repositories } = state;
   if (repositories) {
-    const { disabled: dr } = repositories;
+    const { disabled } = repositories;
     const { repository: repotable } = state.tables;
     const repoTableData = clone(repotable.data);
-    const disabledRepos = dr
-      ? dr.slice()
+    return disabled
+      ? disabled.slice()
       : repoTableData
           .map((r) =>
             r[RepCol.iInfo].repo.disabled
@@ -826,71 +823,170 @@ export function switchRepo(
               : ''
           )
           .filter(Boolean);
+  }
+  return [];
+}
+
+function repoRowEnableDisable(
+  enable: boolean,
+  row: TRepositoryTableRow,
+  disabledRepos: string[],
+  stateIntent = Intent.NONE as Intent
+): string[] {
+  const rowkey = repositoryKey(row[RepCol.iInfo].repo);
+  const disabledIndex = disabledRepos.findIndex((drs) => {
+    return drs === rowkey;
+  });
+  if (enable) {
+    if (disabledIndex !== -1) disabledRepos.splice(disabledIndex, 1);
+    row[RepCol.iState] = row[RepCol.iInfo].repo.builtin ? ALWAYS_ON : ON;
+    row[RepCol.iInfo].repo.disabled = false;
+    row[RepCol.iInfo].loading = loading(RepCol.iState);
+    row[RepCol.iInfo].intent = intent(RepCol.iState, stateIntent);
+  } else {
+    if (disabledIndex === -1) disabledRepos.push(rowkey);
+    row[RepCol.iState] = OFF;
+    row[RepCol.iInfo].repo.disabled = true;
+    row[RepCol.iInfo].loading = false;
+    row[RepCol.iInfo].intent = intent(RepCol.iState, stateIntent);
+  }
+  return disabledRepos;
+}
+
+// Enable or disable one or more repositories. Then update the repository
+// table, download new repository data, and pass it on down the chain.
+export async function switchRepo(
+  xthis: ModuleManager,
+  rows: number[],
+  onOrOff?: boolean
+) {
+  const state = xthis.state as ManagerState;
+  const { repositories } = state;
+  if (repositories) {
+    const { repository: repotable } = state.tables;
+    const repoTableData = clone(repotable.data);
+    const disabled = getDisabledRepos(xthis);
+    const cancel: Parameters<GType['Module']['cancel']>[0] = [];
     rows.forEach((r) => {
       const drowWas = repotable.data[r];
       const drow = repoTableData[r];
       const unswitchable = !drowWas || drowWas[RepCol.iInfo].repo.builtin;
       if (drow && !unswitchable) {
-        const rowkey = repositoryKey(drowWas[RepCol.iInfo].repo);
-        const disabledIndex = disabledRepos.findIndex((drs) => {
-          return drs === rowkey;
-        });
         if (
           onOrOff !== false &&
           (onOrOff === true || drowWas[RepCol.iState] === OFF)
         ) {
-          drow[RepCol.iState] = drow[RepCol.iInfo].repo.builtin
-            ? ALWAYS_ON
-            : ON;
-          drow[RepCol.iInfo].repo.disabled = false;
-          if (disabledIndex !== -1) disabledRepos.splice(disabledIndex, 1);
-          drow[RepCol.iInfo].loading = loading(RepCol.iState);
+          repoRowEnableDisable(true, drow, disabled);
+        } else if (drow[RepCol.iInfo].loading) {
+          drow[RepCol.iInfo].intent = intent(RepCol.iState, 'warning');
+          cancel[r] = {
+            ...drow[RepCol.iInfo].repo,
+            file: C.SwordRepoManifest,
+          };
         } else {
-          drow[RepCol.iState] = OFF;
-          drow[RepCol.iInfo].repo.disabled = true;
-          if (disabledIndex === -1) disabledRepos.push(rowkey);
-          if (drow[RepCol.iInfo].loading) {
-            G.Module.cancel([
-              { ...drow[RepCol.iInfo].repo, file: C.SwordRepoManifest },
-            ]);
-            drow[RepCol.iInfo].loading = false;
-          }
-          drow[RepCol.iInfo].intent = intent(RepCol.iState, 'none');
+          repoRowEnableDisable(false, drow, disabled);
         }
       }
     });
-    this.setTableState('repository', null, repoTableData, true, {
-      repositories: { ...repositories, disabled: disabledRepos },
+    if (cancel.length) G.Module.cancel(cancel.filter((o) => o));
+    const disreps = disabled
+      ? {
+          repositories: { ...repositories, disabled },
+        }
+      : undefined;
+    setTableState(xthis, 'repository', null, repoTableData, true, disreps);
+    const newrepos = repoTableData.map((r, i) => {
+      return !rows.includes(i) || cancel[i] || r[RepCol.iInfo].repo.disabled
+        ? null
+        : { ...r[RepCol.iInfo].repo, file: C.SwordRepoManifest };
     });
-    G.Module.repositoryListing(
-      repoTableData.map((r, i) =>
-        rows.includes(i) && !r[RepCol.iInfo].repo.disabled
-          ? { ...r[RepCol.iInfo].repo, file: C.SwordRepoManifest }
-          : null
-      )
-    )
-      .then((listing) => {
-        if (!listing) log.debug(`repositoryListing canceled`);
-        this.updateRepositoryLists(listing);
-        let selection = this.loadLanguageTable();
-        const { language } = this.state as ManagerState;
-        if (!language.open) selection = [];
-        const success = this.loadModuleTable(selection);
-        if (repositories) this.checkForModuleUpdates(listing);
-        return success;
-      })
-      .catch((er) => log.warn(er));
+    const listing = await G.Module.repositoryListing(newrepos);
+    handleListings(xthis, listing);
   }
 }
 
-export const active = {
-  downloads: [] as [string, number][],
-};
+// Handle one or more raw repository listings which may include errors and
+// cancelations. Then update the language and module tables and check for
+// updates.
+export function handleListings(
+  xthis: ModuleManager,
+  listingsAndErrors: (RepositoryListing | string)[]
+): void {
+  const state = xthis.state as ManagerState;
+  const { repositories } = state;
+  const { repositoryListings } = Saved;
+  let listing = null;
+  if (repositories) {
+    const { repository } = state.tables;
+    const disabled = getDisabledRepos(xthis);
+    listing = listingsAndErrors.map((l, i, a) => {
+      const drow = repository.data[i];
+      if (l !== null && drow) {
+        drow[RepCol.iInfo].loading = false;
+        drow[RepCol.iInfo].intent = intent(RepCol.iState, 'none');
+        if (typeof l === 'string') {
+          log.info(l);
+          let sint: Intent =
+            a.reduce((p, c) => p + (typeof c === 'string' ? 1 : 0), 0) > 1
+              ? 'danger'
+              : 'none';
+          if (!l.startsWith(`Error: ${C.UI.Manager.cancelMsg}`)) {
+            sint = 'danger';
+            xthis.addToast({
+              message: l,
+              timeout: 5000,
+              intent: Intent.WARNING,
+            });
+          }
+          repoRowEnableDisable(false, drow, disabled, sint);
+          if (!Array.isArray(repositoryListings[i])) {
+            repositoryListings[i] = null;
+          }
+          return null;
+        }
+        repositoryListings[i] = l;
+        if ([ON, ALWAYS_ON].includes(drow[RepCol.iState])) {
+          drow[RepCol.iInfo].intent = intent(RepCol.iState, 'success');
+        }
+        return l;
+      }
+      return null;
+    });
+    const disreps = disabled
+      ? {
+          repositories: { ...repositories, disabled },
+        }
+      : undefined;
+    setTableState(xthis, 'repository', null, repository.data, false, disreps);
+  } else {
+    // Then only local repositories are being considered, with no table to update.
+    listing = listingsAndErrors.map((l, i) => {
+      if (typeof l === 'string') {
+        xthis.addToast({
+          message: l,
+          timeout: 5000,
+          intent: Intent.WARNING,
+        });
+        if (!Array.isArray(repositoryListings[i])) {
+          repositoryListings[i] = null;
+        }
+        return null;
+      }
+      repositoryListings[i] = l;
+      return l;
+    });
+  }
+  let langselection = xthis.loadLanguageTable();
+  const { language } = xthis.state as ManagerState;
+  if (!language.open) langselection = [];
+  xthis.loadModuleTable(langselection);
+  checkForModuleUpdates(xthis, listing);
+}
 
-// Start async repository module downloads corresponding to a given
+// Perform async repository module downloads corresponding to a given
 // set of module table rows.
-export function download(this: ModuleManager, rows: number[]): void {
-  const state = this.state as ManagerState;
+export function download(xthis: ModuleManager, rows: number[]): void {
+  const state = xthis.state as ManagerState;
   const { module: modtable } = state.tables;
   rows.forEach((row) => {
     const drow = modtable.data[row];
@@ -938,7 +1034,7 @@ export function download(this: ModuleManager, rows: number[]): void {
                 for (let x = 1; x <= lastchapter; x += 1) {
                   if (x >= chapter) chapters.push(x);
                 }
-                this.sState({
+                xthis.sState({
                   showAudioDialog: {
                     conf: drow[ModCol.iInfo].conf,
                     selection: { book, chapter, lastchapter: chapter },
@@ -960,7 +1056,7 @@ export function download(this: ModuleManager, rows: number[]): void {
                 const { book, chapter, lastchapter } = audio;
                 xsmZipFileOrURL += `&bk=${book}&ch=${chapter}&cl=${lastchapter}`;
               } else {
-                throw new Error(`Audio module download canceled.`);
+                log.warn(`Audio module download canceled.`);
               }
             } else {
               throw new Error(
@@ -970,34 +1066,42 @@ export function download(this: ModuleManager, rows: number[]): void {
               );
             }
           }
+          const { filename } = drow[ModCol.iInfo].conf;
           const dl = await (drow[ModCol.iInfo].conf.xsmType !== 'none'
-            ? G.Module.downloadXSM(module, xsmZipFileOrURL, repo)
-            : G.Module.download(module, repo));
+            ? G.Module.downloadXSM(module, xsmZipFileOrURL, repo, filename)
+            : G.Module.download(module, repo, filename));
           loadingrows.forEach((r) => {
             r[ModCol.iInfo].loading = false;
           });
-          let newintent: Intent = Intent.SUCCESS;
+          let newintent: Intent = Intent.NONE;
           if (typeof dl === 'string') {
-            this.addToast({
-              message: dl,
-              timeout: 5000,
-              intent: Intent.WARNING,
-            });
-            newintent = Intent.DANGER;
-          } else {
+            if (!dl.startsWith(`Error: ${C.UI.Manager.cancelMsg}`)) {
+              newintent = Intent.DANGER;
+              xthis.addToast({
+                message: dl,
+                timeout: 5000,
+                intent: Intent.WARNING,
+              });
+            }
+          } else if (dl > 0) {
+            newintent = Intent.SUCCESS;
             loadingrows.forEach((r) => {
               r[ModCol.iInstalled] = ON;
             });
-            Downloads[modrepk].failed = false;
+          } else {
+            newintent = Intent.WARNING;
+            loadingrows.forEach((r) => {
+              r[ModCol.iInstalled] = OFF;
+            });
           }
           loadingrows.forEach((r) => {
             r[ModCol.iInfo].intent = intent(ModCol.iInstalled, newintent);
           });
-          this.setTableState('module', null, modtable.data, true);
+          setTableState(xthis, 'module', null, modtable.data, true);
           return typeof dl === 'string' ? null : dl;
         } catch (er: any) {
-          this.addToast({
-            message: er.message,
+          xthis.addToast({
+            message: er.toString(),
             timeout: 5000,
             intent: Intent.WARNING,
           });
@@ -1005,14 +1109,14 @@ export function download(this: ModuleManager, rows: number[]): void {
             r[ModCol.iInfo].loading = false;
             r[ModCol.iInfo].intent = intent(ModCol.iInstalled, Intent.DANGER);
           });
-          this.setTableState('module', null, modtable.data, true);
+          setTableState(xthis, 'module', null, modtable.data, true);
           return null;
         }
       })();
-      Downloads[modrepk] = { nfiles, failed: true };
+      Downloads[modrepk] = nfiles;
     }
   });
-  this.setTableState('module', null, modtable.data, true);
+  setTableState(xthis, 'module', null, modtable.data, true);
 }
 
 // Check enabled repository listings for installed modules that have
@@ -1021,10 +1125,10 @@ export function download(this: ModuleManager, rows: number[]): void {
 // the update before doing so. This function should be called after
 // updateRepositoryLists().
 export function checkForModuleUpdates(
-  this: ModuleManager,
+  xthis: ModuleManager,
   rawModuleData: RepositoryListing[]
 ) {
-  const state = this.state as ManagerState;
+  const state = xthis.state as ManagerState;
   const { repository } = state.tables;
   const { repositoryListings } = Saved;
   const installed: SwordConfType[] = [];
@@ -1118,7 +1222,7 @@ export function checkForModuleUpdates(
       )
         .map((h) => h[1].locale)
         .join('\n') ?? '';
-    this.addToast({
+    xthis.addToast({
       timeout: -1,
       intent: Intent.SUCCESS,
       message: `${abbr} ${mud.to.conf.Version}: ${history} (${reponame}, ${mud.to.conf.module})`,
@@ -1131,14 +1235,14 @@ export function checkForModuleUpdates(
       onDismiss: () =>
         setTimeout(() => {
           if (!mud.install) {
-            installModuleUpdates(this, [mud], false);
+            installModuleUpdates(xthis, [mud], false);
           }
         }, 100),
       icon: 'confirm',
     });
   });
   // Download each update.
-  installModuleUpdates(this, moduleUpdates, true);
+  installModuleUpdates(xthis, moduleUpdates, true);
 }
 
 function installModuleUpdates(
@@ -1176,34 +1280,43 @@ function modtableUpdate(
 ) {
   const state = xthis.state as ManagerState;
   const { module: modtable } = state.tables;
+  const cancel: Download[] = [];
   modtableRowIndexes.forEach((mtri, i) => {
     if (mtri !== -1) {
       const row = modtable.data[mtri];
-      // Installed column clicks
       if (Array.isArray(on) ? on[i] : on) {
         row[ModCol.iRemove] = OFF;
-        const k = modrepKey(row[ModCol.iModule], row[ModCol.iInfo].repo);
-        if (
-          isInstalled ||
-          isRepoLocal(row[ModCol.iInfo].repo) ||
-          (k in Downloads && !Downloads[k].failed)
-        ) {
+        if (row[ModCol.iInfo].loading) {
+          // if installing a module that's loading, ignore and do nothing
+        } else if (isInstalled || isRepoLocal(row[ModCol.iInfo].repo)) {
+          // if installing a module is already installed or downloaded, just check the installed box
           row[ModCol.iInstalled] = ON;
-        } else xthis.download([mtri]);
+          // otherwise download the module
+        } else download(xthis, [mtri]);
+      } else if (row[ModCol.iInfo].loading) {
+        // if uninstalling a module that's loading, cancel the download
+        row[ModCol.iInfo].intent = intent(ModCol.iInstalled, 'warning');
+        cancel.push(
+          row[ModCol.iInfo].conf.xsmType === 'XSM_audio'
+            ? row[ModCol.iInfo].conf.DataPath
+            : { ...row[ModCol.iInfo].repo, file: row[ModCol.iModule] }
+        );
       } else {
+        // otherwise uncheck the installed box and check the remove box
         row[ModCol.iRemove] = ON;
         row[ModCol.iInstalled] = OFF;
         row[ModCol.iInfo].intent = intent(ModCol.iInstalled, 'none');
       }
     }
   });
+  if (cancel.length) G.Module.cancel(cancel);
   if (modtableRowIndexes.length)
-    xthis.setTableState('module', null, modtable.data, true);
+    setTableState(xthis, 'module', null, modtable.data, true);
 }
 
 // Set table state, save the data for window re-renders, and re-render the table.
 export function setTableState(
-  this: ModuleManager,
+  xthis: ModuleManager,
   table: typeof Tables[number],
   tableState?: Partial<
     ManagerState['language' | 'module' | 'repository']
@@ -1216,7 +1329,7 @@ export function setTableState(
   tableReset?: boolean,
   s?: Partial<ManagerState>
 ) {
-  const state = this.state as ManagerState;
+  const state = xthis.state as ManagerState;
   const news: Partial<ManagerState> = s || {};
   // Ignore new tableState if it is null (meaning table doesn't exist).
   if (tableState && state[table] !== null) {
@@ -1227,11 +1340,11 @@ export function setTableState(
     news.tables[table].data = tableData;
     Saved[table].data = tableData;
   }
-  if (Object.keys(news).length) this.sState(news);
+  if (Object.keys(news).length) xthis.sState(news);
   // Two steps must be used for statePrefs to be written to Prefs
   // before the reset will will properly read their updated values.
   if (tableReset) {
-    this.sState((prevState) => {
+    xthis.sState((prevState) => {
       const { render } = prevState.tables[table];
       const trnews = { tables: { ...prevState.tables } };
       trnews.tables[table].render = render + 1;
@@ -1243,7 +1356,6 @@ export function setTableState(
 // Given a table selection, return the selected data rows in ascending order.
 // This is like selectionToRows, but returns data rows rather than table rows.
 export function selectionToDataRows(
-  this: ModuleManager,
   table: typeof Tables[number],
   regions: RowSelection
 ): number[] {

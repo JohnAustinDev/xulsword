@@ -14,31 +14,111 @@ import { Stream, Readable } from 'stream';
 import C from '../constant';
 import LocalFile from './components/localFile';
 
-import type { Download } from '../type';
-
 export type ListingElementR = ListingElement & { subdir: string };
 
-const CancelFTP = false;
-export function ftpCancel(download?: Download): number {
-  return 1;
+let MaxDomainConnections: { [domain: string]: number } = {};
+
+let FtpCancelable: {
+  key: string;
+  cancel: [string, (() => void)[]][];
+  canceled: boolean;
+}[] = [];
+
+// Call this function to register arbitrary cancelation functions for a
+// particular cancelkey. When cancel is requested all registered functions
+// will be called in reverse.
+function ftpCancelable(key: string, id?: string, func?: () => void) {
+  // Return unique id
+  if (!id) return Math.random().toString(36).replace('0.', 'x');
+  if (!key) return '';
+
+  // Remove a cancel id from FtpCancelable
+  if (!func) {
+    const i = FtpCancelable.findIndex((fc) => fc.key === key);
+    if (i !== -1) {
+      const j = FtpCancelable[i].cancel.findIndex((x) => x[0] === id);
+      if (j !== -1) {
+        FtpCancelable[i].cancel.splice(j, 1);
+      }
+      if (!FtpCancelable[i].cancel.length) {
+        // Remove after a delay, if it's still empty
+        setTimeout(() => {
+          const x = FtpCancelable.findIndex((fc) => fc.key === key);
+          if (x !== -1) FtpCancelable.splice(x, 1);
+          if (!FtpCancelable.length) {
+            MaxDomainConnections = {};
+          }
+        }, 100);
+      }
+    }
+    return id;
+  }
+
+  // Add another cancel function to FtpCancelable
+  let i = FtpCancelable.findIndex((fc) => fc.key === key);
+  if (i === -1) {
+    FtpCancelable.push({ key, cancel: [], canceled: false });
+    i = FtpCancelable.length - 1;
+  }
+  let j = FtpCancelable[i].cancel.findIndex((x) => x[0] === id);
+  if (j === -1) {
+    FtpCancelable[i].cancel.push([id, []]);
+    j = FtpCancelable[i].cancel.length - 1;
+  }
+  FtpCancelable[i].cancel[j][1].push(func);
+  return id;
+}
+
+export function ftpCancel(cancelkey?: string): number {
+  if (cancelkey === undefined) {
+    destroyFTPconnection();
+    FtpCancelable = [];
+    return 1;
+  }
+  if (cancelkey) {
+    let n = 0;
+    const i = FtpCancelable.findIndex((fc) => fc.key === cancelkey);
+    if (i !== -1) {
+      FtpCancelable[i].canceled = true;
+      FtpCancelable[i].cancel.reverse().forEach((x) =>
+        x[1].reverse().forEach((f) => {
+          f();
+          n += 1;
+        })
+      );
+      FtpCancelable.splice(i, 1);
+    }
+    return n;
+  }
+  return 0;
 }
 
 const HttpCancelable: { url: string; wdevent: any }[] = [];
+
 export function httpCancel(url?: string): number {
-  let cancelled = 0;
+  let canceled = 0;
   const idxs = url
     ? [HttpCancelable.findIndex((hc) => hc.url === url)]
     : HttpCancelable.map((_hc, i) => i);
   idxs.forEach((i) => {
     if (i !== -1) {
       HttpCancelable[i].wdevent.preventDefault();
-      cancelled += 1;
+      log.debug(`HTTP canceled '${url}'`);
+      canceled += 1;
     }
   });
   idxs.forEach((i) => {
     if (i !== -1) HttpCancelable.splice(i, 1);
   });
-  return cancelled;
+  return canceled;
+}
+
+function checkCancel(key: string, reject?: (value: any) => void) {
+  if (key && FtpCancelable.find((fc) => fc.key === key)?.canceled) {
+    const er = new Error(`${C.UI.Manager.cancelMsg}`);
+    if (reject) reject(er);
+    else throw er;
+  }
 }
 
 // Close and free FTP connections to a particular domain, or all connections.
@@ -47,8 +127,8 @@ export function destroyFTPconnection(domain?: string | null, quiet = false) {
     if (domain in connections) {
       connections[domain].forEach((c) => c.destroy());
       delete connections[domain];
-      freeConnections[domain].forEach((c) => c.destroy());
-      delete freeConnections[domain];
+      waitingConnections[domain].forEach((c) => c.destroy());
+      delete waitingConnections[domain];
       waitingFuncs[domain].forEach(() => {
         if (!quiet) log.error(`Dropping neglected FTP function.`);
         delete waitingFuncs[domain];
@@ -59,278 +139,286 @@ export function destroyFTPconnection(domain?: string | null, quiet = false) {
   }
 }
 
-// Use an FTP connection to a remote server to run an arbitrary
-// function and return an arbitrary promise. Returns null if
-// canceled. Up to FTPMaxConnectionsPerDomain will be created
-// per domain. If that many are currently running, this function
-// will use the next connection that becomes free. Once all connections
-// are free they will all be closed.
+// Create or use an existing FTP connection to a remote server to run
+// an arbitrary function and return an arbitrary promise. Up to
+// FTPMaxConnectionsPerDomain will be created per domain. When that
+// number are in use, functions will be queued, waiting for free
+// connections. The cancelkey can be used to cancel any read stream
+// or function even if it is waiting for a connection.
 const connections: { [domain: string]: FTP[] } = {};
-const freeConnections: { [domain: string]: FTP[] } = {};
+const waitingConnections: { [domain: string]: FTP[] } = {};
 const waitingFuncs: { [domain: string]: ((c: FTP) => void)[] } = {};
 export async function connect<Retval>(
   domain: string,
-  func: (c: FTP) => Promise<Retval | null>
-): Promise<Retval | null> {
+  cancelkey: string, // '' is uncancelable
+  func: (c: FTP) => Promise<Retval>
+): Promise<Retval> {
   return new Promise((resolve, reject) => {
+    if (!(domain in connections)) {
+      connections[domain] = [];
+      waitingConnections[domain] = [];
+      waitingFuncs[domain] = [];
+    }
+    const id = ftpCancelable(cancelkey);
     let resolved = false;
-    const resolveOnce = (value: Retval | null) => {
+    const resolveOnce = (value: Retval) => {
       if (!resolved) {
         resolved = true;
         rejected = true;
-        resolve(CancelFTP ? null : value);
+        ftpCancelable(cancelkey, id);
+        resolve(value);
       }
     };
     let rejected = false;
-    const rejectOnce = (er: Error) => {
+    const rejectOnce = (er: any) => {
       if (!rejected) {
         resolved = true;
         rejected = true;
-        reject(
-          new Error(`${er.toString().replace(/^error:\s*/i, '')} (${domain})`)
-        );
+        ftpCancelable(cancelkey, id);
+        reject(er);
       }
     };
-    const removeConnection = (c: FTP) => {
+    const freeConnection = (c: FTP) => {
       const i = connections[domain]?.indexOf(c);
       if (i !== undefined && i !== -1) {
         connections[domain].splice(i, 1);
-        log.debug(`Connections: `, connections[domain].length);
+        log.debug(
+          `Freed 1 connection to ${domain}, ${Object.entries(
+            connections
+          ).reduce((pr, cr) => pr + cr[1].length, 0)} left.`
+        );
       }
     };
-    if (!(domain in connections)) {
-      connections[domain] = [];
-      freeConnections[domain] = [];
-      waitingFuncs[domain] = [];
-    }
-    if (!CancelFTP) {
-      const runFunc = async (c: FTP) => {
-        if (!CancelFTP) {
-          try {
-            const result = await func(c);
-            if (!CancelFTP) {
-              removeConnection(c);
-              const next = waitingFuncs[domain][0];
-              if (next) {
-                waitingFuncs[domain].shift();
-                log.debug(`ftp connect on-ready-wait ${domain}.`);
-                next(c);
-              } else {
-                freeConnections[domain].push(c);
-                // We're freeing all connections when Module.clearDownload() is called.
-                // if (!connections[domain].length) resetFTP(domain);
-              }
-              resolveOnce(result);
-            }
-          } catch (er: any) {
-            removeConnection(c);
-            rejectOnce(er);
+    const runFunc = async (c: FTP) => {
+      try {
+        const result = await func(c);
+        freeConnection(c);
+        const next = waitingFuncs[domain][0];
+        if (next) {
+          if (cancelkey && cancelkey in FtpCancelable) {
+            log.debug(`FTP waitingFuncs canceled '${cancelkey}'`);
+            rejectOnce(new Error(C.UI.Manager.cancelMsg));
           }
+          waitingFuncs[domain].shift();
+          log.silly(`ftp connect on-ready-wait ${domain}.`);
+          next(c);
+        } else {
+          waitingConnections[domain].push(c);
+          // IMPORTANT: All connections should be cleared at some point
+          // by running Module.cancel(). At this point, free connections
+          // to domains are kept for immediate reuse.
+          // if (!connections[domain].length) destroyFTPconnection(domain);
         }
-        removeConnection(c);
-        resolveOnce(null);
-      };
-      let c = freeConnections[domain][0];
-      if (c) {
-        freeConnections[domain].shift();
-        connections[domain].push(c);
-        log.debug(`ftp connect on-ready-free ${domain}.`);
-        runFunc(c);
-      } else if (
-        connections[domain].length < C.FTPMaxConnectionsPerDomain &&
-        Object.values(connections).flat().length < C.FTPMaxConnections
-      ) {
-        c = new FTP();
-        connections[domain].push(c);
-        c.on('error', (er: Error) => {
-          log.debug(`ftp connect on-error ${domain}: '${er}'.`);
-          c.destroy();
-          removeConnection(c);
-          rejectOnce(er);
-        });
-        c.on('close', (er: boolean) => {
-          log.debug(`ftp connect on-close ${domain}: error='${er}'.`);
-          if (er) {
-            if (typeof c === 'object') c.destroy();
-            removeConnection(c);
-            rejectOnce(new Error(`Error during connection close.`));
-          }
-        });
-        c.on('greeting', (msg: string) => {
-          log.debug(`ftp connect on-greeting ${domain}: '${msg}'.`);
-        });
-        c.on('end', () => {
-          log.debug(`ftp connect on-end ${domain}.`);
-          if (CancelFTP) {
-            removeConnection(c);
-            resolveOnce(null);
-          }
-        });
-        c.on('ready', () => {
-          log.debug(`ftp connect on-ready ${domain}.`);
-          runFunc(c);
-        });
-        try {
-          log.debug(`Connecting: ${domain}`);
-          c.connect({ host: domain, user: C.FTPUserName });
-        } catch (er: any) {
-          removeConnection(c);
-          rejectOnce(er);
-        }
-      } else {
-        waitingFuncs[domain].push((cf: FTP) => {
-          connections[domain].push(cf);
-          runFunc(cf);
-        });
+        resolveOnce(result);
+      } catch (er: any) {
+        freeConnection(c);
+        rejectOnce(er);
       }
-    } else resolveOnce(null);
+    };
+    const addWaitingFunc = () => {
+      const nfunc = (cf: FTP) => {
+        connections[domain].push(cf);
+        ftpCancelable(cancelkey, id, cancelConn(cf));
+        runFunc(cf);
+      };
+      waitingFuncs[domain].push(nfunc);
+      ftpCancelable(cancelkey, id, cancelFunc(nfunc));
+    };
+    const cancelFunc = (wfun: (c: FTP) => void) => {
+      return () => {
+        if (domain in waitingFuncs) {
+          const i = waitingFuncs[domain].findIndex((f) => f === wfun);
+          if (i !== -1) {
+            waitingFuncs[domain].splice(i, 1);
+            log.debug(`FTP canceled function '${cancelkey} ${id}'`);
+            rejectOnce(new Error(C.UI.Manager.cancelMsg));
+          }
+        }
+      };
+    };
+    const cancelConn = (cc: FTP) => {
+      return () => {
+        freeConnection(cc);
+        cc.destroy();
+        log.debug(`FTP canceled connection '${cancelkey} ${id}'`);
+        rejectOnce(new Error(C.UI.Manager.cancelMsg));
+      };
+    };
+    if (cancelkey && cancelkey in FtpCancelable) {
+      log.debug(`FTP connect canceled '${cancelkey}'`);
+      rejectOnce(new Error(C.UI.Manager.cancelMsg));
+    }
+    let c = waitingConnections[domain][0];
+    if (c) {
+      waitingConnections[domain].shift();
+      connections[domain].push(c);
+      ftpCancelable(cancelkey, id, cancelConn(c));
+      log.silly(`ftp connect on-ready-free ${domain}.`);
+      runFunc(c);
+    } else if (
+      connections[domain].length <
+        (domain in MaxDomainConnections
+          ? MaxDomainConnections[domain]
+          : C.FTPMaxConnections) &&
+      Object.values(connections).flat().length < C.FTPMaxConnections
+    ) {
+      c = new FTP();
+      connections[domain].push(c);
+      ftpCancelable(cancelkey, id, cancelConn(c));
+      c.on('error', (er: Error) => {
+        log.silly(`ftp connect on-error ${domain}: '${er}'.`);
+        c.destroy();
+        freeConnection(c);
+        if (er.message.includes('too many connections')) {
+          MaxDomainConnections[domain] = connections[domain].length;
+          addWaitingFunc();
+        } else rejectOnce(er);
+      });
+      c.on('close', (er: boolean) => {
+        log.silly(`ftp connect on-close ${domain}: error='${er}'.`);
+        if (er) {
+          if (typeof c === 'object') c.destroy();
+          freeConnection(c);
+          rejectOnce(new Error(`Error during connection close.`));
+        }
+      });
+      c.on('greeting', (msg: string) => {
+        log.silly(`ftp connect on-greeting ${domain}: '${msg}'.`);
+      });
+      c.on('end', () => {
+        log.silly(`ftp connect on-end ${domain}.`);
+      });
+      c.on('ready', () => {
+        log.silly(`ftp connect on-ready ${domain}.`);
+        runFunc(c);
+      });
+      try {
+        log.debug(`Connecting: ${domain}`);
+        c.connect({ host: domain, user: C.FTPUserName });
+      } catch (er: any) {
+        freeConnection(c);
+        rejectOnce(er);
+      }
+    } else addWaitingFunc();
   });
 }
 
-function streamToBuffer(
-  stream: NodeJS.ReadableStream,
-  uncancelable = false
-): Promise<Buffer | null> {
+function streamToBuffer(stream: NodeJS.ReadableStream): Promise<Buffer> {
   const buf: Buffer[] = [];
   return new Promise((resolve, reject) => {
-    if (!CancelFTP) {
-      stream.on('data', (chunk: Buffer) => {
-        if (!uncancelable && CancelFTP) resolve(null);
-        else buf.push(chunk);
-      });
-      stream.on('end', () => {
-        log.debug(`stream on-end.`);
-        resolve(CancelFTP ? null : Buffer.concat(buf));
-      });
-      stream.on('error', (err) => {
-        log.debug(`stream on-error: '${err}'.`);
+    stream.on('data', (chunk: Buffer) => {
+      buf.push(chunk);
+    });
+    stream.on('end', () => {
+      log.silly(`stream on-end.`);
+      resolve(Buffer.concat(buf));
+    });
+    stream.on('error', (err) => {
+      log.silly(`stream on-error: '${err}'.`);
+      reject(err);
+    });
+  });
+}
+
+// Convert the callback FTP API to promise with cancel.
+async function listP(c: FTP, dirpath: string): Promise<ListingElement[]> {
+  return new Promise((resolve, reject) => {
+    log.silly(`list(${dirpath})`);
+    c.list(dirpath, false, (err: Error, listing: ListingElement[]) => {
+      if (err) reject(err);
+      else resolve(listing);
+    });
+  });
+}
+
+// Convert the callback FTP API to promise with cancel.
+async function sizeP(c: FTP, filepath: string): Promise<number> {
+  return new Promise((resolve, reject) => {
+    log.silly(`size(${filepath})`);
+    c.size(filepath, (err: any, size: number) => {
+      if (err) {
         reject(err);
-      });
-    } else resolve(null);
+      } else resolve(size);
+    });
   });
 }
 
 // Convert the callback FTP API to promise with cancel.
-async function listP(
-  c: FTP,
-  dirpath: string
-): Promise<ListingElement[] | null> {
+async function getP(c: FTP, filepath: string): Promise<NodeJS.ReadableStream> {
   return new Promise((resolve, reject) => {
-    if (!CancelFTP) {
-      log.debug(`list(${dirpath})`);
-      c.list(dirpath, false, (err: Error, listing: ListingElement[]) => {
-        if (err) reject(err);
-        else resolve(CancelFTP ? null : listing);
-      });
-    } else resolve(null);
-  });
-}
-
-// Convert the callback FTP API to promise with cancel.
-async function sizeP(c: FTP, filepath: string): Promise<number | null> {
-  return new Promise((resolve, reject) => {
-    if (!CancelFTP) {
-      log.debug(`size(${filepath})`);
-      c.size(filepath, (err: any, size: number) => {
-        if (err) {
-          reject(err);
-        } else resolve(CancelFTP ? null : size);
-      });
-    } else resolve(null);
-  });
-}
-
-// Convert the callback FTP API to promise with cancel.
-async function getP(
-  c: FTP,
-  filepath: string
-): Promise<NodeJS.ReadableStream | null> {
-  return new Promise((resolve, reject) => {
-    if (!CancelFTP) {
-      log.debug(`getStream(${filepath})`);
-      c.get(filepath, (er: Error, stream: NodeJS.ReadableStream) => {
-        if (er) reject(er);
-        else {
-          resolve(CancelFTP ? null : stream);
-        }
-      });
-    } else resolve(null);
+    log.silly(`getStream(${filepath})`);
+    c.get(filepath, (er: Error, stream: NodeJS.ReadableStream) => {
+      if (er) reject(new Error(`${er.message} ${filepath}`));
+      else {
+        resolve(stream);
+      }
+    });
   });
 }
 
 // Take an FTP connection and return a single FTP file download
-// as a promise Buffer. Returns null if canceled. Reports progress
-// if a progress function is provided.
+// as a promise Buffer. Reports progress if a progress function
+// is provided.
 async function getFileP(
   c: FTP,
   filepath: string,
+  cancelkey: string,
   progress?: (prog: number) => void,
   size?: number
-): Promise<Buffer | null> {
-  if (!CancelFTP) {
-    log.debug(`get(${filepath})`);
-    let stream;
-    try {
-      stream = await getP(c, filepath);
-    } catch (er) {
-      return Promise.reject(er);
+): Promise<Buffer> {
+  log.silly(`get(${filepath})`);
+  checkCancel(cancelkey);
+
+  const stream = await getP(c, filepath);
+  const id = ftpCancelable(cancelkey);
+
+  ftpCancelable(cancelkey, id, () => {
+    const s = stream as any;
+    if (s && 'destroy' in s && typeof s.destroy === 'function') {
+      s.destroy();
+      log.debug(`FTP destroyed stream '${cancelkey} ${id}'`);
     }
-    if (stream) {
-      if (progress) {
-        progress(CancelFTP ? -1 : 0);
-        if (size) {
-          let current = 0;
-          stream.on('data', (chunk: Buffer) => {
-            current += chunk.length;
-            progress(CancelFTP ? -1 : current / size);
-          });
-        }
-      }
-      return streamToBuffer(stream)
-        .then((result) => {
-          if (progress) progress(-1);
-          if (!result) return null;
-          log.debug(`DONE get(${filepath})`);
-          return result;
-        })
-        .catch((er) => {
-          if (progress) progress(-1);
-          throw er;
-        });
+  });
+
+  if (progress) {
+    progress(0);
+    if (size) {
+      let current = 0;
+      stream.on('data', (chunk: Buffer) => {
+        current += chunk.length;
+        progress(current / size);
+      });
     }
   }
-  return null;
+  return streamToBuffer(stream)
+    .then((result) => {
+      if (progress) progress(-1);
+      log.silly(`DONE get(${filepath})`);
+      ftpCancelable(cancelkey, id);
+      return result;
+    })
+    .catch((er) => {
+      if (progress) progress(-1);
+      ftpCancelable(cancelkey, id);
+      throw er;
+    });
 }
 
 // Return a buffer promise for the FTP download of domain/filepath.
-// Progress is reported if a progress function is provided. Returns
-// null if canceled.
+// Progress is reported if a progress function is provided.
 export async function getFile(
   domain: string,
   filepath: string,
+  cancelkey: string,
   progress?: ((p: number) => void) | null
-): Promise<Buffer | null> {
-  if (!CancelFTP) {
-    return connect(domain, async (c: FTP) => {
-      if (progress) {
-        let size: number | null = 0;
-        try {
-          size = await sizeP(c, filepath);
-        } catch (er) {
-          if (progress) progress(-1);
-          return Promise.reject(er);
-        }
-        if (size !== null) {
-          return getFileP(c, filepath, progress, size);
-        }
-        if (progress) progress(-1);
-        return null;
-      }
-      return getFileP(c, filepath);
-    });
-  }
-  if (progress) progress(-1);
-  return null;
+): Promise<Buffer> {
+  return connect(domain, cancelkey, async (c: FTP) => {
+    if (progress) {
+      const size = await sizeP(c, filepath);
+      return getFileP(c, filepath, cancelkey, progress, size);
+    }
+    return getFileP(c, filepath, cancelkey);
+  });
 }
 
 // Lists a directory path on a domain using FTP and returns a promise for
@@ -339,125 +427,119 @@ export async function getFile(
 export async function list(
   domain: string,
   dirpath: string,
+  cancelkey: string,
   basepath = '',
   maxdepth = 5,
   depth = 1
-): Promise<ListingElementR[] | null> {
-  if (!CancelFTP) {
-    const promises: Promise<ListingElementR[] | null>[] = [];
-    let listing: ListingElement[] | null;
-    try {
-      listing = await connect(domain, (c: FTP) => {
-        return listP(c, dirpath);
-      });
-      if (listing) {
-        const listingR = listing as ListingElementR[];
-        listingR.forEach((file) => {
-          file.subdir = basepath;
-        });
-        promises.push(Promise.resolve(listingR as ListingElementR[]));
-        if (depth < maxdepth) {
-          listingR
-            .filter((f) => f.type === 'd')
-            .forEach((f) =>
-              promises.push(
-                list(
-                  domain,
-                  fpath.join(dirpath, f.name),
-                  fpath.join(basepath, f.name),
-                  maxdepth,
-                  depth + 1
-                )
-              )
-            );
-        }
-      } else promises.push(Promise.resolve(null));
-    } catch (er) {
-      promises.push(Promise.reject(er));
-    }
-    return Promise.all(promises).then((lists) => {
-      log.debug(`list(${dirpath}):`, lists.flat().length);
-      if (lists.includes(null)) return null;
-      return lists.flat() as ListingElementR[];
+): Promise<ListingElementR[]> {
+  const promises: Promise<ListingElementR[]>[] = [];
+  let listing: ListingElement[];
+  try {
+    listing = await connect(domain, cancelkey, (c: FTP) => {
+      return listP(c, dirpath);
     });
+    const listingR = listing as ListingElementR[];
+    listingR.forEach((file) => {
+      file.subdir = basepath;
+    });
+    promises.push(Promise.resolve(listingR as ListingElementR[]));
+    if (depth < maxdepth) {
+      listingR
+        .filter((f) => f.type === 'd')
+        .forEach((f) =>
+          promises.push(
+            list(
+              domain,
+              fpath.join(dirpath, f.name),
+              cancelkey,
+              fpath.join(basepath, f.name),
+              maxdepth,
+              depth + 1
+            )
+          )
+        );
+    }
+  } catch (er) {
+    promises.push(Promise.reject(er));
   }
-  return null;
+  return Promise.all(promises).then((lists) => {
+    log.silly(`list(${dirpath}):`, lists.flat().length);
+    return lists.flat() as ListingElementR[];
+  });
 }
 
 // FTP downloads a directory from a domain using FTP, returning it as path/data
-// object promise. If canceled, null is returned. If a progress function
-// is provided, it will be used to report progress.
+// object promise. If a progress function is provided, it will be used to report
+// progress.
 export async function getDir(
   domain: string,
   dirpath: string,
   skipPathRegex: RegExp,
+  cancelkey: string,
   progress?: ((prog: number) => void) | null
-): Promise<{ listing: ListingElementR; buffer: Buffer }[] | null> {
-  if (!CancelFTP) {
-    try {
-      const listing = await list(domain, dirpath);
-      if (listing) {
-        const files = listing.filter(
-          (l) =>
-            l.type === '-' &&
-            !skipPathRegex.test(fpath.join(dirpath, l.subdir, l.name))
-        );
-        const buffers = await getFiles(
-          domain,
-          files.map((l) => fpath.join(dirpath, l.subdir, l.name)),
-          progress
-        );
-        if (buffers) {
-          return files.map((l, i) => {
-            return { listing: l, buffer: buffers[i] };
-          });
-        }
-      }
-    } catch (er) {
-      if (progress) progress(-1);
-      return Promise.reject(er);
+): Promise<{ listing: ListingElementR; buffer: Buffer }[]> {
+  try {
+    const listing = await list(domain, dirpath, cancelkey);
+    const files = listing.filter(
+      (l) =>
+        l.type === '-' &&
+        !skipPathRegex.test(fpath.join(dirpath, l.subdir, l.name))
+    );
+    const buffers = await getFiles(
+      domain,
+      files.map((l) => fpath.join(dirpath, l.subdir, l.name)),
+      cancelkey,
+      progress
+    );
+    if (buffers) {
+      return files.map((l, i) => {
+        return { listing: l, buffer: buffers[i] };
+      });
     }
+  } catch (er) {
+    if (progress) progress(-1);
+    return Promise.reject(er);
   }
-  if (progress) progress(-1);
-  return null;
+  return [];
 }
 
 // FTP download an array of files from a domain, returning a Buffer array
-// promise. If FTP was canceled null is returned. If a progress function
-// is provided, it will be used to report progress.
+// promise. If a progress function is provided, it will be used to report
+// progress.
 export async function getFiles(
   domain: string,
   files: string[],
+  cancelkey: string,
   progress?: ((prog: number) => void) | null
-): Promise<Buffer[] | null> {
-  if (!CancelFTP) {
-    if (progress) progress(CancelFTP ? -1 : 0);
-    const total = files.length;
-    let prog = 0;
-    const bufpromises = files.map(async (f) => {
-      let b;
-      try {
-        b = await getFile(domain, f);
-      } catch (er) {
-        return Promise.reject(er);
-      }
-      prog += 1;
-      if (progress) progress(CancelFTP ? -1 : prog / total);
-      return b;
+): Promise<Buffer[]> {
+  if (progress) progress(0);
+  const total = files.length;
+  let prog = 0;
+  const bufpromises = files.map(async (f) => {
+    let b;
+    try {
+      b = await getFile(domain, f, cancelkey);
+    } catch (er) {
+      if (progress) progress(-1);
+      throw er;
+    }
+    prog += 1;
+    if (progress) progress(prog / total);
+    return b;
+  });
+  // IMPORTANT: allSettled (vs all) waits until all results are
+  // in, so that progress cannot be reverted after a rejection.
+  return Promise.allSettled(bufpromises).then((pres) => {
+    if (progress) progress(-1);
+    const bufs: Buffer[] = [];
+    pres.forEach((pre) => {
+      if (pre.status === 'fulfilled') {
+        bufs.push(pre.value);
+      } else throw pre.reason;
     });
-    return Promise.all(bufpromises)
-      .then((bufs) => {
-        if (progress) progress(-1);
-        if (bufs.includes(null)) return null;
-        return bufs as Buffer[];
-      })
-      .catch((er) => {
-        if (progress) progress(-1);
-        throw er;
-      });
-  }
-  if (progress) progress(-1);
-  return null;
+
+    return bufs;
+  });
 }
 
 // Take a tar.gz or tar file as a Buffer or else a file path string,
@@ -483,8 +565,8 @@ export async function untargz(
       extract.on(
         'entry',
         (header: TAR.Headers, stream2: Readable, next: () => void) => {
-          log.debug(`untargz received stream2.`);
-          streamToBuffer(stream2, true)
+          log.silly(`untargz received stream2.`);
+          streamToBuffer(stream2)
             .then((content) => {
               return content && result.push({ header, content });
             })
@@ -505,7 +587,7 @@ export async function getFileHTTP(
   url: string,
   dest: LocalFile | string,
   progress?: ((p: number) => void) | null
-): Promise<LocalFile | string> {
+): Promise<LocalFile> {
   return new Promise((resolve, reject) => {
     const ses = session.fromPartition('persist:audio', { cache: false });
     ses.setUserAgent(C.HTTPUserAgent);
@@ -518,10 +600,10 @@ export async function getFileHTTP(
       item.setSavePath(destpath);
       item.on('updated', (_e, state) => {
         if (state === 'interrupted') {
-          resolve('Download is interrupted but can be resumed');
+          reject(new Error('Download is interrupted'));
         } else if (state === 'progressing') {
           if (item.isPaused()) {
-            resolve('Download is paused');
+            reject(new Error('Download is paused'));
           } else if (progress) {
             progress(item.getReceivedBytes() / item.getTotalBytes());
           }
@@ -533,7 +615,7 @@ export async function getFileHTTP(
         if (state === 'completed') {
           resolve(destFile);
         } else {
-          reject(new Error(`Download failed: ${state}`));
+          reject(new Error(`Download failed '${state}'`));
         }
       });
     });

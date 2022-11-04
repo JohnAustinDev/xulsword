@@ -24,7 +24,6 @@ import type {
   ModTypes,
   V11nType,
   GType,
-  BookGroupType,
   LocationVKType,
   GlobalPrefType,
   XulswordStatePref,
@@ -145,32 +144,35 @@ export function getTabs(): TabType[] {
         if (!tabType) return;
 
         // Find conf file. Look at file name, then search contents if necessary
-        const DIRSEP = process.platform === 'win32' ? '\\' : '/';
         let p = LibSword.getModuleInformation(
           module,
           'AbsoluteDataPath'
-        ).replace(/[\\/]/g, DIRSEP);
-        if (p.slice(-1) !== DIRSEP) p += DIRSEP;
+        ).replace(/[\\/]/g, path.sep);
+        if (p.slice(-1) !== path.sep) p += path.sep;
         const directory = p;
-        p = p.replace(/[\\/]modules[\\/].*?$/, `${DIRSEP}mods.d`);
+        p = p.replace(/[\\/]modules[\\/].*?$/, `${path.sep}mods.d`);
         let confFile = new LocalFile(
-          `${p + DIRSEP + module.toLowerCase()}.conf`
+          `${p + path.sep + module.toLowerCase()}.conf`
         );
         if (!confFile.exists()) {
-          confFile = new LocalFile(`${p + DIRSEP + module}.conf`);
+          confFile = new LocalFile(`${p + path.sep + module}.conf`);
           if (!confFile.exists()) {
-            const modRE = new RegExp(`^\\[${module}\\]`);
             confFile = new LocalFile(p);
-            if (confFile.exists()) {
+            const modRE = new RegExp(`^\\[${module}\\]`);
+            if (confFile.exists() && confFile.isDirectory()) {
               const files = confFile.directoryEntries;
+              let found: LocalFile | null = null;
               files?.forEach((file) => {
-                const f = new LocalFile(confFile.path);
-                f.append(file);
+                if (found) return;
+                const f = confFile.clone().append(file);
                 if (!f.isDirectory() && /\.conf$/.test(f.leafName)) {
                   const cdata = f.readFile();
-                  if (modRE.test(cdata)) confFile = f;
+                  if (modRE.test(cdata)) {
+                    found = f;
+                  }
                 }
               });
+              if (found) confFile = found;
             }
           }
         }
@@ -248,7 +250,7 @@ export function getSwordConf(): { [mod: string]: SwordConfType } {
     if (t.module && t.confPath) {
       const f = new LocalFile(t.confPath);
       if (f.exists()) {
-        swordConf[t.module] = parseSwordConf(f);
+        swordConf[t.module] = parseSwordConf(f, f.leafName);
       }
     }
   });

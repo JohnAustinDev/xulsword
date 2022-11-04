@@ -5,15 +5,15 @@
 /* eslint-disable react/static-property-placement */
 import React from 'react';
 import i18n from 'i18next';
-import { sanitizeHTML } from '../../common';
 import G from '../rg';
 import renderToRoot from '../rinit';
-import { windowArgument, moduleInfoHTML } from '../rutil';
+import { windowArgument } from '../rutil';
 import { Hbox, Vbox } from '../libxul/boxes';
 import Label from '../libxul/label';
 import Stack from '../libxul/stack';
 import Button from '../libxul/button';
 import Spacer from '../libxul/spacer';
+import Modinfo from '../libxul/modinfo';
 import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
 import '../libsword.css'; // about uses .head1
 import '../splash/splash.css';
@@ -174,14 +174,6 @@ export default class AboutWin extends React.Component {
     const contributors: string[] =
       (G.Prefs.getComplexValue('Contributors') as string[]) || [];
 
-    const { confPath } = (showConf !== -1 && G.Tab[modules[showConf]]) || {
-      confPath: '',
-    };
-    const conftext: string[] =
-      showConf === -1 || !confPath
-        ? []
-        : G.inlineFile(confPath, 'utf8', true).split('\n');
-
     return (
       <Vbox id="mainbox">
         {!showModules && (
@@ -249,70 +241,13 @@ export default class AboutWin extends React.Component {
                   )}
                 </div>
               ))}
-            {modules?.map((m, i) => (
-              <div id={`mod_${m}`} className="modlist" key={`ml${m}`}>
-                <div className="head1">
-                  <span className={`cs-${m}`}>{G.Tab[m].label}</span>{' '}
-                  <a href="#" id={`top.${m}`} onClick={handler}>
-                    ↑
-                  </a>
-                </div>
-                <div
-                  // eslint-disable-next-line react/no-danger
-                  dangerouslySetInnerHTML={{
-                    __html: sanitizeHTML(moduleInfoHTML([G.SwordConf[m]])),
-                  }}
-                />
-                <div>
-                  {(showConf === -1 || modules[showConf] !== m) && (
-                    <>
-                      <Button id={`more.${m}`} onClick={handler}>
-                        {i18n.t('more.label')}
-                      </Button>
-                    </>
-                  )}
-                  {showConf !== -1 && modules[showConf] === m && (
-                    <>
-                      <Button id={`less.${m}`} onClick={handler}>
-                        {i18n.t('less.label')}
-                      </Button>
-                      <Button id={`edit.${m}`} onClick={handler}>
-                        {i18n.t('editMenu.label')}
-                      </Button>
-                      <Button
-                        id={`save.${m}`}
-                        disabled={!editConf}
-                        onClick={handler}
-                      >
-                        {i18n.t('save.label')}
-                      </Button>
-                    </>
-                  )}
-                </div>
-                {showConf !== -1 && modules[showConf] === m && (
-                  <div>
-                    <Label
-                      className="confpath-label"
-                      control={`ta.${m}`}
-                      value={G.Tab[m].confPath}
-                    />
-                    <textarea
-                      id={`ta.${m}`}
-                      className={editConf ? 'editable' : 'readonly'}
-                      autoComplete="off"
-                      autoCorrect="off"
-                      spellCheck={false}
-                      wrap="off"
-                      readOnly={!editConf}
-                      rows={conftext.length}
-                      ref={textarea}
-                    >
-                      {conftext.join('\n')}
-                    </textarea>
-                  </div>
-                )}
-              </div>
-            ))}
+            <Modinfo
+              modules={modules}
+              showConf={showConf}
+              editConf={editConf}
+              conftextRef={textarea}
+              handler={handler}
+            />
           </div>
         )}
         <Hbox className="dialog-buttons" pack="end" align="end">

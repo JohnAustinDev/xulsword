@@ -61,7 +61,6 @@ const C = {
 
   URLRE: /^https?:\/\//i,
 
-  FTPMaxConnectionsPerDomain: 24, // 40 is absolute max. 36 failed on crosswire.org
   FTPMaxConnections: 48,
   FTPUserName: 'anonymous', // TODO!: How to set: 'xulsword@xulsword.org',
   HTTPUserAgent: 'xulsword@xulsword.org',
@@ -109,6 +108,9 @@ const C = {
       initialNoteboxHeight: 200, // px
       bbSingleColTopMargin: 100, // px an arbitrary extra margin value
       bbBottomMargin: 20, // px
+    },
+    Manager: {
+      cancelMsg: 'Canceled',
     },
     Search: {
       resultsPerPage: 30, // search results per page

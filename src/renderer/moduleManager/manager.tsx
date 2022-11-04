@@ -45,6 +45,7 @@ import Label from '../libxul/label';
 import DragSizer, { DragSizerVal } from '../libxul/dragsizer';
 import Checkbox from '../libxul/checkbox';
 import Dialog from '../libxul/dialog';
+import Modinfo from '../libxul/modinfo';
 import * as H from './managerH';
 import './manager.css';
 
@@ -72,7 +73,7 @@ import type {
   TinitialRowSort,
 } from '../libxul/table';
 
-G.Module.clearDownload();
+G.Module.cancel();
 
 const defaultProps = {
   ...xulDefaultProps,
@@ -88,7 +89,8 @@ export type ManagerProps = XulProps;
 // these state keys written to Prefs.
 const notStatePref = {
   progress: null as number[] | null,
-  showModuleInfo: '',
+  showModuleInfo: [] as string[],
+  showConfIndex: -1 as number,
   showAudioDialog: null as {
     conf: SwordConfType;
     selection: VKSelection;
@@ -181,19 +183,7 @@ export default class ModuleManager extends React.Component {
 
   onCellEdited: TonEditableCellChanged;
 
-  selectionToDataRows;
-
-  rowSelect;
-
-  switchRepo;
-
-  download;
-
-  checkForModuleUpdates;
-
   eventHandler;
-
-  setTableState;
 
   sState: (
     // sState is just for better TypeScript functionality
@@ -224,22 +214,15 @@ export default class ModuleManager extends React.Component {
     this.destroy = [];
 
     this.loadRepositoryTable = this.loadRepositoryTable.bind(this);
-    this.updateRepositoryLists = this.updateRepositoryLists.bind(this);
     this.loadModuleTable = this.loadModuleTable.bind(this);
-    this.moduleTableData = this.moduleTableData.bind(this);
+    this.filterModuleTable = this.filterModuleTable.bind(this);
     this.onColumnHide = H.onColumnHide.bind(this);
     this.onColumnsReordered = H.onColumnsReordered.bind(this);
-    this.selectionToDataRows = H.selectionToDataRows.bind(this);
-    this.rowSelect = H.rowSelect.bind(this);
     this.onRepoCellClick = H.onRepoCellClick.bind(this);
     this.onLangCellClick = H.onLangCellClick.bind(this);
     this.onModCellClick = H.onModCellClick.bind(this);
     this.onCellEdited = H.onCellEdited.bind(this);
-    this.switchRepo = H.switchRepo.bind(this);
-    this.download = H.download.bind(this);
-    this.checkForModuleUpdates = H.checkForModuleUpdates.bind(this);
     this.eventHandler = H.eventHandler.bind(this);
-    this.setTableState = H.setTableState.bind(this);
     this.onRowsReordered = {
       language: H.onRowsReordered.bind(this, 'language'),
       module: H.onRowsReordered.bind(this, 'module'),
@@ -262,7 +245,7 @@ export default class ModuleManager extends React.Component {
     const { repositories } = state;
     // If we are managing external repositories, Internet is required.
     if (repositories && !state.internetPermission) return;
-    this.loadManagerTables();
+    this.loadTables();
   }
 
   componentDidUpdate(_prevProps: any, prevState: ManagerState) {
@@ -286,21 +269,12 @@ export default class ModuleManager extends React.Component {
     this.destroy = [];
   }
 
-  loadManagerTables() {
+  async loadTables(): Promise<void> {
     const { repositories } = this.state as ManagerState;
-    const handleListing = (listing: RepositoryListing[]) => {
-      this.updateRepositoryLists(listing);
-      let langselection = this.loadLanguageTable();
-      const { language } = this.state as ManagerState;
-      if (!language.open) langselection = [];
-      const success = this.loadModuleTable(langselection);
-      if (repositories) this.checkForModuleUpdates(listing);
-      return success;
-    };
     const loadLocalRepos = async () => {
       H.Saved.repository.data = [];
       H.Saved.repositoryListings = [];
-      let listing: RepositoryListing[] = [];
+      let listing: (RepositoryListing | string)[] = [];
       try {
         listing = await G.Module.repositoryListing(
           this.loadRepositoryTable().map((r) => {
@@ -310,51 +284,54 @@ export default class ModuleManager extends React.Component {
       } catch (err) {
         log.warn(err);
       }
-      return handleListing(listing);
+      H.handleListings(this, listing);
     };
     // Download data for the repository and module tables
     if (!H.Saved.repository.data.length) {
       if (repositories) {
         H.Saved.repository.data = [];
         H.Saved.repositoryListings = [];
-        G.Module.crossWireMasterRepoList()
-          .then((repos) => {
-            if (typeof repos === 'string') {
-              const msg =
-                repos === 'Canceled'
-                  ? `Master Repository List canceled.`
-                  : repos;
-              throw new Error(msg);
-            }
-            return G.Module.repositoryListing(
-              this.loadRepositoryTable(repos).map((r) => {
-                return { ...r, file: C.SwordRepoManifest };
-              })
-            );
-          })
-          .then((listing) => {
-            return handleListing(listing);
-          })
-          .catch(async (er: Error) => {
-            // Failed to load the master list, so just load local repos.
-            log.warn(er);
-            this.addToast({
-              message: `Unable to download Master Repository List`,
-              timeout: 5000,
-              intent: Intent.WARNING,
+        try {
+          const repos = await G.Module.crossWireMasterRepoList();
+          if (typeof repos === 'string') throw new Error(repos);
+          // Calling loadRepositoryTable on all repos at onces causes the
+          // module table to remain empty until all repository listings have
+          // been downloaded, and certain repos may take a long time. So
+          // instead it is called on each repo separately.
+          this.loadRepositoryTable(repos)
+            .map((r) => {
+              return { ...r, file: C.SwordRepoManifest };
+            })
+            .forEach(async (l, i, a) => {
+              const [list] = await G.Module.repositoryListing([l]);
+              H.handleListings(
+                this,
+                a.map((_lr, ir) => (ir === i ? list : null))
+              );
             });
-            return loadLocalRepos();
+        } catch (er) {
+          // Failed to load the master list, so just load local repos.
+          log.warn(er);
+          this.addToast({
+            message: `Unable to download Master Repository List`,
+            timeout: 5000,
+            intent: Intent.WARNING,
           });
+          loadLocalRepos();
+        }
       } else loadLocalRepos();
     }
     this.destroy.push(onSetWindowState(this));
-    // Instantiate progress handlers
+    // Instantiate progress handler
+    const progressing = {
+      downloads: [] as [string, number][], // [id, percent]
+    };
     this.destroy.push(
       window.ipc.renderer.on('progress', (prog: number, id?: string) => {
         const state = this.state as ManagerState;
         if (id) {
           // Set total progress bar
-          let { downloads } = H.active;
+          let { downloads } = progressing;
           const di = downloads.findIndex((d) => d[0] === id);
           if (di === -1) downloads.push([id, prog]);
           else downloads[di][1] = prog;
@@ -367,7 +344,7 @@ export default class ModuleManager extends React.Component {
               ];
           this.sState({ progress });
           log.silly(`Total progress: ${progress}`, downloads);
-          H.active.downloads = downloads;
+          progressing.downloads = downloads;
           // Set individual repository progress bars
           const { repository, module } = state.tables;
           const repoIndex = repository.data.findIndex(
@@ -380,7 +357,7 @@ export default class ModuleManager extends React.Component {
           const repdrow = repository.data[repoIndex];
           if (repdrow && prog === -1 && repdrow[H.RepCol.iInfo].loading) {
             repdrow[H.RepCol.iInfo].loading = false;
-            this.setTableState('repository', null, repository.data, false);
+            H.setTableState(this, 'repository', null, repository.data, false);
           }
           // Set individual module progress bars
           const modIndex = module.data.findIndex((r) => {
@@ -402,7 +379,7 @@ export default class ModuleManager extends React.Component {
                   r[H.ModCol.iInfo].loading = false;
                 });
             } else moddrow[H.ModCol.iInfo].loading = false;
-            this.setTableState('module');
+            H.setTableState(this, 'module');
           }
         }
       })
@@ -432,7 +409,7 @@ export default class ModuleManager extends React.Component {
                 ? w * (cw / t)
                 : cw;
             });
-            this.setTableState(table, { columnWidths }, null, true);
+            H.setTableState(this, table, { columnWidths }, null, true);
           }
         }
       }
@@ -442,7 +419,8 @@ export default class ModuleManager extends React.Component {
   // Load the repository table with all built-in repositories, xulsword
   // repositories, user-custom repositories, and those passed in repos
   // (which normally come from the CrossWire Master Repository List).
-  // It returns the array of repositories that was used to create the table.
+  // It returns the array of repositories that was used to create the
+  // table data.
   loadRepositoryTable(repos?: Repository[]): Repository[] {
     const state = this.state as ManagerState;
     const { repositories } = state;
@@ -489,51 +467,9 @@ export default class ModuleManager extends React.Component {
           },
         ]);
       });
-      this.setTableState('repository', null, repoTableData, false);
+      H.setTableState(this, 'repository', null, repoTableData, false);
     }
     return allrepos;
-  }
-
-  // Update the repository table after receiving new repositoryListings.
-  updateRepositoryLists(rawModuleData: RepositoryListing[]) {
-    const state = this.state as ManagerState;
-    const { progress } = state;
-    const { repository } = state.tables;
-    const { repositoryListings } = H.Saved;
-    rawModuleData.forEach((listing, i) => {
-      if (listing === null) return;
-      const drow = repository.data[i];
-      if (drow) {
-        if (typeof listing === 'string') {
-          this.addToast({
-            message: listing,
-            timeout: 5000,
-            intent: Intent.WARNING,
-          });
-          if (drow[H.RepCol.iState] !== H.OFF) this.switchRepo([i], false);
-          drow[H.RepCol.iInfo].intent = H.intent(H.RepCol.iState, 'danger');
-          drow[H.RepCol.iInfo].loading = false;
-          if (!Array.isArray(repositoryListings[i])) {
-            repositoryListings[i] = null;
-          }
-          let newprog = null;
-          if (progress) {
-            const [p, t] = progress;
-            newprog = p + 1 === t ? null : [p + 1, t];
-          }
-          this.sState({ progress: newprog });
-          return;
-        }
-        if (Array.isArray(listing)) {
-          repositoryListings[i] = listing;
-          if ([H.ON, H.ALWAYS_ON].includes(drow[H.RepCol.iState])) {
-            drow[H.RepCol.iInfo].intent = H.intent(H.RepCol.iState, 'success');
-          }
-        }
-      }
-    });
-    this.setTableState('repository', null, repository.data, false);
-    return true;
   }
 
   // Load language table with all languages found in the saved repositoryListings
@@ -544,7 +480,7 @@ export default class ModuleManager extends React.Component {
     const { language: langtable, repository: repotable } = state.tables;
     const { selection } = state.language;
     const { repositoryListings } = H.Saved;
-    const selectedRowIndexes = this.selectionToDataRows('language', selection);
+    const selectedRowIndexes = H.selectionToDataRows('language', selection);
     const selectedcodes = langtable.data
       .filter((_r, i) => selectedRowIndexes.includes(i))
       .map((r) => r[H.LanCol.iInfo].code);
@@ -572,7 +508,8 @@ export default class ModuleManager extends React.Component {
         newlanguage.push({ rows: [i, i] });
       }
     });
-    this.setTableState(
+    H.setTableState(
+      this,
       'language',
       { selection: newlanguage },
       newTableData,
@@ -583,7 +520,7 @@ export default class ModuleManager extends React.Component {
 
   // Load the module table with modules sharing the language code,
   // or else with all modules if the code is null.
-  loadModuleTable(languageSelection?: RowSelection) {
+  loadModuleTable(languageSelection?: RowSelection): void {
     const state = this.state as ManagerState;
     // Insure there is one moduleData row object for each module in
     // each repository (local and remote). The same object should be reused
@@ -714,20 +651,20 @@ export default class ModuleManager extends React.Component {
         });
       }
     });
-    this.setTableState(
+    H.setTableState(
+      this,
       'module',
       null,
-      this.moduleTableData(languageSelection),
+      this.filterModuleTable(languageSelection),
       true
     );
-    return true;
   }
 
   // Return sorted and filtered (by language selection) module table data.
-  moduleTableData(filter?: RowSelection): TModuleTableRow[] {
+  filterModuleTable(filter?: RowSelection): TModuleTableRow[] {
     const state = this.state as ManagerState;
     const { language: langtable } = state.tables;
-    const rows = this.selectionToDataRows('language', filter || []);
+    const rows = H.selectionToDataRows('language', filter || []);
     const codes: string[] = [];
     rows.forEach((r) => {
       if (langtable.data[r]) {
@@ -828,6 +765,7 @@ export default class ModuleManager extends React.Component {
       module,
       repository,
       showModuleInfo,
+      showConfIndex,
       showAudioDialog,
       progress,
       repositories,
@@ -848,7 +786,6 @@ export default class ModuleManager extends React.Component {
       onRepoCellClick,
       onRowsReordered,
       onColumnWidthChanged,
-      selectionToDataRows,
       dialogClose,
       dialogAccept,
       tableRef,
@@ -862,7 +799,7 @@ export default class ModuleManager extends React.Component {
       repoAdd: false,
       repoDelete:
         !repository?.selection.length ||
-        !selectionToDataRows('repository', repository.selection).every(
+        !H.selectionToDataRows('repository', repository.selection).every(
           (r) =>
             repotable.data[r] && repotable.data[r][H.RepCol.iInfo]?.repo?.custom
         ),
@@ -970,16 +907,20 @@ export default class ModuleManager extends React.Component {
               flex="1"
             >
               <Hbox className="module-deck" flex="1">
-                {showModuleInfo && (
-                  <div
-                    className="info"
-                    // eslint-disable-next-line react/no-danger
-                    dangerouslySetInnerHTML={{
-                      __html: sanitizeHTML(showModuleInfo),
-                    }}
+                {showModuleInfo.length > 0 && (
+                  <Modinfo
+                    modules={showModuleInfo}
+                    showConf={showConfIndex}
+                    configs={showModuleInfo.map((m) => {
+                      const mr = modtable.data.find(
+                        (r) => r[H.ModCol.iModule] === m
+                      );
+                      return (mr && mr[H.ModCol.iInfo].conf) || null;
+                    })}
+                    handler={eventHandler}
                   />
                 )}
-                {!showModuleInfo && (
+                {showModuleInfo.length === 0 && (
                   <Table
                     flex="1"
                     id="module"
@@ -1001,7 +942,7 @@ export default class ModuleManager extends React.Component {
                 )}
               </Hbox>
               <Vbox className="button-stack" pack="center">
-                {!showModuleInfo && (
+                {showModuleInfo.length === 0 && (
                   <Button
                     id="moduleInfo"
                     icon="info-sign"
@@ -1011,7 +952,7 @@ export default class ModuleManager extends React.Component {
                     onClick={eventHandler}
                   />
                 )}
-                {showModuleInfo && (
+                {showModuleInfo.length > 0 && (
                   <Button
                     id="moduleInfoBack"
                     intent="primary"
@@ -1197,5 +1138,5 @@ ModuleManager.defaultProps = defaultProps;
 ModuleManager.propTypes = propTypes;
 
 export function onunload() {
-  G.Module.clearDownload(); // closes all FTP connections
+  G.Module.cancel(); // closes all FTP connections
 }

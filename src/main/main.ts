@@ -2,13 +2,7 @@
 
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
-import {
-  app,
-  dialog,
-  BrowserWindow,
-  ipcMain,
-  IpcMainEvent,
-} from 'electron';
+import { app, dialog, BrowserWindow, ipcMain, IpcMainEvent } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import i18n from 'i18next';

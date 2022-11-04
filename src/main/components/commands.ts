@@ -5,7 +5,7 @@ import { BrowserWindowConstructorOptions } from 'electron/main';
 import log from 'electron-log';
 import i18n from 'i18next';
 import { clone, JSON_stringify } from '../../common';
-import { verseKey, getTab, getTabs } from './../minit';
+import { verseKey, getTab, getTabs } from '../minit';
 import Prefs from './prefs';
 import LocalFile from './localFile';
 import { modalInstall } from './module';

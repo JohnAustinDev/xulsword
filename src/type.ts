@@ -518,7 +518,7 @@ export type Repository = {
   builtin?: boolean;
 };
 
-export type RepositoryListing = SwordConfType[] | string | null;
+export type RepositoryListing = SwordConfType[] | null;
 
 export type FTPDownload = Repository & {
   file: string;
@@ -817,22 +817,20 @@ export const GPublic = {
     >,
     repositoryListing: func as unknown as (
       repos: (FTPDownload | null)[]
-    ) => Promise<RepositoryListing[]>,
+    ) => Promise<(RepositoryListing | string)[]>,
     download: func as unknown as (
       module: string,
-      repository: Repository
+      repository: Repository,
+      confname: string
     ) => Promise<number | string>,
     downloadXSM: func as unknown as (
       module: string,
       zipFileOrURL: string,
-      repository: Repository
+      repository: Repository,
+      confname: string
     ) => Promise<number | string>,
-    // Cancel some or all in-progress downloads
+    // Cancel some or all previously initiated downloads.
     cancel: func as unknown as (downloads?: (Download | string)[]) => number,
-    // Clear an already downloaded module so it won't be installed
-    clearDownload: func as unknown as (
-      downloads?: (Download | string)[]
-    ) => number,
     // Install previously downloaded modules
     installDownloads: func as unknown as (
       installs: { download: Download; toRepo: Repository }[],
