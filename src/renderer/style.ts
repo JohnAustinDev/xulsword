@@ -81,7 +81,11 @@ function insertModuleCSS(
   const css = G.inlineFile(path, 'utf8').substring(
     'data:text/css;utf8,'.length
   );
-  const m = css.replace(/[\n\r]+/g, '').match(/[^{]+\{[^}]*\}/g);
+
+  const m = css
+    .replace(/[\n\r]+/g, ' ')
+    .replace(/\/\*.*?\*\//g, '')
+    .match(/[^{]+\{[^}]*\}/g);
   if (m) {
     m.forEach((rule) => {
       const selrul = rule.split(/(?={)/);
@@ -96,8 +100,12 @@ function insertModuleCSS(
           })
           .join(', ');
         if (rul) {
-          sheet.insertRule(`${newsel} ${rul.trim()}`);
-          log.debug(`Added CSS rule: ${newsel} ${rul.trim()}`);
+          try {
+            sheet.insertRule(`${newsel} ${rul.trim()}`);
+            log.debug(`Added CSS rule: ${newsel} ${rul.trim()}`);
+          } catch (er) {
+            log.warn(er);
+          }
         }
       }
     });
