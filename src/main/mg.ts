@@ -15,17 +15,13 @@ import { inlineFile } from './components/localFile';
 import Dirs from './components/dirs';
 import Prefs from './components/prefs';
 import LibSword from './components/libsword';
-import Commands from './commands';
+import Commands from './components/commands';
 import Data from './components/data';
-import Downloader from './components/downloader';
-import {
-  getLocaleConfigs,
-  getModuleConfigDefault,
-  getModuleFonts,
-  getFeatureModules,
-  localeConfig,
-} from './config';
-import Window, { publishSubscription, resolveHtmlPath } from './window';
+import Window, {
+  publishSubscription,
+  resolveHtmlPath,
+} from './components/window';
+import Module from './components/module';
 import {
   getBooks,
   getBook,
@@ -37,7 +33,13 @@ import {
   resetMain,
   getSwordConf,
 } from './minit';
-import Module from './module';
+import {
+  getLocaleConfigs,
+  getModuleConfigDefault,
+  getModuleFonts,
+  getFeatureModules,
+  localeConfig,
+} from './config';
 
 // Methods of the following classes must not use rest parameters or default
 // values in their function definition's argument lists. This is because
@@ -119,8 +121,6 @@ class GClass implements GType {
 
   Window;
 
-  Downloader;
-
   Module;
 
   constructor() {
@@ -131,7 +131,6 @@ class GClass implements GType {
     this.Shell = shell;
     this.Data = Data;
     this.Window = Window;
-    this.Downloader = Downloader;
     this.Module = Module;
   }
 

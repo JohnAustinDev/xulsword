@@ -1,0 +1,39 @@
+.modinfo {
+  width: 100%;
+}
+
+.modlist {
+  margin: 20px 10px;
+  padding: 5px;
+  background-color: white;
+  border-radius: 8px;
+  border: 2px solid rgb(200, 170, 205);
+}
+.modlist > div:nth-child(3),
+.modlist > div:nth-child(4) {
+  background-color: whitesmoke;
+}
+.modlist > div:nth-child(4) > * {
+  margin-inline-start: 10px;
+}
+.modlist > div:nth-child(4) {
+  margin-bottom: 10px;
+}
+.modlist .module-info .Lang,
+.modlist .module-info .moduleType {
+  display: block;
+  text-align: center;
+}
+.modlist .button {
+  display: inline-block;
+}
+.modlist textarea {
+  background-color: #80808030;
+  width: calc(100% - 10px);
+  font-family: courier;
+  font-size: 13px;
+  line-height: 100%;
+}
+.modlist textarea.editable {
+  background-color: white;
+}

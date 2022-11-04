@@ -6,13 +6,16 @@ import path from 'path';
 import fs from 'fs';
 import i18next from 'i18next';
 import { BrowserWindow, ipcMain } from 'electron';
-import { JSON_parse, JSON_stringify } from '../common';
-import Cache from '../cache';
-import C from '../constant';
-import Subscription from '../subscription';
-import Dirs from './components/dirs';
-import Data from './components/data';
-import Prefs from './components/prefs';
+import { JSON_parse, JSON_stringify } from '../../common';
+import Cache from '../../cache';
+import C from '../../constant';
+import Subscription from '../../subscription';
+import type contextMenu from '../contextMenu';
+import Dirs from './dirs';
+import Data from './data';
+import Prefs from './prefs';
+import type { PrefCallbackType } from './prefs';
+import LocalFile from './localFile';
 
 import type {
   WindowArgType,
@@ -21,10 +24,7 @@ import type {
   WindowDescriptorType,
   WindowRegistryType,
   ModalType,
-} from '../type';
-import type contextMenu from './contextMenu';
-import type { PrefCallbackType } from './components/prefs';
-import LocalFile from './components/localFile';
+} from '../../type';
 
 const i18nBackendRenderer = require('i18next-electron-fs-backend');
 
@@ -274,7 +274,7 @@ function updateOptions(
   options.useContentSize = true;
   options.icon = path.join(Dirs.path.xsAsset, 'icon.png');
   if (!options.webPreferences) options.webPreferences = {};
-  options.webPreferences.preload = path.join(__dirname, 'preload.js');
+  options.webPreferences.preload = path.join(__dirname, '../preload.js');
   options.webPreferences.contextIsolation = true;
   options.webPreferences.nodeIntegration = false;
   options.webPreferences.enableRemoteModule = false;

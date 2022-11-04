@@ -4,36 +4,45 @@
 /* eslint-disable promise/param-names */
 /* eslint-disable prefer-rest-params */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { BrowserWindow, session } from 'electron';
+import { session } from 'electron';
 import fpath from 'path';
 import log from 'electron-log';
 import FTP, { ListingElement } from 'ftp';
 import GUNZIP from 'gunzip-maybe';
 import TAR from 'tar-stream';
 import { Stream, Readable } from 'stream';
-import { downloadKey, isRepoLocal, parseSwordConf } from '../../common';
-import C from '../../constant';
-import LocalFile from './localFile';
+import C from '../constant';
+import LocalFile from './components/localFile';
 
-import type {
-  GType,
-  Download,
-  SwordConfType,
-  RepositoryListing,
-} from '../../type';
+import type { Download } from '../type';
 
-type ListingElementR = ListingElement & { subdir: string };
+export type ListingElementR = ListingElement & { subdir: string };
 
-let CancelFTP = true;
-export function ftpCancel(value?: boolean) {
-  CancelFTP = !!value;
-  if (CancelFTP) {
-    resetFTP(null, true);
-    log.info(`All FTP connections were canceled.`);
-  }
+const CancelFTP = false;
+export function ftpCancel(download?: Download): number {
+  return 1;
 }
 
-export function resetFTP(domain?: string | null, quiet = false) {
+const HttpCancelable: { url: string; wdevent: any }[] = [];
+export function httpCancel(url?: string): number {
+  let cancelled = 0;
+  const idxs = url
+    ? [HttpCancelable.findIndex((hc) => hc.url === url)]
+    : HttpCancelable.map((_hc, i) => i);
+  idxs.forEach((i) => {
+    if (i !== -1) {
+      HttpCancelable[i].wdevent.preventDefault();
+      cancelled += 1;
+    }
+  });
+  idxs.forEach((i) => {
+    if (i !== -1) HttpCancelable.splice(i, 1);
+  });
+  return cancelled;
+}
+
+// Close and free FTP connections to a particular domain, or all connections.
+export function destroyFTPconnection(domain?: string | null, quiet = false) {
   if (domain) {
     if (domain in connections) {
       connections[domain].forEach((c) => c.destroy());
@@ -46,7 +55,7 @@ export function resetFTP(domain?: string | null, quiet = false) {
       });
     }
   } else {
-    Object.keys(connections).forEach((d) => resetFTP(d, quiet));
+    Object.keys(connections).forEach((d) => destroyFTPconnection(d, quiet));
   }
 }
 
@@ -375,7 +384,7 @@ export async function list(
   return null;
 }
 
-// Downloads a directory from a domain using FTP, returning it as path/data
+// FTP downloads a directory from a domain using FTP, returning it as path/data
 // object promise. If canceled, null is returned. If a progress function
 // is provided, it will be used to report progress.
 export async function getDir(
@@ -413,7 +422,7 @@ export async function getDir(
   return null;
 }
 
-// Downloads an array of files from a domain, returning a Buffer array
+// FTP download an array of files from a domain, returning a Buffer array
 // promise. If FTP was canceled null is returned. If a progress function
 // is provided, it will be used to report progress.
 export async function getFiles(
@@ -492,161 +501,7 @@ export async function untargz(
   return result;
 }
 
-const Downloader: GType['Downloader'] = {
-  // Return a promise for the CrossWire master repository list as an
-  // array of Download objects. These can be passed to repositoryListing()
-  // for retrieval of each repository's complete set of config files. A
-  // string is returned if there were errors or the operation was canceled.
-  async crossWireMasterRepoList() {
-    const mr = {
-      domain: 'ftp.crosswire.org',
-      path: '/pub/sword/',
-      file: 'masterRepoList.conf',
-    };
-    ftpCancel(false);
-    const result: Download[] | null = [];
-    let fbuffer: Buffer | null;
-    try {
-      fbuffer = await getFile(mr.domain, fpath.join(mr.path, mr.file));
-    } catch (er: any) {
-      return Promise.resolve(er.toString());
-    }
-    if (fbuffer) {
-      const fstring = fbuffer.toString('utf8');
-      const regex = 'FTPSource=([^|]+)\\|([^|]+)\\|([^|]+)\\s*[\\n\\r]';
-      fstring.match(new RegExp(regex, 'g'))?.forEach((mx: string) => {
-        const m = mx.match(new RegExp(regex));
-        if (m) {
-          result.push({
-            name: m[1],
-            domain: m[2],
-            path: m[3],
-            file: 'mods.d.tar.gz',
-          });
-        }
-      });
-      return result;
-    }
-    return 'Canceled';
-  },
-
-  // Takes an array of local and remote SWORD or XSM repositories and returns a mapped
-  // array containing:
-  // - SwordConfType object array if mods.d.tar.gz or config files were found.
-  // - Or a string error message if there was an error or was canceled.
-  // - Or null if the repository was null or disabled.
-  // Progress on each repository is separately reported to the calling
-  // window, but results are not returned until all repositories have
-  // been completely handled.
-  async repositoryListing(repositories) {
-    const callingWinID = (arguments[1] ?? -1) as number;
-    ftpCancel(false);
-    const promises = repositories.map(async (repo) => {
-      const progress = (prog: number) => {
-        if (!repo) return;
-        const dlk = downloadKey(repo);
-        log.debug(`REPO progress ${dlk}: ${prog}`);
-        const w = BrowserWindow.fromId(callingWinID);
-        w?.webContents.send('progress', prog, dlk);
-      };
-      let value = null;
-      if (repo && !repo.disabled) {
-        if (isRepoLocal(repo)) {
-          if (fpath.isAbsolute(repo.path)) {
-            const modsd = new LocalFile(repo.path).append('mods.d');
-            if (modsd.exists() && modsd.isDirectory()) {
-              const confs: SwordConfType[] = [];
-              modsd.directoryEntries.forEach((de) => {
-                const f = modsd.clone().append(de);
-                if (!f.isDirectory() && f.path.endsWith('.conf')) {
-                  const conf = parseSwordConf(f);
-                  conf.sourceRepository = repo;
-                  confs.push(conf);
-                }
-              });
-              value = confs;
-            } else value = `Directory not found: ${repo.path}/mods.d`;
-          } else value = `Path not absolute: ${repo.path}/mods.d`;
-          if (progress) progress(-1);
-          return value;
-        }
-        let files: { header: { name: string }; content: Buffer }[] | null = [];
-        try {
-          const targzbuf = await getFile(
-            repo.domain,
-            fpath.join(repo.path, repo.file),
-            progress
-          );
-          if (targzbuf) {
-            files = await untargz(targzbuf);
-          } else value = 'Canceled';
-        } catch (er: any) {
-          // If there was no mods.d.tar.gz, then download every conf file.
-          let listing: ListingElementR[] | null = null;
-          let bufs: Buffer[] | null = null;
-          try {
-            if (!/Could not get file size/i.test(er)) throw er;
-            listing = await list(
-              repo.domain,
-              fpath.join(repo.path, 'mods.d'),
-              '',
-              1
-            );
-            if (listing) {
-              bufs = await getFiles(
-                repo.domain,
-                listing.map((l) => fpath.join(repo.path, 'mods.d', l.name)),
-                progress
-              );
-            }
-            if (bufs) {
-              bufs.forEach((b, i) => {
-                if (files && listing) {
-                  files.push({ header: { name: listing[i].name }, content: b });
-                }
-              });
-            } else {
-              value = 'Canceled';
-            }
-          } catch (err: any) {
-            if (progress) progress(-1);
-            return Promise.resolve(err.toString());
-          }
-        }
-        if (files) {
-          const confs: SwordConfType[] = [];
-          files.forEach((r) => {
-            const { header, content: buffer } = r;
-            if (header.name.endsWith('.conf')) {
-              const cobj = parseSwordConf(buffer.toString('utf8'), header.name);
-              cobj.sourceRepository = repo;
-              confs.push(cobj);
-            }
-          });
-          value = confs;
-        }
-      }
-      if (progress) progress(-1);
-      return value;
-    });
-    return Promise.allSettled(promises).then((results) => {
-      const ret: RepositoryListing[] = [];
-      results.forEach((result) => {
-        if (result.status === 'fulfilled') ret.push(result.value);
-        else ret.push(result.reason.toString());
-      });
-      return ret;
-    });
-  },
-
-  ftpCancel() {
-    ftpCancel(true);
-  },
-};
-
-export default Downloader;
-
-export async function downloadFileHTTP(
+export async function getFileHTTP(
   url: string,
   dest: LocalFile | string,
   progress?: ((p: number) => void) | null
@@ -658,7 +513,8 @@ export async function downloadFileHTTP(
     const destFile = new LocalFile(destpath);
     ses.setDownloadPath(fpath.dirname(destpath));
     // TODO!: Get this to work with GenBook UTF8 paths.
-    ses.on('will-download', (_event, item) => {
+    ses.on('will-download', (event, item) => {
+      HttpCancelable.push({ url, wdevent: event });
       item.setSavePath(destpath);
       item.on('updated', (_e, state) => {
         if (state === 'interrupted') {
@@ -672,12 +528,12 @@ export async function downloadFileHTTP(
         }
       });
       item.once('done', (_e, state) => {
+        const i = HttpCancelable.findIndex((hc) => hc.url === url);
+        if (i !== -1) HttpCancelable.splice(i, 1);
         if (state === 'completed') {
           resolve(destFile);
         } else {
-          const er = new Error(`Download failed: ${state}`);
-          reject(er);
-          log.error(er);
+          reject(new Error(`Download failed: ${state}`));
         }
       });
     });

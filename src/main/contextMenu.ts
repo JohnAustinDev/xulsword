@@ -2,9 +2,8 @@
 import { BrowserWindow } from 'electron';
 import contextMenuCreator from 'electron-context-menu';
 import i18next from 'i18next';
-import C from '../constant';
 import G from './mg';
-import Commands, { newDbItemWithDefaults } from './commands';
+import Commands, { newDbItemWithDefaults } from './components/commands';
 import setViewportTabs from './tabs';
 import Data from './components/data';
 

@@ -9,8 +9,10 @@ import {
   clone,
   downloadKey,
   isRepoLocal,
+  keyToDownload,
   modrepKey,
   ofClass,
+  repositoryKey,
   rowsToSelection,
   selectionToRows,
   versionCompare,
@@ -21,6 +23,8 @@ import { log, moduleInfoHTML } from '../rutil';
 import { TCellInfo, TCellLocation } from '../libxul/table';
 
 import type {
+  Download,
+  GType,
   Repository,
   RepositoryListing,
   RowSelection,
@@ -67,7 +71,6 @@ export function builtinRepos(): Repository[] {
       name: 'Shared | Общий',
       domain: 'file://',
       path: G.Dirs.path.xsModsCommon,
-      file: '',
       builtin: true,
       disabled: false,
       custom: false,
@@ -76,7 +79,6 @@ export function builtinRepos(): Repository[] {
       name: i18n.t('programTitle'),
       domain: 'file://',
       path: G.Dirs.path.xsModsUser,
-      file: '',
       builtin: true,
       disabled: false,
       custom: false,
@@ -85,7 +87,6 @@ export function builtinRepos(): Repository[] {
       name: i18n.t('audio.label'),
       domain: 'file://',
       path: G.Dirs.path.xsAudio,
-      file: '',
       builtin: true,
       disabled: false,
       custom: false,
@@ -197,7 +198,7 @@ export const RepCol = {
 } as const;
 
 export const Downloads: {
-  [modrepoKey: string]: {
+  [downloadKey: string]: {
     nfiles: Promise<number | null>;
     failed: boolean;
   };
@@ -403,7 +404,7 @@ export function onCellEdited(
     const drow = tablestate.data[row];
     if (table === 'repository' && drow) {
       const crindex = newCustomRepos.findIndex(
-        (r) => downloadKey(r) === downloadKey(drow[RepCol.iInfo].repo)
+        (r) => repositoryKey(r) === repositoryKey(drow[RepCol.iInfo].repo)
       );
       if (crindex !== -1) {
         newCustomRepos.splice(crindex, 1);
@@ -520,27 +521,38 @@ export async function eventHandler(
             });
 
             // Remove modules
+            const clearMods: Download[] = [];
             Object.values(moduleData).forEach((row) => {
               const module = row[ModCol.iModule];
               if (row[ModCol.iInstalled] === OFF) {
-                const { repo } = row[ModCol.iInfo];
-                const modrepok = modrepKey(module, repo);
-                const conf = installed.find(
-                  (c) => modrepKey(c.module, c.sourceRepository) === modrepok
+                const { repo, conf } = row[ModCol.iInfo];
+                const downloadkey = downloadKey(
+                  conf.xsmType === 'XSM_audio'
+                    ? conf.DataPath
+                    : { ...repo, file: module }
                 );
-                if (modrepok in Downloads) {
-                  if (!G.Module.clearDownload(module, repo)) {
-                    log.warn(`Failed to clear ${module} from downloads`);
-                    Downloads[modrepok].failed = true;
-                  }
-                } else if (conf) {
+                const modrepkey = modrepKey(module, repo);
+                const lconf = installed.find(
+                  (c) => modrepKey(c.module, c.sourceRepository) === modrepkey
+                );
+                if (downloadkey in Downloads) {
+                  clearMods.push(downloadkey);
+                } else if (lconf) {
                   removeMods.push({
-                    name: conf.module,
-                    repo: conf.sourceRepository,
+                    name: lconf.module,
+                    repo: lconf.sourceRepository,
                   });
                 }
               }
             });
+            if (clearMods.length) {
+              const cleared = G.Module.clearDownload(clearMods);
+              if (cleared !== clearMods.length) {
+                log.warn(
+                  `Failed to clear ${clearMods.length - cleared} downloads`
+                );
+              }
+            }
 
             const removeResult = await G.Module.remove(removeMods);
             removeResult.forEach((r, i) => {
@@ -559,9 +571,11 @@ export async function eventHandler(
                   );
                   if (conf?.sourceRepository.builtin) {
                     const toRepo = builtinRepos()[shared ? 0 : 1];
-                    const fromKey = conf && downloadKey(conf.sourceRepository);
-                    const toKey = downloadKey(toRepo);
-                    if (conf && fromKey !== toKey) {
+                    if (
+                      conf &&
+                      repositoryKey(conf.sourceRepository) !==
+                        repositoryKey(toRepo)
+                    ) {
                       moveMods.push({
                         name: module,
                         fromRepo: conf.sourceRepository,
@@ -578,29 +592,23 @@ export async function eventHandler(
             });
 
             // Install modules
-            const install: {
-              module: string;
-              fromRepo: Repository;
-              toRepo: Repository;
-            }[] = [];
+            const install: Parameters<GType['Module']['installDownloads']>[0] =
+              [];
             downloadResults.forEach((dlr, i) => {
               if (dlr.status !== 'fulfilled') log.warn(dlr.reason);
               else if (dlr.value) {
-                const modrepok = downloadKeys[i];
-                const dot = modrepok ? modrepok.lastIndexOf('.') : -1;
-                if (dot === -1) return;
-                const module = modrepok.substring(dot + 1);
-                const repokey = modrepok.substring(0, dot);
+                const dl = keyToDownload(downloadKeys[i]);
+                const modrepkey =
+                  typeof dl === 'string' ? '' : modrepKey(dl.file, dl);
                 const row = Object.values(moduleData).find((r) => {
-                  return (
-                    downloadKey(r[ModCol.iInfo].repo) === repokey &&
-                    r[ModCol.iModule] === module
-                  );
+                  return typeof dl === 'string'
+                    ? dl === r[ModCol.iInfo].conf.DataPath
+                    : modrepkey ===
+                        modrepKey(r[ModCol.iModule], r[ModCol.iInfo].repo);
                 });
                 if (row && row[ModCol.iInstalled]) {
                   install.push({
-                    module: row[ModCol.iModule],
-                    fromRepo: row[ModCol.iInfo].repo,
+                    download: dl,
                     toRepo: builtinRepos()[row[ModCol.iInfo].shared ? 0 : 1],
                   });
                 }
@@ -628,7 +636,6 @@ export async function eventHandler(
               name: '?',
               domain: C.Downloader.localfile,
               path: '?',
-              file: 'mods.d.tar.gz',
               disabled: true,
               custom: true,
               builtin: false,
@@ -670,7 +677,7 @@ export async function eventHandler(
                 repositoryListings.splice(r, 1);
                 const crIndex = repositories.custom.findIndex(
                   (ro) =>
-                    downloadKey(ro) === downloadKey(drow[RepCol.iInfo].repo)
+                    repositoryKey(ro) === repositoryKey(drow[RepCol.iInfo].repo)
                 );
                 if (crIndex !== -1) {
                   newCustomRepos.splice(crIndex, 1);
@@ -685,7 +692,15 @@ export async function eventHandler(
           break;
         }
         case 'repoCancel': {
-          G.Downloader.ftpCancel();
+          const repos = Object.keys(Downloads)
+            .filter((d) => {
+              const dlo = keyToDownload(d);
+              return (
+                typeof dlo !== 'string' && dlo.file === C.SwordRepoManifest
+              );
+            })
+            .map((d) => keyToDownload(d));
+          G.Module.cancel(repos);
           const state = this.state as ManagerState;
           const { repository: repotable } = state.tables;
           repotable.data.forEach((r, i) => {
@@ -699,7 +714,15 @@ export async function eventHandler(
           break;
         }
         case 'moduleCancel': {
-          G.Downloader.ftpCancel();
+          const mods = Object.keys(Downloads)
+            .filter((d) => {
+              const dlo = keyToDownload(d);
+              return !(
+                typeof dlo !== 'string' && dlo.file === C.SwordRepoManifest
+              );
+            })
+            .map((d) => keyToDownload(d));
+          G.Module.cancel(mods);
           Saved.moduleLangData.allmodules?.forEach((r) => {
             if (r[ModCol.iInfo].loading) {
               r[ModCol.iInfo].loading = false;
@@ -799,7 +822,7 @@ export function switchRepo(
       : repoTableData
           .map((r) =>
             r[RepCol.iInfo].repo.disabled
-              ? downloadKey(r[RepCol.iInfo].repo)
+              ? repositoryKey(r[RepCol.iInfo].repo)
               : ''
           )
           .filter(Boolean);
@@ -808,7 +831,7 @@ export function switchRepo(
       const drow = repoTableData[r];
       const unswitchable = !drowWas || drowWas[RepCol.iInfo].repo.builtin;
       if (drow && !unswitchable) {
-        const rowkey = downloadKey(drowWas[RepCol.iInfo].repo);
+        const rowkey = repositoryKey(drowWas[RepCol.iInfo].repo);
         const disabledIndex = disabledRepos.findIndex((drs) => {
           return drs === rowkey;
         });
@@ -827,7 +850,9 @@ export function switchRepo(
           drow[RepCol.iInfo].repo.disabled = true;
           if (disabledIndex === -1) disabledRepos.push(rowkey);
           if (drow[RepCol.iInfo].loading) {
-            G.Downloader.ftpCancel();
+            G.Module.cancel([
+              { ...drow[RepCol.iInfo].repo, file: C.SwordRepoManifest },
+            ]);
             drow[RepCol.iInfo].loading = false;
           }
           drow[RepCol.iInfo].intent = intent(RepCol.iState, 'none');
@@ -837,15 +862,15 @@ export function switchRepo(
     this.setTableState('repository', null, repoTableData, true, {
       repositories: { ...repositories, disabled: disabledRepos },
     });
-    G.Downloader.repositoryListing(
+    G.Module.repositoryListing(
       repoTableData.map((r, i) =>
         rows.includes(i) && !r[RepCol.iInfo].repo.disabled
-          ? r[RepCol.iInfo].repo
+          ? { ...r[RepCol.iInfo].repo, file: C.SwordRepoManifest }
           : null
       )
     )
       .then((listing) => {
-        if (!listing) throw new Error(`Canceled`);
+        if (!listing) log.debug(`repositoryListing canceled`);
         this.updateRepositoryLists(listing);
         let selection = this.loadLanguageTable();
         const { language } = this.state as ManagerState;
@@ -1231,8 +1256,8 @@ export function selectionToDataRows(
 // Create a new repository table row from a Repository object.
 export function repositoryToRow(repo: Repository): TRepositoryTableRow {
   const on = builtinRepos()
-    .map((r) => downloadKey(r))
-    .includes(downloadKey(repo))
+    .map((r) => repositoryKey(r))
+    .includes(repositoryKey(repo))
     ? ALWAYS_ON
     : ON;
   return [

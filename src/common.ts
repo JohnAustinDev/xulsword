@@ -15,7 +15,6 @@ import type {
   SwordConfType,
   TabType,
   RowSelection,
-  SwordConfLocalized,
 } from './type';
 import type LocalFile from './main/components/localFile';
 
@@ -585,16 +584,29 @@ export function versionCompare(v1: string | number, v2: string | number) {
   return 0;
 }
 
-export function isRepoLocal(repo: Download | Repository): boolean {
+export function isRepoLocal(repo: Repository): boolean {
   return repo.domain === C.Downloader.localfile;
 }
 
 export function downloadKey(dl: Download): string {
+  if (typeof dl === 'string') return dl;
   return `[${[dl.name, dl.domain, dl.path, dl.file].join('][')}]`;
 }
 
-export function modrepKey(module: string, repository: Repository): string {
-  return [downloadKey(repository), module].join('.');
+export function repositoryKey(r: Repository): string {
+  return `[${[r.name, r.domain, r.path].join('][')}]`;
+}
+
+export function modrepKey(module: string, r: Repository): string {
+  return `[${[r.name, r.domain, r.path, module].join('][')}]`;
+}
+
+export function keyToDownload(downloadkey: string): Download {
+  if (C.URLRE.test(downloadkey)) return downloadkey;
+  const [name, domain, path, file] = downloadkey
+    .substring(1, downloadkey.length - 1)
+    .split('][');
+  return { name, domain, path, file };
 }
 
 export function selectionToRows(regions: Region[]): number[] {

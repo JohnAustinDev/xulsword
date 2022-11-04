@@ -15,20 +15,29 @@ function silly(msg: string) {
 // This G object is for use in renderer processes, and it shares the same
 // interface as a main process G object. Both G objects are built auto-
 // matically at runtime from the same GPublic declaration. Properties of
-// this object access data and objects via IPC to the main process G object.
+// this object access data and objects via IPC of the main process G object.
 // All getter and cacheable data is cached locally.
 const G = {} as typeof GPublic;
 const asyncFuncs: [
   [keyof GType, (keyof GType['getSystemFonts'])[]],
   [keyof GType, (keyof GType['Commands'])[]],
-  [keyof GType, (keyof GType['Downloader'])[]],
   [keyof GType, (keyof GType['Module'])[]],
   [keyof GType, (keyof GType['LibSword'])[]]
 ] = [
   ['getSystemFonts', []],
   ['Commands', ['installXulswordModules']],
-  ['Downloader', ['crossWireMasterRepoList', 'repositoryListing']],
-  ['Module', ['download', 'downloadXSM', 'installDownloads', 'remove', 'move']],
+  [
+    'Module',
+    [
+      'download',
+      'downloadXSM',
+      'installDownloads',
+      'remove',
+      'move',
+      'crossWireMasterRepoList',
+      'repositoryListing',
+    ],
+  ],
   ['LibSword', ['searchIndexBuild', 'search']],
 ];
 

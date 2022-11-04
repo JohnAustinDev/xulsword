@@ -4,11 +4,10 @@ import { BrowserWindow, dialog, OpenDialogSyncOptions } from 'electron';
 import { BrowserWindowConstructorOptions } from 'electron/main';
 import log from 'electron-log';
 import i18n from 'i18next';
-import Subscription from '../subscription';
-import { clone, JSON_stringify } from '../common';
-import { verseKey, getTab, getTabs } from './minit';
-import Prefs from './components/prefs';
-import LocalFile from './components/localFile';
+import { clone, JSON_stringify } from '../../common';
+import { verseKey, getTab, getTabs } from './../minit';
+import Prefs from './prefs';
+import LocalFile from './localFile';
 import { modalInstall } from './module';
 import Window, { getBrowserWindows } from './window';
 
@@ -19,8 +18,8 @@ import type {
   ScrollType,
   TextVKType,
   XulswordStatePref,
-} from '../type';
-import type { AboutWinState } from '../renderer/about/about';
+} from '../../type';
+import type { AboutWinState } from '../../renderer/about/about';
 
 const Commands: GType['Commands'] = {
   openModuleManager() {

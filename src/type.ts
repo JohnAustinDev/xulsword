@@ -509,7 +509,10 @@ export type DirsDirectories = {
   xsModsCommon: string;
 };
 
-export type Repository = Download & {
+export type Repository = {
+  name: string;
+  domain: string;
+  path: string;
   disabled?: boolean;
   custom?: boolean;
   builtin?: boolean;
@@ -517,12 +520,11 @@ export type Repository = Download & {
 
 export type RepositoryListing = SwordConfType[] | string | null;
 
-export type Download = {
-  domain: string;
-  path: string;
+export type FTPDownload = Repository & {
   file: string;
-  name?: string;
 };
+
+export type Download = FTPDownload | string; // string is http(s) URL
 
 export type ZipEntryType = {
   entryName: string;
@@ -808,16 +810,14 @@ export const GPublic = {
     read: func as unknown as (name: string) => any,
     readAndDelete: func as unknown as (name: string) => any,
   },
-  Downloader: {
+
+  Module: {
     crossWireMasterRepoList: func as unknown as () => Promise<
-      Download[] | string
+      Repository[] | string
     >,
     repositoryListing: func as unknown as (
-      repos: (Repository | null)[]
+      repos: (FTPDownload | null)[]
     ) => Promise<RepositoryListing[]>,
-    ftpCancel: func as unknown as () => void,
-  },
-  Module: {
     download: func as unknown as (
       module: string,
       repository: Repository
@@ -827,20 +827,26 @@ export const GPublic = {
       zipFileOrURL: string,
       repository: Repository
     ) => Promise<number | string>,
+    // Cancel some or all in-progress downloads
+    cancel: func as unknown as (downloads?: (Download | string)[]) => number,
+    // Clear an already downloaded module so it won't be installed
+    clearDownload: func as unknown as (
+      downloads?: (Download | string)[]
+    ) => number,
+    // Install previously downloaded modules
     installDownloads: func as unknown as (
-      installs: { module: string; fromRepo: Repository; toRepo: Repository }[],
+      installs: { download: Download; toRepo: Repository }[],
       callingWinID?: number
     ) => Promise<NewModulesType>,
-    clearDownload: func as unknown as (
-      module?: string,
-      repository?: Repository
-    ) => boolean,
+    // Remove (uninstall) one or more installed modules
     remove: func as unknown as (
       modules: { name: string; repo: Repository }[]
     ) => Promise<boolean[]>,
+    // Move one or more modules between local repositories
     move: func as unknown as (
       modules: { name: string; fromRepo: Repository; toRepo: Repository }[]
     ) => Promise<boolean[]>,
+    // Overwrite the config file of any locally installed module
     writeConf: func as unknown as (
       confFilePath: string,
       contents: string

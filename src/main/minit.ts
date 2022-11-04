@@ -16,7 +16,7 @@ import Prefs from './components/prefs';
 import LibSword from './components/libsword';
 import LocalFile from './components/localFile';
 import { getFeatureModules, getModuleFonts, getModuleConfig } from './config';
-import { moduleUnsupported } from './module';
+import { moduleUnsupported } from './components/module';
 
 import type {
   TabType,

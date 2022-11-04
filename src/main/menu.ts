@@ -11,7 +11,7 @@ import path from 'path';
 import { clone } from '../common';
 import C from '../constant';
 import G from './mg';
-import Commands, { newDbItemWithDefaults } from './commands';
+import Commands, { newDbItemWithDefaults } from './components/commands';
 import setViewportTabs from './tabs';
 
 import type { SearchType, TabTypes, XulswordStatePref } from '../type';

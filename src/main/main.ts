@@ -8,7 +8,6 @@ import {
   BrowserWindow,
   ipcMain,
   IpcMainEvent,
-  shell,
 } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
@@ -22,9 +21,8 @@ import MenuBuilder, { pushPrefsToMenu } from './menu';
 import {
   WindowRegistry,
   pushPrefsToWindows,
-  getBrowserWindows,
   publishSubscription,
-} from './window';
+} from './components/window';
 import contextMenu from './contextMenu';
 import { updateGlobalModulePrefs } from './minit';
 import setViewportTabs from './tabs';

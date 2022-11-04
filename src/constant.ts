@@ -59,6 +59,8 @@ const C = {
     localfile: 'file://',
   },
 
+  URLRE: /^https?:\/\//i,
+
   FTPMaxConnectionsPerDomain: 24, // 40 is absolute max. 36 failed on crosswire.org
   FTPMaxConnections: 48,
   FTPUserName: 'anonymous', // TODO!: How to set: 'xulsword@xulsword.org',
@@ -313,6 +315,8 @@ const C = {
   } as { [key in SwordFilterType]: keyof ShowType },
 
   SwordFilterValues: ['Off', 'On'] as SwordFilterValueType[],
+
+  SwordRepoManifest: 'mods.d.tar.gz',
 
   SwordConf: {
     // default is string

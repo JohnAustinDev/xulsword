@@ -20,6 +20,7 @@ import {
   modrepKey,
   selectionToRows,
   sanitizeHTML,
+  repositoryKey,
 } from '../../common';
 import C from '../../constant';
 import G from '../rg';
@@ -301,8 +302,10 @@ export default class ModuleManager extends React.Component {
       H.Saved.repositoryListings = [];
       let listing: RepositoryListing[] = [];
       try {
-        listing = await G.Downloader.repositoryListing(
-          this.loadRepositoryTable()
+        listing = await G.Module.repositoryListing(
+          this.loadRepositoryTable().map((r) => {
+            return { ...r, file: C.SwordRepoManifest };
+          })
         );
       } catch (err) {
         log.warn(err);
@@ -314,7 +317,7 @@ export default class ModuleManager extends React.Component {
       if (repositories) {
         H.Saved.repository.data = [];
         H.Saved.repositoryListings = [];
-        G.Downloader.crossWireMasterRepoList()
+        G.Module.crossWireMasterRepoList()
           .then((repos) => {
             if (typeof repos === 'string') {
               const msg =
@@ -323,8 +326,11 @@ export default class ModuleManager extends React.Component {
                   : repos;
               throw new Error(msg);
             }
-            const allrepos = this.loadRepositoryTable(repos);
-            return G.Downloader.repositoryListing(allrepos);
+            return G.Module.repositoryListing(
+              this.loadRepositoryTable(repos).map((r) => {
+                return { ...r, file: C.SwordRepoManifest };
+              })
+            );
           })
           .then((listing) => {
             return handleListing(listing);
@@ -365,7 +371,11 @@ export default class ModuleManager extends React.Component {
           // Set individual repository progress bars
           const { repository, module } = state.tables;
           const repoIndex = repository.data.findIndex(
-            (r) => downloadKey(r[H.RepCol.iInfo].repo) === id
+            (r) =>
+              downloadKey({
+                ...r[H.RepCol.iInfo].repo,
+                file: C.SwordRepoManifest,
+              }) === id
           );
           const repdrow = repository.data[repoIndex];
           if (repdrow && prog === -1 && repdrow[H.RepCol.iInfo].loading) {
@@ -376,7 +386,7 @@ export default class ModuleManager extends React.Component {
           const modIndex = module.data.findIndex((r) => {
             const { repo } = r[H.ModCol.iInfo];
             const mod = r[H.ModCol.iModule];
-            return [downloadKey(repo), mod].join('.') === id;
+            return downloadKey({ ...repo, file: mod }) === id;
           });
           const moddrow = module.data[modIndex];
           if (moddrow && prog === -1) {
@@ -453,7 +463,7 @@ export default class ModuleManager extends React.Component {
       const repoTableData: TRepositoryTableRow[] = [];
       allrepos.forEach((repo) => {
         if (disabled && !repo.builtin) {
-          repo.disabled = disabled.includes(downloadKey(repo)) || false;
+          repo.disabled = disabled.includes(repositoryKey(repo)) || false;
         }
         const css = H.classes([H.RepCol.iState], ['checkbox-column']);
         const canedit = repo.custom ? H.editable() : false;
@@ -577,7 +587,8 @@ export default class ModuleManager extends React.Component {
     const state = this.state as ManagerState;
     // Insure there is one moduleData row object for each module in
     // each repository (local and remote). The same object should be reused
-    // throughout the lifetime of the window, so user interactions will be recorded.
+    // throughout the lifetime of the window, so user interactions will be
+    // recorded.
     const { repository: repotable } = state.tables;
     H.Saved.moduleLangData = { allmodules: [] };
     const { moduleData, moduleLangData, repositoryListings } = H.Saved;
@@ -589,7 +600,7 @@ export default class ModuleManager extends React.Component {
       if (drow && Array.isArray(listing)) {
         listing.forEach((c) => {
           const { repo } = drow[H.RepCol.iInfo];
-          const repokey = downloadKey(repo);
+          const repokey = repositoryKey(repo);
           const modrepk = modrepKey(c.module, repo);
           // Different audio and SWORD modules might share the same name,
           // so include XSM_audio in key.
@@ -619,7 +630,7 @@ export default class ModuleManager extends React.Component {
             const d = [] as unknown as TModuleTableRow;
             d[H.ModCol.iInfo] = {
               repo,
-              shared: repokey === downloadKey(H.builtinRepos()[0]),
+              shared: repokey === repositoryKey(H.builtinRepos()[0]),
               classes: H.modclasses(),
               tooltip: H.tooltip('VALUE', [
                 H.ModCol.iShared,
