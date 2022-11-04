@@ -135,7 +135,7 @@ export default class LocalFile {
 
   isDirectory(): boolean {
     const stats = this.stats();
-    return stats.isDirectory();
+    return (stats && stats.isDirectory()) ?? false;
   }
 
   get directoryEntries(): string[] {
@@ -164,7 +164,8 @@ export default class LocalFile {
     fs.rmSync(this.path, { recursive });
   }
 
-  stats(options?: any): fs.Stats {
+  stats(options?: any): fs.Stats | null {
+    if (!this.exists()) return null;
     return fs.statSync(this.path, options);
   }
 
