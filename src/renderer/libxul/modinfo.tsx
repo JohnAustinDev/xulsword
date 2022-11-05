@@ -6,54 +6,138 @@
 import React from 'react';
 import i18n from 'i18next';
 import PropTypes from 'prop-types';
-import { sanitizeHTML } from '../../common';
+import { randomID, sanitizeHTML } from '../../common';
 import { moduleInfoHTML } from '../rutil';
 import G from '../rg';
-import { addClass, xulDefaultProps, xulPropTypes, XulProps } from './xul';
-import { Vbox } from './boxes';
+import { xulDefaultProps, xulPropTypes, XulProps, htmlAttribs } from './xul';
 import Button from './button';
 import Label from './label';
+import '../libsword.css'; // modinfo uses .head1
 import './modinfo.css';
 
 import type { SwordConfType } from '../../type';
+
+// Parent component should have this included in its state and state-type.
+export const modinfoParentInitialState = {
+  showConf: '' as string,
+  editConf: false as boolean,
+};
+
+// Parent component should implement this interface.
+export interface ModinfoParent {
+  state: React.ComponentState;
+  modinfoRefs: {
+    textarea: React.RefObject<HTMLTextAreaElement>;
+    container: React.RefObject<HTMLDivElement>;
+  };
+  setState: React.Component['setState'];
+}
+
+// Parent component should pass this function (bound) to the
+// Modinfo buttonHandler prop.
+export function modinfoParentHandler(
+  this: ModinfoParent,
+  e: React.SyntheticEvent
+): void {
+  switch (e.type) {
+    case 'click': {
+      const target = e.currentTarget as HTMLElement;
+      const [id, m] = target.id.split('.');
+      switch (id) {
+        case 'more': {
+          const s: Partial<ModinfoParent['state']> = {
+            showConf: m,
+            editConf: false,
+          };
+          this.setState(s);
+          break;
+        }
+        case 'less': {
+          const s: Partial<ModinfoParent['state']> = {
+            showConf: '',
+            editConf: false,
+          };
+          this.setState(s);
+          break;
+        }
+        case 'edit': {
+          const s: Partial<ModinfoParent['state']> = {
+            editConf: true,
+          };
+          this.setState(s);
+          break;
+        }
+        case 'save': {
+          if (m && m in G.Tab) {
+            const { modinfoRefs } = this;
+            const { textarea } = modinfoRefs;
+            if (textarea?.current?.value) {
+              G.Module.writeConf(G.Tab[m].confPath, textarea?.current?.value);
+              const s: Partial<ModinfoParent['state']> = {
+                editConf: false,
+              };
+              this.setState(s);
+            }
+          }
+          break;
+        }
+        case 'top': {
+          const { modinfoRefs } = this;
+          const { container } = modinfoRefs;
+          const scrollcont = container.current?.childNodes[0] as HTMLDivElement;
+          if (scrollcont) scrollcont.scrollTop = 0;
+          break;
+        }
+        default:
+          throw new Error(`Unhandled click event ${id} in about.tsx`);
+      }
+      break;
+    }
+    default:
+  }
+}
 
 // XUL Sword module info and config
 const defaultProps = {
   ...xulDefaultProps,
   configs: undefined,
-  showConf: undefined,
+  showConf: '',
   editConf: undefined,
-  conftextRef: undefined,
-  handler: undefined,
 };
 
 const propTypes = {
   ...xulPropTypes,
-  modules: PropTypes.arrayOf(PropTypes.string),
+  modules: PropTypes.arrayOf(PropTypes.string).isRequired,
   configs: PropTypes.arrayOf(PropTypes.object),
-  showConf: PropTypes.number,
+  showConf: PropTypes.string,
   editConf: PropTypes.bool,
-  conftextRef: PropTypes.object,
-  handler: PropTypes.func,
+  refs: PropTypes.object.isRequired,
+  buttonHandler: PropTypes.func.isRequired,
 };
 
 interface ModinfoProps extends XulProps {
   modules: string[]; // modules to show
   configs: (SwordConfType | null)[] | undefined; // required only if modules are not already installed
-  showConf: number | undefined; // index of module whose conf to show, or -1 to show none
+  showConf: string; // module whose conf to show, or '' to show none
   editConf: boolean | undefined; // is that conf editable?
-  conftextRef: React.RefObject<HTMLTextAreaElement> | undefined; // ref to retreive conf edits
-  handler: (e: React.SyntheticEvent) => void | Promise<void> | undefined;
+  refs: {
+    container: React.RefObject<HTMLDivElement>; // ref to control scrolling
+    textarea: React.RefObject<HTMLTextAreaElement>; // ref to retreive conf edits
+  };
+  buttonHandler: (e: React.SyntheticEvent) => void | Promise<void>;
 }
+
 function Modinfo(props: ModinfoProps) {
   const {
     modules: ms,
     configs: cs,
     showConf,
     editConf,
-    conftextRef,
-    handler,
+    refs,
+    buttonHandler,
   } = props;
+  const { container, textarea } = refs;
+  const id = randomID();
 
   const modules: string[] = [];
   const configs: SwordConfType[] = [];
@@ -68,57 +152,111 @@ function Modinfo(props: ModinfoProps) {
   // Currently it is not possible to access the config file text for a
   // module unless it is installed locally (aw shucks).
   const confPath =
-    (showConf !== undefined &&
-      showConf !== -1 &&
-      modules[showConf] in G.Tab &&
-      G.Tab[modules[showConf]].confPath) ||
-    '';
+    (showConf && showConf in G.Tab && G.Tab[showConf].confPath) || '';
   const conftext: string[] =
-    showConf === -1 || !confPath
+    !showConf || !confPath
       ? []
       : G.inlineFile(confPath, 'utf8', true).split('\n');
 
+  const showLinkList = modules.length > 4;
+
   return (
-    <Vbox {...addClass('modinfo', props)}>
-      {modules?.map((m, i) => (
-        <div id={`mod_${m}`} className="modlist" key={`ml${m}`}>
-          <div className="head1">
-            <span className={`cs-${m}`}>{configs[i].module}</span>{' '}
-            <a href="#" id={`top.${m}`} onClick={handler}>
-              ↑
-            </a>
-          </div>
-          <div
-            // eslint-disable-next-line react/no-danger
-            dangerouslySetInnerHTML={{
-              __html: sanitizeHTML(moduleInfoHTML([configs[i]])),
-            }}
-          />
-          <div>
-            {showConf !== undefined &&
-              (showConf === -1 || modules[showConf] !== m) && (
+    <div {...htmlAttribs('modinfo', props)} ref={container}>
+      <div>
+        {showLinkList &&
+          ['Texts', 'Comms', 'Dicts', 'Genbks'].map((t) => (
+            <div key={`lt${t}`} className="linklist">
+              {modules.some((m) => G.Tab[m].tabType === t) && (
                 <>
-                  <Button id={`more.${m}`} onClick={handler}>
+                  <div className="head1">{i18n.t(t)}</div>
+                  <div className="listbox">
+                    <ul>
+                      {modules
+                        ?.sort((a, b) =>
+                          G.Tab[a].label.localeCompare(G.Tab[b].label)
+                        )
+                        .map((m) =>
+                          G.Tab[m].tabType === t ? (
+                            <li key={`lm${m}`}>
+                              <a
+                                href={`#${['module', m, id].join('.')}`}
+                                className={`cs-${m}`}
+                              >
+                                {G.Tab[m].label}
+                              </a>
+                            </li>
+                          ) : null
+                        )}
+                    </ul>
+                  </div>
+                </>
+              )}
+            </div>
+          ))}
+        {modules?.map((m) => (
+          <div
+            id={['module', m, id].join('.')}
+            className={`modlist x-${m}`}
+            key={`ml${m}`}
+          >
+            <div className="head1">
+              <span className={`cs-${m}`}>
+                {configs?.find((c) => c.module === m)?.module}
+              </span>
+              {showLinkList && (
+                <a
+                  href="#"
+                  id={['top', m, id].join('.')}
+                  className="top-link"
+                  onClick={buttonHandler}
+                >
+                  ↑
+                </a>
+              )}
+            </div>
+            <div
+              // eslint-disable-next-line react/no-danger
+              dangerouslySetInnerHTML={{
+                __html: sanitizeHTML(
+                  (configs &&
+                    moduleInfoHTML([
+                      configs.find((c) => c.module === m) as SwordConfType,
+                    ])) ||
+                    ''
+                ),
+              }}
+            />
+            <div>
+              {m in G.Tab && G.Tab[m].confPath && !(showConf === m) && (
+                <>
+                  <Button
+                    id={['more', m, id].join('.')}
+                    onClick={buttonHandler}
+                  >
                     {i18n.t('more.label')}
                   </Button>
                 </>
               )}
-            {showConf !== undefined &&
-              showConf !== -1 &&
-              modules[showConf] === m && (
+              {showConf && showConf === m && (
                 <>
-                  <Button id={`less.${m}`} onClick={handler}>
+                  <Button
+                    id={['less', m, id].join('.')}
+                    onClick={buttonHandler}
+                  >
                     {i18n.t('less.label')}
                   </Button>
-                  {editConf !== undefined && conftextRef !== undefined && (
+                  {editConf !== undefined && textarea !== undefined && (
                     <>
-                      <Button id={`edit.${m}`} onClick={handler}>
+                      <Button
+                        id={['edit', m, id].join('.')}
+                        onClick={buttonHandler}
+                      >
                         {i18n.t('editMenu.label')}
                       </Button>
                       <Button
-                        id={`save.${m}`}
+                        id={`save.${m}.${id}`}
                         disabled={!editConf}
-                        onClick={handler}
+                        onClick={buttonHandler}
                       >
                         {i18n.t('save.label')}
                       </Button>
@@ -126,10 +264,8 @@ function Modinfo(props: ModinfoProps) {
                   )}
                 </>
               )}
-          </div>
-          {showConf !== undefined &&
-            showConf !== -1 &&
-            modules[showConf] === m && (
+            </div>
+            {showConf && showConf === m && (
               <div>
                 <Label
                   className="confpath-label"
@@ -137,7 +273,8 @@ function Modinfo(props: ModinfoProps) {
                   value={confPath}
                 />
                 <textarea
-                  id={`ta.${m}`}
+                  id={['ta', m, id].join('.')}
+                  defaultValue={conftext.join('\n')}
                   className={editConf ? 'editable' : 'readonly'}
                   autoComplete="off"
                   autoCorrect="off"
@@ -145,15 +282,14 @@ function Modinfo(props: ModinfoProps) {
                   wrap="off"
                   readOnly={!editConf}
                   rows={conftext.length}
-                  ref={conftextRef}
-                >
-                  {conftext.join('\n')}
-                </textarea>
+                  ref={textarea}
+                />
               </div>
             )}
-        </div>
-      ))}
-    </Vbox>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 Modinfo.defaultProps = defaultProps;

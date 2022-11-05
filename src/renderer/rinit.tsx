@@ -15,7 +15,7 @@ import { initReactI18next } from 'react-i18next';
 import rendererBackend from 'i18next-electron-fs-backend';
 import { Intent, ProgressBar, Tag } from '@blueprintjs/core';
 import Subscription from '../subscription';
-import { JSON_parse } from '../common';
+import { JSON_parse, stringHash } from '../common';
 import Cache from '../cache';
 import C from '../constant';
 import G from './rg';
@@ -245,28 +245,32 @@ function Reset(props: ResetProps) {
     return Subscription.subscribe(
       'modulesInstalled',
       (newmods: NewModulesType) => {
-        const errwarn = newmods.errors.filter((msg) =>
-          /(failed|warning)/i.test(msg)
-        );
-        if (errwarn.length) G.Shell.beep();
-        if (errwarn.length) {
+        const haser = newmods.reports.some((r) => r.error);
+        const haswn = newmods.reports.some((r) => r.warning);
+        if (haser) G.Shell.beep();
+        if (haser || haswn) {
           setDialog(
             <Dialog
               className="modulesInstalled"
               body={
                 <>
-                  {errwarn.map((em) => (
-                    <Tag
-                      key={em}
-                      icon={/failed/i.test(em) ? 'error' : 'warning-sign'}
-                      intent={
-                        /failed/i.test(em) ? Intent.DANGER : Intent.WARNING
-                      }
-                      multiline
-                    >
-                      {em}
-                    </Tag>
-                  ))}
+                  {newmods.reports.map((r) =>
+                    Object.entries(r).map((entry) => {
+                      const [type, msg] = entry;
+                      return (
+                        <Tag
+                          key={[type, stringHash(msg)].join('.')}
+                          icon={type === 'error' ? 'error' : 'warning-sign'}
+                          intent={
+                            type === 'error' ? Intent.DANGER : Intent.WARNING
+                          }
+                          multiline
+                        >
+                          {msg}
+                        </Tag>
+                      );
+                    })
+                  )}
                 </>
               }
               buttons={

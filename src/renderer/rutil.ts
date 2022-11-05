@@ -10,7 +10,14 @@ import G from './rg';
 import RefParser, { RefParserOptionsType } from '../refparse';
 import VerseKey from '../versekey';
 import { ElemInfo, getElementInfo, TitleFormat } from '../libswordElemInfo';
-import { clone, diff, JSON_parse, JSON_stringify, ofClass } from '../common';
+import {
+  clone,
+  diff,
+  JSON_parse,
+  JSON_stringify,
+  ofClass,
+  versionCompare,
+} from '../common';
 
 import type ElectronLog from 'electron-log';
 import type {
@@ -623,6 +630,7 @@ export function moduleInfoHTML(configs: SwordConfType[]): string {
           } else if (sf === 'History') {
             const v = c[f] as [string, SwordConfLocalized][];
             value = v
+              .sort((a, b) => versionCompare(a[0], b[0]))
               .map((x) => {
                 const vers = esc(x[0]);
                 const desc = esc(lang in x[1] ? x[1][lang] : x[1].en);

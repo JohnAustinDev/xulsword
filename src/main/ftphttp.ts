@@ -11,6 +11,7 @@ import FTP, { ListingElement } from 'ftp';
 import GUNZIP from 'gunzip-maybe';
 import TAR from 'tar-stream';
 import { Stream, Readable } from 'stream';
+import { randomID } from '../common';
 import C from '../constant';
 import LocalFile from './components/localFile';
 
@@ -29,7 +30,7 @@ let FtpCancelable: {
 // will be called in reverse.
 function ftpCancelable(key: string, id?: string, func?: () => void) {
   // Return unique id
-  if (!id) return Math.random().toString(36).replace('0.', 'x');
+  if (!id) return randomID();
   if (!key) return '';
 
   // Remove a cancel id from FtpCancelable

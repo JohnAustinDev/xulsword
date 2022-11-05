@@ -15,12 +15,12 @@
   color: rgba(100, 100, 100, 0.4);
 }
 
-.language.closed .groupbox:first-child {
+.langsmods.lt-closed .groupbox:first-child {
   border: none;
   padding-left: 0;
   padding-right: 0;
 }
-.language.closed .groupbox:first-child .groupbox-body {
+.langsmods.lt-closed .groupbox:first-child .groupbox-body {
   padding: 0;
 }
 
@@ -31,7 +31,7 @@
 .module-deck {
   position: relative;
 }
-.module-deck .info {
+.module-deck .modinfo {
   position: absolute;
   height: 100%;
   width: 100%;

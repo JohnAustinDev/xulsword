@@ -42,24 +42,6 @@ html.about #root {
   height: 1.2em;
 }
 
-.modules {
-  overflow: auto;
-  flex-grow: 1;
-  flex-shrink: 1;
-}
-
-.linklist .listbox {
-  background-color: white;
-  border-radius: 8px;
-  border: 2px solid rgb(200, 170, 205);
-  margin: 10px 10px 20px 10px;
-  padding: 10px;
-}
-.linklist ul {
-  column-count: 3;
-  column-fill: balance;
-}
-
 .dialog-buttons {
   margin: 0;
   background-color: whitesmoke;

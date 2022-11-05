@@ -194,14 +194,17 @@ const openMainWindow = () => {
     Subscription.subscribe(
       'modulesInstalled',
       (newmods: NewModulesType, callingWinID?: number) => {
-        if (
-          newmods.errors.length &&
-          newmods.errors.some((msg) => /(failed|warning)/i.test(msg))
-        ) {
+        const newErrors = newmods.reports.map((r) => r.error).filter(Boolean);
+        const newWarns = newmods.reports.map((r) => r.warning).filter(Boolean);
+        if (newErrors.length) {
           log.error(
-            `Module installation problems follow:\n${newmods.errors.join('\n')}`
+            `Module installation problems follow:\n${newErrors.join('\n')}`
           );
-        } else if (!newmods.errors.length) {
+        } else if (newWarns.length) {
+          log.warn(
+            `All modules installed with warnings:\n${newWarns.join('\n')}`
+          );
+        } else {
           log.info('ALL FILES WERE SUCCESSFULLY INSTALLED!');
         }
         Subscription.publish('resetMain');

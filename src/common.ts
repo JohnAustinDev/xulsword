@@ -15,6 +15,7 @@ import type {
   SwordConfType,
   TabType,
   RowSelection,
+  NewModuleReportType,
 } from './type';
 import type LocalFile from './main/components/localFile';
 
@@ -129,6 +130,10 @@ export function stringHash(...args: any): string {
   const num = stringHashNum(r.join('y'));
 
   return `x${num < 0 ? 'm' : ''}${Math.abs(num)}`;
+}
+
+export function randomID(): string {
+  return Math.random().toString(36).replace('0.', 'x');
 }
 
 // JSON does not encode Javascript undefined, functions or symbols. So
@@ -449,7 +454,7 @@ export function parseSwordConf(
   filename: string
 ): SwordConfType {
   const conf = typeof config === 'string' ? config : config.readFile();
-  const errors = [];
+  const reports: NewModuleReportType[] = [];
   const lines = conf.split(/[\n\r]+/);
   const r = { filename } as SwordConfType;
   C.SwordConf.repeatable.forEach((en) => {
@@ -490,21 +495,23 @@ export function parseSwordConf(
         const htmlTags = value.match(/<\w+[^>]*>/g);
         if (htmlTags) {
           if (!C.SwordConf.htmllink.includes(entryBase)) {
-            errors.push(`Config entry '${entry}' should not contain HTML.`);
+            reports.push({
+              warning: `Config entry '${entry}' should not contain HTML.`,
+            });
           }
           if (htmlTags.find((t) => !t.match(/<a\s+href="[^"]*"\s*>/))) {
-            errors.push(
-              `HTML in entry '${entry}' can only be anchor tags with an href attribute.`
-            );
+            reports.push({
+              warning: `HTML in entry '${entry}' should be limited to anchor tags with an href attribute.`,
+            });
           }
         }
         // Check for RTF where it shouldn't be.
         const rtfControlWords = value.match(/\\\w[\w\d]*/);
         if (rtfControlWords) {
           if (!C.SwordConf.rtf.includes(entryBase)) {
-            errors.push(
-              `Warning: Config entry '${entry}' should not contain RTF.`
-            );
+            reports.push({
+              warning: `Config entry '${entry}' should not contain RTF.`,
+            });
           }
         }
         // Save the value according to value type.
@@ -556,7 +563,14 @@ export function parseSwordConf(
   if (r.ModDrv.includes('Text')) r.moduleType = 'Biblical Texts';
   else if (r.ModDrv.includes('Com')) r.moduleType = 'Commentaries';
   else if (r.ModDrv.includes('LD')) r.moduleType = 'Lexicons / Dictionaries';
-  r.errors = errors.map((er) => `${r.module}: ${er}`);
+  r.reports = reports.map((rp) => {
+    const nr: any = {};
+    Object.entries(rp).forEach((entry) => {
+      nr[entry[0]] = `${r.module}: ${entry[1]}`;
+    });
+    return nr;
+  });
+
   return r;
 }
 

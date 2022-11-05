@@ -19,7 +19,6 @@ import {
   isRepoLocal,
   modrepKey,
   selectionToRows,
-  sanitizeHTML,
   repositoryKey,
 } from '../../common';
 import C from '../../constant';
@@ -45,7 +44,10 @@ import Label from '../libxul/label';
 import DragSizer, { DragSizerVal } from '../libxul/dragsizer';
 import Checkbox from '../libxul/checkbox';
 import Dialog from '../libxul/dialog';
-import Modinfo from '../libxul/modinfo';
+import Modinfo, {
+  modinfoParentInitialState,
+  modinfoParentHandler as modinfoParentHandlerH,
+} from '../libxul/modinfo';
 import * as H from './managerH';
 import './manager.css';
 
@@ -72,6 +74,7 @@ import type {
   TonRowsReordered,
   TinitialRowSort,
 } from '../libxul/table';
+import type { ModinfoParent } from '../libxul/modinfo';
 
 G.Module.cancel();
 
@@ -88,9 +91,8 @@ export type ManagerProps = XulProps;
 // The following initial state values do not come from Prefs. Neither are
 // these state keys written to Prefs.
 const notStatePref = {
+  modules: [] as string[],
   progress: null as number[] | null,
-  showModuleInfo: [] as string[],
-  showConfIndex: -1 as number,
   showAudioDialog: null as {
     conf: SwordConfType;
     selection: VKSelection;
@@ -146,9 +148,14 @@ export interface ManagerStatePref {
   } | null;
 }
 
-export type ManagerState = ManagerStatePref & typeof notStatePref;
+export type ManagerState = ManagerStatePref &
+  typeof notStatePref &
+  typeof modinfoParentInitialState;
 
-export default class ModuleManager extends React.Component {
+export default class ModuleManager
+  extends React.Component
+  implements ModinfoParent
+{
   static defaultProps: typeof defaultProps;
 
   static propTypes: typeof propTypes;
@@ -159,6 +166,11 @@ export default class ModuleManager extends React.Component {
 
   tableRef: {
     [table in typeof H.Tables[number]]: React.RefObject<HTMLDivElement>;
+  };
+
+  modinfoRefs: {
+    textarea: React.RefObject<HTMLTextAreaElement>;
+    container: React.RefObject<HTMLDivElement>;
   };
 
   refHandlers = {
@@ -185,6 +197,8 @@ export default class ModuleManager extends React.Component {
 
   eventHandler;
 
+  modinfoParentHandler: typeof modinfoParentHandlerH;
+
   sState: (
     // sState is just for better TypeScript functionality
     s:
@@ -197,6 +211,7 @@ export default class ModuleManager extends React.Component {
 
     if (!props.id) throw Error(`Manager must have an ID`);
     const s: ManagerState = {
+      ...modinfoParentInitialState,
       ...notStatePref,
       ...(getStatePref(props.id) as ManagerStatePref),
     };
@@ -211,6 +226,11 @@ export default class ModuleManager extends React.Component {
       this.tableRef[t] = React.createRef();
     });
 
+    this.modinfoRefs = {
+      textarea: React.createRef(),
+      container: React.createRef(),
+    };
+
     this.destroy = [];
 
     this.loadRepositoryTable = this.loadRepositoryTable.bind(this);
@@ -223,6 +243,7 @@ export default class ModuleManager extends React.Component {
     this.onModCellClick = H.onModCellClick.bind(this);
     this.onCellEdited = H.onCellEdited.bind(this);
     this.eventHandler = H.eventHandler.bind(this);
+    this.modinfoParentHandler = modinfoParentHandlerH.bind(this);
     this.onRowsReordered = {
       language: H.onRowsReordered.bind(this, 'language'),
       module: H.onRowsReordered.bind(this, 'module'),
@@ -763,9 +784,10 @@ export default class ModuleManager extends React.Component {
     const {
       language,
       module,
+      modules,
+      showConf,
+      editConf,
       repository,
-      showModuleInfo,
-      showConfIndex,
       showAudioDialog,
       progress,
       repositories,
@@ -778,6 +800,7 @@ export default class ModuleManager extends React.Component {
     } = state.tables;
     const {
       eventHandler,
+      modinfoParentHandler,
       onCellEdited,
       onColumnHide,
       onColumnsReordered,
@@ -789,6 +812,7 @@ export default class ModuleManager extends React.Component {
       dialogClose,
       dialogAccept,
       tableRef,
+      modinfoRefs,
       dialogOnChange,
     } = this;
 
@@ -845,7 +869,7 @@ export default class ModuleManager extends React.Component {
           )}
           <Hbox
             flex="1"
-            className={`language ${language.open ? 'open' : 'closed'}`}
+            className={`langsmods ${language.open ? 'lt-open' : 'lt-closed'}`}
           >
             {language.open && (
               <>
@@ -907,20 +931,22 @@ export default class ModuleManager extends React.Component {
               flex="1"
             >
               <Hbox className="module-deck" flex="1">
-                {showModuleInfo.length > 0 && (
+                {modules.length > 0 && (
                   <Modinfo
-                    modules={showModuleInfo}
-                    showConf={showConfIndex}
-                    configs={showModuleInfo.map((m) => {
+                    modules={modules}
+                    showConf={showConf}
+                    editConf={editConf}
+                    configs={modules.map((m) => {
                       const mr = modtable.data.find(
                         (r) => r[H.ModCol.iModule] === m
                       );
                       return (mr && mr[H.ModCol.iInfo].conf) || null;
                     })}
-                    handler={eventHandler}
+                    buttonHandler={modinfoParentHandler}
+                    refs={modinfoRefs}
                   />
                 )}
-                {showModuleInfo.length === 0 && (
+                {modules.length === 0 && (
                   <Table
                     flex="1"
                     id="module"
@@ -942,7 +968,7 @@ export default class ModuleManager extends React.Component {
                 )}
               </Hbox>
               <Vbox className="button-stack" pack="center">
-                {showModuleInfo.length === 0 && (
+                {modules.length === 0 && (
                   <Button
                     id="moduleInfo"
                     icon="info-sign"
@@ -952,7 +978,7 @@ export default class ModuleManager extends React.Component {
                     onClick={eventHandler}
                   />
                 )}
-                {showModuleInfo.length > 0 && (
+                {modules.length > 0 && (
                   <Button
                     id="moduleInfoBack"
                     intent="primary"

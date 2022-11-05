@@ -6,6 +6,7 @@ import { BrowserWindow } from 'electron';
 import ZIP from 'adm-zip';
 import log from 'electron-log';
 import {
+  clone,
   downloadKey,
   isRepoLocal,
   parseSwordConf,
@@ -37,6 +38,7 @@ import type {
   GenBookAudioFile,
   GType,
   ModTypes,
+  NewModuleReportType,
   NewModulesType,
   Repository,
   RepositoryListing,
@@ -65,8 +67,10 @@ export function getTypeFromModDrv(modDrv: string): ModTypes | null {
 // Check a module's version and return rejection message(s) if it is not supported.
 // Returns [] if the module is supported. If the module is passed by name, LibSword
 // will be used to read config information, otherwise LibSword will not be called.
-export function moduleUnsupported(module: string | SwordConfType): string[] {
-  const reasons = [];
+export function moduleUnsupported(
+  module: string | SwordConfType
+): NewModuleReportType[] {
+  const reasons: NewModuleReportType[] = [];
   const conf = typeof module === 'string' ? null : module;
   const module2 = (conf ? conf.module : module) as string;
   let moddrv;
@@ -82,12 +86,14 @@ export function moduleUnsupported(module: string | SwordConfType): string[] {
   const type = getTypeFromModDrv(moddrv);
   if (type && Object.keys(C.SupportedModuleTypes).includes(type)) {
     if (versionCompare(C.SWORDEngineVersion, minimumVersion) < 0) {
-      reasons.push(
-        `${module2} failed: Requires SWORD engine version > ${minimumVersion} (using ${C.SWORDEngineVersion}).`
-      );
+      reasons.push({
+        error: `${module2}: Requires SWORD engine version > ${minimumVersion} (using ${C.SWORDEngineVersion}).`,
+      });
     }
   } else {
-    reasons.push(`${module2} failed: Unsupported type '${type || moddrv}'.`);
+    reasons.push({
+      error: `${module2}: Unsupported type '${type || moddrv}'.`,
+    });
   }
   return reasons;
 }
@@ -200,24 +206,23 @@ export async function installZIPs(
       fonts: [],
       bookmarks: [],
       audio: [],
-      errors: [],
+      reports: [],
     };
     if (zips.length) {
       // Get installed module list.
       const installed: { module: string; dir: string }[] = [];
-      if (LibSword.isReady()) {
-        const mods: string = LibSword.getModuleList();
-        if (mods !== C.NOMODULES) {
-          mods.split(C.CONFSEP).forEach((ms) => {
-            const module = ms.split(';')[0];
-            let dir = LibSword.getModuleInformation(
-              module,
-              'AbsoluteDataPath'
-            ).replace(/\/modules\/.*$/, '');
-            dir = fpath.resolve(dir).split(fpath.sep).join('/');
-            installed.push({ module, dir });
-          });
-        }
+      if (!LibSword.isReady()) LibSword.init();
+      const mods: string = LibSword.getModuleList();
+      if (mods !== C.NOMODULES) {
+        mods.split(C.CONFSEP).forEach((ms) => {
+          const module = ms.split(';')[0];
+          let dir = LibSword.getModuleInformation(
+            module,
+            'AbsoluteDataPath'
+          ).replace(/\/modules\/.*$/, '');
+          dir = fpath.resolve(dir).split(fpath.sep).join('/');
+          installed.push({ module, dir });
+        });
       }
       LibSword.quit();
       // Initialize progress reporter
@@ -262,23 +267,23 @@ export async function installZIPs(
                 const confstr = entry.getData().toString('utf8');
                 const conf = parseSwordConf(confstr, entry.name);
                 // Look for any problems with the module itself
-                const reasons = moduleUnsupported(conf);
+                const modreports = clone(conf.reports);
+                modreports.push(...moduleUnsupported(conf));
                 const swmodpath =
                   conf.DataPath && confModulePath(conf.DataPath);
                 if (!swmodpath) {
-                  reasons.push(
-                    `${conf.module} failed: Has non-standard module path '${conf.DataPath}'.`
-                  );
+                  modreports.push({
+                    warning: `${conf.module}: Has non-standard module path '${conf.DataPath}'.`,
+                  });
                 }
                 if (!dest.exists() || !dest.isDirectory()) {
-                  reasons.push(
-                    `${conf.module} failed: Destination directory does not exist '${dest.path}.`
-                  );
+                  modreports.push({
+                    error: `${conf.module}: Destination directory does not exist '${dest.path}.`,
+                  });
                 }
-                if (conf.errors.length) reasons.push(...conf.errors);
                 // If module is ok, prepare target config location and look for problems there
                 const confdest = dest.clone();
-                if (!reasons.length) {
+                if (!modreports.some((r) => r.error)) {
                   confdest.append('mods.d');
                   if (!confdest.exists()) {
                     confdest.create(LocalFile.DIRECTORY_TYPE);
@@ -293,23 +298,21 @@ export async function installZIPs(
                         existing.Version ?? 0
                       ) !== -1;
                     if (!replace) {
-                      reasons.push(
-                        `${conf.module} ${
+                      modreports.push({
+                        error: `${conf.module}: ${
                           conf.Version ?? 0
-                        } failed: Will not overwrite newer module ${
-                          existing.module
-                        } ${existing.Version}.`
-                      );
+                        } Will not overwrite newer module ${existing.module}.`,
+                      });
                     } else if (!moveRemoveModule([conf.module], destdir)) {
-                      reasons.push(
-                        `${conf.module} failed: Could not remove existing module.`
-                      );
+                      modreports.push({
+                        error: `${conf.module}: Could not remove existing module.`,
+                      });
                     }
                   }
                 }
                 // If module and target is ok, check valid swmodpath, remove obsoletes,
                 // create module directory path, and if still ok, copy config file.
-                if (!reasons.length && swmodpath) {
+                if (!modreports.some((r) => r.error) && swmodpath) {
                   // Remove any module(s) obsoleted by this module.
                   if (conf.Obsoletes?.length) {
                     const obsoletes = conf.Obsoletes.filter((m) => {
@@ -318,9 +321,9 @@ export async function installZIPs(
                     obsoletes.forEach((om) => {
                       const omdir = installed.find((ins) => ins.module === om);
                       if (omdir && !moveRemoveModule(om, omdir.dir)) {
-                        newmods.errors.push(
-                          `${conf.module} warning: Could not remove obsoleted module(s).`
-                        );
+                        modreports.push({
+                          warning: `${conf.module}: Could not remove obsoleted module(s).`,
+                        });
                       }
                     });
                   }
@@ -336,18 +339,17 @@ export async function installZIPs(
                       recursive: true,
                     })
                   ) {
-                    newmods.errors.push(
-                      `${conf.module} failed: Could not create module directory '${moddest.path}'.`
-                    );
+                    modreports.push({
+                      error: `${conf.module}: Could not create module directory '${moddest.path}'.`,
+                    });
                   } else {
                     // Copy config file to mods.d
                     confdest.writeFile(confstr);
                     confs[conf.module] = conf;
                     newmods.modules.push(conf);
                   }
-                } else {
-                  newmods.errors.push(...reasons);
                 }
+                newmods.reports.push(...modreports);
                 break;
               }
 
@@ -377,17 +379,14 @@ export async function installZIPs(
                       }
                     });
                     if (!moddest.exists()) {
-                      newmods.errors.push(
-                        `${conf.module} failed: Could not copy file " ${moddest.path}.`
-                      );
+                      newmods.reports.push({
+                        error: `${conf.module}: Could not copy file " ${moddest.path}.`,
+                      });
                     }
                   } else {
-                    // Error already generated during config file copy
+                    // This error was already reported during config file copy
                   }
-                } else {
-                  newmods.errors.push(
-                    `file will not be installed: ${entry.entryName}.`
-                  );
+                  // Silently drop module contents whose config was rejected.
                 }
                 break;
               }
@@ -484,9 +483,9 @@ export async function installZIPs(
                 break;
 
               default:
-                newmods.errors.push(
-                  `Warning: Unknown module component ${entry.name}.`
-                );
+                newmods.reports.push({
+                  warning: `Unknown module component ${entry.name}.`,
+                });
             }
           }
           progNow += 1;
@@ -546,7 +545,7 @@ export async function modalInstall(
       fonts: [],
       bookmarks: [],
       audio: [],
-      errors: ['No zipmods to install.'],
+      reports: [],
     };
   }
   Subscription.publish('modulesInstalled', newmods, callingWinID);

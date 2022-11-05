@@ -450,7 +450,7 @@ export type SwordConfType = {
 
   // Extra helper additions
   module: string;
-  errors: string[];
+  reports: NewModuleReportType[];
   sourceRepository: Repository;
   moduleType: ModTypes;
   xsmType: XSModTypes;
@@ -483,12 +483,14 @@ export type TabType = {
 
 export type RowSelection = { rows: [number, number] }[];
 
+export type NewModuleReportType = { warning?: string; error?: string };
+
 export type NewModulesType = {
   modules: SwordConfType[];
   fonts: string[];
   bookmarks: string[];
   audio: (AudioFile | GenBookAudioFile)[];
-  errors: string[];
+  reports: NewModuleReportType[];
 };
 
 export type DirsDirectories = {
@@ -601,7 +603,7 @@ const PrefsPublic = {
 const LibSwordPublic = {
   init: func as unknown as () => boolean,
   quit: func as unknown as () => void,
-  isReady: func as unknown as () => boolean,
+  isReady: func as unknown as (err?: boolean) => boolean,
   getMaxChapter: funcCACHE as unknown as (
     v11n: V11nType,
     vkeytext: string
@@ -826,8 +828,7 @@ export const GPublic = {
     downloadXSM: func as unknown as (
       module: string,
       zipFileOrURL: string,
-      repository: Repository,
-      confname: string
+      repository: Repository
     ) => Promise<number | string>,
     // Cancel some or all previously initiated downloads.
     cancel: func as unknown as (downloads?: (Download | string)[]) => number,

@@ -470,22 +470,23 @@ export async function eventHandler(
             const { module } = state;
             const { module: modtable } = state.tables;
             const { selection } = module;
-            const mods = selectionToDataRows('module', selection)
+            const modules = selectionToDataRows('module', selection)
               .map((r) => {
                 return (
                   (modtable.data[r] && modtable.data[r][ModCol.iModule]) || null
                 );
               })
               .filter(Boolean) as string[];
-            const s: Partial<ManagerState> = {
-              showModuleInfo: mods,
-            };
+            const s: Partial<ManagerState> = { modules };
             this.setState(s);
           }
           break;
         }
         case 'moduleInfoBack': {
-          this.setState({ showModuleInfo: [] });
+          const s: Partial<ManagerState> = {
+            modules: [],
+          };
+          this.setState(s);
           break;
         }
         case 'cancel': {
@@ -745,22 +746,6 @@ export async function eventHandler(
           else G.Window.close();
           break;
         }
-        case 'more': {
-          this.setState((prevState: ManagerState) => {
-            const s: Partial<ManagerState> = {
-              showConfIndex: prevState.showModuleInfo.indexOf(idext),
-            };
-            return s;
-          });
-          break;
-        }
-        case 'less': {
-          const s: Partial<ManagerState> = {
-            showConfIndex: -1,
-          };
-          this.setState(s);
-          break;
-        }
         default:
           throw Error(
             `Unhandled ModuleManager click event ${e.currentTarget.id}`
@@ -930,7 +915,7 @@ export function handleListings(
             a.reduce((p, c) => p + (typeof c === 'string' ? 1 : 0), 0) > 1
               ? 'danger'
               : 'none';
-          if (!l.startsWith(`Error: ${C.UI.Manager.cancelMsg}`)) {
+          if (!l.startsWith(C.UI.Manager.cancelMsg)) {
             sint = 'danger';
             xthis.addToast({
               message: l,
@@ -1068,14 +1053,14 @@ export function download(xthis: ModuleManager, rows: number[]): void {
           }
           const { filename } = drow[ModCol.iInfo].conf;
           const dl = await (drow[ModCol.iInfo].conf.xsmType !== 'none'
-            ? G.Module.downloadXSM(module, xsmZipFileOrURL, repo, filename)
+            ? G.Module.downloadXSM(module, xsmZipFileOrURL, repo)
             : G.Module.download(module, repo, filename));
           loadingrows.forEach((r) => {
             r[ModCol.iInfo].loading = false;
           });
           let newintent: Intent = Intent.NONE;
           if (typeof dl === 'string') {
-            if (!dl.startsWith(`Error: ${C.UI.Manager.cancelMsg}`)) {
+            if (!dl.startsWith(C.UI.Manager.cancelMsg)) {
               newintent = Intent.DANGER;
               xthis.addToast({
                 message: dl,

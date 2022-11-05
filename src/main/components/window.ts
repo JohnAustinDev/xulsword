@@ -6,7 +6,7 @@ import path from 'path';
 import fs from 'fs';
 import i18next from 'i18next';
 import { BrowserWindow, ipcMain } from 'electron';
-import { JSON_parse, JSON_stringify } from '../../common';
+import { JSON_parse, JSON_stringify, randomID } from '../../common';
 import Cache from '../../cache';
 import C from '../../constant';
 import Subscription from '../../subscription';
@@ -396,7 +396,7 @@ const Window: GType['Window'] = {
       return w.xstmpDir;
     }
     const dir = Dirs.TmpD;
-    dir.append(`xulsword_${String(Math.round(10000 * Math.random()))}`);
+    dir.append(`xulsword_${randomID()}`);
     if (dir.exists()) dir.remove(true);
     dir.create(LocalFile.DIRECTORY_TYPE);
     if (!dir.exists()) {

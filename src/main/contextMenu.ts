@@ -90,8 +90,7 @@ export default function contextMenu(
               const s: Partial<AboutWinState> = {
                 showModules: true,
                 modules,
-                focusModule: 0,
-                showConf: -1,
+                showConf: '',
                 editConf: false,
               };
               Commands.openAbout(s);

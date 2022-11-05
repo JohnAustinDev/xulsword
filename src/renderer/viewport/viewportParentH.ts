@@ -115,6 +115,7 @@ export function showNewModules(
           !G.getBooksInModule(v11nmod).includes(location.book)
         ) {
           [location.book] = G.getBooksInModule(v11nmod);
+          if (!location.book) location.book = 'Gen';
           location.chapter = 1;
         }
       }

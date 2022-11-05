@@ -13,11 +13,15 @@ import Label from '../libxul/label';
 import Stack from '../libxul/stack';
 import Button from '../libxul/button';
 import Spacer from '../libxul/spacer';
-import Modinfo from '../libxul/modinfo';
+import Modinfo, {
+  modinfoParentInitialState,
+  modinfoParentHandler as modinfoParentHandlerH,
+} from '../libxul/modinfo';
 import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
-import '../libsword.css'; // about uses .head1
 import '../splash/splash.css';
 import './about.css';
+
+import type { ModinfoParent } from '../libxul/modinfo';
 
 const defaultProps = xulDefaultProps;
 
@@ -28,22 +32,23 @@ type AboutWinProps = XulProps;
 const initialState = {
   showContributors: false as boolean,
   showModules: false as boolean,
-  modules: [] as string[], // list of module names to be shown when showModules is true
-  focusModule: -1 as number, // modules index of a module to be given initial focus, if any
-  showConf: -1 as number, // modules index of a module config file to show, if any
-  editConf: false as boolean, // is the showConf config file to be editable or not
+  modules: [] as string[],
 };
 
-export type AboutWinState = typeof initialState;
+export type AboutWinState = typeof initialState &
+  typeof modinfoParentInitialState;
 
-export default class AboutWin extends React.Component {
+export default class AboutWin extends React.Component implements ModinfoParent {
   static defaultProps: typeof defaultProps;
 
   static propTypes: typeof propTypes;
 
-  textarea: React.RefObject<HTMLTextAreaElement>;
+  modinfoRefs: {
+    textarea: React.RefObject<HTMLTextAreaElement>;
+    container: React.RefObject<HTMLDivElement>;
+  };
 
-  modulesdiv: React.RefObject<HTMLDivElement>;
+  modinfoParentHandler: typeof modinfoParentHandlerH;
 
   constructor(props: AboutWinProps) {
     super(props);
@@ -53,6 +58,7 @@ export default class AboutWin extends React.Component {
     ) as Partial<AboutWinState> | null;
 
     const s: AboutWinState = {
+      ...modinfoParentInitialState,
       ...initialState,
       ...(argState || {}),
     };
@@ -62,28 +68,20 @@ export default class AboutWin extends React.Component {
     }
     this.state = s;
 
-    this.textarea = React.createRef();
-    this.modulesdiv = React.createRef();
+    this.modinfoRefs = {
+      textarea: React.createRef(),
+      container: React.createRef(),
+    };
 
-    this.checkFocus = this.checkFocus.bind(this);
+    this.modinfoParentHandler = modinfoParentHandlerH.bind(this);
     this.handler = this.handler.bind(this);
-  }
-
-  componentDidMount() {
-    this.checkFocus();
-  }
-
-  componentDidUpdate() {
-    this.checkFocus();
   }
 
   handler(e: React.SyntheticEvent) {
     switch (e.type) {
       case 'click': {
-        const state = this.state as AboutWinState;
-        const { modules } = state;
         const target = e.currentTarget as HTMLElement;
-        const [id, m] = target.id.split('.');
+        const [id] = target.id.split('.');
         switch (id) {
           case 'showContributors':
           case 'showModules': {
@@ -101,49 +99,6 @@ export default class AboutWin extends React.Component {
             G.Window.close();
             break;
           }
-          case 'more': {
-            const s: Partial<AboutWinState> = {
-              showConf: modules.indexOf(m),
-              editConf: false,
-            };
-            this.setState(s);
-            break;
-          }
-          case 'less': {
-            const s: Partial<AboutWinState> = {
-              showConf: -1,
-              editConf: false,
-            };
-            this.setState(s);
-            break;
-          }
-          case 'edit': {
-            const s: Partial<AboutWinState> = {
-              editConf: true,
-            };
-            this.setState(s);
-            break;
-          }
-          case 'save': {
-            if (m && m in G.Tab) {
-              const { textarea } = this;
-              if (textarea?.current?.value) {
-                G.Module.writeConf(G.Tab[m].confPath, textarea?.current?.value);
-                const s: Partial<AboutWinState> = {
-                  editConf: false,
-                };
-                this.setState(s);
-              }
-            }
-            break;
-          }
-          case 'top': {
-            const { modulesdiv } = this;
-            if (modulesdiv.current) {
-              modulesdiv.current.scrollTop = 0;
-            }
-            break;
-          }
           default:
             throw new Error(`Unhandled click event ${id} in about.tsx`);
         }
@@ -153,23 +108,12 @@ export default class AboutWin extends React.Component {
     }
   }
 
-  checkFocus() {
-    const state = this.state as AboutWinState;
-    const { modules, focusModule } = state;
-    if (modules.length && focusModule !== -1 && modules[focusModule]) {
-      const me = document.getElementById(`mod_${modules[focusModule]}`);
-      if (me) {
-        me.scrollIntoView();
-        this.setState({ focusModule: -1 });
-      }
-    }
-  }
-
   render() {
     const state = this.state as AboutWinState;
     const { modules, showModules, showContributors, showConf, editConf } =
       state;
-    const { handler, textarea, modulesdiv } = this;
+    const { handler, modinfoParentHandler, modinfoRefs } = this;
+    const { container, textarea } = modinfoRefs;
 
     const contributors: string[] =
       (G.Prefs.getComplexValue('Contributors') as string[]) || [];
@@ -213,42 +157,13 @@ export default class AboutWin extends React.Component {
           </Hbox>
         )}
         {showModules && (
-          <div className="modules" ref={modulesdiv}>
-            {modules.length > 4 &&
-              ['Texts', 'Comms', 'Dicts', 'Genbks'].map((t) => (
-                <div key={`lt${t}`} className="linklist">
-                  {modules.some((m) => G.Tab[m].tabType === t) && (
-                    <>
-                      <div className="head1">{i18n.t(t)}</div>
-                      <div className="listbox">
-                        <ul>
-                          {modules
-                            ?.sort((a, b) =>
-                              G.Tab[a].label.localeCompare(G.Tab[b].label)
-                            )
-                            .map((m) =>
-                              G.Tab[m].tabType === t ? (
-                                <li key={`lm${m}`}>
-                                  <a href={`#mod_${m}`} className={`cs-${m}`}>
-                                    {G.Tab[m].label}
-                                  </a>
-                                </li>
-                              ) : null
-                            )}
-                        </ul>
-                      </div>
-                    </>
-                  )}
-                </div>
-              ))}
-            <Modinfo
-              modules={modules}
-              showConf={showConf}
-              editConf={editConf}
-              conftextRef={textarea}
-              handler={handler}
-            />
-          </div>
+          <Modinfo
+            modules={modules}
+            showConf={showConf}
+            editConf={editConf}
+            refs={{ container, textarea }}
+            buttonHandler={modinfoParentHandler}
+          />
         )}
         <Hbox className="dialog-buttons" pack="end" align="end">
           {!!modules.length && (
