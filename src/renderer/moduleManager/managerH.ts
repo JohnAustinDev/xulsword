@@ -593,8 +593,8 @@ export async function eventHandler(
             downloadResults.forEach((dlr, i) => {
               if (dlr.status === 'fulfilled' && dlr.value) {
                 let dl = downloads[i];
-                if ('url' in dl) {
-                  dl = { url: dl.url.replace(/&bk=.*$/, '') };
+                if ('http' in dl) {
+                  dl = { http: dl.http.replace(/&bk=.*$/, '') };
                 }
                 const downloadkey = downloadKey(dl);
                 const key = Object.keys(moduleData).find(
@@ -1000,7 +1000,7 @@ function getModuleDownload(modrepkey: string): Download | null {
     return d;
   }
   if (xsmType === 'XSM_audio') {
-    const d: HTTPDownload = { url: data[ModCol.iInfo].conf.DataPath };
+    const d: HTTPDownload = { http: data[ModCol.iInfo].conf.DataPath };
     return d;
   }
   const d: ModFTPDownload = {
@@ -1097,9 +1097,12 @@ export function download(xthis: ModuleManager, rows: number[]): void {
         modrepkeys.forEach((k) => {
           moduleData[k][ModCol.iInfo].loading = loading(ModCol.iInstalled);
         });
-        if ('url' in dlobj && drow[ModCol.iInfo].conf.xsmType === 'XSM_audio') {
+        if (
+          'http' in dlobj &&
+          drow[ModCol.iInfo].conf.xsmType === 'XSM_audio'
+        ) {
           try {
-            dlobj.url += await promptAudioChapters(
+            dlobj.http += await promptAudioChapters(
               xthis,
               drow[ModCol.iInfo].conf
             );

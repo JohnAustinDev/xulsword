@@ -605,10 +605,10 @@ export function isRepoLocal(repo: Repository): boolean {
 
 export function downloadKey(dl: Download | null): string {
   if (!dl) return '';
-  if ('url' in dl && !C.URLRE.test(dl.url))
+  if ('http' in dl && !C.URLRE.test(dl.http))
     throw new Error(`Not downloadable: ${dl}`);
   const ms: (keyof HTTPDownload | keyof ModFTPDownload | keyof FTPDownload)[] =
-    ['url', 'name', 'domain', 'path', 'file', 'module', 'confname'];
+    ['http', 'name', 'domain', 'path', 'file', 'module', 'confname'];
   const msx = ms as (keyof Download)[];
   return msx
     .filter((m) => m in dl && dl[m])

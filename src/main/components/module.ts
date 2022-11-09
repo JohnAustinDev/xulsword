@@ -723,17 +723,18 @@ const Module: GType['Module'] = {
       w?.webContents.send('progress', prog, downloadkey);
       w = null;
     };
-    if ('url' in download) {
+    if ('http' in download) {
       // Audio XSM modules are HTTP downloads
-      const { url } = download;
+      const { http } = download;
       progress(0);
       try {
         const tmpdir = new LocalFile(Window.tmpDir({ id: callingWinID }));
         if (tmpdir.exists()) {
-          log.silly(`downloadFileHTTP`, url, tmpdir.path);
+          log.silly(`downloadFileHTTP`, http, tmpdir.path);
           const dlfile = await getFileHTTP(
-            url,
+            http,
             tmpdir.append(randomID()),
+            downloadkey,
             progress
           );
           Downloads[downloadkey] = new ZIP(dlfile.path);
@@ -829,7 +830,7 @@ const Module: GType['Module'] = {
     downloads?.forEach((dl) => {
       let cnt = 0;
       const downloadkey = downloadKey(dl);
-      if ('url' in dl) {
+      if ('http' in dl) {
         cnt += httpCancel(downloadkey);
       } else {
         cnt += ftpCancel(downloadkey);

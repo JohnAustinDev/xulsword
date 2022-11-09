@@ -148,16 +148,16 @@ export function httpCancel(cancelkey?: string): number {
     });
   } else {
     const cancelobjx = keyToDownload(cancelkey);
-    if ('url' in cancelobjx) {
+    if ('http' in cancelobjx) {
       const cancelobj = cancelobjx as HTTPDownload;
-      const truncate = cancelobj.url.includes('&bk=');
+      const truncate = !cancelobj.http.includes('&bk=');
       Object.entries(HttpCancelable).forEach((entry) => {
         const keyobj = keyToDownload(entry[0]) as HTTPDownload;
         if (
-          cancelobj.url ===
-          (truncate ? keyobj.url.replace(/&bk=.*$/, '') : keyobj.url)
+          cancelobj.http ===
+          (truncate ? keyobj.http.replace(/&bk=.*$/, '') : keyobj.http)
         ) {
-          log.debug(`HTTP canceled '${keyobj.url}'`);
+          log.debug(`HTTP canceled '${keyobj.http}'`);
           callCallback(entry[1]);
         }
       });
@@ -656,6 +656,7 @@ export async function untargz(
 export async function getFileHTTP(
   url: string,
   dest: LocalFile | string,
+  cancelkey?: string,
   progress?: ((p: number) => void) | null
 ): Promise<LocalFile> {
   return new Promise((resolve, reject) => {
@@ -667,48 +668,73 @@ export async function getFileHTTP(
       }
       rejected = true;
     };
-    const ses = session.fromPartition('persist:audio', { cache: false });
-    ses.setUserAgent(C.HTTPUserAgent);
-    const destpath = typeof dest === 'string' ? dest : dest.path;
-    const destFile = new LocalFile(destpath);
-    ses.setDownloadPath(fpath.dirname(destpath));
-    // TODO!: Get this to work with GenBook UTF8 paths.
-    ses.on('will-download', (_ev, item) => {
-      if (progress) progress(0);
-      HttpCancelable[url] = {
-        canceled: false,
-        callback: () => {
-          item.cancel();
-          rejectme({ message: C.UI.Manager.cancelMsg });
-        },
-      };
-      item.setSavePath(destpath);
-      item.on('updated', (_e, state) => {
-        if (state === 'interrupted') {
-          item.cancel();
-          rejectme(new Error('Download was interrupted'));
-        } else if (state === 'progressing') {
-          if (item.isPaused()) {
+    const canceled = () => {
+      if (
+        cancelkey &&
+        cancelkey in HttpCancelable &&
+        HttpCancelable[cancelkey].canceled
+      ) {
+        rejectme({ message: C.UI.Manager.cancelMsg });
+        return true;
+      }
+      return false;
+    };
+    if (!canceled()) {
+      const ses = session.fromPartition(randomID(), { cache: false });
+      const destpath = typeof dest === 'string' ? dest : dest.path;
+      const destFile = new LocalFile(destpath);
+      // TODO!: Get this to work with GenBook UTF8 paths.
+      ses.on('will-download', (ev, item) => {
+        if (progress) progress(0);
+        if (cancelkey) {
+          HttpCancelable[cancelkey] = {
+            canceled: false,
+            callback: () => {
+              item.cancel();
+              ev.preventDefault();
+              rejectme({ message: C.UI.Manager.cancelMsg });
+            },
+          };
+        }
+        item.setSavePath(destpath);
+        item.on('updated', (ev2, state) => {
+          if (state === 'interrupted') {
             item.cancel();
-            rejectme(new Error('Download was paused'));
-          } else if (progress) {
-            progress(item.getReceivedBytes() / item.getTotalBytes());
+            rejectme(new Error('Download was interrupted'));
+          } else if (state === 'progressing') {
+            if (item.isPaused()) {
+              item.cancel();
+              ev2.preventDefault();
+              rejectme(new Error('Download was paused'));
+            } else if (progress) {
+              progress(item.getReceivedBytes() / item.getTotalBytes());
+            }
           }
-        }
+        });
+        item.once('done', (_e, state) => {
+          if (progress) progress(-1);
+          if (cancelkey) delete HttpCancelable[cancelkey];
+          if (state === 'completed') {
+            if (!canceled()) {
+              resolve(destFile);
+            }
+          } else if (state === 'cancelled') {
+            rejectme({ message: C.UI.Manager.cancelMsg });
+          } else {
+            rejectme(new Error(`Download failed '${state}'`));
+          }
+        });
       });
-      item.once('done', (_e, state) => {
-        if (progress) progress(-1);
-        delete HttpCancelable[url];
-        if (state === 'completed') {
-          resolve(destFile);
-        } else if (state === 'cancelled') {
-          rejectme({ message: C.UI.Manager.cancelMsg });
-        } else {
-          rejectme(new Error(`Download failed '${state}'`));
+      try {
+        log.debug(`Downloading: '${url}'`);
+        ses.setUserAgent(C.HTTPUserAgent);
+        ses.setDownloadPath(fpath.dirname(destpath));
+        ses.downloadURL(url);
+      } catch (er) {
+        if (!canceled()) {
+          rejectme(er);
         }
-      });
-    });
-    log.debug(`Downloading: '${url}'`);
-    ses.downloadURL(url);
+      }
+    }
   });
 }

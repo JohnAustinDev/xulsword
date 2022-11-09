@@ -531,7 +531,7 @@ export type ModFTPDownload = {
   confname: string;
 } & Repository;
 
-export type HTTPDownload = { url: string }; // https?://...
+export type HTTPDownload = { http: string }; // https?://...
 
 export type Download = FTPDownload | ModFTPDownload | HTTPDownload;
 
