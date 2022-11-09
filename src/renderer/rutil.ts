@@ -36,7 +36,9 @@ import type {
 function alog(type: ElectronLog.LogLevel, ...args: any[]) {
   const levels = ['error', 'warn', 'info', 'verbose', 'debug', 'silly'];
   const lcall = levels.indexOf(type);
-  const lprog = levels.indexOf(C.isDevelopment ? C.DevLogLevel : 'info');
+  const lprog = levels.indexOf(
+    C.isDevelopment ? C.DevLogLevel : C.ProdLogLevel
+  );
   const skip = lprog < lcall;
   if (type && !skip) {
     // eslint-disable-next-line no-console

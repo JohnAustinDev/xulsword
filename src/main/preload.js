@@ -17,6 +17,9 @@ contextBridge.exposeInMainWorld('main', {
     XULSWORD_ENV() {
       return process.env.XULSWORD_ENV;
     },
+    DEBUG_PROD() {
+      return process.env.DEBUG_PROD;
+    },
   },
 });
 

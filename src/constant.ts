@@ -5,6 +5,7 @@ import type {
   AtextPropsType,
   BookGroupType,
   ConfigType,
+  EnvironmentVars,
   FeatureType,
   GlobalPrefType,
   ModTypes,
@@ -23,21 +24,26 @@ import type {
 // - DEBUG_PROD - Set by you to 'true' BEFORE packaging to enable
 //     dev source maps and dev-tools in a production build (but the
 //     main process is still not accesible via current vscode config).
+//     Also enables other production debug behaviour (more logging).
 // - XULSWORD_ENV - Set by you to 'production' for debugging production
 //     only behaviour, like i18n, splash and log, in a development
 //     environment (including main process debugging via vscode).
+const env = (envvar: EnvironmentVars) => {
+  return typeof process === 'undefined'
+    ? window.main.process[envvar]()
+    : process.env[envvar];
+};
+
 const isDevelopment =
-  typeof process === 'undefined'
-    ? window.main.process.NODE_ENV() === 'development' &&
-      window.main.process.XULSWORD_ENV() !== 'production'
-    : process.env.NODE_ENV === 'development' &&
-      process.env.XULSWORD_ENV !== 'production';
+  env('NODE_ENV') === 'development' && env('XULSWORD_ENV') !== 'production';
 
 // Common Global Constants
 const C = {
   isDevelopment,
 
   DevLogLevel: 'debug' as LogLevel,
+
+  ProdLogLevel: (env('DEBUG_PROD') === 'true' ? 'silly' : 'info') as LogLevel,
 
   DevToolsopen: false,
 

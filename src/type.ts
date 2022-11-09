@@ -39,10 +39,13 @@ export type WinIpcType = {
     ) => () => void;
   };
 };
+
+export type EnvironmentVars = 'NODE_ENV' | 'XULSWORD_ENV' | 'DEBUG_PROD';
+
 export type WinMainType = {
   process: {
-    NODE_ENV: () => string;
-    XULSWORD_ENV: () => string;
+    [envar in EnvironmentVars]: () => string;
+  } & {
     argv: () => string[];
   };
 };

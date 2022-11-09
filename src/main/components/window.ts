@@ -274,7 +274,12 @@ function updateOptions(
   options.useContentSize = true;
   options.icon = path.join(Dirs.path.xsAsset, 'icon.png');
   if (!options.webPreferences) options.webPreferences = {};
-  options.webPreferences.preload = path.join(__dirname, '../preload.js');
+  options.webPreferences.preload = path.join(
+    Dirs.path.xsAsar,
+    'dist',
+    'main',
+    'preload.js'
+  );
   options.webPreferences.contextIsolation = true;
   options.webPreferences.nodeIntegration = false;
   options.webPreferences.enableRemoteModule = false;

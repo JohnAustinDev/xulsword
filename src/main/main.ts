@@ -28,7 +28,7 @@ const installer = require('electron-devtools-installer');
 const sourceMapSupport = require('source-map-support');
 const electronDebug = require('electron-debug');
 
-const logLevel = C.isDevelopment ? C.DevLogLevel : 'info';
+const logLevel = C.isDevelopment ? C.DevLogLevel : C.ProdLogLevel;
 log.transports.console.level = logLevel;
 log.transports.file.level = logLevel;
 log.info(
