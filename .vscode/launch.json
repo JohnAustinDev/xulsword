@@ -1,45 +1,21 @@
 {
-  "version": "0.2.0",
-  "configurations": [
-    {
-      "name": "Electron: Main",
-      "type": "node",
-      "request": "launch",
-      "protocol": "inspector",
-      "runtimeExecutable": "yarn",
-      "runtimeArgs": ["start:main --inspect=5858 --remote-debugging-port=9223"],
-      "preLaunchTask": "Start Webpack Dev"
-    },
-    {
-      "name": "Electron: Renderer",
-      "type": "chrome",
-      "request": "attach",
-      "port": 9223,
-      "webRoot": "${workspaceFolder}",
-      "timeout": 15000,
-    },
-    {
-      "name": "Jest", // This is the configuration name you will see in debug sidebar
-      "type": "node",
-      "request": "launch",
-      "port": 5858,
-      "address": "localhost",
-      "stopOnEntry": false,
-      "runtimeExecutable": null,
-      "env": {
-          "NODE_ENV": "production" // You can setup here any env vars you
-      },
-      "runtimeArgs": [
-          "--inspect-brk",
-          "${workspaceFolder}/node_modules/.bin/jest", // Path to Jest
-          "-i"
-      ],
-      "cwd": "${workspaceRoot}"
-  }  ],
-  "compounds": [
-    {
-      "name": "Electron: All",
-      "configurations": ["Electron: Main", "Electron: Renderer"]
-    }
-  ]
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Xulsword",
+            "runtimeExecutable": "yarn",
+            "runtimeArgs": ["start"],
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "outFiles": [
+                "${workspaceFolder}/**/*.js"
+            ]
+        }
+    ]
 }

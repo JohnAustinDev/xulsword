@@ -320,6 +320,9 @@ const C = {
 
   SwordRepoManifest: 'mods.d.tar.gz',
 
+  SwordModuleStartRE: /^\[([A-Za-z0-9_-]+)\]\s*$/,
+  SwordModuleCharsRE: /^[A-Za-z0-9_-]+$/,
+
   SwordConf: {
     // default is string
     integer: ['DisplayLevel', 'InstallSize'],

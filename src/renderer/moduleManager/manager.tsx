@@ -93,14 +93,14 @@ export type ManagerProps = XulProps;
 const notStatePref = {
   modules: [] as string[],
   progress: null as number[] | null,
-  showAudioDialog: null as {
+  showAudioDialog: [] as {
     conf: SwordConfType;
     selection: VKSelection;
     initialSelection: VKSelection;
     options: VKSelectOptions;
     chapters: SwordConfAudioChapters;
     callback: (result: VKSelection | null) => void;
-  } | null,
+  }[],
   tables: {
     language: {
       data: [] as TLanguageTableRow[],
@@ -203,7 +203,7 @@ export default class ModuleManager
     // sState is just for better TypeScript functionality
     s:
       | Partial<ManagerState>
-      | ((prevState: ManagerState) => Partial<ManagerState>)
+      | ((prevState: ManagerState) => Partial<ManagerState> | null)
   ) => void;
 
   constructor(props: ManagerProps) {
@@ -255,9 +255,9 @@ export default class ModuleManager
       repository: H.columnWidthChanged.bind(this, 'repository'),
     };
     this.sizeTableToParent = this.sizeTableToParent.bind(this);
-    this.dialogOnChange = this.dialogOnChange.bind(this);
-    this.dialogClose = this.dialogClose.bind(this);
-    this.dialogAccept = this.dialogAccept.bind(this);
+    this.audioDialogOnChange = this.audioDialogOnChange.bind(this);
+    this.audioDialogClose = this.audioDialogClose.bind(this);
+    this.audioDialogAccept = this.audioDialogAccept.bind(this);
     this.sState = this.setState.bind(this);
   }
 
@@ -714,64 +714,76 @@ export default class ModuleManager
     });
   }
 
-  dialogOnChange(_e: VKSelectChangeEvents, selection: VKSelection) {
-    const { showAudioDialog } = this.state as ManagerState;
-    if (showAudioDialog) {
-      const { book, chapter, lastchapter } = selection;
-      const { options, chapters: allchs } = showAudioDialog;
-      const { vkmods: trans, books, verses, lastverses } = options;
-      if (book && chapter !== undefined && lastchapter !== undefined) {
-        const newselection: VKSelection = {
-          book,
-          chapter,
-          lastchapter,
-        };
-        const chset: Set<number> = new Set();
-        allchs.forEach((v) => {
-          if (v.bk === book) {
-            for (let x = v.ch1; x <= v.ch2; x += 1) {
-              chset.add(x);
+  audioDialogOnChange(_e: VKSelectChangeEvents, selection: VKSelection) {
+    this.sState((prevState) => {
+      const { showAudioDialog } = prevState;
+      if (showAudioDialog.length) {
+        const { book, chapter, lastchapter } = selection;
+        const { options, chapters: allchs } = showAudioDialog[0];
+        const { vkmods: trans, books, verses, lastverses } = options;
+        if (book && chapter !== undefined && lastchapter !== undefined) {
+          const newselection: VKSelection = {
+            book,
+            chapter,
+            lastchapter,
+          };
+          const chset: Set<number> = new Set();
+          allchs.forEach((v) => {
+            if (v.bk === book) {
+              for (let x = v.ch1; x <= v.ch2; x += 1) {
+                chset.add(x);
+              }
             }
-          }
-        });
-        const chapters = Array.from(chset).sort((a, b) =>
-          a > b ? 1 : a < b ? -1 : 0
-        );
-        const lastchapters = chapters.filter((c) => c >= chapter);
-        const newoptions: VKSelectOptions = {
-          vkmods: trans,
-          books,
-          chapters,
-          lastchapters,
-          verses,
-          lastverses,
-        };
-        this.sState({
-          showAudioDialog: {
-            ...showAudioDialog,
+          });
+          const chapters = Array.from(chset).sort((a, b) =>
+            a > b ? 1 : a < b ? -1 : 0
+          );
+          const lastchapters = chapters.filter((c) => c >= chapter);
+          const newoptions: VKSelectOptions = {
+            vkmods: trans,
+            books,
+            chapters,
+            lastchapters,
+            verses,
+            lastverses,
+          };
+          showAudioDialog[0] = {
+            ...showAudioDialog[0],
             selection: newselection,
             options: newoptions,
-          },
-        });
+          };
+          return { showAudioDialog };
+        }
       }
-    }
+      return null;
+    });
   }
 
-  dialogClose() {
-    const { showAudioDialog } = this.state as ManagerState;
-    if (showAudioDialog) {
-      showAudioDialog.callback(null);
-      this.sState({ showAudioDialog: null });
-    }
+  audioDialogClose() {
+    this.sState((prevState) => {
+      const { showAudioDialog } = prevState;
+      if (showAudioDialog.length) {
+        const done = showAudioDialog.shift();
+        if (done) done.callback(null);
+        return { showAudioDialog };
+      }
+      return null;
+    });
   }
 
-  dialogAccept() {
-    const { showAudioDialog } = this.state as ManagerState;
-    if (showAudioDialog) {
-      const { selection } = showAudioDialog;
-      showAudioDialog.callback(selection);
-      this.sState({ showAudioDialog: null });
-    }
+  audioDialogAccept() {
+    this.sState((prevState) => {
+      const { showAudioDialog } = prevState;
+      if (showAudioDialog.length) {
+        const done = showAudioDialog.shift();
+        if (done) {
+          const { selection } = done;
+          done.callback(selection);
+        }
+        return { showAudioDialog };
+      }
+      return null;
+    });
   }
 
   addToast(toast: IToastProps) {
@@ -809,11 +821,11 @@ export default class ModuleManager
       onRepoCellClick,
       onRowsReordered,
       onColumnWidthChanged,
-      dialogClose,
-      dialogAccept,
+      audioDialogClose: dialogClose,
+      audioDialogAccept: dialogAccept,
       tableRef,
       modinfoRefs,
-      dialogOnChange,
+      audioDialogOnChange: dialogOnChange,
     } = this;
 
     const disable = {
@@ -840,16 +852,16 @@ export default class ModuleManager
             usePortal
             ref={this.refHandlers.toaster}
           />
-          {showAudioDialog && (
+          {showAudioDialog.length > 0 && (
             <Dialog
               body={
                 <Vbox>
-                  <Label value={showAudioDialog.conf.module} />
-                  <div>{showAudioDialog.conf.Description?.locale}</div>
+                  <Label value={showAudioDialog[0].conf.module} />
+                  <div>{showAudioDialog[0].conf.Description?.locale}</div>
                   <VKSelect
                     height="2em"
-                    initialSelection={showAudioDialog.initialSelection}
-                    options={showAudioDialog.options}
+                    initialSelection={showAudioDialog[0].initialSelection}
+                    options={showAudioDialog[0].options}
                     onSelectionChange={dialogOnChange}
                   />
                 </Vbox>

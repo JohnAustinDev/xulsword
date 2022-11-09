@@ -7,6 +7,7 @@ import { Intent } from '@blueprintjs/core';
 import { Utils } from '@blueprintjs/table';
 import {
   clone,
+  downloadKey,
   isRepoLocal,
   keyToDownload,
   modrepKey,
@@ -23,7 +24,10 @@ import { TCellInfo, TCellLocation } from '../libxul/table';
 
 import type {
   Download,
+  FTPDownload,
   GType,
+  HTTPDownload,
+  ModFTPDownload,
   Repository,
   RepositoryListing,
   RowSelection,
@@ -197,7 +201,7 @@ export const RepCol = {
 } as const;
 
 export const Downloads: {
-  [downloadKey: string]: Promise<number | null>;
+  [downloadKey: string]: Promise<number | string>;
 } = {};
 
 export type ModuleUpdates = {
@@ -499,11 +503,9 @@ export async function eventHandler(
             { modal: 'darkened', window: { type: 'xulsword' } },
           ]);
           try {
-            // Remove any failed downloads
-            Object.keys(Downloads).forEach((k) => {
-              if (!Downloads[k]) delete Downloads[k];
-            });
-            const downloadKeys = Object.keys(Downloads);
+            const downloads = Object.keys(Downloads).map((k) =>
+              keyToDownload(k)
+            );
             const promises = Object.values(Downloads);
             const installed: SwordConfType[] = [];
             const removeMods: { name: string; repo: Repository }[] = [];
@@ -590,19 +592,21 @@ export async function eventHandler(
               [];
             downloadResults.forEach((dlr, i) => {
               if (dlr.status === 'fulfilled' && dlr.value) {
-                const dl = keyToDownload(downloadKeys[i]);
-                const modrepkey =
-                  typeof dl === 'string' ? '' : modrepKey(dl.file, dl);
-                const row = Object.values(moduleData).find((r) => {
-                  return typeof dl === 'string'
-                    ? dl === r[ModCol.iInfo].conf.DataPath
-                    : modrepkey ===
-                        modrepKey(r[ModCol.iModule], r[ModCol.iInfo].repo);
-                });
-                if (row && row[ModCol.iInstalled] === ON) {
+                let dl = downloads[i];
+                if ('url' in dl) {
+                  dl = { url: dl.url.replace(/&bk=.*$/, '') };
+                }
+                const downloadkey = downloadKey(dl);
+                const key = Object.keys(moduleData).find(
+                  (k) => downloadKey(getModuleDownload(k)) === downloadkey
+                );
+                if (key && moduleData[key][ModCol.iInstalled] === ON) {
                   install.push({
-                    download: dl,
-                    toRepo: builtinRepos()[row[ModCol.iInfo].shared ? 0 : 1],
+                    download: downloads[i],
+                    toRepo:
+                      builtinRepos()[
+                        moduleData[key][ModCol.iInfo].shared ? 0 : 1
+                      ],
                   });
                 }
               }
@@ -708,23 +712,21 @@ export async function eventHandler(
           break;
         }
         case 'moduleCancel': {
-          const state = this.state as ManagerState;
-          const { module: modtable } = state.tables;
+          const { moduleData } = Saved;
           G.Module.cancel(
-            modtable.data
-              .map((r, ri) => (r[ModCol.iInfo].loading ? ri : null))
-              .filter((ri) => ri !== null)
-              .map((rix) => {
-                const ri = rix as number;
-                const r = modtable.data[ri];
-                r[ModCol.iInfo].intent = intent(ModCol.iInstalled, 'warning');
-                return r[ModCol.iInfo].conf.xsmType === 'XSM_audio'
-                  ? r[ModCol.iInfo].conf.DataPath
-                  : {
-                      ...r[ModCol.iInfo].repo,
-                      file: r[ModCol.iModule],
-                    };
+            Object.entries(moduleData)
+              .filter((entry) => entry[1][ModCol.iInfo].loading)
+              .map((entry) => {
+                const dl = getModuleDownload(entry[0]);
+                if (dl) {
+                  entry[1][ModCol.iInfo].intent = intent(
+                    ModCol.iInstalled,
+                    'warning'
+                  );
+                }
+                return dl;
               })
+              .filter((d) => d !== null) as Download[]
           );
           break;
         }
@@ -968,95 +970,150 @@ export function handleListings(
   checkForModuleUpdates(xthis, listing);
 }
 
+function geModuleRowXsmSiblings(modrepkey: string): string[] {
+  const { moduleData } = Saved;
+  const data = (modrepkey in moduleData && moduleData[modrepkey]) ?? null;
+  if (!data) return [];
+  if (data[ModCol.iInfo].conf.xsmType === 'XSM') {
+    return Object.entries(moduleData)
+      .map((entry) =>
+        entry[1][ModCol.iInfo].conf.DataPath ===
+        data[ModCol.iInfo].conf.DataPath
+          ? entry[0]
+          : null
+      )
+      .filter((i) => i !== null) as string[];
+  }
+  return [modrepkey];
+}
+
+function getModuleDownload(modrepkey: string): Download | null {
+  const { moduleData } = Saved;
+  const data = (modrepkey in moduleData && moduleData[modrepkey]) ?? null;
+  if (!data) return null;
+  const { xsmType } = data[ModCol.iInfo].conf;
+  if (xsmType === 'XSM') {
+    const d: FTPDownload = {
+      file: data[ModCol.iInfo].conf.DataPath,
+      ...data[ModCol.iInfo].repo,
+    };
+    return d;
+  }
+  if (xsmType === 'XSM_audio') {
+    const d: HTTPDownload = { url: data[ModCol.iInfo].conf.DataPath };
+    return d;
+  }
+  const d: ModFTPDownload = {
+    module: data[ModCol.iModule],
+    confname: data[ModCol.iInfo].conf.filename,
+    ...data[ModCol.iInfo].repo,
+  };
+  return d;
+}
+
+async function promptAudioChapters(
+  xthis: ModuleManager,
+  conf: SwordConfType
+): Promise<string> {
+  if (conf.xsmType === 'XSM_audio') {
+    const { AudioChapters } = conf;
+    if (AudioChapters) {
+      const audio: VKSelection | null = await new Promise((resolve) => {
+        const { bk: book, ch1: chapter, ch2: lastchapter } = AudioChapters[0];
+        const books = Array.from(new Set(AudioChapters.map((v) => v.bk)));
+        const chapters: number[] = [];
+        for (let x = 1; x <= lastchapter; x += 1) {
+          if (x >= chapter) chapters.push(x);
+        }
+        xthis.sState((prevState) => {
+          const { showAudioDialog } = prevState;
+          showAudioDialog.push({
+            conf,
+            selection: { book, chapter, lastchapter: chapter },
+            initialSelection: { book, chapter, lastchapter: chapter },
+            options: {
+              vkmods: [],
+              books,
+              chapters,
+              lastchapters: chapters,
+              verses: [],
+              lastverses: [],
+            },
+            chapters: AudioChapters,
+            callback: (result) => resolve(result),
+          });
+          return { showAudioDialog };
+        });
+      });
+      if (audio) {
+        const { book, chapter, lastchapter } = audio;
+        return `&bk=${book}&ch=${chapter}&cl=${lastchapter}`;
+      }
+    } else {
+      throw new Error(
+        `Audio config is missing AudioChapters: '${conf.module}'`
+      );
+    }
+  }
+  return '';
+}
+
+function handleError(xthis: ModuleManager, er: any, modrepkeys: string[]) {
+  const state = xthis.state as ManagerState;
+  const { module: modtable } = state.tables;
+  const { moduleData } = Saved;
+  xthis.addToast({
+    message: er.toString(),
+    timeout: 5000,
+    intent: Intent.WARNING,
+  });
+  modrepkeys.forEach((k) => {
+    moduleData[k][ModCol.iInfo].loading = false;
+    moduleData[k][ModCol.iInfo].intent = intent(
+      ModCol.iInstalled,
+      Intent.DANGER
+    );
+  });
+  setTableState(xthis, 'module', null, modtable.data, true);
+  return null;
+}
+
 // Perform async repository module downloads corresponding to a given
 // set of module table rows.
 export function download(xthis: ModuleManager, rows: number[]): void {
   const state = xthis.state as ManagerState;
   const { module: modtable } = state.tables;
-  rows.forEach((row) => {
+  rows.forEach(async (row) => {
     const drow = modtable.data[row];
     if (drow) {
-      const module = drow[ModCol.iModule] as string;
-      const { repo } = drow[ModCol.iInfo];
-      const modrepk = modrepKey(module, repo);
-      const { xsmType } = drow[ModCol.iInfo].conf;
-      const loadingrows: TModuleTableRow[] = [];
-      let xsmZipFileOrURL: string = drow[ModCol.iInfo].conf.DataPath;
-      if (xsmType === 'XSM') {
+      const modrepkey = modrepKey(
+        drow[ModCol.iModule],
+        drow[ModCol.iInfo].repo
+      );
+      const modrepkeys = geModuleRowXsmSiblings(modrepkey);
+      const dlobj = getModuleDownload(modrepkey);
+      if (dlobj) {
         const { moduleData } = Saved;
-        Object.values(moduleData)
-          .filter((r) => {
-            return (
-              r[ModCol.iInfo].conf.DataPath === drow[ModCol.iInfo].conf.DataPath
+        modrepkeys.forEach((k) => {
+          moduleData[k][ModCol.iInfo].loading = loading(ModCol.iInstalled);
+        });
+        if ('url' in dlobj && drow[ModCol.iInfo].conf.xsmType === 'XSM_audio') {
+          try {
+            dlobj.url += await promptAudioChapters(
+              xthis,
+              drow[ModCol.iInfo].conf
             );
-          })
-          .forEach((r: TModuleTableRow) => {
-            r[ModCol.iInfo].loading = loading(ModCol.iInstalled);
-            loadingrows.push(r);
-          });
-      } else if (xsmType === 'XSM_audio') {
-        drow[ModCol.iInfo].loading = loading(ModCol.iInstalled);
-        loadingrows.push(drow);
-      } else {
-        drow[ModCol.iInfo].loading = loading(ModCol.iInstalled);
-        loadingrows.push(drow);
-      }
-      const nfiles = (async () => {
-        try {
-          if (drow[ModCol.iInfo].conf.xsmType === 'XSM_audio') {
-            const { AudioChapters } = drow[ModCol.iInfo].conf;
-            if (AudioChapters) {
-              const audio: VKSelection | null = await new Promise((resolve) => {
-                const {
-                  bk: book,
-                  ch1: chapter,
-                  ch2: lastchapter,
-                } = AudioChapters[0];
-                const books = Array.from(
-                  new Set(AudioChapters.map((v) => v.bk))
-                );
-                const chapters: number[] = [];
-                for (let x = 1; x <= lastchapter; x += 1) {
-                  if (x >= chapter) chapters.push(x);
-                }
-                xthis.sState({
-                  showAudioDialog: {
-                    conf: drow[ModCol.iInfo].conf,
-                    selection: { book, chapter, lastchapter: chapter },
-                    initialSelection: { book, chapter, lastchapter: chapter },
-                    options: {
-                      vkmods: [],
-                      books,
-                      chapters,
-                      lastchapters: chapters,
-                      verses: [],
-                      lastverses: [],
-                    },
-                    chapters: AudioChapters,
-                    callback: (result) => resolve(result),
-                  },
-                });
-              });
-              if (audio) {
-                const { book, chapter, lastchapter } = audio;
-                xsmZipFileOrURL += `&bk=${book}&ch=${chapter}&cl=${lastchapter}`;
-              } else {
-                log.warn(`Audio module download canceled.`);
-              }
-            } else {
-              throw new Error(
-                `Audio config is missing AudioChapters: '${
-                  drow[ModCol.iModule]
-                }'`
-              );
-            }
+          } catch (er) {
+            handleError(xthis, er, [modrepkey]);
+            return;
           }
-          const { filename } = drow[ModCol.iInfo].conf;
-          const dl = await (drow[ModCol.iInfo].conf.xsmType !== 'none'
-            ? G.Module.downloadXSM(module, xsmZipFileOrURL, repo)
-            : G.Module.download(module, repo, filename));
-          loadingrows.forEach((r) => {
-            r[ModCol.iInfo].loading = false;
+        }
+        try {
+          const downloadkey = downloadKey(dlobj);
+          Downloads[downloadkey] = G.Module.download(dlobj);
+          const dl = await Downloads[downloadkey];
+          modrepkeys.forEach((k) => {
+            moduleData[k][ModCol.iInfo].loading = false;
           });
           let newintent: Intent = Intent.NONE;
           if (typeof dl === 'string') {
@@ -1070,38 +1127,28 @@ export function download(xthis: ModuleManager, rows: number[]): void {
             }
           } else if (dl > 0) {
             newintent = Intent.SUCCESS;
-            loadingrows.forEach((r) => {
-              r[ModCol.iInstalled] = ON;
+            modrepkeys.forEach((k) => {
+              moduleData[k][ModCol.iInstalled] = ON;
             });
           } else {
             newintent = Intent.WARNING;
-            loadingrows.forEach((r) => {
-              r[ModCol.iInstalled] = OFF;
+            modrepkeys.forEach((k) => {
+              moduleData[k][ModCol.iInstalled] = OFF;
             });
           }
-          loadingrows.forEach((r) => {
-            r[ModCol.iInfo].intent = intent(ModCol.iInstalled, newintent);
+          modrepkeys.forEach((k) => {
+            moduleData[k][ModCol.iInfo].intent = intent(
+              ModCol.iInstalled,
+              newintent
+            );
           });
           setTableState(xthis, 'module', null, modtable.data, true);
-          return typeof dl === 'string' ? null : dl;
-        } catch (er: any) {
-          xthis.addToast({
-            message: er.toString(),
-            timeout: 5000,
-            intent: Intent.WARNING,
-          });
-          loadingrows.forEach((r) => {
-            r[ModCol.iInfo].loading = false;
-            r[ModCol.iInfo].intent = intent(ModCol.iInstalled, Intent.DANGER);
-          });
-          setTableState(xthis, 'module', null, modtable.data, true);
-          return null;
+        } catch (er) {
+          handleError(xthis, er, modrepkeys);
         }
-      })();
-      Downloads[modrepk] = nfiles;
+      }
     }
   });
-  setTableState(xthis, 'module', null, modtable.data, true);
 }
 
 // Check enabled repository listings for installed modules that have
@@ -1279,13 +1326,12 @@ function modtableUpdate(
           // otherwise download the module
         } else download(xthis, [mtri]);
       } else if (row[ModCol.iInfo].loading) {
-        // if uninstalling a module that's loading, cancel the download
+        // if uninstalling a module that is loading, cancel the download
         row[ModCol.iInfo].intent = intent(ModCol.iInstalled, 'warning');
-        cancel.push(
-          row[ModCol.iInfo].conf.xsmType === 'XSM_audio'
-            ? row[ModCol.iInfo].conf.DataPath
-            : { ...row[ModCol.iInfo].repo, file: row[ModCol.iModule] }
+        const dl = getModuleDownload(
+          modrepKey(row[ModCol.iModule], row[ModCol.iInfo].repo)
         );
+        if (dl) cancel.push(dl);
       } else {
         // otherwise uncheck the installed box and check the remove box
         row[ModCol.iRemove] = ON;

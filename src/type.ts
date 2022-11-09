@@ -522,11 +522,20 @@ export type Repository = {
 
 export type RepositoryListing = SwordConfType[] | null;
 
-export type FTPDownload = Repository & {
+export type FTPDownload = {
   file: string;
-};
+} & Repository;
 
-export type Download = FTPDownload | string; // string is http(s) URL
+export type ModFTPDownload = {
+  module: string;
+  confname: string;
+} & Repository;
+
+export type HTTPDownload = { url: string }; // https?://...
+
+export type Download = FTPDownload | ModFTPDownload | HTTPDownload;
+
+export type DownloadKey = string;
 
 export type ZipEntryType = {
   entryName: string;
@@ -821,17 +830,10 @@ export const GPublic = {
       repos: (FTPDownload | null)[]
     ) => Promise<(RepositoryListing | string)[]>,
     download: func as unknown as (
-      module: string,
-      repository: Repository,
-      confname: string
-    ) => Promise<number | string>,
-    downloadXSM: func as unknown as (
-      module: string,
-      zipFileOrURL: string,
-      repository: Repository
+      download: Download
     ) => Promise<number | string>,
     // Cancel some or all previously initiated downloads.
-    cancel: func as unknown as (downloads?: (Download | string)[]) => number,
+    cancel: func as unknown as (downloads?: Download[]) => number,
     // Install previously downloaded modules
     installDownloads: func as unknown as (
       installs: { download: Download; toRepo: Repository }[],

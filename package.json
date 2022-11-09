@@ -235,6 +235,7 @@
     "@types/gunzip-maybe": "^1.4.0",
     "@types/tar-stream": "^2.2.2",
     "adm-zip": "^0.5.9",
+    "caniuse-lite": "^1.0.30001431",
     "electron-context-menu": "^3.1.1",
     "electron-debug": "^3.2.0",
     "electron-log": "^4.3.5",

@@ -9,6 +9,8 @@ import Cache from './cache';
 import type { Region } from '@blueprintjs/table';
 import type {
   Download,
+  FTPDownload,
+  ModFTPDownload,
   PrefObject,
   PrefValue,
   Repository,
@@ -16,6 +18,7 @@ import type {
   TabType,
   RowSelection,
   NewModuleReportType,
+  HTTPDownload,
 } from './type';
 import type LocalFile from './main/components/localFile';
 
@@ -460,16 +463,15 @@ export function parseSwordConf(
   C.SwordConf.repeatable.forEach((en) => {
     r[en] = [];
   });
-  const nameRE = /^\[([A-Za-z0-9_-]+)\]\s*$/;
   const commentRE = /^(#.*|\s*)$/;
   for (let x = 0; x < lines.length; x += 1) {
     const l = lines[x];
     let m;
     if (commentRE.test(l)) {
       // ignore comments
-    } else if (nameRE.test(l)) {
+    } else if (C.SwordModuleStartRE.test(l)) {
       // name might not be at the top of the file
-      m = l.match(nameRE);
+      m = l.match(C.SwordModuleStartRE);
       if (m) [, r.module] = m;
     } else {
       m = l.match(/^([A-Za-z0-9_.]+)\s*=\s*(.*?)\s*$/);
@@ -601,9 +603,26 @@ export function isRepoLocal(repo: Repository): boolean {
   return repo.domain === C.Downloader.localfile;
 }
 
-export function downloadKey(dl: Download): string {
-  if (typeof dl === 'string') return dl;
-  return `[${[dl.name, dl.domain, dl.path, dl.file].join('][')}]`;
+export function downloadKey(dl: Download | null): string {
+  if (!dl) return '';
+  if ('url' in dl && !C.URLRE.test(dl.url))
+    throw new Error(`Not downloadable: ${dl}`);
+  const ms: (keyof HTTPDownload | keyof ModFTPDownload | keyof FTPDownload)[] =
+    ['url', 'name', 'domain', 'path', 'file', 'module', 'confname'];
+  const msx = ms as (keyof Download)[];
+  return msx
+    .filter((m) => m in dl && dl[m])
+    .map((m) => `${m}:${dl[m]}`)
+    .join('][');
+}
+
+export function keyToDownload(downloadkey: string): Download {
+  const dl: any = {};
+  downloadkey.split('][').forEach((x) => {
+    const i = x.indexOf(':');
+    dl[x.substring(0, i)] = x.substring(i + 1);
+  });
+  return dl as Download;
 }
 
 export function repositoryKey(r: Repository): string {
@@ -612,14 +631,6 @@ export function repositoryKey(r: Repository): string {
 
 export function modrepKey(module: string, r: Repository): string {
   return `[${[r.name, r.domain, r.path, module].join('][')}]`;
-}
-
-export function keyToDownload(downloadkey: string): Download {
-  if (C.URLRE.test(downloadkey)) return downloadkey;
-  const [name, domain, path, file] = downloadkey
-    .substring(1, downloadkey.length - 1)
-    .split('][');
-  return { name, domain, path, file };
 }
 
 export function selectionToRows(regions: Region[]): number[] {

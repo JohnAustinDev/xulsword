@@ -30,7 +30,6 @@ const asyncFuncs: [
     'Module',
     [
       'download',
-      'downloadXSM',
       'installDownloads',
       'remove',
       'move',
