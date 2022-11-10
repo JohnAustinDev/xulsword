@@ -97,12 +97,12 @@ export function moduleUnsupported(
   if (type && Object.keys(C.SupportedModuleTypes).includes(type)) {
     if (versionCompare(C.SWORDEngineVersion, minimumVersion) < 0) {
       reasons.push({
-        error: `${module2}: Requires SWORD engine version > ${minimumVersion} (using ${C.SWORDEngineVersion}).`,
+        error: `(${module2}) Requires SWORD engine version > ${minimumVersion} (using ${C.SWORDEngineVersion}).`,
       });
     }
   } else {
     reasons.push({
-      error: `${module2}: Unsupported type '${type || moddrv}'.`,
+      error: `(${module2}) Unsupported type '${type || moddrv}'.`,
     });
   }
   return reasons;
@@ -214,7 +214,8 @@ export async function installZIPs(
     const newmods: NewModulesType = clone(C.NEWMODS);
     if (zips.length) {
       // Get installed module list to remove any obsoleted modules.
-      const installed: { module: string; dir: string }[] = [];
+      const installed: { module: string; dir: string; cipherKey: string }[] =
+        [];
       if (!LibSword.isReady()) LibSword.init();
       const mods: string = LibSword.getModuleList();
       if (mods !== C.NOMODULES) {
@@ -225,7 +226,8 @@ export async function installZIPs(
             'AbsoluteDataPath'
           ).replace(/\/modules\/.*$/, '');
           dir = fpath.resolve(dir).split(fpath.sep).join('/');
-          installed.push({ module, dir });
+          const cipherKey = LibSword.getModuleInformation(module, 'CipherKey');
+          installed.push({ module, dir, cipherKey });
         });
       }
       LibSword.quit();
@@ -277,12 +279,24 @@ export async function installZIPs(
                   conf.DataPath && confModulePath(conf.DataPath);
                 if (!swmodpath) {
                   modreports.push({
-                    warning: `${conf.module}: Has non-standard module path '${conf.DataPath}'.`,
+                    warning: `(${conf.module}) Has non-standard module path '${conf.DataPath}'.`,
                   });
                 }
                 if (!dest.exists() || !dest.isDirectory()) {
                   modreports.push({
-                    error: `${conf.module}: Destination directory does not exist '${dest.path}.`,
+                    error: `(${conf.module}) Destination directory does not exist '${dest.path}.`,
+                  });
+                }
+                // If the module requires a CipherKey, don't replace an existing encrypted
+                // module that has a key.
+                if (
+                  conf.CipherKey === '' &&
+                  installed.find(
+                    (mo) => mo.cipherKey !== '' && mo.cipherKey !== C.NOTFOUND
+                  )
+                ) {
+                  modreports.push({
+                    error: `(${conf.module}) Will not replace encrypted module because new encrypted module has no encrpytion key.`,
                   });
                 }
                 // If module is ok, prepare target config location and look for problems there
@@ -303,13 +317,13 @@ export async function installZIPs(
                       ) !== -1;
                     if (!replace) {
                       modreports.push({
-                        error: `${conf.module}: ${
+                        error: `(${conf.module}) ${
                           conf.Version ?? 0
                         } Will not overwrite newer module ${existing.module}.`,
                       });
                     } else if (!moveRemoveModule([conf.module], destdir)) {
                       modreports.push({
-                        error: `${conf.module}: Could not remove existing module.`,
+                        error: `(${conf.module}) Could not remove existing module.`,
                       });
                     }
                   }
@@ -326,7 +340,7 @@ export async function installZIPs(
                       const omdir = installed.find((ins) => ins.module === om);
                       if (omdir && !moveRemoveModule(om, omdir.dir)) {
                         modreports.push({
-                          warning: `${conf.module}: Could not remove obsoleted module(s).`,
+                          warning: `(${conf.module}) Could not remove obsoleted module(s).`,
                         });
                       }
                     });
@@ -344,7 +358,7 @@ export async function installZIPs(
                     })
                   ) {
                     modreports.push({
-                      error: `${conf.module}: Could not create module directory '${moddest.path}'.`,
+                      error: `(${conf.module}) Could not create module directory '${moddest.path}'.`,
                     });
                   } else {
                     // Copy config file to mods.d
@@ -387,7 +401,7 @@ export async function installZIPs(
                     });
                     if (!moddest.exists()) {
                       newmods.reports.push({
-                        error: `${conf.module}: Could not copy file " ${moddest.path}.`,
+                        error: `(${conf.module}) Could not copy file " ${moddest.path}.`,
                       });
                     }
                   } else {

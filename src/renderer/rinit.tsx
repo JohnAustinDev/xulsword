@@ -253,8 +253,10 @@ function Reset(props: ResetProps) {
         const cipherKeys: CipherKey[] = [];
         const setCipherKey = () => {
           const k = cipherKeys.filter((ck) => ck.conf.module && ck.cipherKey);
-          if (k.length && !dialogs.length)
+          if (k.length && !dialogs.length) {
             G.Module.setCipherKeys(k, G.Window.description().id);
+            setModal('darkened');
+          }
         };
         const haserror = newmods.reports.some((r) => r.error);
         const haswarning = newmods.reports.some((r) => r.warning);

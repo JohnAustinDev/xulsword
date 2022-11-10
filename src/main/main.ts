@@ -14,13 +14,13 @@ import G from './mg';
 import LibSword from './components/libsword';
 import { CipherKeyModules } from './components/module';
 import MenuBuilder, { pushPrefsToMenu } from './menu';
-import {
+import Window, {
   WindowRegistry,
   pushPrefsToWindows,
   publishSubscription,
 } from './components/window';
 import contextMenu from './contextMenu';
-import { getCipherFailConfs, updateGlobalModulePrefs } from './minit';
+import { getCipherFailConfs, getTabs, updateGlobalModulePrefs } from './minit';
 import setViewportTabs from './tabs';
 
 import type { NewModulesType, WindowRegistryType } from '../type';
@@ -29,11 +29,6 @@ const i18nBackendMain = require('i18next-fs-backend');
 const installer = require('electron-devtools-installer');
 const sourceMapSupport = require('source-map-support');
 const electronDebug = require('electron-debug');
-
-let ModulesInstalled: {
-  callingWinID: number;
-  newmods: NewModulesType;
-} | null = null;
 
 const logLevel = C.isDevelopment ? C.DevLogLevel : C.ProdLogLevel;
 log.transports.console.level = logLevel;
@@ -98,16 +93,6 @@ ipcMain.on('did-finish-render', (event: IpcMainEvent) => {
   if (!wd) {
     callingWin = null;
     return;
-  }
-
-  if (ModulesInstalled?.callingWinID === callingWin.id) {
-    publishSubscription(
-      false,
-      { id: callingWin.id },
-      'modulesInstalled',
-      ModulesInstalled.newmods
-    );
-    ModulesInstalled = null;
   }
 
   const { type } = wd;
@@ -213,41 +198,39 @@ const openMainWindow = () => {
           (nmconf) =>
             !newmods.nokeymods.some((nkconf) => nkconf.module === nmconf.module)
         );
-        if (!newmods.modules.length) {
+        if (!newmods.modules.length && !getTabs().length) {
           setViewportTabs(-1, 'all', 'hide');
         } else {
           newmods.modules.forEach((conf) => {
             setViewportTabs(-1, conf.module, 'show');
           });
         }
-        // When callingWin is finished reloading, did-finish-render
-        // will publish modulesInstalled on that window.
-        ModulesInstalled = callingWinID
-          ? {
-              callingWinID,
-              newmods,
-            }
-          : null;
-        BrowserWindow.getAllWindows().forEach((w) => {
-          w.webContents.reload();
-        });
+        if (callingWinID) {
+          setTimeout(
+            () =>
+              publishSubscription(
+                false,
+                { id: callingWinID },
+                'modulesInstalled',
+                newmods
+              ),
+            1
+          );
+        }
+        Window.modal([{ modal: 'off', window: 'all' }]);
       }
     )
   );
 
   // TODO! install command line modules (xulsword 3.0 newModule.js)
 
-  // When encrypted modules with no keys, or incorrect keys, are installed, prompt for them.
+  // Prompt for CipherKeys when encrypted modules with no keys, or
+  // incorrect keys, are installed.
   if (Object.keys(CipherKeyModules).length) {
-    // IMPORTANT: This operation must be completed before did-finish-render is
-    // called! It also must run after 'modulesInstalled' has been subscribed.
-    ModulesInstalled = {
-      callingWinID: mainWin.id,
-      newmods: {
-        ...clone(C.NEWMODS),
-        nokeymods: getCipherFailConfs(),
-      },
-    };
+    publishSubscription(false, { id: mainWin.id }, 'modulesInstalled', {
+      ...clone(C.NEWMODS),
+      nokeymods: getCipherFailConfs(),
+    });
   }
 
   if (
