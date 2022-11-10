@@ -32,14 +32,12 @@ import {
   getSystemFonts,
   resetMain,
   getSwordConf,
-} from './minit';
-import {
   getLocaleConfigs,
   getModuleConfigDefault,
   getModuleFonts,
   getFeatureModules,
   localeConfig,
-} from './config';
+} from './minit';
 
 // Methods of the following classes must not use rest parameters or default
 // values in their function definition's argument lists. This is because

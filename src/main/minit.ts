@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable no-nested-ternary */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable import/no-mutable-exports */
@@ -15,8 +16,8 @@ import Dirs from './components/dirs';
 import Prefs from './components/prefs';
 import LibSword from './components/libsword';
 import LocalFile from './components/localFile';
-import { getFeatureModules, getModuleFonts, getModuleConfig } from './config';
-import { moduleUnsupported } from './components/module';
+import { moduleUnsupported, CipherKeyModules } from './components/module';
+import getFontFamily from './fontfamily';
 
 import type {
   TabType,
@@ -29,6 +30,8 @@ import type {
   XulswordStatePref,
   FeatureType,
   SwordConfType,
+  ConfigType,
+  FontFaceType,
 } from '../type';
 
 const fontList = require('font-list');
@@ -124,6 +127,7 @@ export function getBook(): { [i: string]: BookType } {
 
 export function getTabs(): TabType[] {
   if (!Cache.has('tabs')) {
+    Object.keys(CipherKeyModules).forEach((k) => delete CipherKeyModules[k]);
     const tabs: TabType[] = [];
     const modlist: any = LibSword.getModuleList();
     if (modlist === C.NOMODULES) return [];
@@ -181,6 +185,15 @@ export function getTabs(): TabType[] {
           log.warn(
             `tab config file bad path "${p}$/${module.toLowerCase()}.conf"`
           );
+        const cipherKey = LibSword.getModuleInformation(module, 'CipherKey');
+        if (cipherKey !== C.NOTFOUND) {
+          CipherKeyModules[module] = {
+            confPath,
+            cipherKey,
+            numBooks: cipherKey === '' ? 0 : getBooksInModule(module).length,
+          };
+          if (cipherKey === '') return;
+        }
         const isCommDir =
           confFile.path
             .toLowerCase()
@@ -242,6 +255,20 @@ export function getTab(): { [i: string]: TabType } {
     Cache.write(tab, 'tab');
   }
   return Cache.read('tab');
+}
+
+export function getCipherFailConfs() {
+  getTabs(); // to insure CipherKeyModules is set
+  return Object.values(CipherKeyModules)
+    .filter((v) => v.numBooks === 0 || v.cipherKey === '')
+    .map((v) => {
+      const f = new LocalFile(v.confPath);
+      return (
+        (f.exists() && !f.isDirectory() && parseSwordConf(f, f.leafName)) ||
+        null
+      );
+    })
+    .filter(Boolean) as SwordConfType[];
 }
 
 export function getSwordConf(): { [mod: string]: SwordConfType } {
@@ -321,17 +348,21 @@ export function getBkChsInV11n(): {
   return Cache.read('bkChsInV11n');
 }
 
-// The modules pref is used to cache costly module data.
-// If 'books' is in the pref-value, it is used, otherwise it is added
-// to the pref-value.
 export function getBooksInModule(module: string): string[] {
   if (!Cache.has('booksInModule', module)) {
     const bkChsInV11n = getBkChsInV11n();
     const book = getBook();
-    const t = getTab()[module];
+    let v11n = LibSword.getModuleInformation(
+      module,
+      'Versification'
+    ) as V11nType;
+    if (v11n === C.NOTFOUND) v11n = 'KJV';
+    const isVerseKey = /(text|comm)/i.test(
+      LibSword.getModuleInformation(module, 'ModDrv')
+    );
     const osis: string[] = [];
-    if (t && t.v11n && (t.type === C.BIBLE || t.type === C.COMMENTARY)) {
-      const v11nbooks = bkChsInV11n[t.v11n].map((x) => x[0]);
+    if (isVerseKey) {
+      const v11nbooks = bkChsInV11n[v11n].map((x) => x[0]);
       // When references to missing books are requested from SWORD,
       // the previous (or last?) book in the module is usually quietly
       // used and read from instead! The exception seems to be when a
@@ -341,17 +372,12 @@ export function getBooksInModule(module: string): string[] {
       // results are returned, test two verses to make sure they are
       // different and are not the empty string, to determine whether
       // the book is missing from the module.
-      const fake = LibSword.getVerseText(t.module, 'FAKE 1:1', false);
-
+      const fake = LibSword.getVerseText(module, 'FAKE 1:1', false);
       v11nbooks.forEach((code: string) => {
         const bk = book[code];
-        const verse1 = LibSword.getVerseText(t.module, `${bk.code} 1:1`, false);
+        const verse1 = LibSword.getVerseText(module, `${bk.code} 1:1`, false);
         if (!verse1 || verse1 === fake) {
-          const verse2 = LibSword.getVerseText(
-            t.module,
-            `${bk.code} 1:2`,
-            false
-          );
+          const verse2 = LibSword.getVerseText(module, `${bk.code} 1:2`, false);
           if (!verse2 || verse1 === verse2) return;
         }
         osis.push(bk.code);
@@ -428,26 +454,19 @@ export function getSystemFonts() {
 // Xulsword state prefs and other global prefs should only reference
 // installed modules or be ''.  This function insures that is the case.
 export function updateGlobalModulePrefs() {
-  const currmods: string[] = [];
-  const modlist = LibSword.getModuleList();
-  if (modlist !== C.NOMODULES) {
-    modlist.split('<nx>').forEach((mstring: string) => {
-      const [module] = mstring.split(';');
-      currmods.push(module);
-    });
-  }
+  const tabs = getTabs();
   const xulsword = Prefs.getComplexValue('xulsword') as XulswordStatePref;
   const newxulsword = clone(xulsword);
   const mps = ['panels', 'ilModules', 'mtModules'] as const;
   mps.forEach((p) => {
     newxulsword[p] = xulsword[p].map((m) => {
       const n = p === 'panels' ? '' : null;
-      return m && !currmods.includes(m) ? n : m;
+      return m && !tabs.find((t) => t.module === m) ? n : m;
     });
   });
   newxulsword.tabs.forEach((p, i) => {
     if (p) {
-      newxulsword.tabs[i] = p.filter((m) => currmods.includes(m));
+      newxulsword.tabs[i] = p.filter((m) => tabs.find((t) => t.module === m));
     }
   });
   Prefs.setComplexValue('xulsword', newxulsword);
@@ -458,7 +477,7 @@ export function updateGlobalModulePrefs() {
   Object.entries(newpopupsel).forEach((entry) => {
     const k = entry[0] as keyof FeatureType;
     const m = entry[1];
-    if (!currmods.includes(m)) {
+    if (!tabs.find((t) => t.module === m)) {
       newpopupsel[k] = '';
     }
   });
@@ -484,5 +503,328 @@ export function updateGlobalModulePrefs() {
 }
 
 export function resetMain() {
-  Subscription.publish('resetMain');
+  Subscription.publish.resetMain();
+}
+
+// If a module config fontFamily specifies a URL to a font, rather
+// than a fontFamily, then parse the URL. Otherwise return null.
+function fontURL(mod: string) {
+  const url = LibSword.getModuleInformation(mod, 'Font').match(
+    /(\w+:\/\/[^"')]+)\s*$/
+  );
+  return url
+    ? { fontFamily: `_${url[1].replace(/[^\w\d]/g, '_')}`, url: url[1] }
+    : null;
+}
+
+// Link to fonts which are in xulsword's xsFonts directory. Fonts
+// listed will appear in font option menus and will be available to
+// all modules. The fonts pref is used to cache costly font data.
+export function getModuleFonts(): FontFaceType[] {
+  if (!Cache.has('ModuleFonts')) {
+    // Look for xulsword local fonts, which may be included with some
+    // XSM modules.
+    const ret = [] as FontFaceType[];
+    let fonts = Prefs.getPrefOrCreate('fonts', 'complex', {}, 'fonts') as {
+      [i: string]: { fontFamily: string; path: string };
+    };
+    const fontfiles = Dirs.xsFonts.directoryEntries;
+    let reread = true;
+    if (
+      fontfiles.length === Object.keys(fonts).length &&
+      fontfiles?.every((f) => {
+        return Object.keys(fonts).includes(f);
+      })
+    ) {
+      reread = false;
+    }
+    if (reread) {
+      fonts = {};
+      fontfiles?.forEach((file) => {
+        const font = new LocalFile(path.join(Dirs.path.xsFonts, file));
+        let fontFamily = 'dir';
+        if (!font.isDirectory()) {
+          const ff = getFontFamily(font.path);
+          if (ff) {
+            // replace is for BPG Sans Regular, because otherwise it doesn't load in Chrome
+            fontFamily = ff.replace(' GPL&GNU', '');
+          } else fontFamily = 'unknown';
+        }
+        fonts[file] = { fontFamily, path: font.path };
+      });
+      Prefs.setComplexValue('fonts', fonts, 'fonts');
+    }
+
+    Object.values(fonts).forEach((info) => {
+      if (info.fontFamily !== 'unknown' && info.fontFamily !== 'dir')
+        ret.push({ fontFamily: info.fontFamily, path: info.path });
+    });
+
+    // Look for module config Font URL. A module's Font entry may be a URL or a
+    // fontFamily or font file name. All available font files were added above.
+    // But URLs should also be added if any module requests them.
+    const tabs = getTabs();
+    if (Prefs.getBoolPref('global.InternetPermission')) {
+      tabs.forEach((t) => {
+        const url = fontURL(t.module);
+        if (url) ret.push({ fontFamily: url.fontFamily, url: url.url });
+      });
+    }
+    Cache.write(ret, 'ModuleFonts');
+  }
+  return Cache.read('ModuleFonts');
+}
+
+// Return a locale (if any) to associate with a module:
+//    Return a Locale with exact same language code as module
+//    Return a Locale having same base language code as module, prefering current Locale over any others
+//    Return a Locale which lists the module as an associated module
+//    Return null if no match
+function getLocaleOfModule(module: string) {
+  let myLocale: string | null = null;
+
+  const progLocale = i18next.language;
+  let ml: any = LibSword.getModuleInformation(module, 'Lang').toLowerCase();
+  if (ml === C.NOTFOUND) ml = undefined;
+
+  let stop = false;
+  C.Locales.forEach((l: any) => {
+    const [locale] = l;
+    if (stop) return;
+    const lcs = locale.toLowerCase();
+
+    if (ml && ml === lcs) {
+      myLocale = locale;
+      stop = true;
+      return;
+    }
+    if (ml && lcs && ml.replace(/-.*$/, '') === lcs.replace(/-.*$/, '')) {
+      myLocale = locale;
+      if (myLocale === progLocale) stop = true;
+    }
+  });
+
+  if (myLocale) return myLocale;
+
+  const regex = new RegExp(`(^|s|,)+${module}(,|s|$)+`);
+  C.Locales.forEach((l: any) => {
+    const [locale] = l;
+    const toptions = {
+      lng: locale,
+      ns: 'common/config',
+    };
+    if (i18next.t('DefaultModule', toptions).match(regex)) myLocale = locale;
+  });
+
+  return myLocale;
+}
+
+export function getModuleConfig(mod: string) {
+  if (!Cache.has(`moduleConfig${mod}`)) {
+    const moduleConfig = {} as ConfigType;
+
+    // All config properties should be present, having a valid value or null.
+    // Read values from module's .conf file
+    Object.entries(C.ConfigTemplate).forEach((entry) => {
+      const prop = entry[0] as keyof typeof C.ConfigTemplate;
+      const keyobj = entry[1];
+      let r = null;
+      if (keyobj.modConf) {
+        if (mod !== 'LTR_DEFAULT') {
+          r = LibSword.getModuleInformation(mod, keyobj.modConf);
+          if (r === C.NOTFOUND) r = null;
+        }
+      }
+      moduleConfig[prop] = r;
+    });
+
+    // Make any PreferredCSSXHTML into a full path
+    if (moduleConfig.PreferredCSSXHTML) {
+      const p = LibSword.getModuleInformation(
+        mod,
+        'AbsoluteDataPath'
+      ).replaceAll('\\', '/');
+      const p2 = `${p}${p.slice(-1) === '/' ? '' : '/'}`;
+      moduleConfig.PreferredCSSXHTML = `${p2}${moduleConfig.PreferredCSSXHTML}`;
+    }
+
+    // Assign associated locales
+    if (mod !== 'LTR_DEFAULT') {
+      const lom = getLocaleOfModule(mod);
+      moduleConfig.AssociatedLocale = lom || null;
+    } else {
+      moduleConfig.AssociatedLocale = i18next.language;
+      moduleConfig.AssociatedModules = null;
+    }
+
+    // Normalize direction value
+    moduleConfig.direction =
+      moduleConfig.direction && moduleConfig.direction.search(/RtoL/i) !== -1
+        ? 'rtl'
+        : 'ltr';
+
+    // Insure there are single quotes around font names and that we have the actual
+    // font name and not a file name (which is used in some modules).
+    let { fontFamily } = moduleConfig;
+    if (fontFamily) {
+      const font = getModuleFonts().find(
+        (f) => fontFamily && f.path?.split('/').pop()?.includes(fontFamily)
+      );
+      if (font) fontFamily = font.fontFamily;
+      moduleConfig.fontFamily = fontFamily.replace(/"/g, "'");
+      if (!/'.*'/.test(moduleConfig.fontFamily))
+        moduleConfig.fontFamily = `'${moduleConfig.fontFamily}'`;
+    }
+    Cache.write(moduleConfig, `moduleConfig${mod}`);
+  }
+
+  return Cache.read(`moduleConfig${mod}`);
+}
+
+export function getModuleConfigDefault() {
+  return getModuleConfig('LTR_DEFAULT');
+}
+
+export function localeConfig(locale: string) {
+  const lconfig = {} as ConfigType;
+  const toptions = { lng: locale, ns: 'common/config' };
+  // All config properties should be present, having a valid value or null.
+  // Read any values from locale's config.json file.
+  Object.entries(C.ConfigTemplate).forEach((entry) => {
+    const prop = entry[0] as keyof typeof C.ConfigTemplate;
+    const keyobj = entry[1];
+    let r = null;
+    if (keyobj.localeConf !== null) {
+      r = i18next.exists(keyobj.localeConf, toptions)
+        ? i18next.t(keyobj.localeConf, toptions)
+        : null;
+    }
+    lconfig[prop] = r;
+  });
+  lconfig.AssociatedLocale = locale || null;
+  // Module associations...
+  const tabs = getTabs();
+  const { AssociatedModules } = lconfig;
+  const ams = (AssociatedModules && AssociatedModules.split(/\s*,\s*/)) || [];
+  lconfig.AssociatedModules = null;
+  const assocmods: Set<string> = new Set(
+    ams.filter((m) => tabs.find((t) => t.module === m))
+  );
+  // Associate with modules having configs that associate with this locale.
+  tabs.forEach((t) => {
+    const config = getModuleConfig(t.module);
+    if ('AssociatedLocale' in config && config.AssociatedLocale === locale) {
+      assocmods.add(t.module);
+    }
+  });
+  // Associate with modules sharing this exact locale
+  tabs.forEach((t) => {
+    if (LibSword.getModuleInformation(t.module, 'Lang') === locale) {
+      assocmods.add(t.module);
+    }
+  });
+  // Associate with modules sharing this locale's base language
+  tabs.forEach((t) => {
+    if (
+      LibSword.getModuleInformation(t.module, 'Lang').replace(/-.*$/, '') ===
+      locale.replace(/-.*$/, '')
+    ) {
+      assocmods.add(t.module);
+    }
+  });
+  if (assocmods.size) {
+    lconfig.AssociatedModules = Array.from(assocmods).join(',');
+  }
+  // Insure there are single quotes around font names
+  if (lconfig.fontFamily) {
+    lconfig.fontFamily = lconfig.fontFamily.replace(/"/g, "'");
+    if (!/'.*'/.test(lconfig.fontFamily))
+      lconfig.fontFamily = `'${lconfig.fontFamily}'`;
+  }
+  return lconfig;
+}
+
+export function getLocaleConfigs(): { [i: string]: ConfigType } {
+  if (!Cache.has('localeConfigs')) {
+    const ret = {} as { [i: string]: ConfigType };
+    // Default locale config must have all CSS settings in order to
+    // override unrelated ancestor config CSS.
+    ret.locale = localeConfig(i18next.language);
+    Object.entries(C.ConfigTemplate).forEach((entry) => {
+      const key = entry[0] as keyof ConfigType;
+      const typeobj = entry[1];
+      if (typeobj.CSS && !ret.locale[key]) {
+        const v = C.LocaleDefaultConfigCSS[key] || 'inherit';
+        ret.locale[key] = v;
+      }
+    });
+    C.Locales.forEach((l: any) => {
+      const [lang] = l;
+      ret[lang] = localeConfig(lang);
+    });
+    Cache.write(ret, 'localeConfigs');
+  }
+  return Cache.read('localeConfigs');
+}
+
+export function getFeatureModules(): FeatureType {
+  if (!Cache.has('featureModules')) {
+    // These are CrossWire SWORD standard module features
+    const sword = {
+      strongsNumbers: [] as string[],
+      greekDef: [] as string[],
+      hebrewDef: [] as string[],
+      greekParse: [] as string[],
+      hebrewParse: [] as string[],
+      dailyDevotion: {} as { [i: string]: string },
+      glossary: [] as string[],
+      images: [] as string[],
+      noParagraphs: [] as string[],
+    };
+    // These are xulsword features that use certain modules
+    const xulsword = {
+      greek: [] as string[],
+      hebrew: [] as string[],
+    };
+
+    getTabs().forEach((tab) => {
+      const { module, type } = tab;
+      let mlang = LibSword.getModuleInformation(module, 'Lang');
+      const dash = mlang.indexOf('-');
+      mlang = mlang.substring(0, dash === -1 ? mlang.length : dash);
+      if (module !== 'LXX' && type === C.BIBLE && /^grc$/i.test(mlang))
+        xulsword.greek.push(module);
+      else if (
+        type === C.BIBLE &&
+        /^heb?$/i.test(mlang) &&
+        !/HebModern/i.test(module)
+      )
+        xulsword.hebrew.push(module);
+
+      // These Strongs feature modules do not have Strongs number keys, and so cannot be used
+      const notStrongsKeyed = new RegExp(
+        '^(AbbottSmith|InvStrongsRealGreek|InvStrongsRealHebrew)$',
+        'i'
+      );
+      if (!notStrongsKeyed.test(module)) {
+        const feature = LibSword.getModuleInformation(module, 'Feature');
+        const features = feature.split(C.CONFSEP);
+        Object.keys(sword).forEach((k) => {
+          const swordk = k as keyof typeof sword;
+          const swordf =
+            swordk.substring(0, 1).toUpperCase() + swordk.substring(1);
+          if (features.includes(swordf)) {
+            if (swordk === 'dailyDevotion') {
+              sword[swordk][module] = 'DailyDevotionToday';
+            } else {
+              sword[swordk].push(module);
+            }
+          }
+        });
+      }
+    });
+    Cache.write({ ...sword, ...xulsword }, 'featureModules');
+  }
+
+  return Cache.read('featureModules');
 }

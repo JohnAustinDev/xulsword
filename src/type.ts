@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import type ElectronLog from 'electron-log';
 import React from 'react';
-
+import type { SubscriptionType } from 'subscription';
 import type { AboutWinState } from './renderer/about/about';
 
 declare global {
@@ -255,6 +255,8 @@ export type V11nType =
   | 'NRSV'
   | 'Segond';
 
+export type CipherKey = { conf: SwordConfType; cipherKey: string };
+
 export type LocationSKType = {
   module: string;
   key: string;
@@ -404,6 +406,7 @@ export type SwordConfType = {
   SourceType?: string;
   TextSource?: string;
   Version?: string;
+  CipherKey?: string;
   About?: SwordConfLocalized;
   Abbreviation?: SwordConfLocalized;
   Description?: SwordConfLocalized;
@@ -490,6 +493,7 @@ export type NewModuleReportType = { warning?: string; error?: string };
 
 export type NewModulesType = {
   modules: SwordConfType[];
+  nokeymods: SwordConfType[];
   fonts: string[];
   bookmarks: string[];
   audio: (AudioFile | GenBookAudioFile)[];
@@ -693,11 +697,6 @@ const LibSwordPublic = {
     options: { [key in SwordFilterType]?: SwordFilterValueType }
   ) => void,
   getGlobalOption: func as unknown as (option: SwordFilterType) => string,
-  setCipherKey: func as unknown as (
-    modname: string,
-    cipherKey: string,
-    useSecModule: boolean
-  ) => void,
   getModuleList: funcCACHE as unknown as () => string,
   getModuleInformation: funcCACHE as unknown as (
     modname: string,
@@ -800,7 +799,7 @@ export const GPublic = {
   publishSubscription: func as unknown as (
     main: boolean,
     windows: WindowArgType | WindowArgType[],
-    subscriptionName: string,
+    subscriptionName: keyof SubscriptionType['publish'],
     ...args: any
   ) => void,
 
@@ -854,6 +853,10 @@ export const GPublic = {
     writeConf: func as unknown as (
       confFilePath: string,
       contents: string
+    ) => void,
+    setCipherKeys: func as unknown as (
+      keys: CipherKey[],
+      callingWinID?: number
     ) => void,
   },
   Window: {

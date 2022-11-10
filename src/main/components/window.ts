@@ -6,7 +6,7 @@ import path from 'path';
 import fs from 'fs';
 import i18next from 'i18next';
 import { BrowserWindow, ipcMain } from 'electron';
-import { JSON_parse, JSON_stringify, randomID } from '../../common';
+import { clone, JSON_parse, JSON_stringify, randomID } from '../../common';
 import Cache from '../../cache';
 import C from '../../constant';
 import Subscription from '../../subscription';
@@ -25,6 +25,7 @@ import type {
   WindowRegistryType,
   ModalType,
 } from '../../type';
+import type { SubscriptionType } from '../../subscription';
 
 const i18nBackendRenderer = require('i18next-electron-fs-backend');
 
@@ -341,7 +342,7 @@ function createWindow(
   if (descriptor.options && 'parent' in descriptor.options)
     delete descriptor.options.parent;
   addWindowToRegistry(win.id, descriptor);
-  // win.webContents.openDevTools({ mode: 'detach' });
+  if (C.DevToolsopen) win.webContents.openDevTools({ mode: 'detach' });
   win.loadURL(resolveHtmlPath(`${type}.html`));
   windowInitI18n(win.id);
   if (type !== 'xulsword') win.removeMenu();
@@ -350,7 +351,7 @@ function createWindow(
   });
   const disposables: (() => void)[] = [];
   const args: Parameters<typeof contextMenu> = [win, disposables];
-  Subscription.publish('createWindow', ...args);
+  Subscription.publish.createWindow(...args);
   win.once('closed', () => {
     disposables.forEach((dispose) => dispose());
   });
@@ -449,7 +450,7 @@ const Window: GType['Window'] = {
     let windows = window
       ? getBrowserWindows(window, arguments[2])
       : getBrowserWindows('all');
-    if (!type && !window) Subscription.publish('resetMain');
+    if (!type && !window) Subscription.publish.resetMain();
     windows.forEach((win) => {
       if (win) {
         const resets: ResetType[] = [
@@ -563,10 +564,10 @@ export const pushPrefsToWindows: PrefCallbackType = (
 export function publishSubscription(
   main: boolean,
   renderers: WindowArgType | WindowArgType[],
-  subscription: string,
+  subscription: keyof SubscriptionType['publish'],
   ...args: any
 ) {
-  if (main) Subscription.publish(subscription, ...args);
+  if (main) Subscription.doPublish(subscription, ...args);
   const done: number[] = [];
   (Array.isArray(renderers) ? renderers : [renderers]).forEach((r) => {
     getBrowserWindows(r).forEach((w) => {

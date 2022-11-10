@@ -23,6 +23,8 @@ const noContextData: ContextData = {
   selectionParsedVK: null,
 };
 
+export type ContextMenuType = typeof contextMenu;
+
 export default function contextMenu(
   window: BrowserWindow,
   dispose: (() => void)[]

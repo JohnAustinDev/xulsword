@@ -74,6 +74,22 @@ html.dialog select {
   margin-bottom: 4px;
 }
 
+/* Module post-install dialogs */
+.cipher-prompt {
+  text-align: center;
+}
+.cipher-prompt .dialog-body > * {
+  display: block;
+  margin-bottom: 10px;
+}
+.cipher-prompt .label {
+  white-space: wrap;
+}
+.cipher-prompt .textbox {
+  width: 250px;
+  margin: auto;
+}
+
 /* Grid */
 html .grid {
   align-items: center;

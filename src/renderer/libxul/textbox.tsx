@@ -150,6 +150,7 @@ class Textbox extends React.Component {
             readOnly={props.readonly}
             value={value}
             onChange={handleChange}
+            spellCheck={false}
             ref={props.inputRef}
           />
         )}

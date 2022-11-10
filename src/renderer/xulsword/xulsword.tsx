@@ -134,7 +134,7 @@ export default class Xulsword extends React.Component {
   componentDidMount() {
     this.destroy.push(onSetWindowState(this));
     this.destroy.push(
-      Subscription.subscribe('modulesInstalled', showNewModules.bind(this))
+      Subscription.subscribe.modulesInstalled(showNewModules.bind(this))
     );
   }
 

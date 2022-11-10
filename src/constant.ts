@@ -9,6 +9,7 @@ import type {
   FeatureType,
   GlobalPrefType,
   ModTypes,
+  NewModulesType,
   PinPropsType,
   PlaceType,
   ShowType,
@@ -368,6 +369,15 @@ const C = {
     // About is currently non-standard here, but used by NASB
     htmllink: ['ShortPromo', 'UnlockInfo', 'About'],
   } as const,
+
+  NEWMODS: {
+    modules: [],
+    nokeymods: [],
+    fonts: [],
+    bookmarks: [],
+    audio: [],
+    reports: [],
+  } as NewModulesType,
 
   LOCALE_SEARCH_SYMBOLS: {
     SINGLECharWildCard: '?',

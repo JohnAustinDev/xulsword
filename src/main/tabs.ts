@@ -7,8 +7,8 @@ import { getBooksInModule, getTab, getTabs } from './minit';
 import type { TabType, TabTypes, XulswordStatePref } from '../type';
 
 export default function setViewportTabs(
-  panelIndex: number, // -1 selects all panels
-  whichTabs: string | TabTypes | 'all',
+  panelIndex: number, // which panel(s) (-1 is all)
+  whichTabs: string | TabTypes | 'all', // which tabs in the panel(s)
   doWhat: 'show' | 'hide' | 'toggle'
 ): void {
   const Tabs = getTabs();

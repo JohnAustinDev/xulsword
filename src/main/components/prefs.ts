@@ -322,7 +322,7 @@ const Prefs: GType['Prefs'] & PrefsPrivate = {
         value,
         aStore,
       ];
-      Subscription.publish('setPref', ...args);
+      Subscription.publish.setPref(...args);
     }
 
     return success;

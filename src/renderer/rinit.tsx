@@ -15,7 +15,7 @@ import { initReactI18next } from 'react-i18next';
 import rendererBackend from 'i18next-electron-fs-backend';
 import { Intent, ProgressBar, Tag } from '@blueprintjs/core';
 import Subscription from '../subscription';
-import { JSON_parse, stringHash } from '../common';
+import { JSON_parse, sanitizeHTML, stringHash } from '../common';
 import Cache from '../cache';
 import C from '../constant';
 import G from './rg';
@@ -33,7 +33,10 @@ import '@blueprintjs/icons/lib/css/blueprint-icons.css';
 import '@blueprintjs/core/lib/css/blueprint.css';
 import './global-htm.css';
 
-import type { ModalType, NewModulesType } from '../type';
+import type { CipherKey, ModalType, NewModulesType } from '../type';
+import type { SubscriptionType } from '../subscription';
+import Label from './libxul/label';
+import Textbox from './libxul/textbox';
 
 window.ipc.renderer.on('cache-reset', () => Cache.clear);
 
@@ -135,10 +138,12 @@ function Reset(props: ResetProps) {
     (a: ModalType) => void
   ];
   const [progress, setProgress] = useState(-1);
-  const [dialog, setDialog] = useState(null) as [
-    ReactElement | null,
-    (dialog: ReactElement | null) => void
+  const [dialogs, setDialog] = useState([] as ReactElement[]) as [
+    ReactElement[],
+    (dialog: ReactElement[]) => void
   ];
+
+  const textbox: React.RefObject<HTMLInputElement> = React.createRef();
 
   // IPC component-reset setup:
   useEffect(() => {
@@ -197,8 +202,8 @@ function Reset(props: ResetProps) {
   useEffect(() => {
     return window.ipc.renderer.on(
       'publish-subscription',
-      (subscription: string, ...args: any) => {
-        Subscription.publish(subscription, ...args);
+      (subscription: keyof SubscriptionType['publish'], ...args: any) => {
+        Subscription.doPublish(subscription, ...args);
       }
     );
   });
@@ -240,16 +245,22 @@ function Reset(props: ResetProps) {
     };
   });
 
-  // Modal warn/error dialog on modulesInstalled:
+  // Modal warn/error/cipher-keys dialog on modulesInstalled:
   useEffect(() => {
-    return Subscription.subscribe(
-      'modulesInstalled',
+    return Subscription.subscribe.modulesInstalled(
       (newmods: NewModulesType) => {
-        const haser = newmods.reports.some((r) => r.error);
-        const haswn = newmods.reports.some((r) => r.warning);
-        if (haser) G.Shell.beep();
-        if (haser || haswn) {
-          setDialog(
+        const dialog: ReactElement[] = [];
+        const cipherKeys: CipherKey[] = [];
+        const setCipherKey = () => {
+          const k = cipherKeys.filter((ck) => ck.conf.module && ck.cipherKey);
+          if (k.length && !dialogs.length)
+            G.Module.setCipherKeys(k, G.Window.description().id);
+        };
+        const haserror = newmods.reports.some((r) => r.error);
+        const haswarning = newmods.reports.some((r) => r.warning);
+        if (haserror) G.Shell.beep();
+        if (haserror || haswarning) {
+          dialog.push(
             <Dialog
               className="modulesInstalled"
               body={
@@ -276,13 +287,65 @@ function Reset(props: ResetProps) {
               buttons={
                 <>
                   <Spacer flex="10" />
-                  <Button flex="1" fill="x" onClick={() => setDialog(null)}>
+                  <Button
+                    flex="1"
+                    fill="x"
+                    onClick={() => setDialog(dialogs.splice(0, 1))}
+                  >
                     {i18n.t('ok.label')}
                   </Button>
                 </>
               }
             />
           );
+        }
+        newmods.nokeymods.forEach((conf) => {
+          dialog.push(
+            <Dialog
+              className="cipher-prompt"
+              body={
+                <>
+                  <div className={`head1 cs-${conf.module}`}>
+                    {`${conf.module} ${conf.Version}`}
+                  </div>
+                  <div>{conf.Description?.locale}</div>
+                  {!!conf.UnlockInfo?.locale && (
+                    <div
+                      className="publisher-msg"
+                      // eslint-disable-next-line react/no-danger
+                      dangerouslySetInnerHTML={{
+                        __html: sanitizeHTML(conf.UnlockInfo?.locale),
+                      }}
+                    />
+                  )}
+                  <Label value={i18n.t('cipherKey.prompt')} />
+                  <Textbox maxLength="32" inputRef={textbox} />
+                </>
+              }
+              buttons={
+                <>
+                  <Spacer flex="10" />
+                  <Button
+                    flex="1"
+                    fill="x"
+                    onClick={() => {
+                      cipherKeys.push({
+                        conf,
+                        cipherKey: textbox.current?.value ?? '',
+                      });
+                      setDialog(dialogs.splice(0, 1));
+                      setCipherKey();
+                    }}
+                  >
+                    {i18n.t('ok.label')}
+                  </Button>
+                </>
+              }
+            />
+          );
+        });
+        if (dialog.length) {
+          setDialog(dialog);
         }
       }
     );
@@ -318,7 +381,7 @@ function Reset(props: ResetProps) {
   return (
     <>
       {overlay}
-      {dialog}
+      {dialogs.length > 0 && dialogs[0]}
       <div
         key={reset}
         id="reset"

@@ -106,7 +106,7 @@ export default class ViewportWin extends React.Component {
   componentDidMount() {
     this.destroy.push(onSetWindowState(this, vpWindowState));
     this.destroy.push(
-      Subscription.subscribe('modulesInstalled', showNewModules.bind(this))
+      Subscription.subscribe.modulesInstalled(showNewModules.bind(this))
     );
   }
 

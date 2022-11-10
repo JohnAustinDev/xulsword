@@ -15,7 +15,7 @@ import {
 } from '../../common';
 import Subscription from '../../subscription';
 import C from '../../constant';
-import Window from './window';
+import Window, { getBrowserWindows } from './window';
 import LocalFile from './localFile';
 import Dirs from './dirs';
 import LibSword from './libsword';
@@ -34,6 +34,7 @@ import {
 
 import type {
   AudioFile,
+  CipherKey,
   Download,
   FTPDownload,
   GenBookAudioFile,
@@ -45,6 +46,14 @@ import type {
   RepositoryListing,
   SwordConfType,
 } from '../../type';
+
+export const CipherKeyModules: {
+  [module: string]: {
+    confPath: string;
+    cipherKey: string;
+    numBooks: number | null; // null means unknown
+  };
+} = {};
 
 // CrossWire SWORD Standard TODOS:
 // TODO! DisplayLevel: GenBook standard display's context levels
@@ -202,15 +211,9 @@ export async function installZIPs(
   callingWinID?: number
 ): Promise<NewModulesType> {
   return new Promise((resolve) => {
-    const newmods: NewModulesType = {
-      modules: [],
-      fonts: [],
-      bookmarks: [],
-      audio: [],
-      reports: [],
-    };
+    const newmods: NewModulesType = clone(C.NEWMODS);
     if (zips.length) {
-      // Get installed module list.
+      // Get installed module list to remove any obsoleted modules.
       const installed: { module: string; dir: string }[] = [];
       if (!LibSword.isReady()) LibSword.init();
       const mods: string = LibSword.getModuleList();
@@ -348,6 +351,9 @@ export async function installZIPs(
                     confdest.writeFile(confstr);
                     confs[conf.module] = conf;
                     newmods.modules.push(conf);
+                    if (conf.CipherKey === '') {
+                      newmods.nokeymods.push(conf);
+                    }
                   }
                 }
                 newmods.reports.push(...modreports);
@@ -541,15 +547,9 @@ export async function modalInstall(
       : destdir;
     newmods = await installZIPs(z, d, callingWinID);
   } else {
-    newmods = {
-      modules: [],
-      fonts: [],
-      bookmarks: [],
-      audio: [],
-      reports: [],
-    };
+    newmods = clone(C.NEWMODS);
   }
-  Subscription.publish('modulesInstalled', newmods, callingWinID);
+  Subscription.publish.modulesInstalled(newmods, callingWinID);
   return newmods;
 }
 
@@ -912,8 +912,37 @@ const Module: GType['Module'] = {
       const conf = new LocalFile(confFilePath);
       if (conf.exists()) {
         conf.writeFile(contents);
-        Subscription.publish('resetMain');
+        Subscription.publish.resetMain();
       }
+    }
+  },
+
+  setCipherKeys(keys: CipherKey[], callerWinID?: number): void {
+    if (keys.length) {
+      Window.modal([{ modal: 'darkened', window: 'all' }]);
+      LibSword.quit();
+      keys.forEach((k) => {
+        const { conf, cipherKey } = k;
+        const { module } = conf;
+        if (cipherKey && module && module in CipherKeyModules) {
+          try {
+            const confFile = new LocalFile(CipherKeyModules[module].confPath);
+            const str = confFile.readFile();
+            const nstr = str.replace(/(?<=^CipherKey\s*=).*$/gm, cipherKey);
+            confFile.writeFile(nstr);
+          } catch (er) {
+            log.error(er);
+          }
+        }
+      });
+      const newmods = clone(C.NEWMODS);
+      // Add these as new modules now, but they will be removed during
+      // 'modulesInstalled' if they don't decrypt with the key.
+      newmods.modules.push(...keys.map((k) => k.conf));
+      Subscription.publish.modulesInstalled(
+        newmods,
+        callerWinID ?? getBrowserWindows({ type: 'xulsword' })[0].id
+      );
     }
   },
 };
