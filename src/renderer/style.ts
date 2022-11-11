@@ -137,8 +137,9 @@ class DynamicStyleSheet {
     const module = { default: G.ModuleConfigDefault } as {
       [i: string]: ConfigType;
     };
-    G.Tabs.forEach((t) => {
-      module[t.module] = t.config;
+    Object.entries(G.Config).forEach((entry) => {
+      const [mod, config] = entry;
+      module[mod] = config;
     });
     this.style = {
       locale: G.LocaleConfigs,

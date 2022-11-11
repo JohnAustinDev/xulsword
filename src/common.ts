@@ -430,26 +430,6 @@ export function getCSS(
   return result;
 }
 
-// Sort tabs into the following order:
-// - By module type
-// - Modules matching the current locale
-// - Modules matching any installed locale
-// - By label alpha
-export function tabSort(a: TabType, b: TabType) {
-  if (a.tabType === b.tabType) {
-    const aLocale = a.config.AssociatedLocale;
-    const bLocale = b.config.AssociatedLocale;
-    const lng = i18n.language;
-    const aPriority = aLocale ? (aLocale === lng ? 1 : 2) : 3;
-    const bPriority = bLocale ? (bLocale === lng ? 1 : 2) : 3;
-    if (aPriority !== bPriority) return aPriority > bPriority ? 1 : -1;
-    // Type and Priority are same, then sort by label's alpha.
-    return a.label > b.label ? 1 : -1;
-  }
-  const mto = C.UI.Viewport.TabTypeOrder as any;
-  return mto[a.tabType] > mto[b.tabType] ? 1 : -1;
-}
-
 // Return a SwordConfType object from a config LocalFile, or else from
 // the string contents of a config file plus the config file's name.
 export function parseSwordConf(

@@ -10,7 +10,6 @@ import {
   escapeRE,
   JSON_stringify,
   ofClass,
-  tabSort,
 } from '../../common';
 import { getElementInfo } from '../../libswordElemInfo';
 import G from '../rg';
@@ -69,9 +68,12 @@ export function showNewModules(
   this: Xulsword | ViewportWin,
   newmods: NewModulesType
 ) {
-  const sortedModConfs = newmods.modules.sort((a, b) =>
-    tabSort(G.Tab[a.module], G.Tab[b.module])
-  );
+  const sortedModConfs = newmods.modules.sort((a, b) => {
+    const ai = G.Tabs.indexOf(G.Tab[a.module]);
+    const bi = G.Tabs.indexOf(G.Tab[b.module]);
+    if (ai === bi) return 0;
+    return ai < bi ? -1 : 1;
+  });
   if (sortedModConfs.length) {
     this.setState((prevState: XulswordState | ViewportWinState) => {
       const ps = clone(prevState);

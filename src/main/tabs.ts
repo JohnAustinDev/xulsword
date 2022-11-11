@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-nested-ternary */
-import { clone, tabSort } from '../common';
+import { clone } from '../common';
 import Prefs from './components/prefs';
 import { getBooksInModule, getTab, getTabs } from './minit';
 
@@ -74,9 +74,12 @@ export default function setViewportTabs(
 
   xulsword.tabs.forEach((tabbank, i: number) => {
     if (tabbank) {
-      xulsword.tabs[i] = tabbank
-        .filter(Boolean)
-        .sort((a, b) => tabSort(Tab[a], Tab[b]));
+      xulsword.tabs[i] = tabbank.filter(Boolean).sort((a, b) => {
+        const ai = Tabs.indexOf(Tab[a]);
+        const bi = Tabs.indexOf(Tab[b]);
+        if (ai === bi) return 0;
+        return ai < bi ? -1 : 1;
+      });
     }
   });
 

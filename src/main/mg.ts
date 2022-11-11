@@ -37,6 +37,7 @@ import {
   getModuleFonts,
   getFeatureModules,
   localeConfig,
+  getConfig,
 } from './minit';
 
 // Methods of the following classes must not use rest parameters or default
@@ -146,6 +147,10 @@ class GClass implements GType {
 
   get Tab() {
     return getTab();
+  }
+
+  get Config() {
+    return getConfig();
   }
 
   get SwordConf() {

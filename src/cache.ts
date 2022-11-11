@@ -12,8 +12,8 @@ const Cache = {
     return this.storage[args.join('+')];
   },
 
-  write(value: any, ...args: string[]) {
-    const name = args.join('+');
+  write(value: any, ...cacheName: string[]) {
+    const name = cacheName.join('+');
     if (name in this.storage) throw Error(`Cache already exists: '${name}'`);
     this.storage[name] = value;
   },

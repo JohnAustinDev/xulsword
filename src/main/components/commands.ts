@@ -23,19 +23,14 @@ import type { AboutWinState } from '../../renderer/about/about';
 
 const Commands: GType['Commands'] = {
   openModuleManager() {
-    let win: BrowserWindow | null =
-      BrowserWindow.fromId(arguments[1] ?? -1) ||
-      getBrowserWindows({ type: 'xulsword' })[0];
     const options: BrowserWindowConstructorOptions = {
       title: i18n.t('menu.addNewModule.label'),
-      parent: win || undefined,
     };
     Window.open({
       type: 'moduleManager',
-      category: 'window',
+      category: 'dialog-window',
       options,
     });
-    win = null;
   },
 
   // Install one or more ZIP modules from the local file system. The paths
@@ -99,19 +94,14 @@ const Commands: GType['Commands'] = {
   },
 
   removeModule() {
-    let win: BrowserWindow | null =
-      BrowserWindow.fromId(arguments[0] ?? -1) ||
-      getBrowserWindows({ type: 'xulsword' })[0];
     const options = {
       title: i18n.t('menu.removeModule.label'),
-      parent: win || undefined,
     };
     Window.open({
       type: 'removeModule',
-      category: 'window',
+      category: 'dialog-window',
       options,
     });
-    win = null;
   },
 
   exportAudio() {

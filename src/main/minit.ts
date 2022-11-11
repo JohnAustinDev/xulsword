@@ -5,11 +5,11 @@
 import log from 'electron-log';
 import path from 'path';
 import fs from 'fs';
-import i18next from 'i18next';
+import i18n from 'i18next';
 import C from '../constant';
 import VerseKey from '../versekey';
 import RefParser, { RefParserOptionsType } from '../refparse';
-import { clone, isASCII, JSON_parse, parseSwordConf, tabSort } from '../common';
+import { clone, isASCII, JSON_parse, parseSwordConf } from '../common';
 import Cache from '../cache';
 import Subscription from '../subscription';
 import Dirs from './components/dirs';
@@ -65,7 +65,7 @@ export function getBooks(): BookType[] {
     const stfile = path.join(
       Dirs.path.xsAsset,
       'locales',
-      i18next.language,
+      i18n.language,
       'common',
       'books.json'
     );
@@ -207,7 +207,6 @@ export function getTabs(): TabType[] {
           module,
           type,
           version: LibSword.getModuleInformation(module, 'Version'),
-          config: getModuleConfig(module),
           v11n: isVerseKey ? LibSword.getVerseSystem(module) : '',
           directory,
           label,
@@ -234,7 +233,26 @@ export function getTabs(): TabType[] {
         i += 1;
       }
     });
-    Cache.write(tabs.sort(tabSort), 'tabs');
+    const sorted = tabs.sort((a, b) => {
+      // Sort tabs into the following order:
+      // - By module type
+      // - Modules matching the current locale
+      // - Modules matching any installed locale
+      // - By label alpha
+      if (a.tabType === b.tabType) {
+        const aLocale = getLocaleOfModule(a.module);
+        const bLocale = getLocaleOfModule(b.module);
+        const lng = i18n.language;
+        const aPriority = aLocale ? (aLocale === lng ? 1 : 2) : 3;
+        const bPriority = bLocale ? (bLocale === lng ? 1 : 2) : 3;
+        if (aPriority !== bPriority) return aPriority > bPriority ? 1 : -1;
+        // Type and Priority are same, then sort by label's alpha.
+        return a.label > b.label ? 1 : -1;
+      }
+      const mto = C.UI.Viewport.TabTypeOrder as any;
+      return mto[a.tabType] > mto[b.tabType] ? 1 : -1;
+    });
+    Cache.write(sorted, 'tabs');
   }
   return Cache.read('tabs');
 }
@@ -491,7 +509,7 @@ export function updateGlobalModulePrefs() {
         Array.isArray(featureModules[k]) ? featureModules[k] : []
       ) as string[];
       const sel =
-        C.LocalePreferredFeature[i18next.language === 'en' ? 'en' : 'ru'];
+        C.LocalePreferredFeature[i18n.language === 'en' ? 'en' : 'ru'];
       const preferred = (
         k in sel && Array.isArray(sel[k]) ? sel[k] : []
       ) as string[];
@@ -581,42 +599,58 @@ export function getModuleFonts(): FontFaceType[] {
 //    Return a Locale which lists the module as an associated module
 //    Return null if no match
 function getLocaleOfModule(module: string) {
-  let myLocale: string | null = null;
+  const cacheName = `getLocaleOfModule-${module}`;
+  if (!Cache.has(cacheName)) {
+    let myLocale: string | null = null;
 
-  const progLocale = i18next.language;
-  let ml: any = LibSword.getModuleInformation(module, 'Lang').toLowerCase();
-  if (ml === C.NOTFOUND) ml = undefined;
+    const progLocale = i18n.language;
+    let ml: any = LibSword.getModuleInformation(module, 'Lang').toLowerCase();
+    if (ml === C.NOTFOUND) ml = undefined;
 
-  let stop = false;
-  C.Locales.forEach((l: any) => {
-    const [locale] = l;
-    if (stop) return;
-    const lcs = locale.toLowerCase();
+    let stop = false;
+    C.Locales.forEach((l: any) => {
+      const [locale] = l;
+      if (stop) return;
+      const lcs = locale.toLowerCase();
 
-    if (ml && ml === lcs) {
-      myLocale = locale;
-      stop = true;
-      return;
+      if (ml && ml === lcs) {
+        myLocale = locale;
+        stop = true;
+        return;
+      }
+      if (ml && lcs && ml.replace(/-.*$/, '') === lcs.replace(/-.*$/, '')) {
+        myLocale = locale;
+        if (myLocale === progLocale) stop = true;
+      }
+    });
+
+    if (!myLocale) {
+      const regex = new RegExp(`(^|s|,)+${module}(,|s|$)+`);
+      C.Locales.forEach((l: any) => {
+        const [locale] = l;
+        const toptions = {
+          lng: locale,
+          ns: 'common/config',
+        };
+        if (i18n.t('DefaultModule', toptions).match(regex)) myLocale = locale;
+      });
     }
-    if (ml && lcs && ml.replace(/-.*$/, '') === lcs.replace(/-.*$/, '')) {
-      myLocale = locale;
-      if (myLocale === progLocale) stop = true;
-    }
-  });
+    Cache.write(myLocale, cacheName);
+  }
 
-  if (myLocale) return myLocale;
+  return Cache.read(cacheName);
+}
 
-  const regex = new RegExp(`(^|s|,)+${module}(,|s|$)+`);
-  C.Locales.forEach((l: any) => {
-    const [locale] = l;
-    const toptions = {
-      lng: locale,
-      ns: 'common/config',
-    };
-    if (i18next.t('DefaultModule', toptions).match(regex)) myLocale = locale;
-  });
-
-  return myLocale;
+export function getConfig() {
+  const cacheName = 'getConfig';
+  if (!Cache.has(cacheName)) {
+    const config: { [module: string]: ConfigType } = {};
+    getTabs().forEach((t) => {
+      config[t.module] = getModuleConfig(t.module);
+    });
+    Cache.write(config, cacheName);
+  }
+  return Cache.read(cacheName);
 }
 
 export function getModuleConfig(mod: string) {
@@ -650,10 +684,9 @@ export function getModuleConfig(mod: string) {
 
     // Assign associated locales
     if (mod !== 'LTR_DEFAULT') {
-      const lom = getLocaleOfModule(mod);
-      moduleConfig.AssociatedLocale = lom || null;
+      moduleConfig.AssociatedLocale = getLocaleOfModule(mod) || null;
     } else {
-      moduleConfig.AssociatedLocale = i18next.language;
+      moduleConfig.AssociatedLocale = i18n.language;
       moduleConfig.AssociatedModules = null;
     }
 
@@ -695,8 +728,8 @@ export function localeConfig(locale: string) {
     const keyobj = entry[1];
     let r = null;
     if (keyobj.localeConf !== null) {
-      r = i18next.exists(keyobj.localeConf, toptions)
-        ? i18next.t(keyobj.localeConf, toptions)
+      r = i18n.exists(keyobj.localeConf, toptions)
+        ? i18n.t(keyobj.localeConf, toptions)
         : null;
     }
     lconfig[prop] = r;
@@ -749,7 +782,7 @@ export function getLocaleConfigs(): { [i: string]: ConfigType } {
     const ret = {} as { [i: string]: ConfigType };
     // Default locale config must have all CSS settings in order to
     // override unrelated ancestor config CSS.
-    ret.locale = localeConfig(i18next.language);
+    ret.locale = localeConfig(i18n.language);
     Object.entries(C.ConfigTemplate).forEach((entry) => {
       const key = entry[0] as keyof ConfigType;
       const typeobj = entry[1];

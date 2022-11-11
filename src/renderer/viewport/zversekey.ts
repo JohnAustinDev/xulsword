@@ -305,9 +305,8 @@ export function getRefHTML(
   keepNotes?: boolean,
   info?: Partial<LookupInfo>
 ): string {
-  const { Tab } = G;
   const locale =
-    (targetmod in Tab && Tab[targetmod].config.AssociatedLocale) ||
+    (targetmod in G.Config && G.Config[targetmod].AssociatedLocale) ||
     i18next.language;
   const list = parseExtendedVKRef(extref, context, [locale]);
   const alternates = alternateModules();
@@ -574,7 +573,7 @@ export function getChapterHeading(
 ) {
   if (!location || !module) return { textHTML: '', intronotes: '' };
   const { book, chapter } = location;
-  let l = G.Tab[module].config.AssociatedLocale;
+  let l = G.Config[module].AssociatedLocale;
   if (!l) l = i18next.language; // otherwise use current program locale
   const toptions = { lng: l, ns: 'common/books' };
 
@@ -682,7 +681,7 @@ function verseIsVisible(v: HTMLElement, ignoreNotebox = false): boolean {
   }
 
   // multi-column windows...
-  if (G.Tab[module].config.direction === 'ltr') {
+  if (G.Config[module].direction === 'ltr') {
     // we are LTR
     // are we outside the visible columns?
     if (v.offsetLeft > sb.offsetWidth) return false;

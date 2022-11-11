@@ -469,7 +469,6 @@ export type TabType = {
   module: string;
   type: ModTypes;
   version: string;
-  config: ConfigType;
   lang: string;
   direction: 'ltr' | 'rtl';
   v11n: V11nType | '';
@@ -774,6 +773,7 @@ export const GPublic = {
   Book:                'getter' as unknown as { [i: string]: BookType },
   Tabs:                'getter' as unknown as TabType[],
   Tab:                 'getter' as unknown as { [i: string]: TabType },
+  Config:              'getter' as unknown as { [i: string]: ConfigType },
   SwordConf:           'getter' as unknown as { [mod: string]: SwordConfType },
   ProgramConfig:       'getter' as unknown as ConfigType,
   LocaleConfigs:       'getter' as unknown as { [i: string]: ConfigType },
