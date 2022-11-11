@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable no-nested-ternary */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable import/no-mutable-exports */
@@ -123,6 +122,159 @@ export function getBook(): { [i: string]: BookType } {
     Cache.write(book, 'book');
   }
   return Cache.read('book');
+}
+
+export function getBkChsInV11n(): {
+  [key in V11nType]: [string, number][];
+} {
+  if (!Cache.has('bkChsInV11n')) {
+    // Data was parsed from sword/include/*.h files using /util/readCanons.pl
+    const sameAsKJV = {
+      KJV: { ot: 0, nt: 0 },
+      Calvin: { ot: 1, nt: 1 },
+      Catholic: { ot: 0, nt: 1 },
+      Catholic2: { ot: 0, nt: 1 },
+      DarbyFr: { ot: 1, nt: 1 },
+      German: { ot: 0, nt: 1 },
+      KJVA: { ot: 0, nt: 1 },
+      Leningrad: { ot: 0, nt: 1 },
+      Luther: { ot: 0, nt: 0 },
+      LXX: { ot: 0, nt: 1 },
+      MT: { ot: 0, nt: 1 },
+      NRSV: { ot: 1, nt: 1 },
+      NRSVA: { ot: 0, nt: 1 },
+      Orthodox: { ot: 0, nt: 1 },
+      Segond: { ot: 1, nt: 1 },
+      Synodal: { ot: 0, nt: 0 },
+      SynodalProt: { ot: 0, nt: 1 },
+      Vulg: { ot: 0, nt: 0 },
+    };
+    /* eslint-disable prettier/prettier */
+    const bkChsInV11n: GType['BkChsInV11n'] = {
+      KJV:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['Ruth',4],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['1Chr',29],['2Chr',36],['Ezra',10],['Neh',13],['Esth',10],['Job',42],['Ps',150],['Prov',31],['Eccl',12],['Song',8],['Isa',66],['Jer',52],['Lam',5],['Ezek',48],['Dan',12],['Hos',14],['Joel',3],['Amos',9],['Obad',1],['Jonah',4],['Mic',7],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',4],['Matt',28],['Mark',16],['Luke',24],['John',21],['Acts',28],['Rom',16],['1Cor',16],['2Cor',13],['Gal',6],['Eph',6],['Phil',4],['Col',4],['1Thess',5],['2Thess',3],['1Tim',6],['2Tim',4],['Titus',3],['Phlm',1],['Heb',13],['Jas',5],['1Pet',5],['2Pet',3],['1John',5],['2John',1],['3John',1],['Jude',1],['Rev',22]],
+      Calvin:[],
+      Catholic:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['Ruth',4],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['1Chr',29],['2Chr',36],['Ezra',10],['Neh',13],['Tob',14],['Jdt',16],['Esth',10],['1Macc',16],['2Macc',15],['Job',42],['Ps',150],['Prov',31],['Eccl',12],['Song',8],['Wis',19],['Sir',51],['Isa',66],['Jer',52],['Lam',5],['Bar',6],['Ezek',48],['Dan',14],['Hos',14],['Joel',4],['Amos',9],['Obad',1],['Jonah',4],['Mic',7],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',3]],
+      Catholic2:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['Ruth',4],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['1Chr',29],['2Chr',36],['Ezra',10],['Neh',13],['Tob',14],['Jdt',16],['Esth',16],['1Macc',16],['2Macc',15],['Job',42],['Ps',150],['Prov',31],['Eccl',12],['Song',8],['Wis',19],['Sir',51],['Isa',66],['Jer',52],['Lam',5],['Bar',6],['Ezek',48],['Dan',14],['Hos',14],['Joel',4],['Amos',9],['Obad',1],['Jonah',4],['Mic',7],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',3]],
+      DarbyFr:[],
+      German:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['Ruth',4],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['1Chr',29],['2Chr',36],['Ezra',10],['Neh',13],['Esth',10],['Job',42],['Ps',150],['Prov',31],['Eccl',12],['Song',8],['Isa',66],['Jer',52],['Lam',5],['Ezek',48],['Dan',12],['Hos',14],['Joel',4],['Amos',9],['Obad',1],['Jonah',4],['Mic',7],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',3]],
+      KJVA:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['Ruth',4],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['1Chr',29],['2Chr',36],['Ezra',10],['Neh',13],['Esth',10],['Job',42],['Ps',150],['Prov',31],['Eccl',12],['Song',8],['Isa',66],['Jer',52],['Lam',5],['Ezek',48],['Dan',12],['Hos',14],['Joel',3],['Amos',9],['Obad',1],['Jonah',4],['Mic',7],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',4],['1Esd',9],['2Esd',16],['Tob',14],['Jdt',16],['AddEsth',16],['Wis',19],['Sir',51],['Bar',6],['PrAzar',1],['Sus',1],['Bel',1],['PrMan',1],['1Macc',16],['2Macc',15]],
+      Leningrad:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['Isa',66],['Jer',52],['Ezek',48],['Hos',14],['Joel',4],['Amos',9],['Obad',1],['Jonah',4],['Mic',7],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',3],['1Chr',29],['2Chr',36],['Ps',150],['Job',42],['Prov',31],['Ruth',4],['Song',8],['Eccl',12],['Lam',5],['Esth',10],['Dan',12],['Ezra',10],['Neh',13]],
+      Luther:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['Ruth',4],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['1Chr',29],['2Chr',36],['Ezra',10],['Neh',13],['Esth',10],['Job',42],['Ps',150],['Prov',31],['Eccl',12],['Song',8],['Isa',66],['Jer',52],['Lam',5],['Ezek',48],['Dan',12],['Hos',14],['Joel',4],['Amos',9],['Obad',1],['Jonah',4],['Mic',7],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',3],['Jdt',16],['Wis',19],['Tob',14],['Sir',51],['Bar',6],['1Macc',16],['2Macc',15],['AddEsth',7],['AddDan',3],['PrMan',1],['Matt',28],['Mark',16],['Luke',24],['John',21],['Acts',28],['Rom',16],['1Cor',16],['2Cor',13],['Gal',6],['Eph',6],['Phil',4],['Col',4],['1Thess',5],['2Thess',3],['1Tim',6],['2Tim',4],['Titus',3],['Phlm',1],['1Pet',5],['2Pet',3],['1John',5],['2John',1],['3John',1],['Heb',13],['Jas',5],['Jude',1],['Rev',22]],
+      LXX:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['Ruth',4],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['1Chr',29],['2Chr',36],['1Esd',9],['Ezra',10],['Neh',13],['Esth',16],['Jdt',16],['Tob',14],['1Macc',16],['2Macc',15],['3Macc',7],['4Macc',18],['Ps',151],['PrMan',1],['Prov',31],['Eccl',12],['Song',8],['Job',42],['Wis',19],['Sir',51],['PssSol',18],['Hos',14],['Amos',9],['Mic',7],['Joel',4],['Obad',1],['Jonah',4],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',4],['Isa',66],['Jer',52],['Bar',5],['Lam',5],['EpJer',1],['Ezek',48],['PrAzar',1],['Sus',1],['Dan',12],['Bel',1],['1En',108],['Odes',14]],
+      MT:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['Isa',66],['Jer',52],['Ezek',48],['Hos',14],['Joel',4],['Amos',9],['Obad',1],['Jonah',4],['Mic',7],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',3],['Ps',150],['Job',42],['Prov',31],['Ruth',4],['Song',8],['Eccl',12],['Lam',5],['Esth',10],['Dan',12],['Ezra',10],['Neh',13],['1Chr',29],['2Chr',36]],
+      NRSV:[],
+      NRSVA:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['Ruth',4],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['1Chr',29],['2Chr',36],['Ezra',10],['Neh',13],['Esth',10],['Job',42],['Ps',150],['Prov',31],['Eccl',12],['Song',8],['Isa',66],['Jer',52],['Lam',5],['Ezek',48],['Dan',12],['Hos',14],['Joel',3],['Amos',9],['Obad',1],['Jonah',4],['Mic',7],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',4],['Tob',14],['Jdt',16],['EsthGr',16],['Wis',19],['Sir',51],['Bar',6],['PrAzar',1],['Sus',1],['Bel',1],['1Macc',16],['2Macc',15],['1Esd',9],['PrMan',1],['AddPs',1],['3Macc',7],['2Esd',16],['4Macc',18]],
+      Orthodox:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['Ruth',4],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['1Chr',29],['2Chr',36],['1Esd',9],['Ezra',10],['Neh',13],['Tob',14],['Jdt',16],['Esth',16],['1Macc',16],['2Macc',15],['3Macc',7],['Ps',151],['PrMan',1],['Job',42],['Prov',31],['Eccl',12],['Song',8],['Wis',19],['Sir',51],['Hos',14],['Amos',9],['Mic',7],['Joel',4],['Obad',1],['Jonah',4],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',4],['Isa',66],['Jer',52],['Bar',5],['Lam',5],['EpJer',1],['Ezek',48],['Sus',1],['Dan',12],['Bel',1],['4Macc',18]],
+      Segond:[],
+      Synodal:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['Ruth',4],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['1Chr',29],['2Chr',36],['PrMan',1],['Ezra',10],['Neh',13],['1Esd',9],['Tob',14],['Jdt',16],['Esth',10],['Job',42],['Ps',151],['Prov',31],['Eccl',12],['Song',8],['Wis',19],['Sir',51],['Isa',66],['Jer',52],['Lam',5],['EpJer',1],['Bar',5],['Ezek',48],['Dan',14],['Hos',14],['Joel',3],['Amos',9],['Obad',1],['Jonah',4],['Mic',7],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',4],['1Macc',16],['2Macc',15],['3Macc',7],['2Esd',16],['Matt',28],['Mark',16],['Luke',24],['John',21],['Acts',28],['Jas',5],['1Pet',5],['2Pet',3],['1John',5],['2John',1],['3John',1],['Jude',1],['Rom',16],['1Cor',16],['2Cor',13],['Gal',6],['Eph',6],['Phil',4],['Col',4],['1Thess',5],['2Thess',3],['1Tim',6],['2Tim',4],['Titus',3],['Phlm',1],['Heb',13],['Rev',22]],
+      SynodalProt:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['Ruth',4],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['1Chr',29],['2Chr',36],['Ezra',10],['Neh',13],['Esth',10],['Job',42],['Ps',150],['Prov',31],['Eccl',12],['Song',8],['Isa',66],['Jer',52],['Lam',5],['Ezek',48],['Dan',12],['Hos',14],['Joel',3],['Amos',9],['Obad',1],['Jonah',4],['Mic',7],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',4]],
+      Vulg:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['Ruth',4],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['1Chr',29],['2Chr',36],['Ezra',10],['Neh',13],['Tob',14],['Jdt',16],['Esth',16],['Job',42],['Ps',150],['Prov',31],['Eccl',12],['Song',8],['Wis',19],['Sir',51],['Isa',66],['Jer',52],['Lam',5],['Bar',6],['Ezek',48],['Dan',14],['Hos',14],['Joel',3],['Amos',9],['Obad',1],['Jonah',4],['Mic',7],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',4],['1Macc',16],['2Macc',15],['Matt',28],['Mark',16],['Luke',24],['John',21],['Acts',28],['Rom',16],['1Cor',16],['2Cor',13],['Gal',6],['Eph',6],['Phil',4],['Col',4],['1Thess',5],['2Thess',3],['1Tim',6],['2Tim',4],['Titus',3],['Phlm',1],['Heb',13],['Jas',5],['1Pet',5],['2Pet',3],['1John',5],['2John',1],['3John',1],['Jude',1],['Rev',22],['PrMan',1],['1Esd',9],['2Esd',16],['AddPs',1],['EpLao',1]],
+    };
+    /* eslint-enable prettier/prettier */
+    const kjvot = bkChsInV11n.KJV.slice(0, 39);
+    const kjvnt = bkChsInV11n.KJV.slice(39);
+    Object.keys(bkChsInV11n).forEach((k) => {
+      const v11n = k as keyof typeof bkChsInV11n;
+      if (sameAsKJV[v11n].ot) {
+        bkChsInV11n[v11n].splice(0, 0, ...kjvot);
+      }
+      if (sameAsKJV[v11n].nt) {
+        bkChsInV11n[v11n].push(...kjvnt);
+      }
+    });
+    Cache.write(bkChsInV11n, 'bkChsInV11n');
+  }
+
+  return Cache.read('bkChsInV11n');
+}
+
+export function getBooksInModule(module: string): string[] {
+  if (!Cache.has('booksInModule', module)) {
+    const bkChsInV11n = getBkChsInV11n();
+    const book = getBook();
+    let v11n = LibSword.getModuleInformation(
+      module,
+      'Versification'
+    ) as V11nType;
+    if (v11n === C.NOTFOUND) v11n = 'KJV';
+    const isVerseKey = /(text|comm)/i.test(
+      LibSword.getModuleInformation(module, 'ModDrv')
+    );
+    const osis: string[] = [];
+    if (isVerseKey) {
+      const v11nbooks = bkChsInV11n[v11n].map((x) => x[0]);
+      // When references to missing books are requested from SWORD,
+      // the previous (or last?) book in the module is usually quietly
+      // used and read from instead! The exception seems to be when a
+      // reference to the first (or following?) missing book(s) after
+      // the last included book of a module is requested, which
+      // correctly returns an empty string. In any case, when ambiguous
+      // results are returned, test two verses to make sure they are
+      // different and are not the empty string, to determine whether
+      // the book is missing from the module.
+      const fake = LibSword.getVerseText(module, 'FAKE 1:1', false);
+      v11nbooks.forEach((code: string) => {
+        const bk = book[code];
+        const verse1 = LibSword.getVerseText(module, `${bk.code} 1:1`, false);
+        if (!verse1 || verse1 === fake) {
+          const verse2 = LibSword.getVerseText(module, `${bk.code} 1:2`, false);
+          if (!verse2 || verse1 === verse2) return;
+        }
+        osis.push(bk.code);
+      });
+    }
+    Cache.write(osis, 'booksInModule', module);
+  }
+
+  return Cache.read('booksInModule', module);
+}
+
+// Return a locale (if any) to associate with a module:
+//    Return a Locale with exact same language code as module
+//    Return a Locale having same base language code as module, prefering current Locale over any others
+//    Return a Locale which lists the module as an associated module
+//    Return null if no match
+function getLocaleOfModule(module: string) {
+  const cacheName = `getLocaleOfModule-${module}`;
+  if (!Cache.has(cacheName)) {
+    let myLocale: string | null = null;
+
+    const progLocale = i18n.language;
+    let ml: any = LibSword.getModuleInformation(module, 'Lang').toLowerCase();
+    if (ml === C.NOTFOUND) ml = undefined;
+
+    let stop = false;
+    C.Locales.forEach((l: any) => {
+      const [locale] = l;
+      if (stop) return;
+      const lcs = locale.toLowerCase();
+
+      if (ml && ml === lcs) {
+        myLocale = locale;
+        stop = true;
+        return;
+      }
+      if (ml && lcs && ml.replace(/-.*$/, '') === lcs.replace(/-.*$/, '')) {
+        myLocale = locale;
+        if (myLocale === progLocale) stop = true;
+      }
+    });
+
+    if (!myLocale) {
+      const regex = new RegExp(`(^|s|,)+${module}(,|s|$)+`);
+      C.Locales.forEach((l: any) => {
+        const [locale] = l;
+        const toptions = {
+          lng: locale,
+          ns: 'common/config',
+        };
+        if (i18n.t('DefaultModule', toptions).match(regex)) myLocale = locale;
+      });
+    }
+    Cache.write(myLocale, cacheName);
+  }
+
+  return Cache.read(cacheName);
 }
 
 export function getTabs(): TabType[] {
@@ -302,111 +454,6 @@ export function getSwordConf(): { [mod: string]: SwordConfType } {
   return swordConf;
 }
 
-export function getBkChsInV11n(): {
-  [key in V11nType]: [string, number][];
-} {
-  if (!Cache.has('bkChsInV11n')) {
-    // Data was parsed from sword/include/*.h files using /util/readCanons.pl
-    const sameAsKJV = {
-      KJV: { ot: 0, nt: 0 },
-      Calvin: { ot: 1, nt: 1 },
-      Catholic: { ot: 0, nt: 1 },
-      Catholic2: { ot: 0, nt: 1 },
-      DarbyFr: { ot: 1, nt: 1 },
-      German: { ot: 0, nt: 1 },
-      KJVA: { ot: 0, nt: 1 },
-      Leningrad: { ot: 0, nt: 1 },
-      Luther: { ot: 0, nt: 0 },
-      LXX: { ot: 0, nt: 1 },
-      MT: { ot: 0, nt: 1 },
-      NRSV: { ot: 1, nt: 1 },
-      NRSVA: { ot: 0, nt: 1 },
-      Orthodox: { ot: 0, nt: 1 },
-      Segond: { ot: 1, nt: 1 },
-      Synodal: { ot: 0, nt: 0 },
-      SynodalProt: { ot: 0, nt: 1 },
-      Vulg: { ot: 0, nt: 0 },
-    };
-    /* eslint-disable prettier/prettier */
-    const bkChsInV11n: GType['BkChsInV11n'] = {
-      KJV:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['Ruth',4],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['1Chr',29],['2Chr',36],['Ezra',10],['Neh',13],['Esth',10],['Job',42],['Ps',150],['Prov',31],['Eccl',12],['Song',8],['Isa',66],['Jer',52],['Lam',5],['Ezek',48],['Dan',12],['Hos',14],['Joel',3],['Amos',9],['Obad',1],['Jonah',4],['Mic',7],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',4],['Matt',28],['Mark',16],['Luke',24],['John',21],['Acts',28],['Rom',16],['1Cor',16],['2Cor',13],['Gal',6],['Eph',6],['Phil',4],['Col',4],['1Thess',5],['2Thess',3],['1Tim',6],['2Tim',4],['Titus',3],['Phlm',1],['Heb',13],['Jas',5],['1Pet',5],['2Pet',3],['1John',5],['2John',1],['3John',1],['Jude',1],['Rev',22]],
-      Calvin:[],
-      Catholic:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['Ruth',4],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['1Chr',29],['2Chr',36],['Ezra',10],['Neh',13],['Tob',14],['Jdt',16],['Esth',10],['1Macc',16],['2Macc',15],['Job',42],['Ps',150],['Prov',31],['Eccl',12],['Song',8],['Wis',19],['Sir',51],['Isa',66],['Jer',52],['Lam',5],['Bar',6],['Ezek',48],['Dan',14],['Hos',14],['Joel',4],['Amos',9],['Obad',1],['Jonah',4],['Mic',7],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',3]],
-      Catholic2:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['Ruth',4],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['1Chr',29],['2Chr',36],['Ezra',10],['Neh',13],['Tob',14],['Jdt',16],['Esth',16],['1Macc',16],['2Macc',15],['Job',42],['Ps',150],['Prov',31],['Eccl',12],['Song',8],['Wis',19],['Sir',51],['Isa',66],['Jer',52],['Lam',5],['Bar',6],['Ezek',48],['Dan',14],['Hos',14],['Joel',4],['Amos',9],['Obad',1],['Jonah',4],['Mic',7],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',3]],
-      DarbyFr:[],
-      German:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['Ruth',4],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['1Chr',29],['2Chr',36],['Ezra',10],['Neh',13],['Esth',10],['Job',42],['Ps',150],['Prov',31],['Eccl',12],['Song',8],['Isa',66],['Jer',52],['Lam',5],['Ezek',48],['Dan',12],['Hos',14],['Joel',4],['Amos',9],['Obad',1],['Jonah',4],['Mic',7],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',3]],
-      KJVA:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['Ruth',4],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['1Chr',29],['2Chr',36],['Ezra',10],['Neh',13],['Esth',10],['Job',42],['Ps',150],['Prov',31],['Eccl',12],['Song',8],['Isa',66],['Jer',52],['Lam',5],['Ezek',48],['Dan',12],['Hos',14],['Joel',3],['Amos',9],['Obad',1],['Jonah',4],['Mic',7],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',4],['1Esd',9],['2Esd',16],['Tob',14],['Jdt',16],['AddEsth',16],['Wis',19],['Sir',51],['Bar',6],['PrAzar',1],['Sus',1],['Bel',1],['PrMan',1],['1Macc',16],['2Macc',15]],
-      Leningrad:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['Isa',66],['Jer',52],['Ezek',48],['Hos',14],['Joel',4],['Amos',9],['Obad',1],['Jonah',4],['Mic',7],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',3],['1Chr',29],['2Chr',36],['Ps',150],['Job',42],['Prov',31],['Ruth',4],['Song',8],['Eccl',12],['Lam',5],['Esth',10],['Dan',12],['Ezra',10],['Neh',13]],
-      Luther:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['Ruth',4],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['1Chr',29],['2Chr',36],['Ezra',10],['Neh',13],['Esth',10],['Job',42],['Ps',150],['Prov',31],['Eccl',12],['Song',8],['Isa',66],['Jer',52],['Lam',5],['Ezek',48],['Dan',12],['Hos',14],['Joel',4],['Amos',9],['Obad',1],['Jonah',4],['Mic',7],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',3],['Jdt',16],['Wis',19],['Tob',14],['Sir',51],['Bar',6],['1Macc',16],['2Macc',15],['AddEsth',7],['AddDan',3],['PrMan',1],['Matt',28],['Mark',16],['Luke',24],['John',21],['Acts',28],['Rom',16],['1Cor',16],['2Cor',13],['Gal',6],['Eph',6],['Phil',4],['Col',4],['1Thess',5],['2Thess',3],['1Tim',6],['2Tim',4],['Titus',3],['Phlm',1],['1Pet',5],['2Pet',3],['1John',5],['2John',1],['3John',1],['Heb',13],['Jas',5],['Jude',1],['Rev',22]],
-      LXX:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['Ruth',4],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['1Chr',29],['2Chr',36],['1Esd',9],['Ezra',10],['Neh',13],['Esth',16],['Jdt',16],['Tob',14],['1Macc',16],['2Macc',15],['3Macc',7],['4Macc',18],['Ps',151],['PrMan',1],['Prov',31],['Eccl',12],['Song',8],['Job',42],['Wis',19],['Sir',51],['PssSol',18],['Hos',14],['Amos',9],['Mic',7],['Joel',4],['Obad',1],['Jonah',4],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',4],['Isa',66],['Jer',52],['Bar',5],['Lam',5],['EpJer',1],['Ezek',48],['PrAzar',1],['Sus',1],['Dan',12],['Bel',1],['1En',108],['Odes',14]],
-      MT:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['Isa',66],['Jer',52],['Ezek',48],['Hos',14],['Joel',4],['Amos',9],['Obad',1],['Jonah',4],['Mic',7],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',3],['Ps',150],['Job',42],['Prov',31],['Ruth',4],['Song',8],['Eccl',12],['Lam',5],['Esth',10],['Dan',12],['Ezra',10],['Neh',13],['1Chr',29],['2Chr',36]],
-      NRSV:[],
-      NRSVA:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['Ruth',4],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['1Chr',29],['2Chr',36],['Ezra',10],['Neh',13],['Esth',10],['Job',42],['Ps',150],['Prov',31],['Eccl',12],['Song',8],['Isa',66],['Jer',52],['Lam',5],['Ezek',48],['Dan',12],['Hos',14],['Joel',3],['Amos',9],['Obad',1],['Jonah',4],['Mic',7],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',4],['Tob',14],['Jdt',16],['EsthGr',16],['Wis',19],['Sir',51],['Bar',6],['PrAzar',1],['Sus',1],['Bel',1],['1Macc',16],['2Macc',15],['1Esd',9],['PrMan',1],['AddPs',1],['3Macc',7],['2Esd',16],['4Macc',18]],
-      Orthodox:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['Ruth',4],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['1Chr',29],['2Chr',36],['1Esd',9],['Ezra',10],['Neh',13],['Tob',14],['Jdt',16],['Esth',16],['1Macc',16],['2Macc',15],['3Macc',7],['Ps',151],['PrMan',1],['Job',42],['Prov',31],['Eccl',12],['Song',8],['Wis',19],['Sir',51],['Hos',14],['Amos',9],['Mic',7],['Joel',4],['Obad',1],['Jonah',4],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',4],['Isa',66],['Jer',52],['Bar',5],['Lam',5],['EpJer',1],['Ezek',48],['Sus',1],['Dan',12],['Bel',1],['4Macc',18]],
-      Segond:[],
-      Synodal:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['Ruth',4],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['1Chr',29],['2Chr',36],['PrMan',1],['Ezra',10],['Neh',13],['1Esd',9],['Tob',14],['Jdt',16],['Esth',10],['Job',42],['Ps',151],['Prov',31],['Eccl',12],['Song',8],['Wis',19],['Sir',51],['Isa',66],['Jer',52],['Lam',5],['EpJer',1],['Bar',5],['Ezek',48],['Dan',14],['Hos',14],['Joel',3],['Amos',9],['Obad',1],['Jonah',4],['Mic',7],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',4],['1Macc',16],['2Macc',15],['3Macc',7],['2Esd',16],['Matt',28],['Mark',16],['Luke',24],['John',21],['Acts',28],['Jas',5],['1Pet',5],['2Pet',3],['1John',5],['2John',1],['3John',1],['Jude',1],['Rom',16],['1Cor',16],['2Cor',13],['Gal',6],['Eph',6],['Phil',4],['Col',4],['1Thess',5],['2Thess',3],['1Tim',6],['2Tim',4],['Titus',3],['Phlm',1],['Heb',13],['Rev',22]],
-      SynodalProt:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['Ruth',4],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['1Chr',29],['2Chr',36],['Ezra',10],['Neh',13],['Esth',10],['Job',42],['Ps',150],['Prov',31],['Eccl',12],['Song',8],['Isa',66],['Jer',52],['Lam',5],['Ezek',48],['Dan',12],['Hos',14],['Joel',3],['Amos',9],['Obad',1],['Jonah',4],['Mic',7],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',4]],
-      Vulg:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['Ruth',4],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['1Chr',29],['2Chr',36],['Ezra',10],['Neh',13],['Tob',14],['Jdt',16],['Esth',16],['Job',42],['Ps',150],['Prov',31],['Eccl',12],['Song',8],['Wis',19],['Sir',51],['Isa',66],['Jer',52],['Lam',5],['Bar',6],['Ezek',48],['Dan',14],['Hos',14],['Joel',3],['Amos',9],['Obad',1],['Jonah',4],['Mic',7],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',4],['1Macc',16],['2Macc',15],['Matt',28],['Mark',16],['Luke',24],['John',21],['Acts',28],['Rom',16],['1Cor',16],['2Cor',13],['Gal',6],['Eph',6],['Phil',4],['Col',4],['1Thess',5],['2Thess',3],['1Tim',6],['2Tim',4],['Titus',3],['Phlm',1],['Heb',13],['Jas',5],['1Pet',5],['2Pet',3],['1John',5],['2John',1],['3John',1],['Jude',1],['Rev',22],['PrMan',1],['1Esd',9],['2Esd',16],['AddPs',1],['EpLao',1]],
-    };
-    /* eslint-enable prettier/prettier */
-    const kjvot = bkChsInV11n.KJV.slice(0, 39);
-    const kjvnt = bkChsInV11n.KJV.slice(39);
-    Object.keys(bkChsInV11n).forEach((k) => {
-      const v11n = k as keyof typeof bkChsInV11n;
-      if (sameAsKJV[v11n].ot) {
-        bkChsInV11n[v11n].splice(0, 0, ...kjvot);
-      }
-      if (sameAsKJV[v11n].nt) {
-        bkChsInV11n[v11n].push(...kjvnt);
-      }
-    });
-    Cache.write(bkChsInV11n, 'bkChsInV11n');
-  }
-
-  return Cache.read('bkChsInV11n');
-}
-
-export function getBooksInModule(module: string): string[] {
-  if (!Cache.has('booksInModule', module)) {
-    const bkChsInV11n = getBkChsInV11n();
-    const book = getBook();
-    let v11n = LibSword.getModuleInformation(
-      module,
-      'Versification'
-    ) as V11nType;
-    if (v11n === C.NOTFOUND) v11n = 'KJV';
-    const isVerseKey = /(text|comm)/i.test(
-      LibSword.getModuleInformation(module, 'ModDrv')
-    );
-    const osis: string[] = [];
-    if (isVerseKey) {
-      const v11nbooks = bkChsInV11n[v11n].map((x) => x[0]);
-      // When references to missing books are requested from SWORD,
-      // the previous (or last?) book in the module is usually quietly
-      // used and read from instead! The exception seems to be when a
-      // reference to the first (or following?) missing book(s) after
-      // the last included book of a module is requested, which
-      // correctly returns an empty string. In any case, when ambiguous
-      // results are returned, test two verses to make sure they are
-      // different and are not the empty string, to determine whether
-      // the book is missing from the module.
-      const fake = LibSword.getVerseText(module, 'FAKE 1:1', false);
-      v11nbooks.forEach((code: string) => {
-        const bk = book[code];
-        const verse1 = LibSword.getVerseText(module, `${bk.code} 1:1`, false);
-        if (!verse1 || verse1 === fake) {
-          const verse2 = LibSword.getVerseText(module, `${bk.code} 1:2`, false);
-          if (!verse2 || verse1 === verse2) return;
-        }
-        osis.push(bk.code);
-      });
-    }
-    Cache.write(osis, 'booksInModule', module);
-  }
-
-  return Cache.read('booksInModule', module);
-}
-
 // LibSword.getMaxChapter returns an unpredictable wrong number if
 // vkeytext's book is not part of v11n, but a LibSword call is
 // unnecessary with G.BooksInV11n. NOTE: rutil has this same function.
@@ -450,78 +497,6 @@ export function verseKey(
     versekey,
     v11n
   );
-}
-
-export function getSystemFonts() {
-  if (!Cache.has('fontList')) {
-    return fontList
-      .getFonts()
-      .then((fonts: string[]) => {
-        let allfonts = getModuleFonts()
-          .map((f) => f.fontFamily)
-          .concat(fonts);
-        allfonts = Array.from(new Set(allfonts));
-        Cache.write(allfonts, 'fontList');
-        return allfonts;
-      })
-      .catch((err: any) => log.error(err));
-  }
-  return Promise.resolve(Cache.read('fontList'));
-}
-
-// Xulsword state prefs and other global prefs should only reference
-// installed modules or be ''.  This function insures that is the case.
-export function updateGlobalModulePrefs() {
-  const tabs = getTabs();
-  const xulsword = Prefs.getComplexValue('xulsword') as XulswordStatePref;
-  const newxulsword = clone(xulsword);
-  const mps = ['panels', 'ilModules', 'mtModules'] as const;
-  mps.forEach((p) => {
-    newxulsword[p] = xulsword[p].map((m) => {
-      const n = p === 'panels' ? '' : null;
-      return m && !tabs.find((t) => t.module === m) ? n : m;
-    });
-  });
-  newxulsword.tabs.forEach((p, i) => {
-    if (p) {
-      newxulsword.tabs[i] = p.filter((m) => tabs.find((t) => t.module === m));
-    }
-  });
-  Prefs.setComplexValue('xulsword', newxulsword);
-  const popupsel = Prefs.getComplexValue(
-    'global.popup.selection'
-  ) as GlobalPrefType['global']['popup']['selection'];
-  const newpopupsel = clone(popupsel);
-  Object.entries(newpopupsel).forEach((entry) => {
-    const k = entry[0] as keyof FeatureType;
-    const m = entry[1];
-    if (!tabs.find((t) => t.module === m)) {
-      newpopupsel[k] = '';
-    }
-  });
-  // If no pref has been set for popup.selection[feature] then choose a
-  // module from the available modules, if there are any.
-  const featureModules = getFeatureModules();
-  Object.entries(newpopupsel).forEach((entry) => {
-    const k = entry[0] as keyof FeatureType;
-    if (!entry[1] && k in featureModules) {
-      const ma = (
-        Array.isArray(featureModules[k]) ? featureModules[k] : []
-      ) as string[];
-      const sel =
-        C.LocalePreferredFeature[i18n.language === 'en' ? 'en' : 'ru'];
-      const preferred = (
-        k in sel && Array.isArray(sel[k]) ? sel[k] : []
-      ) as string[];
-      const selection = preferred.find((m) => m && ma.includes(m)) || ma[0];
-      newpopupsel[k] = selection;
-    }
-  });
-  Prefs.setComplexValue('global.popup.selection', newpopupsel);
-}
-
-export function resetMain() {
-  Subscription.publish.resetMain();
 }
 
 // If a module config fontFamily specifies a URL to a font, rather
@@ -593,64 +568,138 @@ export function getModuleFonts(): FontFaceType[] {
   return Cache.read('ModuleFonts');
 }
 
-// Return a locale (if any) to associate with a module:
-//    Return a Locale with exact same language code as module
-//    Return a Locale having same base language code as module, prefering current Locale over any others
-//    Return a Locale which lists the module as an associated module
-//    Return null if no match
-function getLocaleOfModule(module: string) {
-  const cacheName = `getLocaleOfModule-${module}`;
-  if (!Cache.has(cacheName)) {
-    let myLocale: string | null = null;
-
-    const progLocale = i18n.language;
-    let ml: any = LibSword.getModuleInformation(module, 'Lang').toLowerCase();
-    if (ml === C.NOTFOUND) ml = undefined;
-
-    let stop = false;
-    C.Locales.forEach((l: any) => {
-      const [locale] = l;
-      if (stop) return;
-      const lcs = locale.toLowerCase();
-
-      if (ml && ml === lcs) {
-        myLocale = locale;
-        stop = true;
-        return;
-      }
-      if (ml && lcs && ml.replace(/-.*$/, '') === lcs.replace(/-.*$/, '')) {
-        myLocale = locale;
-        if (myLocale === progLocale) stop = true;
-      }
-    });
-
-    if (!myLocale) {
-      const regex = new RegExp(`(^|s|,)+${module}(,|s|$)+`);
-      C.Locales.forEach((l: any) => {
-        const [locale] = l;
-        const toptions = {
-          lng: locale,
-          ns: 'common/config',
-        };
-        if (i18n.t('DefaultModule', toptions).match(regex)) myLocale = locale;
-      });
-    }
-    Cache.write(myLocale, cacheName);
+export function getSystemFonts() {
+  if (!Cache.has('fontList')) {
+    return fontList
+      .getFonts()
+      .then((fonts: string[]) => {
+        let allfonts = getModuleFonts()
+          .map((f) => f.fontFamily)
+          .concat(fonts);
+        allfonts = Array.from(new Set(allfonts));
+        Cache.write(allfonts, 'fontList');
+        return allfonts;
+      })
+      .catch((err: any) => log.error(err));
   }
-
-  return Cache.read(cacheName);
+  return Promise.resolve(Cache.read('fontList'));
 }
 
-export function getConfig() {
-  const cacheName = 'getConfig';
-  if (!Cache.has(cacheName)) {
-    const config: { [module: string]: ConfigType } = {};
-    getTabs().forEach((t) => {
-      config[t.module] = getModuleConfig(t.module);
+export function getFeatureModules(): FeatureType {
+  if (!Cache.has('featureModules')) {
+    // These are CrossWire SWORD standard module features
+    const sword = {
+      strongsNumbers: [] as string[],
+      greekDef: [] as string[],
+      hebrewDef: [] as string[],
+      greekParse: [] as string[],
+      hebrewParse: [] as string[],
+      dailyDevotion: {} as { [i: string]: string },
+      glossary: [] as string[],
+      images: [] as string[],
+      noParagraphs: [] as string[],
+    };
+    // These are xulsword features that use certain modules
+    const xulsword = {
+      greek: [] as string[],
+      hebrew: [] as string[],
+    };
+
+    getTabs().forEach((tab) => {
+      const { module, type } = tab;
+      let mlang = LibSword.getModuleInformation(module, 'Lang');
+      const dash = mlang.indexOf('-');
+      mlang = mlang.substring(0, dash === -1 ? mlang.length : dash);
+      if (module !== 'LXX' && type === C.BIBLE && /^grc$/i.test(mlang))
+        xulsword.greek.push(module);
+      else if (
+        type === C.BIBLE &&
+        /^heb?$/i.test(mlang) &&
+        !/HebModern/i.test(module)
+      )
+        xulsword.hebrew.push(module);
+
+      // These Strongs feature modules do not have Strongs number keys, and so cannot be used
+      const notStrongsKeyed = new RegExp(
+        '^(AbbottSmith|InvStrongsRealGreek|InvStrongsRealHebrew)$',
+        'i'
+      );
+      if (!notStrongsKeyed.test(module)) {
+        const feature = LibSword.getModuleInformation(module, 'Feature');
+        const features = feature.split(C.CONFSEP);
+        Object.keys(sword).forEach((k) => {
+          const swordk = k as keyof typeof sword;
+          const swordf =
+            swordk.substring(0, 1).toUpperCase() + swordk.substring(1);
+          if (features.includes(swordf)) {
+            if (swordk === 'dailyDevotion') {
+              sword[swordk][module] = 'DailyDevotionToday';
+            } else {
+              sword[swordk].push(module);
+            }
+          }
+        });
+      }
     });
-    Cache.write(config, cacheName);
+    Cache.write({ ...sword, ...xulsword }, 'featureModules');
   }
-  return Cache.read(cacheName);
+
+  return Cache.read('featureModules');
+}
+
+// Xulsword state prefs and other global prefs should only reference
+// installed modules or be ''.  This function insures that is the case.
+export function updateGlobalModulePrefs() {
+  const tabs = getTabs();
+  const xulsword = Prefs.getComplexValue('xulsword') as XulswordStatePref;
+  const newxulsword = clone(xulsword);
+  const mps = ['panels', 'ilModules', 'mtModules'] as const;
+  mps.forEach((p) => {
+    newxulsword[p] = xulsword[p].map((m) => {
+      const n = p === 'panels' ? '' : null;
+      return m && !tabs.find((t) => t.module === m) ? n : m;
+    });
+  });
+  newxulsword.tabs.forEach((p, i) => {
+    if (p) {
+      newxulsword.tabs[i] = p.filter((m) => tabs.find((t) => t.module === m));
+    }
+  });
+  Prefs.setComplexValue('xulsword', newxulsword);
+  const popupsel = Prefs.getComplexValue(
+    'global.popup.selection'
+  ) as GlobalPrefType['global']['popup']['selection'];
+  const newpopupsel = clone(popupsel);
+  Object.entries(newpopupsel).forEach((entry) => {
+    const k = entry[0] as keyof FeatureType;
+    const m = entry[1];
+    if (!tabs.find((t) => t.module === m)) {
+      newpopupsel[k] = '';
+    }
+  });
+  // If no pref has been set for popup.selection[feature] then choose a
+  // module from the available modules, if there are any.
+  const featureModules = getFeatureModules();
+  Object.entries(newpopupsel).forEach((entry) => {
+    const k = entry[0] as keyof FeatureType;
+    if (!entry[1] && k in featureModules) {
+      const ma = (
+        Array.isArray(featureModules[k]) ? featureModules[k] : []
+      ) as string[];
+      const sel =
+        C.LocalePreferredFeature[i18n.language === 'en' ? 'en' : 'ru'];
+      const preferred = (
+        k in sel && Array.isArray(sel[k]) ? sel[k] : []
+      ) as string[];
+      const selection = preferred.find((m) => m && ma.includes(m)) || ma[0];
+      newpopupsel[k] = selection;
+    }
+  });
+  Prefs.setComplexValue('global.popup.selection', newpopupsel);
+}
+
+export function resetMain() {
+  Subscription.publish.resetMain();
 }
 
 export function getModuleConfig(mod: string) {
@@ -712,6 +761,18 @@ export function getModuleConfig(mod: string) {
   }
 
   return Cache.read(`moduleConfig${mod}`);
+}
+
+export function getConfig() {
+  const cacheName = 'getConfig';
+  if (!Cache.has(cacheName)) {
+    const config: { [module: string]: ConfigType } = {};
+    getTabs().forEach((t) => {
+      config[t.module] = getModuleConfig(t.module);
+    });
+    Cache.write(config, cacheName);
+  }
+  return Cache.read(cacheName);
 }
 
 export function getModuleConfigDefault() {
@@ -798,66 +859,4 @@ export function getLocaleConfigs(): { [i: string]: ConfigType } {
     Cache.write(ret, 'localeConfigs');
   }
   return Cache.read('localeConfigs');
-}
-
-export function getFeatureModules(): FeatureType {
-  if (!Cache.has('featureModules')) {
-    // These are CrossWire SWORD standard module features
-    const sword = {
-      strongsNumbers: [] as string[],
-      greekDef: [] as string[],
-      hebrewDef: [] as string[],
-      greekParse: [] as string[],
-      hebrewParse: [] as string[],
-      dailyDevotion: {} as { [i: string]: string },
-      glossary: [] as string[],
-      images: [] as string[],
-      noParagraphs: [] as string[],
-    };
-    // These are xulsword features that use certain modules
-    const xulsword = {
-      greek: [] as string[],
-      hebrew: [] as string[],
-    };
-
-    getTabs().forEach((tab) => {
-      const { module, type } = tab;
-      let mlang = LibSword.getModuleInformation(module, 'Lang');
-      const dash = mlang.indexOf('-');
-      mlang = mlang.substring(0, dash === -1 ? mlang.length : dash);
-      if (module !== 'LXX' && type === C.BIBLE && /^grc$/i.test(mlang))
-        xulsword.greek.push(module);
-      else if (
-        type === C.BIBLE &&
-        /^heb?$/i.test(mlang) &&
-        !/HebModern/i.test(module)
-      )
-        xulsword.hebrew.push(module);
-
-      // These Strongs feature modules do not have Strongs number keys, and so cannot be used
-      const notStrongsKeyed = new RegExp(
-        '^(AbbottSmith|InvStrongsRealGreek|InvStrongsRealHebrew)$',
-        'i'
-      );
-      if (!notStrongsKeyed.test(module)) {
-        const feature = LibSword.getModuleInformation(module, 'Feature');
-        const features = feature.split(C.CONFSEP);
-        Object.keys(sword).forEach((k) => {
-          const swordk = k as keyof typeof sword;
-          const swordf =
-            swordk.substring(0, 1).toUpperCase() + swordk.substring(1);
-          if (features.includes(swordf)) {
-            if (swordk === 'dailyDevotion') {
-              sword[swordk][module] = 'DailyDevotionToday';
-            } else {
-              sword[swordk].push(module);
-            }
-          }
-        });
-      }
-    });
-    Cache.write({ ...sword, ...xulsword }, 'featureModules');
-  }
-
-  return Cache.read('featureModules');
 }

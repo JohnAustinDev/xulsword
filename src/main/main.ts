@@ -38,6 +38,8 @@ const electronDebug = require('electron-debug');
     path.join(G.Dirs.path.ProfD, 'logs', 'xulsword.log')
   );
   if (logfile.exists()) logfile.remove();
+  // The renderer log contains any renderer window entries that occur before
+  // rinit.tsx, where their file is changed to the main/renderer log file.
   const logfile2 = new LocalFile(
     path.join(G.Dirs.path.ProfD, 'logs', 'renderer.log')
   );
@@ -47,9 +49,7 @@ const electronDebug = require('electron-debug');
   log.transports.file.resolvePath = () => logfile.path;
   log.catchErrors({ onError: (er: Error) => log.error(er) });
 }
-log.info(
-  `isDevelopment='${C.isDevelopment}' DEBUG_PROD='${process.env.DEBUG_PROD}' XULSWORD_ENV='${process.env.XULSWORD_ENV}'`
-);
+log.info(`Starting ${app.getName()} isDevelopment='${C.isDevelopment}'`);
 
 LibSword.init();
 
@@ -169,14 +169,13 @@ const openMainWindow = () => {
 
   updateGlobalModulePrefs();
 
-  G.Data.write(
-    `${app.getName()} ${app.getVersion()} (${app.getLocale()}) ${
-      process.platform
-    }-${process.arch}, el:${process.versions.electron}, ch:${
-      process.versions.chrome
-    }`,
-    'buildInfo'
-  );
+  const BuildInfo = `${app.getName()} ${app.getVersion()} (${app.getLocale()}) ${
+    process.platform
+  }-${process.arch}, el:${process.versions.electron}, ch:${
+    process.versions.chrome
+  }`;
+  log.info(BuildInfo);
+  G.Data.write(BuildInfo, 'buildInfo');
 
   const subscriptions: (() => void)[] = [];
   subscriptions.push(Subscription.subscribe.setPref(pushPrefsToWindows));
@@ -389,6 +388,7 @@ app.on('window-all-closed', () => {
   // after all windows have been closed
   if (process.platform !== 'darwin') {
     subscriptions.forEach((dispose) => dispose());
+    log.info(`Exiting...`);
     app.quit();
   }
 });

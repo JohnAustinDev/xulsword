@@ -236,7 +236,7 @@ const Prefs: GType['Prefs'] & PrefsPrivate = {
     const json = JSON_stringify(s.data, null, 2);
     if (json) {
       fs.writeFileSync(s.file.path, json);
-      log.info(`Persisted store: ${s.file.path}`);
+      log.verbose(`Persisted store: ${s.file.path}`);
     } else {
       throw Error(`failed to write store: ${s.file.path}`);
     }

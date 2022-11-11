@@ -46,10 +46,10 @@ const productionLogLevel = env('DEBUG_PROD') === 'true' ? 'silly' : 'info';
 const C = {
   isDevelopment,
 
-  LogLevel: (env('LOGLEVEL') ||
+  LogLevel: (/\S+/.test(env('LOGLEVEL') ?? '') ||
     (isDevelopment ? 'debug' : productionLogLevel)) as LogLevel,
 
-  DevToolsopen: isDevelopment ? true : env('DEBUG_PROD') === 'true',
+  DevToolsopen: isDevelopment ? false : env('DEBUG_PROD') === 'true',
 
   DevSplash: 1 as 0 | 1 | 2, // 0 normal, 1 skip, 2 debug
 
