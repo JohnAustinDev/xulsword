@@ -9,7 +9,8 @@ import type { TabType, TabTypes, XulswordStatePref } from '../type';
 export default function setViewportTabs(
   panelIndex: number, // which panel(s) (-1 is all)
   whichTabs: string | TabTypes | 'all', // which tabs in the panel(s)
-  doWhat: 'show' | 'hide' | 'toggle'
+  doWhat: 'show' | 'hide' | 'toggle',
+  clearRendererCaches?: boolean
 ): void {
   const Tabs = getTabs();
   const Tab = getTab();
@@ -131,5 +132,5 @@ export default function setViewportTabs(
     }
   });
 
-  Prefs.mergeValue('xulsword', xulsword);
+  Prefs.mergeValue('xulsword', xulsword, undefined, clearRendererCaches);
 }

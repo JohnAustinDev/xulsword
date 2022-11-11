@@ -12,8 +12,8 @@ import { dString, diff, clone, drop } from '../../common';
 import C from '../../constant';
 import G from '../rg';
 import renderToRoot from '../rinit';
+import log from '../log';
 import {
-  log,
   verseKey,
   onSetWindowState,
   getStatePref,

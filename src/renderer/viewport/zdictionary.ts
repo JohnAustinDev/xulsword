@@ -1,7 +1,7 @@
 /* eslint-disable no-continue */
 import C from '../../constant';
 import G from '../rg';
-import { log } from '../rutil';
+import log from '../log';
 
 import type { SwordFilterType, SwordFilterValueType } from '../../type';
 

@@ -4,6 +4,7 @@ import 'core-js/stable';
 import 'regenerator-runtime/runtime';
 import { app, dialog, BrowserWindow, ipcMain, IpcMainEvent } from 'electron';
 import { autoUpdater } from 'electron-updater';
+import path from 'path';
 import log from 'electron-log';
 import i18n from 'i18next';
 import Subscription from '../subscription';
@@ -12,6 +13,7 @@ import { clone } from '../common';
 import C from '../constant';
 import G from './mg';
 import LibSword from './components/libsword';
+import LocalFile from './components/localFile';
 import { CipherKeyModules } from './components/module';
 import MenuBuilder, { pushPrefsToMenu } from './menu';
 import Window, {
@@ -30,9 +32,21 @@ const installer = require('electron-devtools-installer');
 const sourceMapSupport = require('source-map-support');
 const electronDebug = require('electron-debug');
 
-const logLevel = C.isDevelopment ? C.DevLogLevel : C.ProdLogLevel;
-log.transports.console.level = logLevel;
-log.transports.file.level = logLevel;
+// Init the logfile. This must also be done in rinit.tsx for renderer processes.
+{
+  const logfile = new LocalFile(
+    path.join(G.Dirs.path.ProfD, 'logs', 'xulsword.log')
+  );
+  if (logfile.exists()) logfile.remove();
+  const logfile2 = new LocalFile(
+    path.join(G.Dirs.path.ProfD, 'logs', 'renderer.log')
+  );
+  if (logfile2.exists()) logfile2.remove();
+  log.transports.console.level = C.LogLevel;
+  log.transports.file.level = C.LogLevel;
+  log.transports.file.resolvePath = () => logfile.path;
+  log.catchErrors({ onError: (er: Error) => log.error(er) });
+}
 log.info(
   `isDevelopment='${C.isDevelopment}' DEBUG_PROD='${process.env.DEBUG_PROD}' XULSWORD_ENV='${process.env.XULSWORD_ENV}'`
 );
@@ -199,23 +213,21 @@ const openMainWindow = () => {
             !newmods.nokeymods.some((nkconf) => nkconf.module === nmconf.module)
         );
         if (!newmods.modules.length && !getTabs().length) {
-          setViewportTabs(-1, 'all', 'hide');
+          setViewportTabs(-1, 'all', 'hide', true);
         } else {
           newmods.modules.forEach((conf) => {
-            setViewportTabs(-1, conf.module, 'show');
+            setViewportTabs(-1, conf.module, 'show', true);
           });
         }
         if (callingWinID) {
-          setTimeout(
-            () =>
-              publishSubscription(
-                false,
-                { id: callingWinID },
-                'modulesInstalled',
-                newmods
-              ),
-            1
-          );
+          setTimeout(() => {
+            publishSubscription(
+              false,
+              { id: callingWinID },
+              'modulesInstalled',
+              newmods
+            );
+          }, 1);
         }
         Window.modal([{ modal: 'off', window: 'all' }]);
       }

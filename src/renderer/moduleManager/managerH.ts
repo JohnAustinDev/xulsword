@@ -19,7 +19,7 @@ import {
 } from '../../common';
 import C from '../../constant';
 import G from '../rg';
-import { log } from '../rutil';
+import log from '../log';
 import { TCellInfo, TCellLocation } from '../libxul/table';
 
 import type {

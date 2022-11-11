@@ -14,8 +14,8 @@ import Cache from '../../cache';
 import C from '../../constant';
 import { diff, keep, sanitizeHTML, stringHash } from '../../common';
 import G from '../rg';
+import log from '../log';
 import {
-  log,
   clearPending,
   verseKey,
   getMaxChapter,

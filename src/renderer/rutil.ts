@@ -10,16 +10,8 @@ import G from './rg';
 import RefParser, { RefParserOptionsType } from '../refparse';
 import VerseKey from '../versekey';
 import { ElemInfo, getElementInfo, TitleFormat } from '../libswordElemInfo';
-import {
-  clone,
-  diff,
-  JSON_parse,
-  JSON_stringify,
-  ofClass,
-  versionCompare,
-} from '../common';
+import { clone, diff, JSON_parse, ofClass, versionCompare } from '../common';
 
-import type ElectronLog from 'electron-log';
 import type {
   ContextData,
   LocationVKType,
@@ -31,44 +23,6 @@ import type {
   SwordConfType,
   V11nType,
 } from '../type';
-
-// Filter now to save IPC calls.
-function alog(type: ElectronLog.LogLevel, ...args: any[]) {
-  const levels = ['error', 'warn', 'info', 'verbose', 'debug', 'silly'];
-  const lcall = levels.indexOf(type);
-  const lprog = levels.indexOf(
-    C.isDevelopment ? C.DevLogLevel : C.ProdLogLevel
-  );
-  const skip = lprog < lcall;
-  if (type && !skip) {
-    // eslint-disable-next-line no-console
-    if (C.isDevelopment) console.log(...args);
-    else G.log(type, ...args.map((x) => JSON_stringify(x)));
-  }
-}
-export const log = {
-  error: (...args) => {
-    alog('error', ...args);
-  },
-  warn: (...args) => {
-    alog('warn', ...args);
-  },
-  info: (...args) => {
-    alog('info', ...args);
-  },
-  verbose: (...args) => {
-    alog('verbose', ...args);
-  },
-  debug: (...args) => {
-    alog('debug', ...args);
-  },
-  silly: (...args) => {
-    alog('silly', ...args);
-  },
-  log: (...args) => {
-    alog('info', ...args);
-  },
-} as ElectronLog.LogFunctions;
 
 export function component(
   comp: any

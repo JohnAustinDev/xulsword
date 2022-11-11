@@ -16,7 +16,6 @@ import Bookselect from './bookselect';
 import { Hbox } from './boxes';
 import Label from './label';
 import Menulist from './menulist';
-import Spacer from './spacer';
 import './vkselect.css';
 
 import type { BookGroupType } from '../../type';

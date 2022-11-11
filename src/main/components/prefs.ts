@@ -1,5 +1,6 @@
 /* eslint-disable prefer-rest-params */
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { BrowserWindow } from 'electron';
 import log from 'electron-log';
 import path from 'path';
 import fs from 'fs';
@@ -32,7 +33,8 @@ type PrefsPrivate = {
     type: 'string' | 'number' | 'boolean' | 'complex' | 'any' | 'merge',
     value: PrefValue,
     aStore: string | undefined,
-    callingWinID: number
+    callingWinID: number,
+    clearRendererCaches?: boolean
   ) => boolean;
   writeStore: (aStore: string) => boolean;
   getStore: (aStore: string) => PrefObject;
@@ -102,8 +104,8 @@ const Prefs: GType['Prefs'] & PrefsPrivate = {
   },
 
   // Sets individual properties of a key, leaving the others untouched.
-  mergeValue(key, obj, aStore?) {
-    this.setPref(key, 'merge', obj, aStore, arguments[3] ?? -1);
+  mergeValue(key, obj, aStore?, clearCache?) {
+    this.setPref(key, 'merge', obj, aStore, arguments[4] ?? -1, clearCache);
   },
 
   // Remove the key from a store
@@ -254,7 +256,7 @@ const Prefs: GType['Prefs'] & PrefsPrivate = {
   // to disk immediately. Supported types are PrefValue. If a change was made,
   // any registered subscription callbacks will be called after setting the new
   // value.
-  setPref(key, type, value, store, callingWinID) {
+  setPref(key, type, value, store, callingWinID, clearRendererCaches?) {
     // Get the store.
     const aStore = store || 'prefs';
     let p = this.getStore(aStore);
@@ -313,6 +315,14 @@ const Prefs: GType['Prefs'] & PrefsPrivate = {
     let success = true;
     if (this.writeOnChange) {
       success = this.writeStore(aStore);
+    }
+    // Reset renderer caches if requested. When pref values are being pushed
+    // to renderer windows that are incompatible with currently cached data,
+    // caches must be cleared before the prefs are updated!
+    if (clearRendererCaches) {
+      BrowserWindow.getAllWindows().forEach((w) => {
+        w.webContents.send('cache-reset');
+      });
     }
     // Call any registered callbacks if value was successfully changed.
     if (success) {

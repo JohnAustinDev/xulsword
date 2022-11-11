@@ -15,7 +15,6 @@ import type {
   PrefValue,
   Repository,
   SwordConfType,
-  TabType,
   RowSelection,
   NewModuleReportType,
   HTTPDownload,

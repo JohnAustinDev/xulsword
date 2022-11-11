@@ -1,7 +1,9 @@
+/* eslint-disable import/no-duplicates */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import type ElectronLog from 'electron-log';
 import React from 'react';
+import type ElectronLog from 'electron-log';
+import type { LogLevel } from 'electron-log';
 import type { SubscriptionType } from 'subscription';
 import type { AboutWinState } from './renderer/about/about';
 
@@ -40,13 +42,23 @@ export type WinIpcType = {
   };
 };
 
-export type EnvironmentVars = 'NODE_ENV' | 'XULSWORD_ENV' | 'DEBUG_PROD';
+export type EnvironmentVars =
+  | 'NODE_ENV'
+  | 'XULSWORD_ENV'
+  | 'DEBUG_PROD'
+  | 'LOGLEVEL';
 
 export type WinMainType = {
   process: {
     [envar in EnvironmentVars]: () => string;
   } & {
     argv: () => string[];
+  };
+  log: typeof ElectronLog;
+  logInit: {
+    consoleLevel: (level: LogLevel) => void;
+    fileLevel: (level: LogLevel) => void;
+    file: (...filepath: string[]) => void;
   };
 };
 
@@ -609,7 +621,8 @@ const PrefsPublic = {
   mergeValue: func as unknown as (
     key: string,
     obj: { [i: string]: any },
-    aStore?: string
+    aStore?: string,
+    clearRendererCaches?: boolean
   ) => void,
   deleteUserPref: func as unknown as (key: string, aStore?: string) => boolean,
   writeAllStores: func as unknown as () => void,

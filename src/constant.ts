@@ -1,3 +1,4 @@
+/* eslint-disable no-nested-ternary */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import type { LogLevel } from 'electron-log';
@@ -29,6 +30,7 @@ import type {
 // - XULSWORD_ENV - Set by you to 'production' for debugging production
 //     only behaviour, like i18n, splash and log, in a development
 //     environment (including main process debugging via vscode).
+// - LOGLEVEL - Set a particular logLevel everywhere.
 const env = (envvar: EnvironmentVars) => {
   return typeof process === 'undefined'
     ? window.main.process[envvar]()
@@ -38,15 +40,16 @@ const env = (envvar: EnvironmentVars) => {
 const isDevelopment =
   env('NODE_ENV') === 'development' && env('XULSWORD_ENV') !== 'production';
 
+const productionLogLevel = env('DEBUG_PROD') === 'true' ? 'silly' : 'info';
+
 // Common Global Constants
 const C = {
   isDevelopment,
 
-  DevLogLevel: 'debug' as LogLevel,
+  LogLevel: (env('LOGLEVEL') ||
+    (isDevelopment ? 'debug' : productionLogLevel)) as LogLevel,
 
-  ProdLogLevel: (env('DEBUG_PROD') === 'true' ? 'silly' : 'info') as LogLevel,
-
-  DevToolsopen: false,
+  DevToolsopen: isDevelopment ? true : env('DEBUG_PROD') === 'true',
 
   DevSplash: 1 as 0 | 1 | 2, // 0 normal, 1 skip, 2 debug
 

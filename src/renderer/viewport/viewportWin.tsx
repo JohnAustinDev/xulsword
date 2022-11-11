@@ -10,8 +10,8 @@ import C from '../../constant';
 import { keep, diff } from '../../common';
 import G from '../rg';
 import renderToRoot from '../rinit';
+import log from '../log';
 import {
-  log,
   clearPending,
   getStatePref,
   onSetWindowState,

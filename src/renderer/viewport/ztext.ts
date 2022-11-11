@@ -4,7 +4,7 @@ import Cache from '../../cache';
 import { dString, escapeRE, stringHash } from '../../common';
 import { getElementInfo } from '../../libswordElemInfo';
 import G from '../rg';
-import { log } from '../rutil';
+import log from '../log';
 import {
   getNoteHTML,
   getChapterHeading,

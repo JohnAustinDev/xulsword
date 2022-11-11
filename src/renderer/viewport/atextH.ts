@@ -10,7 +10,8 @@ import {
 } from '../../common';
 import { getElementInfo } from '../../libswordElemInfo';
 import G from '../rg';
-import { log, scrollIntoView } from '../rutil';
+import log from '../log';
+import { scrollIntoView } from '../rutil';
 import { aTextWheelScroll, getRefHTML } from './zversekey';
 
 import { AtextStateType, LocationVKType } from '../../type';

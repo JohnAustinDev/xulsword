@@ -1,7 +1,7 @@
 import type { ConfigType } from '../type';
 import C from '../constant';
 import G from './rg';
-import { log } from './rutil';
+import log from './log';
 
 export type StyleType = {
   [i in 'locale' | 'module']?: {

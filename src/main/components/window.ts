@@ -5,8 +5,8 @@ import log from 'electron-log';
 import path from 'path';
 import fs from 'fs';
 import i18next from 'i18next';
-import { BrowserWindow, ipcMain } from 'electron';
-import { clone, JSON_parse, JSON_stringify, randomID } from '../../common';
+import { app, BrowserWindow, ipcMain } from 'electron';
+import { JSON_parse, JSON_stringify, randomID } from '../../common';
 import Cache from '../../cache';
 import C from '../../constant';
 import Subscription from '../../subscription';
@@ -275,12 +275,9 @@ function updateOptions(
   options.useContentSize = true;
   options.icon = path.join(Dirs.path.xsAsset, 'icon.png');
   if (!options.webPreferences) options.webPreferences = {};
-  options.webPreferences.preload = path.join(
-    Dirs.path.xsAsar,
-    'dist',
-    'main',
-    'preload.js'
-  );
+  options.webPreferences.preload = app.isPackaged
+    ? path.join(__dirname, 'preload.js')
+    : path.join(__dirname, '../preload.js');
   options.webPreferences.contextIsolation = true;
   options.webPreferences.nodeIntegration = false;
   options.webPreferences.enableRemoteModule = false;

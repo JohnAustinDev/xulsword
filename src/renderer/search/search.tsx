@@ -12,7 +12,8 @@ import { clone, diff, drop, dString, sanitizeHTML } from '../../common';
 import C from '../../constant';
 import G from '../rg';
 import renderToRoot from '../rinit';
-import { log, windowArgument } from '../rutil';
+import log from '../log';
+import { windowArgument } from '../rutil';
 import {
   PopupParent,
   PopupParentState,

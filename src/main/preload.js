@@ -1,5 +1,7 @@
 const { contextBridge, ipcRenderer } = require('electron');
 const backend = require('i18next-electron-fs-backend');
+const log = require('electron-log');
+const path = require('path');
 
 contextBridge.exposeInMainWorld('api', {
   i18nextElectronBackend: backend.preloadBindings(ipcRenderer, process),
@@ -19,6 +21,21 @@ contextBridge.exposeInMainWorld('main', {
     },
     DEBUG_PROD() {
       return process.env.DEBUG_PROD;
+    },
+    LOGLEVEL() {
+      return process.env.LOGLEVEL;
+    },
+  },
+  log,
+  logInit: {
+    consoleLevel(level) {
+      log.transports.console.level = level;
+    },
+    fileLevel(level) {
+      log.transports.file.level = level;
+    },
+    file(...filepath) {
+      log.transports.file.resolvePath = () => path.join(...filepath);
     },
   },
 });
@@ -44,6 +61,7 @@ contextBridge.exposeInMainWorld('ipc', {
     // Otherwise event.reply() can respond from ipcMain if the renderer has
     // also added a listener for it.
     send(channel, ...args) {
+      log.silly('[preload:?] send', channel, args);
       if (validChannels.includes(channel)) {
         ipcRenderer.send(channel, ...args);
       } else throw Error(`ipc send bad channel: ${channel}`);
@@ -52,6 +70,7 @@ contextBridge.exposeInMainWorld('ipc', {
     // Trigger a channel event which ipcMain is to listen for and respond to
     // using ipcMain.handle(), returning a promise containing the result arg(s).
     invoke(channel, ...args) {
+      log.silly('[preload:?] invoke', channel, args);
       if (validChannels.includes(channel)) {
         return ipcRenderer.invoke(channel, ...args);
       }
@@ -62,6 +81,7 @@ contextBridge.exposeInMainWorld('ipc', {
     // responds using event.returnValue. Using invoke instead will not block the
     // renderer process.
     sendSync(channel, ...args) {
+      log.silly('[preload:?] sendSync', channel, args);
       if (validChannels.includes(channel)) {
         return ipcRenderer.sendSync(channel, ...args);
       }
@@ -72,7 +92,10 @@ contextBridge.exposeInMainWorld('ipc', {
     on(channel, func) {
       if (validChannels.includes(channel)) {
         // Deliberately strip event as it includes `sender`
-        const strippedfunc = (event, ...args) => func(...args);
+        const strippedfunc = (event, ...args) => {
+          log.silly('[preload:?] on', channel, args);
+          func(...args);
+        };
         ipcRenderer.on(channel, strippedfunc);
         return () => {
           ipcRenderer.removeListener(channel, strippedfunc);
@@ -86,7 +109,10 @@ contextBridge.exposeInMainWorld('ipc', {
     once(channel, func) {
       if (validChannels.includes(channel)) {
         // Deliberately strip event as it includes `sender`
-        const strippedfunc = (event, ...args) => func(...args);
+        const strippedfunc = (event, ...args) => {
+          log.silly('[preload:?] once', channel, args);
+          func(...args);
+        };
         ipcRenderer.once(channel, strippedfunc);
       } else throw Error(`ipc once bad channel: ${channel}`);
     },

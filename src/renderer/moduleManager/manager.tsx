@@ -23,7 +23,8 @@ import {
 } from '../../common';
 import C from '../../constant';
 import G from '../rg';
-import { log, getStatePref, onSetWindowState, getLangReadable } from '../rutil';
+import log from '../log';
+import { getStatePref, onSetWindowState, getLangReadable } from '../rutil';
 import {
   addClass,
   xulDefaultProps,

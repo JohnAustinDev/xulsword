@@ -1,16 +1,10 @@
+/* eslint-disable no-console */
+/* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { stringHash } from 'common';
-import C from 'constant';
+import { stringHash } from '../common';
 import Cache from '../cache';
 import { GPublic, GType } from '../type';
-
-// Cannot use log without dependency cycle
-function silly(msg: string) {
-  if (C.isDevelopment && C.DevLogLevel === 'silly') {
-    // eslint-disable-next-line no-console
-    console.log(msg);
-  }
-}
+import log from './log';
 
 // This G object is for use in renderer processes, and it shares the same
 // interface as a main process G object. Both G objects are built auto-
@@ -18,6 +12,7 @@ function silly(msg: string) {
 // this object access data and objects via IPC of the main process G object.
 // All getter and cacheable data is cached locally.
 const G = {} as typeof GPublic;
+
 const asyncFuncs: [
   [keyof GType, (keyof GType['getSystemFonts'])[]],
   [keyof GType, (keyof GType['Commands'])[]],
@@ -50,8 +45,8 @@ entries.forEach((entry) => {
     const ckey = `G.${name} cache`;
     Object.defineProperty(G, name, {
       get() {
-        silly(`${ckey}${!Cache.has(ckey) ? ' miss' : ''}`);
         if (!Cache.has(ckey)) {
+          log.silly(`${ckey} miss`);
           Cache.write(window.ipc.renderer.sendSync('global', name), ckey);
         }
         return Cache.read(ckey);
@@ -63,15 +58,15 @@ entries.forEach((entry) => {
       const ckey = `G.${name}(${stringHash(...args)})${
         cacheable ? ' cache' : ''
       }`;
-      silly(
-        `${
-          (asyncFuncs as [string, string[]][]).some((en) => en[0] === name)
-            ? 'async '
-            : ''
-        }${ckey}${cacheable && !Cache.has(ckey) ? ' miss' : ''}`
-      );
       if (!cacheable) Cache.clear(ckey);
       if (!Cache.has(ckey)) {
+        log.silly(
+          `${
+            (asyncFuncs as [string, string[]][]).some((en) => en[0] === name)
+              ? 'async '
+              : ''
+          }${ckey}${cacheable ? ' miss' : ''}`
+        );
         if ((asyncFuncs as [string, string[]][]).some((en) => en[0] === name)) {
           return window.ipc.renderer
             .invoke('global', name, ...args)
@@ -98,10 +93,10 @@ entries.forEach((entry) => {
       }
       if (GPublicx[name][m] === 'getter') {
         const ckey = `G.${name}.${m} cache`;
-        silly(`${ckey}${!Cache.has(ckey) ? ' miss' : ''}`);
         Object.defineProperty(Gx[name], m, {
           get() {
             if (!Cache.has(ckey)) {
+              log.silly(`${ckey} miss`);
               Cache.write(
                 window.ipc.renderer.sendSync('global', name, m),
                 ckey
@@ -116,17 +111,17 @@ entries.forEach((entry) => {
           const ckey = `G.${name}.${m}(${stringHash(...args)})${
             cacheable ? ' cache' : ''
           }`;
-          silly(
-            `${
-              (asyncFuncs as [string, string[]][]).some(
-                (en) => en[0] === name && en[1].includes(m)
-              )
-                ? 'async '
-                : ''
-            }${ckey}${cacheable && !Cache.has(ckey) ? ' miss' : ''}`
-          );
           if (!cacheable) Cache.clear(ckey);
           if (!Cache.has(ckey)) {
+            log.silly(
+              `${
+                (asyncFuncs as [string, string[]][]).some(
+                  (en) => en[0] === name && en[1].includes(m)
+                )
+                  ? 'async '
+                  : ''
+              }${ckey}${cacheable ? ' miss' : ''}`
+            );
             if (
               (asyncFuncs as [string, string[]][]).some(
                 (en) => en[0] === name && en[1].includes(m)

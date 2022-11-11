@@ -9,7 +9,8 @@ import { getElementInfo } from '../../libswordElemInfo';
 import { dString, escapeRE, getCSS, sanitizeHTML } from '../../common';
 import C from '../../constant';
 import G from '../rg';
-import { log, verseKey, windowArgument } from '../rutil';
+import log from '../log';
+import { verseKey, windowArgument } from '../rutil';
 import { getStrongsModAndKey } from '../viewport/zdictionary';
 
 import type {

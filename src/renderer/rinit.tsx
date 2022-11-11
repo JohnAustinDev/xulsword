@@ -20,6 +20,7 @@ import Cache from '../cache';
 import C from '../constant';
 import G from './rg';
 import DynamicStyleSheet from './style';
+import log from './log';
 import { getContextData } from './rutil';
 import { delayHandler, xulCaptureEvents } from './libxul/xul';
 import { Hbox } from './libxul/boxes';
@@ -38,7 +39,23 @@ import type { SubscriptionType } from '../subscription';
 import Label from './libxul/label';
 import Textbox from './libxul/textbox';
 
-window.ipc.renderer.on('cache-reset', () => Cache.clear);
+// Init this render process log to the same settings as main.ts
+const logLevel = C.LogLevel;
+const { logInit, log: elog } = window.main;
+logInit.consoleLevel(logLevel);
+logInit.fileLevel(logLevel);
+logInit.file(G.Dirs.path.ProfD, 'logs', 'xulsword.log');
+elog.catchErrors({ onError: (er: Error) => log.error(er) });
+
+const windesc = G.Window.description();
+Cache.write(`${windesc.type}:${windesc.id}`, 'windowID');
+log.debug(`Initializing new window`);
+
+window.ipc.renderer.on('cache-reset', () => {
+  Cache.clear();
+  log.silly(`CLEARED ALL CACHES`);
+  Cache.write(`${windesc.type}:${windesc.id}`, 'windowID');
+});
 
 DynamicStyleSheet.update(G.Data.read('stylesheetData'));
 window.ipc.renderer.on('dynamic-stylesheet-reset', () =>
@@ -255,7 +272,7 @@ function Reset(props: ResetProps) {
           const k = cipherKeys.filter((ck) => ck.conf.module && ck.cipherKey);
           if (k.length && !dialogs.length) {
             G.Module.setCipherKeys(k, G.Window.description().id);
-            setModal('darkened');
+            setModal('darkened'); // so there's no flash
           }
         };
         const haserror = newmods.reports.some((r) => r.error);

@@ -3,7 +3,7 @@
 import { clone, ofClass, sanitizeHTML } from '../../common';
 import G from '../rg';
 import { getElementInfo, getPopupInfo } from '../../libswordElemInfo';
-import { log } from '../rutil';
+import log from '../log';
 import { getDictEntryHTML, getLemmaHTML } from '../viewport/zdictionary';
 import {
   getIntroductions,
