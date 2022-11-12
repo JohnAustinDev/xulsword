@@ -314,6 +314,7 @@ export default class ModuleManager
         H.Saved.repository.data = [];
         H.Saved.repositoryListings = [];
         try {
+          if (!navigator.onLine) throw new Error(`No Internet connection.`);
           const repos = await G.Module.crossWireMasterRepoList();
           if (typeof repos === 'string') throw new Error(repos);
           // Calling loadRepositoryTable on all repos at onces causes the

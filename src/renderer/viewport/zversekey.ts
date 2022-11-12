@@ -56,11 +56,26 @@ export function getRefBible(
   inf.companion = false;
   inf.userpref = false;
   // Is mod a Bible?
-  let refbible =
-    srcmodule && G.Tab[srcmodule].type === C.BIBLE ? srcmodule : null;
+  let refbible = srcmodule;
+  if (!(refbible in G.Tab)) {
+    // Allow case differences in module code references.
+    const rblc = refbible.toLowerCase();
+    refbible = Object.keys(G.Tab).find((m) => m.toLowerCase() === rblc) || '';
+  }
+  if (!(refbible in G.Tab) || G.Tab[refbible].type !== C.BIBLE) {
+    refbible = '';
+  }
   // Otherwise does mod have a Bible companion?
   if (!refbible) {
-    const aref = getCompanionModules(srcmodule);
+    const arefx = getCompanionModules(srcmodule);
+    const aref = arefx
+      .map((m) => {
+        // Allow case differences in module code references.
+        if (m in G.Tab) return m;
+        const mlc = m.toLowerCase();
+        return Object.keys(G.Tab).find((mx) => mx.toLowerCase() === mlc) || '';
+      })
+      .filter(Boolean);
     const bible = aref.find((m) => G.Tab[m]?.type === C.BIBLE);
     if (bible) {
       refbible = bible;
@@ -130,6 +145,12 @@ export function locationVKText(
   const tab = G.Tab;
   // Is module acceptable, or if not, is there a companion which is?
   let targetmod = targetmodx;
+  if (targetmod && !(targetmod in tab)) {
+    // Allow case differences in module code references.
+    const targetmodlc = targetmod.toLowerCase();
+    targetmod =
+      Object.keys(tab).find((m) => m.toLowerCase() === targetmodlc) || null;
+  }
   let location = locationx;
   const mtype = targetmod && targetmod in tab && tab[targetmod].type;
   const modOK =
@@ -137,8 +158,14 @@ export function locationVKText(
     (mtype === C.COMMENTARY && commentaries);
   if (!location.subid && targetmod && !modOK && altModules !== false) {
     const companions = getCompanionModules(targetmod);
-    const compOK = companions.find((comp) => {
-      const ctype = comp in tab && tab[comp].type;
+    const compOK = companions.find((compx) => {
+      let comp = compx;
+      if (!(comp in tab)) {
+        // Allow case differences in module code references.
+        const complc = comp.toLowerCase();
+        comp = Object.keys(tab).find((m) => m.toLowerCase() === complc) || '';
+      }
+      const ctype = comp && comp in tab && tab[comp].type;
       return (
         (ctype === C.BIBLE && commentaries !== 'only') ||
         (ctype === C.COMMENTARY && commentaries)
@@ -339,7 +366,7 @@ export function getRefHTML(
           ) || resolve;
       }
       const { location, module, text } = resolve;
-      if (module && location.book) {
+      if (module && module in G.Tab && location.book) {
         const { subid: noteID } = location;
         const { direction, label, labelClass } = G.Tab[module];
         const crref = ['crref'];

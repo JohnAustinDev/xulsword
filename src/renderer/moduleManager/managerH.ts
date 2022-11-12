@@ -1062,17 +1062,18 @@ function handleError(xthis: ModuleManager, er: any, modrepkeys: string[]) {
   const state = xthis.state as ManagerState;
   const { module: modtable } = state.tables;
   const { moduleData } = Saved;
-  xthis.addToast({
-    message: er.toString(),
-    timeout: 5000,
-    intent: Intent.WARNING,
-  });
+  let intentx: Intent = 'none';
+  if (er.message !== C.UI.Manager.cancelMsg) {
+    intentx = Intent.DANGER;
+    xthis.addToast({
+      message: er.toString(),
+      timeout: 5000,
+      intent: Intent.WARNING,
+    });
+  }
   modrepkeys.forEach((k) => {
     moduleData[k][ModCol.iInfo].loading = false;
-    moduleData[k][ModCol.iInfo].intent = intent(
-      ModCol.iInstalled,
-      Intent.DANGER
-    );
+    moduleData[k][ModCol.iInfo].intent = intent(ModCol.iInstalled, intentx);
   });
   setTableState(xthis, 'module', null, modtable.data, true);
   return null;
@@ -1102,10 +1103,12 @@ export function download(xthis: ModuleManager, rows: number[]): void {
           drow[ModCol.iInfo].conf.xsmType === 'XSM_audio'
         ) {
           try {
-            dlobj.http += await promptAudioChapters(
+            const urlfrag = await promptAudioChapters(
               xthis,
               drow[ModCol.iInfo].conf
             );
+            if (urlfrag) dlobj.http += urlfrag;
+            else throw new Error(C.UI.Manager.cancelMsg);
           } catch (er) {
             handleError(xthis, er, [modrepkey]);
             return;

@@ -161,8 +161,14 @@ export function getDictEntryHTML(
 
   let html = '';
   let sep = '';
-  mods.forEach((m) => {
-    if (m in G.Tab && G.Tab[m].type === C.DICTIONARY) {
+  mods.forEach((mx) => {
+    // Allow case differences in module code references.
+    let m = mx;
+    if (!(m in G.Tab)) {
+      const mlc = m.toLowerCase();
+      m = Object.keys(G.Tab).find((md) => md.toLowerCase() === mlc) || '';
+    }
+    if (m && m in G.Tab && G.Tab[m].type === C.DICTIONARY) {
       const k = DictKeyTransform[m] ? DictKeyTransform[m](key) : key;
       let h = '';
       try {
