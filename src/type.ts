@@ -1,11 +1,39 @@
 /* eslint-disable import/no-duplicates */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import React from 'react';
+import type { Shell } from 'electron';
+import type React from 'react';
 import type ElectronLog from 'electron-log';
 import type { LogLevel } from 'electron-log';
-import type { SubscriptionType } from 'subscription';
-import type { AboutWinState } from './renderer/about/about';
+import type {
+  resetMain,
+  getSystemFonts,
+  getBooksInModule,
+  getBooks,
+  getBook,
+  getTabs,
+  getTab,
+  getConfig,
+  getSwordConf,
+  getLocaleConfigs,
+  localeConfig,
+  getModuleConfigDefault,
+  getModuleFonts,
+  getFeatureModules,
+  getBkChsInV11n,
+} from './main/minit';
+import type {
+  publishSubscription,
+  resolveHtmlPath,
+} from './main/components/window';
+import type { inlineFile } from './main/components/localFile';
+import type Prefs from './main/components/prefs';
+import type Commands from './main/components/commands';
+import type Data from './main/components/data';
+import type Module from './main/components/module';
+import type Window from './main/components/window';
+import type { DirsRendererType } from './main/components/dirs';
+import type LibSword from './main/components/libsword';
 
 declare global {
   export interface Window {
@@ -397,6 +425,95 @@ export type ModTypes =
 
 export type XSModTypes = 'XSM' | 'XSM_audio' | 'none';
 
+export type XSMConfigEntries = {
+  // XSM (xulsword modules) have <module>.xsm for DataPath
+  // NameXSM?: string;
+  SwordModules?: string[];
+  SwordVersions?: string[];
+
+  // XSM audio configs also have ModDrv as 'audio' and
+  // DataPath as a URL value.
+  AudioChapters?: SwordConfAudioChapters;
+};
+
+export type SwordConfXulsword = {
+  AudioCode?: string;
+};
+
+export type DepricatedSwordConfXulsword = {
+  TabLabel?: string;
+  FontSizeAdjust?: string;
+  LineHeight?: string;
+  FontSize?: string;
+  FontColor?: string;
+  FontBackground?: string;
+};
+
+export type SwordConfigEntries = SwordConfXulsword &
+  DepricatedSwordConfXulsword & {
+    DataPath: string;
+    DistributionLicense?: string;
+    Lang?: string;
+    MinimumVersion?: string;
+    PreferredCSSXHTML?: string;
+    KeySort?: string;
+    Scope?: string;
+    SourceType?: string;
+    TextSource?: string;
+    Version?: string;
+    CipherKey?: string;
+    Font?: string;
+    Direction?: 'LtoR' | 'RtoL' | 'BiDi';
+    About?: SwordConfLocalized;
+    Abbreviation?: SwordConfLocalized;
+    Description?: SwordConfLocalized;
+    Copyright?: SwordConfLocalized;
+    CopyrightHolder?: SwordConfLocalized;
+    CopyrightDate?: SwordConfLocalized;
+    CopyrightNotes?: SwordConfLocalized;
+    CopyrightContactName?: SwordConfLocalized;
+    CopyrightContactNotes?: SwordConfLocalized;
+    CopyrightContactAddress?: SwordConfLocalized;
+    CopyrightContactEmail?: SwordConfLocalized;
+    ShortPromo?: SwordConfLocalized;
+    ShortCopyright?: SwordConfLocalized;
+    DistributionNotes?: SwordConfLocalized;
+    UnlockInfo?: SwordConfLocalized;
+    ModDrv:
+      | 'RawText'
+      | 'RawText4'
+      | 'zText'
+      | 'zText4'
+      | 'RawCom'
+      | 'RawCom4'
+      | 'zCom'
+      | 'zCom4'
+      | 'HREFCom'
+      | 'RawFiles'
+      | 'RawLD'
+      | 'RawLD4'
+      | 'zLD'
+      | 'RawGenBook';
+    DisplayLevel?: number;
+    InstallSize?: number;
+    Versification?: V11nType;
+    Obsoletes?: string[];
+    Feature?: string[];
+    GlobalOptionFilter?: string[];
+    History?: [string, SwordConfLocalized][];
+  };
+
+export type SwordConfType = SwordConfigEntries &
+  XSMConfigEntries & {
+    // Extra helper additions
+    module: string;
+    reports: NewModuleReportType[];
+    sourceRepository: Repository;
+    moduleType: ModTypes;
+    xsmType: XSModTypes;
+    filename: string;
+  };
+
 export type SwordConfLocalized = {
   [locale: string | 'locale' | 'en']: string;
 };
@@ -406,74 +523,6 @@ export type SwordConfAudioChapters = {
   ch1: number;
   ch2: number;
 }[];
-
-export type SwordConfType = {
-  DataPath: string;
-  DistributionLicense?: string;
-  Lang?: string;
-  MinimumVersion?: string;
-  PreferredCSSXHTML?: string;
-  KeySort?: string;
-  Scope?: string;
-  SourceType?: string;
-  TextSource?: string;
-  Version?: string;
-  CipherKey?: string;
-  About?: SwordConfLocalized;
-  Abbreviation?: SwordConfLocalized;
-  Description?: SwordConfLocalized;
-  Copyright?: SwordConfLocalized;
-  CopyrightHolder?: SwordConfLocalized;
-  CopyrightDate?: SwordConfLocalized;
-  CopyrightNotes?: SwordConfLocalized;
-  CopyrightContactName?: SwordConfLocalized;
-  CopyrightContactNotes?: SwordConfLocalized;
-  CopyrightContactAddress?: SwordConfLocalized;
-  CopyrightContactEmail?: SwordConfLocalized;
-  ShortPromo?: SwordConfLocalized;
-  ShortCopyright?: SwordConfLocalized;
-  DistributionNotes?: SwordConfLocalized;
-  UnlockInfo?: SwordConfLocalized;
-  ModDrv:
-    | 'RawText'
-    | 'RawText4'
-    | 'zText'
-    | 'zText4'
-    | 'RawCom'
-    | 'RawCom4'
-    | 'zCom'
-    | 'zCom4'
-    | 'HREFCom'
-    | 'RawFiles'
-    | 'RawLD'
-    | 'RawLD4'
-    | 'zLD'
-    | 'RawGenBook';
-  DisplayLevel?: number;
-  InstallSize?: number;
-  Versification?: V11nType;
-  Obsoletes?: string[];
-  Feature?: string[];
-  GlobalOptionFilter?: string[];
-  History?: [string, SwordConfLocalized][];
-
-  // Non-standard XSM (xulsword modules) have 'name.xsm' for DataPath
-  // NameXSM?: string;
-  SwordModules?: string[];
-  SwordVersions?: string[];
-
-  // Non-standard XSM audio module entries. These modules also have
-  // ModDrv as 'audio' and DataPath as a URL value.
-  AudioChapters?: SwordConfAudioChapters;
-
-  // Extra helper additions
-  module: string;
-  reports: NewModuleReportType[];
-  sourceRepository: Repository;
-  moduleType: ModTypes;
-  xsmType: XSModTypes;
-  filename: string;
-};
 
 export type TabTypes = 'Texts' | 'Comms' | 'Dicts' | 'Genbks';
 
@@ -509,24 +558,6 @@ export type NewModulesType = {
   bookmarks: string[];
   audio: (AudioFile | GenBookAudioFile)[];
   reports: NewModuleReportType[];
-};
-
-export type DirsDirectories = {
-  TmpD: string;
-  xsAsset: string;
-  xsAsar: string;
-  xsProgram: string;
-  xsDefaults: string;
-  xsPrefDefD: string;
-  ProfD: string;
-  xsPrefD: string;
-  xsResD: string;
-  xsModsUser: string;
-  xsFonts: string;
-  xsAudio: string;
-  xsBookmarks: string;
-  xsVideo: string;
-  xsModsCommon: string;
 };
 
 export type Repository = {
@@ -569,10 +600,6 @@ export type ResetType =
   | 'component-reset'
   | 'dynamic-stylesheet-reset';
 
-// GPublic funcs used as descriptors/place-holders
-const func = () => {};
-const funcCACHE = () => 'cacheable';
-
 export type PrefPrimative = number | string | boolean | null | undefined;
 export type PrefObject = {
   [i: string]: PrefValue;
@@ -582,327 +609,219 @@ export type PrefValue =
   | PrefObject
   | (PrefPrimative | PrefObject | PrefValue)[];
 
-const PrefsPublic = {
-  has: func as unknown as (
-    key: string,
-    type: 'string' | 'number' | 'boolean' | 'complex' | 'any',
-    aStore?: string
-  ) => boolean,
-  getPrefOrCreate: func as unknown as (
-    key: string,
-    type: 'string' | 'number' | 'boolean' | 'complex',
-    defval: any,
-    aStore?: string
-  ) => PrefValue,
-  getCharPref: func as unknown as (key: string, aStore?: string) => string,
-  setCharPref: func as unknown as (
-    key: string,
-    value: string,
-    aStore?: string
-  ) => boolean,
-  getBoolPref: func as unknown as (key: string, aStore?: string) => boolean,
-  setBoolPref: func as unknown as (
-    key: string,
-    value: boolean,
-    aStore?: string
-  ) => boolean,
-  getIntPref: func as unknown as (key: string, aStore?: string) => number,
-  setIntPref: func as unknown as (
-    key: string,
-    value: number,
-    aStore?: string
-  ) => boolean,
-  getComplexValue: func as unknown as (key: string, aStore?: string) => unknown,
-  setComplexValue: func as unknown as (
-    key: string,
-    value: any,
-    aStore?: string
-  ) => boolean,
-  mergeValue: func as unknown as (
-    key: string,
-    obj: { [i: string]: any },
-    aStore?: string,
-    clearRendererCaches?: boolean
-  ) => void,
-  deleteUserPref: func as unknown as (key: string, aStore?: string) => boolean,
-  writeAllStores: func as unknown as () => void,
+export type GType = {
+  // Getters
+  Books: ReturnType<typeof getBooks>;
+  Book: ReturnType<typeof getBook>;
+  Tabs: ReturnType<typeof getTabs>;
+  Tab: ReturnType<typeof getTab>;
+  Config: ReturnType<typeof getConfig>;
+  SwordConf: ReturnType<typeof getSwordConf>;
+  ProgramConfig: ReturnType<typeof localeConfig>;
+  LocaleConfigs: ReturnType<typeof getLocaleConfigs>;
+  ModuleConfigDefault: ReturnType<typeof getModuleConfigDefault>;
+  ModuleFonts: ReturnType<typeof getModuleFonts>;
+  FeatureModules: ReturnType<typeof getFeatureModules>;
+  BkChsInV11n: ReturnType<typeof getBkChsInV11n>;
+  OPSYS: NodeJS.Platform;
+
+  // Functions
+  resolveHtmlPath: typeof resolveHtmlPath;
+  inlineFile: typeof inlineFile;
+  resetMain: typeof resetMain;
+  getSystemFonts: typeof getSystemFonts;
+  getBooksInModule: typeof getBooksInModule;
+  publishSubscription: typeof publishSubscription;
+
+  // Objects
+  Prefs: typeof Prefs;
+  LibSword: typeof LibSword;
+  Dirs: DirsRendererType;
+  Commands: typeof Commands;
+  Shell: Pick<Shell, 'beep'>;
+  Data: typeof Data;
+  Module: typeof Module;
+  Window: typeof Window;
 };
 
-const LibSwordPublic = {
-  init: func as unknown as () => boolean,
-  quit: func as unknown as () => void,
-  isReady: func as unknown as (err?: boolean) => boolean,
-  getMaxChapter: funcCACHE as unknown as (
-    v11n: V11nType,
-    vkeytext: string
-  ) => number,
-  getMaxVerse: funcCACHE as unknown as (
-    v11n: V11nType,
-    vkeytext: string
-  ) => number,
-  getChapterText: func as unknown as (
-    modname: string,
-    vkeytext: string,
-    options?: { [key in SwordFilterType]?: SwordFilterValueType }
-  ) => string,
-  getChapterTextMulti: func as unknown as (
-    modstrlist: string,
-    vkeytext: string,
-    keepnotes?: boolean,
-    options?: { [key in SwordFilterType]?: SwordFilterValueType }
-  ) => string,
-  getFootnotes: func as unknown as () => string,
-  getCrossRefs: func as unknown as () => string,
-  getNotes: func as unknown as () => string,
-  getVerseText: func as unknown as (
-    vkeymod: string,
-    vkeytext: string,
-    keepTextNotes: boolean
-  ) => string,
-  getVerseSystem: funcCACHE as unknown as (modname: string) => V11nType,
-  convertLocation: funcCACHE as unknown as (
-    fromv11n: V11nType,
-    vkeytext: string,
-    tov11n: V11nType
-  ) => string,
-  getIntroductions: func as unknown as (
-    vkeymod: string,
-    bname: string
-  ) => string,
-  getDictionaryEntry: func as unknown as (
-    lexdictmod: string,
-    key: string,
-    options?: { [key in SwordFilterType]?: SwordFilterValueType }
-  ) => string,
-  getAllDictionaryKeys: funcCACHE as unknown as (lexdictmod: string) => string,
-  getGenBookChapterText: func as unknown as (
-    gbmod: string,
-    treekey: string,
-    options?: { [key in SwordFilterType]?: SwordFilterValueType }
-  ) => string,
-  getGenBookTableOfContents: funcCACHE as unknown as (gbmod: string) => string,
-  luceneEnabled: func as unknown as (modname: string) => boolean,
-  search: func as unknown as (
-    modname: string,
-    srchstr: string,
-    scope: string,
-    type: number,
-    flags: number,
-    newsearch: boolean,
-    hash: string
-  ) => Promise<number | null>,
-  getSearchVerses: func as unknown as (modname: string) => void,
-  getSearchResults: func as unknown as (
-    modname: string,
-    first: number,
-    num: number,
-    keepStrongs: boolean,
-    searchHash: string
-  ) => string | null,
-  searchIndexDelete: func as unknown as (modname: string) => void,
-  searchIndexBuild: func as unknown as (modname: string) => Promise<boolean>,
-  setGlobalOption: func as unknown as (
-    option: SwordFilterType,
-    setting: SwordFilterValueType
-  ) => void,
-  setGlobalOptions: func as unknown as (
-    options: { [key in SwordFilterType]?: SwordFilterValueType }
-  ) => void,
-  getGlobalOption: func as unknown as (option: SwordFilterType) => string,
-  getModuleList: funcCACHE as unknown as () => string,
-  getModuleInformation: funcCACHE as unknown as (
-    modname: string,
-    paramname: string
-  ) => string,
-  uncompressTarGz: func as unknown as (
-    tarGzPath: string,
-    aDirPath: string
-  ) => void,
-  translate: funcCACHE as unknown as (
-    lookup: string,
-    localeFile: string
-  ) => string,
-};
+// This GBuilder object will be used in the main/mg and renderer/rg
+// modules at runtime to create two different types of G objects
+// sharing the same GType interface: one will be available in the
+// main process and the other in renderer processes. The main process
+// G object accesses everything directly. But the renderer process
+// G object requests everything through IPC from the main process G
+// object. All getter and 'funcCACHE' data of the renderer G object
+// is cached. IMPORTANT: async functions must be listed in asyncFuncs
+// or runtime errors will result!
+const func = () => {};
+const CACHEfunc = () => 'cacheable';
+export const GBuilder: GType & {
+  // async functions must be listed in asyncFuncs or runtime
+  // errors will result!
+  asyncFuncs: [
+    [keyof GType, (keyof GType['getSystemFonts'])[]],
+    [keyof GType, (keyof GType['Commands'])[]],
+    [keyof GType, (keyof GType['Module'])[]],
+    [keyof GType, (keyof GType['LibSword'])[]]
+  ];
+} = {
+  asyncFuncs: [
+    ['getSystemFonts', []],
+    ['Commands', ['installXulswordModules']],
+    [
+      'Module',
+      [
+        'download',
+        'installDownloads',
+        'remove',
+        'move',
+        'crossWireMasterRepoList',
+        'repositoryListing',
+      ],
+    ],
+    ['LibSword', ['searchIndexBuild', 'search']],
+  ],
 
-const CommandsPublic = {
-  openModuleManager: func as unknown as () => void,
-  installXulswordModules: func as unknown as (
-    paths?: string[] | string, // file, file[], directory/*, directory or undefined: choose files
-    toSharedModuleDir?: boolean
-  ) => Promise<NewModulesType>,
-  removeModule: func as unknown as () => void,
-  exportAudio: func as unknown as () => void,
-  importAudio: func as unknown as () => void,
-  pageSetup: func as unknown as () => void,
-  printPreview: func as unknown as () => void,
-  printPassage: func as unknown as () => void,
-  print: func as unknown as () => void,
-  edit: func as unknown as (
-    which: 'undo' | 'redo' | 'cut' | 'copy' | 'paste',
-    ...args: any
-  ) => boolean,
-  undo: func as unknown as (...args: any) => boolean,
-  redo: func as unknown as (...args: any) => boolean,
-  cut: func as unknown as (...args: any) => boolean,
-  copy: func as unknown as (...args: any) => boolean,
-  paste: func as unknown as (...args: any) => boolean,
-  search: func as unknown as (search: SearchType) => void,
-  searchHelp: func as unknown as () => void,
-  copyPassage: func as unknown as () => void,
-  openFontsColors: func as unknown as (module: string) => void,
-  openBookmarksManager: func as unknown as () => void,
-  openNewDbItemDialog: func as unknown as (
-    userNote: boolean,
-    textvk: TextVKType
-  ) => void,
-  openDbItemPropertiesDialog: func as unknown as (bookmark: unknown) => void,
-  deleteDbItem: func as unknown as (bookmark: unknown) => void,
-  openAbout: func as unknown as (
-    aboutWinState?: Partial<AboutWinState>
-  ) => void,
-  goToLocationVK: func as unknown as (
-    location: LocationVKType,
-    selection: LocationVKType,
-    scroll?: ScrollType
-  ) => void,
-  goToLocationSK: func as unknown as (
-    location: LocationSKType,
-    scroll?: ScrollType | undefined
-  ) => void,
-};
+  // Getters
+  Books: 'getter' as any,
+  Book: 'getter' as any,
+  Tabs: 'getter' as any,
+  Tab: 'getter' as any,
+  Config: 'getter' as any,
+  SwordConf: 'getter' as any,
+  ProgramConfig: 'getter' as any,
+  LocaleConfigs: 'getter' as any,
+  ModuleConfigDefault: 'getter' as any,
+  ModuleFonts: 'getter' as any,
+  FeatureModules: 'getter' as any,
+  BkChsInV11n: 'getter' as any,
+  OPSYS: 'getter' as any,
 
-// This GPublic object will be used at runtime to create two different
-// types of G objects sharing the same GType interface: one will be
-// available in the main process and the other in renderer processes.
-// The main process G properties access functions and data directly. But
-// renderer process G properties request data through IPC from the main
-// process G object. All getter and cacheable data of the Renderer G
-// object is cached.
-export const GPublic = {
-  // GLOBAL GETTER DATA
-  // ------------------
-  /* eslint-disable prettier/prettier */
-  Books:               'getter' as unknown as BookType[],
-  Book:                'getter' as unknown as { [i: string]: BookType },
-  Tabs:                'getter' as unknown as TabType[],
-  Tab:                 'getter' as unknown as { [i: string]: TabType },
-  Config:              'getter' as unknown as { [i: string]: ConfigType },
-  SwordConf:           'getter' as unknown as { [mod: string]: SwordConfType },
-  ProgramConfig:       'getter' as unknown as ConfigType,
-  LocaleConfigs:       'getter' as unknown as { [i: string]: ConfigType },
-  ModuleConfigDefault: 'getter' as unknown as ConfigType,
-  ModuleFonts:         'getter' as unknown as FontFaceType[],
-  FeatureModules:      'getter' as unknown as FeatureType,
-  BkChsInV11n:         'getter' as unknown as { [key in V11nType]: [string, number][]; },
-  OPSYS:               'getter' as unknown as NodeJS.Platform,
-  /* eslint-enable prettier/prettier */
+  // Functions
+  resolveHtmlPath: CACHEfunc as any,
+  inlineFile: CACHEfunc as any,
+  getSystemFonts: CACHEfunc as any,
+  getBooksInModule: CACHEfunc as any,
+  resetMain: func as any,
+  publishSubscription: func as any,
 
-  // GLOBAL FUNCTIONS
-  // ----------------
-  resolveHtmlPath: funcCACHE as unknown as (htmlfile: string) => string,
-  inlineFile: funcCACHE as unknown as (
-    path: string,
-    encoding: BufferEncoding,
-    noHeader?: boolean
-  ) => string,
-  resetMain: func as unknown as () => void,
-  getSystemFonts: funcCACHE as unknown as () => Promise<string[]>,
-  getBooksInModule: funcCACHE as unknown as (module: string) => string[],
-  log: func as unknown as (type: ElectronLog.LogLevel, ...args: any) => void,
-  publishSubscription: func as unknown as (
-    main: boolean,
-    windows: WindowArgType | WindowArgType[],
-    subscriptionName: keyof SubscriptionType['publish'],
-    ...args: any
-  ) => void,
+  // Objects
+  Prefs: {
+    has: func as any,
+    getPrefOrCreate: func as any,
+    getCharPref: func as any,
+    setCharPref: func as any,
+    getBoolPref: func as any,
+    setBoolPref: func as any,
+    getIntPref: func as any,
+    setIntPref: func as any,
+    getComplexValue: func as any,
+    setComplexValue: func as any,
+    mergeValue: func as any,
+    deleteUserPref: func as any,
+    writeAllStores: func as any,
+  },
 
-  // GLOBAL OBJECTS
-  // --------------
-  Prefs: PrefsPublic,
-  LibSword: LibSwordPublic,
+  LibSword: {
+    init: func as any,
+    quit: func as any,
+    isReady: func as any,
+    getMaxChapter: CACHEfunc as any,
+    getMaxVerse: CACHEfunc as any,
+    getChapterText: func as any,
+    getChapterTextMulti: func as any,
+    getFootnotes: func as any,
+    getCrossRefs: func as any,
+    getNotes: func as any,
+    getVerseText: func as any,
+    getVerseSystem: CACHEfunc as any,
+    convertLocation: CACHEfunc as any,
+    getIntroductions: func as any,
+    getDictionaryEntry: func as any,
+    getAllDictionaryKeys: CACHEfunc as any,
+    getGenBookChapterText: func as any,
+    getGenBookTableOfContents: CACHEfunc as any,
+    luceneEnabled: func as any,
+    search: func as any,
+    getSearchResults: func as any,
+    searchIndexDelete: func as any,
+    searchIndexBuild: func as any,
+    setGlobalOption: func as any,
+    setGlobalOptions: func as any,
+    getGlobalOption: func as any,
+    getModuleList: CACHEfunc as any,
+    getModuleInformation: CACHEfunc as any,
+    translate: CACHEfunc as any,
+  },
+
   Dirs: {
-    path: 'getter' as unknown as DirsDirectories,
+    path: 'getter' as any,
   },
-  Commands: CommandsPublic,
-  // See electron shell api. Any electron shell property can be added
-  // here and it will become available in G.
+
+  Commands: {
+    openModuleManager: func as any,
+    installXulswordModules: func as any,
+    removeModule: func as any,
+    exportAudio: func as any,
+    importAudio: func as any,
+    pageSetup: func as any,
+    printPreview: func as any,
+    printPassage: func as any,
+    print: func as any,
+    edit: func as any,
+    undo: func as any,
+    redo: func as any,
+    cut: func as any,
+    copy: func as any,
+    paste: func as any,
+    search: func as any,
+    searchHelp: func as any,
+    copyPassage: func as any,
+    openFontsColors: func as any,
+    openBookmarksManager: func as any,
+    openNewDbItemDialog: func as any,
+    openDbItemPropertiesDialog: func as any,
+    deleteDbItem: func as any,
+    openAbout: func as any,
+    goToLocationVK: func as any,
+    goToLocationSK: func as any,
+  },
+
   Shell: {
-    beep: func as unknown as () => void,
+    beep: func as any,
   },
-  // Make data available to all processes (main and renderer).
+
   Data: {
-    has: func as unknown as (name: string) => boolean,
-    write: func as unknown as (data: any, name: string) => void,
-    read: func as unknown as (name: string) => any,
-    readAndDelete: func as unknown as (name: string) => any,
+    has: func as any,
+    write: func as any,
+    read: func as any,
+    readAndDelete: func as any,
   },
 
   Module: {
-    crossWireMasterRepoList: func as unknown as () => Promise<
-      Repository[] | string
-    >,
-    repositoryListing: func as unknown as (
-      repos: (FTPDownload | null)[]
-    ) => Promise<(RepositoryListing | string)[]>,
-    download: func as unknown as (
-      download: Download
-    ) => Promise<number | string>,
-    // Cancel some or all previously initiated downloads.
-    cancel: func as unknown as (downloads?: Download[]) => number,
-    // Install previously downloaded modules
-    installDownloads: func as unknown as (
-      installs: { download: Download; toRepo: Repository }[],
-      callingWinID?: number
-    ) => Promise<NewModulesType>,
-    // Remove (uninstall) one or more installed modules
-    remove: func as unknown as (
-      modules: { name: string; repo: Repository }[]
-    ) => Promise<boolean[]>,
-    // Move one or more modules between local repositories
-    move: func as unknown as (
-      modules: { name: string; fromRepo: Repository; toRepo: Repository }[]
-    ) => Promise<boolean[]>,
-    // Overwrite the config file of any locally installed module
-    writeConf: func as unknown as (
-      confFilePath: string,
-      contents: string
-    ) => void,
-    setCipherKeys: func as unknown as (
-      keys: CipherKey[],
-      callingWinID?: number
-    ) => void,
+    crossWireMasterRepoList: func as any,
+    repositoryListing: func as any,
+    download: func as any,
+    cancel: func as any,
+    installDownloads: func as any,
+    remove: func as any,
+    move: func as any,
+    writeConf: func as any,
+    setCipherKeys: func as any,
   },
+
   Window: {
-    description: funcCACHE as unknown as (
-      window?: WindowArgType
-    ) => WindowDescriptorType,
-    open: func as unknown as (arg: WindowDescriptorType) => number,
-    setComplexValue: func as unknown as (argname: string, value: any) => void,
-    mergeValue: func as unknown as (
-      argname: string,
-      value: { [i: string]: any }
-    ) => void,
-    setContentSize: func as unknown as (
-      width: number,
-      height: number,
-      window?: WindowArgType
-    ) => void,
-    setTitle: func as unknown as (
-      title: string,
-      window?: WindowArgType
-    ) => void,
-    tmpDir: func as unknown as (window?: WindowArgType | null) => string,
-    reset: func as unknown as (
-      type?: ResetType,
-      window?: WindowArgType
-    ) => void,
-    modal: func as unknown as (
-      modal: ModalType | { modal: ModalType; window: WindowArgType }[]
-    ) => void,
-    moveToFront: func as unknown as (window?: WindowArgType) => void,
-    moveToBack: func as unknown as (window?: WindowArgType) => void,
-    close: func as unknown as (window?: WindowArgType) => void,
+    description: CACHEfunc as any, // cannot be 'getter' (and auto-pass window id)
+    open: func as any,
+    setComplexValue: func as any,
+    mergeValue: func as any,
+    setContentSize: func as any,
+    setTitle: func as any,
+    tmpDir: func as any,
+    reset: func as any,
+    modal: func as any,
+    moveToFront: func as any,
+    moveToBack: func as any,
+    close: func as any,
   },
 };
-
-export type GType = typeof GPublic;

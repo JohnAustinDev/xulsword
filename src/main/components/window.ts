@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable prefer-rest-params */
 /* eslint-disable import/no-mutable-exports */
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -355,140 +356,6 @@ function createWindow(
   return win.id;
 }
 
-const Window: GType['Window'] = {
-  description(window?: WindowArgType): WindowDescriptorType {
-    const win = getBrowserWindows(window, arguments[1])[0];
-    return WindowRegistry[win.id] || {};
-  },
-
-  open(descriptor: WindowDescriptorType): number {
-    const winid = createWindow(descriptor, arguments[1] ?? -1);
-    if (descriptor.category === 'window') addWindowToPrefs(winid, descriptor);
-    const o = descriptor.options;
-    if (o && o.parent) o.parent = undefined;
-    return winid;
-  },
-
-  setComplexValue(argname: string, value: any) {
-    persist(argname, value, false, arguments[2] ?? -1);
-  },
-
-  mergeValue(argname: string, value: any) {
-    persist(argname, value, true, arguments[2] ?? -1);
-  },
-
-  setContentSize(w: number, h: number, window?: WindowArgType): void {
-    getBrowserWindows(window, arguments[3]).forEach((win) => {
-      win.setContentSize(Math.round(w), Math.round(h));
-    });
-  },
-
-  close(window?: WindowArgType): void {
-    getBrowserWindows(window, arguments[1]).forEach((win) => {
-      win.close();
-    });
-  },
-
-  // Create a new temp directory for the window that gets deleted when
-  // the window closes.
-  tmpDir(window?: WindowArgType | null): string {
-    let win: BrowserWindow | null = getBrowserWindows(window, arguments[1])[0];
-    const w = win as any;
-    if (w && 'xstmpDir' in w) {
-      win = null;
-      return w.xstmpDir;
-    }
-    const dir = Dirs.TmpD;
-    dir.append(`xulsword_${randomID()}`);
-    if (dir.exists()) dir.remove(true);
-    dir.create(LocalFile.DIRECTORY_TYPE);
-    if (!dir.exists()) {
-      win = null;
-      return '';
-    }
-    win.once(
-      'closed',
-      ((d) => {
-        return () => {
-          const f = new LocalFile(d);
-          if (f.exists()) f.remove(true);
-        };
-      })(dir.path)
-    );
-    w.xstmpDir = dir.path;
-    win = null;
-    return dir.path;
-  },
-
-  // Disable all event handlers on a window to insure user input is bocked for
-  // a time, such as when LibSword is offline.
-  modal(modalx: ModalType | { modal: ModalType; window: WindowArgType }[]) {
-    const done: number[] = [];
-    (Array.isArray(modalx) ? modalx : [{ modal: modalx, window: arguments[1] }])
-      .reverse()
-      .forEach((obj) => {
-        const { modal, window } = obj;
-        getBrowserWindows(window)
-          .reverse()
-          .forEach((win) => {
-            if (!done.includes(win.id)) {
-              done.push(win.id);
-              win.webContents.send('modal', modal || '');
-            }
-          });
-      });
-  },
-
-  // If ResetType is not specified then all resets will be called, otherwise only
-  // the specified reset will be called. If window is specified, only matching
-  // window(s) will be reset, otherwise all will be reset. If neither is specified
-  // then all resets will be called on all windows plus the main process in addition.
-  reset(type?: ResetType, window?: WindowArgType) {
-    let windows = window
-      ? getBrowserWindows(window, arguments[2])
-      : getBrowserWindows('all');
-    if (!type && !window) Subscription.publish.resetMain();
-    windows.forEach((win) => {
-      if (win) {
-        const resets: ResetType[] = [
-          'cache-reset',
-          'component-reset',
-          'dynamic-stylesheet-reset',
-        ];
-        resets.forEach((r) => {
-          // 'component-reset' also does 'dynamic-stylesheet-reset'
-          if ((!type || type === 'all') && r === 'dynamic-stylesheet-reset')
-            return;
-          if (!type || type === 'all' || type === r) win.webContents.send(r);
-        });
-      }
-    });
-    windows = [];
-  },
-
-  moveToFront(window?: WindowArgType): void {
-    const front = getBrowserWindows(window, arguments[1]);
-    BrowserWindow.getAllWindows().forEach((w) => {
-      if (front.includes(w)) w.moveTop();
-    });
-  },
-
-  moveToBack(window?: WindowArgType): void {
-    const back = getBrowserWindows(window, arguments[1]);
-    BrowserWindow.getAllWindows().forEach((w) => {
-      if (!back.includes(w)) w.moveTop();
-    });
-  },
-
-  setTitle(title: string, window?: WindowArgType): void {
-    getBrowserWindows(window, arguments[2]).forEach((win) => {
-      win.setTitle(title);
-    });
-  },
-};
-
-export default Window;
-
 // Push user preference changes from the winid focused window, or from the main
 // process (winid === -1) to other windows using update-state-from-pref. For some
 // changes, more is done than simply updating state prefs. For instance when
@@ -559,9 +426,9 @@ export const pushPrefsToWindows: PrefCallbackType = (
 // Publish any subscription on the main process and/or any other window
 // or group of windows.
 export function publishSubscription(
-  main: boolean,
-  renderers: WindowArgType | WindowArgType[],
   subscription: keyof SubscriptionType['publish'],
+  renderers: WindowArgType | WindowArgType[],
+  main: boolean,
   ...args: any
 ) {
   if (main) Subscription.doPublish(subscription, ...args);
@@ -575,3 +442,139 @@ export function publishSubscription(
     });
   });
 }
+
+const Window = {
+  description(window?: WindowArgType): WindowDescriptorType {
+    const win = getBrowserWindows(window, arguments[1])[0];
+    return WindowRegistry[win.id] || {};
+  },
+
+  open(descriptor: WindowDescriptorType): number {
+    const winid = createWindow(descriptor, arguments[1] ?? -1);
+    if (descriptor.category === 'window') addWindowToPrefs(winid, descriptor);
+    const o = descriptor.options;
+    if (o && o.parent) o.parent = undefined;
+    return winid;
+  },
+
+  setComplexValue(argname: string, value: { [i: string]: any }): void {
+    persist(argname, value, false, arguments[2] ?? -1);
+  },
+
+  mergeValue(argname: string, value: any) {
+    persist(argname, value, true, arguments[2] ?? -1);
+  },
+
+  setContentSize(w: number, h: number, window?: WindowArgType): void {
+    getBrowserWindows(window, arguments[3]).forEach((win) => {
+      win.setContentSize(Math.round(w), Math.round(h));
+    });
+  },
+
+  close(window?: WindowArgType): void {
+    getBrowserWindows(window, arguments[1]).forEach((win) => {
+      win.close();
+    });
+  },
+
+  // Create a new temp directory for the window that gets deleted when
+  // the window closes.
+  tmpDir(window?: WindowArgType | null): string {
+    let win: BrowserWindow | null = getBrowserWindows(window, arguments[1])[0];
+    const w = win as any;
+    if (w && 'xstmpDir' in w) {
+      win = null;
+      return w.xstmpDir;
+    }
+    const dir = Dirs.TmpD;
+    dir.append(`xulsword_${randomID()}`);
+    if (dir.exists()) dir.remove(true);
+    dir.create(LocalFile.DIRECTORY_TYPE);
+    if (!dir.exists()) {
+      win = null;
+      return '';
+    }
+    win.once(
+      'closed',
+      ((d) => {
+        return () => {
+          const f = new LocalFile(d);
+          if (f.exists()) f.remove(true);
+        };
+      })(dir.path)
+    );
+    w.xstmpDir = dir.path;
+    win = null;
+    return dir.path;
+  },
+
+  // Disable all event handlers on a window to insure user input is bocked for
+  // a time, such as when LibSword is offline.
+  modal(
+    modalx: ModalType | { modal: ModalType; window: WindowArgType }[]
+  ): void {
+    const done: number[] = [];
+    (Array.isArray(modalx) ? modalx : [{ modal: modalx, window: arguments[1] }])
+      .reverse()
+      .forEach((obj) => {
+        const { modal, window } = obj;
+        getBrowserWindows(window)
+          .reverse()
+          .forEach((win) => {
+            if (!done.includes(win.id)) {
+              done.push(win.id);
+              win.webContents.send('modal', modal || '');
+            }
+          });
+      });
+  },
+
+  // If ResetType is not specified then all resets will be called, otherwise only
+  // the specified reset will be called. If window is specified, only matching
+  // window(s) will be reset, otherwise all will be reset. If neither is specified
+  // then all resets will be called on all windows plus the main process in addition.
+  reset(type?: ResetType, window?: WindowArgType) {
+    let windows = window
+      ? getBrowserWindows(window, arguments[2])
+      : getBrowserWindows('all');
+    if (!type && !window) Subscription.publish.resetMain();
+    windows.forEach((win) => {
+      if (win) {
+        const resets: ResetType[] = [
+          'cache-reset',
+          'component-reset',
+          'dynamic-stylesheet-reset',
+        ];
+        resets.forEach((r) => {
+          // 'component-reset' also does 'dynamic-stylesheet-reset'
+          if ((!type || type === 'all') && r === 'dynamic-stylesheet-reset')
+            return;
+          if (!type || type === 'all' || type === r) win.webContents.send(r);
+        });
+      }
+    });
+    windows = [];
+  },
+
+  moveToFront(window?: WindowArgType): void {
+    const front = getBrowserWindows(window, arguments[1]);
+    BrowserWindow.getAllWindows().forEach((w) => {
+      if (front.includes(w)) w.moveTop();
+    });
+  },
+
+  moveToBack(window?: WindowArgType): void {
+    const back = getBrowserWindows(window, arguments[1]);
+    BrowserWindow.getAllWindows().forEach((w) => {
+      if (!back.includes(w)) w.moveTop();
+    });
+  },
+
+  setTitle(title: string, window?: WindowArgType): void {
+    getBrowserWindows(window, arguments[2]).forEach((win) => {
+      win.setTitle(title);
+    });
+  },
+};
+
+export default Window;

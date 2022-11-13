@@ -1,44 +1,22 @@
-/* eslint-disable no-underscore-dangle */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable no-continue */
 import log from 'electron-log';
 import path from 'path';
 import { repositoryKey, isRepoLocal } from '../../common';
-import C from '../../constant';
 import Cache from '../../cache';
 import LocalFile from './localFile';
 import Dirs from './dirs';
 import Prefs from './prefs';
 
 import type {
-  GType,
   Repository,
+  SwordConfigEntries,
   SwordFilterType,
   SwordFilterValueType,
+  V11nType,
 } from '../../type';
 import type { ManagerStatePref } from '../../renderer/moduleManager/manager';
 
 const { libxulsword } = require('libxulsword');
-
-type LibSwordPrivate = {
-  moduleDirectories: string[];
-  checkCipherKeys: string[];
-
-  libxulsword: null | Record<string, unknown>;
-  paused: boolean;
-
-  upperCaseResult: string;
-  throwMsg: string;
-
-  UpperCase: (s: string) => string | null;
-  ThrowJSError: (ptr: any) => void;
-  ReportProgress: (i: number) => void;
-
-  unlock: () => void;
-  checkerror: () => void;
-  searchingID: string;
-  searchedID: string;
-};
 
 /*
 This LibSword object is used to access all SWORD engine capabilities
@@ -59,18 +37,25 @@ Valid for Bible modules:
 Valid for Dictionary modules:
   KeySort (see https://github.com/JohnAustinDev/osis-converters)
 */
-const LibSword: GType['LibSword'] & LibSwordPrivate = {
-  libxulsword: null, // object returned by libxulsword node API module
-  paused: false,
 
-  moduleDirectories: [],
+const LibSword = {
+  libxulsword: null as null | Record<string, unknown>,
 
-  checkCipherKeys: [],
+  moduleDirectories: [] as string[],
 
-  searchedID: '',
-  searchingID: '',
+  searchedID: '' as string,
 
-  init() {
+  searchingID: '' as string,
+
+  checkerror(): void {
+    if (this.throwMsg) {
+      const tmp = this.throwMsg;
+      this.throwMsg = '';
+      throw Error(`LIBSWORD: ${tmp}`);
+    }
+  },
+
+  init(): boolean {
     if (this.libxulsword) return false;
 
     log.verbose('Initializing libsword...');
@@ -98,20 +83,6 @@ const LibSword: GType['LibSword'] & LibSwordPrivate = {
 
     log.verbose(`module directories: ${this.moduleDirectories}`);
 
-    // These functions are used by C++ to call, and receive results from,
-    // Javascript functions. This method provides a way for special tasks,
-    // such as Unicode processing, or progress reporting, to be performed by
-    // Mozilla Javascript rather than by libxulsword C++ (which otherwise
-    // would create troublesome library dependencies).
-    // var funcTypeUpperCasePtr = ctypes.FunctionType(ctypes.default_abi, ctypes.PointerType(ctypes.char), [ctypes.ArrayType(ctypes.char)]).ptr;
-    // this.UpperCasePtr = funcTypeUpperCasePtr(this.UpperCase);
-
-    // var funcTypeThrowJSErrorPtr = ctypes.FunctionType(ctypes.default_abi, ctypes.void_t, [ctypes.PointerType(ctypes.char)]).ptr;
-    // this.ThrowJSErrorPtr = funcTypeThrowJSErrorPtr(this.ThrowJSError);
-
-    // var funcTypeReportProgressPtr = ctypes.FunctionType(ctypes.default_abi, ctypes.void_t, [ctypes.int]).ptr;
-    // this.ReportProgressPtr = funcTypeReportProgressPtr(this.ReportProgress);
-
     // Get our xulsword instance...
     this.libxulsword = libxulsword.GetXulsword(
       this.moduleDirectories.join(', '),
@@ -124,7 +95,7 @@ const LibSword: GType['LibSword'] & LibSwordPrivate = {
     return true;
   },
 
-  quit() {
+  quit(): void {
     if (this.libxulsword) {
       libxulsword.FreeLibXulsword();
       log.verbose('DELETED libxulsword object');
@@ -132,7 +103,7 @@ const LibSword: GType['LibSword'] & LibSwordPrivate = {
     this.libxulsword = null;
   },
 
-  isReady(err?: boolean) {
+  isReady(err?: boolean): boolean {
     if (this.libxulsword) return true;
     if (err) {
       log.error(
@@ -142,82 +113,31 @@ const LibSword: GType['LibSword'] & LibSwordPrivate = {
     return false;
   },
 
-  // Unlock encrypted SWORD modules
-  unlock() {
-    const mlist = this.getModuleList();
-    if (!mlist || mlist === 'No Modules' || mlist.search(C.BIBLE) === -1) {
-      return;
-    }
-
-    let msg = '';
-    const mods = mlist.split('<nx>');
-    for (let m = 0; m < mods.length; m += 1) {
-      const [mod, type] = mods[m].split(';');
-
-      if (type !== C.BIBLE) continue; // only Bible modules are encrypted?
-
-      // We don't need to supply a cipher key if the CipherKey conf
-      // entry is not present (the module is not encrypted) or else if
-      // it is present with a value (cipher key is supplied in conf file).
-      if (!/^\s*$/.test(this.getModuleInformation(mod, 'CipherKey'))) continue;
-
-      // The module is encrypted but the CipherKey is not supplied in the
-      // .conf file. So we need to get a key from prefs or from the
-      // xulsword security module.
-      let cipherKey;
-      try {
-        cipherKey = Prefs.getCharPref(`CipherKey${mod}`);
-      } catch (er) {
-        cipherKey = '0';
-      }
-      this.setCipherKey(mod, cipherKey, false);
-
-      // If our key is from prefs, then later on check that it works,
-      // and if it does not, the user should be asked to enter a
-      // different key.
-      this.checkCipherKeys.push(mod);
-
-      if (cipherKey) msg += `${mod}(${cipherKey}) `;
-    }
-    log.verbose(`Unlocking: ${msg}\n`);
-  },
-
-  // reports last error logged by previous LibSword call
-  checkerror() {
-    if (this.throwMsg) {
-      const tmp = this.throwMsg;
-      this.throwMsg = '';
-      throw Error(`LIBSWORD: ${tmp}`);
-    }
-  },
-
   /* ******************************************************************************
    * Callback functions available to libsword binary
    ***************************************************************************** */
 
-  // NOTE: these are invoked as functions by libsword, so 'this' will refer to global context!
+  // NOTE: these are invoked as functions by libsword, so 'this'
+  // will refer to global context!
 
-  upperCaseResult: '',
-  UpperCase(aString) {
+  upperCaseResult: '' as string,
+  UpperCase(aString: string): string | null {
     if (aString) {
       LibSword.upperCaseResult = aString.toUpperCase();
-      return LibSword.upperCaseResult; // assigning to LibSword member keeps pointer alive
+      return LibSword.upperCaseResult;
     }
     return null;
   },
 
-  throwMsg: '',
-  ThrowJSError(charPtr) {
+  throwMsg: '' as string,
+  ThrowJSError(charPtr: any): void {
     const aString = charPtr.readString();
     libxulsword.freeMemory(charPtr, 'char');
     if (aString) LibSword.throwMsg = aString;
     else LibSword.throwMsg = 'An unknown libsword exception occurred.';
   },
 
-  ReportProgress(intgr) {
-    // NOTE: postMessage is a ChromeWorker function
-    if (typeof postMessage === 'function') postMessage(intgr);
-  },
+  ReportProgress(_intgr: number): void {},
 
   /* ******************************************************************************
    * GETTING BIBLE TEXT AND BIBLE LOCATION INFORMATION:
@@ -249,15 +169,17 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // Vkeymod must be a module having a key type of versekey (Bibles & commentaries),
   // otherwise null is returned.
   getChapterText(
-    modname,
-    vkeytext,
+    modname: string,
+    vkeytext: string,
     options?: { [key in SwordFilterType]?: SwordFilterValueType }
-  ) {
+  ): string {
     if (options) this.setGlobalOptions(options);
-    if (!this.isReady(true)) return null;
-    const chapterText = libxulsword.GetChapterText(modname, vkeytext);
-    this.checkerror();
-    return chapterText;
+    if (this.isReady(true)) {
+      const chapterText = libxulsword.GetChapterText(modname, vkeytext);
+      this.checkerror();
+      return chapterText;
+    }
+    return '';
   },
 
   // getChapterTextMulti
@@ -270,53 +192,62 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   //   that returned by the first, even though it may have come from a different
   //   chapter or verse number than did the first.
   getChapterTextMulti(
-    modstrlist,
-    vkeytext,
-    keepnotes = false,
+    modstrlist: string,
+    vkeytext: string,
+    keepnotes?: boolean,
     options?: { [key in SwordFilterType]?: SwordFilterValueType }
-  ) {
-    if (!this.isReady(true)) return null;
-    if (options) this.setGlobalOptions(options);
-    const chapterTextMulti = libxulsword.GetChapterTextMulti(
-      modstrlist,
-      vkeytext,
-      keepnotes
-    );
-    this.checkerror();
-    return chapterTextMulti;
+  ): string {
+    if (this.isReady(true)) {
+      if (options) this.setGlobalOptions(options);
+      const chapterTextMulti = libxulsword.GetChapterTextMulti(
+        modstrlist,
+        vkeytext,
+        keepnotes
+      );
+      this.checkerror();
+      return chapterTextMulti;
+    }
+    return '';
   },
 
-  // IMPORTANT: THE FOLLOWING 3 ROUTINES MUST BE CALLED AFTER getChapterText or getChapterTextMulti() ARE CALLED!
+  // IMPORTANT: THE FOLLOWING 3 ROUTINES MUST BE CALLED AFTER getChapterText
+  // or getChapterTextMulti() ARE CALLED!
 
   // getFootnotes
   // Will return the footnotes (or empty string if there aren't any).
   // getChapterText() or getChapterTextMulti() must be called before notes can be read.
-  getFootnotes() {
-    if (!this.isReady(true)) return null;
-    const footnotes = libxulsword.GetFootnotes();
-    this.checkerror();
-    return footnotes;
+  getFootnotes(): string {
+    if (this.isReady(true)) {
+      const footnotes = libxulsword.GetFootnotes();
+      this.checkerror();
+      return footnotes;
+    }
+    return '';
   },
 
   // getCrossRefs
   // Will return the cross references (or empty string if there aren't any).
   // getChapterText() or getChapterTextMulti() must be called before notes can be read.
-  getCrossRefs() {
-    if (!this.isReady(true)) return null;
-    const crossRefs = libxulsword.GetCrossRefs();
-    this.checkerror();
-    return crossRefs;
+  getCrossRefs(): string {
+    if (this.isReady(true)) {
+      const crossRefs = libxulsword.GetCrossRefs();
+      this.checkerror();
+      return crossRefs;
+    }
+    return '';
   },
 
   // getNotes
   // Will return both footnotes and cross references interleaved.
   // getChapterText() or getChapterTextMulti() must be called before notes can be read.
   // order is: v1-footnotes, v1-crossrefs, v2-footnotes, v2-crossrefs, etc
-  getNotes() {
-    if (!this.isReady(true)) return null;
-    const notes = libxulsword.GetNotes();
-    this.checkerror();
-    return notes;
+  getNotes(): string {
+    if (this.isReady(true)) {
+      const notes = libxulsword.GetNotes();
+      this.checkerror();
+      return notes;
+    }
+    return '';
   },
 
   // getVerseText
@@ -327,15 +258,21 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   //   return the text.
   // keepTextNotes if false returns raw text, without features such as
   //   verse numbers, note markers, red-words-of-Christ etc.
-  getVerseText(vkeymod, vkeytext, keepTextNotes) {
-    if (!this.isReady(true)) return null;
-    const verseText = libxulsword.GetVerseText(
-      vkeymod,
-      vkeytext,
-      keepTextNotes
-    );
-    this.checkerror();
-    return verseText;
+  getVerseText(
+    vkeymod: string,
+    vkeytext: string,
+    keepTextNotes: boolean
+  ): string {
+    if (this.isReady(true)) {
+      const verseText = libxulsword.GetVerseText(
+        vkeymod,
+        vkeytext,
+        keepTextNotes
+      );
+      this.checkerror();
+      return verseText;
+    }
+    return '';
   },
 
   // getMaxChapter
@@ -344,11 +281,13 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // IMPORTANT: If vkeytext references a book outside the v11n the
   // result will be erroneous! So this must be checked outside this
   // function first, before calling.
-  getMaxChapter(v11n, vkeytext) {
-    if (!this.isReady(true)) return null;
-    const intgr = libxulsword.GetMaxChapter(v11n, vkeytext);
-    this.checkerror();
-    return intgr;
+  getMaxChapter(v11n: V11nType, vkeytext: string): number {
+    if (this.isReady(true)) {
+      const intgr = libxulsword.GetMaxChapter(v11n, vkeytext);
+      this.checkerror();
+      return intgr;
+    }
+    return 0;
   },
 
   // getMaxVerse
@@ -357,18 +296,22 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // IMPORTANT: If vkeytext references a chapter outside the v11n the
   // result will be erroneous! So this must be checked outside this
   // function first, before calling.
-  getMaxVerse(v11n, vkeytext) {
-    if (!this.isReady(true)) return null;
-    const intgr = libxulsword.GetMaxVerse(v11n, vkeytext);
-    this.checkerror();
-    return intgr;
+  getMaxVerse(v11n: V11nType, vkeytext: string): number {
+    if (this.isReady(true)) {
+      const intgr = libxulsword.GetMaxVerse(v11n, vkeytext);
+      this.checkerror();
+      return intgr;
+    }
+    return 0;
   },
 
   // getVerseSystem
   // Returns the verse system of module Mod.
-  getVerseSystem(modname) {
-    if (!this.isReady(true)) return null;
-    return libxulsword.GetVerseSystem(modname);
+  getVerseSystem(modname: string): V11nType {
+    if (this.isReady(true)) {
+      return libxulsword.GetVerseSystem(modname);
+    }
+    return 'KJV';
   },
 
   // convertLocation
@@ -380,14 +323,15 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // NOTE: Currently libsword mapping is only correct for Gen-Rev of KJV,
   // Synodal and SynodalProt, so this must be checked before calling!
   // TODO! Implement full v11n conversion
-  convertLocation(fromVerseSystem, vkeytext, toVerseSystem) {
-    if (!this.isReady(true)) return null;
-
-    return libxulsword.ConvertLocation(
-      fromVerseSystem,
-      vkeytext,
-      toVerseSystem
-    );
+  convertLocation(
+    fromv11n: V11nType,
+    vkeytext: string,
+    tov11n: V11nType
+  ): string {
+    if (this.isReady(true)) {
+      return libxulsword.ConvertLocation(fromv11n, vkeytext, tov11n);
+    }
+    return '';
   },
 
   /* ******************************************************************************
@@ -397,11 +341,13 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // Will return the introduction for a given short book name in module Vkeymod,
   //   if one exists in the version. If there is not introduction, '' is returned.
   // If Vkeymod is not a versekey type module, an error is returned.
-  getIntroductions(vkeymod, bname) {
-    if (!this.isReady(true)) return null;
-    const introductions = libxulsword.GetIntroductions(vkeymod, bname);
-    this.checkerror();
-    return introductions;
+  getIntroductions(vkeymod: string, bname: string): string {
+    if (this.isReady(true)) {
+      const introductions = libxulsword.GetIntroductions(vkeymod, bname);
+      this.checkerror();
+      return introductions;
+    }
+    return '';
   },
 
   // getDictionaryEntry
@@ -409,53 +355,62 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // An exception is thrown if the dictionary itself is not found, or if the
   //   Lexdictmod is not of type StrKey.
   getDictionaryEntry(
-    lexdictmod,
-    key,
+    lexdictmod: string,
+    key: string,
     options?: { [key in SwordFilterType]?: SwordFilterValueType }
-  ) {
-    if (!this.isReady(true)) return null;
-    if (options) this.setGlobalOptions(options);
-    const dictionaryEntry = libxulsword.GetDictionaryEntry(lexdictmod, key);
-    this.checkerror();
-    return dictionaryEntry;
+  ): string {
+    if (this.isReady(true)) {
+      if (options) this.setGlobalOptions(options);
+      const dictionaryEntry = libxulsword.GetDictionaryEntry(lexdictmod, key);
+      this.checkerror();
+      return dictionaryEntry;
+    }
+    return '';
   },
 
   // getAllDictionaryKeys
   // Returns all keys in form key1<nx>key2<nx>key3<nx>
   // Returns an error is module Lexdictmod is not of type StrKey
-  getAllDictionaryKeys(lexdictmod) {
-    if (!this.isReady(true)) return null;
-    const allDictionaryKeys = libxulsword.GetAllDictionaryKeys(lexdictmod);
-    this.checkerror();
-    return allDictionaryKeys;
+  getAllDictionaryKeys(lexdictmod: string): string {
+    if (this.isReady(true)) {
+      const allDictionaryKeys = libxulsword.GetAllDictionaryKeys(lexdictmod);
+      this.checkerror();
+      return allDictionaryKeys;
+    }
+    return '';
   },
 
   // getGenBookChapterText
   // Returns chapter text for key Treekey in GenBook module Gbmod.
   // Returns an error if module Gbmod is not a TreeKey mod.
   getGenBookChapterText(
-    gbmod,
-    treekey,
+    gbmod: string,
+    treekey: string,
     options?: { [key in SwordFilterType]?: SwordFilterValueType }
-  ) {
-    if (!this.isReady(true)) return null;
-    if (options) this.setGlobalOptions(options);
-    const genBookChapterText = libxulsword.GetGenBookChapterText(
-      gbmod,
-      treekey
-    );
-    this.checkerror();
-    return genBookChapterText;
+  ): string {
+    if (this.isReady(true)) {
+      if (options) this.setGlobalOptions(options);
+      const genBookChapterText = libxulsword.GetGenBookChapterText(
+        gbmod,
+        treekey
+      );
+      this.checkerror();
+      return genBookChapterText;
+    }
+    return '';
   },
 
   // getGenBookTableOfContents
   // Returns table of contents RDF code for GenBook module Gbmod.
   // Returns an error if module Gbmod is not a TreeKey mod.
-  getGenBookTableOfContents(gbmod) {
-    if (!this.isReady(true)) return null;
-    const genBookTableOfContents = libxulsword.GetGenBookTableOfContents(gbmod);
-    this.checkerror();
-    return genBookTableOfContents;
+  getGenBookTableOfContents(gbmod: string): string {
+    if (this.isReady(true)) {
+      const genBookTableOfContents =
+        libxulsword.GetGenBookTableOfContents(gbmod);
+      this.checkerror();
+      return genBookTableOfContents;
+    }
+    return '';
   },
 
   /* *****************************************************************************
@@ -481,7 +436,15 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   //  -5 - a compound search
   // flags are many useful flags as defined in regex.h
   // newsearch is set to add new search results to the previous results
-  async search(modname, srchstr, scope, type, flags, newsearch, searchID) {
+  async search(
+    modname: string,
+    srchstr: string,
+    scope: string,
+    type: number,
+    flags: number,
+    newsearch: boolean,
+    searchID: string
+  ): Promise<number | null> {
     if (
       this.isReady(true) &&
       ((newsearch && !this.searchingID) ||
@@ -515,7 +478,13 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // searchID results are unavailable or the engine is not ready. The search()
   // function must be called with the matching searchID before results can be
   // returned.
-  getSearchResults(modname, first, num, keepStrongs, searchID) {
+  getSearchResults(
+    modname: string,
+    first: number,
+    num: number,
+    keepStrongs: boolean,
+    searchID: string
+  ): string | null {
     if (this.isReady(true) && searchID === this.searchedID) {
       this.searchingID = '';
 
@@ -531,36 +500,37 @@ DEFINITION OF A 'XULSWORD REFERENCE':
 
   // luceneEnabled
   // Will return true if indexed searching is available for the current module, false otherwise.
-  luceneEnabled(modname) {
-    if (!this.isReady(true)) return null;
-    const enabled = libxulsword.LuceneEnabled(modname);
-    this.checkerror();
-    return enabled;
+  luceneEnabled(modname: string): boolean {
+    if (this.isReady(true)) {
+      const enabled = libxulsword.LuceneEnabled(modname);
+      this.checkerror();
+      return enabled;
+    }
+    return false;
   },
 
   // searchIndexDelete
   // Deletes the search index of modname.
-  searchIndexDelete(modname) {
-    if (!this.isReady(true)) return;
-    libxulsword.SearchIndexDelete(modname);
-    this.checkerror();
+  searchIndexDelete(modname: string): boolean {
+    if (this.isReady(true)) {
+      libxulsword.SearchIndexDelete(modname);
+      this.checkerror();
+      return true;
+    }
+    return false;
   },
 
   // searchIndexBuild
   // Before starting to build a new search index, call 'searchIndexDelete()'
   // CAUTION: Do not call any LibSword functions other than getPercentComplete until
   // getPercentComplete returns 100!
-  async searchIndexBuild(modname) {
-    if (!this.isReady(true)) return false;
-    await libxulsword.SearchIndexBuild(modname);
-    this.checkerror();
-    return true;
-  },
-
-  // getSearchVerses
-  // UNEMPLEMENTED AS YET. Returns a list of verse addresses which matched the previous search.
-  getSearchVerses(modname) {
-    return null;
+  async searchIndexBuild(modname: string): Promise<boolean> {
+    if (this.isReady(true)) {
+      await libxulsword.SearchIndexBuild(modname);
+      this.checkerror();
+      return true;
+    }
+    return false;
   },
 
   /* *****************************************************************************
@@ -575,14 +545,20 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   //   'Verse Numbers'
   //   'Hebrew Cantillation'
   //   'Hebrew Vowel Points'
-  setGlobalOption(option, setting) {
-    if (!this.isReady(true)) return;
-    libxulsword.SetGlobalOption(option, setting);
-    this.checkerror();
+  setGlobalOption(
+    option: SwordFilterType,
+    setting: SwordFilterValueType
+  ): void {
+    if (this.isReady(true)) {
+      libxulsword.SetGlobalOption(option, setting);
+      this.checkerror();
+    }
   },
 
   // This is a IPC speedup function setting multiple options with a single request.
-  setGlobalOptions(options) {
+  setGlobalOptions(
+    options: { [key in SwordFilterType]?: SwordFilterValueType }
+  ): void {
     Object.entries(options).forEach((entry) => {
       const option = entry[0] as SwordFilterType;
       this.setGlobalOption(option, entry[1]);
@@ -591,22 +567,13 @@ DEFINITION OF A 'XULSWORD REFERENCE':
 
   // getGlobalOption
   // Option must one of the above option strings. Either 'Off' or 'On' will be returned.
-  getGlobalOption(option) {
-    if (!this.isReady(true)) return null;
-    const globalOption = libxulsword.GetGlobalOption(option);
-    this.checkerror();
-    return globalOption;
-  },
-
-  /* *****************************************************************************
-   * PROVIDING THE DECRYPTION KEY:
-   ***************************************************************************** */
-  // setCipherKey
-  // Will set the module's key. Key can only be set once.
-  setCipherKey(modname, cipherKey, useSecModule) {
-    if (!this.isReady(true)) return;
-    libxulsword.setCipherKey(modname, cipherKey, useSecModule);
-    this.checkerror();
+  getGlobalOption(option: SwordFilterType): string {
+    if (this.isReady(true)) {
+      const globalOption = libxulsword.GetGlobalOption(option);
+      this.checkerror();
+      return globalOption;
+    }
+    return '';
   },
 
   /* ******************************************************************************
@@ -615,12 +582,14 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // getModuleList
   // Returns a string of form: name1;type1<nx>name2;type2<nx> etc...
   // Returns 'No Modules' if there are no modules available.
-  getModuleList() {
-    if (!this.isReady(true)) return null;
-    if (!Cache.has('libswordModueList')) {
-      Cache.write(libxulsword.GetModuleList(), 'libswordModueList');
+  getModuleList(): string {
+    if (this.isReady(true)) {
+      if (!Cache.has('libswordModueList')) {
+        Cache.write(libxulsword.GetModuleList(), 'libswordModueList');
+      }
+      return Cache.read('libswordModueList');
     }
-    return Cache.read('libswordModueList');
+    return '';
   },
 
   // getModuleInformation
@@ -628,23 +597,21 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // Returns Paramname from conf file of module Mod.
   // Returns NOTFOUND if the Paramname does not exist in the conf file.
   // Returns empty string if the module Mod does not exist.
-  // Returns val1<nx>val2<nx>val3 if there is more than one entry of type infotype (eg. GlobalOptionFilter)
-  getModuleInformation(modname, paramname) {
-    if (!this.isReady(true)) return null;
-    const moduleInformation = libxulsword.GetModuleInformation(
-      modname,
-      paramname
-    );
-    this.checkerror();
-    return moduleInformation;
-  },
-
-  // uncompressTarGz
-  // Uncompresses a .tar.gz file into aDir
-  uncompressTarGz(tarGzPath, aDirPath) {
-    if (!this.isReady(true)) return;
-    libxulsword.UncompressTarGz(tarGzPath, aDirPath);
-    this.checkerror();
+  // Returns val1<nx>val2<nx>val3 if there is more than one entry of
+  //   type infotype (eg. GlobalOptionFilter)
+  getModuleInformation(
+    modname: string,
+    paramname: keyof SwordConfigEntries | 'AbsoluteDataPath'
+  ): string {
+    if (this.isReady(true)) {
+      const moduleInformation = libxulsword.GetModuleInformation(
+        modname,
+        paramname
+      );
+      this.checkerror();
+      return moduleInformation;
+    }
+    return '';
   },
 
   /* *****************************************************************************
@@ -653,15 +620,31 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // getLanguageName
   // Returns a localized readable utf8 string correpsonding to the language code.
   // Returns the code if the information is not available
-  translate(lookup, localeFile) {
-    if (!this.isReady(true)) return null;
-    const cdata = libxulsword.Translate(lookup, localeFile);
-    this.checkerror();
-    return cdata;
+  translate(lookup: string, localeFile: string): string {
+    if (this.isReady(true)) {
+      const cdata = libxulsword.Translate(lookup, localeFile);
+      this.checkerror();
+      return cdata;
+    }
+    return '';
   },
 };
 
-// The LibSwordClass interface is only available in the main process directly through the LibSword object
-export type LibSwordClass = GType['LibSword'] & LibSwordPrivate;
+export type LibSwordType = Omit<
+  typeof LibSword,
+  | 'moduleDirectories'
+  | 'checkCipherKeys'
+  | 'libxulsword'
+  | 'paused'
+  | 'upperCaseResult'
+  | 'throwMsg'
+  | 'UpperCase'
+  | 'ThrowJSError'
+  | 'ReportProgress'
+  | 'unlock'
+  | 'checkerror'
+  | 'searchingID'
+  | 'searchedID'
+>;
 
-export default LibSword as GType['LibSword'];
+export default LibSword as LibSwordType;

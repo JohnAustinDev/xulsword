@@ -1,7 +1,6 @@
 /* eslint-disable class-methods-use-this */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-use-before-define */
-import Log, { LogLevel } from 'electron-log';
 import {
   BrowserWindow,
   ipcMain,
@@ -10,7 +9,7 @@ import {
   shell,
 } from 'electron';
 import i18next from 'i18next';
-import { GPublic, GType } from '../type';
+import { GBuilder, GType } from '../type';
 import { inlineFile } from './components/localFile';
 import Dirs from './components/dirs';
 import Prefs from './components/prefs';
@@ -61,18 +60,18 @@ function handleGlobal(
 ) {
   let ret = null;
   const win = BrowserWindow.fromWebContents(event.sender)?.id ?? -1;
-  if (name in GPublic) {
-    const gPublic = GPublic as any;
+  if (name in GBuilder) {
+    const gBuilder = GBuilder as any;
     const g = G as any;
-    if (gPublic[name] === 'getter') {
+    if (gBuilder[name] === 'getter') {
       ret = g[name];
-    } else if (typeof gPublic[name] === 'function') {
+    } else if (typeof gBuilder[name] === 'function') {
       ret = g[name](...args);
-    } else if (typeof gPublic[name] === 'object') {
+    } else if (typeof gBuilder[name] === 'object') {
       const m = args.shift();
-      if (gPublic[name][m] === 'getter') {
+      if (gBuilder[name][m] === 'getter') {
         ret = g[name][m];
-      } else if (typeof gPublic[name][m] === 'function') {
+      } else if (typeof gBuilder[name][m] === 'function') {
         if (
           includeCallingWindow.includes(name) &&
           typeof args[g[name][m].length] === 'undefined'
@@ -84,7 +83,7 @@ function handleGlobal(
         throw Error(`Unhandled method type for ${name}.${m}`);
       }
     } else {
-      throw Error(`Unhandled global ${name} ipc type: ${gPublic[name]}`);
+      throw Error(`Unhandled global ${name} ipc type: ${gBuilder[name]}`);
     }
   } else {
     throw Error(`Unhandled global ipc request: ${name}`);
@@ -102,8 +101,8 @@ ipcMain.handle(
   }
 );
 
-// This G object is for use in the main process, and it shares the same
-// GPublic interface as the renderer's G object. Properties of this
+// This G object is for use in the main process, and it shares the
+// same interface as the renderer's G object. Properties of this
 // object directly access main process data and modules.
 class GClass implements GType {
   LibSword;
@@ -213,10 +212,6 @@ class GClass implements GType {
     ...args: Parameters<GType['getBooksInModule']>
   ): ReturnType<GType['getBooksInModule']> {
     return getBooksInModule(...args);
-  }
-
-  log(...args: Parameters<GType['log']>): ReturnType<GType['log']> {
-    return Log[args.shift() as LogLevel](args);
   }
 
   publishSubscription(

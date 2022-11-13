@@ -221,9 +221,9 @@ const openMainWindow = () => {
         if (callingWinID) {
           setTimeout(() => {
             publishSubscription(
-              false,
-              { id: callingWinID },
               'modulesInstalled',
+              { id: callingWinID },
+              false,
               newmods
             );
           }, 1);
@@ -238,7 +238,7 @@ const openMainWindow = () => {
   // Prompt for CipherKeys when encrypted modules with no keys, or
   // incorrect keys, are installed.
   if (Object.keys(CipherKeyModules).length) {
-    publishSubscription(false, { id: mainWin.id }, 'modulesInstalled', {
+    publishSubscription('modulesInstalled', { id: mainWin.id }, false, {
       ...clone(C.NEWMODS),
       nokeymods: getCipherFailConfs(),
     });

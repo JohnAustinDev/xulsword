@@ -3,9 +3,25 @@ import { app } from 'electron';
 import path from 'path';
 import LocalFile from './localFile';
 
-import type { DirsDirectories, GType } from '../../type';
+export type DirsDirectories = {
+  TmpD: string;
+  xsAsset: string;
+  xsAsar: string;
+  xsProgram: string;
+  xsDefaults: string;
+  xsPrefDefD: string;
+  ProfD: string;
+  xsPrefD: string;
+  xsResD: string;
+  xsModsUser: string;
+  xsFonts: string;
+  xsAudio: string;
+  xsBookmarks: string;
+  xsVideo: string;
+  xsModsCommon: string;
+};
 
-const Dirs = { path: {} } as GType['Dirs'];
+const Dirs = { path: {} as DirsDirectories };
 
 Dirs.path.xsAsset = app.isPackaged
   ? path.join(process.resourcesPath, 'assets')
@@ -70,9 +86,11 @@ dirNames.forEach((dir) => {
 });
 
 // The DirsClass interface is only available in main process directly through the Dirs object
-type DirsClass = GType['Dirs'] &
+type DirsMainType = typeof Dirs &
   {
     [key in keyof DirsDirectories]: LocalFile;
   };
 
-export default Dirs as DirsClass;
+export type DirsRendererType = typeof Dirs;
+
+export default Dirs as DirsMainType;

@@ -567,7 +567,7 @@ export async function modalInstall(
   return newmods;
 }
 
-const Module: GType['Module'] = {
+const Module = {
   // Return a promise for the CrossWire master repository list as an
   // array of Download objects. These can be passed to repositoryListing()
   // for retrieval of each repository's complete set of config files. A
@@ -917,7 +917,7 @@ const Module: GType['Module'] = {
     return results;
   },
 
-  writeConf(confFilePath: string, contents: string) {
+  writeConf(confFilePath: string, contents: string): void {
     if (
       contents &&
       confFilePath.match(/\bmods\.d\b/) &&

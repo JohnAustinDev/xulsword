@@ -4,7 +4,8 @@
 import path from 'path';
 import LocalFile from '../localFile';
 
-import type { DirsDirectories, GType } from '../../../type';
+import type { GType } from '../../../type';
+import type { DirsDirectories } from '../dirs';
 
 const Dirs = { path: {} } as GType['Dirs'];
 const CrosswireRoot = String(process.env.HOME);

@@ -3,43 +3,20 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { stringHash } from '../common';
 import Cache from '../cache';
-import { GPublic, GType } from '../type';
+import { GBuilder, GType } from '../type';
 import log from './log';
 
-// This G object is for use in renderer processes, and it shares the same
-// interface as a main process G object. Both G objects are built auto-
-// matically at runtime from the same GPublic declaration. Properties of
-// this object access data and objects via IPC of the main process G object.
+// This G object is used in renderer processes, and shares the same
+// interface as a main process G object. Properties of this object
+// access data and objects via IPC from the main process G object.
 // All getter and cacheable data is cached locally.
-const G = {} as typeof GPublic;
-
-const asyncFuncs: [
-  [keyof GType, (keyof GType['getSystemFonts'])[]],
-  [keyof GType, (keyof GType['Commands'])[]],
-  [keyof GType, (keyof GType['Module'])[]],
-  [keyof GType, (keyof GType['LibSword'])[]]
-] = [
-  ['getSystemFonts', []],
-  ['Commands', ['installXulswordModules']],
-  [
-    'Module',
-    [
-      'download',
-      'installDownloads',
-      'remove',
-      'move',
-      'crossWireMasterRepoList',
-      'repositoryListing',
-    ],
-  ],
-  ['LibSword', ['searchIndexBuild', 'search']],
-];
-
-const entries = Object.entries(GPublic);
-entries.forEach((entry) => {
-  const GPublicx = GPublic as any;
-  const Gx = G as any;
-  const name = entry[0] as keyof typeof GPublic;
+const G = {} as GType;
+const { asyncFuncs } = GBuilder;
+Object.entries(GBuilder).forEach((entry) => {
+  if (entry[0] === 'asyncFuncs') return;
+  const gBuilder = GBuilder as any;
+  const g = G as any;
+  const name = entry[0] as keyof typeof GBuilder;
   const value = entry[1] as any;
   if (value === 'getter') {
     const ckey = `G.${name} cache`;
@@ -54,20 +31,18 @@ entries.forEach((entry) => {
     });
   } else if (typeof value === 'function') {
     const cacheable = value();
-    Gx[name] = (...args: unknown[]) => {
+    g[name] = (...args: unknown[]) => {
       const ckey = `G.${name}(${stringHash(...args)})${
         cacheable ? ' cache' : ''
       }`;
       if (!cacheable) Cache.clear(ckey);
       if (!Cache.has(ckey)) {
         log.silly(
-          `${
-            (asyncFuncs as [string, string[]][]).some((en) => en[0] === name)
-              ? 'async '
-              : ''
-          }${ckey}${cacheable ? ' miss' : ''}`
+          `${asyncFuncs.some((en) => en[0] === name) ? 'async ' : ''}${ckey}${
+            cacheable ? ' miss' : ''
+          }`
         );
-        if ((asyncFuncs as [string, string[]][]).some((en) => en[0] === name)) {
+        if (asyncFuncs.some((en) => en[0] === name)) {
           return window.ipc.renderer
             .invoke('global', name, ...args)
             .then((result: unknown) => {
@@ -88,12 +63,12 @@ entries.forEach((entry) => {
   } else if (typeof value === 'object') {
     const methods = Object.getOwnPropertyNames(value);
     methods.forEach((m) => {
-      if (G[name] === undefined) {
-        Gx[name] = {};
+      if (g[name] === undefined) {
+        g[name] = {};
       }
-      if (GPublicx[name][m] === 'getter') {
+      if (gBuilder[name][m] === 'getter') {
         const ckey = `G.${name}.${m} cache`;
-        Object.defineProperty(Gx[name], m, {
+        Object.defineProperty(g[name], m, {
           get() {
             if (!Cache.has(ckey)) {
               log.silly(`${ckey} miss`);
@@ -105,9 +80,9 @@ entries.forEach((entry) => {
             return Cache.read(ckey);
           },
         });
-      } else if (typeof GPublicx[name][m] === 'function') {
-        const cacheable = GPublicx[name][m]();
-        Gx[name][m] = (...args: unknown[]) => {
+      } else if (typeof gBuilder[name][m] === 'function') {
+        const cacheable = gBuilder[name][m]();
+        g[name][m] = (...args: unknown[]) => {
           const ckey = `G.${name}.${m}(${stringHash(...args)})${
             cacheable ? ' cache' : ''
           }`;
@@ -148,12 +123,12 @@ entries.forEach((entry) => {
         };
       } else {
         throw Error(
-          `Unhandled GPublic ${name}.${m} type ${typeof GPublicx[name][m]}`
+          `Unhandled GBuilder ${name}.${m} type ${typeof gBuilder[name][m]}`
         );
       }
     });
   } else {
-    throw Error(`Unhandled GPublic ${name} value ${value}`);
+    throw Error(`Unhandled GBuilder ${name} value ${value}`);
   }
 });
 

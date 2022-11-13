@@ -14,6 +14,7 @@ import type {
   PinPropsType,
   PlaceType,
   ShowType,
+  SwordConfigEntries,
   SwordFilterType,
   SwordFilterValueType,
   TabTypes,
@@ -158,7 +159,12 @@ const C = {
     AssociatedModules:{ modConf:null,                localeConf:"DefaultModule",  CSS:null },
     AssociatedLocale: { modConf:"Lang",              localeConf:null,             CSS:null },
     PreferredCSSXHTML:{ modConf:"PreferredCSSXHTML", localeConf:null,             CSS:null }
-  } as { [key in keyof ConfigType]: { modConf: string | null, localeConf: string | null, CSS: string | null }},
+  } as { [key in keyof ConfigType]: {
+      modConf: keyof SwordConfigEntries | null,
+      localeConf: string | null,
+      CSS: string | null
+    }
+  },
   /* eslint-enable prettier/prettier */
 
   // This should be the same as the global-html.css html rule.

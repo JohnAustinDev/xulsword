@@ -12,17 +12,18 @@ import { modalInstall } from './module';
 import Window, { getBrowserWindows } from './window';
 
 import type {
-  GType,
   LocationSKType,
   LocationVKType,
+  NewModulesType,
   ScrollType,
+  SearchType,
   TextVKType,
   XulswordStatePref,
 } from '../../type';
 import type { AboutWinState } from '../../renderer/about/about';
 
-const Commands: GType['Commands'] = {
-  openModuleManager() {
+const Commands = {
+  openModuleManager(): void {
     const options: BrowserWindowConstructorOptions = {
       title: i18n.t('menu.addNewModule.label'),
     };
@@ -38,7 +39,10 @@ const Commands: GType['Commands'] = {
   // directory. If the directory ends with '/*' then all modules in that
   // directory will be installed. A dialog will be shown if no paths argument
   // is provided, or an existing directory path is provided.
-  async installXulswordModules(paths) {
+  async installXulswordModules(
+    paths?: string[] | string, // file, file[], directory, directory/* or undefined=choose-files
+    toSharedModuleDir?: boolean
+  ): Promise<NewModulesType> {
     let callingWin: BrowserWindow | null = BrowserWindow.fromId(
       arguments[1] ?? -1
     );
@@ -128,36 +132,39 @@ const Commands: GType['Commands'] = {
     log.info(`Action not implemented: print`);
   },
 
-  edit(which, ...args) {
+  edit(
+    which: 'undo' | 'redo' | 'cut' | 'copy' | 'paste',
+    ...args: any
+  ): boolean {
     return this[which](...args);
   },
 
-  undo(...args) {
+  undo(...args: any): boolean {
     log.info(`Action not implemented: undo(${JSON_stringify(args)})`);
     return false;
   },
 
-  redo(...args) {
+  redo(...args: any): boolean {
     log.info(`Action not implemented: redo(${JSON_stringify(args)})`);
     return false;
   },
 
-  cut(...args) {
+  cut(...args: any): boolean {
     log.info(`Action not implemented: cut(${JSON_stringify(args)})`);
     return false;
   },
 
-  copy(...args) {
+  copy(...args: any): boolean {
     log.info(`Action not implemented: copy(${JSON_stringify(args)})`);
     return false;
   },
 
-  paste(...args) {
+  paste(...args: any): boolean {
     log.info(`Action not implemented: paste(${JSON_stringify(args)})`);
     return false;
   },
 
-  search(search) {
+  search(search: SearchType): void {
     const options = {
       title: `${i18n.t('search.label')} "${search.searchtext}"`,
       width: 800,
@@ -181,7 +188,7 @@ const Commands: GType['Commands'] = {
     log.info(`Action not implemented: copyPassage`);
   },
 
-  openFontsColors(module) {
+  openFontsColors(module: string): void {
     let win: BrowserWindow | null =
       BrowserWindow.fromId(arguments[1] ?? -1) ||
       getBrowserWindows({ type: 'xulsword' })[0];
@@ -206,7 +213,7 @@ const Commands: GType['Commands'] = {
     log.info(`Action not implemented: openBookmarksManager()`);
   },
 
-  openNewDbItemDialog(userNote: boolean, textvk: TextVKType) {
+  openNewDbItemDialog(userNote: boolean, textvk: TextVKType): void {
     log.info(
       `Action not implemented: openNewBookmarkDialog(${JSON_stringify(
         userNote
@@ -214,7 +221,7 @@ const Commands: GType['Commands'] = {
     );
   },
 
-  openDbItemPropertiesDialog(bookmark) {
+  openDbItemPropertiesDialog(bookmark: unknown): void {
     log.info(
       `Action not implemented: openBookmarkPropertiesDialog(${JSON_stringify(
         bookmark
@@ -222,13 +229,13 @@ const Commands: GType['Commands'] = {
     );
   },
 
-  deleteDbItem(bookmark) {
+  deleteDbItem(bookmark: unknown): void {
     log.info(
       `Action not implemented: deleteBookmark(${JSON_stringify(bookmark)})`
     );
   },
 
-  openAbout(state?: Partial<AboutWinState>) {
+  openAbout(state?: Partial<AboutWinState>): void {
     const tab = getTab();
     const label =
       state?.modules && state.modules.length
@@ -245,7 +252,10 @@ const Commands: GType['Commands'] = {
     Window.open({ type: 'about', category: 'dialog-window', options });
   },
 
-  goToLocationSK(location: LocationSKType, scroll?: ScrollType | undefined) {
+  goToLocationSK(
+    location: LocationSKType,
+    scroll?: ScrollType | undefined
+  ): void {
     const xulsword = Prefs.getComplexValue('xulsword') as XulswordStatePref;
     const newxulsword = clone(xulsword);
     const { panels, keys } = newxulsword;
@@ -262,8 +272,8 @@ const Commands: GType['Commands'] = {
   goToLocationVK(
     newlocation: LocationVKType,
     newselection: LocationVKType,
-    newScroll: ScrollType | undefined
-  ) {
+    newscroll?: ScrollType
+  ): void {
     // To go to a verse system location without also changing xulsword's current
     // versekey module requires this location be converted into the current v11n.
     const xulsword = Prefs.getComplexValue('xulsword') as XulswordStatePref;
@@ -273,7 +283,7 @@ const Commands: GType['Commands'] = {
     const sel = verseKey(newselection, location?.v11n || undefined);
     newxulsword.location = loc.location();
     newxulsword.selection = sel.location();
-    newxulsword.scroll = newScroll || { verseAt: 'center' };
+    newxulsword.scroll = newscroll || { verseAt: 'center' };
     Prefs.mergeValue('xulsword', newxulsword);
   },
 };

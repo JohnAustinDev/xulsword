@@ -35,9 +35,6 @@ import type {
 
 const fontList = require('font-list');
 
-// These exported GPublic functions are called by the runtime
-// auto-generated G object.
-
 // Get all supported books in locale order. NOTE: xulsword ignores individual
 // module book order in lieu of locale book order or xulsword default order
 // (see C.SupportedBooks). Doing so provides a common order for book lists
