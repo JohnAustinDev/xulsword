@@ -44,18 +44,17 @@ import {
 // Function.length is used to append the calling window, and Function.length
 // does not include rest parameters or default arguments, so this would result
 // in runtime exceptions being thrown.
-const includeCallingWindow = [
+const includeCallingWindow: (keyof GType)[] = [
   'Prefs',
   'Window',
   'Commands',
-  'Downloader',
   'Module',
 ];
 
 // Handle global variable calls from renderer processes
 function handleGlobal(
   event: IpcMainEvent | IpcMainInvokeEvent,
-  name: string,
+  name: keyof GType,
   ...args: any[]
 ) {
   let ret = null;
@@ -91,12 +90,15 @@ function handleGlobal(
 
   return ret;
 }
-ipcMain.on('global', (event: IpcMainEvent, name: string, ...args: any[]) => {
-  event.returnValue = handleGlobal(event, name, ...args);
-});
+ipcMain.on(
+  'global',
+  (event: IpcMainEvent, name: keyof GType, ...args: any[]) => {
+    event.returnValue = handleGlobal(event, name, ...args);
+  }
+);
 ipcMain.handle(
   'global',
-  (event: IpcMainInvokeEvent, name: string, ...args: any[]) => {
+  (event: IpcMainInvokeEvent, name: keyof GType, ...args: any[]) => {
     return handleGlobal(event, name, ...args);
   }
 );

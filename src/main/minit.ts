@@ -565,21 +565,21 @@ export function getModuleFonts(): FontFaceType[] {
   return Cache.read('ModuleFonts');
 }
 
-export function getSystemFonts() {
+export async function getSystemFonts(): Promise<string[]> {
   if (!Cache.has('fontList')) {
-    return fontList
-      .getFonts()
-      .then((fonts: string[]) => {
-        let allfonts = getModuleFonts()
-          .map((f) => f.fontFamily)
-          .concat(fonts);
-        allfonts = Array.from(new Set(allfonts));
-        Cache.write(allfonts, 'fontList');
-        return allfonts;
-      })
-      .catch((err: any) => log.error(err));
+    try {
+      const fonts = await fontList.getFonts();
+      let allfonts = getModuleFonts()
+        .map((f) => f.fontFamily)
+        .concat(fonts);
+      allfonts = Array.from(new Set(allfonts));
+      Cache.write(allfonts, 'fontList');
+      return allfonts;
+    } catch (err: any) {
+      log.error(err);
+    }
   }
-  return Promise.resolve(Cache.read('fontList'));
+  return Promise.resolve(Cache.read('fontList') as string[]);
 }
 
 export function getFeatureModules(): FeatureType {

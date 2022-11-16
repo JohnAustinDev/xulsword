@@ -51,43 +51,43 @@ html[dir='rtl'] .viewport .chooser {
 }
 
 /* PRINTING STYLES */
-@media print {
-  .viewport .chooser,
-  .viewport .open-chooser,
-  .viewport .text-pin,
-  .viewport .text-win,
-  .viewport .notebox-maximizer {
-    display: none !important;
-  }
-  .viewport .tab {
-    background-color: white !important;
-    color: black !important;
-  }
-  .viewport .tab:not(.active) {
-    display: none;
-  }
-  .viewport > div {
-    height: auto;
-  }
-  .viewport .sb,
-  .viewport .nbf,
-  .viewport .nb {
-    height: auto !important;
-  }
-  .viewport .sb {
-    margin-bottom: 20px !important;
-  }
-  .viewport .bb {
-    display: none;
-  }
-  .viewport .nbf {
-    position: relative;
-    bottom: auto;
-    right: auto;
-  }
-  .viewport .nb {
-    background: transparent;
-    border: none;
-    padding-top: 20px;
-  }
+/*
+html.print .viewport .chooser,
+html.print .viewport .open-chooser,
+html.print .viewport .text-pin,
+html.print .viewport .text-win,
+html.print .viewport .notebox-maximizer {
+  display: none !important;
 }
+html.print .viewport .tab {
+  background-color: white !important;
+  color: black !important;
+}
+html.print .viewport .tab:not(.active) {
+  display: none;
+}
+html.print .viewport > div {
+  height: auto;
+}
+html.print .viewport .sb,
+html.print .viewport .nbf,
+html.print .viewport .nb {
+  height: auto !important;
+}
+html.print .viewport .sb {
+  margin-bottom: 20px !important;
+}
+html.print .viewport .bb {
+  display: none;
+}
+html.print .viewport .nbf {
+  position: relative;
+  bottom: auto;
+  right: auto;
+}
+html.print .viewport .nb {
+  background: transparent;
+  border: none;
+  padding-top: 20px;
+}
+*/

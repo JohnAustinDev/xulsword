@@ -10,6 +10,7 @@ import Prefs from './prefs';
 import LocalFile from './localFile';
 import { modalInstall } from './module';
 import Window, { getBrowserWindows } from './window';
+import Data from './data';
 
 import type {
   LocationSKType,
@@ -21,6 +22,7 @@ import type {
   XulswordStatePref,
 } from '../../type';
 import type { AboutWinState } from '../../renderer/about/about';
+import type { PrintWinState } from '../../renderer/printPreview/printPreview';
 
 const Commands = {
   openModuleManager(): void {
@@ -43,12 +45,8 @@ const Commands = {
     paths?: string[] | string, // file, file[], directory, directory/* or undefined=choose-files
     toSharedModuleDir?: boolean
   ): Promise<NewModulesType> {
-    let callingWin: BrowserWindow | null = BrowserWindow.fromId(
-      arguments[1] ?? -1
-    );
-    if (!callingWin) [callingWin] = getBrowserWindows({ type: 'xulsword' });
-    const callingWinID = callingWin ? callingWin.id : -1;
-    callingWin = null;
+    const callingWinID: number =
+      arguments[2] ?? getBrowserWindows({ type: 'xulsword' })[0].id;
     const extensions = ['zip', 'xsm', 'xsb'];
     const options: OpenDialogSyncOptions = {
       title: i18n.t('menu.addNewModule.label'),
@@ -116,20 +114,42 @@ const Commands = {
     log.error(`Action not implemented: importAudio`);
   },
 
-  pageSetup() {
-    log.info(`Action not implemented: pageSetup`);
-  },
-
-  printPreview() {
-    log.info(`Action not implemented: printPreview`);
+  // - Open a printPreview window with print controls that dynamically set the
+  // 'style' pref targetting the print-preview class (through the IPC channel
+  // 'dynamic-stylesheet-reset' pushing the style pref globally).
+  // - Send IPC 'print-preview' 'print' to the window to be previewed.
+  // - The Print button will call webContents.print() with current settings and close
+  // the printPreview window once print() is finished.
+  // - The Print To PDF button does the same as the Print Preview button, but prompts
+  // the user for the PDF file's destination and closes when finished (like Print).
+  // - The Print Preview button calls webContents.printToPDF() with current settings,
+  // saves that file to the tmp directory, and displays it in an iframe.
+  print() {
+    const callingWinID: number =
+      arguments[0] ?? getBrowserWindows({ type: 'xulsword' })[0].id;
+    const windowToPrint = BrowserWindow.fromId(callingWinID);
+    if (windowToPrint) {
+      log.info(`Printing window id ${windowToPrint.id}`);
+      Data.write(windowToPrint.id, 'windowToPrint');
+      const printWinState: Partial<PrintWinState> = {};
+      const options = {
+        title: i18n.t('printCmd.label'),
+        parent: windowToPrint,
+        webPreferences: {
+          additionalArguments: [
+            JSON_stringify({
+              printWinState,
+            }),
+          ],
+        },
+      };
+      Window.open({ type: 'printPreview', category: 'dialog', options });
+      windowToPrint.webContents.send('print-preview', 'print');
+    }
   },
 
   printPassage() {
     log.info(`Action not implemented: printPassage`);
-  },
-
-  print() {
-    log.info(`Action not implemented: print`);
   },
 
   edit(

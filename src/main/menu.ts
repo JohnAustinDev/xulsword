@@ -314,19 +314,6 @@ export default class MenuBuilder {
         },
         { type: 'separator' },
         {
-          label: this.ts('printSetupCmd.label', 'printSetupCmd.accesskey'),
-          click: d(() => {
-            Commands.pageSetup();
-          }),
-        },
-        {
-          label: this.ts('printPreviewCmd.label', 'printPreviewCmd.accesskey'),
-          accelerator: this.tx('printCmd.commandkey', ['CommandOrControl']),
-          click: d(() => {
-            Commands.printPreview();
-          }),
-        },
-        {
           label: this.ts('printCmd.label', 'printCmd.accesskey'),
           accelerator: this.tx('printCmd.commandkey', [
             'CommandOrControl',

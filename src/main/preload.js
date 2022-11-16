@@ -52,6 +52,9 @@ const validChannels = [
   'cache-reset', // from main when caches should be cleared
   'dynamic-stylesheet-reset', // from main when dynamic stylesheet should be re-created
   'publish-subscription', // from main when a renderer subscription should be published
+  'print-preview',
+  // from main to set renderer print preview mode
+  // to main when print or printToPDF should happen.
 ];
 
 contextBridge.exposeInMainWorld('ipc', {

@@ -355,7 +355,7 @@ class Viewport extends React.Component implements PopupParent {
     let cls = '';
     if (ownWindow) cls += ' ownWindow';
 
-    log.debug('viewport state: ', state);
+    log.silly('viewport state: ', state);
 
     return (
       <Hbox

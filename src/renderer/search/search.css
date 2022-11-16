@@ -186,8 +186,8 @@ html[dir='rtl'] .resultBox .modulemenu {
 }
 
 /* PRINTING STYLES */
-@media print {
-  .resultBox .slist {
-    white-space: normal;
-  }
+/*
+html.print .resultBox .slist {
+  white-space: normal;
 }
+*/

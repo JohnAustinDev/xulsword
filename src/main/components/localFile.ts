@@ -248,6 +248,7 @@ export function inlineFile(
     ttf: 'font/ttf',
     otf: 'font/otf',
     css: 'text/css',
+    pdf: 'application/pdf',
   } as any;
   const contentType =
     // eslint-disable-next-line no-useless-escape

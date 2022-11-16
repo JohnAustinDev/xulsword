@@ -4,7 +4,7 @@
 import React from 'react';
 import i18n from 'i18next';
 import { ChromePicker as ColorPicker } from 'react-color';
-import { Classes, Slider } from '@blueprintjs/core';
+import { Slider } from '@blueprintjs/core';
 import type { ReactElementLike } from 'prop-types';
 import { diff } from '../../common';
 import G from '../rg';

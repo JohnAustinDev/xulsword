@@ -529,15 +529,8 @@ const Window = {
       });
   },
 
-  // If ResetType is not specified then all resets will be called, otherwise only
-  // the specified reset will be called. If window is specified, only matching
-  // window(s) will be reset, otherwise all will be reset. If neither is specified
-  // then all resets will be called on all windows plus the main process in addition.
-  reset(type?: ResetType, window?: WindowArgType) {
-    let windows = window
-      ? getBrowserWindows(window, arguments[2])
-      : getBrowserWindows('all');
-    if (!type && !window) Subscription.publish.resetMain();
+  reset(type = 'all' as ResetType, window = 'all' as WindowArgType) {
+    let windows = getBrowserWindows(window, arguments[2]);
     windows.forEach((win) => {
       if (win) {
         const resets: ResetType[] = [

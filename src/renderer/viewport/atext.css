@@ -509,59 +509,59 @@ html[dir='rtl'] .fncol3 {
 }
 
 /* PRINTING STYLES */
-@media print {
-  .pagebreak {
-    page-break-after: always;
-    margin: 40px;
-  }
-  .navlink,
-  .chapinfo {
-    display: none !important;
-  }
-  .noticelink {
-    display: none;
-  }
-  .noticetext {
-    display: block;
-  }
-  .chapterhead .chapbk {
-    display: block;
-  }
-  .interS {
-    border-top: 1px solid black;
-  }
-  * {
-    text-decoration: none !important;
-  }
-  .dtl,
-  .sr {
-    color: inherit;
-  }
-  .atext.Texts .un-hilight {
-    background: transparent;
-  }
-  .fnlink {
-    color: inherit;
-  }
-  .crref {
-    color: inherit;
-  }
-  .crref:after {
-    content: ': ';
-  }
-  .crtext {
-    display: inline;
-  }
-  .crtext.opposing-program-direction {
-    display: inline-block;
-  }
-  .cr-sep {
-    display: block;
-    border-top: none;
-    margin: 10px;
-  }
-  .cr-sep:after {
-    content: '';
-    padding-inline-end: 0em;
-  }
+/*
+html.print .pagebreak {
+  page-break-after: always;
+  margin: 40px;
 }
+html.print .navlink,
+html.print .chapinfo {
+  display: none !important;
+}
+html.print .noticelink {
+  display: none;
+}
+html.print .noticetext {
+  display: block;
+}
+html.print .chapterhead .chapbk {
+  display: block;
+}
+html.print .interS {
+  border-top: 1px solid black;
+}
+html.print * {
+  text-decoration: none !important;
+}
+html.print .dtl,
+html.print .sr {
+  color: inherit;
+}
+html.print .atext.Texts .un-hilight {
+  background: transparent;
+}
+html.print .fnlink {
+  color: inherit;
+}
+html.print .crref {
+  color: inherit;
+}
+html.print .crref:after {
+  content: ': ';
+}
+html.print .crtext {
+  display: inline;
+}
+html.print .crtext.opposing-program-direction {
+  display: inline-block;
+}
+html.print .cr-sep {
+  display: block;
+  border-top: none;
+  margin: 10px;
+}
+html.print .cr-sep:after {
+  content: '';
+  padding-inline-end: 0em;
+}
+*/

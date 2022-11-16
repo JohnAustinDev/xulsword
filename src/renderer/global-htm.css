@@ -1,7 +1,8 @@
 html,
 body,
 #root,
-#reset {
+#reset,
+#print {
   height: 100%;
   margin: 0;
   overflow: hidden;
@@ -35,6 +36,12 @@ html.dialog-window #root {
   width: 80%;
   max-width: 300px;
   background: rgb(87, 73, 95);
+}
+
+/* Print preview */
+#print > div,
+#print iframe {
+  width: 100%;
 }
 
 /* Anchor (undo blueprint.css colors) */

@@ -1,7 +1,7 @@
 /* eslint-disable import/no-duplicates */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import type { Shell } from 'electron';
+import type { IpcMainEvent, Shell } from 'electron';
 import type React from 'react';
 import type ElectronLog from 'electron-log';
 import type { LogLevel } from 'electron-log';
@@ -53,7 +53,9 @@ type RendererChannels =
   | 'component-reset'
   | 'cache-reset'
   | 'dynamic-stylesheet-reset'
-  | 'publish-subscription';
+  | 'publish-subscription'
+  | 'print-preview';
+
 export type WinIpcType = {
   renderer: {
     send: (channel: RendererChannels, ...args: any[]) => void;
@@ -104,7 +106,8 @@ export type WindowDescriptorType = {
     | 'removeModule'
     | 'search'
     | 'searchHelp'
-    | 'about';
+    | 'about'
+    | 'printPreview';
   category?:
     | 'window' // Parent optional, persisted, resizable
     | 'dialog' // Has parent, not persisted, size is fit-to-content, not-resizable
@@ -650,9 +653,9 @@ export type GType = {
 // main process and the other in renderer processes. The main process
 // G object accesses everything directly. But the renderer process
 // G object requests everything through IPC from the main process G
-// object. All getter and 'funcCACHE' data of the renderer G object
-// is cached. IMPORTANT: async functions must be listed in asyncFuncs
-// or runtime errors will result!
+// object. All getter and 'CACHEfunc' data of the renderer G object
+// is cached in the renderer. IMPORTANT: async functions must be
+// listed in asyncFuncs or runtime errors will result!
 const func = () => {};
 const CACHEfunc = () => 'cacheable';
 export const GBuilder: GType & {
@@ -764,10 +767,8 @@ export const GBuilder: GType & {
     removeModule: func as any,
     exportAudio: func as any,
     importAudio: func as any,
-    pageSetup: func as any,
-    printPreview: func as any,
-    printPassage: func as any,
     print: func as any,
+    printPassage: func as any,
     edit: func as any,
     undo: func as any,
     redo: func as any,
@@ -811,7 +812,9 @@ export const GBuilder: GType & {
   },
 
   Window: {
-    description: CACHEfunc as any, // cannot be 'getter' (and auto-pass window id)
+    // NOTE: Window cannot use getter functions, because its
+    // G methods pass calling window as an extra argument.
+    description: CACHEfunc as any,
     open: func as any,
     setComplexValue: func as any,
     mergeValue: func as any,

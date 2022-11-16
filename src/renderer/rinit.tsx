@@ -1,3 +1,4 @@
+/* eslint-disable jsx-a11y/iframe-has-title */
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable import/no-mutable-exports */
@@ -23,7 +24,7 @@ import DynamicStyleSheet from './style';
 import log from './log';
 import { getContextData } from './rutil';
 import { delayHandler, xulCaptureEvents } from './libxul/xul';
-import { Hbox } from './libxul/boxes';
+import { Hbox, Vbox } from './libxul/boxes';
 import Dialog from './libxul/dialog';
 import Spacer from './libxul/spacer';
 import Button from './libxul/button';
@@ -159,6 +160,7 @@ function Reset(props: ResetProps) {
     ReactElement[],
     (dialog: ReactElement[]) => void
   ];
+  const [iframe, setIframe] = useState('');
 
   const textbox: React.RefObject<HTMLInputElement> = React.createRef();
 
@@ -189,6 +191,29 @@ function Reset(props: ResetProps) {
     return window.ipc.renderer.on('modal', (cssclass: ModalType) => {
       setModal(cssclass);
     });
+  });
+
+  // Print Preview modes:
+  useEffect(() => {
+    return window.ipc.renderer.on(
+      'print-preview',
+      (mode: 'print' | 'preview' | 'off', pdfurl: string) => {
+        const html = document.getElementsByTagName('html')[0];
+        if (mode === 'print') {
+          html.classList.add('print');
+          setModal('transparent');
+          setIframe('');
+        } else if (mode === 'preview') {
+          html.classList.add('print');
+          setModal('off');
+          setIframe(pdfurl);
+        } else {
+          html.classList.remove('print');
+          setModal('off');
+          setIframe('');
+        }
+      }
+    );
   });
 
   // Progress meter:
@@ -408,7 +433,20 @@ function Reset(props: ResetProps) {
           G.Data.write(getContextData(e.target), 'contextData');
         }}
       >
-        {children}
+        {iframe && (
+          <Vbox id="print" align="stretch">
+            <Hbox flex="1">
+              <iframe key={iframe} src={G.inlineFile(iframe)} />
+            </Hbox>
+            <Hbox className="dialog-buttons" pack="end" align="end">
+              <Spacer flex="10" />
+              <Button id="ok" flex="1" fill="x" onClick={() => setIframe('')}>
+                {i18n.t('ok.label')}
+              </Button>
+            </Hbox>
+          </Vbox>
+        )}
+        {!iframe && children}
       </div>
     </>
   );
