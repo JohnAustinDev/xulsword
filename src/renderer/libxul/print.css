@@ -1,0 +1,54 @@
+.pdf-preview,
+.html-preview {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+.pdf-preview iframe {
+  width: 100%;
+}
+.html-preview {
+  padding-top: 10px;
+  padding-left: 10px;
+}
+
+.content {
+  position: relative; /* for overlay */
+  display: grid;
+  background: white;
+}
+
+.scale {
+  transform-origin: left top;
+}
+
+.print .groupbox-body > div > * {
+  margin-bottom: 10px;
+}
+.print .textbox {
+  width: 3em;
+  text-align: right;
+}
+.print #landscape svg {
+  transform: rotate(90deg) scaleX(-1);
+}
+.print .margins .hbox:nth-child(2) > .hbox:nth-child(1) svg {
+  transform: rotate(-90deg);
+}
+.print .margins .hbox:nth-child(2) > .hbox:nth-child(3) svg {
+  transform: rotate(90deg);
+}
+.print .margins .hbox:nth-child(3) svg {
+  transform: scaleY(-1);
+}
+.print .margins .spacer {
+  width: 40px;
+}
+
+@media print {
+  #overlay,
+  .print {
+    display: none;
+  }
+}

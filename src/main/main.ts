@@ -136,14 +136,13 @@ ipcMain.on('did-finish-render', (event: IpcMainEvent) => {
 
 const printPreviewTmps: LocalFile[] = [];
 const printPreviewHandler = async (
-  _event: IpcMainInvokeEvent,
+  event: IpcMainInvokeEvent,
   options: Electron.PrintToPDFOptions | Electron.WebContentsPrintOptions,
   pdf?: string
 ): Promise<boolean> => {
-  const windowToPrint = Data.read('windowToPrint') as number;
-  if (windowToPrint !== null) {
+  if (event.sender) {
     if (pdf && pdf === 'printToPDF') {
-      // Print to a user selected PDF file
+      // Print to a user selected PDF file and return window to normal
       const opts = options as Electron.PrintToPDFOptions;
       const saveops: SaveDialogOptions = {
         title: i18n.t('printCmd.label'),
@@ -155,22 +154,21 @@ const printPreviewHandler = async (
         ],
         properties: ['createDirectory'],
       };
-      let wtp = BrowserWindow.fromId(windowToPrint);
+      let wtp = BrowserWindow.fromWebContents(event.sender);
       const result = await ((wtp && dialog.showSaveDialog(wtp, saveops)) ||
         null);
       wtp = null;
       if (result && !result.canceled && result.filePath) {
-        const data = await BrowserWindow.fromId(
-          windowToPrint
-        )?.webContents.printToPDF(opts);
+        const data = await event.sender.printToPDF(opts);
         if (data) {
           const outfile = new LocalFile(result.filePath);
           outfile.writeFile(data);
+          event.sender.send('print-preview');
           return true;
         }
       }
     } else if (pdf) {
-      // Print to temporary PDF file and display it in preview iframe
+      // Print to temporary PDF file and display it in the preview iframe
       const opts = options as Electron.PrintToPDFOptions;
       printPreviewTmps.forEach((f) => {
         if (f.exists()) f.remove();
@@ -178,44 +176,32 @@ const printPreviewHandler = async (
       const tmp = new LocalFile(pdf);
       if (tmp.exists() && tmp.isDirectory()) {
         tmp.append(`${randomID()}.pdf`);
-        const data = await BrowserWindow.fromId(
-          windowToPrint
-        )?.webContents.printToPDF(opts);
+        const data = await event.sender.printToPDF(opts);
         if (data) {
           tmp.writeFile(data);
           printPreviewTmps.push(tmp);
-          BrowserWindow.fromId(windowToPrint)?.webContents.send(
-            'print-preview',
-            'preview',
-            tmp.path
-          );
+          event.sender.send('print-preview', 'off', tmp.path);
           return true;
         }
       }
     } else if (options) {
-      // Send to printer
+      // Send to printer and return window to normal
       const opts = options as Electron.WebContentsPrintOptions;
       return new Promise((resolve) => {
-        BrowserWindow.fromId(windowToPrint)?.webContents.print(
-          opts,
-          (suceeded: boolean, failureReason: string) => {
-            if (!suceeded) {
-              log.error(failureReason);
-            }
-            BrowserWindow.fromId(windowToPrint)?.webContents.send(
-              'print-preview',
-              'off'
-            );
-            resolve(suceeded);
+        event.sender.print(opts, (suceeded: boolean, failureReason: string) => {
+          if (!suceeded) {
+            log.error(failureReason);
           }
-        );
+          event.sender.send('print-preview');
+          resolve(suceeded);
+        });
       });
     } else {
-      // Return to normal view/operation
-      BrowserWindow.fromId(windowToPrint)?.webContents.send(
-        'print-preview',
-        'off'
-      );
+      // Return window to normal
+      printPreviewTmps.forEach((f) => {
+        if (f.exists()) f.remove();
+      });
+      event.sender.send('print-preview');
     }
   }
   return false; // failed

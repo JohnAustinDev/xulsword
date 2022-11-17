@@ -177,7 +177,7 @@ export function computedStyle(module: string | null, key: string) {
 
 export function preclose() {
   G.Data.readAndDelete('stylesheetData');
-  G.Window.reset('dynamic-stylesheet-reset');
+  G.Window.reset('dynamic-stylesheet-reset', 'all');
 }
 
 export default function handler(this: ChooseFontWin, e: React.SyntheticEvent) {

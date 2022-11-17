@@ -107,7 +107,7 @@ export type WindowDescriptorType = {
     | 'search'
     | 'searchHelp'
     | 'about'
-    | 'printPreview';
+    | 'printPassage';
   category?:
     | 'window' // Parent optional, persisted, resizable
     | 'dialog' // Has parent, not persisted, size is fit-to-content, not-resizable
@@ -123,7 +123,7 @@ export type WindowArgType =
   | 'not-self'
   | 'children';
 
-export type ModalType = 'off' | 'darkened' | 'transparent';
+export type ModalType = 'off' | 'darkened' | 'outlined' | 'transparent';
 
 // - skipTextUpdate allows a speedup when Atext content does not need to be updated,
 // such as verseAt bottom: only the target panel needs to be fully rendered, then
@@ -444,6 +444,8 @@ export type SwordConfXulsword = {
 };
 
 export type DepricatedSwordConfXulsword = {
+  NoticeLink?: string;
+  NoticeText?: string;
   TabLabel?: string;
   FontSizeAdjust?: string;
   LineHeight?: string;
@@ -466,6 +468,7 @@ export type SwordConfigEntries = SwordConfXulsword &
     Version?: string;
     CipherKey?: string;
     Font?: string;
+    Companion?: string;
     Direction?: 'LtoR' | 'RtoL' | 'BiDi';
     About?: SwordConfLocalized;
     Abbreviation?: SwordConfLocalized;

@@ -360,7 +360,7 @@ const C = {
       'UnlockInfo',
     ],
     repeatable: ['Obsoletes', 'Feature', 'GlobalOptionFilter'],
-    delimited: { SwordModules: /;/, SwordVersions: /;/ },
+    delimited: { SwordModules: /;/, SwordVersions: /;/, Companion: /,/ },
     // ShortCopyright is currently non-standard here, but used by NASB
     continuation: [
       'About',

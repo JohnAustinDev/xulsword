@@ -1,8 +1,7 @@
 html,
 body,
 #root,
-#reset,
-#print {
+#reset {
   height: 100%;
   margin: 0;
   overflow: hidden;
@@ -32,16 +31,14 @@ html.dialog-window #root {
 #overlay.darkened {
   background-color: rgba(0, 0, 0, 0.5);
 }
+#overlay.outlined {
+  outline: 1px solid rgb(216 213 213);
+  box-shadow: 8px 8px 2px 1px rgb(0 0 0 / 22%);
+}
 #overlay .modal-progressbar {
   width: 80%;
   max-width: 300px;
   background: rgb(87, 73, 95);
-}
-
-/* Print preview */
-#print > div,
-#print iframe {
-  width: 100%;
 }
 
 /* Anchor (undo blueprint.css colors) */

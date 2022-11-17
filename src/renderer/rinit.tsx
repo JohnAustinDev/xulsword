@@ -24,10 +24,13 @@ import DynamicStyleSheet from './style';
 import log from './log';
 import { getContextData } from './rutil';
 import { delayHandler, xulCaptureEvents } from './libxul/xul';
-import { Hbox, Vbox } from './libxul/boxes';
+import { Box, Hbox, Vbox } from './libxul/boxes';
 import Dialog from './libxul/dialog';
 import Spacer from './libxul/spacer';
 import Button from './libxul/button';
+import Label from './libxul/label';
+import Textbox from './libxul/textbox';
+import Print from './libxul/print';
 
 // Global CSS imports
 import 'normalize.css/normalize.css';
@@ -37,8 +40,6 @@ import './global-htm.css';
 
 import type { CipherKey, ModalType, NewModulesType } from '../type';
 import type { SubscriptionType } from '../subscription';
-import Label from './libxul/label';
-import Textbox from './libxul/textbox';
 
 // Init this render process log to the same settings as main.ts
 const logLevel = C.LogLevel;
@@ -160,7 +161,8 @@ function Reset(props: ResetProps) {
     ReactElement[],
     (dialog: ReactElement[]) => void
   ];
-  const [iframe, setIframe] = useState('');
+  const [iframeFilePath, setIframe] = useState('');
+  const [print, setPrint] = useState(false);
 
   const textbox: React.RefObject<HTMLInputElement> = React.createRef();
 
@@ -197,21 +199,19 @@ function Reset(props: ResetProps) {
   useEffect(() => {
     return window.ipc.renderer.on(
       'print-preview',
-      (mode: 'print' | 'preview' | 'off', pdfurl: string) => {
+      (modalType?: ModalType, iframePath?: string) => {
         const html = document.getElementsByTagName('html')[0];
-        if (mode === 'print') {
-          html.classList.add('print');
-          setModal('transparent');
-          setIframe('');
-        } else if (mode === 'preview') {
-          html.classList.add('print');
-          setModal('off');
-          setIframe(pdfurl);
-        } else {
-          html.classList.remove('print');
+        if (!modalType && !iframePath) {
+          html.classList.remove('printp');
+          setPrint(false);
           setModal('off');
           setIframe('');
+          return;
         }
+        html.classList.add('printp');
+        setPrint(true);
+        setModal(modalType ?? 'off');
+        setIframe(iframePath ?? '');
       }
     );
   });
@@ -259,7 +259,7 @@ function Reset(props: ResetProps) {
     ) {
       root.ondragover = (e) => {
         e.preventDefault();
-        setModal('darkened');
+        setModal('outlined');
       };
       root.ondragleave = (e) => {
         e.preventDefault();
@@ -422,7 +422,7 @@ function Reset(props: ResetProps) {
       </Hbox>
     ) : null;
 
-  return (
+  const content = (
     <>
       {overlay}
       {dialogs.length > 0 && dialogs[0]}
@@ -433,22 +433,51 @@ function Reset(props: ResetProps) {
           G.Data.write(getContextData(e.target), 'contextData');
         }}
       >
-        {iframe && (
-          <Vbox id="print" align="stretch">
+        {children}
+      </div>
+    </>
+  );
+
+  return (
+    (!print && content) || (
+      <>
+        {iframeFilePath && (
+          <Vbox className="pdf-preview" pack="start" align="stretch">
             <Hbox flex="1">
-              <iframe key={iframe} src={G.inlineFile(iframe)} />
+              <iframe key={iframeFilePath} src={G.inlineFile(iframeFilePath)} />
             </Hbox>
             <Hbox className="dialog-buttons" pack="end" align="end">
               <Spacer flex="10" />
-              <Button id="ok" flex="1" fill="x" onClick={() => setIframe('')}>
-                {i18n.t('ok.label')}
+              <Button
+                id="back"
+                flex="1"
+                fill="x"
+                onClick={() => {
+                  setIframe('');
+                  setModal('outlined');
+                }}
+              >
+                {i18n.t('back.label')}
               </Button>
             </Hbox>
           </Vbox>
         )}
-        {!iframe && children}
-      </div>
-    </>
+        {!iframeFilePath && (
+          <Hbox className="html-preview" align="stretch">
+            <div className="html-page">
+              <div className="scale">
+                <div className="content">{content}</div>
+              </div>
+            </div>
+            <Vbox>
+              <Spacer flex="1" />
+              <Print />
+              <Spacer flex="1" />
+            </Vbox>
+          </Hbox>
+        )}
+      </>
+    )
   );
 }
 Reset.defaultProps = defaultProps;

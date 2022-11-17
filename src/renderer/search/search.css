@@ -187,7 +187,7 @@ html[dir='rtl'] .resultBox .modulemenu {
 
 /* PRINTING STYLES */
 /*
-html.print .resultBox .slist {
+html.printp .resultBox .slist {
   white-space: normal;
 }
 */

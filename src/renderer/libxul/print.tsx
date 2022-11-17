@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable jsx-a11y/iframe-has-title */
 /* eslint-disable react/no-did-update-set-state */
 /* eslint-disable react/no-array-index-key */
@@ -7,86 +9,111 @@
 import React from 'react';
 import { Icon, Slider } from '@blueprintjs/core';
 import i18n from 'i18next';
-import { clone } from '../../common';
+import { clone, diff, drop } from '../../common';
 import G from '../rg';
-import renderToRoot from '../rinit';
-import { windowArgument } from '../rutil';
-import { Hbox, Vbox } from '../libxul/boxes';
-import Button from '../libxul/button';
-import Spacer from '../libxul/spacer';
-import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
-import Menulist from '../libxul/menulist';
-import Textbox from '../libxul/textbox';
-import Label from '../libxul/label';
-import Groupbox from '../libxul/groupbox';
-import './printPreview.css';
+import { getStatePref } from '../rutil';
+import { Hbox, Vbox } from './boxes';
+import Button from './button';
+import Spacer from './spacer';
+import {
+  addClass,
+  delayHandler,
+  xulDefaultProps,
+  XulProps,
+  xulPropTypes,
+} from './xul';
+import Menulist from './menulist';
+import Textbox from './textbox';
+import Label from './label';
+import Groupbox from './groupbox';
+import './print.css';
 
 const paperSizes = [
-  { type: 'A3', w: 297, h: 420, unit: 'mm' },
-  { type: 'A4', w: 210, h: 297, unit: 'mm' },
-  { type: 'A5', w: 148, h: 210, unit: 'mm' },
-  { type: 'Letter', w: 8.5, h: 11, unit: 'in' },
-  { type: 'Legal', w: 8.5, h: 14, unit: 'in' },
-  { type: 'Tabloid', w: 11, h: 17, unit: 'in' },
-];
+  { type: 'A3', w: 297, h: 420, u: 'mm' },
+  { type: 'A4', w: 210, h: 297, u: 'mm' },
+  { type: 'A5', w: 148, h: 210, u: 'mm' },
+  { type: 'Letter', w: 8.5, h: 11, u: 'in' },
+  { type: 'Legal', w: 8.5, h: 14, u: 'in' },
+  { type: 'Tabloid', w: 11, h: 17, u: 'in' },
+] as const;
 
-const scaleLimit = { max: 150, min: 25 };
+const convertToPx = { in: 96, mm: 96 / 25.4 };
+
+const scaleLimit = { min: 75, max: 150 };
 
 const defaultProps = xulDefaultProps;
 
 const propTypes = xulPropTypes;
 
-type PrintWinProps = XulProps;
+type PrintProps = XulProps;
 
-const initialState = {
-  showPreview: false as boolean,
+const defaultState = {
   landscape: false as boolean,
-  pageSize: 'Letter' as string,
+  pageSize: 'Letter' as typeof paperSizes[number]['type'],
   twoColumns: false as boolean,
   scale: 100 as number,
   margins: {
-    top: 297,
-    right: 210,
-    bottom: 297,
-    left: 210,
+    top: 30,
+    right: 21,
+    bottom: 30,
+    left: 21,
   },
 };
 
-export type PrintWinState = typeof initialState;
+const notStatePref = {};
 
-export default class PrintWin extends React.Component {
+export type PrintState = typeof defaultState;
+
+export default class Print extends React.Component {
   static defaultProps: typeof defaultProps;
 
   static propTypes: typeof propTypes;
 
   iframe: React.RefObject<HTMLIFrameElement>;
 
-  constructor(props: PrintWinProps) {
+  resetTO: NodeJS.Timeout | null;
+
+  constructor(props: PrintProps) {
     super(props);
 
-    const argState = windowArgument(
-      'printWinState'
-    ) as Partial<PrintWinState> | null;
-
-    const s: PrintWinState = {
-      ...initialState,
-      ...(argState || {}),
+    const s: PrintState = {
+      ...defaultState,
+      ...(getStatePref('print') as PrintState),
     };
     this.state = s;
 
     this.handler = this.handler.bind(this);
 
     this.iframe = React.createRef();
+
+    this.resetTO = null;
+  }
+
+  componentDidUpdate(prevState: PrintState) {
+    delayHandler.bind(this)(
+      () => {
+        const state = this.state as PrintState;
+        const newStatePref = drop(state, notStatePref);
+        const d = diff(drop(prevState, notStatePref), newStatePref);
+        if (d) {
+          G.Prefs.mergeValue('print', d);
+          setTimeout(() => G.Window.reset('component-reset'), 1);
+        }
+      },
+      1000,
+      'resetTO'
+    )();
   }
 
   async handler(e: React.SyntheticEvent) {
-    const state = this.state as PrintWinState;
+    const state = this.state as PrintState;
     const target = e.currentTarget as HTMLElement;
     const [id, id2] = target.id.split('.');
     switch (e.type) {
       case 'click': {
         switch (id) {
           case 'page': {
+            // TODO! remove if not needed
             const c = this.getContainer();
             if (c) {
               const { iframe, container } = c;
@@ -102,26 +129,26 @@ export default class PrintWin extends React.Component {
           }
           case 'portrait':
           case 'landscape': {
-            const s: Partial<PrintWinState> = {
+            const s: Partial<PrintState> = {
               landscape: id === 'landscape',
             };
             this.setState(s);
             break;
           }
           case 'columns': {
-            const s: Partial<PrintWinState> = {
+            const s: Partial<PrintState> = {
               twoColumns: id2 === '2',
             };
             this.setState(s);
             break;
           }
           case 'margin': {
-            this.setState((prevState: PrintWinState) => {
+            this.setState((prevState: PrintState) => {
               const s = {
                 margins: clone(prevState.margins),
-              } as PrintWinState;
+              } as PrintState;
               const input = e.target as HTMLInputElement;
-              s.margins[id2 as keyof PrintWinState['margins']] = Number(
+              s.margins[id2 as keyof PrintState['margins']] = Number(
                 input.value
               );
               return s;
@@ -135,21 +162,11 @@ export default class PrintWin extends React.Component {
               marginsType: 1,
               pageSize,
             };
-            this.setState((prevState: PrintWinState) => {
-              const s: Partial<PrintWinState> = {
-                showPreview: !prevState.showPreview,
-              };
-              if (s.showPreview) {
-                window.ipc.renderer.invoke(
-                  'print-preview',
-                  options,
-                  G.Window.tmpDir()
-                );
-              } else {
-                // Need way to switch preview off
-              }
-              return s;
-            });
+            window.ipc.renderer.invoke(
+              'print-preview',
+              options,
+              G.Window.tmpDir()
+            );
             break;
           }
           case 'printToPDF': {
@@ -159,12 +176,7 @@ export default class PrintWin extends React.Component {
               marginsType: 1,
               pageSize,
             };
-            const success = await window.ipc.renderer.invoke(
-              'print-preview',
-              options,
-              'printToPDF'
-            );
-            if (success) G.Window.close();
+            window.ipc.renderer.invoke('print-preview', options, 'printToPDF');
             break;
           }
           case 'print': {
@@ -175,25 +187,45 @@ export default class PrintWin extends React.Component {
               landscape,
               pageSize,
             };
-            const success = await window.ipc.renderer.invoke(
-              'print-preview',
-              options
-            );
-            if (success) {
-              G.Window.close();
-            }
+            window.ipc.renderer.invoke('print-preview', options);
             break;
           }
           case 'cancel': {
-            G.Window.close();
+            window.ipc.renderer.invoke('print-preview');
             break;
           }
           default:
-            throw new Error(`Unhandled click event ${id} in printPreview.tsx`);
+            throw new Error(`Unhandled click event ${id} in print.tsx`);
         }
         break;
       }
+
+      case 'change': {
+        switch (id) {
+          case 'pageSize': {
+            const select = e.target as HTMLSelectElement;
+            const s: Partial<PrintState> = {
+              pageSize: select.value as any,
+            };
+            this.setState(s);
+            break;
+          }
+          case 'margins': {
+            const select = e.target as HTMLSelectElement;
+            const s: Partial<PrintState> = {
+              margins: { ...state.margins, [id2]: Number(select.value) },
+            };
+            this.setState(s);
+            break;
+          }
+          default:
+            throw new Error(`Unhandled change event ${id} in print.tsx`);
+        }
+        break;
+      }
+
       default:
+        throw new Error(`Unhandled event type ${e.type} in print.tsx`);
     }
   }
 
@@ -213,31 +245,73 @@ export default class PrintWin extends React.Component {
   }
 
   render() {
-    const state = this.state as PrintWinState;
-    const { showPreview, landscape, pageSize, twoColumns, scale, margins } =
-      state;
+    const props = this.props as PrintProps;
+    const state = this.state as PrintState;
+    const { landscape, pageSize, twoColumns, scale, margins } = state;
     const { handler } = this;
 
+    const psize = paperSizes.find(
+      (p) => p.type === pageSize
+    ) as typeof paperSizes[number];
+
+    const pwidth = psize[landscape ? 'h' : 'w'];
+    const pheight = psize[landscape ? 'w' : 'h'];
+
+    const maxh = window.innerHeight - 20;
+
+    // html-page width can be anything, it just must be known before render
+    let htmlpageW = window.innerWidth - 500;
+    let htmlpageH = htmlpageW * (pheight / pwidth);
+    let hpscale = htmlpageW / (pwidth * convertToPx[psize.u]);
+    let pleft = 0;
+    if (htmlpageH > maxh) {
+      htmlpageH = maxh;
+      htmlpageW = htmlpageH * (pwidth / pheight);
+      hpscale = htmlpageH / (pheight * convertToPx[psize.u]);
+      pleft = (htmlpageW - hpscale * htmlpageW) / 2;
+    }
+
+    // To center page vertically and allow the overflowing outline/shadow
+    // to be visible, the top offset is manually set.
+    const ptop = (maxh - htmlpageH) / (2 * hpscale);
+
     return (
-      <Vbox id="printPreview">
+      <Vbox {...addClass('print', props)}>
+        <style>{`
+          .html-page {
+            width: ${htmlpageW}px;
+          }
+          .scale {
+            transform: scale(${hpscale});
+          }
+          .content {
+            width: ${pwidth}${psize.u};
+            height: ${pheight}${psize.u};
+            padding-top: ${margins.top}mm;
+            padding-right: ${margins.right}mm;
+            padding-bottom: ${margins.bottom}mm;
+            padding-left: ${margins.left}mm;
+            top: ${ptop}px;
+            left: ${pleft}px;
+          }
+          .userFontBase {
+            font-size: ${scale / 100}em;
+          }
+          @media print {
+            .html-page {
+              width: unset;
+            }
+            .scale {
+              transform: scale(1);
+            }
+            .content {
+              top: unset;
+              left: unset;
+            }
+          }
+        `}</style>
         <Groupbox caption={i18n.t('printCmd.label')}>
           <Vbox pack="center" align="center">
-            <Hbox>
-              <Button
-                id="portrait"
-                checked={!landscape}
-                icon="document"
-                disabled={showPreview}
-                onClick={handler}
-              />
-              <Button
-                id="landscape"
-                checked={landscape}
-                icon="document"
-                disabled={showPreview}
-                onClick={handler}
-              />
-            </Hbox>
             <Menulist
               id="pageSize"
               value={pageSize}
@@ -246,43 +320,44 @@ export default class PrintWin extends React.Component {
                   {p.type}
                 </option>
               ))}
-              disabled={showPreview}
               onChange={handler}
             />
+            <Hbox>
+              <Button
+                id="portrait"
+                checked={!landscape}
+                icon="document"
+                onClick={handler}
+              />
+              <Button
+                id="landscape"
+                checked={landscape}
+                icon="document"
+                onClick={handler}
+              />
+            </Hbox>
             <Hbox>
               <Button
                 id="columns.1"
                 checked={!twoColumns}
                 icon="one-column"
-                disabled={showPreview}
                 onClick={handler}
               />
               <Button
                 id="columns.2"
                 checked={twoColumns}
                 icon="two-columns"
-                disabled={showPreview}
                 onClick={handler}
               />
             </Hbox>
-            <Slider
-              min={scaleLimit.min}
-              max={scaleLimit.max}
-              value={scale}
-              disabled={showPreview}
-              onChange={(n: number) => {
-                this.setState({ scale: n });
-              }}
-            />
             <Vbox className="margins" pack="center" align="center">
               <Hbox align="center" pack="start">
                 <Icon icon="bring-data" />
                 <Textbox
-                  id="margin.top"
+                  id="margins.top"
                   value={margins.top.toString()}
                   maxLength="3"
                   pattern={/^\d*$/}
-                  disabled={showPreview}
                   onChange={handler}
                 />
                 <Label value="mm" />
@@ -291,11 +366,10 @@ export default class PrintWin extends React.Component {
                 <Hbox align="center" pack="start">
                   <Icon icon="bring-data" />
                   <Textbox
-                    id="margin.left"
+                    id="margins.left"
                     value={margins.left.toString()}
                     maxLength="3"
                     pattern={/^\d*$/}
-                    disabled={showPreview}
                     onChange={handler}
                   />
                   <Label value="mm" />
@@ -304,11 +378,10 @@ export default class PrintWin extends React.Component {
                 <Hbox align="center" pack="start">
                   <Icon icon="bring-data" />
                   <Textbox
-                    id="margin.right"
+                    id="margins.right"
                     value={margins.right.toString()}
                     maxLength="3"
                     pattern={/^\d*$/}
-                    disabled={showPreview}
                     onChange={handler}
                   />
                   <Label value="mm" />
@@ -317,27 +390,26 @@ export default class PrintWin extends React.Component {
               <Hbox align="center" pack="start">
                 <Icon icon="bring-data" />
                 <Textbox
-                  id="margin.bottom"
+                  id="margins.bottom"
                   value={margins.bottom.toString()}
                   maxLength="3"
                   pattern={/^\d*$/}
-                  disabled={showPreview}
                   onChange={handler}
                 />
                 <Label value="mm" />
               </Hbox>
             </Vbox>
+            <Slider
+              min={scaleLimit.min}
+              max={scaleLimit.max}
+              value={scale}
+              labelValues={[scaleLimit.min, scaleLimit.max]}
+              onChange={(n: number) => this.setState({ scale: n })}
+            />
           </Vbox>
         </Groupbox>
         <Hbox className="dialog-buttons" pack="end" align="end">
-          <Button
-            id="print"
-            icon="print"
-            flex="1"
-            fill="x"
-            disabled={showPreview}
-            onClick={handler}
-          >
+          <Button id="print" icon="print" flex="1" fill="x" onClick={handler}>
             {i18n.t('printCmd.label')}
           </Button>
           <Button
@@ -345,19 +417,11 @@ export default class PrintWin extends React.Component {
             icon="document"
             flex="1"
             fill="x"
-            disabled={showPreview}
             onClick={handler}
           >
             PDF
           </Button>
-          <Button
-            id="printPreview"
-            flex="1"
-            fill="x"
-            checked={showPreview}
-            disabled={showPreview}
-            onClick={handler}
-          >
+          <Button id="printPreview" flex="1" fill="x" onClick={handler}>
             {i18n.t('printPreviewCmd.label')}
           </Button>
           <Spacer flex="10" />
@@ -369,9 +433,5 @@ export default class PrintWin extends React.Component {
     );
   }
 }
-PrintWin.defaultProps = defaultProps;
-PrintWin.propTypes = propTypes;
-
-renderToRoot(<PrintWin />, null, () => {
-  window.ipc.renderer.invoke('print-preview');
-});
+Print.defaultProps = defaultProps;
+Print.propTypes = propTypes;

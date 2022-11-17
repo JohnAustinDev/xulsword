@@ -529,7 +529,7 @@ const Window = {
       });
   },
 
-  reset(type = 'all' as ResetType, window = 'all' as WindowArgType) {
+  reset(type = 'all' as ResetType, window = 'self' as WindowArgType) {
     let windows = getBrowserWindows(window, arguments[2]);
     windows.forEach((win) => {
       if (win) {
