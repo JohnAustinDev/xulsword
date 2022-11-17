@@ -20,6 +20,7 @@ const defaultProps = {
   multiline: false,
   readonly: false,
   disabled: false,
+  timeout: 0,
   type: 'text',
 };
 
@@ -39,13 +40,13 @@ const propTypes = {
 
 interface TextboxProps extends XulProps {
   maxLength?: string | undefined;
-  multiline?: boolean;
+  multiline: boolean;
   pattern?: RegExp | undefined;
-  readonly?: boolean;
+  readonly: boolean;
   inputRef?: React.RefObject<HTMLInputElement> | undefined;
-  disabled?: boolean;
-  timeout?: string | undefined;
-  type?: string;
+  disabled: boolean;
+  timeout: string;
+  type: string;
   value?: string | undefined;
 }
 
@@ -56,8 +57,8 @@ interface TextboxState {
 }
 
 type TBevent =
-  | React.ChangeEvent<HTMLInputElement>
-  | React.ChangeEvent<HTMLTextAreaElement>;
+  | React.SyntheticEvent<HTMLInputElement>
+  | React.SyntheticEvent<HTMLTextAreaElement>;
 
 // XUL textbox
 class Textbox extends React.Component {
@@ -102,18 +103,23 @@ class Textbox extends React.Component {
 
   handleChange(e: TBevent) {
     const { pattern, timeout, onChange } = this.props as TextboxProps;
+    const target = e.target as HTMLSelectElement | HTMLTextAreaElement;
 
     // Test user input against props.pattern and undo mismatched changes,
     // otherwise call the parent's onChange function (using a delay
     // if props.timeout has a value).
-    if (
-      !pattern ||
-      pattern.test(e.target.value) ||
-      /^\s*$/.test(e.target.value)
-    ) {
-      this.setState({ value: e.target.value });
-      if (timeout && typeof onChange === 'function') {
-        delayHandler.bind(this)((evt) => onChange(evt), timeout, 'changeTO')(e);
+    if (!pattern || pattern.test(target.value) || /^\s*$/.test(target.value)) {
+      this.setState({ value: target.value });
+      if (typeof onChange === 'function') {
+        delayHandler.bind(this)(
+          (evt, currentTarget) => {
+            // currentTarget becomes null during the delay, so it must be reset
+            evt.currentTarget = currentTarget;
+            onChange(evt);
+          },
+          timeout,
+          'changeTO'
+        )(e, e.currentTarget);
         e.stopPropagation();
       }
     } else {
@@ -130,7 +136,7 @@ class Textbox extends React.Component {
     const value = props.disabled ? props.value : state.value;
 
     return (
-      <Box {...addClass('textbox', props)}>
+      <Box {...addClass('textbox', props)} onChange={handleChange}>
         {useTextArea && (
           <textarea
             id={`${props.id}__textarea`}
@@ -138,7 +144,7 @@ class Textbox extends React.Component {
             maxLength={props.maxLength ? Number(props.maxLength) : undefined}
             readOnly={props.readonly}
             value={value}
-            onChange={handleChange}
+            onChange={() => {}}
           />
         )}
         {!useTextArea && (
@@ -149,7 +155,7 @@ class Textbox extends React.Component {
             maxLength={props.maxLength ? Number(props.maxLength) : undefined}
             readOnly={props.readonly}
             value={value}
-            onChange={handleChange}
+            onChange={() => {}}
             spellCheck={false}
             ref={props.inputRef}
           />

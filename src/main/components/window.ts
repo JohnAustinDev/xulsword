@@ -529,7 +529,11 @@ const Window = {
       });
   },
 
-  reset(type = 'all' as ResetType, window = 'self' as WindowArgType) {
+  reset(typex?: ResetType, windowx?: WindowArgType) {
+    // NOTE: Default params with reset(param='default') is not allowed
+    // here or previously appended arguments[2] will not work!
+    const type = typex || 'all';
+    const window = windowx || 'self';
     let windows = getBrowserWindows(window, arguments[2]);
     windows.forEach((win) => {
       if (win) {

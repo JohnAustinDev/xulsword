@@ -1,3 +1,4 @@
+/* eslint-disable react/forbid-prop-types */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable jsx-a11y/iframe-has-title */
@@ -6,8 +7,9 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
 /* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable react/static-property-placement */
-import React from 'react';
-import { Icon, Slider } from '@blueprintjs/core';
+import React, { ReactElement } from 'react';
+import PropTypes from 'prop-types';
+import { Icon } from '@blueprintjs/core';
 import i18n from 'i18next';
 import { clone, diff, drop } from '../../common';
 import G from '../rg';
@@ -39,13 +41,24 @@ const paperSizes = [
 
 const convertToPx = { in: 96, mm: 96 / 25.4 };
 
-const scaleLimit = { min: 75, max: 150 };
+const scaleLimit = { min: 25, max: 150 };
 
-const defaultProps = xulDefaultProps;
+const defaultProps = {
+  ...xulDefaultProps,
+  control: null,
+  columnSelect: false,
+};
 
-const propTypes = xulPropTypes;
+const propTypes = {
+  ...xulPropTypes,
+  control: PropTypes.object,
+  columnSelect: PropTypes.bool,
+};
 
-type PrintProps = XulProps;
+type PrintProps = XulProps & {
+  control: ReactElement;
+  columnSelect: boolean;
+};
 
 const defaultState = {
   landscape: false as boolean,
@@ -71,6 +84,16 @@ export default class Print extends React.Component {
 
   iframe: React.RefObject<HTMLIFrameElement>;
 
+  selectRefs: {
+    margins: {
+      top: React.RefObject<HTMLSelectElement>;
+      right: React.RefObject<HTMLSelectElement>;
+      bottom: React.RefObject<HTMLSelectElement>;
+      left: React.RefObject<HTMLSelectElement>;
+    };
+    scale: React.RefObject<HTMLSelectElement>;
+  };
+
   resetTO: NodeJS.Timeout | null;
 
   constructor(props: PrintProps) {
@@ -84,29 +107,32 @@ export default class Print extends React.Component {
 
     this.handler = this.handler.bind(this);
 
+    this.selectRefs = {
+      margins: {
+        top: React.createRef(),
+        right: React.createRef(),
+        bottom: React.createRef(),
+        left: React.createRef(),
+      },
+      scale: React.createRef(),
+    };
+
     this.iframe = React.createRef();
 
     this.resetTO = null;
   }
 
-  componentDidUpdate(prevState: PrintState) {
-    delayHandler.bind(this)(
-      () => {
-        const state = this.state as PrintState;
-        const newStatePref = drop(state, notStatePref);
-        const d = diff(drop(prevState, notStatePref), newStatePref);
-        if (d) {
-          G.Prefs.mergeValue('print', d);
-          setTimeout(() => G.Window.reset('component-reset'), 1);
-        }
-      },
-      1000,
-      'resetTO'
-    )();
+  componentDidUpdate(_prevProps: PrintProps, prevState: PrintState) {
+    const d = diff(prevState, drop(this.state as PrintState, notStatePref));
+    if (d) {
+      G.Prefs.mergeValue('print', d);
+      setTimeout(() => G.Window.reset('component-reset'), 500);
+    }
   }
 
-  async handler(e: React.SyntheticEvent) {
+  async handler(e: React.SyntheticEvent<any, any>) {
     const state = this.state as PrintState;
+    const { selectRefs } = this;
     const target = e.currentTarget as HTMLElement;
     const [id, id2] = target.id.split('.');
     switch (e.type) {
@@ -210,16 +236,45 @@ export default class Print extends React.Component {
             this.setState(s);
             break;
           }
-          case 'margins': {
-            const select = e.target as HTMLSelectElement;
-            const s: Partial<PrintState> = {
-              margins: { ...state.margins, [id2]: Number(select.value) },
-            };
-            this.setState(s);
-            break;
-          }
+
           default:
             throw new Error(`Unhandled change event ${id} in print.tsx`);
+        }
+        break;
+      }
+
+      case 'blur':
+      case 'keydown': {
+        const ek = e as React.KeyboardEvent;
+        if (e.type === 'blur' || ek.key === 'Enter') {
+          switch (id) {
+            case 'margins': {
+              const select =
+                selectRefs.margins[id2 as keyof Print['selectRefs']['margins']]
+                  .current;
+              if (select) {
+                const s: Partial<PrintState> = {
+                  margins: { ...state.margins, [id2]: Number(select.value) },
+                };
+                this.setState(s);
+              }
+              break;
+            }
+            case 'font': {
+              const select = selectRefs.scale.current;
+              if (select) {
+                let scale = Number(select.value);
+                if (scale > scaleLimit.max) scale = scaleLimit.max;
+                if (scale < scaleLimit.min) scale = scaleLimit.min;
+                const s: Partial<PrintState> = { scale };
+                this.setState(s);
+              }
+              break;
+            }
+            default:
+              throw new Error(`Unhandled change event ${id} in print.tsx`);
+          }
+          break;
         }
         break;
       }
@@ -248,7 +303,8 @@ export default class Print extends React.Component {
     const props = this.props as PrintProps;
     const state = this.state as PrintState;
     const { landscape, pageSize, twoColumns, scale, margins } = state;
-    const { handler } = this;
+    const { columnSelect, control } = props;
+    const { handler, selectRefs } = this;
 
     const psize = paperSizes.find(
       (p) => p.type === pageSize
@@ -260,15 +316,17 @@ export default class Print extends React.Component {
     const maxh = window.innerHeight - 20;
 
     // html-page width can be anything, it just must be known before render
-    let htmlpageW = window.innerWidth - 500;
+    const maxControlW = 500;
+    const htmlpageW = window.innerWidth - maxControlW;
     let htmlpageH = htmlpageW * (pheight / pwidth);
     let hpscale = htmlpageW / (pwidth * convertToPx[psize.u]);
     let pleft = 0;
     if (htmlpageH > maxh) {
       htmlpageH = maxh;
-      htmlpageW = htmlpageH * (pwidth / pheight);
+      const contpageW = htmlpageH * (pwidth / pheight);
       hpscale = htmlpageH / (pheight * convertToPx[psize.u]);
-      pleft = (htmlpageW - hpscale * htmlpageW) / 2;
+      pleft = -20 + (htmlpageW - hpscale * contpageW) / 2;
+      if (pleft < 0) pleft = 0;
     }
 
     // To center page vertically and allow the overflowing outline/shadow
@@ -310,6 +368,7 @@ export default class Print extends React.Component {
             }
           }
         `}</style>
+        {control}
         <Groupbox caption={i18n.t('printCmd.label')}>
           <Vbox pack="center" align="center">
             <Menulist
@@ -335,20 +394,23 @@ export default class Print extends React.Component {
                 icon="document"
                 onClick={handler}
               />
-            </Hbox>
-            <Hbox>
-              <Button
-                id="columns.1"
-                checked={!twoColumns}
-                icon="one-column"
-                onClick={handler}
-              />
-              <Button
-                id="columns.2"
-                checked={twoColumns}
-                icon="two-columns"
-                onClick={handler}
-              />
+              {columnSelect && (
+                <>
+                  <Spacer width="10" />
+                  <Button
+                    id="columns.1"
+                    checked={!twoColumns}
+                    icon="one-column"
+                    onClick={handler}
+                  />
+                  <Button
+                    id="columns.2"
+                    checked={twoColumns}
+                    icon="two-columns"
+                    onClick={handler}
+                  />
+                </>
+              )}
             </Hbox>
             <Vbox className="margins" pack="center" align="center">
               <Hbox align="center" pack="start">
@@ -358,7 +420,9 @@ export default class Print extends React.Component {
                   value={margins.top.toString()}
                   maxLength="3"
                   pattern={/^\d*$/}
-                  onChange={handler}
+                  onBlur={handler}
+                  onKeyDown={handler}
+                  inputRef={selectRefs.margins.top}
                 />
                 <Label value="mm" />
               </Hbox>
@@ -370,7 +434,9 @@ export default class Print extends React.Component {
                     value={margins.left.toString()}
                     maxLength="3"
                     pattern={/^\d*$/}
-                    onChange={handler}
+                    onBlur={handler}
+                    onKeyDown={handler}
+                    inputRef={selectRefs.margins.left}
                   />
                   <Label value="mm" />
                 </Hbox>
@@ -382,7 +448,9 @@ export default class Print extends React.Component {
                     value={margins.right.toString()}
                     maxLength="3"
                     pattern={/^\d*$/}
-                    onChange={handler}
+                    onBlur={handler}
+                    onKeyDown={handler}
+                    inputRef={selectRefs.margins.right}
                   />
                   <Label value="mm" />
                 </Hbox>
@@ -394,18 +462,27 @@ export default class Print extends React.Component {
                   value={margins.bottom.toString()}
                   maxLength="3"
                   pattern={/^\d*$/}
-                  onChange={handler}
+                  onBlur={handler}
+                  onKeyDown={handler}
+                  inputRef={selectRefs.margins.bottom}
                 />
                 <Label value="mm" />
               </Hbox>
             </Vbox>
-            <Slider
-              min={scaleLimit.min}
-              max={scaleLimit.max}
-              value={scale}
-              labelValues={[scaleLimit.min, scaleLimit.max]}
-              onChange={(n: number) => this.setState({ scale: n })}
-            />
+            <Hbox align="center" pack="start">
+              <Icon icon="font" />
+              <Textbox
+                id="font.size"
+                value={scale.toString()}
+                maxLength="3"
+                timeout="500"
+                pattern={/^\d*$/}
+                onBlur={handler}
+                onKeyDown={handler}
+                inputRef={selectRefs.scale}
+              />
+              <Label value="%" />
+            </Hbox>
           </Vbox>
         </Groupbox>
         <Hbox className="dialog-buttons" pack="end" align="end">

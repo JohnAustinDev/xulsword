@@ -43,7 +43,7 @@ import {
 // values in their function definition's argument lists. This is because
 // Function.length is used to append the calling window, and Function.length
 // does not include rest parameters or default arguments, so this would result
-// in runtime exceptions being thrown.
+// in runtime exceptions or other unexpected behaviour.
 const includeCallingWindow: (keyof GType)[] = [
   'Prefs',
   'Window',

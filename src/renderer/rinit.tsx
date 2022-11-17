@@ -138,19 +138,25 @@ async function i18nInit(namespaces: string[]) {
   return i18n;
 }
 
-const defaultProps = { resetOnResize: true };
+const defaultProps = {
+  resetOnResize: true,
+  printColumnSelect: false,
+  printControl: null,
+};
 const propTypes = {
   children: PropTypes.element.isRequired,
   resetOnResize: PropTypes.bool,
 };
 type ResetProps = {
   children: ReactElement;
-  resetOnResize?: boolean;
+  resetOnResize: boolean;
+  printColumnSelect: boolean;
+  printControl: ReactElement | null;
 };
 
 const delayHandlerThis = {};
 function Reset(props: ResetProps) {
-  const { children, resetOnResize } = props;
+  const { children, resetOnResize, printColumnSelect, printControl } = props;
   const [reset, setReset] = useState(0);
   const [modal, setModal] = useState('off') as [
     ModalType,
@@ -438,8 +444,8 @@ function Reset(props: ResetProps) {
     </>
   );
 
-  return (
-    (!print && content) || (
+  const printContent =
+    (print && content && (
       <>
         {iframeFilePath && (
           <Vbox className="pdf-preview" pack="start" align="stretch">
@@ -471,14 +477,16 @@ function Reset(props: ResetProps) {
             </div>
             <Vbox>
               <Spacer flex="1" />
-              <Print />
+              <Print columnSelect={printColumnSelect} control={printControl} />
               <Spacer flex="1" />
             </Vbox>
           </Hbox>
         )}
       </>
-    )
-  );
+    )) ||
+    null;
+
+  return (!print && content) || printContent;
 }
 Reset.defaultProps = defaultProps;
 Reset.propTypes = propTypes;
@@ -487,9 +495,15 @@ export default async function renderToRoot(
   component: ReactElement,
   loadedXUL?: (() => void) | null,
   unloadXUL?: (() => void) | null,
-  options?: { namespace?: string; resetOnResize?: boolean }
+  options?: {
+    namespace?: string;
+    resetOnResize?: boolean;
+    printColumnSelect?: boolean;
+    printControl?: ReactElement;
+  }
 ) {
-  const { namespace, resetOnResize } = options || {};
+  const { namespace, resetOnResize, printColumnSelect, printControl } =
+    options || {};
 
   window.ipc.renderer.on('close', () => {
     if (typeof unloadXUL === 'function') unloadXUL();
@@ -499,7 +513,13 @@ export default async function renderToRoot(
   await i18nInit([namespace ?? 'xulsword']);
   render(
     <StrictMode>
-      <Reset resetOnResize={resetOnResize}>{component}</Reset>
+      <Reset
+        resetOnResize={resetOnResize}
+        printColumnSelect={printColumnSelect}
+        printControl={printControl}
+      >
+        {component}
+      </Reset>
     </StrictMode>,
     document.getElementById('root')
   );
