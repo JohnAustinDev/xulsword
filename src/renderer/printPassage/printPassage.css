@@ -1,0 +1,11 @@
+#printControl #to-select .vk-vkmod {
+  visibility: hidden;
+}
+
+#printControl .grid {
+  gap: 2px 10px;
+}
+
+#printControl .vk-chapter select {
+  width: 3.25em;
+}

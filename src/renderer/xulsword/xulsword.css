@@ -21,8 +21,8 @@
 #xulsword .controlbar #book,
 #xulsword .controlbar #chapter,
 #xulsword .controlbar #verse {
-  margin-bottom: 0;
   margin-top: 0;
+  margin-bottom: 2px;
 }
 
 #navigator-tool {

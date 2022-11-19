@@ -1,8 +1,4 @@
-.vkselect .bschapter,
-.vkselect .bsverse,
-.vkselect .bslastverse,
-.vkselect .bslastchapter,
-.vkselect .bsvkmod {
+.vkselect .menulist {
   border-radius: 4px;
   border: 2px solid;
   border-top-color: ThreeDLightShadow;
@@ -20,11 +16,7 @@
 }
 
 .vkselect > *:not(:first-child) {
-  margin-inline-start: 5px;
   display: inline-block;
-}
-.vkselect .bsvkmod {
-  margin-inline-start: 20px;
 }
 
 .vkselect .label label {
@@ -38,18 +30,20 @@
   margin-inline-end: 1px;
 }
 
-.vkselect .bookselect {
-  margin: 0;
-}
-.vkselect menulist.bsbook {
+.vkselect .vk-book {
+  margin-inline-start: 1px;
   margin-inline-end: 9px;
 }
-.vkselect menulist.bschapter,
-.vkselect menulist.bsverse,
-.vkselect menulist.bslastverse {
-  width: 4em;
+.vkselect .vk-chapter,
+.vkselect .vk-verse,
+.vkselect .vk-lastverse,
+.vkselect .vk-lastchapter {
   margin-inline-start: 1px;
   margin-inline-end: 1px;
+}
+.vkselect .vk-vkmod {
+  margin-inline-start: 20px;
+  margin-inline-end: 0px;
 }
 
 .vkselect span.name {

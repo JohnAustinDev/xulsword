@@ -81,6 +81,10 @@ const C = {
     Window: {
       resizeDelay: 500, // ms between window resize and update
       persistentTypes: ['moduleManager'],
+      large: {
+        width: 1024,
+        height: 728,
+      },
     },
     Xulsword: {
       maxHistoryMenuLength: 20,

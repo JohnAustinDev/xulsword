@@ -468,7 +468,6 @@ export type SwordConfigEntries = SwordConfXulsword &
     Version?: string;
     CipherKey?: string;
     Font?: string;
-    Companion?: string;
     Direction?: 'LtoR' | 'RtoL' | 'BiDi';
     About?: SwordConfLocalized;
     Abbreviation?: SwordConfLocalized;
@@ -500,6 +499,7 @@ export type SwordConfigEntries = SwordConfXulsword &
       | 'RawLD4'
       | 'zLD'
       | 'RawGenBook';
+    Companion?: string[];
     DisplayLevel?: number;
     InstallSize?: number;
     Versification?: V11nType;

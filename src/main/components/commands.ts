@@ -5,12 +5,12 @@ import { BrowserWindowConstructorOptions } from 'electron/main';
 import log from 'electron-log';
 import i18n from 'i18next';
 import { clone, JSON_stringify } from '../../common';
+import C from '../../constant';
 import { verseKey, getTab, getTabs } from '../minit';
 import Prefs from './prefs';
 import LocalFile from './localFile';
 import { modalInstall } from './module';
 import Window, { getBrowserWindows } from './window';
-import Data from './data';
 
 import type {
   LocationSKType,
@@ -22,6 +22,7 @@ import type {
   XulswordStatePref,
 } from '../../type';
 import type { AboutWinState } from '../../renderer/about/about';
+import type { PassageWinState } from '../../renderer/printPassage/printPassage';
 
 const Commands = {
   openModuleManager(): void {
@@ -123,8 +124,15 @@ const Commands = {
     }
   },
 
-  printPassage() {
-    log.info(`Action not implemented: printPassage`);
+  printPassage(state?: Partial<PassageWinState>) {
+    const options = {
+      title: i18n.t('print.printpassage'),
+      ...C.UI.Window.large,
+      webPreferences: {
+        additionalArguments: [JSON_stringify({ passageWinState: state || {} })],
+      },
+    };
+    Window.open({ type: 'printPassage', category: 'dialog-window', options });
   },
 
   edit(

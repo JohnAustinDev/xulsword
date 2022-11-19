@@ -1,3 +1,4 @@
+/* eslint-disable react/no-did-update-set-state */
 /* eslint-disable no-nested-ternary */
 /* eslint-disable react/forbid-prop-types */
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -7,73 +8,52 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { clone, ofClass } from '../../common';
+import { clone, diff, ofClass } from '../../common';
 import C from '../../constant';
 import G from '../rg';
 import { getMaxChapter, getMaxVerse } from '../rutil';
 import { addClass, xulDefaultProps, XulProps, xulPropTypes } from './xul';
-import Bookselect from './bookselect';
 import { Hbox } from './boxes';
 import Label from './label';
 import Menulist from './menulist';
 import './vkselect.css';
 
-import type { BookGroupType } from '../../type';
+import type { BookGroupType, LocationVKType, V11nType } from '../../type';
 import ModuleMenu from './modulemenu';
-
-export type VKSelection = {
-  book?: string;
-  chapter?: number;
-  lastchapter?: number;
-  verse?: number;
-  lastverse?: number;
-  vkmod?: string;
-};
-
-// If left undefined, valid lists will be automatically created. Otherwise
-// only the listed options will be provided. If there are no options (an
-// empty array) then the corresponding selector will be hidden.
-export type VKSelectOptions = {
-  books?: string[];
-  chapters?: number[];
-  lastchapters?: number[];
-  verses?: number[];
-  lastverses?: number[];
-  vkmods?: string[];
-};
 
 const defaultProps = {
   ...xulDefaultProps,
-  initialSelection: {
-    book: 'Gen',
-    chapter: 1,
-    lastChapter: undefined,
-    verse: 1,
-    lastverse: 1,
-    vkmod: 'KJV',
-  },
   options: {
     books: undefined,
     chapters: undefined,
-    lastChapters: [],
+    lastChapters: undefined,
     verses: undefined,
     lastverses: undefined,
-    vkmods: [],
+    vkmods: undefined,
   },
   disabled: false,
-  sizetopopup: 'none',
   onSelectionChange: undefined,
 };
 
 const propTypes = {
   ...xulPropTypes,
-  initialSelection: PropTypes.shape({
+  initialVKM: PropTypes.shape({
     book: PropTypes.string,
     chapter: PropTypes.number,
     verse: PropTypes.number,
     lastchapter: PropTypes.number,
     lastverse: PropTypes.number,
     vkmod: PropTypes.string,
+    v11n: PropTypes.string,
+  }),
+  selectVKM: PropTypes.shape({
+    book: PropTypes.string,
+    chapter: PropTypes.number,
+    verse: PropTypes.number,
+    lastchapter: PropTypes.number,
+    lastverse: PropTypes.number,
+    vkmod: PropTypes.string,
+    v11n: PropTypes.string,
   }),
   options: PropTypes.shape({
     books: PropTypes.arrayOf(PropTypes.string),
@@ -84,20 +64,52 @@ const propTypes = {
     vkmods: PropTypes.arrayOf(PropTypes.string),
   }),
   disabled: PropTypes.bool,
-  sizetopopup: PropTypes.oneOf(['none', 'always']),
   onSelectionChange: PropTypes.func,
 };
 
-interface VKSelectProps extends XulProps {
-  initialSelection: VKSelection;
-  options: VKSelectOptions;
+export type SelectVKMType = LocationVKType & {
+  vkmod: string;
+  lastchapter?: number;
+};
+
+export const defaultVKM = {
+  book: 'Gen',
+  chapter: 1,
+  vkmod: '',
+  v11n: 'KJV' as V11nType,
+};
+
+// The VKSelect will either keep its own location state OR be a
+// totally controlled component: If the 'initialVKM' prop is
+// undefined, the component will be a totally controlled component
+// with no state of its own. If the 'initialVKM' prop is defined,
+// state will be kept internally, and any selection prop value
+// will be ignored.
+
+// If options are left undefined, valid lists will be automatically
+// created. Otherwise only the listed options (that are valid) will
+// be provided. If an option is [] then the corresponding selector
+// will be hidden. If the vkmods option is [] its selector will be
+// hidden and available selections will include entire verse system,
+// otherwise the available selections will include only options
+// within the selected vkmod.
+export interface VKSelectProps extends XulProps {
+  initialVKM: SelectVKMType | undefined;
+  selectVKM: SelectVKMType | undefined;
+  options: {
+    books?: string[];
+    chapters?: number[];
+    lastchapters?: number[];
+    verses?: number[];
+    lastverses?: number[];
+    vkmods?: string[];
+  };
   disabled: boolean;
-  sizetopopup: string;
-  onSelectionChange: (e: VKSelectChangeEvents, selection: VKSelection) => void;
+  onSelectionChange: (selection: SelectVKMType, id: string) => void;
 }
 
 interface VKSelectState {
-  selection: VKSelection;
+  selection: SelectVKMType | null;
 }
 
 export type VKSelectChangeEvents =
@@ -110,206 +122,286 @@ class VKSelect extends React.Component {
 
   static propTypes: typeof propTypes;
 
+  newselection: SelectVKMType | null;
+
   constructor(props: VKSelectProps) {
     super(props);
 
-    const { initialSelection } = props;
-    this.state = { selection: initialSelection } as VKSelectState;
+    const s: VKSelectState = {
+      selection: props.initialVKM || null,
+    };
+    this.state = s;
+
+    this.newselection = null;
 
     this.handleChange = this.handleChange.bind(this);
+    this.getNumberOptions = this.getNumberOptions.bind(this);
+  }
+
+  componentDidUpdate(prevProps: VKSelectProps, prevState: VKSelectState) {
+    const { selection: stateVKM } = prevState;
+    const { initialVKM } = prevProps;
+    const { newselection } = this;
+    if (initialVKM !== undefined && newselection) {
+      const d = diff(stateVKM, newselection);
+      if (d) {
+        const s: Partial<VKSelectState> = {
+          selection: newselection,
+        };
+        this.setState(s);
+      }
+    }
   }
 
   handleChange(es: React.SyntheticEvent) {
+    const state = this.state as VKSelectState;
+    const props = this.props as VKSelectProps;
+    const { selection: stateVKM } = state;
+    const { initialVKM, selectVKM: propsVKM } = props;
     const e = es as VKSelectChangeEvents;
     const cls = ofClass(
       [
-        'bsvkmod',
-        'bsbook',
-        'bschapter',
-        'bslastchapter',
-        'bsverse',
-        'bslastverse',
+        'vk-vkmod',
+        'vk-book',
+        'vk-chapter',
+        'vk-lastchapter',
+        'vk-verse',
+        'vk-lastverse',
       ],
       e.target
     );
     if (cls) {
-      let { selection } = this.state as VKSelectState;
-      selection = clone(selection);
+      let s = initialVKM === undefined ? propsVKM : stateVKM;
+      s = s ? clone(s) : defaultVKM;
       const { onSelectionChange } = this.props as VKSelectProps;
       const { value } = e.target;
-      switch (cls.type) {
-        case 'bsvkmod': {
-          selection.vkmod = value;
+      const [, id] = cls.type.split('-');
+      switch (id) {
+        case 'vkmod':
+        case 'book': {
+          s[id] = value;
           break;
         }
-        case 'bsbook': {
-          selection.book = value;
-          break;
-        }
-        case 'bschapter': {
-          selection.chapter = Number(value);
-          break;
-        }
-        case 'bslastchapter': {
-          selection.lastchapter = Number(value);
-          break;
-        }
-        case 'bsverse': {
-          selection.verse = Number(value);
-          break;
-        }
-        case 'bslastverse': {
-          selection.lastverse = Number(value);
+        case 'chapter':
+        case 'lastchapter':
+        case 'verse':
+        case 'lastverse': {
+          s[id] = Number(value);
           break;
         }
         default:
           throw new Error(`Unexpected Bibleselect class: '${cls.type}'`);
       }
-      this.setState({ selection });
+      if (initialVKM !== undefined) {
+        this.setState({ selection: s });
+      }
       if (typeof onSelectionChange === 'function') {
-        onSelectionChange(e, selection);
+        onSelectionChange(s, props.id || '');
       }
     }
   }
 
+  getNumberOptions(
+    p: 'chapter' | 'lastchapter' | 'verse' | 'lastverse',
+    osel: number | null | undefined,
+    olist: number[] | undefined,
+    min: number,
+    max: number
+  ) {
+    const props = this.props as VKSelectProps;
+    const { initialVKM } = props;
+    let oc = olist;
+    if (!oc) {
+      oc = [];
+      for (let x = min; x <= max; x += 1) {
+        oc.push(x);
+      }
+    } else if (oc.length === 0) {
+      return [];
+    }
+    const ocf = oc.filter((c) => c >= min && c <= max);
+    let nsel = osel;
+    if (initialVKM !== undefined) {
+      if (nsel && ocf && !ocf.includes(nsel)) {
+        [nsel] = ocf;
+      }
+    }
+    if (nsel && this.newselection) this.newselection[p] = nsel;
+    if (nsel && !ocf.includes(nsel)) {
+      ocf.push(nsel);
+    }
+    return ocf
+      .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))
+      .map((n) => (
+        <option key={n} value={n}>
+          {n}
+        </option>
+      ));
+  }
+
   render() {
     const props = this.props as VKSelectProps;
-    const { selection } = this.state as VKSelectState;
+    const state = this.state as VKSelectState;
+
+    // Use selectVKM prop if initialVKM is undefined, otherwise use stateVKM.
+    const { selectVKM: propsVKM, initialVKM } = props;
+    const { selection: stateVKM } = state;
+    let selection = initialVKM === undefined ? propsVKM : stateVKM;
+    if (!selection) selection = defaultVKM;
+
+    this.newselection = {} as SelectVKMType;
     const { book, chapter, verse, lastverse, lastchapter, vkmod } = selection;
-    const { options, disabled, sizetopopup } = props;
+    const { options, disabled } = props;
     const { books, chapters, lastchapters, verses, lastverses, vkmods } =
       options;
     const { handleChange } = this;
 
     const tab = (vkmod && G.Tab[vkmod]) || null;
-    const v11n = (tab && tab.v11n) || 'KJV';
+    const v11n = (tab && tab.v11n) || selection.v11n || 'KJV';
 
-    // Bible book options
-    const nb = books || ['ot', 'nt'];
+    // Bible book options are either those passed in the books prop or are
+    // all books the verse system. When the module selector is visible and
+    // an installed module is selected, books not present in the module
+    // are removed from the list. All books are sorted in v11n order and
+    // are unique.
+    const bkbgs = books || G.BkChsInV11n[v11n].map((r) => r[0]);
     const bookset: Set<string> = new Set();
-    nb.forEach((bkbg: BookGroupType | string) => {
-      const bg = (
-        C.SupportedBookGroups.includes(bkbg as BookGroupType) ? bkbg : null
-      ) as BookGroupType | null;
-      if (bg) {
+    bkbgs.forEach((bkbg: BookGroupType | string) => {
+      if (C.SupportedBookGroups.includes(bkbg as any)) {
+        const bg = bkbg as BookGroupType;
         C.SupportedBooks[bg].forEach((b) => bookset.add(b));
-      } else {
+      } else if (G.Book[bkbg]) {
         bookset.add(bkbg);
       }
     });
-    const { Book } = G;
-    const newbooks = Array.from(bookset)
+    const filteredbooks =
+      tab && vkmods?.length !== 0
+        ? Array.from(bookset).filter((b) =>
+            G.getBooksInModule(tab.module).includes(b)
+          )
+        : Array.from(bookset);
+    let sel = book;
+    if (initialVKM !== undefined) {
+      if (sel && !filteredbooks.includes(sel)) {
+        [sel] = filteredbooks;
+      }
+    }
+    this.newselection.book = sel;
+    if (sel && !filteredbooks.includes(sel)) {
+      filteredbooks.push(sel);
+    }
+    const newbooks = filteredbooks
       .sort((a, b) => {
-        const aa = Book[a];
-        const bb = Book[b];
+        const aa = G.Book[a];
+        const bb = G.Book[b];
         if (!aa) return -1;
         if (!bb) return 1;
         return aa.index > bb.index ? 1 : aa.index < bb.index ? -1 : 0;
       })
-      .filter((code) => Book[code]);
+      .map((b) => (
+        <option key={G.Book[b].code} value={G.Book[b].code}>
+          {G.Book[b].name}
+        </option>
+      ));
 
-    // Bible chapter options
-    let mc = chapters;
-    if (!mc) {
-      mc = [];
-      for (
-        let x = 1;
-        x <= (v11n && book ? getMaxChapter(v11n, book) : 0);
-        x += 1
-      ) {
-        mc.push(x);
+    const newchapters = this.getNumberOptions(
+      'chapter',
+      chapter,
+      chapters,
+      1,
+      v11n && book ? getMaxChapter(v11n, book) : 0
+    );
+
+    const newlastchapters = this.getNumberOptions(
+      'lastchapter',
+      lastchapter,
+      lastchapters,
+      chapter || 1,
+      v11n && book ? getMaxChapter(v11n, book) : 0
+    );
+
+    const newverses = this.getNumberOptions(
+      'verse',
+      verse,
+      verses,
+      1,
+      v11n ? getMaxVerse(v11n, `${book}.${chapter}`) : 0
+    );
+
+    const newlastverses = this.getNumberOptions(
+      'lastverse',
+      lastverse,
+      lastverses,
+      verse || 1,
+      v11n ? getMaxVerse(v11n, `${book}.${chapter}`) : 0
+    );
+
+    // Bible module options are either those of the vkmods prop or all installed
+    // Bible modules. If the books prop is controlling book options, modules not
+    // containing the selected book are removed.
+    const controlledBook = (books?.length || 0) > 0 && book;
+    const thevkmods =
+      vkmods || G.Tabs.filter((t) => t.type === C.BIBLE).map((t) => t.module);
+    const newvkmods = thevkmods.filter(
+      (m) => !controlledBook || G.getBooksInModule(m).includes(controlledBook)
+    );
+    let vksel = vkmod;
+    if (initialVKM !== undefined) {
+      if (!vksel || !newvkmods.includes(vksel)) {
+        [vksel] = newvkmods;
       }
     }
-    const newchapters = mc.map((ch) => (
-      <option key={ch} value={ch}>
-        {ch}
-      </option>
-    ));
+    this.newselection.vkmod = vksel;
 
-    // Bible last chapter options
-    if (lastchapters) mc = lastchapters;
-    const newlastchapters = mc.map((ch) => (
-      <option key={ch} value={ch}>
-        {ch}
-      </option>
-    ));
-
-    // Bible verse options
-    let mv = verses;
-    if (!mv) {
-      mv = [];
-      for (
-        let x = 1;
-        x <= (v11n ? getMaxVerse(v11n, `${book}.${chapter}`) : 0);
-        x += 1
-      ) {
-        mv.push(x);
-      }
-    }
-    const newverses = mv.map((vs) => (
-      <option key={vs} value={vs}>
-        {vs}
-      </option>
-    ));
-
-    // Bible last-verse options
-    if (lastverses) mv = lastverses;
-    const newlastverses = mv.map((vs) => (
-      <option key={vs} value={vs}>
-        {vs}
-      </option>
-    ));
-
-    // Bible module options
-    let newvkmods: string[] | null = vkmods || null;
-    if (!newvkmods) {
-      newvkmods = G.Tabs.filter((t) => t.type === C.BIBLE).map((t) => t.module);
-    }
+    const {
+      book: b,
+      chapter: c,
+      verse: v,
+      lastverse: lv,
+      lastchapter: lc,
+      vkmod: vm,
+    } = this.newselection;
 
     return (
       <Hbox pack="start" align="center" {...addClass('vkselect', this.props)}>
         {newbooks.length > 0 && (
-          <Bookselect
-            className="bsbook"
-            selection={book}
+          <Menulist
+            className="vk-book"
+            value={b}
             options={newbooks}
-            sizetopopup={sizetopopup}
             disabled={disabled}
             onChange={handleChange}
           />
         )}
-
         {newchapters.length > 0 && (
           <Menulist
-            className="bschapter"
-            value={(chapter || 1).toString()}
+            className="vk-chapter"
+            value={(c || 1).toString()}
             options={newchapters}
             disabled={disabled}
             onChange={handleChange}
           />
         )}
-
         {newverses.length > 0 && (
           <>
             <Label className="colon" value=":" />
             <Menulist
-              className="bsverse"
-              value={(verse || 1).toString()}
+              className="vk-verse"
+              value={(v || 1).toString()}
               options={newverses}
               disabled={disabled}
               onChange={handleChange}
             />
           </>
         )}
-
         {((newverses.length > 0 && newlastverses.length > 0) ||
           (newchapters.length > 0 && newlastchapters.length > 0)) && (
           <Label className="dash" value="&#8211;" />
         )}
         {newlastverses.length > 0 && (
           <Menulist
-            className="bslastverse"
-            value={(lastverse || verse || 1).toString()}
+            className="vk-lastverse"
+            value={(lv || verse || 1).toString()}
             options={newlastverses}
             disabled={disabled}
             onChange={handleChange}
@@ -317,23 +409,21 @@ class VKSelect extends React.Component {
         )}
         {newlastchapters.length > 0 && (
           <Menulist
-            className="bslastchapter"
-            value={(lastchapter || chapter || 1).toString()}
+            className="vk-lastchapter"
+            value={(lc || chapter || 1).toString()}
             options={newlastchapters}
             disabled={disabled}
             onChange={handleChange}
           />
         )}
         {newvkmods.length > 0 && (
-          <>
-            <ModuleMenu
-              className="bsvkmod"
-              value={vkmod}
-              modules={newvkmods}
-              disabled={disabled}
-              onChange={handleChange}
-            />
-          </>
+          <ModuleMenu
+            className="vk-vkmod"
+            value={vm}
+            modules={newvkmods}
+            disabled={disabled}
+            onChange={handleChange}
+          />
         )}
       </Hbox>
     );

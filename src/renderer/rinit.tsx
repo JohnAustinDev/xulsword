@@ -142,33 +142,54 @@ const defaultProps = {
   resetOnResize: true,
   printColumnSelect: false,
   printControl: null,
+  modalInitial: 'off',
+  dialogInitial: [],
+  iframeInitial: '',
+  printInitial: false,
 };
 const propTypes = {
   children: PropTypes.element.isRequired,
   resetOnResize: PropTypes.bool,
+  modalInitial: PropTypes.string,
+  dialogInitial: PropTypes.arrayOf(PropTypes.object),
+  iframeInitial: PropTypes.string,
+  printInitial: PropTypes.bool,
 };
 type ResetProps = {
   children: ReactElement;
   resetOnResize: boolean;
   printColumnSelect: boolean;
   printControl: ReactElement | null;
+  modalInitial: ModalType;
+  dialogInitial: ReactElement[];
+  iframeInitial: string;
+  printInitial: boolean;
 };
 
 const delayHandlerThis = {};
 function Reset(props: ResetProps) {
-  const { children, resetOnResize, printColumnSelect, printControl } = props;
+  const {
+    children,
+    resetOnResize,
+    printColumnSelect,
+    printControl,
+    modalInitial,
+    dialogInitial,
+    iframeInitial,
+    printInitial,
+  } = props;
   const [reset, setReset] = useState(0);
-  const [modal, setModal] = useState('off') as [
+  const [modal, setModal] = useState(modalInitial) as [
     ModalType,
     (a: ModalType) => void
   ];
   const [progress, setProgress] = useState(-1);
-  const [dialogs, setDialog] = useState([] as ReactElement[]) as [
+  const [dialogs, setDialog] = useState(dialogInitial) as [
     ReactElement[],
     (dialog: ReactElement[]) => void
   ];
-  const [iframeFilePath, setIframe] = useState('');
-  const [print, setPrint] = useState(false);
+  const [iframeFilePath, setIframe] = useState(iframeInitial);
+  const [print, setPrint] = useState(printInitial);
 
   const textbox: React.RefObject<HTMLInputElement> = React.createRef();
 
@@ -500,10 +521,22 @@ export default async function renderToRoot(
     resetOnResize?: boolean;
     printColumnSelect?: boolean;
     printControl?: ReactElement;
+    modalInitial?: ModalType;
+    dialogInitial?: ReactElement[];
+    iframeInitial?: string;
+    printInitial?: boolean;
   }
 ) {
-  const { namespace, resetOnResize, printColumnSelect, printControl } =
-    options || {};
+  const {
+    namespace,
+    resetOnResize,
+    printColumnSelect,
+    printControl,
+    modalInitial,
+    dialogInitial,
+    iframeInitial,
+    printInitial,
+  } = options || {};
 
   window.ipc.renderer.on('close', () => {
     if (typeof unloadXUL === 'function') unloadXUL();
@@ -517,6 +550,10 @@ export default async function renderToRoot(
         resetOnResize={resetOnResize}
         printColumnSelect={printColumnSelect}
         printControl={printControl}
+        modalInitial={modalInitial}
+        dialogInitial={dialogInitial}
+        iframeInitial={iframeInitial}
+        printInitial={printInitial}
       >
         {component}
       </Reset>

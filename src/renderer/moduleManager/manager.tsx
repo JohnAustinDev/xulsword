@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable no-nested-ternary */
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -34,11 +35,7 @@ import {
 import Button from '../libxul/button';
 import { Hbox, Vbox, Box } from '../libxul/boxes';
 import Groupbox from '../libxul/groupbox';
-import VKSelect, {
-  VKSelectChangeEvents,
-  VKSelectOptions,
-  VKSelection,
-} from '../libxul/vkselect';
+import VKSelect from '../libxul/vkselect';
 import Table from '../libxul/table';
 import Spacer from '../libxul/spacer';
 import Label from '../libxul/label';
@@ -75,6 +72,7 @@ import type {
   TonRowsReordered,
   TinitialRowSort,
 } from '../libxul/table';
+import type { VKSelectProps, SelectVKMType } from '../libxul/vkselect';
 import type { ModinfoParent } from '../libxul/modinfo';
 
 G.Module.cancel();
@@ -96,11 +94,11 @@ const notStatePref = {
   progress: null as number[] | null,
   showAudioDialog: [] as {
     conf: SwordConfType;
-    selection: VKSelection;
-    initialSelection: VKSelection;
-    options: VKSelectOptions;
+    selection: SelectVKMType;
+    initialVKM: VKSelectProps['initialVKM'];
+    options: VKSelectProps['options'];
     chapters: SwordConfAudioChapters;
-    callback: (result: VKSelection | null) => void;
+    callback: (result: SelectVKMType | null) => void;
   }[],
   tables: {
     language: {
@@ -198,6 +196,8 @@ export default class ModuleManager
 
   eventHandler;
 
+  audioDialogOnChange: VKSelectProps['onSelectionChange'];
+
   modinfoParentHandler: typeof modinfoParentHandlerH;
 
   sState: (
@@ -256,7 +256,7 @@ export default class ModuleManager
       repository: H.columnWidthChanged.bind(this, 'repository'),
     };
     this.sizeTableToParent = this.sizeTableToParent.bind(this);
-    this.audioDialogOnChange = this.audioDialogOnChange.bind(this);
+    this.audioDialogOnChange = audioDialogOnChange.bind(this);
     this.audioDialogClose = this.audioDialogClose.bind(this);
     this.audioDialogAccept = this.audioDialogAccept.bind(this);
     this.sState = this.setState.bind(this);
@@ -716,51 +716,6 @@ export default class ModuleManager
     });
   }
 
-  audioDialogOnChange(_e: VKSelectChangeEvents, selection: VKSelection) {
-    this.sState((prevState) => {
-      const { showAudioDialog } = prevState;
-      if (showAudioDialog.length) {
-        const { book, chapter, lastchapter } = selection;
-        const { options, chapters: allchs } = showAudioDialog[0];
-        const { vkmods: trans, books, verses, lastverses } = options;
-        if (book && chapter !== undefined && lastchapter !== undefined) {
-          const newselection: VKSelection = {
-            book,
-            chapter,
-            lastchapter,
-          };
-          const chset: Set<number> = new Set();
-          allchs.forEach((v) => {
-            if (v.bk === book) {
-              for (let x = v.ch1; x <= v.ch2; x += 1) {
-                chset.add(x);
-              }
-            }
-          });
-          const chapters = Array.from(chset).sort((a, b) =>
-            a > b ? 1 : a < b ? -1 : 0
-          );
-          const lastchapters = chapters.filter((c) => c >= chapter);
-          const newoptions: VKSelectOptions = {
-            vkmods: trans,
-            books,
-            chapters,
-            lastchapters,
-            verses,
-            lastverses,
-          };
-          showAudioDialog[0] = {
-            ...showAudioDialog[0],
-            selection: newselection,
-            options: newoptions,
-          };
-          return { showAudioDialog };
-        }
-      }
-      return null;
-    });
-  }
-
   audioDialogClose() {
     this.sState((prevState) => {
       const { showAudioDialog } = prevState;
@@ -862,7 +817,7 @@ export default class ModuleManager
                   <div>{showAudioDialog[0].conf.Description?.locale}</div>
                   <VKSelect
                     height="2em"
-                    initialSelection={showAudioDialog[0].initialSelection}
+                    initialVKM={showAudioDialog[0].initialVKM}
                     options={showAudioDialog[0].options}
                     onSelectionChange={dialogOnChange}
                   />
@@ -1176,6 +1131,52 @@ export default class ModuleManager
 }
 ModuleManager.defaultProps = defaultProps;
 ModuleManager.propTypes = propTypes;
+
+function audioDialogOnChange(this: ModuleManager, selection: SelectVKMType) {
+  this.sState((prevState) => {
+    const { showAudioDialog } = prevState;
+    if (showAudioDialog.length) {
+      const { book, chapter, lastchapter, v11n } = selection;
+      const { options, chapters: allchs } = showAudioDialog[0];
+      const { vkmods: trans, books, verses, lastverses } = options;
+      if (book && chapter !== undefined && lastchapter !== undefined) {
+        const newselection: SelectVKMType = {
+          book,
+          chapter,
+          lastchapter,
+          v11n,
+        };
+        const chset: Set<number> = new Set();
+        allchs.forEach((v) => {
+          if (v.bk === book) {
+            for (let x = v.ch1; x <= v.ch2; x += 1) {
+              chset.add(x);
+            }
+          }
+        });
+        const chapters = Array.from(chset).sort((a, b) =>
+          a > b ? 1 : a < b ? -1 : 0
+        );
+        const lastchapters = chapters.filter((c) => c >= chapter);
+        const newoptions: VKSelectProps['options'] = {
+          vkmods: trans,
+          books,
+          chapters,
+          lastchapters,
+          verses,
+          lastverses,
+        };
+        showAudioDialog[0] = {
+          ...showAudioDialog[0],
+          selection: newselection,
+          options: newoptions,
+        };
+        return { showAudioDialog };
+      }
+    }
+    return null;
+  });
+}
 
 export function onunload() {
   G.Module.cancel(); // closes all FTP connections

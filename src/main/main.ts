@@ -213,8 +213,7 @@ const openMainWindow = () => {
   let options: Electron.BrowserWindowConstructorOptions = {
     title: i18n.t('programTitle'),
     fullscreenable: true,
-    width: 1024,
-    height: 728,
+    ...C.UI.Window.large,
   };
 
   const windowsDidClose = G.Prefs.getBoolPref(`WindowsDidClose`);

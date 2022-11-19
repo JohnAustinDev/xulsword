@@ -113,6 +113,46 @@ export function scrollIntoView(
   }
 }
 
+// Does location surely exist in the module? It's assumed if a book is included,
+// then so are all of its chapters and verses.
+export function isValidVKM(location: LocationVKType, module: string): boolean {
+  if (!isValidVK(location)) return false;
+  if (!module || !(module in G.Tab)) return false;
+  const tab = G.Tab[module];
+  if (location.v11n !== tab.v11n) return false;
+  if (!G.getBooksInModule(tab.module).includes(module)) return false;
+  return true;
+}
+
+// Does location actually exist in v11n?
+export function isValidVK(location: LocationVKType): boolean {
+  const { book, chapter, v11n, verse, lastverse } = location;
+  if (!book || !v11n) return false;
+  if (chapter < 1 || chapter > getMaxChapter(v11n, book)) {
+    return false;
+  }
+  const maxv = getMaxVerse(v11n, `${book} ${chapter}`);
+  if (verse !== undefined && verse !== null) {
+    if (verse < 1 || verse > maxv) {
+      return false;
+    }
+  }
+  if (lastverse !== undefined && lastverse !== null) {
+    if (!verse || lastverse < verse || lastverse > maxv) {
+      return false;
+    }
+  }
+  return true;
+}
+
+export function getValidVK(module: string): LocationVKType {
+  return {
+    book: (module && G.getBooksInModule(module)[0]) || 'Gen',
+    chapter: 1,
+    v11n: (module && module in G.Tab && G.Tab[module].v11n) || 'KJV',
+  };
+}
+
 // LibSword.getMaxChapter returns an erroneous number if vkeytext's
 // book is not part of v11n, so it would be necessary to check here
 // first. But a LibSword call is unnecessary with G.BooksInV11n.

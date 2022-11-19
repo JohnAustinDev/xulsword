@@ -371,17 +371,18 @@ export default class Print extends React.Component {
         {control}
         <Groupbox caption={i18n.t('printCmd.label')}>
           <Vbox pack="center" align="center">
-            <Menulist
-              id="pageSize"
-              value={pageSize}
-              options={paperSizes.map((p) => (
-                <option key={p.type} value={p.type}>
-                  {p.type}
-                </option>
-              ))}
-              onChange={handler}
-            />
-            <Hbox>
+            <Hbox align="center">
+              <Menulist
+                id="pageSize"
+                value={pageSize}
+                options={paperSizes.map((p) => (
+                  <option key={p.type} value={p.type}>
+                    {p.type}
+                  </option>
+                ))}
+                onChange={handler}
+              />
+              <Spacer width="15" />
               <Button
                 id="portrait"
                 checked={!landscape}

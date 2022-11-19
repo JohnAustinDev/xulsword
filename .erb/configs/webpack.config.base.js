@@ -17,8 +17,8 @@ export const xulswordWindows = [
   'removeModule',
   'search',
   'searchHelp',
-  'about'
-  //'printPassage'
+  'about',
+  'printPassage'
 ];
 
 export default {

@@ -11,7 +11,10 @@ import './groupbox.css';
 import { Box, Hbox, Vbox } from './boxes';
 
 // XUL deck
-const defaultProps = xulDefaultProps;
+const defaultProps = {
+  ...xulDefaultProps,
+  orient: 'vertical',
+};
 
 const propTypes = {
   ...xulPropTypes,

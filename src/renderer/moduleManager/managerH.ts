@@ -1030,7 +1030,7 @@ async function promptAudioChapters(
           showAudioDialog.push({
             conf,
             selection: { book, chapter, lastchapter: chapter },
-            initialSelection: { book, chapter, lastchapter: chapter },
+            initialVKM: { book, chapter, lastchapter: chapter },
             options: {
               vkmods: [],
               books,
