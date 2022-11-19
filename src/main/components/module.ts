@@ -38,13 +38,13 @@ import type {
   Download,
   FTPDownload,
   GenBookAudioFile,
-  GType,
   ModTypes,
   NewModuleReportType,
   NewModulesType,
   Repository,
   RepositoryListing,
   SwordConfType,
+  V11nType,
 } from '../../type';
 
 export const CipherKeyModules: {
@@ -85,12 +85,16 @@ export function moduleUnsupported(
   const module2 = (conf ? conf.module : module) as string;
   let moddrv;
   let minimumVersion;
+  let v11n;
   if (conf) {
     moddrv = conf.ModDrv;
     minimumVersion = conf.MinimumVersion;
+    v11n = conf.Versification || 'KJV';
   } else {
     moddrv = LibSword.getModuleInformation(module2, 'ModDrv');
     minimumVersion = LibSword.getModuleInformation(module2, 'MinimumVersion');
+    v11n = LibSword.getModuleInformation(module2, 'Versification');
+    if (v11n === C.NOTFOUND) v11n = 'KJV';
   }
   if (!minimumVersion || minimumVersion === C.NOTFOUND) minimumVersion = '0';
   const type = getTypeFromModDrv(moddrv);
@@ -103,6 +107,11 @@ export function moduleUnsupported(
   } else {
     reasons.push({
       error: `(${module2}) Unsupported type '${type || moddrv}'.`,
+    });
+  }
+  if (!C.SupportedV11ns.includes(v11n as V11nType)) {
+    reasons.push({
+      error: `(${module2}) Unsupported verse system '${v11n}'.`,
     });
   }
   return reasons;
