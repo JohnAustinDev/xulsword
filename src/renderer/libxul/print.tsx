@@ -132,6 +132,8 @@ export default class Print extends React.Component {
 
   async handler(e: React.SyntheticEvent<any, any>) {
     const state = this.state as PrintState;
+    const props = this.props as PrintProps;
+    const { control } = props;
     const { selectRefs } = this;
     const target = e.currentTarget as HTMLElement;
     const [id, id2] = target.id.split('.');
@@ -217,7 +219,10 @@ export default class Print extends React.Component {
             break;
           }
           case 'cancel': {
-            window.ipc.renderer.invoke('print-preview');
+            // If the window includes a control component, close the
+            // entire window, otherwise, close the print overlay.
+            if (control) G.Window.close();
+            else window.ipc.renderer.invoke('print-preview');
             break;
           }
           default:
