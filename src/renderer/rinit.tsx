@@ -30,7 +30,7 @@ import Spacer from './libxul/spacer';
 import Button from './libxul/button';
 import Label from './libxul/label';
 import Textbox from './libxul/textbox';
-import Print from './libxul/print';
+import Printsettings from './libxul/printSettings';
 
 // Global CSS imports
 import 'normalize.css/normalize.css';
@@ -498,7 +498,10 @@ function Reset(props: ResetProps) {
             </div>
             <Vbox>
               <Spacer flex="1" />
-              <Print columnSelect={printColumnSelect} control={printControl} />
+              <Printsettings
+                columnSelect={printColumnSelect}
+                control={printControl}
+              />
               <Spacer flex="1" />
             </Vbox>
           </Hbox>

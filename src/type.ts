@@ -615,6 +615,14 @@ export type PrefValue =
   | PrefObject
   | (PrefPrimative | PrefObject | PrefValue)[];
 
+export type GMethodAddCaller<M extends (...args: any) => any> = (
+  ...arg: [...Parameters<M>, number]
+) => ReturnType<M>;
+
+export type GAddCaller<G extends { [k: string]: (...args: any[]) => any }> = {
+  [K in keyof G]: GMethodAddCaller<G[K]>;
+};
+
 export type GType = {
   // Getters
   Books: ReturnType<typeof getBooks>;
@@ -650,6 +658,12 @@ export type GType = {
   Window: typeof Window;
 };
 
+export type AddCaller = {
+  [obj in typeof GBuilder['includeCallingWindow'][number]]: GAddCaller<
+    GType[obj]
+  >;
+};
+
 // This GBuilder object will be used in the main/mg and renderer/rg
 // modules at runtime to create two different types of G objects
 // sharing the same GType interface: one will be available in the
@@ -670,6 +684,14 @@ export const GBuilder: GType & {
     [keyof GType, (keyof GType['Module'])[]],
     [keyof GType, (keyof GType['LibSword'])[]]
   ];
+
+  // Methods of includeCallingWindow classes must not use rest parameters
+  // or default values in their function definition's argument lists. This
+  // is because Function.length is used to append the calling window by
+  // mg.ts, and Function.length does not include rest parameters or default
+  // arguments. Using rest parameters or default arguments would thus
+  // result in overwriting the last argument by the calling window id!
+  includeCallingWindow: ['Prefs', 'Window', 'Commands', 'Module'];
 } = {
   asyncFuncs: [
     ['getSystemFonts', []],
@@ -687,6 +709,8 @@ export const GBuilder: GType & {
     ],
     ['LibSword', ['searchIndexBuild', 'search']],
   ],
+
+  includeCallingWindow: ['Prefs', 'Window', 'Commands', 'Module'],
 
   // Getters
   Books: 'getter' as any,

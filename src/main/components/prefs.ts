@@ -9,7 +9,7 @@ import Subscription from '../../subscription';
 import LocalFile from './localFile';
 import Dirs from './dirs';
 
-import type { PrefObject, PrefValue } from '../../type';
+import type { GAddCaller, PrefObject, PrefValue } from '../../type';
 
 export type PrefCallbackType = (
   callingWinID: number,
@@ -349,7 +349,7 @@ const Prefs = {
   },
 };
 
-export type PrefsType = Omit<
+export type PrefsGType = Omit<
   typeof Prefs,
   | 'writeOnChange'
   | 'store'
@@ -360,4 +360,4 @@ export type PrefsType = Omit<
   | 'setPref'
 >;
 
-export default Prefs as PrefsType;
+export default Prefs as PrefsGType;

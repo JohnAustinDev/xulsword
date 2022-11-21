@@ -13,7 +13,7 @@ import log from './log';
 const G = {} as GType;
 const { asyncFuncs } = GBuilder;
 Object.entries(GBuilder).forEach((entry) => {
-  if (entry[0] === 'asyncFuncs') return;
+  if (['asyncFuncs', 'includeCallingWindow'].includes(entry[0])) return;
   const gBuilder = GBuilder as any;
   const g = G as any;
   const name = entry[0] as keyof typeof GBuilder;

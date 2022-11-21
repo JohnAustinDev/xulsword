@@ -1,0 +1,61 @@
+.printsettings .groupbox-body > div > * {
+  margin-bottom: 10px;
+}
+.printsettings .textbox {
+  width: 3em;
+  text-align: right;
+}
+.printsettings #landscape svg {
+  transform: rotate(90deg) scaleX(-1);
+}
+.printsettings .margins .hbox:nth-child(2) > .hbox:nth-child(1) svg {
+  transform: rotate(-90deg);
+}
+.printsettings .margins .hbox:nth-child(2) > .hbox:nth-child(3) svg {
+  transform: rotate(90deg);
+}
+.printsettings .margins .hbox:nth-child(3) svg {
+  transform: scaleY(-1);
+}
+.printsettings .margins .spacer {
+  width: 40px;
+}
+
+.printsettings .groupbox,
+.printsettings .button {
+  z-index: 1; /* required during full screen for some reason */
+}
+
+/* print overlay */
+.pdf-preview,
+.html-preview {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+.pdf-preview iframe {
+  width: 100%;
+}
+.html-preview {
+  padding-top: 10px;
+  padding-left: 10px;
+}
+
+.content {
+  position: relative; /* for overlay */
+  display: grid;
+  background: white;
+}
+
+.scale {
+  transform-origin: left top;
+}
+
+/* actual print-only CSS */
+@media print {
+  #overlay,
+  .printsettings {
+    display: none;
+  }
+}

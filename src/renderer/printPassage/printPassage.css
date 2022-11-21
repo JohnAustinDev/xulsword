@@ -9,3 +9,8 @@
 #printControl .vk-chapter select {
   width: 3.25em;
 }
+
+#printControl .groupbox,
+#printControl .button {
+  z-index: 1; /* required during full screen for some reason */
+}

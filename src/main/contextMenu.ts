@@ -1,14 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { BrowserWindow } from 'electron';
 import contextMenuCreator from 'electron-context-menu';
-import i18next from 'i18next';
+import i18n from 'i18next';
 import G from './mg';
-import Commands, { newDbItemWithDefaults } from './components/commands';
+import CommandsX, { newDbItemWithDefaults } from './components/commands';
 import setViewportTabs from './tabs';
 import Data from './components/data';
 
-import type { ContextData, LocationVKType } from '../type';
+import type { AddCaller, ContextData, LocationVKType } from '../type';
 import type { AboutWinState } from '../renderer/about/about';
+
+// Requires the calling window, since rg will not be adding it.
+const Commands = CommandsX as AddCaller['Commands'];
 
 const noContextData: ContextData = {
   search: null,
@@ -46,9 +49,9 @@ export default function contextMenu(
     showSaveImageAs: true,
 
     labels: {
-      cut: i18next.t('menu.edit.cut'),
-      copy: i18next.t('menu.edit.copy'),
-      paste: i18next.t('menu.edit.paste'),
+      cut: i18n.t('menu.edit.cut'),
+      copy: i18n.t('menu.edit.copy'),
+      paste: i18n.t('menu.edit.paste'),
       learnSpelling: 'learnSpelling',
       // lookUpSelection: 'lookUpSelection',
       searchWithGoogle: 'searchWithGoogle',
@@ -64,17 +67,17 @@ export default function contextMenu(
 
     prepend: (actions, params) => [
       {
-        label: `${i18next.t('Search')}: ${cm().lemma}`,
+        label: `${i18n.t('Search')}: ${cm().lemma}`,
         visible: Boolean(cm().lemma),
         click: ((data) => {
           return () => {
-            if (data.search) Commands.search(data.search);
+            if (data.search) Commands.search(data.search, window.id);
           };
         })(cm()),
       },
       actions.separator(),
       {
-        label: i18next.t('menu.help.about'),
+        label: i18n.t('menu.help.about'),
         visible: Object.keys(cm()).length > 0,
         enabled: Boolean(cm().tab || cm().module),
         click: ((data) => {
@@ -95,23 +98,23 @@ export default function contextMenu(
                 showConf: '',
                 editConf: false,
               };
-              Commands.openAbout(s);
+              Commands.openAbout(s, window.id);
             }
           };
         })(cm()),
       },
       {
-        label: i18next.t('menu.options.font'),
+        label: i18n.t('menu.options.font'),
         visible: Object.keys(cm()).length > 0,
         enabled: Boolean(cm().module),
         click: ((data) => {
           return () => {
-            if (data.module) Commands.openFontsColors(data.module);
+            if (data.module) Commands.openFontsColors(data.module, window.id);
           };
         })(cm()),
       },
       {
-        label: i18next.t('menu.context.close'),
+        label: i18n.t('menu.context.close'),
         visible: Object.keys(cm()).length > 0,
         enabled: Boolean((cm().tab || cm().module) && cm().panelIndex !== null),
         click: ((data) => {
@@ -126,50 +129,66 @@ export default function contextMenu(
 
     append: (actions, params) => [
       {
-        label: i18next.t('Search'),
+        label: i18n.t('Search'),
         visible: Object.keys(cm()).length > 0,
         enabled: Boolean(cm().selection && cm().module),
         click: ((data) => {
           return () => {
             const { selection, module } = data;
             if (selection && module)
-              Commands.search({
-                module,
-                searchtext: selection,
-                type: 'SearchExactText',
-              });
+              Commands.search(
+                {
+                  module,
+                  searchtext: selection,
+                  type: 'SearchExactText',
+                },
+                window.id
+              );
           };
         })(cm()),
       },
       {
-        label: i18next.t('menu.context.openSelectedRef'),
+        label: i18n.t('menu.context.openSelectedRef'),
         visible: Object.keys(cm()).length > 0,
         enabled: Boolean(cm().selectionParsedVK),
         click: ((data) => {
           return () => {
             const loc = data.selectionParsedVK as LocationVKType;
             if (typeof loc === 'object') {
-              Commands.goToLocationVK(loc, loc);
+              Commands.goToLocationVK(loc, loc, undefined, window.id);
             }
           };
         })(cm()),
       },
       {
-        label: i18next.t('menu.context.selectVerse'),
+        label: i18n.t('menu.context.selectVerse'),
         visible: Object.keys(cm()).length > 0 && !cm().isPinned,
         enabled: Boolean(cm().locationVK),
         click: ((data) => {
           return () => {
             const { locationVK } = data;
             if (locationVK && typeof locationVK === 'object') {
-              Commands.goToLocationVK(locationVK, locationVK);
+              Commands.goToLocationVK(
+                locationVK,
+                locationVK,
+                undefined,
+                window.id
+              );
             }
           };
         })(cm()),
       },
+      {
+        label: i18n.t('printCmd.label'),
+        visible: true,
+        enabled: true,
+        click: () => {
+          Commands.print(window.id);
+        },
+      },
       actions.separator(),
       {
-        label: i18next.t('menu.bookmark.add'),
+        label: i18n.t('menu.bookmark.add'),
         visible: Object.keys(cm()).length > 0,
         enabled: Boolean(cm().module && cm().locationVK),
         click: ((data) => {
@@ -186,7 +205,7 @@ export default function contextMenu(
         })(cm()),
       },
       {
-        label: i18next.t('menu.usernote.add'),
+        label: i18n.t('menu.usernote.add'),
         visible: Object.keys(cm()).length > 0,
         enabled: Boolean(cm().module && cm().locationVK),
         click: ((data) => {
@@ -204,23 +223,23 @@ export default function contextMenu(
       },
 
       {
-        label: i18next.t('menu.usernote.properties'),
+        label: i18n.t('menu.usernote.properties'),
         visible: Object.keys(cm()).length > 0,
         enabled: Boolean(cm().bookmark),
         click: ((data) => {
           return () => {
             if (data.bookmark)
-              Commands.openDbItemPropertiesDialog(data.bookmark);
+              Commands.openDbItemPropertiesDialog(data.bookmark, window.id);
           };
         })(cm()),
       },
       {
-        label: i18next.t('menu.usernote.delete'),
+        label: i18n.t('menu.usernote.delete'),
         visible: Object.keys(cm()).length > 0,
         enabled: Boolean(cm().bookmark),
         click: ((data) => {
           return () => {
-            if (data.bookmark) Commands.deleteDbItem(data.bookmark);
+            if (data.bookmark) Commands.deleteDbItem(data.bookmark, window.id);
           };
         })(cm()),
       },

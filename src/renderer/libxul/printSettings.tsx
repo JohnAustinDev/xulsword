@@ -17,18 +17,12 @@ import { getStatePref } from '../rutil';
 import { Hbox, Vbox } from './boxes';
 import Button from './button';
 import Spacer from './spacer';
-import {
-  addClass,
-  delayHandler,
-  xulDefaultProps,
-  XulProps,
-  xulPropTypes,
-} from './xul';
+import { addClass, xulDefaultProps, XulProps, xulPropTypes } from './xul';
 import Menulist from './menulist';
 import Textbox from './textbox';
 import Label from './label';
 import Groupbox from './groupbox';
-import './print.css';
+import './printSettings.css';
 
 const paperSizes = [
   { type: 'A3', w: 297, h: 420, u: 'mm' },
@@ -77,7 +71,7 @@ const notStatePref = {};
 
 export type PrintState = typeof defaultState;
 
-export default class Print extends React.Component {
+export default class Printsettings extends React.Component {
   static defaultProps: typeof defaultProps;
 
   static propTypes: typeof propTypes;
@@ -254,9 +248,8 @@ export default class Print extends React.Component {
         if (e.type === 'blur' || ek.key === 'Enter') {
           switch (id) {
             case 'margins': {
-              const select =
-                selectRefs.margins[id2 as keyof Print['selectRefs']['margins']]
-                  .current;
+              const id2x = id2 as keyof Printsettings['selectRefs']['margins'];
+              const select = selectRefs.margins[id2x].current;
               if (select) {
                 const s: Partial<PrintState> = {
                   margins: { ...state.margins, [id2]: Number(select.value) },
@@ -318,7 +311,7 @@ export default class Print extends React.Component {
     const pwidth = psize[landscape ? 'h' : 'w'];
     const pheight = psize[landscape ? 'w' : 'h'];
 
-    const maxh = window.innerHeight - 20;
+    const maxh = window.innerHeight - 30;
 
     // html-page width can be anything, it just must be known before render
     const maxControlW = 500;
@@ -339,7 +332,7 @@ export default class Print extends React.Component {
     const ptop = (maxh - htmlpageH) / (2 * hpscale);
 
     return (
-      <Vbox {...addClass('print', props)}>
+      <Vbox {...addClass('printsettings', props)}>
         <style>{`
           .html-page {
             width: ${htmlpageW}px;
@@ -516,5 +509,5 @@ export default class Print extends React.Component {
     );
   }
 }
-Print.defaultProps = defaultProps;
-Print.propTypes = propTypes;
+Printsettings.defaultProps = defaultProps;
+Printsettings.propTypes = propTypes;

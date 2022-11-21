@@ -39,18 +39,6 @@ import {
   getConfig,
 } from './minit';
 
-// Methods of the following classes must not use rest parameters or default
-// values in their function definition's argument lists. This is because
-// Function.length is used to append the calling window, and Function.length
-// does not include rest parameters or default arguments, so this would result
-// in runtime exceptions or other unexpected behaviour.
-const includeCallingWindow: (keyof GType)[] = [
-  'Prefs',
-  'Window',
-  'Commands',
-  'Module',
-];
-
 // Handle global variable calls from renderer processes
 function handleGlobal(
   event: IpcMainEvent | IpcMainInvokeEvent,
@@ -58,6 +46,7 @@ function handleGlobal(
   ...args: any[]
 ) {
   let ret = null;
+  const { includeCallingWindow } = GBuilder;
   const win = BrowserWindow.fromWebContents(event.sender)?.id ?? -1;
   if (name in GBuilder) {
     const gBuilder = GBuilder as any;
@@ -72,7 +61,9 @@ function handleGlobal(
         ret = g[name][m];
       } else if (typeof gBuilder[name][m] === 'function') {
         if (
-          includeCallingWindow.includes(name) &&
+          includeCallingWindow.includes(
+            name as typeof includeCallingWindow[number]
+          ) &&
           typeof args[g[name][m].length] === 'undefined'
         ) {
           args[g[name][m].length] = win;

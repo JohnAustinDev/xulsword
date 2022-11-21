@@ -15,6 +15,7 @@ import Window, { getBrowserWindows } from './window';
 import type {
   LocationSKType,
   LocationVKType,
+  GAddCaller,
   NewModulesType,
   ScrollType,
   SearchType,

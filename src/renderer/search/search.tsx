@@ -373,7 +373,7 @@ export default class SearchWin extends React.Component implements PopupParent {
             </Columns>
             <Rows>
               <Row>
-                <Groupbox align="center">
+                <Groupbox orient="horizontal" align="center">
                   <Button id="moreLess" onClick={handler}>
                     {!moreLess && <Label value={i18n.t('more.label')} />}
                     {moreLess && <Label value={i18n.t('less.label')} />}

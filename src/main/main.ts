@@ -23,8 +23,6 @@ import G from './mg';
 import LibSword from './components/libsword';
 import LocalFile from './components/localFile';
 import { CipherKeyModules } from './components/module';
-import Dirs from './components/dirs';
-import Data from './components/data';
 import MenuBuilder, { pushPrefsToMenu } from './menu';
 import Window, {
   WindowRegistry,
