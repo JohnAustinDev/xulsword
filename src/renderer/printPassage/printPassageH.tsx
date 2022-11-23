@@ -113,16 +113,7 @@ export function bibleChapterText(
         `${book}.${chapter}`,
         options
       );
-      noteHTML = getNoteHTML(
-        G.LibSword.getNotes(),
-        {
-          footnotes: true,
-          crossrefs: true,
-          usernotes: true,
-        },
-        0,
-        crossrefsText
-      );
+      noteHTML = getNoteHTML(G.LibSword.getNotes(), show, 0, crossrefsText);
     }
 
     // Add usernotes to text
@@ -144,16 +135,7 @@ export function bibleChapterText(
     if (introduction) {
       const heading = i18n.t('IntroLink', toptions);
       const intro = getIntroductions(module, `${book} ${chapter}`);
-      const introNotesHTML = getNoteHTML(
-        intro.intronotes,
-        {
-          footnotes: true,
-          crossrefs: true,
-          usernotes: true,
-        },
-        0,
-        true
-      );
+      const introNotesHTML = getNoteHTML(intro.intronotes, show, 0, true);
       if (intro.textHTML)
         introHTML = `<div class="head1">${heading}</div>${intro.textHTML}${introNotesHTML}`;
     }

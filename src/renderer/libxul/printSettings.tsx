@@ -181,7 +181,10 @@ export default class Printsettings extends React.Component {
             break;
           }
           case 'printPreview': {
-            window.ipc.renderer.printPreview({ progress: 'undefined' });
+            window.ipc.renderer.printPreview({
+              progress: 'undefined',
+              modalType: 'darkened',
+            });
             setTimeout(
               () =>
                 window.ipc.renderer.printPreview(undefined, undefined, {
@@ -193,7 +196,7 @@ export default class Printsettings extends React.Component {
           }
           case 'printToPDF': {
             window.ipc.renderer.printPreview(
-              { progress: 'undefined' },
+              { progress: 'undefined', modalType: 'darkened' },
               undefined,
               { pdfTmpDir: 'prompt-for-file' }
             );
@@ -202,7 +205,7 @@ export default class Printsettings extends React.Component {
           case 'print': {
             const { landscape, margins, pageSize } = state;
             window.ipc.renderer.printPreview(
-              { progress: 'undefined' },
+              { progress: 'undefined', modalType: 'darkened' },
               {
                 silent: false,
                 margins,

@@ -31,6 +31,8 @@ import '../libsword.css';
 import '../viewport/atext.css';
 import './printPassage.css';
 
+// TODO!: Dictlinks aren't implemented. CSS needs improvement.
+// Regular print top margin is too large. Wrong chapter(s) print.
 // TODO!: As of 11/22 @page {@bottom-center {content: counter(page);}} does not work
 
 import type { PrintOverlayOptions } from '../../type';
@@ -155,21 +157,23 @@ export default class PrintPassageWin extends React.Component {
         };
         const chapters: [string, number][] = [];
         let total = 0;
-        const is = G.BkChsInV11n[v11n].findIndex(
+        const bs = G.BkChsInV11n[v11n].findIndex(
           (a) => a[0] === firstChapter.book
         );
-        const ie = G.BkChsInV11n[v11n].findIndex(
+        const cs = firstChapter.chapter;
+        const be = G.BkChsInV11n[v11n].findIndex(
           (a) => a[0] === lastChapter.book
         );
-        let atEnd = false;
-        for (let i = is; !atEnd && i <= ie; i += 1) {
-          for (let ch = 1; !atEnd && ch <= G.BkChsInV11n[v11n][i][1]; ch += 1) {
+        const ce = lastChapter.chapter;
+        for (let i = bs; i <= be; i += 1) {
+          for (
+            let ch = i === bs ? cs : 1;
+            ch <= (i === be ? ce : G.BkChsInV11n[v11n][i][1]);
+            ch += 1
+          ) {
             total += 1;
             const bk = G.BkChsInV11n[v11n][i][0];
             chapters.push([bk, ch]);
-            if (bk === lastChapter.book && ch === lastChapter.chapter) {
-              atEnd = true;
-            }
           }
         }
 
