@@ -41,17 +41,20 @@ const defaultProps = {
   ...xulDefaultProps,
   control: null,
   columnSelect: false,
+  printDisabled: false,
 };
 
 const propTypes = {
   ...xulPropTypes,
   control: PropTypes.object,
   columnSelect: PropTypes.bool,
+  printDisabled: PropTypes.bool,
 };
 
 type PrintProps = XulProps & {
   control: ReactElement;
   columnSelect: boolean;
+  printDisabled: boolean;
 };
 
 const defaultState = {
@@ -178,45 +181,42 @@ export default class Printsettings extends React.Component {
             break;
           }
           case 'printPreview': {
-            const { landscape, pageSize } = state;
-            const options: Electron.PrintToPDFOptions = {
-              landscape,
-              marginsType: 1,
-              pageSize,
-            };
-            window.ipc.renderer.invoke(
-              'print-preview',
-              options,
-              G.Window.tmpDir()
+            window.ipc.renderer.printPreview({ progress: 'undefined' });
+            setTimeout(
+              () =>
+                window.ipc.renderer.printPreview(undefined, undefined, {
+                  pdfTmpDir: G.Window.tmpDir(),
+                }),
+              1000
             );
             break;
           }
           case 'printToPDF': {
-            const { landscape, pageSize } = state;
-            const options: Electron.PrintToPDFOptions = {
-              landscape,
-              marginsType: 1,
-              pageSize,
-            };
-            window.ipc.renderer.invoke('print-preview', options, 'printToPDF');
+            window.ipc.renderer.printPreview(
+              { progress: 'undefined' },
+              undefined,
+              { pdfTmpDir: 'prompt-for-file' }
+            );
             break;
           }
           case 'print': {
             const { landscape, margins, pageSize } = state;
-            const options: Electron.WebContentsPrintOptions = {
-              silent: false,
-              margins,
-              landscape,
-              pageSize,
-            };
-            window.ipc.renderer.invoke('print-preview', options);
+            window.ipc.renderer.printPreview(
+              { progress: 'undefined' },
+              {
+                silent: false,
+                margins,
+                landscape,
+                pageSize,
+              }
+            );
             break;
           }
           case 'cancel': {
             // If the window includes a control component, close the
             // entire window, otherwise, close the print overlay.
             if (control) G.Window.close();
-            else window.ipc.renderer.invoke('print-preview');
+            else window.ipc.renderer.printPreview(null);
             break;
           }
           default:
@@ -301,7 +301,7 @@ export default class Printsettings extends React.Component {
     const props = this.props as PrintProps;
     const state = this.state as PrintState;
     const { landscape, pageSize, twoColumns, scale, margins } = state;
-    const { columnSelect, control } = props;
+    const { columnSelect, control, printDisabled } = props;
     const { handler, selectRefs } = this;
 
     const psize = paperSizes.find(
@@ -315,7 +315,8 @@ export default class Printsettings extends React.Component {
 
     // html-page width can be anything, it just must be known before render
     const maxControlW = 500;
-    const htmlpageW = window.innerWidth - maxControlW;
+    let htmlpageW = window.innerWidth - maxControlW;
+    if (htmlpageW < 100) htmlpageW = 100;
     let htmlpageH = htmlpageW * (pheight / pwidth);
     let hpscale = htmlpageW / (pwidth * convertToPx[psize.u]);
     let pleft = 0;
@@ -354,6 +355,13 @@ export default class Printsettings extends React.Component {
             font-size: ${scale / 100}em;
           }
           @media print {
+            @page {
+              size: ${pwidth}${psize.u} ${pheight}${psize.u};
+              margin-top: ${margins.top}mm;
+              margin-right: ${margins.right}mm;
+              margin-bottom: ${margins.bottom}mm;
+              margin-left: ${margins.left}mm;
+            }
             .html-page {
               width: unset;
             }
@@ -363,6 +371,12 @@ export default class Printsettings extends React.Component {
             .content {
               top: unset;
               left: unset;
+              width: unset;
+              height: unset
+              padding-top: unset;
+              padding-right: unset;
+              padding-bottom: unset;
+              padding-left: unset;
             }
           }
         `}</style>
@@ -485,7 +499,14 @@ export default class Printsettings extends React.Component {
           </Vbox>
         </Groupbox>
         <Hbox className="dialog-buttons" pack="end" align="end">
-          <Button id="print" icon="print" flex="1" fill="x" onClick={handler}>
+          <Button
+            id="print"
+            icon="print"
+            flex="1"
+            fill="x"
+            disabled={printDisabled}
+            onClick={handler}
+          >
             {i18n.t('printCmd.label')}
           </Button>
           <Button
@@ -493,11 +514,18 @@ export default class Printsettings extends React.Component {
             icon="document"
             flex="1"
             fill="x"
+            disabled={printDisabled}
             onClick={handler}
           >
             PDF
           </Button>
-          <Button id="printPreview" flex="1" fill="x" onClick={handler}>
+          <Button
+            id="printPreview"
+            flex="1"
+            fill="x"
+            disabled={printDisabled}
+            onClick={handler}
+          >
             {i18n.t('printPreviewCmd.label')}
           </Button>
           <Spacer flex="10" />

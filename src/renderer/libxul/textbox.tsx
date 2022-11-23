@@ -33,7 +33,7 @@ const propTypes = {
   // eslint-disable-next-line react/forbid-prop-types
   inputRef: PropTypes.object,
   disabled: PropTypes.bool,
-  timeout: PropTypes.string,
+  timeout: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   type: PropTypes.oneOf(['search', 'text']),
   value: PropTypes.string,
 };
@@ -45,7 +45,7 @@ interface TextboxProps extends XulProps {
   readonly: boolean;
   inputRef?: React.RefObject<HTMLInputElement> | undefined;
   disabled: boolean;
-  timeout: string;
+  timeout: string | number;
   type: string;
   value?: string | undefined;
 }

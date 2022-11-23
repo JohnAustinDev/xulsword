@@ -7,6 +7,7 @@ import React from 'react';
 import i18next from 'i18next';
 import C from '../constant';
 import G from './rg';
+import log from './log';
 import RefParser, { RefParserOptionsType } from '../refparse';
 import VerseKey from '../versekey';
 import { ElemInfo, getElementInfo, TitleFormat } from '../libswordElemInfo';
@@ -485,7 +486,7 @@ export function getStatePref(
     Object.entries(idpref).forEach((entry) => {
       const [key, value] = entry;
       if (!ignoreKeys.includes(key) && (!prefsToGet || keys?.includes(key))) {
-        state[key] = value;
+        state[key] = clone(value);
       }
     });
   }
@@ -498,6 +499,7 @@ export function getStatePref(
 // and window locale as needed.
 export function onSetWindowState(c: React.Component, ignore?: any) {
   const listener = (prefs: string | string[]) => {
+    log.debug(`Updating state from prefs:`, prefs);
     const { id } = c.props as any;
     if (id) {
       const changed = diff(c.state, getStatePref(id, prefs, ignore));

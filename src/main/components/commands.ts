@@ -15,12 +15,12 @@ import Window, { getBrowserWindows } from './window';
 import type {
   LocationSKType,
   LocationVKType,
-  GAddCaller,
   NewModulesType,
   ScrollType,
   SearchType,
   TextVKType,
   XulswordStatePref,
+  PrintOverlayOptions,
 } from '../../type';
 import type { AboutWinState } from '../../renderer/about/about';
 import type { PassageWinState } from '../../renderer/printPassage/printPassage';
@@ -121,16 +121,21 @@ const Commands = {
     const windowToPrint = BrowserWindow.fromId(callingWinID);
     if (windowToPrint) {
       log.info(`Printing window id ${windowToPrint.id}`);
-      windowToPrint.webContents.send('print-preview', 'outlined');
+      const poo: PrintOverlayOptions = { modalType: 'outlined' };
+      windowToPrint.webContents.send('print-preview', poo);
     }
   },
 
   printPassage(state?: Partial<PassageWinState>) {
+    const passageWinState: Partial<PassageWinState> = state || {
+      firstChapter: null,
+      lastChapter: null,
+    };
     const options = {
       title: i18n.t('print.printpassage'),
       ...C.UI.Window.large,
       webPreferences: {
-        additionalArguments: [JSON_stringify({ passageWinState: state || {} })],
+        additionalArguments: [JSON_stringify({ passageWinState })],
       },
     };
     Window.open({ type: 'printPassage', category: 'dialog-window', options });

@@ -2,22 +2,14 @@
 
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
-import {
-  app,
-  dialog,
-  BrowserWindow,
-  ipcMain,
-  IpcMainEvent,
-  SaveDialogOptions,
-  IpcMainInvokeEvent,
-} from 'electron';
+import { app, dialog, BrowserWindow, ipcMain, IpcMainEvent } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import path from 'path';
 import log from 'electron-log';
 import i18n from 'i18next';
 import Subscription from '../subscription';
 import Cache from '../cache';
-import { clone, randomID } from '../common';
+import { clone } from '../common';
 import C from '../constant';
 import G from './mg';
 import LibSword from './components/libsword';
@@ -29,6 +21,7 @@ import Window, {
   pushPrefsToWindows,
   publishSubscription,
 } from './components/window';
+import PrintHandler from './print';
 import contextMenu from './contextMenu';
 import { getCipherFailConfs, getTabs, updateGlobalModulePrefs } from './minit';
 import setViewportTabs from './tabs';
@@ -132,80 +125,7 @@ ipcMain.on('did-finish-render', (event: IpcMainEvent) => {
   callingWin = null;
 });
 
-const printPreviewTmps: LocalFile[] = [];
-const printPreviewHandler = async (
-  event: IpcMainInvokeEvent,
-  options: Electron.PrintToPDFOptions | Electron.WebContentsPrintOptions,
-  pdf?: string
-): Promise<boolean> => {
-  if (event.sender) {
-    if (pdf && pdf === 'printToPDF') {
-      // Print to a user selected PDF file and return window to normal
-      const opts = options as Electron.PrintToPDFOptions;
-      const saveops: SaveDialogOptions = {
-        title: i18n.t('printCmd.label'),
-        filters: [
-          {
-            name: 'PDF',
-            extensions: ['pdf'],
-          },
-        ],
-        properties: ['createDirectory'],
-      };
-      let wtp = BrowserWindow.fromWebContents(event.sender);
-      const result = await ((wtp && dialog.showSaveDialog(wtp, saveops)) ||
-        null);
-      wtp = null;
-      if (result && !result.canceled && result.filePath) {
-        const data = await event.sender.printToPDF(opts);
-        if (data) {
-          const outfile = new LocalFile(result.filePath);
-          outfile.writeFile(data);
-          event.sender.send('print-preview');
-          return true;
-        }
-      }
-    } else if (pdf) {
-      // Print to temporary PDF file and display it in the preview iframe
-      const opts = options as Electron.PrintToPDFOptions;
-      printPreviewTmps.forEach((f) => {
-        if (f.exists()) f.remove();
-      });
-      const tmp = new LocalFile(pdf);
-      if (tmp.exists() && tmp.isDirectory()) {
-        tmp.append(`${randomID()}.pdf`);
-        const data = await event.sender.printToPDF(opts);
-        if (data) {
-          tmp.writeFile(data);
-          printPreviewTmps.push(tmp);
-          event.sender.send('print-preview', 'off', tmp.path);
-          return true;
-        }
-      }
-    } else if (options) {
-      // Send to printer and return window to normal
-      const opts = options as Electron.WebContentsPrintOptions;
-      return new Promise((resolve) => {
-        event.sender.print(opts, (suceeded: boolean, failureReason: string) => {
-          if (!suceeded) {
-            log.error(failureReason);
-          }
-          event.sender.send('print-preview');
-          resolve(suceeded);
-        });
-      });
-    } else {
-      // Return window to normal
-      printPreviewTmps.forEach((f) => {
-        if (f.exists()) f.remove();
-      });
-      event.sender.send('print-preview');
-    }
-  }
-  return false; // failed
-};
-
-ipcMain.handle('print-preview', printPreviewHandler);
+ipcMain.on('print-preview', PrintHandler);
 
 const openMainWindow = () => {
   let options: Electron.BrowserWindowConstructorOptions = {

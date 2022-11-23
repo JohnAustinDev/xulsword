@@ -31,12 +31,21 @@ export type LibSwordResponse = {
 };
 
 export function addUserNotes(
-  content: LibSwordResponse,
+  content: Partial<LibSwordResponse>,
   props: Partial<AtextProps>
 ) {}
 
 export function libswordText(
-  props: Partial<AtextPropsType>,
+  props: Pick<
+    AtextPropsType,
+    | 'module'
+    | 'ilModule'
+    | 'ilModuleOption'
+    | 'location'
+    | 'modkey'
+    | 'place'
+    | 'show'
+  >,
   n: number
 ): LibSwordResponse {
   const r = {

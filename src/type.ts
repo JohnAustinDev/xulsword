@@ -1,7 +1,7 @@
 /* eslint-disable import/no-duplicates */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import type { IpcMainEvent, Shell } from 'electron';
+import type { Shell } from 'electron';
 import type React from 'react';
 import type ElectronLog from 'electron-log';
 import type { LogLevel } from 'electron-log';
@@ -34,6 +34,7 @@ import type Module from './main/components/module';
 import type Window from './main/components/window';
 import type { DirsRendererType } from './main/components/dirs';
 import type LibSword from './main/components/libsword';
+import type PrintHandler from './main/print';
 
 declare global {
   export interface Window {
@@ -56,8 +57,13 @@ type RendererChannels =
   | 'publish-subscription'
   | 'print-preview';
 
+type Shift<T extends any[]> = T extends [infer _, ...infer Elements]
+  ? Elements
+  : [];
+
 export type WinIpcType = {
   renderer: {
+    printPreview: (...args: Shift<Parameters<typeof PrintHandler>>) => void;
     send: (channel: RendererChannels, ...args: any[]) => void;
     invoke: (channel: RendererChannels, ...args: any[]) => any;
     sendSync: (channel: RendererChannels, ...args: any[]) => any;
@@ -124,6 +130,13 @@ export type WindowArgType =
   | 'children';
 
 export type ModalType = 'off' | 'darkened' | 'outlined' | 'transparent';
+
+export type PrintOverlayOptions = {
+  modalType?: ModalType;
+  iframePath?: string;
+  disabled?: boolean;
+  progress?: number | 'undefined';
+} | null;
 
 // - skipTextUpdate allows a speedup when Atext content does not need to be updated,
 // such as verseAt bottom: only the target panel needs to be fully rendered, then

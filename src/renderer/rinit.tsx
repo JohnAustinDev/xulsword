@@ -38,7 +38,12 @@ import '@blueprintjs/icons/lib/css/blueprint-icons.css';
 import '@blueprintjs/core/lib/css/blueprint.css';
 import './global-htm.css';
 
-import type { CipherKey, ModalType, NewModulesType } from '../type';
+import type {
+  CipherKey,
+  ModalType,
+  NewModulesType,
+  PrintOverlayOptions,
+} from '../type';
 import type { SubscriptionType } from '../subscription';
 
 // Init this render process log to the same settings as main.ts
@@ -183,13 +188,17 @@ function Reset(props: ResetProps) {
     ModalType,
     (a: ModalType) => void
   ];
-  const [progress, setProgress] = useState(-1);
+  const [progress, setProgress] = useState(-1) as [
+    number | undefined,
+    (prog: number | undefined) => void
+  ];
   const [dialogs, setDialog] = useState(dialogInitial) as [
     ReactElement[],
     (dialog: ReactElement[]) => void
   ];
   const [iframeFilePath, setIframe] = useState(iframeInitial);
   const [print, setPrint] = useState(printInitial);
+  const [printDisabled, setPrintDisabled] = useState(false);
 
   const textbox: React.RefObject<HTMLInputElement> = React.createRef();
 
@@ -226,19 +235,25 @@ function Reset(props: ResetProps) {
   useEffect(() => {
     return window.ipc.renderer.on(
       'print-preview',
-      (modalType?: ModalType, iframePath?: string) => {
+      (options: PrintOverlayOptions) => {
         const html = document.getElementsByTagName('html')[0];
-        if (!modalType && !iframePath) {
-          html.classList.remove('printp');
-          setPrint(false);
-          setModal('off');
-          setIframe('');
+        if (options) {
+          const { modalType, iframePath, disabled, progress: prog } = options;
+          html.classList.add('printp');
+          setPrint(true);
+          if (modalType !== undefined) setModal(modalType);
+          if (iframePath !== undefined) setIframe(iframePath);
+          if (disabled !== undefined) setPrintDisabled(disabled);
+          if (prog !== undefined)
+            setProgress(prog === 'undefined' ? undefined : prog);
           return;
         }
-        html.classList.add('printp');
-        setPrint(true);
-        setModal(modalType ?? 'off');
-        setIframe(iframePath ?? '');
+        html.classList.remove('printp');
+        setPrint(false);
+        setModal('off');
+        setIframe('');
+        setPrintDisabled(false);
+        setProgress(-1);
       }
     );
   });
@@ -482,6 +497,7 @@ function Reset(props: ResetProps) {
                 onClick={() => {
                   setIframe('');
                   setModal('outlined');
+                  setProgress(-1);
                 }}
               >
                 {i18n.t('back.label')}
@@ -501,6 +517,7 @@ function Reset(props: ResetProps) {
               <Printsettings
                 columnSelect={printColumnSelect}
                 control={printControl}
+                printDisabled={printDisabled}
               />
               <Spacer flex="1" />
             </Vbox>

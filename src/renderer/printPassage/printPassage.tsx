@@ -1,3 +1,6 @@
+/* eslint-disable no-await-in-loop */
+/* eslint-disable no-restricted-syntax */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react/no-did-update-set-state */
 /* eslint-disable react/no-array-index-key */
 /* eslint-disable jsx-a11y/anchor-is-valid */
@@ -6,21 +9,31 @@
 import React, { ReactElement } from 'react';
 import ReactDOM from 'react-dom';
 import i18n from 'i18next';
-import { JSON_stringify, diff, clone } from '../../common';
-import C from '../../constant';
+import { ProgressBar } from '@blueprintjs/core';
+import { diff, sanitizeHTML, stringHash, drop } from '../../common';
 import G from '../rg';
 import renderToRoot from '../rinit';
-import { getValidVK, windowArgument, verseKey } from '../rutil';
-import { Vbox } from '../libxul/boxes';
+import { windowArgument, getStatePref } from '../rutil';
+import log from '../log';
 import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
 import Grid, { Column, Columns, Row, Rows } from '../libxul/grid';
 import Groupbox from '../libxul/groupbox';
 import Checkbox from '../libxul/checkbox';
-import VKSelect, { SelectVKMType, VKSelectProps } from '../libxul/vkselect';
+import VKSelect, { SelectVKMType } from '../libxul/vkselect';
 import Label from '../libxul/label';
+import {
+  handler as handlerH,
+  vkSelectHandler as vkSelectHandlerH,
+  validPassage,
+  bibleChapterText,
+} from './printPassageH';
+import '../libsword.css';
+import '../viewport/atext.css';
 import './printPassage.css';
 
-import type { LocationVKType } from '../../type';
+// TODO!: As of 11/22 @page {@bottom-center {content: counter(page);}} does not work
+
+import type { PrintOverlayOptions } from '../../type';
 
 // 0=none, 1=checkbox, 2=placeholder
 const switches = [
@@ -30,7 +43,7 @@ const switches = [
     [1, 1, 'usernotes', 'menu.view.usernotes'],
     [1, 1, 'crossrefs', 'menu.view.crossrefs'],
     [1, 1, 'crossrefsText', 'crossrefs.withText.label'],
-    [0, 2, '', ''],
+    [0, 2, '' as never, ''],
   ],
   [
     [1, 1, 'introduction', 'introduction.label'],
@@ -42,65 +55,13 @@ const switches = [
   ],
 ] as const;
 
-function validPassage(is: PassageWinState): PassageWinState {
-  const s = clone(is);
-  // To-vkmod must contain its selected book and from-vkmod must
-  // contain its selected book
-  (['firstChapter', 'lastChapter'] as const).forEach((p) => {
-    const books = G.getBooksInModule(s[p].vkmod);
-    if (!books.includes(s[p].book)) {
-      [s[p].book] = books;
-      s[p].chapter = 1;
-    }
-  });
-  // To-book must come after from-book.
-  if (s.lastChapter && s.firstChapter) {
-    const { book: bookF, chapter: chapterF } = s.firstChapter;
-    const { book: bookL, chapter: chapterL } = s.lastChapter;
-    if (G.Book[bookF].index > G.Book[bookL].index) {
-      s.lastChapter.book = s.firstChapter.book;
-      s.lastChapter.chapter = s.firstChapter.chapter;
-    }
-    // To-chapter must come after from-chapter
-    if (bookF === bookL && chapterF > chapterL) {
-      s.lastChapter.chapter = s.firstChapter.chapter;
-    }
-  }
-  return s;
-}
+let openedWinState = windowArgument(
+  'passageWinState'
+) as Partial<PassageWinState> | null;
 
-function vkSelectHandlerH(
-  this: PrintPassageWin,
-  selection: SelectVKMType,
-  id: string
-) {
-  if (selection) {
-    const { book, chapter, vkmod } = selection;
-    const v11n = G.Tab[selection.vkmod].v11n || selection.v11n || 'KJV';
-    if (book && chapter && vkmod) {
-      this.setState((prevState: PassageWinState) => {
-        const changed = id === 'from-select' ? 'firstChapter' : 'lastChapter';
-        const other = id === 'from-select' ? 'lastChapter' : 'firstChapter';
-        const s: Partial<PassageWinState> = {};
-        s[changed] = { book, chapter, v11n, vkmod };
-        if (book !== prevState[changed].book) {
-          const changedx = s[changed];
-          if (changedx) changedx.chapter = 1;
-        }
-        s[other] = {
-          ...verseKey(
-            (prevState[other] || s[changed]) as LocationVKType,
-            v11n
-          ).location(),
-          vkmod,
-        };
-        return s;
-      });
-      return;
-    }
-  }
-  this.setState({ [id]: null });
-}
+const notStateProps = {
+  progress: -1 as number,
+};
 
 const defaultProps = xulDefaultProps;
 
@@ -108,100 +69,210 @@ const propTypes = xulPropTypes;
 
 type PassageWinProps = XulProps;
 
-const initialState = {
-  firstChapter: {} as SelectVKMType,
-  lastChapter: {} as SelectVKMType,
+export type PassageWinState = typeof notStateProps & {
+  firstChapter: SelectVKMType | null;
+  lastChapter: SelectVKMType | null;
   checkbox: {
-    introduction: false,
-    headings: true,
-    versenums: true,
-    redwords: false,
-    dictlinks: true,
-    footnotes: true,
-    usernotes: false,
-    crossrefs: true,
-    crossrefsText: false,
-    hebvowelpoints: true,
-    hebcantillation: true,
-  } as { [k in typeof switches[number][number][2]]: boolean },
+    [k in typeof switches[number][number][2]]: boolean;
+  };
 };
-
-export type PassageWinState = typeof initialState;
 
 export default class PrintPassageWin extends React.Component {
   static defaultProps: typeof defaultProps;
 
   static propTypes: typeof propTypes;
 
-  vkSelectHandler: VKSelectProps['onSelectionChange'];
+  renderChapters: Promise<string>[];
+
+  textdiv: React.RefObject<HTMLDivElement>;
+
+  handler: typeof handlerH;
+
+  vkSelectHandler: typeof vkSelectHandlerH;
 
   constructor(props: PassageWinProps) {
     super(props);
 
-    const argState = windowArgument(
-      'passageWinState'
-    ) as Partial<PassageWinState> | null;
-
     const s: PassageWinState = {
-      ...initialState,
-      ...(argState || {}),
+      ...notStateProps,
+      ...(getStatePref('printPassage') as PassageWinState),
+      ...(openedWinState || {}),
     };
-
-    let vkmod = s.firstChapter?.vkmod;
-    if (!vkmod || !(vkmod in G.Tab)) {
-      vkmod = G.Tabs.find((t) => t.type === C.BIBLE)?.module || '';
-    }
-    if (vkmod && (!s.firstChapter?.vkmod || !s.lastChapter?.vkmod)) {
-      s.firstChapter = { ...getValidVK(vkmod), vkmod };
-      s.lastChapter = clone(s.firstChapter);
-    }
+    openedWinState = {};
 
     this.state = validPassage(s);
+    // Without the next save, prefs would somehow overwrite state
+    // before first render!
+    this.saveStatePrefs();
 
-    this.handler = this.handler.bind(this);
+    this.renderChapters = [];
+
+    this.textdiv = React.createRef();
+
+    this.handler = handlerH.bind(this);
     this.vkSelectHandler = vkSelectHandlerH.bind(this);
   }
 
   componentDidMount() {
+    this.saveStatePrefs();
     this.forceUpdate(); // for portal DOM target
   }
 
-  componentDidUpdate() {
+  componentDidUpdate(_prevProps: PassageWinProps, prevState: PassageWinState) {
     const state = this.state as PassageWinState;
+    const { textdiv } = this;
+    let { renderChapters } = this;
     const valid = validPassage(state);
+    const tdiv = textdiv.current;
     if (diff(state, valid)) {
       this.setState(valid);
+    } else if (tdiv) {
+      this.saveStatePrefs(prevState);
+      const { firstChapter, lastChapter, checkbox } = state;
+      if (!firstChapter || !lastChapter) return;
+      const { vkmod, v11n } = firstChapter;
+      const show = { ...checkbox, strongs: false, morph: false };
+      const renderkey = stringHash(vkmod, firstChapter, lastChapter, show);
+      if (
+        firstChapter &&
+        lastChapter &&
+        v11n &&
+        tdiv.dataset.renderkey !== renderkey
+      ) {
+        tdiv.dataset.renderkey = renderkey;
+        renderChapters = [];
+        const settings = {
+          module: vkmod,
+          show,
+          ilModule: undefined,
+          ilModuleOption: [],
+          modkey: '',
+          place: {
+            footnotes: 'notebox',
+            crossrefs: 'notebox',
+            usernotes: 'notebox',
+          } as const,
+        };
+        const chapters: [string, number][] = [];
+        let total = 0;
+        const is = G.BkChsInV11n[v11n].findIndex(
+          (a) => a[0] === firstChapter.book
+        );
+        const ie = G.BkChsInV11n[v11n].findIndex(
+          (a) => a[0] === lastChapter.book
+        );
+        let atEnd = false;
+        for (let i = is; !atEnd && i <= ie; i += 1) {
+          for (let ch = 1; !atEnd && ch <= G.BkChsInV11n[v11n][i][1]; ch += 1) {
+            total += 1;
+            const bk = G.BkChsInV11n[v11n][i][0];
+            chapters.push([bk, ch]);
+            if (bk === lastChapter.book && ch === lastChapter.chapter) {
+              atEnd = true;
+            }
+          }
+        }
+
+        // Write first page to DOM for user to see right away
+        sanitizeHTML(tdiv, '');
+        let pageIsFull = false;
+        const pageHtml: string[] = [];
+        chapters.forEach((c) => {
+          if (!pageIsFull && tdiv) {
+            log.silly(`Showing chapter ${c[0]} ${c[1]}`);
+            pageHtml.push(
+              bibleChapterText({
+                ...settings,
+                location: { book: c[0], chapter: c[1], v11n },
+              })
+            );
+            sanitizeHTML(tdiv, pageHtml.join());
+            if (tdiv.scrollWidth > tdiv.offsetWidth) {
+              pageIsFull = true;
+            }
+          }
+        });
+
+        // Then asynchronously generate all other chapters with a progress bar
+        const poo: PrintOverlayOptions = {
+          disabled: true,
+        };
+        window.ipc.renderer.printPreview(poo);
+        this.setState({ progress: 0 });
+        setTimeout(
+          () =>
+            (async function writeToDOM(xthis: PrintPassageWin, key: string) {
+              let prog = 0;
+              const funcs = chapters.map((c) => {
+                return async (): Promise<string> => {
+                  return new Promise((resolve, reject) =>
+                    setTimeout(() => {
+                      if (tdiv && key === tdiv.dataset.renderkey) {
+                        log.silly(`Building chapter ${c[0]} ${c[1]}`);
+                        prog += 1;
+                        xthis.setState({ progress: prog / total });
+                        resolve(
+                          bibleChapterText({
+                            ...settings,
+                            location: {
+                              book: c[0],
+                              chapter: c[1],
+                              v11n,
+                            },
+                          })
+                        );
+                      } else reject(new Error(`Canceled`));
+                    }, 1)
+                  );
+                };
+              });
+              try {
+                renderChapters = funcs.map((f) => f());
+                // Series calling of funcs runs many times slower than parallel!
+                // Although it allows better UI response, such slowdown isn't
+                // worth it.
+                /*
+                for (const func of funcs) {
+                  const r = await func();
+                  renderChapters.push(Promise.resolve(r);
+                }
+                */
+                const done = await Promise.all(renderChapters);
+                sanitizeHTML(tdiv, done.join());
+                log.debug(`Finished loading ${total} chapters to DOM!`);
+              } catch (er) {
+                log.warn(er);
+              } finally {
+                xthis.setState({ progress: -1 });
+                const poo2: PrintOverlayOptions = {
+                  disabled: false,
+                };
+                window.ipc.renderer.printPreview(poo2);
+              }
+            })(this, renderkey),
+          1000
+        );
+      }
     }
   }
 
-  handler(e: React.SyntheticEvent) {
-    switch (e.type) {
-      case 'change': {
-        const cbid = e.currentTarget.id as keyof PassageWinState['checkbox'];
-        this.setState((prevState: PassageWinState) => {
-          const s: Partial<PassageWinState> = {
-            checkbox: {
-              ...prevState.checkbox,
-              [cbid]: !prevState.checkbox[cbid],
-            },
-          };
-          return s;
-        });
-        break;
+  saveStatePrefs(prevState?: PassageWinState) {
+    const state = this.state as PassageWinState;
+    if (prevState) {
+      const d = diff(prevState, drop(state, notStateProps));
+      if (d) {
+        G.Prefs.mergeValue('printPassage', d);
       }
-      default:
-        throw new Error(`Unhandled event type ${e.type} in printPassage.tsx`);
-    }
+    } else G.Prefs.mergeValue('printPassage', drop(state, notStateProps));
   }
 
   render() {
     const state = this.state as PassageWinState;
-    const { firstChapter, lastChapter } = state;
-    const { checkbox } = state;
-    const { handler, vkSelectHandler } = this;
-
+    const { checkbox, firstChapter, lastChapter, progress } = state;
+    const { textdiv, handler, vkSelectHandler } = this;
     const vkmod = firstChapter?.vkmod;
-    if (!vkmod) return null;
+    const vkmod2 = lastChapter?.vkmod;
+    if (!vkmod || !vkmod2 || vkmod !== vkmod2) return null;
 
     const isHebrew = /^heb?$/i.test(G.Tab[vkmod].lang);
     const tr = isHebrew ? 1 : 0;
@@ -212,14 +283,17 @@ export default class PrintPassageWin extends React.Component {
 
     return (
       <>
-        <Vbox
-          className="sb"
-          pack="start"
-          flex="1"
+        <div
+          ref={textdiv}
+          className={[
+            'text',
+            'userFontBase',
+            G.Prefs.getBoolPref('print.twoColumns')
+              ? 'two-column'
+              : 'one-column',
+          ].join(' ')}
           dir={G.Tab[vkmod].direction || 'auto'}
-        >
-          {JSON_stringify(state)}
-        </Vbox>
+        />
         {printControl &&
           ReactDOM.createPortal(
             <>
@@ -249,16 +323,27 @@ export default class PrintPassageWin extends React.Component {
                     <Row>
                       <Label value={`${i18n.t('to.label')}:`} />
                       {lastChapter && (
-                        <VKSelect
-                          id="to-select"
-                          selectVKM={{ ...lastChapter, vkmod }}
-                          options={{
-                            verses: [],
-                            lastchapters: [],
-                            lastverses: [],
-                          }}
-                          onSelectionChange={vkSelectHandler}
-                        />
+                        <div className="progress-anchor">
+                          <VKSelect
+                            id="to-select"
+                            selectVKM={{ ...lastChapter, vkmod }}
+                            options={{
+                              verses: [],
+                              lastchapters: [],
+                              lastverses: [],
+                            }}
+                            onSelectionChange={vkSelectHandler}
+                          />
+
+                          {progress !== -1 && (
+                            <ProgressBar
+                              value={progress}
+                              intent="primary"
+                              animate
+                              stripes
+                            />
+                          )}
+                        </div>
                       )}
                       {!lastChapter && <div />}
                     </Row>

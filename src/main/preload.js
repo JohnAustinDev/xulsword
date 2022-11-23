@@ -54,11 +54,16 @@ const validChannels = [
   'publish-subscription', // from main when a renderer subscription should be published
   'print-preview',
   // from main to set renderer print preview mode
-  // to main when print or printToPDF should happen.
+  // to main when print or printToPDF should happen or self-preview-mode update.
 ];
 
 contextBridge.exposeInMainWorld('ipc', {
   renderer: {
+    printPreview(...args) {
+      log.silly('[preload:?] send', 'print-preview', args);
+      ipcRenderer.send('print-preview', ...args);
+    },
+
     // Trigger a channel event which ipcMain is to listen for. If a single
     // response from ipcMain is desired, then 'invoke' should likely be used.
     // Otherwise event.reply() can respond from ipcMain if the renderer has

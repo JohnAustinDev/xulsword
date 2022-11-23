@@ -1138,12 +1138,13 @@ function audioDialogOnChange(this: ModuleManager, selection: SelectVKMType) {
     if (showAudioDialog.length) {
       const { book, chapter, lastchapter, v11n } = selection;
       const { options, chapters: allchs } = showAudioDialog[0];
-      const { vkmods: trans, books, verses, lastverses } = options;
+      const { vkmods, books, verses, lastverses } = options;
       if (book && chapter !== undefined && lastchapter !== undefined) {
         const newselection: SelectVKMType = {
           book,
           chapter,
           lastchapter,
+          vkmod: '',
           v11n,
         };
         const chset: Set<number> = new Set();
@@ -1159,7 +1160,7 @@ function audioDialogOnChange(this: ModuleManager, selection: SelectVKMType) {
         );
         const lastchapters = chapters.filter((c) => c >= chapter);
         const newoptions: VKSelectProps['options'] = {
-          vkmods: trans,
+          vkmods,
           books,
           chapters,
           lastchapters,

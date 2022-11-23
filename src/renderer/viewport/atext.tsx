@@ -205,7 +205,16 @@ class Atext extends React.Component {
           ...pinProps,
         },
         C.LibSwordProps[type]
-      ) as Partial<AtextProps>;
+      ) as Pick<
+        AtextPropsType,
+        | 'module'
+        | 'ilModule'
+        | 'ilModuleOption'
+        | 'location'
+        | 'modkey'
+        | 'place'
+        | 'show'
+      >;
       const highlightkey = stringHash(libswordProps.location);
       // IMPORTANT: verse doesn't effect libsword output, so always remove
       // it from stringHash for a big speedup.
@@ -452,7 +461,16 @@ class Atext extends React.Component {
 
   // Write a LibSword response to the DOM.
   writeLibSword2DOM(
-    libswordProps: Partial<AtextProps>,
+    libswordProps: Pick<
+      AtextPropsType,
+      | 'module'
+      | 'ilModule'
+      | 'ilModuleOption'
+      | 'location'
+      | 'modkey'
+      | 'place'
+      | 'show'
+    >,
     i: number,
     flag: 'overwrite' | 'prepend' | 'append'
   ) {
