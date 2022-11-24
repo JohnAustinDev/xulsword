@@ -61,6 +61,13 @@ type Shift<T extends any[]> = T extends [infer _, ...infer Elements]
   ? Elements
   : [];
 
+export type QuerablePromise<T> = Promise<T> & {
+  isFulfilled: boolean;
+  isPending: boolean;
+  isRejected: boolean;
+  reject: (er: any) => void;
+};
+
 export type WinIpcType = {
   renderer: {
     printPreview: (...args: Shift<Parameters<typeof PrintHandler>>) => void;
@@ -132,6 +139,7 @@ export type WindowArgType =
 export type ModalType = 'off' | 'darkened' | 'outlined' | 'transparent';
 
 export type PrintOverlayOptions = {
+  showOverlay: boolean;
   modalType?: ModalType;
   iframePath?: string;
   disabled?: boolean;

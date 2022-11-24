@@ -18,6 +18,7 @@ import type {
   RowSelection,
   NewModuleReportType,
   HTTPDownload,
+  QuerablePromise,
 } from './type';
 import type LocalFile from './main/components/localFile';
 
@@ -307,6 +308,33 @@ export function ofClass(
   }
   if (!type) return null;
   return { element: test, type };
+}
+
+// Returns a promise whose state can be queried or can be rejected at will.
+export function querablePromise<T>(promise: Promise<T>): QuerablePromise<T> {
+  if ('isFulfilled' in promise) return promise as QuerablePromise<T>;
+  let isPending = true;
+  let isRejected = false;
+  let isFulfilled = false;
+
+  const result = promise.then(
+    (v) => {
+      isFulfilled = true;
+      isPending = false;
+      return v;
+    },
+    (e) => {
+      isRejected = true;
+      isPending = false;
+      throw e;
+    }
+  ) as QuerablePromise<T>;
+
+  result.reject = (er: any) => {
+    result.reject(er);
+  };
+
+  return result;
 }
 
 // Replaces character with codes <32 with " " (these may occur in text/footnotes at times- code 30 is used for sure)

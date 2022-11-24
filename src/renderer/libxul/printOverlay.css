@@ -1,0 +1,20 @@
+.pdf-preview,
+.html-preview {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+.pdf-preview iframe {
+  width: 100%;
+}
+.html-preview {
+  padding-top: 10px;
+  padding-left: 10px;
+}
+
+@media print {
+  #overlay {
+    display: none;
+  }
+}

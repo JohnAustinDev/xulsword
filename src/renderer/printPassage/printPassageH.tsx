@@ -5,33 +5,70 @@ import i18n from 'i18next';
 import { clone, dString, getLocalizedChapterTerm } from '../../common';
 import C from '../../constant';
 import G from '../rg';
-import { getValidVK, verseKey } from '../rutil';
+import { getValidVK, isValidVKM } from '../rutil';
 import { getNoteHTML, getIntroductions } from '../viewport/zversekey';
 import { addUserNotes } from '../viewport/ztext';
 import { SelectVKMType } from '../libxul/vkselect';
 
-// TODO!:
-// print bottom margin
-// print introduction
-// print footnotes open/closed
-// print page numbers
-// print progress stuff
-
 import type {
   AtextPropsType,
-  LocationVKType,
   SwordFilterType,
   SwordFilterValueType,
 } from '../../type';
 import type PrintPassageWin from './printPassage';
-import type { PassageWinState } from './printPassage';
+import type { PrintPassageState } from './printPassage';
 
-export function handler(this: PrintPassageWin, e: React.SyntheticEvent) {
-  switch (e.type) {
+export function handler(this: PrintPassageWin, ex: React.SyntheticEvent) {
+  switch (ex.type) {
+    case 'click': {
+      const e = ex as React.MouseEvent;
+      const { textdiv } = this;
+      const pageW = textdiv.current?.clientWidth ?? 0;
+      const scrollW = textdiv.current?.scrollWidth ?? 0;
+      const { id } = e.currentTarget;
+      switch (id) {
+        case 'pagefirst': {
+          const s: Partial<PrintPassageState> = {
+            showpage: 1,
+          };
+          this.setState(s);
+          break;
+        }
+        case 'pageprev': {
+          this.setState((prevState: PrintPassageState) => {
+            let { showpage } = prevState;
+            showpage -= 1;
+            if (showpage < 1) showpage = 1;
+            return { showpage };
+          });
+          break;
+        }
+        case 'pagenext': {
+          this.setState((prevState: PrintPassageState) => {
+            let { showpage } = prevState;
+            showpage += 1;
+            const max = Math.ceil(scrollW / pageW);
+            if (showpage > max) showpage = max;
+            return { showpage };
+          });
+          break;
+        }
+        case 'pagelast': {
+          const s: Partial<PrintPassageState> = {
+            showpage: Math.ceil(scrollW / pageW),
+          };
+          this.setState(s);
+          break;
+        }
+        default:
+          throw new Error(`Unhandled click event ${id} in printPassageH.tsx`);
+      }
+      break;
+    }
     case 'change': {
-      const cbid = e.currentTarget.id as keyof PassageWinState['checkbox'];
-      this.setState((prevState: PassageWinState) => {
-        const s: Partial<PassageWinState> = {
+      const cbid = ex.currentTarget.id as keyof PrintPassageState['checkbox'];
+      this.setState((prevState: PrintPassageState) => {
+        const s: Partial<PrintPassageState> = {
           checkbox: {
             ...prevState.checkbox,
             [cbid]: !prevState.checkbox[cbid],
@@ -42,44 +79,32 @@ export function handler(this: PrintPassageWin, e: React.SyntheticEvent) {
       break;
     }
     default:
-      throw new Error(`Unhandled event type ${e.type} in printPassage.tsx`);
+      throw new Error(`Unhandled event type ${ex.type} in printPassage.tsx`);
   }
 }
 
 export function vkSelectHandler(
   this: PrintPassageWin,
-  selection: SelectVKMType,
-  id: string
+  selection: SelectVKMType
 ) {
-  if (id) {
-    const changed = id === 'from-select' ? 'firstChapter' : 'lastChapter';
-    const other = id === 'from-select' ? 'lastChapter' : 'firstChapter';
-    if (selection) {
-      const { book, chapter, vkmod } = selection;
-      const v11n = G.Tab[selection.vkmod].v11n || selection.v11n || 'KJV';
-      if (book && chapter && vkmod) {
-        this.setState((prevState: PassageWinState) => {
-          const s: Partial<PassageWinState> = {};
-          s[changed] = { book, chapter, v11n, vkmod };
-          const prev = prevState[changed];
-          if (prev && book !== prev.book) {
-            const changedx = s[changed];
-            if (changedx) changedx.chapter = 1;
-          }
-          s[other] = {
-            ...verseKey(
-              (prevState[other] || s[changed]) as LocationVKType,
-              v11n
-            ).location(),
-            vkmod,
-          };
-          return s;
-        });
-        return;
+  if (selection) {
+    const { book, lastchapter, vkmod, v11n: vsys } = selection;
+    if (lastchapter) {
+      const state = this.state as PrintPassageState;
+      const obook = state.chapters?.book;
+      if (!obook || obook !== book) {
+        selection.chapter = 1;
+        selection.lastchapter = 1;
       }
+      const v11n = G.Tab[vkmod].v11n || vsys || 'KJV';
+      const s: Partial<PrintPassageState> = {
+        chapters: { ...selection, v11n, vkmod },
+      };
+      this.setState(s);
+      return;
     }
-    this.setState({ [changed]: null });
   }
+  this.setState({ chapters: null });
 }
 
 export function bibleChapterText(
@@ -163,47 +188,23 @@ export function bibleChapterText(
   return '';
 }
 
-export function validPassage(is: PassageWinState): PassageWinState {
-  const s = clone(is);
-  if (!s.firstChapter || !s.lastChapter) {
-    let vkmod = s.firstChapter?.vkmod;
-    if (!vkmod || !(vkmod in G.Tab)) {
-      vkmod = G.Tabs.find((t) => t.type === C.BIBLE)?.module || '';
-    }
-    if (vkmod && (!s.firstChapter?.vkmod || !s.lastChapter?.vkmod)) {
-      s.firstChapter = { ...getValidVK(vkmod), vkmod };
-      s.lastChapter = clone(s.firstChapter);
-    }
-    if (!vkmod) {
-      s.firstChapter = null;
-      s.lastChapter = null;
-      return s;
-    }
+export function validPassage(passage: SelectVKMType | null): SelectVKMType {
+  let chapters = clone(passage);
+  if (!chapters || !chapters.vkmod || !isValidVKM(chapters, chapters.vkmod)) {
+    const vkmod = G.Tabs.find((t) => t.type === C.BIBLE)?.module || '';
+    chapters = {
+      vkmod,
+      ...getValidVK(vkmod),
+      lastchapter: 1,
+    };
   }
-  // To-vkmod must contain its selected book and from-vkmod must
-  // contain its selected book
-  (['firstChapter', 'lastChapter'] as const).forEach((p) => {
-    const ch = s[p];
-    if (ch) {
-      const books = G.getBooksInModule(ch.vkmod);
-      if (!books.includes(ch.book)) {
-        [ch.book] = books;
-        ch.chapter = 1;
-      }
-    }
-  });
-  // To-book must come after from-book.
-  if (s.lastChapter && s.firstChapter) {
-    const { book: bookF, chapter: chapterF } = s.firstChapter;
-    const { book: bookL, chapter: chapterL } = s.lastChapter;
-    if (G.Book[bookF].index > G.Book[bookL].index) {
-      s.lastChapter.book = s.firstChapter.book;
-      s.lastChapter.chapter = s.firstChapter.chapter;
-    }
-    // To-chapter must come after from-chapter
-    if (bookF === bookL && chapterF > chapterL) {
-      s.lastChapter.chapter = s.firstChapter.chapter;
-    }
+  let { lastchapter, v11n } = chapters;
+  if (!v11n) {
+    const { vkmod } = chapters;
+    v11n = (vkmod in G.Tab && G.Tab[vkmod].v11n) || 'KJV';
   }
-  return s;
+  if (!lastchapter || lastchapter > chapters.chapter) {
+    lastchapter = chapters.chapter;
+  }
+  return chapters;
 }

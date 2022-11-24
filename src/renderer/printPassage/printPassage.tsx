@@ -10,7 +10,13 @@ import React, { ReactElement } from 'react';
 import ReactDOM from 'react-dom';
 import i18n from 'i18next';
 import { ProgressBar } from '@blueprintjs/core';
-import { diff, sanitizeHTML, stringHash, drop } from '../../common';
+import {
+  diff,
+  sanitizeHTML,
+  stringHash,
+  drop,
+  querablePromise,
+} from '../../common';
 import G from '../rg';
 import renderToRoot from '../rinit';
 import { windowArgument, getStatePref } from '../rutil';
@@ -19,8 +25,10 @@ import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
 import Grid, { Column, Columns, Row, Rows } from '../libxul/grid';
 import Groupbox from '../libxul/groupbox';
 import Checkbox from '../libxul/checkbox';
+import { Hbox } from '../libxul/boxes';
+import Button from '../libxul/button';
+import Spacer from '../libxul/spacer';
 import VKSelect, { SelectVKMType } from '../libxul/vkselect';
-import Label from '../libxul/label';
 import {
   handler as handlerH,
   vkSelectHandler as vkSelectHandlerH,
@@ -31,11 +39,18 @@ import '../libsword.css';
 import '../viewport/atext.css';
 import './printPassage.css';
 
-// TODO!: Dictlinks aren't implemented. CSS needs improvement.
-// Regular print top margin is too large. Wrong chapter(s) print.
+import type { PrintOverlayOptions, QuerablePromise } from '../../type';
+
+// TODO!: Dictlinks aren't implemented. CSS needs improvement. Print hasn't been checked.
 // TODO!: As of 11/22 @page {@bottom-center {content: counter(page);}} does not work
 
-import type { PrintOverlayOptions } from '../../type';
+const printOverlayOptions: PrintOverlayOptions = {
+  showOverlay: true,
+  modalType: 'outlined',
+  iframePath: '',
+  disabled: false,
+  progress: -1,
+};
 
 // 0=none, 1=checkbox, 2=placeholder
 const switches = [
@@ -59,9 +74,10 @@ const switches = [
 
 let openedWinState = windowArgument(
   'passageWinState'
-) as Partial<PassageWinState> | null;
+) as Partial<PrintPassageState> | null;
 
 const notStateProps = {
+  showpage: 1 as number,
   progress: -1 as number,
 };
 
@@ -69,11 +85,10 @@ const defaultProps = xulDefaultProps;
 
 const propTypes = xulPropTypes;
 
-type PassageWinProps = XulProps;
+type PrintPassageProps = XulProps;
 
-export type PassageWinState = typeof notStateProps & {
-  firstChapter: SelectVKMType | null;
-  lastChapter: SelectVKMType | null;
+export type PrintPassageState = typeof notStateProps & {
+  chapters: SelectVKMType | null;
   checkbox: {
     [k in typeof switches[number][number][2]]: boolean;
   };
@@ -84,7 +99,7 @@ export default class PrintPassageWin extends React.Component {
 
   static propTypes: typeof propTypes;
 
-  renderChapters: Promise<string>[];
+  renderPromises: QuerablePromise<string>[];
 
   textdiv: React.RefObject<HTMLDivElement>;
 
@@ -92,22 +107,23 @@ export default class PrintPassageWin extends React.Component {
 
   vkSelectHandler: typeof vkSelectHandlerH;
 
-  constructor(props: PassageWinProps) {
+  constructor(props: PrintPassageProps) {
     super(props);
 
-    const s: PassageWinState = {
+    const s: PrintPassageState = {
       ...notStateProps,
-      ...(getStatePref('printPassage') as PassageWinState),
+      ...(getStatePref('printPassage') as PrintPassageState),
       ...(openedWinState || {}),
     };
     openedWinState = {};
+    s.chapters = validPassage(s.chapters);
+    this.state = s;
 
-    this.state = validPassage(s);
     // Without the next save, prefs would somehow overwrite state
     // before first render!
     this.saveStatePrefs();
 
-    this.renderChapters = [];
+    this.renderPromises = [];
 
     this.textdiv = React.createRef();
 
@@ -120,29 +136,40 @@ export default class PrintPassageWin extends React.Component {
     this.forceUpdate(); // for portal DOM target
   }
 
-  componentDidUpdate(_prevProps: PassageWinProps, prevState: PassageWinState) {
-    const state = this.state as PassageWinState;
+  componentDidUpdate(
+    _prevProps: PrintPassageProps,
+    prevState: PrintPassageState
+  ) {
+    const state = this.state as PrintPassageState;
+    const { showpage } = state;
     const { textdiv } = this;
-    let { renderChapters } = this;
-    const valid = validPassage(state);
     const tdiv = textdiv.current;
-    if (diff(state, valid)) {
-      this.setState(valid);
+    let { renderPromises } = this;
+    const { chapters } = state;
+    const valid = validPassage(chapters);
+    if (diff(chapters, valid)) {
+      this.setState({ chapters: valid });
     } else if (tdiv) {
       this.saveStatePrefs(prevState);
-      const { firstChapter, lastChapter, checkbox } = state;
-      if (!firstChapter || !lastChapter) return;
-      const { vkmod, v11n } = firstChapter;
+      const { checkbox } = state;
+      if (!chapters) return;
+      if (prevState.showpage !== showpage) {
+        tdiv.scrollLeft = Math.floor(
+          (showpage - 1) * (tdiv.clientWidth + 13.5)
+        );
+      }
+      const { vkmod, book, chapter, lastchapter, v11n } = chapters;
       const show = { ...checkbox, strongs: false, morph: false };
-      const renderkey = stringHash(vkmod, firstChapter, lastChapter, show);
-      if (
-        firstChapter &&
-        lastChapter &&
-        v11n &&
-        tdiv.dataset.renderkey !== renderkey
-      ) {
+      const renderkey = stringHash(vkmod, chapter, lastchapter, show);
+      if (lastchapter && tdiv.dataset.renderkey !== renderkey) {
         tdiv.dataset.renderkey = renderkey;
-        renderChapters = [];
+        const rendering = renderPromises.find((p) => p.isPending);
+        if (rendering) {
+          rendering.reject(new Error('Canceled'));
+          return;
+        }
+        this.setState({ showpage: 1 });
+        renderPromises = [];
         const settings = {
           module: vkmod,
           show,
@@ -155,113 +182,98 @@ export default class PrintPassageWin extends React.Component {
             usernotes: 'notebox',
           } as const,
         };
-        const chapters: [string, number][] = [];
-        let total = 0;
-        const bs = G.BkChsInV11n[v11n].findIndex(
-          (a) => a[0] === firstChapter.book
-        );
-        const cs = firstChapter.chapter;
-        const be = G.BkChsInV11n[v11n].findIndex(
-          (a) => a[0] === lastChapter.book
-        );
-        const ce = lastChapter.chapter;
-        for (let i = bs; i <= be; i += 1) {
-          for (
-            let ch = i === bs ? cs : 1;
-            ch <= (i === be ? ce : G.BkChsInV11n[v11n][i][1]);
-            ch += 1
-          ) {
-            total += 1;
-            const bk = G.BkChsInV11n[v11n][i][0];
-            chapters.push([bk, ch]);
-          }
+        const renderChaps: [string, number][] = [];
+        for (let ch = chapter; ch <= lastchapter; ch += 1) {
+          renderChaps.push([book, ch]);
         }
 
         // Write first page to DOM for user to see right away
         sanitizeHTML(tdiv, '');
         let pageIsFull = false;
-        const pageHtml: string[] = [];
-        chapters.forEach((c) => {
+        const renderHTML: string[] = [];
+        renderChaps.forEach((c) => {
           if (!pageIsFull && tdiv) {
             log.silly(`Showing chapter ${c[0]} ${c[1]}`);
-            pageHtml.push(
+            renderHTML.push(
               bibleChapterText({
                 ...settings,
                 location: { book: c[0], chapter: c[1], v11n },
               })
             );
-            sanitizeHTML(tdiv, pageHtml.join());
+            sanitizeHTML(tdiv, renderHTML.join());
             if (tdiv.scrollWidth > tdiv.offsetWidth) {
               pageIsFull = true;
             }
           }
         });
+        log.debug(`Finished previwing ${renderHTML.length} chapters to DOM`);
 
         // Then asynchronously generate all other chapters with a progress bar
-        const poo: PrintOverlayOptions = {
+        window.ipc.renderer.printPreview({
+          showOverlay: true,
           disabled: true,
-        };
-        window.ipc.renderer.printPreview(poo);
+        });
         this.setState({ progress: 0 });
         setTimeout(
           () =>
-            (async function writeToDOM(xthis: PrintPassageWin, key: string) {
+            (async function writeToDOM(
+              xthis: PrintPassageWin,
+              key: string,
+              chaps: [string, number][],
+              html: string[]
+            ) {
               let prog = 0;
-              const funcs = chapters.map((c) => {
+              const funcs = chaps.map((c, i) => {
                 return async (): Promise<string> => {
                   return new Promise((resolve, reject) =>
                     setTimeout(() => {
-                      if (tdiv && key === tdiv.dataset.renderkey) {
-                        log.silly(`Building chapter ${c[0]} ${c[1]}`);
-                        prog += 1;
-                        xthis.setState({ progress: prog / total });
-                        resolve(
-                          bibleChapterText({
-                            ...settings,
-                            location: {
-                              book: c[0],
-                              chapter: c[1],
-                              v11n,
-                            },
-                          })
-                        );
-                      } else reject(new Error(`Canceled`));
+                      if (html[i]) resolve(html[i]);
+                      else {
+                        const tdivx = xthis.textdiv.current;
+                        if (tdivx && key === tdivx.dataset.renderkey) {
+                          log.silly(`Building chapter ${c[0]} ${c[1]}`);
+                          prog += 1;
+                          xthis.setState({ progress: prog / chaps.length });
+                          resolve(
+                            bibleChapterText({
+                              ...settings,
+                              location: {
+                                book: c[0],
+                                chapter: c[1],
+                                v11n,
+                              },
+                            })
+                          );
+                        } else reject(new Error(`Canceled`));
+                      }
                     }, 1)
                   );
                 };
               });
               try {
-                renderChapters = funcs.map((f) => f());
-                // Series calling of funcs runs many times slower than parallel!
-                // Although it allows better UI response, such slowdown isn't
-                // worth it.
-                /*
-                for (const func of funcs) {
-                  const r = await func();
-                  renderChapters.push(Promise.resolve(r);
-                }
-                */
-                const done = await Promise.all(renderChapters);
-                sanitizeHTML(tdiv, done.join());
-                log.debug(`Finished loading ${total} chapters to DOM!`);
+                renderPromises = funcs.map((f) => querablePromise(f()));
+                const html2 = await Promise.all(renderPromises);
+                const tdivx = xthis.textdiv.current;
+                if (tdivx) sanitizeHTML(tdivx, html2.join());
+                log.debug(`Finished loading ${html2.length} chapters to DOM`);
               } catch (er) {
                 log.warn(er);
               } finally {
                 xthis.setState({ progress: -1 });
-                const poo2: PrintOverlayOptions = {
+                window.ipc.renderer.printPreview({
+                  showOverlay: true,
                   disabled: false,
-                };
-                window.ipc.renderer.printPreview(poo2);
+                });
               }
-            })(this, renderkey),
+            })(this, renderkey, renderChaps, renderHTML),
           1000
         );
       }
     }
   }
 
-  saveStatePrefs(prevState?: PassageWinState) {
-    const state = this.state as PassageWinState;
+  saveStatePrefs(prevState?: PrintPassageState) {
+    const state = this.state as PrintPassageState;
     if (prevState) {
       const d = diff(prevState, drop(state, notStateProps));
       if (d) {
@@ -271,12 +283,14 @@ export default class PrintPassageWin extends React.Component {
   }
 
   render() {
-    const state = this.state as PassageWinState;
-    const { checkbox, firstChapter, lastChapter, progress } = state;
+    const state = this.state as PrintPassageState;
+    const { checkbox, chapters, progress } = state;
     const { textdiv, handler, vkSelectHandler } = this;
-    const vkmod = firstChapter?.vkmod;
-    const vkmod2 = lastChapter?.vkmod;
-    if (!vkmod || !vkmod2 || vkmod !== vkmod2) return null;
+    const vkmod = chapters?.vkmod;
+    if (!vkmod || !chapters) return null;
+
+    const showpaging =
+      (textdiv.current?.scrollWidth ?? 0) > (textdiv.current?.clientWidth ?? 0);
 
     const isHebrew = /^heb?$/i.test(G.Tab[vkmod].lang);
     const tr = isHebrew ? 1 : 0;
@@ -301,59 +315,56 @@ export default class PrintPassageWin extends React.Component {
         {printControl &&
           ReactDOM.createPortal(
             <>
-              <Groupbox caption={i18n.t('print.printpassage')}>
-                <Grid>
-                  <Columns>
-                    <Column />
-                    <Column />
-                  </Columns>
-                  <Rows>
-                    <Row>
-                      <Label value={`${i18n.t('from.label')}:`} />
-                      {firstChapter && (
-                        <VKSelect
-                          id="from-select"
-                          selectVKM={{ ...firstChapter, vkmod }}
-                          options={{
-                            verses: [],
-                            lastchapters: [],
-                            lastverses: [],
-                          }}
-                          onSelectionChange={vkSelectHandler}
-                        />
-                      )}
-                      {!firstChapter && <div />}
-                    </Row>
-                    <Row>
-                      <Label value={`${i18n.t('to.label')}:`} />
-                      {lastChapter && (
-                        <div className="progress-anchor">
-                          <VKSelect
-                            id="to-select"
-                            selectVKM={{ ...lastChapter, vkmod }}
-                            options={{
-                              verses: [],
-                              lastchapters: [],
-                              lastverses: [],
-                            }}
-                            onSelectionChange={vkSelectHandler}
-                          />
-
-                          {progress !== -1 && (
-                            <ProgressBar
-                              value={progress}
-                              intent="primary"
-                              animate
-                              stripes
-                            />
-                          )}
-                        </div>
-                      )}
-                      {!lastChapter && <div />}
-                    </Row>
-                  </Rows>
-                </Grid>
+              <Groupbox
+                className="progress-anchor"
+                caption={i18n.t('print.printpassage')}
+              >
+                <VKSelect
+                  id="chapters"
+                  selectVKM={{ ...chapters, vkmod }}
+                  options={{
+                    verses: [],
+                    lastverses: [],
+                  }}
+                  onSelectionChange={vkSelectHandler}
+                />
+                {progress !== -1 && (
+                  <ProgressBar
+                    value={progress}
+                    intent="primary"
+                    animate
+                    stripes
+                  />
+                )}
               </Groupbox>
+              <Hbox className="page-buttons-container">
+                {progress === -1 && showpaging && (
+                  <Hbox className="page-buttons">
+                    <Button
+                      id="pagefirst"
+                      icon="double-chevron-left"
+                      onClick={handler}
+                    />
+                    <Spacer flex="1" />
+                    <Button
+                      id="pageprev"
+                      icon="chevron-left"
+                      onClick={handler}
+                    />
+                    <Button
+                      id="pagenext"
+                      icon="chevron-right"
+                      onClick={handler}
+                    />
+                    <Spacer flex="1" />
+                    <Button
+                      id="pagelast"
+                      icon="double-chevron-right"
+                      onClick={handler}
+                    />
+                  </Hbox>
+                )}
+              </Hbox>
               <Groupbox caption={i18n.t('include.label')}>
                 <Grid>
                   <Rows>
@@ -406,6 +417,5 @@ PrintPassageWin.propTypes = propTypes;
 renderToRoot(<PrintPassageWin />, null, null, {
   printColumnSelect: true,
   printControl: <div id="printControl" />,
-  modalInitial: 'outlined',
-  printInitial: true,
+  printOverlayOptions,
 });

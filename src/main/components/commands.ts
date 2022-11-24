@@ -23,7 +23,7 @@ import type {
   PrintOverlayOptions,
 } from '../../type';
 import type { AboutWinState } from '../../renderer/about/about';
-import type { PassageWinState } from '../../renderer/printPassage/printPassage';
+import type { PrintPassageState } from '../../renderer/printPassage/printPassage';
 
 const Commands = {
   openModuleManager(): void {
@@ -121,15 +121,17 @@ const Commands = {
     const windowToPrint = BrowserWindow.fromId(callingWinID);
     if (windowToPrint) {
       log.info(`Printing window id ${windowToPrint.id}`);
-      const poo: PrintOverlayOptions = { modalType: 'outlined' };
+      const poo: PrintOverlayOptions = {
+        showOverlay: true,
+        modalType: 'outlined',
+      };
       windowToPrint.webContents.send('print-preview', poo);
     }
   },
 
-  printPassage(state?: Partial<PassageWinState>) {
-    const passageWinState: Partial<PassageWinState> = state || {
-      firstChapter: null,
-      lastChapter: null,
+  printPassage(state?: Partial<PrintPassageState>) {
+    const passageWinState: Partial<PrintPassageState> = state || {
+      chapters: null,
     };
     const options = {
       title: i18n.t('print.printpassage'),

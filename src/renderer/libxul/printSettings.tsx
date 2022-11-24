@@ -72,9 +72,9 @@ const defaultState = {
 
 const notStatePref = {};
 
-export type PrintState = typeof defaultState;
+export type PrintState = typeof defaultState & typeof notStatePref;
 
-export default class Printsettings extends React.Component {
+export default class PrintSettings extends React.Component {
   static defaultProps: typeof defaultProps;
 
   static propTypes: typeof propTypes;
@@ -180,8 +180,38 @@ export default class Printsettings extends React.Component {
             });
             break;
           }
+          case 'print': {
+            const { landscape, margins, pageSize } = state;
+            window.ipc.renderer.printPreview(
+              {
+                showOverlay: true,
+                progress: 'undefined',
+                modalType: 'darkened',
+              },
+              {
+                silent: false,
+                margins,
+                landscape,
+                pageSize,
+              }
+            );
+            break;
+          }
+          case 'printToPDF': {
+            window.ipc.renderer.printPreview(
+              {
+                showOverlay: true,
+                progress: 'undefined',
+                modalType: 'darkened',
+              },
+              undefined,
+              { pdfTmpDir: 'prompt-for-file' }
+            );
+            break;
+          }
           case 'printPreview': {
             window.ipc.renderer.printPreview({
+              showOverlay: true,
               progress: 'undefined',
               modalType: 'darkened',
             });
@@ -191,27 +221,6 @@ export default class Printsettings extends React.Component {
                   pdfTmpDir: G.Window.tmpDir(),
                 }),
               1000
-            );
-            break;
-          }
-          case 'printToPDF': {
-            window.ipc.renderer.printPreview(
-              { progress: 'undefined', modalType: 'darkened' },
-              undefined,
-              { pdfTmpDir: 'prompt-for-file' }
-            );
-            break;
-          }
-          case 'print': {
-            const { landscape, margins, pageSize } = state;
-            window.ipc.renderer.printPreview(
-              { progress: 'undefined', modalType: 'darkened' },
-              {
-                silent: false,
-                margins,
-                landscape,
-                pageSize,
-              }
             );
             break;
           }
@@ -251,7 +260,7 @@ export default class Printsettings extends React.Component {
         if (e.type === 'blur' || ek.key === 'Enter') {
           switch (id) {
             case 'margins': {
-              const id2x = id2 as keyof Printsettings['selectRefs']['margins'];
+              const id2x = id2 as keyof PrintSettings['selectRefs']['margins'];
               const select = selectRefs.margins[id2x].current;
               if (select) {
                 const s: Partial<PrintState> = {
@@ -331,10 +340,6 @@ export default class Printsettings extends React.Component {
       if (pleft < 0) pleft = 0;
     }
 
-    // To center page vertically and allow the overflowing outline/shadow
-    // to be visible, the top offset is manually set.
-    const ptop = (maxh - htmlpageH) / (2 * hpscale);
-
     return (
       <Vbox {...addClass('printsettings', props)}>
         <style>{`
@@ -351,7 +356,7 @@ export default class Printsettings extends React.Component {
             padding-right: ${margins.right}mm;
             padding-bottom: ${margins.bottom}mm;
             padding-left: ${margins.left}mm;
-            top: ${ptop}px;
+            top: 0;
             left: ${pleft}px;
           }
           .userFontBase {
@@ -540,5 +545,5 @@ export default class Printsettings extends React.Component {
     );
   }
 }
-Printsettings.defaultProps = defaultProps;
-Printsettings.propTypes = propTypes;
+PrintSettings.defaultProps = defaultProps;
+PrintSettings.propTypes = propTypes;

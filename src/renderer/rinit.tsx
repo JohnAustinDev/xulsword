@@ -1,3 +1,4 @@
+/* eslint-disable react/forbid-prop-types */
 /* eslint-disable jsx-a11y/iframe-has-title */
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -24,13 +25,13 @@ import DynamicStyleSheet from './style';
 import log from './log';
 import { getContextData } from './rutil';
 import { delayHandler, xulCaptureEvents } from './libxul/xul';
-import { Box, Hbox, Vbox } from './libxul/boxes';
+import { Hbox } from './libxul/boxes';
 import Dialog from './libxul/dialog';
 import Spacer from './libxul/spacer';
 import Button from './libxul/button';
 import Label from './libxul/label';
 import Textbox from './libxul/textbox';
-import Printsettings from './libxul/printSettings';
+import PrintOverlay from './libxul/printOverlay';
 
 // Global CSS imports
 import 'normalize.css/normalize.css';
@@ -147,60 +148,81 @@ const defaultProps = {
   resetOnResize: true,
   printColumnSelect: false,
   printControl: null,
-  modalInitial: 'off',
   dialogInitial: [],
-  iframeInitial: '',
-  printInitial: false,
+  printOverlayOptions: null,
 };
 const propTypes = {
   children: PropTypes.element.isRequired,
   resetOnResize: PropTypes.bool,
-  modalInitial: PropTypes.string,
   dialogInitial: PropTypes.arrayOf(PropTypes.object),
-  iframeInitial: PropTypes.string,
-  printInitial: PropTypes.bool,
+  printOverlayOptions: PropTypes.object,
 };
 type ResetProps = {
   children: ReactElement;
   resetOnResize: boolean;
   printColumnSelect: boolean;
   printControl: ReactElement | null;
-  modalInitial: ModalType;
   dialogInitial: ReactElement[];
-  iframeInitial: string;
-  printInitial: boolean;
+  printOverlayOptions: PrintOverlayOptions;
 };
 
 const delayHandlerThis = {};
+const defaultPrintOptions = {
+  showOverlay: false,
+  modalType: 'off' as ModalType,
+  iframePath: '',
+  disabled: false,
+  progress: -1,
+};
 function Reset(props: ResetProps) {
   const {
     children,
     resetOnResize,
     printColumnSelect,
     printControl,
-    modalInitial,
     dialogInitial,
-    iframeInitial,
-    printInitial,
+    printOverlayOptions,
   } = props;
+  const {
+    showOverlay: so,
+    modalType: mt,
+    iframePath: ip,
+    disabled: db,
+    progress: pg,
+  } = printOverlayOptions || defaultPrintOptions;
   const [reset, setReset] = useState(0);
-  const [modal, setModal] = useState(modalInitial) as [
-    ModalType,
-    (a: ModalType) => void
-  ];
-  const [progress, setProgress] = useState(-1) as [
-    number | undefined,
-    (prog: number | undefined) => void
-  ];
   const [dialogs, setDialog] = useState(dialogInitial) as [
     ReactElement[],
     (dialog: ReactElement[]) => void
   ];
-  const [iframeFilePath, setIframe] = useState(iframeInitial);
-  const [print, setPrint] = useState(printInitial);
-  const [printDisabled, setPrintDisabled] = useState(false);
+  const [modal, setModal] = useState(mt) as [ModalType, (a: ModalType) => void];
+  const [progress, setProgress] = useState(
+    pg === 'undefined' ? undefined : pg
+  ) as [number | undefined, (prog: number | undefined) => void];
+  const [print, setPrint] = useState(so);
+  const [iframeFilePath, setIframe] = useState(ip);
+  const [printDisabled, setPrintDisabled] = useState(db);
 
   const textbox: React.RefObject<HTMLInputElement> = React.createRef();
+
+  const setPrintOverlay = (options: PrintOverlayOptions) => {
+    const html = document.getElementsByTagName('html')[0];
+    const {
+      showOverlay,
+      modalType,
+      iframePath,
+      disabled,
+      progress: prog,
+    } = options || printOverlayOptions || defaultPrintOptions;
+    if (showOverlay) html.classList.add('printp');
+    else html.classList.remove('printf');
+    setPrint(showOverlay);
+    if (modalType !== undefined) setModal(modalType);
+    if (iframePath !== undefined) setIframe(iframePath);
+    if (disabled !== undefined) setPrintDisabled(disabled);
+    if (prog !== undefined)
+      setProgress(prog === 'undefined' ? undefined : prog);
+  };
 
   // IPC component-reset setup:
   useEffect(() => {
@@ -235,26 +257,7 @@ function Reset(props: ResetProps) {
   useEffect(() => {
     return window.ipc.renderer.on(
       'print-preview',
-      (options: PrintOverlayOptions) => {
-        const html = document.getElementsByTagName('html')[0];
-        if (options) {
-          const { modalType, iframePath, disabled, progress: prog } = options;
-          html.classList.add('printp');
-          setPrint(true);
-          if (modalType !== undefined) setModal(modalType);
-          if (iframePath !== undefined) setIframe(iframePath);
-          if (disabled !== undefined) setPrintDisabled(disabled);
-          if (prog !== undefined)
-            setProgress(prog === 'undefined' ? undefined : prog);
-          return;
-        }
-        html.classList.remove('printp');
-        setPrint(false);
-        setModal('off');
-        setIframe('');
-        setPrintDisabled(false);
-        setProgress(-1);
-      }
+      (options: PrintOverlayOptions) => setPrintOverlay(options)
     );
   });
 
@@ -480,54 +483,27 @@ function Reset(props: ResetProps) {
     </>
   );
 
-  const printContent =
-    (print && content && (
-      <>
-        {iframeFilePath && (
-          <Vbox className="pdf-preview" pack="start" align="stretch">
-            <Hbox flex="1">
-              <iframe key={iframeFilePath} src={G.inlineFile(iframeFilePath)} />
-            </Hbox>
-            <Hbox className="dialog-buttons" pack="end" align="end">
-              <Spacer flex="10" />
-              <Button
-                id="back"
-                flex="1"
-                fill="x"
-                onClick={() => {
-                  setIframe('');
-                  setModal('outlined');
-                  setProgress(-1);
-                }}
-              >
-                {i18n.t('back.label')}
-              </Button>
-            </Hbox>
-          </Vbox>
-        )}
-        {!iframeFilePath && (
-          <Hbox className="html-preview" align="stretch">
-            <div className="html-page">
-              <div className="scale">
-                <div className="content">{content}</div>
-              </div>
-            </div>
-            <Vbox>
-              <Spacer flex="1" />
-              <Printsettings
-                columnSelect={printColumnSelect}
-                control={printControl}
-                printDisabled={printDisabled}
-              />
-              <Spacer flex="1" />
-            </Vbox>
-          </Hbox>
-        )}
-      </>
-    )) ||
-    null;
-
-  return (!print && content) || printContent;
+  if (print) {
+    return (
+      <PrintOverlay
+        content={content}
+        customControl={printControl}
+        showColumnButton={printColumnSelect}
+        printDisabled={printDisabled}
+        iframeFilePath={iframeFilePath}
+        iframeBackHandler={() => {
+          setPrintOverlay({
+            showOverlay: true,
+            modalType: 'outlined',
+            iframePath: '',
+            disabled: false,
+            progress: -1,
+          });
+        }}
+      />
+    );
+  }
+  return content;
 }
 Reset.defaultProps = defaultProps;
 Reset.propTypes = propTypes;
@@ -545,6 +521,7 @@ export default async function renderToRoot(
     dialogInitial?: ReactElement[];
     iframeInitial?: string;
     printInitial?: boolean;
+    printOverlayOptions?: PrintOverlayOptions;
   }
 ) {
   const {
@@ -552,10 +529,8 @@ export default async function renderToRoot(
     resetOnResize,
     printColumnSelect,
     printControl,
-    modalInitial,
     dialogInitial,
-    iframeInitial,
-    printInitial,
+    printOverlayOptions,
   } = options || {};
 
   window.ipc.renderer.on('close', () => {
@@ -570,10 +545,8 @@ export default async function renderToRoot(
         resetOnResize={resetOnResize}
         printColumnSelect={printColumnSelect}
         printControl={printControl}
-        modalInitial={modalInitial}
         dialogInitial={dialogInitial}
-        iframeInitial={iframeInitial}
-        printInitial={printInitial}
+        printOverlayOptions={printOverlayOptions || null}
       >
         {component}
       </Reset>

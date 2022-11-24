@@ -26,22 +26,6 @@
   z-index: 1; /* required during full screen for some reason */
 }
 
-/* print overlay */
-.pdf-preview,
-.html-preview {
-  height: 100%;
-  margin: 0;
-  overflow: hidden;
-}
-
-.pdf-preview iframe {
-  width: 100%;
-}
-.html-preview {
-  padding-top: 10px;
-  padding-left: 10px;
-}
-
 .content {
   position: relative; /* for overlay */
   display: grid;
@@ -49,12 +33,10 @@
 }
 
 .scale {
-  transform-origin: left top;
+  transform-origin: left;
 }
 
-/* actual print-only CSS */
 @media print {
-  #overlay,
   .printsettings {
     display: none;
   }

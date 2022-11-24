@@ -21,6 +21,13 @@ const PrintHandler = async (
   }
 ): Promise<boolean> => {
   if (event.sender) {
+    const showPrintOverlay = {
+      showOverlay: true,
+      modalType: 'outlined',
+      iframePath: '',
+      disabled: false,
+      progress: -1,
+    };
     if (printOverlayOptions !== undefined) {
       // Send printOverlayOptions to the calling window
       event.sender.send('print-preview', printOverlayOptions);
@@ -33,16 +40,14 @@ const PrintHandler = async (
     }
 
     if (electronPrintOptions) {
-      // Send to printer and return window to normal
+      // Send to printer
       return new Promise((resolve) => {
         event.sender.print(
           electronPrintOptions,
           (suceeded: boolean, failureReason: string) => {
-            if (!suceeded) {
-              log.error(failureReason);
-            }
-            event.sender.send('print-preview', null);
-            resolve(suceeded);
+            event.sender.send('print-preview', showPrintOverlay);
+            if (suceeded) resolve(suceeded);
+            else log.error(failureReason);
           }
         );
       });
@@ -51,7 +56,7 @@ const PrintHandler = async (
     if (electronPDFOptions) {
       const { pdfTmpDir } = electronPDFOptions;
       if (pdfTmpDir === 'prompt-for-file') {
-        // Print to a user selected PDF file and return window to normal
+        // Print to a user selected PDF file
         const saveops: SaveDialogOptions = {
           title: i18n.t('printCmd.label'),
           filters: [
@@ -71,7 +76,7 @@ const PrintHandler = async (
           if (data) {
             const outfile = new LocalFile(result.filePath);
             outfile.writeFile(data);
-            event.sender.send('print-preview');
+            event.sender.send('print-preview', showPrintOverlay);
             return true;
           }
         }
@@ -88,6 +93,7 @@ const PrintHandler = async (
             tmp.writeFile(data);
             printPreviewTmps.push(tmp);
             const poo: PrintOverlayOptions = {
+              showOverlay: true,
               modalType: 'off',
               iframePath: tmp.path,
               progress: -1,

@@ -121,7 +121,7 @@ export function isValidVKM(location: LocationVKType, module: string): boolean {
   if (!module || !(module in G.Tab)) return false;
   const tab = G.Tab[module];
   if (location.v11n !== tab.v11n) return false;
-  if (!G.getBooksInModule(tab.module).includes(module)) return false;
+  if (!G.getBooksInModule(module).includes(location.book)) return false;
   return true;
 }
 
@@ -146,10 +146,14 @@ export function isValidVK(location: LocationVKType): boolean {
   return true;
 }
 
+// Return a valid LocationVK in the given module. If module is '' then
+// Gen.1.1.1.KJV is returned.
 export function getValidVK(module: string): LocationVKType {
   return {
     book: (module && G.getBooksInModule(module)[0]) || 'Gen',
     chapter: 1,
+    verse: 1,
+    lastverse: 1,
     v11n: (module && module in G.Tab && G.Tab[module].v11n) || 'KJV',
   };
 }
