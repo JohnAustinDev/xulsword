@@ -8,7 +8,7 @@ import { Slider } from '@blueprintjs/core';
 import type { ReactElementLike } from 'prop-types';
 import { diff } from '../../common';
 import G from '../rg';
-import renderToRoot from '../rinit';
+import renderToRoot from '../renderer';
 import log from '../log';
 import { windowArgument } from '../rutil';
 import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';

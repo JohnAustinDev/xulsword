@@ -425,11 +425,13 @@ export const pushPrefsToWindows: PrefCallbackType = (
 
 // Publish any subscription on the main process and/or any other window
 // or group of windows.
-export function publishSubscription(
-  subscription: keyof SubscriptionType['publish'],
+export function publishSubscription<
+  S extends keyof SubscriptionType['publish']
+>(
+  subscription: S,
   renderers: WindowArgType | WindowArgType[],
   main: boolean,
-  ...args: any
+  ...args: Parameters<SubscriptionType['publish'][S]>
 ) {
   if (main) Subscription.doPublish(subscription, ...args);
   const done: number[] = [];

@@ -1,6 +1,6 @@
 import React from 'react';
 import i18n from 'i18next';
-import renderToRoot from '../rinit';
+import renderToRoot from '../renderer';
 import { Hbox, Vbox } from '../libxul/boxes';
 import Label from '../libxul/label';
 import Stack from '../libxul/stack';

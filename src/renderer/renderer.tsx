@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 /* eslint-disable react/forbid-prop-types */
 /* eslint-disable jsx-a11y/iframe-has-title */
 /* eslint-disable react/jsx-props-no-spreading */
@@ -39,12 +40,7 @@ import '@blueprintjs/icons/lib/css/blueprint-icons.css';
 import '@blueprintjs/core/lib/css/blueprint.css';
 import './global-htm.css';
 
-import type {
-  CipherKey,
-  ModalType,
-  NewModulesType,
-  PrintOverlayOptions,
-} from '../type';
+import type { CipherKey, ModalType, NewModulesType } from '../type';
 import type { SubscriptionType } from '../subscription';
 
 // Init this render process log to the same settings as main.ts
@@ -146,83 +142,60 @@ async function i18nInit(namespaces: string[]) {
 
 const defaultProps = {
   resetOnResize: true,
-  printColumnSelect: false,
   printControl: null,
   dialogInitial: [],
-  printOverlayOptions: null,
+  initialPrintOverlay: null,
 };
 const propTypes = {
   children: PropTypes.element.isRequired,
   resetOnResize: PropTypes.bool,
-  dialogInitial: PropTypes.arrayOf(PropTypes.object),
-  printOverlayOptions: PropTypes.object,
+  printControl: PropTypes.object,
+  initialState: PropTypes.object,
 };
-type ResetProps = {
+type WindowRootProps = {
   children: ReactElement;
-  resetOnResize: boolean;
-  printColumnSelect: boolean;
-  printControl: ReactElement | null;
-  dialogInitial: ReactElement[];
-  printOverlayOptions: PrintOverlayOptions;
+  resetOnResize?: boolean;
+  printControl?: ReactElement | null;
+  initialState?: Partial<WindowRootState>;
 };
 
-const delayHandlerThis = {};
-const defaultPrintOptions = {
-  showOverlay: false,
-  modalType: 'off' as ModalType,
-  iframePath: '',
-  disabled: false,
-  progress: -1,
+const initialState = {
+  reset: 0 as number,
+  dialogs: [] as ReactElement[],
+  showPrintOverlay: false as boolean,
+  modal: 'off' as ModalType,
+  iframeFilePath: '' as string,
+  printDisabled: false as boolean,
+  progress: -1 as number | 'undefined',
 };
-function Reset(props: ResetProps) {
+
+// Key order must never change for React hooks to work!
+const stateme = Object.keys(initialState) as (keyof typeof initialState)[];
+
+export type WindowRootState = typeof initialState;
+
+type StateArray<M extends keyof WindowRootState> = [
+  WindowRootState[M],
+  (a: WindowRootState[M]) => void
+];
+
+const delayHandlerThis = {};
+
+function WindowRoot(props: WindowRootProps) {
   const {
     children,
     resetOnResize,
-    printColumnSelect,
     printControl,
-    dialogInitial,
-    printOverlayOptions,
+    initialState: initialStateProp,
   } = props;
-  const {
-    showOverlay: so,
-    modalType: mt,
-    iframePath: ip,
-    disabled: db,
-    progress: pg,
-  } = printOverlayOptions || defaultPrintOptions;
-  const [reset, setReset] = useState(0);
-  const [dialogs, setDialog] = useState(dialogInitial) as [
-    ReactElement[],
-    (dialog: ReactElement[]) => void
-  ];
-  const [modal, setModal] = useState(mt) as [ModalType, (a: ModalType) => void];
-  const [progress, setProgress] = useState(
-    pg === 'undefined' ? undefined : pg
-  ) as [number | undefined, (prog: number | undefined) => void];
-  const [print, setPrint] = useState(so);
-  const [iframeFilePath, setIframe] = useState(ip);
-  const [printDisabled, setPrintDisabled] = useState(db);
+  const istate = { ...initialState, ...initialStateProp };
+
+  const s = {} as { [k in keyof typeof initialState]: StateArray<k> };
+  stateme.forEach((me) => {
+    s[me] = useState(istate[me]) as any;
+  });
 
   const textbox: React.RefObject<HTMLInputElement> = React.createRef();
-
-  const setPrintOverlay = (options: PrintOverlayOptions) => {
-    const html = document.getElementsByTagName('html')[0];
-    const {
-      showOverlay,
-      modalType,
-      iframePath,
-      disabled,
-      progress: prog,
-    } = options || printOverlayOptions || defaultPrintOptions;
-    if (showOverlay) html.classList.add('printp');
-    else html.classList.remove('printf');
-    setPrint(showOverlay);
-    if (modalType !== undefined) setModal(modalType);
-    if (iframePath !== undefined) setIframe(iframePath);
-    if (disabled !== undefined) setPrintDisabled(disabled);
-    if (prog !== undefined)
-      setProgress(prog === 'undefined' ? undefined : prog);
-  };
 
   // IPC component-reset setup:
   useEffect(() => {
@@ -234,14 +207,14 @@ function Reset(props: ResetProps) {
           .loadLanguages(lng)
           .then(() => i18n.changeLanguage(lng))
           .then(() => {
-            return setReset(reset + 1);
+            return s.reset[1](s.reset[0] + 1);
           })
           .catch((err: any) => {
             throw Error(err);
           });
       } else {
         Cache.clear();
-        setReset(reset + 1);
+        s.reset[1](s.reset[0] + 1);
       }
     });
   });
@@ -249,22 +222,29 @@ function Reset(props: ResetProps) {
   // Modal overlay:
   useEffect(() => {
     return window.ipc.renderer.on('modal', (cssclass: ModalType) => {
-      setModal(cssclass);
+      s.modal[1](cssclass);
     });
   });
 
-  // Print Preview modes:
+  // Set Window State:
   useEffect(() => {
-    return window.ipc.renderer.on(
-      'print-preview',
-      (options: PrintOverlayOptions) => setPrintOverlay(options)
-    );
+    return Subscription.subscribe.setWindowRootState((state) => {
+      Object.entries(state).forEach((entry) => {
+        const [sp, v] = entry;
+        const S = sp as keyof typeof initialState;
+        const val = v as any;
+        if (val !== undefined) {
+          const setMe = s[S][1] as (a: any) => any;
+          setMe(val);
+        }
+      });
+    });
   });
 
   // Progress meter:
   useEffect(() => {
     return window.ipc.renderer.on('progress', (prog: number, id?: string) => {
-      if (!id) setProgress(prog);
+      if (!id) s.progress[1](prog);
     });
   });
 
@@ -275,7 +255,7 @@ function Reset(props: ResetProps) {
         'resize',
         delayHandler.bind(delayHandlerThis)(
           () => {
-            setReset(reset + 1);
+            s.reset[1](s.reset[0] + 1);
           },
           C.UI.Window.resizeDelay,
           'resizeTO'
@@ -304,11 +284,11 @@ function Reset(props: ResetProps) {
     ) {
       root.ondragover = (e) => {
         e.preventDefault();
-        setModal('outlined');
+        s.modal[1]('outlined');
       };
       root.ondragleave = (e) => {
         e.preventDefault();
-        if (!root.contains(e.relatedTarget as HTMLElement)) setModal('off');
+        if (!root.contains(e.relatedTarget as HTMLElement)) s.modal[1]('off');
       };
       root.ondrop = (e) => {
         e.preventDefault();
@@ -319,7 +299,7 @@ function Reset(props: ResetProps) {
             throw Error(err);
           });
         } else {
-          setModal('off');
+          s.modal[1]('off');
         }
       };
     }
@@ -340,9 +320,9 @@ function Reset(props: ResetProps) {
         const cipherKeys: CipherKey[] = [];
         const setCipherKey = () => {
           const k = cipherKeys.filter((ck) => ck.conf.module && ck.cipherKey);
-          if (k.length && !dialogs.length) {
+          if (k.length && !s.dialogs[0].length) {
             G.Module.setCipherKeys(k, G.Window.description().id);
-            setModal('darkened'); // so there's no flash
+            s.modal[1]('darkened'); // so there's no flash
           }
         };
         const haserror = newmods.reports.some((r) => r.error);
@@ -379,7 +359,7 @@ function Reset(props: ResetProps) {
                   <Button
                     flex="1"
                     fill="x"
-                    onClick={() => setDialog(dialogs.splice(0, 1))}
+                    onClick={() => s.dialogs[1](s.dialogs[0].splice(0, 1))}
                   >
                     {i18n.t('ok.label')}
                   </Button>
@@ -422,7 +402,7 @@ function Reset(props: ResetProps) {
                         conf,
                         cipherKey: textbox.current?.value ?? '',
                       });
-                      setDialog(dialogs.splice(0, 1));
+                      s.dialogs[1](s.dialogs[0].splice(0, 1));
                       setCipherKey();
                     }}
                   >
@@ -434,17 +414,17 @@ function Reset(props: ResetProps) {
           );
         });
         if (dialog.length) {
-          setDialog(dialog);
+          s.dialogs[1](dialog);
         }
       }
     );
   });
 
   const overlay =
-    progress !== -1 || modal !== 'off' ? (
+    s.progress[0] !== -1 || s.modal[0] !== 'off' ? (
       <Hbox
         id="overlay"
-        className={modal}
+        className={s.modal[0]}
         pack="center"
         align="center"
         {...xulCaptureEvents.reduce((p: any, c) => {
@@ -455,10 +435,10 @@ function Reset(props: ResetProps) {
           return p;
         }, {})}
       >
-        {progress !== -1 && (
+        {s.progress[0] !== -1 && (
           <ProgressBar
             className="modal-progressbar"
-            value={progress}
+            value={s.progress[0] === 'undefined' ? undefined : s.progress[0]}
             intent="primary"
             animate
             stripes
@@ -470,10 +450,11 @@ function Reset(props: ResetProps) {
   const content = (
     <>
       {overlay}
-      {dialogs.length > 0 && dialogs[0]}
+      {s.dialogs[0].length > 0 && s.dialogs[0][0]}
       <div
-        key={reset}
+        key={s.reset[0]}
         id="reset"
+        className={s.showPrintOverlay[0] ? 'printp' : undefined}
         onContextMenu={(e: React.SyntheticEvent) => {
           G.Data.write(getContextData(e.target), 'contextData');
         }}
@@ -483,77 +464,61 @@ function Reset(props: ResetProps) {
     </>
   );
 
-  if (print) {
+  if (s.showPrintOverlay[0]) {
     return (
       <PrintOverlay
         content={content}
         customControl={printControl}
-        showColumnButton={printColumnSelect}
-        printDisabled={printDisabled}
-        iframeFilePath={iframeFilePath}
-        iframeBackHandler={() => {
-          setPrintOverlay({
-            showOverlay: true,
-            modalType: 'outlined',
-            iframePath: '',
-            disabled: false,
-            progress: -1,
-          });
-        }}
+        printDisabled={s.printDisabled[0]}
+        iframeFilePath={s.iframeFilePath[0]}
       />
     );
   }
+
   return content;
 }
-Reset.defaultProps = defaultProps;
-Reset.propTypes = propTypes;
+WindowRoot.defaultProps = defaultProps;
+WindowRoot.propTypes = propTypes;
 
 export default async function renderToRoot(
   component: ReactElement,
-  loadedXUL?: (() => void) | null,
-  unloadXUL?: (() => void) | null,
   options?: {
     namespace?: string;
     resetOnResize?: boolean;
-    printColumnSelect?: boolean;
     printControl?: ReactElement;
-    modalInitial?: ModalType;
-    dialogInitial?: ReactElement[];
-    iframeInitial?: string;
-    printInitial?: boolean;
-    printOverlayOptions?: PrintOverlayOptions;
+    initialWindowRootState?: Partial<WindowRootState>;
+    onload?: (() => void) | null;
+    onunload?: (() => void) | null;
   }
 ) {
   const {
     namespace,
     resetOnResize,
-    printColumnSelect,
     printControl,
-    dialogInitial,
-    printOverlayOptions,
+    initialWindowRootState,
+    onload,
+    onunload,
   } = options || {};
 
   window.ipc.renderer.on('close', () => {
-    if (typeof unloadXUL === 'function') unloadXUL();
+    if (typeof onunload === 'function') onunload();
     Cache.clear();
   });
 
   await i18nInit([namespace ?? 'xulsword']);
   render(
     <StrictMode>
-      <Reset
+      <WindowRoot
         resetOnResize={resetOnResize}
-        printColumnSelect={printColumnSelect}
         printControl={printControl}
-        dialogInitial={dialogInitial}
-        printOverlayOptions={printOverlayOptions || null}
+        initialState={initialWindowRootState}
       >
         {component}
-      </Reset>
+      </WindowRoot>
     </StrictMode>,
     document.getElementById('root')
   );
-  if (typeof loadedXUL === 'function') loadedXUL();
+  if (typeof onload === 'function') onload();
   setTimeout(() => {
     if (winArgs.type === 'dialog') {
       const body = document.getElementsByTagName('body');

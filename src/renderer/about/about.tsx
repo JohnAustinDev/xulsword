@@ -6,7 +6,7 @@
 import React from 'react';
 import i18n from 'i18next';
 import G from '../rg';
-import renderToRoot from '../rinit';
+import renderToRoot from '../renderer';
 import { windowArgument } from '../rutil';
 import { Hbox, Vbox } from '../libxul/boxes';
 import Label from '../libxul/label';
@@ -202,4 +202,4 @@ export default class AboutWin extends React.Component implements ModinfoParent {
 AboutWin.defaultProps = defaultProps;
 AboutWin.propTypes = propTypes;
 
-renderToRoot(<AboutWin />, null, null, { resetOnResize: false });
+renderToRoot(<AboutWin />, { resetOnResize: false });

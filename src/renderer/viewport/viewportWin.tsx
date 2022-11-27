@@ -9,7 +9,7 @@ import Subscription from '../../subscription';
 import C from '../../constant';
 import { keep, diff } from '../../common';
 import G from '../rg';
-import renderToRoot from '../rinit';
+import renderToRoot from '../renderer';
 import log from '../log';
 import {
   clearPending,

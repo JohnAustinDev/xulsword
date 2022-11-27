@@ -3,6 +3,7 @@
 import type { ContextMenuType } from './main/contextMenu';
 import type { PrefCallbackType } from './main/components/prefs';
 import type { NewModulesType } from './type';
+import type { WindowRootState } from './renderer/renderer';
 
 // To add a new subscription option, add another key to subscriptions, and
 // to make it TypeScriptable, copy/paste/edit SubscriptionType.subscribe
@@ -16,7 +17,10 @@ const subscriptions = {
     newmods: NewModulesType,
     callingWinID?: number
   ) => void,
+
   createWindow: {} as ContextMenuType,
+
+  setWindowRootState: {} as (state: Partial<WindowRootState>) => void,
 };
 
 export interface SubscriptionType {
@@ -27,6 +31,9 @@ export interface SubscriptionType {
       func: typeof subscriptions['modulesInstalled']
     ) => () => void;
     createWindow: (func: typeof subscriptions['createWindow']) => () => void;
+    setWindowRootState: (
+      func: typeof subscriptions['setWindowRootState']
+    ) => () => void;
   };
 
   publish: {
@@ -42,6 +49,9 @@ export interface SubscriptionType {
     createWindow: (
       ...args: Parameters<typeof subscriptions['createWindow']>
     ) => ReturnType<typeof subscriptions['createWindow']>[];
+    setWindowRootState: (
+      ...args: Parameters<typeof subscriptions['setWindowRootState']>
+    ) => ReturnType<typeof subscriptions['setWindowRootState']>[];
   };
 
   doPublish: (

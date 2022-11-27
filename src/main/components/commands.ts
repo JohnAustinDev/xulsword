@@ -10,7 +10,7 @@ import { verseKey, getTab, getTabs } from '../minit';
 import Prefs from './prefs';
 import LocalFile from './localFile';
 import { modalInstall } from './module';
-import Window, { getBrowserWindows } from './window';
+import Window, { getBrowserWindows, publishSubscription } from './window';
 
 import type {
   LocationSKType,
@@ -20,7 +20,6 @@ import type {
   SearchType,
   TextVKType,
   XulswordStatePref,
-  PrintOverlayOptions,
 } from '../../type';
 import type { AboutWinState } from '../../renderer/about/about';
 import type { PrintPassageState } from '../../renderer/printPassage/printPassage';
@@ -121,11 +120,15 @@ const Commands = {
     const windowToPrint = BrowserWindow.fromId(callingWinID);
     if (windowToPrint) {
       log.info(`Printing window id ${windowToPrint.id}`);
-      const poo: PrintOverlayOptions = {
-        showOverlay: true,
-        modalType: 'outlined',
-      };
-      windowToPrint.webContents.send('print-preview', poo);
+      publishSubscription<'setWindowRootState'>(
+        'setWindowRootState',
+        { id: windowToPrint.id },
+        false,
+        {
+          showPrintOverlay: true,
+          modal: 'outlined',
+        }
+      );
     }
   },
 

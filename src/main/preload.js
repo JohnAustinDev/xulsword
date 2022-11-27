@@ -43,6 +43,7 @@ contextBridge.exposeInMainWorld('main', {
 const validChannels = [
   'global', // to/from main for use by the G object
   'did-finish-render', // to main when window has finished rendering
+  'print-or-preview', // to main to do print, printToPDF or preview PDF
   'close', // from main when renderer window is being closed
   'resize', // from main when renderer window is being resized
   'progress', // from main for progress meter
@@ -52,16 +53,13 @@ const validChannels = [
   'cache-reset', // from main when caches should be cleared
   'dynamic-stylesheet-reset', // from main when dynamic stylesheet should be re-created
   'publish-subscription', // from main when a renderer subscription should be published
-  'print-preview',
-  // from main to set renderer print preview mode
-  // to main when print or printToPDF should happen or self-preview-mode update.
 ];
 
 contextBridge.exposeInMainWorld('ipc', {
   renderer: {
-    printPreview(...args) {
-      log.silly('[preload:?] send', 'print-preview', args);
-      ipcRenderer.send('print-preview', ...args);
+    printOrPreview(...args) {
+      log.silly('[preload:?] send', 'print-or-preview', args);
+      return ipcRenderer.invoke('print-or-preview', ...args);
     },
 
     // Trigger a channel event which ipcMain is to listen for. If a single

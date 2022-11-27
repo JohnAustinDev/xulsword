@@ -161,8 +161,6 @@ export default class ModuleManager
 
   destroy: (() => void)[];
 
-  toaster: Toaster | undefined;
-
   tableRef: {
     [table in typeof H.Tables[number]]: React.RefObject<HTMLDivElement>;
   };
@@ -171,6 +169,8 @@ export default class ModuleManager
     textarea: React.RefObject<HTMLTextAreaElement>;
     container: React.RefObject<HTMLDivElement>;
   };
+
+  toaster: Toaster | undefined;
 
   refHandlers = {
     toaster: (ref: Toaster) => {

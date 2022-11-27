@@ -7,13 +7,15 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
 /* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable react/static-property-placement */
-import React, { ReactElement } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
-import { Icon } from '@blueprintjs/core';
+import { Icon, Intent, Position, Toaster } from '@blueprintjs/core';
 import i18n from 'i18next';
+import Subscription from '../../subscription';
 import { clone, diff, drop } from '../../common';
 import G from '../rg';
 import { getStatePref } from '../rutil';
+import log from '../log';
 import { Hbox, Vbox } from './boxes';
 import Button from './button';
 import Spacer from './spacer';
@@ -23,6 +25,8 @@ import Textbox from './textbox';
 import Label from './label';
 import Groupbox from './groupbox';
 import './printSettings.css';
+
+import type { WindowRootState } from '../renderer';
 
 const paperSizes = [
   { type: 'A3', w: 297, h: 420, u: 'mm' },
@@ -37,24 +41,34 @@ const convertToPx = { in: 96, mm: 96 / 25.4 };
 
 const scaleLimit = { min: 25, max: 150 };
 
+const dark: Partial<WindowRootState> = {
+  modal: 'darkened',
+  progress: 'undefined',
+};
+
+const normal: Partial<WindowRootState> = {
+  modal: 'outlined',
+  iframeFilePath: '',
+  progress: -1,
+};
+
 const defaultProps = {
   ...xulDefaultProps,
-  control: null,
-  columnSelect: false,
+  pageable: false,
   printDisabled: false,
 };
 
 const propTypes = {
   ...xulPropTypes,
-  control: PropTypes.object,
-  columnSelect: PropTypes.bool,
+  pageable: PropTypes.bool,
   printDisabled: PropTypes.bool,
+  dialogEnd: PropTypes.string,
 };
 
 type PrintProps = XulProps & {
-  control: ReactElement;
-  columnSelect: boolean;
+  pageable: boolean;
   printDisabled: boolean;
+  dialogEnd: string;
 };
 
 const defaultState = {
@@ -93,6 +107,14 @@ export default class PrintSettings extends React.Component {
 
   resetTO: NodeJS.Timeout | null;
 
+  toaster: Toaster | undefined;
+
+  refHandlers = {
+    toaster: (ref: Toaster) => {
+      this.toaster = ref;
+    },
+  };
+
   constructor(props: PrintProps) {
     super(props);
 
@@ -121,16 +143,22 @@ export default class PrintSettings extends React.Component {
 
   componentDidUpdate(_prevProps: PrintProps, prevState: PrintState) {
     const d = diff(prevState, drop(this.state as PrintState, notStatePref));
-    if (d) {
-      G.Prefs.mergeValue('print', d);
-      setTimeout(() => G.Window.reset('component-reset'), 500);
-    }
+    if (d) G.Prefs.mergeValue('print', d);
   }
 
   async handler(e: React.SyntheticEvent<any, any>) {
-    const state = this.state as PrintState;
     const props = this.props as PrintProps;
-    const { control } = props;
+    const { pageable } = props;
+    const state = this.state as PrintState;
+    // Electron marginsType must be undefined for paged media to work
+    // properly, and must be 1 (no margins) for window print margins to
+    // work via the CSS @page rules.
+    const marginsType = pageable ? undefined : 1;
+    // The margins state should never be passed to Electron because
+    // margins are handled through CSS @page rules. Also, landscape
+    // and pageSize do not need to be passed because they are also
+    // handled through CSS @page rules.
+    const electronOptions = { marginsType };
     const { selectRefs } = this;
     const target = e.currentTarget as HTMLElement;
     const [id, id2] = target.id.split('.');
@@ -181,54 +209,81 @@ export default class PrintSettings extends React.Component {
             break;
           }
           case 'print': {
-            const { landscape, margins, pageSize } = state;
-            window.ipc.renderer.printPreview(
-              {
-                showOverlay: true,
-                progress: 'undefined',
-                modalType: 'darkened',
-              },
-              {
-                silent: false,
-                margins,
-                landscape,
-                pageSize,
-              }
-            );
+            Subscription.publish.setWindowRootState(dark);
+            window.print();
+            Subscription.publish.setWindowRootState(normal);
+            /* See print.ts - seems to be Electron bug?
+            const path = window.ipc.renderer
+              .printOrPreview(
+                electronOptions as Electron.WebContentsPrintOptions
+              )
+              .catch((er) => {
+                if (this.toaster) {
+                  this.toaster.show({
+                    message: er,
+                    intent: Intent.WARNING,
+                  });
+                }
+              })
+              .finally(() => {
+                Subscription.publish.setWindowRootState(normal);
+              });
+              */
             break;
           }
           case 'printToPDF': {
-            window.ipc.renderer.printPreview(
-              {
-                showOverlay: true,
-                progress: 'undefined',
-                modalType: 'darkened',
-              },
-              undefined,
-              { pdfTmpDir: 'prompt-for-file' }
-            );
+            Subscription.publish.setWindowRootState(dark);
+            window.ipc.renderer
+              .printOrPreview({
+                destination: 'prompt-for-file',
+                ...electronOptions,
+              })
+              .then(() => {
+                return Subscription.publish.setWindowRootState(normal);
+              })
+              .catch((er) => {
+                this.toaster?.show({
+                  message: er,
+                  intent: Intent.WARNING,
+                });
+              });
             break;
           }
           case 'printPreview': {
-            window.ipc.renderer.printPreview({
-              showOverlay: true,
-              progress: 'undefined',
-              modalType: 'darkened',
-            });
-            setTimeout(
-              () =>
-                window.ipc.renderer.printPreview(undefined, undefined, {
-                  pdfTmpDir: G.Window.tmpDir(),
-                }),
-              1000
-            );
+            Subscription.publish.setWindowRootState(dark);
+            window.ipc.renderer
+              .printOrPreview({
+                destination: 'iframe',
+                ...electronOptions,
+              })
+              .then((iframeFilePath: string) => {
+                return Subscription.publish.setWindowRootState({
+                  iframeFilePath,
+                  modal: 'off',
+                  printDisabled: false,
+                  progress: -1,
+                });
+              })
+              .catch((er) => {
+                this.toaster?.show({
+                  message: er,
+                  intent: Intent.WARNING,
+                });
+              });
             break;
           }
-          case 'cancel': {
-            // If the window includes a control component, close the
-            // entire window, otherwise, close the print overlay.
-            if (control) G.Window.close();
-            else window.ipc.renderer.printPreview(null);
+          case 'close': {
+            G.Window.close();
+            break;
+          }
+          case 'ok': {
+            Subscription.publish.setWindowRootState({
+              showPrintOverlay: false,
+              modal: 'off',
+              iframeFilePath: '',
+              printDisabled: false,
+              progress: -1,
+            });
             break;
           }
           default:
@@ -313,8 +368,16 @@ export default class PrintSettings extends React.Component {
     const props = this.props as PrintProps;
     const state = this.state as PrintState;
     const { landscape, pageSize, twoColumns, scale, margins } = state;
-    const { columnSelect, control, printDisabled } = props;
+    const { pageable, printDisabled, dialogEnd } = props;
     const { handler, selectRefs } = this;
+
+    // This is for printPassage.tsx only...
+    const printPassage = pageable
+      ? `
+    .print-passage-text {
+      column-count: ${twoColumns ? 2 : 1}
+    }`
+      : '';
 
     const psize = paperSizes.find(
       (p) => p.type === pageSize
@@ -342,9 +405,16 @@ export default class PrintSettings extends React.Component {
 
     return (
       <Vbox {...addClass('printsettings', props)}>
+        <Toaster
+          canEscapeKeyClear
+          position={Position.TOP}
+          usePortal
+          ref={this.refHandlers.toaster}
+        />
         <style>{`
           .html-page {
             width: ${htmlpageW}px;
+            height: ${htmlpageH}px;
           }
           .scale {
             transform: scale(${hpscale});
@@ -362,6 +432,7 @@ export default class PrintSettings extends React.Component {
           .userFontBase {
             font-size: ${scale / 100}em;
           }
+          ${printPassage}
           @media print {
             @page {
               size: ${pwidth}${psize.u} ${pheight}${psize.u};
@@ -372,23 +443,28 @@ export default class PrintSettings extends React.Component {
             }
             .html-page {
               width: unset;
+              height: unset;
             }
             .scale {
               transform: scale(1);
             }
-            .content {
+            .content  {
               top: unset;
               left: unset;
-              width: unset;
-              height: unset
-              padding-top: unset;
-              padding-right: unset;
-              padding-bottom: unset;
-              padding-left: unset;
+              ${
+                pageable
+                  ? `
+                width: unset;
+                height: unset;
+                padding-top: unset;
+                padding-right: unset;
+                padding-bottom: unset;
+                padding-left: unset;`
+                  : ''
+              }
             }
           }
         `}</style>
-        {control}
         <Groupbox caption={i18n.t('printCmd.label')}>
           <Vbox pack="center" align="center">
             <Hbox align="center">
@@ -415,7 +491,7 @@ export default class PrintSettings extends React.Component {
                 icon="document"
                 onClick={handler}
               />
-              {columnSelect && (
+              {pageable && (
                 <>
                   <Spacer width="10" />
                   <Button
@@ -537,8 +613,8 @@ export default class PrintSettings extends React.Component {
             {i18n.t('printPreviewCmd.label')}
           </Button>
           <Spacer flex="10" />
-          <Button id="cancel" flex="1" fill="x" onClick={handler}>
-            {i18n.t('cancel.label')}
+          <Button id={dialogEnd} flex="1" fill="x" onClick={handler}>
+            {i18n.t(`${dialogEnd}.label`)}
           </Button>
         </Hbox>
       </Vbox>

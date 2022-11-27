@@ -193,7 +193,7 @@ process, (see comment there) and is not really needed for an electron app.
     }
     return new HtmlWebpackPlugin({
       filename: name + '.html',
-      template: path.join(webpackPaths.srcRendererPath, 'template.html'),
+      template: path.join(webpackPaths.srcRendererPath, 'root.html'),
       chunks: [name],
       minify: {
         collapseWhitespace: true,

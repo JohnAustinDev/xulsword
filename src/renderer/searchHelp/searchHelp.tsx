@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import i18n from 'i18next';
 import { dString, sanitizeHTML } from '../../common';
 import C from '../../constant';
-import renderToRoot from '../rinit';
+import renderToRoot from '../renderer';
 import { xulDefaultProps, xulPropTypes } from '../libxul/xul';
 import './searchHelp.css';
 

@@ -10,6 +10,7 @@ import React, { ReactElement } from 'react';
 import ReactDOM from 'react-dom';
 import i18n from 'i18next';
 import { ProgressBar } from '@blueprintjs/core';
+import Subscription from '../../subscription';
 import {
   diff,
   sanitizeHTML,
@@ -18,7 +19,7 @@ import {
   querablePromise,
 } from '../../common';
 import G from '../rg';
-import renderToRoot from '../rinit';
+import renderToRoot from '../renderer';
 import { windowArgument, getStatePref } from '../rutil';
 import log from '../log';
 import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
@@ -28,6 +29,7 @@ import Checkbox from '../libxul/checkbox';
 import { Hbox } from '../libxul/boxes';
 import Button from '../libxul/button';
 import Spacer from '../libxul/spacer';
+import PrintSettings from '../libxul/printSettings';
 import VKSelect, { SelectVKMType } from '../libxul/vkselect';
 import {
   handler as handlerH,
@@ -39,18 +41,10 @@ import '../libsword.css';
 import '../viewport/atext.css';
 import './printPassage.css';
 
-import type { PrintOverlayOptions, QuerablePromise } from '../../type';
+import type { QuerablePromise } from '../../type';
 
 // TODO!: Dictlinks aren't implemented. CSS needs improvement. Print hasn't been checked.
 // TODO!: As of 11/22 @page {@bottom-center {content: counter(page);}} does not work
-
-const printOverlayOptions: PrintOverlayOptions = {
-  showOverlay: true,
-  modalType: 'outlined',
-  iframePath: '',
-  disabled: false,
-  progress: -1,
-};
 
 // 0=none, 1=checkbox, 2=placeholder
 const switches = [
@@ -103,6 +97,8 @@ export default class PrintPassageWin extends React.Component {
 
   textdiv: React.RefObject<HTMLDivElement>;
 
+  pagebuttons: React.RefObject<HTMLDivElement>;
+
   handler: typeof handlerH;
 
   vkSelectHandler: typeof vkSelectHandlerH;
@@ -126,9 +122,11 @@ export default class PrintPassageWin extends React.Component {
     this.renderPromises = [];
 
     this.textdiv = React.createRef();
+    this.pagebuttons = React.createRef();
 
     this.handler = handlerH.bind(this);
     this.vkSelectHandler = vkSelectHandlerH.bind(this);
+    this.placePagingButtons = this.placePagingButtons.bind(this);
   }
 
   componentDidMount() {
@@ -151,6 +149,7 @@ export default class PrintPassageWin extends React.Component {
       this.setState({ chapters: valid });
     } else if (tdiv) {
       this.saveStatePrefs(prevState);
+      this.placePagingButtons();
       const { checkbox } = state;
       if (!chapters) return;
       if (prevState.showpage !== showpage) {
@@ -209,9 +208,8 @@ export default class PrintPassageWin extends React.Component {
         log.debug(`Finished previwing ${renderHTML.length} chapters to DOM`);
 
         // Then asynchronously generate all other chapters with a progress bar
-        window.ipc.renderer.printPreview({
-          showOverlay: true,
-          disabled: true,
+        Subscription.publish.setWindowRootState({
+          printDisabled: true,
         });
         this.setState({ progress: 0 });
         setTimeout(
@@ -260,15 +258,27 @@ export default class PrintPassageWin extends React.Component {
                 log.warn(er);
               } finally {
                 xthis.setState({ progress: -1 });
-                window.ipc.renderer.printPreview({
-                  showOverlay: true,
-                  disabled: false,
+                Subscription.publish.setWindowRootState({
+                  printDisabled: false,
                 });
               }
             })(this, renderkey, renderChaps, renderHTML),
           1000
         );
       }
+    }
+  }
+
+  placePagingButtons() {
+    const { textdiv, pagebuttons } = this;
+    const tdiv = textdiv.current;
+    const pbts = pagebuttons.current;
+    if (tdiv && pbts) {
+      const box = textdiv.current.getBoundingClientRect();
+      const boxw = box.right - box.left;
+      pbts.style.top = `${box.bottom + 60}px`;
+      pbts.style.left = `${box.left}px`;
+      pbts.style.width = `${boxw}px`;
     }
   }
 
@@ -285,7 +295,13 @@ export default class PrintPassageWin extends React.Component {
   render() {
     const state = this.state as PrintPassageState;
     const { checkbox, chapters, progress } = state;
-    const { textdiv, handler, vkSelectHandler } = this;
+    const {
+      textdiv,
+      pagebuttons,
+      handler,
+      vkSelectHandler,
+      placePagingButtons,
+    } = this;
     const vkmod = chapters?.vkmod;
     if (!vkmod || !chapters) return null;
 
@@ -303,13 +319,7 @@ export default class PrintPassageWin extends React.Component {
       <>
         <div
           ref={textdiv}
-          className={[
-            'text',
-            'userFontBase',
-            G.Prefs.getBoolPref('print.twoColumns')
-              ? 'two-column'
-              : 'one-column',
-          ].join(' ')}
+          className="print-passage-text userFontBase"
           dir={G.Tab[vkmod].direction || 'auto'}
         />
         {printControl &&
@@ -337,34 +347,29 @@ export default class PrintPassageWin extends React.Component {
                   />
                 )}
               </Groupbox>
-              <Hbox className="page-buttons-container">
-                {progress === -1 && showpaging && (
-                  <Hbox className="page-buttons">
-                    <Button
-                      id="pagefirst"
-                      icon="double-chevron-left"
-                      onClick={handler}
-                    />
-                    <Spacer flex="1" />
-                    <Button
-                      id="pageprev"
-                      icon="chevron-left"
-                      onClick={handler}
-                    />
-                    <Button
-                      id="pagenext"
-                      icon="chevron-right"
-                      onClick={handler}
-                    />
-                    <Spacer flex="1" />
-                    <Button
-                      id="pagelast"
-                      icon="double-chevron-right"
-                      onClick={handler}
-                    />
-                  </Hbox>
-                )}
-              </Hbox>
+              {progress === -1 && showpaging && (
+                <Hbox domref={pagebuttons} className="page-buttons">
+                  <Button
+                    id="pagefirst"
+                    icon="double-chevron-left"
+                    onClick={handler}
+                  />
+                  <Spacer flex="1" />
+                  <Button id="pageprev" icon="chevron-left" onClick={handler} />
+                  <Button
+                    id="pagenext"
+                    icon="chevron-right"
+                    onClick={handler}
+                  />
+                  <Spacer flex="1" />
+                  <Button
+                    id="pagelast"
+                    icon="double-chevron-right"
+                    onClick={handler}
+                  />
+                </Hbox>
+              )}
+
               <Groupbox caption={i18n.t('include.label')}>
                 <Grid>
                   <Rows>
@@ -404,6 +409,12 @@ export default class PrintPassageWin extends React.Component {
                   </Columns>
                 </Grid>
               </Groupbox>
+              <PrintSettings
+                pageable
+                printDisabled={progress !== -1}
+                dialogEnd="close"
+                onClick={() => setTimeout(placePagingButtons, 100)}
+              />
             </>,
             printControl
           )}
@@ -414,8 +425,13 @@ export default class PrintPassageWin extends React.Component {
 PrintPassageWin.defaultProps = defaultProps;
 PrintPassageWin.propTypes = propTypes;
 
-renderToRoot(<PrintPassageWin />, null, null, {
-  printColumnSelect: true,
+renderToRoot(<PrintPassageWin />, {
   printControl: <div id="printControl" />,
-  printOverlayOptions,
+  initialWindowRootState: {
+    showPrintOverlay: true,
+    modal: 'outlined',
+    iframeFilePath: '',
+    printDisabled: false,
+    progress: -1,
+  },
 });

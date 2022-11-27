@@ -11,7 +11,7 @@ import { ProgressBar } from '@blueprintjs/core';
 import { clone, diff, drop, dString, sanitizeHTML } from '../../common';
 import C from '../../constant';
 import G from '../rg';
-import renderToRoot from '../rinit';
+import renderToRoot from '../renderer';
 import log from '../log';
 import { windowArgument } from '../rutil';
 import {
@@ -592,6 +592,6 @@ export default class SearchWin extends React.Component implements PopupParent {
 SearchWin.defaultProps = defaultProps;
 SearchWin.propTypes = propTypes;
 
-renderToRoot(<SearchWin height="100%" />, null, null, {
+renderToRoot(<SearchWin height="100%" />, {
   resetOnResize: false,
 });

@@ -1,9 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable jsx-a11y/iframe-has-title */
 /* eslint-disable react/static-property-placement */
 /* eslint-disable react/forbid-prop-types */
 import React, { ReactElement } from 'react';
 import PropTypes from 'prop-types';
 import i18n from 'i18next';
+import Subscription from '../../subscription';
 import G from '../rg';
 import { Hbox, Vbox } from './boxes';
 import Button from './button';
@@ -24,30 +26,28 @@ const propTypes = {
   ...xulPropTypes,
   content: PropTypes.object.isRequired,
   customControl: PropTypes.object,
-  showColumnButton: PropTypes.bool,
   iframeFilePath: PropTypes.string,
   printDisabled: PropTypes.bool,
-  iframeBackHandler: PropTypes.func.isRequired,
 };
 
 type PrintOverlayProps = XulProps & {
   content: ReactElement; // content to print will be shown in the overlay
   customControl: ReactElement | null; // UI controlling any custom print settings
-  showColumnButton: boolean;
   printDisabled: boolean;
   iframeFilePath: string; // filepath of a PDF preview of the content
-  iframeBackHandler: () => void; // called when 'back' is clicked on PDF preview
 };
 
 export default function PrintOverlay(props: PrintOverlayProps) {
-  const {
-    customControl,
-    iframeFilePath,
-    content,
-    printDisabled,
-    showColumnButton,
-    iframeBackHandler: backHandler,
-  } = props;
+  const { customControl, iframeFilePath, content, printDisabled } = props;
+
+  const backHandler = () =>
+    Subscription.publish.setWindowRootState({
+      showPrintOverlay: true,
+      modal: 'outlined',
+      iframeFilePath: '',
+      printDisabled: false,
+      progress: -1,
+    });
 
   return (
     <>
@@ -66,20 +66,23 @@ export default function PrintOverlay(props: PrintOverlayProps) {
       )}
       {!iframeFilePath && (
         <Hbox className="html-preview" align="stretch">
-          <Vbox>
+          <Spacer orient="vertical" flex="1" />
+          <Vbox pack="center">
+            <Spacer orient="horizontal" flex="1" />
             <div id="html-page" className="html-page">
               <div className="scale">
                 <div className="content">{content}</div>
               </div>
             </div>
+            <Spacer orient="horizontal" flex="1" />
           </Vbox>
+          <Spacer orient="vertical" flex="1" />
           <Vbox className="print-settings">
             <Spacer flex="1" />
-            <PrintSettings
-              columnSelect={showColumnButton}
-              control={customControl}
-              printDisabled={printDisabled}
-            />
+            {customControl}
+            {!customControl && (
+              <PrintSettings printDisabled={printDisabled} dialogEnd="ok" />
+            )}
             <Spacer flex="1" />
           </Vbox>
         </Hbox>

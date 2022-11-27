@@ -21,7 +21,7 @@ import Window, {
   pushPrefsToWindows,
   publishSubscription,
 } from './components/window';
-import PrintHandler from './print';
+import MainPrintHandler from './print';
 import contextMenu from './contextMenu';
 import { getCipherFailConfs, getTabs, updateGlobalModulePrefs } from './minit';
 import setViewportTabs from './tabs';
@@ -33,14 +33,14 @@ const installer = require('electron-devtools-installer');
 const sourceMapSupport = require('source-map-support');
 const electronDebug = require('electron-debug');
 
-// Init the logfile. This must also be done in rinit.tsx for renderer processes.
+// Init the logfile. This must also be done in renderer.tsx for renderer processes.
 {
   const logfile = new LocalFile(
     path.join(G.Dirs.path.ProfD, 'logs', 'xulsword.log')
   );
   if (logfile.exists()) logfile.remove();
   // The renderer log contains any renderer window entries that occur before
-  // rinit.tsx, where their file is changed to the main/renderer log file.
+  // renderer.tsx, where their file is changed to the main/renderer log file.
   const logfile2 = new LocalFile(
     path.join(G.Dirs.path.ProfD, 'logs', 'renderer.log')
   );
@@ -125,7 +125,7 @@ ipcMain.on('did-finish-render', (event: IpcMainEvent) => {
   callingWin = null;
 });
 
-ipcMain.on('print-preview', PrintHandler);
+ipcMain.handle('print-or-preview', MainPrintHandler);
 
 const openMainWindow = () => {
   let options: Electron.BrowserWindowConstructorOptions = {

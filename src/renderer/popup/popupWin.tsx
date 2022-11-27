@@ -5,7 +5,7 @@
 import React from 'react';
 import { diff } from '../../common';
 import G from '../rg';
-import renderToRoot from '../rinit';
+import renderToRoot from '../renderer';
 import { windowArgument } from '../rutil';
 import {
   addClass,

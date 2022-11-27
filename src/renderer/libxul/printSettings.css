@@ -33,7 +33,7 @@
 }
 
 .scale {
-  transform-origin: left;
+  transform-origin: top left;
 }
 
 @media print {

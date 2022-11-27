@@ -1,11 +1,26 @@
-#printControl .page-buttons-container,
+html,
+body,
+#root,
+.html-preview,
+.html-preview > div,
+.html-page,
+.scale {
+  overflow: visible !important;
+}
+
+#printControl {
+  z-index: 1; /* insure .scale doesn't block mouse */
+}
 #printControl .progress-anchor {
   position: relative;
 }
 
 #printControl .page-buttons {
-  position: absolute;
-  top: -30px;
+  position: fixed;
+}
+
+#printControl .vkselect {
+  padding-bottom: 14px;
 }
 
 #printControl .bp4-progress-bar {
@@ -18,28 +33,25 @@
   width: 3.25em;
 }
 
-#printControl .groupbox,
-#printControl .button {
-  z-index: 1; /* required during full screen for some reason */
-}
-
 .html-preview .content {
   overflow: visible; /* allow page scroll to work */
 }
 
-.text {
+.print-passage-text {
   height: 100%;
   overflow: hidden;
-  column-count: 1;
-}
-.text.two-column {
-  column-count: 2;
 }
 
 @media print {
-  html * {
-    overflow: visible !important;
+  #printControl {
+    display: none;
   }
+
+  /* flex display breaks print paging! */
+  .html-preview {
+    display: block;
+  }
+
   .chapter-start:not(.chapterfirst) {
     break-before: page;
   }

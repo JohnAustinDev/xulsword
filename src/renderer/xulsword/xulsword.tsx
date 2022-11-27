@@ -11,7 +11,7 @@ import Subscription from '../../subscription';
 import { dString, diff, clone, drop } from '../../common';
 import C from '../../constant';
 import G from '../rg';
-import renderToRoot from '../rinit';
+import renderToRoot from '../renderer';
 import log from '../log';
 import {
   verseKey,
@@ -567,11 +567,11 @@ export default class Xulsword extends React.Component {
 Xulsword.defaultProps = defaultProps;
 Xulsword.propTypes = propTypes;
 
-const loadxs = () => {
+const onload = () => {
   log.verbose('Loading Xulsword!');
   setTimeout(() => {
     G.Window.moveToBack();
   }, 100);
 };
 
-renderToRoot(<Xulsword id="xulsword" />, loadxs);
+renderToRoot(<Xulsword id="xulsword" />, { onload });

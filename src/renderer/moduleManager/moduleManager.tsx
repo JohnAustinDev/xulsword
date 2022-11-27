@@ -1,5 +1,5 @@
 import React from 'react';
-import renderToRoot from '../rinit';
+import renderToRoot from '../renderer';
 import ModuleManager, { onunload } from './manager';
 
-renderToRoot(<ModuleManager id="moduleManager" />, null, onunload);
+renderToRoot(<ModuleManager id="moduleManager" />, { onunload });

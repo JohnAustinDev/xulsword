@@ -510,57 +510,57 @@ html[dir='rtl'] .fncol3 {
 
 /* PRINTING STYLES */
 /*
-html.printp .pagebreak {
+#reset.printp .pagebreak {
   page-break-after: always;
   margin: 40px;
 }
-html.printp .navlink,
-html.printp .chapinfo {
+#reset.printp .navlink,
+#reset.printp .chapinfo {
   display: none !important;
 }
-html.printp .noticelink {
+#reset.printp .noticelink {
   display: none;
 }
-html.printp .noticetext {
+#reset.printp .noticetext {
   display: block;
 }
-html.printp .chapterhead .chapbk {
+#reset.printp .chapterhead .chapbk {
   display: block;
 }
-html.printp .interS {
+#reset.printp .interS {
   border-top: 1px solid black;
 }
-html.printp * {
+#reset.printp * {
   text-decoration: none !important;
 }
-html.printp .dtl,
-html.printp .sr {
+#reset.printp .dtl,
+#reset.printp .sr {
   color: inherit;
 }
-html.printp .atext.Texts .un-hilight {
+#reset.printp .atext.Texts .un-hilight {
   background: transparent;
 }
-html.printp .fnlink {
+#reset.printp .fnlink {
   color: inherit;
 }
-html.printp .crref {
+#reset.printp .crref {
   color: inherit;
 }
-html.printp .crref:after {
+#reset.printp .crref:after {
   content: ': ';
 }
-html.printp .crtext {
+#reset.printp .crtext {
   display: inline;
 }
-html.printp .crtext.opposing-program-direction {
+#reset.printp .crtext.opposing-program-direction {
   display: inline-block;
 }
-html.printp .cr-sep {
+#reset.printp .cr-sep {
   display: block;
   border-top: none;
   margin: 10px;
 }
-html.printp .cr-sep:after {
+#reset.printp .cr-sep:after {
   content: '';
   padding-inline-end: 0em;
 }

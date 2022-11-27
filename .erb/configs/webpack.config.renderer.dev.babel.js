@@ -276,7 +276,7 @@ export default merge(baseConfig, {
     }
     return new HtmlWebpackPlugin({
       filename: path.join(name + '.html'),
-      template: path.join(webpackPaths.srcRendererPath, 'template.html'),
+      template: path.join(webpackPaths.srcRendererPath, 'root.html'),
       chunks: [name],
       minify: {
         collapseWhitespace: true,

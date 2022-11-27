@@ -52,40 +52,40 @@ html[dir='rtl'] .viewport .chooser {
 
 /* PRINTING STYLES */
 /*
-html.printp .viewport .chooser,
-html.printp .viewport .open-chooser,
-html.printp .viewport .text-pin,
-html.printp .viewport .text-win,
-html.printp .viewport .notebox-maximizer {
+#reset.printp .viewport .chooser,
+#reset.printp .viewport .open-chooser,
+#reset.printp .viewport .text-pin,
+#reset.printp .viewport .text-win,
+#reset.printp .viewport .notebox-maximizer {
   display: none !important;
 }
-html.printp .viewport .tab {
+#reset.printp .viewport .tab {
   background-color: white !important;
   color: black !important;
 }
-html.printp .viewport .tab:not(.active) {
+#reset.printp .viewport .tab:not(.active) {
   display: none;
 }
-html.printp .viewport > div {
+#reset.printp .viewport > div {
   height: auto;
 }
-html.printp .viewport .sb,
-html.printp .viewport .nbf,
-html.printp .viewport .nb {
+#reset.printp .viewport .sb,
+#reset.printp .viewport .nbf,
+#reset.printp .viewport .nb {
   height: auto !important;
 }
-html.printp .viewport .sb {
+#reset.printp .viewport .sb {
   margin-bottom: 20px !important;
 }
-html.printp .viewport .bb {
+#reset.printp .viewport .bb {
   display: none;
 }
-html.printp .viewport .nbf {
+#reset.printp .viewport .nbf {
   position: relative;
   bottom: auto;
   right: auto;
 }
-html.printp .viewport .nb {
+#reset.printp .viewport .nb {
   background: transparent;
   border: none;
   padding-top: 20px;
