@@ -1,0 +1,24 @@
+diff -ru build.64win/src/shared/CLucene/_clucene-config.h build.64win-new/src/shared/CLucene/_clucene-config.h
+--- build.64win/src/shared/CLucene/_clucene-config.h	2022-11-30 10:54:14.307777593 -0800
++++ build.64win-new/src/shared/CLucene/_clucene-config.h	2022-11-30 10:55:45.051773703 -0800
+@@ -68,7 +68,7 @@
+ /* undef _read _read */
+ #define _cl_open _open
+ /* undef _write _write */
+-#define _snprintf snprintf
++/* #define _snprintf snprintf */
+ /* undef _mkdir _mkdir */
+ /* undef _unlink _unlink */
+ /* undef _ftime _ftime */
+diff -ru build.64win/src/shared/CLucene/clucene-config.h build.64win-new/src/shared/CLucene/clucene-config.h
+--- build.64win/src/shared/CLucene/clucene-config.h	2022-11-30 10:54:14.307777593 -0800
++++ build.64win-new/src/shared/CLucene/clucene-config.h	2022-11-30 10:55:45.051773703 -0800
+@@ -61,7 +61,7 @@
+ /* #undef LUCENE_DISABLE_HASHING */
+ 
+ /* Define if you have POSIX threads libraries and header files. */
+-#define _CL_HAVE_PTHREAD  1 
++/*#define _CL_HAVE_PTHREAD  1*/ 
+ 
+ /* Define if you have Win32 threads libraries and header files. */
+ #define _CL_HAVE_WIN32_THREADS  1 

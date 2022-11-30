@@ -22,5 +22,7 @@
     "test/**/__snapshots__": true,
     "yarn.lock": true,
     "*.{css,sass,scss}.d.ts": true
-  }
+  },
+  "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+  "cmake.sourceDirectory": "${workspaceFolder}/Cpp"
 }

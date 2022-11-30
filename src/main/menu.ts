@@ -314,6 +314,15 @@ export default class MenuBuilder {
         },
         { type: 'separator' },
         {
+          label: this.ts('print.printpassage'),
+          accelerator: this.tx('printPassageCmd.commandkey', [
+            'CommandOrControl',
+          ]),
+          click: d(() => {
+            Commands.printPassage();
+          }),
+        },
+        {
           label: this.ts('printCmd.label', 'printCmd.accesskey'),
           accelerator: this.tx('printCmd.commandkey', [
             'CommandOrControl',
@@ -321,16 +330,6 @@ export default class MenuBuilder {
           ]),
           click: d(() => {
             Commands.print();
-          }),
-        },
-        { type: 'separator' },
-        {
-          label: this.ts('print.printpassage'),
-          accelerator: this.tx('printPassageCmd.commandkey', [
-            'CommandOrControl',
-          ]),
-          click: d(() => {
-            Commands.printPassage();
           }),
         },
         { type: 'separator' },

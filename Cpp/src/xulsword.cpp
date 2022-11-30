@@ -514,11 +514,6 @@ PUBLIC XULSWORD FUNCTIONS
 *********************************************************************/
 
 xulsword::xulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(const char *), void (*reportProgress)(int), const char *localedir, bool firebibleMode) {
-#ifdef WIN32
-  _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_DEBUG); // turn off MSVC debug mode's horrid assertion prompts
-  CreateMutexA(NULL, FALSE, "xulswordmutex"); // so Window's installer will bail we're already running
-#endif
-
   if (!MySWLogXS) {
     MySWLogXS = new SWLogXS();
     SWLog::setSystemLog(MySWLogXS);
@@ -1700,9 +1695,7 @@ int xulsword::search(const char *mod, const char *srchstr, const char *scope, in
   Query *q  = 0;
   const TCHAR *stopWords[] = { 0 };
   standard::StandardAnalyzer analyzer(stopWords);
-  wchar_t wbuff[5000];
-  lucene_utf8towcs(wbuff, searchString.c_str(), 5000);
-  q = QueryParser::parse(wbuff, _T("content"), &analyzer);
+  q = QueryParser::parse(searchString.c_str(), _T("content"), &analyzer);
 
   if (q) {
 //SWLog::getSystemLog()->logDebug("search:\"%s\" %i %i", searchString.c_str(), type1, flags);

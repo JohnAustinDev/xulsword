@@ -1,0 +1,30 @@
+diff -ru ./sword/CMakeLists.txt ./sword-new/CMakeLists.txt
+--- ./sword/CMakeLists.txt	2022-11-30 11:10:17.151736311 -0800
++++ ./sword-new/CMakeLists.txt	2022-11-30 11:27:08.371692955 -0800
+@@ -316,3 +316,18 @@
+ IF(SWORD_BUILD_TESTS STREQUAL "Yes")
+ 	ADD_SUBDIRECTORY("${CMAKE_CURRENT_SOURCE_DIR}/tests")
+ ENDIF(SWORD_BUILD_TESTS STREQUAL "Yes")
++
++# For Linux cross-compilation to Windows
++IF(CMAKE_TOOLCHAIN_FILE MATCHES "cmake-toolchain.64win")
++  add_definitions(-DWIN32 -D_WIN32 -DBUILDING_LIBRARY)
++  add_library(libwsock32 SHARED IMPORTED)
++  find_library(SOCKLIB libwsock32 NAMES libwsock32.a PATHS "/usr/x86_64-w64-mingw32/lib")
++  message(STATUS "${SOCKLIB}")
++  target_link_libraries(sword ${SOCKLIB})
++  target_link_libraries(sword_static ${SOCKLIB})
++  set(CMAKE_CXX_FLAGS "-fpermissive ${CMAKE_CXX_FLAGS}")
++ENDIF(CMAKE_TOOLCHAIN_FILE MATCHES "cmake-toolchain.64win")
+diff -ru ./sword/include/ftplib.h ./sword-new/include/ftplib.h
+--- ./sword/include/ftplib.h	2022-11-30 11:21:58.943706222 -0800
++++ ./sword-new/include/ftplib.h	2022-11-30 11:17:35.607717512 -0800
+@@ -94,7 +94,6 @@
+ #endif /* (_FTPLIB_NO_COMPAT) */
+ /* end v1 compatibility stuff */
+ 
+-GLOBALREF int ftplib_debug;
+ GLOBALREF void FtpInit(void);
+ GLOBALREF char *FtpLastResponse(netbuf *nControl);
+ GLOBALREF int FtpConnect(const char *host, netbuf **nControl);
+Binary files ./sword/.svn/wc.db and ./sword-new/.svn/wc.db differ

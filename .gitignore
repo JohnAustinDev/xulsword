@@ -38,6 +38,7 @@ npm-debug.log.*
 Cpp/sword
 Cpp/zlib
 Cpp/clucene
+Cpp/boost
 Cpp/build*
 Cpp/install*
 

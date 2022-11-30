@@ -95,6 +95,20 @@ if [ ! -e "$XULSWORD/Cpp/zlib" ]; then
   make DESTDIR="$XULSWORD/Cpp/install.64win" install
 fi
 
+# Compile boost for Clucene cross-compilation
+# https://packages.ubuntu.com/source/xenial/zlib
+if [ ! -e "$XULSWORD/Cpp/boost" ]; then
+  cd "$XULSWORD/Cpp"
+  curl -o boost.tar.gz https://boostorg.jfrog.io/artifactory/main/release/1.80.0/source/boost_1_80_0.tar.gz
+  tar -xf boost.tar.gz
+  rm boost.tar.gz
+  mv boost_1_80_0 boost
+  cd boost
+  echo "using gcc :  : x86_64-w64-mingw32-g++ ;" > user-config.jam
+  ./bootstrap.sh
+  ./b2 --user-config=./user-config.jam --prefix=./boost-x64 target-os=windows address-model=64 variant=release install
+fi
+
 # Compile libclucene (local compilation is required to create libsword static library)
 if [ ! -e "$XULSWORD/Cpp/clucene" ]; then
   cd "$XULSWORD/Cpp"
@@ -123,9 +137,11 @@ if [ ! -e "$XULSWORD/Cpp/clucene" ]; then
 
   # CROSS COMPILE to windows 64 bit dll
   cd "$XULSWORD/Cpp"
+  patch -s -p0 < "$XULSWORD/Cpp/windows/clucene-src.patch"
   mkdir ./clucene/build.64win
   cd ./clucene/build.64win
-  cmake -DCMAKE_TOOLCHAIN_FILE=$XULSWORD/Cpp/windows/cmake-toolchain.64win -D BUILD_STATIC_LIBRARIES=ON -D ZLIB_INCLUDE_DIR=$XULSWORD/Cpp/install.64win/usr/local/include -D ZLIB_LIBRARY=$XULSWORD/Cpp/install.64win/usr/local/lib -D Boost_INCLUDE_DIR="$XULSWORD/Cpp/clucene/boost/boost" ..
+  cmake -DCMAKE_TOOLCHAIN_FILE="$XULSWORD/Cpp/windows/cmake-toolchain.64win" -C $XULSWORD/Cpp/cluceneMK/cmake/TryRunResults.cmake -D CMAKE_USE_PTHREADS_INIT=OFF -D BUILD_STATIC_LIBRARIES=ON -D ZLIB_INCLUDE_DIR=$XULSWORD/Cpp/install.64win/usr/local/include -D Boost_INCLUDE_DIR="$XULSWORD/Cpp/boost/boost-x64/include" -D ZLIB_LIBRARY=$XULSWORD/Cpp/install.64win/usr/local/lib/libzlibstatic.a ..
+  cd .. && patch -s -p0 < "$XULSWORD/Cpp/windows/clucene-build.patch" && cd build.64win 
   make DESTDIR="$XULSWORD/Cpp/install.64win" install
 fi
 
@@ -143,8 +159,16 @@ if [ ! -e "$XULSWORD/Cpp/sword" ]; then
   cp "$XULSWORD/Cpp/clucene/build/src/shared/CLucene/clucene-config.h" ./CLucene/clucene-config.h
 
   cd "$XULSWORD/Cpp/sword/build"
-  cmake -G "Unix Makefiles" -D SWORD_NO_ICU="No" -D CLUCENE_LIBRARY_DIR="$XULSWORD/Cpp/install/usr/local/lib" -D CLUCENE_LIBRARY="$XULSWORD/Cpp/install/usr/local/lib/libclucene-core.$LIB_EXT" -D CMAKE_INCLUDE_PATH="$XULSWORD/Cpp/install/usr/local/include" -D CMAKE_LIBRARY_PATH="$XULSWORD/Cpp/install/usr/local/lib" ..
+  cmake -G "Unix Makefiles" -D SWORD_NO_ICU="No"-D CLUCENE_LIBRARY_DIR="$XULSWORD/Cpp/install/usr/local/lib" -D CLUCENE_LIBRARY="$XULSWORD/Cpp/install/usr/local/lib/libclucene-core.$LIB_EXT" -D CMAKE_INCLUDE_PATH="$XULSWORD/Cpp/install/usr/local/include" -D CMAKE_LIBRARY_PATH="$XULSWORD/Cpp/install/usr/local/lib" ..
   make DESTDIR="$XULSWORD/Cpp/install" install
+
+  # CROSS COMPILE to windows 64 bit dll
+  cd "$XULSWORD/Cpp"
+  patch -s -p0 < "$XULSWORD/Cpp/windows/libsword-src.patch"
+  mkdir ./sword/build.64win
+  cd ./sword/build.64win
+  cmake -DCMAKE_TOOLCHAIN_FILE="$XULSWORD/Cpp/windows/cmake-toolchain.64win" -D SWORD_NO_ICU="No" -D CLUCENE_LIBRARY="$XULSWORD/Cpp/install.64win/usr/local/lib/libclucene-core.dll.a" -D ZLIB_LIBRARY="$XULSWORD/Cpp/install.64win/usr/local/lib/libzlib.dll.a" -D CLUCENE_LIBRARY_DIR="$XULSWORD/Cpp/install.64win/usr/local/include" -D CLUCENE_INCLUDE_DIR="$XULSWORD/Cpp/install.64win/usr/local/include" -D ZLIB_INCLUDE_DIR="$XULSWORD/Cpp/install.64win/usr/local/include" -DSWORD_BUILD_UTILS="No" ..
+  make DESTDIR="$XULSWORD/Cpp/install.64win" install
 fi
 
 # Compile libxulsword
@@ -157,6 +181,13 @@ if [ ! -e "$XULSWORD/Cpp/build" ]; then
   mkdir build
   cd build
   cmake -G "Unix Makefiles" -D SWORD_NO_ICU="No" -D CMAKE_INCLUDE_PATH="$XULSWORD/Cpp/install/usr/local/include" -D CMAKE_LIBRARY_PATH="$XULSWORD/Cpp/install/usr/local/lib" ..
+  make
+  
+  # CROSS COMPILE to windows 64 bit dll
+  cd "$XULSWORD/Cpp"
+  mkdir build-64win
+  cd build-64win
+  cmake -G "Unix Makefiles" -DCMAKE_TOOLCHAIN_FILE="$XULSWORD/Cpp/windows/cmake-toolchain.64win" -D SWORD_NO_ICU="No" -D CMAKE_INCLUDE_PATH="$XULSWORD/Cpp/install.64win/usr/local/include" -D CMAKE_LIBRARY_PATH="$XULSWORD/Cpp/install.64win/usr/local/lib" ..
   make
 fi
 

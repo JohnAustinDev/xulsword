@@ -1,0 +1,48 @@
+diff -ru ./clucene/src/core/CLucene/store/MMapInput.cpp ./clucene-new/src/core/CLucene/store/MMapInput.cpp
+--- ./clucene-orig/src/core/CLucene/store/MMapInput.cpp	2022-11-30 09:59:14.427919076 -0800
++++ ./clucene/src/core/CLucene/store/MMapInput.cpp	2022-11-30 10:01:18.543913755 -0800
+@@ -31,6 +31,9 @@
+ #endif
+ #include <errno.h>
+ 
++CL_NS_DEF(store)
++CL_NS_USE(util)
++
+ #if defined(_CL_HAVE_FUNCTION_MAPVIEWOFFILE)
+     typedef int HANDLE;
+ 	
+@@ -80,10 +83,6 @@
+     extern "C" __declspec(dllimport) _cl_dword_t __stdcall GetLastError();
+ #endif
+ 
+-
+-CL_NS_DEF(store)
+-CL_NS_USE(util)
+-
+     class MMapIndexInput::Internal: LUCENE_BASE{
+ 	public:
+ 		uint8_t* data;
+diff -ru ./clucene/src/shared/CLucene/LuceneThreads.h ./clucene-new/src/shared/CLucene/LuceneThreads.h
+--- ./clucene-orig/src/shared/CLucene/LuceneThreads.h	2022-11-30 09:59:14.431919076 -0800
++++ ./clucene/src/shared/CLucene/LuceneThreads.h	2022-11-30 10:01:18.547913755 -0800
+@@ -7,6 +7,8 @@
+ #ifndef _LuceneThreads_h
+ #define  _LuceneThreads_h
+ 
++#include <windows.h>
++#include <pthread.h>
+ 
+ CL_NS_DEF(util)
+ class CLuceneThreadIdCompare;
+diff -ru ./clucene/src/shared/cmake/MacroCheckGccVisibility.cmake ./clucene-new/src/shared/cmake/MacroCheckGccVisibility.cmake
+--- ./clucene-orig/src/shared/cmake/MacroCheckGccVisibility.cmake	2022-11-30 09:59:14.435919076 -0800
++++ ./clucene/src/shared/cmake/MacroCheckGccVisibility.cmake	2022-11-30 10:07:49.967896972 -0800
+@@ -26,7 +26,7 @@
+    
+       # gcc on mac just reports: "gcc (GCC) 3.3 20030304 ..." without the patch level, handle this here:
+       if (NOT _gcc_version)
+-        string (REGEX REPLACE ".*\\(GCC\\).* ([34]\\.[0-9]) .*" "\\1.0" _gcc_version "${_gcc_version_info}")
++        string (REGEX REPLACE ".*\\(GCC\\).* ([3-9]\\.[0-9]).*" "\\1.0" _gcc_version "${_gcc_version_info}")
+       endif (NOT _gcc_version)
+    endif (NOT _gcc_version)
+    
