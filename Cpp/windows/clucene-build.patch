@@ -1,6 +1,6 @@
-diff -ru build.64win/src/shared/CLucene/_clucene-config.h build.64win-new/src/shared/CLucene/_clucene-config.h
---- build.64win/src/shared/CLucene/_clucene-config.h	2022-11-30 10:54:14.307777593 -0800
-+++ build.64win-new/src/shared/CLucene/_clucene-config.h	2022-11-30 10:55:45.051773703 -0800
+diff -ru build/src/shared/CLucene/_clucene-config.h build-new/src/shared/CLucene/_clucene-config.h
+--- build/src/shared/CLucene/_clucene-config.h	2022-11-30 10:54:14.307777593 -0800
++++ build-new/src/shared/CLucene/_clucene-config.h	2022-11-30 10:55:45.051773703 -0800
 @@ -68,7 +68,7 @@
  /* undef _read _read */
  #define _cl_open _open
@@ -10,9 +10,9 @@ diff -ru build.64win/src/shared/CLucene/_clucene-config.h build.64win-new/src/sh
  /* undef _mkdir _mkdir */
  /* undef _unlink _unlink */
  /* undef _ftime _ftime */
-diff -ru build.64win/src/shared/CLucene/clucene-config.h build.64win-new/src/shared/CLucene/clucene-config.h
---- build.64win/src/shared/CLucene/clucene-config.h	2022-11-30 10:54:14.307777593 -0800
-+++ build.64win-new/src/shared/CLucene/clucene-config.h	2022-11-30 10:55:45.051773703 -0800
+diff -ru build/src/shared/CLucene/clucene-config.h build-new/src/shared/CLucene/clucene-config.h
+--- build/src/shared/CLucene/clucene-config.h	2022-11-30 10:54:14.307777593 -0800
++++ build-new/src/shared/CLucene/clucene-config.h	2022-11-30 10:55:45.051773703 -0800
 @@ -61,7 +61,7 @@
  /* #undef LUCENE_DISABLE_HASHING */
  

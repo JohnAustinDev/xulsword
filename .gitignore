@@ -36,8 +36,11 @@ npm-debug.log.*
 *-console.log
 .vagrant
 Cpp/sword
+Cpp/sword.64win
 Cpp/zlib
+Cpp/zlib.64win
 Cpp/clucene
+Cpp/clucene.64win
 Cpp/boost
 Cpp/build*
 Cpp/install*
