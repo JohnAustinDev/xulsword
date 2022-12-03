@@ -1,21 +1,56 @@
 diff -ru sword.64win/CMakeLists.txt sword-new/CMakeLists.txt
 --- sword.64win/CMakeLists.txt	2022-11-30 17:40:44.698731851 -0800
 +++ sword-new/CMakeLists.txt	2022-11-30 17:53:44.546698415 -0800
-@@ -316,3 +316,14 @@
+@@ -271,13 +271,14 @@
+ ##############################################################################################
+ # Our build test
+ #
+-
+-ADD_EXECUTABLE(buildtest buildtest.cpp)
+-IF(BUILDING_STATIC)
+-	TARGET_LINK_LIBRARIES(buildtest sword_static)
+-ELSE(BUILDING_STATIC)
+-	TARGET_LINK_LIBRARIES(buildtest sword)
+-ENDIF(BUILDING_STATIC)
++IF(SWORD_BUILD_TESTS)
++  ADD_EXECUTABLE(buildtest buildtest.cpp)
++  IF(BUILDING_STATIC)
++    TARGET_LINK_LIBRARIES(buildtest sword_static)
++  ELSE(BUILDING_STATIC)
++    TARGET_LINK_LIBRARIES(buildtest sword)
++  ENDIF(BUILDING_STATIC)
++ENDIF(SWORD_BUILD_TESTS)
+ 
+ ##############################################################################################
+ # Installing the library, headers, utilies, etc
+@@ -316,3 +317,26 @@
  IF(SWORD_BUILD_TESTS STREQUAL "Yes")
  	ADD_SUBDIRECTORY("${CMAKE_CURRENT_SOURCE_DIR}/tests")
  ENDIF(SWORD_BUILD_TESTS STREQUAL "Yes")
 +
 +# For Linux cross-compilation to Windows
 +IF(CMAKE_TOOLCHAIN_FILE MATCHES "cmake-toolchain.64win")
++  # Use same CLucene compilation flags:
++  set(CMAKE_CXX_FLAGS "-fvisibility=hidden -fvisibility-inlines-hidden -O2 -g -DNDEBUG -D_REENTRANT -D_UCS2 -D_UNICODE ${CMAKE_CXX_FLAGS}")
 +  add_definitions(-DWIN32 -D_WIN32 -DBUILDING_LIBRARY)
++  
++  # Windows requires that the type of import target library (dll or a) be
++  # decided by headers. CLucene shared headers require the definition of
++  # MAKE_CLUCENE_XX_LIB to allow import from an .a type library.
++  target_compile_definitions(sword_static PUBLIC -DMAKE_CLUCENE_CORE_LIB -DMAKE_CLUCENE_SHARED_LIB)
++  
 +  add_library(libwsock32 SHARED IMPORTED)
 +  find_library(SOCKLIB libwsock32 NAMES libwsock32.a PATHS "/usr/x86_64-w64-mingw32/lib")
 +  message(STATUS "${SOCKLIB}")
-+  target_link_libraries(sword ${SOCKLIB})
-+  target_link_libraries(sword_static ${SOCKLIB})
++  IF(TARGET sword_static)
++    target_link_libraries(sword_static ${SOCKLIB})
++  ENDIF(TARGET sword_static)
++  IF(TARGET sword)
++    target_link_libraries(sword ${SOCKLIB})
++  ENDIF(TARGET sword)
 +  set(CMAKE_CXX_FLAGS "-fpermissive ${CMAKE_CXX_FLAGS}")
 +ENDIF(CMAKE_TOOLCHAIN_FILE MATCHES "cmake-toolchain.64win")
+
 diff -ru sword.64win/include/ftplib.h sword-new/include/ftplib.h
 --- sword.64win/include/ftplib.h	2022-11-30 17:40:49.410731649 -0800
 +++ sword-new/include/ftplib.h	2022-11-30 17:52:19.574702058 -0800

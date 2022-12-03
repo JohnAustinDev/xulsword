@@ -17,6 +17,7 @@
 */
 
 #ifdef _WIN32
+  #include "tchar.h"
   #include "windows.h"
 #endif
 
@@ -1695,7 +1696,9 @@ int xulsword::search(const char *mod, const char *srchstr, const char *scope, in
   Query *q  = 0;
   const TCHAR *stopWords[] = { 0 };
   standard::StandardAnalyzer analyzer(stopWords);
-  q = QueryParser::parse(searchString.c_str(), _T("content"), &analyzer);
+  wchar_t wbuff[5000];
+  lucene_utf8towcs(wbuff, searchString.c_str(), 5000);
+  q = QueryParser::parse(&wbuff[0], L"content", &analyzer);
 
   if (q) {
 //SWLog::getSystemLog()->logDebug("search:\"%s\" %i %i", searchString.c_str(), type1, flags);

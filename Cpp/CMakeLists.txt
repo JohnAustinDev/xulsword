@@ -11,7 +11,6 @@ set(CMAKE_INSTALL_RPATH "")
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH FALSE)
 
 # -Wl,--no-undefined flags are required by GCC to make it check shared library dependencies
-set(CMAKE_CXX_FLAGS "-pthread ${CMAKE_CXX_FLAGS}")
 set(CMAKE_LINKER_FLAGS "-Wl,-undefined,error ${CMAKE_SHARED_LINKER_FLAGS}")
 set(CMAKE_SHARED_LINKER_FLAGS "-Wl,-undefined,error ${CMAKE_SHARED_LINKER_FLAGS}")
 
@@ -19,20 +18,23 @@ set(CMAKE_SHARED_LINKER_FLAGS "-Wl,-undefined,error ${CMAKE_SHARED_LINKER_FLAGS}
 include_directories(./src/include ./sword/include ${CMAKE_INCLUDE_PATH})
 link_directories(${CMAKE_LIBRARY_PATH})
 
-add_library(xulsword SHARED ./src/xulsword.cpp ./src/libxulsword.cpp)
-set_target_properties(xulsword PROPERTIES VERSION 1.4.4)
-target_link_libraries (xulsword sword clucene-core clucene-shared zlib)
-
-#add_library(xulsword-static SHARED ./src/xulsword.cpp ./src/libxulsword.cpp)
-#set_target_properties(xulsword-static PROPERTIES VERSION 1.4.4)
-#target_link_libraries(xulsword-static libsword.a)
-#target_link_libraries(xulsword-static libclucene-shared.a)
-#target_link_libraries(xulsword-static libclucene-core.a)
+add_library(xulsword-static SHARED ./src/xulsword.cpp ./src/libxulsword.cpp)
 
 # For Linux cross-compilation to Windows
 IF(CMAKE_TOOLCHAIN_FILE MATCHES "cmake-toolchain.64win")
-  add_definitions(-DWIN32 -D_WIN32)
-  # _ASCII is a CLucene define needed for headers to compile
-  add_definitions(-D_ASCII)
-  set(CMAKE_CXX_FLAGS "-fpermissive ${CMAKE_CXX_FLAGS}")
+  # Use same CLucene compilation flags and definitions:
+  set(CMAKE_CXX_FLAGS "-fvisibility=hidden -fvisibility-inlines-hidden -O2 -g -DNDEBUG -D_REENTRANT -D_UCS2 -D_UNICODE ${CMAKE_CXX_FLAGS}")
+  add_definitions(-DWIN32 -D_WIN32 -DBUILDING_LIBRARY)
+  # Windows requires that the type of import target library (dll or a) be
+  # decided by headers. CLucene shared headers require the definition of
+  # MAKE_CLUCENE_XX_LIB to allow import from an .a type library.
+  target_compile_definitions(xulsword-static PUBLIC -DMAKE_CLUCENE_CORE_LIB -DMAKE_CLUCENE_SHARED_LIB)
+  
+  target_link_libraries (xulsword-static libsword.a libclucene-core-static.a libclucene-shared-static.a zlibstatic.a)
+ELSE(CMAKE_TOOLCHAIN_FILE MATCHES "cmake-toolchain.64win")
+  target_link_libraries (xulsword-static libsword.a libclucene-core-static.a libclucene-shared-static.a libz.a)
 ENDIF(CMAKE_TOOLCHAIN_FILE MATCHES "cmake-toolchain.64win")
+
+set_target_properties(xulsword-static PROPERTIES VERSION 1.4.4)
+
+install(TARGETS xulsword-static DESTINATION "${LIB_INSTALL_DIR}")
