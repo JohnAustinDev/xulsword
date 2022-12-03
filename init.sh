@@ -172,7 +172,7 @@ if [ ! -e "$XULSWORD/Cpp/sword" ]; then
   cd "$XULSWORD/Cpp"
   patch -s -p0 < "$XULSWORD/Cpp/windows/libsword-src.patch"
   cd ./sword.64win/build
-  cmake -DCMAKE_TOOLCHAIN_FILE="$XULSWORD/Cpp/windows/cmake-toolchain.64win" -D SWORD_NO_ICU="No" -D LIBSWORD_LIBRARY_TYPE="Static" -D CLUCENE_LIBRARY="$XULSWORD/Cpp/install.64win/usr/local/lib/libclucene-core-static.a" -D ZLIB_LIBRARY="$XULSWORD/Cpp/install.64win/usr/local/lib/libzlibstatic.a" -D CLUCENE_LIBRARY_DIR="$XULSWORD/Cpp/install.64win/usr/local/include" -D CLUCENE_INCLUDE_DIR="$XULSWORD/Cpp/install.64win/usr/local/include" -D ZLIB_INCLUDE_DIR="$XULSWORD/Cpp/install.64win/usr/local/include" -DSWORD_BUILD_UTILS="No" ..
+  cmake -DCMAKE_TOOLCHAIN_FILE="$XULSWORD/Cpp/windows/cmake-toolchain.64win" -D SWORD_NO_ICU="No" -D LIBSWORD_LIBRARY_TYPE="Static" -D CLUCENE_LIBRARY="$XULSWORD/Cpp/install.64win/usr/local/lib/libclucene-core.dll.a" -D ZLIB_LIBRARY="$XULSWORD/Cpp/install.64win/usr/local/lib/libzlibstatic.a" -D CLUCENE_LIBRARY_DIR="$XULSWORD/Cpp/install.64win/usr/local/include" -D CLUCENE_INCLUDE_DIR="$XULSWORD/Cpp/install.64win/usr/local/include" -D ZLIB_INCLUDE_DIR="$XULSWORD/Cpp/install.64win/usr/local/include" -DSWORD_BUILD_UTILS="No" ..
   make DESTDIR="$XULSWORD/Cpp/install.64win" install
 fi
 
