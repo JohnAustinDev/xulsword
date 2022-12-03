@@ -8,7 +8,13 @@ if [[ $EUID -eq 0 ]]; then
    exit 1
 fi
 
-EXTRAS=IBTXulsword
+# x86_64-w64-mingw32 is 64 bit windows, and i686-w64-mingw32 is 32 bit windows.
+TOOLCHAIN_PREFIX=i686-w64-mingw32
+ADDRESS_MODEL=32
+if [ "$TOOLCHAIN_PREFIX" = "x86_64-w64-mingw32" ]; then
+  ADDRESS_MODEL=64
+fi
+XCOMP="${ADDRESS_MODEL}win"
 
 if [ -e /vagrant ]; then CONTEXT="xsguest"; else CONTEXT="host"; fi
 if [ "$CONTEXT" = "xsguest" ]; then XULSWORD="$HOME/src/xulsword"; else XULSWORD="$( cd "$(dirname "$0")" ; pwd -P )"; fi
@@ -77,7 +83,7 @@ if [ ! -e "$XULSWORD/Cpp/zlib" ]; then
   tar -xf "../archive/zlib_1.2.8.dfsg.orig.tar.gz"
   mv zlib-1.2.8 zlib
   mkdir ./zlib/build
-  cp -r zlib zlib.64win
+  cp -r zlib "zlib.$XCOMP"
   
   cd ./zlib/build
   cmake -G "Unix Makefiles" -D CMAKE_C_FLAGS="-fPIC" ..
@@ -87,9 +93,9 @@ if [ ! -e "$XULSWORD/Cpp/zlib" ]; then
 
   # CROSS COMPILE TO WINDOWS 64 bit
   cd "$XULSWORD/Cpp"
-  cd ./zlib.64win/build
-  cmake -G "Unix Makefiles" -D CMAKE_TOOLCHAIN_FILE="$XULSWORD/Cpp/windows/cmake-toolchain.64win" ..
-  make DESTDIR="$XULSWORD/Cpp/install.64win" install
+  cd "./zlib.$XCOMP/build"
+  cmake -G "Unix Makefiles" -D CMAKE_TOOLCHAIN_FILE="$XULSWORD/Cpp/windows/cmake-toolchain.$XCOMP" ..
+  make DESTDIR="$XULSWORD/Cpp/install.$XCOMP" install
 fi
 
 # CROSS-COMPILE BOOST TO WINDOWS FOR CLUCENE
@@ -103,9 +109,9 @@ if [ ! -e "$XULSWORD/Cpp/boost" ]; then
   mv boost_1_80_0 boost
   cd boost
   # CROSS COMPILE TO WINDOWS 64 BIT:
-  echo "using gcc :  : x86_64-w64-mingw32-g++ ;" > user-config.jam
+  echo "using gcc :  : ${TOOLCHAIN_PREFIX}-g++ ;" > user-config.jam
   ./bootstrap.sh
-  ./b2 --user-config=./user-config.jam --prefix=./boost-x64 target-os=windows address-model=64 variant=release install
+  ./b2 --user-config=./user-config.jam --prefix=./$XCOMP target-os=windows address-model=$ADDRESS_MODEL variant=release install
 fi
 
 # COMPILE LIBCLUCENE
@@ -120,7 +126,7 @@ if [ ! -e "$XULSWORD/Cpp/clucene" ]; then
   mkdir ./clucene/build
   # Stop this dumb clucene error for searches beginning with a wildcard, which results in a core dump.
   sed -i 's/!allowLeadingWildcard/!true/g' "$XULSWORD/Cpp/clucene/src/core/CLucene/queryParser/QueryParser.cpp"
-  cp -r clucene clucene.64win
+  cp -r clucene "clucene.$XCOMP"
 
   #if [ $(uname | grep Darwin) ]; then
   #  # patch clucene for OSX build (https://stackoverflow.com/questions/28113556/error-while-making-clucene-for-max-os-x-10-10/28175358#28175358)
@@ -138,11 +144,11 @@ if [ ! -e "$XULSWORD/Cpp/clucene" ]; then
 
   # CROSS COMPILE TO WINDOWS 64 BIT
   cd "$XULSWORD/Cpp"
-  patch -s -p0 < "$XULSWORD/Cpp/windows/clucene-src.patch"
-  cd ./clucene.64win/build
-  cmake -DCMAKE_TOOLCHAIN_FILE="$XULSWORD/Cpp/windows/cmake-toolchain.64win" -C $XULSWORD/Cpp/cluceneMK/cmake/TryRunResults.cmake -D CMAKE_USE_PTHREADS_INIT=OFF -D BUILD_STATIC_LIBRARIES=ON -D ZLIB_INCLUDE_DIR="$XULSWORD/Cpp/install.64win/usr/local/include" -D Boost_INCLUDE_DIR="$XULSWORD/Cpp/boost/boost-x64/include" -D ZLIB_LIBRARY=$XULSWORD/Cpp/install.64win/usr/local/lib/libzlibstatic.a ..
-  patch -s -p0 -d "$XULSWORD/Cpp/clucene.64win" < "$XULSWORD/Cpp/windows/clucene-build.patch"
-  make DESTDIR="$XULSWORD/Cpp/install.64win" install
+  patch -s -p0 -d "$XULSWORD/Cpp/clucene.$XCOMP" < "$XULSWORD/Cpp/windows/clucene-src.patch"
+  cd "./clucene.$XCOMP/build"
+  cmake -DCMAKE_TOOLCHAIN_FILE="$XULSWORD/Cpp/windows/cmake-toolchain.$XCOMP" -C $XULSWORD/Cpp/cluceneMK/cmake/TryRunResults.cmake -D CMAKE_USE_PTHREADS_INIT=OFF -D BUILD_STATIC_LIBRARIES=ON -D ZLIB_INCLUDE_DIR="$XULSWORD/Cpp/install.$XCOMP/usr/local/include" -D Boost_INCLUDE_DIR="$XULSWORD/Cpp/boost/$XCOMP/include" -D ZLIB_LIBRARY="$XULSWORD/Cpp/install.$XCOMP/usr/local/lib/libzlibstatic.a" ..
+  patch -s -p0 -d "$XULSWORD/Cpp/clucene.$XCOMP" < "$XULSWORD/Cpp/windows/clucene-build.patch"
+  make DESTDIR="$XULSWORD/Cpp/install.$XCOMP" install
 fi
 
 # COMPILE LIBSWORD
@@ -159,9 +165,9 @@ if [ ! -e "$XULSWORD/Cpp/sword" ]; then
   cd "$XULSWORD/Cpp"
   tar -xf "../archive/sword-rev-$swordRev.tar.gz"
   mkdir ./sword/build
-  cp -r sword sword.64win
+  cp -r sword "sword.$XCOMP"
   
-  # SWORD's CMakeLists.txt requires clucene-config.h be located in the lib directory:
+  # SWORD's CMakeLists.txt requires clucene-config.h be located in the a weird directory:
   cp -r "$XULSWORD/Cpp/install/usr/local/include/CLucene" "$XULSWORD/Cpp/install/usr/local/lib"
 
   cd "$XULSWORD/Cpp/sword/build"
@@ -170,10 +176,10 @@ if [ ! -e "$XULSWORD/Cpp/sword" ]; then
 
   # CROSS COMPILE TO WINDOWS 64 BIT
   cd "$XULSWORD/Cpp"
-  patch -s -p0 < "$XULSWORD/Cpp/windows/libsword-src.patch"
-  cd ./sword.64win/build
-  cmake -DCMAKE_TOOLCHAIN_FILE="$XULSWORD/Cpp/windows/cmake-toolchain.64win" -D SWORD_NO_ICU="No" -D LIBSWORD_LIBRARY_TYPE="Static" -D CLUCENE_LIBRARY="$XULSWORD/Cpp/install.64win/usr/local/lib/libclucene-core.dll.a" -D ZLIB_LIBRARY="$XULSWORD/Cpp/install.64win/usr/local/lib/libzlibstatic.a" -D CLUCENE_LIBRARY_DIR="$XULSWORD/Cpp/install.64win/usr/local/include" -D CLUCENE_INCLUDE_DIR="$XULSWORD/Cpp/install.64win/usr/local/include" -D ZLIB_INCLUDE_DIR="$XULSWORD/Cpp/install.64win/usr/local/include" -DSWORD_BUILD_UTILS="No" ..
-  make DESTDIR="$XULSWORD/Cpp/install.64win" install
+  patch -s -p0 -d "$XULSWORD/Cpp/sword.$XCOMP" < "$XULSWORD/Cpp/windows/libsword-src.patch"
+  cd "./sword.$XCOMP/build"
+  cmake -DCMAKE_TOOLCHAIN_FILE="$XULSWORD/Cpp/windows/cmake-toolchain.$XCOMP" -D SWORD_NO_ICU="No" -D LIBSWORD_LIBRARY_TYPE="Static" -D CLUCENE_LIBRARY="$XULSWORD/Cpp/install.$XCOMP/usr/local/lib/libclucene-core.dll.a" -D ZLIB_LIBRARY="$XULSWORD/Cpp/install.$XCOMP/usr/local/lib/libzlibstatic.a" -D CLUCENE_LIBRARY_DIR="$XULSWORD/Cpp/install.$XCOMP/usr/local/include" -D CLUCENE_INCLUDE_DIR="$XULSWORD/Cpp/install.$XCOMP/usr/local/include" -D ZLIB_INCLUDE_DIR="$XULSWORD/Cpp/install.$XCOMP/usr/local/include" -DSWORD_BUILD_UTILS="No" ..
+  make DESTDIR="$XULSWORD/Cpp/install.$XCOMP" install
 fi
 
 # COMPILE LIBXULSWORD
@@ -191,10 +197,10 @@ if [ ! -e "$XULSWORD/Cpp/build" ]; then
   
   # CROSS COMPILE TO WINDOWS 64 BIT
   cd "$XULSWORD/Cpp"
-  mkdir build.64win
-  cd build.64win
-  cmake -DCMAKE_TOOLCHAIN_FILE="$XULSWORD/Cpp/windows/cmake-toolchain.64win" -D SWORD_NO_ICU="No" -D CMAKE_INCLUDE_PATH="$XULSWORD/Cpp/install.64win/usr/local/include" -D CMAKE_LIBRARY_PATH="$XULSWORD/Cpp/install.64win/usr/local/lib" ..
-  make DESTDIR="$XULSWORD/Cpp/install.64win" install
+  mkdir "build.$XCOMP"
+  cd "build.$XCOMP"
+  cmake -DCMAKE_TOOLCHAIN_FILE="$XULSWORD/Cpp/windows/cmake-toolchain.$XCOMP" -D SWORD_NO_ICU="No" -D CMAKE_INCLUDE_PATH="$XULSWORD/Cpp/install.$XCOMP/usr/local/include" -D CMAKE_LIBRARY_PATH="$XULSWORD/Cpp/install.$XCOMP/usr/local/lib" ..
+  make DESTDIR="$XULSWORD/Cpp/install.$XCOMP" install
 fi
 
 # Now initialize node.js

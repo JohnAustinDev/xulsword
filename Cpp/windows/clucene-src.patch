@@ -1,6 +1,6 @@
-diff -ru ./clucene.64win/src/core/CLucene/store/MMapInput.cpp ./clucene-new/src/core/CLucene/store/MMapInput.cpp
---- ./clucene.64win/src/core/CLucene/store/MMapInput.cpp	2022-11-30 09:59:14.427919076 -0800
-+++ ./clucene-new/src/core/CLucene/store/MMapInput.cpp	2022-11-30 10:01:18.543913755 -0800
+diff -ru ./src/core/CLucene/store/MMapInput.cpp ../clucene-new/src/core/CLucene/store/MMapInput.cpp
+--- ./src/core/CLucene/store/MMapInput.cpp	2022-11-30 09:59:14.427919076 -0800
++++ ../clucene-new/src/core/CLucene/store/MMapInput.cpp	2022-11-30 10:01:18.543913755 -0800
 @@ -31,6 +31,9 @@
  #endif
  #include <errno.h>
@@ -22,9 +22,9 @@ diff -ru ./clucene.64win/src/core/CLucene/store/MMapInput.cpp ./clucene-new/src/
      class MMapIndexInput::Internal: LUCENE_BASE{
  	public:
  		uint8_t* data;
-diff -ru ./clucene.64win/src/core/CMakeLists.txt ./clucene-new/src/core/CMakeLists.txt
---- ./clucene.64win/src/core/CMakeLists.txt	2011-03-16 17:21:07.000000000 -0700
-+++ ./clucene-new/src/core/CMakeLists.txt	2022-12-02 09:50:47.719818951 -0800
+diff -ru ./src/core/CMakeLists.txt ../clucene-new/src/core/CMakeLists.txt
+--- ./src/core/CMakeLists.txt	2011-03-16 17:21:07.000000000 -0700
++++ ../clucene-new/src/core/CMakeLists.txt	2022-12-02 09:50:47.719818951 -0800
 @@ -207,6 +207,13 @@
  	add_library(clucene-core-static STATIC
  		${clucene_core_Files} ${clucene_shared_Files} ${HEADERS}
@@ -39,9 +39,9 @@ diff -ru ./clucene.64win/src/core/CMakeLists.txt ./clucene-new/src/core/CMakeLis
  	
  	SET_TARGET_PROPERTIES(clucene-core-static PROPERTIES
  	    VERSION ${CLUCENE_VERSION}
-diff -ru ./clucene.64win/src/shared/CLucene/LuceneThreads.h ./clucene-new/src/shared/CLucene/LuceneThreads.h
---- ./clucene.64win/src/shared/CLucene/LuceneThreads.h	2022-11-30 09:59:14.431919076 -0800
-+++ ./clucene-new/src/shared/CLucene/LuceneThreads.h	2022-11-30 10:01:18.547913755 -0800
+diff -ru ./clucene.64win/src/shared/CLucene/LuceneThreads.h ../clucene-new/src/shared/CLucene/LuceneThreads.h
+--- ./src/shared/CLucene/LuceneThreads.h	2022-11-30 09:59:14.431919076 -0800
++++ ../clucene-new/src/shared/CLucene/LuceneThreads.h	2022-11-30 10:01:18.547913755 -0800
 @@ -7,6 +7,8 @@
  #ifndef _LuceneThreads_h
  #define  _LuceneThreads_h
@@ -51,9 +51,9 @@ diff -ru ./clucene.64win/src/shared/CLucene/LuceneThreads.h ./clucene-new/src/sh
  
  CL_NS_DEF(util)
  class CLuceneThreadIdCompare;
-diff -ru ./clucene.64win/src/shared/cmake/MacroCheckGccVisibility.cmake ./clucene-new/src/shared/cmake/MacroCheckGccVisibility.cmake
---- ./clucene.64win/src/shared/cmake/MacroCheckGccVisibility.cmake	2022-11-30 09:59:14.435919076 -0800
-+++ ./clucene-new/src/shared/cmake/MacroCheckGccVisibility.cmake	2022-11-30 10:07:49.967896972 -0800
+diff -ru ./src/shared/cmake/MacroCheckGccVisibility.cmake ../clucene-new/src/shared/cmake/MacroCheckGccVisibility.cmake
+--- ./src/shared/cmake/MacroCheckGccVisibility.cmake	2022-11-30 09:59:14.435919076 -0800
++++ ../clucene-new/src/shared/cmake/MacroCheckGccVisibility.cmake	2022-11-30 10:07:49.967896972 -0800
 @@ -26,7 +26,7 @@
     
        # gcc on mac just reports: "gcc (GCC) 3.3 20030304 ..." without the patch level, handle this here:
