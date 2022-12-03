@@ -3,11 +3,11 @@
     {
       "target_name": "libxulsword",
       "sources": [ "src/libxulsword.cpp" ],
-      "libraries": ["$(CPP)/build/libxulsword-static.so.1.4.4"],
+      "libraries": ["$(XULSWORD)/Cpp/build/libxulsword-static.so.1.4.4"],
       "include_dirs": [
         "<!@(node -p \"require('node-addon-api').include\")",
-        "$(CPP)/src/include",
-        "$(CPP)/sword/include"
+        "$(XULSWORD)/Cpp/src/include",
+        "$(XULSWORD)/Cpp/sword/include"
       ],
       'defines': [ 'NODE_GYP_MODULE_NAME=libxulsword' ],
       'cflags!': [ '-fno-exceptions' ],

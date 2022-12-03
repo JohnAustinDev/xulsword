@@ -1,5 +1,8 @@
 #!/bin/bash
 
+cd "${BASH_SOURCE%/*}"
+source ./setenv
+
 # This script installs dependencies and builds the libxulsword
 # dynamic library and libxulsword native node-module.
 
@@ -7,18 +10,6 @@ if [[ $EUID -eq 0 ]]; then
    echo "This script should not be run as root. Exiting..."
    exit 1
 fi
-
-# x86_64-w64-mingw32 is 64 bit windows, and i686-w64-mingw32 is 32 bit windows.
-TOOLCHAIN_PREFIX=i686-w64-mingw32
-ADDRESS_MODEL=32
-if [ "$TOOLCHAIN_PREFIX" = "x86_64-w64-mingw32" ]; then
-  ADDRESS_MODEL=64
-fi
-XCOMP="${ADDRESS_MODEL}win"
-
-if [ -e /vagrant ]; then CONTEXT="xsguest"; else CONTEXT="host"; fi
-if [ "$CONTEXT" = "xsguest" ]; then XULSWORD="$HOME/src/xulsword"; else XULSWORD="$( cd "$(dirname "$0")" ; pwd -P )"; fi
-export CPP="$XULSWORD/Cpp"
 
 # BUILD DEPENDENCIES (Ubuntu Xenial & Bionic)
 PKG_DEPS="build-essential git subversion libtool-bin cmake autoconf make pkg-config zip curl"
@@ -54,14 +45,13 @@ if [ "$CONTEXT" = "xsguest" ]; then
   cd /vagrant
   git ls-files | tar -czf "$XULSWORD/archive.tgz" -T -
   cd "$XULSWORD"
-  tar -xvzf ./archive.tgz
+  tar -xvzf "$XULSWORD/archive.tgz"
 fi
 
 # Install node.js using nvm so our dev environment can use the latest
 # LTS version of node.js. Then install yarn and dependant node modules.
-cd "$XULSWORD/xulsword"
+cd "$XULSWORD"
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash
-export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
@@ -80,7 +70,7 @@ if [ ! -e "$XULSWORD/Cpp/zlib" ]; then
     curl -o zlib_1.2.8.dfsg.orig.tar.gz http://archive.ubuntu.com/ubuntu/pool/main/z/zlib/zlib_1.2.8.dfsg.orig.tar.gz
   fi
   cd "$XULSWORD/Cpp"
-  tar -xf "../archive/zlib_1.2.8.dfsg.orig.tar.gz"
+  tar -xf "$XULSWORD/archive/zlib_1.2.8.dfsg.orig.tar.gz"
   mv zlib-1.2.8 zlib
   mkdir ./zlib/build
   cp -r zlib "zlib.$XCOMP"
@@ -105,7 +95,7 @@ if [ ! -e "$XULSWORD/Cpp/boost" ]; then
     curl -o boost_1_80_0.tar.gz https://boostorg.jfrog.io/artifactory/main/release/1.80.0/source/boost_1_80_0.tar.gz
   fi
   cd "$XULSWORD/Cpp"
-  tar -xf "../archive/boost_1_80_0.tar.gz"
+  tar -xf "$XULSWORD/archive/boost_1_80_0.tar.gz"
   mv boost_1_80_0 boost
   cd boost
   # CROSS COMPILE TO WINDOWS 64 BIT:
@@ -146,15 +136,13 @@ if [ ! -e "$XULSWORD/Cpp/clucene" ]; then
   cd "$XULSWORD/Cpp"
   patch -s -p0 -d "$XULSWORD/Cpp/clucene.$XCOMP" < "$XULSWORD/Cpp/windows/clucene-src.patch"
   cd "./clucene.$XCOMP/build"
-  cmake -DCMAKE_TOOLCHAIN_FILE="$XULSWORD/Cpp/windows/cmake-toolchain.$XCOMP" -C $XULSWORD/Cpp/cluceneMK/cmake/TryRunResults.cmake -D CMAKE_USE_PTHREADS_INIT=OFF -D BUILD_STATIC_LIBRARIES=ON -D ZLIB_INCLUDE_DIR="$XULSWORD/Cpp/install.$XCOMP/usr/local/include" -D Boost_INCLUDE_DIR="$XULSWORD/Cpp/boost/$XCOMP/include" -D ZLIB_LIBRARY="$XULSWORD/Cpp/install.$XCOMP/usr/local/lib/libzlibstatic.a" ..
+  cmake -DCMAKE_TOOLCHAIN_FILE="$XULSWORD/Cpp/windows/cmake-toolchain.$XCOMP" -C "$XULSWORD/Cpp/cluceneMK/cmake/TryRunResults.cmake" -D CMAKE_USE_PTHREADS_INIT=OFF -D BUILD_STATIC_LIBRARIES=ON -D ZLIB_INCLUDE_DIR="$XULSWORD/Cpp/install.$XCOMP/usr/local/include" -D Boost_INCLUDE_DIR="$XULSWORD/Cpp/boost/$XCOMP/include" -D ZLIB_LIBRARY="$XULSWORD/Cpp/install.$XCOMP/usr/local/lib/libzlibstatic.a" ..
   patch -s -p0 -d "$XULSWORD/Cpp/clucene.$XCOMP" < "$XULSWORD/Cpp/windows/clucene-build.patch"
   make DESTDIR="$XULSWORD/Cpp/install.$XCOMP" install
 fi
 
 # COMPILE LIBSWORD
 if [ ! -e "$XULSWORD/Cpp/sword" ]; then
-  # svn rev 3563 is sword-1.8.1
-  swordRev=3563
   if [ ! -e "$XULSWORD/archive/sword-rev-$swordRev.tar.gz" ]; then
     cd "$XULSWORD/archive"
     svn checkout -r $swordRev http://crosswire.org/svn/sword/trunk sword
@@ -162,9 +150,8 @@ if [ ! -e "$XULSWORD/Cpp/sword" ]; then
     tar -czvf "sword-rev-$swordRev.tar.gz" sword
     rm -rf sword
   fi
-  cd "$XULSWORD/Cpp"
-  tar -xf "../archive/sword-rev-$swordRev.tar.gz"
-  mkdir ./sword/build
+  tar -xf "$XULSWORD/archive/sword-rev-$swordRev.tar.gz"
+  mkdir "$XULSWORD/Cpp/sword/build"
   cp -r sword "sword.$XCOMP"
   
   # SWORD's CMakeLists.txt requires clucene-config.h be located in the a weird directory:
@@ -175,30 +162,27 @@ if [ ! -e "$XULSWORD/Cpp/sword" ]; then
   make DESTDIR="$XULSWORD/Cpp/install" install
 
   # CROSS COMPILE TO WINDOWS 64 BIT
-  cd "$XULSWORD/Cpp"
   patch -s -p0 -d "$XULSWORD/Cpp/sword.$XCOMP" < "$XULSWORD/Cpp/windows/libsword-src.patch"
-  cd "./sword.$XCOMP/build"
+  cd "$XULSWORD/Cpp/sword.$XCOMP/build"
   cmake -DCMAKE_TOOLCHAIN_FILE="$XULSWORD/Cpp/windows/cmake-toolchain.$XCOMP" -D SWORD_NO_ICU="No" -D LIBSWORD_LIBRARY_TYPE="Static" -D CLUCENE_LIBRARY="$XULSWORD/Cpp/install.$XCOMP/usr/local/lib/libclucene-core.dll.a" -D ZLIB_LIBRARY="$XULSWORD/Cpp/install.$XCOMP/usr/local/lib/libzlibstatic.a" -D CLUCENE_LIBRARY_DIR="$XULSWORD/Cpp/install.$XCOMP/usr/local/include" -D CLUCENE_INCLUDE_DIR="$XULSWORD/Cpp/install.$XCOMP/usr/local/include" -D ZLIB_INCLUDE_DIR="$XULSWORD/Cpp/install.$XCOMP/usr/local/include" -DSWORD_BUILD_UTILS="No" ..
   make DESTDIR="$XULSWORD/Cpp/install.$XCOMP" install
 fi
 
 # COMPILE LIBXULSWORD
 if [ ! -e "$XULSWORD/Cpp/build" ]; then
-  cd "$XULSWORD/Cpp"
 #  if [ $(uname | grep Darwin) ]; then
 #    # patch untgz MAC compile problem
 #    perl -p -i -e 's/#ifdef unix/#if defined(unix) || defined(__APPLE__)/g' ./sword/src/utilfuns/zlib/untgz.c
 #  fi
   
-  mkdir build
-  cd build
+  mkdir "$XULSWORD/Cpp/build"
+  cd "$XULSWORD/Cpp/build"
   cmake -D SWORD_NO_ICU="No" -D CMAKE_INCLUDE_PATH="$XULSWORD/Cpp/install/usr/local/include" -D CMAKE_LIBRARY_PATH="$XULSWORD/Cpp/install/usr/local/lib" ..
   make DESTDIR="$XULSWORD/Cpp/install" install
   
   # CROSS COMPILE TO WINDOWS 64 BIT
-  cd "$XULSWORD/Cpp"
-  mkdir "build.$XCOMP"
-  cd "build.$XCOMP"
+  mkdir "$XULSWORD/Cpp/build.$XCOMP"
+  cd "$XULSWORD/Cpp/build.$XCOMP"
   cmake -DCMAKE_TOOLCHAIN_FILE="$XULSWORD/Cpp/windows/cmake-toolchain.$XCOMP" -D SWORD_NO_ICU="No" -D CMAKE_INCLUDE_PATH="$XULSWORD/Cpp/install.$XCOMP/usr/local/include" -D CMAKE_LIBRARY_PATH="$XULSWORD/Cpp/install.$XCOMP/usr/local/lib" ..
   make DESTDIR="$XULSWORD/Cpp/install.$XCOMP" install
 fi

@@ -1,6 +1,6 @@
-diff -ru CMakeLists.txt ../sword-new/CMakeLists.txt
+diff -ru CMakeLists.txt CMakeLists.txt
 --- CMakeLists.txt	2022-11-30 17:40:44.698731851 -0800
-+++ ../sword-new/CMakeLists.txt	2022-11-30 17:53:44.546698415 -0800
++++ CMakeLists.txt	2022-11-30 17:53:44.546698415 -0800
 @@ -271,13 +271,14 @@
  ##############################################################################################
  # Our build test
@@ -29,7 +29,7 @@ diff -ru CMakeLists.txt ../sword-new/CMakeLists.txt
  ENDIF(SWORD_BUILD_TESTS STREQUAL "Yes")
 +
 +# For Linux cross-compilation to Windows
-+IF(CMAKE_TOOLCHAIN_FILE MATCHES "cmake-toolchain.64win")
++IF(CMAKE_TOOLCHAIN_FILE MATCHES "windows")
 +  # Use same CLucene compilation flags:
 +  set(CMAKE_CXX_FLAGS "-fvisibility=hidden -fvisibility-inlines-hidden -O2 -g -DNDEBUG -D_REENTRANT -D_UCS2 -D_UNICODE ${CMAKE_CXX_FLAGS}")
 +  add_definitions(-DWIN32 -D_WIN32 -DBUILDING_LIBRARY)
@@ -48,11 +48,11 @@ diff -ru CMakeLists.txt ../sword-new/CMakeLists.txt
 +  IF(TARGET sword)
 +    target_link_libraries(sword ${SOCKLIB})
 +  ENDIF(TARGET sword)
-+ENDIF(CMAKE_TOOLCHAIN_FILE MATCHES "cmake-toolchain.64win")
++ENDIF(CMAKE_TOOLCHAIN_FILE MATCHES "windows")
 
-diff -ru include/ftplib.h ../sword-new/include/ftplib.h
+diff -ru include/ftplib.h include/ftplib.h
 --- include/ftplib.h	2022-11-30 17:40:49.410731649 -0800
-+++ ../sword-new/include/ftplib.h	2022-11-30 17:52:19.574702058 -0800
++++ include/ftplib.h	2022-11-30 17:52:19.574702058 -0800
 @@ -94,7 +94,6 @@
  #endif /* (_FTPLIB_NO_COMPAT) */
  /* end v1 compatibility stuff */

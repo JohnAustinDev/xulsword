@@ -33,13 +33,13 @@ diff -ru ./src/core/CMakeLists.txt ../clucene-new/src/core/CMakeLists.txt
 +  # Windows requires that the type of import target library (dll or a) be
 +  # decided by headers. CLucene shared headers require the definition of
 +  # MAKE_CLUCENE_SHARED_LIB to allow import from an .a type library.
-+  IF(CMAKE_TOOLCHAIN_FILE MATCHES "cmake-toolchain.64win")
++  IF(CMAKE_TOOLCHAIN_FILE MATCHES "windows")
 +    target_compile_definitions(clucene-core-static PUBLIC -DMAKE_CLUCENE_SHARED_LIB)
-+  ENDIF(CMAKE_TOOLCHAIN_FILE MATCHES "cmake-toolchain.64win")
++  ENDIF(CMAKE_TOOLCHAIN_FILE MATCHES "windows")
  	
  	SET_TARGET_PROPERTIES(clucene-core-static PROPERTIES
  	    VERSION ${CLUCENE_VERSION}
-diff -ru ./clucene.64win/src/shared/CLucene/LuceneThreads.h ../clucene-new/src/shared/CLucene/LuceneThreads.h
+diff -ru ./src/shared/CLucene/LuceneThreads.h ../clucene-new/src/shared/CLucene/LuceneThreads.h
 --- ./src/shared/CLucene/LuceneThreads.h	2022-11-30 09:59:14.431919076 -0800
 +++ ../clucene-new/src/shared/CLucene/LuceneThreads.h	2022-11-30 10:01:18.547913755 -0800
 @@ -7,6 +7,8 @@
