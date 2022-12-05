@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Run 'source ./cross-compile' to set Gyp these cross-compilation vars.
+
 if [ -z $1 ]; then
   unset GYP_CROSSCOMPILE
   unset CC_target

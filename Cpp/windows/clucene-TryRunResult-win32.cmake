@@ -50,11 +50,11 @@ set( _CL_HAVE_GCC_ATOMIC_FUNCTIONS_EXITCODE__TRYRUN_OUTPUT
 #                 [1]	/home/dale/src/xulsword/Cpp/clucene/src/shared/CMakeLists.txt
 
 set( _CL_HAVE_TRY_BLOCKS_EXITCODE 
-     "PLEASE_FILL_OUT-FAILED_TO_RUN"
+     "FAILED_TO_RUN"
      CACHE STRING "Result from TRY_RUN" FORCE)
 
 set( _CL_HAVE_TRY_BLOCKS_EXITCODE__TRYRUN_OUTPUT 
-     "PLEASE_FILL_OUT-NOTFOUND"
+     ""
      CACHE STRING "Output from TRY_RUN" FORCE)
 
 
@@ -77,11 +77,11 @@ set( _CL_HAVE_TRY_BLOCKS_EXITCODE__TRYRUN_OUTPUT
 #                 [1]	/home/dale/src/xulsword/Cpp/clucene/src/shared/CMakeLists.txt
 
 set( _CL_HAVE_NAMESPACES_EXITCODE 
-     "PLEASE_FILL_OUT-FAILED_TO_RUN"
+     "FAILED_TO_RUN"
      CACHE STRING "Result from TRY_RUN" FORCE)
 
 set( _CL_HAVE_NAMESPACES_EXITCODE__TRYRUN_OUTPUT 
-     "PLEASE_FILL_OUT-NOTFOUND"
+     ""
      CACHE STRING "Output from TRY_RUN" FORCE)
 
 
@@ -104,11 +104,11 @@ set( _CL_HAVE_NAMESPACES_EXITCODE__TRYRUN_OUTPUT
 #                 [1]	/home/dale/src/xulsword/Cpp/clucene/src/shared/CMakeLists.txt
 
 set( _CL_HAVE_NO_SNPRINTF_BUG_EXITCODE 
-     "PLEASE_FILL_OUT-FAILED_TO_RUN"
+     "FAILED_TO_RUN"
      CACHE STRING "Result from TRY_RUN" FORCE)
 
 set( _CL_HAVE_NO_SNPRINTF_BUG_EXITCODE__TRYRUN_OUTPUT 
-     "PLEASE_FILL_OUT-NOTFOUND"
+     ""
      CACHE STRING "Output from TRY_RUN" FORCE)
 
 
@@ -131,11 +131,11 @@ set( _CL_HAVE_NO_SNPRINTF_BUG_EXITCODE__TRYRUN_OUTPUT
 #                 [1]	/home/dale/src/xulsword/Cpp/clucene/src/shared/CMakeLists.txt
 
 set( _CL_HAVE_NO_SNWPRINTF_BUG_EXITCODE 
-     "PLEASE_FILL_OUT-FAILED_TO_RUN"
+     "FAILED_TO_RUN"
      CACHE STRING "Result from TRY_RUN" FORCE)
 
 set( _CL_HAVE_NO_SNWPRINTF_BUG_EXITCODE__TRYRUN_OUTPUT 
-     "PLEASE_FILL_OUT-NOTFOUND"
+     ""
      CACHE STRING "Output from TRY_RUN" FORCE)
 
 
@@ -158,10 +158,10 @@ set( _CL_HAVE_NO_SNWPRINTF_BUG_EXITCODE__TRYRUN_OUTPUT
 #                 [1]	/home/dale/src/xulsword/Cpp/clucene/src/shared/CMakeLists.txt
 
 set( LUCENE_STATIC_CONSTANT_SYNTAX_EXITCODE 
-     "PLEASE_FILL_OUT-FAILED_TO_RUN"
+     "FAILED_TO_RUN"
      CACHE STRING "Result from TRY_RUN" FORCE)
 
 set( LUCENE_STATIC_CONSTANT_SYNTAX_EXITCODE__TRYRUN_OUTPUT 
-     "PLEASE_FILL_OUT-NOTFOUND"
+     ""
      CACHE STRING "Output from TRY_RUN" FORCE)
 

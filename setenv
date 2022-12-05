@@ -1,20 +1,23 @@
 #!/bin/bash
-# source this file to set build environment variables.
+# Run this script from this directory with 'source ./setenv' to set build environment variables.
 
-# Set to x86_64-w64-mingw32 to cross-compile to 64 bit windows, or 
-# i686-w64-mingw32 to cross-compile to 32 bit windows.
+# Set to x86_64-w64-mingw32 to cross-compile to 64 bit windows, or set to
+# i686-w64-mingw32 to cross-compile to 32 bit windows:
 export TOOLCHAIN_PREFIX=i686-w64-mingw32
+
 export ADDRESS_MODEL=32
 if [ "$TOOLCHAIN_PREFIX" = "x86_64-w64-mingw32" ]; then
   export ADDRESS_MODEL=64
 fi
-export XCOMP="${ADDRESS_MODEL}win"
+
+export XCWD="${ADDRESS_MODEL}win"
+
+# Choose the ming-gcc cross-compiler by setting to 'win32' or 'posix':
+export GCCSTD=posix
 
 if [ -e /vagrant ]; then export CONTEXT="xsguest"; else export CONTEXT="host"; fi
-if [ "$CONTEXT" = "xsguest" ]; then exportvXULSWORD="$HOME/src/xulsword"; else export XULSWORD="$( cd "${BASH_SOURCE%/*}" ; pwd -P )"; fi
+if [ "$CONTEXT" = "xsguest" ]; then exportvXULSWORD="$HOME/src/xulsword"; else export XULSWORD="$( pwd -P )"; fi
 export CPP="$XULSWORD/Cpp"
-
-export NVM_DIR="$HOME/.nvm"
 
 # svn rev 3563 is sword-1.8.1
 export swordRev=3563

@@ -1,7 +1,3 @@
-Only in build: binding.Makefile
-Only in build: config.gypi
-Only in build: libxulsword.host.mk
-Only in build: libxulsword.target.mk
 diff -ru build/Makefile build-new/Makefile
 --- build/Makefile	2022-12-05 14:02:30.087854459 -0800
 +++ build-new/Makefile	2022-12-05 14:04:23.887853628 -0800

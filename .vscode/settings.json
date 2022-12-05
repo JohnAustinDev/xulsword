@@ -5,7 +5,8 @@
     ".prettierrc": "jsonc",
     ".eslintignore": "ignore",
     "*.tcc": "cpp",
-    "string": "cpp"
+    "string": "cpp",
+    "mutex": "cpp"
   },
 
   "javascript.validate.enable": false,

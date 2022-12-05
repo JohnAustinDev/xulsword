@@ -51,6 +51,7 @@ fi
 # Install node.js using nvm so our dev environment can use the latest
 # LTS version of node.js. Then install yarn and dependant node modules.
 cd "$XULSWORD"
+export NVM_DIR="$HOME/.nvm"
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
@@ -73,7 +74,7 @@ if [ ! -e "$XULSWORD/Cpp/zlib" ]; then
   tar -xf "$XULSWORD/archive/zlib_1.2.8.dfsg.orig.tar.gz"
   mv zlib-1.2.8 zlib
   mkdir ./zlib/build
-  cp -r zlib "zlib.$XCOMP"
+  cp -r zlib "zlib.$XCWD"
   
   cd ./zlib/build
   cmake -G "Unix Makefiles" -D CMAKE_C_FLAGS="-fPIC" ..
@@ -83,16 +84,21 @@ if [ ! -e "$XULSWORD/Cpp/zlib" ]; then
 
   # CROSS COMPILE TO WINDOWS 64 bit
   cd "$XULSWORD/Cpp"
-  cd "./zlib.$XCOMP/build"
-  cmake -G "Unix Makefiles" -D CMAKE_TOOLCHAIN_FILE="$XULSWORD/Cpp/windows/cmake-toolchain.$XCOMP" ..
-  make DESTDIR="$XULSWORD/Cpp/install.$XCOMP" install
+  cd "./zlib.$XCWD/build"
+  cmake -G "Unix Makefiles" -D CMAKE_TOOLCHAIN_FILE="$XULSWORD/Cpp/windows/toolchain.cmake" ..
+  make DESTDIR="$XULSWORD/Cpp/install.$XCWD" install
 fi
 
 # CROSS-COMPILE BOOST TO WINDOWS FOR CLUCENE
 if [ ! -e "$XULSWORD/Cpp/boost" ]; then
   if [ ! -e "$XULSWORD/archive/boost_1_80_0.tar.gz" ]; then
-    cd "$XULSWORD/archive"
-    curl -o boost_1_80_0.tar.gz https://boostorg.jfrog.io/artifactory/main/release/1.80.0/source/boost_1_80_0.tar.gz
+    echo "Download boost_1_80_0.tar.gz from:"
+    echo "    https://www.boost.org/users/download/"
+    echo "Place it in this directory: $XULSWORD/archive"
+    echo "Then start this script again (boost does not allow auto-downloads)"
+    exit
+    #cd "$XULSWORD/archive"
+    #curl -o boost_1_80_0.tar.gz http://boostorg.jfrog.io/artifactory/main/release/1.80.0/source/boost_1_80_0.tar.gz
   fi
   cd "$XULSWORD/Cpp"
   tar -xf "$XULSWORD/archive/boost_1_80_0.tar.gz"
@@ -101,7 +107,7 @@ if [ ! -e "$XULSWORD/Cpp/boost" ]; then
   # CROSS COMPILE TO WINDOWS 64 BIT:
   echo "using gcc :  : ${TOOLCHAIN_PREFIX}-g++ ;" > user-config.jam
   ./bootstrap.sh
-  ./b2 --user-config=./user-config.jam --prefix=./$XCOMP target-os=windows address-model=$ADDRESS_MODEL variant=release install
+  ./b2 --user-config=./user-config.jam --prefix=./$XCWD target-os=windows address-model=$ADDRESS_MODEL variant=release install
 fi
 
 # COMPILE LIBCLUCENE
@@ -116,7 +122,7 @@ if [ ! -e "$XULSWORD/Cpp/clucene" ]; then
   mkdir ./clucene/build
   # Stop this dumb clucene error for searches beginning with a wildcard, which results in a core dump.
   sed -i 's/!allowLeadingWildcard/!true/g' "$XULSWORD/Cpp/clucene/src/core/CLucene/queryParser/QueryParser.cpp"
-  cp -r clucene "clucene.$XCOMP"
+  cp -r clucene "clucene.$XCWD"
 
   #if [ $(uname | grep Darwin) ]; then
   #  # patch clucene for OSX build (https://stackoverflow.com/questions/28113556/error-while-making-clucene-for-max-os-x-10-10/28175358#28175358)
@@ -134,25 +140,26 @@ if [ ! -e "$XULSWORD/Cpp/clucene" ]; then
 
   # CROSS COMPILE TO WINDOWS 64 BIT
   cd "$XULSWORD/Cpp"
-  patch -s -p0 -d "$XULSWORD/Cpp/clucene.$XCOMP" < "$XULSWORD/Cpp/windows/clucene-src.patch"
-  cd "./clucene.$XCOMP/build"
-  cmake -DCMAKE_TOOLCHAIN_FILE="$XULSWORD/Cpp/windows/cmake-toolchain.$XCOMP" -C "$XULSWORD/Cpp/cluceneMK/cmake/TryRunResults.cmake" -D CMAKE_USE_PTHREADS_INIT=OFF -D BUILD_STATIC_LIBRARIES=ON -D ZLIB_INCLUDE_DIR="$XULSWORD/Cpp/install.$XCOMP/usr/local/include" -D Boost_INCLUDE_DIR="$XULSWORD/Cpp/boost/$XCOMP/include" -D ZLIB_LIBRARY="$XULSWORD/Cpp/install.$XCOMP/usr/local/lib/libzlibstatic.a" ..
-  patch -s -p0 -d "$XULSWORD/Cpp/clucene.$XCOMP" < "$XULSWORD/Cpp/windows/clucene-build.patch"
-  make DESTDIR="$XULSWORD/Cpp/install.$XCOMP" install
+  patch -s -p0 -d "$XULSWORD/Cpp/clucene.$XCWD" < "$XULSWORD/Cpp/windows/clucene-src.patch"
+  cd "./clucene.$XCWD/build"
+  cmake -DCMAKE_TOOLCHAIN_FILE="$XULSWORD/Cpp/windows/toolchain.cmake" -C "$XULSWORD/Cpp/windows/clucene-TryRunResult-${GCCSTD}.cmake" -D CMAKE_USE_PTHREADS_INIT=OFF -D BUILD_STATIC_LIBRARIES=ON -D ZLIB_INCLUDE_DIR="$XULSWORD/Cpp/install.$XCWD/usr/local/include" -D Boost_INCLUDE_DIR="$XULSWORD/Cpp/boost/$XCWD/include" -D ZLIB_LIBRARY="$XULSWORD/Cpp/install.$XCWD/usr/local/lib/libzlibstatic.a" ..
+  patch -s -p0 -d "$XULSWORD/Cpp/clucene.$XCWD" < "$XULSWORD/Cpp/windows/clucene-build.patch"
+  make DESTDIR="$XULSWORD/Cpp/install.$XCWD" install
 fi
 
 # COMPILE LIBSWORD
 if [ ! -e "$XULSWORD/Cpp/sword" ]; then
-  if [ ! -e "$XULSWORD/archive/sword-rev-$swordRev.tar.gz" ]; then
+  if [ ! -e "$XULSWORD/archive/sword-rev-${swordRev}.tar.gz" ]; then
     cd "$XULSWORD/archive"
     svn checkout -r $swordRev http://crosswire.org/svn/sword/trunk sword
     find ./sword -type d -name '.svn' -exec rm -rf {} \;
-    tar -czvf "sword-rev-$swordRev.tar.gz" sword
+    tar -czvf "sword-rev-${swordRev}.tar.gz" sword
     rm -rf sword
   fi
-  tar -xf "$XULSWORD/archive/sword-rev-$swordRev.tar.gz"
+  cd "$XULSWORD/Cpp"
+  tar -xf "$XULSWORD/archive/sword-rev-${swordRev}.tar.gz"
   mkdir "$XULSWORD/Cpp/sword/build"
-  cp -r sword "sword.$XCOMP"
+  cp -r sword "sword.$XCWD"
   
   # SWORD's CMakeLists.txt requires clucene-config.h be located in the a weird directory:
   cp -r "$XULSWORD/Cpp/install/usr/local/include/CLucene" "$XULSWORD/Cpp/install/usr/local/lib"
@@ -160,12 +167,12 @@ if [ ! -e "$XULSWORD/Cpp/sword" ]; then
   cd "$XULSWORD/Cpp/sword/build"
   cmake -D SWORD_NO_ICU="No" -D LIBSWORD_LIBRARY_TYPE="Static" -D CLUCENE_LIBRARY="$XULSWORD/Cpp/install/usr/local/lib/libclucene-core.so" -D CMAKE_INCLUDE_PATH="$XULSWORD/Cpp/install/usr/local/include" -D CMAKE_LIBRARY_PATH="$XULSWORD/Cpp/install/usr/local/lib" -DSWORD_BUILD_UTILS="No" ..
   make DESTDIR="$XULSWORD/Cpp/install" install
-
+  
   # CROSS COMPILE TO WINDOWS 64 BIT
-  patch -s -p0 -d "$XULSWORD/Cpp/sword.$XCOMP" < "$XULSWORD/Cpp/windows/libsword-src.patch"
-  cd "$XULSWORD/Cpp/sword.$XCOMP/build"
-  cmake -DCMAKE_TOOLCHAIN_FILE="$XULSWORD/Cpp/windows/cmake-toolchain.$XCOMP" -D SWORD_NO_ICU="No" -D LIBSWORD_LIBRARY_TYPE="Static" -D CLUCENE_LIBRARY="$XULSWORD/Cpp/install.$XCOMP/usr/local/lib/libclucene-core.dll.a" -D ZLIB_LIBRARY="$XULSWORD/Cpp/install.$XCOMP/usr/local/lib/libzlibstatic.a" -D CLUCENE_LIBRARY_DIR="$XULSWORD/Cpp/install.$XCOMP/usr/local/include" -D CLUCENE_INCLUDE_DIR="$XULSWORD/Cpp/install.$XCOMP/usr/local/include" -D ZLIB_INCLUDE_DIR="$XULSWORD/Cpp/install.$XCOMP/usr/local/include" -DSWORD_BUILD_UTILS="No" ..
-  make DESTDIR="$XULSWORD/Cpp/install.$XCOMP" install
+  patch -s -p0 -d "$XULSWORD/Cpp/sword.$XCWD" < "$XULSWORD/Cpp/windows/libsword-src.patch"
+  cd "$XULSWORD/Cpp/sword.$XCWD/build"
+  cmake -DCMAKE_TOOLCHAIN_FILE="$XULSWORD/Cpp/windows/toolchain.cmake" -D SWORD_NO_ICU="No" -D LIBSWORD_LIBRARY_TYPE="Static" -D CLUCENE_LIBRARY="$XULSWORD/Cpp/install.$XCWD/usr/local/lib/libclucene-core.dll.a" -D ZLIB_LIBRARY="$XULSWORD/Cpp/install.$XCWD/usr/local/lib/libzlibstatic.a" -D CLUCENE_LIBRARY_DIR="$XULSWORD/Cpp/install.$XCWD/usr/local/include" -D CLUCENE_INCLUDE_DIR="$XULSWORD/Cpp/install.$XCWD/usr/local/include" -D ZLIB_INCLUDE_DIR="$XULSWORD/Cpp/install.$XCWD/usr/local/include" -DSWORD_BUILD_UTILS="No" ..
+  make DESTDIR="$XULSWORD/Cpp/install.$XCWD" install
 fi
 
 # COMPILE LIBXULSWORD
@@ -180,11 +187,25 @@ if [ ! -e "$XULSWORD/Cpp/build" ]; then
   cmake -D SWORD_NO_ICU="No" -D CMAKE_INCLUDE_PATH="$XULSWORD/Cpp/install/usr/local/include" -D CMAKE_LIBRARY_PATH="$XULSWORD/Cpp/install/usr/local/lib" ..
   make DESTDIR="$XULSWORD/Cpp/install" install
   
+  # Install the DLL and all ming dependencies and strip them
+  SODIR="$XULSWORD/Cpp/install/so"
+  mkdir "$SODIR"
+  cp "$XULSWORD/Cpp/install/usr/local/lib/libxulsword-static.so.1.4.4" "$SODIR/libxulsword-static.so"
+  strip "$SODIR/"*
+  
   # CROSS COMPILE TO WINDOWS 64 BIT
-  mkdir "$XULSWORD/Cpp/build.$XCOMP"
-  cd "$XULSWORD/Cpp/build.$XCOMP"
-  cmake -DCMAKE_TOOLCHAIN_FILE="$XULSWORD/Cpp/windows/cmake-toolchain.$XCOMP" -D SWORD_NO_ICU="No" -D CMAKE_INCLUDE_PATH="$XULSWORD/Cpp/install.$XCOMP/usr/local/include" -D CMAKE_LIBRARY_PATH="$XULSWORD/Cpp/install.$XCOMP/usr/local/lib" ..
-  make DESTDIR="$XULSWORD/Cpp/install.$XCOMP" install
+  mkdir "$XULSWORD/Cpp/build.$XCWD"
+  cd "$XULSWORD/Cpp/build.$XCWD"
+  cmake -DCMAKE_TOOLCHAIN_FILE="$XULSWORD/Cpp/windows/toolchain.cmake" -D SWORD_NO_ICU="No" -D CMAKE_INCLUDE_PATH="$XULSWORD/Cpp/install.$XCWD/usr/local/include" -D CMAKE_LIBRARY_PATH="$XULSWORD/Cpp/install.$XCWD/usr/local/lib" ..
+  make DESTDIR="$XULSWORD/Cpp/install.$XCWD" install
+  
+  # Install the DLL and all ming dependencies and strip them
+  DLLDIR="$XULSWORD/Cpp/install.$XCWD/dll"
+  mkdir "$DLLDIR"
+  cp "$XULSWORD/Cpp/install.$XCWD/usr/local/bin/libxulsword-static.dll" "$DLLDIR"
+  cp /usr/lib/gcc/i686-w64-mingw32/9.3-${GCCSTD}/libgcc_s_sjlj-1.dll "$DLLDIR"
+  cp /usr/lib/gcc/i686-w64-mingw32/9.3-${GCCSTD}/libstdc++-6.dll "$DLLDIR"
+  strip "$DLLDIR/"*
 fi
 
 # Now initialize node.js

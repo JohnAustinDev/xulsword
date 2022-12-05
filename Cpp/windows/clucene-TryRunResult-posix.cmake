@@ -16,7 +16,7 @@
 # The _CL_HAVE_PTHREAD_MUTEX_RECURSIVE_COMPILED variable holds the build result for this TRY_RUN().
 # 
 # Source file   : /home/dale/src/xulsword/Cpp/clucene.32win/build/CMakeFiles/CMakeTmp/src.cxx
-# Executable    : /home/dale/src/xulsword/Cpp/clucene.32win/build/CMakeFiles/cmTC_54330-_CL_HAVE_PTHREAD_MUTEX_RECURSIVE_EXITCODE.exe
+# Executable    : /home/dale/src/xulsword/Cpp/clucene.32win/build/CMakeFiles/cmTC_ae1f8-_CL_HAVE_PTHREAD_MUTEX_RECURSIVE_EXITCODE.exe
 # Run arguments : 
 #    Called from: [3]	/usr/share/cmake-3.16/Modules/CheckCXXSourceRuns.cmake
 #                 [2]	/home/dale/src/xulsword/Cpp/clucene.32win/src/shared/cmake/CheckPthread.cmake
@@ -27,6 +27,168 @@ set( _CL_HAVE_PTHREAD_MUTEX_RECURSIVE_EXITCODE
      CACHE STRING "Result from TRY_RUN" FORCE)
 
 set( _CL_HAVE_PTHREAD_MUTEX_RECURSIVE_EXITCODE__TRYRUN_OUTPUT 
-     "NOTFOUND"
+     ""
+     CACHE STRING "Output from TRY_RUN" FORCE)
+
+
+# _CL_HAVE_GCC_ATOMIC_FUNCTIONS_EXITCODE
+#    indicates whether the executable would have been able to run on its
+#    target platform. If so, set _CL_HAVE_GCC_ATOMIC_FUNCTIONS_EXITCODE to
+#    the exit code (in many cases 0 for success), otherwise enter "FAILED_TO_RUN".
+# _CL_HAVE_GCC_ATOMIC_FUNCTIONS_EXITCODE__TRYRUN_OUTPUT
+#    contains the text the executable would have printed on stdout and stderr.
+#    If the executable would not have been able to run, set _CL_HAVE_GCC_ATOMIC_FUNCTIONS_EXITCODE__TRYRUN_OUTPUT empty.
+#    Otherwise check if the output is evaluated by the calling CMake code. If so,
+#    check what the source file would have printed when called with the given arguments.
+# The _CL_HAVE_GCC_ATOMIC_FUNCTIONS_COMPILED variable holds the build result for this TRY_RUN().
+# 
+# Source file   : /home/dale/src/xulsword/Cpp/clucene.32win/build/CMakeFiles/CMakeTmp/src.cxx
+# Executable    : /home/dale/src/xulsword/Cpp/clucene.32win/build/CMakeFiles/cmTC_5a8c3-_CL_HAVE_GCC_ATOMIC_FUNCTIONS_EXITCODE.exe
+# Run arguments : 
+#    Called from: [3]	/usr/share/cmake-3.16/Modules/CheckCXXSourceRuns.cmake
+#                 [2]	/home/dale/src/xulsword/Cpp/clucene.32win/src/shared/cmake/CheckAtomicFunctions.cmake
+#                 [1]	/home/dale/src/xulsword/Cpp/clucene.32win/src/shared/CMakeLists.txt
+
+set( _CL_HAVE_GCC_ATOMIC_FUNCTIONS_EXITCODE 
+     "FAILED_TO_RUN"
+     CACHE STRING "Result from TRY_RUN" FORCE)
+
+set( _CL_HAVE_GCC_ATOMIC_FUNCTIONS_EXITCODE__TRYRUN_OUTPUT 
+     ""
+     CACHE STRING "Output from TRY_RUN" FORCE)
+
+
+# _CL_HAVE_TRY_BLOCKS_EXITCODE
+#    indicates whether the executable would have been able to run on its
+#    target platform. If so, set _CL_HAVE_TRY_BLOCKS_EXITCODE to
+#    the exit code (in many cases 0 for success), otherwise enter "FAILED_TO_RUN".
+# _CL_HAVE_TRY_BLOCKS_EXITCODE__TRYRUN_OUTPUT
+#    contains the text the executable would have printed on stdout and stderr.
+#    If the executable would not have been able to run, set _CL_HAVE_TRY_BLOCKS_EXITCODE__TRYRUN_OUTPUT empty.
+#    Otherwise check if the output is evaluated by the calling CMake code. If so,
+#    check what the source file would have printed when called with the given arguments.
+# The _CL_HAVE_TRY_BLOCKS_COMPILED variable holds the build result for this TRY_RUN().
+# 
+# Source file   : /home/dale/src/xulsword/Cpp/clucene.32win/build/CMakeFiles/CMakeTmp/src.cxx
+# Executable    : /home/dale/src/xulsword/Cpp/clucene.32win/build/CMakeFiles/cmTC_380fc-_CL_HAVE_TRY_BLOCKS_EXITCODE.exe
+# Run arguments : 
+#    Called from: [3]	/usr/share/cmake-3.16/Modules/CheckCXXSourceRuns.cmake
+#                 [2]	/home/dale/src/xulsword/Cpp/clucene.32win/src/shared/cmake/CheckErrorHandling.cmake
+#                 [1]	/home/dale/src/xulsword/Cpp/clucene.32win/src/shared/CMakeLists.txt
+
+set( _CL_HAVE_TRY_BLOCKS_EXITCODE 
+     "FAILED_TO_RUN"
+     CACHE STRING "Result from TRY_RUN" FORCE)
+
+set( _CL_HAVE_TRY_BLOCKS_EXITCODE__TRYRUN_OUTPUT 
+     ""
+     CACHE STRING "Output from TRY_RUN" FORCE)
+
+
+# _CL_HAVE_NAMESPACES_EXITCODE
+#    indicates whether the executable would have been able to run on its
+#    target platform. If so, set _CL_HAVE_NAMESPACES_EXITCODE to
+#    the exit code (in many cases 0 for success), otherwise enter "FAILED_TO_RUN".
+# _CL_HAVE_NAMESPACES_EXITCODE__TRYRUN_OUTPUT
+#    contains the text the executable would have printed on stdout and stderr.
+#    If the executable would not have been able to run, set _CL_HAVE_NAMESPACES_EXITCODE__TRYRUN_OUTPUT empty.
+#    Otherwise check if the output is evaluated by the calling CMake code. If so,
+#    check what the source file would have printed when called with the given arguments.
+# The _CL_HAVE_NAMESPACES_COMPILED variable holds the build result for this TRY_RUN().
+# 
+# Source file   : /home/dale/src/xulsword/Cpp/clucene.32win/build/CMakeFiles/CMakeTmp/src.cxx
+# Executable    : /home/dale/src/xulsword/Cpp/clucene.32win/build/CMakeFiles/cmTC_8af96-_CL_HAVE_NAMESPACES_EXITCODE.exe
+# Run arguments : 
+#    Called from: [3]	/usr/share/cmake-3.16/Modules/CheckCXXSourceRuns.cmake
+#                 [2]	/home/dale/src/xulsword/Cpp/clucene.32win/src/shared/cmake/CheckNamespace.cmake
+#                 [1]	/home/dale/src/xulsword/Cpp/clucene.32win/src/shared/CMakeLists.txt
+
+set( _CL_HAVE_NAMESPACES_EXITCODE 
+     "FAILED_TO_RUN"
+     CACHE STRING "Result from TRY_RUN" FORCE)
+
+set( _CL_HAVE_NAMESPACES_EXITCODE__TRYRUN_OUTPUT 
+     ""
+     CACHE STRING "Output from TRY_RUN" FORCE)
+
+
+# _CL_HAVE_NO_SNPRINTF_BUG_EXITCODE
+#    indicates whether the executable would have been able to run on its
+#    target platform. If so, set _CL_HAVE_NO_SNPRINTF_BUG_EXITCODE to
+#    the exit code (in many cases 0 for success), otherwise enter "FAILED_TO_RUN".
+# _CL_HAVE_NO_SNPRINTF_BUG_EXITCODE__TRYRUN_OUTPUT
+#    contains the text the executable would have printed on stdout and stderr.
+#    If the executable would not have been able to run, set _CL_HAVE_NO_SNPRINTF_BUG_EXITCODE__TRYRUN_OUTPUT empty.
+#    Otherwise check if the output is evaluated by the calling CMake code. If so,
+#    check what the source file would have printed when called with the given arguments.
+# The _CL_HAVE_NO_SNPRINTF_BUG_COMPILED variable holds the build result for this TRY_RUN().
+# 
+# Source file   : /home/dale/src/xulsword/Cpp/clucene.32win/build/CMakeFiles/CMakeTmp/src.cxx
+# Executable    : /home/dale/src/xulsword/Cpp/clucene.32win/build/CMakeFiles/cmTC_0dc52-_CL_HAVE_NO_SNPRINTF_BUG_EXITCODE.exe
+# Run arguments : 
+#    Called from: [3]	/usr/share/cmake-3.16/Modules/CheckCXXSourceRuns.cmake
+#                 [2]	/home/dale/src/xulsword/Cpp/clucene.32win/src/shared/cmake/CheckSnprintf.cmake
+#                 [1]	/home/dale/src/xulsword/Cpp/clucene.32win/src/shared/CMakeLists.txt
+
+set( _CL_HAVE_NO_SNPRINTF_BUG_EXITCODE 
+     "FAILED_TO_RUN"
+     CACHE STRING "Result from TRY_RUN" FORCE)
+
+set( _CL_HAVE_NO_SNPRINTF_BUG_EXITCODE__TRYRUN_OUTPUT 
+     ""
+     CACHE STRING "Output from TRY_RUN" FORCE)
+
+
+# _CL_HAVE_NO_SNWPRINTF_BUG_EXITCODE
+#    indicates whether the executable would have been able to run on its
+#    target platform. If so, set _CL_HAVE_NO_SNWPRINTF_BUG_EXITCODE to
+#    the exit code (in many cases 0 for success), otherwise enter "FAILED_TO_RUN".
+# _CL_HAVE_NO_SNWPRINTF_BUG_EXITCODE__TRYRUN_OUTPUT
+#    contains the text the executable would have printed on stdout and stderr.
+#    If the executable would not have been able to run, set _CL_HAVE_NO_SNWPRINTF_BUG_EXITCODE__TRYRUN_OUTPUT empty.
+#    Otherwise check if the output is evaluated by the calling CMake code. If so,
+#    check what the source file would have printed when called with the given arguments.
+# The _CL_HAVE_NO_SNWPRINTF_BUG_COMPILED variable holds the build result for this TRY_RUN().
+# 
+# Source file   : /home/dale/src/xulsword/Cpp/clucene.32win/build/CMakeFiles/CMakeTmp/src.cxx
+# Executable    : /home/dale/src/xulsword/Cpp/clucene.32win/build/CMakeFiles/cmTC_8433b-_CL_HAVE_NO_SNWPRINTF_BUG_EXITCODE.exe
+# Run arguments : 
+#    Called from: [3]	/usr/share/cmake-3.16/Modules/CheckCXXSourceRuns.cmake
+#                 [2]	/home/dale/src/xulsword/Cpp/clucene.32win/src/shared/cmake/CheckSnprintf.cmake
+#                 [1]	/home/dale/src/xulsword/Cpp/clucene.32win/src/shared/CMakeLists.txt
+
+set( _CL_HAVE_NO_SNWPRINTF_BUG_EXITCODE 
+     "FAILED_TO_RUN"
+     CACHE STRING "Result from TRY_RUN" FORCE)
+
+set( _CL_HAVE_NO_SNWPRINTF_BUG_EXITCODE__TRYRUN_OUTPUT 
+     ""
+     CACHE STRING "Output from TRY_RUN" FORCE)
+
+
+# LUCENE_STATIC_CONSTANT_SYNTAX_EXITCODE
+#    indicates whether the executable would have been able to run on its
+#    target platform. If so, set LUCENE_STATIC_CONSTANT_SYNTAX_EXITCODE to
+#    the exit code (in many cases 0 for success), otherwise enter "FAILED_TO_RUN".
+# LUCENE_STATIC_CONSTANT_SYNTAX_EXITCODE__TRYRUN_OUTPUT
+#    contains the text the executable would have printed on stdout and stderr.
+#    If the executable would not have been able to run, set LUCENE_STATIC_CONSTANT_SYNTAX_EXITCODE__TRYRUN_OUTPUT empty.
+#    Otherwise check if the output is evaluated by the calling CMake code. If so,
+#    check what the source file would have printed when called with the given arguments.
+# The LUCENE_STATIC_CONSTANT_SYNTAX_COMPILED variable holds the build result for this TRY_RUN().
+# 
+# Source file   : /home/dale/src/xulsword/Cpp/clucene.32win/build/CMakeFiles/CMakeTmp/src.cxx
+# Executable    : /home/dale/src/xulsword/Cpp/clucene.32win/build/CMakeFiles/cmTC_0cc28-LUCENE_STATIC_CONSTANT_SYNTAX_EXITCODE.exe
+# Run arguments : 
+#    Called from: [3]	/usr/share/cmake-3.16/Modules/CheckCXXSourceRuns.cmake
+#                 [2]	/home/dale/src/xulsword/Cpp/clucene.32win/src/shared/cmake/DefineStaticSyntax.cmake
+#                 [1]	/home/dale/src/xulsword/Cpp/clucene.32win/src/shared/CMakeLists.txt
+
+set( LUCENE_STATIC_CONSTANT_SYNTAX_EXITCODE 
+     "FAILED_TO_RUN"
+     CACHE STRING "Result from TRY_RUN" FORCE)
+
+set( LUCENE_STATIC_CONSTANT_SYNTAX_EXITCODE__TRYRUN_OUTPUT 
+     ""
      CACHE STRING "Output from TRY_RUN" FORCE)
 
