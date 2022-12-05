@@ -1,10 +1,19 @@
 #!/bin/bash
 
-export GYP_CROSSCOMPILE=1
-
-export CC_target=/usr/bin/x86_64-w64-mingw32-gcc
-export CXX_target=/usr/bin/x86_64-w64-mingw32-g++ 
-export LD_target=/usr/bin/x86_64-w64-mingw32-ld 
-export AR_target=/usr/bin/x86_64-w64-mingw32-ar 
-export AS_target=/usr/bin/x86_64-w64-mingw32-as 
-
+if [ -z $1 ]; then
+  unset GYP_CROSSCOMPILE
+  unset CC_target
+  unset CXX_target
+  unset LD_target
+  unset AR_target
+  unset AS_target
+  unset GYP_SYSROOT
+else
+  export GYP_CROSSCOMPILE=1
+  export CC_target="/usr/bin/${TOOLCHAIN_PREFIX}-gcc-${GCCSTD}"
+  export CXX_target="/usr/bin/${TOOLCHAIN_PREFIX}-g++-${GCCSTD}"
+  export LD_target="/usr/bin/${TOOLCHAIN_PREFIX}-ld"
+  export AR_target="/usr/bin/${TOOLCHAIN_PREFIX}-ar"
+  export AS_target="/usr/bin/${TOOLCHAIN_PREFIX}-as"
+  export GYP_SYSROOT="/usr/i686-w64-mingw32"
+fi
