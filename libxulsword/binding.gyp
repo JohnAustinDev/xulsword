@@ -28,7 +28,7 @@
       ],
       'defines': [ 'NODE_GYP_MODULE_NAME=libxulsword' ],
       'cflags!': [ '-m64', '-fno-exceptions' ],
-      'cflags_cc!': [ '-fno-exceptions' ],
+      'cflags_cc!': [ '-m64', '-fno-exceptions' ],
       'cflags': [ '-m32', '--sysroot=$(GYP_SYSROOT)' ],
       'ldflags!': [ '-m64', '-rdynamic' ],
       'ldflags': [ '-m32' ],

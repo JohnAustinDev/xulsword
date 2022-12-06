@@ -12,7 +12,7 @@ fi
 
 export XCWD="${ADDRESS_MODEL}win"
 
-# Choose the ming-gcc cross-compiler by setting to 'win32' or 'posix':
+# The ming-gcc cross-compiler standard must be 'posix' for NodeAPI:
 export GCCSTD=posix
 
 if [ -e /vagrant ]; then export CONTEXT="xsguest"; else export CONTEXT="host"; fi
@@ -21,3 +21,5 @@ export CPP="$XULSWORD/Cpp"
 
 # svn rev 3563 is sword-1.8.1
 export swordRev=3563
+
+source ./setxce $TOOLCHAIN_PREFIX

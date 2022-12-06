@@ -2,8 +2,8 @@ cmake_minimum_required (VERSION 2.8)
 project (xulswordProj)
 
 set(xulswordProj_VERSION_MAJOR "1")
-set(xulswordProj_VERSION_MINOR "4")
-set(xulswordProj_VERSION_REVISION "4")
+set(xulswordProj_VERSION_MINOR "5")
+set(xulswordProj_VERSION_REVISION "0")
 
 set(CMAKE_SKIP_BUILD_RPATH FALSE)
 set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
@@ -29,7 +29,7 @@ IF(CMAKE_TOOLCHAIN_FILE MATCHES "windows")
   # decided by headers. CLucene shared headers require the definition of
   # MAKE_CLUCENE_XX_LIB to allow import from an .a type library.
   target_compile_definitions(xulsword-static PUBLIC -DMAKE_CLUCENE_CORE_LIB -DMAKE_CLUCENE_SHARED_LIB)
-  
+
   target_link_libraries (xulsword-static libsword.a libclucene-core-static.a libclucene-shared-static.a zlibstatic.a)
 ELSE(CMAKE_TOOLCHAIN_FILE MATCHES "windows")
   target_link_libraries (xulsword-static libsword.a libclucene-core-static.a libclucene-shared-static.a libz.a)

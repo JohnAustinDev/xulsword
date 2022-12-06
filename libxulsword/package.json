@@ -1,7 +1,10 @@
 {
   "name": "libxulsword",
-  "version": "0.0.1",
-  "description": "NodeAPI-based libsword addon for xulsword.",
+  "version": "1.5.0",
+  "description": "libxulsword NodeAPI",
+  "bin": {
+    "rebuild": "./rebuild.js"
+  },
   "devDependencies": {
     "node-addon-api": "^4.2.0",
     "node-gyp": "^8.4.1"
