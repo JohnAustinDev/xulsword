@@ -8,7 +8,9 @@
     "build:renderer": "cross-env NODE_ENV=production webpack --config ./.erb/configs/webpack.config.renderer.prod.babel.js",
     "rebuild": "electron-rebuild --parallel --types prod,dev,optional --module-dir src",
     "lint": "cross-env NODE_ENV=development eslint . --cache --ext .js,.jsx,.ts,.tsx",
-    "package": "node -r @babel/register ./.erb/scripts/clean.js dist release && yarn build && electron-builder build --publish never",
+    "package": "node -r @babel/register ./.erb/scripts/clean.js dist release && ./build/app/node_modules/libxulsword/rebuild.js &&yarn build && electron-builder build --publish never",
+    "packageWin32": "cross-env XCOMP=ming32 XADS=32 yarn package --win -ia32",
+    "packageWin64": "cross-env XCOMP=ming32 XADS=64 yarn package --win -ia64",
     "postinstall": "node -r @babel/register .erb/scripts/check-native-dep.js && electron-builder install-app-deps && yarn cross-env NODE_ENV=development webpack --config ./.erb/configs/webpack.config.renderer.dev.dll.babel.js && opencollective-postinstall && yarn-deduplicate yarn.lock",
     "start": "node -r @babel/register ./.erb/scripts/check-port-in-use.js && yarn start:renderer",
     "start:main": "cross-env NODE_ENV=development LD_LIBRARY_PATH=./Cpp/build electron -r ./.erb/scripts/babel-register ./src/main/main.ts",
@@ -70,7 +72,7 @@
     },
     "win": {
       "target": [
-        "nsis"
+        "portable"
       ],
       "extraFiles": [
         "./Cpp/install.32win/dll/libxulsword-static.dll",

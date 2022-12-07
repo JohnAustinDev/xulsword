@@ -11,4 +11,14 @@ if [[ "$1" == *"mingw32" ]]; then
   export AR_target="/usr/bin/${TOOLCHAIN_PREFIX}-ar"
   export AS_target="/usr/bin/${TOOLCHAIN_PREFIX}-as"
   export GYP_SYSROOT="/usr/i686-w64-mingw32"
+else
+  if [ -z $1 ]; then
+    unset GYP_CROSSCOMPILE
+    unset CC_target
+    unset CXX_target
+    unset LD_target
+    unset AR_target
+    unset AS_target
+    unset GYP_SYSROOT
+  fi
 fi
