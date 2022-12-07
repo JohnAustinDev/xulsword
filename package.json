@@ -8,7 +8,7 @@
     "build:renderer": "cross-env NODE_ENV=production webpack --config ./.erb/configs/webpack.config.renderer.prod.babel.js",
     "rebuild": "electron-rebuild --parallel --types prod,dev,optional --module-dir src",
     "lint": "cross-env NODE_ENV=development eslint . --cache --ext .js,.jsx,.ts,.tsx",
-    "package": "node -r @babel/register ./.erb/scripts/clean.js dist release && ./build/app/node_modules/libxulsword/rebuild.js &&yarn build && electron-builder build --publish never",
+    "package": "node -r @babel/register ./.erb/scripts/clean.js dist release && yarn build && electron-builder build --publish never",
     "packageWin32": "cross-env XCOMP=ming32 XADS=32 yarn package --win -ia32",
     "packageWin64": "cross-env XCOMP=ming32 XADS=64 yarn package --win -ia64",
     "postinstall": "node -r @babel/register .erb/scripts/check-native-dep.js && electron-builder install-app-deps && yarn cross-env NODE_ENV=development webpack --config ./.erb/configs/webpack.config.renderer.dev.dll.babel.js && opencollective-postinstall && yarn-deduplicate yarn.lock",
@@ -32,6 +32,7 @@
     ]
   },
   "build": {
+    "npmRebuild": true,
     "productName": "xulsword",
     "appId": "org.xulsword",
     "asar": false,
@@ -42,7 +43,6 @@
       "package.json"
     ],
     "afterSign": ".erb/scripts/notarize.js",
-    "npmRebuild": false,
     "mac": {
       "type": "distribution",
       "hardenedRuntime": true,
@@ -75,9 +75,18 @@
         "portable"
       ],
       "extraFiles": [
-        "./Cpp/install.32win/dll/libxulsword-static.dll",
-        "./Cpp/install.32win/dll/libstdc++-6.dll",
-        "./Cpp/install.32win/dll/libgcc_s_sjlj-1.dll"
+        {
+          "from": "./Cpp/install.32win/dll/libxulsword-static.dll",
+          "to": "libxulsword-static.dll"
+        },
+        {
+          "from": "./Cpp/install.32win/dll/libstdc++-6.dll",
+          "to": "libstdc++-6.dll"
+        },
+        {
+          "from": "./Cpp/install.32win/dll/libgcc_s_sjlj-1.dll",
+          "to": "libgcc_s_sjlj-1.dll"
+        }
       ]
     },
     "linux": {
