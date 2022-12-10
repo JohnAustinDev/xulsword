@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd "${BASH_SOURCE%/*}"
+cd $( dirname -- "$0"; )
 
 if [ -e /vagrant ]; then export CONTEXT="xsguest"; else export CONTEXT="host"; fi
 if [ "$CONTEXT" = "xsguest" ]; then export XULSWORD="$HOME/src/xulsword"; else export XULSWORD="$( pwd -P )"; fi
