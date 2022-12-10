@@ -1,6 +1,11 @@
 #!/bin/bash
 
 cd "${BASH_SOURCE%/*}"
+
+if [ -e /vagrant ]; then export CONTEXT="xsguest"; else export CONTEXT="host"; fi
+if [ "$CONTEXT" = "xsguest" ]; then export XULSWORD="$HOME/src/xulsword"; else export XULSWORD="$( pwd -P )"; fi
+export CPP="$XULSWORD/Cpp"
+
 source ./setenv
 
 # This script installs dependencies and builds the libxulsword
@@ -62,7 +67,8 @@ npm i --global yarn
 
 # Create a local Cpp installation directory where compiled libraries will
 # be installed for libxulsword linking.
-if [ ! -e "$XULSWORD/Cpp/install" ]; then  mkdir "$XULSWORD/Cpp/install"; fi
+if [ ! -e "$XULSWORD/Cpp/install" ]; then mkdir "$XULSWORD/Cpp/install"; fi
+if [ ! -e "$XULSWORD/archive" ]; then mkdir "$XULSWORD/archive"; fi
 
 # COMPILE ZLIB
 if [ ! -e "$XULSWORD/Cpp/zlib" ]; then

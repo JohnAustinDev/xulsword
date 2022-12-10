@@ -1,6 +1,10 @@
 #!/bin/bash
 # Run this script from this directory with 'source ./setenv' to set build environment variables.
 
+if [ -e /vagrant ]; then export CONTEXT="xsguest"; else export CONTEXT="host"; fi
+if [ "$CONTEXT" = "xsguest" ]; then export XULSWORD="$HOME/src/xulsword"; else export XULSWORD="$( pwd -P )"; fi
+export CPP="$XULSWORD/Cpp"
+
 # Set to x86_64-w64-mingw32 to cross-compile to 64 bit windows, or set to
 # i686-w64-mingw32 to cross-compile to 32 bit windows:
 export TOOLCHAIN_PREFIX=x86_64-w64-mingw32
@@ -14,10 +18,6 @@ export XCWD="${ADDRESS_MODEL}win"
 
 # The ming-gcc cross-compiler standard must be 'posix' for NodeAPI:
 export GCCSTD=posix
-
-if [ -e /vagrant ]; then export CONTEXT="xsguest"; else export CONTEXT="host"; fi
-if [ "$CONTEXT" = "xsguest" ]; then exportvXULSWORD="$HOME/src/xulsword"; else export XULSWORD="$( pwd -P )"; fi
-export CPP="$XULSWORD/Cpp"
 
 export DLLDIR="$XULSWORD/Cpp/install.$XCWD/dll"
 
