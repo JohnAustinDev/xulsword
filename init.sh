@@ -234,7 +234,7 @@ if [ ! -e "$XULSWORD/Cpp/build.$XCWD" ]; then
   cp "/usr/lib/gcc/${TOOLCHAIN_PREFIX}/9.3-${GCCSTD}/$GCCDLL" "$DLLDIR"
   cp "/usr/lib/gcc/${TOOLCHAIN_PREFIX}/9.3-${GCCSTD}/libstdc++-6.dll" "$DLLDIR"
   cp "/usr/${TOOLCHAIN_PREFIX}/lib/libwinpthread-1.dll" "$DLLDIR"
-  strip "$DLLDIR/"*
+  # strip "$DLLDIR/"*
 fi
 
 # Now initialize node.js
