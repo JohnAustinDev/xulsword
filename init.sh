@@ -68,6 +68,7 @@ npm i --global yarn
 # Create a local Cpp installation directory where compiled libraries will
 # be installed for libxulsword linking.
 if [ ! -e "$XULSWORD/Cpp/install" ]; then mkdir "$XULSWORD/Cpp/install"; fi
+if [ ! -e "$XULSWORD/Cpp/install.$XCWD" ]; then mkdir "$XULSWORD/Cpp/install.$XCWD"; fi
 if [ ! -e "$XULSWORD/archive" ]; then mkdir "$XULSWORD/archive"; fi
 
 # COMPILE ZLIB
