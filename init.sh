@@ -69,16 +69,19 @@ npm i --global yarn
 # be installed for libxulsword linking.
 if [ ! -e "$XULSWORD/Cpp/install" ]; then mkdir "$XULSWORD/Cpp/install"; fi
 if [ ! -e "$XULSWORD/Cpp/install.$XCWD" ]; then mkdir "$XULSWORD/Cpp/install.$XCWD"; fi
-if [ ! -e "$XULSWORD/archive" ]; then mkdir "$XULSWORD/archive"; fi
+ARCHIVEDIR="$XULSWORD/archive"
+if [ "$CONTEXT" = "xsguest" ]; then ARCHIVEDIR="/vagrant/archive"; fi
+if [ ! -e "$ARCHIVEDIR" ]; then mkdir "$ARCHIVEDIR"; fi
 
+########################################################################
 # COMPILE ZLIB
 if [ ! -e "$XULSWORD/Cpp/zlib" ]; then
-  if [ ! -e "$XULSWORD/archive/zlib_1.2.8.dfsg.orig.tar.gz" ]; then
-    cd "$XULSWORD/archive"
+  if [ ! -e "$ARCHIVEDIR/zlib_1.2.8.dfsg.orig.tar.gz" ]; then
+    cd "$ARCHIVEDIR"
     curl -o zlib_1.2.8.dfsg.orig.tar.gz http://archive.ubuntu.com/ubuntu/pool/main/z/zlib/zlib_1.2.8.dfsg.orig.tar.gz
   fi
   cd "$XULSWORD/Cpp"
-  tar -xf "$XULSWORD/archive/zlib_1.2.8.dfsg.orig.tar.gz"
+  tar -xf "$ARCHIVEDIR/zlib_1.2.8.dfsg.orig.tar.gz"
   mv zlib-1.2.8 zlib
   mkdir "./zlib/build"
   
@@ -92,7 +95,7 @@ fi
 if [ ! -e "$XULSWORD/Cpp/zlib.$XCWD" ]; then
   cd "$XULSWORD/Cpp"
   mkdir "./zlib.$XCWD"
-  tar -xf "$XULSWORD/archive/zlib_1.2.8.dfsg.orig.tar.gz" -C "./zlib.$XCWD" --strip-components 1
+  tar -xf "$ARCHIVEDIR/zlib_1.2.8.dfsg.orig.tar.gz" -C "./zlib.$XCWD" --strip-components 1
   mkdir "./zlib.$XCWD/build"
   
   cd "./zlib.$XCWD/build"
@@ -100,19 +103,20 @@ if [ ! -e "$XULSWORD/Cpp/zlib.$XCWD" ]; then
   make DESTDIR="$XULSWORD/Cpp/install.$XCWD" install
 fi
 
+########################################################################
 # CROSS-COMPILE BOOST TO WINDOWS FOR CLUCENE
 if [ ! -e "$BOOSTDIR" ]; then
-  if [ ! -e "$XULSWORD/archive/boost_1_80_0.tar.gz" ]; then
+  if [ ! -e "$ARCHIVEDIR/boost_1_80_0.tar.gz" ]; then
     echo "Download boost_1_80_0.tar.gz from:"
     echo "    https://www.boost.org/users/download/"
-    echo "Place it in this directory: $XULSWORD/archive"
+    echo "Place it in this directory: $ARCHIVEDIR"
     echo "Then start this script again (boost does not allow auto-downloads)"
     exit
-    #cd "$XULSWORD/archive"
+    #cd "$ARCHIVEDIR"
     #curl -o boost_1_80_0.tar.gz http://boostorg.jfrog.io/artifactory/main/release/1.80.0/source/boost_1_80_0.tar.gz
   fi
   cd "$XULSWORD/Cpp"
-  tar -xf "$XULSWORD/archive/boost_1_80_0.tar.gz"
+  tar -xf "$ARCHIVEDIR/boost_1_80_0.tar.gz"
   mv boost_1_80_0 $BOOSTDIR
   cd $BOOSTDIR
   # CROSS COMPILE TO WINDOWS 64 BIT:
@@ -121,19 +125,19 @@ if [ ! -e "$BOOSTDIR" ]; then
   ./b2 --user-config=./user-config.jam --prefix=./$XCWD target-os=windows address-model=$ADDRESS_MODEL variant=release install
 fi
 
+########################################################################
 # COMPILE LIBCLUCENE
 if [ ! -e "$XULSWORD/Cpp/clucene" ]; then
-  if [ ! -e "$XULSWORD/archive/clucene-core_2.3.3.4.orig.tar.gz" ]; then
-    cd "$XULSWORD/archive"
+  if [ ! -e "$ARCHIVEDIR/clucene-core_2.3.3.4.orig.tar.gz" ]; then
+    cd "$ARCHIVEDIR"
     curl -o clucene-core_2.3.3.4.orig.tar.gz http://archive.ubuntu.com/ubuntu/pool/main/c/clucene-core/clucene-core_2.3.3.4.orig.tar.gz
   fi
   cd "$XULSWORD/Cpp"
-  tar -xf "../archive/clucene-core_2.3.3.4.orig.tar.gz"
+  tar -xf "$ARCHIVEDIR/clucene-core_2.3.3.4.orig.tar.gz"
   mv clucene-core-2.3.3.4 clucene
   mkdir ./clucene/build
   # Stop this dumb clucene error for searches beginning with a wildcard, which results in a core dump.
   sed -i 's/!allowLeadingWildcard/!true/g' "$XULSWORD/Cpp/clucene/src/core/CLucene/queryParser/QueryParser.cpp"
-  cp -r clucene "clucene.$XCWD"
 
   #if [ $(uname | grep Darwin) ]; then
   #  # patch clucene for OSX build (https://stackoverflow.com/questions/28113556/error-while-making-clucene-for-max-os-x-10-10/28175358#28175358)
@@ -153,8 +157,10 @@ fi
 if [ ! -e "$XULSWORD/Cpp/clucene.$XCWD" ]; then
   cd "$XULSWORD/Cpp"
   mkdir "clucene.$XCWD"
-  tar -xf "$XULSWORD/archive/clucene-core_2.3.3.4.orig.tar.gz" -C "./clucene.$XCWD" --strip-components 1
+  tar -xf "$ARCHIVEDIR/clucene-core_2.3.3.4.orig.tar.gz" -C "./clucene.$XCWD" --strip-components 1
   mkdir "./clucene.$XCWD/build"
+  # Stop this dumb clucene error for searches beginning with a wildcard, which results in a core dump.
+  sed -i 's/!allowLeadingWildcard/!true/g' "$XULSWORD/Cpp/clucene.$XCWD/src/core/CLucene/queryParser/QueryParser.cpp"
   
   cd "$XULSWORD/Cpp"
   patch -s -p0 -d "$XULSWORD/Cpp/clucene.$XCWD" < "$XULSWORD/Cpp/windows/clucene-src.patch"
@@ -164,20 +170,21 @@ if [ ! -e "$XULSWORD/Cpp/clucene.$XCWD" ]; then
   make DESTDIR="$XULSWORD/Cpp/install.$XCWD" install
 fi
 
+########################################################################
 # COMPILE LIBSWORD
 if [ ! -e "$XULSWORD/Cpp/sword" ]; then
-  if [ ! -e "$XULSWORD/archive/sword-rev-${swordRev}.tar.gz" ]; then
-    cd "$XULSWORD/archive"
+  if [ ! -e "$ARCHIVEDIR/sword-rev-${swordRev}.tar.gz" ]; then
+    cd "$ARCHIVEDIR"
     svn checkout -r $swordRev http://crosswire.org/svn/sword/trunk sword
     find ./sword -type d -name '.svn' -exec rm -rf {} \;
     tar -czvf "sword-rev-${swordRev}.tar.gz" sword
     rm -rf sword
   fi
   cd "$XULSWORD/Cpp"
-  tar -xf "$XULSWORD/archive/sword-rev-${swordRev}.tar.gz"
+  tar -xf "$ARCHIVEDIR/sword-rev-${swordRev}.tar.gz"
   mkdir "$XULSWORD/Cpp/sword/build"
   
-  # SWORD's CMakeLists.txt requires clucene-config.h be located in the a weird directory:
+  # SWORD's CMakeLists.txt requires clucene-config.h be located in a weird directory:
   cp -r "$XULSWORD/Cpp/install/usr/local/include/CLucene" "$XULSWORD/Cpp/install/usr/local/lib"
 
   cd "$XULSWORD/Cpp/sword/build"
@@ -188,8 +195,11 @@ fi
 if [ ! -e "$XULSWORD/Cpp/sword.$XCWD" ]; then
   cd "$XULSWORD/Cpp"
   mkdir "sword.$XCWD"
-  tar -xf "$XULSWORD/archive/sword-rev-${swordRev}.tar.gz" -C "./sword.$XCWD" --strip-components 1
+  tar -xf "$ARCHIVEDIR/sword-rev-${swordRev}.tar.gz" -C "./sword.$XCWD" --strip-components 1
   mkdir "./sword.$XCWD/build"
+  
+  # SWORD's CMakeLists.txt requires clucene-config.h be located in a weird directory:
+  cp -r "$XULSWORD/Cpp/install.$XCWD/usr/local/include/CLucene" "$XULSWORD/Cpp/install.$XCWD/usr/local/lib"
   
   cd "$XULSWORD/Cpp"
   patch -s -p0 -d "$XULSWORD/Cpp/sword.$XCWD" < "$XULSWORD/Cpp/windows/libsword-src.patch"
@@ -198,7 +208,8 @@ if [ ! -e "$XULSWORD/Cpp/sword.$XCWD" ]; then
   make DESTDIR="$XULSWORD/Cpp/install.$XCWD" install
 fi
 
-# COMPILE LIBXULSWORD
+########################################################################
+# COMPILE AND INSTALL LIBXULSWORD
 if [ ! -e "$XULSWORD/Cpp/build" ]; then
 #  if [ $(uname | grep Darwin) ]; then
 #    # patch untgz MAC compile problem
