@@ -2,12 +2,6 @@
 
 cd $( dirname -- "$0"; )
 
-if [ -e /vagrant ]; then export CONTEXT="xsguest"; else export CONTEXT="host"; fi
-if [ "$CONTEXT" = "xsguest" ]; then export XULSWORD="$HOME/src/xulsword"; else export XULSWORD="$( pwd -P )"; fi
-export CPP="$XULSWORD/Cpp"
-
-source ./setenv
-
 # This script installs dependencies and builds the libxulsword
 # dynamic library and libxulsword native node-module.
 
@@ -15,6 +9,23 @@ if [[ $EUID -eq 0 ]]; then
    echo "This script should not be run as root. Exiting..."
    exit 1
 fi
+
+if [ -e /vagrant ]; then export CONTEXT="xsguest"; else export CONTEXT="host"; fi
+if [ "$CONTEXT" = "xsguest" ]; then export XULSWORD="$HOME/src/xulsword"; else export XULSWORD="$( pwd -P )"; fi
+export CPP="$XULSWORD/Cpp"
+
+# If this is a guest VM, then copy host code to VM and build
+# everything within the VM so as not to modify any host build files.
+if [ "$CONTEXT" = "xsguest" ]; then
+  if [ -e "$XULSWORD" ]; then rm -rf "$XULSWORD/*"; fi
+  if [ ! -e "$XULSWORD" ]; then mkdir -p "$XULSWORD"; fi
+  cd /vagrant
+  git ls-files | tar -czf "$XULSWORD/archive.tgz" -T -
+  cd "$XULSWORD"
+  tar -xvzf "$XULSWORD/archive.tgz"
+fi
+
+source ./setenv
 
 # BUILD DEPENDENCIES (Ubuntu Xenial & Bionic)
 PKG_DEPS="build-essential git subversion libtool-bin cmake autoconf make pkg-config zip curl"
@@ -40,17 +51,6 @@ if [ $(dpkg -s $PKG_DEPS 2>&1 | grep "not installed" | wc -m) -ne 0 ]; then
     echo Then run this script again.
     exit;
   fi
-fi
-
-# If this is a guest VM, then copy host code to VM and build
-# everything within the VM so as not to modify any host build files.
-if [ "$CONTEXT" = "xsguest" ]; then
-  if [ -e "$XULSWORD" ]; then rm -rf "$XULSWORD/*"; fi
-  if [ ! -e "$XULSWORD" ]; then mkdir -p "$XULSWORD"; fi
-  cd /vagrant
-  git ls-files | tar -czf "$XULSWORD/archive.tgz" -T -
-  cd "$XULSWORD"
-  tar -xvzf "$XULSWORD/archive.tgz"
 fi
 
 # Install node.js using nvm so our dev environment can use the latest
@@ -101,7 +101,6 @@ if [ ! -e "$XULSWORD/Cpp/zlib.$XCWD" ]; then
 fi
 
 # CROSS-COMPILE BOOST TO WINDOWS FOR CLUCENE
-BOOSTDIR="$XULSWORD/Cpp/boost-${TOOLCHAIN_PREFIX}-${XCWD}"
 if [ ! -e "$BOOSTDIR" ]; then
   if [ ! -e "$XULSWORD/archive/boost_1_80_0.tar.gz" ]; then
     echo "Download boost_1_80_0.tar.gz from:"

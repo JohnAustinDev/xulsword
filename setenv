@@ -20,6 +20,7 @@ export XCWD="${ADDRESS_MODEL}win"
 # The ming-gcc cross-compiler standard must be 'posix' for NodeAPI:
 export GCCSTD=posix
 
+export BOOSTDIR="$XULSWORD/Cpp/boost-${TOOLCHAIN_PREFIX}-${XCWD}"
 export DLLDIR="$XULSWORD/Cpp/install.$XCWD/dll"
 
 # svn rev 3563 is sword-1.8.1
