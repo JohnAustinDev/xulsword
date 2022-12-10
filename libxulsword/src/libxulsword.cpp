@@ -6,7 +6,7 @@ using namespace sword;
 
 extern "C" {
   void FreeMemory(void *tofree, const char *memType);
-  void FreeLibxulsword();
+void FreeLibxulsword();
 }
 
 xulsword* myXulsword = NULL;
@@ -33,7 +33,7 @@ void throwJs(const char* message) {
   // return nullptr;
 };
 
-void reportProgress(int progress) { 
+void reportProgress(int progress) {
   printf("progress: %d\n", progress);
   // return nullptr;
 };
@@ -240,7 +240,7 @@ Napi::Boolean GetXulsword(const Napi::CallbackInfo& info) {
   toUpperCaseFunction    = info[1].As<Napi::Function>();
   throwJsFunction        = info[2].As<Napi::Function>();
   reportProgressFunction = info[3].As<Napi::Function>();
-  
+
   myXulsword = new xulsword(
     (char*) info[0].ToString().Utf8Value().c_str(),
     toUpperCase,

@@ -45,7 +45,7 @@ Cpp/zlib.64win
 Cpp/clucene
 Cpp/clucene.32win
 Cpp/clucene.64win
-Cpp/boost
+Cpp/boost*
 Cpp/build*
 Cpp/install*
 

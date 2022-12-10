@@ -181,7 +181,7 @@ DLLEXPORT char *Translate(xulsword *inst, const char *text, const char *localeNa
   return inst->translate(text, localeName);
 }
 
-DLLEXPORT void FreeMemory(void *tofree, char *type) {
+DLLEXPORT void FreeMemory(void *tofree, const char *type) {
 
   if (!strcmp(type, "char")) free(tofree);
 

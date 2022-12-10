@@ -73,24 +73,29 @@ if [ ! -e "$XULSWORD/Cpp/zlib" ]; then
   cd "$XULSWORD/Cpp"
   tar -xf "$XULSWORD/archive/zlib_1.2.8.dfsg.orig.tar.gz"
   mv zlib-1.2.8 zlib
-  mkdir ./zlib/build
-  cp -r zlib "zlib.$XCWD"
+  mkdir "./zlib/build"
   
   cd ./zlib/build
   cmake -G "Unix Makefiles" -D CMAKE_C_FLAGS="-fPIC" ..
   make DESTDIR="$XULSWORD/Cpp/install" install
   # create a symlink to zconf.h (which was just renamed by cmake) so CLucene will compile
   ln -s ./build/zconf.h ../zconf.h
-
-  # CROSS COMPILE TO WINDOWS 64 bit
+fi
+# CROSS COMPILE ZLIB TO WINDOWS
+if [ ! -e "$XULSWORD/Cpp/zlib.$XCWD" ]; then
   cd "$XULSWORD/Cpp"
+  mkdir "./zlib.$XCWD"
+  tar -xf "$XULSWORD/archive/zlib_1.2.8.dfsg.orig.tar.gz" -C "./zlib.$XCWD" --strip-components 1
+  mkdir "./zlib.$XCWD/build"
+  
   cd "./zlib.$XCWD/build"
   cmake -G "Unix Makefiles" -D CMAKE_TOOLCHAIN_FILE="$XULSWORD/Cpp/windows/toolchain.cmake" ..
   make DESTDIR="$XULSWORD/Cpp/install.$XCWD" install
 fi
 
 # CROSS-COMPILE BOOST TO WINDOWS FOR CLUCENE
-if [ ! -e "$XULSWORD/Cpp/boost" ]; then
+BOOSTDIR="$XULSWORD/Cpp/boost-${TOOLCHAIN_PREFIX}-${XCWD}"
+if [ ! -e "$BOOSTDIR" ]; then
   if [ ! -e "$XULSWORD/archive/boost_1_80_0.tar.gz" ]; then
     echo "Download boost_1_80_0.tar.gz from:"
     echo "    https://www.boost.org/users/download/"
@@ -102,8 +107,8 @@ if [ ! -e "$XULSWORD/Cpp/boost" ]; then
   fi
   cd "$XULSWORD/Cpp"
   tar -xf "$XULSWORD/archive/boost_1_80_0.tar.gz"
-  mv boost_1_80_0 boost
-  cd boost
+  mv boost_1_80_0 $BOOSTDIR
+  cd $BOOSTDIR
   # CROSS COMPILE TO WINDOWS 64 BIT:
   echo "using gcc :  : ${TOOLCHAIN_PREFIX}-g++ ;" > user-config.jam
   ./bootstrap.sh
@@ -137,12 +142,18 @@ if [ ! -e "$XULSWORD/Cpp/clucene" ]; then
   # -D DISABLE_MULTITHREADING=ON causes compilation to fail
   cmake -G "Unix Makefiles" -D BUILD_STATIC_LIBRARIES=ON -D CMAKE_INCLUDE_PATH="$XULSWORD/Cpp/install/usr/local/include" -D CMAKE_LIBRARY_PATH="$XULSWORD/Cpp/install/usr/local/lib" ..
   make DESTDIR="$XULSWORD/Cpp/install" install
-
-  # CROSS COMPILE TO WINDOWS 64 BIT
+fi
+# CROSS COMPILE LIBCLUCENE TO WINDOWS
+if [ ! -e "$XULSWORD/Cpp/clucene.$XCWD" ]; then
+  cd "$XULSWORD/Cpp"
+  mkdir "clucene.$XCWD"
+  tar -xf "$XULSWORD/archive/clucene-core_2.3.3.4.orig.tar.gz" -C "./clucene.$XCWD" --strip-components 1
+  mkdir "./clucene.$XCWD/build"
+  
   cd "$XULSWORD/Cpp"
   patch -s -p0 -d "$XULSWORD/Cpp/clucene.$XCWD" < "$XULSWORD/Cpp/windows/clucene-src.patch"
   cd "./clucene.$XCWD/build"
-  cmake -DCMAKE_TOOLCHAIN_FILE="$XULSWORD/Cpp/windows/toolchain.cmake" -C "$XULSWORD/Cpp/windows/clucene-TryRunResult-${GCCSTD}.cmake" -D CMAKE_USE_PTHREADS_INIT=OFF -D BUILD_STATIC_LIBRARIES=ON -D ZLIB_INCLUDE_DIR="$XULSWORD/Cpp/install.$XCWD/usr/local/include" -D Boost_INCLUDE_DIR="$XULSWORD/Cpp/boost/$XCWD/include" -D ZLIB_LIBRARY="$XULSWORD/Cpp/install.$XCWD/usr/local/lib/libzlibstatic.a" ..
+  cmake -DCMAKE_TOOLCHAIN_FILE="$XULSWORD/Cpp/windows/toolchain.cmake" -C "$XULSWORD/Cpp/windows/clucene-TryRunResult-${GCCSTD}.cmake" -D CMAKE_USE_PTHREADS_INIT=OFF -D BUILD_STATIC_LIBRARIES=ON -D ZLIB_INCLUDE_DIR="$XULSWORD/Cpp/install.$XCWD/usr/local/include" -D Boost_INCLUDE_DIR="$BOOSTDIR/$XCWD/include" -D ZLIB_LIBRARY="$XULSWORD/Cpp/install.$XCWD/usr/local/lib/libzlibstatic.a" ..
   patch -s -p0 -d "$XULSWORD/Cpp/clucene.$XCWD" < "$XULSWORD/Cpp/windows/clucene-build.patch"
   make DESTDIR="$XULSWORD/Cpp/install.$XCWD" install
 fi
@@ -159,7 +170,6 @@ if [ ! -e "$XULSWORD/Cpp/sword" ]; then
   cd "$XULSWORD/Cpp"
   tar -xf "$XULSWORD/archive/sword-rev-${swordRev}.tar.gz"
   mkdir "$XULSWORD/Cpp/sword/build"
-  cp -r sword "sword.$XCWD"
   
   # SWORD's CMakeLists.txt requires clucene-config.h be located in the a weird directory:
   cp -r "$XULSWORD/Cpp/install/usr/local/include/CLucene" "$XULSWORD/Cpp/install/usr/local/lib"
@@ -167,8 +177,15 @@ if [ ! -e "$XULSWORD/Cpp/sword" ]; then
   cd "$XULSWORD/Cpp/sword/build"
   cmake -D SWORD_NO_ICU="No" -D LIBSWORD_LIBRARY_TYPE="Static" -D CLUCENE_LIBRARY="$XULSWORD/Cpp/install/usr/local/lib/libclucene-core.so" -D CMAKE_INCLUDE_PATH="$XULSWORD/Cpp/install/usr/local/include" -D CMAKE_LIBRARY_PATH="$XULSWORD/Cpp/install/usr/local/lib" -DSWORD_BUILD_UTILS="No" ..
   make DESTDIR="$XULSWORD/Cpp/install" install
+fi
+# CROSS COMPILE LIBSWORD TO WINDOWS
+if [ ! -e "$XULSWORD/Cpp/sword.$XCWD" ]; then
+  cd "$XULSWORD/Cpp"
+  mkdir "sword.$XCWD"
+  tar -xf "$XULSWORD/archive/sword-rev-${swordRev}.tar.gz" -C "./sword.$XCWD" --strip-components 1
+  mkdir "./sword.$XCWD/build"
   
-  # CROSS COMPILE TO WINDOWS 64 BIT
+  cd "$XULSWORD/Cpp"
   patch -s -p0 -d "$XULSWORD/Cpp/sword.$XCWD" < "$XULSWORD/Cpp/windows/libsword-src.patch"
   cd "$XULSWORD/Cpp/sword.$XCWD/build"
   cmake -DCMAKE_TOOLCHAIN_FILE="$XULSWORD/Cpp/windows/toolchain.cmake" -D SWORD_NO_ICU="No" -D LIBSWORD_LIBRARY_TYPE="Static" -D CLUCENE_LIBRARY="$XULSWORD/Cpp/install.$XCWD/usr/local/lib/libclucene-core.dll.a" -D ZLIB_LIBRARY="$XULSWORD/Cpp/install.$XCWD/usr/local/lib/libzlibstatic.a" -D CLUCENE_LIBRARY_DIR="$XULSWORD/Cpp/install.$XCWD/usr/local/include" -D CLUCENE_INCLUDE_DIR="$XULSWORD/Cpp/install.$XCWD/usr/local/include" -D ZLIB_INCLUDE_DIR="$XULSWORD/Cpp/install.$XCWD/usr/local/include" -DSWORD_BUILD_UTILS="No" ..
@@ -192,19 +209,24 @@ if [ ! -e "$XULSWORD/Cpp/build" ]; then
   mkdir "$SODIR"
   cp "$XULSWORD/Cpp/install/usr/local/lib/libxulsword-static.so.1.4.4" "$SODIR/libxulsword-static.so"
   strip "$SODIR/"*
-  
-  # CROSS COMPILE TO WINDOWS 64 BIT
+fi
+# CROSS COMPILE LIBXULSWORD TO WINDOWS
+if [ ! -e "$XULSWORD/Cpp/build.$XCWD" ]; then
   mkdir "$XULSWORD/Cpp/build.$XCWD"
   cd "$XULSWORD/Cpp/build.$XCWD"
   cmake -DCMAKE_TOOLCHAIN_FILE="$XULSWORD/Cpp/windows/toolchain.cmake" -D SWORD_NO_ICU="No" -D CMAKE_INCLUDE_PATH="$XULSWORD/Cpp/install.$XCWD/usr/local/include" -D CMAKE_LIBRARY_PATH="$XULSWORD/Cpp/install.$XCWD/usr/local/lib" ..
   make DESTDIR="$XULSWORD/Cpp/install.$XCWD" install
   
   # Install the DLL and all ming dependencies and strip them
-  DLLDIR="$XULSWORD/Cpp/install.$XCWD/dll"
+  GCCDLL=libgcc_s_seh-1.dll
+  if [[ "$XCWD" == "32win" ]]; then
+    GCCDLL=libgcc_s_sjlj-1.dll
+  fi
   mkdir "$DLLDIR"
   cp "$XULSWORD/Cpp/install.$XCWD/usr/local/bin/libxulsword-static.dll" "$DLLDIR"
-  cp /usr/lib/gcc/i686-w64-mingw32/9.3-${GCCSTD}/libgcc_s_sjlj-1.dll "$DLLDIR"
-  cp /usr/lib/gcc/i686-w64-mingw32/9.3-${GCCSTD}/libstdc++-6.dll "$DLLDIR"
+  cp "/usr/lib/gcc/${TOOLCHAIN_PREFIX}/9.3-${GCCSTD}/$GCCDLL" "$DLLDIR"
+  cp "/usr/lib/gcc/${TOOLCHAIN_PREFIX}/9.3-${GCCSTD}/libstdc++-6.dll" "$DLLDIR"
+  cp "/usr/${TOOLCHAIN_PREFIX}/lib/libwinpthread-1.dll" "$DLLDIR"
   strip "$DLLDIR/"*
 fi
 

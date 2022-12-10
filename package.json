@@ -9,8 +9,8 @@
     "rebuild": "electron-rebuild --parallel --types prod,dev,optional --module-dir src",
     "lint": "cross-env NODE_ENV=development eslint . --cache --ext .js,.jsx,.ts,.tsx",
     "package": "node -r @babel/register ./.erb/scripts/clean.js dist release && yarn build && electron-builder build --publish never",
-    "packageWin32": "cross-env XCOMP=ming32 XADS=32 yarn package --win -ia32",
-    "packageWin64": "cross-env XCOMP=ming32 XADS=64 yarn package --win -ia64",
+    "packageWin32": "cross-env XCOMP=ming32 XADS=32 yarn package --win --ia32",
+    "packageWin64": "cross-env XCOMP=ming32 XADS=64 yarn package --win --x64",
     "postinstall": "node -r @babel/register .erb/scripts/check-native-dep.js && electron-builder install-app-deps && yarn cross-env NODE_ENV=development webpack --config ./.erb/configs/webpack.config.renderer.dev.dll.babel.js && opencollective-postinstall && yarn-deduplicate yarn.lock",
     "start": "node -r @babel/register ./.erb/scripts/check-port-in-use.js && yarn start:renderer",
     "start:main": "cross-env NODE_ENV=development LD_LIBRARY_PATH=./Cpp/build electron -r ./.erb/scripts/babel-register ./src/main/main.ts",
@@ -32,7 +32,7 @@
     ]
   },
   "build": {
-    "npmRebuild": true,
+    "npmRebuild": false,
     "productName": "xulsword",
     "appId": "org.xulsword",
     "asar": false,
@@ -73,20 +73,6 @@
     "win": {
       "target": [
         "portable"
-      ],
-      "extraFiles": [
-        {
-          "from": "./Cpp/install.32win/dll/libxulsword-static.dll",
-          "to": "libxulsword-static.dll"
-        },
-        {
-          "from": "./Cpp/install.32win/dll/libstdc++-6.dll",
-          "to": "libstdc++-6.dll"
-        },
-        {
-          "from": "./Cpp/install.32win/dll/libgcc_s_sjlj-1.dll",
-          "to": "libgcc_s_sjlj-1.dll"
-        }
       ]
     },
     "linux": {
@@ -197,7 +183,6 @@
     "eslint": "^7.25.0",
     "eslint-config-airbnb": "^18.2.0",
     "eslint-config-airbnb-typescript": "^12.3.1",
-    "eslint-config-erb": "^3.0.0",
     "eslint-config-prettier": "8.3.0",
     "eslint-import-resolver-webpack": "^0.13.0",
     "eslint-plugin-compat": "^3.9.0",
@@ -211,9 +196,6 @@
     "file-loader": "^6.0.0",
     "html-webpack-plugin": "^5.3.1",
     "husky": "4.x.x",
-    "i18next": "^21.2.4",
-    "i18next-electron-fs-backend": "^2.0.0",
-    "i18next-fs-backend": "^1.1.1",
     "identity-obj-proxy": "^3.0.0",
     "instead": "^1.0.3",
     "jest": "^26.1.0",
@@ -221,7 +203,6 @@
     "mini-css-extract-plugin": "^1.6.0",
     "opencollective-postinstall": "^2.0.3",
     "prettier": "^2.2.1",
-    "react-i18next": "^11.12.0",
     "react-refresh": "^0.10.0",
     "react-test-renderer": "^17.0.2",
     "rimraf": "^3.0.0",
@@ -253,6 +234,9 @@
     "electron-updater": "^4.3.8",
     "font-list": "^1.4.5",
     "ftp": "^0.3.10",
+    "i18next": "^21.2.4",
+    "i18next-electron-fs-backend": "^2.0.0",
+    "i18next-fs-backend": "^1.1.1",
     "gunzip-maybe": "^1.4.2",
     "history": "4.x.x",
     "node-addon-api": "^4.2.0",
@@ -260,6 +244,7 @@
     "react": "^18.0.0",
     "react-color": "^2.19.3",
     "react-dom": "^18.0.0",
+    "react-i18next": "^11.12.0",
     "react-router-dom": "^5.2.0",
     "regenerator-runtime": "^0.13.5",
     "tar-stream": "^2.2.0"

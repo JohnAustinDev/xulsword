@@ -514,7 +514,7 @@ void xulsword::getTreeContents(TreeKey *key, SWBuf *body) {
 PUBLIC XULSWORD FUNCTIONS
 *********************************************************************/
 
-xulsword::xulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(const char *), void (*reportProgress)(int), const char *localedir, bool firebibleMode) {
+DLLEXPORT xulsword::xulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(const char *), void (*reportProgress)(int), const char *localedir, bool firebibleMode) {
   if (!MySWLogXS) {
     MySWLogXS = new SWLogXS();
     SWLog::setSystemLog(MySWLogXS);
@@ -559,7 +559,7 @@ xulsword::xulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(con
 }
 
 
-xulsword::~xulsword() {
+DLLEXPORT xulsword::~xulsword() {
   SWLog::getSystemLog()->logDebug("XULSWORD DESTRUCTOR");
   //delete(SWLogXS); deleted by _staticSystemLog
   //delete(StringMgrXS); deleted by _staticsystemStringMgr
@@ -573,7 +573,7 @@ xulsword::~xulsword() {
 /********************************************************************
 GetChapterText
 *********************************************************************/
-char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
+DLLEXPORT char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
   SWBuf Chapter;
   int Verse;
   int LastVerse;
@@ -756,7 +756,7 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
 /********************************************************************
 GetChapterTextMulti
 *********************************************************************/
-char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytext, bool keepnotes)
+DLLEXPORT char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytext, bool keepnotes)
 {
   SWBuf Chapter;
   int Verse;
@@ -979,7 +979,7 @@ char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytex
 /********************************************************************
 GetFootnotes
 *********************************************************************/
-char *xulsword::getFootnotes() {
+DLLEXPORT char *xulsword::getFootnotes() {
   //NOTE: getChapterText MUST HAVE BEEN RUN BEFORE THIS IS CALLED
   SWBuf check = assureValidUTF8(MyFootnotes.c_str());
   char *retval;
@@ -992,7 +992,7 @@ char *xulsword::getFootnotes() {
 /********************************************************************
 GetCrossRefs
 *********************************************************************/
-char *xulsword::getCrossRefs() {
+DLLEXPORT char *xulsword::getCrossRefs() {
   //NOTE: getChapterText MUST HAVE BEEN RUN BEFORE THIS IS CALLED
   SWBuf check = assureValidUTF8(MyCrossRefs.c_str());
   char *retval;
@@ -1005,7 +1005,7 @@ char *xulsword::getCrossRefs() {
 /********************************************************************
 GetNotes
 *********************************************************************/
-char *xulsword::getNotes() {
+DLLEXPORT char *xulsword::getNotes() {
   //NOTE: getChapterText MUST HAVE BEEN RUN BEFORE THIS IS CALLED
   SWBuf check = assureValidUTF8(MyNotes.c_str());
   char *retval;
@@ -1018,7 +1018,7 @@ char *xulsword::getNotes() {
 /********************************************************************
 GetVerseText
 *********************************************************************/
-char *xulsword::getVerseText(const char *vkeymod, const char *vkeytext, bool keepnotes) {
+DLLEXPORT char *xulsword::getVerseText(const char *vkeymod, const char *vkeytext, bool keepnotes) {
   SWModule * module = MyManager->getModule(vkeymod);
   if (!module) {
     xsThrow("GetVerseText: module \"%s\" not found.", vkeymod);
@@ -1099,7 +1099,7 @@ char *xulsword::getVerseText(const char *vkeymod, const char *vkeytext, bool kee
 /********************************************************************
 GetMaxChapter
 *********************************************************************/
-int xulsword::getMaxChapter(const char *v11n, const char *vkeytext) {
+DLLEXPORT int xulsword::getMaxChapter(const char *v11n, const char *vkeytext) {
   VerseKey vkey;
   vkey.setVersificationSystem(v11n);
   return textToMaxChapter(vkeytext, &vkey);
@@ -1109,7 +1109,7 @@ int xulsword::getMaxChapter(const char *v11n, const char *vkeytext) {
 /********************************************************************
 GetMaxVerse
 *********************************************************************/
-int xulsword::getMaxVerse(const char *v11n, const char *vkeytext) {
+DLLEXPORT int xulsword::getMaxVerse(const char *v11n, const char *vkeytext) {
   VerseKey vkey;
   vkey.setVersificationSystem(v11n);
   return textToMaxVerse(vkeytext, &vkey);
@@ -1119,7 +1119,7 @@ int xulsword::getMaxVerse(const char *v11n, const char *vkeytext) {
 /********************************************************************
 GetVerseSystem
 *********************************************************************/
-char *xulsword::getVerseSystem(const char *mod) {
+DLLEXPORT char *xulsword::getVerseSystem(const char *mod) {
   SWBuf vsystem;
   vsystem.set(getVerseSystemOfModule(mod));
   char *retval;
@@ -1132,7 +1132,7 @@ char *xulsword::getVerseSystem(const char *mod) {
 /********************************************************************
 GetModuleBooks
 *********************************************************************/
-char *xulsword::getModuleBooks(const char *mod) {
+DLLEXPORT char *xulsword::getModuleBooks(const char *mod) {
   SWBuf bookList;
   const VersificationMgr::System *refSys = VersificationMgr::getSystemVersificationMgr()->getVersificationSystem(getVerseSystemOfModule(mod));
   if (refSys) {
@@ -1161,7 +1161,7 @@ char *xulsword::getModuleBooks(const char *mod) {
 /********************************************************************
 ParseVerseKey
 *********************************************************************/
-char *xulsword::parseVerseKey(const char *vkeymod, const char *vkeytext) {
+DLLEXPORT char *xulsword::parseVerseKey(const char *vkeymod, const char *vkeytext) {
   SWModule * module = MyManager->getModule(vkeymod);
   if (!module) {
     xsThrow("GetChapterText: module \"%s\" not found.", vkeymod);
@@ -1199,7 +1199,7 @@ char *xulsword::parseVerseKey(const char *vkeymod, const char *vkeytext) {
 /********************************************************************
 ConvertLocation
 *********************************************************************/
-char *xulsword::convertLocation(const char *frVS, const char *vkeytext, const char *toVS) {
+DLLEXPORT char *xulsword::convertLocation(const char *frVS, const char *vkeytext, const char *toVS) {
   VerseKey fromKey;
   fromKey.setVersificationSystem(frVS);
   locationToVerseKey(vkeytext, &fromKey);
@@ -1221,7 +1221,7 @@ char *xulsword::convertLocation(const char *frVS, const char *vkeytext, const ch
 /********************************************************************
 GetIntroductions
 *********************************************************************/
-char *xulsword::getIntroductions(const char *vkeymod, const char *vkeytext) {
+DLLEXPORT char *xulsword::getIntroductions(const char *vkeymod, const char *vkeytext) {
   SWModule * module = MyManager->getModule(vkeymod);
   if (!module) {
     xsThrow("GetIntroductions: module \"%s\" not found.", vkeymod);
@@ -1370,7 +1370,7 @@ char *xulsword::getIntroductions(const char *vkeymod, const char *vkeytext) {
 /********************************************************************
 GetDictionaryEntry
 *********************************************************************/
-char *xulsword::getDictionaryEntry(const char *lexdictmod, const char *key) {
+DLLEXPORT char *xulsword::getDictionaryEntry(const char *lexdictmod, const char *key) {
   SWModule *dmod;
   dmod = MyManager->getModule(lexdictmod);
   if (!dmod) {
@@ -1431,7 +1431,7 @@ char *xulsword::getDictionaryEntry(const char *lexdictmod, const char *key) {
 /********************************************************************
 GetAllDictionaryKeys
 *********************************************************************/
-char *xulsword::getAllDictionaryKeys(const char *lexdictmod) {
+DLLEXPORT char *xulsword::getAllDictionaryKeys(const char *lexdictmod) {
   SWModule * dmod;
   dmod = MyManager->getModule(lexdictmod);
   if (!dmod) {
@@ -1471,7 +1471,7 @@ char *xulsword::getAllDictionaryKeys(const char *lexdictmod) {
 /********************************************************************
 GetGenBookChapterText
 *********************************************************************/
-char *xulsword::getGenBookChapterText(const char *gbmod, const char *treekey) {
+DLLEXPORT char *xulsword::getGenBookChapterText(const char *gbmod, const char *treekey) {
   SWModule * module = MyManager->getModule(gbmod);
   if (!module) {
     xsThrow("GetGenBookChapterText: module \"%s\" not found.", gbmod);
@@ -1539,7 +1539,7 @@ char *xulsword::getGenBookChapterText(const char *gbmod, const char *treekey) {
 /********************************************************************
 GetGenBookTableOfContents
 *********************************************************************/
-char *xulsword::getGenBookTableOfContents(const char *gbmod) {
+DLLEXPORT char *xulsword::getGenBookTableOfContents(const char *gbmod) {
   SWModule * module = MyManager->getModule(gbmod);
   if (!module) {
     xsThrow("GetGenBookTableOfContents: module \"%s\" not found.", gbmod);
@@ -1591,7 +1591,7 @@ char *xulsword::getGenBookTableOfContents(const char *gbmod) {
 /********************************************************************
 GetGenBookTableOfContentsJSON
 *********************************************************************/
-char *xulsword::getGenBookTableOfContentsJSON(const char *gbmod) {
+DLLEXPORT char *xulsword::getGenBookTableOfContentsJSON(const char *gbmod) {
   SWModule * module = MyManager->getModule(gbmod);
   if (!module) {
     xsThrow("GetGenBookTOC: module \"%s\" not found.", gbmod);
@@ -1624,7 +1624,7 @@ char *xulsword::getGenBookTableOfContentsJSON(const char *gbmod) {
 /********************************************************************
 LuceneEnabled
 *********************************************************************/
-bool xulsword::luceneEnabled(const char *mod) {
+DLLEXPORT bool xulsword::luceneEnabled(const char *mod) {
   SWModule * module = MyManager->getModule(mod);
   if (!module) {return false;}
 
@@ -1638,7 +1638,7 @@ bool xulsword::luceneEnabled(const char *mod) {
 /********************************************************************
 Search
 *********************************************************************/
-int xulsword::search(const char *mod, const char *srchstr, const char *scope, int type, int flags, bool newsearch) {
+DLLEXPORT int xulsword::search(const char *mod, const char *srchstr, const char *scope, int type, int flags, bool newsearch) {
   SWModule * module = MyManager->getModule(mod);
   if (!module) {
     xsThrow("Search: module \"%s\" not found.", mod);
@@ -1750,7 +1750,7 @@ int xulsword::search(const char *mod, const char *srchstr, const char *scope, in
 /********************************************************************
 GetSearchPointer
 *********************************************************************/
-ListKey *xulsword::getSearchPointer() {
+DLLEXPORT ListKey *xulsword::getSearchPointer() {
   //SWLog::getSystemLog()->logDebug("(getSearchPointer) CREATING new searchPointer");
   ListKey *searchCopy = new ListKey(SearchList);
   return searchCopy;
@@ -1760,7 +1760,7 @@ ListKey *xulsword::getSearchPointer() {
 /********************************************************************
 GetSearchResults
 *********************************************************************/
-char *xulsword::getSearchResults(const char *mod, int first, int num, bool keepStrongs, ListKey *searchPointer, bool referencesOnly) {
+DLLEXPORT char *xulsword::getSearchResults(const char *mod, int first, int num, bool keepStrongs, ListKey *searchPointer, bool referencesOnly) {
   SWModule * module = MyManager->getModule(mod);
   if (!module) {
     xsThrow("GetSearchResults: module \"%s\" not found.", mod);
@@ -1865,7 +1865,7 @@ char *xulsword::getSearchResults(const char *mod, int first, int num, bool keepS
 /********************************************************************
 SearchIndexDelete
 *********************************************************************/
-void xulsword::searchIndexDelete(const char *mod) {
+DLLEXPORT void xulsword::searchIndexDelete(const char *mod) {
   SWModule * module = MyManager->getModule(mod);
   if (!module) {return;}
 
@@ -1878,7 +1878,7 @@ void xulsword::searchIndexDelete(const char *mod) {
 /********************************************************************
 SearchIndexBuild
 *********************************************************************/
-void xulsword::searchIndexBuild(const char *mod) {
+DLLEXPORT void xulsword::searchIndexBuild(const char *mod) {
   SWModule * module = MyManager->getModule(mod);
   if (module && ReportProgress) {
     if (module->hasSearchFramework()) {
@@ -1891,7 +1891,7 @@ void xulsword::searchIndexBuild(const char *mod) {
 /********************************************************************
 SetGlobalOption
 *********************************************************************/
-void xulsword::setGlobalOption(const char *option, const char *setting) {
+DLLEXPORT void xulsword::setGlobalOption(const char *option, const char *setting) {
   bool * thisOption;
 
   // Find which global option we are updating
@@ -1918,7 +1918,7 @@ void xulsword::setGlobalOption(const char *option, const char *setting) {
 /********************************************************************
 GetGlobalOption
 *********************************************************************/
-char *xulsword::getGlobalOption(const char *option) {
+DLLEXPORT char *xulsword::getGlobalOption(const char *option) {
   bool *thisOption;
   SWBuf rCText;
 
@@ -1949,7 +1949,7 @@ char *xulsword::getGlobalOption(const char *option) {
 /********************************************************************
 SetCipherKey
 *********************************************************************/
-void xulsword::setCipherKey(const char *mod, const char *cipherkey, bool useSecModule) {
+DLLEXPORT void xulsword::setCipherKey(const char *mod, const char *cipherkey, bool useSecModule) {
   SWModule *module;
   module = MyManager->getModule(mod);
   if (!module) {
@@ -1968,7 +1968,7 @@ void xulsword::setCipherKey(const char *mod, const char *cipherkey, bool useSecM
 /********************************************************************
 GetModuleList()
 *********************************************************************/
-char* xulsword::getModuleList() {
+DLLEXPORT char* xulsword::getModuleList() {
   std::string tr;
   SWModule * module;
 
@@ -1994,7 +1994,7 @@ char* xulsword::getModuleList() {
 /********************************************************************
 GetModuleInformation
 *********************************************************************/
-char *xulsword::getModuleInformation(const char *mod, const char *paramname) {
+DLLEXPORT char *xulsword::getModuleInformation(const char *mod, const char *paramname) {
   SWModule * infoModule;
   infoModule = MyManager->getModule(mod);
   SWBuf paramstring;
@@ -2028,7 +2028,7 @@ UncompressTarGz
 *********************************************************************/
 
 #include "../sword/src/utilfuns/zlib/untgz.c"
-void xulsword::uncompressTarGz(const char *tarGzPath, const char *aDirPath) {
+DLLEXPORT void xulsword::uncompressTarGz(const char *tarGzPath, const char *aDirPath) {
 
   FileDesc *fd = FileMgr::getSystemFileMgr()->open(tarGzPath, FileMgr::RDONLY);
   untargz(fd->getFd(), aDirPath);
@@ -2040,7 +2040,7 @@ void xulsword::uncompressTarGz(const char *tarGzPath, const char *aDirPath) {
 /********************************************************************
 Translate
 *********************************************************************/
-char *xulsword::translate(const char *text, const char *localeName) {
+DLLEXPORT char *xulsword::translate(const char *text, const char *localeName) {
 
   SWBuf langReadable;
   langReadable.set(LocaleMgr::getSystemLocaleMgr()->translate(text, localeName));
@@ -2064,7 +2064,7 @@ CUSTOM DERIVATIVE CLASSES
 /********************************************************************
 MarkupFilterMgrXS - to implement xulsword's own OSIS markup filters
 *********************************************************************/
-MarkupFilterMgrXS::MarkupFilterMgrXS() {
+DLLEXPORT MarkupFilterMgrXS::MarkupFilterMgrXS() {
   markup = -1;
   fromplain = NULL;
   fromthml = new ThMLXHTMLXS();
@@ -2073,16 +2073,16 @@ MarkupFilterMgrXS::MarkupFilterMgrXS() {
   fromtei = new TEIXHTMLXS();
 }
 
-MarkupFilterMgrXS::~MarkupFilterMgrXS() {}
+DLLEXPORT MarkupFilterMgrXS::~MarkupFilterMgrXS() {}
 
 
 /********************************************************************
 StringMgrXS - to over-ride broken toUpperCase
 *********************************************************************/
-StringMgrXS::StringMgrXS(char *(*toUpperCase)(char *)) {ToUpperCase = toUpperCase;}
-StringMgrXS::~StringMgrXS() {}
+DLLEXPORT StringMgrXS::StringMgrXS(char *(*toUpperCase)(char *)) {ToUpperCase = toUpperCase;}
+DLLEXPORT StringMgrXS::~StringMgrXS() {}
 
-char *StringMgrXS::upperUTF8(char *text, unsigned int maxlen) const {
+DLLEXPORT char *StringMgrXS::upperUTF8(char *text, unsigned int maxlen) const {
 
   if (text) {
     SWBuf check = assureValidUTF8(text);
@@ -2096,7 +2096,7 @@ char *StringMgrXS::upperUTF8(char *text, unsigned int maxlen) const {
   return text;
 }
 
-bool StringMgrXS::supportsUnicode() const {
+DLLEXPORT bool StringMgrXS::supportsUnicode() const {
   return true;
 }
 
@@ -2104,9 +2104,9 @@ bool StringMgrXS::supportsUnicode() const {
 /********************************************************************
 SWLogXS - to implement xulsword's own logger
 *********************************************************************/
-SWLogXS::SWLogXS() {}
-SWLogXS::~SWLogXS() {}
-void SWLogXS::logMessage(const char *message, int level) const {
+DLLEXPORT SWLogXS::SWLogXS() {}
+DLLEXPORT SWLogXS::~SWLogXS() {}
+DLLEXPORT void SWLogXS::logMessage(const char *message, int level) const {
 #ifndef PHPSWORD
   std::cerr << message;
   std::cerr << std::endl;
