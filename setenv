@@ -26,4 +26,8 @@ export DLLDIR="$XULSWORD/Cpp/install.$XCWD/dll"
 # svn rev 3563 is sword-1.8.1
 export swordRev=3563
 
-source ./setxce $TOOLCHAIN_PREFIX
+# Node-gyp can be put into cross-compile mode by calling setxce with a toolchain
+# argument. However, there is no sane way to actually cross-compile a NAPI addon
+# so that hope has been abandoned.
+# source ./setxce $TOOLCHAIN_PREFIX
+source ./setxce

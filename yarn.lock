@@ -4874,6 +4874,13 @@ eslint-config-airbnb@^18.2.0:
     object.assign "^4.1.2"
     object.entries "^1.1.2"
 
+eslint-config-erb@^3.0.0:
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/eslint-config-erb/-/eslint-config-erb-3.1.0.tgz#d3bbbe7785726757eb99aa815c50dc7b6b8e9785"
+  integrity sha512-EHikjWaTUY3iHBro/wJ/RbvZxiqfN/97Iyf9jHBwIFOdWWf6Tc/Y/q8bFys6o0ZcO5W9s8PyHWRg+CeGjWwFzw==
+  dependencies:
+    babel-eslint "^10.1.0"
+
 eslint-config-prettier@8.3.0:
   version "8.3.0"
   resolved "https://registry.npmjs.org/eslint-config-prettier/-/eslint-config-prettier-8.3.0.tgz"
