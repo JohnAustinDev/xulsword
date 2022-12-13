@@ -2,9 +2,8 @@
 
 # Source this script so node-gyp will cross-compile.
 
-export GYP_CROSSCOMPILE=1
-
 if [[ "$1" == *"mingw32" ]]; then
+  export GYP_CROSSCOMPILE=1
   export CC_target="/usr/bin/${TOOLCHAIN_PREFIX}-gcc-${GCCSTD}"
   export CXX_target="/usr/bin/${TOOLCHAIN_PREFIX}-g++-${GCCSTD}"
   export LD_target="/usr/bin/${TOOLCHAIN_PREFIX}-ld"

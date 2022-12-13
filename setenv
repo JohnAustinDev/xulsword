@@ -1,7 +1,6 @@
 #!/bin/bash
 # Run this script from this directory with 'source ./setenv' to set build environment variables.
 
-cd $( dirname -- "$0"; )
 if [ -e /vagrant ]; then export CONTEXT="xsguest"; else export CONTEXT="host"; fi
 if [ "$CONTEXT" = "xsguest" ]; then export XULSWORD="$HOME/src/xulsword"; else export XULSWORD="$( pwd -P )"; fi
 export CPP="$XULSWORD/Cpp"
