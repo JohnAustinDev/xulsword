@@ -2,15 +2,21 @@
   'targets': [
     {
       'target_name': 'libxulsword',
-      'sources': [ 'src/libxulsword.cpp' ],
-      'target_conditions': [
-        ['OS=="linux"', {
-          'libraries': ["$(XULSWORD)/Cpp/install/so/libxulsword-static.so"],
+      'conditions':[['OS=="win"', {
+        'actions': [{
+          'action_name': 'Create lib file',
+          'message': 'Creating libxulsword.lib file...',
+          'output': ['../win-napi/libxulsword.lib'],
+          'conditions': [[
+            '$(XCWD)=="32win"', {
+              'action': ['lib.exe', '/def:../win-napi/libxulsword.def', '/machine:x86', '/out:../win-napi/libxulsword.lib'],
+            }, {
+              'action': ['lib.exe', '/def:../win-napi/libxulsword.def', '/machine:x64', '/out:../win-napi/libxulsword.lib'],
+            }
+          ]],
         }],
-        ['OS=="win"', {
-        'libraries': ["$(XULSWORD)/Cpp/lib/libxulsword-static.dll"],
-        }]],
-
+      }]],
+      'sources': [ 'src/libxulsword.cpp' ],
       'include_dirs': [
         "<!@(node -p \"require('node-addon-api').include\")",
         "$(XULSWORD)/Cpp/src/include",
@@ -28,6 +34,19 @@
         }]],
       'cflags!': [ '-fno-exceptions' ],
       'cflags_cc!': [ '-fno-exceptions' ],
+      'target_conditions': [
+        ['OS=="linux"', {
+          'libraries': ["$(XULSWORD)/Cpp/install/so/libxulsword-static.so"],
+        }],
+        ['OS=="win"', {
+        'libraries': ['../win-napi/libxulsword.lib'],
+        }]],
+        'conditions': [['OS=="win"', {
+          'copies': [{
+            'files': ['Release/xulsword.node'],
+            'destination': '../win-napi/xulsword.$(XCWD).node'
+          }],
+        }]],
       }
     ],
   'variables' : {

@@ -35,6 +35,6 @@ ELSE(CMAKE_TOOLCHAIN_FILE MATCHES "windows")
   target_link_libraries (xulsword-static libsword.a libclucene-core-static.a libclucene-shared-static.a libz.a)
 ENDIF(CMAKE_TOOLCHAIN_FILE MATCHES "windows")
 
-set_target_properties(xulsword-static PROPERTIES VERSION 1.4.4)
+set_target_properties(xulsword-static PROPERTIES VERSION "${xulswordProj_VERSION_MAJOR}.${xulswordProj_VERSION_MINOR}.${xulswordProj_VERSION_REVISION}")
 
 install(TARGETS xulsword-static DESTINATION "${LIB_INSTALL_DIR}")
