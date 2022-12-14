@@ -3,7 +3,7 @@
     {
       'target_name': 'libxulsword',
       'sources': [ 'src/libxulsword.cpp' ],
-      'conditions': [
+      'target_conditions': [
         ['OS=="linux"', {
           'libraries': ["$(XULSWORD)/Cpp/install/so/libxulsword-static.so"],
         }],
@@ -24,8 +24,7 @@
         ['OS=="win"', {
           'defines': [
             'NODE_GYP_MODULE_NAME=libxulsword',
-            'NAPI_DISABLE_CPP_EXCEPTIONS',
-            'NODE_ADDON_API_ENABLE_MAYBE']
+            'NAPI_DISABLE_CPP_EXCEPTIONS']
         }]],
       'cflags!': [ '-fno-exceptions' ],
       'cflags_cc!': [ '-fno-exceptions' ],

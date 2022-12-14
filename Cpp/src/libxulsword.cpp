@@ -17,171 +17,148 @@
 */
 
 #include "xulsword.h"
+#include "libxulsword.h"
 #include "swlog.h"
 #include "stringmgr.h"
 #include <iostream>
 
-#ifdef WIN32
-#define DLLEXPORT extern "C" __declspec(dllexport)
-#else
-#define DLLEXPORT extern "C"
-#endif
-
 static xulsword *my_xulsword;
-static xulsword *my_xulswordfb;
 
 /********************************************************************
 EXPORTED INTERFACE FUNCTIONS
 *********************************************************************/
-// Ruturns a xulsword instance with firebibleMode = false
-DLLEXPORT xulsword *GetXulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(const char *), void (*reportProgress)(int), const char *localeDir) {
+bool GetXulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(const char *), void (*reportProgress)(int)) {
 
-  if (my_xulsword) return my_xulsword;
+  if (my_xulsword) return true;
 
-  my_xulsword = new xulsword(path, toUpperCase, throwJS, reportProgress, localeDir, false);
+  my_xulsword = new xulsword(path, toUpperCase, throwJS, reportProgress, NULL);
 
   SWLog::getSystemLog()->logDebug("CREATED xulsword object (firebibleMode = false)");
 
-  return my_xulsword;
+  return true;
 }
 
-// Ruturns a xulsword instance with firebibleMode = true
-DLLEXPORT xulsword *GetXulswordFB(char *path, char *(*toUpperCase)(char *), void (*throwJS)(const char *), void (*reportProgress)(int), const char *localeDir) {
-
-  if (my_xulswordfb) return my_xulswordfb;
-
-  my_xulswordfb = new xulsword(path, toUpperCase, throwJS, reportProgress, localeDir, true);
-
-  SWLog::getSystemLog()->logDebug("CREATED xulsword object (firebibleMode = true)");
-
-  return my_xulswordfb;
+char *GetChapterText(const char *vkeymod, const char *vkeytext) {
+  return my_xulsword->getChapterText(vkeymod, vkeytext);
 }
 
-DLLEXPORT char *GetChapterText(xulsword *inst, const char *vkeymod, const char *vkeytext) {
-  return inst->getChapterText(vkeymod, vkeytext);
+char *GetFootnotes() {
+  return my_xulsword->getFootnotes();
 }
 
-DLLEXPORT char *GetFootnotes(xulsword *inst) {
-  return inst->getFootnotes();
+char *GetCrossRefs() {
+  return my_xulsword->getCrossRefs();
 }
 
-DLLEXPORT char *GetCrossRefs(xulsword *inst) {
-  return inst->getCrossRefs();
+char *GetNotes() {
+  return my_xulsword->getNotes();
 }
 
-DLLEXPORT char *GetNotes(xulsword *inst) {
-  return inst->getNotes();
+char *GetChapterTextMulti(const char *vkeymodlist, const char *vkeytext, bool keepnotes) {
+  return my_xulsword->getChapterTextMulti(vkeymodlist, vkeytext, keepnotes);
 }
 
-DLLEXPORT char *GetChapterTextMulti(xulsword *inst, const char *vkeymodlist, const char *vkeytext, bool keepnotes) {
-  return inst->getChapterTextMulti(vkeymodlist, vkeytext, keepnotes);
+char *GetVerseText(const char *vkeymod, const char *vkeytext, bool keepnotes) {
+  return my_xulsword->getVerseText(vkeymod, vkeytext, keepnotes);
 }
 
-DLLEXPORT char *GetVerseText(xulsword *inst, const char *vkeymod, const char *vkeytext, bool keepnotes) {
-  return inst->getVerseText(vkeymod, vkeytext, keepnotes);
+int GetMaxChapter(const char *v11n, const char *vkeytext) {
+  return my_xulsword->getMaxChapter(v11n, vkeytext);
 }
 
-DLLEXPORT int GetMaxChapter(xulsword *inst, const char *v11n, const char *vkeytext) {
-  return inst->getMaxChapter(v11n, vkeytext);
+int GetMaxVerse(const char *v11n, const char *vkeytext) {
+  return my_xulsword->getMaxVerse(v11n, vkeytext);
 }
 
-DLLEXPORT int GetMaxVerse(xulsword *inst, const char *v11n, const char *vkeytext) {
-  return inst->getMaxVerse(v11n, vkeytext);
+char *GetModuleBooks(const char *mod) {
+  return my_xulsword->getModuleBooks(mod);
 }
 
-DLLEXPORT char *GetModuleBooks(xulsword *inst, const char *mod) {
-  return inst->getModuleBooks(mod);
+char *ParseVerseKey(const char *vkeymod, const char *vkeytext) {
+  return my_xulsword->parseVerseKey(vkeymod, vkeytext);
 }
 
-DLLEXPORT char *ParseVerseKey(xulsword *inst, const char *vkeymod, const char *vkeytext) {
-  return inst->parseVerseKey(vkeymod, vkeytext);
+char *GetVerseSystem(const char *mod) {
+  return my_xulsword->getVerseSystem(mod);
 }
 
-DLLEXPORT char *GetVerseSystem(xulsword *inst, const char *mod) {
-  return inst->getVerseSystem(mod);
+char *ConvertLocation(const char *frVS, const char *vkeytext, const char *toVS) {
+  return my_xulsword->convertLocation(frVS, vkeytext, toVS);
 }
 
-DLLEXPORT char *ConvertLocation(xulsword *inst, const char *frVS, const char *vkeytext, const char *toVS) {
-  return inst->convertLocation(frVS, vkeytext, toVS);
+char *GetIntroductions(const char *vkeymod, const char *bname) {
+  return my_xulsword->getIntroductions(vkeymod, bname);
 }
 
-DLLEXPORT char *GetIntroductions(xulsword *inst, const char *vkeymod, const char *bname) {
-  return inst->getIntroductions(vkeymod, bname);
+char *GetDictionaryEntry(const char *lexdictmod, const char *key) {
+  return my_xulsword->getDictionaryEntry(lexdictmod, key);
 }
 
-DLLEXPORT char *GetDictionaryEntry(xulsword *inst, const char *lexdictmod, const char *key) {
-  return inst->getDictionaryEntry(lexdictmod, key);
+char *GetAllDictionaryKeys(const char *lexdictmod) {
+  return my_xulsword->getAllDictionaryKeys(lexdictmod);
 }
 
-DLLEXPORT char *GetAllDictionaryKeys(xulsword *inst, const char *lexdictmod) {
-  return inst->getAllDictionaryKeys(lexdictmod);
+char *GetGenBookChapterText(const char *gbmod, const char *treekey) {
+  return my_xulsword->getGenBookChapterText(gbmod, treekey);
 }
 
-DLLEXPORT char *GetGenBookChapterText(xulsword *inst, const char *gbmod, const char *treekey) {
-  return inst->getGenBookChapterText(gbmod, treekey);
+char *GetGenBookTableOfContents(const char *gbmod) {
+  return my_xulsword->getGenBookTableOfContents(gbmod);
 }
 
-DLLEXPORT char *GetGenBookTableOfContents(xulsword *inst, const char *gbmod) {
-  return inst->getGenBookTableOfContents(gbmod);
+char *GetGenBookTableOfContentsJSON(const char *gbmod) {
+  return my_xulsword->getGenBookTableOfContentsJSON(gbmod);
 }
 
-DLLEXPORT char *GetGenBookTableOfContentsJSON(xulsword *inst, const char *gbmod) {
-  return inst->getGenBookTableOfContentsJSON(gbmod);
+bool LuceneEnabled(const char *mod) {
+  return my_xulsword->luceneEnabled(mod);
 }
 
-DLLEXPORT bool LuceneEnabled(xulsword *inst, const char *mod) {
-  return inst->luceneEnabled(mod);
+int Search(const char *mod, const char *srchstr, const char *scope, int type, int flags, bool newsearch) {
+  return my_xulsword->search(mod, srchstr, scope, type, flags, newsearch);
 }
 
-DLLEXPORT int Search(xulsword *inst, const char *mod, const char *srchstr, const char *scope, int type, int flags, bool newsearch) {
-  return inst->search(mod, srchstr, scope, type, flags, newsearch);
+char *GetSearchResults(const char *mod, int first, int num, bool keepStrongs) {
+  return my_xulsword->getSearchResults(mod, first, num, keepStrongs, NULL);
 }
 
-DLLEXPORT void *GetSearchPointer(xulsword *inst) {
-  return inst->getSearchPointer();
+void SearchIndexDelete(const char *mod) {
+  return my_xulsword->searchIndexDelete(mod);
 }
 
-DLLEXPORT char *GetSearchResults(xulsword *inst, const char *mod, int first, int num, bool keepStrongs, void *searchPointer = NULL) {
-  return inst->getSearchResults(mod, first, num, keepStrongs, (ListKey *)searchPointer);
+void SearchIndexBuild(const char *mod) {
+  return my_xulsword->searchIndexBuild(mod);
 }
 
-DLLEXPORT void SearchIndexDelete(xulsword *inst, const char *mod) {
-  return inst->searchIndexDelete(mod);
+void SetGlobalOption(const char *option, const char *setting) {
+  return my_xulsword->setGlobalOption(option, setting);
 }
 
-DLLEXPORT void SearchIndexBuild(xulsword *inst, const char *mod) {
-  return inst->searchIndexBuild(mod);
+char *GetGlobalOption(const char *option) {
+  return my_xulsword->getGlobalOption(option);
 }
 
-DLLEXPORT void SetGlobalOption(xulsword *inst, const char *option, const char *setting) {
-  return inst->setGlobalOption(option, setting);
+void SetCipherKey(const char *mod, const char *cipherkey, bool useSecModule) {
+  return my_xulsword->setCipherKey(mod, cipherkey, useSecModule);
 }
 
-DLLEXPORT char *GetGlobalOption(xulsword *inst, const char *option) {
-  return inst->getGlobalOption(option);
+char* GetModuleList() {
+  return my_xulsword->getModuleList();
 }
 
-DLLEXPORT void SetCipherKey(xulsword *inst, const char *mod, const char *cipherkey, bool useSecModule) {
-  return inst->setCipherKey(mod, cipherkey, useSecModule);
+char *GetModuleInformation(const char *mod, const char *paramname) {
+  return my_xulsword->getModuleInformation(mod, paramname);
 }
 
-DLLEXPORT char* GetModuleList(xulsword *inst) {
-  return inst->getModuleList();
+void UncompressTarGz(const char *tarGzPath, const char *aDirPath) {
+  return my_xulsword->uncompressTarGz(tarGzPath, aDirPath);
 }
 
-DLLEXPORT char *GetModuleInformation(xulsword *inst, const char *mod, const char *paramname) {
-  return inst->getModuleInformation(mod, paramname);
+char *Translate(const char *text, const char *localeName) {
+  return my_xulsword->translate(text, localeName);
 }
 
-DLLEXPORT void UncompressTarGz(xulsword *inst, const char *tarGzPath, const char *aDirPath) {
-  return inst->uncompressTarGz(tarGzPath, aDirPath);
-}
-
-DLLEXPORT char *Translate(xulsword *inst, const char *text, const char *localeName) {
-  return inst->translate(text, localeName);
-}
-
-DLLEXPORT void FreeMemory(void *tofree, const char *type) {
+void FreeMemory(void *tofree, const char *type) {
 
   if (!strcmp(type, "char")) free(tofree);
 
@@ -207,7 +184,7 @@ DLLEXPORT void FreeMemory(void *tofree, const char *type) {
 
 }
 
-DLLEXPORT void FreeLibxulsword() {
+void FreeLibxulsword() {
   std::cerr << "LIBXULSWORD DESTRUCTOR" << std::endl;
 
   if (my_xulsword) {

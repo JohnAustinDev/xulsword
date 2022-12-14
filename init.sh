@@ -37,7 +37,7 @@ PKG_DEPS="$PKG_DEPS debhelper libboost-dev"
 if [ "$CONTEXT" = "xsguest" ]; then PKG_DEPS="$PKG_DEPS libxshmfence1 libglu1 libnss3-dev libgdk-pixbuf2.0-dev libgtk-3-dev libxss-dev libasound2"; fi
 
 # BUID DEPENDENCIES (for cross compiling libxulsword as a Windows dll)
-PKG_DEPS="$PKG_DEPS mingw-w64"
+PKG_DEPS="$PKG_DEPS mingw-w64 mingw-w64-tools"
 
 if [ $(dpkg -s $PKG_DEPS 2>&1 | grep "not installed" | wc -m) -ne 0 ]; then
   if [ "$CONTEXT" = "xsguest" ]; then
@@ -84,7 +84,7 @@ if [ ! -e "$XULSWORD/Cpp/zlib" ]; then
   tar -xf "$ARCHIVEDIR/zlib_1.2.8.dfsg.orig.tar.gz"
   mv zlib-1.2.8 zlib
   mkdir "./zlib/build"
-  
+
   cd ./zlib/build
   cmake -G "Unix Makefiles" -D CMAKE_C_FLAGS="-fPIC" ..
   make DESTDIR="$XULSWORD/Cpp/install" install
@@ -97,7 +97,7 @@ if [ ! -e "$XULSWORD/Cpp/zlib.$XCWD" ]; then
   mkdir "./zlib.$XCWD"
   tar -xf "$ARCHIVEDIR/zlib_1.2.8.dfsg.orig.tar.gz" -C "./zlib.$XCWD" --strip-components 1
   mkdir "./zlib.$XCWD/build"
-  
+
   cd "./zlib.$XCWD/build"
   cmake -G "Unix Makefiles" -D CMAKE_TOOLCHAIN_FILE="$XULSWORD/Cpp/windows/toolchain.cmake" ..
   make DESTDIR="$XULSWORD/Cpp/install.$XCWD" install
@@ -161,7 +161,7 @@ if [ ! -e "$XULSWORD/Cpp/clucene.$XCWD" ]; then
   mkdir "./clucene.$XCWD/build"
   # Stop this dumb clucene error for searches beginning with a wildcard, which results in a core dump.
   sed -i 's/!allowLeadingWildcard/!true/g' "$XULSWORD/Cpp/clucene.$XCWD/src/core/CLucene/queryParser/QueryParser.cpp"
-  
+
   cd "$XULSWORD/Cpp"
   patch -s -p0 -d "$XULSWORD/Cpp/clucene.$XCWD" < "$XULSWORD/Cpp/windows/clucene-src.patch"
   cd "./clucene.$XCWD/build"
@@ -183,7 +183,7 @@ if [ ! -e "$XULSWORD/Cpp/sword" ]; then
   cd "$XULSWORD/Cpp"
   tar -xf "$ARCHIVEDIR/sword-rev-${swordRev}.tar.gz"
   mkdir "$XULSWORD/Cpp/sword/build"
-  
+
   # SWORD's CMakeLists.txt requires clucene-config.h be located in a weird directory:
   cp -r "$XULSWORD/Cpp/install/usr/local/include/CLucene" "$XULSWORD/Cpp/install/usr/local/lib"
 
@@ -197,10 +197,10 @@ if [ ! -e "$XULSWORD/Cpp/sword.$XCWD" ]; then
   mkdir "sword.$XCWD"
   tar -xf "$ARCHIVEDIR/sword-rev-${swordRev}.tar.gz" -C "./sword.$XCWD" --strip-components 1
   mkdir "./sword.$XCWD/build"
-  
+
   # SWORD's CMakeLists.txt requires clucene-config.h be located in a weird directory:
   cp -r "$XULSWORD/Cpp/install.$XCWD/usr/local/include/CLucene" "$XULSWORD/Cpp/install.$XCWD/usr/local/lib"
-  
+
   cd "$XULSWORD/Cpp"
   patch -s -p0 -d "$XULSWORD/Cpp/sword.$XCWD" < "$XULSWORD/Cpp/windows/libsword-src.patch"
   cd "$XULSWORD/Cpp/sword.$XCWD/build"
@@ -215,17 +215,18 @@ if [ ! -e "$XULSWORD/Cpp/build" ]; then
 #    # patch untgz MAC compile problem
 #    perl -p -i -e 's/#ifdef unix/#if defined(unix) || defined(__APPLE__)/g' ./sword/src/utilfuns/zlib/untgz.c
 #  fi
-  
+
   mkdir "$XULSWORD/Cpp/build"
   cd "$XULSWORD/Cpp/build"
   cmake -D SWORD_NO_ICU="No" -D CMAKE_INCLUDE_PATH="$XULSWORD/Cpp/install/usr/local/include" -D CMAKE_LIBRARY_PATH="$XULSWORD/Cpp/install/usr/local/lib" ..
   make DESTDIR="$XULSWORD/Cpp/install" install
-  
+
   # Install the DLL and all ming dependencies and strip them
   SODIR="$XULSWORD/Cpp/install/so"
+  if [ -e "$SODIR" ]; then rm -rf "$SODIR"; fi
   mkdir "$SODIR"
   cp "$XULSWORD/Cpp/install/usr/local/lib/libxulsword-static.so.1.4.4" "$SODIR/libxulsword-static.so"
-  strip "$SODIR/"*
+  #strip "$SODIR/"*
 fi
 # CROSS COMPILE LIBXULSWORD TO WINDOWS
 if [ ! -e "$XULSWORD/Cpp/build.$XCWD" ]; then
@@ -233,8 +234,9 @@ if [ ! -e "$XULSWORD/Cpp/build.$XCWD" ]; then
   cd "$XULSWORD/Cpp/build.$XCWD"
   cmake -DCMAKE_TOOLCHAIN_FILE="$XULSWORD/Cpp/windows/toolchain.cmake" -D SWORD_NO_ICU="No" -D CMAKE_INCLUDE_PATH="$XULSWORD/Cpp/install.$XCWD/usr/local/include" -D CMAKE_LIBRARY_PATH="$XULSWORD/Cpp/install.$XCWD/usr/local/lib" ..
   make DESTDIR="$XULSWORD/Cpp/install.$XCWD" install
-  
+
   # Install the DLL and all ming dependencies and strip them
+  if [ -e "$DLLDIR" ]; then rm -rf "$DLLDIR"; fi
   GCCDLL=libgcc_s_seh-1.dll
   if [[ "$XCWD" == "32win" ]]; then
     GCCDLL=libgcc_s_sjlj-1.dll
