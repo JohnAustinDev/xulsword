@@ -225,7 +225,7 @@ if [ ! -e "$XULSWORD/Cpp/build" ]; then
   SODIR="$XULSWORD/Cpp/install/so"
   if [ -e "$SODIR" ]; then rm -rf "$SODIR"; fi
   mkdir "$SODIR"
-  cp "$XULSWORD/Cpp/install/usr/local/lib/libxulsword-static.so.1.4.4" "$SODIR/libxulsword-static.so"
+  cp "$XULSWORD/Cpp/install/usr/local/lib/libxulsword-static.so" "$SODIR"
   strip "$SODIR/"*
 fi
 # CROSS COMPILE LIBXULSWORD TO WINDOWS

@@ -1,9 +1,9 @@
 cmake_minimum_required (VERSION 2.8)
 project (xulswordProj)
 
-set(xulswordProj_VERSION_MAJOR "1")
-set(xulswordProj_VERSION_MINOR "5")
-set(xulswordProj_VERSION_REVISION "0")
+set(xulswordProj_VERSION_MAJOR "$ENV{LIBXULSWORD_MAJOR}")
+set(xulswordProj_VERSION_MINOR "$ENV{LIBXULSWORD_MINOR}")
+set(xulswordProj_VERSION_REVISION "$ENV{LIBXULSWORD_REVIS}")
 
 set(CMAKE_SKIP_BUILD_RPATH FALSE)
 set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)

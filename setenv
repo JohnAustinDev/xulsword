@@ -28,6 +28,10 @@ export DLLDIR="$XULSWORD/Cpp/install.$XCWD/dll"
 # svn rev 3563 is sword-1.8.1
 export swordRev=3563
 
+export LIBXULSWORD_MAJOR=1
+export LIBXULSWORD_MINOR=5
+export LIBXULSWORD_REVIS=0
+
 # Node-gyp can be put into cross-compile mode by calling setxce with a toolchain
 # argument. However, there is no sane way to actually cross-compile a node-gyp addon
 # so that hope has been abandoned for now.

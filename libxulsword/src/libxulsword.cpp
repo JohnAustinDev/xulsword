@@ -1,5 +1,4 @@
 #include <napi.h>
-#include <map>
 #include "libxulsword.h"
 
 Napi::String napiConvertLocation(const Napi::CallbackInfo& info) {
