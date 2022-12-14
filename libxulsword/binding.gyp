@@ -1,50 +1,45 @@
 {
   'targets': [
     {
-      'target_name': 'libxulsword',
-      'conditions':[['OS=="win"', {
+      'target_name': 'make_win_lib',
+      'type': 'none',
+      'target_conditions': [['OS=="win"', {
         'actions': [{
           'action_name': 'Create lib file',
-          'message': 'Creating libxulsword.lib file...',
-          'output': ['../win-napi/libxulsword.lib'],
-          'conditions': [[
-            '$(XCWD)=="32win"', {
-              'action': ['lib.exe', '/def:../win-napi/libxulsword.def', '/machine:x86', '/out:../win-napi/libxulsword.lib'],
-            }, {
-              'action': ['lib.exe', '/def:../win-napi/libxulsword.def', '/machine:x64', '/out:../win-napi/libxulsword.lib'],
-            }
-          ]],
+	  'message': "CREATING libxulsword.lib...",
+          'inputs': ["$(LIBXULSWORD)/win-napi/libxulsword.def"],
+          'outputs': ['../win-napi/libxulsword.lib'],
+          'action': ['lib', "/def:$(LIBXULSWORD)/win-napi/libxulsword.def", '/machine:x64', '/out:../win-napi/libxulsword.lib'],
         }],
       }]],
+    },
+    {
+      'target_name': 'libxulsword',
+      'dependencies': ['make_win_lib'],
       'sources': [ 'src/libxulsword.cpp' ],
       'include_dirs': [
         "<!@(node -p \"require('node-addon-api').include\")",
         "$(XULSWORD)/Cpp/src/include",
         "$(XULSWORD)/Cpp/sword/include"
       ],
-      'conditions': [
-        ['OS=="linux"', {
-          'defines': [
-            'NODE_GYP_MODULE_NAME=libxulsword' ]
-        }],
-        ['OS=="win"', {
-          'defines': [
-            'NODE_GYP_MODULE_NAME=libxulsword',
-            'NAPI_DISABLE_CPP_EXCEPTIONS']
-        }]],
+      'defines': ['NODE_GYP_MODULE_NAME=libxulsword'],
+      'conditions': [['OS=="win"', {
+        'defines': ['NAPI_DISABLE_CPP_EXCEPTIONS']
+      }]],
       'cflags!': [ '-fno-exceptions' ],
       'cflags_cc!': [ '-fno-exceptions' ],
       'target_conditions': [
-        ['OS=="linux"', {
-          'libraries': ["$(XULSWORD)/Cpp/install/so/libxulsword-static.so"],
-        }],
-        ['OS=="win"', {
-        'libraries': ['../win-napi/libxulsword.lib'],
-        }]],
-        'conditions': [['OS=="win"', {
+      	['OS=="linux"', {'libraries': ["$(XULSWORD)/Cpp/install/so/libxulsword-static.so"]}],
+        ['OS=="win"', { 'libraries': ['../win-napi/libxulsword.lib']}]],
+      },
+      {
+        'target_name': 'save_win_binary',
+	'type': 'none',
+	'dependencies': ['libxulsword'],
+	'target_conditions': [['OS=="win"', {
           'copies': [{
-            'files': ['Release/xulsword.node'],
-            'destination': '../win-napi/xulsword.$(XCWD).node'
+            'files': ['build/Release/libxulsword.node'],
+            'destination': "$(LIBXULSWORD)/win-napi/$(XCWD)"
           }],
         }]],
       }

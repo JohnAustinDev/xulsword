@@ -27,3 +27,6 @@ Some of the early build steps outlined in the links above are not required since
 5. add build procedure to the top-level _build.sh_ script
 6. coordinate with team to insure seamless integration of the module
 7. replace the _xul/content/libsword.js_ file with the one currently located in the napi directory
+
+# MS-Windows build
+Although the libxulsword shared library is cross-compiled with MinGW, this module cannot be cross-compiled (because node-gyp is not compatible with MinGW). However, since it uses node-addon-api this module will not need to be recompiled in MS-Windows until the libxulsword shared library's interface changes. For this reason, the MS-Windows libxulsword.node compiled binary is under version control. When I compiled this module in MS-Windows, I used nvm from https://github.com/coreybutler/nvm-windows. I used cmd.exe to run MSVC vcvars.bat to set the proper build environment (either x64 or x86) and then called Git/bin/bash.sh. In Git-bash, run 'source ./setenv' in the xulsword directory to complete the environment settings. After this, I ran yarn in the libxulsword module to install its dependencies, and finally 'npx node-gyp rebuild' takes care of the rest. The resulting libxulsword.node binary should be committed to version control.
