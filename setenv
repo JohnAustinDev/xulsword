@@ -11,8 +11,10 @@ export LIBXULSWORD="$XULSWORD/libxulsword"
 export TOOLCHAIN_PREFIX=x86_64-w64-mingw32
 
 export ADDRESS_MODEL=32
+export WINMACHINE=x86
 if [ "$TOOLCHAIN_PREFIX" = "x86_64-w64-mingw32" ]; then
   export ADDRESS_MODEL=64
+  export WINMACHINE=x64
 fi
 
 export XCWD="${ADDRESS_MODEL}win"
@@ -27,7 +29,6 @@ export DLLDIR="$XULSWORD/Cpp/install.$XCWD/dll"
 export swordRev=3563
 
 # Node-gyp can be put into cross-compile mode by calling setxce with a toolchain
-# argument. However, there is no sane way to actually cross-compile a NAPI addon
-# so that hope has been abandoned.
+# argument. However, there is no sane way to actually cross-compile a node-gyp addon
+# so that hope has been abandoned for now.
 # source ./setxce $TOOLCHAIN_PREFIX
-source ./setxce
