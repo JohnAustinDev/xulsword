@@ -37,10 +37,11 @@ PKG_DEPS="$PKG_DEPS debhelper libboost-dev"
 if [ "$CONTEXT" = "xsguest" ]; then PKG_DEPS="$PKG_DEPS libxshmfence1 libglu1 libnss3-dev libgdk-pixbuf2.0-dev libgtk-3-dev libxss-dev libasound2"; fi
 
 # BUID DEPENDENCIES (for cross compiling libxulsword as a Windows dll)
-PKG_DEPS="$PKG_DEPS mingw-w64 mingw-w64-tools"
+PKG_DEPS="$PKG_DEPS mingw-w64 mingw-w64-tools wine wine32-preloader"
 
 if [ $(dpkg -s $PKG_DEPS 2>&1 | grep "not installed" | wc -m) -ne 0 ]; then
   if [ "$CONTEXT" = "xsguest" ]; then
+    sudo dpkg --add-architecture i386
     sudo apt-get update
     sudo apt-get install -y $PKG_DEPS
   else
