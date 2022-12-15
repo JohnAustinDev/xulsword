@@ -222,12 +222,14 @@ if [ ! -e "$XULSWORD/Cpp/build" ]; then
   cmake -D SWORD_NO_ICU="No" -D CMAKE_INCLUDE_PATH="$XULSWORD/Cpp/install/usr/local/include" -D CMAKE_LIBRARY_PATH="$XULSWORD/Cpp/install/usr/local/lib" ..
   make DESTDIR="$XULSWORD/Cpp/install" install
 
-  # Install the DLL and all ming dependencies and strip them
+  # Install the DLL and all ming dependencies beyond the node executable and strip them
   SODIR="$XULSWORD/Cpp/install/so"
   if [ -e "$SODIR" ]; then rm -rf "$SODIR"; fi
   mkdir "$SODIR"
   cp "$XULSWORD/Cpp/install/usr/local/lib/libxulsword-static.so" "$SODIR"
+  cp "/lib/x86_64-linux-gnu/libstdc++.so.6" "$SODIR"
   strip "$SODIR/"*
+  chmod ugo+x "$SODIR/"*
 fi
 # CROSS COMPILE LIBXULSWORD TO WINDOWS
 if [ ! -e "$XULSWORD/Cpp/build.$XCWD" ]; then
@@ -236,7 +238,7 @@ if [ ! -e "$XULSWORD/Cpp/build.$XCWD" ]; then
   cmake -DCMAKE_TOOLCHAIN_FILE="$XULSWORD/Cpp/windows/toolchain.cmake" -D SWORD_NO_ICU="No" -D CMAKE_INCLUDE_PATH="$XULSWORD/Cpp/install.$XCWD/usr/local/include" -D CMAKE_LIBRARY_PATH="$XULSWORD/Cpp/install.$XCWD/usr/local/lib" ..
   make DESTDIR="$XULSWORD/Cpp/install.$XCWD" install
 
-  # Install the DLL and all ming dependencies and strip them
+  # Install the DLL and all ming dependencies beyond the node executable and strip them
   if [ -e "$DLLDIR" ]; then rm -rf "$DLLDIR"; fi
   GCCDLL=libgcc_s_seh-1.dll
   if [[ "$XCWD" == "32win" ]]; then
@@ -249,6 +251,7 @@ if [ ! -e "$XULSWORD/Cpp/build.$XCWD" ]; then
   cp "/usr/${TOOLCHAIN_PREFIX}/lib/libwinpthread-1.dll" "$DLLDIR"
   gendef - "$XULSWORD/Cpp/install.$XCWD/usr/local/bin/libxulsword-static.dll" > "$XULSWORD/libxulsword/win-napi/libxulsword.def"
   strip "$DLLDIR/"*
+  chmod ugo+x "$DLLDIR/"*
 fi
 
 # Now initialize node.js

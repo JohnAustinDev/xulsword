@@ -85,6 +85,10 @@
         {
           "from": "./Cpp/install/so/libxulsword-static.so",
           "to": "libxulsword-static.so"
+        },
+        {
+          "from": "./Cpp/install/so/libstdc++.so.6",
+          "to": "libstdc++.so.6"
         }
       ]
     },
