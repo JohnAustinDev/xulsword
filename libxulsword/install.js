@@ -34,5 +34,8 @@ if (machine.includes('win')) {
       console.log(`Copying shared library ${name}`);
       fs.copyFileSync(path.join(shared, name), path.join(release, name));
     });
-  }
+  } else throw new Error(
+    `Windows ${machine} libxulsword DLL has not been built:
+    Run xulsword init.sh after setting WINMACHINE=${machine === '64win' ? 'x64' : 'x86'} in xulsword/setenv`
+  );
 }

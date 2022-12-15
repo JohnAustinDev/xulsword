@@ -1,25 +1,28 @@
 #!/bin/bash
 # Run this script from this directory with 'source ./setenv' to set build environment variables.
 
+export LIBXULSWORD_MAJOR=1
+export LIBXULSWORD_MINOR=5
+export LIBXULSWORD_REVIS=0
+
 if [ -e /vagrant ]; then export CONTEXT="xsguest"; else export CONTEXT="host"; fi
 if [ "$CONTEXT" = "xsguest" ]; then export XULSWORD="$HOME/src/xulsword"; else export XULSWORD="$( pwd -P )"; fi
 export CPP="$XULSWORD/Cpp"
 export LIBXULSWORD="$XULSWORD/libxulsword"
 
-# Set to x86_64-w64-mingw32 to cross-compile to 64 bit windows, or set to
-# i686-w64-mingw32 to cross-compile to 32 bit windows:
-export TOOLCHAIN_PREFIX=x86_64-w64-mingw32
-
-export ADDRESS_MODEL=32
+# Set WINMACHINE to x86 or x64 to compile Windows 32 bit or 64 bit, respectively:
 export WINMACHINE=x86
-if [ "$TOOLCHAIN_PREFIX" = "x86_64-w64-mingw32" ]; then
+
+export TOOLCHAIN_PREFIX=i686-w64-mingw32
+export ADDRESS_MODEL=32
+if [ "$WINMACHINE" = "x64" ]; then
   export ADDRESS_MODEL=64
-  export WINMACHINE=x64
+  export TOOLCHAIN_PREFIX=x86_64-w64-mingw32
 fi
 
 export XCWD="${ADDRESS_MODEL}win"
 
-# The ming-gcc cross-compiler standard must be 'posix' for NodeAPI:
+# The ming-gcc cross-compiler standard must be 'posix' to work with NodeAPI:
 export GCCSTD=posix
 
 export BOOSTDIR="$XULSWORD/Cpp/boost-${TOOLCHAIN_PREFIX}-${XCWD}"
@@ -27,12 +30,3 @@ export DLLDIR="$XULSWORD/Cpp/install.$XCWD/dll"
 
 # svn rev 3563 is sword-1.8.1
 export swordRev=3563
-
-export LIBXULSWORD_MAJOR=1
-export LIBXULSWORD_MINOR=5
-export LIBXULSWORD_REVIS=0
-
-# Node-gyp can be put into cross-compile mode by calling setxce with a toolchain
-# argument. However, there is no sane way to actually cross-compile a node-gyp addon
-# so that hope has been abandoned for now.
-# source ./setxce $TOOLCHAIN_PREFIX
