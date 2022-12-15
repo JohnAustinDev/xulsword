@@ -1,7 +1,21 @@
 {
   "HelpEmailAddress": "",
   "WindowsDidClose": true,
-
+  "Contributors": [
+    "Special Thanks To:",
+    "Troy Griffitts and the SWORD Project",
+    "",
+    "Developers:",
+    "John Austin",
+    "David Booth",
+    "",
+    "Contributors:",
+    "Abram Victorovich",
+    "Allen Peleton",
+    "David Haslam",
+    "Wolfgang Stradner",
+    "Tom Roth"
+  ],
   "global": {
     "InternetPermission": true,
     "fontSize": 2,
@@ -56,7 +70,36 @@
     "noteBoxHeight": [],
     "maximizeNoteBox": []
   },
-
+  "print": {
+    "landscape": false,
+    "pageSize": "Letter",
+    "twoColumns": false,
+    "scale": 100,
+    "margins": {
+      "top": 30,
+      "right": 20,
+      "bottom": 30,
+      "left": 20
+    }
+  },
+  "printPassage": {
+    "firstChapter": null,
+    "lastChapter": null,
+    "checkbox": {
+      "introduction": true,
+      "headings": true,
+      "versenums": true,
+      "redwords": true,
+      "dictlinks": true,
+      "footnotes": true,
+      "usernotes": true,
+      "crossrefs": true,
+      "crossrefsText": true,
+      "hebvowelpoints": true,
+      "hebcantillation": true
+    },
+    "chapters": null,
+  },
   "moduleManager": {
     "language": {
       "open": true,

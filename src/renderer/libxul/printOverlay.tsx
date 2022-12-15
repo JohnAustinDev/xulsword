@@ -81,7 +81,7 @@ export default function PrintOverlay(props: PrintOverlayProps) {
             <Spacer flex="1" />
             {customControl}
             {!customControl && (
-              <PrintSettings printDisabled={printDisabled} dialogEnd="ok" />
+              <PrintSettings printDisabled={printDisabled} dialogEnd="cancel" />
             )}
             <Spacer flex="1" />
           </Vbox>

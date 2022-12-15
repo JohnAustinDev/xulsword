@@ -276,7 +276,8 @@ export default class PrintSettings extends React.Component {
             G.Window.close();
             break;
           }
-          case 'ok': {
+          case 'ok':
+          case 'cancel': {
             Subscription.publish.setWindowRootState({
               showPrintOverlay: false,
               modal: 'off',
