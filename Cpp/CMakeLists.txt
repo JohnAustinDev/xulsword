@@ -20,6 +20,9 @@ link_directories(${CMAKE_LIBRARY_PATH})
 
 add_library(xulsword-static SHARED ./src/xulsword.cpp ./src/libxulsword.cpp)
 
+# set this so swmodule.cpp will allow CLucene searching
+add_definitions(-DUSELUCENE)
+
 # For Linux cross-compilation to Windows
 IF(CMAKE_TOOLCHAIN_FILE MATCHES "windows")
   # Use same CLucene compilation flags and definitions:

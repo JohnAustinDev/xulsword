@@ -24,6 +24,7 @@ build/release
 archive.tgz
 libxulsword/build/
 libxulsword/yarn.lock
+libxulsword/lib/linux/
 
 .idea
 npm-debug.log.*

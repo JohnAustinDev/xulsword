@@ -503,6 +503,8 @@ void xulsword::getTreeContents(TreeKey *key, SWBuf *body) {
   }
 }
 
+void dummyProgress(int progress) {}
+
 
 /********************************************************************
 PUBLIC XULSWORD FUNCTIONS
@@ -518,7 +520,8 @@ xulsword::xulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(con
 
   ToUpperCase = toUpperCase;
   ThrowJS = throwJS;
-  ReportProgress = reportProgress;
+  if (reportProgress) ReportProgress = reportProgress;
+  else ReportProgress = &dummyProgress;
   FireBibleMode = firebibleMode;
 
   MarkupFilterMgrXS *muf = new MarkupFilterMgrXS();

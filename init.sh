@@ -27,6 +27,9 @@ fi
 
 source ./setenv
 
+DBG=
+# DBG=-D CMAKE_BUILD_TYPE="Debug"
+
 # BUILD DEPENDENCIES (Ubuntu Xenial & Bionic)
 PKG_DEPS="build-essential git subversion libtool-bin cmake autoconf make pkg-config zip curl"
 # for ZLib build
@@ -87,7 +90,7 @@ if [ ! -e "$XULSWORD/Cpp/zlib" ]; then
   mkdir "./zlib/build"
 
   cd ./zlib/build
-  cmake -G "Unix Makefiles" -D CMAKE_C_FLAGS="-fPIC" ..
+  cmake $DBG -G "Unix Makefiles" -D CMAKE_C_FLAGS="-fPIC" ..
   make DESTDIR="$XULSWORD/Cpp/install" install
   # create a symlink to zconf.h (which was just renamed by cmake) so CLucene will compile
   ln -s ./build/zconf.h ../zconf.h
@@ -100,7 +103,7 @@ if [ ! -e "$XULSWORD/Cpp/zlib.$XCWD" ]; then
   mkdir "./zlib.$XCWD/build"
 
   cd "./zlib.$XCWD/build"
-  cmake -G "Unix Makefiles" -D CMAKE_TOOLCHAIN_FILE="$XULSWORD/Cpp/windows/toolchain.cmake" ..
+  cmake $DBG -G "Unix Makefiles" -D CMAKE_TOOLCHAIN_FILE="$XULSWORD/Cpp/windows/toolchain.cmake" ..
   make DESTDIR="$XULSWORD/Cpp/install.$XCWD" install
 fi
 
@@ -151,7 +154,7 @@ if [ ! -e "$XULSWORD/Cpp/clucene" ]; then
 
   cd ./clucene/build
   # -D DISABLE_MULTITHREADING=ON causes compilation to fail
-  cmake -G "Unix Makefiles" -D BUILD_STATIC_LIBRARIES=ON -D CMAKE_INCLUDE_PATH="$XULSWORD/Cpp/install/usr/local/include" -D CMAKE_LIBRARY_PATH="$XULSWORD/Cpp/install/usr/local/lib" ..
+  cmake $DBG -G "Unix Makefiles" -D BUILD_STATIC_LIBRARIES=ON -D CMAKE_INCLUDE_PATH="$XULSWORD/Cpp/install/usr/local/include" -D CMAKE_LIBRARY_PATH="$XULSWORD/Cpp/install/usr/local/lib" ..
   make DESTDIR="$XULSWORD/Cpp/install" install
 fi
 # CROSS COMPILE LIBCLUCENE TO WINDOWS
@@ -166,7 +169,7 @@ if [ ! -e "$XULSWORD/Cpp/clucene.$XCWD" ]; then
   cd "$XULSWORD/Cpp"
   patch -s -p0 -d "$XULSWORD/Cpp/clucene.$XCWD" < "$XULSWORD/Cpp/windows/clucene-src.patch"
   cd "./clucene.$XCWD/build"
-  cmake -DCMAKE_TOOLCHAIN_FILE="$XULSWORD/Cpp/windows/toolchain.cmake" -C "$XULSWORD/Cpp/windows/clucene-TryRunResult-${GCCSTD}.cmake" -D CMAKE_USE_PTHREADS_INIT=OFF -D BUILD_STATIC_LIBRARIES=ON -D ZLIB_INCLUDE_DIR="$XULSWORD/Cpp/install.$XCWD/usr/local/include" -D Boost_INCLUDE_DIR="$BOOSTDIR/$XCWD/include" -D ZLIB_LIBRARY="$XULSWORD/Cpp/install.$XCWD/usr/local/lib/libzlibstatic.a" ..
+  cmake $DBG -DCMAKE_TOOLCHAIN_FILE="$XULSWORD/Cpp/windows/toolchain.cmake" -C "$XULSWORD/Cpp/windows/clucene-TryRunResult-${GCCSTD}.cmake" -D CMAKE_USE_PTHREADS_INIT=OFF -D BUILD_STATIC_LIBRARIES=ON -D ZLIB_INCLUDE_DIR="$XULSWORD/Cpp/install.$XCWD/usr/local/include" -D Boost_INCLUDE_DIR="$BOOSTDIR/$XCWD/include" -D ZLIB_LIBRARY="$XULSWORD/Cpp/install.$XCWD/usr/local/lib/libzlibstatic.a" ..
   patch -s -p0 -d "$XULSWORD/Cpp/clucene.$XCWD" < "$XULSWORD/Cpp/windows/clucene-build.patch"
   make DESTDIR="$XULSWORD/Cpp/install.$XCWD" install
 fi
@@ -189,7 +192,7 @@ if [ ! -e "$XULSWORD/Cpp/sword" ]; then
   cp -r "$XULSWORD/Cpp/install/usr/local/include/CLucene" "$XULSWORD/Cpp/install/usr/local/lib"
 
   cd "$XULSWORD/Cpp/sword/build"
-  cmake -D SWORD_NO_ICU="No" -D LIBSWORD_LIBRARY_TYPE="Static" -D CLUCENE_LIBRARY="$XULSWORD/Cpp/install/usr/local/lib/libclucene-core.so" -D CMAKE_INCLUDE_PATH="$XULSWORD/Cpp/install/usr/local/include" -D CMAKE_LIBRARY_PATH="$XULSWORD/Cpp/install/usr/local/lib" -DSWORD_BUILD_UTILS="No" ..
+  cmake $DBG -D SWORD_NO_ICU="No" -D LIBSWORD_LIBRARY_TYPE="Static" -D CLUCENE_LIBRARY="$XULSWORD/Cpp/install/usr/local/lib/libclucene-core.so" -D ZLIB_LIBRARY="$XULSWORD/Cpp/install/usr/local/lib/libz.so" -D CLUCENE_LIBRARY_DIR="$XULSWORD/Cpp/install/usr/local/include" -D CLUCENE_INCLUDE_DIR="$XULSWORD/Cpp/install/usr/local/include" -D ZLIB_INCLUDE_DIR="$XULSWORD/Cpp/install/usr/local/include" -DSWORD_BUILD_UTILS="No" ..
   make DESTDIR="$XULSWORD/Cpp/install" install
 fi
 # CROSS COMPILE LIBSWORD TO WINDOWS
@@ -205,7 +208,7 @@ if [ ! -e "$XULSWORD/Cpp/sword.$XCWD" ]; then
   cd "$XULSWORD/Cpp"
   patch -s -p0 -d "$XULSWORD/Cpp/sword.$XCWD" < "$XULSWORD/Cpp/windows/libsword-src.patch"
   cd "$XULSWORD/Cpp/sword.$XCWD/build"
-  cmake -DCMAKE_TOOLCHAIN_FILE="$XULSWORD/Cpp/windows/toolchain.cmake" -D SWORD_NO_ICU="No" -D LIBSWORD_LIBRARY_TYPE="Static" -D CLUCENE_LIBRARY="$XULSWORD/Cpp/install.$XCWD/usr/local/lib/libclucene-core.dll.a" -D ZLIB_LIBRARY="$XULSWORD/Cpp/install.$XCWD/usr/local/lib/libzlibstatic.a" -D CLUCENE_LIBRARY_DIR="$XULSWORD/Cpp/install.$XCWD/usr/local/include" -D CLUCENE_INCLUDE_DIR="$XULSWORD/Cpp/install.$XCWD/usr/local/include" -D ZLIB_INCLUDE_DIR="$XULSWORD/Cpp/install.$XCWD/usr/local/include" -DSWORD_BUILD_UTILS="No" ..
+  cmake $DBG -DCMAKE_TOOLCHAIN_FILE="$XULSWORD/Cpp/windows/toolchain.cmake" -D SWORD_NO_ICU="No" -D LIBSWORD_LIBRARY_TYPE="Static" -D CLUCENE_LIBRARY="$XULSWORD/Cpp/install.$XCWD/usr/local/lib/libclucene-core.dll.a" -D ZLIB_LIBRARY="$XULSWORD/Cpp/install.$XCWD/usr/local/lib/libzlibstatic.a" -D CLUCENE_LIBRARY_DIR="$XULSWORD/Cpp/install.$XCWD/usr/local/include" -D CLUCENE_INCLUDE_DIR="$XULSWORD/Cpp/install.$XCWD/usr/local/include" -D ZLIB_INCLUDE_DIR="$XULSWORD/Cpp/install.$XCWD/usr/local/include" -DSWORD_BUILD_UTILS="No" ..
   make DESTDIR="$XULSWORD/Cpp/install.$XCWD" install
 fi
 
@@ -219,7 +222,7 @@ if [ ! -e "$XULSWORD/Cpp/build" ]; then
 
   mkdir "$XULSWORD/Cpp/build"
   cd "$XULSWORD/Cpp/build"
-  cmake -D SWORD_NO_ICU="No" -D CMAKE_INCLUDE_PATH="$XULSWORD/Cpp/install/usr/local/include" -D CMAKE_LIBRARY_PATH="$XULSWORD/Cpp/install/usr/local/lib" ..
+  cmake $DBG -D SWORD_NO_ICU="No" -D CMAKE_INCLUDE_PATH="$XULSWORD/Cpp/install/usr/local/include" -D CMAKE_LIBRARY_PATH="$XULSWORD/Cpp/install/usr/local/lib" ..
   make DESTDIR="$XULSWORD/Cpp/install" install
 
   # Install the DLL and all ming dependencies beyond the node executable and strip them
@@ -235,7 +238,7 @@ fi
 if [ ! -e "$XULSWORD/Cpp/build.$XCWD" ]; then
   mkdir "$XULSWORD/Cpp/build.$XCWD"
   cd "$XULSWORD/Cpp/build.$XCWD"
-  cmake -DCMAKE_TOOLCHAIN_FILE="$XULSWORD/Cpp/windows/toolchain.cmake" -D SWORD_NO_ICU="No" -D CMAKE_INCLUDE_PATH="$XULSWORD/Cpp/install.$XCWD/usr/local/include" -D CMAKE_LIBRARY_PATH="$XULSWORD/Cpp/install.$XCWD/usr/local/lib" ..
+  cmake $DBG -DCMAKE_TOOLCHAIN_FILE="$XULSWORD/Cpp/windows/toolchain.cmake" -D SWORD_NO_ICU="No" -D CMAKE_INCLUDE_PATH="$XULSWORD/Cpp/install.$XCWD/usr/local/include" -D CMAKE_LIBRARY_PATH="$XULSWORD/Cpp/install.$XCWD/usr/local/lib" ..
   make DESTDIR="$XULSWORD/Cpp/install.$XCWD" install
 
   # Install the DLL and all ming dependencies beyond the node executable and strip them
