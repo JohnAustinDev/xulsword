@@ -33,24 +33,22 @@
         ['OS=="win"', { 'libraries': ['../lib/libxulsword.lib']}]],
       },
       {
-        'target_name': 'save_win_binary',
-        'type': 'none',
-        'dependencies': ['libxulsword'],
-        'Release': {
-          'target_conditions': [
-            ['OS=="win"', {
-              'copies': [{
-                'files': ['build/Release/libxulsword.node'],
-                'destination': "$(LIBXULSWORD)/lib/$(XCWD)"
-              }],
+      'target_name': 'save_win_binary',
+      'type': 'none',
+      'dependencies': ['libxulsword'],
+        'target_conditions': [
+          ['OS=="win"', {
+            'copies': [{
+              'files': ['build/Release/libxulsword.node'],
+              'destination': "$(LIBXULSWORD)/lib/$(XCWD)"
             }],
-            ['OS=="linux"', {
-              'copies': [{
-                'files': ['build/Release/xulsword.node'],
-                'destination': "$(LIBXULSWORD)/lib/linux"
-              }],
-            }]],
-        }
+          }],
+          ['OS=="linux"', {
+            'copies': [{
+              'files': ['build/Release/xulsword.node'],
+              'destination': "$(LIBXULSWORD)/lib/linux"
+            }],
+          }]],
       }
     ],
   'variables' : {
