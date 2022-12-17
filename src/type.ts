@@ -42,6 +42,8 @@ declare global {
     ipc: WinIpcType;
     main: WinMainType;
   }
+  function ToUpperCase(str: string): string;
+  function reportSearchIndexerProgress(percent: number): void;
 }
 type RendererChannels =
   | 'global'
@@ -796,7 +798,6 @@ export const GBuilder: GType & {
     getGlobalOption: func as any,
     getModuleList: CACHEfunc as any,
     getModuleInformation: CACHEfunc as any,
-    translate: CACHEfunc as any,
   },
 
   Dirs: {

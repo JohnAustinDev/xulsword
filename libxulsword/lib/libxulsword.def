@@ -7,7 +7,6 @@ LIBRARY "libxulsword-static.dll"
 EXPORTS
 ConvertLocation
 FreeLibxulsword
-FreeMemory
 GetAllDictionaryKeys
 GetChapterText
 GetChapterTextMulti
@@ -36,5 +35,3 @@ SearchIndexBuild
 SearchIndexDelete
 SetCipherKey
 SetGlobalOption
-Translate
-UncompressTarGz

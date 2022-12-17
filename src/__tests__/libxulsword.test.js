@@ -294,9 +294,6 @@ test('search 8', () => {
   expect(LibSword.search('KJV', 'shineth in darkness', 'John', 2 /* multi */, 0, true)).toBe(1);
 });
 
-test('search 9', () => {
-  expect(LibSword.getSearchPointer()).toBe(1);
-});
 
 test('search 10', () => {
   expect(LibSword.getSearchResults('KJV', 0, 1, false).match(/title="[^"]+"/g)[0]).toBe('title="John.1.5.KJV"');

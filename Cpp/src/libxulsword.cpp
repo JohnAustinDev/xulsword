@@ -22,20 +22,32 @@
 #include "stringmgr.h"
 #include <iostream>
 
-static xulsword *my_xulsword;
+xulsword *my_xulsword;
 
 /********************************************************************
 EXPORTED INTERFACE FUNCTIONS
 *********************************************************************/
-bool GetXulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(const char *), void (*reportProgress)(int)) {
+xulsword *GetXulsword(char *path, char *(*toUpperCase)(char *), void (*reportProgress)(int)) {
 
-  if (my_xulsword) return true;
+  my_xulsword = new xulsword(path, toUpperCase, reportProgress);
 
-  my_xulsword = new xulsword(path, toUpperCase, throwJS, reportProgress, NULL);
+  SWLog::getSystemLog()->logDebug("(c++ GetXulsword) CREATED xulsword object");
 
-  SWLog::getSystemLog()->logDebug("CREATED xulsword object (firebibleMode = false)");
+  return my_xulsword;
+}
 
-  return true;
+void FreeLibxulsword(xulsword *tofree) {
+  // deleting a xulsword object causes unpredictable access violations,
+  // so let created xulsword objects live until the end of the process
+  // even if they're not referenced any longer.
+  /*
+  SWLog::getSystemLog()->logDebug("(c++ FreeLibxulsword) FREEING xulsword");
+  if (tofree && tofree != my_xulsword) delete tofree;
+  else if (my_xulsword) {
+    delete my_xulsword;
+    my_xulsword = NULL;
+  }
+  */
 }
 
 char *GetChapterText(const char *vkeymod, const char *vkeytext) {
@@ -148,65 +160,4 @@ char* GetModuleList() {
 
 char *GetModuleInformation(const char *mod, const char *paramname) {
   return my_xulsword->getModuleInformation(mod, paramname);
-}
-
-void UncompressTarGz(const char *tarGzPath, const char *aDirPath) {
-  return my_xulsword->uncompressTarGz(tarGzPath, aDirPath);
-}
-
-char *Translate(const char *text, const char *localeName) {
-  return my_xulsword->translate(text, localeName);
-}
-
-void FreeMemory(void *tofree, const char *type) {
-
-  if (!strcmp(type, "char")) free(tofree);
-
-  else if (!strcmp(type, "xulsword")) {
-    if (my_xulsword == (xulsword *)tofree) {
-
-      SWLog::getSystemLog()->logDebug("(FreeMemory) FREEING xulsword");
-
-      delete my_xulsword;
-      my_xulsword = NULL;
-
-    }
-  }
-
-  else if (!strcmp(type, "searchPointer")) {
-    ListKey *sp = (ListKey *)tofree;
-    if (sp) {
-      //SWLog::getSystemLog()->logDebug("(FreeMemory) FREEING searchPointer");
-      delete sp;
-    }
-    else SWLog::getSystemLog()->logDebug("(FreeMemory) NULL pointer, nothing freed.");
-  }
-
-}
-
-void FreeLibxulsword() {
-  std::cerr << "LIBXULSWORD DESTRUCTOR" << std::endl;
-
-  if (my_xulsword) {
-
-    SWLog::getSystemLog()->logDebug("(FreeLibxulsword) FREEING xulsword");
-
-    delete my_xulsword;
-    my_xulsword = NULL;
-
-  }
-
-  SWLog::setSystemLog(NULL);
-  xulsword::MySWLogXS = NULL;
-
-  StringMgr::setSystemStringMgr(NULL);
-  xulsword::MyStringMgrXS = NULL;
-
-/*
-  VersificationMgr::getSystemVersificationMgr(NULL);
-  FileMgr::setSystemFileMgr(NULL);
-  delete LocaleMgr::systemLocaleMgr;
-  LocaleMgr::systemLocaleMgr = NULL;
-*/
-
 }

@@ -18,6 +18,20 @@ import type { ManagerStatePref } from '../../renderer/moduleManager/manager';
 
 const { libxulsword } = require('libxulsword');
 
+/* ******************************************************************************
+ * Callback functions available to libxulsword NodeJS addon
+ ***************************************************************************** */
+
+global.ToUpperCase = (aString) => {
+  if (aString) {
+    log.debug(`Node-API ToUpperCase callback: ${aString}`);
+    return aString.toUpperCase();
+  }
+  return '';
+};
+
+global.reportSearchIndexerProgress = (_intgr) => {};
+
 /*
 This LibSword object is used to access all SWORD engine capabilities
 and information, including texts, searches etc. This object utilizes
@@ -46,14 +60,6 @@ const LibSword = {
   searchedID: '' as string,
 
   searchingID: '' as string,
-
-  checkerror(): void {
-    if (this.throwMsg) {
-      const tmp = this.throwMsg;
-      this.throwMsg = '';
-      throw Error(`LIBSWORD: ${tmp}`);
-    }
-  },
 
   init(): boolean {
     if (this.libxulsword) return false;
@@ -85,10 +91,7 @@ const LibSword = {
 
     // Get our xulsword instance...
     this.libxulsword = libxulsword.GetXulsword(
-      this.moduleDirectories.join(', '),
-      this.UpperCase,
-      this.ThrowJSError,
-      this.ReportProgress
+      this.moduleDirectories.join(', ')
     );
     log.verbose(`CREATED libxulsword object`);
 
@@ -112,32 +115,6 @@ const LibSword = {
     }
     return false;
   },
-
-  /* ******************************************************************************
-   * Callback functions available to libsword binary
-   ***************************************************************************** */
-
-  // NOTE: these are invoked as functions by libsword, so 'this'
-  // will refer to global context!
-
-  upperCaseResult: '' as string,
-  UpperCase(aString: string): string | null {
-    if (aString) {
-      LibSword.upperCaseResult = aString.toUpperCase();
-      return LibSword.upperCaseResult;
-    }
-    return null;
-  },
-
-  throwMsg: '' as string,
-  ThrowJSError(charPtr: any): void {
-    const aString = charPtr.readString();
-    libxulsword.freeMemory(charPtr, 'char');
-    if (aString) LibSword.throwMsg = aString;
-    else LibSword.throwMsg = 'An unknown libsword exception occurred.';
-  },
-
-  ReportProgress(_intgr: number): void {},
 
   /* ******************************************************************************
    * GETTING BIBLE TEXT AND BIBLE LOCATION INFORMATION:
@@ -176,7 +153,6 @@ DEFINITION OF A 'XULSWORD REFERENCE':
     if (options) this.setGlobalOptions(options);
     if (this.isReady(true)) {
       const chapterText = libxulsword.GetChapterText(modname, vkeytext);
-      this.checkerror();
       return chapterText;
     }
     return '';
@@ -204,7 +180,6 @@ DEFINITION OF A 'XULSWORD REFERENCE':
         vkeytext,
         keepnotes
       );
-      this.checkerror();
       return chapterTextMulti;
     }
     return '';
@@ -219,7 +194,6 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   getFootnotes(): string {
     if (this.isReady(true)) {
       const footnotes = libxulsword.GetFootnotes();
-      this.checkerror();
       return footnotes;
     }
     return '';
@@ -231,7 +205,6 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   getCrossRefs(): string {
     if (this.isReady(true)) {
       const crossRefs = libxulsword.GetCrossRefs();
-      this.checkerror();
       return crossRefs;
     }
     return '';
@@ -244,7 +217,6 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   getNotes(): string {
     if (this.isReady(true)) {
       const notes = libxulsword.GetNotes();
-      this.checkerror();
       return notes;
     }
     return '';
@@ -269,7 +241,6 @@ DEFINITION OF A 'XULSWORD REFERENCE':
         vkeytext,
         keepTextNotes
       );
-      this.checkerror();
       return verseText;
     }
     return '';
@@ -284,7 +255,6 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   getMaxChapter(v11n: V11nType, vkeytext: string): number {
     if (this.isReady(true)) {
       const intgr = libxulsword.GetMaxChapter(v11n, vkeytext);
-      this.checkerror();
       return intgr;
     }
     return 0;
@@ -299,7 +269,6 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   getMaxVerse(v11n: V11nType, vkeytext: string): number {
     if (this.isReady(true)) {
       const intgr = libxulsword.GetMaxVerse(v11n, vkeytext);
-      this.checkerror();
       return intgr;
     }
     return 0;
@@ -344,7 +313,6 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   getIntroductions(vkeymod: string, bname: string): string {
     if (this.isReady(true)) {
       const introductions = libxulsword.GetIntroductions(vkeymod, bname);
-      this.checkerror();
       return introductions;
     }
     return '';
@@ -362,7 +330,6 @@ DEFINITION OF A 'XULSWORD REFERENCE':
     if (this.isReady(true)) {
       if (options) this.setGlobalOptions(options);
       const dictionaryEntry = libxulsword.GetDictionaryEntry(lexdictmod, key);
-      this.checkerror();
       return dictionaryEntry;
     }
     return '';
@@ -374,7 +341,6 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   getAllDictionaryKeys(lexdictmod: string): string {
     if (this.isReady(true)) {
       const allDictionaryKeys = libxulsword.GetAllDictionaryKeys(lexdictmod);
-      this.checkerror();
       return allDictionaryKeys;
     }
     return '';
@@ -394,7 +360,6 @@ DEFINITION OF A 'XULSWORD REFERENCE':
         gbmod,
         treekey
       );
-      this.checkerror();
       return genBookChapterText;
     }
     return '';
@@ -407,7 +372,6 @@ DEFINITION OF A 'XULSWORD REFERENCE':
     if (this.isReady(true)) {
       const genBookTableOfContents =
         libxulsword.GetGenBookTableOfContents(gbmod);
-      this.checkerror();
       return genBookTableOfContents;
     }
     return '';
@@ -463,7 +427,6 @@ DEFINITION OF A 'XULSWORD REFERENCE':
         flags,
         newsearch
       );
-      this.checkerror();
       this.searchedID = searchID;
       log.debug(
         `search: modname=${modname} srchstr=${srchstr} scope=${scope} type=${type} flags=${flags} newsearch=${newsearch} searchID=${searchID} intgr=${intgr}`
@@ -503,7 +466,6 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   luceneEnabled(modname: string): boolean {
     if (this.isReady(true)) {
       const enabled = libxulsword.LuceneEnabled(modname);
-      this.checkerror();
       return enabled;
     }
     return false;
@@ -514,7 +476,6 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   searchIndexDelete(modname: string): boolean {
     if (this.isReady(true)) {
       libxulsword.SearchIndexDelete(modname);
-      this.checkerror();
       return true;
     }
     return false;
@@ -527,7 +488,6 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   async searchIndexBuild(modname: string): Promise<boolean> {
     if (this.isReady(true)) {
       await libxulsword.SearchIndexBuild(modname);
-      this.checkerror();
       return true;
     }
     return false;
@@ -551,7 +511,6 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   ): void {
     if (this.isReady(true)) {
       libxulsword.SetGlobalOption(option, setting);
-      this.checkerror();
     }
   },
 
@@ -570,7 +529,6 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   getGlobalOption(option: SwordFilterType): string {
     if (this.isReady(true)) {
       const globalOption = libxulsword.GetGlobalOption(option);
-      this.checkerror();
       return globalOption;
     }
     return '';
@@ -608,23 +566,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
         modname,
         paramname
       );
-      this.checkerror();
       return moduleInformation;
-    }
-    return '';
-  },
-
-  /* *****************************************************************************
-   * LOCALE RELATED INFORMATION:
-   ***************************************************************************** */
-  // getLanguageName
-  // Returns a localized readable utf8 string correpsonding to the language code.
-  // Returns the code if the information is not available
-  translate(lookup: string, localeFile: string): string {
-    if (this.isReady(true)) {
-      const cdata = libxulsword.Translate(lookup, localeFile);
-      this.checkerror();
-      return cdata;
     }
     return '';
   },

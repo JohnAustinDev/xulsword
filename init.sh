@@ -28,7 +28,7 @@ fi
 source ./setenv
 
 DBG=
-# DBG=-D CMAKE_BUILD_TYPE="Debug"
+# DBG='-D CMAKE_BUILD_TYPE=Debug'
 
 # BUILD DEPENDENCIES (Ubuntu Xenial & Bionic)
 PKG_DEPS="build-essential git subversion libtool-bin cmake autoconf make pkg-config zip curl"
@@ -231,7 +231,9 @@ if [ ! -e "$XULSWORD/Cpp/build" ]; then
   mkdir "$SODIR"
   cp "$XULSWORD/Cpp/install/usr/local/lib/libxulsword-static.so" "$SODIR"
   cp "/lib/x86_64-linux-gnu/libstdc++.so.6" "$SODIR"
-  strip "$SODIR/"*
+  if [ -z "$DBG" ]; then
+    strip "$SODIR/"*
+  fi
   chmod ugo+x "$SODIR/"*
 fi
 # CROSS COMPILE LIBXULSWORD TO WINDOWS
@@ -253,7 +255,9 @@ if [ ! -e "$XULSWORD/Cpp/build.$XCWD" ]; then
   cp "/usr/lib/gcc/${TOOLCHAIN_PREFIX}/9.3-${GCCSTD}/libstdc++-6.dll" "$DLLDIR"
   cp "/usr/${TOOLCHAIN_PREFIX}/lib/libwinpthread-1.dll" "$DLLDIR"
   gendef - "$XULSWORD/Cpp/install.$XCWD/usr/local/bin/libxulsword-static.dll" > "$XULSWORD/libxulsword/win-napi/libxulsword.def"
-  strip "$DLLDIR/"*
+  if [ -z "$DBG" ]; then
+    strip "$DLLDIR/"*
+  fi
   chmod ugo+x "$DLLDIR/"*
 fi
 

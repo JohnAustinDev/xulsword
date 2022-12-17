@@ -28,7 +28,8 @@
 #define DLLEXPORT extern "C"
 #endif
 
-DLLEXPORT bool GetXulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(const char *), void (*reportProgress)(int));
+DLLEXPORT xulsword *GetXulsword(char *path, char *(*toUpperCase)(char *), void (*reportProgress)(int));
+DLLEXPORT void FreeLibxulsword(xulsword *tofree = NULL);
 DLLEXPORT char *GetChapterText(const char *vkeymod, const char *vkeytext);
 DLLEXPORT char *GetFootnotes();
 DLLEXPORT char *GetCrossRefs();
@@ -57,7 +58,3 @@ DLLEXPORT char *GetGlobalOption(const char *option);
 DLLEXPORT void SetCipherKey(const char *mod, const char *cipherkey, bool useSecModule);
 DLLEXPORT char* GetModuleList();
 DLLEXPORT char *GetModuleInformation(const char *mod, const char *paramname);
-DLLEXPORT void UncompressTarGz(const char *tarGzPath, const char *aDirPath);
-DLLEXPORT char *Translate(const char *text, const char *localeName);
-DLLEXPORT void FreeMemory(void *tofree, const char *type);
-DLLEXPORT void FreeLibxulsword();

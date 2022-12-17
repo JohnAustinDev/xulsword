@@ -112,8 +112,9 @@ void xulsword::xsThrow(const char *msg, const char *param) {
 
   SWLog::getSystemLog()->logDebug("xsThrow: %s", fmsg);
 
-  if (ThrowJS) {ThrowJS(fmsg);}
-  else free(fmsg);
+  // THROW JAVASCRIPT ERROR HERE
+
+  free(fmsg);
 }
 
 
@@ -510,7 +511,7 @@ void dummyProgress(int progress) {}
 PUBLIC XULSWORD FUNCTIONS
 *********************************************************************/
 
-xulsword::xulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(const char *), void (*reportProgress)(int), const char *localedir, bool firebibleMode) {
+xulsword::xulsword(char *path, char *(*toUpperCase)(char *), void (*reportProgress)(int)) {
   if (!MySWLogXS) {
     MySWLogXS = new SWLogXS();
     SWLog::setSystemLog(MySWLogXS);
@@ -519,10 +520,8 @@ xulsword::xulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(con
   SWLog::getSystemLog()->logDebug("XULSWORD CONSTRUCTOR");
 
   ToUpperCase = toUpperCase;
-  ThrowJS = throwJS;
   if (reportProgress) ReportProgress = reportProgress;
   else ReportProgress = &dummyProgress;
-  FireBibleMode = firebibleMode;
 
   MarkupFilterMgrXS *muf = new MarkupFilterMgrXS();
 
@@ -549,10 +548,6 @@ xulsword::xulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(con
       StringMgr::setSystemStringMgr(MyStringMgrXS); // this also resets localeMgr
     }
   }
-
-  if (localedir && strlen(localedir) > 0) {
-    LocaleMgr::getSystemLocaleMgr()->loadConfigDir(localedir);
-  }
 }
 
 
@@ -563,7 +558,16 @@ xulsword::~xulsword() {
 
   //deleting MyManager causes mozalloc to abort for some reason,
   //so xulsword objects are never deleted
-  delete(MyManager); // will delete MarkupFilterMgrXS
+  if (MyManager) {
+    delete(MyManager); // will delete MarkupFilterMgrXS
+    MyManager = NULL;
+  }
+
+  SWLog::setSystemLog(NULL);
+  MySWLogXS = NULL;
+
+  StringMgr::setSystemStringMgr(NULL);
+  MyStringMgrXS = NULL;
 }
 
 
@@ -604,16 +608,14 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
   module->setSkipConsecutiveLinks(true);
 
   int vChapLast = 0;
-  if (!FireBibleMode) {
-    //Initialize Key to chapter
-    myVerseKey->setText(Chapter.c_str());
+  //Initialize Key to chapter
+  myVerseKey->setText(Chapter.c_str());
 
-    VerseKey ub;
-    ub.copyFrom(myVerseKey);
-    ub.setVerse(ub.getVerseMax());
-    myVerseKey->setUpperBound(ub);
-    vChapLast = myVerseKey->getUpperBound().getVerse();
-  }
+  VerseKey ub;
+  ub.copyFrom(myVerseKey);
+  ub.setVerse(ub.getVerseMax());
+  myVerseKey->setUpperBound(ub);
+  vChapLast = myVerseKey->getUpperBound().getVerse();
 
   //Is this a Commentary??
   bool isCommentary = !strcmp(module->getType(), "Commentaries");
@@ -714,7 +716,7 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
 
     SWBuf verseNumHTML = "<sup class=\"versenum\">";
     if (Versenumbers && (verseText.length() > 0)) {
-      if (vNum == vLast || FireBibleMode) {verseNumHTML.appendFormatted("%d", vNum);}
+      if (vNum == vLast) {verseNumHTML.appendFormatted("%d", vNum);}
       else {verseNumHTML.appendFormatted("%d-%d", vNum, vLast);}
     }
     verseNumHTML.append("</sup> ");
@@ -800,16 +802,14 @@ char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytex
   }
 
   int vChapLast = 0;
-  if (!FireBibleMode) {
-    //Initialize Key to chapter
-    myVerseKey->setText(Chapter.c_str());
+  //Initialize Key to chapter
+  myVerseKey->setText(Chapter.c_str());
 
-    VerseKey ub;
-    ub.copyFrom(myVerseKey);
-    ub.setVerse(ub.getVerseMax());
-    myVerseKey->setUpperBound(ub);
-    vChapLast = myVerseKey->getUpperBound().getVerse();
-  }
+  VerseKey ub;
+  ub.copyFrom(myVerseKey);
+  ub.setVerse(ub.getVerseMax());
+  myVerseKey->setUpperBound(ub);
+  vChapLast = myVerseKey->getUpperBound().getVerse();
 
 /*
   <div class="interB>
@@ -851,7 +851,7 @@ char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytex
     chapText.append("<div class=\"interB\">");
 
     //If this is the selected verse group then designate as so
-    if (!FireBibleMode && !(Verse == 1 && vChapLast && LastVerse == vChapLast)) { // Never hilight entire chapter
+    if (!(Verse == 1 && vChapLast && LastVerse == vChapLast)) { // Never hilight entire chapter
       if (vNum == Verse) {chapText.append("<span class=\"hl\" id=\"sv\">");}
       if ((vNum > Verse)&&(vNum <= LastVerse)) {chapText.append("<span class=\"hl\">");}
     }
@@ -942,7 +942,7 @@ char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytex
 
     } while (comma != -1);
 
-    if (Verse > 1 && !FireBibleMode) {
+    if (Verse > 1) {
       if (vNum==Verse) {chapText.append("</span>");}
       else if ((vNum > Verse)&&(vNum <= LastVerse)) {chapText.append("</span>");}
     }
@@ -1161,7 +1161,7 @@ ParseVerseKey
 char *xulsword::parseVerseKey(const char *vkeymod, const char *vkeytext) {
   SWModule * module = MyManager->getModule(vkeymod);
   if (!module) {
-    xsThrow("GetChapterText: module \"%s\" not found.", vkeymod);
+    xsThrow("parseVerseKey: module \"%s\" not found.", vkeymod);
     return NULL;
   }
 
@@ -1169,7 +1169,7 @@ char *xulsword::parseVerseKey(const char *vkeymod, const char *vkeytext) {
   VerseKey *myVerseKey = SWDYNAMIC_CAST(VerseKey, testkey);
   if (!myVerseKey) {
     delete(testkey);
-    xsThrow("GetChapterText: module \"%s\" was not Bible or Commentary.", vkeymod);
+    xsThrow("parseVerseKey: module \"%s\" was not Bible or Commentary.", vkeymod);
   }
 
   //myVerseKey->setPersist(true);
@@ -2010,37 +2010,6 @@ char *xulsword::getModuleInformation(const char *mod, const char *paramname) {
   return retval;
 }
 
-/********************************************************************
-UncompressTarGz
-*********************************************************************/
-
-#include "../sword/src/utilfuns/zlib/untgz.c"
-void xulsword::uncompressTarGz(const char *tarGzPath, const char *aDirPath) {
-
-  FileDesc *fd = FileMgr::getSystemFileMgr()->open(tarGzPath, FileMgr::RDONLY);
-  untargz(fd->getFd(), aDirPath);
-  FileMgr::getSystemFileMgr()->close(fd);
-
-  return;
-}
-
-/********************************************************************
-Translate
-*********************************************************************/
-char *xulsword::translate(const char *text, const char *localeName) {
-
-  SWBuf langReadable;
-  langReadable.set(LocaleMgr::getSystemLocaleMgr()->translate(text, localeName));
-
-  SWBuf check = assureValidUTF8(langReadable.c_str());
-
-  char *retval;
-  retval = (char *)emalloc(check.length() + 1);
-  if (retval) {strcpy(retval, check.c_str());}
-  return retval;
-}
-
-
 // END class xulsword
 
 /********************************************************************
@@ -2077,6 +2046,7 @@ char *StringMgrXS::upperUTF8(char *text, unsigned int maxlen) const {
     if (res) {
       if (maxlen && strlen(res) > maxlen) *(res+maxlen) = 0;
       strcpy(text, res);
+      free(res);
     }
   }
 

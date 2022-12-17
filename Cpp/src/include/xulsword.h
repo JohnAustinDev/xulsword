@@ -132,7 +132,7 @@ class xulsword {
 
 
   public:
-  xulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(const char *), void (*reportProgress)(int), const char *localeDir = NULL, bool firebibleMode = false);
+  xulsword(char *path, char *(*toUpperCase)(char *), void (*reportProgress)(int));
   ~xulsword();
 
   static StringMgrXS *MyStringMgrXS;
@@ -158,7 +158,6 @@ class xulsword {
   char *getGenBookTableOfContentsJSON(const char *gbmod);
   bool  luceneEnabled(const char *mod);
   int   search(const char *mod, const char *srchstr, const char *scope, int type, int flags, bool newsearch);
-  ListKey *getSearchPointer();
   char *getSearchResults(const char *mod, int first, int num, bool keepStrongs, ListKey *searchPointer = NULL, bool referencesOnly = false);
   void  searchIndexDelete(const char *mod);
   void  searchIndexBuild(const char *mod);
@@ -167,9 +166,6 @@ class xulsword {
   void  setCipherKey(const char *mod, const char *cipherkey, bool useSecModule);
   char *getModuleList();
   char *getModuleInformation(const char *mod, const char *paramname);
-  void  uncompressTarGz(const char *tarGzPath, const char *aDirPath);
-  char *translate(const char *text, const char *localeName);
-
 };
 
 #endif

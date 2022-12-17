@@ -1,5 +1,56 @@
+#include <cstdlib>
 #include <napi.h>
 #include "libxulsword.h"
+
+napi_env xsenv = NULL;
+
+// These are Javascript functions that are run in C++
+char *toUpperCase(char *string) {
+  napi_value global, toUpperCase, arg;
+  napi_status status = napi_get_global(xsenv, &global);
+  if (status != napi_ok) return NULL;
+
+  status = napi_get_named_property(xsenv, global, "ToUpperCase", &toUpperCase);
+  if (status != napi_ok) return NULL;
+
+  // Convert the string to Javascript type
+  napi_value napiString;
+  status = napi_create_string_utf8(xsenv, string, NAPI_AUTO_LENGTH, &napiString);
+
+  // Uppercase it using the Javascript function
+  napi_value return_val;
+  napi_call_function(xsenv, global, toUpperCase, 1, &napiString, &return_val);
+  if (status != napi_ok) return NULL;
+
+  // Convert the result back to a native type
+  size_t sizein;
+  size_t sizeout;
+  char *upperCased;
+  status = napi_get_value_string_utf8(xsenv, return_val, NULL, 0, &sizein);
+  if (status != napi_ok) return NULL;
+  status = napi_get_value_string_utf8(xsenv, return_val, upperCased, sizein, &sizeout);
+  if (status != napi_ok) return NULL;
+
+  return upperCased;
+}
+
+Napi::Boolean napiGetXulsword(const Napi::CallbackInfo& info) {
+  xsenv = info.Env();
+
+  void *result = GetXulsword(
+    (char*) info[0].ToString().Utf8Value().c_str(),
+    &toUpperCase,
+    NULL
+  );
+
+  return Napi::Boolean::New(info.Env(), result);
+}
+
+Napi::Boolean napiFreeLibXulsword(const Napi::CallbackInfo& info) {
+  FreeLibxulsword();
+  xsenv = NULL;
+  return Napi::Boolean::New(info.Env(), true);
+}
 
 Napi::String napiConvertLocation(const Napi::CallbackInfo& info) {
   char* location = ConvertLocation(
@@ -7,20 +58,15 @@ Napi::String napiConvertLocation(const Napi::CallbackInfo& info) {
     (char*) info[1].ToString().Utf8Value().c_str(),   // vkeytext
     (char*) info[2].ToString().Utf8Value().c_str());  // toVS
   Napi::String napiLocation = Napi::String::New(info.Env(), location);
-  FreeMemory(location, "char");
+  free(location);
   return napiLocation;
-}
-
-Napi::Boolean napiFreeLibXulsword(const Napi::CallbackInfo& info) {
-  FreeLibxulsword();
-  return Napi::Boolean::New(info.Env(), true);
 }
 
 Napi::String napiGetAllDictionaryKeys(const Napi::CallbackInfo& info) {
   char* allDictionaryKeys = GetAllDictionaryKeys(
     (char*) info[0].ToString().Utf8Value().c_str());
   Napi::String napiAllDictionaryKeys = Napi::String::New(info.Env(), allDictionaryKeys);
-  FreeMemory(allDictionaryKeys, "char");
+  free(allDictionaryKeys);
   return napiAllDictionaryKeys;
 }
 
@@ -29,7 +75,7 @@ Napi::String napiGetChapterText(const Napi::CallbackInfo& info) {
     (char*) info[0].ToString().Utf8Value().c_str(),
     (char*) info[1].ToString().Utf8Value().c_str());
   Napi::String napiChapterText = Napi::String::New(info.Env(), chapterText);
-  FreeMemory(chapterText, "char");
+  free(chapterText);
   return napiChapterText;
 }
 
@@ -39,14 +85,14 @@ Napi::String napiGetChapterTextMulti(const Napi::CallbackInfo& info) {
     (char*) info[1].ToString().Utf8Value().c_str(),
     (char*) info[2].As<Napi::Boolean>().Value());
   Napi::String napiChapterTextMulti = Napi::String::New(info.Env(), chapterTextMulti);
-  FreeMemory(chapterTextMulti, "char");
+  free(chapterTextMulti);
   return napiChapterTextMulti;
 }
 
 Napi::String napiGetCrossRefs(const Napi::CallbackInfo& info) {
   char* crossRefs = GetCrossRefs();
   Napi::String napiCrossRefs = Napi::String::New(info.Env(), crossRefs);
-  FreeMemory(crossRefs, "char");
+  free(crossRefs);
   return napiCrossRefs;
 }
 
@@ -55,14 +101,14 @@ Napi::String napiGetDictionaryEntry(const Napi::CallbackInfo& info) {
     (char*) info[0].ToString().Utf8Value().c_str(),
     (char*) info[1].ToString().Utf8Value().c_str());
   Napi::String napiDictionaryEntry = Napi::String::New(info.Env(), dictionaryEntry);
-  FreeMemory(dictionaryEntry, "char");
+  free(dictionaryEntry);
   return napiDictionaryEntry;
 }
 
 Napi::String napiGetFootnotes(const Napi::CallbackInfo& info) {
   char* footnotes = GetFootnotes();
   Napi::String napiFootnotes = Napi::String::New(info.Env(), footnotes);
-  FreeMemory(footnotes, "char");
+  free(footnotes);
   return napiFootnotes;
 }
 
@@ -71,7 +117,7 @@ Napi::String napiGetGenBookChapterText(const Napi::CallbackInfo& info) {
     (char*) info[0].ToString().Utf8Value().c_str(),
     (char*) info[1].ToString().Utf8Value().c_str());
   Napi::String napiGenBookChapterText = Napi::String::New(info.Env(), genBookChapterText);
-  FreeMemory(genBookChapterText, "char");
+  free(genBookChapterText);
   return napiGenBookChapterText;
 }
 
@@ -79,7 +125,7 @@ Napi::String napiGetGenBookTableOfContents(const Napi::CallbackInfo& info) {
   char* genBookTableOfContents = GetGenBookTableOfContents(
     (char*) info[0].ToString().Utf8Value().c_str());
   Napi::String napiGenBookTableOfContents = Napi::String::New(info.Env(), genBookTableOfContents);
-  FreeMemory(genBookTableOfContents, "char");
+  free(genBookTableOfContents);
   return napiGenBookTableOfContents;
 }
 
@@ -87,7 +133,7 @@ Napi::String napiGetGlobalOption(const Napi::CallbackInfo& info) {
   char* globalOption = GetGlobalOption(
     (char*) info[0].ToString().Utf8Value().c_str());
   Napi::String napiGlobalOption = Napi::String::New(info.Env(), globalOption);
-  FreeMemory(globalOption, "char");
+  free(globalOption);
   return napiGlobalOption;
 }
 Napi::String napiGetIntroductions(const Napi::CallbackInfo& info) {
@@ -95,7 +141,7 @@ Napi::String napiGetIntroductions(const Napi::CallbackInfo& info) {
     (char*) info[0].ToString().Utf8Value().c_str(),
     (char*) info[1].ToString().Utf8Value().c_str());
   Napi::String napiIntroductions = Napi::String::New(info.Env(), introductions);
-  FreeMemory(introductions, "char");
+  free(introductions);
   return napiIntroductions;
 }
 
@@ -116,21 +162,21 @@ Napi::String napiGetModuleInformation(const Napi::CallbackInfo& info) {
     (char*) info[0].ToString().Utf8Value().c_str(),
     (char*) info[1].ToString().Utf8Value().c_str());
   Napi::String napiModuleInformation = Napi::String::New(info.Env(), moduleInformation);
-  FreeMemory(moduleInformation, "char");
+  free(moduleInformation);
   return napiModuleInformation;
 }
 
 Napi::String napiGetModuleList(const Napi::CallbackInfo& info) {
   char* moduleList = GetModuleList();
   Napi::String napiModuleList = Napi::String::New(info.Env(), moduleList);
-  FreeMemory(moduleList, "char");
+  free(moduleList);
   return napiModuleList;
 }
 
 Napi::String napiGetNotes(const Napi::CallbackInfo& info) {
   char* notes = GetNotes();
   Napi::String napiNotes = Napi::String::New(info.Env(), notes);
-  FreeMemory(notes, "char");
+  free(notes);
   return napiNotes;
 }
 
@@ -147,7 +193,7 @@ Napi::String napiGetVerseSystem(const Napi::CallbackInfo& info) {
   char* verseSystem = GetVerseSystem(
     (char*) info[0].ToString().Utf8Value().c_str());
   Napi::String napiVerseSystem = Napi::String::New(info.Env(), verseSystem);
-  FreeMemory(verseSystem, "char");
+  free(verseSystem);
   return napiVerseSystem;
 }
 
@@ -157,19 +203,8 @@ Napi::String napiGetVerseText(const Napi::CallbackInfo& info) {
     (char*) info[1].ToString().Utf8Value().c_str(),
     (char*) info[2].As<Napi::Boolean>().Value());
   Napi::String napiVerseText = Napi::String::New(info.Env(), verseText);
-  FreeMemory(verseText, "char");
+  free(verseText);
   return napiVerseText;
-}
-
-Napi::Boolean napiGetXulsword(const Napi::CallbackInfo& info) {
-
-  bool result = GetXulsword(
-    (char*) info[0].ToString().Utf8Value().c_str(),
-    NULL,
-    NULL,
-    NULL);
-
-  return Napi::Boolean::New(info.Env(), result);
 }
 
 Napi::Boolean napiLuceneEnabled(const Napi::CallbackInfo& info) {
@@ -214,23 +249,6 @@ void napiSetGlobalOption(const Napi::CallbackInfo& info) {
   return;
 }
 
-void napiUncompressTarGz(const Napi::CallbackInfo& info) {
-  UncompressTarGz(
-    (char*) info[0].ToString().Utf8Value().c_str(),
-    (char*) info[1].ToString().Utf8Value().c_str());
-  return;
-}
-
-Napi::String napiTranslate(const Napi::CallbackInfo& info) {
-  char* translate = Translate(
-    (char*) info[0].ToString().Utf8Value().c_str(),
-    (char*) info[1].ToString().Utf8Value().c_str());
-  Napi::String nTranslate = Napi::String::New(info.Env(), translate);
-  FreeMemory(translate, "char");
-  return nTranslate;
-}
-
-
 void RunCallback(const Napi::CallbackInfo& info) {
   Napi::Env env = info.Env();
   Napi::Function cb = info[0].As<Napi::Function>();
@@ -265,8 +283,6 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
   exports.Set(Napi::String::New(env, "SearchIndexDelete"),         Napi::Function::New(env, napiSearchIndexDelete));
   exports.Set(Napi::String::New(env, "SetCipherKey"),              Napi::Function::New(env, napiSetCipherKey));
   exports.Set(Napi::String::New(env, "SetGlobalOption"),           Napi::Function::New(env, napiSetGlobalOption));
-  exports.Set(Napi::String::New(env, "Translate"),                 Napi::Function::New(env, napiTranslate));
-  exports.Set(Napi::String::New(env, "UncompressTarGz"),           Napi::Function::New(env, napiUncompressTarGz));
   exports.Set(Napi::String::New(env, "callback"),                  Napi::Function::New(env, RunCallback));
 return exports;
 }
