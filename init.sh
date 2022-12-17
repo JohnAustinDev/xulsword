@@ -254,7 +254,7 @@ if [ ! -e "$XULSWORD/Cpp/build.$XCWD" ]; then
   cp "/usr/lib/gcc/${TOOLCHAIN_PREFIX}/9.3-${GCCSTD}/$GCCDLL" "$DLLDIR"
   cp "/usr/lib/gcc/${TOOLCHAIN_PREFIX}/9.3-${GCCSTD}/libstdc++-6.dll" "$DLLDIR"
   cp "/usr/${TOOLCHAIN_PREFIX}/lib/libwinpthread-1.dll" "$DLLDIR"
-  gendef - "$XULSWORD/Cpp/install.$XCWD/usr/local/bin/libxulsword-static.dll" > "$XULSWORD/libxulsword/win-napi/libxulsword.def"
+  gendef - "$XULSWORD/Cpp/install.$XCWD/usr/local/bin/libxulsword-static.dll" > "$XULSWORD/libxulsword/lib/libxulsword.def"
   if [ -z "$DBG" ]; then
     strip "$DLLDIR/"*
   fi

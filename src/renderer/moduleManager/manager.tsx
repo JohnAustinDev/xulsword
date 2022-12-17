@@ -332,11 +332,12 @@ export default class ModuleManager
                 a.map((_lr, ir) => (ir === i ? list : null))
               );
             });
-        } catch (er) {
+        } catch (er: any) {
           // Failed to load the master list, so just load local repos.
           log.warn(er);
+          const msg = (typeof er === 'object' && er.message) || '';
           this.addToast({
-            message: `Unable to download Master Repository List`,
+            message: `Unable to download Master Repository List.\n${msg}`,
             timeout: 5000,
             intent: Intent.WARNING,
           });

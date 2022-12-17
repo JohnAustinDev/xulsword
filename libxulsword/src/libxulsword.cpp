@@ -6,7 +6,7 @@ napi_env xsenv = NULL;
 
 // These are Javascript functions that are run in C++
 char *toUpperCase(char *string) {
-  napi_value global, toUpperCase, arg;
+  napi_value global, toUpperCase;
   napi_status status = napi_get_global(xsenv, &global);
   if (status != napi_ok) return NULL;
 
@@ -18,20 +18,20 @@ char *toUpperCase(char *string) {
   status = napi_create_string_utf8(xsenv, string, NAPI_AUTO_LENGTH, &napiString);
 
   // Uppercase it using the Javascript function
-  napi_value return_val;
-  napi_call_function(xsenv, global, toUpperCase, 1, &napiString, &return_val);
+  napi_value jsUpperCaseResult;
+  napi_call_function(xsenv, global, toUpperCase, 1, &napiString, &jsUpperCaseResult);
   if (status != napi_ok) return NULL;
 
   // Convert the result back to a native type
-  size_t sizein;
-  size_t sizeout;
-  char *upperCased;
-  status = napi_get_value_string_utf8(xsenv, return_val, NULL, 0, &sizein);
+  size_t buflen;
+  size_t outlen;
+  status = napi_get_value_string_utf8(xsenv, jsUpperCaseResult, NULL, 0, &buflen);
   if (status != napi_ok) return NULL;
-  status = napi_get_value_string_utf8(xsenv, return_val, upperCased, sizein, &sizeout);
+  char *upperCaseBuf = (char *)malloc(buflen + 1);
+  status = napi_get_value_string_utf8(xsenv, jsUpperCaseResult, upperCaseBuf, buflen, &outlen);
   if (status != napi_ok) return NULL;
 
-  return upperCased;
+  return upperCaseBuf;
 }
 
 Napi::Boolean napiGetXulsword(const Napi::CallbackInfo& info) {
