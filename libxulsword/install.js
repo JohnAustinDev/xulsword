@@ -8,6 +8,7 @@ const xulsword = process.env.XULSWORD;
 if (!xulsword || !fs.existsSync(xulsword) || !fs.statSync(xulsword).isDirectory())
   throw new Error(`Set environment variables by running: 'source ./setenv'`);
 
+const os = process.platform === 'win32' ? '32win' : 'linux';
 const machine = process.env.PKLIB || 'linux';
 
 const build = path.join(__dirname, 'build');
@@ -20,7 +21,7 @@ fs.mkdirSync(release, { recursive: true });
 const nodeapi = machine.includes('win') ? 'libxulsword.node' : 'xulsword.node';
 const binfile = path.join(__dirname, 'lib', machine, nodeapi);
 console.log(`Copying Node-API binary xulsword.node`);
-if (!fs.existsSync(binfile)) throw new Error(`Library does not exist!`);
+if (!fs.existsSync(binfile)) throw new Error(`Library does not exist! ${binfile}`);
 const tofile = path.join(release, 'xulsword.node');
 fs.copyFileSync(binfile, tofile);
 

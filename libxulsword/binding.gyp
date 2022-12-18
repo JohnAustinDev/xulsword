@@ -41,12 +41,18 @@
             'copies': [{
               'files': ['build/Release/libxulsword.node'],
               'destination': "$(LIBXULSWORD)/lib/$(XCWD)"
+            }, {
+              'files': ['build/Release/libxulsword.node'],
+              'destination': "lib/$(XCWD)"
             }],
           }],
           ['OS=="linux"', {
             'copies': [{
               'files': ['build/Release/xulsword.node'],
               'destination': "$(LIBXULSWORD)/lib/linux"
+            }, {
+              'files': ['build/Release/xulsword.node'],
+              'destination': "lib/linux"
             }],
           }]],
       }
