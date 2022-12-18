@@ -8,7 +8,7 @@ export LIBXULSWORD_REVIS=1
 if [ -e /vagrant ]; then export CONTEXT="xsguest"; else export CONTEXT="host"; fi
 if [ "$CONTEXT" = "xsguest" ]; then export XULSWORD="$HOME/src/xulsword"; else export XULSWORD="$( pwd -P )"; fi
 export CPP="$XULSWORD/Cpp"
-export LIBXULSWORD="$XULSWORD/libxulsword"
+export LIBXULSWORD="$XULSWORD/build/app/node_modules/libxulsword"
 
 # Set WINMACHINE to x86 or x64 to compile Windows 32 bit or 64 bit, respectively:
 export WINMACHINE=x86
