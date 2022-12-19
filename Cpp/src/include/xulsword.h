@@ -138,6 +138,8 @@ class xulsword {
   static StringMgrXS *MyStringMgrXS;
   static SWLogXS *MySWLogXS;
 
+  SWBuf ResultBuf;
+
   char *getChapterText(const char *vkeymod, const char *vkeytext);
   char *getFootnotes();
   char *getCrossRefs();

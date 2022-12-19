@@ -745,10 +745,8 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
   SWBuf check = assureValidUTF8(chapHTML.c_str());
   check.replaceBytes("\n\r", ' ');
 
-  char *retval;
-  retval = (char *)emalloc(check.length() + 1);
-  if (retval) {strcpy(retval, check.c_str());}
-  return retval;
+  ResultBuf.set(check.c_str());
+  return ResultBuf.getRawData();
 }
 
 
@@ -966,10 +964,8 @@ char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytex
 
   SWBuf check = assureValidUTF8(chapText.c_str());
 
-  char *retval;
-  retval = (char *)emalloc(check.length() + 1);
-  if (retval) {strcpy(retval, check.c_str());}
-  return retval;
+  ResultBuf.set(check.c_str());
+  return ResultBuf.getRawData();
 }
 
 
@@ -979,10 +975,8 @@ GetFootnotes
 char *xulsword::getFootnotes() {
   //NOTE: getChapterText MUST HAVE BEEN RUN BEFORE THIS IS CALLED
   SWBuf check = assureValidUTF8(MyFootnotes.c_str());
-  char *retval;
-  retval = (char *)emalloc(check.length() + 1);
-  if (retval) {strcpy(retval, check.c_str());}
-  return retval;
+  ResultBuf.set(check.c_str());
+  return ResultBuf.getRawData();
 }
 
 
@@ -992,10 +986,8 @@ GetCrossRefs
 char *xulsword::getCrossRefs() {
   //NOTE: getChapterText MUST HAVE BEEN RUN BEFORE THIS IS CALLED
   SWBuf check = assureValidUTF8(MyCrossRefs.c_str());
-  char *retval;
-  retval = (char *)emalloc(check.length() + 1);
-  if (retval) {strcpy(retval, check.c_str());}
-  return retval;
+  ResultBuf.set(check.c_str());
+  return ResultBuf.getRawData();
 }
 
 
@@ -1005,10 +997,8 @@ GetNotes
 char *xulsword::getNotes() {
   //NOTE: getChapterText MUST HAVE BEEN RUN BEFORE THIS IS CALLED
   SWBuf check = assureValidUTF8(MyNotes.c_str());
-  char *retval;
-  retval = (char *)emalloc(check.length() + 1);
-  if (retval) {strcpy(retval, check.c_str());}
-  return retval;
+  ResultBuf.set(check.c_str());
+  return ResultBuf.getRawData();
 }
 
 
@@ -1085,11 +1075,8 @@ char *xulsword::getVerseText(const char *vkeymod, const char *vkeytext, bool kee
   }
 
   SWBuf check = assureValidUTF8(bText.c_str());
-
-  char *retval;
-  retval = (char *)emalloc(check.length() + 1);
-  if (retval) {strcpy(retval, check.c_str());}
-  return retval;
+  ResultBuf.set(check.c_str());
+  return ResultBuf.getRawData();
 }
 
 
@@ -1119,10 +1106,8 @@ GetVerseSystem
 char *xulsword::getVerseSystem(const char *mod) {
   SWBuf vsystem;
   vsystem.set(getVerseSystemOfModule(mod));
-  char *retval;
-  retval = (char *)emalloc(vsystem.length() + 1);
-  if (retval) {strcpy(retval, vsystem.c_str());}
-  return retval;
+  ResultBuf.set(vsystem.c_str());
+  return ResultBuf.getRawData();
 }
 
 
@@ -1147,11 +1132,8 @@ char *xulsword::getModuleBooks(const char *mod) {
     }
   }
   SWBuf check = assureValidUTF8(bookList.c_str());
-
-  char *retval;
-  retval = (char *)emalloc(check.length() + 1);
-  if (retval) {strcpy(retval, check.c_str());}
-  return retval;
+  ResultBuf.set(check.c_str());
+  return ResultBuf.getRawData();
 }
 
 
@@ -1186,10 +1168,8 @@ char *xulsword::parseVerseKey(const char *vkeymod, const char *vkeytext) {
 
   delete(testkey);
 
-  char *retval;
-  retval = (char *)emalloc(bookChapter.length() + 1);
-  if (retval) {strcpy(retval, bookChapter.c_str());}
-  return retval;
+  ResultBuf.set(bookChapter.c_str());
+  return ResultBuf.getRawData();
 }
 
 
@@ -1208,10 +1188,8 @@ char *xulsword::convertLocation(const char *frVS, const char *vkeytext, const ch
   SWBuf result;
   result.appendFormatted("%s.%i", toKey.getOSISRef(), toKey.getUpperBound().getVerse());
 
-  char *retval;
-  retval = (char *)emalloc(result.length() + 1);
-  if (retval) {strcpy(retval, result.c_str());}
-  return retval;
+  ResultBuf.set(result.c_str());
+  return ResultBuf.getRawData();
 }
 
 
@@ -1356,11 +1334,8 @@ char *xulsword::getIntroductions(const char *vkeymod, const char *vkeytext) {
   }
 
   SWBuf check = assureValidUTF8(intro.c_str());
-
-  char *retval;
-  retval = (char *)emalloc(check.length() + 1);
-  if (retval) {strcpy(retval, check.c_str());}
-  return retval;
+  ResultBuf.set(check.c_str());
+  return ResultBuf.getRawData();
 }
 
 
@@ -1417,11 +1392,8 @@ char *xulsword::getDictionaryEntry(const char *lexdictmod, const char *key) {
   }
 
   SWBuf check = assureValidUTF8(entryText.c_str());
-
-  char *retval;
-  retval = (char *)emalloc(check.length() + 1);
-  if (retval) {strcpy(retval, check.c_str());}
-  return retval;
+  ResultBuf.set(check.c_str());
+  return ResultBuf.getRawData();
 }
 
 
@@ -1457,11 +1429,8 @@ char *xulsword::getAllDictionaryKeys(const char *lexdictmod) {
   }
 
   SWBuf check = assureValidUTF8(keytext.c_str());
-
-  char *retval;
-  retval = (char *)emalloc(check.length() + 1);
-  if (retval) {strcpy(retval, check.c_str());}
-  return retval;
+  ResultBuf.set(check.c_str());
+  return ResultBuf.getRawData();
 }
 
 
@@ -1525,11 +1494,8 @@ char *xulsword::getGenBookChapterText(const char *gbmod, const char *treekey) {
   }
 
   SWBuf check = assureValidUTF8(chapterText.c_str());
-
-  char *retval;
-  retval = (char *)emalloc(check.length() + 1);
-  if (retval) {strcpy(retval, check.c_str());}
-  return retval;
+  ResultBuf.set(check.c_str());
+  return ResultBuf.getRawData();
 }
 
 
@@ -1577,11 +1543,8 @@ char *xulsword::getGenBookTableOfContents(const char *gbmod) {
   delete(testkey);
 
   SWBuf check = assureValidUTF8(toc.c_str());
-
-  char *retval;
-  retval = (char *)emalloc(check.length() + 1);
-  if (retval) {strcpy(retval, check.c_str());}
-  return retval;
+  ResultBuf.set(check.c_str());
+  return ResultBuf.getRawData();
 }
 
 
@@ -1610,11 +1573,8 @@ char *xulsword::getGenBookTableOfContentsJSON(const char *gbmod) {
   delete(testkey);
 
   SWBuf check = assureValidUTF8(toc.c_str());
-
-  char *retval;
-  retval = (char *)emalloc(check.length() + 1);
-  if (retval) {strcpy(retval, check.c_str());}
-  return retval;
+  ResultBuf.set(check.c_str());
+  return ResultBuf.getRawData();
 }
 
 
@@ -1841,11 +1801,8 @@ char *xulsword::getSearchResults(const char *mod, int first, int num, bool keepS
   resultList->setPersist(savePersist);
 
   SWBuf check = assureValidUTF8(referencesOnly ? MySearchVerses.c_str():MySearchTexts.c_str());
-
-  char *retval;
-  retval = (char *)emalloc(check.length() + 1);
-  if (retval) {strcpy(retval, check.c_str());}
-  return retval;
+  ResultBuf.set(check.c_str());
+  return ResultBuf.getRawData();
 }
 
 
@@ -1926,10 +1883,8 @@ char *xulsword::getGlobalOption(const char *option) {
   // Now return the proper value
   *thisOption ? rCText.set("On") : rCText.set("Off");
 
-  char *retval;
-  retval = (char *)emalloc(rCText.length() + 1);
-  if (retval) {strcpy(retval, rCText.c_str());}
-  return retval;
+  ResultBuf.set(rCText.c_str());
+  return ResultBuf.getRawData();
 }
 
 
@@ -1971,10 +1926,8 @@ char* xulsword::getModuleList() {
 
   if (!strcmp(tr.c_str(), "")) {tr.assign("No Modules");}
 
-  char *retval;
-  retval = (char *)emalloc(tr.length() + 1);
-  if (retval) {strcpy(retval, tr.c_str());}
-  return retval;
+  ResultBuf.set(tr.c_str());
+  return ResultBuf.getRawData();
 }
 
 
@@ -2003,11 +1956,8 @@ char *xulsword::getModuleInformation(const char *mod, const char *paramname) {
   }
 
   SWBuf check = assureValidUTF8(paramstring.c_str());
-
-  char *retval;
-  retval = (char *)emalloc(check.length() + 1);
-  if (retval) {strcpy(retval, check.c_str());}
-  return retval;
+  ResultBuf.set(check.c_str());
+  return ResultBuf.getRawData();
 }
 
 // END class xulsword
@@ -2044,9 +1994,9 @@ char *StringMgrXS::upperUTF8(char *text, unsigned int maxlen) const {
     SWBuf check = assureValidUTF8(text);
     char *res = ToUpperCase((char *)check.c_str());
     if (res) {
+      // Truncate if too long, although could upper case be longer?
       if (maxlen && strlen(res) > maxlen) *(res+maxlen) = 0;
       strcpy(text, res);
-      free(res);
     }
   }
 
