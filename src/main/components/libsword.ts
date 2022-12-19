@@ -24,8 +24,9 @@ const { libxulsword } = require('libxulsword');
 
 global.ToUpperCase = (aString) => {
   if (aString) {
-    log.debug(`Node-API ToUpperCase callback: ${aString}`);
-    return aString.toUpperCase();
+    const result = aString.toUpperCase();
+    log.debug(`Node-API ToUpperCase callback: ${result}`);
+    return result;
   }
   return '';
 };
