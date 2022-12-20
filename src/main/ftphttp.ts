@@ -519,9 +519,9 @@ export async function list(
           promises.push(
             list(
               domain,
-              fpath.join(dirpath, f.name),
+              fpath.posix.join(dirpath, f.name),
               cancelkey,
-              fpath.join(basepath, f.name),
+              fpath.posix.join(basepath, f.name),
               maxdepth,
               depth + 1
             )
@@ -552,11 +552,11 @@ export async function getDir(
     const files = listing.filter(
       (l) =>
         l.type === '-' &&
-        !skipPathRegex.test(fpath.join(dirpath, l.subdir, l.name))
+        !skipPathRegex.test(fpath.posix.join(dirpath, l.subdir, l.name))
     );
     const buffers = await getFiles(
       domain,
-      files.map((l) => fpath.join(dirpath, l.subdir, l.name)),
+      files.map((l) => fpath.posix.join(dirpath, l.subdir, l.name)),
       cancelkey,
       progress
     );

@@ -584,7 +584,7 @@ const Module = {
   async crossWireMasterRepoList(): Promise<Repository[] | string> {
     const mr = {
       domain: 'ftp.crosswire.org',
-      path: '/pub/sword/',
+      path: fpath.posix.join('pub', 'sword'),
       file: 'masterRepoList.conf',
       name: 'CrossWire Master List',
     };
@@ -595,7 +595,7 @@ const Module = {
     try {
       fbuffer = await getFile(
         mr.domain,
-        fpath.join(mr.path, mr.file),
+        fpath.posix.join(mr.path, mr.file),
         cancelkey
       );
     } catch (er: any) {
@@ -662,7 +662,7 @@ const Module = {
         try {
           const targzbuf = await getFile(
             manifest.domain,
-            fpath.join(manifest.path, manifest.file),
+            fpath.posix.join(manifest.path, manifest.file),
             cancelkey,
             progress
           );
@@ -675,14 +675,16 @@ const Module = {
             if (!/Could not get file size/i.test(er)) throw er;
             listing = await list(
               manifest.domain,
-              fpath.join(manifest.path, 'mods.d'),
+              fpath.posix.join(manifest.path, 'mods.d'),
               cancelkey,
               '',
               1
             );
             bufs = await getFiles(
               manifest.domain,
-              listing.map((l) => fpath.join(manifest.path, 'mods.d', l.name)),
+              listing.map((l) =>
+                fpath.posix.join(manifest.path, 'mods.d', l.name)
+              ),
               cancelkey,
               progress
             );
@@ -789,7 +791,7 @@ const Module = {
     }
     // Standard SWORD modules. First download conf file.
     const { domain, path, confname } = download;
-    const confpath = fpath.join(path, 'mods.d', confname);
+    const confpath = fpath.posix.join(path, 'mods.d', confname);
     let confbuf;
     progress(0);
     try {
@@ -804,7 +806,7 @@ const Module = {
     // Download module contents
     const datapath = confModulePath(conf.DataPath);
     if (datapath) {
-      const modpath = fpath.join(path, datapath);
+      const modpath = fpath.posix.join(path, datapath);
       let modfiles;
       try {
         modfiles = await getDir(
@@ -820,10 +822,10 @@ const Module = {
         return Promise.resolve(er.message);
       }
       const zip = new ZIP();
-      zip.addFile(fpath.join('mods.d', confname), confbuf);
+      zip.addFile(fpath.posix.join('mods.d', confname), confbuf);
       modfiles.forEach((fp) => {
         zip.addFile(
-          fpath.join(datapath, fp.listing.subdir, fp.listing.name),
+          fpath.posix.join(datapath, fp.listing.subdir, fp.listing.name),
           fp.buffer
         );
       });
