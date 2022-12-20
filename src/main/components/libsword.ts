@@ -31,7 +31,7 @@ global.ToUpperCase = (aString) => {
   return '';
 };
 
-global.reportSearchIndexerProgress = (_intgr) => {};
+global.ReportSearchIndexerProgress = (_intgr) => {};
 
 /*
 This LibSword object is used to access all SWORD engine capabilities

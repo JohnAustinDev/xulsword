@@ -77,8 +77,8 @@ SWLogXS *xulsword::MySWLogXS = NULL;
 
 void savePercentComplete(char percent, void *userData) {
   if (userData) {
-    void (*funcptr)(int) = (void (*)(int))userData;
-    funcptr((int)percent);
+    void (*funcptr)(int32_t) = (void (*)(int32_t))userData;
+    funcptr((int32_t)percent);
   }
 }
 
