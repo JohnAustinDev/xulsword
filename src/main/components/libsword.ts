@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { BrowserWindow } from 'electron';
 import log from 'electron-log';
 import path from 'path';
 import { repositoryKey, isRepoLocal } from '../../common';
@@ -24,9 +25,7 @@ const { libxulsword } = require('libxulsword');
 
 global.ToUpperCase = (aString) => {
   if (aString) {
-    const result = aString.toUpperCase();
-    log.debug(`Node-API ToUpperCase callback: ${result}`);
-    return result;
+    return aString.toUpperCase();
   }
   return '';
 };
@@ -410,31 +409,34 @@ DEFINITION OF A 'XULSWORD REFERENCE':
     newsearch: boolean,
     searchID: string
   ): Promise<number | null> {
-    if (
-      this.isReady(true) &&
-      ((newsearch && !this.searchingID) ||
-        (!newsearch && searchID === this.searchedID))
-    ) {
-      this.searchingID = searchID;
-      // IMPORTANT:
-      // VerseKey module searches require a non-empty book-scope, which may
-      // contain a single range. If the book(s) given in the scope value do
-      // not exist in the module, SWORD may crash!
-      const intgr = await libxulsword.Search(
-        modname,
-        srchstr,
-        scope,
-        type,
-        flags,
-        newsearch
-      );
-      this.searchedID = searchID;
-      log.debug(
-        `search: modname=${modname} srchstr=${srchstr} scope=${scope} type=${type} flags=${flags} newsearch=${newsearch} searchID=${searchID} intgr=${intgr}`
-      );
-      return intgr;
-    }
-    return null;
+    return new Promise((resolve) => {
+      if (
+        this.isReady(true) &&
+        ((newsearch && !this.searchingID) ||
+          (!newsearch && searchID === this.searchedID))
+      ) {
+        this.searchingID = searchID;
+        // IMPORTANT:
+        // VerseKey module searches require a non-empty book-scope, which may
+        // contain a single range. If the book(s) given in the scope value do
+        // not exist in the module, SWORD may crash!
+        // NOTE: This libxulsword function is not a Node-API async function, so
+        // it will block Node's event loop until it finishes.
+        const intgr = libxulsword.Search(
+          modname,
+          srchstr,
+          scope,
+          type,
+          flags,
+          newsearch
+        );
+        this.searchedID = searchID;
+        log.debug(
+          `search: modname=${modname} srchstr=${srchstr} scope=${scope} type=${type} flags=${flags} newsearch=${newsearch} searchID=${searchID} intgr=${intgr}`
+        );
+        resolve(intgr);
+      } else resolve(null);
+    });
   },
 
   // getSearchResults
@@ -486,12 +488,46 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // Before starting to build a new search index, call 'searchIndexDelete()'
   // CAUTION: Do not call any LibSword functions other than getPercentComplete until
   // getPercentComplete returns 100!
-  async searchIndexBuild(modname: string): Promise<boolean> {
-    if (this.isReady(true)) {
-      await libxulsword.SearchIndexBuild(modname);
-      return true;
-    }
-    return false;
+  async searchIndexBuild(
+    modname: string,
+    callingWinId?: number
+  ): Promise<boolean> {
+    return new Promise((resolve) => {
+      if (this.isReady(true)) {
+        let idwin: null | BrowserWindow = null;
+        if (callingWinId) idwin = BrowserWindow.fromId(callingWinId);
+        if (idwin) {
+          global.ReportSearchIndexerProgress = (percent: number) => {
+            // Even though sending progress to the renderer works, the renderer
+            // will not process the calls until the indexer is finished (see note
+            // below). Since this defeats the whole purpose, progress is not reported.
+            /*
+            idwin?.webContents.send(
+              'progress',
+              percent / 100,
+              'search.indexer'
+            );
+            */
+            log.silly(`Search indexer: ${percent}`);
+          };
+        }
+        // This libxulsword function is not async, so it will block the main event loop.
+        // Therefore electron renderers won't act on any communication from the main process
+        // until it finishes. The timeout allows renderers to redraw once before execution
+        // begins. NOTE: apparently even Node-API simple async functionality would not be
+        // enough to make progress reporting work, since Node-API documentation says simple
+        // async work objects must never interact with Javascript, as we would need do to.
+        setTimeout(() => {
+          libxulsword.SearchIndexBuild(modname);
+          if (idwin) {
+            idwin.webContents.send('progress', 0, 'search.indexer');
+            global.ReportSearchIndexerProgress = (_percent: number) => {};
+            idwin = null;
+          }
+          resolve(true);
+        }, 100);
+      } else resolve(false);
+    });
   },
 
   /* *****************************************************************************

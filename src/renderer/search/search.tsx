@@ -123,6 +123,8 @@ export default class SearchWin extends React.Component implements PopupParent {
 
   lexref: React.RefObject<HTMLDivElement>;
 
+  destroy: (() => void)[];
+
   constructor(props: SearchWinProps) {
     super(props);
 
@@ -160,9 +162,20 @@ export default class SearchWin extends React.Component implements PopupParent {
 
     this.resref = React.createRef();
     this.lexref = React.createRef();
+    this.destroy = [];
   }
 
   componentDidMount() {
+    // NOTE: The search.indexer event is never sent because the Node event
+    // loop is blocked by the indexer so that event was removed , but the handler
+    // is left here anyway, in case a a solution to that problem is ever found.
+    this.destroy.push(
+      window.ipc.renderer.on('progress', (prog: number, id?: string) => {
+        if (id === 'search.indexer') {
+          this.setState({ progressLabel: '', progress: prog });
+        }
+      })
+    );
     search(this);
   }
 
@@ -259,6 +272,10 @@ export default class SearchWin extends React.Component implements PopupParent {
     }
 
     lexupdate(dModule, dModuleIsStrongs);
+  }
+
+  componentWillUnmount() {
+    this.destroy.forEach((d) => d());
   }
 
   render() {

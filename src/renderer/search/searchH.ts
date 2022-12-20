@@ -370,7 +370,7 @@ export async function getSearchResults(
   return r || '';
 }
 
-function createSearchIndex(sthis: SearchWin, module: string) {
+async function createSearchIndex(sthis: SearchWin, module: string) {
   if (module && module in G.Tab) {
     G.Window.modal([{ modal: 'darkened', window: 'all' }]);
     const s: Partial<SearchWinState> = {
@@ -383,20 +383,15 @@ function createSearchIndex(sthis: SearchWin, module: string) {
     if (G.LibSword.luceneEnabled(module)) {
       G.LibSword.searchIndexDelete(module);
     }
-    // The timeout allows UI to catch up before indexing begins,
-    // which is still required even though indexing is anync.
-    setTimeout(() => {
-      G.LibSword.searchIndexBuild(module)
-        .then(() => {
-          G.Window.modal([{ modal: 'off', window: 'all' }]);
-          sthis.setState({ progress: 0 });
-          return search(sthis);
-        })
-        .catch((er: Error) => {
-          log.error(er);
-          G.Window.modal([{ modal: 'off', window: 'all' }]);
-        });
-    }, 100);
+    const winid = G.Window.description().id;
+    try {
+      const result = await G.LibSword.searchIndexBuild(module, winid);
+      G.Window.modal([{ modal: 'off', window: 'all' }]);
+      if (result) search(sthis);
+    } catch (er: any) {
+      log.error(er);
+      G.Window.modal([{ modal: 'off', window: 'all' }]);
+    }
   }
 }
 
@@ -730,7 +725,10 @@ export async function lexicon(lexdiv: HTMLDivElement, state: SearchWinState) {
   lexdiv.style.display = ''; // was set to 'none' earlier
 }
 
-export default function handler(this: SearchWin, e: React.SyntheticEvent) {
+export default async function handler(
+  this: SearchWin,
+  e: React.SyntheticEvent
+) {
   const state = this.state as SearchWinState;
   const target = e.target as HTMLElement;
   const currentTarget = e.currentTarget as HTMLElement;
@@ -763,7 +761,7 @@ export default function handler(this: SearchWin, e: React.SyntheticEvent) {
               searchtype: 'SearchAnyWord',
             };
             this.setState(s);
-            createSearchIndex(this, module);
+            await createSearchIndex(this, module);
           }
           break;
         }

@@ -43,7 +43,7 @@ declare global {
     main: WinMainType;
   }
   function ToUpperCase(str: string): string;
-  function reportSearchIndexerProgress(percent: number): void;
+  function ReportSearchIndexerProgress(percent: number): void;
 }
 type RendererChannels =
   | 'global'
