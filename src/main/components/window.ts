@@ -20,7 +20,6 @@ import LocalFile from './localFile';
 
 import type {
   WindowArgType,
-  GType,
   ResetType,
   WindowDescriptorType,
   WindowRegistryType,

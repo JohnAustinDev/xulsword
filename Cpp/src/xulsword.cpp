@@ -1809,26 +1809,29 @@ char *xulsword::getSearchResults(const char *mod, int first, int num, bool keepS
 /********************************************************************
 SearchIndexDelete
 *********************************************************************/
-void xulsword::searchIndexDelete(const char *mod) {
+bool xulsword::searchIndexDelete(const char *mod) {
   SWModule * module = MyManager->getModule(mod);
-  if (!module) {return;}
+  if (!module) {return false;}
 
-  if (!module->hasSearchFramework()) {return;}
-
-  module->deleteSearchFramework();
+  if (module->hasSearchFramework()) {
+    module->deleteSearchFramework();
+  }
+  return true;
 }
 
 
 /********************************************************************
 SearchIndexBuild
 *********************************************************************/
-void xulsword::searchIndexBuild(const char *mod) {
+bool xulsword::searchIndexBuild(const char *mod) {
   SWModule * module = MyManager->getModule(mod);
   if (module && ReportProgress) {
     if (module->hasSearchFramework()) {
       module->createSearchFramework(&savePercentComplete, (void *)ReportProgress);
+      return true;
     }
   }
+  return false;
 }
 
 

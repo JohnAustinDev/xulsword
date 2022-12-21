@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { BrowserWindow } from 'electron';
+import { app, BrowserWindow } from 'electron';
+import { fork } from 'child_process';
 import log from 'electron-log';
 import path from 'path';
 import { repositoryKey, isRepoLocal } from '../../common';
@@ -7,6 +8,7 @@ import Cache from '../../cache';
 import LocalFile from './localFile';
 import Dirs from './dirs';
 import Prefs from './prefs';
+import Window from './window';
 
 import type {
   Repository,
@@ -486,46 +488,47 @@ DEFINITION OF A 'XULSWORD REFERENCE':
 
   // searchIndexBuild
   // Before starting to build a new search index, call 'searchIndexDelete()'
-  // CAUTION: Do not call any LibSword functions other than getPercentComplete until
-  // getPercentComplete returns 100!
   async searchIndexBuild(
-    modname: string,
+    modcode: string,
     callingWinId?: number
   ): Promise<boolean> {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       if (this.isReady(true)) {
-        let idwin: null | BrowserWindow = null;
-        if (callingWinId) idwin = BrowserWindow.fromId(callingWinId);
-        if (idwin) {
-          global.ReportSearchIndexerProgress = (percent: number) => {
-            // Even though sending progress to the renderer works, the renderer
-            // will not process the calls until the indexer is finished (see note
-            // below). Since this defeats the whole purpose, progress is not reported.
-            /*
-            idwin?.webContents.send(
-              'progress',
-              percent / 100,
-              'search.indexer'
-            );
-            */
-            log.silly(`Search indexer: ${percent}`);
-          };
-        }
-        // This libxulsword function is not async, so it will block the main event loop.
-        // Therefore electron renderers won't act on any communication from the main process
-        // until it finishes. The timeout allows renderers to redraw once before execution
-        // begins. NOTE: apparently even Node-API simple async functionality would not be
-        // enough to make progress reporting work, since Node-API documentation says simple
-        // async work objects must never interact with Javascript, as we would need do to.
-        setTimeout(() => {
-          libxulsword.SearchIndexBuild(modname);
-          if (idwin) {
-            idwin.webContents.send('progress', 0, 'search.indexer');
-            global.ReportSearchIndexerProgress = (_percent: number) => {};
-            idwin = null;
+        const sendProgress = (percent: number) => {
+          if (callingWinId) {
+            let idwin = BrowserWindow.fromId(Number(callingWinId));
+            if (idwin) {
+              const progress = percent / 100;
+              idwin.webContents.send('progress', progress, 'search.indexer');
+              idwin = null;
+            }
           }
-          resolve(true);
-        }, 100);
+        };
+        const done = () => {
+          Window.modal([{ modal: 'off', window: 'all' }]);
+          sendProgress(0);
+        };
+        Window.modal([{ modal: 'darkened', window: 'all' }]);
+        const workerjs = app.isPackaged
+          ? path.join(__dirname, 'indexWorker.js')
+          : path.join(__dirname, '../indexWorker.js');
+        const indexer = fork(workerjs);
+        indexer.on('error', (er: Error) => {
+          done();
+          reject(er);
+        });
+        indexer.on(
+          'message',
+          (indexerMsg: { msg: string; percent: number }) => {
+            const { msg, percent } = indexerMsg;
+            sendProgress(percent);
+            if (msg === 'finished') {
+              done();
+              resolve(true);
+            }
+          }
+        );
+        indexer.send({ modsd: this.moduleDirectories, modcode });
       } else resolve(false);
     });
   },

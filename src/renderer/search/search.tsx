@@ -596,7 +596,7 @@ export default class SearchWin extends React.Component implements PopupParent {
             <Spacer flex="1" />
             {progress !== 0 && (
               <Hbox align="center">
-                <Label value={`${progressLabel}:`} />
+                {progressLabel && <Label value={`${progressLabel}:`} />}
                 <ProgressBar value={progress === -1 ? undefined : progress} />
               </Hbox>
             )}

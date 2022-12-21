@@ -372,25 +372,19 @@ export async function getSearchResults(
 
 async function createSearchIndex(sthis: SearchWin, module: string) {
   if (module && module in G.Tab) {
-    G.Window.modal([{ modal: 'darkened', window: 'all' }]);
     const s: Partial<SearchWinState> = {
       results: 0,
       pageindex: 0,
-      progress: -1,
+      progress: 0.01,
       progressLabel: i18n.t('BuildingIndex'),
     };
     sthis.setState(s);
-    if (G.LibSword.luceneEnabled(module)) {
-      G.LibSword.searchIndexDelete(module);
-    }
     const winid = G.Window.description().id;
     try {
       const result = await G.LibSword.searchIndexBuild(module, winid);
-      G.Window.modal([{ modal: 'off', window: 'all' }]);
       if (result) search(sthis);
     } catch (er: any) {
       log.error(er);
-      G.Window.modal([{ modal: 'off', window: 'all' }]);
     }
   }
 }

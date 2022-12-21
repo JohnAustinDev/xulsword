@@ -134,11 +134,11 @@ char *GetSearchResults(const char *mod, int first, int num, bool keepStrongs) {
   return my_xulsword->getSearchResults(mod, first, num, keepStrongs, NULL);
 }
 
-void SearchIndexDelete(const char *mod) {
+bool SearchIndexDelete(const char *mod) {
   return my_xulsword->searchIndexDelete(mod);
 }
 
-void SearchIndexBuild(const char *mod) {
+bool SearchIndexBuild(const char *mod) {
   return my_xulsword->searchIndexBuild(mod);
 }
 
