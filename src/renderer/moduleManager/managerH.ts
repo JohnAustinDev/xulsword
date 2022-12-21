@@ -33,9 +33,9 @@ import type {
   RowSelection,
   SwordConfType,
 } from '../../type';
+import type { SelectVKMType } from '../libxul/vkselect';
 import type ModuleManager from './manager';
 import type { ManagerState } from './manager';
-import type { VKSelection } from '../libxul/vkselect';
 
 export const Tables = ['language', 'module', 'repository'] as const;
 
@@ -994,8 +994,8 @@ function getModuleDownload(modrepkey: string): Download | null {
   const { xsmType } = data[ModCol.iInfo].conf;
   if (xsmType === 'XSM') {
     const d: FTPDownload = {
-      file: data[ModCol.iInfo].conf.DataPath,
       ...data[ModCol.iInfo].repo,
+      file: data[ModCol.iInfo].conf.DataPath,
     };
     return d;
   }
@@ -1018,7 +1018,7 @@ async function promptAudioChapters(
   if (conf.xsmType === 'XSM_audio') {
     const { AudioChapters } = conf;
     if (AudioChapters) {
-      const audio: VKSelection | null = await new Promise((resolve) => {
+      const audio: SelectVKMType | null = await new Promise((resolve) => {
         const { bk: book, ch1: chapter, ch2: lastchapter } = AudioChapters[0];
         const books = Array.from(new Set(AudioChapters.map((v) => v.bk)));
         const chapters: number[] = [];
@@ -1029,8 +1029,20 @@ async function promptAudioChapters(
           const { showAudioDialog } = prevState;
           showAudioDialog.push({
             conf,
-            selection: { book, chapter, lastchapter: chapter },
-            initialVKM: { book, chapter, lastchapter: chapter },
+            selection: {
+              book,
+              chapter,
+              lastchapter: chapter,
+              vkmod: '',
+              v11n: 'KJV',
+            },
+            initialVKM: {
+              book,
+              chapter,
+              lastchapter: chapter,
+              vkmod: '',
+              v11n: 'KJV',
+            },
             options: {
               vkmods: [],
               books,
