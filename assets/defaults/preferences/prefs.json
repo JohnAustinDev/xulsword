@@ -17,7 +17,7 @@
     "Tom Roth"
   ],
   "global": {
-    "InternetPermission": true,
+    "InternetPermission": false,
     "fontSize": 2,
     "locale": "",
     "popup": {
