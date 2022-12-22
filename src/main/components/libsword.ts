@@ -494,6 +494,11 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   ): Promise<boolean> {
     return new Promise((resolve, reject) => {
       if (this.isReady(true)) {
+        Window.modal([{ modal: 'darkened', window: 'all' }]);
+        const workerjs = app.isPackaged
+          ? path.join(__dirname, 'indexWorker.js')
+          : path.join(__dirname, '../indexWorker.js');
+        const indexer = fork(workerjs);
         const sendProgress = (percent: number) => {
           if (callingWinId) {
             let idwin = BrowserWindow.fromId(Number(callingWinId));
@@ -507,12 +512,8 @@ DEFINITION OF A 'XULSWORD REFERENCE':
         const done = () => {
           Window.modal([{ modal: 'off', window: 'all' }]);
           sendProgress(0);
+          if (indexer) indexer.kill();
         };
-        Window.modal([{ modal: 'darkened', window: 'all' }]);
-        const workerjs = app.isPackaged
-          ? path.join(__dirname, 'indexWorker.js')
-          : path.join(__dirname, '../indexWorker.js');
-        const indexer = fork(workerjs);
         indexer.on('error', (er: Error) => {
           done();
           reject(er);
