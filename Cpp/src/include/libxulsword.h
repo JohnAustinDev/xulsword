@@ -28,7 +28,7 @@
 #define DLLEXPORT extern "C"
 #endif
 
-DLLEXPORT xulsword *GetXulsword(char *path, char *(*toUpperCase)(char *), void (*reportProgress)(int));
+DLLEXPORT xulsword *GetXulsword(char *path, void (*throwJS)(const char *), char *(*toUpperCase)(char *), void (*reportProgress)(int));
 DLLEXPORT void FreeLibxulsword(xulsword *tofree = NULL);
 DLLEXPORT char *GetChapterText(const char *vkeymod, const char *vkeytext);
 DLLEXPORT char *GetFootnotes();

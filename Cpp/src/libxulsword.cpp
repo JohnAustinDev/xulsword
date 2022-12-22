@@ -27,9 +27,9 @@ xulsword *my_xulsword;
 /********************************************************************
 EXPORTED INTERFACE FUNCTIONS
 *********************************************************************/
-xulsword *GetXulsword(char *path, char *(*toUpperCase)(char *), void (*reportProgress)(int)) {
+xulsword *GetXulsword(char *path, void (*throwJS)(const char *), char *(*toUpperCase)(char *), void (*reportProgress)(int)) {
 
-  my_xulsword = new xulsword(path, toUpperCase, reportProgress);
+  my_xulsword = new xulsword(path, throwJS, toUpperCase, reportProgress);
 
   SWLog::getSystemLog()->logDebug("(c++ GetXulsword) CREATED xulsword object");
 

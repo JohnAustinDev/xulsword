@@ -112,7 +112,7 @@ void xulsword::xsThrow(const char *msg, const char *param) {
 
   SWLog::getSystemLog()->logDebug("xsThrow: %s", fmsg);
 
-  // THROW JAVASCRIPT ERROR HERE
+  if (ThrowJS) ThrowJS((const char *)fmsg);
 
   free(fmsg);
 }
@@ -511,7 +511,7 @@ void dummyProgress(int progress) {}
 PUBLIC XULSWORD FUNCTIONS
 *********************************************************************/
 
-xulsword::xulsword(char *path, char *(*toUpperCase)(char *), void (*reportProgress)(int)) {
+xulsword::xulsword(char *path, void (*throwJS)(const char *), char *(*toUpperCase)(char *), void (*reportProgress)(int)) {
   if (!MySWLogXS) {
     MySWLogXS = new SWLogXS();
     SWLog::setSystemLog(MySWLogXS);
@@ -519,6 +519,7 @@ xulsword::xulsword(char *path, char *(*toUpperCase)(char *), void (*reportProgre
   SWLog::getSystemLog()->setLogLevel(4); // set SWORD log reporting... 5 is all stuff
   SWLog::getSystemLog()->logDebug("XULSWORD CONSTRUCTOR");
 
+  ThrowJS = throwJS;
   ToUpperCase = toUpperCase;
   if (reportProgress) ReportProgress = reportProgress;
   else ReportProgress = &dummyProgress;

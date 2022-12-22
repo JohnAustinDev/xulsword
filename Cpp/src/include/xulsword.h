@@ -132,7 +132,7 @@ class xulsword {
 
 
   public:
-  xulsword(char *path, char *(*toUpperCase)(char *), void (*reportProgress)(int));
+  xulsword(char *path, void (*throwJS)(const char *), char *(*toUpperCase)(char *), void (*reportProgress)(int));
   ~xulsword();
 
   static StringMgrXS *MyStringMgrXS;
