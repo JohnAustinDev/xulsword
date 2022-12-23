@@ -360,8 +360,11 @@ export async function installZIPs(
                   if (moddest.exists()) {
                     moddest.remove(true);
                   }
+                  if (moddest.exists())
+                    modreports.push({
+                      error: `(${conf.module}) Could not remove directory '${moddest.path}'.`,
+                    });
                   if (
-                    moddest.exists() ||
                     !moddest.create(LocalFile.DIRECTORY_TYPE, {
                       recursive: true,
                     })

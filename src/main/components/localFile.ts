@@ -81,8 +81,8 @@ export default class LocalFile {
 
   // Create a new directory or en empty file for this.path, depending on the
   // requested type. It does nothing if this.path already exists. The type
-  // must be supplied or an error is thrown. If the file is created, true is
-  // returned, false otherwise.
+  // must be supplied or an error is thrown. If the file exists before return,
+  // true is returned, false otherwise.
   create(type: number, options?: any): boolean {
     if (this.path) {
       if (!this.exists()) {

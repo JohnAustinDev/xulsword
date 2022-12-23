@@ -22,9 +22,6 @@ build/app/dist
 build/release
 .erb/dll
 archive.tgz
-libxulsword/build/
-libxulsword/yarn.lock
-libxulsword/lib/linux/
 
 .idea
 npm-debug.log.*
@@ -37,31 +34,15 @@ npm-debug.log.*
 *-console.log
 .vagrant
 archive
-Cpp/sword
-Cpp/sword.32win
-Cpp/sword.64win
-Cpp/zlib
-Cpp/zlib.32win
-Cpp/zlib.64win
-Cpp/clucene
-Cpp/clucene.32win
-Cpp/clucene.64win
+Cpp/sword*
+Cpp/zlib*
+Cpp/clucene*
 Cpp/boost*
 Cpp/build*
 Cpp/install*
 
 .vscode/perl-lang/
 .vstags
-
-# For Windows...
-Cpp/cluceneMK/windows/lib/Release/
-Cpp/src/include/appInfo.h
-Cpp/swordMK/windows/lib/Release/
-Cpp/windows/Release/
-Cpp/windows/Versions.bat
-Cpp/windows/startup/Release/
-Cpp/windows/cdrun/Release/
-Cpp/windows/compiled.txt
 
 # For MAC
 .DS_Store
