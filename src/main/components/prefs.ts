@@ -9,7 +9,7 @@ import Subscription from '../../subscription';
 import LocalFile from './localFile';
 import Dirs from './dirs';
 
-import type { GAddCaller, PrefObject, PrefValue } from '../../type';
+import type { PrefObject, PrefValue } from '../../type';
 
 export type PrefCallbackType = (
   callingWinID: number,

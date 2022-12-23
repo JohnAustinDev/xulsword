@@ -312,6 +312,7 @@ export function ofClass(
 
 // Returns a promise whose state can be queried or can be rejected at will.
 export function querablePromise<T>(promise: Promise<T>): QuerablePromise<T> {
+  /* eslint-disable @typescript-eslint/no-unused-vars */
   if ('isFulfilled' in promise) return promise as QuerablePromise<T>;
   let isPending = true;
   let isRejected = false;
@@ -335,6 +336,7 @@ export function querablePromise<T>(promise: Promise<T>): QuerablePromise<T> {
   };
 
   return result;
+  /* eslint-enable @typescript-eslint/no-unused-vars */
 }
 
 // Replaces character with codes <32 with " " (these may occur in text/footnotes at times- code 30 is used for sure)

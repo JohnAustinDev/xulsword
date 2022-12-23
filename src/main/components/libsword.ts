@@ -32,6 +32,7 @@ global.ToUpperCase = (aString) => {
   return '';
 };
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 global.ReportSearchIndexerProgress = (_intgr) => {};
 
 /*

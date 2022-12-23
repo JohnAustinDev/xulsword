@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 
 const FPERM = 0o666;
-const DPERM = 0o666;
+// const DPERM = 0o666;
 
 export default class LocalFile {
   // The file system location for this LocalFile instance.

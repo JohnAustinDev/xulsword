@@ -4,7 +4,6 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { component } from '../rutil';
 import { addClass, xulDefaultProps, xulPropTypes, XulProps } from './xul';
 import { Box } from './boxes';
 

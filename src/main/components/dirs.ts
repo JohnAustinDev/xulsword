@@ -8,8 +8,8 @@ export type DirsDirectories = {
   xsAsset: string;
   xsAsar: string;
   xsProgram: string;
-  xsDefaults: string;
   xsPrefDefD: string;
+  xsResDefD: string;
   ProfD: string;
   xsPrefD: string;
   xsResD: string;
@@ -30,16 +30,16 @@ Dirs.path.xsAsset = app.isPackaged
 // Packaged filename should be 'app.asar' if package.json has build.asar
 // set to true. Or it should be 'app' otherwise.
 Dirs.path.xsAsar = app.isPackaged
-  ? path.join(process.resourcesPath, 'app')
+  ? path.join(process.resourcesPath, 'app.asar')
   : path.join(__dirname, '..', '..', '..', 'build', 'app');
 
 Dirs.path.TmpD = app.getPath('temp');
 
 Dirs.path.xsProgram = path.join(process.resourcesPath, '..');
 
-Dirs.path.xsDefaults = path.join(Dirs.path.xsAsset, 'defaults');
+Dirs.path.xsPrefDefD = path.join(Dirs.path.xsAsset, 'defaults', 'preferences');
 
-Dirs.path.xsPrefDefD = path.join(Dirs.path.xsDefaults, 'preferences');
+Dirs.path.xsResDefD = path.join(Dirs.path.xsAsset, 'defaults', 'resources');
 
 Dirs.path.ProfD = app.getPath('userData');
 
@@ -71,14 +71,30 @@ dirNames.forEach((dir) => {
   });
 });
 
-// Create all directories if they don't exist, except those in noCreate.
-const noCreate = ['TmpD'];
-dirNames.forEach((dir) => {
-  if (!noCreate.includes(dir)) {
-    const dirs = Dirs as any;
-    const f = dirs[dir];
-    f.create(LocalFile.DIRECTORY_TYPE);
+// Install default resources?
+{
+  const resd = (Dirs as any).xsResD as LocalFile;
+  const resdefd = (Dirs as any).xsResDefD as LocalFile;
+  if (!resd.exists() && resdefd.exists()) {
+    resdefd.copyTo(resd.parent, resdefd.leafName, true);
   }
+}
+
+// Create user directories if they don't exist.
+[
+  'ProfD',
+  'xsPrefD',
+  'xsResD',
+  'xsModsUser',
+  'xsFonts',
+  'xsAudio',
+  'xsBookmarks',
+  'xsVideo',
+  'xsModsCommon',
+].forEach((dir) => {
+  const dirs = Dirs as any;
+  const f = dirs[dir];
+  f.create(LocalFile.DIRECTORY_TYPE);
 });
 ['xsModsUser', 'xsModsCommon', 'xsAudio'].forEach((r) => {
   const d = Dirs as any;

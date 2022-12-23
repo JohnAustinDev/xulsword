@@ -11,6 +11,7 @@ import Prefs from './prefs';
 import LocalFile from './localFile';
 import { modalInstall } from './module';
 import Window, { getBrowserWindows, publishSubscription } from './window';
+import Dirs from './dirs';
 
 import type {
   LocationSKType,
@@ -45,6 +46,8 @@ const Commands = {
     paths?: string[] | string, // file, file[], directory, directory/* or undefined=choose-files
     toSharedModuleDir?: boolean
   ): Promise<NewModulesType> {
+    const destDir =
+      Dirs.path[toSharedModuleDir ? 'xsModsCommon' : 'xsModsUser'];
     const callingWinID: number =
       arguments[2] ?? getBrowserWindows({ type: 'xulsword' })[0].id;
     const extensions = ['zip', 'xsm', 'xsb'];
@@ -69,7 +72,7 @@ const Commands = {
     if (paths) {
       // Install array of file paths
       if (Array.isArray(paths)) {
-        return modalInstall(filter(paths), undefined, callingWinID);
+        return modalInstall(filter(paths), destDir, callingWinID);
       }
       // Install all modules in a directory
       if (paths.endsWith('/*')) {
@@ -78,12 +81,12 @@ const Commands = {
         if (file.isDirectory()) {
           list.push(...filter(file.directoryEntries));
         }
-        return modalInstall(list, undefined, callingWinID);
+        return modalInstall(list, destDir, callingWinID);
       }
       const file = new LocalFile(paths);
       // ZIP file to install
       if (!file.isDirectory()) {
-        return modalInstall(filter([file.path]), undefined, callingWinID);
+        return modalInstall(filter([file.path]), destDir, callingWinID);
       }
       // Choose from existing directory.
       options.defaultPath = paths;
@@ -92,7 +95,7 @@ const Commands = {
       getBrowserWindows({ type: 'xulsword' })[0],
       options
     );
-    return modalInstall(obj.filePaths, undefined, callingWinID);
+    return modalInstall(obj.filePaths, destDir, callingWinID);
   },
 
   removeModule() {

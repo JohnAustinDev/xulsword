@@ -15,7 +15,6 @@ import Subscription from '../../subscription';
 import { clone, diff, drop } from '../../common';
 import G from '../rg';
 import { getStatePref } from '../rutil';
-import log from '../log';
 import { Hbox, Vbox } from './boxes';
 import Button from './button';
 import Spacer from './spacer';

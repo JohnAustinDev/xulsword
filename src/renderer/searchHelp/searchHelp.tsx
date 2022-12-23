@@ -78,7 +78,7 @@ function SearchHelpWin() {
     <div className="helpPane">
       <div id="searchTypes" />
       <div>
-        {type.map((t, i) => (
+        {type.map((t) => (
           <div key={t}>
             <span id={['name', t].join('.')} className="typeName" />
             <span id={['desc', t].join('.')} className="typeDesc" />
