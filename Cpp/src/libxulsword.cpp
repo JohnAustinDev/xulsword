@@ -50,27 +50,27 @@ void FreeLibxulsword(xulsword *tofree) {
   */
 }
 
-char *GetChapterText(const char *vkeymod, const char *vkeytext) {
+const char *GetChapterText(const char *vkeymod, const char *vkeytext) {
   return my_xulsword->getChapterText(vkeymod, vkeytext);
 }
 
-char *GetFootnotes() {
+const char *GetFootnotes() {
   return my_xulsword->getFootnotes();
 }
 
-char *GetCrossRefs() {
+const char *GetCrossRefs() {
   return my_xulsword->getCrossRefs();
 }
 
-char *GetNotes() {
+const char *GetNotes() {
   return my_xulsword->getNotes();
 }
 
-char *GetChapterTextMulti(const char *vkeymodlist, const char *vkeytext, bool keepnotes) {
+const char *GetChapterTextMulti(const char *vkeymodlist, const char *vkeytext, bool keepnotes) {
   return my_xulsword->getChapterTextMulti(vkeymodlist, vkeytext, keepnotes);
 }
 
-char *GetVerseText(const char *vkeymod, const char *vkeytext, bool keepnotes) {
+const char *GetVerseText(const char *vkeymod, const char *vkeytext, bool keepnotes) {
   return my_xulsword->getVerseText(vkeymod, vkeytext, keepnotes);
 }
 
@@ -82,43 +82,43 @@ int GetMaxVerse(const char *v11n, const char *vkeytext) {
   return my_xulsword->getMaxVerse(v11n, vkeytext);
 }
 
-char *GetModuleBooks(const char *mod) {
+const char *GetModuleBooks(const char *mod) {
   return my_xulsword->getModuleBooks(mod);
 }
 
-char *ParseVerseKey(const char *vkeymod, const char *vkeytext) {
+const char *ParseVerseKey(const char *vkeymod, const char *vkeytext) {
   return my_xulsword->parseVerseKey(vkeymod, vkeytext);
 }
 
-char *GetVerseSystem(const char *mod) {
+const char *GetVerseSystem(const char *mod) {
   return my_xulsword->getVerseSystem(mod);
 }
 
-char *ConvertLocation(const char *frVS, const char *vkeytext, const char *toVS) {
+const char *ConvertLocation(const char *frVS, const char *vkeytext, const char *toVS) {
   return my_xulsword->convertLocation(frVS, vkeytext, toVS);
 }
 
-char *GetIntroductions(const char *vkeymod, const char *bname) {
+const char *GetIntroductions(const char *vkeymod, const char *bname) {
   return my_xulsword->getIntroductions(vkeymod, bname);
 }
 
-char *GetDictionaryEntry(const char *lexdictmod, const char *key) {
+const char *GetDictionaryEntry(const char *lexdictmod, const char *key) {
   return my_xulsword->getDictionaryEntry(lexdictmod, key);
 }
 
-char *GetAllDictionaryKeys(const char *lexdictmod) {
+const char *GetAllDictionaryKeys(const char *lexdictmod) {
   return my_xulsword->getAllDictionaryKeys(lexdictmod);
 }
 
-char *GetGenBookChapterText(const char *gbmod, const char *treekey) {
+const char *GetGenBookChapterText(const char *gbmod, const char *treekey) {
   return my_xulsword->getGenBookChapterText(gbmod, treekey);
 }
 
-char *GetGenBookTableOfContents(const char *gbmod) {
+const char *GetGenBookTableOfContents(const char *gbmod) {
   return my_xulsword->getGenBookTableOfContents(gbmod);
 }
 
-char *GetGenBookTableOfContentsJSON(const char *gbmod) {
+const char *GetGenBookTableOfContentsJSON(const char *gbmod) {
   return my_xulsword->getGenBookTableOfContentsJSON(gbmod);
 }
 
@@ -130,7 +130,7 @@ int Search(const char *mod, const char *srchstr, const char *scope, int type, in
   return my_xulsword->search(mod, srchstr, scope, type, flags, newsearch);
 }
 
-char *GetSearchResults(const char *mod, int first, int num, bool keepStrongs) {
+const char *GetSearchResults(const char *mod, int first, int num, bool keepStrongs) {
   return my_xulsword->getSearchResults(mod, first, num, keepStrongs, NULL);
 }
 
@@ -146,7 +146,7 @@ void SetGlobalOption(const char *option, const char *setting) {
   return my_xulsword->setGlobalOption(option, setting);
 }
 
-char *GetGlobalOption(const char *option) {
+const char *GetGlobalOption(const char *option) {
   return my_xulsword->getGlobalOption(option);
 }
 
@@ -154,10 +154,10 @@ void SetCipherKey(const char *mod, const char *cipherkey, bool useSecModule) {
   return my_xulsword->setCipherKey(mod, cipherkey, useSecModule);
 }
 
-char* GetModuleList() {
+const char* GetModuleList() {
   return my_xulsword->getModuleList();
 }
 
-char *GetModuleInformation(const char *mod, const char *paramname) {
+const char *GetModuleInformation(const char *mod, const char *paramname) {
   return my_xulsword->getModuleInformation(mod, paramname);
 }

@@ -48,7 +48,11 @@
     "type_traits": "cpp",
     "tuple": "cpp",
     "typeinfo": "cpp",
-    "utility": "cpp"
+    "utility": "cpp",
+    "hash_map": "cpp",
+    "hash_set": "cpp",
+    "cstddef": "cpp",
+    "set": "cpp"
   },
 
   "javascript.validate.enable": false,

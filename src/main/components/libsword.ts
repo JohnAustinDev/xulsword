@@ -501,18 +501,18 @@ DEFINITION OF A 'XULSWORD REFERENCE':
         const indexer = fork(workerjs);
         const sendProgress = (percent: number) => {
           if (callingWinId) {
-            let idwin = BrowserWindow.fromId(Number(callingWinId));
-            if (idwin) {
+            let w = BrowserWindow.fromId(Number(callingWinId));
+            if (w) {
               const progress = percent / 100;
-              idwin.webContents.send('progress', progress, 'search.indexer');
-              idwin = null;
+              w.webContents.send('progress', progress, 'search.indexer');
+              w = null;
             }
           }
         };
         const done = () => {
           Window.modal([{ modal: 'off', window: 'all' }]);
           sendProgress(0);
-          if (indexer) indexer.kill();
+          if (indexer && indexer.exitCode === null) indexer.kill();
         };
         indexer.on('error', (er: Error) => {
           done();

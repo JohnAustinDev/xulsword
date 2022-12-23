@@ -87,7 +87,6 @@ class xulsword {
   private:
   SWMgr *MyManager;
 
-  char *(*ToUpperCase)(char *);
   void (*ThrowJS)(const char *);
   void (*ReportProgress)(int);
 
@@ -126,7 +125,7 @@ class xulsword {
   void getFolderContents(TreeKey *key, const char *modname, SWBuf *retval);
   virtual void updateGlobalOptions(bool disableFootCrossRed);
   void mapVersifications(VerseKey *vkin, VerseKey *vkout);
-  char *getBookName(SWBuf *Chapter);
+  const char *getBookName(SWBuf *Chapter);
   void saveFootnotes(SWModule *module, bool includeNumberedMarkers = false);
   void getTreeContents(TreeKey *key, SWBuf *retval);
 
@@ -140,34 +139,34 @@ class xulsword {
 
   SWBuf ResultBuf;
 
-  char *getChapterText(const char *vkeymod, const char *vkeytext);
-  char *getFootnotes();
-  char *getCrossRefs();
-  char *getNotes();
-  char *getChapterTextMulti(const char *vkeymodlist, const char *vkeytext, bool keepnotes);
-  char *getVerseText(const char *vkeymod, const char *vkeytext, bool keepnotes = false);
+  const char *getChapterText(const char *vkeymod, const char *vkeytext);
+  const char *getFootnotes();
+  const char *getCrossRefs();
+  const char *getNotes();
+  const char *getChapterTextMulti(const char *vkeymodlist, const char *vkeytext, bool keepnotes);
+  const char *getVerseText(const char *vkeymod, const char *vkeytext, bool keepnotes = false);
   int   getMaxChapter(const char *v11n, const char *vkeytext);
   int   getMaxVerse(const char *v11n, const char *vkeytext);
-  char *getModuleBooks(const char *mod);
-  char *parseVerseKey(const char *vkeymod, const char *vkeytext);
-  char *getVerseSystem(const char *mod);
-  char *convertLocation(const char *frVS, const char *vkeytext, const char *toVS);
-  char *getIntroductions(const char *vkeymod, const char *bname);
-  char *getDictionaryEntry(const char *lexdictmod, const char *key);
-  char *getAllDictionaryKeys(const char *lexdictmod);
-  char *getGenBookChapterText(const char *gbmod, const char *treekey);
-  char *getGenBookTableOfContents(const char *gbmod);
-  char *getGenBookTableOfContentsJSON(const char *gbmod);
+  const char *getModuleBooks(const char *mod);
+  const char *parseVerseKey(const char *vkeymod, const char *vkeytext);
+  const char *getVerseSystem(const char *mod);
+  const char *convertLocation(const char *frVS, const char *vkeytext, const char *toVS);
+  const char *getIntroductions(const char *vkeymod, const char *bname);
+  const char *getDictionaryEntry(const char *lexdictmod, const char *key);
+  const char *getAllDictionaryKeys(const char *lexdictmod);
+  const char *getGenBookChapterText(const char *gbmod, const char *treekey);
+  const char *getGenBookTableOfContents(const char *gbmod);
+  const char *getGenBookTableOfContentsJSON(const char *gbmod);
   bool  luceneEnabled(const char *mod);
   int   search(const char *mod, const char *srchstr, const char *scope, int type, int flags, bool newsearch);
-  char *getSearchResults(const char *mod, int first, int num, bool keepStrongs, ListKey *searchPointer = NULL, bool referencesOnly = false);
+  const char *getSearchResults(const char *mod, int first, int num, bool keepStrongs, ListKey *searchPointer = NULL, bool referencesOnly = false);
   bool  searchIndexDelete(const char *mod);
   bool  searchIndexBuild(const char *mod);
   void  setGlobalOption(const char *option, const char *setting);
-  char *getGlobalOption(const char *option);
+  const char *getGlobalOption(const char *option);
   void  setCipherKey(const char *mod, const char *cipherkey, bool useSecModule);
-  char *getModuleList();
-  char *getModuleInformation(const char *mod, const char *paramname);
+  const char *getModuleList();
+  const char *getModuleInformation(const char *mod, const char *paramname);
 };
 
 #endif

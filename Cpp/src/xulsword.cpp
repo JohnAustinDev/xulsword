@@ -381,7 +381,7 @@ void xulsword::mapVersifications(VerseKey *vkin, VerseKey *vkout) {
 /********************************************************************
 getBookName
 *********************************************************************/
-char *xulsword::getBookName(SWBuf *Chapter) {
+const char *xulsword::getBookName(SWBuf *Chapter) {
   std::string chapter;
   std::string book;
 
@@ -520,7 +520,6 @@ xulsword::xulsword(char *path, void (*throwJS)(const char *), char *(*toUpperCas
   SWLog::getSystemLog()->logDebug("XULSWORD CONSTRUCTOR");
 
   ThrowJS = throwJS;
-  ToUpperCase = toUpperCase;
   if (reportProgress) ReportProgress = reportProgress;
   else ReportProgress = &dummyProgress;
 
@@ -543,11 +542,9 @@ xulsword::xulsword(char *path, void (*throwJS)(const char *), char *(*toUpperCas
     MyManager->augmentModules(aPath.substr(beg, comma-beg).c_str(), false);
   }
 
-  if (ToUpperCase) {
-    if (!MyStringMgrXS) {
-      MyStringMgrXS = new StringMgrXS(ToUpperCase);
-      StringMgr::setSystemStringMgr(MyStringMgrXS); // this also resets localeMgr
-    }
+  if (toUpperCase && !MyStringMgrXS) {
+    MyStringMgrXS = new StringMgrXS(toUpperCase);
+    StringMgr::setSystemStringMgr(MyStringMgrXS); // this also resets localeMgr
   }
 }
 
@@ -575,7 +572,7 @@ xulsword::~xulsword() {
 /********************************************************************
 GetChapterText
 *********************************************************************/
-char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
+const char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
   SWBuf Chapter;
   int Verse;
   int LastVerse;
@@ -625,7 +622,7 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
 
   //NOW READ ALL VERSES IN THE CHAPTER
 
-  char *bkp = getBookName(&Chapter);
+  const char *bkp = getBookName(&Chapter);
   SWBuf bk;
   bk.set(bkp);
   delete(bkp);
@@ -747,14 +744,14 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
   check.replaceBytes("\n\r", ' ');
 
   ResultBuf.set(check.c_str());
-  return ResultBuf.getRawData();
+  return ResultBuf.c_str();
 }
 
 
 /********************************************************************
 GetChapterTextMulti
 *********************************************************************/
-char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytext, bool keepnotes)
+const char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytext, bool keepnotes)
 {
   SWBuf Chapter;
   int Verse;
@@ -833,7 +830,7 @@ char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytex
 */
 
   //NOW READ ALL VERSES IN THE CHAPTER
-  char *bkp = getBookName(&Chapter);
+  const char *bkp = getBookName(&Chapter);
   SWBuf bk;
   bk.set(bkp);
   delete(bkp);
@@ -966,47 +963,47 @@ char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytex
   SWBuf check = assureValidUTF8(chapText.c_str());
 
   ResultBuf.set(check.c_str());
-  return ResultBuf.getRawData();
+  return ResultBuf.c_str();
 }
 
 
 /********************************************************************
 GetFootnotes
 *********************************************************************/
-char *xulsword::getFootnotes() {
+const char *xulsword::getFootnotes() {
   //NOTE: getChapterText MUST HAVE BEEN RUN BEFORE THIS IS CALLED
   SWBuf check = assureValidUTF8(MyFootnotes.c_str());
   ResultBuf.set(check.c_str());
-  return ResultBuf.getRawData();
+  return ResultBuf.c_str();
 }
 
 
 /********************************************************************
 GetCrossRefs
 *********************************************************************/
-char *xulsword::getCrossRefs() {
+const char *xulsword::getCrossRefs() {
   //NOTE: getChapterText MUST HAVE BEEN RUN BEFORE THIS IS CALLED
   SWBuf check = assureValidUTF8(MyCrossRefs.c_str());
   ResultBuf.set(check.c_str());
-  return ResultBuf.getRawData();
+  return ResultBuf.c_str();
 }
 
 
 /********************************************************************
 GetNotes
 *********************************************************************/
-char *xulsword::getNotes() {
+const char *xulsword::getNotes() {
   //NOTE: getChapterText MUST HAVE BEEN RUN BEFORE THIS IS CALLED
   SWBuf check = assureValidUTF8(MyNotes.c_str());
   ResultBuf.set(check.c_str());
-  return ResultBuf.getRawData();
+  return ResultBuf.c_str();
 }
 
 
 /********************************************************************
 GetVerseText
 *********************************************************************/
-char *xulsword::getVerseText(const char *vkeymod, const char *vkeytext, bool keepnotes) {
+const char *xulsword::getVerseText(const char *vkeymod, const char *vkeytext, bool keepnotes) {
   SWModule * module = MyManager->getModule(vkeymod);
   if (!module) {
     xsThrow("GetVerseText: module \"%s\" not found.", vkeymod);
@@ -1077,7 +1074,7 @@ char *xulsword::getVerseText(const char *vkeymod, const char *vkeytext, bool kee
 
   SWBuf check = assureValidUTF8(bText.c_str());
   ResultBuf.set(check.c_str());
-  return ResultBuf.getRawData();
+  return ResultBuf.c_str();
 }
 
 
@@ -1104,18 +1101,18 @@ int xulsword::getMaxVerse(const char *v11n, const char *vkeytext) {
 /********************************************************************
 GetVerseSystem
 *********************************************************************/
-char *xulsword::getVerseSystem(const char *mod) {
+const char *xulsword::getVerseSystem(const char *mod) {
   SWBuf vsystem;
   vsystem.set(getVerseSystemOfModule(mod));
   ResultBuf.set(vsystem.c_str());
-  return ResultBuf.getRawData();
+  return ResultBuf.c_str();
 }
 
 
 /********************************************************************
 GetModuleBooks
 *********************************************************************/
-char *xulsword::getModuleBooks(const char *mod) {
+const char *xulsword::getModuleBooks(const char *mod) {
   SWBuf bookList;
   const VersificationMgr::System *refSys = VersificationMgr::getSystemVersificationMgr()->getVersificationSystem(getVerseSystemOfModule(mod));
   if (refSys) {
@@ -1134,14 +1131,14 @@ char *xulsword::getModuleBooks(const char *mod) {
   }
   SWBuf check = assureValidUTF8(bookList.c_str());
   ResultBuf.set(check.c_str());
-  return ResultBuf.getRawData();
+  return ResultBuf.c_str();
 }
 
 
 /********************************************************************
 ParseVerseKey
 *********************************************************************/
-char *xulsword::parseVerseKey(const char *vkeymod, const char *vkeytext) {
+const char *xulsword::parseVerseKey(const char *vkeymod, const char *vkeytext) {
   SWModule * module = MyManager->getModule(vkeymod);
   if (!module) {
     xsThrow("parseVerseKey: module \"%s\" not found.", vkeymod);
@@ -1170,14 +1167,14 @@ char *xulsword::parseVerseKey(const char *vkeymod, const char *vkeytext) {
   delete(testkey);
 
   ResultBuf.set(bookChapter.c_str());
-  return ResultBuf.getRawData();
+  return ResultBuf.c_str();
 }
 
 
 /********************************************************************
 ConvertLocation
 *********************************************************************/
-char *xulsword::convertLocation(const char *frVS, const char *vkeytext, const char *toVS) {
+const char *xulsword::convertLocation(const char *frVS, const char *vkeytext, const char *toVS) {
   VerseKey fromKey;
   fromKey.setVersificationSystem(frVS);
   locationToVerseKey(vkeytext, &fromKey);
@@ -1190,14 +1187,14 @@ char *xulsword::convertLocation(const char *frVS, const char *vkeytext, const ch
   result.appendFormatted("%s.%i", toKey.getOSISRef(), toKey.getUpperBound().getVerse());
 
   ResultBuf.set(result.c_str());
-  return ResultBuf.getRawData();
+  return ResultBuf.c_str();
 }
 
 
 /********************************************************************
 GetIntroductions
 *********************************************************************/
-char *xulsword::getIntroductions(const char *vkeymod, const char *vkeytext) {
+const char *xulsword::getIntroductions(const char *vkeymod, const char *vkeytext) {
   SWModule * module = MyManager->getModule(vkeymod);
   if (!module) {
     xsThrow("GetIntroductions: module \"%s\" not found.", vkeymod);
@@ -1336,14 +1333,14 @@ char *xulsword::getIntroductions(const char *vkeymod, const char *vkeytext) {
 
   SWBuf check = assureValidUTF8(intro.c_str());
   ResultBuf.set(check.c_str());
-  return ResultBuf.getRawData();
+  return ResultBuf.c_str();
 }
 
 
 /********************************************************************
 GetDictionaryEntry
 *********************************************************************/
-char *xulsword::getDictionaryEntry(const char *lexdictmod, const char *key) {
+const char *xulsword::getDictionaryEntry(const char *lexdictmod, const char *key) {
   SWModule *dmod;
   dmod = MyManager->getModule(lexdictmod);
   if (!dmod) {
@@ -1394,14 +1391,14 @@ char *xulsword::getDictionaryEntry(const char *lexdictmod, const char *key) {
 
   SWBuf check = assureValidUTF8(entryText.c_str());
   ResultBuf.set(check.c_str());
-  return ResultBuf.getRawData();
+  return ResultBuf.c_str();
 }
 
 
 /********************************************************************
 GetAllDictionaryKeys
 *********************************************************************/
-char *xulsword::getAllDictionaryKeys(const char *lexdictmod) {
+const char *xulsword::getAllDictionaryKeys(const char *lexdictmod) {
   SWModule * dmod;
   dmod = MyManager->getModule(lexdictmod);
   if (!dmod) {
@@ -1421,7 +1418,7 @@ char *xulsword::getAllDictionaryKeys(const char *lexdictmod) {
 
   long count=0;
   SWBuf keytext;
-  while (!dmod->popError() && count++<MAXDICTSIZE) {
+  while (!dmod->popError() && count++ < MAXDICTSIZE) {
     keytext.append(dmod->getKeyText());
     keytext.append("<nx>");
    //printf("%s\n", dmod->getKeyText());
@@ -1431,14 +1428,14 @@ char *xulsword::getAllDictionaryKeys(const char *lexdictmod) {
 
   SWBuf check = assureValidUTF8(keytext.c_str());
   ResultBuf.set(check.c_str());
-  return ResultBuf.getRawData();
+  return ResultBuf.c_str();
 }
 
 
 /********************************************************************
 GetGenBookChapterText
 *********************************************************************/
-char *xulsword::getGenBookChapterText(const char *gbmod, const char *treekey) {
+const char *xulsword::getGenBookChapterText(const char *gbmod, const char *treekey) {
   SWModule * module = MyManager->getModule(gbmod);
   if (!module) {
     xsThrow("GetGenBookChapterText: module \"%s\" not found.", gbmod);
@@ -1496,14 +1493,14 @@ char *xulsword::getGenBookChapterText(const char *gbmod, const char *treekey) {
 
   SWBuf check = assureValidUTF8(chapterText.c_str());
   ResultBuf.set(check.c_str());
-  return ResultBuf.getRawData();
+  return ResultBuf.c_str();
 }
 
 
 /********************************************************************
 GetGenBookTableOfContents
 *********************************************************************/
-char *xulsword::getGenBookTableOfContents(const char *gbmod) {
+const char *xulsword::getGenBookTableOfContents(const char *gbmod) {
   SWModule * module = MyManager->getModule(gbmod);
   if (!module) {
     xsThrow("GetGenBookTableOfContents: module \"%s\" not found.", gbmod);
@@ -1545,14 +1542,14 @@ char *xulsword::getGenBookTableOfContents(const char *gbmod) {
 
   SWBuf check = assureValidUTF8(toc.c_str());
   ResultBuf.set(check.c_str());
-  return ResultBuf.getRawData();
+  return ResultBuf.c_str();
 }
 
 
 /********************************************************************
 GetGenBookTableOfContentsJSON
 *********************************************************************/
-char *xulsword::getGenBookTableOfContentsJSON(const char *gbmod) {
+const char *xulsword::getGenBookTableOfContentsJSON(const char *gbmod) {
   SWModule * module = MyManager->getModule(gbmod);
   if (!module) {
     xsThrow("GetGenBookTOC: module \"%s\" not found.", gbmod);
@@ -1575,7 +1572,7 @@ char *xulsword::getGenBookTableOfContentsJSON(const char *gbmod) {
 
   SWBuf check = assureValidUTF8(toc.c_str());
   ResultBuf.set(check.c_str());
-  return ResultBuf.getRawData();
+  return ResultBuf.c_str();
 }
 
 
@@ -1708,7 +1705,7 @@ int xulsword::search(const char *mod, const char *srchstr, const char *scope, in
 /********************************************************************
 GetSearchResults
 *********************************************************************/
-char *xulsword::getSearchResults(const char *mod, int first, int num, bool keepStrongs, ListKey *searchPointer, bool referencesOnly) {
+const char *xulsword::getSearchResults(const char *mod, int first, int num, bool keepStrongs, ListKey *searchPointer, bool referencesOnly) {
   SWModule * module = MyManager->getModule(mod);
   if (!module) {
     xsThrow("GetSearchResults: module \"%s\" not found.", mod);
@@ -1803,7 +1800,7 @@ char *xulsword::getSearchResults(const char *mod, int first, int num, bool keepS
 
   SWBuf check = assureValidUTF8(referencesOnly ? MySearchVerses.c_str():MySearchTexts.c_str());
   ResultBuf.set(check.c_str());
-  return ResultBuf.getRawData();
+  return ResultBuf.c_str();
 }
 
 
@@ -1866,7 +1863,7 @@ void xulsword::setGlobalOption(const char *option, const char *setting) {
 /********************************************************************
 GetGlobalOption
 *********************************************************************/
-char *xulsword::getGlobalOption(const char *option) {
+const char *xulsword::getGlobalOption(const char *option) {
   bool *thisOption;
   SWBuf rCText;
 
@@ -1888,7 +1885,7 @@ char *xulsword::getGlobalOption(const char *option) {
   *thisOption ? rCText.set("On") : rCText.set("Off");
 
   ResultBuf.set(rCText.c_str());
-  return ResultBuf.getRawData();
+  return ResultBuf.c_str();
 }
 
 
@@ -1914,7 +1911,7 @@ void xulsword::setCipherKey(const char *mod, const char *cipherkey, bool useSecM
 /********************************************************************
 GetModuleList()
 *********************************************************************/
-char* xulsword::getModuleList() {
+const char* xulsword::getModuleList() {
   std::string tr;
   SWModule * module;
 
@@ -1931,14 +1928,14 @@ char* xulsword::getModuleList() {
   if (!strcmp(tr.c_str(), "")) {tr.assign("No Modules");}
 
   ResultBuf.set(tr.c_str());
-  return ResultBuf.getRawData();
+  return ResultBuf.c_str();
 }
 
 
 /********************************************************************
 GetModuleInformation
 *********************************************************************/
-char *xulsword::getModuleInformation(const char *mod, const char *paramname) {
+const char *xulsword::getModuleInformation(const char *mod, const char *paramname) {
   SWModule * infoModule;
   infoModule = MyManager->getModule(mod);
   SWBuf paramstring;
@@ -1961,7 +1958,7 @@ char *xulsword::getModuleInformation(const char *mod, const char *paramname) {
 
   SWBuf check = assureValidUTF8(paramstring.c_str());
   ResultBuf.set(check.c_str());
-  return ResultBuf.getRawData();
+  return ResultBuf.c_str();
 }
 
 // END class xulsword

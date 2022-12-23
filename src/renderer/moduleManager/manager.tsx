@@ -521,11 +521,11 @@ export default class ModuleManager
         });
       }
     });
-    const langlist = Array.from(langs).sort();
-    const newTableData: TLanguageTableRow[] = [];
-    langlist.forEach((l) =>
+    let newTableData: TLanguageTableRow[] = [];
+    Array.from(langs).forEach((l) =>
       newTableData.push([getLangReadable(l), { code: l }])
     );
+    newTableData = newTableData.sort((a, b) => a[0].localeCompare(b[0]));
     const newlanguage: RowSelection = [];
     newTableData.forEach((r, i) => {
       if (selectedcodes?.includes(r[H.LanCol.iInfo].code)) {
