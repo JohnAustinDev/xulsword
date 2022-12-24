@@ -34,12 +34,13 @@ npm-debug.log.*
 *-console.log
 .vagrant
 archive
-Cpp/sword*
-Cpp/zlib*
-Cpp/clucene*
-Cpp/boost*
-Cpp/build*
+Cpp/lib*
 Cpp/install*
+Cpp/zlib*
+Cpp/boost*
+Cpp/clucene*
+Cpp/sword*
+Cpp/build*
 
 .vscode/perl-lang/
 .vstags

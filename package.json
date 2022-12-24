@@ -7,14 +7,15 @@
     "build:main": "cross-env NODE_ENV=production webpack --config ./.erb/configs/webpack.config.main.prod.babel.js",
     "build:renderer": "cross-env NODE_ENV=production webpack --config ./.erb/configs/webpack.config.renderer.prod.babel.js",
     "rebuild": "electron-rebuild -f -m ./build/app/node_modules/libxulsword",
+    "install": "./build/app/node_modules/libxulsword/install.js",
     "lint": "cross-env NODE_ENV=development eslint . --cache --ext .js,.jsx,.ts,.tsx",
     "package": "node -r @babel/register ./.erb/scripts/clean.js dist release && yarn build && electron-builder build --publish never",
-    "package-linux": "cross-env PKLIB=linux ./build/app/node_modules/libxulsword/install.js && yarn package",
-    "package-32win": "cross-env PKLIB=32win ./build/app/node_modules/libxulsword/install.js && yarn package --win --ia32 && cross-env PKLIB=linux ./build/app/node_modules/libxulsword/install.js",
-    "package-64win": "cross-env PKLIB=64win ./build/app/node_modules/libxulsword/install.js && yarn package --win --x64 && cross-env PKLIB=linux ./build/app/node_modules/libxulsword/install.js",
+    "package-linux": "cross-env PKLIB=linux yarn install && yarn package",
+    "package-32win": "cross-env PKLIB=32win yarn install && yarn package --win --ia32 && cross-env PKLIB=linux yarn install",
+    "package-64win": "cross-env PKLIB=64win yarn install && yarn package --win --x64 && cross-env PKLIB=linux yarn install",
     "postinstall": "node -r @babel/register .erb/scripts/check-native-dep.js && electron-builder install-app-deps && yarn cross-env NODE_ENV=development webpack --config ./.erb/configs/webpack.config.renderer.dev.dll.babel.js && opencollective-postinstall && yarn-deduplicate yarn.lock",
     "start": "node -r @babel/register ./.erb/scripts/check-port-in-use.js && yarn start:renderer",
-    "start:main": "cross-env NODE_ENV=development LD_LIBRARY_PATH=./Cpp/build electron -r ./.erb/scripts/babel-register ./src/main/main.ts",
+    "start:main": "cross-env NODE_ENV=development LD_LIBRARY_PATH=./Cpp/lib electron -r ./.erb/scripts/babel-register ./src/main/main.ts",
     "start:renderer": "cross-env NODE_ENV=development webpack serve --config ./.erb/configs/webpack.config.renderer.dev.babel.js",
     "test": "jest"
   },
@@ -83,11 +84,11 @@
       "category": "Development",
       "extraFiles": [
         {
-          "from": "./Cpp/install/so/libxulsword-static.so",
+          "from": "./Cpp/lib/libxulsword-static.so",
           "to": "libxulsword-static.so"
         },
         {
-          "from": "./Cpp/install/so/libstdc++.so.6",
+          "from": "./Cpp/lib/libstdc++.so.6",
           "to": "libstdc++.so.6"
         }
       ]

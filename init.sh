@@ -73,6 +73,12 @@ npm i --global yarn
 # be installed for libxulsword linking.
 if [ ! -e "$XULSWORD/Cpp/install" ]; then mkdir "$XULSWORD/Cpp/install"; fi
 if [ ! -e "$XULSWORD/Cpp/install.$XCWD" ]; then mkdir "$XULSWORD/Cpp/install.$XCWD"; fi
+
+# Create a local lib directory where libxulsword will be installed
+if [ ! -e "$XULSWORD/Cpp/lib" ]; then mkdir "$XULSWORD/Cpp/lib"; fi
+if [ ! -e "$XULSWORD/Cpp/lib.$XCWD" ]; then mkdir "$XULSWORD/Cpp/lib.$XCWD"; fi
+
+# Create an archive directory to cache source code
 ARCHIVEDIR="$XULSWORD/archive"
 if [ "$CONTEXT" = "xsguest" ]; then ARCHIVEDIR="/vagrant/archive"; fi
 if [ ! -e "$ARCHIVEDIR" ]; then mkdir "$ARCHIVEDIR"; fi
@@ -225,16 +231,23 @@ if [ ! -e "$XULSWORD/Cpp/build" ]; then
   cmake $DBG -D SWORD_NO_ICU="No" -D CMAKE_INCLUDE_PATH="$XULSWORD/Cpp/install/usr/local/include" -D CMAKE_LIBRARY_PATH="$XULSWORD/Cpp/install/usr/local/lib" ..
   make DESTDIR="$XULSWORD/Cpp/install" install
 
-  # Install the DLL and all ming dependencies beyond the node executable and strip them
-  SODIR="$XULSWORD/Cpp/install/so"
-  if [ -e "$SODIR" ]; then rm -rf "$SODIR"; fi
-  mkdir "$SODIR"
-  cp "$XULSWORD/Cpp/install/usr/local/lib/libxulsword-static.so" "$SODIR"
-  cp "/lib/x86_64-linux-gnu/libstdc++.so.6" "$SODIR"
+  # Install the DLL and all ming dependencies (those beyond the node executable) and strip them
+  LIBDIR="$XULSWORD/Cpp/lib"
+  if [ -e "$LIBDIR" ]; then rm -rf "$LIBDIR"; fi
+  mkdir "$LIBDIR"
+  cp "$XULSWORD/Cpp/install/usr/local/lib/libxulsword-static.so" "$LIBDIR"
+  cp "/lib/x86_64-linux-gnu/libstdc++.so.6" "$LIBDIR"
   if [ -z "$DBG" ]; then
-    strip "$SODIR/"*
+    strip "$LIBDIR/"*
   fi
-  chmod ugo+x "$SODIR/"*
+  chmod ugo+x "$LIBDIR/"*
+
+  # If this is Vagrant, then copy the finished library to the host machine
+  if [ "$CONTEXT" = "xsguest" ]; then
+    HLIBDIR="/vagrant/Cpp/lib"
+    if [ -e "$HLIBDIR" ]; then rm -rf "$HLIBDIR"; fi
+    cp -r "$LIBDIR" "$HLIBDIR"
+  fi
 fi
 # CROSS COMPILE LIBXULSWORD TO WINDOWS
 if [ ! -e "$XULSWORD/Cpp/build.$XCWD" ]; then
@@ -244,21 +257,29 @@ if [ ! -e "$XULSWORD/Cpp/build.$XCWD" ]; then
   make DESTDIR="$XULSWORD/Cpp/install.$XCWD" install
 
   # Install the DLL and all ming dependencies beyond the node executable and strip them
-  if [ -e "$DLLDIR" ]; then rm -rf "$DLLDIR"; fi
+  LIBDIR="$XULSWORD/Cpp/lib.$XCWD"
+  if [ -e "$LIBDIR" ]; then rm -rf "$LIBDIR"; fi
   GCCDLL=libgcc_s_seh-1.dll
   if [[ "$XCWD" == "32win" ]]; then
     GCCDLL=libgcc_s_sjlj-1.dll
   fi
-  mkdir "$DLLDIR"
-  cp "$XULSWORD/Cpp/install.$XCWD/usr/local/bin/libxulsword-static.dll" "$DLLDIR"
-  cp "/usr/lib/gcc/${TOOLCHAIN_PREFIX}/9.3-${GCCSTD}/$GCCDLL" "$DLLDIR"
-  cp "/usr/lib/gcc/${TOOLCHAIN_PREFIX}/9.3-${GCCSTD}/libstdc++-6.dll" "$DLLDIR"
-  cp "/usr/${TOOLCHAIN_PREFIX}/lib/libwinpthread-1.dll" "$DLLDIR"
+  mkdir "$LIBDIR"
+  cp "$XULSWORD/Cpp/install.$XCWD/usr/local/bin/libxulsword-static.dll" "$LIBDIR"
+  cp "/usr/lib/gcc/${TOOLCHAIN_PREFIX}/9.3-${GCCSTD}/$GCCDLL" "$LIBDIR"
+  cp "/usr/lib/gcc/${TOOLCHAIN_PREFIX}/9.3-${GCCSTD}/libstdc++-6.dll" "$LIBDIR"
+  cp "/usr/${TOOLCHAIN_PREFIX}/lib/libwinpthread-1.dll" "$LIBDIR"
   gendef - "$XULSWORD/Cpp/install.$XCWD/usr/local/bin/libxulsword-static.dll" > "$LIBXULSWORD/lib/libxulsword.def"
   if [ -z "$DBG" ]; then
-    strip "$DLLDIR/"*
+    strip "$LIBDIR/"*
   fi
-  chmod ugo+x "$DLLDIR/"*
+  chmod ugo+x "$LIBDIR/"*
+
+  # If this is Vagrant, then copy the finished library to the host machine
+  if [ "$CONTEXT" = "xsguest" ]; then
+    HLIBDIR="/vagrant/Cpp/lib.$XCWD"
+    if [ -e "$HLIBDIR" ]; then rm -rf "$HLIBDIR"; fi
+    cp -r "$LIBDIR" "$HLIBDIR"
+  fi
 fi
 
 # Now initialize node.js
