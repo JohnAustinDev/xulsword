@@ -118,8 +118,20 @@ export default class AboutWin extends React.Component implements ModinfoParent {
     const contributors: string[] =
       (G.Prefs.getComplexValue('Contributors') as string[]) || [];
 
+    const overlay = G.inlineFile(
+      `${G.Dirs.path.xsAsset}/splash-overlay-${i18n.language}.png`
+    );
+    const style = overlay ? (
+      <style>
+        {`html.${i18n.language} #layer2 {
+            background-image: url(${overlay});
+          }`}
+      </style>
+    ) : undefined;
+
     return (
       <Vbox id="mainbox">
+        {style}
         {!showModules && (
           <Hbox pack="center" align="center" flex="1">
             <Spacer orient="vertical" flex="1" />
@@ -134,7 +146,7 @@ export default class AboutWin extends React.Component implements ModinfoParent {
                     />
                     <Label
                       className="splash-text"
-                      value={i18n.t('producedBy')}
+                      value={i18n.t('producedBy', { ns: 'branding' })}
                     />
                   </Vbox>
                 </Hbox>

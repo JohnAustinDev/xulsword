@@ -129,7 +129,7 @@ ipcMain.handle('print-or-preview', MainPrintHandler);
 
 const openMainWindow = () => {
   let options: Electron.BrowserWindowConstructorOptions = {
-    title: i18n.t('programTitle'),
+    title: i18n.t('programTitle', { ns: 'branding' }),
     fullscreenable: true,
     ...C.UI.Window.large,
   };

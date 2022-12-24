@@ -112,7 +112,7 @@ async function i18nInit(namespaces: string[]) {
       supportedLngs: supportedLangs,
       preload: supportedLangs,
 
-      ns: namespaces.concat(['common/books', 'common/numbers']),
+      ns: namespaces.concat(['common/books', 'common/numbers', 'branding']),
 
       debug: C.isDevelopment,
 

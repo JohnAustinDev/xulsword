@@ -79,7 +79,7 @@ export function builtinRepos(): Repository[] {
       custom: false,
     },
     {
-      name: i18n.t('programTitle'),
+      name: i18n.t('programTitle', { ns: 'branding' }),
       domain: 'file://',
       path: G.Dirs.path.xsModsUser,
       builtin: true,
