@@ -31,7 +31,7 @@ connection.
 - Recursive popup windows. Dictionary links, cross references, footnotes
   and more appear in multilevel popup windows that allow instant access to a
   variety of information without necessitating a complex user interface layout.
-- Bible texts and footnotes can include quick links to associated dictionaries,
+- Bible texts and footnotes include quick links to associated dictionaries,
   including pictures, maps and tables.
 - Bookmark and personal annotation features.
 - Integrated audio. Allows you to listen to the Bible and read along.
@@ -44,29 +44,33 @@ connection.
 
 # Build Instructions
 
-A working build has two parts: a NodeJS project and a native libxulsword C++ library.
+A working build has two parts: a Node.js project and a native libxulsword C++ library.
 First download Boost 1.80.0 from https://www.boost.org/users/download/ and place it in
 the `xulsword/archive` directory (boost doesn't support scripted downloads).
 
-**NodeJS Project**: Install nvm on Linux, Windows or Mac and use yarn to build the
-NodeJS project. After the libxulsword C++ addon has been built or otherwise placed in the
+**IMPORTANT**: Each time you open a shell to build xulsword, set its environment variables 
+by running `source ./setenv`, otherwise the build will fail.
+
+**Node.js Project**: Install nvm on Linux, Windows or Mac and use yarn to build the
+Node.js project. After the libxulsword C++ library has been built or otherwise placed in the
 Cpp/lib directory (see below) install it with `yarn install`. Then start xulsword with
 `yarn start`.
 
 **Libxulsword C++ Addon**: Install VirtualBox and Vagrant on Linux, Windows or Mac, and
-run `vagrant up`. The native addon shared library for each operating system will eventually
-appear in the appropriate xulsword/Cpp/lib directory. The shared library for your operating
-system can then be installed with `yarn install`.
+run `vagrant up`. The Node.js native addon's shared library for each operating system will 
+eventually appear in the appropriate xulsword/Cpp/lib directory. The shared library for your 
+particular operating system should then be installed with `yarn install`.
 
 ---
 
 # Packaging Instructions
 
-Once the project has been built (see above) packaged applications for each operating system can be
+Once the project has been built (see above) packaged applications for each operating system are
 built with:
-`yarn package-linux`
-`yarn package-32win`
-`yarn package-64win`
+
+    yarn package-linux
+    yarn package-32win
+    yarn package-64win
 
 ---
 
