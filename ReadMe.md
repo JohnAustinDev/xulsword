@@ -11,10 +11,10 @@ connection.
 
 ## Distinctives include:
 
-- Direct text download. Easily download thousands of texts in hundreds of 
-  languages with the "Add New Module" interface (located under the File menu, 
-  or else just press F2). In addition to Bibles, also commentaries, glossaries, 
-  books and devotionals can be installed and used offline without an Internet 
+- Direct text download. Easily download thousands of texts in hundreds of
+  languages with the "Add New Module" interface (located under the File menu,
+  or else just press F2). In addition to Bibles, also commentaries, glossaries,
+  books and devotionals can be installed and used offline without an Internet
   connection.
 - Complete internationalization including right-to-left languages.
 - Very readable texts. Texts can be nicely formatted to appear on screen
@@ -37,39 +37,34 @@ connection.
 - Integrated audio. Allows you to listen to the Bible and read along.
   Export audio for other uses, such as mp3 players.
 - Secure texts. Texts can be encrypted to prevent tampering.
-- Built using the most popular Open Source technologies available as of 2023,
+- Built using the most popular Open Source technologies as of 2023,
   to make xulsword freely available for years to come.
 
 ---
 
 # Build Instructions
 
-A working build has two parts: a Node.js project and a native libxulsword C++ library as
-a Node.js addon. First download Boost 1.80.0 from https://www.boost.org/users/download/ and 
-place it in the `xulsword/archive` directory (boost doesn't support scripted downloads).
+The build has two parts: a Node.js project and a native libxulsword C++ library.
 
-**IMPORTANT**: Each time you open a shell to build xulsword, set its environment variables 
+**IMPORTANT**: Each time you open a shell to build xulsword, set its environment variables
 by running `source ./setenv`, otherwise builds will fail.
 
-**Node.js Project**: Install nvm on Linux, Windows or Mac and use yarn to build the
-Node.js project. After the libxulsword C++ library has been built or otherwise placed in the
-Cpp/lib directory (see below) install it with `yarn installLXS`. Then start xulsword with
-`yarn start`.
+1. Install nvm on Linux, Windows or Mac.
+2. Use nvm to select Node version 16.14.0
+3. Run `source ./setenv` to set environment variables.
+4. Download Boost 1.80.0 from https://www.boost.org/users/download/ and place it in the `xulsword/archive` directory (boost doesn't support scripted downloads).
+5. Install VirtualBox and Vagrant, and run `vagrant up`. The Node.js native addon's shared library for each operating system will eventually appear in the appropriate xulsword/Cpp/lib directory. Install the shared library for your particular operating system by running `yarn installLXS`.
+6. Run `yarn` to install all dependencies for the the Node.js project.
+7. Start xulsword with `yarn start`.
 
-**Libxulsword C++ Addon**: Install VirtualBox and Vagrant on Linux, Windows or Mac, and
-run `vagrant up`. The Node.js native addon's shared library for each operating system will 
-eventually appear in the appropriate xulsword/Cpp/lib directory. The shared library for your 
-particular operating system should then be installed with `yarn installLXS`.
-
-When the libxulsword interface changes, the Node.js libxulsword addon will need to be 
-recompiled for each operating system, and committed to git. See the libxulsword Readme.
+**NOTE:** When the libxulsword interface changes, the Node.js libxulsword addon will need to be
+recompiled for each operating system, and the addon then committed to git. See libxulsword ReadMe.
 
 ---
 
 # Packaging Instructions
 
-Once the project has been built (see above) packaged applications for each operating system are
-built with:
+Packaged applications for each operating system are created with:
 
     yarn package-linux
     yarn package-32win

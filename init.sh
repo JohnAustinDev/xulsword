@@ -285,3 +285,10 @@ fi
 # Now initialize node.js
 cd "$XULSWORD"
 yarn
+
+# If this is Vagrant then copy node_modules to host to save download time
+if [ "$CONTEXT" = "xsguest" ]; then
+  if [ ! -e "/vagrant/node_modules" ]; then
+    cp -r "$XULSWORD/node_modules" "/vagrant"
+  fi
+fi
