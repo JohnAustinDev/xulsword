@@ -13,32 +13,35 @@ connection.
 
 - Direct text download. Easily download thousands of texts in hundreds of
   languages with the "Add New Module" interface (located under the File menu,
-  or else just press F2). In addition to Bibles, also commentaries, glossaries,
-  books and devotionals can be installed and used offline without an Internet
-  connection.
-- Complete internationalization including right-to-left languages.
-- Very readable texts. Texts can be nicely formatted to appear on screen
-  the way they look in printed form. Text flows from column to column. Font,
-  font size, line spacing etc are adjustable for each text.
-- Easy Bible browsing. Go to any heading in the entire Bible with a
-  single click using a Bible navigator widget which also gives a visual
-  representation of the Bible.
-- Print capability. A powerful print feature allows Bible texts and
-  related information to be easily printed, and includes print preview.
+  or else just press F2).
+- Original language study features. Gain deeper understanding of any Bible
+  translation through comparison to ancient original language texts and
+  instant concordance lookup.
 - Comprehensive and lighting fast search capability. The indexed C++ search
   engine works without Internet and enables you to dig deep into God's Word.
-- Parallel and interlinear version display with original languages.
+- Commentaries, glossaries, books and study materials in many languages can be
+  freely downloaded and installed for offline use.
+- Complete internationalization including right-to-left languages.
+- Very readable texts. Formatted texts are displayed on screen the way they look
+  in printed form. Text flows from column to column. Font, font size, line
+  spacing etc. are adjustable for each text.
+- Easy Bible browsing. Instantly jump to any heading in the entire Bible with a
+  single click using a Bible navigator widget which also gives a visual
+  representation of the Bible.
+- Print capability. Powerful print features allow Bible texts and
+  related information to be easily printed, and includes print preview.
 - Recursive popup windows. Dictionary links, cross references, footnotes
-  and more appear in multilevel popup windows that allow instant access to a
-  variety of information without necessitating a complex user interface layout.
+  and more appear in recursive popup windows that allow instant access to a
+  variety of information without necessitating a complex user interface.
 - Bible texts and footnotes include quick links to associated dictionaries,
   including pictures, maps and tables.
 - Bookmark and personal annotation features.
-- Integrated audio. Allows you to listen to the Bible and read along.
-  Export audio for other uses, such as mp3 players.
+- Integrated audio. Allows you to listen to the Bible and read along. Export
+  audio for other uses, such as mp3 players.
 - Secure texts. Texts can be encrypted to prevent tampering.
-- Built using the most popular Open Source technologies as of 2023,
-  to make xulsword freely available for years to come.
+- Open Source software technology. Xulsword was developed using the most popular
+  Open Source technologies as of 2023 so it will be freely available for years to
+  come.
 
 ---
 
@@ -46,19 +49,23 @@ connection.
 
 The build has two parts: a Node.js project and a native libxulsword C++ library.
 
-**IMPORTANT**: Each time you open a shell to build xulsword, set its environment variables
-by running `source ./setenv`, otherwise builds will fail.
+**Important**: Each time you open a shell to build xulsword, environment variables
+must first be set by running `source ./setenv`.
 
 1. Install nvm on Linux, Windows or Mac.
 2. Use nvm to select Node version 16.14.0
 3. Run `source ./setenv` to set environment variables.
-4. Download Boost 1.80.0 from https://www.boost.org/users/download/ and place it in the `xulsword/archive` directory (boost doesn't support scripted downloads).
-5. Install VirtualBox and Vagrant, and run `vagrant up`. The Node.js native addon's shared library for each operating system will eventually appear in the appropriate xulsword/Cpp/lib directory. Install the shared library for your particular operating system by running `yarn installLXS`.
-6. Run `yarn` to install all dependencies for the the Node.js project.
-7. Start xulsword with `yarn start`.
+4. Build the native libxulsword C++ addon for your system:
+5. Download Boost 1.80.0 from https://www.boost.org/users/download/ and place it in
+   `xulsword/archive` directory (boost doesn't support scripted downloads).
+6. Install VirtualBox and Vagrant, and run `vagrant up`. Native libraries for each system
+   will eventually appear in the Cpp/lib directories.
+7. Install the shared library for your particular operating system by running `yarn installLXS`.
+8. Run `yarn` to install dependencies for the the Node.js project.
+9. Start xulsword with `yarn start`.
 
 **NOTE:** When the libxulsword interface changes, the Node.js libxulsword addon will need to be
-recompiled for each operating system, and the addon then committed to git. See libxulsword ReadMe.
+recompiled for each operating system, and the addon committed to git. See libxulsword ReadMe.
 
 ---
 

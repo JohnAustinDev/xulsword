@@ -39,8 +39,11 @@ PKG_DEPS="$PKG_DEPS debhelper libboost-dev"
 # for VM build
 if [ "$CONTEXT" = "xsguest" ]; then PKG_DEPS="$PKG_DEPS libxshmfence1 libglu1 libnss3-dev libgdk-pixbuf2.0-dev libgtk-3-dev libxss-dev libasound2"; fi
 
-# BUID DEPENDENCIES (for cross compiling libxulsword as a Windows dll)
+# BUILD DEPENDENCIES (for cross compiling libxulsword as a Windows dll)
 PKG_DEPS="$PKG_DEPS mingw-w64 mingw-w64-tools wine wine32-preloader"
+
+# BUILD DEPENDENCIES (for cross compiling libxulsword as MacOS dylib)
+# PKG_DEPS="$PKG_DEPS llvm-12 llvm-12-linker-tools llvm-12-tools clang-12 lldb-12 lld-12"
 
 if [ $(dpkg -s $PKG_DEPS 2>&1 | grep "not installed" | wc -m) -ne 0 ]; then
   if [ "$CONTEXT" = "xsguest" ]; then
