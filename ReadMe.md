@@ -11,11 +11,11 @@ connection.
 
 ## Distinctives include:
 
-- Direct text download. Allows easy download of thousands of texts in
-  hundreds of languages with the "Add New Module" interface (located under
-  the File menu, or else just press F2). In addition to Bibles, also
-  commentaries, glossaries, books and devotionals can be installed and used
-  offline without an Internet connection.
+- Direct text download. Easily download thousands of texts in hundreds of 
+  languages with the "Add New Module" interface (located under the File menu, 
+  or else just press F2). In addition to Bibles, also commentaries, glossaries, 
+  books and devotionals can be installed and used offline without an Internet 
+  connection.
 - Complete internationalization including right-to-left languages.
 - Very readable texts. Texts can be nicely formatted to appear on screen
   the way they look in printed form. Text flows from column to column. Font,
@@ -44,22 +44,25 @@ connection.
 
 # Build Instructions
 
-A working build has two parts: a Node.js project and a native libxulsword C++ library.
-First download Boost 1.80.0 from https://www.boost.org/users/download/ and place it in
-the `xulsword/archive` directory (boost doesn't support scripted downloads).
+A working build has two parts: a Node.js project and a native libxulsword C++ library as
+a Node.js addon. First download Boost 1.80.0 from https://www.boost.org/users/download/ and 
+place it in the `xulsword/archive` directory (boost doesn't support scripted downloads).
 
 **IMPORTANT**: Each time you open a shell to build xulsword, set its environment variables 
-by running `source ./setenv`, otherwise the build will fail.
+by running `source ./setenv`, otherwise builds will fail.
 
 **Node.js Project**: Install nvm on Linux, Windows or Mac and use yarn to build the
 Node.js project. After the libxulsword C++ library has been built or otherwise placed in the
-Cpp/lib directory (see below) install it with `yarn install`. Then start xulsword with
+Cpp/lib directory (see below) install it with `yarn installLXS`. Then start xulsword with
 `yarn start`.
 
 **Libxulsword C++ Addon**: Install VirtualBox and Vagrant on Linux, Windows or Mac, and
 run `vagrant up`. The Node.js native addon's shared library for each operating system will 
 eventually appear in the appropriate xulsword/Cpp/lib directory. The shared library for your 
-particular operating system should then be installed with `yarn install`.
+particular operating system should then be installed with `yarn installLXS`.
+
+When the libxulsword interface changes, the Node.js libxulsword addon will need to be 
+recompiled for each operating system, and committed to git. See the libxulsword Readme.
 
 ---
 

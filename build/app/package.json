@@ -10,12 +10,12 @@
     "url": "https://github.com/JohnAustinDev/xulsword"
   },
   "scripts": {
-    "electron-rebuild": "node -r ../../.erb/scripts/babel-register.js ../../.erb/scripts/electron-rebuild.js",
     "link-modules": "node -r ../../.erb/scripts/babel-register.js ../../.erb/scripts/link-modules.js",
-    "postinstall": "yarn electron-rebuild && yarn link-modules"
+    "postinstall": "yarn link-modules"
   },
   "license": "MIT",
   "dependencies": {
-    "libxulsword": "./node_modules/libxulsword"
+    "libxulsword": "./node_modules/libxulsword",
+    "bindings": "~1.2.1"
   }
 }
