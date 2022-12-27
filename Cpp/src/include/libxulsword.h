@@ -47,7 +47,6 @@ DLLEXPORT const char *GetDictionaryEntry(const char *lexdictmod, const char *key
 DLLEXPORT const char *GetAllDictionaryKeys(const char *lexdictmod);
 DLLEXPORT const char *GetGenBookChapterText(const char *gbmod, const char *treekey);
 DLLEXPORT const char *GetGenBookTableOfContents(const char *gbmod);
-DLLEXPORT const char *GetGenBookTableOfContentsJSON(const char *gbmod);
 DLLEXPORT bool LuceneEnabled(const char *mod);
 DLLEXPORT int Search(const char *mod, const char *srchstr, const char *scope, int type, int flags, bool newsearch);
 DLLEXPORT const char *GetSearchResults(const char *mod, int first, int num, bool keepStrongs);

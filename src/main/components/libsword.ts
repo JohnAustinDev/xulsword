@@ -369,7 +369,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   },
 
   // getGenBookTableOfContents
-  // Returns table of contents RDF code for GenBook module Gbmod.
+  // Returns table of contents JSON code for GenBook module Gbmod.
   // Returns an error if module Gbmod is not a TreeKey mod.
   getGenBookTableOfContents(gbmod: string): string {
     if (this.isReady(true)) {

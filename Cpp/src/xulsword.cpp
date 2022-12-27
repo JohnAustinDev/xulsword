@@ -251,52 +251,6 @@ int xulsword::textToMaxVerse(const char *vkeytext, VerseKey *vkey) {
 
 
 /********************************************************************
-getFolderContents
-*********************************************************************/
-#define ROOTRDF "http://www.xulsword.com/tableofcontents/ContentsRoot"
-void xulsword::getFolderContents(TreeKey *key, const char *modname, SWBuf *retval) {
-  retval->setFormatted("\t<RDF:Seq RDF:about=\"rdf:#/%s%s\">\n", modname, key->getText());
-
-  SWBuf subfolders;
-  SWBuf descriptions;
-
-  bool ok;
-  bool isChild=false;
-  for (ok = key->firstChild(); ok; ok = key->nextSibling()) {
-    isChild=true;
-    retval->appendFormatted("\t\t<RDF:li RDF:resource=\"rdf:#/%s%s\" />\n", modname, key->getText());
-
-    descriptions.appendFormatted("\
-    \t<RDF:Description RDF:about=\"rdf:#/%s%s\" \
-    \n\t\t\tTABLEOFCONTENTS:Chapter=\"rdf:#/%s%s\" \
-    \n\t\t\tTABLEOFCONTENTS:Type=\"%s\" \
-    \n\t\t\tTABLEOFCONTENTS:Name=\"%s\" \
-    \n\t\t\tTABLEOFCONTENTS:Module=\"%s\" />\n",
-          modname,
-          key->getText(),
-          modname,
-          key->getText(),
-          (key->hasChildren() ? "folder":"key"),
-          key->getLocalName(),
-          modname);
-
-    if (key->hasChildren()) {
-      SWBuf save = key->getLocalName();
-      SWBuf subf;
-      getFolderContents(key, modname, &subf);
-      subfolders.append(subf);
-      key->setLocalName(save);
-    }
-  }
-  if (isChild) {key->parent();}
-
-  retval->append("\t</RDF:Seq>\n\n");
-  retval->append(descriptions.c_str());
-  retval->append(subfolders.c_str());
-}
-
-
-/********************************************************************
 updateGlobalOptions
 *********************************************************************/
 void xulsword::updateGlobalOptions(bool disableFootCrossRed) {
@@ -1496,14 +1450,13 @@ const char *xulsword::getGenBookChapterText(const char *gbmod, const char *treek
   return ResultBuf.c_str();
 }
 
-
 /********************************************************************
 GetGenBookTableOfContents
 *********************************************************************/
 const char *xulsword::getGenBookTableOfContents(const char *gbmod) {
   SWModule * module = MyManager->getModule(gbmod);
   if (!module) {
-    xsThrow("GetGenBookTableOfContents: module \"%s\" not found.", gbmod);
+    xsThrow("getGenBookTableOfContents: module \"%s\" not found.", gbmod);
     return NULL;
   }
 
@@ -1511,56 +1464,7 @@ const char *xulsword::getGenBookTableOfContents(const char *gbmod) {
   TreeKey *key = SWDYNAMIC_CAST(TreeKey, testkey);
   if (!key) {
     delete(testkey);
-    xsThrow("GetGenBookTableOfContents: module \"%s\" is not a General-Book.", gbmod);
-    return NULL;
-  }
-
-  SWBuf toc;
-  // xulSword requires the following header for the RDF file
-  toc.set("<?xml version=\"1.0\"?>\n\n<RDF:RDF xmlns:TABLEOFCONTENTS=\"http://www.xulsword.com/tableofcontents/rdf#\" \n\t\txmlns:NC=\"http://home.netscape.com/NC-rdf#\" \n\t\txmlns:RDF=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\">\n\n");
-
-  // xulSword requires a table of contents having a single folder with name of the module
-  toc.appendFormatted("\t<RDF:Bag RDF:about=\"rdf:#%s\">\n\t\t<RDF:li RDF:resource=\"rdf:#/%s\" />\n\t</RDF:Bag>\n\n",
-        ROOTRDF,
-        gbmod);
-
-  // describe and create the root itself...
-  key->root();
-  toc.appendFormatted("\t<RDF:Description RDF:about=\"rdf:#/%s\" \n\t\t\tTABLEOFCONTENTS:Chapter=\"rdf:#/%s\" \n\t\t\tTABLEOFCONTENTS:Type=\"folder\" \n\t\t\tTABLEOFCONTENTS:Name=\"%s\" />\n",
-        gbmod,
-        key->getText(),
-        gbmod);
-
-  // fill the root folder with everything else...
-  SWBuf body;
-  getFolderContents(key, gbmod, &body);
-  toc.append(body);
-
-  toc.append("</RDF:RDF>");
-
-  delete(testkey);
-
-  SWBuf check = assureValidUTF8(toc.c_str());
-  ResultBuf.set(check.c_str());
-  return ResultBuf.c_str();
-}
-
-
-/********************************************************************
-GetGenBookTableOfContentsJSON
-*********************************************************************/
-const char *xulsword::getGenBookTableOfContentsJSON(const char *gbmod) {
-  SWModule * module = MyManager->getModule(gbmod);
-  if (!module) {
-    xsThrow("GetGenBookTOC: module \"%s\" not found.", gbmod);
-    return NULL;
-  }
-
-  SWKey *testkey = module->createKey();
-  TreeKey *key = SWDYNAMIC_CAST(TreeKey, testkey);
-  if (!key) {
-    delete(testkey);
-    xsThrow("GetGenBookTOC: module \"%s\" is not a General-Book.", gbmod);
+    xsThrow("getGenBookTableOfContents: module \"%s\" is not a General-Book.", gbmod);
     return NULL;
   }
 

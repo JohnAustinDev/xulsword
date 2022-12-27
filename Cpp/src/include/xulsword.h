@@ -122,7 +122,6 @@ class xulsword {
   int locationToVerseKey(const char *locationText, VerseKey *vk);
   int textToMaxChapter(const char *vkeytext, VerseKey *vkey);
   int textToMaxVerse(const char *vkeytext, VerseKey *vkey);
-  void getFolderContents(TreeKey *key, const char *modname, SWBuf *retval);
   virtual void updateGlobalOptions(bool disableFootCrossRed);
   void mapVersifications(VerseKey *vkin, VerseKey *vkout);
   const char *getBookName(SWBuf *Chapter);
@@ -156,7 +155,6 @@ class xulsword {
   const char *getAllDictionaryKeys(const char *lexdictmod);
   const char *getGenBookChapterText(const char *gbmod, const char *treekey);
   const char *getGenBookTableOfContents(const char *gbmod);
-  const char *getGenBookTableOfContentsJSON(const char *gbmod);
   bool  luceneEnabled(const char *mod);
   int   search(const char *mod, const char *srchstr, const char *scope, int type, int flags, bool newsearch);
   const char *getSearchResults(const char *mod, int first, int num, bool keepStrongs, ListKey *searchPointer = NULL, bool referencesOnly = false);

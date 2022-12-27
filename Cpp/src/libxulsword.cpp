@@ -118,10 +118,6 @@ const char *GetGenBookTableOfContents(const char *gbmod) {
   return my_xulsword->getGenBookTableOfContents(gbmod);
 }
 
-const char *GetGenBookTableOfContentsJSON(const char *gbmod) {
-  return my_xulsword->getGenBookTableOfContentsJSON(gbmod);
-}
-
 bool LuceneEnabled(const char *mod) {
   return my_xulsword->luceneEnabled(mod);
 }

@@ -17,7 +17,6 @@ export CPP="$XULSWORD/Cpp"
 # If this is a guest VM, then copy host code to VM and build
 # everything within the VM so as not to modify any host build files.
 if [ "$CONTEXT" = "xsguest" ]; then
-  if [ -e "$XULSWORD" ]; then rm -rf "$XULSWORD/*"; fi
   if [ ! -e "$XULSWORD" ]; then mkdir -p "$XULSWORD"; fi
   cd /vagrant
   git ls-files | tar -czf "$XULSWORD/archive.tgz" -T -

@@ -44,6 +44,35 @@
       "package.json"
     ],
     "afterSign": ".erb/scripts/notarize.js",
+    "directories": {
+      "app": "build/app",
+      "buildResources": "assets",
+      "output": "build/release"
+    },
+    "extraResources": [
+      "./assets/**"
+    ],
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "category": "Education",
+      "extraFiles": [
+        {
+          "from": "./Cpp/lib/libxulsword-static.so",
+          "to": "libxulsword-static.so"
+        },
+        {
+          "from": "./Cpp/lib/libstdc++.so.6",
+          "to": "libstdc++.so.6"
+        }
+      ]
+    },
+    "win": {
+      "target": [
+        "portable"
+      ]
+    },
     "mac": {
       "type": "distribution",
       "hardenedRuntime": true,
@@ -70,36 +99,7 @@
           "path": "/Applications"
         }
       ]
-    },
-    "win": {
-      "target": [
-        "portable"
-      ]
-    },
-    "linux": {
-      "target": [
-        "AppImage"
-      ],
-      "category": "Development",
-      "extraFiles": [
-        {
-          "from": "./Cpp/lib/libxulsword-static.so",
-          "to": "libxulsword-static.so"
-        },
-        {
-          "from": "./Cpp/lib/libstdc++.so.6",
-          "to": "libstdc++.so.6"
-        }
-      ]
-    },
-    "directories": {
-      "app": "build/app",
-      "buildResources": "assets",
-      "output": "build/release"
-    },
-    "extraResources": [
-      "./assets/**"
-    ]
+    }
   },
   "repository": {
     "type": "git",
@@ -120,6 +120,7 @@
     "url": "https://github.com/JohnAustinDev/xulsword/issues"
   },
   "keywords": [
+    "bible",
     "electron",
     "react"
   ],

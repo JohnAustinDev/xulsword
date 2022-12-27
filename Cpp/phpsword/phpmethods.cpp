@@ -259,21 +259,6 @@ PHP_METHOD(phpsword, getGenBookTableOfContents)
   RETURN_EMPTY_STRING();
 }
 
-PHP_METHOD(phpsword, getGenBookTableOfContentsJSON)
-{
-  xulsword *sword;
-  sword_object *obj = Z_SWORD;
-  sword = obj->sword;
-  if (sword != NULL) {
-    char *gbmod; size_t l1;
-    if (zend_parse_parameters_throw(ZEND_NUM_ARGS() TSRMLS_CC, "s", &gbmod, &l1) != FAILURE) {
-      char *ret = sword->getGenBookTableOfContentsJSON(gbmod);
-      if (ret) {RETURN_STRING(ret);}
-    }
-  }
-  RETURN_EMPTY_STRING();
-}
-
 PHP_METHOD(phpsword, luceneEnabled)
 {
   xulsword *sword;
@@ -437,7 +422,6 @@ static const zend_function_entry sword_methods[] = {
     PHP_ME(phpsword,  getAllDictionaryKeys,          NULL, ZEND_ACC_PUBLIC)
     PHP_ME(phpsword,  getGenBookChapterText,         NULL, ZEND_ACC_PUBLIC)
     PHP_ME(phpsword,  getGenBookTableOfContents,     NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(phpsword,  getGenBookTableOfContentsJSON, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(phpsword,  luceneEnabled,                 NULL, ZEND_ACC_PUBLIC)
     PHP_ME(phpsword,  search,                        NULL, ZEND_ACC_PUBLIC)
     PHP_ME(phpsword,  getSearchResults,              NULL, ZEND_ACC_PUBLIC)
