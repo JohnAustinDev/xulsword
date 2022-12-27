@@ -54,13 +54,11 @@ must first be set by running `source ./setenv`.
 2. Use nvm to select Node version 18.12.1
 3. Run `source ./setenv` to set environment variables.
 4. Build the native libxulsword C++ addon for your system:
-5. Download Boost 1.80.0 from https://www.boost.org/users/download/ and place it in
-   `xulsword/archive` directory (boost doesn't support scripted downloads).
-6. Install VirtualBox and Vagrant, and run `vagrant up`. Native libraries for each system
-   will eventually appear in the Cpp/lib directories.
-7. Install the shared library for your particular operating system by running `yarn installLXS`.
-8. Run `yarn` to install dependencies for the the Node.js project.
-9. Start xulsword with `yarn start`.
+  * Download Boost 1.80.0 from https://www.boost.org/users/download/ and place it in `xulsword/archive` directory (boost doesn't support scripted downloads).
+  * Install VirtualBox and Vagrant, and run `vagrant up`. Native libraries for each system will eventually appear in the Cpp/lib directories.
+  * Install the shared library for your particular operating system by running `yarn installLXS`.
+5. Run `yarn` to install Node.js dependencies.
+6. Start xulsword with `yarn start`.
 
 **NOTE:** When the libxulsword interface changes, the Node.js libxulsword addon will need to be
 recompiled for each operating system, and the addon committed to git. See libxulsword ReadMe.
