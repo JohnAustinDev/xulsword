@@ -431,7 +431,9 @@ export function getCipherFailConfs() {
     .map((v) => {
       const f = new LocalFile(v.confPath);
       return (
-        (f.exists() && !f.isDirectory() && parseSwordConf(f, f.leafName)) ||
+        (f.exists() &&
+          !f.isDirectory() &&
+          parseSwordConf(i18n, f, f.leafName)) ||
         null
       );
     })
@@ -444,7 +446,7 @@ export function getSwordConf(): { [mod: string]: SwordConfType } {
     if (t.module && t.confPath) {
       const f = new LocalFile(t.confPath);
       if (f.exists()) {
-        swordConf[t.module] = parseSwordConf(f, f.leafName);
+        swordConf[t.module] = parseSwordConf(i18n, f, f.leafName);
       }
     }
   });
@@ -474,7 +476,7 @@ export function verseKey(
   options?: RefParserOptionsType
 ): VerseKey {
   return new VerseKey(
-    new RefParser(options),
+    new RefParser(i18n, options),
     getBkChsInV11n(),
     {
       convertLocation: (

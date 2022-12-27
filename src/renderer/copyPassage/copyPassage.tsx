@@ -7,7 +7,6 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable react/static-property-placement */
 import React, { ReactElement } from 'react';
-import i18n from 'i18next';
 import G from '../rg';
 import renderToRoot from '../renderer';
 import log from '../log';
@@ -63,7 +62,7 @@ export default class CopyPassageWin extends React.Component {
   }
 
   render() {
-
+    return <></>;
   }
 }
 CopyPassageWin.defaultProps = defaultProps;

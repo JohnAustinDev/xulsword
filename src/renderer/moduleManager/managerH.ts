@@ -2,7 +2,6 @@
 /* eslint-disable no-nested-ternary */
 /* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable import/no-duplicates */
-import i18n from 'i18next';
 import { Intent } from '@blueprintjs/core';
 import { Utils } from '@blueprintjs/table';
 import {
@@ -67,7 +66,7 @@ export const Saved = {
 };
 
 // These local repositories cannot be disabled, deleted or changed.
-// Implemented as a function to allow i18n to initialize.
+// Implemented as a function to allow G.i18n to initialize.
 export function builtinRepos(): Repository[] {
   return [
     {
@@ -79,7 +78,7 @@ export function builtinRepos(): Repository[] {
       custom: false,
     },
     {
-      name: i18n.t('programTitle', { ns: 'branding' }),
+      name: G.i18n.t('programTitle', { ns: 'branding' }),
       domain: 'file://',
       path: G.Dirs.path.xsModsUser,
       builtin: true,
@@ -87,7 +86,7 @@ export function builtinRepos(): Repository[] {
       custom: false,
     },
     {
-      name: i18n.t('audio.label'),
+      name: G.i18n.t('audio.label'),
       domain: 'file://',
       path: G.Dirs.path.xsAudio,
       builtin: true,
@@ -103,7 +102,7 @@ export function ModuleTableHeadings() {
   return [
     '',
     '',
-    i18n.t('name.label'),
+    G.i18n.t('name.label'),
     'Repository',
     'Version',
     'Size',
@@ -1264,7 +1263,7 @@ export function checkForModuleUpdates(
     const rn = mud.to.repo.name;
     const reponame =
       rn && rn.includes(' | ')
-        ? rn.split(' | ')[i18n.language === 'ru' ? 1 : 0]
+        ? rn.split(' | ')[G.i18n.language === 'ru' ? 1 : 0]
         : rn || '';
     const history =
       mud.to.conf.History?.filter(
@@ -1280,7 +1279,7 @@ export function checkForModuleUpdates(
         onClick: () => {
           mud.install = true;
         },
-        text: i18n.t('yes.label'),
+        text: G.i18n.t('yes.label'),
       },
       onDismiss: () =>
         setTimeout(() => {

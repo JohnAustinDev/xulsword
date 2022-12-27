@@ -7,7 +7,6 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import i18next from 'i18next';
 import RefParser from '../../refparse';
 import G from '../rg';
 import {
@@ -87,8 +86,8 @@ class Bookselect extends React.Component {
 
     // noVariations is important for autocomplete because some
     // variations are short abbreviations.
-    this.parser = new RefParser({
-      locales: [i18next.language],
+    this.parser = new RefParser(G.i18n, {
+      locales: [G.i18n.language],
       noVariations: true,
     });
 

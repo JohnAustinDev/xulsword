@@ -2,7 +2,6 @@
 /* eslint-disable no-nested-ternary */
 /* eslint-disable no-bitwise */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import i18n from 'i18next';
 import C from './constant';
 import Cache from './cache';
 
@@ -19,6 +18,7 @@ import type {
   NewModuleReportType,
   HTTPDownload,
   QuerablePromise,
+  GType,
 } from './type';
 import type LocalFile from './main/components/localFile';
 
@@ -362,7 +362,10 @@ export function isASCII(text: string) {
 }
 
 // converts any normal digits in a string or number into localized digits
-function getLocalizedNumerals(locale: string): string[] | null {
+function getLocalizedNumerals(
+  i18n: GType['i18n'],
+  locale: string
+): string[] | null {
   if (!Cache.has('locnums', locale)) {
     let l = null;
     const toptions = { lng: locale, ns: 'common/numbers' };
@@ -383,9 +386,13 @@ function getLocalizedNumerals(locale: string): string[] | null {
   return Cache.read('locnums', locale);
 }
 
-export function dString(string: string | number, locale?: string) {
+export function dString(
+  i18n: GType['i18n'],
+  string: string | number,
+  locale?: string
+) {
   const loc = locale || i18n.language;
-  const l = getLocalizedNumerals(loc);
+  const l = getLocalizedNumerals(i18n, loc);
   let s = string.toString();
   if (l !== null) {
     for (let i = 0; i <= 9; i += 1) {
@@ -396,9 +403,13 @@ export function dString(string: string | number, locale?: string) {
 }
 
 // converts any localized digits in a string into ASCII digits
-export function iString(locstring: string | number, locale?: string) {
+export function iString(
+  i18n: GType['i18n'],
+  locstring: string | number,
+  locale?: string
+) {
   const loc = locale || i18n.language;
-  const l = getLocalizedNumerals(loc);
+  const l = getLocalizedNumerals(i18n, loc);
   let s = locstring.toString();
   if (l !== null) {
     for (let i = 0; i <= 9; i += 1) {
@@ -409,6 +420,7 @@ export function iString(locstring: string | number, locale?: string) {
 }
 
 export function getLocalizedChapterTerm(
+  i18n: GType['i18n'],
   book: string,
   chapter: number,
   locale: string
@@ -416,7 +428,7 @@ export function getLocalizedChapterTerm(
   const k1 = `${book}_Chaptext`;
   const k2 = 'Chaptext';
   const toptions = {
-    v1: dString(chapter, locale),
+    v1: dString(i18n, chapter, locale),
     lng: locale,
     ns: 'common/books',
   };
@@ -462,6 +474,7 @@ export function getCSS(
 // Return a SwordConfType object from a config LocalFile, or else from
 // the string contents of a config file plus the config file's name.
 export function parseSwordConf(
+  i18next: GType['i18n'],
   config: string | LocalFile,
   filename: string
 ): SwordConfType {
@@ -534,7 +547,7 @@ export function parseSwordConf(
             const eold = r.History.find((y) => y[0] === version);
             const enew = eold || [version as string, {}];
             enew[1][loc || 'en'] = value;
-            if (loc === i18n.language || (loc === 'en' && !enew[1].locale))
+            if (loc === i18next.language || (loc === 'en' && !enew[1].locale))
               enew[1].locale = value;
             if (!eold) r.History.push(enew);
           }
@@ -556,7 +569,7 @@ export function parseSwordConf(
           const o = r[ent];
           if (o) {
             o[loc] = value;
-            if (loc === i18n.language || (loc === 'en' && !o.locale))
+            if (loc === i18next.language || (loc === 'en' && !o.locale))
               o.locale = value;
           }
         } else {

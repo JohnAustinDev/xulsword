@@ -6,7 +6,6 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import i18next from 'i18next';
 import C from '../../constant';
 import { ofClass } from '../../common';
 import {
@@ -85,7 +84,7 @@ class Tabs extends React.Component {
     const { panelIndex: i } = this.props as TabsProps;
     const tabType = !m || type === 'ilt-tab' ? 'Texts' : G.Tab[m].tabType;
     const label =
-      !m || type === 'ilt-tab' ? i18next.t('ORIGLabelTab') : G.Tab[m].label;
+      !m || type === 'ilt-tab' ? G.i18n.t('ORIGLabelTab') : G.Tab[m].label;
     return (
       <div
         key={`${type}_${i}_${m}`}
@@ -196,7 +195,7 @@ class Tabs extends React.Component {
     const { module, isPinned, panelIndex, tabs, ilModule, ilModuleOption } =
       this.props as TabsProps;
 
-    let ilTabLabel = i18next.t('ORIGLabelTab');
+    let ilTabLabel = G.i18n.t('ORIGLabelTab');
     if (!ilTabLabel) ilTabLabel = 'ilt';
 
     const mtMod = this.getMultiTabSelection(multiTabs);

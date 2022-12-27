@@ -34,7 +34,7 @@ import type {
 // - LOGLEVEL - Set a particular logLevel everywhere.
 const env = (envvar: EnvironmentVars) => {
   return typeof process === 'undefined'
-    ? window.main.process[envvar]()
+    ? window.processR[envvar]()
     : process.env[envvar];
 };
 

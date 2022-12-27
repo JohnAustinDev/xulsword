@@ -4,7 +4,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable import/prefer-default-export */
 import React from 'react';
-import i18next from 'i18next';
+import Cache from '../cache';
 import C from '../constant';
 import G from './rg';
 import log from './log';
@@ -15,6 +15,7 @@ import { clone, diff, JSON_parse, ofClass, versionCompare } from '../common';
 
 import type {
   ContextData,
+  GType,
   LocationVKType,
   ModTypes,
   PrefObject,
@@ -45,7 +46,7 @@ export function component(
 // object as key value pairs so that any React component in the hierarchy
 // may retrieve data specifically provided for it.
 export function windowArgument(key: string) {
-  const arg = window.main.process.argv().at(-1);
+  const arg = window.processR.argv().at(-1);
   if (typeof arg === 'string' && arg.includes('{')) {
     const argobj = JSON_parse(arg);
     if (key in argobj) {
@@ -173,7 +174,7 @@ export function getMaxChapter(v11n: V11nType, vkeytext: string) {
 // chapter is not part of v11n, so check here first.
 // NOTE: main process has this same function.
 export function getMaxVerse(v11n: V11nType, vkeytext: string) {
-  const { chapter } = verseKey(vkeytext, v11n);
+  const { chapter } = verseKey(null, vkeytext, v11n);
   const maxch = getMaxChapter(v11n, vkeytext);
   return chapter <= maxch && chapter > 0
     ? G.LibSword.getMaxVerse(v11n, vkeytext)
@@ -181,12 +182,13 @@ export function getMaxVerse(v11n: V11nType, vkeytext: string) {
 }
 
 export function verseKey(
+  i18n: GType['i18n'] | null,
   versekey: LocationVKType | string,
   v11n?: V11nType | null,
   options?: RefParserOptionsType
 ): VerseKey {
   return new VerseKey(
-    new RefParser(options),
+    new RefParser(i18n, options),
     G.BkChsInV11n,
     {
       convertLocation: (
@@ -350,6 +352,7 @@ function getTargetsFromSelection(
 
 // Return contextual data for use by context menus.
 export function getContextData(
+  i18n: GType['i18n'],
   elem: HTMLElement | ParentNode | EventTarget
 ): ContextData {
   const atextx = ofClass(['atext'], elem);
@@ -414,8 +417,8 @@ export function getContextData(
   if (selob && !selob.isCollapsed && !/^\s*$/.test(selob.toString())) {
     selection = selob.toString();
     selectedLocationVK =
-      new RefParser({ uncertain: true }).parse(selection, v11n)?.location ||
-      null;
+      new RefParser(i18n, { uncertain: true }).parse(selection, v11n)
+        ?.location || null;
     getTargetsFromSelection(info, selob);
   } else {
     getTargetsFromElement(info, elem);
@@ -508,23 +511,17 @@ export function onSetWindowState(c: React.Component, ignore?: any) {
     if (id) {
       const changed = diff(c.state, getStatePref(id, prefs, ignore));
       if (changed && Object.keys(changed).length) {
-        const lng = G.Prefs.getCharPref('global.locale');
-        if (lng !== i18next.language) {
-          i18next
-            .loadLanguages(lng)
-            .then(() => i18next.changeLanguage(lng))
-            .then(() => {
-              c.setState(changed);
-              return true;
-            })
-            .catch((err) => {
-              throw Error(err);
-            });
-        } else c.setState(changed);
+        if (
+          changed?.global?.locale &&
+          changed.global.locale !== G.i18n.language
+        ) {
+          Cache.clear();
+        }
+        c.setState(changed);
       }
     }
   };
-  return window.ipc.renderer.on('update-state-from-pref', listener);
+  return window.ipc.on('update-state-from-pref', listener);
 }
 
 let languageNames: {
@@ -541,7 +538,7 @@ export function getLangReadable(code: string): string {
   }
   let name = code;
   const code2 = code.replace(/-.*$/, '');
-  if (i18next.language.split('-').shift() === 'en') {
+  if (G.i18n.language.split('-').shift() === 'en') {
     name =
       code2 in languageNames.en
         ? languageNames.en[code2]
@@ -597,7 +594,7 @@ export function moduleInfoHTML(configs: SwordConfType[]): string {
       'History',
     ];
     const sc = C.SwordConf;
-    const lang = i18next.language;
+    const lang = G.i18n.language;
     let about: string;
     if (c.About) about = lang in c.About ? c.About[lang] : c.About.en;
     return fields
@@ -623,7 +620,7 @@ export function moduleInfoHTML(configs: SwordConfType[]): string {
             value = v.toString();
           } else if (sf === 'moduleType') {
             const v = c[f] as ModTypes;
-            value = i18next.t(v);
+            value = G.i18n.t(v);
           } else if (sf === 'Lang') {
             const v = c[f] as string;
             const [l, s] = v.split('-');

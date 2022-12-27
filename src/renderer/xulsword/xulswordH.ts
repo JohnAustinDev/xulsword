@@ -51,7 +51,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
           this.setState((prevState: XulswordState) => {
             const { location } = prevState;
             if (location) {
-              const l = verseKey(location);
+              const l = verseKey(G.i18n, location);
               l.verse = 1;
               const newloc = chapterChange(
                 l.location(),
@@ -139,7 +139,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
           this.setState((prevState: XulswordState) => {
             const { location } = prevState;
             if (location) {
-              const newloc = verseKey({
+              const newloc = verseKey(G.i18n, {
                 book: value,
                 chapter: 1,
                 verse: 1,
@@ -160,7 +160,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
         case 'book__textbox__input': {
           this.setState((prevState: XulswordState) => {
             const { location } = prevState;
-            const newloc = new RefParser().parse(
+            const newloc = new RefParser(G.i18n).parse(
               value,
               location?.v11n || null
             )?.location;
@@ -187,7 +187,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
             // reset Bookselect on Enter key even if chapter doesn't change
             const bsreset = prevState.bsreset + 1;
             if (location) {
-              const pvk = verseKey(location);
+              const pvk = verseKey(G.i18n, location);
               let newloc;
               if (id === 'chapter__input') {
                 pvk.chapter = Number(value);

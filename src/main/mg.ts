@@ -9,7 +9,7 @@ import {
   shell,
 } from 'electron';
 import i18next from 'i18next';
-import { GBuilder, GType } from '../type';
+import { GBuilder, GType, WindowArgType, WindowDescriptorType } from '../type';
 import { inlineFile } from './components/localFile';
 import Dirs from './components/dirs';
 import Prefs from './components/prefs';
@@ -38,6 +38,7 @@ import {
   localeConfig,
   getConfig,
 } from './minit';
+import type { SubscriptionType } from '../subscription';
 
 // Handle global variable calls from renderer processes
 function handleGlobal(
@@ -98,6 +99,8 @@ ipcMain.handle(
 // same interface as the renderer's G object. Properties of this
 // object directly access main process data and modules.
 class GClass implements GType {
+  i18n;
+
   LibSword;
 
   Prefs;
@@ -115,6 +118,7 @@ class GClass implements GType {
   Module;
 
   constructor() {
+    this.i18n = i18next;
     this.LibSword = LibSword;
     this.Prefs = Prefs;
     this.Dirs = Dirs;
@@ -207,10 +211,13 @@ class GClass implements GType {
     return getBooksInModule(...args);
   }
 
-  publishSubscription(
-    ...args: Parameters<GType['publishSubscription']>
-  ): ReturnType<GType['publishSubscription']> {
-    return publishSubscription(...args);
+  publishSubscription<S extends keyof SubscriptionType['publish']>(
+    s: S,
+    r: WindowArgType | WindowArgType[],
+    m: boolean,
+    ...args: Parameters<SubscriptionType['publish'][S]>
+  ) {
+    return publishSubscription(s, r, m, ...args);
   }
 }
 

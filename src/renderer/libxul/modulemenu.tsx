@@ -7,7 +7,6 @@
 /* eslint-disable react/jsx-props-no-spreading */
 
 import React from 'react';
-import i18n from 'i18next';
 import PropTypes from 'prop-types';
 import C from '../../constant';
 import G from '../rg';
@@ -64,7 +63,10 @@ class ModuleMenu extends React.Component {
             mtabs.some((tab) => tab.type === type)
           )
             return (
-              <optgroup key={type} label={i18n.t(C.SupportedModuleTypes[type])}>
+              <optgroup
+                key={type}
+                label={G.i18n.t(C.SupportedModuleTypes[type])}
+              >
                 {mtabs
                   .map((tab) => {
                     if (tab.type === type) {

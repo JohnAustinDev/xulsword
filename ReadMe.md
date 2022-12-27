@@ -4,15 +4,15 @@ xulsword is a Bible reading and study tool intended to be easy to use,
 yet very powerful at the same time. It utilizes popular Open Source
 technologies such as Node.js, React and The SWORD Project, and will
 always be a free program. It is designed for full internationalization,
-including right-to-left languages, and is fully functional offline. 
+including right-to-left languages, and is fully functional offline.
 Modules may be installed from the Internet however.
 
 ## Distinctives include:
 
 - **Direct text download**. Easily download thousands of texts in hundreds of
   languages with the "Add New Module" interface (located under the File menu,
-  or else just press F2). Bible translations, commentaries, glossaries, books 
-  and study materials in many languages can be freely downloaded and installed 
+  or else just press F2). Bible translations, commentaries, glossaries, books
+  and study materials in many languages can be freely downloaded and installed
   for offline use.
 - **Original language study features**. Gain deeper understanding of any Bible
   translation through comparison to ancient original language texts and
@@ -51,7 +51,7 @@ The build has two parts: a Node.js project and a native libxulsword C++ library.
 must first be set by running `source ./setenv`.
 
 1. Install nvm on Linux, Windows or Mac.
-2. Use nvm to select Node version 16.14.0
+2. Use nvm to select Node version 18.12.1
 3. Run `source ./setenv` to set environment variables.
 4. Build the native libxulsword C++ addon for your system:
 5. Download Boost 1.80.0 from https://www.boost.org/users/download/ and place it in

@@ -4,9 +4,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import log from 'electron-log';
 import path from 'path';
-import fs from 'fs';
 import i18next from 'i18next';
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow } from 'electron';
 import { JSON_parse, JSON_stringify, randomID } from '../../common';
 import Cache from '../../cache';
 import C from '../../constant';
@@ -26,8 +25,6 @@ import type {
   ModalType,
 } from '../../type';
 import type { SubscriptionType } from '../../subscription';
-
-const i18nBackendRenderer = require('i18next-electron-fs-backend');
 
 export let resolveHtmlPath: (htmlFileName: string) => string;
 
@@ -81,7 +78,8 @@ export function getBrowserWindows(
   let testwin: Partial<WindowDescriptorType> | null = null;
   if (winargs === 'parent') {
     if (caller) {
-      return [caller.getParentWindow()];
+      const pw = caller.getParentWindow();
+      return pw ? [pw] : [];
     }
   } else if (winargs === 'self') {
     if (caller) {
@@ -144,26 +142,6 @@ function windowBounds(winid: number) {
     };
   }
   return null;
-}
-
-function windowInitI18n(winid: number) {
-  const win = BrowserWindow.fromId(winid);
-  if (win) {
-    // Bind i18next-electron-fs-backend providing IPC to renderer processes
-    i18nBackendRenderer.mainBindings(ipcMain, win, fs);
-    // Unbind i18next-electron-fs-backend from window upon close to prevent
-    // access of closed window. Since the binding is anonymous, all are
-    // removed, and other windows get new ones added back.
-    win.once('close', () => {
-      i18nBackendRenderer.clearMainBindings(ipcMain);
-      BrowserWindow.getAllWindows().forEach((w) => {
-        if (w !== win) {
-          i18nBackendRenderer.mainBindings(ipcMain, w, fs);
-        }
-      });
-      if (win !== null) win.webContents.send('close');
-    });
-  }
 }
 
 function persist(
@@ -280,7 +258,6 @@ function updateOptions(
     : path.join(__dirname, '../preload.js');
   options.webPreferences.contextIsolation = true;
   options.webPreferences.nodeIntegration = false;
-  options.webPreferences.enableRemoteModule = false;
   options.webPreferences.webSecurity = true;
   if (!Array.isArray(options.webPreferences.additionalArguments))
     options.webPreferences.additionalArguments = ['{}'];
@@ -341,7 +318,6 @@ function createWindow(
   addWindowToRegistry(win.id, descriptor);
   if (C.DevToolsopen) win.webContents.openDevTools({ mode: 'detach' });
   win.loadURL(resolveHtmlPath(`${type}.html`));
-  windowInitI18n(win.id);
   if (type !== 'xulsword') win.removeMenu();
   win.on('resize', () => {
     win.webContents.send('resize', win.getSize());

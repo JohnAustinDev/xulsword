@@ -10,7 +10,6 @@
 /* eslint-disable react/static-property-placement */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
-import i18next from 'i18next';
 import PropTypes from 'prop-types';
 import {
   topHandle,
@@ -269,7 +268,7 @@ class Popup extends React.Component {
     if (!isWindow) {
       const maxHeight = window.innerHeight / 2;
       const leftd = drag && drag.x[0] ? drag.x[1] - drag.x[0] : 0;
-      const left = window.main.process.argv()[0] === 'search' ? leftd : 'auto';
+      const left = window.processR.argv()[0] === 'search' ? leftd : 'auto';
       let top = gap || 0;
       if (drag) top += drag.adjustment + (drag.y[1] || 0) - (drag.y[0] || 0);
       boxlocation = {
@@ -306,12 +305,12 @@ class Popup extends React.Component {
             {!isWindow && <div className="towindow" />}
             {elemhtml && elemhtml.length > 1 && (
               <div>
-                <a className="popupBackLink">{i18next.t('back.label')}</a>
+                <a className="popupBackLink">{G.i18n.t('back.label')}</a>
               </div>
             )}
             {elemhtml && elemhtml.length === 1 && (
               <div>
-                <a className="popupCloseLink">{i18next.t('close')}</a>
+                <a className="popupCloseLink">{G.i18n.t('close')}</a>
               </div>
             )}
             {!isWindow && <div className="draghandle" />}

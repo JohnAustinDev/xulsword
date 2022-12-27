@@ -10,7 +10,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Icon, Intent, Position, Toaster } from '@blueprintjs/core';
-import i18n from 'i18next';
 import Subscription from '../../subscription';
 import { clone, diff, drop } from '../../common';
 import G from '../rg';
@@ -212,7 +211,7 @@ export default class PrintSettings extends React.Component {
             window.print();
             Subscription.publish.setWindowRootState(normal);
             /* See print.ts - seems to be Electron bug?
-            const path = window.ipc.renderer
+            const path = window.ipcTS
               .printOrPreview(
                 electronOptions as Electron.WebContentsPrintOptions
               )
@@ -232,7 +231,7 @@ export default class PrintSettings extends React.Component {
           }
           case 'printToPDF': {
             Subscription.publish.setWindowRootState(dark);
-            window.ipc.renderer
+            window.ipcTS
               .printOrPreview({
                 destination: 'prompt-for-file',
                 ...electronOptions,
@@ -250,7 +249,7 @@ export default class PrintSettings extends React.Component {
           }
           case 'printPreview': {
             Subscription.publish.setWindowRootState(dark);
-            window.ipc.renderer
+            window.ipcTS
               .printOrPreview({
                 destination: 'iframe',
                 ...electronOptions,
@@ -465,7 +464,7 @@ export default class PrintSettings extends React.Component {
             }
           }
         `}</style>
-        <Groupbox caption={i18n.t('printCmd.label')}>
+        <Groupbox caption={G.i18n.t('printCmd.label')}>
           <Vbox pack="center" align="center">
             <Hbox align="center">
               <Menulist
@@ -591,7 +590,7 @@ export default class PrintSettings extends React.Component {
             disabled={printDisabled}
             onClick={handler}
           >
-            {i18n.t('printCmd.label')}
+            {G.i18n.t('printCmd.label')}
           </Button>
           <Button
             id="printToPDF"
@@ -610,11 +609,11 @@ export default class PrintSettings extends React.Component {
             disabled={printDisabled}
             onClick={handler}
           >
-            {i18n.t('printPreviewCmd.label')}
+            {G.i18n.t('printPreviewCmd.label')}
           </Button>
           <Spacer flex="10" />
           <Button id={dialogEnd} flex="1" fill="x" onClick={handler}>
-            {i18n.t(`${dialogEnd}.label`)}
+            {G.i18n.t(`${dialogEnd}.label`)}
           </Button>
         </Hbox>
       </Vbox>

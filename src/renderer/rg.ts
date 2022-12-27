@@ -24,7 +24,7 @@ Object.entries(GBuilder).forEach((entry) => {
       get() {
         if (!Cache.has(ckey)) {
           log.silly(`${ckey} miss`);
-          Cache.write(window.ipc.renderer.sendSync('global', name), ckey);
+          Cache.write(window.ipc.sendSync('global', name), ckey);
         }
         return Cache.read(ckey);
       },
@@ -43,17 +43,14 @@ Object.entries(GBuilder).forEach((entry) => {
           }`
         );
         if (asyncFuncs.some((en) => en[0] === name)) {
-          return window.ipc.renderer
+          return window.ipc
             .invoke('global', name, ...args)
             .then((result: unknown) => {
               if (!Cache.has(ckey)) Cache.write(result, ckey);
               return result;
             });
         }
-        Cache.write(
-          window.ipc.renderer.sendSync('global', name, ...args),
-          ckey
-        );
+        Cache.write(window.ipc.sendSync('global', name, ...args), ckey);
       }
       const retval = Cache.read(ckey);
       return (asyncFuncs as [string, string[]][]).some((en) => en[0] === name)
@@ -72,10 +69,7 @@ Object.entries(GBuilder).forEach((entry) => {
           get() {
             if (!Cache.has(ckey)) {
               log.silly(`${ckey} miss`);
-              Cache.write(
-                window.ipc.renderer.sendSync('global', name, m),
-                ckey
-              );
+              Cache.write(window.ipc.sendSync('global', name, m), ckey);
             }
             return Cache.read(ckey);
           },
@@ -102,17 +96,14 @@ Object.entries(GBuilder).forEach((entry) => {
                 (en) => en[0] === name && en[1].includes(m)
               )
             ) {
-              return window.ipc.renderer
+              return window.ipc
                 .invoke('global', name, m, ...args)
                 .then((result: unknown) => {
                   if (!Cache.has(ckey)) Cache.write(result, ckey);
                   return result;
                 });
             }
-            Cache.write(
-              window.ipc.renderer.sendSync('global', name, m, ...args),
-              ckey
-            );
+            Cache.write(window.ipc.sendSync('global', name, m, ...args), ckey);
           }
           const retval = Cache.read(ckey);
           return (asyncFuncs as [string, string[]][]).some(

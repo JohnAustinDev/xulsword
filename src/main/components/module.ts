@@ -5,6 +5,7 @@ import fpath from 'path';
 import { BrowserWindow } from 'electron';
 import ZIP from 'adm-zip';
 import log from 'electron-log';
+import i18n from 'i18next';
 import {
   clone,
   downloadKey,
@@ -162,7 +163,7 @@ export function moveRemoveModule(
         const f = moddir.clone();
         f.append(conf);
         if (!f.isDirectory() && f.path.endsWith('.conf')) {
-          const c = parseSwordConf(f, f.leafName);
+          const c = parseSwordConf(i18n, f, f.leafName);
           if (c.module === m) {
             if (move && repositoryPath !== Dirs.path.xsAudio) {
               const tomodsd = move.clone().append('mods.d');
@@ -280,7 +281,7 @@ export async function installZIPs(
               case 'mods.d': {
                 const dest = new LocalFile(destdir);
                 const confstr = entry.getData().toString('utf8');
-                const conf = parseSwordConf(confstr, entry.name);
+                const conf = parseSwordConf(i18n, confstr, entry.name);
                 // Look for any problems with the module itself
                 const modreports = clone(conf.reports);
                 modreports.push(...moduleUnsupported(conf));
@@ -318,7 +319,7 @@ export async function installZIPs(
                   confdest.append(entry.name);
                   // Remove any existing module having this name unless it would be downgraded.
                   if (confdest.exists()) {
-                    const existing = parseSwordConf(confdest, entry.name);
+                    const existing = parseSwordConf(i18n, confdest, entry.name);
                     const replace =
                       versionCompare(
                         conf.Version ?? 0,
@@ -649,7 +650,7 @@ const Module = {
               modsd.directoryEntries.forEach((de) => {
                 const f = modsd.clone().append(de);
                 if (!f.isDirectory() && f.path.endsWith('.conf')) {
-                  const conf = parseSwordConf(f, de);
+                  const conf = parseSwordConf(i18n, f, de);
                   conf.sourceRepository = manifest;
                   confs.push(conf);
                 }
@@ -708,6 +709,7 @@ const Module = {
             const { header, content: buffer } = r;
             if (header.name.endsWith('.conf')) {
               const cobj = parseSwordConf(
+                i18n,
                 buffer.toString('utf8'),
                 header.name.replace(/^.*?mods\.d\//, '')
               );
@@ -804,7 +806,7 @@ const Module = {
       log.silly(er);
       return Promise.resolve(er.message);
     }
-    const conf = parseSwordConf(confbuf.toString('utf8'), confname);
+    const conf = parseSwordConf(i18n, confbuf.toString('utf8'), confname);
 
     // Download module contents
     const datapath = confModulePath(conf.DataPath);

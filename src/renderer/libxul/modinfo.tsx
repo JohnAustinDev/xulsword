@@ -4,7 +4,6 @@
 /* eslint-disable react/jsx-props-no-spreading */
 
 import React from 'react';
-import i18n from 'i18next';
 import PropTypes from 'prop-types';
 import { randomID, sanitizeHTML } from '../../common';
 import { moduleInfoHTML } from '../rutil';
@@ -168,7 +167,7 @@ function Modinfo(props: ModinfoProps) {
             <div key={`lt${t}`} className="linklist">
               {modules.some((m) => G.Tab[m].tabType === t) && (
                 <>
-                  <div className="head1">{i18n.t(t)}</div>
+                  <div className="head1">{G.i18n.t(t)}</div>
                   <div className="listbox">
                     <ul>
                       {modules
@@ -233,7 +232,7 @@ function Modinfo(props: ModinfoProps) {
                     id={['more', m, id].join('.')}
                     onClick={buttonHandler}
                   >
-                    {i18n.t('more.label')}
+                    {G.i18n.t('more.label')}
                   </Button>
                 </>
               )}
@@ -243,7 +242,7 @@ function Modinfo(props: ModinfoProps) {
                     id={['less', m, id].join('.')}
                     onClick={buttonHandler}
                   >
-                    {i18n.t('less.label')}
+                    {G.i18n.t('less.label')}
                   </Button>
                   {editConf !== undefined && textarea !== undefined && (
                     <>
@@ -251,14 +250,14 @@ function Modinfo(props: ModinfoProps) {
                         id={['edit', m, id].join('.')}
                         onClick={buttonHandler}
                       >
-                        {i18n.t('editMenu.label')}
+                        {G.i18n.t('editMenu.label')}
                       </Button>
                       <Button
                         id={`save.${m}.${id}`}
                         disabled={!editConf}
                         onClick={buttonHandler}
                       >
-                        {i18n.t('save.label')}
+                        {G.i18n.t('save.label')}
                       </Button>
                     </>
                   )}

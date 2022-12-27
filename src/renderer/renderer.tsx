@@ -13,9 +13,6 @@ import React, {
 } from 'react';
 import { render } from 'react-dom';
 import PropTypes from 'prop-types';
-import i18n from 'i18next';
-import { initReactI18next } from 'react-i18next';
-import rendererBackend from 'i18next-electron-fs-backend';
 import { Intent, ProgressBar, Tag } from '@blueprintjs/core';
 import Subscription from '../subscription';
 import { JSON_parse, sanitizeHTML, stringHash } from '../common';
@@ -43,108 +40,38 @@ import './global-htm.css';
 import type { CipherKey, ModalType, NewModulesType } from '../type';
 import type { SubscriptionType } from '../subscription';
 
-// Init this render process log to the same settings as main.ts
-const logLevel = C.LogLevel;
-const { logInit, log: elog } = window.main;
-logInit.consoleLevel(logLevel);
-logInit.fileLevel(logLevel);
-logInit.file(G.Dirs.path.ProfD, 'logs', 'xulsword.log');
-elog.catchErrors({ onError: (er: Error) => log.error(er) });
-
 const windesc = G.Window.description();
 Cache.write(`${windesc.type}:${windesc.id}`, 'windowID');
 log.debug(`Initializing new window`);
 
-window.ipc.renderer.on('cache-reset', () => {
+window.ipc.on('cache-reset', () => {
   Cache.clear();
   log.silly(`CLEARED ALL CACHES`);
   Cache.write(`${windesc.type}:${windesc.id}`, 'windowID');
 });
 
 DynamicStyleSheet.update(G.Data.read('stylesheetData'));
-window.ipc.renderer.on('dynamic-stylesheet-reset', () =>
+window.ipc.on('dynamic-stylesheet-reset', () =>
   DynamicStyleSheet.update(G.Data.read('stylesheetData'))
 );
 
-const winArgs = JSON_parse(window.main.process.argv().at(-1) || '{}');
+const winArgs = JSON_parse(window.processR.argv().at(-1) || '{}');
 
 // Set window type and language classes of the root html element.
-i18n.on('initialized', (options) => {
-  const classes = winArgs?.classes || ['unknown'];
-  classes.push('cs-locale');
-  function setHTMLClass(classarray: string[]) {
-    const html = document?.getElementsByTagName('html')[0];
-    if (!html) return false;
-    html.className = classarray.join(' ');
-    const dir = i18n.t('locale_direction');
-    html.dir = dir;
-    return true;
-  }
-  i18n.on('languageChanged', (lng) => {
-    Cache.clear();
-    return setHTMLClass(classes.concat(lng));
-  });
-
-  return setHTMLClass(classes.concat(options.lng));
-});
-
-async function i18nInit(namespaces: string[]) {
-  const lang = G.Prefs.getCharPref('global.locale');
-
-  const supportedLangs = [
-    ...new Set(
-      C.Locales.map((l) => {
-        return l[0];
-      })
-        .map((l) => {
-          return [l, l.replace(/-.*$/, '')];
-        })
-        .flat()
-    ),
-  ];
-
-  await i18n
-    .use(rendererBackend)
-    .use(initReactI18next)
-    .init({
-      lng: lang,
-      fallbackLng: C.FallbackLanguage[lang] || ['en'],
-      supportedLngs: supportedLangs,
-      preload: supportedLangs,
-
-      ns: namespaces.concat(['common/books', 'common/numbers', 'branding']),
-
-      debug: C.isDevelopment,
-
-      backend: {
-        // path where resources get loaded from
-        loadPath: `${G.Dirs.path.xsAsset}/locales/{{lng}}/{{ns}}.json`,
-        // path to post missing resources
-        addPath: `${G.Dirs.path.xsAsset}/locales/{{lng}}/{{ns}}.missing.json`,
-        // jsonIndent to use when storing json files
-        jsonIndent: 2,
-        ipcRenderer: window.api.i18nextElectronBackend,
-      },
-      saveMissing: !G.Dirs.path.xsAsset.includes('resources'),
-      saveMissingTo: 'current',
-
-      react: {
-        useSuspense: false,
-      },
-
-      interpolation: {
-        escapeValue: false, // not needed for react as it escapes by default
-      },
-    });
-
-  return i18n;
+const classes = winArgs?.classes || ['unknown'];
+classes.push('cs-locale');
+classes.push(G.i18n.language);
+const html = document?.getElementsByTagName('html')[0];
+if (html) {
+  html.className = classes.join(' ');
+  const dir = G.i18n.t('locale_direction');
+  html.dir = dir;
 }
 
 const defaultProps = {
   resetOnResize: true,
   printControl: null,
-  dialogInitial: [],
-  initialPrintOverlay: null,
+  initialState: {},
 };
 const propTypes = {
   children: PropTypes.element.isRequired,
@@ -199,29 +126,16 @@ function WindowRoot(props: WindowRootProps) {
 
   // IPC component-reset setup:
   useEffect(() => {
-    return window.ipc.renderer.on('component-reset', () => {
+    return window.ipc.on('component-reset', () => {
       DynamicStyleSheet.update(G.Data.read('stylesheetData'));
-      const lng = G.Prefs.getCharPref('global.locale');
-      if (i18n.language !== lng) {
-        i18n
-          .loadLanguages(lng)
-          .then(() => i18n.changeLanguage(lng))
-          .then(() => {
-            return s.reset[1](s.reset[0] + 1);
-          })
-          .catch((err: any) => {
-            throw Error(err);
-          });
-      } else {
-        Cache.clear();
-        s.reset[1](s.reset[0] + 1);
-      }
+      Cache.clear();
+      s.reset[1](s.reset[0] + 1);
     });
   });
 
   // Modal overlay:
   useEffect(() => {
-    return window.ipc.renderer.on('modal', (cssclass: ModalType) => {
+    return window.ipc.on('modal', (cssclass: ModalType) => {
       s.modal[1](cssclass);
     });
   });
@@ -243,7 +157,7 @@ function WindowRoot(props: WindowRootProps) {
 
   // Progress meter:
   useEffect(() => {
-    return window.ipc.renderer.on('progress', (prog: number, id?: string) => {
+    return window.ipc.on('progress', (prog: number, id?: string) => {
       if (!id) s.progress[1](prog);
     });
   });
@@ -251,7 +165,7 @@ function WindowRoot(props: WindowRootProps) {
   // IPC resize setup:
   useEffect(() => {
     if (resetOnResize) {
-      return window.ipc.renderer.on(
+      return window.ipc.on(
         'resize',
         delayHandler.bind(delayHandlerThis)(
           () => {
@@ -267,7 +181,7 @@ function WindowRoot(props: WindowRootProps) {
 
   // Publish arbitrary subscription:
   useEffect(() => {
-    return window.ipc.renderer.on(
+    return window.ipc.on(
       'publish-subscription',
       (subscription: keyof SubscriptionType['publish'], ...args: any) => {
         Subscription.doPublish(subscription, ...args);
@@ -361,7 +275,7 @@ function WindowRoot(props: WindowRootProps) {
                     fill="x"
                     onClick={() => s.dialogs[1](s.dialogs[0].splice(0, 1))}
                   >
-                    {i18n.t('ok.label')}
+                    {G.i18n.t('ok.label')}
                   </Button>
                 </>
               }
@@ -387,7 +301,7 @@ function WindowRoot(props: WindowRootProps) {
                       }}
                     />
                   )}
-                  <Label value={i18n.t('cipherKey.prompt')} />
+                  <Label value={G.i18n.t('cipherKey.prompt')} />
                   <Textbox maxLength="32" inputRef={textbox} />
                 </>
               }
@@ -406,7 +320,7 @@ function WindowRoot(props: WindowRootProps) {
                       setCipherKey();
                     }}
                   >
-                    {i18n.t('ok.label')}
+                    {G.i18n.t('ok.label')}
                   </Button>
                 </>
               }
@@ -456,7 +370,7 @@ function WindowRoot(props: WindowRootProps) {
         id="reset"
         className={s.showPrintOverlay[0] ? 'printp' : undefined}
         onContextMenu={(e: React.SyntheticEvent) => {
-          G.Data.write(getContextData(e.target), 'contextData');
+          G.Data.write(getContextData(G.i18n, e.target), 'contextData');
         }}
       >
         {children}
@@ -500,12 +414,11 @@ export default async function renderToRoot(
     onunload,
   } = options || {};
 
-  window.ipc.renderer.on('close', () => {
+  window.ipc.on('close', () => {
     if (typeof onunload === 'function') onunload();
     Cache.clear();
   });
 
-  await i18nInit([namespace ?? 'xulsword']);
   render(
     <StrictMode>
       <WindowRoot
@@ -527,6 +440,6 @@ export default async function renderToRoot(
         if (b) G.Window.setContentSize(b.width, b.height);
       }
     }
-    window.ipc.renderer.send('did-finish-render');
+    window.ipc.send('did-finish-render');
   }, 1);
 }

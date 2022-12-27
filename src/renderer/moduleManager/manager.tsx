@@ -5,7 +5,6 @@
 /* eslint-disable react/static-property-placement */
 /* eslint-disable jsx-a11y/control-has-associated-label */
 import React from 'react';
-import i18n from 'i18next';
 import {
   Intent,
   IToastProps,
@@ -351,7 +350,7 @@ export default class ModuleManager
       downloads: [] as [string, number][], // [id, percent]
     };
     this.destroy.push(
-      window.ipc.renderer.on('progress', (prog: number, id?: string) => {
+      window.ipc.on('progress', (prog: number, id?: string) => {
         const state = this.state as ManagerState;
         if (id) {
           // Set total progress bar
@@ -471,7 +470,7 @@ export default class ModuleManager
         const canedit = repo.custom ? H.editable() : false;
         const isloading = repo.disabled ? false : H.loading(H.RepCol.iState);
         const on = repo.builtin ? H.ALWAYS_ON : H.ON;
-        let lng = i18n.language;
+        let lng = G.i18n.language;
         if (!['en', 'ru'].includes(lng)) lng = C.FallbackLanguage[lng];
         const reponame =
           repo.name && repo.name.includes(' | ')
@@ -582,11 +581,11 @@ export default class ModuleManager
           if (!(modrepk in moduleData)) {
             let mtype: string = c.moduleType;
             if (c.xsmType === 'XSM') {
-              mtype = `XSM ${i18n.t(
+              mtype = `XSM ${G.i18n.t(
                 C.SupportedModuleTypes[mtype as ModTypes]
               )}`;
             } else if (c.xsmType === 'XSM_audio') {
-              mtype = `XSM ${i18n.t('audio.label')}`;
+              mtype = `XSM ${G.i18n.t('audio.label')}`;
             }
             const d = [] as unknown as TModuleTableRow;
             d[H.ModCol.iInfo] = {
@@ -603,7 +602,7 @@ export default class ModuleManager
             d[H.ModCol.iType] = mtype;
             d[H.ModCol.iAbout] =
               (c.Description &&
-                (c.Description[i18n.language] || c.Description.en)) ||
+                (c.Description[G.i18n.language] || c.Description.en)) ||
               '';
             d[H.ModCol.iModule] = c.module;
             d[H.ModCol.iRepoName] =
@@ -616,7 +615,8 @@ export default class ModuleManager
             d[H.ModCol.iVersification] = c.Versification || 'KJV';
             d[H.ModCol.iScope] = c.Scope || '';
             d[H.ModCol.iCopyright] =
-              (c.Copyright && (c.Copyright[i18n.language] || c.Copyright.en)) ||
+              (c.Copyright &&
+                (c.Copyright[G.i18n.language] || c.Copyright.en)) ||
               '';
             d[H.ModCol.iLicense] = c.DistributionLicense || '';
             d[H.ModCol.iSourceType] = c.SourceType || '';
@@ -828,10 +828,10 @@ export default class ModuleManager
                 <>
                   <Spacer flex="10" />
                   <Button id="cancel" flex="1" fill="x" onClick={dialogClose}>
-                    {i18n.t('cancel.label')}
+                    {G.i18n.t('cancel.label')}
                   </Button>
                   <Button id="ok" flex="1" fill="x" onClick={dialogAccept}>
-                    {i18n.t('ok.label')}
+                    {G.i18n.t('ok.label')}
                   </Button>
                 </>
               }
@@ -844,7 +844,7 @@ export default class ModuleManager
             {language.open && (
               <>
                 <Groupbox
-                  caption={i18n.t('menu.options.language')}
+                  caption={G.i18n.t('menu.options.language')}
                   orient="vertical"
                   width={language.width}
                 >
@@ -896,7 +896,7 @@ export default class ModuleManager
             )}
 
             <Groupbox
-              caption={i18n.t('chooseModule.label')}
+              caption={G.i18n.t('chooseModule.label')}
               orient="horizontal"
               flex="1"
             >
@@ -956,7 +956,7 @@ export default class ModuleManager
                     disabled={disable.moduleInfoBack}
                     onClick={eventHandler}
                   >
-                    {i18n.t('back.label')}
+                    {G.i18n.t('back.label')}
                   </Button>
                 )}
                 <Button
@@ -966,7 +966,7 @@ export default class ModuleManager
                   disabled={disable.moduleCancel}
                   onClick={eventHandler}
                 >
-                  {i18n.t('cancel.label')}
+                  {G.i18n.t('cancel.label')}
                 </Button>
               </Vbox>
             </Groupbox>
@@ -986,7 +986,7 @@ export default class ModuleManager
                 shrink
               />
               <Groupbox
-                caption={i18n.t('moduleSources.label')}
+                caption={G.i18n.t('moduleSources.label')}
                 height={repository.height}
                 orient="horizontal"
                 flex="1"
@@ -1034,7 +1034,7 @@ export default class ModuleManager
                     disabled={disable.repoCancel}
                     onClick={eventHandler}
                   >
-                    {i18n.t('cancel.label')}
+                    {G.i18n.t('cancel.label')}
                   </Button>
                 </Vbox>
               </Groupbox>
@@ -1052,7 +1052,7 @@ export default class ModuleManager
                   })
                 }
               >
-                {i18n.t('less.label')}
+                {G.i18n.t('less.label')}
               </Button>
             )}
             {repository && !repository.open && (
@@ -1063,7 +1063,7 @@ export default class ModuleManager
                   this.sState({ repository: { ...repository, open: true } })
                 }
               >
-                {i18n.t('moduleSources.label')}
+                {G.i18n.t('moduleSources.label')}
               </Button>
             )}
             {!progress && <Spacer flex="10" />}
@@ -1078,7 +1078,7 @@ export default class ModuleManager
               </Hbox>
             )}
             <Button id="cancel" flex="1" fill="x" onClick={eventHandler}>
-              {i18n.t('cancel.label')}
+              {G.i18n.t('cancel.label')}
             </Button>
             <Button
               id="ok"
@@ -1087,7 +1087,7 @@ export default class ModuleManager
               fill="x"
               onClick={eventHandler}
             >
-              {i18n.t('ok.label')}
+              {G.i18n.t('ok.label')}
             </Button>
           </Hbox>
         </Vbox>
@@ -1098,9 +1098,9 @@ export default class ModuleManager
         <Dialog
           body={
             <Vbox>
-              <Label value={i18n.t('allowInternet.title')} />
-              <Label value={i18n.t('allowInternet.message')} />
-              <Label value={i18n.t('allowInternet.continue')} />
+              <Label value={G.i18n.t('allowInternet.title')} />
+              <Label value={G.i18n.t('allowInternet.message')} />
+              <Label value={G.i18n.t('allowInternet.continue')} />
             </Vbox>
           }
           buttons={
@@ -1109,7 +1109,7 @@ export default class ModuleManager
               <Checkbox
                 id="internet.rememberChoice"
                 initial={false}
-                label={i18n.t('rememberChoice.label')}
+                label={G.i18n.t('rememberChoice.label')}
               />
               <Spacer flex="10" />
               <Button
@@ -1118,10 +1118,10 @@ export default class ModuleManager
                 fill="x"
                 onClick={eventHandler}
               >
-                {i18n.t('yes.label')}
+                {G.i18n.t('yes.label')}
               </Button>
               <Button id="internet.no" flex="1" fill="x" onClick={eventHandler}>
-                {i18n.t('no.label')}
+                {G.i18n.t('no.label')}
               </Button>
             </>
           }

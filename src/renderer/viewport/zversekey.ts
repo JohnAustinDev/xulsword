@@ -2,7 +2,6 @@
 /* eslint-disable import/no-duplicates */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-continue */
-import i18next from 'i18next';
 import C from '../../constant';
 import { clone, dString, getLocalizedChapterTerm } from '../../common';
 import { getElementInfo } from '../../libswordElemInfo';
@@ -174,7 +173,7 @@ export function locationVKText(
     const tov11n = compOK && tab[compOK].v11n;
     if (tov11n) {
       targetmod = compOK;
-      location = verseKey(location).location(tov11n);
+      location = verseKey(G.i18n, location).location(tov11n);
       i.companion = true;
     }
   }
@@ -187,7 +186,7 @@ export function locationVKText(
       (type === C.COMMENTARY && commentaries);
     if (isOK && v11n && G.getBooksInModule(module).includes(book)) {
       let text;
-      const modloc = verseKey(loc);
+      const modloc = verseKey(G.i18n, loc);
       if (loc.subid) {
         text = getFootnoteText(loc, mod);
       } else {
@@ -273,7 +272,7 @@ export function parseExtendedVKRef(
       [, ref, noteID] = noteref;
     }
     const options = locales && locales.length ? { locales } : undefined;
-    const vk = verseKey(ref, null, options);
+    const vk = verseKey(G.i18n, ref, null, options);
     if (!vk.book && bk) {
       const match = ref
         .replace(/[^\s\p{L}\p{N}:-]/gu, ' ')
@@ -334,7 +333,7 @@ export function getRefHTML(
 ): string {
   const locale =
     (targetmod in G.Config && G.Config[targetmod].AssociatedLocale) ||
-    i18next.language;
+    G.i18n.language;
   const list = parseExtendedVKRef(extref, context, [locale]);
   const alternates = alternateModules();
   const mod = targetmod || alternates[0] || '';
@@ -401,7 +400,7 @@ export function getRefHTML(
             verse,
             lastverse || verse,
             module,
-          ].join('.')}">${verseKey(location).readable()}</a>${q}${
+          ].join('.')}">${verseKey(G.i18n, location).readable()}</a>${q}${
             text ? ': ' : ''
           }</bdi><bdi><span class="${crtext.join(
             ' '
@@ -491,7 +490,10 @@ export function getNoteHTML(
         t += '<div class="fncol4">';
         if (p.ch && p.vs) {
           t += `<a class="fnlink" data-title="${p.nid}.${p.bk}.${p.ch}.${p.vs}.${p.mod}">`;
-          t += `<i>${dString(p.ch)}<bdi>:</bdi>${dString(p.vs)}</i>`;
+          t += `<i>${dString(G.i18n, p.ch)}<bdi>:</bdi>${dString(
+            G.i18n,
+            p.vs
+          )}</i>`;
           t += '</a>';
           t += ' -';
         }
@@ -601,7 +603,7 @@ export function getChapterHeading(
   if (!location || !module) return { textHTML: '', intronotes: '' };
   const { book, chapter } = location;
   let l = G.Config[module].AssociatedLocale;
-  if (!l) l = i18next.language; // otherwise use current program locale
+  if (!l) l = G.i18n.language; // otherwise use current program locale
   const toptions = { lng: l, ns: 'common/books' };
 
   const intro = getIntroductions(module, `${book} ${chapter}`);
@@ -628,8 +630,9 @@ export function getChapterHeading(
   html += '</div>';
 
   html += '<div class="chaptitle" >';
-  html += `<div class="chapbk">${i18next.t(book, toptions)}</div>`;
+  html += `<div class="chapbk">${G.i18n.t(book, toptions)}</div>`;
   html += `<div class="chapch">${getLocalizedChapterTerm(
+    G.i18n,
     book,
     chapter,
     l
@@ -645,7 +648,7 @@ export function getChapterHeading(
   ].join('.')}"></div>`;
   html += `<div class="introlink${
     !intro.textHTML ? ' empty' : ''
-  }" data-title="${[book, chapter, 1, module].join('.')}">${i18next.t(
+  }" data-title="${[book, chapter, 1, module].join('.')}">${G.i18n.t(
     'IntroLink',
     toptions
   )}</div>`;
@@ -874,7 +877,7 @@ function aTextWheelScroll2(
         const { bk: book, ch, vs: verse } = p;
         const chapter = Number(ch);
         if (book && chapter && verse) {
-          newloc = verseKey({ book, chapter, verse, v11n }).location(
+          newloc = verseKey(G.i18n, { book, chapter, verse, v11n }).location(
             location.v11n
           );
         }
@@ -948,6 +951,7 @@ export function highlight(
 
   if (!selection) return;
   const { book, chapter, verse, lastverse } = verseKey(
+    G.i18n,
     selection,
     G.Tab[module].v11n || undefined
   ).location();
@@ -1140,7 +1144,7 @@ export function pageChange(
       const t = (ei && ei.mod && G.Tab[ei.mod]) || null;
       const v11n = t?.v11n || null;
       if (ei && ei.bk && v11n) {
-        const vk = verseKey({
+        const vk = verseKey(G.i18n, {
           book: ei.bk,
           chapter: Number(ei.ch),
           verse: ei.vs,

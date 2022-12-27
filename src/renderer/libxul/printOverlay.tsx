@@ -4,7 +4,6 @@
 /* eslint-disable react/forbid-prop-types */
 import React, { ReactElement } from 'react';
 import PropTypes from 'prop-types';
-import i18n from 'i18next';
 import Subscription from '../../subscription';
 import G from '../rg';
 import { Hbox, Vbox } from './boxes';
@@ -59,7 +58,7 @@ export default function PrintOverlay(props: PrintOverlayProps) {
           <Hbox className="dialog-buttons" pack="end" align="end">
             <Spacer flex="10" />
             <Button id="back" flex="1" fill="x" onClick={backHandler}>
-              {i18n.t('back.label')}
+              {G.i18n.t('back.label')}
             </Button>
           </Hbox>
         </Vbox>

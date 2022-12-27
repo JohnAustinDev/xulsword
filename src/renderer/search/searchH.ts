@@ -4,7 +4,6 @@
 /* eslint-disable no-bitwise */
 /* eslint-disable import/no-duplicates */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import i18n from 'i18next';
 import { getElementInfo } from '../../libswordElemInfo';
 import { dString, escapeRE, getCSS, sanitizeHTML } from '../../common';
 import C from '../../constant';
@@ -58,8 +57,8 @@ export function getLuceneSearchText(searchtext0: string) {
     const k = entry[0];
     const [uiVal, luceneVal] = entry[1];
     let uiVal2 = uiVal;
-    if (i18n.exists(k)) {
-      const kv = i18n.t(k);
+    if (G.i18n.exists(k)) {
+      const kv = G.i18n.t(k);
       if (!/^\s*$/.test(kv)) uiVal2 = kv;
     }
     searchtext = searchtext.replace(
@@ -160,7 +159,7 @@ export async function search(sthis: SearchWin) {
     displayBible,
   };
 
-  G.Window.setTitle(`${i18n.t('search.label')} "${searchtext}"`);
+  G.Window.setTitle(`${G.i18n.t('search.label')} "${searchtext}"`);
 
   // Replace UI search symbols with Clucene recognized search symbols,
   // and prepare the query string according to search type.
@@ -376,7 +375,7 @@ async function createSearchIndex(sthis: SearchWin, module: string) {
       results: 0,
       pageindex: 0,
       progress: 0.01,
-      progressLabel: i18n.t('BuildingIndex'),
+      progressLabel: G.i18n.t('BuildingIndex'),
     };
     sthis.setState(s);
     const winid = G.Window.description().id;
@@ -412,7 +411,7 @@ export function formatResult(div: HTMLDivElement, state: SearchWinState) {
           if (a && p?.osisref) {
             // Translate from module to DisplayBible
             const vsys = G.LibSword.getVerseSystem(module);
-            const v = verseKey(p.osisref, vsys);
+            const v = verseKey(G.i18n, p.osisref, vsys);
             sanitizeHTML(a, v.readable(G.LibSword.getVerseSystem(dModule)));
             a.className = 'cs-locale';
             a.id = ['verselink', vsys, v.osisRef()].join('.');
@@ -629,7 +628,10 @@ export async function lexicon(lexdiv: HTMLDivElement, state: SearchWinState) {
       a.textContent = strongNum;
 
       const span1 = lexlist.appendChild(document.createElement('span'));
-      span1.textContent = ` - [${dString(1)}-${dString(total)}]: `;
+      span1.textContent = ` - [${dString(G.i18n, 1)}-${dString(
+        G.i18n,
+        total
+      )}]: `;
 
       const span2 = lexlist.appendChild(document.createElement('span'));
       span2.className = `cs-${dModule}`;
@@ -679,8 +681,8 @@ export async function lexicon(lexdiv: HTMLDivElement, state: SearchWinState) {
         lexlist.className = 'lexlist';
 
         let mtype = '';
-        if (hg === 'H') mtype = i18n.t('ORIGLabelOT');
-        if (hg === 'G') mtype = i18n.t('ORIGLabelNT');
+        if (hg === 'H') mtype = G.i18n.t('ORIGLabelOT');
+        if (hg === 'G') mtype = G.i18n.t('ORIGLabelNT');
 
         const sns: string[] = [];
         stsa.forEach((sts: Sts) => {
@@ -696,7 +698,10 @@ export async function lexicon(lexdiv: HTMLDivElement, state: SearchWinState) {
         });
         sanitizeHTML(
           lexlist,
-          `${mtype} - [${dString(1)}-${dString(total)}]: ${sns.join(', ')}`
+          `${mtype} - [${dString(G.i18n, 1)}-${dString(
+            G.i18n,
+            total
+          )}]: ${sns.join(', ')}`
         );
       }
     });

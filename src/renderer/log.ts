@@ -1,19 +1,19 @@
 /* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type ElectronLog from 'electron-log';
-import { LogLevel } from 'electron-log';
+import type { LogLevel } from 'electron-log';
 import C from '../constant';
 import Cache from '../cache';
-
-const { log: elog } = window.main;
 
 const levels = ['error', 'warn', 'info', 'verbose', 'debug', 'silly'];
 
 function rlog(level: LogLevel, ...args: any[]) {
-  const windowID = Cache.has('windowID') ? Cache.read('windowID') : '?:?';
-  elog[level](`[${windowID}]`, ...args);
-  if (C.isDevelopment && levels.indexOf(level) <= levels.indexOf(C.LogLevel)) {
-    console.log(`[${windowID}]`, ...args);
+  if (levels.indexOf(level) <= levels.indexOf(C.LogLevel)) {
+    const windowID = Cache.has('windowID') ? Cache.read('windowID') : '?:?';
+    window.ipc.send('log', level, `[${windowID}]`, ...args);
+    if (C.isDevelopment) {
+      console.log(`[${windowID}]`, ...args);
+    }
   }
 }
 

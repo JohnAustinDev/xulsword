@@ -1,10 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import i18next from 'i18next';
 import Cache from './cache';
 import C from './constant';
 import { iString } from './common';
 
-import type { BookGroupType, LocationVKType, V11nType } from './type';
+import type { BookGroupType, LocationVKType, V11nType, GType } from './type';
 
 type IdentifyBookType = {
   code: string;
@@ -54,7 +53,9 @@ export default class RefParser {
 
   localizedBooks: LocalizedBookType;
 
-  constructor(options?: RefParserOptionsType) {
+  i18n: GType['i18n'] | null;
+
+  constructor(i18n: GType['i18n'] | null, options?: RefParserOptionsType) {
     this.locales = C.Locales.map((l) => l[0]);
     this.onlyOsisCode = false;
     this.noVariations = false;
@@ -64,9 +65,7 @@ export default class RefParser {
       return `${p}${C.SupportedBooks[bg].join('.')}.`;
     }, '.');
     this.osisStringLC = this.osisString.toLowerCase();
-    if (!i18next.isInitialized) {
-      throw Error('Cannot use RefParser until i18next has initialized');
-    }
+    this.i18n = i18n;
     if (!Cache.has('RefParseLocale')) {
       const rpl = {} as LocalizedBookType;
       C.Locales.forEach((locarray) => {
@@ -81,8 +80,8 @@ export default class RefParser {
               let str = '';
               // Must test for key's existence. Using return === key as the
               // existence check gives false fails: ex. Job === Job.
-              if (i18next.exists(key, toptions)) {
-                str = i18next.t(key, toptions);
+              if (i18n && i18n.exists(key, toptions)) {
+                str = i18n.t(key, toptions);
               }
               return str ? str.split(/\s*,\s*/) : [];
             }) as any;
@@ -176,12 +175,15 @@ export default class RefParser {
     if (!Cache.has(ckey)) {
       let locale: string | null = null;
       const locales = alocale ? [alocale] : this.locales;
-      locales.forEach((loc) => {
-        const test = iString(name, loc);
-        if (test === name) return;
-        name = test;
-        locale = loc;
-      });
+      const { i18n } = this;
+      if (i18n) {
+        locales.forEach((loc) => {
+          const test = iString(i18n, name, loc);
+          if (test === name) return;
+          name = test;
+          locale = loc;
+        });
+      }
 
       const parts = name.split(' ');
 

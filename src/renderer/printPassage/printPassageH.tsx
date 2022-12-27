@@ -1,7 +1,6 @@
 /* eslint-disable import/no-duplicates */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-use-before-define */
-import i18n from 'i18next';
 import { clone, dString, getLocalizedChapterTerm } from '../../common';
 import C from '../../constant';
 import G from '../rg';
@@ -145,11 +144,14 @@ export function bibleChapterText(
     if (show.usernotes) addUserNotes({}, {});
 
     let moduleLocale = G.Config[module].AssociatedLocale;
-    if (!moduleLocale) moduleLocale = i18n.language; // otherwise use current program locale
+    if (!moduleLocale) moduleLocale = G.i18n.language; // otherwise use current program locale
     const toptions = { lng: moduleLocale, ns: 'common/books' };
 
     // Localize verse numbers to match the module
-    if (moduleLocale && dString(1, moduleLocale) !== dString(1, 'en')) {
+    if (
+      moduleLocale &&
+      dString(G.i18n, 1, moduleLocale) !== dString(G.i18n, 1, 'en')
+    ) {
       const verseNm = new RegExp('(<sup class="versenum">)(\\d+)(</sup>)', 'g');
       textHTML = textHTML.replace(verseNm, (_str, p1, p2, p3) => {
         return p1 + dString(p2, moduleLocale) + p3;
@@ -158,7 +160,7 @@ export function bibleChapterText(
 
     // Get introduction
     if (introduction) {
-      const heading = i18n.t('IntroLink', toptions);
+      const heading = G.i18n.t('IntroLink', toptions);
       const intro = getIntroductions(module, `${book} ${chapter}`);
       const introNotesHTML = getNoteHTML(intro.intronotes, show, 0, true);
       if (intro.textHTML)
@@ -173,8 +175,8 @@ export function bibleChapterText(
       headHTML = `
       <div class="${headclass.join(' ')}">
         <div class="chaptitle" >
-          <div class="chapbk">${i18n.t(book, toptions)}</div>
-          <div class="chapch">${getLocalizedChapterTerm(book, chapter, moduleLocale)}</div>
+          <div class="chapbk">${G.i18n.t(book, toptions)}</div>
+          <div class="chapch">${getLocalizedChapterTerm(G.i18n, book, chapter, moduleLocale)}</div>
         </div>
       </div>`;
     }

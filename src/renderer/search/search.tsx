@@ -6,7 +6,6 @@
 /* eslint-disable jsx-a11y/control-has-associated-label */
 import React from 'react';
 import ReactDOM from 'react-dom';
-import i18n from 'i18next';
 import { ProgressBar } from '@blueprintjs/core';
 import { clone, diff, drop, dString, sanitizeHTML } from '../../common';
 import C from '../../constant';
@@ -170,7 +169,7 @@ export default class SearchWin extends React.Component implements PopupParent {
     // loop is blocked by the indexer so that event was removed , but the handler
     // is left here anyway, in case a a solution to that problem is ever found.
     this.destroy.push(
-      window.ipc.renderer.on('progress', (prog: number, id?: string) => {
+      window.ipc.on('progress', (prog: number, id?: string) => {
         if (id === 'search.indexer') {
           this.setState({ progressLabel: '', progress: prog });
         }
@@ -332,7 +331,9 @@ export default class SearchWin extends React.Component implements PopupParent {
               : option
           }
         >
-          {i18n.exists(`${option}.label`) ? i18n.t(`${option}.label`) : option}
+          {G.i18n.exists(`${option}.label`)
+            ? G.i18n.t(`${option}.label`)
+            : option}
         </option>
       );
     });
@@ -349,15 +350,16 @@ export default class SearchWin extends React.Component implements PopupParent {
         ? count
         : pageindex + C.UI.Search.resultsPerPage;
     let searchStatus = '';
+    const { i18n } = G;
     if (count > C.UI.Search.resultsPerPage) {
-      searchStatus = i18n.t('searchStatusPage', {
-        v1: dString(pageindex + 1),
-        v2: dString(lasti),
-        v3: dString(count),
+      searchStatus = G.i18n.t('searchStatusPage', {
+        v1: dString(i18n, pageindex + 1),
+        v2: dString(i18n, lasti),
+        v3: dString(i18n, count),
       });
     } else {
-      searchStatus = i18n.t('searchStatusAll', {
-        v1: dString(count),
+      searchStatus = G.i18n.t('searchStatusAll', {
+        v1: dString(i18n, count),
       });
     }
 
@@ -392,21 +394,21 @@ export default class SearchWin extends React.Component implements PopupParent {
               <Row>
                 <Groupbox orient="horizontal" align="center">
                   <Button id="moreLess" onClick={handler}>
-                    {!moreLess && <Label value={i18n.t('more.label')} />}
-                    {moreLess && <Label value={i18n.t('less.label')} />}
+                    {!moreLess && <Label value={G.i18n.t('more.label')} />}
+                    {moreLess && <Label value={G.i18n.t('less.label')} />}
                   </Button>
                   <Spacer flex="1" orient="horizontal" />
                   <Hbox className="searchtextLabel" align="start">
                     <Label
                       control="searchtext"
-                      value={`${i18n.t('searchtext.label')}:`}
+                      value={`${G.i18n.t('searchtext.label')}:`}
                     />
                   </Hbox>
                   <Vbox className="searchtext">
                     <Textbox
                       id="searchtext"
                       value={searchtext}
-                      title={i18n.t('searchbox.tooltip')}
+                      title={G.i18n.t('searchbox.tooltip')}
                       maxLength="60"
                       onChange={handler}
                     />
@@ -418,7 +420,7 @@ export default class SearchWin extends React.Component implements PopupParent {
                     disabled={progress !== 0 || !module}
                     onClick={handler}
                   >
-                    {i18n.t('searchBut.label')}
+                    {G.i18n.t('searchBut.label')}
                   </Button>
                   <Spacer flex="1" orient="horizontal" />
                   <Button id="helpButton" icon="help" onClick={handler} />
@@ -432,7 +434,7 @@ export default class SearchWin extends React.Component implements PopupParent {
                 >
                   <Groupbox
                     id="searchtype"
-                    caption={i18n.t('searchType.label')}
+                    caption={G.i18n.t('searchType.label')}
                     orient="vertical"
                     onChange={handler}
                   >
@@ -442,8 +444,8 @@ export default class SearchWin extends React.Component implements PopupParent {
                         name="type"
                         checked={searchtype === st}
                         value={st}
-                        label={i18n.t(`${st}.label`)}
-                        title={i18n.t(`${st}.description`)}
+                        label={G.i18n.t(`${st}.label`)}
+                        title={G.i18n.t(`${st}.description`)}
                       />
                     ))}
                   </Groupbox>
@@ -456,7 +458,7 @@ export default class SearchWin extends React.Component implements PopupParent {
                           disabled={progress !== 0}
                           onClick={handler}
                         >
-                          {i18n.t('createIndex.label')}
+                          {G.i18n.t('createIndex.label')}
                         </Button>
                       </Vbox>
                     </>
@@ -464,7 +466,7 @@ export default class SearchWin extends React.Component implements PopupParent {
                 </Stack>
                 <Groupbox
                   id="scoperadio"
-                  caption={i18n.t('searchScope.label')}
+                  caption={G.i18n.t('searchScope.label')}
                   onChange={handler}
                 >
                   <Grid>
@@ -478,13 +480,13 @@ export default class SearchWin extends React.Component implements PopupParent {
                           name="scope"
                           checked={scoperadio === 'all'}
                           value="all"
-                          label={i18n.t('search.all')}
+                          label={G.i18n.t('search.all')}
                         />
                         <Radio
                           name="scope"
                           checked={scoperadio === 'book'}
                           value="book"
-                          label={i18n.t('search.currentBook')}
+                          label={G.i18n.t('search.currentBook')}
                           disabled={!location?.book}
                         />
                       </Row>
@@ -493,13 +495,13 @@ export default class SearchWin extends React.Component implements PopupParent {
                           name="scope"
                           checked={scoperadio === 'ot'}
                           value="ot"
-                          label={i18n.t('search.ot')}
+                          label={G.i18n.t('search.ot')}
                         />
                         <Radio
                           name="scope"
                           checked={scoperadio === 'nt'}
                           value="nt"
-                          label={i18n.t('search.nt')}
+                          label={G.i18n.t('search.nt')}
                         />
                       </Row>
                       <Row>
@@ -508,7 +510,7 @@ export default class SearchWin extends React.Component implements PopupParent {
                             name="scope"
                             checked={scoperadio === 'other'}
                             value="other"
-                            label={`${i18n.t('search.groups')}:`}
+                            label={`${G.i18n.t('search.groups')}:`}
                           />
                           <Menulist
                             id="scopeselect"

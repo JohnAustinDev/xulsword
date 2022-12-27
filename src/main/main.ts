@@ -5,7 +5,7 @@ import 'regenerator-runtime/runtime';
 import { app, dialog, BrowserWindow, ipcMain, IpcMainEvent } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import path from 'path';
-import log from 'electron-log';
+import log, { LogLevel } from 'electron-log';
 import i18n from 'i18next';
 import Subscription from '../subscription';
 import Cache from '../cache';
@@ -126,6 +126,10 @@ ipcMain.on('did-finish-render', (event: IpcMainEvent) => {
 });
 
 ipcMain.handle('print-or-preview', MainPrintHandler);
+
+ipcMain.on('log', (_event: IpcMainEvent, type: LogLevel, ...args: any[]) => {
+  log[type](...args);
+});
 
 const openMainWindow = () => {
   let options: Electron.BrowserWindowConstructorOptions = {

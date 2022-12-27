@@ -2,7 +2,6 @@
 /* eslint-disable react/static-property-placement */
 /* eslint-disable jsx-a11y/control-has-associated-label */
 import React from 'react';
-import i18n from 'i18next';
 import { ChromePicker as ColorPicker } from 'react-color';
 import { Slider } from '@blueprintjs/core';
 import type { ReactElementLike } from 'prop-types';
@@ -31,7 +30,7 @@ import handlerH, {
 } from './chooseFontH';
 import './chooseFont.css';
 
-window.ipc.renderer.once('close', () => {
+window.ipc.once('close', () => {
   preclose();
 });
 
@@ -118,7 +117,7 @@ export default class ChooseFontWin extends React.Component {
 
     const showBackgroundRow = false;
     const fontOptions: ReactElementLike[] = [
-      <option key="empty" value="" label={i18n.t('choose.label')} />,
+      <option key="empty" value="" label={G.i18n.t('choose.label')} />,
     ];
     if (fonts) {
       fontOptions.splice(
@@ -165,15 +164,15 @@ export default class ChooseFontWin extends React.Component {
         }`}</style>
         {ruSureDialog && (
           <Dialog
-            body={i18n.t('dialog.confirmDelete')}
+            body={G.i18n.t('dialog.confirmDelete')}
             buttons={
               <>
                 <Spacer flex="10" />
                 <Button flex="1" fill="x" onClick={() => ruSureDialog(false)}>
-                  {i18n.t('no.label')}
+                  {G.i18n.t('no.label')}
                 </Button>
                 <Button flex="1" fill="x" onClick={() => ruSureDialog(true)}>
-                  {i18n.t('yes.label')}
+                  {G.i18n.t('yes.label')}
                 </Button>
                 <Spacer width="10px" />
               </>
@@ -181,7 +180,7 @@ export default class ChooseFontWin extends React.Component {
           />
         )}
         <span id="styleTest" />
-        <Groupbox caption={i18n.t('fontsAndColors.label')}>
+        <Groupbox caption={G.i18n.t('fontsAndColors.label')}>
           <Grid id="fontsGrid">
             <Columns>
               <Column width="min-content" />
@@ -193,7 +192,7 @@ export default class ChooseFontWin extends React.Component {
               <Row>
                 <Label
                   control="module"
-                  value={`${i18n.t('chooseModule.label')}:`}
+                  value={`${G.i18n.t('chooseModule.label')}:`}
                 />
                 <ModuleMenu
                   id="module"
@@ -203,7 +202,7 @@ export default class ChooseFontWin extends React.Component {
                 />
                 <Checkbox
                   id="removeModuleUserStyles"
-                  label={i18n.t('removeModuleUserStyles.label')}
+                  label={G.i18n.t('removeModuleUserStyles.label')}
                   checked={Boolean(removeModuleUserStyles)}
                   disabled={disableRD}
                   onChange={handler}
@@ -212,7 +211,7 @@ export default class ChooseFontWin extends React.Component {
               <Row>
                 <Label
                   control="fontFamily"
-                  value={`${i18n.t('chooseFont.label')}:`}
+                  value={`${G.i18n.t('chooseFont.label')}:`}
                 />
                 <Menulist
                   id="fontFamily"
@@ -223,7 +222,7 @@ export default class ChooseFontWin extends React.Component {
                 />
                 <Label
                   control="fontSize"
-                  value={`${i18n.t('textSize.label')}:`}
+                  value={`${G.i18n.t('textSize.label')}:`}
                 />
                 <Slider
                   min={0}
@@ -240,7 +239,7 @@ export default class ChooseFontWin extends React.Component {
                 <Hbox />
                 <Hbox />
                 <Label
-                  value={`${i18n.t('lineHeight.label')}:`}
+                  value={`${G.i18n.t('lineHeight.label')}:`}
                   control="lineHeight"
                 />
                 <Slider
@@ -258,7 +257,7 @@ export default class ChooseFontWin extends React.Component {
                 <Hbox />
                 <Hbox />
                 <Label
-                  value={`${i18n.t('textColor.label')}:`}
+                  value={`${G.i18n.t('textColor.label')}:`}
                   control="color"
                 />
                 <Button
@@ -285,7 +284,7 @@ export default class ChooseFontWin extends React.Component {
                   <Hbox />
                   <Hbox />
                   <Label
-                    value={`${i18n.t('backgroundColor.label')}:`}
+                    value={`${G.i18n.t('backgroundColor.label')}:`}
                     control="background"
                   />
                   <Button
@@ -311,7 +310,7 @@ export default class ChooseFontWin extends React.Component {
               <Row>
                 <Checkbox
                   id="makeDefault"
-                  label={i18n.t('makeDefault.label')}
+                  label={G.i18n.t('makeDefault.label')}
                   checked={Boolean(makeDefault)}
                   disabled={disableMD}
                   onChange={handler}
@@ -320,7 +319,7 @@ export default class ChooseFontWin extends React.Component {
               <Row>
                 <Checkbox
                   id="removeAllUserStyles"
-                  label={i18n.t('removeAllUserStyles.label')}
+                  label={G.i18n.t('removeAllUserStyles.label')}
                   checked={Boolean(removeAllUserStyles)}
                   disabled={disableAD}
                   onChange={handler}
@@ -333,10 +332,10 @@ export default class ChooseFontWin extends React.Component {
         <Hbox className="dialog-buttons" pack="end" align="end">
           <Spacer flex="10" />
           <Button id="cancel" flex="1" fill="x" onClick={handler}>
-            {i18n.t('cancel.label')}
+            {G.i18n.t('cancel.label')}
           </Button>
           <Button id="ok" flex="1" fill="x" onClick={handler}>
-            {i18n.t('ok.label')}
+            {G.i18n.t('ok.label')}
           </Button>
         </Hbox>
       </Vbox>

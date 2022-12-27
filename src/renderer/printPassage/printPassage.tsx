@@ -8,7 +8,6 @@
 /* eslint-disable react/static-property-placement */
 import React, { ReactElement } from 'react';
 import ReactDOM from 'react-dom';
-import i18n from 'i18next';
 import { ProgressBar } from '@blueprintjs/core';
 import Subscription from '../../subscription';
 import {
@@ -327,7 +326,7 @@ export default class PrintPassageWin extends React.Component {
             <>
               <Groupbox
                 className="progress-anchor"
-                caption={i18n.t('print.printpassage')}
+                caption={G.i18n.t('print.printpassage')}
               >
                 <VKSelect
                   id="chapters"
@@ -370,7 +369,7 @@ export default class PrintPassageWin extends React.Component {
                 </Hbox>
               )}
 
-              <Groupbox caption={i18n.t('include.label')}>
+              <Groupbox caption={G.i18n.t('include.label')}>
                 <Grid>
                   <Rows>
                     {switches[0]
@@ -390,7 +389,7 @@ export default class PrintPassageWin extends React.Component {
                               <Checkbox
                                 key={key}
                                 id={c[2]}
-                                label={i18n.t(c[3])}
+                                label={G.i18n.t(c[3])}
                                 checked={checkbox[c[2]]}
                                 disabled={
                                   c[2] === 'crossrefsText' &&

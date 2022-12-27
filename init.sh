@@ -67,8 +67,8 @@ curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
-nvm install 16.14.0
-nvm use 16.14.0
+nvm install 18.12.1
+nvm use 18.12.1
 npm i --global yarn
 
 # Create a local Cpp installation directory where compiled libraries will

@@ -1,5 +1,4 @@
 import React from 'react';
-import i18n from 'i18next';
 import G from '../rg';
 import renderToRoot from '../renderer';
 import { Hbox, Vbox } from '../libxul/boxes';
@@ -8,11 +7,11 @@ import Stack from '../libxul/stack';
 import './splash.css';
 
 const overlay = G.inlineFile(
-  `${G.Dirs.path.xsAsset}/splash-overlay-${i18n.language}.png`
+  `${G.Dirs.path.xsAsset}/splash-overlay-${G.i18n.language}.png`
 );
 const style = overlay ? (
   <style>
-    {`html.${i18n.language} #layer2 {
+    {`html.${G.i18n.language} #layer2 {
         background-image: url(${overlay});
       }`}
   </style>
@@ -28,7 +27,7 @@ renderToRoot(
           <Vbox flex="1" pack="start" align="center">
             <Label
               className="splash-text"
-              value={i18n.t('producedBy', { ns: 'branding' })}
+              value={G.i18n.t('producedBy', { ns: 'branding' })}
             />
           </Vbox>
         </Hbox>

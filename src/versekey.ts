@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import i18next from 'i18next';
 import C from './constant';
 import { clone, dString } from './common';
 
@@ -223,7 +222,8 @@ export default class VerseKey {
     const Book = this.#gfunctions.Book();
     const tov11n = v11n || this.#v11nCurrent;
     const l = this.location(tov11n);
-    const guidir = i18next.t('locale_direction').toLocaleLowerCase();
+    const { i18n } = this.#parser;
+    const guidir = i18n?.t('locale_direction').toLowerCase() || 'ltr';
     let d = guidir === 'rtl' ? '&rlm;' : '&lrm;';
     if (notHTML)
       d =
@@ -245,6 +245,7 @@ export default class VerseKey {
       }
     }
     parts.push('');
-    return dString(parts.join(d));
+    const res = parts.join(d);
+    return i18n ? dString(i18n, res) : res;
   }
 }

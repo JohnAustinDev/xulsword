@@ -8,7 +8,6 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
 import PropTypes from 'prop-types';
-import i18next from 'i18next';
 import { getElementInfo } from '../../libswordElemInfo';
 import Cache from '../../cache';
 import C from '../../constant';
@@ -325,6 +324,7 @@ class Atext extends React.Component {
                   const skipTextUpdate: boolean[] = [];
                   skipTextUpdate[panelIndex] = true;
                   const location = verseKey(
+                    G.i18n,
                     [info.bk, info.ch, info.vs].join('.'),
                     libswordProps.location.v11n
                   ).location();
@@ -491,6 +491,7 @@ class Atext extends React.Component {
       const response = Cache.read(libswordHash);
       log.silly(
         `${flag} panel ${i} ${verseKey(
+          G.i18n,
           libswordProps.location || ''
         ).osisRef()}:`
       );
@@ -617,8 +618,8 @@ class Atext extends React.Component {
         <Box className="hd">
           <div className="navlink">
             <span className="navlink-span">{prevArrow}</span>
-            <a className="prevchaplink">{i18next.t('PrevChaptext')}</a>{' '}
-            <a className="nextchaplink">{i18next.t('NextChaptext')}</a>{' '}
+            <a className="prevchaplink">{G.i18n.t('PrevChaptext')}</a>{' '}
+            <a className="nextchaplink">{G.i18n.t('NextChaptext')}</a>{' '}
             <span className="navlink-span">{nextArrow}</span>
           </div>
         </Box>

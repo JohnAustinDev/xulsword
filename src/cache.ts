@@ -1,8 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-// Cache any data according to string keys.
+// Cache any data according to string keys. Calling noclear on a key will prevent it
+// from being cleared when Cache.clear() is called, but it may always be cleared if
+// cleared explicitly, ie. Cache.clear(name).
 const Cache = {
   storage: {} as { [i: string]: any },
+
+  noclears: [] as string[],
 
   has(...args: string[]) {
     return args.join('+') in this.storage;
@@ -18,13 +22,23 @@ const Cache = {
     this.storage[name] = value;
   },
 
+  noclear(...args: string[]) {
+    const name = args.length ? args.join('+') : '';
+    if (name) {
+      this.noclears.push(name);
+    }
+  },
+
   clear(...args: string[]) {
     const name = args.length ? args.join('+') : '';
-    if (!args.length) this.storage = {};
-    else if (name in this.storage) {
+    if (!args.length) {
+      Object.keys(this.storage).forEach((k) => {
+        if (!this.noclears.includes(k)) delete this.storage[k];
+      });
+    } else if (name in this.storage) {
       delete this.storage[name];
     }
   },
 };
 
-export default Cache;
+export default Cache as Omit<typeof Cache, 'storage' | 'noclears'>;

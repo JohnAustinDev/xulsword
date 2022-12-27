@@ -7,7 +7,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react/destructuring-assignment */
 /* eslint-disable react/jsx-props-no-spreading */
-import i18next from 'i18next';
 import React from 'react';
 import PropTypes from 'prop-types';
 import { dString } from '../../common';
@@ -273,8 +272,8 @@ class Chooser extends React.Component {
     const useLabelImage: any = {};
     bookGroups.forEach((bg) => {
       const tkey = `chooserBookGroup_${bg}`;
-      if (i18next.exists(tkey)) {
-        label[bg] = i18next.t(tkey);
+      if (G.i18n.exists(tkey)) {
+        label[bg] = G.i18n.t(tkey);
         useLabelImage[bg] = /^\s*$/.test(label[bg]);
       } else label[bg] = bg.replaceAll('_', ' ').substring(0, 12);
     });
@@ -479,7 +478,7 @@ function ChapterMenu(props: {
             onMouseEnter={dlyhandler}
             onMouseLeave={handler}
           >
-            {dString(ch)}
+            {dString(G.i18n, ch)}
           </div>
         );
       } else {

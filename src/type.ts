@@ -2,9 +2,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import type { Shell } from 'electron';
+import type i18n from 'i18next';
 import type React from 'react';
-import type ElectronLog from 'electron-log';
-import type { LogLevel } from 'electron-log';
 import type {
   resetMain,
   getSystemFonts,
@@ -38,9 +37,9 @@ import type MainPrintHandler from './main/print';
 
 declare global {
   export interface Window {
-    api: { i18nextElectronBackend: any };
     ipc: WinIpcType;
-    main: WinMainType;
+    ipcTS: WinfuncTSType;
+    processR: WinProcessType;
   }
   function ToUpperCase(str: string): string;
   function ReportSearchIndexerProgress(percent: number): void;
@@ -48,6 +47,8 @@ declare global {
 type RendererChannels =
   | 'global'
   | 'did-finish-render'
+  | 'print-or-preview'
+  | 'log'
   | 'close'
   | 'resize'
   | 'progress'
@@ -56,8 +57,7 @@ type RendererChannels =
   | 'component-reset'
   | 'cache-reset'
   | 'dynamic-stylesheet-reset'
-  | 'publish-subscription'
-  | 'print-or-preview';
+  | 'publish-subscription';
 
 type Shift<T extends any[]> = T extends [infer _, ...infer Elements]
   ? Elements
@@ -70,23 +70,21 @@ export type QuerablePromise<T> = Promise<T> & {
   reject: (er: any) => void;
 };
 
+export type WinfuncTSType = {
+  printOrPreview: (
+    ...args: Shift<Parameters<typeof MainPrintHandler>>
+  ) => ReturnType<typeof MainPrintHandler>;
+};
+
 export type WinIpcType = {
-  renderer: {
-    printOrPreview: (
-      ...args: Shift<Parameters<typeof MainPrintHandler>>
-    ) => ReturnType<typeof MainPrintHandler>;
-    send: (channel: RendererChannels, ...args: any[]) => void;
-    invoke: (channel: RendererChannels, ...args: any[]) => any;
-    sendSync: (channel: RendererChannels, ...args: any[]) => any;
-    on: (
-      channel: RendererChannels,
-      func: (...args: any[]) => any
-    ) => () => void;
-    once: (
-      channel: RendererChannels,
-      func: (...args: any[]) => any
-    ) => () => void;
-  };
+  send: (channel: RendererChannels, ...args: any[]) => void;
+  invoke: (channel: RendererChannels, ...args: any[]) => any;
+  sendSync: (channel: RendererChannels, ...args: any[]) => any;
+  on: (channel: RendererChannels, func: (...args: any[]) => any) => () => void;
+  once: (
+    channel: RendererChannels,
+    func: (...args: any[]) => any
+  ) => () => void;
 };
 
 export type EnvironmentVars =
@@ -95,18 +93,10 @@ export type EnvironmentVars =
   | 'DEBUG_PROD'
   | 'LOGLEVEL';
 
-export type WinMainType = {
-  process: {
-    [envar in EnvironmentVars]: () => string;
-  } & {
-    argv: () => string[];
-  };
-  log: typeof ElectronLog;
-  logInit: {
-    consoleLevel: (level: LogLevel) => void;
-    fileLevel: (level: LogLevel) => void;
-    file: (...filepath: string[]) => void;
-  };
+export type WinProcessType = {
+  [envar in EnvironmentVars]: () => string;
+} & {
+  argv: () => string[];
 };
 
 export type WindowRegistryType = (WindowDescriptorType | null)[];
@@ -666,6 +656,7 @@ export type GType = {
   publishSubscription: typeof publishSubscription;
 
   // Objects
+  i18n: Pick<typeof i18n, 't' | 'exists' | 'language'>;
   Prefs: typeof Prefs;
   LibSword: typeof LibSword;
   Dirs: DirsRendererType;
@@ -754,6 +745,12 @@ export const GBuilder: GType & {
   publishSubscription: func as any,
 
   // Objects
+  i18n: {
+    t: CACHEfunc as any,
+    exists: CACHEfunc as any,
+    language: 'getter' as any,
+  },
+
   Prefs: {
     has: func as any,
     getPrefOrCreate: func as any,

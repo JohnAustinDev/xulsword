@@ -4,7 +4,6 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable react/static-property-placement */
 import React from 'react';
-import i18n from 'i18next';
 import G from '../rg';
 import renderToRoot from '../renderer';
 import { windowArgument } from '../rutil';
@@ -119,11 +118,11 @@ export default class AboutWin extends React.Component implements ModinfoParent {
       (G.Prefs.getComplexValue('Contributors') as string[]) || [];
 
     const overlay = G.inlineFile(
-      `${G.Dirs.path.xsAsset}/splash-overlay-${i18n.language}.png`
+      `${G.Dirs.path.xsAsset}/splash-overlay-${G.i18n.language}.png`
     );
     const style = overlay ? (
       <style>
-        {`html.${i18n.language} #layer2 {
+        {`html.${G.i18n.language} #layer2 {
             background-image: url(${overlay});
           }`}
       </style>
@@ -146,7 +145,7 @@ export default class AboutWin extends React.Component implements ModinfoParent {
                     />
                     <Label
                       className="splash-text"
-                      value={i18n.t('producedBy', { ns: 'branding' })}
+                      value={G.i18n.t('producedBy', { ns: 'branding' })}
                     />
                   </Vbox>
                 </Hbox>
@@ -182,8 +181,8 @@ export default class AboutWin extends React.Component implements ModinfoParent {
             <>
               <Button id="showModules" flex="1" fill="x" onClick={handler}>
                 {showModules
-                  ? i18n.t('back.label')
-                  : i18n.t('chooseModule.label')}
+                  ? G.i18n.t('back.label')
+                  : G.i18n.t('chooseModule.label')}
               </Button>
 
               <Spacer flex="10" />
@@ -198,13 +197,13 @@ export default class AboutWin extends React.Component implements ModinfoParent {
               onClick={handler}
             >
               {showContributors
-                ? i18n.t('back.label')
-                : i18n.t('contributors.label')}
+                ? G.i18n.t('back.label')
+                : G.i18n.t('contributors.label')}
             </Button>
           )}
           <Spacer flex="10" />
           <Button id="close" flex="1" fill="x" onClick={handler}>
-            {i18n.t('close.label')}
+            {G.i18n.t('close.label')}
           </Button>
         </Hbox>
       </Vbox>
