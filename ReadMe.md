@@ -4,43 +4,41 @@ xulsword is a Bible reading and study tool intended to be easy to use,
 yet very powerful at the same time. It utilizes popular Open Source
 technologies such as Node.js, React and The SWORD Project, and will
 always be a free program. It is designed for full internationalization,
-including right-to-left languages. Potential users include those who
-are not necessarily computer savvy, those who might be new to the
-Bible, and those who may not have (or may not want to use) an internet
-connection.
+including right-to-left languages, and is fully functional offline. 
+Modules may be installed from the Internet however.
 
 ## Distinctives include:
 
-- Direct text download. Easily download thousands of texts in hundreds of
+- **Direct text download**. Easily download thousands of texts in hundreds of
   languages with the "Add New Module" interface (located under the File menu,
-  or else just press F2).
-- Original language study features. Gain deeper understanding of any Bible
+  or else just press F2). Bible translations, commentaries, glossaries, books 
+  and study materials in many languages can be freely downloaded and installed 
+  for offline use.
+- **Original language study features**. Gain deeper understanding of any Bible
   translation through comparison to ancient original language texts and
   instant concordance lookup.
-- Comprehensive and lighting fast search capability. The indexed C++ search
+- **Comprehensive and lighting fast search capability**. The indexed C++ search
   engine works without Internet and enables you to dig deep into God's Word.
-- Commentaries, glossaries, books and study materials in many languages can be
-  freely downloaded and installed for offline use.
-- Complete internationalization including right-to-left languages.
-- Very readable texts. Formatted texts are displayed on screen the way they look
+- **Complete internationalization** including right-to-left languages.
+- **Very readable texts**. Formatted texts are displayed on screen the way they look
   in printed form. Text flows from column to column. Font, font size, line
   spacing etc. are adjustable for each text.
-- Easy Bible browsing. Instantly jump to any heading in the entire Bible with a
+- **Easy Bible browsing**. Instantly jump to any heading in the entire Bible with a
   single click using a Bible navigator widget which also gives a visual
   representation of the Bible.
-- Print capability. Powerful print features allow Bible texts and
+- **Print capability**. Powerful print features allow Bible texts and
   related information to be easily printed, and includes print preview.
-- Recursive popup windows. Dictionary links, cross references, footnotes
+- **Recursive popup windows**. Dictionary links, cross references, footnotes
   and more appear in recursive popup windows that allow instant access to a
   variety of information without necessitating a complex user interface.
-- Bible texts and footnotes include quick links to associated dictionaries,
+- **Bible texts and footnotes include quick links** to associated dictionaries,
   including pictures, maps and tables.
-- Bookmark and personal annotation features.
-- Integrated audio. Allows you to listen to the Bible and read along. Export
+- **Bookmark and personal annotation features**.
+- **Integrated audio**. Allows you to listen to the Bible and read along. Export
   audio for other uses, such as mp3 players.
-- Secure texts. Texts can be encrypted to prevent tampering.
-- Open Source software technology. Xulsword was developed using the most popular
-  Open Source technologies as of 2023 so it will be freely available for years to
+- **Secure texts**. Texts can be encrypted to prevent tampering.
+- **Open Source software technology**. Xulsword was developed using the most popular
+  Open Source technologies as of 2023, to make it freely available for years to
   come.
 
 ---

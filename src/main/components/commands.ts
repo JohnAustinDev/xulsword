@@ -24,6 +24,7 @@ import type {
 } from '../../type';
 import type { AboutWinState } from '../../renderer/about/about';
 import type { PrintPassageState } from '../../renderer/printPassage/printPassage';
+import type { CopyPassageState } from '../../renderer/copyPassage/copyPassage';
 
 const Commands = {
   openModuleManager(): void {
@@ -201,8 +202,18 @@ const Commands = {
     Window.open({ type: 'searchHelp', category: 'dialog-window', options });
   },
 
-  copyPassage() {
-    log.info(`Action not implemented: copyPassage`);
+  copyPassage(state?: Partial<CopyPassageState>) {
+    const copyPassageState: Partial<CopyPassageState> = state || {
+
+    };
+    const options = {
+      title: i18n.t('menu.copypassage'),
+      ...C.UI.Window.large,
+      webPreferences: {
+        additionalArguments: [JSON_stringify({ copyPassageState })],
+      },
+    };
+    Window.open({ type: 'copyPassage', category: 'dialog', options });
   },
 
   openFontsColors(module: string): void {

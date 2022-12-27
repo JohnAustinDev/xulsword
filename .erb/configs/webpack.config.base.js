@@ -18,7 +18,8 @@ export const xulswordWindows = [
   'search',
   'searchHelp',
   'about',
-  'printPassage'
+  'printPassage',
+  'copyPassage'
 ];
 
 export default {

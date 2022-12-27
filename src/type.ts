@@ -124,7 +124,8 @@ export type WindowDescriptorType = {
     | 'search'
     | 'searchHelp'
     | 'about'
-    | 'printPassage';
+    | 'printPassage'
+    | 'copyPassage';
   category?:
     | 'window' // Parent optional, persisted, resizable
     | 'dialog' // Has parent, not persisted, size is fit-to-content, not-resizable
