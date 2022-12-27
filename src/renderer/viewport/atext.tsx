@@ -556,6 +556,7 @@ class Atext extends React.Component {
       columns,
       isPinned,
       module,
+      modkey,
       panelIndex,
       ownWindow,
       noteBoxHeight,
@@ -604,6 +605,7 @@ class Atext extends React.Component {
         {...topHandle('onMouseOut', handler, props)}
         data-index={panelIndex}
         data-module={module}
+        data-modkey={modkey}
         data-columns={columns}
         data-ispinned={isPinned}
       >

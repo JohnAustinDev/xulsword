@@ -65,6 +65,7 @@ const C = {
   NOTFOUND: 'Not Found',
   NOMODULES: 'No Modules',
   CONFSEP: '<nx>',
+  GBKSEP: '/',
 
   Downloader: {
     localfile: 'file://',

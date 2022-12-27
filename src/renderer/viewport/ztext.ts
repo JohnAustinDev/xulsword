@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import C from '../../constant';
 import Cache from '../../cache';
-import { dString, escapeRE, stringHash } from '../../common';
+import { dString, escapeRE, JSON_parse, stringHash } from '../../common';
 import { getElementInfo } from '../../libswordElemInfo';
 import G from '../rg';
 import log from '../log';
@@ -116,6 +116,13 @@ export function libswordText(
           options
         );
         r.notes += G.LibSword.getNotes();
+      }
+      break;
+    }
+    case C.GENBOOK: {
+      if (modkey) {
+        r.textHTML += G.LibSword.getGenBookChapterText(module, modkey, options);
+        r.noteHTML += G.LibSword.getNotes();
       }
       break;
     }
@@ -249,13 +256,6 @@ export function libswordText(
       }
       break;
     }
-    case C.GENBOOK: {
-      if (modkey) {
-        r.textHTML += G.LibSword.getGenBookChapterText(module, modkey, options);
-        r.noteHTML += G.LibSword.getNotes();
-      }
-      break;
-    }
     default:
   }
 
@@ -327,10 +327,46 @@ function dictionaryChange(atext: HTMLElement, next: boolean): string | null {
   return newkey || null;
 }
 
-// TODO!
+function gbkeys(toc: any, parent?: string): string[] {
+  if (typeof toc !== 'object') return [];
+  const r: string[] = [];
+  const p = parent || '';
+  Object.entries(toc).forEach((entry) => {
+    const [chapter, sub] = entry;
+    const c = p ? `${p}${C.GBKSEP}${chapter}` : chapter;
+    if (sub === 1) {
+      r.push(c);
+    } else {
+      r.push(...gbkeys(sub, c));
+    }
+  });
+  return r;
+}
+
 // Change a general book to the previous or next chapter.
 function genbookChange(atext: HTMLElement, next: boolean): string | null {
-  log.info(`genbookChange not implemented yet.`);
+  const { module, modkey } = atext.dataset;
+  let tocs: string[] = [];
+  if (module) {
+    if (!Cache.has('genbkTOC', module)) {
+      Cache.write(
+        JSON_parse(G.LibSword.getGenBookTableOfContents(module)),
+        'genbkTOC',
+        module
+      );
+    }
+    tocs = gbkeys(Cache.read('genbkTOC', module));
+    if (modkey) {
+      const toc = tocs.indexOf(modkey);
+      if (toc !== -1) {
+        if (next && toc + 1 < tocs.length) return tocs[toc + 1];
+        if (!next && toc - 1 > -1) return tocs[toc - 1];
+        return null;
+      }
+    }
+  }
+  // If atext key isn't in the module and next is requested, return the first good key.
+  if (next && tocs.length) return tocs[0];
   return null;
 }
 
