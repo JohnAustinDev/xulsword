@@ -604,7 +604,7 @@ export function getChapterHeading(
   const { book, chapter } = location;
   let l = G.Config[module].AssociatedLocale;
   if (!l) l = G.i18n.language; // otherwise use current program locale
-  const toptions = { lng: l, ns: 'common/books' };
+  const toptions = { lng: l, ns: 'books' };
 
   const intro = getIntroductions(module, `${book} ${chapter}`);
 

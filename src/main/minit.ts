@@ -262,7 +262,7 @@ function getLocaleOfModule(module: string) {
         const [locale] = l;
         const toptions = {
           lng: locale,
-          ns: 'common/config',
+          ns: 'config',
         };
         if (i18n.t('DefaultModule', toptions).match(regex)) myLocale = locale;
       });
@@ -779,7 +779,7 @@ export function getModuleConfigDefault() {
 
 export function localeConfig(locale: string) {
   const lconfig = {} as ConfigType;
-  const toptions = { lng: locale, ns: 'common/config' };
+  const toptions = { lng: locale, ns: 'config' };
   // All config properties should be present, having a valid value or null.
   // Read any values from locale's config.json file.
   Object.entries(C.ConfigTemplate).forEach((entry) => {

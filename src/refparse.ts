@@ -71,7 +71,7 @@ export default class RefParser {
       C.Locales.forEach((locarray) => {
         const [loc] = locarray;
         rpl[loc] = {};
-        const toptions = { lng: loc, ns: 'common/books' };
+        const toptions = { lng: loc, ns: 'books' };
         ['ot', 'nt'].forEach((bgs) => {
           const bg = bgs as BookGroupType;
           C.SupportedBooks[bg].forEach((code) => {

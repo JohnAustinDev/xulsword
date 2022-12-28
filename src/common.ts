@@ -368,7 +368,7 @@ function getLocalizedNumerals(
 ): string[] | null {
   if (!Cache.has('locnums', locale)) {
     let l = null;
-    const toptions = { lng: locale, ns: 'common/numbers' };
+    const toptions = { lng: locale, ns: 'numbers' };
     for (let i = 0; i <= 9; i += 1) {
       const key = `n${i}`;
       if (i18n.exists(key, toptions) && !/^\s*$/.test(i18n.t(key, toptions))) {
@@ -430,7 +430,7 @@ export function getLocalizedChapterTerm(
   const toptions = {
     v1: dString(i18n, chapter, locale),
     lng: locale,
-    ns: 'common/books',
+    ns: 'books',
   };
   const r1 = i18n.exists(k1, toptions) && i18n.t(k1, toptions);
   return r1 && !/^\s*$/.test(r1) ? r1 : i18n.t(k2, toptions);

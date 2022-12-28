@@ -317,7 +317,7 @@ const init = async () => {
       supportedLngs: AvailableLanguages,
       preload: AvailableLanguages,
 
-      ns: ['xulsword', 'common/config', 'common/books', 'common/numbers'],
+      ns: ['xulsword', 'branding', 'config', 'books', 'numbers'],
       defaultNS: 'xulsword',
 
       debug: false,

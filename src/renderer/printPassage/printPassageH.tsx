@@ -145,7 +145,7 @@ export function bibleChapterText(
 
     let moduleLocale = G.Config[module].AssociatedLocale;
     if (!moduleLocale) moduleLocale = G.i18n.language; // otherwise use current program locale
-    const toptions = { lng: moduleLocale, ns: 'common/books' };
+    const toptions = { lng: moduleLocale, ns: 'books' };
 
     // Localize verse numbers to match the module
     if (
