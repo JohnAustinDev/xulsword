@@ -12,6 +12,7 @@
     "package-linux": "cross-env PKLIB=linux yarn installLXS && yarn package",
     "package-32win": "cross-env PKLIB=32win yarn installLXS && yarn package --win --ia32 && cross-env PKLIB=linux yarn installLXS",
     "package-64win": "cross-env PKLIB=64win yarn installLXS && yarn package --win --x64 && cross-env PKLIB=linux yarn installLXS",
+    "release": "electron-builder",
     "postinstall": "node -r @babel/register .erb/scripts/check-native-dep.js && electron-builder install-app-deps && yarn cross-env NODE_ENV=development webpack --config ./.erb/configs/webpack.config.renderer.dev.dll.babel.js && opencollective-postinstall && yarn-deduplicate yarn.lock",
     "start": "node -r @babel/register ./.erb/scripts/check-port-in-use.js && yarn start:renderer",
     "start:main": "cross-env NODE_ENV=development LD_LIBRARY_PATH=./Cpp/lib electron -r ./.erb/scripts/babel-register ./src/main/main.ts",
@@ -100,6 +101,14 @@
         }
       ]
     }
+  },
+  "publish": {
+    "provider": "github",
+    "owner": "JohnAustinDev",
+    "host": "github.com",
+    "protocol": "https",
+    "channel": "latest",
+    "releaseType": "draft"
   },
   "repository": {
     "type": "git",
