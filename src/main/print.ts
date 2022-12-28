@@ -66,7 +66,7 @@ const MainPrintHandler = async (
           if (data) {
             const outfile = new LocalFile(result.filePath);
             outfile.writeFile(data);
-            return Promise.resolve(outfile.path);
+            return await Promise.resolve(outfile.path);
           }
         } catch (er) {
           return Promise.reject(er);
@@ -86,7 +86,7 @@ const MainPrintHandler = async (
         if (data) {
           tmp.writeFile(data);
           printPreviewTmps.push(tmp);
-          return Promise.resolve(tmp.path);
+          return await Promise.resolve(tmp.path);
         }
       } catch (er) {
         return Promise.reject(er);

@@ -1,22 +1,7 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
-const preloadLogLevel = 'debug';
-
-const levels = ['error', 'warn', 'info', 'verbose', 'debug', 'silly'];
-function log(level, ...args) {
-  if (levels.indexOf(level) <= levels.indexOf(preloadLogLevel)) {
-    const windowID = 'preload:?';
-    window.ipc.send('log', level, `[${windowID}]`, ...args);
-    if (process.env.NODE_ENV === 'development') {
-      // eslint-disable-next-line no-console
-      console.log(`[${windowID}]`, ...args);
-    }
-  }
-}
-
 contextBridge.exposeInMainWorld('processR', {
   argv() {
-    // argv[?] = window name ('main', 'splash' etc.)
     return process.argv;
   },
   NODE_ENV() {
@@ -34,7 +19,7 @@ contextBridge.exposeInMainWorld('processR', {
 });
 
 const validChannels = [
-  'global', // to/from main for use by the G object
+  'global', // to+from main for use by the G object
   'did-finish-render', // to main when window has finished rendering
   'print-or-preview', // to main to do print, printToPDF or preview PDF
   'log', // to main for logging
@@ -52,7 +37,6 @@ const validChannels = [
 // TypeScriptable IPC functions
 contextBridge.exposeInMainWorld('ipcTS', {
   printOrPreview(...args) {
-    log('silly', '[preload:?] send', 'print-or-preview', args);
     return ipcRenderer.invoke('print-or-preview', ...args);
   },
 });
@@ -63,7 +47,6 @@ contextBridge.exposeInMainWorld('ipc', {
   // Otherwise event.reply() can respond from ipcMain if the renderer has
   // also added a listener for it.
   send(channel, ...args) {
-    log('silly', '[preload:?] send', channel, args);
     if (validChannels.includes(channel)) {
       ipcRenderer.send(channel, ...args);
     } else throw Error(`ipc send bad channel: ${channel}`);
@@ -72,7 +55,6 @@ contextBridge.exposeInMainWorld('ipc', {
   // Trigger a channel event which ipcMain is to listen for and respond to
   // using ipcMain.handle(), returning a promise containing the result arg(s).
   invoke(channel, ...args) {
-    log('silly', '[preload:?] invoke', channel, args);
     if (validChannels.includes(channel)) {
       return ipcRenderer.invoke(channel, ...args);
     }
@@ -83,7 +65,6 @@ contextBridge.exposeInMainWorld('ipc', {
   // responds using event.returnValue. Using invoke instead will not block the
   // renderer process.
   sendSync(channel, ...args) {
-    log('silly', '[preload:?] sendSync', channel, args);
     if (validChannels.includes(channel)) {
       return ipcRenderer.sendSync(channel, ...args);
     }
@@ -95,7 +76,6 @@ contextBridge.exposeInMainWorld('ipc', {
     if (validChannels.includes(channel)) {
       // Deliberately strip event as it includes `sender`
       const strippedfunc = (event, ...args) => {
-        log('silly', '[preload:?] on', channel, args);
         func(...args);
       };
       ipcRenderer.on(channel, strippedfunc);
@@ -112,7 +92,6 @@ contextBridge.exposeInMainWorld('ipc', {
     if (validChannels.includes(channel)) {
       // Deliberately strip event as it includes `sender`
       const strippedfunc = (event, ...args) => {
-        log('silly', '[preload:?] once', channel, args);
         func(...args);
       };
       ipcRenderer.once(channel, strippedfunc);

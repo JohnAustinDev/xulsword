@@ -5,6 +5,7 @@ import log from 'electron-log';
 import path from 'path';
 import fs from 'fs';
 import i18n from 'i18next';
+import fontList from 'font-list';
 import C from '../constant';
 import VerseKey from '../versekey';
 import RefParser, { RefParserOptionsType } from '../refparse';
@@ -32,8 +33,6 @@ import type {
   ConfigType,
   FontFaceType,
 } from '../type';
-
-const fontList = require('font-list');
 
 // Get all supported books in locale order. NOTE: xulsword ignores individual
 // module book order in lieu of locale book order or xulsword default order

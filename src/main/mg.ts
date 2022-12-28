@@ -9,7 +9,7 @@ import {
   shell,
 } from 'electron';
 import i18next from 'i18next';
-import { GBuilder, GType, WindowArgType, WindowDescriptorType } from '../type';
+import { GBuilder, GType, WindowArgType } from '../type';
 import { inlineFile } from './components/localFile';
 import Dirs from './components/dirs';
 import Prefs from './components/prefs';

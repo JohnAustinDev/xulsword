@@ -9,7 +9,7 @@ import log, { LogLevel } from 'electron-log';
 import i18n from 'i18next';
 import Subscription from '../subscription';
 import Cache from '../cache';
-import { clone } from '../common';
+import { clone, JSON_parse, randomID } from '../common';
 import C from '../constant';
 import G from './mg';
 import LibSword from './components/libsword';
@@ -33,10 +33,10 @@ const installer = require('electron-devtools-installer');
 const sourceMapSupport = require('source-map-support');
 const electronDebug = require('electron-debug');
 
-// Init the logfile. This must also be done in renderer.tsx for renderer processes.
+// Init xulsword logfile.
 {
   const logfile = new LocalFile(
-    path.join(G.Dirs.path.ProfD, 'logs', 'xulsword.log')
+    path.join(G.Dirs.path.ProfD, 'logs', `xulsword.${randomID()}.log`)
   );
   if (logfile.exists()) logfile.remove();
   // The renderer log contains any renderer window entries that occur before
@@ -127,9 +127,12 @@ ipcMain.on('did-finish-render', (event: IpcMainEvent) => {
 
 ipcMain.handle('print-or-preview', MainPrintHandler);
 
-ipcMain.on('log', (_event: IpcMainEvent, type: LogLevel, ...args: any[]) => {
-  log[type](...args);
-});
+ipcMain.on(
+  'log',
+  (_e: IpcMainEvent, type: LogLevel, windowID: string, json: string) => {
+    log[type](windowID, ...JSON_parse(json));
+  }
+);
 
 const openMainWindow = () => {
   let options: Electron.BrowserWindowConstructorOptions = {
@@ -337,6 +340,8 @@ const init = async () => {
       interpolation: {
         escapeValue: false, // not needed for react as it escapes by default
       },
+
+      keySeparator: false,
     })
     .catch((e) => log.error(e));
 

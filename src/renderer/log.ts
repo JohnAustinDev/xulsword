@@ -3,6 +3,7 @@
 import type ElectronLog from 'electron-log';
 import type { LogLevel } from 'electron-log';
 import C from '../constant';
+import { JSON_stringify } from '../common';
 import Cache from '../cache';
 
 const levels = ['error', 'warn', 'info', 'verbose', 'debug', 'silly'];
@@ -10,7 +11,7 @@ const levels = ['error', 'warn', 'info', 'verbose', 'debug', 'silly'];
 function rlog(level: LogLevel, ...args: any[]) {
   if (levels.indexOf(level) <= levels.indexOf(C.LogLevel)) {
     const windowID = Cache.has('windowID') ? Cache.read('windowID') : '?:?';
-    window.ipc.send('log', level, `[${windowID}]`, ...args);
+    window.ipc.send('log', level, `[${windowID}]`, JSON_stringify(args));
     if (C.isDevelopment) {
       console.log(`[${windowID}]`, ...args);
     }

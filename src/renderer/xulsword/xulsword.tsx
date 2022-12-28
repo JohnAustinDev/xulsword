@@ -350,8 +350,6 @@ export default class Xulsword extends React.Component {
     const left = G.i18n.t('locale_direction') === 'ltr' ? 'left' : 'right';
     const right = G.i18n.t('locale_direction') !== 'ltr' ? 'left' : 'right';
 
-    log.debug('xulsword state: ', state);
-
     return (
       <Vbox
         {...addClass('xulsword', props)}

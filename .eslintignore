@@ -28,8 +28,8 @@ npm-debug.log.*
 *.sass.d.ts
 *.scss.d.ts
 
-# Ignore C++ code
 Cpp
-
-# Ignore libxulsword which contains nothing requiring eslint
-libxulsword
+util
+archive
+assets
+.vagrant

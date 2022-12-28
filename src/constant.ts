@@ -43,16 +43,16 @@ const isDevelopment =
 
 const productionLogLevel = env('DEBUG_PROD') === 'true' ? 'silly' : 'info';
 
-// Common Global Constants
+// COMMON GLOBAL CONSTANTS FOR MAIN AND RENDERER PROCESSES
 const C = {
-  isDevelopment,
+  DevToolsopen: isDevelopment ? false : env('DEBUG_PROD') === 'true',
 
   LogLevel: (/\S+/.test(env('LOGLEVEL') ?? '') ||
     (isDevelopment ? 'debug' : productionLogLevel)) as LogLevel,
 
-  DevToolsopen: isDevelopment ? false : env('DEBUG_PROD') === 'true',
-
   DevSplash: 1 as 0 | 1 | 2, // 0 normal, 1 skip, 2 debug
+
+  isDevelopment,
 
   SWORDEngineVersion: '1.8.1',
 

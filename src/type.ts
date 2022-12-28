@@ -37,13 +37,36 @@ import type MainPrintHandler from './main/print';
 
 declare global {
   export interface Window {
-    ipc: WinIpcType;
-    ipcTS: WinfuncTSType;
-    processR: WinProcessType;
+    ipc: {
+      send: (channel: RendererChannels, ...args: any[]) => void;
+      invoke: (channel: RendererChannels, ...args: any[]) => any;
+      sendSync: (channel: RendererChannels, ...args: any[]) => any;
+      on: (
+        channel: RendererChannels,
+        func: (...args: any[]) => any
+      ) => () => void;
+      once: (
+        channel: RendererChannels,
+        func: (...args: any[]) => any
+      ) => () => void;
+    };
+    ipcTS: {
+      printOrPreview: (
+        ...args: Shift<Parameters<typeof MainPrintHandler>>
+      ) => ReturnType<typeof MainPrintHandler>;
+    };
+    processR: {
+      [envar in EnvironmentVars]: () => string;
+    } & {
+      argv: () => string[];
+    };
   }
+
   function ToUpperCase(str: string): string;
+
   function ReportSearchIndexerProgress(percent: number): void;
 }
+
 type RendererChannels =
   | 'global'
   | 'did-finish-render'
@@ -70,34 +93,11 @@ export type QuerablePromise<T> = Promise<T> & {
   reject: (er: any) => void;
 };
 
-export type WinfuncTSType = {
-  printOrPreview: (
-    ...args: Shift<Parameters<typeof MainPrintHandler>>
-  ) => ReturnType<typeof MainPrintHandler>;
-};
-
-export type WinIpcType = {
-  send: (channel: RendererChannels, ...args: any[]) => void;
-  invoke: (channel: RendererChannels, ...args: any[]) => any;
-  sendSync: (channel: RendererChannels, ...args: any[]) => any;
-  on: (channel: RendererChannels, func: (...args: any[]) => any) => () => void;
-  once: (
-    channel: RendererChannels,
-    func: (...args: any[]) => any
-  ) => () => void;
-};
-
 export type EnvironmentVars =
   | 'NODE_ENV'
   | 'XULSWORD_ENV'
   | 'DEBUG_PROD'
   | 'LOGLEVEL';
-
-export type WinProcessType = {
-  [envar in EnvironmentVars]: () => string;
-} & {
-  argv: () => string[];
-};
 
 export type WindowRegistryType = (WindowDescriptorType | null)[];
 
