@@ -4,27 +4,25 @@ import 'core-js/stable';
 import 'regenerator-runtime/runtime';
 import { app, dialog, BrowserWindow, ipcMain, IpcMainEvent } from 'electron';
 import { autoUpdater } from 'electron-updater';
-import path from 'path';
 import log, { LogLevel } from 'electron-log';
-import i18n from 'i18next';
+import path from 'path';
 import Subscription from '../subscription';
 import Cache from '../cache';
 import { clone, JSON_parse, randomID } from '../common';
 import C from '../constant';
 import G from './mg';
-import LibSword from './components/libsword';
+import { getCipherFailConfs, getTabs, updateGlobalModulePrefs } from './minit';
+import MenuBuilder, { pushPrefsToMenu } from './menu';
+import contextMenu from './contextMenu';
+import MainPrintHandler from './print';
+import setViewportTabs from './tabs';
 import LocalFile from './components/localFile';
 import { CipherKeyModules } from './components/module';
-import MenuBuilder, { pushPrefsToMenu } from './menu';
-import Window, {
+import {
   WindowRegistry,
   pushPrefsToWindows,
   publishSubscription,
 } from './components/window';
-import MainPrintHandler from './print';
-import contextMenu from './contextMenu';
-import { getCipherFailConfs, getTabs, updateGlobalModulePrefs } from './minit';
-import setViewportTabs from './tabs';
 
 import type { NewModulesType, WindowRegistryType } from '../type';
 
@@ -52,7 +50,7 @@ const electronDebug = require('electron-debug');
 }
 log.info(`Starting ${app.getName()} isDevelopment='${C.isDevelopment}'`);
 
-LibSword.init();
+G.LibSword.init();
 
 const AvailableLanguages = [
   ...new Set(
@@ -65,26 +63,20 @@ const AvailableLanguages = [
       .flat()
   ),
 ];
-// Select the program's locale
-let Language = G.Prefs.getCharPref('global.locale');
-if (!Language) {
-  const oplng = 'en'; // webpack couldn't compile os-locale module
-  let matched = '';
-  C.Locales.forEach((l) => {
-    if (!matched && (l[0] === oplng || l[0].replace(/-.*$/, '') === oplng))
-      [matched] = l;
-  });
-  Language = matched || 'ru';
-  G.Prefs.setCharPref('global.locale', Language);
-}
-// Set program menu direction and Chromium locale. This must be done
+
+// Program menu direction and Chromium locale must be set now,
 // before the app 'ready' event is fired, which happens even before
 // i18next or configs are initialized. Direction need not be forced
 // for locales in Chromium's list, like fa, but must be for ky-Arab.
-if ((C.Locales.find((l) => l[0] === Language) || [])[2] === 'rtl') {
-  app.commandLine.appendSwitch('force-ui-direction', 'rtl');
+{
+  const lang = G.Prefs.getCharPref('global.locale');
+  if (lang) {
+    if ((C.Locales.find((l) => l[0] === lang) || [])[2] === 'rtl') {
+      app.commandLine.appendSwitch('force-ui-direction', 'rtl');
+    }
+    app.commandLine.appendSwitch('lang', lang.replace(/-.*$/, ''));
+  }
 }
-app.commandLine.appendSwitch('lang', Language.replace(/-.*$/, ''));
 
 if (
   process.env.NODE_ENV === 'development' ||
@@ -97,7 +89,9 @@ export default class AppUpdater {
   constructor() {
     log.transports.file.level = 'info';
     autoUpdater.logger = log;
-    autoUpdater.checkForUpdatesAndNotify();
+    if (G.Prefs.getBoolPref('global.InternetPermission')) {
+      autoUpdater.checkForUpdatesAndNotify();
+    }
   }
 }
 
@@ -136,7 +130,7 @@ ipcMain.on(
 
 const openMainWindow = () => {
   let options: Electron.BrowserWindowConstructorOptions = {
-    title: i18n.t('programTitle', { ns: 'branding' }),
+    title: G.i18n.t('programTitle', { ns: 'branding' }),
     fullscreenable: true,
     ...C.UI.Window.large,
   };
@@ -173,7 +167,7 @@ const openMainWindow = () => {
     return null;
   }
 
-  const menuBuilder = new MenuBuilder(mainWin, i18n);
+  const menuBuilder = new MenuBuilder(mainWin, G.i18n);
   menuBuilder.buildMenu();
 
   updateGlobalModulePrefs();
@@ -191,9 +185,9 @@ const openMainWindow = () => {
   subscriptions.push(Subscription.subscribe.setPref(pushPrefsToMenu));
   subscriptions.push(
     Subscription.subscribe.resetMain(() => {
-      LibSword.quit();
+      G.LibSword.quit();
       Cache.clear();
-      LibSword.init();
+      G.LibSword.init();
       updateGlobalModulePrefs();
       menuBuilder.buildMenu();
     })
@@ -237,7 +231,7 @@ const openMainWindow = () => {
             );
           }, 1);
         }
-        Window.modal([{ modal: 'off', window: 'all' }]);
+        G.Window.modal([{ modal: 'off', window: 'all' }]);
       }
     )
   );
@@ -277,7 +271,7 @@ const openMainWindow = () => {
       if (w !== mainWin) w.close();
     });
     subscriptions.forEach((dispose) => dispose());
-    LibSword.quit();
+    G.LibSword.quit();
   });
 
   mainWin.on('closed', () => {
@@ -307,13 +301,28 @@ const init = async () => {
         .catch((e: Error) => log.error(e));
     })();
   }
+
+  let lng = G.Prefs.getCharPref('global.locale');
+  if (!lng) {
+    const langs = C.Locales.map((x) => x[0].replace(/-.*$/, ''));
+    const plangs = app.getPreferredSystemLanguages();
+    log.info(`App locale is not set. Preferred system languages are: `, plangs);
+    plangs.forEach((l) => {
+      const ls = l.replace(/-.*$/, '');
+      if (!lng && langs.includes(ls)) lng = ls;
+    });
+    lng = lng || 'ru';
+    log.info(`Choosing language: ${lng}`);
+    G.Prefs.setCharPref('global.locale', lng);
+  }
+
   // Remove this if your app does not use auto updates
   // new AppUpdater();
-  await i18n
+  await G.i18n
     .use(i18nBackendMain)
     .init({
-      lng: Language,
-      fallbackLng: C.FallbackLanguage[Language] || ['en'],
+      lng,
+      fallbackLng: C.FallbackLanguage[lng] || ['en'],
       supportedLngs: AvailableLanguages,
       preload: AvailableLanguages,
 
@@ -351,7 +360,7 @@ const init = async () => {
       // eslint-disable-next-line promise/no-promise-in-callback
       dialog
         .showMessageBox({
-          title: i18n.t('error-detected'),
+          title: G.i18n.t('error-detected'),
           message: error.message,
           detail: error.stack,
           type: 'error',
@@ -370,7 +379,6 @@ const init = async () => {
             );
             return result;
           }
-
           if (result.response === 2) {
             app.quit();
           }
@@ -381,7 +389,6 @@ const init = async () => {
         });
     },
   });
-  return i18n;
 };
 
 const subscriptions: (() => void)[] = [];

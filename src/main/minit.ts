@@ -61,7 +61,6 @@ export function getBooks(): BookType[] {
       Dirs.path.xsAsset,
       'locales',
       i18n.language,
-      'common',
       'books.json'
     );
     const raw = fs.readFileSync(stfile);
