@@ -148,18 +148,17 @@ export default merge(baseConfig, {
       },
     ],
   },
-/* This was commented out because the minifier caused problems in the main
-process, (see comment there) and is not really needed for an electron app.
   optimization: {
+    // concatenateModules: false,
     minimize: true,
+    // Careful! The TerserPlugin seemed to cause runtime errors at one point early on...
     minimizer: [
       new TerserPlugin({
         parallel: true,
       }),
-      new CssMinimizerPlugin(),
+      new CssMinimizerPlugin()
     ],
   },
-*/
   plugins: [
     /**
      * Create global constants which can be configured at compile time.
@@ -183,6 +182,7 @@ process, (see comment there) and is not really needed for an electron app.
       analyzerMode:
         process.env.OPEN_ANALYZER === 'true' ? 'server' : 'disabled',
       openAnalyzer: process.env.OPEN_ANALYZER === 'true',
+      analyzerPort: 8889,
     }),
 
   ].concat(xulswordWindows.map((xsw) => {

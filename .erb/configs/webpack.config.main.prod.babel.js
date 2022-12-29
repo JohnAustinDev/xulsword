@@ -39,22 +39,21 @@ export default merge(baseConfig, {
     path: webpackPaths.distMainPath,
     filename: '[name].js',
   },
-/* Minifying caused at least one very weird problem: switching the number
-of panels would remove the tab selection. Unminified JS did not have
-this problem!
   optimization: {
+    minimize: true,
+    // Careful! The TerserPlugin seemed to cause runtime errors at one point early on...
     minimizer: [
       new TerserPlugin({
         parallel: true,
       }),
     ],
   },
-*/
   plugins: [
     new BundleAnalyzerPlugin({
       analyzerMode:
         process.env.OPEN_ANALYZER === 'true' ? 'server' : 'disabled',
       openAnalyzer: process.env.OPEN_ANALYZER === 'true',
+      analyzerPort: 8888,
     }),
 
     /**
