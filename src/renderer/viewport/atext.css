@@ -167,6 +167,7 @@ html[dir='rtl'] .notebox-maximizer {
 
 /* Bible & Commentary chapter/page header */
 .chapterhead {
+  display: inline-block;
   padding-top: 26px;
 }
 .chapnotice {
