@@ -12,8 +12,8 @@ import {
   modrepKey,
   ofClass,
   repositoryKey,
-  rowsToSelection,
-  selectionToRows,
+  tableRowsToSelection,
+  selectionToTableRows,
   versionCompare,
 } from '../../common';
 import C from '../../constant';
@@ -168,7 +168,7 @@ export const OFF = '☐';
 export const ALWAYS_ON = '￭';
 
 export const LanCol = {
-  iCode: 0,
+  iName: 0,
   iInfo: 1,
 } as const;
 
@@ -308,7 +308,8 @@ export function onLangCellClick(
   e: React.MouseEvent,
   cell: TCellLocation
 ) {
-  this.loadModuleTable(rowSelect(this, e, 'language', cell.tableRowIndex));
+  const newSelection = rowSelect(this, e, 'language', cell.tableRowIndex);
+  this.loadModuleTable(newSelection as string[]);
 }
 
 export function onModCellClick(
@@ -329,7 +330,7 @@ export function onModCellClick(
       // iInstalled and iRemove column clicks
       const was = drow[col] === ON || drow[ModCol.iInfo].loading;
       const is = !was;
-      const selrows = selectionToRows(selection);
+      const selrows = selectionToTableRows(selection);
       modtableUpdate(
         this,
         col === ModCol.iRemove ? !is : is,
@@ -341,7 +342,7 @@ export function onModCellClick(
     } else if (drow && col === ModCol.iShared) {
       // Shared column clicks
       const is = !drow[ModCol.iInfo].shared;
-      const selrows = selectionToRows(selection);
+      const selrows = selectionToTableRows(selection);
       (selrows.includes(tableRowIndex) ? selrows : [tableRowIndex])
         .map((r) => Saved.module.tableToDataRowMap[r] ?? r)
         .forEach((r) => {
@@ -372,7 +373,7 @@ export function onRepoCellClick(
     const builtin =
       repotable.data[row] && repotable.data[row][RepCol.iInfo].repo.builtin;
     if (!builtin && col === RepCol.iState) {
-      const selrows = selectionToRows(selection);
+      const selrows = selectionToTableRows(selection);
       switchRepo(
         this,
         (selrows.includes(tableRowIndex) ? selrows : [tableRowIndex]).map(
@@ -436,32 +437,18 @@ export async function eventHandler(
       const e = ev as React.MouseEvent;
       const [id, idext] = e.currentTarget.id.split('.');
       switch (id) {
-        case 'languageListClose': {
-          const state = this.state as ManagerState;
-          setTableState(
-            this,
-            'module',
-            null,
-            this.filterModuleTable([]),
-            true,
-            {
-              language: { ...state.language, open: false },
-            }
-          );
-          break;
-        }
+        case 'languageListClose':
         case 'languageListOpen': {
+          const open = id === 'languageListOpen';
           const state = this.state as ManagerState;
-          // Cannot retain selection without making moduleTableData() an async
-          // function, because selectionToDataRows() needs a rendered table.
           setTableState(
             this,
             'module',
             null,
-            this.filterModuleTable([]),
+            this.filterModuleTable(null, open),
             true,
             {
-              language: { ...state.language, selection: [], open: true },
+              language: { ...state.language, open },
             }
           );
           break;
@@ -682,7 +669,8 @@ export async function eventHandler(
             setTableState(this, 'repository', null, repotableData, true, {
               repositories: { ...repositories, custom: newCustomRepos },
             });
-            this.loadModuleTable(this.loadLanguageTable());
+            this.loadLanguageTable();
+            this.loadModuleTable();
           }
           break;
         }
@@ -760,20 +748,34 @@ export async function eventHandler(
 }
 
 // Select or unselect a row of a table. If the ctrl or shift key is pressed,
-// the current selection will be modified accordingly.
+// the current selection will be modified accordingly. Returns the new
+// selection. NOTE: returned selection is type state.table[table].selection.
 export function rowSelect(
   xthis: ModuleManager,
   e: React.MouseEvent,
   table: typeof Tables[number],
   row: number
-) {
+): RowSelection | string[] {
   const state = xthis.state as ManagerState;
   const tbl = state[table];
+  let newSelection: RowSelection | string[] = [];
   if (tbl) {
     const { selection } = tbl;
-    const rows = selectionToRows(selection);
+    let rows: number[] = [];
+    if (table === 'language') {
+      const { data: langTableData } = state.tables.language;
+      rows = selection
+        .map((code) => {
+          const rx = langTableData.findIndex(
+            (r) => r[LanCol.iInfo].code === code
+          );
+          return rx === -1 ? 0 : rx;
+        })
+        .sort();
+    } else {
+      rows = selectionToTableRows(selection as RowSelection);
+    }
     const isSelected = rows.includes(row);
-    let newSelection;
     if (selection.length && (e.ctrlKey || e.shiftKey)) {
       const prev = rows.filter((r) => r < row).pop();
       const start = prev === undefined || e.ctrlKey ? row : prev;
@@ -783,14 +785,20 @@ export function rowSelect(
           rows.splice(rows.indexOf(x), 1);
         }
       }
-      newSelection = rowsToSelection(rows);
+      newSelection = tableRowsToSelection(rows);
     } else {
-      newSelection = rowsToSelection(isSelected ? [] : [row]);
+      newSelection = tableRowsToSelection(isSelected ? [] : [row]);
     }
-    setTableState(xthis, table, { selection: newSelection }, null, false);
-    return newSelection;
+    if (table === 'language') {
+      const { data: langTableData } = state.tables.language;
+      newSelection = selectionToTableRows(newSelection).map(
+        (r) => langTableData[r][LanCol.iInfo].code
+      );
+    }
+    const sel = newSelection as any;
+    setTableState(xthis, table, { selection: sel }, null, false);
   }
-  return [];
+  return newSelection;
 }
 
 function getDisabledRepos(xthis: ModuleManager) {
@@ -891,9 +899,9 @@ export async function switchRepo(
   }
 }
 
-// Handle one or more raw repository listings which may include errors and
-// cancelations. Then update the language and module tables and check for
-// updates.
+// Handle one or more raw repository listings, also handling any errors
+// or cancelations. Also update the language and module tables, checking for
+// possible module updates of installed modules.
 export function handleListings(
   xthis: ModuleManager,
   listingsAndErrors: (RepositoryListing | string)[]
@@ -962,10 +970,8 @@ export function handleListings(
       return l;
     });
   }
-  let langselection = xthis.loadLanguageTable();
-  const { language } = xthis.state as ManagerState;
-  if (!language.open) langselection = [];
-  xthis.loadModuleTable(langselection);
+  xthis.loadLanguageTable();
+  xthis.loadModuleTable();
   checkForModuleUpdates(xthis, listing);
 }
 
@@ -1324,13 +1330,13 @@ function installModuleUpdates(
 function modtableUpdate(
   xthis: ModuleManager,
   on: boolean | boolean[],
-  modtableRowIndexes: number[],
+  moduleDataRowIndexes: number[],
   isInstalled = false
 ) {
   const state = xthis.state as ManagerState;
   const { module: modtable } = state.tables;
   const cancel: Download[] = [];
-  modtableRowIndexes.forEach((mtri, i) => {
+  moduleDataRowIndexes.forEach((mtri, i) => {
     if (mtri !== -1) {
       const row = modtable.data[mtri];
       if (Array.isArray(on) ? on[i] : on) {
@@ -1358,7 +1364,7 @@ function modtableUpdate(
     }
   });
   if (cancel.length) G.Module.cancel(cancel);
-  if (modtableRowIndexes.length)
+  if (moduleDataRowIndexes.length)
     setTableState(xthis, 'module', null, modtable.data, true);
 }
 
@@ -1405,9 +1411,17 @@ export function setTableState(
 // This is like selectionToRows, but returns data rows rather than table rows.
 export function selectionToDataRows(
   table: typeof Tables[number],
-  regions: RowSelection
+  selection: RowSelection | string[]
 ): number[] {
-  const tablerows = selectionToRows(regions);
+  if (table === 'language') {
+    return selection
+      .map((code) => {
+        const { data } = Saved[table];
+        return data.findIndex((r) => r[LanCol.iInfo].code === code);
+      })
+      .filter((i) => i !== -1);
+  }
+  const tablerows = selectionToTableRows(selection as RowSelection);
   return tablerows
     .map((r) => Saved[table].tableToDataRowMap[r] ?? r)
     .sort((a, b) => (a > b ? 1 : a < b ? -1 : 0));

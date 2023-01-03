@@ -1,3 +1,4 @@
+/* eslint-disable import/order */
 /* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable no-nested-ternary */
 /* eslint-disable react/jsx-props-no-spreading */
@@ -18,8 +19,9 @@ import {
   drop,
   isRepoLocal,
   modrepKey,
-  selectionToRows,
+  selectionToTableRows,
   repositoryKey,
+  tableRowsToSelection,
 } from '../../common';
 import C from '../../constant';
 import G from '../rg';
@@ -121,7 +123,7 @@ const notStatePref = {
 export interface ManagerStatePref {
   language: {
     open: boolean;
-    selection: RowSelection;
+    selection: string[];
     rowSort: TinitialRowSort;
     width: number;
   };
@@ -163,6 +165,8 @@ export default class ModuleManager
   tableRef: {
     [table in typeof H.Tables[number]]: React.RefObject<HTMLDivElement>;
   };
+
+  languageTableCompRef;
 
   modinfoRefs: {
     textarea: React.RefObject<HTMLTextAreaElement>;
@@ -226,6 +230,8 @@ export default class ModuleManager
       this.tableRef[t] = React.createRef();
     });
 
+    this.languageTableCompRef = React.createRef();
+
     this.modinfoRefs = {
       textarea: React.createRef(),
       container: React.createRef(),
@@ -258,6 +264,8 @@ export default class ModuleManager
     this.audioDialogOnChange = audioDialogOnChange.bind(this);
     this.audioDialogClose = this.audioDialogClose.bind(this);
     this.audioDialogAccept = this.audioDialogAccept.bind(this);
+    this.languageCodesToTableSelection =
+      this.languageCodesToTableSelection.bind(this);
     this.sState = this.setState.bind(this);
   }
 
@@ -316,21 +324,21 @@ export default class ModuleManager
           if (!navigator.onLine) throw new Error(`No Internet connection.`);
           const repos = await G.Module.crossWireMasterRepoList();
           if (typeof repos === 'string') throw new Error(repos);
-          // Calling loadRepositoryTable on all repos at onces causes the
+          // Calling loadRepositoryTable on all repos at once causes the
           // module table to remain empty until all repository listings have
           // been downloaded, and certain repos may take a long time. So
           // instead it is called on each repo separately.
-          this.loadRepositoryTable(repos)
-            .map((r) => {
-              return { ...r, file: C.SwordRepoManifest };
-            })
-            .forEach(async (l, i, a) => {
-              const [list] = await G.Module.repositoryListing([l]);
+          this.loadRepositoryTable(repos).map(async (r, i, a) => {
+            return G.Module.repositoryListing([
+              { ...r, file: C.SwordRepoManifest },
+            ]).then((list) => {
               H.handleListings(
                 this,
-                a.map((_lr, ir) => (ir === i ? list : null))
+                a.map((_lr, ir) => (ir === i ? list[0] : null))
               );
+              return true;
             });
+          });
         } catch (er: any) {
           // Failed to load the master list, so just load local repos.
           log.warn(er);
@@ -344,6 +352,7 @@ export default class ModuleManager
         }
       } else loadLocalRepos();
     }
+
     this.destroy.push(onSetWindowState(this));
     // Instantiate progress handler
     const progressing = {
@@ -495,18 +504,13 @@ export default class ModuleManager
     return allrepos;
   }
 
-  // Load language table with all languages found in the saved repositoryListings
-  // data, keeping the selection the same if possible. It returns the new
-  // selection.
-  loadLanguageTable(): RowSelection {
+  // Load the language table with all languages found in all currently enabled
+  // repositories that are present in the saved repositoryListings and scroll
+  // to the first selected language if there is one.
+  loadLanguageTable() {
     const state = this.state as ManagerState;
-    const { language: langtable, repository: repotable } = state.tables;
-    const { selection } = state.language;
+    const { repository: repotable } = state.tables;
     const { repositoryListings } = H.Saved;
-    const selectedRowIndexes = H.selectionToDataRows('language', selection);
-    const selectedcodes = langtable.data
-      .filter((_r, i) => selectedRowIndexes.includes(i))
-      .map((r) => r[H.LanCol.iInfo].code);
     const langs: Set<string> = new Set();
     repositoryListings.forEach((listing, i) => {
       if (
@@ -525,25 +529,50 @@ export default class ModuleManager
       newTableData.push([getLangReadable(l), { code: l }])
     );
     newTableData = newTableData.sort((a, b) => a[0].localeCompare(b[0]));
-    const newlanguage: RowSelection = [];
-    newTableData.forEach((r, i) => {
-      if (selectedcodes?.includes(r[H.LanCol.iInfo].code)) {
-        newlanguage.push({ rows: [i, i] });
+    H.setTableState(this, 'language', null, newTableData, true);
+
+    const { selection } = state.language;
+    if (selection.length) {
+      const selectedRegions = this.languageCodesToTableSelection(selection);
+      const firstSelectedRegion = selectedRegions[0];
+      if (firstSelectedRegion) {
+        const { languageTableCompRef } = this;
+        const tc = languageTableCompRef.current;
+        if (
+          tc &&
+          typeof tc === 'object' &&
+          'scrollToRegion' in tc &&
+          typeof tc.scrollToRegion === 'function'
+        ) {
+          tc.scrollToRegion(firstSelectedRegion);
+        }
       }
-    });
-    H.setTableState(
-      this,
-      'language',
-      { selection: newlanguage },
-      newTableData,
-      true
-    );
-    return newlanguage;
+    }
   }
 
-  // Load the module table with modules sharing the language code,
-  // or else with all modules if the code is null.
-  loadModuleTable(languageSelection?: RowSelection): void {
+  // Convert the language table string array selection to a current language table
+  // row selection.
+  languageCodesToTableSelection(codes: string[]): RowSelection {
+    const { tableToDataRowMap } = H.Saved.language;
+    const state = this.state as ManagerState;
+    const { data } = state.tables.language;
+    const datarow = codes
+      .map((code) => {
+        return data.findIndex((r) => r[H.LanCol.iInfo].code === code);
+      })
+      .filter((r) => r !== -1);
+    return tableRowsToSelection(
+      datarow.map((dr) => tableToDataRowMap.indexOf(dr))
+    );
+  }
+
+  // Create and save moduleData data taken from all listings found in saved
+  // repositoryListings. Create and save moduleLangData as the language to
+  // moduleData mapping. Then load the module table with all modules that
+  // share any language code found in the current language selection (or
+  // languageSelection argument if provided), or else with all modules if
+  // no codes are selected.
+  loadModuleTable(languageSelection?: string[]): void {
     const state = this.state as ManagerState;
     // Insure there is one moduleData row object for each module in
     // each repository (local and remote). The same object should be reused
@@ -679,26 +708,24 @@ export default class ModuleManager
       this,
       'module',
       null,
-      this.filterModuleTable(languageSelection),
+      this.filterModuleTable(languageSelection, null),
       true
     );
   }
 
   // Return sorted and filtered (by language selection) module table data.
-  filterModuleTable(filter?: RowSelection): TModuleTableRow[] {
+  filterModuleTable(
+    languageSelection?: string[] | null,
+    langTableOpen?: boolean | null
+  ): TModuleTableRow[] {
     const state = this.state as ManagerState;
-    const { language: langtable } = state.tables;
-    const rows = H.selectionToDataRows('language', filter || []);
-    const codes: string[] = [];
-    rows.forEach((r) => {
-      if (langtable.data[r]) {
-        codes.push(langtable.data[r][H.LanCol.iInfo].code);
-      }
-    });
+    const codes = languageSelection ?? state.language.selection;
+    const { open } = state.language;
     const { moduleLangData } = H.Saved;
+    const isOpen = langTableOpen ?? open;
     // Select the appropriate moduleLangData lists.
     let tableData: TModuleTableRow[] = moduleLangData.allmodules;
-    if (codes.length) {
+    if (isOpen && codes?.length) {
       tableData = Object.entries(moduleLangData)
         .filter((ent) => codes.includes(ent[0]))
         .map((ent) => ent[1])
@@ -784,10 +811,12 @@ export default class ModuleManager
       tableRef,
       modinfoRefs,
       audioDialogOnChange: dialogOnChange,
+      languageCodesToTableSelection: selectedRegions,
+      languageTableCompRef,
     } = this;
 
     const disable = {
-      moduleInfo: !selectionToRows(module.selection).length,
+      moduleInfo: !selectionToTableRows(module.selection).length,
       moduleInfoBack: false,
       moduleCancel: !modtable.data.find((r) => r[H.ModCol.iInfo].loading),
       repoAdd: false,
@@ -855,10 +884,11 @@ export default class ModuleManager
                       columnHeadings={H.LanguageTableHeadings}
                       initialRowSort={language.rowSort}
                       data={langtable.data}
-                      selectedRegions={language.selection}
+                      selectedRegions={selectedRegions(language.selection)}
                       domref={tableRef.language}
                       onRowsReordered={onRowsReordered.language}
                       onCellClick={onLangCellClick}
+                      tableCompRef={languageTableCompRef}
                     />
                   </Box>
                   <Button

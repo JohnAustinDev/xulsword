@@ -655,7 +655,7 @@ export function modrepKey(module: string, r: Repository): string {
   return `[${[r.name, r.domain, r.path, module].join('][')}]`;
 }
 
-export function selectionToRows(regions: Region[]): number[] {
+export function selectionToTableRows(regions: Region[]): number[] {
   const sels: Set<number> = new Set();
   regions?.forEach((region) => {
     if (region.rows) {
@@ -667,7 +667,7 @@ export function selectionToRows(regions: Region[]): number[] {
   return Array.from(sels).sort((a, b) => (a > b ? 1 : a < b ? -1 : 0));
 }
 
-export function rowsToSelection(rows: number[]): RowSelection {
+export function tableRowsToSelection(rows: number[]): RowSelection {
   const unique = new Set(rows);
   const sorted = Array.from(unique).sort((a: number, b: number) =>
     a > b ? 1 : a < b ? -1 : 0

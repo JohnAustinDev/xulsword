@@ -153,9 +153,10 @@ function Modinfo(props: ModinfoProps) {
   const confPath =
     (showConf && showConf in G.Tab && G.Tab[showConf].confPath) || '';
   const conftext: string[] =
-    !showConf || !confPath
-      ? []
-      : G.inlineFile(confPath, 'utf8', true).split('\n');
+    (showConf &&
+      confPath &&
+      G.inlineFile(confPath, 'utf8', true).split('\n')) ||
+    [];
 
   const showLinkList = modules.length > 4;
 
@@ -165,7 +166,7 @@ function Modinfo(props: ModinfoProps) {
         {showLinkList &&
           ['Texts', 'Comms', 'Dicts', 'Genbks'].map((t) => (
             <div key={`lt${t}`} className="linklist">
-              {modules.some((m) => G.Tab[m].tabType === t) && (
+              {modules.some((m) => m in G.Tab && G.Tab[m].tabType === t) && (
                 <>
                   <div className="head1">{G.i18n.t(t)}</div>
                   <div className="listbox">

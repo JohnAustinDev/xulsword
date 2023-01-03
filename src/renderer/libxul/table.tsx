@@ -15,12 +15,12 @@ import { Icon, Intent, Menu, MenuDivider, MenuItem } from '@blueprintjs/core';
 import {
   Cell,
   Column,
-  ColumnHeaderCell,
-  EditableCell,
+  ColumnHeaderCell2,
+  EditableCell2,
   Region,
   RegionCardinality,
   SelectionModes,
-  Table as BPTable,
+  Table2 as BPTable,
   Utils,
 } from '@blueprintjs/table';
 import {
@@ -173,7 +173,7 @@ abstract class AbstractSortableColumn implements TSortableColumn {
           tooltip !== 'VALUE' ? tooltip : typeof val === 'string' ? val : ''
         ) as string;
         return (
-          <EditableCell
+          <EditableCell2
             className={classes?.join(' ')}
             value={val}
             intent={state.sparseCellIntent[dataKey] || intent || 'none'}
@@ -205,7 +205,7 @@ abstract class AbstractSortableColumn implements TSortableColumn {
       props
     );
     const columnHeaderCellRenderer = () => (
-      <ColumnHeaderCell
+      <ColumnHeaderCell2
         className={[
           `data-col-${this.dataColIndex}`,
           this.name ? '' : 'no-name',
@@ -219,7 +219,7 @@ abstract class AbstractSortableColumn implements TSortableColumn {
         {this.name.startsWith('icon:') && (
           <Icon icon={this.name.substring(5) as any} size={20} intent="none" />
         )}
-      </ColumnHeaderCell>
+      </ColumnHeaderCell2>
     );
     return (
       <Column
@@ -328,6 +328,8 @@ const defaultProps = {
   onColumnHide: undefined,
   onEditableCellChanged: undefined,
   onCellClick: undefined,
+
+  tableCompRef: {},
 };
 
 const propTypes = {
@@ -351,6 +353,8 @@ const propTypes = {
   onColumnHide: PropTypes.func,
   onEditableCellChanged: PropTypes.func,
   onCellClick: PropTypes.func,
+
+  tableCompRef: PropTypes.object,
 };
 
 type TableProps = XulProps & {
@@ -370,6 +374,8 @@ type TableProps = XulProps & {
   onColumnHide?: TonColumnHide;
   onEditableCellChanged?: TonEditableCellChanged;
   onCellClick?: TonCellClick;
+
+  tableCompRef: React.LegacyRef<BPTable>;
 };
 
 type TableState = {
@@ -390,7 +396,7 @@ class Table extends React.Component {
     return `${rowIndex}-${columnIndex}`;
   };
 
-  tableRef: React.RefObject<HTMLDivElement>;
+  tableDomRef: React.RefObject<HTMLDivElement>;
 
   sState: (s: Partial<TableState> | ((prevState: TableState) => void)) => void;
 
@@ -429,7 +435,7 @@ class Table extends React.Component {
     }
     this.state = s;
 
-    this.tableRef = React.createRef();
+    this.tableDomRef = React.createRef();
 
     this.sState = this.setState.bind(this);
     this.getCellData = this.getCellData.bind(this);
@@ -444,7 +450,7 @@ class Table extends React.Component {
   componentDidMount() {
     const { domref, id } = this.props as TableProps;
     // Scroll table to previously saved position.
-    const tableRef = domref || this.tableRef;
+    const tableRef = domref || this.tableDomRef;
     const t = tableRef.current;
     if (t) {
       const parent = t.getElementsByClassName(
@@ -461,7 +467,7 @@ class Table extends React.Component {
   componentWillUnmount() {
     const { id, domref } = this.props as TableProps;
     // Save scroll position.
-    const tableRef = domref || this.tableRef;
+    const tableRef = domref || this.tableDomRef;
     const t = tableRef.current;
     if (t) {
       const parent = t.getElementsByClassName(
@@ -615,9 +621,10 @@ class Table extends React.Component {
       enableColumnReordering,
       onColumnsReordered,
       onColumnWidthChanged,
+      tableCompRef,
     } = props;
     const { onCellClick } = this;
-    let { tableRef } = this;
+    let { tableDomRef } = this;
     const numRows = data.length;
     // Column order and visiblity are wholly determined by the visibleColumns
     // prop. If the user reorders or hides a column, the action is reported via
@@ -645,7 +652,7 @@ class Table extends React.Component {
     if (onColumnWidthChanged) classes.push('width-resizable');
 
     // If parent uses a domref, don't clobber it, use it.
-    if (props.domref) tableRef = props.domref;
+    if (props.domref) tableDomRef = props.domref;
 
     // Notes on BluePrintJS Tables:
     // - Row and column selection is only possible by clicking on a row or col
@@ -665,7 +672,7 @@ class Table extends React.Component {
     return (
       <Box
         {...topHandle('onClick', onCellClick)}
-        domref={tableRef}
+        domref={tableDomRef}
         {...addClass(classes, props)}
         dir="ltr"
       >
@@ -680,6 +687,7 @@ class Table extends React.Component {
           enableFocusedCell={false}
           onColumnsReordered={onColumnsReordered}
           onColumnWidthChanged={onColumnWidthChanged}
+          ref={tableCompRef}
         >
           {tableColumns}
         </BPTable>

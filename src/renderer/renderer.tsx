@@ -40,6 +40,11 @@ import './global-htm.css';
 import type { CipherKey, ModalType, NewModulesType } from '../type';
 import type { SubscriptionType } from '../subscription';
 
+window.onerror = (errorMsg, url, line) => {
+  log.error(`${errorMsg} at: ${url} line: ${line}`);
+  return false;
+};
+
 const windesc = G.Window.description();
 Cache.write(`${windesc.type}:${windesc.id}`, 'windowID');
 log.debug(`Initializing new window`);
