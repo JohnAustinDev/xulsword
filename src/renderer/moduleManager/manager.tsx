@@ -121,6 +121,7 @@ const notStatePref = {
 };
 
 export interface ManagerStatePref {
+  suggested: { [fallbackLang: string]: string[] };
   language: {
     open: boolean;
     selection: string[];
