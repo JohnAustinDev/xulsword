@@ -856,7 +856,9 @@ export const GBuilder: GType & {
     // NOTE: Window cannot use getter functions, because its
     // G methods pass calling window as an extra argument.
     description: CACHEfunc as any,
+    descriptions: func as any,
     open: func as any,
+    openSingleton: func as any,
     setComplexValue: func as any,
     mergeValue: func as any,
     setContentSize: func as any,

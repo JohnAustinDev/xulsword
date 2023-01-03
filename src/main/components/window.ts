@@ -106,13 +106,14 @@ export function getBrowserWindows(
   }
   const windows: BrowserWindow[] = [];
   BrowserWindow.getAllWindows().forEach((w) => {
+    const ew = WindowRegistry[w.id];
     if (
+      ew &&
       testwin &&
       Object.entries(testwin).every((entry) => {
         const p = entry[0] as keyof WindowDescriptorType;
         const v = entry[1] as any;
-        const ew = WindowRegistry[w.id];
-        return ew && ew[p] === v;
+        return v === undefined || ew[p] === v;
       })
     )
       windows.push(w);
@@ -421,11 +422,24 @@ export function publishSubscription<
 }
 
 const Window = {
-  description(window?: WindowArgType): WindowDescriptorType {
-    const win = getBrowserWindows(window, arguments[1])[0];
-    return WindowRegistry[win.id] || {};
+  // Returns the WindowDescriptorType for the calling window.
+  description() {
+    let win: BrowserWindow | null = getBrowserWindows(null, arguments[0])[0];
+    const ret = win ? WindowRegistry[win.id] || {} : {};
+    win = null;
+    return ret;
   },
 
+  // Returns the WindowDescriptorTypes for the given window(s).
+  descriptions(window?: WindowArgType) {
+    const wins: WindowDescriptorType[] = [];
+    getBrowserWindows(window, arguments[1]).forEach((win) => {
+      wins.push(WindowRegistry[win.id] || {});
+    });
+    return wins;
+  },
+
+  // Returns the id of a newly created window.
   open(descriptor: WindowDescriptorType): number {
     const winid = createWindow(descriptor, arguments[1] ?? -1);
     if (descriptor.category === 'window') addWindowToPrefs(winid, descriptor);
@@ -434,63 +448,92 @@ const Window = {
     return winid;
   },
 
+  // Returns the id of a singleton window. If a window matching the given descriptor
+  // is currently open, the first such window will be moved to the front, otherwise a
+  // new window will be created.
+  openSingleton(descriptor: WindowDescriptorType): number {
+    const matching = {
+      ...descriptor,
+      category: undefined, // matches regardless of value
+      options: undefined, // matches regardless of value
+    };
+    const wins = getBrowserWindows(matching, arguments[1] ?? -1);
+    const dofunc = (wins.length ? Window.moveToFront : Window.open) as any;
+    const withwin = wins.length ? { id: wins[0].id } : descriptor;
+    const ret = dofunc(withwin, arguments[1]) as number | number[];
+    return Array.isArray(ret) ? ret[0] : ret;
+  },
+
+  // Set the caller window's window prefs, or if calling window is undefined,
+  // sets the default window state prefs.
   setComplexValue(argname: string, value: { [i: string]: any }): void {
     persist(argname, value, false, arguments[2] ?? -1);
   },
 
+  // Merge a key with the caller window's window prefs, or if calling window is
+  // undefined, merge a key with the default window state prefs.
   mergeValue(argname: string, value: any) {
     persist(argname, value, true, arguments[2] ?? -1);
   },
 
-  setContentSize(w: number, h: number, window?: WindowArgType): void {
+  // Set the size of the given window(s) or else the calling window.
+  setContentSize(w: number, h: number, window?: WindowArgType): number[] {
+    const winids: number[] = [];
     getBrowserWindows(window, arguments[3]).forEach((win) => {
       win.setContentSize(Math.round(w), Math.round(h));
+      winids.push(win.id);
     });
+    return winids;
   },
 
-  close(window?: WindowArgType): void {
+  // Close the given window(s) or else the calling window. Returns the closed window(s)
+  // id(s).
+  close(window?: WindowArgType): number[] {
+    const winids: number[] = [];
     getBrowserWindows(window, arguments[1]).forEach((win) => {
+      winids.push(win.id);
       win.close();
     });
+    return winids;
   },
 
-  // Create a new temp directory for the window that gets deleted when
-  // the window closes.
-  tmpDir(window?: WindowArgType | null): string {
-    let win: BrowserWindow | null = getBrowserWindows(window, arguments[1])[0];
-    const w = win as any;
-    if (w && 'xstmpDir' in w) {
-      win = null;
-      return w.xstmpDir;
-    }
-    const dir = Dirs.TmpD;
-    dir.append(`xulsword_${randomID()}`);
-    if (dir.exists()) dir.remove(true);
-    dir.create(LocalFile.DIRECTORY_TYPE);
-    if (!dir.exists()) {
-      win = null;
-      return '';
-    }
-    win.once(
-      'closed',
-      ((d) => {
-        return () => {
-          const f = new LocalFile(d);
-          if (f.exists()) f.remove(true);
-        };
-      })(dir.path)
-    );
-    w.xstmpDir = dir.path;
-    win = null;
-    return dir.path;
+  // Create new temp directory for window(s), or return the path(s) of existing tmp dirs(s).
+  // These temp directories will be deleted when the associated window closes.
+  tmpDir(window?: WindowArgType | null) {
+    const ret: string[] = [];
+    getBrowserWindows(window, arguments[1]).forEach((win) => {
+      let w = win as any;
+      if (w && 'xstmpDir' in w) {
+        ret.push(w.xstmpDir);
+      } else {
+        const dir = Dirs.TmpD;
+        dir.append(`xulsword_${win.id}`);
+        dir.create(LocalFile.DIRECTORY_TYPE);
+        if (dir.exists()) {
+          ret.push(dir.path);
+          w.xstmpDir = dir.path;
+          win.once(
+            'closed',
+            ((d) => {
+              return () => {
+                const f = new LocalFile(d);
+                if (f.exists()) f.remove(true);
+              };
+            })(dir.path)
+          );
+        }
+      }
+      w = null;
+    });
+    return ret;
   },
 
   // Disable all event handlers on a window to insure user input is bocked for
-  // a time, such as when LibSword is offline.
+  // a time, such as when LibSword is offline. Returns id of modal windows.
   modal(
     modalx: ModalType | { modal: ModalType; window: WindowArgType }[]
-  ): void {
-    const done: number[] = [];
+  ): number[] {
+    const winids: number[] = [];
     (Array.isArray(modalx) ? modalx : [{ modal: modalx, window: arguments[1] }])
       .reverse()
       .forEach((obj) => {
@@ -498,20 +541,22 @@ const Window = {
         getBrowserWindows(window)
           .reverse()
           .forEach((win) => {
-            if (!done.includes(win.id)) {
-              done.push(win.id);
+            if (!winids.includes(win.id)) {
+              winids.push(win.id);
               win.webContents.send('modal', modal || '');
             }
           });
       });
+    return winids;
   },
 
-  reset(typex?: ResetType, windowx?: WindowArgType) {
+  reset(typex?: ResetType, windowx?: WindowArgType): number[] {
     // NOTE: Default params with reset(param='default') is not allowed
     // here or previously appended arguments[2] will not work!
     const type = typex || 'all';
     const window = windowx || 'self';
     let windows = getBrowserWindows(window, arguments[2]);
+    const winids: Set<number> = new Set();
     windows.forEach((win) => {
       if (win) {
         const resets: ResetType[] = [
@@ -523,31 +568,48 @@ const Window = {
           // 'component-reset' also does 'dynamic-stylesheet-reset'
           if ((!type || type === 'all') && r === 'dynamic-stylesheet-reset')
             return;
-          if (!type || type === 'all' || type === r) win.webContents.send(r);
+          if (!type || type === 'all' || type === r) {
+            win.webContents.send(r);
+            winids.add(win.id);
+          }
         });
       }
     });
     windows = [];
+    return Array.from(winids);
   },
 
-  moveToFront(window?: WindowArgType): void {
+  moveToFront(window?: WindowArgType): number[] {
     const front = getBrowserWindows(window, arguments[1]);
+    const winids: number[] = [];
     BrowserWindow.getAllWindows().forEach((w) => {
-      if (front.includes(w)) w.moveTop();
+      if (front.includes(w)) {
+        w.moveTop();
+        winids.push(w.id);
+      }
     });
+    return winids;
   },
 
-  moveToBack(window?: WindowArgType): void {
+  moveToBack(window?: WindowArgType): number[] {
     const back = getBrowserWindows(window, arguments[1]);
+    const winids: number[] = [];
     BrowserWindow.getAllWindows().forEach((w) => {
-      if (!back.includes(w)) w.moveTop();
+      if (!back.includes(w)) {
+        w.moveTop();
+        winids.push(w.id);
+      }
     });
+    return winids;
   },
 
-  setTitle(title: string, window?: WindowArgType): void {
-    getBrowserWindows(window, arguments[2]).forEach((win) => {
-      win.setTitle(title);
+  setTitle(title: string, window?: WindowArgType): number[] {
+    const winids: number[] = [];
+    getBrowserWindows(window, arguments[2]).forEach((w) => {
+      w.setTitle(title);
+      winids.push(w.id);
     });
+    return winids;
   },
 };
 

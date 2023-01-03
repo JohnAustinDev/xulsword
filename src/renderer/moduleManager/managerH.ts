@@ -599,7 +599,7 @@ export async function eventHandler(
             });
             G.Module.installDownloads(
               install,
-              G.Window.description({ type: 'xulsword' }).id
+              G.Window.descriptions({ type: 'xulsword' })[0]?.id
             );
             G.Window.close();
           } catch (er) {

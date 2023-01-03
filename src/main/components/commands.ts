@@ -31,7 +31,7 @@ const Commands = {
     const options: BrowserWindowConstructorOptions = {
       title: i18n.t('menu.addNewModule.label'),
     };
-    Window.open({
+    Window.openSingleton({
       type: 'moduleManager',
       category: 'dialog-window',
       options,
@@ -103,7 +103,7 @@ const Commands = {
     const options = {
       title: i18n.t('menu.removeModule.label'),
     };
-    Window.open({
+    Window.openSingleton({
       type: 'removeModule',
       category: 'dialog-window',
       options,

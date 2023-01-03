@@ -758,7 +758,7 @@ const Module = {
       const { http } = download;
       progress(0);
       try {
-        const tmpdir = new LocalFile(Window.tmpDir({ id: callingWinID }));
+        const tmpdir = new LocalFile(Window.tmpDir({ id: callingWinID })[0]);
         if (tmpdir.exists()) {
           log.silly(`downloadFileHTTP`, http, tmpdir.path);
           const dlfile = await getFileHTTP(

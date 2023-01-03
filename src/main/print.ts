@@ -77,7 +77,7 @@ const MainPrintHandler = async (
     printPreviewTmps.forEach((f) => {
       if (f.exists()) f.remove();
     });
-    const tmp = new LocalFile(Window.tmpDir({ type: 'xulsword' }));
+    const tmp = new LocalFile(Window.tmpDir({ type: 'xulsword' })[0]);
     if (tmp.exists() && tmp.isDirectory()) {
       tmp.append(`${randomID()}.pdf`);
       log.debug(`printToPDF: `, electronOptions);
