@@ -1,3 +1,4 @@
+/* eslint-disable no-nested-ternary */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import 'core-js/stable';
@@ -24,7 +25,12 @@ import {
   publishSubscription,
 } from './components/window';
 
-import type { NewModulesType, WindowRegistryType } from '../type';
+import type {
+  NewModulesType,
+  WindowRegistryType,
+  XulswordStatePref,
+} from '../type';
+import type { ManagerStatePref } from '../renderer/moduleManager/manager';
 
 const i18nBackendMain = require('i18next-fs-backend');
 const installer = require('electron-devtools-installer');
@@ -304,6 +310,7 @@ const init = async () => {
 
   let lng = G.Prefs.getCharPref('global.locale');
   if (!lng) {
+    // Choose a starting locale based on the host machine's system language.
     const langs = C.Locales.map((x) => x[0].replace(/-.*$/, ''));
     const plangs = app.getPreferredSystemLanguages();
     log.info(`App locale is not set. Preferred system languages are: `, plangs);
@@ -314,6 +321,15 @@ const init = async () => {
     lng = lng || 'ru';
     log.info(`Choosing language: ${lng}`);
     G.Prefs.setCharPref('global.locale', lng);
+    // Set the starting moduleManager language selection
+    const codes = G.Prefs.getComplexValue(
+      'moduleManager.language.selection'
+    ) as ManagerStatePref['language']['selection'];
+    if (!codes.length) {
+      G.Prefs.setComplexValue('moduleManager.language.selection', [
+        lng.replace(/-.*$/, ''),
+      ]);
+    }
   }
 
   // Remove this if your app does not use auto updates
@@ -353,6 +369,72 @@ const init = async () => {
       keySeparator: false,
     })
     .catch((e) => log.error(e));
+
+  // Set i18n reliant pref values
+  const v = G.Prefs.getComplexValue(
+    'moduleManager.repositories'
+  ) as ManagerStatePref['repositories'];
+  if (v) {
+    v.xulsword[0].name = G.i18n.t('IBT XSM.repository.label');
+    v.xulsword[1].name = G.i18n.t('IBT Audio.repository.label');
+    G.Prefs.setComplexValue('moduleManager.repositories', v);
+  }
+
+  // If there are no tabs, choose tabs and location based on current locale
+  // and installed modules.
+  const xulsword = G.Prefs.getComplexValue('xulsword') as XulswordStatePref;
+  if (xulsword.tabs.every((tb) => tb === null || !tb.length)) {
+    const slng = lng.replace(/-.*$/, '');
+    const lngmodules = Array.from(
+      new Set(
+        G.Tabs.filter(
+          (t) => t.type === C.BIBLE && t.lang?.replace(/-.*$/, '') === slng
+        )
+          .map((t) => t.module)
+          .sort()
+          .concat(
+            G.Tabs.filter(
+              (t) =>
+                t.type === C.BIBLE &&
+                t.lang?.replace(/-.*$/, '') === C.FallbackLanguage[lng]
+            )
+              .map((t) => t.module)
+              .sort()
+          )
+      )
+    );
+    xulsword.tabs = xulsword.panels.map((p) =>
+      p === null ? null : lngmodules
+    );
+    let x = -1;
+    xulsword.panels = xulsword.panels.map((p) => {
+      if (p === '') {
+        if (x < lngmodules.length - 1) x += 1;
+        return lngmodules[x];
+      }
+      return p;
+    });
+    const vkmod = xulsword.panels.filter(
+      (p) => p && p in G.Tab && G.Tab[p].isVerseKey
+    )[0];
+    const books = ((vkmod && G.getBooksInModule(vkmod)) || []).sort((a, b) => {
+      const ab = G.Book[a];
+      const bb = G.Book[b];
+      if (ab.bookGroup === 'nt' && bb.bookGroup !== 'nt') return -1;
+      if (ab.bookGroup !== 'nt' && bb.bookGroup === 'nt') return 1;
+      return ab.index < bb.index ? -1 : ab.index > bb.index ? 1 : 0;
+    });
+    const { location } = xulsword;
+    if (books.length && (location === null || !books.includes(location.book))) {
+      xulsword.location = {
+        book: books[0],
+        chapter: 1,
+        verse: 1,
+        v11n: (vkmod && G.Tab[vkmod].v11n) || 'KJV',
+      };
+    }
+    G.Prefs.setComplexValue('xulsword', xulsword);
+  }
 
   log.catchErrors({
     showDialog: false,

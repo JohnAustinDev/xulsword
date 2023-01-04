@@ -713,6 +713,15 @@ export function getModuleConfig(mod: string) {
         if (mod !== 'LTR_DEFAULT') {
           r = LibSword.getModuleInformation(mod, keyobj.modConf);
           if (r === C.NOTFOUND) r = null;
+          // Give Hebrew language modules the SILOT.ttf 'Ezra SIL' font,
+          // if none was specified.
+          if (
+            prop === 'fontFamily' &&
+            r === null &&
+            LibSword.getModuleInformation(mod, 'Lang') === 'he'
+          ) {
+            r = 'Ezra SIL';
+          }
         }
       }
       moduleConfig[prop] = r;
@@ -761,15 +770,15 @@ export function getModuleConfig(mod: string) {
 }
 
 export function getConfig() {
+  const config: { [module: string]: ConfigType } = {};
   const cacheName = 'getConfig';
   if (!Cache.has(cacheName)) {
-    const config: { [module: string]: ConfigType } = {};
     getTabs().forEach((t) => {
       config[t.module] = getModuleConfig(t.module);
     });
     Cache.write(config, cacheName);
   }
-  return Cache.read(cacheName);
+  return Cache.read(cacheName) as typeof config;
 }
 
 export function getModuleConfigDefault() {

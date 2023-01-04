@@ -480,12 +480,12 @@ export default class ModuleManager
         const canedit = repo.custom ? H.editable() : false;
         const isloading = repo.disabled ? false : H.loading(H.RepCol.iState);
         const on = repo.builtin ? H.ALWAYS_ON : H.ON;
+        let reponame = repo.name;
+        if (G.i18n.exists(`${repo.name}.repository.label`)) {
+          reponame = G.i18n.t(`${repo.name}.repository.label`);
+        }
         let lng = G.i18n.language;
         if (!['en', 'ru'].includes(lng)) lng = C.FallbackLanguage[lng];
-        const reponame =
-          repo.name && repo.name.includes(' | ')
-            ? repo.name.split(' | ')[lng === 'ru' ? 1 : 0]
-            : repo.name || '';
         repoTableData.push([
           reponame,
           repo.domain,
@@ -617,6 +617,10 @@ export default class ModuleManager
             } else if (c.xsmType === 'XSM_audio') {
               mtype = `XSM ${G.i18n.t('audio.label')}`;
             }
+            let reponame = repo.name;
+            if (G.i18n.exists(`${repo.name}.repository.label`)) {
+              reponame = G.i18n.t(`${repo.name}.repository.label`);
+            }
             const d = [] as unknown as TModuleTableRow;
             d[H.ModCol.iInfo] = {
               repo,
@@ -636,9 +640,10 @@ export default class ModuleManager
               '';
             d[H.ModCol.iModule] = c.module;
             d[H.ModCol.iRepoName] =
-              repo.name ||
+              reponame ||
               (repoIsLocal ? repo.path : `${repo.domain}/${repo.path}`);
             d[H.ModCol.iVersion] = c.Version || '';
+            d[H.ModCol.iLang] = c.Lang || '?';
             d[H.ModCol.iSize] =
               (c.InstallSize && c.InstallSize.toString()) || '';
             d[H.ModCol.iFeatures] = (c.Feature && c.Feature.join(', ')) || '';
@@ -725,13 +730,14 @@ export default class ModuleManager
     const { moduleLangData } = H.Saved;
     const isOpen = langTableOpen ?? open;
     // Select the appropriate moduleLangData lists.
-    let tableData: TModuleTableRow[] = moduleLangData.allmodules;
+    let tableData: TModuleTableRow[] = [];
     if (isOpen && codes?.length) {
       tableData = Object.entries(moduleLangData)
         .filter((ent) => codes.includes(ent[0]))
         .map((ent) => ent[1])
         .flat();
     }
+    if (!tableData.length) tableData = moduleLangData.allmodules;
     // Return sorted rows.
     const taborder = [C.BIBLE, C.COMMENTARY, C.GENBOOK, C.DICTIONARY];
     return tableData.sort((a: TModuleTableRow, b: TModuleTableRow) => {

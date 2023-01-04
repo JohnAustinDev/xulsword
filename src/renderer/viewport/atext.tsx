@@ -31,6 +31,7 @@ import {
 } from '../libxul/xul';
 import DragSizer from '../libxul/dragsizer';
 import { Vbox, Hbox, Box } from '../libxul/boxes';
+import Spacer from '../libxul/spacer';
 import { libswordText, textChange } from './ztext';
 import {
   highlight,
@@ -653,6 +654,7 @@ class Atext extends React.Component {
             <div className="notebox-maximizer" />
           </Hbox>
           <div className="nb" ref={this.nbref} />
+          <Spacer orient="vertical" height="8px" />
         </Vbox>
       </Vbox>
     );

@@ -27,7 +27,9 @@ function getConfig(
   let config: Partial<ConfigType> | null = null;
   if (styleType && type && key) {
     const type0 = styleType[type] || null;
-    if (type0 && key in type0) config = type0[key];
+    if (type0 && key in type0) {
+      config = type0[key];
+    }
     const typeDef = defaultStyle[type];
     const configDef = typeDef && typeDef[key];
     if (configDef) {

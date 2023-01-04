@@ -70,7 +70,7 @@ export const Saved = {
 export function builtinRepos(): Repository[] {
   return [
     {
-      name: 'Shared | Общий',
+      name: G.i18n.t('shared.label'),
       domain: 'file://',
       path: G.Dirs.path.xsModsCommon,
       builtin: true,
@@ -100,18 +100,19 @@ export const LanguageTableHeadings = [''];
 
 export function ModuleTableHeadings() {
   return [
-    '',
-    '',
-    G.i18n.t('name.label'),
-    'Repository',
-    'Version',
-    'Size',
-    'Features',
-    'Versification',
-    'Scope',
-    'Copyright',
-    'Distribution License',
-    'Source Type',
+    G.i18n.t('Type.label'),
+    G.i18n.t('Description.label'),
+    G.i18n.t('Name.label'),
+    G.i18n.t('Repository.label'),
+    G.i18n.t('Version.label'),
+    G.i18n.t('Language.label'),
+    G.i18n.t('Size.label'),
+    G.i18n.t('Features.label'),
+    G.i18n.t('Verse System.label'),
+    G.i18n.t('Scope.label'),
+    G.i18n.t('Copyright.label'),
+    G.i18n.t('Distribution License.label'),
+    G.i18n.t('Source Type.label'),
     'icon:folder-shared',
     'icon:cloud-download',
     'icon:delete',
@@ -137,6 +138,7 @@ export type TLangCellInfo = TCellInfo & {
 export type TLanguageTableRow = [string, TLangCellInfo];
 
 export type TModuleTableRow = [
+  string,
   string,
   string,
   string,
@@ -178,17 +180,18 @@ export const ModCol = {
   iModule: 2,
   iRepoName: 3,
   iVersion: 4,
-  iSize: 5,
-  iFeatures: 6,
-  iVersification: 7,
-  iScope: 8,
-  iCopyright: 9,
-  iLicense: 10,
-  iSourceType: 11,
-  iShared: 12,
-  iInstalled: 13,
-  iRemove: 14,
-  iInfo: 15,
+  iLang: 5,
+  iSize: 6,
+  iFeatures: 7,
+  iVersification: 8,
+  iScope: 9,
+  iCopyright: 10,
+  iLicense: 11,
+  iSourceType: 12,
+  iShared: 13,
+  iInstalled: 14,
+  iRemove: 15,
+  iInfo: 16,
 } as const;
 
 export const RepCol = {
@@ -502,7 +505,7 @@ export async function eventHandler(
             }[] = [];
 
             const downloadResults = await Promise.allSettled(promises);
-            // Don't persist table selections.
+            // Un-persist these table selections.
             setTableState(this, 'module', { selection: [] });
             setTableState(this, 'repository', { selection: [] });
             const state = this.state as ManagerState;
@@ -951,7 +954,7 @@ export function handleListings(
           repositories: { ...repositories, disabled },
         }
       : undefined;
-    setTableState(xthis, 'repository', null, repository.data, false, disreps);
+    setTableState(xthis, 'repository', null, repository.data, true, disreps);
   } else {
     // Then only local repositories are being considered, with no table to update.
     listing = listingsAndErrors.map((l, i) => {
@@ -1266,11 +1269,6 @@ export function checkForModuleUpdates(
   moduleUpdates.forEach((mud) => {
     const abbr =
       (mud.to.conf.Abbreviation?.locale || mud.to.conf.module) ?? '?';
-    const rn = mud.to.repo.name;
-    const reponame =
-      rn && rn.includes(' | ')
-        ? rn.split(' | ')[G.i18n.language === 'ru' ? 1 : 0]
-        : rn || '';
     const history =
       mud.to.conf.History?.filter(
         (h) => versionCompare(h[0], mud.from.conf.Version ?? 0) === 1
@@ -1280,7 +1278,7 @@ export function checkForModuleUpdates(
     xthis.addToast({
       timeout: -1,
       intent: Intent.SUCCESS,
-      message: `${abbr} ${mud.to.conf.Version}: ${history} (${reponame}, ${mud.to.conf.module})`,
+      message: `${abbr} ${mud.to.conf.Version}: ${history} (${mud.to.repo.name}, ${mud.to.conf.module})`,
       action: {
         onClick: () => {
           mud.install = true;

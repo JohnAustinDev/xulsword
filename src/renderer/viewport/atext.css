@@ -92,7 +92,7 @@ html[dir='rtl'] .sbcontrols {
 
 .atext .nbc {
   background-color: inherit;
-  margin: 0px 8px 8px 8px;
+  margin: 0px 8px 0 8px;
   /* fixed width is required for multi-column panels */
   width: calc(100% - 16px);
 }
@@ -168,6 +168,7 @@ html[dir='rtl'] .notebox-maximizer {
 /* Bible & Commentary chapter/page header */
 .chapterhead {
   display: inline-block;
+  width: 100%;
   padding-top: 26px;
 }
 .chapnotice {
