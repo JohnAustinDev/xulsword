@@ -151,13 +151,15 @@ export default merge(baseConfig, {
   optimization: {
     // concatenateModules: false,
     minimize: true,
-    // Careful! The TerserPlugin seemed to cause runtime errors at one point early on...
+    // Important! The TerserPlugin causeed runtime errors and CSS glitches. Don't use.
+    /*
     minimizer: [
       new TerserPlugin({
         parallel: true,
       }),
       new CssMinimizerPlugin()
     ],
+    */
   },
   plugins: [
     /**

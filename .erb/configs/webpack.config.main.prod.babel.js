@@ -41,12 +41,14 @@ export default merge(baseConfig, {
   },
   optimization: {
     minimize: true,
-    // Careful! The TerserPlugin seemed to cause runtime errors at one point early on...
+    // IMPORTANT! The TerserPlugin cause runtime errors and CSS glitches. Don't use.
+    /*
     minimizer: [
       new TerserPlugin({
         parallel: true,
       }),
     ],
+    */
   },
   plugins: [
     new BundleAnalyzerPlugin({
