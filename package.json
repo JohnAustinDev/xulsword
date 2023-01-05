@@ -110,7 +110,7 @@
     "host": "github.com",
     "protocol": "https",
     "channel": "latest",
-    "releaseType": "draft"
+    "releaseType": "prerelease"
   },
   "repository": {
     "type": "git",
