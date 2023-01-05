@@ -17,6 +17,7 @@
     "Tom Roth"
   ],
   "global": {
+    "crashReporterURL": "",
     "InternetPermission": false,
     "fontSize": 2,
     "locale": "",

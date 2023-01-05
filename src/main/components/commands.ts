@@ -111,7 +111,7 @@ const Commands = {
   },
 
   exportAudio() {
-    throw Error(`Action not implemented: exportAudio`);
+    process.crash();
   },
 
   importAudio() {

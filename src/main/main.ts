@@ -3,7 +3,14 @@
 
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
-import { app, dialog, BrowserWindow, ipcMain, IpcMainEvent } from 'electron';
+import {
+  app,
+  crashReporter,
+  dialog,
+  BrowserWindow,
+  ipcMain,
+  IpcMainEvent,
+} from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log, { LogLevel } from 'electron-log';
 import path from 'path';
@@ -26,6 +33,7 @@ import {
 } from './components/window';
 
 import type {
+  BookType,
   NewModulesType,
   WindowRegistryType,
   XulswordStatePref,
@@ -36,6 +44,13 @@ const i18nBackendMain = require('i18next-fs-backend');
 const installer = require('electron-devtools-installer');
 const sourceMapSupport = require('source-map-support');
 const electronDebug = require('electron-debug');
+
+if (G.Prefs.getBoolPref('global.InternetPermission')) {
+  const url = G.Prefs.getCharPref('global.crashReporterURL');
+  if (url) {
+    crashReporter.start({ submitURL: url });
+  }
+}
 
 // Init xulsword logfile.
 {
@@ -418,8 +433,8 @@ const init = async () => {
       (p) => p && p in G.Tab && G.Tab[p].isVerseKey
     )[0];
     const books = ((vkmod && G.getBooksInModule(vkmod)) || []).sort((a, b) => {
-      const ab = G.Book[a];
-      const bb = G.Book[b];
+      const ab = G.Book[a] as BookType;
+      const bb = G.Book[b] as BookType;
       if (ab.bookGroup === 'nt' && bb.bookGroup !== 'nt') return -1;
       if (ab.bookGroup !== 'nt' && bb.bookGroup === 'nt') return 1;
       return ab.index < bb.index ? -1 : ab.index > bb.index ? 1 : 0;
