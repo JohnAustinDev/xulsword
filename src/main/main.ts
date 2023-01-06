@@ -16,7 +16,7 @@ import log, { LogLevel } from 'electron-log';
 import path from 'path';
 import Subscription from '../subscription';
 import Cache from '../cache';
-import { clone, JSON_parse, randomID } from '../common';
+import { clone, JSON_parse } from '../common';
 import C from '../constant';
 import G from './mg';
 import { getCipherFailConfs, getTabs, updateGlobalModulePrefs } from './minit';
@@ -55,7 +55,7 @@ if (G.Prefs.getBoolPref('global.InternetPermission')) {
 // Init xulsword logfile.
 {
   const logfile = new LocalFile(
-    path.join(G.Dirs.path.ProfD, 'logs', `xulsword.${randomID()}.log`)
+    path.join(G.Dirs.path.ProfD, 'logs', `xulsword.${Date.now()}.log`)
   );
   if (logfile.exists()) logfile.remove();
   // The renderer log contains any renderer window entries that occur before
@@ -104,16 +104,6 @@ if (
   process.env.DEBUG_PROD === 'true'
 ) {
   sourceMapSupport.install();
-}
-
-export default class AppUpdater {
-  constructor() {
-    log.transports.file.level = 'info';
-    autoUpdater.logger = log;
-    if (G.Prefs.getBoolPref('global.InternetPermission')) {
-      autoUpdater.checkForUpdatesAndNotify();
-    }
-  }
 }
 
 ipcMain.on('did-finish-render', (event: IpcMainEvent) => {
@@ -518,6 +508,10 @@ app.on('activate', () => {
 app
   .whenReady()
   .then(() => {
+    if (G.Prefs.getBoolPref('global.InternetPermission')) {
+      autoUpdater.logger = log;
+      autoUpdater.checkForUpdatesAndNotify();
+    }
     return init();
   })
   .then(() => {
