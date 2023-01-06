@@ -37,6 +37,8 @@
    "menu.edit.paste.sc" : "",
    "menu.edit.redo.ac" : "Y",
    "menu.edit.redo.sc" : "",
+   "menu.edit.selectAll.ac" : "A",
+   "menu.edit.selectAll.sc" : "",
    "menu.edit.undo.ac" : "Z",
    "menu.edit.undo.sc" : "",
    "menu.exportAudio.sc" : "",

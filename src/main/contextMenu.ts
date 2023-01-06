@@ -52,6 +52,7 @@ export default function contextMenu(
       cut: i18n.t('menu.edit.cut'),
       copy: i18n.t('menu.edit.copy'),
       paste: i18n.t('menu.edit.paste'),
+      selectAll: i18n.t('menu.edit.selectAll'),
       learnSpelling: 'learnSpelling',
       // lookUpSelection: 'lookUpSelection',
       searchWithGoogle: 'searchWithGoogle',
