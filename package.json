@@ -46,6 +46,7 @@
       "node_modules",
       "package.json"
     ],
+    "afterPack": "./afterPack.js",
     "afterSign": ".erb/scripts/notarize.js",
     "directories": {
       "app": "build/app",
