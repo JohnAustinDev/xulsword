@@ -242,6 +242,7 @@ const Prefs = {
   // will be written. True is returned on success.
   writeStore(aStore = 'prefs') {
     if (!this.store) return false;
+    if (aStore.endsWith('_default')) return true;
 
     const s = this.store[aStore];
     if (!s.data || typeof s.data !== 'object') return false;

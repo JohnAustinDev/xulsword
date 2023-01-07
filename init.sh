@@ -105,7 +105,7 @@ function getSource() {
       rm -rf "$dirin"
     elif [ -z "$url" ]; then
       echo "Download $gzfile:"
-      echo "Place it in this directory: $ARCHHOST"
+      echo "Place it in the xulsword/archive directory."
       echo "Then start this script again ($gzfile does not allow auto-downloads)"
       exit
     else
