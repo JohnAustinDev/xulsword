@@ -90,161 +90,156 @@ if [ ! -e "$XULSWORD/Cpp/lib.$XCWD" ]; then mkdir "$XULSWORD/Cpp/lib.$XCWD"; fi
 # Create an archive directory to cache source code
 ARCHIVEDIR="$XULSWORD/archive"
 if [ ! -e "$ARCHIVEDIR" ]; then mkdir "$ARCHIVEDIR"; fi
-if [ "$CONTEXT" = "guest" ]; then ARCHBOOST="/vagrant/archive"; else ARCHBOOST=$ARCHIVEDIR; fi
+if [ "$CONTEXT" = "guest" ]; then ARCHHOST="/vagrant/archive"; else ARCHHOST=$ARCHIVEDIR; fi
+
+function getSource() {
+  echo "Getting source $gzfile from '$url'"
+  if [ ! -e "$ARCHIVEDIR/$gzfile" ]; then
+    if [ -e "$ARCHHOST/$gzfile" ]; then
+      cp "$ARCHHOST/$gzfile" "$ARCHIVEDIR/$gzfile"
+    elif [ "$url" = "http://crosswire.org/svn/sword/trunk" ]; then
+      cd "$ARCHIVEDIR"
+      svn checkout -r $swordRev $url "$dirin"
+      find "$dirin" -type d -name '.svn' -exec rm -rf {} \;
+      tar -czvf "$gzfile" "$dirin"
+      rm -rf "$dirin"
+    elif [ -z "$url" ]; then
+      echo "Download $gzfile:"
+      echo "Place it in this directory: $ARCHHOST"
+      echo "Then start this script again ($gzfile does not allow auto-downloads)"
+      exit
+    else
+      cd "$ARCHIVEDIR"
+      curl -o "$gzfile" "$url"
+    fi
+  fi
+  if [ -e "$ARCHIVEDIR/$gzfile" ]; then
+    cd "$XULSWORD/Cpp"
+    tar -xf "$ARCHIVEDIR/$gzfile"
+    mv $dirin $dirout
+    mkdir "./$dirout/build"
+    cd "./$dirout/build"
+  else
+    echo "Archive does not exist: $ARCHIVEDIR/$gzfile"
+    exit;
+  fi
+}
+
 
 ########################################################################
 # COMPILE ZLIB
-if [ ! -e "$XULSWORD/Cpp/zlib" ]; then
-  if [ ! -e "$ARCHIVEDIR/zlib_1.2.8.dfsg.orig.tar.gz" ]; then
-    cd "$ARCHIVEDIR"
-    curl -o zlib_1.2.8.dfsg.orig.tar.gz http://archive.ubuntu.com/ubuntu/pool/main/z/zlib/zlib_1.2.8.dfsg.orig.tar.gz
-  fi
-  cd "$XULSWORD/Cpp"
-  tar -xf "$ARCHIVEDIR/zlib_1.2.8.dfsg.orig.tar.gz"
-  mv zlib-1.2.8 zlib
-  mkdir "./zlib/build"
-
-  cd ./zlib/build
+url="http://archive.ubuntu.com/ubuntu/pool/main/z/zlib/zlib_1.2.8.dfsg.orig.tar.gz"
+gzfile="zlib_1.2.8.dfsg.orig.tar.gz"
+dirin="zlib-1.2.8"
+dirout="zlib"
+if [ ! -e "$CPP/$dirout" ]; then
+  getSource
   cmake $DBG -G "Unix Makefiles" -D CMAKE_C_FLAGS="-fPIC" ..
   make DESTDIR="$XULSWORD/Cpp/install" install
   # create a symlink to zconf.h (which was just renamed by cmake) so CLucene will compile
   ln -s ./build/zconf.h ../zconf.h
 fi
 # CROSS COMPILE ZLIB TO WINDOWS
-if [ ! -e "$XULSWORD/Cpp/zlib.$XCWD" ]; then
-  cd "$XULSWORD/Cpp"
-  mkdir "./zlib.$XCWD"
-  tar -xf "$ARCHIVEDIR/zlib_1.2.8.dfsg.orig.tar.gz" -C "./zlib.$XCWD" --strip-components 1
-  mkdir "./zlib.$XCWD/build"
-
-  cd "./zlib.$XCWD/build"
-  cmake $DBG -G "Unix Makefiles" -D CMAKE_TOOLCHAIN_FILE="$XULSWORD/Cpp/windows/toolchain.cmake" ..
-  make DESTDIR="$XULSWORD/Cpp/install.$XCWD" install
+dirout="zlib.$XCWD"
+if [ ! -e "$CPP/$dirout" ]; then
+  getSource
+  cmake $DBG -G "Unix Makefiles" -D CMAKE_TOOLCHAIN_FILE="$CPP/windows/toolchain.cmake" ..
+  make DESTDIR="$CPP/install.$XCWD" install
 fi
+########################################################################
+
 
 ########################################################################
 # CROSS-COMPILE BOOST TO WINDOWS FOR CLUCENE
+url=
+gzfile="boost_1_80_0.tar.gz"
+dirin="boost_1_80_0"
+dirout="boost-${TOOLCHAIN_PREFIX}-${XCWD}"
+BOOSTDIR="$CPP/boost-${TOOLCHAIN_PREFIX}-${XCWD}"
 if [ ! -e "$BOOSTDIR" ]; then
-  if [ ! -e "$ARCHBOOST/boost_1_80_0.tar.gz" ]; then
-    echo "Download boost_1_80_0.tar.gz from:"
-    echo "    https://www.boost.org/users/download/"
-    echo "Place it in this directory: $ARCHBOOST"
-    echo "Then start this script again (boost does not allow auto-downloads)"
-    exit
-    #cd "$ARCHBOOST"
-    #curl -o boost_1_80_0.tar.gz http://boostorg.jfrog.io/artifactory/main/release/1.80.0/source/boost_1_80_0.tar.gz
-  fi
-  cd "$XULSWORD/Cpp"
-  tar -xf "$ARCHBOOST/boost_1_80_0.tar.gz"
-  mv boost_1_80_0 $BOOSTDIR
-  cd $BOOSTDIR
+  getSource
   # CROSS COMPILE TO WINDOWS 64 BIT:
+  cd ..
   echo "using gcc :  : ${TOOLCHAIN_PREFIX}-g++ ;" > user-config.jam
   ./bootstrap.sh
   ./b2 --user-config=./user-config.jam --prefix=./$XCWD target-os=windows address-model=$ADDRESS_MODEL variant=release install
 fi
+########################################################################
+
 
 ########################################################################
 # COMPILE LIBCLUCENE
-if [ ! -e "$XULSWORD/Cpp/clucene" ]; then
-  if [ ! -e "$ARCHIVEDIR/clucene-core_2.3.3.4.orig.tar.gz" ]; then
-    cd "$ARCHIVEDIR"
-    curl -o clucene-core_2.3.3.4.orig.tar.gz http://archive.ubuntu.com/ubuntu/pool/main/c/clucene-core/clucene-core_2.3.3.4.orig.tar.gz
-  fi
-  cd "$XULSWORD/Cpp"
-  tar -xf "$ARCHIVEDIR/clucene-core_2.3.3.4.orig.tar.gz"
-  mv clucene-core-2.3.3.4 clucene
-  mkdir ./clucene/build
-  # Stop this dumb clucene error for searches beginning with a wildcard, which results in a core dump.
-  sed -i 's/!allowLeadingWildcard/!true/g' "$XULSWORD/Cpp/clucene/src/core/CLucene/queryParser/QueryParser.cpp"
-
-  #if [ $(uname | grep Darwin) ]; then
-  #  # patch clucene for OSX build (https://stackoverflow.com/questions/28113556/error-while-making-clucene-for-max-os-x-10-10/28175358#28175358)
-  #  pushd "$XULSWORD/Cpp/clucene/src/shared/CLucene"
-  #  patch < $XULSWORD/Cpp/patch/patch-src-shared-CLucene-LuceneThreads.h.diff
-  #  cd config
-  #  patch < $XULSWORD/Cpp/patch/patch-src-shared-CLucene-config-repl_tchar.h.diff
-  #  popd
-  #fi
-
-  cd ./clucene/build
+url="http://archive.ubuntu.com/ubuntu/pool/main/c/clucene-core/clucene-core_2.3.3.4.orig.tar.gz"
+gzfile="clucene-core_2.3.3.4.orig.tar.gz"
+dirin="clucene-core-2.3.3.4"
+dirout="clucene"
+if [ ! -e "$CPP/$dirout" ]; then
+  getSource
+   # Stop this dumb clucene error for searches beginning with a wildcard, which results in a core dump.
+  sed -i 's/!allowLeadingWildcard/!true/g' "$CPP/$dirout/src/core/CLucene/queryParser/QueryParser.cpp"
   # -D DISABLE_MULTITHREADING=ON causes compilation to fail
-  cmake $DBG -G "Unix Makefiles" -D BUILD_STATIC_LIBRARIES=ON -D CMAKE_INCLUDE_PATH="$XULSWORD/Cpp/install/usr/local/include" -D CMAKE_LIBRARY_PATH="$XULSWORD/Cpp/install/usr/local/lib" ..
-  make DESTDIR="$XULSWORD/Cpp/install" install
+  cmake $DBG -G "Unix Makefiles" -D BUILD_STATIC_LIBRARIES=ON -D CMAKE_INCLUDE_PATH="$CPP/install/usr/local/include" -D CMAKE_LIBRARY_PATH="$CPP/install/usr/local/lib" ..
+  make DESTDIR="$CPP/install" install
 fi
 # CROSS COMPILE LIBCLUCENE TO WINDOWS
-if [ ! -e "$XULSWORD/Cpp/clucene.$XCWD" ]; then
-  cd "$XULSWORD/Cpp"
-  mkdir "clucene.$XCWD"
-  tar -xf "$ARCHIVEDIR/clucene-core_2.3.3.4.orig.tar.gz" -C "./clucene.$XCWD" --strip-components 1
-  mkdir "./clucene.$XCWD/build"
+dirout="clucene.$XCWD"
+if [ ! -e "$CPP/$dirout" ]; then
+  getSource
   # Stop this dumb clucene error for searches beginning with a wildcard, which results in a core dump.
-  sed -i 's/!allowLeadingWildcard/!true/g' "$XULSWORD/Cpp/clucene.$XCWD/src/core/CLucene/queryParser/QueryParser.cpp"
-
-  cd "$XULSWORD/Cpp"
-  patch -s -p0 -d "$XULSWORD/Cpp/clucene.$XCWD" < "$XULSWORD/Cpp/windows/clucene-src.patch"
-  cd "./clucene.$XCWD/build"
-  cmake $DBG -DCMAKE_TOOLCHAIN_FILE="$XULSWORD/Cpp/windows/toolchain.cmake" -C "$XULSWORD/Cpp/windows/clucene-TryRunResult-${GCCSTD}.cmake" -D CMAKE_USE_PTHREADS_INIT=OFF -D BUILD_STATIC_LIBRARIES=ON -D ZLIB_INCLUDE_DIR="$XULSWORD/Cpp/install.$XCWD/usr/local/include" -D Boost_INCLUDE_DIR="$BOOSTDIR/$XCWD/include" -D ZLIB_LIBRARY="$XULSWORD/Cpp/install.$XCWD/usr/local/lib/libzlibstatic.a" ..
-  patch -s -p0 -d "$XULSWORD/Cpp/clucene.$XCWD" < "$XULSWORD/Cpp/windows/clucene-build.patch"
-  make DESTDIR="$XULSWORD/Cpp/install.$XCWD" install
+  sed -i 's/!allowLeadingWildcard/!true/g' "$CPP/$dirout/src/core/CLucene/queryParser/QueryParser.cpp"
+  cd "$CPP"
+  patch -s -p0 -d "$CPP/$dirout" < "$CPP/windows/clucene-src.patch"
+  cd "$CPP/$dirout/build"
+  cmake $DBG -DCMAKE_TOOLCHAIN_FILE="$CPP/windows/toolchain.cmake" -C "$CPP/windows/clucene-TryRunResult-${GCCSTD}.cmake" -D CMAKE_USE_PTHREADS_INIT=OFF -D BUILD_STATIC_LIBRARIES=ON -D ZLIB_INCLUDE_DIR="$CPP/install.$XCWD/usr/local/include" -D Boost_INCLUDE_DIR="$BOOSTDIR/$XCWD/include" -D ZLIB_LIBRARY="$CPP/install.$XCWD/usr/local/lib/libzlibstatic.a" ..
+  patch -s -p0 -d "$CPP/$dirout" < "$CPP/windows/clucene-build.patch"
+  make DESTDIR="$CPP/install.$XCWD" install
 fi
+########################################################################
+
 
 ########################################################################
 # COMPILE LIBSWORD
-if [ ! -e "$XULSWORD/Cpp/sword" ]; then
-  if [ ! -e "$ARCHIVEDIR/sword-rev-${swordRev}.tar.gz" ]; then
-    cd "$ARCHIVEDIR"
-    svn checkout -r $swordRev http://crosswire.org/svn/sword/trunk sword
-    find ./sword -type d -name '.svn' -exec rm -rf {} \;
-    tar -czvf "sword-rev-${swordRev}.tar.gz" sword
-    rm -rf sword
-  fi
-  cd "$XULSWORD/Cpp"
-  tar -xf "$ARCHIVEDIR/sword-rev-${swordRev}.tar.gz"
-  mkdir "$XULSWORD/Cpp/sword/build"
-
+# svn rev 3563 is sword-1.8.1
+swordRev=3563
+url="http://crosswire.org/svn/sword/trunk"
+gzfile="sword-rev-${swordRev}.tar.gz"
+dirin="sword-$swordRev"
+dirout="sword"
+if [ ! -e "$CPP/$dirout" ]; then
+  getSource
   # SWORD's CMakeLists.txt requires clucene-config.h be located in a weird directory:
-  cp -r "$XULSWORD/Cpp/install/usr/local/include/CLucene" "$XULSWORD/Cpp/install/usr/local/lib"
-
-  cd "$XULSWORD/Cpp/sword/build"
-  cmake $DBG -D SWORD_NO_ICU="No" -D LIBSWORD_LIBRARY_TYPE="Static" -D CLUCENE_LIBRARY="$XULSWORD/Cpp/install/usr/local/lib/libclucene-core.so" -D ZLIB_LIBRARY="$XULSWORD/Cpp/install/usr/local/lib/libz.so" -D CLUCENE_LIBRARY_DIR="$XULSWORD/Cpp/install/usr/local/include" -D CLUCENE_INCLUDE_DIR="$XULSWORD/Cpp/install/usr/local/include" -D ZLIB_INCLUDE_DIR="$XULSWORD/Cpp/install/usr/local/include" -DSWORD_BUILD_UTILS="No" ..
-  make DESTDIR="$XULSWORD/Cpp/install" install
+  cp -r "$CPP/install/usr/local/include/CLucene" "$CPP/install/usr/local/lib"
+  cmake $DBG -D SWORD_NO_ICU="No" -D LIBSWORD_LIBRARY_TYPE="Static" -D CLUCENE_LIBRARY="$CPP/install/usr/local/lib/libclucene-core.so" -D ZLIB_LIBRARY="$CPP/install/usr/local/lib/libz.so" -D CLUCENE_LIBRARY_DIR="$CPP/install/usr/local/include" -D CLUCENE_INCLUDE_DIR="$CPP/install/usr/local/include" -D ZLIB_INCLUDE_DIR="$CPP/install/usr/local/include" -DSWORD_BUILD_UTILS="No" ..
+  make DESTDIR="$CPP/install" install
 fi
 # CROSS COMPILE LIBSWORD TO WINDOWS
-if [ ! -e "$XULSWORD/Cpp/sword.$XCWD" ]; then
-  cd "$XULSWORD/Cpp"
-  mkdir "sword.$XCWD"
-  tar -xf "$ARCHIVEDIR/sword-rev-${swordRev}.tar.gz" -C "./sword.$XCWD" --strip-components 1
-  mkdir "./sword.$XCWD/build"
-
+dirout="sword.$XCWD"
+if [ ! -e "$CPP/$dirout" ]; then
+  getSource
   # SWORD's CMakeLists.txt requires clucene-config.h be located in a weird directory:
-  cp -r "$XULSWORD/Cpp/install.$XCWD/usr/local/include/CLucene" "$XULSWORD/Cpp/install.$XCWD/usr/local/lib"
-
-  cd "$XULSWORD/Cpp"
-  patch -s -p0 -d "$XULSWORD/Cpp/sword.$XCWD" < "$XULSWORD/Cpp/windows/libsword-src.patch"
-  cd "$XULSWORD/Cpp/sword.$XCWD/build"
-  cmake $DBG -DCMAKE_TOOLCHAIN_FILE="$XULSWORD/Cpp/windows/toolchain.cmake" -D SWORD_NO_ICU="No" -D LIBSWORD_LIBRARY_TYPE="Static" -D CLUCENE_LIBRARY="$XULSWORD/Cpp/install.$XCWD/usr/local/lib/libclucene-core.dll.a" -D ZLIB_LIBRARY="$XULSWORD/Cpp/install.$XCWD/usr/local/lib/libzlibstatic.a" -D CLUCENE_LIBRARY_DIR="$XULSWORD/Cpp/install.$XCWD/usr/local/include" -D CLUCENE_INCLUDE_DIR="$XULSWORD/Cpp/install.$XCWD/usr/local/include" -D ZLIB_INCLUDE_DIR="$XULSWORD/Cpp/install.$XCWD/usr/local/include" -DSWORD_BUILD_UTILS="No" ..
-  make DESTDIR="$XULSWORD/Cpp/install.$XCWD" install
+  cp -r "$CPP/install.$XCWD/usr/local/include/CLucene" "$CPP/install.$XCWD/usr/local/lib"
+  cd "$CPP"
+  patch -s -p0 -d "$CPP/$dirout" < "$CPP/windows/libsword-src.patch"
+  cd "$CPP/$dirout/build"
+  cmake $DBG -DCMAKE_TOOLCHAIN_FILE="$CPP/windows/toolchain.cmake" -D SWORD_NO_ICU="No" -D LIBSWORD_LIBRARY_TYPE="Static" -D CLUCENE_LIBRARY="$CPP/install.$XCWD/usr/local/lib/libclucene-core.dll.a" -D ZLIB_LIBRARY="$CPP/install.$XCWD/usr/local/lib/libzlibstatic.a" -D CLUCENE_LIBRARY_DIR="$CPP/install.$XCWD/usr/local/include" -D CLUCENE_INCLUDE_DIR="$CPP/install.$XCWD/usr/local/include" -D ZLIB_INCLUDE_DIR="$CPP/install.$XCWD/usr/local/include" -DSWORD_BUILD_UTILS="No" ..
+  make DESTDIR="$CPP/install.$XCWD" install
 fi
+########################################################################
+
 
 ########################################################################
 # COMPILE AND INSTALL LIBXULSWORD
-if [ ! -e "$XULSWORD/Cpp/build" ]; then
-#  if [ $(uname | grep Darwin) ]; then
-#    # patch untgz MAC compile problem
-#    perl -p -i -e 's/#ifdef unix/#if defined(unix) || defined(__APPLE__)/g' ./sword/src/utilfuns/zlib/untgz.c
-#  fi
-
-  mkdir "$XULSWORD/Cpp/build"
-  cd "$XULSWORD/Cpp/build"
-  cmake $DBG -D SWORD_NO_ICU="No" -D CMAKE_INCLUDE_PATH="$XULSWORD/Cpp/install/usr/local/include" -D CMAKE_LIBRARY_PATH="$XULSWORD/Cpp/install/usr/local/lib" ..
-  make DESTDIR="$XULSWORD/Cpp/install" install
+if [ ! -e "$CPP/build" ]; then
+  mkdir "$CPP/build"
+  cd "$CPP/build"
+  cmake $DBG -D SWORD_NO_ICU="No" -D CMAKE_INCLUDE_PATH="$CPP/install/usr/local/include" -D CMAKE_LIBRARY_PATH="$CPP/install/usr/local/lib" ..
+  make DESTDIR="$CPP/install" install
 
   # Install the DLL and all ming dependencies (those beyond the node executable) and strip them
-  LIBDIR="$XULSWORD/Cpp/lib"
+  LIBDIR="$CPP/lib"
   if [ -e "$LIBDIR" ]; then rm -rf "$LIBDIR"; fi
   mkdir "$LIBDIR"
-  cp "$XULSWORD/Cpp/install/usr/local/lib/libxulsword-static.so" "$LIBDIR"
+  cp "$CPP/install/usr/local/lib/libxulsword-static.so" "$LIBDIR"
   cp "/lib/x86_64-linux-gnu/libstdc++.so.6" "$LIBDIR"
   if [ -z "$DBG" ]; then
     strip "$LIBDIR/"*
@@ -259,25 +254,25 @@ if [ ! -e "$XULSWORD/Cpp/build" ]; then
   fi
 fi
 # CROSS COMPILE LIBXULSWORD TO WINDOWS
-if [ ! -e "$XULSWORD/Cpp/build.$XCWD" ]; then
-  mkdir "$XULSWORD/Cpp/build.$XCWD"
-  cd "$XULSWORD/Cpp/build.$XCWD"
-  cmake $DBG -DCMAKE_TOOLCHAIN_FILE="$XULSWORD/Cpp/windows/toolchain.cmake" -D SWORD_NO_ICU="No" -D CMAKE_INCLUDE_PATH="$XULSWORD/Cpp/install.$XCWD/usr/local/include" -D CMAKE_LIBRARY_PATH="$XULSWORD/Cpp/install.$XCWD/usr/local/lib" ..
-  make DESTDIR="$XULSWORD/Cpp/install.$XCWD" install
+if [ ! -e "$CPP/build.$XCWD" ]; then
+  mkdir "$CPP/build.$XCWD"
+  cd "$CPP/build.$XCWD"
+  cmake $DBG -DCMAKE_TOOLCHAIN_FILE="$CPP/windows/toolchain.cmake" -D SWORD_NO_ICU="No" -D CMAKE_INCLUDE_PATH="$CPP/install.$XCWD/usr/local/include" -D CMAKE_LIBRARY_PATH="$CPP/install.$XCWD/usr/local/lib" ..
+  make DESTDIR="$CPP/install.$XCWD" install
 
   # Install the DLL and all ming dependencies beyond the node executable and strip them
-  LIBDIR="$XULSWORD/Cpp/lib.$XCWD"
+  LIBDIR="$CPP/lib.$XCWD"
   if [ -e "$LIBDIR" ]; then rm -rf "$LIBDIR"; fi
   GCCDLL=libgcc_s_seh-1.dll
   if [[ "$XCWD" == "32win" ]]; then
     GCCDLL=libgcc_s_sjlj-1.dll
   fi
   mkdir "$LIBDIR"
-  cp "$XULSWORD/Cpp/install.$XCWD/usr/local/bin/libxulsword-static.dll" "$LIBDIR"
+  cp "$CPP/install.$XCWD/usr/local/bin/libxulsword-static.dll" "$LIBDIR"
   cp "/usr/lib/gcc/${TOOLCHAIN_PREFIX}/9.3-${GCCSTD}/$GCCDLL" "$LIBDIR"
   cp "/usr/lib/gcc/${TOOLCHAIN_PREFIX}/9.3-${GCCSTD}/libstdc++-6.dll" "$LIBDIR"
   cp "/usr/${TOOLCHAIN_PREFIX}/lib/libwinpthread-1.dll" "$LIBDIR"
-  gendef - "$XULSWORD/Cpp/install.$XCWD/usr/local/bin/libxulsword-static.dll" > "$LIBXULSWORD/lib/libxulsword.def"
+  gendef - "$CPP/install.$XCWD/usr/local/bin/libxulsword-static.dll" > "$LIBXULSWORD/lib/libxulsword.def"
   if [ -z "$DBG" ]; then
     strip "$LIBDIR/"*
   fi
@@ -290,6 +285,11 @@ if [ ! -e "$XULSWORD/Cpp/build.$XCWD" ]; then
     cp -r "$LIBDIR" "$HLIBDIR"
   fi
 fi
+########################################################################
+
+
+########################################################################
+# WRAP UP
 
 # Now initialize node.js
 cd "$XULSWORD"
@@ -301,3 +301,22 @@ if [ "$CONTEXT" = "guest" ]; then
     cp -r "$XULSWORD/node_modules" "/vagrant"
   fi
 fi
+########################################################################
+
+# Old Darwin Clucene
+#if [ $(uname | grep Darwin) ]; then
+#  # patch clucene for OSX build (https://stackoverflow.com/questions/28113556/error-while-making-clucene-for-max-os-x-10-10/28175358#28175358)
+#  pushd "$XULSWORD/Cpp/clucene/src/shared/CLucene"
+#  patch < $XULSWORD/Cpp/patch/patch-src-shared-CLucene-LuceneThreads.h.diff
+#  cd config
+#  patch < $XULSWORD/Cpp/patch/patch-src-shared-CLucene-config-repl_tchar.h.diff
+#  popd
+#fi
+
+# Old Darwin libxulsword
+#  if [ $(uname | grep Darwin) ]; then
+#    # patch untgz MAC compile problem
+#    perl -p -i -e 's/#ifdef unix/#if defined(unix) || defined(__APPLE__)/g' ./sword/src/utilfuns/zlib/untgz.c
+#  fi
+
+
