@@ -129,14 +129,20 @@ const Prefs = {
   },
 
   // Get persistent data from source json files
-  getStore(aStore: string): PrefObject {
+  getStore(
+    aStorex: string,
+    useDefault = false,
+    throwIfMissing = true
+  ): PrefObject {
     // Create a new store if needed
+    const aStore = useDefault ? `${aStorex}_default` : aStorex;
+    const pdir = useDefault ? Dirs.path.xsPrefDefD : Dirs.path.xsPrefD;
     if (this.store === null || !(aStore in this.store)) {
       this.store = {
         ...this.store,
         [aStore]: {
           file: new LocalFile(
-            path.join(Dirs.path.xsPrefD, aStore.concat('.json')),
+            path.join(pdir, aStorex.concat('.json')),
             LocalFile.NO_CREATE
           ),
           data: null,
@@ -149,14 +155,14 @@ const Prefs = {
     // Read the data unless it has already been read
     if (!s.data || typeof s.data !== 'object') {
       // If there is no store file, copy the default or create one.
-      if (!s.file.exists()) {
+      if (!s.file.exists() && !useDefault) {
         const defFile = new LocalFile(
-          path.join(Dirs.path.xsPrefDefD, aStore.concat('.json')),
+          path.join(Dirs.path.xsPrefDefD, aStorex.concat('.json')),
           LocalFile.NO_CREATE
         );
         if (defFile.exists()) {
           defFile.copyTo(s.file.parent, s.file.leafName);
-        } else if (aStore === 'prefs') {
+        } else if (aStorex === 'prefs') {
           throw Error(`Default prefs file is missing: ${defFile.path}`);
         } else {
           s.file.writeFile('{}');
@@ -171,11 +177,11 @@ const Prefs = {
             s.data = json;
           }
         } else {
-          throw Error(`ERROR: failed to read store ${aStore}`);
+          throw Error(`ERROR: failed to read store ${s.file.path}`);
         }
       }
 
-      if (s.data === null) {
+      if (s.data === null && throwIfMissing) {
         throw Error(`ERROR: failed to read prefs from: ${s.file.path}`);
       }
     }
@@ -186,9 +192,10 @@ const Prefs = {
   getKeyValueFromStore(
     key: string,
     throwIfMissing: boolean,
-    aStore: string
+    aStore: string,
+    useDefault = false
   ): PrefValue {
-    const stobj = this.getStore(aStore);
+    const stobj = this.getStore(aStore, useDefault, throwIfMissing);
     if (stobj === null) {
       if (throwIfMissing) throw Error(`missing store: '${aStore}'`);
       return undefined;
@@ -203,7 +210,7 @@ const Prefs = {
         Array.isArray(keyvalue) ||
         !(d in keyvalue)
       ) {
-        if (throwIfMissing) {
+        if (throwIfMissing && useDefault) {
           throw Error(`missing key: '${key}' of '${aStore}' store`);
         }
         keyExists = false;
@@ -211,6 +218,9 @@ const Prefs = {
         keyvalue = keyvalue[d] as PrefValue;
       }
     });
+    if (!keyExists && !useDefault) {
+      return this.getKeyValueFromStore(key, throwIfMissing, aStore, true);
+    }
     return keyExists ? keyvalue : undefined;
   },
 
@@ -328,7 +338,7 @@ const Prefs = {
     }
     // Reset renderer caches if requested. When pref values are being pushed
     // to renderer windows that are incompatible with currently cached data,
-    // caches must be cleared before the prefs are updated!
+    // such as global.locale, caches must be cleared before prefs are updated!
     if (clearRendererCaches) {
       BrowserWindow.getAllWindows().forEach((w) => {
         w.webContents.send('cache-reset');
