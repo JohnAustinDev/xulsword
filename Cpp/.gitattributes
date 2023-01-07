@@ -1,17 +1,2 @@
 *  text eol=lf
 
-# Denote files that are binary and should never be modified.
-*.docx  binary
-*.idx   binary
-*.png   binary
-*.exe   binary
-*.jpg   binary
-*.jpeg  binary
-*.ico   binary
-*.icns  binary
-*.eot   binary
-*.otf   binary
-*.ttf   binary
-*.woff  binary
-*.woff2 binary
-

@@ -5,8 +5,8 @@ export LIBXULSWORD_MAJOR=1
 export LIBXULSWORD_MINOR=5
 export LIBXULSWORD_REVIS=6
 
-if [ -e /vagrant ]; then export CONTEXT="xsguest"; else export CONTEXT="host"; fi
-if [ "$CONTEXT" = "xsguest" ]; then export XULSWORD="$HOME/src/xulsword"; else export XULSWORD="$( pwd -P )"; fi
+if [ -e /vagrant ]; then export CONTEXT="guest"; else export CONTEXT="host"; fi
+if [ "$CONTEXT" = "guest" ]; then export XULSWORD="$HOME/src/xulsword"; else export XULSWORD="$( pwd -P )"; fi
 export CPP="$XULSWORD/Cpp"
 export LIBXULSWORD="$XULSWORD/build/app/node_modules/libxulsword"
 
