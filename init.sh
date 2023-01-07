@@ -82,8 +82,8 @@ if [ ! -e "$XULSWORD/Cpp/lib.$XCWD" ]; then mkdir "$XULSWORD/Cpp/lib.$XCWD"; fi
 
 # Create an archive directory to cache source code
 ARCHIVEDIR="$XULSWORD/archive"
-if [ "$CONTEXT" = "xsguest" ]; then ARCHIVEDIR="/vagrant/archive"; fi
 if [ ! -e "$ARCHIVEDIR" ]; then mkdir "$ARCHIVEDIR"; fi
+if [ "$CONTEXT" = "xsguest" ]; then ARCHBOOST="/vagrant/archive"; else ARCHBOOST=$ARCHIVEDIR; fi
 
 ########################################################################
 # COMPILE ZLIB
@@ -118,17 +118,17 @@ fi
 ########################################################################
 # CROSS-COMPILE BOOST TO WINDOWS FOR CLUCENE
 if [ ! -e "$BOOSTDIR" ]; then
-  if [ ! -e "$ARCHIVEDIR/boost_1_80_0.tar.gz" ]; then
+  if [ ! -e "$ARCHBOOST/boost_1_80_0.tar.gz" ]; then
     echo "Download boost_1_80_0.tar.gz from:"
     echo "    https://www.boost.org/users/download/"
-    echo "Place it in this directory: $ARCHIVEDIR"
+    echo "Place it in this directory: $ARCHBOOST"
     echo "Then start this script again (boost does not allow auto-downloads)"
     exit
-    #cd "$ARCHIVEDIR"
+    #cd "$ARCHBOOST"
     #curl -o boost_1_80_0.tar.gz http://boostorg.jfrog.io/artifactory/main/release/1.80.0/source/boost_1_80_0.tar.gz
   fi
   cd "$XULSWORD/Cpp"
-  tar -xf "$ARCHIVEDIR/boost_1_80_0.tar.gz"
+  tar -xf "$ARCHBOOST/boost_1_80_0.tar.gz"
   mv boost_1_80_0 $BOOSTDIR
   cd $BOOSTDIR
   # CROSS COMPILE TO WINDOWS 64 BIT:
