@@ -69,7 +69,7 @@ const LibSword = {
 
     log.verbose('Initializing libsword...');
 
-    this.moduleDirectories = [Dirs.path.xsModsUser];
+    this.moduleDirectories = [Dirs.path.xsModsUser, Dirs.path.xsModsCommon];
     const repos = Prefs.getComplexValue(
       'moduleManager.repositories'
     ) as ManagerStatePref['repositories'];
@@ -78,17 +78,19 @@ const LibSword = {
       custom.forEach((repo: Repository) => {
         if (
           !disabled?.includes(repositoryKey(repo)) &&
+          !this.moduleDirectories.includes(repo.path) &&
           isRepoLocal(repo) &&
           path.isAbsolute(repo.path)
         ) {
-          const dir = new LocalFile(repo.path);
-          const test = dir.clone().append('mods.d');
-          if (test.exists() && test.isDirectory()) {
-            this.moduleDirectories.push(dir.path);
-          }
+          this.moduleDirectories.push(repo.path);
         }
       });
     }
+
+    this.moduleDirectories = this.moduleDirectories.filter((md) => {
+      const test = new LocalFile(md).append('mods.d');
+      return test.exists() && test.isDirectory();
+    });
 
     log.verbose(`module directories: ${this.moduleDirectories}`);
 
@@ -557,9 +559,9 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   },
 
   // This is a IPC speedup function setting multiple options with a single request.
-  setGlobalOptions(
-    options: { [key in SwordFilterType]?: SwordFilterValueType }
-  ): void {
+  setGlobalOptions(options: {
+    [key in SwordFilterType]?: SwordFilterValueType;
+  }): void {
     Object.entries(options).forEach((entry) => {
       const option = entry[0] as SwordFilterType;
       this.setGlobalOption(option, entry[1]);

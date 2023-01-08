@@ -102,10 +102,9 @@ dirNames.forEach((dir) => {
 });
 
 // The DirsClass interface is only available in main process directly through the Dirs object
-type DirsMainType = typeof Dirs &
-  {
-    [key in keyof DirsDirectories]: LocalFile;
-  };
+type DirsMainType = typeof Dirs & {
+  [key in keyof DirsDirectories]: LocalFile;
+};
 
 export type DirsRendererType = typeof Dirs;
 
