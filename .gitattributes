@@ -13,7 +13,7 @@
 
 # All text files committed to the repository are normalized to LF. Git 
 # recognizes files encoded as ASCII or UTF-8 as text files.
-*  text=auto
+*  text eol=lf
 
 # CHECKED OUT FILES (line endings of checked-out files)
 # All text files in this repository have LF line endings, but Windows 
@@ -42,10 +42,6 @@
 *.ttf   binary
 *.woff  binary
 *.woff2 binary
-
-# Files that should always have LF endings
-*.sh    text eol=lf
-setenv  text eol=lf
 
 # UPSHOT: 
 # Linux hosts may or may not have (it's redundant due to * text=auto):
