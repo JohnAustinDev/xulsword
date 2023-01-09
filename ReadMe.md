@@ -50,18 +50,20 @@ The build has two parts: a Node.js project and a native libxulsword C++ library.
 **Important**: Each time you open a shell to build xulsword, environment variables
 must first be set by running `source ./setenv`.
 
-1. Install nvm on Linux, Windows or Mac.
-2. Use nvm to select Node version 18.12.1
-3. Run `source ./setenv` to set environment variables.
-4. Build the native libxulsword C++ addon for your system:
-  * Download Boost 1.80.0 from https://www.boost.org/users/download/ and place it in `xulsword/archive` directory (boost doesn't support scripted downloads).
-  * Install VirtualBox and Vagrant, and run `vagrant up`. Native libraries for each system will eventually appear in the Cpp/lib directories.
-  * Install the shared library for your particular operating system by running `yarn installLXS`.
+1. Install nvm on Linux, Windows or Mac. On Windows https://github.com/coreybutler/nvm-windows is recommended.
+2. Use nvm to select Node version 18.12.1. On Windows, select the x86 architecture with: `nvm install 18.12.1 32` followed by `nvm use 18.12.1 32` to select it. Install yarn globally with: `nvm -i global yarn`. On Windows, administrator priviledge is required for these steps (subsequent steps do not require admin priviledge).
+3. Run `source ./setenv` to set environment variables. On Windows, the Git Bash shell that comes with https://gitforwindows.org/ can be used to run this, and all subsequent command line steps.
+4. Build the native libxulsword C++ dynamic library for your system (this step only needs to be done once and won't be needed again until the rare occasion that xulsword/Cpp C++ source changes):
+
+- Download Boost 1.80.0 from https://www.boost.org/users/download/ and place it in `xulsword/archive` directory (boost doesn't support scripted downloads).
+- Install VirtualBox and Vagrant, and run `vagrant up`. Native libraries for each system will eventually appear in the Cpp/lib directories.
+- Install the shared library for your particular operating system by running `yarn install-libxulsword`. The apporpriate binaries will be installed to `build/app/node_modules/libxulsword/build/Release`.
+
 5. Run `yarn` to install Node.js dependencies.
 6. Start xulsword with `yarn start`.
 
-**NOTE:** When the libxulsword interface changes, the Node.js libxulsword addon will need to be
-recompiled for each operating system, and the addon committed to git. See libxulsword ReadMe.
+**NOTE:** In the very rare occasion that the libxulsword interface changes, the Node.js libxulsword.node addon will need to be
+recompiled on each operating system, and the addon committed to git. See libxulsword ReadMe.
 
 ---
 
