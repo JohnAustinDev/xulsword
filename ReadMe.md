@@ -50,12 +50,12 @@ The build has two parts: a Node.js project and a native libxulsword C++ library.
 **Important**: Each time you open a shell to build xulsword, environment variables
 must first be set by running `source ./setenv`.
 
-1. Install nvm on Linux, Windows or Mac. On Windows https://github.com/coreybutler/nvm-windows is recommended.
+1. Install nvm on Linux, Windows or Mac. On Windows [nvm for Windows](https://github.com/coreybutler/nvm-windows) is recommended.
 2. Use nvm to select Node version 18.12.1. On Windows, select the x86 architecture with: `nvm install 18.12.1 32` followed by `nvm use 18.12.1 32` to select it. Install yarn globally with: `nvm -i global yarn`. On Windows, administrator priviledge is required for these steps (subsequent steps do not require admin priviledge).
 3. Run `source ./setenv` to set environment variables. On Windows, the Git Bash shell that comes with [Git for Windows](https://gitforwindows.org/) can be used to run this, and subsequent command line steps.
 4. Build the native libxulsword C++ dynamic library for your system (this step only needs to be done once and won't be needed again until the rare occasion that xulsword/Cpp C++ source changes):
 
-- Download the [Boost 1.80.0](https://www.boost.org/users/download/) tar.gz source code bundle (you may need to go to the history section to find previous releases). Create an `archive` sub-directory under `xulsword` and place the source bundle there (boost doesn't support scripted downloads).
+- Download the [boost_1_80_0.tar.gz](https://www.boost.org/users/download/) source code bundle (you may need to go to the history section to find previous releases). Create an `archive` sub-directory under `xulsword` and place the source bundle there (boost doesn't support scripted downloads).
 - Install [VirtualBox](https://www.virtualbox.org/wiki/Downloads) and [Vagrant](https://www.vagrantup.com/), and run `vagrant up`. Native libraries for each system will eventually appear in the Cpp/lib directories.
 - Install the shared library for your particular operating system by running `yarn install-libxulsword`. The apporpriate binaries will be installed to `build/app/node_modules/libxulsword/build/Release`.
 
