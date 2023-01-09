@@ -55,7 +55,7 @@ must first be set by running `source ./setenv`.
 3. Run `source ./setenv` to set environment variables. On Windows, the Git Bash shell that comes with [Git for Windows](https://gitforwindows.org/) can be used to run this, and subsequent command line steps.
 4. Build the native libxulsword C++ dynamic library for your system (this step only needs to be done once and won't be needed again until the rare occasion that xulsword/Cpp C++ source changes):
 
-- Download Boost 1.80.0 from https://www.boost.org/users/download/ and place it in `xulsword/archive` directory (boost doesn't support scripted downloads).
+- Download the [Boost 1.80.0](https://www.boost.org/users/download/) tar.gz source code bundle (you may need to go to the history section to find previous releases). Create an `archive` sub-directory under `xulsword` and place the source bundle there (boost doesn't support scripted downloads).
 - Install [VirtualBox](https://www.virtualbox.org/wiki/Downloads) and [Vagrant](https://www.vagrantup.com/), and run `vagrant up`. Native libraries for each system will eventually appear in the Cpp/lib directories.
 - Install the shared library for your particular operating system by running `yarn install-libxulsword`. The apporpriate binaries will be installed to `build/app/node_modules/libxulsword/build/Release`.
 
@@ -63,7 +63,7 @@ must first be set by running `source ./setenv`.
 6. Start xulsword with `yarn start`.
 
 **NOTE:** In the very rare occasion that the libxulsword interface changes, the Node.js libxulsword.node addon will need to be
-recompiled on each operating system, and the addon committed to git. See [libxulsword ReadMe](/blob/master/build/app/node_modules/libxulsword/Readme.md).
+recompiled on each operating system, and the addon committed to git. See [libxulsword ReadMe](build/app/node_modules/libxulsword/Readme.md).
 
 ---
 
