@@ -710,6 +710,7 @@ export default class ModuleManager
         });
       }
     });
+    log.debug(`Total modules available: ${moduleLangData.allmodules.length}`);
     H.setTableState(
       this,
       'module',
