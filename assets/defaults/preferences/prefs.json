@@ -202,5 +202,12 @@
       ]
     },
     "repository": null
+  },
+  "copyPassage": {
+    "checkboxes": {
+      "headings": true,
+      "versenums": true,
+      "redwords": true
+    }
   }
 }

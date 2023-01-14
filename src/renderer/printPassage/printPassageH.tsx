@@ -154,7 +154,7 @@ export function bibleChapterText(
     ) {
       const verseNm = new RegExp('(<sup class="versenum">)(\\d+)(</sup>)', 'g');
       textHTML = textHTML.replace(verseNm, (_str, p1, p2, p3) => {
-        return p1 + dString(p2, moduleLocale) + p3;
+        return p1 + dString(G.i18n, p2, moduleLocale || undefined) + p3;
       });
     }
 

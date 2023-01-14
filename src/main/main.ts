@@ -337,8 +337,6 @@ const init = async () => {
     }
   }
 
-  // Remove this if your app does not use auto updates
-  // new AppUpdater();
   await G.i18n
     .use(i18nBackendMain)
     .init({

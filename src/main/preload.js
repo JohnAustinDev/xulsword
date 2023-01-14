@@ -19,6 +19,7 @@ contextBridge.exposeInMainWorld('processR', {
   LOGLEVEL() {
     return process.env.LOGLEVEL;
   },
+  platform: process.platform,
 });
 
 const validChannels = [

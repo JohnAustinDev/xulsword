@@ -206,6 +206,7 @@
    "notesButton.label" : "각 주",
    "notesButton.tooltip" : "각 주 표시/감춤",
    "ok.label" : "확인",
+   "passage.label" : "구절",
    "pentateuch.label" : "모세 5경",
    "print.printpassage" : "구절 프린트 출력",
    "print.printpassage.sc" : "",

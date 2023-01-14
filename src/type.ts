@@ -1,7 +1,7 @@
 /* eslint-disable import/no-duplicates */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import type { Shell } from 'electron';
+import type { clipboard, Shell } from 'electron';
 import type i18n from 'i18next';
 import type React from 'react';
 import type {
@@ -59,6 +59,7 @@ declare global {
       [envar in EnvironmentVars]: () => string;
     } & {
       argv: () => string[];
+      platform: string;
     };
   }
 
@@ -172,6 +173,12 @@ export interface XulswordStatePref {
   isPinned: boolean[];
   noteBoxHeight: number[];
   maximizeNoteBox: boolean[];
+}
+
+export interface CopyPassageStatePref {
+  checkboxes: {
+    [k in keyof ShowType]?: boolean;
+  };
 }
 
 export type AtextPropsType = Pick<
@@ -657,6 +664,7 @@ export type GType = {
 
   // Objects
   i18n: Pick<typeof i18n, 't' | 'exists' | 'language'>;
+  clipboard: Pick<typeof clipboard, 'write'>;
   Prefs: typeof Prefs;
   LibSword: typeof LibSword;
   Dirs: DirsRendererType;
@@ -749,6 +757,10 @@ export const GBuilder: GType & {
     t: CACHEfunc as any,
     exists: CACHEfunc as any,
     language: 'getter' as any,
+  },
+
+  clipboard: {
+    write: func as any,
   },
 
   Prefs: {

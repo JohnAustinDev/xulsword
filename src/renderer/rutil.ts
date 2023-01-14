@@ -25,6 +25,7 @@ import type {
   SwordConfType,
   V11nType,
 } from '../type';
+import type { SelectVKMType } from './libxul/vkselect';
 
 export function component(
   comp: any
@@ -670,4 +671,62 @@ export function moduleInfoHTML(configs: SwordConfType[]): string {
   return `<div class="module-info">${html.join(
     '<div class="separator"></div>'
   )}</div>`;
+}
+
+export function computed2inlineStyle(
+  elemx: HTMLElement | ChildNode,
+  ignore?: CSSStyleDeclaration
+): HTMLElement {
+  const elem = elemx as HTMLElement;
+  const style = getComputedStyle(elem);
+  const ign = ignore || style;
+  for (let i = 0; i < style.length; i += 1) {
+    const name = style[i];
+    const value = style.getPropertyValue(name);
+    if (value && ign.getPropertyValue(name) !== value) {
+      elem.style.setProperty(name, value, style.getPropertyPriority(name));
+    }
+  }
+  for (let i = 0; i < elem.attributes.length; i += 1) {
+    const attrib = elem.attributes[i];
+    if (attrib.name !== 'style') elem.removeAttribute(attrib.name);
+  }
+  elem.removeAttribute('class');
+  Array.from(elem.children).forEach((c) => computed2inlineStyle(c, ign));
+  return elem;
+}
+
+// Filter the HTML Bible text children of a div (LibSword HTML output) to a range of verses.
+export function htmlVerses(
+  div: HTMLElement,
+  verse: number,
+  lastverse: number | null // null means last verse of chapter
+): HTMLElement {
+  let keeping = lastverse === null;
+  Array.from(div.children)
+    .reverse()
+    .forEach((ch) => {
+      const child = ch as HTMLElement;
+      const info = getElementInfo(child);
+      if (info?.type === 'vs') {
+        const vs = info.lv ?? (info.vs || 0);
+        if (vs <= (lastverse || verse || 0)) keeping = true;
+        if (vs < (verse || 0)) keeping = false;
+      }
+      if (!keeping) {
+        div.removeChild(child);
+      }
+    });
+  return div;
+}
+
+export function elem2text(div: HTMLElement): string {
+  let html = div.innerHTML;
+  html = html.replace(/\s*<sup[^>]*>([\d-]+)<\/sup>\s*/gi, ' [$1] ');
+  html = html.replace(/<br>/gi, C.SYSTEMNEWLINE);
+  html = html.replace(/<\/div>/gi, C.SYSTEMNEWLINE);
+  html = html.replace(/\s*(<[^>]+>\s*)+/g, ' ');
+  html = html.replace(/&nbsp;/gi, ' ');
+  html = html.replace(/(&rlm;|&lrm;)/g, '');
+  return html;
 }

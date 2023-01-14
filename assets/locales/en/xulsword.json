@@ -230,6 +230,7 @@
    "notesButton.label" : "footnotes",
    "notesButton.tooltip" : "Toggle display of footnotes.",
    "ok.label" : "OK",
+   "passage.label" : "Passage",
    "pentateuch.label" : "Pentateuch",
    "print.printpassage" : "Print Passage",
    "print.printpassage.sc" : "r",

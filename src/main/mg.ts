@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-use-before-define */
 import {
+  clipboard,
   BrowserWindow,
   ipcMain,
   IpcMainEvent,
@@ -101,6 +102,8 @@ ipcMain.handle(
 class GClass implements GType {
   i18n;
 
+  clipboard;
+
   LibSword;
 
   Prefs;
@@ -119,6 +122,7 @@ class GClass implements GType {
 
   constructor() {
     this.i18n = i18next;
+    this.clipboard = clipboard;
     this.LibSword = LibSword;
     this.Prefs = Prefs;
     this.Dirs = Dirs;

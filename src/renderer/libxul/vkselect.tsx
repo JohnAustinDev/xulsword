@@ -153,6 +153,8 @@ class VKSelect extends React.Component {
     }
   }
 
+  // Get an updated selection based on last user input, and call onSelectionChange.
+  // If the component is keeping its own state, also update that state.
   handleChange(es: React.SyntheticEvent) {
     const state = this.state as VKSelectState;
     const props = this.props as VKSelectProps;
@@ -177,20 +179,40 @@ class VKSelect extends React.Component {
       const { value } = e.target;
       const [, id] = cls.type.split('-');
       switch (id) {
-        case 'vkmod':
+        case 'vkmod': {
+          s.vkmod = value;
+          break;
+        }
         case 'book': {
-          s[id] = value;
+          if (initialVKM !== undefined) {
+            s.chapter = 1;
+            s.verse = 1;
+            s.lastchapter = 1;
+            s.lastverse = 1;
+          }
+          s.book = value;
           break;
         }
-        case 'chapter':
-        case 'lastchapter':
-        case 'verse':
-        case 'lastverse': {
-          s[id] = Number(value);
-          break;
+        default: {
+          s[id as 'chapter' | 'lastchapter' | 'verse' | 'lastverse'] =
+            Number(value);
+          if (initialVKM !== undefined) {
+            let updateverse = false;
+            if (id === 'chapter') {
+              updateverse = true;
+              if (!s.lastchapter || s.lastchapter < s.chapter)
+                s.lastchapter = s.chapter;
+            }
+            if (updateverse) s.verse = 1;
+            if (id === 'lastchapter') updateverse = true;
+            if (updateverse) {
+              s.lastverse = getMaxVerse(
+                (s.vkmod in G.Tab && G.Tab[s.vkmod].v11n) || s.v11n || 'KJV',
+                `${s.book}.${s.lastchapter}`
+              );
+            }
+          }
         }
-        default:
-          throw new Error(`Unexpected Bibleselect class: '${cls.type}'`);
       }
       if (initialVKM !== undefined) {
         this.setState({ selection: s });
@@ -202,15 +224,15 @@ class VKSelect extends React.Component {
   }
 
   getNumberOptions(
-    p: 'chapter' | 'lastchapter' | 'verse' | 'lastverse',
-    osel: number | null | undefined,
-    olist: number[] | undefined,
+    selector: 'chapter' | 'verse' | 'lastchapter' | 'lastverse',
+    selected: number | null | undefined,
+    options: number[] | undefined,
     min: number,
     max: number
   ) {
     const props = this.props as VKSelectProps;
     const { initialVKM } = props;
-    let oc = olist;
+    let oc = options;
     if (!oc) {
       oc = [];
       for (let x = min; x <= max; x += 1) {
@@ -220,13 +242,13 @@ class VKSelect extends React.Component {
       return [];
     }
     const ocf = oc.filter((c) => c >= min && c <= max);
-    let nsel = osel;
+    let nsel = selected;
     if (initialVKM !== undefined) {
       if (nsel && ocf && !ocf.includes(nsel)) {
         [nsel] = ocf;
       }
     }
-    if (nsel && this.newselection) this.newselection[p] = nsel;
+    if (nsel && this.newselection) this.newselection[selector] = nsel;
     if (nsel && !ocf.includes(nsel)) {
       ocf.push(nsel);
     }
@@ -259,9 +281,13 @@ class VKSelect extends React.Component {
     const tab = (vkmod && G.Tab[vkmod]) || null;
     const v11n = (tab && tab.v11n) || selection.v11n || 'KJV';
 
+    // Get the appropriate options for each selector, adjusting selection
+    // only if the component is keeping its own selection state and the
+    // current selection is not an option.
+
     // Bible book options are either those passed in the books prop or are
-    // all books the verse system. When the module selector is visible and
-    // an installed module is selected, books not present in the module
+    // all books in the verse system. When the module selector is visible
+    // and an installed module is selected, books not present in the module
     // are removed from the list. All books are sorted in v11n order and
     // are unique.
     const bkbgs = books || G.BkChsInV11n[v11n].map((r) => r[0]);
@@ -312,14 +338,6 @@ class VKSelect extends React.Component {
       v11n && book ? getMaxChapter(v11n, book) : 0
     );
 
-    const newlastchapters = this.getNumberOptions(
-      'lastchapter',
-      lastchapter,
-      lastchapters,
-      chapter || 1,
-      v11n && book ? getMaxChapter(v11n, book) : 0
-    );
-
     const newverses = this.getNumberOptions(
       'verse',
       verse,
@@ -328,12 +346,25 @@ class VKSelect extends React.Component {
       v11n ? getMaxVerse(v11n, `${book}.${chapter}`) : 0
     );
 
+    const newlastchapters = this.getNumberOptions(
+      'lastchapter',
+      lastchapter,
+      lastchapters,
+      chapter || 1,
+      v11n && book ? getMaxChapter(v11n, book) : 0
+    );
+
     const newlastverses = this.getNumberOptions(
       'lastverse',
       lastverse,
       lastverses,
-      verse || 1,
-      v11n ? getMaxVerse(v11n, `${book}.${chapter}`) : 0
+      (newlastchapters.length === 0 && verse) || 1,
+      v11n
+        ? getMaxVerse(
+            v11n,
+            `${book}.${newlastchapters.length === 0 ? chapter : lastchapter}`
+          )
+        : 0
     );
 
     // Bible module options are either those of the vkmods prop or all installed
@@ -398,20 +429,23 @@ class VKSelect extends React.Component {
           (newchapters.length > 0 && newlastchapters.length > 0)) && (
           <Label className="dash" value="&#8211;" />
         )}
-        {newlastverses.length > 0 && (
-          <Menulist
-            className="vk-lastverse"
-            value={(lv || verse || 1).toString()}
-            options={newlastverses}
-            disabled={disabled}
-            onChange={handleChange}
-          />
-        )}
         {newlastchapters.length > 0 && (
           <Menulist
             className="vk-lastchapter"
             value={(lc || chapter || 1).toString()}
             options={newlastchapters}
+            disabled={disabled}
+            onChange={handleChange}
+          />
+        )}
+        {newlastchapters.length > 0 && newlastverses.length > 0 && (
+          <Label className="colon" value=":" />
+        )}
+        {newlastverses.length > 0 && (
+          <Menulist
+            className="vk-lastverse"
+            value={(lv || verse || 1).toString()}
+            options={newlastverses}
             disabled={disabled}
             onChange={handleChange}
           />

@@ -49,7 +49,6 @@ export function libswordText(
   n: number
 ): LibSwordResponse {
   const r = {
-    headHTML: '',
     textHTML: '',
     noteHTML: '',
     notes: '',

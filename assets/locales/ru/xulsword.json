@@ -230,6 +230,7 @@
    "notesButton.label" : "сноски",
    "notesButton.tooltip" : "Подключать отображение сносок",
    "ok.label" : "ОК",
+   "passage.label" : "Отрывок",
    "pentateuch.label" : "Пятикнижие Моисея",
    "print.printpassage" : "Печатать отрывок",
    "print.printpassage.sc" : "",

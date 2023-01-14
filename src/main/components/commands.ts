@@ -25,6 +25,7 @@ import type {
 import type { AboutWinState } from '../../renderer/about/about';
 import type { PrintPassageState } from '../../renderer/printPassage/printPassage';
 import type { CopyPassageState } from '../../renderer/copyPassage/copyPassage';
+import type { SelectVKMType } from '../../renderer/libxul/vkselect';
 
 const Commands = {
   openModuleManager(): void {
@@ -203,8 +204,21 @@ const Commands = {
   },
 
   copyPassage(state?: Partial<CopyPassageState>) {
-    const copyPassageState: Partial<CopyPassageState> = state || {
-
+    const tab = getTab();
+    const xulsword = Prefs.getComplexValue('xulsword') as XulswordStatePref;
+    const vkmod = xulsword.panels.find(
+      (p) => p && p in tab && tab[p].isVerseKey
+    );
+    const passage: SelectVKMType | null =
+      xulsword.location && vkmod
+        ? {
+            ...xulsword.location,
+            vkmod,
+          }
+        : null;
+    const copyPassageState: Partial<CopyPassageState> = {
+      passage,
+      ...(state || undefined),
     };
     const options = {
       title: i18n.t('menu.copypassage'),

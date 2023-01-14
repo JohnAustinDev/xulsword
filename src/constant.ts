@@ -43,6 +43,9 @@ const isDevelopment =
 
 const productionLogLevel = env('DEBUG_PROD') === 'true' ? 'silly' : 'info';
 
+const platform =
+  typeof process === 'undefined' ? window.processR.platform : process.platform;
+
 // COMMON GLOBAL CONSTANTS FOR MAIN AND RENDERER PROCESSES
 const C = {
   DevToolsopen: isDevelopment ? false : env('DEBUG_PROD') === 'true',
@@ -405,6 +408,9 @@ const C = {
     QUOTESTART: '"',
     QUOTEEND: '"',
   },
+
+  SYSTEMNEWLINE:
+    platform === 'win32' ? '\r\n' : platform === 'darwin' ? '\r' : '\n',
 
   BM: {
     // used in imported/exported bookmarks.txt because < 3.6 could only read files with this newline.
