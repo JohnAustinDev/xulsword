@@ -4,3 +4,9 @@
 .chapnotice {
   display: none;
 }
+
+#testdiv {
+  position: absolute;
+  overflow: hidden;
+  height: 0;
+}

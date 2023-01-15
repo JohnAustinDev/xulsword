@@ -673,12 +673,30 @@ export function moduleInfoHTML(configs: SwordConfType[]): string {
   )}</div>`;
 }
 
+// Replace stylesheet and other CSS with inline CSS.
 export function computed2inlineStyle(
   elemx: HTMLElement | ChildNode,
   ignore?: CSSStyleDeclaration
-): HTMLElement {
+): HTMLElement | null {
   const elem = elemx as HTMLElement;
   const style = getComputedStyle(elem);
+  // Computed style is Chrome specific, so apply some simple replacements to
+  // make inline CSS more portable.
+  if (elem.parentElement) {
+    let replacement;
+    if (style.display === 'none' || style.visibility === 'hidden') {
+      replacement = 'span';
+    } else if (elem.classList.contains('head-line-break')) {
+      replacement = 'br';
+    }
+    if (replacement) {
+      elem.parentElement.insertBefore(
+        document.createElement(replacement),
+        elem
+      );
+      elem.parentElement.removeChild(elem);
+    }
+  }
   const ign = ignore || style;
   for (let i = 0; i < style.length; i += 1) {
     const name = style[i];
@@ -687,16 +705,16 @@ export function computed2inlineStyle(
       elem.style.setProperty(name, value, style.getPropertyPriority(name));
     }
   }
-  for (let i = 0; i < elem.attributes.length; i += 1) {
-    const attrib = elem.attributes[i];
-    if (attrib.name !== 'style') elem.removeAttribute(attrib.name);
-  }
-  elem.removeAttribute('class');
+  // Remove all attributes except style
+  elem.getAttributeNames().forEach((name) => {
+    if (name !== 'style') elem.removeAttribute(name);
+  });
   Array.from(elem.children).forEach((c) => computed2inlineStyle(c, ign));
   return elem;
 }
 
-// Filter the HTML Bible text children of a div (LibSword HTML output) to a range of verses.
+// Filter div element children (such as from LibSword HTML output)
+// to just the given range of verses.
 export function htmlVerses(
   div: HTMLElement,
   verse: number,
@@ -720,13 +738,15 @@ export function htmlVerses(
   return div;
 }
 
+// Convert LibSword HTML into plain text.
 export function elem2text(div: HTMLElement): string {
   let html = div.innerHTML;
   html = html.replace(/\s*<sup[^>]*>([\d-]+)<\/sup>\s*/gi, ' [$1] ');
   html = html.replace(/<br>/gi, C.SYSTEMNEWLINE);
   html = html.replace(/<\/div>/gi, C.SYSTEMNEWLINE);
-  html = html.replace(/\s*(<[^>]+>\s*)+/g, ' ');
+  html = html.replace(/ *(<[^>]+> *)+/g, ' ');
   html = html.replace(/&nbsp;/gi, ' ');
   html = html.replace(/(&rlm;|&lrm;)/g, '');
+  html = html.replace(/([\n\r]+ *){3,}/g, C.SYSTEMNEWLINE + C.SYSTEMNEWLINE);
   return html;
 }

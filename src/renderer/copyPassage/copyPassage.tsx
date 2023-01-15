@@ -10,7 +10,6 @@ import React from 'react';
 import { diff, drop, sanitizeHTML } from '../../common';
 import G from '../rg';
 import renderToRoot from '../renderer';
-import log from '../log';
 import {
   windowArgument,
   computed2inlineStyle,
@@ -117,10 +116,10 @@ export default class CopyPassageWin extends React.Component {
             show: {
               headings: true,
               versenums: true,
-              usernotes: true,
-              footnotes: true,
-              crossrefs: true,
-              dictlinks: true,
+              usernotes: false,
+              footnotes: false,
+              crossrefs: false,
+              dictlinks: false,
               strongs: false,
               morph: false,
               hebcantillation: true,
@@ -152,7 +151,7 @@ export default class CopyPassageWin extends React.Component {
       }
       const refdiv = testdiv.appendChild(document.createElement('div'));
       const vks: VerseKey[] = [];
-      if (passage.chapter === passage.lastchapter) {
+      if (!passage.lastchapter || passage.chapter === passage.lastchapter) {
         vks.push(verseKey(G.i18n, passage));
       } else {
         vks.push(
@@ -174,13 +173,9 @@ export default class CopyPassageWin extends React.Component {
         <span class="cs-locale">
           (${vks.map((vk) => vk.readable()).join('-')})
         </span>`;
-      const text = elem2text(testdiv);
-      const html = testdiv.innerHTML;
-      log.debug(html);
-      log.debug(text);
       G.clipboard.write({
-        html,
-        text,
+        html: testdiv.innerHTML,
+        text: elem2text(testdiv),
       });
     }
   }
@@ -191,10 +186,7 @@ export default class CopyPassageWin extends React.Component {
     const { passageToClipboard } = this;
     return (
       <Vbox>
-        <div
-          id="testdiv"
-          style={{ position: 'absolute', visibility: 'hidden' }}
-        />
+        <div id="testdiv" />
         <Groupbox caption={G.i18n.t('passage.label')}>
           <VKSelect
             initialVKM={passage}

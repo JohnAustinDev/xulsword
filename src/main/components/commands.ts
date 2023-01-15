@@ -209,10 +209,11 @@ const Commands = {
     const vkmod = xulsword.panels.find(
       (p) => p && p in tab && tab[p].isVerseKey
     );
+    const vk11n = (vkmod && tab[vkmod].v11n) || 'KJV';
     const passage: SelectVKMType | null =
       xulsword.location && vkmod
         ? {
-            ...xulsword.location,
+            ...verseKey(xulsword.location).location(vk11n),
             vkmod,
           }
         : null;
