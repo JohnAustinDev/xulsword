@@ -28,10 +28,6 @@ html[dir='rtl'] .viewport .open-chooser {
 
 .viewport .chooser {
   padding-inline-end: 10px;
-  float: left;
-}
-html[dir='rtl'] .viewport .chooser {
-  float: right;
 }
 .viewport.chooser-hidden .chooser {
   display: none;

@@ -1,0 +1,32 @@
+/* Move border from container to scroll-parent (below),
+and give a fixed width */
+.genbook-chooser .chooser-container {
+  width: 200px;
+  border-inline-start: unset;
+  border-top: unset;
+  border-inline-end: unset;
+  border-bottom: unset;
+  border-radius: unset;
+}
+
+.genbook-chooser .scroll-parent {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  bottom: 0px;
+  min-width: calc(100% - 3px);
+  max-width: calc(100% - 3px);
+  overflow: auto;
+  z-index: 6;
+  border-inline-start: 2px solid rgb(175, 145, 180);
+  border-top: 2px solid rgb(175, 145, 180);
+  border-inline-end: 2px solid rgb(225, 195, 230);
+  border-bottom: 2px solid rgb(225, 195, 230);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.95);
+  transition: 0.5s;
+}
+
+.genbook-chooser .scroll-parent:hover {
+  max-width: 800px;
+}

@@ -1,7 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import C from '../../constant';
 import Cache from '../../cache';
-import { dString, escapeRE, JSON_parse, stringHash } from '../../common';
+import {
+  dString,
+  escapeRE,
+  genBookContentArray,
+  JSON_parse,
+  stringHash,
+} from '../../common';
 import { getElementInfo } from '../../libswordElemInfo';
 import G from '../rg';
 import log from '../log';
@@ -326,22 +332,6 @@ function dictionaryChange(atext: HTMLElement, next: boolean): string | null {
   return newkey || null;
 }
 
-function gbkeys(toc: any, parent?: string): string[] {
-  if (typeof toc !== 'object') return [];
-  const r: string[] = [];
-  const p = parent || '';
-  Object.entries(toc).forEach((entry) => {
-    const [chapter, sub] = entry;
-    const c = p ? `${p}${C.GBKSEP}${chapter}` : chapter;
-    if (sub === 1) {
-      r.push(c);
-    } else {
-      r.push(...gbkeys(sub, c));
-    }
-  });
-  return r;
-}
-
 // Change a general book to the previous or next chapter.
 function genbookChange(atext: HTMLElement, next: boolean): string | null {
   const { module, modkey } = atext.dataset;
@@ -349,12 +339,12 @@ function genbookChange(atext: HTMLElement, next: boolean): string | null {
   if (module) {
     if (!Cache.has('genbkTOC', module)) {
       Cache.write(
-        JSON_parse(G.LibSword.getGenBookTableOfContents(module)),
+        genBookContentArray(G.LibSword.getGenBookTableOfContents(module)),
         'genbkTOC',
         module
       );
     }
-    tocs = gbkeys(Cache.read('genbkTOC', module));
+    tocs = Cache.read('genbkTOC', module);
     if (modkey) {
       const toc = tocs.indexOf(modkey);
       if (toc !== -1) {

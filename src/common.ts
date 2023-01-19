@@ -19,6 +19,7 @@ import type {
   HTTPDownload,
   QuerablePromise,
   GType,
+  GenBookTOC,
 } from './type';
 import type LocalFile from './main/components/localFile';
 
@@ -417,6 +418,27 @@ export function iString(
     }
   }
   return s;
+}
+
+// Convert the raw GenBookTOC output of LibSword.getGenBookTableOfContents()
+// into an array of C.GBKSEP delimited keys.
+export function genBookContentArray(
+  toc: GenBookTOC,
+  parent?: string
+): string[] {
+  if (typeof toc !== 'object') return [];
+  const r: string[] = [];
+  const p = parent || '';
+  Object.entries(toc).forEach((entry) => {
+    const [chapter, sub] = entry;
+    const c = p ? `${p}${C.GBKSEP}${chapter}` : chapter;
+    if (sub === 1) {
+      r.push(c);
+    } else {
+      r.push(...genBookContentArray(sub, c));
+    }
+  });
+  return r;
 }
 
 export function getLocalizedChapterTerm(

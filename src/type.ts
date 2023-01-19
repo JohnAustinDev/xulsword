@@ -630,6 +630,10 @@ export type PrefValue =
   | PrefObject
   | (PrefPrimative | PrefObject | PrefValue)[];
 
+export type GenBookTOC = {
+  [title: string]: GenBookTOC | 1;
+};
+
 export type GMethodAddCaller<M extends (...args: any) => any> = (
   ...arg: [...Parameters<M>, number]
 ) => ReturnType<M>;

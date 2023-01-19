@@ -3,7 +3,7 @@ import { app, BrowserWindow } from 'electron';
 import { fork } from 'child_process';
 import log from 'electron-log';
 import path from 'path';
-import { repositoryKey, isRepoLocal } from '../../common';
+import { repositoryKey, isRepoLocal, JSON_parse } from '../../common';
 import Cache from '../../cache';
 import LocalFile from './localFile';
 import Dirs from './dirs';
@@ -11,6 +11,7 @@ import Prefs from './prefs';
 import Window from './window';
 
 import type {
+  GenBookTOC,
   Repository,
   SwordConfigEntries,
   SwordFilterType,
@@ -373,13 +374,11 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // getGenBookTableOfContents
   // Returns table of contents JSON code for GenBook module Gbmod.
   // Returns an error if module Gbmod is not a TreeKey mod.
-  getGenBookTableOfContents(gbmod: string): string {
+  getGenBookTableOfContents(gbmod: string): GenBookTOC {
     if (this.isReady(true)) {
-      const genBookTableOfContents =
-        libxulsword.GetGenBookTableOfContents(gbmod);
-      return genBookTableOfContents;
+      return JSON_parse(libxulsword.GetGenBookTableOfContents(gbmod));
     }
-    return '';
+    return {};
   },
 
   /* *****************************************************************************

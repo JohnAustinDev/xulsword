@@ -34,11 +34,17 @@ import {
 } from '../libxul/xul';
 import { Hbox, Vbox } from '../libxul/boxes';
 import Chooser from './chooser';
+import GenbookChooser from './genbookChooser';
 import Tabs from './tabs';
 import Atext from './atext';
 import './viewport.css';
 
-import type { LocationVKType, ScrollType, XulswordStatePref } from '../../type';
+import type {
+  LocationVKType,
+  ScrollType,
+  XulswordStateArgType,
+  XulswordStatePref,
+} from '../../type';
 
 const defaultProps = xulDefaultProps;
 
@@ -87,7 +93,7 @@ type ViewportProps = ViewportPopupProps &
 
     eHandler: (e: React.SyntheticEvent) => void;
     bbDragEnd: (e: React.MouseEvent, value: any) => void;
-    xulswordStateHandler: (s: Partial<XulswordStatePref>) => void;
+    xulswordStateHandler: (s: XulswordStateArgType) => void;
   };
 
 type ViewportState = PopupParentState & {
@@ -368,16 +374,23 @@ class Viewport extends React.Component implements PopupParent {
           <button type="button" className="open-chooser" />
         )}
 
-        {showingChooser && (
+        {chooser === 'bible' && showingChooser && (
           <Chooser
             key={[reset, location?.book].join('.')}
-            type={chooser}
             selection={location?.book}
             v11n={chooserV11n}
             headingsModule={firstUnpinnedBible}
             bookGroups={bookGroups}
             availableBooks={availableBooks}
             onCloseChooserClick={eHandler}
+          />
+        )}
+        {chooser === 'genbook' && showingChooser && (
+          <GenbookChooser
+            key={reset}
+            panels={panels}
+            keys={keys}
+            xulswordStateHandler={xulswordStateHandler}
           />
         )}
 

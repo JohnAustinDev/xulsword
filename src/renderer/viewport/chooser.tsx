@@ -35,7 +35,6 @@ const defaultProps = {
   availableBooks: new Set(),
   hideUnavailableBooks: false,
   v11n: 'KJV',
-  type: 'bible',
 };
 
 const propTypes = {
@@ -46,7 +45,6 @@ const propTypes = {
   hideUnavailableBooks: PropTypes.bool,
   headingsModule: PropTypes.string,
   v11n: PropTypes.string.isRequired,
-  type: PropTypes.oneOf(['bible', 'genbook', 'none']).isRequired,
   onCloseChooserClick: PropTypes.func.isRequired,
 };
 
@@ -57,7 +55,6 @@ export interface ChooserProps extends XulProps {
   hideUnavailableBooks: boolean;
   headingsModule: string | undefined;
   v11n: V11nType;
-  type: string;
   onCloseChooserClick: (e: any) => void;
 }
 
@@ -256,17 +253,9 @@ class Chooser extends React.Component {
     const state = this.state as ChooserState;
     const { handler, rowHeight, longestBook, containerRef, sliderRef, rowRef } =
       this;
-    const {
-      availableBooks,
-      bookGroups,
-      selection,
-      type,
-      v11n,
-      onCloseChooserClick,
-    } = props;
+    const { availableBooks, bookGroups, selection, v11n, onCloseChooserClick } =
+      props;
     const { bookGroup, slideIndex } = state;
-
-    if (type === 'none') return [];
 
     const label: any = {};
     const useLabelImage: any = {};
@@ -279,7 +268,7 @@ class Chooser extends React.Component {
     });
 
     return (
-      <Vbox {...addClass(`chooser ${type}`, props)} onMouseOut={handler}>
+      <Vbox {...addClass(`chooser`, props)} onMouseOut={handler}>
         <Hbox className="fadetop" />
 
         <Hbox className="chooser-container" flex="20">
