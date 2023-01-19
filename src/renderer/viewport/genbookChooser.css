@@ -17,16 +17,19 @@ and give a fixed width */
   min-width: calc(100% - 3px);
   max-width: calc(100% - 3px);
   overflow: auto;
-  z-index: 6;
+  z-index: 7;
   border-inline-start: 2px solid rgb(175, 145, 180);
   border-top: 2px solid rgb(175, 145, 180);
   border-inline-end: 2px solid rgb(225, 195, 230);
   border-bottom: 2px solid rgb(225, 195, 230);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.95);
+  background: white;
   transition: 0.5s;
 }
 
 .genbook-chooser .scroll-parent:hover {
   max-width: 800px;
+  top: -5px;
+  left: -5px;
+  filter: drop-shadow(10px 10px 2px #777777);
 }

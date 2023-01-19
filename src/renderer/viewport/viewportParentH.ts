@@ -32,9 +32,12 @@ import type ViewportWin from './viewportWin';
 import type { ViewportWinState } from './viewportWin';
 import type { DragSizerVal } from '../libxul/dragsizer';
 
+// Important: These XulswordStatePref properties become independent
+// window properties for windows other than the xulsword window.
 export const vpWindowState = {
   tabs: [] as (string[] | null)[],
   panels: [] as (string | null)[],
+  keys: [] as (string | null)[],
   ilModules: [] as (string | null)[],
   mtModules: [] as (string | null)[],
   isPinned: [true, true, true],
@@ -636,7 +639,8 @@ export default function handler(
       if (
         !isPinned &&
         atext &&
-        type !== C.DICTIONARY &&
+        type &&
+        [C.BIBLE, C.COMMENTARY].includes(type) &&
         !ofClass(['nbc'], target)
       ) {
         aTextWheelScroll(e, atext, this);

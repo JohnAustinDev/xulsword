@@ -165,10 +165,6 @@ class Viewport extends React.Component implements PopupParent {
     } = this.props as ViewportProps;
     const { reset, elemhtml, eleminfo, gap, popupParent, popupReset } = state;
 
-    const chooser = panels.some((m) => m && G.Tab[m].type === C.GENBOOK)
-      ? 'genbook'
-      : 'bible';
-
     // Only versekey panels can be pinned
     const isVerseKey = panels.map((m) => Boolean(m && G.Tab[m].isVerseKey));
     const isPinned = panels.map((_m, i) => isPinned0[i] && isVerseKey[i]);
@@ -341,6 +337,12 @@ class Viewport extends React.Component implements PopupParent {
     }
 
     const numPanels = panels.filter((m) => m || m === '').length;
+
+    const chooser = panels
+      .filter((m, i) => m && panelWidths[i] && columns[i])
+      .some((m) => m && G.Tab[m].type === C.GENBOOK)
+      ? 'genbook'
+      : 'bible';
 
     const showingChooser = showChooser || chooser === 'genbook';
     const chooserV11n =
