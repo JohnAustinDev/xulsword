@@ -33,3 +33,15 @@ and give a fixed width */
   left: -5px;
   filter: drop-shadow(10px 10px 2px #777777);
 }
+
+html[dir='rtl'] .genbook-chooser .scroll-parent {
+  transform: scaleX(-1);
+  left: unset;
+  right: 0px;
+}
+html[dir='rtl'] .genbook-chooser .scroll-parent:hover {
+  right: -5px;
+}
+html[dir='rtl'] .bp4-tree-node-label {
+  transform: scaleX(-1);
+}

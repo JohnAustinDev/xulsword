@@ -397,6 +397,8 @@ class Atext extends React.Component {
           } else {
             versekeyScroll(sbe, scrollProps);
           }
+        } else if (update && type === C.GENBOOK && columns > 1 && sbe) {
+          sbe.scrollLeft = 0;
         } else if (update && type === C.DICTIONARY) {
           const { modkey } = libswordProps;
           const id = `${stringHash(modkey)}.${panelIndex}`;

@@ -78,6 +78,9 @@ html[dir='rtl'] .atext .text-win {
   column-rule: 14px solid rgb(240, 215, 240);
   column-fill: auto;
 }
+.atext.Genbks:not(.columns1) .sb {
+  overflow: auto;
+}
 .atext .sbcontrols {
   position: absolute;
   top: 0px;

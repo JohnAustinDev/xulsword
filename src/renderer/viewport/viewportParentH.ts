@@ -636,14 +636,15 @@ export default function handler(
 
     case 'wheel': {
       const e = es as React.WheelEvent;
-      if (
-        !isPinned &&
-        atext &&
-        type &&
-        [C.BIBLE, C.COMMENTARY].includes(type) &&
-        !ofClass(['nbc'], target)
-      ) {
-        aTextWheelScroll(e, atext, this);
+      if (!isPinned && atext && type && !ofClass(['nbc'], target)) {
+        if ([C.BIBLE, C.COMMENTARY].includes(type)) {
+          aTextWheelScroll(e, atext, this);
+        } else if (type === C.GENBOOK) {
+          const sb = atext.getElementsByClassName('sb');
+          if (sb.length) {
+            sb[0].scrollLeft += e.deltaY;
+          }
+        }
       }
       break;
     }

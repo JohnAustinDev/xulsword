@@ -249,7 +249,7 @@ function toc2nodes(
 }
 
 // Return groups of same-genbook-panels, in chooser order.
-// Ex: [[0],[1,2]] or [[1,2,3]]
+// Ex: [[0],[1,2]] or [[0,1,2]]
 function genbks(panels: (string | null)[]): number[][] {
   const r: number[][] = [];
   panels.forEach((m, i) => {
