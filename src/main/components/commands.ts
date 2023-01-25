@@ -280,10 +280,13 @@ const Commands = {
 
   openAbout(state?: Partial<AboutWinState>): void {
     const tab = getTab();
-    const label =
-      state?.modules && state.modules.length
-        ? (tab && state.modules[0] in tab && tab[state.modules[0]].label) || ''
-        : '';
+    const t =
+      (state?.configs &&
+        state.configs.length &&
+        state.configs[0].module in tab &&
+        tab[state.configs[0].module]) ||
+      null;
+    const label = (t && t.label) || '';
     const options = {
       width: 510,
       height: 425,

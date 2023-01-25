@@ -45,6 +45,7 @@
    "UpgradeMe" : "Programmani hech bo‘lmasa {{v1}} versiyasigacha yangilang.",
    "Version" : "Versiya: {{v1}}, Tuzilish: {{v2}}",
    "Want2InstallQuickTime" : "Audio tekstlarni eshitish uchun QuickTime programmasi o‘rnatilishi kerak.\n\n\"QT Lite\" ni hozir o‘rnatishni xohlaysizmi?\n",
+   "XSM_audio" : "Audio",
    "addCurPageAsCmd.commandkey" : "D",
    "allowInternet.continue" : "Davom etishni xohlaysizmi?",
    "allowInternet.message" : "Siz Muqaddas Kitobni internetdan ko‘chirib olish arafasidasiz.\nInternetdagi bu faoliyatingizni boshqalar osonlikcha ko‘rishlari mumkin.\nAgar bundan xavotirlanayotgan bo‘lsangiz “Yo‘q” tugmachasini bosib,\nMuqaddas Kitobni ko‘chirish vazifasini bekor qiling.",

@@ -21,6 +21,7 @@ import '../splash/splash.css';
 import './about.css';
 
 import type { ModinfoParent } from '../libxul/modinfo';
+import type { SwordConfType } from '../../type';
 
 const defaultProps = xulDefaultProps;
 
@@ -31,7 +32,7 @@ type AboutWinProps = XulProps;
 const initialState = {
   showContributors: false as boolean,
   showModules: false as boolean,
-  modules: [] as string[],
+  configs: [] as SwordConfType[],
 };
 
 export type AboutWinState = typeof initialState &
@@ -62,8 +63,8 @@ export default class AboutWin extends React.Component implements ModinfoParent {
       ...(argState || {}),
     };
     // When no modules are specified, show them all.
-    if (!s.modules.length) {
-      s.modules = G.Tabs.map((t) => t.module);
+    if (!s.configs.length) {
+      s.configs = G.SwordConf;
     }
     this.state = s;
 
@@ -109,7 +110,7 @@ export default class AboutWin extends React.Component implements ModinfoParent {
 
   render() {
     const state = this.state as AboutWinState;
-    const { modules, showModules, showContributors, showConf, editConf } =
+    const { configs, showModules, showContributors, showConf, editConf } =
       state;
     const { handler, modinfoParentHandler, modinfoRefs } = this;
     const { container, textarea } = modinfoRefs;
@@ -169,7 +170,7 @@ export default class AboutWin extends React.Component implements ModinfoParent {
         )}
         {showModules && (
           <Modinfo
-            modules={modules}
+            configs={configs}
             showConf={showConf}
             editConf={editConf}
             refs={{ container, textarea }}
@@ -177,7 +178,7 @@ export default class AboutWin extends React.Component implements ModinfoParent {
           />
         )}
         <Hbox className="dialog-buttons" pack="end" align="end">
-          {!!modules.length && (
+          {!!configs.length && (
             <>
               <Button id="showModules" flex="1" fill="x" onClick={handler}>
                 {showModules

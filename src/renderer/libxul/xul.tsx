@@ -121,12 +121,11 @@ export type XulProps = {
   title?: string | undefined;
 } & {
   [k in typeof xulEvents[number]]?: (e: React.SyntheticEvent<any>) => void;
-} &
-  {
-    [k in typeof xulCaptureEvents[number]]?: (
-      e: React.SyntheticEvent<any>
-    ) => void;
-  };
+} & {
+  [k in typeof xulCaptureEvents[number]]?: (
+    e: React.SyntheticEvent<any>
+  ) => void;
+};
 
 // const styles = ['width', 'height', 'flex'];
 const enums = ['align', 'xuldir', 'orient', 'pack', 'type'] as const;

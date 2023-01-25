@@ -5,9 +5,9 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { randomID, sanitizeHTML } from '../../common';
-import { moduleInfoHTML } from '../rutil';
+import { randomID, sanitizeHTML, stringHash } from '../../common';
 import G from '../rg';
+import { moduleInfoHTML } from '../rutil';
 import { xulDefaultProps, xulPropTypes, XulProps, htmlAttribs } from './xul';
 import Button from './button';
 import Label from './label';
@@ -18,13 +18,12 @@ import type { SwordConfType } from '../../type';
 
 // Parent component should have this included in its state and state-type.
 export const modinfoParentInitialState = {
-  showConf: '' as string,
+  showConf: '',
   editConf: false as boolean,
 };
 
 // Parent component should implement this interface.
 export interface ModinfoParent {
-  state: React.ComponentState;
   modinfoRefs: {
     textarea: React.RefObject<HTMLTextAreaElement>;
     container: React.RefObject<HTMLDivElement>;
@@ -41,18 +40,18 @@ export function modinfoParentHandler(
   switch (e.type) {
     case 'click': {
       const target = e.currentTarget as HTMLElement;
-      const [id, m] = target.id.split('.');
+      const [id, muni] = target.id.split('.');
       switch (id) {
         case 'more': {
-          const s: Partial<ModinfoParent['state']> = {
-            showConf: m,
+          const s: typeof modinfoParentInitialState = {
+            showConf: muni,
             editConf: false,
           };
           this.setState(s);
           break;
         }
         case 'less': {
-          const s: Partial<ModinfoParent['state']> = {
+          const s: typeof modinfoParentInitialState = {
             showConf: '',
             editConf: false,
           };
@@ -60,22 +59,26 @@ export function modinfoParentHandler(
           break;
         }
         case 'edit': {
-          const s: Partial<ModinfoParent['state']> = {
+          const s: Partial<typeof modinfoParentInitialState> = {
             editConf: true,
           };
           this.setState(s);
           break;
         }
         case 'save': {
-          if (m && m in G.Tab) {
+          if (muni) {
             const { modinfoRefs } = this;
             const { textarea } = modinfoRefs;
             if (textarea?.current?.value) {
-              G.Module.writeConf(G.Tab[m].confPath, textarea?.current?.value);
-              const s: Partial<ModinfoParent['state']> = {
-                editConf: false,
-              };
-              this.setState(s);
+              const { dataset } = textarea?.current;
+              const { confPath } = dataset;
+              if (confPath) {
+                G.Module.writeConf(confPath, textarea.current.value);
+                const s: Partial<typeof modinfoParentInitialState> = {
+                  editConf: false,
+                };
+                this.setState(s);
+              }
             }
           }
           break;
@@ -99,15 +102,13 @@ export function modinfoParentHandler(
 // XUL Sword module info and config
 const defaultProps = {
   ...xulDefaultProps,
-  configs: undefined,
   showConf: '',
   editConf: undefined,
 };
 
 const propTypes = {
   ...xulPropTypes,
-  modules: PropTypes.arrayOf(PropTypes.string).isRequired,
-  configs: PropTypes.arrayOf(PropTypes.object),
+  configs: PropTypes.arrayOf(PropTypes.object).isRequired,
   showConf: PropTypes.string,
   editConf: PropTypes.bool,
   refs: PropTypes.object.isRequired,
@@ -115,10 +116,9 @@ const propTypes = {
 };
 
 interface ModinfoProps extends XulProps {
-  modules: string[]; // modules to show
-  configs: (SwordConfType | null)[] | undefined; // required only if modules are not already installed
-  showConf: string; // module whose conf to show, or '' to show none
-  editConf: boolean | undefined; // is that conf editable?
+  configs: SwordConfType[];
+  showConf: string; // unique id of conf to show
+  editConf: boolean | undefined; // is showConf editable?
   refs: {
     container: React.RefObject<HTMLDivElement>; // ref to control scrolling
     textarea: React.RefObject<HTMLTextAreaElement>; // ref to retreive conf edits
@@ -126,87 +126,106 @@ interface ModinfoProps extends XulProps {
   buttonHandler: (e: React.SyntheticEvent) => void | Promise<void>;
 }
 
+type SwordConfExtraType = SwordConfType & {
+  modUnique: string;
+  confPath: string | null;
+  label: string;
+  style: string;
+};
+
 function Modinfo(props: ModinfoProps) {
   const {
-    modules: ms,
-    configs: cs,
-    showConf,
+    configs: configsx,
+    showConf: showConfx,
     editConf,
     refs,
     buttonHandler,
   } = props;
   const { container, textarea } = refs;
-  const id = randomID();
 
-  const modules: string[] = [];
-  const configs: SwordConfType[] = [];
-  ms.forEach((m, i) => {
-    const csi = G.SwordConf[m] || (cs && cs[i]);
-    if (csi) {
-      modules.push(m);
-      configs.push(csi);
-    }
-  });
+  // Is not possible to edit or (currently) view a config file unless it
+  // is installed locally.
+  const configs: SwordConfExtraType[] = configsx
+    .map((c) => {
+      const m = c.module;
+      const data = {
+        confPath: null as null | string,
+        label: m in G.Tab ? G.Tab[m].label : m,
+        style: m in G.Tab ? G.Tab[m].labelClass : 'cs-LTR_DEFAULT',
+        modUnique: '',
+      };
+      if (c) {
+        if (c.xsmType === 'XSM_audio') {
+          data.confPath = [G.Dirs.path.xsAudio, 'mods.d', c.filename].join('/');
+        } else if (c.module in G.Tab) {
+          data.confPath = G.Tab[c.module].confPath;
+        }
+      }
+      data.modUnique = stringHash(c.module, data.confPath);
+      return {
+        ...c,
+        ...data,
+      };
+    })
+    .sort((a, b) => a.label.localeCompare(b.label));
 
-  // Currently it is not possible to access the config file text for a
-  // module unless it is installed locally (aw shucks).
-  const confPath =
-    (showConf && showConf in G.Tab && G.Tab[showConf].confPath) || '';
+  const showConf: SwordConfExtraType | null =
+    (showConfx && configs.find((c) => c.modUnique === showConfx)) || null;
+
   const conftext: string[] =
-    (showConf &&
-      confPath &&
-      G.inlineFile(confPath, 'utf8', true).split('\n')) ||
+    (showConf?.confPath &&
+      G.inlineFile(showConf.confPath, 'utf8', true).split('\n')) ||
     [];
 
-  const showLinkList = modules.length > 4;
+  const showLinkList = configs.length > 4;
 
   return (
     <div {...htmlAttribs('modinfo', props)} ref={container}>
       <div>
         {showLinkList &&
-          ['Texts', 'Comms', 'Dicts', 'Genbks'].map((t) => (
-            <div key={`lt${t}`} className="linklist">
-              {modules.some((m) => m in G.Tab && G.Tab[m].tabType === t) && (
+          [
+            'Biblical Texts',
+            'Commentaries',
+            'Lexicons / Dictionaries',
+            'Generic Books',
+            'XSM_audio',
+          ].map((g) => (
+            <div key={`lt${g}`} className="linklist">
+              {configs.some((c) => c.moduleType === g || c.xsmType === g) && (
                 <>
-                  <div className="head1">{G.i18n.t(t)}</div>
+                  <div className="head1">{G.i18n.t(g)}</div>
                   <div className="listbox">
                     <ul>
-                      {modules
-                        ?.sort((a, b) =>
-                          G.Tab[a].label.localeCompare(G.Tab[b].label)
-                        )
-                        .map((m) =>
-                          G.Tab[m].tabType === t ? (
-                            <li key={`lm${m}`}>
-                              <a
-                                href={`#${['module', m, id].join('.')}`}
-                                className={`cs-${m}`}
-                              >
-                                {G.Tab[m].label}
-                              </a>
-                            </li>
-                          ) : null
-                        )}
+                      {configs.map((c) =>
+                        c.moduleType === g || c.xsmType === g ? (
+                          <li key={`lm${c.module}`}>
+                            <a
+                              href={`#${['module', c.modUnique].join('.')}`}
+                              className={c.style}
+                            >
+                              {c.label}
+                            </a>
+                          </li>
+                        ) : null
+                      )}
                     </ul>
                   </div>
                 </>
               )}
             </div>
           ))}
-        {modules?.map((m) => (
+        {configs?.map((c) => (
           <div
-            id={['module', m, id].join('.')}
-            className={`modlist x-${m}`}
-            key={`ml${m}`}
+            id={['module', c.modUnique].join('.')}
+            className={`modlist x-${c.module}`}
+            key={`ml${c.module}`}
           >
             <div className="head1">
-              <span className={`cs-${m}`}>
-                {configs?.find((c) => c.module === m)?.module}
-              </span>
+              <span className={`cs-${c.module}`}>{c.module}</span>
               {showLinkList && (
                 <a
                   href="#"
-                  id={['top', m, id].join('.')}
+                  id={['top', c.modUnique].join('.')}
                   className="top-link"
                   onClick={buttonHandler}
                 >
@@ -217,30 +236,24 @@ function Modinfo(props: ModinfoProps) {
             <div
               // eslint-disable-next-line react/no-danger
               dangerouslySetInnerHTML={{
-                __html: sanitizeHTML(
-                  (configs &&
-                    moduleInfoHTML([
-                      configs.find((c) => c.module === m) as SwordConfType,
-                    ])) ||
-                    ''
-                ),
+                __html: sanitizeHTML((configs && moduleInfoHTML([c])) || ''),
               }}
             />
             <div>
-              {m in G.Tab && G.Tab[m].confPath && !(showConf === m) && (
+              {c.confPath && !(showConf === c) && (
                 <>
                   <Button
-                    id={['more', m, id].join('.')}
+                    id={['more', c.modUnique].join('.')}
                     onClick={buttonHandler}
                   >
                     {G.i18n.t('more.label')}
                   </Button>
                 </>
               )}
-              {showConf && showConf === m && (
+              {showConf && showConf === c && (
                 <>
                   <Button
-                    id={['less', m, id].join('.')}
+                    id={['less', c.modUnique].join('.')}
                     onClick={buttonHandler}
                   >
                     {G.i18n.t('less.label')}
@@ -248,13 +261,13 @@ function Modinfo(props: ModinfoProps) {
                   {editConf !== undefined && textarea !== undefined && (
                     <>
                       <Button
-                        id={['edit', m, id].join('.')}
+                        id={['edit', c.modUnique].join('.')}
                         onClick={buttonHandler}
                       >
                         {G.i18n.t('editMenu.label')}
                       </Button>
                       <Button
-                        id={`save.${m}.${id}`}
+                        id={['save', c.modUnique].join('.')}
                         disabled={!editConf}
                         onClick={buttonHandler}
                       >
@@ -265,15 +278,15 @@ function Modinfo(props: ModinfoProps) {
                 </>
               )}
             </div>
-            {showConf && showConf === m && (
+            {showConf && showConf === c && (
               <div>
                 <Label
                   className="confpath-label"
-                  control={`ta.${m}`}
-                  value={confPath}
+                  control={`ta.${c.module}`}
+                  value={c.confPath || ''}
                 />
                 <textarea
-                  id={['ta', m, id].join('.')}
+                  id={['ta', c.modUnique].join('.')}
                   defaultValue={conftext.join('\n')}
                   className={editConf ? 'editable' : 'readonly'}
                   autoComplete="off"
@@ -283,6 +296,7 @@ function Modinfo(props: ModinfoProps) {
                   readOnly={!editConf}
                   rows={conftext.length}
                   ref={textarea}
+                  data-conf-path={c.confPath}
                 />
               </div>
             )}

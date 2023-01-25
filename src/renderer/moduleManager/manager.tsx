@@ -12,6 +12,7 @@ import {
   Position,
   ProgressBar,
   Toaster,
+  TreeNodeInfo,
 } from '@blueprintjs/core';
 import {
   diff,
@@ -22,6 +23,8 @@ import {
   selectionToTableRows,
   repositoryKey,
   tableRowsToSelection,
+  removeAudioChaptersRanges,
+  chapters2TreeNodes,
 } from '../../common';
 import C from '../../constant';
 import G from '../rg';
@@ -37,6 +40,7 @@ import Button from '../libxul/button';
 import { Hbox, Vbox, Box } from '../libxul/boxes';
 import Groupbox from '../libxul/groupbox';
 import VKSelect from '../libxul/vkselect';
+import GBSelect, { GBSelectProps } from '../libxul/genbookselect';
 import Table from '../libxul/table';
 import Spacer from '../libxul/spacer';
 import Label from '../libxul/label';
@@ -56,7 +60,7 @@ import type {
   Repository,
   RepositoryListing,
   RowSelection,
-  SwordConfAudioChapters,
+  SwordConfAudioChaptersGeneral,
   SwordConfType,
 } from '../../type';
 import type {
@@ -93,14 +97,7 @@ export type ManagerProps = XulProps;
 const notStatePref = {
   modules: [] as string[],
   progress: null as number[] | null,
-  showAudioDialog: [] as {
-    conf: SwordConfType;
-    selection: SelectVKMType;
-    initialVKM: VKSelectProps['initialVKM'];
-    options: VKSelectProps['options'];
-    chapters: SwordConfAudioChapters;
-    callback: (result: SelectVKMType | null) => void;
-  }[],
+  showAudioDialog: [] as (H.VersekeyDialog | H.GenbookDialog)[],
   tables: {
     language: {
       data: [] as TLanguageTableRow[],
@@ -200,7 +197,9 @@ export default class ModuleManager
 
   eventHandler;
 
-  audioDialogOnChange: VKSelectProps['onSelectionChange'];
+  audioDialogOnChange:
+    | VKSelectProps['onSelection']
+    | GBSelectProps['onSelection'];
 
   modinfoParentHandler: typeof modinfoParentHandlerH;
 
@@ -611,9 +610,7 @@ export default class ModuleManager
           if (!(modrepk in moduleData)) {
             let mtype: string = c.moduleType;
             if (c.xsmType === 'XSM') {
-              mtype = `XSM ${G.i18n.t(
-                C.SupportedModuleTypes[mtype as ModTypes]
-              )}`;
+              mtype = `XSM ${G.i18n.t(C.SupportedTabTypes[mtype as ModTypes])}`;
             } else if (c.xsmType === 'XSM_audio') {
               mtype = `XSM ${G.i18n.t('audio.label')}`;
             }
@@ -688,7 +685,7 @@ export default class ModuleManager
           const repoIsLocal = isRepoLocal(repo);
           const remoteSrcOfLocalMod = !repoIsLocal && modunique in localModules;
           if (remoteSrcOfLocalMod) {
-            modrow[H.ModCol.iInstalled] = H.ON;
+            if (c.xsmType !== 'XSM_audio') modrow[H.ModCol.iInstalled] = H.ON;
             const modrepok = `${localModules[modunique]}.${c.module}`;
             if (modrepok in moduleData) {
               modrow[H.ModCol.iInfo].shared =
@@ -771,7 +768,7 @@ export default class ModuleManager
         const done = showAudioDialog.shift();
         if (done) {
           const { selection } = done;
-          done.callback(selection);
+          done.callback(selection as any);
         }
         return { showAudioDialog };
       }
@@ -837,6 +834,15 @@ export default class ModuleManager
       repoCancel: !repotable.data.find((r) => r[H.RepCol.iInfo].loading),
     };
 
+    // Set one or the other or neither (never both)
+    let vkAudioDialog;
+    let gbAudioDialog;
+    if (showAudioDialog[0]) {
+      if (showAudioDialog[0].type === 'versekey')
+        vkAudioDialog = showAudioDialog[0] as H.VersekeyDialog;
+      else gbAudioDialog = showAudioDialog[0] as H.GenbookDialog;
+    }
+
     // If we are managing external repositories, Internet permission is required.
     if (!repositories || internetPermission)
       return (
@@ -847,18 +853,35 @@ export default class ModuleManager
             usePortal
             ref={this.refHandlers.toaster}
           />
-          {showAudioDialog.length > 0 && (
+          {(vkAudioDialog || gbAudioDialog) && (
             <Dialog
               body={
                 <Vbox>
-                  <Label value={showAudioDialog[0].conf.module} />
-                  <div>{showAudioDialog[0].conf.Description?.locale}</div>
-                  <VKSelect
-                    height="2em"
-                    initialVKM={showAudioDialog[0].initialVKM}
-                    options={showAudioDialog[0].options}
-                    onSelectionChange={dialogOnChange}
-                  />
+                  {vkAudioDialog && (
+                    <>
+                      <Label value={vkAudioDialog.conf.module} />
+                      <div>{vkAudioDialog.conf.Description?.locale}</div>
+                      <VKSelect
+                        height="2em"
+                        initialVKM={vkAudioDialog.initial}
+                        options={vkAudioDialog.options}
+                        onSelection={dialogOnChange}
+                      />
+                    </>
+                  )}
+                  {gbAudioDialog && (
+                    <>
+                      <Label value={gbAudioDialog.conf.module} />
+                      <div>{gbAudioDialog.conf.Description?.locale}</div>
+                      <GBSelect
+                        initialGBM={gbAudioDialog.initial}
+                        gbmodNodeLists={gbAudioDialog.options.gbmodNodeLists}
+                        gbmods={gbAudioDialog.options.gbmods}
+                        enableMultipleSelection
+                        onSelection={dialogOnChange}
+                      />
+                    </>
+                  )}
                 </Vbox>
               }
               buttons={
@@ -941,15 +964,18 @@ export default class ModuleManager
               <Hbox className="module-deck" flex="1">
                 {modules.length > 0 && (
                   <Modinfo
-                    modules={modules}
+                    configs={
+                      modules
+                        .map((m) => {
+                          const mr = modtable.data.find(
+                            (r) => r[H.ModCol.iModule] === m
+                          );
+                          return (mr && mr[H.ModCol.iInfo].conf) || null;
+                        })
+                        .filter(Boolean) as SwordConfType[]
+                    }
                     showConf={showConf}
                     editConf={editConf}
-                    configs={modules.map((m) => {
-                      const mr = modtable.data.find(
-                        (r) => r[H.ModCol.iModule] === m
-                      );
-                      return (mr && mr[H.ModCol.iInfo].conf) || null;
-                    })}
                     buttonHandler={modinfoParentHandler}
                     refs={modinfoRefs}
                   />
@@ -1171,48 +1197,24 @@ export default class ModuleManager
 ModuleManager.defaultProps = defaultProps;
 ModuleManager.propTypes = propTypes;
 
-function audioDialogOnChange(this: ModuleManager, selection: SelectVKMType) {
+function audioDialogOnChange(
+  this: ModuleManager,
+  selection: SelectVKMType | (string | number)[]
+) {
   this.sState((prevState) => {
     const { showAudioDialog } = prevState;
     if (showAudioDialog.length) {
-      const { book, chapter, lastchapter, v11n } = selection;
-      const { options, chapters: allchs } = showAudioDialog[0];
-      const { vkmods, books, verses, lastverses } = options;
-      if (book && chapter !== undefined && lastchapter !== undefined) {
-        const newselection: SelectVKMType = {
-          book,
-          chapter,
-          lastchapter,
-          vkmod: '',
-          v11n,
-        };
-        const chset: Set<number> = new Set();
-        allchs.forEach((v) => {
-          if (v.bk === book) {
-            for (let x = v.ch1; x <= v.ch2; x += 1) {
-              chset.add(x);
-            }
-          }
-        });
-        const chapters = Array.from(chset).sort((a, b) =>
-          a > b ? 1 : a < b ? -1 : 0
-        );
-        const lastchapters = chapters.filter((c) => c >= chapter);
-        const newoptions: VKSelectProps['options'] = {
-          vkmods,
-          books,
-          chapters,
-          lastchapters,
-          verses,
-          lastverses,
-        };
-        showAudioDialog[0] = {
-          ...showAudioDialog[0],
-          selection: newselection,
-          options: newoptions,
-        };
-        return { showAudioDialog };
+      showAudioDialog[0] = {
+        ...showAudioDialog[0],
+        selection,
+      } as H.VersekeyDialog | H.GenbookDialog;
+      if (showAudioDialog[0].type === 'versekey') {
+        const dvk = showAudioDialog[0] as H.VersekeyDialog;
+        const ch = dvk.chapters[dvk.selection.book].map((n) => Number(n));
+        dvk.options.chapters = ch;
+        dvk.options.lastchapters = ch;
       }
+      return { showAudioDialog };
     }
     return null;
   });

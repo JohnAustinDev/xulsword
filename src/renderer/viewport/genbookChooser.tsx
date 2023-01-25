@@ -8,6 +8,7 @@
 /* eslint-disable import/order */
 import React from 'react';
 import PropTypes from 'prop-types';
+import { genBookTreeNodes } from '../../common';
 import C from '../../constant';
 import G from '../rg';
 import { Hbox, Vbox } from '../libxul/boxes';
@@ -22,7 +23,7 @@ import './chooser.css';
 import './genbookChooser.css';
 
 import type { Tree, TreeNodeInfo } from '@blueprintjs/core';
-import type { GenBookTOC, XulswordStateArgType } from 'type';
+import type { XulswordStateArgType } from 'type';
 
 const defaultProps = {
   ...xulDefaultProps,
@@ -160,12 +161,12 @@ class GenbookChooser extends React.Component {
             nodes.push({
               id: m,
               label: t?.label || m,
-              className: t?.labelClass || 'cs-locale',
+              className: t?.labelClass || 'cs-LTR_DEFAULT',
               hasCaret: true,
-              childNodes: toc2nodes(toc, m, `${i}`),
+              childNodes: genBookTreeNodes(toc, m, `${i}`),
             });
           } else {
-            nodes.push(...toc2nodes(toc, m, `${i}`));
+            nodes.push(...genBookTreeNodes(toc, m, `${i}`));
           }
         }
       }
@@ -227,25 +228,6 @@ function getAncestors(
     }
   });
   return result;
-}
-
-// Return a TreeView node list from a raw GenBook TOC object.
-function toc2nodes(
-  toc: GenBookTOC,
-  module: string,
-  parentID: string
-): TreeNodeInfo[] {
-  return Object.entries(toc).map((entry) => {
-    const [key, val] = entry;
-    const id = parentID ? [parentID, key].join(C.GBKSEP) : key;
-    return {
-      id,
-      label: key,
-      className: `cs-${module}`,
-      hasCaret: val !== 1,
-      childNodes: val !== 1 ? toc2nodes(val, module, id) : undefined,
-    };
-  });
 }
 
 // Return groups of same-genbook-panels, in chooser order.

@@ -7,9 +7,11 @@ import ZIP from 'adm-zip';
 import log from 'electron-log';
 import i18n from 'i18next';
 import {
+  addAudioChaptersRanges,
   clone,
   downloadKey,
   isRepoLocal,
+  JSON_stringify,
   parseSwordConf,
   randomID,
   versionCompare,
@@ -46,6 +48,10 @@ import type {
   RepositoryListing,
   SwordConfType,
   V11nType,
+  SwordConfAudioChapters,
+  SwordConfAudioChaptersVK,
+  SwordConfAudioChaptersGeneral,
+  XSModTypes,
 } from '../../type';
 
 export const CipherKeyModules: {
@@ -66,11 +72,14 @@ let Downloads: { [downloadKey: string]: ZIP } = {};
 
 // Return the ModTypes type derived from a module config's ModDrv entry,
 // or return null if it's not a ModTypes type.
-export function getTypeFromModDrv(modDrv: string): ModTypes | null {
+export function getTypeFromModDrv(
+  modDrv: string
+): ModTypes | 'XSM_audio' | null {
   if (modDrv.includes('Text')) return 'Biblical Texts';
   if (modDrv.includes('LD')) return 'Lexicons / Dictionaries';
   if (modDrv.includes('Com')) return 'Commentaries';
   if (modDrv.includes('RawGenBook')) return 'Generic Books';
+  if (modDrv === 'audio') return 'XSM_audio';
   if (modDrv.includes('RawFiles')) return null;
   return null;
 }
@@ -99,13 +108,13 @@ export function moduleUnsupported(
   }
   if (!minimumVersion || minimumVersion === C.NOTFOUND) minimumVersion = '0';
   const type = getTypeFromModDrv(moddrv);
-  if (type && Object.keys(C.SupportedModuleTypes).includes(type)) {
+  if (type && Object.keys(C.SupportedTabTypes).includes(type)) {
     if (versionCompare(C.SWORDEngineVersion, minimumVersion) < 0) {
       reasons.push({
         error: `(${module2}) Requires SWORD engine version > ${minimumVersion} (using ${C.SWORDEngineVersion}).`,
       });
     }
-  } else {
+  } else if (!type && moddrv !== 'audio') {
     reasons.push({
       error: `(${module2}) Unsupported type '${type || moddrv}'.`,
     });
@@ -130,6 +139,75 @@ export function confModulePath(aDataPath: string): string | null {
   let requiredSubs = 4;
   if (['devotionals', 'glossaries'].includes(subs[3])) requiredSubs = 5;
   return subs.length === requiredSubs ? subs.join('/') : null;
+}
+
+function recurseAudioDirectory(
+  dir: LocalFile,
+  results: SwordConfAudioChaptersGeneral
+) {
+  dir.directoryEntries.forEach((sub) => {
+    const chn = Number(sub.replace(/^(\d+).*?$/, '$1'));
+    if (!Number.isNaN(chn)) {
+      const subdir = dir.clone().append(sub);
+      if (subdir.isDirectory()) {
+        const child: SwordConfAudioChaptersGeneral = [];
+        results.push([chn, child]);
+        recurseAudioDirectory(subdir, child);
+      } else {
+        results.push(chn);
+      }
+    } else log.warn(`Skipping non-number audio file: ${sub}`);
+  });
+}
+
+// Scan the file system for audio files starting at the location pointed to by
+// repoPath/dataPath, and return the results.
+export function scanAudio(
+  repoPath: string,
+  dataPath: string
+): SwordConfAudioChapters {
+  let r: SwordConfAudioChapters = [];
+  const scan = new LocalFile(repoPath);
+  if (scan.exists() && scan.isDirectory()) {
+    dataPath.replace('/', fpath.sep);
+    scan.append(dataPath);
+    if (scan.exists() && scan.isDirectory()) {
+      const subs = scan.directoryEntries;
+      const isVerseKey = subs.find((bk) =>
+        Object.values(C.SupportedBooks).find((bg) => bg.includes(bk))
+      );
+      if (!isVerseKey) recurseAudioDirectory(scan, r);
+      else {
+        r = {};
+        const rvk = r as SwordConfAudioChaptersVK;
+        scan.directoryEntries.forEach((book) => {
+          if (Object.values(C.SupportedBooks).find((bg) => bg.includes(book))) {
+            rvk[book] = [];
+            const scan2 = scan.clone().append(book);
+            if (scan2.isDirectory()) {
+              scan2.directoryEntries.forEach((chapter) => {
+                const audioFile = scan2.clone().append(chapter);
+                if (!audioFile.isDirectory()) {
+                  const chn = Number(
+                    audioFile.leafName.replace(/^(\d+).*?$/, '$1')
+                  );
+                  if (!Number.isNaN(chn)) rvk[book].push(chn);
+                  else {
+                    log.warn(
+                      `Skipping audio file with name: ${audioFile.leafName}`
+                    );
+                  }
+                } else
+                  log.warn(`Skipping audio chapter subdirectory: ${chapter}`);
+              });
+            }
+          } else log.warn(`Skipping unrecognized audio subdirectory: ${book}`);
+        });
+      }
+    }
+  }
+  addAudioChaptersRanges(r);
+  return r;
 }
 
 // Move or remove one or more modules. Returns the number of modules
@@ -279,14 +357,18 @@ export async function installZIPs(
             const type = entry.entryName.split('/').shift();
             switch (type) {
               case 'mods.d': {
-                const dest = new LocalFile(destdir);
                 const confstr = entry.getData().toString('utf8');
                 const conf = parseSwordConf(i18n, confstr, entry.name);
+                const dest = new LocalFile(
+                  conf.xsmType === 'XSM_audio' ? Dirs.path.xsAudio : destdir
+                );
                 // Look for any problems with the module itself
                 const modreports = clone(conf.reports);
                 modreports.push(...moduleUnsupported(conf));
                 const swmodpath =
-                  conf.DataPath && confModulePath(conf.DataPath);
+                  conf.xsmType === 'XSM_audio'
+                    ? 'XSM_audio'
+                    : conf.DataPath && confModulePath(conf.DataPath);
                 if (!swmodpath) {
                   modreports.push({
                     warning: `(${conf.module}) Has non-standard module path '${conf.DataPath}'.`,
@@ -306,7 +388,7 @@ export async function installZIPs(
                   )
                 ) {
                   modreports.push({
-                    error: `(${conf.module}) Will not replace encrypted module because new encrypted module has no encrpytion key.`,
+                    error: `(${conf.module}) Will not replace encrypted module; new encrypted module has no encrpytion key.`,
                   });
                 }
                 // If module is ok, prepare target config location and look for problems there
@@ -319,28 +401,44 @@ export async function installZIPs(
                   confdest.append(entry.name);
                   // Remove any existing module having this name unless it would be downgraded.
                   if (confdest.exists()) {
-                    const existing = parseSwordConf(i18n, confdest, entry.name);
-                    const replace =
-                      versionCompare(
-                        conf.Version ?? 0,
-                        existing.Version ?? 0
-                      ) !== -1;
-                    if (!replace) {
-                      modreports.push({
-                        error: `(${conf.module}) ${
-                          conf.Version ?? 0
-                        } Will not overwrite newer module ${existing.module}.`,
-                      });
-                    } else if (!moveRemoveModule([conf.module], destdir)) {
-                      modreports.push({
-                        error: `(${conf.module}) Could not remove existing module.`,
-                      });
+                    if (swmodpath === 'XSM_audio') {
+                      // Audio is not treated as a single module but as an updatable set of audio
+                      // files so just delete the conf file and it will be overwritten by the new.
+                      confdest.remove();
+                    } else {
+                      const existing = parseSwordConf(
+                        i18n,
+                        confdest,
+                        entry.name
+                      );
+                      const replace =
+                        versionCompare(
+                          conf.Version ?? 0,
+                          existing.Version ?? 0
+                        ) !== -1;
+                      if (!replace) {
+                        modreports.push({
+                          error: `(${conf.module}) ${
+                            conf.Version ?? 0
+                          } Will not overwrite newer module ${
+                            existing.module
+                          }.`,
+                        });
+                      } else if (!moveRemoveModule([conf.module], destdir)) {
+                        modreports.push({
+                          error: `(${conf.module}) Could not remove existing module.`,
+                        });
+                      }
                     }
                   }
                 }
                 // If module and target is ok, check valid swmodpath, remove obsoletes,
-                // create module directory path, and if still ok, copy config file.
-                if (!modreports.some((r) => r.error) && swmodpath) {
+                // create module directory path.
+                if (
+                  !modreports.some((r) => r.error) &&
+                  swmodpath &&
+                  swmodpath !== 'XSM_audio'
+                ) {
                   // Remove any module(s) obsoleted by this module.
                   if (conf.Obsoletes?.length) {
                     const obsoletes = conf.Obsoletes.filter((m) => {
@@ -373,14 +471,15 @@ export async function installZIPs(
                     modreports.push({
                       error: `(${conf.module}) Could not create module directory '${moddest.path}'.`,
                     });
-                  } else {
-                    // Copy config file to mods.d
-                    confdest.writeFile(confstr);
-                    confs[conf.module] = conf;
-                    newmods.modules.push(conf);
-                    if (conf.CipherKey === '') {
-                      newmods.nokeymods.push(conf);
-                    }
+                  }
+                }
+                // If still ok, copy config file etc.
+                if (!modreports.some((r) => r.error)) {
+                  confdest.writeFile(confstr);
+                  confs[conf.module] = conf;
+                  if (swmodpath !== 'XSM_audio') newmods.modules.push(conf);
+                  if (conf.CipherKey === '') {
+                    newmods.nokeymods.push(conf);
                   }
                 }
                 newmods.reports.push(...modreports);
@@ -442,22 +541,33 @@ export async function installZIPs(
               }
 
               case 'audio': {
+                // audio/<lang-code>?/<audio-code>/<book>/001.mp3
+                // audio/<lang-code>?/<audio-code>/( 001.mp3 | 001/ )+
                 const audio = Dirs.xsAudio;
-                const parts = fpath.posix.parse(entry.entryName);
-                const audiotype = parts.ext.substring(1).toLowerCase();
-                let audioCode: string | undefined;
-                if (/^\d+$/.test(parts.name)) {
-                  // Bible audio files...
-                  const chapter = Number(parts.name.replace(/^0+(?!$)/, ''));
-                  const dirs = parts.dir.split('/');
-                  const book = dirs.pop();
-                  audioCode = dirs.pop();
-                  if (
-                    audioCode &&
-                    book &&
-                    !Number.isNaN(chapter) &&
-                    (audiotype === 'mp3' || audiotype === 'ogg')
-                  ) {
+                const pobj = fpath.posix.parse(entry.entryName);
+                const audiotype = pobj.ext.substring(1).toLowerCase();
+                const dirs = pobj.dir.split('/');
+                dirs.shift(); // remove ./audio
+                // Zip file may have lang-code in path, so check and remove.
+                if (
+                  dirs.findIndex(
+                    (d) =>
+                      Object.entries(C.SupportedBooks).some((en) =>
+                        en[1].includes(d)
+                      ) || /^\d+/.test(d)
+                  ) === 2
+                )
+                  dirs.shift();
+                let audioCode = dirs.shift();
+                if (
+                  Object.entries(C.SupportedBooks).find((en) =>
+                    en[1].includes(dirs[0])
+                  )
+                ) {
+                  // VerseKey audio files...
+                  const chapter = Number(pobj.name.replace(/^0+(?!$)/, ''));
+                  const book = dirs[0];
+                  if (audioCode && book && !Number.isNaN(chapter)) {
                     audio.append(audioCode);
                     if (!audio.exists()) {
                       audio.create(LocalFile.DIRECTORY_TYPE);
@@ -468,43 +578,57 @@ export async function installZIPs(
                     }
                     audio.append(entry.name);
                     audio.writeFile(entry.getData());
-                    const ret: AudioFile = {
+                    const audiofile: AudioFile = {
                       audioCode,
                       book,
                       chapter,
-                      file: parts.base,
+                      file: pobj.base,
                       type: audiotype,
                     };
-                    newmods.audio.push(ret);
+                    newmods.audio.push(audiofile);
                   } else audioCode = undefined;
                 } else {
                   // Genbook audio files...
-                  const path = parts.dir.split('/');
+                  const path = pobj.dir.split('/');
                   path.shift(); // don't need language code
                   audioCode = path.shift();
-                  if (
-                    audioCode &&
-                    (audiotype === 'mp3' || audiotype === 'ogg')
-                  ) {
+                  if (audioCode) {
                     const n: GenBookAudioFile = {
                       genbook: true,
                       audioCode,
                       path,
-                      file: parts.base,
+                      file: pobj.base,
                       type: audiotype,
                     };
                     newmods.audio.push(n);
                   } else audioCode = undefined;
                 }
-                // Write a config file to allow repository listing
+                // Modify the config file to show the new audio.
                 if (audioCode) {
-                  const conf = Dirs.xsAudio;
-                  conf.append('mods.d');
-                  conf.append(`${audioCode.toLowerCase()}.conf`);
-                  if (!conf.exists()) {
-                    conf.writeFile(
-                      `[${audioCode}]\nDataPath=./${audioCode}/\nModDrv=audio\n`
-                    );
+                  const conf = Object.values(confs).find(
+                    (c) => c.module === audioCode
+                  );
+                  if (conf) {
+                    const confFile = Dirs.xsAudio;
+                    confFile.append('mods.d');
+                    confFile.append(conf.filename);
+                    if (confFile.exists()) {
+                      const dataPath = `./${audioCode}`;
+                      let str = confFile.readFile();
+                      str = str.replace(
+                        /^DataPath\b.*$/m,
+                        `DataPath=${dataPath}`
+                      );
+                      const audioChapters = scanAudio(
+                        Dirs.xsAudio.path,
+                        dataPath
+                      );
+                      str = str.replace(
+                        /^AudioChapters\b.*$/m,
+                        `AudioChapters=${JSON_stringify(audioChapters)}`
+                      );
+                      confFile.writeFile(str);
+                    }
                   }
                 }
                 break;
@@ -580,6 +704,80 @@ export async function modalInstall(
   return newmods;
 }
 
+type DownloadRepoConfsType = {
+  module: string;
+  strconf: string;
+  conf: SwordConfType;
+};
+
+async function downloadRepoConfs(
+  manifest: FTPDownload,
+  cancelkey: string,
+  progress?: ((p: number) => void) | null | undefined
+): Promise<DownloadRepoConfsType[]> {
+  const repositoryConfs: DownloadRepoConfsType[] = [];
+  let files: { header: { name: string }; content: Buffer }[] = [];
+  try {
+    const targzbuf = await getFile(
+      manifest.domain,
+      fpath.posix.join(manifest.path, manifest.file),
+      cancelkey,
+      progress
+    );
+    files = await untargz(targzbuf);
+  } catch (er: any) {
+    // If there was no SwordRepoManifest, then download every conf file.
+    let listing: ListingElementR[] | null = null;
+    let bufs: Buffer[] | null = null;
+    try {
+      if (!/Could not get file size/i.test(er)) throw er;
+      listing = await list(
+        manifest.domain,
+        fpath.posix.join(manifest.path, 'mods.d'),
+        cancelkey,
+        '',
+        1
+      );
+      bufs = await getFiles(
+        manifest.domain,
+        listing.map((l) => fpath.posix.join(manifest.path, 'mods.d', l.name)),
+        cancelkey,
+        progress
+      );
+      bufs.forEach((b, i) => {
+        if (files && listing) {
+          files.push({ header: { name: listing[i].name }, content: b });
+        }
+      });
+    } catch (err: any) {
+      if (progress) progress(-1);
+      return err.message;
+    }
+  }
+  files.forEach((r) => {
+    const { header, content: buffer } = r;
+    if (header.name.endsWith('.conf')) {
+      const rconf = {} as DownloadRepoConfsType;
+      rconf.strconf = buffer.toString('utf8');
+      const conf = parseSwordConf(
+        i18n,
+        rconf.strconf,
+        header.name.replace(/^.*?mods\.d\//, '')
+      );
+      conf.sourceRepository = manifest;
+      rconf.conf = conf;
+      rconf.module = conf.module;
+      repositoryConfs.push(rconf);
+      /*
+      if (conf.module === 'Kapingamarangi') {
+        log.info('Kapingamarangi: ', rconf.raw);
+      }
+      */
+    }
+  });
+  return repositoryConfs;
+}
+
 const Module = {
   // Return a promise for the CrossWire master repository list as an
   // array of Download objects. These can be passed to repositoryListing()
@@ -632,103 +830,58 @@ const Module = {
     manifests: (FTPDownload | null)[]
   ): Promise<(RepositoryListing | string)[]> {
     const callingWinID = (arguments[1] ?? -1) as number;
-    const promises = manifests.map(async (manifest) => {
-      const progress = (prog: number) => {
-        if (!manifest) return;
-        const dlk = downloadKey(manifest);
-        log.silly(`REPO progress ${dlk}: ${prog}`);
-        const w = BrowserWindow.fromId(callingWinID);
-        w?.webContents.send('progress', prog, dlk);
-      };
-      let value = null;
-      if (manifest && !manifest.disabled) {
-        if (isRepoLocal(manifest)) {
-          if (fpath.isAbsolute(manifest.path)) {
-            const modsd = new LocalFile(manifest.path).append('mods.d');
-            if (modsd.exists() && modsd.isDirectory()) {
-              const confs: SwordConfType[] = [];
-              modsd.directoryEntries.forEach((de) => {
-                const f = modsd.clone().append(de);
-                if (!f.isDirectory() && f.path.endsWith('.conf')) {
-                  const conf = parseSwordConf(i18n, f, de);
-                  conf.sourceRepository = manifest;
-                  confs.push(conf);
+    // Get an array of Promises that will progress in parallel.
+    const promises: Promise<RepositoryListing | string>[] = manifests.map(
+      async (manifest) => {
+        return new Promise((resolve) => {
+          if (manifest && !manifest.disabled) {
+            // Read local repository conf files
+            if (isRepoLocal(manifest)) {
+              if (fpath.isAbsolute(manifest.path)) {
+                const modsd = new LocalFile(manifest.path).append('mods.d');
+                if (modsd.exists() && modsd.isDirectory()) {
+                  const confs: SwordConfType[] = [];
+                  modsd.directoryEntries.forEach((de) => {
+                    const f = modsd.clone().append(de);
+                    if (!f.isDirectory() && f.path.endsWith('.conf')) {
+                      const conf = parseSwordConf(i18n, f, de);
+                      conf.sourceRepository = manifest;
+                      confs.push(conf);
+                    }
+                  });
+                  return resolve(confs);
                 }
-              });
-              value = confs;
-            } else value = `Directory not found: ${manifest.path}/mods.d`;
-          } else value = `Path not absolute: ${manifest.path}/mods.d`;
-          return value;
-        }
-        let files: { header: { name: string }; content: Buffer }[] | null = [];
-        const cancelkey = downloadKey(manifest);
-        if (ftpCancel(cancelkey, true)) return C.UI.Manager.cancelMsg;
-        try {
-          const targzbuf = await getFile(
-            manifest.domain,
-            fpath.posix.join(manifest.path, manifest.file),
-            cancelkey,
-            progress
-          );
-          files = await untargz(targzbuf);
-        } catch (er: any) {
-          // If there was no SwordRepoManifest, then download every conf file.
-          let listing: ListingElementR[] | null = null;
-          let bufs: Buffer[] | null = null;
-          try {
-            if (!/Could not get file size/i.test(er)) throw er;
-            listing = await list(
-              manifest.domain,
-              fpath.posix.join(manifest.path, 'mods.d'),
-              cancelkey,
-              '',
-              1
-            );
-            bufs = await getFiles(
-              manifest.domain,
-              listing.map((l) =>
-                fpath.posix.join(manifest.path, 'mods.d', l.name)
-              ),
-              cancelkey,
-              progress
-            );
-            bufs.forEach((b, i) => {
-              if (files && listing) {
-                files.push({ header: { name: listing[i].name }, content: b });
+                return resolve(`Directory not found: ${manifest.path}/mods.d`);
               }
-            });
-          } catch (err: any) {
-            if (progress) progress(-1);
-            return err.message;
-          }
-        }
-
-        if (files) {
-          const confs: SwordConfType[] = [];
-          files.forEach((r) => {
-            const { header, content: buffer } = r;
-            if (header.name.endsWith('.conf')) {
-              const cobj = parseSwordConf(
-                i18n,
-                buffer.toString('utf8'),
-                header.name.replace(/^.*?mods\.d\//, '')
-              );
-              cobj.sourceRepository = manifest;
-              confs.push(cobj);
-              /*
-              if (cobj.module === 'Kapingamarangi') {
-                log.info('Kapingamarangi: ', buffer.toString('utf8'));
-              }
-              */
+              return resolve(`Path not absolute: ${manifest.path}/mods.d`);
             }
-          });
-          value = confs;
-        }
+            // Download and read remote repository conf files.
+            const cancelkey = downloadKey(manifest);
+            if (ftpCancel(cancelkey, true)) {
+              return Promise.resolve(C.UI.Manager.cancelMsg);
+            }
+            const progress = (prog: number) => {
+              if (!manifest) return;
+              const dlk = downloadKey(manifest);
+              log.silly(`REPO progress ${dlk}: ${prog}`);
+              const w = BrowserWindow.fromId(callingWinID);
+              w?.webContents.send('progress', prog, dlk);
+            };
+            return resolve(
+              downloadRepoConfs(manifest, cancelkey, progress)
+                .then((repconfs) => {
+                  return repconfs.map((rc) => rc.conf);
+                })
+                .finally(() => {
+                  progress(-1);
+                })
+            );
+          }
+          return resolve(null);
+        });
       }
-      if (progress) progress(-1);
-      return value;
-    });
-
+    );
+    // Wait for all Promises to be settled before returning any repo data.
     return Promise.allSettled(promises).then((results) => {
       const ret: (RepositoryListing | string)[] = [];
       results.forEach((result) => {
@@ -747,15 +900,17 @@ const Module = {
     const callingWinID = (arguments[1] ?? -1) as number;
     const downloadkey = downloadKey(download);
     if (ftpCancel(downloadkey, true)) return C.UI.Manager.cancelMsg;
+
     const progress = (prog: number) => {
       log.silly(`SWORD progress ${downloadkey}: ${prog}`);
       let w = BrowserWindow.fromId(callingWinID);
       w?.webContents.send('progress', prog, downloadkey);
       w = null;
     };
+
+    // Audio XSM modules (HTTP download)
     if ('http' in download) {
-      // Audio XSM modules are HTTP downloads
-      const { http } = download;
+      const { http, confname } = download;
       progress(0);
       try {
         const tmpdir = new LocalFile(Window.tmpDir({ id: callingWinID })[0]);
@@ -765,11 +920,42 @@ const Module = {
             http,
             tmpdir.append(randomID()),
             downloadkey,
-            progress
+            (p: number) => {
+              if (p && p !== -1) progress(p * (3 / 4));
+            }
           );
-          Downloads[downloadkey] = new ZIP(dlfile.path);
+          const zip = new ZIP(dlfile.path);
+          // The conf file is required, so add it to the zip if not already present.
+          let hasConf = false;
+          zip.forEach((ze) => {
+            if (ze.entryName.endsWith(confname)) hasConf = true;
+          });
+          if (!hasConf) {
+            const confs = await downloadRepoConfs(
+              { ...download, file: C.SwordRepoManifest },
+              downloadkey,
+              (p: number) => {
+                if (p && p !== -1) progress(3 / 4 + p / 4);
+              }
+            );
+            const strconf = confs.find(
+              (rc) => rc.conf.filename === confname
+            )?.strconf;
+            if (strconf) {
+              zip.addFile(
+                fpath.posix.join('mods.d', confname),
+                Buffer.from(strconf)
+              );
+            } else {
+              progress(-1);
+              return await Promise.resolve(
+                `Could not locate ${confname} at '${download.domain}/${download.path}'.`
+              );
+            }
+          }
+          Downloads[downloadkey] = zip;
           progress(-1);
-          return 1;
+          return await Promise.resolve(1);
         }
         throw new Error(`Could not create tmp directory '${tmpdir.path}'.`);
       } catch (er: any) {
@@ -777,8 +963,9 @@ const Module = {
         log.silly(er);
         return Promise.resolve(er.message);
       }
-    } else if ('file' in download) {
+
       // Other XSM modules are ZIP files
+    } else if ('file' in download) {
       const { domain, path, file } = download;
       const fp = fpath.posix.join(path, file);
       log.silly(`downloadXSM`, domain, fp);
@@ -794,6 +981,7 @@ const Module = {
         return Promise.resolve(er.message);
       }
     }
+
     // Standard SWORD modules. First download conf file.
     const { domain, path, confname } = download;
     const confpath = fpath.posix.join(path, 'mods.d', confname);
@@ -807,7 +995,6 @@ const Module = {
       return Promise.resolve(er.message);
     }
     const conf = parseSwordConf(i18n, confbuf.toString('utf8'), confname);
-
     // Download module contents
     const datapath = confModulePath(conf.DataPath);
     if (datapath) {

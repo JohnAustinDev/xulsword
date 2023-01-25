@@ -15,6 +15,9 @@ import {
   tableRowsToSelection,
   selectionToTableRows,
   versionCompare,
+  removeAudioChaptersRanges,
+  JSON_stringify,
+  chapters2TreeNodes,
 } from '../../common';
 import C from '../../constant';
 import G from '../rg';
@@ -30,11 +33,14 @@ import type {
   Repository,
   RepositoryListing,
   RowSelection,
+  SwordConfAudioChaptersGeneral,
+  SwordConfAudioChaptersVK,
   SwordConfType,
 } from '../../type';
-import type { SelectVKMType } from '../libxul/vkselect';
+import type { SelectVKMType, VKSelectProps } from '../libxul/vkselect';
 import type ModuleManager from './manager';
 import type { ManagerState } from './manager';
+import type { GBModNodeList } from '../libxul/genbookselect';
 
 export const Tables = ['language', 'module', 'repository'] as const;
 
@@ -63,6 +69,26 @@ export const Saved = {
     tableToDataRowMap: [] as number[],
     scrollTop: 0 as number,
   },
+};
+
+export type VersekeyDialog = {
+  type: 'versekey';
+  conf: SwordConfType;
+  selection: SelectVKMType;
+  initial: VKSelectProps['initialVKM'];
+  options: VKSelectProps['options'];
+  chapters: SwordConfAudioChaptersVK;
+  callback: (result: SelectVKMType | null) => void;
+};
+
+export type GenbookDialog = {
+  type: 'genbook';
+  conf: SwordConfType;
+  selection: (string | number)[];
+  initial: { gbmod: string; expandedKeys: string[] };
+  options: { gbmodNodeLists?: GBModNodeList[]; gbmods?: string[] };
+  chapters: SwordConfAudioChaptersGeneral;
+  callback: (result: string | null) => void;
 };
 
 // These local repositories cannot be disabled, deleted or changed.
@@ -581,10 +607,11 @@ export async function eventHandler(
               [];
             downloadResults.forEach((dlr, i) => {
               if (dlr.status === 'fulfilled' && dlr.value) {
-                let dl = downloads[i];
-                if ('http' in dl) {
-                  dl = { http: dl.http.replace(/&bk=.*$/, '') };
-                }
+                // Find the moduleData row associated with this download. The moduleData
+                // audio download URLs do not include the chapter range, so it must be
+                // removed from the download URL (and don't change original download object!).
+                const dl = clone(downloads[i]);
+                if ('http' in dl) dl.http = dl.http.replace(/&bk=.*$/, '');
                 const downloadkey = downloadKey(dl);
                 const key = Object.keys(moduleData).find(
                   (k) => downloadKey(getModuleDownload(k)) === downloadkey
@@ -1001,22 +1028,30 @@ function getModuleDownload(modrepkey: string): Download | null {
   if (!data) return null;
   const { xsmType } = data[ModCol.iInfo].conf;
   if (xsmType === 'XSM') {
-    const d: FTPDownload = {
+    return {
       ...data[ModCol.iInfo].repo,
       file: data[ModCol.iInfo].conf.DataPath,
-    };
-    return d;
+    } as FTPDownload;
   }
   if (xsmType === 'XSM_audio') {
-    const d: HTTPDownload = { http: data[ModCol.iInfo].conf.DataPath };
-    return d;
+    // Remote audio repositories have URL as DataPath.
+    if (data[ModCol.iInfo].conf.DataPath.startsWith('http'))
+      return {
+        http: data[ModCol.iInfo].conf.DataPath,
+        confname: data[ModCol.iInfo].conf.filename,
+        ...data[ModCol.iInfo].repo,
+      } as HTTPDownload;
+    // Local audio repositories have local path as DataPath.
+    return {
+      ...data[ModCol.iInfo].repo,
+      file: data[ModCol.iInfo].conf.DataPath,
+    } as FTPDownload;
   }
-  const d: ModFTPDownload = {
+  return {
     module: data[ModCol.iModule],
     confname: data[ModCol.iInfo].conf.filename,
     ...data[ModCol.iInfo].repo,
-  };
-  return d;
+  } as ModFTPDownload;
 }
 
 async function promptAudioChapters(
@@ -1025,49 +1060,78 @@ async function promptAudioChapters(
 ): Promise<string> {
   if (conf.xsmType === 'XSM_audio') {
     const { AudioChapters } = conf;
+    const isVerseKey = !Array.isArray(AudioChapters);
     if (AudioChapters) {
-      const audio: SelectVKMType | null = await new Promise((resolve) => {
-        const { bk: book, ch1: chapter, ch2: lastchapter } = AudioChapters[0];
-        const books = Array.from(new Set(AudioChapters.map((v) => v.bk)));
-        const chapters: number[] = [];
-        for (let x = 1; x <= lastchapter; x += 1) {
-          if (x >= chapter) chapters.push(x);
-        }
-        xthis.sState((prevState) => {
-          const { showAudioDialog } = prevState;
-          showAudioDialog.push({
+      const audio: SelectVKMType | string | null = await new Promise(
+        (resolve) => {
+          const ac = clone(AudioChapters);
+          removeAudioChaptersRanges(ac);
+          const dialog = {
             conf,
-            selection: {
-              book,
-              chapter,
-              lastchapter: chapter,
+            chapters: ac,
+            callback: (result: any) => resolve(result),
+          } as VersekeyDialog | GenbookDialog;
+          if (isVerseKey) {
+            const acvk = ac as SwordConfAudioChaptersVK;
+            const books = Object.keys(acvk);
+            dialog.type = 'versekey';
+            dialog.selection = {
+              book: books[0],
+              chapter: 1,
+              lastchapter: 1,
               vkmod: '',
               v11n: 'KJV',
-            },
-            initialVKM: {
-              book,
-              chapter,
-              lastchapter: chapter,
+            };
+            dialog.initial = {
+              book: books[0],
+              chapter: 1,
+              lastchapter: 1,
               vkmod: '',
               v11n: 'KJV',
-            },
-            options: {
-              vkmods: [],
+            };
+            const ch = acvk[books[0]].map((n) => Number(n));
+            dialog.options = {
               books,
-              chapters,
-              lastchapters: chapters,
+              chapters: ch,
+              lastchapters: ch,
               verses: [],
               lastverses: [],
-            },
-            chapters: AudioChapters,
-            callback: (result) => resolve(result),
+              vkmods: [],
+            };
+          } else {
+            const acgb = ac as SwordConfAudioChaptersGeneral;
+            dialog.type = 'genbook';
+            dialog.selection = [];
+            dialog.initial = { gbmod: conf.module, expandedKeys: [] };
+            const options = {} as GenbookDialog['options'];
+            if (conf.module in G.Tab) {
+              options.gbmods = [conf.module];
+            } else {
+              options.gbmodNodeLists = [
+                {
+                  module: conf.module,
+                  label: conf.Description?.locale || conf.module,
+                  style: 'cs-locale',
+                  nodes: chapters2TreeNodes(acgb),
+                },
+              ];
+            }
+            dialog.options = options;
+          }
+          xthis.sState((prevState) => {
+            const { showAudioDialog } = prevState;
+            showAudioDialog.push(dialog);
+            return { showAudioDialog };
           });
-          return { showAudioDialog };
-        });
-      });
+        }
+      );
       if (audio) {
-        const { book, chapter, lastchapter } = audio;
-        return `&bk=${book}&ch=${chapter}&cl=${lastchapter}`;
+        if (isVerseKey) {
+          const a = audio as SelectVKMType;
+          const { book, chapter, lastchapter } = a;
+          return `&bk=${book}&ch=${chapter}&cl=${lastchapter}`;
+        }
+        return `&swordzip=${JSON_stringify(audio)}`;
       }
     } else {
       throw new Error(
@@ -1190,12 +1254,14 @@ export function checkForModuleUpdates(
   const { repository } = state.tables;
   const { repositoryListings } = Saved;
   const installed: SwordConfType[] = [];
-  // Get installed modules
+  // Get installed modules, minus audio which cannot be updated this way.
   repository.data.forEach((rtd, i) => {
     if (isRepoLocal(rtd[RepCol.iInfo].repo)) {
       const listing = repositoryListings[i];
       if (Array.isArray(listing)) {
-        listing.forEach((c) => installed.push(c));
+        listing.forEach((c) => {
+          if (c.xsmType !== 'XSM_audio') installed.push(c);
+        });
       }
     }
   });

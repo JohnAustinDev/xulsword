@@ -335,7 +335,7 @@ export default class PrintPassageWin extends React.Component {
                     verses: [],
                     lastverses: [],
                   }}
-                  onSelectionChange={vkSelectHandler}
+                  onSelection={vkSelectHandler}
                 />
                 {progress !== -1 && (
                   <ProgressBar

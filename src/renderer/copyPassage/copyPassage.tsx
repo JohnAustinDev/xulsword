@@ -191,7 +191,7 @@ export default class CopyPassageWin extends React.Component {
           <VKSelect
             initialVKM={passage}
             options={{ lastchapters: [] }}
-            onSelectionChange={(selection: SelectVKMType) => {
+            onSelection={(selection: SelectVKMType) => {
               this.setState({ passage: selection });
             }}
           />

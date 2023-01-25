@@ -458,9 +458,9 @@ async function getFileP(
     return buf;
   } catch (er) {
     if (cancelkey in FtpCancelable && FtpCancelable[cancelkey].canceled) {
-      return Promise.reject({ message: C.UI.Manager.cancelMsg });
+      return await Promise.reject({ message: C.UI.Manager.cancelMsg });
     }
-    return Promise.reject(er);
+    return await Promise.reject(er);
   } finally {
     if (progress) progress(-1);
     ftpCancelable(cancelkey, id); // never throws

@@ -32,7 +32,7 @@ const defaultProps = {
     vkmods: undefined,
   },
   disabled: false,
-  onSelectionChange: undefined,
+  onSelection: undefined,
 };
 
 const propTypes = {
@@ -64,7 +64,7 @@ const propTypes = {
     vkmods: PropTypes.arrayOf(PropTypes.string),
   }),
   disabled: PropTypes.bool,
-  onSelectionChange: PropTypes.func,
+  onSelection: PropTypes.func,
 };
 
 export type SelectVKMType = LocationVKType & {
@@ -81,10 +81,10 @@ export const defaultVKM = {
 
 // The VKSelect will either keep its own location state OR be a
 // totally controlled component: If the 'initialVKM' prop is
-// undefined, the component will be a totally controlled component
-// with no state of its own. If the 'initialVKM' prop is defined,
-// state will be kept internally, and any selection prop value
-// will be ignored.
+// undefined, the component will be totally controlled by the
+// selectVKM prop and will keep no state of its own. If the
+// 'initialVKM' prop is defined, state will be kept internally,
+// and any selection prop value will be ignored.
 
 // If options are left undefined, valid lists will be automatically
 // created. Otherwise only the listed options (that are valid) will
@@ -105,7 +105,7 @@ export interface VKSelectProps extends XulProps {
     vkmods?: string[];
   };
   disabled: boolean;
-  onSelectionChange: (selection: SelectVKMType, id: string) => void;
+  onSelection: (selection: SelectVKMType, id: string) => void;
 }
 
 interface VKSelectState {
@@ -153,7 +153,7 @@ class VKSelect extends React.Component {
     }
   }
 
-  // Get an updated selection based on last user input, and call onSelectionChange.
+  // Get an updated selection based on last user input, and call onSelection.
   // If the component is keeping its own state, also update that state.
   handleChange(es: React.SyntheticEvent) {
     const state = this.state as VKSelectState;
@@ -175,7 +175,7 @@ class VKSelect extends React.Component {
     if (cls) {
       let s = initialVKM === undefined ? propsVKM : stateVKM;
       s = s ? clone(s) : defaultVKM;
-      const { onSelectionChange } = this.props as VKSelectProps;
+      const { onSelection } = this.props as VKSelectProps;
       const { value } = e.target;
       const [, id] = cls.type.split('-');
       switch (id) {
@@ -217,8 +217,8 @@ class VKSelect extends React.Component {
       if (initialVKM !== undefined) {
         this.setState({ selection: s });
       }
-      if (typeof onSelectionChange === 'function') {
-        onSelectionChange(s, props.id || '');
+      if (typeof onSelection === 'function') {
+        onSelection(s, props.id || '');
       }
     }
   }

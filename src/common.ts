@@ -20,8 +20,13 @@ import type {
   QuerablePromise,
   GType,
   GenBookTOC,
+  SwordConfAudioChaptersVK,
+  SwordConfAudioChaptersGeneral,
+  DeprecatedSwordConfAudioChapters,
+  SwordConfAudioChapters,
 } from './type';
 import type LocalFile from './main/components/localFile';
+import type { TreeNodeInfo } from '@blueprintjs/core';
 
 export function escapeRE(text: string) {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -420,27 +425,6 @@ export function iString(
   return s;
 }
 
-// Convert the raw GenBookTOC output of LibSword.getGenBookTableOfContents()
-// into an array of C.GBKSEP delimited keys.
-export function genBookContentArray(
-  toc: GenBookTOC,
-  parent?: string
-): string[] {
-  if (typeof toc !== 'object') return [];
-  const r: string[] = [];
-  const p = parent || '';
-  Object.entries(toc).forEach((entry) => {
-    const [chapter, sub] = entry;
-    const c = p ? `${p}${C.GBKSEP}${chapter}` : chapter;
-    if (sub === 1) {
-      r.push(c);
-    } else {
-      r.push(...genBookContentArray(sub, c));
-    }
-  });
-  return r;
-}
-
 export function getLocalizedChapterTerm(
   i18n: GType['i18n'],
   book: string,
@@ -491,6 +475,227 @@ export function getCSS(
     });
   });
   return result;
+}
+
+// Convert the raw GenBookTOC (output of LibSword.getGenBookTableOfContents())
+// into an array of C.GBKSEP delimited keys.
+export function genBookContentArray(
+  toc: GenBookTOC,
+  parent?: string
+): string[] {
+  if (typeof toc !== 'object') return [];
+  const r: string[] = [];
+  const p = parent || '';
+  Object.entries(toc).forEach((entry) => {
+    const [chapter, sub] = entry;
+    const c = p ? `${p}${C.GBKSEP}${chapter}` : chapter;
+    if (sub === 1) {
+      r.push(c);
+    } else {
+      r.push(...genBookContentArray(sub, c));
+    }
+  });
+  return r;
+}
+
+// Convert the raw GenBookTOC (output of LibSword.getGenBookTableOfContents())
+// into a TreeView node list.
+export function genBookTreeNodes(
+  toc: GenBookTOC,
+  module?: string,
+  parentID?: string
+): TreeNodeInfo[] {
+  return Object.entries(toc).map((entry) => {
+    const [key, val] = entry;
+    const id = parentID ? [parentID, key].join(C.GBKSEP) : key;
+    return {
+      id,
+      label: key,
+      className: `cs-${module || 'locale'}`,
+      hasCaret: val !== 1,
+      childNodes: val !== 1 ? genBookTreeNodes(val, module, id) : undefined,
+    };
+  });
+}
+
+// Return the node containing a GenBook key, filtering out descendants that are not
+// ancestors of the key, selecting the key and expanding its ancestors.
+export function genBookKeyNode(
+  nodes: TreeNodeInfo[],
+  key: string
+): TreeNodeInfo | undefined {
+  const keys = key.split(C.GBKSEP);
+  const k = keys.shift();
+  let n = nodes.find((x) => x.id === k);
+  if (n) {
+    n = clone(n);
+    n.isSelected = false;
+    if (n.hasCaret) n.isExpanded = false;
+    if (!keys.length) {
+      n.isSelected = true;
+      return n;
+    }
+    if (keys.length && n.childNodes) {
+      const child = genBookKeyNode(n.childNodes, keys.join(C.GBKSEP));
+      if (child) {
+        n.isExpanded = true;
+        n.childNodes = [child];
+      }
+    }
+  }
+  return undefined;
+}
+
+// Does a GenBookTOC or TreeNodeInfo[] contain the key?
+export function genBookHasKey(
+  gb: GenBookTOC | TreeNodeInfo[],
+  key: string,
+  parentID?: string | number
+): boolean {
+  if (Array.isArray(gb)) {
+    return gb.some((tni) => {
+      const { id: idx, childNodes } = tni;
+      const id = parentID ? [parentID, idx].join(C.GBKSEP) : idx;
+      if (id === key) return true;
+      if (childNodes) return genBookHasKey(childNodes, key, id);
+      return false;
+    });
+  }
+  return genBookHasKey(genBookTreeNodes(gb), key, parentID);
+}
+
+// Convert the legacy SwordConf AudioChapters entry to the new forms.
+export function upgradeSwordConfAudioChapters(
+  legacy: DeprecatedSwordConfAudioChapters
+): SwordConfAudioChapters {
+  const isVerseKey = legacy.find((ko) =>
+    Object.values(C.SupportedBooks).find((bks) => bks.includes(ko.bk))
+  );
+  const r: SwordConfAudioChapters = isVerseKey ? {} : [];
+  legacy.forEach((le) => {
+    const { bk, ch1, ch2 } = le;
+    const index = Number(bk.replace(/^(\d+).*?$/, '$1'));
+    let next: SwordConfAudioChaptersGeneral | null = null;
+    if (isVerseKey) {
+      const r2 = r as SwordConfAudioChaptersVK;
+      if (Object.values(C.SupportedBooks).find((bks) => bks.includes(bk))) {
+        if (!(bk in r)) r2[bk] = [];
+        next = r2[bk];
+      }
+    } else if (!Number.isNaN(index)) {
+      const r2 = r as SwordConfAudioChaptersGeneral;
+      next = [];
+      r2.push([index, next]);
+    }
+    if (next) {
+      if (!Number.isNaN(ch1) && !Number.isNaN(ch2)) {
+        if (ch1 === ch2) {
+          next.push(ch1);
+        } else {
+          next.push(`${ch1}-${ch2}`);
+        }
+      }
+    }
+  });
+  return r;
+}
+
+export function filterInPlace(
+  a: any[],
+  condition: (e: any, i: number, a: any[]) => boolean
+) {
+  let j = 0;
+  a.forEach((e, i) => {
+    if (condition(e, i, a)) {
+      if (i !== j) a[j] = e;
+      j += 1;
+    }
+  });
+  a.length = j;
+  return a;
+}
+
+// Convert all string range members to numbers.
+export function removeAudioChaptersRanges(
+  audioChapters: SwordConfAudioChapters
+) {
+  const nodes = (
+    Array.isArray(audioChapters)
+      ? audioChapters
+      : Object.values(audioChapters).map((v, i) => [i, v])
+  ) as SwordConfAudioChaptersGeneral;
+  const strings: string[] = [];
+  nodes.forEach((nx, i) => {
+    if (Array.isArray(nx)) removeAudioChaptersRanges(nx[1]);
+    if (typeof nx === 'string') {
+      strings.push(nx);
+      nodes.splice(i, 1);
+    }
+  });
+  strings.forEach((range) => {
+    const se = range.split('-');
+    const start: number = Number.isNaN(se[0]) ? -1 : Number(se[0]);
+    const end: number = Number.isNaN(se[1]) ? start : Number(se[1]);
+    for (let x = start; x > -1 && x <= end; x += 1) {
+      nodes.push(x);
+    }
+  });
+  nodes.sort();
+}
+
+// Convert all series of numbers to string ranges. Shortens json strings to reduce
+// audio config file length.
+export function addAudioChaptersRanges(audioChapters: SwordConfAudioChapters) {
+  removeAudioChaptersRanges(audioChapters);
+  const nodes = (
+    Array.isArray(audioChapters)
+      ? audioChapters
+      : Object.values(audioChapters).map((v, i) => [i, v])
+  ) as SwordConfAudioChaptersGeneral;
+  let ranges: [number, number][] = [];
+  nodes.sort().forEach((nx) => {
+    if (Array.isArray(nx)) addAudioChaptersRanges(nx[1]);
+    let n = -1;
+    if (typeof nx === 'number') n = nx;
+    else if (Array.isArray(nx)) [n] = nx;
+    if (n !== -1) {
+      if (!ranges.length) ranges.push([n, n]);
+      else if (n === ranges[ranges.length - 1][1] + 1) {
+        ranges[ranges.length - 1][1] = n;
+      } else ranges.push([n, n]);
+    }
+  });
+  ranges = ranges.filter((r) => r[0] !== r[1]);
+  filterInPlace(nodes, (nx) => {
+    if (typeof nx === 'number') {
+      return !ranges.find((r) => nx >= r[0] && nx <= r[1]);
+    }
+    return true;
+  });
+  ranges.forEach((r) => nodes.push(`${r[0]}-${r[1]}`));
+  nodes.sort();
+}
+
+export function chapters2TreeNodes(
+  chapters: SwordConfAudioChaptersGeneral,
+  expanded?: boolean
+): TreeNodeInfo[] {
+  removeAudioChaptersRanges(chapters);
+  return chapters.map((c) => {
+    const r = {} as TreeNodeInfo;
+    if (Array.isArray(c)) {
+      r.id = c[0].toString();
+      r.label = c[0].toString();
+      r.hasCaret = true;
+      r.isExpanded = !!expanded;
+      r.childNodes = chapters2TreeNodes(c[1], expanded);
+    } else {
+      r.id = c.toString();
+      r.label = c.toString();
+      r.hasCaret = false;
+    }
+    return r;
+  });
 }
 
 // Return a SwordConfType object from a config LocalFile, or else from
@@ -574,7 +779,13 @@ export function parseSwordConf(
             if (!eold) r.History.push(enew);
           }
         } else if (entryBase === 'AudioChapters') {
-          r.AudioChapters = JSON_parse(value);
+          let ac = JSON_parse(value);
+          if (Array.isArray(ac) && 'bk' in ac[0]) {
+            ac = ac as DeprecatedSwordConfAudioChapters;
+            r.AudioChapters = upgradeSwordConfAudioChapters(ac);
+          } else {
+            r.AudioChapters = ac as SwordConfAudioChapters;
+          }
         } else if (Object.keys(C.SwordConf.delimited).includes(entry)) {
           const ent = entry as keyof typeof C.SwordConf.delimited;
           r[ent] = value.split(C.SwordConf.delimited[ent]);
@@ -603,12 +814,13 @@ export function parseSwordConf(
     }
   }
   r.xsmType = 'none';
-  if ((r.ModDrv as any) === 'audio') r.xsmType = 'XSM_audio';
+  if (r.ModDrv === 'audio') r.xsmType = 'XSM_audio';
   else if (r.DataPath.endsWith('.xsm')) r.xsmType = 'XSM';
   r.moduleType = 'Generic Books';
   if (r.ModDrv.includes('Text')) r.moduleType = 'Biblical Texts';
   else if (r.ModDrv.includes('Com')) r.moduleType = 'Commentaries';
   else if (r.ModDrv.includes('LD')) r.moduleType = 'Lexicons / Dictionaries';
+  else if (r.xsmType === 'XSM_audio') r.moduleType = r.xsmType;
   r.reports = reports.map((rp) => {
     const nr: any = {};
     Object.entries(rp).forEach((entry) => {
@@ -650,7 +862,7 @@ export function isRepoLocal(repo: Repository): boolean {
 export function downloadKey(dl: Download | null): string {
   if (!dl) return '';
   if ('http' in dl && !C.URLRE.test(dl.http))
-    throw new Error(`Not downloadable: ${dl}`);
+    throw new Error(`Not downloadable: ${dl.http}`);
   const ms: (keyof HTTPDownload | keyof ModFTPDownload | keyof FTPDownload)[] =
     ['http', 'name', 'domain', 'path', 'file', 'module', 'confname'];
   const msx = ms as (keyof Download)[];

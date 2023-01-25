@@ -320,7 +320,7 @@ const C = {
   COMMENTARY: 'Commentaries' as ModTypes,
   GENBOOK: 'Generic Books' as ModTypes,
 
-  SupportedModuleTypes: {
+  SupportedTabTypes: {
     'Biblical Texts': 'Texts',
     Commentaries: 'Comms',
     'Lexicons / Dictionaries': 'Dicts',
@@ -454,6 +454,7 @@ const C = {
       'Cross-references',
       'Reference Material Links',
     ],
+    XSM_audio: [],
   } as { [key in ModTypes]: SwordFilterType[] },
 
   SwordFeatureClasses: {
@@ -526,6 +527,7 @@ const C = {
       modkey: '',
       show: {} as ShowType,
     },
+    XSM_audio: {},
   } as { [key in ModTypes]: Partial<AtextPropsType> },
 
   // These Atext props effect the verse scroll. If these props all have

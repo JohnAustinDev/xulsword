@@ -95,7 +95,7 @@ export default function contextMenu(
               }
               const s: Partial<AboutWinState> = {
                 showModules: true,
-                modules,
+                configs: modules.map((m) => G.Tab[m].conf),
                 showConf: '',
                 editConf: false,
               };

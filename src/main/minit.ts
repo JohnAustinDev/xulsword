@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable import/no-mutable-exports */
 import log from 'electron-log';
-import path from 'path';
+import path, { parse } from 'path';
 import fs from 'fs';
 import i18n from 'i18next';
 import fontList from 'font-list';
@@ -288,7 +288,7 @@ export function getTabs(): TabType[] {
           label = LibSword.getModuleInformation(module, 'Abbreviation');
         if (label === C.NOTFOUND) label = module;
         let tabType;
-        Object.entries(C.SupportedModuleTypes).forEach((entry) => {
+        Object.entries(C.SupportedTabTypes).forEach((entry) => {
           const [longType, shortType] = entry;
           if (longType === type) tabType = shortType;
         });
@@ -328,10 +328,13 @@ export function getTabs(): TabType[] {
           }
         }
         const confPath = confFile.path;
-        if (!confFile.exists())
+        if (!confFile.exists()) {
           log.warn(
-            `tab config file bad path "${p}$/${module.toLowerCase()}.conf"`
+            `config file not found: "${p}$/${module.toLowerCase()}.conf"`
           );
+          return;
+        }
+        const conf = parseSwordConf(i18n, confFile, confFile.leafName);
         const cipherKey = LibSword.getModuleInformation(module, 'CipherKey');
         if (cipherKey !== C.NOTFOUND) {
           CipherKeyModules[module] = {
@@ -373,6 +376,7 @@ export function getTabs(): TabType[] {
           audioCode: LibSword.getModuleInformation(module, 'AudioCode'),
           lang: LibSword.getModuleInformation(module, 'Lang'),
           obsoletes,
+          conf,
         };
 
         tabs.push(tab);
@@ -438,14 +442,23 @@ export function getCipherFailConfs() {
     .filter(Boolean) as SwordConfType[];
 }
 
-export function getSwordConf(): { [mod: string]: SwordConfType } {
-  const swordConf: { [mod: string]: SwordConfType } = {};
+export function getSwordConf(): SwordConfType[] {
+  const swordConf: SwordConfType[] = [];
+  // From all tab modules
   getTabs().forEach((t) => {
     if (t.module && t.confPath) {
       const f = new LocalFile(t.confPath);
       if (f.exists()) {
-        swordConf[t.module] = parseSwordConf(i18n, f, f.leafName);
+        swordConf.push(parseSwordConf(i18n, f, f.leafName));
       }
+    }
+  });
+  // From all audio modules
+  const audio = Dirs.xsAudio.clone().append('mods.d');
+  audio.directoryEntries.forEach((d) => {
+    const f = audio.clone().append(d);
+    if (!f.isDirectory() && f.leafName.endsWith('.conf')) {
+      swordConf.push(parseSwordConf(i18n, f, f.leafName));
     }
   });
   return swordConf;

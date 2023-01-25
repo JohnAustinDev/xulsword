@@ -63,6 +63,7 @@
    "Version" : "Version: {{v1}}, Build: {{v2}}",
    "Version.label" : "Version",
    "Want2InstallQuickTime" : "To listen to audio content, a QuickTime plugin must be installed.\n\nWould you like to install the \"QT Lite\" plugin now?\n",
+   "XSM_audio" : "Audio",
    "addCurPageAsCmd.commandkey" : "D",
    "allowInternet.continue" : "Do you want to continue?",
    "allowInternet.message" : "You are about to download Biblical texts from the Internet.\nYour Internet activity may be easily monitored by others.\nIf this is a concern, you may click \"No\" to cancel this operation.",

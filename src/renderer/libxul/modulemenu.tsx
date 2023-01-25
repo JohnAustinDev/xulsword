@@ -56,17 +56,14 @@ class ModuleMenu extends React.Component {
 
     return (
       <Menulist {...addClass('modulemenu', props)}>
-        {Object.keys(C.SupportedModuleTypes).map((typ) => {
+        {Object.keys(C.SupportedTabTypes).map((typ) => {
           const type = typ as ModTypes;
           if (
             (!types.length || types.includes(type)) &&
             mtabs.some((tab) => tab.type === type)
           )
             return (
-              <optgroup
-                key={type}
-                label={G.i18n.t(C.SupportedModuleTypes[type])}
-              >
+              <optgroup key={type} label={G.i18n.t(C.SupportedTabTypes[type])}>
                 {mtabs
                   .map((tab) => {
                     if (tab.type === type) {

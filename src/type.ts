@@ -345,14 +345,14 @@ export type AudioFile = {
   book: string;
   chapter: number;
   file: string;
-  type: 'mp3' | 'ogg';
+  type: string; // ie. mp3, ogg;
 };
 
 export type GenBookAudioFile = {
   audioCode: string;
   path: string[];
   file: string;
-  type: 'mp3' | 'ogg';
+  type: string; // ie. mp3, ogg;
   genbook: true;
 };
 
@@ -439,7 +439,8 @@ export type ModTypes =
   | 'Biblical Texts'
   | 'Commentaries'
   | 'Lexicons / Dictionaries'
-  | 'Generic Books';
+  | 'Generic Books'
+  | 'XSM_audio';
 
 export type XSModTypes = 'XSM' | 'XSM_audio' | 'none';
 
@@ -513,7 +514,8 @@ export type SwordConfigEntries = SwordConfXulsword &
       | 'RawLD'
       | 'RawLD4'
       | 'zLD'
-      | 'RawGenBook';
+      | 'RawGenBook'
+      | 'audio';
     Companion?: string[];
     DisplayLevel?: number;
     InstallSize?: number;
@@ -539,7 +541,24 @@ export type SwordConfLocalized = {
   [locale: string | 'locale' | 'en']: string;
 };
 
-export type SwordConfAudioChapters = {
+export type SwordConfAudioChapters =
+  | SwordConfAudioChaptersVK
+  | SwordConfAudioChaptersGeneral;
+
+// Indexes are base 1, with 0 being reserved for intro audio file.
+export type SwordConfAudioChaptersVK = {
+  [osisBookCode: string]: SwordConfAudioChaptersGeneral;
+};
+
+// Indexes are base 1, with 0 being reserved for parent audio file.
+export type SwordConfAudioChaptersGeneral = (
+  | number // index of an existing audio file
+  | string // range of indexes separated by '-'
+  // index of an existing audio parent and its contents
+  | [number, SwordConfAudioChaptersGeneral]
+)[];
+
+export type DeprecatedSwordConfAudioChapters = {
   bk: string;
   ch1: number;
   ch2: number;
@@ -566,6 +585,7 @@ export type TabType = {
   audio: { [index: string]: string };
   audioCode: string;
   obsoletes: string[];
+  conf: SwordConfType;
 };
 
 export type RowSelection = { rows: [number, number] }[];
@@ -601,8 +621,10 @@ export type ModFTPDownload = {
   confname: string;
 } & Repository;
 
-export type HTTPDownload = { http: string }; // https?://...
-
+export type HTTPDownload = {
+  http: string; // https?://...
+  confname: string;
+} & Repository;
 export type Download = FTPDownload | ModFTPDownload | HTTPDownload;
 
 export type DownloadKey = string;
