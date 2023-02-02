@@ -62,23 +62,25 @@ type TreeAction =
 export function forEachNode(
   nodes: TreeNodeInfo[] | undefined,
   callback: (node: TreeNodeInfo) => void
-) {
+): TreeNodeInfo[] {
   if (nodes === undefined) {
-    return;
+    return [];
   }
-
   nodes.forEach((node) => {
     callback(node);
     forEachNode(node.childNodes, callback);
   });
+  return nodes;
 }
 
 export function forNodeAtPath(
   nodes: TreeNodeInfo[],
   path: NodePath,
   callback: (node: TreeNodeInfo) => void
-) {
-  callback(Tree.nodeFromPath(path, nodes));
+): TreeNodeInfo {
+  const nfp = Tree.nodeFromPath(path, nodes);
+  callback(nfp);
+  return nfp;
 }
 
 function treeReducer(state: TreeNodeInfo[], action: TreeAction) {

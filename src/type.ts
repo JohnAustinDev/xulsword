@@ -13,7 +13,7 @@ import type {
   getTabs,
   getTab,
   getConfig,
-  getSwordConf,
+  getAudioConf,
   getLocaleConfigs,
   localeConfig,
   getModuleConfigDefault,
@@ -452,7 +452,7 @@ export type XSMConfigEntries = {
 
   // XSM audio configs also have ModDrv as 'audio' and
   // DataPath as a URL value.
-  AudioChapters?: SwordConfAudioChapters;
+  AudioChapters?: VerseKeyAudio | GenBookAudioConf;
 };
 
 export type SwordConfXulsword = {
@@ -531,7 +531,7 @@ export type SwordConfType = SwordConfigEntries &
     // Extra helper additions
     module: string;
     reports: NewModuleReportType[];
-    sourceRepository: Repository;
+    sourceRepository?: Repository;
     moduleType: ModTypes;
     xsmType: XSModTypes;
     filename: string;
@@ -541,28 +541,54 @@ export type SwordConfLocalized = {
   [locale: string | 'locale' | 'en']: string;
 };
 
-export type SwordConfAudioChapters =
-  | SwordConfAudioChaptersVK
-  | SwordConfAudioChaptersGeneral;
-
-// Indexes are base 1, with 0 being reserved for intro audio file.
-export type SwordConfAudioChaptersVK = {
-  [osisBookCode: string]: SwordConfAudioChaptersGeneral;
+// GenBookTOC describes GenBooks structure (chapter names/order/hierarchy).
+// Is output by LibSword but immediately converted to GenBookKeys.
+export type GenBookTOC = {
+  [title: string]: GenBookTOC | 1;
 };
 
-// Indexes are base 1, with 0 being reserved for parent audio file.
-export type SwordConfAudioChaptersGeneral = (
-  | number // index of an existing audio file
-  | string // range of indexes separated by '-'
-  // index of an existing audio parent and its contents
-  | [number, SwordConfAudioChaptersGeneral]
-)[];
+// GenBookKeys describes GenBooks structure (chapter names/order/hierarchy)
+// as well as maps all GenBook keys. Keys are dileneated by C.GBKSEP and keys
+// ending with C.GBKSEP are parent nodes.
+export type GenBookKeys = string[];
 
-export type DeprecatedSwordConfAudioChapters = {
+// GenBookAudioPath describes a chapter's address on disk.
+// Ex: [0, 2, 1] is the disk path 000/002/001.mp3
+export type GenBookAudioPath = number[];
+
+// GenBookAudio describes audio chapter keys, existence and disk address.
+// NOTE: gbkey MUST be a key to a GenBook SWORD module.
+export type GenBookAudio = {
+  [gbkey: string]: GenBookAudioPath;
+};
+
+// GenBookAudioConf is similar to GenBookAudio but is short and readable for
+// use in config files. Ex: { '000 Title/002 Title/': ['0-10', '12'] }
+// NOTE: parentPath is composed of '/' delineated segments that MUST begin
+// with a three digit index number, but the title is optional.
+export type GenBookAudioConf = {
+  [parentPath: string]: string[];
+};
+
+// VerseKeyAudio describes chapter existence and disk address.
+// Ex: { Prov: [true,,true] } are disk paths Prov/000.mp3 and Prov/002.mp3
+export type VerseKeyAudio = {
+  [osisBookCode: string]: boolean[];
+};
+
+// VerseKeyAudioConf same as VerseKeyAudio but short and readable for
+// config file. Ex: { 'Prov': ['0-10', '12'] }
+export type VerseKeyAudioConf = {
+  [osisBookCode: string]: string[];
+};
+
+// Was used to list audio for both VerseKey and GenBook in old audio config
+// files, but VerseKeyAudioConf and GenBookAudioConf are used now.
+export type DeprecatedAudioChaptersConf = {
   bk: string;
   ch1: number;
   ch2: number;
-}[];
+};
 
 export type TabTypes = 'Texts' | 'Comms' | 'Dicts' | 'Genbks';
 
@@ -652,10 +678,6 @@ export type PrefValue =
   | PrefObject
   | (PrefPrimative | PrefObject | PrefValue)[];
 
-export type GenBookTOC = {
-  [title: string]: GenBookTOC | 1;
-};
-
 export type GMethodAddCaller<M extends (...args: any) => any> = (
   ...arg: [...Parameters<M>, number]
 ) => ReturnType<M>;
@@ -671,7 +693,7 @@ export type GType = {
   Tabs: ReturnType<typeof getTabs>;
   Tab: ReturnType<typeof getTab>;
   Config: ReturnType<typeof getConfig>;
-  SwordConf: ReturnType<typeof getSwordConf>;
+  AudioConf: ReturnType<typeof getAudioConf>;
   ProgramConfig: ReturnType<typeof localeConfig>;
   LocaleConfigs: ReturnType<typeof getLocaleConfigs>;
   ModuleConfigDefault: ReturnType<typeof getModuleConfigDefault>;
@@ -761,7 +783,7 @@ export const GBuilder: GType & {
   Tabs: 'getter' as any,
   Tab: 'getter' as any,
   Config: 'getter' as any,
-  SwordConf: 'getter' as any,
+  AudioConf: 'getter' as any,
   ProgramConfig: 'getter' as any,
   LocaleConfigs: 'getter' as any,
   ModuleConfigDefault: 'getter' as any,

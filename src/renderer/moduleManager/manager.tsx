@@ -12,7 +12,6 @@ import {
   Position,
   ProgressBar,
   Toaster,
-  TreeNodeInfo,
 } from '@blueprintjs/core';
 import {
   diff,
@@ -23,8 +22,10 @@ import {
   selectionToTableRows,
   repositoryKey,
   tableRowsToSelection,
-  removeAudioChaptersRanges,
-  chapters2TreeNodes,
+  clone,
+  isAudioVerseKey,
+  subtractVerseKeyAudioChapters,
+  subtractGenBookAudioChapters,
 } from '../../common';
 import C from '../../constant';
 import G from '../rg';
@@ -40,7 +41,10 @@ import Button from '../libxul/button';
 import { Hbox, Vbox, Box } from '../libxul/boxes';
 import Groupbox from '../libxul/groupbox';
 import VKSelect from '../libxul/vkselect';
-import GBSelect, { GBSelectProps } from '../libxul/genbookselect';
+import GBSelect, {
+  GBSelectProps,
+  SelectGBMType,
+} from '../libxul/genbookselect';
 import Table from '../libxul/table';
 import Spacer from '../libxul/spacer';
 import Label from '../libxul/label';
@@ -55,13 +59,14 @@ import * as H from './managerH';
 import './manager.css';
 
 import type {
+  GenBookAudioConf,
   ModTypes,
   PrefObject,
   Repository,
   RepositoryListing,
   RowSelection,
-  SwordConfAudioChaptersGeneral,
   SwordConfType,
+  VerseKeyAudio,
 } from '../../type';
 import type {
   TLanguageTableRow,
@@ -97,7 +102,7 @@ export type ManagerProps = XulProps;
 const notStatePref = {
   modules: [] as string[],
   progress: null as number[] | null,
-  showAudioDialog: [] as (H.VersekeyDialog | H.GenbookDialog)[],
+  showAudioDialog: [] as (H.VersekeyDialog | H.GenBookDialog)[],
   tables: {
     language: {
       data: [] as TLanguageTableRow[],
@@ -576,8 +581,8 @@ export default class ModuleManager
     const state = this.state as ManagerState;
     // Insure there is one moduleData row object for each module in
     // each repository (local and remote). The same object should be reused
-    // throughout the lifetime of the window, so user interactions will be
-    // recorded.
+    // throughout the lifetime of the window, so that user interactions will
+    // be recorded.
     const { repository: repotable } = state.tables;
     H.Saved.moduleLangData = { allmodules: [] };
     const { moduleData, moduleLangData, repositoryListings } = H.Saved;
@@ -598,7 +603,8 @@ export default class ModuleManager
             c.Version,
             c.xsmType === 'XSM_audio',
           ].join('.');
-          const repoIsLocal = isRepoLocal(c.sourceRepository);
+          const repoIsLocal =
+            (c.sourceRepository && isRepoLocal(c.sourceRepository)) || false;
           if (repoIsLocal && drow[H.RepCol.iState] !== H.OFF)
             localModules[modunique] = repokey;
           else if (drow[H.RepCol.iState] !== H.OFF) {
@@ -617,6 +623,33 @@ export default class ModuleManager
             let reponame = repo.name;
             if (G.i18n.exists(`${repo.name}.repository.label`)) {
               reponame = G.i18n.t(`${repo.name}.repository.label`);
+            }
+            let isON: typeof H.ON | typeof H.OFF = H.ON;
+            if (c.xsmType === 'XSM_audio') {
+              const remoteAudioChapters = c.AudioChapters;
+              const localAudioChapters = G.AudioConf.find(
+                (cf) => cf.module === c.module
+              )?.AudioChapters;
+              if (
+                !remoteAudioChapters ||
+                !localAudioChapters ||
+                (isAudioVerseKey(remoteAudioChapters) &&
+                  Object.keys(
+                    subtractVerseKeyAudioChapters(
+                      remoteAudioChapters as VerseKeyAudio,
+                      localAudioChapters as VerseKeyAudio
+                    )
+                  ).length) ||
+                (!isAudioVerseKey(remoteAudioChapters) &&
+                  Object.keys(
+                    subtractGenBookAudioChapters(
+                      remoteAudioChapters as GenBookAudioConf,
+                      localAudioChapters as GenBookAudioConf
+                    )
+                  ).length)
+              ) {
+                isON = H.OFF;
+              }
             }
             const d = [] as unknown as TModuleTableRow;
             d[H.ModCol.iInfo] = {
@@ -657,7 +690,7 @@ export default class ModuleManager
                 ? H.ON
                 : H.OFF;
             };
-            d[H.ModCol.iInstalled] = repoIsLocal ? H.ON : H.OFF;
+            d[H.ModCol.iInstalled] = repoIsLocal ? isON : H.OFF;
             d[H.ModCol.iRemove] = H.OFF;
             moduleData[modrepk] = d;
           }
@@ -667,9 +700,9 @@ export default class ModuleManager
     // Installed modules (ie those in local repos) which are from enabled
     // remote repositories are not included in moduleLangData. Rather their
     // 'installed' and 'shared' checkboxes are applied to the corresponding
-    // remote repository module. Also, modules in disabled repositories
-    // are not included. If a xulsword module repository is enabled, any
-    // correpsonding modules in regular repositories will not be listed.
+    // remote repository module. Also, disabled repositories are skipped.
+    // If a xulsword module repository is enabled, any corresponding modules
+    // in regular repositories will not be listed.
     repositoryListings.forEach((listing, i) => {
       const drow = repotable.data[i];
       if (drow && Array.isArray(listing) && drow[H.RepCol.iState] !== H.OFF) {
@@ -685,11 +718,12 @@ export default class ModuleManager
           const repoIsLocal = isRepoLocal(repo);
           const remoteSrcOfLocalMod = !repoIsLocal && modunique in localModules;
           if (remoteSrcOfLocalMod) {
-            if (c.xsmType !== 'XSM_audio') modrow[H.ModCol.iInstalled] = H.ON;
             const modrepok = `${localModules[modunique]}.${c.module}`;
             if (modrepok in moduleData) {
               modrow[H.ModCol.iInfo].shared =
                 moduleData[modrepok][H.ModCol.iInfo].shared;
+              modrow[H.ModCol.iInstalled] =
+                moduleData[modrepok][H.ModCol.iInstalled];
             }
           }
           const localModFromRemote =
@@ -768,7 +802,7 @@ export default class ModuleManager
         const done = showAudioDialog.shift();
         if (done) {
           const { selection } = done;
-          done.callback(selection as any);
+          done.callback(selection);
         }
         return { showAudioDialog };
       }
@@ -840,7 +874,7 @@ export default class ModuleManager
     if (showAudioDialog[0]) {
       if (showAudioDialog[0].type === 'versekey')
         vkAudioDialog = showAudioDialog[0] as H.VersekeyDialog;
-      else gbAudioDialog = showAudioDialog[0] as H.GenbookDialog;
+      else gbAudioDialog = showAudioDialog[0] as H.GenBookDialog;
     }
 
     // If we are managing external repositories, Internet permission is required.
@@ -872,9 +906,8 @@ export default class ModuleManager
                   {gbAudioDialog && (
                     <>
                       <Label value={gbAudioDialog.conf.module} />
-                      <div>{gbAudioDialog.conf.Description?.locale}</div>
                       <GBSelect
-                        initialGBM={gbAudioDialog.initial}
+                        selectGBM={gbAudioDialog.selection}
                         gbmodNodeLists={gbAudioDialog.options.gbmodNodeLists}
                         gbmods={gbAudioDialog.options.gbmods}
                         enableMultipleSelection
@@ -890,7 +923,17 @@ export default class ModuleManager
                   <Button id="cancel" flex="1" fill="x" onClick={dialogClose}>
                     {G.i18n.t('cancel.label')}
                   </Button>
-                  <Button id="ok" flex="1" fill="x" onClick={dialogAccept}>
+                  <Button
+                    id="ok"
+                    disabled={
+                      (gbAudioDialog &&
+                        !gbAudioDialog.selection.children.length) ||
+                      (vkAudioDialog && !vkAudioDialog.selection.chapter)
+                    }
+                    flex="1"
+                    fill="x"
+                    onClick={dialogAccept}
+                  >
                     {G.i18n.t('ok.label')}
                   </Button>
                 </>
@@ -1199,18 +1242,22 @@ ModuleManager.propTypes = propTypes;
 
 function audioDialogOnChange(
   this: ModuleManager,
-  selection: SelectVKMType | (string | number)[]
+  selection: SelectVKMType | SelectGBMType
 ) {
   this.sState((prevState) => {
-    const { showAudioDialog } = prevState;
+    const { showAudioDialog: sad } = prevState;
+    const showAudioDialog = clone(sad);
     if (showAudioDialog.length) {
       showAudioDialog[0] = {
         ...showAudioDialog[0],
         selection,
-      } as H.VersekeyDialog | H.GenbookDialog;
+      } as H.VersekeyDialog | H.GenBookDialog;
       if (showAudioDialog[0].type === 'versekey') {
         const dvk = showAudioDialog[0] as H.VersekeyDialog;
-        const ch = dvk.chapters[dvk.selection.book].map((n) => Number(n));
+        const sel = selection as SelectVKMType;
+        const ch = dvk.chapters[sel.book]
+          .map((n, i) => (n ? i : undefined))
+          .filter(Boolean) as number[];
         dvk.options.chapters = ch;
         dvk.options.lastchapters = ch;
       }

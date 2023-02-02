@@ -31,7 +31,7 @@ import {
   getBkChsInV11n,
   getSystemFonts,
   resetMain,
-  getSwordConf,
+  getAudioConf,
   getLocaleConfigs,
   getModuleConfigDefault,
   getModuleFonts,
@@ -153,8 +153,8 @@ class GClass implements GType {
     return getConfig();
   }
 
-  get SwordConf() {
-    return getSwordConf();
+  get AudioConf() {
+    return getAudioConf();
   }
 
   get LocaleConfigs() {

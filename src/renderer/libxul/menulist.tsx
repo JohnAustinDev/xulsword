@@ -21,7 +21,10 @@ const propTypes = {
   multiple: PropTypes.bool,
   options: PropTypes.arrayOf(PropTypes.element),
   size: PropTypes.number,
-  value: PropTypes.string,
+  value: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.arrayOf(PropTypes.string),
+  ]),
 };
 
 interface MenulistProps extends XulProps {
@@ -29,7 +32,7 @@ interface MenulistProps extends XulProps {
   multiple?: boolean;
   options?: React.ReactElement<HTMLOptionElement>[];
   size?: number | undefined;
-  value?: string | undefined;
+  value?: string | string[] | undefined;
 }
 
 function Menulist(props: MenulistProps) {

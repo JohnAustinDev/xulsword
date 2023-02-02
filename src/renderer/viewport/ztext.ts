@@ -1,13 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import C from '../../constant';
 import Cache from '../../cache';
-import {
-  dString,
-  escapeRE,
-  genBookContentArray,
-  JSON_parse,
-  stringHash,
-} from '../../common';
+import { dString, escapeRE, stringHash } from '../../common';
 import { getElementInfo } from '../../libswordElemInfo';
 import G from '../rg';
 import log from '../log';
@@ -339,7 +333,7 @@ function genbookChange(atext: HTMLElement, next: boolean): string | null {
   if (module) {
     if (!Cache.has('genbkTOC', module)) {
       Cache.write(
-        genBookContentArray(G.LibSword.getGenBookTableOfContents(module)),
+        G.LibSword.getGenBookTableOfContents(module),
         'genbkTOC',
         module
       );

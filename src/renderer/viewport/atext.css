@@ -275,9 +275,16 @@ html[dir='rtl'] .notebox-maximizer {
   margin-top: 4px;
   margin-bottom: 4px;
 }
-.matchingStrongs {
+.matchingStrongs2 {
+  background: hsla(298, 100%, 50%, 0.562);
+}
+.matchingStrongs1 {
+  background: hsla(123, 100%, 50%, 0.507);
+}
+.matchingStrongs0 {
   background: yellow;
 }
+
 .atext.Texts .un-hilight {
   background: yellow;
 }

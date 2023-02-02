@@ -394,7 +394,7 @@ export function getContextData(
       const lemmaNum = Number(lemmaStr.substring(1));
       // SWORD filters >= 5627 out- not valid it says
       if (
-        Number.isNaN(lemmaNum) ||
+        Number.isNaN(Number(lemmaNum)) ||
         (lemmaStr.startsWith('G') && lemmaNum >= 5627)
       )
         return;

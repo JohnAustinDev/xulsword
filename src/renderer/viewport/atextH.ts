@@ -18,11 +18,6 @@ import { AtextStateType, LocationVKType } from '../../type';
 import type Atext from './atext';
 import type { AtextProps } from './atext';
 
-let MatchingStrongs: {
-  sheet: CSSStyleSheet;
-  rule: CSSRule;
-  index: number;
-} | null;
 let AddedRules: { sheet: CSSStyleSheet; index: number }[] = [];
 
 function scroll2Note(atext: HTMLElement, id: string) {
@@ -233,24 +228,25 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
           // Add elem's strong's classes to stylesheet for highlighting
           const classes = Array.from(elem.classList);
           classes.shift(); // remove sn base class
-          classes.forEach((cls) => {
-            if (/^S_\w*\d+$/.test(cls)) {
+          classes
+            .filter((c) => /^S_\w*\d+$/.test(c))
+            .forEach((cls, xx) => {
+              const x = xx > 2 ? 2 : xx;
               const sheet =
                 document.styleSheets[document.styleSheets.length - 1];
               const i = sheet.cssRules.length;
-              if (!MatchingStrongs) {
-                // Read from CSS stylesheet
-                MatchingStrongs = getCSS('.matchingStrongs {');
-              }
-              if (MatchingStrongs) {
+              const matchingStrongs = getCSS(`.matchingStrongs${x} {`);
+              if (matchingStrongs) {
                 sheet.insertRule(
-                  MatchingStrongs.rule.cssText.replace('matchingStrongs', cls),
+                  matchingStrongs.rule.cssText.replace(
+                    `matchingStrongs${x}`,
+                    cls
+                  ),
                   i
                 );
                 AddedRules.push({ sheet, index: i });
               }
-            }
-          });
+            });
           break;
         }
 

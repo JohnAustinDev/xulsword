@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable import/no-mutable-exports */
 import log from 'electron-log';
-import path, { parse } from 'path';
+import path from 'path';
 import fs from 'fs';
 import i18n from 'i18next';
 import fontList from 'font-list';
@@ -442,26 +442,16 @@ export function getCipherFailConfs() {
     .filter(Boolean) as SwordConfType[];
 }
 
-export function getSwordConf(): SwordConfType[] {
-  const swordConf: SwordConfType[] = [];
-  // From all tab modules
-  getTabs().forEach((t) => {
-    if (t.module && t.confPath) {
-      const f = new LocalFile(t.confPath);
-      if (f.exists()) {
-        swordConf.push(parseSwordConf(i18n, f, f.leafName));
-      }
-    }
-  });
-  // From all audio modules
+export function getAudioConf(): SwordConfType[] {
+  const confs: SwordConfType[] = [];
   const audio = Dirs.xsAudio.clone().append('mods.d');
   audio.directoryEntries.forEach((d) => {
     const f = audio.clone().append(d);
     if (!f.isDirectory() && f.leafName.endsWith('.conf')) {
-      swordConf.push(parseSwordConf(i18n, f, f.leafName));
+      confs.push(parseSwordConf(i18n, f, f.leafName));
     }
   });
-  return swordConf;
+  return confs;
 }
 
 // LibSword.getMaxChapter returns an unpredictable wrong number if

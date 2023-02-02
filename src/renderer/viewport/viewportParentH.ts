@@ -143,7 +143,7 @@ export function bbDragEnd(
   const target = e.target as HTMLElement;
   const atext = ofClass(['atext'], target)?.element;
   const index = Number(atext && atext.dataset.index);
-  if (atext && !Number.isNaN(index)) {
+  if (atext && !Number.isNaN(Number(index))) {
     let { noteBoxHeight, maximizeNoteBox } = this.state as XulswordStatePref;
     noteBoxHeight = noteBoxHeight.slice();
     maximizeNoteBox = maximizeNoteBox.slice();

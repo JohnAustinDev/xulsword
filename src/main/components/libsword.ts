@@ -5,6 +5,7 @@ import log from 'electron-log';
 import path from 'path';
 import { repositoryKey, isRepoLocal, JSON_parse } from '../../common';
 import Cache from '../../cache';
+import C from '../../constant';
 import LocalFile from './localFile';
 import Dirs from './dirs';
 import Prefs from './prefs';
@@ -17,10 +18,29 @@ import type {
   SwordFilterType,
   SwordFilterValueType,
   V11nType,
+  GenBookKeys,
 } from '../../type';
 import type { ManagerStatePref } from '../../renderer/moduleManager/manager';
 
 const { libxulsword } = require('libxulsword');
+
+// Convert the raw GenBookTOC (output of LibSword.getGenBookTableOfContents())
+// into an array of C.GBKSEP delimited keys.
+function readGenBookLibSword(toc: GenBookTOC, parent?: string): GenBookKeys {
+  if (typeof toc !== 'object') return [];
+  const r: string[] = [];
+  const p = parent || '';
+  Object.entries(toc).forEach((entry) => {
+    const [chapter, sub] = entry;
+    const c = p ? `${p}${C.GBKSEP}${chapter}` : chapter;
+    if (sub === 1) {
+      r.push(c);
+    } else {
+      r.push(...readGenBookLibSword(sub, c));
+    }
+  });
+  return r;
+}
 
 /* ******************************************************************************
  * Callback functions available to libxulsword NodeJS addon
@@ -374,11 +394,14 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // getGenBookTableOfContents
   // Returns table of contents JSON code for GenBook module Gbmod.
   // Returns an error if module Gbmod is not a TreeKey mod.
-  getGenBookTableOfContents(gbmod: string): GenBookTOC {
+  getGenBookTableOfContents(gbmod: string): GenBookKeys {
     if (this.isReady(true)) {
-      return JSON_parse(libxulsword.GetGenBookTableOfContents(gbmod));
+      const toc = JSON_parse(
+        libxulsword.GetGenBookTableOfContents(gbmod)
+      ) as GenBookTOC;
+      return readGenBookLibSword(toc);
     }
-    return {};
+    return [];
   },
 
   /* *****************************************************************************

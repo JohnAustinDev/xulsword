@@ -20,13 +20,18 @@ import type {
   QuerablePromise,
   GType,
   GenBookTOC,
-  SwordConfAudioChaptersVK,
-  SwordConfAudioChaptersGeneral,
-  DeprecatedSwordConfAudioChapters,
-  SwordConfAudioChapters,
+  DeprecatedAudioChaptersConf,
+  GenBookKeys,
+  VerseKeyAudioConf,
+  GenBookAudioConf,
+  GenBookAudio,
+  VerseKeyAudio,
+  GenBookAudioPath,
 } from './type';
 import type LocalFile from './main/components/localFile';
 import type { TreeNodeInfo } from '@blueprintjs/core';
+import type { SelectVKMType } from './renderer/libxul/vkselect';
+import type { SelectGBMType } from './renderer/libxul/genbookselect';
 
 export function escapeRE(text: string) {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -477,56 +482,134 @@ export function getCSS(
   return result;
 }
 
-// Convert the raw GenBookTOC (output of LibSword.getGenBookTableOfContents())
-// into an array of C.GBKSEP delimited keys.
-export function genBookContentArray(
-  toc: GenBookTOC,
-  parent?: string
-): string[] {
-  if (typeof toc !== 'object') return [];
-  const r: string[] = [];
-  const p = parent || '';
-  Object.entries(toc).forEach((entry) => {
-    const [chapter, sub] = entry;
-    const c = p ? `${p}${C.GBKSEP}${chapter}` : chapter;
-    if (sub === 1) {
-      r.push(c);
-    } else {
-      r.push(...genBookContentArray(sub, c));
+export function pad(
+  padMe: string | number,
+  len: number,
+  char: string | number
+): string {
+  let r: string = padMe.toString();
+  const c = char.toString().substring(0, 1);
+  while (r.length < len) r = `${c}${r}`;
+  return r;
+}
+
+// IMPORTANT: To work, this function requires allGbKeys to be the output
+// of LibSword.getGenBookTableOfContents() (ie. all keys are included and
+// are in the proper order).
+export function gbPaths(allGbKeys: string[]): {
+  [gbkey: string]: GenBookAudioPath;
+} {
+  const path: number[] = [];
+  let level = 0;
+  let x = -1;
+  const r: {
+    [gbkey: string]: GenBookAudioPath;
+  } = {};
+  allGbKeys.forEach((key) => {
+    const p = path.slice();
+    x += 1;
+    p[level] = x;
+    r[key] = p;
+    if (key.endsWith(C.GBKSEP)) {
+      level += 1;
+      x = -1;
     }
   });
   return r;
 }
 
-// Convert the raw GenBookTOC (output of LibSword.getGenBookTableOfContents())
-// into a TreeView node list.
-export function genBookTreeNodes(
-  toc: GenBookTOC,
-  module?: string,
-  parentID?: string
-): TreeNodeInfo[] {
-  return Object.entries(toc).map((entry) => {
-    const [key, val] = entry;
-    const id = parentID ? [parentID, key].join(C.GBKSEP) : key;
-    return {
-      id,
-      label: key,
-      className: `cs-${module || 'locale'}`,
-      hasCaret: val !== 1,
-      childNodes: val !== 1 ? genBookTreeNodes(val, module, id) : undefined,
-    };
+// Convert a range-form string array into a number array.
+// Ex: ['1-3', '2-4', '7'] => [1,2,3,4,7]
+export function audioConfNumbers(strings: string[]): number[] {
+  const r: number[] = [];
+  strings.forEach((str) => {
+    const m = str.match(/^(\d+)-(\d+)$/);
+    if (m) {
+      const [, f, t] = m;
+      for (let x = Number(f); x <= Number(t); x += 1) {
+        r.push(x);
+      }
+    } else if (!Number.isNaN(Number(str))) {
+      r.push(Number(str));
+    }
+  });
+  return r.sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+}
+
+// Convert long form number or boolean arrays into the short form strings
+// for use in human readable or text files.
+// Ex: [1,2,3,4,7] => ['1-4', '7'] or [false, true, true, true] => ['1-3']
+export function audioConfStrings(chapters: number[] | boolean[]): string[] {
+  let nums: number[];
+  if (chapters.some((ch) => typeof ch === 'number')) {
+    nums = chapters.sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)) as number[];
+  } else {
+    nums = chapters.map((ch, i) => (ch === true ? i : -1)) as number[];
+    nums = nums.filter((ch) => ch !== -1);
+  }
+  const ranges: [number, number][] = [];
+  nums.forEach((n) => {
+    if (!ranges.length) ranges.push([n, n]);
+    else if (n === ranges[ranges.length - 1][1] + 1) {
+      ranges[ranges.length - 1][1] = n;
+    } else ranges.push([n, n]);
+  });
+  return ranges.map((r) => {
+    if (r[0] === r[1]) return `${r[0]}`;
+    return `${r[0]}-${r[1]}`;
   });
 }
 
-// Return the node containing a GenBook key, filtering out descendants that are not
-// ancestors of the key, selecting the key and expanding its ancestors.
-export function genBookKeyNode(
+// Important: allGbKeys must be output of LibSword.getGenBookTableOfContents().
+export function genBookTreeNodes(
+  allGbKeys: GenBookKeys,
+  module?: string,
+  expanded?: boolean,
+  rootID?: string
+): TreeNodeInfo[] {
+  const r: TreeNodeInfo[] = allGbKeys.map((gbkey) => {
+    const n: TreeNodeInfo = {
+      id: rootID ? [rootID, gbkey].join(C.GBKSEP) : gbkey,
+      label: gbkey.split(C.GBKSEP).pop() || gbkey,
+      className: module ? `cs-${module}` : 'cs-LTR_DEFAULT',
+      hasCaret: gbkey.endsWith(C.GBKSEP),
+    };
+    if (expanded !== undefined && 'hasCaret' in n && n.hasCaret)
+      n.isExpanded = !!expanded;
+    return n;
+  });
+  // Now move children to parent childNodes array.
+  r.reverse().forEach((n, i, a) => {
+    if (typeof n.id === 'string') {
+      const ks = n.id.split(C.GBKSEP);
+      if (ks[ks.length - 1] !== '' && ks.length > 1) {
+        ks.pop();
+        const parent = a.find((n2) => n2.id === ks.join(C.GBKSEP));
+        if (!parent) throw new Error(`No parent: ${n.id}`);
+        const [me] = a.splice(i, 1);
+        if (!('childNodes' in parent)) {
+          parent.childNodes = [];
+        }
+        if (parent.childNodes) parent.childNodes.unshift(me);
+      }
+    }
+  });
+
+  return r;
+}
+
+// Return the node having a specific id, or the first leaf node if id
+// is undefined, or undefined if id is not found. Ancestors are included
+// (and expanded). All nodes are selected.
+export function filterNodes(
   nodes: TreeNodeInfo[],
-  key: string
+  id?: string | number
 ): TreeNodeInfo | undefined {
-  const keys = key.split(C.GBKSEP);
-  const k = keys.shift();
-  let n = nodes.find((x) => x.id === k);
+  const k =
+    id?.toString() || nodes.find((n) => !n.hasCaret)?.id.toString() || '';
+  const keys = k.split(C.GBKSEP);
+  const parent = keys.shift();
+  let n = nodes.find((x) => x.id === parent);
   if (n) {
     n = clone(n);
     n.isSelected = false;
@@ -536,7 +619,7 @@ export function genBookKeyNode(
       return n;
     }
     if (keys.length && n.childNodes) {
-      const child = genBookKeyNode(n.childNodes, keys.join(C.GBKSEP));
+      const child = filterNodes(n.childNodes, keys.join(C.GBKSEP));
       if (child) {
         n.isExpanded = true;
         n.childNodes = [child];
@@ -546,156 +629,196 @@ export function genBookKeyNode(
   return undefined;
 }
 
-// Does a GenBookTOC or TreeNodeInfo[] contain the key?
-export function genBookHasKey(
-  gb: GenBookTOC | TreeNodeInfo[],
-  key: string,
-  parentID?: string | number
-): boolean {
-  if (Array.isArray(gb)) {
-    return gb.some((tni) => {
-      const { id: idx, childNodes } = tni;
-      const id = parentID ? [parentID, idx].join(C.GBKSEP) : idx;
-      if (id === key) return true;
-      if (childNodes) return genBookHasKey(childNodes, key, id);
-      return false;
-    });
-  }
-  return genBookHasKey(genBookTreeNodes(gb), key, parentID);
+export function genBookAudio2TreeNodes(
+  audio: GenBookAudioConf,
+  module: string
+): TreeNodeInfo[] {
+  const r: TreeNodeInfo[] = [];
+  Object.entries(audio).forEach((entry) => {
+    const [parentPath, str] = entry;
+    let parent = {} as TreeNodeInfo;
+    parentPath
+      .split(C.GBKSEP)
+      .filter(Boolean)
+      .forEach((s, i, a) => {
+        const tni: TreeNodeInfo = {
+          id: a.slice(0, i + 1).join(C.GBKSEP) + C.GBKSEP,
+          label: s,
+          className: module ? `cs-${module}` : 'cs-LTR_DEFAULT',
+          hasCaret: true,
+        };
+        if (parent) {
+          if (!parent.childNodes) parent.childNodes = [];
+          parent.childNodes.push(tni);
+        }
+        parent = tni;
+      });
+    if ('id' in parent) {
+      const ch = audioConfNumbers(str).map((n) => ({
+        id: [parentPath, n].join(C.GBKSEP),
+        label: pad(n, 3, 0),
+        hasCaret: false,
+      }));
+      if (ch.length) {
+        if (!parent.childNodes) parent.childNodes = [];
+        parent.childNodes.push(...ch);
+      }
+      r.push(parent);
+    }
+  });
+  return r;
 }
 
-// Convert the legacy SwordConf AudioChapters entry to the new forms.
-export function upgradeSwordConfAudioChapters(
-  legacy: DeprecatedSwordConfAudioChapters
-): SwordConfAudioChapters {
-  const isVerseKey = legacy.find((ko) =>
-    Object.values(C.SupportedBooks).find((bks) => bks.includes(ko.bk))
+export function isAudioVerseKey(
+  audio: VerseKeyAudio | GenBookAudioConf
+): boolean {
+  const books = Object.keys(audio);
+  return books.some((bk) =>
+    Object.values(C.SupportedBooks).some((bg) => bg.includes(bk))
   );
-  const r: SwordConfAudioChapters = isVerseKey ? {} : [];
-  legacy.forEach((le) => {
-    const { bk, ch1, ch2 } = le;
-    const index = Number(bk.replace(/^(\d+).*?$/, '$1'));
-    let next: SwordConfAudioChaptersGeneral | null = null;
-    if (isVerseKey) {
-      const r2 = r as SwordConfAudioChaptersVK;
-      if (Object.values(C.SupportedBooks).find((bks) => bks.includes(bk))) {
-        if (!(bk in r)) r2[bk] = [];
-        next = r2[bk];
-      }
-    } else if (!Number.isNaN(index)) {
-      const r2 = r as SwordConfAudioChaptersGeneral;
-      next = [];
-      r2.push([index, next]);
-    }
-    if (next) {
-      if (!Number.isNaN(ch1) && !Number.isNaN(ch2)) {
-        if (ch1 === ch2) {
-          next.push(ch1);
-        } else {
-          next.push(`${ch1}-${ch2}`);
-        }
+}
+
+export function readVerseKeyAudioConf(audio: VerseKeyAudioConf): VerseKeyAudio {
+  const r: VerseKeyAudio = {};
+  Object.entries(audio).forEach((entry) => {
+    const [book, str] = entry;
+    if (Object.values(C.SupportedBooks).some((bg) => bg.includes(book))) {
+      if (!(book in r)) r[book] = [];
+      audioConfNumbers(str).forEach((n) => {
+        r[book][n] = true;
+      });
+      for (let i = 0; i < r[book].length; i += 1) {
+        r[book][i] = !!r[book][i];
       }
     }
   });
   return r;
 }
 
-export function filterInPlace(
-  a: any[],
-  condition: (e: any, i: number, a: any[]) => boolean
-) {
-  let j = 0;
-  a.forEach((e, i) => {
-    if (condition(e, i, a)) {
-      if (i !== j) a[j] = e;
-      j += 1;
+export function readDeprecatedVerseKeyAudioConf(
+  audio: DeprecatedAudioChaptersConf[]
+): VerseKeyAudio {
+  const r: VerseKeyAudio = {};
+  audio.forEach((entry) => {
+    const { bk, ch1, ch2 } = entry;
+    if (Object.values(C.SupportedBooks).some((bg) => bg.includes(bk))) {
+      if (!(bk in r)) r[bk] = [];
+      for (let x = ch1; x <= ch2; x += 1) {
+        r[bk][x] = true;
+      }
+      for (let i = 0; i < r[bk].length; i += 1) {
+        r[bk][i] = !!r[bk][i];
+      }
     }
   });
-  a.length = j;
-  return a;
+  return r;
 }
 
-// Convert all string range members to numbers.
-export function removeAudioChaptersRanges(
-  audioChapters: SwordConfAudioChapters
-) {
-  const nodes = (
-    Array.isArray(audioChapters)
-      ? audioChapters
-      : Object.values(audioChapters).map((v, i) => [i, v])
-  ) as SwordConfAudioChaptersGeneral;
-  const strings: string[] = [];
-  nodes.forEach((nx, i) => {
-    if (Array.isArray(nx)) removeAudioChaptersRanges(nx[1]);
-    if (typeof nx === 'string') {
-      strings.push(nx);
-      nodes.splice(i, 1);
-    }
+export function readGenBookAudioConf(
+  audio: GenBookAudioConf,
+  allGbKeysx: string[]
+): GenBookAudio {
+  const r: GenBookAudio = {};
+  const allGbKeys = gbPaths(allGbKeysx);
+  Object.entries(audio).forEach((entry) => {
+    const [pathx, str] = entry;
+    const px = pathx.split('/').filter(Boolean);
+    const parentPath: number[] = [];
+    px.forEach((p, i) => {
+      parentPath[i] = Number(p);
+    });
+    audioConfNumbers(str).forEach((n) => {
+      const pp = parentPath.slice();
+      pp.push(n);
+      const kx = Object.entries(allGbKeys).find((e) => !diff(pp, e[1]));
+      if (kx) r[kx[0]] = pp;
+    });
   });
-  strings.forEach((range) => {
-    const se = range.split('-');
-    const start: number = Number.isNaN(se[0]) ? -1 : Number(se[0]);
-    const end: number = Number.isNaN(se[1]) ? start : Number(se[1]);
-    for (let x = start; x > -1 && x <= end; x += 1) {
-      nodes.push(x);
-    }
-  });
-  nodes.sort();
+  return r;
 }
 
-// Convert all series of numbers to string ranges. Shortens json strings to reduce
-// audio config file length.
-export function addAudioChaptersRanges(audioChapters: SwordConfAudioChapters) {
-  removeAudioChaptersRanges(audioChapters);
-  const nodes = (
-    Array.isArray(audioChapters)
-      ? audioChapters
-      : Object.values(audioChapters).map((v, i) => [i, v])
-  ) as SwordConfAudioChaptersGeneral;
-  let ranges: [number, number][] = [];
-  nodes.sort().forEach((nx) => {
-    if (Array.isArray(nx)) addAudioChaptersRanges(nx[1]);
-    let n = -1;
-    if (typeof nx === 'number') n = nx;
-    else if (Array.isArray(nx)) [n] = nx;
-    if (n !== -1) {
-      if (!ranges.length) ranges.push([n, n]);
-      else if (n === ranges[ranges.length - 1][1] + 1) {
-        ranges[ranges.length - 1][1] = n;
-      } else ranges.push([n, n]);
+export function readDeprecatedGenBookAudioConf(
+  audio: DeprecatedAudioChaptersConf[]
+): GenBookAudioConf {
+  const r: GenBookAudioConf = {};
+  audio.forEach((entry) => {
+    const { bk, ch1, ch2 } = entry;
+    if (/^\d+/.test(bk)) {
+      const bk2 = `${bk}/`;
+      if (!(bk2 in r)) r[bk2] = [];
+      r[bk2].push(`${ch1}-${ch2}`);
     }
   });
-  ranges = ranges.filter((r) => r[0] !== r[1]);
-  filterInPlace(nodes, (nx) => {
-    if (typeof nx === 'number') {
-      return !ranges.find((r) => nx >= r[0] && nx <= r[1]);
-    }
-    return true;
-  });
-  ranges.forEach((r) => nodes.push(`${r[0]}-${r[1]}`));
-  nodes.sort();
+  Object.values(r).forEach((v) => audioConfStrings(audioConfNumbers(v)));
+  return r;
 }
 
-export function chapters2TreeNodes(
-  chapters: SwordConfAudioChaptersGeneral,
-  expanded?: boolean
-): TreeNodeInfo[] {
-  removeAudioChaptersRanges(chapters);
-  return chapters.map((c) => {
-    const r = {} as TreeNodeInfo;
-    if (Array.isArray(c)) {
-      r.id = c[0].toString();
-      r.label = c[0].toString();
-      r.hasCaret = true;
-      r.isExpanded = !!expanded;
-      r.childNodes = chapters2TreeNodes(c[1], expanded);
-    } else {
-      r.id = c.toString();
-      r.label = c.toString();
-      r.hasCaret = false;
+export function getDeprecatedVerseKeyAudioConf(
+  vkey: SelectVKMType
+): DeprecatedAudioChaptersConf {
+  const { book, chapter, lastchapter } = vkey;
+  return { bk: book, ch1: chapter, ch2: lastchapter || chapter };
+}
+
+export function getDeprecatedGenBookAudioConf(
+  gbsel: SelectGBMType
+): DeprecatedAudioChaptersConf {
+  const { parent, children } = gbsel;
+  return {
+    bk: parent,
+    ch1: Number(children[0]),
+    ch2: Number(children[children.length - 1]),
+  };
+}
+
+export function subtractVerseKeyAudioChapters(
+  audio: VerseKeyAudio,
+  subtract: VerseKeyAudio
+): VerseKeyAudio {
+  const r = clone(audio);
+  Object.entries(r).forEach((e) => {
+    const [book] = e;
+    if (book in subtract) {
+      subtract[book].forEach((s, i) => {
+        if (s) r[book][i] = false;
+      });
     }
-    return r;
+    if (!r[book].some((v) => v)) delete r[book];
   });
+  return r;
+}
+
+// Remove audio files listed in subtract from audio. The parentPath
+// matching is not verbatim; only the index numbers are considered.
+export function subtractGenBookAudioChapters(
+  audio: GenBookAudioConf,
+  subtract: GenBookAudioConf
+): GenBookAudioConf {
+  const r = clone(audio);
+  Object.keys(subtract).forEach((subkey) => {
+    const subkeys = subkey
+      .split(C.GBKSEP)
+      .filter(Boolean)
+      .map((s) => s.replace(/^(\d+).*?$/, '$1'));
+    const audiokey = Object.keys(audio).find((k) => {
+      const audiokeys = k
+        .split(C.GBKSEP)
+        .filter(Boolean)
+        .map((s) => s.replace(/^(\d+).*?$/, '$1'));
+      return !diff(subkeys, audiokeys);
+    });
+    if (audiokey) {
+      const is = audioConfNumbers(r[audiokey]);
+      const st = audioConfNumbers(subtract[subkey]);
+      st.forEach((i) => {
+        const ix = is.indexOf(i);
+        if (ix !== -1) is.splice(ix, 1);
+      });
+      if (is.length) r[audiokey] = audioConfStrings(is);
+      else delete r[audiokey];
+    }
+  });
+  return r;
 }
 
 // Return a SwordConfType object from a config LocalFile, or else from
@@ -781,10 +904,24 @@ export function parseSwordConf(
         } else if (entryBase === 'AudioChapters') {
           let ac = JSON_parse(value);
           if (Array.isArray(ac) && 'bk' in ac[0]) {
-            ac = ac as DeprecatedSwordConfAudioChapters;
-            r.AudioChapters = upgradeSwordConfAudioChapters(ac);
+            // Deprecated bk, ch1, ch2 API
+            ac = ac as DeprecatedAudioChaptersConf[];
+            if (
+              Object.values(C.SupportedBooks).some((bg) =>
+                bg.includes(ac[0].bk)
+              )
+            ) {
+              r.AudioChapters = readDeprecatedVerseKeyAudioConf(ac);
+            } else {
+              r.AudioChapters = readDeprecatedGenBookAudioConf(ac);
+            }
           } else {
-            r.AudioChapters = ac as SwordConfAudioChapters;
+            ac = ac as VerseKeyAudioConf | GenBookAudioConf;
+            if (isAudioVerseKey(ac)) {
+              r.AudioChapters = readVerseKeyAudioConf(ac);
+            } else {
+              r.AudioChapters = ac;
+            }
           }
         } else if (Object.keys(C.SwordConf.delimited).includes(entry)) {
           const ent = entry as keyof typeof C.SwordConf.delimited;

@@ -169,7 +169,7 @@ export function computedStyle(module: string | null, key: string) {
         Number(n)
       );
       const a = ax || 1;
-      return !Number.isNaN(r) ? { r, g, b, a } : null;
+      return !Number.isNaN(Number(r)) ? { r, g, b, a } : null;
     }
   }
   return null;

@@ -7,14 +7,15 @@ import ZIP from 'adm-zip';
 import log from 'electron-log';
 import i18n from 'i18next';
 import {
-  addAudioChaptersRanges,
   clone,
   downloadKey,
+  audioConfStrings,
   isRepoLocal,
   JSON_stringify,
   parseSwordConf,
   randomID,
   versionCompare,
+  pad,
 } from '../../common';
 import Subscription from '../../subscription';
 import C from '../../constant';
@@ -48,10 +49,8 @@ import type {
   RepositoryListing,
   SwordConfType,
   V11nType,
-  SwordConfAudioChapters,
-  SwordConfAudioChaptersVK,
-  SwordConfAudioChaptersGeneral,
-  XSModTypes,
+  GenBookAudioConf,
+  VerseKeyAudioConf,
 } from '../../type';
 
 export const CipherKeyModules: {
@@ -143,21 +142,26 @@ export function confModulePath(aDataPath: string): string | null {
 
 function recurseAudioDirectory(
   dir: LocalFile,
-  results: SwordConfAudioChaptersGeneral
-) {
+  ancOrSelfx?: string[],
+  audiox?: GenBookAudioConf
+): GenBookAudioConf {
+  const audio = audiox || {};
+  const ancOrSelf = ancOrSelfx?.slice() || [];
+  if (ancOrSelfx) ancOrSelf.push(dir.leafName);
+  const chs: number[] = [];
   dir.directoryEntries.forEach((sub) => {
-    const chn = Number(sub.replace(/^(\d+).*?$/, '$1'));
-    if (!Number.isNaN(chn)) {
-      const subdir = dir.clone().append(sub);
-      if (subdir.isDirectory()) {
-        const child: SwordConfAudioChaptersGeneral = [];
-        results.push([chn, child]);
-        recurseAudioDirectory(subdir, child);
-      } else {
-        results.push(chn);
+    if (/^(\d+)/.test(sub)) {
+      const subfile = dir.clone().append(sub);
+      const m2 = subfile.leafName.match(/^(\d+)\.[^.]+$/);
+      if (subfile.isDirectory()) {
+        recurseAudioDirectory(subfile, ancOrSelf, audio);
+      } else if (m2) {
+        chs.push(Number(m2[1]));
       }
     } else log.warn(`Skipping non-number audio file: ${sub}`);
   });
+  if (chs.length) audio[`${[...ancOrSelf].join('/')}/`] = audioConfStrings(chs);
+  return audio;
 }
 
 // Scan the file system for audio files starting at the location pointed to by
@@ -165,8 +169,7 @@ function recurseAudioDirectory(
 export function scanAudio(
   repoPath: string,
   dataPath: string
-): SwordConfAudioChapters {
-  let r: SwordConfAudioChapters = [];
+): GenBookAudioConf | VerseKeyAudioConf {
   const scan = new LocalFile(repoPath);
   if (scan.exists() && scan.isDirectory()) {
     dataPath.replace('/', fpath.sep);
@@ -176,38 +179,39 @@ export function scanAudio(
       const isVerseKey = subs.find((bk) =>
         Object.values(C.SupportedBooks).find((bg) => bg.includes(bk))
       );
-      if (!isVerseKey) recurseAudioDirectory(scan, r);
-      else {
-        r = {};
-        const rvk = r as SwordConfAudioChaptersVK;
-        scan.directoryEntries.forEach((book) => {
-          if (Object.values(C.SupportedBooks).find((bg) => bg.includes(book))) {
-            rvk[book] = [];
-            const scan2 = scan.clone().append(book);
-            if (scan2.isDirectory()) {
-              scan2.directoryEntries.forEach((chapter) => {
-                const audioFile = scan2.clone().append(chapter);
-                if (!audioFile.isDirectory()) {
-                  const chn = Number(
-                    audioFile.leafName.replace(/^(\d+).*?$/, '$1')
+      if (!isVerseKey) return recurseAudioDirectory(scan);
+      const r = {} as VerseKeyAudioConf;
+      scan.directoryEntries.forEach((book) => {
+        if (Object.values(C.SupportedBooks).find((bg) => bg.includes(book))) {
+          const boolArray: boolean[] = [];
+          const scan2 = scan.clone().append(book);
+          if (scan2.isDirectory()) {
+            scan2.directoryEntries.forEach((chapter) => {
+              const audioFile = scan2.clone().append(chapter);
+              if (!audioFile.isDirectory()) {
+                const chn = Number(
+                  audioFile.leafName.replace(/^(\d+).*?$/, '$1')
+                );
+                if (!Number.isNaN(chn)) boolArray[chn] = true;
+                else {
+                  log.warn(
+                    `Skipping audio file with name: ${audioFile.leafName}`
                   );
-                  if (!Number.isNaN(chn)) rvk[book].push(chn);
-                  else {
-                    log.warn(
-                      `Skipping audio file with name: ${audioFile.leafName}`
-                    );
-                  }
-                } else
-                  log.warn(`Skipping audio chapter subdirectory: ${chapter}`);
-              });
-            }
-          } else log.warn(`Skipping unrecognized audio subdirectory: ${book}`);
-        });
-      }
+                }
+              } else
+                log.warn(`Skipping audio chapter subdirectory: ${chapter}`);
+            });
+          }
+          for (let i = 0; i < boolArray.length; i += 1) {
+            boolArray[i] = !!boolArray[i];
+          }
+          r[book] = audioConfStrings(boolArray);
+        } else log.warn(`Skipping unrecognized audio subdirectory: ${book}`);
+      });
+      return r;
     }
   }
-  addAudioChaptersRanges(r);
-  return r;
+  return {};
 }
 
 // Move or remove one or more modules. Returns the number of modules
@@ -567,7 +571,7 @@ export async function installZIPs(
                   // VerseKey audio files...
                   const chapter = Number(pobj.name.replace(/^0+(?!$)/, ''));
                   const book = dirs[0];
-                  if (audioCode && book && !Number.isNaN(chapter)) {
+                  if (audioCode && book && !Number.isNaN(Number(chapter))) {
                     audio.append(audioCode);
                     if (!audio.exists()) {
                       audio.create(LocalFile.DIRECTORY_TYPE);
@@ -588,11 +592,35 @@ export async function installZIPs(
                     newmods.audio.push(audiofile);
                   } else audioCode = undefined;
                 } else {
-                  // Genbook audio files...
+                  // GenBook audio files...
                   const path = pobj.dir.split('/');
+                  path.shift(); // remove ./audio
                   path.shift(); // don't need language code
-                  audioCode = path.shift();
-                  if (audioCode) {
+                  [audioCode] = path;
+                  // For some reason audioCode case might not always
+                  // match the conf file, so use the conf file value.
+                  const conf = Object.values(confs).pop();
+                  if (conf) audioCode = conf.module;
+                  path[0] = audioCode;
+                  const m = pobj.name.match(/^(\d+)/);
+                  if (audioCode && m) {
+                    while (path.length) {
+                      let subname = path.shift();
+                      if (subname) {
+                        subname = pad(
+                          subname.replace(/^(\d+).*?$/, '$1'),
+                          3,
+                          0
+                        );
+                        audio.append(subname);
+                        if (!audio.exists()) {
+                          audio.create(LocalFile.DIRECTORY_TYPE);
+                        }
+                      }
+                    }
+                    const fname = pad(m[1], 3, 0);
+                    audio.append(fname + pobj.ext);
+                    audio.writeFile(entry.getData());
                     const n: GenBookAudioFile = {
                       genbook: true,
                       audioCode,
@@ -603,11 +631,9 @@ export async function installZIPs(
                     newmods.audio.push(n);
                   } else audioCode = undefined;
                 }
-                // Modify the config file to show the new audio.
+                // Modify the GenBook config file to show the new audio.
                 if (audioCode) {
-                  const conf = Object.values(confs).find(
-                    (c) => c.module === audioCode
-                  );
+                  const conf = Object.values(confs).pop();
                   if (conf) {
                     const confFile = Dirs.xsAudio;
                     confFile.append('mods.d');
@@ -751,7 +777,7 @@ async function downloadRepoConfs(
       });
     } catch (err: any) {
       if (progress) progress(-1);
-      return err.message;
+      return Promise.reject(err.message);
     }
   }
   files.forEach((r) => {

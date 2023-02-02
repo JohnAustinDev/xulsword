@@ -163,10 +163,10 @@ class GenbookChooser extends React.Component {
               label: t?.label || m,
               className: t?.labelClass || 'cs-LTR_DEFAULT',
               hasCaret: true,
-              childNodes: genBookTreeNodes(toc, m, `${i}`),
+              childNodes: genBookTreeNodes(toc, m, undefined, `${i}`),
             });
           } else {
-            nodes.push(...genBookTreeNodes(toc, m, `${i}`));
+            nodes.push(...genBookTreeNodes(toc, m, undefined, `${i}`));
           }
         }
       }
@@ -254,7 +254,7 @@ function newState(selection: (string | number)[]): XulswordStateArgType {
     selection.forEach((selkey) => {
       const key = selkey.toString().split(C.GBKSEP);
       const i = Number(key.shift());
-      if (!Number.isNaN(i)) {
+      if (!Number.isNaN(Number(i))) {
         genbk[i].forEach((ix) => {
           keys[ix] = key.join(C.GBKSEP);
         });
