@@ -13,7 +13,7 @@ import type {
   getTabs,
   getTab,
   getConfig,
-  getAudioConf,
+  getAudioConfs,
   getLocaleConfigs,
   localeConfig,
   getModuleConfigDefault,
@@ -25,7 +25,7 @@ import type {
   publishSubscription,
   resolveHtmlPath,
 } from './main/components/window';
-import type { inlineFile } from './main/components/localFile';
+import type { inlineFile, inlineAudioFile } from './main/components/localFile';
 import type Prefs from './main/components/prefs';
 import type Commands from './main/components/commands';
 import type Data from './main/components/data';
@@ -147,6 +147,11 @@ export type ScrollType = {
   skipWindowUpdate?: boolean;
 } | null;
 
+export type AudioPrefType = {
+  open: boolean;
+  file: VerseKeyAudioFile | GenBookAudioFile | null;
+};
+
 // Default values for these keys must be set in the default
 // JSON Pref file or an error will be thrown. These values
 // are always kept in sync between Prefs, the application menu
@@ -158,6 +163,7 @@ export interface XulswordStatePref {
 
   keys: (string | null)[];
 
+  audio: AudioPrefType;
   history: HistoryVKType[];
   historyIndex: number;
 
@@ -198,6 +204,7 @@ export type AtextPropsType = Pick<
   panelIndex: number;
   columns: number;
   ownWindow: boolean;
+  onAudioClick: (audio: VerseKeyAudioFile | GenBookAudioFile) => void;
   bbDragEnd: (e: React.MouseEvent, value: any) => void;
   xulswordState: (s: XulswordStateArgType) => void;
 };
@@ -240,6 +247,7 @@ export type GlobalPrefType = {
     };
   };
   xulsword: {
+    audio: AudioPrefType;
     location: LocationVKType | null;
     selection: LocationVKType | null;
     scroll: ScrollType;
@@ -315,7 +323,7 @@ export type V11nType =
 
 export type CipherKey = { conf: SwordConfType; cipherKey: string };
 
-export type LocationSKType = {
+export type LocationGBType = {
   module: string;
   key: string;
 };
@@ -338,22 +346,6 @@ export type TextVKType = {
 export type HistoryVKType = {
   location: LocationVKType;
   selection: LocationVKType | null;
-};
-
-export type AudioFile = {
-  audioCode: string;
-  book: string;
-  chapter: number;
-  file: string;
-  type: string; // ie. mp3, ogg;
-};
-
-export type GenBookAudioFile = {
-  audioCode: string;
-  path: string[];
-  file: string;
-  type: string; // ie. mp3, ogg;
-  genbook: true;
 };
 
 export type LookupInfo = {
@@ -531,7 +523,7 @@ export type SwordConfType = SwordConfigEntries &
     // Extra helper additions
     module: string;
     reports: NewModuleReportType[];
-    sourceRepository?: Repository;
+    sourceRepository: Repository;
     moduleType: ModTypes;
     xsmType: XSModTypes;
     filename: string;
@@ -552,14 +544,15 @@ export type GenBookTOC = {
 // ending with C.GBKSEP are parent nodes.
 export type GenBookKeys = string[];
 
-// GenBookAudioPath describes a chapter's address on disk.
-// Ex: [0, 2, 1] is the disk path 000/002/001.mp3
-export type GenBookAudioPath = number[];
+// AudioPath describes a chapter's address on disk.
+// Ex: [0, 2, 1] is the disk path 000/002/001.*
+// Ex: ['Prov', 1] is the disk path Prov/001.*
+export type AudioPath = (number | string)[];
 
 // GenBookAudio describes audio chapter keys, existence and disk address.
 // NOTE: gbkey MUST be a key to a GenBook SWORD module.
 export type GenBookAudio = {
-  [gbkey: string]: GenBookAudioPath;
+  [gbkey: string]: AudioPath;
 };
 
 // GenBookAudioConf is similar to GenBookAudio but is short and readable for
@@ -588,6 +581,19 @@ export type DeprecatedAudioChaptersConf = {
   bk: string;
   ch1: number;
   ch2: number;
+};
+
+export type VerseKeyAudioFile = {
+  module: string;
+  book: string;
+  chapter: number;
+  path: AudioPath;
+};
+
+export type GenBookAudioFile = {
+  module: string;
+  key: string;
+  path: AudioPath;
 };
 
 export type TabTypes = 'Texts' | 'Comms' | 'Dicts' | 'Genbks';
@@ -623,7 +629,7 @@ export type NewModulesType = {
   nokeymods: SwordConfType[];
   fonts: string[];
   bookmarks: string[];
-  audio: (AudioFile | GenBookAudioFile)[];
+  audio: (VerseKeyAudioFile | GenBookAudioFile)[];
   reports: NewModuleReportType[];
 };
 
@@ -693,7 +699,7 @@ export type GType = {
   Tabs: ReturnType<typeof getTabs>;
   Tab: ReturnType<typeof getTab>;
   Config: ReturnType<typeof getConfig>;
-  AudioConf: ReturnType<typeof getAudioConf>;
+  AudioConfs: ReturnType<typeof getAudioConfs>;
   ProgramConfig: ReturnType<typeof localeConfig>;
   LocaleConfigs: ReturnType<typeof getLocaleConfigs>;
   ModuleConfigDefault: ReturnType<typeof getModuleConfigDefault>;
@@ -705,6 +711,7 @@ export type GType = {
   // Functions
   resolveHtmlPath: typeof resolveHtmlPath;
   inlineFile: typeof inlineFile;
+  inlineAudioFile: typeof inlineAudioFile;
   resetMain: typeof resetMain;
   getSystemFonts: typeof getSystemFonts;
   getBooksInModule: typeof getBooksInModule;
@@ -783,7 +790,7 @@ export const GBuilder: GType & {
   Tabs: 'getter' as any,
   Tab: 'getter' as any,
   Config: 'getter' as any,
-  AudioConf: 'getter' as any,
+  AudioConfs: 'getter' as any,
   ProgramConfig: 'getter' as any,
   LocaleConfigs: 'getter' as any,
   ModuleConfigDefault: 'getter' as any,
@@ -795,6 +802,7 @@ export const GBuilder: GType & {
   // Functions
   resolveHtmlPath: CACHEfunc as any,
   inlineFile: CACHEfunc as any,
+  inlineAudioFile: CACHEfunc as any,
   getSystemFonts: CACHEfunc as any,
   getBooksInModule: CACHEfunc as any,
   resetMain: func as any,
@@ -868,6 +876,7 @@ export const GBuilder: GType & {
     removeModule: func as any,
     exportAudio: func as any,
     importAudio: func as any,
+    playAudio: func as any,
     print: func as any,
     printPassage: func as any,
     edit: func as any,
@@ -886,7 +895,7 @@ export const GBuilder: GType & {
     deleteDbItem: func as any,
     openAbout: func as any,
     goToLocationVK: func as any,
-    goToLocationSK: func as any,
+    goToLocationGB: func as any,
   },
 
   Shell: {

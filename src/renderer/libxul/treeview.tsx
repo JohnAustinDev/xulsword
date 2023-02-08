@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Tree, TreeNodeInfo } from '@blueprintjs/core';
+import { Tree, TreeEventHandler, TreeNodeInfo } from '@blueprintjs/core';
 import { clone, diff } from '../../common';
 
 // The initialState of all nodes in the tree is required. If selectedIDs is defined
@@ -18,6 +18,7 @@ export type TreeViewProps = {
   bpClassName: string;
   onSelection: (ids: (string | number)[]) => void;
   onExpansion: (ids: (string | number)[]) => void;
+  onNodeClick: TreeEventHandler;
   treeRef: React.RefObject<Tree>;
 };
 
@@ -28,6 +29,7 @@ const defaultProps = {
   bpClassName: undefined,
   onSelection: undefined,
   onExpansion: undefined,
+  onNodeClick: undefined,
   treeRef: undefined,
 };
 
@@ -43,6 +45,7 @@ const propTypes = {
   bpClassName: PropTypes.string,
   onSelection: PropTypes.func,
   onExpansion: PropTypes.func,
+  onNodeClick: PropTypes.func,
   treeRef: PropTypes.object,
 };
 
@@ -176,6 +179,7 @@ export const TreeView = (props: TreeViewProps) => {
     enableMultipleSelection,
     onSelection,
     onExpansion,
+    onNodeClick,
     treeRef,
   } = props;
   const [nodes, dispatch] = React.useReducer(treeReducer, initialState);
@@ -255,8 +259,9 @@ export const TreeView = (props: TreeViewProps) => {
           type: 'SET_IS_SELECTED',
         });
       }
+      if (onNodeClick) onNodeClick(node, nodePath, e);
     },
-    [selectedIDs, onSelection, enableMultipleSelection]
+    [selectedIDs, onSelection, onNodeClick, enableMultipleSelection]
   );
 
   // Call onExpansion if controlled, or else dispatch collapse to state.

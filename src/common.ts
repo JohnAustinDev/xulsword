@@ -15,23 +15,54 @@ import type {
   Repository,
   SwordConfType,
   RowSelection,
-  NewModuleReportType,
   HTTPDownload,
   QuerablePromise,
   GType,
-  GenBookTOC,
   DeprecatedAudioChaptersConf,
   GenBookKeys,
   VerseKeyAudioConf,
   GenBookAudioConf,
   GenBookAudio,
   VerseKeyAudio,
-  GenBookAudioPath,
+  AudioPath,
 } from './type';
-import type LocalFile from './main/components/localFile';
 import type { TreeNodeInfo } from '@blueprintjs/core';
 import type { SelectVKMType } from './renderer/libxul/vkselect';
 import type { SelectGBMType } from './renderer/libxul/genbookselect';
+
+// These local repositories cannot be disabled, deleted or changed.
+// Implemented as a function to allow G.i18n to initialize.
+export function builtinRepos(
+  i18n: GType['i18n'],
+  DirsPath: GType['Dirs']['path']
+): Repository[] {
+  return [
+    {
+      name: i18n.t('shared.label'),
+      domain: 'file://',
+      path: DirsPath.xsModsCommon,
+      builtin: true,
+      disabled: false,
+      custom: false,
+    },
+    {
+      name: i18n.t('programTitle', { ns: 'branding' }),
+      domain: 'file://',
+      path: DirsPath.xsModsUser,
+      builtin: true,
+      disabled: false,
+      custom: false,
+    },
+    {
+      name: i18n.t('audio.label'),
+      domain: 'file://',
+      path: DirsPath.xsAudio,
+      builtin: true,
+      disabled: false,
+      custom: false,
+    },
+  ];
+}
 
 export function escapeRE(text: string) {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -203,18 +234,18 @@ export function clone<T extends unknown>(obj: T): T {
 }
 
 // Compare two PrefValues. It returns only the differences in pv2 compared to pv1,
-// or undefined if they share the same value (recursively). If there are children
-// greater than 'depth' recursion, they are compared exhaustively but returned entirely
-// if different in any way. Depth is 1 by default because React setState performs
-// shallow merging with existing state, meaning a partial state object overwrites
-// a complete one, resulting in unexpected states.
+// or undefined if they share the same value (recursively). If there are descendant
+// objects greater than 'depth' recursion, properties are compared exhaustively but
+// entire pv2 descendant objects are returned when there are differences in any child
+// property. Depth is 1 by default because React setState performs shallow merging
+// with existing state, meaning a partial state object would overwrite a complete one,
+// resulting in unexpected states.
 export function diff<T extends PrefValue>(
   pv1: T,
   pv2: T,
   depth = 1
 ): Partial<T> {
   let difference: any;
-  const level = depth || 0;
   // Primatives
   if (
     pv1 === null ||
@@ -238,32 +269,28 @@ export function diff<T extends PrefValue>(
     // Data objects
     const obj1 = pv1 as PrefObject;
     const obj2 = pv2 as PrefObject;
-    let different = false;
     Object.entries(obj2).forEach((entry2) => {
       const [k2, v2] = entry2;
       if (!(k2 in obj1)) {
-        different = true;
-        if (depth > 0) {
-          if (!difference) difference = {};
-          difference[k2] = v2;
-        }
+        if (!difference) difference = {};
+        difference[k2] = v2;
       } else {
-        const diff2 = diff(obj1[k2], v2, level - 1);
+        const diff2 = diff(obj1[k2], v2, depth - 1);
         if (diff2 !== undefined) {
-          different = true;
-          if (depth > 0) {
-            if (!difference) difference = {};
-            difference[k2] = diff2;
-          }
+          if (!difference) difference = {};
+          difference[k2] = diff2;
         }
       }
     });
-    if (different && depth <= 0) difference = obj2;
-    if (
-      difference === undefined &&
-      Object.keys(obj1).length !== Object.keys(obj2).length
-    )
-      difference = {};
+    if (depth < 1) {
+      Object.keys(obj1).forEach((k1) => {
+        if (!(k1 in obj2)) {
+          if (!difference) difference = {};
+          difference[k1] = undefined;
+        }
+      });
+    }
+    if (difference && depth < 1) difference = obj2;
   }
   return difference;
 }
@@ -493,31 +520,6 @@ export function pad(
   return r;
 }
 
-// IMPORTANT: To work, this function requires allGbKeys to be the output
-// of LibSword.getGenBookTableOfContents() (ie. all keys are included and
-// are in the proper order).
-export function gbPaths(allGbKeys: string[]): {
-  [gbkey: string]: GenBookAudioPath;
-} {
-  const path: number[] = [];
-  let level = 0;
-  let x = -1;
-  const r: {
-    [gbkey: string]: GenBookAudioPath;
-  } = {};
-  allGbKeys.forEach((key) => {
-    const p = path.slice();
-    x += 1;
-    p[level] = x;
-    r[key] = p;
-    if (key.endsWith(C.GBKSEP)) {
-      level += 1;
-      x = -1;
-    }
-  });
-  return r;
-}
-
 // Convert a range-form string array into a number array.
 // Ex: ['1-3', '2-4', '7'] => [1,2,3,4,7]
 export function audioConfNumbers(strings: string[]): number[] {
@@ -560,6 +562,26 @@ export function audioConfStrings(chapters: number[] | boolean[]): string[] {
   });
 }
 
+// Takes a flat list of general book nodes and arranges them according to
+// their hierarchy. IMPORTANT: nodes must be in document order before
+// calling this function.
+function hierarchy(nodes: TreeNodeInfo[]): TreeNodeInfo[] {
+  const r: TreeNodeInfo[] = [];
+  for (let x = nodes.length - 1; x > -1; x -= 1) {
+    const n = nodes[x];
+    const idp = n.id.toString().split(C.GBKSEP);
+    if (idp[idp.length - 1] === '') idp.pop();
+    idp[idp.length - 1] = '';
+    const parent = nodes.find((an) => an.id === idp.join(C.GBKSEP));
+    if (parent) {
+      if (!('childNodes' in parent)) parent.childNodes = [];
+      if (parent.childNodes) parent.childNodes.unshift(n);
+    } else r.unshift(n);
+  }
+
+  return r;
+}
+
 // Important: allGbKeys must be output of LibSword.getGenBookTableOfContents().
 export function genBookTreeNodes(
   allGbKeys: GenBookKeys,
@@ -567,106 +589,85 @@ export function genBookTreeNodes(
   expanded?: boolean,
   rootID?: string
 ): TreeNodeInfo[] {
-  const r: TreeNodeInfo[] = allGbKeys.map((gbkey) => {
-    const n: TreeNodeInfo = {
-      id: rootID ? [rootID, gbkey].join(C.GBKSEP) : gbkey,
-      label: gbkey.split(C.GBKSEP).pop() || gbkey,
-      className: module ? `cs-${module}` : 'cs-LTR_DEFAULT',
-      hasCaret: gbkey.endsWith(C.GBKSEP),
-    };
-    if (expanded !== undefined && 'hasCaret' in n && n.hasCaret)
-      n.isExpanded = !!expanded;
-    return n;
-  });
-  // Now move children to parent childNodes array.
-  r.reverse().forEach((n, i, a) => {
-    if (typeof n.id === 'string') {
-      const ks = n.id.split(C.GBKSEP);
-      if (ks[ks.length - 1] !== '' && ks.length > 1) {
-        ks.pop();
-        const parent = a.find((n2) => n2.id === ks.join(C.GBKSEP));
-        if (!parent) throw new Error(`No parent: ${n.id}`);
-        const [me] = a.splice(i, 1);
-        if (!('childNodes' in parent)) {
-          parent.childNodes = [];
-        }
-        if (parent.childNodes) parent.childNodes.unshift(me);
-      }
-    }
-  });
-
-  return r;
+  return hierarchy(
+    allGbKeys.map((gbkey) => {
+      const label = gbkey.split(C.GBKSEP);
+      if (gbkey.endsWith(C.GBKSEP)) label.pop();
+      const n: TreeNodeInfo = {
+        id: rootID ? [rootID, gbkey].join(C.GBKSEP) : gbkey,
+        label: label[label.length - 1],
+        className: module ? `cs-${module}` : 'cs-LTR_DEFAULT',
+        hasCaret: gbkey.endsWith(C.GBKSEP),
+      };
+      if (expanded !== undefined && 'hasCaret' in n && n.hasCaret)
+        n.isExpanded = !!expanded;
+      return n;
+    })
+  );
 }
 
-// Return the node having a specific id, or the first leaf node if id
-// is undefined, or undefined if id is not found. Ancestors are included
-// (and expanded). All nodes are selected.
-export function filterNodes(
-  nodes: TreeNodeInfo[],
-  id?: string | number
-): TreeNodeInfo | undefined {
-  const k =
-    id?.toString() || nodes.find((n) => !n.hasCaret)?.id.toString() || '';
-  const keys = k.split(C.GBKSEP);
-  const parent = keys.shift();
-  let n = nodes.find((x) => x.id === parent);
-  if (n) {
-    n = clone(n);
-    n.isSelected = false;
-    if (n.hasCaret) n.isExpanded = false;
-    if (!keys.length) {
-      n.isSelected = true;
-      return n;
-    }
-    if (keys.length && n.childNodes) {
-      const child = filterNodes(n.childNodes, keys.join(C.GBKSEP));
-      if (child) {
-        n.isExpanded = true;
-        n.childNodes = [child];
-      }
-    }
+// IMPORTANT: To work, this function requires allGbKeys to be the output
+// of LibSword.getGenBookTableOfContents() (ie. all keys are included and
+// are in the proper order).
+export function gbPaths(allGbKeys: string[]): {
+  [gbkey: string]: AudioPath;
+} {
+  const r: {
+    [gbkey: string]: AudioPath;
+  } = {};
+  function addPath(nodes: TreeNodeInfo[], parentPath?: number[]) {
+    const pp = parentPath || [];
+    const i = pp.length;
+    let n = 0;
+    nodes.forEach((node) => {
+      const path = pp.slice();
+      path[i] = n;
+      r[node.id] = path;
+      if (node.childNodes) addPath(node.childNodes, path);
+      n += 1;
+    });
+    return nodes;
   }
-  return undefined;
+  addPath(genBookTreeNodes(allGbKeys));
+  return r;
 }
 
 export function genBookAudio2TreeNodes(
   audio: GenBookAudioConf,
   module: string
 ): TreeNodeInfo[] {
-  const r: TreeNodeInfo[] = [];
+  const nodes: TreeNodeInfo[] = [];
   Object.entries(audio).forEach((entry) => {
     const [parentPath, str] = entry;
-    let parent = {} as TreeNodeInfo;
     parentPath
       .split(C.GBKSEP)
       .filter(Boolean)
       .forEach((s, i, a) => {
-        const tni: TreeNodeInfo = {
-          id: a.slice(0, i + 1).join(C.GBKSEP) + C.GBKSEP,
-          label: s,
-          className: module ? `cs-${module}` : 'cs-LTR_DEFAULT',
-          hasCaret: true,
-        };
-        if (parent) {
-          if (!parent.childNodes) parent.childNodes = [];
-          parent.childNodes.push(tni);
+        const id = a.slice(0, i + 1).join(C.GBKSEP) + C.GBKSEP;
+        if (!nodes.some((n) => n.id === id)) {
+          nodes.push({
+            id,
+            label: s,
+            className: module ? `cs-${module}` : 'cs-LTR_DEFAULT',
+            hasCaret: true,
+          });
         }
-        parent = tni;
       });
-    if ('id' in parent) {
-      const ch = audioConfNumbers(str).map((n) => ({
-        id: [parentPath, n].join(C.GBKSEP),
+    audioConfNumbers(str)
+      .map((n) => ({
+        id: [parentPath, pad(n, 3, 0)].join(''),
         label: pad(n, 3, 0),
         hasCaret: false,
-      }));
-      if (ch.length) {
-        if (!parent.childNodes) parent.childNodes = [];
-        parent.childNodes.push(...ch);
-      }
-      r.push(parent);
-    }
+      }))
+      .forEach((n) => {
+        if (!nodes.some((n2) => n2.id === n.id)) {
+          nodes.push(n);
+        }
+      });
   });
-  return r;
+  return hierarchy(
+    nodes.sort((a, b) => a.id.toString().localeCompare(b.id.toString()))
+  );
 }
 
 export function isAudioVerseKey(
@@ -714,6 +715,7 @@ export function readDeprecatedVerseKeyAudioConf(
   return r;
 }
 
+// Returns the files listed in config file as GenBookAudio.
 export function readGenBookAudioConf(
   audio: GenBookAudioConf,
   allGbKeysx: string[]
@@ -723,7 +725,7 @@ export function readGenBookAudioConf(
   Object.entries(audio).forEach((entry) => {
     const [pathx, str] = entry;
     const px = pathx.split('/').filter(Boolean);
-    const parentPath: number[] = [];
+    const parentPath: AudioPath = [];
     px.forEach((p, i) => {
       parentPath[i] = Number(p);
     });
@@ -737,16 +739,20 @@ export function readGenBookAudioConf(
   return r;
 }
 
+// The deprecated GenBook audio conf does not consider all levels
+// of a module, only the 2nd, and indexing starts with 1. So these
+// must be updated to the new scheme.
 export function readDeprecatedGenBookAudioConf(
   audio: DeprecatedAudioChaptersConf[]
 ): GenBookAudioConf {
   const r: GenBookAudioConf = {};
   audio.forEach((entry) => {
     const { bk, ch1, ch2 } = entry;
-    if (/^\d+/.test(bk)) {
-      const bk2 = `${bk}/`;
+    const m = bk.match(/^(\d+)(.*?)$/);
+    if (m) {
+      const bk2 = `000/${pad(Number(m[1]) - 1, 3, 0) + m[2]}/`;
       if (!(bk2 in r)) r[bk2] = [];
-      r[bk2].push(`${ch1}-${ch2}`);
+      r[bk2].push(`${Number(ch1) - 1}-${Number(ch2) - 1}`);
     }
   });
   Object.values(r).forEach((v) => audioConfStrings(audioConfNumbers(v)));
@@ -760,15 +766,23 @@ export function getDeprecatedVerseKeyAudioConf(
   return { bk: book, ch1: chapter, ch2: lastchapter || chapter };
 }
 
+// The deprecated GenBook audio conf does not consider all levels
+// of a module, only the 2nd, and indexing starts with 1. So these
+// must be updated from the new scheme. IMPORTANT: the gbsel arg
+// must be a GenBookAudioConf selection and not a GenBookAudio
+// selection.
 export function getDeprecatedGenBookAudioConf(
   gbsel: SelectGBMType
 ): DeprecatedAudioChaptersConf {
   const { parent, children } = gbsel;
-  return {
-    bk: parent,
-    ch1: Number(children[0]),
-    ch2: Number(children[children.length - 1]),
-  };
+  const k = parent.split(C.GBKSEP);
+  if (!k[k.length - 1]) k.pop();
+  let bk = k.pop() || '';
+  const m = bk.match(/^(\d+)(.*?)$/);
+  if (m) bk = pad(Number(m[1]) + 1, 3, 0) + m[2];
+  const ch1 = Number(children[0].split(C.GBKSEP).pop()) + 1;
+  const ch2 = Number(children[children.length - 1].split(C.GBKSEP).pop()) + 1;
+  return { bk, ch1, ch2 };
 }
 
 export function subtractVerseKeyAudioChapters(
@@ -821,154 +835,6 @@ export function subtractGenBookAudioChapters(
   return r;
 }
 
-// Return a SwordConfType object from a config LocalFile, or else from
-// the string contents of a config file plus the config file's name.
-export function parseSwordConf(
-  i18next: GType['i18n'],
-  config: string | LocalFile,
-  filename: string
-): SwordConfType {
-  const conf = typeof config === 'string' ? config : config.readFile();
-  const reports: NewModuleReportType[] = [];
-  const lines = conf.split(/[\n\r]+/);
-  const r = { filename } as SwordConfType;
-  C.SwordConf.repeatable.forEach((en) => {
-    r[en] = [];
-  });
-  const commentRE = /^(#.*|\s*)$/;
-  for (let x = 0; x < lines.length; x += 1) {
-    const l = lines[x];
-    let m;
-    if (commentRE.test(l)) {
-      // ignore comments
-    } else if (C.SwordModuleStartRE.test(l)) {
-      // name might not be at the top of the file
-      m = l.match(C.SwordModuleStartRE);
-      if (m) [, r.module] = m;
-    } else {
-      m = l.match(/^([A-Za-z0-9_.]+)\s*=\s*(.*?)\s*$/);
-      if (m) {
-        const entry = m[1] as any;
-        let value = m[2] as string;
-        const entryBase = entry.substring(0, entry.indexOf('_')) || entry;
-        // Handle line continuation.
-        if (
-          C.SwordConf.continuation.includes(entryBase) &&
-          value.endsWith('\\')
-        ) {
-          let nval = value.substring(0, value.length - 1);
-          for (;;) {
-            x += 1;
-            nval += lines[x];
-            if (!nval.endsWith('\\')) break;
-            nval = nval.substring(0, nval.length - 1);
-          }
-          value = nval;
-        }
-        // Check for HTML where it shouldn't be.
-        const htmlTags = value.match(/<\w+[^>]*>/g);
-        if (htmlTags) {
-          if (!C.SwordConf.htmllink.includes(entryBase)) {
-            reports.push({
-              warning: `Config entry '${entry}' should not contain HTML.`,
-            });
-          }
-          if (htmlTags.find((t) => !t.match(/<a\s+href="[^"]*"\s*>/))) {
-            reports.push({
-              warning: `HTML in entry '${entry}' should be limited to anchor tags with an href attribute.`,
-            });
-          }
-        }
-        // Check for RTF where it shouldn't be.
-        const rtfControlWords = value.match(/\\\w[\w\d]*/);
-        if (rtfControlWords) {
-          if (!C.SwordConf.rtf.includes(entryBase)) {
-            reports.push({
-              warning: `Config entry '${entry}' should not contain RTF.`,
-            });
-          }
-        }
-        // Save the value according to value type.
-        if (entryBase === 'History') {
-          const [, version, locale] = entry.split('_');
-          const loc = locale || 'en';
-          if (version) {
-            if (!r.History) r.History = [];
-            const eold = r.History.find((y) => y[0] === version);
-            const enew = eold || [version as string, {}];
-            enew[1][loc || 'en'] = value;
-            if (loc === i18next.language || (loc === 'en' && !enew[1].locale))
-              enew[1].locale = value;
-            if (!eold) r.History.push(enew);
-          }
-        } else if (entryBase === 'AudioChapters') {
-          let ac = JSON_parse(value);
-          if (Array.isArray(ac) && 'bk' in ac[0]) {
-            // Deprecated bk, ch1, ch2 API
-            ac = ac as DeprecatedAudioChaptersConf[];
-            if (
-              Object.values(C.SupportedBooks).some((bg) =>
-                bg.includes(ac[0].bk)
-              )
-            ) {
-              r.AudioChapters = readDeprecatedVerseKeyAudioConf(ac);
-            } else {
-              r.AudioChapters = readDeprecatedGenBookAudioConf(ac);
-            }
-          } else {
-            ac = ac as VerseKeyAudioConf | GenBookAudioConf;
-            if (isAudioVerseKey(ac)) {
-              r.AudioChapters = readVerseKeyAudioConf(ac);
-            } else {
-              r.AudioChapters = ac;
-            }
-          }
-        } else if (Object.keys(C.SwordConf.delimited).includes(entry)) {
-          const ent = entry as keyof typeof C.SwordConf.delimited;
-          r[ent] = value.split(C.SwordConf.delimited[ent]);
-        } else if (C.SwordConf.repeatable.includes(entry)) {
-          const ent = entry as typeof C.SwordConf.repeatable[number];
-          r[ent]?.push(value);
-        } else if (C.SwordConf.integer.includes(entry)) {
-          const ent = entry as typeof C.SwordConf.integer[number];
-          r[ent] = Number(value);
-        } else if (C.SwordConf.localization.includes(entryBase)) {
-          const ent = entryBase as typeof C.SwordConf.localization[number];
-          const loc = entry.substring(entryBase.length + 1) || 'en';
-          if (!(ent in r)) r[ent] = {};
-          const o = r[ent];
-          if (o) {
-            o[loc] = value;
-            if (loc === i18next.language || (loc === 'en' && !o.locale))
-              o.locale = value;
-          }
-        } else {
-          // default is string;
-          const rx = r as any;
-          rx[entry] = value;
-        }
-      }
-    }
-  }
-  r.xsmType = 'none';
-  if (r.ModDrv === 'audio') r.xsmType = 'XSM_audio';
-  else if (r.DataPath.endsWith('.xsm')) r.xsmType = 'XSM';
-  r.moduleType = 'Generic Books';
-  if (r.ModDrv.includes('Text')) r.moduleType = 'Biblical Texts';
-  else if (r.ModDrv.includes('Com')) r.moduleType = 'Commentaries';
-  else if (r.ModDrv.includes('LD')) r.moduleType = 'Lexicons / Dictionaries';
-  else if (r.xsmType === 'XSM_audio') r.moduleType = r.xsmType;
-  r.reports = reports.map((rp) => {
-    const nr: any = {};
-    Object.entries(rp).forEach((entry) => {
-      nr[entry[0]] = `${r.module}: ${entry[1]}`;
-    });
-    return nr;
-  });
-
-  return r;
-}
-
 // Compare \d.\d.\d type version numbers (like SWORD modules).
 // Returns -1 if v1 < v2, 1 of v1 > v2 and 0 if they are the same.
 export function versionCompare(v1: string | number, v2: string | number) {
@@ -1018,12 +884,19 @@ export function keyToDownload(downloadkey: string): Download {
   return dl as Download;
 }
 
+// Unique string signature of a particular repository.
 export function repositoryKey(r: Repository): string {
   return `[${[r.name, r.domain, r.path].join('][')}]`;
 }
 
-export function modrepKey(module: string, r: Repository): string {
-  return `[${[r.name, r.domain, r.path, module].join('][')}]`;
+// Unique string signature of a particular module in a particular repository.
+export function repositoryModuleKey(conf: SwordConfType): string {
+  const { module, sourceRepository: r, DataPath } = conf;
+  let str = `[${[r.name, r.domain, r.path, module].join('][')}]`;
+  // XSM files may have multiple config files for the same module, differentiated
+  // only by DataPath.
+  if (conf.xsmType === 'XSM') str += `[${DataPath}]`;
+  return str;
 }
 
 export function selectionToTableRows(regions: Region[]): number[] {

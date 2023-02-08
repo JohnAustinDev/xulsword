@@ -14,7 +14,7 @@ import log from '../log';
 import {
   clearPending,
   getStatePref,
-  onSetWindowState,
+  registerUpdateStateFromPref,
   windowArgument,
 } from '../rutil';
 import {
@@ -104,7 +104,7 @@ export default class ViewportWin extends React.Component {
   }
 
   componentDidMount() {
-    this.destroy.push(onSetWindowState(this, vpWindowState));
+    this.destroy.push(registerUpdateStateFromPref(this, vpWindowState));
     this.destroy.push(
       Subscription.subscribe.modulesInstalled(showNewModules.bind(this))
     );

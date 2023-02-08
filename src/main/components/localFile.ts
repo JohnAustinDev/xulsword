@@ -1,6 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
 import fs from 'fs';
 import path from 'path';
+import { pad } from '../../common';
+import Subscription from '../../subscription';
+import C from '../../constant';
+
+import type { GenBookAudioFile, GType, VerseKeyAudioFile } from '../../type';
+import type Dirs from './dirs';
 
 const FPERM = 0o666;
 // const DPERM = 0o666;
@@ -249,6 +256,8 @@ export function inlineFile(
     otf: 'font/otf',
     css: 'text/css',
     pdf: 'application/pdf',
+    mp3: 'audio/mpeg',
+    ogg: 'audio/ogg',
   } as any;
   const contentType =
     // eslint-disable-next-line no-useless-escape
@@ -258,4 +267,32 @@ export function inlineFile(
   return noHeader
     ? rawbuf.toString(encoding)
     : `data:${contentType};${encoding},${rawbuf.toString(encoding)}`;
+}
+
+export function inlineAudioFile(
+  audio: VerseKeyAudioFile | GenBookAudioFile | null
+): string {
+  if (audio) {
+    const { path: apath, module } = audio;
+    const G = Subscription.doPublish('getG') as GType[];
+    if (module && G) {
+      const file = new LocalFile(G[0].Dirs.path.xsAudio);
+      file.append(module);
+      const leaf = pad(apath.pop() || 0, 3, 0);
+      while (apath.length) {
+        const p = apath.shift() as string | number;
+        if (!Number.isNaN(Number(p))) {
+          file.append(pad(p, 3, 0));
+        } else file.append(p.toString());
+      }
+      for (let x = 0; x < C.SupportedAudio.length; x += 1) {
+        const ext = C.SupportedAudio[x];
+        const afile = file.clone().append(`${leaf}.${ext}`);
+        if (afile.exists()) {
+          return inlineFile(afile.path);
+        }
+      }
+    }
+  }
+  return '';
 }

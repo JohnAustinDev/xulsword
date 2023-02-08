@@ -235,6 +235,9 @@ function WindowRoot(props: WindowRootProps) {
   useEffect(() => {
     return Subscription.subscribe.modulesInstalled(
       (newmods: NewModulesType) => {
+        DynamicStyleSheet.update(G.Data.read('stylesheetData'));
+        Cache.clear();
+        s.reset[1](s.reset[0] + 1);
         const dialog: ReactElement[] = [];
         const cipherKeys: CipherKey[] = [];
         const setCipherKey = () => {
@@ -375,7 +378,7 @@ function WindowRoot(props: WindowRootProps) {
         id="reset"
         className={s.showPrintOverlay[0] ? 'printp' : undefined}
         onContextMenu={(e: React.SyntheticEvent) => {
-          G.Data.write(getContextData(G.i18n, e.target), 'contextData');
+          G.Data.write(getContextData(e.target), 'contextData');
         }}
       >
         {children}

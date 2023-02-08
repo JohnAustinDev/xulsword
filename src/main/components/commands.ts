@@ -14,12 +14,15 @@ import Window, { getBrowserWindows, publishSubscription } from './window';
 import Dirs from './dirs';
 
 import type {
-  LocationSKType,
+  AudioPrefType,
+  GenBookAudioFile,
+  LocationGBType,
   LocationVKType,
   NewModulesType,
   ScrollType,
   SearchType,
   TextVKType,
+  VerseKeyAudioFile,
   XulswordStatePref,
 } from '../../type';
 import type { AboutWinState } from '../../renderer/about/about';
@@ -109,6 +112,47 @@ const Commands = {
       category: 'dialog-window',
       options,
     });
+  },
+
+  playAudio(audio: VerseKeyAudioFile | GenBookAudioFile | null) {
+    let newxulsword = clone(
+      Prefs.getComplexValue('xulsword')
+    ) as XulswordStatePref;
+    if (audio) {
+      if (
+        'book' in audio &&
+        Object.values(C.SupportedBooks).some((bg) => bg.includes(audio.book))
+      ) {
+        const { book, chapter, module } = audio;
+        const tab = getTab();
+        newxulsword = this.goToLocationVK(
+          {
+            book,
+            chapter: chapter || 1,
+            verse: 1,
+            v11n: tab[module].v11n || null,
+          },
+          undefined,
+          undefined,
+          true
+        );
+      } else if ('key' in audio) {
+        const { key, module } = audio;
+        newxulsword = this.goToLocationGB(
+          {
+            module,
+            key,
+          },
+          undefined,
+          true
+        );
+      }
+      newxulsword.audio = {
+        open: true,
+        file: audio,
+      };
+    } else newxulsword.audio = { open: false, file: null };
+    Prefs.mergeValue('xulsword', newxulsword);
   },
 
   exportAudio() {
@@ -298,10 +342,11 @@ const Commands = {
     Window.open({ type: 'about', category: 'dialog-window', options });
   },
 
-  goToLocationSK(
-    location: LocationSKType,
-    scroll?: ScrollType | undefined
-  ): void {
+  goToLocationGB(
+    location: LocationGBType,
+    scroll?: ScrollType | undefined,
+    deferAction?: boolean
+  ): XulswordStatePref {
     const xulsword = Prefs.getComplexValue('xulsword') as XulswordStatePref;
     const newxulsword = clone(xulsword);
     const { panels, keys } = newxulsword;
@@ -312,25 +357,30 @@ const Commands = {
     }
     keys[p] = location.key;
     newxulsword.scroll = scroll || { verseAt: 'center' };
-    Prefs.mergeValue('xulsword', newxulsword);
+    if (!deferAction) Prefs.mergeValue('xulsword', newxulsword);
+    return newxulsword;
   },
 
   goToLocationVK(
     newlocation: LocationVKType,
-    newselection: LocationVKType,
-    newscroll?: ScrollType
-  ): void {
+    newselection?: LocationVKType,
+    newscroll?: ScrollType,
+    deferAction?: boolean
+  ): XulswordStatePref {
     // To go to a verse system location without also changing xulsword's current
     // versekey module requires this location be converted into the current v11n.
     const xulsword = Prefs.getComplexValue('xulsword') as XulswordStatePref;
     const { location } = xulsword;
     const newxulsword = clone(xulsword);
     const loc = verseKey(newlocation, location?.v11n || undefined);
-    const sel = verseKey(newselection, location?.v11n || undefined);
+    const sel = newselection
+      ? verseKey(newselection, location?.v11n || undefined)
+      : null;
     newxulsword.location = loc.location();
-    newxulsword.selection = sel.location();
+    newxulsword.selection = sel ? sel.location() : null;
     newxulsword.scroll = newscroll || { verseAt: 'center' };
-    Prefs.mergeValue('xulsword', newxulsword);
+    if (!deferAction) Prefs.mergeValue('xulsword', newxulsword);
+    return newxulsword;
   },
 };
 

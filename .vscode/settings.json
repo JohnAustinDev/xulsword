@@ -71,5 +71,6 @@
     "*.{css,sass,scss}.d.ts": true
   },
   "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
-  "cmake.sourceDirectory": "${workspaceFolder}/Cpp"
+  "cmake.sourceDirectory": "${workspaceFolder}/Cpp",
+  "emmet.excludeLanguages": ["typescriptreact"]
 }

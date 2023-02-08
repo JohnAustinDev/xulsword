@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable react/no-did-update-set-state */
 /* eslint-disable react/forbid-prop-types */
 /* eslint-disable no-continue */
@@ -40,10 +41,11 @@ import Atext from './atext';
 import './viewport.css';
 
 import type {
+  GenBookAudioFile,
   LocationVKType,
   ScrollType,
+  VerseKeyAudioFile,
   XulswordStateArgType,
-  XulswordStatePref,
 } from '../../type';
 
 const defaultProps = xulDefaultProps;
@@ -328,7 +330,6 @@ class Viewport extends React.Component implements PopupParent {
         const verse = (scroll && vs) || 1;
         locs.push(
           verseKey(
-            G.i18n,
             { book, chapter, verse, v11n },
             tov11n || undefined
           ).location()
@@ -385,6 +386,7 @@ class Viewport extends React.Component implements PopupParent {
             bookGroups={bookGroups}
             availableBooks={availableBooks}
             onCloseChooserClick={eHandler}
+            onAudioClick={audioHandler}
           />
         )}
         {chooser === 'genbook' && showingChooser && (
@@ -393,6 +395,7 @@ class Viewport extends React.Component implements PopupParent {
             panels={panels}
             keys={keys}
             xulswordStateHandler={xulswordStateHandler}
+            onAudioClick={audioHandler}
           />
         )}
 
@@ -476,6 +479,7 @@ class Viewport extends React.Component implements PopupParent {
                     noteBoxHeight={noteBoxHeight[i]}
                     maximizeNoteBox={maximizeNoteBox[i]}
                     ownWindow={ownWindow}
+                    onAudioClick={audioHandler}
                     bbDragEnd={bbDragEnd}
                     xulswordState={xulswordStateHandler}
                     onWheel={(e: SyntheticEvent) => {
@@ -507,3 +511,7 @@ Viewport.defaultProps = defaultProps;
 Viewport.propTypes = propTypes;
 
 export default Viewport;
+
+export function audioHandler(audio?: VerseKeyAudioFile | GenBookAudioFile) {
+  if (audio) G.Commands.playAudio(audio);
+}

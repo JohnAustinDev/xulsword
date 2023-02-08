@@ -12,7 +12,7 @@ import PropTypes from 'prop-types';
 import { dString } from '../../common';
 import C from '../../constant';
 import G from '../rg';
-import { clearPending, getMaxChapter } from '../rutil';
+import { audioIcon, clearPending, getMaxChapter } from '../rutil';
 import { Hbox, Vbox } from '../libxul/boxes';
 import Spacer from '../libxul/spacer';
 import {
@@ -26,7 +26,13 @@ import {
 import handlerH from './chooserH';
 import './chooser.css';
 
-import type { BookGroupType, BookType, V11nType } from '../../type';
+import type {
+  BookGroupType,
+  BookType,
+  GenBookAudioFile,
+  V11nType,
+  VerseKeyAudioFile,
+} from '../../type';
 
 const defaultProps = {
   ...xulDefaultProps,
@@ -46,6 +52,7 @@ const propTypes = {
   headingsModule: PropTypes.string,
   v11n: PropTypes.string.isRequired,
   onCloseChooserClick: PropTypes.func.isRequired,
+  onAudioClick: PropTypes.func.isRequired,
 };
 
 export interface ChooserProps extends XulProps {
@@ -56,6 +63,7 @@ export interface ChooserProps extends XulProps {
   headingsModule: string | undefined;
   v11n: V11nType;
   onCloseChooserClick: (e: any) => void;
+  onAudioClick: (audio?: VerseKeyAudioFile | GenBookAudioFile) => void;
 }
 
 export interface ChooserState {
@@ -253,8 +261,15 @@ class Chooser extends React.Component {
     const state = this.state as ChooserState;
     const { handler, rowHeight, longestBook, containerRef, sliderRef, rowRef } =
       this;
-    const { availableBooks, bookGroups, selection, v11n, onCloseChooserClick } =
-      props;
+    const {
+      availableBooks,
+      bookGroups,
+      headingsModule,
+      selection,
+      v11n,
+      onCloseChooserClick,
+      onAudioClick,
+    } = props;
     const { bookGroup, slideIndex } = state;
 
     const label: any = {};
@@ -312,6 +327,7 @@ class Chooser extends React.Component {
             <BookGroupList
               className="sizer"
               availableBooks={new Set([longestBook])}
+              headingsModule={headingsModule}
               hideUnavailableBooks
               v11n={v11n}
               domref={rowRef}
@@ -325,6 +341,7 @@ class Chooser extends React.Component {
               bookGroup={bookGroup}
               selection={selection}
               availableBooks={availableBooks}
+              headingsModule={headingsModule}
               v11n={v11n}
               domref={sliderRef}
               style={{
@@ -332,6 +349,7 @@ class Chooser extends React.Component {
                 top: `${-1 * slideIndex[bookGroup] * rowHeight}px`,
               }}
               handler={handler}
+              onAudioClick={onAudioClick}
             />
           </Vbox>
         </Hbox>
@@ -349,11 +367,13 @@ export default Chooser;
 function BookGroupList(
   props: {
     v11n: V11nType;
-    bookGroup?: BookGroupType | undefined;
-    selection?: string | undefined;
-    availableBooks?: Set<string> | undefined;
+    bookGroup?: BookGroupType;
+    selection?: string;
+    availableBooks?: Set<string>;
+    headingsModule?: string;
     hideUnavailableBooks?: boolean;
-    handler?: (e: React.SyntheticEvent) => void | undefined;
+    handler?: (e: React.SyntheticEvent) => void;
+    onAudioClick?: (audio?: VerseKeyAudioFile | GenBookAudioFile) => void;
   } & XulProps
 ) {
   const {
@@ -361,8 +381,10 @@ function BookGroupList(
     selection,
     availableBooks,
     hideUnavailableBooks,
+    headingsModule,
     v11n,
     handler,
+    onAudioClick,
   } = props;
   const listOfBookIndexes: number[] = [];
   if (bookGroup) {
@@ -386,8 +408,10 @@ function BookGroupList(
             key={bk.code}
             sName={bk.code}
             classes={classes}
+            headingsModule={headingsModule}
             v11n={v11n}
             handler={handler}
+            onAudioClick={onAudioClick}
           />
         );
       })}
@@ -398,20 +422,23 @@ BookGroupList.defaultProps = {
   bookGroup: undefined,
   selection: undefined,
   availableBooks: undefined,
+  headingsModule: undefined,
   hideUnavailableBooks: false,
   handler: undefined,
+  onAudioClick: undefined,
 };
 
 function BookGroupItem(
   props: {
     sName: string;
+    classes?: string[];
+    headingsModule?: string;
     v11n: V11nType;
-    classes?: string[] | undefined;
-    handler?: (e: React.SyntheticEvent) => void | undefined;
+    handler?: (e: React.SyntheticEvent) => void;
+    onAudioClick?: (audio?: VerseKeyAudioFile | GenBookAudioFile) => void;
   } & XulProps
 ) {
-  const { sName, classes, handler, v11n } = props;
-  const hasAudio = false; // TODO! add audio icons for available audio
+  const { sName, classes, headingsModule, handler, onAudioClick, v11n } = props;
   const c = classes || [];
   return (
     <Hbox
@@ -422,26 +449,38 @@ function BookGroupItem(
     >
       <div className="label">{G.Book[sName].name}</div>
 
-      {hasAudio && <div className="hasAudio" />}
+      {headingsModule &&
+        onAudioClick &&
+        audioIcon(headingsModule, sName, undefined, onAudioClick)}
 
       <div key="charrow" className="charrow" />
       {!classes?.includes('disabled') && (
-        <ChapterMenu bkcode={sName} v11n={v11n} handler={handler} />
+        <ChapterMenu
+          headingsModule={headingsModule}
+          bkcode={sName}
+          v11n={v11n}
+          handler={handler}
+          onAudioClick={onAudioClick}
+        />
       )}
     </Hbox>
   );
 }
 BookGroupItem.defaultProps = {
   classes: undefined,
+  headingsModule: undefined,
   handler: undefined,
+  onAudioClick: undefined,
 };
 
 function ChapterMenu(props: {
+  headingsModule?: string;
   bkcode: string;
   v11n: V11nType;
   handler?: (e: React.SyntheticEvent) => void;
+  onAudioClick?: (audio?: VerseKeyAudioFile | GenBookAudioFile) => void;
 }) {
-  const { bkcode, v11n, handler } = props;
+  const { headingsModule, bkcode, v11n, handler, onAudioClick } = props;
   const dlyhandler =
     handler && chooserCompRef
       ? delayHandler.bind(chooserCompRef)(
@@ -468,6 +507,9 @@ function ChapterMenu(props: {
             onMouseLeave={handler}
           >
             {dString(G.i18n, ch)}
+            {headingsModule &&
+              onAudioClick &&
+              audioIcon(headingsModule, bkcode, ch, onAudioClick)}
           </div>
         );
       } else {
@@ -493,5 +535,7 @@ function ChapterMenu(props: {
   );
 }
 ChapterMenu.defaultProps = {
+  headingsModule: undefined,
   handler: undefined,
+  onAudioClick: undefined,
 };

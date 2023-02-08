@@ -12,13 +12,13 @@ import {
   audioConfStrings,
   isRepoLocal,
   JSON_stringify,
-  parseSwordConf,
   randomID,
   versionCompare,
   pad,
 } from '../../common';
 import Subscription from '../../subscription';
 import C from '../../constant';
+import parseSwordConf from '../parseSwordConf';
 import Window, { getBrowserWindows } from './window';
 import LocalFile from './localFile';
 import Dirs from './dirs';
@@ -37,7 +37,6 @@ import {
 } from '../ftphttp';
 
 import type {
-  AudioFile,
   CipherKey,
   Download,
   FTPDownload,
@@ -51,6 +50,7 @@ import type {
   V11nType,
   GenBookAudioConf,
   VerseKeyAudioConf,
+  VerseKeyAudioFile,
 } from '../../type';
 
 export const CipherKeyModules: {
@@ -245,7 +245,7 @@ export function moveRemoveModule(
         const f = moddir.clone();
         f.append(conf);
         if (!f.isDirectory() && f.path.endsWith('.conf')) {
-          const c = parseSwordConf(i18n, f, f.leafName);
+          const c = parseSwordConf(f);
           if (c.module === m) {
             if (move && repositoryPath !== Dirs.path.xsAudio) {
               const tomodsd = move.clone().append('mods.d');
@@ -362,10 +362,16 @@ export async function installZIPs(
             switch (type) {
               case 'mods.d': {
                 const confstr = entry.getData().toString('utf8');
-                const conf = parseSwordConf(i18n, confstr, entry.name);
                 const dest = new LocalFile(
-                  conf.xsmType === 'XSM_audio' ? Dirs.path.xsAudio : destdir
+                  /^ModDrv\s*=\s*audio\b/m.test(confstr)
+                    ? Dirs.path.xsAudio
+                    : destdir
                 );
+                const conf = parseSwordConf({
+                  string: confstr,
+                  filename: entry.name,
+                  sourceRepository: dest.path,
+                });
                 // Look for any problems with the module itself
                 const modreports = clone(conf.reports);
                 modreports.push(...moduleUnsupported(conf));
@@ -403,18 +409,14 @@ export async function installZIPs(
                     confdest.create(LocalFile.DIRECTORY_TYPE);
                   }
                   confdest.append(entry.name);
-                  // Remove any existing module having this name unless it would be downgraded.
                   if (confdest.exists()) {
                     if (swmodpath === 'XSM_audio') {
                       // Audio is not treated as a single module but as an updatable set of audio
                       // files so just delete the conf file and it will be overwritten by the new.
                       confdest.remove();
                     } else {
-                      const existing = parseSwordConf(
-                        i18n,
-                        confdest,
-                        entry.name
-                      );
+                      // Remove any existing module having this name unless it would be downgraded.
+                      const existing = parseSwordConf(confdest);
                       const replace =
                         versionCompare(
                           conf.Version ?? 0,
@@ -481,7 +483,7 @@ export async function installZIPs(
                 if (!modreports.some((r) => r.error)) {
                   confdest.writeFile(confstr);
                   confs[conf.module] = conf;
-                  if (swmodpath !== 'XSM_audio') newmods.modules.push(conf);
+                  newmods.modules.push(conf);
                   if (conf.CipherKey === '') {
                     newmods.nokeymods.push(conf);
                   }
@@ -545,14 +547,39 @@ export async function installZIPs(
               }
 
               case 'audio': {
-                // audio/<lang-code>?/<audio-code>/<book>/001.mp3
-                // audio/<lang-code>?/<audio-code>/( 001.mp3 | 001/ )+
+                // Deprecated paths:
+                // audio/<lang-code>/<audio-code>/<book>/001.mp3
+                // audio/<lang-code>/<audio-code>/001 Title/001.mp3
+                //
+                // New paths:
+                // audio/<audio-code>/<book>/001.mp3 (000.mp3 is book introduction)
+                // audio/<audio-code>/000/.../000.mp3
+                //
+                // NOTES:
+                // - Deprecated file indexes start at 1, but new indexes start at 0, with
+                // the single exception of verse-key chapters which start at 1 to match
+                // actual chapter numbers.
+                // - Deprecated system is detected if <lang-code> is present in the path.
+                // - New parent node audio files are different between verse-key and general-
+                // book systems: the verse-key parent (book introduction) audio file is a
+                // 000.mp3 child, but general-book parent audio is the nnn.mp3 sibling to
+                // the nnn parent directory.
+                //
+                // Convert from deprecated to new:
+                // - Verse-key systems are the same, just remove the lang-code.
+                // - General-book also needs lang-code removed from path.
+                // - General-book needs a 000 root directory inserted, to match what is
+                // actually in Children's Bible SWORD modules (the only GenBook audio
+                // published so far).
+                // - General-book needs 1 to be subtracted from file indexes, and any title
+                // to be removed.
                 const audio = Dirs.xsAudio;
                 const pobj = fpath.posix.parse(entry.entryName);
-                const audiotype = pobj.ext.substring(1).toLowerCase();
-                const dirs = pobj.dir.split('/');
+                let dirs = pobj.dir.split('/');
+                let chapter = Number(pobj.name.replace(/^(\d+).*?$/, '$1'));
                 dirs.shift(); // remove ./audio
-                // Zip file may have lang-code in path, so check and remove.
+                let deprecatedZip = false;
+                // Deprecated Zip files have lang-code in the path, so check and remove.
                 if (
                   dirs.findIndex(
                     (d) =>
@@ -560,101 +587,87 @@ export async function installZIPs(
                         en[1].includes(d)
                       ) || /^\d+/.test(d)
                   ) === 2
-                )
-                  dirs.shift();
-                let audioCode = dirs.shift();
-                if (
-                  Object.entries(C.SupportedBooks).find((en) =>
-                    en[1].includes(dirs[0])
-                  )
                 ) {
-                  // VerseKey audio files...
-                  const chapter = Number(pobj.name.replace(/^0+(?!$)/, ''));
-                  const book = dirs[0];
-                  if (audioCode && book && !Number.isNaN(Number(chapter))) {
-                    audio.append(audioCode);
-                    if (!audio.exists()) {
-                      audio.create(LocalFile.DIRECTORY_TYPE);
-                    }
-                    audio.append(book);
-                    if (!audio.exists()) {
-                      audio.create(LocalFile.DIRECTORY_TYPE);
-                    }
-                    audio.append(entry.name);
+                  dirs.shift();
+                  deprecatedZip = true;
+                }
+                let audioCode = dirs[0];
+                // For some reason path-audioCode case might not always
+                // match what is in the conf file, so use the conf file value.
+                const conf = Object.values(confs).pop();
+                if (conf) audioCode = conf.module;
+                dirs[0] = audioCode;
+                const isVerseKey = Object.values(C.SupportedBooks).some((bg) =>
+                  bg.includes(dirs[1])
+                );
+                const book = dirs[1];
+                // Convert deprecated GenBook path to new form.
+                if (!isVerseKey && deprecatedZip) {
+                  chapter -= 1;
+                  dirs = dirs.map((d, ix) =>
+                    ix === 0
+                      ? d
+                      : pad(Number(d.replace(/^(\d+).*?$/, '$1')) - 1, 3, 0)
+                  );
+                  dirs.splice(1, 0, '000');
+                }
+                // Create parent directories
+                const gbkeys: string[] = [];
+                while (dirs.length) {
+                  const subname = dirs.shift() as string;
+                  audio.append(subname);
+                  gbkeys.push(subname);
+                  if (!audio.exists()) {
+                    audio.create(LocalFile.DIRECTORY_TYPE);
+                  }
+                }
+                if (isVerseKey && audioCode) {
+                  // VerseKey audio file...
+                  if (audioCode && book && !Number.isNaN(chapter)) {
+                    audio.append(pad(chapter, 3, 0) + pobj.ext);
                     audio.writeFile(entry.getData());
-                    const audiofile: AudioFile = {
-                      audioCode,
+                    const audiofile: VerseKeyAudioFile = {
+                      module: audioCode,
                       book,
                       chapter,
-                      file: pobj.base,
-                      type: audiotype,
+                      path: [book, chapter],
                     };
                     newmods.audio.push(audiofile);
-                  } else audioCode = undefined;
-                } else {
-                  // GenBook audio files...
-                  const path = pobj.dir.split('/');
-                  path.shift(); // remove ./audio
-                  path.shift(); // don't need language code
-                  [audioCode] = path;
-                  // For some reason audioCode case might not always
-                  // match the conf file, so use the conf file value.
-                  const conf = Object.values(confs).pop();
-                  if (conf) audioCode = conf.module;
-                  path[0] = audioCode;
-                  const m = pobj.name.match(/^(\d+)/);
-                  if (audioCode && m) {
-                    while (path.length) {
-                      let subname = path.shift();
-                      if (subname) {
-                        subname = pad(
-                          subname.replace(/^(\d+).*?$/, '$1'),
-                          3,
-                          0
-                        );
-                        audio.append(subname);
-                        if (!audio.exists()) {
-                          audio.create(LocalFile.DIRECTORY_TYPE);
-                        }
-                      }
-                    }
-                    const fname = pad(m[1], 3, 0);
-                    audio.append(fname + pobj.ext);
-                    audio.writeFile(entry.getData());
-                    const n: GenBookAudioFile = {
-                      genbook: true,
-                      audioCode,
-                      path,
-                      file: pobj.base,
-                      type: audiotype,
-                    };
-                    newmods.audio.push(n);
-                  } else audioCode = undefined;
+                  } else audioCode = '';
+                } else if (audioCode) {
+                  // GenBook audio file...
+                  const fname = pad(chapter, 3, 0);
+                  gbkeys.push(fname);
+                  audio.append(fname + pobj.ext);
+                  audio.writeFile(entry.getData());
+                  const audioFile: GenBookAudioFile = {
+                    module: audioCode,
+                    key: gbkeys.join(C.GBKSEP),
+                    path: gbkeys.map((k) => Number(k)),
+                  };
+                  newmods.audio.push(audioFile);
                 }
-                // Modify the GenBook config file to show the new audio.
-                if (audioCode) {
-                  const conf = Object.values(confs).pop();
-                  if (conf) {
-                    const confFile = Dirs.xsAudio;
-                    confFile.append('mods.d');
-                    confFile.append(conf.filename);
-                    if (confFile.exists()) {
-                      const dataPath = `./${audioCode}`;
-                      let str = confFile.readFile();
-                      str = str.replace(
-                        /^DataPath\b.*$/m,
-                        `DataPath=${dataPath}`
-                      );
-                      const audioChapters = scanAudio(
-                        Dirs.xsAudio.path,
-                        dataPath
-                      );
-                      str = str.replace(
-                        /^AudioChapters\b.*$/m,
-                        `AudioChapters=${JSON_stringify(audioChapters)}`
-                      );
-                      confFile.writeFile(str);
-                    }
+                // Modify the config file to show the new audio.
+                if (audioCode && conf) {
+                  const confFile = Dirs.xsAudio;
+                  confFile.append('mods.d');
+                  confFile.append(conf.filename);
+                  if (confFile.exists()) {
+                    const dataPath = `./${audioCode}`;
+                    let str = confFile.readFile();
+                    str = str.replace(
+                      /^DataPath\b.*$/m,
+                      `DataPath=${dataPath}`
+                    );
+                    const audioChapters = scanAudio(
+                      Dirs.xsAudio.path,
+                      dataPath
+                    );
+                    str = str.replace(
+                      /^AudioChapters\b.*$/m,
+                      `AudioChapters=${JSON_stringify(audioChapters)}`
+                    );
+                    confFile.writeFile(str);
                   }
                 }
                 break;
@@ -785,12 +798,11 @@ async function downloadRepoConfs(
     if (header.name.endsWith('.conf')) {
       const rconf = {} as DownloadRepoConfsType;
       rconf.strconf = buffer.toString('utf8');
-      const conf = parseSwordConf(
-        i18n,
-        rconf.strconf,
-        header.name.replace(/^.*?mods\.d\//, '')
-      );
-      conf.sourceRepository = manifest;
+      const conf = parseSwordConf({
+        string: rconf.strconf,
+        filename: header.name.replace(/^.*?mods\.d\//, ''),
+        sourceRepository: manifest,
+      });
       rconf.conf = conf;
       rconf.module = conf.module;
       repositoryConfs.push(rconf);
@@ -870,8 +882,7 @@ const Module = {
                   modsd.directoryEntries.forEach((de) => {
                     const f = modsd.clone().append(de);
                     if (!f.isDirectory() && f.path.endsWith('.conf')) {
-                      const conf = parseSwordConf(i18n, f, de);
-                      conf.sourceRepository = manifest;
+                      const conf = parseSwordConf(f);
                       confs.push(conf);
                     }
                   });
@@ -1020,7 +1031,11 @@ const Module = {
       log.silly(er);
       return Promise.resolve(er.message);
     }
-    const conf = parseSwordConf(i18n, confbuf.toString('utf8'), confname);
+    const conf = parseSwordConf({
+      string: confbuf.toString('utf8'),
+      filename: confname,
+      sourceRepository: download,
+    });
     // Download module contents
     const datapath = confModulePath(conf.DataPath);
     if (datapath) {

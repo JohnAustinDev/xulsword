@@ -14,7 +14,7 @@ import renderToRoot from '../renderer';
 import log from '../log';
 import {
   verseKey,
-  onSetWindowState,
+  registerUpdateStateFromPref,
   getStatePref,
   clearPending,
 } from '../rutil';
@@ -131,7 +131,7 @@ export default class Xulsword extends React.Component {
   }
 
   componentDidMount() {
-    this.destroy.push(onSetWindowState(this));
+    this.destroy.push(registerUpdateStateFromPref(this));
     this.destroy.push(
       Subscription.subscribe.modulesInstalled(showNewModules.bind(this))
     );
@@ -186,11 +186,7 @@ export default class Xulsword extends React.Component {
     // before comparing so duplicate history is not recorded when v11n
     // switches with a module having a different v11n.
     if (history[historyIndex]) {
-      const locvk = verseKey(
-        G.i18n,
-        history[historyIndex].location,
-        location.v11n
-      );
+      const locvk = verseKey(history[historyIndex].location, location.v11n);
       if (location.book === locvk.book && location.chapter === locvk.chapter)
         return;
     }
@@ -221,10 +217,8 @@ export default class Xulsword extends React.Component {
         // To update state to a history index without changing the selected
         // modules, history needs to be converted to the current v11n.
         const { location: hloc, selection: hsel } = history[index];
-        const newloc = verseKey(G.i18n, hloc, location.v11n).location();
-        const newsel = hsel
-          ? verseKey(G.i18n, hsel, location.v11n).location()
-          : null;
+        const newloc = verseKey(hloc, location.v11n).location();
+        const newsel = hsel ? verseKey(hsel, location.v11n).location() : null;
         if (promote) {
           const targ = history.splice(index, 1);
           history.splice(0, 0, targ[0]);
@@ -255,7 +249,7 @@ export default class Xulsword extends React.Component {
       <Menupopup>
         {items.map((histitem, i) => {
           const { location: hloc, selection: hsel } = histitem;
-          const versekey = verseKey(G.i18n, hloc, location.v11n);
+          const versekey = verseKey(hloc, location.v11n);
           if (versekey.verse === 1) {
             versekey.verse = null;
             versekey.lastverse = null;
@@ -320,6 +314,7 @@ export default class Xulsword extends React.Component {
       showChooser,
       bsreset,
       vpreset,
+      audio,
     } = state;
 
     // Book options for Bookselect dropdown
@@ -361,7 +356,7 @@ export default class Xulsword extends React.Component {
           <Spacer className="start-spacer" orient="vertical" />
 
           <Vbox id="navigator-tool" pack="start">
-            {true && (
+            {!audio.open && (
               <Hbox id="historyButtons" align="center">
                 <Box flex="40%" title={G.i18n.t('history.back.tooltip')}>
                   <Button
@@ -400,10 +395,19 @@ export default class Xulsword extends React.Component {
                 </Box>
               </Hbox>
             )}
-            {false && (
+            {audio.open && (
               <Hbox id="player" pack="start" align="center">
-                <audio controls onEnded={handler} onCanPlay={handler} />
-                <Button id="closeplayer" onClick={handler}>
+                <Vbox flex="3">
+                  <div>
+                    <audio
+                      controls
+                      onEnded={handler}
+                      onCanPlay={handler}
+                      src={G.inlineAudioFile(audio.file)}
+                    />
+                  </div>
+                </Vbox>
+                <Button id="closeplayer" flex="1" onClick={handler}>
                   {G.i18n.t('close.label')}
                 </Button>
               </Hbox>

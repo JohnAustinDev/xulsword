@@ -1,0 +1,7 @@
+.select-parent.hide {
+  display: none;
+}
+
+.gbselect select {
+  margin: 5px;
+}

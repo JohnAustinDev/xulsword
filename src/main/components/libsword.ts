@@ -26,16 +26,18 @@ const { libxulsword } = require('libxulsword');
 
 // Convert the raw GenBookTOC (output of LibSword.getGenBookTableOfContents())
 // into an array of C.GBKSEP delimited keys.
-function readGenBookLibSword(toc: GenBookTOC, parent?: string): GenBookKeys {
+function readGenBookLibSword(toc: GenBookTOC, parent?: string[]): GenBookKeys {
   if (typeof toc !== 'object') return [];
   const r: string[] = [];
-  const p = parent || '';
+  const p = parent || [];
   Object.entries(toc).forEach((entry) => {
     const [chapter, sub] = entry;
-    const c = p ? `${p}${C.GBKSEP}${chapter}` : chapter;
+    const c = p.slice();
+    c.push(chapter);
     if (sub === 1) {
-      r.push(c);
+      r.push(c.join(C.GBKSEP));
     } else {
+      r.push(c.concat('').join(C.GBKSEP));
       r.push(...readGenBookLibSword(sub, c));
     }
   });
@@ -90,7 +92,7 @@ const LibSword = {
 
     log.verbose('Initializing libsword...');
 
-    this.moduleDirectories = [Dirs.path.xsModsUser, Dirs.path.xsModsCommon];
+    this.moduleDirectories = [Dirs.path.xsModsCommon, Dirs.path.xsModsUser];
     const repos = Prefs.getComplexValue(
       'moduleManager.repositories'
     ) as ManagerStatePref['repositories'];

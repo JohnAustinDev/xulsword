@@ -192,6 +192,7 @@ const openMainWindow = () => {
   G.Data.write(BuildInfo, 'buildInfo');
 
   const subscriptions: (() => void)[] = [];
+  subscriptions.push(Subscription.doSubscribe('getG', () => G));
   subscriptions.push(Subscription.subscribe.setPref(pushPrefsToWindows));
   subscriptions.push(Subscription.subscribe.setPref(pushPrefsToMenu));
   subscriptions.push(
@@ -228,9 +229,11 @@ const openMainWindow = () => {
         if (!newmods.modules.length && !getTabs().length) {
           setViewportTabs(-1, 'all', 'hide', true);
         } else {
-          newmods.modules.forEach((conf) => {
-            setViewportTabs(-1, conf.module, 'show', true);
-          });
+          newmods.modules
+            .filter((c) => c.xsmType !== 'XSM_audio')
+            .forEach((conf) => {
+              setViewportTabs(-1, conf.module, 'show', true);
+            });
         }
         if (callingWinID) {
           setTimeout(() => {

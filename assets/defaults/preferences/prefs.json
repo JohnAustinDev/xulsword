@@ -39,6 +39,10 @@
 
     "keys": [],
 
+    "audio": {
+      "open": false,
+      "file": null
+    },
     "history": [],
     "historyIndex": 0,
 

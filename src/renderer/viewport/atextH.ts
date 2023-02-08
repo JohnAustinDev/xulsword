@@ -96,17 +96,6 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
           }
           break;
 
-        case 'listenlink':
-          if (p && p.mod && p.ch && p.bk) {
-            /* TODO!
-            XS_window.Player.version = p.mod;
-            XS_window.Player.chapter = p.ch;
-            XS_window.Player.book = p.bk;
-            XS_window.beginAudioPlayer();
-            */
-          }
-          break;
-
         case 'versePerLineButton':
           this.setState((prevState: AtextStateType) => {
             const { versePerLine } = prevState;

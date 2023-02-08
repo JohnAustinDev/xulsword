@@ -9,7 +9,6 @@ import {
   downloadKey,
   isRepoLocal,
   keyToDownload,
-  modrepKey,
   ofClass,
   repositoryKey,
   tableRowsToSelection,
@@ -21,6 +20,10 @@ import {
   genBookAudio2TreeNodes,
   getDeprecatedVerseKeyAudioConf,
   getDeprecatedGenBookAudioConf,
+  gbPaths,
+  diff,
+  builtinRepos,
+  repositoryModuleKey,
 } from '../../common';
 import C from '../../constant';
 import G from '../rg';
@@ -95,37 +98,6 @@ export type GenBookDialog = {
   chapters: GenBookAudioConf;
   callback: (result: SelectVKMType | SelectGBMType | null) => void;
 };
-
-// These local repositories cannot be disabled, deleted or changed.
-// Implemented as a function to allow G.i18n to initialize.
-export function builtinRepos(): Repository[] {
-  return [
-    {
-      name: G.i18n.t('shared.label'),
-      domain: 'file://',
-      path: G.Dirs.path.xsModsCommon,
-      builtin: true,
-      disabled: false,
-      custom: false,
-    },
-    {
-      name: G.i18n.t('programTitle', { ns: 'branding' }),
-      domain: 'file://',
-      path: G.Dirs.path.xsModsUser,
-      builtin: true,
-      disabled: false,
-      custom: false,
-    },
-    {
-      name: G.i18n.t('audio.label'),
-      domain: 'file://',
-      path: G.Dirs.path.xsAudio,
-      builtin: true,
-      disabled: false,
-      custom: false,
-    },
-  ];
-}
 
 export const LanguageTableHeadings = [''];
 
@@ -540,6 +512,7 @@ export async function eventHandler(
             setTableState(this, 'module', { selection: [] });
             setTableState(this, 'repository', { selection: [] });
             const state = this.state as ManagerState;
+            const { repositories } = state;
             const { repository: repotable } = state.tables;
             const { moduleData } = Saved;
             // Get a list of all currently installed modules (those found in any
@@ -553,44 +526,42 @@ export async function eventHandler(
               }
             });
 
-            // Remove modules
-            Object.values(moduleData).forEach((row) => {
-              if (row[ModCol.iInstalled] === OFF) {
-                const module = row[ModCol.iModule];
-                const { repo } = row[ModCol.iInfo];
-                const modrepkey = modrepKey(module, repo);
-                const lconf = installed.find(
-                  (c) =>
-                    c.sourceRepository &&
-                    modrepKey(c.module, c.sourceRepository) === modrepkey
-                );
-                if (lconf) {
-                  removeMods.push({
-                    name: lconf.module,
-                    repo: lconf.sourceRepository as Repository,
-                  });
+            // Remove modules (only when there are no repositories)
+            if (!repositories) {
+              Object.values(moduleData).forEach((row) => {
+                if (row[ModCol.iInstalled] === OFF) {
+                  const modkey = repositoryModuleKey(row[ModCol.iInfo].conf);
+                  const lconf = installed.find(
+                    (c) => repositoryModuleKey(c) === modkey
+                  );
+                  if (lconf) {
+                    removeMods.push({
+                      name: lconf.module,
+                      repo: lconf.sourceRepository as Repository,
+                    });
+                  }
                 }
-              }
-            });
-            const removeResult = await G.Module.remove(removeMods);
-            removeResult.forEach((r, i) => {
-              if (!r) log.warn(`Failed to remove module: ${removeMods[i]}`);
-            });
+              });
+              const removeResult = await G.Module.remove(removeMods);
+              removeResult.forEach((r, i) => {
+                if (!r) log.warn(`Failed to remove module: ${removeMods[i]}`);
+              });
+            }
 
             // Move modules (between the shared and xulsword builtins).
             Object.values(moduleData).forEach((row) => {
               if (row[ModCol.iInfo].conf.xsmType !== 'XSM_audio') {
-                const { shared, repo } = row[ModCol.iInfo];
+                const { shared } = row[ModCol.iInfo];
                 const module = row[ModCol.iModule];
                 if (!removeMods.map((m) => m.name).includes(module)) {
-                  const modrepok = modrepKey(module, repo);
+                  const modkey = repositoryModuleKey(row[ModCol.iInfo].conf);
                   const conf = installed.find(
-                    (c) =>
-                      c.sourceRepository &&
-                      modrepKey(c.module, c.sourceRepository) === modrepok
+                    (c) => repositoryModuleKey(c) === modkey
                   );
-                  if (conf?.sourceRepository?.builtin) {
-                    const toRepo = builtinRepos()[shared ? 0 : 1];
+                  if (conf?.sourceRepository.builtin) {
+                    const toRepo = builtinRepos(G.i18n, G.Dirs.path)[
+                      shared ? 0 : 1
+                    ];
                     if (
                       conf &&
                       repositoryKey(conf.sourceRepository) !==
@@ -628,10 +599,9 @@ export async function eventHandler(
                 if (key && moduleData[key][ModCol.iInstalled] === ON) {
                   install.push({
                     download: downloads[i],
-                    toRepo:
-                      builtinRepos()[
-                        moduleData[key][ModCol.iInfo].shared ? 0 : 1
-                      ],
+                    toRepo: builtinRepos(G.i18n, G.Dirs.path)[
+                      moduleData[key][ModCol.iInfo].shared ? 0 : 1
+                    ],
                   });
                 }
               }
@@ -1014,7 +984,7 @@ export function handleListings(
   checkForModuleUpdates(xthis, listing);
 }
 
-function geModuleRowXsmSiblings(modrepkey: string): string[] {
+export function getModuleRowXsmSiblings(modrepkey: string): string[] {
   const { moduleData } = Saved;
   const data = (modrepkey in moduleData && moduleData[modrepkey]) ?? null;
   if (!data) return [];
@@ -1073,9 +1043,7 @@ async function promptAudioChapters(
       let audio: SelectVKMType | SelectGBMType | null = null;
       audio = await new Promise((resolve) => {
         // Subtract audio files that are already installed.
-        const installed = G.AudioConf.find(
-          (c) => c.xsmType === 'XSM_audio' && c.module === conf.module
-        )?.AudioChapters;
+        const installed = G.AudioConfs[conf.module]?.AudioChapters;
         const dialog: Partial<VersekeyDialog> | Partial<GenBookDialog> = {
           conf,
           callback: (result) => resolve(result),
@@ -1089,6 +1057,7 @@ async function promptAudioChapters(
           const books = Object.entries(ac)
             .filter((e) => e[1].some((v) => v))
             .map((e) => e[0]);
+          if (!books.length) return resolve(null);
           d.type = 'versekey';
           d.chapters = ac;
           d.initial = {
@@ -1116,17 +1085,19 @@ async function promptAudioChapters(
           ac = installed
             ? subtractGenBookAudioChapters(ac, installed as GenBookAudioConf)
             : ac;
+          if (!Object.keys(ac).length) return resolve(null);
+          const paths =
+            conf.module in G.Tab
+              ? gbPaths(G.LibSword.getGenBookTableOfContents(conf.module))
+              : {};
           d.type = 'genbook';
           d.selection = {
             gbmod: conf.module,
             parent: '',
             children: [],
           };
-          const options = {} as GenBookDialog['options'];
-          if (conf.module in G.Tab) {
-            options.gbmods = [conf.module];
-          } else {
-            options.gbmodNodeLists = [
+          d.options = {
+            gbmodNodeLists: [
               {
                 module: conf.module,
                 label: conf.Description?.locale || conf.module,
@@ -1134,20 +1105,30 @@ async function promptAudioChapters(
                 nodes: forEachNode(
                   genBookAudio2TreeNodes(ac, conf.module),
                   (n) => {
-                    n.label = n.label.toString().replace(/^\d+\s*(.*?)$/, '$1');
+                    const path = n.id
+                      .toString()
+                      .split(C.GBKSEP)
+                      .filter(Boolean)
+                      .map((s) => Number(s.replace(/^(\d+).*?$/, '$1')));
+                    const entry = Object.entries(paths).find(
+                      (e) => !diff(e[1], path)
+                    );
+                    const keys = (entry ? entry[0] : '').split(C.GBKSEP);
+                    let label = '';
+                    while (keys.length && !label) label = keys.pop() || '';
+                    n.label =
+                      label || n.label.toString().replace(/^\d+\s(.*?)$/, '$1');
                   }
                 ),
               },
-            ];
-          }
-          d.options = options;
+            ],
+          };
         }
         const d = dialog as VersekeyDialog | GenBookDialog;
-        xthis.sState((prevState) => {
-          const { showAudioDialog } = prevState;
-          showAudioDialog.push(d);
-          return { showAudioDialog };
-        });
+        const state = xthis.state as ManagerState;
+        const { showAudioDialog } = state;
+        showAudioDialog.push(d);
+        return xthis.setState({ showAudioDialog });
       });
       if (audio) {
         // TODO!: Implement swordzip API on server.
@@ -1198,15 +1179,12 @@ export function download(xthis: ModuleManager, rows: number[]): void {
   rows.forEach(async (row) => {
     const drow = modtable.data[row];
     if (drow) {
-      const modrepkey = modrepKey(
-        drow[ModCol.iModule],
-        drow[ModCol.iInfo].repo
-      );
-      const modrepkeys = geModuleRowXsmSiblings(modrepkey);
-      const dlobj = getModuleDownload(modrepkey);
+      const modkey = repositoryModuleKey(drow[ModCol.iInfo].conf);
+      const modkeys = getModuleRowXsmSiblings(modkey);
+      const dlobj = getModuleDownload(modkey);
       if (dlobj) {
         const { moduleData } = Saved;
-        modrepkeys.forEach((k) => {
+        modkeys.forEach((k) => {
           moduleData[k][ModCol.iInfo].loading = loading(ModCol.iInstalled);
         });
         if (
@@ -1221,7 +1199,7 @@ export function download(xthis: ModuleManager, rows: number[]): void {
             if (urlfrag) dlobj.http += urlfrag;
             else throw new Error(C.UI.Manager.cancelMsg);
           } catch (er) {
-            handleError(xthis, er, [modrepkey]);
+            handleError(xthis, er, [modkey]);
             return;
           }
         }
@@ -1229,7 +1207,7 @@ export function download(xthis: ModuleManager, rows: number[]): void {
           const downloadkey = downloadKey(dlobj);
           Downloads[downloadkey] = G.Module.download(dlobj);
           const dl = await Downloads[downloadkey];
-          modrepkeys.forEach((k) => {
+          modkeys.forEach((k) => {
             moduleData[k][ModCol.iInfo].loading = false;
           });
           let newintent: Intent = Intent.NONE;
@@ -1244,16 +1222,16 @@ export function download(xthis: ModuleManager, rows: number[]): void {
             }
           } else if (dl > 0) {
             newintent = Intent.SUCCESS;
-            modrepkeys.forEach((k) => {
+            modkeys.forEach((k) => {
               moduleData[k][ModCol.iInstalled] = ON;
             });
           } else {
             newintent = Intent.WARNING;
-            modrepkeys.forEach((k) => {
+            modkeys.forEach((k) => {
               moduleData[k][ModCol.iInstalled] = OFF;
             });
           }
-          modrepkeys.forEach((k) => {
+          modkeys.forEach((k) => {
             moduleData[k][ModCol.iInfo].intent = intent(
               ModCol.iInstalled,
               newintent
@@ -1261,7 +1239,7 @@ export function download(xthis: ModuleManager, rows: number[]): void {
           });
           setTableState(xthis, 'module', null, modtable.data, true);
         } catch (er) {
-          handleError(xthis, er, modrepkeys);
+          handleError(xthis, er, modkeys);
         }
       }
     }
@@ -1423,7 +1401,7 @@ function modtableUpdate(
   xthis: ModuleManager,
   on: boolean | boolean[],
   moduleDataRowIndexes: number[],
-  isInstalled = false
+  iRemove = false
 ) {
   const state = xthis.state as ManagerState;
   const { module: modtable } = state.tables;
@@ -1435,7 +1413,7 @@ function modtableUpdate(
         row[ModCol.iRemove] = OFF;
         if (row[ModCol.iInfo].loading) {
           // if installing a module that's loading, ignore and do nothing
-        } else if (isInstalled || isRepoLocal(row[ModCol.iInfo].repo)) {
+        } else if (iRemove || isRepoLocal(row[ModCol.iInfo].repo)) {
           // if installing a module is already installed or downloaded, just check the installed box
           row[ModCol.iInstalled] = ON;
           // otherwise download the module
@@ -1444,7 +1422,7 @@ function modtableUpdate(
         // if uninstalling a module that is loading, cancel the download
         row[ModCol.iInfo].intent = intent(ModCol.iInstalled, 'warning');
         const dl = getModuleDownload(
-          modrepKey(row[ModCol.iModule], row[ModCol.iInfo].repo)
+          repositoryModuleKey(row[ModCol.iInfo].conf)
         );
         if (dl) cancel.push(dl);
       } else {
@@ -1521,7 +1499,7 @@ export function selectionToDataRows(
 
 // Create a new repository table row from a Repository object.
 export function repositoryToRow(repo: Repository): TRepositoryTableRow {
-  const on = builtinRepos()
+  const on = builtinRepos(G.i18n, G.Dirs.path)
     .map((r) => repositoryKey(r))
     .includes(repositoryKey(repo))
     ? ALWAYS_ON
@@ -1533,6 +1511,33 @@ export function repositoryToRow(repo: Repository): TRepositoryTableRow {
     repo.disabled ? on : OFF,
     { repo },
   ];
+}
+
+export function allAudioInstalled(conf: SwordConfType): boolean {
+  let allInstalled = false;
+  const remoteAudioChapters = conf.AudioChapters;
+  const localAudioChapters = G.AudioConfs[conf.module]?.AudioChapters;
+  if (
+    !remoteAudioChapters ||
+    !localAudioChapters ||
+    (isAudioVerseKey(remoteAudioChapters) &&
+      !Object.keys(
+        subtractVerseKeyAudioChapters(
+          remoteAudioChapters as VerseKeyAudio,
+          localAudioChapters as VerseKeyAudio
+        )
+      ).length) ||
+    (!isAudioVerseKey(remoteAudioChapters) &&
+      !Object.keys(
+        subtractGenBookAudioChapters(
+          remoteAudioChapters as GenBookAudioConf,
+          localAudioChapters as GenBookAudioConf
+        )
+      ).length)
+  ) {
+    allInstalled = true;
+  }
+  return allInstalled;
 }
 
 // The following functions return custom callbacks meant to be sent

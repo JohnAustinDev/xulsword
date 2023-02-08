@@ -4,7 +4,6 @@ import Cache from '../../cache';
 import { dString, escapeRE, stringHash } from '../../common';
 import { getElementInfo } from '../../libswordElemInfo';
 import G from '../rg';
-import log from '../log';
 import {
   getNoteHTML,
   getChapterHeading,
@@ -327,8 +326,11 @@ function dictionaryChange(atext: HTMLElement, next: boolean): string | null {
 }
 
 // Change a general book to the previous or next chapter.
-function genbookChange(atext: HTMLElement, next: boolean): string | null {
-  const { module, modkey } = atext.dataset;
+export function genbookChange(
+  module: string,
+  modkey: string,
+  next: boolean
+): string | null {
   let tocs: string[] = [];
   if (module) {
     if (!Cache.has('genbkTOC', module)) {
@@ -404,12 +406,18 @@ export function textChange(
       } else return null;
       break;
     }
-    case C.GENBOOK:
+    case C.GENBOOK: {
+      const { module: m, modkey } = atext.dataset;
+      if (m && modkey) {
+        const key = genbookChange(m, modkey, next);
+        if (key) {
+          newPinProps.modkey = key;
+        } else return null;
+      }
+      break;
+    }
     case C.DICTIONARY: {
-      const key =
-        type === C.DICTIONARY
-          ? dictionaryChange(atext, next)
-          : genbookChange(atext, next);
+      const key = dictionaryChange(atext, next);
       if (key) {
         newPinProps.modkey = key;
       } else return null;

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable jsx-a11y/control-has-associated-label */
 /* eslint-disable react/no-did-update-set-state */
 /* eslint-disable no-nested-ternary */
@@ -9,8 +10,8 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import type { TreeNodeInfo } from '@blueprintjs/core';
-import { clone, diff, genBookTreeNodes } from '../../common';
+import { TreeNodeInfo } from '@blueprintjs/core';
+import { clone, diff, genBookTreeNodes, keep, ofClass } from '../../common';
 import C from '../../constant';
 import G from '../rg';
 import log from '../log';
@@ -24,8 +25,8 @@ import './genbookselect.css';
 
 export type SelectGBMType = {
   gbmod: string;
-  parent: string;
-  children: string[];
+  parent: string; // full length gbkey
+  children: string[]; // full length gbkeys
 };
 
 export type GBModNodeList = {
@@ -54,6 +55,7 @@ export interface GBSelectProps extends XulProps {
   gbmods?: string[];
   gbmodNodeLists?: GBModNodeList[];
   enableMultipleSelection?: boolean;
+  enableParentSelection?: boolean;
   disabled?: boolean;
   onSelection?: (selection: SelectGBMType, id?: string) => void;
 }
@@ -65,6 +67,7 @@ const defaultProps = {
   gbmods: undefined,
   gbmodNodeLists: undefined,
   enableMultipleSelection: false,
+  enableParentSelection: false,
   disabled: undefined,
   onSelection: undefined,
 };
@@ -76,6 +79,7 @@ const propTypes = {
   gbmods: PropTypes.arrayOf(PropTypes.string),
   gbmodNodeLists: PropTypes.arrayOf(PropTypes.object),
   enableMultipleSelection: PropTypes.bool,
+  enableParentSelection: PropTypes.bool,
   disabled: PropTypes.bool,
   onSelection: PropTypes.func,
 };
@@ -111,56 +115,71 @@ class GBSelect extends React.Component {
     };
     this.state = s;
 
-    this.prevValues = s.stateGBM;
+    this.prevValues = clone(s.stateGBM);
 
     this.handler = this.handler.bind(this);
+    this.checkSelection = this.checkSelection.bind(this);
+    this.realStateGBM = this.realStateGBM.bind(this);
+    this.skipUpdate = this.skipUpdate.bind(this);
+    this.openParent = this.openParent.bind(this);
   }
 
   componentDidMount(): void {
-    const state = this.state as GBSelectState;
-    const { stateGBM } = state;
-    const { prevValues } = this;
+    const { checkSelection } = this;
+    checkSelection();
+  }
 
-    // Insure state contains initial select values
-    if (diff(stateGBM, prevValues)) {
-      this.setState({ stateGBM: prevValues });
-    }
+  componentDidUpdate(): void {
+    const { checkSelection } = this;
+    checkSelection();
   }
 
   handler(ev: React.SyntheticEvent) {
     const props = this.props as GBSelectProps;
+    const { onSelection, enableMultipleSelection } = props;
+    const { realStateGBM, skipUpdate, openParent } = this;
     switch (ev.type) {
+      case 'click':
+      case 'dblclick': {
+        const e = ev as React.MouseEvent;
+        const t = e.currentTarget as HTMLSelectElement;
+        openParent(t.value);
+        break;
+      }
       case 'change': {
         const e = ev as React.ChangeEvent<HTMLSelectElement>;
-        const { onSelection } = props;
-        const m = e.currentTarget.className.match(
-          /\b(key-(\d+)|module|children)\b/
+        const targ = ofClass(
+          ['select-module', 'select-parent', 'select-child'],
+          e.currentTarget
         );
-        if (m) {
-          const [, cls, ix] = m;
-          const i = Number(ix);
+        if (targ) {
           this.setState((prevState: GBSelectState) => {
-            const { stateGBM: s } = clone(prevState);
-            let stateGBM = s;
-            if (cls === 'module') {
+            let stateGBM = realStateGBM(prevState);
+            if (targ.type === 'select-module') {
               stateGBM = {
                 gbmod: e.target.value,
                 parent: '',
                 children: [],
               };
-            } else if (cls === 'children') {
+            } else if (targ.type === 'select-child') {
               stateGBM.children = Array.from(e.target.selectedOptions).map(
                 (o) => o.value
               );
+              if (
+                !enableMultipleSelection &&
+                e.target.value.endsWith(C.GBKSEP)
+              ) {
+                stateGBM.parent = e.target.value;
+                stateGBM.children = [];
+              }
             } else {
-              const p = stateGBM.parent.split(C.GBKSEP).slice(0, i);
-              p.push(e.target.value);
-              p.push(''); // add trailing GBSEP
-              stateGBM.parent = p.join(C.GBKSEP);
+              stateGBM.parent = e.target.value;
               stateGBM.children = [];
             }
             if (onSelection) onSelection(stateGBM, props.id);
-            return { stateGBM };
+            return skipUpdate(prevState.stateGBM, stateGBM)
+              ? null
+              : { stateGBM };
           });
         }
 
@@ -171,21 +190,50 @@ class GBSelect extends React.Component {
     }
   }
 
-  render() {
+  // Insure state and onSelection contains final select values
+  checkSelection() {
     const props = this.props as GBSelectProps;
-    const state = this.state as GBSelectState;
-    const {
-      selectGBM,
-      initialGBM,
-      gbmods: gbmodsProp,
-      gbmodNodeLists,
-      enableMultipleSelection,
-    } = props;
-    const { stateGBM } = state;
-    const { handler } = this;
+    const { onSelection } = props;
+    const { prevValues, realStateGBM } = this;
+    const stateGBM = realStateGBM();
+    if (diff(stateGBM, prevValues)) {
+      if (onSelection) onSelection(prevValues);
+      this.setState({ stateGBM: prevValues });
+    }
+  }
 
-    // Use the selectGBM child prop if initialGBM child prop is not defined.
-    // Otherwise, use the stateGBM prop.
+  openParent(id: string) {
+    const props = this.props as GBSelectProps;
+    const { onSelection } = props;
+    const { realStateGBM, skipUpdate } = this;
+    this.setState((prevState: GBSelectState) => {
+      const stateGBM = realStateGBM(prevState);
+      stateGBM.parent = id;
+      stateGBM.children = [];
+      if (onSelection) onSelection(stateGBM, props.id);
+      return skipUpdate(prevState.stateGBM, stateGBM) ? null : { stateGBM };
+    });
+  }
+
+  // Don't trigger a state update when only ignored state values change.
+  skipUpdate(prevStateGBM: SelectGBMType, newStateGBM: SelectGBMType): boolean {
+    const props = this.props as GBSelectProps;
+    const { initialGBM } = props;
+    if (initialGBM) {
+      const p = keep(prevStateGBM, initialGBM);
+      const n = keep(newStateGBM, initialGBM);
+      return !diff(p, n);
+    }
+    return true;
+  }
+
+  // Use the selectGBM child prop if initialGBM child prop is not defined.
+  // Otherwise, use the stateGBM prop.
+  realStateGBM(prevState?: Partial<GBSelectState>): SelectGBMType {
+    const props = this.props as GBSelectProps;
+    const state = clone(prevState || this.state) as GBSelectState;
+    const { selectGBM, initialGBM } = props;
+    const { stateGBM } = state;
     const selection = stateGBM;
     const checkProps = [
       'gbmod',
@@ -201,64 +249,74 @@ class GBSelect extends React.Component {
           );
       }
     });
-    const { gbmod, parent: parentx, children: childrenx } = selection;
+    return selection;
+  }
+
+  render() {
+    const props = this.props as GBSelectProps;
+    const {
+      gbmods: gbmodsProp,
+      gbmodNodeLists,
+      enableMultipleSelection,
+      enableParentSelection,
+    } = props;
+    const { realStateGBM, handler } = this;
+
+    const { gbmod, parent: parentx, children: childrenx } = realStateGBM();
 
     // Get modules to be made available for selection, and their node lists:
-    const gbms =
+    const list: GBModNodeList[] = gbmodNodeLists || [];
+    const propNodeLists = (
       gbmodsProp && !gbmodsProp.length
         ? []
-        : gbmodsProp || G.Tabs.map((t) => t.module);
-    const gbmods = gbms.filter(
-      (m) => m && m in G.Tab && G.Tab[m].type === C.GENBOOK
-    );
-    const list: GBModNodeList[] = gbmods.map((m) => {
-      return {
-        module: m,
-        label: G.Tab[m].label,
-        labelClass: G.Tab[m].labelClass,
-        nodes: genBookTreeNodes(G.LibSword.getGenBookTableOfContents(m), m),
-      };
-    });
-    if (gbmodNodeLists) list.push(...gbmodNodeLists);
+        : gbmodsProp || G.Tabs.map((t) => t.module)
+    )
+      .filter((m) => m && m in G.Tab && G.Tab[m].type === C.GENBOOK)
+      .map((m) => {
+        return {
+          module: m,
+          label: G.Tab[m].label,
+          labelClass: G.Tab[m].labelClass,
+          nodes: genBookTreeNodes(G.LibSword.getGenBookTableOfContents(m), m),
+        };
+      });
+    list.push(...propNodeLists);
 
-    // Insure selectors are shown even when there is no selection.
+    // Insure a leaf node is shown when there is no parent selection.
+    const nodes = list.find((l) => l.module === gbmod)?.nodes || [];
+    let ancestors = findAncestors(parentx, nodes);
     let parent = parentx;
     let children = childrenx;
+    if (!ancestors.length) parent = '';
     if (!parent) {
-      const nlist = list.find((l) => l.module === gbmod);
-      if (nlist) {
-        const p = nlist.nodes[0];
-        if (p) {
-          parent = p.id.toString();
-          children = [];
-        }
-      }
+      children = [];
+      parent = findParentOfFirstLeaf(nodes);
+      ancestors = findAncestors(parent, nodes);
     }
-    if (!children.length) {
-      const nlist = list.find((l) => l.module === gbmod);
-      if (nlist) {
-        const p = nlist.nodes.find((n) => n.id === parent);
-        if (p) {
-          children = p.childNodes?.map((n) => n.id.toString()) || [];
-        }
-      }
+
+    // If parent has no children, then use grandparent
+    if (!ancestors[ancestors.length - 1].childNodes?.length) {
+      ancestors.pop();
+      parent = ancestors[ancestors.length - 1].id.toString();
+      children = [];
     }
 
     // Generate all HTML select elements
     const selects: JSX.Element[] = [];
+
     // Module selector
     this.prevValues.gbmod = gbmod;
     selects.push(
       <Menulist
-        className="module"
-        key={['mod'].join('.')}
+        className="select-module"
+        key={['sm', gbmod].join('.')}
         value={gbmod}
         disabled={gbmod === list[0].module && list.length === 1}
         onChange={handler}
       >
         {list.map((x) => (
           <option
-            key={['modo', x.module, x.labelClass, x.label].join('.')}
+            key={['smop', x.module].join('.')}
             className={x.labelClass}
             value={x.module}
           >
@@ -267,87 +325,89 @@ class GBSelect extends React.Component {
         ))}
       </Menulist>
     );
-    // Parent selectors
-    const parentid = parent;
-    if (gbmod) {
-      const nlist = list.find((l) => l.module === gbmod);
-      if (nlist) {
-        this.prevValues.parent = parent;
-        selects.push(
-          ...parentid
-            .split(C.GBKSEP)
-            .filter((p, i, a) => i !== a.length - 1 || p)
-            .map((k, i, a) => (
-              <Menulist
-                className={`key-${i}`}
-                key={['key'].concat(a.slice(0, i + 1)).join('.')}
-                value={k || undefined}
-                onChange={handler}
-              >
-                {nlist.nodes
-                  .filter((n) => {
-                    const level = a.length;
-                    const nlevel = n.id
-                      .toString()
-                      .split(C.GBKSEP)
-                      .filter(
-                        (px, ix, ax) => ix !== ax.length - 1 || px
-                      ).length;
-                    return nlevel === level;
-                  })
-                  .map((n) => {
-                    const idp = n.id.toString().split(C.GBKSEP);
-                    idp.pop(); // remove undefined
-                    const id = idp.pop();
-                    const label = n.label.toString();
-                    const className = !Number.isNaN(Number(label))
-                      ? undefined
-                      : `cs-${gbmod}`;
-                    return (
-                      <option
-                        key={['keyo', className, label].join('.')}
-                        className={className}
-                        value={id}
-                      >
-                        {label}
-                      </option>
-                    );
-                  })}
-              </Menulist>
-            ))
-        );
-        // Child selector
-        const parentNode = nlist.nodes.find((n) => n.id && n.id === parent);
-        if (parentNode?.childNodes?.length) {
-          this.prevValues.children = children;
-          const value = enableMultipleSelection ? children : children[0];
-          selects.push(
-            <Menulist
-              className="children"
-              key={['ch'].join('.')}
-              multiple={!!enableMultipleSelection}
-              value={value}
-              onChange={handler}
-            >
-              {parentNode.childNodes.map((n) => {
-                const idp = n.id.toString().split(C.GBKSEP);
-                const label = idp.pop();
+    // Ancestor selectors
+    if (ancestors) {
+      this.prevValues.parent = parent;
+      selects.push(
+        ...ancestors.map((n, i) => (
+          <Menulist
+            className={[
+              'select-parent',
+              findSiblings(n.id, nodes).length === 1 ? 'hide' : '',
+            ].join(' ')}
+            key={['sp', n.id].join('.')}
+            value={n.id.toString()}
+            data-index={i}
+            onChange={handler}
+          >
+            {findSiblings(n.id, nodes).map((cn) => {
+              if (cn) {
+                const label = cn.label.toString();
                 const className = !Number.isNaN(Number(label))
                   ? undefined
                   : `cs-${gbmod}`;
                 return (
                   <option
-                    key={['cho', className, label].join('.')}
+                    key={['spop', cn.id].join('.')}
                     className={className}
-                    value={label}
+                    value={cn.id}
                   >
                     {label}
                   </option>
                 );
-              })}
-            </Menulist>
-          );
+              }
+              return null;
+            })}
+          </Menulist>
+        ))
+      );
+      // Child selector
+      const parentNode = ancestors[ancestors.length - 1];
+      const { childNodes } = parentNode;
+      if (childNodes) {
+        // Deselect any child selections which don't exist
+        if (children.some((id) => !childNodes.find((cn) => cn.id === id))) {
+          children = [];
         }
+        this.prevValues.children = children;
+        const value = enableMultipleSelection ? children : children[0];
+        selects.push(
+          <Menulist
+            className="select-child"
+            key={['ch', parentNode.id].join('.')}
+            multiple={!!enableMultipleSelection}
+            value={value}
+            onChange={handler}
+          >
+            {childNodes.map((n) => {
+              const className = !Number.isNaN(Number(n.label))
+                ? undefined
+                : `cs-${gbmod}`;
+              const clickHandler = {} as any;
+              if (
+                enableMultipleSelection &&
+                n.childNodes &&
+                n.childNodes.length
+              ) {
+                clickHandler[
+                  enableParentSelection ? 'onDoubleClick' : 'onClick'
+                ] = handler;
+              }
+              return (
+                <option
+                  key={['chop', n.id].join('.')}
+                  className={className}
+                  value={n.id}
+                  {...clickHandler}
+                >
+                  {`${n.childNodes && n.childNodes.length ? '❭ ' : ''}${
+                    n.label
+                  }`}
+                </option>
+              );
+            })}
+          </Menulist>
+        );
       }
     }
 
@@ -362,3 +422,75 @@ GBSelect.defaultProps = defaultProps;
 GBSelect.propTypes = propTypes;
 
 export default GBSelect;
+
+function findAncestors(
+  id: string | number,
+  nodes?: TreeNodeInfo[]
+): TreeNodeInfo[] {
+  let r: TreeNodeInfo[] = [];
+  if (nodes) {
+    const r1 = id.toString().split(C.GBKSEP);
+    let end = '';
+    if (!r1[r1.length - 1]) {
+      r1.pop();
+      end = C.GBKSEP;
+    }
+    const r2 = r1.map((_k, i, a) => {
+      let fid = a.slice(0, i + 1).join(C.GBKSEP);
+      fid += i === a.length - 1 ? end : C.GBKSEP;
+      const fnd = findNode(fid, nodes);
+      return fnd;
+    });
+    if (!r2.some((n) => n === undefined)) r = r2 as TreeNodeInfo[];
+  }
+  return r;
+}
+
+function findSiblings(
+  id: string | number,
+  nodes?: TreeNodeInfo[]
+): TreeNodeInfo[] {
+  if (nodes) {
+    const ancestors = findAncestors(id, nodes);
+    if (ancestors.length) {
+      ancestors.pop(); // remove self
+      const parent = ancestors.pop();
+      return parent && parent.childNodes ? parent.childNodes : nodes;
+    }
+  }
+  const self = findNode(id, nodes);
+  return self ? [self] : [];
+}
+
+function findNode(
+  id: string | number,
+  nodes?: TreeNodeInfo[]
+): TreeNodeInfo | undefined {
+  if (nodes) {
+    for (let x = 0; x < nodes.length; x += 1) {
+      if (nodes[x].id === id) return nodes[x];
+      const rc = findNode(id, nodes[x].childNodes);
+      if (rc) return rc;
+    }
+  }
+  return undefined;
+}
+
+function findParentOfFirstLeaf(nodes?: TreeNodeInfo[]): string {
+  if (nodes) {
+    const r = nodes.find(
+      (n) =>
+        n.childNodes?.length &&
+        n.childNodes?.find((cn) => !('childNodes' in cn))
+    );
+    if (r) return r.id.toString();
+    for (let x = 0; x < nodes.length; x += 1) {
+      const cn = nodes[x]?.childNodes;
+      if (cn && cn.length) {
+        const res = findParentOfFirstLeaf(cn);
+        if (res) return res;
+      }
+    }
+  }
+  return '';
+}

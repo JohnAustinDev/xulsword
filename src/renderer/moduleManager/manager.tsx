@@ -18,19 +18,21 @@ import {
   downloadKey,
   drop,
   isRepoLocal,
-  modrepKey,
   selectionToTableRows,
   repositoryKey,
   tableRowsToSelection,
   clone,
-  isAudioVerseKey,
-  subtractVerseKeyAudioChapters,
-  subtractGenBookAudioChapters,
+  builtinRepos,
+  repositoryModuleKey,
 } from '../../common';
 import C from '../../constant';
 import G from '../rg';
 import log from '../log';
-import { getStatePref, onSetWindowState, getLangReadable } from '../rutil';
+import {
+  getStatePref,
+  registerUpdateStateFromPref,
+  getLangReadable,
+} from '../rutil';
 import {
   addClass,
   xulDefaultProps,
@@ -59,14 +61,12 @@ import * as H from './managerH';
 import './manager.css';
 
 import type {
-  GenBookAudioConf,
   ModTypes,
   PrefObject,
   Repository,
   RepositoryListing,
   RowSelection,
   SwordConfType,
-  VerseKeyAudio,
 } from '../../type';
 import type {
   TLanguageTableRow,
@@ -358,7 +358,7 @@ export default class ModuleManager
       } else loadLocalRepos();
     }
 
-    this.destroy.push(onSetWindowState(this));
+    this.destroy.push(registerUpdateStateFromPref(this));
     // Instantiate progress handler
     const progressing = {
       downloads: [] as [string, number][], // [id, percent]
@@ -462,7 +462,7 @@ export default class ModuleManager
     const state = this.state as ManagerState;
     const { repositories } = state;
     let disabled: string[] | null = [];
-    let allrepos = H.builtinRepos();
+    let allrepos = builtinRepos(G.i18n, G.Dirs.path);
     if (repositories) {
       disabled = repositories.disabled;
       const { xulsword, custom } = repositories;
@@ -586,75 +586,51 @@ export default class ModuleManager
     const { repository: repotable } = state.tables;
     H.Saved.moduleLangData = { allmodules: [] };
     const { moduleData, moduleLangData, repositoryListings } = H.Saved;
-    const enabledExternRepoMods: { [modunique: string]: string } = {};
-    const enabledXulswordRepoMods: { [modunique: string]: string } = {};
-    const localModules: { [modunique: string]: string } = {};
+    const repoType = {
+      localSWORD: [] as SwordConfType[],
+      localAudio: [] as SwordConfType[],
+      remoteSWORD: [] as SwordConfType[],
+      remoteAudio: [] as SwordConfType[],
+      remoteXSM: [] as SwordConfType[],
+    };
     repositoryListings.forEach((listing, i) => {
       const drow = repotable.data[i];
+      // The repoType data is re-collected every time listings change.
       if (drow && Array.isArray(listing)) {
         listing.forEach((c) => {
-          const { repo } = drow[H.RepCol.iInfo];
-          const repokey = repositoryKey(repo);
-          const modrepk = modrepKey(c.module, repo);
-          // Different audio and SWORD modules might share the same name,
-          // so include XSM_audio in key.
-          const modunique = [
-            c.module,
-            c.Version,
-            c.xsmType === 'XSM_audio',
-          ].join('.');
-          const repoIsLocal =
-            (c.sourceRepository && isRepoLocal(c.sourceRepository)) || false;
-          if (repoIsLocal && drow[H.RepCol.iState] !== H.OFF)
-            localModules[modunique] = repokey;
-          else if (drow[H.RepCol.iState] !== H.OFF) {
-            enabledExternRepoMods[modunique] = repokey;
-            if (c.xsmType !== 'none') {
-              enabledXulswordRepoMods[modunique] = repokey;
-            }
+          const modkey = repositoryModuleKey(c);
+          const repoIsLocal = isRepoLocal(c.sourceRepository) || false;
+          if (drow[H.RepCol.iState] !== H.OFF) {
+            if (repoIsLocal && c.xsmType !== 'XSM_audio')
+              repoType.localSWORD.push(c);
+            if (repoIsLocal && c.xsmType === 'XSM_audio')
+              repoType.localAudio.push(c);
+            if (!repoIsLocal && c.xsmType === 'none')
+              repoType.remoteSWORD.push(c);
+            if (!repoIsLocal && c.xsmType === 'XSM_audio')
+              repoType.remoteAudio.push(c);
+            if (!repoIsLocal && c.xsmType === 'XSM') repoType.remoteXSM.push(c);
           }
-          if (!(modrepk in moduleData)) {
+          // But moduleData is only collected once.
+          if (!(modkey in moduleData)) {
             let mtype: string = c.moduleType;
             if (c.xsmType === 'XSM') {
               mtype = `XSM ${G.i18n.t(C.SupportedTabTypes[mtype as ModTypes])}`;
             } else if (c.xsmType === 'XSM_audio') {
               mtype = `XSM ${G.i18n.t('audio.label')}`;
             }
-            let reponame = repo.name;
-            if (G.i18n.exists(`${repo.name}.repository.label`)) {
-              reponame = G.i18n.t(`${repo.name}.repository.label`);
-            }
-            let isON: typeof H.ON | typeof H.OFF = H.ON;
-            if (c.xsmType === 'XSM_audio') {
-              const remoteAudioChapters = c.AudioChapters;
-              const localAudioChapters = G.AudioConf.find(
-                (cf) => cf.module === c.module
-              )?.AudioChapters;
-              if (
-                !remoteAudioChapters ||
-                !localAudioChapters ||
-                (isAudioVerseKey(remoteAudioChapters) &&
-                  Object.keys(
-                    subtractVerseKeyAudioChapters(
-                      remoteAudioChapters as VerseKeyAudio,
-                      localAudioChapters as VerseKeyAudio
-                    )
-                  ).length) ||
-                (!isAudioVerseKey(remoteAudioChapters) &&
-                  Object.keys(
-                    subtractGenBookAudioChapters(
-                      remoteAudioChapters as GenBookAudioConf,
-                      localAudioChapters as GenBookAudioConf
-                    )
-                  ).length)
-              ) {
-                isON = H.OFF;
-              }
+            let reponame = c.sourceRepository.name;
+            if (G.i18n.exists(`${c.sourceRepository.name}.repository.label`)) {
+              reponame = G.i18n.t(
+                `${c.sourceRepository.name}.repository.label`
+              );
             }
             const d = [] as unknown as TModuleTableRow;
             d[H.ModCol.iInfo] = {
-              repo,
-              shared: repokey === repositoryKey(H.builtinRepos()[0]),
+              repo: c.sourceRepository,
+              shared:
+                c.sourceRepository.path ===
+                builtinRepos(G.i18n, G.Dirs.path)[0].path,
               classes: H.modclasses(),
               tooltip: H.tooltip('VALUE', [
                 H.ModCol.iShared,
@@ -671,7 +647,9 @@ export default class ModuleManager
             d[H.ModCol.iModule] = c.module;
             d[H.ModCol.iRepoName] =
               reponame ||
-              (repoIsLocal ? repo.path : `${repo.domain}/${repo.path}`);
+              (repoIsLocal
+                ? c.sourceRepository.path
+                : `${c.sourceRepository.domain}/${c.sourceRepository.path}`);
             d[H.ModCol.iVersion] = c.Version || '';
             d[H.ModCol.iLang] = c.Lang || '?';
             d[H.ModCol.iSize] =
@@ -690,9 +668,9 @@ export default class ModuleManager
                 ? H.ON
                 : H.OFF;
             };
-            d[H.ModCol.iInstalled] = repoIsLocal ? isON : H.OFF;
+            d[H.ModCol.iInstalled] = repoIsLocal ? H.ON : H.OFF;
             d[H.ModCol.iRemove] = H.OFF;
-            moduleData[modrepk] = d;
+            moduleData[modkey] = d;
           }
         });
       }
@@ -703,36 +681,51 @@ export default class ModuleManager
     // remote repository module. Also, disabled repositories are skipped.
     // If a xulsword module repository is enabled, any corresponding modules
     // in regular repositories will not be listed.
+    const { localSWORD, localAudio, remoteSWORD, remoteAudio, remoteXSM } =
+      repoType;
     repositoryListings.forEach((listing, i) => {
       const drow = repotable.data[i];
       if (drow && Array.isArray(listing) && drow[H.RepCol.iState] !== H.OFF) {
         listing.forEach((c) => {
-          const { repo } = drow[H.RepCol.iInfo];
-          const modrepk = modrepKey(c.module, repo);
-          const modrow = moduleData[modrepk];
-          const modunique = [
-            c.module,
-            c.Version,
-            c.xsmType === 'XSM_audio',
-          ].join('.');
-          const repoIsLocal = isRepoLocal(repo);
-          const remoteSrcOfLocalMod = !repoIsLocal && modunique in localModules;
+          const modkey = repositoryModuleKey(c);
+          const modrow = moduleData[modkey];
+          const repoIsLocal = isRepoLocal(c.sourceRepository);
+          const modIsLocal = localSWORD
+            .concat(localAudio)
+            .find(
+              (ci) =>
+                c.module === ci.module &&
+                c.Version === ci.Version &&
+                (c.xsmType === 'XSM_audio') === (ci.xsmType === 'XSM_audio')
+            );
+          const remoteSrcOfLocalMod = !repoIsLocal && modIsLocal;
           if (remoteSrcOfLocalMod) {
-            const modrepok = `${localModules[modunique]}.${c.module}`;
-            if (modrepok in moduleData) {
+            const localModKey = repositoryModuleKey(modIsLocal);
+            if (localModKey in moduleData) {
               modrow[H.ModCol.iInfo].shared =
-                moduleData[modrepok][H.ModCol.iInfo].shared;
+                moduleData[localModKey][H.ModCol.iInfo].shared;
               modrow[H.ModCol.iInstalled] =
-                moduleData[modrepok][H.ModCol.iInstalled];
+                moduleData[localModKey][H.ModCol.iInstalled];
+              if (c.xsmType === 'XSM_audio') {
+                const inst = H.allAudioInstalled(c) ? H.ON : H.OFF;
+                modrow[H.ModCol.iInstalled] = inst;
+                moduleData[localModKey][H.ModCol.iInstalled] = inst;
+              }
             }
           }
-          const localModFromRemote =
-            repoIsLocal &&
-            (modunique in enabledExternRepoMods ||
-              modunique in enabledXulswordRepoMods);
-          const regularModWithXSM =
-            modunique in enabledXulswordRepoMods && c.xsmType === 'none';
-          if (!localModFromRemote && !regularModWithXSM) {
+
+          if (
+            !repoIsLocal ||
+            !remoteSWORD
+              .concat(remoteAudio)
+              .concat(remoteXSM)
+              .find(
+                (ci) =>
+                  c.module === ci.module &&
+                  c.Version === ci.Version &&
+                  c.xsmType === ci.xsmType
+              )
+          ) {
             const code = (c.Lang && c.Lang.replace(/-.*$/, '')) || 'en';
             if (!(code in moduleLangData)) moduleLangData[code] = [];
             moduleLangData[code].push(modrow);
@@ -908,8 +901,8 @@ export default class ModuleManager
                       <Label value={gbAudioDialog.conf.module} />
                       <GBSelect
                         selectGBM={gbAudioDialog.selection}
+                        gbmods={[]}
                         gbmodNodeLists={gbAudioDialog.options.gbmodNodeLists}
-                        gbmods={gbAudioDialog.options.gbmods}
                         enableMultipleSelection
                         onSelection={dialogOnChange}
                       />

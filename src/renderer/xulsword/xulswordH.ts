@@ -4,10 +4,11 @@ import React from 'react';
 import RefParser from '../../refparse';
 import { clone, ofClass } from '../../common';
 import { chapterChange, verseChange } from '../viewport/zversekey';
-import { verseKey } from '../rutil';
+import { genbookChange } from '../viewport/ztext';
+import { genBookAudioFile, verseKey, verseKeyAudioFile } from '../rutil';
 import G from '../rg';
 
-import type { ShowType } from '../../type';
+import type { GenBookAudioFile, ShowType, VerseKeyAudioFile } from '../../type';
 import type Xulsword from './xulsword';
 import type { XulswordState } from './xulsword';
 
@@ -19,6 +20,14 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
     case 'click': {
       const e = es as React.MouseEvent;
       switch (currentId) {
+        case 'closeplayer': {
+          const audio: XulswordState['audio'] = {
+            open: false,
+            file: null,
+          };
+          this.setState({ audio });
+          break;
+        }
         case 'back': {
           this.setHistory(state.historyIndex + 1);
           break;
@@ -51,7 +60,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
           this.setState((prevState: XulswordState) => {
             const { location } = prevState;
             if (location) {
-              const l = verseKey(G.i18n, location);
+              const l = verseKey(location);
               l.verse = 1;
               const newloc = chapterChange(
                 l.location(),
@@ -139,7 +148,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
           this.setState((prevState: XulswordState) => {
             const { location } = prevState;
             if (location) {
-              const newloc = verseKey(G.i18n, {
+              const newloc = verseKey({
                 book: value,
                 chapter: 1,
                 verse: 1,
@@ -187,7 +196,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
             // reset Bookselect on Enter key even if chapter doesn't change
             const bsreset = prevState.bsreset + 1;
             if (location) {
-              const pvk = verseKey(G.i18n, location);
+              const pvk = verseKey(location);
               let newloc;
               if (id === 'chapter__input') {
                 pvk.chapter = Number(value);
@@ -222,6 +231,42 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
             `Unhandled xulswordHandler onChange event on '${currentId}'`
           );
       }
+      break;
+    }
+
+    case 'canplay': {
+      const player: HTMLAudioElement | undefined = document
+        .getElementById('player')
+        ?.getElementsByTagName('audio')[0];
+      if (player) player.play();
+      break;
+    }
+
+    case 'ended': {
+      const { audio } = state;
+      const { file } = audio;
+      let afile: VerseKeyAudioFile | GenBookAudioFile | null = null;
+      if (file) {
+        const { module } = file;
+        if ('book' in file) {
+          const { book, chapter } = file;
+          const nk = chapterChange(
+            verseKey({
+              book,
+              chapter,
+              v11n: G.Tab[module].v11n || null,
+            })
+          );
+          if (nk) afile = verseKeyAudioFile(module, nk.book, nk.chapter);
+        } else if ('key' in file) {
+          const { key: k } = file;
+          const key = genbookChange(module, k, true);
+          if (key) {
+            afile = genBookAudioFile(module, key);
+          }
+        }
+      }
+      G.Commands.playAudio(afile);
       break;
     }
 

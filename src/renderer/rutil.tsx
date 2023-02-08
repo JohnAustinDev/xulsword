@@ -1,9 +1,12 @@
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+/* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable import/order */
 /* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable no-continue */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable import/prefer-default-export */
-import React from 'react';
+import React, { SyntheticEvent } from 'react';
+import { Icon, TreeNodeInfo } from '@blueprintjs/core';
 import Cache from '../cache';
 import C from '../constant';
 import G from './rg';
@@ -11,11 +14,21 @@ import log from './log';
 import RefParser, { RefParserOptionsType } from '../refparse';
 import VerseKey from '../versekey';
 import { ElemInfo, getElementInfo, TitleFormat } from '../libswordElemInfo';
-import { clone, diff, JSON_parse, ofClass, versionCompare } from '../common';
+import {
+  clone,
+  diff,
+  isAudioVerseKey,
+  JSON_parse,
+  ofClass,
+  readGenBookAudioConf,
+  versionCompare,
+} from '../common';
 
 import type {
   ContextData,
-  GType,
+  GenBookAudio,
+  GenBookAudioConf,
+  GenBookAudioFile,
   LocationVKType,
   ModTypes,
   PrefObject,
@@ -24,8 +37,9 @@ import type {
   SwordConfLocalized,
   SwordConfType,
   V11nType,
+  VerseKeyAudio,
+  VerseKeyAudioFile,
 } from '../type';
-import type { SelectVKMType } from './libxul/vkselect';
 
 export function component(
   comp: any
@@ -116,6 +130,126 @@ export function scrollIntoView(
   }
 }
 
+export function verseKeyAudioFile(
+  module: string,
+  book?: string,
+  chapter?: number
+): VerseKeyAudioFile | null {
+  const audioConf = G.AudioConfs[module];
+  if (audioConf) {
+    const { AudioChapters } = audioConf;
+    if (AudioChapters && isAudioVerseKey(AudioChapters)) {
+      const ac = AudioChapters as VerseKeyAudio;
+      let bk = book;
+      let boolarray: boolean[] = [];
+      let ch = chapter === undefined ? -1 : chapter;
+      if (!bk) {
+        const entry = Object.entries(ac)[0];
+        if (entry) {
+          [bk, boolarray] = entry;
+          ch = -1;
+        }
+      } else if (bk in ac) boolarray = ac[bk];
+      if (bk && boolarray.length) {
+        if (ch === -1) ch = boolarray.indexOf(true);
+        if (ch !== -1 && boolarray[ch])
+          return {
+            module,
+            book: bk,
+            chapter: ch,
+            path: [bk, ch],
+          };
+      }
+    }
+  }
+  return null;
+}
+
+export function genBookAudioFile(
+  module: string,
+  key: string
+): GenBookAudioFile | null {
+  let audioConf: SwordConfType | null = null;
+  if (module in G.AudioConfs) audioConf = G.AudioConfs[module];
+  if (!audioConf) {
+    const audioCode = module in G.Tab && G.Tab[module].audioCode;
+    if (audioCode && audioCode in G.AudioConfs) {
+      audioConf = G.AudioConfs[audioCode];
+    }
+  }
+  if (audioConf) {
+    const { AudioChapters } = audioConf;
+    if (AudioChapters && !isAudioVerseKey(AudioChapters)) {
+      const ac = AudioChapters as GenBookAudioConf;
+      if (!Cache.has('readGenBookAudioConf', module)) {
+        Cache.write(
+          readGenBookAudioConf(
+            ac,
+            G.LibSword.getGenBookTableOfContents(module)
+          ),
+          'readGenBookAudioConf',
+          module
+        );
+      }
+      const ac2 = Cache.read('readGenBookAudioConf', module) as GenBookAudio;
+      if (key in ac2) {
+        return {
+          module,
+          key,
+          path: ac2[key],
+        };
+      }
+    }
+  }
+  return null;
+}
+
+export function audioGenBookNode(
+  node: TreeNodeInfo,
+  module: string,
+  key: string
+): boolean {
+  let afile: GenBookAudioFile | null = null;
+  if (!G.Tab[module].isVerseKey && G.Tab[module].tabType === 'Genbks' && key) {
+    afile = genBookAudioFile(module, key);
+  }
+  if (afile) {
+    node.nodeData = afile;
+    node.className = 'audio-icon';
+    node.icon = 'volume-up';
+    return true;
+  }
+  return false;
+}
+
+export function audioIcon(
+  module: string,
+  bookOrKey: string,
+  chapter: number | undefined,
+  audioHandler: (audio: VerseKeyAudioFile | GenBookAudioFile) => void
+): JSX.Element | null {
+  let afile: VerseKeyAudioFile | GenBookAudioFile | null = null;
+  if (G.Tab[module].isVerseKey) {
+    afile = verseKeyAudioFile(module, bookOrKey, chapter);
+  } else if (G.Tab[module].tabType === 'Genbks' && bookOrKey) {
+    afile = genBookAudioFile(module, bookOrKey);
+  }
+  if (afile) {
+    const handler = ((ax: VerseKeyAudioFile | GenBookAudioFile) => {
+      return (e: React.SyntheticEvent) => {
+        e.stopPropagation();
+        audioHandler(ax);
+      };
+    })(afile);
+    return (
+      <div className="audio-icon" onClick={handler}>
+        <Icon icon="volume-up" />
+      </div>
+    );
+  }
+  return null;
+}
+
 // Does location surely exist in the module? It's assumed if a book is included,
 // then so are all of its chapters and verses.
 export function isValidVKM(location: LocationVKType, module: string): boolean {
@@ -175,7 +309,7 @@ export function getMaxChapter(v11n: V11nType, vkeytext: string) {
 // chapter is not part of v11n, so check here first.
 // NOTE: main process has this same function.
 export function getMaxVerse(v11n: V11nType, vkeytext: string) {
-  const { chapter } = verseKey(null, vkeytext, v11n);
+  const { chapter } = verseKey(vkeytext, v11n);
   const maxch = getMaxChapter(v11n, vkeytext);
   return chapter <= maxch && chapter > 0
     ? G.LibSword.getMaxVerse(v11n, vkeytext)
@@ -183,13 +317,12 @@ export function getMaxVerse(v11n: V11nType, vkeytext: string) {
 }
 
 export function verseKey(
-  i18n: GType['i18n'] | null,
   versekey: LocationVKType | string,
   v11n?: V11nType | null,
   options?: RefParserOptionsType
 ): VerseKey {
   return new VerseKey(
-    new RefParser(i18n, options),
+    new RefParser(G.i18n, options),
     G.BkChsInV11n,
     {
       convertLocation: (
@@ -353,7 +486,6 @@ function getTargetsFromSelection(
 
 // Return contextual data for use by context menus.
 export function getContextData(
-  i18n: GType['i18n'],
   elem: HTMLElement | ParentNode | EventTarget
 ): ContextData {
   const atextx = ofClass(['atext'], elem);
@@ -418,7 +550,7 @@ export function getContextData(
   if (selob && !selob.isCollapsed && !/^\s*$/.test(selob.toString())) {
     selection = selob.toString();
     selectedLocationVK =
-      new RefParser(i18n, { uncertain: true }).parse(selection, v11n)
+      new RefParser(G.i18n, { uncertain: true }).parse(selection, v11n)
         ?.location || null;
     getTargetsFromSelection(info, selob);
   } else {
@@ -502,11 +634,11 @@ export function getStatePref(
   return state;
 }
 
-// Calling this function sets a listener to update-state-from-pref. It will
+// Calling this function sets a listener for update-state-from-pref. It will
 // read component state Prefs and locale, and will update component state
 // and window locale as needed.
-export function onSetWindowState(c: React.Component, ignore?: any) {
-  const listener = (prefs: string | string[]) => {
+export function registerUpdateStateFromPref(c: React.Component, ignore?: any) {
+  const updateStateFromPref = (prefs: string | string[]) => {
     log.debug(`Updating state from prefs:`, prefs);
     const { id } = c.props as any;
     if (id) {
@@ -522,7 +654,7 @@ export function onSetWindowState(c: React.Component, ignore?: any) {
       }
     }
   };
-  return window.ipc.on('update-state-from-pref', listener);
+  return window.ipc.on('update-state-from-pref', updateStateFromPref);
 }
 
 let languageNames: {

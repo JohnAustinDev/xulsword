@@ -387,6 +387,8 @@ const C = {
     htmllink: ['ShortPromo', 'UnlockInfo', 'About'],
   } as const,
 
+  SupportedAudio: ['mp3', 'ogg'],
+
   NEWMODS: {
     modules: [],
     nokeymods: [],
@@ -480,6 +482,7 @@ const C = {
   // the same values for each of these prefs, in addition to other GlobalPref.
   GlobalXulsword: [
     'location',
+    'audio',
     'selection',
     'scroll',
     'show',

@@ -29,8 +29,6 @@ and give a fixed width */
 
 .genbook-chooser .scroll-parent:hover {
   max-width: 800px;
-  top: -5px;
-  left: -5px;
   filter: drop-shadow(10px 10px 2px #777777);
 }
 

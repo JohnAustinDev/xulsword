@@ -9,9 +9,10 @@ import fontList from 'font-list';
 import C from '../constant';
 import VerseKey from '../versekey';
 import RefParser, { RefParserOptionsType } from '../refparse';
-import { clone, isASCII, JSON_parse, parseSwordConf } from '../common';
+import { clone, isASCII, JSON_parse } from '../common';
 import Cache from '../cache';
 import Subscription from '../subscription';
+import parseSwordConf from './parseSwordConf';
 import Dirs from './components/dirs';
 import Prefs from './components/prefs';
 import LibSword from './components/libsword';
@@ -334,7 +335,7 @@ export function getTabs(): TabType[] {
           );
           return;
         }
-        const conf = parseSwordConf(i18n, confFile, confFile.leafName);
+        const conf = parseSwordConf(confFile);
         const cipherKey = LibSword.getModuleInformation(module, 'CipherKey');
         if (cipherKey !== C.NOTFOUND) {
           CipherKeyModules[module] = {
@@ -426,29 +427,25 @@ export function getTab(): { [i: string]: TabType } {
   return Cache.read('tab');
 }
 
-export function getCipherFailConfs() {
+export function getCipherFailConfs(): SwordConfType[] {
   getTabs(); // to insure CipherKeyModules is set
   return Object.values(CipherKeyModules)
     .filter((v) => v.numBooks === 0 || v.cipherKey === '')
     .map((v) => {
       const f = new LocalFile(v.confPath);
-      return (
-        (f.exists() &&
-          !f.isDirectory() &&
-          parseSwordConf(i18n, f, f.leafName)) ||
-        null
-      );
+      return (f.exists() && !f.isDirectory() && parseSwordConf(f)) || null;
     })
     .filter(Boolean) as SwordConfType[];
 }
 
-export function getAudioConf(): SwordConfType[] {
-  const confs: SwordConfType[] = [];
+export function getAudioConfs(): { [module: string]: SwordConfType } {
+  const confs: { [module: string]: SwordConfType } = {};
   const audio = Dirs.xsAudio.clone().append('mods.d');
   audio.directoryEntries.forEach((d) => {
     const f = audio.clone().append(d);
     if (!f.isDirectory() && f.leafName.endsWith('.conf')) {
-      confs.push(parseSwordConf(i18n, f, f.leafName));
+      const c = parseSwordConf(f);
+      confs[c.module] = c;
     }
   });
   return confs;

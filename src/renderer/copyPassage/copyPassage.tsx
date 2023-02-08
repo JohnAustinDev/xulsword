@@ -152,16 +152,16 @@ export default class CopyPassageWin extends React.Component {
       const refdiv = testdiv.appendChild(document.createElement('div'));
       const vks: VerseKey[] = [];
       if (!passage.lastchapter || passage.chapter === passage.lastchapter) {
-        vks.push(verseKey(G.i18n, passage));
+        vks.push(verseKey(passage));
       } else {
         vks.push(
-          verseKey(G.i18n, {
+          verseKey({
             ...passage,
             lastverse: undefined,
           })
         );
         vks.push(
-          verseKey(G.i18n, {
+          verseKey({
             ...passage,
             chapter: passage.lastchapter || passage.chapter,
             verse: passage.lastverse,

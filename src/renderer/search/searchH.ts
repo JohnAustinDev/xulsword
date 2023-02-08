@@ -411,7 +411,7 @@ export function formatResult(div: HTMLDivElement, state: SearchWinState) {
           if (a && p?.osisref) {
             // Translate from module to DisplayBible
             const vsys = G.LibSword.getVerseSystem(module);
-            const v = verseKey(G.i18n, p.osisref, vsys);
+            const v = verseKey(p.osisref, vsys);
             sanitizeHTML(a, v.readable(G.LibSword.getVerseSystem(dModule)));
             a.className = 'cs-locale';
             a.id = ['verselink', vsys, v.osisRef()].join('.');
@@ -806,7 +806,7 @@ export default async function handler(
             case 'keylink': {
               const module = p.shift();
               if (module && module in G.Tab) {
-                G.Commands.goToLocationSK({
+                G.Commands.goToLocationGB({
                   module,
                   key: decodeURIComponent(p.shift() || ''),
                 });

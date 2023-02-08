@@ -21,6 +21,7 @@ import {
   libswordImgSrc,
   scrollIntoView,
   windowArgument,
+  audioIcon,
 } from '../rutil';
 import {
   xulDefaultProps,
@@ -69,6 +70,7 @@ const propTypes = {
   show: PropTypes.object.isRequired,
   place: PropTypes.object.isRequired,
   ownWindow: PropTypes.bool,
+  onAudioClick: PropTypes.func.isRequired,
 };
 
 export type AtextProps = XulProps & AtextPropsType;
@@ -90,7 +92,7 @@ class Atext extends React.Component {
 
   static propTypes: typeof propTypes;
 
-  handler: (e: React.SyntheticEvent) => void;
+  handler: typeof handlerH;
 
   wheelScrollTO: NodeJS.Timeout | undefined;
 
@@ -325,7 +327,6 @@ class Atext extends React.Component {
                   const skipTextUpdate: boolean[] = [];
                   skipTextUpdate[panelIndex] = true;
                   const location = verseKey(
-                    G.i18n,
                     [info.bk, info.ch, info.vs].join('.'),
                     libswordProps.location.v11n
                   ).location();
@@ -439,10 +440,6 @@ class Atext extends React.Component {
             nbc.classList.toggle('noteboxEmpty');
           }
         }
-        // AUDIO LINKS
-        if (type === C.BIBLE) {
-          // window.setTimeout(function () {BibleTexts.updateAudioLinks(w);}, 0);
-        }
         // PREV / NEXT LINKS
         setTimeout(() => {
           const prev = textChange(atext, false);
@@ -494,7 +491,6 @@ class Atext extends React.Component {
       const response = Cache.read(libswordHash);
       log.silly(
         `${flag} panel ${i} ${verseKey(
-          G.i18n,
           libswordProps.location || ''
         ).osisRef()}:`
       );
@@ -559,12 +555,14 @@ class Atext extends React.Component {
     const {
       columns,
       isPinned,
+      location,
       module,
       modkey,
       panelIndex,
       ownWindow,
       noteBoxHeight,
       maximizeNoteBox,
+      onAudioClick,
       bbDragEnd,
     } = props;
 
@@ -626,6 +624,14 @@ class Atext extends React.Component {
             <span className="navlink-span">{nextArrow}</span>
           </div>
         </Box>
+
+        {module &&
+          audioIcon(
+            module,
+            isVerseKey ? location?.book || '' : modkey,
+            location?.chapter,
+            onAudioClick
+          )}
 
         <Vbox
           className="sb"

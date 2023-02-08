@@ -173,7 +173,7 @@ export function locationVKText(
     const tov11n = compOK && tab[compOK].v11n;
     if (tov11n) {
       targetmod = compOK;
-      location = verseKey(G.i18n, location).location(tov11n);
+      location = verseKey(location).location(tov11n);
       i.companion = true;
     }
   }
@@ -186,7 +186,7 @@ export function locationVKText(
       (type === C.COMMENTARY && commentaries);
     if (isOK && v11n && G.getBooksInModule(module).includes(book)) {
       let text;
-      const modloc = verseKey(G.i18n, loc);
+      const modloc = verseKey(loc);
       if (loc.subid) {
         text = getFootnoteText(loc, mod);
       } else {
@@ -272,7 +272,7 @@ export function parseExtendedVKRef(
       [, ref, noteID] = noteref;
     }
     const options = locales && locales.length ? { locales } : undefined;
-    const vk = verseKey(G.i18n, ref, null, options);
+    const vk = verseKey(ref, null, options);
     if (!vk.book && bk) {
       const match = ref
         .replace(/[^\s\p{L}\p{N}:-]/gu, ' ')
@@ -400,7 +400,7 @@ export function getRefHTML(
             verse,
             lastverse || verse,
             module,
-          ].join('.')}">${verseKey(G.i18n, location).readable()}</a>${q}${
+          ].join('.')}">${verseKey(location).readable()}</a>${q}${
             text ? ': ' : ''
           }</bdi><bdi><span class="${crtext.join(
             ' '
@@ -877,7 +877,7 @@ function aTextWheelScroll2(
         const { bk: book, ch, vs: verse } = p;
         const chapter = Number(ch);
         if (book && chapter && verse) {
-          newloc = verseKey(G.i18n, { book, chapter, verse, v11n }).location(
+          newloc = verseKey({ book, chapter, verse, v11n }).location(
             location.v11n
           );
         }
@@ -951,7 +951,6 @@ export function highlight(
 
   if (!selection) return;
   const { book, chapter, verse, lastverse } = verseKey(
-    G.i18n,
     selection,
     G.Tab[module].v11n || undefined
   ).location();
@@ -1053,7 +1052,7 @@ export function findVerseElement(
 // returns changes between books as null, although this could be coded in.
 export function chapterChange(
   location: LocationVKType | null,
-  chDelta?: number
+  chDelta = 1
 ): LocationVKType | null {
   if (!location || !location.v11n) return null;
   const { book } = location;
@@ -1144,7 +1143,7 @@ export function pageChange(
       const t = (ei && ei.mod && G.Tab[ei.mod]) || null;
       const v11n = t?.v11n || null;
       if (ei && ei.bk && v11n) {
-        const vk = verseKey(G.i18n, {
+        const vk = verseKey({
           book: ei.bk,
           chapter: Number(ei.ch),
           verse: ei.vs,

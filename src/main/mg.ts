@@ -11,7 +11,7 @@ import {
 } from 'electron';
 import i18next from 'i18next';
 import { GBuilder, GType, WindowArgType } from '../type';
-import { inlineFile } from './components/localFile';
+import { inlineAudioFile, inlineFile } from './components/localFile';
 import Dirs from './components/dirs';
 import Prefs from './components/prefs';
 import LibSword from './components/libsword';
@@ -31,7 +31,7 @@ import {
   getBkChsInV11n,
   getSystemFonts,
   resetMain,
-  getAudioConf,
+  getAudioConfs,
   getLocaleConfigs,
   getModuleConfigDefault,
   getModuleFonts,
@@ -153,8 +153,8 @@ class GClass implements GType {
     return getConfig();
   }
 
-  get AudioConf() {
-    return getAudioConf();
+  get AudioConfs() {
+    return getAudioConfs();
   }
 
   get LocaleConfigs() {
@@ -195,6 +195,12 @@ class GClass implements GType {
     ...args: Parameters<GType['inlineFile']>
   ): ReturnType<GType['inlineFile']> {
     return inlineFile(...args);
+  }
+
+  inlineAudioFile(
+    ...args: Parameters<GType['inlineAudioFile']>
+  ): ReturnType<GType['inlineAudioFile']> {
+    return inlineAudioFile(...args);
   }
 
   resetMain(

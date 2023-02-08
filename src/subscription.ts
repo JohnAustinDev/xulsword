@@ -54,10 +54,11 @@ export interface SubscriptionType {
     ) => ReturnType<typeof subscriptions['setWindowRootState']>[];
   };
 
-  doPublish: (
-    subscriptionName: keyof typeof subscriptions,
-    ...args: Parameters<typeof subscriptions[keyof typeof subscriptions]>
-  ) => ReturnType<typeof subscriptions[keyof typeof subscriptions]>[];
+  doSubscribe: (
+    subscriptionName: string,
+    callback: (...args: any) => void
+  ) => () => void;
+  doPublish: (subscriptionName: string, ...args: any[]) => any[];
 }
 
 // Subscribe to and publish callback opportunities. It cannot be
@@ -101,10 +102,7 @@ class SubscriptionClass implements SubscriptionType {
 
   // Call any callback functions that have been registered for a
   // particular subscription.
-  doPublish(
-    subscriptionName: keyof typeof subscriptions,
-    ...args: Parameters<typeof subscriptions[keyof typeof subscriptions]>
-  ) {
+  doPublish(subscriptionName: string, ...args: any[]) {
     if (subscriptionName in this.store) {
       return this.store[subscriptionName].map((cb) => {
         return cb(...args);

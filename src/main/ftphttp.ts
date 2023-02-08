@@ -683,7 +683,6 @@ export async function getFileHTTP(
       const ses = session.fromPartition(randomID(), { cache: false });
       const destpath = typeof dest === 'string' ? dest : dest.path;
       const destFile = new LocalFile(destpath);
-      // TODO!: Get this to work with GenBook UTF8 paths.
       ses.on('will-download', (ev, item) => {
         if (progress) progress(0);
         if (cancelkey) {

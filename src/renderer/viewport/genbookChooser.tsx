@@ -18,12 +18,17 @@ import {
   XulProps,
   addClass,
 } from '../libxul/xul';
-import { TreeView } from '../libxul/treeview';
+import { forEachNode, TreeView } from '../libxul/treeview';
 import './chooser.css';
 import './genbookChooser.css';
 
 import type { Tree, TreeNodeInfo } from '@blueprintjs/core';
-import type { XulswordStateArgType } from 'type';
+import type {
+  GenBookAudioFile,
+  VerseKeyAudioFile,
+  XulswordStateArgType,
+} from 'type';
+import { audioGenBookNode } from 'renderer/rutil';
 
 const defaultProps = {
   ...xulDefaultProps,
@@ -33,12 +38,14 @@ const propTypes = {
   ...xulPropTypes,
   panels: PropTypes.arrayOf(PropTypes.string).isRequired,
   keys: PropTypes.arrayOf(PropTypes.string).isRequired,
+  onAudioClick: PropTypes.func.isRequired,
   xulswordStateHandler: PropTypes.func.isRequired,
 };
 
 export interface GenbookChooserProps extends XulProps {
   panels: (string | null)[];
   keys: (string | undefined)[];
+  onAudioClick: (audio: VerseKeyAudioFile | GenBookAudioFile) => void;
   xulswordStateHandler: (s: XulswordStateArgType) => void;
 }
 
@@ -67,6 +74,7 @@ class GenbookChooser extends React.Component {
     this.getSelectedIDs = this.getSelectedIDs.bind(this);
     this.expandKeyParents = this.expandKeyParents.bind(this);
     this.key2ID = this.key2ID.bind(this);
+    this.onNodeClick = this.onNodeClick.bind(this);
   }
 
   componentDidMount() {
@@ -97,6 +105,19 @@ class GenbookChooser extends React.Component {
       treeRef.current
         ?.getNodeContentElement(key2ID(firstChangedKey))
         ?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
+  }
+
+  onNodeClick(
+    node: TreeNodeInfo,
+    _nodePath: number[],
+    e: React.MouseEvent<HTMLElement>
+  ) {
+    const props = this.props as GenbookChooserProps;
+    const { onAudioClick } = props;
+    if ('nodeData' in node) {
+      onAudioClick(node.nodeData as GenBookAudioFile);
+      e.stopPropagation();
     }
   }
 
@@ -168,6 +189,14 @@ class GenbookChooser extends React.Component {
           } else {
             nodes.push(...genBookTreeNodes(toc, m, undefined, `${i}`));
           }
+          forEachNode(nodes, (node) => {
+            const key = node.id
+              .toString()
+              .split(C.GBKSEP)
+              .slice(1)
+              .join(C.GBKSEP);
+            audioGenBookNode(node, m, key);
+          });
         }
       }
     });
@@ -179,7 +208,7 @@ class GenbookChooser extends React.Component {
     const state = this.state as GenbookChooserState;
     const { xulswordStateHandler } = props;
     const { expandedIDs } = state;
-    const { genBookNodes, getSelectedIDs, treeRef } = this;
+    const { genBookNodes, getSelectedIDs, treeRef, onNodeClick } = this;
 
     return (
       <Vbox {...addClass(`chooser genbook-chooser`, props)}>
@@ -193,6 +222,7 @@ class GenbookChooser extends React.Component {
               expandedIDs={expandedIDs}
               onSelection={(sel) => xulswordStateHandler(newState(sel))}
               onExpansion={(exids) => this.setState({ expandedIDs: exids })}
+              onNodeClick={onNodeClick}
               treeRef={treeRef}
             />
           </div>

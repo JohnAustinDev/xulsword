@@ -439,7 +439,6 @@ export default function handler(
           const v11n = (m && G.Tab[m].v11n) || null;
           if (location && m && b && v && v11n) {
             const newloc = verseKey(
-              G.i18n,
               { book: b, chapter: Number(c), verse: Number(v), v11n },
               location.v11n
             ).location();
