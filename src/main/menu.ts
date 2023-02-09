@@ -302,6 +302,7 @@ export default class MenuBuilder {
         { type: 'separator' },
         {
           label: this.ts('menu.exportAudio.label', 'menu.exportAudio.sc'),
+          enabled: !!G.Dirs.xsAudio.append('modules').directoryEntries.length,
           click: d(() => {
             Commands.exportAudio();
           }),

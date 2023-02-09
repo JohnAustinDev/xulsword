@@ -255,7 +255,7 @@ export function moveRemoveModule(
             f.remove();
             if (repositoryPath === Dirs.path.xsAudio) {
               const audiodir = new LocalFile(repositoryPath);
-              audiodir.append(c.module);
+              audiodir.append('modules').append(c.module);
               if (audiodir.isDirectory()) {
                 audiodir.remove(true);
               }
@@ -597,19 +597,20 @@ export async function installZIPs(
                 const conf = Object.values(confs).pop();
                 if (conf) audioCode = conf.module;
                 dirs[0] = audioCode;
+                dirs.unshift('modules');
+                const book = dirs[2];
                 const isVerseKey = Object.values(C.SupportedBooks).some((bg) =>
-                  bg.includes(dirs[1])
+                  bg.includes(book)
                 );
-                const book = dirs[1];
                 // Convert deprecated GenBook path to new form.
                 if (!isVerseKey && deprecatedZip) {
                   chapter -= 1;
                   dirs = dirs.map((d, ix) =>
-                    ix === 0
+                    ix < 2
                       ? d
                       : pad(Number(d.replace(/^(\d+).*?$/, '$1')) - 1, 3, 0)
                   );
-                  dirs.splice(1, 0, '000');
+                  dirs.splice(2, 0, '000');
                 }
                 // Create parent directories
                 const gbkeys: string[] = [];
@@ -653,7 +654,7 @@ export async function installZIPs(
                   confFile.append('mods.d');
                   confFile.append(conf.filename);
                   if (confFile.exists()) {
-                    const dataPath = `./${audioCode}`;
+                    const dataPath = `./modules/${audioCode}`;
                     let str = confFile.readFile();
                     str = str.replace(
                       /^DataPath\b.*$/m,

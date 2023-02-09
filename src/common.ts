@@ -284,13 +284,10 @@ export function diff<T extends PrefValue>(
     });
     if (depth < 1) {
       Object.keys(obj1).forEach((k1) => {
-        if (!(k1 in obj2)) {
-          if (!difference) difference = {};
-          difference[k1] = undefined;
-        }
+        if (!(k1 in obj2) && !difference) difference = {};
       });
+      if (difference) difference = obj2;
     }
-    if (difference && depth < 1) difference = obj2;
   }
   return difference;
 }
@@ -609,12 +606,8 @@ export function genBookTreeNodes(
 // IMPORTANT: To work, this function requires allGbKeys to be the output
 // of LibSword.getGenBookTableOfContents() (ie. all keys are included and
 // are in the proper order).
-export function gbPaths(allGbKeys: string[]): {
-  [gbkey: string]: AudioPath;
-} {
-  const r: {
-    [gbkey: string]: AudioPath;
-  } = {};
+export function gbPaths(allGbKeys: string[]): GenBookAudio {
+  const r: GenBookAudio = {};
   function addPath(nodes: TreeNodeInfo[], parentPath?: number[]) {
     const pp = parentPath || [];
     const i = pp.length;

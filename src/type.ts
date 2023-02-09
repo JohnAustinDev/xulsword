@@ -767,7 +767,7 @@ export const GBuilder: GType & {
 } = {
   asyncFuncs: [
     ['getSystemFonts', []],
-    ['Commands', ['installXulswordModules']],
+    ['Commands', ['installXulswordModules', 'exportAudio', 'importAudio']],
     [
       'Module',
       [

@@ -346,7 +346,7 @@ function WindowRoot(props: WindowRootProps) {
     s.progress[0] !== -1 || s.modal[0] !== 'off' ? (
       <Hbox
         id="overlay"
-        className={s.modal[0]}
+        className={s.progress[0] !== -1 ? 'darkened' : s.modal[0]}
         pack="center"
         align="center"
         {...xulCaptureEvents.reduce((p: any, c) => {
@@ -414,7 +414,6 @@ export default async function renderToRoot(
   }
 ) {
   const {
-    namespace,
     resetOnResize,
     printControl,
     initialWindowRootState,

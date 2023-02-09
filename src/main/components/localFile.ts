@@ -7,7 +7,6 @@ import Subscription from '../../subscription';
 import C from '../../constant';
 
 import type { GenBookAudioFile, GType, VerseKeyAudioFile } from '../../type';
-import type Dirs from './dirs';
 
 const FPERM = 0o666;
 // const DPERM = 0o666;
@@ -90,7 +89,10 @@ export default class LocalFile {
   // requested type. It does nothing if this.path already exists. The type
   // must be supplied or an error is thrown. If the file exists before return,
   // true is returned, false otherwise.
-  create(type: number, options?: any): boolean {
+  create(
+    type: number,
+    options?: fs.MakeDirectoryOptions | fs.WriteFileOptions
+  ): boolean {
     if (this.path) {
       if (!this.exists()) {
         if (type === LocalFile.DIRECTORY_TYPE) {
@@ -114,7 +116,10 @@ export default class LocalFile {
   // Creates a file. If it already exists, another name is tried (up to
   // max files) so as to create a unique file name. True is returned if
   // sucessful, false otherwise.
-  createUnique(type: number, options?: any) {
+  createUnique(
+    type: number,
+    options?: fs.MakeDirectoryOptions | fs.WriteFileOptions
+  ) {
     if (this.path) {
       const max = 999;
       let n = 0;
@@ -178,9 +183,9 @@ export default class LocalFile {
 
   // This was not part of LocalFile, but added for convenience. Writes UTF-8
   // encoded string to file.
-  writeFile(data: string | Buffer, options?: any) {
+  writeFile(data: string | Buffer, options?: fs.WriteFileOptions) {
     const o = options || { mode: FPERM };
-    if (typeof data === 'string' && !o.encoding) {
+    if (typeof o !== 'string' && typeof data === 'string' && !o.encoding) {
       o.encoding = 'utf8';
     }
     fs.writeFileSync(this.path, data, o);
@@ -210,8 +215,9 @@ export function createSafeFile(
     return false;
   }
 
-  if (createUnique) nsIFile.createUnique(LocalFile.NORMAL_FILE_TYPE, perm);
-  else nsIFile.create(LocalFile.NORMAL_FILE_TYPE, perm);
+  if (createUnique)
+    nsIFile.createUnique(LocalFile.NORMAL_FILE_TYPE, { mode: perm });
+  else nsIFile.create(LocalFile.NORMAL_FILE_TYPE, { mode: perm });
 
   return true;
 }
@@ -221,7 +227,7 @@ export function writeSafeFile(
   nsIFile: LocalFile,
   str: string,
   overwrite: boolean,
-  toEncoding = 'utf8'
+  toEncoding: BufferEncoding = 'utf8'
 ) {
   if (!nsIFile) return false;
 
@@ -277,6 +283,7 @@ export function inlineAudioFile(
     const G = Subscription.doPublish('getG') as GType[];
     if (module && G) {
       const file = new LocalFile(G[0].Dirs.path.xsAudio);
+      file.append('modules');
       file.append(module);
       const leaf = pad(apath.pop() || 0, 3, 0);
       while (apath.length) {

@@ -65,9 +65,7 @@ export default class VerseKey {
     let v11n = workv11n || tov11n || null;
     if (
       code &&
-      C.SupportedBookGroups.some((bg) => {
-        return C.SupportedBooks[bg].includes(code[1]);
-      })
+      C.SupportedBookGroups.some((bg) => C.SupportedBooks[bg].includes(code[1]))
     ) {
       const segs = loc.split('-');
       if (segs.length > 2) segs.splice(1, segs.length - 2);

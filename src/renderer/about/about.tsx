@@ -64,7 +64,7 @@ export default class AboutWin extends React.Component implements ModinfoParent {
     };
     // When no modules are specified, show them all.
     if (!s.configs.length) {
-      s.configs = G.AudioConfs.concat(G.Tabs.map((t) => t.conf));
+      s.configs = Object.values(G.AudioConfs).concat(G.Tabs.map((t) => t.conf));
     }
     this.state = s;
 

@@ -2,19 +2,30 @@
 /* eslint-disable prefer-rest-params */
 import { BrowserWindow, dialog, OpenDialogSyncOptions } from 'electron';
 import { BrowserWindowConstructorOptions } from 'electron/main';
+import fpath from 'path';
 import log from 'electron-log';
 import i18n from 'i18next';
-import { clone, JSON_stringify } from '../../common';
+import {
+  clone,
+  diff,
+  gbPaths,
+  JSON_stringify,
+  pad,
+  versionCompare,
+} from '../../common';
+import Subscription from '../../subscription';
 import C from '../../constant';
-import { verseKey, getTab, getTabs } from '../minit';
+import parseSwordConf from '../parseSwordConf';
+import { verseKey, getTab, getTabs, getAudioConfs } from '../minit';
 import Prefs from './prefs';
+import LibSword from './libsword';
 import LocalFile from './localFile';
-import { modalInstall } from './module';
+import { modalInstall, scanAudio } from './module';
 import Window, { getBrowserWindows, publishSubscription } from './window';
 import Dirs from './dirs';
 
 import type {
-  AudioPrefType,
+  GenBookAudio,
   GenBookAudioFile,
   LocationGBType,
   LocationVKType,
@@ -155,12 +166,296 @@ const Commands = {
     Prefs.mergeValue('xulsword', newxulsword);
   },
 
-  exportAudio() {
-    process.crash();
+  async exportAudio() {
+    let xswindow: BrowserWindow | null = getBrowserWindows({
+      type: 'xulsword',
+    })[0];
+    const gbpaths = {} as { [module: string]: GenBookAudio };
+    function title(module: string, path: number[]): string {
+      let paths = {} as GenBookAudio;
+      if (module in gbpaths) {
+        paths = gbpaths[module];
+      } else {
+        paths = gbPaths(LibSword.getGenBookTableOfContents(module));
+        gbpaths[module] = paths;
+      }
+      const entry = Object.entries(paths).find((e) => !diff(path, e[1]));
+      let t = '';
+      if (entry) {
+        const keys = entry[0].split(C.GBKSEP);
+        if (!keys[keys.length - 1]) keys.pop();
+        t = ` ${keys.pop()}`;
+      }
+      return t;
+    }
+    function getFiles(dir: LocalFile) {
+      let r: LocalFile[] = [];
+      dir.directoryEntries.forEach((fn) => {
+        const f = dir.clone().append(fn);
+        if (f.isDirectory()) {
+          const rsub = getFiles(f);
+          if (rsub.length) r = r.concat(rsub);
+        } else r.push(f);
+      });
+      return r;
+    }
+    const progress = (prog: number) => {
+      xswindow?.setProgressBar(prog);
+      xswindow?.webContents.send('progress', prog);
+      if (prog === -1) xswindow = null;
+    };
+    const modulesDir = Dirs.xsAudio.append('modules');
+    const audioFiles = getFiles(modulesDir);
+    if (audioFiles.length) {
+      const options: OpenDialogSyncOptions = {
+        title: i18n.t('to.label'),
+        properties: ['openDirectory', 'createDirectory'],
+      };
+      const obj = await dialog.showOpenDialog(xswindow, options);
+      if (obj.filePaths[0]) {
+        progress(0);
+        let tot = 0;
+        const audioConfs = getAudioConfs();
+        const destdir = new LocalFile(obj.filePaths[0]);
+        const confWritten: string[] = [];
+        audioFiles.forEach((file) => {
+          const fp = fpath.parse(fpath.relative(modulesDir.path, file.path));
+          const dirs = fp.dir.split(fpath.sep);
+          const module = dirs.shift();
+          if (module) {
+            // Copy config file once...
+            const confname = audioConfs[module].filename;
+            const conf = Dirs.xsAudio.append('mods.d').append(confname);
+            if (
+              conf.exists() &&
+              !confWritten.includes(conf.path) &&
+              !conf.isDirectory()
+            ) {
+              const confdest = destdir.clone().append('mods.d');
+              if (!confdest.exists()) confdest.create(LocalFile.DIRECTORY_TYPE);
+              conf.copyTo(confdest);
+              confWritten.push(conf.path);
+            }
+            if (
+              dirs[0] &&
+              Object.values(C.SupportedBooks).some((bg) => bg.includes(dirs[0]))
+            ) {
+              // Copy VerseKey audio file...
+              const book = dirs.shift();
+              if (book) {
+                const chapFileName = dirs.shift();
+                if (!dirs.length) {
+                  const bookFileName = i18n.exists(book, { ns: 'books' })
+                    ? i18n.t(book, { ns: 'books' })
+                    : book;
+                  const dest = destdir
+                    .clone()
+                    .append('modules')
+                    .append(module)
+                    .append(bookFileName);
+                  if (!dest.exists())
+                    dest.create(LocalFile.DIRECTORY_TYPE, {
+                      recursive: true,
+                    });
+                  file.copyTo(dest, chapFileName);
+                  tot += 1;
+                }
+              }
+            } else {
+              // Copy GenBook audio file...
+              const path: number[] = [];
+              const dest = destdir.clone().append('modules').append(module);
+              while (dirs.length) {
+                const sub = dirs.shift();
+                if (sub) {
+                  if (!Number.isNaN(Number(sub))) {
+                    path.push(Number(sub));
+                  }
+                  dest.append(`${sub}${title(module, path)}`);
+                }
+              }
+              if (!Number.isNaN(Number(fp.name))) {
+                path.push(Number(fp.name));
+              }
+              const chapFileName = `${fp.name}${title(module, path)}${fp.ext}`;
+              if (!dest.exists())
+                dest.create(LocalFile.DIRECTORY_TYPE, {
+                  recursive: true,
+                });
+              file.copyTo(dest, chapFileName);
+              tot += 1;
+            }
+          }
+          progress(tot / audioFiles.length);
+        });
+        progress(-1);
+        log.info(`Exported ${tot} of ${audioFiles.length} audio files.`);
+      }
+    }
   },
 
-  importAudio() {
-    log.error(`Action not implemented: importAudio`);
+  async importAudio() {
+    const tab = getTab();
+    let xswindow: BrowserWindow | null = getBrowserWindows({
+      type: 'xulsword',
+    })[0];
+    const callingWinID = xswindow.id;
+    function getImportFiles(dir: LocalFile): LocalFile[] {
+      const r: LocalFile[] = [];
+      dir.directoryEntries.forEach((fn) => {
+        const file = dir.clone().append(fn);
+        if (file.isDirectory()) r.push(...getImportFiles(file));
+        else r.push(file);
+      });
+      return r;
+    }
+    const progress = (prog: number) => {
+      xswindow?.setProgressBar(prog);
+      xswindow?.webContents.send('progress', prog);
+      if (prog === -1) xswindow = null;
+    };
+    const options: OpenDialogSyncOptions = {
+      title: i18n.t('from.label'),
+      properties: ['openDirectory'],
+    };
+    const obj = await dialog.showOpenDialog(
+      getBrowserWindows({ type: 'xulsword' })[0],
+      options
+    );
+    if (obj.filePaths[0]) {
+      progress(0);
+      let tot = 0;
+      let modsd: LocalFile | null = null;
+      const gbpaths = {} as { [module: string]: GenBookAudio };
+      const newmods = clone(C.NEWMODS);
+      const smodules: Set<string> = new Set();
+      const fromdir = new LocalFile(obj.filePaths[0]);
+      if (fromdir.directoryEntries.includes('modules')) {
+        fromdir.append('modules');
+      }
+      modsd = fromdir.clone();
+      modsd.append('..').append('mods.d');
+      if (!modsd.exists()) modsd = null;
+      const importFiles = getImportFiles(fromdir);
+      importFiles.forEach((file) => {
+        const dest = Dirs.xsAudio;
+        const fp = fpath.parse(fpath.relative(fromdir.path, file.path));
+        const dirs = fp.dir.split(fpath.sep);
+        const module = dirs.shift();
+        if (module) {
+          let paths = {} as GenBookAudio;
+          if (module in gbpaths) {
+            paths = gbpaths[module];
+          } else if (tab[module].type === C.GENBOOK) {
+            paths = gbPaths(LibSword.getGenBookTableOfContents(module));
+            gbpaths[module] = paths;
+          }
+          smodules.add(module);
+          dest.append('modules').append(module);
+          const path: number[] = [];
+          const chapter = Number(fp.name.replace(/^(\d+).*?$/, '$1'));
+          let book = '';
+          while (dirs.length) {
+            let sub = dirs.shift();
+            if (sub) {
+              const subn = Number(sub.replace(/^(\d+).*?$/, '$1'));
+              path.push(subn);
+              const m = sub.match(/^(\d+)[-\s](.*?)$/); // legacy VerseKey markup
+              if (!book && m) book = verseKey(m[2]).book;
+              else if (!book) book = verseKey(sub).book;
+              if (book) {
+                sub = book;
+              } else {
+                sub = pad(subn, 3, 0);
+              }
+              dest.append(sub);
+            }
+          }
+          if (!dest.exists()) {
+            dest.create(LocalFile.DIRECTORY_TYPE, { recursive: true });
+          }
+          path.push(chapter);
+          const name = pad(chapter, 3, 0);
+          file.copyTo(dest, `${name}${fp.ext}`);
+          let audiofile: VerseKeyAudioFile | GenBookAudioFile;
+          if (Object.values(C.SupportedBooks).some((bg) => bg.includes(book))) {
+            audiofile = {
+              module,
+              book,
+              chapter,
+              path: [book, chapter],
+            };
+          } else {
+            const entry = Object.entries(paths).find((e) => !diff(path, e[1]));
+            audiofile = {
+              module,
+              key: (entry && entry[0]) || '',
+              path,
+            };
+          }
+          newmods.audio.push(audiofile);
+          tot += 1;
+        }
+        progress(tot / importFiles.length);
+      });
+      progress(-1);
+      // Update config files
+      const myconfs = modsd?.directoryEntries.map((c) => {
+        const cf = modsd?.clone().append(c);
+        return !cf || cf.isDirectory() ? null : parseSwordConf(cf);
+      });
+      const destconfs = getAudioConfs();
+      const modules = Array.from(smodules);
+      let ctot = 0;
+      modules.forEach((module) => {
+        const myconf = myconfs && myconfs.find((c) => c && c.module === module);
+        const destconf = Object.values(destconfs).find(
+          (c) => c && c.module === module
+        );
+        const mycfile =
+          (myconf && modsd?.clone().append(myconf.filename)) || null;
+        let destcfile =
+          (destconf &&
+            Dirs.xsAudio.append('mods.d').append(destconf.filename)) ||
+          null;
+        const myvers = (myconf && myconf.Version) || 0;
+        const destvers = (destconf && destconf.Version) || 0;
+        const confname = `${module.toLowerCase()}.conf`;
+        if (
+          mycfile?.exists() &&
+          (!destcfile?.exists() || versionCompare(myvers, destvers) === 1)
+        ) {
+          destcfile = Dirs.xsAudio.append('mods.d').append(confname);
+          mycfile?.copyTo(Dirs.xsAudio.append('mods.d'), confname);
+        } else if (!destcfile?.exists()) {
+          // Auto-generate bare minimum config file
+          destcfile = Dirs.xsAudio.append('mods.d').append(confname);
+          destcfile.writeFile(
+            `[${module}]\nModDrv=audio\nDataPath=./modules/${module}\nVersion=0.0.1\nDescription=Imported audio\nAudioChapters={}`
+          );
+        }
+        // Update config AudioChapters
+        if (destcfile && destcfile.exists()) {
+          const audioChapters = scanAudio(
+            Dirs.xsAudio.path,
+            `./modules/${module}`
+          );
+          let str = destcfile.readFile();
+          str = str.replace(
+            /^AudioChapters\b.*$/m,
+            `AudioChapters=${JSON_stringify(audioChapters)}`
+          );
+          destcfile.writeFile(str);
+          newmods.modules.push(parseSwordConf(destcfile));
+          ctot += 1;
+        }
+      });
+      log.info(`Imported ${tot} of ${importFiles.length} audio files`);
+      log.info(`Updated ${ctot} of ${modules.length} audio config files.`);
+      if (modules.length) {
+        Subscription.publish.modulesInstalled(newmods, callingWinID);
+      }
+    }
   },
 
   print() {
