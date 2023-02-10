@@ -403,7 +403,9 @@ export default class Xulsword extends React.Component {
                       controls
                       onEnded={handler}
                       onCanPlay={handler}
-                      src={G.inlineAudioFile(audio.file)}
+                      src={
+                        audio.file ? G.inlineAudioFile(audio.file) : undefined
+                      }
                     />
                   </div>
                 </Vbox>
