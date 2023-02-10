@@ -288,7 +288,6 @@ export default class RefParser {
       }
       if (has1chap) p.splice(2, 0, '1'); // insert chapter=1 if book has only one chapter
       if (p[1]) {
-        // gfunctions allows RefParser to function correctly even after reset.
         const idbk = this.#identifyBook(p[1]);
         if (idbk) {
           r.location.book = idbk.code;

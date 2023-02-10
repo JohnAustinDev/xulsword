@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import i18n from 'i18next';
 import path from 'path';
 import Dirs from './components/dirs';
@@ -138,7 +139,7 @@ export default function parseSwordConf(
             // Deprecated bk, ch1, ch2 API
             ac = ac as DeprecatedAudioChaptersConf[];
             if (
-              Object.values(C.SupportedBooks).some((bg) =>
+              Object.values(C.SupportedBooks).some((bg: any) =>
                 bg.includes(ac[0].bk)
               )
             ) {

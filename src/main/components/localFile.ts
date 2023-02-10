@@ -44,7 +44,7 @@ export default class LocalFile {
 
   // Append a relative path string to the current path
   append(relPath: string) {
-    this.path = path.join(this.path, relPath);
+    this.path = path.normalize(path.join(this.path, relPath));
     return this;
   }
 
@@ -279,12 +279,12 @@ export function inlineAudioFile(
   audio: VerseKeyAudioFile | GenBookAudioFile | null
 ): string {
   if (audio) {
-    const { path: apath, module } = audio;
+    const { path: apath, audioModule } = audio;
     const G = Subscription.doPublish('getG') as GType[];
-    if (module && G) {
+    if (audioModule && G) {
       const file = new LocalFile(G[0].Dirs.path.xsAudio);
       file.append('modules');
-      file.append(module);
+      file.append(audioModule);
       const leaf = pad(apath.pop() || 0, 3, 0);
       while (apath.length) {
         const p = apath.shift() as string | number;

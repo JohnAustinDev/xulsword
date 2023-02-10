@@ -25,6 +25,7 @@ import type {
   GenBookAudio,
   VerseKeyAudio,
   AudioPath,
+  OSISBookType,
 } from './type';
 import type { TreeNodeInfo } from '@blueprintjs/core';
 import type { SelectVKMType } from './renderer/libxul/vkselect';
@@ -668,21 +669,25 @@ export function isAudioVerseKey(
 ): boolean {
   const books = Object.keys(audio);
   return books.some((bk) =>
-    Object.values(C.SupportedBooks).some((bg) => bg.includes(bk))
+    Object.values(C.SupportedBooks).some((bg: any) => bg.includes(bk))
   );
 }
 
 export function readVerseKeyAudioConf(audio: VerseKeyAudioConf): VerseKeyAudio {
-  const r: VerseKeyAudio = {};
+  const r = {} as VerseKeyAudio;
   Object.entries(audio).forEach((entry) => {
-    const [book, str] = entry;
-    if (Object.values(C.SupportedBooks).some((bg) => bg.includes(book))) {
+    const [bk, str] = entry;
+    if (Object.values(C.SupportedBooks).some((bg: any) => bg.includes(bk))) {
+      const book = bk as OSISBookType;
       if (!(book in r)) r[book] = [];
-      audioConfNumbers(str).forEach((n) => {
-        r[book][n] = true;
-      });
-      for (let i = 0; i < r[book].length; i += 1) {
-        r[book][i] = !!r[book][i];
+      const rb = r[book];
+      if (rb) {
+        audioConfNumbers(str).forEach((n) => {
+          rb[n] = true;
+        });
+        for (let i = 0; i < rb.length; i += 1) {
+          rb[i] = !!rb[i];
+        }
       }
     }
   });
@@ -692,16 +697,20 @@ export function readVerseKeyAudioConf(audio: VerseKeyAudioConf): VerseKeyAudio {
 export function readDeprecatedVerseKeyAudioConf(
   audio: DeprecatedAudioChaptersConf[]
 ): VerseKeyAudio {
-  const r: VerseKeyAudio = {};
+  const r = {} as VerseKeyAudio;
   audio.forEach((entry) => {
     const { bk, ch1, ch2 } = entry;
-    if (Object.values(C.SupportedBooks).some((bg) => bg.includes(bk))) {
-      if (!(bk in r)) r[bk] = [];
-      for (let x = ch1; x <= ch2; x += 1) {
-        r[bk][x] = true;
-      }
-      for (let i = 0; i < r[bk].length; i += 1) {
-        r[bk][i] = !!r[bk][i];
+    if (Object.values(C.SupportedBooks).some((bg: any) => bg.includes(bk))) {
+      const book = bk as OSISBookType;
+      if (!(book in r)) r[book] = [];
+      const rb = r[book];
+      if (rb) {
+        for (let x = ch1; x <= ch2; x += 1) {
+          rb[x] = true;
+        }
+        for (let i = 0; i < rb.length; i += 1) {
+          rb[i] = !!rb[i];
+        }
       }
     }
   });
@@ -723,7 +732,7 @@ export function readGenBookAudioConf(
       parentPath[i] = Number(p);
     });
     audioConfNumbers(str).forEach((n) => {
-      const pp = parentPath.slice();
+      const pp = parentPath.slice() as AudioPath;
       pp.push(n);
       const kx = Object.entries(allGbKeys).find((e) => !diff(pp, e[1]));
       if (kx) r[kx[0]] = pp;
@@ -784,13 +793,15 @@ export function subtractVerseKeyAudioChapters(
 ): VerseKeyAudio {
   const r = clone(audio);
   Object.entries(r).forEach((e) => {
-    const [book] = e;
-    if (book in subtract) {
-      subtract[book].forEach((s, i) => {
-        if (s) r[book][i] = false;
+    const [bk] = e;
+    const book = bk as OSISBookType;
+    const rb = r[book];
+    if (bk in subtract) {
+      subtract[book]?.forEach((s, i) => {
+        if (s && rb) rb[i] = false;
       });
     }
-    if (!r[book].some((v) => v)) delete r[book];
+    if (rb && !rb.some((v) => v)) delete r[book];
   });
   return r;
 }

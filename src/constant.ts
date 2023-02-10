@@ -312,7 +312,7 @@ const C = {
     Other: [
       'TatDiat','PsMet'
     ]
-  } as { [key in BookGroupType]: string[] },
+  } as const,
   /* eslint-enable prettier/prettier */
 
   BIBLE: 'Biblical Texts' as ModTypes,
@@ -368,7 +368,12 @@ const C = {
       'UnlockInfo',
     ],
     repeatable: ['Obsoletes', 'Feature', 'GlobalOptionFilter'],
-    delimited: { SwordModules: /;/, SwordVersions: /;/, Companion: /,/ },
+    delimited: {
+      SwordModules: /;/,
+      SwordVersions: /;/,
+      Companion: /,/,
+      AudioCode: /,/,
+    },
     // ShortCopyright is currently non-standard here, but used by NASB
     continuation: [
       'About',
@@ -387,6 +392,7 @@ const C = {
     htmllink: ['ShortPromo', 'UnlockInfo', 'About'],
   } as const,
 
+  // Determines which files may be imported, and the prefered playback.
   SupportedAudio: ['mp3', 'ogg'],
 
   NEWMODS: {

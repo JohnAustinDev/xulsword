@@ -46,7 +46,7 @@ export default class VerseKey {
   // Accept any osisRef work prefix and then look for an OSIS ref book code. If the
   // reference starts with a book code, the following string patterns are parsed:
   // code, code 1, code 1:1, code 1:1-1, code 1:1 - code 1:1, code.1, code.1.1, code.1.1.1
-  // Otherwise the string will be parsed using parseLocation() for up to two dash separated
+  // Otherwise the string will be parsed using parse() for up to two dash separated
   // segments. If a location cannot be parsed, book will be empty string and chapter will
   // be 0. If any range contains verses beyond the chapter, those verses will not be
   // included in the VerseKey.

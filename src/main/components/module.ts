@@ -51,6 +51,7 @@ import type {
   GenBookAudioConf,
   VerseKeyAudioConf,
   VerseKeyAudioFile,
+  OSISBookType,
 } from '../../type';
 
 export const CipherKeyModules: {
@@ -150,15 +151,15 @@ function recurseAudioDirectory(
   if (ancOrSelfx) ancOrSelf.push(dir.leafName);
   const chs: number[] = [];
   dir.directoryEntries.forEach((sub) => {
+    const subfile = dir.clone().append(sub);
     if (/^(\d+)/.test(sub)) {
-      const subfile = dir.clone().append(sub);
       const m2 = subfile.leafName.match(/^(\d+)\.[^.]+$/);
       if (subfile.isDirectory()) {
         recurseAudioDirectory(subfile, ancOrSelf, audio);
       } else if (m2) {
         chs.push(Number(m2[1]));
       }
-    } else log.warn(`Skipping non-number audio file: ${sub}`);
+    } else log.warn(`Skipping non-number audio file: ${subfile.path}`);
   });
   if (chs.length) audio[`${[...ancOrSelf].join('/')}/`] = audioConfStrings(chs);
   return audio;
@@ -177,12 +178,15 @@ export function scanAudio(
     if (scan.exists() && scan.isDirectory()) {
       const subs = scan.directoryEntries;
       const isVerseKey = subs.find((bk) =>
-        Object.values(C.SupportedBooks).find((bg) => bg.includes(bk))
+        Object.values(C.SupportedBooks).find((bg: any) => bg.includes(bk))
       );
       if (!isVerseKey) return recurseAudioDirectory(scan);
       const r = {} as VerseKeyAudioConf;
-      scan.directoryEntries.forEach((book) => {
-        if (Object.values(C.SupportedBooks).find((bg) => bg.includes(book))) {
+      scan.directoryEntries.forEach((bk) => {
+        if (
+          Object.values(C.SupportedBooks).find((bg: any) => bg.includes(bk))
+        ) {
+          const book = bk as OSISBookType;
           const boolArray: boolean[] = [];
           const scan2 = scan.clone().append(book);
           if (scan2.isDirectory()) {
@@ -206,7 +210,7 @@ export function scanAudio(
             boolArray[i] = !!boolArray[i];
           }
           r[book] = audioConfStrings(boolArray);
-        } else log.warn(`Skipping unrecognized audio subdirectory: ${book}`);
+        } else log.warn(`Skipping unrecognized audio subdirectory: ${bk}`);
       });
       return r;
     }
@@ -575,7 +579,7 @@ export async function installZIPs(
                 // to be removed.
                 const audio = Dirs.xsAudio;
                 const pobj = fpath.posix.parse(entry.entryName);
-                let dirs = pobj.dir.split('/');
+                let dirs = pobj.dir.split(fpath.posix.sep);
                 let chapter = Number(pobj.name.replace(/^(\d+).*?$/, '$1'));
                 dirs.shift(); // remove ./audio
                 let deprecatedZip = false;
@@ -583,8 +587,8 @@ export async function installZIPs(
                 if (
                   dirs.findIndex(
                     (d) =>
-                      Object.entries(C.SupportedBooks).some((en) =>
-                        en[1].includes(d)
+                      Object.entries(C.SupportedBooks).some((bg: any) =>
+                        bg[1].includes(d)
                       ) || /^\d+/.test(d)
                   ) === 2
                 ) {
@@ -598,9 +602,9 @@ export async function installZIPs(
                 if (conf) audioCode = conf.module;
                 dirs[0] = audioCode;
                 dirs.unshift('modules');
-                const book = dirs[2];
-                const isVerseKey = Object.values(C.SupportedBooks).some((bg) =>
-                  bg.includes(book)
+                const bookOrSub = dirs[2];
+                const isVerseKey = Object.values(C.SupportedBooks).some(
+                  (bg: any) => bg.includes(bookOrSub)
                 );
                 // Convert deprecated GenBook path to new form.
                 if (!isVerseKey && deprecatedZip) {
@@ -623,12 +627,13 @@ export async function installZIPs(
                   }
                 }
                 if (isVerseKey && audioCode) {
+                  const book = bookOrSub as OSISBookType;
                   // VerseKey audio file...
                   if (audioCode && book && !Number.isNaN(chapter)) {
                     audio.append(pad(chapter, 3, 0) + pobj.ext);
                     audio.writeFile(entry.getData());
                     const audiofile: VerseKeyAudioFile = {
-                      module: audioCode,
+                      audioModule: audioCode,
                       book,
                       chapter,
                       path: [book, chapter],
@@ -642,7 +647,7 @@ export async function installZIPs(
                   audio.append(fname + pobj.ext);
                   audio.writeFile(entry.getData());
                   const audioFile: GenBookAudioFile = {
-                    module: audioCode,
+                    audioModule: audioCode,
                     key: gbkeys.join(C.GBKSEP),
                     path: gbkeys.map((k) => Number(k)),
                   };

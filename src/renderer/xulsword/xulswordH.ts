@@ -247,22 +247,24 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
       const { file } = audio;
       let afile: VerseKeyAudioFile | GenBookAudioFile | null = null;
       if (file) {
-        const { module } = file;
-        if ('book' in file) {
-          const { book, chapter } = file;
-          const nk = chapterChange(
-            verseKey({
-              book,
-              chapter,
-              v11n: G.Tab[module].v11n || null,
-            })
-          );
-          if (nk) afile = verseKeyAudioFile(module, nk.book, nk.chapter);
-        } else if ('key' in file) {
-          const { key: k } = file;
-          const key = genbookChange(module, k, true);
-          if (key) {
-            afile = genBookAudioFile(module, key);
+        const { swordModule } = file;
+        if (swordModule) {
+          if ('book' in file) {
+            const { book, chapter } = file;
+            const nk = chapterChange(
+              verseKey({
+                book,
+                chapter,
+                v11n: G.Tab[swordModule].v11n || null,
+              })
+            );
+            if (nk) afile = verseKeyAudioFile(swordModule, nk.book, nk.chapter);
+          } else if ('key' in file) {
+            const { key: k } = file;
+            const key = genbookChange(swordModule, k, true);
+            if (key) {
+              afile = genBookAudioFile(swordModule, key);
+            }
           }
         }
       }

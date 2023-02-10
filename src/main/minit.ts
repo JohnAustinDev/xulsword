@@ -33,6 +33,7 @@ import type {
   SwordConfType,
   ConfigType,
   FontFaceType,
+  OSISBookType,
 } from '../type';
 
 // Get all supported books in locale order. NOTE: xulsword ignores individual
@@ -184,7 +185,7 @@ export function getBkChsInV11n(): {
   return Cache.read('bkChsInV11n');
 }
 
-export function getBooksInModule(module: string): string[] {
+export function getBooksInModule(module: string): OSISBookType[] {
   if (!Cache.has('booksInModule', module)) {
     const bkChsInV11n = getBkChsInV11n();
     const book = getBook();

@@ -31,6 +31,7 @@ import type {
   GenBookAudioFile,
   LocationVKType,
   ModTypes,
+  OSISBookType,
   PrefObject,
   Repository,
   SearchType,
@@ -130,31 +131,44 @@ export function scrollIntoView(
   }
 }
 
+// Return an audio file for the given VerseKey module, book and chapter,
+// or null if there isn't one.
 export function verseKeyAudioFile(
-  module: string,
-  book?: string,
+  swordModule: string,
+  book?: OSISBookType,
   chapter?: number
 ): VerseKeyAudioFile | null {
-  const audioConf = G.AudioConfs[module];
+  let audioConf = G.AudioConfs[swordModule];
+  if (!audioConf && swordModule in G.Tab) {
+    const codes = G.Tab[swordModule].conf.AudioCode || [];
+    const i = codes.findIndex((code) => code in G.AudioConfs);
+    if (i !== -1) audioConf = G.AudioConfs[codes[i]];
+  }
   if (audioConf) {
     const { AudioChapters } = audioConf;
+    let boolarray: boolean[] = [];
     if (AudioChapters && isAudioVerseKey(AudioChapters)) {
       const ac = AudioChapters as VerseKeyAudio;
       let bk = book;
-      let boolarray: boolean[] = [];
       let ch = chapter === undefined ? -1 : chapter;
       if (!bk) {
         const entry = Object.entries(ac)[0];
         if (entry) {
-          [bk, boolarray] = entry;
+          [, boolarray] = entry;
+          const [b] = entry;
+          bk = b as OSISBookType;
           ch = -1;
         }
-      } else if (bk in ac) boolarray = ac[bk];
+      } else if (bk in ac) {
+        const acbk = ac[bk];
+        if (acbk) boolarray = acbk;
+      }
       if (bk && boolarray.length) {
         if (ch === -1) ch = boolarray.indexOf(true);
         if (ch !== -1 && boolarray[ch])
           return {
-            module,
+            audioModule: audioConf.module,
+            swordModule,
             book: bk,
             chapter: ch,
             path: [bk, ch],
@@ -165,36 +179,40 @@ export function verseKeyAudioFile(
   return null;
 }
 
+// Return an audio file for the given GenBook module and key,
+// or null if there isn't one.
 export function genBookAudioFile(
-  module: string,
+  swordModule: string,
   key: string
 ): GenBookAudioFile | null {
-  let audioConf: SwordConfType | null = null;
-  if (module in G.AudioConfs) audioConf = G.AudioConfs[module];
-  if (!audioConf) {
-    const audioCode = module in G.Tab && G.Tab[module].audioCode;
-    if (audioCode && audioCode in G.AudioConfs) {
-      audioConf = G.AudioConfs[audioCode];
-    }
+  let audioConf = G.AudioConfs[swordModule];
+  if (!audioConf && swordModule in G.Tab) {
+    const codes = G.Tab[swordModule].conf.AudioCode || [];
+    const i = codes.findIndex((code) => code in G.AudioConfs);
+    if (i !== -1) audioConf = G.AudioConfs[codes[i]];
   }
   if (audioConf) {
     const { AudioChapters } = audioConf;
     if (AudioChapters && !isAudioVerseKey(AudioChapters)) {
       const ac = AudioChapters as GenBookAudioConf;
-      if (!Cache.has('readGenBookAudioConf', module)) {
+      if (!Cache.has('readGenBookAudioConf', swordModule)) {
         Cache.write(
           readGenBookAudioConf(
             ac,
-            G.LibSword.getGenBookTableOfContents(module)
+            G.LibSword.getGenBookTableOfContents(swordModule)
           ),
           'readGenBookAudioConf',
-          module
+          swordModule
         );
       }
-      const ac2 = Cache.read('readGenBookAudioConf', module) as GenBookAudio;
+      const ac2 = Cache.read(
+        'readGenBookAudioConf',
+        swordModule
+      ) as GenBookAudio;
       if (key in ac2) {
         return {
-          module,
+          audioModule: audioConf.module,
+          swordModule,
           key,
           path: ac2[key],
         };
@@ -224,13 +242,14 @@ export function audioGenBookNode(
 
 export function audioIcon(
   module: string,
-  bookOrKey: string,
+  bookOrKey: OSISBookType | string,
   chapter: number | undefined,
   audioHandler: (audio: VerseKeyAudioFile | GenBookAudioFile) => void
 ): JSX.Element | null {
   let afile: VerseKeyAudioFile | GenBookAudioFile | null = null;
   if (G.Tab[module].isVerseKey) {
-    afile = verseKeyAudioFile(module, bookOrKey, chapter);
+    const book = bookOrKey as OSISBookType;
+    afile = verseKeyAudioFile(module, book, chapter);
   } else if (G.Tab[module].tabType === 'Genbks' && bookOrKey) {
     afile = genBookAudioFile(module, bookOrKey);
   }
@@ -371,7 +390,7 @@ export function getContextModule(
 
 const TargetInfo = {
   mod: null as string | null,
-  bk: null as string | null,
+  bk: null as OSISBookType | null,
   ch: null as number | null,
   vs: null as number | null,
   lv: null as number | null,

@@ -30,6 +30,7 @@ import type {
   BookGroupType,
   BookType,
   GenBookAudioFile,
+  OSISBookType,
   V11nType,
   VerseKeyAudioFile,
 } from '../../type';
@@ -57,7 +58,7 @@ const propTypes = {
 
 export interface ChooserProps extends XulProps {
   bookGroups: BookGroupType[];
-  selection: string;
+  selection: OSISBookType | '';
   availableBooks: Set<string> | undefined;
   hideUnavailableBooks: boolean;
   headingsModule: string | undefined;
@@ -103,16 +104,17 @@ class Chooser extends React.Component {
 
   constructor(props: ChooserProps) {
     super(props);
+    const { selection, bookGroups, hideUnavailableBooks } = props;
     chooserCompRef = this;
 
     let bookGroup: BookGroupType =
-      props.selection && props.selection in G.Book
-        ? G.Book[props.selection].bookGroup
-        : props.bookGroups[0];
-    if (!props.bookGroups.includes(bookGroup)) [bookGroup] = props.bookGroups;
+      selection && selection in G.Book
+        ? G.Book[selection].bookGroup
+        : bookGroups[0];
+    if (!bookGroups.includes(bookGroup)) [bookGroup] = bookGroups;
 
     const slideIndex: any = {};
-    props.bookGroups.forEach((g) => {
+    bookGroups.forEach((g) => {
       slideIndex[g] = 0;
     });
 
@@ -137,11 +139,11 @@ class Chooser extends React.Component {
     this.handler = handlerH.bind(this);
 
     if (
-      !props.hideUnavailableBooks &&
-      props.selection &&
-      C.SupportedBooks[bookGroup].includes(props.selection)
+      !hideUnavailableBooks &&
+      selection &&
+      (C.SupportedBooks[bookGroup] as any).includes(selection)
     ) {
-      this.startSlidingUp(null, 0, props.selection);
+      this.startSlidingUp(null, 0, selection);
     }
   }
 

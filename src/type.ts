@@ -4,6 +4,7 @@
 import type { clipboard, Shell } from 'electron';
 import type i18n from 'i18next';
 import type React from 'react';
+import type C from './constant';
 import type {
   resetMain,
   getSystemFonts,
@@ -329,7 +330,7 @@ export type LocationGBType = {
 };
 
 export type LocationVKType = {
-  book: string;
+  book: OSISBookType;
   chapter: number;
   v11n: V11nType | null;
   verse?: number | null;
@@ -427,6 +428,9 @@ export type FeatureType = {
   hebrew: string[];
 };
 
+export type OSISBookType =
+  typeof C.SupportedBooks[keyof typeof C.SupportedBooks][number];
+
 export type ModTypes =
   | 'Biblical Texts'
   | 'Commentaries'
@@ -448,7 +452,7 @@ export type XSMConfigEntries = {
 };
 
 export type SwordConfXulsword = {
-  AudioCode?: string;
+  AudioCode?: string[];
 };
 
 export type DepricatedSwordConfXulsword = {
@@ -544,10 +548,11 @@ export type GenBookTOC = {
 // ending with C.GBKSEP are parent nodes.
 export type GenBookKeys = string[];
 
-// AudioPath describes a chapter's address on disk.
+// AudioPath describes a chapter's address on disk. IMPORTANT: only the first
+// item may be an OSIS book abbreviation or number, all other items are numbers.
 // Ex: [0, 2, 1] is the disk path 000/002/001.*
 // Ex: ['Prov', 1] is the disk path Prov/001.*
-export type AudioPath = (number | string)[];
+export type AudioPath = [(number | OSISBookType)?, ...number[]];
 
 // GenBookAudio describes audio chapter keys, existence and disk address.
 // NOTE: gbkey MUST be a key to a GenBook SWORD module.
@@ -566,34 +571,36 @@ export type GenBookAudioConf = {
 // VerseKeyAudio describes chapter existence and disk address.
 // Ex: { Prov: [true,,true] } are disk paths Prov/000.mp3 and Prov/002.mp3
 export type VerseKeyAudio = {
-  [osisBookCode: string]: boolean[];
+  [osisBookCode in OSISBookType]?: boolean[];
 };
 
 // VerseKeyAudioConf same as VerseKeyAudio but short and readable for
 // config file. Ex: { 'Prov': ['0-10', '12'] }
 export type VerseKeyAudioConf = {
-  [osisBookCode: string]: string[];
+  [osisBookCode in OSISBookType]?: string[];
 };
 
 // Was used to list audio for both VerseKey and GenBook in old audio config
 // files, but VerseKeyAudioConf and GenBookAudioConf are used now.
 export type DeprecatedAudioChaptersConf = {
-  bk: string;
+  bk: OSISBookType | string;
   ch1: number;
   ch2: number;
 };
 
 export type VerseKeyAudioFile = {
-  module: string;
-  book: string;
+  audioModule: string;
+  book: OSISBookType;
   chapter: number;
   path: AudioPath;
+  swordModule?: string;
 };
 
 export type GenBookAudioFile = {
-  module: string;
+  audioModule: string;
   key: string;
   path: AudioPath;
+  swordModule?: string;
 };
 
 export type TabTypes = 'Texts' | 'Comms' | 'Dicts' | 'Genbks';
