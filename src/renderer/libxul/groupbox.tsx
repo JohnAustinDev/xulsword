@@ -35,14 +35,17 @@ function Groupbox(props: GroupboxProps) {
     pack: 'center',
   };
   return (
-    <Vbox {...drop(addClass('groupbox', props), pass)}>
+    <Vbox {...drop(addClass('groupbox', props), Object.keys(pass))}>
       {caption && (
         <Hbox className="groupbox-title" align="start" pack="start">
           <Image className="caption-icon" src={image} />
           <Label className="caption-text" flex="1" value={caption} />
         </Hbox>
       )}
-      <Box {...addClass('groupbox-body', keep(props, pass))} flex="1">
+      <Box
+        {...addClass('groupbox-body', keep(props, Object.keys(pass)))}
+        flex="1"
+      >
         {props.children}
       </Box>
     </Vbox>

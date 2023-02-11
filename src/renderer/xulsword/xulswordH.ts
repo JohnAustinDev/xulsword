@@ -268,7 +268,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
           }
         }
       }
-      G.Commands.playAudio(afile);
+      G.Commands.playAudio(afile); // null closes the player
       break;
     }
 

@@ -5,7 +5,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { randomID, sanitizeHTML, stringHash } from '../../common';
+import { sanitizeHTML, stringHash } from '../../common';
 import G from '../rg';
 import { moduleInfoHTML } from '../rutil';
 import { xulDefaultProps, xulPropTypes, XulProps, htmlAttribs } from './xul';

@@ -7,8 +7,8 @@
 import React from 'react';
 import { Icon } from '@blueprintjs/core';
 import Subscription from '../../subscription';
-import { dString, diff, clone, drop } from '../../common';
-import C from '../../constant';
+import { dString, clone } from '../../common';
+import C, { SP } from '../../constant';
 import G from '../rg';
 import renderToRoot from '../renderer';
 import log from '../log';
@@ -17,6 +17,7 @@ import {
   registerUpdateStateFromPref,
   getStatePref,
   clearPending,
+  setStatePref,
 } from '../rutil';
 import {
   addClass,
@@ -41,39 +42,25 @@ import viewportParentH, {
 import handlerH from './xulswordH';
 import './xulsword.css';
 
-import type {
-  HistoryVKType,
-  XulswordStateArgType,
-  XulswordStatePref,
-} from '../../type';
+import type { HistoryVKType, XulswordStateArgType } from '../../type';
 import type Atext from '../viewport/atext';
 
 const defaultProps = xulDefaultProps;
 
-const propTypes = {
-  ...xulPropTypes,
-};
+const propTypes = xulPropTypes;
 
 export type XulswordProps = XulProps;
 
-// The following initial state values do not come from Prefs. Neither are
-// these state keys written to Prefs.
-const notStatePref = {
+// The following state keys are never read from Prefs. Neither are
+// they written to Prefs.
+const notStatePrefDefault = {
   historyMenupopup: undefined,
   bsreset: 0,
   vpreset: 0,
   searchDisabled: true,
 };
 
-// These are state pref panel arrays that don't require default values in
-// default prefs.js. Their array size will be the same as panels array size.
-const statePrefPanelDefault: Partial<XulswordStatePref> = {
-  isPinned: [false],
-  noteBoxHeight: [C.UI.Atext.initialNoteboxHeight],
-  maximizeNoteBox: [false],
-};
-
-export type XulswordState = typeof notStatePref & XulswordStatePref;
+export type XulswordState = typeof notStatePrefDefault & typeof SP.xulsword;
 
 export default class Xulsword extends React.Component {
   static defaultProps: typeof defaultProps;
@@ -99,22 +86,10 @@ export default class Xulsword extends React.Component {
   constructor(props: XulswordProps) {
     super(props);
 
-    if (props.id !== 'xulsword') throw Error(`Xulsword id must be 'xulsword'`);
     const s: XulswordState = {
-      ...notStatePref,
-      ...(getStatePref(props.id) as XulswordStatePref),
+      ...notStatePrefDefault,
+      ...getStatePref('xulsword', SP.xulsword),
     };
-    // If any statePrefPanelDefault arrays are still 0 length, fill them.
-    const sx = s as any;
-    Object.entries(statePrefPanelDefault).forEach((entry) => {
-      const [key, val] = entry;
-      const sval = sx[key];
-      if (!sval.length && key && Array.isArray(val)) {
-        sx.panels.forEach((_p: any, i: string) => {
-          if (sx[key][i] === undefined) [sx[key][i]] = val;
-        });
-      }
-    });
     this.state = s;
 
     this.handler = handlerH.bind(this);
@@ -131,7 +106,11 @@ export default class Xulsword extends React.Component {
   }
 
   componentDidMount() {
-    this.destroy.push(registerUpdateStateFromPref(this));
+    const props = this.props as XulswordProps;
+    const { id } = props;
+    this.destroy.push(
+      registerUpdateStateFromPref('xulsword', this, SP.xulsword)
+    );
     this.destroy.push(
       Subscription.subscribe.modulesInstalled(showNewModules.bind(this))
     );
@@ -142,12 +121,9 @@ export default class Xulsword extends React.Component {
     const { id } = this.props as XulswordProps;
     const { scroll } = state;
     if (id && !scroll?.skipWindowUpdate) {
-      const newStatePref = drop(state, notStatePref);
-      const d = diff(drop(prevState, notStatePref), newStatePref);
-      if (d) {
-        if (d.scroll?.skipTextUpdate) delete d.scroll.skipTextUpdate;
-        G.Prefs.mergeValue(id, d);
-      }
+      const statex = clone(state);
+      if (statex.scroll?.skipTextUpdate) delete statex.scroll.skipTextUpdate;
+      setStatePref(id, prevState, statex, Object.keys(SP.xulsword));
       // Add page to history after a short delay
       const { location } = state;
       if (location) {
@@ -585,4 +561,4 @@ const onload = () => {
   }, 100);
 };
 
-renderToRoot(<Xulsword id="xulsword" />, { onload });
+renderToRoot(<Xulsword />, { onload });

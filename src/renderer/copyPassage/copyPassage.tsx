@@ -7,7 +7,8 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable react/static-property-placement */
 import React from 'react';
-import { diff, drop, sanitizeHTML } from '../../common';
+import { sanitizeHTML } from '../../common';
+import { SP } from '../../constant';
 import G from '../rg';
 import renderToRoot from '../renderer';
 import {
@@ -17,6 +18,8 @@ import {
   htmlVerses,
   getMaxVerse,
   verseKey,
+  getStatePref,
+  setStatePref,
 } from '../rutil';
 import { libswordText } from '../viewport/ztext';
 import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
@@ -29,8 +32,20 @@ import '../libsword.css';
 import '../viewport/atext.css';
 import './copyPassage.css';
 
-import type { CopyPassageStatePref } from '../../type';
 import type VerseKey from '../../versekey';
+
+const defaultProps = xulDefaultProps;
+
+const propTypes = xulPropTypes;
+
+type CopyPassageProps = XulProps;
+
+const notStatePrefDefault = {
+  passage: null as SelectVKMType | null,
+};
+
+export type CopyPassageState = typeof notStatePrefDefault &
+  typeof SP.copyPassage;
 
 const openedWinState = windowArgument(
   'copyPassageState'
@@ -43,18 +58,6 @@ if (openedWinState) {
   });
 }
 
-const defaultProps = xulDefaultProps;
-
-const propTypes = xulPropTypes;
-
-type CopyPassageProps = XulProps;
-
-const notStatePref = {
-  passage: null as SelectVKMType | null,
-};
-
-export type CopyPassageState = typeof notStatePref & CopyPassageStatePref;
-
 export default class CopyPassageWin extends React.Component {
   static defaultProps: typeof defaultProps;
 
@@ -64,8 +67,8 @@ export default class CopyPassageWin extends React.Component {
     super(props);
 
     const s: CopyPassageState = {
-      ...notStatePref,
-      ...(G.Prefs.getComplexValue('copyPassage') as CopyPassageStatePref),
+      ...notStatePrefDefault,
+      ...getStatePref('copyPassage', SP.copyPassage),
       ...openedWinState,
     };
     if (s.passage) {
@@ -89,11 +92,12 @@ export default class CopyPassageWin extends React.Component {
     _prevProps: CopyPassageProps,
     prevState: CopyPassageState
   ) {
-    const d = diff(
+    setStatePref(
+      'copyPassage',
       prevState,
-      drop(this.state as CopyPassageState, notStatePref)
+      this.state,
+      Object.keys(SP.copyPassage)
     );
-    if (d) G.Prefs.mergeValue('copyPassage', d);
   }
 
   passageToClipboard() {

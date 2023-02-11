@@ -116,7 +116,7 @@ export default class AboutWin extends React.Component implements ModinfoParent {
     const { container, textarea } = modinfoRefs;
 
     const contributors: string[] =
-      (G.Prefs.getComplexValue('Contributors') as string[]) || [];
+      (G.Prefs.getComplexValue('global.Contributors') as string[]) || [];
 
     const overlay = G.inlineFile(
       `${G.Dirs.path.xsAsset}/splash-overlay-${G.i18n.language}.png`

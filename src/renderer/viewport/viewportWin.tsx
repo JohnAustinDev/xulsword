@@ -6,8 +6,8 @@
 /* eslint-disable jsx-a11y/media-has-caption */
 import React from 'react';
 import Subscription from '../../subscription';
-import C from '../../constant';
-import { keep, diff } from '../../common';
+import C, { SP } from '../../constant';
+import { keep, diff, drop } from '../../common';
 import G from '../rg';
 import renderToRoot from '../renderer';
 import log from '../log';
@@ -15,6 +15,7 @@ import {
   clearPending,
   getStatePref,
   registerUpdateStateFromPref,
+  setStatePref,
   windowArgument,
 } from '../rutil';
 import {
@@ -32,31 +33,34 @@ import viewportParentH, {
   showNewModules,
 } from './viewportParentH';
 
-import type { XulswordStateArgType, XulswordStatePref } from '../../type';
+import type { XulswordStateArgType } from '../../type';
 import type Atext from './atext';
 
 const defaultProps = xulDefaultProps;
 
-const propTypes = {
-  ...xulPropTypes,
-};
+const propTypes = xulPropTypes;
 
 export type ViewportWinProps = XulProps;
 
-const vpWinDefaults = {
+const statePrefDefault = drop(SP.xulsword, Object.keys(vpWindowState)) as Omit<
+  typeof SP.xulsword,
+  keyof typeof vpWindowState
+>;
+
+const notStatePrefDefault = {
   history: [] as any[],
   historyIndex: 0,
   vpreset: 0,
 };
 
-export type ViewportWinState = XulswordStatePref &
-  typeof vpWindowState &
-  typeof vpWinDefaults;
+export type ViewportWinState = typeof statePrefDefault &
+  typeof notStatePrefDefault &
+  typeof vpWindowState;
 
 // Window arguments that are used to set initial state must be updated locally
 // and in Prefs, so that component reset or program restart won't cause
 // reversion to initial state.
-let windowState = windowArgument('xulswordState');
+let windowState = windowArgument('xulswordState') as typeof vpWindowState;
 
 export default class ViewportWin extends React.Component {
   static defaultProps: typeof defaultProps;
@@ -78,15 +82,9 @@ export default class ViewportWin extends React.Component {
   constructor(props: ViewportWinProps) {
     super(props);
 
-    if (props.id !== 'xulsword')
-      throw Error(`ViewportWin id must be 'xulsword'`);
-    const statePref = getStatePref(props.id) as Omit<
-      XulswordStatePref,
-      keyof typeof vpWindowState
-    >;
     const s: ViewportWinState = {
-      ...statePref,
-      ...vpWinDefaults,
+      ...getStatePref('xulsword', statePrefDefault),
+      ...notStatePrefDefault,
       ...windowState,
     };
     this.state = s;
@@ -104,7 +102,9 @@ export default class ViewportWin extends React.Component {
   }
 
   componentDidMount() {
-    this.destroy.push(registerUpdateStateFromPref(this, vpWindowState));
+    this.destroy.push(
+      registerUpdateStateFromPref('xulsword', this, statePrefDefault)
+    );
     this.destroy.push(
       Subscription.subscribe.modulesInstalled(showNewModules.bind(this))
     );
@@ -117,28 +117,25 @@ export default class ViewportWin extends React.Component {
     const state = this.state as ViewportWinState;
     const { scroll } = state;
     if (!scroll?.skipWindowUpdate) {
-      windowState = keep(state, vpWindowState);
+      windowState = keep(
+        state,
+        Object.keys(vpWindowState)
+      ) as typeof vpWindowState;
       const changedWindowState = diff(
-        keep(prevState, vpWindowState),
+        keep(prevState, Object.keys(vpWindowState)),
         windowState
-      );
+      ) as Partial<typeof vpWindowState>;
       if (changedWindowState) {
-        if (changedWindowState.scroll?.skipLocalPanels)
-          delete changedWindowState.scroll.skipLocalPanels;
+        if (changedWindowState.scroll?.skipTextUpdate)
+          delete changedWindowState.scroll.skipTextUpdate;
         G.Window.mergeValue('xulswordState', changedWindowState);
       }
-      const { id } = this.props as ViewportWinProps;
-      if (id) {
-        const changedStatePref = diff(
-          keep(prevState, C.GlobalXulsword),
-          keep(state, C.GlobalXulsword)
-        );
-        if (changedStatePref) {
-          if (changedStatePref.scroll?.skipTextUpdate)
-            delete changedStatePref.scroll.skipTextUpdate;
-          G.Prefs.mergeValue(id, changedStatePref);
-        }
-      }
+      setStatePref(
+        'xulsword',
+        prevState,
+        state,
+        Object.keys(C.SyncPrefs.xulsword)
+      );
     }
   }
 
@@ -217,4 +214,4 @@ export default class ViewportWin extends React.Component {
 ViewportWin.defaultProps = defaultProps;
 ViewportWin.propTypes = propTypes;
 
-renderToRoot(<ViewportWin id="xulsword" pack="start" height="100%" />);
+renderToRoot(<ViewportWin pack="start" height="100%" />);

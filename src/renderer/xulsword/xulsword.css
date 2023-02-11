@@ -1,26 +1,26 @@
-#xulsword {
+.xulsword {
   overflow: hidden;
 }
-#xulsword .controlbar {
+.xulsword .controlbar {
   background-image: url(../../../assets/b2.png);
 }
-#xulsword .controlbar .start-spacer {
+.xulsword .controlbar .start-spacer {
   width: 15px;
 }
-#xulsword .controlbar .button,
-#xulsword .controlbar .button > div,
-#xulsword .controlbar button {
+.xulsword .controlbar .button,
+.xulsword .controlbar .button > div,
+.xulsword .controlbar button {
   width: 100%;
 }
-#xulsword .controlbar .textbox {
+.xulsword .controlbar .textbox {
   font-size: 15px;
 }
-#xulsword .controlbar #search-tool .vbox > div {
+.xulsword .controlbar #search-tool .vbox > div {
   width: 100%;
 }
-#xulsword .controlbar #book,
-#xulsword .controlbar #chapter,
-#xulsword .controlbar #verse {
+.xulsword .controlbar #book,
+.xulsword .controlbar #chapter,
+.xulsword .controlbar #verse {
   margin-top: 0;
   margin-bottom: 2px;
 }

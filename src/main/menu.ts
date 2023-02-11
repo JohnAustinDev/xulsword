@@ -9,15 +9,16 @@ import {
 } from 'electron';
 import path from 'path';
 import { clone } from '../common';
-import C from '../constant';
+import C, { SP } from '../constant';
 import G from './mg';
+import Data from './components/data';
+import Prefs from './components/prefs';
 import Commands, { newDbItemWithDefaults } from './components/commands';
+import { verseKey } from './minit';
 import setViewportTabs from './tabs';
 
-import type { SearchType, TabTypes, XulswordStatePref } from '../type';
-import { verseKey } from './minit';
-import Data from './components/data';
-import Prefs, { PrefCallbackType } from './components/prefs';
+import type { SearchType, TabTypes } from '../type';
+import type { PrefCallbackType } from './components/prefs';
 
 type Modifiers =
   | 'CommandOrControl' // 'accel' in XUL
@@ -74,24 +75,24 @@ const showtabs: [string, TabTypes][] = [
   ['showdicttabs', 'Dicts'],
 ];
 
-const panelLabels = (() => {
+function panelLabels() {
   const labels: string[] = [];
   const panels = G.Prefs.getComplexValue(
     'xulsword.panels'
-  ) as XulswordStatePref['panels'];
+  ) as typeof SP.xulsword['panels'];
   panels.forEach((_panel: string | null, i: number) => {
     labels.push(`menu.view.window${i + 1}`);
   });
   labels.push('menu.view.allwindows');
   return labels;
-})();
+}
 
 function buildModuleMenus(menu: Menu) {
   const rgtabs = clone(G.Tabs).reverse();
   showtabs.forEach((showtab) => {
     const [typekey, type] = showtab;
     let disableParent = true;
-    panelLabels.forEach((pl) => {
+    panelLabels().forEach((pl) => {
       const panelIndex =
         pl === 'menu.view.allwindows'
           ? -1
@@ -128,7 +129,7 @@ function buildModuleMenus(menu: Menu) {
 function updateMenuFromPref(menux?: Menu | null) {
   const panels = Prefs.getComplexValue(
     'xulsword.panels'
-  ) as XulswordStatePref['panels'];
+  ) as typeof SP.xulsword['panels'];
   const menuPref: Set<string> = new Set();
   function add(pref: string) {
     menuPref.add(pref.split('.').slice(0, 2).join('.'));
@@ -143,7 +144,7 @@ function updateMenuFromPref(menux?: Menu | null) {
           add('xulsword.tabs');
           const pval = Prefs.getComplexValue(
             'xulsword.tabs'
-          ) as XulswordStatePref['tabs'];
+          ) as typeof SP.xulsword['tabs'];
           if (panelIndex === -1) {
             i.checked = pval.every((p: any) => !p || p.includes(mod));
           } else {
@@ -193,7 +194,7 @@ export const pushPrefsToMenu: PrefCallbackType = (winid, key, val, store) => {
   if (winid !== -1 && store === 'prefs') {
     const keys: string[] = [];
     if (!key.includes('.') && typeof val === 'object') {
-      Object.keys(val).forEach((k) => keys.push(`${key}.${k}`));
+      Object.keys(val as any).forEach((k) => keys.push(`${key}.${k}`));
     } else keys.push(key);
     if (keys.some((k) => menuPref.includes(k))) {
       updateMenuFromPref();
@@ -460,7 +461,7 @@ export default class MenuBuilder {
           `${typekey}.png`
         ),
         submenu: [
-          ...panelLabels.map((pl: any) => {
+          ...panelLabels().map((pl: any) => {
             const panelIndex =
               pl === 'menu.view.allwindows'
                 ? -1
@@ -521,7 +522,7 @@ export default class MenuBuilder {
         ...textTabs,
         {
           label: this.ts('menu.view.showAll'),
-          submenu: panelLabels.map((pl: any) => {
+          submenu: panelLabels().map((pl: any) => {
             const panelIndex =
               pl === 'menu.view.allwindows'
                 ? -1
@@ -536,7 +537,7 @@ export default class MenuBuilder {
         },
         {
           label: this.ts('menu.view.hideAll'),
-          submenu: panelLabels.map((pl: any) => {
+          submenu: panelLabels().map((pl: any) => {
             const panelIndex =
               pl === 'menu.view.allwindows'
                 ? -1
@@ -604,7 +605,7 @@ export default class MenuBuilder {
               click: d(() => {
                 const panels = G.Prefs.getComplexValue(
                   'xulsword.panels'
-                ) as XulswordStatePref['panels'];
+                ) as typeof SP.xulsword['panels'];
                 const module =
                   panels.find((m) => m) ||
                   (G.Tabs[0] && G.Tabs[0].module) ||
@@ -692,7 +693,7 @@ export default class MenuBuilder {
 
     const initialPanels = G.Prefs.getComplexValue(
       'xulsword.panels'
-    ) as XulswordStatePref['panels'];
+    ) as typeof SP.xulsword['panels'];
     const subMenuWindows = {
       role: 'windowMenu',
       label: this.ts('menu.windows'),
@@ -705,7 +706,7 @@ export default class MenuBuilder {
           click: d(() => {
             const panels = G.Prefs.getComplexValue(
               'xulsword.panels'
-            ) as XulswordStatePref['panels'];
+            ) as typeof SP.xulsword['panels'];
             const newpans = panels.map((panel: string | null, x: number) => {
               return x > i ? null : panel || '';
             });

@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-nested-ternary */
 import { clone } from '../common';
+import { SP } from '../constant';
 import Prefs from './components/prefs';
 import { getBooksInModule, getTab, getTabs } from './minit';
 
-import type { TabType, TabTypes, XulswordStatePref } from '../type';
+import type { TabType, TabTypes } from '../type';
 
 export default function setViewportTabs(
   panelIndex: number, // which panel(s) (-1 is all)
@@ -16,7 +17,7 @@ export default function setViewportTabs(
   const Tab = getTab();
   const xulsword = clone(
     Prefs.getComplexValue('xulsword')
-  ) as XulswordStatePref;
+  ) as typeof SP.xulsword;
   const { location, mtModules, panels, tabs } = xulsword;
   const panelIndexes =
     panelIndex === -1 ? panels.map((_p: any, i: number) => i) : [panelIndex];

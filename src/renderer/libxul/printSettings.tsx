@@ -11,9 +11,10 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Icon, Intent, Position, Toaster } from '@blueprintjs/core';
 import Subscription from '../../subscription';
-import { clone, diff, drop } from '../../common';
+import { clone } from '../../common';
+import { SP } from '../../constant';
 import G from '../rg';
-import { getStatePref } from '../rutil';
+import { getStatePref, setStatePref } from '../rutil';
 import { Hbox, Vbox } from './boxes';
 import Button from './button';
 import Spacer from './spacer';
@@ -26,7 +27,7 @@ import './printSettings.css';
 
 import type { WindowRootState } from '../renderer';
 
-const paperSizes = [
+export const paperSizes = [
   { type: 'A3', w: 297, h: 420, u: 'mm' },
   { type: 'A4', w: 210, h: 297, u: 'mm' },
   { type: 'A5', w: 148, h: 210, u: 'mm' },
@@ -69,22 +70,9 @@ type PrintProps = XulProps & {
   dialogEnd: string;
 };
 
-const defaultState = {
-  landscape: false as boolean,
-  pageSize: 'Letter' as typeof paperSizes[number]['type'],
-  twoColumns: false as boolean,
-  scale: 100 as number,
-  margins: {
-    top: 30,
-    right: 21,
-    bottom: 30,
-    left: 21,
-  },
-};
-
 const notStatePref = {};
 
-export type PrintState = typeof defaultState & typeof notStatePref;
+export type PrintState = typeof SP.print & typeof notStatePref;
 
 export default class PrintSettings extends React.Component {
   static defaultProps: typeof defaultProps;
@@ -117,8 +105,7 @@ export default class PrintSettings extends React.Component {
     super(props);
 
     const s: PrintState = {
-      ...defaultState,
-      ...(getStatePref('print') as PrintState),
+      ...getStatePref('print', SP.print),
     };
     this.state = s;
 
@@ -140,8 +127,7 @@ export default class PrintSettings extends React.Component {
   }
 
   componentDidUpdate(_prevProps: PrintProps, prevState: PrintState) {
-    const d = diff(prevState, drop(this.state as PrintState, notStatePref));
-    if (d) G.Prefs.mergeValue('print', d);
+    setStatePref('print', prevState, this.state, Object.keys(SP.print));
   }
 
   async handler(e: React.SyntheticEvent<any, any>) {

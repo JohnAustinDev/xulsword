@@ -6,6 +6,7 @@
 /* eslint-disable react/static-property-placement */
 /* eslint-disable jsx-a11y/control-has-associated-label */
 import React from 'react';
+import PropTypes from 'prop-types';
 import {
   Intent,
   IToastProps,
@@ -14,9 +15,7 @@ import {
   Toaster,
 } from '@blueprintjs/core';
 import {
-  diff,
   downloadKey,
-  drop,
   isRepoLocal,
   selectionToTableRows,
   repositoryKey,
@@ -25,13 +24,14 @@ import {
   builtinRepos,
   repositoryModuleKey,
 } from '../../common';
-import C from '../../constant';
+import C, { SP } from '../../constant';
 import G from '../rg';
 import log from '../log';
 import {
   getStatePref,
   registerUpdateStateFromPref,
   getLangReadable,
+  setStatePref,
 } from '../rutil';
 import {
   addClass,
@@ -62,7 +62,6 @@ import './manager.css';
 
 import type {
   ModTypes,
-  PrefObject,
   Repository,
   RepositoryListing,
   RowSelection,
@@ -80,7 +79,6 @@ import type {
   TonColumnWidthChanged,
   TonEditableCellChanged,
   TonRowsReordered,
-  TinitialRowSort,
 } from '../libxul/table';
 import type { VKSelectProps, SelectVKMType } from '../libxul/vkselect';
 import type { ModinfoParent } from '../libxul/modinfo';
@@ -93,12 +91,13 @@ const defaultProps = {
 
 const propTypes = {
   ...xulPropTypes,
+  id: PropTypes.oneOf(['moduleManager', 'removeModule']),
 };
 
-export type ManagerProps = XulProps;
+export type ManagerProps = XulProps & {
+  id: 'moduleManager' | 'removeModule';
+};
 
-// The following initial state values do not come from Prefs. Neither are
-// these state keys written to Prefs.
 const notStatePref = {
   modules: [] as string[],
   progress: null as number[] | null,
@@ -122,34 +121,7 @@ const notStatePref = {
   internetPermission: false as boolean,
 };
 
-export interface ManagerStatePref {
-  suggested: { [fallbackLang: string]: string[] };
-  language: {
-    open: boolean;
-    selection: string[];
-    rowSort: TinitialRowSort;
-    width: number;
-  };
-  module: {
-    selection: RowSelection;
-    rowSort: TinitialRowSort;
-    visibleColumns: number[];
-    columnWidths: number[];
-  };
-  repository: {
-    open: boolean;
-    selection: RowSelection;
-    rowSort: TinitialRowSort;
-    visibleColumns: number[];
-    columnWidths: number[];
-    height: number;
-  } | null;
-  repositories: {
-    xulsword: Repository[];
-    custom: Repository[];
-    disabled: string[] | null;
-  } | null;
-}
+export type ManagerStatePref = typeof SP.moduleManager | typeof SP.removeModule;
 
 export type ManagerState = ManagerStatePref &
   typeof notStatePref &
@@ -217,12 +189,12 @@ export default class ModuleManager
 
   constructor(props: ManagerProps) {
     super(props);
+    const { id } = props;
 
-    if (!props.id) throw Error(`Manager must have an ID`);
     const s: ManagerState = {
       ...modinfoParentInitialState,
       ...notStatePref,
-      ...(getStatePref(props.id) as ManagerStatePref),
+      ...getStatePref(id, SP[id]),
     };
     s.tables.language.data = H.Saved.language.data;
     s.tables.module.data = H.Saved.module.data;
@@ -283,19 +255,14 @@ export default class ModuleManager
   }
 
   componentDidUpdate(_prevProps: any, prevState: ManagerState) {
+    const props = this.props as ManagerProps;
     const state = this.state as ManagerState;
     if (!state.internetPermission) return;
-    const { id } = this.props as ManagerProps;
-    if (id) {
-      const newStatePref = drop(state, notStatePref) as PrefObject;
-      const prvStatePref = drop(prevState, notStatePref) as PrefObject;
-      const d = diff(prvStatePref, newStatePref);
-      if (d) {
-        G.Prefs.mergeValue(id, d);
-      }
-    }
+    const { id } = props;
+    setStatePref(id, prevState, state, Object.keys(SP[id]));
     this.sizeTableToParent('repository');
     this.sizeTableToParent('module');
+    // this.destroy.push(registerUpdateStateFromPref(id, this, SP[id]));
   }
 
   componentWillUnmount() {
@@ -358,7 +325,6 @@ export default class ModuleManager
       } else loadLocalRepos();
     }
 
-    this.destroy.push(registerUpdateStateFromPref(this));
     // Instantiate progress handler
     const progressing = {
       downloads: [] as [string, number][], // [id, percent]
@@ -1248,9 +1214,13 @@ function audioDialogOnChange(
       if (showAudioDialog[0].type === 'versekey') {
         const dvk = showAudioDialog[0] as H.VersekeyDialog;
         const sel = selection as SelectVKMType;
-        const ch = dvk.chapters[sel.book]
-          .map((n, i) => (n ? i : undefined))
-          .filter(Boolean) as number[];
+        const af = dvk.chapters[sel.book];
+        let ch: number[] | undefined;
+        if (af) {
+          ch = af
+            .map((n, i) => (n ? i : undefined))
+            .filter(Boolean) as number[];
+        }
         dvk.options.chapters = ch;
         dvk.options.lastchapters = ch;
       }

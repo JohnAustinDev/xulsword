@@ -44,6 +44,7 @@ import type {
   SwordConfType,
   VerseKeyAudio,
   GenBookAudioConf,
+  OSISBookType,
 } from '../../type';
 import type { SelectVKMType, VKSelectProps } from '../libxul/vkselect';
 import type ModuleManager from './manager';
@@ -1056,7 +1057,7 @@ async function promptAudioChapters(
             : ac;
           const books = Object.entries(ac)
             .filter((e) => e[1].some((v) => v))
-            .map((e) => e[0]);
+            .map((e) => e[0]) as OSISBookType[];
           if (!books.length) return resolve(null);
           d.type = 'versekey';
           d.chapters = ac;
@@ -1068,9 +1069,13 @@ async function promptAudioChapters(
             v11n: 'KJV',
           };
           d.selection = d.initial;
-          const ch = ac[books[0]]
-            .map((n, i) => (n ? i : undefined))
-            .filter(Boolean) as number[];
+          let ch: number[] | undefined;
+          const acbk0 = ac[books[0]];
+          if (acbk0) {
+            ch = acbk0
+              .map((n, i) => (n ? i : undefined))
+              .filter(Boolean) as number[];
+          }
           d.options = {
             books,
             chapters: ch,

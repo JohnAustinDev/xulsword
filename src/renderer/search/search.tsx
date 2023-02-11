@@ -43,7 +43,7 @@ import handlerH, {
 } from './searchH';
 import './search.css';
 
-import type { BookGroupType, GlobalPrefType, SearchType } from '../../type';
+import type { BookGroupType, OSISBookType, SearchType } from '../../type';
 import Popup from '../popup/popup';
 
 const defaultProps = xulDefaultProps;
@@ -313,9 +313,10 @@ export default class SearchWin extends React.Component implements PopupParent {
       if (
         module &&
         !['ot', 'nt'].includes(bg) &&
-        G.getBooksInModule(module).some((bk) =>
-          C.SupportedBooks[bg].includes(bk)
-        )
+        G.getBooksInModule(module).some((bk) => {
+          const x = C.SupportedBooks[bg] as any;
+          return x.includes(bk);
+        })
       ) {
         sos.push(bg);
       }
@@ -340,7 +341,7 @@ export default class SearchWin extends React.Component implements PopupParent {
 
     const location = G.Prefs.getComplexValue(
       'xulsword.location'
-    ) as GlobalPrefType['xulsword']['location'];
+    ) as typeof C.SyncPrefs['xulsword']['location'];
 
     const searchindex = module && G.LibSword.luceneEnabled(module);
 

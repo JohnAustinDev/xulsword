@@ -14,7 +14,7 @@ import {
   versionCompare,
 } from '../../common';
 import Subscription from '../../subscription';
-import C from '../../constant';
+import C, { SP } from '../../constant';
 import parseSwordConf from '../parseSwordConf';
 import { verseKey, getTab, getTabs, getAudioConfs } from '../minit';
 import Prefs from './prefs';
@@ -36,7 +36,6 @@ import type {
   SearchType,
   TextVKType,
   VerseKeyAudioFile,
-  XulswordStatePref,
 } from '../../type';
 import type { AboutWinState } from '../../renderer/about/about';
 import type { PrintPassageState } from '../../renderer/printPassage/printPassage';
@@ -130,7 +129,7 @@ const Commands = {
   playAudio(audio: VerseKeyAudioFile | GenBookAudioFile | null) {
     let newxulsword = clone(
       Prefs.getComplexValue('xulsword')
-    ) as XulswordStatePref;
+    ) as typeof SP.xulsword;
     if (audio) {
       if (
         'book' in audio &&
@@ -397,9 +396,8 @@ const Commands = {
               if (sub) {
                 const subn = Number(sub.replace(/^(\d+).*?$/, '$1'));
                 const m2 = sub.match(/^(\d+)[-\s](.*?)$/); // legacy VerseKey markup
-                if (!book && m2)
-                  book = verseKey(m2[2]).book as OSISBookType | '';
-                else if (!book) book = verseKey(sub).book as OSISBookType | '';
+                if (!book && m2) book = verseKey(m2[2]).book;
+                else if (!book) book = verseKey(sub).book;
                 if (book) {
                   sub = book;
                   path.push(book);
@@ -606,7 +604,7 @@ const Commands = {
 
   copyPassage(state?: Partial<CopyPassageState>) {
     const tab = getTab();
-    const xulsword = Prefs.getComplexValue('xulsword') as XulswordStatePref;
+    const xulsword = Prefs.getComplexValue('xulsword') as typeof SP.xulsword;
     const vkmod = xulsword.panels.find(
       (p) => p && p in tab && tab[p].isVerseKey
     );
@@ -703,8 +701,8 @@ const Commands = {
     location: LocationGBType,
     scroll?: ScrollType | undefined,
     deferAction?: boolean
-  ): XulswordStatePref {
-    const xulsword = Prefs.getComplexValue('xulsword') as XulswordStatePref;
+  ): typeof SP.xulsword {
+    const xulsword = Prefs.getComplexValue('xulsword') as typeof SP.xulsword;
     const newxulsword = clone(xulsword);
     const { panels, keys } = newxulsword;
     let p = panels.findIndex((m) => m && m === location.module);
@@ -723,10 +721,10 @@ const Commands = {
     newselection?: LocationVKType,
     newscroll?: ScrollType,
     deferAction?: boolean
-  ): XulswordStatePref {
+  ): typeof SP.xulsword {
     // To go to a verse system location without also changing xulsword's current
     // versekey module requires this location be converted into the current v11n.
-    const xulsword = Prefs.getComplexValue('xulsword') as XulswordStatePref;
+    const xulsword = Prefs.getComplexValue('xulsword') as typeof SP.xulsword;
     const { location } = xulsword;
     const newxulsword = clone(xulsword);
     const loc = verseKey(newlocation, location?.v11n || undefined);
@@ -751,17 +749,17 @@ export function newDbItemWithDefaults(
   const tabs = getTabs();
   const panels = Prefs.getComplexValue(
     'xulsword.panels'
-  ) as XulswordStatePref['panels'];
+  ) as typeof SP.xulsword['panels'];
   const vkm = panels.find(
     (m: string | null) => m && m in tab && tab[m].isVerseKey
   );
   if (vkm) {
     const loc = Prefs.getComplexValue(
       'xulsword.location'
-    ) as XulswordStatePref['location'];
+    ) as typeof SP.xulsword['location'];
     const sel = Prefs.getComplexValue(
       'xulsword.selection'
-    ) as XulswordStatePref['selection'];
+    ) as typeof SP.xulsword['selection'];
     const textvk2 = {
       module: textvk?.module || tabs[0].module,
       text: textvk?.text || '',

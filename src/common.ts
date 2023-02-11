@@ -11,7 +11,6 @@ import type {
   FTPDownload,
   ModFTPDownload,
   PrefObject,
-  PrefValue,
   Repository,
   SwordConfType,
   RowSelection,
@@ -26,6 +25,7 @@ import type {
   VerseKeyAudio,
   AudioPath,
   OSISBookType,
+  PrefValue,
 } from './type';
 import type { TreeNodeInfo } from '@blueprintjs/core';
 import type { SelectVKMType } from './renderer/libxul/vkselect';
@@ -69,13 +69,65 @@ export function escapeRE(text: string) {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+// JSON does not encode Javascript undefined, functions or symbols. So
+// what is specially encoded here can be recovered using JSON_parse(string).
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export function JSON_stringify(x: any, _func?: null, space?: number): string {
+  return JSON.stringify(
+    x,
+    (_k, v) => {
+      return v === undefined ? '_undefined_' : v;
+    },
+    space
+  );
+}
+// NOTE: It is not possible to 100% recover arrays with undefined values
+// using the JSON.parse reviver, because the reviver specification requires
+// deletion of undefined array elements rather than setting to undefined.
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export function JSON_parse(s: string, anyx?: Exclude<any, undefined>): any {
+  const any = anyx !== undefined ? anyx : JSON.parse(s);
+  if (any === undefined || any === null) return any;
+  if (typeof any === 'object') {
+    Object.entries(any).forEach((entry) => {
+      const [k, v] = entry;
+      any[k] = v === '_undefined_' ? undefined : JSON_parse('', v);
+    });
+  }
+  return any;
+}
+
+// Firefox Add-On validation throws warnings about eval(uneval(obj)), so
+// this is an alternate way...
+export function deepClone(obj: any) {
+  return JSON_parse(JSON_stringify(obj));
+}
+
+// Copy a data object. Data objects have string keys with values that are
+// either primitives, arrays or other data objects.
+export function clone<T extends unknown>(obj: T): T {
+  let copy: any;
+  if (obj === null || typeof obj !== 'object') copy = obj;
+  else if (Array.isArray(obj)) {
+    copy = [];
+    obj.forEach((p) => copy.push(clone(p)));
+  } else {
+    copy = {};
+    const o = obj as any;
+    Object.entries(o).forEach((entry) => {
+      copy[entry[0]] = clone(entry[1]);
+    });
+  }
+  return copy;
+}
+
 // Return a new source object keeping only certain keys from the original.
-export function keep<T extends { [i: string]: any }>(
+export function keep<T extends { [key: string]: any }>(
   source: T,
-  keepkeys: string[] | { [i: string]: any },
+  keepkeys: string[],
   dropInstead = false
 ): Partial<T> {
-  const p: any = {};
+  const p = {} as any;
   const pkeep = Array.isArray(keepkeys) ? keepkeys : Object.keys(keepkeys);
   if (dropInstead) {
     const pdrop = pkeep;
@@ -89,15 +141,98 @@ export function keep<T extends { [i: string]: any }>(
       p[k] = k in source ? source[k] : undefined;
     });
   }
-  return p;
+  return p as Partial<T>;
 }
 
 // Return a new source object dropping certain keys from the original.
-export function drop<T extends { [i: string]: any }>(
+export function drop<T extends { [key: string]: any }>(
   source: T,
-  dropkeys: string[] | { [i: string]: any }
+  dropkeys: string[]
 ): Partial<T> {
   return keep(source, dropkeys, true);
+}
+
+// Compare two PrefValues. It returns only the differences in pv2 compared to pv1,
+// or undefined if they share the same value (recursively). If there are descendant
+// objects greater than 'depth' recursion, properties are compared exhaustively but
+// entire pv2 descendant objects are returned when there are differences in any child
+// property. Depth is 1 by default because React setState performs shallow merging
+// with existing state, meaning a partial state object would overwrite a complete one,
+// resulting in unexpected states.
+export function diff<T>(pv1: any, pv2: T, depth = 1): Partial<T> | undefined {
+  let difference: any;
+  // Primatives
+  if (
+    pv1 === null ||
+    pv2 === null ||
+    typeof pv1 !== 'object' ||
+    typeof pv2 !== 'object'
+  ) {
+    if (pv1 !== pv2) difference = pv2;
+  } else if (Array.isArray(pv2)) {
+    // Arrays
+    if (
+      !Array.isArray(pv1) ||
+      pv1.length !== pv2.length ||
+      pv2.some((v, i) => {
+        return diff(pv1[i], v, depth - 1) !== undefined;
+      })
+    ) {
+      difference = pv2;
+    }
+  } else {
+    // Data objects
+    const obj1 = pv1 as PrefObject;
+    const obj2 = pv2 as PrefObject;
+    Object.entries(obj2).forEach((entry2) => {
+      const [k2, v2] = entry2;
+      if (!(k2 in obj1)) {
+        if (!difference) difference = {};
+        difference[k2] = v2;
+      } else {
+        const diff2 = diff(obj1[k2], v2, depth - 1);
+        if (diff2 !== undefined) {
+          if (!difference) difference = {};
+          difference[k2] = diff2;
+        }
+      }
+    });
+    if (depth < 1) {
+      Object.keys(obj1).forEach((k1) => {
+        if (!(k1 in obj2) && !difference) difference = {};
+      });
+      if (difference) difference = obj2;
+    }
+  }
+  return difference;
+}
+
+export function prefType(
+  pval: PrefValue
+): 'string' | 'number' | 'boolean' | 'complex' {
+  let t = typeof pval;
+  if (t === 'bigint') t = 'number';
+  return ['string', 'number', 'boolean'].includes(t)
+    ? (t as 'string' | 'number' | 'boolean')
+    : 'complex';
+}
+
+// Return and persist the key/value pairs of component state Prefs. Component
+// state Prefs are permanently persisted component state values recorded in
+// prefs.json whose key begins with the component id.
+export function getStatePref<P extends PrefObject>(
+  prefs: GType['Prefs'],
+  id: string,
+  defaultPrefs: P
+): P {
+  const state = {} as P;
+  Object.entries(defaultPrefs).forEach((entry) => {
+    const [key, value] = entry;
+    state[key as keyof P] = clone(
+      prefs.getPrefOrCreate(`${id}.${String(key)}`, prefType(value), value)
+    ) as any;
+  });
+  return state;
 }
 
 // Decode an osisRef that was encoded using _(\d+)_ encoding, where
@@ -180,117 +315,6 @@ export function stringHash(...args: any): string {
 
 export function randomID(): string {
   return Math.random().toString(36).replace('0.', 'x');
-}
-
-// JSON does not encode Javascript undefined, functions or symbols. So
-// what is specially encoded here can be recovered using JSON_parse(string).
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export function JSON_stringify(x: any, _func?: null, space?: number): string {
-  return JSON.stringify(
-    x,
-    (_k, v) => {
-      return v === undefined ? '_undefined_' : v;
-    },
-    space
-  );
-}
-// NOTE: It is not possible to 100% recover arrays with undefined values
-// using the JSON.parse reviver, because the reviver specification requires
-// deletion of undefined array elements rather than setting to undefined.
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export function JSON_parse(s: string, anyx?: Exclude<any, undefined>): any {
-  const any = anyx !== undefined ? anyx : JSON.parse(s);
-  if (any === undefined || any === null) return any;
-  if (typeof any === 'object') {
-    Object.entries(any).forEach((entry) => {
-      const [k, v] = entry;
-      any[k] = v === '_undefined_' ? undefined : JSON_parse('', v);
-    });
-  }
-  return any;
-}
-
-// Firefox Add-On validation throws warnings about eval(uneval(obj)), so
-// this is an alternate way...
-export function deepClone(obj: any) {
-  return JSON_parse(JSON_stringify(obj));
-}
-
-// Copy a data object. Data objects have string keys with values that are
-// either primitives, arrays or other data objects.
-export function clone<T extends unknown>(obj: T): T {
-  let copy: any;
-  if (obj === null || typeof obj !== 'object') copy = obj;
-  else if (Array.isArray(obj)) {
-    copy = [];
-    obj.forEach((p) => copy.push(clone(p)));
-  } else {
-    copy = {};
-    const o = obj as any;
-    Object.entries(o).forEach((entry) => {
-      copy[entry[0]] = clone(entry[1]);
-    });
-  }
-  return copy;
-}
-
-// Compare two PrefValues. It returns only the differences in pv2 compared to pv1,
-// or undefined if they share the same value (recursively). If there are descendant
-// objects greater than 'depth' recursion, properties are compared exhaustively but
-// entire pv2 descendant objects are returned when there are differences in any child
-// property. Depth is 1 by default because React setState performs shallow merging
-// with existing state, meaning a partial state object would overwrite a complete one,
-// resulting in unexpected states.
-export function diff<T extends PrefValue>(
-  pv1: T,
-  pv2: T,
-  depth = 1
-): Partial<T> {
-  let difference: any;
-  // Primatives
-  if (
-    pv1 === null ||
-    pv2 === null ||
-    typeof pv1 !== 'object' ||
-    typeof pv2 !== 'object'
-  ) {
-    if (pv1 !== pv2) difference = pv2;
-  } else if (Array.isArray(pv2)) {
-    // Arrays
-    if (
-      !Array.isArray(pv1) ||
-      pv1.length !== pv2.length ||
-      pv2.some((v, i) => {
-        return diff(pv1[i], v, depth - 1) !== undefined;
-      })
-    ) {
-      difference = pv2;
-    }
-  } else {
-    // Data objects
-    const obj1 = pv1 as PrefObject;
-    const obj2 = pv2 as PrefObject;
-    Object.entries(obj2).forEach((entry2) => {
-      const [k2, v2] = entry2;
-      if (!(k2 in obj1)) {
-        if (!difference) difference = {};
-        difference[k2] = v2;
-      } else {
-        const diff2 = diff(obj1[k2], v2, depth - 1);
-        if (diff2 !== undefined) {
-          if (!difference) difference = {};
-          difference[k2] = diff2;
-        }
-      }
-    });
-    if (depth < 1) {
-      Object.keys(obj1).forEach((k1) => {
-        if (!(k1 in obj2) && !difference) difference = {};
-      });
-      if (difference) difference = obj2;
-    }
-  }
-  return difference;
 }
 
 // Searches an element and its ancestors or descendants, depending on
@@ -717,7 +741,7 @@ export function readDeprecatedVerseKeyAudioConf(
   return r;
 }
 
-// Returns the files listed in config file as GenBookAudio.
+// Returns the audio files listed in a config file as GenBookAudio.
 export function readGenBookAudioConf(
   audio: GenBookAudioConf,
   allGbKeysx: string[]

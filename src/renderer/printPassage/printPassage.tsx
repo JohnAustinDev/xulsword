@@ -10,16 +10,11 @@ import React, { ReactElement } from 'react';
 import ReactDOM from 'react-dom';
 import { ProgressBar } from '@blueprintjs/core';
 import Subscription from '../../subscription';
-import {
-  diff,
-  sanitizeHTML,
-  stringHash,
-  drop,
-  querablePromise,
-} from '../../common';
+import { diff, sanitizeHTML, stringHash, querablePromise } from '../../common';
+import { SP } from '../../constant';
 import G from '../rg';
 import renderToRoot from '../renderer';
-import { windowArgument, getStatePref } from '../rutil';
+import { windowArgument, getStatePref, setStatePref } from '../rutil';
 import log from '../log';
 import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
 import Grid, { Column, Columns, Row, Rows } from '../libxul/grid';
@@ -40,7 +35,7 @@ import '../libsword.css';
 import '../viewport/atext.css';
 import './printPassage.css';
 
-import type { QuerablePromise } from '../../type';
+import type { OSISBookType, QuerablePromise } from '../../type';
 
 // TODO!: Dictlinks aren't implemented. CSS needs improvement. Print hasn't been checked.
 // TODO!: As of 11/22 @page {@bottom-center {content: counter(page);}} does not work
@@ -65,27 +60,23 @@ const switches = [
   ],
 ] as const;
 
-let openedWinState = windowArgument(
-  'passageWinState'
-) as Partial<PrintPassageState> | null;
-
-const notStateProps = {
-  showpage: 1 as number,
-  progress: -1 as number,
-};
-
 const defaultProps = xulDefaultProps;
 
 const propTypes = xulPropTypes;
 
 type PrintPassageProps = XulProps;
 
-export type PrintPassageState = typeof notStateProps & {
-  chapters: SelectVKMType | null;
-  checkbox: {
-    [k in typeof switches[number][number][2]]: boolean;
-  };
+const notStatePrefDefault = {
+  showpage: 1 as number,
+  progress: -1 as number,
 };
+
+let openedWinState = windowArgument(
+  'passageWinState'
+) as Partial<PrintPassageState> | null;
+
+export type PrintPassageState = typeof SP.printPassage &
+  typeof notStatePrefDefault;
 
 export default class PrintPassageWin extends React.Component {
   static defaultProps: typeof defaultProps;
@@ -106,8 +97,8 @@ export default class PrintPassageWin extends React.Component {
     super(props);
 
     const s: PrintPassageState = {
-      ...notStateProps,
-      ...(getStatePref('printPassage') as PrintPassageState),
+      ...notStatePrefDefault,
+      ...getStatePref('printPassage', SP.printPassage),
       ...(openedWinState || {}),
     };
     openedWinState = {};
@@ -116,7 +107,7 @@ export default class PrintPassageWin extends React.Component {
 
     // Without the next save, prefs would somehow overwrite state
     // before first render!
-    this.saveStatePrefs();
+    setStatePref('printPassage', null, s, Object.keys(SP.printPassage));
 
     this.renderPromises = [];
 
@@ -129,7 +120,8 @@ export default class PrintPassageWin extends React.Component {
   }
 
   componentDidMount() {
-    this.saveStatePrefs();
+    const state = this.state as PrintPassageState;
+    setStatePref('printPassage', null, state, Object.keys(SP.printPassage));
     this.forceUpdate(); // for portal DOM target
   }
 
@@ -147,7 +139,12 @@ export default class PrintPassageWin extends React.Component {
     if (diff(chapters, valid)) {
       this.setState({ chapters: valid });
     } else if (tdiv) {
-      this.saveStatePrefs(prevState);
+      setStatePref(
+        'printPassage',
+        prevState,
+        state,
+        Object.keys(SP.printPassage)
+      );
       this.placePagingButtons();
       const { checkbox } = state;
       if (!chapters) return;
@@ -180,7 +177,7 @@ export default class PrintPassageWin extends React.Component {
             usernotes: 'notebox',
           } as const,
         };
-        const renderChaps: [string, number][] = [];
+        const renderChaps: [OSISBookType, number][] = [];
         for (let ch = chapter; ch <= lastchapter; ch += 1) {
           renderChaps.push([book, ch]);
         }
@@ -216,7 +213,7 @@ export default class PrintPassageWin extends React.Component {
             (async function writeToDOM(
               xthis: PrintPassageWin,
               key: string,
-              chaps: [string, number][],
+              chaps: [OSISBookType, number][],
               html: string[]
             ) {
               let prog = 0;
@@ -279,16 +276,6 @@ export default class PrintPassageWin extends React.Component {
       pbts.style.left = `${box.left}px`;
       pbts.style.width = `${boxw}px`;
     }
-  }
-
-  saveStatePrefs(prevState?: PrintPassageState) {
-    const state = this.state as PrintPassageState;
-    if (prevState) {
-      const d = diff(prevState, drop(state, notStateProps));
-      if (d) {
-        G.Prefs.mergeValue('printPassage', d);
-      }
-    } else G.Prefs.mergeValue('printPassage', drop(state, notStateProps));
   }
 
   render() {

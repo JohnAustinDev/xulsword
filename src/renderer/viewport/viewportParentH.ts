@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-loop-func */
 import React from 'react';
-import C from '../../constant';
+import C, { SP } from '../../constant';
 import Cache from '../../cache';
 import {
   decodeOSISRef,
@@ -24,7 +24,8 @@ import type {
   NewModulesType,
   PinPropsType,
   V11nType,
-  XulswordStatePref,
+  ScrollType,
+  OSISBookType,
 } from '../../type';
 import type Xulsword from '../xulsword/xulsword';
 import type { XulswordState } from '../xulsword/xulsword';
@@ -32,12 +33,13 @@ import type ViewportWin from './viewportWin';
 import type { ViewportWinState } from './viewportWin';
 import type { DragSizerVal } from '../libxul/dragsizer';
 
-// Important: These XulswordStatePref properties become independent
+// Important: These SP.xulsword properties become independent
 // window properties for windows other than the xulsword window.
 export const vpWindowState = {
   tabs: [] as (string[] | null)[],
   panels: [] as (string | null)[],
   keys: [] as (string | null)[],
+  scroll: null as ScrollType,
   ilModules: [] as (string | null)[],
   mtModules: [] as (string | null)[],
   isPinned: [true, true, true],
@@ -146,12 +148,12 @@ export function bbDragEnd(
   const atext = ofClass(['atext'], target)?.element;
   const index = Number(atext && atext.dataset.index);
   if (atext && !Number.isNaN(Number(index))) {
-    let { noteBoxHeight, maximizeNoteBox } = this.state as XulswordStatePref;
+    let { noteBoxHeight, maximizeNoteBox } = this.state as typeof SP.xulsword;
     noteBoxHeight = noteBoxHeight.slice();
     maximizeNoteBox = maximizeNoteBox.slice();
     maximizeNoteBox[index] = value.isMinMax === true;
     noteBoxHeight[index] = value.sizerPos;
-    this.setState({ noteBoxHeight, maximizeNoteBox } as XulswordStatePref);
+    this.setState({ noteBoxHeight, maximizeNoteBox } as typeof SP.xulsword);
   }
 }
 
@@ -370,7 +372,7 @@ export default function handler(
         case 'text-pin': {
           if (atext && panel) {
             const { columns } = atext.dataset;
-            this.setState((prevState: XulswordStatePref) => {
+            this.setState((prevState: typeof SP.xulsword) => {
               const { isPinned: ipx } = prevState;
               const ip = ipx.slice();
               const newv = ip[index];
@@ -418,7 +420,7 @@ export default function handler(
           const { book, chapter, v11n } = targ.element.dataset;
           if (book && chapter) {
             const newloc = chapterChange({
-              book,
+              book: book as OSISBookType,
               chapter: Number(chapter),
               v11n: v11n as V11nType,
             });
@@ -441,7 +443,12 @@ export default function handler(
           const v11n = (m && G.Tab[m].v11n) || null;
           if (location && m && b && v && v11n) {
             const newloc = verseKey(
-              { book: b, chapter: Number(c), verse: Number(v), v11n },
+              {
+                book: b as OSISBookType,
+                chapter: Number(c),
+                verse: Number(v),
+                v11n,
+              },
               location.v11n
             ).location();
             this.setState({
@@ -461,7 +468,7 @@ export default function handler(
         }
         case 'notebox-maximizer': {
           if (atext) {
-            this.setState((prevState: XulswordStatePref) => {
+            this.setState((prevState: typeof SP.xulsword) => {
               let { maximizeNoteBox, noteBoxHeight } = prevState;
               maximizeNoteBox = clone(maximizeNoteBox);
               noteBoxHeight = clone(noteBoxHeight);
@@ -489,9 +496,9 @@ export default function handler(
             !state.isPinned[index]
           ) {
             if (targ.type === 'ilt-tab') {
-              this.setState((prevState: XulswordStatePref) => {
+              this.setState((prevState: typeof SP.xulsword) => {
                 const { ilModules } = prevState;
-                const s: Partial<XulswordStatePref> = {
+                const s: Partial<typeof SP.xulsword> = {
                   ilModules: ilModules.slice(),
                 };
                 if (!s.ilModules) s.ilModules = [];
@@ -499,9 +506,9 @@ export default function handler(
                 return s;
               });
             } else {
-              this.setState((prevState: XulswordStatePref) => {
+              this.setState((prevState: typeof SP.xulsword) => {
                 const { panels: pans, mtModules } = prevState;
-                const s: Partial<XulswordStatePref> = {
+                const s: Partial<typeof SP.xulsword> = {
                   panels: pans.slice(),
                 };
                 if (!s.panels) s.panels = [];
@@ -570,9 +577,17 @@ export default function handler(
             const t = (mod && G.Tab[mod]) || null;
             const v11n = t?.v11n || null;
             const chapter = !Number.isNaN(Number(ch)) ? Number(ch) : 0;
-            if (bk && ch && mod && v11n) {
+            if (
+              bk &&
+              Object.values(C.SupportedBooks).some((bg: any) =>
+                bg.includes(bk)
+              ) &&
+              ch &&
+              mod &&
+              v11n
+            ) {
               const loc = {
-                book: bk,
+                book: bk as OSISBookType,
                 chapter,
                 verse: vs || 1,
                 lastverse: lv || 1,

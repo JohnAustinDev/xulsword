@@ -2,17 +2,26 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import type { LogLevel } from 'electron-log';
+import type { paperSizes } from 'renderer/libxul/printSettings';
+import type { SelectVKMType } from 'renderer/libxul/vkselect';
+import type { TinitialRowSort } from './renderer/libxul/table';
 import type {
   AtextPropsType,
+  AudioPrefType,
   BookGroupType,
   ConfigType,
   EnvironmentVars,
   FeatureType,
-  GlobalPrefType,
+  FTPDownload,
+  HistoryVKType,
+  LocationVKType,
   ModTypes,
   NewModulesType,
   PinPropsType,
   PlaceType,
+  Repository,
+  RowSelection,
+  ScrollType,
   ShowType,
   SwordConfigEntries,
   SwordFilterType,
@@ -484,16 +493,6 @@ const C = {
     },
   } as { [k in 'en' | 'ru']: Partial<FeatureType> },
 
-  // These xulsword Pref keys are global so all windows will be kept in sync sharing
-  // the same values for each of these prefs, in addition to other GlobalPref.
-  GlobalXulsword: [
-    'location',
-    'audio',
-    'selection',
-    'scroll',
-    'show',
-  ] as (keyof GlobalPrefType['xulsword'])[],
-
   // These Atext props can be 'pinned' to become independant state properties.
   // NOTE: property types are important, but property values are not.
   PinProps: {
@@ -549,5 +548,224 @@ const C = {
     scroll: null,
     columns: 0,
   } as Partial<AtextPropsType>,
+
+  // These pref keys are always kept in sync across all windows.
+  SyncPrefs: {
+    xulsword: {
+      audio: null,
+      location: null,
+      selection: null,
+      scroll: null,
+      show: null,
+    } as unknown as Pick<
+      typeof SP.xulsword,
+      'audio' | 'location' | 'selection' | 'scroll' | 'show'
+    >,
+  },
 };
 export default C;
+
+// The following state keys are stored in Prefs and can be kept in sync
+// with their corresponding Prefs keys (optionally both directions):
+//
+// getStatePref() - read state pref keys from Prefs and/or initialize state
+//                  Prefs to default values.
+// setStatePref() - Run in componentDidUpdate() to push state changes to
+//                  Prefs, thereby making state persistent.
+// registerUpdateStateFromPref() - Run in componentDidMount() to register
+//                  a listener for state Pref changes that will push
+//                  changes to state.
+export const SP = {
+  global: {
+    WindowsDidClose: true,
+    Contributors: [
+      'Special Thanks To:',
+      'Troy Griffitts and the SWORD Project',
+      '',
+      'Developers:',
+      'John Austin',
+      'David Booth',
+      '',
+      'Contributors:',
+      'Abram Victorovich',
+      'Allen Peleton',
+      'David Haslam',
+      'Wolfgang Stradner',
+      'Tom Roth',
+    ],
+    crashReporterURL: '' as string,
+    InternetPermission: false as boolean,
+    fontSize: 2 as number,
+    locale: '' as string,
+    popup: {
+      selection: {
+        hebrewDef: '' as string,
+        greekDef: '' as string,
+        greekParse: '' as string,
+      },
+    },
+  },
+
+  xulsword: {
+    location: null as LocationVKType | null,
+    selection: null as LocationVKType | null,
+    scroll: null as ScrollType,
+
+    keys: [] as (string | null)[],
+
+    audio: { open: false, file: null } as AudioPrefType,
+    history: [] as HistoryVKType[],
+    historyIndex: 0 as number,
+
+    show: {
+      headings: true,
+      footnotes: true,
+      crossrefs: true,
+      dictlinks: true,
+      versenums: true,
+      strongs: true,
+      morph: true,
+      usernotes: true,
+      hebcantillation: true,
+      hebvowelpoints: true,
+      redwords: true,
+    } as ShowType,
+    place: {
+      footnotes: 'notebox',
+      crossrefs: 'notebox',
+      usernotes: 'popup',
+    } as PlaceType,
+
+    showChooser: true as boolean,
+    tabs: [] as (string[] | null)[],
+    panels: ['', '', null] as (string | null)[],
+    ilModules: [] as (string | null)[],
+    mtModules: [] as (string | null)[],
+
+    isPinned: [false] as boolean[],
+    noteBoxHeight: [200] as number[],
+    maximizeNoteBox: [false] as boolean[],
+  },
+
+  moduleManager: {
+    suggested: {} as { [fallbackLang: string]: string[] },
+    language: {
+      open: true as boolean,
+      selection: [] as string[],
+      rowSort: { column: 0, direction: 'ascending' } as TinitialRowSort,
+      width: 150 as number,
+    },
+    module: {
+      selection: [] as RowSelection,
+      rowSort: { column: 0, direction: 'ascending' } as TinitialRowSort,
+      visibleColumns: [0, 1, 14] as number[],
+      columnWidths: [
+        127, 190, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 88, 103, 80,
+      ] as number[],
+    },
+    repository: {
+      open: true as boolean,
+      selection: [] as RowSelection,
+      rowSort: { column: 2, direction: 'ascending' } as TinitialRowSort,
+      visibleColumns: [0, 1, 2, 3] as number[],
+      columnWidths: [124, 145, 343, 67] as number[],
+      height: 200 as number,
+    },
+    repositories: {
+      xulsword: [
+        {
+          name: 'IBT XSM',
+          domain: 'ftp.ibt.org.ru',
+          path: '/pub/modxsm',
+          file: 'mods.d.tar.gz',
+          builtin: false,
+          disabled: false,
+          custom: false,
+        },
+        {
+          name: 'IBT Audio',
+          domain: 'ftp.ibt.org.ru',
+          path: '/pub/modaudio',
+          file: 'mods.d.tar.gz',
+          builtin: false,
+          disabled: false,
+          custom: false,
+        },
+      ],
+      custom: [],
+      disabled: null,
+    } as {
+      xulsword: FTPDownload[];
+      custom: Repository[];
+      disabled: string[] | null;
+    },
+  },
+
+  removeModule: {
+    language: {
+      open: false as boolean,
+      selection: [] as string[],
+      rowSort: { column: 0, direction: 'ascending' } as TinitialRowSort,
+      width: 150 as number,
+    },
+    module: {
+      selection: [] as RowSelection,
+      rowSort: { column: 0, direction: 'ascending' } as TinitialRowSort,
+      visibleColumns: [0, 1, 2, 13, 15] as number[],
+      columnWidths: [
+        150, 225, 71, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 105, 103, 95,
+      ] as number[],
+    },
+    repository: null,
+    repositories: null,
+  },
+
+  printPassage: {
+    checkbox: {
+      introduction: true,
+      headings: true,
+      versenums: true,
+      redwords: true,
+      dictlinks: true,
+      footnotes: true,
+      usernotes: true,
+      crossrefs: true,
+      crossrefsText: true,
+      hebvowelpoints: true,
+      hebcantillation: true,
+    } as {
+      [k in keyof Omit<ShowType, 'morph' | 'strongs'>]: boolean;
+    } & {
+      introduction: boolean;
+      crossrefsText: boolean;
+    },
+    chapters: null as SelectVKMType | null,
+  },
+
+  print: {
+    landscape: false as boolean,
+    pageSize: 'Letter' as typeof paperSizes[number]['type'],
+    twoColumns: false as boolean,
+    scale: 100 as number,
+    margins: {
+      top: 30 as number,
+      right: 20 as number,
+      bottom: 30 as number,
+      left: 20 as number,
+    },
+  },
+
+  copyPassage: {
+    checkboxes: {
+      headings: true,
+      versenums: true,
+      redwords: true,
+    } as { [k in keyof ShowType]?: boolean },
+  },
+};
+
+// Fill out variable length default arrays
+(['isPinned', 'noteBoxHeight', 'maximizeNoteBox'] as const).forEach((p) => {
+  const v = SP.xulsword[p][0];
+  SP.xulsword[p] = SP.xulsword.panels.map(() => v as any);
+});

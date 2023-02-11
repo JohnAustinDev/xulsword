@@ -35,6 +35,7 @@ import type Window from './main/components/window';
 import type { DirsRendererType } from './main/components/dirs';
 import type LibSword from './main/components/libsword';
 import type MainPrintHandler from './main/print';
+import type { SP } from './constant';
 
 declare global {
   export interface Window {
@@ -153,43 +154,8 @@ export type AudioPrefType = {
   file: VerseKeyAudioFile | GenBookAudioFile | null;
 };
 
-// Default values for these keys must be set in the default
-// JSON Pref file or an error will be thrown. These values
-// are always kept in sync between Prefs, the application menu
-// the main xulsword window state.
-export interface XulswordStatePref {
-  location: LocationVKType | null;
-  selection: LocationVKType | null;
-  scroll: ScrollType;
-
-  keys: (string | null)[];
-
-  audio: AudioPrefType;
-  history: HistoryVKType[];
-  historyIndex: number;
-
-  show: ShowType;
-  place: PlaceType;
-
-  showChooser: boolean;
-  tabs: (string[] | null)[];
-  panels: (string | null)[];
-  ilModules: (string | null)[];
-  mtModules: (string | null)[];
-
-  isPinned: boolean[];
-  noteBoxHeight: number[];
-  maximizeNoteBox: boolean[];
-}
-
-export interface CopyPassageStatePref {
-  checkboxes: {
-    [k in keyof ShowType]?: boolean;
-  };
-}
-
 export type AtextPropsType = Pick<
-  XulswordStatePref,
+  typeof SP.xulsword,
   'location' | 'selection' | 'scroll' | 'show' | 'place'
 > & {
   modkey: string;
@@ -229,32 +195,8 @@ export type PinPropsType = Pick<
 >;
 
 export type XulswordStateArgType =
-  | Partial<XulswordStatePref>
-  | ((s: XulswordStatePref) => Partial<XulswordStatePref>);
-
-// Default values for these keys must be set in the default
-// JSON Pref file or an error will be thrown. These values
-// are always kept in sync between Prefs, the application menu
-// and all window states.
-export type GlobalPrefType = {
-  global: {
-    fontSize: number;
-    locale: string;
-    locales: [string, string, string][];
-    popup: {
-      selection: {
-        [k in keyof FeatureType]: string;
-      };
-    };
-  };
-  xulsword: {
-    audio: AudioPrefType;
-    location: LocationVKType | null;
-    selection: LocationVKType | null;
-    scroll: ScrollType;
-    show: ShowType;
-  };
-};
+  | Partial<typeof SP.xulsword>
+  | ((s: typeof SP.xulsword) => Partial<typeof SP.xulsword>);
 
 export type SwordFilterType =
   | 'Headings'

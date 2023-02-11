@@ -16,8 +16,8 @@ import log, { LogLevel } from 'electron-log';
 import path from 'path';
 import Subscription from '../subscription';
 import Cache from '../cache';
-import { clone, JSON_parse } from '../common';
-import C from '../constant';
+import { clone, getStatePref, JSON_parse } from '../common';
+import C, { SP } from '../constant';
 import G from './mg';
 import { getCipherFailConfs, getTabs, updateGlobalModulePrefs } from './minit';
 import MenuBuilder, { pushPrefsToMenu } from './menu';
@@ -32,18 +32,18 @@ import {
   publishSubscription,
 } from './components/window';
 
-import type {
-  BookType,
-  NewModulesType,
-  WindowRegistryType,
-  XulswordStatePref,
-} from '../type';
+import type { BookType, NewModulesType, WindowRegistryType } from '../type';
 import type { ManagerStatePref } from '../renderer/moduleManager/manager';
 
 const i18nBackendMain = require('i18next-fs-backend');
 const installer = require('electron-devtools-installer');
 const sourceMapSupport = require('source-map-support');
 const electronDebug = require('electron-debug');
+
+Object.entries(SP).forEach((entry) => {
+  const [key, val] = entry;
+  getStatePref(G.Prefs, key, val);
+});
 
 if (G.Prefs.getBoolPref('global.InternetPermission')) {
   const url = G.Prefs.getCharPref('global.crashReporterURL');
@@ -146,8 +146,8 @@ const openMainWindow = () => {
     ...C.UI.Window.large,
   };
 
-  const windowsDidClose = G.Prefs.getBoolPref(`WindowsDidClose`);
-  G.Prefs.setBoolPref(`WindowsDidClose`, false);
+  const windowsDidClose = G.Prefs.getBoolPref(`global.WindowsDidClose`);
+  G.Prefs.setBoolPref(`global.WindowsDidClose`, false);
   const persistWinPref = G.Prefs.getPrefOrCreate(
     `OpenOnStartup`,
     'complex',
@@ -388,7 +388,7 @@ const init = async () => {
 
   // If there are no tabs, choose tabs and location based on current locale
   // and installed modules.
-  const xulsword = G.Prefs.getComplexValue('xulsword') as XulswordStatePref;
+  const xulsword = G.Prefs.getComplexValue('xulsword') as typeof SP.xulsword;
   if (xulsword.tabs.every((tb) => tb === null || !tb.length)) {
     const slng = lng.replace(/-.*$/, '');
     const lngmodules = Array.from(
@@ -483,7 +483,7 @@ const subscriptions: (() => void)[] = [];
 subscriptions.push(Subscription.subscribe.createWindow(contextMenu));
 
 app.on('window-all-closed', () => {
-  G.Prefs.setBoolPref(`WindowsDidClose`, true);
+  G.Prefs.setBoolPref(`global.WindowsDidClose`, true);
 
   // Write all prefs to disk when app closes
   G.Prefs.writeAllStores();

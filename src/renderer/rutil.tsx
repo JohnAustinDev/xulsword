@@ -5,7 +5,7 @@
 /* eslint-disable no-continue */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable import/prefer-default-export */
-import React, { SyntheticEvent } from 'react';
+import React from 'react';
 import { Icon, TreeNodeInfo } from '@blueprintjs/core';
 import Cache from '../cache';
 import C from '../constant';
@@ -19,9 +19,11 @@ import {
   diff,
   isAudioVerseKey,
   JSON_parse,
+  keep,
   ofClass,
   readGenBookAudioConf,
   versionCompare,
+  getStatePref as getStatePref2,
 } from '../common';
 
 import type {
@@ -33,6 +35,7 @@ import type {
   ModTypes,
   OSISBookType,
   PrefObject,
+  PrefValue,
   Repository,
   SearchType,
   SwordConfLocalized,
@@ -607,70 +610,60 @@ export function getCompanionModules(mod: string) {
   return [];
 }
 
-// Return the values of component state Prefs. Component state Prefs are
-// permanently persisted component state values recorded in prefs.json
-// whose key begins with the component id. Pref keys found in ignore
-// are ignored. If prefsToGet is undefined or null, all state prefs will
-// be returned. NOTE: The whole pref object (the property name following
-// the id) is returned if any of its descendants is requested.
-type StateKeysType =
-  | {
-      [i: string]: any;
-    }
-  | string[];
-export function getStatePref(
+// Return and persist the key/value pairs of component state Prefs. Component
+// state Prefs are permanently persisted component state values recorded in
+// prefs.json whose key begins with the component id.
+export function getStatePref<P extends PrefObject>(
   id: string,
-  prefsToGet?: string | string[] | null,
-  ignore?: StateKeysType
-) {
-  const state: StateKeysType = {};
-  if (id) {
-    let ignoreKeys: string[] = [];
-    if (ignore)
-      ignoreKeys = Array.isArray(ignore) ? ignore : Object.keys(ignore);
-    const idpref = G.Prefs.getComplexValue(id) as PrefObject;
-    let keys: undefined | string[];
-    if (prefsToGet) {
-      if (!Array.isArray(prefsToGet)) keys = [prefsToGet];
-      else {
-        keys = prefsToGet;
-      }
-      keys = keys
-        .map((k) => {
-          const kp = k.split('.');
-          return kp[0] === id ? kp[1] : '';
-        })
-        .filter(Boolean);
-    }
-    Object.entries(idpref).forEach((entry) => {
-      const [key, value] = entry;
-      if (!ignoreKeys.includes(key) && (!prefsToGet || keys?.includes(key))) {
-        state[key] = clone(value);
-      }
-    });
-  }
+  defaultPrefs: P
+): P {
+  return getStatePref2(G.Prefs, id, defaultPrefs);
+}
 
-  return state;
+// Push state changes of statePrefKeys value to Prefs. The state Pref key
+// will begin with id. Pref keys of SyncPrefs are always included since
+// they are global.
+export function setStatePref(
+  id: string,
+  prevState: { [key: string]: any } | null,
+  state: { [key: string]: any },
+  statePrefKeys: string[]
+) {
+  const keys = statePrefKeys.slice();
+  if (id in C.SyncPrefs) {
+    const idx = id as keyof typeof C.SyncPrefs;
+    keys.push(...Object.keys(C.SyncPrefs[idx]));
+  }
+  const newStatePref = keep(state, keys);
+  if (prevState === null) G.Prefs.mergeValue(id, newStatePref);
+  else {
+    const prvStatePref = keep(prevState, keys);
+    const d = diff(prvStatePref, newStatePref);
+    if (d) G.Prefs.mergeValue(id, d);
+  }
 }
 
 // Calling this function sets a listener for update-state-from-pref. It will
 // read component state Prefs and locale, and will update component state
 // and window locale as needed.
-export function registerUpdateStateFromPref(c: React.Component, ignore?: any) {
+export function registerUpdateStateFromPref(
+  id: string,
+  c: React.Component,
+  defaultPrefs: { [prefkey: string]: PrefValue }
+) {
   const updateStateFromPref = (prefs: string | string[]) => {
     log.debug(`Updating state from prefs:`, prefs);
-    const { id } = c.props as any;
-    if (id) {
-      const changed = diff(c.state, getStatePref(id, prefs, ignore));
-      if (changed && Object.keys(changed).length) {
-        if (
-          changed?.global?.locale &&
-          changed.global.locale !== G.i18n.language
-        ) {
-          Cache.clear();
-        }
-        c.setState(changed);
+    const changed = diff(c.state, getStatePref(id, defaultPrefs));
+    if (changed && Object.keys(changed).length) {
+      if (
+        changed.global &&
+        typeof changed.global === 'object' &&
+        'locale' in changed.global &&
+        changed.global.locale !== G.i18n.language
+      ) {
+        Cache.clear();
       }
+      c.setState(changed);
     }
   };
   return window.ipc.on('update-state-from-pref', updateStateFromPref);

@@ -334,11 +334,11 @@ function createWindow(
 
 // Push user preference changes from the winid focused window, or from the main
 // process (winid === -1) to other windows using update-state-from-pref. For some
-// changes, more is done than simply updating state prefs. For instance when
-// changing locale or dynamic stylesheet.
+// changes, more is done than simply updating state prefs, like changing locale
+// or dynamic stylesheet.
 export const pushPrefsToWindows: PrefCallbackType = (
   winid,
-  key,
+  key, // ie. global or xulsword.panels
   val,
   store
 ) => {
@@ -346,34 +346,33 @@ export const pushPrefsToWindows: PrefCallbackType = (
     (!store || store === 'prefs') &&
     (winid === -1 || winid === BrowserWindow.getFocusedWindow()?.id)
   ) {
-    // Get the list of passed keys
-    const keys: string[] =
-      !key.includes('.') && typeof val === 'object'
+    // Get a (key.property)[] of changed keyprops requesting to be pushed.
+    const keyprops: string[] =
+      !key.includes('.') && val && typeof val === 'object'
         ? Object.keys(val).map((k) => {
-            return `${key}.${k}`;
+            return [key, k].join('.');
           })
         : [key];
 
-    // Collect a list of keys that may result in push updates.
-    // C.GlobalState and pushPrefs have <id>.<property> format.
-    const pushPrefs: string[] = ['xulsword.keys'];
+    // Collect a list of keyprops that are allowed to be pushed.
+    // Note: menuPref is auto-generated during menu build as (key.property)[]
+    const allowed: string[] = ['xulsword.keys'];
     if (Data.has('menuPref')) {
-      // menuPref is auto-generated during menu build
-      pushPrefs.push(...(Data.read('menuPref') as string[]));
+      allowed.push(...(Data.read('menuPref') as string[]));
     }
-
-    // Build the list of keys that will push updates
-    const keysToUpdate: string[] = [];
-    keys.forEach((pkey) => {
-      const basekey = pkey.split('.').slice(0, 2).join('.');
-      if (pushPrefs.includes(basekey)) keysToUpdate.push(pkey);
-      else {
-        C.GlobalXulsword.forEach((k) => {
-          const gloskey = `xulsword.${k}`;
-          if (basekey === gloskey) keysToUpdate.push(pkey);
-        });
-      }
+    Object.entries(C.SyncPrefs).forEach((entry) => {
+      const [k, v] = entry;
+      Object.keys(v).forEach((p) => {
+        allowed.push([k, p].join('.'));
+      });
     });
+
+    // Get the list of keyprops that will be pushed.
+    const pushKeyProps = keyprops.filter((kp) => {
+      const basekey = kp.split('.').slice(0, 2).join('.');
+      return allowed.includes(basekey);
+    });
+
     if (key === 'global.locale') {
       const lng = Prefs.getCharPref('global.locale');
       i18next
@@ -389,10 +388,10 @@ export const pushPrefsToWindows: PrefCallbackType = (
         });
     } else if (key === 'global.fontSize') {
       Window.reset('dynamic-stylesheet-reset', 'all');
-    } else if (keysToUpdate.length) {
+    } else if (pushKeyProps.length) {
       BrowserWindow.getAllWindows().forEach((w) => {
         if (winid === -1 || w.id !== winid) {
-          w.webContents.send('update-state-from-pref', keysToUpdate);
+          w.webContents.send('update-state-from-pref', pushKeyProps);
         }
       });
     }

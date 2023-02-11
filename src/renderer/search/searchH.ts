@@ -6,7 +6,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { getElementInfo } from '../../libswordElemInfo';
 import { dString, escapeRE, getCSS, sanitizeHTML } from '../../common';
-import C from '../../constant';
+import C, { SP } from '../../constant';
 import G from '../rg';
 import log from '../log';
 import { verseKey, windowArgument } from '../rutil';
@@ -14,8 +14,8 @@ import { getStrongsModAndKey } from '../viewport/zdictionary';
 
 import type {
   BookGroupType,
-  GlobalPrefType,
   LocationVKType,
+  OSISBookType,
   SearchType,
   V11nType,
 } from '../../type';
@@ -218,7 +218,7 @@ export async function search(sthis: SearchWin) {
       case 'book': {
         const location = G.Prefs.getComplexValue(
           'xulsword.location'
-        ) as GlobalPrefType['xulsword']['location'];
+        ) as typeof SP.xulsword['location'];
         if (location?.book) {
           scopes = getScopes(location.book, module, bookByBook);
         }
@@ -796,7 +796,7 @@ export default async function handler(
             case 'verselink': {
               const l: LocationVKType = {
                 v11n: p.shift() as V11nType,
-                book: p.shift() as string,
+                book: p.shift() as OSISBookType,
                 chapter: Number(p.shift()),
                 verse: Number(p.shift()),
               };

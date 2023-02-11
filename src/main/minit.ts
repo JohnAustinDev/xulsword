@@ -6,10 +6,10 @@ import path from 'path';
 import fs from 'fs';
 import i18n from 'i18next';
 import fontList from 'font-list';
-import C from '../constant';
+import C, { SP } from '../constant';
 import VerseKey from '../versekey';
 import RefParser, { RefParserOptionsType } from '../refparse';
-import { clone, isASCII, JSON_parse } from '../common';
+import { clone, isASCII, JSON_parse, getStatePref } from '../common';
 import Cache from '../cache';
 import Subscription from '../subscription';
 import parseSwordConf from './parseSwordConf';
@@ -27,8 +27,6 @@ import type {
   V11nType,
   GType,
   LocationVKType,
-  GlobalPrefType,
-  XulswordStatePref,
   FeatureType,
   SwordConfType,
   ConfigType,
@@ -649,7 +647,7 @@ export function getFeatureModules(): FeatureType {
 // installed modules or be ''.  This function insures that is the case.
 export function updateGlobalModulePrefs() {
   const tabs = getTabs();
-  const xulsword = Prefs.getComplexValue('xulsword') as XulswordStatePref;
+  const xulsword = Prefs.getComplexValue('xulsword') as typeof SP.xulsword;
   const newxulsword = clone(xulsword);
   const mps = ['panels', 'ilModules', 'mtModules'] as const;
   mps.forEach((p) => {
@@ -666,10 +664,10 @@ export function updateGlobalModulePrefs() {
   Prefs.setComplexValue('xulsword', newxulsword);
   const popupsel = Prefs.getComplexValue(
     'global.popup.selection'
-  ) as GlobalPrefType['global']['popup']['selection'];
+  ) as typeof SP.global['popup']['selection'];
   const newpopupsel = clone(popupsel);
   Object.entries(newpopupsel).forEach((entry) => {
-    const k = entry[0] as keyof FeatureType;
+    const k = entry[0] as keyof typeof SP.global['popup']['selection'];
     const m = entry[1];
     if (!tabs.find((t) => t.module === m)) {
       newpopupsel[k] = '';
@@ -679,7 +677,7 @@ export function updateGlobalModulePrefs() {
   // module from the available modules, if there are any.
   const featureModules = getFeatureModules();
   Object.entries(newpopupsel).forEach((entry) => {
-    const k = entry[0] as keyof FeatureType;
+    const k = entry[0] as keyof typeof SP.global['popup']['selection'];
     if (!entry[1] && k in featureModules) {
       const ma = (
         Array.isArray(featureModules[k]) ? featureModules[k] : []

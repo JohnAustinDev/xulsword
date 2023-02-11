@@ -129,9 +129,9 @@ class Atext extends React.Component {
     const { panelIndex } = this.props as AtextProps;
     const state = this.state as AtextStateType;
     if (this.onUpdate()) {
-      windowState[panelIndex] = keep(state, atextInitialState);
+      windowState[panelIndex] = keep(state, Object.keys(atextInitialState));
       const changedState = diff(
-        keep(prevState, atextInitialState),
+        keep(prevState, Object.keys(atextInitialState)),
         windowState[panelIndex]
       );
       if (changedState) {
@@ -167,12 +167,12 @@ class Atext extends React.Component {
     // isPinned prop value.
     const pinProps = keep(
       pin && isPinned ? pin : props,
-      C.PinProps
+      Object.keys(C.PinProps)
     ) as PinPropsType;
     // scrollProps are current props that effect scrolling
     const scrollProps = keep(
       { ...props, ...pinProps },
-      C.ScrollPropsVK
+      Object.keys(C.ScrollPropsVK)
     ) as typeof C.ScrollPropsVK;
     const { scroll } = scrollProps;
     // skip all render side-effects if skipTextUpdate is set
@@ -206,7 +206,7 @@ class Atext extends React.Component {
           ...props,
           ...pinProps,
         },
-        C.LibSwordProps[type]
+        Object.keys(C.LibSwordProps[type])
       ) as Pick<
         AtextPropsType,
         | 'module'

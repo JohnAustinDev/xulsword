@@ -202,51 +202,6 @@ export default class LocalFile {
   }
 }
 
-// creates only allowable file types
-export function createSafeFile(
-  nsIFile: LocalFile,
-  perm: number,
-  createUnique = false
-) {
-  if (!nsIFile) return false;
-
-  // only create a file if it has one of these file extensions
-  if (!/\.(txt|xsb|rdf|conf|xpi)$/i.test(nsIFile.leafName)) {
-    return false;
-  }
-
-  if (createUnique)
-    nsIFile.createUnique(LocalFile.NORMAL_FILE_TYPE, { mode: perm });
-  else nsIFile.create(LocalFile.NORMAL_FILE_TYPE, { mode: perm });
-
-  return true;
-}
-
-// writes to only allowable file types
-export function writeSafeFile(
-  nsIFile: LocalFile,
-  str: string,
-  overwrite: boolean,
-  toEncoding: BufferEncoding = 'utf8'
-) {
-  if (!nsIFile) return false;
-
-  // only write to a file if it has one of these file extensions
-  if (!/\.(txt|xsb|rdf|conf)$/i.test(nsIFile.leafName)) {
-    return false;
-  }
-
-  if (nsIFile.exists()) {
-    if (!overwrite) return false;
-    nsIFile.remove(true);
-  }
-  createSafeFile(nsIFile, FPERM);
-
-  nsIFile.writeFile(str, { encoding: toEncoding, mode: FPERM });
-
-  return true;
-}
-
 export function inlineFile(
   fpath: string,
   encoding = 'base64' as BufferEncoding,

@@ -2,7 +2,7 @@
 /* eslint-disable import/no-duplicates */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-continue */
-import C from '../../constant';
+import C, { SP } from '../../constant';
 import { clone, dString, getLocalizedChapterTerm } from '../../common';
 import { getElementInfo } from '../../libswordElemInfo';
 import {
@@ -19,9 +19,9 @@ import type {
   AtextStateType,
   LocationVKType,
   LookupInfo,
+  OSISBookType,
   ShowType,
   TextVKType,
-  XulswordStatePref,
 } from '../../type';
 import type Xulsword from '../xulsword/xulsword';
 import type { XulswordState } from '../xulsword/xulsword';
@@ -36,7 +36,7 @@ function alternateModules() {
   const alternates = new Set(am ? am.split(',') : undefined);
   const tabs = G.Prefs.getComplexValue(
     'xulsword.tabs'
-  ) as XulswordStatePref['tabs'];
+  ) as typeof SP.xulsword['tabs'];
   tabs.forEach((tbk) => {
     if (tbk) tbk.forEach((t) => alternates.add(t));
   });
@@ -261,7 +261,7 @@ export function parseExtendedVKRef(
     i += commas.length - 1;
   }
   const results: (LocationVKType | string)[] = [];
-  let bk = context?.book || '';
+  let bk = (context?.book || '') as OSISBookType | '';
   let ch = context?.chapter || 0;
   let vs = context?.verse || 0;
   reflistA.forEach((r) => {
@@ -510,7 +510,7 @@ export function getNoteHTML(
             const info = {} as Partial<LookupInfo>;
             const keepNotes = false;
             const context: LocationVKType = {
-              book: p.bk || '',
+              book: (p.bk || 'Gen') as OSISBookType,
               chapter: Number(p.ch),
               verse: p.vs,
               v11n: null,
@@ -877,9 +877,12 @@ function aTextWheelScroll2(
         const { bk: book, ch, vs: verse } = p;
         const chapter = Number(ch);
         if (book && chapter && verse) {
-          newloc = verseKey({ book, chapter, verse, v11n }).location(
-            location.v11n
-          );
+          newloc = verseKey({
+            book: book as OSISBookType,
+            chapter,
+            verse,
+            v11n,
+          }).location(location.v11n);
         }
       }
     }
@@ -1124,7 +1127,7 @@ export function pageChange(
       const v11n = t?.v11n || null;
       if (ei && ei.bk && v11n && (Number(ei.ch) !== 1 || ei.vs !== 1)) {
         return {
-          book: ei.bk,
+          book: ei.bk as OSISBookType,
           chapter: Number(ei.ch),
           verse: ei.vs,
           v11n,
@@ -1144,7 +1147,7 @@ export function pageChange(
       const v11n = t?.v11n || null;
       if (ei && ei.bk && v11n) {
         const vk = verseKey({
-          book: ei.bk,
+          book: ei.bk as OSISBookType,
           chapter: Number(ei.ch),
           verse: ei.vs,
           v11n,

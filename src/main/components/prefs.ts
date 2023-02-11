@@ -14,7 +14,7 @@ import type { PrefObject, PrefValue } from '../../type';
 export type PrefCallbackType = (
   callingWinID: number,
   key: string,
-  value: any,
+  value: PrefValue,
   store?: string
 ) => void;
 
