@@ -653,17 +653,17 @@ export function registerUpdateStateFromPref(
 ) {
   const updateStateFromPref = (prefs: string | string[]) => {
     log.debug(`Updating state from prefs:`, prefs);
-    const changed = diff(c.state, getStatePref(id, defaultPrefs));
-    if (changed && Object.keys(changed).length) {
+    const different = diff(c.state, getStatePref(id, defaultPrefs));
+    if (different && Object.keys(different).length) {
       if (
-        changed.global &&
-        typeof changed.global === 'object' &&
-        'locale' in changed.global &&
-        changed.global.locale !== G.i18n.language
+        different.global &&
+        typeof different.global === 'object' &&
+        'locale' in different.global &&
+        different.global.locale !== G.i18n.language
       ) {
         Cache.clear();
       }
-      c.setState(changed);
+      c.setState(different);
     }
   };
   return window.ipc.on('update-state-from-pref', updateStateFromPref);

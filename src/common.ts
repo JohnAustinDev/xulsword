@@ -124,7 +124,7 @@ export function clone<T extends unknown>(obj: T): T {
 // Return a new source object keeping only certain keys from the original.
 export function keep<T extends { [key: string]: any }>(
   source: T,
-  keepkeys: string[],
+  keepkeys: readonly string[],
   dropInstead = false
 ): Partial<T> {
   const p = {} as any;
@@ -147,7 +147,7 @@ export function keep<T extends { [key: string]: any }>(
 // Return a new source object dropping certain keys from the original.
 export function drop<T extends { [key: string]: any }>(
   source: T,
-  dropkeys: string[]
+  dropkeys: readonly string[]
 ): Partial<T> {
   return keep(source, dropkeys, true);
 }

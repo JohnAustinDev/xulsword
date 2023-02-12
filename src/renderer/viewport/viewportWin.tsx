@@ -42,25 +42,31 @@ const propTypes = xulPropTypes;
 
 export type ViewportWinProps = XulProps;
 
-const statePrefDefault = drop(SP.xulsword, Object.keys(vpWindowState)) as Omit<
-  typeof SP.xulsword,
-  keyof typeof vpWindowState
->;
-
 const notStatePrefDefault = {
-  history: [] as any[],
-  historyIndex: 0,
+  history: [] as typeof SP.xulsword['history'],
+  historyIndex: 0 as typeof SP.xulsword['historyIndex'],
   vpreset: 0,
 };
 
-export type ViewportWinState = typeof statePrefDefault &
-  typeof notStatePrefDefault &
-  typeof vpWindowState;
+const statePrefDefault = drop(
+  SP.xulsword,
+  vpWindowState.concat(Object.keys(notStatePrefDefault) as any)
+) as Omit<
+  typeof SP.xulsword,
+  typeof vpWindowState[number] | 'history' | 'historyIndex'
+>;
 
 // Window arguments that are used to set initial state must be updated locally
 // and in Prefs, so that component reset or program restart won't cause
 // reversion to initial state.
-let windowState = windowArgument('xulswordState') as typeof vpWindowState;
+let windowState = windowArgument('xulswordState') as Pick<
+  typeof SP.xulsword,
+  typeof vpWindowState[number]
+>;
+
+export type ViewportWinState = typeof statePrefDefault &
+  typeof notStatePrefDefault &
+  typeof windowState;
 
 export default class ViewportWin extends React.Component {
   static defaultProps: typeof defaultProps;
@@ -83,7 +89,10 @@ export default class ViewportWin extends React.Component {
     super(props);
 
     const s: ViewportWinState = {
-      ...getStatePref('xulsword', statePrefDefault),
+      ...(getStatePref(
+        'xulsword',
+        statePrefDefault
+      ) as typeof statePrefDefault),
       ...notStatePrefDefault,
       ...windowState,
     };
@@ -117,25 +126,17 @@ export default class ViewportWin extends React.Component {
     const state = this.state as ViewportWinState;
     const { scroll } = state;
     if (!scroll?.skipWindowUpdate) {
-      windowState = keep(
-        state,
-        Object.keys(vpWindowState)
-      ) as typeof vpWindowState;
+      setStatePref('xulsword', prevState, state, Object.keys(statePrefDefault));
+      windowState = keep(state, vpWindowState) as typeof windowState;
       const changedWindowState = diff(
-        keep(prevState, Object.keys(vpWindowState)),
+        keep(prevState, vpWindowState),
         windowState
-      ) as Partial<typeof vpWindowState>;
+      );
       if (changedWindowState) {
         if (changedWindowState.scroll?.skipTextUpdate)
           delete changedWindowState.scroll.skipTextUpdate;
         G.Window.mergeValue('xulswordState', changedWindowState);
       }
-      setStatePref(
-        'xulsword',
-        prevState,
-        state,
-        Object.keys(C.SyncPrefs.xulsword)
-      );
     }
   }
 

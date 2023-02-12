@@ -574,7 +574,7 @@ export default C;
 //                  Prefs, thereby making state persistent.
 // registerUpdateStateFromPref() - Run in componentDidMount() to register
 //                  a listener for state Pref changes that will push
-//                  changes to state.
+//                  changes into component state.
 export const SP = {
   global: {
     WindowsDidClose: true,

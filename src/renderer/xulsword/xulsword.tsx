@@ -106,8 +106,6 @@ export default class Xulsword extends React.Component {
   }
 
   componentDidMount() {
-    const props = this.props as XulswordProps;
-    const { id } = props;
     this.destroy.push(
       registerUpdateStateFromPref('xulsword', this, SP.xulsword)
     );
@@ -118,12 +116,11 @@ export default class Xulsword extends React.Component {
 
   componentDidUpdate(_prevProps: XulswordProps, prevState: XulswordState) {
     const state = this.state as XulswordState;
-    const { id } = this.props as XulswordProps;
     const { scroll } = state;
-    if (id && !scroll?.skipWindowUpdate) {
+    if (!scroll?.skipWindowUpdate) {
       const statex = clone(state);
       if (statex.scroll?.skipTextUpdate) delete statex.scroll.skipTextUpdate;
-      setStatePref(id, prevState, statex, Object.keys(SP.xulsword));
+      setStatePref('xulsword', prevState, statex, Object.keys(SP.xulsword));
       // Add page to history after a short delay
       const { location } = state;
       if (location) {

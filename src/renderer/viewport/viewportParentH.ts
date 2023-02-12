@@ -24,7 +24,6 @@ import type {
   NewModulesType,
   PinPropsType,
   V11nType,
-  ScrollType,
   OSISBookType,
 } from '../../type';
 import type Xulsword from '../xulsword/xulsword';
@@ -35,17 +34,20 @@ import type { DragSizerVal } from '../libxul/dragsizer';
 
 // Important: These SP.xulsword properties become independent
 // window properties for windows other than the xulsword window.
-export const vpWindowState = {
-  tabs: [] as (string[] | null)[],
-  panels: [] as (string | null)[],
-  keys: [] as (string | null)[],
-  scroll: null as ScrollType,
-  ilModules: [] as (string | null)[],
-  mtModules: [] as (string | null)[],
-  isPinned: [true, true, true],
-  noteBoxHeight: [] as number[],
-  maximizeNoteBox: [] as boolean[],
-};
+// So they are xulsword state prefs, but become just local state
+// for other windows (they are however persisted as window prefs).
+export const vpWindowState = [
+  'tabs',
+  'panels',
+  'keys',
+  'scroll',
+  'place',
+  'ilModules',
+  'mtModules',
+  'isPinned',
+  'noteBoxHeight',
+  'maximizeNoteBox',
+] as const;
 
 export function closeMenupopups(component: React.Component) {
   const state = component.state as XulswordState & ViewportWinState;
@@ -305,8 +307,7 @@ export default function handler(
           if (atext && cols !== undefined) {
             // Save new window's XulswordState
             const xulswordState: Partial<XulswordState> = {};
-            Object.entries(vpWindowState).forEach((entry) => {
-              const name = entry[0] as keyof typeof vpWindowState;
+            vpWindowState.forEach((name) => {
               const nsp = xulswordState as any;
               nsp[name] = state[name];
             });
