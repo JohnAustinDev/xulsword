@@ -31,7 +31,7 @@ import type { TreeNodeInfo } from '@blueprintjs/core';
 import type { SelectVKMType } from './renderer/libxul/vkselect';
 import type { SelectGBMType } from './renderer/libxul/genbookselect';
 
-// These local repositories cannot be disabled, deleted or changed.
+// These built-in local repositories cannot be disabled, deleted or changed.
 // Implemented as a function to allow G.i18n to initialize.
 export function builtinRepos(
   i18n: GType['i18n'],
@@ -892,17 +892,32 @@ export function isRepoLocal(repo: Repository): boolean {
 
 export function downloadKey(dl: Download | null): string {
   if (!dl) return '';
-  if ('http' in dl && !C.URLRE.test(dl.http))
+  if (dl.type === 'http' && !C.URLRE.test(dl.http))
     throw new Error(`Not downloadable: ${dl.http}`);
-  const ms: (keyof HTTPDownload | keyof ModFTPDownload | keyof FTPDownload)[] =
-    ['http', 'name', 'domain', 'path', 'file', 'module', 'confname'];
-  const msx = ms as (keyof Download)[];
-  return msx
-    .filter((m) => m in dl && dl[m])
-    .map((m) => `${m}:${dl[m]}`)
+  type DLkeys = Exclude<
+    keyof HTTPDownload | keyof ModFTPDownload | keyof FTPDownload,
+    'disabled'
+  >;
+  const ms: Record<DLkeys, 1> = {
+    type: 1,
+    http: 1,
+    file: 1,
+    module: 1,
+    name: 1,
+    domain: 1,
+    path: 1,
+    confname: 1,
+    custom: 1,
+    builtin: 1,
+  };
+  return Object.keys(ms)
+    .filter((m) => m in dl && dl[m as keyof typeof dl])
+    .map((m) => `${m}:${dl[m as keyof typeof dl]}`)
     .join('][');
 }
 
+// Return a Download object from a download key. NOTE: The 'disabled'
+// property will not be restored (it will be undefined).
 export function keyToDownload(downloadkey: string): Download {
   const dl: any = {};
   downloadkey.split('][').forEach((x) => {

@@ -586,23 +586,26 @@ export type Repository = {
   name: string;
   domain: string;
   path: string;
+  custom: boolean; // repository is created by user (and can be deleted)
+  builtin: boolean; // repository cannot be disabled
   disabled?: boolean;
-  custom?: boolean;
-  builtin?: boolean;
 };
 
 export type RepositoryListing = SwordConfType[] | null;
 
 export type FTPDownload = {
+  type: 'ftp';
   file: string;
 } & Repository;
 
 export type ModFTPDownload = {
+  type: 'module';
   module: string;
   confname: string;
 } & Repository;
 
 export type HTTPDownload = {
+  type: 'http';
   http: string; // https?://...
   confname: string;
 } & Repository;

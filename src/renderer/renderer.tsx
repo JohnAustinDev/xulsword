@@ -250,7 +250,7 @@ function WindowRoot(props: WindowRootProps) {
         const haserror = newmods.reports.some((r) => r.error);
         const haswarning = newmods.reports.some((r) => r.warning);
         if (haserror) G.Shell.beep();
-        if (haserror || haswarning) {
+        if (haserror || (C.isDevelopment && haswarning)) {
           dialog.push(
             <Dialog
               className="modulesInstalled"

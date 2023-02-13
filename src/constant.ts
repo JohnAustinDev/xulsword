@@ -12,7 +12,6 @@ import type {
   ConfigType,
   EnvironmentVars,
   FeatureType,
-  FTPDownload,
   HistoryVKType,
   LocationVKType,
   ModTypes,
@@ -80,12 +79,13 @@ const C = {
   GBKSEP: '/',
 
   Downloader: {
-    localfile: 'file://',
+    localfile: 'file://' as const,
   },
 
   URLRE: /^https?:\/\//i,
 
   FTPMaxConnections: 48,
+  FTPConnectTimeout: 10000,
   FTPUserName: 'anonymous', // TODO!: How to set: 'xulsword@xulsword.org',
   HTTPUserAgent: 'xulsword@xulsword.org',
 
@@ -677,7 +677,6 @@ export const SP = {
           name: 'IBT XSM',
           domain: 'ftp.ibt.org.ru',
           path: '/pub/modxsm',
-          file: 'mods.d.tar.gz',
           builtin: false,
           disabled: false,
           custom: false,
@@ -686,7 +685,6 @@ export const SP = {
           name: 'IBT Audio',
           domain: 'ftp.ibt.org.ru',
           path: '/pub/modaudio',
-          file: 'mods.d.tar.gz',
           builtin: false,
           disabled: false,
           custom: false,
@@ -695,7 +693,7 @@ export const SP = {
       custom: [],
       disabled: null,
     } as {
-      xulsword: FTPDownload[];
+      xulsword: Repository[];
       custom: Repository[];
       disabled: string[] | null;
     },

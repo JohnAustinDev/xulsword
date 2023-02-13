@@ -27,12 +27,7 @@ import {
 import C, { SP } from '../../constant';
 import G from '../rg';
 import log from '../log';
-import {
-  getStatePref,
-  registerUpdateStateFromPref,
-  getLangReadable,
-  setStatePref,
-} from '../rutil';
+import { getStatePref, getLangReadable, setStatePref } from '../rutil';
 import {
   addClass,
   xulDefaultProps,
@@ -99,7 +94,7 @@ export type ManagerProps = XulProps & {
 };
 
 const notStatePref = {
-  modules: [] as string[],
+  infoConfigs: [] as SwordConfType[],
   progress: null as number[] | null,
   showAudioDialog: [] as (H.VersekeyDialog | H.GenBookDialog)[],
   tables: {
@@ -279,7 +274,7 @@ export default class ModuleManager
       try {
         listing = await G.Module.repositoryListing(
           this.loadRepositoryTable().map((r) => {
-            return { ...r, file: C.SwordRepoManifest };
+            return { ...r, file: C.SwordRepoManifest, type: 'ftp' };
           })
         );
       } catch (err) {
@@ -302,7 +297,7 @@ export default class ModuleManager
           // instead it is called on each repo separately.
           this.loadRepositoryTable(repos).map(async (r, i, a) => {
             return G.Module.repositoryListing([
-              { ...r, file: C.SwordRepoManifest },
+              { ...r, file: C.SwordRepoManifest, type: 'ftp' },
             ]).then((list) => {
               H.handleListings(
                 this,
@@ -355,6 +350,7 @@ export default class ModuleManager
               downloadKey({
                 ...r[H.RepCol.iInfo].repo,
                 file: C.SwordRepoManifest,
+                type: 'ftp',
               }) === id
           );
           const repdrow = repository.data[repoIndex];
@@ -364,9 +360,16 @@ export default class ModuleManager
           }
           // Set individual module progress bars
           const modIndex = module.data.findIndex((r) => {
-            const { repo } = r[H.ModCol.iInfo];
+            const { repo, conf } = r[H.ModCol.iInfo];
             const mod = r[H.ModCol.iModule];
-            return downloadKey({ ...repo, file: mod }) === id;
+            return (
+              downloadKey({
+                ...repo,
+                module: mod,
+                confname: conf.filename,
+                type: 'module',
+              }) === id
+            );
           });
           const moddrow = module.data[modIndex];
           if (moddrow && prog === -1) {
@@ -427,51 +430,42 @@ export default class ModuleManager
   loadRepositoryTable(repos?: Repository[]): Repository[] {
     const state = this.state as ManagerState;
     const { repositories } = state;
-    let disabled: string[] | null = [];
     let allrepos = builtinRepos(G.i18n, G.Dirs.path);
     if (repositories) {
-      disabled = repositories.disabled;
       const { xulsword, custom } = repositories;
-      custom.forEach((cr) => {
-        cr.custom = true;
-      });
-      repos?.forEach((rr) => {
-        rr.disabled = true;
-      });
       allrepos = allrepos.concat(xulsword, custom, repos || []);
     }
-    if ('repository' in state) {
-      const repoTableData: TRepositoryTableRow[] = [];
-      allrepos.forEach((repo) => {
-        if (disabled && !repo.builtin) {
-          repo.disabled = disabled.includes(repositoryKey(repo)) || false;
-        }
-        const css = H.classes([H.RepCol.iState], ['checkbox-column']);
-        const canedit = repo.custom ? H.editable() : false;
-        const isloading = repo.disabled ? false : H.loading(H.RepCol.iState);
-        const on = repo.builtin ? H.ALWAYS_ON : H.ON;
-        let reponame = repo.name;
-        if (G.i18n.exists(`${repo.name}.repository.label`)) {
-          reponame = G.i18n.t(`${repo.name}.repository.label`);
-        }
-        let lng = G.i18n.language;
-        if (!['en', 'ru'].includes(lng)) lng = C.FallbackLanguage[lng];
-        repoTableData.push([
-          reponame,
-          repo.domain,
-          repo.path,
-          repo.disabled ? H.OFF : on,
-          {
-            loading: isloading,
-            editable: canedit,
-            classes: css,
-            repo,
-            tooltip: H.tooltip('VALUE', [H.RepCol.iState]),
-          },
-        ]);
-      });
-      H.setTableState(this, 'repository', null, repoTableData, false);
-    }
+    const repoTableData: TRepositoryTableRow[] = [];
+    allrepos.forEach((repo) => {
+      if (repositories && repositories.disabled !== null && !repo.builtin) {
+        repo.disabled =
+          repositories.disabled.includes(repositoryKey(repo)) || false;
+      }
+      const css = H.classes([H.RepCol.iState], ['checkbox-column']);
+      const canedit = repo.custom ? H.editable() : false;
+      const isloading = repo.disabled ? false : H.loading(H.RepCol.iState);
+      const on = repo.builtin ? H.ALWAYS_ON : H.ON;
+      let reponame = repo.name;
+      if (G.i18n.exists(`${repo.name}.repository.label`)) {
+        reponame = G.i18n.t(`${repo.name}.repository.label`);
+      }
+      let lng = G.i18n.language;
+      if (!['en', 'ru'].includes(lng)) lng = C.FallbackLanguage[lng];
+      repoTableData.push([
+        reponame,
+        repo.domain,
+        repo.path,
+        repo.disabled ? H.OFF : on,
+        {
+          loading: isloading,
+          editable: canedit,
+          classes: css,
+          repo,
+          tooltip: H.tooltip('VALUE', [H.RepCol.iState]),
+        },
+      ]);
+    });
+    H.setTableState(this, 'repository', null, repoTableData, false);
     return allrepos;
   }
 
@@ -553,7 +547,8 @@ export default class ModuleManager
     H.Saved.moduleLangData = { allmodules: [] };
     const { moduleData, moduleLangData, repositoryListings } = H.Saved;
     const repoType = {
-      localSWORD: [] as SwordConfType[],
+      localXulsword: [] as SwordConfType[],
+      localShared: [] as SwordConfType[],
       localAudio: [] as SwordConfType[],
       remoteSWORD: [] as SwordConfType[],
       remoteAudio: [] as SwordConfType[],
@@ -567,9 +562,11 @@ export default class ModuleManager
           const modkey = repositoryModuleKey(c);
           const repoIsLocal = isRepoLocal(c.sourceRepository) || false;
           if (drow[H.RepCol.iState] !== H.OFF) {
-            if (repoIsLocal && c.xsmType !== 'XSM_audio')
-              repoType.localSWORD.push(c);
-            if (repoIsLocal && c.xsmType === 'XSM_audio')
+            if (c.sourceRepository.path === G.Dirs.path.xsModsUser)
+              repoType.localXulsword.push(c);
+            if (c.sourceRepository.path === G.Dirs.path.xsModsCommon)
+              repoType.localShared.push(c);
+            if (c.sourceRepository.path === G.Dirs.path.xsAudio)
               repoType.localAudio.push(c);
             if (!repoIsLocal && c.xsmType === 'none')
               repoType.remoteSWORD.push(c);
@@ -641,13 +638,13 @@ export default class ModuleManager
         });
       }
     });
-    // Installed modules (ie those in local repos) which are from enabled
-    // remote repositories are not included in moduleLangData. Rather their
-    // 'installed' and 'shared' checkboxes are applied to the corresponding
-    // remote repository module. Also, disabled repositories are skipped.
-    // If a xulsword module repository is enabled, any corresponding modules
-    // in regular repositories will not be listed.
-    const { localSWORD, localAudio, remoteSWORD, remoteAudio, remoteXSM } =
+    // Modules in the local xulsword repository and local audio repository
+    // which are from enabled remote repositories are not included in
+    // moduleLangData. Rather they are left off the list and their 'installed'
+    // and 'shared' checkboxes are applied to the corresponding remote
+    // repository module. Also, if an XSM module is listed, any corresponding
+    // module in a repository at the same domain will not be listed.
+    const { localXulsword, localAudio, remoteSWORD, remoteAudio, remoteXSM } =
       repoType;
     repositoryListings.forEach((listing, i) => {
       const drow = repotable.data[i];
@@ -655,18 +652,17 @@ export default class ModuleManager
         listing.forEach((c) => {
           const modkey = repositoryModuleKey(c);
           const modrow = moduleData[modkey];
-          const repoIsLocal = isRepoLocal(c.sourceRepository);
-          const modIsLocal = localSWORD
+          const repoIsRemote = !isRepoLocal(c.sourceRepository);
+          const modInLocalXulswordOrAudio = localXulsword
             .concat(localAudio)
             .find(
               (ci) =>
                 c.module === ci.module &&
                 c.Version === ci.Version &&
-                (c.xsmType === 'XSM_audio') === (ci.xsmType === 'XSM_audio')
+                c.xsmType === ci.xsmType
             );
-          const remoteSrcOfLocalMod = !repoIsLocal && modIsLocal;
-          if (remoteSrcOfLocalMod) {
-            const localModKey = repositoryModuleKey(modIsLocal);
+          if (repoIsRemote && modInLocalXulswordOrAudio) {
+            const localModKey = repositoryModuleKey(modInLocalXulswordOrAudio);
             if (localModKey in moduleData) {
               modrow[H.ModCol.iInfo].shared =
                 moduleData[localModKey][H.ModCol.iInfo].shared;
@@ -681,16 +677,24 @@ export default class ModuleManager
           }
 
           if (
-            !repoIsLocal ||
-            !remoteSWORD
-              .concat(remoteAudio)
-              .concat(remoteXSM)
-              .find(
-                (ci) =>
-                  c.module === ci.module &&
-                  c.Version === ci.Version &&
-                  c.xsmType === ci.xsmType
-              )
+            // not if in xsModsUser or xsAudio and a remote match is listed.
+            ((c.sourceRepository.path !== G.Dirs.path.xsModsUser &&
+              c.sourceRepository.path !== G.Dirs.path.xsAudio) ||
+              !remoteSWORD
+                .concat(remoteXSM)
+                .concat(remoteAudio)
+                .find(
+                  (ci) =>
+                    c.module === ci.module &&
+                    c.Version === ci.Version &&
+                    c.xsmType === ci.xsmType
+                )) &&
+            // and not if in remote-non-xsm and a remote XSM is listed.
+            (!repoIsRemote ||
+              c.xsmType !== 'none' ||
+              !remoteXSM.find(
+                (ci) => c.module === ci.module && c.Version === ci.Version
+              ))
           ) {
             const code = (c.Lang && c.Lang.replace(/-.*$/, '')) || 'en';
             if (!(code in moduleLangData)) moduleLangData[code] = [];
@@ -779,7 +783,7 @@ export default class ModuleManager
     const {
       language,
       module,
-      modules,
+      infoConfigs,
       showConf,
       editConf,
       repository,
@@ -964,25 +968,16 @@ export default class ModuleManager
               flex="1"
             >
               <Hbox className="module-deck" flex="1">
-                {modules.length > 0 && (
+                {infoConfigs.length > 0 && (
                   <Modinfo
-                    configs={
-                      modules
-                        .map((m) => {
-                          const mr = modtable.data.find(
-                            (r) => r[H.ModCol.iModule] === m
-                          );
-                          return (mr && mr[H.ModCol.iInfo].conf) || null;
-                        })
-                        .filter(Boolean) as SwordConfType[]
-                    }
+                    configs={infoConfigs}
                     showConf={showConf}
                     editConf={editConf}
                     buttonHandler={modinfoParentHandler}
                     refs={modinfoRefs}
                   />
                 )}
-                {modules.length === 0 && (
+                {infoConfigs.length === 0 && (
                   <Table
                     flex="1"
                     id="module"
@@ -1004,7 +999,7 @@ export default class ModuleManager
                 )}
               </Hbox>
               <Vbox className="button-stack" pack="center">
-                {modules.length === 0 && (
+                {infoConfigs.length === 0 && (
                   <Button
                     id="moduleInfo"
                     icon="info-sign"
@@ -1014,7 +1009,7 @@ export default class ModuleManager
                     onClick={eventHandler}
                   />
                 )}
-                {modules.length > 0 && (
+                {infoConfigs.length > 0 && (
                   <Button
                     id="moduleInfoBack"
                     intent="primary"

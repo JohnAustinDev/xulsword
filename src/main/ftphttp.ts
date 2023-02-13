@@ -211,7 +211,9 @@ export async function connect<Retval>(
     const rejectOnce = (er: any) => {
       if (!rejected) {
         ftpCancelable(cancelkey, id); // never throws
-        reject(er);
+        const message: string =
+          typeof er === 'object' && 'message' in er ? er.message : '';
+        reject(message ? new Error(`${domain}: ${message}`) : er);
       }
       rejected = true;
     };
@@ -325,7 +327,11 @@ export async function connect<Retval>(
         });
         try {
           log.debug(`Connecting: ${domain}`);
-          c.connect({ host: domain, user: C.FTPUserName });
+          c.connect({
+            host: domain,
+            user: C.FTPUserName,
+            connTimeout: C.FTPConnectTimeout,
+          });
         } catch (er: any) {
           rejectOnce(er);
         }

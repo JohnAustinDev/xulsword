@@ -333,8 +333,8 @@ export async function installZIPs(
       const progress = (prog: number) => {
         let w = BrowserWindow.fromId(callingWinID ?? -1);
         if (w) {
-          w?.setProgressBar(prog);
-          w?.webContents.send('progress', prog);
+          w.setProgressBar(prog);
+          w.webContents.send('progress', prog);
           w = null;
         }
       };
@@ -828,11 +828,14 @@ const Module = {
   // for retrieval of each repository's complete set of config files. A
   // string is returned if there were errors or the operation was canceled.
   async crossWireMasterRepoList(): Promise<Repository[] | string> {
-    const mr = {
+    const mr: FTPDownload = {
+      type: 'ftp',
       domain: 'ftp.crosswire.org',
       path: fpath.posix.join('pub', 'sword'),
       file: 'masterRepoList.conf',
       name: 'CrossWire Master List',
+      custom: false,
+      builtin: true,
     };
     const cancelkey = downloadKey(mr);
     if (ftpCancel(cancelkey, true)) return C.UI.Manager.cancelMsg;
@@ -856,6 +859,8 @@ const Module = {
           name: m[1],
           domain: m[2],
           path: m[3],
+          custom: false,
+          builtin: false,
         });
       }
     });
@@ -940,6 +945,7 @@ const Module = {
   // for later installation by installDownload. Returns the number of files
   // if successful, or a string error/cancel message otherwise.
   async download(download: Download): Promise<number | string> {
+    const { type } = download;
     const callingWinID = (arguments[1] ?? -1) as number;
     const downloadkey = downloadKey(download);
     if (ftpCancel(downloadkey, true)) return C.UI.Manager.cancelMsg;
@@ -952,7 +958,7 @@ const Module = {
     };
 
     // Audio XSM modules (HTTP download)
-    if ('http' in download) {
+    if (type === 'http') {
       const { http, confname } = download;
       progress(0);
       try {
@@ -975,7 +981,7 @@ const Module = {
           });
           if (!hasConf) {
             const confs = await downloadRepoConfs(
-              { ...download, file: C.SwordRepoManifest },
+              { ...download, file: C.SwordRepoManifest, type: 'ftp' },
               downloadkey,
               (p: number) => {
                 if (p && p !== -1) progress(3 / 4 + p / 4);
@@ -1008,7 +1014,7 @@ const Module = {
       }
 
       // Other XSM modules are ZIP files
-    } else if ('file' in download) {
+    } else if (type === 'ftp') {
       const { domain, path, file } = download;
       const fp = fpath.posix.join(path, file);
       log.silly(`downloadXSM`, domain, fp);

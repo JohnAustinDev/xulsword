@@ -25,7 +25,7 @@ import {
   builtinRepos,
   repositoryModuleKey,
 } from '../../common';
-import C from '../../constant';
+import C, { SP } from '../../constant';
 import G from '../rg';
 import log from '../log';
 import { TCellInfo, TCellLocation } from '../libxul/table';
@@ -36,8 +36,6 @@ import type {
   Download,
   FTPDownload,
   GType,
-  HTTPDownload,
-  ModFTPDownload,
   Repository,
   RepositoryListing,
   RowSelection,
@@ -211,15 +209,9 @@ export const Downloads: {
 } = {};
 
 export type ModuleUpdates = {
-  install: boolean;
-  from: {
-    conf: SwordConfType;
-    repo: Repository;
-  };
-  to: {
-    conf: SwordConfType;
-    repo: Repository;
-  };
+  doInstall: boolean;
+  installed?: SwordConfType;
+  updateTo: SwordConfType;
 };
 
 export function onColumnHide(
@@ -328,7 +320,7 @@ export function onModCellClick(
   if (!disabled) {
     const state = this.state as ManagerState;
     const { module } = state as ManagerState;
-    const { module: modtable } = state.tables;
+    const { module: modtable } = Saved;
     const { selection, visibleColumns } = module;
     const { dataRowIndex: row, column, tableRowIndex } = cell;
     const col = visibleColumns[column];
@@ -338,12 +330,13 @@ export function onModCellClick(
       const was = drow[col] === ON || drow[ModCol.iInfo].loading;
       const is = !was;
       const selrows = selectionToTableRows(selection);
+      const datarows = (
+        selrows.includes(tableRowIndex) ? selrows : [tableRowIndex]
+      ).map((r) => modtable.tableToDataRowMap[r] ?? r);
       modtableUpdate(
         this,
         col === ModCol.iRemove ? !is : is,
-        (selrows.includes(tableRowIndex) ? selrows : [tableRowIndex]).map(
-          (r) => Saved.module.tableToDataRowMap[r] ?? r
-        ),
+        datarows.map((ri) => modtable.data[ri][ModCol.iInfo].conf),
         col === ModCol.iRemove
       );
     } else if (drow && col === ModCol.iShared) {
@@ -351,7 +344,7 @@ export function onModCellClick(
       const is = !drow[ModCol.iInfo].shared;
       const selrows = selectionToTableRows(selection);
       (selrows.includes(tableRowIndex) ? selrows : [tableRowIndex])
-        .map((r) => Saved.module.tableToDataRowMap[r] ?? r)
+        .map((r) => modtable.tableToDataRowMap[r] ?? r)
         .forEach((r) => {
           const rrow = modtable.data[r];
           if (rrow && rrow[ModCol.iInstalled] === ON) {
@@ -467,21 +460,19 @@ export async function eventHandler(
             const { module } = state;
             const { module: modtable } = state.tables;
             const { selection } = module;
-            const modules = selectionToDataRows('module', selection)
+            const infoConfigs = selectionToDataRows('module', selection)
               .map((r) => {
-                return (
-                  (modtable.data[r] && modtable.data[r][ModCol.iModule]) || null
-                );
+                return modtable.data[r][ModCol.iInfo].conf || null;
               })
-              .filter(Boolean) as string[];
-            const s: Partial<ManagerState> = { modules };
+              .filter(Boolean);
+            const s: Partial<ManagerState> = { infoConfigs };
             this.setState(s);
           }
           break;
         }
         case 'moduleInfoBack': {
           const s: Partial<ManagerState> = {
-            modules: [],
+            infoConfigs: [],
           };
           this.setState(s);
           break;
@@ -538,7 +529,7 @@ export async function eventHandler(
                   if (lconf) {
                     removeMods.push({
                       name: lconf.module,
-                      repo: lconf.sourceRepository as Repository,
+                      repo: lconf.sourceRepository,
                     });
                   }
                 }
@@ -702,6 +693,7 @@ export async function eventHandler(
                 return {
                   ...r[RepCol.iInfo].repo,
                   file: C.SwordRepoManifest,
+                  type: 'ftp',
                 };
               })
           );
@@ -811,16 +803,17 @@ export function rowSelect(
   return newSelection;
 }
 
+// Get a list of disabled repositories: usually state.repositories.disabled,
+// but if that is null, return the 'disabled' property of each repository.
 function getDisabledRepos(xthis: ModuleManager) {
   const state = xthis.state as ManagerState;
   const { repositories } = state;
   if (repositories) {
     const { disabled } = repositories;
-    const { repository: repotable } = state.tables;
-    const repoTableData = clone(repotable.data);
+    const { repository: repotable } = Saved;
     return disabled
       ? disabled.slice()
-      : repoTableData
+      : repotable.data
           .map((r) =>
             r[RepCol.iInfo].repo.disabled
               ? repositoryKey(r[RepCol.iInfo].repo)
@@ -886,6 +879,7 @@ export async function switchRepo(
           cancel[r] = {
             ...drow[RepCol.iInfo].repo,
             file: C.SwordRepoManifest,
+            type: 'ftp',
           };
         } else {
           repoRowEnableDisable(false, drow, disabled);
@@ -899,10 +893,14 @@ export async function switchRepo(
         }
       : undefined;
     setTableState(xthis, 'repository', null, repoTableData, true, disreps);
-    const newrepos = repoTableData.map((r, i) => {
+    const newrepos: (FTPDownload | null)[] = repoTableData.map((r, i) => {
       return !rows.includes(i) || cancel[i] || r[RepCol.iInfo].repo.disabled
         ? null
-        : { ...r[RepCol.iInfo].repo, file: C.SwordRepoManifest };
+        : {
+            ...r[RepCol.iInfo].repo,
+            file: C.SwordRepoManifest,
+            type: 'ftp',
+          };
     });
     const listing = await G.Module.repositoryListing(newrepos);
     handleListings(xthis, listing);
@@ -919,11 +917,10 @@ export function handleListings(
   const state = xthis.state as ManagerState;
   const { repositories } = state;
   const { repositoryListings } = Saved;
-  let listing = null;
   if (repositories) {
     const { repository } = state.tables;
     const disabled = getDisabledRepos(xthis);
-    listing = listingsAndErrors.map((l, i, a) => {
+    listingsAndErrors.forEach((l, i, a) => {
       const drow = repository.data[i];
       if (l !== null && drow) {
         drow[RepCol.iInfo].loading = false;
@@ -964,7 +961,7 @@ export function handleListings(
     setTableState(xthis, 'repository', null, repository.data, true, disreps);
   } else {
     // Then only local repositories are being considered, with no table to update.
-    listing = listingsAndErrors.map((l, i) => {
+    listingsAndErrors.forEach((l, i) => {
       if (typeof l === 'string') {
         xthis.addToast({
           message: l,
@@ -982,7 +979,222 @@ export function handleListings(
   }
   xthis.loadLanguageTable();
   xthis.loadModuleTable();
-  checkForModuleUpdates(xthis, listing);
+
+  if (repositories) {
+    checkForModuleUpdates(xthis);
+    checkForSuggestions(xthis);
+  }
+}
+
+// Check enabled repository listings for installed modules that have
+// newer versions available, or have been obsoleted. Begin downloading
+// the updates, but ask whether to replace each installed module with
+// the update before doing so. This function should be called after
+// updateRepositoryLists().
+export function checkForModuleUpdates(xthis: ModuleManager) {
+  const { repositoryListings, repository: reptable, moduleLangData } = Saved;
+  const updateable: SwordConfType[] = [];
+  // Get modules in the local xulsword repository.
+  reptable.data.forEach((rtd, i) => {
+    if (rtd[RepCol.iInfo].repo.path === G.Dirs.path.xsModsUser) {
+      const listing = repositoryListings[i];
+      if (Array.isArray(listing)) listing.forEach((c) => updateable.push(c));
+    }
+  });
+  // Add modules in other local SWORD repositories IF they are not in the
+  // local xulsword repository. Modules in the shared repository are never
+  // auto-updated, but newer versions will be installed into the xulsword repo.
+  reptable.data.forEach((rtd, i) => {
+    if (
+      isRepoLocal(rtd[RepCol.iInfo].repo) &&
+      rtd[RepCol.iInfo].repo.path !== G.Dirs.path.xsAudio
+    ) {
+      const listing = repositoryListings[i];
+      if (Array.isArray(listing)) {
+        listing.forEach((c) => {
+          if (!updateable.some((uc) => uc.module === c.module))
+            updateable.push(c);
+        });
+      }
+    }
+  });
+
+  // Search all module table data for candidate updates.
+  const moduleUpdates: ModuleUpdates[] = [];
+  updateable.forEach((inst) => {
+    const candidates: ModuleUpdates[] = [];
+    moduleLangData.allmodules.forEach((row) => {
+      const { conf } = row[ModCol.iInfo];
+      if (
+        inst.sourceRepository &&
+        conf.xsmType !== 'XSM_audio' &&
+        // module is to be obsoleted
+        (conf.Obsoletes?.includes(inst.module) ||
+          // module is to be replaced by a newer version
+          (conf.xsmType !== 'XSM' &&
+            conf.module === inst.module &&
+            versionCompare(conf.Version ?? 0, inst.Version ?? 0) === 1) ||
+          // module is to be replaced by an XSM module containing a newer
+          // version, as long as we don't downgrade any installed modules
+          (conf.xsmType === 'XSM' &&
+            conf.SwordModules?.some(
+              (swm, x) =>
+                inst.module === swm &&
+                versionCompare(
+                  (conf.SwordVersions && conf.SwordVersions[x]) ?? 0,
+                  inst.Version ?? 0
+                ) === 1
+            ) &&
+            !conf.SwordModules?.some(
+              (swm, x) =>
+                versionCompare(
+                  updateable.find((im) => im.module === swm)?.Version ?? 0,
+                  (conf.SwordVersions && conf.SwordVersions[x]) ?? 0
+                ) === 1
+            )))
+      ) {
+        candidates.push({
+          installed: inst,
+          updateTo: conf,
+          doInstall: false,
+        });
+      }
+    });
+    // Choose the first candidate with the highest version number, XSM modules first.
+    const version = (x: ModuleUpdates): string => {
+      let v = '0';
+      if (x.updateTo.xsmType === 'XSM') {
+        const i =
+          x.updateTo.SwordModules?.findIndex((m) => m === inst.module) ?? -1;
+        if (i !== -1 && x.updateTo.SwordVersions)
+          v = `2.${x.updateTo.SwordVersions[i] ?? '0'}`;
+      } else {
+        v = `1.${x.updateTo.Version ?? 0}`;
+      }
+      return v;
+    };
+    candidates.sort((a, b) => versionCompare(version(b), version(a)));
+    if (candidates.length) moduleUpdates.push(candidates[0]);
+  });
+  promptAndInstall(xthis, moduleUpdates);
+}
+
+const ModuleUpdatePrompted: string[] = [];
+
+function promptAndInstall(xthis: ModuleManager, updatesx: ModuleUpdates[]) {
+  // Only initiate prompt/download once per module per window lifetime.
+  const updates = updatesx.filter(
+    (mud) => !ModuleUpdatePrompted.includes(mud.updateTo.module)
+  );
+  ModuleUpdatePrompted.push(...updatesx.map((mud) => mud.updateTo.module));
+  // Show a toast to ask permission to install each update.
+  updates.forEach((mud) => {
+    const abbr =
+      (mud.updateTo.Abbreviation?.locale || mud.updateTo.module) ?? '?';
+    let message: string;
+    const { installed: from } = mud;
+    if (from) {
+      const history =
+        mud.updateTo.History?.filter(
+          (h) => versionCompare(h[0], from.Version ?? 0) === 1
+        )
+          .map((h) => h[1].locale)
+          .join('\n') ?? '';
+      message = `${abbr} ${mud.updateTo.Version}: ${history} (${mud.updateTo.sourceRepository.name}, ${mud.updateTo.module})`;
+    } else {
+      message = `${abbr} ${mud.updateTo.Description?.locale} (${mud.updateTo.sourceRepository.name}, ${mud.updateTo.module})`;
+    }
+    xthis.addToast({
+      timeout: -1,
+      intent: Intent.SUCCESS,
+      message,
+      action: {
+        onClick: () => {
+          mud.doInstall = true;
+        },
+        text: G.i18n.t('yes.label'),
+      },
+      onDismiss: () =>
+        setTimeout(() => {
+          if (!mud.doInstall) {
+            installModuleUpdates(xthis, [mud], false);
+          }
+        }, 100),
+      icon: 'confirm',
+    });
+  });
+  // Download each update (to be canceled if prompt isn't accepted).
+  installModuleUpdates(xthis, updates, true);
+}
+
+function installModuleUpdates(
+  xthis: ModuleManager,
+  moduleUpdates: ModuleUpdates[],
+  on: boolean
+) {
+  const ons: boolean[] = [];
+  const rows: SwordConfType[] = [];
+  moduleUpdates.forEach((mud) => {
+    const { installed, updateTo } = mud;
+    // Turn off local repository module
+    if (installed) {
+      ons.push(!on);
+      rows.push(installed);
+    }
+    // Turn on external update module
+    if (updateTo) {
+      ons.push(on);
+      rows.push(updateTo);
+    }
+  });
+  modtableUpdate(xthis, ons, rows);
+}
+
+function checkForSuggestions(xthis: ModuleManager) {
+  const { moduleLangData } = Saved;
+  const suggested = G.Prefs.getComplexValue(
+    'moduleManager.suggested'
+  ) as typeof SP.moduleManager['suggested'];
+  const locale = G.i18n.language;
+  // Filter from Prefs any suggested mods that are already installed.
+  suggested[locale] = suggested[locale].filter(
+    (m) =>
+      !Object.values(moduleLangData.allmodules).some(
+        (r) => r[ModCol.iModule] === m && r[ModCol.iInstalled] !== OFF
+      )
+  );
+  if (locale in suggested && suggested[locale].length) {
+    // Build the list of modules to suggest.
+    const suggestions: ModuleUpdates[] = [];
+    suggested[locale].forEach((m) => {
+      const row: TModuleTableRow | null = Object.values(
+        moduleLangData.allmodules
+      ).reduce((p: TModuleTableRow | null, c: TModuleTableRow) => {
+        if (c[ModCol.iModule] !== m) return p;
+        if (!p) return c;
+        return versionCompare(
+          c[ModCol.iInfo].conf.Version || 0,
+          p[ModCol.iInfo].conf.Version || 0
+        ) === 1
+          ? c
+          : p;
+      }, null);
+      if (row) {
+        const { conf } = row[ModCol.iInfo];
+        suggestions.push({
+          doInstall: false,
+          updateTo: conf,
+        });
+      }
+    });
+    // Remove modules being suggested from Prefs, so that user only sees
+    // a particular suggestion once, ever.
+    suggested[locale] = suggested[locale].filter(
+      (m) => !suggestions.find((mud) => mud.updateTo.module === m)
+    );
+    G.Prefs.setComplexValue('moduleManager.suggested', suggested);
+    promptAndInstall(xthis, suggestions);
+  }
 }
 
 export function getModuleRowXsmSiblings(modrepkey: string): string[] {
@@ -1011,7 +1223,8 @@ function getModuleDownload(modrepkey: string): Download | null {
     return {
       ...data[ModCol.iInfo].repo,
       file: data[ModCol.iInfo].conf.DataPath,
-    } as FTPDownload;
+      type: 'ftp',
+    };
   }
   if (xsmType === 'XSM_audio') {
     // Remote audio repositories have URL as DataPath.
@@ -1020,18 +1233,21 @@ function getModuleDownload(modrepkey: string): Download | null {
         http: data[ModCol.iInfo].conf.DataPath,
         confname: data[ModCol.iInfo].conf.filename,
         ...data[ModCol.iInfo].repo,
-      } as HTTPDownload;
+        type: 'http',
+      };
     // Local audio repositories have local path as DataPath.
     return {
       ...data[ModCol.iInfo].repo,
       file: data[ModCol.iInfo].conf.DataPath,
-    } as FTPDownload;
+      type: 'ftp',
+    };
   }
   return {
     module: data[ModCol.iModule],
     confname: data[ModCol.iInfo].conf.filename,
     ...data[ModCol.iInfo].repo,
-  } as ModFTPDownload;
+    type: 'module',
+  };
 }
 
 async function promptAudioChapters(
@@ -1177,273 +1393,110 @@ function handleError(xthis: ModuleManager, er: any, modrepkeys: string[]) {
 }
 
 // Perform async repository module downloads corresponding to a given
-// set of module table rows.
-export function download(xthis: ModuleManager, rows: number[]): void {
-  const state = xthis.state as ManagerState;
-  const { module: modtable } = state.tables;
-  rows.forEach(async (row) => {
-    const drow = modtable.data[row];
-    if (drow) {
-      const modkey = repositoryModuleKey(drow[ModCol.iInfo].conf);
-      const modkeys = getModuleRowXsmSiblings(modkey);
-      const dlobj = getModuleDownload(modkey);
-      if (dlobj) {
-        const { moduleData } = Saved;
-        modkeys.forEach((k) => {
-          moduleData[k][ModCol.iInfo].loading = loading(ModCol.iInstalled);
-        });
-        if (
-          'http' in dlobj &&
-          drow[ModCol.iInfo].conf.xsmType === 'XSM_audio'
-        ) {
-          try {
-            const urlfrag = await promptAudioChapters(
-              xthis,
-              drow[ModCol.iInfo].conf
-            );
-            if (urlfrag) dlobj.http += urlfrag;
-            else throw new Error(C.UI.Manager.cancelMsg);
-          } catch (er) {
-            handleError(xthis, er, [modkey]);
-            return;
-          }
-        }
+// set of module configs.
+export function download(xthis: ModuleManager, configs: SwordConfType[]): void {
+  const { module: modtable } = Saved;
+  configs.forEach(async (conf) => {
+    const modkey = repositoryModuleKey(conf);
+    const modkeys = getModuleRowXsmSiblings(modkey);
+    const dlobj = getModuleDownload(modkey);
+    if (dlobj) {
+      const { moduleData } = Saved;
+      modkeys.forEach((k) => {
+        moduleData[k][ModCol.iInfo].loading = loading(ModCol.iInstalled);
+      });
+      if ('http' in dlobj && conf.xsmType === 'XSM_audio') {
         try {
-          const downloadkey = downloadKey(dlobj);
-          Downloads[downloadkey] = G.Module.download(dlobj);
-          const dl = await Downloads[downloadkey];
-          modkeys.forEach((k) => {
-            moduleData[k][ModCol.iInfo].loading = false;
-          });
-          let newintent: Intent = Intent.NONE;
-          if (typeof dl === 'string') {
-            if (!dl.startsWith(C.UI.Manager.cancelMsg)) {
-              newintent = Intent.DANGER;
-              xthis.addToast({
-                message: dl,
-                timeout: 5000,
-                intent: Intent.WARNING,
-              });
-            }
-          } else if (dl > 0) {
-            newintent = Intent.SUCCESS;
-            modkeys.forEach((k) => {
-              moduleData[k][ModCol.iInstalled] = ON;
-            });
-          } else {
-            newintent = Intent.WARNING;
-            modkeys.forEach((k) => {
-              moduleData[k][ModCol.iInstalled] = OFF;
-            });
-          }
-          modkeys.forEach((k) => {
-            moduleData[k][ModCol.iInfo].intent = intent(
-              ModCol.iInstalled,
-              newintent
-            );
-          });
-          setTableState(xthis, 'module', null, modtable.data, true);
+          const urlfrag = await promptAudioChapters(xthis, conf);
+          if (urlfrag) dlobj.http += urlfrag;
+          else throw new Error(C.UI.Manager.cancelMsg);
         } catch (er) {
-          handleError(xthis, er, modkeys);
+          handleError(xthis, er, [modkey]);
+          return;
         }
       }
-    }
-  });
-}
-
-// Check enabled repository listings for installed modules that have
-// newer versions available, or have been obsoleted. Begin downloading
-// the updates, but ask whether to replace each installed module with
-// the update before doing so. This function should be called after
-// updateRepositoryLists().
-export function checkForModuleUpdates(
-  xthis: ModuleManager,
-  rawModuleData: RepositoryListing[]
-) {
-  const state = xthis.state as ManagerState;
-  const { repository } = state.tables;
-  const { repositoryListings } = Saved;
-  const installed: SwordConfType[] = [];
-  // Get installed modules, minus audio which cannot be updated this way.
-  repository.data.forEach((rtd, i) => {
-    if (isRepoLocal(rtd[RepCol.iInfo].repo)) {
-      const listing = repositoryListings[i];
-      if (Array.isArray(listing)) {
-        listing.forEach((c) => {
-          if (c.xsmType !== 'XSM_audio') installed.push(c);
+      try {
+        const downloadkey = downloadKey(dlobj);
+        Downloads[downloadkey] = G.Module.download(dlobj);
+        const dl = await Downloads[downloadkey];
+        modkeys.forEach((k) => {
+          moduleData[k][ModCol.iInfo].loading = false;
         });
-      }
-    }
-  });
-  // Search new rawModuleData for possible updates
-  const moduleUpdates: ModuleUpdates[] = [];
-  installed.forEach((inst) => {
-    const candidates: ModuleUpdates[] = [];
-    rawModuleData.forEach((listing, i) => {
-      const { repo } = repository.data[i][RepCol.iInfo];
-      if (listing && Array.isArray(listing)) {
-        listing.forEach((avail) => {
-          if (
-            inst.sourceRepository &&
-            avail.xsmType !== 'XSM_audio' &&
-            // module is to be obsoleted
-            (avail.Obsoletes?.includes(inst.module) ||
-              // module is to be replaced by a newer version
-              (avail.xsmType !== 'XSM' &&
-                avail.module === inst.module &&
-                versionCompare(avail.Version ?? 0, inst.Version ?? 0) === 1) ||
-              // module is to be replaced by an XSM module containing a newer
-              // version, as long as we don't downgrade any installed modules
-              (avail.xsmType === 'XSM' &&
-                avail.SwordModules?.some(
-                  (swm, x) =>
-                    inst.module === swm &&
-                    versionCompare(
-                      (avail.SwordVersions && avail.SwordVersions[x]) ?? 0,
-                      inst.Version ?? 0
-                    ) === 1
-                ) &&
-                !avail.SwordModules?.some(
-                  (swm, x) =>
-                    versionCompare(
-                      installed.find((im) => im.module === swm)?.Version ?? 0,
-                      (avail.SwordVersions && avail.SwordVersions[x]) ?? 0
-                    ) === 1
-                )))
-          ) {
-            candidates.push({
-              from: {
-                conf: inst,
-                repo: inst.sourceRepository,
-              },
-              to: {
-                conf: avail,
-                repo,
-              },
-              install: false,
+        let newintent: Intent = Intent.NONE;
+        if (typeof dl === 'string') {
+          if (!dl.startsWith(C.UI.Manager.cancelMsg)) {
+            newintent = Intent.DANGER;
+            xthis.addToast({
+              message: dl,
+              timeout: 5000,
+              intent: Intent.WARNING,
             });
           }
+        } else if (dl > 0) {
+          newintent = Intent.SUCCESS;
+          modkeys.forEach((k) => {
+            moduleData[k][ModCol.iInstalled] = ON;
+          });
+        } else {
+          newintent = Intent.WARNING;
+          modkeys.forEach((k) => {
+            moduleData[k][ModCol.iInstalled] = OFF;
+          });
+        }
+        modkeys.forEach((k) => {
+          moduleData[k][ModCol.iInfo].intent = intent(
+            ModCol.iInstalled,
+            newintent
+          );
         });
+        setTableState(xthis, 'module', null, modtable.data, true);
+      } catch (er) {
+        handleError(xthis, er, modkeys);
       }
-    });
-    // Choose the first candidate with the highest version number, XSM modules first.
-    const version = (x: ModuleUpdates): string => {
-      let v = '0';
-      if (x.to.conf.xsmType === 'XSM') {
-        const i =
-          x.to.conf.SwordModules?.findIndex((m) => m === inst.module) ?? -1;
-        if (i !== -1 && x.to.conf.SwordVersions)
-          v = `2.${x.to.conf.SwordVersions[i] ?? '0'}`;
-      } else {
-        v = `1.${x.to.conf.Version ?? 0}`;
-      }
-      return v;
-    };
-    candidates.sort((a, b) => versionCompare(version(b), version(a)));
-    if (candidates.length) moduleUpdates.push(candidates[0]);
+    }
   });
-  // Show a toast to ask permission to install each update.
-  moduleUpdates.forEach((mud) => {
-    const abbr =
-      (mud.to.conf.Abbreviation?.locale || mud.to.conf.module) ?? '?';
-    const history =
-      mud.to.conf.History?.filter(
-        (h) => versionCompare(h[0], mud.from.conf.Version ?? 0) === 1
-      )
-        .map((h) => h[1].locale)
-        .join('\n') ?? '';
-    xthis.addToast({
-      timeout: -1,
-      intent: Intent.SUCCESS,
-      message: `${abbr} ${mud.to.conf.Version}: ${history} (${mud.to.repo.name}, ${mud.to.conf.module})`,
-      action: {
-        onClick: () => {
-          mud.install = true;
-        },
-        text: G.i18n.t('yes.label'),
-      },
-      onDismiss: () =>
-        setTimeout(() => {
-          if (!mud.install) {
-            installModuleUpdates(xthis, [mud], false);
-          }
-        }, 100),
-      icon: 'confirm',
-    });
-  });
-  // Download each update.
-  installModuleUpdates(xthis, moduleUpdates, true);
-}
-
-function installModuleUpdates(
-  xthis: ModuleManager,
-  moduleUpdates: ModuleUpdates[],
-  on: boolean
-) {
-  const state = xthis.state as ManagerState;
-  const { module: modtable } = state.tables;
-  const ons: boolean[] = [];
-  const rows: number[] = [];
-  moduleUpdates.forEach((mud) => {
-    const row = (which: 'from' | 'to') =>
-      modtable.data.findIndex(
-        (r: TModuleTableRow) =>
-          mud[which].repo.name === r[ModCol.iRepoName] &&
-          mud[which].conf.module === r[ModCol.iModule] &&
-          mud[which].conf.Version === r[ModCol.iVersion]
-      );
-    // Turn off local repository module
-    ons.push(!on);
-    rows.push(row('from'));
-    // Turn on external update module
-    ons.push(on);
-    rows.push(row('to'));
-  });
-  modtableUpdate(xthis, ons, rows);
 }
 
 function modtableUpdate(
   xthis: ModuleManager,
   on: boolean | boolean[],
-  moduleDataRowIndexes: number[],
+  configs: SwordConfType[],
   iRemove = false
 ) {
-  const state = xthis.state as ManagerState;
-  const { module: modtable } = state.tables;
+  const { moduleData } = Saved;
   const cancel: Download[] = [];
-  moduleDataRowIndexes.forEach((mtri, i) => {
-    if (mtri !== -1) {
-      const row = modtable.data[mtri];
-      if (Array.isArray(on) ? on[i] : on) {
-        row[ModCol.iRemove] = OFF;
-        if (row[ModCol.iInfo].loading) {
-          // if installing a module that's loading, ignore and do nothing
-        } else if (iRemove || isRepoLocal(row[ModCol.iInfo].repo)) {
-          // if installing a module is already installed or downloaded, just check the installed box
-          row[ModCol.iInstalled] = ON;
-          // otherwise download the module
-        } else download(xthis, [mtri]);
-      } else if (row[ModCol.iInfo].loading) {
-        // if uninstalling a module that is loading, cancel the download
-        row[ModCol.iInfo].intent = intent(ModCol.iInstalled, 'warning');
-        const dl = getModuleDownload(
-          repositoryModuleKey(row[ModCol.iInfo].conf)
-        );
-        if (dl) cancel.push(dl);
-      } else {
-        // otherwise uncheck the installed box and check the remove box
-        row[ModCol.iRemove] = ON;
-        row[ModCol.iInstalled] = OFF;
-        row[ModCol.iInfo].intent = intent(ModCol.iInstalled, 'none');
-      }
+  configs.forEach((conf, i) => {
+    const row = moduleData[repositoryModuleKey(conf)];
+    if (Array.isArray(on) ? on[i] : on) {
+      row[ModCol.iRemove] = OFF;
+      if (row[ModCol.iInfo].loading) {
+        // if installing a module that's loading, ignore and do nothing
+      } else if (iRemove || isRepoLocal(row[ModCol.iInfo].repo)) {
+        // if installing a module is already installed or downloaded, just check the installed box
+        row[ModCol.iInstalled] = ON;
+        // otherwise download the module
+      } else download(xthis, [conf]);
+    } else if (row[ModCol.iInfo].loading) {
+      // if uninstalling a module that is loading, cancel the download
+      row[ModCol.iInfo].intent = intent(ModCol.iInstalled, 'warning');
+      const dl = getModuleDownload(repositoryModuleKey(row[ModCol.iInfo].conf));
+      if (dl) cancel.push(dl);
+    } else {
+      // otherwise uncheck the installed box and check the remove box
+      row[ModCol.iRemove] = ON;
+      row[ModCol.iInstalled] = OFF;
+      row[ModCol.iInfo].intent = intent(ModCol.iInstalled, 'none');
     }
   });
   if (cancel.length) G.Module.cancel(cancel);
-  if (moduleDataRowIndexes.length)
-    setTableState(xthis, 'module', null, modtable.data, true);
+  if (configs.length) setTableState(xthis, 'module', null, null, true);
 }
 
-// Set table state, save the data for window re-renders, and re-render the table.
+// Do any or all of the following with minimum setState() calls:
+// Update Saved table data for immediate use and for window re-renders.
+// Change table state and data state.
+// Force re-render of a table.
+// Change other ModuleManager state
 export function setTableState(
   xthis: ModuleManager,
   table: typeof Tables[number],
@@ -1470,8 +1523,8 @@ export function setTableState(
     Saved[table].data = tableData;
   }
   if (Object.keys(news).length) xthis.sState(news);
-  // Two steps must be used for statePrefs to be written to Prefs
-  // before the reset will will properly read their updated values.
+  // Two setState() calls must be used: first call allows statePrefs to be
+  // written to Prefs so afterward the reset will properly load updated values.
   if (tableReset) {
     xthis.sState((prevState) => {
       const { render } = prevState.tables[table];

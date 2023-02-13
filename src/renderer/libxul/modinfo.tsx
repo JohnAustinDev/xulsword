@@ -5,7 +5,12 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { sanitizeHTML, stringHash } from '../../common';
+import {
+  isRepoLocal,
+  repositoryModuleKey,
+  sanitizeHTML,
+  stringHash,
+} from '../../common';
 import G from '../rg';
 import { moduleInfoHTML } from '../rutil';
 import { xulDefaultProps, xulPropTypes, XulProps, htmlAttribs } from './xul';
@@ -152,16 +157,13 @@ function Modinfo(props: ModinfoProps) {
         confPath: null as null | string,
         label: m in G.Tab ? G.Tab[m].label : m,
         style: m in G.Tab ? G.Tab[m].labelClass : 'cs-LTR_DEFAULT',
-        modUnique: '',
+        modUnique: stringHash(repositoryModuleKey(c)),
       };
-      if (c) {
-        if (c.xsmType === 'XSM_audio') {
-          data.confPath = [G.Dirs.path.xsAudio, 'mods.d', c.filename].join('/');
-        } else if (c.module in G.Tab) {
-          data.confPath = G.Tab[c.module].confPath;
-        }
+      if (c && isRepoLocal(c.sourceRepository)) {
+        data.confPath = [c.sourceRepository.path, 'mods.d', c.filename].join(
+          '/'
+        );
       }
-      data.modUnique = stringHash(c.module, data.confPath);
       return {
         ...c,
         ...data,

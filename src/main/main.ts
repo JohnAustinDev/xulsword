@@ -211,14 +211,20 @@ const openMainWindow = () => {
         const newWarns = newmods.reports.map((r) => r.warning).filter(Boolean);
         if (newErrors.length) {
           log.error(
-            `Module installation problems follow:\n${newErrors.join('\n')}`
+            `${
+              newmods.modules.length
+            } Module(s) installed with problems:\n${newErrors.join('\n')}`
           );
         } else if (newWarns.length) {
           log.warn(
-            `All modules installed with warnings:\n${newWarns.join('\n')}`
+            `${
+              newmods.modules.length
+            } Module(s) installed with warnings:\n${newWarns.join('\n')}`
           );
         } else {
-          log.info('ALL FILES WERE SUCCESSFULLY INSTALLED!');
+          log.info(
+            `${newmods.modules.length} MODULE(S) SUCCESSFULLY INSTALLED!`
+          );
         }
         Subscription.publish.resetMain();
         newmods.nokeymods = getCipherFailConfs();
