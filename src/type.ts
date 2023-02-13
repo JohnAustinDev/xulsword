@@ -644,6 +644,12 @@ export type GAddCaller<G extends { [k: string]: (...args: any[]) => any }> = {
   [K in keyof G]: GMethodAddCaller<G[K]>;
 };
 
+export type AddCaller = {
+  [obj in typeof GBuilder['includeCallingWindow'][number]]: GAddCaller<
+    GType[obj]
+  >;
+};
+
 export type GType = {
   // Getters
   Books: ReturnType<typeof getBooks>;
@@ -680,12 +686,6 @@ export type GType = {
   Data: typeof Data;
   Module: typeof Module;
   Window: typeof Window;
-};
-
-export type AddCaller = {
-  [obj in typeof GBuilder['includeCallingWindow'][number]]: GAddCaller<
-    GType[obj]
-  >;
 };
 
 // This GBuilder object will be used in the main/mg and renderer/rg

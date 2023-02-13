@@ -156,7 +156,13 @@ export default function contextMenu(
           return () => {
             const loc = data.selectionParsedVK as LocationVKType;
             if (typeof loc === 'object') {
-              Commands.goToLocationVK(loc, loc, undefined, window.id);
+              Commands.goToLocationVK(
+                loc,
+                loc,
+                undefined,
+                undefined,
+                window.id
+              );
             }
           };
         })(cm()),
@@ -172,6 +178,7 @@ export default function contextMenu(
               Commands.goToLocationVK(
                 locationVK,
                 locationVK,
+                undefined,
                 undefined,
                 window.id
               );

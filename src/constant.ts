@@ -85,7 +85,7 @@ const C = {
   URLRE: /^https?:\/\//i,
 
   FTPMaxConnections: 48,
-  FTPConnectTimeout: 10000,
+  FTPConnectTimeout: 10000, // ms for an ftp server to respond
   FTPUserName: 'anonymous', // TODO!: How to set: 'xulsword@xulsword.org',
   HTTPUserAgent: 'xulsword@xulsword.org',
 
