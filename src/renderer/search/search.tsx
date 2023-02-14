@@ -43,7 +43,7 @@ import handlerH, {
 } from './searchH';
 import './search.css';
 
-import type { BookGroupType, OSISBookType, SearchType } from '../../type';
+import type { BookGroupType, SearchType } from '../../type';
 import Popup from '../popup/popup';
 
 const defaultProps = xulDefaultProps;
@@ -61,7 +61,7 @@ const initialState = {
   scoperadio: 'all' as typeof ScopeRadioOptions[number], // scope radio value
   scopeselect: 'gospel' as BookGroupType | typeof ScopeSelectOptions[number], // scope select value
   moreLess: true as boolean, // more / less state
-  displayBible: '' as string, // current module of Bible search
+  displayBible: '' as string, // current module for Bible search results
   results: null as number | null, // count and page-result are returned at different times
   pageindex: 0 as number, // first results index to show
   progress: 0 as number, // -1=indeterminate, 0=hidden, 1=complete
@@ -165,9 +165,8 @@ export default class SearchWin extends React.Component implements PopupParent {
   }
 
   componentDidMount() {
-    // NOTE: The search.indexer event is never sent because the Node event
-    // loop is blocked by the indexer so that event was removed , but the handler
-    // is left here anyway, in case a a solution to that problem is ever found.
+    const state = this.state as SearchWinState;
+    const { module } = state;
     this.destroy.push(
       window.ipc.on('progress', (prog: number, id?: string) => {
         if (id === 'search.indexer') {
@@ -175,7 +174,7 @@ export default class SearchWin extends React.Component implements PopupParent {
         }
       })
     );
-    search(this);
+    if (module && G.LibSword.luceneEnabled(module)) search(this);
   }
 
   componentDidUpdate(_prevProps: any, prevState: SearchWinState) {

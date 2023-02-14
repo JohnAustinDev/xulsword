@@ -240,7 +240,7 @@ export type SearchType = {
     | 'SearchSimilar'
     | 'SearchExactText'
     | 'SearchAdvanced';
-  scope?: 'SearchAll' | string;
+  scope?: string;
 };
 
 export type V11nType =

@@ -99,7 +99,7 @@ function getScopes(
   single = false
 ): string[] {
   const scopes: string[] = [];
-  function continuation(start: any, end: any, skip: any) {
+  function continuation(start: string, end: string, skip: boolean) {
     if (!skip) {
       if (start && start === end) scopes.push(start);
       else if (start && end) scopes.push(`${start}-${end}`);
@@ -109,8 +109,8 @@ function getScopes(
     const scopebooks = scopeBooks(input);
     const modbooks = G.getBooksInModule(module); // are in v11n order
 
-    let contStart: string | null = null;
-    let contEnd: string | null = null;
+    let contStart: OSISBookType | '' = '';
+    let contEnd: OSISBookType | '' = '';
     modbooks.forEach((bk) => {
       let keep = false;
       if (input === 'all') keep = true;
@@ -125,8 +125,8 @@ function getScopes(
         contEnd = bk;
       } else {
         continuation(contStart, contEnd, single);
-        contStart = null;
-        contEnd = null;
+        contStart = '';
+        contEnd = '';
       }
     });
     continuation(contStart, contEnd, single);
