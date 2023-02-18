@@ -677,6 +677,12 @@ export type BookmarkFolderType = BookmarkItem & {
 
 export type BookmarkTypes = ['folder', 'bookmark'];
 
+export type TransactionType = {
+  prefkey: string;
+  value: PrefValue;
+  store?: string;
+};
+
 export type AddCaller = {
   [obj in typeof GBuilder['includeCallingWindow'][number]]: GAddCaller<
     GType[obj]

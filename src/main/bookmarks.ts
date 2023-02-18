@@ -11,8 +11,11 @@ import type {
   LocationGBType,
   LocationVKType,
   NewModulesType,
+  PrefValue,
+  TransactionType,
 } from '../type';
 import { verseKey } from './minit';
+import { PrefCallbackType } from './components/prefs';
 
 type BMkeys =
   | keyof BookmarkItem
@@ -20,6 +23,33 @@ type BMkeys =
   | keyof BookmarkFolderType;
 
 type StringRegex = [string, RegExp];
+
+// Storage for all undo/redo transactions (not just bookmarks)
+export const Transaction = {
+  pause: false as boolean, // to pause transaction addition when new index is selected
+  list: [] as TransactionType[],
+  index: -1 as number,
+};
+
+export const addBookmarkTransaction: PrefCallbackType = (
+  _callingWinID: number,
+  key: string,
+  value: PrefValue,
+  store?: string
+) => {
+  const { pause, list } = Transaction;
+  if (!pause && store === 'bookmarks' && key === 'manager.bookmarks') {
+    Transaction.index += 1;
+    const { index } = Transaction;
+    list[index] = {
+      prefkey: key,
+      value: clone(value),
+      store,
+    };
+    const trim = list.length - 1 - index;
+    if (trim > 0) list.splice(index + 1, trim);
+  }
+};
 
 export function findBookmarkFolder(
   toSearch: BookmarkFolderType,

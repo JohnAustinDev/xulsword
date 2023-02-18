@@ -15,6 +15,7 @@ import C, { SP, SPBM } from '../constant';
 import G from './mg';
 import { getBrowserWindows } from './components/window';
 import Commands, { newDbItemWithDefaults } from './components/commands';
+import { Transaction } from './bookmarks';
 import { verseKey } from './minit';
 import setViewportTabs from './tabs';
 
@@ -184,15 +185,15 @@ function updateMenuFromPref(menux?: Menu | null) {
 }
 
 // This callback updates the menu when applicable prefs change. If the
-// calling window is -1 (main process) the menu will NOT be updated
-// because it will be assumed the menu initiated the change, and ignoring
+// calling window is -1 (main process) the menu will normally NOT be updated
+// as it will be assumed the menu initiated the change, and ignoring
 // it prevents cycling.
 export const pushPrefsToMenu: PrefCallbackType = (winid, key, val, store) => {
   let menuPref: string[] = [];
   if (G.Data.has('menuPref')) {
     menuPref = G.Data.read('menuPref') as string[];
   }
-  if (winid !== -1) {
+  if (winid !== -1 || Transaction.pause) {
     if (store === 'prefs') {
       const keys: string[] = [];
       if (!key.includes('.') && typeof val === 'object') {
@@ -397,19 +398,25 @@ export default class MenuBuilder {
     };
 
     const edits = ['undo', 'redo', 'cut', 'copy', 'paste'];
+    const { list, index } = Transaction;
     const subMenuEdit: MenuItemConstructorOptions = {
       role: 'editMenu',
       label: ts('editMenu.label', 'editMenu.accesskey'),
       submenu: edits
         .map((edx) => {
           const ed = edx as 'undo' | 'redo' | 'cut' | 'copy' | 'paste';
-          return {
+          const item: MenuItemConstructorOptions = {
             label: ts(`menu.edit.${ed}`),
             accelerator: tx(`menu.edit.${ed}.ac`, ['CommandOrControl']),
+            enabled: !(
+              (ed === 'undo' && (list.length < 2 || index < 1)) ||
+              (ed === 'redo' && index >= list.length - 1)
+            ),
             click: d(() => {
               if (!Commands.edit(ed)) this.mainWindow.webContents[ed]();
             }),
           };
+          return item;
         })
         .concat([
           { type: 'separator' } as any,

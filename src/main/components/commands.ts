@@ -21,6 +21,7 @@ import parseSwordConf from '../parseSwordConf';
 import importBookmarkObject, {
   findBookmarkFolder,
   importDeprecatedBookmarks,
+  Transaction,
 } from '../bookmarks';
 import { verseKey, getTab, getTabs, getAudioConfs } from '../minit';
 import Prefs from './prefs';
@@ -587,13 +588,29 @@ const Commands = {
     return this[which](...args);
   },
 
-  undo(...args: any): boolean {
-    log.info(`Action not implemented: undo(${JSON_stringify(args)})`);
+  undo(): boolean {
+    const { list, index } = Transaction;
+    if (!(list.length < 2 || index < 1)) {
+      Transaction.index = index - 1;
+      const { prefkey, value, store } = list[Transaction.index];
+      Transaction.pause = true;
+      Prefs.setComplexValue(prefkey, value, store);
+      Transaction.pause = false;
+      return true;
+    }
     return false;
   },
 
-  redo(...args: any): boolean {
-    log.info(`Action not implemented: redo(${JSON_stringify(args)})`);
+  redo(): boolean {
+    const { list, index } = Transaction;
+    if (!(index >= list.length - 1)) {
+      Transaction.index = index + 1;
+      const { prefkey, value, store } = list[Transaction.index];
+      Transaction.pause = true;
+      Prefs.setComplexValue(prefkey, value, store);
+      Transaction.pause = false;
+      return true;
+    }
     return false;
   },
 

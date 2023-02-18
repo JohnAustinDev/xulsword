@@ -39,6 +39,7 @@ import type {
   WindowRegistryType,
 } from '../type';
 import type { ManagerStatePref } from '../renderer/moduleManager/manager';
+import { addBookmarkTransaction } from './bookmarks';
 
 const i18nBackendMain = require('i18next-fs-backend');
 const installer = require('electron-devtools-installer');
@@ -50,6 +51,15 @@ Object.entries(SP).forEach((entry) => {
   getStatePref(G.Prefs, key, val);
 });
 getStatePref(G.Prefs, 'manager', SPBM.manager as PrefObject, 'bookmarks');
+addBookmarkTransaction(
+  -1,
+  'manager.bookmarks',
+  G.Prefs.getComplexValue(
+    'manager.bookmarks',
+    'bookmarks'
+  ) as typeof SPBM.manager.bookmarks,
+  'bookmarks'
+);
 
 if (G.Prefs.getBoolPref('global.InternetPermission')) {
   const url = G.Prefs.getCharPref('global.crashReporterURL');
@@ -199,6 +209,7 @@ const openMainWindow = () => {
 
   const subscriptions: (() => void)[] = [];
   subscriptions.push(Subscription.doSubscribe('getG', () => G));
+  subscriptions.push(Subscription.subscribe.setPref(addBookmarkTransaction));
   subscriptions.push(Subscription.subscribe.setPref(pushPrefsToWindows));
   subscriptions.push(Subscription.subscribe.setPref(pushPrefsToMenu));
   subscriptions.push(
