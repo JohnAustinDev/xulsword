@@ -6,7 +6,7 @@ import log from 'electron-log';
 import path from 'path';
 import i18next from 'i18next';
 import { app, BrowserWindow } from 'electron';
-import { JSON_parse, JSON_stringify, randomID } from '../../common';
+import { JSON_parse, JSON_stringify } from '../../common';
 import Cache from '../../cache';
 import C from '../../constant';
 import Subscription from '../../subscription';
@@ -342,59 +342,62 @@ export const pushPrefsToWindows: PrefCallbackType = (
   val,
   store
 ) => {
-  if (
-    (!store || store === 'prefs') &&
-    (winid === -1 || winid === BrowserWindow.getFocusedWindow()?.id)
-  ) {
-    // Get a (key.property)[] of changed keyprops requesting to be pushed.
-    const keyprops: string[] =
-      !key.includes('.') && val && typeof val === 'object'
-        ? Object.keys(val).map((k) => {
-            return [key, k].join('.');
+  let pushKeyProps: string[] = [];
+  if (winid === -1 || winid === BrowserWindow.getFocusedWindow()?.id) {
+    if (!store) {
+      if (key === 'global.locale') {
+        const lng = Prefs.getCharPref('global.locale');
+        i18next
+          .loadLanguages(lng)
+          .then(() => i18next.changeLanguage(lng))
+          .then(() => {
+            Cache.clear();
+            Window.reset('all', 'all');
+            return true;
           })
-        : [key];
+          .catch((err: any) => {
+            if (err) throw Error(err);
+          });
+      } else if (key === 'global.fontSize') {
+        Window.reset('dynamic-stylesheet-reset', 'all');
+      } else {
+        // Get a (key.property)[] of changed keyprops requesting to be pushed.
+        const keyprops: string[] =
+          !key.includes('.') && val && typeof val === 'object'
+            ? Object.keys(val).map((k) => {
+                return [key, k].join('.');
+              })
+            : [key];
 
-    // Collect a list of keyprops that are allowed to be pushed.
-    // Note: menuPref is auto-generated during menu build as (key.property)[]
-    const allowed: string[] = ['xulsword.keys'];
-    if (Data.has('menuPref')) {
-      allowed.push(...(Data.read('menuPref') as string[]));
-    }
-    Object.entries(C.SyncPrefs).forEach((entry) => {
-      const [k, v] = entry;
-      Object.keys(v).forEach((p) => {
-        allowed.push([k, p].join('.'));
-      });
-    });
-
-    // Get the list of keyprops that will be pushed.
-    const pushKeyProps = keyprops.filter((kp) => {
-      const basekey = kp.split('.').slice(0, 2).join('.');
-      return allowed.includes(basekey);
-    });
-
-    if (key === 'global.locale') {
-      const lng = Prefs.getCharPref('global.locale');
-      i18next
-        .loadLanguages(lng)
-        .then(() => i18next.changeLanguage(lng))
-        .then(() => {
-          Cache.clear();
-          Window.reset('all', 'all');
-          return true;
-        })
-        .catch((err: any) => {
-          if (err) throw Error(err);
-        });
-    } else if (key === 'global.fontSize') {
-      Window.reset('dynamic-stylesheet-reset', 'all');
-    } else if (pushKeyProps.length) {
-      BrowserWindow.getAllWindows().forEach((w) => {
-        if (winid === -1 || w.id !== winid) {
-          w.webContents.send('update-state-from-pref', pushKeyProps);
+        // Collect a list of keyprops that are allowed to be pushed.
+        // Note: menuPref is auto-generated during menu build as (key.property)[]
+        const allowed: string[] = ['xulsword.keys'];
+        if (Data.has('menuPref')) {
+          allowed.push(...(Data.read('menuPref') as string[]));
         }
-      });
+        Object.entries(C.SyncPrefs).forEach((entry) => {
+          const [k, v] = entry;
+          Object.keys(v).forEach((p) => {
+            allowed.push([k, p].join('.'));
+          });
+        });
+
+        // Get the list of keyprops that will be pushed.
+        pushKeyProps = keyprops.filter((kp) => {
+          const basekey = kp.split('.').slice(0, 2).join('.');
+          return allowed.includes(basekey);
+        });
+      }
+    } else if (store === 'bookmarks' && key.startsWith('manager.bookmarks')) {
+      pushKeyProps = ['manager.bookmarks'];
     }
+  }
+  if (pushKeyProps.length) {
+    BrowserWindow.getAllWindows().forEach((w) => {
+      if (winid === -1 || w.id !== winid) {
+        w.webContents.send('update-state-from-pref', pushKeyProps, store);
+      }
+    });
   }
 };
 

@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable prefer-rest-params */
+import type ZIP from 'adm-zip';
 import { BrowserWindow, dialog, OpenDialogSyncOptions } from 'electron';
 import { BrowserWindowConstructorOptions } from 'electron/main';
 import fpath from 'path';
@@ -9,13 +10,18 @@ import {
   clone,
   diff,
   gbPaths,
+  JSON_parse,
   JSON_stringify,
   pad,
   versionCompare,
 } from '../../common';
 import Subscription from '../../subscription';
-import C, { SP } from '../../constant';
+import C, { SP, SPBM } from '../../constant';
 import parseSwordConf from '../parseSwordConf';
+import importBookmarkObject, {
+  findBookmarkFolder,
+  importDeprecatedBookmarks,
+} from '../bookmarks';
 import { verseKey, getTab, getTabs, getAudioConfs } from '../minit';
 import Prefs from './prefs';
 import LibSword from './libsword';
@@ -26,6 +32,7 @@ import Dirs from './dirs';
 
 import type {
   AudioPath,
+  BookmarkFolderType,
   GenBookAudio,
   GenBookAudioFile,
   LocationGBType,
@@ -54,11 +61,13 @@ const Commands = {
     });
   },
 
-  // Install one or more ZIP modules from the local file system. The paths
-  // argument may be one or more paths to installable ZIP files, or a single
-  // directory. If the directory ends with '/*' then all modules in that
-  // directory will be installed. A dialog will be shown if no paths argument
-  // is provided, or an existing directory path is provided.
+  // Install one or more .zip, .xsm, .xsb, .txt or .json modules from the local
+  // file system. All .zip and .xsm files will be treated as XSM modules, and
+  // all other extensions will be treated as bookmark files. The paths argument
+  // may be one or more paths of installable files, or a single directory con-
+  // taining installable files. If the directory ends with '/*' then all modules
+  // in that directory will be installed. A dialog will be shown if no paths
+  // argument is provided, or an existing directory path is provided.
   async installXulswordModules(
     paths?: string[] | string, // file, file[], directory, directory/* or undefined=choose-files
     toSharedModuleDir?: boolean
@@ -67,7 +76,7 @@ const Commands = {
       Dirs.path[toSharedModuleDir ? 'xsModsCommon' : 'xsModsUser'];
     const callingWinID: number =
       arguments[2] ?? getBrowserWindows({ type: 'xulsword' })[0].id;
-    const extensions = ['zip', 'xsm', 'xsb'];
+    const extensions = ['zip', 'xsm', 'xsb', 'txt', 'json'];
     const options: OpenDialogSyncOptions = {
       title: i18n.t('menu.addNewModule.label'),
       filters: [
@@ -79,9 +88,30 @@ const Commands = {
       properties: ['openFile', 'multiSelections'],
     };
     const extRE = new RegExp(`\\.(${extensions.join('|')})$`, 'i');
-    function filter(fileArray: string[]): string[] {
+    const filter = (fileArray: string[]): string[] => {
       return fileArray.filter((f) => extRE.test(f));
-    }
+    };
+    const modalInstall2 = async (
+      mods: (ZIP | string)[],
+      destdir?: string | string[],
+      callingWinID2?: number
+    ): Promise<NewModulesType> => {
+      const r: NewModulesType = clone(C.NEWMODS);
+      const bookmarkMods = mods.filter(
+        (m) => typeof m === 'string' && /\.(xsb|txt|json)$/i.test(m)
+      ) as string[];
+      if (bookmarkMods.length) {
+        await this.importBookmarks(bookmarkMods, undefined, r);
+      }
+      const zipmods = mods.filter(
+        (m) => typeof m !== 'string' || !/\.(xsb|txt|json)$/i.test(m)
+      );
+      if (zipmods.length) {
+        await modalInstall(zipmods, destdir, callingWinID2, r);
+      }
+      Subscription.publish.modulesInstalled(r, callingWinID);
+      return r;
+    };
     Window.modal([
       { modal: 'transparent', window: 'all' },
       { modal: 'darkened', window: { type: 'xulsword' } },
@@ -89,7 +119,7 @@ const Commands = {
     if (paths) {
       // Install array of file paths
       if (Array.isArray(paths)) {
-        return modalInstall(filter(paths), destDir, callingWinID);
+        return modalInstall2(filter(paths), destDir, callingWinID);
       }
       // Install all modules in a directory
       if (paths.endsWith('/*')) {
@@ -98,12 +128,12 @@ const Commands = {
         if (file.isDirectory()) {
           list.push(...filter(file.directoryEntries));
         }
-        return modalInstall(list, destDir, callingWinID);
+        return modalInstall2(list, destDir, callingWinID);
       }
       const file = new LocalFile(paths);
       // ZIP file to install
       if (!file.isDirectory()) {
-        return modalInstall(filter([file.path]), destDir, callingWinID);
+        return modalInstall2(filter([file.path]), destDir, callingWinID);
       }
       // Choose from existing directory.
       options.defaultPath = paths;
@@ -112,7 +142,7 @@ const Commands = {
       getBrowserWindows({ type: 'xulsword' })[0],
       options
     );
-    return modalInstall(obj.filePaths, destDir, callingWinID);
+    return modalInstall2(obj.filePaths, destDir, callingWinID);
   },
 
   removeModule() {
@@ -655,6 +685,103 @@ const Commands = {
     log.info(`Action not implemented: openBookmarksManager()`);
   },
 
+  async importBookmarks(
+    paths?: string[],
+    toFolder?: string | string[],
+    result?: NewModulesType
+  ): Promise<NewModulesType> {
+    const extensions = ['json', 'xsb', 'txt'];
+    let importFiles: string[] | undefined = paths;
+    let callingWin: BrowserWindow | undefined = getBrowserWindows({
+      type: 'xulsword',
+    })[0];
+    if (!paths) {
+      const obj = await dialog.showOpenDialog(callingWin, {
+        title: i18n.t('menu.addNewModule.label'),
+        filters: [
+          {
+            name: extensions.map((x) => x.toUpperCase()).join(', '),
+            extensions,
+          },
+        ],
+        properties: ['openFile', 'multiSelections'],
+      });
+      if (obj) importFiles = obj.filePaths;
+    }
+    const r = result || clone(C.NEWMODS);
+    if (importFiles && importFiles.length) {
+      const rootid = SPBM.manager.bookmarks.id;
+      let parentFolder: string[] = importFiles.map(() => rootid);
+      if (toFolder) {
+        if (typeof toFolder === 'string') {
+          parentFolder = importFiles.map(() => toFolder);
+        } else {
+          parentFolder = toFolder;
+        }
+      }
+      const bookmarks = clone(
+        Prefs.getComplexValue('manager.bookmarks', 'bookmarks')
+      ) as BookmarkFolderType;
+      importFiles?.forEach((path, i) => {
+        const folderID = parentFolder[i] || rootid;
+        const findFolder = findBookmarkFolder(bookmarks, folderID);
+        let folder = bookmarks;
+        if (findFolder && 'children' in findFolder) {
+          folder = findFolder as BookmarkFolderType;
+        }
+        const file = new LocalFile(path);
+        if (file.exists() && !file.isDirectory()) {
+          const content = file.readFile();
+          const fnlc = file.leafName.toLowerCase();
+          if (fnlc.endsWith('.json')) {
+            importBookmarkObject(JSON_parse(content), folder, r);
+          } else if (fnlc.endsWith('.txt') || fnlc.endsWith('.xsb')) {
+            importDeprecatedBookmarks(content, folder, r);
+          }
+        }
+      });
+      Prefs.setComplexValue('manager.bookmarks', bookmarks, 'bookmarks');
+    }
+    if (!result) Subscription.publish.modulesInstalled(r, callingWin.id);
+    callingWin = undefined;
+    return r;
+  },
+
+  async exportBookmarks(folderID?: string) {
+    let xswindow: BrowserWindow | null = getBrowserWindows({
+      type: 'xulsword',
+    })[0];
+    const extensions = ['json'];
+    const obj = await dialog.showSaveDialog(xswindow, {
+      title: i18n.t('to.label'),
+      defaultPath: fpath.join(Dirs.path.xsProgram, 'exported-bookmarks.json'),
+      filters: [
+        {
+          name: extensions.map((x) => x.toUpperCase()).join(', '),
+          extensions,
+        },
+      ],
+      properties: ['showOverwriteConfirmation', 'createDirectory'],
+    });
+    xswindow = null;
+    if (obj && !obj.canceled && obj.filePath) {
+      const bookmarks = Prefs.getComplexValue(
+        'manager.bookmarks',
+        'bookmarks'
+      ) as BookmarkFolderType;
+      const folder = folderID
+        ? findBookmarkFolder(bookmarks, folderID)
+        : bookmarks;
+      if (folder && 'children' in folder) {
+        const file = new LocalFile(obj.filePath);
+        if (file.exists()) file.remove();
+        if (!file.exists()) {
+          file.writeFile(JSON_stringify(folder));
+        }
+      }
+    }
+  },
+
   openNewDbItemDialog(userNote: boolean, textvk: TextVKType): void {
     log.info(
       `Action not implemented: openNewBookmarkDialog(${JSON_stringify(
@@ -724,18 +851,19 @@ const Commands = {
   ): typeof SP.xulsword {
     // To go to a verse system location without also changing xulsword's current
     // versekey module requires this location be converted into the current v11n.
-    const xulsword = Prefs.getComplexValue('xulsword') as typeof SP.xulsword;
+    const xulsword = clone(
+      Prefs.getComplexValue('xulsword')
+    ) as typeof SP.xulsword;
     const { location } = xulsword;
-    const newxulsword = clone(xulsword);
     const loc = verseKey(newlocation, location?.v11n || undefined);
     const sel = newselection
       ? verseKey(newselection, location?.v11n || undefined)
       : null;
-    newxulsword.location = loc.location();
-    newxulsword.selection = sel ? sel.location() : null;
-    newxulsword.scroll = newscroll || { verseAt: 'center' };
-    if (!deferAction) Prefs.mergeValue('xulsword', newxulsword);
-    return newxulsword;
+    xulsword.location = loc.location();
+    xulsword.selection = sel ? sel.location() : null;
+    xulsword.scroll = newscroll || { verseAt: 'center' };
+    if (!deferAction) Prefs.mergeValue('xulsword', xulsword);
+    return xulsword;
   },
 };
 

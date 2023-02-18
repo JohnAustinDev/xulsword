@@ -26,7 +26,14 @@ import type {
   AudioPath,
   OSISBookType,
   PrefValue,
+  BookmarkFolderType,
+  BookmarkType,
+  BookmarkItem,
+  LocationVKType,
+  LocationGBType,
+  NewModulesType,
 } from './type';
+import type i18next from 'i18next';
 import type { TreeNodeInfo } from '@blueprintjs/core';
 import type { SelectVKMType } from './renderer/libxul/vkselect';
 import type { SelectGBMType } from './renderer/libxul/genbookselect';
@@ -223,13 +230,19 @@ export function prefType(
 export function getStatePref<P extends PrefObject>(
   prefs: GType['Prefs'],
   id: string,
-  defaultPrefs: P
+  defaultPrefs: P,
+  store?: string
 ): P {
   const state = {} as P;
   Object.entries(defaultPrefs).forEach((entry) => {
     const [key, value] = entry;
     state[key as keyof P] = clone(
-      prefs.getPrefOrCreate(`${id}.${String(key)}`, prefType(value), value)
+      prefs.getPrefOrCreate(
+        `${id}.${String(key)}`,
+        prefType(value),
+        value,
+        store
+      )
     ) as any;
   });
   return state;
@@ -970,4 +983,14 @@ export function tableRowsToSelection(rows: number[]): RowSelection {
     selection.push({ rows: [s, e] });
   }
   return selection;
+}
+
+// Append entries of 'b' to 'a'. So 'a' is modified in place, while 'b'
+// is untouched.
+export function mergeNewModules(a: NewModulesType, b: NewModulesType) {
+  Object.entries(b).forEach((entry) => {
+    const [kx, v] = entry;
+    const k = kx as keyof typeof C.NEWMODS;
+    a[k].push(...(v as any[]));
+  });
 }

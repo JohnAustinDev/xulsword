@@ -9,6 +9,7 @@ import type {
   AtextPropsType,
   AudioPrefType,
   BookGroupType,
+  BookmarkFolderType,
   ConfigType,
   EnvironmentVars,
   FeatureType,
@@ -429,27 +430,6 @@ const C = {
   SYSTEMNEWLINE:
     platform === 'win32' ? '\r\n' : platform === 'darwin' ? '\r' : '\n',
 
-  BM: {
-    // used in imported/exported bookmarks.txt because < 3.6 could only read files with this newline.
-    FileReturn: '\r\n',
-    // bookmark and personal-note fields (do not change, or user exported data will become incompatible)
-    TYPE: 0,
-    NAME: 1,
-    NOTE: 2,
-    BOOK: 3,
-    CHAPTER: 4,
-    VERSE: 5,
-    LASTVERSE: 6,
-    MODULE: 7,
-    LOCATION: 8,
-    BMTEXT: 9,
-    ICON: 10,
-    CREATIONDATE: 11,
-    VISITEDDATE: 12,
-    NAMELOCALE: 13,
-    NOTELOCALE: 14,
-  },
-
   // Lists for each module type of LibSword features that should be always on.
   AlwaysOn: {
     'Biblical Texts': [],
@@ -767,3 +747,19 @@ export const SP = {
   const v = SP.xulsword[p][0];
   SP.xulsword[p] = SP.xulsword.panels.map(() => v as any);
 });
+
+export const SPBM = {
+  manager: {
+    bookmarks: {
+      type: 'folder',
+      id: 'bmroot',
+      label: 'bmroot',
+      labelLocale: 'en',
+      note: '',
+      noteLocale: 'en',
+      creationDate: new Date().valueOf(),
+      hasCaret: true,
+      children: [],
+    } as BookmarkFolderType,
+  },
+};

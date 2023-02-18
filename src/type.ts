@@ -4,6 +4,7 @@
 import type { clipboard, Shell } from 'electron';
 import type i18n from 'i18next';
 import type React from 'react';
+import type { TreeNodeInfo } from '@blueprintjs/core';
 import type C from './constant';
 import type {
   resetMain,
@@ -269,6 +270,14 @@ export type CipherKey = { conf: SwordConfType; cipherKey: string };
 export type LocationGBType = {
   module: string;
   key: string;
+  paragraph?: number;
+};
+
+export type LocationTypes = {
+  Texts: LocationVKType;
+  Comms: LocationVKType;
+  Genbks: LocationGBType;
+  Dicts: LocationGBType;
 };
 
 export type LocationVKType = {
@@ -644,6 +653,30 @@ export type GAddCaller<G extends { [k: string]: (...args: any[]) => any }> = {
   [K in keyof G]: GMethodAddCaller<G[K]>;
 };
 
+export type BookmarkItem = Pick<TreeNodeInfo, 'hasCaret' | 'isExpanded'> & {
+  id: string; // unique id of item
+  label: string; // default is auto-generated; editable
+  labelLocale: string; // locale of name
+  note: string; // default is empty; editable
+  noteLocale: string; // locale of note
+  creationDate: number; // ms epoch
+};
+
+export type BookmarkType = BookmarkItem & {
+  type: 'bookmark';
+  module: string; // it may or may not be installed.
+  tabType: TabTypes;
+  location: LocationVKType | LocationGBType;
+  sampleText: string;
+};
+
+export type BookmarkFolderType = BookmarkItem & {
+  type: 'folder';
+  children: (BookmarkType | BookmarkFolderType)[];
+};
+
+export type BookmarkTypes = ['folder', 'bookmark'];
+
 export type AddCaller = {
   [obj in typeof GBuilder['includeCallingWindow'][number]]: GAddCaller<
     GType[obj]
@@ -719,7 +752,16 @@ export const GBuilder: GType & {
 } = {
   asyncFuncs: [
     ['getSystemFonts', []],
-    ['Commands', ['installXulswordModules', 'exportAudio', 'importAudio']],
+    [
+      'Commands',
+      [
+        'installXulswordModules',
+        'exportAudio',
+        'importAudio',
+        'importBookmarks',
+        'exportBookmarks',
+      ],
+    ],
     [
       'Module',
       [
@@ -842,6 +884,8 @@ export const GBuilder: GType & {
     copyPassage: func as any,
     openFontsColors: func as any,
     openBookmarksManager: func as any,
+    importBookmarks: func as any,
+    exportBookmarks: func as any,
     openNewDbItemDialog: func as any,
     openDbItemPropertiesDialog: func as any,
     deleteDbItem: func as any,

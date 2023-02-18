@@ -1,3 +1,5 @@
+/* eslint-disable no-nested-ternary */
+/* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   app,
@@ -9,15 +11,14 @@ import {
 } from 'electron';
 import path from 'path';
 import { clone } from '../common';
-import C, { SP } from '../constant';
+import C, { SP, SPBM } from '../constant';
 import G from './mg';
-import Data from './components/data';
-import Prefs from './components/prefs';
+import { getBrowserWindows } from './components/window';
 import Commands, { newDbItemWithDefaults } from './components/commands';
 import { verseKey } from './minit';
 import setViewportTabs from './tabs';
 
-import type { SearchType, TabTypes } from '../type';
+import type { BookmarkFolderType, SearchType, TabTypes } from '../type';
 import type { PrefCallbackType } from './components/prefs';
 
 type Modifiers =
@@ -127,7 +128,7 @@ function buildModuleMenus(menu: Menu) {
 // This set of keys will be monitored such that when one of them is changed,
 // the menu will again be updated.
 function updateMenuFromPref(menux?: Menu | null) {
-  const panels = Prefs.getComplexValue(
+  const panels = G.Prefs.getComplexValue(
     'xulsword.panels'
   ) as typeof SP.xulsword['panels'];
   const menuPref: Set<string> = new Set();
@@ -142,7 +143,7 @@ function updateMenuFromPref(menux?: Menu | null) {
         if (type === 'showtab') {
           const panelIndex = Number(pi);
           add('xulsword.tabs');
-          const pval = Prefs.getComplexValue(
+          const pval = G.Prefs.getComplexValue(
             'xulsword.tabs'
           ) as typeof SP.xulsword['tabs'];
           if (panelIndex === -1) {
@@ -152,7 +153,7 @@ function updateMenuFromPref(menux?: Menu | null) {
           }
         } else {
           add(i.id);
-          i.checked = Prefs.getBoolPref(i.id);
+          i.checked = G.Prefs.getBoolPref(i.id);
         }
       } else if (i.id && i.type === 'radio') {
         const [pref, str] = i.id.split('_val_');
@@ -168,8 +169,8 @@ function updateMenuFromPref(menux?: Menu | null) {
           add(pref);
           const pval =
             typeof val === 'number'
-              ? Prefs.getIntPref(pref)
-              : Prefs.getCharPref(pref);
+              ? G.Prefs.getIntPref(pref)
+              : G.Prefs.getCharPref(pref);
           if (pval === val) i.checked = true;
         }
       }
@@ -179,44 +180,121 @@ function updateMenuFromPref(menux?: Menu | null) {
   const menu = menux || Menu.getApplicationMenu();
   if (menu) recurseMenu(menu);
   // To inject menuPref into pref callbacks.
-  Data.write(Array.from(menuPref), 'menuPref');
+  G.Data.write(Array.from(menuPref), 'menuPref');
 }
 
 // This callback updates the menu when applicable prefs change. If the
 // calling window is -1 (main process) the menu will NOT be updated
-// because it is assumed the menu initiated the change, and ignoring
+// because it will be assumed the menu initiated the change, and ignoring
 // it prevents cycling.
 export const pushPrefsToMenu: PrefCallbackType = (winid, key, val, store) => {
   let menuPref: string[] = [];
-  if (Data.has('menuPref')) {
-    menuPref = Data.read('menuPref') as string[];
+  if (G.Data.has('menuPref')) {
+    menuPref = G.Data.read('menuPref') as string[];
   }
-  if (winid !== -1 && store === 'prefs') {
-    const keys: string[] = [];
-    if (!key.includes('.') && typeof val === 'object') {
-      Object.keys(val as any).forEach((k) => keys.push(`${key}.${k}`));
-    } else keys.push(key);
-    if (keys.some((k) => menuPref.includes(k))) {
-      updateMenuFromPref();
+  if (winid !== -1) {
+    if (store === 'prefs') {
+      const keys: string[] = [];
+      if (!key.includes('.') && typeof val === 'object') {
+        Object.keys(val as any).forEach((k) => keys.push(`${key}.${k}`));
+      } else keys.push(key);
+      if (keys.some((k) => menuPref.includes(k))) {
+        updateMenuFromPref();
+      }
+    } else if (store === 'bookmarks') {
+      let xs: BrowserWindow | undefined = getBrowserWindows({
+        type: 'xulsword',
+      })[0];
+      if (xs) {
+        const menuBuilder = new MenuBuilder(xs);
+        menuBuilder.buildMenu();
+        xs = undefined;
+      }
     }
   }
 };
 
+function bookmarkProgramMenu(
+  bookmarks: BookmarkFolderType
+): MenuItemConstructorOptions[] {
+  return bookmarks.children.map((bm) => ({
+    label: bm.label,
+    type: bm.type === 'folder' ? 'submenu' : 'normal',
+    submenu: bm.type === 'folder' ? bookmarkProgramMenu(bm) : undefined,
+    icon: path.join(
+      G.Dirs.path.xsAsset,
+      'icons',
+      '16x16',
+      bm.type === 'folder'
+        ? 'folder.png'
+        : bm.note
+        ? `${bm.tabType}_note.png`
+        : `${bm.tabType}.png`
+    ),
+    id: bm.id,
+    click: d(() => {
+      if ('location' in bm) {
+        if ('v11n' in bm.location)
+          Commands.goToLocationVK(bm.location, bm.location);
+        else Commands.goToLocationGB(bm.location);
+      }
+    }),
+  }));
+}
+
+// Read locale key, appending & before shortcut key and escaping other &s.
+function ts(key: string, sckey?: string): string {
+  // CLUDGE:
+  let fix;
+  [/(?<=menu\.windows\.)(\d)(?=win)/, /(?<=menu\.view\.window)(\d)/].forEach(
+    (re) => {
+      if (re.test(key)) {
+        const m = key.match(re);
+        if (m && m[1] && Number(m[1]) > 3) {
+          fix = G.i18n.t(key.replace(m[1], '3'));
+          fix = fix.replace('3', m[1]);
+        }
+      }
+    }
+  );
+  if (fix) return fix;
+
+  let text = G.i18n.t(key);
+  const sckey2 = sckey || `${key}.sc`;
+  if (text) {
+    text = text.replace(/(?!<&)&(?!=&)/g, '&&');
+    const l = G.i18n.t(sckey2);
+    if (l) {
+      const re = new RegExp(`(${l})`, 'i');
+      text = text.replace(re, '&$1');
+    }
+  }
+  return text;
+}
+
+// Read locale key returning undefined if it doesn't exist.
+// Also prepend with key modifiers if needed.
+function tx(key: string, modifiers?: Modifiers[]): string | undefined {
+  const text = G.i18n.t(key);
+  if (!text) return undefined;
+  if (modifiers && modifiers.length) {
+    return `${modifiers.join('+')}+${text}`;
+  }
+  return text;
+}
+
 export default class MenuBuilder {
   mainWindow: BrowserWindow;
 
-  i18n: any;
-
   menuPref: string[];
 
-  constructor(mainWindow: BrowserWindow, i18n: any) {
+  constructor(mainWindow: BrowserWindow) {
     this.mainWindow = mainWindow;
-    this.i18n = i18n;
     this.menuPref = [];
   }
 
   buildMenu(): Menu {
-    const template: any =
+    const template: MenuItemConstructorOptions[] =
       process.platform === 'darwin'
         ? this.buildDarwinTemplate()
         : this.buildDefaultTemplate();
@@ -227,67 +305,23 @@ export default class MenuBuilder {
     return menu;
   }
 
-  // Read locale key, appending & before shortcut key and escaping other &s.
-  ts(key: string, sckey?: string): string {
-    // CLUDGE:
-    let fix;
-    [/(?<=menu\.windows\.)(\d)(?=win)/, /(?<=menu\.view\.window)(\d)/].forEach(
-      (re) => {
-        if (re.test(key)) {
-          const m = key.match(re);
-          if (m && m[1] && Number(m[1]) > 3) {
-            fix = this.i18n.t(key.replace(m[1], '3'));
-            fix = fix.replace('3', m[1]);
-          }
-        }
-      }
-    );
-    if (fix) return fix;
-
-    let text = this.i18n.t(key);
-    const sckey2 = sckey || `${key}.sc`;
-    if (text) {
-      text = text.replace(/(?!<&)&(?!=&)/g, '&&');
-      const l = this.i18n.t(sckey2);
-      if (l) {
-        const re = new RegExp(`(${l})`, 'i');
-        text = text.replace(re, '&$1');
-      }
-    }
-    return text;
-  }
-
-  // Read locale key returning undefined if it doesn't exist.
-  // Also prepend with key modifiers if needed.
-  tx(key: string, modifiers?: Modifiers[]): string | undefined {
-    const text = this.i18n.t(key);
-    if (!text) return undefined;
-    if (modifiers && modifiers.length) {
-      return `${modifiers.join('+')}+${text}`;
-    }
-    return text;
-  }
-
   buildDefaultTemplate() {
-    const subMenuFile = {
+    const subMenuFile: MenuItemConstructorOptions = {
       role: 'fileMenu',
-      label: this.ts('fileMenu.label', 'fileMenu.accesskey'),
+      label: ts('fileMenu.label', 'fileMenu.accesskey'),
       submenu: [
         {
-          label: this.ts('menu.addNewModule.label'),
+          label: ts('menu.addNewModule.label'),
           submenu: [
             {
-              label: this.ts(
-                'newmodule.fromInternet',
-                'newmodule.fromInternet.ak'
-              ),
+              label: ts('newmodule.fromInternet', 'newmodule.fromInternet.ak'),
               accelerator: 'F2',
               click: d(() => {
                 Commands.openModuleManager();
               }),
             },
             {
-              label: this.ts('newmodule.fromFile', 'newmodule.fromFile.ak'),
+              label: ts('newmodule.fromFile', 'newmodule.fromFile.ak'),
               click: d(() => {
                 Commands.installXulswordModules();
               }),
@@ -295,41 +329,55 @@ export default class MenuBuilder {
           ],
         },
         {
-          label: this.ts('menu.removeModule.label', 'menu.removeModule.sc'),
+          label: ts('menu.removeModule.label', 'menu.removeModule.sc'),
           click: d(() => {
             Commands.removeModule();
           }),
         },
         { type: 'separator' },
         {
-          label: this.ts('menu.exportAudio.label', 'menu.exportAudio.sc'),
+          label: ts('menu.importAudio.label', 'menu.importAudio.sc'),
+          click: d(() => {
+            Commands.importAudio();
+          }),
+        },
+        {
+          label: ts('menu.exportAudio.label', 'menu.exportAudio.sc'),
           enabled: !!G.Dirs.xsAudio.append('modules').directoryEntries.length,
           click: d(() => {
             Commands.exportAudio();
           }),
         },
+        { type: 'separator' },
         {
-          label: this.ts('menu.importAudio.label', 'menu.importAudio.sc'),
+          label: `${ts('import.label', 'import.sc').replace(
+            /\W+$/,
+            ''
+          )} ${G.i18n.t('bookmarksMenu.label')}`,
           click: d(() => {
-            Commands.importAudio();
+            Commands.importBookmarks();
+          }),
+        },
+        {
+          label: `${ts('export.label', 'export.sc').replace(
+            /\W+$/,
+            ''
+          )} ${G.i18n.t('bookmarksMenu.label')}`,
+          click: d(() => {
+            Commands.exportBookmarks();
           }),
         },
         { type: 'separator' },
         {
-          label: this.ts('print.printpassage'),
-          accelerator: this.tx('printPassageCmd.commandkey', [
-            'CommandOrControl',
-          ]),
+          label: ts('print.printpassage'),
+          accelerator: tx('printPassageCmd.commandkey', ['CommandOrControl']),
           click: d(() => {
             Commands.printPassage();
           }),
         },
         {
-          label: this.ts('printCmd.label', 'printCmd.accesskey'),
-          accelerator: this.tx('printCmd.commandkey', [
-            'CommandOrControl',
-            'Shift',
-          ]),
+          label: ts('printCmd.label', 'printCmd.accesskey'),
+          accelerator: tx('printCmd.commandkey', ['CommandOrControl', 'Shift']),
           click: d(() => {
             Commands.print();
           }),
@@ -337,7 +385,7 @@ export default class MenuBuilder {
         { type: 'separator' },
         {
           role: 'quit',
-          label: this.ts(
+          label: ts(
             'quitApplicationCmdWin.label',
             'quitApplicationCmdWin.accesskey'
           ),
@@ -349,15 +397,15 @@ export default class MenuBuilder {
     };
 
     const edits = ['undo', 'redo', 'cut', 'copy', 'paste'];
-    const subMenuEdit = {
+    const subMenuEdit: MenuItemConstructorOptions = {
       role: 'editMenu',
-      label: this.ts('editMenu.label', 'editMenu.accesskey'),
+      label: ts('editMenu.label', 'editMenu.accesskey'),
       submenu: edits
         .map((edx) => {
           const ed = edx as 'undo' | 'redo' | 'cut' | 'copy' | 'paste';
           return {
-            label: this.ts(`menu.edit.${ed}`),
-            accelerator: this.tx(`menu.edit.${ed}.ac`, ['CommandOrControl']),
+            label: ts(`menu.edit.${ed}`),
+            accelerator: tx(`menu.edit.${ed}.ac`, ['CommandOrControl']),
             click: d(() => {
               if (!Commands.edit(ed)) this.mainWindow.webContents[ed]();
             }),
@@ -366,8 +414,8 @@ export default class MenuBuilder {
         .concat([
           { type: 'separator' } as any,
           {
-            label: this.ts('searchBut.label', 'SearchAccKey'),
-            accelerator: this.tx('SearchCommandKey', ['CommandOrControl']),
+            label: ts('searchBut.label', 'SearchAccKey'),
+            accelerator: tx('SearchCommandKey', ['CommandOrControl']),
             click: d(() => {
               const search: SearchType = {
                 module: (G.Tabs.length && G.Tabs[0].module) || '',
@@ -378,8 +426,8 @@ export default class MenuBuilder {
             }),
           },
           {
-            label: this.ts('menu.copypassage', 'menu.copypassage.ak'),
-            accelerator: this.tx('menu.copypassage.sc', ['CommandOrControl']),
+            label: ts('menu.copypassage', 'menu.copypassage.ak'),
+            accelerator: tx('menu.copypassage.sc', ['CommandOrControl']),
             click: d(() => {
               Commands.copyPassage();
             }),
@@ -403,13 +451,13 @@ export default class MenuBuilder {
       return `xulsword.show.${x}`;
     });
 
-    const textSwitches = switches
+    const textSwitches: MenuItemConstructorOptions[] = switches
       .filter((s) => {
         return s !== 'morph'; // this options does not have a menu item
       })
       .map((key) => {
         return {
-          label: this.ts(`menu.view.${key}`),
+          label: ts(`menu.view.${key}`),
           id: `xulsword.show.${key}`,
           type: 'checkbox',
           icon: path.join(G.Dirs.path.xsAsset, 'icons', '16x16', `${key}.png`),
@@ -425,12 +473,12 @@ export default class MenuBuilder {
 
     const radios = ['footnotes', 'crossrefs', 'usernotes'];
 
-    const displayLocation = radios.map((name) => {
+    const displayLocation: MenuItemConstructorOptions[] = radios.map((name) => {
       return {
-        label: this.ts(`menu.view.place.${name}`),
+        label: ts(`menu.view.place.${name}`),
         submenu: [
           {
-            label: this.ts('menu.view.popups'),
+            label: ts('menu.view.popups'),
             id: `xulsword.place.${name}_val_popup`,
             type: 'radio',
             click: d(() => {
@@ -438,7 +486,7 @@ export default class MenuBuilder {
             }),
           },
           {
-            label: this.ts('menu.view.notebox'),
+            label: ts('menu.view.notebox'),
             id: `xulsword.place.${name}_val_notebox`,
             type: 'radio',
             click: d(() => {
@@ -449,17 +497,12 @@ export default class MenuBuilder {
       };
     });
 
-    const textTabs = showtabs.map((t) => {
+    const textTabs: MenuItemConstructorOptions[] = showtabs.map((t) => {
       const [typekey, type] = t;
       return {
         id: `parent_${typekey}`,
-        label: this.ts(`menu.view.${typekey}`),
-        icon: path.join(
-          G.Dirs.path.xsAsset,
-          'icons',
-          '16x16',
-          `${typekey}.png`
-        ),
+        label: ts(`menu.view.${typekey}`),
+        icon: path.join(G.Dirs.path.xsAsset, 'icons', '16x16', `${type}.png`),
         submenu: [
           ...panelLabels().map((pl: any) => {
             const panelIndex =
@@ -467,19 +510,19 @@ export default class MenuBuilder {
                 ? -1
                 : Number(pl.substring(pl.length - 1)) - 1;
             return {
-              label: this.ts(pl),
+              label: ts(pl),
               id: `menu_${typekey}_${pl}`,
               submenu: [
                 {
                   id: `showAll_${typekey}_${pl}`,
-                  label: this.ts('menu.view.showAll'),
+                  label: ts('menu.view.showAll'),
                   click: d(() => {
                     setViewportTabs(panelIndex, type, 'show');
                   }),
                 },
                 {
                   id: `hideAll_${typekey}_${pl}`,
-                  label: this.ts('menu.view.hideAll'),
+                  label: ts('menu.view.hideAll'),
                   click: d(() => {
                     setViewportTabs(panelIndex, type, 'hide');
                   }),
@@ -491,9 +534,9 @@ export default class MenuBuilder {
       };
     });
 
-    const subMenuView = {
+    const subMenuView: MenuItemConstructorOptions = {
       role: 'viewMenu',
-      label: this.ts('viewMenu.label', 'viewMenu.accesskey'),
+      label: ts('viewMenu.label', 'viewMenu.accesskey'),
       submenu: [
         /*
         {
@@ -505,13 +548,13 @@ export default class MenuBuilder {
         }, */
         ...textSwitches,
         {
-          label: this.ts('menu.view.showAll'),
+          label: ts('menu.view.showAll'),
           click: d(() => {
             toggleSwitch(allswitches, true);
           }),
         },
         {
-          label: this.ts('menu.view.hideAll'),
+          label: ts('menu.view.hideAll'),
           click: d(() => {
             toggleSwitch(allswitches, false);
           }),
@@ -521,14 +564,14 @@ export default class MenuBuilder {
         { type: 'separator' },
         ...textTabs,
         {
-          label: this.ts('menu.view.showAll'),
+          label: ts('menu.view.showAll'),
           submenu: panelLabels().map((pl: any) => {
             const panelIndex =
               pl === 'menu.view.allwindows'
                 ? -1
                 : Number(pl.substring(pl.length - 1)) - 1;
             return {
-              label: this.ts(pl),
+              label: ts(pl),
               click: d(() => {
                 setViewportTabs(panelIndex, 'all', 'show');
               }),
@@ -536,14 +579,14 @@ export default class MenuBuilder {
           }),
         },
         {
-          label: this.ts('menu.view.hideAll'),
+          label: ts('menu.view.hideAll'),
           submenu: panelLabels().map((pl: any) => {
             const panelIndex =
               pl === 'menu.view.allwindows'
                 ? -1
                 : Number(pl.substring(pl.length - 1)) - 1;
             return {
-              label: this.ts(pl),
+              label: ts(pl),
               click: d(() => {
                 setViewportTabs(panelIndex, 'all', 'hide');
               }),
@@ -553,14 +596,14 @@ export default class MenuBuilder {
       ],
     };
 
-    const subMenuOptions = {
-      label: this.ts('menu.options'),
+    const subMenuOptions: MenuItemConstructorOptions = {
+      label: ts('menu.options'),
       submenu: [
         {
-          label: this.ts('menu.options.font'),
+          label: ts('menu.options.font'),
           submenu: [
             {
-              label: this.ts('menu.options.font1'),
+              label: ts('menu.options.font1'),
               id: `global.fontSize_val_0`,
               type: 'radio',
               click: d(() => {
@@ -568,7 +611,7 @@ export default class MenuBuilder {
               }),
             },
             {
-              label: this.ts('menu.options.font2'),
+              label: ts('menu.options.font2'),
               id: `global.fontSize_val_1`,
               type: 'radio',
               click: d(() => {
@@ -576,7 +619,7 @@ export default class MenuBuilder {
               }),
             },
             {
-              label: this.ts('menu.options.font3'),
+              label: ts('menu.options.font3'),
               id: `global.fontSize_val_2`,
               type: 'radio',
               click: d(() => {
@@ -584,7 +627,7 @@ export default class MenuBuilder {
               }),
             },
             {
-              label: this.ts('menu.options.font4'),
+              label: ts('menu.options.font4'),
               id: `global.fontSize_val_3`,
               type: 'radio',
               click: d(() => {
@@ -592,7 +635,7 @@ export default class MenuBuilder {
               }),
             },
             {
-              label: this.ts('menu.options.font5'),
+              label: ts('menu.options.font5'),
               id: `global.fontSize_val_4`,
               type: 'radio',
               click: d(() => {
@@ -601,7 +644,7 @@ export default class MenuBuilder {
             },
             { type: 'separator' },
             {
-              label: this.ts('fontsAndColors.label'),
+              label: ts('fontsAndColors.label'),
               click: d(() => {
                 const panels = G.Prefs.getComplexValue(
                   'xulsword.panels'
@@ -616,10 +659,10 @@ export default class MenuBuilder {
           ],
         },
         {
-          label: this.ts('menu.options.hebrew'),
+          label: ts('menu.options.hebrew'),
           submenu: [
             {
-              label: this.ts('menu.options.hebVowel'),
+              label: ts('menu.options.hebVowel'),
               id: 'xulsword.show.hebvowelpoints',
               type: 'checkbox',
               click: d(() => {
@@ -627,7 +670,7 @@ export default class MenuBuilder {
               }),
             },
             {
-              label: this.ts('menu.options.hebCant'),
+              label: ts('menu.options.hebCant'),
               id: 'xulsword.show.hebcantillation',
               type: 'checkbox',
               click: d(() => {
@@ -637,7 +680,7 @@ export default class MenuBuilder {
           ],
         },
         {
-          label: this.ts('menu.options.language'),
+          label: ts('menu.options.language'),
           // accelerator: 'F1', cannot open main menu item
           submenu: C.Locales.map((l: any) => {
             const [lng, name] = l;
@@ -661,28 +704,25 @@ export default class MenuBuilder {
       text: '',
     };
 
-    const subMenuBookmarks = {
-      label: this.ts('bookmarksMenu.label', 'bookmarksMenu.accesskey'),
+    const subMenuBookmarks: MenuItemConstructorOptions = {
+      label: ts('bookmarksMenu.label', 'bookmarksMenu.accesskey'),
       submenu: [
         {
-          label: this.ts('manBookmarksCmd.label'),
-          accelerator: this.tx('manBookmarksCmd.commandkey', [
-            'CommandOrControl',
-          ]),
+          label: ts('manBookmarksCmd.label'),
+          accelerator: tx('manBookmarksCmd.commandkey', ['CommandOrControl']),
           click: d(() => {
             Commands.openBookmarksManager();
           }),
         },
         {
-          label: this.ts('menu.bookmark.add'),
-          accelerator: this.tx('addCurPageAsCmd.commandkey', [
-            'CommandOrControl',
-          ]),
+          label: ts('menu.bookmark.add'),
+          accelerator: tx('addCurPageAsCmd.commandkey', ['CommandOrControl']),
           click: d(() => newDbItemWithDefaults(false, dummy)),
         },
         {
-          label: this.ts('menu.usernote.add'),
-          accelerator: this.tx('addCurPageAsCmd.commandkey', [
+          id: 'addUserNote',
+          label: ts('menu.usernote.add'),
+          accelerator: tx('addCurPageAsCmd.commandkey', [
             'CommandOrControl',
             'Shift',
           ]),
@@ -691,16 +731,27 @@ export default class MenuBuilder {
       ],
     };
 
+    const bookmarks = G.Prefs.getComplexValue(
+      'manager.bookmarks',
+      'bookmarks'
+    ) as typeof SPBM.manager['bookmarks'];
+
+    if (bookmarks && bookmarks.children.length) {
+      const submenu = subMenuBookmarks.submenu as MenuItemConstructorOptions[];
+      submenu.push({ type: 'separator' });
+      submenu.push(...bookmarkProgramMenu(bookmarks));
+    }
+
     const initialPanels = G.Prefs.getComplexValue(
       'xulsword.panels'
     ) as typeof SP.xulsword['panels'];
-    const subMenuWindows = {
+    const subMenuWindows: MenuItemConstructorOptions = {
       role: 'windowMenu',
-      label: this.ts('menu.windows'),
+      label: ts('menu.windows'),
       submenu: initialPanels.map((_p: string | null, i: number) => {
         const n = i + 1;
         return {
-          label: this.ts(`menu.windows.${n}win`),
+          label: ts(`menu.windows.${n}win`),
           id: `xulsword.panels_val_${n}`,
           type: 'radio',
           click: d(() => {
@@ -716,12 +767,12 @@ export default class MenuBuilder {
       }),
     };
 
-    const subMenuHelp = {
+    const subMenuHelp: MenuItemConstructorOptions = {
       role: 'about',
-      label: this.ts('menu.help'),
+      label: ts('menu.help'),
       submenu: [
         {
-          label: this.ts('menu.help.about'),
+          label: ts('menu.help.about'),
           click: d(() => {
             Commands.openAbout();
           }),
@@ -729,7 +780,7 @@ export default class MenuBuilder {
       ],
     };
 
-    const subMenuDev = {
+    const subMenuDev: MenuItemConstructorOptions = {
       role: 'help',
       label: 'Devel',
       submenu: [
@@ -744,7 +795,7 @@ export default class MenuBuilder {
           }),
         },
         {
-          role: 'toggelDevTools',
+          role: 'toggleDevTools',
           label: 'Toggle &Developer Tools',
           accelerator: 'Alt+Ctrl+I',
           click: d(() => {
@@ -774,7 +825,7 @@ export default class MenuBuilder {
     return applicationMenuTemplate;
   }
 
-  buildDarwinTemplate(): MenuItemConstructorOptions[] {
+  buildDarwinTemplate(): DarwinMenuItemConstructorOptions[] {
     const subMenuAbout: DarwinMenuItemConstructorOptions = {
       label: 'Electron',
       submenu: [
@@ -848,7 +899,7 @@ export default class MenuBuilder {
         },
       ],
     };
-    const subMenuViewProd: MenuItemConstructorOptions = {
+    const subMenuViewProd: DarwinMenuItemConstructorOptions = {
       label: 'View',
       submenu: [
         {
@@ -873,7 +924,7 @@ export default class MenuBuilder {
         { label: 'Bring All to Front', selector: 'arrangeInFront:' },
       ],
     };
-    const subMenuHelp: MenuItemConstructorOptions = {
+    const subMenuHelp: DarwinMenuItemConstructorOptions = {
       label: 'Help',
       submenu: [
         {

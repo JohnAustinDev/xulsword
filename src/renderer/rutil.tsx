@@ -612,12 +612,13 @@ export function getCompanionModules(mod: string) {
 
 // Return and persist the key/value pairs of component state Prefs. Component
 // state Prefs are permanently persisted component state values recorded in
-// prefs.json whose key begins with the component id.
+// a prefs json file whose key begins with the component id.
 export function getStatePref<P extends PrefObject>(
   id: string,
-  defaultPrefs: P
+  defaultPrefs: P,
+  store?: string
 ): P {
-  return getStatePref2(G.Prefs, id, defaultPrefs);
+  return getStatePref2(G.Prefs, id, defaultPrefs, store);
 }
 
 // Push state changes of statePrefKeys value to Prefs. The state Pref key
@@ -627,19 +628,20 @@ export function setStatePref(
   id: string,
   prevState: { [key: string]: any } | null,
   state: { [key: string]: any },
-  statePrefKeys: string[]
+  statePrefKeys: string[],
+  store?: string
 ) {
   const keys = statePrefKeys.slice();
-  if (id in C.SyncPrefs) {
+  if (!store && id in C.SyncPrefs) {
     const idx = id as keyof typeof C.SyncPrefs;
     keys.push(...Object.keys(C.SyncPrefs[idx]));
   }
   const newStatePref = keep(state, keys);
-  if (prevState === null) G.Prefs.mergeValue(id, newStatePref);
+  if (prevState === null) G.Prefs.mergeValue(id, newStatePref, store);
   else {
     const prvStatePref = keep(prevState, keys);
     const d = diff(prvStatePref, newStatePref);
-    if (d) G.Prefs.mergeValue(id, d);
+    if (d) G.Prefs.mergeValue(id, d, store);
   }
 }
 
@@ -649,21 +651,25 @@ export function setStatePref(
 export function registerUpdateStateFromPref(
   id: string,
   c: React.Component,
-  defaultPrefs: { [prefkey: string]: PrefValue }
+  defaultPrefs: { [prefkey: string]: PrefValue },
+  store?: string
 ) {
-  const updateStateFromPref = (prefs: string | string[]) => {
-    log.debug(`Updating state from prefs:`, prefs);
-    const different = diff(c.state, getStatePref(id, defaultPrefs));
-    if (different && Object.keys(different).length) {
-      if (
-        different.global &&
-        typeof different.global === 'object' &&
-        'locale' in different.global &&
-        different.global.locale !== G.i18n.language
-      ) {
-        Cache.clear();
+  const updateStateFromPref = (prefs: string | string[], aStore?: string) => {
+    log.debug(`Updating state from prefs:`, prefs, aStore);
+    if (aStore === store) {
+      const different = diff(c.state, getStatePref(id, defaultPrefs, store));
+      if (different && Object.keys(different).length) {
+        if (
+          !aStore &&
+          different.global &&
+          typeof different.global === 'object' &&
+          'locale' in different.global &&
+          different.global.locale !== G.i18n.language
+        ) {
+          Cache.clear();
+        }
+        c.setState(different);
       }
-      c.setState(different);
     }
   };
   return window.ipc.on('update-state-from-pref', updateStateFromPref);

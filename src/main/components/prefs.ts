@@ -351,7 +351,7 @@ const Prefs = {
         callingWinID,
         key,
         value,
-        aStore,
+        aStore === 'prefs' ? undefined : aStore,
       ];
       Subscription.publish.setPref(...args);
     }

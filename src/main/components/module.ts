@@ -5,7 +5,6 @@ import fpath from 'path';
 import { BrowserWindow } from 'electron';
 import ZIP from 'adm-zip';
 import log from 'electron-log';
-import i18n from 'i18next';
 import {
   clone,
   downloadKey,
@@ -15,6 +14,7 @@ import {
   randomID,
   versionCompare,
   pad,
+  mergeNewModules,
 } from '../../common';
 import Subscription from '../../subscription';
 import C from '../../constant';
@@ -719,9 +719,10 @@ export async function installZIPs(
 export async function modalInstall(
   zipmods: (ZIP | string)[],
   destdir?: string | string[],
-  callingWinID?: number
-) {
-  let newmods: NewModulesType;
+  callingWinID?: number,
+  result?: NewModulesType
+): Promise<NewModulesType> {
+  const r: NewModulesType = result || clone(C.NEWMODS);
   if (zipmods.length) {
     const zips: (ZIP | null)[] = [];
     zipmods.forEach((zipmod) => {
@@ -741,12 +742,10 @@ export async function modalInstall(
     const d = Array.isArray(destdir)
       ? destdir.filter((_d, i) => zips[i])
       : destdir;
-    newmods = await installZIPs(z, d, callingWinID);
-  } else {
-    newmods = clone(C.NEWMODS);
+    mergeNewModules(r, await installZIPs(z, d, callingWinID));
   }
-  Subscription.publish.modulesInstalled(newmods, callingWinID);
-  return newmods;
+  if (!result) Subscription.publish.modulesInstalled(r, callingWinID);
+  return r;
 }
 
 type DownloadRepoConfsType = {

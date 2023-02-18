@@ -17,7 +17,7 @@ import path from 'path';
 import Subscription from '../subscription';
 import Cache from '../cache';
 import { clone, getStatePref, JSON_parse } from '../common';
-import C, { SP } from '../constant';
+import C, { SP, SPBM } from '../constant';
 import G from './mg';
 import { getCipherFailConfs, getTabs, updateGlobalModulePrefs } from './minit';
 import MenuBuilder, { pushPrefsToMenu } from './menu';
@@ -32,7 +32,12 @@ import {
   publishSubscription,
 } from './components/window';
 
-import type { BookType, NewModulesType, WindowRegistryType } from '../type';
+import type {
+  BookType,
+  NewModulesType,
+  PrefObject,
+  WindowRegistryType,
+} from '../type';
 import type { ManagerStatePref } from '../renderer/moduleManager/manager';
 
 const i18nBackendMain = require('i18next-fs-backend');
@@ -44,6 +49,7 @@ Object.entries(SP).forEach((entry) => {
   const [key, val] = entry;
   getStatePref(G.Prefs, key, val);
 });
+getStatePref(G.Prefs, 'manager', SPBM.manager as PrefObject, 'bookmarks');
 
 if (G.Prefs.getBoolPref('global.InternetPermission')) {
   const url = G.Prefs.getCharPref('global.crashReporterURL');
@@ -178,7 +184,7 @@ const openMainWindow = () => {
     return null;
   }
 
-  const menuBuilder = new MenuBuilder(mainWin, G.i18n);
+  const menuBuilder = new MenuBuilder(mainWin);
   menuBuilder.buildMenu();
 
   updateGlobalModulePrefs();
@@ -223,7 +229,9 @@ const openMainWindow = () => {
           );
         } else {
           log.info(
-            `${newmods.modules.length} MODULE(S) SUCCESSFULLY INSTALLED!`
+            `${
+              newmods.modules.length + newmods.bookmarks.length
+            } MODULE(S) SUCCESSFULLY INSTALLED!`
           );
         }
         Subscription.publish.resetMain();
