@@ -464,7 +464,10 @@ const init = async () => {
       return ab.index < bb.index ? -1 : ab.index > bb.index ? 1 : 0;
     });
     const { location } = xulsword;
-    if (books.length && (location === null || !books.includes(location.book))) {
+    if (
+      books.length &&
+      (location === null || !books.includes(location.book as any))
+    ) {
       xulsword.location = {
         book: books[0],
         chapter: 1,

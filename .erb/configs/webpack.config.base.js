@@ -19,7 +19,8 @@ export const xulswordWindows = [
   'searchHelp',
   'about',
   'printPassage',
-  'copyPassage'
+  'copyPassage',
+  'bmProperties'
 ];
 
 export default {

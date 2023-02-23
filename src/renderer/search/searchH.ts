@@ -159,7 +159,7 @@ export async function search(sthis: SearchWin) {
     displayBible,
   };
 
-  G.Window.setTitle(`${G.i18n.t('search.label')} "${searchtext}"`);
+  G.Window.setTitle(`${G.i18n.t('menu.search')} "${searchtext}"`);
 
   // Replace UI search symbols with Clucene recognized search symbols,
   // and prepare the query string according to search type.

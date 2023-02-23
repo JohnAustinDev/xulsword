@@ -477,7 +477,7 @@ export default class Xulsword extends React.Component {
                   disabled={searchDisabled}
                   onClick={handler}
                 >
-                  {G.i18n.t('searchBut.label')}
+                  {G.i18n.t('menu.search')}
                 </Button>
               </Box>
             </Vbox>

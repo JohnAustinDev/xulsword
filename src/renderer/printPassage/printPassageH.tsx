@@ -4,16 +4,17 @@
 import { clone, dString, getLocalizedChapterTerm } from '../../common';
 import C from '../../constant';
 import G from '../rg';
+import addBookmarks from '../bookmarks';
 import { getValidVK, isValidVKM } from '../rutil';
 import { getNoteHTML, getIntroductions } from '../viewport/zversekey';
-import { addUserNotes } from '../viewport/ztext';
-import { SelectVKMType } from '../libxul/vkselect';
 
 import type {
   AtextPropsType,
   SwordFilterType,
   SwordFilterValueType,
 } from '../../type';
+import type { LibSwordResponse } from '../viewport/ztext';
+import type { SelectVKMType } from '../libxul/vkselect';
 import type PrintPassageWin from './printPassage';
 import type { PrintPassageState } from './printPassage';
 
@@ -129,19 +130,24 @@ export function bibleChapterText(
 
     let introHTML = '';
     let headHTML = '';
-    let textHTML = '';
-    let noteHTML = '';
+    const response: LibSwordResponse = {
+      textHTML: '',
+      noteHTML: '',
+      notes: '',
+      intronotes: '',
+    };
     if (G.getBooksInModule(module).includes(location.book)) {
-      textHTML = G.LibSword.getChapterText(
+      response.textHTML = G.LibSword.getChapterText(
         module,
         `${book}.${chapter}`,
         options
       );
-      noteHTML = getNoteHTML(G.LibSword.getNotes(), show, 0, crossrefsText);
+      response.notes = G.LibSword.getNotes();
+      if (show.usernotes) addBookmarks(response, { ...props, modkey: '' });
+      response.noteHTML = getNoteHTML(response.notes, show, 0, crossrefsText);
     }
-
-    // Add usernotes to text
-    if (show.usernotes) addUserNotes({}, {});
+    const { noteHTML } = response;
+    let { textHTML, intronotes } = response;
 
     let moduleLocale = G.Config[module].AssociatedLocale;
     if (!moduleLocale) moduleLocale = G.i18n.language; // otherwise use current program locale
@@ -162,7 +168,8 @@ export function bibleChapterText(
     if (introduction) {
       const heading = G.i18n.t('IntroLink', toptions);
       const intro = getIntroductions(module, `${book} ${chapter}`);
-      const introNotesHTML = getNoteHTML(intro.intronotes, show, 0, true);
+      intronotes = intro.intronotes;
+      const introNotesHTML = getNoteHTML(intronotes, show, 0, true);
       if (intro.textHTML)
         introHTML = `<div class="head1">${heading}</div>${intro.textHTML}${introNotesHTML}`;
     }

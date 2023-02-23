@@ -1,0 +1,8 @@
+.bmProperties .textbox {
+  min-width: 200px;
+}
+
+.bmProperties .treeview-container {
+  max-height: 200px;
+  overflow: auto;
+}

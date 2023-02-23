@@ -603,10 +603,10 @@ export function findParentOfBookmark(
   recurse = true
 ): BookmarkFolderType | null {
   if (toSearch.id === id) return null;
-  for (let x = 0; x < toSearch.children.length; x += 1) {
-    const child = toSearch.children[x];
+  for (let x = 0; x < toSearch.childNodes.length; x += 1) {
+    const child = toSearch.childNodes[x];
     if (child.id === id) return toSearch;
-    if (recurse && 'children' in child) {
+    if (recurse && 'childNodes' in child) {
       const descendant = findParentOfBookmark(child, id, true);
       if (descendant) return descendant;
     }
@@ -614,31 +614,33 @@ export function findParentOfBookmark(
   return null;
 }
 
-export function findBookmark(
+export function findBookmarkItem(
   toSearch: BookmarkFolderType,
   id: string,
   recurse = true
 ): BookmarkFolderType | BookmarkType | null {
   if (toSearch.id === id) return toSearch;
-  for (let x = 0; x < toSearch.children.length; x += 1) {
-    const child = toSearch.children[x];
+  for (let x = 0; x < toSearch.childNodes.length; x += 1) {
+    const child = toSearch.childNodes[x];
     if (child.id === id) return child;
-    if (recurse && 'children' in child) {
-      const descendant = findBookmark(child, id, true);
+    if (recurse && 'childNodes' in child) {
+      const descendant = findBookmarkItem(child, id, true);
       if (descendant) return descendant;
     }
   }
   return null;
 }
 
-// Convert bookmark children of a folder into tree nodes.
+// Convert bookmark childNodes of a folder into tree nodes.
 export function bookmarkTreeNodes(
-  children: BookmarkFolderType['children'],
+  childNodes: BookmarkFolderType['childNodes'],
   only?: 'folder' | 'bookmark', // undefined = all
   selectedIDs?: string | string[], // undefined = none
   expandedIDs?: string | string[], // undefined = all
-  recurse = true
+  recurse = true,
+  doClone = true
 ): TreeNodeInfo[] {
+  const childnodes = doClone ? clone(childNodes) : childNodes;
   const expIDs =
     expandedIDs && typeof expandedIDs === 'string'
       ? [expandedIDs]
@@ -647,24 +649,31 @@ export function bookmarkTreeNodes(
     selectedIDs && typeof selectedIDs === 'string'
       ? [selectedIDs]
       : selectedIDs;
-  for (let x = 0; x < children.length; x += 1) {
-    const item = children[x];
-    if (recurse && 'children' in item) {
-      bookmarkTreeNodes(item.children, only, expandedIDs, selectedIDs);
+  for (let x = 0; x < childnodes.length; x += 1) {
+    const item = childnodes[x];
+    if (recurse && 'childNodes' in item) {
+      bookmarkTreeNodes(
+        item.childNodes,
+        only,
+        expandedIDs,
+        selectedIDs,
+        true,
+        false
+      );
     }
     if (
       only &&
       ((only === 'folder' && item.type !== 'folder') ||
         (only === 'bookmark' && item.type !== 'bookmark'))
     ) {
-      children.splice(x, 1);
+      childnodes.splice(x, 1);
       x -= 1;
     } else {
       item.isExpanded = !expIDs || expIDs.includes(item.id);
       item.isSelected = !!selIDs && selIDs.includes(item.id);
     }
   }
-  return children;
+  return childnodes;
 }
 
 // Takes a flat list of general book nodes and arranges them according to

@@ -186,6 +186,7 @@ class VKSelect extends React.Component {
       switch (id) {
         case 'vkmod': {
           s.vkmod = value;
+          s.v11n = (value in G.Tab && G.Tab[value].v11n) || 'KJV';
           break;
         }
         case 'book': {
@@ -389,6 +390,7 @@ class VKSelect extends React.Component {
       }
     }
     this.newselection.vkmod = vksel;
+    this.newselection.v11n = v11n;
 
     const {
       book: b,

@@ -79,7 +79,7 @@ export default function importBookmarkObject(
     ] as StringRegex,
     location: 'location',
     sampleText: 'string',
-    children: 'array',
+    childNodes: 'array',
     hasCaret: 'boolean',
     isExpanded: 'boolean',
     isSelected: 'boolean',
@@ -144,9 +144,9 @@ export default function importBookmarkObject(
       }
     });
     if (validationFailed) return null;
-    if ('children' in o) {
-      for (let x = 0; x < o.children.length; x += 1) {
-        if (!validateBookMark(o.children[x])) return null;
+    if ('childNodes' in o) {
+      for (let x = 0; x < o.childNodes.length; x += 1) {
+        if (!validateBookMark(o.childNodes[x])) return null;
       }
     }
     return o as BookmarkFolderType;
@@ -154,9 +154,9 @@ export default function importBookmarkObject(
   const validated = validateBookMark(obj);
   if (validated) {
     if (validated.id === SPBM.manager.bookmarks.id) {
-      parentFolder.children.push(...validated.children);
+      parentFolder.childNodes.push(...validated.childNodes);
     } else {
-      parentFolder.children.push(validated);
+      parentFolder.childNodes.push(validated);
     }
     r.bookmarks.push(validated.id);
   }
@@ -209,12 +209,13 @@ export function importDeprecatedBookmarks(
           // These are no longer needed
         }
         const isVerseKey = !Number.isNaN(Number(CHAPTER));
+        const locs: string[] = C.Locales.map((l) => l[0]);
         const item: BookmarkItem = {
           id,
           label: NAME,
-          labelLocale: NAMELOCALE,
+          labelLocale: locs.includes(NAMELOCALE) ? NAMELOCALE : 'ru',
           note: NOTE,
-          noteLocale: NOTELOCALE,
+          noteLocale: locs.includes(NOTELOCALE) ? NOTELOCALE : 'ru',
           creationDate: Date.parse(CREATIONDATE),
         };
         if (TYPE === 'Folder') {
@@ -226,7 +227,7 @@ export function importDeprecatedBookmarks(
               type: 'folder',
               hasCaret: true,
               isExpanded: false,
-              children: [],
+              childNodes: [],
             },
           ];
         }
@@ -270,19 +271,19 @@ export function importDeprecatedBookmarks(
         const parx = bms.find((bmx) => bmx[2] && bmx[2].id === parent);
         const parentBM = parx && parx[2] ? parx[2] : null;
         if (parentBM) {
-          if ('children' in parentBM) parentBM.children.push(bm);
+          if ('childNodes' in parentBM) parentBM.childNodes.push(bm);
           else {
             r.reports.push({
               warning: `Imported bookmark parent is not a folder: ${bm.label}`,
             });
-            parentFolder.children.push(bm);
+            parentFolder.childNodes.push(bm);
           }
-        } else if (parent === parentFolder.id) parentFolder.children.push(bm);
+        } else if (parent === parentFolder.id) parentFolder.childNodes.push(bm);
         else {
           r.reports.push({
             warning: `Imported bookmark parent not found: ${bm.label}`,
           });
-          parentFolder.children.push(bm);
+          parentFolder.childNodes.push(bm);
         }
       }
     });

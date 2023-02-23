@@ -2,7 +2,7 @@
 import C from './constant';
 import { clone, dString } from './common';
 
-import type { GType, LocationVKType, V11nType } from './type';
+import type { GType, LocationVKType, OSISBookType, V11nType } from './type';
 import type RefParser from './refparse';
 
 type VerseKeyGtype = {
@@ -58,21 +58,24 @@ export default class VerseKey {
     if (match) [, work, loc] = match;
     const workv11n = work && work in Tab && Tab[work].v11n;
     const code = loc.match(/^([\w\d]+)\./);
-    let book = '';
+    let book: OSISBookType | '' = '';
     let chapter = 0;
     let verse = null as number | null | undefined;
     let lastverse = null as number | null | undefined;
     let v11n = workv11n || tov11n || null;
     if (
       code &&
-      C.SupportedBookGroups.some((bg) => C.SupportedBooks[bg].includes(code[1]))
+      Object.values(C.SupportedBooks).some((bg: any) => bg.includes(code[1]))
     ) {
       const segs = loc.split('-');
       if (segs.length > 2) segs.splice(1, segs.length - 2);
       segs.forEach((seg) => {
         const [bk, ch, vs, lv] = seg.split('.');
-        if (bk) {
-          if (!book) book = bk;
+        if (
+          bk &&
+          Object.values(C.SupportedBooks).some((bg: any) => bg.includes(bk))
+        ) {
+          if (!book) book = bk as OSISBookType;
           if (bk === book && ch) {
             if (!chapter) chapter = Number(ch);
             if (Number(ch) === chapter && vs) {

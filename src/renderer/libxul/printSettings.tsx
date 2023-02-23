@@ -450,7 +450,7 @@ export default class PrintSettings extends React.Component {
             }
           }
         `}</style>
-        <Groupbox caption={G.i18n.t('printCmd.label')}>
+        <Groupbox caption={G.i18n.t('menu.print')}>
           <Vbox pack="center" align="center">
             <Hbox align="center">
               <Menulist
@@ -576,7 +576,7 @@ export default class PrintSettings extends React.Component {
             disabled={printDisabled}
             onClick={handler}
           >
-            {G.i18n.t('printCmd.label')}
+            {G.i18n.t('menu.print')}
           </Button>
           <Button
             id="printToPDF"

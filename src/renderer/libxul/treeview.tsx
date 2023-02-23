@@ -306,13 +306,16 @@ const TreeView = (props: TreeViewProps) => {
     [expandedIDs, onExpansion]
   );
 
+  const classes = ['treeview'];
+  if (bpClassName) classes.push(bpClassName);
+
   return (
     <Tree
+      className={classes.join(' ')}
       contents={nodes}
       onNodeClick={handleNodeClick}
       onNodeCollapse={handleNodeCollapse}
       onNodeExpand={handleNodeExpand}
-      className={bpClassName}
       ref={treeRef}
     />
   );

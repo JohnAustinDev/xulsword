@@ -15,11 +15,13 @@
 
 import { decodeOSISRef, ofClass } from './common';
 
+import type { OSISBookType } from './type';
+
 export type ElemInfo = {
   type: string | null;
   title: string | null;
   reflist: string[] | null;
-  bk: string | null;
+  bk: OSISBookType | '' | null;
   ch: string | number | null;
   vs: number | null;
   lv: number | null;
@@ -27,6 +29,7 @@ export type ElemInfo = {
   osisref: string | null;
   nid: number | null;
   ntype: string | null;
+  bmitem: string | null;
 }
 
 type ElemInfoIndex = {
@@ -98,6 +101,7 @@ export function getElementInfo(elem: string | HTMLElement): ElemInfo | null {
   // Info is parsed from className and dataTitle, so start by getting each
   let className;
   let title;
+  let bmitem: string | null = null;
   if (typeof elem === 'string') {
     // If elem is string HTML, parse only the first tag
     const mt = elem.match(/^[^<]*<[^>]+data-title\s*=\s*["']([^"']*)["']/);
@@ -105,16 +109,23 @@ export function getElementInfo(elem: string | HTMLElement): ElemInfo | null {
     const mc = elem.match(/^[^<]*<[^>]+class\s*=\s*["']([^"']*)["']/);
     if (mc !== null) [, className] = mc;
     if (!title || !className) return null;
+    const mi = elem.match(/^[^<]*<[^>]+data-bmitem\s*=\s*["']([^"']*)["']/);
+    if (mi !== null) [, bmitem] = mi;
   } else {
     if (!elem.className || !elem.dataset.title) return null;
     className = elem.className;
     title = elem.dataset.title;
+    bmitem = elem.dataset.bmitem || null;
   }
+
+  // Even though there may multiple space separated bookmark items, only the
+  // first is currently returned.
+  if (bmitem?.includes(' ')) [bmitem] = bmitem.split(' ');
 
   // Read info using ...
   const r: ElemInfo = {
+    title,
     type: null,
-    title: null,
     reflist: null,
     bk: null,
     ch: null,
@@ -124,6 +135,7 @@ export function getElementInfo(elem: string | HTMLElement): ElemInfo | null {
     osisref: null,
     nid: null,
     ntype: null,
+    bmitem,
   };
 
   const mt = className.match(/^([^\-\s]*)/);
@@ -133,7 +145,6 @@ export function getElementInfo(elem: string | HTMLElement): ElemInfo | null {
   const type = t as keyof typeof TitleFormat;
 
   r.type = type;
-  r.title = title;
   let unmatched = true;
   for (let i = 0; i < TitleFormat[type].length; i += 1) {
     const m = title.match(TitleFormat[type][i].re);

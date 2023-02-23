@@ -420,7 +420,7 @@ export default class SearchWin extends React.Component implements PopupParent {
                     disabled={progress !== 0 || !module}
                     onClick={handler}
                   >
-                    {G.i18n.t('searchBut.label')}
+                    {G.i18n.t('menu.search')}
                   </Button>
                   <Spacer flex="1" orient="horizontal" />
                   <Button id="helpButton" icon="help" onClick={handler} />

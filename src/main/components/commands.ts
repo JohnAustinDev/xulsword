@@ -9,6 +9,8 @@ import i18n from 'i18next';
 import {
   clone,
   diff,
+  findBookmarkItem,
+  findParentOfBookmark as findParentOfBookmarkItem,
   gbPaths,
   JSON_parse,
   JSON_stringify,
@@ -19,11 +21,10 @@ import Subscription from '../../subscription';
 import C, { SP, SPBM } from '../../constant';
 import parseSwordConf from '../parseSwordConf';
 import importBookmarkObject, {
-  findBookmark,
   importDeprecatedBookmarks,
   Transaction,
 } from '../bookmarks';
-import { verseKey, getTab, getTabs, getAudioConfs } from '../minit';
+import { verseKey, getTab, getAudioConfs } from '../minit';
 import Prefs from './prefs';
 import LibSword from './libsword';
 import LocalFile from './localFile';
@@ -34,6 +35,7 @@ import Dirs from './dirs';
 import type {
   AudioPath,
   BookmarkFolderType,
+  BookmarkItem,
   GenBookAudio,
   GenBookAudioFile,
   LocationGBType,
@@ -42,13 +44,13 @@ import type {
   OSISBookType,
   ScrollType,
   SearchType,
-  TextVKType,
   VerseKeyAudioFile,
 } from '../../type';
 import type { AboutWinState } from '../../renderer/about/about';
 import type { PrintPassageState } from '../../renderer/printPassage/printPassage';
 import type { CopyPassageState } from '../../renderer/copyPassage/copyPassage';
 import type { SelectVKMType } from '../../renderer/libxul/vkselect';
+import type { BMPropertiesState } from '../../renderer/bmProperties/bmProperties';
 
 const Commands = {
   openModuleManager(): void {
@@ -596,6 +598,7 @@ const Commands = {
       Transaction.pause = true;
       Prefs.setComplexValue(prefkey, value, store);
       Transaction.pause = false;
+      Window.reset('all', 'all');
       return true;
     }
     return false;
@@ -609,6 +612,7 @@ const Commands = {
       Transaction.pause = true;
       Prefs.setComplexValue(prefkey, value, store);
       Transaction.pause = false;
+      Window.reset('all', 'all');
       return true;
     }
     return false;
@@ -631,7 +635,7 @@ const Commands = {
 
   search(search: SearchType): void {
     const options = {
-      title: `${i18n.t('search.label')} "${search.searchtext}"`,
+      title: `${i18n.t('menu.search')} "${search.searchtext}"`,
       width: 800,
       height: 630,
       webPreferences: {
@@ -741,9 +745,9 @@ const Commands = {
       ) as BookmarkFolderType;
       importFiles?.forEach((path, i) => {
         const folderID = parentFolder[i] || rootid;
-        const findFolder = findBookmark(bookmarks, folderID);
+        const findFolder = findBookmarkItem(bookmarks, folderID);
         let folder = bookmarks;
-        if (findFolder && 'children' in findFolder) {
+        if (findFolder && 'childNodes' in findFolder) {
           folder = findFolder as BookmarkFolderType;
         }
         const file = new LocalFile(path);
@@ -787,9 +791,9 @@ const Commands = {
         'bookmarks'
       ) as BookmarkFolderType;
       const folder = folderID
-        ? findBookmark(bookmarks, folderID)
+        ? findBookmarkItem(bookmarks, folderID)
         : bookmarks;
-      if (folder && 'children' in folder) {
+      if (folder && 'childNodes' in folder) {
         const file = new LocalFile(obj.filePath);
         if (file.exists()) file.remove();
         if (!file.exists()) {
@@ -799,26 +803,121 @@ const Commands = {
     }
   },
 
-  openNewDbItemDialog(userNote: boolean, textvk: TextVKType): void {
-    log.info(
-      `Action not implemented: openNewBookmarkDialog(${JSON_stringify(
-        userNote
-      )})`
-    );
+  // Normally either bmPropertiesState (to show properties of an existing item)
+  // or newitem (show properties of a new item) are expected to be provided, not
+  // both. However bmPropertiesState can be used to modify a new-bookmark dialog,
+  // and in that case any bmPropertiesState.bookmark will be ignored.
+  openBookmarkProperties(
+    bmPropertiesState?: Partial<BMPropertiesState>,
+    newitem?: {
+      location: LocationVKType | LocationGBType | null | undefined;
+      module?: string;
+      usernote?: boolean;
+    }
+  ): void {
+    const tab = getTab();
+    let parent: BrowserWindow | undefined =
+      BrowserWindow.fromId(arguments[2] ?? -1) ||
+      getBrowserWindows({ type: 'xulsword' })[0] ||
+      undefined;
+    let bookmark: BMPropertiesState['bookmark'] | undefined;
+    let treeSelection: BMPropertiesState['treeSelection'] | undefined;
+    let anyChildSelectable: BMPropertiesState['anyChildSelectable'] | undefined;
+    let hide: BMPropertiesState['hide'] | undefined;
+    if (bmPropertiesState) {
+      ({ bookmark, treeSelection, anyChildSelectable, hide } =
+        bmPropertiesState);
+    }
+    if (newitem) {
+      bookmark = undefined;
+      const { location, module, usernote } = newitem;
+      const item: BookmarkItem = {
+        id: '',
+        label: location ? '' : i18n.t('newFolder'),
+        labelLocale: location ? '' : i18n.language,
+        note: usernote ? ' ' : '',
+        noteLocale: usernote ? i18n.language : '',
+        creationDate: new Date().valueOf(),
+      };
+      if (location) {
+        const t = (module && module in tab && tab[module]) || null;
+        if (t && 'v11n' in location) {
+          bookmark = {
+            ...item,
+            type: 'bookmark',
+            location: {
+              ...location,
+              vkmod: module || '',
+              v11n: t.v11n || 'KJV',
+            },
+            tabType: t.tabType,
+            sampleText: '',
+          };
+        } else if (t) {
+          const l = location as LocationGBType;
+          bookmark = {
+            ...item,
+            type: 'bookmark',
+            location: l,
+            tabType: t.tabType,
+            sampleText: '',
+          };
+        }
+      } else {
+        bookmark = {
+          ...item,
+          type: 'folder',
+          childNodes: [],
+        };
+      }
+    }
+    let titleKey = 'menu.bookmark.properties';
+    if (newitem && bookmark) {
+      if (!('location' in bookmark)) titleKey = 'menu.folder.add';
+      else if (bookmark.note) titleKey = 'menu.usernote.add';
+      else titleKey = 'menu.bookmark.add';
+    }
+    if (!hide) hide = [];
+    if (!bookmark?.note && !hide.includes('note')) hide.push('note');
+    const options = {
+      title: i18n.t(titleKey),
+      parent,
+      webPreferences: {
+        additionalArguments: [
+          JSON_stringify({
+            bmPropertiesState: {
+              bookmark,
+              treeSelection,
+              anyChildSelectable,
+              hide,
+            },
+          }),
+        ],
+      },
+    };
+    Window.open({ type: 'bmProperties', category: 'dialog', options });
+    parent = undefined;
   },
 
-  openDbItemPropertiesDialog(bookmark: unknown): void {
-    log.info(
-      `Action not implemented: openBookmarkPropertiesDialog(${JSON_stringify(
-        bookmark
-      )})`
+  deleteBookmarkItem(itemID: string): void {
+    const bookmarks = clone(
+      Prefs.getComplexValue(
+        'manager.bookmarks',
+        'bookmarks'
+      ) as typeof SPBM.manager.bookmarks
     );
-  },
-
-  deleteDbItem(bookmark: unknown): void {
-    log.info(
-      `Action not implemented: deleteBookmark(${JSON_stringify(bookmark)})`
-    );
+    const item = findBookmarkItem(bookmarks, itemID);
+    if (item) {
+      const parent = findParentOfBookmarkItem(bookmarks, item.id);
+      if (parent) {
+        const i = parent.childNodes.findIndex((c) => c.id === item.id);
+        if (i !== -1) {
+          parent.childNodes.splice(i, 1);
+          Prefs.setComplexValue('manager.bookmarks', bookmarks, 'bookmarks');
+          Window.reset('all', 'all');
+        }
+      }
+    }
   },
 
   openAbout(state?: Partial<AboutWinState>): void {
@@ -885,42 +984,3 @@ const Commands = {
 };
 
 export default Commands;
-
-export function newDbItemWithDefaults(
-  userNote: boolean,
-  textvk: TextVKType | null
-) {
-  const tab = getTab();
-  const tabs = getTabs();
-  const panels = Prefs.getComplexValue(
-    'xulsword.panels'
-  ) as typeof SP.xulsword['panels'];
-  const vkm = panels.find(
-    (m: string | null) => m && m in tab && tab[m].isVerseKey
-  );
-  if (vkm) {
-    const loc = Prefs.getComplexValue(
-      'xulsword.location'
-    ) as typeof SP.xulsword['location'];
-    const sel = Prefs.getComplexValue(
-      'xulsword.selection'
-    ) as typeof SP.xulsword['selection'];
-    const textvk2 = {
-      module: textvk?.module || tabs[0].module,
-      text: textvk?.text || '',
-      location: {
-        book: (textvk?.location?.book || loc?.book || 'Gen') as OSISBookType,
-        chapter: textvk?.location?.chapter || loc?.chapter || 0,
-        verse: textvk?.location?.verse || sel?.verse || loc?.verse || null,
-        lastverse:
-          textvk?.location?.lastverse ||
-          sel?.lastverse ||
-          loc?.lastverse ||
-          null,
-        v11n: textvk?.location?.v11n || loc?.v11n || null,
-      },
-    };
-
-    Commands.openNewDbItemDialog(userNote, textvk2);
-  }
-}

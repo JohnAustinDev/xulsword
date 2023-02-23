@@ -76,7 +76,7 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
                 const el = col5.element;
                 const refs = el.dataset.reflist;
                 const context: LocationVKType = {
-                  book: (p && p.bk) || '',
+                  book: (p && p.bk) || 'Gen',
                   chapter: (p && Number(p.ch)) || 0,
                   verse: (p && p.vs) || null,
                   v11n: null,

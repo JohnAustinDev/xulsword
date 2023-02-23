@@ -1439,10 +1439,10 @@ const char *xulsword::getGenBookChapterText(const char *gbmod, const char *treek
 
   if (chapterText.length() > 16) {
     SWBuf css;
-    css.setFormatted("<span class=\"cs-%s%s\">", module->getName(), (module->getDirection() != DIRECTION_LTR ? " RTL":""));
+    css.setFormatted("<div class=\"cs-%s%s\">", module->getName(), (module->getDirection() != DIRECTION_LTR ? " RTL":""));
     chapterText.insert(0, css);
     chapterText.append(MyNotes);
-    chapterText.append("</span>");
+    chapterText.append("</div>");
   }
 
   SWBuf check = assureValidUTF8(chapterText.c_str());

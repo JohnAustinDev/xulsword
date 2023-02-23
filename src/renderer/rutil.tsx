@@ -31,6 +31,7 @@ import type {
   GenBookAudio,
   GenBookAudioConf,
   GenBookAudioFile,
+  LocationGBType,
   LocationVKType,
   ModTypes,
   OSISBookType,
@@ -40,10 +41,13 @@ import type {
   SearchType,
   SwordConfLocalized,
   SwordConfType,
+  SwordFilterType,
+  SwordFilterValueType,
   V11nType,
   VerseKeyAudio,
   VerseKeyAudioFile,
 } from '../type';
+import type { SelectVKMType } from './libxul/vkselect';
 
 export function component(
   comp: any
@@ -243,12 +247,6 @@ export function audioGenBookNode(
   return false;
 }
 
-// Split a string from LibSword up into paragraphs
-export function parseParagraphs(text: string): string[] {
-  // Apparently paragraph support was removed in xulsword 3.
-  return [text];
-}
-
 export function audioIcon(
   module: string,
   bookOrKey: OSISBookType | string,
@@ -285,7 +283,7 @@ export function isValidVKM(location: LocationVKType, module: string): boolean {
   if (!module || !(module in G.Tab)) return false;
   const tab = G.Tab[module];
   if (location.v11n !== tab.v11n) return false;
-  if (!G.getBooksInModule(module).includes(location.book)) return false;
+  if (!G.getBooksInModule(module).includes(location.book as any)) return false;
   return true;
 }
 
@@ -403,41 +401,38 @@ const TargetInfo = {
   ch: null as number | null,
   vs: null as number | null,
   lv: null as number | null,
-  bookmark: null as string | null,
+  bmitem: null as string | null,
 };
+
+type TargetInfoType = typeof TargetInfo;
 
 // Returns target information associated with an element.
 // NOTE: bk, ch, vs, and lv may be interpreted differently depending
 // on the module type of "mod".
-function readDataFromElement(info: typeof TargetInfo, element: HTMLElement) {
+function readDataFromElement(info: TargetInfoType, element: HTMLElement) {
   const eleminfo = getElementInfo(element);
   if (!eleminfo) return false;
 
   Object.entries(eleminfo).forEach((entry) => {
-    const p0 = entry[0] as keyof ElemInfo;
-    const p = p0 as keyof typeof TargetInfo;
+    const p = entry[0] as keyof ElemInfo;
     const val = entry[1] as any;
 
-    if (p0 === 'nid') {
-      /* TODO!:
-      if (!info.bookmark && BM && typeof BookmarkFuns !== undefined) {
-        const aItem = BM.RDF.GetResource(decodeURIComponent(val));
-        const aParent = ResourceFuns.getParentOfResource(aItem, BMDS);
-        if (aParent) {
-          info.bookmark = XS_window.BookmarksUtils.getSelectionFromResource(aItem, aParent);
-        }
-      }
-      */
+    if (p === 'nid') return;
+
+    // first come, first served- don't overwrite existing data
+    if (!(p in info) || info[p as keyof TargetInfoType] !== null) return;
+
+    // some params use "0" as a placeholder which should not be propagated
+    if (
+      ['bk', 'ch', 'vs', 'lv'].includes(p) &&
+      info[p as keyof TargetInfoType] === 0
+    ) {
       return;
     }
 
-    // first come, first served- don't overwrite existing data
-    if (!(p0 in info) || info[p] !== null) return;
-
-    // some params use "0" as a placeholder which should not be propagated
-    if (['bk', 'ch', 'vs', 'lv'].includes(p) && info[p] === 0) return;
-
-    if (val !== null && val !== undefined) info[p] = val; // got it!
+    if (val !== null && val !== undefined) {
+      info[p as keyof TargetInfoType] = val; // got it!
+    }
   });
 
   return true;
@@ -479,7 +474,7 @@ function getTargetsFromSelection(
   if (!getTargetsFromElement(info2, anchorNode)) return false;
 
   // merge bookmarks
-  if (!info1.bookmark && info2.bookmark) info1.bookmark = info2.bookmark;
+  if (!info1.bmitem && info2.bmitem) info1.bmitem = info2.bmitem;
 
   // merge targ2 into targ1 if mod, bk and ch are the same (otherwise ignore targ2)
   if (
@@ -598,7 +593,7 @@ export function getContextData(
 
   return {
     locationVK,
-    bookmark: info.bookmark,
+    bookmark: info.bmitem,
     module,
     tab,
     lemma,
@@ -665,12 +660,12 @@ export function registerUpdateStateFromPref(
     if (aStore === store) {
       const different = diff(c.state, getStatePref(id, defaultPrefs, store));
       if (different && Object.keys(different).length) {
+        const d = different as any;
         if (
-          !aStore &&
-          different.global &&
-          typeof different.global === 'object' &&
-          'locale' in different.global &&
-          different.global.locale !== G.i18n.language
+          (!aStore &&
+            d?.global?.locale &&
+            d?.global?.locale !== G.i18n.language) ||
+          (aStore === 'bookmarks' && d?.manager?.bookmarks)
         ) {
           Cache.clear();
         }

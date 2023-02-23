@@ -120,7 +120,8 @@ export type WindowDescriptorType = {
     | 'searchHelp'
     | 'about'
     | 'printPassage'
-    | 'copyPassage';
+    | 'copyPassage'
+    | 'bmProperties';
   category?:
     | 'window' // Parent optional, persisted, resizable
     | 'dialog' // Has parent, not persisted, size is fit-to-content, not-resizable
@@ -268,12 +269,6 @@ export type V11nType =
 
 export type CipherKey = { conf: SwordConfType; cipherKey: string };
 
-export type LocationGBType = {
-  module: string;
-  key: string;
-  paragraph?: number;
-};
-
 export type LocationTypes = {
   Texts: LocationVKType;
   Comms: LocationVKType;
@@ -281,8 +276,14 @@ export type LocationTypes = {
   Dicts: LocationGBType;
 };
 
+export type LocationGBType = {
+  module: string;
+  key: string;
+  paragraph?: number; // Not implemented
+};
+
 export type LocationVKType = {
-  book: OSISBookType;
+  book: OSISBookType | '';
   chapter: number;
   v11n: V11nType | null;
   verse?: number | null;
@@ -316,7 +317,7 @@ export type ContextData = {
   tab: string | null;
   lemma: string | null;
   panelIndex: number | null;
-  bookmark: unknown | null;
+  bookmark: string | null;
   isPinned: boolean;
   selection: string | null;
   selectionParsedVK: LocationVKType | null;
@@ -669,13 +670,13 @@ export type BookmarkItem = Pick<
 export type BookmarkType = BookmarkItem & {
   type: 'bookmark';
   tabType: TabTypes;
-  location: SelectVKMType | LocationGBType;
+  location: SelectVKMType | LocationGBType | null;
   sampleText: string;
 };
 
 export type BookmarkFolderType = BookmarkItem & {
   type: 'folder';
-  children: (BookmarkType | BookmarkFolderType)[];
+  childNodes: (BookmarkType | BookmarkFolderType)[];
 };
 
 export type BookmarkTypes = ['folder', 'bookmark'];
@@ -895,9 +896,8 @@ export const GBuilder: GType & {
     openBookmarksManager: func as any,
     importBookmarks: func as any,
     exportBookmarks: func as any,
-    openNewDbItemDialog: func as any,
-    openDbItemPropertiesDialog: func as any,
-    deleteDbItem: func as any,
+    openBookmarkProperties: func as any,
+    deleteBookmarkItem: func as any,
     openAbout: func as any,
     goToLocationVK: func as any,
     goToLocationGB: func as any,

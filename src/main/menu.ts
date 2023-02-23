@@ -14,9 +14,8 @@ import { clone } from '../common';
 import C, { SP, SPBM } from '../constant';
 import G from './mg';
 import { getBrowserWindows } from './components/window';
-import Commands, { newDbItemWithDefaults } from './components/commands';
+import Commands from './components/commands';
 import { Transaction } from './bookmarks';
-import { verseKey } from './minit';
 import setViewportTabs from './tabs';
 
 import type { BookmarkFolderType, SearchType, TabTypes } from '../type';
@@ -202,15 +201,16 @@ export const pushPrefsToMenu: PrefCallbackType = (winid, key, val, store) => {
       if (keys.some((k) => menuPref.includes(k))) {
         updateMenuFromPref();
       }
-    } else if (store === 'bookmarks') {
-      let xs: BrowserWindow | undefined = getBrowserWindows({
-        type: 'xulsword',
-      })[0];
-      if (xs) {
-        const menuBuilder = new MainMenuBuilder(xs);
-        menuBuilder.buildMenu();
-        xs = undefined;
-      }
+    }
+  }
+  if (store === 'bookmarks') {
+    let xs: BrowserWindow | undefined = getBrowserWindows({
+      type: 'xulsword',
+    })[0];
+    if (xs) {
+      const menuBuilder = new MainMenuBuilder(xs);
+      menuBuilder.buildMenu();
+      xs = undefined;
     }
   }
 };
@@ -218,7 +218,7 @@ export const pushPrefsToMenu: PrefCallbackType = (winid, key, val, store) => {
 function bookmarkProgramMenu(
   bookmarks: BookmarkFolderType
 ): MenuItemConstructorOptions[] {
-  return bookmarks.children.map((bm) => ({
+  return bookmarks.childNodes.map((bm) => ({
     label: bm.label,
     type: bm.type === 'folder' ? 'submenu' : 'normal',
     submenu: bm.type === 'folder' ? bookmarkProgramMenu(bm) : undefined,
@@ -235,9 +235,11 @@ function bookmarkProgramMenu(
     id: bm.id,
     click: d(() => {
       if ('location' in bm) {
-        if ('v11n' in bm.location)
-          Commands.goToLocationVK(bm.location, bm.location);
-        else Commands.goToLocationGB(bm.location);
+        if (bm.location) {
+          if ('v11n' in bm.location)
+            Commands.goToLocationVK(bm.location, bm.location);
+          else Commands.goToLocationGB(bm.location);
+        }
       }
     }),
   }));
@@ -261,7 +263,7 @@ function ts(key: string, sckey?: string): string {
   if (fix) return fix;
 
   let text = G.i18n.t(key);
-  const sckey2 = sckey || `${key}.sc`;
+  const sckey2 = sckey || `${key}.ak`;
   if (text) {
     text = text.replace(/(?!<&)&(?!=&)/g, '&&');
     const l = G.i18n.t(sckey2);
@@ -309,20 +311,20 @@ export default class MainMenuBuilder {
   buildDefaultTemplate() {
     const subMenuFile: MenuItemConstructorOptions = {
       role: 'fileMenu',
-      label: ts('fileMenu.label', 'fileMenu.accesskey'),
+      label: ts('menu.file'),
       submenu: [
         {
-          label: ts('menu.addNewModule.label'),
+          label: ts('menu.addNewModule'),
           submenu: [
             {
-              label: ts('newmodule.fromInternet', 'newmodule.fromInternet.ak'),
+              label: ts('menu.newModule.fromInternet'),
               accelerator: 'F2',
               click: d(() => {
                 Commands.openModuleManager();
               }),
             },
             {
-              label: ts('newmodule.fromFile', 'newmodule.fromFile.ak'),
+              label: ts('menu.newModule.fromFile'),
               click: d(() => {
                 Commands.installXulswordModules();
               }),
@@ -330,20 +332,20 @@ export default class MainMenuBuilder {
           ],
         },
         {
-          label: ts('menu.removeModule.label', 'menu.removeModule.sc'),
+          label: ts('menu.removeModule'),
           click: d(() => {
             Commands.removeModule();
           }),
         },
         { type: 'separator' },
         {
-          label: ts('menu.importAudio.label', 'menu.importAudio.sc'),
+          label: ts('menu.importAudio'),
           click: d(() => {
             Commands.importAudio();
           }),
         },
         {
-          label: ts('menu.exportAudio.label', 'menu.exportAudio.sc'),
+          label: ts('menu.exportAudio'),
           enabled: !!G.Dirs.xsAudio.append('modules').directoryEntries.length,
           click: d(() => {
             Commands.exportAudio();
@@ -351,34 +353,32 @@ export default class MainMenuBuilder {
         },
         { type: 'separator' },
         {
-          label: `${ts('import.label', 'import.sc').replace(
-            /\W+$/,
-            ''
-          )} ${G.i18n.t('bookmarksMenu.label')}`,
+          label: `${ts('menu.import').replace(/\W+$/, '')} ${G.i18n.t(
+            'menu.bookmarks'
+          )}`,
           click: d(() => {
             Commands.importBookmarks();
           }),
         },
         {
-          label: `${ts('export.label', 'export.sc').replace(
-            /\W+$/,
-            ''
-          )} ${G.i18n.t('bookmarksMenu.label')}`,
+          label: `${ts('menu.export').replace(/\W+$/, '')} ${G.i18n.t(
+            'menu.bookmarks'
+          )}`,
           click: d(() => {
             Commands.exportBookmarks();
           }),
         },
         { type: 'separator' },
         {
-          label: ts('print.printpassage'),
-          accelerator: tx('printPassageCmd.commandkey', ['CommandOrControl']),
+          label: ts('menu.printPassage'),
+          accelerator: tx('menu.print.ac', ['CommandOrControl']),
           click: d(() => {
             Commands.printPassage();
           }),
         },
         {
-          label: ts('printCmd.label', 'printCmd.accesskey'),
-          accelerator: tx('printCmd.commandkey', ['CommandOrControl', 'Shift']),
+          label: ts('menu.print'),
+          accelerator: tx('menu.print.ac', ['CommandOrControl', 'Shift']),
           click: d(() => {
             Commands.print();
           }),
@@ -386,10 +386,7 @@ export default class MainMenuBuilder {
         { type: 'separator' },
         {
           role: 'quit',
-          label: ts(
-            'quitApplicationCmdWin.label',
-            'quitApplicationCmdWin.accesskey'
-          ),
+          label: ts('menu.quit'),
           click: d(() => {
             this.window.close();
           }),
@@ -401,7 +398,7 @@ export default class MainMenuBuilder {
     const { list, index } = Transaction;
     const subMenuEdit: MenuItemConstructorOptions = {
       role: 'editMenu',
-      label: ts('editMenu.label', 'editMenu.accesskey'),
+      label: ts('menu.edit'),
       submenu: edits
         .map((edx) => {
           const ed = edx as 'undo' | 'redo' | 'cut' | 'copy' | 'paste';
@@ -421,8 +418,8 @@ export default class MainMenuBuilder {
         .concat([
           { type: 'separator' } as any,
           {
-            label: ts('searchBut.label', 'SearchAccKey'),
-            accelerator: tx('SearchCommandKey', ['CommandOrControl']),
+            label: ts('menu.search'),
+            accelerator: tx('menu.search.ac', ['CommandOrControl']),
             click: d(() => {
               const search: SearchType = {
                 module: (G.Tabs.length && G.Tabs[0].module) || '',
@@ -433,8 +430,8 @@ export default class MainMenuBuilder {
             }),
           },
           {
-            label: ts('menu.copypassage', 'menu.copypassage.ak'),
-            accelerator: tx('menu.copypassage.sc', ['CommandOrControl']),
+            label: ts('menu.copyPassage'),
+            accelerator: tx('menu.copyPassage.ac', ['CommandOrControl']),
             click: d(() => {
               Commands.copyPassage();
             }),
@@ -543,7 +540,7 @@ export default class MainMenuBuilder {
 
     const subMenuView: MenuItemConstructorOptions = {
       role: 'viewMenu',
-      label: ts('viewMenu.label', 'viewMenu.accesskey'),
+      label: ts('menu.view'),
       submenu: [
         /*
         {
@@ -705,35 +702,62 @@ export default class MainMenuBuilder {
       ],
     };
 
-    const dummy = {
-      location: verseKey('Gen.1.1').location(),
-      module: 'FOO',
-      text: '',
-    };
-
     const subMenuBookmarks: MenuItemConstructorOptions = {
-      label: ts('bookmarksMenu.label', 'bookmarksMenu.accesskey'),
+      label: ts('menu.bookmarks'),
       submenu: [
         {
-          label: ts('manBookmarksCmd.label'),
-          accelerator: tx('manBookmarksCmd.commandkey', ['CommandOrControl']),
+          label: ts('menu.bookmark.manager'),
+          accelerator: tx('menu.bookmark.manager.ac', ['CommandOrControl']),
           click: d(() => {
             Commands.openBookmarksManager();
           }),
         },
+        { type: 'separator' },
         {
           label: ts('menu.bookmark.add'),
-          accelerator: tx('addCurPageAsCmd.commandkey', ['CommandOrControl']),
-          click: d(() => newDbItemWithDefaults(false, dummy)),
+          accelerator: tx('menu.bmitem.add.ac', ['CommandOrControl']),
+          click: d(() =>
+            Commands.openBookmarkProperties(undefined, {
+              location: G.Prefs.getComplexValue(
+                'xulsword.location'
+              ) as typeof SP.xulsword.location,
+              module:
+                (
+                  G.Prefs.getComplexValue(
+                    'xulsword.panels'
+                  ) as typeof SP.xulsword.panels
+                ).find((m) => m && G.Tab[m].isVerseKey) || '',
+              usernote: false,
+            })
+          ),
         },
         {
-          id: 'addUserNote',
           label: ts('menu.usernote.add'),
-          accelerator: tx('addCurPageAsCmd.commandkey', [
-            'CommandOrControl',
-            'Shift',
-          ]),
-          click: d(() => newDbItemWithDefaults(true, dummy)),
+          accelerator: tx('menu.bmitem.add.ac', ['CommandOrControl', 'Shift']),
+          click: d(() =>
+            Commands.openBookmarkProperties(undefined, {
+              location: G.Prefs.getComplexValue(
+                'xulsword.location'
+              ) as typeof SP.xulsword.location,
+              module:
+                (
+                  G.Prefs.getComplexValue(
+                    'xulsword.panels'
+                  ) as typeof SP.xulsword.panels
+                ).find((m) => m && G.Tab[m].isVerseKey) || '',
+              usernote: true,
+            })
+          ),
+        },
+        {
+          label: ts('menu.folder.add'),
+          accelerator: tx('menu.bmitem.add.ac', ['Alt', 'Shift']),
+          click: d(() =>
+            Commands.openBookmarkProperties(undefined, {
+              location: null,
+              usernote: true,
+            })
+          ),
         },
       ],
     };
@@ -743,7 +767,7 @@ export default class MainMenuBuilder {
       'bookmarks'
     ) as typeof SPBM.manager['bookmarks'];
 
-    if (bookmarks && bookmarks.children.length) {
+    if (bookmarks && bookmarks.childNodes.length) {
       const submenu = subMenuBookmarks.submenu as MenuItemConstructorOptions[];
       submenu.push({ type: 'separator' });
       submenu.push(...bookmarkProgramMenu(bookmarks));

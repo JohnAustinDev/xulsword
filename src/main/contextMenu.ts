@@ -2,8 +2,10 @@
 import { BrowserWindow } from 'electron';
 import contextMenuCreator from 'electron-context-menu';
 import i18n from 'i18next';
+import { findBookmarkItem } from '../common';
+import { SPBM } from '../constant';
 import G from './mg';
-import CommandsX, { newDbItemWithDefaults } from './components/commands';
+import CommandsX from './components/commands';
 import setViewportTabs from './tabs';
 import Data from './components/data';
 
@@ -192,7 +194,7 @@ export default function contextMenu(
           })(cm()),
         },
         {
-          label: i18n.t('printCmd.label'),
+          label: i18n.t('menu.print'),
           visible: true,
           enabled: true,
           click: () => {
@@ -208,10 +210,10 @@ export default function contextMenu(
             return () => {
               const { module, locationVK: location } = data;
               if (module && location) {
-                newDbItemWithDefaults(false, {
+                CommandsX.openBookmarkProperties(undefined, {
                   location,
                   module,
-                  text: '',
+                  usernote: false,
                 });
               }
             };
@@ -225,10 +227,10 @@ export default function contextMenu(
             return () => {
               const { module, locationVK: location } = data;
               if (module && location) {
-                newDbItemWithDefaults(true, {
+                CommandsX.openBookmarkProperties(undefined, {
                   location,
                   module,
-                  text: '',
+                  usernote: true,
                 });
               }
             };
@@ -236,24 +238,31 @@ export default function contextMenu(
         },
 
         {
-          label: i18n.t('menu.usernote.properties'),
+          label: i18n.t('menu.bookmark.properties'),
           visible: Object.keys(cm()).length > 0,
           enabled: Boolean(cm().bookmark),
           click: ((data) => {
             return () => {
-              if (data.bookmark)
-                Commands.openDbItemPropertiesDialog(data.bookmark, window.id);
+              if (data.bookmark) {
+                const bookmarks = G.Prefs.getComplexValue(
+                  'manager.bookmarks',
+                  'bookmarks'
+                ) as typeof SPBM.manager.bookmarks;
+                const bookmark = findBookmarkItem(bookmarks, data.bookmark);
+                if (bookmark) {
+                  CommandsX.openBookmarkProperties({ bookmark });
+                }
+              }
             };
           })(cm()),
         },
         {
-          label: i18n.t('menu.usernote.delete'),
+          label: i18n.t('menu.bookmark.delete'),
           visible: Object.keys(cm()).length > 0,
           enabled: Boolean(cm().bookmark),
           click: ((data) => {
             return () => {
-              if (data.bookmark)
-                Commands.deleteDbItem(data.bookmark, window.id);
+              if (data.bookmark) CommandsX.deleteBookmarkItem(data.bookmark);
             };
           })(cm()),
         },

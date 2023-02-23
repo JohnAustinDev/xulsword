@@ -1,9 +1,12 @@
+/* eslint-disable no-nested-ternary */
+/* eslint-disable no-restricted-syntax */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import C from '../../constant';
 import Cache from '../../cache';
 import { dString, escapeRE, stringHash } from '../../common';
 import { getElementInfo } from '../../libswordElemInfo';
 import G from '../rg';
+import addBookmarks from '../bookmarks';
 import {
   getNoteHTML,
   getChapterHeading,
@@ -12,7 +15,6 @@ import {
 } from './zversekey';
 import { getDictEntryHTML } from './zdictionary';
 
-import type { AtextProps } from './atext';
 import type {
   AtextPropsType,
   LocationVKType,
@@ -28,11 +30,6 @@ export type LibSwordResponse = {
   notes: string;
   intronotes: string;
 };
-
-export function addUserNotes(
-  content: Partial<LibSwordResponse>,
-  props: Partial<AtextProps>
-) {}
 
 export function libswordText(
   props: Pick<
@@ -257,8 +254,8 @@ export function libswordText(
     default:
   }
 
-  // Add usernotes to text
-  if (show.usernotes) addUserNotes(r, props);
+  // Add bookmarks to text and notes
+  if (show.usernotes) addBookmarks(r, props);
 
   // handle footnotes.
   if (G.Tab[module].isVerseKey) {

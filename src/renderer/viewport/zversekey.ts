@@ -3,7 +3,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-continue */
 import C, { SP } from '../../constant';
-import { clone, dString, getLocalizedChapterTerm } from '../../common';
+import {
+  clone,
+  dString,
+  getLocalizedChapterTerm,
+  findBookmarkItem,
+} from '../../common';
 import { getElementInfo } from '../../libswordElemInfo';
 import {
   getCompanionModules,
@@ -17,6 +22,7 @@ import { delayHandler } from '../libxul/xul';
 import type {
   AtextPropsType,
   AtextStateType,
+  BookmarkFolderType,
   LocationVKType,
   LookupInfo,
   OSISBookType,
@@ -539,22 +545,7 @@ export function getNoteHTML(
           }
           case 'un': {
             // If this is a usernote, then add direction entities and style
-            const unmod = null;
-            /*
-              try {
-                unmod = BMDS.GetTarget(
-                  BM.RDF.GetResource(decodeURIComponent(p.nid)),
-                  BM.gBmProperties[C.NOTELOCALE],
-                  true
-                );
-                unmod = unmod.QueryInterface(
-                  Components.interfaces.nsIRDFLiteral
-                ).Value;
-              } catch (er) {}
-              */
-            t += `<bdi><span class="noteBoxUserNote${
-              unmod ? ` cs-${unmod}` : ''
-            }">${innerHTML}</span></bdi>`;
+            t += `<bdi><span class="noteBoxUserNote">${innerHTML}</span></bdi>`;
             break;
           }
           default:

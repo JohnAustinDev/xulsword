@@ -762,7 +762,7 @@ export const SPBM = {
       noteLocale: 'en',
       creationDate: new Date().valueOf(),
       hasCaret: true,
-      children: [],
+      childNodes: [],
     } as BookmarkFolderType,
   },
 };

@@ -4,6 +4,7 @@ import { clone, ofClass, sanitizeHTML } from '../../common';
 import G from '../rg';
 import { getElementInfo, getPopupInfo } from '../../libswordElemInfo';
 import log from '../log';
+import { addBookmarksToNotes, findBookmarks } from '../bookmarks';
 import { getDictEntryHTML, getLemmaHTML } from '../viewport/zdictionary';
 import {
   getIntroductions,
@@ -11,7 +12,7 @@ import {
   parseExtendedVKRef,
 } from '../viewport/zversekey';
 
-import { LocationVKType } from '../../type';
+import type { LocationGBType, LocationVKType, OSISBookType } from '../../type';
 import type { ElemInfo } from '../../libswordElemInfo';
 import type Popup from './popup';
 import type { PopupState } from './popup';
@@ -47,14 +48,37 @@ export function getPopupHTML(
   let html = '';
   switch (type) {
     case 'cr':
-    case 'fn':
-    case 'un': {
+    case 'fn': {
       if (mod && bk && ch && title) {
         // getChapterText must be called before getNotes
         G.LibSword.getChapterText(mod, `${bk}.${ch}`);
         const notes = G.LibSword.getNotes();
         // a note element's title does not include type, but its nlist does
         html = getNoteHTML(notes, null, 0, !testonly, `${type}.${title}`);
+      }
+      break;
+    }
+
+    case 'un': {
+      let l: LocationVKType | LocationGBType | null = null;
+      const t = (mod && mod in G.Tab && G.Tab[mod]) || null;
+      if (t && t.isVerseKey) {
+        l = {
+          book: bk as OSISBookType,
+          chapter: Number(ch),
+          v11n: t.v11n || 'KJV',
+        };
+      } else if (t && mod && typeof ch === 'string') {
+        l = { module: mod, key: ch };
+      }
+      if (l && mod) {
+        html = getNoteHTML(
+          addBookmarksToNotes(findBookmarks(l), '', mod),
+          null,
+          0,
+          !testonly,
+          `un.${title}`
+        );
       }
       break;
     }
@@ -90,7 +114,7 @@ export function getPopupHTML(
         }
         const { bk: bk2, ch: ch2, vs: vs2 } = si;
         const context: LocationVKType = {
-          book: bk2 || '',
+          book: bk2 || 'Gen',
           chapter: !Number.isNaN(Number(ch2)) ? Number(ch2) : 0,
           verse: vs2,
           v11n: null,

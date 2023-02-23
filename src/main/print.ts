@@ -42,7 +42,7 @@ const MainPrintHandler = async (
     if (destination === 'prompt-for-file') {
       // Print to a user selected PDF file
       const saveops: SaveDialogOptions = {
-        title: i18n.t('printCmd.label'),
+        title: i18n.t('menu.print'),
         filters: [
           {
             name: 'PDF',
