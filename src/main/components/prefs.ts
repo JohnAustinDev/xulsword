@@ -353,7 +353,7 @@ const Prefs = {
         value,
         aStore === 'prefs' ? undefined : aStore,
       ];
-      Subscription.publish.setPref(...args);
+      Subscription.publish.prefsChanged(...args);
     }
 
     return success;

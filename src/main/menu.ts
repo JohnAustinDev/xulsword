@@ -180,7 +180,7 @@ function updateMenuFromPref(menux?: Menu | null) {
   }
   const menu = menux || Menu.getApplicationMenu();
   if (menu) recurseMenu(menu);
-  // To inject menuPref into pref callbacks.
+  // To make menuPref available to pref callbacks without dependency cycles.
   G.Data.write(Array.from(menuPref), 'menuPref');
 }
 
@@ -207,7 +207,7 @@ export const pushPrefsToMenu: PrefCallbackType = (winid, key, val, store) => {
         type: 'xulsword',
       })[0];
       if (xs) {
-        const menuBuilder = new MenuBuilder(xs);
+        const menuBuilder = new MainMenuBuilder(xs);
         menuBuilder.buildMenu();
         xs = undefined;
       }
@@ -284,13 +284,13 @@ function tx(key: string, modifiers?: Modifiers[]): string | undefined {
   return text;
 }
 
-export default class MenuBuilder {
-  mainWindow: BrowserWindow;
+export default class MainMenuBuilder {
+  window: BrowserWindow;
 
   menuPref: string[];
 
-  constructor(mainWindow: BrowserWindow) {
-    this.mainWindow = mainWindow;
+  constructor(window: BrowserWindow) {
+    this.window = window;
     this.menuPref = [];
   }
 
@@ -391,7 +391,7 @@ export default class MenuBuilder {
             'quitApplicationCmdWin.accesskey'
           ),
           click: d(() => {
-            this.mainWindow.close();
+            this.window.close();
           }),
         },
       ],
@@ -413,7 +413,7 @@ export default class MenuBuilder {
               (ed === 'redo' && index >= list.length - 1)
             ),
             click: d(() => {
-              if (!Commands.edit(ed)) this.mainWindow.webContents[ed]();
+              if (!Commands.edit(ed)) this.window.webContents[ed]();
             }),
           };
           return item;
@@ -798,7 +798,7 @@ export default class MenuBuilder {
           click: d(() => {
             // because role is 'reload', this handler isn't called
             // (in Linux at least)
-            this.mainWindow.webContents.reload();
+            this.window.webContents.reload();
           }),
         },
         {
@@ -806,7 +806,7 @@ export default class MenuBuilder {
           label: 'Toggle &Developer Tools',
           accelerator: 'Alt+Ctrl+I',
           click: d(() => {
-            this.mainWindow.webContents.toggleDevTools();
+            this.window.webContents.toggleDevTools();
           }),
         },
       ],
@@ -887,21 +887,21 @@ export default class MenuBuilder {
           label: 'Reload',
           accelerator: 'Command+R',
           click: () => {
-            this.mainWindow.webContents.reload();
+            this.window.webContents.reload();
           },
         },
         {
           label: 'Toggle Full Screen',
           accelerator: 'Ctrl+Command+F',
           click: () => {
-            this.mainWindow.setFullScreen(!this.mainWindow.isFullScreen());
+            this.window.setFullScreen(!this.window.isFullScreen());
           },
         },
         {
           label: 'Toggle Developer Tools',
           accelerator: 'Alt+Command+I',
           click: () => {
-            this.mainWindow.webContents.toggleDevTools();
+            this.window.webContents.toggleDevTools();
           },
         },
       ],
@@ -913,7 +913,7 @@ export default class MenuBuilder {
           label: 'Toggle Full Screen',
           accelerator: 'Ctrl+Command+F',
           click: () => {
-            this.mainWindow.setFullScreen(!this.mainWindow.isFullScreen());
+            this.window.setFullScreen(!this.window.isFullScreen());
           },
         },
       ],

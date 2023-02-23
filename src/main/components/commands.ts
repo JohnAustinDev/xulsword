@@ -19,7 +19,7 @@ import Subscription from '../../subscription';
 import C, { SP, SPBM } from '../../constant';
 import parseSwordConf from '../parseSwordConf';
 import importBookmarkObject, {
-  findBookmarkFolder,
+  findBookmark,
   importDeprecatedBookmarks,
   Transaction,
 } from '../bookmarks';
@@ -741,7 +741,7 @@ const Commands = {
       ) as BookmarkFolderType;
       importFiles?.forEach((path, i) => {
         const folderID = parentFolder[i] || rootid;
-        const findFolder = findBookmarkFolder(bookmarks, folderID);
+        const findFolder = findBookmark(bookmarks, folderID);
         let folder = bookmarks;
         if (findFolder && 'children' in findFolder) {
           folder = findFolder as BookmarkFolderType;
@@ -787,7 +787,7 @@ const Commands = {
         'bookmarks'
       ) as BookmarkFolderType;
       const folder = folderID
-        ? findBookmarkFolder(bookmarks, folderID)
+        ? findBookmark(bookmarks, folderID)
         : bookmarks;
       if (folder && 'children' in folder) {
         const file = new LocalFile(obj.filePath);

@@ -18,7 +18,7 @@ import {
   XulProps,
   addClass,
 } from '../libxul/xul';
-import { forEachNode, TreeView } from '../libxul/treeview';
+import TreeView, { forEachNode } from '../libxul/treeview';
 import './chooser.css';
 import './genbookChooser.css';
 

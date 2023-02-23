@@ -2,6 +2,8 @@
 /* eslint-disable no-nested-ternary */
 import C, { SPBM } from '../constant';
 import { clone, randomID, replaceASCIIcontrolChars } from '../common';
+import { verseKey } from './minit';
+import { PrefCallbackType } from './components/prefs';
 
 import type {
   BookmarkFolderType,
@@ -11,11 +13,11 @@ import type {
   LocationGBType,
   LocationVKType,
   NewModulesType,
+  OSISBookType,
   PrefValue,
   TransactionType,
 } from '../type';
-import { verseKey } from './minit';
-import { PrefCallbackType } from './components/prefs';
+import type { SelectVKMType } from '../renderer/libxul/vkselect';
 
 type BMkeys =
   | keyof BookmarkItem
@@ -51,23 +53,6 @@ export const addBookmarkTransaction: PrefCallbackType = (
   }
 };
 
-export function findBookmarkFolder(
-  toSearch: BookmarkFolderType,
-  id: string,
-  recurse = true
-): BookmarkItem | null {
-  if (toSearch.id === id) return toSearch;
-  for (let x = 0; x < toSearch.children.length; x += 1) {
-    const child = toSearch.children[x];
-    if (child.id === id) return child;
-    if (recurse && 'children' in child) {
-      const descendant = findBookmarkFolder(child, id, true);
-      if (descendant) return descendant;
-    }
-  }
-  return null;
-}
-
 // Import a json file with bookmarks. Basic validation of property names
 // and types is done, along with a few enums. But validation is certainly
 // not comprehensive, so don't modify bookmark files by hand!
@@ -88,7 +73,6 @@ export default function importBookmarkObject(
       'string',
       new RegExp(`^(${(['folder', 'bookmark'] as BookmarkTypes).join('|')})$`),
     ] as StringRegex,
-    module: 'string',
     tabType: [
       'string',
       new RegExp(`^(${Object.values(C.SupportedTabTypes).join('|')})$`),
@@ -98,6 +82,7 @@ export default function importBookmarkObject(
     children: 'array',
     hasCaret: 'boolean',
     isExpanded: 'boolean',
+    isSelected: 'boolean',
   };
   const validateBookMark = (o: any): BookmarkFolderType | null => {
     let validationFailed = false;
@@ -245,17 +230,20 @@ export function importDeprecatedBookmarks(
             },
           ];
         }
-        let location: LocationVKType | LocationGBType;
+        let location: SelectVKMType | LocationGBType;
         if (isVerseKey) {
           location = {
-            book: BOOK,
+            vkmod: MODULE,
+            book: BOOK as OSISBookType,
             chapter: Number(CHAPTER),
             verse: Number(VERSE),
             lastverse: Number(LASTVERSE),
             v11n: 'KJV',
-          } as LocationVKType;
+          };
         } else {
-          location = { module: MODULE, key: CHAPTER } as LocationGBType;
+          const paragraph =
+            VERSE && !Number.isNaN(Number(VERSE)) ? Number(VERSE) : undefined;
+          location = { module: MODULE, key: CHAPTER, paragraph };
         }
         return [
           parentID,

@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react/static-property-placement */
 /* eslint-disable jsx-a11y/control-has-associated-label */
+import type { ReactElementLike } from 'prop-types';
 import React from 'react';
 import { ChromePicker as ColorPicker } from 'react-color';
 import { Slider } from '@blueprintjs/core';
-import type { ReactElementLike } from 'prop-types';
 import { diff } from '../../common';
 import G from '../rg';
 import renderToRoot from '../renderer';

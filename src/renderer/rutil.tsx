@@ -243,6 +243,12 @@ export function audioGenBookNode(
   return false;
 }
 
+// Split a string from LibSword up into paragraphs
+export function parseParagraphs(text: string): string[] {
+  // Apparently paragraph support was removed in xulsword 3.
+  return [text];
+}
+
 export function audioIcon(
   module: string,
   bookOrKey: OSISBookType | string,

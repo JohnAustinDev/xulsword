@@ -20,7 +20,7 @@ import { clone, getStatePref, JSON_parse } from '../common';
 import C, { SP, SPBM } from '../constant';
 import G from './mg';
 import { getCipherFailConfs, getTabs, updateGlobalModulePrefs } from './minit';
-import MenuBuilder, { pushPrefsToMenu } from './menu';
+import MainMenuBuilder, { pushPrefsToMenu } from './menu';
 import contextMenu from './contextMenu';
 import MainPrintHandler from './print';
 import setViewportTabs from './tabs';
@@ -115,6 +115,9 @@ const AvailableLanguages = [
   }
 }
 
+const appSubscriptions: (() => void)[] = [];
+appSubscriptions.push(Subscription.subscribe.windowCreated(contextMenu));
+
 if (
   process.env.NODE_ENV === 'development' ||
   process.env.DEBUG_PROD === 'true'
@@ -155,7 +158,7 @@ ipcMain.on(
   }
 );
 
-const openMainWindow = () => {
+const openXulswordWindow = () => {
   let options: Electron.BrowserWindowConstructorOptions = {
     title: G.i18n.t('programTitle', { ns: 'branding' }),
     fullscreenable: true,
@@ -186,15 +189,15 @@ const openMainWindow = () => {
   }
 
   G.Prefs.setComplexValue(`OpenWindows`, {}, 'windows');
-  const mainWin = BrowserWindow.fromId(
+  const xulswordWindow = BrowserWindow.fromId(
     G.Window.open({ type: 'xulsword', options })
   );
 
-  if (!mainWin) {
+  if (!xulswordWindow) {
     return null;
   }
 
-  const menuBuilder = new MenuBuilder(mainWin);
+  const menuBuilder = new MainMenuBuilder(xulswordWindow);
   menuBuilder.buildMenu();
 
   updateGlobalModulePrefs();
@@ -207,12 +210,17 @@ const openMainWindow = () => {
   log.info(BuildInfo);
   G.Data.write(BuildInfo, 'buildInfo');
 
-  const subscriptions: (() => void)[] = [];
-  subscriptions.push(Subscription.doSubscribe('getG', () => G));
-  subscriptions.push(Subscription.subscribe.setPref(addBookmarkTransaction));
-  subscriptions.push(Subscription.subscribe.setPref(pushPrefsToWindows));
-  subscriptions.push(Subscription.subscribe.setPref(pushPrefsToMenu));
-  subscriptions.push(
+  const xswinSubscriptions: (() => void)[] = [];
+  xswinSubscriptions.push(Subscription.doSubscribe('getG', () => G));
+  // addBookmarkTransaction must be before pushPrefsToMenu for undo/redo enable to work.
+  xswinSubscriptions.push(
+    Subscription.subscribe.prefsChanged(addBookmarkTransaction)
+  );
+  xswinSubscriptions.push(
+    Subscription.subscribe.prefsChanged(pushPrefsToWindows)
+  );
+  xswinSubscriptions.push(Subscription.subscribe.prefsChanged(pushPrefsToMenu));
+  xswinSubscriptions.push(
     Subscription.subscribe.resetMain(() => {
       G.LibSword.quit();
       Cache.clear();
@@ -221,7 +229,7 @@ const openMainWindow = () => {
       menuBuilder.buildMenu();
     })
   );
-  subscriptions.push(
+  xswinSubscriptions.push(
     Subscription.subscribe.modulesInstalled(
       (newmods: NewModulesType, callingWinID?: number) => {
         const newErrors = newmods.reports.map((r) => r.error).filter(Boolean);
@@ -280,7 +288,7 @@ const openMainWindow = () => {
   // Prompt for CipherKeys when encrypted modules with no keys, or
   // incorrect keys, are installed.
   if (Object.keys(CipherKeyModules).length) {
-    publishSubscription('modulesInstalled', { id: mainWin.id }, false, {
+    publishSubscription('modulesInstalled', { id: xulswordWindow.id }, false, {
       ...clone(C.NEWMODS),
       nokeymods: getCipherFailConfs(),
     });
@@ -290,7 +298,7 @@ const openMainWindow = () => {
     process.env.NODE_ENV === 'development' ||
     process.env.DEBUG_PROD === 'true'
   ) {
-    mainWin.on('ready-to-show', () =>
+    xulswordWindow.on('ready-to-show', () =>
       electronDebug({
         showDevTools: C.DevToolsopen,
         devToolsMode: 'undocked',
@@ -298,7 +306,7 @@ const openMainWindow = () => {
     );
   }
 
-  mainWin.on('close', () => {
+  xulswordWindow.on('close', () => {
     // Persist any open windows for the next restart
     G.Prefs.setComplexValue(
       `OpenOnStartup`,
@@ -307,13 +315,13 @@ const openMainWindow = () => {
     );
     // Close all other open windows
     BrowserWindow.getAllWindows().forEach((w) => {
-      if (w !== mainWin) w.close();
+      if (w !== xulswordWindow) w.close();
     });
-    subscriptions.forEach((dispose) => dispose());
+    xswinSubscriptions.forEach((dispose) => dispose());
     G.LibSword.quit();
   });
 
-  mainWin.on('closed', () => {
+  xulswordWindow.on('closed', () => {
     log.verbose('mainWindow closed...');
   });
 
@@ -321,7 +329,7 @@ const openMainWindow = () => {
     if (windowDescriptor) G.Window.open(windowDescriptor);
   });
 
-  return mainWin;
+  return xulswordWindow;
 };
 
 const init = async () => {
@@ -504,9 +512,6 @@ const init = async () => {
   });
 };
 
-const subscriptions: (() => void)[] = [];
-subscriptions.push(Subscription.subscribe.createWindow(contextMenu));
-
 app.on('window-all-closed', () => {
   G.Prefs.setBoolPref(`global.WindowsDidClose`, true);
 
@@ -518,7 +523,7 @@ app.on('window-all-closed', () => {
   // Respect the OSX convention of having the application in memory even
   // after all windows have been closed
   if (process.platform !== 'darwin') {
-    subscriptions.forEach((dispose) => dispose());
+    appSubscriptions.forEach((dispose) => dispose());
     log.info(`Exiting...`);
     app.quit();
   }
@@ -528,7 +533,7 @@ app.on('activate', () => {
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
   if (!WindowRegistry.some((wd) => wd && wd.type === 'xulsword'))
-    openMainWindow();
+    openXulswordWindow();
 });
 
 app
@@ -563,7 +568,7 @@ app
               },
       });
     }
-    return openMainWindow();
+    return openXulswordWindow();
   })
   .catch((e) => {
     throw e.stack;

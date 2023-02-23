@@ -158,6 +158,9 @@ const C = {
         QUOTEEND: ['"', '"'],
       },
     },
+    BMProperties: {
+      maxSampleText: 1024,
+    },
   },
 
   // These are all the properties which Config type objects will have.

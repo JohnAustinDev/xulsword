@@ -18,7 +18,12 @@ import Label from './label';
 import Menulist from './menulist';
 import './vkselect.css';
 
-import type { BookGroupType, LocationVKType, V11nType } from '../../type';
+import type {
+  BookGroupType,
+  LocationVKType,
+  OSISBookType,
+  V11nType,
+} from '../../type';
 import ModuleMenu from './modulemenu';
 
 const defaultProps = {
@@ -73,7 +78,7 @@ export type SelectVKMType = LocationVKType & {
 };
 
 export const defaultVKM = {
-  book: 'Gen',
+  book: 'Gen' as OSISBookType,
   chapter: 1,
   vkmod: '',
   v11n: 'KJV' as V11nType,
@@ -190,7 +195,7 @@ class VKSelect extends React.Component {
             s.lastchapter = 1;
             s.lastverse = 1;
           }
-          s.book = value;
+          s.book = value as OSISBookType;
           break;
         }
         default: {
@@ -290,14 +295,15 @@ class VKSelect extends React.Component {
     // and an installed module is selected, books not present in the module
     // are removed from the list. All books are sorted in v11n order and
     // are unique.
-    const bkbgs = books || G.BkChsInV11n[v11n].map((r) => r[0]);
-    const bookset: Set<string> = new Set();
-    bkbgs.forEach((bkbg: BookGroupType | string) => {
+    const bkbgs = (books ||
+      G.BkChsInV11n[v11n].map((r) => r[0])) as OSISBookType[];
+    const bookset: Set<OSISBookType> = new Set();
+    bkbgs.forEach((bkbg: OSISBookType | BookGroupType) => {
       if (C.SupportedBookGroups.includes(bkbg as any)) {
         const bg = bkbg as BookGroupType;
         C.SupportedBooks[bg].forEach((b) => bookset.add(b));
       } else if (G.Book[bkbg]) {
-        bookset.add(bkbg);
+        bookset.add(bkbg as OSISBookType);
       }
     });
     const filteredbooks =

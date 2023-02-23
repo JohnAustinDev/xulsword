@@ -324,8 +324,14 @@ function createWindow(
     win.webContents.send('resize', win.getSize());
   });
   const disposables: (() => void)[] = [];
-  const args: Parameters<typeof contextMenu> = [win, disposables];
-  Subscription.publish.createWindow(...args);
+  win.once(
+    'ready-to-show',
+    ((w, d) => () => {
+      Subscription.publish.windowCreated(
+        ...([w, d] as Parameters<typeof contextMenu>)
+      );
+    })(win, disposables)
+  );
   win.once('closed', () => {
     disposables.forEach((dispose) => dispose());
   });

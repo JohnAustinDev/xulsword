@@ -37,6 +37,7 @@ import type { DirsRendererType } from './main/components/dirs';
 import type LibSword from './main/components/libsword';
 import type MainPrintHandler from './main/print';
 import type { SP } from './constant';
+import type { SelectVKMType } from './renderer/libxul/vkselect';
 
 declare global {
   export interface Window {
@@ -653,7 +654,10 @@ export type GAddCaller<G extends { [k: string]: (...args: any[]) => any }> = {
   [K in keyof G]: GMethodAddCaller<G[K]>;
 };
 
-export type BookmarkItem = Pick<TreeNodeInfo, 'hasCaret' | 'isExpanded'> & {
+export type BookmarkItem = Pick<
+  TreeNodeInfo,
+  'hasCaret' | 'isExpanded' | 'isSelected'
+> & {
   id: string; // unique id of item
   label: string; // default is auto-generated; editable
   labelLocale: string; // locale of name
@@ -664,9 +668,8 @@ export type BookmarkItem = Pick<TreeNodeInfo, 'hasCaret' | 'isExpanded'> & {
 
 export type BookmarkType = BookmarkItem & {
   type: 'bookmark';
-  module: string; // it may or may not be installed.
   tabType: TabTypes;
-  location: LocationVKType | LocationGBType;
+  location: SelectVKMType | LocationGBType;
   sampleText: string;
 };
 

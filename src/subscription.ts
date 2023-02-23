@@ -5,50 +5,52 @@ import type { PrefCallbackType } from './main/components/prefs';
 import type { NewModulesType } from './type';
 import type { WindowRootState } from './renderer/renderer';
 
+// Publish callback opportunities to subscribers. To publish for subscribers
+// in other processes, use G.publishSubscription in conjunctions with Subscribe.
+// Subscribe may also be used to avoid dependency cycles.
+
 // To add a new subscription option, add another key to subscriptions, and
 // to make it TypeScriptable, copy/paste/edit SubscriptionType.subscribe
-// and SubscriptionsType.publish.
+// and SubscriptionType.publish.
 const subscriptions = {
-  setPref: {} as PrefCallbackType,
-
-  resetMain: {} as () => void,
-
+  prefsChanged: {} as PrefCallbackType,
+  windowCreated: {} as ContextMenuType,
   modulesInstalled: {} as (
     newmods: NewModulesType,
     callingWinID?: number
   ) => void,
 
-  createWindow: {} as ContextMenuType,
-
+  // These are subscribe once (used to avoid dependency cycles):
+  resetMain: {} as () => void,
   setWindowRootState: {} as (state: Partial<WindowRootState>) => void,
 };
 
 export interface SubscriptionType {
   subscribe: {
-    setPref: (func: typeof subscriptions['setPref']) => () => void;
-    resetMain: (func: typeof subscriptions['resetMain']) => () => void;
+    prefsChanged: (func: typeof subscriptions['prefsChanged']) => () => void;
     modulesInstalled: (
       func: typeof subscriptions['modulesInstalled']
     ) => () => void;
-    createWindow: (func: typeof subscriptions['createWindow']) => () => void;
+    windowCreated: (func: typeof subscriptions['windowCreated']) => () => void;
+    resetMain: (func: typeof subscriptions['resetMain']) => () => void;
     setWindowRootState: (
       func: typeof subscriptions['setWindowRootState']
     ) => () => void;
   };
 
   publish: {
-    setPref: (
-      ...args: Parameters<typeof subscriptions['setPref']>
-    ) => ReturnType<typeof subscriptions['setPref']>[];
-    resetMain: (
-      ...args: Parameters<typeof subscriptions['resetMain']>
-    ) => ReturnType<typeof subscriptions['resetMain']>[];
+    prefsChanged: (
+      ...args: Parameters<typeof subscriptions['prefsChanged']>
+    ) => ReturnType<typeof subscriptions['prefsChanged']>[];
     modulesInstalled: (
       ...args: Parameters<typeof subscriptions['modulesInstalled']>
     ) => ReturnType<typeof subscriptions['modulesInstalled']>[];
-    createWindow: (
-      ...args: Parameters<typeof subscriptions['createWindow']>
-    ) => ReturnType<typeof subscriptions['createWindow']>[];
+    windowCreated: (
+      ...args: Parameters<typeof subscriptions['windowCreated']>
+    ) => ReturnType<typeof subscriptions['windowCreated']>[];
+    resetMain: (
+      ...args: Parameters<typeof subscriptions['resetMain']>
+    ) => ReturnType<typeof subscriptions['resetMain']>[];
     setWindowRootState: (
       ...args: Parameters<typeof subscriptions['setWindowRootState']>
     ) => ReturnType<typeof subscriptions['setWindowRootState']>[];
@@ -61,10 +63,6 @@ export interface SubscriptionType {
   doPublish: (subscriptionName: string, ...args: any[]) => any[];
 }
 
-// Subscribe to and publish callback opportunities. It cannot be
-// used to provide callbacks between processes, but it may be used
-// to avoid dependency cycles. For multi-process publication
-// functionality, use G.publishSubscription.
 class SubscriptionClass implements SubscriptionType {
   subscribe;
 

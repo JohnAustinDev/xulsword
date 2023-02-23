@@ -15,7 +15,7 @@ export type TreeViewProps = {
   enableMultipleSelection: boolean;
   selectedIDs: (string | number)[];
   expandedIDs: (string | number)[];
-  bpClassName: string;
+  bpClassName: string; // a BluePrint class for the Tree element
   onSelection: (ids: (string | number)[]) => void;
   onExpansion: (ids: (string | number)[]) => void;
   onNodeClick: TreeEventHandler;
@@ -170,7 +170,7 @@ function usePrevious<V>(value: V) {
   return ref.current;
 }
 
-export const TreeView = (props: TreeViewProps) => {
+const TreeView = (props: TreeViewProps) => {
   const {
     bpClassName,
     initialState,
@@ -319,3 +319,5 @@ export const TreeView = (props: TreeViewProps) => {
 };
 TreeView.defaultProps = defaultProps;
 TreeView.propTypes = propTypes;
+
+export default TreeView;
