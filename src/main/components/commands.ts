@@ -55,7 +55,7 @@ import type { BMPropertiesState } from '../../renderer/bmProperties/bmProperties
 const Commands = {
   openModuleManager(): void {
     const options: BrowserWindowConstructorOptions = {
-      title: i18n.t('menu.addNewModule.label'),
+      title: i18n.t('menu.addNewModule'),
     };
     Window.openSingleton({
       type: 'moduleManager',
@@ -81,7 +81,7 @@ const Commands = {
       arguments[2] ?? getBrowserWindows({ type: 'xulsword' })[0].id;
     const extensions = ['zip', 'xsm', 'xsb', 'txt', 'json'];
     const options: OpenDialogSyncOptions = {
-      title: i18n.t('menu.addNewModule.label'),
+      title: i18n.t('menu.addNewModule'),
       filters: [
         {
           name: extensions.map((x) => x.toUpperCase()).join(', '),
@@ -150,7 +150,7 @@ const Commands = {
 
   removeModule() {
     const options = {
-      title: i18n.t('menu.removeModule.label'),
+      title: i18n.t('menu.removeModule'),
     };
     Window.openSingleton({
       type: 'removeModule',
@@ -574,7 +574,7 @@ const Commands = {
       chapters: null,
     };
     const options = {
-      title: i18n.t('print.printpassage'),
+      title: i18n.t('menu.printPassage'),
       ...C.UI.Window.large,
       webPreferences: {
         additionalArguments: [JSON_stringify({ passageWinState })],
@@ -672,7 +672,7 @@ const Commands = {
       ...(state || undefined),
     };
     const options = {
-      title: i18n.t('menu.copypassage'),
+      title: i18n.t('menu.copyPassage'),
       ...C.UI.Window.large,
       webPreferences: {
         additionalArguments: [JSON_stringify({ copyPassageState })],
@@ -718,7 +718,7 @@ const Commands = {
     })[0];
     if (!paths) {
       const obj = await dialog.showOpenDialog(callingWin, {
-        title: i18n.t('menu.addNewModule.label'),
+        title: i18n.t('menu.addNewModule'),
         filters: [
           {
             name: extensions.map((x) => x.toUpperCase()).join(', '),

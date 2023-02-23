@@ -284,7 +284,7 @@ export default class BMPropertiesWin extends React.Component {
           // Place the new bookmark or folder and save the updated bookmarks.
           newparent.childNodes.splice(newindex, 0, newitem);
           G.Prefs.setComplexValue('manager.bookmarks', bookmarks, 'bookmarks');
-          G.Window.reset('all', 'all');
+          G.Window.reset('all');
           G.Window.close();
         }
         break;

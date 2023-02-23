@@ -319,10 +319,17 @@ const openXulswordWindow = () => {
     });
     xswinSubscriptions.forEach((dispose) => dispose());
     G.LibSword.quit();
+
+    G.Prefs.setBoolPref(`global.WindowsDidClose`, true);
+
+    // Write all prefs to disk when app closes
+    G.Prefs.writeAllStores();
+
+    Cache.clear();
   });
 
   xulswordWindow.on('closed', () => {
-    log.verbose('mainWindow closed...');
+    log.verbose('xulsword window closed...');
   });
 
   persistedWindows.forEach((windowDescriptor) => {
@@ -516,13 +523,6 @@ const init = async () => {
 };
 
 app.on('window-all-closed', () => {
-  G.Prefs.setBoolPref(`global.WindowsDidClose`, true);
-
-  // Write all prefs to disk when app closes
-  G.Prefs.writeAllStores();
-
-  Cache.clear();
-
   // Respect the OSX convention of having the application in memory even
   // after all windows have been closed
   if (process.platform !== 'darwin') {

@@ -179,7 +179,7 @@ export default class PrintPassageWin extends React.Component {
         };
         const renderChaps: [OSISBookType, number][] = [];
         for (let ch = chapter; ch <= lastchapter; ch += 1) {
-          renderChaps.push([book, ch]);
+          if (book) renderChaps.push([book, ch]);
         }
 
         // Write first page to DOM for user to see right away
@@ -313,7 +313,7 @@ export default class PrintPassageWin extends React.Component {
             <>
               <Groupbox
                 className="progress-anchor"
-                caption={G.i18n.t('print.printpassage')}
+                caption={G.i18n.t('menu.printPassage')}
               >
                 <VKSelect
                   id="chapters"

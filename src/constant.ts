@@ -92,6 +92,10 @@ const C = {
 
   // xulsword UI constants
   UI: {
+    AcceleratorKey: {
+      openModuleManager: 'F2',
+      toggleFullScreen: 'F11',
+    },
     Window: {
       resizeDelay: 500, // ms between window resize and update
       persistentTypes: ['moduleManager'],

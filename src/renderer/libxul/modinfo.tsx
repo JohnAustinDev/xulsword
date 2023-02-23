@@ -11,6 +11,7 @@ import {
   sanitizeHTML,
   stringHash,
 } from '../../common';
+import C from '../../constant';
 import G from '../rg';
 import { moduleInfoHTML } from '../rutil';
 import { xulDefaultProps, xulPropTypes, XulProps, htmlAttribs } from './xul';
@@ -19,7 +20,7 @@ import Label from './label';
 import '../libsword.css'; // modinfo uses .head1
 import './modinfo.css';
 
-import type { SwordConfType } from '../../type';
+import type { ModTypes, SwordConfType, TabTypes } from '../../type';
 
 // Parent component should have this included in its state and state-type.
 export const modinfoParentInitialState = {
@@ -195,7 +196,13 @@ function Modinfo(props: ModinfoProps) {
             <div key={`lt${g}`} className="linklist">
               {configs.some((c) => c.moduleType === g || c.xsmType === g) && (
                 <>
-                  <div className="head1">{G.i18n.t(g)}</div>
+                  <div className="head1">
+                    {G.i18n.t(
+                      ((g in C.SupportedTabTypes &&
+                        C.SupportedTabTypes[g as ModTypes]) ||
+                        'Genbks') as TabTypes
+                    )}
+                  </div>
                   <div className="listbox">
                     <ul>
                       {configs.map((c) =>

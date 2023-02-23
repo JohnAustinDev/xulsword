@@ -13,7 +13,7 @@ import path from 'path';
 import { clone } from '../common';
 import C, { SP, SPBM } from '../constant';
 import G from './mg';
-import { getBrowserWindows } from './components/window';
+import Window, { getBrowserWindows } from './components/window';
 import Commands from './components/commands';
 import { Transaction } from './bookmarks';
 import setViewportTabs from './tabs';
@@ -245,9 +245,75 @@ function bookmarkProgramMenu(
   }));
 }
 
+function addShortcutKeys(submenu?: MenuItemConstructorOptions[]): void {
+  if (submenu) {
+    const sc = /(?!<&)&([^&])/;
+
+    const numbers: string[] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) =>
+      n.toString()
+    );
+
+    // Collect every letter of every label in this submenu and sort them.
+    const uc: Set<string> = new Set();
+    const lc: Set<string> = new Set();
+    submenu.forEach((item) => {
+      const { label } = item;
+      if (label) {
+        for (let x = 0; x <= label.length; x += 1) {
+          const l = label.substring(x, x + 1);
+          if (l.trim()) {
+            if (l.toUpperCase() === l) uc.add(l);
+            else lc.add(l);
+          }
+        }
+      }
+    });
+    const ucLetters: string[] = Array.from(uc).sort();
+    const lcLetters: string[] = Array.from(lc).sort();
+
+    // Collect already present shortcuts in this submenu
+    const used: string[] = [];
+    submenu.forEach((item) => {
+      const m = item.label?.match(sc);
+      if (m) {
+        used.push(m[1]);
+      }
+    });
+    const doAdd = (letters: string[]): void => {
+      submenu.forEach((item) => {
+        const m = item.label?.match(sc);
+        if (item.label && !m) {
+          const words = item.label.split(' ');
+          for (let x = 0; x < words.length && !item.label.match(sc); x += 1) {
+            const available = letters.filter((l) => !used.includes(l));
+            let i = -1;
+            available.forEach((l) => {
+              const i2 = words[x].indexOf(l);
+              if (i2 > -1 && (i === -1 || i2 < i)) i = i2;
+            });
+            if (i !== -1) {
+              const l = words[x].substring(i, i + 1);
+              used.push(l);
+              words[x] = words[x].replace(l, `&${l}`);
+              item.label = words.join(' ');
+            }
+          }
+        }
+      });
+    };
+    doAdd(numbers.concat(ucLetters));
+    doAdd(lcLetters);
+    submenu.forEach((item) =>
+      addShortcutKeys(item.submenu as MenuItemConstructorOptions[] | undefined)
+    );
+  }
+}
+
 // Read locale key, appending & before shortcut key and escaping other &s.
+// IMPORTANT: shortcut keys are automatically added by addShortcutKeys(), so
+// i18n shortcut keys only need to be provided where automation is unacceptable.
 function ts(key: string, sckey?: string): string {
-  // CLUDGE:
+  // Only 3 keys exist for panels:
   let fix;
   [/(?<=menu\.windows\.)(\d)(?=win)/, /(?<=menu\.view\.window)(\d)/].forEach(
     (re) => {
@@ -263,11 +329,11 @@ function ts(key: string, sckey?: string): string {
   if (fix) return fix;
 
   let text = G.i18n.t(key);
-  const sckey2 = sckey || `${key}.ak`;
+  const sckey2 = sckey || `${key}.sc`;
   if (text) {
     text = text.replace(/(?!<&)&(?!=&)/g, '&&');
-    const l = G.i18n.t(sckey2);
-    if (l) {
+    if (G.i18n.exists(sckey2)) {
+      const l = G.i18n.t(sckey2);
       const re = new RegExp(`(${l})`, 'i');
       text = text.replace(re, '&$1');
     }
@@ -301,6 +367,7 @@ export default class MainMenuBuilder {
       process.platform === 'darwin'
         ? this.buildDarwinTemplate()
         : this.buildDefaultTemplate();
+    addShortcutKeys(template);
     const menu = Menu.buildFromTemplate(template);
     buildModuleMenus(menu);
     updateMenuFromPref(menu);
@@ -318,7 +385,7 @@ export default class MainMenuBuilder {
           submenu: [
             {
               label: ts('menu.newModule.fromInternet'),
-              accelerator: 'F2',
+              accelerator: C.UI.AcceleratorKey.openModuleManager,
               click: d(() => {
                 Commands.openModuleManager();
               }),
@@ -388,7 +455,7 @@ export default class MainMenuBuilder {
           role: 'quit',
           label: ts('menu.quit'),
           click: d(() => {
-            this.window.close();
+            Window.close({ type: 'xulsword' });
           }),
         },
       ],
@@ -542,14 +609,14 @@ export default class MainMenuBuilder {
       role: 'viewMenu',
       label: ts('menu.view'),
       submenu: [
-        /*
         {
-          label: 'Toggle &Full Screen',
-          accelerator: 'F11',
+          label: G.i18n.t('Toggle Full Screen'),
+          visible: false,
+          accelerator: C.UI.AcceleratorKey.toggleFullScreen,
           click: d(() => {
-            this.mainWindow.setFullScreen(!this.mainWindow.isFullScreen());
+            this.window.setFullScreen(!this.window.isFullScreen());
           }),
-        }, */
+        },
         ...textSwitches,
         {
           label: ts('menu.view.showAll'),
@@ -685,7 +752,6 @@ export default class MainMenuBuilder {
         },
         {
           label: ts('menu.options.language'),
-          // accelerator: 'F1', cannot open main menu item
           submenu: C.Locales.map((l: any) => {
             const [lng, name] = l;
             return {

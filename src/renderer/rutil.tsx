@@ -772,7 +772,9 @@ export function moduleInfoHTML(configs: SwordConfType[]): string {
             value = v.toString();
           } else if (sf === 'moduleType') {
             const v = c[f] as ModTypes;
-            value = G.i18n.t(v);
+            const tt =
+              (v in C.SupportedTabTypes && C.SupportedTabTypes[v]) || '';
+            value = G.i18n.t(tt || 'Genbks');
           } else if (sf === 'Lang') {
             const v = c[f] as string;
             const [l, s] = v.split('-');
