@@ -1,14 +1,14 @@
 /* eslint-disable no-nested-ternary */
 import Cache from '../cache';
 import { JSON_attrib_parse, ofClass } from '../common';
-import RefParser from '../refparse';
+import RefParser from '../refParser';
 import C from '../constant';
 import G from './rg';
 import {
   findElementData,
   mergeElementData,
   updateDataAttribute,
-} from './libswordElemInfo';
+} from './htmlData';
 import { getMaxVerse, verseKey } from './rutil';
 
 import type {
@@ -21,7 +21,7 @@ import type {
   SwordFilterType,
   SwordFilterValueType,
 } from '../type';
-import type { HTMLData } from './libswordElemInfo';
+import type { HTMLData } from './htmlData';
 import type { AtextProps } from './viewport/atext';
 import type { LibSwordResponse } from './viewport/ztext';
 import type { SelectVKMType } from './libxul/vkselect';

@@ -9,7 +9,7 @@ import {
   getLocalizedChapterTerm,
   JSON_attrib_stringify,
 } from '../../common';
-import { getElementData, HTMLData } from '../libswordElemInfo';
+import { getElementData } from '../htmlData';
 import {
   getCompanionModules,
   getMaxChapter,
@@ -28,6 +28,7 @@ import type {
   ShowType,
   TextVKType,
 } from '../../type';
+import type { HTMLData } from '../htmlData';
 import type Xulsword from '../xulsword/xulsword';
 import type { XulswordState } from '../xulsword/xulsword';
 import type Atext from './atext';

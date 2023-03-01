@@ -3,6 +3,7 @@
 import { clone, findBookmarkItem, ofClass } from '../../common';
 import G from '../rg';
 import { addBookmarksToNotes, getBookmarkInfo } from '../bookmarks';
+import { getElementData } from '../htmlData';
 import { getDictEntryHTML, getLemmaHTML } from '../viewport/zdictionary';
 import {
   getIntroductions,
@@ -11,7 +12,7 @@ import {
 } from '../viewport/zversekey';
 
 import type { BookmarkFolderType } from '../../type';
-import { getElementData, HTMLData } from '../libswordElemInfo';
+import type { HTMLData } from '../htmlData';
 import type Popup from './popup';
 import type { PopupState } from './popup';
 

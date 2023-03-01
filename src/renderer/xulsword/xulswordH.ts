@@ -1,7 +1,7 @@
 /* eslint-disable import/no-duplicates */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
-import RefParser from '../../refparse';
+import RefParser from '../../refParser';
 import { clone, ofClass } from '../../common';
 import { chapterChange, verseChange } from '../viewport/zversekey';
 import { genbookChange } from '../viewport/ztext';

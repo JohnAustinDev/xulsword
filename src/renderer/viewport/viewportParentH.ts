@@ -5,7 +5,7 @@ import React from 'react';
 import C, { SP } from '../../constant';
 import Cache from '../../cache';
 import { clone, escapeRE, JSON_stringify, ofClass } from '../../common';
-import { getElementData } from '../libswordElemInfo';
+import { getElementData } from '../htmlData';
 import G from '../rg';
 import { scrollIntoView, verseKey } from '../rutil';
 import { delayHandler } from '../libxul/xul';
@@ -22,9 +22,9 @@ import type {
 } from '../../type';
 import type Xulsword from '../xulsword/xulsword';
 import type { XulswordState } from '../xulsword/xulsword';
+import type { DragSizerVal } from '../libxul/dragsizer';
 import type ViewportWin from './viewportWin';
 import type { ViewportWinState } from './viewportWin';
-import type { DragSizerVal } from '../libxul/dragsizer';
 
 // Important: These SP.xulsword properties become independent
 // window properties for windows other than the xulsword window.

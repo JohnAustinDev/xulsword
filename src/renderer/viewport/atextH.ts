@@ -8,13 +8,13 @@ import {
   ofClass,
   sanitizeHTML,
 } from '../../common';
-import { getElementData } from '../libswordElemInfo';
+import { getElementData } from '../htmlData';
 import G from '../rg';
 import log from '../log';
 import { scrollIntoView } from '../rutil';
 import { aTextWheelScroll, getRefHTML } from './zversekey';
 
-import { AtextStateType } from '../../type';
+import type { AtextStateType } from '../../type';
 import type Atext from './atext';
 import type { AtextProps } from './atext';
 

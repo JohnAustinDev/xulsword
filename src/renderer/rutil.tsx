@@ -13,43 +13,33 @@ import {
   isAudioVerseKey,
   JSON_parse,
   keep,
-  ofClass,
   readGenBookAudioConf,
   versionCompare,
   getStatePref as getStatePref2,
-  JSON_attrib_parse,
 } from '../common';
-import RefParser, { RefParserOptionsType } from '../refparse';
-import VerseKey from '../versekey';
+import RefParser, { RefParserOptionsType } from '../refParser';
+import VerseKey from '../verseKey';
 import C from '../constant';
 import G from './rg';
-import {
-  getElementData,
-  findElementData,
-  mergeElementData,
-} from './libswordElemInfo';
+import { getElementData } from './htmlData';
 import log from './log';
 
 import type {
-  ContextData,
   GenBookAudio,
   GenBookAudioConf,
   GenBookAudioFile,
-  LocationGBType,
   LocationVKType,
   ModTypes,
   OSISBookType,
   PrefObject,
   PrefValue,
   Repository,
-  SearchType,
   SwordConfLocalized,
   SwordConfType,
   V11nType,
   VerseKeyAudio,
   VerseKeyAudioFile,
 } from '../type';
-import type { HTMLData } from './libswordElemInfo';
 
 export function component(
   comp: any

@@ -4,11 +4,11 @@
 /* eslint-disable no-bitwise */
 /* eslint-disable import/no-duplicates */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { getElementData } from '../libswordElemInfo';
 import { dString, escapeRE, getCSS, sanitizeHTML } from '../../common';
 import C, { SP } from '../../constant';
 import G from '../rg';
 import log from '../log';
+import { getElementData } from '../htmlData';
 import { verseKey, windowArgument } from '../rutil';
 import { getStrongsModAndKey } from '../viewport/zdictionary';
 

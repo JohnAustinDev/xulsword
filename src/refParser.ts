@@ -3,10 +3,16 @@ import Cache from './cache';
 import C from './constant';
 import { iString } from './common';
 
-import type { BookGroupType, LocationVKType, V11nType, GType } from './type';
+import type {
+  BookGroupType,
+  LocationVKType,
+  V11nType,
+  GType,
+  OSISBookType,
+} from './type';
 
 type IdentifyBookType = {
-  code: string;
+  code: OSISBookType | '';
   locale: string | null;
 };
 
@@ -216,7 +222,7 @@ export default class RefParser {
       const code = this.osisString.substring(
         osisi,
         this.osisString.indexOf('.', osisi)
-      );
+      ) as OSISBookType;
       r.code = code;
       return r;
     }

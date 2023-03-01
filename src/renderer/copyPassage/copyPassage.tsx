@@ -32,7 +32,7 @@ import '../libsword.css';
 import '../viewport/atext.css';
 import './copyPassage.css';
 
-import type VerseKey from '../../versekey';
+import type VerseKey from '../../verseKey';
 
 const defaultProps = xulDefaultProps;
 

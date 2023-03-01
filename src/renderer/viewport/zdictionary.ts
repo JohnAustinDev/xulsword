@@ -6,7 +6,7 @@ import G from '../rg';
 import log from '../log';
 
 import type { SwordFilterType, SwordFilterValueType } from '../../type';
-import type { HTMLData } from '../libswordElemInfo';
+import type { HTMLData } from '../htmlData';
 
 const DictKeyTransform: { [i: string]: (key: string) => string } = {
   StrongsHebrew: (key) => {

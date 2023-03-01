@@ -3,7 +3,7 @@ import C from './constant';
 import { clone, dString } from './common';
 
 import type { GType, LocationVKType, OSISBookType, V11nType } from './type';
-import type RefParser from './refparse';
+import type RefParser from './refParser';
 
 type VerseKeyGtype = {
   convertLocation: GType['LibSword']['convertLocation'];

@@ -8,7 +8,7 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { getElementData, HTMLData } from '../libswordElemInfo';
+import { getElementData, HTMLData } from '../htmlData';
 import Cache from '../../cache';
 import C from '../../constant';
 import {

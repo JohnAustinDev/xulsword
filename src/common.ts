@@ -666,7 +666,7 @@ export function audioConfStrings(chapters: number[] | boolean[]): string[] {
   });
 }
 
-export function findParentOfBookmark(
+export function findParentOfBookmarkItem(
   toSearch: BookmarkFolderType,
   id: string,
   recurse = true
@@ -676,7 +676,7 @@ export function findParentOfBookmark(
     const child = toSearch.childNodes[x];
     if (child.id === id) return toSearch;
     if (recurse && 'childNodes' in child) {
-      const descendant = findParentOfBookmark(child, id, true);
+      const descendant = findParentOfBookmarkItem(child, id, true);
       if (descendant) return descendant;
     }
   }
@@ -721,14 +721,7 @@ export function bookmarkTreeNodes(
   for (let x = 0; x < childnodes.length; x += 1) {
     const item = childnodes[x];
     if (recurse && 'childNodes' in item) {
-      bookmarkTreeNodes(
-        item.childNodes,
-        only,
-        expandedIDs,
-        selectedIDs,
-        true,
-        false
-      );
+      bookmarkTreeNodes(item.childNodes, only, selIDs, expIDs, true, false);
     }
     if (
       only &&

@@ -10,7 +10,7 @@ import {
   clone,
   diff,
   findBookmarkItem,
-  findParentOfBookmark as findParentOfBookmarkItem,
+  findParentOfBookmarkItem,
   gbPaths,
   JSON_parse,
   JSON_stringify,

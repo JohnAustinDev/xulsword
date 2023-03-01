@@ -7,7 +7,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import RefParser from '../../refparse';
+import RefParser from '../../refParser';
 import G from '../rg';
 import {
   addClass,

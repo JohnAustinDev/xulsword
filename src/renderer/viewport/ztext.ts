@@ -10,7 +10,7 @@ import {
   JSON_attrib_stringify,
   stringHash,
 } from '../../common';
-import { getElementData, HTMLData } from '../libswordElemInfo';
+import { getElementData } from '../htmlData';
 import G from '../rg';
 import addBookmarks from '../bookmarks';
 import {
@@ -28,6 +28,7 @@ import type {
   SwordFilterType,
   SwordFilterValueType,
 } from '../../type';
+import type { HTMLData } from '../htmlData';
 
 export type LibSwordResponse = {
   textHTML: string;

@@ -2,17 +2,14 @@
 import React from 'react';
 import C from '../../constant';
 import { clone, JSON_stringify, ofClass } from '../../common';
-import {
-  findElementData,
-  HTMLData,
-  updateDataAttribute,
-} from '../libswordElemInfo';
+import { findElementData, updateDataAttribute } from '../htmlData';
 import G from '../rg';
 import { scrollIntoView } from '../rutil';
 import { delayHandler } from '../libxul/xul';
 import { getPopupHTML } from './popupH';
 
 import type { PlaceType, ShowType } from '../../type';
+import type { HTMLData } from '../htmlData';
 import type Atext from '../viewport/atext';
 
 let WheelScrolling = false;

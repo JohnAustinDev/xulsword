@@ -8,7 +8,7 @@ import {
   bookmarkTreeNodes,
   clone,
   findBookmarkItem,
-  findParentOfBookmark,
+  findParentOfBookmarkItem,
   randomID,
 } from '../../common';
 import C, { SPBM } from '../../constant';
@@ -35,7 +35,7 @@ import type {
   LocationGBType,
 } from '../../type';
 
-const { childNodes: rootChildNodes } = G.Prefs.getComplexValue(
+const Bookmarks = G.Prefs.getComplexValue(
   'manager.bookmarks',
   'bookmarks'
 ) as BookmarkFolderType;
@@ -93,16 +93,17 @@ const defaultState: BMPropertiesState = {
 // The window argument controls what appears in the bmProperties window and
 // to some extent how it operates:
 // STATE                  VALUE MEANING
-// treeSelection           str -move to or create item in selected folder,
-//                              or before selected bookmark if anyChildSelectable
-//                              is set.
 // bookmark.id             ''  -create new bookmark (new id will be created)
-// bookmark.location     undef -show folder properties dialog (no vk or gb
+// bookmark.id             str -id of bookmark item to which the window will apply.
+// bookmark.location     undef -shows folder properties dialog (which has no vk or gb
 //                              selector or sampleText)
-// bookmark.location      null -show default verse-key properties dialog
-// bookmark.location.v11n  str -show verse-key properties dialog
-// bookmark.location.v11n  ''   show general-book properties dialog
-// hide                    []  -hide the inputs with the given id(s)
+// bookmark.location      null -shows verse-key properties dialog with default location.
+// bookmark.location.v11n  str -shows verse-key properties dialog with the given location.
+// bookmark.location.v11n  ''   show general-book properties dialog at given location.
+// treeSelection           str -if editing an existing bookmark, this value is ignored.
+//                              Otherwise it's the default folder (or bookmark loc-
+//                              ation if anyChildSelectable is set) for the new item.
+// hide                    []  -hide the input selector(s) with the given id(s)
 const initialState = {
   ...defaultState,
   ...(windowArgument('bmPropertiesState') as Partial<BMPropertiesState> | null),
@@ -122,7 +123,16 @@ export default class BMPropertiesWin extends React.Component {
   constructor(props: BMPropertiesProps) {
     super(props);
 
-    this.state = clone(initialState);
+    const state: BMPropertiesState = clone(initialState);
+
+    // Select bookmark item's parent folder or location
+    if (state.bookmark) {
+      const item = state.anyChildSelectable
+        ? findBookmarkItem(Bookmarks, state.bookmark.id)
+        : findParentOfBookmarkItem(Bookmarks, state.bookmark.id);
+      if (item) state.treeSelection = item.id;
+    }
+    this.state = state;
 
     this.treeHandler = this.treeHandler.bind(this);
     this.vkHandler = this.vkHandler.bind(this);
@@ -195,7 +205,7 @@ export default class BMPropertiesWin extends React.Component {
       }
       case 'ok': {
         const state = this.state as BMPropertiesState;
-        const { treeSelection, bookmark } = state;
+        const { treeSelection, bookmark, anyChildSelectable } = state;
         const { id } = bookmark;
         if (!initialState.bookmark.id) {
           bookmark.creationDate = new Date().valueOf();
@@ -205,43 +215,42 @@ export default class BMPropertiesWin extends React.Component {
           'bookmarks'
         ) as BookmarkFolderType;
         // Delete original bookmark or folder:
-        const oldparent = findParentOfBookmark(bookmarks, id);
-        let oldindex = -1;
-        if (oldparent) {
-          oldindex = oldparent.childNodes.findIndex((c) => c.id === id);
+        const oldFolder = findParentOfBookmarkItem(bookmarks, id);
+        let oldIndex = -1;
+        if (oldFolder) {
+          oldIndex = oldFolder.childNodes.findIndex((c) => c.id === id);
         }
-        if (oldparent && oldindex > -1) {
-          oldparent.childNodes.splice(oldindex, 1);
+        if (oldFolder && oldIndex > -1) {
+          oldFolder.childNodes.splice(oldIndex, 1);
         }
         // Find parent and index where new bookmark or folder will be placed:
-        let newparent = oldparent;
-        let newindex = oldindex;
-        if (treeSelection) {
-          const selItem = findBookmarkItem(bookmarks, treeSelection) || null;
-          if (selItem && selItem.type === 'bookmark') {
-            newparent = findParentOfBookmark(bookmarks, selItem.id);
-            if (newparent) {
-              newindex = newparent.childNodes.findIndex(
-                (c) => c.id === selItem.id
-              );
-            }
-          } else if (selItem) {
-            newparent = selItem;
-            newindex = 0;
-            if (newparent && oldparent && newparent.id === oldparent.id) {
-              newindex = oldindex;
-            }
-          }
-        }
-        if (!newparent || newindex === -1) {
-          newparent = findBookmarkItem(
+        let newFolder = oldFolder;
+        let newIndex = oldIndex > -1 ? oldIndex - 1 : -1;
+        const selItem =
+          findBookmarkItem(
             bookmarks,
-            SPBM.manager.bookmarks.id
-          ) as BookmarkFolderType;
-          newindex = 0;
+            treeSelection || SPBM.manager.bookmarks.id
+          ) || null;
+        if (selItem?.type === 'bookmark') {
+          newFolder = findParentOfBookmarkItem(bookmarks, selItem.id);
+          if (newFolder) {
+            newIndex = newFolder.childNodes.findIndex(
+              (c) => c.id === selItem.id
+            );
+          }
+        } else if (
+          selItem?.type === 'folder' &&
+          (anyChildSelectable || selItem.id !== oldFolder?.id)
+        ) {
+          newFolder = selItem;
+          newIndex = -1;
+        }
+        if (!newFolder) {
+          newFolder = bookmarks;
+          newIndex = -1;
         }
         // Place the new bookmark or folder and save the updated bookmarks.
-        newparent.childNodes.splice(newindex, 0, bookmark);
+        newFolder.childNodes.splice(newIndex + 1, 0, bookmark);
         G.Prefs.setComplexValue('manager.bookmarks', bookmarks, 'bookmarks');
         G.Window.reset('component-reset', 'all');
         G.Window.close();
@@ -253,7 +262,8 @@ export default class BMPropertiesWin extends React.Component {
   }
 
   treeHandler(selection: (string | number)[]) {
-    this.setState({ treeSelection: selection[0].toString() });
+    const ts = selection[0] || '';
+    this.setState({ treeSelection: ts.toString() });
   }
 
   gbHandler(selection: SelectGBMType) {
@@ -262,7 +272,7 @@ export default class BMPropertiesWin extends React.Component {
       const bm = bookmark as BookmarkType;
       bm.location = {
         module: selection.gbmod,
-        key: [selection.parent, selection.children[0]].join(C.GBKSEP),
+        key: [selection.parent, selection.children[0] || ''].join(C.GBKSEP),
         paragraph: undefined,
       };
       bm.label = newLabel(bm.location);
@@ -311,7 +321,7 @@ export default class BMPropertiesWin extends React.Component {
     }
 
     const childNodes = bookmarkTreeNodes(
-      rootChildNodes,
+      Bookmarks.childNodes,
       anyChildSelectable ? undefined : 'folder',
       treeSelection || undefined
     );

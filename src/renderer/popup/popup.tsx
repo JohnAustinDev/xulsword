@@ -11,6 +11,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import PropTypes from 'prop-types';
+import C from '../../constant';
+import { JSON_attrib_stringify, sanitizeHTML, stringHash } from '../../common';
+import G from '../rg';
+import { libswordImgSrc } from '../rutil';
 import {
   topHandle,
   htmlAttribs,
@@ -18,22 +22,13 @@ import {
   XulProps,
   xulPropTypes,
 } from '../libxul/xul';
-import C from '../../constant';
-import {
-  clone,
-  JSON_attrib_stringify,
-  sanitizeHTML,
-  stringHash,
-} from '../../common';
-import G from '../rg';
-import { libswordImgSrc } from '../rutil';
 import { Box, Hbox } from '../libxul/boxes';
 import { getRefBible } from '../viewport/zversekey';
 import popupH, { getPopupHTML } from './popupH';
 import '../libsword.css';
 import './popup.css';
 
-import { HTMLData } from '../libswordElemInfo';
+import type { HTMLData } from '../htmlData';
 
 const defaultProps = {
   ...xulDefaultProps,
