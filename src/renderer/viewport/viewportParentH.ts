@@ -4,14 +4,8 @@
 import React from 'react';
 import C, { SP } from '../../constant';
 import Cache from '../../cache';
-import {
-  decodeOSISRef,
-  clone,
-  escapeRE,
-  JSON_stringify,
-  ofClass,
-} from '../../common';
-import { getElementInfo } from '../../libswordElemInfo';
+import { clone, escapeRE, JSON_stringify, ofClass } from '../../common';
+import { getElementData } from '../libswordElemInfo';
 import G from '../rg';
 import { scrollIntoView, verseKey } from '../rutil';
 import { delayHandler } from '../libxul/xul';
@@ -287,7 +281,7 @@ export default function handler(
           'ilt-tab', // the interlinear tab
           'prevchaplink',
           'nextchaplink',
-          'dict-key',
+          'dictkey',
           'dt',
           'dtl',
           'gfn',
@@ -300,7 +294,7 @@ export default function handler(
       if (targ === null) return;
       e.preventDefault();
       const elem = targ.element;
-      const p = getElementInfo(elem);
+      const p = getElementData(elem);
       switch (targ.type) {
         case 'text-win': {
           const cols = atext?.dataset.columns;
@@ -537,19 +531,17 @@ export default function handler(
         case 'dtl':
           if (
             p &&
-            typeof p.osisref === 'string' &&
+            p.locationGB &&
             elem.classList.contains('x-target_self') &&
             atext
           ) {
-            setState(this, atext, (prevState: PinPropsType) => {
-              let { modkey } = prevState;
-              const str = p.osisref as string;
-              modkey = decodeOSISRef(str.replace(/^[^:]+:/, ''));
+            const modkey = p.locationGB.key;
+            setState(this, atext, () => {
               return { modkey };
             });
           }
           break;
-        case 'dict-key': {
+        case 'dictkey': {
           const key = elem.innerText;
           if (atext && key) {
             setState(this, atext, () => {
@@ -574,24 +566,14 @@ export default function handler(
         case 'fnlink':
         case 'crref': {
           if (p) {
-            const { bk, ch, vs, lv, mod } = p;
-            const t = (mod && G.Tab[mod]) || null;
-            const v11n = t?.v11n || null;
-            const chapter = !Number.isNaN(Number(ch)) ? Number(ch) : 0;
-            if (
-              bk &&
-              Object.values(C.SupportedBooks).some((bg: any) =>
-                bg.includes(bk)
-              ) &&
-              ch &&
-              mod &&
-              v11n
-            ) {
+            const { context, location: l } = p;
+            if (context && l) {
+              const { book, chapter, verse, lastverse, v11n } = l;
               const loc = {
-                book: bk as OSISBookType,
+                book,
                 chapter,
-                verse: vs || 1,
-                lastverse: lv || 1,
+                verse: verse || 1,
+                lastverse: lastverse || 1,
                 v11n,
               };
               G.Commands.goToLocationVK(loc, loc);

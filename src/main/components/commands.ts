@@ -805,7 +805,7 @@ const Commands = {
 
   // Normally either bmPropertiesState (to show properties of an existing item)
   // or newitem (show properties of a new item) are expected to be provided, not
-  // both. However bmPropertiesState can be used to modify a new-bookmark dialog,
+  // both. However bmPropertiesState could be used to modify a new-bookmark dialog,
   // and in that case any bmPropertiesState.bookmark will be ignored.
   openBookmarkProperties(
     bmPropertiesState?: Partial<BMPropertiesState>,
@@ -840,26 +840,28 @@ const Commands = {
         creationDate: new Date().valueOf(),
       };
       if (location) {
-        const t = (module && module in tab && tab[module]) || null;
-        if (t && 'v11n' in location) {
+        if (module && 'v11n' in location) {
+          const t = (module in tab && tab[module]) || null;
           bookmark = {
             ...item,
             type: 'bookmark',
             location: {
               ...location,
               vkmod: module || '',
-              v11n: t.v11n || 'KJV',
+              v11n: t?.v11n || 'KJV',
             },
-            tabType: t.tabType,
+            tabType: t?.tabType || 'Texts',
             sampleText: '',
           };
-        } else if (t) {
+        } else if (!('v11n' in location)) {
           const l = location as LocationGBType;
+          const { module: m } = l;
+          const tabType = (m in tab && tab[m].tabType) || 'Genbks';
           bookmark = {
             ...item,
             type: 'bookmark',
             location: l,
-            tabType: t.tabType,
+            tabType,
             sampleText: '',
           };
         }
@@ -879,23 +881,25 @@ const Commands = {
     }
     if (!hide) hide = [];
     if (!bookmark?.note && !hide.includes('note')) hide.push('note');
-    const options = {
-      title: i18n.t(titleKey),
-      parent,
-      webPreferences: {
-        additionalArguments: [
-          JSON_stringify({
-            bmPropertiesState: {
-              bookmark,
-              treeSelection,
-              anyChildSelectable,
-              hide,
-            },
-          }),
-        ],
-      },
-    };
-    Window.open({ type: 'bmProperties', category: 'dialog', options });
+    if (bookmark) {
+      const options = {
+        title: i18n.t(titleKey),
+        parent,
+        webPreferences: {
+          additionalArguments: [
+            JSON_stringify({
+              bmPropertiesState: {
+                bookmark,
+                treeSelection,
+                anyChildSelectable,
+                hide,
+              },
+            }),
+          ],
+        },
+      };
+      Window.open({ type: 'bmProperties', category: 'dialog', options });
+    }
     parent = undefined;
   },
 

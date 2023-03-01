@@ -1,9 +1,12 @@
 /* eslint-disable no-continue */
+import Cache from '../../cache';
+import { JSON_attrib_stringify } from '../../common';
 import C from '../../constant';
 import G from '../rg';
 import log from '../log';
 
 import type { SwordFilterType, SwordFilterValueType } from '../../type';
+import type { HTMLData } from '../libswordElemInfo';
 
 const DictKeyTransform: { [i: string]: (key: string) => string } = {
   StrongsHebrew: (key) => {
@@ -325,12 +328,14 @@ export function getLemmaHTML(
       !/^S_(DSS|MT)/.test(strongsClassArray[i])
     ) {
       // DSS|MT for SPVar module
-      buttonHTML += '<button type="button" class="snbut" ';
-      buttonHTML += `data-title="${
-        info.mod ? info.mod : 'Program'
-      }:${strongsClassArray[i].replace(/^[^_]+_/, '')}.${sourcemod}">`;
-      buttonHTML += strongsClassArray[i].replace(/^[^_]+_/, '');
-      buttonHTML += '</button>';
+      const code = strongsClassArray[i].replace(/^[^_]+_/, '');
+      const data: HTMLData = {
+        type: 'snbut',
+        reflist: [code],
+        context: sourcemod,
+      };
+      const d = JSON_attrib_stringify(data);
+      buttonHTML += `<button type="button" class="snbut" data-data="${d}">${code}</button>`;
     }
 
     if (info.key && info.mod) {
@@ -355,4 +360,90 @@ export function getLemmaHTML(
   }"><div class="lemma-header">${matchingPhrase}</div>${html}<div>`;
 
   return html;
+}
+
+export function getAllDictionaryKeys(module: string): string[] {
+  if (!Cache.has('keylist', module)) {
+    let list: string[] = G.LibSword.getAllDictionaryKeys(module).split('<nx>');
+    list.pop();
+    // KeySort entry enables localized list sorting by character collation.
+    // Square brackets are used to separate any arbitrary JDK 1.4 case
+    // sensitive regular expressions which are to be treated as single
+    // characters during the sort comparison. Also, a single set of curly
+    // brackets can be used around a regular expression which matches any
+    // characters/patterns that need to be ignored during the sort comparison.
+    // IMPORTANT: Any square or curly bracket within regular expressions must
+    // have had an additional backslash added before it.
+    const sort0 = G.LibSword.getModuleInformation(module, 'KeySort');
+    if (sort0 !== C.NOTFOUND) {
+      const sort = `-${sort0}0123456789`;
+      const getignRE = /(?<!\\)\{(.*?)(?<!\\)\}/; // captures the ignore regex
+      const getsrtRE = /^\[(.*?)(?<!\\)\]/; // captures sorting regexes
+      const getescRE = /\\(?=[{}[\]])/g; // matches the KeySort escapes
+      const ignoreREs: RegExp[] = [/\s/];
+      const ignREm = sort.match(getignRE);
+      if (ignREm) ignoreREs.push(new RegExp(ignREm[1].replace(getescRE, '')));
+      let sort2 = sort.replace(getignRE, '');
+      let sortREs: [number, number, RegExp][] = [];
+      for (let i = 0; sort2.length; i += 1) {
+        let re = sort2.substring(0, 1);
+        let rlen = 1;
+        const mt = sort2.match(getsrtRE);
+        if (mt) {
+          [, re] = mt;
+          rlen = re.length + 2;
+        }
+        sortREs.push([i, re.length, new RegExp(`^(${re})`)]);
+        sort2 = sort2.substring(rlen);
+      }
+      sortREs = sortREs.sort((a, b) => {
+        const [, alen] = a;
+        const [, blen] = b;
+        if (alen > blen) return -1;
+        if (alen < blen) return 1;
+        return 0;
+      });
+      list = list.sort((aa, bb) => {
+        let a = aa;
+        let b = bb;
+        ignoreREs.forEach((re) => {
+          a = aa.replace(re, '');
+          b = bb.replace(re, '');
+        });
+        for (; a.length && b.length; ) {
+          let x;
+          let am;
+          let bm;
+          for (x = 0; x < sortREs.length; x += 1) {
+            const [, , re] = sortREs[x];
+            if (am === undefined && re.test(a)) am = sortREs[x];
+            if (bm === undefined && re.test(b)) bm = sortREs[x];
+          }
+          if (am !== undefined && bm !== undefined) {
+            const [ia, , rea] = am;
+            const [ib, , reb] = bm;
+            if (ia < ib) return -1;
+            if (ia > ib) return 1;
+            a = a.replace(rea, '');
+            b = b.replace(reb, '');
+          } else if (am !== undefined && bm === undefined) {
+            return -1;
+          } else if (am === undefined && bm !== undefined) {
+            return 1;
+          }
+          const ax = a.charCodeAt(0);
+          const bx = b.charCodeAt(0);
+          if (ax < bx) return -1;
+          if (ax > bx) return 1;
+          a = a.substring(1);
+          b = b.substring(1);
+        }
+        if (a.length && !b.length) return -1;
+        if (!a.length && b.length) return 1;
+        return 0;
+      });
+    }
+    Cache.write(list, 'keylist', module);
+  }
+  return Cache.read('keylist', module);
 }

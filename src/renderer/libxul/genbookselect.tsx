@@ -11,9 +11,17 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { TreeNodeInfo } from '@blueprintjs/core';
-import { clone, diff, genBookTreeNodes, keep, ofClass } from '../../common';
+import {
+  clone,
+  dictTreeNodes,
+  diff,
+  genBookTreeNodes,
+  keep,
+  ofClass,
+} from '../../common';
 import C from '../../constant';
 import G from '../rg';
+import { getAllDictionaryKeys } from '../viewport/zdictionary';
 import log from '../log';
 import { addClass, xulDefaultProps, XulProps, xulPropTypes } from './xul';
 import { Vbox } from './boxes';
@@ -98,7 +106,7 @@ class GBSelect extends React.Component {
   constructor(props: GBSelectProps) {
     super(props);
     const { initialGBM, gbmods, gbmodNodeLists } = props;
-    const defaultGBM = {
+    const defaultGBM: SelectGBMType = {
       gbmod:
         (gbmods && gbmods[0]) ||
         (gbmodNodeLists && gbmodNodeLists[0].module) ||
@@ -271,31 +279,44 @@ class GBSelect extends React.Component {
         ? []
         : gbmodsProp || G.Tabs.map((t) => t.module)
     )
-      .filter((m) => m && m in G.Tab && G.Tab[m].type === C.GENBOOK)
+      .filter(
+        (m) =>
+          m && m in G.Tab && [C.GENBOOK, C.DICTIONARY].includes(G.Tab[m].type)
+      )
       .map((m) => {
         return {
           module: m,
           label: G.Tab[m].label,
           labelClass: G.Tab[m].labelClass,
-          nodes: genBookTreeNodes(G.LibSword.getGenBookTableOfContents(m), m),
+          nodes:
+            G.Tab[m].type === C.GENBOOK
+              ? genBookTreeNodes(G.LibSword.getGenBookTableOfContents(m), m)
+              : dictTreeNodes(getAllDictionaryKeys(m), m),
         };
       });
     list.push(...propNodeLists);
 
     // Insure a leaf node is shown when there is no parent selection.
     const nodes = list.find((l) => l.module === gbmod)?.nodes || [];
+    // Find ancestors including parent
     let ancestors = findAncestors(parentx, nodes);
     let parent = parentx;
     let children = childrenx;
     if (!ancestors.length) parent = '';
-    if (!parent) {
-      children = [];
-      parent = findParentOfFirstLeaf(nodes);
-      ancestors = findAncestors(parent, nodes);
+    if (!parent && !children.length) {
+      const par = findParentOfFirstLeaf(nodes);
+      if (par) {
+        children = [];
+        parent = par;
+        ancestors = findAncestors(par, nodes);
+      }
     }
 
     // If parent has no children, then use grandparent
-    if (!ancestors[ancestors.length - 1].childNodes?.length) {
+    if (
+      ancestors.length > 1 &&
+      !ancestors[ancestors.length - 1].childNodes?.length
+    ) {
       ancestors.pop();
       parent = ancestors[ancestors.length - 1].id.toString();
       children = [];
@@ -325,90 +346,92 @@ class GBSelect extends React.Component {
         ))}
       </Menulist>
     );
-    // Ancestor selectors
-    if (ancestors) {
-      this.prevValues.parent = parent;
-      selects.push(
-        ...ancestors.map((n, i) => (
-          <Menulist
-            className={[
-              'select-parent',
-              findSiblings(n.id, nodes).length === 1 ? 'hide' : '',
-            ].join(' ')}
-            key={['sp', n.id].join('.')}
-            value={n.id.toString()}
-            data-index={i}
-            onChange={handler}
-          >
-            {findSiblings(n.id, nodes).map((cn) => {
-              if (cn) {
-                const label = cn.label.toString();
-                const className = !Number.isNaN(Number(label))
-                  ? undefined
-                  : `cs-${gbmod}`;
-                return (
-                  <option
-                    key={['spop', cn.id].join('.')}
-                    className={className}
-                    value={cn.id}
-                  >
-                    {label}
-                  </option>
-                );
-              }
-              return null;
-            })}
-          </Menulist>
-        ))
-      );
-      // Child selector
-      const parentNode = ancestors[ancestors.length - 1];
-      const { childNodes } = parentNode;
-      if (childNodes) {
-        // Deselect any child selections which don't exist
-        if (children.some((id) => !childNodes.find((cn) => cn.id === id))) {
-          children = [];
-        }
-        this.prevValues.children = children;
-        const value = enableMultipleSelection ? children : children[0];
-        selects.push(
-          <Menulist
-            className="select-child"
-            key={['ch', parentNode.id].join('.')}
-            multiple={!!enableMultipleSelection}
-            value={value}
-            onChange={handler}
-          >
-            {childNodes.map((n) => {
-              const className = !Number.isNaN(Number(n.label))
+    // Ancestor selector
+    this.prevValues.parent = parent;
+    selects.push(
+      ...ancestors.map((n, i) => (
+        <Menulist
+          className={[
+            'select-parent',
+            findSiblings(n.id, nodes).length === 1 ? 'hide' : '',
+          ].join(' ')}
+          key={['sp', n.id].join('.')}
+          value={n.id.toString()}
+          data-index={i}
+          onChange={handler}
+        >
+          {findSiblings(n.id, nodes).map((cn) => {
+            if (cn) {
+              const label = cn.label.toString();
+              const className = !Number.isNaN(Number(label))
                 ? undefined
                 : `cs-${gbmod}`;
-              const clickHandler = {} as any;
-              if (
-                enableMultipleSelection &&
-                n.childNodes &&
-                n.childNodes.length
-              ) {
-                clickHandler[
-                  enableParentSelection ? 'onDoubleClick' : 'onClick'
-                ] = handler;
-              }
               return (
                 <option
-                  key={['chop', n.id].join('.')}
+                  key={['spop', cn.id].join('.')}
                   className={className}
-                  value={n.id}
-                  {...clickHandler}
+                  value={cn.id}
                 >
-                  {`${n.childNodes && n.childNodes.length ? '❭ ' : ''}${
-                    n.label
-                  }`}
+                  {label}
                 </option>
               );
-            })}
-          </Menulist>
-        );
+            }
+            return null;
+          })}
+        </Menulist>
+      ))
+    );
+    // Child selector
+    const parentNode: TreeNodeInfo | undefined =
+      ancestors[ancestors.length - 1];
+    let childNodes: TreeNodeInfo[];
+    if (parentNode) childNodes = parentNode.childNodes || [];
+    else {
+      childNodes = nodes;
+    }
+    if (childNodes.length) {
+      // Deselect any child selections which don't exist
+      if (children.some((id) => !childNodes.find((cn) => cn.id === id))) {
+        children = [];
       }
+      this.prevValues.children = children;
+      const value = enableMultipleSelection ? children : children[0];
+      const id = parentNode?.id || module;
+      selects.push(
+        <Menulist
+          className="select-child"
+          key={['ch', id].join('.')}
+          multiple={!!enableMultipleSelection}
+          value={value}
+          onChange={handler}
+        >
+          {childNodes.map((n) => {
+            const className = !Number.isNaN(Number(n.label))
+              ? undefined
+              : `cs-${gbmod}`;
+            const clickHandler = {} as any;
+            if (
+              enableMultipleSelection &&
+              n.childNodes &&
+              n.childNodes.length
+            ) {
+              clickHandler[
+                enableParentSelection ? 'onDoubleClick' : 'onClick'
+              ] = handler;
+            }
+            return (
+              <option
+                key={['chop', n.id].join('.')}
+                className={className}
+                value={n.id}
+                {...clickHandler}
+              >
+                {`${n.childNodes && n.childNodes.length ? '❭ ' : ''}${n.label}`}
+              </option>
+            );
+          })}
+        </Menulist>
+      );
     }
 
     return (

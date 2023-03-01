@@ -21,7 +21,7 @@ import C from '../constant';
 import G from './rg';
 import DynamicStyleSheet from './style';
 import log from './log';
-import { getContextData } from './rutil';
+import { getContextData } from './bookmarks';
 import { delayHandler, xulCaptureEvents } from './libxul/xul';
 import { Hbox } from './libxul/boxes';
 import Dialog from './libxul/dialog';
@@ -378,7 +378,7 @@ function WindowRoot(props: WindowRootProps) {
         id="reset"
         className={s.showPrintOverlay[0] ? 'printp' : undefined}
         onContextMenu={(e: React.SyntheticEvent) => {
-          G.Data.write(getContextData(e.target), 'contextData');
+          G.Data.write(getContextData(e.target as HTMLElement), 'contextData');
         }}
       >
         {children}

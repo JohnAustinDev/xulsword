@@ -8,10 +8,17 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { getElementInfo } from '../../libswordElemInfo';
+import { getElementData, HTMLData } from '../libswordElemInfo';
 import Cache from '../../cache';
 import C from '../../constant';
-import { diff, keep, sanitizeHTML, stringHash } from '../../common';
+import {
+  diff,
+  JSON_attrib_stringify,
+  JSON_stringify,
+  keep,
+  sanitizeHTML,
+  stringHash,
+} from '../../common';
 import G from '../rg';
 import log from '../log';
 import {
@@ -271,7 +278,13 @@ class Atext extends React.Component {
                 ) {
                   sib = sib.nextSibling as HTMLElement | null;
                 }
-                let prepend = Number(sib && getElementInfo(sib)?.ch) - 1 || 0;
+                let prepend = 0;
+                if (sib) {
+                  const i = getElementData(sib);
+                  if (i.location) {
+                    prepend = i.location.chapter - 1;
+                  }
+                }
                 while (
                   v &&
                   prepend > 0 &&
@@ -322,12 +335,13 @@ class Atext extends React.Component {
                 ) {
                   sib = sib.nextSibling as HTMLElement | null;
                 }
-                const info = (sib && getElementInfo(sib)) || null;
-                if (info) {
+                const info = (sib && getElementData(sib)) || null;
+                if (info && info.location) {
+                  const { book, chapter, verse: vs } = info.location;
                   const skipTextUpdate: boolean[] = [];
                   skipTextUpdate[panelIndex] = true;
                   const location = verseKey(
-                    [info.bk, info.ch, info.vs].join('.'),
+                    [book, chapter, vs].join('.'),
                     libswordProps.location.v11n
                   ).location();
                   if (isPinned) {
@@ -366,7 +380,8 @@ class Atext extends React.Component {
                   }
                   if (!v) v = sbe.firstChild as HTMLElement | null;
                 }
-                // Hide all siblings preceding the selected one, to make it appear at the top.
+                // Hide all siblings preceding the selected one, to make it
+                // appear at the top.
                 sib = sbe.firstChild as HTMLElement | null;
                 let hide = true;
                 let lastv;
@@ -378,9 +393,11 @@ class Atext extends React.Component {
                   sib = sib.nextSibling as HTMLElement | null;
                 }
                 // Append chapters until text overflows
-                let append =
-                  Number(lastv && getElementInfo(lastv)?.ch) + 1 ||
-                  C.MAXCHAPTER + 1;
+                let append = C.MAXCHAPTER + 1;
+                if (lastv) {
+                  const i = getElementData(lastv);
+                  if (i && i.location) append = i.location.chapter + 1;
+                }
                 const v11n = G.Tab[module].v11n || null;
                 const max = v11n
                   ? getMaxChapter(v11n, libswordProps.location.book)
@@ -597,6 +614,11 @@ class Atext extends React.Component {
     )
       cls += ' verse-per-line';
 
+    const data: HTMLData = { type: 'text' };
+    if (module && ['Dicts', 'Genbks'].includes(G.Tab[module].tabType)) {
+      if (module && modkey) data.locationGB = { module, key: modkey };
+    } else if (location) data.location = location;
+
     return (
       <Vbox
         {...addClass(`atext ${cls}`, props)}
@@ -607,9 +629,9 @@ class Atext extends React.Component {
         {...topHandle('onMouseOut', handler, props)}
         data-index={panelIndex}
         data-module={module}
-        data-modkey={modkey}
         data-columns={columns}
         data-ispinned={isPinned}
+        data-data={JSON_attrib_stringify(data)}
       >
         <div className="sbcontrols">
           {isVerseKey && <div className="text-pin" />}

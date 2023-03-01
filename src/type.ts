@@ -312,8 +312,9 @@ export type LookupInfo = {
 
 export type ContextData = {
   search: SearchType | null;
-  locationVK: LocationVKType | null;
-  module: string | null;
+  location: LocationVKType | null;
+  locationGB: LocationGBType | null;
+  context: string | null;
   tab: string | null;
   lemma: string | null;
   panelIndex: number | null;

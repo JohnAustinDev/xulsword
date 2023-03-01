@@ -209,7 +209,7 @@ export const pushPrefsToMenu: PrefCallbackType = (winid, key, val, store) => {
     })[0];
     if (xs) {
       const menuBuilder = new MainMenuBuilder(xs);
-      menuBuilder.buildMenu();
+      menuBuilder.buildMenu(true);
       xs = undefined;
     }
   }
@@ -362,7 +362,7 @@ export default class MainMenuBuilder {
     this.menuPref = [];
   }
 
-  buildMenu(): Menu {
+  buildMenu(update?: boolean): Menu {
     const template: MenuItemConstructorOptions[] =
       process.platform === 'darwin'
         ? this.buildDarwinTemplate()
@@ -371,7 +371,16 @@ export default class MainMenuBuilder {
     const menu = Menu.buildFromTemplate(template);
     buildModuleMenus(menu);
     updateMenuFromPref(menu);
-    Menu.setApplicationMenu(menu);
+    if (update) {
+      const appMenu = Menu.getApplicationMenu();
+      if (appMenu) {
+        while (appMenu.items.length) appMenu.items.shift();
+        while (menu.items.length) {
+          const item = menu.items.pop();
+          if (item) appMenu.insert(0, item);
+        }
+      }
+    } else Menu.setApplicationMenu(menu);
     return menu;
   }
 

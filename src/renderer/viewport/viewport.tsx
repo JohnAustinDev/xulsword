@@ -165,7 +165,7 @@ class Viewport extends React.Component implements PopupParent {
       xulswordStateHandler,
       atextRefs,
     } = this.props as ViewportProps;
-    const { reset, elemhtml, eleminfo, gap, popupParent, popupReset } = state;
+    const { reset, elemdata, gap, popupParent, popupReset } = state;
 
     // Only versekey panels can be pinned
     const isVerseKey = panels.map((m) => Boolean(m && G.Tab[m].isVerseKey));
@@ -436,13 +436,12 @@ class Viewport extends React.Component implements PopupParent {
 
           <Hbox className="textrow userFontBase" flex="1">
             {popupParent &&
-              elemhtml &&
-              elemhtml.length &&
+              elemdata &&
+              elemdata.length &&
               ReactDOM.createPortal(
                 <Popup
-                  key={[gap, elemhtml.length, popupReset].join('.')}
-                  elemhtml={elemhtml}
-                  eleminfo={eleminfo}
+                  key={[gap, elemdata.length, popupReset].join('.')}
+                  elemdata={elemdata}
                   gap={gap}
                   onMouseMove={popupHandler}
                   onPopupClick={popupHandler}

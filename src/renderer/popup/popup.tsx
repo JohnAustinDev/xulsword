@@ -19,16 +19,21 @@ import {
   xulPropTypes,
 } from '../libxul/xul';
 import C from '../../constant';
-import { sanitizeHTML, stringHash } from '../../common';
+import {
+  clone,
+  JSON_attrib_stringify,
+  sanitizeHTML,
+  stringHash,
+} from '../../common';
 import G from '../rg';
 import { libswordImgSrc } from '../rutil';
 import { Box, Hbox } from '../libxul/boxes';
 import { getRefBible } from '../viewport/zversekey';
-import popupH, { getPopupHTML, getTopElement } from './popupH';
+import popupH, { getPopupHTML } from './popupH';
 import '../libsword.css';
 import './popup.css';
 
-import type { ElemInfo } from '../../libswordElemInfo';
+import { HTMLData } from '../libswordElemInfo';
 
 const defaultProps = {
   ...xulDefaultProps,
@@ -37,8 +42,7 @@ const defaultProps = {
 
 const propTypes = {
   ...xulPropTypes,
-  elemhtml: PropTypes.arrayOf(PropTypes.string),
-  eleminfo: PropTypes.arrayOf(PropTypes.object),
+  elemdata: PropTypes.arrayOf(PropTypes.object),
   gap: PropTypes.number,
   isWindow: PropTypes.bool,
   onPopupClick: PropTypes.func.isRequired,
@@ -49,10 +53,9 @@ const propTypes = {
 
 export interface PopupProps extends XulProps {
   // key must be set correctly for popup to update, like:
-  // key={[gap, elemhtml.length, popupReset].join('.')}
+  // key={[gap, elemdata.length, popupReset].join('.')}
   key: string;
-  elemhtml: string[] | null; // outerHTML of target element
-  eleminfo: ElemInfo[] | null; // extra target element info (ie for select options)
+  elemdata: HTMLData[] | null; // data of target elements
   gap: number | undefined; // Pixel distance between target element and top of popup window
   isWindow: boolean; // Set to true to use popup in windowed mode
   onPopupClick: (e: React.SyntheticEvent) => void;
@@ -73,20 +76,17 @@ export interface PopupState {
 // To show/hide a popup, either Popup should be rendered, or not.
 // Popup shows information about particular types of elements (a
 // list of verses for a cross-reference note, or information about
-// a Strong's number for a Strong's link, etc.). The outerHTML
-// string of a target element must be supplied on the elemhtml
-// prop. Extra information associated with the target element may
-// be provided using the eleminfo prop (and this info supercedes any
-// ElemInfo from the outerHTML). Both elemhtml and eleminfo props are
-// arrays because a Popup may be updated to show information about
-// other elements appearing within the popup, and a back link will
-// appear when there are previous views to return to. To use Popup as
-// a windowed popup, it should be rendered as the child of a visible
-// parent element and isWindow should be true. To use as a regular
-// popup, Popup should be rendered using a React portal to a target
-// element within which it will appear (usually the same element as
-// elemhtml[0] but this is not necessary), and isWindow should be
-// false (the default).
+// a Strong's number for a Strong's link, etc.). The data object
+// of a target element must be supplied on the elemdata prop, which
+// is an array because a Popup may be updated to show information
+// about other elements appearing within the popup, and a back link
+// will appear when there are previous views to return to. To use
+// Popup as a windowed popup, it should be rendered as the child of
+// a visible parent element and isWindow should be true. To use as
+// a regular popup, Popup should be rendered using a React portal
+// to a target element within which it will appear (usually the
+// same element as elemdata[0] but this is not necessary), and
+// isWindow should be false (the default).
 class Popup extends React.Component {
   static defaultProps: typeof defaultProps;
 
@@ -125,6 +125,7 @@ class Popup extends React.Component {
     const { isWindow } = this.props as PopupProps;
     const popup = npopup?.current;
     if (isWindow && popup) {
+      const maxlen = Math.floor((popup.clientWidth - 50) / 10);
       const search = ['crref', 'lemma-header', 'popup-text'];
       let title;
       for (let x = 0; !title && x < search.length; x += 1) {
@@ -133,8 +134,8 @@ class Popup extends React.Component {
           const elem = els[0] as HTMLElement;
           title = elem?.textContent;
           title = title?.replace(/[\n\s]+/g, ' ');
-          if (title && title.length > 24) {
-            title = `${title.substring(0, title.indexOf(' ', 24))}…`;
+          if (title && title.length > maxlen) {
+            title = `${title.substring(0, title.indexOf(' ', maxlen))}…`;
           }
         }
       }
@@ -190,27 +191,38 @@ class Popup extends React.Component {
   update() {
     const { npopup } = this;
     const props = this.props as PopupProps;
-    const { elemhtml, eleminfo, isWindow } = props;
+    const { elemdata, isWindow } = props;
     const pts = npopup?.current?.getElementsByClassName('popup-text');
     if (!npopup.current || !pts) throw Error(`Popup.updateContent no npopup.`);
     const pt = pts[0] as HTMLElement;
-    const element = getTopElement(elemhtml, eleminfo);
-    if (!element) return;
-    const { elem, info } = element;
-    const { type, reflist, bk, ch, mod } = info;
-    const infokey = stringHash(type, reflist, bk, ch, mod);
-    if (!pt.dataset.infokey || pt.dataset.infokey !== infokey) {
-      const html = getPopupHTML(elem, info);
-      pt.dataset.infokey = infokey;
-      sanitizeHTML(pt, html);
-      libswordImgSrc(pt);
-      const parent = npopup.current.parentNode as HTMLElement | null;
-      if (!isWindow && parent) {
-        if (html) parent.classList.remove('empty');
-        else parent.classList.add('empty');
+    const data = elemdata && elemdata[elemdata.length - 1];
+    if (data) {
+      const { type, reflist, context, location, locationGB } = data;
+      let infokey;
+      if (location) {
+        const { book, chapter } = location;
+        infokey = stringHash(type, reflist, book, chapter, context);
+      } else if (locationGB) {
+        const { module, key } = locationGB;
+        infokey = stringHash(type, reflist, module, key, context);
+      } else {
+        infokey = stringHash(type, reflist, context);
       }
-      if (isWindow) this.setTitle();
-      this.positionPopup();
+      if (infokey) {
+        if (!pt.dataset.infokey || pt.dataset.infokey !== infokey) {
+          const html = getPopupHTML(data);
+          pt.dataset.infokey = infokey;
+          sanitizeHTML(pt, html);
+          libswordImgSrc(pt);
+          const parent = npopup.current.parentNode as HTMLElement | null;
+          if (!isWindow && parent) {
+            if (html) parent.classList.remove('empty');
+            else parent.classList.add('empty');
+          }
+          if (isWindow) this.setTitle();
+          this.positionPopup();
+        }
+      }
     }
   }
 
@@ -251,13 +263,11 @@ class Popup extends React.Component {
     const state = this.state as PopupState;
     const { handler, npopup } = this;
     const { drag } = state;
-    const { elemhtml, eleminfo, gap, isWindow } = props;
-    const element = getTopElement(elemhtml, eleminfo);
-    const { info, elem } = element || {
-      info: { mod: '', type: '' },
-      elem: null,
-    };
-    const { mod, type } = info;
+    const { elemdata, gap, isWindow } = props;
+    const data = (elemdata && elemdata[elemdata.length - 1]) || null;
+    let context: string | undefined;
+    let type: string | undefined;
+    if (data) ({ context, type } = data);
 
     const allBibleModules = [];
     for (let t = 0; t < G.Tabs.length; t += 1) {
@@ -278,7 +288,7 @@ class Popup extends React.Component {
       };
     }
 
-    const bibleMod = mod && getRefBible(mod);
+    const bibleMod = context && getRefBible(context);
 
     let cls = 'cs-locale';
     if (isWindow) cls += ` ownWindow viewport`;
@@ -292,7 +302,7 @@ class Popup extends React.Component {
         ref={npopup}
       >
         <div
-          className="npopupTX userFontBase"
+          className="npopupTX userFontBase text"
           onClick={props.onPopupClick}
           onMouseDown={handler}
           onMouseMove={handler}
@@ -300,15 +310,16 @@ class Popup extends React.Component {
           onMouseOver={handler}
           onMouseLeave={props.onMouseLeftPopup}
           style={boxlocation}
+          data-data={JSON_attrib_stringify(data)}
         >
           <Hbox pack="start" align="center" className="popupheader">
             {!isWindow && <div className="towindow" />}
-            {elemhtml && elemhtml.length > 1 && (
+            {elemdata && elemdata.length > 1 && (
               <div>
                 <a className="popupBackLink">{G.i18n.t('back.label')}</a>
               </div>
             )}
-            {elemhtml && elemhtml.length === 1 && (
+            {elemdata && elemdata.length === 1 && (
               <div>
                 <a className="popupCloseLink">{G.i18n.t('close')}</a>
               </div>
@@ -320,14 +331,14 @@ class Popup extends React.Component {
               this.selector(allBibleModules, bibleMod, bibleMod)}
 
             {type === 'sn' &&
-              elem &&
+              data?.className &&
               Object.entries(C.SwordFeatureClasses).map((entry) => {
                 const feature = entry[0] as
                   | 'hebrewDef'
                   | 'greekDef'
                   | 'greekParse';
                 const regex = entry[1];
-                if (regex.test(elem.className)) {
+                if (data?.className && regex.test(data.className)) {
                   const fmods = G.FeatureModules[feature];
                   if (fmods?.length) {
                     let selmod = G.Prefs.getCharPref(

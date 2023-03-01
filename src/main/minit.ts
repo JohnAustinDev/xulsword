@@ -9,7 +9,7 @@ import fontList from 'font-list';
 import C, { SP } from '../constant';
 import VerseKey from '../versekey';
 import RefParser, { RefParserOptionsType } from '../refparse';
-import { clone, isASCII, JSON_parse, getStatePref } from '../common';
+import { clone, isASCII, JSON_parse } from '../common';
 import Cache from '../cache';
 import Subscription from '../subscription';
 import parseSwordConf from './parseSwordConf';

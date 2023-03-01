@@ -8,14 +8,7 @@
 import React from 'react';
 import { Icon, TreeNodeInfo } from '@blueprintjs/core';
 import Cache from '../cache';
-import C from '../constant';
-import G from './rg';
-import log from './log';
-import RefParser, { RefParserOptionsType } from '../refparse';
-import VerseKey from '../versekey';
-import { ElemInfo, getElementInfo, TitleFormat } from '../libswordElemInfo';
 import {
-  clone,
   diff,
   isAudioVerseKey,
   JSON_parse,
@@ -24,7 +17,18 @@ import {
   readGenBookAudioConf,
   versionCompare,
   getStatePref as getStatePref2,
+  JSON_attrib_parse,
 } from '../common';
+import RefParser, { RefParserOptionsType } from '../refparse';
+import VerseKey from '../versekey';
+import C from '../constant';
+import G from './rg';
+import {
+  getElementData,
+  findElementData,
+  mergeElementData,
+} from './libswordElemInfo';
+import log from './log';
 
 import type {
   ContextData,
@@ -41,13 +45,11 @@ import type {
   SearchType,
   SwordConfLocalized,
   SwordConfType,
-  SwordFilterType,
-  SwordFilterValueType,
   V11nType,
   VerseKeyAudio,
   VerseKeyAudioFile,
 } from '../type';
-import type { SelectVKMType } from './libxul/vkselect';
+import type { HTMLData } from './libswordElemInfo';
 
 export function component(
   comp: any
@@ -370,241 +372,6 @@ export function verseKey(
   );
 }
 
-// Return the module context in which the element resides.
-export function getContextModule(
-  elem: ParentNode | HTMLElement | EventTarget | null
-): string | null {
-  if (!elem) return null;
-  // get the first ancestor having one of these classes
-  const c = ofClass(
-    ['atext']
-      .concat(Object.keys(TitleFormat))
-      .concat(G.Tabs.map((t) => `cs-${t.module}`)),
-    elem
-  );
-  if (c) {
-    if (c.type === 'atext') {
-      return c.element.dataset.module || null;
-    }
-    if (c.type.startsWith('cs-')) {
-      return c.type.substring(3);
-    }
-    const p = getElementInfo(c.element);
-    return (p && p.mod) || null;
-  }
-  return null;
-}
-
-const TargetInfo = {
-  mod: null as string | null,
-  bk: null as OSISBookType | null,
-  ch: null as number | null,
-  vs: null as number | null,
-  lv: null as number | null,
-  bmitem: null as string | null,
-};
-
-type TargetInfoType = typeof TargetInfo;
-
-// Returns target information associated with an element.
-// NOTE: bk, ch, vs, and lv may be interpreted differently depending
-// on the module type of "mod".
-function readDataFromElement(info: TargetInfoType, element: HTMLElement) {
-  const eleminfo = getElementInfo(element);
-  if (!eleminfo) return false;
-
-  Object.entries(eleminfo).forEach((entry) => {
-    const p = entry[0] as keyof ElemInfo;
-    const val = entry[1] as any;
-
-    if (p === 'nid') return;
-
-    // first come, first served- don't overwrite existing data
-    if (!(p in info) || info[p as keyof TargetInfoType] !== null) return;
-
-    // some params use "0" as a placeholder which should not be propagated
-    if (
-      ['bk', 'ch', 'vs', 'lv'].includes(p) &&
-      info[p as keyof TargetInfoType] === 0
-    ) {
-      return;
-    }
-
-    if (val !== null && val !== undefined) {
-      info[p as keyof TargetInfoType] = val; // got it!
-    }
-  });
-
-  return true;
-}
-
-// Read target info from an element and its parents.
-function getTargetsFromElement(
-  info: typeof TargetInfo,
-  element: HTMLElement | ParentNode | EventTarget | null
-): typeof TargetInfo {
-  let elem = element as HTMLElement | null;
-  while (elem) {
-    // if this is a user-note hilight verse, get un info from inside it
-    if (elem.className && elem.classList.contains('un-hilight')) {
-      const child = elem.getElementsByClassName('un');
-      if (child && child.length) {
-        const chl = child[0] as HTMLElement;
-        readDataFromElement(info, chl);
-      }
-    }
-    readDataFromElement(info, elem);
-    elem = elem.parentNode as HTMLElement | null;
-  }
-
-  return info;
-}
-
-// Read two targets, one from each end of the selection, merge the two and return the results.
-function getTargetsFromSelection(
-  info: typeof TargetInfo,
-  selob: Selection
-): boolean {
-  const info1 = clone(TargetInfo);
-  const focusNode = selob.focusNode as HTMLElement | null;
-  if (!getTargetsFromElement(info1, focusNode)) return false;
-
-  const info2 = clone(TargetInfo);
-  const anchorNode = selob.anchorNode as HTMLElement | null;
-  if (!getTargetsFromElement(info2, anchorNode)) return false;
-
-  // merge bookmarks
-  if (!info1.bmitem && info2.bmitem) info1.bmitem = info2.bmitem;
-
-  // merge targ2 into targ1 if mod, bk and ch are the same (otherwise ignore targ2)
-  if (
-    info1.mod &&
-    info1.mod === info2.mod &&
-    info1.bk &&
-    info1.bk === info2.bk &&
-    info1.ch &&
-    info1.ch === info2.ch
-  ) {
-    let vs =
-      info2.vs && (!info1.vs || info2.vs < info1.vs) ? info2.vs : info1.vs;
-    let lv =
-      info2.lv && (!info1.lv || info2.lv > info1.lv) ? info2.lv : info1.lv;
-
-    if (lv && !vs) vs = lv;
-    if (vs && (!lv || lv < vs)) lv = vs;
-
-    if (vs) info1.vs = vs;
-    if (lv) info1.lv = lv;
-  }
-
-  // save merged targ1 to target
-  Object.keys(TargetInfo).forEach((key) => {
-    const k = key as keyof typeof TargetInfo;
-    const i1k = info1[k] as any;
-    if (info[k] === null && i1k !== null) info[k] = i1k;
-  });
-
-  return true;
-}
-
-// Return contextual data for use by context menus.
-export function getContextData(
-  elem: HTMLElement | ParentNode | EventTarget
-): ContextData {
-  const atextx = ofClass(['atext'], elem);
-  const atext = atextx ? atextx.element : null;
-  const tabx = ofClass(['tab'], elem);
-  const atab = tabx ? tabx.element : null;
-
-  let module;
-  if (atext) module = atext.dataset.module;
-  else if (atab) module = atab.dataset.module;
-  module = module || null;
-
-  let panelIndexs;
-  if (atext) panelIndexs = atext.dataset.index;
-  else if (atab) panelIndexs = atab.dataset.index;
-  const panelIndex = panelIndexs ? Number(panelIndexs) : null;
-
-  const isPinned = Boolean(atext && atext.dataset.ispinned === 'true');
-
-  const tab = atab?.dataset.module || null;
-
-  const contextModule = getContextModule(elem);
-  if (contextModule) module = contextModule;
-
-  const v11n =
-    (contextModule && contextModule in G.Tab && G.Tab[contextModule].v11n) ||
-    null;
-
-  let search: SearchType | null = null;
-  let lemma = null;
-  const snx = ofClass(['sn'], elem);
-  const lemmaArray: string[] = [];
-  if (snx && contextModule) {
-    Array.from(snx.element.classList).forEach((cls) => {
-      if (cls === 'sn') return;
-      const [type, lemmaStr] = cls.split('_');
-      if (type !== 'S' || !lemmaStr) return;
-      const lemmaNum = Number(lemmaStr.substring(1));
-      // SWORD filters >= 5627 out- not valid it says
-      if (
-        Number.isNaN(Number(lemmaNum)) ||
-        (lemmaStr.startsWith('G') && lemmaNum >= 5627)
-      )
-        return;
-      lemmaArray.push(`lemma: ${lemmaStr}`);
-    });
-    lemma = lemmaArray.length ? lemmaArray.join(' ') : null;
-    if (lemma && module) {
-      search = {
-        module,
-        searchtext: lemma,
-        type: 'SearchAdvanced',
-      };
-    }
-  }
-
-  // Get targets from mouse pointer or selection
-  let selection = null;
-  let selectedLocationVK = null;
-  const selob = getSelection();
-  const info = clone(TargetInfo) as typeof TargetInfo;
-  if (selob && !selob.isCollapsed && !/^\s*$/.test(selob.toString())) {
-    selection = selob.toString();
-    selectedLocationVK =
-      new RefParser(G.i18n, { uncertain: true }).parse(selection, v11n)
-        ?.location || null;
-    getTargetsFromSelection(info, selob);
-  } else {
-    getTargetsFromElement(info, elem);
-  }
-
-  const iv11n = (info.mod && info.mod in G.Tab && G.Tab[info.mod].v11n) || null;
-  const locationVK = info.bk
-    ? {
-        v11n: iv11n,
-        book: info.bk,
-        chapter: info.ch || 1,
-        verse: info.vs,
-        lastverse: info.lv,
-      }
-    : null;
-
-  return {
-    locationVK,
-    bookmark: info.bmitem,
-    module,
-    tab,
-    lemma,
-    panelIndex,
-    isPinned,
-    selection,
-    selectionParsedVK: selectedLocationVK,
-    search,
-  };
-}
-
 export function getCompanionModules(mod: string) {
   const cms = G.LibSword.getModuleInformation(mod, 'Companion');
   if (cms !== C.NOTFOUND) return cms.split(/\s*,\s*/);
@@ -878,11 +645,12 @@ export function htmlVerses(
     .reverse()
     .forEach((ch) => {
       const child = ch as HTMLElement;
-      const info = getElementInfo(child);
-      if (info?.type === 'vs') {
-        const vs = info.lv ?? (info.vs || 0);
-        if (vs <= (lastverse || verse || 0)) keeping = true;
-        if (vs < (verse || 0)) keeping = false;
+      const info = getElementData(child);
+      if (info.type === 'vs' && info.location) {
+        const { verse: vs, lastverse: lv } = info.location;
+        const v = lv ?? (vs || 0);
+        if (v <= (lastverse || verse || 0)) keeping = true;
+        if (v < (verse || 0)) keeping = false;
       }
       if (!keeping) {
         div.removeChild(child);

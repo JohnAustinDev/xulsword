@@ -4,7 +4,7 @@
 /* eslint-disable no-bitwise */
 /* eslint-disable import/no-duplicates */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { getElementInfo } from '../../libswordElemInfo';
+import { getElementData } from '../libswordElemInfo';
 import { dString, escapeRE, getCSS, sanitizeHTML } from '../../common';
 import C, { SP } from '../../constant';
 import G from '../rg';
@@ -39,7 +39,7 @@ const libSwordSearchTypes = {
 export const searchArg = windowArgument('search') as SearchType;
 
 export const strongsCSS = {
-  css: getCSS('.matchingStrongs {'),
+  css: null as { sheet: CSSStyleSheet; rule: CSSRule; index: number } | null,
   sheet: document.styleSheets[document.styleSheets.length - 1],
   added: [] as number[],
 };
@@ -396,53 +396,56 @@ export function formatResult(div: HTMLDivElement, state: SearchWinState) {
       : module;
   if (module && module in G.Tab && dModule && dModule in G.Tab) {
     Array.from(div.getElementsByClassName('slist')).forEach((slist) => {
-      const p = getElementInfo(slist as HTMLElement);
-
-      // Add the reference link to each result
-      const span = document.createElement('span');
-      span.innerHTML = '-';
-      slist.insertBefore(span, slist.firstChild);
-      const a = document.createElement('a');
-      slist.insertBefore(a, slist.firstChild);
-      const type = (p?.mod && G.Tab[p.mod].type) || C.BIBLE;
-      switch (type) {
-        case C.BIBLE:
-        case C.COMMENTARY: {
-          if (a && p?.osisref) {
-            // Translate from module to DisplayBible
-            const vsys = G.LibSword.getVerseSystem(module);
-            const v = verseKey(p.osisref, vsys);
-            sanitizeHTML(a, v.readable(G.LibSword.getVerseSystem(dModule)));
-            a.className = 'cs-locale';
-            a.id = ['verselink', vsys, v.osisRef()].join('.');
+      const p = getElementData(slist as HTMLElement);
+      const { context } = p;
+      if (context) {
+        const { location, locationGB } = p;
+        // Add the reference link to each result
+        const span = document.createElement('span');
+        span.innerHTML = '-';
+        slist.insertBefore(span, slist.firstChild);
+        const a = document.createElement('a');
+        slist.insertBefore(a, slist.firstChild);
+        const type = (context in G.Tab && G.Tab[context].type) || C.BIBLE;
+        switch (type) {
+          case C.BIBLE:
+          case C.COMMENTARY: {
+            if (a && location) {
+              // Translate from module to DisplayBible
+              const vsys = G.LibSword.getVerseSystem(module);
+              const v = verseKey(location, vsys);
+              sanitizeHTML(a, v.readable(G.LibSword.getVerseSystem(dModule)));
+              a.className = 'cs-locale';
+              a.id = ['verselink', vsys, v.osisRef()].join('.');
+            }
+            break;
           }
-          break;
+
+          case C.GENBOOK:
+          case C.DICTIONARY: {
+            if (locationGB) {
+              const { module: m, key } = locationGB;
+              sanitizeHTML(a, key);
+              a.className = `cs-${m}`;
+              // p.ch may contain . so careful using split('.')!
+              a.id = ['keylink', context, encodeURIComponent(key)].join('.');
+            }
+            break;
+          }
+
+          default:
         }
 
-        case C.GENBOOK:
-        case C.DICTIONARY: {
-          if (p?.ch && p?.mod) {
-            sanitizeHTML(a, p.ch.toString());
-            a.className = `cs-${p.mod}`;
-            // p.ch may contain . so careful using split('.')!
-            a.id = ['keylink', p.mod, encodeURIComponent(p.ch.toString())].join(
-              '.'
-            );
-          }
-          break;
-        }
-        default:
+        // Apply hilight class to search result matches
+        const lastChild = slist.lastChild as HTMLElement;
+        sanitizeHTML(
+          lastChild,
+          markSearchMatches(
+            lastChild.innerHTML,
+            getSearchMatches(searchtext, searchtype)
+          )
+        );
       }
-
-      // Apply hilight class to search result matches
-      const lastChild = slist.lastChild as HTMLElement;
-      sanitizeHTML(
-        lastChild,
-        markSearchMatches(
-          lastChild.innerHTML,
-          getSearchMatches(searchtext, searchtype)
-        )
-      );
     });
   }
 }
@@ -451,26 +454,27 @@ function markSearchMatches(
   htmlStr: string,
   matches: SearchMatchType[]
 ): string {
+  const repl = (re: RegExp, replacement: string) => {
+    return html
+      .split(/(<[^>]*>)/)
+      .map((t) => {
+        if (/^<[^>]*>$/.test(t)) return t;
+        return t.replace(re, replacement);
+      })
+      .join('');
+  };
   let html = htmlStr;
   matches.forEach((m) => {
     if (m.type === 'RegExp') {
-      const re = new RegExp(m.term, 'gim');
-      html = html
-        .split(/(<[^>]*>)/)
-        .map((t) => {
-          if (/^<[^>]*>$/.test(t)) return t;
-          return t.replace(re, '$1<span class="searchterm">$2</span>$3');
-        })
-        .join('');
+      html = repl(
+        new RegExp(m.term, 'gim'),
+        '$1<span class="searchterm">$2</span>$3'
+      );
     } else if (m.type === 'string') {
-      const re = new RegExp(escapeRE(m.term), 'gim');
-      html = html
-        .split(/(<[^>]*>)/)
-        .map((t) => {
-          if (/^<[^>]*>$/.test(t)) return t;
-          return t.replace(re, '<span class="searchterm">$&</span>');
-        })
-        .join('');
+      html = repl(
+        new RegExp(escapeRE(m.term), 'gim'),
+        '<span class="searchterm">$&</span>'
+      );
     }
   });
 
@@ -551,6 +555,9 @@ export function hilightStrongs(strongs: RegExpMatchArray | null) {
     const c = `S_${s.replace(/lemma:\s*/, '')}`;
     log.debug(`Adding sn class: ${c}`);
     const index = strongsCSS.sheet.cssRules.length;
+    if (!strongsCSS.css) {
+      strongsCSS.css = getCSS('.matchingStrongs {');
+    }
     if (strongsCSS.css) {
       strongsCSS.sheet.insertRule(
         strongsCSS.css.rule.cssText.replace('matchingStrongs', c),

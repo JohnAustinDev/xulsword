@@ -8,13 +8,13 @@ import {
   ofClass,
   sanitizeHTML,
 } from '../../common';
-import { getElementInfo } from '../../libswordElemInfo';
+import { getElementData } from '../libswordElemInfo';
 import G from '../rg';
 import log from '../log';
 import { scrollIntoView } from '../rutil';
 import { aTextWheelScroll, getRefHTML } from './zversekey';
 
-import { AtextStateType, LocationVKType } from '../../type';
+import { AtextStateType } from '../../type';
 import type Atext from './atext';
 import type { AtextProps } from './atext';
 
@@ -39,7 +39,6 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
         [
           'cr',
           'crtwisty',
-          'listenlink',
           'versePerLineButton',
           'image-container',
           'dictkeyinput',
@@ -55,7 +54,8 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
       let popupParent: any = ofClass(['npopup'], target);
       popupParent = popupParent ? popupParent.element : null;
       const elem = targ.element;
-      const p = getElementInfo(elem);
+      const p = getElementData(elem);
+      const { title, type: ptype } = p;
       switch (targ.type) {
         case 'cr':
         case 'crtwisty':
@@ -63,32 +63,30 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
             let row;
             let id;
             if (targ.type === 'cr' && p) {
-              id = `w${index}.footnote.${p.type}.${p.nid}.${p.osisref}.${p.mod}`;
+              id = `w${index}.footnote.${ptype}.${title}`;
               row = document.getElementById(id);
             } else {
               const rowx = ofClass(['fnrow'], elem);
               if (rowx) row = rowx.element;
             }
             if (row) {
+              const { location } = getElementData(row);
               row.classList.toggle('cropened');
               const col5 = ofClass('fncol5', row, 'descendant');
-              if (col5) {
+              if (col5 && location) {
                 const el = col5.element;
                 const refs = el.dataset.reflist;
-                const context: LocationVKType = {
-                  book: (p && p.bk) || 'Gen',
-                  chapter: (p && Number(p.ch)) || 0,
-                  verse: (p && p.vs) || null,
-                  v11n: null,
-                };
                 if (refs) {
-                  let html;
-                  if (row.classList.contains('cropened')) {
-                    html = getRefHTML(refs, module, context, true, false);
-                  } else {
-                    html = getRefHTML(refs, module, context, false, false);
-                  }
-                  sanitizeHTML(el, html);
+                  sanitizeHTML(
+                    el,
+                    getRefHTML(
+                      refs,
+                      module,
+                      location,
+                      row.classList.contains('cropened'),
+                      false
+                    )
+                  );
                 }
               }
               if (id) scroll2Note(atext, id);
@@ -177,15 +175,13 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
       let popupParent: any = ofClass(['npopup'], target);
       popupParent = popupParent ? popupParent.element : null;
       const elem = targ.element;
-      const p = getElementInfo(elem);
+      const p = getElementData(elem);
+      const { title, type: ptype } = p;
       let okay;
       switch (targ.type) {
         case 'cr':
           if (p && place.crossrefs === 'notebox') {
-            okay = scroll2Note(
-              atext,
-              `w${index}.footnote.${p.type}.${p.nid}.${p.osisref}.${p.mod}`
-            );
+            okay = scroll2Note(atext, `w${index}.footnote.${ptype}.${title}`);
           }
           break;
 
@@ -193,10 +189,7 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
           // genbk fn are embedded in text
           if (!popupParent && type === C.GENBOOK) okay = null;
           else if (p && place.footnotes === 'notebox') {
-            okay = scroll2Note(
-              atext,
-              `w${index}.footnote.${p.type}.${p.nid}.${p.osisref}.${p.mod}`
-            );
+            okay = scroll2Note(atext, `w${index}.footnote.${ptype}.${title}`);
           }
           break;
 
@@ -206,10 +199,7 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
             place.usernotes === 'notebox' &&
             (type === C.BIBLE || type === C.COMMENTARY)
           ) {
-            okay = scroll2Note(
-              atext,
-              `w${index}.footnote.${p.type}.${p.nid}.${p.osisref}.${p.mod}`
-            );
+            okay = scroll2Note(atext, `w${index}.footnote.${ptype}.${title}`);
           }
           break;
 

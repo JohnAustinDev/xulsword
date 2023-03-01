@@ -12,13 +12,15 @@ import Data from './components/data';
 import type { AddCaller, ContextData, LocationVKType } from '../type';
 import type { AboutWinState } from '../renderer/about/about';
 
-// Requires the calling window, since rg will not be adding it.
+// Require the calling window argument, since rg will not add it when
+// Commands are called from the main process.
 const Commands = CommandsX as AddCaller['Commands'];
 
-const noContextData: ContextData = {
+const defaultContextData: ContextData = {
   search: null,
-  locationVK: null,
-  module: null,
+  location: null,
+  locationGB: null,
+  context: null,
   tab: null,
   lemma: null,
   panelIndex: null,
@@ -35,9 +37,9 @@ export default function contextMenu(
   dispose: (() => void)[]
 ): void {
   // Custom context-menu target data is written to Data to be read when
-  // the menu is built.
+  // the menu is being built.
   const cm = () => {
-    return (Data.read('contextData') || noContextData) as ContextData;
+    return (Data.read('contextData') || defaultContextData) as ContextData;
   };
 
   dispose.push(
@@ -85,10 +87,10 @@ export default function contextMenu(
         {
           label: i18n.t('menu.help.about'),
           visible: Object.keys(cm()).length > 0,
-          enabled: Boolean(cm().tab || cm().module),
+          enabled: Boolean(cm().tab || cm().context),
           click: ((data) => {
             return () => {
-              const mod = data.module || data.tab;
+              const mod = data.context || data.tab;
               if (mod) {
                 const modules = [mod];
                 if (mod && mod in G.Tab) {
@@ -112,10 +114,12 @@ export default function contextMenu(
         {
           label: i18n.t('menu.options.font'),
           visible: Object.keys(cm()).length > 0,
-          enabled: Boolean(cm().module),
+          enabled: Boolean(cm().context),
           click: ((data) => {
             return () => {
-              if (data.module) Commands.openFontsColors(data.module, window.id);
+              if (data.context) {
+                Commands.openFontsColors(data.context, window.id);
+              }
             };
           })(cm()),
         },
@@ -123,11 +127,11 @@ export default function contextMenu(
           label: i18n.t('menu.context.close'),
           visible: Object.keys(cm()).length > 0,
           enabled: Boolean(
-            (cm().tab || cm().module) && cm().panelIndex !== null
+            (cm().tab || cm().context) && cm().panelIndex !== null
           ),
           click: ((data) => {
             return () => {
-              const mod = data.tab || data.module;
+              const mod = data.tab || data.context;
               if (mod && data.panelIndex !== null)
                 setViewportTabs(data.panelIndex, mod, 'hide');
             };
@@ -139,10 +143,10 @@ export default function contextMenu(
         {
           label: i18n.t('Search'),
           visible: Object.keys(cm()).length > 0,
-          enabled: Boolean(cm().selection && cm().module),
+          enabled: Boolean(cm().selection && cm().context),
           click: ((data) => {
             return () => {
-              const { selection, module } = data;
+              const { selection, context: module } = data;
               if (selection && module)
                 Commands.search(
                   {
@@ -177,10 +181,10 @@ export default function contextMenu(
         {
           label: i18n.t('menu.context.selectVerse'),
           visible: Object.keys(cm()).length > 0 && !cm().isPinned,
-          enabled: Boolean(cm().locationVK),
+          enabled: Boolean(cm().location),
           click: ((data) => {
             return () => {
-              const { locationVK } = data;
+              const { location: locationVK } = data;
               if (locationVK && typeof locationVK === 'object') {
                 Commands.goToLocationVK(
                   locationVK,
@@ -205,14 +209,14 @@ export default function contextMenu(
         {
           label: i18n.t('menu.bookmark.add'),
           visible: Object.keys(cm()).length > 0,
-          enabled: Boolean(cm().module && cm().locationVK),
+          enabled: Boolean((cm().context && cm().location) || cm().locationGB),
           click: ((data) => {
             return () => {
-              const { module, locationVK: location } = data;
-              if (module && location) {
+              const { context: module, location, locationGB } = data;
+              if ((module && location) || locationGB) {
                 CommandsX.openBookmarkProperties(undefined, {
-                  location,
-                  module,
+                  location: locationGB || location,
+                  module: module || undefined,
                   usernote: false,
                 });
               }
@@ -222,14 +226,14 @@ export default function contextMenu(
         {
           label: i18n.t('menu.usernote.add'),
           visible: Object.keys(cm()).length > 0,
-          enabled: Boolean(cm().module && cm().locationVK),
+          enabled: Boolean((cm().context && cm().location) || cm().locationGB),
           click: ((data) => {
             return () => {
-              const { module, locationVK: location } = data;
-              if (module && location) {
+              const { context: module, location, locationGB } = data;
+              if ((module && location) || locationGB) {
                 CommandsX.openBookmarkProperties(undefined, {
-                  location,
-                  module,
+                  location: locationGB || location,
+                  module: module || undefined,
                   usernote: true,
                 });
               }

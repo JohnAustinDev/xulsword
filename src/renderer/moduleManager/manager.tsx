@@ -1209,15 +1209,17 @@ function audioDialogOnChange(
       if (showAudioDialog[0].type === 'versekey') {
         const dvk = showAudioDialog[0] as H.VersekeyDialog;
         const sel = selection as SelectVKMType;
-        const af = dvk.chapters[sel.book];
-        let ch: number[] | undefined;
-        if (af) {
-          ch = af
-            .map((n, i) => (n ? i : undefined))
-            .filter(Boolean) as number[];
+        if (sel.book) {
+          const af = dvk.chapters[sel.book];
+          let ch: number[] | undefined;
+          if (af) {
+            ch = af
+              .map((n, i) => (n ? i : undefined))
+              .filter(Boolean) as number[];
+          }
+          dvk.options.chapters = ch;
+          dvk.options.lastchapters = ch;
         }
-        dvk.options.chapters = ch;
-        dvk.options.lastchapters = ch;
       }
       return { showAudioDialog };
     }

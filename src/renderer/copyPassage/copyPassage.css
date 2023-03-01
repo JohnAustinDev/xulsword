@@ -1,7 +1,6 @@
 .versePerLineButton,
 .chapinfo,
-.introtext,
-.chapnotice {
+.introtext {
   display: none;
 }
 

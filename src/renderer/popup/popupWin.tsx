@@ -66,14 +66,13 @@ export default class PopupWin extends React.Component implements PopupParent {
 
   render() {
     const { popupHandler } = this;
-    const { elemhtml, eleminfo, popupReset } = this.state as PopupWinState;
+    const { elemdata, popupReset } = this.state as PopupWinState;
 
     return (
       <Vbox {...addClass('popupWin', this.props)}>
         <Popup
-          key={[elemhtml && elemhtml.length, popupReset].join('.')}
-          elemhtml={elemhtml}
-          eleminfo={eleminfo}
+          key={[elemdata && elemdata.length, popupReset].join('.')}
+          elemdata={elemdata}
           onPopupClick={popupHandler}
           onSelectChange={popupHandler}
           isWindow

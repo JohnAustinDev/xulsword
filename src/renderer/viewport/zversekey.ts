@@ -7,9 +7,9 @@ import {
   clone,
   dString,
   getLocalizedChapterTerm,
-  findBookmarkItem,
+  JSON_attrib_stringify,
 } from '../../common';
-import { getElementInfo } from '../../libswordElemInfo';
+import { getElementData, HTMLData } from '../libswordElemInfo';
 import {
   getCompanionModules,
   getMaxChapter,
@@ -22,7 +22,6 @@ import { delayHandler } from '../libxul/xul';
 import type {
   AtextPropsType,
   AtextStateType,
-  BookmarkFolderType,
   LocationVKType,
   LookupInfo,
   OSISBookType,
@@ -190,7 +189,7 @@ export function locationVKText(
     const isOK =
       (type === C.BIBLE && commentaries !== 'only') ||
       (type === C.COMMENTARY && commentaries);
-    if (isOK && v11n && G.getBooksInModule(module).includes(book)) {
+    if (isOK && v11n && book && G.getBooksInModule(module).includes(book)) {
       let text;
       const modloc = verseKey(loc);
       if (loc.subid) {
@@ -395,22 +394,21 @@ export function getRefHTML(
           h += `
           <bdi><span class="${fntext.join(' ')}">${text}${alt}</span></bdi>`;
         } else {
-          const { book, chapter, verse, lastverse } = location;
+          const crdata: HTMLData = { type: 'crref', location, context: module };
+          const crd = JSON_attrib_stringify(crdata);
           const q = inf.possibleV11nMismatch
             ? '<span class="possibleV11nMismatch">?</span>'
             : '';
           h += `
-          <bdi><a class="${crref.join(' ')}" data-title="${[
-            book,
-            chapter,
-            verse,
-            lastverse || verse,
-            module,
-          ].join('.')}">${verseKey(location).readable()}</a>${q}${
-            text ? ': ' : ''
-          }</bdi><bdi><span class="${crtext.join(
-            ' '
-          )}">${text}${alt}</span></bdi>`;
+          <bdi>
+            <a class="${crref.join(' ')}" data-title="${crd}">
+              ${verseKey(location).readable()}
+            </a>
+            ${q}${text ? ': ' : ''}
+          </bdi>
+          <bdi>
+            <span class="${crtext.join(' ')}">${text}${alt}</span>
+          </bdi>`;
         }
       }
     }
@@ -420,41 +418,46 @@ export function getRefHTML(
 }
 
 // The 'notes' argument is an HTML string containing one or more nlist
-// notes. An nlist note contains a single verse-key textual note.
+// notes, possibly contained by a div. An nlist note contains a single
+// verse-key textual note.
 export function getNoteHTML(
-  nlist: string,
-  show:
-    | {
-        [key in keyof ShowType]?: boolean;
-      }
-    | null, // null to show all types of notes
+  notes: string,
+  show: Partial<ShowType> | null, // null to show all types of notes
   panelIndex = 0, // used for IDs
   openCRs = false, // show scripture reference texts or not
-  keepOnlyThisNote = '' // title of a single note to keep
+  keepOnlyThisNote = '' // type.title of a single note to keep
 ) {
-  if (!nlist) return '';
+  if (!notes) return '';
 
   const index = panelIndex || 0; // w is only needed for unique id creation
+  const containerTagsRE = /(^<div[^>]*>|<\/div>$)/g;
 
-  let note = nlist.split(/(?=<div[^>]+class="nlist")/);
+  // Remove any container around the nlist(s)
+  let nlists = notes;
+  if (!/^[^<]*<[^>]*class="nlist\b/.test(nlists)) {
+    nlists = nlists.replace(containerTagsRE, '');
+  }
+  let note = nlists.split(/(?=<div[^>]+class="nlist")/);
   note = note.sort((a: string, b: string) => {
     const t1 = 'un';
     const t2 = 'fn';
     const t3 = 'cr';
-    const pa = getElementInfo(a);
-    const pb = getElementInfo(b);
+    const ia = getElementData(a);
+    const pa = ia?.location || null;
+    const ib = getElementData(b);
+    const pb = ib?.location || null;
     if (pa === null) return 1;
     if (pb === null) return -1;
-    if (pa.ch === pb.ch) {
-      if (pa.vs === pb.vs) {
-        if (pa.ntype === pb.ntype) return 0;
-        if (pa.ntype === t1) return -1;
-        if (pa.ntype === t2 && pb.ntype === t3) return -1;
+    if (pa.chapter === pb.chapter) {
+      if (pa.verse === pb.verse) {
+        if (ia.type === ib.type) return 0;
+        if (ia.type === t1) return -1;
+        if (ia.type === t2 && ib.type === t3) return -1;
         return 1;
       }
-      return (pa.vs || 0) > (pb.vs || 0) ? 1 : -1;
+      return (pa.verse || 0) > (pb.verse || 0) ? 1 : -1;
     }
-    if ((pa.ch || 0) < (pb.ch || 0)) return -1;
+    if ((pa.chapter || 0) < (pb.chapter || 0)) return -1;
     return 1;
   });
 
@@ -462,98 +465,116 @@ export function getNoteHTML(
   let t = '';
 
   note.forEach((anote) => {
-    const p = getElementInfo(anote);
-    if (p && (!keepOnlyThisNote || p.title === keepOnlyThisNote)) {
-      const innerHTML = anote.replace(
-        /(^(<div[^>]+>\s*)+|(<\/div>\s*)+$)/g,
-        ''
+    const p = getElementData(anote);
+    const { context, nid, location } = p;
+    const { title: nlistTitle } = p;
+    if (nlistTitle && nid) {
+      // NOTE nlist title starts with fn|cr|un type, however other note related titles
+      // do not!.
+      let type: string | undefined = nlistTitle.substring(
+        0,
+        nlistTitle.indexOf('.')
       );
-      // Check if this note should be displayed, and if not then skip it
-      const notetypes = { fn: 'footnotes', cr: 'crossrefs', un: 'usernotes' };
-      Object.entries(notetypes).forEach((entry) => {
-        const [ntype, tx] = entry;
-        const type = tx as keyof ShowType;
-        if (p.ntype === ntype && show && !show[type]) p.ntype = null;
-      });
-      if (p.ntype) {
-        // Display this note as a row in the main table
-        t += `<div id="w${index}.footnote.${p.title}" `;
-        t += `data-title="${p.nid}.${p.bk}.${p.ch}.${p.vs}.${p.mod}" `;
-        t += `class="fnrow ${openCRs ? 'cropened' : ''}">`;
+      let book;
+      let chapter;
+      let verse;
+      if (location) ({ book, chapter, verse } = location);
+      const keepNote = (
+        location
+          ? [type, nid, book, chapter, verse]
+          : [type, nid, 'unavailable']
+      ).join('.');
+      if (!keepOnlyThisNote || keepNote === keepOnlyThisNote) {
+        const innerHTML = anote.replace(containerTagsRE, '');
+        // Check if this note should be displayed, and if not then skip it
+        const notetypes = { fn: 'footnotes', cr: 'crossrefs', un: 'usernotes' };
+        Object.entries(notetypes).forEach((entry) => {
+          const [ntype, tx] = entry;
+          if (type === ntype && show && !show[tx as keyof ShowType]) {
+            type = undefined;
+          }
+        });
+        if (type) {
+          const fnid = `w${index}.footnote.${nlistTitle}`;
+          const rowcls = openCRs ? ' cropened' : '';
+          // Display this note as a row in the main table
+          const fnrdata = JSON_attrib_stringify({
+            type: 'fnrow',
+            location,
+            context,
+          });
+          t += `<div id="${fnid}" data-data="${fnrdata}" class="fnrow${rowcls}">`;
 
-        // Write cell #1: an expander link for cross references only
-        t += '<div class="fncol1">';
-        if (p.ntype === 'cr') {
-          t += '<div class="crtwisty"></div>';
-        }
-        t += '</div>';
+          // Write cell #1: an expander link for cross references only
+          const twisty = type === 'cr' ? '<div class="crtwisty"></div>' : '';
+          t += `<div class="fncol1">${twisty}</div>`;
 
-        // These are the lines for showing expanded verse refs
-        t += '<div class="fncol2"><div class="fndash"></div></div>';
-        t += '<div class="fncol3">&nbsp;</div>';
+          // These are the lines for showing expanded verse refs
+          t += '<div class="fncol2"><div class="fndash"></div></div>';
+          t += '<div class="fncol3">&nbsp;</div>';
 
-        // Write cell #4: chapter and verse
-        t += '<div class="fncol4">';
-        if (p.ch && p.vs) {
-          t += `<a class="fnlink" data-title="${p.nid}.${p.bk}.${p.ch}.${p.vs}.${p.mod}">`;
-          t += `<i>${dString(G.i18n, p.ch)}<bdi>:</bdi>${dString(
-            G.i18n,
-            p.vs
-          )}</i>`;
-          t += '</a>';
-          t += ' -';
-        }
-        t += '</div>';
-
-        // Write cell #5: note body
-        t += `<div class="fncol5"${
-          p.ntype === 'cr' ? ` data-reflist="${innerHTML}"` : ''
-        }>`;
-
-        switch (p.ntype) {
-          case 'cr': {
-            // If this is a cross reference, then parse the note body for references and display them
-            const info = {} as Partial<LookupInfo>;
-            const keepNotes = false;
-            const context: LocationVKType = {
-              book: (p.bk || 'Gen') as OSISBookType,
-              chapter: Number(p.ch),
-              verse: p.vs,
-              v11n: null,
-            };
-            const tmod = /^[\w\d]+:/.test(innerHTML)
-              ? innerHTML.split(':')[0]
-              : p.mod;
-            t += getRefHTML(
-              innerHTML,
-              tmod || '',
+          // Write cell #4: chapter and verse
+          t += '<div class="fncol4">';
+          if (chapter && verse) {
+            const ch = dString(G.i18n, chapter);
+            const vs = dString(G.i18n, verse);
+            const fnldata = JSON_attrib_stringify({
+              type: 'fnlink',
+              location,
               context,
-              openCRs,
-              keepNotes,
-              info
-            );
-            break;
+            });
+            t += `<a class="fnlink" data-data="${fnldata}"><i>${ch}<bdi>:</bdi>${vs}</i></a> -`;
           }
-          case 'fn': {
-            // If this is a footnote, then just write the body
-            let opdir = '';
-            if (p.mod && G.Tab[p.mod].direction !== G.ProgramConfig.direction) {
-              opdir = ' opposing-program-direction';
-            }
-            t += `<bdi><span class="fntext${opdir}">${innerHTML}</span></bdi>`;
-            break;
-          }
-          case 'un': {
-            // If this is a usernote, then add direction entities and style
-            t += `<bdi><span class="noteBoxUserNote">${innerHTML}</span></bdi>`;
-            break;
-          }
-          default:
-        }
+          t += '</div>';
 
-        // Finish this body and this row
-        t += '</div>';
-        t += '</div>';
+          // Write cell #5: note body
+          const ccls = type === 'cr' ? ` data-reflist="${innerHTML}"` : '';
+          t += `<div class="fncol5"${ccls}>`;
+
+          switch (type) {
+            case 'cr': {
+              if (location) {
+                // If this is a cross reference, then parse the note body for references and display them
+                const info = {} as Partial<LookupInfo>;
+                const keepNotes = false;
+                const tmod = /^[\w\d]+:/.test(innerHTML)
+                  ? innerHTML.split(':')[0]
+                  : context;
+                t += getRefHTML(
+                  innerHTML,
+                  tmod || '',
+                  location,
+                  openCRs,
+                  keepNotes,
+                  info
+                );
+              }
+              break;
+            }
+            case 'fn': {
+              // If this is a footnote, then just write the body
+              let opdir = '';
+              if (
+                context &&
+                G.Tab[context].direction !== G.ProgramConfig.direction
+              ) {
+                opdir = ' opposing-program-direction';
+              }
+              t += `<bdi><span class="fntext${opdir}">${innerHTML}</span></bdi>`;
+              break;
+            }
+            case 'un': {
+              // If this is a usernote, then add direction entities and style
+              t += `<bdi><span class="noteBoxUserNote">${innerHTML}</span></bdi>`;
+              break;
+            }
+            default:
+          }
+
+          // Finish this body and this row
+          t += '</div>';
+          t += '</div>';
+        }
       }
     }
   });
@@ -599,27 +620,11 @@ export function getChapterHeading(
 
   const intro = getIntroductions(module, `${book} ${chapter}`);
 
-  let lt = G.LibSword.getModuleInformation(module, 'NoticeLink');
-  if (lt === C.NOTFOUND) lt = '';
-  else lt = lt.replace('<a>', "<a class='noticelink'>");
-
   // Chapter heading has style of the locale associated with the module, or else
-  // current program locale if no associated locale is installed. But notice-link
-  // is always cs-module style.
+  // current program locale if no associated locale is installed.
   let html = `<div class="chapterhead${
     chapter === 1 ? ' chapterfirst' : ''
   } cs-${l}">`;
-
-  html += `<div class="chapnotice cs-${module}${!lt ? ' empty' : ''}">`;
-  html += `<div class="noticelink-c">${lt}</div>`;
-  html += '<div class="noticetext">'; // contains a span with class cs-mod because LibSword.getModuleInformation doesn't supply the class
-  html += `<div class="cs-${module}">${
-    lt ? G.LibSword.getModuleInformation(module, 'NoticeText') : ''
-  }</div>`;
-  html += '</div>';
-  html += '<div class="head-line-break"></div>';
-  html += '</div>';
-
   html += '<div class="chaptitle" >';
   html += `<div class="chapbk">${G.i18n.t(book, toptions)}</div>`;
   html += `<div class="chapch">${getLocalizedChapterTerm(
@@ -630,19 +635,15 @@ export function getChapterHeading(
   )}</div>`;
   html += '</div>';
 
+  const inc = !intro.textHTML ? ' empty' : '';
+  const ind = JSON_attrib_stringify({
+    type: 'introlink',
+    location,
+    context: module,
+  });
+  const int = G.i18n.t('IntroLink', toptions);
   html += '<div class="chapinfo">';
-  html += `<div class="listenlink" data-title="${[
-    book,
-    chapter,
-    1,
-    module,
-  ].join('.')}"></div>`;
-  html += `<div class="introlink${
-    !intro.textHTML ? ' empty' : ''
-  }" data-title="${[book, chapter, 1, module].join('.')}">${G.i18n.t(
-    'IntroLink',
-    toptions
-  )}</div>`;
+  html += `<div class="introlink${inc}" data-data="${ind}">${int}</div>`;
   if (ilModule && ilModuleOption && ilModuleOption.length > 1) {
     html += '<div class="origselect">';
     html += '<select>';
@@ -755,16 +756,19 @@ export function versekeyScroll(
   let v = null as HTMLElement | null;
   let vf = null;
   while (av && !v) {
-    const p = getElementInfo(av as HTMLElement);
-    if (p !== null && p.type === 'vs') {
-      if (!vf && p.bk === book && p.ch === chapter) vf = av as HTMLElement;
+    const pi = getElementData(av as HTMLElement);
+    const p = pi?.location || null;
+    if (p && pi.type === 'vs') {
+      if (!vf && p.book === book && p.chapter === chapter) {
+        vf = av as HTMLElement;
+      }
       if (
-        p.bk === book &&
-        p.ch === chapter &&
-        p.vs &&
-        p.lv &&
-        verse >= p.vs &&
-        verse <= p.lv
+        p.book === book &&
+        p.chapter === chapter &&
+        p.verse &&
+        p.lastverse &&
+        verse >= p.verse &&
+        verse <= p.lastverse
       )
         v = av as HTMLElement;
     }
@@ -861,12 +865,11 @@ function aTextWheelScroll2(
         v = v.nextSibling as HTMLElement | null;
       }
       if (!v) return null;
-      const p = getElementInfo(v);
+      const p = getElementData(v);
       const t = (module && G.Tab[module]) || null;
       const v11n = (t && t.v11n) || null;
-      if (p && v11n) {
-        const { bk: book, ch, vs: verse } = p;
-        const chapter = Number(ch);
+      if (p.location && v11n) {
+        const { book, chapter, verse } = p.location;
         if (book && chapter && verse) {
           newloc = verseKey({
             book: book as OSISBookType,
@@ -953,10 +956,14 @@ export function highlight(
     // Then find the verse element(s) to highlight
     let av = sbe.firstChild as HTMLElement | null;
     while (av) {
-      const v = getElementInfo(av);
-      if (v && v.type === 'vs') {
-        let hi = v.bk === book && v.ch === chapter;
-        if (!v.lv || !v.vs || v.lv < verse || v.vs > lv) hi = false;
+      const vi = getElementData(av);
+      const { type, location } = vi;
+      const v = location || null;
+      if (v && type === 'vs') {
+        let hi = v.book === book && v.chapter === chapter;
+        if (!v.lastverse || !v.verse || v.lastverse < verse || v.verse > lv) {
+          hi = false;
+        }
         if (hi) av.classList.add('hl');
       }
 
@@ -982,33 +989,38 @@ export function trimNotes(sbe: HTMLElement, nbe: HTMLElement): boolean {
     vl = vl.previousSibling as HTMLElement | null;
   }
 
-  const f = vf ? getElementInfo(vf) : null;
-  const l = vl ? getElementInfo(vl) : null;
+  const fi = vf ? getElementData(vf) : null;
+  const f = fi?.location || null;
+  const li = vl ? getElementData(vl) : null;
+  const l = li?.location || null;
 
   // hide footnotes whose references are scrolled off the window
   if (nbe.innerHTML) {
     const nt = Array.from(nbe.getElementsByClassName('fnrow')) as HTMLElement[];
     nt.forEach((nti) => {
-      const v = getElementInfo(nti);
+      const vi = getElementData(nti);
+      const v = vi?.location || null;
       if (v) {
         let display = '';
         if (
           f &&
-          v.ch &&
-          f.ch &&
-          v.vs &&
-          f.vs &&
-          (v.ch < f.ch || (v.ch === f.ch && v.vs < f.vs))
+          v.chapter &&
+          f.chapter &&
+          v.verse &&
+          f.verse &&
+          (v.chapter < f.chapter ||
+            (v.chapter === f.chapter && v.verse < f.verse))
         )
           display = 'none';
         if (
           l &&
           vl &&
-          v.ch &&
-          l.ch &&
-          v.vs &&
-          l.vs &&
-          (v.ch > l.ch || (v.ch === l.ch && v.vs > l.vs))
+          v.chapter &&
+          l.chapter &&
+          v.verse &&
+          l.verse &&
+          (v.chapter > l.chapter ||
+            (v.chapter === l.chapter && v.verse > l.verse))
         )
           display = 'none';
         nti.style.display = display;
@@ -1113,16 +1125,19 @@ export function pageChange(
       if (!firstVerse && verseIsVisible(v)) firstVerse = v;
     });
     if (firstVerse) {
-      const ei = getElementInfo(firstVerse);
-      const t = (ei && ei.mod && G.Tab[ei.mod]) || null;
-      const v11n = t?.v11n || null;
-      if (ei && ei.bk && v11n && (Number(ei.ch) !== 1 || ei.vs !== 1)) {
-        return {
-          book: ei.bk as OSISBookType,
-          chapter: Number(ei.ch),
-          verse: ei.vs,
-          v11n,
-        };
+      const ei = getElementData(firstVerse);
+      const { context, location } = ei;
+      if (context && location) {
+        const { book, chapter, verse } = location;
+        const t = (context in G.Tab && G.Tab[context]) || null;
+        if (t && book && (chapter !== 1 || verse !== 1)) {
+          return {
+            book,
+            chapter,
+            verse,
+            v11n: t.v11n || null,
+          };
+        }
       }
     }
   } else {
@@ -1133,21 +1148,25 @@ export function pageChange(
         if (!lastVerse && verseIsVisible(v)) lastVerse = v;
       });
     if (lastVerse) {
-      const ei = getElementInfo(lastVerse);
-      const t = (ei && ei.mod && G.Tab[ei.mod]) || null;
-      const v11n = t?.v11n || null;
-      if (ei && ei.bk && v11n) {
-        const vk = verseKey({
-          book: ei.bk as OSISBookType,
-          chapter: Number(ei.ch),
-          verse: ei.vs,
-          v11n,
-        });
-        if (
-          vk.chapter <= getMaxChapter(v11n, vk.osisRef()) &&
-          (!vk.verse || vk.verse <= getMaxVerse(v11n, vk.osisRef()))
-        )
-          return vk.location();
+      const ei = getElementData(lastVerse);
+      const { context, location } = ei;
+      if (context && location) {
+        const { book, chapter, verse } = location;
+        const t = (context in G.Tab && G.Tab[context]) || null;
+        const v11n = t?.v11n || null;
+        if (v11n && book) {
+          const vk = verseKey({
+            book,
+            chapter,
+            verse,
+            v11n,
+          });
+          if (
+            vk.chapter <= getMaxChapter(v11n, vk.osisRef()) &&
+            (!vk.verse || vk.verse <= getMaxVerse(v11n, vk.osisRef()))
+          )
+            return vk.location();
+        }
       }
     }
   }

@@ -28,12 +28,8 @@ import type {
   PrefValue,
   BookmarkFolderType,
   BookmarkType,
-  BookmarkItem,
-  LocationVKType,
-  LocationGBType,
   NewModulesType,
 } from './type';
-import type i18next from 'i18next';
 import type { TreeNodeInfo } from '@blueprintjs/core';
 import type { SelectVKMType } from './renderer/libxul/vkselect';
 import type { SelectGBMType } from './renderer/libxul/genbookselect';
@@ -102,6 +98,36 @@ export function JSON_parse(s: string, anyx?: Exclude<any, undefined>): any {
     });
   }
   return any;
+}
+
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export function JSON_attrib_stringify(
+  x: any,
+  _func?: null,
+  space?: number
+): string {
+  const str = JSON_stringify(x, _func, space);
+  return str
+    .replace(/&/g, '%26') /* These 5 replacements protect from HTML/XML. */
+    .replace(/'/g, '%27')
+    .replace(/"/g, "'")
+    .replace(/</g, '%3C')
+    .replace(/>/g, '%3E');
+}
+
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export function JSON_attrib_parse(
+  s: string,
+  anyx?: Exclude<any, undefined>
+): any {
+  const str = s
+    .replace(/%3E/g, '>')
+    .replace(/%3C/g, '<')
+    .replace(/'/g, '"')
+    .replace(/%27/g, "'")
+    .replace(/%26/g, '&'); /* These 5 replacements protect from HTML/XML. */
+
+  return JSON_parse(str, anyx);
 }
 
 // Firefox Add-On validation throws warnings about eval(uneval(obj)), so
@@ -330,6 +356,75 @@ export function randomID(): string {
   return Math.random().toString(36).replace('0.', 'x');
 }
 
+export type HTMLElementSearchModes =
+  | 'self'
+  | 'ancestor'
+  | 'ancestor-or-self'
+  | 'descendant'
+  | 'descendant-or-self';
+
+export function findElements(
+  start: HTMLElement,
+  mode: HTMLElementSearchModes,
+  testFunc: (elem: HTMLElement) => boolean,
+  onlyFirst: false
+): HTMLElement[];
+
+export function findElements(
+  start: HTMLElement,
+  mode: HTMLElementSearchModes,
+  testFunc: (elem: HTMLElement) => boolean,
+  onlyFirst: true
+): HTMLElement | null;
+
+export function findElements(
+  start: HTMLElement,
+  mode: HTMLElementSearchModes,
+  testFunc: (elem: HTMLElement) => boolean,
+  onlyFirst: true | false
+): HTMLElement | null | HTMLElement[] {
+  const onlyFirst2 = onlyFirst ?? true;
+  const r: HTMLElement[] = [];
+  let telem: HTMLElement | undefined = start;
+  if (mode !== 'self') {
+    while (telem && telem.nodeType === 1) {
+      const testElem = telem;
+      if (mode.includes('self') && testFunc(testElem)) {
+        if (onlyFirst2) return testElem;
+        r.push(testElem);
+      }
+      if (mode.includes('ancestor')) {
+        if (testFunc(testElem)) {
+          if (onlyFirst2) return testElem;
+          r.push(testElem);
+        }
+        telem = telem.parentNode as HTMLElement | undefined;
+      } else {
+        const es = Array.from(telem.childNodes)
+          .map((chn) => {
+            return chn.nodeType === 1
+              ? findElements(
+                  chn as HTMLElement,
+                  'descendant-or-self',
+                  testFunc,
+                  false
+                )
+              : [];
+          })
+          .flat();
+        if (onlyFirst2 && es.length) return es[0];
+        r.push(...es);
+        break;
+      }
+    }
+  } else if (start.nodeType === 1 && testFunc(start)) {
+    if (onlyFirst2) return start;
+    r.push(start);
+  }
+  if (onlyFirst2) return r.length ? r[0] : null;
+  return r;
+}
+
 // Searches an element and its ancestors or descendants, depending on
 // chosen mode, looking for particular class-name(s). Default mode is
 // ancestor-or-self which searches the element and all its ancestors
@@ -339,48 +434,22 @@ export function randomID(): string {
 export function ofClass(
   search: string | string[],
   element: HTMLElement | ParentNode | EventTarget | null,
-  mode?:
-    | 'self'
-    | 'ancestor'
-    | 'ancestor-or-self'
-    | 'descendant'
-    | 'descendant-or-self'
+  mode?: HTMLElementSearchModes
 ): { element: HTMLElement; type: string } | null {
   const amode = mode || 'ancestor-or-self';
   const searchclasses = Array.isArray(search) ? search : [search];
   if (!element || !('classList' in element)) return null;
-  let elm: HTMLElement | undefined = element;
-  let type: string | undefined;
-  let searchingself = true;
-  if (amode !== 'self') {
-    while (elm) {
-      const test = elm;
-      if (
-        (!searchingself || amode.includes('self')) &&
-        searchclasses.some((x) => test.classList && test.classList.contains(x))
-      ) {
-        break;
-      }
-      searchingself = false;
-      if (amode.includes('ancestor')) {
-        elm = elm.parentNode as HTMLElement | undefined;
-      } else {
-        let celm: HTMLElement | undefined;
-        elm.childNodes.forEach((chn) => {
-          const tst = ofClass(search, chn, 'descendant-or-self');
-          if (!celm && tst) celm = tst.element;
-        });
-        elm = celm;
-      }
-    }
-  }
-  const test = elm;
-  if (!test) return null;
-  if (test && test.classList) {
-    type = searchclasses.find((c) => test.classList.contains(c));
-  }
+  const result = findElements(
+    element,
+    amode,
+    (el) => searchclasses.some((x) => el.classList && el.classList.contains(x)),
+    true
+  );
+  if (!result) return null;
+  const type =
+    (result && searchclasses.find((c) => result.classList.contains(c))) || '';
   if (!type) return null;
-  return { element: test, type };
+  return { element: result, type };
 }
 
 // Returns a promise whose state can be queried or can be rejected at will.
@@ -718,6 +787,21 @@ export function genBookTreeNodes(
       return n;
     })
   );
+}
+
+export function dictTreeNodes(
+  allDictionaryKeys: string[],
+  module?: string
+): TreeNodeInfo[] {
+  return allDictionaryKeys.map((id) => {
+    const r: TreeNodeInfo = {
+      id,
+      label: id,
+      className: module ? `cs-${module}` : 'cs-LTR_DEFAULT',
+      hasCaret: false,
+    };
+    return r;
+  });
 }
 
 // IMPORTANT: To work, this function requires allGbKeys to be the output

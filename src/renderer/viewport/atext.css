@@ -174,24 +174,6 @@ html[dir='rtl'] .notebox-maximizer {
   width: 100%;
   padding-top: 26px;
 }
-.chapnotice {
-  font-size: 1em !important;
-  margin: 0px 10px 10px 10px;
-}
-.chapnotice.empty {
-  display: none;
-}
-.noticelink-c {
-  text-align: center;
-}
-.noticelink {
-  text-decoration: underline;
-  color: blue;
-  cursor: pointer;
-}
-.noticetext {
-  display: none;
-}
 .chaptitle {
   float: left;
   font-size: 1.6em;
@@ -222,27 +204,6 @@ html[dir='rtl'] .notebox-maximizer {
 }
 .sb[dir='rtl'] .chapinfo {
   float: left;
-}
-.listenlink {
-  visibility: hidden;
-  display: inline-block;
-  background: url('../images/listen0.png');
-  width: 45px;
-  height: 37px;
-  position: relative;
-  top: -0.8em;
-}
-.listenlink.hasAudio {
-  visibility: visible;
-}
-.listenlink:hover {
-  background: url('../images/listen1.png');
-  cursor: pointer;
-}
-.atext.Genbks .listenlink {
-  position: absolute;
-  top: 0px;
-  left: 52px;
 }
 .introlink {
   font-size: 1.2em;
@@ -491,7 +452,7 @@ html[dir='rtl'] .fncol3 {
   margin-top: 10px;
   max-height: calc(100% - 13px);
 }
-.dictlist .dict-key {
+.dictlist .dictkey {
   cursor: pointer;
 }
 .dictselectkey {
@@ -530,12 +491,6 @@ html[dir='rtl'] .fncol3 {
 #reset.printp .navlink,
 #reset.printp .chapinfo {
   display: none !important;
-}
-#reset.printp .noticelink {
-  display: none;
-}
-#reset.printp .noticetext {
-  display: block;
 }
 #reset.printp .chapterhead .chapbk {
   display: block;

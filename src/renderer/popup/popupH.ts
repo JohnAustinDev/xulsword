@@ -1,10 +1,8 @@
 /* eslint-disable import/no-duplicates */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { clone, ofClass, sanitizeHTML } from '../../common';
+import { clone, findBookmarkItem, ofClass } from '../../common';
 import G from '../rg';
-import { getElementInfo, getPopupInfo } from '../../libswordElemInfo';
-import log from '../log';
-import { addBookmarksToNotes, findBookmarks } from '../bookmarks';
+import { addBookmarksToNotes, getBookmarkInfo } from '../bookmarks';
 import { getDictEntryHTML, getLemmaHTML } from '../viewport/zdictionary';
 import {
   getIntroductions,
@@ -12,46 +10,34 @@ import {
   parseExtendedVKRef,
 } from '../viewport/zversekey';
 
-import type { LocationGBType, LocationVKType, OSISBookType } from '../../type';
-import type { ElemInfo } from '../../libswordElemInfo';
+import type { BookmarkFolderType } from '../../type';
+import { getElementData, HTMLData } from '../libswordElemInfo';
 import type Popup from './popup';
 import type { PopupState } from './popup';
 
-export function getTopElement(
-  elemhtml: string[] | null,
-  eleminfo: ElemInfo[] | null
-) {
-  if (!elemhtml || !elemhtml.length) return null;
-  const elemHTML = elemhtml[elemhtml.length - 1];
-  const reninfo =
-    eleminfo && eleminfo.length === elemhtml.length
-      ? eleminfo[eleminfo.length - 1]
-      : {};
-  const div = sanitizeHTML(document.createElement('div'), elemHTML);
-  const elem = div.firstChild as HTMLElement | null;
-  if (!elem) throw Error(`Popup was given a malformed element: '${elemHTML}'`);
-  const info = { ...getPopupInfo(elem), ...reninfo };
-  if (!info)
-    throw Error(
-      `Neither Popup elemhtml or eleminfo provided info: '${elemHTML}'`
-    );
-  return { info, elem, elemHTML };
-}
-
 // Get html for Popup target with the help of any extra info.
 export function getPopupHTML(
-  elem: HTMLElement,
-  info: ElemInfo,
+  data: HTMLData,
   testonly?: boolean // is elem renderable as a popup?
-) {
-  const { type, reflist, bk, ch, mod, title } = info;
+): string {
+  const {
+    type,
+    className,
+    context,
+    reflist,
+    location,
+    title,
+    bmitem,
+    snphrase,
+  } = data;
   let html = '';
   switch (type) {
     case 'cr':
     case 'fn': {
-      if (mod && bk && ch && title) {
+      if (location && title && context) {
+        const { book, chapter } = location;
         // getChapterText must be called before getNotes
-        G.LibSword.getChapterText(mod, `${bk}.${ch}`);
+        G.LibSword.getChapterText(context, `${book}.${chapter}`);
         const notes = G.LibSword.getNotes();
         // a note element's title does not include type, but its nlist does
         html = getNoteHTML(notes, null, 0, !testonly, `${type}.${title}`);
@@ -59,70 +45,37 @@ export function getPopupHTML(
       break;
     }
 
-    case 'un': {
-      let l: LocationVKType | LocationGBType | null = null;
-      const t = (mod && mod in G.Tab && G.Tab[mod]) || null;
-      if (t && t.isVerseKey) {
-        l = {
-          book: bk as OSISBookType,
-          chapter: Number(ch),
-          v11n: t.v11n || 'KJV',
-        };
-      } else if (t && mod && typeof ch === 'string') {
-        l = { module: mod, key: ch };
-      }
-      if (l && mod) {
-        html = getNoteHTML(
-          addBookmarksToNotes(findBookmarks(l), '', mod),
-          null,
-          0,
-          !testonly,
-          `un.${title}`
+    case 'un':
+      if (bmitem && context) {
+        const bm = findBookmarkItem(
+          G.Prefs.getComplexValue(
+            'manager.bookmarks',
+            'bookmarks'
+          ) as BookmarkFolderType,
+          bmitem
         );
+        const bmi = (bm && 'location' in bm && getBookmarkInfo(bm)) || null;
+        if (bmi) {
+          html = getNoteHTML(
+            addBookmarksToNotes([bmi], '', context),
+            null,
+            0,
+            !testonly
+          );
+        }
       }
       break;
-    }
 
     // An 'sr' class of reference is a textual link to either a versekey passage,
     // footnote, or, in some weird cases (such as StrongsHebrew module) to a
     // dictionary entry.
     case 'sr': {
-      if (mod) {
-        const bibleReflist = reflist
-          ? reflist.join(';')
-          : elem && elem.innerHTML;
-        // Getting original context of an sr span is tricky since popup
-        // copies the span locally. So write data-context when possible.
-        let si = info;
-        if (!si.vs) {
-          let pp;
-          if (elem.dataset.context) {
-            pp = getElementInfo(
-              `<span class="vs" data-title="${elem.dataset.context}">`
-            );
-          } else {
-            const vstarg = ofClass(['vs'], elem);
-            if (vstarg) {
-              pp = getElementInfo(vstarg.element);
-              if (pp) {
-                const { bk: b, ch: c, vs: v, lv: l, mod: m } = pp;
-                elem.dataset.context = `${b}.${c}.${v}.${l}.${m}`;
-              }
-            }
-          }
-          if (pp) si = pp;
-        }
-        const { bk: bk2, ch: ch2, vs: vs2 } = si;
-        const context: LocationVKType = {
-          book: bk2 || 'Gen',
-          chapter: !Number.isNaN(Number(ch2)) ? Number(ch2) : 0,
-          verse: vs2,
-          v11n: null,
-        };
-        const parsed = parseExtendedVKRef(bibleReflist, context);
+      if (context && reflist && location) {
+        const bibleReflist = reflist.join(';');
+        const parsed = parseExtendedVKRef(bibleReflist, location);
         if (parsed.length) {
-          const { book, chapter, verse } = context;
-          const dt = `cr.1.${book || 0}.${chapter || 0}.${verse || 0}.${mod}`;
+          const { book: b, chapter: c, verse: v } = location;
+          const dt = `cr.1.${b || 0}.${c || 0}.${v || 0}.${context}`;
           html = getNoteHTML(
             `<div class="nlist" data-title="${dt}">${bibleReflist}</div>`,
             null,
@@ -130,18 +83,18 @@ export function getPopupHTML(
             !testonly
           );
         } else if (reflist && reflist[0]) {
-          html = getDictEntryHTML(reflist[0].replace(/^.*?:/, ''), mod);
+          html = getDictEntryHTML(reflist[0].replace(/^.*?:/, ''), context);
         }
       }
       break;
     }
 
     case 'sn': {
-      if (mod) {
-        const snlist = Array.from(elem.classList);
+      if (context && className && snphrase) {
+        const snlist = className.trim().split(' ');
         if (snlist && snlist.length > 1) {
           snlist.shift();
-          html = getLemmaHTML(snlist, elem.innerHTML, mod);
+          html = getLemmaHTML(snlist, snphrase, context);
         }
       }
       break;
@@ -165,20 +118,11 @@ export function getPopupHTML(
     }
 
     case 'introlink': {
-      if (mod && bk && ch) {
-        const intro = getIntroductions(mod, `${bk}.${ch}`);
+      if (context && location) {
+        const { book, chapter } = location;
+        const intro = getIntroductions(context, `${book}.${chapter}`);
         if (intro && intro.textHTML) html = intro.textHTML;
       }
-      break;
-    }
-
-    case 'noticelink': {
-      if (mod) html = G.LibSword.getModuleInformation(mod, 'NoticeText');
-      break;
-    }
-
-    case 'unknown': {
-      log.warn(`Unknown popup: '${elem.className}'`);
       break;
     }
 
@@ -193,22 +137,11 @@ export default function handler(this: Popup, e: React.MouseEvent) {
   switch (e.type) {
     case 'mouseover': {
       const targ = ofClass(
-        [
-          'npopup',
-          'cr',
-          'fn',
-          'un',
-          'sn',
-          'sr',
-          'dt',
-          'dtl',
-          'introlink',
-          'noticelink',
-        ],
+        ['npopup', 'cr', 'fn', 'un', 'sn', 'sr', 'dt', 'dtl', 'introlink'],
         target
       );
       if (!targ || targ.type === 'npopup') return;
-      if (!getPopupHTML(targ.element, getPopupInfo(targ.element), true)) {
+      if (!getPopupHTML(getElementData(targ.element), true)) {
         targ.element.classList.add('empty');
       }
       break;

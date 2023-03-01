@@ -2,13 +2,16 @@
 import React from 'react';
 import C from '../../constant';
 import { clone, JSON_stringify, ofClass } from '../../common';
-import { getPopupInfo } from '../../libswordElemInfo';
+import {
+  findElementData,
+  HTMLData,
+  updateDataAttribute,
+} from '../libswordElemInfo';
 import G from '../rg';
 import { scrollIntoView } from '../rutil';
 import { delayHandler } from '../libxul/xul';
 import { getPopupHTML } from './popupH';
 
-import type { ElemInfo } from '../../libswordElemInfo';
 import type { PlaceType, ShowType } from '../../type';
 import type Atext from '../viewport/atext';
 
@@ -25,8 +28,7 @@ export interface PopupParent {
 }
 
 export const PopupParentInitState = {
-  elemhtml: [] as string[] | null, // popup target element html
-  eleminfo: [] as ElemInfo[] | null, // popup target element info
+  elemdata: [] as HTMLData[] | null, // popup target element data
   gap: 0 as number, // gap between target element and top of popup
   popupHold: false as boolean, // hold popup open
   popupParent: null as HTMLElement | null, // popup location
@@ -53,11 +55,15 @@ export function popupParentHandler(
       const parent = ppar?.element;
       // Only mouseovers outside of a popup which are not 'x-target_self' are handled here.
       if (parent) return;
-      const targ = ofClass(
-        ['cr', 'fn', 'un', 'sn', 'sr', 'dt', 'dtl', 'introlink', 'noticelink'],
+      let targ = ofClass(
+        ['cr', 'fn', 'un', 'sn', 'sr', 'dt', 'dtl', 'introlink', 'searchterm'],
         es.target,
         'self'
       );
+      // searchterm will be a child span of sn and the sn parent is needed, not the searchterm.
+      if (targ?.type === 'searchterm') {
+        targ = ofClass(['sn'], targ.element);
+      }
       if (targ === null) return;
       if (targ.element.classList.contains('x-target_self')) return;
       const state = this.state as PopupParentState;
@@ -81,7 +87,7 @@ export function popupParentHandler(
       const elem = targ.element;
       let openPopup = false;
       let gap = C.UI.Popup.openGap;
-      const info = getPopupInfo(elem);
+      const data = findElementData(elem);
       switch (targ.type) {
         case 'cr':
           if (!place || place.crossrefs === 'popup') openPopup = true;
@@ -111,18 +117,17 @@ export function popupParentHandler(
         case 'dt':
         case 'dtl':
         case 'introlink':
-        case 'noticelink':
           openPopup = true;
           break;
         default:
       }
-      if (openPopup && !popupParent) {
-        if (getPopupHTML(elem, info, true)) {
+      if (data && openPopup && !popupParent) {
+        if (getPopupHTML(data, true)) {
           delayHandler.bind(this)(
-            (el: HTMLElement, ifo: ElemInfo, gp: number) => {
+            (el: HTMLElement, dt: HTMLData, gp: number) => {
+              updateDataAttribute(el, dt);
               const s: Partial<PopupParentState> = {
-                elemhtml: [el.outerHTML],
-                eleminfo: [ifo || ({} as ElemInfo)],
+                elemdata: [dt],
                 gap: gp,
                 popupParent: el,
               };
@@ -132,7 +137,7 @@ export function popupParentHandler(
               ? C.UI.Popup.strongsOpenDelay
               : C.UI.Popup.openDelay,
             'popupDelayTO'
-          )(elem, info, gap);
+          )(elem, data, gap);
         } else {
           elem.classList.add('empty');
         }
@@ -211,7 +216,7 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
       e.preventDefault();
       e.stopPropagation();
       const elem = targ.element;
-      const info = getPopupInfo(elem);
+      const data = findElementData(elem);
       const popupY = parent.getBoundingClientRect().y;
       switch (targ.type) {
         case 'fn':
@@ -220,18 +225,15 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
         case 'sr':
         case 'dt':
         case 'dtl': {
-          if (!targ.element.classList.contains('empty')) {
+          if (data && !targ.element.classList.contains('empty')) {
             this.setState((prevState: PopupParentState) => {
-              let { elemhtml, eleminfo } = clone(prevState);
-              if (elemhtml === null) elemhtml = [];
-              if (eleminfo === null) eleminfo = [];
-              elemhtml.push(elem.outerHTML);
-              eleminfo.push(info || ({} as ElemInfo));
+              let { elemdata } = clone(prevState);
+              if (elemdata === null) elemdata = [];
+              elemdata.push(data);
               // set the gap so as to position popup under the mouse
               const gap = Math.round(e.clientY - popupY - 40);
               const s: Partial<PopupParentState> = {
-                elemhtml,
-                eleminfo,
+                elemdata,
                 gap,
               };
               return s;
@@ -240,29 +242,41 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
           break;
         }
         case 'gfn': {
-          if (info) {
+          if (data) {
             const gfns = parent.getElementsByClassName('gfn');
             Array.from(gfns).forEach((gfn: any) => {
-              if (gfn !== elem && gfn.dataset.title === info.title)
+              if (gfn !== elem && gfn.dataset.title === data.title)
                 scrollIntoView(gfn, parent);
             });
           }
           break;
         }
         case 'crref': {
-          if (info) {
-            const { bk, ch, vs, lv, mod } = info;
-            const v11n = (mod && G.Tab[mod].v11n) || null;
-            if (bk && ch && mod && v11n) {
+          if (data) {
+            const { context, location } = data;
+            if (context && location) {
+              const { book, chapter, verse, lastverse, v11n } = location;
               const loc = {
-                book: bk,
-                chapter: Number(ch),
-                verse: vs || 1,
-                lastverse: lv || 1,
+                book,
+                chapter,
+                verse: verse || 1,
+                lastverse: lastverse || 1,
                 v11n,
               };
               G.Commands.goToLocationVK(loc, loc);
             }
+          }
+          break;
+        }
+        case 'snbut': {
+          if (data) {
+            const { context, reflist } = data;
+            if (context && reflist)
+              G.Commands.search({
+                module: context,
+                searchtext: `lemma: ${reflist[0]}`,
+                type: 'SearchAdvanced',
+              });
           }
           break;
         }
@@ -276,15 +290,13 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
         }
         case 'popupBackLink': {
           this.setState((prevState: PopupParentState) => {
-            const { elemhtml, eleminfo } = clone(prevState);
-            if (elemhtml && eleminfo) {
-              elemhtml.pop();
-              eleminfo.pop();
+            const { elemdata } = clone(prevState);
+            if (elemdata) {
+              elemdata.pop();
               // set the gap so as to position popup under the mouse
               const gap = Math.round(e.clientY - popupY - 40);
               const s: Partial<PopupParentState> = {
-                elemhtml,
-                eleminfo,
+                elemdata,
                 gap,
               };
               return s;
@@ -294,22 +306,16 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
           break;
         }
         case 'towindow': {
-          const { elemhtml, eleminfo } = state;
+          const { elemdata } = state;
           const boxes = parent.getElementsByClassName('npopupTX');
           const box = boxes ? boxes[0] : (null as HTMLElement | null);
           if (box) {
             const b = box.getBoundingClientRect();
+            const popupState: Partial<PopupParentState> = { elemdata };
             const options = {
               title: 'popup',
               webPreferences: {
-                additionalArguments: [
-                  JSON_stringify({
-                    popupState: {
-                      elemhtml,
-                      eleminfo,
-                    },
-                  }),
-                ],
+                additionalArguments: [JSON_stringify({ popupState })],
               },
               openWithBounds: {
                 x: Math.round(b.x),
@@ -322,15 +328,6 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
             const s: Partial<PopupParentState> = { popupParent: null };
             this.setState(s);
           }
-          break;
-        }
-        case 'snbut': {
-          if (info && info.ch && info.mod)
-            G.Commands.search({
-              module: info.mod,
-              searchtext: `lemma: ${info.ch}`,
-              type: 'SearchAdvanced',
-            });
           break;
         }
         default:
@@ -347,17 +344,14 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
         const t = select.element as HTMLSelectElement;
         const { value } = t;
         this.setState((prevState: PopupParentState) => {
-          const { elemhtml, eleminfo } = clone(prevState);
-          if (
-            t.dataset.module &&
-            elemhtml &&
-            elemhtml.length &&
-            eleminfo &&
-            eleminfo.length
-          ) {
-            const orig = getPopupInfo(elemhtml[elemhtml.length - 1]);
-            if (orig.mod && value) {
-              G.Prefs.setCharPref(`global.popup.selection.${orig.mod}`, value);
+          const { elemdata } = clone(prevState);
+          if (t.dataset.module && elemdata && elemdata.length) {
+            const orig = elemdata[elemdata.length - 1];
+            if (orig.context && value) {
+              G.Prefs.setCharPref(
+                `global.popup.selection.${orig.context}`,
+                value
+              );
             }
           }
           if (t.dataset.feature) {
@@ -370,7 +364,7 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
           // the popup after selection. So hold the popup open until the mouse
           // moves over the popup and then it leaves again.
           const s: Partial<PopupParentState> = {
-            eleminfo,
+            elemdata,
             popupHold: true,
             popupReset: prevState.popupReset + 1,
           };

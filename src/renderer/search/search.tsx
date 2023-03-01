@@ -293,9 +293,8 @@ export default class SearchWin extends React.Component implements PopupParent {
       displayBible,
       popupParent,
       popupReset,
-      eleminfo,
       gap,
-      elemhtml,
+      elemdata,
     } = state;
 
     const searchTypes: SearchType['type'][] = [
@@ -366,13 +365,12 @@ export default class SearchWin extends React.Component implements PopupParent {
     return (
       <Vbox className="searchwin">
         {popupParent &&
-          elemhtml &&
-          elemhtml.length &&
+          elemdata &&
+          elemdata.length &&
           ReactDOM.createPortal(
             <Popup
-              key={[gap, elemhtml.length, popupReset].join('.')}
-              elemhtml={elemhtml}
-              eleminfo={eleminfo}
+              key={[gap, elemdata.length, popupReset].join('.')}
+              elemdata={elemdata}
               gap={gap}
               onMouseMove={popupHandler}
               onPopupClick={popupHandler}
