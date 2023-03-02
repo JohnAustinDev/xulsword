@@ -63,9 +63,7 @@ export const CipherKeyModules: {
 } = {};
 
 // CrossWire SWORD Standard TODOS:
-// TODO! DisplayLevel: GenBook standard display's context levels
 // TODO! CrossWire wiki mentions LangSortOrder! Report change to KeySort
-// TODO! UnlockInfo: Display instructions for obtaining an unlock key
 // TODO! CrossWire Eusebian_vs and Eusebian_num share a single conf file. Support this?
 
 let Downloads: { [downloadKey: string]: ZIP } = {};

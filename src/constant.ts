@@ -87,8 +87,8 @@ const C = {
 
   FTPMaxConnections: 48,
   FTPConnectTimeout: 10000, // ms for an ftp server to respond
-  FTPUserName: 'anonymous', // TODO!: How to set: 'xulsword@xulsword.org',
-  HTTPUserAgent: 'xulsword@xulsword.org',
+  FTPPassword: 'xulsword4@xulsword.org',
+  HTTPUserAgent: 'xulsword4@xulsword.org',
 
   // xulsword UI constants
   UI: {
@@ -659,24 +659,7 @@ export const SP = {
       height: 200 as number,
     },
     repositories: {
-      xulsword: [
-        {
-          name: 'IBT XSM',
-          domain: 'ftp.ibt.org.ru',
-          path: '/pub/modxsm',
-          builtin: false,
-          disabled: false,
-          custom: false,
-        },
-        {
-          name: 'IBT Audio',
-          domain: 'ftp.ibt.org.ru',
-          path: '/pub/modaudio',
-          builtin: false,
-          disabled: false,
-          custom: false,
-        },
-      ],
+      xulsword: [],
       custom: [],
       disabled: null,
     } as {

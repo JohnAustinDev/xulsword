@@ -159,8 +159,12 @@ ipcMain.on(
 );
 
 const openXulswordWindow = () => {
+  const opts = { ns: 'branding' };
+  const programTitle = G.i18n.exists('programTitle', opts)
+    ? G.i18n.t('programTitle', opts)
+    : 'xulsword';
   let options: Electron.BrowserWindowConstructorOptions = {
-    title: G.i18n.t('programTitle', { ns: 'branding' }),
+    title: programTitle,
     fullscreenable: true,
     ...C.UI.Window.large,
   };
@@ -282,8 +286,6 @@ const openXulswordWindow = () => {
       }
     )
   );
-
-  // TODO! install command line modules (xulsword 3.0 newModule.js)
 
   // Prompt for CipherKeys when encrypted modules with no keys, or
   // incorrect keys, are installed.
@@ -417,13 +419,16 @@ const init = async () => {
     .catch((e) => log.error(e));
 
   // Set i18n reliant pref values
-  const v = G.Prefs.getComplexValue(
+  const repositories = G.Prefs.getComplexValue(
     'moduleManager.repositories'
   ) as ManagerStatePref['repositories'];
-  if (v) {
-    v.xulsword[0].name = G.i18n.t('IBT XSM.repository.label');
-    v.xulsword[1].name = G.i18n.t('IBT Audio.repository.label');
-    G.Prefs.setComplexValue('moduleManager.repositories', v);
+  if (repositories) {
+    repositories.xulsword.forEach((repo) => {
+      const key = `${repo.name}.repository.label`;
+      const opts = { ns: 'branding' };
+      if (G.i18n.exists(key, opts)) repo.name = G.i18n.t(key, opts);
+    });
+    G.Prefs.setComplexValue('moduleManager.repositories', repositories);
   }
 
   // If there are no tabs, choose tabs and location based on current locale

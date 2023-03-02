@@ -150,7 +150,6 @@ export default class PrintSettings extends React.Component {
       case 'click': {
         switch (id) {
           case 'page': {
-            // TODO! remove if not needed
             const c = this.getContainer();
             if (c) {
               const { iframe, container } = c;

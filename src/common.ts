@@ -40,6 +40,10 @@ export function builtinRepos(
   i18n: GType['i18n'],
   DirsPath: GType['Dirs']['path']
 ): Repository[] {
+  const opts = { ns: 'branding' };
+  const programTitle = i18n.exists('programTitle', opts)
+    ? i18n.t('programTitle', opts)
+    : 'xulsword';
   return [
     {
       name: i18n.t('shared.label'),
@@ -50,7 +54,7 @@ export function builtinRepos(
       custom: false,
     },
     {
-      name: i18n.t('programTitle', { ns: 'branding' }),
+      name: programTitle,
       domain: 'file://',
       path: DirsPath.xsModsUser,
       builtin: true,
@@ -252,7 +256,7 @@ export function prefType(
 
 // Return and persist the key/value pairs of component state Prefs. Component
 // state Prefs are permanently persisted component state values recorded in
-// prefs.json whose key begins with the component id.
+// prefs.json whose key begins with a component id.
 export function getStatePref<P extends PrefObject>(
   prefs: GType['Prefs'],
   id: string,

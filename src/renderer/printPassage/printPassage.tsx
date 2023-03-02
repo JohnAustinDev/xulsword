@@ -24,7 +24,7 @@ import { Hbox } from '../libxul/boxes';
 import Button from '../libxul/button';
 import Spacer from '../libxul/spacer';
 import PrintSettings from '../libxul/printSettings';
-import VKSelect, { SelectVKMType } from '../libxul/vkselect';
+import VKSelect from '../libxul/vkselect';
 import {
   handler as handlerH,
   vkSelectHandler as vkSelectHandlerH,

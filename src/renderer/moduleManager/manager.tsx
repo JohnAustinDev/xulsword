@@ -446,8 +446,9 @@ export default class ModuleManager
       const isloading = repo.disabled ? false : H.loading(H.RepCol.iState);
       const on = repo.builtin ? H.ALWAYS_ON : H.ON;
       let reponame = repo.name;
-      if (G.i18n.exists(`${repo.name}.repository.label`)) {
-        reponame = G.i18n.t(`${repo.name}.repository.label`);
+      const opts = { ns: 'branding' };
+      if (G.i18n.exists(`${repo.name}.repository.label`, opts)) {
+        reponame = G.i18n.t(`${repo.name}.repository.label`, opts);
       }
       let lng = G.i18n.language;
       if (!['en', 'ru'].includes(lng)) lng = C.FallbackLanguage[lng];
@@ -583,9 +584,13 @@ export default class ModuleManager
               mtype = `XSM ${G.i18n.t('audio.label')}`;
             }
             let reponame = c.sourceRepository.name;
-            if (G.i18n.exists(`${c.sourceRepository.name}.repository.label`)) {
+            const opts = { ns: 'branding' };
+            if (
+              G.i18n.exists(`${c.sourceRepository.name}.repository.label`, opts)
+            ) {
               reponame = G.i18n.t(
-                `${c.sourceRepository.name}.repository.label`
+                `${c.sourceRepository.name}.repository.label`,
+                opts
               );
             }
             const d = [] as unknown as TModuleTableRow;

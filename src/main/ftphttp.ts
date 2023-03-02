@@ -329,7 +329,8 @@ export async function connect<Retval>(
           log.debug(`Connecting: ${domain}`);
           c.connect({
             host: domain,
-            user: C.FTPUserName,
+            user: 'anonymous',
+            password: C.FTPPassword,
             connTimeout: C.FTPConnectTimeout,
           });
         } catch (er: any) {

@@ -253,13 +253,13 @@ html[dir='rtl'] .notebox-maximizer {
 
 /* Verse-per-line button */
 .versePerLineButton {
-  position: relative;
-  display: inline-block;
+  position: absolute;
+  display: block;
   width: 0px;
   height: 0px;
 }
 .versePerLineButton > div {
-  position: absolute;
+  position: relative;
   top: 0px;
   left: -25px;
   background: url('../images/versePerLine.png');

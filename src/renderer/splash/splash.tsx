@@ -17,6 +17,11 @@ const style = overlay ? (
   </style>
 ) : undefined;
 
+const opts = { ns: 'branding' };
+const programTitle = G.i18n.exists('producedBy', opts)
+  ? G.i18n.t('producedBy', opts)
+  : '';
+
 renderToRoot(
   <Vbox id="mainbox" width="500" height="375">
     {style}
@@ -25,10 +30,7 @@ renderToRoot(
       <Vbox id="layer2" flex="1" pack="end">
         <Hbox align="center">
           <Vbox flex="1" pack="start" align="center">
-            <Label
-              className="splash-text"
-              value={G.i18n.t('producedBy', { ns: 'branding' })}
-            />
+            <Label className="splash-text" value={programTitle} />
           </Vbox>
         </Hbox>
       </Vbox>

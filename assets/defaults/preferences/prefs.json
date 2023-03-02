@@ -2,7 +2,10 @@
   "global": {
     "crashReporterURL": ""
   },
+  "xulsword": {
+    "repositories": {}
+  },
   "moduleManager": {
-    "suggested": {}
+    "suggested": null
   }
 }

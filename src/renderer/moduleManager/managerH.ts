@@ -1156,44 +1156,46 @@ function checkForSuggestions(xthis: ModuleManager) {
     'moduleManager.suggested'
   ) as typeof SP.moduleManager['suggested'];
   const locale = G.i18n.language;
-  // Filter from Prefs any suggested mods that are already installed.
-  suggested[locale] = suggested[locale].filter(
-    (m) =>
-      !Object.values(moduleLangData.allmodules).some(
-        (r) => r[ModCol.iModule] === m && r[ModCol.iInstalled] !== OFF
-      )
-  );
-  if (locale in suggested && suggested[locale].length) {
-    // Build the list of modules to suggest.
-    const suggestions: ModuleUpdates[] = [];
-    suggested[locale].forEach((m) => {
-      const row: TModuleTableRow | null = Object.values(
-        moduleLangData.allmodules
-      ).reduce((p: TModuleTableRow | null, c: TModuleTableRow) => {
-        if (c[ModCol.iModule] !== m) return p;
-        if (!p) return c;
-        return versionCompare(
-          c[ModCol.iInfo].conf.Version || 0,
-          p[ModCol.iInfo].conf.Version || 0
-        ) === 1
-          ? c
-          : p;
-      }, null);
-      if (row) {
-        const { conf } = row[ModCol.iInfo];
-        suggestions.push({
-          doInstall: false,
-          updateTo: conf,
-        });
-      }
-    });
-    // Remove modules being suggested from Prefs, so that user only sees
-    // a particular suggestion once, ever.
+  if (suggested && suggested[locale]) {
+    // Filter from Prefs any suggested mods that are already installed.
     suggested[locale] = suggested[locale].filter(
-      (m) => !suggestions.find((mud) => mud.updateTo.module === m)
+      (m) =>
+        !Object.values(moduleLangData.allmodules).some(
+          (r) => r[ModCol.iModule] === m && r[ModCol.iInstalled] !== OFF
+        )
     );
-    G.Prefs.setComplexValue('moduleManager.suggested', suggested);
-    promptAndInstall(xthis, suggestions);
+    if (locale in suggested && suggested[locale].length) {
+      // Build the list of modules to suggest.
+      const suggestions: ModuleUpdates[] = [];
+      suggested[locale].forEach((m) => {
+        const row: TModuleTableRow | null = Object.values(
+          moduleLangData.allmodules
+        ).reduce((p: TModuleTableRow | null, c: TModuleTableRow) => {
+          if (c[ModCol.iModule] !== m) return p;
+          if (!p) return c;
+          return versionCompare(
+            c[ModCol.iInfo].conf.Version || 0,
+            p[ModCol.iInfo].conf.Version || 0
+          ) === 1
+            ? c
+            : p;
+        }, null);
+        if (row) {
+          const { conf } = row[ModCol.iInfo];
+          suggestions.push({
+            doInstall: false,
+            updateTo: conf,
+          });
+        }
+      });
+      // Remove modules being suggested from Prefs, so that user only sees
+      // a particular suggestion once, ever.
+      suggested[locale] = suggested[locale].filter(
+        (m) => !suggestions.find((mud) => mud.updateTo.module === m)
+      );
+      G.Prefs.setComplexValue('moduleManager.suggested', suggested);
+      promptAndInstall(xthis, suggestions);
+    }
   }
 }
 
