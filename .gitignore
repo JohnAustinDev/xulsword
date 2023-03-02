@@ -1,3 +1,15 @@
+# xulsword
+.vagrant
+archive
+branding.json
+Cpp/lib*
+Cpp/install*
+Cpp/zlib*
+Cpp/boost*
+Cpp/clucene*
+Cpp/sword*
+Cpp/build*
+
 # Logs
 logs
 *.log
@@ -32,15 +44,6 @@ npm-debug.log.*
 *.missing.*
 
 *-console.log
-.vagrant
-archive
-Cpp/lib*
-Cpp/install*
-Cpp/zlib*
-Cpp/boost*
-Cpp/clucene*
-Cpp/sword*
-Cpp/build*
 
 .vscode/perl-lang/
 .vstags

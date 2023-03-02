@@ -635,7 +635,7 @@ export const SP = {
   },
 
   moduleManager: {
-    suggested: {} as { [fallbackLang: string]: string[] },
+    suggested: null as { [fallbackLang: string]: string[] } | null,
     language: {
       open: true as boolean,
       selection: [] as string[],
