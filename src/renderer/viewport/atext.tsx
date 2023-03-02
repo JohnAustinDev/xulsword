@@ -51,7 +51,7 @@ import handlerH from './atextH';
 import '../libsword.css';
 import './atext.css';
 
-import type { AtextPropsType, AtextStateType, PinPropsType } from '../../type';
+import type { AtextPropsType, AtextStateType } from '../../type';
 
 const defaultProps = {
   ...xulDefaultProps,
@@ -136,9 +136,15 @@ class Atext extends React.Component {
     const { panelIndex } = this.props as AtextProps;
     const state = this.state as AtextStateType;
     if (this.onUpdate()) {
-      windowState[panelIndex] = keep(state, Object.keys(atextInitialState));
+      windowState[panelIndex] = keep(
+        state,
+        Object.keys(atextInitialState) as (keyof typeof atextInitialState)[]
+      );
       const changedState = diff(
-        keep(prevState, Object.keys(atextInitialState)),
+        keep(
+          prevState,
+          Object.keys(atextInitialState) as (keyof typeof atextInitialState)[]
+        ),
         windowState[panelIndex]
       );
       if (changedState) {
@@ -172,15 +178,9 @@ class Atext extends React.Component {
     // Decide what needs to be updated...
     // pinProps are the currently active props according to the panel's
     // isPinned prop value.
-    const pinProps = keep(
-      pin && isPinned ? pin : props,
-      Object.keys(C.PinProps)
-    ) as PinPropsType;
+    const pinProps = keep(pin && isPinned ? pin : props, C.PinProps);
     // scrollProps are current props that effect scrolling
-    const scrollProps = keep(
-      { ...props, ...pinProps },
-      Object.keys(C.ScrollPropsVK)
-    ) as typeof C.ScrollPropsVK;
+    const scrollProps = keep({ ...props, ...pinProps }, C.ScrollPropsVK);
     const { scroll } = scrollProps;
     // skip all render side-effects if skipTextUpdate is set
     if (scroll?.skipTextUpdate && scroll.skipTextUpdate[panelIndex])
@@ -208,22 +208,14 @@ class Atext extends React.Component {
       const { type, isVerseKey } = G.Tab[module];
       const scrollkey = stringHash(scrollProps);
       // libswordProps are current props that effect LibSword output
+      const keepme: readonly (keyof AtextPropsType)[] = C.LibSwordProps[type];
       const libswordProps = keep(
         {
           ...props,
           ...pinProps,
         },
-        Object.keys(C.LibSwordProps[type])
-      ) as Pick<
-        AtextPropsType,
-        | 'module'
-        | 'ilModule'
-        | 'ilModuleOption'
-        | 'location'
-        | 'modkey'
-        | 'place'
-        | 'show'
-      >;
+        keepme
+      );
       const highlightkey = stringHash(libswordProps.location);
       // IMPORTANT: verse doesn't effect libsword output, so always remove
       // it from stringHash for a big speedup.

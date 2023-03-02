@@ -382,9 +382,9 @@ export const pushPrefsToWindows: PrefCallbackType = (
           allowed.push(...(Data.read('menuPref') as string[]));
         }
         Object.entries(C.SyncPrefs).forEach((entry) => {
-          const [k, v] = entry;
-          Object.keys(v).forEach((p) => {
-            allowed.push([k, p].join('.'));
+          const [id, parray] = entry;
+          parray.forEach((p) => {
+            allowed.push([id, p].join('.'));
           });
         });
 

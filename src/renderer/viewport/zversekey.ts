@@ -743,7 +743,7 @@ function verseIsVisible(v: HTMLElement, ignoreNotebox = false): boolean {
 // Implement Atext verse scroll for single column panels.
 export function versekeyScroll(
   sbe: HTMLElement,
-  scrollProps: typeof C.ScrollPropsVK
+  scrollProps: Pick<AtextPropsType, typeof C.ScrollPropsVK[number]>
 ) {
   const { module, location, scroll } = scrollProps;
   if (!location) return;

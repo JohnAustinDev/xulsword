@@ -8,7 +8,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { ProgressBar } from '@blueprintjs/core';
 import { clone, diff, drop, dString, sanitizeHTML } from '../../common';
-import C from '../../constant';
+import C, { SP } from '../../constant';
 import G from '../rg';
 import renderToRoot from '../renderer';
 import log from '../log';
@@ -339,7 +339,7 @@ export default class SearchWin extends React.Component implements PopupParent {
 
     const location = G.Prefs.getComplexValue(
       'xulsword.location'
-    ) as typeof C.SyncPrefs['xulsword']['location'];
+    ) as typeof SP.xulsword.location;
 
     const searchindex = module && G.LibSword.luceneEnabled(module);
 

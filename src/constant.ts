@@ -17,7 +17,6 @@ import type {
   LocationVKType,
   ModTypes,
   NewModulesType,
-  PinPropsType,
   PlaceType,
   Repository,
   RowSelection,
@@ -67,8 +66,6 @@ const C = {
   isDevelopment,
 
   SWORDEngineVersion: '1.8.1',
-
-  APPLICATIONID: 'xulsword@xulsword.org',
 
   MAXVERSE: 176,
   MAXCHAPTER: 150,
@@ -481,73 +478,43 @@ const C = {
   } as { [k in 'en' | 'ru']: Partial<FeatureType> },
 
   // These Atext props can be 'pinned' to become independant state properties.
-  // NOTE: property types are important, but property values are not.
-  PinProps: {
-    location: null,
-    selection: null,
-    scroll: null,
-    show: {} as ShowType,
-    place: {} as PlaceType,
-    module: '',
-    ilModule: '',
-    modkey: '',
-  } as PinPropsType,
+  PinProps: [
+    'location',
+    'selection',
+    'scroll',
+    'show',
+    'place',
+    'module',
+    'ilModule',
+    'modkey',
+  ] as const,
 
   // These Atext props are used by LibSword. If these props all have the same values
   // as the previous rendering, the LibSword response will also be the same.
-  // NOTE: property types are important, but property values are not.
   LibSwordProps: {
-    'Biblical Texts': {
-      location: null,
-      module: '',
-      show: {} as ShowType,
-      place: {} as PlaceType,
-      columns: 0,
-      ilModule: '',
-      ilModuleOption: [],
-    },
-    Commentaries: {
-      location: null,
-      module: '',
-      show: {} as ShowType,
-      place: {} as PlaceType,
-    },
-    'Lexicons / Dictionaries': {
-      module: '',
-      modkey: '',
-      show: {} as ShowType,
-    },
-    'Generic Books': {
-      module: '',
-      modkey: '',
-      show: {} as ShowType,
-    },
-    XSM_audio: {},
-  } as { [key in ModTypes]: Partial<AtextPropsType> },
+    'Biblical Texts': [
+      'location',
+      'module',
+      'show',
+      'place',
+      'columns',
+      'ilModule',
+      'ilModuleOption',
+    ],
+    Commentaries: ['location', 'module', 'show', 'place'],
+    'Lexicons / Dictionaries': ['module', 'modkey', 'show'],
+    'Generic Books': ['module', 'modkey', 'show'],
+    XSM_audio: [],
+  } as const,
 
   // These Atext props effect the verse scroll. If these props all have
   // the same values as the previous rendering, and the same is true of
   // the LibSwordProps, then scrolling is also unnecessary.
-  // NOTE: property types are important, but property values are not.
-  ScrollPropsVK: {
-    module: '',
-    location: null,
-    scroll: null,
-    columns: 0,
-  } as Partial<AtextPropsType>,
+  ScrollPropsVK: ['module', 'location', 'scroll', 'columns'] as const,
 
-  // These pref keys are always kept in sync across all windows.
+  // These prefs.json keys are always kept in sync across all windows.
   SyncPrefs: {
-    xulsword: {
-      audio: null,
-      location: null,
-      selection: null,
-      scroll: null,
-      show: null,
-    } as unknown as Pick<
-      typeof SP.xulsword,
-      'audio' | 'location' | 'selection' | 'scroll' | 'show'
-    >,
+    xulsword: ['audio', 'location', 'selection', 'scroll', 'show'] as const,
   },
 };
 export default C;
@@ -561,7 +528,7 @@ export default C;
 //                  Prefs, thereby making state persistent.
 // registerUpdateStateFromPref() - Run in componentDidMount() to register
 //                  a listener for state Pref changes that will push
-//                  changes into component state.
+//                  those changes into component state.
 export const SP = {
   global: {
     WindowsDidClose: true,
@@ -732,12 +699,13 @@ export const SP = {
   },
 };
 
-// Fill out variable length default arrays
+// Fill out these variable length default arrays
 (['isPinned', 'noteBoxHeight', 'maximizeNoteBox'] as const).forEach((p) => {
   const v = SP.xulsword[p][0];
   SP.xulsword[p] = SP.xulsword.panels.map(() => v as any);
 });
 
+// Root bookmark folder and default child bookmark-items
 export const SPBM = {
   manager: {
     bookmarks: {

@@ -136,13 +136,13 @@ export function JSON_attrib_parse(
 
 // Firefox Add-On validation throws warnings about eval(uneval(obj)), so
 // this is an alternate way...
-export function deepClone(obj: any) {
-  return JSON_parse(JSON_stringify(obj));
+export function deepClone<T>(obj: T): T {
+  return JSON_parse(JSON_stringify(obj)) as T;
 }
 
 // Copy a data object. Data objects have string keys with values that are
 // either primitives, arrays or other data objects.
-export function clone<T extends unknown>(obj: T): T {
+export function clone<T>(obj: T): T {
   let copy: any;
   if (obj === null || typeof obj !== 'object') copy = obj;
   else if (Array.isArray(obj)) {
@@ -155,38 +155,33 @@ export function clone<T extends unknown>(obj: T): T {
       copy[entry[0]] = clone(entry[1]);
     });
   }
-  return copy;
+  return copy as T;
 }
 
 // Return a new source object keeping only certain keys from the original.
 export function keep<T extends { [key: string]: any }>(
   source: T,
-  keepkeys: readonly string[],
-  dropInstead = false
-): Partial<T> {
-  const p = {} as any;
-  const pkeep = Array.isArray(keepkeys) ? keepkeys : Object.keys(keepkeys);
-  if (dropInstead) {
-    const pdrop = pkeep;
-    Object.keys(source).forEach((k) => {
-      if (!pdrop.includes(k)) {
-        p[k] = k in source ? source[k] : undefined;
-      }
-    });
-  } else {
-    pkeep.forEach((k) => {
-      p[k] = k in source ? source[k] : undefined;
-    });
-  }
-  return p as Partial<T>;
+  keepkeys: readonly (keyof T)[]
+): Pick<T, typeof keepkeys[number]> {
+  const r = {} as any;
+  Object.entries(source).forEach((entry) => {
+    const [p, v] = entry;
+    if (keepkeys.includes(p)) r[p] = v;
+  });
+  return r as Pick<T, typeof keepkeys[number]>;
 }
 
 // Return a new source object dropping certain keys from the original.
 export function drop<T extends { [key: string]: any }>(
   source: T,
-  dropkeys: readonly string[]
-): Partial<T> {
-  return keep(source, dropkeys, true);
+  dropkeys: readonly (keyof T)[]
+): Omit<T, typeof dropkeys[number]> {
+  const r = {} as any;
+  Object.entries(source).forEach((entry) => {
+    const [p, v] = entry;
+    if (!dropkeys.includes(p)) r[p] = v;
+  });
+  return r as Omit<T, typeof dropkeys[number]>;
 }
 
 // Compare two PrefValues. It returns only the differences in pv2 compared to pv1,
@@ -241,7 +236,7 @@ export function diff<T>(pv1: any, pv2: T, depth = 1): Partial<T> | undefined {
       if (difference) difference = obj2;
     }
   }
-  return difference;
+  return difference as Partial<T> | undefined;
 }
 
 export function prefType(

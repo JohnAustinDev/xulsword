@@ -179,23 +179,13 @@ export type AtextPropsType = Pick<
   xulswordState: (s: XulswordStateArgType) => void;
 };
 
+export type PinPropsType = Pick<AtextPropsType, typeof C.PinProps[number]>;
+
 export type AtextStateType = {
   pin: PinPropsType | null;
   versePerLine: boolean;
   maxNoteBoxHeight: number | null;
 };
-
-export type PinPropsType = Pick<
-  AtextPropsType,
-  | 'location'
-  | 'selection'
-  | 'scroll'
-  | 'show'
-  | 'place'
-  | 'module'
-  | 'ilModule'
-  | 'modkey'
->;
 
 export type XulswordStateArgType =
   | Partial<typeof SP.xulsword>

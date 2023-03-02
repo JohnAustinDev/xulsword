@@ -391,8 +391,7 @@ export function setStatePref(
 ) {
   const keys = statePrefKeys.slice();
   if (!store && id in C.SyncPrefs) {
-    const idx = id as keyof typeof C.SyncPrefs;
-    keys.push(...Object.keys(C.SyncPrefs[idx]));
+    keys.push(...C.SyncPrefs[id as keyof typeof C.SyncPrefs]);
   }
   const newStatePref = keep(state, keys);
   if (prevState === null) G.Prefs.mergeValue(id, newStatePref, store);

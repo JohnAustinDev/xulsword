@@ -189,8 +189,7 @@ function setState(
       const newPinProps = func(pinProps);
       if (newPinProps) {
         const s: Partial<XulswordState> = {};
-        Object.keys(C.PinProps).forEach((k: string) => {
-          const key = k as keyof PinPropsType;
+        C.PinProps.forEach((key) => {
           if (key in newPinProps) {
             switch (key) {
               case 'location':
