@@ -5,7 +5,6 @@
 /* eslint-disable react/static-property-placement */
 import React from 'react';
 import {
-  bookmarkTreeNodes,
   clone,
   findBookmarkItem,
   findParentOfBookmarkItem,
@@ -15,7 +14,7 @@ import C, { SPBM } from '../../constant';
 import G from '../rg';
 import renderToRoot from '../renderer';
 import { windowArgument } from '../rutil';
-import { getSampleText, newLabel } from '../bookmarks';
+import { getSampleText, newLabel, bookmarkTreeNodes } from '../bookmarks';
 import Grid, { Column, Columns, Row, Rows } from '../libxul/grid';
 import { Hbox, Vbox } from '../libxul/boxes';
 import Label from '../libxul/label';
@@ -29,6 +28,7 @@ import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
 import './bmProperties.css';
 
 import type {
+  BMItem,
   BookmarkFolderType,
   BookmarkItem,
   BookmarkType,
@@ -40,36 +40,24 @@ const Bookmarks = G.Prefs.getComplexValue(
   'bookmarks'
 ) as BookmarkFolderType;
 
-const bmDefaults: {
-  item: BookmarkItem;
-  folder: Omit<BookmarkFolderType, keyof BookmarkItem>;
-  bookmark: Omit<BookmarkType, keyof BookmarkItem>;
-} = {
-  item: {
-    id: '',
-    label: '',
-    labelLocale: G.i18n.language,
-    note: '',
-    noteLocale: '',
-    creationDate: Date.now(),
+const bmdefault: BookmarkType = {
+  type: 'bookmark',
+  tabType: 'Texts',
+  id: '',
+  label: '',
+  labelLocale: G.i18n.language,
+  note: '',
+  noteLocale: '',
+  creationDate: Date.now(),
+  location: {
+    vkmod: G.Tabs.find((t) => t.isVerseKey)?.module || '',
+    book: 'Gen',
+    chapter: 1,
+    verse: 1,
+    lastverse: 1,
+    v11n: 'KJV',
   },
-  folder: {
-    type: 'folder',
-    childNodes: [],
-  },
-  bookmark: {
-    type: 'bookmark',
-    tabType: 'Texts',
-    location: {
-      vkmod: G.Tabs.find((t) => t.isVerseKey)?.module || '',
-      book: 'Gen',
-      chapter: 1,
-      verse: 1,
-      lastverse: 1,
-      v11n: 'KJV',
-    },
-    sampleText: '',
-  },
+  sampleText: '',
 };
 
 export type BMPropertiesState = {
@@ -80,11 +68,7 @@ export type BMPropertiesState = {
 };
 
 const defaultState: BMPropertiesState = {
-  bookmark: {
-    ...bmDefaults.item,
-    ...bmDefaults.bookmark,
-    ...bmDefaults.folder,
-  },
+  bookmark: bmdefault,
   treeSelection: SPBM.manager.bookmarks.id,
   anyChildSelectable: true,
   hide: [],
@@ -148,7 +132,7 @@ export default class BMPropertiesWin extends React.Component {
     // Null location means default location
     if ('location' in bookmark && bookmark.location === null) {
       updateState = true;
-      bookmark.location = bmDefaults.bookmark.location;
+      bookmark.location = bmdefault.location;
     }
     // Empty id means create a new bookmark or folder.
     if (!id) {
@@ -302,7 +286,7 @@ export default class BMPropertiesWin extends React.Component {
     if (type === 'bookmark') {
       const bm = bookmark as BookmarkType;
       ({ location, sampleText } = bm);
-      if (location === null) location = bmDefaults.bookmark.location;
+      if (location === null) location = bmdefault.location;
     }
     let module = '';
     if (location && 'v11n' in location) module = location.vkmod;
