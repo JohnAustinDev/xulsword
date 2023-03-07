@@ -23,6 +23,7 @@ import {
   clone,
   builtinRepos,
   repositoryModuleKey,
+  stringHash,
 } from '../../common';
 import C, { SP } from '../../constant';
 import G from '../rg';
@@ -42,7 +43,7 @@ import GBSelect, {
   GBSelectProps,
   SelectGBMType,
 } from '../libxul/genbookselect';
-import Table from '../libxul/table';
+import Table, { TablePropColumn } from '../libxul/table';
 import Spacer from '../libxul/spacer';
 import Label from '../libxul/label';
 import DragSizer, { DragSizerVal } from '../libxul/dragsizer';
@@ -69,9 +70,6 @@ import type {
 } from './managerH';
 import type {
   TonCellClick,
-  TonColumnHide,
-  TonColumnsReordered,
-  TonColumnWidthChanged,
   TonEditableCellChanged,
   TonRowsReordered,
 } from '../libxul/table';
@@ -153,12 +151,6 @@ export default class ModuleManager
 
   onRowsReordered: { [table: string]: TonRowsReordered };
 
-  onColumnWidthChanged: { [table: string]: TonColumnWidthChanged };
-
-  onColumnHide: TonColumnHide;
-
-  onColumnsReordered: TonColumnsReordered;
-
   onRepoCellClick: TonCellClick;
 
   onLangCellClick: TonCellClick;
@@ -195,6 +187,17 @@ export default class ModuleManager
     s.tables.module.data = H.Saved.module.data;
     s.tables.repository.data = H.Saved.repository.data;
     s.internetPermission = G.Prefs.getBoolPref('global.InternetPermission');
+    (['language', 'module', 'repository'] as const).forEach((t) => {
+      const table = s[t];
+      if (table) {
+        table.columns.forEach((c) => {
+          if (c.heading.startsWith('i18n:')) {
+            c.heading = G.i18n.t(c.heading.substring(5));
+          }
+        });
+      }
+    });
+
     this.state = s;
 
     this.tableRef = {} as typeof this.tableRef;
@@ -214,8 +217,6 @@ export default class ModuleManager
     this.loadRepositoryTable = this.loadRepositoryTable.bind(this);
     this.loadModuleTable = this.loadModuleTable.bind(this);
     this.filterModuleTable = this.filterModuleTable.bind(this);
-    this.onColumnHide = H.onColumnHide.bind(this);
-    this.onColumnsReordered = H.onColumnsReordered.bind(this);
     this.onRepoCellClick = H.onRepoCellClick.bind(this);
     this.onLangCellClick = H.onLangCellClick.bind(this);
     this.onModCellClick = H.onModCellClick.bind(this);
@@ -227,12 +228,6 @@ export default class ModuleManager
       module: H.onRowsReordered.bind(this, 'module'),
       repository: H.onRowsReordered.bind(this, 'repository'),
     };
-    this.onColumnWidthChanged = {
-      language: H.columnWidthChanged.bind(this, 'language'),
-      module: H.columnWidthChanged.bind(this, 'module'),
-      repository: H.columnWidthChanged.bind(this, 'repository'),
-    };
-    this.sizeTableToParent = this.sizeTableToParent.bind(this);
     this.audioDialogOnChange = audioDialogOnChange.bind(this);
     this.audioDialogClose = this.audioDialogClose.bind(this);
     this.audioDialogAccept = this.audioDialogAccept.bind(this);
@@ -252,11 +247,8 @@ export default class ModuleManager
   componentDidUpdate(_prevProps: any, prevState: ManagerState) {
     const props = this.props as ManagerProps;
     const state = this.state as ManagerState;
-    if (!state.internetPermission) return;
     const { id } = props;
     setStatePref(id, prevState, state, Object.keys(SP[id]));
-    this.sizeTableToParent('repository');
-    this.sizeTableToParent('module');
     // this.destroy.push(registerUpdateStateFromPref(id, this, SP[id]));
   }
 
@@ -390,36 +382,6 @@ export default class ModuleManager
         }
       })
     );
-    this.sizeTableToParent('repository');
-    this.sizeTableToParent('module');
-  }
-
-  sizeTableToParent(table: typeof H.Tables[number]) {
-    const state = this.state as ManagerState;
-    if (table === 'language') return;
-    const tbl = state[table];
-    if (tbl) {
-      const { visibleColumns } = tbl;
-      let { columnWidths } = tbl;
-      const { tableRef } = this;
-      if (tableRef[table].current) {
-        const atable = tableRef[table].current as HTMLDivElement | null;
-        if (atable) {
-          const w = atable.clientWidth;
-          const t = columnWidths
-            .filter((_w, i) => !visibleColumns || visibleColumns.includes(i))
-            .reduce((p, c) => p + c, 0);
-          if (Math.abs(w - t) > 2) {
-            columnWidths = columnWidths.map((cw, i) => {
-              return !visibleColumns || visibleColumns.includes(i)
-                ? w * (cw / t)
-                : cw;
-            });
-            H.setTableState(this, table, { columnWidths }, null, true);
-          }
-        }
-      }
-    }
   }
 
   // Load the repository table with all built-in repositories, xulsword
@@ -519,16 +481,14 @@ export default class ModuleManager
   // Convert the language table string array selection to a current language table
   // row selection.
   languageCodesToTableSelection(codes: string[]): RowSelection {
-    const { tableToDataRowMap } = H.Saved.language;
     const state = this.state as ManagerState;
     const { data } = state.tables.language;
-    const datarow = codes
-      .map((code) => {
-        return data.findIndex((r) => r[H.LanCol.iInfo].code === code);
-      })
-      .filter((r) => r !== -1);
     return tableRowsToSelection(
-      datarow.map((dr) => tableToDataRowMap.indexOf(dr))
+      codes
+        .map((code) => {
+          return data.findIndex((r) => r[H.LanCol.iInfo].code === code);
+        })
+        .filter((r) => r !== -1)
     );
   }
 
@@ -788,10 +748,10 @@ export default class ModuleManager
     const {
       language,
       module,
+      repository,
       infoConfigs,
       showConf,
       editConf,
-      repository,
       showAudioDialog,
       progress,
       repositories,
@@ -806,13 +766,10 @@ export default class ModuleManager
       eventHandler,
       modinfoParentHandler,
       onCellEdited,
-      onColumnHide,
-      onColumnsReordered,
       onLangCellClick,
       onModCellClick,
       onRepoCellClick,
       onRowsReordered,
-      onColumnWidthChanged,
       audioDialogClose: dialogClose,
       audioDialogAccept: dialogAccept,
       tableRef,
@@ -844,6 +801,19 @@ export default class ModuleManager
         vkAudioDialog = showAudioDialog[0] as H.VersekeyDialog;
       else gbAudioDialog = showAudioDialog[0] as H.GenBookDialog;
     }
+
+    const handleColumns = (table: typeof H.Tables[number]) => {
+      return (columns: TablePropColumn[]) => {
+        this.sState((prevState) => {
+          const ptable = clone(prevState[table]);
+          if (ptable) {
+            ptable.columns = columns;
+            return { [table]: ptable };
+          }
+          return null;
+        });
+      };
+    };
 
     // If we are managing external repositories, Internet permission is required.
     if (!repositories || internetPermission)
@@ -922,15 +892,14 @@ export default class ModuleManager
                   <Box flex="1">
                     <Table
                       id="language"
-                      key={langtable.render}
-                      columnHeadings={H.LanguageTableHeadings}
-                      initialRowSort={language.rowSort}
+                      key={stringHash(language.columns, langtable.render)}
                       data={langtable.data}
+                      columns={language.columns}
+                      initialRowSort={language.rowSort}
                       selectedRegions={selectedRegions(language.selection)}
                       domref={tableRef.language}
-                      onRowsReordered={onRowsReordered.language}
-                      onCellClick={onLangCellClick}
                       tableCompRef={languageTableCompRef}
+                      onCellClick={onLangCellClick}
                     />
                   </Box>
                   <Button
@@ -986,19 +955,17 @@ export default class ModuleManager
                   <Table
                     flex="1"
                     id="module"
-                    key={modtable.render}
+                    key={stringHash(module.columns, modtable.render)}
                     data={modtable.data}
+                    columns={module.columns}
                     selectedRegions={module.selection}
-                    columnHeadings={H.ModuleTableHeadings()}
-                    visibleColumns={module.visibleColumns}
-                    columnWidths={module.columnWidths}
                     initialRowSort={module.rowSort}
                     enableColumnReordering
                     domref={tableRef.module}
-                    onColumnsReordered={onColumnsReordered}
-                    onColumnHide={onColumnHide}
                     onCellClick={onModCellClick}
-                    onColumnWidthChanged={onColumnWidthChanged.module}
+                    onColumnsReordered={handleColumns('module')}
+                    onColumnHide={handleColumns('module')}
+                    onColumnWidthChanged={handleColumns('module')}
                     onRowsReordered={onRowsReordered.module}
                   />
                 )}
@@ -1062,17 +1029,16 @@ export default class ModuleManager
                     <Table
                       flex="1"
                       id="repository"
-                      key={repotable.render}
+                      key={stringHash(repository.columns, repotable.render)}
                       data={repotable.data}
+                      columns={repository.columns}
                       selectedRegions={repository.selection}
-                      columnHeadings={H.RepositoryTableHeadings}
-                      columnWidths={repository.columnWidths}
                       initialRowSort={repository.rowSort}
                       domref={tableRef.repository}
                       onEditableCellChanged={onCellEdited}
-                      onCellClick={onRepoCellClick}
                       onRowsReordered={onRowsReordered.repository}
-                      onColumnWidthChanged={onColumnWidthChanged.repository}
+                      onCellClick={onRepoCellClick}
+                      onColumnWidthChanged={handleColumns('repository')}
                     />
                   )}
                 </Box>

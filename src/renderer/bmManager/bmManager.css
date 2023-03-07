@@ -1,0 +1,35 @@
+.bmmanager {
+  height: 100%;
+  overflow: hidden;
+}
+.bmmanager .groupbox {
+  margin-bottom: 15px;
+}
+.bmmanager .folders .groupbox-body {
+  margin-inline-start: -15px;
+}
+.bmmanager > div,
+.bmmanager > div .folders,
+.bmmanager .folders .groupbox-body,
+.bmmanager .folders .treeview,
+.bmmanager > div .items {
+  height: calc(100% - 10px);
+}
+.bmmanager .folders .treeview {
+  overflow: auto;
+  font-size: 12px;
+}
+.bmmanager .label-cell > * {
+  margin-inline-end: 6px;
+}
+.bmmanager .folders .bmicon {
+  margin-inline-start: 0;
+  margin-inline-end: 5px;
+}
+.bmmanager .dragsizer {
+  margin: 0;
+}
+.bmmanager .indent {
+  display: inline-block;
+  width: 6px;
+}

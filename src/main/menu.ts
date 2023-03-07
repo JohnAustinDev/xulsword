@@ -10,7 +10,7 @@ import {
   MenuItem,
 } from 'electron';
 import path from 'path';
-import { clone } from '../common';
+import { bookmarkItemIconPath, clone } from '../common';
 import C, { SP, SPBM } from '../constant';
 import G from './mg';
 import Window, { getBrowserWindows } from './components/window';
@@ -222,16 +222,7 @@ function bookmarkProgramMenu(
     label: bm.label,
     type: bm.type === 'folder' ? 'submenu' : 'normal',
     submenu: bm.type === 'folder' ? bookmarkProgramMenu(bm) : undefined,
-    icon: path.join(
-      G.Dirs.path.xsAsset,
-      'icons',
-      '16x16',
-      bm.type === 'folder'
-        ? 'folder.png'
-        : bm.note
-        ? `${bm.tabType}_note.png`
-        : `${bm.tabType}.png`
-    ),
+    icon: bookmarkItemIconPath(G, bm),
     id: bm.id,
     click: d(() => {
       if ('location' in bm) {
@@ -385,6 +376,14 @@ export default class MainMenuBuilder {
   }
 
   buildDefaultTemplate() {
+    const haveBookmarks =
+      (
+        G.Prefs.getComplexValue(
+          'manager.bookmarks',
+          'bookmarks'
+        ) as typeof SPBM.manager.bookmarks
+      ).childNodes.length > 0;
+
     const subMenuFile: MenuItemConstructorOptions = {
       role: 'fileMenu',
       label: ts('menu.file'),
@@ -440,6 +439,7 @@ export default class MainMenuBuilder {
           label: `${ts('menu.export').replace(/\W+$/, '')} ${G.i18n.t(
             'menu.bookmarks'
           )}`,
+          enabled: haveBookmarks,
           click: d(() => {
             Commands.exportBookmarks();
           }),
@@ -783,6 +783,7 @@ export default class MainMenuBuilder {
         {
           label: ts('menu.bookmark.manager'),
           accelerator: tx('menu.bookmark.manager.ac', ['CommandOrControl']),
+          enabled: haveBookmarks,
           click: d(() => {
             Commands.openBookmarksManager();
           }),

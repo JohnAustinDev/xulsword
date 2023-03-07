@@ -121,7 +121,8 @@ export type WindowDescriptorType = {
     | 'about'
     | 'printPassage'
     | 'copyPassage'
-    | 'bmProperties';
+    | 'bmProperties'
+    | 'bmManager';
   category?:
     | 'window' // Parent optional, persisted, resizable
     | 'dialog' // Has parent, not persisted, size is fit-to-content, not-resizable
@@ -646,16 +647,23 @@ export type GAddCaller<G extends { [k: string]: (...args: any[]) => any }> = {
   [K in keyof G]: GMethodAddCaller<G[K]>;
 };
 
+export type BookmarkTreeNode = TreeNodeInfo & BMItem;
+
 export type BookmarkItem = Pick<
   TreeNodeInfo,
   'hasCaret' | 'isExpanded' | 'isSelected'
-> & {
+> &
+  BMItem;
+
+export type BMItem = {
   id: string; // unique id of item
   label: string; // default is auto-generated; editable
   labelLocale: string; // locale of name
   note: string; // default is empty; editable
   noteLocale: string; // locale of note
   creationDate: number; // ms epoch
+  type?: 'bookmark' | 'folder';
+  tabType?: TabTypes;
 };
 
 export type BookmarkType = BookmarkItem & {

@@ -1,6 +1,7 @@
 /* eslint-disable no-nested-ternary */
+import type { TreeNodeInfo } from '@blueprintjs/core';
 import Cache from '../cache';
-import { JSON_attrib_parse, ofClass } from '../common';
+import { clone, JSON_attrib_parse, ofClass } from '../common';
 import RefParser from '../refParser';
 import C from '../constant';
 import G from './rg';
@@ -9,10 +10,12 @@ import {
   mergeElementData,
   updateDataAttribute,
 } from './htmlData';
-import { getMaxVerse, verseKey } from './rutil';
+import { bookmarkItemIcon, getMaxVerse, verseKey } from './rutil';
 
 import type {
   BookmarkFolderType,
+  BookmarkItem,
+  BookmarkTreeNode,
   BookmarkType,
   ContextData,
   LocationGBType,
@@ -351,6 +354,58 @@ export function getSampleText(l: LocationGBType | SelectVKMType): string {
   return r
     .replace(/<[^>]+>/g, '')
     .substring(0, C.UI.BMProperties.maxSampleText);
+}
+
+// Convert bookmark childNodes of a folder into tree nodes.
+export function bookmarkTreeNodes(
+  childNodes: BookmarkItem[] | BookmarkTreeNode[] | undefined,
+  only?: 'folder' | 'bookmark', // undefined = all
+  selectedIDs?: string | string[], // undefined = none
+  expandedIDs?: string | string[], // undefined = all
+  recurse = true,
+  doClone = true
+): BookmarkTreeNode[] {
+  if (childNodes) {
+    const childnodes: BookmarkTreeNode[] = doClone
+      ? clone(childNodes)
+      : childNodes;
+    const expIDs =
+      expandedIDs && typeof expandedIDs === 'string'
+        ? [expandedIDs]
+        : expandedIDs;
+    const selIDs =
+      selectedIDs && typeof selectedIDs === 'string'
+        ? [selectedIDs]
+        : selectedIDs;
+    for (let x = 0; x < childnodes.length; x += 1) {
+      const item = childnodes[x];
+      if (recurse && 'childNodes' in item) {
+        bookmarkTreeNodes(
+          item.childNodes as BookmarkTreeNode[],
+          only,
+          selIDs,
+          expIDs,
+          true,
+          false
+        );
+      }
+      if (
+        only &&
+        ((only === 'folder' && 'type' in item && item.type !== 'folder') ||
+          (only === 'bookmark' && 'type' in item && item.type !== 'bookmark'))
+      ) {
+        childnodes.splice(x, 1);
+        x -= 1;
+      } else {
+        item.hasCaret = item.childNodes?.some((cn) => cn.childNodes);
+        item.isExpanded = !expIDs || expIDs.includes(item.id.toString());
+        item.isSelected = !!selIDs && selIDs.includes(item.id.toString());
+        item.icon = bookmarkItemIcon(item);
+      }
+    }
+    return childnodes;
+  }
+  return [];
 }
 
 // Return contextual data for use by context menus.

@@ -29,6 +29,7 @@ import type {
   BookmarkFolderType,
   BookmarkType,
   NewModulesType,
+  BookmarkTreeNode,
 } from './type';
 import type { TreeNodeInfo } from '@blueprintjs/core';
 import type { SelectVKMType } from './renderer/libxul/vkselect';
@@ -251,7 +252,7 @@ export function prefType(
 
 // Return and persist the key/value pairs of component state Prefs. Component
 // state Prefs are permanently persisted component state values recorded in
-// prefs.json whose key begins with a component id.
+// a json preference file whose key begins with a component id.
 export function getStatePref<P extends PrefObject>(
   prefs: GType['Prefs'],
   id: string,
@@ -270,7 +271,7 @@ export function getStatePref<P extends PrefObject>(
       )
     ) as any;
   });
-  return state;
+  return state as P;
 }
 
 // Decode an osisRef that was encoded using _(\d+)_ encoding, where
@@ -665,6 +666,16 @@ export function audioConfStrings(chapters: number[] | boolean[]): string[] {
   });
 }
 
+export function bookmarkItemIconPath(G: GType, item: BookmarkTreeNode): string {
+  const { note } = item;
+  let fname = 'folder.png';
+  if (item.type === 'bookmark') {
+    if (note) fname = `${item.tabType}_note.png`;
+    else fname = `${item.tabType}.png`;
+  }
+  return [G.Dirs.path.xsAsset, 'icons', '16x16', fname].join('/');
+}
+
 export function findParentOfBookmarkItem(
   toSearch: BookmarkFolderType,
   id: string,
@@ -697,44 +708,6 @@ export function findBookmarkItem(
     }
   }
   return null;
-}
-
-// Convert bookmark childNodes of a folder into tree nodes.
-export function bookmarkTreeNodes(
-  childNodes: BookmarkFolderType['childNodes'],
-  only?: 'folder' | 'bookmark', // undefined = all
-  selectedIDs?: string | string[], // undefined = none
-  expandedIDs?: string | string[], // undefined = all
-  recurse = true,
-  doClone = true
-): TreeNodeInfo[] {
-  const childnodes = doClone ? clone(childNodes) : childNodes;
-  const expIDs =
-    expandedIDs && typeof expandedIDs === 'string'
-      ? [expandedIDs]
-      : expandedIDs;
-  const selIDs =
-    selectedIDs && typeof selectedIDs === 'string'
-      ? [selectedIDs]
-      : selectedIDs;
-  for (let x = 0; x < childnodes.length; x += 1) {
-    const item = childnodes[x];
-    if (recurse && 'childNodes' in item) {
-      bookmarkTreeNodes(item.childNodes, only, selIDs, expIDs, true, false);
-    }
-    if (
-      only &&
-      ((only === 'folder' && item.type !== 'folder') ||
-        (only === 'bookmark' && item.type !== 'bookmark'))
-    ) {
-      childnodes.splice(x, 1);
-      x -= 1;
-    } else {
-      item.isExpanded = !expIDs || expIDs.includes(item.id);
-      item.isSelected = !!selIDs && selIDs.includes(item.id);
-    }
-  }
-  return childnodes;
 }
 
 // Takes a flat list of general book nodes and arranges them according to

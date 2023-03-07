@@ -4,9 +4,8 @@
 import type { LogLevel } from 'electron-log';
 import type { paperSizes } from 'renderer/libxul/printSettings';
 import type { SelectVKMType } from 'renderer/libxul/vkselect';
-import type { TinitialRowSort } from './renderer/libxul/table';
+import type { TablePropColumn, TinitialRowSort } from './renderer/libxul/table';
 import type {
-  AtextPropsType,
   AudioPrefType,
   BookGroupType,
   BookmarkFolderType,
@@ -603,28 +602,6 @@ export const SP = {
 
   moduleManager: {
     suggested: null as { [fallbackLang: string]: string[] } | null,
-    language: {
-      open: true as boolean,
-      selection: [] as string[],
-      rowSort: { column: 0, direction: 'ascending' } as TinitialRowSort,
-      width: 150 as number,
-    },
-    module: {
-      selection: [] as RowSelection,
-      rowSort: { column: 0, direction: 'ascending' } as TinitialRowSort,
-      visibleColumns: [0, 1, 14] as number[],
-      columnWidths: [
-        127, 190, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 88, 103, 80,
-      ] as number[],
-    },
-    repository: {
-      open: true as boolean,
-      selection: [] as RowSelection,
-      rowSort: { column: 2, direction: 'ascending' } as TinitialRowSort,
-      visibleColumns: [0, 1, 2, 3] as number[],
-      columnWidths: [124, 145, 343, 67] as number[],
-      height: 200 as number,
-    },
     repositories: {
       xulsword: [],
       custom: [],
@@ -634,25 +611,366 @@ export const SP = {
       custom: Repository[];
       disabled: string[] | null;
     },
-  },
-
-  removeModule: {
     language: {
-      open: false as boolean,
+      open: true as boolean,
       selection: [] as string[],
-      rowSort: { column: 0, direction: 'ascending' } as TinitialRowSort,
       width: 150 as number,
+      rowSort: {
+        propColumnIndex: 0,
+        direction: 'ascending',
+      } as TinitialRowSort,
+      columns: [
+        {
+          datacolumn: 0,
+          heading: '',
+          width: 150,
+          hideable: false,
+          sortable: false,
+          visible: true,
+        },
+      ] as TablePropColumn[],
     },
     module: {
       selection: [] as RowSelection,
-      rowSort: { column: 0, direction: 'ascending' } as TinitialRowSort,
-      visibleColumns: [0, 1, 2, 13, 15] as number[],
-      columnWidths: [
-        150, 225, 71, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 105, 103, 95,
-      ] as number[],
+      rowSort: {
+        propColumnIndex: 0,
+        direction: 'ascending',
+      } as TinitialRowSort,
+      columns: [
+        {
+          datacolumn: 0,
+          heading: 'i18n:Type.label',
+          width: 127,
+          hideable: true,
+          sortable: true,
+          visible: true,
+        },
+        {
+          datacolumn: 1,
+          heading: 'i18n:Description.label',
+          width: 190,
+          hideable: true,
+          sortable: true,
+          visible: true,
+        },
+        {
+          datacolumn: 2,
+          heading: 'i18n:Name.label',
+          width: 80,
+          hideable: true,
+          sortable: true,
+          visible: false,
+        },
+        {
+          datacolumn: 3,
+          heading: 'i18n:Repository.label',
+          width: 80,
+          hideable: true,
+          sortable: true,
+          visible: false,
+        },
+        {
+          datacolumn: 4,
+          heading: 'i18n:Version.label',
+          width: 80,
+          hideable: true,
+          sortable: true,
+          visible: false,
+        },
+        {
+          datacolumn: 5,
+          heading: 'i18n:Language.label',
+          width: 80,
+          hideable: true,
+          sortable: true,
+          visible: false,
+        },
+        {
+          datacolumn: 6,
+          heading: 'i18n:Size.label',
+          width: 80,
+          hideable: true,
+          sortable: true,
+          visible: false,
+        },
+        {
+          datacolumn: 7,
+          heading: 'i18n:Features.label',
+          width: 80,
+          hideable: true,
+          sortable: true,
+          visible: false,
+        },
+        {
+          datacolumn: 8,
+          heading: 'i18n:Verse System.label',
+          width: 80,
+          hideable: true,
+          sortable: true,
+          visible: false,
+        },
+        {
+          datacolumn: 9,
+          heading: 'i18n:Scope.label',
+          width: 80,
+          hideable: true,
+          sortable: true,
+          visible: false,
+        },
+        {
+          datacolumn: 10,
+          heading: 'i18n:Copyright.label',
+          width: 80,
+          hideable: true,
+          sortable: true,
+          visible: false,
+        },
+        {
+          datacolumn: 11,
+          heading: 'i18n:Distribution License.label',
+          width: 80,
+          hideable: true,
+          sortable: true,
+          visible: false,
+        },
+        {
+          datacolumn: 12,
+          heading: 'i18n:Source Type.label',
+          width: 80,
+          hideable: true,
+          sortable: true,
+          visible: false,
+        },
+        {
+          datacolumn: 13,
+          heading: 'icon:folder-shared',
+          width: 88,
+          hideable: false,
+          sortable: true,
+          visible: true,
+        },
+        {
+          datacolumn: 14,
+          heading: 'icon:cloud-download',
+          width: 103,
+          hideable: false,
+          sortable: true,
+          visible: true,
+        },
+        {
+          datacolumn: 15,
+          heading: 'icon:delete',
+          width: 80,
+          hideable: false,
+          sortable: false,
+          visible: false,
+        },
+      ] as TablePropColumn[],
+    },
+    repository: {
+      open: true as boolean,
+      selection: [] as RowSelection,
+      height: 200 as number,
+      rowSort: {
+        propColumnIndex: 2,
+        direction: 'ascending',
+      } as TinitialRowSort,
+      columns: [
+        {
+          datacolumn: 0,
+          heading: '',
+          width: 124,
+          hideable: false,
+          sortable: true,
+          visible: true,
+        },
+        {
+          datacolumn: 1,
+          heading: '',
+          width: 145,
+          hideable: false,
+          sortable: true,
+          visible: true,
+        },
+        {
+          datacolumn: 2,
+          heading: '',
+          width: 343,
+          hideable: false,
+          sortable: true,
+          visible: true,
+        },
+        {
+          datacolumn: 3,
+          heading: 'icon:folder-open',
+          width: 67,
+          hideable: false,
+          sortable: true,
+          visible: true,
+        },
+      ] as TablePropColumn[],
+    },
+  },
+
+  removeModule: {
+    repositories: null,
+    language: {
+      open: false as boolean,
+      selection: [] as string[],
+      rowSort: {
+        propColumnIndex: 0,
+        direction: 'ascending',
+      } as TinitialRowSort,
+      width: 150 as number,
+      columns: [
+        {
+          datacolumn: 0,
+          heading: '',
+          width: 150,
+          hideable: false,
+          sortable: false,
+          visible: true,
+        },
+      ] as TablePropColumn[],
+    },
+    module: {
+      selection: [] as RowSelection,
+      rowSort: {
+        propColumnIndex: 0,
+        direction: 'ascending',
+      } as TinitialRowSort,
+      columns: [
+        {
+          datacolumn: 0,
+          heading: 'i18n:Type.label',
+          width: 150,
+          hideable: true,
+          sortable: true,
+          visible: true,
+        },
+        {
+          datacolumn: 1,
+          heading: 'i18n:Description.label',
+          width: 225,
+          hideable: true,
+          sortable: true,
+          visible: true,
+        },
+        {
+          datacolumn: 2,
+          heading: 'i18n:Name.label',
+          width: 71,
+          hideable: true,
+          sortable: true,
+          visible: true,
+        },
+        {
+          datacolumn: 3,
+          heading: 'i18n:Repository.label',
+          width: 80,
+          hideable: true,
+          sortable: true,
+          visible: false,
+        },
+        {
+          datacolumn: 4,
+          heading: 'i18n:Version.label',
+          width: 80,
+          hideable: true,
+          sortable: true,
+          visible: false,
+        },
+        {
+          datacolumn: 5,
+          heading: 'i18n:Language.label',
+          width: 80,
+          hideable: true,
+          sortable: true,
+          visible: false,
+        },
+        {
+          datacolumn: 6,
+          heading: 'i18n:Size.label',
+          width: 80,
+          hideable: true,
+          sortable: true,
+          visible: false,
+        },
+        {
+          datacolumn: 7,
+          heading: 'i18n:Features.label',
+          width: 80,
+          hideable: true,
+          sortable: true,
+          visible: false,
+        },
+        {
+          datacolumn: 8,
+          heading: 'i18n:Verse System.label',
+          width: 80,
+          hideable: true,
+          sortable: true,
+          visible: false,
+        },
+        {
+          datacolumn: 9,
+          heading: 'i18n:Scope.label',
+          width: 80,
+          hideable: true,
+          sortable: true,
+          visible: false,
+        },
+        {
+          datacolumn: 10,
+          heading: 'i18n:Copyright.label',
+          width: 80,
+          hideable: true,
+          sortable: true,
+          visible: false,
+        },
+        {
+          datacolumn: 11,
+          heading: 'i18n:Distribution License.label',
+          width: 80,
+          hideable: true,
+          sortable: true,
+          visible: false,
+        },
+        {
+          datacolumn: 12,
+          heading: 'i18n:Source Type.label',
+          width: 80,
+          hideable: true,
+          sortable: true,
+          visible: false,
+        },
+        {
+          datacolumn: 13,
+          heading: 'icon:folder-shared',
+          width: 105,
+          hideable: false,
+          sortable: true,
+          visible: true,
+        },
+        {
+          datacolumn: 14,
+          heading: 'icon:cloud-download',
+          width: 103,
+          hideable: false,
+          sortable: true,
+          visible: false,
+        },
+        {
+          datacolumn: 15,
+          heading: 'icon:delete',
+          width: 95,
+          hideable: false,
+          sortable: false,
+          visible: true,
+        },
+      ] as TablePropColumn[],
     },
     repository: null,
-    repositories: null,
   },
 
   printPassage: {
@@ -705,7 +1023,8 @@ export const SP = {
   SP.xulsword[p] = SP.xulsword.panels.map(() => v as any);
 });
 
-// Root bookmark folder and default child bookmark-items
+// Root bookmark folder and default child bookmark-items and the other
+// bookmark manager state prefs.
 export const SPBM = {
   manager: {
     bookmarks: {
@@ -719,5 +1038,42 @@ export const SPBM = {
       hasCaret: true,
       childNodes: [],
     } as BookmarkFolderType,
+    treeWidth: 210 as number,
+    selectedFolder: 'bmroot',
+    selectedItem: '' as string,
+    columns: [
+      {
+        datacolumn: 0,
+        heading: '',
+        width: 127,
+        hideable: false,
+        sortable: false,
+        visible: true,
+      },
+      {
+        datacolumn: 1,
+        heading: 'icon:annotation',
+        width: 190,
+        hideable: true,
+        sortable: false,
+        visible: true,
+      },
+      {
+        datacolumn: 2,
+        heading: 'icon:manual',
+        width: 80,
+        hideable: true,
+        sortable: false,
+        visible: true,
+      },
+      {
+        datacolumn: 3,
+        heading: 'icon:calendar',
+        width: 80,
+        hideable: true,
+        sortable: false,
+        visible: true,
+      },
+    ] as TablePropColumn[],
   },
 };

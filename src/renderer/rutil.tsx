@@ -1,3 +1,4 @@
+/* eslint-disable jsx-a11y/alt-text */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable import/order */
@@ -16,6 +17,7 @@ import {
   readGenBookAudioConf,
   versionCompare,
   getStatePref as getStatePref2,
+  bookmarkItemIconPath,
 } from '../common';
 import RefParser, { RefParserOptionsType } from '../refParser';
 import VerseKey from '../verseKey';
@@ -25,6 +27,7 @@ import { getElementData } from './htmlData';
 import log from './log';
 
 import type {
+  BookmarkTreeNode,
   GenBookAudio,
   GenBookAudioConf,
   GenBookAudioFile,
@@ -458,6 +461,11 @@ export function getLangReadable(code: string): string {
         : languageNames.en[code2];
   }
   return name || code;
+}
+
+export function bookmarkItemIcon(item: BookmarkTreeNode): JSX.Element {
+  const path = bookmarkItemIconPath(G, item);
+  return <img className="bmicon" src={G.inlineFile(path)} />;
 }
 
 export function moduleInfoHTML(configs: SwordConfType[]): string {

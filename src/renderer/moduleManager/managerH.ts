@@ -3,7 +3,6 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable import/no-duplicates */
 import { Intent } from '@blueprintjs/core';
-import { Utils } from '@blueprintjs/table';
 import {
   clone,
   downloadKey,
@@ -98,31 +97,6 @@ export type GenBookDialog = {
   callback: (result: SelectVKMType | SelectGBMType | null) => void;
 };
 
-export const LanguageTableHeadings = [''];
-
-export function ModuleTableHeadings() {
-  return [
-    G.i18n.t('Type.label'),
-    G.i18n.t('Description.label'),
-    G.i18n.t('Name.label'),
-    G.i18n.t('Repository.label'),
-    G.i18n.t('Version.label'),
-    G.i18n.t('Language.label'),
-    G.i18n.t('Size.label'),
-    G.i18n.t('Features.label'),
-    G.i18n.t('Verse System.label'),
-    G.i18n.t('Scope.label'),
-    G.i18n.t('Copyright.label'),
-    G.i18n.t('Distribution License.label'),
-    G.i18n.t('Source Type.label'),
-    'icon:folder-shared',
-    'icon:cloud-download',
-    'icon:delete',
-  ];
-}
-
-export const RepositoryTableHeadings = ['', '', '', 'icon:folder-open'];
-
 export type TRepCellInfo = TCellInfo & {
   repo: Repository;
 };
@@ -214,72 +188,10 @@ export type ModuleUpdates = {
   updateTo: SwordConfType;
 };
 
-export function onColumnHide(
-  this: ModuleManager,
-  toggleDataColumn: number,
-  targetColumn: number
-) {
-  const state = this.state as ManagerState;
-  const table = 'module';
-  const tablestate = state[table];
-  let { visibleColumns } = tablestate;
-  visibleColumns = visibleColumns.slice();
-  const wasHidden = visibleColumns.indexOf(toggleDataColumn) === -1;
-  if (wasHidden) {
-    visibleColumns.splice(targetColumn + 1, 0, toggleDataColumn);
-  } else {
-    visibleColumns.splice(visibleColumns.indexOf(toggleDataColumn), 1);
-  }
-  tablestate.visibleColumns = visibleColumns;
-  this.sState({ [table]: tablestate });
-}
-
-export function columnWidthChanged(
-  this: ModuleManager,
-  table: typeof Tables[number],
-  column: number,
-  size: number
-): void {
-  const state = this.state as ManagerState;
-  if (table === 'language') return;
-  const tbl = state[table];
-  if (tbl) {
-    let { columnWidths } = tbl;
-    columnWidths = columnWidths.slice();
-    const { visibleColumns } = tbl;
-    const dcol0 = visibleColumns[column];
-    const dcol2 = visibleColumns[column + 1];
-    const delta = size - columnWidths[dcol0];
-    columnWidths[dcol0] += delta;
-    columnWidths[dcol2] -= delta;
-    setTableState(this, table, { columnWidths }, null, true);
-  }
-}
-
-export function onColumnsReordered(
-  this: ModuleManager,
-  oldTableColIndex: number,
-  newTableColIndex: number,
-  length: number
-) {
-  const state = this.state as ManagerState;
-  const table = 'module';
-  let { visibleColumns } = state[table];
-  if (oldTableColIndex === newTableColIndex) return;
-  visibleColumns =
-    Utils.reorderArray(
-      visibleColumns,
-      oldTableColIndex,
-      newTableColIndex,
-      length
-    ) || [];
-  setTableState(this, 'module', { visibleColumns }, null, true);
-}
-
 export function onRowsReordered(
   this: ModuleManager,
   table: typeof Tables[number],
-  column: number,
+  propColumnIndex: number,
   direction: 'ascending' | 'descending',
   tableToDataRowMap: number[]
 ) {
@@ -290,11 +202,14 @@ export function onRowsReordered(
     Saved[table].tableToDataRowMap = tableToDataRowMap;
     // Update initial rowSort for the next Table component reset.
     const { rowSort } = tbl;
-    if (rowSort.column !== column || rowSort.direction !== direction) {
+    if (
+      rowSort.propColumnIndex !== propColumnIndex ||
+      rowSort.direction !== direction
+    ) {
       setTableState(
         this,
         table,
-        { rowSort: { column, direction } },
+        { rowSort: { propColumnIndex, direction } },
         null,
         true
       );
@@ -321,9 +236,8 @@ export function onModCellClick(
     const state = this.state as ManagerState;
     const { module } = state as ManagerState;
     const { module: modtable } = Saved;
-    const { selection, visibleColumns } = module;
-    const { dataRowIndex: row, column, tableRowIndex } = cell;
-    const col = visibleColumns[column];
+    const { selection } = module;
+    const { dataRowIndex: row, tableRowIndex, dataColIndex: col } = cell;
     const drow = modtable.data[row];
     if (drow && (col === ModCol.iInstalled || col === ModCol.iRemove)) {
       // iInstalled and iRemove column clicks
@@ -367,9 +281,8 @@ export function onRepoCellClick(
   const { repository } = state;
   if (repository) {
     const { repository: repotable } = state.tables;
-    const { selection, visibleColumns } = repository;
-    const { dataRowIndex: row, column, tableRowIndex } = cell;
-    const col = visibleColumns[column];
+    const { selection } = repository;
+    const { dataRowIndex: row, tableRowIndex, dataColIndex: col } = cell;
     const builtin =
       repotable.data[row] && repotable.data[row][RepCol.iInfo].repo.builtin;
     if (!builtin && col === RepCol.iState) {
@@ -399,9 +312,7 @@ export function onCellEdited(
   if (repositories && tbl) {
     const newCustomRepos = clone(repositories.custom);
     const tablestate = state.tables[table];
-    const { visibleColumns } = tbl;
-    const row = cell.dataRowIndex;
-    const col = visibleColumns[cell.column];
+    const { dataRowIndex: row, dataColIndex: col } = cell;
     const drow = tablestate.data[row];
     if (table === 'repository' && drow) {
       const crindex = newCustomRepos.findIndex(

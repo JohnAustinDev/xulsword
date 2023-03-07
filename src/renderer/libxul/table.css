@@ -41,3 +41,6 @@
   top: -24px;
   left: calc(50% - 10px);
 }
+.bp4-table-last-in-row .bp4-table-th-menu-container .bp4-icon {
+  margin-right: 14px;
+}

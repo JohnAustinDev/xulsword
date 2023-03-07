@@ -703,7 +703,14 @@ const Commands = {
   },
 
   openBookmarksManager() {
-    log.info(`Action not implemented: openBookmarksManager()`);
+    const options: BrowserWindowConstructorOptions = {
+      title: i18n.t('bookmark.manager.title'),
+    };
+    Window.openSingleton({
+      type: 'bmManager',
+      category: 'dialog-window',
+      options,
+    });
   },
 
   async importBookmarks(

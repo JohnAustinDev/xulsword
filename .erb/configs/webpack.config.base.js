@@ -20,7 +20,8 @@ export const xulswordWindows = [
   'about',
   'printPassage',
   'copyPassage',
-  'bmProperties'
+  'bmProperties',
+  'bmManager'
 ];
 
 export default {
