@@ -10,7 +10,7 @@ import type ChooseFontWin from './chooseFont';
 import type { ChooseFontWinState, ColorType } from './chooseFont';
 
 export const startingState = {
-  module: '' as string | null, // will be initialized by windowArgument()
+  module: '' as string | null, // will be initialized by windowArguments()
   fonts: [] as string[], // will be initialized by getSystemFonts() Promise
   style: G.Prefs.getComplexValue('style', 'style') as StyleType,
 

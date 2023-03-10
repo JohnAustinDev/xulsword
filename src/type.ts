@@ -128,7 +128,9 @@ export type WindowDescriptorType = {
     | 'window' // Parent optional, persisted, resizable
     | 'dialog' // Has parent, not persisted, size is fit-to-content, not-resizable
     | 'dialog-window'; // Has parent, not persisted, resizable
-  options?: Electron.BrowserWindowConstructorOptions;
+  options?: Electron.BrowserWindowConstructorOptions & {
+    additionalArguments?: { [k: string]: PrefValue };
+  };
 };
 
 export type WindowArgType =
@@ -920,6 +922,7 @@ export const GBuilder: GType & {
     has: func as any,
     write: func as any,
     read: func as any,
+    delete: func as any,
     readAndDelete: func as any,
   },
 

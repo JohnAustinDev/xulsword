@@ -6,7 +6,7 @@
 import React from 'react';
 import G from '../rg';
 import renderToRoot from '../renderer';
-import { windowArgument } from '../rutil';
+import { windowArguments } from '../rutil';
 import { Hbox, Vbox } from '../libxul/boxes';
 import Label from '../libxul/label';
 import Stack from '../libxul/stack';
@@ -53,7 +53,7 @@ export default class AboutWin extends React.Component implements ModinfoParent {
   constructor(props: AboutWinProps) {
     super(props);
 
-    const argState = windowArgument(
+    const argState = windowArguments(
       'aboutWinState'
     ) as Partial<AboutWinState> | null;
 

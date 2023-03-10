@@ -16,7 +16,7 @@ import {
   getStatePref,
   registerUpdateStateFromPref,
   setStatePref,
-  windowArgument,
+  windowArguments,
 } from '../rutil';
 import {
   topHandle,
@@ -59,7 +59,7 @@ const statePrefDefault = drop(
 // Window arguments that are used to set initial state must be updated locally
 // and in Prefs, so that component reset or program restart won't cause
 // reversion to initial state.
-let windowState = windowArgument('xulswordState') as Pick<
+let windowState = windowArguments('xulswordState') as Pick<
   typeof SP.xulsword,
   typeof vpWindowState[number]
 >;

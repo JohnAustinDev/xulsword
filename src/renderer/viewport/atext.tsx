@@ -26,7 +26,7 @@ import {
   getMaxChapter,
   libswordImgSrc,
   scrollIntoView,
-  windowArgument,
+  windowArguments,
   audioIcon,
 } from '../rutil';
 import {
@@ -109,7 +109,7 @@ class Atext extends React.Component {
   constructor(props: AtextProps) {
     super(props);
 
-    windowState[props.panelIndex] = windowArgument(
+    windowState[props.panelIndex] = windowArguments(
       `atext${props.panelIndex}State`
     ) as AtextStateType;
 

@@ -9,7 +9,7 @@ import C, { SP } from '../../constant';
 import G from '../rg';
 import log from '../log';
 import { getElementData } from '../htmlData';
-import { verseKey, windowArgument } from '../rutil';
+import { verseKey, windowArguments } from '../rutil';
 import { getStrongsModAndKey } from '../viewport/zdictionary';
 
 import type {
@@ -36,7 +36,7 @@ const libSwordSearchTypes = {
   COMPOUND: -5,
 };
 
-export const searchArg = windowArgument('search') as SearchType;
+export const searchArg = windowArguments('search') as SearchType;
 
 export const strongsCSS = {
   css: null as { sheet: CSSStyleSheet; rule: CSSRule; index: number } | null,

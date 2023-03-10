@@ -20,6 +20,10 @@ const Data = {
     return name && name in this.datastore ? this.datastore[name] : null;
   },
 
+  delete(name: string): void {
+    delete this.datastore[name];
+  },
+
   readAndDelete(name: string): any {
     const r = this.datastore[name];
     delete this.datastore[name];

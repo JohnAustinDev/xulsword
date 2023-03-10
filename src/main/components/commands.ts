@@ -36,7 +36,6 @@ import Dirs from './dirs';
 import type {
   AudioPath,
   BookmarkFolderType,
-  BookmarkItem,
   BookmarkType,
   GenBookAudio,
   GenBookAudioFile,
@@ -47,6 +46,7 @@ import type {
   ScrollType,
   SearchType,
   VerseKeyAudioFile,
+  WindowDescriptorType,
 } from '../../type';
 import type { AboutWinState } from '../../renderer/about/about';
 import type { PrintPassageState } from '../../renderer/printPassage/printPassage';
@@ -575,18 +575,10 @@ const Commands = {
     const passageWinState: Partial<PrintPassageState> = state || {
       chapters: null,
     };
-    const options = {
+    const options: WindowDescriptorType['options'] = {
       title: i18n.t('menu.printPassage'),
       ...C.UI.Window.large,
-      webPreferences: {
-        additionalArguments: [
-          JSON_stringify(
-            { passageWinState },
-            undefined,
-            C.MAXLEN_additionalArguments
-          ),
-        ],
-      },
+      additionalArguments: { passageWinState },
     };
     Window.open({ type: 'printPassage', category: 'dialog-window', options });
   },
@@ -642,15 +634,11 @@ const Commands = {
   },
 
   search(search: SearchType): void {
-    const options = {
+    const options: WindowDescriptorType['options'] = {
       title: `${i18n.t('menu.search')} "${search.searchtext}"`,
       width: 800,
       height: 630,
-      webPreferences: {
-        additionalArguments: [
-          JSON_stringify({ search }, undefined, C.MAXLEN_additionalArguments),
-        ],
-      },
+      additionalArguments: { search },
     };
     Window.open({ type: 'search', category: 'window', options });
   },
@@ -681,18 +669,10 @@ const Commands = {
       passage,
       ...(state || undefined),
     };
-    const options = {
+    const options: WindowDescriptorType['options'] = {
       title: i18n.t('menu.copyPassage'),
       ...C.UI.Window.large,
-      webPreferences: {
-        additionalArguments: [
-          JSON_stringify(
-            { copyPassageState },
-            undefined,
-            C.MAXLEN_additionalArguments
-          ),
-        ],
-      },
+      additionalArguments: { copyPassageState },
     };
     Window.open({ type: 'copyPassage', category: 'dialog', options });
   },
@@ -701,21 +681,11 @@ const Commands = {
     let win: BrowserWindow | null =
       BrowserWindow.fromId(arguments[1] ?? -1) ||
       getBrowserWindows({ type: 'xulsword' })[0];
-    const options = {
+    const options: WindowDescriptorType['options'] = {
       title: i18n.t('fontsAndColors.label'),
       parent: win || undefined,
-      webPreferences: {
-        additionalArguments: [
-          JSON_stringify(
-            {
-              chooseFontState: {
-                module,
-              },
-            },
-            undefined,
-            C.MAXLEN_additionalArguments
-          ),
-        ],
+      additionalArguments: {
+        chooseFontState: { module },
       },
     };
     Window.open({ type: 'chooseFont', category: 'dialog', options });
@@ -856,25 +826,17 @@ const Commands = {
         bmPropertiesState);
     }
     if (!hide) hide = [];
-    const options = {
+    const options: WindowDescriptorType['options'] = {
       title: i18n.t(titleKey),
       parent,
-      webPreferences: {
-        additionalArguments: [
-          JSON_stringify(
-            {
-              bmPropertiesState: {
-                bookmark,
-                treeSelection,
-                anyChildSelectable,
-                hide,
-              },
-              newitem,
-            },
-            undefined,
-            C.MAXLEN_additionalArguments
-          ),
-        ],
+      additionalArguments: {
+        bmPropertiesState: {
+          bookmark,
+          treeSelection,
+          anyChildSelectable,
+          hide,
+        },
+        newitem,
       },
     };
     Window.open({ type: 'bmProperties', category: 'dialog', options });
@@ -937,19 +899,11 @@ const Commands = {
         tab[state.configs[0].module]) ||
       null;
     const label = (t && t.label) || '';
-    const options = {
+    const options: WindowDescriptorType['options'] = {
       width: 510,
       height: 425,
       title: `${i18n.t('menu.help.about')} ${label}`,
-      webPreferences: {
-        additionalArguments: [
-          JSON_stringify(
-            { aboutWinState: state || {} },
-            undefined,
-            C.MAXLEN_additionalArguments
-          ),
-        ],
-      },
+      additionalArguments: { aboutWinState: state || {} },
     };
     Window.open({ type: 'about', category: 'dialog-window', options });
   },

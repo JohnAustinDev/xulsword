@@ -308,18 +308,10 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
           const box = boxes ? boxes[0] : (null as HTMLElement | null);
           if (box) {
             const b = box.getBoundingClientRect();
-            const popupState: Partial<PopupParentState> = { elemdata };
+            const popupState: Pick<PopupParentState, 'elemdata'> = { elemdata };
             const options = {
               title: 'popup',
-              webPreferences: {
-                additionalArguments: [
-                  JSON_stringify(
-                    { popupState },
-                    undefined,
-                    C.MAXLEN_additionalArguments
-                  ),
-                ],
-              },
+              additionalArguments: { popupState },
               openWithBounds: {
                 x: Math.round(b.x),
                 y: Math.round(b.y),

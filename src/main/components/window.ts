@@ -6,7 +6,7 @@ import log from 'electron-log';
 import path from 'path';
 import i18next from 'i18next';
 import { app, BrowserWindow } from 'electron';
-import { JSON_parse, JSON_stringify } from '../../common';
+import { randomID } from '../../common';
 import Cache from '../../cache';
 import C from '../../constant';
 import Subscription from '../../subscription';
@@ -23,6 +23,8 @@ import type {
   WindowDescriptorType,
   WindowRegistryType,
   ModalType,
+  PrefValue,
+  PrefObject,
 } from '../../type';
 import type { SubscriptionType } from '../../subscription';
 
@@ -39,6 +41,15 @@ if (process.env.NODE_ENV === 'development') {
   resolveHtmlPath = (htmlFileName: string) => {
     return `file://${path.resolve(__dirname, '../renderer/', htmlFileName)}`;
   };
+}
+
+// Since webPreferences.additionalArguments are string arguments with limited (and
+// unspecified) maximum length, and since surpassing this limit causes segmentation
+// faults, Data is used to pass arbitrary window arguments.
+export function windowArguments(obj: { [k: string]: PrefValue }): string[] {
+  const dataID = randomID();
+  Data.write(obj, dataID);
+  return [dataID];
 }
 
 // WindowRegistry value for a window will be null after window is closed.
@@ -147,7 +158,7 @@ function windowBounds(winid: number) {
 
 function persist(
   argname: string,
-  value: any,
+  value: PrefValue,
   merge: boolean,
   callingWinID: number
 ) {
@@ -155,29 +166,28 @@ function persist(
     `OpenWindows.w${callingWinID}`,
     'windows'
   ) as WindowDescriptorType;
-  const args = pref?.options?.webPreferences?.additionalArguments;
-  const [argstring] = args || [''];
-  if (args && argstring) {
-    const arg = JSON_parse(argstring);
-    if (typeof arg === 'object') {
-      if (merge) {
-        if (
-          !['undefined', 'object'].includes(typeof value) ||
-          Array.isArray(value)
-        )
-          throw Error(`Window: merge value is not a data object: ${value}`);
-        const origval = arg[argname];
-        if (
-          !['undefined', 'object'].includes(typeof origval) ||
-          Array.isArray(origval)
-        )
-          throw Error(`Window: merge target is not a data object: ${origval}`);
-        arg[argname] = { ...origval, ...value };
-      } else arg[argname] = value;
-      args[0] = JSON_stringify(arg);
-      Prefs.setComplexValue(`OpenWindows.w${callingWinID}`, pref, 'windows');
+  const winargs = pref?.options?.additionalArguments || {};
+  if (merge) {
+    if (
+      !['undefined', 'object'].includes(typeof value) ||
+      Array.isArray(value)
+    ) {
+      throw Error(`Window: merge value is not a data object: ${value}`);
     }
-  }
+    const v = value as PrefObject | undefined;
+    const origval = winargs[argname];
+    if (
+      !['undefined', 'object'].includes(typeof origval) ||
+      Array.isArray(origval)
+    ) {
+      throw Error(`Window: merge target is not a data object: ${origval}`);
+    }
+    const ov = origval as PrefObject | undefined;
+    winargs[argname] = { ...ov, ...v };
+  } else winargs[argname] = value;
+  if (!('options' in pref) || !pref.options) pref.options = {};
+  pref.options.additionalArguments = winargs;
+  Prefs.setComplexValue(`OpenWindows.w${callingWinID}`, pref, 'windows');
 }
 
 function addWindowToPrefs(winid: number, descriptor: WindowDescriptorType) {
@@ -260,21 +270,13 @@ function updateOptions(
   options.webPreferences.contextIsolation = true;
   options.webPreferences.nodeIntegration = false;
   options.webPreferences.webSecurity = true;
-  if (!Array.isArray(options.webPreferences.additionalArguments))
-    options.webPreferences.additionalArguments = ['{}'];
-  if (typeof options.webPreferences.additionalArguments[0] !== 'string')
-    throw Error(
-      `Window additionalArguments must be a JSON_stringify { key: value } string.`
-    );
-  const args = JSON_parse(options.webPreferences.additionalArguments[0]);
-  args.classes = [type, category];
-  args.name = type;
-  args.type = category;
-  options.webPreferences.additionalArguments[0] = JSON_stringify(
-    args,
-    undefined,
-    C.MAXLEN_additionalArguments
-  );
+
+  const winargs = options.additionalArguments || {};
+  winargs.classes = [type, category];
+  winargs.name = type;
+  winargs.type = category;
+  options.webPreferences.additionalArguments = windowArguments(winargs);
+
   // Dialog windows have these defaults (while regular windows and dialog-
   // windows just have Electron defaults).
   if (category === 'dialog') {

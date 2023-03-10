@@ -6,7 +6,7 @@ import React from 'react';
 import { diff } from '../../common';
 import G from '../rg';
 import renderToRoot from '../renderer';
-import { windowArgument } from '../rutil';
+import { windowArguments } from '../rutil';
 import {
   addClass,
   xulDefaultProps,
@@ -34,7 +34,7 @@ type PopupWinProps = ViewportPopupProps & XulProps;
 
 type PopupWinState = PopupParentState;
 
-let windowState = windowArgument('popupState') as Partial<PopupWinState>;
+let windowState = windowArguments('popupState') as Partial<PopupWinState>;
 
 export default class PopupWin extends React.Component implements PopupParent {
   static defaultProps: typeof defaultProps;

@@ -273,7 +273,7 @@ function Modinfo(props: ModinfoProps) {
                         id={['edit', c.modUnique].join('.')}
                         onClick={buttonHandler}
                       >
-                        {G.i18n.t('editMenu.label')}
+                        {G.i18n.t('menu.edit')}
                       </Button>
                       <Button
                         id={['save', c.modUnique].join('.')}

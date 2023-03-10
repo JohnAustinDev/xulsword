@@ -60,18 +60,17 @@ export function component(
   return null;
 }
 
-// This function will retrieve the last argument passed to a window (as
-// webPreferences.additionalArguments) look for a particular key, and
-// return its value if found. Xulsword passes these arguments in a single
-// object as key value pairs so that any React component in the hierarchy
-// may retrieve data specifically provided for it.
-export function windowArgument(key: string) {
-  const arg = window.processR.argv().at(-1);
-  if (typeof arg === 'string' && arg.includes('{')) {
-    const argobj = JSON_parse(arg);
-    if (key in argobj) {
-      return argobj[key];
-    }
+// Read the window's given argument ID and use it to retrieve a property
+// value from the window's Data.
+export function windowArguments(prop?: undefined): PrefObject | null;
+export function windowArguments(prop: string): PrefValue | null;
+export function windowArguments(prop: string | undefined): PrefValue | null {
+  const dataID = window.processR.argv()[0];
+  if (typeof dataID === 'string' && G.Data.has(dataID)) {
+    const data = G.Data.read(dataID);
+    if (prop) {
+      if (prop in data) return data[prop];
+    } else return data;
   }
   return null;
 }

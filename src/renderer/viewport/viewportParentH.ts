@@ -334,17 +334,9 @@ export default function handler(
             }
             const options = {
               title: 'viewport',
-              webPreferences: {
-                additionalArguments: [
-                  JSON_stringify(
-                    {
-                      xulswordState,
-                      ...atextStates,
-                    },
-                    undefined,
-                    C.MAXLEN_additionalArguments
-                  ),
-                ],
+              additionalArguments: {
+                xulswordState,
+                ...atextStates,
               },
             };
             // Calculate the content size ViewportWin should be created with:

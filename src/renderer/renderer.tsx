@@ -15,11 +15,12 @@ import { render } from 'react-dom';
 import PropTypes from 'prop-types';
 import { Intent, ProgressBar, Tag } from '@blueprintjs/core';
 import Subscription from '../subscription';
-import { JSON_parse, sanitizeHTML, stringHash } from '../common';
+import { sanitizeHTML, stringHash } from '../common';
 import Cache from '../cache';
 import C from '../constant';
 import G from './rg';
 import DynamicStyleSheet from './style';
+import { windowArguments } from './rutil';
 import log from './log';
 import { getContextData } from './bookmarks';
 import { delayHandler, xulCaptureEvents } from './libxul/xul';
@@ -60,10 +61,10 @@ window.ipc.on('dynamic-stylesheet-reset', () =>
   DynamicStyleSheet.update(G.Data.read('stylesheetData'))
 );
 
-const winArgs = JSON_parse(window.processR.argv().at(-1) || '{}');
+const winArgs = windowArguments();
 
 // Set window type and language classes of the root html element.
-const classes = winArgs?.classes || ['unknown'];
+const classes = (winArgs?.classes as string[]) || ['unknown'];
 classes.push('cs-locale');
 classes.push(G.i18n.language);
 const html = document?.getElementsByTagName('html')[0];
@@ -378,7 +379,12 @@ function WindowRoot(props: WindowRootProps) {
         id="reset"
         className={s.showPrintOverlay[0] ? 'printp' : undefined}
         onContextMenu={(e: React.SyntheticEvent) => {
-          G.Data.write(getContextData(e.target as HTMLElement), 'contextData');
+          if (!G.Data.has('contextData')) {
+            G.Data.write(
+              getContextData(e.target as HTMLElement),
+              'contextData'
+            );
+          }
         }}
       >
         {children}
@@ -424,6 +430,10 @@ export default async function renderToRoot(
   window.ipc.on('close', () => {
     if (typeof onunload === 'function') onunload();
     Cache.clear();
+    const dataID = window.processR.argv()[0];
+    if (typeof dataID === 'string' && G.Data.has(dataID)) {
+      G.Data.delete(dataID);
+    }
   });
 
   render(
@@ -440,7 +450,7 @@ export default async function renderToRoot(
   );
   if (typeof onload === 'function') onload();
   setTimeout(() => {
-    if (winArgs.type === 'dialog') {
+    if (winArgs && 'type' in winArgs && winArgs.type === 'dialog') {
       const body = document.getElementsByTagName('body');
       if (body.length) {
         const b = body[0].getBoundingClientRect();

@@ -12,7 +12,7 @@ import C, { SP } from '../../constant';
 import G from '../rg';
 import renderToRoot from '../renderer';
 import log from '../log';
-import { windowArgument } from '../rutil';
+import { windowArguments } from '../rutil';
 import {
   PopupParent,
   PopupParentState,
@@ -152,7 +152,7 @@ export default class SearchWin extends React.Component implements PopupParent {
       s.moreLess = true;
     }
 
-    const pstate = windowArgument('pstate') as SearchWinState;
+    const pstate = windowArguments('pstate') as SearchWinState;
     this.state = resetState || pstate || s;
 
     this.handler = handlerH.bind(this);

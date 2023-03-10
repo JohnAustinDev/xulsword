@@ -69,8 +69,6 @@ const C = {
   MAXVERSE: 176,
   MAXCHAPTER: 150,
 
-  MAXLEN_additionalArguments: 1024,
-
   // LibSword response constants
   NOTFOUND: 'Not Found',
   NOMODULES: 'No Modules',

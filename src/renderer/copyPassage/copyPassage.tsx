@@ -12,7 +12,7 @@ import { SP } from '../../constant';
 import G from '../rg';
 import renderToRoot from '../renderer';
 import {
-  windowArgument,
+  windowArguments,
   computed2inlineStyle,
   elem2text,
   htmlVerses,
@@ -47,7 +47,7 @@ const notStatePrefDefault = {
 export type CopyPassageState = typeof notStatePrefDefault &
   typeof SP.copyPassage;
 
-const openedWinState = windowArgument(
+const openedWinState = windowArguments(
   'copyPassageState'
 ) as Partial<CopyPassageState> | null;
 if (openedWinState) {

@@ -14,7 +14,7 @@ import { diff, sanitizeHTML, stringHash, querablePromise } from '../../common';
 import { SP } from '../../constant';
 import G from '../rg';
 import renderToRoot from '../renderer';
-import { windowArgument, getStatePref, setStatePref } from '../rutil';
+import { windowArguments, getStatePref, setStatePref } from '../rutil';
 import log from '../log';
 import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
 import Grid, { Column, Columns, Row, Rows } from '../libxul/grid';
@@ -71,7 +71,7 @@ const notStatePrefDefault = {
   progress: -1 as number,
 };
 
-let openedWinState = windowArgument(
+let openedWinState = windowArguments(
   'passageWinState'
 ) as Partial<PrintPassageState> | null;
 

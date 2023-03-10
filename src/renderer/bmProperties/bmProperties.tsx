@@ -15,7 +15,7 @@ import {
 import C, { SPBM } from '../../constant';
 import G from '../rg';
 import renderToRoot from '../renderer';
-import { windowArgument } from '../rutil';
+import { windowArguments } from '../rutil';
 import { getSampleText, newLabel, bookmarkTreeNode } from '../bookmarks';
 import Grid, { Column, Columns, Row, Rows } from '../libxul/grid';
 import { Hbox, Vbox } from '../libxul/boxes';
@@ -95,11 +95,11 @@ const defaultState: BMPropertiesState = {
 //                              Otherwise it's the default folder (or bookmark loc-
 //                              ation if anyChildSelectable is set) for the new item.
 // hide                    []  -hide the input selector(s) having the given id(s)
-const winState0 = windowArgument('bmPropertiesState') as Parameters<
+const winState0 = windowArguments('bmPropertiesState') as Parameters<
   GType['Commands']['openBookmarkProperties']
 >[1];
 
-const newitem = windowArgument('newitem') as Parameters<
+const newitem = windowArguments('newitem') as Parameters<
   GType['Commands']['openBookmarkProperties']
 >[2];
 

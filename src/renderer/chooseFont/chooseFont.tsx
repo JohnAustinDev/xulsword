@@ -9,7 +9,7 @@ import { diff } from '../../common';
 import G from '../rg';
 import renderToRoot from '../renderer';
 import log from '../log';
-import { windowArgument } from '../rutil';
+import { windowArguments } from '../rutil';
 import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
 import { Hbox, Vbox } from '../libxul/boxes';
 import Groupbox from '../libxul/groupbox';
@@ -69,7 +69,7 @@ export default class ChooseFontWin extends React.Component {
   constructor(props: ChooseFontWinProps) {
     super(props);
 
-    const { module } = windowArgument('chooseFontState') as { module: string };
+    const { module } = windowArguments('chooseFontState') as { module: string };
 
     this.state = {
       ...startingState,
