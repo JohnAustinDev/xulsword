@@ -27,7 +27,9 @@ import { getElementData } from './htmlData';
 import log from './log';
 
 import type {
+  BookmarkFolderType,
   BookmarkTreeNode,
+  BookmarkType,
   GenBookAudio,
   GenBookAudioConf,
   GenBookAudioFile,
@@ -463,7 +465,9 @@ export function getLangReadable(code: string): string {
   return name || code;
 }
 
-export function bookmarkItemIcon(item: BookmarkTreeNode): JSX.Element {
+export function bookmarkItemIcon(
+  item: BookmarkTreeNode | BookmarkFolderType | BookmarkType
+): JSX.Element {
   const path = bookmarkItemIconPath(G, item);
   return <img className="bmicon" src={G.inlineFile(path)} />;
 }

@@ -1,15 +1,5 @@
 .textbox {
   cursor: text;
-  margin: 5px;
-  border-radius: 4px;
-  border: 2px solid;
-  border-top-color: ThreeDLightShadow;
-  border-right-color: ThreeDHighlight;
-  border-bottom-color: ThreeDHighlight;
-  border-left-color: ThreeDLightShadow;
-  padding: 2px 2px 3px;
-  padding-inline-start: 4px;
-  background-color: white;
 }
 
 .textbox input,

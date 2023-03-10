@@ -1,11 +1,4 @@
 .vkselect .menulist {
-  border-radius: 4px;
-  border: 2px solid;
-  border-top-color: ThreeDLightShadow;
-  border-right-color: ThreeDHighlight;
-  border-bottom-color: ThreeDHighlight;
-  border-left-color: ThreeDLightShadow;
-  background-color: white;
   height: 100%;
 }
 .vkselect select {

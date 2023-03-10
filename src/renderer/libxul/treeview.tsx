@@ -162,11 +162,19 @@ function updatedExpansion(
   return null;
 }
 
-function usePrevious<V>(value: V) {
+function usePreviousSelection<V>(value: V) {
   const ref: React.MutableRefObject<V | undefined> = React.useRef();
   React.useEffect(() => {
     ref.current = value;
-  });
+  }, [value]);
+  return ref.current;
+}
+
+function usePreviousExpansion<V>(value: V) {
+  const ref: React.MutableRefObject<V | undefined> = React.useRef();
+  React.useEffect(() => {
+    ref.current = value;
+  }, [value]);
   return ref.current;
 }
 
@@ -180,14 +188,16 @@ const TreeView = (props: TreeViewProps) => {
     onSelection,
     onExpansion,
     onNodeClick,
-    treeRef,
+    treeRef: treeRef0,
   } = props;
+  const treeRef1 = React.createRef();
+  const treeRef = treeRef0 || treeRef1;
+
   const [nodes, dispatch] = React.useReducer(treeReducer, initialState);
 
-  const previous = usePrevious(nodes);
-
-  // Apply selection if controlled.
+  // Get current and previous selection and expansion.
   let selection: (string | number)[] = [];
+  let expansion: (string | number)[] = [];
   if (selectedIDs) {
     let stop = false;
     forEachNode(nodes, (node) => {
@@ -201,39 +211,46 @@ const TreeView = (props: TreeViewProps) => {
       }
     });
   } else selection = getSelection(nodes);
-
-  // Call onSelection if NOT controlled and selection changed.
-  React.useEffect(() => {
-    if (
-      !selectedIDs &&
-      typeof onSelection === 'function' &&
-      diff(getSelection(previous), selection)
-    ) {
-      onSelection(selection);
-    }
-  });
-
-  // Apply expansion if controlled.
-  let expansion: (string | number)[] = [];
   if (expandedIDs) {
     forEachNode(nodes, (node) => {
       node.isExpanded = expandedIDs.includes(node.id);
       if (node.isExpanded) expansion.push(node.id);
     });
   } else expansion = getExpansion(nodes);
+  const previousSelection = usePreviousSelection(selection);
+  const previousExpansion = usePreviousExpansion(expansion);
 
-  // Call onExpansion if NOT controlled and expansion changed.
+  // On mount, scroll to selection
+  React.useEffect(() => {
+    setTimeout(() => {
+      if (selection.length) {
+        treeRef.current
+          ?.getNodeContentElement(selection[0])
+          ?.scrollIntoView({ block: 'center', behavior: 'auto' });
+      }
+    }, 500);
+  });
+
+  // Call onSelection and onExpansion when NOT controlled.
+  React.useEffect(() => {
+    if (
+      !selectedIDs &&
+      typeof onSelection === 'function' &&
+      diff(previousSelection, selection)
+    ) {
+      onSelection(selection);
+    }
+  });
   React.useEffect(() => {
     if (
       !expandedIDs &&
       typeof onExpansion === 'function' &&
-      diff(getExpansion(previous), expansion)
+      diff(previousExpansion, expansion)
     ) {
       onExpansion(expansion);
     }
   });
 
-  // Call onSelection if controlled or dispatch selection to state.
   const handleNodeClick = React.useCallback(
     (
       node: TreeNodeInfo,
@@ -264,7 +281,6 @@ const TreeView = (props: TreeViewProps) => {
     [selectedIDs, onSelection, onNodeClick, enableMultipleSelection]
   );
 
-  // Call onExpansion if controlled, or else dispatch collapse to state.
   const handleNodeCollapse = React.useCallback(
     (node: TreeNodeInfo, nodePath: NodePath) => {
       if (expandedIDs) {

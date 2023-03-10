@@ -312,7 +312,13 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
             const options = {
               title: 'popup',
               webPreferences: {
-                additionalArguments: [JSON_stringify({ popupState })],
+                additionalArguments: [
+                  JSON_stringify(
+                    { popupState },
+                    undefined,
+                    C.MAXLEN_additionalArguments
+                  ),
+                ],
               },
               openWithBounds: {
                 x: Math.round(b.x),

@@ -1,14 +1,28 @@
 .bmmanager {
   height: 100%;
+  padding: 8px;
   overflow: hidden;
+}
+.bmmanager .items {
+  padding: 1px;
+}
+.bmmanager .tables .groupbox-body {
+  position: relative;
+  padding: 0;
+}
+.bmmanager .tables .treeview,
+.bmmanager .tables .table {
+  position: absolute;
+  height: 100%;
+  width: 100%;
 }
 .bmmanager .groupbox {
   margin-bottom: 15px;
 }
-.bmmanager .folders .groupbox-body {
-  margin-inline-start: -15px;
+
+.bmmanager .search {
+  margin: 0 8px;
 }
-.bmmanager > div,
 .bmmanager > div .folders,
 .bmmanager .folders .groupbox-body,
 .bmmanager .folders .treeview,
@@ -32,4 +46,11 @@
 .bmmanager .indent {
   display: inline-block;
   width: 6px;
+}
+
+.bmmanager .is-cut {
+  color: red;
+}
+.bmmanager .is-copy {
+  color: yellow;
 }

@@ -80,14 +80,22 @@ export function escapeRE(text: string) {
 // JSON does not encode Javascript undefined, functions or symbols. So
 // what is specially encoded here can be recovered using JSON_parse(string).
 // eslint-disable-next-line @typescript-eslint/naming-convention
-export function JSON_stringify(x: any, _func?: null, space?: number): string {
-  return JSON.stringify(
+export function JSON_stringify(
+  x: any,
+  space?: number,
+  maxlen?: number
+): string {
+  const str = JSON.stringify(
     x,
     (_k, v) => {
       return v === undefined ? '_undefined_' : v;
     },
     space
   );
+  if (maxlen && str.length > maxlen) {
+    throw new Error(`Exceeded maximum JSON string length of ${maxlen}`);
+  }
+  return str;
 }
 // NOTE: It is not possible to 100% recover arrays with undefined values
 // using the JSON.parse reviver, because the reviver specification requires
@@ -108,16 +116,22 @@ export function JSON_parse(s: string, anyx?: Exclude<any, undefined>): any {
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export function JSON_attrib_stringify(
   x: any,
-  _func?: null,
-  space?: number
+  space?: number,
+  maxlen?: number
 ): string {
-  const str = JSON_stringify(x, _func, space);
-  return str
+  let str = JSON_stringify(x, space);
+  str = str
     .replace(/&/g, '%26') /* These 5 replacements protect from HTML/XML. */
     .replace(/'/g, '%27')
     .replace(/"/g, "'")
     .replace(/</g, '%3C')
     .replace(/>/g, '%3E');
+  if (maxlen && str.length > maxlen) {
+    throw new Error(
+      `Exceeded maximum JSON attribute string length of ${maxlen}`
+    );
+  }
+  return str;
 }
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -666,7 +680,10 @@ export function audioConfStrings(chapters: number[] | boolean[]): string[] {
   });
 }
 
-export function bookmarkItemIconPath(G: GType, item: BookmarkTreeNode): string {
+export function bookmarkItemIconPath(
+  G: GType,
+  item: BookmarkTreeNode | BookmarkFolderType | BookmarkType
+): string {
   const { note } = item;
   let fname = 'folder.png';
   if (item.type === 'bookmark') {
@@ -706,6 +723,68 @@ export function findBookmarkItem(
       const descendant = findBookmarkItem(child, id, true);
       if (descendant) return descendant;
     }
+  }
+  return null;
+}
+
+export function deleteBookmarkItem(
+  bookmarks: BookmarkFolderType,
+  itemID: string
+): BookmarkFolderType | BookmarkType | null {
+  const item = findBookmarkItem(bookmarks, itemID);
+  if (item) {
+    const parent = findParentOfBookmarkItem(bookmarks, item.id);
+    if (parent) {
+      const i = parent.childNodes.findIndex((c) => c.id === item.id);
+      if (i !== -1) {
+        const r = parent.childNodes.splice(i, 1);
+        return r[0];
+      }
+    }
+  }
+  return null;
+}
+
+export function insertBookmarkItem(
+  bookmarks: BookmarkFolderType,
+  item: BookmarkFolderType | BookmarkType | null,
+  parentID: string,
+  afterID?: string
+): BookmarkFolderType | BookmarkType | null {
+  if (item) {
+    const parent = findBookmarkItem(bookmarks, parentID);
+    if (parent && parent.type === 'folder') {
+      let index = -1;
+      if (afterID) {
+        index = parent.childNodes.findIndex((n) => n.id === afterID);
+      }
+      parent.childNodes.splice(index + 1, 0, item);
+      return item;
+    }
+  }
+  return null;
+}
+
+export function copyBookmarkItem(
+  bookmarks: BookmarkFolderType,
+  itemID: string
+): BookmarkFolderType | BookmarkType | null {
+  const copyChildNodes = (childNodes: BookmarkFolderType['childNodes']) => {
+    return childNodes.map((n) => {
+      const nn = clone(n);
+      nn.id = randomID();
+      if (nn.type === 'folder') nn.childNodes = copyChildNodes(nn.childNodes);
+      return nn;
+    });
+  };
+  const item = findBookmarkItem(bookmarks, itemID);
+  if (item) {
+    const copy = clone(item);
+    copy.id = randomID();
+    if (copy.type === 'folder') {
+      copy.childNodes = copyChildNodes(copy.childNodes);
+    }
+    return copy;
   }
   return null;
 }
@@ -1083,6 +1162,7 @@ export function repositoryModuleKey(conf: SwordConfType): string {
   return str;
 }
 
+// Convert a Blueprint.js Region selection to a list of table data rows.
 export function selectionToTableRows(regions: Region[]): number[] {
   const sels: Set<number> = new Set();
   regions?.forEach((region) => {
@@ -1095,6 +1175,7 @@ export function selectionToTableRows(regions: Region[]): number[] {
   return Array.from(sels).sort((a, b) => (a > b ? 1 : a < b ? -1 : 0));
 }
 
+// Convert a list of table data rows to a Blueprint.js Region.
 export function tableRowsToSelection(rows: number[]): RowSelection {
   const unique = new Set(rows);
   const sorted = Array.from(unique).sort((a: number, b: number) =>
@@ -1111,6 +1192,29 @@ export function tableRowsToSelection(rows: number[]): RowSelection {
     selection.push({ rows: [s, e] });
   }
   return selection;
+}
+
+// Return a new selection after toggling a data row, by adding or
+// subtracting from the current selection as appropriate.
+export function tableSelectDataRows(
+  toggleDataRow: number,
+  selectedDataRows: number[],
+  e: React.MouseEvent
+): number[] {
+  const rows = clone(selectedDataRows.sort());
+  const isSelected = rows.includes(toggleDataRow);
+  if (rows.length && (e.ctrlKey || e.shiftKey)) {
+    const prev = rows.filter((r) => r < toggleDataRow).pop();
+    const start = prev === undefined || e.ctrlKey ? toggleDataRow : prev + 1;
+    for (let x = start; x <= toggleDataRow; x += 1) {
+      if (!isSelected) rows.push(x);
+      else if (rows.includes(x)) {
+        rows.splice(rows.indexOf(x), 1);
+      }
+    }
+    return rows;
+  }
+  return isSelected ? [] : [toggleDataRow];
 }
 
 // Append entries of 'b' to 'a'. So 'a' is modified in place, while 'b'

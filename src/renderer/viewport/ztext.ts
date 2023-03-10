@@ -288,14 +288,14 @@ export function textChange(
   atext: HTMLElement,
   next: boolean,
   prevState?: PinPropsType
-): PinPropsType | null {
+): PinPropsType | Partial<PinPropsType> | null {
   const { columns: cx, module, index } = atext.dataset;
   const panelIndex = Number(index);
   const columns = Number(cx);
   if (!columns || !module) return null;
   const { type } = G.Tab[module];
   const sbe = atext.getElementsByClassName('sb')[0];
-  const newPinProps = prevState || C.PinProps;
+  const newPartialPinProps: Partial<PinPropsType> = prevState || {};
   switch (type) {
     case C.BIBLE:
     case C.COMMENTARY: {
@@ -319,7 +319,7 @@ export function textChange(
         }
       }
       if (location) {
-        newPinProps.location = location;
+        newPartialPinProps.location = location;
       } else return null;
       break;
     }
@@ -332,7 +332,7 @@ export function textChange(
           const { module: m, key: k } = locationGB;
           const key = genbookChange(m, k, next);
           if (key) {
-            newPinProps.modkey = key;
+            newPartialPinProps.modkey = key;
           } else return null;
         }
       }
@@ -341,13 +341,14 @@ export function textChange(
     case C.DICTIONARY: {
       const key = dictionaryChange(atext, next);
       if (key) {
-        newPinProps.modkey = key;
+        newPartialPinProps.modkey = key;
       } else return null;
       break;
     }
     default:
   }
-  if (!prevState) return newPinProps;
+  if (!prevState) return newPartialPinProps;
+  const newPinProps = newPartialPinProps as PinPropsType;
   newPinProps.scroll = null;
   if (type === C.BIBLE && columns > 1) {
     const skipTextUpdate: boolean[] = [];

@@ -69,6 +69,8 @@ const C = {
   MAXVERSE: 176,
   MAXCHAPTER: 150,
 
+  MAXLEN_additionalArguments: 1024,
+
   // LibSword response constants
   NOTFOUND: 'Not Found',
   NOMODULES: 'No Modules',
@@ -1030,7 +1032,7 @@ export const SPBM = {
     bookmarks: {
       type: 'folder',
       id: 'bmroot',
-      label: 'bmroot',
+      label: 'i18n:rootBookmark.label',
       labelLocale: 'en',
       note: '',
       noteLocale: 'en',
@@ -1040,12 +1042,11 @@ export const SPBM = {
     } as BookmarkFolderType,
     treeWidth: 210 as number,
     selectedFolder: 'bmroot',
-    selectedItem: '' as string,
     columns: [
       {
         datacolumn: 0,
         heading: '',
-        width: 127,
+        width: 237,
         hideable: false,
         sortable: false,
         visible: true,
@@ -1053,7 +1054,7 @@ export const SPBM = {
       {
         datacolumn: 1,
         heading: 'icon:annotation',
-        width: 190,
+        width: 80,
         hideable: true,
         sortable: false,
         visible: true,

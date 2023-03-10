@@ -10,12 +10,13 @@ import {
   clone,
   diff,
   findBookmarkItem,
-  findParentOfBookmarkItem,
   gbPaths,
   JSON_parse,
   JSON_stringify,
   pad,
   versionCompare,
+  deleteBookmarkItem as DeleteBookmarkItem,
+  insertBookmarkItem,
 } from '../../common';
 import Subscription from '../../subscription';
 import C, { SP, SPBM } from '../../constant';
@@ -36,6 +37,7 @@ import type {
   AudioPath,
   BookmarkFolderType,
   BookmarkItem,
+  BookmarkType,
   GenBookAudio,
   GenBookAudioFile,
   LocationGBType,
@@ -50,7 +52,7 @@ import type { AboutWinState } from '../../renderer/about/about';
 import type { PrintPassageState } from '../../renderer/printPassage/printPassage';
 import type { CopyPassageState } from '../../renderer/copyPassage/copyPassage';
 import type { SelectVKMType } from '../../renderer/libxul/vkselect';
-import type { BMPropertiesState } from '../../renderer/bmProperties/bmProperties';
+import type { BMPropertiesStateWinArg } from '../../renderer/bmProperties/bmProperties';
 
 const Commands = {
   openModuleManager(): void {
@@ -577,7 +579,13 @@ const Commands = {
       title: i18n.t('menu.printPassage'),
       ...C.UI.Window.large,
       webPreferences: {
-        additionalArguments: [JSON_stringify({ passageWinState })],
+        additionalArguments: [
+          JSON_stringify(
+            { passageWinState },
+            undefined,
+            C.MAXLEN_additionalArguments
+          ),
+        ],
       },
     };
     Window.open({ type: 'printPassage', category: 'dialog-window', options });
@@ -639,7 +647,9 @@ const Commands = {
       width: 800,
       height: 630,
       webPreferences: {
-        additionalArguments: [JSON_stringify({ search })],
+        additionalArguments: [
+          JSON_stringify({ search }, undefined, C.MAXLEN_additionalArguments),
+        ],
       },
     };
     Window.open({ type: 'search', category: 'window', options });
@@ -675,7 +685,13 @@ const Commands = {
       title: i18n.t('menu.copyPassage'),
       ...C.UI.Window.large,
       webPreferences: {
-        additionalArguments: [JSON_stringify({ copyPassageState })],
+        additionalArguments: [
+          JSON_stringify(
+            { copyPassageState },
+            undefined,
+            C.MAXLEN_additionalArguments
+          ),
+        ],
       },
     };
     Window.open({ type: 'copyPassage', category: 'dialog', options });
@@ -690,27 +706,20 @@ const Commands = {
       parent: win || undefined,
       webPreferences: {
         additionalArguments: [
-          JSON_stringify({
-            chooseFontState: {
-              module,
+          JSON_stringify(
+            {
+              chooseFontState: {
+                module,
+              },
             },
-          }),
+            undefined,
+            C.MAXLEN_additionalArguments
+          ),
         ],
       },
     };
     Window.open({ type: 'chooseFont', category: 'dialog', options });
     win = null;
-  },
-
-  openBookmarksManager() {
-    const options: BrowserWindowConstructorOptions = {
-      title: i18n.t('bookmark.manager.title'),
-    };
-    Window.openSingleton({
-      type: 'bmManager',
-      category: 'dialog-window',
-      options,
-    });
   },
 
   async importBookmarks(
@@ -810,125 +819,113 @@ const Commands = {
     }
   },
 
-  // Normally either bmPropertiesState (to show properties of an existing item)
-  // or newitem (show properties of a new item) are expected to be provided, not
-  // both. However bmPropertiesState could be used to modify a new-bookmark dialog,
-  // and in that case any bmPropertiesState.bookmark will be ignored.
+  openBookmarksManager() {
+    const options: BrowserWindowConstructorOptions = {
+      title: i18n.t('bookmark.manager.title'),
+    };
+    Window.openSingleton({
+      type: 'bmManager',
+      category: 'dialog-window',
+      options,
+    });
+  },
+
+  // Properties for either bmPropertiesState.bookmark (properties of an existing
+  // bookmark item) or newitem (properties of a new item) will be shown in the new
+  // window. When newitem is provided, bmPropertiesState.bookmark is ignored. But
+  // the other bmPropertiesState properties are still used to control the dialog
+  // window.
   openBookmarkProperties(
-    bmPropertiesState?: Partial<BMPropertiesState>,
+    titleKey: string,
+    bmPropertiesState: Partial<BMPropertiesStateWinArg>,
     newitem?: {
       location: LocationVKType | LocationGBType | null | undefined;
       module?: string;
-      usernote?: boolean;
     }
   ): void {
-    const tab = getTab();
     let parent: BrowserWindow | undefined =
-      BrowserWindow.fromId(arguments[2] ?? -1) ||
+      BrowserWindow.fromId(arguments[3] ?? -1) ||
       getBrowserWindows({ type: 'xulsword' })[0] ||
       undefined;
-    let bookmark: BMPropertiesState['bookmark'] | undefined;
-    let treeSelection: BMPropertiesState['treeSelection'] | undefined;
-    let anyChildSelectable: BMPropertiesState['anyChildSelectable'] | undefined;
-    let hide: BMPropertiesState['hide'] | undefined;
+    let bookmark: any | undefined;
+    let treeSelection: any | undefined;
+    let anyChildSelectable: any | undefined;
+    let hide: any | undefined;
     if (bmPropertiesState) {
       ({ bookmark, treeSelection, anyChildSelectable, hide } =
         bmPropertiesState);
     }
-    if (newitem) {
-      bookmark = undefined;
-      const { location, module, usernote } = newitem;
-      const item: BookmarkItem = {
-        id: '',
-        label: location ? '' : i18n.t('newFolder'),
-        labelLocale: location ? '' : i18n.language,
-        note: usernote ? ' ' : '',
-        noteLocale: usernote ? i18n.language : '',
-        creationDate: new Date().valueOf(),
-      };
-      if (location) {
-        if (module && 'v11n' in location) {
-          const t = (module in tab && tab[module]) || null;
-          bookmark = {
-            ...item,
-            type: 'bookmark',
-            location: {
-              ...location,
-              vkmod: module || '',
-              v11n: t?.v11n || 'KJV',
-            },
-            tabType: t?.tabType || 'Texts',
-            sampleText: '',
-          };
-        } else if (!('v11n' in location)) {
-          const l = location as LocationGBType;
-          const { module: m } = l;
-          const tabType = (m in tab && tab[m].tabType) || 'Genbks';
-          bookmark = {
-            ...item,
-            type: 'bookmark',
-            location: l,
-            tabType,
-            sampleText: '',
-          };
-        }
-      } else {
-        bookmark = {
-          ...item,
-          type: 'folder',
-          childNodes: [],
-        };
-      }
-    }
-    let titleKey = 'menu.bookmark.properties';
-    if (newitem && bookmark) {
-      if (!('location' in bookmark)) titleKey = 'menu.folder.add';
-      else if (bookmark.note) titleKey = 'menu.usernote.add';
-      else titleKey = 'menu.bookmark.add';
-    }
     if (!hide) hide = [];
-    if (!bookmark?.note && !hide.includes('note')) hide.push('note');
-    if (bookmark) {
-      const options = {
-        title: i18n.t(titleKey),
-        parent,
-        webPreferences: {
-          additionalArguments: [
-            JSON_stringify({
+    const options = {
+      title: i18n.t(titleKey),
+      parent,
+      webPreferences: {
+        additionalArguments: [
+          JSON_stringify(
+            {
               bmPropertiesState: {
                 bookmark,
                 treeSelection,
                 anyChildSelectable,
                 hide,
               },
-            }),
-          ],
-        },
-      };
-      Window.open({ type: 'bmProperties', category: 'dialog', options });
-    }
+              newitem,
+            },
+            undefined,
+            C.MAXLEN_additionalArguments
+          ),
+        ],
+      },
+    };
+    Window.open({ type: 'bmProperties', category: 'dialog', options });
     parent = undefined;
   },
 
-  deleteBookmarkItem(itemID: string): void {
+  deleteBookmarkItems(itemIDs: string[]): boolean {
     const bookmarks = clone(
       Prefs.getComplexValue(
         'manager.bookmarks',
         'bookmarks'
       ) as typeof SPBM.manager.bookmarks
     );
-    const item = findBookmarkItem(bookmarks, itemID);
-    if (item) {
-      const parent = findParentOfBookmarkItem(bookmarks, item.id);
-      if (parent) {
-        const i = parent.childNodes.findIndex((c) => c.id === item.id);
-        if (i !== -1) {
-          parent.childNodes.splice(i, 1);
-          Prefs.setComplexValue('manager.bookmarks', bookmarks, 'bookmarks');
-          Window.reset('all', 'all');
-        }
-      }
+    const items = itemIDs.map((id) => DeleteBookmarkItem(bookmarks, id));
+    if (items.length && !items.some((i) => i === null)) {
+      Prefs.setComplexValue('manager.bookmarks', bookmarks, 'bookmarks');
+      Window.reset('all', 'all');
+      return true;
     }
+    return false;
+  },
+
+  // itemOrID = string - REMOVE and INSERT.
+  // itemOrID = object - INSERT object (which must have unique id to succeed).
+  // Returns true if the move was successful.
+  moveBookmarkItems(
+    itemsOrIDs: string[] | (BookmarkFolderType | BookmarkType)[],
+    newParentID: string,
+    afterID?: string
+  ): boolean {
+    const bookmarks = clone(
+      Prefs.getComplexValue(
+        'manager.bookmarks',
+        'bookmarks'
+      ) as typeof SPBM.manager.bookmarks
+    );
+    const moved = itemsOrIDs.map((itemOrId) =>
+      insertBookmarkItem(
+        bookmarks,
+        typeof itemOrId === 'string'
+          ? DeleteBookmarkItem(bookmarks, itemOrId)
+          : itemOrId,
+        newParentID,
+        afterID
+      )
+    );
+    if (moved.length && !moved.includes(null)) {
+      Prefs.setComplexValue('manager.bookmarks', bookmarks, 'bookmarks');
+      return true;
+    }
+    return false;
   },
 
   openAbout(state?: Partial<AboutWinState>): void {
@@ -945,7 +942,13 @@ const Commands = {
       height: 425,
       title: `${i18n.t('menu.help.about')} ${label}`,
       webPreferences: {
-        additionalArguments: [JSON_stringify({ aboutWinState: state || {} })],
+        additionalArguments: [
+          JSON_stringify(
+            { aboutWinState: state || {} },
+            undefined,
+            C.MAXLEN_additionalArguments
+          ),
+        ],
       },
     };
     Window.open({ type: 'about', category: 'dialog-window', options });

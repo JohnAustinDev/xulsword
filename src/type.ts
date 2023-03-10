@@ -5,6 +5,7 @@ import type { clipboard, Shell } from 'electron';
 import type i18n from 'i18next';
 import type React from 'react';
 import type { TreeNodeInfo } from '@blueprintjs/core';
+import type { SP } from './constant';
 import type C from './constant';
 import type {
   resetMain,
@@ -36,7 +37,7 @@ import type Window from './main/components/window';
 import type { DirsRendererType } from './main/components/dirs';
 import type LibSword from './main/components/libsword';
 import type MainPrintHandler from './main/print';
-import type { SP } from './constant';
+import type { canRedo, canUndo } from './main/bookmarks';
 import type { SelectVKMType } from './renderer/libxul/vkselect';
 
 declare global {
@@ -647,7 +648,11 @@ export type GAddCaller<G extends { [k: string]: (...args: any[]) => any }> = {
   [K in keyof G]: GMethodAddCaller<G[K]>;
 };
 
-export type BookmarkTreeNode = TreeNodeInfo & BMItem;
+export type BookmarkTreeNode = TreeNodeInfo &
+  BMItem & {
+    isCut: boolean;
+    isCopy: boolean;
+  };
 
 export type BookmarkItem = Pick<
   TreeNodeInfo,
@@ -716,6 +721,8 @@ export type GType = {
   getSystemFonts: typeof getSystemFonts;
   getBooksInModule: typeof getBooksInModule;
   publishSubscription: typeof publishSubscription;
+  canUndo: typeof canUndo;
+  canRedo: typeof canRedo;
 
   // Objects
   i18n: Pick<typeof i18n, 't' | 'exists' | 'language'>;
@@ -810,6 +817,8 @@ export const GBuilder: GType & {
   getBooksInModule: CACHEfunc as any,
   resetMain: func as any,
   publishSubscription: func as any,
+  canUndo: func as any,
+  canRedo: func as any,
 
   // Objects
   i18n: {
@@ -893,10 +902,11 @@ export const GBuilder: GType & {
     copyPassage: func as any,
     openFontsColors: func as any,
     openBookmarksManager: func as any,
+    moveBookmarkItems: func as any,
+    deleteBookmarkItems: func as any,
     importBookmarks: func as any,
     exportBookmarks: func as any,
     openBookmarkProperties: func as any,
-    deleteBookmarkItem: func as any,
     openAbout: func as any,
     goToLocationVK: func as any,
     goToLocationGB: func as any,

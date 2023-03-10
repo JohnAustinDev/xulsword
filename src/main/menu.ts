@@ -471,7 +471,6 @@ export default class MainMenuBuilder {
     };
 
     const edits = ['undo', 'redo', 'cut', 'copy', 'paste'];
-    const { list, index } = Transaction;
     const subMenuEdit: MenuItemConstructorOptions = {
       role: 'editMenu',
       label: ts('menu.edit'),
@@ -482,8 +481,8 @@ export default class MainMenuBuilder {
             label: ts(`menu.edit.${ed}`),
             accelerator: tx(`menu.edit.${ed}.ac`, ['CommandOrControl']),
             enabled: !(
-              (ed === 'undo' && (list.length < 2 || index < 1)) ||
-              (ed === 'redo' && index >= list.length - 1)
+              (ed === 'undo' && !G.canUndo()) ||
+              (ed === 'redo' && !G.canRedo())
             ),
             click: d(() => {
               if (!Commands.edit(ed)) this.window.webContents[ed]();

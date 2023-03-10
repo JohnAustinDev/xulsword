@@ -258,7 +258,12 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
                 v11n: G.Tab[swordModule].v11n || null,
               })
             );
-            if (nk) afile = verseKeyAudioFile(swordModule, nk.book, nk.chapter);
+            if (nk)
+              afile = verseKeyAudioFile(
+                swordModule,
+                nk.book || undefined,
+                nk.chapter
+              );
           } else if ('key' in file) {
             const { key: k } = file;
             const key = genbookChange(swordModule, k, true);

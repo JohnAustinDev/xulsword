@@ -270,7 +270,11 @@ function updateOptions(
   args.classes = [type, category];
   args.name = type;
   args.type = category;
-  options.webPreferences.additionalArguments[0] = JSON_stringify(args);
+  options.webPreferences.additionalArguments[0] = JSON_stringify(
+    args,
+    undefined,
+    C.MAXLEN_additionalArguments
+  );
   // Dialog windows have these defaults (while regular windows and dialog-
   // windows just have Electron defaults).
   if (category === 'dialog') {

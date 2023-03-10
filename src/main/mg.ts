@@ -11,6 +11,7 @@ import {
 } from 'electron';
 import i18next from 'i18next';
 import { GBuilder, GType, WindowArgType } from '../type';
+import { canRedo, canUndo } from './bookmarks';
 import { inlineAudioFile, inlineFile } from './components/localFile';
 import Dirs from './components/dirs';
 import Prefs from './components/prefs';
@@ -39,6 +40,7 @@ import {
   localeConfig,
   getConfig,
 } from './minit';
+
 import type { SubscriptionType } from '../subscription';
 
 // Handle global variable calls from renderer processes
@@ -228,6 +230,14 @@ class GClass implements GType {
     ...args: Parameters<SubscriptionType['publish'][S]>
   ) {
     return publishSubscription(s, r, m, ...args);
+  }
+
+  canUndo(...args: Parameters<GType['canUndo']>): ReturnType<GType['canUndo']> {
+    return canUndo(...args);
+  }
+
+  canRedo(...args: Parameters<GType['canRedo']>): ReturnType<GType['canRedo']> {
+    return canRedo(...args);
   }
 }
 

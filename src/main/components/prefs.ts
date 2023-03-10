@@ -247,7 +247,7 @@ const Prefs = {
     const s = this.store[aStore];
     if (!s.data || typeof s.data !== 'object') return false;
 
-    const json = JSON_stringify(s.data, null, 2);
+    const json = JSON_stringify(s.data, 2);
     if (json) {
       fs.writeFileSync(s.file.path, json);
       log.verbose(`Persisted store: ${s.file.path}`);

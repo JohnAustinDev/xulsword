@@ -51,7 +51,7 @@ function Button(props: ButtonProps) {
     'small',
     'text',
     'type',
-  ];
+  ] as const;
   return (
     <div
       {...htmlAttribs(cls.join(' '), props)}

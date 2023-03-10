@@ -136,7 +136,7 @@ class Textbox extends React.Component {
     const value = props.disabled ? props.value : state.value;
 
     return (
-      <Box {...addClass('textbox', props)} onChange={handleChange}>
+      <Box {...addClass('textbox xsinput', props)} onChange={handleChange}>
         {useTextArea && (
           <textarea
             id={`${props.id}__textarea`}

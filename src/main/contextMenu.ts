@@ -214,11 +214,14 @@ export default function contextMenu(
             return () => {
               const { context: module, location, locationGB } = data;
               if ((module && location) || locationGB) {
-                CommandsX.openBookmarkProperties(undefined, {
-                  location: locationGB || location,
-                  module: module || undefined,
-                  usernote: false,
-                });
+                CommandsX.openBookmarkProperties(
+                  'menu.bookmark.add',
+                  {},
+                  {
+                    location: locationGB || location,
+                    module: module || undefined,
+                  }
+                );
               }
             };
           })(cm()),
@@ -231,11 +234,14 @@ export default function contextMenu(
             return () => {
               const { context: module, location, locationGB } = data;
               if ((module && location) || locationGB) {
-                CommandsX.openBookmarkProperties(undefined, {
-                  location: locationGB || location,
-                  module: module || undefined,
-                  usernote: true,
-                });
+                CommandsX.openBookmarkProperties(
+                  'menu.usernote.add',
+                  {},
+                  {
+                    location: locationGB || location,
+                    module: module || undefined,
+                  }
+                );
               }
             };
           })(cm()),
@@ -254,19 +260,21 @@ export default function contextMenu(
                 ) as typeof SPBM.manager.bookmarks;
                 const bookmark = findBookmarkItem(bookmarks, data.bookmark);
                 if (bookmark) {
-                  CommandsX.openBookmarkProperties({ bookmark });
+                  CommandsX.openBookmarkProperties('menu.bookmark.properties', {
+                    bookmark: bookmark.id,
+                  });
                 }
               }
             };
           })(cm()),
         },
         {
-          label: i18n.t('menu.bookmark.delete'),
+          label: i18n.t('menu.usernote.delete'),
           visible: Object.keys(cm()).length > 0,
           enabled: Boolean(cm().bookmark),
           click: ((data) => {
             return () => {
-              if (data.bookmark) CommandsX.deleteBookmarkItem(data.bookmark);
+              if (data.bookmark) CommandsX.deleteBookmarkItems([data.bookmark]);
             };
           })(cm()),
         },

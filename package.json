@@ -170,6 +170,7 @@
   },
   "dependencies": {
     "@blueprintjs/core": "^4.2.0",
+    "@blueprintjs/select": "^4.9.10",
     "@blueprintjs/table": "^4.1.4",
     "@types/adm-zip": "^0.5.0",
     "@types/ftp": "^0.3.33",

@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-use-before-define */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-nested-ternary */
 import type { TreeNodeInfo } from '@blueprintjs/core';
 import Cache from '../cache';
@@ -356,56 +358,72 @@ export function getSampleText(l: LocationGBType | SelectVKMType): string {
     .substring(0, C.UI.BMProperties.maxSampleText);
 }
 
-// Convert bookmark childNodes of a folder into tree nodes.
-export function bookmarkTreeNodes(
-  childNodes: BookmarkItem[] | BookmarkTreeNode[] | undefined,
+// Convert a bookmark item into a tree node.
+export function bookmarkTreeNode(
+  item: BookmarkFolderType | BookmarkType | BookmarkTreeNode | null | undefined,
   only?: 'folder' | 'bookmark', // undefined = all
   selectedIDs?: string | string[], // undefined = none
   expandedIDs?: string | string[], // undefined = all
-  recurse = true,
-  doClone = true
-): BookmarkTreeNode[] {
-  if (childNodes) {
-    const childnodes: BookmarkTreeNode[] = doClone
-      ? clone(childNodes)
-      : childNodes;
-    const expIDs =
-      expandedIDs && typeof expandedIDs === 'string'
-        ? [expandedIDs]
-        : expandedIDs;
-    const selIDs =
-      selectedIDs && typeof selectedIDs === 'string'
-        ? [selectedIDs]
-        : selectedIDs;
-    for (let x = 0; x < childnodes.length; x += 1) {
-      const item = childnodes[x];
-      if (recurse && 'childNodes' in item) {
-        bookmarkTreeNodes(
-          item.childNodes as BookmarkTreeNode[],
+  cloned = false
+): BookmarkTreeNode | null {
+  const selIDs =
+    selectedIDs && typeof selectedIDs === 'string'
+      ? [selectedIDs]
+      : selectedIDs;
+  const expIDs =
+    expandedIDs && typeof expandedIDs === 'string'
+      ? [expandedIDs]
+      : expandedIDs;
+  if (item) {
+    const node = (cloned ? item : clone(item)) as BookmarkTreeNode;
+    if (
+      !only ||
+      (only === 'folder' && 'type' in node && node.type === 'folder') ||
+      (only === 'bookmark' && 'type' in node && node.type === 'bookmark')
+    ) {
+      if (node.label.startsWith('i18n:')) {
+        node.label = G.i18n.t(node.label.substring(5));
+        node.labelLocale = G.i18n.language;
+      }
+      if (node.type === 'folder') {
+        node.hasCaret = node.childNodes?.some(
+          (cn) => 'type' in cn && cn.type === 'folder' && cn.childNodes
+        );
+        node.isExpanded = !expIDs || expIDs.includes(node.id.toString());
+      }
+      node.isSelected = !!selIDs && selIDs.includes(node.id.toString());
+      node.icon = bookmarkItemIcon(node);
+      if (node.childNodes) {
+        node.childNodes = bookmarkTreeNodes(
+          node.childNodes as BookmarkTreeNode[],
           only,
           selIDs,
           expIDs,
-          true,
-          false
+          true
         );
       }
-      if (
-        only &&
-        ((only === 'folder' && 'type' in item && item.type !== 'folder') ||
-          (only === 'bookmark' && 'type' in item && item.type !== 'bookmark'))
-      ) {
-        childnodes.splice(x, 1);
-        x -= 1;
-      } else {
-        item.hasCaret = item.childNodes?.some((cn) => cn.childNodes);
-        item.isExpanded = !expIDs || expIDs.includes(item.id.toString());
-        item.isSelected = !!selIDs && selIDs.includes(item.id.toString());
-        item.icon = bookmarkItemIcon(item);
-      }
+      node?.childNodes?.forEach((n) =>
+        bookmarkTreeNode(n as BookmarkTreeNode, only, selIDs, expIDs, true)
+      );
+      return node;
     }
-    return childnodes;
   }
-  return [];
+  return null;
+}
+
+// Convert bookmark childNodes of a folder into tree nodes.
+export function bookmarkTreeNodes(
+  items: (BookmarkFolderType | BookmarkType)[] | BookmarkTreeNode[],
+  only?: 'folder' | 'bookmark', // undefined = all
+  selectedIDs?: string | string[], // undefined = none
+  expandedIDs?: string | string[], // undefined = all
+  cloned = false
+): BookmarkTreeNode[] {
+  return items
+    .map((item) =>
+      bookmarkTreeNode(item, only, selectedIDs, expandedIDs, cloned)
+    )
+    .filter(Boolean) as BookmarkTreeNode[];
 }
 
 // Return contextual data for use by context menus.

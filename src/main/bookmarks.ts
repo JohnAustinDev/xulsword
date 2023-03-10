@@ -33,6 +33,16 @@ export const Transaction = {
   index: -1 as number,
 };
 
+export function canUndo(): boolean {
+  const { list, index } = Transaction;
+  return list.length >= 2 && index >= 1;
+}
+
+export function canRedo(): boolean {
+  const { list, index } = Transaction;
+  return index < list.length - 1;
+}
+
 export const addBookmarkTransaction: PrefCallbackType = (
   _callingWinID: number,
   key: string,

@@ -1,14 +1,9 @@
 .bookselect {
-  margin: 5px;
-  border-radius: 4px;
-  border: 2px solid;
-  border-top-color: ThreeDLightShadow;
-  border-right-color: ThreeDHighlight;
-  border-bottom-color: ThreeDHighlight;
-  border-left-color: ThreeDLightShadow;
-  background-color: white;
   width: fit-content;
   height: fit-content;
+  margin: 0;
+  padding: 0;
+  padding-inline-start: 0;
 }
 .bookselect:focus-within .stack > div:first-child {
   outline: rgba(45, 114, 210, 0.6) auto 2px;
@@ -37,11 +32,14 @@
   min-width: 24px;
 }
 
-.bookselect .textbox {
+.bookselect .textbox,
+.bookselect .menulist {
   height: auto;
   margin: 0px;
   padding: 0px;
   border: none;
+  border-radius: unset;
+  padding-inline-start: unset;
 }
 
 .bookselect input {

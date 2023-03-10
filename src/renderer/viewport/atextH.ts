@@ -102,6 +102,7 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
           break;
 
         case 'image-container': {
+          // TODO!: Fix this
           const cont = elem;
           const imgs = cont.getElementsByTagName('img');
           if (imgs && imgs.length) {

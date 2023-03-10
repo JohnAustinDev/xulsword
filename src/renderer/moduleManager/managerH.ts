@@ -23,6 +23,7 @@ import {
   diff,
   builtinRepos,
   repositoryModuleKey,
+  tableSelectDataRows,
 } from '../../common';
 import C, { SP } from '../../constant';
 import G from '../rg';
@@ -688,20 +689,7 @@ export function rowSelect(
     } else {
       rows = selectionToTableRows(selection as RowSelection);
     }
-    const isSelected = rows.includes(row);
-    if (selection.length && (e.ctrlKey || e.shiftKey)) {
-      const prev = rows.filter((r) => r < row).pop();
-      const start = prev === undefined || e.ctrlKey ? row : prev;
-      for (let x = start; x <= row; x += 1) {
-        if (!isSelected) rows.push(x);
-        else if (rows.includes(x)) {
-          rows.splice(rows.indexOf(x), 1);
-        }
-      }
-      newSelection = tableRowsToSelection(rows);
-    } else {
-      newSelection = tableRowsToSelection(isSelected ? [] : [row]);
-    }
+    newSelection = tableRowsToSelection(tableSelectDataRows(row, rows, e));
     if (table === 'language') {
       const { data: langTableData } = state.tables.language;
       newSelection = selectionToTableRows(newSelection).map(

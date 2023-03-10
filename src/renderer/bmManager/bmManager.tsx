@@ -1,48 +1,31 @@
-/* eslint-disable react/no-did-update-set-state */
-/* eslint-disable react/no-array-index-key */
-/* eslint-disable jsx-a11y/anchor-is-valid */
-/* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable react/static-property-placement */
 import React from 'react';
-import { findBookmarkItem, getStatePref, stringHash } from '../../common';
+import { Suggest2 } from '@blueprintjs/select';
+import {
+  diff,
+  getStatePref,
+  randomID,
+  stringHash,
+  tableRowsToSelection,
+} from '../../common';
 import { SPBM } from '../../constant';
 import G from '../rg';
 import renderToRoot from '../renderer';
-import {
-  bookmarkItemIcon,
-  registerUpdateStateFromPref,
-  setStatePref,
-} from '../rutil';
+import { registerUpdateStateFromPref, setStatePref } from '../rutil';
 import { bookmarkTreeNodes } from '../bookmarks';
-import Table, { TCellInfo, TRowLocation } from '../libxul/table';
+import Table from '../libxul/table';
 import DragSizer, { DragSizerVal } from '../libxul/dragsizer';
 import Groupbox from '../libxul/groupbox';
 import { Hbox, Vbox } from '../libxul/boxes';
 import Label from '../libxul/label';
 import TreeView from '../libxul/treeview';
+import Button from '../libxul/button';
 import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
+import * as H from './bmManagerH';
 import './bmManager.css';
+import '@blueprintjs/select/lib/css/blueprint-select.css';
 
-import type {
-  BookmarkFolderType,
-  LocationGBType,
-  LocationVKType,
-} from '../../type';
-
-type CellInfo = TCellInfo & {
-  id: string;
-  location?: LocationVKType | LocationGBType | null | undefined;
-};
-
-type TableRow = [JSX.Element, JSX.Element, JSX.Element, string, CellInfo];
-
-const Col = {
-  iName: 0,
-  iNote: 1,
-  iSampleText: 2,
-  iCreationDate: 3,
-  iInfo: 4,
-} as const;
+import type { BookmarkFolderType, BookmarkType } from '../../type';
 
 const defaultProps = xulDefaultProps;
 
@@ -51,7 +34,11 @@ const propTypes = xulPropTypes;
 type BMManagerProps = XulProps;
 
 const defaultNotStatePref = {
-  reset: 0 as number,
+  selectedItems: [] as string[],
+  query: '' as string,
+  cut: null as string[] | null,
+  copy: null as string[] | null,
+  reset: '' as string,
 };
 
 export type BMManagerState = typeof SPBM.manager & typeof defaultNotStatePref;
@@ -60,6 +47,18 @@ export default class BMManagerWin extends React.Component {
   static defaultProps: typeof defaultProps;
 
   static propTypes: typeof propTypes;
+
+  buttonHandler: typeof H.buttonHandler;
+
+  onFolderSelection: typeof H.onFolderSelection;
+
+  onCellClick: typeof H.onCellClick;
+
+  onItemSelect: typeof H.onItemSelect;
+
+  onQueryChange: typeof H.onQueryChange;
+
+  tableData: typeof H.tableData;
 
   constructor(props: BMManagerProps) {
     super(props);
@@ -71,9 +70,12 @@ export default class BMManagerWin extends React.Component {
 
     this.state = state;
 
-    this.onFolderSelection = this.onFolderSelection.bind(this);
-    this.onCellClick = this.onCellClick.bind(this);
-    this.tableData = this.tableData.bind(this);
+    this.buttonHandler = H.buttonHandler.bind(this);
+    this.onFolderSelection = H.onFolderSelection.bind(this);
+    this.onCellClick = H.onCellClick.bind(this);
+    this.onItemSelect = H.onItemSelect.bind(this);
+    this.onQueryChange = H.onQueryChange.bind(this);
+    this.tableData = H.tableData.bind(this);
   }
 
   componentDidMount() {
@@ -89,75 +91,10 @@ export default class BMManagerWin extends React.Component {
       Object.keys(SPBM.manager),
       'bookmarks'
     );
-  }
-
-  onFolderSelection(ids: (string | number)[]): void {
-    if (ids[0]) {
-      const clicked = ids[0].toString();
-      this.setState((prevState: BMManagerState) => {
-        let { selectedFolder } = prevState;
-        selectedFolder = selectedFolder === clicked ? '' : clicked;
-        const s: Partial<BMManagerState> = {
-          selectedFolder,
-        };
-        return s;
-      });
-    }
-  }
-
-  onCellClick(_e: React.MouseEvent, cell: TRowLocation): void {
-    const { dataRowIndex } = cell;
-    const data = this.tableData();
-    if (data[dataRowIndex]) {
-      const s: Partial<BMManagerState> = {
-        selectedItem: data[dataRowIndex][Col.iInfo].id,
-      };
+    if (diff(prevState.bookmarks, state.bookmarks)) {
+      const s: Partial<BMManagerState> = { reset: randomID() };
       this.setState(s);
     }
-  }
-
-  tableData(): TableRow[] {
-    const state = this.state as BMManagerState;
-    const { bookmarks, selectedFolder } = state;
-    const data: TableRow[] = [];
-    const addItems = (folder: BookmarkFolderType, level = 0) => {
-      folder.childNodes.forEach((cn) => {
-        const { id, label, note, creationDate, labelLocale, noteLocale } = cn;
-        let mclass = 'cs-locale';
-        if ('location' in cn && cn.location) {
-          if ('v11n' in cn.location) mclass = `cs-${cn.location.vkmod}`;
-          else mclass = `cs-${cn.location.module}`;
-        }
-        const sampleText = 'sampleText' in cn ? cn.sampleText : '';
-        data.push([
-          <span className="label-cell" key={stringHash(id, label, note)}>
-            {[...Array(level).keys()].map((a) => (
-              <div key={`ind${a}`} className="indent" />
-            ))}
-            {bookmarkItemIcon(cn)}
-            <Label className={labelLocale} value={label} />
-          </span>,
-          <span key={note} className={noteLocale}>
-            {note}
-          </span>,
-          <span key={[sampleText, mclass].join('.')} className={mclass}>
-            {sampleText}
-          </span>,
-          new Date(creationDate).toLocaleDateString(G.i18n.language),
-          {
-            id,
-            location: 'location' in cn ? cn.location : undefined,
-          },
-        ] as TableRow);
-        if (cn.type === 'folder') addItems(cn, level + 1);
-      });
-    };
-    const selfolder = findBookmarkItem(
-      bookmarks,
-      selectedFolder || SPBM.manager.bookmarks.id
-    );
-    if (selfolder && selfolder.type === 'folder') addItems(selfolder);
-    return data;
   }
 
   render() {
@@ -165,11 +102,13 @@ export default class BMManagerWin extends React.Component {
       bookmarks,
       columns,
       selectedFolder,
-      selectedItem,
+      selectedItems,
       treeWidth,
+      query,
+      cut,
+      copy,
       reset,
     } = this.state as BMManagerState;
-    const { onFolderSelection, onCellClick, tableData } = this;
 
     const folders = bookmarkTreeNodes(
       bookmarks.childNodes,
@@ -177,26 +116,112 @@ export default class BMManagerWin extends React.Component {
       selectedFolder || SPBM.manager.bookmarks.id
     );
 
-    const data = tableData();
+    const data = this.tableData();
 
-    let row = data.findIndex((d) => d[Col.iInfo].id === selectedItem);
-    if (row === -1) row += 1;
-    const selectedRegions = [
-      {
-        cols: null,
-        rows: [row, row],
-      },
-    ];
+    const selectedRegions = tableRowsToSelection(
+      selectedItems
+        .map((id) => data.findIndex((r) => r[H.Col.iInfo].id === id))
+        .filter((i) => i !== -1)
+    );
+
+    const searchableItems: (BookmarkFolderType | BookmarkType)[] = [];
+    const getItems = (folder: BookmarkFolderType) => {
+      if (folder.id !== bookmarks.id) searchableItems.push(folder);
+      folder.childNodes.forEach((n) => {
+        if (n.type === 'bookmark') searchableItems.push(n);
+        else getItems(n);
+      });
+    };
+    getItems(bookmarks);
 
     return (
       <Vbox className="bmmanager">
-        <Hbox flex="1" pack="start" align="center">
+        <Hbox
+          className="tools"
+          pack="start"
+          align="center"
+          onClick={this.buttonHandler}
+        >
+          <Button
+            id="button.newFolder"
+            icon="folder-new"
+            title={G.i18n.t('menu.folder.add')}
+          />
+          <Button
+            id="button.add"
+            icon="add"
+            title={G.i18n.t('menu.bookmark.add')}
+          />
+          <Button
+            id="button.properties"
+            icon="properties"
+            disabled={selectedItems.length !== 1}
+            title={G.i18n.t('menu.edit.properties')}
+          />
+          <Button
+            id="button.delete"
+            icon="delete"
+            disabled={selectedItems.length === 0}
+            title={G.i18n.t('menu.edit.delete')}
+          />
+          <Button
+            id="button.cut"
+            icon="cut"
+            disabled={selectedItems.length === 0}
+            title={G.i18n.t('menu.edit.cut')}
+          />
+          <Button
+            id="button.copy"
+            icon="duplicate"
+            disabled={selectedItems.length === 0}
+            title={G.i18n.t('menu.edit.copy')}
+          />
+          <Button
+            id="button.paste"
+            icon="clipboard"
+            disabled={!(cut || copy) || selectedItems.length !== 1}
+            title={G.i18n.t('menu.edit.paste')}
+          />
+          <Button
+            id="button.move"
+            icon="drawer-left"
+            disabled={selectedItems.length !== 1}
+            title={G.i18n.t('menu.edit.move')}
+          />
+          <Button
+            id="button.undo"
+            icon="undo"
+            disabled={!G.canUndo()}
+            title={G.i18n.t('menu.edit.undo')}
+          />
+          <Button
+            id="button.redo"
+            icon="redo"
+            disabled={!G.canRedo()}
+            title={G.i18n.t('menu.edit.redo')}
+          />
+          <Vbox className="search" flex="1" onChange={this.onQueryChange}>
+            <Suggest2
+              fill
+              query={query}
+              items={searchableItems}
+              itemsEqual="id"
+              inputValueRenderer={H.inputValueRenderer}
+              itemPredicate={H.itemPredicate}
+              itemRenderer={H.itemRenderer}
+              noResults={<Label value="SEARCHING" />}
+              onItemSelect={this.onItemSelect}
+            />
+          </Vbox>
+        </Hbox>
+        <Hbox className="tables" flex="1" pack="start" align="center">
           <Groupbox className="folders" width={treeWidth}>
             <TreeView
+              key={reset}
               initialState={folders}
               selectedIDs={[selectedFolder || SPBM.manager.bookmarks.id]}
               enableMultipleSelection={false}
-              onSelection={onFolderSelection}
+              onSelection={this.onFolderSelection}
             />
           </Groupbox>
           <DragSizer
@@ -219,7 +244,8 @@ export default class BMManagerWin extends React.Component {
               selectedRegions={selectedRegions}
               columns={columns}
               enableColumnReordering
-              onCellClick={onCellClick}
+              enableMultipleSelection
+              onCellClick={this.onCellClick}
               onColumnHide={(c) => this.setState({ columns: c })}
               onColumnsReordered={(c) => this.setState({ columns: c })}
               onColumnWidthChanged={(c) => this.setState({ columns: c })}

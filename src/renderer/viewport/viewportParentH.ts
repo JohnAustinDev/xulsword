@@ -336,10 +336,14 @@ export default function handler(
               title: 'viewport',
               webPreferences: {
                 additionalArguments: [
-                  JSON_stringify({
-                    xulswordState,
-                    ...atextStates,
-                  }),
+                  JSON_stringify(
+                    {
+                      xulswordState,
+                      ...atextStates,
+                    },
+                    undefined,
+                    C.MAXLEN_additionalArguments
+                  ),
                 ],
               },
             };

@@ -14,7 +14,6 @@ import C from '../../constant';
 import {
   diff,
   JSON_attrib_stringify,
-  JSON_stringify,
   keep,
   sanitizeHTML,
   stringHash,
