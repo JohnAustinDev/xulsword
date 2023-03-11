@@ -1,3 +1,4 @@
+/* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable react/static-property-placement */
 import React from 'react';
 import { Suggest2 } from '@blueprintjs/select';
@@ -21,7 +22,12 @@ import { Hbox, Vbox } from '../libxul/boxes';
 import Label from '../libxul/label';
 import TreeView from '../libxul/treeview';
 import Button from '../libxul/button';
-import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
+import {
+  xulDefaultProps,
+  XulProps,
+  xulPropTypes,
+  addClass,
+} from '../libxul/xul';
 import * as H from './bmManagerH';
 import './bmManager.css';
 import '@blueprintjs/select/lib/css/blueprint-select.css';
@@ -141,7 +147,18 @@ export default class BMManagerWin extends React.Component {
     getItems(bookmarks);
 
     return (
-      <Vbox className="bmmanager">
+      <Vbox
+        {...addClass(['bmmanager'], this.props)}
+        onKeyDown={(e: React.SyntheticEvent) => {
+          const ek = e as React.KeyboardEvent;
+          if (ek.key === 'Escape')
+            this.setState({
+              cut: null,
+              copy: null,
+              reset: randomID(),
+            } as BMManagerState);
+        }}
+      >
         <Hbox
           className="tools"
           pack="start"
@@ -220,7 +237,7 @@ export default class BMManagerWin extends React.Component {
             />
           </Vbox>
         </Hbox>
-        <Hbox className="tables" flex="1" pack="start" align="center">
+        <Hbox className="tables" flex="1" pack="start" align="stretch">
           <Groupbox className="folders" width={treeWidth}>
             <TreeView
               key={reset}
@@ -276,3 +293,8 @@ BMManagerWin.defaultProps = defaultProps;
 BMManagerWin.propTypes = propTypes;
 
 renderToRoot(<BMManagerWin />);
+
+window.ipc.once('close', () => {
+  G.Prefs.setComplexValue('manager.cut', null, 'bookmarks');
+  G.Prefs.setComplexValue('manager.copy', null, 'bookmarks');
+});

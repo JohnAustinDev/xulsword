@@ -340,6 +340,9 @@ function createWindow(
       );
     })(win, disposables)
   );
+  win.once('close', () => {
+    win.webContents.send('close');
+  });
   win.once('closed', () => {
     disposables.forEach((dispose) => dispose());
   });

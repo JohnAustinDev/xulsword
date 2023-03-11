@@ -16,18 +16,8 @@
   height: 100%;
   width: 100%;
 }
-.bmmanager .groupbox {
-  margin-bottom: 15px;
-}
-
 .bmmanager .search {
   margin: 0 8px;
-}
-.bmmanager > div .folders,
-.bmmanager .folders .groupbox-body,
-.bmmanager .folders .treeview,
-.bmmanager > div .items {
-  height: calc(100% - 10px);
 }
 .bmmanager .folders .treeview {
   overflow: auto;
@@ -41,16 +31,16 @@
   margin-inline-end: 5px;
 }
 .bmmanager .dragsizer {
-  margin: 0;
+  height: calc(100% - 20px);
+  margin: 15px 0 0 0;
 }
 .bmmanager .indent {
   display: inline-block;
   width: 6px;
 }
-
 .bmmanager .is-cut {
-  color: red;
+  opacity: 0.5;
 }
 .bmmanager .is-copy {
-  color: yellow;
+  font-weight: bold;
 }

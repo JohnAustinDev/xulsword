@@ -820,11 +820,20 @@ export function moveBookmarkItems(
   itemsOrIDs: (BookmarkFolderType | BookmarkType)[] | string[],
   targetID: string
 ): (BookmarkFolderType | BookmarkType | null)[] {
-  if (
-    !itemsOrIDs.some(
-      (item) => typeof item !== 'string' && findBookmarkItem(bookmarks, item.id)
-    )
-  ) {
+  const objectsHaveUniqueIDs = !itemsOrIDs.some(
+    (item) => typeof item !== 'string' && findBookmarkItem(bookmarks, item.id)
+  );
+  const targetNotDescendantOfIDs = !itemsOrIDs.some((id) => {
+    if (typeof id === 'string') {
+      const item = findBookmarkItem(bookmarks, id);
+      if (item) {
+        if (item.type === 'bookmark') return false;
+        return Boolean(findBookmarkItem(item, targetID));
+      }
+    } else return false;
+    return true;
+  });
+  if (objectsHaveUniqueIDs && targetNotDescendantOfIDs) {
     return itemsOrIDs.map((itemOrID) => {
       if (typeof itemOrID === 'string' && itemOrID === targetID) {
         return findBookmarkItem(bookmarks, itemOrID);
