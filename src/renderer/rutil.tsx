@@ -65,7 +65,7 @@ export function component(
 export function windowArguments(prop?: undefined): PrefObject | null;
 export function windowArguments(prop: string): PrefValue | null;
 export function windowArguments(prop: string | undefined): PrefValue | null {
-  const dataID = window.processR.argv()[0];
+  const dataID = window.processR.argv().at(-1);
   if (typeof dataID === 'string' && G.Data.has(dataID)) {
     const data = G.Data.read(dataID);
     if (prop) {
@@ -391,11 +391,15 @@ export function setStatePref(
   prevState: { [key: string]: any } | null,
   state: { [key: string]: any },
   statePrefKeys: string[],
-  store?: string
+  storex?: string
 ) {
+  const store = storex || 'prefs';
   const keys = statePrefKeys.slice();
-  if (!store && id in C.SyncPrefs) {
-    keys.push(...C.SyncPrefs[id as keyof typeof C.SyncPrefs]);
+  if (
+    store in C.SyncPrefs &&
+    id in C.SyncPrefs[store as keyof typeof C.SyncPrefs]
+  ) {
+    keys.push(...(C.SyncPrefs as any)[store][id]);
   }
   const newStatePref = keep(state, keys);
   if (prevState === null) G.Prefs.mergeValue(id, newStatePref, store);
@@ -413,9 +417,11 @@ export function registerUpdateStateFromPref(
   id: string,
   c: React.Component,
   defaultPrefs: { [prefkey: string]: PrefValue },
-  store?: string
+  storex?: string
 ) {
-  const updateStateFromPref = (prefs: string | string[], aStore?: string) => {
+  const store = storex || 'prefs';
+  const updateStateFromPref = (prefs: string | string[], aStorex?: string) => {
+    const aStore = aStorex || 'prefs';
     log.debug(`Updating state from prefs:`, prefs, aStore);
     if (aStore === store) {
       const different = diff(c.state, getStatePref(id, defaultPrefs, store));

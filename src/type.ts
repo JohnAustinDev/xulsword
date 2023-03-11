@@ -305,17 +305,19 @@ export type LookupInfo = {
 };
 
 export type ContextData = {
-  search: SearchType | null;
-  location: LocationVKType | null;
-  locationGB: LocationGBType | null;
-  context: string | null;
-  tab: string | null;
-  lemma: string | null;
-  panelIndex: number | null;
-  bookmark: string | null;
-  isPinned: boolean;
-  selection: string | null;
-  selectionParsedVK: LocationVKType | null;
+  type: 'general' | 'bookmarkManager';
+  search?: SearchType;
+  location?: LocationVKType;
+  locationGB?: LocationGBType;
+  context?: string;
+  tab?: string;
+  lemma?: string;
+  panelIndex?: number;
+  bookmark?: string;
+  bookmarks?: string[];
+  isPinned?: boolean;
+  selection?: string;
+  selectionParsedVK?: LocationVKType;
 };
 
 export type BookGroupType =
@@ -896,15 +898,13 @@ export const GBuilder: GType & {
     edit: func as any,
     undo: func as any,
     redo: func as any,
-    cut: func as any,
-    copy: func as any,
-    paste: func as any,
     search: func as any,
     searchHelp: func as any,
     copyPassage: func as any,
     openFontsColors: func as any,
     openBookmarksManager: func as any,
     moveBookmarkItems: func as any,
+    pasteBookmarkItems: func as any,
     deleteBookmarkItems: func as any,
     importBookmarks: func as any,
     exportBookmarks: func as any,

@@ -16,7 +16,8 @@ import {
   pad,
   versionCompare,
   deleteBookmarkItem as DeleteBookmarkItem,
-  insertBookmarkItem,
+  pasteBookmarkItems as PasteBookmarkItems,
+  moveBookmarkItems,
 } from '../../common';
 import Subscription from '../../subscription';
 import C, { SP, SPBM } from '../../constant';
@@ -583,11 +584,12 @@ const Commands = {
     Window.open({ type: 'printPassage', category: 'dialog-window', options });
   },
 
-  edit(
-    which: 'undo' | 'redo' | 'cut' | 'copy' | 'paste',
-    ...args: any
-  ): boolean {
-    return this[which](...args);
+  edit(which: string, ...args: any[]): boolean {
+    if (which in this) {
+      const func = (this as any)[which];
+      if (typeof func === 'function') return func(...args);
+    }
+    return false;
   },
 
   undo(): boolean {
@@ -615,21 +617,6 @@ const Commands = {
       Window.reset('all', 'all');
       return true;
     }
-    return false;
-  },
-
-  cut(...args: any): boolean {
-    log.info(`Action not implemented: cut(${JSON_stringify(args)})`);
-    return false;
-  },
-
-  copy(...args: any): boolean {
-    log.info(`Action not implemented: copy(${JSON_stringify(args)})`);
-    return false;
-  },
-
-  paste(...args: any): boolean {
-    log.info(`Action not implemented: paste(${JSON_stringify(args)})`);
     return false;
   },
 
@@ -864,8 +851,7 @@ const Commands = {
   // Returns true if the move was successful.
   moveBookmarkItems(
     itemsOrIDs: string[] | (BookmarkFolderType | BookmarkType)[],
-    newParentID: string,
-    afterID?: string
+    targetID: string
   ): boolean {
     const bookmarks = clone(
       Prefs.getComplexValue(
@@ -873,17 +859,27 @@ const Commands = {
         'bookmarks'
       ) as typeof SPBM.manager.bookmarks
     );
-    const moved = itemsOrIDs.map((itemOrId) =>
-      insertBookmarkItem(
-        bookmarks,
-        typeof itemOrId === 'string'
-          ? DeleteBookmarkItem(bookmarks, itemOrId)
-          : itemOrId,
-        newParentID,
-        afterID
-      )
-    );
+    const moved = moveBookmarkItems(bookmarks, itemsOrIDs, targetID);
     if (moved.length && !moved.includes(null)) {
+      Prefs.setComplexValue('manager.bookmarks', bookmarks, 'bookmarks');
+      return true;
+    }
+    return false;
+  },
+
+  pasteBookmarkItems(
+    cut: string[] | null,
+    copy: string[] | null,
+    targetID: string
+  ): boolean {
+    const bookmarks = clone(
+      Prefs.getComplexValue(
+        'manager.bookmarks',
+        'bookmarks'
+      ) as typeof SPBM.manager.bookmarks
+    );
+    const pasted = PasteBookmarkItems(bookmarks, cut, copy, targetID);
+    if (pasted.length && !pasted.includes(null)) {
       Prefs.setComplexValue('manager.bookmarks', bookmarks, 'bookmarks');
       return true;
     }

@@ -4,6 +4,7 @@ import { Suggest2 } from '@blueprintjs/select';
 import {
   diff,
   getStatePref,
+  keep,
   randomID,
   stringHash,
   tableRowsToSelection,
@@ -60,6 +61,10 @@ export default class BMManagerWin extends React.Component {
 
   tableData: typeof H.tableData;
 
+  bmContextData: typeof H.bmContextData;
+
+  onDoubleClick: typeof H.onDoubleClick;
+
   constructor(props: BMManagerProps) {
     super(props);
 
@@ -67,7 +72,6 @@ export default class BMManagerWin extends React.Component {
       ...defaultNotStatePref,
       ...getStatePref(G.Prefs, 'manager', SPBM.manager, 'bookmarks'),
     };
-
     this.state = state;
 
     this.buttonHandler = H.buttonHandler.bind(this);
@@ -76,6 +80,8 @@ export default class BMManagerWin extends React.Component {
     this.onItemSelect = H.onItemSelect.bind(this);
     this.onQueryChange = H.onQueryChange.bind(this);
     this.tableData = H.tableData.bind(this);
+    this.bmContextData = H.bmContextData.bind(this);
+    this.onDoubleClick = H.onDoubleClick.bind(this);
   }
 
   componentDidMount() {
@@ -91,7 +97,7 @@ export default class BMManagerWin extends React.Component {
       Object.keys(SPBM.manager),
       'bookmarks'
     );
-    if (diff(prevState.bookmarks, state.bookmarks)) {
+    if (diff(prevState, keep(state, ['bookmarks', 'cut', 'copy']))) {
       const s: Partial<BMManagerState> = { reset: randomID() };
       this.setState(s);
     }
@@ -237,7 +243,16 @@ export default class BMManagerWin extends React.Component {
             }}
             min={150}
           />
-          <Groupbox className="items" flex="1">
+          <Groupbox
+            className="items"
+            flex="1"
+            onContextMenu={(e: React.SyntheticEvent) => {
+              G.Data.write(
+                this.bmContextData(e.target as HTMLElement),
+                'contextData'
+              );
+            }}
+          >
             <Table
               key={stringHash(columns, reset)}
               data={data}
@@ -249,6 +264,7 @@ export default class BMManagerWin extends React.Component {
               onColumnHide={(c) => this.setState({ columns: c })}
               onColumnsReordered={(c) => this.setState({ columns: c })}
               onColumnWidthChanged={(c) => this.setState({ columns: c })}
+              onDoubleClick={this.onDoubleClick}
             />
           </Groupbox>
         </Hbox>

@@ -727,6 +727,25 @@ export function findBookmarkItem(
   return null;
 }
 
+// Returns null if the replacement failed, or returns the new item if successful.
+export function replaceBookmarkItem(
+  bookmarks: BookmarkFolderType,
+  item: BookmarkFolderType | BookmarkType
+): BookmarkFolderType | BookmarkType | null {
+  const olditem = findBookmarkItem(bookmarks, item.id);
+  if (olditem) {
+    const parent = findParentOfBookmarkItem(bookmarks, item.id);
+    if (parent) {
+      const index = parent.childNodes.findIndex((n) => n.id === item.id);
+      if (index !== -1) {
+        parent.childNodes.splice(index, 1, item);
+        return item;
+      }
+    }
+  }
+  return null;
+}
+
 export function deleteBookmarkItem(
   bookmarks: BookmarkFolderType,
   itemID: string
@@ -748,18 +767,23 @@ export function deleteBookmarkItem(
 export function insertBookmarkItem(
   bookmarks: BookmarkFolderType,
   item: BookmarkFolderType | BookmarkType | null,
-  parentID: string,
-  afterID?: string
+  targetID: string
 ): BookmarkFolderType | BookmarkType | null {
   if (item) {
-    const parent = findBookmarkItem(bookmarks, parentID);
-    if (parent && parent.type === 'folder') {
-      let index = -1;
-      if (afterID) {
-        index = parent.childNodes.findIndex((n) => n.id === afterID);
+    let index = -1;
+    const target = findBookmarkItem(bookmarks, targetID);
+    if (target) {
+      let parent: BookmarkFolderType | null = null;
+      if (target.type === 'bookmark') {
+        parent = findParentOfBookmarkItem(bookmarks, targetID);
+        if (parent) {
+          index = parent.childNodes.findIndex((n) => n.id === targetID);
+        }
+      } else parent = target;
+      if (parent) {
+        parent.childNodes.splice(index + 1, 0, item);
+        return item;
       }
-      parent.childNodes.splice(index + 1, 0, item);
-      return item;
     }
   }
   return null;
@@ -787,6 +811,60 @@ export function copyBookmarkItem(
     return copy;
   }
   return null;
+}
+
+// itemsOrIDs = string[] - REMOVE and INSERT.
+// itemsOrIDs = object[] - INSERT new object (which must have unique id to succeed).
+export function moveBookmarkItems(
+  bookmarks: BookmarkFolderType,
+  itemsOrIDs: (BookmarkFolderType | BookmarkType)[] | string[],
+  targetID: string
+): (BookmarkFolderType | BookmarkType | null)[] {
+  if (
+    !itemsOrIDs.some(
+      (item) => typeof item !== 'string' && findBookmarkItem(bookmarks, item.id)
+    )
+  ) {
+    return itemsOrIDs.map((itemOrID) => {
+      if (typeof itemOrID === 'string' && itemOrID === targetID) {
+        return findBookmarkItem(bookmarks, itemOrID);
+      }
+      return insertBookmarkItem(
+        bookmarks,
+        typeof itemOrID === 'string'
+          ? deleteBookmarkItem(bookmarks, itemOrID)
+          : itemOrID,
+        targetID
+      );
+    });
+  }
+  return [];
+}
+
+export function pasteBookmarkItems(
+  bookmarks: BookmarkFolderType,
+  cut: string[] | null,
+  copy: string[] | null,
+  targetID: string
+): (BookmarkFolderType | BookmarkType | null)[] {
+  if (targetID && (cut || copy)) {
+    let pasted: (BookmarkFolderType | BookmarkType | null)[] = [];
+    if (cut) {
+      pasted = moveBookmarkItems(bookmarks, cut, targetID);
+    } else if (copy) {
+      const copiedItems = copy.map((id) => copyBookmarkItem(bookmarks, id));
+      if (!copiedItems.includes(null)) {
+        pasted = moveBookmarkItems(
+          bookmarks,
+          copiedItems as (BookmarkFolderType | BookmarkType)[],
+          targetID
+        );
+      }
+    }
+    return pasted;
+  }
+
+  return [];
 }
 
 // Takes a flat list of general book nodes and arranges them according to

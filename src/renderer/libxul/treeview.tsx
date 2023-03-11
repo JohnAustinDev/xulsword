@@ -1,16 +1,18 @@
+/* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable react/forbid-prop-types */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Tree, TreeEventHandler, TreeNodeInfo } from '@blueprintjs/core';
 import { clone, diff } from '../../common';
+import { addClass, xulDefaultProps, XulProps, xulPropTypes } from './xul';
 
 // The initialState of all nodes in the tree is required. If selectedIDs is defined
 // then onSelection must also be defined so that selection can be controlled by the
 // parent. If expandedIDs is defined then onExpansion must also be defined so that
 // expansion can be controlled by the parent. If enableMultipleSelection is false,
 // then only one node will be selected at a time.
-export type TreeViewProps = {
+export type TreeViewProps = XulProps & {
   initialState: TreeNodeInfo[];
   enableMultipleSelection: boolean;
   selectedIDs: (string | number)[];
@@ -23,6 +25,7 @@ export type TreeViewProps = {
 };
 
 const defaultProps = {
+  ...xulDefaultProps,
   enableMultipleSelection: true,
   selectedIDs: undefined,
   expandedIDs: undefined,
@@ -34,6 +37,7 @@ const defaultProps = {
 };
 
 const propTypes = {
+  ...xulPropTypes,
   initialState: PropTypes.arrayOf(PropTypes.any).isRequired,
   enableMultipleSelection: PropTypes.bool,
   selectedIDs: PropTypes.arrayOf(
@@ -327,6 +331,7 @@ const TreeView = (props: TreeViewProps) => {
 
   return (
     <Tree
+      {...addClass(['treeview'], props)}
       className={classes.join(' ')}
       contents={nodes}
       onNodeClick={handleNodeClick}

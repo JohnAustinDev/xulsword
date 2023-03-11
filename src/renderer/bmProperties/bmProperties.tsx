@@ -9,8 +9,9 @@ import {
   deleteBookmarkItem,
   findBookmarkItem,
   findParentOfBookmarkItem,
-  insertBookmarkItem,
+  moveBookmarkItems,
   randomID,
+  replaceBookmarkItem,
 } from '../../common';
 import C, { SPBM } from '../../constant';
 import G from '../rg';
@@ -200,34 +201,10 @@ export default class BMPropertiesWin extends React.Component {
         ) as BookmarkFolderType;
         const state = this.state as BMPropertiesState;
         const { treeSelection, bookmark } = state;
-        let parentID: string | undefined;
-        let afterID: string | undefined;
-        const treeSelectionItem =
-          findBookmarkItem(
-            bookmarks,
-            treeSelection || SPBM.manager.bookmarks.id
-          ) || null;
-        if (treeSelectionItem?.type === 'folder') parentID = treeSelection;
-        else if (treeSelectionItem?.type === 'bookmark') {
-          parentID = undefined;
-          const p = findParentOfBookmarkItem(bookmarks, treeSelection);
-          if (p) {
-            parentID = p.id;
-            afterID = treeSelection;
-          }
-        }
-        let done: BookmarkFolderType | BookmarkType | null = null;
-        if (parentID) {
-          const exists = findBookmarkItem(bookmarks, bookmark.id);
-          if (!exists) bookmark.creationDate = new Date().valueOf();
-          done = insertBookmarkItem(
-            bookmarks,
-            exists ? deleteBookmarkItem(bookmarks, bookmark.id) : bookmark,
-            parentID,
-            afterID
-          );
-        }
-        if (done) {
+        const isNew = !replaceBookmarkItem(bookmarks, bookmark);
+        const itemOrID = isNew ? [bookmark] : [bookmark.id];
+        const moved = moveBookmarkItems(bookmarks, itemOrID, treeSelection);
+        if (moved) {
           G.Prefs.setComplexValue('manager.bookmarks', bookmarks, 'bookmarks');
           G.Window.reset('component-reset', 'all');
           G.Window.close();

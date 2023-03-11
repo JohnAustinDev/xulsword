@@ -792,46 +792,55 @@ export default class MainMenuBuilder {
           label: ts('menu.bookmark.add'),
           accelerator: tx('menu.bmitem.add.ac', ['CommandOrControl']),
           click: d(() =>
-            Commands.openBookmarkProperties(undefined, {
-              location: G.Prefs.getComplexValue(
-                'xulsword.location'
-              ) as typeof SP.xulsword.location,
-              module:
-                (
-                  G.Prefs.getComplexValue(
-                    'xulsword.panels'
-                  ) as typeof SP.xulsword.panels
-                ).find((m) => m && G.Tab[m].isVerseKey) || '',
-              usernote: false,
-            })
+            Commands.openBookmarkProperties(
+              G.i18n.t('i18n:menu.bookmark.add'),
+              {},
+              {
+                location: G.Prefs.getComplexValue(
+                  'xulsword.location'
+                ) as typeof SP.xulsword.location,
+                module:
+                  (
+                    G.Prefs.getComplexValue(
+                      'xulsword.panels'
+                    ) as typeof SP.xulsword.panels
+                  ).find((m) => m && G.Tab[m].isVerseKey) || '',
+              }
+            )
           ),
         },
         {
           label: ts('menu.usernote.add'),
           accelerator: tx('menu.bmitem.add.ac', ['CommandOrControl', 'Shift']),
           click: d(() =>
-            Commands.openBookmarkProperties(undefined, {
-              location: G.Prefs.getComplexValue(
-                'xulsword.location'
-              ) as typeof SP.xulsword.location,
-              module:
-                (
-                  G.Prefs.getComplexValue(
-                    'xulsword.panels'
-                  ) as typeof SP.xulsword.panels
-                ).find((m) => m && G.Tab[m].isVerseKey) || '',
-              usernote: true,
-            })
+            Commands.openBookmarkProperties(
+              G.i18n.t('menu.usernote.add'),
+              {},
+              {
+                location: G.Prefs.getComplexValue(
+                  'xulsword.location'
+                ) as typeof SP.xulsword.location,
+                module:
+                  (
+                    G.Prefs.getComplexValue(
+                      'xulsword.panels'
+                    ) as typeof SP.xulsword.panels
+                  ).find((m) => m && G.Tab[m].isVerseKey) || '',
+              }
+            )
           ),
         },
         {
           label: ts('menu.folder.add'),
           accelerator: tx('menu.bmitem.add.ac', ['Alt', 'Shift']),
           click: d(() =>
-            Commands.openBookmarkProperties(undefined, {
-              location: null,
-              usernote: true,
-            })
+            Commands.openBookmarkProperties(
+              G.i18n.t('menu.folder.add'),
+              {},
+              {
+                location: null,
+              }
+            )
           ),
         },
       ],

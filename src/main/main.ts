@@ -128,13 +128,13 @@ if (
 ipcMain.on('did-finish-render', (event: IpcMainEvent) => {
   let callingWin = BrowserWindow.fromWebContents(event.sender);
   if (!callingWin) return;
-  const wd = WindowRegistry[callingWin.id];
-  if (!wd) {
+  const windowRegistry = WindowRegistry[callingWin.id];
+  if (!windowRegistry) {
     callingWin = null;
     return;
   }
 
-  const { type } = wd;
+  const { type } = windowRegistry;
   if (type === 'xulsword' && process.env.START_MINIMIZED) {
     callingWin.minimize();
   } else {

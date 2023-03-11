@@ -430,7 +430,7 @@ export default async function renderToRoot(
   window.ipc.on('close', () => {
     if (typeof onunload === 'function') onunload();
     Cache.clear();
-    const dataID = window.processR.argv()[0];
+    const dataID = window.processR.argv().at(-1);
     if (typeof dataID === 'string' && G.Data.has(dataID)) {
       G.Data.delete(dataID);
     }

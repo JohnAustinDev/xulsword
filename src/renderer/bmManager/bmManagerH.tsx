@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  copyBookmarkItem,
   findBookmarkItem,
   findParentOfBookmarkItem,
   ofClass,
@@ -18,6 +17,7 @@ import '@blueprintjs/select/lib/css/blueprint-select.css';
 import type {
   BookmarkFolderType,
   BookmarkType,
+  ContextData,
   GType,
   LocationGBType,
   LocationVKType,
@@ -85,6 +85,23 @@ export function onCellClick(
   });
 }
 
+export function onDoubleClick(this: BMManagerWin, ex: React.SyntheticEvent) {
+  const { bookmarks } = this.state as BMManagerState;
+  const e = ex as React.MouseEvent;
+  const { bookmark } = this.bmContextData(e.target as HTMLElement);
+  if (bookmark) {
+    const bookmarkItem = findBookmarkItem(bookmarks, bookmark);
+    if (bookmarkItem?.type === 'bookmark' && bookmarkItem.location) {
+      const { location } = bookmarkItem;
+      if ('v11n' in location) {
+        G.Commands.goToLocationVK(location, location);
+      } else {
+        G.Commands.goToLocationGB(location);
+      }
+    }
+  }
+}
+
 export function onItemSelect(
   this: BMManagerWin,
   item: BookmarkFolderType | BookmarkType
@@ -105,7 +122,7 @@ export function buttonHandler(this: BMManagerWin, e: React.SyntheticEvent) {
   const { bookmarks, selectedFolder, selectedItems, cut, copy } = state;
   const button = ofClass(['button'], e.target);
   if (button) {
-    let titleKey = 'menu.bookmark.properties';
+    let titleKey = 'menu.edit.properties';
     let bmPropertiesState:
       | Parameters<GType['Commands']['openBookmarkProperties']>[1]
       | undefined;
@@ -150,7 +167,7 @@ export function buttonHandler(this: BMManagerWin, e: React.SyntheticEvent) {
             bmPropertiesState = {
               bookmark: item.id,
               treeSelection: parent?.id ?? undefined,
-              anyChildSelectable: false,
+              anyChildSelectable: true,
             };
           }
         }
@@ -186,37 +203,8 @@ export function buttonHandler(this: BMManagerWin, e: React.SyntheticEvent) {
         break;
       }
       case 'paste': {
-        if (selectedItems && (cut || copy)) {
-          const selItem = findBookmarkItem(bookmarks, selectedItems[0]);
-          if (selItem) {
-            let parent: BookmarkFolderType | null = null;
-            let after: BookmarkFolderType | BookmarkType | null = null;
-            if (selItem.type === 'folder') parent = selItem;
-            else {
-              parent = findParentOfBookmarkItem(bookmarks, selectedItems[0]);
-              after = selItem;
-            }
-            if (parent) {
-              if (cut) {
-                G.Commands.moveBookmarkItems(
-                  cut,
-                  parent.id,
-                  after?.id ?? undefined
-                );
-              } else if (copy) {
-                const copiedItems = copy.map((id) =>
-                  copyBookmarkItem(bookmarks, id)
-                );
-                if (!copiedItems.includes(null)) {
-                  G.Commands.moveBookmarkItems(
-                    copiedItems as (BookmarkFolderType | BookmarkType)[],
-                    parent.id,
-                    after?.id
-                  );
-                }
-              }
-            }
-          }
+        if (selectedItems[0] && (cut || copy)) {
+          G.Commands.pasteBookmarkItems(cut, copy, selectedItems[0]);
           const s: Partial<BMManagerState> = {
             cut: null,
             copy: null,
@@ -252,7 +240,7 @@ export function buttonHandler(this: BMManagerWin, e: React.SyntheticEvent) {
     }
     if (bmPropertiesState || newitem) {
       G.Commands.openBookmarkProperties(
-        titleKey,
+        G.i18n.t(titleKey),
         bmPropertiesState || {},
         newitem
       );
@@ -366,4 +354,32 @@ export function itemPredicate(
     if (!q || !is.includes(q)) return false;
   }
   return true;
+}
+
+export function bmContextData(
+  this: BMManagerWin,
+  elem: HTMLElement
+): ContextData {
+  const { selectedItems } = this.state as BMManagerState;
+  const data = this.tableData();
+  const r: ContextData = { type: 'bookmarkManager' };
+  const point = ofClass(['bp4-table-cell'], elem);
+  if (point) {
+    const ri = point.element.className.match(/\bbp4-table-cell-row-(\d+)\b/);
+    if (ri) {
+      const tableDataRowIndex = Number(ri[1]);
+      const selectedDataRows = selectedItems.map((id) =>
+        data.findIndex((row) => row[Col.iInfo].id === id)
+      );
+      const rows = selectedDataRows.includes(tableDataRowIndex)
+        ? selectedDataRows
+        : [tableDataRowIndex];
+      r.bookmarks = rows.map((row) => data[row][Col.iInfo].id);
+      if (r.bookmarks.length === 1) {
+        [r.bookmark] = r.bookmarks;
+      }
+    }
+  }
+
+  return r;
 }

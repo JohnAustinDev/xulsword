@@ -259,6 +259,7 @@ function updateOptions(
   let { options } = descriptor;
   options = options || {};
   descriptor.category = category || 'window';
+
   // All windows must have these same options.
   options.show = false;
   options.useContentSize = true;
@@ -271,6 +272,7 @@ function updateOptions(
   options.webPreferences.nodeIntegration = false;
   options.webPreferences.webSecurity = true;
 
+  // All windows must have these additional arguments.
   const winargs = options.additionalArguments || {};
   winargs.classes = [type, category];
   winargs.name = type;
@@ -352,56 +354,61 @@ export const pushPrefsToWindows: PrefCallbackType = (
   winid,
   key, // ie. global or xulsword.panels
   val,
-  store
+  storex
 ) => {
+  const store = storex || 'prefs';
   let pushKeyProps: string[] = [];
   if (winid === -1 || winid === BrowserWindow.getFocusedWindow()?.id) {
-    if (!store) {
-      if (key === 'global.locale') {
-        const lng = Prefs.getCharPref('global.locale');
-        i18next
-          .loadLanguages(lng)
-          .then(() => i18next.changeLanguage(lng))
-          .then(() => {
-            Cache.clear();
-            Window.reset('all', 'all');
-            return true;
-          })
-          .catch((err: any) => {
-            if (err) throw Error(err);
-          });
-      } else if (key === 'global.fontSize') {
-        Window.reset('dynamic-stylesheet-reset', 'all');
-      } else {
-        // Get a (key.property)[] of changed keyprops requesting to be pushed.
-        const keyprops: string[] =
-          !key.includes('.') && val && typeof val === 'object'
-            ? Object.keys(val).map((k) => {
-                return [key, k].join('.');
-              })
-            : [key];
+    if (store === 'prefs' && key === 'global.locale') {
+      const lng = Prefs.getCharPref('global.locale');
+      i18next
+        .loadLanguages(lng)
+        .then(() => i18next.changeLanguage(lng))
+        .then(() => {
+          Cache.clear();
+          Window.reset('all', 'all');
+          return true;
+        })
+        .catch((err: any) => {
+          if (err) throw Error(err);
+        });
+    } else if (store === 'prefs' && key === 'global.fontSize') {
+      Window.reset('dynamic-stylesheet-reset', 'all');
+    } else {
+      // Get a (key.property)[] of changed keyprops requesting to be pushed.
+      const keyprops: string[] =
+        !key.includes('.') && val && typeof val === 'object'
+          ? Object.keys(val).map((k) => {
+              return [key, k].join('.');
+            })
+          : [key];
 
-        // Collect a list of keyprops that are allowed to be pushed.
-        // Note: menuPref is auto-generated during menu build as (key.property)[]
-        const allowed: string[] = ['xulsword.keys'];
+      // Collect a list of keyprops that are allowed to be pushed.
+      // Note: menuPref is auto-generated during menu build as (key.property)[]
+      const allowed: string[] = [];
+      if (store === 'prefs') {
+        allowed.push('xulsword.keys');
         if (Data.has('menuPref')) {
           allowed.push(...(Data.read('menuPref') as string[]));
         }
-        Object.entries(C.SyncPrefs).forEach((entry) => {
-          const [id, parray] = entry;
-          parray.forEach((p) => {
-            allowed.push([id, p].join('.'));
-          });
-        });
-
-        // Get the list of keyprops that will be pushed.
-        pushKeyProps = keyprops.filter((kp) => {
-          const basekey = kp.split('.').slice(0, 2).join('.');
-          return allowed.includes(basekey);
-        });
       }
-    } else if (store === 'bookmarks' && key.startsWith('manager.bookmarks')) {
-      pushKeyProps = ['manager.bookmarks'];
+      Object.entries(C.SyncPrefs).forEach((entry) => {
+        const [astore, syncprefs] = entry;
+        if (astore === store) {
+          Object.entries(syncprefs).forEach((e) => {
+            const [id, proparray] = e;
+            proparray.forEach((prop: string) => {
+              allowed.push([id, prop].join('.'));
+            });
+          });
+        }
+      });
+
+      // Get the list of keyprops that will be pushed.
+      pushKeyProps = keyprops.filter((kp) => {
+        const basekey = kp.split('.').slice(0, 2).join('.');
+        return allowed.includes(basekey);
+      });
     }
   }
   if (pushKeyProps.length) {

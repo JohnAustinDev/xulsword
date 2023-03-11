@@ -513,7 +513,12 @@ const C = {
 
   // These prefs.json keys are always kept in sync across all windows.
   SyncPrefs: {
-    xulsword: ['audio', 'location', 'selection', 'scroll', 'show'] as const,
+    prefs: {
+      xulsword: ['audio', 'location', 'selection', 'scroll', 'show'] as const,
+    },
+    bookmarks: {
+      manager: ['bookmarks', 'cut', 'copy'] as const,
+    },
   },
 };
 export default C;
@@ -1040,6 +1045,8 @@ export const SPBM = {
     } as BookmarkFolderType,
     treeWidth: 210 as number,
     selectedFolder: 'bmroot',
+    cut: null as string[] | null,
+    copy: null as string[] | null,
     columns: [
       {
         datacolumn: 0,

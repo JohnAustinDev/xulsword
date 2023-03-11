@@ -436,7 +436,7 @@ export function getContextData(elem: HTMLElement): ContextData {
   const elemData = findElementData(elem);
 
   // Get selection and target elements from selection
-  let selection = null;
+  let selection: string | undefined;
   const selElems: HTMLElement[] = [];
   const selob = getSelection();
   if (selob && !selob.isCollapsed && !/^\s*$/.test(selob.toString())) {
@@ -471,17 +471,17 @@ export function getContextData(elem: HTMLElement): ContextData {
     atabData,
   ]);
 
-  let context: string | null = null;
-  if (contextData) context = contextData.context || null;
+  let context: string | undefined;
+  if (contextData) context = contextData.context;
 
-  let location: LocationVKType | null = null;
-  if (contextData) location = contextData.location || null;
+  let location: LocationVKType | undefined;
+  if (contextData) location = contextData.location;
 
-  let locationGB: LocationGBType | null = null;
-  if (contextData) locationGB = contextData.locationGB || null;
+  let locationGB: LocationGBType | undefined;
+  if (contextData) locationGB = contextData.locationGB;
 
-  let bookmark: string | null = null;
-  if (contextData) bookmark = contextData.bmitem || null;
+  let bookmark: string | undefined;
+  if (contextData) bookmark = contextData.bmitem;
   if (!bookmark && (locationGB || location)) {
     const bm = findBookmarks(
       (locationGB || location) as LocationVKType | LocationGBType
@@ -492,18 +492,19 @@ export function getContextData(elem: HTMLElement): ContextData {
   let panelIndexs;
   if (atext) panelIndexs = atext.dataset.index;
   else if (atab) panelIndexs = atab.dataset.index;
-  const panelIndex = panelIndexs ? Number(panelIndexs) : null;
+  const panelIndex = panelIndexs ? Number(panelIndexs) : undefined;
 
   const isPinned = Boolean(atext && atext.dataset.ispinned === 'true');
 
-  const tab = atab?.dataset.module || null;
+  const tab = atab?.dataset.module;
 
-  const v11n = (context && context in G.Tab && G.Tab[context].v11n) || null;
-  let selectionParsedVK = null;
+  const v11n =
+    (context && context in G.Tab && G.Tab[context].v11n) || undefined;
+  let selectionParsedVK: LocationVKType | undefined;
   if (selection) {
     selectionParsedVK =
-      new RefParser(G.i18n, { uncertain: true }).parse(selection, v11n)
-        ?.location || null;
+      new RefParser(G.i18n, { uncertain: true }).parse(selection, v11n || null)
+        ?.location || undefined;
   }
 
   // Find location lastverse
@@ -524,8 +525,8 @@ export function getContextData(elem: HTMLElement): ContextData {
     }
   }
 
-  let search: SearchType | null = null;
-  let lemma = null;
+  let search: SearchType | undefined;
+  let lemma: string | undefined;
   const snx = ofClass(['sn'], elem);
   const lemmaArray: string[] = [];
   if (snx && context) {
@@ -542,7 +543,7 @@ export function getContextData(elem: HTMLElement): ContextData {
         return;
       lemmaArray.push(`lemma: ${lemmaStr}`);
     });
-    lemma = lemmaArray.length ? lemmaArray.join(' ') : null;
+    lemma = lemmaArray.length ? lemmaArray.join(' ') : undefined;
     if (lemma && context) {
       search = {
         module: context,
@@ -553,6 +554,7 @@ export function getContextData(elem: HTMLElement): ContextData {
   }
 
   return {
+    type: 'general',
     location,
     locationGB,
     bookmark,
