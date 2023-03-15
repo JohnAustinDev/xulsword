@@ -159,10 +159,9 @@ abstract class AbstractSortableColumn implements TSortableColumn {
     state: TableState
   ) {
     const cellRenderer = (tableRowIndex: number, tableColIndex: number) => {
-      const { value, info, row, dataColIndex } = getCellData(
-        tableRowIndex,
-        tableColIndex
-      );
+      const cellData = getCellData(tableRowIndex, tableColIndex);
+      let { value } = cellData;
+      const { info, row, dataColIndex } = cellData;
       let { editable, loading, intent, classes, tooltip } = info;
       if (typeof editable === 'function') {
         editable = editable(row.dataRowIndex, dataColIndex);
@@ -181,26 +180,33 @@ abstract class AbstractSortableColumn implements TSortableColumn {
       }
       if (!classes) classes = [];
       classes.push(`data-row-${row.dataRowIndex} data-col-${dataColIndex}`);
-      tooltip = (
-        tooltip !== 'VALUE' ? tooltip : typeof value === 'string' ? value : ''
-      ) as string;
+
       if (editable) {
         const dataKey = Table.dataKey(tableRowIndex, tableColIndex);
-        const val =
+        value =
           dataKey in state.sparseCellData
             ? state.sparseCellData[dataKey] || ''
             : value || '';
-        tooltip = (
-          tooltip !== 'VALUE' ? tooltip : typeof val === 'string' ? val : ''
-        ) as string;
+      }
+
+      let tooltipStr = tooltip as string;
+      if (tooltipStr === 'VALUE') {
+        if (typeof value === 'string') tooltipStr = value;
+        else if (typeof value === 'object' && 'toString' in value) {
+          tooltipStr = value.toString();
+        }
+      }
+
+      if (editable) {
+        const dataKey = Table.dataKey(tableRowIndex, tableColIndex);
         return (
           <EditableCell2
             className={classes?.join(' ')}
-            value={val}
+            value={value}
             intent={state.sparseCellIntent[dataKey] || intent || 'none'}
             truncated
             loading={loading}
-            tooltip={tooltip}
+            tooltip={tooltipStr}
             onCancel={cellValidator(tableRowIndex, tableColIndex)}
             onChange={cellValidator(tableRowIndex, tableColIndex)}
             onConfirm={cellSetter(tableRowIndex, tableColIndex)}
@@ -212,7 +218,7 @@ abstract class AbstractSortableColumn implements TSortableColumn {
           className={classes?.join(' ')}
           intent={intent || 'none'}
           truncated
-          tooltip={tooltip}
+          tooltip={tooltipStr}
           loading={loading}
         >
           {value}

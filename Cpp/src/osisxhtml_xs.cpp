@@ -861,7 +861,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 
             filepath.replaceBytes("\\", '/');
 
-          outHtmlTag(SWBuf().appendFormatted("<div class=\"image-container %s %s\">",
+          outHtmlTag(SWBuf().appendFormatted("<div class=\"image-viewport\"><div class=\"scroll-container %s %s\">",
               (tag.getAttribute("type") ? tag.getAttribute("type"):""),
               (tag.getAttribute("subType") ? tag.getAttribute("subType"):"")
             ).c_str(), buf, u);
@@ -869,7 +869,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
           outHtmlTag("<img src=\"data:,\" alt data-src=\"File://", buf, u);
           outText(filepath, buf, u);
           outText("\">", buf, u);
-          outHtmlTag("</div>", buf, u);
+          outHtmlTag("</div></div>", buf, u);
       }
     }
     else if (!strcmp(tag.getName(), "caption")) {

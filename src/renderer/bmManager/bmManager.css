@@ -19,6 +19,17 @@
 .bmmanager .search {
   margin: 0 8px;
 }
+.search-result-item {
+  white-space: nowrap;
+  cursor: pointer;
+}
+.search-result-item .label {
+  font-weight: bold;
+  cursor: pointer;
+}
+.search-result-item .description {
+  font-style: italic;
+}
 .bmmanager .folders .treeview {
   overflow: auto;
   font-size: 12px;

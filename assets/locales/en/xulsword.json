@@ -48,6 +48,7 @@
    "SearchExactText.label" : "Find verses which contain this exact text",
    "SearchSimilar.description" : "This is useful if you don't know exactly how a word is spelled, or to find variations of words.",
    "SearchSimilar.label" : "Find verses which contain similar words",
+   "Searching" : "Searching {{v1}}...",
    "Size.label" : "Size",
    "Source Type.label" : "Source Type",
    "Texts" : "Bibles",

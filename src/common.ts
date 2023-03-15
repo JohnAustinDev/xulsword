@@ -1271,12 +1271,14 @@ export function tableRowsToSelection(rows: number[]): RowSelection {
   const selection: RowSelection = [];
   for (let i = 0; i < sorted.length; i += 1) {
     const s = sorted[i];
-    let e = sorted[i];
-    while (sorted[i + 1] === e + 1) {
-      i += 1;
-      e = sorted[i];
+    if (s > -1) {
+      let e = sorted[i];
+      while (sorted[i + 1] === e + 1) {
+        i += 1;
+        e = sorted[i];
+      }
+      selection.push({ rows: [s, e] });
     }
-    selection.push({ rows: [s, e] });
   }
   return selection;
 }

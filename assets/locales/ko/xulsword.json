@@ -38,6 +38,7 @@
    "SearchExactText.label" : "원하는 문장이 포함된 구절 검색",
    "SearchSimilar.description" : "유사한 단어가 포함된 구절을 찾습니다.이 검색은 다양한 단어에 대한 검색이 가능하며,단어의 철자를 정확히 모를 경우 유용합니다.",
    "SearchSimilar.label" : "유사 단어가 포함된 구절 검색",
+   "Searching" : "{{v1}}... 검색 중",
    "Texts" : "성경책",
    "TooNew" : "다음 모듈은 지원되지 않는 콤포넌트를 가지고 있습니다.",
    "UpgradeMe" : "최소한 다음 버전으로 프로그램을 업그레이드 해야 합니다.:  {{v1}}",

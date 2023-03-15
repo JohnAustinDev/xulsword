@@ -38,6 +38,7 @@
    "SearchExactText.label" : "Aynan shunday ibora ishlatilgan oyatlarni topish",
    "SearchSimilar.description" : "Agar siz qidirayotgan so‘zning to‘g‘ri yozilishini bilmasangiz bu turdagi qidiruvdan foydalaning. Misol uchun, siz “havoriy” so‘zining “h” yoki “x” bilan yozilishini bilmasangiz va adashib “xavoriy” deb yozsangiz, natijada matndagi “havoriy” so‘zini topasiz.",
    "SearchSimilar.label" : "O‘xshash so‘zlarni o‘z ichiga olgan oyatlarni topish",
+   "Searching" : "{{v1}} ni qidiryapti...",
    "Texts" : "Muqaddas kitoblar",
    "TooNew" : "Quyidagi modullarda ba’zi komponentlar qo‘llanilmaydi",
    "UpgradeMe" : "Programmani hech bo‘lmasa {{v1}} versiyasigacha yangilang.",

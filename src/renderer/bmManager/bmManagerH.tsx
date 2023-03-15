@@ -1,3 +1,7 @@
+/* eslint-disable jsx-a11y/no-noninteractive-element-interactions */
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+/* eslint-disable jsx-a11y/click-events-have-key-events */
+import { ItemRendererProps } from '@blueprintjs/select';
 import React from 'react';
 import {
   findBookmarkItem,
@@ -5,6 +9,7 @@ import {
   ofClass,
   randomID,
   stringHash,
+  tableRowsToSelection,
   tableSelectDataRows,
 } from '../../common';
 import { SP, SPBM } from '../../constant';
@@ -107,7 +112,22 @@ export function onItemSelect(
   item: BookmarkFolderType | BookmarkType
 ) {
   const { bookmarks } = this.state as BMManagerState;
-  this.setState({ selectedFolder: bookmarks.id, selectedItem: item.id });
+  const { tableCompRef } = this;
+  const s: Partial<BMManagerState> = {
+    selectedFolder: bookmarks.id,
+    selectedItems: [item.id],
+  };
+  this.setState(s);
+  const tc = tableCompRef.current;
+  if (tc) {
+    const data = this.tableData();
+    const selectedItem = data.findIndex((r) => r[Col.iInfo].id === item.id);
+    const selectedRegion = tableRowsToSelection([selectedItem])[0];
+    const r0 = selectedRegion.rows[0];
+    const r1 = selectedRegion.rows[1];
+    selectedRegion.rows = [r0 > 5 ? r0 - 5 : r0, r1 > 5 ? r1 - 5 : r1];
+    tc.scrollToRegion(selectedRegion);
+  }
 }
 
 export function onQueryChange(
@@ -248,6 +268,12 @@ export function buttonHandler(this: BMManagerWin, e: React.SyntheticEvent) {
   }
 }
 
+function tooltip(strings: string[]) {
+  return (_dataRowIndex: number, dataColIndex: number): string => {
+    return strings[dataColIndex];
+  };
+}
+
 export function tableData(this: BMManagerWin): TableRow[] {
   const state = this.state as BMManagerState;
   const { bookmarks, selectedFolder, cut, copy } = state;
@@ -292,6 +318,7 @@ export function tableData(this: BMManagerWin): TableRow[] {
         id,
         location: 'location' in item ? item.location : undefined,
         classes,
+        tooltip: tooltip([label2, note, sampleText, 'VALUE']),
       },
     ];
     return r;
@@ -315,6 +342,36 @@ export function tableData(this: BMManagerWin): TableRow[] {
 export function inputValueRenderer(
   item: BookmarkFolderType | BookmarkType
 ): string {
+  const { label } = item;
+  return label;
+}
+
+export function itemRenderer(
+  item: BookmarkFolderType | BookmarkType,
+  itemProps: ItemRendererProps
+): JSX.Element | null {
+  const { handleClick, ref } = itemProps;
+  const d0 = `${item.note ? `[${item.note}]` : ''} ${
+    ('sampleText' in item && item.sampleText) || ''
+  }`.trim();
+  const d = `${d0.replace(/^(.{128}.*?)\b.*$/, '$1')}…`;
+  return (
+    <li
+      className="search-result-item"
+      title={d0}
+      ref={ref}
+      onClick={handleClick}
+    >
+      {bookmarkItemIcon(item)} <Label value={item.label} />
+      <span className="description">{d ? `: ${d}` : ''}</span>
+    </li>
+  );
+}
+
+export function itemPredicate(
+  query: string,
+  item: BookmarkFolderType | BookmarkType
+): boolean {
   const { type, label, note } = item;
   const parts: string[] = [label, note];
   if (type === 'bookmark') {
@@ -326,34 +383,10 @@ export function inputValueRenderer(
       parts.push(sampleText, key);
     }
   }
-  let s = parts.shift();
-  if (parts.length) s += ': ';
-  return `${s}${parts.join(' ')}`;
-}
-
-export function itemRenderer(
-  item: BookmarkFolderType | BookmarkType,
-  itemProps: any
-): JSX.Element | null {
-  console.log(itemProps);
-  return (
-    <>
-      {bookmarkItemIcon(item)} <Label value={item.label} />
-    </>
-  );
-}
-
-export function itemPredicate(
-  query: string,
-  item: BookmarkFolderType | BookmarkType
-): boolean {
-  const qs = query.toLowerCase().split(' ');
-  const is = inputValueRenderer(item).toLowerCase();
-  while (qs.length) {
-    const q = qs.shift();
-    if (!q || !is.includes(q)) return false;
-  }
-  return true;
+  const querylc = query.toLowerCase();
+  const is = parts.join(' ').toLowerCase();
+  if (is.includes(querylc)) return true;
+  return querylc.split(' ').every((w) => is.includes(w));
 }
 
 export function bmContextData(

@@ -40,7 +40,7 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
           'cr',
           'crtwisty',
           'versePerLineButton',
-          'image-container',
+          'image-viewport',
           'dictkeyinput',
         ],
         es.target
@@ -101,34 +101,62 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
           });
           break;
 
-        case 'image-container': {
-          // TODO!: Fix this
-          const cont = elem;
-          const imgs = cont.getElementsByTagName('img');
-          if (imgs && imgs.length) {
-            const img = imgs[0];
-            const style = window.getComputedStyle(img, null);
-            if (style.cursor !== 'not-allowed') {
-              const cbox = cont.getBoundingClientRect();
-              cont.style.width = `${Math.round(cbox.width)}px`;
-              cont.style.height = `${Math.round(cbox.height)}px`;
-              if (img.offsetWidth < img.naturalWidth)
-                img.style.width = `${img.naturalWidth}px`;
-              else img.style.width = '';
-              if (img.offsetWidth < img.naturalWidth)
-                img.style.cursor = 'zoom-in';
-              else if (img.style.width) img.style.cursor = 'zoom-out';
-              else img.style.cursor = '';
-              const contMouseY = e.clientY - cbox.top;
-              const imgMouseY =
-                contMouseY * (img.offsetHeight / cont.offsetHeight);
-              cont.scrollTop = imgMouseY - (1 / 2) * cont.offsetHeight;
-              const contMouseX = e.clientX - cbox.left;
-              const imgMouseX =
-                contMouseX * (img.offsetWidth / cont.offsetWidth);
-              cont.scrollLeft = imgMouseX - (1 / 2) * cont.offsetHeight;
+        case 'image-viewport': {
+          // When an image-viewport is clicked, the viewport's current width and height
+          // will become fixed and it will be made the relative ancestor of the scroll-
+          // container, which will become absolutely positioned. With the mouse cursor
+          // position in the viewport recorded as (Xt, Yt) the image is resized to its
+          // natural width and height and the scroll-container top and left are set to
+          // calculated (Xn, Yn) such that the image pixel that was under the cursor when
+          // it was clicked will remain under the cursor after the image is resized to
+          // its natural size. If clicked again, the image will be resized back to the
+          // viewport width with scroll-container top and left set to 0.
+          // Yn = Y(1 - (Wi/Wv))
+          // WHERE:
+          // Yn = CSS top value of the image container with respect to viewport
+          // Y = Y coordinate of the cursor within the viewport (containing the fit image)
+          // Wi = Width of the natural image
+          // Wv = Width of the viewport
+          const viewport = elem as HTMLDivElement;
+          const scrollcn = viewport.firstChild as HTMLDivElement;
+          const img = scrollcn?.firstChild as HTMLImageElement | undefined;
+          let expandShrink: boolean | undefined;
+          if (img) {
+            const scrollcnS = window.getComputedStyle(scrollcn, null);
+            if (scrollcnS.position === 'absolute') {
+              expandShrink = img.style.width !== `${img.naturalWidth}px`;
+            } else if (img.width < img.naturalWidth) {
+              expandShrink = true;
+              const viewportS = window.getComputedStyle(viewport, null);
+              const vph = viewportS.height;
+              const vpw = viewportS.width;
+              viewport.style.height = vph;
+              viewport.style.width = vpw;
+              viewport.style.position = 'relative';
+              viewport.style.overflow = 'auto';
+              scrollcn.style.position = 'absolute';
             }
+            if (expandShrink !== undefined) {
+              if (expandShrink) {
+                const cbox = viewport.getBoundingClientRect();
+                const Y = e.clientY - cbox.top;
+                const top = Y * (1 - img.naturalWidth / viewport.offsetWidth);
+                const X = e.clientX - cbox.left;
+                const left =
+                  X * (1 - img.naturalHeight / viewport.offsetHeight);
+                scrollcn.style.top = `${top}px`;
+                scrollcn.style.left = `${left}px`;
+                img.style.width = `${img.naturalWidth}px`;
+                img.style.cursor = 'zoom-out';
+              } else {
+                scrollcn.style.top = '0';
+                scrollcn.style.left = '0';
+                img.style.width = `${viewport.offsetWidth}px`;
+                img.style.cursor = 'zoom-in';
+              }
+            } else img.style.cursor = 'default';
           }
+
           break;
         }
 

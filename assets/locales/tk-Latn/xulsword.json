@@ -40,6 +40,7 @@
    "SearchExactText.label" : "edil şu teksti tapmak",
    "SearchSimilar.description" : "Şu söze meňzeş sözli aýatlary tapmak. Mysal üçin, &quot;aýan&quot; sözüni girizseňiz, &quot;aý&quot;, &quot;aýak&quot;, &quot;aýal&quot;, &quot;aýlan&quot; ýaly sözleriň bary tapylar.",
    "SearchSimilar.label" : "şeýle sözli aýatlary tapmak",
+   "Searching" : "gözleg ({{v1}})",
    "Texts" : "Mukaddes Ýazgylar",
    "TooNew" : "Bu modullaryň goldanylmaýan komponentleri bar",
    "UpgradeMe" : "programmany täzelemeli: {{v1}}",

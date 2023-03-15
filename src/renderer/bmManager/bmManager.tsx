@@ -1,5 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable react/static-property-placement */
+import type { Table2 as BPTable } from '@blueprintjs/table';
 import React from 'react';
 import { Suggest2 } from '@blueprintjs/select';
 import {
@@ -71,6 +73,8 @@ export default class BMManagerWin extends React.Component {
 
   onDoubleClick: typeof H.onDoubleClick;
 
+  tableCompRef: React.RefObject<BPTable>;
+
   constructor(props: BMManagerProps) {
     super(props);
 
@@ -88,6 +92,8 @@ export default class BMManagerWin extends React.Component {
     this.tableData = H.tableData.bind(this);
     this.bmContextData = H.bmContextData.bind(this);
     this.onDoubleClick = H.onDoubleClick.bind(this);
+
+    this.tableCompRef = React.createRef();
   }
 
   componentDidMount() {
@@ -121,6 +127,8 @@ export default class BMManagerWin extends React.Component {
       copy,
       reset,
     } = this.state as BMManagerState;
+
+    const { tableCompRef } = this;
 
     const folders = bookmarkTreeNodes(
       bookmarks.childNodes,
@@ -229,10 +237,20 @@ export default class BMManagerWin extends React.Component {
               query={query}
               items={searchableItems}
               itemsEqual="id"
+              inputProps={{ placeholder: `${G.i18n.t('Search')}…` }}
               inputValueRenderer={H.inputValueRenderer}
               itemPredicate={H.itemPredicate}
               itemRenderer={H.itemRenderer}
-              noResults={<Label value="SEARCHING" />}
+              initialContent={
+                <Label
+                  value={G.i18n.t('Searching', {
+                    v1: G.i18n.t('menu.bookmarks'),
+                  })}
+                />
+              }
+              noResults={
+                <Label value={G.i18n.t('searchStatusAll', { v1: 0 })} />
+              }
               onItemSelect={this.onItemSelect}
             />
           </Vbox>
@@ -282,6 +300,7 @@ export default class BMManagerWin extends React.Component {
               onColumnsReordered={(c) => this.setState({ columns: c })}
               onColumnWidthChanged={(c) => this.setState({ columns: c })}
               onDoubleClick={this.onDoubleClick}
+              tableCompRef={tableCompRef}
             />
           </Groupbox>
         </Hbox>
