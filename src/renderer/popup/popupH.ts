@@ -71,12 +71,19 @@ export function getPopupHTML(
     // footnote, or, in some weird cases (such as StrongsHebrew module) to a
     // dictionary entry.
     case 'sr': {
-      if (context && reflist && location) {
+      if (context && reflist) {
         const bibleReflist = reflist.join(';');
         const parsed = parseExtendedVKRef(bibleReflist, location);
         if (parsed.length) {
-          const { book: b, chapter: c, verse: v } = location;
-          const dt = `cr.1.${b || 0}.${c || 0}.${v || 0}.${context}`;
+          let b = 'Gen';
+          let c = 0;
+          let v = 0;
+          if (location) {
+            ({ book: b, chapter: c } = location);
+            const { verse: vx } = location;
+            v = vx || v;
+          }
+          const dt = `cr.1.${b}.${c}.${v}.${context}`;
           html = getNoteHTML(
             `<div class="nlist" data-title="${dt}">${bibleReflist}</div>`,
             null,

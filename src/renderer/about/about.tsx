@@ -172,6 +172,7 @@ export default class AboutWin extends React.Component implements ModinfoParent {
         )}
         {showModules && (
           <Modinfo
+            className="skin"
             configs={configs}
             showConf={showConf}
             editConf={editConf}

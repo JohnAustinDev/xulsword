@@ -19,11 +19,9 @@ import {
   getStatePref as getStatePref2,
   bookmarkItemIconPath,
 } from '../common';
-import RefParser, { RefParserOptionsType } from '../refParser';
-import VerseKey from '../verseKey';
-import C from '../constant';
+import C, { S } from '../constant';
 import G from './rg';
-import { getElementData } from './htmlData';
+import { getElementData, verseKey } from './htmlData';
 import log from './log';
 
 import type {
@@ -37,6 +35,7 @@ import type {
   ModTypes,
   OSISBookType,
   PrefObject,
+  PrefStoreType,
   PrefValue,
   Repository,
   SwordConfLocalized,
@@ -44,6 +43,7 @@ import type {
   V11nType,
   VerseKeyAudio,
   VerseKeyAudioFile,
+  WindowDescriptorPrefType,
 } from '../type';
 
 export function component(
@@ -62,17 +62,22 @@ export function component(
 
 // Read the window's given argument ID and use it to retrieve a property
 // value from the window's Data.
-export function windowArguments(prop?: undefined): PrefObject | null;
-export function windowArguments(prop: string): PrefValue | null;
-export function windowArguments(prop: string | undefined): PrefValue | null {
+export function windowArguments(prop?: undefined): WindowDescriptorPrefType;
+export function windowArguments(prop: string): PrefValue;
+export function windowArguments(
+  prop: string | undefined
+): PrefValue | WindowDescriptorPrefType {
   const dataID = window.processR.argv().at(-1);
   if (typeof dataID === 'string' && G.Data.has(dataID)) {
-    const data = G.Data.read(dataID);
+    const data = G.Data.read(dataID) as WindowDescriptorPrefType;
     if (prop) {
-      if (prop in data) return data[prop];
+      const { additionalArguments } = data;
+      if (additionalArguments && prop in additionalArguments) {
+        return additionalArguments[prop];
+      }
     } else return data;
   }
-  return null;
+  return prop ? undefined : { type: 'xulsword' };
 }
 
 // Read libsword data-src attribute file URLs and convert them into src inline data.
@@ -338,34 +343,6 @@ export function getMaxVerse(v11n: V11nType, vkeytext: string) {
     : 0;
 }
 
-export function verseKey(
-  versekey: LocationVKType | string,
-  v11n?: V11nType | null,
-  options?: RefParserOptionsType
-): VerseKey {
-  return new VerseKey(
-    new RefParser(G.i18n, options),
-    G.BkChsInV11n,
-    {
-      convertLocation: (
-        fromv11n: V11nType,
-        vkeytext: string,
-        tov11n: V11nType
-      ) => {
-        return G.LibSword.convertLocation(fromv11n, vkeytext, tov11n);
-      },
-      Book: () => {
-        return G.Book;
-      },
-      Tab: () => {
-        return G.Tab;
-      },
-    },
-    versekey,
-    v11n
-  );
-}
-
 export function getCompanionModules(mod: string) {
   const cms = G.LibSword.getModuleInformation(mod, 'Companion');
   if (cms !== C.NOTFOUND) return cms.split(/\s*,\s*/);
@@ -375,32 +352,34 @@ export function getCompanionModules(mod: string) {
 // Return and persist the key/value pairs of component state Prefs. Component
 // state Prefs are permanently persisted component state values recorded in
 // a prefs json file whose key begins with the component id.
+export function getStatePref(store: keyof typeof S, id: string): PrefObject;
 export function getStatePref<P extends PrefObject>(
+  store: keyof typeof S,
   id: string,
-  defaultPrefs: P,
-  store?: string
-): P {
-  return getStatePref2(G.Prefs, id, defaultPrefs, store);
+  defaultPrefs: P
+): P;
+export function getStatePref<P extends PrefObject>(
+  store: keyof typeof S,
+  id: string,
+  defaultPrefs?: P
+): P | PrefObject {
+  if (defaultPrefs) return getStatePref2(G.Prefs, store, id, defaultPrefs) as P;
+  return getStatePref2(G.Prefs, store, id) as PrefObject;
 }
 
 // Push state changes of statePrefKeys value to Prefs. The state Pref key
 // will begin with id. Pref keys of SyncPrefs are always included since
 // they are global.
 export function setStatePref(
+  store: PrefStoreType,
   id: string,
   prevState: { [key: string]: any } | null,
   state: { [key: string]: any },
-  statePrefKeys: string[],
-  storex?: string
+  statePrefKeys?: string[] // default is all
 ) {
-  const store = storex || 'prefs';
-  const keys = statePrefKeys.slice();
-  if (
-    store in C.SyncPrefs &&
-    id in C.SyncPrefs[store as keyof typeof C.SyncPrefs]
-  ) {
-    keys.push(...(C.SyncPrefs as any)[store][id]);
-  }
+  const keys = statePrefKeys
+    ? statePrefKeys.slice()
+    : Object.keys(S[store][id as keyof typeof S[PrefStoreType]]);
   const newStatePref = keep(state, keys);
   if (prevState === null) G.Prefs.mergeValue(id, newStatePref, store);
   else {
@@ -414,17 +393,23 @@ export function setStatePref(
 // read component state Prefs and locale, and will update component state
 // and window locale as needed.
 export function registerUpdateStateFromPref(
+  store: PrefStoreType,
   id: string,
   c: React.Component,
-  defaultPrefs: { [prefkey: string]: PrefValue },
-  storex?: string
+  defaultPrefs?: { [prefkey: string]: PrefValue } // default is all
 ) {
-  const store = storex || 'prefs';
   const updateStateFromPref = (prefs: string | string[], aStorex?: string) => {
     const aStore = aStorex || 'prefs';
     log.debug(`Updating state from prefs:`, prefs, aStore);
     if (aStore === store) {
-      const different = diff(c.state, getStatePref(id, defaultPrefs, store));
+      const different = diff(
+        c.state,
+        getStatePref(
+          store,
+          id,
+          defaultPrefs || S[store][id as keyof typeof S[PrefStoreType]]
+        )
+      );
       if (different && Object.keys(different).length) {
         const d = different as any;
         if (

@@ -24,7 +24,7 @@ import type { ModTypes, SwordConfType, TabTypes } from '../../type';
 
 // Parent component should have this included in its state and state-type.
 export const modinfoParentInitialState = {
-  showConf: '',
+  showConf: '' as string,
   editConf: false as boolean,
 };
 

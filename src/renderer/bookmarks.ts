@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-nested-ternary */
-import type { TreeNodeInfo } from '@blueprintjs/core';
 import Cache from '../cache';
 import { clone, JSON_attrib_parse, ofClass } from '../common';
 import RefParser from '../refParser';
@@ -11,12 +10,12 @@ import {
   findElementData,
   mergeElementData,
   updateDataAttribute,
+  verseKey,
 } from './htmlData';
-import { bookmarkItemIcon, getMaxVerse, verseKey } from './rutil';
+import { bookmarkItemIcon, getMaxVerse } from './rutil';
 
 import type {
   BookmarkFolderType,
-  BookmarkItem,
   BookmarkTreeNode,
   BookmarkType,
   ContextData,

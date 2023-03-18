@@ -1,8 +1,16 @@
-.bmProperties .textbox {
+.bmproperties {
+  padding: 10px;
+}
+
+.bmproperties .textbox {
   min-width: 200px;
 }
 
-.bmProperties .treeview-container {
+.grid-cell > .label::after {
+  content: ': ';
+}
+
+.bmproperties .treeview-container {
   max-height: 100px;
   overflow: auto;
   font-size: 12px;

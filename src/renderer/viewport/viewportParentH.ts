@@ -2,12 +2,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-loop-func */
 import React from 'react';
-import C, { SP } from '../../constant';
+import C, { S } from '../../constant';
 import Cache from '../../cache';
-import { clone, escapeRE, JSON_stringify, ofClass } from '../../common';
-import { getElementData } from '../htmlData';
+import { clone, escapeRE, ofClass } from '../../common';
+import { getElementData, verseKey } from '../htmlData';
 import G from '../rg';
-import { scrollIntoView, verseKey } from '../rutil';
+import { scrollIntoView } from '../rutil';
 import { delayHandler } from '../libxul/xul';
 import { textChange } from './ztext';
 import { aTextWheelScroll, chapterChange } from './zversekey';
@@ -34,6 +34,8 @@ export const vpWindowState = [
   'tabs',
   'panels',
   'keys',
+  'history',
+  'historyIndex',
   'scroll',
   'place',
   'ilModules',
@@ -144,12 +146,16 @@ export function bbDragEnd(
   const atext = ofClass(['atext'], target)?.element;
   const index = Number(atext && atext.dataset.index);
   if (atext && !Number.isNaN(Number(index))) {
-    let { noteBoxHeight, maximizeNoteBox } = this.state as typeof SP.xulsword;
+    let { noteBoxHeight, maximizeNoteBox } = this
+      .state as typeof S.prefs.xulsword;
     noteBoxHeight = noteBoxHeight.slice();
     maximizeNoteBox = maximizeNoteBox.slice();
     maximizeNoteBox[index] = value.isMinMax === true;
     noteBoxHeight[index] = value.sizerPos;
-    this.setState({ noteBoxHeight, maximizeNoteBox } as typeof SP.xulsword);
+    this.setState({
+      noteBoxHeight,
+      maximizeNoteBox,
+    } as typeof S.prefs.xulsword);
   }
 }
 
@@ -332,13 +338,6 @@ export default function handler(
                 }
               });
             }
-            const options = {
-              title: 'viewport',
-              additionalArguments: {
-                xulswordState,
-                ...atextStates,
-              },
-            };
             // Calculate the content size ViewportWin should be created with:
             const atextb = atext.getBoundingClientRect();
             const textareab = document
@@ -346,23 +345,30 @@ export default function handler(
               ?.getBoundingClientRect();
             const vpPadding = 15; // left padding of ViewportWin (assumes same as right and bottom)
             const vpPaddingTop = 10; // top padding of ViewportWin
-            if (atextb && textareab) {
-              const o = options as any;
-              o.openWithBounds = {
+            G.Window.open({
+              type: 'viewportWin',
+              className: 'skin',
+              allowMultiple: true,
+              saveIfAppClosed: true,
+              openWithBounds: {
                 x: Math.round(atextb.x - vpPadding),
                 y: Math.round(textareab.y - vpPaddingTop),
                 width: Math.round(atextb.width + 2 * vpPadding),
                 height: Math.round(textareab.height + vpPaddingTop + vpPadding),
-              };
-            }
-            G.Window.open({ type: 'viewportWin', options });
+              },
+              additionalArguments: {
+                xulswordState,
+                ...atextStates,
+              },
+              options: { title: 'viewport' },
+            });
           }
           break;
         }
         case 'text-pin': {
           if (atext && panel) {
             const { columns } = atext.dataset;
-            this.setState((prevState: typeof SP.xulsword) => {
+            this.setState((prevState: typeof S.prefs.xulsword) => {
               const { isPinned: ipx } = prevState;
               const ip = ipx.slice();
               const newv = ip[index];
@@ -458,7 +464,7 @@ export default function handler(
         }
         case 'notebox-maximizer': {
           if (atext) {
-            this.setState((prevState: typeof SP.xulsword) => {
+            this.setState((prevState: typeof S.prefs.xulsword) => {
               let { maximizeNoteBox, noteBoxHeight } = prevState;
               maximizeNoteBox = clone(maximizeNoteBox);
               noteBoxHeight = clone(noteBoxHeight);
@@ -486,9 +492,9 @@ export default function handler(
             !state.isPinned[index]
           ) {
             if (targ.type === 'ilt-tab') {
-              this.setState((prevState: typeof SP.xulsword) => {
+              this.setState((prevState: typeof S.prefs.xulsword) => {
                 const { ilModules } = prevState;
-                const s: Partial<typeof SP.xulsword> = {
+                const s: Partial<typeof S.prefs.xulsword> = {
                   ilModules: ilModules.slice(),
                 };
                 if (!s.ilModules) s.ilModules = [];
@@ -496,9 +502,9 @@ export default function handler(
                 return s;
               });
             } else {
-              this.setState((prevState: typeof SP.xulsword) => {
+              this.setState((prevState: typeof S.prefs.xulsword) => {
                 const { panels: pans, mtModules } = prevState;
-                const s: Partial<typeof SP.xulsword> = {
+                const s: Partial<typeof S.prefs.xulsword> = {
                   panels: pans.slice(),
                 };
                 if (!s.panels) s.panels = [];

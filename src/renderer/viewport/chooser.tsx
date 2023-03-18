@@ -286,7 +286,7 @@ class Chooser extends React.Component {
 
     return (
       <Vbox {...addClass(`chooser`, props)} onMouseOut={handler}>
-        <Hbox className="fadetop" />
+        <Hbox className="fadetop skin" />
 
         <Hbox className="chooser-container" flex="20">
           <div className="close-chooser" onClick={onCloseChooserClick} />
@@ -356,7 +356,7 @@ class Chooser extends React.Component {
           </Vbox>
         </Hbox>
 
-        <Hbox flex="1" className="fadebot" />
+        <Hbox flex="1" className="fadebot skin" />
       </Vbox>
     );
   }

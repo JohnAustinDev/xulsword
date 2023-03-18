@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import C from '../../constant';
-import { clone, JSON_stringify, ofClass } from '../../common';
+import { clone, ofClass } from '../../common';
 import { findElementData, updateDataAttribute } from '../htmlData';
+import log from '../log';
 import G from '../rg';
 import { scrollIntoView } from '../rutil';
 import { delayHandler } from '../libxul/xul';
@@ -137,6 +138,7 @@ export function popupParentHandler(
           )(elem, data, gap);
         } else {
           elem.classList.add('empty');
+          log.debug(`Mouseover failed: `, targ.type, data);
         }
       }
       break;
@@ -309,17 +311,19 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
           if (box) {
             const b = box.getBoundingClientRect();
             const popupState: Pick<PopupParentState, 'elemdata'> = { elemdata };
-            const options = {
-              title: 'popup',
-              additionalArguments: { popupState },
+            G.Window.open({
+              type: 'popupWin',
+              allowMultiple: true,
+              saveIfAppClosed: true,
               openWithBounds: {
                 x: Math.round(b.x),
                 y: Math.round(b.y),
                 width: Math.round(b.width),
                 height: Math.round(b.height),
               },
-            };
-            G.Window.open({ type: 'popupWin', options });
+              additionalArguments: { popupState },
+              options: { title: 'popup' },
+            });
             const s: Partial<PopupParentState> = { popupParent: null };
             this.setState(s);
           }

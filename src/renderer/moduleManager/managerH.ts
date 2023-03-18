@@ -25,7 +25,7 @@ import {
   repositoryModuleKey,
   tableSelectDataRows,
 } from '../../common';
-import C, { SP } from '../../constant';
+import C, { S } from '../../constant';
 import G from '../rg';
 import log from '../log';
 import { TCellInfo, TCellLocation } from '../libxul/table';
@@ -1053,7 +1053,7 @@ function checkForSuggestions(xthis: ModuleManager) {
   const { moduleLangData } = Saved;
   const suggested = G.Prefs.getComplexValue(
     'moduleManager.suggested'
-  ) as typeof SP.moduleManager['suggested'];
+  ) as typeof S.prefs.moduleManager.suggested;
   const locale = G.i18n.language;
   if (suggested && suggested[locale]) {
     // Filter from Prefs any suggested mods that are already installed.

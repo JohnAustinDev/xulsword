@@ -6,7 +6,7 @@ import path from 'path';
 import fs from 'fs';
 import i18n from 'i18next';
 import fontList from 'font-list';
-import C, { SP } from '../constant';
+import C, { S } from '../constant';
 import VerseKey from '../verseKey';
 import RefParser, { RefParserOptionsType } from '../refParser';
 import { clone, isASCII, JSON_parse } from '../common';
@@ -514,9 +514,7 @@ export function getModuleFonts(): FontFaceType[] {
     // Look for xulsword local fonts, which may be included with some
     // XSM modules.
     const ret = [] as FontFaceType[];
-    let fonts = Prefs.getPrefOrCreate('fonts', 'complex', {}, 'fonts') as {
-      [i: string]: { fontFamily: string; path: string };
-    };
+    let fonts = Prefs.getComplexValue('fonts', 'fonts') as typeof S.fonts.fonts;
     const fontfiles = Dirs.xsFonts.directoryEntries;
     let reread = true;
     if (
@@ -647,7 +645,7 @@ export function getFeatureModules(): FeatureType {
 // installed modules or be ''.  This function insures that is the case.
 export function updateGlobalModulePrefs() {
   const tabs = getTabs();
-  const xulsword = Prefs.getComplexValue('xulsword') as typeof SP.xulsword;
+  const xulsword = Prefs.getComplexValue('xulsword') as typeof S.prefs.xulsword;
   const newxulsword = clone(xulsword);
   const mps = ['panels', 'ilModules', 'mtModules'] as const;
   mps.forEach((p) => {
@@ -664,10 +662,10 @@ export function updateGlobalModulePrefs() {
   Prefs.setComplexValue('xulsword', newxulsword);
   const popupsel = Prefs.getComplexValue(
     'global.popup.selection'
-  ) as typeof SP.global['popup']['selection'];
+  ) as typeof S.prefs.global.popup.selection;
   const newpopupsel = clone(popupsel);
   Object.entries(newpopupsel).forEach((entry) => {
-    const k = entry[0] as keyof typeof SP.global['popup']['selection'];
+    const k = entry[0] as keyof typeof S.prefs.global.popup.selection;
     const m = entry[1];
     if (!tabs.find((t) => t.module === m)) {
       newpopupsel[k] = '';
@@ -677,15 +675,18 @@ export function updateGlobalModulePrefs() {
   // module from the available modules, if there are any.
   const featureModules = getFeatureModules();
   Object.entries(newpopupsel).forEach((entry) => {
-    const k = entry[0] as keyof typeof SP.global['popup']['selection'];
+    const k = entry[0] as keyof typeof S.prefs.global.popup.selection;
     if (!entry[1] && k in featureModules) {
+      const kk = k as keyof typeof featureModules;
       const ma = (
-        Array.isArray(featureModules[k]) ? featureModules[k] : []
+        Array.isArray(featureModules[kk]) ? featureModules[kk] : []
       ) as string[];
       const sel =
         C.LocalePreferredFeature[i18n.language === 'en' ? 'en' : 'ru'];
       const preferred = (
-        k in sel && Array.isArray(sel[k]) ? sel[k] : []
+        k in sel && Array.isArray(sel[k as keyof typeof sel])
+          ? sel[k as keyof typeof sel]
+          : []
       ) as string[];
       const selection = preferred.find((m) => m && ma.includes(m)) || ma[0];
       newpopupsel[k] = selection;

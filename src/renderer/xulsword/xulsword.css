@@ -1,11 +1,14 @@
 .xulsword {
   overflow: hidden;
 }
-.xulsword .controlbar {
-  background-image: url(../../../assets/b2.png);
-}
 .xulsword .controlbar .start-spacer {
   width: 15px;
+}
+.xulsword .bp4-button {
+  min-height: unset;
+}
+.xulsword #closeplayer {
+  margin-inline-start: 10px !important;
 }
 .xulsword .controlbar .button,
 .xulsword .controlbar .button > div,
@@ -17,6 +20,9 @@
 }
 .xulsword .controlbar #search-tool .vbox > div {
   width: 100%;
+}
+.xulsword .controlbar #historymenu {
+  position: relative;
 }
 .xulsword .controlbar #book,
 .xulsword .controlbar #chapter,
@@ -38,6 +44,14 @@
 
 #navigator-tool {
   min-width: 312px;
+}
+#navigator-tool .button {
+  margin-left: 0;
+  margin-right: 0;
+}
+#navigator-tool #historymenu {
+  margin-left: 10px;
+  margin-right: 10px;
 }
 
 #textnav .bookselect {

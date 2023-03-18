@@ -8,16 +8,16 @@
 /* eslint-disable react/static-property-placement */
 import React from 'react';
 import { sanitizeHTML } from '../../common';
-import { SP } from '../../constant';
+import { S } from '../../constant';
 import G from '../rg';
 import renderToRoot from '../renderer';
+import { verseKey } from '../htmlData';
 import {
   windowArguments,
   computed2inlineStyle,
   elem2text,
   htmlVerses,
   getMaxVerse,
-  verseKey,
   getStatePref,
   setStatePref,
 } from '../rutil';
@@ -45,7 +45,7 @@ const notStatePrefDefault = {
 };
 
 export type CopyPassageState = typeof notStatePrefDefault &
-  typeof SP.copyPassage;
+  typeof S.prefs.copyPassage;
 
 const openedWinState = windowArguments(
   'copyPassageState'
@@ -68,7 +68,10 @@ export default class CopyPassageWin extends React.Component {
 
     const s: CopyPassageState = {
       ...notStatePrefDefault,
-      ...getStatePref('copyPassage', SP.copyPassage),
+      ...(getStatePref(
+        'prefs',
+        'copyPassage'
+      ) as typeof S.prefs.copyPassage),
       ...openedWinState,
     };
     if (s.passage) {
@@ -92,12 +95,7 @@ export default class CopyPassageWin extends React.Component {
     _prevProps: CopyPassageProps,
     prevState: CopyPassageState
   ) {
-    setStatePref(
-      'copyPassage',
-      prevState,
-      this.state,
-      Object.keys(SP.copyPassage)
-    );
+    setStatePref('prefs', 'copyPassage', prevState, this.state);
   }
 
   passageToClipboard() {

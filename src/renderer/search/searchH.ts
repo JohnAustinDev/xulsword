@@ -5,11 +5,11 @@
 /* eslint-disable import/no-duplicates */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { dString, escapeRE, getCSS, sanitizeHTML } from '../../common';
-import C, { SP } from '../../constant';
+import C, { S } from '../../constant';
 import G from '../rg';
 import log from '../log';
-import { getElementData } from '../htmlData';
-import { verseKey, windowArguments } from '../rutil';
+import { getElementData, verseKey } from '../htmlData';
+import { windowArguments } from '../rutil';
 import { getStrongsModAndKey } from '../viewport/zdictionary';
 
 import type {
@@ -37,6 +37,8 @@ const libSwordSearchTypes = {
 };
 
 export const searchArg = windowArguments('search') as SearchType;
+
+const descriptor = windowArguments();
 
 export const strongsCSS = {
   css: null as { sheet: CSSStyleSheet; rule: CSSRule; index: number } | null,
@@ -218,7 +220,7 @@ export async function search(sthis: SearchWin) {
       case 'book': {
         const location = G.Prefs.getComplexValue(
           'xulsword.location'
-        ) as typeof SP.xulsword['location'];
+        ) as typeof S.prefs.xulsword.location;
         if (location?.book) {
           scopes = getScopes(location.book, module, bookByBook);
         }
@@ -378,7 +380,7 @@ async function createSearchIndex(sthis: SearchWin, module: string) {
       progressLabel: G.i18n.t('BuildingIndex'),
     };
     sthis.setState(s);
-    const winid = G.Window.description().id;
+    const winid = descriptor.id;
     try {
       const result = await G.LibSword.searchIndexBuild(module, winid);
       if (result) search(sthis);

@@ -228,8 +228,14 @@ class GBSelect extends React.Component {
     const props = this.props as GBSelectProps;
     const { initialGBM } = props;
     if (initialGBM) {
-      const p = keep(prevStateGBM, Object.keys(initialGBM));
-      const n = keep(newStateGBM, Object.keys(initialGBM));
+      const p = keep(
+        prevStateGBM,
+        Object.keys(initialGBM) as (keyof typeof initialGBM)[]
+      );
+      const n = keep(
+        newStateGBM,
+        Object.keys(initialGBM) as (keyof typeof initialGBM)[]
+      );
       return !diff(p, n);
     }
     return true;

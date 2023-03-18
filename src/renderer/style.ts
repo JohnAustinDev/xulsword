@@ -1,5 +1,5 @@
 import type { ConfigType } from '../type';
-import C from '../constant';
+import C, { S } from '../constant';
 import G from './rg';
 import log from './log';
 
@@ -153,15 +153,10 @@ class DynamicStyleSheet {
     const { sheet } = this;
 
     // Create CSS classes and rules according to user pref style.
-    const prefStyleConfigs = G.Prefs.getPrefOrCreate(
+    const prefStyleConfigs = G.Prefs.getComplexValue(
       'style',
-      'complex',
-      {
-        locale: {},
-        module: {},
-      },
       'style'
-    ) as StyleType;
+    ) as typeof S.style.style;
     const style = styleConfigs || prefStyleConfigs;
     const classPrefixes = ['cs'];
     if (sheet) {

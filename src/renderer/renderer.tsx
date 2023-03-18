@@ -38,22 +38,27 @@ import '@blueprintjs/icons/lib/css/blueprint-icons.css';
 import '@blueprintjs/core/lib/css/blueprint.css';
 import './global-htm.css';
 
-import type { CipherKey, ModalType, NewModulesType } from '../type';
+import type {
+  CipherKey,
+  ModalType,
+  NewModulesType,
+  WindowDescriptorPrefType,
+} from '../type';
 import type { SubscriptionType } from '../subscription';
+
+const descriptor = windowArguments();
+Cache.write(`${descriptor.type}:${descriptor.id}`, 'windowID');
+log.debug(`Initializing new window:`, descriptor);
 
 window.onerror = (errorMsg, url, line) => {
   log.error(`${errorMsg} at: ${url} line: ${line}`);
   return false;
 };
 
-const windesc = G.Window.description();
-Cache.write(`${windesc.type}:${windesc.id}`, 'windowID');
-log.debug(`Initializing new window`);
-
 window.ipc.on('cache-reset', () => {
   Cache.clear();
   log.silly(`CLEARED ALL CACHES`);
-  Cache.write(`${windesc.type}:${windesc.id}`, 'windowID');
+  Cache.write(`${descriptor.type}:${descriptor.id}`, 'windowID');
 });
 
 DynamicStyleSheet.update(G.Data.read('stylesheetData'));
@@ -61,10 +66,19 @@ window.ipc.on('dynamic-stylesheet-reset', () =>
   DynamicStyleSheet.update(G.Data.read('stylesheetData'))
 );
 
-const winArgs = windowArguments();
-
-// Set window type and language classes of the root html element.
-const classes = (winArgs?.classes as string[]) || ['unknown'];
+// Set window type and language classes on the root html element.
+const classes: string[] = [];
+const classArgs = [
+  'className',
+  'type',
+  'fitToContent',
+  'notResizable',
+] as const;
+classArgs.forEach((p: keyof WindowDescriptorPrefType) => {
+  const s = p in descriptor ? descriptor[p] : undefined;
+  if (s !== undefined && typeof s === 'boolean' && s) classes.push(p);
+  else if (s !== undefined && typeof s === 'string') classes.push(s);
+});
 classes.push('cs-locale');
 classes.push(G.i18n.language);
 const html = document?.getElementsByTagName('html')[0];
@@ -198,10 +212,7 @@ function WindowRoot(props: WindowRootProps) {
   // Installer drag-and-drop setup:
   useEffect(() => {
     const root = document.getElementById('root');
-    if (
-      root &&
-      ['xulsword', 'viewportWin'].includes(G.Window.description().type ?? '')
-    ) {
+    if (root && ['xulsword', 'viewportWin'].includes(descriptor.type ?? '')) {
       root.ondragover = (e) => {
         e.preventDefault();
         s.modal[1]('outlined');
@@ -244,7 +255,7 @@ function WindowRoot(props: WindowRootProps) {
         const setCipherKey = () => {
           const k = cipherKeys.filter((ck) => ck.conf.module && ck.cipherKey);
           if (k.length && !s.dialogs[0].length) {
-            G.Module.setCipherKeys(k, G.Window.description().id);
+            G.Module.setCipherKeys(k, descriptor.id);
             s.modal[1]('darkened'); // so there's no flash
           }
         };
@@ -450,11 +461,15 @@ export default async function renderToRoot(
   );
   if (typeof onload === 'function') onload();
   setTimeout(() => {
-    if (winArgs && 'type' in winArgs && winArgs.type === 'dialog') {
-      const body = document.getElementsByTagName('body');
-      if (body.length) {
-        const b = body[0].getBoundingClientRect();
+    if (descriptor?.fitToContent) {
+      const htmlElem = document.getElementsByTagName('html')[0];
+      const bodyElem = document.getElementsByTagName('body')[0];
+      if (htmlElem && bodyElem) {
+        const b = bodyElem.getBoundingClientRect();
         if (b) G.Window.setContentSize(b.width, b.height);
+        // Now that the window has been resized, remove the fitToContent
+        // class so content will fill the window even if it shrinks.
+        htmlElem.classList.remove('fitToContent');
       }
     }
     window.ipc.send('did-finish-render');

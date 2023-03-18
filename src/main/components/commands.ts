@@ -20,7 +20,7 @@ import {
   moveBookmarkItems,
 } from '../../common';
 import Subscription from '../../subscription';
-import C, { SP, SPBM } from '../../constant';
+import C, { S } from '../../constant';
 import parseSwordConf from '../parseSwordConf';
 import importBookmarkObject, {
   importDeprecatedBookmarks,
@@ -47,7 +47,6 @@ import type {
   ScrollType,
   SearchType,
   VerseKeyAudioFile,
-  WindowDescriptorType,
 } from '../../type';
 import type { AboutWinState } from '../../renderer/about/about';
 import type { PrintPassageState } from '../../renderer/printPassage/printPassage';
@@ -57,13 +56,14 @@ import type { BMPropertiesStateWinArg } from '../../renderer/bmProperties/bmProp
 
 const Commands = {
   openModuleManager(): void {
-    const options: BrowserWindowConstructorOptions = {
-      title: i18n.t('menu.addNewModule'),
-    };
-    Window.openSingleton({
+    Window.open({
       type: 'moduleManager',
-      category: 'dialog-window',
-      options,
+      className: 'skin',
+      persist: true,
+      saveIfAppClosed: true,
+      options: {
+        title: i18n.t('menu.addNewModule'),
+      },
     });
   },
 
@@ -152,20 +152,21 @@ const Commands = {
   },
 
   removeModule() {
-    const options = {
-      title: i18n.t('menu.removeModule'),
-    };
-    Window.openSingleton({
+    Window.open({
       type: 'removeModule',
-      category: 'dialog-window',
-      options,
+      className: 'skin',
+      persist: true,
+      saveIfAppClosed: true,
+      options: {
+        title: i18n.t('menu.removeModule'),
+      },
     });
   },
 
   playAudio(audio: VerseKeyAudioFile | GenBookAudioFile | null) {
     let newxulsword = clone(
       Prefs.getComplexValue('xulsword')
-    ) as typeof SP.xulsword;
+    ) as typeof S.prefs.xulsword;
     if (audio) {
       if (
         'book' in audio &&
@@ -576,12 +577,16 @@ const Commands = {
     const passageWinState: Partial<PrintPassageState> = state || {
       chapters: null,
     };
-    const options: WindowDescriptorType['options'] = {
-      title: i18n.t('menu.printPassage'),
-      ...C.UI.Window.large,
+    Window.open({
+      type: 'printPassage',
+      className: 'skin',
+      persist: true,
       additionalArguments: { passageWinState },
-    };
-    Window.open({ type: 'printPassage', category: 'dialog-window', options });
+      options: {
+        title: i18n.t('menu.printPassage'),
+        ...C.UI.Window.large,
+      },
+    });
   },
 
   edit(which: string, ...args: any[]): boolean {
@@ -621,26 +626,38 @@ const Commands = {
   },
 
   search(search: SearchType): void {
-    const options: WindowDescriptorType['options'] = {
-      title: `${i18n.t('menu.search')} "${search.searchtext}"`,
-      width: 800,
-      height: 630,
+    Window.open({
+      type: 'search',
+      className: 'skin',
+      allowMultiple: true,
+      saveIfAppClosed: true,
       additionalArguments: { search },
-    };
-    Window.open({ type: 'search', category: 'window', options });
+      options: {
+        title: `${i18n.t('menu.search')} "${search.searchtext}"`,
+        width: 800,
+        height: 630,
+      },
+    });
   },
 
   searchHelp() {
-    const options = {
-      width: 800,
-      title: `${i18n.t('searchHelp.title')}`,
-    };
-    Window.open({ type: 'searchHelp', category: 'dialog-window', options });
+    Window.open({
+      type: 'searchHelp',
+      className: 'skin',
+      fitToContent: true,
+      persist: true,
+      options: {
+        width: 800,
+        title: `${i18n.t('searchHelp.title')}`,
+      },
+    });
   },
 
   copyPassage(state?: Partial<CopyPassageState>) {
     const tab = getTab();
-    const xulsword = Prefs.getComplexValue('xulsword') as typeof SP.xulsword;
+    const xulsword = Prefs.getComplexValue(
+      'xulsword'
+    ) as typeof S.prefs.xulsword;
     const vkmod = xulsword.panels.find(
       (p) => p && p in tab && tab[p].isVerseKey
     );
@@ -656,26 +673,36 @@ const Commands = {
       passage,
       ...(state || undefined),
     };
-    const options: WindowDescriptorType['options'] = {
-      title: i18n.t('menu.copyPassage'),
-      ...C.UI.Window.large,
+    Window.open({
+      type: 'copyPassage',
+      notResizable: true,
+      fitToContent: true,
+      saveIfAppClosed: true,
       additionalArguments: { copyPassageState },
-    };
-    Window.open({ type: 'copyPassage', category: 'dialog', options });
+      options: {
+        title: i18n.t('menu.copyPassage'),
+        ...C.UI.Window.large,
+      },
+    });
   },
 
   openFontsColors(module: string): void {
     let win: BrowserWindow | null =
       BrowserWindow.fromId(arguments[1] ?? -1) ||
       getBrowserWindows({ type: 'xulsword' })[0];
-    const options: WindowDescriptorType['options'] = {
-      title: i18n.t('fontsAndColors.label'),
-      parent: win || undefined,
+    Window.open({
+      type: 'chooseFont',
+      notResizable: true,
+      fitToContent: true,
+      saveIfAppClosed: true,
       additionalArguments: {
         chooseFontState: { module },
       },
-    };
-    Window.open({ type: 'chooseFont', category: 'dialog', options });
+      options: {
+        title: i18n.t('fontsAndColors.label'),
+        parent: win || undefined,
+      },
+    });
     win = null;
   },
 
@@ -704,7 +731,7 @@ const Commands = {
     }
     const r = result || clone(C.NEWMODS);
     if (importFiles && importFiles.length) {
-      const rootid = SPBM.manager.bookmarks.id;
+      const rootid = S.bookmarks.manager.bookmarks.id;
       let parentFolder: string[] = importFiles.map(() => rootid);
       if (toFolder) {
         if (typeof toFolder === 'string') {
@@ -777,13 +804,14 @@ const Commands = {
   },
 
   openBookmarksManager() {
-    const options: BrowserWindowConstructorOptions = {
-      title: i18n.t('bookmark.manager.title'),
-    };
-    Window.openSingleton({
+    Window.open({
       type: 'bmManager',
-      category: 'dialog-window',
-      options,
+      className: 'skin',
+      persist: true,
+      saveIfAppClosed: true,
+      options: {
+        title: i18n.t('bookmark.manager.title'),
+      },
     });
   },
 
@@ -813,9 +841,11 @@ const Commands = {
         bmPropertiesState);
     }
     if (!hide) hide = [];
-    const options: WindowDescriptorType['options'] = {
-      title: i18n.t(titleKey),
-      parent,
+    Window.open({
+      type: 'bmProperties',
+      allowMultiple: true,
+      notResizable: true,
+      fitToContent: true,
       additionalArguments: {
         bmPropertiesState: {
           bookmark,
@@ -825,8 +855,11 @@ const Commands = {
         },
         newitem,
       },
-    };
-    Window.open({ type: 'bmProperties', category: 'dialog', options });
+      options: {
+        title: i18n.t(titleKey),
+        parent,
+      },
+    });
     parent = undefined;
   },
 
@@ -835,7 +868,7 @@ const Commands = {
       Prefs.getComplexValue(
         'manager.bookmarks',
         'bookmarks'
-      ) as typeof SPBM.manager.bookmarks
+      ) as typeof S.bookmarks.manager.bookmarks
     );
     const items = itemIDs.map((id) => DeleteBookmarkItem(bookmarks, id));
     if (items.length && !items.some((i) => i === null)) {
@@ -857,7 +890,7 @@ const Commands = {
       Prefs.getComplexValue(
         'manager.bookmarks',
         'bookmarks'
-      ) as typeof SPBM.manager.bookmarks
+      ) as typeof S.bookmarks.manager.bookmarks
     );
     const moved = moveBookmarkItems(bookmarks, itemsOrIDs, targetID);
     if (moved.length && !moved.includes(null)) {
@@ -876,7 +909,7 @@ const Commands = {
       Prefs.getComplexValue(
         'manager.bookmarks',
         'bookmarks'
-      ) as typeof SPBM.manager.bookmarks
+      ) as typeof S.bookmarks.manager.bookmarks
     );
     const pasted = PasteBookmarkItems(bookmarks, cut, copy, targetID);
     if (pasted.length && !pasted.includes(null)) {
@@ -894,22 +927,27 @@ const Commands = {
         state.configs[0].module in tab &&
         tab[state.configs[0].module]) ||
       null;
-    const label = (t && t.label) || '';
-    const options: WindowDescriptorType['options'] = {
-      width: 510,
-      height: 425,
-      title: `${i18n.t('menu.help.about')} ${label}`,
+    Window.open({
+      type: 'about',
+      allowMultiple: true,
+      saveIfAppClosed: true,
       additionalArguments: { aboutWinState: state || {} },
-    };
-    Window.open({ type: 'about', category: 'dialog-window', options });
+      options: {
+        width: 510,
+        height: 425,
+        title: `${i18n.t('menu.help.about')} ${(t && t.label) || ''}`,
+      },
+    });
   },
 
   goToLocationGB(
     location: LocationGBType,
     scroll?: ScrollType | undefined,
     deferAction?: boolean
-  ): typeof SP.xulsword {
-    const xulsword = Prefs.getComplexValue('xulsword') as typeof SP.xulsword;
+  ): typeof S.prefs.xulsword {
+    const xulsword = Prefs.getComplexValue(
+      'xulsword'
+    ) as typeof S.prefs.xulsword;
     const newxulsword = clone(xulsword);
     const { panels, keys } = newxulsword;
     let p = panels.findIndex((m) => m && m === location.module);
@@ -928,12 +966,12 @@ const Commands = {
     newselection?: LocationVKType,
     newscroll?: ScrollType,
     deferAction?: boolean
-  ): typeof SP.xulsword {
+  ): typeof S.prefs.xulsword {
     // To go to a verse system location without also changing xulsword's current
     // versekey module requires this location be converted into the current v11n.
     const xulsword = clone(
       Prefs.getComplexValue('xulsword')
-    ) as typeof SP.xulsword;
+    ) as typeof S.prefs.xulsword;
     const { location } = xulsword;
     const loc = verseKey(newlocation, location?.v11n || undefined);
     const sel = newselection

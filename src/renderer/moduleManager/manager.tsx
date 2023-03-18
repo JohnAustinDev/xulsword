@@ -25,7 +25,7 @@ import {
   repositoryModuleKey,
   stringHash,
 } from '../../common';
-import C, { SP } from '../../constant';
+import C, { S } from '../../constant';
 import G from '../rg';
 import log from '../log';
 import { getStatePref, getLangReadable, setStatePref } from '../rutil';
@@ -114,7 +114,9 @@ const notStatePref = {
   internetPermission: false as boolean,
 };
 
-export type ManagerStatePref = typeof SP.moduleManager | typeof SP.removeModule;
+export type ManagerStatePref =
+  | typeof S.prefs.moduleManager
+  | typeof S.prefs.removeModule;
 
 export type ManagerState = ManagerStatePref &
   typeof notStatePref &
@@ -181,7 +183,7 @@ export default class ModuleManager
     const s: ManagerState = {
       ...modinfoParentInitialState,
       ...notStatePref,
-      ...getStatePref(id, SP[id]),
+      ...(getStatePref('prefs', id) as ManagerStatePref),
     };
     s.tables.language.data = H.Saved.language.data;
     s.tables.module.data = H.Saved.module.data;
@@ -248,8 +250,7 @@ export default class ModuleManager
     const props = this.props as ManagerProps;
     const state = this.state as ManagerState;
     const { id } = props;
-    setStatePref(id, prevState, state, Object.keys(SP[id]));
-    // this.destroy.push(registerUpdateStateFromPref(id, this, SP[id]));
+    setStatePref('prefs', id, prevState, state);
   }
 
   componentWillUnmount() {
@@ -923,17 +924,12 @@ export default class ModuleManager
               </>
             )}
             {!language.open && (
-              <Groupbox caption=" " orient="vertical">
-                <Vbox flex="1">
-                  <Button
-                    id="languageListOpen"
-                    icon="chevron-right"
-                    fill="y"
-                    style={{ height: '100%' }}
-                    onClick={eventHandler}
-                  />
-                </Vbox>
-              </Groupbox>
+              <Button
+                id="languageListOpen"
+                icon="chevron-right"
+                fill="y"
+                onClick={eventHandler}
+              />
             )}
 
             <Groupbox

@@ -25,7 +25,8 @@ import {
 } from '../popup/popupParentH';
 import G from '../rg';
 import log from '../log';
-import { clearPending, verseKey } from '../rutil';
+import { verseKey } from '../htmlData';
+import { clearPending } from '../rutil';
 import {
   addClass,
   xulDefaultProps,
@@ -369,7 +370,7 @@ class Viewport extends React.Component implements PopupParent {
 
     return (
       <Hbox
-        {...addClass(`viewport ${cls}`, props)}
+        {...addClass(`viewport skin ${cls}`, props)}
         style={{ minWidth: `${minWidth}px` }}
         {...topHandle('onClick', eHandler)}
       >

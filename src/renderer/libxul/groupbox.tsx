@@ -29,31 +29,17 @@ type GroupboxProps = XulProps & {
 
 function Groupbox(props: GroupboxProps) {
   const { caption, image } = props;
-  // Pass these properties on to groubox-body, rather than groupbox (values are meaningless).
-  const pass: Partial<GroupboxProps> = {
-    orient: 'horizontal',
-    pack: 'center',
-  };
+  // These props should be passed to the groupbox body
+  const passToBody = ['align', 'orient', 'pack'] as const;
   return (
-    <Vbox
-      {...drop(
-        addClass('groupbox', props),
-        Object.keys(pass) as (keyof GroupboxProps)[]
-      )}
-    >
+    <Vbox {...drop(addClass('groupbox', props), passToBody)}>
       {caption && (
         <Hbox className="groupbox-title" align="start" pack="start">
           <Image className="caption-icon" src={image} />
           <Label className="caption-text" flex="1" value={caption} />
         </Hbox>
       )}
-      <Box
-        {...addClass(
-          'groupbox-body',
-          keep(props, Object.keys(pass) as (keyof GroupboxProps)[])
-        )}
-        flex="1"
-      >
+      <Box {...addClass('groupbox-body', keep(props, passToBody))} flex="1">
         {props.children}
       </Box>
     </Vbox>

@@ -2,7 +2,7 @@
 /* eslint-disable no-nested-ternary */
 /* eslint-disable no-bitwise */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import C from './constant';
+import C, { S } from './constant';
 import Cache from './cache';
 
 import type { Region } from '@blueprintjs/table';
@@ -30,6 +30,7 @@ import type {
   BookmarkType,
   NewModulesType,
   BookmarkTreeNode,
+  PrefStoreType,
 } from './type';
 import type { TreeNodeInfo } from '@blueprintjs/core';
 import type { SelectVKMType } from './renderer/libxul/vkselect';
@@ -157,17 +158,28 @@ export function deepClone<T>(obj: T): T {
 
 // Copy a data object. Data objects have string keys with values that are
 // either primitives, arrays or other data objects.
-export function clone<T>(obj: T): T {
+export function clone<T>(obj: T, ancestors: any[] = []): T {
+  const anc = ancestors.slice();
   let copy: any;
   if (obj === null || typeof obj !== 'object') copy = obj;
   else if (Array.isArray(obj)) {
     copy = [];
-    obj.forEach((p) => copy.push(clone(p)));
+    anc.push(obj);
+    obj.forEach((p) => copy.push(clone(p, anc)));
   } else {
     copy = {};
     const o = obj as any;
+    if (anc.includes(o)) {
+      anc.push(o);
+      throw new Error(
+        `Clone reference to ancestor loop: ${anc
+          .map((a) => JSON_stringify(a, 1))
+          .join('\n')}`
+      );
+    }
+    anc.push(o);
     Object.entries(o).forEach((entry) => {
-      copy[entry[0]] = clone(entry[1]);
+      copy[entry[0]] = clone(entry[1], anc);
     });
   }
   return copy as T;
@@ -207,7 +219,7 @@ export function drop<T extends { [key: string]: any }>(
 // with existing state, meaning a partial state object would overwrite a complete one,
 // resulting in unexpected states.
 export function diff<T>(pv1: any, pv2: T, depth = 1): Partial<T> | undefined {
-  let difference: any;
+  let difference: Partial<T> | undefined;
   // Primatives
   if (
     pv1 === null ||
@@ -227,6 +239,8 @@ export function diff<T>(pv1: any, pv2: T, depth = 1): Partial<T> | undefined {
     ) {
       difference = pv2;
     }
+  } else if (Object.keys(pv2).length === 0) {
+    if (Object.keys(pv1).length !== 0) difference = {};
   } else {
     // Data objects
     const obj1 = pv1 as PrefObject;
@@ -235,12 +249,12 @@ export function diff<T>(pv1: any, pv2: T, depth = 1): Partial<T> | undefined {
       const [k2, v2] = entry2;
       if (!(k2 in obj1)) {
         if (!difference) difference = {};
-        difference[k2] = v2;
+        (difference as any)[k2] = v2;
       } else {
         const diff2 = diff(obj1[k2], v2, depth - 1);
         if (diff2 !== undefined) {
           if (!difference) difference = {};
-          difference[k2] = diff2;
+          (difference as any)[k2] = diff2;
         }
       }
     });
@@ -248,10 +262,10 @@ export function diff<T>(pv1: any, pv2: T, depth = 1): Partial<T> | undefined {
       Object.keys(obj1).forEach((k1) => {
         if (!(k1 in obj2) && !difference) difference = {};
       });
-      if (difference) difference = obj2;
+      if (difference) difference = obj2 as T;
     }
   }
-  return difference as Partial<T> | undefined;
+  return difference;
 }
 
 export function prefType(
@@ -264,19 +278,21 @@ export function prefType(
     : 'complex';
 }
 
-// Return and persist the key/value pairs of component state Prefs. Component
+// Return values of key/value pairs of component state Prefs. Component
 // state Prefs are permanently persisted component state values recorded in
 // a json preference file whose key begins with a component id.
-export function getStatePref<P extends PrefObject>(
+export function getStatePref(
   prefs: GType['Prefs'],
+  store: PrefStoreType,
   id: string,
-  defaultPrefs: P,
-  store?: string
-): P {
-  const state = {} as P;
-  Object.entries(defaultPrefs).forEach((entry) => {
+  defaultPrefs?: PrefObject // default is all
+): PrefObject {
+  const state = {} as PrefObject;
+  Object.entries(
+    defaultPrefs || S[store][id as keyof typeof S[PrefStoreType]]
+  ).forEach((entry) => {
     const [key, value] = entry;
-    state[key as keyof P] = clone(
+    state[key] = clone(
       prefs.getPrefOrCreate(
         `${id}.${String(key)}`,
         prefType(value),
@@ -285,7 +301,7 @@ export function getStatePref<P extends PrefObject>(
       )
     ) as any;
   });
-  return state as P;
+  return state;
 }
 
 // Decode an osisRef that was encoded using _(\d+)_ encoding, where

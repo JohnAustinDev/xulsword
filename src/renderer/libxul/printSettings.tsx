@@ -12,7 +12,7 @@ import PropTypes from 'prop-types';
 import { Icon, Intent, Position, Toaster } from '@blueprintjs/core';
 import Subscription from '../../subscription';
 import { clone } from '../../common';
-import { SP } from '../../constant';
+import { S } from '../../constant';
 import G from '../rg';
 import { getStatePref, setStatePref } from '../rutil';
 import { Hbox, Vbox } from './boxes';
@@ -72,7 +72,7 @@ type PrintProps = XulProps & {
 
 const notStatePref = {};
 
-export type PrintState = typeof SP.print & typeof notStatePref;
+export type PrintState = typeof S.prefs.print & typeof notStatePref;
 
 export default class PrintSettings extends React.Component {
   static defaultProps: typeof defaultProps;
@@ -105,7 +105,7 @@ export default class PrintSettings extends React.Component {
     super(props);
 
     const s: PrintState = {
-      ...getStatePref('print', SP.print),
+      ...(getStatePref('prefs', 'print') as typeof S.prefs.print),
     };
     this.state = s;
 
@@ -127,7 +127,7 @@ export default class PrintSettings extends React.Component {
   }
 
   componentDidUpdate(_prevProps: PrintProps, prevState: PrintState) {
-    setStatePref('print', prevState, this.state, Object.keys(SP.print));
+    setStatePref('prefs', 'print', prevState, this.state);
   }
 
   async handler(e: React.SyntheticEvent<any, any>) {

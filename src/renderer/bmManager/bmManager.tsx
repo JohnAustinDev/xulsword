@@ -6,16 +6,19 @@ import React from 'react';
 import { Suggest2 } from '@blueprintjs/select';
 import {
   diff,
-  getStatePref,
   keep,
   randomID,
   stringHash,
   tableRowsToSelection,
 } from '../../common';
-import { SPBM } from '../../constant';
+import { S } from '../../constant';
 import G from '../rg';
 import renderToRoot from '../renderer';
-import { registerUpdateStateFromPref, setStatePref } from '../rutil';
+import {
+  registerUpdateStateFromPref,
+  setStatePref,
+  getStatePref,
+} from '../rutil';
 import { bookmarkTreeNodes } from '../bookmarks';
 import Table from '../libxul/table';
 import DragSizer, { DragSizerVal } from '../libxul/dragsizer';
@@ -50,7 +53,8 @@ const defaultNotStatePref = {
   reset: '' as string,
 };
 
-export type BMManagerState = typeof SPBM.manager & typeof defaultNotStatePref;
+export type BMManagerState = typeof S.bookmarks.manager &
+  typeof defaultNotStatePref;
 
 export default class BMManagerWin extends React.Component {
   static defaultProps: typeof defaultProps;
@@ -80,7 +84,10 @@ export default class BMManagerWin extends React.Component {
 
     const state: BMManagerState = {
       ...defaultNotStatePref,
-      ...getStatePref(G.Prefs, 'manager', SPBM.manager, 'bookmarks'),
+      ...(getStatePref(
+        'bookmarks',
+        'manager'
+      ) as typeof S.bookmarks.manager),
     };
     this.state = state;
 
@@ -97,18 +104,12 @@ export default class BMManagerWin extends React.Component {
   }
 
   componentDidMount() {
-    registerUpdateStateFromPref('manager', this, SPBM.manager, 'bookmarks');
+    registerUpdateStateFromPref('bookmarks', 'manager', this);
   }
 
   componentDidUpdate(_prevProps: BMManagerProps, prevState: BMManagerState) {
     const state = this.state as BMManagerState;
-    setStatePref(
-      'manager',
-      prevState,
-      state,
-      Object.keys(SPBM.manager),
-      'bookmarks'
-    );
+    setStatePref('bookmarks', 'manager', prevState, state);
     if (diff(prevState, keep(state, ['bookmarks', 'cut', 'copy']))) {
       const s: Partial<BMManagerState> = { reset: randomID() };
       this.setState(s);
@@ -133,9 +134,10 @@ export default class BMManagerWin extends React.Component {
     const folders = bookmarkTreeNodes(
       bookmarks.childNodes,
       'folder',
-      selectedFolder || SPBM.manager.bookmarks.id
+      selectedFolder || S.bookmarks.manager.bookmarks.id
     );
 
+    // TODO!: Add print feature
     const data = this.tableData();
 
     const selectedRegions = tableRowsToSelection(
@@ -260,7 +262,7 @@ export default class BMManagerWin extends React.Component {
             <TreeView
               key={reset}
               initialState={folders}
-              selectedIDs={[selectedFolder || SPBM.manager.bookmarks.id]}
+              selectedIDs={[selectedFolder || S.bookmarks.manager.bookmarks.id]}
               enableMultipleSelection={false}
               onSelection={this.onFolderSelection}
             />

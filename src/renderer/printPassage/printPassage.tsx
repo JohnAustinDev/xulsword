@@ -11,7 +11,7 @@ import ReactDOM from 'react-dom';
 import { ProgressBar } from '@blueprintjs/core';
 import Subscription from '../../subscription';
 import { diff, sanitizeHTML, stringHash, querablePromise } from '../../common';
-import { SP } from '../../constant';
+import { S } from '../../constant';
 import G from '../rg';
 import renderToRoot from '../renderer';
 import { windowArguments, getStatePref, setStatePref } from '../rutil';
@@ -75,7 +75,7 @@ let openedWinState = windowArguments(
   'passageWinState'
 ) as Partial<PrintPassageState> | null;
 
-export type PrintPassageState = typeof SP.printPassage &
+export type PrintPassageState = typeof S.prefs.printPassage &
   typeof notStatePrefDefault;
 
 export default class PrintPassageWin extends React.Component {
@@ -98,7 +98,10 @@ export default class PrintPassageWin extends React.Component {
 
     const s: PrintPassageState = {
       ...notStatePrefDefault,
-      ...getStatePref('printPassage', SP.printPassage),
+      ...(getStatePref(
+        'prefs',
+        'printPassage'
+      ) as typeof S.prefs.printPassage),
       ...(openedWinState || {}),
     };
     openedWinState = {};
@@ -107,7 +110,7 @@ export default class PrintPassageWin extends React.Component {
 
     // Without the next save, prefs would somehow overwrite state
     // before first render!
-    setStatePref('printPassage', null, s, Object.keys(SP.printPassage));
+    setStatePref('prefs', 'printPassage', null, s);
 
     this.renderPromises = [];
 
@@ -121,7 +124,7 @@ export default class PrintPassageWin extends React.Component {
 
   componentDidMount() {
     const state = this.state as PrintPassageState;
-    setStatePref('printPassage', null, state, Object.keys(SP.printPassage));
+    setStatePref('prefs', 'printPassage', null, state);
     this.forceUpdate(); // for portal DOM target
   }
 
@@ -139,12 +142,7 @@ export default class PrintPassageWin extends React.Component {
     if (diff(chapters, valid)) {
       this.setState({ chapters: valid });
     } else if (tdiv) {
-      setStatePref(
-        'printPassage',
-        prevState,
-        state,
-        Object.keys(SP.printPassage)
-      );
+      setStatePref('prefs', 'printPassage', prevState, state);
       this.placePagingButtons();
       const { checkbox } = state;
       if (!chapters) return;

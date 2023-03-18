@@ -2,6 +2,6 @@
   display: none;
 }
 
-.gbselect select {
-  margin: 5px;
+.gbselect .menulist + .menulist {
+  margin-top: 0;
 }

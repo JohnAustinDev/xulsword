@@ -8,12 +8,12 @@ import React from 'react';
 import { Icon } from '@blueprintjs/core';
 import Subscription from '../../subscription';
 import { dString, clone } from '../../common';
-import C, { SP } from '../../constant';
+import C, { S } from '../../constant';
 import G from '../rg';
 import renderToRoot from '../renderer';
 import log from '../log';
+import { verseKey } from '../htmlData';
 import {
-  verseKey,
   registerUpdateStateFromPref,
   getStatePref,
   clearPending,
@@ -60,7 +60,8 @@ const notStatePrefDefault = {
   searchDisabled: true,
 };
 
-export type XulswordState = typeof notStatePrefDefault & typeof SP.xulsword;
+export type XulswordState = typeof notStatePrefDefault &
+  typeof S.prefs.xulsword;
 
 export default class Xulsword extends React.Component {
   static defaultProps: typeof defaultProps;
@@ -88,7 +89,7 @@ export default class Xulsword extends React.Component {
 
     const s: XulswordState = {
       ...notStatePrefDefault,
-      ...getStatePref('xulsword', SP.xulsword),
+      ...(getStatePref('prefs', 'xulsword') as typeof S.prefs.xulsword),
     };
     this.state = s;
 
@@ -106,9 +107,7 @@ export default class Xulsword extends React.Component {
   }
 
   componentDidMount() {
-    this.destroy.push(
-      registerUpdateStateFromPref('xulsword', this, SP.xulsword)
-    );
+    this.destroy.push(registerUpdateStateFromPref('prefs', 'xulsword', this));
     this.destroy.push(
       Subscription.subscribe.modulesInstalled(showNewModules.bind(this))
     );
@@ -120,7 +119,7 @@ export default class Xulsword extends React.Component {
     if (!scroll?.skipWindowUpdate) {
       const statex = clone(state);
       if (statex.scroll?.skipTextUpdate) delete statex.scroll.skipTextUpdate;
-      setStatePref('xulsword', prevState, statex, Object.keys(SP.xulsword));
+      setStatePref('prefs', 'xulsword', prevState, statex);
       // Add page to history after a short delay
       const { location } = state;
       if (location) {
@@ -325,7 +324,7 @@ export default class Xulsword extends React.Component {
         height="100%"
         {...topHandle('onClick', () => closeMenupopups(this), props)}
       >
-        <Hbox id="main-controlbar" pack="start" className="controlbar">
+        <Hbox id="main-controlbar" pack="start" className="controlbar skin">
           <Spacer className="start-spacer" orient="vertical" />
 
           <Vbox id="navigator-tool" pack="start">

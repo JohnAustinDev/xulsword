@@ -6,14 +6,13 @@
 import React from 'react';
 import {
   clone,
-  deleteBookmarkItem,
   findBookmarkItem,
   findParentOfBookmarkItem,
   moveBookmarkItems,
   randomID,
   replaceBookmarkItem,
 } from '../../common';
-import C, { SPBM } from '../../constant';
+import C, { S } from '../../constant';
 import G from '../rg';
 import renderToRoot from '../renderer';
 import { windowArguments } from '../rutil';
@@ -77,7 +76,7 @@ const bmdefault: BookmarkType = {
 
 const defaultState: BMPropertiesState = {
   bookmark: bmdefault,
-  treeSelection: SPBM.manager.bookmarks.id,
+  treeSelection: S.bookmarks.manager.bookmarks.id,
   anyChildSelectable: true,
   hide: [],
 };
@@ -165,7 +164,7 @@ export default class BMPropertiesWin extends React.Component {
     }
     if (updateState) {
       this.setState({
-        treeSelection: treeSelection || SPBM.manager.bookmarks.id,
+        treeSelection: treeSelection || S.bookmarks.manager.bookmarks.id,
         bookmark,
       });
     }
@@ -282,7 +281,7 @@ export default class BMPropertiesWin extends React.Component {
     );
 
     return (
-      <Vbox className="bmProperties">
+      <Vbox className="bmproperties">
         <Grid>
           <Columns>
             <Column width="min-content" />

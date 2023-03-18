@@ -5,10 +5,10 @@
 import log from 'electron-log';
 import path from 'path';
 import i18next from 'i18next';
-import { app, BrowserWindow } from 'electron';
-import { randomID } from '../../common';
+import { app, BrowserWindow, BrowserWindowConstructorOptions } from 'electron';
+import { drop, keep, randomID } from '../../common';
 import Cache from '../../cache';
-import C from '../../constant';
+import C, { S } from '../../constant';
 import Subscription from '../../subscription';
 import type contextMenu from '../contextMenu';
 import Dirs from './dirs';
@@ -25,6 +25,7 @@ import type {
   ModalType,
   PrefValue,
   PrefObject,
+  WindowDescriptorPrefType,
 } from '../../type';
 import type { SubscriptionType } from '../../subscription';
 
@@ -45,30 +46,12 @@ if (process.env.NODE_ENV === 'development') {
 
 // Since webPreferences.additionalArguments are string arguments with limited (and
 // unspecified) maximum length, and since surpassing this limit causes segmentation
-// faults, Data is used to pass arbitrary window arguments.
-export function windowArguments(obj: { [k: string]: PrefValue }): string[] {
+// faults, Data is used to pass arbitrary window arguments, as well as the window
+// descriptor.
+export function windowArguments(obj: WindowDescriptorType): string[] {
   const dataID = randomID();
-  Data.write(obj, dataID);
+  Data.write(descriptorToPref(obj), dataID);
   return [dataID];
-}
-
-// WindowRegistry value for a window will be null after window is closed.
-export const WindowRegistry: WindowRegistryType = [];
-function addWindowToRegistry(winid: number, descriptor: WindowDescriptorType) {
-  let win = BrowserWindow.fromId(winid);
-  if (win) {
-    descriptor.id = winid;
-    WindowRegistry[winid] = descriptor;
-    win.once(
-      'closed',
-      ((id: number) => {
-        return () => {
-          WindowRegistry[id] = null;
-        };
-      })(winid)
-    );
-  }
-  win = null;
 }
 
 // Return a list of BrowserWindow objects matching winargs. If winargs
@@ -149,116 +132,105 @@ function windowBounds(winid: number) {
       height: c.height,
       x: w.x,
       y: w.y + yAdj,
-      wLeft: c.x - w.x, // width of left window border
-      hTop: c.y - w.y, // width of top window border
+      windowFrameThicknessLeft: c.x - w.x,
+      windowFrameThicknessTop: c.y - w.y,
     };
   }
   return null;
 }
 
-function persist(
-  argname: string,
-  value: PrefValue,
-  merge: boolean,
-  callingWinID: number
-) {
-  const pref = Prefs.getComplexValue(
-    `OpenWindows.w${callingWinID}`,
-    'windows'
-  ) as WindowDescriptorType;
-  const winargs = pref?.options?.additionalArguments || {};
-  if (merge) {
-    if (
-      !['undefined', 'object'].includes(typeof value) ||
-      Array.isArray(value)
-    ) {
-      throw Error(`Window: merge value is not a data object: ${value}`);
-    }
-    const v = value as PrefObject | undefined;
-    const origval = winargs[argname];
-    if (
-      !['undefined', 'object'].includes(typeof origval) ||
-      Array.isArray(origval)
-    ) {
-      throw Error(`Window: merge target is not a data object: ${origval}`);
-    }
-    const ov = origval as PrefObject | undefined;
-    winargs[argname] = { ...ov, ...v };
-  } else winargs[argname] = value;
-  if (!('options' in pref) || !pref.options) pref.options = {};
-  pref.options.additionalArguments = winargs;
-  Prefs.setComplexValue(`OpenWindows.w${callingWinID}`, pref, 'windows');
+function descriptorToPref(
+  descriptor: WindowDescriptorType
+): WindowDescriptorPrefType {
+  // Remove this intentional circular reference.
+  if (descriptor.additionalArguments?.descriptor) {
+    delete descriptor.additionalArguments.descriptor;
+  }
+  const strip: (keyof BrowserWindowConstructorOptions)[] = [
+    'parent',
+    'icon',
+    'trafficLightPosition',
+    'webPreferences',
+    'titleBarOverlay',
+  ];
+  const { options: o } = descriptor;
+  return {
+    ...descriptor,
+    options: (o && drop(o, strip)) || undefined,
+  };
 }
 
-function addWindowToPrefs(winid: number, descriptor: WindowDescriptorType) {
-  // Remove any parent or there will be JSON recursion problems
-  if (descriptor.options && 'parent' in descriptor.options)
-    delete descriptor.options.parent;
-  Prefs.setComplexValue(`OpenWindows.w${winid}`, descriptor, 'windows');
-  function updateBounds() {
-    const args = Prefs.getComplexValue(
-      `OpenWindows.w${winid}`,
+// Set window preferences for on open window, by adding them to, or modifying them
+// in, the window's additionalArguments.
+function setWindowPref(
+  key: string,
+  value: PrefValue,
+  merge: boolean,
+  windowID: number
+) {
+  const descriptor = WindowRegistry[windowID];
+  if (descriptor) {
+    const prefs = Prefs.getComplexValue(
+      'OpenWindows',
       'windows'
-    ) as WindowDescriptorType;
-    const b = windowBounds(winid);
-    args.options = { ...args.options, ...b };
-    Prefs.setComplexValue(`OpenWindows.w${winid}`, args, 'windows');
-  }
-  const win = BrowserWindow.fromId(winid);
-  if (win) {
-    win.on('resize', () => {
-      updateBounds();
-    });
-    win.on('move', () => {
-      updateBounds();
-    });
-    win.once(
-      'closed',
-      ((id: number) => {
-        return () => {
-          if (C.UI.Window.persistentTypes.includes(descriptor.type || '')) {
-            Prefs.setComplexValue(
-              `PersistentTypes.${descriptor.type}`,
-              Prefs.getComplexValue(`OpenWindows.w${id}`, 'windows'),
-              'windows'
-            );
-          }
-          Prefs.deleteUserPref(`OpenWindows.w${id}`, 'windows');
-        };
-      })(winid)
-    );
+    ) as typeof S.windows.OpenWindows;
+    const pk = `w${windowID}`;
+    if (!(pk in prefs)) prefs[pk] = descriptorToPref(descriptor);
+    const additionalArguments = prefs[pk].additionalArguments || {};
+    if (merge) {
+      if (
+        !['undefined', 'object'].includes(typeof value) ||
+        Array.isArray(value)
+      ) {
+        throw Error(`Window: merge value is not a data object: ${value}`);
+      }
+      const v = value as PrefObject | undefined;
+      const origval = additionalArguments[key];
+      if (
+        !['undefined', 'object'].includes(typeof origval) ||
+        Array.isArray(origval)
+      ) {
+        throw Error(`Window: merge target is not a data object: ${origval}`);
+      }
+      const ov = origval as PrefObject | undefined;
+      additionalArguments[key] = { ...ov, ...v };
+    } else additionalArguments[key] = value;
+    prefs[pk].additionalArguments = additionalArguments;
   }
 }
 
 // All Windows are created with BrowserWindow.show = false so they
 // will not be shown until the custom 'did-finish-render' event.
-// This function modifies descriptor.options in place.
+// NOTE: This function modifies descriptor.options in place.
 function updateOptions(
   descriptor: WindowDescriptorType,
   sizeToWinID: number
 ): void {
-  let persistentTypesOptions: Electron.BrowserWindowConstructorOptions = {};
+  let persisted: WindowDescriptorType | undefined;
   if (
-    C.UI.Window.persistentTypes.includes(descriptor.type || '') &&
-    Prefs.has(
-      `PersistentTypes.${descriptor.type}.options`,
-      'complex',
-      'windows'
-    )
+    descriptor.persist &&
+    Prefs.has(`PersistForType.${descriptor.type}`, 'complex', 'windows')
   ) {
-    persistentTypesOptions = Prefs.getComplexValue(
-      `PersistentTypes.${descriptor.type}.options`,
+    persisted = Prefs.getComplexValue(
+      `PersistForType.${descriptor.type}`,
       'windows'
-    ) as Electron.BrowserWindowConstructorOptions;
+    ) as WindowDescriptorType;
   }
-  descriptor.options = {
-    ...(persistentTypesOptions || {}),
-    ...(descriptor.options || {}),
-  };
-  const { type, category } = descriptor;
+  if (persisted) {
+    Object.entries(persisted).forEach((entry) => {
+      const [key, val] = entry;
+      (descriptor as any)[key] = val;
+    });
+    let o: BrowserWindowConstructorOptions = {};
+    if (persisted.options) ({ options: o } = persisted);
+    descriptor.options = {
+      ...(descriptor.options || {}),
+      ...o,
+    };
+  }
   let { options } = descriptor;
   options = options || {};
-  descriptor.category = category || 'window';
+  const { fitToContent, openWithBounds, notResizable, persist } = descriptor;
 
   // All windows must have these same options.
   options.show = false;
@@ -272,81 +244,30 @@ function updateOptions(
   options.webPreferences.nodeIntegration = false;
   options.webPreferences.webSecurity = true;
 
-  // All windows must have these additional arguments.
-  const winargs = options.additionalArguments || {};
-  winargs.classes = [type, category];
-  winargs.name = type;
-  winargs.type = category;
-  options.webPreferences.additionalArguments = windowArguments(winargs);
+  options.resizable = !notResizable;
 
-  // Dialog windows have these defaults (while regular windows and dialog-
-  // windows just have Electron defaults).
-  if (category === 'dialog') {
-    const ddef: Electron.BrowserWindowConstructorOptions = {
-      width: 50, // dialogs are auto-resized and then fixed
-      height: 50, // dialogs are auto-resized and then fixed
-      resizable: false,
-      fullscreenable: false,
-      // skipTaskbar: true,
-    };
-    Object.entries(ddef).forEach((entry) => {
-      const [pro, val] = entry;
-      if (options && !(pro in options)) {
-        const o = options as any;
-        o[pro] = val;
-      }
-    });
+  const cancelFitToContent = !notResizable && persist && persisted;
+  if (cancelFitToContent) descriptor.fitToContent = false;
+  if (fitToContent && !cancelFitToContent) {
+    // These windows are up-sized to their content once loaded.
+    options.width = 50;
+    options.height = 50;
   }
+
   // Set bounds for windows that should cover their source position
   // within the parent window.
-  if (sizeToWinID !== -1 && (type === 'viewportWin' || type === 'popupWin')) {
+  if (openWithBounds && sizeToWinID !== -1) {
     const xs = windowBounds(sizeToWinID);
-    const o = options as any;
-    const eb = o?.openWithBounds;
-    if (xs && eb) {
-      options.width = eb.width;
-      options.height = eb.height;
-      options.x = xs.x + eb.x + xs.wLeft;
-      options.y = xs.y + eb.y + xs.hTop;
+    if (xs) {
+      options.width = openWithBounds.width;
+      options.height = openWithBounds.height;
+      options.x = xs.x + openWithBounds.x + xs.windowFrameThicknessLeft;
+      options.y = xs.y + openWithBounds.y + xs.windowFrameThicknessTop;
     }
-    if (o?.openWithBounds) delete o.openWithBounds;
   }
-}
 
-function createWindow(
-  descriptor: WindowDescriptorType,
-  sizeToWinID?: number
-): number {
-  updateOptions(descriptor, sizeToWinID ?? -1);
-  const { type, options } = descriptor;
-  log.silly('Window options:', options);
-  const win = new BrowserWindow(options);
-  // Remove any parent or there will be JSON recursion problems
-  if (descriptor.options && 'parent' in descriptor.options)
-    delete descriptor.options.parent;
-  addWindowToRegistry(win.id, descriptor);
-  if (C.DevToolsopen) win.webContents.openDevTools({ mode: 'detach' });
-  win.loadURL(resolveHtmlPath(`${type}.html`));
-  if (type !== 'xulsword') win.removeMenu();
-  win.on('resize', () => {
-    win.webContents.send('resize', win.getSize());
-  });
-  const disposables: (() => void)[] = [];
-  win.once(
-    'ready-to-show',
-    ((w, d) => () => {
-      Subscription.publish.windowCreated(
-        ...([w, d] as Parameters<typeof contextMenu>)
-      );
-    })(win, disposables)
-  );
-  win.once('close', () => {
-    win.webContents.send('close');
-  });
-  win.once('closed', () => {
-    disposables.forEach((dispose) => dispose());
-  });
-  return win.id;
+  // All windows have their descriptor available through window arguments.
+  options.webPreferences.additionalArguments = windowArguments(descriptor);
 }
 
 // Push user preference changes from the winid focused window, or from the main
@@ -355,14 +276,13 @@ function createWindow(
 // or dynamic stylesheet.
 export const pushPrefsToWindows: PrefCallbackType = (
   winid,
-  key, // ie. global or xulsword.panels
-  val,
-  storex
+  store,
+  idOrKey, // ie. global or xulsword.panels
+  val
 ) => {
-  const store = storex || 'prefs';
   let pushKeyProps: string[] = [];
   if (winid === -1 || winid === BrowserWindow.getFocusedWindow()?.id) {
-    if (store === 'prefs' && key === 'global.locale') {
+    if (store === 'prefs' && idOrKey === 'global.locale') {
       const lng = Prefs.getCharPref('global.locale');
       i18next
         .loadLanguages(lng)
@@ -375,36 +295,30 @@ export const pushPrefsToWindows: PrefCallbackType = (
         .catch((err: any) => {
           if (err) throw Error(err);
         });
-    } else if (store === 'prefs' && key === 'global.fontSize') {
+    } else if (store === 'prefs' && idOrKey === 'global.fontSize') {
       Window.reset('dynamic-stylesheet-reset', 'all');
     } else {
       // Get a (key.property)[] of changed keyprops requesting to be pushed.
       const keyprops: string[] =
-        !key.includes('.') && val && typeof val === 'object'
+        !idOrKey.includes('.') && val && typeof val === 'object'
           ? Object.keys(val).map((k) => {
-              return [key, k].join('.');
+              return [idOrKey, k].join('.');
             })
-          : [key];
+          : [idOrKey];
 
       // Collect a list of keyprops that are allowed to be pushed.
       // Note: menuPref is auto-generated during menu build as (key.property)[]
       const allowed: string[] = [];
       if (store === 'prefs') {
-        allowed.push('xulsword.keys');
         if (Data.has('menuPref')) {
           allowed.push(...(Data.read('menuPref') as string[]));
         }
       }
-      Object.entries(C.SyncPrefs).forEach((entry) => {
-        const [astore, syncprefs] = entry;
-        if (astore === store) {
-          Object.entries(syncprefs).forEach((e) => {
-            const [id, proparray] = e;
-            proparray.forEach((prop: string) => {
-              allowed.push([id, prop].join('.'));
-            });
-          });
-        }
+      Object.entries(S[store]).forEach((e) => {
+        const [id, props] = e;
+        Object.keys(props).forEach((prop: string) => {
+          allowed.push([id, prop].join('.'));
+        });
       });
 
       // Get the list of keyprops that will be pushed.
@@ -445,59 +359,119 @@ export function publishSubscription<
   });
 }
 
-const Window = {
-  // Returns the WindowDescriptorType for the calling window.
-  description() {
-    let win: BrowserWindow | null = getBrowserWindows(null, arguments[0])[0];
-    const ret = win ? WindowRegistry[win.id] || {} : {};
-    win = null;
-    return ret;
-  },
+// Update window bounds after a delay. The delay is required since events
+// such as maximize are emmitted before the window size has finished changing.
+let UBTO: NodeJS.Timeout | null = null;
+function updateBounds(winid: number) {
+  if (UBTO) clearTimeout(UBTO);
+  UBTO = setTimeout(() => {
+    if (Prefs.has(`OpenWindows.w${winid}`, 'complex', 'windows')) {
+      let desc = Prefs.getComplexValue(
+        `OpenWindows.w${winid}`,
+        'windows'
+      ) as WindowDescriptorPrefType;
+      const b = windowBounds(winid);
+      if (b) {
+        const { x, y, width, height } = b;
+        desc.options = { ...desc.options, x, y, width, height };
+        desc = descriptorToPref(desc);
+        Prefs.setComplexValue(`OpenWindows.w${winid}`, desc, 'windows');
+      }
+      if (desc.persist && desc.options) {
+        let { options: o } = desc;
+        o = keep(o, ['width', 'height', 'x', 'y']);
+        Prefs.setComplexValue(
+          `PersistForType.${desc.type}`,
+          { options: o },
+          'windows'
+        );
+      }
+    }
+  }, 500);
+}
 
-  // Returns the WindowDescriptorTypes for the given window(s).
-  descriptions(window?: WindowArgType) {
-    const wins: WindowDescriptorType[] = [];
+export const WindowRegistry: WindowRegistryType = [];
+
+const Window = {
+  // Returns the WindowDescriptorPrefTypes for the given window(s).
+  descriptions(window?: WindowArgType): WindowDescriptorPrefType[] {
+    const wins: WindowDescriptorPrefType[] = [];
     getBrowserWindows(window, arguments[1]).forEach((win) => {
-      wins.push(WindowRegistry[win.id] || {});
+      const wdt = WindowRegistry[win.id];
+      if (wdt) wins.push(descriptorToPref(wdt));
     });
     return wins;
   },
 
-  // Returns the id of a newly created window.
+  // Returns the id of the window.
   open(descriptor: WindowDescriptorType): number {
-    const winid = createWindow(descriptor, arguments[1] ?? -1);
-    if (descriptor.category === 'window') addWindowToPrefs(winid, descriptor);
-    const o = descriptor.options;
-    if (o && o.parent) o.parent = undefined;
-    return winid;
-  },
+    // If window is a singleton, bring open window forward if it exists.
+    if (!descriptor.allowMultiple) {
+      const { type } = descriptor;
+      const [awin] = getBrowserWindows({ type }, arguments[1] ?? -1);
+      if (awin) {
+        const { id } = awin;
+        const [r] = Window.moveToFront({ id });
+        return r;
+      }
+    }
+    updateOptions(descriptor, arguments[1] ?? -1);
+    const { type, options } = descriptor;
+    log.silly('Window options:', options);
 
-  // Returns the id of a singleton window. If a window matching the given descriptor
-  // is currently open, the first such window will be moved to the front, otherwise a
-  // new window will be created.
-  openSingleton(descriptor: WindowDescriptorType): number {
-    const matching = {
-      ...descriptor,
-      category: undefined, // matches regardless of value
-      options: undefined, // matches regardless of value
-    };
-    const wins = getBrowserWindows(matching, arguments[1] ?? -1);
-    const dofunc = (wins.length ? Window.moveToFront : Window.open) as any;
-    const withwin = wins.length ? { id: wins[0].id } : descriptor;
-    const ret = dofunc(withwin, arguments[1]) as number | number[];
-    return Array.isArray(ret) ? ret[0] : ret;
+    const win = new BrowserWindow(options);
+    descriptor.id = win.id;
+    if (C.DevToolsopen) win.webContents.openDevTools({ mode: 'detach' });
+    win.loadURL(resolveHtmlPath(`${type}.html`));
+    if (type !== 'xulsword') win.removeMenu();
+
+    // Add window to registry
+    WindowRegistry[win.id] = descriptor;
+
+    // Add window to Prefs
+    log.debug(descriptorToPref(descriptor));
+    Prefs.setComplexValue(
+      `OpenWindows.w${win.id}`,
+      descriptorToPref(descriptor),
+      'windows'
+    );
+    // Window event handlers
+    const { id } = win;
+    const disposables: (() => void)[] = [];
+    win.once('ready-to-show', () =>
+      Subscription.publish.windowCreated(
+        ...([win, disposables] as Parameters<typeof contextMenu>)
+      )
+    );
+    win.on('resize', () => {
+      updateBounds(id);
+      win?.webContents.send('resize', win.getSize());
+    });
+    win.on('resized', () => updateBounds(id));
+    win.on('move', () => updateBounds(id));
+    win.on('moved', () => updateBounds(id));
+    win.on('maximize', () => updateBounds(id));
+    win.on('unmaximize', () => updateBounds(id));
+    win.once('close', () => win?.webContents.send('close'));
+    win.once('closed', () => {
+      Prefs.deleteUserPref(`OpenWindows.w${id}`, 'windows');
+      WindowRegistry[id] = null;
+      disposables.forEach((dispose) => dispose());
+    });
+
+    return win.id;
   },
 
   // Set the caller window's window prefs, or if calling window is undefined,
   // sets the default window state prefs.
-  setComplexValue(argname: string, value: { [i: string]: any }): void {
-    persist(argname, value, false, arguments[2] ?? -1);
+  setComplexValue(key: string, value: PrefObject): void {
+    setWindowPref(key, value, false, arguments[2] ?? -1);
   },
 
   // Merge a key with the caller window's window prefs, or if calling window is
   // undefined, merge a key with the default window state prefs.
-  mergeValue(argname: string, value: any) {
-    persist(argname, value, true, arguments[2] ?? -1);
+  mergeValue(key: string, value: any) {
+    setWindowPref(key, value, true, arguments[2] ?? -1);
   },
 
   // Set the size of the given window(s) or else the calling window.

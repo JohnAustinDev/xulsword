@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-nested-ternary */
-import C, { SPBM } from '../constant';
+import C, { S } from '../constant';
 import { clone, randomID, replaceASCIIcontrolChars } from '../common';
 import { verseKey } from './minit';
 import { PrefCallbackType } from './components/prefs';
@@ -14,6 +14,7 @@ import type {
   LocationVKType,
   NewModulesType,
   OSISBookType,
+  PrefStoreType,
   PrefValue,
   TransactionType,
 } from '../type';
@@ -44,10 +45,10 @@ export function canRedo(): boolean {
 }
 
 export const addBookmarkTransaction: PrefCallbackType = (
-  _callingWinID: number,
-  key: string,
-  value: PrefValue,
-  store?: string
+  _callingWinID,
+  store,
+  key,
+  value
 ) => {
   const { pause, list } = Transaction;
   if (!pause && store === 'bookmarks' && key === 'manager.bookmarks') {
@@ -163,7 +164,7 @@ export default function importBookmarkObject(
   };
   const validated = validateBookMark(obj);
   if (validated) {
-    if (validated.id === SPBM.manager.bookmarks.id) {
+    if (validated.id === S.bookmarks.manager.bookmarks.id) {
       parentFolder.childNodes.push(...validated.childNodes);
     } else {
       parentFolder.childNodes.push(validated);

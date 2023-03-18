@@ -3,7 +3,7 @@ import { BrowserWindow } from 'electron';
 import contextMenuCreator from 'electron-context-menu';
 import i18n from 'i18next';
 import { findBookmarkItem } from '../common';
-import { SP, SPBM } from '../constant';
+import { S } from '../constant';
 import G from './mg';
 import CommandsX from './components/commands';
 import setViewportTabs from './tabs';
@@ -125,7 +125,7 @@ export default function contextMenu(
         const Bookmarks = G.Prefs.getComplexValue(
           'manager.bookmarks',
           'bookmarks'
-        ) as typeof SPBM.manager.bookmarks;
+        ) as typeof S.bookmarks.manager.bookmarks;
         const { bookmark } = d;
         const bookmarkItem =
           (bookmark && findBookmarkItem(Bookmarks, bookmark)) || null;
@@ -293,7 +293,7 @@ export default function contextMenu(
 
         const xulsword = G.Prefs.getComplexValue(
           'xulsword'
-        ) as typeof SP.xulsword;
+        ) as typeof S.prefs.xulsword;
         const { location: xslocation, panels } = xulsword;
         const module =
           d.context ||
@@ -350,11 +350,11 @@ export default function contextMenu(
               const cut = G.Prefs.getComplexValue(
                 'manager.cut',
                 'bookmarks'
-              ) as typeof SPBM.manager.cut;
+              ) as typeof S.bookmarks.manager.cut;
               const copy = G.Prefs.getComplexValue(
                 'manager.copy',
                 'bookmarks'
-              ) as typeof SPBM.manager.copy;
+              ) as typeof S.bookmarks.manager.copy;
               G.Prefs.setComplexValue('manager.cut', null, 'bookmarks');
               G.Prefs.setComplexValue('manager.copy', null, 'bookmarks');
               if (d.bookmark) {

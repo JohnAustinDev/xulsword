@@ -5,7 +5,8 @@ import RefParser from '../../refParser';
 import { clone, ofClass } from '../../common';
 import { chapterChange, verseChange } from '../viewport/zversekey';
 import { genbookChange } from '../viewport/ztext';
-import { genBookAudioFile, verseKey, verseKeyAudioFile } from '../rutil';
+import { genBookAudioFile, verseKeyAudioFile } from '../rutil';
+import { verseKey } from '../htmlData';
 import G from '../rg';
 
 import type { GenBookAudioFile, ShowType, VerseKeyAudioFile } from '../../type';

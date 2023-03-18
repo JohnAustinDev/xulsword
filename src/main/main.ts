@@ -16,8 +16,8 @@ import log, { LogLevel } from 'electron-log';
 import path from 'path';
 import Subscription from '../subscription';
 import Cache from '../cache';
-import { clone, getStatePref, JSON_parse } from '../common';
-import C, { SP, SPBM } from '../constant';
+import { clone, JSON_parse, keep } from '../common';
+import C, { S } from '../constant';
 import G from './mg';
 import { getCipherFailConfs, getTabs, updateGlobalModulePrefs } from './minit';
 import MainMenuBuilder, { pushPrefsToMenu } from './menu';
@@ -35,8 +35,8 @@ import {
 import type {
   BookType,
   NewModulesType,
-  PrefObject,
-  WindowRegistryType,
+  WindowDescriptorPrefType,
+  WindowDescriptorType,
 } from '../type';
 import type { ManagerStatePref } from '../renderer/moduleManager/manager';
 import { addBookmarkTransaction } from './bookmarks';
@@ -46,19 +46,14 @@ const installer = require('electron-devtools-installer');
 const sourceMapSupport = require('source-map-support');
 const electronDebug = require('electron-debug');
 
-Object.entries(SP).forEach((entry) => {
-  const [key, val] = entry;
-  getStatePref(G.Prefs, key, val);
-});
-getStatePref(G.Prefs, 'manager', SPBM.manager as PrefObject, 'bookmarks');
 addBookmarkTransaction(
   -1,
+  'bookmarks',
   'manager.bookmarks',
   G.Prefs.getComplexValue(
     'manager.bookmarks',
     'bookmarks'
-  ) as typeof SPBM.manager.bookmarks,
-  'bookmarks'
+  ) as typeof S.bookmarks.manager.bookmarks
 );
 
 if (G.Prefs.getBoolPref('global.InternetPermission')) {
@@ -125,6 +120,23 @@ if (
   sourceMapSupport.install();
 }
 
+// Make all windows appear at the same time, rather than each flashing
+// up separately and reordering themselves visibly.
+let SyncShow: { id: number; readyToShow: boolean }[] = [];
+function showApp() {
+  SyncShow.forEach((x, i) => {
+    const w = BrowserWindow.fromId(x.id);
+    w?.show();
+    if (i === SyncShow.length - 1) w?.focus();
+  });
+  SyncShow = [];
+  if (!(C.isDevelopment && C.DevSplash === 2)) {
+    setTimeout(() => {
+      G.Window.close({ type: 'splash' });
+    }, 1000);
+  }
+}
+
 ipcMain.on('did-finish-render', (event: IpcMainEvent) => {
   let callingWin = BrowserWindow.fromWebContents(event.sender);
   if (!callingWin) return;
@@ -134,19 +146,19 @@ ipcMain.on('did-finish-render', (event: IpcMainEvent) => {
     return;
   }
 
-  const { type } = windowRegistry;
-  if (type === 'xulsword' && process.env.START_MINIMIZED) {
-    callingWin.minimize();
-  } else {
-    callingWin.show();
-    callingWin.focus();
+  if (callingWin) {
+    const syncShow = SyncShow.find((x) => x.id === callingWin?.id);
+    if (process.env.START_MINIMIZED) {
+      callingWin.minimize();
+    } else if (!syncShow) {
+      callingWin.show();
+      callingWin.focus();
+    } else {
+      syncShow.readyToShow = true;
+      if (SyncShow.every((x) => x.readyToShow)) showApp();
+    }
+    callingWin = null;
   }
-  if (type === 'xulsword' && !(C.isDevelopment && C.DevSplash === 2)) {
-    setTimeout(() => {
-      G.Window.close({ type: 'splash' });
-    }, 1000);
-  }
-  callingWin = null;
 });
 
 ipcMain.handle('print-or-preview', MainPrintHandler);
@@ -159,47 +171,38 @@ ipcMain.on(
 );
 
 const openXulswordWindow = () => {
+  const windowsDidClose = G.Prefs.getBoolPref(`global.WindowsDidClose`);
+  const openOnStartup = G.Prefs.getComplexValue(
+    'OpenOnStartup',
+    'windows'
+  ) as typeof S.windows.OpenOnStartup;
+  G.Prefs.setBoolPref(`global.WindowsDidClose`, false);
+  G.Prefs.deleteUserPref(`OpenOnStartup`, 'windows');
+  G.Prefs.setComplexValue(`OpenWindows`, {}, 'windows');
+
   const opts = { ns: 'branding' };
   const programTitle = G.i18n.exists('programTitle', opts)
     ? G.i18n.t('programTitle', opts)
     : 'xulsword';
-  let options: Electron.BrowserWindowConstructorOptions = {
-    title: programTitle,
-    fullscreenable: true,
-    ...C.UI.Window.large,
-  };
-
-  const windowsDidClose = G.Prefs.getBoolPref(`global.WindowsDidClose`);
-  G.Prefs.setBoolPref(`global.WindowsDidClose`, false);
-  const persistWinPref = G.Prefs.getPrefOrCreate(
-    `OpenOnStartup`,
-    'complex',
-    {},
-    'windows'
-  ) as WindowRegistryType | Record<string, never>;
-  const persistedWindows: WindowRegistryType = [];
-  if (persistWinPref) {
-    G.Prefs.deleteUserPref(`OpenOnStartup`, 'windows');
-    if (windowsDidClose) {
-      Object.entries(persistWinPref).forEach((entry) => {
-        const reg = entry[1] as WindowRegistryType[number];
-        if (reg && reg.type === 'xulsword') {
-          if (reg.options) options = reg.options;
-        } else {
-          persistedWindows.push(reg);
-        }
-      });
-    }
-  }
-
-  G.Prefs.setComplexValue(`OpenWindows`, {}, 'windows');
   const xulswordWindow = BrowserWindow.fromId(
-    G.Window.open({ type: 'xulsword', options })
+    G.Window.open({
+      type: 'xulsword',
+      className: 'skin',
+      persist: true,
+      saveIfAppClosed: false, // main win doesn't used window prefs when starting
+      options: {
+        title: programTitle,
+        fullscreenable: true,
+        ...C.UI.Window.large,
+      },
+    })
   );
 
   if (!xulswordWindow) {
     return null;
   }
+
+  SyncShow.push({ id: xulswordWindow.id, readyToShow: false });
 
   const menuBuilder = new MainMenuBuilder(xulswordWindow);
   menuBuilder.buildMenu();
@@ -309,10 +312,16 @@ const openXulswordWindow = () => {
   }
 
   xulswordWindow.on('close', () => {
-    // Persist any open windows for the next restart
+    // Persist open windows for the next restart
+    const openWindows = G.Prefs.getComplexValue('OpenWindows', 'windows') as {
+      [wn: string]: WindowDescriptorPrefType;
+    };
     G.Prefs.setComplexValue(
       `OpenOnStartup`,
-      G.Prefs.getComplexValue('OpenWindows', 'windows'),
+      keep(
+        openWindows,
+        Object.keys(openWindows).filter((k) => openWindows[k].saveIfAppClosed)
+      ),
       'windows'
     );
     // Close all other open windows
@@ -324,9 +333,6 @@ const openXulswordWindow = () => {
 
     G.Prefs.setBoolPref(`global.WindowsDidClose`, true);
 
-    // Write all prefs to disk when app closes
-    G.Prefs.writeAllStores();
-
     Cache.clear();
   });
 
@@ -334,9 +340,16 @@ const openXulswordWindow = () => {
     log.verbose('xulsword window closed...');
   });
 
-  persistedWindows.forEach((windowDescriptor) => {
-    if (windowDescriptor) G.Window.open(windowDescriptor);
-  });
+  if (windowsDidClose) {
+    Object.values(openOnStartup).forEach((w) => {
+      if ('type' in w) {
+        const id = G.Window.open(w as WindowDescriptorType);
+        SyncShow.push({ id, readyToShow: false });
+      }
+    });
+    // After 20 seconds show all windows even if they're not ready yet.
+    setTimeout(() => showApp(), 20000);
+  }
 
   return xulswordWindow;
 };
@@ -433,7 +446,9 @@ const init = async () => {
 
   // If there are no tabs, choose tabs and location based on current locale
   // and installed modules.
-  const xulsword = G.Prefs.getComplexValue('xulsword') as typeof SP.xulsword;
+  const xulsword = G.Prefs.getComplexValue(
+    'xulsword'
+  ) as typeof S.prefs.xulsword;
   if (xulsword.tabs.every((tb) => tb === null || !tb.length)) {
     const slng = lng.replace(/-.*$/, '');
     const lngmodules = Array.from(
@@ -527,7 +542,9 @@ const init = async () => {
   });
 };
 
-app.on('window-all-closed', () => {
+app.on('will-quit', () => {
+  // Write all prefs to disk when app closes
+  G.Prefs.writeAllStores();
   // Respect the OSX convention of having the application in memory even
   // after all windows have been closed
   if (process.platform !== 'darwin') {
@@ -554,10 +571,13 @@ app
     return init();
   })
   .then(() => {
-    if (!(C.isDevelopment && C.DevSplash === 1)) {
+    if (
+      !process.env.START_MINIMIZED &&
+      !(C.isDevelopment && C.DevSplash === 1)
+    ) {
       G.Window.open({
         type: 'splash',
-        category: 'dialog',
+        notResizable: true,
         options:
           C.isDevelopment && C.DevSplash === 2
             ? {

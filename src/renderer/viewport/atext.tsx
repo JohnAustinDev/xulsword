@@ -8,7 +8,7 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { getElementData, HTMLData } from '../htmlData';
+import { getElementData, HTMLData, verseKey } from '../htmlData';
 import Cache from '../../cache';
 import C from '../../constant';
 import {
@@ -22,7 +22,6 @@ import G from '../rg';
 import log from '../log';
 import {
   clearPending,
-  verseKey,
   getMaxChapter,
   libswordImgSrc,
   scrollIntoView,
@@ -618,6 +617,7 @@ class Atext extends React.Component {
         {...topHandle('onWheel', handler, props)}
         {...topHandle('onMouseOver', handler, props)}
         {...topHandle('onMouseOut', handler, props)}
+        {...topHandle('onChange', handler, props)}
         data-index={panelIndex}
         data-module={module}
         data-columns={columns}

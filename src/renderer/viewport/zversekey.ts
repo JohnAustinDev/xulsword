@@ -2,20 +2,15 @@
 /* eslint-disable import/no-duplicates */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-continue */
-import C, { SP } from '../../constant';
+import C, { S } from '../../constant';
 import {
   clone,
   dString,
   getLocalizedChapterTerm,
   JSON_attrib_stringify,
 } from '../../common';
-import { getElementData } from '../htmlData';
-import {
-  getCompanionModules,
-  getMaxChapter,
-  getMaxVerse,
-  verseKey,
-} from '../rutil';
+import { getElementData, verseKey } from '../htmlData';
+import { getCompanionModules, getMaxChapter, getMaxVerse } from '../rutil';
 import G from '../rg';
 import { delayHandler } from '../libxul/xul';
 
@@ -42,7 +37,7 @@ function alternateModules() {
   const alternates = new Set(am ? am.split(',') : undefined);
   const tabs = G.Prefs.getComplexValue(
     'xulsword.tabs'
-  ) as typeof SP.xulsword['tabs'];
+  ) as typeof S.prefs.xulsword.tabs;
   tabs.forEach((tbk) => {
     if (tbk) tbk.forEach((t) => alternates.add(t));
   });
@@ -50,7 +45,7 @@ function alternateModules() {
 }
 
 // Return an installed Bible module to be referenced for a given source module.
-// If no particular Bible reference can be found then null is returned.
+// If no particular Bible reference can be found, then null is returned.
 // An info object will also be populated with info about the match.
 export function getRefBible(
   srcmodule: string,
@@ -90,13 +85,15 @@ export function getRefBible(
   if (refbible) {
     // Finally, if we have a refbible, then has the user chosen an alternate
     // for it, to be used in its place?
-    const userprefBible = G.Prefs.getPrefOrCreate(
-      `global.popup.selection.${srcmodule}`,
-      'string',
-      refbible
-    ) as string;
-    if (userprefBible !== refbible) {
-      refbible = userprefBible;
+    const pmsel = G.Prefs.getComplexValue(
+      'global.popup.selection'
+    ) as typeof S.prefs.global.popup.selection;
+    let userPrefBible = refbible;
+    if (srcmodule in pmsel && pmsel[srcmodule]) {
+      userPrefBible = pmsel[srcmodule];
+    }
+    if (userPrefBible !== refbible) {
+      refbible = userPrefBible;
       inf.userpref = true;
     }
     return refbible;
@@ -244,7 +241,7 @@ export function locationVKText(
 const NoterefRE = /^\s*([^!]+)!(.*?)\s*$/;
 
 // This function tries to read a ";" separated list of Scripture
-// references and returns an array of TextVKType objects, one for
+// references and returns an array of LocationVKType objects, one for
 // each individual reference in the extended reference. It parses
 // osisRef type references as well as free hand references which
 // may include commas. It will supply missing book, chapter and verse
@@ -372,7 +369,6 @@ export function getRefHTML(
       }
       const { location, module, text } = resolve;
       if (module && module in G.Tab && location.book) {
-        const { subid: noteID } = location;
         const { direction, label, labelClass } = G.Tab[module];
         const crref = ['crref'];
         const crtext = ['crtext'];
@@ -391,18 +387,14 @@ export function getRefHTML(
         const alt = cc.some((c) => inf[c])
           ? ` <bdi><span class="${altlabel.join(' ')}">(${label})</span></bdi>`
           : '';
-        if (noteID) {
-          h += `
-          <bdi><span class="${fntext.join(' ')}">${text}${alt}</span></bdi>`;
-        } else {
-          const crdata: HTMLData = { type: 'crref', location, context: module };
-          const crd = JSON_attrib_stringify(crdata);
-          const q = inf.possibleV11nMismatch
-            ? '<span class="possibleV11nMismatch">?</span>'
-            : '';
-          h += `
+        const crdata: HTMLData = { type: 'crref', location, context: module };
+        const crd = JSON_attrib_stringify(crdata);
+        const q = inf.possibleV11nMismatch
+          ? '<span class="possibleV11nMismatch">?</span>'
+          : '';
+        h += `
           <bdi>
-            <a class="${crref.join(' ')}" data-title="${crd}">
+            <a class="${crref.join(' ')}" data-data="${crd}">
               ${verseKey(location).readable()}
             </a>
             ${q}${text ? ': ' : ''}
@@ -410,7 +402,6 @@ export function getRefHTML(
           <bdi>
             <span class="${crtext.join(' ')}">${text}${alt}</span>
           </bdi>`;
-        }
       }
     }
     html.push(h);
@@ -482,8 +473,8 @@ export function getNoteHTML(
       if (location) ({ book, chapter, verse } = location);
       const keepNote = (
         location
-          ? [type, nid, book, chapter, verse]
-          : [type, nid, 'unavailable']
+          ? [type, nid, book, chapter, verse, context]
+          : [type, nid, 'unavailable', context]
       ).join('.');
       if (!keepOnlyThisNote || keepNote === keepOnlyThisNote) {
         const innerHTML = anote.replace(containerTagsRE, '');

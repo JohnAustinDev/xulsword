@@ -6,7 +6,7 @@
 /* eslint-disable jsx-a11y/media-has-caption */
 import React from 'react';
 import Subscription from '../../subscription';
-import C, { SP } from '../../constant';
+import C, { S } from '../../constant';
 import { keep, diff, drop } from '../../common';
 import G from '../rg';
 import renderToRoot from '../renderer';
@@ -43,24 +43,19 @@ const propTypes = xulPropTypes;
 export type ViewportWinProps = XulProps;
 
 const notStatePrefDefault = {
-  history: [] as typeof SP.xulsword['history'],
-  historyIndex: 0 as typeof SP.xulsword['historyIndex'],
   vpreset: 0,
 };
 
-const statePrefDefault = drop(
-  SP.xulsword,
-  vpWindowState.concat(Object.keys(notStatePrefDefault) as any)
-) as Omit<
-  typeof SP.xulsword,
-  typeof vpWindowState[number] | 'history' | 'historyIndex'
+const statePrefDefault = drop(S.prefs.xulsword, vpWindowState) as Omit<
+  typeof S.prefs.xulsword,
+  typeof vpWindowState[number]
 >;
 
 // Window arguments that are used to set initial state must be updated locally
 // and in Prefs, so that component reset or program restart won't cause
 // reversion to initial state.
 let windowState = windowArguments('xulswordState') as Pick<
-  typeof SP.xulsword,
+  typeof S.prefs.xulsword,
   typeof vpWindowState[number]
 >;
 
@@ -89,10 +84,7 @@ export default class ViewportWin extends React.Component {
     super(props);
 
     const s: ViewportWinState = {
-      ...(getStatePref(
-        'xulsword',
-        statePrefDefault
-      ) as typeof statePrefDefault),
+      ...getStatePref('prefs', 'xulsword', statePrefDefault),
       ...notStatePrefDefault,
       ...windowState,
     };
@@ -112,7 +104,7 @@ export default class ViewportWin extends React.Component {
 
   componentDidMount() {
     this.destroy.push(
-      registerUpdateStateFromPref('xulsword', this, statePrefDefault)
+      registerUpdateStateFromPref('prefs', 'xulsword', this, statePrefDefault)
     );
     this.destroy.push(
       Subscription.subscribe.modulesInstalled(showNewModules.bind(this))
@@ -126,7 +118,13 @@ export default class ViewportWin extends React.Component {
     const state = this.state as ViewportWinState;
     const { scroll } = state;
     if (!scroll?.skipWindowUpdate) {
-      setStatePref('xulsword', prevState, state, Object.keys(statePrefDefault));
+      setStatePref(
+        'prefs',
+        'xulsword',
+        prevState,
+        state,
+        Object.keys(statePrefDefault)
+      );
       windowState = keep(state, vpWindowState) as typeof windowState;
       const changedWindowState = diff(
         keep(prevState, vpWindowState),

@@ -33,19 +33,22 @@
 
 .searchtext {
   position: relative;
-  margin-bottom: 20px;
+  top: -15px;
+}
+.searchtext > div {
+  width: 100%;
+  margin: 0;
 }
 .searchtextLabel {
-  padding-top: 5px;
+  margin-inline-end: 10px;
 }
 .searchtext > .modulemenu {
   position: absolute;
-  width: 100%;
-  top: 100%;
+  top: 37px;
 }
-.searchtext > .modulemenu select {
-  margin: 0 5px;
-  width: 100%;
+
+#searchButton {
+  margin-inline-start: 10px;
 }
 
 .searchType > div:nth-child(2) {

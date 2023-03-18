@@ -11,7 +11,7 @@ import {
 } from 'electron';
 import path from 'path';
 import { bookmarkItemIconPath, clone } from '../common';
-import C, { SP, SPBM } from '../constant';
+import C, { S } from '../constant';
 import G from './mg';
 import Window, { getBrowserWindows } from './components/window';
 import Commands from './components/commands';
@@ -80,7 +80,7 @@ function panelLabels() {
   const labels: string[] = [];
   const panels = G.Prefs.getComplexValue(
     'xulsword.panels'
-  ) as typeof SP.xulsword['panels'];
+  ) as typeof S.prefs.xulsword.panels;
   panels.forEach((_panel: string | null, i: number) => {
     labels.push(`menu.view.window${i + 1}`);
   });
@@ -130,7 +130,7 @@ function buildModuleMenus(menu: Menu) {
 function updateMenuFromPref(menux?: Menu | null) {
   const panels = G.Prefs.getComplexValue(
     'xulsword.panels'
-  ) as typeof SP.xulsword['panels'];
+  ) as typeof S.prefs.xulsword.panels;
   const menuPref: Set<string> = new Set();
   function add(pref: string) {
     menuPref.add(pref.split('.').slice(0, 2).join('.'));
@@ -145,7 +145,7 @@ function updateMenuFromPref(menux?: Menu | null) {
           add('xulsword.tabs');
           const pval = G.Prefs.getComplexValue(
             'xulsword.tabs'
-          ) as typeof SP.xulsword['tabs'];
+          ) as typeof S.prefs.xulsword.tabs;
           if (panelIndex === -1) {
             i.checked = pval.every((p: any) => !p || p.includes(mod));
           } else {
@@ -187,7 +187,7 @@ function updateMenuFromPref(menux?: Menu | null) {
 // calling window is -1 (main process) the menu will normally NOT be updated
 // as it will be assumed the menu initiated the change, and ignoring
 // it prevents cycling.
-export const pushPrefsToMenu: PrefCallbackType = (winid, key, val, store) => {
+export const pushPrefsToMenu: PrefCallbackType = (winid, store, key, val) => {
   let menuPref: string[] = [];
   if (G.Data.has('menuPref')) {
     menuPref = G.Data.read('menuPref') as string[];
@@ -381,7 +381,7 @@ export default class MainMenuBuilder {
         G.Prefs.getComplexValue(
           'manager.bookmarks',
           'bookmarks'
-        ) as typeof SPBM.manager.bookmarks
+        ) as typeof S.bookmarks.manager.bookmarks
       ).childNodes.length > 0;
 
     const subMenuFile: MenuItemConstructorOptions = {
@@ -727,7 +727,7 @@ export default class MainMenuBuilder {
               click: d(() => {
                 const panels = G.Prefs.getComplexValue(
                   'xulsword.panels'
-                ) as typeof SP.xulsword['panels'];
+                ) as typeof S.prefs.xulsword.panels;
                 const module =
                   panels.find((m) => m) ||
                   (G.Tabs[0] && G.Tabs[0].module) ||
@@ -798,12 +798,12 @@ export default class MainMenuBuilder {
               {
                 location: G.Prefs.getComplexValue(
                   'xulsword.location'
-                ) as typeof SP.xulsword.location,
+                ) as typeof S.prefs.xulsword.location,
                 module:
                   (
                     G.Prefs.getComplexValue(
                       'xulsword.panels'
-                    ) as typeof SP.xulsword.panels
+                    ) as typeof S.prefs.xulsword.panels
                   ).find((m) => m && G.Tab[m].isVerseKey) || '',
               }
             )
@@ -819,12 +819,12 @@ export default class MainMenuBuilder {
               {
                 location: G.Prefs.getComplexValue(
                   'xulsword.location'
-                ) as typeof SP.xulsword.location,
+                ) as typeof S.prefs.xulsword.location,
                 module:
                   (
                     G.Prefs.getComplexValue(
                       'xulsword.panels'
-                    ) as typeof SP.xulsword.panels
+                    ) as typeof S.prefs.xulsword.panels
                   ).find((m) => m && G.Tab[m].isVerseKey) || '',
               }
             )
@@ -849,7 +849,7 @@ export default class MainMenuBuilder {
     const bookmarks = G.Prefs.getComplexValue(
       'manager.bookmarks',
       'bookmarks'
-    ) as typeof SPBM.manager['bookmarks'];
+    ) as typeof S.bookmarks.manager.bookmarks;
 
     if (bookmarks && bookmarks.childNodes.length) {
       const submenu = subMenuBookmarks.submenu as MenuItemConstructorOptions[];
@@ -859,7 +859,7 @@ export default class MainMenuBuilder {
 
     const initialPanels = G.Prefs.getComplexValue(
       'xulsword.panels'
-    ) as typeof SP.xulsword['panels'];
+    ) as typeof S.prefs.xulsword.panels;
     const subMenuWindows: MenuItemConstructorOptions = {
       role: 'windowMenu',
       label: ts('menu.windows'),
@@ -872,7 +872,7 @@ export default class MainMenuBuilder {
           click: d(() => {
             const panels = G.Prefs.getComplexValue(
               'xulsword.panels'
-            ) as typeof SP.xulsword['panels'];
+            ) as typeof S.prefs.xulsword.panels;
             const newpans = panels.map((panel: string | null, x: number) => {
               return x > i ? null : panel || '';
             });

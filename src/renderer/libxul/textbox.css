@@ -21,7 +21,7 @@
 /* ..... readonly state ..... */
 
 .textbox.readonly {
-  background-color: grey;
+  background-color: lightgrey;
 }
 
 /* ..... disabled state ..... */

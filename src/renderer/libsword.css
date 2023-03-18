@@ -408,38 +408,38 @@ span.sense-level-2 {
 }
 .x-PM {
 }
-.verse-per-line .p-end,
-.verse-per-line .lg-end,
-.verse-per-linetrue .list-end,
-.verse-per-line .lb,
-.verse-per-line .line,
-.verse-per-line .item {
+.verse-per-line .vs > .p-end,
+.verse-per-line .vs > .lg-end,
+.verse-per-line .vs > .list-end,
+.verse-per-line .vs > .lb,
+.verse-per-line .vs > .line,
+.verse-per-line .vs > .item {
   display: inline;
   margin: 0.25em;
   text-indent: 0px;
   padding: 0px;
 }
-.verse-per-line .p-milestone,
-.verse-per-line .p-start,
-.verse-per-line .lg-start,
-.verse-per-line .list-start,
-.verse-per-line .x-p-indent,
-.verse-per-line .lb + .lb,
-.verse-per-line br,
+.verse-per-line .vs > .p-milestone,
+.verse-per-line .vs > .p-start,
+.verse-per-line .vs > .lg-start,
+.verse-per-line .vs > .list-start,
+.verse-per-line .vs > .x-p-indent,
+.verse-per-line .vs > .lb + .lb,
+.verse-per-line .vs > br,
 .interB .lg-start:first-child,
 .interB .lg-end:last-child,
 .interB .list-start:first-child,
 .interB .list-end:last-child {
   display: none;
 }
-.verse-per-line .x-p,
-.verse-per-line .indent0,
-.verse-per-line .indent1,
-.verse-per-line .indent2,
-.verse-per-line .indent3,
-.verse-per-line .indent4,
-.verse-per-line .x-lg,
-.verse-per-line .x-list {
+.verse-per-line .vs > .x-p,
+.verse-per-line .vs > .indent0,
+.verse-per-line .vs > .indent1,
+.verse-per-line .vs > .indent2,
+.verse-per-line .vs > .indent3,
+.verse-per-line .vs > .indent4,
+.verse-per-line .vs > .x-lg,
+.verse-per-line .vs > .x-list {
   text-indent: 0em;
   margin: 0px;
 }

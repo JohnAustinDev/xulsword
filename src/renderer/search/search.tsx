@@ -8,7 +8,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { ProgressBar } from '@blueprintjs/core';
 import { clone, diff, drop, dString, sanitizeHTML } from '../../common';
-import C, { SP } from '../../constant';
+import C, { S } from '../../constant';
 import G from '../rg';
 import renderToRoot from '../renderer';
 import log from '../log';
@@ -339,7 +339,7 @@ export default class SearchWin extends React.Component implements PopupParent {
 
     const location = G.Prefs.getComplexValue(
       'xulsword.location'
-    ) as typeof SP.xulsword.location;
+    ) as typeof S.prefs.xulsword.location;
 
     const searchindex = module && G.LibSword.luceneEnabled(module);
 
@@ -390,13 +390,13 @@ export default class SearchWin extends React.Component implements PopupParent {
             </Columns>
             <Rows>
               <Row>
-                <Groupbox orient="horizontal" align="center">
+                <Groupbox orient="horizontal" align="stretch">
                   <Button id="moreLess" onClick={handler}>
                     {!moreLess && <Label value={G.i18n.t('more.label')} />}
                     {moreLess && <Label value={G.i18n.t('less.label')} />}
                   </Button>
                   <Spacer flex="1" orient="horizontal" />
-                  <Hbox className="searchtextLabel" align="start">
+                  <Hbox className="searchtextLabel" align="center">
                     <Label
                       control="searchtext"
                       value={`${G.i18n.t('searchtext.label')}:`}

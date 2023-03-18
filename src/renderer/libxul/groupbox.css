@@ -1,18 +1,27 @@
 .groupbox {
-  margin: 5px;
+  margin: 10px 5px 5px 5px;
   padding: 5px;
+  border: 2px solid rgb(200, 200, 200);
+  border-radius: 4px;
+  background: hsl(0 0% 94% / 1);
 }
 
 .groupbox .groupbox-title {
-  margin-bottom: 2px;
-  font-weight: bold;
+  display: block;
+  white-space: nowrap;
   overflow-y: visible;
+  margin-top: -0.9em;
+  margin-bottom: 2px;
+  margin-inline-start: -9px;
+  font-weight: bold;
 }
 
 .groupbox .caption-text {
   margin-top: 0;
   margin-bottom: 0;
   margin-inline-start: 1px;
+  background: whitesmoke;
+  padding: 0 2px;
 }
 
 .groupbox .groupbox-body {

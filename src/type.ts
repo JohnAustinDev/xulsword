@@ -1,11 +1,15 @@
 /* eslint-disable import/no-duplicates */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import type { clipboard, Shell } from 'electron';
+import type {
+  BrowserWindowConstructorOptions,
+  clipboard,
+  Shell,
+} from 'electron';
 import type i18n from 'i18next';
 import type React from 'react';
 import type { TreeNodeInfo } from '@blueprintjs/core';
-import type { SP } from './constant';
+import type { S } from './constant';
 import type C from './constant';
 import type {
   resetMain,
@@ -108,8 +112,7 @@ export type EnvironmentVars =
 export type WindowRegistryType = (WindowDescriptorType | null)[];
 
 export type WindowDescriptorType = {
-  id?: number;
-  type?:
+  type:
     | 'xulsword'
     | 'splash'
     | 'viewportWin'
@@ -124,13 +127,43 @@ export type WindowDescriptorType = {
     | 'copyPassage'
     | 'bmProperties'
     | 'bmManager';
-  category?:
-    | 'window' // Parent optional, persisted, resizable
-    | 'dialog' // Has parent, not persisted, size is fit-to-content, not-resizable
-    | 'dialog-window'; // Has parent, not persisted, resizable
-  options?: Electron.BrowserWindowConstructorOptions & {
-    additionalArguments?: { [k: string]: PrefValue };
+  id?: number;
+  className?: string;
+  persist?: boolean; // persist window arguments between restarts for a type
+  saveIfAppClosed?: boolean;
+  notResizable?: boolean;
+  fitToContent?: boolean;
+  allowMultiple?: boolean;
+  additionalArguments?: { [k: string]: PrefValue };
+  openWithBounds?: { x: number; y: number; width: number; height: number };
+  windowFrameThicknessTop?: number;
+  windowFrameThicknessLeft?: number;
+  options?: BrowserWindowConstructorOptions;
+};
+
+// Some descriptor options are not PrefValues and cannot be cloned or serialized,
+// so these properties must be removed before sending to a renderer for instance.
+export type WindowDescriptorPrefType = Omit<WindowDescriptorType, 'options'> & {
+  options?: {
+    parent?: undefined;
+    icon?: undefined;
+    trafficLightPosition?: undefined;
+    webPreferences?: undefined;
+    titleBarOverlay?: undefined;
   };
+} & {
+  options?: Omit<
+    BrowserWindowConstructorOptions,
+    | 'parent'
+    | 'icon'
+    | 'trafficLightPosition'
+    | 'webPreferences'
+    | 'titleBarOverlay'
+  >;
+};
+
+export type WindowPrefsType = {
+  [wid: string]: WindowDescriptorPrefType | Record<string, never>;
 };
 
 export type WindowArgType =
@@ -162,7 +195,7 @@ export type AudioPrefType = {
 };
 
 export type AtextPropsType = Pick<
-  typeof SP.xulsword,
+  typeof S.prefs.xulsword,
   'location' | 'selection' | 'scroll' | 'show' | 'place'
 > & {
   modkey: string;
@@ -192,8 +225,8 @@ export type AtextStateType = {
 };
 
 export type XulswordStateArgType =
-  | Partial<typeof SP.xulsword>
-  | ((s: typeof SP.xulsword) => Partial<typeof SP.xulsword>);
+  | Partial<typeof S.prefs.xulsword>
+  | ((s: typeof S.prefs.xulsword) => Partial<typeof S.prefs.xulsword>);
 
 export type SwordFilterType =
   | 'Headings'
@@ -635,6 +668,13 @@ export type ResetType =
   | 'component-reset'
   | 'dynamic-stylesheet-reset';
 
+export type PrefStoreType =
+  | 'prefs'
+  | 'bookmarks'
+  | 'fonts'
+  | 'style'
+  | 'windows';
+
 export type PrefPrimative = number | string | boolean | null | undefined;
 export type PrefObject = {
   [i: string]: PrefValue;
@@ -692,7 +732,7 @@ export type BookmarkTypes = ['folder', 'bookmark'];
 export type TransactionType = {
   prefkey: string;
   value: PrefValue;
-  store?: string;
+  store?: PrefStoreType;
 };
 
 export type AddCaller = {
@@ -941,10 +981,8 @@ export const GBuilder: GType & {
   Window: {
     // NOTE: Window cannot use getter functions, because its
     // G methods pass calling window as an extra argument.
-    description: CACHEfunc as any,
     descriptions: func as any,
     open: func as any,
-    openSingleton: func as any,
     setComplexValue: func as any,
     mergeValue: func as any,
     setContentSize: func as any,

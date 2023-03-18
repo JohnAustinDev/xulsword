@@ -12,7 +12,7 @@ import {
   tableRowsToSelection,
   tableSelectDataRows,
 } from '../../common';
-import { SP, SPBM } from '../../constant';
+import { S } from '../../constant';
 import G from '../rg';
 import { bookmarkItemIcon } from '../rutil';
 import Label from '../libxul/label';
@@ -162,7 +162,7 @@ export function buttonHandler(this: BMManagerWin, e: React.SyntheticEvent) {
       case 'add': {
         const xulsword = G.Prefs.getComplexValue(
           'xulsword'
-        ) as typeof SP.xulsword;
+        ) as typeof S.prefs.xulsword;
         const { panels, location } = xulsword;
         let module = panels.find((m) => m && m in G.Tab && G.Tab[m].isVerseKey);
         if (!module) module = G.Tabs.find((t) => t.isVerseKey)?.module;
@@ -333,7 +333,7 @@ export function tableData(this: BMManagerWin): TableRow[] {
   };
   const selfolder = findBookmarkItem(
     bookmarks,
-    selectedFolder || SPBM.manager.bookmarks.id
+    selectedFolder || S.bookmarks.manager.bookmarks.id
   );
   if (selfolder && selfolder.type === 'folder') addItems(selfolder);
   return data;

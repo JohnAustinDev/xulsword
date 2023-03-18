@@ -133,7 +133,7 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
               viewport.style.height = vph;
               viewport.style.width = vpw;
               viewport.style.position = 'relative';
-              viewport.style.overflow = 'auto';
+              viewport.style.overflow = 'visible';
               scrollcn.style.position = 'absolute';
             }
             if (expandShrink !== undefined) {
@@ -327,6 +327,15 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
         if (atext && type !== C.DICTIONARY && !ofClass(['nbc'], es.target)) {
           aTextWheelScroll(e, atext, this);
         }
+      }
+      break;
+    }
+
+    case 'change': {
+      const origselect = ofClass(['origselect'], es.target);
+      if (origselect) {
+        const s = origselect.element.firstChild as HTMLSelectElement;
+        // TODO!: Finish this!
       }
       break;
     }
