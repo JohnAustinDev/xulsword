@@ -280,27 +280,32 @@ export function prefType(
 
 // Return values of key/value pairs of component state Prefs. Component
 // state Prefs are permanently persisted component state values recorded in
-// a json preference file whose key begins with a component id.
+// a json preference file.
 export function getStatePref(
   prefs: GType['Prefs'],
   store: PrefStoreType,
-  id: string,
+  id: string | null,
   defaultPrefs?: PrefObject // default is all
 ): PrefObject {
   const state = {} as PrefObject;
-  Object.entries(
-    defaultPrefs || S[store][id as keyof typeof S[PrefStoreType]]
-  ).forEach((entry) => {
-    const [key, value] = entry;
-    state[key] = clone(
-      prefs.getPrefOrCreate(
+  if (id) {
+    Object.entries(
+      defaultPrefs || S[store][id as keyof typeof S[PrefStoreType]]
+    ).forEach((entry) => {
+      const [key, value] = entry;
+      state[key] = prefs.getPrefOrCreate(
         `${id}.${String(key)}`,
         prefType(value),
         value,
         store
-      )
-    ) as any;
-  });
+      );
+    });
+  } else {
+    Object.entries(defaultPrefs || S[store]).forEach((entry) => {
+      const [sid, value] = entry;
+      state[sid] = prefs.getPrefOrCreate(sid, prefType(value), value, store);
+    });
+  }
   return state;
 }
 
@@ -748,14 +753,16 @@ export function replaceBookmarkItem(
   bookmarks: BookmarkFolderType,
   item: BookmarkFolderType | BookmarkType
 ): BookmarkFolderType | BookmarkType | null {
-  const olditem = findBookmarkItem(bookmarks, item.id);
-  if (olditem) {
-    const parent = findParentOfBookmarkItem(bookmarks, item.id);
-    if (parent) {
-      const index = parent.childNodes.findIndex((n) => n.id === item.id);
-      if (index !== -1) {
-        parent.childNodes.splice(index, 1, item);
-        return item;
+  if (item.id !== S.bookmarks.rootfolder.id) {
+    const olditem = findBookmarkItem(bookmarks, item.id);
+    if (olditem) {
+      const parent = findParentOfBookmarkItem(bookmarks, item.id);
+      if (parent) {
+        const index = parent.childNodes.findIndex((n) => n.id === item.id);
+        if (index !== -1) {
+          parent.childNodes.splice(index, 1, item);
+          return item;
+        }
       }
     }
   }
@@ -766,14 +773,16 @@ export function deleteBookmarkItem(
   bookmarks: BookmarkFolderType,
   itemID: string
 ): BookmarkFolderType | BookmarkType | null {
-  const item = findBookmarkItem(bookmarks, itemID);
-  if (item) {
-    const parent = findParentOfBookmarkItem(bookmarks, item.id);
-    if (parent) {
-      const i = parent.childNodes.findIndex((c) => c.id === item.id);
-      if (i !== -1) {
-        const r = parent.childNodes.splice(i, 1);
-        return r[0];
+  if (itemID !== S.bookmarks.rootfolder.id) {
+    const item = findBookmarkItem(bookmarks, itemID);
+    if (item) {
+      const parent = findParentOfBookmarkItem(bookmarks, item.id);
+      if (parent) {
+        const i = parent.childNodes.findIndex((c) => c.id === item.id);
+        if (i !== -1) {
+          const r = parent.childNodes.splice(i, 1);
+          return r[0];
+        }
       }
     }
   }
@@ -785,7 +794,7 @@ export function insertBookmarkItem(
   item: BookmarkFolderType | BookmarkType | null,
   targetID: string
 ): BookmarkFolderType | BookmarkType | null {
-  if (item) {
+  if (item && item.id !== S.bookmarks.rootfolder.id) {
     let index = -1;
     const target = findBookmarkItem(bookmarks, targetID);
     if (target) {
@@ -809,22 +818,24 @@ export function copyBookmarkItem(
   bookmarks: BookmarkFolderType,
   itemID: string
 ): BookmarkFolderType | BookmarkType | null {
-  const copyChildNodes = (childNodes: BookmarkFolderType['childNodes']) => {
-    return childNodes.map((n) => {
-      const nn = clone(n);
-      nn.id = randomID();
-      if (nn.type === 'folder') nn.childNodes = copyChildNodes(nn.childNodes);
-      return nn;
-    });
-  };
-  const item = findBookmarkItem(bookmarks, itemID);
-  if (item) {
-    const copy = clone(item);
-    copy.id = randomID();
-    if (copy.type === 'folder') {
-      copy.childNodes = copyChildNodes(copy.childNodes);
+  if (itemID !== S.bookmarks.rootfolder.id) {
+    const copyChildNodes = (childNodes: BookmarkFolderType['childNodes']) => {
+      return childNodes.map((n) => {
+        const nn = clone(n);
+        nn.id = randomID();
+        if (nn.type === 'folder') nn.childNodes = copyChildNodes(nn.childNodes);
+        return nn;
+      });
+    };
+    const item = findBookmarkItem(bookmarks, itemID);
+    if (item) {
+      const copy = clone(item);
+      copy.id = randomID();
+      if (copy.type === 'folder') {
+        copy.childNodes = copyChildNodes(copy.childNodes);
+      }
+      return copy;
     }
-    return copy;
   }
   return null;
 }
@@ -836,6 +847,15 @@ export function moveBookmarkItems(
   itemsOrIDs: (BookmarkFolderType | BookmarkType)[] | string[],
   targetID: string
 ): (BookmarkFolderType | BookmarkType | null)[] {
+  const itemsIncludeRoot = itemsOrIDs.some((item: any) => {
+    if (typeof item === 'string' && item === S.bookmarks.rootfolder.id) {
+      return true;
+    }
+    if (typeof item !== 'string' && item.id === S.bookmarks.rootfolder.id) {
+      return true;
+    }
+    return false;
+  });
   const objectsHaveUniqueIDs = !itemsOrIDs.some(
     (item) => typeof item !== 'string' && findBookmarkItem(bookmarks, item.id)
   );
@@ -849,7 +869,7 @@ export function moveBookmarkItems(
     } else return false;
     return true;
   });
-  if (objectsHaveUniqueIDs && targetNotDescendantOfIDs) {
+  if (!itemsIncludeRoot && objectsHaveUniqueIDs && targetNotDescendantOfIDs) {
     return itemsOrIDs.map((itemOrID) => {
       if (typeof itemOrID === 'string' && itemOrID === targetID) {
         return findBookmarkItem(bookmarks, itemOrID);
@@ -872,7 +892,10 @@ export function pasteBookmarkItems(
   copy: string[] | null,
   targetID: string
 ): (BookmarkFolderType | BookmarkType | null)[] {
-  if (targetID && (cut || copy)) {
+  const itemsIncludeRoot = (cut || [])
+    .concat(copy || [])
+    .some((id) => id === S.bookmarks.rootfolder.id);
+  if (!itemsIncludeRoot && targetID && (cut || copy)) {
     let pasted: (BookmarkFolderType | BookmarkType | null)[] = [];
     if (cut) {
       pasted = moveBookmarkItems(bookmarks, cut, targetID);

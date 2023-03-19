@@ -545,6 +545,19 @@ export const S = {
     OpenWindows: {} as WindowPrefsType,
     PersistForType: {} as WindowPrefsType,
   },
+  bookmarks: {
+    rootfolder: {
+      type: 'folder',
+      id: 'bmroot',
+      label: 'i18n:rootBookmark.label',
+      labelLocale: '',
+      note: '',
+      noteLocale: '',
+      creationDate: new Date().valueOf(),
+      hasCaret: true,
+      childNodes: [],
+    } as BookmarkFolderType,
+  },
   prefs: {
     global: {
       WindowsDidClose: true as boolean,
@@ -1036,21 +1049,8 @@ export const S = {
         [k in keyof ShowType]?: boolean;
       },
     },
-  },
 
-  bookmarks: {
-    manager: {
-      bookmarks: {
-        type: 'folder',
-        id: 'bmroot',
-        label: 'i18n:rootBookmark.label',
-        labelLocale: 'en',
-        note: '',
-        noteLocale: 'en',
-        creationDate: new Date().valueOf(),
-        hasCaret: true,
-        childNodes: [],
-      } as BookmarkFolderType,
+    bookmarkManager: {
       treeWidth: 210 as number,
       selectedFolder: 'bmroot' as string,
       cut: null as string[] | null,

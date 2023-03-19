@@ -196,6 +196,7 @@ function setWindowPref(
       additionalArguments[key] = { ...ov, ...v };
     } else additionalArguments[key] = value;
     prefs[pk].additionalArguments = additionalArguments;
+    Prefs.setComplexValue('OpenWindows', prefs, 'windows');
   }
 }
 

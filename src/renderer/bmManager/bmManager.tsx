@@ -53,8 +53,10 @@ const defaultNotStatePref = {
   reset: '' as string,
 };
 
-export type BMManagerState = typeof S.bookmarks.manager &
-  typeof defaultNotStatePref;
+export type BMManagerState = typeof S.prefs.bookmarkManager &
+  typeof defaultNotStatePref & {
+    rootfolder: typeof S.bookmarks.rootfolder;
+  };
 
 export default class BMManagerWin extends React.Component {
   static defaultProps: typeof defaultProps;
@@ -85,9 +87,10 @@ export default class BMManagerWin extends React.Component {
     const state: BMManagerState = {
       ...defaultNotStatePref,
       ...(getStatePref(
-        'bookmarks',
-        'manager'
-      ) as typeof S.bookmarks.manager),
+        'prefs',
+        'bookmarkManager'
+      ) as typeof S.prefs.bookmarkManager),
+      ...(getStatePref('bookmarks', null) as typeof S.bookmarks),
     };
     this.state = state;
 
@@ -104,21 +107,22 @@ export default class BMManagerWin extends React.Component {
   }
 
   componentDidMount() {
-    registerUpdateStateFromPref('bookmarks', 'manager', this);
+    registerUpdateStateFromPref('prefs', 'bookmarkManager', this);
+    registerUpdateStateFromPref('bookmarks', null, this);
   }
 
   componentDidUpdate(_prevProps: BMManagerProps, prevState: BMManagerState) {
     const state = this.state as BMManagerState;
-    setStatePref('bookmarks', 'manager', prevState, state);
-    if (diff(prevState, keep(state, ['bookmarks', 'cut', 'copy']))) {
-      const s: Partial<BMManagerState> = { reset: randomID() };
-      this.setState(s);
+    setStatePref('prefs', 'bookmarkManager', prevState, state);
+    setStatePref('bookmarks', null, prevState, state);
+    if (diff(prevState, keep(state, ['rootfolder', 'cut', 'copy']))) {
+      this.setState({ reset: randomID() } as Partial<BMManagerState>);
     }
   }
 
   render() {
     const {
-      bookmarks,
+      rootfolder,
       columns,
       selectedFolder,
       selectedItems,
@@ -132,9 +136,9 @@ export default class BMManagerWin extends React.Component {
     const { tableCompRef } = this;
 
     const folders = bookmarkTreeNodes(
-      bookmarks.childNodes,
+      rootfolder.childNodes,
       'folder',
-      selectedFolder || S.bookmarks.manager.bookmarks.id
+      selectedFolder || rootfolder.id
     );
 
     // TODO!: Add print feature
@@ -148,13 +152,15 @@ export default class BMManagerWin extends React.Component {
 
     const searchableItems: (BookmarkFolderType | BookmarkType)[] = [];
     const getItems = (folder: BookmarkFolderType) => {
-      if (folder.id !== bookmarks.id) searchableItems.push(folder);
+      if (folder.id !== rootfolder.id) searchableItems.push(folder);
       folder.childNodes.forEach((n) => {
         if (n.type === 'bookmark') searchableItems.push(n);
         else getItems(n);
       });
     };
-    getItems(bookmarks);
+    getItems(rootfolder);
+
+    // TODO!: add move to context menu and allow multiple moves
 
     return (
       <Vbox
@@ -188,25 +194,37 @@ export default class BMManagerWin extends React.Component {
           <Button
             id="button.properties"
             icon="properties"
-            disabled={selectedItems.length !== 1}
+            disabled={
+              selectedItems.length !== 1 ||
+              selectedItems.includes(rootfolder.id)
+            }
             title={G.i18n.t('menu.edit.properties')}
           />
           <Button
             id="button.delete"
             icon="delete"
-            disabled={selectedItems.length === 0}
+            disabled={
+              selectedItems.length === 0 ||
+              selectedItems.includes(rootfolder.id)
+            }
             title={G.i18n.t('menu.edit.delete')}
           />
           <Button
             id="button.cut"
             icon="cut"
-            disabled={selectedItems.length === 0}
+            disabled={
+              selectedItems.length === 0 ||
+              selectedItems.includes(rootfolder.id)
+            }
             title={G.i18n.t('menu.edit.cut')}
           />
           <Button
             id="button.copy"
             icon="duplicate"
-            disabled={selectedItems.length === 0}
+            disabled={
+              selectedItems.length === 0 ||
+              selectedItems.includes(rootfolder.id)
+            }
             title={G.i18n.t('menu.edit.copy')}
           />
           <Button
@@ -218,7 +236,10 @@ export default class BMManagerWin extends React.Component {
           <Button
             id="button.move"
             icon="drawer-left"
-            disabled={selectedItems.length !== 1}
+            disabled={
+              selectedItems.length !== 1 ||
+              selectedItems.includes(rootfolder.id)
+            }
             title={G.i18n.t('menu.edit.move')}
           />
           <Button
@@ -258,28 +279,32 @@ export default class BMManagerWin extends React.Component {
           </Vbox>
         </Hbox>
         <Hbox className="tables" flex="1" pack="start" align="stretch">
-          <Groupbox className="folders" width={treeWidth}>
-            <TreeView
-              key={reset}
-              initialState={folders}
-              selectedIDs={[selectedFolder || S.bookmarks.manager.bookmarks.id]}
-              enableMultipleSelection={false}
-              onSelection={this.onFolderSelection}
-            />
-          </Groupbox>
-          <DragSizer
-            orient="vertical"
-            onDragStart={() => treeWidth}
-            onDragEnd={(_e: React.MouseEvent, v: DragSizerVal) => {
-              this.setState((prevState: BMManagerState) => {
-                return {
-                  treeWidth: v.sizerPos,
-                  reset: prevState.reset + 1,
-                };
-              });
-            }}
-            min={150}
-          />
+          {folders.length > 0 && (
+            <>
+              <Groupbox className="folders" width={treeWidth}>
+                <TreeView
+                  key={reset}
+                  initialState={folders}
+                  selectedIDs={[selectedFolder || rootfolder.id]}
+                  enableMultipleSelection={false}
+                  onSelection={this.onFolderSelection}
+                />
+              </Groupbox>
+              <DragSizer
+                orient="vertical"
+                onDragStart={() => treeWidth}
+                onDragEnd={(_e: React.MouseEvent, v: DragSizerVal) => {
+                  this.setState((prevState: BMManagerState) => {
+                    return {
+                      treeWidth: v.sizerPos,
+                      reset: prevState.reset + 1,
+                    };
+                  });
+                }}
+                min={1}
+              />
+            </>
+          )}
           <Groupbox
             className="items"
             flex="1"
@@ -313,9 +338,9 @@ export default class BMManagerWin extends React.Component {
 BMManagerWin.defaultProps = defaultProps;
 BMManagerWin.propTypes = propTypes;
 
-renderToRoot(<BMManagerWin />);
+renderToRoot(<BMManagerWin id="bookmarkManager" />);
 
 window.ipc.once('close', () => {
-  G.Prefs.setComplexValue('manager.cut', null, 'bookmarks');
-  G.Prefs.setComplexValue('manager.copy', null, 'bookmarks');
+  G.Prefs.setComplexValue('bookmarkManager.cut', null);
+  G.Prefs.setComplexValue('bookmarkManager.copy', null);
 });

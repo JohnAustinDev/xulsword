@@ -192,6 +192,8 @@ export const pushPrefsToMenu: PrefCallbackType = (winid, store, key, val) => {
   if (G.Data.has('menuPref')) {
     menuPref = G.Data.read('menuPref') as string[];
   }
+  // Transaction.pause true means main process is doing a transaction so
+  // the menu should be notified.
   if (winid !== -1 || Transaction.pause) {
     if (store === 'prefs') {
       const keys: string[] = [];
@@ -202,15 +204,15 @@ export const pushPrefsToMenu: PrefCallbackType = (winid, store, key, val) => {
         updateMenuFromPref();
       }
     }
-  }
-  if (store === 'bookmarks') {
-    let xs: BrowserWindow | undefined = getBrowserWindows({
-      type: 'xulsword',
-    })[0];
-    if (xs) {
-      const menuBuilder = new MainMenuBuilder(xs);
-      menuBuilder.buildMenu(true);
-      xs = undefined;
+    if (store === 'bookmarks') {
+      let xs: BrowserWindow | undefined = getBrowserWindows({
+        type: 'xulsword',
+      })[0];
+      if (xs) {
+        const menuBuilder = new MainMenuBuilder(xs);
+        menuBuilder.buildMenu(true);
+        xs = undefined;
+      }
     }
   }
 };
@@ -379,9 +381,9 @@ export default class MainMenuBuilder {
     const haveBookmarks =
       (
         G.Prefs.getComplexValue(
-          'manager.bookmarks',
+          'rootfolder',
           'bookmarks'
-        ) as typeof S.bookmarks.manager.bookmarks
+        ) as typeof S.bookmarks.rootfolder
       ).childNodes.length > 0;
 
     const subMenuFile: MenuItemConstructorOptions = {
@@ -847,9 +849,9 @@ export default class MainMenuBuilder {
     };
 
     const bookmarks = G.Prefs.getComplexValue(
-      'manager.bookmarks',
+      'rootfolder',
       'bookmarks'
-    ) as typeof S.bookmarks.manager.bookmarks;
+    ) as typeof S.bookmarks.rootfolder;
 
     if (bookmarks && bookmarks.childNodes.length) {
       const submenu = subMenuBookmarks.submenu as MenuItemConstructorOptions[];

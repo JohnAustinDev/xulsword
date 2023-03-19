@@ -123,9 +123,9 @@ export default function contextMenu(
         ];
 
         const Bookmarks = G.Prefs.getComplexValue(
-          'manager.bookmarks',
+          'rootfolder',
           'bookmarks'
-        ) as typeof S.bookmarks.manager.bookmarks;
+        ) as typeof S.bookmarks.rootfolder;
         const { bookmark } = d;
         const bookmarkItem =
           (bookmark && findBookmarkItem(Bookmarks, bookmark)) || null;
@@ -314,49 +314,43 @@ export default function contextMenu(
           actions.separator(), */
           {
             label: i18n.t('menu.edit.cut'),
-            enabled: Boolean(d.bookmarks),
+            enabled:
+              Boolean(d.bookmarks) &&
+              !d.bookmarks?.includes(S.bookmarks.rootfolder.id),
             click: () => {
               if (d.bookmarks) {
-                G.Prefs.setComplexValue(
-                  'manager.cut',
-                  d.bookmarks,
-                  'bookmarks'
-                );
-                G.Prefs.setComplexValue('manager.copy', null, 'bookmarks');
+                G.Prefs.setComplexValue('bookmarkManager.cut', d.bookmarks);
+                G.Prefs.setComplexValue('bookmarkManager.copy', null);
               }
             },
           },
           {
             label: i18n.t('menu.edit.copy'),
-            enabled: Boolean(d.bookmarks),
+            enabled:
+              Boolean(d.bookmarks) &&
+              !d.bookmarks?.includes(S.bookmarks.rootfolder.id),
             click: () => {
               if (d.bookmarks) {
-                G.Prefs.setComplexValue(
-                  'manager.copy',
-                  d.bookmarks,
-                  'bookmarks'
-                );
-                G.Prefs.setComplexValue('manager.cut', null, 'bookmarks');
+                G.Prefs.setComplexValue('bookmarkManager.copy', d.bookmarks);
+                G.Prefs.setComplexValue('bookmarkManager.cut', null);
               }
             },
           },
           {
             label: i18n.t('menu.edit.paste'),
             enabled: Boolean(
-              G.Prefs.getComplexValue('manager.cut', 'bookmarks') ||
-                G.Prefs.getComplexValue('manager.copy', 'bookmarks')
+              G.Prefs.getComplexValue('bookmarkManager.cut') ||
+                G.Prefs.getComplexValue('bookmarkManager.copy')
             ),
             click: () => {
               const cut = G.Prefs.getComplexValue(
-                'manager.cut',
-                'bookmarks'
-              ) as typeof S.bookmarks.manager.cut;
+                'bookmarkManager.cut'
+              ) as typeof S.prefs.bookmarkManager.cut;
               const copy = G.Prefs.getComplexValue(
-                'manager.copy',
-                'bookmarks'
-              ) as typeof S.bookmarks.manager.copy;
-              G.Prefs.setComplexValue('manager.cut', null, 'bookmarks');
-              G.Prefs.setComplexValue('manager.copy', null, 'bookmarks');
+                'bookmarkManager.copy'
+              ) as typeof S.prefs.bookmarkManager.copy;
+              G.Prefs.setComplexValue('bookmarkManager.cut', null);
+              G.Prefs.setComplexValue('bookmarkManager.copy', null);
               if (d.bookmark) {
                 G.Commands.pasteBookmarkItems(cut, copy, d.bookmark);
               }
@@ -379,7 +373,9 @@ export default function contextMenu(
           {
             label: i18n.t('menu.edit.delete'),
             visible: Object.keys(d).length > 0,
-            enabled: Boolean(d.bookmark),
+            enabled:
+              Boolean(d.bookmark) &&
+              !d.bookmarks?.includes(S.bookmarks.rootfolder.id),
             click: () => {
               if (d.bookmark) {
                 Commands.deleteBookmarkItems([d.bookmark], window.id);
@@ -422,7 +418,9 @@ export default function contextMenu(
           {
             label: i18n.t('menu.edit.properties'),
             visible: Object.keys(d).length > 0,
-            enabled: Boolean(d.bookmark),
+            enabled:
+              Boolean(d.bookmark) &&
+              !d.bookmarks?.includes(S.bookmarks.rootfolder.id),
             click: () => {
               if (d.bookmark) {
                 Commands.openBookmarkProperties(

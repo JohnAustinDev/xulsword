@@ -91,11 +91,11 @@ export function onCellClick(
 }
 
 export function onDoubleClick(this: BMManagerWin, ex: React.SyntheticEvent) {
-  const { bookmarks } = this.state as BMManagerState;
+  const { rootfolder } = this.state as BMManagerState;
   const e = ex as React.MouseEvent;
   const { bookmark } = this.bmContextData(e.target as HTMLElement);
   if (bookmark) {
-    const bookmarkItem = findBookmarkItem(bookmarks, bookmark);
+    const bookmarkItem = findBookmarkItem(rootfolder, bookmark);
     if (bookmarkItem?.type === 'bookmark' && bookmarkItem.location) {
       const { location } = bookmarkItem;
       if ('v11n' in location) {
@@ -111,10 +111,10 @@ export function onItemSelect(
   this: BMManagerWin,
   item: BookmarkFolderType | BookmarkType
 ) {
-  const { bookmarks } = this.state as BMManagerState;
+  const { rootfolder } = this.state as BMManagerState;
   const { tableCompRef } = this;
   const s: Partial<BMManagerState> = {
-    selectedFolder: bookmarks.id,
+    selectedFolder: rootfolder.id,
     selectedItems: [item.id],
   };
   this.setState(s);
@@ -139,7 +139,7 @@ export function onQueryChange(
 
 export function buttonHandler(this: BMManagerWin, e: React.SyntheticEvent) {
   const state = this.state as BMManagerState;
-  const { bookmarks, selectedFolder, selectedItems, cut, copy } = state;
+  const { rootfolder, selectedFolder, selectedItems, cut, copy } = state;
   const button = ofClass(['button'], e.target);
   if (button) {
     let titleKey = 'menu.edit.properties';
@@ -178,10 +178,10 @@ export function buttonHandler(this: BMManagerWin, e: React.SyntheticEvent) {
       }
       case 'properties': {
         if (selectedItems) {
-          const item = findBookmarkItem(bookmarks, selectedItems[0]);
+          const item = findBookmarkItem(rootfolder, selectedItems[0]);
           if (item) {
             const parent = findParentOfBookmarkItem(
-              bookmarks,
+              rootfolder,
               selectedItems[0]
             );
             bmPropertiesState = {
@@ -276,7 +276,7 @@ function tooltip(strings: string[]) {
 
 export function tableData(this: BMManagerWin): TableRow[] {
   const state = this.state as BMManagerState;
-  const { bookmarks, selectedFolder, cut, copy } = state;
+  const { rootfolder, selectedFolder, cut, copy } = state;
   const getRow = (
     item: BookmarkFolderType | BookmarkType,
     level: number
@@ -331,11 +331,9 @@ export function tableData(this: BMManagerWin): TableRow[] {
       else data.push(getRow(cn, level + 1));
     });
   };
-  const selfolder = findBookmarkItem(
-    bookmarks,
-    selectedFolder || S.bookmarks.manager.bookmarks.id
-  );
+  const selfolder = findBookmarkItem(rootfolder, selectedFolder);
   if (selfolder && selfolder.type === 'folder') addItems(selfolder);
+  else addItems(rootfolder);
   return data;
 }
 

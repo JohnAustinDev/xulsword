@@ -1,6 +1,7 @@
 /* eslint-disable import/no-duplicates */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { clone, findBookmarkItem, ofClass } from '../../common';
+import { S } from '../../constant';
 import G from '../rg';
 import { addBookmarksToNotes, getBookmarkInfo } from '../bookmarks';
 import { getElementData } from '../htmlData';
@@ -11,7 +12,6 @@ import {
   parseExtendedVKRef,
 } from '../viewport/zversekey';
 
-import type { BookmarkFolderType } from '../../type';
 import type { HTMLData } from '../htmlData';
 import type Popup from './popup';
 import type { PopupState } from './popup';
@@ -50,9 +50,9 @@ export function getPopupHTML(
       if (bmitem && context) {
         const bm = findBookmarkItem(
           G.Prefs.getComplexValue(
-            'manager.bookmarks',
+            'rootfolder',
             'bookmarks'
-          ) as BookmarkFolderType,
+          ) as typeof S.bookmarks.rootfolder,
           bmitem
         );
         const bmi = (bm && 'location' in bm && getBookmarkInfo(bm)) || null;

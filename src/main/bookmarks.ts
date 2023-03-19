@@ -14,8 +14,6 @@ import type {
   LocationVKType,
   NewModulesType,
   OSISBookType,
-  PrefStoreType,
-  PrefValue,
   TransactionType,
 } from '../type';
 import type { SelectVKMType } from '../renderer/libxul/vkselect';
@@ -51,7 +49,7 @@ export const addBookmarkTransaction: PrefCallbackType = (
   value
 ) => {
   const { pause, list } = Transaction;
-  if (!pause && store === 'bookmarks' && key === 'manager.bookmarks') {
+  if (!pause && store === 'bookmarks' && key === 'rootfolder') {
     Transaction.index += 1;
     const { index } = Transaction;
     list[index] = {
@@ -164,7 +162,7 @@ export default function importBookmarkObject(
   };
   const validated = validateBookMark(obj);
   if (validated) {
-    if (validated.id === S.bookmarks.manager.bookmarks.id) {
+    if (validated.id === S.bookmarks.rootfolder.id) {
       parentFolder.childNodes.push(...validated.childNodes);
     } else {
       parentFolder.childNodes.push(validated);
@@ -224,9 +222,9 @@ export function importDeprecatedBookmarks(
         const item: BookmarkItem = {
           id,
           label: NAME,
-          labelLocale: locs.includes(NAMELOCALE) ? NAMELOCALE : 'ru',
+          labelLocale: locs.includes(NAMELOCALE) ? NAMELOCALE : '',
           note: NOTE,
-          noteLocale: locs.includes(NOTELOCALE) ? NOTELOCALE : 'ru',
+          noteLocale: locs.includes(NOTELOCALE) ? NOTELOCALE : '',
           creationDate: Date.parse(CREATIONDATE),
         };
         if (TYPE === 'Folder') {

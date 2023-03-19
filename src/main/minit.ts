@@ -663,18 +663,17 @@ export function updateGlobalModulePrefs() {
   const popupsel = Prefs.getComplexValue(
     'global.popup.selection'
   ) as typeof S.prefs.global.popup.selection;
-  const newpopupsel = clone(popupsel);
-  Object.entries(newpopupsel).forEach((entry) => {
+  Object.entries(popupsel).forEach((entry) => {
     const k = entry[0] as keyof typeof S.prefs.global.popup.selection;
     const m = entry[1];
     if (!tabs.find((t) => t.module === m)) {
-      newpopupsel[k] = '';
+      popupsel[k] = '';
     }
   });
   // If no pref has been set for popup.selection[feature] then choose a
   // module from the available modules, if there are any.
   const featureModules = getFeatureModules();
-  Object.entries(newpopupsel).forEach((entry) => {
+  Object.entries(popupsel).forEach((entry) => {
     const k = entry[0] as keyof typeof S.prefs.global.popup.selection;
     if (!entry[1] && k in featureModules) {
       const kk = k as keyof typeof featureModules;
@@ -689,10 +688,10 @@ export function updateGlobalModulePrefs() {
           : []
       ) as string[];
       const selection = preferred.find((m) => m && ma.includes(m)) || ma[0];
-      newpopupsel[k] = selection;
+      popupsel[k] = selection;
     }
   });
-  Prefs.setComplexValue('global.popup.selection', newpopupsel);
+  Prefs.setComplexValue('global.popup.selection', popupsel);
 }
 
 export function resetMain() {

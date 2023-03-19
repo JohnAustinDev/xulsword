@@ -352,34 +352,38 @@ export function getCompanionModules(mod: string) {
 // Return and persist the key/value pairs of component state Prefs. Component
 // state Prefs are permanently persisted component state values recorded in
 // a prefs json file whose key begins with the component id.
-export function getStatePref(store: keyof typeof S, id: string): PrefObject;
+export function getStatePref(
+  store: keyof typeof S,
+  id: string | null
+): PrefObject;
 export function getStatePref<P extends PrefObject>(
   store: keyof typeof S,
-  id: string,
+  id: string | null,
   defaultPrefs: P
 ): P;
 export function getStatePref<P extends PrefObject>(
   store: keyof typeof S,
-  id: string,
+  id: string | null,
   defaultPrefs?: P
 ): P | PrefObject {
   if (defaultPrefs) return getStatePref2(G.Prefs, store, id, defaultPrefs) as P;
   return getStatePref2(G.Prefs, store, id) as PrefObject;
 }
 
-// Push state changes of statePrefKeys value to Prefs. The state Pref key
-// will begin with id. Pref keys of SyncPrefs are always included since
-// they are global.
+// Push state changes of statePrefKeys value to Prefs.
 export function setStatePref(
   store: PrefStoreType,
-  id: string,
+  id: string | null,
   prevState: { [key: string]: any } | null,
   state: { [key: string]: any },
-  statePrefKeys?: string[] // default is all
+  statePrefKeys?: string[] // default is all applicable S keys
 ) {
-  const keys = statePrefKeys
-    ? statePrefKeys.slice()
-    : Object.keys(S[store][id as keyof typeof S[PrefStoreType]]);
+  let keys = statePrefKeys?.slice();
+  if (!keys) {
+    keys = Object.keys(
+      id ? S[store][id as keyof typeof S[PrefStoreType]] : S[store]
+    );
+  }
   const newStatePref = keep(state, keys);
   if (prevState === null) G.Prefs.mergeValue(id, newStatePref, store);
   else {
@@ -394,7 +398,7 @@ export function setStatePref(
 // and window locale as needed.
 export function registerUpdateStateFromPref(
   store: PrefStoreType,
-  id: string,
+  id: string | null,
   c: React.Component,
   defaultPrefs?: { [prefkey: string]: PrefValue } // default is all
 ) {
@@ -402,21 +406,17 @@ export function registerUpdateStateFromPref(
     const aStore = aStorex || 'prefs';
     log.debug(`Updating state from prefs:`, prefs, aStore);
     if (aStore === store) {
-      const different = diff(
-        c.state,
-        getStatePref(
-          store,
-          id,
-          defaultPrefs || S[store][id as keyof typeof S[PrefStoreType]]
-        )
-      );
+      const sp = defaultPrefs
+        ? getStatePref(store, id, defaultPrefs)
+        : getStatePref(store, id);
+      const different = diff(c.state, sp);
       if (different && Object.keys(different).length) {
         const d = different as any;
         if (
           (!aStore &&
             d?.global?.locale &&
             d?.global?.locale !== G.i18n.language) ||
-          (aStore === 'bookmarks' && d?.manager?.bookmarks)
+          (aStore === 'bookmarks' && d?.rootfolder)
         ) {
           Cache.clear();
         }

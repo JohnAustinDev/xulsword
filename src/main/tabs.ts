@@ -15,9 +15,7 @@ export default function setViewportTabs(
 ): void {
   const Tabs = getTabs();
   const Tab = getTab();
-  const xulsword = clone(
-    Prefs.getComplexValue('xulsword')
-  ) as typeof S.prefs.xulsword;
+  const xulsword = Prefs.getComplexValue('xulsword') as typeof S.prefs.xulsword;
   const { location, mtModules, panels, tabs } = xulsword;
   const panelIndexes =
     panelIndex === -1 ? panels.map((_p: any, i: number) => i) : [panelIndex];

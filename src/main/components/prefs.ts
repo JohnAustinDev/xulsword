@@ -68,7 +68,7 @@ const Prefs = {
     return this.getPrefOrCreate(key, 'number', undefined, aStore) as number;
   },
 
-  // Set a Boolean pref value. Error if key is not an number.
+  // Set a Boolean pref value. Error if key is not a number.
   setIntPref(key: string, value: number, aStore?: PrefStoreType): boolean {
     return this.setPref(key, 'number', value, aStore, arguments[3] ?? -1);
   },
@@ -83,19 +83,20 @@ const Prefs = {
     return this.setPref(key, 'complex', value, aStore, arguments[3] ?? -1);
   },
 
-  // Sets individual properties of a key, leaving the others untouched.
+  // Sets individual properties of a key or a store, leaving the others untouched.
   mergeValue(
-    key: string,
-    obj: { [i: string]: any },
+    key: string | null,
+    obj: PrefObject,
     aStore?: PrefStoreType,
     clearRendererCaches?: boolean
-  ): void {
-    this.setPref(
+  ): boolean {
+    return this.setPref(
       key,
       'merge',
       obj,
       aStore,
       arguments[4] ?? -1,
+      false,
       clearRendererCaches
     );
   },
@@ -105,43 +106,145 @@ const Prefs = {
     return this.setPref(key, 'any', undefined, aStore, arguments[2] ?? -1);
   },
 
-  // Return the pref value of the given type. If the key is not found in the
-  // store, or its value is of the wrong type, it will be reset to a default
-  // value. The default value will be the first found of:
+  // Find the S default value of any key in any store. If the store is not part
+  // of S, undefined is returned.
+  findDefaultValueInS(key: string, store: PrefStoreType): PrefValue {
+    if (store in S) {
+      const ks = key.split('.');
+      let s = S[store] as any;
+      while (ks[0] && typeof s === 'object' && ks[0] in s) {
+        s = s[ks.shift() as string];
+      }
+      if (ks.length > 0) s = undefined;
+      return s;
+    }
+    return undefined;
+  },
+
+  // Return the default value for a key. If store is in S and no default is found,
+  // an error is thrown. Otherwise undefined is returned. The default value will
+  // be the first found of:
   // 1) defval argument (unless undefined)
-  // 2) current store_default value (if it exists)
-  // 3) value from S global variable.
-  // Finally, if no default value is found, an exception is thrown.
+  // 2) current store value (if is exists)
+  // 3) current store_default value (if it exists)
+  // 4) value from S global variable.
+  // 5) undefined, or throw if key is in S
+  findDefaultValue(
+    key: string,
+    defaultValue: PrefValue,
+    store: PrefStoreType
+  ): PrefValue {
+    if (defaultValue === undefined) {
+      const s = this.findDefaultValueInS(key, store);
+      const throwOnFail = store in S && s === undefined;
+      const value = this.getKeyValueFromStore(key, !throwOnFail, store);
+      if (value === undefined) return s;
+      return value;
+    }
+    return defaultValue;
+  },
+
+  isType(
+    type: 'string' | 'number' | 'boolean' | 'complex' | 'any',
+    value: PrefValue
+  ): boolean {
+    if (type !== 'any') {
+      const type2 = type === 'complex' ? 'object' : type;
+      if (typeof value !== type2) {
+        return false;
+      }
+    }
+    return true;
+  },
+
+  // Return the pref value of the given type and create it if it doesn't exist.
+  // Exceptions are thrown if:
+  // - defval is provided but has the wrong type
+  // - store is in S, but the requested key is not
+  // - store is in S and the default is required but cannot be found
+  // - pref creation fails
+  // If the key is not found in the store, or else its value is of the wrong type,
+  // it, along with all of its unset ancestors, will be reset to a default value.
   getPrefOrCreate(
     key: string,
     type: 'string' | 'number' | 'boolean' | 'complex',
-    defval: PrefValue,
-    store?: PrefStoreType
+    defvalx: PrefValue,
+    storex?: PrefStoreType
   ): PrefValue {
-    if (defval !== undefined && !this.isType(type, defval)) {
+    const callingWinID = arguments[4] ?? -1;
+    // Check input values
+    if (defvalx !== undefined && !this.isType(type, defvalx)) {
       throw new Error(
-        `Default pref has wrong type. Expected '${type}', got '${typeof defval}'.`
+        `Default pref has wrong type. Expected '${type}', got '${typeof defvalx}'.`
       );
     }
-    const aStore = store || 'prefs';
-    const storeValue = this.getKeyValueFromStore(key, true, aStore);
-    let value = storeValue;
-    if (storeValue === undefined) value = defval;
-    if (value !== undefined && value !== storeValue) {
-      this.setPref(key, type, value, aStore, arguments[4] ?? -1);
+    const defval = clone(defvalx);
+    const store = storex || 'prefs';
+    const rootkey = key.split('.')[0];
+    if (store in S && !Object.keys(S[store]).includes(rootkey)) {
+      throw new Error(
+        `Pref root key '${rootkey}' is unrecognized in '${store}'.`
+      );
     }
-    if (!this.isType(type, value)) {
+    // Read the store to get the key value (without throwing if the key is missing).
+    const storeValue = this.getKeyValueFromStore(key, true, store);
+    if (store in S && storeValue === undefined) {
+      // Set any missing ancestor key in the store to the default.
+      const ks = key.split('.');
+      let i;
+      for (i = ks.length - 1; i > 0; i -= 1) {
+        if (
+          this.getKeyValueFromStore(ks.slice(0, i).join('.'), true, store, null)
+        ) {
+          break;
+        }
+      }
+      if (i !== ks.length - 1) {
+        const ancestorKey = ks.slice(0, i + 1).join('.');
+        const ancestorDefVal = this.findDefaultValueInS(ancestorKey, store);
+        if (ancestorDefVal === undefined) {
+          throw new Error(
+            `Pref ancestor has no default: key='${key}', store='${store}', ancestorKey='${ancestorKey}'`
+          );
+        }
+        if (
+          !this.setPref(
+            ancestorKey,
+            'any',
+            ancestorDefVal,
+            store,
+            callingWinID,
+            true
+          )
+        ) {
+          throw new Error(
+            `Failed setting ancestor default: key='${key}', store='${store}', ancestorKey='${ancestorKey}'`
+          );
+        }
+      }
+    }
+    let value = storeValue;
+    // Use the default if store value is undefined
+    if (storeValue === undefined) value = defval;
+    // If a valid default was used, write it to the store
+    if (value !== undefined && value !== storeValue) {
+      if (!this.setPref(key, type, value, store, callingWinID, true)) {
+        throw new Error(
+          `Failed to persist default value: key='${key}', store='${store}', value='${value}'`
+        );
+      }
+    }
+    if (value === undefined || !this.isType(type, value)) {
       // A program update may have caused a pref type change, so delete
       // the existing value and replace it with a default value. Reading
       // after delete causes the store_default to be read.
       this.deleteUserPref(key, store);
-      const ks = key.split('.');
-      let s = S as any;
-      while (typeof s === 'object' && ks[0] in s) s = s[ks.shift() as string];
-      if (ks.length > 0) s = undefined;
-      value = this.getKeyValueFromStore(key, s !== undefined, aStore);
-      if (value === undefined) value = s;
-      this.setPref(key, type, value, aStore, arguments[4] ?? -1);
+      value = this.findDefaultValue(key, defval, store);
+      if (!this.setPref(key, type, value, store, callingWinID, true)) {
+        throw new Error(
+          `Failed to reset to default value: key='${key}', store='${store}', value='${value}'`
+        );
+      }
     }
 
     return value;
@@ -205,13 +308,16 @@ const Prefs = {
     return s.data;
   },
 
+  // If getDefaultStore is null, only the store will be searched, if it is
+  // false, the store will be searched followed by the default store. If it
+  // is true, only the default store will be searched.
   getKeyValueFromStore(
     key: string,
     noErrorOnMissingKey: boolean,
     aStore: string,
-    getDefaultStore = false
+    getDefaultStore = false as boolean | null
   ): PrefValue {
-    const stobj = this.getStore(aStore, getDefaultStore);
+    const stobj = this.getStore(aStore, !!getDefaultStore);
     let keyExists = true;
     let keyvalue = stobj as PrefObject | PrefValue;
     key.split('.').forEach((d) => {
@@ -228,7 +334,7 @@ const Prefs = {
       }
     });
     if (!keyExists) {
-      if (!getDefaultStore) {
+      if (getDefaultStore === false) {
         return this.getKeyValueFromStore(
           key,
           noErrorOnMissingKey,
@@ -239,30 +345,25 @@ const Prefs = {
       if (noErrorOnMissingKey) return undefined;
       throw Error(`Missing Prefs key: '${key}' of '${aStore}' store`);
     }
-    return keyvalue;
-  },
-
-  isType(
-    type: 'string' | 'number' | 'boolean' | 'complex' | 'any',
-    value: PrefValue
-  ): boolean {
-    if (type !== 'any') {
-      const type2 = type === 'complex' ? 'object' : type;
-      if (typeof value !== type2) {
-        return false;
-      }
-    }
-    return true;
+    return clone(keyvalue);
   },
 
   // Write persistent data to source json files. If there is no data object
   // for the store, then there have been no set/gets on the store, and nothing
   // will be written. True is returned on success.
   writeStore(aStore: PrefStoreType = 'prefs') {
-    if (!this.stores) return false;
+    if (!this.stores) {
+      log.warn(`Failed to write to non-existent store: '${aStore}.`);
+      return false;
+    }
 
     const s = this.stores[aStore];
-    if (!s.data || typeof s.data !== 'object') return false;
+    if (!s.data || typeof s.data !== 'object') {
+      log.warn(
+        `No data written to store: store='${aStore}', PrefValue='${s.data}'`
+      );
+      return false;
+    }
 
     // Prune unrecognized or outdated pref values
     const allStoreKeys = Object.keys(S[aStore]);
@@ -275,7 +376,10 @@ const Prefs = {
       fs.writeFileSync(s.file.path, json);
       log.verbose(`Persisted store: ${s.file.path}`);
     } else {
-      throw Error(`Failed to write Prefs store: ${s.file.path}`);
+      log.warn(
+        `Failed to write to store: '${aStore}' PrefValue did not stringify.`
+      );
+      return false;
     }
 
     return true;
@@ -295,20 +399,23 @@ const Prefs = {
   // value is undefined, the key will be removed from the store. If the value
   // does not match the given type, false is returned, and nothing is set and no
   // error is thrown. If this.writeOnChange is set, then the store will be saved
-  // to disk immediately. Supported types are PrefValue. If a change was made,
-  // any registered subscription callbacks will be called after setting the new
-  // value.
+  // to disk immediately. If a change was made, any registered subscription
+  // callbacks will be called after setting the new value unless skipCallbacks
+  // is set.
   setPref(
-    key: string,
+    key: string | null, // null only if type is merge and target is store
     type: 'string' | 'number' | 'boolean' | 'complex' | 'any' | 'merge',
     value: PrefValue,
-    store: PrefStoreType | undefined,
+    storex: PrefStoreType | undefined,
     callingWinID: number,
+    skipCallbacks?: boolean,
     clearRendererCaches?: boolean
   ): boolean {
+    if (key === null && type !== 'merge')
+      throw new Error(`Pref key is null. Must use merge.`);
     // Get the store.
-    const aStore = store || 'prefs';
-    let p = this.getStore(aStore);
+    const store = storex || 'prefs';
+    let p = this.getStore(store);
     // Test the value.
     let valueobj: PrefObject | undefined;
     if (type === 'merge') {
@@ -319,73 +426,87 @@ const Prefs = {
       ) {
         valueobj = value;
       } else {
-        throw Error(
-          `Prefs merge failed because value is not a PrefObject (value='${value}', key='${key}', store='${aStore}').`
+        log.warn(
+          `Prefs merge failed because value is not a PrefObject (value='${value}', key='${key}', store='${store}').`
         );
+        return false;
       }
     } else if (!this.isType(type, value)) {
       log.warn(
-        `Prefs was given the wrong type (expected='${type}', given='${value}', key='${key}', store='${aStore}').`
+        `Prefs was given the wrong type (expected='${type}', given='${value}', key='${key}', store='${store}').`
       );
       return false;
     }
     // Get (or create) the parent object of the key.
     let k = key;
-    key.split('.').forEach((d, i, a) => {
-      k = d;
-      if (i + 1 === a.length) return;
-      if (!(d in p)) p[d] = {};
-      const pd = p[d];
-      if (pd) {
-        if (typeof pd !== 'object' || Array.isArray(pd)) {
-          throw Error(
-            `Prefs parent key is not a PrefObject: '${a
-              .slice(0, i + 1)
-              .join('.')}'`
-          );
+    if (key !== null) {
+      key.split('.').forEach((d, i, a) => {
+        k = d;
+        if (i + 1 === a.length) return;
+        if (!(d in p)) p[d] = {};
+        const pd = p[d];
+        if (pd) {
+          if (typeof pd !== 'object' || Array.isArray(pd)) {
+            throw Error(
+              `Prefs parent key is not a PrefObject: '${a
+                .slice(0, i + 1)
+                .join('.')}'`
+            );
+          }
+          p = pd;
         }
-        p = pd;
-      }
-    });
+      });
+    }
     // Check the current value and set to the new value only if needed.
-    if (value === undefined) {
+    if (k !== null && value === undefined) {
       if (k in p) delete p[k];
       else return true;
-    } else if (diff(p[k], value) === undefined) {
+    } else if (k !== null && diff(p[k], value) === undefined) {
       return true;
-    } else if (type === 'merge') {
-      let pp = p[k];
-      if (!pp) pp = {};
+    } else if (k === null || type === 'merge') {
+      // already asserted the type <=> merge connection above
+      const pp = k === null ? this.stores[store].data : p[k];
       if (typeof pp === 'object' && !Array.isArray(pp)) {
-        p[k] = { ...pp, ...clone(valueobj) };
+        valueobj = diff(pp, valueobj);
+        if (valueobj === undefined) return true;
+        const merged = { ...pp, ...clone(valueobj) };
+        if (k === null) this.stores[store].data = merged;
+        else p[k] = merged;
       } else {
-        throw Error(
-          `Prefs merge failed because the key does not contain a PrefObject (key-value='${pp}', key='${key}', store='${aStore}').`
+        log.warn(
+          `Prefs merge failed because the key does not contain a PrefObject (key-value='${pp}', key='${key}', store='${store}').`
         );
+        return false;
       }
     } else p[k] = clone(value);
     // If not writeOnChange, then data is persisted only when app is closed.
     let success = true;
-    if (this.writeOnChange) {
-      success = this.writeStore(aStore);
-    }
-    // Reset renderer caches if requested. When pref values are being pushed
-    // to renderer windows that are incompatible with currently cached data,
-    // such as global.locale, caches must be cleared before prefs are updated!
-    if (clearRendererCaches) {
-      BrowserWindow.getAllWindows().forEach((w) => {
-        w.webContents.send('cache-reset');
-      });
-    }
-    // Call any registered callbacks if value was successfully changed.
+    if (this.writeOnChange) success = this.writeStore(store);
     if (success) {
-      const args: Parameters<PrefCallbackType> = [
-        callingWinID,
-        aStore,
-        key,
-        value,
-      ];
-      Subscription.publish.prefsChanged(...args);
+      // Reset renderer caches if requested. When pref values are being pushed
+      // to renderer windows that are incompatible with currently cached data,
+      // such as global.locale, caches must be cleared before prefs are updated!
+      if (clearRendererCaches) {
+        BrowserWindow.getAllWindows().forEach((w) => {
+          w.webContents.send('cache-reset');
+        });
+      }
+      // Call any registered callbacks if value was successfully changed.
+      if (!skipCallbacks) {
+        let keys: string[] = [];
+        if (key === null) {
+          if (valueobj) keys = Object.keys(valueobj);
+        } else keys = [key];
+        keys.forEach((ks) => {
+          const args: Parameters<PrefCallbackType> = [
+            callingWinID,
+            store,
+            ks,
+            value,
+          ];
+          Subscription.publish.prefsChanged(...args);
+        });
+      }
     }
 
     return success;
@@ -401,6 +522,8 @@ export type PrefsGType = Omit<
   | 'isType'
   | 'writeStore'
   | 'setPref'
+  | 'findDefaultValue'
+  | 'findDefaultValueInS'
 >;
 
 export default Prefs as PrefsGType;

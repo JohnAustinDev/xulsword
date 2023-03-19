@@ -39,9 +39,9 @@ import type {
 } from '../../type';
 
 const Bookmarks = G.Prefs.getComplexValue(
-  'manager.bookmarks',
+  'rootfolder',
   'bookmarks'
-) as BookmarkFolderType;
+) as typeof S.bookmarks.rootfolder;
 
 export type BMPropertiesState = {
   bookmark: BookmarkType | BookmarkFolderType;
@@ -76,7 +76,7 @@ const bmdefault: BookmarkType = {
 
 const defaultState: BMPropertiesState = {
   bookmark: bmdefault,
-  treeSelection: S.bookmarks.manager.bookmarks.id,
+  treeSelection: S.bookmarks.rootfolder.id,
   anyChildSelectable: true,
   hide: [],
 };
@@ -164,7 +164,7 @@ export default class BMPropertiesWin extends React.Component {
     }
     if (updateState) {
       this.setState({
-        treeSelection: treeSelection || S.bookmarks.manager.bookmarks.id,
+        treeSelection: treeSelection || S.bookmarks.rootfolder.id,
         bookmark,
       });
     }
@@ -194,17 +194,21 @@ export default class BMPropertiesWin extends React.Component {
         break;
       }
       case 'ok': {
-        const bookmarks = G.Prefs.getComplexValue(
-          'manager.bookmarks',
+        const rootfolder = G.Prefs.getComplexValue(
+          'rootfolder',
           'bookmarks'
-        ) as BookmarkFolderType;
+        ) as typeof S.bookmarks.rootfolder;
         const state = this.state as BMPropertiesState;
         const { treeSelection, bookmark } = state;
-        const isNew = !replaceBookmarkItem(bookmarks, bookmark);
+        const isNew = !replaceBookmarkItem(rootfolder, bookmark);
         const itemOrID = isNew ? [bookmark] : [bookmark.id];
-        const moved = moveBookmarkItems(bookmarks, itemOrID, treeSelection);
+        const moved = moveBookmarkItems(
+          rootfolder,
+          itemOrID,
+          treeSelection || rootfolder.id
+        );
         if (moved) {
-          G.Prefs.setComplexValue('manager.bookmarks', bookmarks, 'bookmarks');
+          G.Prefs.setComplexValue('rootfolder', rootfolder, 'bookmarks');
           G.Window.reset('component-reset', 'all');
           G.Window.close();
         }
@@ -250,7 +254,8 @@ export default class BMPropertiesWin extends React.Component {
     const state = this.state as BMPropertiesState;
     const { treeHandler, gbHandler, handler, vkHandler } = this;
     const { bookmark, hide, treeSelection, anyChildSelectable } = state;
-    const { type, label, labelLocale, note, noteLocale } = bookmark;
+    const { type, label: l, labelLocale, note, noteLocale } = bookmark;
+    const label = l.startsWith('i18n:') ? G.i18n.t(l.substring(5)) : l;
     let location;
     let sampleText;
     if (type === 'bookmark') {

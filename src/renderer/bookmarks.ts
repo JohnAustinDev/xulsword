@@ -4,7 +4,7 @@
 import Cache from '../cache';
 import { clone, JSON_attrib_parse, ofClass } from '../common';
 import RefParser from '../refParser';
-import C from '../constant';
+import C, { S } from '../constant';
 import G from './rg';
 import {
   findElementData,
@@ -131,9 +131,9 @@ export function getBookmarkMap(): BookmarkMapType {
     };
     kmap(
       G.Prefs.getComplexValue(
-        'manager.bookmarks',
+        'rootfolder',
         'bookmarks'
-      ) as BookmarkFolderType
+      ) as typeof S.bookmarks.rootfolder
     );
     Cache.write(keyBmitemIDMap, 'bookmarkMap');
   }
