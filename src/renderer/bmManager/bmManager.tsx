@@ -11,7 +11,7 @@ import {
   stringHash,
   tableRowsToSelection,
 } from '../../common';
-import { S } from '../../constant';
+import S from '../../defaultPrefs';
 import G from '../rg';
 import renderToRoot from '../renderer';
 import {
@@ -161,6 +161,7 @@ export default class BMManagerWin extends React.Component {
     getItems(rootfolder);
 
     // TODO!: add move to context menu and allow multiple moves
+    // TODO!: Add import/export buttons
 
     return (
       <Vbox

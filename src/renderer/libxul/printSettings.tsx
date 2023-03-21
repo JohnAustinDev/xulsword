@@ -12,7 +12,7 @@ import PropTypes from 'prop-types';
 import { Icon, Intent, Position, Toaster } from '@blueprintjs/core';
 import Subscription from '../../subscription';
 import { clone } from '../../common';
-import { S } from '../../constant';
+import S from '../../defaultPrefs';
 import G from '../rg';
 import { getStatePref, setStatePref } from '../rutil';
 import { Hbox, Vbox } from './boxes';

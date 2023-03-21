@@ -2,7 +2,6 @@
 /* eslint-disable prefer-rest-params */
 import type ZIP from 'adm-zip';
 import { BrowserWindow, dialog, OpenDialogSyncOptions } from 'electron';
-import { BrowserWindowConstructorOptions } from 'electron/main';
 import fpath from 'path';
 import log from 'electron-log';
 import i18n from 'i18next';
@@ -20,7 +19,8 @@ import {
   moveBookmarkItems,
 } from '../../common';
 import Subscription from '../../subscription';
-import C, { S } from '../../constant';
+import C from '../../constant';
+import S from '../../defaultPrefs';
 import parseSwordConf from '../parseSwordConf';
 import importBookmarkObject, {
   canRedo,
@@ -807,7 +807,7 @@ const Commands = {
         const file = new LocalFile(obj.filePath);
         if (file.exists()) file.remove();
         if (!file.exists()) {
-          file.writeFile(JSON_stringify(folder));
+          file.writeFile(JSON_stringify(folder, 1));
         }
       }
     }

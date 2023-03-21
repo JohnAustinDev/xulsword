@@ -3,7 +3,7 @@ import { BrowserWindow } from 'electron';
 import contextMenuCreator from 'electron-context-menu';
 import i18n from 'i18next';
 import { findBookmarkItem } from '../common';
-import { S } from '../constant';
+import S from '../defaultPrefs';
 import G from './mg';
 import CommandsX from './components/commands';
 import setViewportTabs from './tabs';

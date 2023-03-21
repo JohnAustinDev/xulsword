@@ -17,7 +17,8 @@ import path from 'path';
 import Subscription from '../subscription';
 import Cache from '../cache';
 import { clone, JSON_parse, keep } from '../common';
-import C, { S } from '../constant';
+import C from '../constant';
+import S from '../defaultPrefs';
 import G from './mg';
 import { getCipherFailConfs, getTabs, updateGlobalModulePrefs } from './minit';
 import MainMenuBuilder, { pushPrefsToMenu } from './menu';
@@ -46,23 +47,6 @@ const installer = require('electron-devtools-installer');
 const sourceMapSupport = require('source-map-support');
 const electronDebug = require('electron-debug');
 
-addBookmarkTransaction(
-  -1,
-  'bookmarks',
-  'rootfolder',
-  G.Prefs.getComplexValue(
-    'rootfolder',
-    'bookmarks'
-  ) as typeof S.bookmarks.rootfolder
-);
-
-if (G.Prefs.getBoolPref('global.InternetPermission')) {
-  const url = G.Prefs.getCharPref('global.crashReporterURL');
-  if (url) {
-    crashReporter.start({ submitURL: url });
-  }
-}
-
 // Init xulsword logfile.
 {
   const logfile = new LocalFile(
@@ -81,6 +65,23 @@ if (G.Prefs.getBoolPref('global.InternetPermission')) {
   log.catchErrors({ onError: (er: Error) => log.error(er) });
 }
 log.info(`Starting ${app.getName()} isDevelopment='${C.isDevelopment}'`);
+
+addBookmarkTransaction(
+  -1,
+  'bookmarks',
+  'rootfolder',
+  G.Prefs.getComplexValue(
+    'rootfolder',
+    'bookmarks'
+  ) as typeof S.bookmarks.rootfolder
+);
+
+if (G.Prefs.getBoolPref('global.InternetPermission')) {
+  const url = G.Prefs.getCharPref('global.crashReporterURL');
+  if (url) {
+    crashReporter.start({ submitURL: url });
+  }
+}
 
 G.LibSword.init();
 

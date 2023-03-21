@@ -6,7 +6,8 @@ import path from 'path';
 import fs from 'fs';
 import i18n from 'i18next';
 import fontList from 'font-list';
-import C, { S } from '../constant';
+import C from '../constant';
+import S from '../defaultPrefs';
 import VerseKey from '../verseKey';
 import RefParser, { RefParserOptionsType } from '../refParser';
 import { clone, isASCII, JSON_parse } from '../common';
@@ -469,7 +470,7 @@ export function getMaxVerse(v11n: V11nType, vkeytext: string) {
 
 export function verseKey(
   versekey: LocationVKType | string,
-  v11n?: V11nType,
+  v11n?: V11nType | null,
   options?: RefParserOptionsType
 ): VerseKey {
   return new VerseKey(

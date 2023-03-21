@@ -25,7 +25,8 @@ import {
   repositoryModuleKey,
   tableSelectDataRows,
 } from '../../common';
-import C, { S } from '../../constant';
+import C from '../../constant';
+import S from '../../defaultPrefs';
 import G from '../rg';
 import log from '../log';
 import { TCellInfo, TCellLocation } from '../libxul/table';

@@ -48,9 +48,8 @@ dirNames.forEach((dir) => {
 // });
 
 // The DirsClass interface is only available in main process directly through the Dirs object
-type DirsClass = GType['Dirs'] &
-  {
-    [key in keyof DirsDirectories]: LocalFile;
-  };
+type DirsClass = GType['Dirs'] & {
+  [key in keyof DirsDirectories]: LocalFile;
+};
 
 export default Dirs as DirsClass;

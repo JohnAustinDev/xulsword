@@ -11,7 +11,7 @@ import ReactDOM from 'react-dom';
 import { ProgressBar } from '@blueprintjs/core';
 import Subscription from '../../subscription';
 import { diff, sanitizeHTML, stringHash, querablePromise } from '../../common';
-import { S } from '../../constant';
+import S from '../../defaultPrefs';
 import G from '../rg';
 import renderToRoot from '../renderer';
 import { windowArguments, getStatePref, setStatePref } from '../rutil';
@@ -98,10 +98,7 @@ export default class PrintPassageWin extends React.Component {
 
     const s: PrintPassageState = {
       ...notStatePrefDefault,
-      ...(getStatePref(
-        'prefs',
-        'printPassage'
-      ) as typeof S.prefs.printPassage),
+      ...(getStatePref('prefs', 'printPassage') as typeof S.prefs.printPassage),
       ...(openedWinState || {}),
     };
     openedWinState = {};

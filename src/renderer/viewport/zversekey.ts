@@ -2,7 +2,8 @@
 /* eslint-disable import/no-duplicates */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-continue */
-import C, { S } from '../../constant';
+import C from '../../constant';
+import S from '../../defaultPrefs';
 import {
   clone,
   dString,
@@ -21,6 +22,7 @@ import type {
   LookupInfo,
   OSISBookType,
   ShowType,
+  TabTypes,
   TextVKType,
 } from '../../type';
 import type { HTMLData } from '../htmlData';
@@ -30,9 +32,9 @@ import type Atext from './atext';
 import type ViewportWin from './viewportWin';
 import type { ViewportWinState } from './viewportWin';
 
-// Return modules of all types that are associated with the
-// current locale and tab settings.
-function alternateModules() {
+// Return modules (optionally of a particular type) that are associated with
+// the current locale and tab settings.
+function workingModules(type?: TabTypes) {
   const am = G.ProgramConfig.AssociatedModules;
   const alternates = new Set(am ? am.split(',') : undefined);
   const tabs = G.Prefs.getComplexValue(
@@ -41,14 +43,18 @@ function alternateModules() {
   tabs.forEach((tbk) => {
     if (tbk) tbk.forEach((t) => alternates.add(t));
   });
-  return Array.from(alternates);
+  return Array.from(alternates).filter(
+    (m) => !type || (m in G.Tab && G.Tab[m].tabType === type)
+  );
 }
 
-// Return an installed Bible module to be referenced for a given source module.
-// If no particular Bible reference can be found, then null is returned.
-// An info object will also be populated with info about the match.
+// Return an installed Bible module associated with a module of any type. If
+// anyTypeModule is a Bible, it will be used, otherwise its Companion Bible.
+// Then, if the user has specified another Bible module for it, the user module
+// will be returned and userpref = true will be set in info. If no particular
+// Bible reference can be found, null is returned.
 export function getRefBible(
-  srcmodule: string,
+  anyTypeModule: string,
   info?: Partial<LookupInfo>
 ): string | null {
   const inf = (typeof info === 'object' ? info : {}) as Partial<LookupInfo>;
@@ -56,7 +62,7 @@ export function getRefBible(
   inf.companion = false;
   inf.userpref = false;
   // Is mod a Bible?
-  let refbible = srcmodule;
+  let refbible = anyTypeModule;
   if (!(refbible in G.Tab)) {
     // Allow case differences in module code references.
     const rblc = refbible.toLowerCase();
@@ -67,7 +73,7 @@ export function getRefBible(
   }
   // Otherwise does mod have a Bible companion?
   if (!refbible) {
-    const arefx = getCompanionModules(srcmodule);
+    const arefx = getCompanionModules(anyTypeModule);
     const aref = arefx
       .map((m) => {
         // Allow case differences in module code references.
@@ -83,14 +89,13 @@ export function getRefBible(
     }
   }
   if (refbible) {
-    // Finally, if we have a refbible, then has the user chosen an alternate
-    // for it, to be used in its place?
+    // Finally, has the user specified an alternate for this refbible.
     const pmsel = G.Prefs.getComplexValue(
       'global.popup.selection'
     ) as typeof S.prefs.global.popup.selection;
     let userPrefBible = refbible;
-    if (srcmodule in pmsel && pmsel[srcmodule]) {
-      userPrefBible = pmsel[srcmodule];
+    if (anyTypeModule in pmsel && pmsel[anyTypeModule]) {
+      userPrefBible = pmsel[anyTypeModule];
     }
     if (userPrefBible !== refbible) {
       refbible = userPrefBible;
@@ -119,15 +124,15 @@ function getFootnoteText(location: LocationVKType, module: string): string {
 // Given a LocationVKType and target module, this function attempts to return
 // a TextVKType object using LibSword. Even if the target module is not an
 // acceptable reference (because it's not a Bible or Commentary according to
-// the commentary argument) or even if it does not contain the location's text,
-// alternate modules may be searched for the text if location does not include
-// a subid. First any companion modules are tried, unless altModules is set to
-// false. Then altModules are searched in order. If still a text is not found,
-// and findAny is set, then all tabs are searched in order. The returned text
-// will also include textual notes if keepNotes is true. If no text was found
-// (meaning a string longer than 7 characters since modules may use various
-// empty verse place-holders) then null is returned. LookupInfo data is also
-// returned via an info object if supplied.
+// the commentary argument) or even if it is missing the referenced verses,
+// alternate modules may be searched for the text (as long as location does
+// not include a subid). First any companion modules are tried, unless
+// altModules is set to false. Then altModules are searched in order. If still
+// a text is not found, and findAny is set, then all tabs are searched in
+// order. The returned text will also include textual notes if keepNotes is
+// true. If no text was found (meaning a string longer than 7 characters since
+// modules may use various empty verse place-holders) then null is returned.
+// LookupInfo data is also returned via an info object if supplied.
 export function locationVKText(
   locationx: LocationVKType,
   targetmodx: string | null,
@@ -338,7 +343,7 @@ export function getRefHTML(
     (targetmod in G.Config && G.Config[targetmod].AssociatedLocale) ||
     G.i18n.language;
   const list = parseExtendedVKRef(extref, context, [locale]);
-  const alternates = alternateModules();
+  const alternates = workingModules();
   const mod = targetmod || alternates[0] || '';
   const html: string[] = [];
   list.forEach((locOrStr) => {

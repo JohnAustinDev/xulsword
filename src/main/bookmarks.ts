@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-nested-ternary */
-import C, { S } from '../constant';
+import C from '../constant';
+import S from '../defaultPrefs';
 import { clone, randomID, replaceASCIIcontrolChars } from '../common';
 import { verseKey } from './minit';
 import { PrefCallbackType } from './components/prefs';
@@ -87,7 +88,6 @@ export default function importBookmarkObject(
       new RegExp(`^(${Object.values(C.SupportedTabTypes).join('|')})$`),
     ] as StringRegex,
     location: 'location',
-    sampleText: 'string',
     childNodes: 'array',
     hasCaret: 'boolean',
     isExpanded: 'boolean',
@@ -214,7 +214,7 @@ export function importDeprecatedBookmarks(
           NAMELOCALE,
           NOTELOCALE,
         ] = propertyValues;
-        if (LOCATION && ICON && VISITEDDATE) {
+        if (LOCATION && ICON && BMTEXT && VISITEDDATE) {
           // These are no longer needed
         }
         const isVerseKey = !Number.isNaN(Number(CHAPTER));
@@ -222,9 +222,9 @@ export function importDeprecatedBookmarks(
         const item: BookmarkItem = {
           id,
           label: NAME,
-          labelLocale: locs.includes(NAMELOCALE) ? NAMELOCALE : '',
+          labelLocale: locs.includes(NAMELOCALE) ? (NAMELOCALE as 'en') : '',
           note: NOTE,
-          noteLocale: locs.includes(NOTELOCALE) ? NOTELOCALE : '',
+          noteLocale: locs.includes(NOTELOCALE) ? (NOTELOCALE as 'en') : '',
           creationDate: Date.parse(CREATIONDATE),
         };
         if (TYPE === 'Folder') {
@@ -264,7 +264,6 @@ export function importDeprecatedBookmarks(
             tabType: isVerseKey ? 'Texts' : 'Genbks',
             module: MODULE,
             location,
-            sampleText: BMTEXT,
             hasCaret: false,
           },
         ];

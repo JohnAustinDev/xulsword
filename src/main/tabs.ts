@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-nested-ternary */
 import { clone } from '../common';
-import { S } from '../constant';
+import S from '../defaultPrefs';
 import Prefs from './components/prefs';
 import { getBooksInModule, getTab, getTabs } from './minit';
 

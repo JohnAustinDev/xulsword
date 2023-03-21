@@ -6,7 +6,7 @@
 /* eslint-disable jsx-a11y/media-has-caption */
 import React from 'react';
 import Subscription from '../../subscription';
-import C, { S } from '../../constant';
+import S from '../../defaultPrefs';
 import { keep, diff, drop } from '../../common';
 import G from '../rg';
 import renderToRoot from '../renderer';

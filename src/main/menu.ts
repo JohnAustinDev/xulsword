@@ -10,8 +10,9 @@ import {
   MenuItem,
 } from 'electron';
 import path from 'path';
-import { bookmarkItemIconPath, clone } from '../common';
-import C, { S } from '../constant';
+import { bookmarkItemIconPath, clone, showBookmarkItem } from '../common';
+import C from '../constant';
+import S from '../defaultPrefs';
 import G from './mg';
 import Window, { getBrowserWindows } from './components/window';
 import Commands from './components/commands';
@@ -20,6 +21,7 @@ import setViewportTabs from './tabs';
 
 import type { BookmarkFolderType, SearchType, TabTypes } from '../type';
 import type { PrefCallbackType } from './components/prefs';
+import { verseKey } from './minit';
 
 type Modifiers =
   | 'CommandOrControl' // 'accel' in XUL
@@ -220,22 +222,24 @@ export const pushPrefsToMenu: PrefCallbackType = (winid, store, key, val) => {
 function bookmarkProgramMenu(
   bookmarks: BookmarkFolderType
 ): MenuItemConstructorOptions[] {
-  return bookmarks.childNodes.map((bm) => ({
-    label: bm.label,
-    type: bm.type === 'folder' ? 'submenu' : 'normal',
-    submenu: bm.type === 'folder' ? bookmarkProgramMenu(bm) : undefined,
-    icon: bookmarkItemIconPath(G, bm),
-    id: bm.id,
-    click: d(() => {
-      if ('location' in bm) {
-        if (bm.location) {
-          if ('v11n' in bm.location)
-            Commands.goToLocationVK(bm.location, bm.location);
-          else Commands.goToLocationGB(bm.location);
+  return bookmarks.childNodes
+    .map((bm) => showBookmarkItem(G, verseKey, bm))
+    .map((bm) => ({
+      label: bm.label,
+      type: bm.type === 'folder' ? 'submenu' : 'normal',
+      submenu: bm.type === 'folder' ? bookmarkProgramMenu(bm) : undefined,
+      icon: bookmarkItemIconPath(G, bm),
+      id: bm.id,
+      click: d(() => {
+        if ('location' in bm) {
+          if (bm.location) {
+            if ('v11n' in bm.location)
+              Commands.goToLocationVK(bm.location, bm.location);
+            else Commands.goToLocationGB(bm.location);
+          }
         }
-      }
-    }),
-  }));
+      }),
+    }));
 }
 
 function addShortcutKeys(submenu?: MenuItemConstructorOptions[]): void {

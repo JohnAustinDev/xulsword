@@ -19,7 +19,8 @@ import {
   getStatePref as getStatePref2,
   bookmarkItemIconPath,
 } from '../common';
-import C, { S } from '../constant';
+import C from '../constant';
+import S from '../defaultPrefs';
 import G from './rg';
 import { getElementData, verseKey } from './htmlData';
 import log from './log';

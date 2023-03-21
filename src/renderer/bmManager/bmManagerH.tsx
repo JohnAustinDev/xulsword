@@ -11,10 +11,14 @@ import {
   stringHash,
   tableRowsToSelection,
   tableSelectDataRows,
+  showBookmarkItem,
 } from '../../common';
-import { S } from '../../constant';
+import C from '../../constant';
+import S from '../../defaultPrefs';
 import G from '../rg';
 import { bookmarkItemIcon } from '../rutil';
+import { verseKey } from '../htmlData';
+import { getSampleText } from '../bookmarks';
 import Label from '../libxul/label';
 import './bmManager.css';
 import '@blueprintjs/select/lib/css/blueprint-select.css';
@@ -281,17 +285,16 @@ export function tableData(this: BMManagerWin): TableRow[] {
     item: BookmarkFolderType | BookmarkType,
     level: number
   ): TableRow => {
-    const { id, label, note, creationDate, labelLocale, noteLocale } = item;
-    let mclass = 'cs-locale';
-    if ('location' in item && item.location) {
-      if ('v11n' in item.location) mclass = `cs-${item.location.vkmod}`;
-      else mclass = `cs-${item.location.module}`;
-    }
-    const sampleText = 'sampleText' in item ? item.sampleText : '';
-    let label2 = label;
-    if (label.startsWith('i18n:') && G.i18n.exists(label.substring(5))) {
-      label2 = G.i18n.t(label.substring(5));
-    }
+    const {
+      id,
+      label,
+      note,
+      creationDate,
+      labelLocale,
+      noteLocale,
+      sampleText,
+      sampleModule,
+    } = showBookmarkItem(G, verseKey, item, getSampleText);
     const classes: string[] = [];
     if (cut && cut.includes(id)) {
       classes.push('is-cut');
@@ -300,25 +303,40 @@ export function tableData(this: BMManagerWin): TableRow[] {
       classes.push('is-copy');
     }
     const r: TableRow = [
-      <span className="label-cell" key={stringHash(id, label, note)}>
+      // Label
+      <span
+        className="label-cell"
+        key={stringHash(labelLocale, label, item, level)}
+      >
         {[...Array(level).keys()].map((a) => (
           <div key={`ind${a}`} className="indent" />
         ))}
         {bookmarkItemIcon(item)}
-        <Label className={labelLocale} value={label2} />
+        <Label className={labelLocale} value={label} />
       </span>,
-      <span key={note} className={noteLocale}>
+
+      // Note
+      <span key={stringHash(note, noteLocale)} className={noteLocale}>
         {note}
       </span>,
-      <span key={[sampleText, mclass].join('.')} className={mclass}>
+
+      // Sample text
+      <span
+        key={stringHash(sampleText, sampleModule)}
+        className={`cs-${sampleModule}`}
+      >
         {sampleText}
       </span>,
+
+      // Creation date
       new Date(creationDate).toLocaleDateString(G.i18n.language),
+
+      // Info
       {
         id,
         location: 'location' in item ? item.location : undefined,
         classes,
-        tooltip: tooltip([label2, note, sampleText, 'VALUE']),
+        tooltip: tooltip([label, note, sampleText, 'VALUE']),
       },
     ];
     return r;
@@ -349,19 +367,32 @@ export function itemRenderer(
   itemProps: ItemRendererProps
 ): JSX.Element | null {
   const { handleClick, ref } = itemProps;
-  const d0 = `${item.note ? `[${item.note}]` : ''} ${
-    ('sampleText' in item && item.sampleText) || ''
-  }`.trim();
-  const d = `${d0.replace(/^(.{128}.*?)\b.*$/, '$1')}…`;
+  const { label, labelLocale, note, noteLocale, sampleText, sampleModule } =
+    showBookmarkItem(G, verseKey, item, getSampleText);
+  const shortRE1 = new RegExp(
+    `^(.{${C.UI.BMManager.searchResultBreakAfter}}.*?)\b.*$`
+  );
+  let notesh = note.replace(shortRE1, '$1');
+  if (note.length > C.UI.BMManager.searchResultBreakAfter) notesh += '…';
+  const shl = C.UI.BMManager.searchResultBreakAfter - notesh.length;
+  let samplesh = '';
+  if (shl > 0) {
+    const shortRE2 = new RegExp(`^(.{${shl}}.*?)\b.*$`);
+    samplesh = sampleText.replace(shortRE2, '$1');
+    if (sampleText.length > shl) samplesh += '…';
+  }
   return (
     <li
       className="search-result-item"
-      title={d0}
+      title={`[${notesh}] ${samplesh}`}
       ref={ref}
       onClick={handleClick}
     >
-      {bookmarkItemIcon(item)} <Label value={item.label} />
-      <span className="description">{d ? `: ${d}` : ''}</span>
+      {bookmarkItemIcon(item)}
+      <Label className={`cs-${labelLocale}`} value={label} />
+      {(note || sampleText) && `: `}
+      <span className={`cs-${noteLocale} description`}>[{note}]</span>
+      <span className={`cs-${sampleModule} description`}>{sampleText}</span>
     </li>
   );
 }
@@ -370,15 +401,18 @@ export function itemPredicate(
   query: string,
   item: BookmarkFolderType | BookmarkType
 ): boolean {
-  const { type, label, note } = item;
-  const parts: string[] = [label, note];
-  if (type === 'bookmark') {
-    const { sampleText, location } = item;
-    if (location && 'v11n' in location) {
-      parts.push(sampleText);
-    } else if (location) {
+  const { label, note, sampleText } = showBookmarkItem(
+    G,
+    verseKey,
+    item,
+    getSampleText
+  );
+  const parts: string[] = [label, note, sampleText];
+  if (item.type === 'bookmark') {
+    const { location } = item;
+    if (location && !('v11n' in location)) {
       const { key } = location;
-      parts.push(sampleText, key);
+      parts.push(key);
     }
   }
   const querylc = query.toLowerCase();

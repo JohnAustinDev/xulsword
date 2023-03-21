@@ -1,7 +1,7 @@
 /* eslint-disable import/no-duplicates */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { clone, findBookmarkItem, ofClass } from '../../common';
-import { S } from '../../constant';
+import S from '../../defaultPrefs';
 import G from '../rg';
 import { addBookmarksToNotes, getBookmarkInfo } from '../bookmarks';
 import { getElementData } from '../htmlData';

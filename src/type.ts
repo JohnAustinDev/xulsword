@@ -9,7 +9,7 @@ import type {
 import type i18n from 'i18next';
 import type React from 'react';
 import type { TreeNodeInfo } from '@blueprintjs/core';
-import type { S } from './constant';
+import S from './defaultPrefs';
 import type C from './constant';
 import type {
   resetMain,
@@ -692,24 +692,21 @@ export type GAddCaller<G extends { [k: string]: (...args: any[]) => any }> = {
   [K in keyof G]: GMethodAddCaller<G[K]>;
 };
 
-export type BookmarkTreeNode = TreeNodeInfo &
-  BMItem & {
+export type BookmarkTreeNode = BMItem &
+  TreeNodeInfo & {
     isCut: boolean;
     isCopy: boolean;
   };
 
-export type BookmarkItem = Pick<
-  TreeNodeInfo,
-  'hasCaret' | 'isExpanded' | 'isSelected'
-> &
-  BMItem;
+export type BookmarkItem = BMItem &
+  Pick<TreeNodeInfo, 'hasCaret' | 'isExpanded' | 'isSelected'>;
 
 export type BMItem = {
   id: string; // unique id of item
-  label: string; // default is auto-generated; editable
-  labelLocale: string; // locale of name
-  note: string; // default is empty; editable
-  noteLocale: string; // locale of note
+  label: string | 'i18n:lookup'; // default is auto-generated; editable
+  labelLocale: typeof C.Locales[number][0] | ''; // locale of name
+  note: string | 'i18n:lookup'; // default is empty; editable
+  noteLocale: typeof C.Locales[number][0] | ''; // locale of note
   creationDate: number; // ms epoch
   type?: 'bookmark' | 'folder';
   tabType?: TabTypes;
@@ -719,7 +716,6 @@ export type BookmarkType = BookmarkItem & {
   type: 'bookmark';
   tabType: TabTypes;
   location: SelectVKMType | LocationGBType | null;
-  sampleText: string;
 };
 
 export type BookmarkFolderType = BookmarkItem & {

@@ -2,6 +2,7 @@
 .vagrant
 archive
 branding.json
+assets/defaults/preferences/
 Cpp/lib*
 Cpp/install*
 Cpp/zlib*

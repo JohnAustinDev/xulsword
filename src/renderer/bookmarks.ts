@@ -4,7 +4,8 @@
 import Cache from '../cache';
 import { clone, JSON_attrib_parse, ofClass } from '../common';
 import RefParser from '../refParser';
-import C, { S } from '../constant';
+import C from '../constant';
+import S from '../defaultPrefs';
 import G from './rg';
 import {
   findElementData,
@@ -29,6 +30,7 @@ import type { HTMLData } from './htmlData';
 import type { AtextProps } from './viewport/atext';
 import type { LibSwordResponse } from './viewport/ztext';
 import type { SelectVKMType } from './libxul/vkselect';
+import { locationVKText } from './viewport/zversekey';
 
 type BookmarkMapType = { [key: string]: BookmarkInfoHTML[] };
 
@@ -301,37 +303,52 @@ export default function addBookmarks(
   }
 }
 
-export function newLabel(l: SelectVKMType | LocationGBType): string {
-  if ('v11n' in l) {
-    const vk = verseKey(l);
-    return vk.readable(undefined, true);
-  }
-  const ks = l.key.split(C.GBKSEP);
-  const tab = l.module && l.module in G.Tab && G.Tab[l.module];
-  ks.unshift(tab ? tab.description : l.module);
-  while (ks[2] && ks[0] === ks[1]) {
-    ks.shift();
-  }
-  return `${ks.shift()}: ${ks[ks.length - 1]}`;
-}
-
 // Split a string from LibSword up into paragraphs
 export function parseParagraphs(text: string): string[] {
   // Paragraph support was removed in xulsword 3.
   return [text];
 }
 
-export function getSampleText(l: LocationGBType | SelectVKMType): string {
-  let r = '';
+export function getSampleText(
+  l: LocationGBType | SelectVKMType,
+  locale?: typeof C.Locales[number][0]
+): { sampleText: string; sampleModule: string } {
+  let sampleText = '';
+  let sampleModule = '';
   if ('v11n' in l) {
     const vk = l as SelectVKMType;
+    const { book } = vk;
     const { vkmod } = vk;
-    if (vkmod in G.Tab && G.Tab[vkmod].isVerseKey) {
-      r = G.LibSword.getVerseText(
-        vk.vkmod,
-        verseKey(vk).osisRef(),
-        false
-      ).substring(0, C.UI.BMProperties.maxSampleText);
+    const isComm = vkmod in G.Tab && G.Tab[vkmod].tabType === 'Comms';
+    const searchMods: string[] = [vkmod];
+    if (locale && book) {
+      // Look for an installed sampleText module associated with the locale.
+      const configs = G.LocaleConfigs;
+      const locales = [locale, C.FallbackLanguage[locale]];
+      searchMods.unshift(
+        ...locales.reduce(
+          (p, c) =>
+            c in configs
+              ? p.concat(configs[c].AssociatedModules?.split(/\s*,\s*/) || [])
+              : p,
+          [] as string[]
+        )
+      );
+    }
+    if (searchMods.length) {
+      const vktxt = locationVKText(
+        l,
+        searchMods[0],
+        searchMods,
+        false,
+        isComm,
+        true
+      );
+      if (vktxt) {
+        const { module, text } = vktxt;
+        sampleText = text;
+        sampleModule = module;
+      }
     }
   } else {
     const { module, key, paragraph } = l;
@@ -349,12 +366,14 @@ export function getSampleText(l: LocationGBType | SelectVKMType): string {
       }
       const paragraphs = parseParagraphs(text);
       const i = paragraph && paragraphs[paragraph] ? paragraph : 0;
-      r = paragraphs[i];
+      sampleText = paragraphs[i];
+      sampleModule = module;
     }
   }
-  return r
+  sampleText = sampleText
     .replace(/<[^>]+>/g, '')
-    .substring(0, C.UI.BMProperties.maxSampleText);
+    .substring(0, C.UI.BMProperties.sampleTextLength);
+  return { sampleText, sampleModule };
 }
 
 // Convert a bookmark item into a tree node.
@@ -382,7 +401,7 @@ export function bookmarkTreeNode(
     ) {
       if (node.label.startsWith('i18n:')) {
         node.label = G.i18n.t(node.label.substring(5));
-        node.labelLocale = G.i18n.language;
+        node.labelLocale = G.i18n.language as 'en';
       }
       if (node.type === 'folder') {
         node.hasCaret = node.childNodes?.some(

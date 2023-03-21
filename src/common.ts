@@ -2,7 +2,8 @@
 /* eslint-disable no-nested-ternary */
 /* eslint-disable no-bitwise */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import C, { S } from './constant';
+import C from './constant';
+import S from './defaultPrefs';
 import Cache from './cache';
 
 import type { Region } from '@blueprintjs/table';
@@ -31,10 +32,13 @@ import type {
   NewModulesType,
   BookmarkTreeNode,
   PrefStoreType,
+  LocationGBType,
 } from './type';
 import type { TreeNodeInfo } from '@blueprintjs/core';
 import type { SelectVKMType } from './renderer/libxul/vkselect';
 import type { SelectGBMType } from './renderer/libxul/genbookselect';
+import type { getSampleText } from './renderer/bookmarks';
+import type { verseKey } from './renderer/htmlData';
 
 // These built-in local repositories cannot be disabled, deleted or changed.
 // Implemented as a function to allow G.i18n to initialize.
@@ -98,6 +102,7 @@ export function JSON_stringify(
   }
   return str;
 }
+
 // NOTE: It is not possible to 100% recover arrays with undefined values
 // using the JSON.parse reviver, because the reviver specification requires
 // deletion of undefined array elements rather than setting to undefined.
@@ -266,6 +271,26 @@ export function diff<T>(pv1: any, pv2: T, depth = 1): Partial<T> | undefined {
     }
   }
   return difference;
+}
+
+// Apply a function to every PrefValue of a prefObject, recursively,
+// returning a new prefObject containing the mapped results.
+export function mapp(
+  obj: PrefObject,
+  func: (key: string, val: PrefValue) => PrefValue,
+  workKey?: string
+): PrefObject {
+  const workObj = {} as PrefObject;
+  Object.entries(obj).forEach((entry) => {
+    const [k, v] = entry;
+    const key = workKey ? [workKey, k].join('.') : k;
+    if (v === null || Array.isArray(v) || typeof v !== 'object') {
+      workObj[k] = func(key, v);
+    } else {
+      workObj[k] = mapp(v as PrefObject, func, key);
+    }
+  });
+  return workObj;
 }
 
 export function prefType(
@@ -913,6 +938,62 @@ export function pasteBookmarkItems(
   }
 
   return [];
+}
+
+export function bookmarkLabel(
+  g: GType,
+  verseKeyFunc: typeof verseKey,
+  l: SelectVKMType | LocationGBType
+): string {
+  if ('v11n' in l) {
+    const vk = verseKeyFunc(l);
+    return vk.readable(undefined, true);
+  }
+  const ks = l.key.split(C.GBKSEP);
+  const tab = l.module && l.module in g.Tab && g.Tab[l.module];
+  ks.unshift(tab ? tab.description : l.module);
+  while (ks[2] && ks[0] === ks[1]) {
+    ks.shift();
+  }
+  return `${ks.shift()}: ${ks[ks.length - 1]}`;
+}
+
+// Convert a raw bookmark into a bookmark for showing to the user.
+export function showBookmarkItem<T extends BookmarkFolderType | BookmarkType>(
+  g: GType,
+  verseKeyFunc: typeof verseKey,
+  item: T,
+  sampleTextFunc?: typeof getSampleText
+): T & { sampleText: string; sampleModule: string } {
+  const r: T & { sampleText: string; sampleModule: string } = {
+    ...item,
+    sampleText: '',
+    sampleModule: '',
+  };
+  const { type, label, note } = item;
+  const loc = g.i18n.language as 'en';
+  let locationLocale: typeof C.Locales[number][0] | undefined;
+  if (label.startsWith('i18n:')) {
+    const i18nKey = label.substring(5);
+    if (i18nKey === 'label' && item.type === 'bookmark') {
+      const { location } = item;
+      r.label = location ? bookmarkLabel(g, verseKeyFunc, location) : 'label';
+    } else {
+      r.label = g.i18n.t(i18nKey);
+    }
+    locationLocale = loc;
+    r.labelLocale = loc;
+  }
+  if (note.startsWith('i18n:') && g.i18n.exists(note.substring(5))) {
+    r.note = g.i18n.t(label.substring(5));
+    r.noteLocale = loc;
+  }
+  if (sampleTextFunc && type === 'bookmark' && item.location) {
+    const st = sampleTextFunc(item.location, locationLocale);
+    r.sampleText = st.sampleText;
+    r.sampleModule = st.sampleModule;
+  }
+  return r;
 }
 
 // Takes a flat list of general book nodes and arranges them according to

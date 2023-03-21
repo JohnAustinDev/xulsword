@@ -8,7 +8,7 @@
 /* eslint-disable react/static-property-placement */
 import React from 'react';
 import { sanitizeHTML } from '../../common';
-import { S } from '../../constant';
+import S from '../../defaultPrefs';
 import G from '../rg';
 import renderToRoot from '../renderer';
 import { verseKey } from '../htmlData';
@@ -68,10 +68,7 @@ export default class CopyPassageWin extends React.Component {
 
     const s: CopyPassageState = {
       ...notStatePrefDefault,
-      ...(getStatePref(
-        'prefs',
-        'copyPassage'
-      ) as typeof S.prefs.copyPassage),
+      ...(getStatePref('prefs', 'copyPassage') as typeof S.prefs.copyPassage),
       ...openedWinState,
     };
     if (s.passage) {

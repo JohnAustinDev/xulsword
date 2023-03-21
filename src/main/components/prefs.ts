@@ -4,8 +4,8 @@ import { BrowserWindow } from 'electron';
 import log from 'electron-log';
 import path from 'path';
 import fs from 'fs';
-import { S } from '../../constant';
-import { clone, diff, JSON_parse, JSON_stringify } from '../../common';
+import S from '../../defaultPrefs';
+import { clone, diff, JSON_parse, JSON_stringify, mapp } from '../../common';
 import Subscription from '../../subscription';
 import LocalFile from './localFile';
 import Dirs from './dirs';
@@ -161,10 +161,10 @@ const Prefs = {
   // Exceptions are thrown if:
   // - defval is provided but has the wrong type
   // - store is in S, but the requested key is not
-  // - store is in S and the default is required but cannot be found
+  // - store is in S and the default is required, but it cannot be found
   // - pref creation fails
   // If the key is not found in the store, or else its value is of the wrong type,
-  // it, along with all of its unset ancestors, will be reset to a default value.
+  // then it, along with all of its unset ancestors, will be reset to a default value.
   getPrefOrCreate(
     key: string,
     type: 'string' | 'number' | 'boolean' | 'complex',
@@ -187,9 +187,9 @@ const Prefs = {
       );
     }
     // Read the store to get the key value (without throwing if the key is missing).
-    const storeValue = this.getKeyValueFromStore(key, true, store);
+    let storeValue = this.getKeyValueFromStore(key, true, store, null);
     if (store in S && storeValue === undefined) {
-      // Set any missing ancestor key in the store to the default.
+      // Look for a missing ancestor key in the store.
       const ks = key.split('.');
       let i;
       for (i = ks.length - 1; i > 0; i -= 1) {
@@ -199,14 +199,22 @@ const Prefs = {
           break;
         }
       }
-      if (i !== ks.length - 1) {
+      // If found, save the default ancestor value
+      if (ks.length === 1 || i !== ks.length - 1) {
         const ancestorKey = ks.slice(0, i + 1).join('.');
-        const ancestorDefVal = this.findDefaultValueInS(ancestorKey, store);
-        if (ancestorDefVal === undefined) {
+        const ancestorSVal = this.findDefaultValueInS(
+          ancestorKey,
+          store
+        ) as PrefObject;
+        if (ancestorSVal === undefined) {
           throw new Error(
             `Pref ancestor has no default: key='${key}', store='${store}', ancestorKey='${ancestorKey}'`
           );
         }
+        // Override S values with default store values, if any
+        const ancestorDefVal = mapp(ancestorSVal, (k: string) =>
+          this.findDefaultValue([ancestorKey, k].join('.'), undefined, store)
+        );
         if (
           !this.setPref(
             ancestorKey,
@@ -222,6 +230,9 @@ const Prefs = {
           );
         }
       }
+    }
+    if (storeValue === undefined) {
+      storeValue = this.getKeyValueFromStore(key, true, store);
     }
     let value = storeValue;
     // Use the default if store value is undefined
@@ -272,24 +283,7 @@ const Prefs = {
 
     // Read the data unless it has already been read
     if (!s.data) {
-      if (getDefaultStore && !s.file.exists()) {
-        s.data = {};
-      } else {
-        if (!s.file.exists()) {
-          // If there is no store file, copy the default or create one.
-          const defFile = new LocalFile(
-            path.join(Dirs.path.xsPrefDefD, aStorex.concat('.json')),
-            LocalFile.NO_CREATE
-          );
-          if (defFile.exists()) {
-            defFile.copyTo(s.file.parent, s.file.leafName);
-          } else {
-            s.file.writeFile('{}');
-          }
-        }
-        if (!s.file.exists()) {
-          throw new Error(`Failed to create pref store: ${s.file.path}`);
-        }
+      if (s.file.exists()) {
         const data = fs.readFileSync(s.file.path);
         if (data && data.length) {
           const json = JSON_parse(data.toString());
@@ -297,12 +291,12 @@ const Prefs = {
             s.data = json;
           }
         }
-      }
-    }
-    if (!s.data || typeof s.data !== 'object' || Array.isArray(s.data)) {
-      throw Error(
-        `Read of JSON Prefs store did not return a PrefObject (store='${s.file.path}', contents='${s.data}').`
-      );
+        if (!s.data || typeof s.data !== 'object' || Array.isArray(s.data)) {
+          throw Error(
+            `Read of JSON Prefs store did not return a PrefObject (store='${s.file.path}', contents='${s.data}').`
+          );
+        }
+      } else s.data = {};
     }
 
     return s.data;
@@ -322,15 +316,15 @@ const Prefs = {
     let keyvalue = stobj as PrefObject | PrefValue;
     key.split('.').forEach((d) => {
       if (
-        keyExists &&
-        keyvalue &&
-        typeof keyvalue === 'object' &&
-        !Array.isArray(keyvalue) &&
-        d in keyvalue
+        !keyExists ||
+        !keyvalue ||
+        Array.isArray(keyvalue) ||
+        typeof keyvalue !== 'object' ||
+        !(d in keyvalue)
       ) {
-        keyvalue = keyvalue[d] as PrefValue;
-      } else {
         keyExists = false;
+      } else {
+        keyvalue = keyvalue[d] as PrefValue;
       }
     });
     if (!keyExists) {
@@ -368,7 +362,12 @@ const Prefs = {
     // Prune unrecognized or outdated pref values
     const allStoreKeys = Object.keys(S[aStore]);
     Object.keys(s.data).forEach((k) => {
-      if (!allStoreKeys.includes(k)) delete s.data[k];
+      if (!allStoreKeys.includes(k)) {
+        delete s.data[k];
+        log.info(
+          `Deleting outdated user preference: key='${k}', store='${aStore}'`
+        );
+      }
     });
 
     const json = JSON_stringify(s.data, 2);

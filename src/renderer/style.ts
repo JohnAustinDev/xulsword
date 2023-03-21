@@ -1,5 +1,6 @@
 import type { ConfigType } from '../type';
-import C, { S } from '../constant';
+import C from '../constant';
+import S from '../defaultPrefs';
 import G from './rg';
 import log from './log';
 

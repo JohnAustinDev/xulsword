@@ -25,7 +25,8 @@ import {
   repositoryModuleKey,
   stringHash,
 } from '../../common';
-import C, { S } from '../../constant';
+import C from '../../constant';
+import S from '../../defaultPrefs';
 import G from '../rg';
 import log from '../log';
 import { getStatePref, getLangReadable, setStatePref } from '../rutil';

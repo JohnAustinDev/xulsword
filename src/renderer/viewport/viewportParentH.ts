@@ -2,7 +2,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-loop-func */
 import React from 'react';
-import C, { S } from '../../constant';
+import C from '../../constant';
+import S from '../../defaultPrefs';
 import Cache from '../../cache';
 import { clone, escapeRE, ofClass } from '../../common';
 import { getElementData, verseKey } from '../htmlData';
