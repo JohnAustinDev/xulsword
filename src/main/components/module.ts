@@ -63,8 +63,8 @@ export const CipherKeyModules: {
 } = {};
 
 // CrossWire SWORD Standard TODOS:
-// TODO! CrossWire wiki mentions LangSortOrder! Report change to KeySort
-// TODO! CrossWire Eusebian_vs and Eusebian_num share a single conf file. Support this?
+// TODO CrossWire wiki mentions LangSortOrder! Report change to KeySort
+// TODO CrossWire Eusebian_vs and Eusebian_num share a single conf file. Support this?
 
 let Downloads: { [downloadKey: string]: ZIP } = {};
 

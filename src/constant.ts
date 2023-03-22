@@ -152,6 +152,7 @@ const C = {
     BMManager: {
       searchResultBreakAfter: 128,
     },
+    TreeScrollDelay: 100,
   },
 
   // These are all the properties which Config type objects will have.

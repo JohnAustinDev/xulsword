@@ -56,6 +56,15 @@ html a:hover {
   visibility: hidden;
 }
 
+/* Bookmark item trees */
+.bookmark-item-tree {
+  font-size: 12px;
+}
+.bookmark-item-tree .bmicon {
+  margin-inline-start: 0;
+  margin-inline-end: 5px;
+}
+
 /* Dialog buttons */
 .groupbox + .dialog-buttons {
   margin-top: -5px; /* undo groupbox bottom margin */

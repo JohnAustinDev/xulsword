@@ -26,9 +26,8 @@ import { getElementData, verseKey } from './htmlData';
 import log from './log';
 
 import type {
-  BookmarkFolderType,
+  BookmarkItemType,
   BookmarkTreeNode,
-  BookmarkType,
   GenBookAudio,
   GenBookAudioConf,
   GenBookAudioFile,
@@ -414,12 +413,13 @@ export function registerUpdateStateFromPref(
       if (different && Object.keys(different).length) {
         const d = different as any;
         if (
-          (!aStore &&
-            d?.global?.locale &&
-            d?.global?.locale !== G.i18n.language) ||
-          (aStore === 'bookmarks' && d?.rootfolder)
+          !aStore &&
+          d?.global?.locale &&
+          d?.global?.locale !== G.i18n.language
         ) {
           Cache.clear();
+        } else if (aStore === 'bookmarks') {
+          Cache.clear('bookmarkMap');
         }
         c.setState(different);
       }
@@ -457,7 +457,7 @@ export function getLangReadable(code: string): string {
 }
 
 export function bookmarkItemIcon(
-  item: BookmarkTreeNode | BookmarkFolderType | BookmarkType
+  item: BookmarkTreeNode | BookmarkItemType
 ): JSX.Element {
   const path = bookmarkItemIconPath(G, item);
   return <img className="bmicon" src={G.inlineFile(path)} />;

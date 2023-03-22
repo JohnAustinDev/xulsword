@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/no-use-before-define */
+/* eslint-disable react/no-unused-state */
+/* eslint-disable jsx-a11y/click-events-have-key-events */
+/* eslint-disable jsx-a11y/no-noninteractive-element-interactions */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable react/static-property-placement */
@@ -5,8 +9,10 @@ import type { Table2 as BPTable } from '@blueprintjs/table';
 import React from 'react';
 import { Suggest2 } from '@blueprintjs/select';
 import {
+  clone,
   diff,
   keep,
+  localizeBookmarks,
   randomID,
   stringHash,
   tableRowsToSelection,
@@ -19,7 +25,8 @@ import {
   setStatePref,
   getStatePref,
 } from '../rutil';
-import { bookmarkTreeNodes } from '../bookmarks';
+import { bookmarkTreeNodes, getSampleText } from '../bookmarks';
+import { verseKey } from '../htmlData';
 import Table from '../libxul/table';
 import DragSizer, { DragSizerVal } from '../libxul/dragsizer';
 import Groupbox from '../libxul/groupbox';
@@ -37,7 +44,15 @@ import * as H from './bmManagerH';
 import './bmManager.css';
 import '@blueprintjs/select/lib/css/blueprint-select.css';
 
-import type { BookmarkFolderType, BookmarkType } from '../../type';
+import type {
+  BookmarkFolderType,
+  BookmarkItemType,
+  BookmarkTreeNode,
+} from '../../type';
+
+// TODO!: Add print feature
+// TODO!: add move to context menu and allow multiple moves
+// TODO!: Add import/export buttons
 
 const defaultProps = xulDefaultProps;
 
@@ -63,6 +78,20 @@ export default class BMManagerWin extends React.Component {
 
   static propTypes: typeof propTypes;
 
+  localizedRootFolderClone: BookmarkFolderType | null;
+
+  currentRootFolderObject: BookmarkFolderType | null;
+
+  searchableItems: BookmarkItemType[];
+
+  folderItems: BookmarkTreeNode[];
+
+  tableData: H.TableRow[];
+
+  itemPredicate: typeof H.itemPredicate;
+
+  itemRenderer: typeof H.itemRenderer;
+
   buttonHandler: typeof H.buttonHandler;
 
   onFolderSelection: typeof H.onFolderSelection;
@@ -73,11 +102,11 @@ export default class BMManagerWin extends React.Component {
 
   onQueryChange: typeof H.onQueryChange;
 
-  tableData: typeof H.tableData;
+  onDoubleClick: typeof H.onDoubleClick;
 
   bmContextData: typeof H.bmContextData;
 
-  onDoubleClick: typeof H.onDoubleClick;
+  scrollToItem: typeof H.scrollToItem;
 
   tableCompRef: React.RefObject<BPTable>;
 
@@ -94,14 +123,22 @@ export default class BMManagerWin extends React.Component {
     };
     this.state = state;
 
+    this.localizedRootFolderClone = null;
+    this.searchableItems = [];
+    this.folderItems = [];
+    this.tableData = [];
+    this.currentRootFolderObject = null;
+
+    this.itemPredicate = H.itemPredicate.bind(this);
+    this.itemRenderer = H.itemRenderer.bind(this);
     this.buttonHandler = H.buttonHandler.bind(this);
     this.onFolderSelection = H.onFolderSelection.bind(this);
     this.onCellClick = H.onCellClick.bind(this);
     this.onItemSelect = H.onItemSelect.bind(this);
     this.onQueryChange = H.onQueryChange.bind(this);
-    this.tableData = H.tableData.bind(this);
-    this.bmContextData = H.bmContextData.bind(this);
     this.onDoubleClick = H.onDoubleClick.bind(this);
+    this.bmContextData = H.bmContextData.bind(this);
+    this.scrollToItem = H.scrollToItem.bind(this);
 
     this.tableCompRef = React.createRef();
   }
@@ -121,6 +158,7 @@ export default class BMManagerWin extends React.Component {
   }
 
   render() {
+    const state = this.state as BMManagerState;
     const {
       rootfolder,
       columns,
@@ -131,37 +169,47 @@ export default class BMManagerWin extends React.Component {
       cut,
       copy,
       reset,
-    } = this.state as BMManagerState;
+    } = state;
 
-    const { tableCompRef } = this;
+    const {
+      tableCompRef,
+      buttonHandler,
+      itemPredicate,
+      itemRenderer,
+      onQueryChange,
+      onItemSelect,
+      onFolderSelection,
+    } = this;
 
-    const folders = bookmarkTreeNodes(
-      rootfolder.childNodes,
-      'folder',
-      selectedFolder || rootfolder.id
-    );
-
-    // TODO!: Add print feature
-    const data = this.tableData();
+    if (rootfolder !== this.currentRootFolderObject) {
+      // Clone the localized rootfolder so state does not to push temporary
+      // localization state changes to the rest of xulsword.
+      this.localizedRootFolderClone = clone(rootfolder);
+      localizeBookmarks(
+        G,
+        verseKey,
+        this.localizedRootFolderClone,
+        getSampleText
+      );
+      this.searchableItems = H.getSearchableItems(
+        this.localizedRootFolderClone
+      );
+      this.folderItems = bookmarkTreeNodes(
+        this.localizedRootFolderClone.childNodes,
+        'folder'
+      );
+      this.tableData = H.getTableData({
+        ...state,
+        rootfolder: this.localizedRootFolderClone,
+      });
+      this.currentRootFolderObject = rootfolder;
+    }
 
     const selectedRegions = tableRowsToSelection(
       selectedItems
-        .map((id) => data.findIndex((r) => r[H.Col.iInfo].id === id))
+        .map((id) => this.tableData.findIndex((r) => r[H.Col.iInfo].id === id))
         .filter((i) => i !== -1)
     );
-
-    const searchableItems: (BookmarkFolderType | BookmarkType)[] = [];
-    const getItems = (folder: BookmarkFolderType) => {
-      if (folder.id !== rootfolder.id) searchableItems.push(folder);
-      folder.childNodes.forEach((n) => {
-        if (n.type === 'bookmark') searchableItems.push(n);
-        else getItems(n);
-      });
-    };
-    getItems(rootfolder);
-
-    // TODO!: add move to context menu and allow multiple moves
-    // TODO!: Add import/export buttons
 
     return (
       <Vbox
@@ -180,7 +228,7 @@ export default class BMManagerWin extends React.Component {
           className="tools"
           pack="start"
           align="center"
-          onClick={this.buttonHandler}
+          onClick={buttonHandler}
         >
           <Button
             id="button.newFolder"
@@ -197,7 +245,7 @@ export default class BMManagerWin extends React.Component {
             icon="properties"
             disabled={
               selectedItems.length !== 1 ||
-              selectedItems.includes(rootfolder.id)
+              selectedItems.includes(S.bookmarks.rootfolder.id)
             }
             title={G.i18n.t('menu.edit.properties')}
           />
@@ -206,7 +254,7 @@ export default class BMManagerWin extends React.Component {
             icon="delete"
             disabled={
               selectedItems.length === 0 ||
-              selectedItems.includes(rootfolder.id)
+              selectedItems.includes(S.bookmarks.rootfolder.id)
             }
             title={G.i18n.t('menu.edit.delete')}
           />
@@ -215,7 +263,7 @@ export default class BMManagerWin extends React.Component {
             icon="cut"
             disabled={
               selectedItems.length === 0 ||
-              selectedItems.includes(rootfolder.id)
+              selectedItems.includes(S.bookmarks.rootfolder.id)
             }
             title={G.i18n.t('menu.edit.cut')}
           />
@@ -224,7 +272,7 @@ export default class BMManagerWin extends React.Component {
             icon="duplicate"
             disabled={
               selectedItems.length === 0 ||
-              selectedItems.includes(rootfolder.id)
+              selectedItems.includes(S.bookmarks.rootfolder.id)
             }
             title={G.i18n.t('menu.edit.copy')}
           />
@@ -239,7 +287,7 @@ export default class BMManagerWin extends React.Component {
             icon="drawer-left"
             disabled={
               selectedItems.length !== 1 ||
-              selectedItems.includes(rootfolder.id)
+              selectedItems.includes(S.bookmarks.rootfolder.id)
             }
             title={G.i18n.t('menu.edit.move')}
           />
@@ -255,16 +303,16 @@ export default class BMManagerWin extends React.Component {
             disabled={!G.canRedo()}
             title={G.i18n.t('menu.edit.redo')}
           />
-          <Vbox className="search" flex="1" onChange={this.onQueryChange}>
+          <Vbox className="search" flex="1" onChange={onQueryChange}>
             <Suggest2
               fill
               query={query}
-              items={searchableItems}
+              items={this.searchableItems}
               itemsEqual="id"
               inputProps={{ placeholder: `${G.i18n.t('Search')}…` }}
               inputValueRenderer={H.inputValueRenderer}
-              itemPredicate={H.itemPredicate}
-              itemRenderer={H.itemRenderer}
+              itemPredicate={itemPredicate}
+              itemRenderer={itemRenderer}
               initialContent={
                 <Label
                   value={G.i18n.t('Searching', {
@@ -275,20 +323,21 @@ export default class BMManagerWin extends React.Component {
               noResults={
                 <Label value={G.i18n.t('searchStatusAll', { v1: 0 })} />
               }
-              onItemSelect={this.onItemSelect}
+              onItemSelect={onItemSelect}
             />
           </Vbox>
         </Hbox>
         <Hbox className="tables" flex="1" pack="start" align="stretch">
-          {folders.length > 0 && (
+          {this.folderItems.length > 0 && (
             <>
               <Groupbox className="folders" width={treeWidth}>
                 <TreeView
+                  className="bookmark-item-tree"
                   key={reset}
-                  initialState={folders}
-                  selectedIDs={[selectedFolder || rootfolder.id]}
+                  initialState={this.folderItems}
+                  selectedIDs={[selectedFolder]}
                   enableMultipleSelection={false}
-                  onSelection={this.onFolderSelection}
+                  onSelection={onFolderSelection}
                 />
               </Groupbox>
               <DragSizer
@@ -318,7 +367,7 @@ export default class BMManagerWin extends React.Component {
           >
             <Table
               key={stringHash(columns, reset)}
-              data={data}
+              data={this.tableData}
               selectedRegions={selectedRegions}
               columns={columns}
               enableColumnReordering
@@ -342,6 +391,16 @@ BMManagerWin.propTypes = propTypes;
 renderToRoot(<BMManagerWin id="bookmarkManager" />);
 
 window.ipc.once('close', () => {
-  G.Prefs.setComplexValue('bookmarkManager.cut', null);
-  G.Prefs.setComplexValue('bookmarkManager.copy', null);
+  G.Prefs.setComplexValue(
+    'bookmarkManager.cut',
+    null as typeof S.prefs.bookmarkManager.cut
+  );
+  G.Prefs.setComplexValue(
+    'bookmarkManager.copy',
+    null as typeof S.prefs.bookmarkManager.copy
+  );
+  G.Prefs.setCharPref(
+    'bookmarkManager.selectedFolder',
+    S.bookmarks.rootfolder.id as typeof S.prefs.bookmarkManager.selectedFolder
+  );
 });

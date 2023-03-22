@@ -28,11 +28,11 @@ import type {
   OSISBookType,
   PrefValue,
   BookmarkFolderType,
-  BookmarkType,
   NewModulesType,
   BookmarkTreeNode,
   PrefStoreType,
   LocationGBType,
+  BookmarkItemType,
 } from './type';
 import type { TreeNodeInfo } from '@blueprintjs/core';
 import type { SelectVKMType } from './renderer/libxul/vkselect';
@@ -728,7 +728,7 @@ export function audioConfStrings(chapters: number[] | boolean[]): string[] {
 
 export function bookmarkItemIconPath(
   G: GType,
-  item: BookmarkTreeNode | BookmarkFolderType | BookmarkType
+  item: BookmarkTreeNode | BookmarkItemType
 ): string {
   const { note } = item;
   let fname = 'folder.png';
@@ -760,7 +760,7 @@ export function findBookmarkItem(
   toSearch: BookmarkFolderType,
   id: string,
   recurse = true
-): BookmarkFolderType | BookmarkType | null {
+): BookmarkItemType | null {
   if (toSearch.id === id) return toSearch;
   for (let x = 0; x < toSearch.childNodes.length; x += 1) {
     const child = toSearch.childNodes[x];
@@ -776,8 +776,8 @@ export function findBookmarkItem(
 // Returns null if the replacement failed, or returns the new item if successful.
 export function replaceBookmarkItem(
   bookmarks: BookmarkFolderType,
-  item: BookmarkFolderType | BookmarkType
-): BookmarkFolderType | BookmarkType | null {
+  item: BookmarkItemType
+): BookmarkItemType | null {
   if (item.id !== S.bookmarks.rootfolder.id) {
     const olditem = findBookmarkItem(bookmarks, item.id);
     if (olditem) {
@@ -797,7 +797,7 @@ export function replaceBookmarkItem(
 export function deleteBookmarkItem(
   bookmarks: BookmarkFolderType,
   itemID: string
-): BookmarkFolderType | BookmarkType | null {
+): BookmarkItemType | null {
   if (itemID !== S.bookmarks.rootfolder.id) {
     const item = findBookmarkItem(bookmarks, itemID);
     if (item) {
@@ -816,9 +816,9 @@ export function deleteBookmarkItem(
 
 export function insertBookmarkItem(
   bookmarks: BookmarkFolderType,
-  item: BookmarkFolderType | BookmarkType | null,
+  item: BookmarkItemType | null,
   targetID: string
-): BookmarkFolderType | BookmarkType | null {
+): BookmarkItemType | null {
   if (item && item.id !== S.bookmarks.rootfolder.id) {
     let index = -1;
     const target = findBookmarkItem(bookmarks, targetID);
@@ -842,7 +842,7 @@ export function insertBookmarkItem(
 export function copyBookmarkItem(
   bookmarks: BookmarkFolderType,
   itemID: string
-): BookmarkFolderType | BookmarkType | null {
+): BookmarkItemType | null {
   if (itemID !== S.bookmarks.rootfolder.id) {
     const copyChildNodes = (childNodes: BookmarkFolderType['childNodes']) => {
       return childNodes.map((n) => {
@@ -869,9 +869,9 @@ export function copyBookmarkItem(
 // itemsOrIDs = object[] - INSERT new object (which must have unique id to succeed).
 export function moveBookmarkItems(
   bookmarks: BookmarkFolderType,
-  itemsOrIDs: (BookmarkFolderType | BookmarkType)[] | string[],
+  itemsOrIDs: BookmarkItemType[] | string[],
   targetID: string
-): (BookmarkFolderType | BookmarkType | null)[] {
+): (BookmarkItemType | null)[] {
   const itemsIncludeRoot = itemsOrIDs.some((item: any) => {
     if (typeof item === 'string' && item === S.bookmarks.rootfolder.id) {
       return true;
@@ -916,12 +916,12 @@ export function pasteBookmarkItems(
   cut: string[] | null,
   copy: string[] | null,
   targetID: string
-): (BookmarkFolderType | BookmarkType | null)[] {
+): (BookmarkItemType | null)[] {
   const itemsIncludeRoot = (cut || [])
     .concat(copy || [])
     .some((id) => id === S.bookmarks.rootfolder.id);
   if (!itemsIncludeRoot && targetID && (cut || copy)) {
-    let pasted: (BookmarkFolderType | BookmarkType | null)[] = [];
+    let pasted: (BookmarkItemType | null)[] = [];
     if (cut) {
       pasted = moveBookmarkItems(bookmarks, cut, targetID);
     } else if (copy) {
@@ -929,7 +929,7 @@ export function pasteBookmarkItems(
       if (!copiedItems.includes(null)) {
         pasted = moveBookmarkItems(
           bookmarks,
-          copiedItems as (BookmarkFolderType | BookmarkType)[],
+          copiedItems as BookmarkItemType[],
           targetID
         );
       }
@@ -958,42 +958,70 @@ export function bookmarkLabel(
   return `${ks.shift()}: ${ks[ks.length - 1]}`;
 }
 
-// Convert a raw bookmark into a bookmark for showing to the user.
-export function showBookmarkItem<T extends BookmarkFolderType | BookmarkType>(
+export function forEachBookmarkItem(
+  nodes: BookmarkItemType[] | undefined,
+  callback: (node: BookmarkItemType) => void
+): BookmarkItemType[] {
+  if (nodes === undefined) {
+    return [];
+  }
+  nodes.forEach((node) => {
+    callback(node);
+    if ('childNodes' in node) forEachBookmarkItem(node.childNodes, callback);
+  });
+  return nodes;
+}
+
+// Apply localization to a bookmark (NOT recursive and does NOT add
+// sampleText).
+export function localizeBookmark(
   g: GType,
   verseKeyFunc: typeof verseKey,
-  item: T,
-  sampleTextFunc?: typeof getSampleText
-): T & { sampleText: string; sampleModule: string } {
-  const r: T & { sampleText: string; sampleModule: string } = {
-    ...item,
-    sampleText: '',
-    sampleModule: '',
-  };
-  const { type, label, note } = item;
+  item: BookmarkItemType
+): BookmarkItemType {
+  const { label, note } = item;
   const loc = g.i18n.language as 'en';
-  let locationLocale: typeof C.Locales[number][0] | undefined;
   if (label.startsWith('i18n:')) {
     const i18nKey = label.substring(5);
     if (i18nKey === 'label' && item.type === 'bookmark') {
       const { location } = item;
-      r.label = location ? bookmarkLabel(g, verseKeyFunc, location) : 'label';
+      item.label = location
+        ? bookmarkLabel(g, verseKeyFunc, location)
+        : 'label';
     } else {
-      r.label = g.i18n.t(i18nKey);
+      item.label = g.i18n.t(i18nKey);
     }
-    locationLocale = loc;
-    r.labelLocale = loc;
+    item.labelLocale = loc;
   }
   if (note.startsWith('i18n:') && g.i18n.exists(note.substring(5))) {
-    r.note = g.i18n.t(label.substring(5));
-    r.noteLocale = loc;
+    item.note = g.i18n.t(label.substring(5));
+    item.noteLocale = loc;
   }
-  if (sampleTextFunc && type === 'bookmark' && item.location) {
-    const st = sampleTextFunc(item.location, locationLocale);
-    r.sampleText = st.sampleText;
-    r.sampleModule = st.sampleModule;
-  }
-  return r;
+  return item;
+}
+
+// Recursively apply localization, and optionally add sampleText, to a folder.
+export function localizeBookmarks(
+  g: GType,
+  verseKeyFunc: typeof verseKey,
+  folder: BookmarkFolderType,
+  getSampleTextFunc?: typeof getSampleText
+) {
+  const locale = g.i18n.language as 'en';
+  localizeBookmark(g, verseKeyFunc, folder);
+  forEachBookmarkItem(folder.childNodes, (item) => {
+    localizeBookmark(g, verseKeyFunc, item);
+    if (
+      getSampleTextFunc &&
+      item.type === 'bookmark' &&
+      !item.sampleText &&
+      item.location
+    ) {
+      const st = getSampleTextFunc(item.location, locale);
+      item.sampleText = st.sampleText;
+      item.sampleModule = st.sampleModule;
+    }
+  });
 }
 
 // Takes a flat list of general book nodes and arranges them according to

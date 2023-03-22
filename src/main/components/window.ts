@@ -283,7 +283,7 @@ export const pushPrefsToWindows: PrefCallbackType = (
   val
 ) => {
   let pushKeyProps: string[] = [];
-  if (winid === -1 || winid === BrowserWindow.getFocusedWindow()?.id) {
+  if (winid < 0 || winid === BrowserWindow.getFocusedWindow()?.id) {
     if (store === 'prefs' && idOrKey === 'global.locale') {
       const lng = Prefs.getCharPref('global.locale');
       i18next
@@ -332,7 +332,7 @@ export const pushPrefsToWindows: PrefCallbackType = (
   }
   if (pushKeyProps.length) {
     BrowserWindow.getAllWindows().forEach((w) => {
-      if (winid === -1 || w.id !== winid) {
+      if (winid < 0 || w.id !== winid) {
         w.webContents.send('update-state-from-pref', pushKeyProps, store);
       }
     });

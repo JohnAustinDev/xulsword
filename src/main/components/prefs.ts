@@ -396,11 +396,10 @@ const Prefs = {
 
   // Write a key value pair to a store, and return true if succesfull. If the
   // value is undefined, the key will be removed from the store. If the value
-  // does not match the given type, false is returned, and nothing is set and no
-  // error is thrown. If this.writeOnChange is set, then the store will be saved
-  // to disk immediately. If a change was made, any registered subscription
-  // callbacks will be called after setting the new value unless skipCallbacks
-  // is set.
+  // does not match the given type, an error is thrown if type is not complex.
+  // If this.writeOnChange is set, then the store will be saved to disk
+  // immediately. If a change was made, any registered subscription callbacks
+  // will be called after setting the new value unless skipCallbacks is set.
   setPref(
     key: string | null, // null only if type is merge and target is store
     type: 'string' | 'number' | 'boolean' | 'complex' | 'any' | 'merge',
@@ -425,16 +424,14 @@ const Prefs = {
       ) {
         valueobj = value;
       } else {
-        log.warn(
+        throw new Error(
           `Prefs merge failed because value is not a PrefObject (value='${value}', key='${key}', store='${store}').`
         );
-        return false;
       }
     } else if (!this.isType(type, value)) {
-      log.warn(
-        `Prefs was given the wrong type (expected='${type}', given='${value}', key='${key}', store='${store}').`
-      );
-      return false;
+      const msg = `Prefs was given the wrong type (expected='${type}', given='${value}', key='${key}', store='${store}').`;
+      if (type === 'complex') log.warn(msg);
+      else throw new Error(msg);
     }
     // Get (or create) the parent object of the key.
     let k = key;
@@ -472,10 +469,9 @@ const Prefs = {
         if (k === null) this.stores[store].data = merged;
         else p[k] = merged;
       } else {
-        log.warn(
+        throw new Error(
           `Prefs merge failed because the key does not contain a PrefObject (key-value='${pp}', key='${key}', store='${store}').`
         );
-        return false;
       }
     } else p[k] = clone(value);
     // If not writeOnChange, then data is persisted only when app is closed.

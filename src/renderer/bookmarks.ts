@@ -17,6 +17,7 @@ import { bookmarkItemIcon, getMaxVerse } from './rutil';
 
 import type {
   BookmarkFolderType,
+  BookmarkItemType,
   BookmarkTreeNode,
   BookmarkType,
   ContextData,
@@ -378,7 +379,7 @@ export function getSampleText(
 
 // Convert a bookmark item into a tree node.
 export function bookmarkTreeNode(
-  item: BookmarkFolderType | BookmarkType | BookmarkTreeNode | null | undefined,
+  item: BookmarkItemType | BookmarkTreeNode | null | undefined,
   only?: 'folder' | 'bookmark', // undefined = all
   selectedIDs?: string | string[], // undefined = none
   expandedIDs?: string | string[], // undefined = all
@@ -399,10 +400,6 @@ export function bookmarkTreeNode(
       (only === 'folder' && 'type' in node && node.type === 'folder') ||
       (only === 'bookmark' && 'type' in node && node.type === 'bookmark')
     ) {
-      if (node.label.startsWith('i18n:')) {
-        node.label = G.i18n.t(node.label.substring(5));
-        node.labelLocale = G.i18n.language as 'en';
-      }
       if (node.type === 'folder') {
         node.hasCaret = node.childNodes?.some(
           (cn) => 'type' in cn && cn.type === 'folder' && cn.childNodes
@@ -431,7 +428,7 @@ export function bookmarkTreeNode(
 
 // Convert bookmark childNodes of a folder into tree nodes.
 export function bookmarkTreeNodes(
-  items: (BookmarkFolderType | BookmarkType)[] | BookmarkTreeNode[],
+  items: BookmarkItemType[] | BookmarkTreeNode[],
   only?: 'folder' | 'bookmark', // undefined = all
   selectedIDs?: string | string[], // undefined = none
   expandedIDs?: string | string[], // undefined = all

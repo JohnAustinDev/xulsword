@@ -38,7 +38,7 @@ import './printPassage.css';
 import type { OSISBookType, QuerablePromise } from '../../type';
 
 // TODO!: Dictlinks aren't implemented. CSS needs improvement. Print hasn't been checked.
-// TODO!: As of 11/22 @page {@bottom-center {content: counter(page);}} does not work
+// TODO: As of 11/22 @page {@bottom-center {content: counter(page);}} does not work
 
 // 0=none, 1=checkbox, 2=placeholder
 const switches = [

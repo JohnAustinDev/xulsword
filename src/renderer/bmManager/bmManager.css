@@ -32,14 +32,9 @@
 }
 .bmmanager .folders .treeview {
   overflow: auto;
-  font-size: 12px;
 }
 .bmmanager .label-cell > * {
   margin-inline-end: 6px;
-}
-.bmmanager .folders .bmicon {
-  margin-inline-start: 0;
-  margin-inline-end: 5px;
 }
 .bmmanager .dragsizer {
   height: calc(100% - 20px);

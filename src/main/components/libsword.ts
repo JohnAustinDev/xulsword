@@ -319,7 +319,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // Returned value is always of the form shortBook.chapter.verse.lastVerse
   // NOTE: Currently libsword mapping is only correct for Gen-Rev of KJV,
   // Synodal and SynodalProt, so this must be checked before calling!
-  // TODO! Implement full v11n conversion
+  // TODO Implement full v11n conversion
   convertLocation(
     fromv11n: V11nType,
     vkeytext: string,

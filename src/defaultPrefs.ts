@@ -46,7 +46,7 @@ import type {
 //                  a listener for state Pref changes that will push
 //                  those changes into component state.
 //
-// TODO!: Write an installer script to delete arbitrary PrefValues during an update.
+// TODO: Write an installer script to delete arbitrary PrefValues during an update.
 const S = {
   fonts: {
     fonts: {} as {

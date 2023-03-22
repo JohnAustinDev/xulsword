@@ -1,31 +1,28 @@
-/* eslint-disable jsx-a11y/no-noninteractive-element-interactions */
-/* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
+/* eslint-disable jsx-a11y/no-noninteractive-element-interactions */
 import { ItemRendererProps } from '@blueprintjs/select';
 import React from 'react';
 import {
   findBookmarkItem,
   findParentOfBookmarkItem,
+  forEachBookmarkItem,
   ofClass,
   randomID,
   stringHash,
   tableRowsToSelection,
   tableSelectDataRows,
-  showBookmarkItem,
 } from '../../common';
-import C from '../../constant';
 import S from '../../defaultPrefs';
+import C from '../../constant';
 import G from '../rg';
 import { bookmarkItemIcon } from '../rutil';
-import { verseKey } from '../htmlData';
-import { getSampleText } from '../bookmarks';
 import Label from '../libxul/label';
 import './bmManager.css';
 import '@blueprintjs/select/lib/css/blueprint-select.css';
 
 import type {
   BookmarkFolderType,
-  BookmarkType,
+  BookmarkItemType,
   ContextData,
   GType,
   LocationGBType,
@@ -40,7 +37,13 @@ type CellInfo = TCellInfo & {
   location?: LocationVKType | LocationGBType | null | undefined;
 };
 
-type TableRow = [JSX.Element, JSX.Element, JSX.Element, string, CellInfo];
+export type TableRow = [
+  JSX.Element,
+  JSX.Element,
+  JSX.Element,
+  string,
+  CellInfo
+];
 
 export const Col = {
   iName: 0,
@@ -65,6 +68,10 @@ export function onFolderSelection(
       };
       return s;
     });
+    setTimeout(() => {
+      const { selectedFolder } = this.state as BMManagerState;
+      if (selectedFolder) this.scrollToItem(selectedFolder);
+    }, C.UI.TreeScrollDelay);
   }
 }
 
@@ -75,7 +82,7 @@ export function onCellClick(
 ): void {
   this.setState((prevState: BMManagerState) => {
     const { dataRowIndex } = cell;
-    const data = this.tableData();
+    const data = this.tableData;
     if (data[dataRowIndex]) {
       const { selectedItems: prevSelectedItems } = prevState;
       const selectedDataRows = tableSelectDataRows(
@@ -111,27 +118,32 @@ export function onDoubleClick(this: BMManagerWin, ex: React.SyntheticEvent) {
   }
 }
 
-export function onItemSelect(
-  this: BMManagerWin,
-  item: BookmarkFolderType | BookmarkType
-) {
-  const { rootfolder } = this.state as BMManagerState;
+export function scrollToItem(this: BMManagerWin, id: string) {
   const { tableCompRef } = this;
+  const tc = tableCompRef.current;
+  if (tc) {
+    const data = this.tableData;
+    const selectedItem = data.findIndex((r) => r[Col.iInfo].id === id);
+    if (selectedItem !== -1) {
+      const selectedRegion = tableRowsToSelection([selectedItem])[0];
+      if (selectedRegion) {
+        const r0 = selectedRegion.rows[0];
+        const r1 = selectedRegion.rows[1];
+        selectedRegion.rows = [r0 > 5 ? r0 - 5 : r0, r1 > 5 ? r1 - 5 : r1];
+        tc.scrollToRegion(selectedRegion);
+      }
+    }
+  }
+}
+
+export function onItemSelect(this: BMManagerWin, item: BookmarkItemType) {
+  const { rootfolder } = this.state as BMManagerState;
   const s: Partial<BMManagerState> = {
     selectedFolder: rootfolder.id,
     selectedItems: [item.id],
   };
   this.setState(s);
-  const tc = tableCompRef.current;
-  if (tc) {
-    const data = this.tableData();
-    const selectedItem = data.findIndex((r) => r[Col.iInfo].id === item.id);
-    const selectedRegion = tableRowsToSelection([selectedItem])[0];
-    const r0 = selectedRegion.rows[0];
-    const r1 = selectedRegion.rows[1];
-    selectedRegion.rows = [r0 > 5 ? r0 - 5 : r0, r1 > 5 ? r1 - 5 : r1];
-    tc.scrollToRegion(selectedRegion);
-  }
+  this.scrollToItem(item.id);
 }
 
 export function onQueryChange(
@@ -206,6 +218,7 @@ export function buttonHandler(this: BMManagerWin, e: React.SyntheticEvent) {
       }
       case 'cut': {
         if (selectedItems) {
+          this.currentRootFolderObject = null;
           const s: Partial<BMManagerState> = {
             cut: selectedItems,
             copy: null,
@@ -217,6 +230,7 @@ export function buttonHandler(this: BMManagerWin, e: React.SyntheticEvent) {
       }
       case 'copy': {
         if (selectedItems) {
+          this.currentRootFolderObject = null;
           const s: Partial<BMManagerState> = {
             copy: selectedItems,
             cut: null,
@@ -272,141 +286,60 @@ export function buttonHandler(this: BMManagerWin, e: React.SyntheticEvent) {
   }
 }
 
-function tooltip(strings: string[]) {
-  return (_dataRowIndex: number, dataColIndex: number): string => {
-    return strings[dataColIndex];
-  };
-}
-
-export function tableData(this: BMManagerWin): TableRow[] {
-  const state = this.state as BMManagerState;
-  const { rootfolder, selectedFolder, cut, copy } = state;
-  const getRow = (
-    item: BookmarkFolderType | BookmarkType,
-    level: number
-  ): TableRow => {
-    const {
-      id,
-      label,
-      note,
-      creationDate,
-      labelLocale,
-      noteLocale,
-      sampleText,
-      sampleModule,
-    } = showBookmarkItem(G, verseKey, item, getSampleText);
-    const classes: string[] = [];
-    if (cut && cut.includes(id)) {
-      classes.push('is-cut');
-    }
-    if (copy && copy.includes(id)) {
-      classes.push('is-copy');
-    }
-    const r: TableRow = [
-      // Label
-      <span
-        className="label-cell"
-        key={stringHash(labelLocale, label, item, level)}
-      >
-        {[...Array(level).keys()].map((a) => (
-          <div key={`ind${a}`} className="indent" />
-        ))}
-        {bookmarkItemIcon(item)}
-        <Label className={labelLocale} value={label} />
-      </span>,
-
-      // Note
-      <span key={stringHash(note, noteLocale)} className={noteLocale}>
-        {note}
-      </span>,
-
-      // Sample text
-      <span
-        key={stringHash(sampleText, sampleModule)}
-        className={`cs-${sampleModule}`}
-      >
-        {sampleText}
-      </span>,
-
-      // Creation date
-      new Date(creationDate).toLocaleDateString(G.i18n.language),
-
-      // Info
-      {
-        id,
-        location: 'location' in item ? item.location : undefined,
-        classes,
-        tooltip: tooltip([label, note, sampleText, 'VALUE']),
-      },
-    ];
-    return r;
-  };
-  const data: TableRow[] = [];
-  const addItems = (folder: BookmarkFolderType, level = 0) => {
-    data.push(getRow(folder, level));
-    folder.childNodes.forEach((cn) => {
-      if (cn.type === 'folder') addItems(cn, level + 2);
-      else data.push(getRow(cn, level + 1));
-    });
-  };
-  const selfolder = findBookmarkItem(rootfolder, selectedFolder);
-  if (selfolder && selfolder.type === 'folder') addItems(selfolder);
-  else addItems(rootfolder);
-  return data;
-}
-
-export function inputValueRenderer(
-  item: BookmarkFolderType | BookmarkType
-): string {
-  const { label } = item;
-  return label;
-}
-
 export function itemRenderer(
-  item: BookmarkFolderType | BookmarkType,
+  this: BMManagerWin,
+  item: BookmarkItemType,
   itemProps: ItemRendererProps
 ): JSX.Element | null {
   const { handleClick, ref } = itemProps;
-  const { label, labelLocale, note, noteLocale, sampleText, sampleModule } =
-    showBookmarkItem(G, verseKey, item, getSampleText);
+  const { label, labelLocale, note, noteLocale } = item;
+  let sampleText = '';
+  let sampleModule = '';
+  if (item.type === 'bookmark') {
+    ({ sampleText, sampleModule } = item);
+  }
   const shortRE1 = new RegExp(
-    `^(.{${C.UI.BMManager.searchResultBreakAfter}}.*?)\b.*$`
+    `^(.{${C.UI.BMManager.searchResultBreakAfter}}.*?)\\b.*$`
   );
   let notesh = note.replace(shortRE1, '$1');
   if (note.length > C.UI.BMManager.searchResultBreakAfter) notesh += '…';
   const shl = C.UI.BMManager.searchResultBreakAfter - notesh.length;
   let samplesh = '';
   if (shl > 0) {
-    const shortRE2 = new RegExp(`^(.{${shl}}.*?)\b.*$`);
+    const shortRE2 = new RegExp(`^(.{${shl}}.*?)\\b.*$`);
     samplesh = sampleText.replace(shortRE2, '$1');
     if (sampleText.length > shl) samplesh += '…';
   }
   return (
     <li
       className="search-result-item"
-      title={`[${notesh}] ${samplesh}`}
+      title={`${notesh ? `[${notesh}] ` : ''}${samplesh}`}
       ref={ref}
       onClick={handleClick}
     >
       {bookmarkItemIcon(item)}
       <Label className={`cs-${labelLocale}`} value={label} />
-      {(note || sampleText) && `: `}
-      <span className={`cs-${noteLocale} description`}>[{note}]</span>
-      <span className={`cs-${sampleModule} description`}>{sampleText}</span>
+      {(notesh || samplesh) && `: `}
+      {notesh && (
+        <span className={`cs-${noteLocale} description`}>[{notesh}]</span>
+      )}
+      {samplesh && (
+        <span className={`cs-${sampleModule} description`}>{samplesh}</span>
+      )}
     </li>
   );
 }
 
 export function itemPredicate(
+  this: BMManagerWin,
   query: string,
-  item: BookmarkFolderType | BookmarkType
+  item: BookmarkItemType
 ): boolean {
-  const { label, note, sampleText } = showBookmarkItem(
-    G,
-    verseKey,
-    item,
-    getSampleText
-  );
+  const { label, note } = item;
+  let sampleText = '';
+  if (item.type === 'bookmark') {
+    ({ sampleText } = item);
+  }
   const parts: string[] = [label, note, sampleText];
   if (item.type === 'bookmark') {
     const { location } = item;
@@ -421,12 +354,97 @@ export function itemPredicate(
   return querylc.split(' ').every((w) => is.includes(w));
 }
 
+export function inputValueRenderer(item: BookmarkItemType): string {
+  const { label } = item;
+  return label;
+}
+
+export function getSearchableItems(
+  folder: BookmarkFolderType
+): BookmarkItemType[] {
+  const searchableItems: BookmarkItemType[] = [];
+  forEachBookmarkItem(folder.childNodes, (n) => {
+    if (n.type === 'bookmark') searchableItems.push(n);
+  });
+  return searchableItems;
+}
+
+function tooltip(rowArray: string[]) {
+  return (_row: number, col: number): string => {
+    return rowArray[col];
+  };
+}
+
+export function getTableData(
+  s: Pick<BMManagerState, 'rootfolder' | 'cut' | 'copy'>
+): TableRow[] {
+  const { rootfolder, cut, copy } = s;
+  const getTableRow = (item: BookmarkItemType, level: number): TableRow => {
+    const { id, creationDate, label, labelLocale, note, noteLocale } = item;
+    let sampleText = '';
+    let sampleModule = '';
+    if (item.type === 'bookmark') {
+      ({ sampleText, sampleModule } = item);
+    }
+    const classes: string[] = [];
+    if (cut && cut.includes(id)) {
+      classes.push('is-cut');
+    }
+    if (copy && copy.includes(id)) {
+      classes.push('is-copy');
+    }
+    const r: TableRow = [
+      <span
+        className="label-cell"
+        key={stringHash(labelLocale, label, item, level)}
+      >
+        {[...Array(level).keys()].map((a) => (
+          <div key={`ind${a}`} className="indent" />
+        ))}
+        {bookmarkItemIcon(item)}
+        <Label className={labelLocale} value={label} />
+      </span>,
+
+      <span key={stringHash(note, noteLocale)} className={noteLocale}>
+        {note}
+      </span>,
+
+      <span
+        key={stringHash(sampleText, sampleModule)}
+        className={`cs-${sampleModule}`}
+      >
+        {sampleText}
+      </span>,
+
+      new Date(creationDate).toLocaleDateString(G.i18n.language),
+
+      {
+        id,
+        location: 'location' in item ? item.location : undefined,
+        classes,
+      },
+    ];
+    r[Col.iInfo].tooltip = tooltip([label, note, sampleText, 'VALUE']);
+    return r;
+  };
+  const data: TableRow[] = [];
+  const getTableRows = (folder: BookmarkFolderType, level = 0) => {
+    data.push(getTableRow(folder, level));
+    folder.childNodes.forEach((cn) => {
+      if (cn.type === 'folder') getTableRows(cn, level + 1);
+      else data.push(getTableRow(cn, level + 1));
+    });
+  };
+  getTableRows(rootfolder);
+  return data;
+}
+
 export function bmContextData(
   this: BMManagerWin,
   elem: HTMLElement
 ): ContextData {
   const { selectedItems } = this.state as BMManagerState;
-  const data = this.tableData();
+  const data = this.tableData;
   const r: ContextData = { type: 'bookmarkManager' };
   const point = ofClass(['bp4-table-cell'], elem);
   if (point) {

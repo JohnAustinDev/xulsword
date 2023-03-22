@@ -4,8 +4,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Tree, TreeEventHandler, TreeNodeInfo } from '@blueprintjs/core';
+import C from '../../constant';
 import { clone, diff } from '../../common';
-import { addClass, xulDefaultProps, XulProps, xulPropTypes } from './xul';
+import { xulDefaultProps, XulProps, xulPropTypes } from './xul';
 
 // The initialState of all nodes in the tree is required. If selectedIDs is defined
 // then onSelection must also be defined so that selection can be controlled by the
@@ -184,6 +185,7 @@ function usePreviousExpansion<V>(value: V) {
 
 const TreeView = (props: TreeViewProps) => {
   const {
+    className,
     bpClassName,
     initialState,
     selectedIDs,
@@ -227,12 +229,16 @@ const TreeView = (props: TreeViewProps) => {
   // On mount, scroll to selection
   React.useEffect(() => {
     setTimeout(() => {
-      if (selection.length) {
-        treeRef.current
-          ?.getNodeContentElement(selection[0])
-          ?.scrollIntoView({ block: 'center', behavior: 'auto' });
+      if (selection.length && treeRef.current) {
+        const elem = treeRef.current.getNodeContentElement(selection[0]);
+        if (elem) {
+          const el = elem.getBoundingClientRect();
+          if (el.top < 100 || el.bottom > window.innerHeight - 100) {
+            elem.scrollIntoView({ block: 'center', behavior: 'auto' });
+          }
+        }
       }
-    }, 500);
+    }, C.UI.TreeScrollDelay);
   });
 
   // Call onSelection and onExpansion when NOT controlled.
@@ -327,11 +333,11 @@ const TreeView = (props: TreeViewProps) => {
   );
 
   const classes = ['treeview'];
+  if (className) classes.push(className);
   if (bpClassName) classes.push(bpClassName);
 
   return (
     <Tree
-      {...addClass(['treeview'], props)}
       className={classes.join(' ')}
       contents={nodes}
       onNodeClick={handleNodeClick}

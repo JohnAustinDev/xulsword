@@ -10,13 +10,12 @@ import {
   MenuItem,
 } from 'electron';
 import path from 'path';
-import { bookmarkItemIconPath, clone, showBookmarkItem } from '../common';
+import { bookmarkItemIconPath, clone, localizeBookmark } from '../common';
 import C from '../constant';
 import S from '../defaultPrefs';
 import G from './mg';
 import Window, { getBrowserWindows } from './components/window';
 import Commands from './components/commands';
-import { Transaction } from './bookmarks';
 import setViewportTabs from './tabs';
 
 import type { BookmarkFolderType, SearchType, TabTypes } from '../type';
@@ -194,9 +193,7 @@ export const pushPrefsToMenu: PrefCallbackType = (winid, store, key, val) => {
   if (G.Data.has('menuPref')) {
     menuPref = G.Data.read('menuPref') as string[];
   }
-  // Transaction.pause true means main process is doing a transaction so
-  // the menu should be notified.
-  if (winid !== -1 || Transaction.pause) {
+  if (winid !== -1) {
     if (store === 'prefs') {
       const keys: string[] = [];
       if (!key.includes('.') && typeof val === 'object') {
@@ -223,7 +220,7 @@ function bookmarkProgramMenu(
   bookmarks: BookmarkFolderType
 ): MenuItemConstructorOptions[] {
   return bookmarks.childNodes
-    .map((bm) => showBookmarkItem(G, verseKey, bm))
+    .map((bm) => localizeBookmark(G, verseKey, bm))
     .map((bm) => ({
       label: bm.label,
       type: bm.type === 'folder' ? 'submenu' : 'normal',
@@ -434,7 +431,7 @@ export default class MainMenuBuilder {
         },
         { type: 'separator' },
         {
-          label: `${ts('menu.import').replace(/\W+$/, '')} ${G.i18n.t(
+          label: `${ts('menu.import').replace(/[.…]+$/, '')} ${G.i18n.t(
             'menu.bookmarks'
           )}`,
           click: d(() => {
@@ -442,7 +439,7 @@ export default class MainMenuBuilder {
           }),
         },
         {
-          label: `${ts('menu.export').replace(/\W+$/, '')} ${G.i18n.t(
+          label: `${ts('menu.export').replace(/[.…]+$/, '')} ${G.i18n.t(
             'menu.bookmarks'
           )}`,
           enabled: haveBookmarks,

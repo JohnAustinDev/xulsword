@@ -1,15 +1,17 @@
 /* eslint-disable import/no-duplicates */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
-import C from '../../constant';
 import {
   cleanDoubleClickSelection,
+  clone,
   getCSS,
   ofClass,
   sanitizeHTML,
 } from '../../common';
-import { getElementData } from '../htmlData';
+import C from '../../constant';
+import S from '../../defaultPrefs';
 import G from '../rg';
+import { getElementData } from '../htmlData';
 import log from '../log';
 import { scrollIntoView } from '../rutil';
 import { aTextWheelScroll, getRefHTML } from './zversekey';
@@ -332,10 +334,20 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
     }
 
     case 'change': {
+      // TODO!: Finish this - absolute position a React component select?
+      const { xulswordState, panelIndex } = this.props as AtextProps;
       const origselect = ofClass(['origselect'], es.target);
       if (origselect) {
         const s = origselect.element.firstChild as HTMLSelectElement;
-        // TODO!: Finish this!
+        xulswordState((prevState: typeof S.prefs.xulsword) => {
+          const { ilModules } = clone(prevState);
+          const module = s.value.split('.').pop();
+          if (module) {
+            ilModules[panelIndex] = module;
+            return { ilModules } as Partial<typeof S.prefs.xulsword>;
+          }
+          return null;
+        });
       }
       break;
     }

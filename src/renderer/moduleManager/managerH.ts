@@ -1254,7 +1254,7 @@ async function promptAudioChapters(
         return xthis.setState({ showAudioDialog });
       });
       if (audio) {
-        // TODO!: Implement swordzip API on server.
+        // TODO: Implement swordzip API on server.
         let bkchs: DeprecatedAudioChaptersConf;
         if ('gbmod' in audio) {
           bkchs = getDeprecatedGenBookAudioConf(audio);

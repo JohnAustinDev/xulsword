@@ -226,7 +226,7 @@ export type AtextStateType = {
 
 export type XulswordStateArgType =
   | Partial<typeof S.prefs.xulsword>
-  | ((s: typeof S.prefs.xulsword) => Partial<typeof S.prefs.xulsword>);
+  | ((s: typeof S.prefs.xulsword) => Partial<typeof S.prefs.xulsword> | null);
 
 export type SwordFilterType =
   | 'Headings'
@@ -716,14 +716,18 @@ export type BookmarkType = BookmarkItem & {
   type: 'bookmark';
   tabType: TabTypes;
   location: SelectVKMType | LocationGBType | null;
+  sampleText: string;
+  sampleModule: string;
 };
 
 export type BookmarkFolderType = BookmarkItem & {
   type: 'folder';
-  childNodes: (BookmarkType | BookmarkFolderType)[];
+  childNodes: BookmarkItemType[];
 };
 
-export type BookmarkTypes = ['folder', 'bookmark'];
+export type BookmarkItemType = BookmarkFolderType | BookmarkType;
+
+export type BookmarkItemTypes = ['folder', 'bookmark'];
 
 export type TransactionType = {
   prefkey: string;

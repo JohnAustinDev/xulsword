@@ -11,8 +11,9 @@ import {
   moveBookmarkItems,
   randomID,
   replaceBookmarkItem,
-  showBookmarkItem,
   bookmarkLabel,
+  localizeBookmark,
+  localizeBookmarks,
 } from '../../common';
 import C from '../../constant';
 import S from '../../defaultPrefs';
@@ -34,8 +35,8 @@ import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
 import './bmProperties.css';
 
 import type {
-  BookmarkFolderType,
   BookmarkItem,
+  BookmarkItemType,
   BookmarkType,
   GType,
   LocationGBType,
@@ -46,9 +47,10 @@ const Bookmarks = G.Prefs.getComplexValue(
   'rootfolder',
   'bookmarks'
 ) as typeof S.bookmarks.rootfolder;
+localizeBookmarks(G, verseKey, Bookmarks);
 
 export type BMPropertiesState = {
-  bookmark: BookmarkType | BookmarkFolderType;
+  bookmark: BookmarkItemType;
   treeSelection: string;
   anyChildSelectable: boolean; // Set to allow bookmark selection, before which bm will be inserted
   hide: ('folder' | 'name' | 'location' | 'note' | 'text')[];
@@ -75,6 +77,8 @@ const bmdefault: BookmarkType = {
     lastverse: 1,
     v11n: 'KJV',
   },
+  sampleText: '',
+  sampleModule: '',
 };
 
 const defaultState: BMPropertiesState = {
@@ -125,6 +129,7 @@ export default class BMPropertiesWin extends React.Component {
       G.Window.close();
       return;
     }
+
     // Select bookmark item's parent folder or location
     const item = state.anyChildSelectable
       ? findBookmarkItem(Bookmarks, state.bookmark.id)
@@ -159,6 +164,17 @@ export default class BMPropertiesWin extends React.Component {
               bookmark.location as LocationGBType | SelectVKMType
             )
           : G.i18n.t('menu.folder.add');
+    }
+    // Don't leave sampleText empty
+    if (
+      bookmark.type === 'bookmark' &&
+      !bookmark.sampleText &&
+      bookmark.location
+    ) {
+      updateState = true;
+      const st = getSampleText(bookmark.location, G.i18n.language as 'en');
+      bookmark.sampleText = st.sampleText;
+      bookmark.sampleModule = st.sampleModule;
     }
     if (updateState) {
       this.setState({
@@ -232,6 +248,9 @@ export default class BMPropertiesWin extends React.Component {
         paragraph: undefined,
       };
       bm.label = bookmarkLabel(G, verseKey, bm.location);
+      const st = getSampleText(bm.location, G.i18n.language as 'en');
+      bm.sampleText = st.sampleText;
+      bm.sampleModule = st.sampleModule;
       return { bookmark };
     });
   }
@@ -242,6 +261,9 @@ export default class BMPropertiesWin extends React.Component {
       const bm = bookmark as BookmarkType;
       bm.location = selection;
       bm.label = bookmarkLabel(G, verseKey, bm.location);
+      const st = getSampleText(bm.location, G.i18n.language as 'en');
+      bm.sampleText = st.sampleText;
+      bm.sampleModule = st.sampleModule;
       return { bookmark };
     });
   }
@@ -249,10 +271,12 @@ export default class BMPropertiesWin extends React.Component {
   render() {
     const state = this.state as BMPropertiesState;
     const { treeHandler, gbHandler, handler, vkHandler } = this;
-    const { bookmark: bmx, hide, treeSelection, anyChildSelectable } = state;
-    const bookmark = showBookmarkItem(G, verseKey, bmx, getSampleText);
-    const { label, labelLocale, note, noteLocale, sampleText, sampleModule } =
-      bookmark;
+    const { bookmark, hide, treeSelection, anyChildSelectable } = state;
+    const { label, labelLocale, note, noteLocale } = localizeBookmark(
+      G,
+      verseKey,
+      bookmark
+    );
     let location;
     if (bookmark.type === 'bookmark') {
       ({ location } = bookmark);
@@ -269,6 +293,12 @@ export default class BMPropertiesWin extends React.Component {
         parent: ks.join(C.GBKSEP),
         children: child ? [child] : [],
       };
+    }
+
+    let sampleText: string | undefined;
+    let sampleModule: string | undefined;
+    if (bookmark.type === 'bookmark') {
+      ({ sampleText, sampleModule } = bookmark);
     }
 
     const treeNode = bookmarkTreeNode(
@@ -332,6 +362,7 @@ export default class BMPropertiesWin extends React.Component {
             )}
             {!hide.includes('text') && location && (
               <Row>
+                <div />
                 <Textbox
                   id="sampleText"
                   className={`cs-${sampleModule}`}
@@ -347,6 +378,7 @@ export default class BMPropertiesWin extends React.Component {
                 <Label value={G.i18n.t('chooseFolder.label')} />
                 <div className="treeview-container xsinput">
                   <TreeView
+                    className="bookmark-item-tree"
                     initialState={[treeNode]}
                     enableMultipleSelection={false}
                     onSelection={treeHandler}
@@ -376,7 +408,7 @@ renderToRoot(<BMPropertiesWin />, { resetOnResize: false });
 
 function initialState(): BMPropertiesState | null {
   const winarg = winState0 as Partial<BMPropertiesState>;
-  let bookmark: BookmarkFolderType | BookmarkType = clone(bmdefault);
+  let bookmark: BookmarkItemType = clone(bmdefault);
   if (newitem || !winState0?.bookmark) {
     let location = bmdefault.location as
       | LocationVKType
@@ -411,6 +443,8 @@ function initialState(): BMPropertiesState | null {
             vkmod: module || '',
             v11n: t?.v11n || 'KJV',
           },
+          sampleText: '',
+          sampleModule: '',
           tabType: t?.tabType || 'Texts',
         };
       } else if (!('v11n' in location)) {
@@ -423,6 +457,8 @@ function initialState(): BMPropertiesState | null {
           label: '',
           labelLocale: '',
           location: l,
+          sampleText: '',
+          sampleModule: '',
           tabType,
         };
       }

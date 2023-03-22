@@ -29,7 +29,7 @@ import importBookmarkObject, {
   Transaction,
 } from '../bookmarks';
 import { verseKey, getTab, getAudioConfs } from '../minit';
-import Prefs from './prefs';
+import PrefsX from './prefs';
 import LibSword from './libsword';
 import LocalFile from './localFile';
 import { modalInstall, scanAudio } from './module';
@@ -37,9 +37,10 @@ import Window, { getBrowserWindows, publishSubscription } from './window';
 import Dirs from './dirs';
 
 import type {
+  AddCaller,
   AudioPath,
   BookmarkFolderType,
-  BookmarkType,
+  BookmarkItemType,
   GenBookAudio,
   GenBookAudioFile,
   LocationGBType,
@@ -55,6 +56,11 @@ import type { PrintPassageState } from '../../renderer/printPassage/printPassage
 import type { CopyPassageState } from '../../renderer/copyPassage/copyPassage';
 import type { SelectVKMType } from '../../renderer/libxul/vkselect';
 import type { BMPropertiesStateWinArg } from '../../renderer/bmProperties/bmProperties';
+
+// Require the calling window argument for Prefs.set calls, so window -2 (to all
+// follow Pref changes with update to all windows and main process) can be passed
+// to Prefs.
+const Prefs = PrefsX as AddCaller['Prefs'];
 
 const Commands = {
   openModuleManager(): void {
@@ -211,7 +217,7 @@ const Commands = {
         audio: { open: false, file: null },
       };
     }
-    Prefs.mergeValue('xulsword', xulsword);
+    Prefs.mergeValue('xulsword', xulsword, undefined, undefined, -2);
   },
 
   async exportAudio() {
@@ -609,7 +615,7 @@ const Commands = {
       Transaction.index = index - 1;
       const { prefkey, value, store } = list[Transaction.index];
       Transaction.pause = true;
-      Prefs.setComplexValue(prefkey, value, store);
+      Prefs.setComplexValue(prefkey, value, store, -2);
       Transaction.pause = false;
       Window.reset('all', 'all');
       return true;
@@ -623,7 +629,7 @@ const Commands = {
       Transaction.index = index + 1;
       const { prefkey, value, store } = list[Transaction.index];
       Transaction.pause = true;
-      Prefs.setComplexValue(prefkey, value, store);
+      Prefs.setComplexValue(prefkey, value, store, -2);
       Transaction.pause = false;
       Window.reset('all', 'all');
       return true;
@@ -661,10 +667,10 @@ const Commands = {
 
   copyPassage(state?: Partial<CopyPassageState>) {
     const tab = getTab();
-    const panels = Prefs.getComplexValue(
+    const panels = PrefsX.getComplexValue(
       'xulsword.panels'
     ) as typeof S.prefs.xulsword.panels;
-    const location = Prefs.getComplexValue(
+    const location = PrefsX.getComplexValue(
       'xulsword.location'
     ) as typeof S.prefs.xulsword.location;
     if (panels && location) {
@@ -749,7 +755,7 @@ const Commands = {
           parentFolder = toFolder;
         }
       }
-      const bookmarks = Prefs.getComplexValue(
+      const bookmarks = PrefsX.getComplexValue(
         'rootfolder',
         'bookmarks'
       ) as typeof S.bookmarks.rootfolder;
@@ -771,7 +777,7 @@ const Commands = {
           }
         }
       });
-      Prefs.setComplexValue('rootfolder', bookmarks, 'bookmarks');
+      Prefs.setComplexValue('rootfolder', bookmarks, 'bookmarks', -2);
     }
     if (!result) Subscription.publish.modulesInstalled(r, callingWin.id);
     callingWin = undefined;
@@ -796,7 +802,7 @@ const Commands = {
     });
     xswindow = null;
     if (obj && !obj.canceled && obj.filePath) {
-      const bookmarks = Prefs.getComplexValue(
+      const bookmarks = PrefsX.getComplexValue(
         'rootfolder',
         'bookmarks'
       ) as typeof S.bookmarks.rootfolder;
@@ -874,13 +880,13 @@ const Commands = {
   },
 
   deleteBookmarkItems(itemIDs: string[]): boolean {
-    const bookmarks = Prefs.getComplexValue(
+    const bookmarks = PrefsX.getComplexValue(
       'rootfolder',
       'bookmarks'
     ) as typeof S.bookmarks.rootfolder;
     const items = itemIDs.map((id) => DeleteBookmarkItem(bookmarks, id));
     if (items.length && !items.some((i) => i === null)) {
-      Prefs.setComplexValue('rootfolder', bookmarks, 'bookmarks');
+      Prefs.setComplexValue('rootfolder', bookmarks, 'bookmarks', -2);
       Window.reset('all', 'all');
       return true;
     }
@@ -891,16 +897,16 @@ const Commands = {
   // itemOrID = object - INSERT object (which must have unique id to succeed).
   // Returns true if the move was successful.
   moveBookmarkItems(
-    itemsOrIDs: string[] | (BookmarkFolderType | BookmarkType)[],
+    itemsOrIDs: string[] | BookmarkItemType[],
     targetID: string
   ): boolean {
-    const bookmarks = Prefs.getComplexValue(
+    const bookmarks = PrefsX.getComplexValue(
       'rootfolder',
       'bookmarks'
     ) as typeof S.bookmarks.rootfolder;
     const moved = moveBookmarkItems(bookmarks, itemsOrIDs, targetID);
     if (moved.length && !moved.includes(null)) {
-      Prefs.setComplexValue('rootfolder', bookmarks, 'bookmarks');
+      Prefs.setComplexValue('rootfolder', bookmarks, 'bookmarks', -2);
       return true;
     }
     return false;
@@ -911,13 +917,13 @@ const Commands = {
     copy: string[] | null,
     targetID: string
   ): boolean {
-    const bookmarks = Prefs.getComplexValue(
+    const bookmarks = PrefsX.getComplexValue(
       'rootfolder',
       'bookmarks'
     ) as typeof S.bookmarks.rootfolder;
     const pasted = PasteBookmarkItems(bookmarks, cut, copy, targetID);
     if (pasted.length && !pasted.includes(null)) {
-      Prefs.setComplexValue('rootfolder', bookmarks, 'bookmarks');
+      Prefs.setComplexValue('rootfolder', bookmarks, 'bookmarks', -2);
       return true;
     }
     return false;
@@ -950,10 +956,10 @@ const Commands = {
     deferAction?: boolean
   ): Partial<typeof S.prefs.xulsword> {
     const xulsword: Partial<typeof S.prefs.xulsword> = {
-      panels: Prefs.getComplexValue(
+      panels: PrefsX.getComplexValue(
         'xulsword.panels'
       ) as typeof S.prefs.xulsword.panels,
-      keys: Prefs.getComplexValue(
+      keys: PrefsX.getComplexValue(
         'xulsword.keys'
       ) as typeof S.prefs.xulsword.keys,
     };
@@ -966,7 +972,9 @@ const Commands = {
       }
       keys[p] = location.key;
       xulsword.scroll = scroll || { verseAt: 'center' };
-      if (!deferAction) Prefs.mergeValue('xulsword', xulsword);
+      if (!deferAction) {
+        Prefs.mergeValue('xulsword', xulsword, undefined, undefined, -2);
+      }
     }
     return xulsword;
   },
@@ -980,7 +988,7 @@ const Commands = {
     // To go to a verse system location without also changing xulsword's current
     // versekey module requires this location be converted into the current v11n.
     const xulsword: Partial<typeof S.prefs.xulsword> = {
-      location: Prefs.getComplexValue(
+      location: PrefsX.getComplexValue(
         'xulsword.location'
       ) as typeof S.prefs.xulsword.location,
     };
@@ -992,7 +1000,9 @@ const Commands = {
     xulsword.location = loc.location();
     xulsword.selection = sel ? sel.location() : null;
     xulsword.scroll = newscroll || { verseAt: 'center' };
-    if (!deferAction) Prefs.mergeValue('xulsword', xulsword);
+    if (!deferAction) {
+      Prefs.mergeValue('xulsword', xulsword, undefined, undefined, -2);
+    }
     return xulsword;
   },
 };
