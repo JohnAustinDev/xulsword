@@ -127,7 +127,9 @@ export type WindowDescriptorType = {
     | 'copyPassage'
     | 'bmProperties'
     | 'bmManager';
-  id?: number;
+  id: number;
+  dataID: string;
+  options: BrowserWindowConstructorOptions;
   className?: string;
   persist?: boolean; // persist window arguments between restarts for a type
   saveIfAppClosed?: boolean;
@@ -135,10 +137,13 @@ export type WindowDescriptorType = {
   fitToContent?: boolean;
   allowMultiple?: boolean;
   additionalArguments?: { [k: string]: PrefValue };
-  openWithBounds?: { x: number; y: number; width: number; height: number };
-  windowFrameThicknessTop?: number;
-  windowFrameThicknessLeft?: number;
-  options?: BrowserWindowConstructorOptions;
+  openWithBounds?: {
+    withinWindowID: number;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
 };
 
 // Some descriptor options are not PrefValues and cannot be cloned or serialized,
@@ -217,12 +222,6 @@ export type AtextPropsType = Pick<
 };
 
 export type PinPropsType = Pick<AtextPropsType, typeof C.PinProps[number]>;
-
-export type AtextStateType = {
-  pin: PinPropsType | null;
-  versePerLine: boolean;
-  maxNoteBoxHeight: number | null;
-};
 
 export type XulswordStateArgType =
   | Partial<typeof S.prefs.xulsword>

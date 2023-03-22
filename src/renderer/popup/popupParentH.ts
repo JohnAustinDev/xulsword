@@ -5,7 +5,7 @@ import { clone, ofClass } from '../../common';
 import { findElementData, updateDataAttribute } from '../htmlData';
 import log from '../log';
 import G from '../rg';
-import { scrollIntoView } from '../rutil';
+import { scrollIntoView, windowArguments } from '../rutil';
 import { delayHandler } from '../libxul/xul';
 import { getPopupHTML } from './popupH';
 
@@ -13,6 +13,7 @@ import type { PlaceType, ShowType } from '../../type';
 import type { HTMLData } from '../htmlData';
 import type Atext from '../viewport/atext';
 
+const WindowDescriptor = windowArguments();
 let WheelScrolling = false;
 
 export interface PopupParent {
@@ -316,6 +317,7 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
               allowMultiple: true,
               saveIfAppClosed: true,
               openWithBounds: {
+                withinWindowID: WindowDescriptor.id,
                 x: Math.round(b.x),
                 y: Math.round(b.y),
                 width: Math.round(b.width),

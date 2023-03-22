@@ -17,7 +17,6 @@ import { delayHandler } from '../libxul/xul';
 
 import type {
   AtextPropsType,
-  AtextStateType,
   LocationVKType,
   LookupInfo,
   OSISBookType,
@@ -29,6 +28,7 @@ import type { HTMLData } from '../htmlData';
 import type Xulsword from '../xulsword/xulsword';
 import type { XulswordState } from '../xulsword/xulsword';
 import type Atext from './atext';
+import type { AtextStateType } from './atext';
 import type ViewportWin from './viewportWin';
 import type { ViewportWinState } from './viewportWin';
 
@@ -641,18 +641,7 @@ export function getChapterHeading(
   const int = G.i18n.t('IntroLink', toptions);
   html += '<div class="chapinfo">';
   html += `<div class="introlink${inc}" data-data="${ind}">${int}</div>`;
-  if (ilModule && ilModuleOption && ilModuleOption.length > 1) {
-    html += '<div class="origselect">';
-    html += '<select>';
-    ilModuleOption.forEach((m) => {
-      const selected = m === ilModule;
-      html += `<option class="origoption cs-${m}" value="${book}.1.1.${m}"${
-        selected ? ' selected="selected"' : ''
-      }>${G.Tab[m].label}</option>`;
-    });
-    html += '</select>';
-    html += '</div>';
-  }
+  html += '<div class="origselect"></div>';
   html += '</div>';
 
   html += '</div>';

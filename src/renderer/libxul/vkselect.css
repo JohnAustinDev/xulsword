@@ -14,28 +14,23 @@
 .vkselect .label label {
   font-weight: bold;
   padding-top: 3px;
-  margin-inline-start: 3px;
+  margin-inline-start: 2px;
   margin-inline-end: 2px;
 }
-.vkselect .dash label {
-  margin-inline-start: 1px;
-  margin-inline-end: 1px;
-}
-
 .vkselect .vk-book {
-  margin-inline-start: 1px;
-  margin-inline-end: 9px;
+  margin-inline-end: 10px;
 }
-.vkselect .vk-chapter,
-.vkselect .vk-verse,
-.vkselect .vk-lastverse,
-.vkselect .vk-lastchapter {
-  margin-inline-start: 1px;
-  margin-inline-end: 1px;
+.vkselect .vk-chapter select,
+.vkselect .vk-lastchapter select,
+.vkselect .vk-verse select,
+.vkselect .vk-lastverse select {
+  width: 3.1em;
+}
+.vkselect .spacer {
+  width: 10px;
 }
 .vkselect .vk-vkmod {
-  margin-inline-start: 20px;
-  margin-inline-end: 0px;
+  margin-inline-start: 10px;
 }
 
 .vkselect span.name {

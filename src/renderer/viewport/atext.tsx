@@ -1,3 +1,4 @@
+/* eslint-disable jsx-a11y/control-has-associated-label */
 /* eslint-disable react/forbid-prop-types */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable jsx-a11y/anchor-is-valid */
@@ -7,6 +8,7 @@
 /* eslint-disable react/static-property-placement */
 /* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
+import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import { getElementData, HTMLData, verseKey } from '../htmlData';
 import Cache from '../../cache';
@@ -49,7 +51,7 @@ import handlerH from './atextH';
 import '../libsword.css';
 import './atext.css';
 
-import type { AtextPropsType, AtextStateType } from '../../type';
+import type { AtextPropsType, PinPropsType } from '../../type';
 
 const defaultProps = {
   ...xulDefaultProps,
@@ -80,11 +82,17 @@ const propTypes = {
 
 export type AtextProps = XulProps & AtextPropsType;
 
-export const atextInitialState: AtextStateType = {
-  pin: null,
-  versePerLine: false,
-  maxNoteBoxHeight: null,
+export const stateWinPrefs = {
+  pin: null as PinPropsType | null,
+  versePerLine: false as boolean,
+  maxNoteBoxHeight: null as number | null,
 };
+
+const notStateWinPrefs = {
+  origSelectDomNode: null as HTMLDivElement | null,
+};
+
+export type AtextStateType = typeof stateWinPrefs & typeof notStateWinPrefs;
 
 // Window arguments that are used to set initial state must be updated locally
 // and in Prefs, so that a component reset or program restart won't cause
@@ -113,7 +121,8 @@ class Atext extends React.Component {
     ) as AtextStateType;
 
     const s: AtextStateType = {
-      ...atextInitialState,
+      ...stateWinPrefs,
+      ...notStateWinPrefs,
       ...windowState[props.panelIndex],
     };
     this.state = s;
@@ -136,12 +145,12 @@ class Atext extends React.Component {
     if (this.onUpdate()) {
       windowState[panelIndex] = keep(
         state,
-        Object.keys(atextInitialState) as (keyof typeof atextInitialState)[]
+        Object.keys(stateWinPrefs) as (keyof typeof stateWinPrefs)[]
       );
       const changedState = diff(
         keep(
           prevState,
-          Object.keys(atextInitialState) as (keyof typeof atextInitialState)[]
+          Object.keys(stateWinPrefs) as (keyof typeof stateWinPrefs)[]
         ),
         windowState[panelIndex]
       );
@@ -172,6 +181,7 @@ class Atext extends React.Component {
     const state = this.state as AtextStateType;
     const { columns, isPinned, panelIndex, xulswordState } = props;
     const { pin, maxNoteBoxHeight } = state as AtextStateType;
+    let { origSelectDomNode } = state;
 
     // Decide what needs to be updated...
     // pinProps are the currently active props according to the panel's
@@ -231,6 +241,7 @@ class Atext extends React.Component {
         const update = writekey !== sbe.dataset.libsword;
         if (update) {
           this.writeLibSword2DOM(libswordProps, panelIndex, 'overwrite');
+          origSelectDomNode = null;
         }
         // SCROLL
         const doscroll =
@@ -286,6 +297,7 @@ class Atext extends React.Component {
                     location: { ...libswordProps.location, chapter: prepend },
                   };
                   this.writeLibSword2DOM(pre, panelIndex, 'prepend');
+                  origSelectDomNode = null;
                   v = findVerseElement(
                     sbe,
                     libswordProps.location.chapter,
@@ -398,6 +410,7 @@ class Atext extends React.Component {
                     location: { ...libswordProps.location, chapter: append },
                   };
                   this.writeLibSword2DOM(app, panelIndex, 'append');
+                  origSelectDomNode = null;
                   append += 1;
                 }
               }
@@ -460,6 +473,18 @@ class Atext extends React.Component {
             atext.classList.toggle('next-disabled');
           }
         }, 1);
+      }
+      // This adds the interlinear original language select element:
+      const { ilModule, ilModuleOption } = props;
+      if (
+        ilModule &&
+        ilModuleOption &&
+        ilModuleOption.length > 1 &&
+        !origSelectDomNode
+      ) {
+        origSelectDomNode = (sbe.getElementsByClassName('origselect')[0] ||
+          null) as HTMLDivElement | null;
+        if (origSelectDomNode) newState.origSelectDomNode = origSelectDomNode;
       }
     }
     if (Object.keys(newState).length) this.setState(newState);
@@ -558,7 +583,7 @@ class Atext extends React.Component {
     const state = this.state as AtextStateType;
     const props = this.props as AtextProps;
     const { handler } = this;
-    const { maxNoteBoxHeight, versePerLine } = state;
+    const { maxNoteBoxHeight, versePerLine, origSelectDomNode } = state;
     const {
       columns,
       isPinned,
@@ -569,6 +594,8 @@ class Atext extends React.Component {
       ownWindow,
       noteBoxHeight,
       maximizeNoteBox,
+      ilModuleOption,
+      ilModule,
       onAudioClick,
       bbDragEnd,
     } = props;
@@ -644,6 +671,25 @@ class Atext extends React.Component {
             isVerseKey ? location?.book || '' : modkey,
             location?.chapter,
             onAudioClick
+          )}
+
+        {origSelectDomNode &&
+          // This React portal injects a React select into rendered LibSword HTML.
+          ReactDOM.createPortal(
+            <select defaultValue={ilModule} onClick={handler}>
+              {ilModuleOption.map((m) => {
+                return (
+                  <option
+                    key={m}
+                    className={`origoption ${G.Tab[m].labelClass}`}
+                    value={m}
+                  >
+                    {G.Tab[m].label}
+                  </option>
+                );
+              })}
+            </select>,
+            origSelectDomNode
           )}
 
         <Vbox

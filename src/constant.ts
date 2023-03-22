@@ -17,6 +17,10 @@ import type {
   V11nType,
 } from './type';
 
+// TODO!: Figure out hang using old Prefs?
+// TODO!: CopyPassage font is underlined.
+// TODO!: Don't open to dict when a bunch of modules are installed!
+
 // Environment variables:
 // - NODE_ENV - Set in package.json to control the build process
 //     (will be set to either 'development' or 'production').

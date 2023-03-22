@@ -549,6 +549,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
           'message',
           (indexerMsg: { msg: string; percent: number }) => {
             const { msg, percent } = indexerMsg;
+            log.silly(`indexer message:`, msg, percent);
             sendProgress(percent);
             if (msg === 'finished') {
               done();

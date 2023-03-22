@@ -46,6 +46,9 @@
   position: absolute;
   top: 37px;
 }
+.searchtext > .modulemenu select {
+  width: 100%;
+}
 
 #searchButton {
   margin-inline-start: 10px;

@@ -372,7 +372,7 @@ export async function getSearchResults(
   return r || '';
 }
 
-async function createSearchIndex(sthis: SearchWin, module: string) {
+async function createSearchIndex(xthis: SearchWin, module: string) {
   if (module && module in G.Tab) {
     const s: Partial<SearchWinState> = {
       results: 0,
@@ -380,11 +380,11 @@ async function createSearchIndex(sthis: SearchWin, module: string) {
       progress: 0.01,
       progressLabel: G.i18n.t('BuildingIndex'),
     };
-    sthis.setState(s);
+    xthis.setState(s);
     const winid = descriptor.id;
     try {
       const result = await G.LibSword.searchIndexBuild(module, winid);
-      if (result) search(sthis);
+      if (result) search(xthis);
     } catch (er: any) {
       log.error(er);
     }

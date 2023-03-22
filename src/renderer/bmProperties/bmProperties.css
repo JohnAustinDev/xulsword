@@ -1,13 +1,27 @@
 .bmproperties {
+  height: 100%;
   padding: 10px;
 }
 
-.bmproperties .textbox {
-  min-width: 200px;
+.bmproperties #note,
+.bmproperties #sampleText {
+  min-width: 350px;
+  height: 100%;
+}
+.bmproperties .treeview-container {
+  min-width: 350px;
 }
 
+.grid-cell > .label {
+  display: inline-block;
+  margin: 5px;
+}
 .grid-cell > .label::after {
   content: ': ';
+}
+
+.bmproperties textarea {
+  resize: vertical;
 }
 
 .bmproperties .treeview-container {

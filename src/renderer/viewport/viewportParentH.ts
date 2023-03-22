@@ -8,13 +8,12 @@ import Cache from '../../cache';
 import { clone, escapeRE, ofClass } from '../../common';
 import { getElementData, verseKey } from '../htmlData';
 import G from '../rg';
-import { scrollIntoView } from '../rutil';
+import { scrollIntoView, windowArguments } from '../rutil';
 import { delayHandler } from '../libxul/xul';
 import { textChange } from './ztext';
 import { aTextWheelScroll, chapterChange } from './zversekey';
 
 import type {
-  AtextStateType,
   BookGroupType,
   NewModulesType,
   PinPropsType,
@@ -24,8 +23,11 @@ import type {
 import type Xulsword from '../xulsword/xulsword';
 import type { XulswordState } from '../xulsword/xulsword';
 import type { DragSizerVal } from '../libxul/dragsizer';
+import type { AtextStateType } from './atext';
 import type ViewportWin from './viewportWin';
 import type { ViewportWinState } from './viewportWin';
+
+const WindowDescriptor = windowArguments();
 
 // Important: These SP.xulsword properties become independent
 // window properties for windows other than the xulsword window.
@@ -352,6 +354,7 @@ export default function handler(
               allowMultiple: true,
               saveIfAppClosed: true,
               openWithBounds: {
+                withinWindowID: WindowDescriptor.id,
                 x: Math.round(atextb.x - vpPadding),
                 y: Math.round(textareab.y - vpPaddingTop),
                 width: Math.round(atextb.width + 2 * vpPadding),

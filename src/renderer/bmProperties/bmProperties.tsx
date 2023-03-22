@@ -309,10 +309,10 @@ export default class BMPropertiesWin extends React.Component {
 
     return (
       <Vbox className="bmproperties">
-        <Grid>
+        <Grid flex="1">
           <Columns>
             <Column width="min-content" />
-            <Column width="min-content" />
+            <Column width="minmax(min-content, 1fr)" />
           </Columns>
           <Rows>
             {!hide.includes('location') && location && 'v11n' in location && (
@@ -348,7 +348,7 @@ export default class BMPropertiesWin extends React.Component {
               </Row>
             )}
             {!hide.includes('note') && (
-              <Row>
+              <Row height="1fr">
                 <Label value={G.i18n.t('note.label')} />
                 <Textbox
                   id="note"
@@ -361,7 +361,7 @@ export default class BMPropertiesWin extends React.Component {
               </Row>
             )}
             {!hide.includes('text') && location && (
-              <Row>
+              <Row height="1fr">
                 <div />
                 <Textbox
                   id="sampleText"

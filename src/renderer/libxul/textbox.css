@@ -8,7 +8,6 @@
   height: 100%;
   margin: 0px;
   border: none;
-  padding: 0px 1px;
   background-color: inherit;
   color: inherit;
   font: inherit;
@@ -18,13 +17,9 @@
   cursor: default;
 }
 
-/* ..... readonly state ..... */
-
 .textbox.readonly {
   background-color: lightgrey;
 }
-
-/* ..... disabled state ..... */
 
 .textbox.disabled {
   cursor: default;

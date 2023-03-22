@@ -16,9 +16,8 @@ import log from '../log';
 import { scrollIntoView } from '../rutil';
 import { aTextWheelScroll, getRefHTML } from './zversekey';
 
-import type { AtextStateType } from '../../type';
 import type Atext from './atext';
-import type { AtextProps } from './atext';
+import type { AtextProps, AtextStateType } from './atext';
 
 let AddedRules: { sheet: CSSStyleSheet; index: number }[] = [];
 
@@ -334,20 +333,20 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
     }
 
     case 'change': {
-      // TODO!: Finish this - absolute position a React component select?
       const { xulswordState, panelIndex } = this.props as AtextProps;
       const origselect = ofClass(['origselect'], es.target);
       if (origselect) {
-        const s = origselect.element.firstChild as HTMLSelectElement;
-        xulswordState((prevState: typeof S.prefs.xulsword) => {
-          const { ilModules } = clone(prevState);
-          const module = s.value.split('.').pop();
-          if (module) {
+        const s = origselect.element.firstChild as
+          | HTMLSelectElement
+          | undefined;
+        const module = s?.value;
+        if (module) {
+          xulswordState((prevState: typeof S.prefs.xulsword) => {
+            const { ilModules } = clone(prevState);
             ilModules[panelIndex] = module;
             return { ilModules } as Partial<typeof S.prefs.xulsword>;
-          }
-          return null;
-        });
+          });
+        }
       }
       break;
     }

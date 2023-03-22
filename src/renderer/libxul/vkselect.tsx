@@ -15,6 +15,7 @@ import { getMaxChapter, getMaxVerse } from '../rutil';
 import { addClass, xulDefaultProps, XulProps, xulPropTypes } from './xul';
 import { Hbox } from './boxes';
 import Label from './label';
+import Spacer from './spacer';
 import Menulist from './menulist';
 import './vkselect.css';
 
@@ -458,6 +459,7 @@ class VKSelect extends React.Component {
             onChange={handleChange}
           />
         )}
+        <Spacer flex="1" />
         {newvkmods.length > 0 && (
           <ModuleMenu
             className="vk-vkmod"

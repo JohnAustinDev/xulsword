@@ -844,10 +844,6 @@ const Commands = {
       module?: string;
     }
   ): void {
-    let parent: BrowserWindow | undefined =
-      BrowserWindow.fromId(arguments[3] ?? -1) ||
-      getBrowserWindows({ type: 'xulsword' })[0] ||
-      undefined;
     let bookmark: any | undefined;
     let treeSelection: any | undefined;
     let anyChildSelectable: any | undefined;
@@ -860,7 +856,6 @@ const Commands = {
     Window.open({
       type: 'bmProperties',
       allowMultiple: true,
-      notResizable: true,
       fitToContent: true,
       additionalArguments: {
         bmPropertiesState: {
@@ -873,10 +868,8 @@ const Commands = {
       },
       options: {
         title: i18n.t(titleKey),
-        parent,
       },
     });
-    parent = undefined;
   },
 
   deleteBookmarkItems(itemIDs: string[]): boolean {
