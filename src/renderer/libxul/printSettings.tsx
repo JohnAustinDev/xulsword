@@ -67,7 +67,7 @@ const propTypes = {
 type PrintProps = XulProps & {
   pageable: boolean;
   printDisabled: boolean;
-  dialogEnd: string;
+  dialogEnd: 'cancel' | 'close';
 };
 
 const notStatePref = {};
@@ -268,6 +268,7 @@ export default class PrintSettings extends React.Component {
               printDisabled: false,
               progress: -1,
             });
+            G.publishSubscription('asyncTaskComplete', 'all', true);
             break;
           }
           default:

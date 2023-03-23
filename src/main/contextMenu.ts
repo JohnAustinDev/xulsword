@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { BrowserWindow } from 'electron';
 import contextMenuCreator from 'electron-context-menu';
+import log from 'electron-log';
 import i18n from 'i18next';
 import { findBookmarkItem } from '../common';
 import S from '../defaultPrefs';
@@ -302,16 +303,27 @@ export default function contextMenu(
           '';
 
         const bookmarkManagerMenu: Electron.MenuItemConstructorOptions[] = [
-          /*
           {
             label: i18n.t('menu.print'),
             visible: true,
             enabled: true,
             click: () => {
-              Commands.print(window.id);
+              G.Prefs.setComplexValue(
+                'bookmarkManager.printItems',
+                d.bookmarks as typeof S.prefs.bookmarkManager.printItems
+              );
+              Commands.print(window.id)
+                .then(() => {
+                  G.Prefs.setComplexValue(
+                    'bookmarkManager.printItems',
+                    null as typeof S.prefs.bookmarkManager.printItems
+                  );
+                  return true;
+                })
+                .catch((er) => log.error(er));
             },
           },
-          actions.separator(), */
+          actions.separator(),
           {
             label: i18n.t('menu.edit.cut'),
             enabled:

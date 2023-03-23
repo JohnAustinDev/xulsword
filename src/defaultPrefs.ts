@@ -574,6 +574,7 @@ const S = {
       selectedFolder: 'bmroot' as string,
       cut: null as string[] | null,
       copy: null as string[] | null,
+      printItems: null as string[] | null,
       columns: [
         {
           datacolumn: 0,

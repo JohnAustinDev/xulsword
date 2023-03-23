@@ -819,6 +819,7 @@ export const GBuilder: GType & {
         'importAudio',
         'importBookmarks',
         'exportBookmarks',
+        'print',
       ],
     ],
     [

@@ -272,6 +272,14 @@ export function buttonHandler(this: BMManagerWin, e: React.SyntheticEvent) {
         if (G.canRedo()) G.Commands.redo();
         break;
       }
+      case 'import': {
+        G.Commands.importBookmarks();
+        break;
+      }
+      case 'export': {
+        G.Commands.exportBookmarks();
+        break;
+      }
       default: {
         throw new Error(`Unhandled bmManager button type: ${button.type}`);
       }

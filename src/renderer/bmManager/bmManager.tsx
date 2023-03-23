@@ -169,6 +169,7 @@ export default class BMManagerWin extends React.Component {
       cut,
       copy,
       reset,
+      printItems,
     } = state;
 
     const {
@@ -210,6 +211,14 @@ export default class BMManagerWin extends React.Component {
         .map((id) => this.tableData.findIndex((r) => r[H.Col.iInfo].id === id))
         .filter((i) => i !== -1)
     );
+
+    if (printItems) {
+      return (
+        <Vbox {...addClass(['bmmanager print'], this.props)}>
+          This is printable!!!
+        </Vbox>
+      );
+    }
 
     return (
       <Vbox
@@ -302,6 +311,21 @@ export default class BMManagerWin extends React.Component {
             icon="redo"
             disabled={!G.canRedo()}
             title={G.i18n.t('menu.edit.redo')}
+          />
+          <Button
+            id="button.import"
+            icon="import"
+            title={`${G.i18n.t('menu.import').replace(/[.…]+$/, '')} ${G.i18n.t(
+              'menu.bookmarks'
+            )}`}
+          />
+          <Button
+            id="button.export"
+            icon="export"
+            disabled={S.bookmarks.rootfolder.childNodes.length > 0}
+            title={`${G.i18n.t('menu.export').replace(/[.…]+$/, '')} ${G.i18n.t(
+              'menu.bookmarks'
+            )}`}
           />
           <Vbox className="search" flex="1" onChange={onQueryChange}>
             <Suggest2

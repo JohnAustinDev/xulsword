@@ -567,22 +567,28 @@ const Commands = {
     }
   },
 
-  print() {
-    const callingWinID: number =
-      arguments[0] ?? getBrowserWindows({ type: 'xulsword' })[0].id;
-    const windowToPrint = BrowserWindow.fromId(callingWinID);
-    if (windowToPrint) {
-      log.info(`Printing window id ${windowToPrint.id}`);
-      publishSubscription<'setWindowRootState'>(
-        'setWindowRootState',
-        { id: windowToPrint.id },
-        false,
-        {
-          showPrintOverlay: true,
-          modal: 'outlined',
-        }
-      );
-    }
+  async print(): Promise<void> {
+    return new Promise((resolve) => {
+      const callingWinID: number =
+        arguments[0] ?? getBrowserWindows({ type: 'xulsword' })[0].id;
+      const windowToPrint = BrowserWindow.fromId(callingWinID);
+      if (windowToPrint) {
+        log.info(`Printing window id ${windowToPrint.id}`);
+        publishSubscription<'setWindowRootState'>(
+          'setWindowRootState',
+          { id: windowToPrint.id },
+          false,
+          {
+            showPrintOverlay: true,
+            modal: 'outlined',
+          }
+        );
+        const destroy = Subscription.subscribe.asyncTaskComplete(() => {
+          destroy();
+          resolve();
+        });
+      }
+    });
   },
 
   printPassage(state?: Partial<PrintPassageState>) {
@@ -778,8 +784,8 @@ const Commands = {
         }
       });
       Prefs.setComplexValue('rootfolder', bookmarks, 'bookmarks', -2);
+      if (!result) Subscription.publish.modulesInstalled(r, callingWin.id);
     }
-    if (!result) Subscription.publish.modulesInstalled(r, callingWin.id);
     callingWin = undefined;
     return r;
   },

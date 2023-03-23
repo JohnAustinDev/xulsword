@@ -19,6 +19,7 @@ const subscriptions = {
     newmods: NewModulesType,
     callingWinID?: number
   ) => void,
+  asyncTaskComplete: {} as () => unknown,
 
   // These are subscribe once (used to avoid dependency cycles):
   resetMain: {} as () => void,
@@ -30,6 +31,9 @@ export interface SubscriptionType {
     prefsChanged: (func: typeof subscriptions['prefsChanged']) => () => void;
     modulesInstalled: (
       func: typeof subscriptions['modulesInstalled']
+    ) => () => void;
+    asyncTaskComplete: (
+      func: typeof subscriptions['asyncTaskComplete']
     ) => () => void;
     windowCreated: (func: typeof subscriptions['windowCreated']) => () => void;
     resetMain: (func: typeof subscriptions['resetMain']) => () => void;
@@ -45,6 +49,9 @@ export interface SubscriptionType {
     modulesInstalled: (
       ...args: Parameters<typeof subscriptions['modulesInstalled']>
     ) => ReturnType<typeof subscriptions['modulesInstalled']>[];
+    asyncTaskComplete: (
+      ...args: Parameters<typeof subscriptions['asyncTaskComplete']>
+    ) => ReturnType<typeof subscriptions['asyncTaskComplete']>[];
     windowCreated: (
       ...args: Parameters<typeof subscriptions['windowCreated']>
     ) => ReturnType<typeof subscriptions['windowCreated']>[];

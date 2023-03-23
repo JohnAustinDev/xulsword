@@ -21,7 +21,7 @@ import C from '../constant';
 import S from '../defaultPrefs';
 import G from './mg';
 import { getCipherFailConfs, getTabs, updateGlobalModulePrefs } from './minit';
-import MainMenuBuilder, { pushPrefsToMenu } from './menu';
+import MainMenuBuilder, { pushPrefsToMenu } from './mainMenu';
 import contextMenu from './contextMenu';
 import MainPrintHandler from './print';
 import setViewportTabs from './tabs';
