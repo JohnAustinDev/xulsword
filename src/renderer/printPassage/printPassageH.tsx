@@ -20,51 +20,6 @@ import type { PrintPassageState } from './printPassage';
 
 export function handler(this: PrintPassageWin, ex: React.SyntheticEvent) {
   switch (ex.type) {
-    case 'click': {
-      const e = ex as React.MouseEvent;
-      const { textdiv } = this;
-      const pageW = textdiv.current?.clientWidth ?? 0;
-      const scrollW = textdiv.current?.scrollWidth ?? 0;
-      const { id } = e.currentTarget;
-      switch (id) {
-        case 'pagefirst': {
-          const s: Partial<PrintPassageState> = {
-            showpage: 1,
-          };
-          this.setState(s);
-          break;
-        }
-        case 'pageprev': {
-          this.setState((prevState: PrintPassageState) => {
-            let { showpage } = prevState;
-            showpage -= 1;
-            if (showpage < 1) showpage = 1;
-            return { showpage };
-          });
-          break;
-        }
-        case 'pagenext': {
-          this.setState((prevState: PrintPassageState) => {
-            let { showpage } = prevState;
-            showpage += 1;
-            const max = Math.ceil(scrollW / pageW);
-            if (showpage > max) showpage = max;
-            return { showpage };
-          });
-          break;
-        }
-        case 'pagelast': {
-          const s: Partial<PrintPassageState> = {
-            showpage: Math.ceil(scrollW / pageW),
-          };
-          this.setState(s);
-          break;
-        }
-        default:
-          throw new Error(`Unhandled click event ${id} in printPassageH.tsx`);
-      }
-      break;
-    }
     case 'change': {
       const cbid = ex.currentTarget.id as keyof PrintPassageState['checkbox'];
       this.setState((prevState: PrintPassageState) => {
@@ -136,7 +91,7 @@ export function bibleChapterText(
       notes: '',
       intronotes: '',
     };
-    if (G.getBooksInModule(module).includes(location.book)) {
+    if (location.book && G.getBooksInModule(module).includes(location.book)) {
       response.textHTML = G.LibSword.getChapterText(
         module,
         `${book}.${chapter}`,

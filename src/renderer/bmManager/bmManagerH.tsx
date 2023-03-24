@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-this-alias */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/no-noninteractive-element-interactions */
 import { ItemRendererProps } from '@blueprintjs/select';
@@ -15,7 +16,9 @@ import {
 import S from '../../defaultPrefs';
 import C from '../../constant';
 import G from '../rg';
+import { verseKey } from '../htmlData';
 import { bookmarkItemIcon } from '../rutil';
+import log from '../log';
 import Label from '../libxul/label';
 import './bmManager.css';
 import '@blueprintjs/select/lib/css/blueprint-select.css';
@@ -27,6 +30,7 @@ import type {
   GType,
   LocationGBType,
   LocationVKType,
+  PrefsSetComplexValueWithCaller,
 } from '../../type';
 import type { TCellInfo, TRowLocation } from '../libxul/table';
 import type BMManagerWin from './bmManager';
@@ -280,6 +284,25 @@ export function buttonHandler(this: BMManagerWin, e: React.SyntheticEvent) {
         G.Commands.exportBookmarks();
         break;
       }
+      case 'print': {
+        if (selectedItems.length) {
+          this.setState({
+            printItems: selectedItems,
+          } as Partial<BMManagerState>);
+          G.Commands.print()
+            .then(() => {
+              (G.Prefs.setComplexValue as PrefsSetComplexValueWithCaller)(
+                'bookmarkManager.printItems',
+                null as typeof S.prefs.bookmarkManager.printItems,
+                'prefs',
+                -1 // notify self to update ('this'.setState is gone by now)
+              );
+              return true;
+            })
+            .catch((er) => log.error(er));
+        }
+        break;
+      }
       default: {
         throw new Error(`Unhandled bmManager button type: ${button.type}`);
       }
@@ -292,6 +315,30 @@ export function buttonHandler(this: BMManagerWin, e: React.SyntheticEvent) {
       );
     }
   }
+}
+
+export function itemPredicate(
+  this: BMManagerWin,
+  query: string,
+  item: BookmarkItemType
+): boolean {
+  const { label, note } = item;
+  let sampleText = '';
+  if (item.type === 'bookmark') {
+    ({ sampleText } = item);
+  }
+  const parts: string[] = [label, note, sampleText];
+  if (item.type === 'bookmark') {
+    const { location } = item;
+    if (location && !('v11n' in location)) {
+      const { key } = location;
+      parts.push(key);
+    }
+  }
+  const querylc = query.toLowerCase();
+  const is = parts.join(' ').toLowerCase();
+  if (is.includes(querylc)) return true;
+  return querylc.split(' ').every((w) => is.includes(w));
 }
 
 export function itemRenderer(
@@ -329,37 +376,15 @@ export function itemRenderer(
       <Label className={`cs-${labelLocale}`} value={label} />
       {(notesh || samplesh) && `: `}
       {notesh && (
-        <span className={`cs-${noteLocale} description`}>[{notesh}]</span>
+        <span className={`cs-${noteLocale} description usernote`}>
+          [{notesh}]
+        </span>
       )}
       {samplesh && (
         <span className={`cs-${sampleModule} description`}>{samplesh}</span>
       )}
     </li>
   );
-}
-
-export function itemPredicate(
-  this: BMManagerWin,
-  query: string,
-  item: BookmarkItemType
-): boolean {
-  const { label, note } = item;
-  let sampleText = '';
-  if (item.type === 'bookmark') {
-    ({ sampleText } = item);
-  }
-  const parts: string[] = [label, note, sampleText];
-  if (item.type === 'bookmark') {
-    const { location } = item;
-    if (location && !('v11n' in location)) {
-      const { key } = location;
-      parts.push(key);
-    }
-  }
-  const querylc = query.toLowerCase();
-  const is = parts.join(' ').toLowerCase();
-  if (is.includes(querylc)) return true;
-  return querylc.split(' ').every((w) => is.includes(w));
 }
 
 export function inputValueRenderer(item: BookmarkItemType): string {
@@ -413,7 +438,10 @@ export function getTableData(
         <Label className={labelLocale} value={label} />
       </span>,
 
-      <span key={stringHash(note, noteLocale)} className={noteLocale}>
+      <span
+        key={stringHash(note, noteLocale)}
+        className={`${noteLocale} usernote`}
+      >
         {note}
       </span>,
 
@@ -473,4 +501,69 @@ export function bmContextData(
   }
 
   return r;
+}
+
+export function printableItem(
+  this: BMManagerWin,
+  itemOrID: string | BookmarkItemType,
+  level = 1
+): JSX.Element | null {
+  const { localizedRootFolderClone } = this;
+  if (localizedRootFolderClone) {
+    const item =
+      typeof itemOrID === 'string'
+        ? findBookmarkItem(localizedRootFolderClone, itemOrID)
+        : itemOrID;
+    if (item) {
+      let ref: JSX.Element | null = null;
+      if (item.type === 'bookmark') {
+        const { location } = item;
+        if (location && 'v11n' in location) {
+          ref = (
+            <span className="ref versekey cs-locale">
+              {verseKey(location).readable(undefined, true)}
+            </span>
+          );
+        } else if (location) {
+          const { module, key } = location;
+          ref = (
+            <>
+              {key.split(C.GBKSEP).map((k, i) => (
+                <span
+                  key={[k, i].join('.')}
+                  className={`ref gbkey level${i} cs-${module}`}
+                >
+                  {k}
+                </span>
+              ))}
+            </>
+          );
+        }
+      }
+      return (
+        <span key={item.id} className={`item ${item.type} level-${level}`}>
+          {item.id !== S.bookmarks.rootfolder.id && (
+            <Label className={`cs-${item.labelLocale}`} value={item.label} />
+          )}
+          {item.note && (
+            <span className={`usernote cs-${item.noteLocale}`}>
+              {`[${item.note}]`}
+            </span>
+          )}
+          {item.type === 'folder' && (
+            <span className="childNodes">
+              {item.childNodes.map((n) => this.printableItem(n, level + 1))}
+            </span>
+          )}
+          {item.type === 'bookmark' && (
+            <span className="sampleText">
+              <span className={`text  cs-${module}`}>{item.sampleText}</span>
+              {ref}
+            </span>
+          )}
+        </span>
+      );
+    }
+  }
+  return null;
 }

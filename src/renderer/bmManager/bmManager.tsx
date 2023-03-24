@@ -1,3 +1,4 @@
+/* eslint-disable react/forbid-prop-types */
 /* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable react/no-unused-state */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
@@ -7,6 +8,7 @@
 /* eslint-disable react/static-property-placement */
 import type { Table2 as BPTable } from '@blueprintjs/table';
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Suggest2 } from '@blueprintjs/select';
 import {
   clone,
@@ -39,6 +41,7 @@ import {
   XulProps,
   xulPropTypes,
   addClass,
+  htmlAttribs,
 } from '../libxul/xul';
 import * as H from './bmManagerH';
 import './bmManager.css';
@@ -50,15 +53,21 @@ import type {
   BookmarkTreeNode,
 } from '../../type';
 
-// TODO!: Add print feature
-// TODO!: add move to context menu and allow multiple moves
-// TODO!: Add import/export buttons
+// TODO!: Fix Print CSS
 
 const defaultProps = xulDefaultProps;
 
-const propTypes = xulPropTypes;
+const propTypes = {
+  ...xulPropTypes,
+  printPageable: PropTypes.object.isRequired,
+};
 
-type BMManagerProps = XulProps;
+type BMManagerProps = XulProps & {
+  printPageable: {
+    page: React.RefObject<HTMLDivElement>;
+    text: React.RefObject<HTMLDivElement>;
+  };
+};
 
 const defaultNotStatePref = {
   selectedItems: [] as string[],
@@ -108,6 +117,8 @@ export default class BMManagerWin extends React.Component {
 
   scrollToItem: typeof H.scrollToItem;
 
+  printableItem: typeof H.printableItem;
+
   tableCompRef: React.RefObject<BPTable>;
 
   constructor(props: BMManagerProps) {
@@ -139,6 +150,7 @@ export default class BMManagerWin extends React.Component {
     this.onDoubleClick = H.onDoubleClick.bind(this);
     this.bmContextData = H.bmContextData.bind(this);
     this.scrollToItem = H.scrollToItem.bind(this);
+    this.printableItem = H.printableItem.bind(this);
 
     this.tableCompRef = React.createRef();
   }
@@ -158,6 +170,7 @@ export default class BMManagerWin extends React.Component {
   }
 
   render() {
+    const props = this.props as BMManagerProps;
     const state = this.state as BMManagerState;
     const {
       rootfolder,
@@ -171,7 +184,7 @@ export default class BMManagerWin extends React.Component {
       reset,
       printItems,
     } = state;
-
+    const { printPageable } = props;
     const {
       tableCompRef,
       buttonHandler,
@@ -183,27 +196,30 @@ export default class BMManagerWin extends React.Component {
     } = this;
 
     if (rootfolder !== this.currentRootFolderObject) {
-      // Clone the localized rootfolder so state does not to push temporary
-      // localization state changes to the rest of xulsword.
+      // Clone the localized rootfolder so state does not push temporary
+      // localization changes to the rest of xulsword (which should not
+      // happen until localized bookmarks are edited).
       this.localizedRootFolderClone = clone(rootfolder);
-      localizeBookmarks(
-        G,
-        verseKey,
-        this.localizedRootFolderClone,
-        getSampleText
-      );
-      this.searchableItems = H.getSearchableItems(
-        this.localizedRootFolderClone
-      );
-      this.folderItems = bookmarkTreeNodes(
-        this.localizedRootFolderClone.childNodes,
-        'folder'
-      );
-      this.tableData = H.getTableData({
-        ...state,
-        rootfolder: this.localizedRootFolderClone,
-      });
-      this.currentRootFolderObject = rootfolder;
+      if (this.localizedRootFolderClone) {
+        localizeBookmarks(
+          G,
+          verseKey,
+          this.localizedRootFolderClone,
+          getSampleText
+        );
+        this.searchableItems = H.getSearchableItems(
+          this.localizedRootFolderClone
+        );
+        this.folderItems = bookmarkTreeNodes(
+          this.localizedRootFolderClone.childNodes,
+          'folder'
+        );
+        this.tableData = H.getTableData({
+          ...state,
+          rootfolder: this.localizedRootFolderClone,
+        });
+        this.currentRootFolderObject = rootfolder;
+      }
     }
 
     const selectedRegions = tableRowsToSelection(
@@ -214,15 +230,21 @@ export default class BMManagerWin extends React.Component {
 
     if (printItems) {
       return (
-        <Vbox {...addClass(['bmmanager print'], this.props)}>
-          This is printable!!!
-        </Vbox>
+        <div
+          {...htmlAttribs(
+            ['bmmanager print print-pageable-text userFontBase'],
+            props
+          )}
+          ref={printPageable.text}
+        >
+          {printItems.map((itemID) => this.printableItem(itemID))}
+        </div>
       );
     }
 
     return (
       <Vbox
-        {...addClass(['bmmanager'], this.props)}
+        {...addClass(['bmmanager'], props)}
         onKeyDown={(e: React.SyntheticEvent) => {
           const ek = e as React.KeyboardEvent;
           if (ek.key === 'Escape')
@@ -327,6 +349,12 @@ export default class BMManagerWin extends React.Component {
               'menu.bookmarks'
             )}`}
           />
+          <Button
+            id="button.print"
+            icon="print"
+            disabled={selectedItems.length === 0}
+            title={G.i18n.t('menu.print')}
+          />
           <Vbox className="search" flex="1" onChange={onQueryChange}>
             <Suggest2
               fill
@@ -412,7 +440,16 @@ export default class BMManagerWin extends React.Component {
 BMManagerWin.defaultProps = defaultProps;
 BMManagerWin.propTypes = propTypes;
 
-renderToRoot(<BMManagerWin id="bookmarkManager" />);
+const printPageable = {
+  page: React.createRef() as React.RefObject<HTMLDivElement>,
+  text: React.createRef() as React.RefObject<HTMLDivElement>,
+};
+renderToRoot(
+  <BMManagerWin id="bookmarkManager" printPageable={printPageable} />,
+  {
+    printPageable,
+  }
+);
 
 window.ipc.once('close', () => {
   G.Prefs.setComplexValue(
@@ -426,5 +463,9 @@ window.ipc.once('close', () => {
   G.Prefs.setCharPref(
     'bookmarkManager.selectedFolder',
     S.bookmarks.rootfolder.id as typeof S.prefs.bookmarkManager.selectedFolder
+  );
+  G.Prefs.setComplexValue(
+    'bookmarkManager.printItems',
+    null as typeof S.prefs.bookmarkManager.printItems
   );
 });

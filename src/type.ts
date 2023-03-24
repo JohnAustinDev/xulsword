@@ -36,6 +36,7 @@ import type { inlineFile, inlineAudioFile } from './main/components/localFile';
 import type Prefs from './main/components/prefs';
 import type Commands from './main/components/commands';
 import type Data from './main/components/data';
+import type { PrefsGType } from './main/components/prefs';
 import type Module from './main/components/module';
 import type Window from './main/components/window';
 import type { DirsRendererType } from './main/components/dirs';
@@ -739,6 +740,10 @@ export type AddCaller = {
     GType[obj]
   >;
 };
+
+export type PrefsSetComplexValueWithCaller = GMethodAddCaller<
+  GType['Prefs']['setComplexValue']
+>;
 
 export type GType = {
   // Getters

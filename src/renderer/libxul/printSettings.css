@@ -36,6 +36,20 @@
   transform-origin: top left;
 }
 
+.print-pageable-text {
+  height: 100%;
+  overflow: hidden;
+}
+.html-page {
+  position: relative;
+}
+.page-buttons {
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  right: 50%;
+}
+
 @media print {
   .printsettings {
     display: none;

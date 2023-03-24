@@ -51,6 +51,7 @@ import type {
   SearchType,
   VerseKeyAudioFile,
 } from '../../type';
+import type { WindowRootState } from '../../renderer/renderer';
 import type { AboutWinState } from '../../renderer/about/about';
 import type { PrintPassageState } from '../../renderer/printPassage/printPassage';
 import type { CopyPassageState } from '../../renderer/copyPassage/copyPassage';
@@ -567,21 +568,20 @@ const Commands = {
     }
   },
 
-  async print(): Promise<void> {
+  async print(winRootState?: Partial<WindowRootState>): Promise<void> {
     return new Promise((resolve) => {
       const callingWinID: number =
-        arguments[0] ?? getBrowserWindows({ type: 'xulsword' })[0].id;
+        arguments[1] ?? getBrowserWindows({ type: 'xulsword' })[0].id;
       const windowToPrint = BrowserWindow.fromId(callingWinID);
       if (windowToPrint) {
-        log.info(`Printing window id ${windowToPrint.id}`);
-        publishSubscription<'setWindowRootState'>(
-          'setWindowRootState',
+        const rootState: Partial<WindowRootState> = winRootState || {};
+        rootState.showPrintOverlay = true;
+        rootState.modal = 'outlined';
+        publishSubscription<'setRendererRootState'>(
+          'setRendererRootState',
           { id: windowToPrint.id },
           false,
-          {
-            showPrintOverlay: true,
-            modal: 'outlined',
-          }
+          rootState
         );
         const destroy = Subscription.subscribe.asyncTaskComplete(() => {
           destroy();

@@ -50,3 +50,58 @@
 .bmmanager .is-copy {
   font-weight: bold;
 }
+
+/* Print styles */
+#reset:not(.printp) .bmmanager.print > *,
+#reset.printp .bmmanager:not(.print) > * {
+  /* prevent bookmark text from flashing during print transition */
+  display: none;
+}
+.bmmanager.print .label {
+  font-weight: bold;
+}
+.bmmanager.print .folder > .label {
+  font-size: 24px;
+}
+.bmmanager.print .folder::before {
+  content: '';
+  display: block;
+  height: 2em;
+}
+.bmmanager.print .folder:first-child::before {
+  content: '';
+  display: block;
+  height: 1em;
+}
+.bmmanager.print .bookmark::before {
+  content: '';
+  display: block;
+  height: 1em;
+}
+.bmmanager.print .bookmark:first-child::before {
+  content: '';
+  display: block;
+  height: unset;
+}
+.bmmanager.print .label::before,
+.bmmanager.print .label::after,
+.bmmanager.print .usernote::before,
+.bmmanager.print .usernote::after,
+.bmmanager.print .sampleText::before,
+.bmmanager.print .sampleText::after {
+  content: '';
+  display: block;
+}
+.bmmanager .label {
+  white-space: normal;
+}
+.bmmanager.print .ref {
+  font-style: italic;
+  white-space: nowrap;
+}
+.bmmanager.print .ref::before {
+  content: ' (';
+}
+.bmmanager.print .ref::after {
+  content: ')';
+}

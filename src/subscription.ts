@@ -23,7 +23,7 @@ const subscriptions = {
 
   // These are subscribe once (used to avoid dependency cycles):
   resetMain: {} as () => void,
-  setWindowRootState: {} as (state: Partial<WindowRootState>) => void,
+  setRendererRootState: {} as (state: Partial<WindowRootState>) => void,
 };
 
 export interface SubscriptionType {
@@ -37,8 +37,8 @@ export interface SubscriptionType {
     ) => () => void;
     windowCreated: (func: typeof subscriptions['windowCreated']) => () => void;
     resetMain: (func: typeof subscriptions['resetMain']) => () => void;
-    setWindowRootState: (
-      func: typeof subscriptions['setWindowRootState']
+    setRendererRootState: (
+      func: typeof subscriptions['setRendererRootState']
     ) => () => void;
   };
 
@@ -58,9 +58,9 @@ export interface SubscriptionType {
     resetMain: (
       ...args: Parameters<typeof subscriptions['resetMain']>
     ) => ReturnType<typeof subscriptions['resetMain']>[];
-    setWindowRootState: (
-      ...args: Parameters<typeof subscriptions['setWindowRootState']>
-    ) => ReturnType<typeof subscriptions['setWindowRootState']>[];
+    setRendererRootState: (
+      ...args: Parameters<typeof subscriptions['setRendererRootState']>
+    ) => ReturnType<typeof subscriptions['setRendererRootState']>[];
   };
 
   doSubscribe: (

@@ -8,10 +8,11 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable react/static-property-placement */
 import React from 'react';
+import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import { Icon, Intent, Position, Toaster } from '@blueprintjs/core';
 import Subscription from '../../subscription';
-import { clone } from '../../common';
+import { clone, ofClass } from '../../common';
 import S from '../../defaultPrefs';
 import G from '../rg';
 import { getStatePref, setStatePref } from '../rutil';
@@ -53,24 +54,29 @@ const normal: Partial<WindowRootState> = {
 
 const defaultProps = {
   ...xulDefaultProps,
-  pageable: false,
+  pageable: undefined,
   printDisabled: false,
 };
 
 const propTypes = {
   ...xulPropTypes,
-  pageable: PropTypes.bool,
+  pageable: PropTypes.object,
   printDisabled: PropTypes.bool,
   dialogEnd: PropTypes.string,
 };
 
 type PrintProps = XulProps & {
-  pageable: boolean;
+  pageable?: {
+    page: React.RefObject<HTMLDivElement>;
+    text: React.RefObject<HTMLDivElement>;
+  };
   printDisabled: boolean;
   dialogEnd: 'cancel' | 'close';
 };
 
-const notStatePref = {};
+const notStatePref = {
+  showpage: 1 as number,
+};
 
 export type PrintState = typeof S.prefs.print & typeof notStatePref;
 
@@ -91,6 +97,8 @@ export default class PrintSettings extends React.Component {
     scale: React.RefObject<HTMLSelectElement>;
   };
 
+  pagebuttons: React.RefObject<HTMLDivElement>;
+
   resetTO: NodeJS.Timeout | null;
 
   toaster: Toaster | undefined;
@@ -106,6 +114,7 @@ export default class PrintSettings extends React.Component {
 
     const s: PrintState = {
       ...(getStatePref('prefs', 'print') as typeof S.prefs.print),
+      ...notStatePref,
     };
     this.state = s;
 
@@ -121,18 +130,31 @@ export default class PrintSettings extends React.Component {
       scale: React.createRef(),
     };
 
+    this.pagebuttons = React.createRef();
+
     this.iframe = React.createRef();
 
     this.resetTO = null;
   }
 
   componentDidUpdate(_prevProps: PrintProps, prevState: PrintState) {
+    const { showpage } = this.state as PrintState;
+    const { pageable } = this.props as PrintProps;
+    let text;
+    if (pageable) ({ text } = pageable);
     setStatePref('prefs', 'print', prevState, this.state);
+    if (text?.current && prevState.showpage !== showpage) {
+      text.current.scrollLeft = Math.floor(
+        (showpage - 1) * (text.current.clientWidth + 13.5)
+      );
+    }
   }
 
   async handler(e: React.SyntheticEvent<any, any>) {
     const props = this.props as PrintProps;
     const { pageable } = props;
+    let text;
+    if (pageable) ({ text } = pageable);
     const state = this.state as PrintState;
     // Electron marginsType must be undefined for paged media to work
     // properly, and must be 1 (no margins) for window print margins to
@@ -148,7 +170,42 @@ export default class PrintSettings extends React.Component {
     const [id, id2] = target.id.split('.');
     switch (e.type) {
       case 'click': {
+        const pageW = text?.current?.clientWidth ?? 0;
+        const scrollW = text?.current?.scrollWidth ?? 0;
         switch (id) {
+          case 'pagefirst': {
+            const s: Partial<PrintState> = {
+              showpage: 1,
+            };
+            this.setState(s);
+            break;
+          }
+          case 'pageprev': {
+            this.setState((prevState: PrintState) => {
+              let { showpage } = prevState;
+              showpage -= 1;
+              if (showpage < 1) showpage = 1;
+              return { showpage };
+            });
+            break;
+          }
+          case 'pagenext': {
+            this.setState((prevState: PrintState) => {
+              let { showpage } = prevState;
+              showpage += 1;
+              const max = Math.ceil(scrollW / pageW);
+              if (showpage > max) showpage = max;
+              return { showpage };
+            });
+            break;
+          }
+          case 'pagelast': {
+            const s: Partial<PrintState> = {
+              showpage: Math.ceil(scrollW / pageW),
+            };
+            this.setState(s);
+            break;
+          }
           case 'page': {
             const c = this.getContainer();
             if (c) {
@@ -192,9 +249,9 @@ export default class PrintSettings extends React.Component {
             break;
           }
           case 'print': {
-            Subscription.publish.setWindowRootState(dark);
+            Subscription.publish.setRendererRootState(dark);
             window.print();
-            Subscription.publish.setWindowRootState(normal);
+            Subscription.publish.setRendererRootState(normal);
             /* See print.ts - seems to be Electron bug?
             const path = window.ipcTS
               .printOrPreview(
@@ -209,20 +266,20 @@ export default class PrintSettings extends React.Component {
                 }
               })
               .finally(() => {
-                Subscription.publish.setWindowRootState(normal);
+                Subscription.publish.setRendererRootState(normal);
               });
               */
             break;
           }
           case 'printToPDF': {
-            Subscription.publish.setWindowRootState(dark);
+            Subscription.publish.setRendererRootState(dark);
             window.ipcTS
               .printOrPreview({
                 destination: 'prompt-for-file',
                 ...electronOptions,
               })
               .then(() => {
-                return Subscription.publish.setWindowRootState(normal);
+                return Subscription.publish.setRendererRootState(normal);
               })
               .catch((er) => {
                 this.toaster?.show({
@@ -233,14 +290,14 @@ export default class PrintSettings extends React.Component {
             break;
           }
           case 'printPreview': {
-            Subscription.publish.setWindowRootState(dark);
+            Subscription.publish.setRendererRootState(dark);
             window.ipcTS
               .printOrPreview({
                 destination: 'iframe',
                 ...electronOptions,
               })
               .then((iframeFilePath: string) => {
-                return Subscription.publish.setWindowRootState({
+                return Subscription.publish.setRendererRootState({
                   iframeFilePath,
                   modal: 'off',
                   printDisabled: false,
@@ -261,7 +318,7 @@ export default class PrintSettings extends React.Component {
           }
           case 'ok':
           case 'cancel': {
-            Subscription.publish.setWindowRootState({
+            Subscription.publish.setRendererRootState({
               showPrintOverlay: false,
               modal: 'off',
               iframeFilePath: '',
@@ -354,15 +411,20 @@ export default class PrintSettings extends React.Component {
     const state = this.state as PrintState;
     const { landscape, pageSize, twoColumns, scale, margins } = state;
     const { pageable, printDisabled, dialogEnd } = props;
+    let page;
+    let text;
+    if (pageable) ({ page, text } = pageable);
     const { handler, selectRefs } = this;
 
-    // This is for printPassage.tsx only...
     const printPassage = pageable
       ? `
-    .print-passage-text {
+    .print-pageable-text {
       column-count: ${twoColumns ? 2 : 1}
     }`
       : '';
+
+    const showpaging =
+      (text?.current?.scrollWidth ?? 0) > (text?.current?.clientWidth ?? 0);
 
     const psize = paperSizes.find(
       (p) => p.type === pageSize
@@ -396,6 +458,27 @@ export default class PrintSettings extends React.Component {
           usePortal
           ref={this.refHandlers.toaster}
         />
+        {page?.current &&
+          showpaging &&
+          ReactDOM.createPortal(
+            <Hbox className="page-buttons">
+              <Button
+                id="pagefirst"
+                icon="double-chevron-left"
+                onClick={handler}
+              />
+              <Spacer flex="1" />
+              <Button id="pageprev" icon="chevron-left" onClick={handler} />
+              <Button id="pagenext" icon="chevron-right" onClick={handler} />
+              <Spacer flex="1" />
+              <Button
+                id="pagelast"
+                icon="double-chevron-right"
+                onClick={handler}
+              />
+            </Hbox>,
+            page.current
+          )}
         <style>{`
           .html-page {
             width: ${htmlpageW}px;

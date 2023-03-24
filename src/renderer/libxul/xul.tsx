@@ -191,7 +191,7 @@ export const xulClass = (
 // Convert all props to corresponding HTML element attribtues.
 // This must be used to pass props to all HTML elements but
 // should only used on HTML elements (not on React components).
-export const htmlAttribs = (className: string, props: any) => {
+export const htmlAttribs = (className: string | string[], props: any) => {
   if (props === null) return {};
   const r = {
     ...xulClass(className, props),

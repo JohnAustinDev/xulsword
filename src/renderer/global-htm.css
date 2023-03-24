@@ -56,6 +56,10 @@ html a:hover {
   visibility: hidden;
 }
 
+.usernote {
+  font-style: italic;
+}
+
 /* Bookmark item trees */
 .bookmark-item-tree {
   font-size: 12px;

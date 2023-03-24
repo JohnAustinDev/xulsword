@@ -16,6 +16,7 @@ import './printOverlay.css';
 const defaultProps = {
   ...xulDefaultProps,
   customControl: null,
+  pageable: undefined,
   showColumnButton: false,
   iframeFilePath: '',
   printDisabled: false,
@@ -25,22 +26,30 @@ const propTypes = {
   ...xulPropTypes,
   content: PropTypes.object.isRequired,
   customControl: PropTypes.object,
+  pageable: PropTypes.object,
   iframeFilePath: PropTypes.string,
   printDisabled: PropTypes.bool,
 };
 
 type PrintOverlayProps = XulProps & {
   content: ReactElement; // content to print will be shown in the overlay
-  customControl: ReactElement | null; // UI controlling any custom print settings
+  customControl?: ReactElement | null; // UI controlling any custom print settings
+  pageable?: {
+    page: React.RefObject<HTMLDivElement>;
+    text: React.RefObject<HTMLDivElement>;
+  };
   printDisabled: boolean;
   iframeFilePath: string; // filepath of a PDF preview of the content
 };
 
 export default function PrintOverlay(props: PrintOverlayProps) {
-  const { customControl, iframeFilePath, content, printDisabled } = props;
+  const { customControl, iframeFilePath, content, printDisabled, pageable } =
+    props;
+  let page;
+  if (pageable) ({ page } = pageable);
 
   const backHandler = () =>
-    Subscription.publish.setWindowRootState({
+    Subscription.publish.setRendererRootState({
       showPrintOverlay: true,
       modal: 'outlined',
       iframeFilePath: '',
@@ -68,7 +77,7 @@ export default function PrintOverlay(props: PrintOverlayProps) {
           <Spacer orient="vertical" flex="1" />
           <Vbox pack="center">
             <Spacer orient="horizontal" flex="1" />
-            <div id="html-page" className="html-page">
+            <div id="html-page" className="html-page" ref={page}>
               <div className="scale">
                 <div className="content">{content}</div>
               </div>
@@ -80,7 +89,11 @@ export default function PrintOverlay(props: PrintOverlayProps) {
             <Spacer flex="1" />
             {customControl}
             {!customControl && (
-              <PrintSettings printDisabled={printDisabled} dialogEnd="cancel" />
+              <PrintSettings
+                printDisabled={printDisabled}
+                pageable={pageable}
+                dialogEnd="cancel"
+              />
             )}
             <Spacer flex="1" />
           </Vbox>

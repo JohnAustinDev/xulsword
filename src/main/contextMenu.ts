@@ -306,7 +306,7 @@ export default function contextMenu(
           {
             label: i18n.t('menu.print'),
             visible: true,
-            enabled: true,
+            enabled: Boolean(d.bookmark),
             click: () => {
               G.Prefs.setComplexValue(
                 'bookmarkManager.printItems',

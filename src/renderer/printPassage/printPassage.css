@@ -37,11 +37,6 @@ body,
   overflow: visible; /* allow page scroll to work */
 }
 
-.print-passage-text {
-  height: 100%;
-  overflow: hidden;
-}
-
 @media print {
   #printControl {
     display: none;

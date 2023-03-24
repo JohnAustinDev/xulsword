@@ -91,18 +91,24 @@ if (html) {
 const defaultProps = {
   resetOnResize: true,
   printControl: null,
+  printPageable: undefined,
   initialState: {},
 };
 const propTypes = {
   children: PropTypes.element.isRequired,
   resetOnResize: PropTypes.bool,
   printControl: PropTypes.object,
+  printPageable: PropTypes.object,
   initialState: PropTypes.object,
 };
 type WindowRootProps = {
   children: ReactElement;
   resetOnResize?: boolean;
   printControl?: ReactElement | null;
+  printPageable?: {
+    page: React.RefObject<HTMLDivElement>;
+    text: React.RefObject<HTMLDivElement>;
+  };
   initialState?: Partial<WindowRootState>;
 };
 
@@ -116,10 +122,10 @@ const initialState = {
   progress: -1 as number | 'undefined',
 };
 
+export type WindowRootState = typeof initialState;
+
 // Key order must never change for React hooks to work!
 const stateme = Object.keys(initialState) as (keyof typeof initialState)[];
-
-export type WindowRootState = typeof initialState;
 
 type StateArray<M extends keyof WindowRootState> = [
   WindowRootState[M],
@@ -133,6 +139,7 @@ function WindowRoot(props: WindowRootProps) {
     children,
     resetOnResize,
     printControl,
+    printPageable,
     initialState: initialStateProp,
   } = props;
   const istate = { ...initialState, ...initialStateProp };
@@ -162,7 +169,7 @@ function WindowRoot(props: WindowRootProps) {
 
   // Set Window State:
   useEffect(() => {
-    return Subscription.subscribe.setWindowRootState((state) => {
+    return Subscription.subscribe.setRendererRootState((state) => {
       Object.entries(state).forEach((entry) => {
         const [sp, v] = entry;
         const S = sp as keyof typeof initialState;
@@ -408,6 +415,7 @@ function WindowRoot(props: WindowRootProps) {
       <PrintOverlay
         content={content}
         customControl={printControl}
+        pageable={printPageable}
         printDisabled={s.printDisabled[0]}
         iframeFilePath={s.iframeFilePath[0]}
       />
@@ -425,6 +433,10 @@ export default async function renderToRoot(
     namespace?: string;
     resetOnResize?: boolean;
     printControl?: ReactElement;
+    printPageable?: {
+      page: React.RefObject<HTMLDivElement>;
+      text: React.RefObject<HTMLDivElement>;
+    };
     initialWindowRootState?: Partial<WindowRootState>;
     onload?: (() => void) | null;
     onunload?: (() => void) | null;
@@ -433,6 +445,7 @@ export default async function renderToRoot(
   const {
     resetOnResize,
     printControl,
+    printPageable,
     initialWindowRootState,
     onload,
     onunload,
@@ -452,6 +465,7 @@ export default async function renderToRoot(
       <WindowRoot
         resetOnResize={resetOnResize}
         printControl={printControl}
+        printPageable={printPageable}
         initialState={initialWindowRootState}
       >
         {component}
