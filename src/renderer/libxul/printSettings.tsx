@@ -12,7 +12,7 @@ import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import { Icon, Intent, Position, Toaster } from '@blueprintjs/core';
 import Subscription from '../../subscription';
-import { clone, ofClass } from '../../common';
+import { clone } from '../../common';
 import S from '../../defaultPrefs';
 import G from '../rg';
 import { getStatePref, setStatePref } from '../rutil';
@@ -26,7 +26,7 @@ import Label from './label';
 import Groupbox from './groupbox';
 import './printSettings.css';
 
-import type { WindowRootState } from '../renderer';
+import type { RootPrintType, WindowRootState } from '../renderer';
 
 export const paperSizes = [
   { type: 'A3', w: 297, h: 420, u: 'mm' },
@@ -54,28 +54,24 @@ const normal: Partial<WindowRootState> = {
 
 const defaultProps = {
   ...xulDefaultProps,
-  pageable: undefined,
   printDisabled: false,
 };
 
 const propTypes = {
   ...xulPropTypes,
-  pageable: PropTypes.object,
+  print: PropTypes.object.isRequired,
   printDisabled: PropTypes.bool,
   dialogEnd: PropTypes.string,
 };
 
 type PrintProps = XulProps & {
-  pageable?: {
-    page: React.RefObject<HTMLDivElement>;
-    text: React.RefObject<HTMLDivElement>;
-  };
+  print: RootPrintType;
   printDisabled: boolean;
-  dialogEnd: 'cancel' | 'close';
 };
 
 const notStatePref = {
   showpage: 1 as number,
+  showpaging: false as boolean,
 };
 
 export type PrintState = typeof S.prefs.print & typeof notStatePref;
@@ -130,31 +126,39 @@ export default class PrintSettings extends React.Component {
       scale: React.createRef(),
     };
 
-    this.pagebuttons = React.createRef();
+    this.updatePageButtons = this.updatePageButtons.bind(this);
 
+    this.pagebuttons = React.createRef();
     this.iframe = React.createRef();
 
     this.resetTO = null;
   }
 
+  componentDidMount() {
+    this.updatePageButtons();
+  }
+
   componentDidUpdate(_prevProps: PrintProps, prevState: PrintState) {
     const { showpage } = this.state as PrintState;
-    const { pageable } = this.props as PrintProps;
-    let text;
-    if (pageable) ({ text } = pageable);
+    const { print } = this.props as PrintProps;
+    const { text } = print;
+
     setStatePref('prefs', 'print', prevState, this.state);
     if (text?.current && prevState.showpage !== showpage) {
       text.current.scrollLeft = Math.floor(
         (showpage - 1) * (text.current.clientWidth + 13.5)
       );
     }
+
+    this.updatePageButtons();
   }
 
   async handler(e: React.SyntheticEvent<any, any>) {
     const props = this.props as PrintProps;
-    const { pageable } = props;
+    const { print } = props;
     let text;
-    if (pageable) ({ text } = pageable);
+    let pageable;
+    if (print) ({ text, pageable } = print);
     const state = this.state as PrintState;
     // Electron marginsType must be undefined for paged media to work
     // properly, and must be 1 (no margins) for window print margins to
@@ -406,25 +410,24 @@ export default class PrintSettings extends React.Component {
     return null;
   }
 
+  updatePageButtons() {
+    const { showpaging } = this.state as PrintState;
+    const { print } = this.props as PrintProps;
+    const { text } = print;
+    const showpagingNow =
+      (text?.current?.scrollWidth ?? 0) > (text?.current?.clientWidth ?? 0);
+    if (showpaging !== showpagingNow)
+      this.setState({ showpaging: showpagingNow } as Partial<PrintState>);
+  }
+
   render() {
     const props = this.props as PrintProps;
     const state = this.state as PrintState;
-    const { landscape, pageSize, twoColumns, scale, margins } = state;
-    const { pageable, printDisabled, dialogEnd } = props;
-    let page;
-    let text;
-    if (pageable) ({ page, text } = pageable);
-    const { handler, selectRefs } = this;
-
-    const printPassage = pageable
-      ? `
-    .print-pageable-text {
-      column-count: ${twoColumns ? 2 : 1}
-    }`
-      : '';
-
-    const showpaging =
-      (text?.current?.scrollWidth ?? 0) > (text?.current?.clientWidth ?? 0);
+    const { landscape, pageSize, twoColumns, scale, margins, showpaging } =
+      state;
+    const { print, printDisabled } = props;
+    const { pageable, page, controls, settings, dialogEnd } = print;
+    const { handler, selectRefs, pagebuttons } = this;
 
     const psize = paperSizes.find(
       (p) => p.type === pageSize
@@ -435,19 +438,22 @@ export default class PrintSettings extends React.Component {
 
     const maxh = window.innerHeight - 30;
 
+    const pmargin = 20;
+    const settingsW = settings?.current?.parentElement?.clientWidth || 500;
+    const pagebuttonsW = pagebuttons?.current?.offsetWidth || 200;
+
     // html-page width can be anything, it just must be known before render
-    const maxControlW = 500;
-    let htmlpageW = window.innerWidth - maxControlW;
+    let htmlpageW = window.innerWidth - settingsW - 2 * pmargin;
     if (htmlpageW < 100) htmlpageW = 100;
     let htmlpageH = htmlpageW * (pheight / pwidth);
     let hpscale = htmlpageW / (pwidth * convertToPx[psize.u]);
-    let pleft = 0;
+    let htmlleft = 0;
+    let htmlContW = htmlpageW;
     if (htmlpageH > maxh) {
       htmlpageH = maxh;
-      const contpageW = htmlpageH * (pwidth / pheight);
+      htmlContW = htmlpageH * (pwidth / pheight);
       hpscale = htmlpageH / (pheight * convertToPx[psize.u]);
-      pleft = -20 + (htmlpageW - hpscale * contpageW) / 2;
-      if (pleft < 0) pleft = 0;
+      htmlleft = (htmlpageW - htmlContW) / 2;
     }
 
     return (
@@ -461,7 +467,7 @@ export default class PrintSettings extends React.Component {
         {page?.current &&
           showpaging &&
           ReactDOM.createPortal(
-            <Hbox className="page-buttons">
+            <Hbox className="page-buttons" domref={pagebuttons}>
               <Button
                 id="pagefirst"
                 icon="double-chevron-left"
@@ -483,6 +489,10 @@ export default class PrintSettings extends React.Component {
           .html-page {
             width: ${htmlpageW}px;
             height: ${htmlpageH}px;
+            left: ${htmlleft ? pmargin + htmlleft : 0}px;
+          }
+          .page-buttons {
+            left: ${htmlContW / 2 - 0.5 * pagebuttonsW}px;
           }
           .scale {
             transform: scale(${hpscale});
@@ -495,12 +505,17 @@ export default class PrintSettings extends React.Component {
             padding-bottom: ${margins.bottom}mm;
             padding-left: ${margins.left}mm;
             top: 0;
-            left: ${pleft}px;
           }
           .userFontBase {
             font-size: ${scale / 100}em;
           }
-          ${printPassage}
+          ${
+            pageable &&
+            `
+          .print-pageable-text {
+            column-count: ${twoColumns ? 2 : 1}
+          }`
+          }
           @media print {
             @page {
               size: ${pwidth}${psize.u} ${pheight}${psize.u};
@@ -520,20 +535,24 @@ export default class PrintSettings extends React.Component {
               top: unset;
               left: unset;
               ${
-                pageable
-                  ? `
+                pageable &&
+                `
                 width: unset;
                 height: unset;
                 padding-top: unset;
                 padding-right: unset;
                 padding-bottom: unset;
                 padding-left: unset;`
-                  : ''
               }
             }
           }
         `}</style>
-        <Groupbox caption={G.i18n.t('menu.print')}>
+        <div className="printControls" ref={controls} />
+        <Groupbox
+          className="printSettings"
+          caption={G.i18n.t('menu.print')}
+          domref={settings}
+        >
           <Vbox pack="center" align="center">
             <Hbox align="center">
               <Menulist

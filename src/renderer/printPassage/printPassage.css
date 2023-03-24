@@ -1,52 +1,19 @@
-html,
-body,
-#root,
-.html-preview,
-.html-preview > div,
-.html-page,
-.scale {
-  overflow: visible !important;
-}
-
-#printControl {
+.printControls {
   z-index: 1; /* insure .scale doesn't block mouse */
 }
-#printControl .progress-anchor {
+.printControls .passage-selector {
   position: relative;
 }
-
-#printControl .page-buttons {
-  position: fixed;
-}
-
-#printControl .vkselect {
+.printControls .vkselect {
   padding-bottom: 14px;
 }
-
-#printControl .bp4-progress-bar {
+.printControls .bp4-progress-bar {
   position: absolute;
-  top: 53px;
+  top: 70px;
   width: calc(100% - 30px);
 }
 
-#printControl .vk-chapter select {
-  width: 3.25em;
-}
-
-.html-preview .content {
-  overflow: visible; /* allow page scroll to work */
-}
-
 @media print {
-  #printControl {
-    display: none;
-  }
-
-  /* flex display breaks print paging! */
-  .html-preview {
-    display: block;
-  }
-
   .chapter-start:not(.chapterfirst) {
     break-before: page;
   }

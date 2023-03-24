@@ -1,3 +1,6 @@
+.printsettings {
+  width: fit-content;
+}
 .printsettings .groupbox-body > div > * {
   margin-bottom: 10px;
 }
@@ -26,32 +29,25 @@
   z-index: 1; /* required during full screen for some reason */
 }
 
-.content {
-  position: relative; /* for overlay */
-  display: grid;
-  background: white;
-}
-
-.scale {
-  transform-origin: top left;
-}
-
 .print-pageable-text {
   height: 100%;
   overflow: hidden;
 }
+
 .html-page {
   position: relative;
 }
 .page-buttons {
   position: absolute;
-  bottom: -20px;
-  left: 50%;
-  right: 50%;
+  bottom: 0px;
 }
 
 @media print {
-  .printsettings {
-    display: none;
+  .page-buttons {
+    display: none !important;
+  }
+
+  .print-pageable-text {
+    overflow: unset !important;
   }
 }

@@ -23,7 +23,7 @@ import DynamicStyleSheet from './style';
 import { windowArguments } from './rutil';
 import log from './log';
 import { getContextData } from './bookmarks';
-import { delayHandler, xulCaptureEvents } from './libxul/xul';
+import { delayHandler, xulCaptureEvents, xulDefaultProps } from './libxul/xul';
 import { Hbox } from './libxul/boxes';
 import Dialog from './libxul/dialog';
 import Spacer from './libxul/spacer';
@@ -88,44 +88,29 @@ if (html) {
   html.dir = dir;
 }
 
-const defaultProps = {
-  resetOnResize: true,
-  printControl: null,
-  printPageable: undefined,
-  initialState: {},
-};
 const propTypes = {
   children: PropTypes.element.isRequired,
-  resetOnResize: PropTypes.bool,
-  printControl: PropTypes.object,
-  printPageable: PropTypes.object,
-  initialState: PropTypes.object,
-};
-type WindowRootProps = {
-  children: ReactElement;
-  resetOnResize?: boolean;
-  printControl?: ReactElement | null;
-  printPageable?: {
-    page: React.RefObject<HTMLDivElement>;
-    text: React.RefObject<HTMLDivElement>;
-  };
-  initialState?: Partial<WindowRootState>;
+  resetOnResize: PropTypes.bool.isRequired,
+  print: PropTypes.object.isRequired,
+  initialState: PropTypes.object.isRequired,
 };
 
-const initialState = {
+const InitialState = {
   reset: 0 as number,
   dialogs: [] as ReactElement[],
   showPrintOverlay: false as boolean,
+  printDisabled: false,
   modal: 'off' as ModalType,
   iframeFilePath: '' as string,
-  printDisabled: false as boolean,
   progress: -1 as number | 'undefined',
 };
 
-export type WindowRootState = typeof initialState;
+type WindowRootProps = WindowRootOptions & {
+  children: ReactElement;
+};
 
 // Key order must never change for React hooks to work!
-const stateme = Object.keys(initialState) as (keyof typeof initialState)[];
+const stateme = Object.keys(InitialState) as (keyof typeof InitialState)[];
 
 type StateArray<M extends keyof WindowRootState> = [
   WindowRootState[M],
@@ -135,16 +120,9 @@ type StateArray<M extends keyof WindowRootState> = [
 const delayHandlerThis = {};
 
 function WindowRoot(props: WindowRootProps) {
-  const {
-    children,
-    resetOnResize,
-    printControl,
-    printPageable,
-    initialState: initialStateProp,
-  } = props;
-  const istate = { ...initialState, ...initialStateProp };
+  const { children, resetOnResize, print, initialState: istate } = props;
 
-  const s = {} as { [k in keyof typeof initialState]: StateArray<k> };
+  const s = {} as { [k in keyof typeof InitialState]: StateArray<k> };
   stateme.forEach((me) => {
     s[me] = useState(istate[me]) as any;
   });
@@ -172,7 +150,7 @@ function WindowRoot(props: WindowRootProps) {
     return Subscription.subscribe.setRendererRootState((state) => {
       Object.entries(state).forEach((entry) => {
         const [sp, v] = entry;
-        const S = sp as keyof typeof initialState;
+        const S = sp as keyof typeof InitialState;
         const val = v as any;
         if (val !== undefined) {
           const setMe = s[S][1] as (a: any) => any;
@@ -191,7 +169,7 @@ function WindowRoot(props: WindowRootProps) {
 
   // IPC resize setup:
   useEffect(() => {
-    if (resetOnResize) {
+    if (resetOnResize || s.showPrintOverlay[0]) {
       return window.ipc.on(
         'resize',
         delayHandler.bind(delayHandlerThis)(
@@ -414,8 +392,7 @@ function WindowRoot(props: WindowRootProps) {
     return (
       <PrintOverlay
         content={content}
-        customControl={printControl}
-        pageable={printPageable}
+        print={print}
         printDisabled={s.printDisabled[0]}
         iframeFilePath={s.iframeFilePath[0]}
       />
@@ -424,32 +401,66 @@ function WindowRoot(props: WindowRootProps) {
 
   return content;
 }
-WindowRoot.defaultProps = defaultProps;
 WindowRoot.propTypes = propTypes;
+WindowRoot.defaultProps = {
+  ...xulDefaultProps,
+  onload: null,
+  onunload: null,
+};
+
+export type RootPrintType = {
+  pageable: boolean;
+  dialogEnd: 'cancel' | 'close';
+  page: React.RefObject<HTMLDivElement>;
+  text: React.RefObject<HTMLDivElement>;
+  controls: React.RefObject<HTMLDivElement>;
+  settings: React.RefObject<HTMLDivElement>;
+};
+
+export type WindowRootOptions = {
+  resetOnResize: boolean;
+  print: RootPrintType;
+  initialState: Partial<WindowRootState>;
+  onload?: (() => void) | null;
+  onunload?: (() => void) | null;
+};
+
+export type WindowRootState = typeof InitialState;
 
 export default async function renderToRoot(
   component: ReactElement,
-  options?: {
-    namespace?: string;
-    resetOnResize?: boolean;
-    printControl?: ReactElement;
-    printPageable?: {
-      page: React.RefObject<HTMLDivElement>;
-      text: React.RefObject<HTMLDivElement>;
-    };
-    initialWindowRootState?: Partial<WindowRootState>;
-    onload?: (() => void) | null;
-    onunload?: (() => void) | null;
+  options?: Partial<Omit<WindowRootOptions, 'print'>> & {
+    print: Partial<RootPrintType>;
   }
 ) {
-  const {
-    resetOnResize,
-    printControl,
-    printPageable,
-    initialWindowRootState,
-    onload,
-    onunload,
-  } = options || {};
+  const { onload, onunload, resetOnResize } = options || {};
+  const { print: printArg, initialState: initialStateArg } = options || {};
+  const print = {
+    pageable: false,
+    dialogEnd: 'cancel' as const,
+    page: React.createRef() as React.RefObject<HTMLDivElement>,
+    text: React.createRef() as React.RefObject<HTMLDivElement>,
+    controls: React.createRef() as React.RefObject<HTMLDivElement>,
+    settings: React.createRef() as React.RefObject<HTMLDivElement>,
+    ...printArg,
+  };
+  const initialState = {
+    ...InitialState,
+    ...initialStateArg,
+  };
+
+  render(
+    <StrictMode>
+      <WindowRoot
+        print={print}
+        resetOnResize={resetOnResize || false}
+        initialState={initialState}
+      >
+        {component}
+      </WindowRoot>
+    </StrictMode>,
+    document.getElementById('root')
+  );
 
   window.ipc.on('close', () => {
     if (typeof onunload === 'function') onunload();
@@ -460,19 +471,6 @@ export default async function renderToRoot(
     }
   });
 
-  render(
-    <StrictMode>
-      <WindowRoot
-        resetOnResize={resetOnResize}
-        printControl={printControl}
-        printPageable={printPageable}
-        initialState={initialWindowRootState}
-      >
-        {component}
-      </WindowRoot>
-    </StrictMode>,
-    document.getElementById('root')
-  );
   if (typeof onload === 'function') onload();
   setTimeout(() => {
     if (descriptor?.fitToContent) {

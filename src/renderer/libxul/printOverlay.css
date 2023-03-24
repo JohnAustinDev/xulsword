@@ -13,13 +13,42 @@
 .pdf-preview iframe {
   width: 100%;
 }
-.html-preview {
-  padding: 10px;
+
+.scale {
+  transform-origin: top left;
+}
+
+.content {
+  position: relative; /* for overlay */
+  display: grid;
+  background: white;
+}
+
+.print-settings {
+  padding: 10px 10px 10px 0;
+  margin-inline-start: -5px;
 }
 
 @media print {
   .print-settings,
+  .spacer,
   #overlay {
-    display: none;
+    display: none !important;
+  }
+
+  /* IMPORTANT: flex display breaks print paging! */
+  .html-preview,
+  .preview-flex,
+  .content {
+    display: block !important;
+  }
+
+  html,
+  body,
+  #root,
+  .html-preview,
+  .html-page,
+  #reset {
+    overflow: unset !important;
   }
 }

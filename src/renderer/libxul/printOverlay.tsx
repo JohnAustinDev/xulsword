@@ -13,40 +13,29 @@ import PrintSettings from './printSettings';
 import { xulDefaultProps, XulProps, xulPropTypes } from './xul';
 import './printOverlay.css';
 
-const defaultProps = {
-  ...xulDefaultProps,
-  customControl: null,
-  pageable: undefined,
-  showColumnButton: false,
-  iframeFilePath: '',
-  printDisabled: false,
-};
+import type { RootPrintType } from '../renderer';
+
+const defaultProps = xulDefaultProps;
 
 const propTypes = {
   ...xulPropTypes,
   content: PropTypes.object.isRequired,
-  customControl: PropTypes.object,
-  pageable: PropTypes.object,
-  iframeFilePath: PropTypes.string,
-  printDisabled: PropTypes.bool,
+  print: PropTypes.object.isRequired,
+  iframeFilePath: PropTypes.string.isRequired,
+  printDisabled: PropTypes.bool.isRequired,
 };
 
 type PrintOverlayProps = XulProps & {
   content: ReactElement; // content to print will be shown in the overlay
-  customControl?: ReactElement | null; // UI controlling any custom print settings
-  pageable?: {
-    page: React.RefObject<HTMLDivElement>;
-    text: React.RefObject<HTMLDivElement>;
-  };
+  print: RootPrintType;
   printDisabled: boolean;
   iframeFilePath: string; // filepath of a PDF preview of the content
 };
 
 export default function PrintOverlay(props: PrintOverlayProps) {
-  const { customControl, iframeFilePath, content, printDisabled, pageable } =
-    props;
+  const { iframeFilePath, content, printDisabled, print } = props;
   let page;
-  if (pageable) ({ page } = pageable);
+  if (print) ({ page } = print);
 
   const backHandler = () =>
     Subscription.publish.setRendererRootState({
@@ -73,9 +62,8 @@ export default function PrintOverlay(props: PrintOverlayProps) {
         </Vbox>
       )}
       {!iframeFilePath && (
-        <Hbox className="html-preview" align="stretch">
-          <Spacer orient="vertical" flex="1" />
-          <Vbox pack="center">
+        <Hbox className="html-preview" pack="end" align="stretch">
+          <Vbox className="preview-flex" pack="center" align="center" flex="1">
             <Spacer orient="horizontal" flex="1" />
             <div id="html-page" className="html-page" ref={page}>
               <div className="scale">
@@ -84,17 +72,9 @@ export default function PrintOverlay(props: PrintOverlayProps) {
             </div>
             <Spacer orient="horizontal" flex="1" />
           </Vbox>
-          <Spacer orient="vertical" flex="1" />
           <Vbox className="print-settings">
             <Spacer flex="1" />
-            {customControl}
-            {!customControl && (
-              <PrintSettings
-                printDisabled={printDisabled}
-                pageable={pageable}
-                dialogEnd="cancel"
-              />
-            )}
+            <PrintSettings printDisabled={printDisabled} print={print} />
             <Spacer flex="1" />
           </Vbox>
         </Hbox>

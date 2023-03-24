@@ -21,7 +21,7 @@ import {
 } from '../../common';
 import S from '../../defaultPrefs';
 import G from '../rg';
-import renderToRoot from '../renderer';
+import renderToRoot, { RootPrintType } from '../renderer';
 import {
   registerUpdateStateFromPref,
   setStatePref,
@@ -59,14 +59,11 @@ const defaultProps = xulDefaultProps;
 
 const propTypes = {
   ...xulPropTypes,
-  printPageable: PropTypes.object.isRequired,
+  print: PropTypes.object.isRequired,
 };
 
 type BMManagerProps = XulProps & {
-  printPageable: {
-    page: React.RefObject<HTMLDivElement>;
-    text: React.RefObject<HTMLDivElement>;
-  };
+  print: Pick<RootPrintType, 'text'>;
 };
 
 const defaultNotStatePref = {
@@ -184,7 +181,7 @@ export default class BMManagerWin extends React.Component {
       reset,
       printItems,
     } = state;
-    const { printPageable } = props;
+    const { print } = props;
     const {
       tableCompRef,
       buttonHandler,
@@ -235,7 +232,7 @@ export default class BMManagerWin extends React.Component {
             ['bmmanager print print-pageable-text userFontBase'],
             props
           )}
-          ref={printPageable.text}
+          ref={print.text}
         >
           {printItems.map((itemID) => this.printableItem(itemID))}
         </div>
@@ -440,16 +437,13 @@ export default class BMManagerWin extends React.Component {
 BMManagerWin.defaultProps = defaultProps;
 BMManagerWin.propTypes = propTypes;
 
-const printPageable = {
-  page: React.createRef() as React.RefObject<HTMLDivElement>,
-  text: React.createRef() as React.RefObject<HTMLDivElement>,
+const print: BMManagerProps['print'] = {
+  text: React.createRef(),
 };
-renderToRoot(
-  <BMManagerWin id="bookmarkManager" printPageable={printPageable} />,
-  {
-    printPageable,
-  }
-);
+
+renderToRoot(<BMManagerWin id="bookmarkManager" print={print} />, {
+  print: { ...print, pageable: true },
+});
 
 window.ipc.once('close', () => {
   G.Prefs.setComplexValue(

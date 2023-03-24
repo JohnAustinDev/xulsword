@@ -223,7 +223,7 @@ export default function contextMenu(
             visible: true,
             enabled: true,
             click: () => {
-              Commands.print(window.id);
+              Commands.print(undefined, window.id);
             },
           },
           actions.separator(),
@@ -312,7 +312,7 @@ export default function contextMenu(
                 'bookmarkManager.printItems',
                 d.bookmarks as typeof S.prefs.bookmarkManager.printItems
               );
-              Commands.print(window.id)
+              Commands.print(undefined, window.id)
                 .then(() => {
                   G.Prefs.setComplexValue(
                     'bookmarkManager.printItems',

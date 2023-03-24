@@ -61,7 +61,7 @@
   font-weight: bold;
 }
 .bmmanager.print .folder > .label {
-  font-size: 24px;
+  font-size: 1.3em;
 }
 .bmmanager.print .folder::before {
   content: '';

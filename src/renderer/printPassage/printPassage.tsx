@@ -15,7 +15,7 @@ import Subscription from '../../subscription';
 import { diff, sanitizeHTML, stringHash, querablePromise } from '../../common';
 import S from '../../defaultPrefs';
 import G from '../rg';
-import renderToRoot from '../renderer';
+import renderToRoot, { RootPrintType } from '../renderer';
 import { windowArguments, getStatePref, setStatePref } from '../rutil';
 import log from '../log';
 import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
@@ -63,14 +63,11 @@ const defaultProps = xulDefaultProps;
 
 const propTypes = {
   ...xulPropTypes,
-  printPageable: PropTypes.object.isRequired,
+  print: PropTypes.object.isRequired,
 };
 
 type PrintPassageProps = XulProps & {
-  printPageable: {
-    page: React.RefObject<HTMLDivElement>;
-    text: React.RefObject<HTMLDivElement>;
-  };
+  print: Pick<RootPrintType, 'text' | 'controls'>;
 };
 
 const notStatePrefDefault = {
@@ -132,8 +129,8 @@ export default class PrintPassageWin extends React.Component {
     prevState: PrintPassageState
   ) {
     const state = this.state as PrintPassageState;
-    const { printPageable } = this.props as PrintPassageProps;
-    const tdiv = printPageable.text.current;
+    const { print } = this.props as PrintPassageProps;
+    const tdiv = print.text.current;
     let { renderPromises } = this;
     const { chapters } = state;
     const valid = validPassage(chapters);
@@ -212,8 +209,7 @@ export default class PrintPassageWin extends React.Component {
                     setTimeout(() => {
                       if (html[i]) resolve(html[i]);
                       else {
-                        const { printPageable: pr } =
-                          xthis.props as PrintPassageProps;
+                        const { print: pr } = xthis.props as PrintPassageProps;
                         const tdivx = pr.text.current;
                         if (tdivx && key === tdivx.dataset.renderkey) {
                           log.silly(`Building chapter ${c[0]} ${c[1]}`);
@@ -238,7 +234,7 @@ export default class PrintPassageWin extends React.Component {
               try {
                 renderPromises = funcs.map((f) => querablePromise(f()));
                 const html2 = await Promise.all(renderPromises);
-                const { printPageable: pr } = xthis.props as PrintPassageProps;
+                const { print: pr } = xthis.props as PrintPassageProps;
                 const tdivx = pr.text.current;
                 if (tdivx) sanitizeHTML(tdivx, html2.join());
                 log.debug(`Finished loading ${html2.length} chapters to DOM`);
@@ -260,7 +256,7 @@ export default class PrintPassageWin extends React.Component {
   render() {
     const state = this.state as PrintPassageState;
     const { checkbox, chapters, progress } = state;
-    const { printPageable } = this.props as PrintPassageProps;
+    const { print } = this.props as PrintPassageProps;
     const { handler, vkSelectHandler } = this;
     const vkmod = chapters?.vkmod;
     if (!vkmod || !chapters) return null;
@@ -268,22 +264,19 @@ export default class PrintPassageWin extends React.Component {
     const isHebrew = /^heb?$/i.test(G.Tab[vkmod].lang);
     const tr = isHebrew ? 1 : 0;
 
-    const printControl = document.getElementById(
-      'printControl'
-    ) as HTMLDivElement | null;
-
     return (
       <>
         <div
-          ref={printPageable.text}
+          ref={print.text}
           className="print print-pageable-text userFontBase"
           dir={G.Tab[vkmod].direction || 'auto'}
         />
-        {printControl &&
+
+        {print.controls.current &&
           ReactDOM.createPortal(
             <>
               <Groupbox
-                className="progress-anchor"
+                className="passage-selector"
                 caption={G.i18n.t('menu.printPassage')}
               >
                 <VKSelect
@@ -304,7 +297,10 @@ export default class PrintPassageWin extends React.Component {
                   />
                 )}
               </Groupbox>
-              <Groupbox caption={G.i18n.t('include.label')}>
+              <Groupbox
+                className="text-options"
+                caption={G.i18n.t('include.label')}
+              >
                 <Grid>
                   <Rows>
                     {switches[0]
@@ -343,13 +339,8 @@ export default class PrintPassageWin extends React.Component {
                   </Columns>
                 </Grid>
               </Groupbox>
-              <PrintSettings
-                pageable={printPageable}
-                printDisabled={progress !== -1}
-                dialogEnd="close"
-              />
             </>,
-            printControl
+            print.controls.current
           )}
       </>
     );
@@ -358,19 +349,17 @@ export default class PrintPassageWin extends React.Component {
 PrintPassageWin.defaultProps = defaultProps;
 PrintPassageWin.propTypes = propTypes;
 
-const printPageable = {
-  page: React.createRef() as React.RefObject<HTMLDivElement>,
+const print: PrintPassageProps['print'] = {
   text: React.createRef() as React.RefObject<HTMLDivElement>,
+  controls: React.createRef() as React.RefObject<HTMLDivElement>,
 };
 
-renderToRoot(<PrintPassageWin printPageable={printPageable} />, {
-  printControl: <div id="printControl" />,
-  printPageable,
-  initialWindowRootState: {
+renderToRoot(<PrintPassageWin print={print} />, {
+  print: { ...print, pageable: true, dialogEnd: 'close' },
+  initialState: {
     showPrintOverlay: true,
     modal: 'outlined',
     iframeFilePath: '',
-    printDisabled: false,
     progress: -1,
   },
 });
