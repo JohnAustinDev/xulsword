@@ -53,8 +53,6 @@ import type {
   BookmarkTreeNode,
 } from '../../type';
 
-// TODO!: Fix Print CSS
-
 const defaultProps = xulDefaultProps;
 
 const propTypes = {

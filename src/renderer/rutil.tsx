@@ -282,8 +282,6 @@ export function audioIcon(
 export function isValidVKM(location: LocationVKType, module: string): boolean {
   if (!isValidVK(location)) return false;
   if (!module || !(module in G.Tab)) return false;
-  const tab = G.Tab[module];
-  if (location.v11n !== tab.v11n) return false;
   if (!G.getBooksInModule(module).includes(location.book as any)) return false;
   return true;
 }

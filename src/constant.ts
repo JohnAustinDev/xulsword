@@ -86,7 +86,7 @@ const C = {
       toggleFullScreen: 'F11',
     },
     Window: {
-      resizeDelay: 500, // ms between window resize and update
+      resizeDelay: 200, // ms between window resize and update
       large: {
         width: 1024,
         height: 728,

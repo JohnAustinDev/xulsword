@@ -13,6 +13,32 @@
   width: calc(100% - 30px);
 }
 
+* {
+  text-decoration: none !important;
+}
+
+div.footnotes,
+div.dict-entry-heading {
+  margin-top: 1em;
+}
+
+.x-navmenu,
+.versePerLineButton,
+.fndash,
+.crtwisty,
+.dictionary-entry.notes,
+*[class^='x-keyword'] .gfn {
+  display: none !important;
+}
+.fncol3 {
+  border-top: none;
+  border-bottom: none;
+}
+
+*[class^='x-keyword'] .dtl {
+  text-decoration: none !important;
+}
+
 @media print {
   .chapter-start:not(.chapterfirst) {
     break-before: page;

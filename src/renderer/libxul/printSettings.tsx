@@ -70,7 +70,7 @@ type PrintProps = XulProps & {
 };
 
 const notStatePref = {
-  showpage: 1 as number,
+  scrollLeft: 0 as number,
   showpaging: false as boolean,
 };
 
@@ -139,26 +139,14 @@ export default class PrintSettings extends React.Component {
   }
 
   componentDidUpdate(_prevProps: PrintProps, prevState: PrintState) {
-    const { showpage } = this.state as PrintState;
-    const { print } = this.props as PrintProps;
-    const { text } = print;
-
     setStatePref('prefs', 'print', prevState, this.state);
-    if (text?.current && prevState.showpage !== showpage) {
-      text.current.scrollLeft = Math.floor(
-        (showpage - 1) * (text.current.clientWidth + 13.5)
-      );
-    }
-
     this.updatePageButtons();
   }
 
   async handler(e: React.SyntheticEvent<any, any>) {
     const props = this.props as PrintProps;
     const { print } = props;
-    let text;
-    let pageable;
-    if (print) ({ text, pageable } = print);
+    const { text, pageable } = print;
     const state = this.state as PrintState;
     // Electron marginsType must be undefined for paged media to work
     // properly, and must be 1 (no margins) for window print margins to
@@ -174,53 +162,56 @@ export default class PrintSettings extends React.Component {
     const [id, id2] = target.id.split('.');
     switch (e.type) {
       case 'click': {
-        const pageW = text?.current?.clientWidth ?? 0;
-        const scrollW = text?.current?.scrollWidth ?? 0;
+        const textcurrent = text.current;
         switch (id) {
           case 'pagefirst': {
-            const s: Partial<PrintState> = {
-              showpage: 1,
-            };
-            this.setState(s);
+            if (textcurrent) {
+              textcurrent.scrollLeft = 0;
+              this.setState({
+                scrollLeft: 0,
+              } as Partial<PrintState>);
+            }
             break;
           }
           case 'pageprev': {
-            this.setState((prevState: PrintState) => {
-              let { showpage } = prevState;
-              showpage -= 1;
-              if (showpage < 1) showpage = 1;
-              return { showpage };
-            });
+            if (textcurrent) {
+              this.setState((prevState: PrintState) => {
+                let { scrollLeft } = prevState;
+                scrollLeft -= 1.2 * textcurrent.clientWidth;
+                textcurrent.scrollLeft = scrollLeft;
+                // CSS Scroll Snap adjusts scrollLeft here!
+                return {
+                  scrollLeft: textcurrent.scrollLeft,
+                } as Partial<PrintState>;
+              });
+            }
             break;
           }
           case 'pagenext': {
-            this.setState((prevState: PrintState) => {
-              let { showpage } = prevState;
-              showpage += 1;
-              const max = Math.ceil(scrollW / pageW);
-              if (showpage > max) showpage = max;
-              return { showpage };
-            });
+            if (textcurrent) {
+              this.setState((prevState: PrintState) => {
+                let { scrollLeft } = prevState;
+                scrollLeft += 1.2 * textcurrent.clientWidth;
+                textcurrent.scrollLeft = scrollLeft;
+                // CSS Scroll Snap adjusts scrollLeft here!
+                return {
+                  scrollLeft: textcurrent.scrollLeft,
+                } as Partial<PrintState>;
+              });
+            }
             break;
           }
           case 'pagelast': {
-            const s: Partial<PrintState> = {
-              showpage: Math.ceil(scrollW / pageW),
-            };
-            this.setState(s);
-            break;
-          }
-          case 'page': {
-            const c = this.getContainer();
-            if (c) {
-              const { iframe, container } = c;
-              const pagewidth = iframe.offsetWidth;
-              let { scrollLeft } = container;
-              if (id2 === 'first') scrollLeft = 0;
-              else if (id2 === 'prev') scrollLeft -= pagewidth;
-              else if (id2 === 'next') scrollLeft += pagewidth;
-              else scrollLeft = container.offsetWidth - pagewidth;
-              container.scrollLeft = scrollLeft;
+            if (textcurrent) {
+              this.setState((prevState: PrintState) => {
+                let { scrollLeft } = prevState;
+                scrollLeft = textcurrent.scrollWidth - textcurrent.clientWidth;
+                textcurrent.scrollLeft = scrollLeft;
+                // CSS Scroll Snap adjusts scrollLeft here!
+                return {
+                  scrollLeft: textcurrent.scrollLeft,
+                } as Partial<PrintState>;
+              });
             }
             break;
           }
@@ -393,21 +384,6 @@ export default class PrintSettings extends React.Component {
       default:
         throw new Error(`Unhandled event type ${e.type} in print.tsx`);
     }
-  }
-
-  getContainer() {
-    const { iframe } = this;
-    if (iframe && iframe.current) {
-      const container =
-        iframe.current.contentDocument?.getElementById('container');
-      if (container) {
-        return {
-          iframe: iframe.current,
-          container,
-        };
-      }
-    }
-    return null;
   }
 
   updatePageButtons() {

@@ -448,15 +448,16 @@ const Window = {
         ...([win, disposables] as Parameters<typeof contextMenu>)
       )
     );
-    win.on('resize', () => {
+    const resize = () => {
       updateBounds(id);
       win?.webContents.send('resize', win.getSize());
-    });
-    win.on('resized', () => updateBounds(id));
-    win.on('move', () => updateBounds(id));
-    win.on('moved', () => updateBounds(id));
-    win.on('maximize', () => updateBounds(id));
-    win.on('unmaximize', () => updateBounds(id));
+    };
+    win.on('resize', resize);
+    win.on('resized', resize);
+    win.on('move', resize);
+    win.on('moved', resize);
+    win.on('maximize', resize);
+    win.on('unmaximize', resize);
     win.once('close', () => win?.webContents.send('close'));
     win.once('closed', () => {
       Prefs.deleteUserPref(`OpenWindows.w${id}`, 'windows');

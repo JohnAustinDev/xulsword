@@ -16,13 +16,17 @@ import { diff, sanitizeHTML, stringHash, querablePromise } from '../../common';
 import S from '../../defaultPrefs';
 import G from '../rg';
 import renderToRoot, { RootPrintType } from '../renderer';
-import { windowArguments, getStatePref, setStatePref } from '../rutil';
+import {
+  windowArguments,
+  getStatePref,
+  setStatePref,
+  libswordImgSrc,
+} from '../rutil';
 import log from '../log';
 import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
 import Grid, { Column, Columns, Row, Rows } from '../libxul/grid';
 import Groupbox from '../libxul/groupbox';
 import Checkbox from '../libxul/checkbox';
-import PrintSettings from '../libxul/printSettings';
 import VKSelect from '../libxul/vkselect';
 import {
   handler as handlerH,
@@ -36,7 +40,6 @@ import './printPassage.css';
 
 import type { OSISBookType, QuerablePromise } from '../../type';
 
-// TODO!: Dictlinks aren't implemented. CSS needs improvement. Print hasn't been checked.
 // TODO: As of 11/22 @page {@bottom-center {content: counter(page);}} does not work
 
 // 0=none, 1=checkbox, 2=placeholder
@@ -187,7 +190,7 @@ export default class PrintPassageWin extends React.Component {
             }
           }
         });
-        log.debug(`Finished previwing ${renderHTML.length} chapters to DOM`);
+        log.debug(`Finished previewing ${renderHTML.length} chapters to DOM`);
 
         // Then asynchronously generate all other chapters with a progress bar
         Subscription.publish.setRendererRootState({
@@ -236,7 +239,10 @@ export default class PrintPassageWin extends React.Component {
                 const html2 = await Promise.all(renderPromises);
                 const { print: pr } = xthis.props as PrintPassageProps;
                 const tdivx = pr.text.current;
-                if (tdivx) sanitizeHTML(tdivx, html2.join());
+                if (tdivx) {
+                  sanitizeHTML(tdivx, html2.join());
+                  libswordImgSrc(tdivx);
+                }
                 log.debug(`Finished loading ${html2.length} chapters to DOM`);
               } catch (er) {
                 log.warn(er);

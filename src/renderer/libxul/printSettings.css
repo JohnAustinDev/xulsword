@@ -32,6 +32,10 @@
 .print-pageable-text {
   height: 100%;
   overflow: hidden;
+  scroll-snap-type: x mandatory;
+}
+.print-pageable-text > * {
+  scroll-snap-align: start;
 }
 
 .html-page {

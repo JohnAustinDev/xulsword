@@ -1,11 +1,17 @@
 /* eslint-disable import/no-duplicates */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-use-before-define */
-import { clone, dString, getLocalizedChapterTerm } from '../../common';
+import {
+  clone,
+  decodeOSISRef,
+  dString,
+  getLocalizedChapterTerm,
+} from '../../common';
 import C from '../../constant';
 import G from '../rg';
 import addBookmarks from '../bookmarks';
 import { getValidVK, isValidVKM } from '../rutil';
+import { getDictEntryHTML } from '../viewport/zdictionary';
 import { getNoteHTML, getIntroductions } from '../viewport/zversekey';
 
 import type {
@@ -43,23 +49,37 @@ export function vkSelectHandler(
   selection: SelectVKMType
 ) {
   if (selection) {
-    const { book, lastchapter, vkmod, v11n: vsys } = selection;
-    if (lastchapter) {
-      const state = this.state as PrintPassageState;
-      const obook = state.chapters?.book;
-      if (!obook || obook !== book) {
+    const { book } = selection;
+    this.setState((prevState: PrintPassageState) => {
+      const obook = prevState.chapters?.book;
+      if (obook && book && obook !== book) {
         selection.chapter = 1;
         selection.lastchapter = 1;
       }
-      const v11n = G.Tab[vkmod].v11n || vsys || 'KJV';
-      const s: Partial<PrintPassageState> = {
-        chapters: { ...selection, v11n, vkmod },
-      };
-      this.setState(s);
-      return;
-    }
-  }
-  this.setState({ chapters: null });
+      return {
+        chapters: { ...selection },
+      } as Partial<PrintPassageState>;
+    });
+  } else this.setState({ chapters: null });
+}
+
+function getDictionaryLinks(textHTML: string): string {
+  const m = textHTML.matchAll(/<span class="dt" data-title="([^"]*)\.[^."]*"/g);
+  const decoded = [...new Set(Array.from(m).map((x) => decodeOSISRef(x[1])))];
+  const sorted = decoded.sort((a, b) => {
+    const ax = a.replace(/^[^:]+:/, '');
+    const bx = b.replace(/^[^:]+:/, '');
+    return ax.localeCompare(bx);
+  });
+  return sorted
+    .map((osisRef) => {
+      const [, mod, key] = osisRef.match(/^([^:]+):(.*?)$/) || [
+        undefined,
+        undefined,
+      ];
+      return key && mod ? getDictEntryHTML(key, mod) : '';
+    })
+    .join('');
 }
 
 export function bibleChapterText(
@@ -102,7 +122,7 @@ export function bibleChapterText(
       response.noteHTML = getNoteHTML(response.notes, show, 0, crossrefsText);
     }
     const { noteHTML } = response;
-    let { textHTML, intronotes } = response;
+    let { textHTML } = response;
 
     let moduleLocale = G.Config[module].AssociatedLocale;
     if (!moduleLocale) moduleLocale = G.i18n.language; // otherwise use current program locale
@@ -121,12 +141,8 @@ export function bibleChapterText(
 
     // Get introduction
     if (introduction) {
-      const heading = G.i18n.t('IntroLink', toptions);
       const intro = getIntroductions(module, `${book} ${chapter}`);
-      intronotes = intro.intronotes;
-      const introNotesHTML = getNoteHTML(intronotes, show, 0, true);
-      if (intro.textHTML)
-        introHTML = `<div class="head1">${heading}</div>${intro.textHTML}${introNotesHTML}`;
+      if (intro.textHTML) introHTML = intro.textHTML;
     }
 
     // Get chapter heading
@@ -142,11 +158,14 @@ export function bibleChapterText(
         </div>
       </div>`;
     }
+
     return `
       <div class="introduction"></div>${introHTML}
+      <div class="dictionary-links"></div>${getDictionaryLinks(introHTML)}
       <div class="chapter-start${chapter === 1 ? ' chapterfirst' : ''}"></div>${headHTML}
       ${textHTML}
-      <div class="footnotes"></div>${noteHTML}`;
+      <div class="footnotes"></div>${noteHTML}
+      <div class="dictionary-links"></div>${getDictionaryLinks(textHTML)}`;
        /* eslint-enable prettier/prettier */
   }
   return '';
@@ -162,13 +181,13 @@ export function validPassage(passage: SelectVKMType | null): SelectVKMType {
       lastchapter: 1,
     };
   }
-  let { lastchapter, v11n } = chapters;
+  const { lastchapter, v11n } = chapters;
   if (!v11n) {
     const { vkmod } = chapters;
-    v11n = (vkmod in G.Tab && G.Tab[vkmod].v11n) || 'KJV';
+    chapters.v11n = (vkmod in G.Tab && G.Tab[vkmod].v11n) || 'KJV';
   }
-  if (!lastchapter || lastchapter > chapters.chapter) {
-    lastchapter = chapters.chapter;
+  if (!lastchapter || lastchapter < chapters.chapter) {
+    chapters.lastchapter = chapters.chapter;
   }
   return chapters;
 }

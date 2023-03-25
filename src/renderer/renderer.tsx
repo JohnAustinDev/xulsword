@@ -430,7 +430,7 @@ export type WindowRootState = typeof InitialState;
 export default async function renderToRoot(
   component: ReactElement,
   options?: Partial<Omit<WindowRootOptions, 'print'>> & {
-    print: Partial<RootPrintType>;
+    print?: Partial<RootPrintType>;
   }
 ) {
   const { onload, onunload, resetOnResize } = options || {};
@@ -453,7 +453,7 @@ export default async function renderToRoot(
     <StrictMode>
       <WindowRoot
         print={print}
-        resetOnResize={resetOnResize || false}
+        resetOnResize={resetOnResize ?? true}
         initialState={initialState}
       >
         {component}

@@ -36,8 +36,6 @@ import { modalInstall, scanAudio } from './module';
 import Window, { getBrowserWindows, publishSubscription } from './window';
 import Dirs from './dirs';
 
-// TODO!: Viewport window resize does not shrink tabs
-
 import type {
   AddCaller,
   AudioPath,

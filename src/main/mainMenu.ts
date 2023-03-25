@@ -16,11 +16,12 @@ import S from '../defaultPrefs';
 import G from './mg';
 import Window, { getBrowserWindows } from './components/window';
 import Commands from './components/commands';
+import { verseKey } from './minit';
 import setViewportTabs from './tabs';
 
+import type { PrintPassageState } from '../renderer/printPassage/printPassage';
 import type { BookmarkFolderType, SearchType, TabTypes } from '../type';
 import type { PrefCallbackType } from './components/prefs';
-import { verseKey } from './minit';
 
 type Modifiers =
   | 'CommandOrControl' // 'accel' in XUL
@@ -452,7 +453,23 @@ export default class MainMenuBuilder {
           label: ts('menu.printPassage'),
           accelerator: tx('menu.print.ac', ['CommandOrControl']),
           click: d(() => {
-            Commands.printPassage();
+            let options: Partial<PrintPassageState> | undefined;
+            const location = G.Prefs.getComplexValue(
+              'xulsword.location'
+            ) as typeof S.prefs.xulsword.location;
+            const panels = G.Prefs.getComplexValue(
+              'xulsword.panels'
+            ) as typeof S.prefs.xulsword.panels;
+            const vkmod =
+              panels.find(
+                (m) => m && m in G.Tab && G.Tab[m].tabType === 'Texts'
+              ) ||
+              G.Tabs.find((t) => t.tabType === 'Texts')?.module ||
+              '';
+            if (location && vkmod) {
+              options = { chapters: { ...location, vkmod } };
+            }
+            Commands.printPassage(options);
           }),
         },
         {
