@@ -34,6 +34,8 @@ import {
   untargz,
   ListingElementR,
   httpCancel,
+  ftpCancelReset,
+  ftpCancelCause,
 } from '../ftphttp';
 
 import type {
@@ -793,7 +795,7 @@ async function downloadRepoConfs(
       });
     } catch (err: any) {
       if (progress) progress(-1);
-      return Promise.reject(err.message);
+      return Promise.reject(err);
     }
   }
   files.forEach((r) => {
@@ -835,7 +837,7 @@ const Module = {
       builtin: true,
     };
     const cancelkey = downloadKey(mr);
-    if (ftpCancel(cancelkey, true)) return C.UI.Manager.cancelMsg;
+    if (ftpCancelReset(cancelkey)) return C.UI.Manager.cancelMsg;
     const result: Repository[] | string = [];
     let fbuffer: Buffer;
     try {
@@ -879,63 +881,75 @@ const Module = {
     // Get an array of Promises that will progress in parallel.
     const promises: Promise<RepositoryListing | string>[] = manifests.map(
       async (manifest) => {
-        return new Promise((resolve) => {
-          if (manifest && !manifest.disabled) {
-            // Read local repository conf files
-            if (isRepoLocal(manifest)) {
-              if (fpath.isAbsolute(manifest.path)) {
-                const modsd = new LocalFile(manifest.path).append('mods.d');
-                if (modsd.exists() && modsd.isDirectory()) {
-                  const confs: SwordConfType[] = [];
-                  modsd.directoryEntries.forEach((de) => {
-                    const f = modsd.clone().append(de);
-                    if (!f.isDirectory() && f.path.endsWith('.conf')) {
-                      const conf = parseSwordConf(f);
-                      confs.push(conf);
-                    }
-                  });
-                  return resolve(confs);
-                }
-                return resolve(`Directory not found: ${manifest.path}/mods.d`);
+        if (manifest && !manifest.disabled) {
+          // LOCAL repository conf files
+          if (isRepoLocal(manifest)) {
+            if (fpath.isAbsolute(manifest.path)) {
+              const modsd = new LocalFile(manifest.path).append('mods.d');
+              if (modsd.exists() && modsd.isDirectory()) {
+                const confs: SwordConfType[] = [];
+                modsd.directoryEntries.forEach((de) => {
+                  const f = modsd.clone().append(de);
+                  if (!f.isDirectory() && f.path.endsWith('.conf')) {
+                    const conf = parseSwordConf(f);
+                    confs.push(conf);
+                  }
+                });
+                return confs;
               }
-              return resolve(`Path not absolute: ${manifest.path}/mods.d`);
+              return `Directory not found: ${manifest.path}/mods.d`;
             }
-            // Download and read remote repository conf files.
-            const cancelkey = downloadKey(manifest);
-            if (ftpCancel(cancelkey, true)) {
-              return Promise.resolve(C.UI.Manager.cancelMsg);
+            return `Path not absolute: ${manifest.path}/mods.d`;
+          }
+
+          // REMOTE repository conf files.
+          const cancelkey = downloadKey(manifest);
+          if (ftpCancelReset(cancelkey)) {
+            return C.UI.Manager.cancelMsg;
+          }
+          let threshProgress = 0;
+          let done = false;
+          const progress = (prog: number) => {
+            if (manifest) {
+              if (!done && (Math.abs(prog) === 1 || prog >= threshProgress)) {
+                const dlk = downloadKey(manifest);
+                const w = BrowserWindow.fromId(callingWinID);
+                w?.webContents.send('progress', prog, dlk);
+                threshProgress = prog + 5;
+                done = prog === -1;
+              }
             }
-            const progress = (prog: number) => {
-              if (!manifest) return;
-              const dlk = downloadKey(manifest);
-              log.silly(`REPO progress ${dlk}: ${prog}`);
-              const w = BrowserWindow.fromId(callingWinID);
-              w?.webContents.send('progress', prog, dlk);
-            };
-            return resolve(
-              downloadRepoConfs(manifest, cancelkey, progress)
-                .then((repconfs) => {
-                  return repconfs.map((rc) => rc.conf);
-                })
-                .finally(() => {
-                  progress(-1);
-                })
+          };
+          let repconfs: DownloadRepoConfsType[];
+          try {
+            repconfs = await downloadRepoConfs(manifest, cancelkey, progress);
+          } catch (er) {
+            const cause = ftpCancelCause(cancelkey) || er;
+            return Promise.reject(
+              cause && typeof cause === 'object' && 'message' in cause
+                ? cause.message
+                : cause
             );
           }
-          return resolve(null);
-        });
+          return repconfs.map((rc) => rc.conf);
+        }
+        return null;
       }
     );
     // Wait for all Promises to be settled before returning any repo data.
-    return Promise.allSettled(promises).then((results) => {
-      const ret: (RepositoryListing | string)[] = [];
-      results.forEach((result) => {
-        if (result.status === 'fulfilled')
-          ret.push(result.value as RepositoryListing);
-        else ret.push(result.reason.toString() as string);
+    return Promise.allSettled(promises)
+      .then((results) => {
+        const ret: (RepositoryListing | string)[] = [];
+        results.forEach((result) => {
+          if (result.status === 'fulfilled')
+            ret.push(result.value as RepositoryListing);
+          else ret.push(result.reason.toString() as string);
+        });
+        return ret;
+      })
+      .catch((er) => {
+        throw new Error(er);
       });
-      return ret;
-    });
   },
 
   // Download a SWORD module from a repository and save it as a zip object
@@ -945,13 +959,24 @@ const Module = {
     const { type } = download;
     const callingWinID = (arguments[1] ?? -1) as number;
     const downloadkey = downloadKey(download);
-    if (ftpCancel(downloadkey, true)) return C.UI.Manager.cancelMsg;
+    if (ftpCancelReset(downloadkey)) return C.UI.Manager.cancelMsg;
 
+    let threshProgress = 0;
+    let done = false;
     const progress = (prog: number) => {
-      log.silly(`SWORD progress ${downloadkey}: ${prog}`);
-      let w = BrowserWindow.fromId(callingWinID);
-      w?.webContents.send('progress', prog, downloadkey);
-      w = null;
+      if (!done && (Math.abs(prog) === 1 || prog >= threshProgress)) {
+        let w = BrowserWindow.fromId(callingWinID);
+        w?.webContents.send('progress', prog, downloadkey, new Error().stack);
+        w = null;
+        threshProgress = prog + 2;
+        done = prog === -1;
+      }
+    };
+    const logerror = (er: any) => {
+      const msg = (er?.message || '') as string;
+      if (msg.includes(C.UI.Manager.cancelMsg) || msg === 'canceled') {
+        log.debug(er);
+      } else log.error(er);
     };
 
     // Audio XSM modules (HTTP download)
@@ -1006,7 +1031,7 @@ const Module = {
         throw new Error(`Could not create tmp directory '${tmpdir.path}'.`);
       } catch (er: any) {
         progress(-1);
-        log.silly(er);
+        logerror(er);
         return Promise.resolve(er.message);
       }
 
@@ -1020,10 +1045,10 @@ const Module = {
         const zipBuf = await getFile(domain, fp, downloadkey, progress);
         Downloads[downloadkey] = new ZIP(zipBuf);
         progress(-1);
-        return 1;
+        return await Promise.resolve(1);
       } catch (er: any) {
         progress(-1);
-        log.silly(er);
+        logerror(er);
         return Promise.resolve(er.message);
       }
     }
@@ -1037,7 +1062,7 @@ const Module = {
       confbuf = await getFile(domain, confpath, downloadkey);
     } catch (er: any) {
       progress(-1);
-      log.silly(er);
+      logerror(er);
       return Promise.resolve(er.message);
     }
     const conf = parseSwordConf({
@@ -1060,8 +1085,12 @@ const Module = {
         );
       } catch (er: any) {
         progress(-1);
-        log.silly(er);
-        return Promise.resolve(er.message);
+        logerror(er);
+        // Multi-connection operations should check ftpCancelCause
+        const cause = ftpCancelCause(downloadkey) || er.message;
+        return Promise.resolve(
+          typeof cause === 'string' ? cause : cause.message
+        );
       }
       const zip = new ZIP();
       zip.addFile(fpath.posix.join('mods.d', confname), confbuf);
@@ -1073,22 +1102,23 @@ const Module = {
       });
       Downloads[downloadkey] = zip;
       progress(-1);
-      return zip.getEntries().length;
+      return Promise.resolve(zip.getEntries().length);
     }
     progress(-1);
     const msg = `Unexpected DataPath in ${confname}: ${conf.DataPath}`;
     log.silly(msg);
-    return msg;
+    return Promise.resolve(msg);
   },
 
   // Cancel in-process downloads and/or previous downloads.
-  // IMPORTANT: cancel() should also always be called when a session
-  // is finished, to delete all waiting connections.
+  // IMPORTANT: cancel() without arguments should always be
+  // called when a session is finished, to delete all waiting
+  // connections.
   cancel(downloads?: Download[]): number {
     let canceled = 0;
     if (downloads === undefined) {
       canceled += httpCancel();
-      canceled += ftpCancel();
+      canceled += ftpCancel(undefined, 'canceled');
       destroyFTPconnection();
       canceled += Object.keys(Downloads).length;
       Downloads = {};
@@ -1100,7 +1130,7 @@ const Module = {
       if ('http' in dl) {
         cnt += httpCancel(downloadkey);
       } else {
-        cnt += ftpCancel(downloadkey);
+        cnt += ftpCancel(downloadkey, 'canceled');
       }
       log.verbose(`Module.cancel(${downloadkey}) = ${cnt}`);
       if (downloadkey in Downloads) {

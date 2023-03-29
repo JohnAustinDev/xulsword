@@ -26,7 +26,7 @@ let MaxDomainConnections: { [domain: string]: number } = {};
 
 let FtpCancelable: {
   [cancelkey: string]: {
-    canceled: boolean;
+    cause: 'canceled' | Error | null;
     // callbacks is array of [ operation-id, callback[] ]
     callbacks: [string, (() => void)[]][];
   };
@@ -40,22 +40,25 @@ const HttpCancelable: {
 // return a unique id. Then call ftpCancelable(key, id, func) as necessary
 // to register arbitrary cancelation functions for the key. If ftpCancel(key)
 // is called, all registered functions will be called in reverse to cancel
-// each operation id for that key. At the end of an operation, be sure  to
-// call ftpCancelable(key, id) to remove registered functions of that id.
+// each operation id for that key. When the operation for which the id was
+// created finishes without error, call ftpCancelable(key, id) to remove all
+// registered cancel functions for that id.
 function ftpCancelable(key: string, id?: string, func?: () => void) {
   if (!key) return '';
 
-  // Don't throw during ftpCancelable(key, id) since this should be called
-  // after an operation has already succesfully completed.
   if (
-    !(key && id && !func) &&
+    key &&
+    id === undefined &&
+    func === undefined &&
     key in FtpCancelable &&
-    FtpCancelable[key].canceled
+    FtpCancelable[key].cause
   ) {
+    const { cause } = FtpCancelable[key];
     // Run ftpCancel(key) again in case somehow new operations were added
     // since the last ftpCancel(key) call.
-    ftpCancel(key);
-    throw new Error(`${C.UI.Manager.cancelMsg}`);
+    ftpCancel(key, cause);
+    if (typeof cause === 'string') throw new Error(cause);
+    if (cause) throw cause;
   }
 
   // Return a unique operation id
@@ -74,7 +77,7 @@ function ftpCancelable(key: string, id?: string, func?: () => void) {
 
   // Add another callback to an operation id
   if (!(key in FtpCancelable)) {
-    FtpCancelable[key] = { callbacks: [], canceled: false };
+    FtpCancelable[key] = { callbacks: [], cause: null };
   }
   let j = FtpCancelable[key].callbacks.findIndex((x) => x[0] === id);
   if (j === -1) {
@@ -86,25 +89,17 @@ function ftpCancelable(key: string, id?: string, func?: () => void) {
 }
 
 // When a cancelable download is started, any existing key should be
-// deleted with ftpCancel(key, true). If 1 is returned from this call,
+// deleted with ftpCancelReset(key). If 1 is returned from this call,
 // then there are still registered callbcacks from a previous operation
 // for the download, indicating the operation(s) threw an unhandled
 // exception, or were not closed with ftpCancelable(key, id). Later,
 // when the downloading window is closed, ftpCancel() should be called
-// to delete all keys, clear MaxDomainConnections and destroy all FTP
-// connections. To cancel a single download, ftpCancel(key) should be
-// called.
+// to delete all keys,  and destroy all FTP connections. To cancel a
+// single download, ftpCancel(key) should be called.
 export function ftpCancel(
   cancelkey?: string,
-  resetFTPCancelable?: boolean
+  cause?: 'canceled' | Error | null
 ): number {
-  if (resetFTPCancelable && cancelkey) {
-    if (cancelkey in FtpCancelable) {
-      if (FtpCancelable[cancelkey].callbacks.length) return 1;
-      delete FtpCancelable[cancelkey];
-    }
-    return 0;
-  }
   if (cancelkey === undefined) {
     destroyFTPconnection();
     FtpCancelable = {};
@@ -121,9 +116,34 @@ export function ftpCancel(
         })
       );
       FtpCancelable[cancelkey].callbacks = [];
-      FtpCancelable[cancelkey].canceled = true;
+      if (cause && !FtpCancelable[cancelkey].cause) {
+        FtpCancelable[cancelkey].cause = cause;
+      }
     }
     return n;
+  }
+  return 0;
+}
+
+// If an error occurs, it usually causes the entire cancelkey to be canceled.
+// In this case, we need to report the root cause, not just 'canceled'.
+export function ftpCancelCause(cancelkey: string): string | Error | null {
+  if (cancelkey && cancelkey in FtpCancelable) {
+    const { cause } = FtpCancelable[cancelkey];
+    if (cause === 'canceled') {
+      return C.UI.Manager.cancelMsg;
+    }
+    return cause;
+  }
+  return null;
+}
+
+export function ftpCancelReset(cancelkey: string): number {
+  if (cancelkey in FtpCancelable) {
+    if (FtpCancelable[cancelkey].callbacks.length) {
+      return FtpCancelable[cancelkey].callbacks.length;
+    }
+    delete FtpCancelable[cancelkey];
   }
   return 0;
 }
@@ -166,18 +186,22 @@ export function httpCancel(cancelkey?: string): number {
   return canceled;
 }
 
-// Close and free FTP connections to a particular domain, or all connections.
+// Close and free FTP connections to a particular domain, or all domains.
 export function destroyFTPconnection(domain?: string | null, quiet = false) {
   if (domain) {
     if (domain in activeConnections) {
-      activeConnections[domain].forEach((c) => c.destroy());
-      delete activeConnections[domain];
-      waitingConnections[domain].forEach((c) => c.destroy());
-      delete waitingConnections[domain];
-      waitingFuncs[domain].forEach(() => {
-        if (!quiet) log.error(`Dropping neglected FTP function.`);
-        delete waitingFuncs[domain];
+      activeConnections[domain].forEach((c) => {
+        abortP(c)
+          .then(() => c.destroy())
+          .catch((er) => log.error(er));
       });
+      activeConnections[domain] = [];
+      waitingConnections[domain].forEach((c) => {
+        abortP(c)
+          .then(() => c.destroy())
+          .catch((er) => log.error(er));
+      });
+      waitingConnections[domain] = [];
     }
   } else {
     Object.keys(activeConnections).forEach((d) =>
@@ -186,168 +210,197 @@ export function destroyFTPconnection(domain?: string | null, quiet = false) {
   }
 }
 
-// Create or use an existing FTP connection to a remote server to run
-// an arbitrary function and return an arbitrary promise. Up to
-// FTPMaxConnectionsPerDomain will be created per domain. When that
-// number are in use, functions will be queued, waiting for free
-// connections. The cancelkey can be used to cancel any read stream
-// or function even if it is waiting for a connection.
+// Move a connection from active to waiting.
+function freeConnection(c: FTP, domain: string) {
+  waitingConnections[domain].push(c);
+  const i = activeConnections[domain]?.indexOf(c);
+  if (i !== undefined && i !== -1) {
+    activeConnections[domain].splice(i, 1);
+    log.debug(
+      `Freed 1 connection to ${domain}; ${activeConnections[domain].length} still active.`
+    );
+  }
+}
+
+// Remove a connection from active and waiting.
+function forgetConnection(c: FTP, domain: string) {
+  const i0 = waitingConnections[domain]?.indexOf(c);
+  if (i0 !== undefined && i0 !== -1) {
+    waitingConnections[domain].splice(i0, 1);
+  }
+  const i1 = activeConnections[domain]?.indexOf(c);
+  if (i1 !== undefined && i1 !== -1) {
+    activeConnections[domain].splice(i1, 1);
+  }
+}
+
+// NOTE: If a connection operation is not aborted before the connection
+// is destroyed, unhandled 'Failure writing network stream.' errors will
+// occur.
+function createActiveConnection(
+  domain: string,
+  cancelkey: string
+): Promise<FTP | 'too-many-connections'> {
+  return new Promise((resolve, reject) => {
+    let c: FTP | undefined;
+    let id: string;
+    try {
+      const max = MaxDomainConnections[domain] || C.FTPMaxConnections;
+      if (
+        activeConnections[domain].length + waitingConnections[domain].length <
+          max &&
+        Object.values(activeConnections)
+          .concat(Object.values(waitingConnections))
+          .flat().length < max
+      ) {
+        log.debug(`Connecting: ${domain}`);
+        c = new FTP();
+        id = ftpCancelable(cancelkey);
+        ftpCancelable(cancelkey, id, () => {
+          if (c) {
+            abortP(c)
+              .then(() => c?.destroy())
+              .catch((er) => log.error(er));
+            forgetConnection(c, domain);
+            reject(C.UI.Manager.cancelMsg);
+          }
+        });
+        activeConnections[domain].push(c);
+        c.connect({
+          host: domain,
+          user: 'anonymous',
+          password: C.FTPPassword,
+          connTimeout: C.FTPConnectTimeout,
+        });
+      } else resolve('too-many-connections');
+    } catch (er: any) {
+      reject(er);
+    }
+
+    if (c) {
+      const cc = c;
+      cc.on('error', (er: Error) => {
+        log.debug(`ftp connect on-error ${domain}: '${er}'.`);
+        abortP(cc)
+          .then(() => cc.destroy())
+          .catch((err) => log.error(err));
+        if (er.message.includes('too many connections')) {
+          MaxDomainConnections[domain] = activeConnections[domain].length;
+          resolve('too-many-connections');
+        } else reject(er);
+      });
+      cc.on('close', (er: boolean) => {
+        log.silly(`ftp connect on-close ${domain} ${er}'.`);
+        forgetConnection(cc, domain);
+      });
+      cc.on('end', () => {
+        log.silly(`ftp connect on-end ${domain}.`);
+      });
+      cc.on('greeting', (msg: string) => {
+        log.silly(`ftp connect on-greeting ${domain}: '${msg}'.`);
+      });
+      cc.on('ready', () => {
+        log.silly(`ftp connect on-ready ${domain}.`);
+        if (id) ftpCancelable(cancelkey, id);
+        resolve(cc);
+      });
+    }
+  });
+}
+
+async function getActiveConnection(
+  domain: string,
+  cancelkey: string
+): Promise<FTP> {
+  const waiting = async (): Promise<FTP | 'too-many-connections'> => {
+    ftpCancelable(cancelkey);
+    let c: FTP | null | 'too-many-connections' =
+      waitingConnections[domain][0] || null;
+    if (c) {
+      log.silly(`ftp connect on-ready-free ${domain}.`);
+      waitingConnections[domain].shift();
+      activeConnections[domain].push(c);
+      return c;
+    }
+    c = await createActiveConnection(domain, cancelkey);
+    return c;
+  };
+  let c: FTP | 'too-many-connections';
+  try {
+    c = await waiting();
+  } catch (er) {
+    return Promise.reject(er);
+  }
+  let msg = `Waiting for a free connection to ${domain}.`;
+  for (;;) {
+    if (c !== 'too-many-connections') break;
+    if (msg) log.debug(msg);
+    msg = '';
+    await new Promise((resolve) => setTimeout(() => resolve(true), 100));
+    try {
+      c = await waiting();
+    } catch (er) {
+      return Promise.reject(er);
+    }
+  }
+  return c;
+}
+
+// Create or use a waiting FTP connection to a remote server to run
+// an arbitrary function and return an arbitrary promise. When there
+// are no connections waiting and there are too many connections to
+// create a new one, then it waits. When a connection becomes available,
+// it will be used. The cancelkey can be used to cancel the function
+// even if it is still waiting for a connection, or it's already in
+// process.
 const activeConnections: { [domain: string]: FTP[] } = {};
 const waitingConnections: { [domain: string]: FTP[] } = {};
-const waitingFuncs: { [domain: string]: ((c: FTP) => void)[] } = {};
 export async function connect<Retval>(
   domain: string,
   cancelkey: string, // '' is uncancelable
   func: (c: FTP) => Promise<Retval>
 ): Promise<Retval> {
-  return new Promise((resolve, reject) => {
-    if (!(domain in activeConnections)) {
-      activeConnections[domain] = [];
-      waitingConnections[domain] = [];
-      waitingFuncs[domain] = [];
-    }
-    let id = '';
-    let rejected = false;
-    const rejectOnce = (er: any) => {
-      if (!rejected) {
-        ftpCancelable(cancelkey, id); // never throws
-        const message: string =
-          typeof er === 'object' && 'message' in er ? er.message : '';
-        reject(message ? new Error(`${domain}: ${message}`) : er);
-      }
-      rejected = true;
-    };
-    const freeConnection = (c: FTP, failed?: boolean) => {
-      if (!failed) waitingConnections[domain].push(c);
-      else c.destroy();
-      const i = activeConnections[domain]?.indexOf(c);
-      if (i !== undefined && i !== -1) {
-        activeConnections[domain].splice(i, 1);
-        log.debug(
-          `Freed 1 connection to ${domain}, ${
-            activeConnections[domain].length
-          }/${Object.entries(activeConnections).reduce(
-            (pr, cr) => pr + cr[1].length,
-            0
-          )} left.`
-        );
-      }
-    };
-    const startNextWaitingFunc = (c: FTP) => {
-      const next = waitingFuncs[domain][0];
-      if (next) {
-        waitingFuncs[domain].shift();
-        log.silly(`ftp connect on-ready-wait ${domain}.`);
-        next(c);
-      } else freeConnection(c);
-    };
-    const runFunc = async (c: FTP) => {
-      try {
-        ftpCancelable(cancelkey, id, () => {
-          abortP(c);
-        });
-        try {
-          const result = await func(c);
-          startNextWaitingFunc(c);
-          resolve(result);
-        } catch (er: any) {
-          freeConnection(c, true);
-          rejectOnce(er);
-        } finally {
-          ftpCancelable(cancelkey, id); // never throws
-        }
-      } catch (er) {
-        ftpCancelable(cancelkey, id); // never throws
-        startNextWaitingFunc(c);
-        rejectOnce(er);
-      }
-    };
-    const addWaitingFunc = () => {
-      const nfunc = (cf: FTP) => {
-        try {
-          runFunc(cf);
-        } catch (er) {
-          rejectOnce(er);
-        }
-      };
-      try {
-        ftpCancelable(cancelkey, id, () => {
-          const i = waitingFuncs[domain].indexOf(nfunc);
-          if (i !== -1) {
-            waitingFuncs[domain].splice(i, 1);
-            log.silly(`Canceled waiting function: ${id}`);
-          }
-          rejectOnce({ message: C.UI.Manager.cancelMsg });
-        });
-        waitingFuncs[domain].push(nfunc);
-      } catch (er) {
-        rejectOnce(er);
-      }
-    };
-    try {
-      id = ftpCancelable(cancelkey);
-      let c = waitingConnections[domain][0];
-      if (c) {
-        log.silly(`ftp connect on-ready-free ${domain}.`);
-        waitingConnections[domain].shift();
-        activeConnections[domain].push(c);
-        runFunc(c);
-      } else if (
-        activeConnections[domain].length <
-          (domain in MaxDomainConnections
-            ? MaxDomainConnections[domain]
-            : C.FTPMaxConnections) &&
-        Object.values(activeConnections).flat().length < C.FTPMaxConnections
-      ) {
-        c = new FTP();
-        c.on('error', (er: Error) => {
-          log.silly(`ftp connect on-error ${domain}: '${er}'.`);
-          freeConnection(c, true);
-          if (er.message.includes('too many connections')) {
-            MaxDomainConnections[domain] = activeConnections[domain].length;
-            addWaitingFunc();
-          } else rejectOnce(er);
-        });
-        c.on('close', (er: boolean) => {
-          log.silly(`ftp connect on-close ${domain}: error='${er}'.`);
-          if (er) {
-            rejectOnce(new Error(`Error during connection close.`));
-          }
-        });
-        c.on('greeting', (msg: string) => {
-          log.silly(`ftp connect on-greeting ${domain}: '${msg}'.`);
-        });
-        c.on('end', () => {
-          log.silly(`ftp connect on-end ${domain}.`);
-        });
-        c.on('ready', () => {
-          log.silly(`ftp connect on-ready ${domain}.`);
-          activeConnections[domain].push(c);
-          runFunc(c);
-        });
-        try {
-          log.debug(`Connecting: ${domain}`);
-          c.connect({
-            host: domain,
-            user: 'anonymous',
-            password: C.FTPPassword,
-            connTimeout: C.FTPConnectTimeout,
-          });
-        } catch (er: any) {
-          rejectOnce(er);
-        }
-      } else addWaitingFunc();
-    } catch (er) {
-      rejectOnce(er);
-    }
+  if (!(domain in activeConnections)) {
+    activeConnections[domain] = [];
+    waitingConnections[domain] = [];
+  }
+
+  const id = ftpCancelable(cancelkey);
+  let c: FTP;
+  try {
+    c = await getActiveConnection(domain, cancelkey);
+  } catch (er) {
+    ftpCancelable(cancelkey, id); // never throws
+    return Promise.reject(er);
+  }
+
+  ftpCancelable(cancelkey, id, () => {
+    abortP(c);
+    freeConnection(c, domain);
   });
+
+  let result: Retval;
+  try {
+    result = await func(c);
+    freeConnection(c, domain);
+  } catch (er) {
+    abortP(c)
+      .then(() => c.destroy())
+      .catch((err) => log.error(err));
+    forgetConnection(c, domain);
+    return await Promise.reject(er);
+  } finally {
+    ftpCancelable(cancelkey, id); // never throws
+  }
+
+  return result;
 }
 
 function streamToBuffer(stream: NodeJS.ReadableStream): Promise<Buffer> {
   const buf: Buffer[] = [];
   return new Promise((resolve, reject) => {
     stream.on('data', (chunk: Buffer) => {
-      log.silly(`data: ${chunk.length} bytes`);
+      // log.silly(`data: ${chunk.length} bytes`);
       buf.push(chunk);
     });
     stream.on('end', () => {
@@ -364,7 +417,7 @@ function streamToBuffer(stream: NodeJS.ReadableStream): Promise<Buffer> {
 // Convert the callback FTP API to promise.
 async function abortP(c: FTP): Promise<void> {
   return new Promise((resolve, reject) => {
-    log.silly(`abortP() before ${c.status}`);
+    log.silly(`abortP(c)`);
     c.abort((er: Error) => {
       if (er) reject(er);
       else resolve();
@@ -378,7 +431,10 @@ async function listP(c: FTP, dirpath: string): Promise<ListingElement[]> {
     log.silly(`listP(${dirpath})`);
     c.list(dirpath, false, (er: Error, listing: ListingElement[]) => {
       if (er) reject(er);
-      else resolve(listing);
+      else if (listing) {
+        listing.forEach((l) => log.debug(`listing: ${l.name}`));
+        resolve(listing);
+      }
     });
   });
 }
@@ -399,7 +455,7 @@ async function sizeP(c: FTP, filepath: string): Promise<number> {
 async function getP(c: FTP, filepath: string): Promise<NodeJS.ReadableStream> {
   return new Promise((resolve, reject) => {
     c.get(filepath, (er: Error, stream: NodeJS.ReadableStream) => {
-      if (er) reject(new Error(`${er.message} ${filepath}`));
+      if (er) reject(`${er.message} ${filepath}`);
       else {
         log.silly(`getStream(${filepath})`);
         resolve(stream);
@@ -419,59 +475,68 @@ async function getFileP(
   size?: number
 ): Promise<Buffer> {
   log.silly(`getFileP(${filepath})`);
+
+  const killstream = async (s: any) => {
+    if (s && 'destroy' in s && typeof s.destroy === 'function') {
+      try {
+        await abortP(c);
+        await s.destroy();
+      } catch (er) {
+        log.error(er);
+      } finally {
+        log.debug(`Killed FTP stream: ${filepath}`);
+      }
+    } else log.error(`Stream was not destroyable: ${filepath}`);
+  };
+
   let id = '';
   let stream: NodeJS.ReadableStream;
   try {
     id = ftpCancelable(cancelkey);
     stream = await getP(c, filepath);
-
-    const killstream = async (s: any) => {
-      if (s && 'destroy' in s && typeof s.destroy === 'function') {
-        try {
-          await s.destroy();
-        } catch (er) {
-          log.debug(er);
-        } finally {
-          if (progress) progress(-1);
-          log.debug(`Canceled FTP stream '${cancelkey} ${id}'`);
-        }
-      }
-    };
-
-    ftpCancelable(cancelkey, id, async () => killstream(stream));
-
-    if (progress) {
-      progress(0);
-      if (size) {
-        let current = 0;
-        stream.on('data', (chunk: Buffer) => {
-          try {
-            ftpCancelable(cancelkey);
-            current += chunk.length;
-            progress(current / size);
-          } catch (er) {
-            killstream(stream);
-          }
-        });
-      }
-    }
   } catch (er) {
     return Promise.reject(er);
   }
+  ftpCancelable(cancelkey, id, async () => killstream(stream));
 
+  let buf: Buffer;
   try {
-    const buf = await streamToBuffer(stream);
-    log.silly(`DONE getFileP(${filepath})`);
-    return buf;
-  } catch (er) {
-    if (cancelkey in FtpCancelable && FtpCancelable[cancelkey].canceled) {
-      return await Promise.reject({ message: C.UI.Manager.cancelMsg });
-    }
+    buf = await new Promise((resolve, reject) => {
+      if (stream) {
+        stream.on('error', (er) => {
+          killstream(stream);
+          reject(er);
+        });
+        stream.on('data', () => {
+          try {
+            ftpCancelable(cancelkey);
+          } catch (er) {
+            killstream(stream);
+            reject(er);
+          }
+        });
+        if (progress && size) {
+          progress(0);
+          let current = 0;
+          stream.on('data', (chunk: Buffer) => {
+            current += chunk.length;
+            progress(current / size);
+          });
+        }
+        streamToBuffer(stream)
+          .then((r) => resolve(r))
+          .catch((er) => reject(er));
+      } else reject(`No stream: ${filepath}`);
+    });
+  } catch (er: any) {
+    ftpCancel(cancelkey, er);
     return await Promise.reject(er);
   } finally {
-    if (progress) progress(-1);
-    ftpCancelable(cancelkey, id); // never throws
+    if (progress && size) progress(-1);
   }
+  log.silly(`DONE getFileP(${filepath})`);
+  ftpCancelable(cancelkey, id); // never throws
+  return buf;
 }
 
 // Return a buffer promise for the FTP download of domain/filepath.
@@ -535,7 +600,8 @@ export async function list(
           )
         );
     }
-  } catch (er) {
+  } catch (er: any) {
+    ftpCancel(cancelkey, er);
     promises.push(Promise.reject(er));
   }
   return Promise.all(promises).then((lists) => {
@@ -572,8 +638,9 @@ export async function getDir(
         return { listing: l, buffer: buffers[i] };
       });
     }
-  } catch (er) {
+  } catch (er: any) {
     if (progress) progress(-1);
+    ftpCancel(cancelkey, er);
     return Promise.reject(er);
   }
   return [];
@@ -595,8 +662,9 @@ export async function getFiles(
     let b;
     try {
       b = await getFile(domain, f, cancelkey);
-    } catch (er) {
+    } catch (er: any) {
       if (progress) progress(-1);
+      ftpCancel(cancelkey, er);
       return Promise.reject(er);
     }
     prog += 1;
@@ -612,7 +680,9 @@ export async function getFiles(
     pres.forEach((pre) => {
       if (pre.status === 'fulfilled') {
         bufs.push(pre.value);
-      } else throw pre.reason;
+      } else {
+        throw pre.reason;
+      }
     });
 
     return bufs;

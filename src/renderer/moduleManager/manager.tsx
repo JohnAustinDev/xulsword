@@ -79,6 +79,8 @@ import type { ModinfoParent } from '../libxul/modinfo';
 
 G.Module.cancel();
 
+let MasterRepoListDownloaded = false;
+
 const defaultProps = {
   ...xulDefaultProps,
 };
@@ -277,30 +279,18 @@ export default class ModuleManager
       H.handleListings(this, listing);
     };
     // Download data for the repository and module tables
-    if (!H.Saved.repository.data.length) {
+    if (!MasterRepoListDownloaded) {
+      MasterRepoListDownloaded = true;
+      let remoteRepos: string | Repository[] = [];
       if (repositories) {
         H.Saved.repository.data = [];
         H.Saved.repositoryListings = [];
         try {
           if (!navigator.onLine) throw new Error(`No Internet connection.`);
-          const repos = await G.Module.crossWireMasterRepoList();
-          if (typeof repos === 'string') throw new Error(repos);
-          // Calling loadRepositoryTable on all repos at once causes the
-          // module table to remain empty until all repository listings have
-          // been downloaded, and certain repos may take a long time. So
-          // instead it is called on each repo separately.
-          this.loadRepositoryTable(repos).map(async (r, i, a) => {
-            return G.Module.repositoryListing([
-              { ...r, file: C.SwordRepoManifest, type: 'ftp' },
-            ]).then((list) => {
-              H.handleListings(
-                this,
-                a.map((_lr, ir) => (ir === i ? list[0] : null))
-              );
-              return true;
-            });
-          });
+          remoteRepos = await G.Module.crossWireMasterRepoList();
+          if (typeof remoteRepos === 'string') throw new Error(remoteRepos);
         } catch (er: any) {
+          remoteRepos = [];
           // Failed to load the master list, so just load local repos.
           log.warn(er);
           const msg = (typeof er === 'object' && er.message) || '';
@@ -309,34 +299,37 @@ export default class ModuleManager
             timeout: 5000,
             intent: Intent.WARNING,
           });
-          loadLocalRepos();
         }
+      }
+      if (remoteRepos.length) {
+        // Calling loadRepositoryTable on all repos at once causes the
+        // module table to remain empty until all repository listings have
+        // been downloaded, and certain repos may take a long time. So
+        // instead it is called on each repo separately.
+        this.loadRepositoryTable(remoteRepos).map(async (r, i, a) => {
+          return G.Module.repositoryListing([
+            { ...r, file: C.SwordRepoManifest, type: 'ftp' },
+          ])
+            .then((list) => {
+              H.handleListings(
+                this,
+                a.map((_lr, ir) => (ir === i ? list[0] : null))
+              );
+              return true;
+            })
+            .catch((er) => {
+              log.error(er);
+            });
+        });
       } else loadLocalRepos();
     }
 
     // Instantiate progress handler
-    const progressing = {
-      downloads: [] as [string, number][], // [id, percent]
-    };
     this.destroy.push(
-      window.ipc.on('progress', (prog: number, id?: string) => {
+      window.ipc.on('progress', (prog: number, id?: string, stack?: string) => {
         const state = this.state as ManagerState;
         if (id) {
-          // Set total progress bar
-          let { downloads } = progressing;
-          const di = downloads.findIndex((d) => d[0] === id);
-          if (di === -1) downloads.push([id, prog]);
-          else downloads[di][1] = prog;
-          if (downloads.every((d) => d[1] === -1)) downloads = [];
-          const progress = !downloads.length
-            ? null
-            : [
-                downloads.reduce((p, c) => p + (c[1] === -1 ? 1 : c[1]), 0),
-                downloads.length,
-              ];
-          this.sState({ progress });
-          log.silly(`Total progress: ${progress}`, downloads);
-          progressing.downloads = downloads;
+          H.setDownloadProgress(this, id, prog);
           // Set individual repository progress bars
           const { repository, module } = state.tables;
           const repoIndex = repository.data.findIndex(
@@ -350,7 +343,7 @@ export default class ModuleManager
           const repdrow = repository.data[repoIndex];
           if (repdrow && prog === -1 && repdrow[H.RepCol.iInfo].loading) {
             repdrow[H.RepCol.iInfo].loading = false;
-            H.setTableState(this, 'repository', null, repository.data, false);
+            H.setTableState(this, 'repository', null, repository.data, true);
           }
           // Set individual module progress bars
           const modIndex = module.data.findIndex((r) => {
@@ -430,7 +423,7 @@ export default class ModuleManager
         },
       ]);
     });
-    H.setTableState(this, 'repository', null, repoTableData, false);
+    H.setTableState(this, 'repository', null, repoTableData, true);
     return allrepos;
   }
 
@@ -784,7 +777,9 @@ export default class ModuleManager
     const disable = {
       moduleInfo: !selectionToTableRows(module.selection).length,
       moduleInfoBack: false,
-      moduleCancel: !modtable.data.find((r) => r[H.ModCol.iInfo].loading),
+      moduleCancel:
+        !modtable.data.find((r) => r[H.ModCol.iInfo].loading) &&
+        !progress?.length,
       repoAdd: false,
       repoDelete:
         !repository?.selection.length ||

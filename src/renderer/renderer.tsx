@@ -55,6 +55,16 @@ window.onerror = (errorMsg, url, line) => {
   return false;
 };
 
+window.addEventListener('unhandledrejection', (event) => {
+  log.error(
+    'Unhandled Renderer Process rejection (promise: ',
+    event.promise,
+    ', reason: ',
+    event.reason,
+    ').'
+  );
+});
+
 window.ipc.on('cache-reset', () => {
   Cache.clear();
   log.silly(`CLEARED ALL CACHES`);
@@ -169,7 +179,7 @@ function WindowRoot(props: WindowRootProps) {
 
   // IPC resize setup:
   useEffect(() => {
-    if (resetOnResize || s.showPrintOverlay[0]) {
+    if ((resetOnResize || s.showPrintOverlay[0]) && s.dialogs[0].length === 0) {
       return window.ipc.on(
         'resize',
         delayHandler.bind(delayHandlerThis)(

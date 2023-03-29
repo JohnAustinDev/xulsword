@@ -250,9 +250,9 @@ abstract class AbstractSortableColumn implements TSortableColumn {
     );
     return (
       <Column
+        key={this.dataColIndex}
         cellRenderer={cellRenderer}
         columnHeaderCellRenderer={columnHeaderCellRenderer}
-        key={this.dataColIndex}
         name={this.name}
       />
     );
@@ -354,7 +354,7 @@ const defaultProps = {
   onColumnWidthChanged: undefined,
   onColumnHide: undefined,
 
-  tableCompRef: {},
+  tableCompRef: undefined,
 };
 
 const propTypes = {
@@ -396,7 +396,7 @@ export type TableProps = XulProps & {
   onColumnWidthChanged?: (propColumns: TablePropColumn[]) => void;
   onColumnHide?: (propColumns: TablePropColumn[]) => void;
 
-  tableCompRef: React.LegacyRef<BPTable>;
+  tableCompRef: React.LegacyRef<BPTable> | undefined;
 };
 
 type TableState = {

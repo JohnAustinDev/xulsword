@@ -5,11 +5,12 @@ import React from 'react';
 import C from '../../constant';
 import S from '../../defaultPrefs';
 import Cache from '../../cache';
-import { clone, escapeRE, ofClass } from '../../common';
+import { clone, escapeRE, ofClass, sortTabsByRelevance } from '../../common';
 import { getElementData, verseKey } from '../htmlData';
 import G from '../rg';
 import { scrollIntoView, windowArguments } from '../rutil';
 import { delayHandler } from '../libxul/xul';
+import log from '../log';
 import { textChange } from './ztext';
 import { aTextWheelScroll, chapterChange } from './zversekey';
 
@@ -19,6 +20,8 @@ import type {
   PinPropsType,
   V11nType,
   OSISBookType,
+  TabTypes,
+  TabType,
 } from '../../type';
 import type Xulsword from '../xulsword/xulsword';
 import type { XulswordState } from '../xulsword/xulsword';
@@ -70,27 +73,24 @@ export function closeMenupopups(component: React.Component) {
   }
 }
 
+// Replace current module choices with newly installed modules
+// without breaking multi-column panels.
 export function showNewModules(
   this: Xulsword | ViewportWin,
   newmods: NewModulesType
 ) {
-  const sortedModConfs = newmods.modules
-    .filter((m) => m && m.module in G.Tab)
-    .sort((a, b) => {
-      const ai = G.Tabs.indexOf(G.Tab[a.module]);
-      const bi = G.Tabs.indexOf(G.Tab[b.module]);
-      if (ai === bi) return 0;
-      return ai < bi ? -1 : 1;
-    });
-  if (sortedModConfs.length) {
+  const newTabs = newmods.modules
+    .map((m) => (m && m.module in G.Tab && G.Tab[m.module]) || null)
+    .filter(Boolean) as TabType[];
+  const sortedTabs = sortTabsByRelevance(newTabs, G.i18n.language);
+  if (sortedTabs.length) {
+    log.debug(`showNewModules (sorted): ${sortedTabs.map((c) => c.module)}`);
     this.setState((prevState: XulswordState | ViewportWinState) => {
       const ps = clone(prevState);
       const { panels, isPinned } = ps;
       let { location } = ps;
-      // Replace current module choices with newly installed modules
-      // without breaking multi-column panels.
       let panelIndex = 0;
-      sortedModConfs.forEach((conf) => {
+      sortedTabs.forEach((conf) => {
         let current = panels[panelIndex];
         if (panelIndex < panels.length) {
           for (;;) {

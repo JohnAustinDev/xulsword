@@ -190,6 +190,30 @@ export type ModuleUpdates = {
   updateTo: SwordConfType;
 };
 
+export const Progressing = {
+  downloads: [] as [string, number][], // [id, percent]
+};
+
+export function setDownloadProgress(
+  xthis: ModuleManager,
+  dlkey: string,
+  prog: number
+) {
+  let { downloads } = Progressing;
+  const di = downloads.findIndex((d) => d[0] === dlkey);
+  if (di === -1) downloads.push([dlkey, prog]);
+  else downloads[di][1] = prog;
+  if (downloads.every((d) => d[1] === -1)) downloads = [];
+  const progress = !downloads.length
+    ? null
+    : [
+        downloads.reduce((p, c) => p + (c[1] === -1 ? 1 : c[1]), 0),
+        downloads.length,
+      ];
+  xthis.sState({ progress });
+  Progressing.downloads = downloads;
+}
+
 export function onRowsReordered(
   this: ModuleManager,
   table: typeof Tables[number],
@@ -630,6 +654,8 @@ export async function eventHandler(
               })
               .filter((d) => d !== null) as Download[]
           );
+          Progressing.downloads = [];
+          this.sState({ progress: null });
           break;
         }
         case 'internet': {
@@ -826,20 +852,16 @@ export function handleListings(
         drow[RepCol.iInfo].loading = false;
         drow[RepCol.iInfo].intent = intent(RepCol.iState, 'none');
         if (typeof l === 'string') {
-          log.info(l);
-          let sint: Intent =
-            a.reduce((p, c) => p + (typeof c === 'string' ? 1 : 0), 0) > 1
-              ? 'danger'
-              : 'none';
-          if (!l.startsWith(C.UI.Manager.cancelMsg)) {
-            sint = 'danger';
-            xthis.addToast({
-              message: l,
-              timeout: 5000,
-              intent: Intent.WARNING,
-            });
-          }
-          repoRowEnableDisable(false, drow, disabled, sint);
+          log.warn(l);
+          const newintent = l.startsWith(C.UI.Manager.cancelMsg)
+            ? Intent.WARNING
+            : Intent.DANGER;
+          xthis.addToast({
+            message: l,
+            timeout: 5000,
+            intent: newintent,
+          });
+          repoRowEnableDisable(false, drow, disabled, newintent);
           if (!Array.isArray(repositoryListings[i])) {
             repositoryListings[i] = null;
           }
@@ -863,6 +885,7 @@ export function handleListings(
     // Then only local repositories are being considered, with no table to update.
     listingsAndErrors.forEach((l, i) => {
       if (typeof l === 'string') {
+        log.warn(l);
         xthis.addToast({
           message: l,
           timeout: 5000,
@@ -1277,18 +1300,18 @@ function handleError(xthis: ModuleManager, er: any, modrepkeys: string[]) {
   const state = xthis.state as ManagerState;
   const { module: modtable } = state.tables;
   const { moduleData } = Saved;
-  let intentx: Intent = 'none';
-  if (er.message !== C.UI.Manager.cancelMsg) {
-    intentx = Intent.DANGER;
-    xthis.addToast({
-      message: er.toString(),
-      timeout: 5000,
-      intent: Intent.WARNING,
-    });
-  }
+  log.error(er);
+  const newintent = er.message.startsWith(C.UI.Manager.cancelMsg)
+    ? Intent.WARNING
+    : Intent.DANGER;
+  xthis.addToast({
+    message: er.toString(),
+    timeout: 5000,
+    intent: newintent,
+  });
   modrepkeys.forEach((k) => {
     moduleData[k][ModCol.iInfo].loading = false;
-    moduleData[k][ModCol.iInfo].intent = intent(ModCol.iInstalled, intentx);
+    moduleData[k][ModCol.iInfo].intent = intent(ModCol.iInstalled, newintent);
   });
   setTableState(xthis, 'module', null, modtable.data, true);
   return null;
@@ -1317,8 +1340,8 @@ export function download(xthis: ModuleManager, configs: SwordConfType[]): void {
           return;
         }
       }
+      const downloadkey = downloadKey(dlobj);
       try {
-        const downloadkey = downloadKey(dlobj);
         Downloads[downloadkey] = G.Module.download(dlobj);
         const dl = await Downloads[downloadkey];
         modkeys.forEach((k) => {
@@ -1326,14 +1349,15 @@ export function download(xthis: ModuleManager, configs: SwordConfType[]): void {
         });
         let newintent: Intent = Intent.NONE;
         if (typeof dl === 'string') {
-          if (!dl.startsWith(C.UI.Manager.cancelMsg)) {
-            newintent = Intent.DANGER;
-            xthis.addToast({
-              message: dl,
-              timeout: 5000,
-              intent: Intent.WARNING,
-            });
-          }
+          log.warn(dl);
+          newintent = dl.startsWith(C.UI.Manager.cancelMsg)
+            ? Intent.WARNING
+            : Intent.DANGER;
+          xthis.addToast({
+            message: dl,
+            timeout: 5000,
+            intent: newintent,
+          });
         } else if (dl > 0) {
           newintent = Intent.SUCCESS;
           modkeys.forEach((k) => {
@@ -1354,6 +1378,9 @@ export function download(xthis: ModuleManager, configs: SwordConfType[]): void {
         setTableState(xthis, 'module', null, modtable.data, true);
       } catch (er) {
         handleError(xthis, er, modkeys);
+        if (Progressing.downloads.find((v) => v[0] === downloadkey)) {
+          setDownloadProgress(xthis, downloadkey, -1);
+        }
       }
     }
   });

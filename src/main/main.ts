@@ -66,6 +66,10 @@ const electronDebug = require('electron-debug');
 }
 log.info(`Starting ${app.getName()} isDevelopment='${C.isDevelopment}'`);
 
+process.on('unhandledRejection', (reason, promise) => {
+  log.error('Unhandled Main Process Rejection at:', promise, 'reason:', reason);
+});
+
 addBookmarkTransaction(
   -1,
   'bookmarks',
@@ -445,8 +449,8 @@ const init = async () => {
     G.Prefs.setComplexValue('moduleManager.repositories', repositories);
   }
 
-  // If there are no tabs, choose tabs and location based on current locale
-  // and installed modules.
+  // If there are no tabs, choose a Bible and a location from the installed modules,
+  // (preferring the locale language), and show that tab.
   let panels = G.Prefs.getComplexValue(
     'xulsword.panels'
   ) as typeof S.prefs.xulsword.panels;

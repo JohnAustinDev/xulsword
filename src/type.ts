@@ -500,7 +500,7 @@ export type SwordConfigEntries = SwordConfXulsword &
     InstallSize?: number;
     Versification?: V11nType;
     Obsoletes?: string[];
-    Feature?: string[];
+    Feature?: SwordFeatures[];
     GlobalOptionFilter?: string[];
     History?: [string, SwordConfLocalized][];
   };
@@ -519,6 +519,17 @@ export type SwordConfType = SwordConfigEntries &
 export type SwordConfLocalized = {
   [locale: string | 'locale' | 'en']: string;
 };
+
+export type SwordFeatures =
+  | 'StrongsNumbers'
+  | 'GreekDef'
+  | 'HebrewDef '
+  | 'GreekParse'
+  | 'HebrewParse'
+  | 'DailyDevotion'
+  | 'Glossary'
+  | 'Images'
+  | 'NoParagraphs';
 
 // GenBookTOC describes GenBooks structure (chapter names/order/hierarchy).
 // Is output by LibSword but immediately converted to GenBookKeys.

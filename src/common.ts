@@ -33,6 +33,9 @@ import type {
   PrefStoreType,
   LocationGBType,
   BookmarkItemType,
+  TabType,
+  TabTypes,
+  SwordFeatures,
 } from './type';
 import type { TreeNodeInfo } from '@blueprintjs/core';
 import type { SelectVKMType } from './renderer/libxul/vkselect';
@@ -1316,6 +1319,50 @@ export function subtractGenBookAudioChapters(
     }
   });
   return r;
+}
+
+// Sort modules by type and then by language relevance to a locale.
+export function sortTabsByRelevance(
+  tablist: TabType[],
+  locale: string
+): TabType[] {
+  const order: TabTypes[] = ['Texts', 'Comms', 'Genbks', 'Dicts'];
+  const localeRelevance = (t: TabType): number => {
+    let r = 0;
+    if (t.lang === locale) r -= 4;
+    if (t.lang === C.FallbackLanguage[locale]) r -= 3;
+    if (t.lang.replace(/-.*$/, '') === locale.replace(/-.*$/, '')) r -= 2;
+    if (
+      t.lang.replace(/-.*$/, '') ===
+      C.FallbackLanguage[locale].replace(/-.*$/, '')
+    )
+      r -= 1;
+    if (
+      (
+        [
+          'StrongsNumbers',
+          'GreekDef',
+          'HebrewDef ',
+          'GreekParse',
+          'HebrewParse',
+          'Glossary',
+        ] as SwordFeatures[]
+      ).some((f) => t.conf.Feature?.includes(f))
+    )
+      r += 1;
+    return r;
+  };
+  return tablist.sort((a, b) => {
+    const ai = order.findIndex((t) => a.tabType === t);
+    const ar = localeRelevance(a);
+    const bi = order.findIndex((t) => b.tabType === t);
+    const br = localeRelevance(b);
+    if (ar === 1 && br < 1) return 1;
+    if (br === 1 && ar < 1) return -1;
+    if (ai !== bi) return ai < bi ? -1 : 1;
+    if (ar === br) return 0;
+    return ar < br ? -1 : 1;
+  });
 }
 
 // Compare \d.\d.\d type version numbers (like SWORD modules).

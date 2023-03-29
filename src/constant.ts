@@ -17,10 +17,12 @@ import type {
   V11nType,
 } from './type';
 
+// TODO!: Check Daily Devotional
+// TODO!: Add sword protocol support.
 // TODO!: Figure out hang using old Prefs?
 // TODO!: CopyPassage font is underlined.
-// TODO!: Don't open to dict when a bunch of modules are installed!
-
+// TODO!: Only one at a time of ModuleManager RemoveModule
+// TODO!: Fix ModuleManager not updating module or language tables after initial repo update.
 // Environment variables:
 // - NODE_ENV - Set in package.json to control the build process
 //     (will be set to either 'development' or 'production').
@@ -75,7 +77,7 @@ const C = {
   URLRE: /^https?:\/\//i,
 
   FTPMaxConnections: 48,
-  FTPConnectTimeout: 10000, // ms for an ftp server to respond
+  FTPConnectTimeout: 20000, // ms for an ftp server to respond
   FTPPassword: 'xulsword4@xulsword.org',
   HTTPUserAgent: 'xulsword4@xulsword.org',
 

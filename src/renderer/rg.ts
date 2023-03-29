@@ -1,10 +1,26 @@
 /* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { stringHash } from '../common';
+import { JSON_stringify, stringHash } from '../common';
 import Cache from '../cache';
-import { GBuilder, GType } from '../type';
+import { GBuilder } from '../type';
+import C from '../constant';
 import log from './log';
+
+import type { GType } from '../type';
+
+function logtag(
+  name: string,
+  m: string | undefined,
+  args: any,
+  cacheable: boolean
+) {
+  return `${asyncFuncs.some((en) => en[0] === name) ? 'async ' : ''}G.${name}${
+    m ? `.${m}` : ''
+  }(${JSON_stringify(args).substring(0, 64)}...)${
+    cacheable ? ' cache miss' : ''
+  }`;
+}
 
 // This G object is used in renderer processes, and shares the same
 // interface as a main process G object. Properties of this object
@@ -37,17 +53,26 @@ Object.entries(GBuilder).forEach((entry) => {
       }`;
       if (!cacheable) Cache.clear(ckey);
       if (!Cache.has(ckey)) {
-        log.silly(
-          `${asyncFuncs.some((en) => en[0] === name) ? 'async ' : ''}${ckey}${
-            cacheable ? ' miss' : ''
-          }`
-        );
+        if (C.LogLevel === 'silly') {
+          log.silly(logtag(name, undefined, args, cacheable));
+        }
         if (asyncFuncs.some((en) => en[0] === name)) {
           return window.ipc
             .invoke('global', name, ...args)
             .then((result: unknown) => {
               if (!Cache.has(ckey)) Cache.write(result, ckey);
               return result;
+            })
+            .catch((er: unknown) => {
+              log.warn(
+                `Promise rejection in ${logtag(
+                  name,
+                  undefined,
+                  args,
+                  cacheable
+                )}. Error message follows:`
+              );
+              log.error(er);
             });
         }
         Cache.write(window.ipc.sendSync('global', name, ...args), ckey);
@@ -82,15 +107,9 @@ Object.entries(GBuilder).forEach((entry) => {
           }`;
           if (!cacheable) Cache.clear(ckey);
           if (!Cache.has(ckey)) {
-            log.silly(
-              `${
-                (asyncFuncs as [string, string[]][]).some(
-                  (en) => en[0] === name && en[1].includes(m)
-                )
-                  ? 'async '
-                  : ''
-              }${ckey}${cacheable ? ' miss' : ''}`
-            );
+            if (C.LogLevel === 'silly') {
+              log.silly(logtag(name, m, args, cacheable));
+            }
             if (
               (asyncFuncs as [string, string[]][]).some(
                 (en) => en[0] === name && en[1].includes(m)
@@ -101,6 +120,17 @@ Object.entries(GBuilder).forEach((entry) => {
                 .then((result: unknown) => {
                   if (!Cache.has(ckey)) Cache.write(result, ckey);
                   return result;
+                })
+                .catch((er: unknown) => {
+                  log.warn(
+                    `Promise rejection in: ${logtag(
+                      name,
+                      m,
+                      args,
+                      cacheable
+                    )}. Error message follows:`
+                  );
+                  log.error(er);
                 });
             }
             Cache.write(window.ipc.sendSync('global', name, m, ...args), ckey);
