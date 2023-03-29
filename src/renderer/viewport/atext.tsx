@@ -628,8 +628,12 @@ class Atext extends React.Component {
     if (
       versePerLine ||
       (module && G.FeatureModules.noParagraphs.includes(module))
-    )
-      cls += ' verse-per-line';
+    ) {
+      cls +=
+        !module || G.Tab[module].tabType === 'Texts'
+          ? 'verse-per-line'
+          : 'verse-per-line-com';
+    }
 
     const data: HTMLData = { type: 'text' };
     if (module && ['Dicts', 'Genbks'].includes(G.Tab[module].tabType)) {

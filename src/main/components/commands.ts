@@ -218,7 +218,7 @@ const Commands = {
         audio: { open: false, file: null },
       };
     }
-    Prefs.mergeValue('xulsword', xulsword, undefined, undefined, -2);
+    Prefs.mergeValue('xulsword', xulsword, 'prefs', undefined, false, -2);
   },
 
   async exportAudio() {
@@ -972,7 +972,7 @@ const Commands = {
       keys[p] = location.key;
       xulsword.scroll = scroll || { verseAt: 'center' };
       if (!deferAction) {
-        Prefs.mergeValue('xulsword', xulsword, undefined, undefined, -2);
+        Prefs.mergeValue('xulsword', xulsword, 'prefs', undefined, false, -2);
       }
     }
     return xulsword;
@@ -1000,7 +1000,7 @@ const Commands = {
     xulsword.selection = sel ? sel.location() : null;
     xulsword.scroll = newscroll || { verseAt: 'center' };
     if (!deferAction) {
-      Prefs.mergeValue('xulsword', xulsword, undefined, undefined, -2);
+      Prefs.mergeValue('xulsword', xulsword, 'prefs', undefined, false, -2);
     }
     return xulsword;
   },

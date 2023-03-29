@@ -28,7 +28,7 @@ import {
   getBook,
   getTabs,
   getTab,
-  getBooksInModule,
+  getBooksInVKModule,
   getBkChsInV11n,
   getSystemFonts,
   resetMain,
@@ -220,7 +220,7 @@ class GClass implements GType {
   getBooksInModule(
     ...args: Parameters<GType['getBooksInModule']>
   ): ReturnType<GType['getBooksInModule']> {
-    return getBooksInModule(...args);
+    return getBooksInVKModule(...args);
   }
 
   publishSubscription<S extends keyof SubscriptionType['publish']>(

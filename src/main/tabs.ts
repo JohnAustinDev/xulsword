@@ -3,7 +3,7 @@
 import { clone } from '../common';
 import S from '../defaultPrefs';
 import Prefs from './components/prefs';
-import { getBooksInModule, getTab, getTabs } from './minit';
+import { getBooksInVKModule, getTab, getTabs } from './minit';
 
 import type { TabType, TabTypes } from '../type';
 
@@ -116,7 +116,7 @@ export default function setViewportTabs(
           nextmod &&
           Tab[nextmod].isVerseKey
         ) {
-          const [book] = getBooksInModule(nextmod);
+          const [book] = getBooksInVKModule(nextmod);
           const v11n = Tab[nextmod].v11n || null;
           if (book && v11n) {
             xulsword.location = {
@@ -131,5 +131,11 @@ export default function setViewportTabs(
     }
   });
 
-  Prefs.mergeValue('xulsword', xulsword, undefined, clearRendererCaches);
+  Prefs.mergeValue(
+    'xulsword',
+    xulsword,
+    'prefs',
+    undefined,
+    clearRendererCaches
+  );
 }

@@ -14,7 +14,7 @@ import type C from './constant';
 import type {
   resetMain,
   getSystemFonts,
-  getBooksInModule,
+  getBooksInVKModule,
   getBooks,
   getBook,
   getTabs,
@@ -778,7 +778,7 @@ export type GType = {
   inlineAudioFile: typeof inlineAudioFile;
   resetMain: typeof resetMain;
   getSystemFonts: typeof getSystemFonts;
-  getBooksInModule: typeof getBooksInModule;
+  getBooksInModule: typeof getBooksInVKModule;
   publishSubscription: typeof publishSubscription;
   canUndo: typeof canUndo;
   canRedo: typeof canRedo;

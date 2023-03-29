@@ -88,6 +88,7 @@ const Prefs = {
     key: string | null,
     obj: PrefObject,
     aStore?: PrefStoreType,
+    skipCallbacks?: boolean | undefined, // undefined means skip if no change
     clearRendererCaches?: boolean
   ): boolean {
     return this.setPref(
@@ -96,7 +97,7 @@ const Prefs = {
       obj,
       aStore,
       arguments[4] ?? -1,
-      false,
+      skipCallbacks,
       clearRendererCaches
     );
   },
@@ -454,20 +455,22 @@ const Prefs = {
       });
     }
     // Check the current value and set to the new value only if needed.
+    let valueChanged = true;
     if (k !== null && value === undefined) {
       if (k in p) delete p[k];
-      else return true;
+      else valueChanged = false;
     } else if (k !== null && diff(p[k], value) === undefined) {
-      return true;
+      valueChanged = false;
     } else if (k === null || type === 'merge') {
       // already asserted the type <=> merge connection above
       const pp = k === null ? this.stores[store].data : p[k];
       if (typeof pp === 'object' && !Array.isArray(pp)) {
         valueobj = diff(pp, valueobj);
-        if (valueobj === undefined) return true;
-        const merged = { ...pp, ...clone(valueobj) };
-        if (k === null) this.stores[store].data = merged;
-        else p[k] = merged;
+        if (valueobj !== undefined) {
+          const merged = { ...pp, ...clone(valueobj) };
+          if (k === null) this.stores[store].data = merged;
+          else p[k] = merged;
+        } else valueChanged = false;
       } else {
         throw new Error(
           `Prefs merge failed because the key does not contain a PrefObject (key-value='${pp}', key='${key}', store='${store}').`
@@ -476,7 +479,7 @@ const Prefs = {
     } else p[k] = clone(value);
     // If not writeOnChange, then data is persisted only when app is closed.
     let success = true;
-    if (this.writeOnChange) success = this.writeStore(store);
+    if (valueChanged && this.writeOnChange) success = this.writeStore(store);
     if (success) {
       // Reset renderer caches if requested. When pref values are being pushed
       // to renderer windows that are incompatible with currently cached data,
@@ -487,7 +490,10 @@ const Prefs = {
         });
       }
       // Call any registered callbacks if value was successfully changed.
-      if (!skipCallbacks) {
+      if (
+        (skipCallbacks === undefined && valueChanged) ||
+        skipCallbacks === false
+      ) {
         let keys: string[] = [];
         if (key === null) {
           if (valueobj) keys = Object.keys(valueobj);

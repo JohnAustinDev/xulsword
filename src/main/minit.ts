@@ -184,7 +184,7 @@ export function getBkChsInV11n(): {
   return Cache.read('bkChsInV11n');
 }
 
-export function getBooksInModule(module: string): OSISBookType[] {
+export function getBooksInVKModule(module: string): OSISBookType[] {
   if (!Cache.has('booksInModule', module)) {
     const bkChsInV11n = getBkChsInV11n();
     const book = getBook();
@@ -193,7 +193,7 @@ export function getBooksInModule(module: string): OSISBookType[] {
       'Versification'
     ) as V11nType;
     if (v11n === C.NOTFOUND) v11n = 'KJV';
-    const isVerseKey = /(text|comm)/i.test(
+    const isVerseKey = /(text|com)/i.test(
       LibSword.getModuleInformation(module, 'ModDrv')
     );
     const osis: string[] = [];
@@ -341,7 +341,7 @@ export function getTabs(): TabType[] {
           CipherKeyModules[module] = {
             confPath,
             cipherKey,
-            numBooks: cipherKey === '' ? 0 : getBooksInModule(module).length,
+            numBooks: cipherKey === '' ? 0 : getBooksInVKModule(module).length,
           };
           if (cipherKey === '') return;
         }
@@ -645,36 +645,40 @@ export function getFeatureModules(): FeatureType {
 // Xulsword state prefs and other global prefs should only reference
 // installed modules or be ''.  This function insures that is the case.
 export function updateGlobalModulePrefs() {
-  const tabs = getTabs();
-  const xulsword = Prefs.getComplexValue('xulsword') as typeof S.prefs.xulsword;
-  const newxulsword = clone(xulsword);
-  const mps = ['panels', 'ilModules', 'mtModules'] as const;
-  mps.forEach((p) => {
-    newxulsword[p] = xulsword[p].map((m) => {
+  const Tabs = getTabs();
+  const xulsword: Partial<typeof S.prefs.xulsword> = {};
+  const globalPopup: Partial<typeof S.prefs.global.popup> = {};
+  (['panels', 'ilModules', 'mtModules'] as const).forEach((p) => {
+    const prop = Prefs.getComplexValue(`xulsword.${p}`) as any[];
+    xulsword[p] = prop.map((m) => {
       const n = p === 'panels' ? '' : null;
-      return m && !tabs.find((t) => t.module === m) ? n : m;
+      if (m && !Tabs.find((t) => t.module === m)) return n;
+      return m;
     });
   });
-  newxulsword.tabs.forEach((p, i) => {
+  const tabs = Prefs.getComplexValue(
+    'xulsword.tabs'
+  ) as typeof S.prefs.xulsword.tabs;
+  tabs.forEach((p, i) => {
     if (p) {
-      newxulsword.tabs[i] = p.filter((m) => tabs.find((t) => t.module === m));
+      tabs[i] = p.filter((m) => Tabs.find((t) => t.module === m));
     }
   });
-  Prefs.setComplexValue('xulsword', newxulsword);
-  const popupsel = Prefs.getComplexValue(
+  xulsword.tabs = tabs;
+  const selection = Prefs.getComplexValue(
     'global.popup.selection'
   ) as typeof S.prefs.global.popup.selection;
-  Object.entries(popupsel).forEach((entry) => {
+  Object.entries(selection).forEach((entry) => {
     const k = entry[0] as keyof typeof S.prefs.global.popup.selection;
     const m = entry[1];
-    if (!tabs.find((t) => t.module === m)) {
-      popupsel[k] = '';
+    if (!Tabs.find((t) => t.module === m)) {
+      selection[k] = '';
     }
   });
   // If no pref has been set for popup.selection[feature] then choose a
   // module from the available modules, if there are any.
   const featureModules = getFeatureModules();
-  Object.entries(popupsel).forEach((entry) => {
+  Object.entries(selection).forEach((entry) => {
     const k = entry[0] as keyof typeof S.prefs.global.popup.selection;
     if (!entry[1] && k in featureModules) {
       const kk = k as keyof typeof featureModules;
@@ -688,11 +692,17 @@ export function updateGlobalModulePrefs() {
           ? sel[k as keyof typeof sel]
           : []
       ) as string[];
-      const selection = preferred.find((m) => m && ma.includes(m)) || ma[0];
-      popupsel[k] = selection;
+      selection[k] = preferred.find((m) => m && ma.includes(m)) || ma[0];
     }
   });
-  Prefs.setComplexValue('global.popup.selection', popupsel);
+  globalPopup.selection = selection;
+
+  // IMPORTANT: Use the skipCallbacks and clearRendererCaches arguments of
+  // Prefs.mergeValue() to force renderer processes to update once, after
+  // module prefs are valid. Otherwise renderer exceptions may be thrown as they
+  // they would re-render with invalid module prefs.
+  Prefs.mergeValue('global.popup', globalPopup, 'prefs', true, false);
+  Prefs.mergeValue('xulsword', xulsword, 'prefs', false, true);
 }
 
 export function resetMain() {

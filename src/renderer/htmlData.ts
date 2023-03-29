@@ -256,7 +256,7 @@ export function getElementData(elem: string | HTMLElement): HTMLData {
               r[p] = m[val] as any;
             }
 
-            let parsed = r[p] as any;
+            let parsed = r[p] as string | string[] | null;
 
             // convert integers into Number type, rather than String type
             if (
@@ -271,7 +271,7 @@ export function getElementData(elem: string | HTMLElement): HTMLData {
             if (parsed !== null) {
               // decode properties which need decodeURIComponent
               if (['osisref', 'reflist', 'ch'].includes(p)) {
-                parsed = decodeURIComponent(parsed) as any;
+                parsed = decodeURIComponent(parsed as string);
               }
 
               // remove unavaiable
@@ -287,18 +287,21 @@ export function getElementData(elem: string | HTMLElement): HTMLData {
               if (p === 'reflist') {
                 if (['dtl', 'dt'].includes(type)) {
                   // Backward Compatibility to < 2.23
-                  if (parsed.indexOf(':') === -1) {
-                    parsed = parsed.replace(/ /g, '_32_');
-                    parsed = parsed.replace(/;/g, ' ');
-                    parsed = parsed.replace(/((^|\s)\w+)\./g, '$1:');
+                  if (parsed?.indexOf(':') === -1) {
+                    parsed = (parsed as string)?.replace(/ /g, '_32_');
+                    parsed = (parsed as string)?.replace(/;/g, ' ');
+                    parsed = (parsed as string)?.replace(
+                      /((^|\s)\w+)\./g,
+                      '$1:'
+                    );
                   }
-                  parsed = parsed.split(/ +/);
+                  parsed = (parsed as string).split(/ +/);
                 } else if (type === 'sr') {
-                  parsed = parsed.split(/\s*;\s*/);
+                  parsed = (parsed as string).split(/\s*;\s*/);
                 } else if (type === 'sn') {
-                  parsed = parsed.split(/\s*\.\s*/);
+                  parsed = (parsed as string).split(/\s*\.\s*/);
                 } else {
-                  parsed = parsed.split(/\s+/);
+                  parsed = (parsed as string).split(/\s+/);
                 }
                 // decode properties which need decodeOSISRef
                 for (let x = 0; x < parsed.length; x += 1) {
@@ -309,9 +312,11 @@ export function getElementData(elem: string | HTMLElement): HTMLData {
                   parsed = null;
               }
 
-              if (p === 'ch') parsed = decodeOSISRef(parsed);
+              if (p === 'ch' && typeof parsed === 'string') {
+                parsed = decodeOSISRef(parsed);
+              }
             }
-            r[p] = parsed;
+            r[p] = parsed as any;
           }
         });
         if (type === 'sr' && !r.reflist) {

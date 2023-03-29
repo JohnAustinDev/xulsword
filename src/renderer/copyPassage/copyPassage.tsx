@@ -34,6 +34,8 @@ import './copyPassage.css';
 
 import type VerseKey from '../../verseKey';
 
+// TODO: CopyPassage font is underlined when viewed in LibreOffice.
+
 const defaultProps = xulDefaultProps;
 
 const propTypes = xulPropTypes;

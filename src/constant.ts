@@ -17,13 +17,14 @@ import type {
   V11nType,
 } from './type';
 
-// TODO!: Check Tab setters only installed tabs!
+// TODO!: Make folder icons same color as their tab
 // TODO!: Check Daily Devotional
 // TODO!: Add sword protocol support.
 // TODO!: Figure out hang using old Prefs?
-// TODO!: CopyPassage font is underlined.
-// TODO!: Only one at a time of ModuleManager RemoveModule
-// TODO!: Fix ModuleManager not updating module or language tables after initial repo update.
+// TODO!: Only one window at a time between ModuleManager RemoveModule
+// TODO!: Fix ModuleManager not updating module or language tables after initial repo update, possibly related to columns etc. not having keys?
+// TODO!: Commentary notes should attach to one commentary!
+// TODO!: Note popup/notebox i18n not being applied.
 // Environment variables:
 // - NODE_ENV - Set in package.json to control the build process
 //     (will be set to either 'development' or 'production').
