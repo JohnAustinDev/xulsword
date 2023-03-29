@@ -24,6 +24,7 @@ import {
   builtinRepos,
   repositoryModuleKey,
   tableSelectDataRows,
+  querablePromise,
 } from '../../common';
 import C from '../../constant';
 import S from '../../defaultPrefs';
@@ -44,6 +45,7 @@ import type {
   VerseKeyAudio,
   GenBookAudioConf,
   OSISBookType,
+  QuerablePromise,
 } from '../../type';
 import type { SelectVKMType, VKSelectProps } from '../libxul/vkselect';
 import type ModuleManager from './manager';
@@ -181,7 +183,7 @@ export const RepCol = {
 } as const;
 
 export const Downloads: {
-  [downloadKey: string]: Promise<number | string>;
+  [downloadKey: string]: QuerablePromise<number | string>;
 } = {};
 
 export type ModuleUpdates = {
@@ -419,10 +421,6 @@ export async function eventHandler(
           break;
         }
         case 'ok': {
-          G.Window.modal([
-            { modal: 'transparent', window: 'all' },
-            { modal: 'darkened', window: { type: 'xulsword' } },
-          ]);
           try {
             const downloads = Object.keys(Downloads).map((k) =>
               keyToDownload(k)
@@ -435,8 +433,14 @@ export async function eventHandler(
               fromRepo: any;
               toRepo: Repository;
             }[] = [];
-
+            promises.forEach((p) => {
+              if (p.isPending) p.reject(`time-out`);
+            });
             const downloadResults = await Promise.allSettled(promises);
+            G.Window.modal([
+              { modal: 'transparent', window: 'all' },
+              { modal: 'darkened', window: { type: 'xulsword' } },
+            ]);
             // Un-persist these table selections.
             setTableState(this, 'module', { selection: [] });
             setTableState(this, 'repository', { selection: [] });
@@ -1342,7 +1346,7 @@ export function download(xthis: ModuleManager, configs: SwordConfType[]): void {
       }
       const downloadkey = downloadKey(dlobj);
       try {
-        Downloads[downloadkey] = G.Module.download(dlobj);
+        Downloads[downloadkey] = querablePromise(G.Module.download(dlobj));
         const dl = await Downloads[downloadkey];
         modkeys.forEach((k) => {
           moduleData[k][ModCol.iInfo].loading = false;

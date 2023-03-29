@@ -757,7 +757,7 @@ type DownloadRepoConfsType = {
 async function downloadRepoConfs(
   manifest: FTPDownload,
   cancelkey: string,
-  progress?: ((p: number) => void) | null | undefined
+  progress?: (p: number) => void
 ): Promise<DownloadRepoConfsType[]> {
   const repositoryConfs: DownloadRepoConfsType[] = [];
   let files: { header: { name: string }; content: Buffer }[] = [];
@@ -924,7 +924,7 @@ const Module = {
           try {
             repconfs = await downloadRepoConfs(manifest, cancelkey, progress);
           } catch (er) {
-            const cause = ftpCancelCause(cancelkey) || er;
+            const cause = ftpCancelCause(cancelkey, er as Error | string);
             return Promise.reject(
               cause && typeof cause === 'object' && 'message' in cause
                 ? cause.message
@@ -1087,7 +1087,7 @@ const Module = {
         progress(-1);
         logerror(er);
         // Multi-connection operations should check ftpCancelCause
-        const cause = ftpCancelCause(downloadkey) || er.message;
+        const cause = ftpCancelCause(downloadkey, er);
         return Promise.resolve(
           typeof cause === 'string' ? cause : cause.message
         );

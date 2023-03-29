@@ -17,6 +17,7 @@ import type {
   V11nType,
 } from './type';
 
+// TODO!: Check Tab setters only installed tabs!
 // TODO!: Check Daily Devotional
 // TODO!: Add sword protocol support.
 // TODO!: Figure out hang using old Prefs?

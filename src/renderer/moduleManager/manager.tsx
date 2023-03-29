@@ -720,7 +720,7 @@ export default class ModuleManager
 
   audioDialogAccept() {
     this.sState((prevState) => {
-      const { showAudioDialog } = prevState;
+      const { showAudioDialog } = clone(prevState);
       if (showAudioDialog.length) {
         const done = showAudioDialog.shift();
         if (done) {
