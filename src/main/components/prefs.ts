@@ -96,7 +96,7 @@ const Prefs = {
       'merge',
       obj,
       aStore,
-      arguments[4] ?? -1,
+      arguments[5] ?? -1,
       skipCallbacks,
       clearRendererCaches
     );

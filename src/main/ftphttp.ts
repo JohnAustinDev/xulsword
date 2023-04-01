@@ -477,17 +477,20 @@ async function getFileP(
 ): Promise<Buffer> {
   log.silly(`getFileP(${filepath})`);
 
+  let dead = false;
   const killstream = async (s: any) => {
-    if (s && 'destroy' in s && typeof s.destroy === 'function') {
-      try {
-        await abortP(c);
-        await s.destroy();
-      } catch (er) {
-        log.error(er);
-      } finally {
-        log.debug(`Killed FTP stream: ${filepath}`);
-      }
-    } else log.error(`Stream was not destroyable: ${filepath}`);
+    if (!dead) {
+      if (s && 'destroy' in s && typeof s.destroy === 'function') {
+        dead = true;
+        try {
+          await abortP(c);
+          await s.destroy();
+          log.debug(`Killed FTP stream: ${filepath}`);
+        } catch (er) {
+          log.error(er);
+        }
+      } else log.error(`Stream was not destroyable: ${filepath}`);
+    }
   };
 
   let id = '';

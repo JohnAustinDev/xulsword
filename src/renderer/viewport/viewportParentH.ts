@@ -84,59 +84,9 @@ export function showNewModules(
     .filter(Boolean) as TabType[];
   const sortedTabs = sortTabsByRelevance(newTabs, G.i18n.language);
   if (sortedTabs.length) {
-    log.debug(`showNewModules (sorted): ${sortedTabs.map((c) => c.module)}`);
-    this.setState((prevState: XulswordState | ViewportWinState) => {
-      const ps = clone(prevState);
-      const { panels, isPinned } = ps;
-      let { location } = ps;
-      let panelIndex = 0;
-      sortedTabs.forEach((conf) => {
-        let current = panels[panelIndex];
-        if (panelIndex < panels.length) {
-          for (;;) {
-            if (panelIndex >= panels.length) {
-              break;
-            } else if (panels[panelIndex] === null) {
-              panelIndex += 1;
-              current = panels[panelIndex];
-            } else if (panels[panelIndex] === current) {
-              // Unpin panels that have changed.
-              if (panels[panelIndex] !== conf.module) {
-                isPinned[panelIndex] = false;
-              }
-              panels[panelIndex] = conf.module;
-              panelIndex += 1;
-            } else break;
-          }
-        }
-      });
-      // If a Bible is showing, make sure location is included in it.
-      const v11nmod = panels.find((m) => m && G.Tab[m].v11n);
-      const v11n = (v11nmod && G.Tab[v11nmod].v11n) as V11nType;
-      if (v11n && v11nmod) {
-        if (!location)
-          location = {
-            book: 'Gen',
-            chapter: 1,
-            v11n,
-          };
-        if (
-          !location.book ||
-          !G.getBooksInModule(v11nmod).includes(location.book)
-        ) {
-          [location.book] = G.getBooksInModule(v11nmod);
-          if (!location.book) location.book = 'Gen';
-          location.chapter = 1;
-        }
-      }
-      const s: Partial<XulswordState | ViewportWinState> = {
-        isPinned,
-        location,
-        panels,
-        selection: null,
-      };
-      return s;
-    });
+    const nms = sortedTabs.map((t) => t.module);
+    log.debug(`showNewModules (sorted): ${nms}`);
+    G.Viewport.setPanels(nms);
   }
 }
 

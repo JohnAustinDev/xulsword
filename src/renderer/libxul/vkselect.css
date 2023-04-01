@@ -32,6 +32,10 @@
 .vkselect .vk-vkmod {
   margin-inline-start: 10px;
 }
+.vkselect .vk-book select,
+.vkselect .vk-vkmod select {
+  width: 150px;
+}
 
 .vkselect span.name {
   font-weight: bold;

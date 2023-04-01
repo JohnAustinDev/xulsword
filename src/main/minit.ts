@@ -10,16 +10,16 @@ import C from '../constant';
 import S from '../defaultPrefs';
 import VerseKey from '../verseKey';
 import RefParser, { RefParserOptionsType } from '../refParser';
-import { clone, isASCII, JSON_parse } from '../common';
+import { isASCII, JSON_parse } from '../common';
 import Cache from '../cache';
 import Subscription from '../subscription';
-import parseSwordConf from './parseSwordConf';
 import Dirs from './components/dirs';
 import Prefs from './components/prefs';
 import LibSword from './components/libsword';
 import LocalFile from './components/localFile';
 import { moduleUnsupported, CipherKeyModules } from './components/module';
 import getFontFamily from './fontfamily';
+import parseSwordConf from './parseSwordConf';
 
 import type {
   TabType,

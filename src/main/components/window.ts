@@ -11,11 +11,9 @@ import Cache from '../../cache';
 import C from '../../constant';
 import S from '../../defaultPrefs';
 import Subscription from '../../subscription';
-import type contextMenu from '../contextMenu';
 import Dirs from './dirs';
 import Data from './data';
 import Prefs from './prefs';
-import type { PrefCallbackType } from './prefs';
 import LocalFile from './localFile';
 
 import type {
@@ -29,6 +27,8 @@ import type {
   WindowDescriptorPrefType,
 } from '../../type';
 import type { SubscriptionType } from '../../subscription';
+import type contextMenu from '../contextMenu';
+import type { PrefCallbackType } from './prefs';
 
 export let resolveHtmlPath: (htmlFileName: string) => string;
 
@@ -95,11 +95,12 @@ export function getBrowserWindows(
     if (
       ew &&
       testwin &&
-      Object.entries(testwin).every((entry) => {
-        const p = entry[0] as keyof WindowDescriptorType;
-        const v = entry[1] as any;
-        return v === undefined || ew[p] === v;
-      })
+      (testwin.type === 'all' ||
+        Object.entries(testwin).every((entry) => {
+          const p = entry[0] as keyof WindowDescriptorType;
+          const v = entry[1] as any;
+          return v === undefined || ew[p] === v;
+        }))
     )
       windows.push(w);
   });
@@ -221,14 +222,7 @@ function updateOptions(descriptor: Omit<WindowDescriptorType, 'id'>): void {
     };
   }
 
-  const {
-    dataID,
-    fitToContent,
-    openWithBounds,
-    notResizable,
-    persist,
-    options,
-  } = descriptor;
+  const { dataID, openWithBounds, notResizable, persist, options } = descriptor;
 
   // All windows must have these same options.
   options.show = false;
@@ -344,10 +338,17 @@ export function publishSubscription<
   S extends keyof SubscriptionType['publish']
 >(
   subscription: S,
-  renderers: WindowArgType | WindowArgType[],
-  main: boolean,
+  options?: {
+    renderers?: Partial<WindowDescriptorType> | Partial<WindowDescriptorType>[];
+    main?: boolean;
+  },
   ...args: Parameters<SubscriptionType['publish'][S]>
 ) {
+  const { renderers, main } = {
+    renderers: { type: 'all' } as Partial<WindowDescriptorType>,
+    main: true,
+    ...options,
+  };
   if (main) Subscription.doPublish(subscription, ...args);
   const done: number[] = [];
   (Array.isArray(renderers) ? renderers : [renderers]).forEach((r) => {

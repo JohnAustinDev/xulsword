@@ -453,12 +453,9 @@ class Atext extends React.Component {
         if (columns > 1 && (update || doscroll)) {
           const empty = !trimNotes(sbe, nbe);
           const nbc = nbe.parentNode as any;
-          if (
-            (empty && !nbc.classList.contains('noteboxEmpty')) ||
-            (!empty && nbc.classList.contains('noteboxEmpty'))
-          ) {
-            nbc.classList.toggle('noteboxEmpty');
-          }
+          if (empty && type !== 'Lexicons / Dictionaries') {
+            nbc.classList.add('noteboxEmpty');
+          } else nbc.classList.remove('noteboxEmpty');
         }
         // PREV / NEXT LINKS
         setTimeout(() => {
@@ -571,11 +568,8 @@ class Atext extends React.Component {
       }
       const nbc = nbe.parentNode as any;
       fntable = nbe.firstChild as HTMLElement | null;
-      if (
-        (!fntable?.innerHTML && !nbc.classList.contains('noteboxEmpty')) ||
-        (fntable?.innerHTML && nbc.classList.contains('noteboxEmpty'))
-      )
-        nbc.classList.toggle('noteboxEmpty');
+      if (!fntable?.innerHTML && !isDict) nbc.classList.add('noteboxEmpty');
+      else nbc.classList.remove('noteboxEmpty');
     }
   }
 

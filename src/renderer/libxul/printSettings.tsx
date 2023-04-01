@@ -320,7 +320,7 @@ export default class PrintSettings extends React.Component {
               printDisabled: false,
               progress: -1,
             });
-            G.publishSubscription('asyncTaskComplete', 'all', true);
+            G.publishSubscription('asyncTaskComplete');
             break;
           }
           default:
@@ -503,6 +503,7 @@ export default class PrintSettings extends React.Component {
             .html-page {
               width: unset;
               height: unset;
+              left: unset;
             }
             .scale {
               transform: scale(1);

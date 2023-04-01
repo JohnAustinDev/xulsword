@@ -10,19 +10,20 @@ import {
   shell,
 } from 'electron';
 import i18next from 'i18next';
-import { GBuilder, GType, WindowArgType } from '../type';
+import { GBuilder, WindowDescriptorType } from '../type';
 import { canRedo, canUndo } from './bookmarks';
+import Viewport from './components/viewport';
 import { inlineAudioFile, inlineFile } from './components/localFile';
 import Dirs from './components/dirs';
 import Prefs from './components/prefs';
 import LibSword from './components/libsword';
-import Commands from './components/commands';
 import Data from './components/data';
 import Window, {
   publishSubscription,
   resolveHtmlPath,
 } from './components/window';
 import Module from './components/module';
+import Commands from './components/commands';
 import {
   getBooks,
   getBook,
@@ -41,6 +42,7 @@ import {
   getConfig,
 } from './minit';
 
+import type { GType } from '../type';
 import type { SubscriptionType } from '../subscription';
 
 // Handle global variable calls from renderer processes
@@ -122,6 +124,8 @@ class GClass implements GType {
 
   Module;
 
+  Viewport;
+
   constructor() {
     this.i18n = i18next;
     this.clipboard = clipboard;
@@ -133,6 +137,7 @@ class GClass implements GType {
     this.Data = Data;
     this.Window = Window;
     this.Module = Module;
+    this.Viewport = Viewport;
   }
 
   get Books() {
@@ -225,11 +230,15 @@ class GClass implements GType {
 
   publishSubscription<S extends keyof SubscriptionType['publish']>(
     s: S,
-    r: WindowArgType | WindowArgType[],
-    m: boolean,
+    ops?: {
+      renderers?:
+        | Partial<WindowDescriptorType>
+        | Partial<WindowDescriptorType>[];
+      main?: boolean;
+    },
     ...args: Parameters<SubscriptionType['publish'][S]>
   ) {
-    return publishSubscription(s, r, m, ...args);
+    return publishSubscription(s, ops, ...args);
   }
 
   canUndo(...args: Parameters<GType['canUndo']>): ReturnType<GType['canUndo']> {

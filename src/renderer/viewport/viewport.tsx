@@ -13,7 +13,7 @@ import React, { SyntheticEvent } from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import C from '../../constant';
-import { stringHash } from '../../common';
+import { getPanelWidths, stringHash } from '../../common';
 import Popup from '../popup/popup';
 import {
   popupParentHandler as popupParentHandlerH,
@@ -44,10 +44,10 @@ import './viewport.css';
 import type {
   GenBookAudioFile,
   LocationVKType,
-  ScrollType,
   VerseKeyAudioFile,
   XulswordStateArgType,
 } from '../../type';
+import type S from '../../defaultPrefs';
 
 const defaultProps = xulDefaultProps;
 
@@ -81,17 +81,17 @@ const propTypes = {
 
 type ViewportProps = ViewportPopupProps &
   XulProps & {
-    location: LocationVKType | null;
-    selection: LocationVKType | null;
-    scroll: ScrollType;
-    keys: (string | undefined)[];
-    showChooser: boolean;
-    tabs: (string[] | undefined)[];
-    panels: (string | null)[];
-    ilModules: (string | undefined)[];
-    mtModules: (string | undefined)[];
-    noteBoxHeight: number[];
-    maximizeNoteBox: boolean[];
+    location: typeof S.prefs.xulsword.location;
+    selection: typeof S.prefs.xulsword.selection;
+    scroll: typeof S.prefs.xulsword.scroll;
+    keys: typeof S.prefs.xulsword.keys;
+    showChooser: typeof S.prefs.xulsword.showChooser;
+    tabs: typeof S.prefs.xulsword.tabs;
+    panels: typeof S.prefs.xulsword.panels;
+    ilModules: typeof S.prefs.xulsword.ilModules;
+    mtModules: typeof S.prefs.xulsword.mtModules;
+    noteBoxHeight: typeof S.prefs.xulsword.noteBoxHeight;
+    maximizeNoteBox: typeof S.prefs.xulsword.maximizeNoteBox;
     ownWindow: boolean;
 
     eHandler: (e: React.SyntheticEvent) => void;
@@ -218,7 +218,7 @@ class Viewport extends React.Component implements PopupParent {
     panels.forEach((panel, i) => {
       ilModules[i] = ''; // visible and inactive (or hidden if no ilModuleOption)
       let ilpref = ilModules0[i];
-      if (ilpref === 'disabled') ilpref = undefined;
+      if (ilpref === 'disabled') ilpref = null;
       if (
         panelHasILOptions[i] &&
         (!ilModuleOptions[i] ||
@@ -235,38 +235,11 @@ class Viewport extends React.Component implements PopupParent {
       }
     });
 
-    // Figure out the relative width of each panel due to adjacent panels
-    // sharing common module and isPinned settings etc. In such case, the
-    // first panel of the matching group will widen to take up the whole
-    // width while the following matching panels will shrink to zero width.
-    // A value of null is given for null or undefined panels.
-    const panelWidths: (number | null)[] = [];
-    for (let i = 0; i < panels.length; i += 1) {
-      const panel = panels[i];
-      panelWidths[i] = panel || panel === '' ? 1 : null;
-      if (panel) {
-        const key = [panel, !!ilModules[i], !!isPinned[i]].join('.');
-        let f = i + 1;
-        for (;;) {
-          if (f === panels.length) break;
-          const modulef = panels[f];
-          if (
-            !modulef ||
-            [modulef, !!ilModules[f], !!isPinned[f]].join('.') !== key
-          )
-            break;
-          const panelWidthsx = panelWidths as number[];
-          panelWidthsx[i] += 1;
-          panelWidths[f] = 0;
-          f += 1;
-        }
-        i += f - i - 1;
-      }
-    }
+    const panelWidths = getPanelWidths({ panels, ilModules, isPinned });
 
     // The tabs and panels props are used to determine how many banks of tabs
     // will be shown, which tabs are in each bank and how wide the bank is,
-    // and how many panels will be shown and how wide the panel is.
+    // as well as how many panels will be shown and how wide the panel is.
     // - tabs: (string[] | null)[]
     // Where string[] is a tab bank, and null tab banks are not drawn.
     // - panels: (string | null)[]

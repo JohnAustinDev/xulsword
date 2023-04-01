@@ -110,15 +110,17 @@ export function getBookmarkMap(): BookmarkMapType {
     const keyBmitemIDMap: BookmarkMapType = {};
     const kmap = (f: BookmarkFolderType): void => {
       f.childNodes.forEach((item) => {
-        const { type, note } = item;
+        const { type, tabType, note } = item;
         if ('childNodes' in item) kmap(item);
         else if (type === 'bookmark' && note) {
           const { location } = item;
           let k = '';
           if (location && 'v11n' in location) {
+            const { vkmod } = location;
             const kjvl = verseKey(location).location('KJV');
             const { book, chapter, verse } = kjvl;
             k = [book, chapter, verse, 'KJV'].join('.');
+            if (tabType === 'Comms') k += `.${vkmod}`;
           } else if (location) {
             const { module, key } = location;
             k = [module, key].join(C.GBKSEP);
@@ -148,7 +150,7 @@ export function getBookmarkMap(): BookmarkMapType {
 // Find the bookmarks associated with either a Bible chapter or module/key
 // pair.
 export function findBookmarks(
-  location: LocationVKType | LocationGBType
+  location: LocationVKType | LocationGBType | SelectVKMType
 ): BookmarkInfoHTML[] {
   const bookmarkMap = getBookmarkMap();
   if ('v11n' in location) {
@@ -156,7 +158,11 @@ export function findBookmarks(
     const { book, chapter } = kjvl;
     const chBookmarks: BookmarkInfoHTML[] = [];
     for (let x = 0; x <= getMaxVerse('KJV', `${book} ${chapter}`); x += 1) {
-      const k = [book, chapter, x, 'KJV'].join('.');
+      let k = [book, chapter, x, 'KJV'].join('.');
+      if ('vkmod' in location) {
+        const { vkmod } = location;
+        k += `.${vkmod}`;
+      }
       if (k in bookmarkMap) {
         chBookmarks.push(...bookmarkMap[k]);
       }
@@ -285,9 +291,13 @@ export default function addBookmarks(
   const { module, location, modkey } = props;
   if (module && module in G.Tab) {
     const { isVerseKey } = G.Tab[module];
-    let bmlocation: LocationGBType | LocationVKType | null = null;
-    if (isVerseKey && location) bmlocation = location;
-    else if (!isVerseKey && modkey) {
+    let bmlocation: LocationGBType | LocationVKType | SelectVKMType | null =
+      null;
+    if (isVerseKey && location && G.Tab[module].tabType === 'Comms') {
+      bmlocation = { ...location, vkmod: module };
+    } else if (isVerseKey && location) {
+      bmlocation = location;
+    } else if (!isVerseKey && modkey) {
       bmlocation = { module, key: modkey };
     }
     if (bmlocation) {

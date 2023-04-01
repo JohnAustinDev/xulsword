@@ -42,6 +42,7 @@ import type { SelectVKMType } from './renderer/libxul/vkselect';
 import type { SelectGBMType } from './renderer/libxul/genbookselect';
 import type { getSampleText } from './renderer/bookmarks';
 import type { verseKey } from './renderer/htmlData';
+import type { XulswordState } from './renderer/xulsword/xulsword';
 
 // These built-in local repositories cannot be disabled, deleted or changed.
 // Implemented as a function to allow G.i18n to initialize.
@@ -685,6 +686,41 @@ export function pad(
   const c = char.toString().substring(0, 1);
   while (r.length < len) r = `${c}${r}`;
   return r;
+}
+
+// Figure out the relative width of each panel due to adjacent panels
+// sharing common module and isPinned settings etc. In such case, the
+// first panel of the matching group will widen to take up the whole
+// width while the following matching panels will shrink to zero width.
+// A value of null is given for null or undefined panels.
+export function getPanelWidths(
+  xulswordState: Pick<XulswordState, 'panels' | 'ilModules' | 'isPinned'>
+): (number | null)[] {
+  const { panels, ilModules, isPinned } = xulswordState;
+  const panelWidths: (number | null)[] = [];
+  for (let i = 0; i < panels.length; i += 1) {
+    const panel = panels[i];
+    panelWidths[i] = panel || panel === '' ? 1 : null;
+    if (panel) {
+      const key = [panel, !!ilModules[i], !!isPinned[i]].join('.');
+      let f = i + 1;
+      for (;;) {
+        if (f === panels.length) break;
+        const modulef = panels[f];
+        if (
+          !modulef ||
+          [modulef, !!ilModules[f], !!isPinned[f]].join('.') !== key
+        )
+          break;
+        const panelWidthsx = panelWidths as number[];
+        panelWidthsx[i] += 1;
+        panelWidths[f] = 0;
+        f += 1;
+      }
+      i += f - i - 1;
+    }
+  }
+  return panelWidths;
 }
 
 // Convert a range-form string array into a number array.

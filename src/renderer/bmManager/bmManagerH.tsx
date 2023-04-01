@@ -114,6 +114,7 @@ export function onDoubleClick(this: BMManagerWin, ex: React.SyntheticEvent) {
     if (bookmarkItem?.type === 'bookmark' && bookmarkItem.location) {
       const { location } = bookmarkItem;
       if ('v11n' in location) {
+        location.isBible = bookmarkItem.tabType === 'Texts';
         G.Commands.goToLocationVK(location, location);
       } else {
         G.Commands.goToLocationGB(location);

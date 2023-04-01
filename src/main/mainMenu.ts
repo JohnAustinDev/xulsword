@@ -17,7 +17,6 @@ import G from './mg';
 import Window, { getBrowserWindows } from './components/window';
 import Commands from './components/commands';
 import { verseKey } from './minit';
-import setViewportTabs from './tabs';
 
 import type { PrintPassageState } from '../renderer/printPassage/printPassage';
 import type { BookmarkFolderType, SearchType, TabTypes } from '../type';
@@ -114,7 +113,7 @@ function buildModuleMenus(menu: Menu) {
             type: 'checkbox',
             // icon: path.join(G.Dirs.path.xsAsset, 'icons', '16x16', `${tab}.png`),
             click: d(() => {
-              setViewportTabs(panelIndex, t.module, 'toggle');
+              G.Viewport.setTabs(panelIndex, t.module, 'toggle');
             }),
           });
           submenu.insert(0, newItem);
@@ -231,9 +230,10 @@ function bookmarkProgramMenu(
       click: d(() => {
         if ('location' in bm) {
           if (bm.location) {
-            if ('v11n' in bm.location)
+            if ('v11n' in bm.location) {
+              bm.location.isBible = bm.tabType === 'Texts';
               Commands.goToLocationVK(bm.location, bm.location);
-            else Commands.goToLocationGB(bm.location);
+            } else Commands.goToLocationGB(bm.location);
           }
         }
       }),
@@ -616,14 +616,14 @@ export default class MainMenuBuilder {
                   id: `showAll_${typekey}_${pl}`,
                   label: ts('menu.view.showAll'),
                   click: d(() => {
-                    setViewportTabs(panelIndex, type, 'show');
+                    G.Viewport.setTabs(panelIndex, type, 'show');
                   }),
                 },
                 {
                   id: `hideAll_${typekey}_${pl}`,
                   label: ts('menu.view.hideAll'),
                   click: d(() => {
-                    setViewportTabs(panelIndex, type, 'hide');
+                    G.Viewport.setTabs(panelIndex, type, 'hide');
                   }),
                 },
               ],
@@ -672,7 +672,7 @@ export default class MainMenuBuilder {
             return {
               label: ts(pl),
               click: d(() => {
-                setViewportTabs(panelIndex, 'all', 'show');
+                G.Viewport.setTabs(panelIndex, 'all', 'show');
               }),
             };
           }),
@@ -687,7 +687,7 @@ export default class MainMenuBuilder {
             return {
               label: ts(pl),
               click: d(() => {
-                setViewportTabs(panelIndex, 'all', 'hide');
+                G.Viewport.setTabs(panelIndex, 'all', 'hide');
               }),
             };
           }),

@@ -17,13 +17,13 @@ import type {
   V11nType,
 } from './type';
 
+// TODO!: Commentary bmProperties should not show SelectVK, should have different label, and sampleText from commentary.
+// TODO!: Lightfoot commentary Matthew chatper 2 (or 3?) has images with relative paths that cause exceptions.
 // TODO!: Make folder icons same color as their tab
 // TODO!: Check Daily Devotional
 // TODO!: Add sword protocol support.
 // TODO!: Figure out hang using old Prefs?
-// TODO!: Only one window at a time between ModuleManager RemoveModule
 // TODO!: Fix ModuleManager not updating module or language tables after initial repo update, possibly related to columns etc. not having keys?
-// TODO!: Commentary notes should attach to one commentary!
 // TODO!: Note popup/notebox i18n not being applied.
 // Environment variables:
 // - NODE_ENV - Set in package.json to control the build process

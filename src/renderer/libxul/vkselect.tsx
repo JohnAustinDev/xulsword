@@ -76,6 +76,7 @@ const propTypes = {
 export type SelectVKMType = LocationVKType & {
   vkmod: string;
   lastchapter?: number;
+  isBible?: boolean;
 };
 
 export const defaultVKM = {

@@ -404,7 +404,7 @@ export default class BMPropertiesWin extends React.Component {
 BMPropertiesWin.defaultProps = defaultProps;
 BMPropertiesWin.propTypes = propTypes;
 
-renderToRoot(<BMPropertiesWin />, { resetOnResize: false });
+renderToRoot(<BMPropertiesWin />, { initialState: { resetOnResize: false } });
 
 function initialState(): BMPropertiesState | null {
   const winarg = winState0 as Partial<BMPropertiesState>;

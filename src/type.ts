@@ -36,13 +36,13 @@ import type { inlineFile, inlineAudioFile } from './main/components/localFile';
 import type Prefs from './main/components/prefs';
 import type Commands from './main/components/commands';
 import type Data from './main/components/data';
-import type { PrefsGType } from './main/components/prefs';
 import type Module from './main/components/module';
 import type Window from './main/components/window';
 import type { DirsRendererType } from './main/components/dirs';
 import type LibSword from './main/components/libsword';
 import type MainPrintHandler from './main/print';
 import type { canRedo, canUndo } from './main/bookmarks';
+import type Viewport from './main/components/viewport';
 import type { SelectVKMType } from './renderer/libxul/vkselect';
 
 declare global {
@@ -112,22 +112,24 @@ export type EnvironmentVars =
 
 export type WindowRegistryType = (WindowDescriptorType | null)[];
 
+export type WindowTypes =
+  | 'xulsword'
+  | 'splash'
+  | 'viewportWin'
+  | 'popupWin'
+  | 'chooseFont'
+  | 'moduleManager'
+  | 'removeModule'
+  | 'search'
+  | 'searchHelp'
+  | 'about'
+  | 'printPassage'
+  | 'copyPassage'
+  | 'bmProperties'
+  | 'bmManager';
+
 export type WindowDescriptorType = {
-  type:
-    | 'xulsword'
-    | 'splash'
-    | 'viewportWin'
-    | 'popupWin'
-    | 'chooseFont'
-    | 'moduleManager'
-    | 'removeModule'
-    | 'search'
-    | 'searchHelp'
-    | 'about'
-    | 'printPassage'
-    | 'copyPassage'
-    | 'bmProperties'
-    | 'bmManager';
+  type: WindowTypes | 'all';
   id: number;
   dataID: string;
   options: BrowserWindowConstructorOptions;
@@ -793,6 +795,7 @@ export type GType = {
   Shell: Pick<Shell, 'beep'>;
   Data: typeof Data;
   Module: typeof Module;
+  Viewport: typeof Viewport;
   Window: typeof Window;
 };
 
@@ -1009,5 +1012,10 @@ export const GBuilder: GType & {
     moveToFront: func as any,
     moveToBack: func as any,
     close: func as any,
+  },
+
+  Viewport: {
+    setTabs: func as any,
+    setPanels: func as any,
   },
 };

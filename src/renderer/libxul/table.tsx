@@ -295,8 +295,20 @@ class TextSortableColumn extends AbstractSortableColumn {
     };
     const items: JSX.Element[] = [];
     if (column.sortable) {
-      items.push(<MenuItem icon="sort-asc" onClick={sortAsc} />);
-      items.push(<MenuItem icon="sort-desc" onClick={sortDesc} />);
+      items.push(
+        <MenuItem
+          key={['sort-asc', this.dataColIndex].join('.')}
+          icon="sort-asc"
+          onClick={sortAsc}
+        />
+      );
+      items.push(
+        <MenuItem
+          key={['sort-desc', this.dataColIndex].join('.')}
+          icon="sort-desc"
+          onClick={sortDesc}
+        />
+      );
     }
     if (onColumnHide) {
       if (column.hideable && columns.filter((c) => c.visible).length > 1) {

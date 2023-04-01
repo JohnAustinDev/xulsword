@@ -24,7 +24,6 @@ import { getCipherFailConfs, getTabs, updateGlobalModulePrefs } from './minit';
 import MainMenuBuilder, { pushPrefsToMenu } from './mainMenu';
 import contextMenu from './contextMenu';
 import MainPrintHandler from './print';
-import setViewportTabs from './tabs';
 import LocalFile from './components/localFile';
 import { CipherKeyModules } from './components/module';
 import {
@@ -272,20 +271,19 @@ const openXulswordWindow = () => {
             !newmods.nokeymods.some((nkconf) => nkconf.module === nmconf.module)
         );
         if (!newmods.modules.length && !getTabs().length) {
-          setViewportTabs(-1, 'all', 'hide', true);
+          G.Viewport.setTabs(-1, 'all', 'hide', undefined, true);
         } else {
           newmods.modules
             .filter((c) => c.xsmType !== 'XSM_audio')
             .forEach((conf) => {
-              setViewportTabs(-1, conf.module, 'show', true);
+              G.Viewport.setTabs(-1, conf.module, 'show', undefined, true);
             });
         }
         if (callingWinID) {
           setTimeout(() => {
             publishSubscription(
               'modulesInstalled',
-              { id: callingWinID },
-              false,
+              { renderers: { id: callingWinID }, main: false },
               newmods
             );
           }, 1);
@@ -298,10 +296,14 @@ const openXulswordWindow = () => {
   // Prompt for CipherKeys when encrypted modules with no keys, or
   // incorrect keys, are installed.
   if (Object.keys(CipherKeyModules).length) {
-    publishSubscription('modulesInstalled', { id: xulswordWindow.id }, false, {
-      ...clone(C.NEWMODS),
-      nokeymods: getCipherFailConfs(),
-    });
+    publishSubscription(
+      'modulesInstalled',
+      { renderers: { id: xulswordWindow.id }, main: false },
+      {
+        ...clone(C.NEWMODS),
+        nokeymods: getCipherFailConfs(),
+      }
+    );
   }
 
   if (

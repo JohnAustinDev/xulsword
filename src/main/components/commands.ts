@@ -17,6 +17,7 @@ import {
   deleteBookmarkItem as DeleteBookmarkItem,
   pasteBookmarkItems as PasteBookmarkItems,
   moveBookmarkItems,
+  keep,
 } from '../../common';
 import Subscription from '../../subscription';
 import C from '../../constant';
@@ -29,6 +30,7 @@ import importBookmarkObject, {
   Transaction,
 } from '../bookmarks';
 import { verseKey, getTab, getAudioConfs } from '../minit';
+import Viewport from './viewport';
 import PrefsX from './prefs';
 import LibSword from './libsword';
 import LocalFile from './localFile';
@@ -57,6 +59,7 @@ import type { PrintPassageState } from '../../renderer/printPassage/printPassage
 import type { CopyPassageState } from '../../renderer/copyPassage/copyPassage';
 import type { SelectVKMType } from '../../renderer/libxul/vkselect';
 import type { BMPropertiesStateWinArg } from '../../renderer/bmProperties/bmProperties';
+import type { XulswordState } from '../../renderer/xulsword/xulsword';
 
 // Require the calling window argument for Prefs.set calls, so window -2 (to all
 // follow Pref changes with update to all windows and main process) can be passed
@@ -183,28 +186,19 @@ const Commands = {
       ) {
         const { book, chapter, swordModule } = audio;
         const tab = getTab();
-        xulsword = this.goToLocationVK(
-          {
-            book,
-            chapter: chapter || 1,
-            verse: 1,
-            v11n: (swordModule && tab[swordModule].v11n) || null,
-          },
-          undefined,
-          undefined,
-          true
-        );
+        this.goToLocationVK({
+          book,
+          chapter: chapter || 1,
+          verse: 1,
+          v11n: (swordModule && tab[swordModule].v11n) || null,
+        });
       } else if ('key' in audio) {
         const { key, swordModule } = audio;
         if (swordModule) {
-          xulsword = this.goToLocationGB(
-            {
-              module: swordModule,
-              key,
-            },
-            undefined,
-            true
-          );
+          this.goToLocationGB({
+            module: swordModule,
+            key,
+          });
         }
       }
       xulsword = {
@@ -579,8 +573,7 @@ const Commands = {
         rootState.modal = 'outlined';
         publishSubscription<'setRendererRootState'>(
           'setRendererRootState',
-          { id: windowToPrint.id },
-          false,
+          { renderers: { id: windowToPrint.id }, main: false },
           rootState
         );
         const destroy = Subscription.subscribe.asyncTaskComplete(() => {
@@ -951,58 +944,38 @@ const Commands = {
 
   goToLocationGB(
     location: LocationGBType,
-    scroll?: ScrollType | undefined,
-    deferAction?: boolean
-  ): Partial<typeof S.prefs.xulsword> {
-    const xulsword: Partial<typeof S.prefs.xulsword> = {
-      panels: PrefsX.getComplexValue(
-        'xulsword.panels'
-      ) as typeof S.prefs.xulsword.panels,
-      keys: PrefsX.getComplexValue(
-        'xulsword.keys'
-      ) as typeof S.prefs.xulsword.keys,
-    };
-    const { panels, keys } = xulsword;
-    if (panels && keys) {
-      let p = panels.findIndex((m) => m && m === location.module);
-      if (p === -1) {
-        p = 0;
-        panels[p] = location.module;
+    scroll?: ScrollType | undefined
+  ): void {
+    const xulsword: Partial<typeof S.prefs.xulsword> = Viewport.setPanels(
+      location,
+      {
+        skipCallbacks: true,
+        clearRendererCaches: false,
       }
-      keys[p] = location.key;
-      xulsword.scroll = scroll || { verseAt: 'center' };
-      if (!deferAction) {
-        Prefs.mergeValue('xulsword', xulsword, 'prefs', undefined, false, -2);
-      }
-    }
-    return xulsword;
+    );
+    xulsword.scroll = scroll || { verseAt: 'center' };
+    Prefs.mergeValue('xulsword', xulsword, 'prefs', false, true, -2);
   },
 
+  // If SelectVKMType (which includes vkmod) is passed, and vkmod is not a Bible (is
+  // a commentary) then the main viewport will be updated to show that module in a
+  // panel, unless it is already showing.
   goToLocationVK(
-    newlocation: LocationVKType,
+    newlocation: LocationVKType | SelectVKMType,
     newselection?: LocationVKType,
-    newscroll?: ScrollType,
-    deferAction?: boolean
-  ): Partial<typeof S.prefs.xulsword> {
-    // To go to a verse system location without also changing xulsword's current
-    // versekey module requires this location be converted into the current v11n.
-    const xulsword: Partial<typeof S.prefs.xulsword> = {
-      location: PrefsX.getComplexValue(
-        'xulsword.location'
-      ) as typeof S.prefs.xulsword.location,
-    };
-    const { location } = xulsword;
-    const loc = verseKey(newlocation, location?.v11n || undefined);
-    const sel = newselection
-      ? verseKey(newselection, location?.v11n || undefined)
-      : null;
-    xulsword.location = loc.location();
-    xulsword.selection = sel ? sel.location() : null;
-    xulsword.scroll = newscroll || { verseAt: 'center' };
-    if (!deferAction) {
-      Prefs.mergeValue('xulsword', xulsword, 'prefs', undefined, false, -2);
+    newscroll?: ScrollType
+  ): void {
+    let xulsword: Partial<typeof S.prefs.xulsword> = {};
+    if ('vkmod' in newlocation && newlocation.isBible === false) {
+      xulsword = Viewport.setPanels(newlocation.vkmod, {
+        skipCallbacks: true,
+        clearRendererCaches: false,
+      });
     }
-    return xulsword;
+    xulsword.location = newlocation;
+    xulsword.selection = newselection || null;
+    xulsword.scroll = newscroll || { verseAt: 'center' };
+    Prefs.mergeValue('xulsword', xulsword, 'prefs', false, true, -2);
   },
 };
 

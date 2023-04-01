@@ -7,7 +7,7 @@ import { findBookmarkItem } from '../common';
 import S from '../defaultPrefs';
 import G from './mg';
 import CommandsX from './components/commands';
-import setViewportTabs from './tabs';
+import Viewport from './components/viewport';
 import Data from './components/data';
 
 import type { AddCaller, ContextData, LocationVKType } from '../type';
@@ -118,7 +118,7 @@ export default function contextMenu(
             click: () => {
               const mod = d.tab || d.context;
               if (mod && d.panelIndex !== undefined)
-                setViewportTabs(d.panelIndex, mod, 'hide');
+                Viewport.setTabs(d.panelIndex, mod, 'hide');
             },
           },
         ];
@@ -138,22 +138,17 @@ export default function contextMenu(
               bookmarkItem?.type === 'bookmark' && !!bookmarkItem.location,
             click: () => {
               if (bookmarkItem?.type === 'bookmark' && bookmarkItem.location) {
-                const { location } = bookmarkItem;
+                const { location, tabType } = bookmarkItem;
                 if ('v11n' in location) {
+                  location.isBible = tabType === 'Texts';
                   Commands.goToLocationVK(
                     location,
                     location,
                     undefined,
-                    undefined,
                     window.id
                   );
                 } else {
-                  Commands.goToLocationGB(
-                    location,
-                    undefined,
-                    undefined,
-                    window.id
-                  );
+                  Commands.goToLocationGB(location, undefined, window.id);
                 }
               }
             },
@@ -190,13 +185,7 @@ export default function contextMenu(
             click: () => {
               const loc = d.selectionParsedVK as LocationVKType;
               if (typeof loc === 'object') {
-                Commands.goToLocationVK(
-                  loc,
-                  loc,
-                  undefined,
-                  undefined,
-                  window.id
-                );
+                Commands.goToLocationVK(loc, loc, undefined, window.id);
               }
             },
           },
@@ -210,7 +199,6 @@ export default function contextMenu(
                 Commands.goToLocationVK(
                   locationVK,
                   locationVK,
-                  undefined,
                   undefined,
                   window.id
                 );

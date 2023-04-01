@@ -29,7 +29,12 @@ import C from '../../constant';
 import S from '../../defaultPrefs';
 import G from '../rg';
 import log from '../log';
-import { getStatePref, getLangReadable, setStatePref } from '../rutil';
+import {
+  getStatePref,
+  getLangReadable,
+  setStatePref,
+  windowArguments,
+} from '../rutil';
 import {
   addClass,
   xulDefaultProps,
@@ -76,10 +81,13 @@ import type {
 } from '../libxul/table';
 import type { VKSelectProps, SelectVKMType } from '../libxul/vkselect';
 import type { ModinfoParent } from '../libxul/modinfo';
+import { WindowRootState } from 'renderer/renderer';
 
 G.Module.cancel();
 
 let MasterRepoListDownloaded = false;
+let resetOnResize = false;
+const windowDescriptor = windowArguments();
 
 const defaultProps = {
   ...xulDefaultProps,
@@ -813,7 +821,18 @@ export default class ModuleManager
     };
 
     // If we are managing external repositories, Internet permission is required.
-    if (!repositories || internetPermission)
+    if (!repositories || internetPermission) {
+      if (!resetOnResize) {
+        const { id } = windowDescriptor;
+        resetOnResize = true;
+        G.publishSubscription(
+          'setRendererRootState',
+          { renderers: { id }, main: false },
+          {
+            resetOnResize,
+          } as Partial<WindowRootState>
+        );
+      }
       return (
         <Vbox {...addClass('modulemanager', props)} flex="1" height="100%">
           <Toaster
@@ -1116,6 +1135,7 @@ export default class ModuleManager
           </Hbox>
         </Vbox>
       );
+    }
     // If Internet permission is needed but has not been granted, then ask for it.
     return (
       <Vbox {...addClass('modulemanager', props)} flex="1" height="100%">

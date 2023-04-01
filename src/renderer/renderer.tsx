@@ -11,7 +11,7 @@ import React, {
   useEffect,
   useState,
 } from 'react';
-import { render } from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import PropTypes from 'prop-types';
 import { Intent, ProgressBar, Tag } from '@blueprintjs/core';
 import Subscription from '../subscription';
@@ -99,10 +99,9 @@ if (html) {
 }
 
 const propTypes = {
-  children: PropTypes.element.isRequired,
-  resetOnResize: PropTypes.bool.isRequired,
   print: PropTypes.object.isRequired,
   initialState: PropTypes.object.isRequired,
+  children: PropTypes.element.isRequired,
 };
 
 const InitialState = {
@@ -112,6 +111,7 @@ const InitialState = {
   printDisabled: false,
   modal: 'off' as ModalType,
   iframeFilePath: '' as string,
+  resetOnResize: true as boolean,
   progress: -1 as number | 'undefined',
 };
 
@@ -130,7 +130,7 @@ type StateArray<M extends keyof WindowRootState> = [
 const delayHandlerThis = {};
 
 function WindowRoot(props: WindowRootProps) {
-  const { children, resetOnResize, print, initialState: istate } = props;
+  const { children, print, initialState: istate } = props;
 
   const s = {} as { [k in keyof typeof InitialState]: StateArray<k> };
   stateme.forEach((me) => {
@@ -179,7 +179,10 @@ function WindowRoot(props: WindowRootProps) {
 
   // IPC resize setup:
   useEffect(() => {
-    if ((resetOnResize || s.showPrintOverlay[0]) && s.dialogs[0].length === 0) {
+    if (
+      (s.resetOnResize[0] || s.showPrintOverlay[0]) &&
+      s.dialogs[0].length === 0
+    ) {
       return window.ipc.on(
         'resize',
         delayHandler.bind(delayHandlerThis)(
@@ -428,7 +431,6 @@ export type RootPrintType = {
 };
 
 export type WindowRootOptions = {
-  resetOnResize: boolean;
   print: RootPrintType;
   initialState: Partial<WindowRootState>;
   onload?: (() => void) | null;
@@ -443,7 +445,7 @@ export default async function renderToRoot(
     print?: Partial<RootPrintType>;
   }
 ) {
-  const { onload, onunload, resetOnResize } = options || {};
+  const { onload, onunload } = options || {};
   const { print: printArg, initialState: initialStateArg } = options || {};
   const print = {
     pageable: false,
@@ -459,17 +461,14 @@ export default async function renderToRoot(
     ...initialStateArg,
   };
 
-  render(
+  const root = createRoot(document.getElementById('root') as HTMLElement);
+
+  root.render(
     <StrictMode>
-      <WindowRoot
-        print={print}
-        resetOnResize={resetOnResize ?? true}
-        initialState={initialState}
-      >
+      <WindowRoot print={print} initialState={initialState}>
         {component}
       </WindowRoot>
-    </StrictMode>,
-    document.getElementById('root')
+    </StrictMode>
   );
 
   window.ipc.on('close', () => {

@@ -217,4 +217,4 @@ export default class AboutWin extends React.Component implements ModinfoParent {
 AboutWin.defaultProps = defaultProps;
 AboutWin.propTypes = propTypes;
 
-renderToRoot(<AboutWin />, { resetOnResize: false });
+renderToRoot(<AboutWin />, { initialState: { resetOnResize: false } });

@@ -108,9 +108,7 @@ html[dir='rtl'] .sbcontrols {
   right: auto;
   left: 0px;
 }
-.atext.Texts .nbc.noteboxEmpty,
-.atext.Comms .nbc.noteboxEmpty,
-.atext.Genbks .nbc {
+.atext .nbc.noteboxEmpty {
   display: none;
 }
 
