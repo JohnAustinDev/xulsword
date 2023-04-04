@@ -344,28 +344,23 @@ bool ThMLXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
       }
     }
     else if (tag.getName() && (!strcmp(tag.getName(), "img") || !strcmp(tag.getName(), "image"))) {
-      const char *src = strstr(token, "src");
-      if (!src)   // assert we have a src attribute
-        return false;
+      const char *url = tag.getAttribute("src");
+      if (url) {    // assert we have a url attribute
+        SWBuf filepath;
+        if (userData->module) {
+          filepath = userData->module->getConfigEntry("AbsoluteDataPath");
+          if ((filepath.size()) && (filepath[filepath.size()-1] != '/') && (url[0] != '/'))
+            filepath += '/';
+        }
+        filepath += url;
+        filepath.replaceBytes("\\", '/');
 
-      const char *c, *d;
-      if (((c = strchr(src+3, '"')) == NULL) ||
-          ((d = strchr( ++c , '"')) == NULL)) // identify endpoints.
-        return false;     // abandon hope.
-
-      SWBuf imagename;
-      if (*c == '/')        // as below, inside for loop.
-        imagename += userData->module->getConfigEntry("AbsoluteDataPath");
-      while (c != d)        // move bits into the name.
-          imagename += *(c++);
-
-      imagename.replaceBytes("\\", '/');
-
-      buf.append("<div class=\"image-viewport\"><div class=\"scroll-container\">");
-      // Secure src file URLs require front-end handling
-      buf.append("<img src=\"data:,\" alt data-src=\"File://");
-      buf.append(imagename.c_str());
-      buf.append("\"></div></div>");
+        buf.append("<div class=\"image-viewport\"><div class=\"scroll-container\">");
+        // Secure src file URLs require front-end handling
+        buf.append("<img src=\"data:,\" alt data-src=\"File://");
+        buf.append(filepath.c_str());
+        buf.append("\"></div></div>");
+      }
     }
     else {
       buf += '<';

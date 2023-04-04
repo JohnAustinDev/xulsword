@@ -214,6 +214,7 @@ export function inlineFile(
     png: 'image/png',
     gif: 'image/gif',
     ttf: 'font/ttf',
+    svg: 'image/svg+xml',
     otf: 'font/otf',
     css: 'text/css',
     pdf: 'application/pdf',

@@ -861,7 +861,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 
             filepath.replaceBytes("\\", '/');
 
-          outHtmlTag(SWBuf().appendFormatted("<div class=\"image-viewport\"><div class=\"scroll-container %s %s\">",
+          outHtmlTag(SWBuf().appendFormatted("<div class=\"image-viewport %s %s\"><div class=\"scroll-container\">",
               (tag.getAttribute("type") ? tag.getAttribute("type"):""),
               (tag.getAttribute("subType") ? tag.getAttribute("subType"):"")
             ).c_str(), buf, u);

@@ -455,16 +455,20 @@ span.sense-level-2 {
 }
 .image-viewport .scroll-container img {
   width: 100%;
-  cursor: zoom-in;
 }
 .image-viewport + .caption {
   margin-top: -20px;
   margin-bottom: 2em;
 }
+.image-viewport img.image-not-found {
+  width: 20px;
+  filter: invert(0.5) sepia(1) saturate(5) hue-rotate(-45deg);
+  cursor: not-allowed;
+}
 
 /* CLASSES FROM OSIS-CONVERTER-MADE SWORD MODULES */
 .x-text-image {
-  float: inline-end;
+  float: right; /* inline-end is invalid (why?) */
   margin-inline-end: 10px;
   max-width: 50%;
 }

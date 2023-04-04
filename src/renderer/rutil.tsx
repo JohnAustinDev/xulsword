@@ -86,12 +86,23 @@ export function windowArguments(
 export function libswordImgSrc(container: HTMLElement) {
   Array.from(container.getElementsByTagName('img')).forEach((img) => {
     if (img.dataset.src) {
-      // Show red box on failure
-      let src =
-        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==';
+      let src: string | undefined;
       const m = img.dataset.src.match(/^file:\/\/(.*)$/i);
-      if (m) src = G.inlineFile(m[1], 'base64');
-      img.src = src;
+      if (m) {
+        if (m[1].match(/^(\w:\\|\/)/)) src = G.inlineFile(m[1], 'base64');
+        else {
+          log.error(`Image source is not absolute: ${m[1]}`);
+        }
+      }
+      if (src) {
+        img.src = src;
+      } else {
+        img.src = G.inlineFile(
+          [G.Dirs.path.xsAsset, 'icons', '20x20', 'media.svg'].join(C.FSSEP),
+          'base64'
+        );
+        img.classList.add('image-not-found');
+      }
       img.removeAttribute('data-src');
     }
   });

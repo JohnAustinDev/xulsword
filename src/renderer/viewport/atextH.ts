@@ -122,7 +122,7 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
           const scrollcn = viewport.firstChild as HTMLDivElement;
           const img = scrollcn?.firstChild as HTMLImageElement | undefined;
           let expandShrink: boolean | undefined;
-          if (img) {
+          if (img && ['zoom-in', 'zoom-out'].includes(img.style.cursor)) {
             const scrollcnS = window.getComputedStyle(scrollcn, null);
             if (scrollcnS.position === 'absolute') {
               expandShrink = img.style.width !== `${img.naturalWidth}px`;
@@ -155,7 +155,7 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
                 img.style.width = `${viewport.offsetWidth}px`;
                 img.style.cursor = 'zoom-in';
               }
-            } else img.style.cursor = 'default';
+            } else img.style.cursor = '';
           }
 
           break;
@@ -191,7 +191,7 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
 
     case 'mouseover': {
       const targ = ofClass(
-        ['cr', 'fn', 'sn', 'un', 'image-container'],
+        ['cr', 'fn', 'sn', 'un', 'image-viewport'],
         es.target
       );
       if (targ === null) return;
@@ -259,18 +259,18 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
           break;
         }
 
-        case 'image-container': {
+        case 'image-viewport': {
           okay = true;
-          const img = elem.getElementsByTagName('img');
+          const img = elem.getElementsByTagName('img')[0] as
+            | HTMLImageElement
+            | undefined;
           if (
             img &&
-            img.length &&
-            window.getComputedStyle(img[0], null).cursor !== 'not-allowed'
+            !img.style.cursor &&
+            img.width < img.naturalWidth &&
+            window.getComputedStyle(img, null).cursor !== 'not-allowed'
           ) {
-            if (img[0].offsetWidth < img[0].naturalWidth)
-              img[0].style.cursor = 'zoom-in';
-            else if (img[0].style.width) img[0].style.cursor = 'zoom-out';
-            else img[0].style.cursor = '';
+            img.style.cursor = 'zoom-in';
           }
           break;
         }
