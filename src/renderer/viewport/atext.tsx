@@ -453,7 +453,7 @@ class Atext extends React.Component {
         if (columns > 1 && (update || doscroll)) {
           const empty = !trimNotes(sbe, nbe);
           const nbc = nbe.parentNode as any;
-          if (empty && type !== 'Lexicons / Dictionaries') {
+          if ((empty || !nbc.innerText) && type !== 'Lexicons / Dictionaries') {
             nbc.classList.add('noteboxEmpty');
           } else nbc.classList.remove('noteboxEmpty');
         }
@@ -568,7 +568,7 @@ class Atext extends React.Component {
       }
       const nbc = nbe.parentNode as any;
       fntable = nbe.firstChild as HTMLElement | null;
-      if (!fntable?.innerHTML && !isDict) nbc.classList.add('noteboxEmpty');
+      if (!fntable?.innerText && !isDict) nbc.classList.add('noteboxEmpty');
       else nbc.classList.remove('noteboxEmpty');
     }
   }

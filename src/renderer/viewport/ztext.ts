@@ -19,7 +19,7 @@ import {
   chapterChange,
   pageChange,
 } from './zversekey';
-import { getAllDictionaryKeys, getDictEntryHTML } from './zdictionary';
+import { getAllDictionaryKeyList, getDictEntryHTML } from './zdictionary';
 
 import type {
   AtextPropsType,
@@ -136,7 +136,7 @@ export function libswordText(
       // Cache is used rather than memoization when there is a strictly
       // limited number of cache possibliities (ie. one per module).
       let key = modkey;
-      const keylist = getAllDictionaryKeys(module);
+      const keylist = getAllDictionaryKeyList(module);
       if (!key || !keylist.includes(key)) [key] = keylist;
       if (key) {
         if (key === 'DailyDevotionToday') {
@@ -149,7 +149,7 @@ export function libswordText(
         // Build and cache the selector list.
         if (!Cache.has('keyHTML', module)) {
           let html = '';
-          Cache.read('keylist', module).forEach((k1: any) => {
+          keylist.forEach((k1: any) => {
             const id = `${stringHash(k1)}.0`;
             const data: HTMLData = {
               type: 'dictkey',
@@ -258,14 +258,7 @@ export function genbookChange(
 ): string | null {
   let tocs: string[] = [];
   if (module) {
-    if (!Cache.has('genbkTOC', module)) {
-      Cache.write(
-        G.LibSword.getGenBookTableOfContents(module),
-        'genbkTOC',
-        module
-      );
-    }
-    tocs = Cache.read('genbkTOC', module);
+    tocs = G.LibSword.getGenBookTableOfContents(module);
     if (modkey) {
       const toc = tocs.indexOf(modkey);
       if (toc !== -1) {

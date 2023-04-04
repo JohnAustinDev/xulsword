@@ -4,6 +4,7 @@ import { fork } from 'child_process';
 import log from 'electron-log';
 import path from 'path';
 import { repositoryKey, isRepoLocal, JSON_parse } from '../../common';
+import S from '../../defaultPrefs';
 import Cache from '../../cache';
 import C from '../../constant';
 import LocalFile from './localFile';
@@ -19,6 +20,7 @@ import type {
   SwordFilterValueType,
   V11nType,
   GenBookKeys,
+  ModulesCache,
 } from '../../type';
 import type { ManagerStatePref } from '../../renderer/moduleManager/manager';
 
@@ -366,12 +368,22 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // getAllDictionaryKeys
   // Returns all keys in form key1<nx>key2<nx>key3<nx>
   // Returns an error is module Lexdictmod is not of type StrKey
-  getAllDictionaryKeys(lexdictmod: string): string {
+  getAllDictionaryKeys(lexdictmod: string): string[] {
     if (this.isReady(true)) {
-      const allDictionaryKeys = libxulsword.GetAllDictionaryKeys(lexdictmod);
-      return allDictionaryKeys;
+      const mpver = Object.keys(S.modules)[0];
+      const pkey = `${mpver}.${lexdictmod}.keylist`;
+      if (!Prefs.has(pkey, 'complex', 'modules')) {
+        // Don't save this version to prefs; the sorted version will be saved later!
+        return libxulsword
+          .GetAllDictionaryKeys(lexdictmod)
+          .split('<nx>') as string[];
+      }
+      return Prefs.getComplexValue(
+        pkey,
+        'modules'
+      ) as ModulesCache[string]['keylist'];
     }
-    return '';
+    return [];
   },
 
   // getGenBookChapterText
@@ -398,10 +410,22 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // Returns an error if module Gbmod is not a TreeKey mod.
   getGenBookTableOfContents(gbmod: string): GenBookKeys {
     if (this.isReady(true)) {
-      const toc = JSON_parse(
-        libxulsword.GetGenBookTableOfContents(gbmod)
-      ) as GenBookTOC;
-      return readGenBookLibSword(toc);
+      const mpver = Object.keys(S.modules)[0];
+      const pkey = `${mpver}.${gbmod}.toc`;
+      if (!Prefs.has(pkey, 'complex', 'modules')) {
+        const toc = JSON_parse(
+          libxulsword.GetGenBookTableOfContents(gbmod)
+        ) as GenBookTOC;
+        Prefs.setComplexValue(
+          pkey,
+          readGenBookLibSword(toc) as GenBookKeys,
+          'modules'
+        );
+      }
+      return Prefs.getComplexValue(
+        pkey,
+        'modules'
+      ) as ModulesCache[string]['toc'];
     }
     return [];
   },

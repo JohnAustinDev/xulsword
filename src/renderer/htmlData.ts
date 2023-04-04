@@ -14,7 +14,7 @@ import VerseKey from '../verseKey';
 import G from './rg';
 
 import type {
-  LocationGBType,
+  LocationORType,
   LocationVKType,
   OSISBookType,
   V11nType,
@@ -59,7 +59,7 @@ export type HTMLData = {
   context?: string;
   reflist?: string[];
   location?: LocationVKType;
-  locationGB?: LocationGBType;
+  locationGB?: LocationORType;
   bmitem?: string;
   nid?: number;
   title?: string; // data-title value from LibSword
@@ -132,7 +132,7 @@ export function libSwordData2XulswordData(dataIn: LibSwordHTMLData): HTMLData {
     dataIn;
   const { bk, vs, lv } = dataIn;
   let { ch } = dataIn;
-  let locationGB: LocationGBType | undefined;
+  let locationGB: LocationORType | undefined;
   let key = '';
   if (typeof ch === 'string') {
     key = ch;

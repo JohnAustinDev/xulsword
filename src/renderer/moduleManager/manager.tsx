@@ -44,11 +44,8 @@ import {
 import Button from '../libxul/button';
 import { Hbox, Vbox, Box } from '../libxul/boxes';
 import Groupbox from '../libxul/groupbox';
-import VKSelect from '../libxul/vkselect';
-import GBSelect, {
-  GBSelectProps,
-  SelectGBMType,
-} from '../libxul/genbookselect';
+import SelectVK from '../libxul/selectVK';
+import SelectOR, { SelectORProps, SelectORMType } from '../libxul/selectOR';
 import Table, { TablePropColumn } from '../libxul/table';
 import Spacer from '../libxul/spacer';
 import Label from '../libxul/label';
@@ -79,7 +76,7 @@ import type {
   TonEditableCellChanged,
   TonRowsReordered,
 } from '../libxul/table';
-import type { VKSelectProps, SelectVKMType } from '../libxul/vkselect';
+import type { SelectVKProps, SelectVKMType } from '../libxul/selectVK';
 import type { ModinfoParent } from '../libxul/modinfo';
 import { WindowRootState } from 'renderer/renderer';
 
@@ -175,8 +172,8 @@ export default class ModuleManager
   eventHandler;
 
   audioDialogOnChange:
-    | VKSelectProps['onSelection']
-    | GBSelectProps['onSelection'];
+    | SelectVKProps['onSelection']
+    | SelectORProps['onSelection'];
 
   modinfoParentHandler: typeof modinfoParentHandlerH;
 
@@ -334,7 +331,7 @@ export default class ModuleManager
 
     // Instantiate progress handler
     this.destroy.push(
-      window.ipc.on('progress', (prog: number, id?: string, stack?: string) => {
+      window.ipc.on('progress', (prog: number, id?: string) => {
         const state = this.state as ManagerState;
         if (id) {
           H.setDownloadProgress(this, id, prog);
@@ -849,7 +846,7 @@ export default class ModuleManager
                     <>
                       <Label value={vkAudioDialog.conf.module} />
                       <div>{vkAudioDialog.conf.Description?.locale}</div>
-                      <VKSelect
+                      <SelectVK
                         height="2em"
                         initialVKM={vkAudioDialog.initial}
                         options={vkAudioDialog.options}
@@ -860,10 +857,10 @@ export default class ModuleManager
                   {gbAudioDialog && (
                     <>
                       <Label value={gbAudioDialog.conf.module} />
-                      <GBSelect
-                        selectGBM={gbAudioDialog.selection}
-                        gbmods={[]}
-                        gbmodNodeLists={gbAudioDialog.options.gbmodNodeLists}
+                      <SelectOR
+                        selectORM={gbAudioDialog.selection}
+                        ormods={[]}
+                        ormodNodeLists={gbAudioDialog.options.ormodNodeLists}
                         enableMultipleSelection
                         onSelection={dialogOnChange}
                       />
@@ -880,8 +877,7 @@ export default class ModuleManager
                   <Button
                     id="ok"
                     disabled={
-                      (gbAudioDialog &&
-                        !gbAudioDialog.selection.children.length) ||
+                      (gbAudioDialog && !gbAudioDialog.selection.keys.length) ||
                       (vkAudioDialog && !vkAudioDialog.selection.chapter)
                     }
                     flex="1"
@@ -1179,7 +1175,7 @@ ModuleManager.propTypes = propTypes;
 
 function audioDialogOnChange(
   this: ModuleManager,
-  selection: SelectVKMType | SelectGBMType
+  selection: SelectVKMType | SelectORMType
 ) {
   this.sState((prevState) => {
     const { showAudioDialog: sad } = prevState;

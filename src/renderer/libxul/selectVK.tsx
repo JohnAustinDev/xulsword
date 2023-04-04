@@ -17,7 +17,7 @@ import { Hbox } from './boxes';
 import Label from './label';
 import Spacer from './spacer';
 import Menulist from './menulist';
-import './vkselect.css';
+import './selectVK.css';
 
 import type {
   BookGroupType,
@@ -100,7 +100,7 @@ export const defaultVKM = {
 // hidden and available selections will include entire verse system,
 // otherwise the available selections will include only options
 // within the selected vkmod.
-export interface VKSelectProps extends XulProps {
+export interface SelectVKProps extends XulProps {
   initialVKM: SelectVKMType | undefined;
   selectVKM: SelectVKMType | undefined;
   options: {
@@ -115,26 +115,26 @@ export interface VKSelectProps extends XulProps {
   onSelection: (selection: SelectVKMType, id: string) => void;
 }
 
-interface VKSelectState {
+interface SelectVKState {
   selection: SelectVKMType | null;
 }
 
-export type VKSelectChangeEvents =
+export type SelectVKChangeEvents =
   | React.ChangeEvent<HTMLInputElement>
   | React.ChangeEvent<HTMLSelectElement>;
 
 // React Bibleselect
-class VKSelect extends React.Component {
+class SelectVK extends React.Component {
   static defaultProps: typeof defaultProps;
 
   static propTypes: typeof propTypes;
 
   newselection: SelectVKMType | null;
 
-  constructor(props: VKSelectProps) {
+  constructor(props: SelectVKProps) {
     super(props);
 
-    const s: VKSelectState = {
+    const s: SelectVKState = {
       selection: props.initialVKM || null,
     };
     this.state = s;
@@ -145,14 +145,14 @@ class VKSelect extends React.Component {
     this.getNumberOptions = this.getNumberOptions.bind(this);
   }
 
-  componentDidUpdate(prevProps: VKSelectProps, prevState: VKSelectState) {
+  componentDidUpdate(prevProps: SelectVKProps, prevState: SelectVKState) {
     const { selection: stateVKM } = prevState;
     const { initialVKM } = prevProps;
     const { newselection } = this;
     if (initialVKM !== undefined && newselection) {
       const d = diff(stateVKM, newselection);
       if (d) {
-        const s: Partial<VKSelectState> = {
+        const s: Partial<SelectVKState> = {
           selection: newselection,
         };
         this.setState(s);
@@ -163,11 +163,11 @@ class VKSelect extends React.Component {
   // Get an updated selection based on last user input, and call onSelection.
   // If the component is keeping its own state, also update that state.
   handleChange(es: React.SyntheticEvent) {
-    const state = this.state as VKSelectState;
-    const props = this.props as VKSelectProps;
+    const state = this.state as SelectVKState;
+    const props = this.props as SelectVKProps;
     const { selection: stateVKM } = state;
     const { initialVKM, selectVKM: propsVKM } = props;
-    const e = es as VKSelectChangeEvents;
+    const e = es as SelectVKChangeEvents;
     const cls = ofClass(
       [
         'vk-vkmod',
@@ -182,7 +182,7 @@ class VKSelect extends React.Component {
     if (cls) {
       let s = initialVKM === undefined ? propsVKM : stateVKM;
       s = s ? clone(s) : defaultVKM;
-      const { onSelection } = this.props as VKSelectProps;
+      const { onSelection } = this.props as SelectVKProps;
       const { value } = e.target;
       const [, id] = cls.type.split('-');
       switch (id) {
@@ -238,7 +238,7 @@ class VKSelect extends React.Component {
     min: number,
     max: number
   ) {
-    const props = this.props as VKSelectProps;
+    const props = this.props as SelectVKProps;
     const { initialVKM } = props;
     let oc = options;
     if (!oc) {
@@ -270,8 +270,8 @@ class VKSelect extends React.Component {
   }
 
   render() {
-    const props = this.props as VKSelectProps;
-    const state = this.state as VKSelectState;
+    const props = this.props as SelectVKProps;
+    const state = this.state as SelectVKState;
 
     // Use selectVKM prop if initialVKM is undefined, otherwise use stateVKM.
     const { selectVKM: propsVKM, initialVKM } = props;
@@ -404,7 +404,7 @@ class VKSelect extends React.Component {
     } = this.newselection;
 
     return (
-      <Hbox pack="start" align="center" {...addClass('vkselect', this.props)}>
+      <Hbox pack="start" align="center" {...addClass('selectvk', this.props)}>
         {newbooks.length > 0 && (
           <Menulist
             className="vk-book"
@@ -474,7 +474,7 @@ class VKSelect extends React.Component {
     );
   }
 }
-VKSelect.defaultProps = defaultProps;
-VKSelect.propTypes = propTypes;
+SelectVK.defaultProps = defaultProps;
+SelectVK.propTypes = propTypes;
 
-export default VKSelect;
+export default SelectVK;

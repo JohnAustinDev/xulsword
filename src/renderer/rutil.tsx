@@ -14,10 +14,11 @@ import {
   isAudioVerseKey,
   JSON_parse,
   keep,
-  readGenBookAudioConf,
   versionCompare,
   getStatePref as getStatePref2,
   bookmarkItemIconPath,
+  audioConfNumbers,
+  gbPaths,
 } from '../common';
 import C from '../constant';
 import S from '../defaultPrefs';
@@ -26,6 +27,7 @@ import { getElementData, verseKey } from './htmlData';
 import log from './log';
 
 import type {
+  AudioPath,
   BookmarkItemType,
   BookmarkTreeNode,
   GenBookAudio,
@@ -205,10 +207,7 @@ export function genBookAudioFile(
       const ac = AudioChapters as GenBookAudioConf;
       if (!Cache.has('readGenBookAudioConf', swordModule)) {
         Cache.write(
-          readGenBookAudioConf(
-            ac,
-            G.LibSword.getGenBookTableOfContents(swordModule)
-          ),
+          readGenBookAudioConf(ac, swordModule),
           'readGenBookAudioConf',
           swordModule
         );
@@ -275,6 +274,30 @@ export function audioIcon(
     );
   }
   return null;
+}
+
+// Returns the audio files listed in a config file as GenBookAudio.
+export function readGenBookAudioConf(
+  audio: GenBookAudioConf,
+  gbmod: string
+): GenBookAudio {
+  const r: GenBookAudio = {};
+  const allGbKeys = gbPaths(G.Prefs, G.LibSword, gbmod);
+  Object.entries(audio).forEach((entry) => {
+    const [pathx, str] = entry;
+    const px = pathx.split('/').filter(Boolean);
+    const parentPath: AudioPath = [];
+    px.forEach((p, i) => {
+      parentPath[i] = Number(p);
+    });
+    audioConfNumbers(str).forEach((n) => {
+      const pp = parentPath.slice() as AudioPath;
+      pp.push(n);
+      const kx = Object.entries(allGbKeys).find((e) => !diff(pp, e[1]));
+      if (kx) r[kx[0]] = pp;
+    });
+  });
+  return r;
 }
 
 // Does location surely exist in the module? It's assumed if a book is included,

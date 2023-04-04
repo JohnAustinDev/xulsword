@@ -1,7 +1,0 @@
-.select-parent.hide {
-  display: none;
-}
-
-.gbselect .menulist + .menulist {
-  margin-top: 0;
-}

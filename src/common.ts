@@ -19,27 +19,26 @@ import type {
   QuerablePromise,
   GType,
   DeprecatedAudioChaptersConf,
-  GenBookKeys,
   VerseKeyAudioConf,
   GenBookAudioConf,
-  GenBookAudio,
   VerseKeyAudio,
-  AudioPath,
   OSISBookType,
   PrefValue,
   BookmarkFolderType,
   NewModulesType,
   BookmarkTreeNode,
   PrefStoreType,
-  LocationGBType,
+  LocationORType,
   BookmarkItemType,
   TabType,
   TabTypes,
   SwordFeatures,
+  GenBookAudio,
+  ModulesCache,
 } from './type';
 import type { TreeNodeInfo } from '@blueprintjs/core';
-import type { SelectVKMType } from './renderer/libxul/vkselect';
-import type { SelectGBMType } from './renderer/libxul/genbookselect';
+import type { SelectVKMType } from './renderer/libxul/selectVK';
+import type { SelectORMType } from './renderer/libxul/selectOR';
 import type { getSampleText } from './renderer/bookmarks';
 import type { verseKey } from './renderer/htmlData';
 import type { XulswordState } from './renderer/xulsword/xulsword';
@@ -796,13 +795,13 @@ export function findParentOfBookmarkItem(
 }
 
 export function findBookmarkItem(
-  toSearch: BookmarkFolderType,
+  searchIn: BookmarkFolderType,
   id: string,
   recurse = true
 ): BookmarkItemType | null {
-  if (toSearch.id === id) return toSearch;
-  for (let x = 0; x < toSearch.childNodes.length; x += 1) {
-    const child = toSearch.childNodes[x];
+  if (searchIn.id === id) return searchIn;
+  for (let x = 0; x < searchIn.childNodes.length; x += 1) {
+    const child = searchIn.childNodes[x];
     if (child.id === id) return child;
     if (recurse && 'childNodes' in child) {
       const descendant = findBookmarkItem(child, id, true);
@@ -982,7 +981,7 @@ export function pasteBookmarkItems(
 export function bookmarkLabel(
   g: GType,
   verseKeyFunc: typeof verseKey,
-  l: SelectVKMType | LocationGBType
+  l: SelectVKMType | LocationORType
 ): string {
   if ('v11n' in l) {
     const vk = verseKeyFunc(l);
@@ -1063,69 +1062,142 @@ export function localizeBookmarks(
   });
 }
 
+// Find the node having the id, or return undefined.
+export function findTreeNode(
+  searchIn: TreeNodeInfo[],
+  id: string | number
+): TreeNodeInfo | undefined {
+  if (searchIn) {
+    for (let x = 0; x < searchIn.length; x += 1) {
+      if (searchIn[x].id === id) return searchIn[x];
+      const { childNodes } = searchIn[x];
+      if (childNodes) {
+        const rc = findTreeNode(childNodes, id);
+        if (rc) return rc;
+      }
+    }
+  }
+  return undefined;
+}
+
+// A leaf node has no childNodes property, or else it is zero length.
+export function findFirstLeafNode(
+  nodes: TreeNodeInfo[],
+  candidates: (string | TreeNodeInfo)[]
+): TreeNodeInfo {
+  const candidateNodes = candidates.map((c) => {
+    if (typeof c === 'string') {
+      if (!nodes)
+        throw new Error(
+          `'nodes' argument required when candidate is type 'string': '${c}'`
+        );
+      const n = findTreeNode(nodes, c);
+      if (!n) throw new Error(`node does not exist in nodes: '${c}'`);
+      return n;
+    }
+    return c;
+  });
+  const r = candidateNodes.find(
+    (n) => !('childNodes' in n) || n.childNodes?.length === 0
+  );
+  if (r) return r;
+  const rc = candidateNodes
+    .map((n) =>
+      'childNodes' in n && n.childNodes
+        ? findFirstLeafNode(nodes, n.childNodes)
+        : null
+    )
+    .filter(Boolean) as TreeNodeInfo[];
+  return rc[0] || candidateNodes[0];
+}
+
 // Takes a flat list of general book nodes and arranges them according to
 // their hierarchy. IMPORTANT: nodes must be in document order before
 // calling this function.
-function hierarchy(nodes: TreeNodeInfo[]): TreeNodeInfo[] {
-  const r: TreeNodeInfo[] = [];
-  for (let x = nodes.length - 1; x > -1; x -= 1) {
-    const n = nodes[x];
-    const idp = n.id.toString().split(C.GBKSEP);
-    if (idp[idp.length - 1] === '') idp.pop();
-    idp[idp.length - 1] = '';
-    const parent = nodes.find((an) => an.id === idp.join(C.GBKSEP));
-    if (parent) {
-      if (!('childNodes' in parent)) parent.childNodes = [];
-      if (parent.childNodes) parent.childNodes.unshift(n);
-    } else r.unshift(n);
+export function hierarchy(nodes: TreeNodeInfo[]): TreeNodeInfo[] {
+  const cachekey = nodes.map((n) => n.id).join();
+  if (!Cache.has(cachekey)) {
+    const r: TreeNodeInfo[] = [];
+    for (let x = nodes.length - 1; x > -1; x -= 1) {
+      const n = nodes[x];
+      const idp = n.id.toString().split(C.GBKSEP);
+      if (idp[idp.length - 1] === '') idp.pop();
+      idp[idp.length - 1] = '';
+      const parent = nodes.find((an) => an.id === idp.join(C.GBKSEP));
+      if (parent) {
+        if (!('childNodes' in parent)) parent.childNodes = [];
+        if (parent.childNodes) parent.childNodes.unshift(n);
+      } else r.unshift(n);
+    }
+    Cache.write(r, cachekey);
   }
 
-  return r;
-}
-
-// Important: allGbKeys must be output of LibSword.getGenBookTableOfContents().
-export function genBookTreeNodes(
-  allGbKeys: GenBookKeys,
-  module?: string,
-  expanded?: boolean,
-  rootID?: string
-): TreeNodeInfo[] {
-  return hierarchy(
-    allGbKeys.map((gbkey) => {
-      const label = gbkey.split(C.GBKSEP);
-      if (gbkey.endsWith(C.GBKSEP)) label.pop();
-      const n: TreeNodeInfo = {
-        id: rootID ? [rootID, gbkey].join(C.GBKSEP) : gbkey,
-        label: label[label.length - 1],
-        className: module ? `cs-${module}` : 'cs-LTR_DEFAULT',
-        hasCaret: gbkey.endsWith(C.GBKSEP),
-      };
-      if (expanded !== undefined && 'hasCaret' in n && n.hasCaret)
-        n.isExpanded = !!expanded;
-      return n;
-    })
-  );
+  return Cache.read(cachekey);
 }
 
 export function dictTreeNodes(
   allDictionaryKeys: string[],
   module?: string
 ): TreeNodeInfo[] {
-  return allDictionaryKeys.map((id) => {
-    const r: TreeNodeInfo = {
-      id,
-      label: id,
-      className: module ? `cs-${module}` : 'cs-LTR_DEFAULT',
-      hasCaret: false,
-    };
-    return r;
-  });
+  const ckey = `dictTreeNodes.${module}`;
+  if (!Cache.has(ckey)) {
+    Cache.write(
+      allDictionaryKeys.map((id) => {
+        const r: TreeNodeInfo = {
+          id,
+          label: id,
+          className: module ? `cs-${module}` : 'cs-LTR_DEFAULT',
+          hasCaret: false,
+        };
+        return r;
+      }),
+      ckey
+    );
+  }
+  return Cache.read(ckey);
 }
 
-// IMPORTANT: To work, this function requires allGbKeys to be the output
-// of LibSword.getGenBookTableOfContents() (ie. all keys are included and
-// are in the proper order).
-export function gbPaths(allGbKeys: string[]): GenBookAudio {
+// Important: allGbKeys must be output of getGenBookTableOfContents().
+export function genBookTreeNodes(
+  prefs: GType['Prefs'],
+  libsword: GType['LibSword'],
+  module: string,
+  expanded?: boolean
+): TreeNodeInfo[] {
+  const mpver = Object.keys(S.modules)[0];
+  const pkey = `${mpver}.${module}.treenodes`;
+  if (!prefs.has(pkey, 'complex', 'modules')) {
+    prefs.setComplexValue(
+      pkey,
+      hierarchy(
+        libsword.getGenBookTableOfContents(module).map((gbkey) => {
+          const label = gbkey.split(C.GBKSEP);
+          if (gbkey.endsWith(C.GBKSEP)) label.pop();
+          const n: TreeNodeInfo = {
+            id: gbkey,
+            label: label[label.length - 1],
+            className: module ? `cs-${module}` : 'cs-LTR_DEFAULT',
+            hasCaret: gbkey.endsWith(C.GBKSEP),
+          };
+          return n;
+        })
+      ) as ModulesCache[string]['treenodes'],
+      'modules'
+    );
+  }
+  const nodeinfos = prefs.getComplexValue(pkey, 'modules') as TreeNodeInfo[];
+  nodeinfos.forEach((n) => {
+    if (expanded !== undefined && 'hasCaret' in n && n.hasCaret)
+      n.isExpanded = !!expanded;
+  });
+  return nodeinfos;
+}
+
+export function gbPaths(
+  prefs: GType['Prefs'],
+  libsword: GType['LibSword'],
+  gbmod: string
+): GenBookAudio {
   const r: GenBookAudio = {};
   function addPath(nodes: TreeNodeInfo[], parentPath?: number[]) {
     const pp = parentPath || [];
@@ -1140,7 +1212,7 @@ export function gbPaths(allGbKeys: string[]): GenBookAudio {
     });
     return nodes;
   }
-  addPath(genBookTreeNodes(allGbKeys));
+  addPath(genBookTreeNodes(prefs, libsword, gbmod));
   return r;
 }
 
@@ -1235,30 +1307,6 @@ export function readDeprecatedVerseKeyAudioConf(
   return r;
 }
 
-// Returns the audio files listed in a config file as GenBookAudio.
-export function readGenBookAudioConf(
-  audio: GenBookAudioConf,
-  allGbKeysx: string[]
-): GenBookAudio {
-  const r: GenBookAudio = {};
-  const allGbKeys = gbPaths(allGbKeysx);
-  Object.entries(audio).forEach((entry) => {
-    const [pathx, str] = entry;
-    const px = pathx.split('/').filter(Boolean);
-    const parentPath: AudioPath = [];
-    px.forEach((p, i) => {
-      parentPath[i] = Number(p);
-    });
-    audioConfNumbers(str).forEach((n) => {
-      const pp = parentPath.slice() as AudioPath;
-      pp.push(n);
-      const kx = Object.entries(allGbKeys).find((e) => !diff(pp, e[1]));
-      if (kx) r[kx[0]] = pp;
-    });
-  });
-  return r;
-}
-
 // The deprecated GenBook audio conf does not consider all levels
 // of a module, only the 2nd, and indexing starts with 1. So these
 // must be updated to the new scheme.
@@ -1289,19 +1337,19 @@ export function getDeprecatedVerseKeyAudioConf(
 // The deprecated GenBook audio conf does not consider all levels
 // of a module, only the 2nd, and indexing starts with 1. So these
 // must be updated from the new scheme. IMPORTANT: the gbsel arg
-// must be a GenBookAudioConf selection and not a GenBookAudio
-// selection.
+// selection must be a key to GenBookAudioConf and not GenBookAudio.
 export function getDeprecatedGenBookAudioConf(
-  gbsel: SelectGBMType
+  gbsel: SelectORMType
 ): DeprecatedAudioChaptersConf {
-  const { parent, children } = gbsel;
-  const k = parent.split(C.GBKSEP);
-  if (!k[k.length - 1]) k.pop();
+  const { keys } = gbsel;
+  const k = keys[0].split(C.GBKSEP);
+  if (!k[k.length - 1]) k.pop(); // remove any leaf dir mark
+  k.pop(); // remove leaf
   let bk = k.pop() || '';
   const m = bk.match(/^(\d+)(.*?)$/);
   if (m) bk = pad(Number(m[1]) + 1, 3, 0) + m[2];
-  const ch1 = Number(children[0].split(C.GBKSEP).pop()) + 1;
-  const ch2 = Number(children[children.length - 1].split(C.GBKSEP).pop()) + 1;
+  const ch1 = Number(keys[0].split(C.GBKSEP).pop()) + 1;
+  const ch2 = Number(keys[keys.length - 1].split(C.GBKSEP).pop()) + 1;
   return { bk, ch1, ch2 };
 }
 

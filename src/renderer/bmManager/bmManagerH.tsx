@@ -28,7 +28,7 @@ import type {
   BookmarkItemType,
   ContextData,
   GType,
-  LocationGBType,
+  LocationORType,
   LocationVKType,
   PrefsSetComplexValueWithCaller,
 } from '../../type';
@@ -38,7 +38,7 @@ import type { BMManagerState } from './bmManager';
 
 type CellInfo = TCellInfo & {
   id: string;
-  location?: LocationVKType | LocationGBType | null | undefined;
+  location?: LocationVKType | LocationORType | null | undefined;
 };
 
 export type TableRow = [

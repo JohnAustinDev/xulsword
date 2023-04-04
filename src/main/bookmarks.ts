@@ -12,14 +12,14 @@ import type {
   BookmarkItem,
   BookmarkType,
   BookmarkItemTypes,
-  LocationGBType,
+  LocationORType,
   LocationVKType,
   NewModulesType,
   OSISBookType,
   TransactionType,
   BookmarkItemType,
 } from '../type';
-import type { SelectVKMType } from '../renderer/libxul/vkselect';
+import type { SelectVKMType } from '../renderer/libxul/selectVK';
 
 type BMkeys =
   | keyof BookmarkItem
@@ -165,7 +165,7 @@ function isValidItem(
                 log.debug(`FAILED:`, item, k, v);
               } else isValid = true;
             } else {
-              const v2 = v as LocationGBType;
+              const v2 = v as LocationORType;
               const { module, key, paragraph } = v2;
               isValid =
                 !!module &&
@@ -308,7 +308,7 @@ export function importDeprecatedBookmarks(
             },
           ];
         }
-        let location: SelectVKMType | LocationGBType;
+        let location: SelectVKMType | LocationORType;
         if (isVerseKey) {
           location = {
             vkmod: MODULE,

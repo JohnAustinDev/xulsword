@@ -9,7 +9,6 @@ import {
   clone,
   diff,
   findBookmarkItem,
-  gbPaths,
   JSON_parse,
   JSON_stringify,
   pad,
@@ -17,7 +16,7 @@ import {
   deleteBookmarkItem as DeleteBookmarkItem,
   pasteBookmarkItems as PasteBookmarkItems,
   moveBookmarkItems,
-  keep,
+  gbPaths,
 } from '../../common';
 import Subscription from '../../subscription';
 import C from '../../constant';
@@ -32,11 +31,11 @@ import importBookmarkObject, {
 import { verseKey, getTab, getAudioConfs } from '../minit';
 import Viewport from './viewport';
 import PrefsX from './prefs';
-import LibSword from './libsword';
 import LocalFile from './localFile';
 import { modalInstall, scanAudio } from './module';
 import Window, { getBrowserWindows, publishSubscription } from './window';
 import Dirs from './dirs';
+import LibSword from './libsword';
 
 import type {
   AddCaller,
@@ -45,7 +44,7 @@ import type {
   BookmarkItemType,
   GenBookAudio,
   GenBookAudioFile,
-  LocationGBType,
+  LocationORType,
   LocationVKType,
   NewModulesType,
   OSISBookType,
@@ -57,9 +56,8 @@ import type { WindowRootState } from '../../renderer/renderer';
 import type { AboutWinState } from '../../renderer/about/about';
 import type { PrintPassageState } from '../../renderer/printPassage/printPassage';
 import type { CopyPassageState } from '../../renderer/copyPassage/copyPassage';
-import type { SelectVKMType } from '../../renderer/libxul/vkselect';
+import type { SelectVKMType } from '../../renderer/libxul/selectVK';
 import type { BMPropertiesStateWinArg } from '../../renderer/bmProperties/bmProperties';
-import type { XulswordState } from '../../renderer/xulsword/xulsword';
 
 // Require the calling window argument for Prefs.set calls, so window -2 (to all
 // follow Pref changes with update to all windows and main process) can be passed
@@ -226,7 +224,7 @@ const Commands = {
       if (module in gbpaths) {
         paths = gbpaths[module];
       } else if (module && module in tab) {
-        paths = gbPaths(LibSword.getGenBookTableOfContents(module));
+        paths = gbPaths(PrefsX, LibSword, module);
         gbpaths[module] = paths;
       }
       const entry = Object.entries(paths).find((e) => !diff(path, e[1]));
@@ -428,7 +426,7 @@ const Commands = {
             if (module in gbpaths) {
               paths = gbpaths[module];
             } else if (module in tab && tab[module].type === C.GENBOOK) {
-              paths = gbPaths(LibSword.getGenBookTableOfContents(module));
+              paths = gbPaths(PrefsX, LibSword, module);
               gbpaths[module] = paths;
             }
             dest.append('modules').append(module);
@@ -839,7 +837,7 @@ const Commands = {
     titleKey: string,
     bmPropertiesState: Partial<BMPropertiesStateWinArg>,
     newitem?: {
-      location: LocationVKType | LocationGBType | null | undefined;
+      location: LocationVKType | LocationORType | null | undefined;
       module?: string;
     }
   ): void {
@@ -943,7 +941,7 @@ const Commands = {
   },
 
   goToLocationGB(
-    location: LocationGBType,
+    location: LocationORType,
     scroll?: ScrollType | undefined
   ): void {
     const xulsword: Partial<typeof S.prefs.xulsword> = Viewport.setPanels(

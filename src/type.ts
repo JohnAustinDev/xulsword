@@ -43,7 +43,7 @@ import type LibSword from './main/components/libsword';
 import type MainPrintHandler from './main/print';
 import type { canRedo, canUndo } from './main/bookmarks';
 import type Viewport from './main/components/viewport';
-import type { SelectVKMType } from './renderer/libxul/vkselect';
+import type { SelectVKMType } from './renderer/libxul/selectVK';
 
 declare global {
   export interface Window {
@@ -301,11 +301,11 @@ export type CipherKey = { conf: SwordConfType; cipherKey: string };
 export type LocationTypes = {
   Texts: LocationVKType;
   Comms: LocationVKType;
-  Genbks: LocationGBType;
-  Dicts: LocationGBType;
+  Genbks: LocationORType;
+  Dicts: LocationORType;
 };
 
-export type LocationGBType = {
+export type LocationORType = {
   module: string;
   key: string;
   paragraph?: number; // Not implemented
@@ -343,7 +343,7 @@ export type ContextData = {
   type: 'general' | 'bookmarkManager';
   search?: SearchType;
   location?: LocationVKType;
-  locationGB?: LocationGBType;
+  locationGB?: LocationORType;
   context?: string;
   tab?: string;
   lemma?: string;
@@ -533,6 +533,14 @@ export type SwordFeatures =
   | 'Images'
   | 'NoParagraphs';
 
+export type ModulesCache = {
+  [module: string]: {
+    toc: GenBookKeys;
+    keylist: string[];
+    treenodes: TreeNodeInfo[];
+  };
+};
+
 // GenBookTOC describes GenBooks structure (chapter names/order/hierarchy).
 // Is output by LibSword but immediately converted to GenBookKeys.
 export type GenBookTOC = {
@@ -686,7 +694,8 @@ export type PrefStoreType =
   | 'bookmarks'
   | 'fonts'
   | 'style'
-  | 'windows';
+  | 'windows'
+  | 'modules';
 
 export type PrefPrimative = number | string | boolean | null | undefined;
 export type PrefObject = {
@@ -728,7 +737,7 @@ export type BMItem = {
 export type BookmarkType = BookmarkItem & {
   type: 'bookmark';
   tabType: TabTypes;
-  location: SelectVKMType | LocationGBType | null;
+  location: SelectVKMType | LocationORType | null;
   sampleText: string;
   sampleModule: string;
 };

@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import type { paperSizes } from './renderer/libxul/printSettings';
-import type { SelectVKMType } from './renderer/libxul/vkselect';
+import type { SelectVKMType } from './renderer/libxul/selectVK';
 import type { StyleType } from './renderer/style';
 import type { TablePropColumn, TinitialRowSort } from './renderer/libxul/table';
 import type {
@@ -10,6 +10,7 @@ import type {
   BookmarkFolderType,
   HistoryVKType,
   LocationVKType,
+  ModulesCache,
   PlaceType,
   Repository,
   RowSelection,
@@ -63,6 +64,9 @@ const S = {
     OpenOnStartup: {} as WindowPrefsType,
     OpenWindows: {} as WindowPrefsType,
     PersistForType: {} as WindowPrefsType,
+  },
+  modules: {
+    version01: {} as ModulesCache,
   },
   bookmarks: {
     rootfolder: {

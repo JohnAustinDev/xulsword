@@ -21,7 +21,7 @@ import type {
   BookmarkTreeNode,
   BookmarkType,
   ContextData,
-  LocationGBType,
+  LocationORType,
   LocationVKType,
   SearchType,
   SwordFilterType,
@@ -30,7 +30,7 @@ import type {
 import type { HTMLData } from './htmlData';
 import type { AtextProps } from './viewport/atext';
 import type { LibSwordResponse } from './viewport/ztext';
-import type { SelectVKMType } from './libxul/vkselect';
+import type { SelectVKMType } from './libxul/selectVK';
 import { locationVKText } from './viewport/zversekey';
 
 type BookmarkMapType = { [key: string]: BookmarkInfoHTML[] };
@@ -40,11 +40,11 @@ type BookmarkInfoHTML = {
   n: number;
   note: string;
   noteLocale: string;
-  location: LocationGBType | LocationVKType;
+  location: LocationORType | LocationVKType;
   classes: ('bmitem' | 'bmnote')[];
 };
 
-export function bmOsisRef(location: LocationGBType | LocationVKType): string {
+export function bmOsisRef(location: LocationORType | LocationVKType): string {
   let osisref = 'unavailable';
   if ('v11n' in location) {
     const { book, chapter, verse } = verseKey(location).location('KJV');
@@ -150,7 +150,7 @@ export function getBookmarkMap(): BookmarkMapType {
 // Find the bookmarks associated with either a Bible chapter or module/key
 // pair.
 export function findBookmarks(
-  location: LocationVKType | LocationGBType | SelectVKMType
+  location: LocationVKType | LocationORType | SelectVKMType
 ): BookmarkInfoHTML[] {
   const bookmarkMap = getBookmarkMap();
   if ('v11n' in location) {
@@ -291,7 +291,7 @@ export default function addBookmarks(
   const { module, location, modkey } = props;
   if (module && module in G.Tab) {
     const { isVerseKey } = G.Tab[module];
-    let bmlocation: LocationGBType | LocationVKType | SelectVKMType | null =
+    let bmlocation: LocationORType | LocationVKType | SelectVKMType | null =
       null;
     if (isVerseKey && location && G.Tab[module].tabType === 'Comms') {
       bmlocation = { ...location, vkmod: module };
@@ -321,7 +321,7 @@ export function parseParagraphs(text: string): string[] {
 }
 
 export function getSampleText(
-  l: LocationGBType | SelectVKMType,
+  l: LocationORType | SelectVKMType,
   locale?: typeof C.Locales[number][0]
 ): { sampleText: string; sampleModule: string } {
   let sampleText = '';
@@ -502,14 +502,14 @@ export function getContextData(elem: HTMLElement): ContextData {
   let location: LocationVKType | undefined;
   if (contextData) location = contextData.location;
 
-  let locationGB: LocationGBType | undefined;
+  let locationGB: LocationORType | undefined;
   if (contextData) locationGB = contextData.locationGB;
 
   let bookmark: string | undefined;
   if (contextData) bookmark = contextData.bmitem;
   if (!bookmark && (locationGB || location)) {
     const bm = findBookmarks(
-      (locationGB || location) as LocationVKType | LocationGBType
+      (locationGB || location) as LocationVKType | LocationORType
     );
     if (bm[0]) bookmark = bm[0].id;
   }

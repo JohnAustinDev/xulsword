@@ -6,7 +6,7 @@ import S from '../../defaultPrefs';
 import Prefs from './prefs';
 import { getBooksInVKModule, getTab, getTabs } from '../minit';
 
-import type { LocationGBType, TabType, TabTypes } from '../../type';
+import type { LocationORType, TabType, TabTypes } from '../../type';
 
 // Update the tab banks of one, or all, panels. The tab(s) for a module, a list of
 // modules, a type of module, or all modules, will be updated. Those tabs may be
@@ -158,7 +158,7 @@ export function setViewportTabs(
 // it does not have a tab for the new module, that tab will be added to the panel.
 // Viewport location may also be updated. The new pref values are returned.
 export function setViewportPanels(
-  moduleOrLocGB: string | LocationGBType | (string | LocationGBType)[],
+  moduleOrLocGB: string | LocationORType | (string | LocationORType)[],
   options?: {
     maintainWidePanels?: boolean;
     maintainPins?: boolean;
@@ -181,7 +181,7 @@ export function setViewportPanels(
     clearRendererCaches: true, // default: reset renderer caches
     ...options,
   };
-  const modules: (string | LocationGBType | undefined)[] = Array.isArray(
+  const modules: (string | LocationORType | undefined)[] = Array.isArray(
     moduleOrLocGB
   )
     ? moduleOrLocGB

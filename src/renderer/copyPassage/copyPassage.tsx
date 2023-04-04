@@ -27,7 +27,7 @@ import Groupbox from '../libxul/groupbox';
 import Checkbox from '../libxul/checkbox';
 import { Hbox, Vbox } from '../libxul/boxes';
 import Button from '../libxul/button';
-import VKSelect, { SelectVKMType } from '../libxul/vkselect';
+import SelectVK, { SelectVKMType } from '../libxul/selectVK';
 import '../libsword.css';
 import '../viewport/atext.css';
 import './copyPassage.css';
@@ -189,7 +189,7 @@ export default class CopyPassageWin extends React.Component {
       <Vbox>
         <div id="testdiv" />
         <Groupbox caption={G.i18n.t('passage.label')}>
-          <VKSelect
+          <SelectVK
             initialVKM={passage}
             options={{ lastchapters: [] }}
             onSelection={(selection: SelectVKMType) => {

@@ -19,12 +19,12 @@ import {
   genBookAudio2TreeNodes,
   getDeprecatedVerseKeyAudioConf,
   getDeprecatedGenBookAudioConf,
-  gbPaths,
   diff,
   builtinRepos,
   repositoryModuleKey,
   tableSelectDataRows,
   querablePromise,
+  gbPaths,
 } from '../../common';
 import C from '../../constant';
 import S from '../../defaultPrefs';
@@ -47,10 +47,10 @@ import type {
   OSISBookType,
   QuerablePromise,
 } from '../../type';
-import type { SelectVKMType, VKSelectProps } from '../libxul/vkselect';
+import type { SelectVKMType, SelectVKProps } from '../libxul/selectVK';
 import type ModuleManager from './manager';
 import type { ManagerState } from './manager';
-import type { GBModNodeList, SelectGBMType } from '../libxul/genbookselect';
+import type { ORModNodeList, SelectORMType } from '../libxul/selectOR';
 
 export const Tables = ['language', 'module', 'repository'] as const;
 
@@ -85,20 +85,20 @@ export type VersekeyDialog = {
   type: 'versekey';
   conf: SwordConfType;
   selection: SelectVKMType;
-  initial: VKSelectProps['initialVKM'];
-  options: VKSelectProps['options'];
+  initial: SelectVKProps['initialVKM'];
+  options: SelectVKProps['options'];
   chapters: VerseKeyAudio;
-  callback: (result: SelectVKMType | SelectGBMType | null) => void;
+  callback: (result: SelectVKMType | SelectORMType | null) => void;
 };
 
 export type GenBookDialog = {
   type: 'genbook';
   conf: SwordConfType;
-  selection: SelectGBMType;
+  selection: SelectORMType;
   initial: undefined;
-  options: { gbmodNodeLists?: GBModNodeList[]; gbmods?: string[] };
+  options: { ormodNodeLists?: ORModNodeList[]; gbmods?: string[] };
   chapters: GenBookAudioConf;
-  callback: (result: SelectVKMType | SelectGBMType | null) => void;
+  callback: (result: SelectVKMType | SelectORMType | null) => void;
 };
 
 export type TRepCellInfo = TCellInfo & {
@@ -850,7 +850,7 @@ export function handleListings(
   if (repositories) {
     const { repository } = state.tables;
     const disabled = getDisabledRepos(xthis);
-    listingsAndErrors.forEach((l, i, a) => {
+    listingsAndErrors.forEach((l, i) => {
       const drow = repository.data[i];
       if (l !== null && drow) {
         drow[RepCol.iInfo].loading = false;
@@ -1186,7 +1186,7 @@ async function promptAudioChapters(
   if (conf.xsmType === 'XSM_audio') {
     const { AudioChapters } = conf;
     if (AudioChapters) {
-      let audio: SelectVKMType | SelectGBMType | null = null;
+      let audio: SelectVKMType | SelectORMType | null = null;
       audio = await new Promise((resolve) => {
         // Subtract audio files that are already installed.
         const installed = G.AudioConfs[conf.module]?.AudioChapters;
@@ -1238,18 +1238,17 @@ async function promptAudioChapters(
           if (!Object.keys(ac).length) return resolve(null);
           const paths =
             conf.module in G.Tab
-              ? gbPaths(G.LibSword.getGenBookTableOfContents(conf.module))
+              ? gbPaths(G.Prefs, G.LibSword, conf.module)
               : {};
           d.type = 'genbook';
           d.selection = {
-            gbmod: conf.module,
-            parent: '',
-            children: [],
+            ormod: conf.module,
+            keys: [],
           };
           d.options = {
-            gbmodNodeLists: [
+            ormodNodeLists: [
               {
-                module: conf.module,
+                ormod: conf.module,
                 label: conf.Description?.locale || conf.module,
                 labelClass: 'cs-locale',
                 nodes: forEachNode(
@@ -1283,7 +1282,7 @@ async function promptAudioChapters(
       if (audio) {
         // TODO: Implement swordzip API on server.
         let bkchs: DeprecatedAudioChaptersConf;
-        if ('gbmod' in audio) {
+        if ('ormod' in audio) {
           bkchs = getDeprecatedGenBookAudioConf(audio);
         } else {
           bkchs = getDeprecatedVerseKeyAudioConf(audio);

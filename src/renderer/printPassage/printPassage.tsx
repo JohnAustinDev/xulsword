@@ -27,7 +27,7 @@ import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
 import Grid, { Column, Columns, Row, Rows } from '../libxul/grid';
 import Groupbox from '../libxul/groupbox';
 import Checkbox from '../libxul/checkbox';
-import VKSelect from '../libxul/vkselect';
+import SelectVK from '../libxul/selectVK';
 import {
   handler as handlerH,
   vkSelectHandler as vkSelectHandlerH,
@@ -285,7 +285,7 @@ export default class PrintPassageWin extends React.Component {
                 className="passage-selector"
                 caption={G.i18n.t('menu.printPassage')}
               >
-                <VKSelect
+                <SelectVK
                   id="chapters"
                   selectVKM={{ ...chapters, vkmod }}
                   options={{

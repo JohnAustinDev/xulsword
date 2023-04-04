@@ -18,6 +18,7 @@ import {
 } from '../../common';
 import Subscription from '../../subscription';
 import C from '../../constant';
+import S from '../../defaultPrefs';
 import parseSwordConf from '../parseSwordConf';
 import Window, { getBrowserWindows } from './window';
 import LocalFile from './localFile';
@@ -55,6 +56,7 @@ import type {
   VerseKeyAudioFile,
   OSISBookType,
 } from '../../type';
+import Prefs from './prefs';
 
 export const CipherKeyModules: {
   [module: string]: {
@@ -1175,8 +1177,10 @@ const Module = {
     const results: boolean[] | PromiseLike<boolean[]> = [];
     modules.forEach((module) => {
       const { name, repo } = module;
+      const mpver = Object.keys(S.modules)[0];
       if (isRepoLocal(repo)) {
         results.push(!!moveRemoveModule([name], repo.path));
+        Prefs.deleteUserPref(`${mpver}.${name}`, 'modules');
       }
     });
 

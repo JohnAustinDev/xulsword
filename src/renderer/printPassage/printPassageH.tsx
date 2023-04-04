@@ -20,7 +20,7 @@ import type {
   SwordFilterValueType,
 } from '../../type';
 import type { LibSwordResponse } from '../viewport/ztext';
-import type { SelectVKMType } from '../libxul/vkselect';
+import type { SelectVKMType } from '../libxul/selectVK';
 import type PrintPassageWin from './printPassage';
 import type { PrintPassageState } from './printPassage';
 

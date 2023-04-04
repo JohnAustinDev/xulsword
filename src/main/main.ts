@@ -264,6 +264,10 @@ const openXulswordWindow = () => {
             } MODULE(S) SUCCESSFULLY INSTALLED!`
           );
         }
+        const mpver = Object.keys(S.modules)[0];
+        newmods.modules.forEach((m) => {
+          G.Prefs.deleteUserPref(`${mpver}.${m}`, 'modules');
+        });
         Subscription.publish.resetMain();
         newmods.nokeymods = getCipherFailConfs();
         newmods.modules = newmods.modules.filter(
