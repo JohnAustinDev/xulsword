@@ -614,19 +614,24 @@ class Atext extends React.Component {
       realNoteBoxHeight = maxNoteBoxHeight;
 
     // Class list
-    let cls = `text text${panelIndex} columns${columns}`;
-    cls += ' prev-disabled next-disabled';
-    if (module) cls += ` ${G.Tab[module].tabType}`;
-    if (isPinned) cls += ' pinned';
-    if (doMaximizeNB) cls += ' noteboxMaximized';
+    const classes = [
+      'atext',
+      'text',
+      `text${panelIndex}`,
+      `columns${columns}`,
+      'prev-disabled',
+      'next-disabled',
+    ];
+    if (module) classes.push(`${G.Tab[module].tabType}`);
+    if (isPinned) classes.push('pinned');
+    if (doMaximizeNB) classes.push('noteboxMaximized');
     if (
       versePerLine ||
       (module && G.FeatureModules.noParagraphs.includes(module))
     ) {
-      cls +=
-        !module || G.Tab[module].tabType === 'Texts'
-          ? 'verse-per-line'
-          : 'verse-per-line-com';
+      if (!module || G.Tab[module].tabType === 'Texts') {
+        classes.push('verse-per-line');
+      } else classes.push('verse-per-line-com');
     }
 
     const data: HTMLData = { type: 'text' };
@@ -636,7 +641,7 @@ class Atext extends React.Component {
 
     return (
       <Vbox
-        {...addClass(`atext ${cls}`, props)}
+        {...addClass(classes, props)}
         {...topHandle('onDoubleClick', handler, props)}
         {...topHandle('onClick', handler, props)}
         {...topHandle('onWheel', handler, props)}

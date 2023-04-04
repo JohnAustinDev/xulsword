@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-nested-ternary */
 import Cache from '../cache';
-import { clone, JSON_attrib_parse, ofClass } from '../common';
+import { clone, JSON_attrib_parse, localizeBookmark, ofClass } from '../common';
 import RefParser from '../refParser';
 import C from '../constant';
 import S from '../defaultPrefs';
@@ -89,7 +89,11 @@ function marker(bookmarkInfo: BookmarkInfoHTML, module: string): string {
 export function getBookmarkInfo(
   bookmark: BookmarkType
 ): BookmarkInfoHTML | null {
-  const { id, note, noteLocale, location } = bookmark;
+  const { id, note, noteLocale, location } = localizeBookmark(
+    G,
+    verseKey,
+    bookmark
+  ) as BookmarkType;
   if (location) {
     const classes: BookmarkInfoHTML['classes'] = ['bmitem'];
     if (note) classes.push('bmnote');
@@ -273,7 +277,7 @@ export function addBookmarksToTextGB(
     info.classes.forEach((c) => classes.add(c));
   });
   const re = /(<div class=")([^"]*)("[^>]*>)/;
-  return textHTML.replace(re, (t, s, c, e) => {
+  return textHTML.replace(re, (_t, s, c, e) => {
     let div = `${s}${[c, ...classes].join(' ')}${e}`;
     div = updateDataAttribute(
       div,

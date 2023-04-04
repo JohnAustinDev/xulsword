@@ -1032,7 +1032,7 @@ export function localizeBookmark(
     item.labelLocale = loc;
   }
   if (note.startsWith('i18n:') && g.i18n.exists(note.substring(5))) {
-    item.note = g.i18n.t(label.substring(5));
+    item.note = g.i18n.t(note.substring(5));
     item.noteLocale = loc;
   }
   return item;

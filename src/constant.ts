@@ -17,7 +17,6 @@ import type {
   V11nType,
 } from './type';
 
-// TODO!: Note popup/notebox i18n not being applied.
 // TODO!: Make folder icons same color as their tab
 // TODO!: Commentary bmProperties should not show SelectVK, should have different label, and sampleText from commentary.
 // TODO!: Check Daily Devotional
