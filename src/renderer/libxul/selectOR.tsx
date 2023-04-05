@@ -22,6 +22,7 @@ import {
   genBookTreeNodes,
   findTreeAncestors,
   findTreeSiblings,
+  gbAncestorIDs,
 } from '../../common';
 import C from '../../constant';
 import G from '../rg';
@@ -260,6 +261,7 @@ class SelectOR extends React.Component {
       enableMultipleSelection,
       enableParentSelection,
     } = props;
+    let { disabled } = props;
     const { realStateORM, openParent, onChange } = this;
     const { ormod, keys } = realStateORM();
 
@@ -287,9 +289,40 @@ class SelectOR extends React.Component {
       });
     list.push(...propNodeLists);
 
-    const isDictMod = G.Tab[ormod].tabType === 'Dicts';
-    const nodes = list.find((l) => l.ormod === ormod)?.nodes || [];
-    if (!nodes || nodes.length === 0) return null;
+    const isDictMod = ormod in G.Tab && G.Tab[ormod].tabType === 'Dicts';
+    let nodes = list.find((l) => l.ormod === ormod)?.nodes || [];
+    if (!nodes || nodes.length === 0) {
+      // If there is no no list available (ie. the module is no longer
+      // installed) then create a dummy node list with no options.
+      // Note: it's ok to treat Dict as GBmod here since this dummy
+      // cannot be edited.
+      disabled = true;
+      const ancIDs = gbAncestorIDs(keys[0]);
+      ancIDs.push(keys[0]);
+      let pn: TreeNodeInfo | undefined;
+      for (let i = 0; i < ancIDs.length; i += 1) {
+        const p = ancIDs[i].split(C.GBKSEP);
+        if (!p.at(-1)) p.pop();
+        const n: TreeNodeInfo = {
+          id: ancIDs[i],
+          label: p.pop() || '',
+        };
+        if (!pn) nodes = [n];
+        else {
+          pn.hasCaret = true;
+          pn.isExpanded = true;
+          pn.childNodes = [n];
+        }
+        pn = n;
+      }
+      list.push({
+        ormod,
+        label: ormod,
+        labelClass: 'cs-locale',
+        nodes,
+      });
+    }
+    if (!nodes || !nodes.length) return null;
     const selectedNodes = keys.map((k) => findTreeNode(nodes, k));
     const showNodes = (
       !selectedNodes.length || selectedNodes.some((kn) => !kn)
@@ -312,7 +345,7 @@ class SelectOR extends React.Component {
         className="select-module"
         key={['sm', ormod].join('.')}
         value={ormod}
-        disabled={ormod === list[0].ormod && list.length === 1}
+        disabled={disabled || (ormod === list[0].ormod && list.length === 1)}
         onChange={onChange}
       >
         {list.map((x) => (
@@ -339,6 +372,7 @@ class SelectOR extends React.Component {
             ].join(' ')}
             key={['sp', n.id].join('.')}
             value={n.id.toString()}
+            disabled={disabled}
             data-index={i}
             onChange={onChange}
           >
@@ -372,6 +406,7 @@ class SelectOR extends React.Component {
         key={['ch', parentNode ? parentNode.id : module].join('.')}
         multiple={!!enableMultipleSelection}
         value={value}
+        disabled={disabled}
         onChange={onChange}
       >
         {childNodes.map((n) => {

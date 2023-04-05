@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable prefer-rest-params */
 import type ZIP from 'adm-zip';
-import { BrowserWindow, dialog, OpenDialogSyncOptions } from 'electron';
+import { BrowserWindow, dialog, OpenDialogSyncOptions, shell } from 'electron';
 import fpath from 'path';
 import log from 'electron-log';
 import i18n from 'i18next';
@@ -945,15 +945,18 @@ const Commands = {
     location: LocationORType,
     scroll?: ScrollType | undefined
   ): void {
-    const xulsword: Partial<typeof S.prefs.xulsword> = Viewport.setPanels(
-      location,
-      {
-        skipCallbacks: true,
-        clearRendererCaches: false,
-      }
-    );
-    xulsword.scroll = scroll || { verseAt: 'center' };
-    Prefs.mergeValue('xulsword', xulsword, 'prefs', false, false, -2);
+    const tab = getTab();
+    if (location.module in tab) {
+      const xulsword: Partial<typeof S.prefs.xulsword> = Viewport.setPanels(
+        location,
+        {
+          skipCallbacks: true,
+          clearRendererCaches: false,
+        }
+      );
+      xulsword.scroll = scroll || { verseAt: 'center' };
+      Prefs.mergeValue('xulsword', xulsword, 'prefs', false, false, -2);
+    } else shell.beep();
   },
 
   // If SelectVKMType (which includes vkmod) is passed, and vkmod is not a Bible (is
@@ -964,17 +967,20 @@ const Commands = {
     newselection?: LocationVKType,
     newscroll?: ScrollType
   ): void {
-    let xulsword: Partial<typeof S.prefs.xulsword> = {};
-    if ('vkmod' in newlocation && newlocation.isBible === false) {
-      xulsword = Viewport.setPanels(newlocation.vkmod, {
-        skipCallbacks: true,
-        clearRendererCaches: false,
-      });
-    }
-    xulsword.location = newlocation;
-    xulsword.selection = newselection || null;
-    xulsword.scroll = newscroll || { verseAt: 'center' };
-    Prefs.mergeValue('xulsword', xulsword, 'prefs', false, false, -2);
+    const tab = getTab();
+    if (!('vkmod' in newlocation) || newlocation.vkmod in tab) {
+      let xulsword: Partial<typeof S.prefs.xulsword> = {};
+      if ('vkmod' in newlocation && newlocation.isBible === false) {
+        xulsword = Viewport.setPanels(newlocation.vkmod, {
+          skipCallbacks: true,
+          clearRendererCaches: false,
+        });
+      }
+      xulsword.location = newlocation;
+      xulsword.selection = newselection || null;
+      xulsword.scroll = newscroll || { verseAt: 'center' };
+      Prefs.mergeValue('xulsword', xulsword, 'prefs', false, false, -2);
+    } else shell.beep();
   },
 };
 
