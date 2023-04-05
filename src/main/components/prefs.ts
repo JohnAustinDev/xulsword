@@ -112,8 +112,9 @@ const Prefs = {
   findDefaultValueInS(key: string, store: PrefStoreType): PrefValue {
     if (store in S) {
       const ks = key.split('.');
-      let s = S[store] as any;
-      while (ks[0] && typeof s === 'object' && ks[0] in s) {
+      let s: any;
+      if (store in S) s = (S as any)[store];
+      while (s && ks[0] && typeof s === 'object' && ks[0] in s) {
         s = s[ks.shift() as string];
       }
       if (ks.length > 0) s = undefined;
@@ -182,7 +183,7 @@ const Prefs = {
     const defval = clone(defvalx);
     const store = storex || 'prefs';
     const rootkey = key.split('.')[0];
-    if (store in S && !Object.keys(S[store]).includes(rootkey)) {
+    if (store in S && !Object.keys((S as any)[store]).includes(rootkey)) {
       throw new Error(
         `Pref root key '${rootkey}' is unrecognized in '${store}'.`
       );
@@ -361,7 +362,7 @@ const Prefs = {
     }
 
     // Prune unrecognized or outdated pref values
-    const allStoreKeys = Object.keys(S[aStore]);
+    const allStoreKeys = aStore in S ? Object.keys((S as any)[aStore]) : [];
     Object.keys(s.data).forEach((k) => {
       if (!allStoreKeys.includes(k)) {
         delete s.data[k];
@@ -486,6 +487,7 @@ const Prefs = {
       // such as global.locale, caches must be cleared before prefs are updated!
       if (clearRendererCaches) {
         BrowserWindow.getAllWindows().forEach((w) => {
+          log.debug(`Prefs is clearing renderer caches: clearRendererCaches=true`);
           w.webContents.send('cache-reset');
         });
       }

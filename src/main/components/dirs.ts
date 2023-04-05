@@ -13,6 +13,7 @@ export type DirsDirectories = {
   ProfD: string;
   xsPrefD: string;
   xsResD: string;
+  xsCache: string;
   xsModsUser: string;
   xsFonts: string;
   xsAudio: string;
@@ -46,6 +47,8 @@ Dirs.path.ProfD = app.getPath('userData');
 Dirs.path.xsPrefD = path.join(Dirs.path.ProfD, 'preferences');
 
 Dirs.path.xsResD = path.join(Dirs.path.ProfD, 'resources');
+
+Dirs.path.xsCache = path.join(Dirs.path.ProfD, 'cache');
 
 Dirs.path.xsModsUser = path.join(Dirs.path.ProfD, 'resources');
 
@@ -85,6 +88,7 @@ dirNames.forEach((dir) => {
   'ProfD',
   'xsPrefD',
   'xsResD',
+  'xsCache',
   'xsModsUser',
   'xsFonts',
   'xsAudio',

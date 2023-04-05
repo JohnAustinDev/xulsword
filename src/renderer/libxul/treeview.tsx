@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable react/forbid-prop-types */
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -239,7 +240,7 @@ const TreeView = (props: TreeViewProps) => {
         }
       }
     }, C.UI.TreeScrollDelay);
-  });
+  }, []);
 
   // Call onSelection and onExpansion when NOT controlled.
   React.useEffect(() => {

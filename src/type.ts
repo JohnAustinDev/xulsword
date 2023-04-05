@@ -8,7 +8,7 @@ import type {
 } from 'electron';
 import type i18n from 'i18next';
 import type React from 'react';
-import type { TreeNodeInfo } from '@blueprintjs/core';
+import { TreeNode, TreeNodeInfo } from '@blueprintjs/core';
 import S from './defaultPrefs';
 import type C from './constant';
 import type {
@@ -34,6 +34,7 @@ import type {
 } from './main/components/window';
 import type { inlineFile, inlineAudioFile } from './main/components/localFile';
 import type Prefs from './main/components/prefs';
+import type DiskCache from './main/components/diskcache';
 import type Commands from './main/components/commands';
 import type Data from './main/components/data';
 import type Module from './main/components/module';
@@ -695,7 +696,7 @@ export type PrefStoreType =
   | 'fonts'
   | 'style'
   | 'windows'
-  | 'modules';
+  | string;
 
 export type PrefPrimative = number | string | boolean | null | undefined;
 export type PrefObject = {
@@ -713,6 +714,11 @@ export type GMethodAddCaller<M extends (...args: any) => any> = (
 export type GAddCaller<G extends { [k: string]: (...args: any[]) => any }> = {
   [K in keyof G]: GMethodAddCaller<G[K]>;
 };
+
+export type TreeNodeInfoPref = Pick<
+  TreeNodeInfo,
+  'id' | 'label' | 'className' | 'hasCaret' | 'isExpanded'
+>;
 
 export type BookmarkTreeNode = BMItem &
   TreeNodeInfo & {
@@ -798,6 +804,7 @@ export type GType = {
   i18n: Pick<typeof i18n, 't' | 'exists' | 'language'>;
   clipboard: Pick<typeof clipboard, 'write'>;
   Prefs: typeof Prefs;
+  DiskCache: typeof DiskCache;
   LibSword: typeof LibSword;
   Dirs: DirsRendererType;
   Commands: typeof Commands;
@@ -916,6 +923,14 @@ export const GBuilder: GType & {
     setComplexValue: func as any,
     mergeValue: func as any,
     deleteUserPref: func as any,
+    writeAllStores: func as any,
+  },
+
+  DiskCache: {
+    has: func as any,
+    read: CACHEfunc as any,
+    write: func as any,
+    delete: func as any,
     writeAllStores: func as any,
   },
 

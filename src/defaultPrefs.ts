@@ -10,7 +10,6 @@ import type {
   BookmarkFolderType,
   HistoryVKType,
   LocationVKType,
-  ModulesCache,
   PlaceType,
   Repository,
   RowSelection,
@@ -64,9 +63,6 @@ const S = {
     OpenOnStartup: {} as WindowPrefsType,
     OpenWindows: {} as WindowPrefsType,
     PersistForType: {} as WindowPrefsType,
-  },
-  modules: {
-    version01: {} as ModulesCache,
   },
   bookmarks: {
     rootfolder: {

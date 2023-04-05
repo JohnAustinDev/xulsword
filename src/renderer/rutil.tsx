@@ -240,6 +240,8 @@ export function genBookAudioFile(
   return null;
 }
 
+// Check a GenBook tree node to see if it has an audio file. If so,
+// add the audio file information to the node and return true.
 export function audioGenBookNode(
   node: TreeNodeInfo,
   module: string,
@@ -293,7 +295,7 @@ export function readGenBookAudioConf(
   gbmod: string
 ): GenBookAudio {
   const r: GenBookAudio = {};
-  const allGbKeys = gbPaths(G.Prefs, G.LibSword, gbmod);
+  const allGbKeys = gbPaths(G.DiskCache, G.LibSword, gbmod);
   Object.entries(audio).forEach((entry) => {
     const [pathx, str] = entry;
     const px = pathx.split('/').filter(Boolean);
@@ -412,16 +414,17 @@ export function setStatePref(
 ) {
   let keys = statePrefKeys?.slice();
   if (!keys) {
-    keys = Object.keys(
-      id ? S[store][id as keyof typeof S[PrefStoreType]] : S[store]
-    );
+    const st = store in S ? (S as any)[store] : null;
+    if (st) keys = Object.keys(id ? st[id] : st);
   }
-  const newStatePref = keep(state, keys);
-  if (prevState === null) G.Prefs.mergeValue(id, newStatePref, store);
-  else {
-    const prvStatePref = keep(prevState, keys);
-    const d = diff(prvStatePref, newStatePref);
-    if (d) G.Prefs.mergeValue(id, d, store);
+  if (keys) {
+    const newStatePref = keep(state, keys);
+    if (prevState === null) G.Prefs.mergeValue(id, newStatePref, store);
+    else {
+      const prvStatePref = keep(prevState, keys);
+      const d = diff(prvStatePref, newStatePref);
+      if (d) G.Prefs.mergeValue(id, d, store);
+    }
   }
 }
 
@@ -437,10 +440,10 @@ export function registerUpdateStateFromPref(
   const updateStateFromPref = (prefs: string | string[], aStorex?: string) => {
     const aStore = aStorex || 'prefs';
     log.debug(`Updating state from prefs:`, prefs, aStore);
-    if (aStore === store) {
+    if (aStore === store && aStore in S) {
       const sp = defaultPrefs
-        ? getStatePref(store, id, defaultPrefs)
-        : getStatePref(store, id);
+        ? getStatePref(aStore as keyof typeof S, id, defaultPrefs)
+        : getStatePref(aStore as keyof typeof S, id);
       const different = diff(c.state, sp);
       if (different && Object.keys(different).length) {
         const d = different as any;
@@ -450,8 +453,10 @@ export function registerUpdateStateFromPref(
           d?.global?.locale !== G.i18n.language
         ) {
           Cache.clear();
+          log.debug(`Cache cleared (locale)`);
         } else if (aStore === 'bookmarks') {
           Cache.clear('bookmarkMap');
+          log.debug(`bookmarkMap cache cleared`);
         }
         c.setState(different);
       }

@@ -20,6 +20,8 @@ import {
   ofClass,
   findTreeNode,
   genBookTreeNodes,
+  findTreeAncestors,
+  findTreeSiblings,
 } from '../../common';
 import C from '../../constant';
 import G from '../rg';
@@ -164,7 +166,7 @@ class SelectOR extends React.Component {
           const ormod = e.target.value;
           const nodes =
             G.Tab[ormod].type === C.GENBOOK
-              ? genBookTreeNodes(G.Prefs, G.LibSword, ormod)
+              ? genBookTreeNodes(G.DiskCache, G.LibSword, ormod)
               : dictTreeNodes(getAllDictionaryKeyList(ormod), ormod);
           const keys = [findFirstLeafNode(nodes, nodes).id.toString()];
           stateORM = { ormod, keys };
@@ -279,7 +281,7 @@ class SelectOR extends React.Component {
           labelClass: G.Tab[m].labelClass,
           nodes:
             G.Tab[m].type === C.GENBOOK
-              ? genBookTreeNodes(G.Prefs, G.LibSword, m)
+              ? genBookTreeNodes(G.DiskCache, G.LibSword, m)
               : dictTreeNodes(getAllDictionaryKeyList(m), m),
         };
       });
@@ -328,7 +330,7 @@ class SelectOR extends React.Component {
     // Ancestor selector(s) if any
     selects.push(
       ...ancestorNodes.map((n, i) => {
-        const children = findSiblings(n.id, nodes, isDictMod);
+        const children = findTreeSiblings(n.id, nodes);
         return (
           <Menulist
             className={[
@@ -409,49 +411,6 @@ SelectOR.propTypes = propTypes;
 
 export default SelectOR;
 
-// Return ancestor nodes of any non-versekey module key. The returned array is
-// ordered from greatest ancestor down to parent. If there is no parent, an
-// empty array is returned. If id is not present in nodes an error is thrown.
-function findAncestors(
-  id: string | number,
-  nodes: TreeNodeInfo[],
-  isDictMod: boolean
-): { ancestors: TreeNodeInfo[]; self: TreeNodeInfo } {
-  let ancestors: TreeNodeInfo[] = [];
-  const r1 = isDictMod ? [id.toString()] : id.toString().split(C.GBKSEP);
-  let end = '';
-  if (!isDictMod && !r1[r1.length - 1]) {
-    r1.pop();
-    end = C.GBKSEP;
-  }
-  ancestors = r1.map((k, i, a) => {
-    let fid = k;
-    if (!isDictMod) {
-      fid = a.slice(0, i + 1).join(C.GBKSEP);
-      fid += i === a.length - 1 ? end : C.GBKSEP;
-    }
-    const fnd = findTreeNode(nodes, fid);
-    if (!fnd) throw new Error(`Node not found: '${fid}'`);
-    return fnd;
-  });
-  const self = ancestors.pop() as TreeNodeInfo;
-  return { ancestors, self };
-}
-
-function findSiblings(
-  id: string | number,
-  nodes: TreeNodeInfo[],
-  isDictMod: boolean
-): TreeNodeInfo[] {
-  const { ancestors } = findAncestors(id, nodes, isDictMod);
-  if (ancestors.length) {
-    const parent = ancestors.pop();
-    if (parent?.childNodes) return parent.childNodes;
-    throw new Error(`Parent has no children: '${id}'`);
-  }
-  return nodes;
-}
-
 // A valid node family will be returned from any node that exist in nodes.
 // If the selected node does not exist in nodes, an error is thrown. The
 // 'family' returned will be at least an array of childNodes, while
@@ -462,7 +421,7 @@ function nodeFamily(
   isDictMod: boolean
 ): FamilyNodes {
   const selectedChildID = typeof node === 'string' ? node : node.id.toString();
-  const { ancestors: ancestorNodes } = findAncestors(
+  const { ancestors: ancestorNodes } = findTreeAncestors(
     selectedChildID,
     nodes,
     isDictMod

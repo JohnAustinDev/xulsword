@@ -67,7 +67,7 @@ window.addEventListener('unhandledrejection', (event) => {
 
 window.ipc.on('cache-reset', () => {
   Cache.clear();
-  log.silly(`CLEARED ALL CACHES`);
+  log.debug(`CLEARED ALL CACHES`);
   Cache.write(`${descriptor.type}:${descriptor.id}`, 'windowID');
 });
 
@@ -142,6 +142,9 @@ function WindowRoot(props: WindowRootProps) {
   // IPC component-reset setup:
   useEffect(() => {
     return window.ipc.on('component-reset', () => {
+      log.debug(
+        `Renderer reset (stylesheet, cache, component): ${descriptor.id}`
+      );
       DynamicStyleSheet.update(G.Data.read('stylesheetData'));
       Cache.clear();
       s.reset[1](s.reset[0] + 1);
@@ -187,6 +190,7 @@ function WindowRoot(props: WindowRootProps) {
         'resize',
         delayHandler.bind(delayHandlerThis)(
           () => {
+            log.debug(`Renderer reset (component): ${descriptor.id}`);
             s.reset[1](s.reset[0] + 1);
           },
           C.UI.Window.resizeDelay,
@@ -245,6 +249,9 @@ function WindowRoot(props: WindowRootProps) {
   useEffect(() => {
     return Subscription.subscribe.modulesInstalled(
       (newmods: NewModulesType) => {
+        log.debug(
+          `Renderer reset (cache, stylesheet, component): ${descriptor.id}`
+        );
         DynamicStyleSheet.update(G.Data.read('stylesheetData'));
         Cache.clear();
         s.reset[1](s.reset[0] + 1);

@@ -57,6 +57,7 @@ import type {
   OSISBookType,
 } from '../../type';
 import Prefs from './prefs';
+import DiskCache from './diskcache';
 
 export const CipherKeyModules: {
   [module: string]: {
@@ -1177,10 +1178,9 @@ const Module = {
     const results: boolean[] | PromiseLike<boolean[]> = [];
     modules.forEach((module) => {
       const { name, repo } = module;
-      const mpver = Object.keys(S.modules)[0];
       if (isRepoLocal(repo)) {
         results.push(!!moveRemoveModule([name], repo.path));
-        Prefs.deleteUserPref(`${mpver}.${name}`, 'modules');
+        DiskCache.delete(null, name);
       }
     });
 

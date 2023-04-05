@@ -1238,7 +1238,7 @@ async function promptAudioChapters(
           if (!Object.keys(ac).length) return resolve(null);
           const paths =
             conf.module in G.Tab
-              ? gbPaths(G.Prefs, G.LibSword, conf.module)
+              ? gbPaths(G.DiskCache, G.LibSword, conf.module)
               : {};
           d.type = 'genbook';
           d.selection = {

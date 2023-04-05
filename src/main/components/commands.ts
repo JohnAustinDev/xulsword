@@ -30,6 +30,7 @@ import importBookmarkObject, {
 } from '../bookmarks';
 import { verseKey, getTab, getAudioConfs } from '../minit';
 import Viewport from './viewport';
+import DiskCache from './diskcache';
 import PrefsX from './prefs';
 import LocalFile from './localFile';
 import { modalInstall, scanAudio } from './module';
@@ -224,7 +225,7 @@ const Commands = {
       if (module in gbpaths) {
         paths = gbpaths[module];
       } else if (module && module in tab) {
-        paths = gbPaths(PrefsX, LibSword, module);
+        paths = gbPaths(DiskCache, LibSword, module);
         gbpaths[module] = paths;
       }
       const entry = Object.entries(paths).find((e) => !diff(path, e[1]));
@@ -426,7 +427,7 @@ const Commands = {
             if (module in gbpaths) {
               paths = gbpaths[module];
             } else if (module in tab && tab[module].type === C.GENBOOK) {
-              paths = gbPaths(PrefsX, LibSword, module);
+              paths = gbPaths(DiskCache, LibSword, module);
               gbpaths[module] = paths;
             }
             dest.append('modules').append(module);
@@ -952,7 +953,7 @@ const Commands = {
       }
     );
     xulsword.scroll = scroll || { verseAt: 'center' };
-    Prefs.mergeValue('xulsword', xulsword, 'prefs', false, true, -2);
+    Prefs.mergeValue('xulsword', xulsword, 'prefs', false, false, -2);
   },
 
   // If SelectVKMType (which includes vkmod) is passed, and vkmod is not a Bible (is
@@ -973,7 +974,7 @@ const Commands = {
     xulsword.location = newlocation;
     xulsword.selection = newselection || null;
     xulsword.scroll = newscroll || { verseAt: 'center' };
-    Prefs.mergeValue('xulsword', xulsword, 'prefs', false, true, -2);
+    Prefs.mergeValue('xulsword', xulsword, 'prefs', false, false, -2);
   },
 };
 

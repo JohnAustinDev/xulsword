@@ -4,7 +4,6 @@ import { fork } from 'child_process';
 import log from 'electron-log';
 import path from 'path';
 import { repositoryKey, isRepoLocal, JSON_parse } from '../../common';
-import S from '../../defaultPrefs';
 import Cache from '../../cache';
 import C from '../../constant';
 import LocalFile from './localFile';
@@ -23,6 +22,7 @@ import type {
   ModulesCache,
 } from '../../type';
 import type { ManagerStatePref } from '../../renderer/moduleManager/manager';
+import DiskCache from './diskcache';
 
 const { libxulsword } = require('libxulsword');
 
@@ -370,17 +370,16 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // Returns an error is module Lexdictmod is not of type StrKey
   getAllDictionaryKeys(lexdictmod: string): string[] {
     if (this.isReady(true)) {
-      const mpver = Object.keys(S.modules)[0];
-      const pkey = `${mpver}.${lexdictmod}.keylist`;
-      if (!Prefs.has(pkey, 'complex', 'modules')) {
+      const pkey = 'keylist';
+      if (!DiskCache.has(pkey, lexdictmod)) {
         // Don't save this version to prefs; the sorted version will be saved later!
         return libxulsword
           .GetAllDictionaryKeys(lexdictmod)
           .split('<nx>') as string[];
       }
-      return Prefs.getComplexValue(
+      return DiskCache.read(
         pkey,
-        'modules'
+        lexdictmod
       ) as ModulesCache[string]['keylist'];
     }
     return [];
@@ -410,22 +409,14 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // Returns an error if module Gbmod is not a TreeKey mod.
   getGenBookTableOfContents(gbmod: string): GenBookKeys {
     if (this.isReady(true)) {
-      const mpver = Object.keys(S.modules)[0];
-      const pkey = `${mpver}.${gbmod}.toc`;
-      if (!Prefs.has(pkey, 'complex', 'modules')) {
+      const pkey = 'toc';
+      if (!DiskCache.has(pkey, gbmod)) {
         const toc = JSON_parse(
           libxulsword.GetGenBookTableOfContents(gbmod)
         ) as GenBookTOC;
-        Prefs.setComplexValue(
-          pkey,
-          readGenBookLibSword(toc) as GenBookKeys,
-          'modules'
-        );
+        DiskCache.write(pkey, readGenBookLibSword(toc) as GenBookKeys, gbmod);
       }
-      return Prefs.getComplexValue(
-        pkey,
-        'modules'
-      ) as ModulesCache[string]['toc'];
+      return DiskCache.read(pkey, gbmod) as ModulesCache[string]['toc'];
     }
     return [];
   },

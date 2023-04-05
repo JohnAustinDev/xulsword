@@ -15,6 +15,7 @@ import { canRedo, canUndo } from './bookmarks';
 import Viewport from './components/viewport';
 import { inlineAudioFile, inlineFile } from './components/localFile';
 import Dirs from './components/dirs';
+import DiskCache from './components/diskcache';
 import Prefs from './components/prefs';
 import LibSword from './components/libsword';
 import Data from './components/data';
@@ -112,6 +113,8 @@ class GClass implements GType {
 
   Prefs;
 
+  DiskCache;
+
   Dirs;
 
   Commands;
@@ -131,6 +134,7 @@ class GClass implements GType {
     this.clipboard = clipboard;
     this.LibSword = LibSword;
     this.Prefs = Prefs;
+    this.DiskCache = DiskCache;
     this.Dirs = Dirs;
     this.Commands = Commands;
     this.Shell = shell;

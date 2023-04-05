@@ -264,9 +264,8 @@ const openXulswordWindow = () => {
             } MODULE(S) SUCCESSFULLY INSTALLED!`
           );
         }
-        const mpver = Object.keys(S.modules)[0];
         newmods.modules.forEach((m) => {
-          G.Prefs.deleteUserPref(`${mpver}.${m}`, 'modules');
+          G.DiskCache.delete(null, m.module);
         });
         Subscription.publish.resetMain();
         newmods.nokeymods = getCipherFailConfs();
@@ -561,6 +560,7 @@ const init = async () => {
 app.on('will-quit', () => {
   // Write all prefs to disk when app closes
   G.Prefs.writeAllStores();
+  G.DiskCache.writeAllStores();
   // Respect the OSX convention of having the application in memory even
   // after all windows have been closed
   if (process.platform !== 'darwin') {

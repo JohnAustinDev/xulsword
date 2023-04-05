@@ -35,6 +35,7 @@ import type {
   SwordFeatures,
   GenBookAudio,
   ModulesCache,
+  TreeNodeInfoPref,
 } from './type';
 import type { TreeNodeInfo } from '@blueprintjs/core';
 import type { SelectVKMType } from './renderer/libxul/selectVK';
@@ -316,23 +317,29 @@ export function getStatePref(
   defaultPrefs?: PrefObject // default is all
 ): PrefObject {
   const state = {} as PrefObject;
-  if (id) {
-    Object.entries(
-      defaultPrefs || S[store][id as keyof typeof S[PrefStoreType]]
-    ).forEach((entry) => {
-      const [key, value] = entry;
-      state[key] = prefs.getPrefOrCreate(
-        `${id}.${String(key)}`,
-        prefType(value),
-        value,
-        store
-      );
-    });
-  } else {
-    Object.entries(defaultPrefs || S[store]).forEach((entry) => {
-      const [sid, value] = entry;
-      state[sid] = prefs.getPrefOrCreate(sid, prefType(value), value, store);
-    });
+  const sdef = store in S ? (S as any)[store] : null;
+  if (defaultPrefs || sdef) {
+    if (id) {
+      Object.entries(defaultPrefs || sdef[id]).forEach((entry) => {
+        const [key, value] = entry;
+        state[key] = prefs.getPrefOrCreate(
+          `${id}.${String(key)}`,
+          prefType(value as PrefValue),
+          value as PrefValue,
+          store
+        );
+      });
+    } else {
+      Object.entries(defaultPrefs || sdef).forEach((entry) => {
+        const [sid, value] = entry;
+        state[sid] = prefs.getPrefOrCreate(
+          sid,
+          prefType(value as PrefValue),
+          value as PrefValue,
+          store
+        );
+      });
+    }
   }
   return state;
 }
@@ -1080,6 +1087,63 @@ export function findTreeNode(
   return undefined;
 }
 
+// Return ancestor nodes of a non-versekey module key. The returned array is
+// ordered from greatest ancestor down to parent. If there is no parent, an
+// empty array is returned.
+export function gbAncestorIDs(
+  id: string | number,
+  isDictMod?: boolean // don't split dict mod keys
+): string[] {
+  let ancestors: string[] = [];
+  const r1 = isDictMod ? [id.toString()] : id.toString().split(C.GBKSEP);
+  let end = '';
+  if (!isDictMod && !r1[r1.length - 1]) {
+    r1.pop();
+    end = C.GBKSEP;
+  }
+  ancestors = r1.map((k, i, a) => {
+    let fid = k;
+    if (!isDictMod) {
+      fid = a.slice(0, i + 1).join(C.GBKSEP);
+      fid += i === a.length - 1 ? end : C.GBKSEP;
+    }
+    return fid;
+  });
+  ancestors.pop();
+  return ancestors;
+}
+
+export function findTreeAncestors(
+  id: string | number,
+  nodes: TreeNodeInfo[],
+  isDictMod?: boolean // don't split dict mod keys
+): { ancestors: TreeNodeInfo[]; self: TreeNodeInfo } {
+  const anc = gbAncestorIDs(id, isDictMod).map((ids) =>
+    findTreeNode(nodes, ids)
+  );
+  const slf = findTreeNode(nodes, id);
+  if (anc.some((x) => x === undefined) || slf === undefined) {
+    throw new Error(`Node not found: '${id}'`);
+  }
+  return {
+    ancestors: anc as TreeNodeInfo[],
+    self: slf as TreeNodeInfo,
+  };
+}
+
+export function findTreeSiblings(
+  id: string | number,
+  nodes: TreeNodeInfo[]
+): TreeNodeInfo[] {
+  const { ancestors } = findTreeAncestors(id, nodes);
+  if (ancestors.length) {
+    const parent = ancestors.pop();
+    if (parent?.childNodes) return parent.childNodes;
+    throw new Error(`Parent has no children: '${id}'`);
+  }
+  return nodes;
+}
+
 // A leaf node has no childNodes property, or else it is zero length.
 export function findFirstLeafNode(
   nodes: TreeNodeInfo[],
@@ -1159,21 +1223,20 @@ export function dictTreeNodes(
 
 // Important: allGbKeys must be output of getGenBookTableOfContents().
 export function genBookTreeNodes(
-  prefs: GType['Prefs'],
+  diskCache: GType['DiskCache'],
   libsword: GType['LibSword'],
   module: string,
   expanded?: boolean
 ): TreeNodeInfo[] {
-  const mpver = Object.keys(S.modules)[0];
-  const pkey = `${mpver}.${module}.treenodes`;
-  if (!prefs.has(pkey, 'complex', 'modules')) {
-    prefs.setComplexValue(
+  const pkey = 'treenodes';
+  if (!diskCache.has(pkey, module)) {
+    diskCache.write(
       pkey,
       hierarchy(
         libsword.getGenBookTableOfContents(module).map((gbkey) => {
           const label = gbkey.split(C.GBKSEP);
           if (gbkey.endsWith(C.GBKSEP)) label.pop();
-          const n: TreeNodeInfo = {
+          const n: TreeNodeInfoPref = {
             id: gbkey,
             label: label[label.length - 1],
             className: module ? `cs-${module}` : 'cs-LTR_DEFAULT',
@@ -1182,10 +1245,10 @@ export function genBookTreeNodes(
           return n;
         })
       ) as ModulesCache[string]['treenodes'],
-      'modules'
+      module
     );
   }
-  const nodeinfos = prefs.getComplexValue(pkey, 'modules') as TreeNodeInfo[];
+  const nodeinfos = diskCache.read(pkey, module) as TreeNodeInfoPref[];
   nodeinfos.forEach((n) => {
     if (expanded !== undefined && 'hasCaret' in n && n.hasCaret)
       n.isExpanded = !!expanded;
@@ -1194,7 +1257,7 @@ export function genBookTreeNodes(
 }
 
 export function gbPaths(
-  prefs: GType['Prefs'],
+  diskCache: GType['DiskCache'],
   libsword: GType['LibSword'],
   gbmod: string
 ): GenBookAudio {
@@ -1212,7 +1275,7 @@ export function gbPaths(
     });
     return nodes;
   }
-  addPath(genBookTreeNodes(prefs, libsword, gbmod));
+  addPath(genBookTreeNodes(diskCache, libsword, gbmod));
   return r;
 }
 

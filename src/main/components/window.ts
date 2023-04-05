@@ -309,12 +309,14 @@ export const pushPrefsToWindows: PrefCallbackType = (
           allowed.push(...(Data.read('menuPref') as string[]));
         }
       }
-      Object.entries(S[store]).forEach((e) => {
-        const [id, props] = e;
-        Object.keys(props).forEach((prop: string) => {
-          allowed.push([id, prop].join('.'));
+      if (store in S) {
+        Object.entries((S as any)[store]).forEach((e) => {
+          const [id, props] = e;
+          Object.keys(props as PrefObject).forEach((prop: string) => {
+            allowed.push([id, prop].join('.'));
+          });
         });
-      });
+      }
 
       // Get the list of keyprops that will be pushed.
       pushKeyProps = keyprops.filter((kp) => {
@@ -574,6 +576,11 @@ const Window = {
           if ((!type || type === 'all') && r === 'dynamic-stylesheet-reset')
             return;
           if (!type || type === 'all' || type === r) {
+            if (r === 'cache-reset') {
+              log.debug(
+                `Clearing ${win.id} cache: Window.reset(${typex}, ${windowx})`
+              );
+            }
             win.webContents.send(r);
             winids.add(win.id);
           }

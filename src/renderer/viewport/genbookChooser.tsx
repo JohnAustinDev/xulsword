@@ -8,7 +8,7 @@
 /* eslint-disable import/order */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { clone, genBookTreeNodes } from '../../common';
+import { clone, genBookTreeNodes, gbAncestorIDs } from '../../common';
 import C from '../../constant';
 import G from '../rg';
 import { audioGenBookNode } from '../rutil';
@@ -96,9 +96,9 @@ class GenbookChooser extends React.Component {
   }
 
   componentDidUpdate(prevProps: GenbookChooserProps) {
+    const { keys: prevkeys } = prevProps;
     const props = this.props as GenbookChooserProps;
     const { keys } = props;
-    const { keys: prevkeys } = prevProps;
     const { scrollTo } = this;
     const firstChangedKeyIndex = keys.findIndex(
       (k, i) => k && k !== prevkeys[i]
@@ -151,21 +151,18 @@ class GenbookChooser extends React.Component {
     const props = this.props as GenbookChooserProps;
     const { panels, keys } = props;
     const { treeNodes } = this;
-    const expanded: Set<string> = new Set(expandedIDs[panelIndex]);
-    const originalSize = expanded.size;
     const module = panels[panelIndex];
     const key = keys[panelIndex];
     const treekey = [module, panelIndex].join('.');
     const nodes = treeNodes[treekey];
     if (nodes && key) {
-      const ancestors = getAncestors(nodes, key);
+      const expanded: string[] = [];
+      const ancestors = gbAncestorIDs(key);
       if (ancestors) {
-        ancestors.forEach((id) => expanded.add(id));
+        ancestors.forEach((id) => expanded.push(id));
       }
-      if (expanded.size > originalSize) {
-        expandedIDs[panelIndex] = Array.from(expanded);
-        this.setState({ expandedIDs });
-      }
+      expandedIDs[panelIndex] = expanded;
+      this.setState({ expandedIDs });
     }
   }
 
@@ -192,7 +189,11 @@ class GenbookChooser extends React.Component {
                   if (!(treekey in treeRef)) {
                     treeRef[treekey] = React.createRef();
                   }
-                  const childNodes = genBookTreeNodes(G.Prefs, G.LibSword, m);
+                  const childNodes = genBookTreeNodes(
+                    G.DiskCache,
+                    G.LibSword,
+                    m
+                  );
                   const toc = G.LibSword.getGenBookTableOfContents(m);
                   const tocKeys = Object.keys(toc);
                   this.treeNodes[treekey] = [];
@@ -225,7 +226,7 @@ class GenbookChooser extends React.Component {
                   const key = keys[i];
                   return (
                     <TreeView
-                      key={[treekey, key, ...expandedIDs[i]].join('.')}
+                      key={[treekey].join('.')}
                       initialState={this.treeNodes[treekey]}
                       selectedIDs={key ? [key] : []}
                       expandedIDs={expandedIDs[i]}
@@ -259,28 +260,6 @@ GenbookChooser.defaultProps = defaultProps;
 GenbookChooser.propTypes = propTypes;
 
 export default GenbookChooser;
-
-// Returns the ids of a node's ancestors.
-function getAncestors(
-  nodes: TreeNodeInfo[],
-  id: string,
-  ancesterNodes?: TreeNodeInfo[]
-): string[] | null {
-  const ancestors = ancesterNodes || [];
-  let result: string[] | null = null;
-  nodes.forEach((node) => {
-    if (!result) {
-      if (node.id === id) {
-        result = ancestors.map((an) => an.id.toString());
-      } else if (node.childNodes) {
-        ancestors.push(node);
-        const found = getAncestors(node.childNodes, id, ancestors);
-        if (found !== null) result = found;
-      }
-    }
-  });
-  return result;
-}
 
 // Return groups of same-genbook-panels, in chooser order.
 // Ex: [[0],[1,2]] or [[0,1,2]]
