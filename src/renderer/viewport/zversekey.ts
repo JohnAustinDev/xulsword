@@ -88,22 +88,19 @@ export function getRefBible(
       inf.companion = true;
     }
   }
-  if (refbible) {
-    // Finally, has the user specified an alternate for this refbible.
-    const pmsel = G.Prefs.getComplexValue(
-      'global.popup.selection'
-    ) as typeof S.prefs.global.popup.selection;
-    let userPrefBible = refbible;
-    if (anyTypeModule in pmsel && pmsel[anyTypeModule]) {
-      userPrefBible = pmsel[anyTypeModule];
-    }
-    if (userPrefBible !== refbible) {
-      refbible = userPrefBible;
-      inf.userpref = true;
-    }
-    return refbible;
+  // Finally, has the user specified a lookup for this module.
+  const vklookup = G.Prefs.getComplexValue(
+    'global.popup.vklookup'
+  ) as typeof S.prefs.global.popup.vklookup;
+  let userPrefBible = refbible;
+  if (anyTypeModule in vklookup && vklookup[anyTypeModule]) {
+    userPrefBible = vklookup[anyTypeModule];
   }
-  return null;
+  if (userPrefBible !== refbible) {
+    refbible = userPrefBible;
+    inf.userpref = true;
+  }
+  return refbible || null;
 }
 
 function getFootnoteText(location: LocationVKType, module: string): string {
@@ -459,7 +456,7 @@ export function getNoteHTML(
   });
 
   // Start building our html
-  let t = '';
+  let html = '';
 
   note.forEach((anote) => {
     const p = getElementData(anote);
@@ -500,18 +497,18 @@ export function getNoteHTML(
             location,
             context,
           });
-          t += `<div id="${fnid}" data-data="${fnrdata}" class="fnrow${rowcls}">`;
+          html += `<div id="${fnid}" data-data="${fnrdata}" class="fnrow${rowcls}">`;
 
           // Write cell #1: an expander link for cross references only
           const twisty = type === 'cr' ? '<div class="crtwisty"></div>' : '';
-          t += `<div class="fncol1">${twisty}</div>`;
+          html += `<div class="fncol1">${twisty}</div>`;
 
           // These are the lines for showing expanded verse refs
-          t += '<div class="fncol2"><div class="fndash"></div></div>';
-          t += '<div class="fncol3">&nbsp;</div>';
+          html += '<div class="fncol2"><div class="fndash"></div></div>';
+          html += '<div class="fncol3">&nbsp;</div>';
 
           // Write cell #4: chapter and verse
-          t += '<div class="fncol4">';
+          html += '<div class="fncol4">';
           if (chapter && verse) {
             const ch = dString(G.i18n, chapter);
             const vs = dString(G.i18n, verse);
@@ -520,13 +517,13 @@ export function getNoteHTML(
               location,
               context,
             });
-            t += `<a class="fnlink" data-data="${fnldata}"><i>${ch}<bdi>:</bdi>${vs}</i></a> -`;
+            html += `<a class="fnlink" data-data="${fnldata}"><i>${ch}<bdi>:</bdi>${vs}</i></a> -`;
           }
-          t += '</div>';
+          html += '</div>';
 
           // Write cell #5: note body
           const ccls = type === 'cr' ? ` data-reflist="${innerHTML}"` : '';
-          t += `<div class="fncol5"${ccls}>`;
+          html += `<div class="fncol5"${ccls}>`;
 
           switch (type) {
             case 'cr': {
@@ -537,7 +534,7 @@ export function getNoteHTML(
                 const tmod = /^[\w\d]+:/.test(innerHTML)
                   ? innerHTML.split(':')[0]
                   : context;
-                t += getRefHTML(
+                html += getRefHTML(
                   innerHTML,
                   tmod || '',
                   location,
@@ -557,26 +554,26 @@ export function getNoteHTML(
               ) {
                 opdir = ' opposing-program-direction';
               }
-              t += `<bdi><span class="fntext${opdir}">${innerHTML}</span></bdi>`;
+              html += `<bdi><span class="fntext${opdir}">${innerHTML}</span></bdi>`;
               break;
             }
             case 'un': {
               // If this is a usernote, then add direction entities and style
-              t += `<bdi><span class="noteBoxUserNote">${innerHTML}</span></bdi>`;
+              html += `<bdi><span class="noteBoxUserNote">${innerHTML}</span></bdi>`;
               break;
             }
             default:
           }
 
           // Finish this body and this row
-          t += '</div>';
-          t += '</div>';
+          html += '</div>';
+          html += '</div>';
         }
       }
     }
   });
 
-  return t;
+  return html;
 }
 
 // Turns headings on before reading introductions

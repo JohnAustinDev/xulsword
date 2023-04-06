@@ -1,10 +1,16 @@
 /* eslint-disable import/no-duplicates */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { clone, findBookmarkItem, ofClass } from '../../common';
+import {
+  JSON_attrib_stringify,
+  clone,
+  findBookmarkItem,
+  ofClass,
+} from '../../common';
 import S from '../../defaultPrefs';
 import G from '../rg';
 import { addBookmarksToNotes, getBookmarkInfo } from '../bookmarks';
 import { getElementData } from '../htmlData';
+import log from '../log';
 import { getDictEntryHTML, getLemmaHTML } from '../viewport/zdictionary';
 import {
   getIntroductions,
@@ -16,7 +22,11 @@ import type { HTMLData } from '../htmlData';
 import type Popup from './popup';
 import type { PopupState } from './popup';
 
-// Get html for Popup target with the help of any extra info.
+export type FailReason = { requires: string[]; reason?: string };
+
+// Get html for Popup target with the help of any extra info. If html
+// cannot be generated, an object is returned with information about
+// the reason.
 export function getPopupHTML(
   data: HTMLData,
   testonly?: boolean // is elem renderable as a popup?
@@ -31,39 +41,44 @@ export function getPopupHTML(
     bmitem,
     snphrase,
   } = data;
+  const failReason: FailReason = { requires: [] };
   let html = '';
   switch (type) {
     case 'cr':
     case 'fn': {
       if (location && title && context) {
-        const { book, chapter } = location;
-        // getChapterText must be called before getNotes
-        G.LibSword.getChapterText(context, `${book}.${chapter}`);
-        const notes = G.LibSword.getNotes();
-        // a note element's title does not include type, but its nlist does
-        html = getNoteHTML(notes, null, 0, !testonly, `${type}.${title}`);
+        if (context in G.Tab) {
+          const { book, chapter } = location;
+          // getChapterText must be called before getNotes
+          G.LibSword.getChapterText(context, `${book}.${chapter}`);
+          const notes = G.LibSword.getNotes();
+          // a note element's title does not include type, but its nlist does
+          html = getNoteHTML(notes, null, 0, !testonly, `${type}.${title}`);
+        } else failReason.requires.push(context);
       }
       break;
     }
 
     case 'un':
       if (bmitem && context) {
-        const bm = findBookmarkItem(
-          G.Prefs.getComplexValue(
-            'rootfolder',
-            'bookmarks'
-          ) as typeof S.bookmarks.rootfolder,
-          bmitem
-        );
-        const bmi = (bm && 'location' in bm && getBookmarkInfo(bm)) || null;
-        if (bmi) {
-          html = getNoteHTML(
-            addBookmarksToNotes([bmi], '', context),
-            null,
-            0,
-            !testonly
+        if (context in G.Tab) {
+          const bm = findBookmarkItem(
+            G.Prefs.getComplexValue(
+              'rootfolder',
+              'bookmarks'
+            ) as typeof S.bookmarks.rootfolder,
+            bmitem
           );
-        }
+          const bmi = (bm && 'location' in bm && getBookmarkInfo(bm)) || null;
+          if (bmi) {
+            html = getNoteHTML(
+              addBookmarksToNotes([bmi], '', context),
+              null,
+              0,
+              !testonly
+            );
+          }
+        } else failReason.requires.push(context);
       }
       break;
 
@@ -72,38 +87,47 @@ export function getPopupHTML(
     // dictionary entry.
     case 'sr': {
       if (context && reflist) {
-        const bibleReflist = reflist.join(';');
-        const parsed = parseExtendedVKRef(bibleReflist, location);
-        if (parsed.length) {
-          let b = 'Gen';
-          let c = 0;
-          let v = 0;
-          if (location) {
-            ({ book: b, chapter: c } = location);
-            const { verse: vx } = location;
-            v = vx || v;
+        if (context in G.Tab) {
+          const bibleReflist = reflist.join(';');
+          const parsed = parseExtendedVKRef(bibleReflist, location);
+          if (parsed.length) {
+            let b = 'Gen';
+            let c = 0;
+            let v = 0;
+            if (location) {
+              ({ book: b, chapter: c } = location);
+              const { verse: vx } = location;
+              v = vx || v;
+            }
+            const dt = `cr.1.${b}.${c}.${v}.${context}`;
+            html = getNoteHTML(
+              `<div class="nlist" data-title="${dt}">${bibleReflist}</div>`,
+              null,
+              0,
+              !testonly
+            );
+          } else if (reflist && reflist[0]) {
+            html = getDictEntryHTML(
+              reflist[0].replace(/^.*?:/, ''),
+              context,
+              false,
+              failReason
+            );
           }
-          const dt = `cr.1.${b}.${c}.${v}.${context}`;
-          html = getNoteHTML(
-            `<div class="nlist" data-title="${dt}">${bibleReflist}</div>`,
-            null,
-            0,
-            !testonly
-          );
-        } else if (reflist && reflist[0]) {
-          html = getDictEntryHTML(reflist[0].replace(/^.*?:/, ''), context);
-        }
+        } else failReason.requires.push(context);
       }
       break;
     }
 
     case 'sn': {
       if (context && className && snphrase) {
-        const snlist = className.trim().split(' ');
-        if (snlist && snlist.length > 1) {
-          snlist.shift();
-          html = getLemmaHTML(snlist, snphrase, context);
-        }
+        if (context in G.Tab) {
+          const snlist = className.trim().split(' ');
+          if (snlist && snlist.length > 1) {
+            snlist.shift();
+            html = getLemmaHTML(snlist, snphrase, context, failReason);
+          }
+        } else failReason.requires.push(context);
       }
       break;
     }
@@ -120,22 +144,46 @@ export function getPopupHTML(
             if (!dword) dword = ref.substring(colon + 1);
           }
         });
-        html = getDictEntryHTML(dword, dnames.join(';'));
+        html = getDictEntryHTML(dword, dnames.join(';'), false, failReason);
       }
       break;
     }
 
     case 'introlink': {
       if (context && location) {
-        const { book, chapter } = location;
-        const intro = getIntroductions(context, `${book}.${chapter}`);
-        if (intro && intro.textHTML) html = intro.textHTML;
+        if (context in G.Tab) {
+          const { book, chapter } = location;
+          const intro = getIntroductions(context, `${book}.${chapter}`);
+          if (intro && intro.textHTML) html = intro.textHTML;
+        } else failReason.requires.push(context);
       }
       break;
     }
 
     default:
       throw Error(`Unhandled popup type '${type}'.`);
+  }
+
+  const { reason, requires } = failReason;
+  if (reason || requires.length) {
+    const d = JSON_attrib_stringify({
+      type: 'requiremod',
+      reflist: requires,
+    } as HTMLData);
+    return `${html}
+      <div class="popup-fail">
+        <div class="fail-reason">${reason ?? ''}</div>
+        <div>
+          <span class="label">${G.i18n.t('module-required.message')}</span>
+          <div class="requiremod button" data-data="${d}">
+            <div class="button-box">
+              <div class="bp4-button">
+                ${G.i18n.t('install.label')}
+              </div>
+            </div>
+          </div>
+        <div>
+      </div>`;
   }
   return html;
 }
@@ -151,6 +199,9 @@ export default function handler(this: Popup, e: React.MouseEvent) {
       if (!targ || targ.type === 'npopup') return;
       if (!getPopupHTML(getElementData(targ.element), true)) {
         targ.element.classList.add('empty');
+        log.debug(
+          `Popup failed without reported reason: ${targ.element.classList}`
+        );
       }
       break;
     }

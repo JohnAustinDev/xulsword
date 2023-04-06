@@ -8,6 +8,7 @@ import type { TablePropColumn, TinitialRowSort } from './renderer/libxul/table';
 import type {
   AudioPrefType,
   BookmarkFolderType,
+  FeatureMods,
   HistoryVKType,
   LocationVKType,
   PlaceType,
@@ -100,12 +101,11 @@ const S = {
       fontSize: 2 as number,
       locale: '' as string,
       popup: {
-        selection: {
-          hebrewDef: '',
-          greekDef: '',
-          greekParse: '',
-        } as {
-          [k in 'hebrewDef' | 'greekDef' | 'greekParse' | string]: string;
+        vklookup: {} as {
+          [module: string]: string;
+        },
+        feature: {} as {
+          [feature in keyof FeatureMods]?: string;
         },
       },
     },

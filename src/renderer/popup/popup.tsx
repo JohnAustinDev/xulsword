@@ -11,8 +11,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import PropTypes from 'prop-types';
-import C from '../../constant';
 import { JSON_attrib_stringify, sanitizeHTML, stringHash } from '../../common';
+import S from '../../defaultPrefs';
+import C from '../../constant';
 import G from '../rg';
 import { libswordImgSrc, windowArguments } from '../rutil';
 import {
@@ -27,7 +28,11 @@ import { getRefBible } from '../viewport/zversekey';
 import popupH, { getPopupHTML } from './popupH';
 import '../libsword.css';
 import './popup.css';
+// These classes are used by generated HTML:
+import '../libxul/label.css';
+import '../libxul/button.css';
 
+import type { FeatureMods } from '../../type';
 import type { HTMLData } from '../htmlData';
 
 const defaultProps = {
@@ -211,8 +216,9 @@ class Popup extends React.Component {
           libswordImgSrc(pt);
           const parent = npopup.current.parentNode as HTMLElement | null;
           if (!isWindow && parent) {
-            if (html) parent.classList.remove('empty');
-            else parent.classList.add('empty');
+            if (html) {
+              parent.classList.remove('empty');
+            } else parent.classList.add('empty');
           }
           if (isWindow) this.setTitle();
           this.positionPopup();
@@ -283,6 +289,12 @@ class Popup extends React.Component {
       };
     }
 
+    let gpfeature: typeof S.prefs.global.popup.feature | undefined;
+    if (type === 'sn')
+      gpfeature = G.Prefs.getComplexValue(
+        'global.popup.feature'
+      ) as typeof S.prefs.global.popup.feature;
+
     const bibleMod = context && getRefBible(context);
 
     let cls = 'cs-locale';
@@ -328,23 +340,21 @@ class Popup extends React.Component {
             {type === 'sn' &&
               data?.className &&
               Object.entries(C.SwordFeatureClasses).map((entry) => {
-                const feature = entry[0] as
-                  | 'hebrewDef'
-                  | 'greekDef'
-                  | 'greekParse';
+                const feature = entry[0] as keyof FeatureMods;
                 const regex = entry[1];
-                if (data?.className && regex.test(data.className)) {
+                if (data.className && regex.test(data.className)) {
                   const fmods = G.FeatureModules[feature];
-                  if (fmods?.length) {
-                    let selmod = G.Prefs.getCharPref(
-                      `global.popup.selection.${feature}`
-                    );
+                  if (fmods?.length && Array.isArray(fmods)) {
+                    let selmod = (gpfeature as any)[feature] || null;
                     if (!selmod && fmods[0]) {
                       [selmod] = fmods;
-                      G.Prefs.setCharPref(
-                        `global.popup.selection.${feature}`,
-                        selmod
-                      );
+                      if (gpfeature) {
+                        gpfeature[feature] = selmod;
+                        G.Prefs.setComplexValue(
+                          'global.popup.feature',
+                          gpfeature as typeof S.prefs.global.popup.feature
+                        );
+                      }
                     }
                     return this.selector(fmods, selmod, undefined, feature);
                   }

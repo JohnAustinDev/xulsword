@@ -1,5 +1,6 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect } from 'react';
+import React, { useLayoutEffect } from 'react';
 import { dString, sanitizeHTML } from '../../common';
 import C from '../../constant';
 import G from '../rg';
@@ -57,7 +58,7 @@ function SearchHelpWin() {
   ];
 
   // Write after render, to allow use of HTML formatting and entities.
-  useEffect(() => {
+  useLayoutEffect(() => {
     write('searchTypes', G.i18n.t('searchTypes'));
     type.forEach((t, i) => {
       write(
@@ -72,7 +73,7 @@ function SearchHelpWin() {
       });
     });
     write('caseMessage', G.i18n.t('searchCase'));
-  });
+  }, []);
 
   return (
     <div className="helpPane">
@@ -86,20 +87,22 @@ function SearchHelpWin() {
         ))}
       </div>
       <table>
-        {[...Array(9).keys()].map((row) => (
-          <tr
-            key={`row${row}`}
-            className={row % 2 === 1 ? 'odd-row' : 'even-row'}
-          >
-            {[...Array(4).keys()].map((col) => (
-              <td
-                key={`row${row} col${col}`}
-                id={`row${row} col${col}`}
-                className={`row${row} col${col}`}
-              />
-            ))}
-          </tr>
-        ))}
+        <tbody>
+          {[...Array(9).keys()].map((row) => (
+            <tr
+              key={`row${row}`}
+              className={row % 2 === 1 ? 'odd-row' : 'even-row'}
+            >
+              {[...Array(4).keys()].map((col) => (
+                <td
+                  key={`row${row} col${col}`}
+                  id={`row${row} col${col}`}
+                  className={`row${row} col${col}`}
+                />
+              ))}
+            </tr>
+          ))}
+        </tbody>
       </table>
       <div id="caseMessage" />
     </div>

@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
-import C from '../../constant';
 import { clone, ofClass } from '../../common';
+import C from '../../constant';
+import S from '../../defaultPrefs';
+import G from '../rg';
 import { findElementData, updateDataAttribute } from '../htmlData';
 import log from '../log';
-import G from '../rg';
 import { scrollIntoView, windowArguments } from '../rutil';
 import { delayHandler } from '../libxul/xul';
 import { getPopupHTML } from './popupH';
@@ -139,7 +140,11 @@ export function popupParentHandler(
           )(elem, data, gap);
         } else {
           elem.classList.add('empty');
-          log.debug(`Mouseover failed: `, targ.type, data);
+          log.debug(
+            `Mouseover failed without reported reason: `,
+            targ.type,
+            data
+          );
         }
       }
       break;
@@ -204,6 +209,7 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
           'pupselect',
           'snbut',
           'npopup',
+          'requiremod',
         ],
         es.target
       );
@@ -331,6 +337,29 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
           }
           break;
         }
+        case 'requiremod': {
+          // Add required modules to module manager suggestion list
+          const { reflist } = data || {};
+          if (reflist?.length) {
+            const suggested = G.Prefs.getComplexValue(
+              'moduleManager.suggested'
+            ) as typeof S.prefs.moduleManager.suggested;
+            const news = suggested || {};
+            const locale = G.i18n.language;
+            if (!(locale in news)) news[locale] = [];
+            news[locale].unshift(...reflist);
+            G.Prefs.setComplexValue('moduleManager.suggested', news);
+            // Enable all repositories
+            G.Prefs.setComplexValue(
+              'moduleManager.repositories.disabled',
+              null as typeof S.prefs.moduleManager.repositories.disabled
+            );
+            // Open the module manager window, which should then auto-
+            // download the suggestions.
+            G.Commands.openModuleManager();
+          }
+          break;
+        }
         default:
           throw Error(
             `Unhandled popupHandler click class: '${elem.className}'`
@@ -349,17 +378,15 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
           if (t.dataset.module && elemdata && elemdata.length) {
             const orig = elemdata[elemdata.length - 1];
             if (orig.context && value) {
-              G.Prefs.setCharPref(
-                `global.popup.selection.${orig.context}`,
-                value
-              );
+              G.Prefs.mergeValue('global.popup.vklookup', {
+                [orig.context]: value,
+              } as typeof S.prefs.global.popup.vklookup);
             }
           }
           if (t.dataset.feature) {
-            G.Prefs.setCharPref(
-              `global.popup.selection.${t.dataset.feature}`,
-              value
-            );
+            G.Prefs.mergeValue('global.popup.feature', {
+              [t.dataset.feature]: value,
+            } as typeof S.prefs.global.popup.feature);
           }
           // Making a selection from a long dropdown may put the mouse outside
           // the popup after selection. So hold the popup open until the mouse

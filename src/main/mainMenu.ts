@@ -780,6 +780,7 @@ export default class MainMenuBuilder {
         },
         {
           label: ts('menu.options.language'),
+          // sublabel: ts('menu.language.tooltip'),
           submenu: C.Locales.map((l: any) => {
             const [lng, name] = l;
             return {

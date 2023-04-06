@@ -18,7 +18,6 @@ import {
 } from '../../common';
 import Subscription from '../../subscription';
 import C from '../../constant';
-import S from '../../defaultPrefs';
 import parseSwordConf from '../parseSwordConf';
 import Window, { getBrowserWindows } from './window';
 import LocalFile from './localFile';
@@ -56,7 +55,6 @@ import type {
   VerseKeyAudioFile,
   OSISBookType,
 } from '../../type';
-import Prefs from './prefs';
 import DiskCache from './diskcache';
 
 export const CipherKeyModules: {

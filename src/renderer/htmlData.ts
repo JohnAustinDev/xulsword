@@ -46,6 +46,7 @@ const otherElemClasses = [
   'fnlink', // notebox note-list row source link
   'introlink', // versekey chapter introduction link
   'dictkey', // dictionary key in a key list
+  'requiremod', // button to install required modules
 ] as const;
 
 export type DataElemClasses =

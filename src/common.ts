@@ -51,8 +51,8 @@ export function builtinRepos(
   DirsPath: GType['Dirs']['path']
 ): Repository[] {
   const opts = { ns: 'branding' };
-  const programTitle = i18n.exists('programTitle', opts)
-    ? i18n.t('programTitle', opts)
+  const programTitle = i18n.exists('program.title', opts)
+    ? i18n.t('program.title', opts)
     : 'xulsword';
   return [
     {

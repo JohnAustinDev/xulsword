@@ -282,6 +282,9 @@ html[dir='rtl'] .notebox-maximizer {
 .verse-per-line .vs {
   display: block;
 }
+.always-vpl .versePerLineButton {
+  display: none;
+}
 
 /* Bible footnotes */
 .fntable {

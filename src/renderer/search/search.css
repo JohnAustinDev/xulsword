@@ -118,6 +118,9 @@ html[dir='rtl'] .resultBox .modulemenu {
   padding-inline-start: 50px;
   padding-inline-end: 100px;
 }
+.searchwin .npopupTX {
+  background: rgb(248, 232, 255);
+}
 
 /* Lexicon Results */
 #lexiconResults {

@@ -398,22 +398,6 @@ export type FontFaceType = {
   url?: string;
 };
 
-export type FeatureType = {
-  // SWORD standard
-  strongsNumbers: string[];
-  greekDef: string[];
-  hebrewDef: string[];
-  greekParse: string[];
-  hebrewParse: string[];
-  dailyDevotion: { [i: string]: string };
-  glossary: string[];
-  images: string[];
-  noParagraphs: string[];
-  // xulsword features
-  greek: string[];
-  hebrew: string[];
-};
-
 export type OSISBookType =
   typeof C.SupportedBooks[keyof typeof C.SupportedBooks][number];
 
@@ -526,13 +510,21 @@ export type SwordConfLocalized = {
 export type SwordFeatures =
   | 'StrongsNumbers'
   | 'GreekDef'
-  | 'HebrewDef '
+  | 'HebrewDef'
   | 'GreekParse'
   | 'HebrewParse'
   | 'DailyDevotion'
   | 'Glossary'
   | 'Images'
   | 'NoParagraphs';
+
+export type XulswordFeatures = 'greek' | 'hebrew';
+
+export type SwordFeatureMods = Record<SwordFeatures, string[]>;
+
+export type XulswordFeatureMods = Record<XulswordFeatures, string[]>;
+
+export type FeatureMods = SwordFeatureMods & XulswordFeatureMods;
 
 export type ModulesCache = {
   [module: string]: {

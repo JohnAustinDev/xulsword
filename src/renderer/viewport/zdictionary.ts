@@ -1,5 +1,6 @@
 /* eslint-disable no-continue */
 import { JSON_attrib_stringify } from '../../common';
+import S from '../../defaultPrefs';
 import C from '../../constant';
 import G from '../rg';
 import log from '../log';
@@ -10,6 +11,7 @@ import type {
   SwordFilterValueType,
 } from '../../type';
 import type { HTMLData } from '../htmlData';
+import type { FailReason } from '../popup/popupH';
 
 const DictKeyTransform: { [i: string]: (key: string) => string } = {
   StrongsHebrew: (key) => {
@@ -138,9 +140,11 @@ function replaceLinks(entry: string, mod: string) {
         if (l[1] === 'ἀγαλλίασις') l[1] = ' ἈΓΑΛΛΊΑΣΙΣ'; // key needs space before!
       }
 
-      let r = G.LibSword.getDictionaryEntry(mod, l[1].toUpperCase());
-      if (!r) r = G.LibSword.getDictionaryEntry(mod, l[1]);
-      if (r) html = html.replace(l[0], r);
+      if (mod && mod in G.Tab) {
+        let r = G.LibSword.getDictionaryEntry(mod, l[1].toUpperCase());
+        if (!r) r = G.LibSword.getDictionaryEntry(mod, l[1]);
+        if (r) html = html.replace(l[0], r);
+      }
     }
   }
 
@@ -150,7 +154,8 @@ function replaceLinks(entry: string, mod: string) {
 export function getDictEntryHTML(
   key: string,
   modules: string,
-  libswordFiltersReady = false
+  libswordFiltersReady = false,
+  reason?: FailReason
 ) {
   const mods = modules.split(';');
 
@@ -205,6 +210,7 @@ export function getDictEntryHTML(
         sep = `<div class="dict-sep"></div>`;
       }
     }
+    if (!m && reason) reason.requires.push(mx);
   });
   if (!html) return '';
 
@@ -218,7 +224,10 @@ export function getDictEntryHTML(
   return html;
 }
 
-export function getStrongsModAndKey(snclass: string): {
+export function getStrongsModAndKey(
+  snclass: string,
+  reason?: FailReason
+): {
   mod: string | null;
   key: string | null;
 } {
@@ -226,7 +235,10 @@ export function getStrongsModAndKey(snclass: string): {
   let key = null;
   let mod = null;
   const parts = snclass.split('_');
-  if (!parts || !parts[1]) return { mod, key };
+  if (!parts || !parts[1]) {
+    if (reason) reason.reason = `${snclass}?`;
+    return { mod: null, key: null };
+  }
 
   [type, key] = parts;
   key = key.replace(/ /g, ''); // why?
@@ -234,24 +246,39 @@ export function getStrongsModAndKey(snclass: string): {
   switch (type) {
     case 'S': {
       // Strongs Hebrew or Greek tags
-      let feature = null;
+      let feature: 'hebrewDef' | 'greekDef' | null = null;
       if (key.charAt(0) === 'H') {
         feature = 'hebrewDef';
       } else if (key.charAt(0) === 'G') {
-        if (Number(key.substring(1)) >= 5627) return { mod, key }; // SWORD filters these out- not valid it says
+        if (Number(key.substring(1)) >= 5627) {
+          if (reason) reason.reason = `${key.substring(1)} >= 5627?`;
+          return { mod, key }; // SWORD filters these out- not valid it says
+        }
         feature = 'greekDef';
       }
       if (feature) {
-        mod = G.Prefs.getCharPref(`global.popup.selection.${feature}`) || null;
+        const f = G.Prefs.getComplexValue(
+          'global.popup.feature'
+        ) as typeof S.prefs.global.popup.feature;
+        mod = (feature in f && f[feature]) || null;
       }
       if (!mod) {
-        key = null;
+        if (reason) {
+          if (feature) {
+            const requires =
+              C.LocalePreferredFeature[G.i18n.language === 'en' ? 'en' : 'ru'][
+                feature
+              ];
+            if (requires?.length) reason.requires.push(...requires);
+          } else reason.reason = `${key.charAt(0)}?`;
+        }
         return { mod, key };
       }
 
       const styp = feature === 'hebrewDef' ? 'H' : 'G';
       const snum = Number(key.substring(1));
       if (Number.isNaN(Number(snum))) {
+        if (reason) reason.reason = `${snum}?`;
         key = null;
         return { mod, key };
       }
@@ -270,7 +297,7 @@ export function getStrongsModAndKey(snclass: string): {
       ];
 
       // try out key possibilities until we find a correct key for this mod
-      if (mod) {
+      if (mod && mod in G.Tab) {
         let k;
         for (k = 0; k < keys.length; k += 1) {
           try {
@@ -281,22 +308,25 @@ export function getStrongsModAndKey(snclass: string): {
           }
         }
         if (mod && k < keys.length) key = keys[k];
+        if ((!mod || !key) && reason) {
+          reason.reason = `${snum}?`;
+        }
       }
       break;
     }
 
     case 'RM': {
       // Robinson's Greek parts of speech tags (used by KJV)
-      if (G.FeatureModules.greekParse.includes('Robinson')) mod = 'Robinson';
+      if (G.FeatureModules.GreekParse.includes('Robinson')) mod = 'Robinson';
       break;
     }
 
     case 'SM': {
       // no lookup module available for these yet...
-      mod =
-        G.Prefs.getCharPref('global.popup.selection.greekParse') ||
-        G.FeatureModules.greekParse[0] ||
-        null;
+      const f = G.Prefs.getComplexValue(
+        'global.popup.feature'
+      ) as typeof S.prefs.global.popup.feature;
+      mod = f.GreekParse || G.FeatureModules.GreekParse[0] || null;
       break;
     }
 
@@ -307,22 +337,30 @@ export function getStrongsModAndKey(snclass: string): {
     }
   }
 
+  if (mod && !(mod in G.Tab)) {
+    if (reason) reason.requires.push(mod);
+    mod = null;
+    return { mod, key };
+  }
   return { mod, key };
 }
 
 // Builds HTML text which displays lemma information from numberList.
-// numberList form: (S|WT|SM|RM)_(G|H)#
+// numberList form: (S|WT|SM|RM)_(G|H)#. If information cannot be
+// found, a preferred required module will be returned as the reason.
 export function getLemmaHTML(
   strongsClassArray: string[],
   matchingPhrase: string,
-  sourcemod: string
+  sourcemod: string,
+  reason?: FailReason
 ) {
   // Start building html
   let html = '';
   let sep = '';
   let info;
   for (let i = 0; i < strongsClassArray.length; i += 1) {
-    info = getStrongsModAndKey(strongsClassArray[i]);
+    info = getStrongsModAndKey(strongsClassArray[i], reason);
+    if (!info.mod) continue;
 
     // add a button to search for this Strong's number
     let buttonHTML = '';
@@ -341,7 +379,7 @@ export function getLemmaHTML(
       buttonHTML += `<button type="button" class="snbut" data-data="${d}">${code}</button>`;
     }
 
-    if (info.key && info.mod) {
+    if (info.key && info.mod && info.mod in G.Tab) {
       if (Number(info.key) === 0) continue; // skip G tags with no number
       const entry = G.LibSword.getDictionaryEntry(info.mod, info.key);
       if (entry) {
@@ -356,13 +394,14 @@ export function getLemmaHTML(
 
     sep = '<div class="lemma-sep"></div>';
   }
+  if (!html) return html;
 
   // Add heading now that we know module styling
-  html = `<div class="lemma-html cs-${
-    info && info.mod ? info.mod : 'Program'
-  }"><div class="lemma-header">${matchingPhrase}</div>${html}<div>`;
-
-  return html;
+  return `
+    <div class="lemma-html cs-${info && info.mod ? info.mod : 'Program'}">
+      <div class="lemma-header">${matchingPhrase}</div>
+      ${html}
+    <div>`;
 }
 
 export function getAllDictionaryKeyList(module: string): string[] {

@@ -613,6 +613,8 @@ class Atext extends React.Component {
     )
       realNoteBoxHeight = maxNoteBoxHeight;
 
+    const moduleAlwaysVersePerLine =
+      module && G.FeatureModules.NoParagraphs.includes(module);
     // Class list
     const classes = [
       'atext',
@@ -625,13 +627,11 @@ class Atext extends React.Component {
     if (module) classes.push(`${G.Tab[module].tabType}`);
     if (isPinned) classes.push('pinned');
     if (doMaximizeNB) classes.push('noteboxMaximized');
-    if (
-      versePerLine ||
-      (module && G.FeatureModules.noParagraphs.includes(module))
-    ) {
+    if (versePerLine || moduleAlwaysVersePerLine) {
       if (!module || G.Tab[module].tabType === 'Texts') {
         classes.push('verse-per-line');
       } else classes.push('verse-per-line-com');
+      if (moduleAlwaysVersePerLine) classes.push('always-vpl');
     }
 
     const data: HTMLData = { type: 'text' };

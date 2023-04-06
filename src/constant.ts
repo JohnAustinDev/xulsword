@@ -6,7 +6,7 @@ import type {
   BookGroupType,
   ConfigType,
   EnvironmentVars,
-  FeatureType,
+  FeatureMods,
   ModTypes,
   NewModulesType,
   ShowType,
@@ -18,7 +18,6 @@ import type {
 } from './type';
 
 // TODO!: Commentary bmProperties should not show SelectVK, should have different label, and sampleText from commentary.
-// TODO!: Check Daily Devotional
 // TODO!: Add sword protocol support.
 // TODO!: Figure out hang using old Prefs?
 // TODO!: Fix ModuleManager not updating module or language tables after initial repo update, possibly related to columns etc. not having keys?
@@ -456,23 +455,23 @@ const C = {
   } as { [key in ModTypes]: SwordFilterType[] },
 
   SwordFeatureClasses: {
-    hebrewDef: /S_H/,
-    greekDef: /S_G/,
-    greekParse: /SM_G/,
-  } as { [key in keyof FeatureType]?: RegExp },
+    HebrewDef: /S_H/,
+    GreekDef: /S_G/,
+    GreekParse: /SM_G/,
+  } as { [key in keyof FeatureMods]?: RegExp },
 
   LocalePreferredFeature: {
     en: {
-      hebrewDef: ['StrongsHebrew'],
-      greekDef: ['StrongsGreek'],
-      greekParse: [''],
+      HebrewDef: ['StrongsHebrew'],
+      GreekDef: ['StrongsGreek'],
+      GreekParse: [''],
     },
     ru: {
-      hebrewDef: ['StrongsHebrewRU'],
-      greekDef: ['StrongsGreekRU'],
-      greekParse: [''],
+      HebrewDef: ['StrongsHebrewRU'],
+      GreekDef: ['StrongsGreekRU'],
+      GreekParse: [''],
     },
-  } as { [k in 'en' | 'ru']: Partial<FeatureType> },
+  } as { [k in 'en' | 'ru']: Partial<FeatureMods> },
 
   // These Atext props can be 'pinned' to become independant state properties.
   PinProps: [

@@ -135,17 +135,22 @@ export function libswordText(
       // the keyList and the key selector for a big speedup.
       // Cache is used rather than memoization when there is a strictly
       // limited number of cache possibliities (ie. one per module).
-      let key = modkey;
+      // Cache is also used for DailyDevotion - if the key is not in the,
+      // Cache use today's date instead of the key.
       const keylist = getAllDictionaryKeyList(module);
+      let key = modkey;
+      if (
+        G.FeatureModules.DailyDevotion.includes(module) &&
+        !Cache.has('DailyDevotion', module)
+      ) {
+        const today = new Date();
+        const mo = today.getMonth() + 1;
+        const dy = today.getDate();
+        key = `${mo < 10 ? '0' : ''}${String(mo)}.${dy < 10 ? '0' : ''}${dy}`;
+        Cache.write(true, 'DailyDevotion', module);
+      }
       if (!key || !keylist.includes(key)) [key] = keylist;
       if (key) {
-        if (key === 'DailyDevotionToday') {
-          const today = new Date();
-          const mo = today.getMonth() + 1;
-          const dy = today.getDate();
-          key = `${mo < 10 ? '0' : ''}${String(mo)}.${dy < 10 ? '0' : ''}${dy}`;
-        }
-
         // Build and cache the selector list.
         if (!Cache.has('keyHTML', module)) {
           let html = '';

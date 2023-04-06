@@ -28,11 +28,13 @@ import type {
   V11nType,
   GType,
   LocationVKType,
-  FeatureType,
+  FeatureMods,
   SwordConfType,
   ConfigType,
   FontFaceType,
   OSISBookType,
+  SwordFeatureMods,
+  XulswordFeatureMods,
 } from '../type';
 
 // Get all supported books in locale order. NOTE: xulsword ignores individual
@@ -580,39 +582,38 @@ export async function getSystemFonts(): Promise<string[]> {
   return Promise.resolve(Cache.read('fontList') as string[]);
 }
 
-export function getFeatureModules(): FeatureType {
-  if (!Cache.has('featureModules')) {
-    // These are CrossWire SWORD standard module features
-    const sword = {
-      strongsNumbers: [] as string[],
-      greekDef: [] as string[],
-      hebrewDef: [] as string[],
-      greekParse: [] as string[],
-      hebrewParse: [] as string[],
-      dailyDevotion: {} as { [i: string]: string },
-      glossary: [] as string[],
-      images: [] as string[],
-      noParagraphs: [] as string[],
+// Search through installed modules to find which features have
+// modules installed for them.
+export function getFeatureModules(): FeatureMods {
+  if (!Cache.has('swordFeatureMods')) {
+    const swordFeatureMods: SwordFeatureMods = {
+      StrongsNumbers: [],
+      GreekDef: [],
+      HebrewDef: [],
+      GreekParse: [],
+      HebrewParse: [],
+      DailyDevotion: [],
+      Glossary: [],
+      Images: [],
+      NoParagraphs: [],
     };
-    // These are xulsword features that use certain modules
-    const xulsword = {
-      greek: [] as string[],
-      hebrew: [] as string[],
+    const xulswordFeatureMods: XulswordFeatureMods = {
+      greek: [],
+      hebrew: [],
     };
-
     getTabs().forEach((tab) => {
       const { module, type } = tab;
       let mlang = LibSword.getModuleInformation(module, 'Lang');
       const dash = mlang.indexOf('-');
       mlang = mlang.substring(0, dash === -1 ? mlang.length : dash);
       if (module !== 'LXX' && type === C.BIBLE && /^grc$/i.test(mlang))
-        xulsword.greek.push(module);
+        xulswordFeatureMods.greek.push(module);
       else if (
         type === C.BIBLE &&
         /^heb?$/i.test(mlang) &&
         !/HebModern/i.test(module)
       )
-        xulsword.hebrew.push(module);
+        xulswordFeatureMods.hebrew.push(module);
 
       // These Strongs feature modules do not have Strongs number keys, and so cannot be used
       const notStrongsKeyed = new RegExp(
@@ -622,24 +623,21 @@ export function getFeatureModules(): FeatureType {
       if (!notStrongsKeyed.test(module)) {
         const feature = LibSword.getModuleInformation(module, 'Feature');
         const features = feature.split(C.CONFSEP);
-        Object.keys(sword).forEach((k) => {
-          const swordk = k as keyof typeof sword;
-          const swordf =
-            swordk.substring(0, 1).toUpperCase() + swordk.substring(1);
-          if (features.includes(swordf)) {
-            if (swordk === 'dailyDevotion') {
-              sword[swordk][module] = 'DailyDevotionToday';
-            } else {
-              sword[swordk].push(module);
-            }
+        Object.keys(swordFeatureMods).forEach((k) => {
+          const swordk = k as keyof SwordFeatureMods;
+          if (features.includes(swordk)) {
+            swordFeatureMods[swordk].push(module);
           }
         });
       }
     });
-    Cache.write({ ...sword, ...xulsword }, 'featureModules');
+    Cache.write(
+      { ...swordFeatureMods, ...xulswordFeatureMods },
+      'swordFeatureMods'
+    );
   }
 
-  return Cache.read('featureModules');
+  return Cache.read('swordFeatureMods');
 }
 
 // Xulsword state prefs and other global prefs should only reference
@@ -648,6 +646,7 @@ export function updateGlobalModulePrefs() {
   const Tabs = getTabs();
   const xulsword: Partial<typeof S.prefs.xulsword> = {};
   const globalPopup: Partial<typeof S.prefs.global.popup> = {};
+
   (['panels', 'ilModules', 'mtModules'] as const).forEach((p) => {
     const prop = Prefs.getComplexValue(`xulsword.${p}`) as any[];
     xulsword[p] = prop.map((m) => {
@@ -656,6 +655,7 @@ export function updateGlobalModulePrefs() {
       return m;
     });
   });
+
   const tabs = Prefs.getComplexValue(
     'xulsword.tabs'
   ) as typeof S.prefs.xulsword.tabs;
@@ -665,37 +665,43 @@ export function updateGlobalModulePrefs() {
     }
   });
   xulsword.tabs = tabs;
-  const selection = Prefs.getComplexValue(
-    'global.popup.selection'
-  ) as typeof S.prefs.global.popup.selection;
-  Object.entries(selection).forEach((entry) => {
-    const k = entry[0] as keyof typeof S.prefs.global.popup.selection;
+
+  const vklookup = Prefs.getComplexValue(
+    'global.popup.vklookup'
+  ) as typeof S.prefs.global.popup.vklookup;
+  Object.entries(vklookup).forEach((entry) => {
+    const m = entry[0] as keyof typeof S.prefs.global.popup.feature;
+    const lumod = entry[1];
+    if (!lumod || !Tabs.find((t) => t.module === lumod)) {
+      delete vklookup[m];
+    }
+  });
+  globalPopup.vklookup = vklookup;
+
+  const feature = Prefs.getComplexValue(
+    'global.popup.feature'
+  ) as typeof S.prefs.global.popup.feature;
+  Object.entries(feature).forEach((entry) => {
+    const f = entry[0] as keyof typeof S.prefs.global.popup.feature;
     const m = entry[1];
-    if (!Tabs.find((t) => t.module === m)) {
-      selection[k] = '';
+    if (!m || !Tabs.find((t) => t.module === m)) {
+      delete feature[f];
     }
   });
   // If no pref has been set for popup.selection[feature] then choose a
   // module from the available modules, if there are any.
   const featureModules = getFeatureModules();
-  Object.entries(selection).forEach((entry) => {
-    const k = entry[0] as keyof typeof S.prefs.global.popup.selection;
-    if (!entry[1] && k in featureModules) {
-      const kk = k as keyof typeof featureModules;
-      const ma = (
-        Array.isArray(featureModules[kk]) ? featureModules[kk] : []
-      ) as string[];
-      const sel =
-        C.LocalePreferredFeature[i18n.language === 'en' ? 'en' : 'ru'];
-      const preferred = (
-        k in sel && Array.isArray(sel[k as keyof typeof sel])
-          ? sel[k as keyof typeof sel]
-          : []
-      ) as string[];
-      selection[k] = preferred.find((m) => m && ma.includes(m)) || ma[0];
+  Object.entries(featureModules).forEach((entry) => {
+    const f = entry[0] as keyof typeof S.prefs.global.popup.feature;
+    const fmods = entry[1];
+    if (!(f in feature) && Array.isArray(fmods) && fmods.length) {
+      const pref = C.LocalePreferredFeature[
+        i18n.language === 'en' ? 'en' : 'ru'
+      ][f] as string[] | undefined;
+      feature[f] = (pref && pref.find((m) => fmods.includes(m))) || fmods[0];
     }
   });
-  globalPopup.selection = selection;
+  globalPopup.feature = feature;
 
   // IMPORTANT: Use the skipCallbacks and clearRendererCaches arguments of
   // Prefs.mergeValue() to force renderer processes to update once, after

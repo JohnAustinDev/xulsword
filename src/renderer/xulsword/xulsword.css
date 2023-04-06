@@ -86,6 +86,7 @@
 
 #searchButton {
   margin: 0;
+  z-index: 1; /* allow bottom focus border to be visible */
 }
 
 #optionButtons button.off {

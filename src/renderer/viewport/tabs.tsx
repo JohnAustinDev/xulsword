@@ -79,7 +79,8 @@ class Tabs extends React.Component {
     m: string | undefined,
     type: string,
     classes: string,
-    children: any = null
+    children: any = null,
+    tooltip?: string
   ) {
     const { panelIndex: i } = this.props as TabsProps;
     const tabType = !m || type === 'ilt-tab' ? 'Texts' : G.Tab[m].tabType;
@@ -91,7 +92,7 @@ class Tabs extends React.Component {
         className={`${type} tab tab${tabType} ${classes}`}
         data-module={m}
         data-index={i}
-        title={m ? G.Tab[m].description : undefined}
+        title={m ? G.Tab[m].description : tooltip}
       >
         <div className="border">
           <div className="tab-label">{label}</div>
@@ -234,7 +235,13 @@ class Tabs extends React.Component {
           )}
         {!isPinned &&
           (ilModule === 'disabled' || ilModuleOption[0]) &&
-          this.getTab(ilModuleOption[0], 'ilt-tab', ilcls)}
+          this.getTab(
+            ilModuleOption[0],
+            'ilt-tab',
+            ilcls,
+            null,
+            G.i18n.t('ilDisplay.tooltip')
+          )}
       </div>
     );
   }

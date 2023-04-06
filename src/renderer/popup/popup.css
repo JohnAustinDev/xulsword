@@ -207,3 +207,7 @@ html[dir='rtl'] .snbut {
   vertical-align: baseline;
   font-size: medium;
 }
+
+.popup-fail > div > * {
+  display: inline-block;
+}

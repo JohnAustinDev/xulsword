@@ -48,7 +48,7 @@ const Bookmarks = G.Prefs.getComplexValue(
 ) as typeof S.bookmarks.rootfolder;
 localizeBookmarks(G, verseKey, Bookmarks);
 
-let ModuleInstalled = false;
+let HasRequiredModule = false;
 
 export type BMPropertiesState = {
   bookmark: BookmarkItemType;
@@ -131,16 +131,16 @@ export default class BMPropertiesWin extends React.Component {
       return;
     }
 
-    // Check if the referenced module, if any, is installed
+    // Check if a required module is installed.
     const l = (state.bookmark as BookmarkType).location;
     if (l) {
-      let m = '';
-      if ('v11n' in l) {
-        ({ vkmod: m } = l);
-      } else {
-        ({ module: m } = l);
+      let reqmod = '';
+      if ('v11n' in l && state.bookmark.tabType === 'Comms') {
+        ({ vkmod: reqmod } = l);
+      } else if (!('v11n' in l)) {
+        ({ module: reqmod } = l);
       }
-      if (!m || m in G.Tab) ModuleInstalled = true;
+      if (!reqmod || reqmod in G.Tab) HasRequiredModule = true;
     }
 
     // Select bookmark item's parent folder or location
@@ -160,7 +160,7 @@ export default class BMPropertiesWin extends React.Component {
     const state = this.state as BMPropertiesState;
     const { bookmark, treeSelection } = clone(state);
     const { label } = bookmark;
-    if (ModuleInstalled) {
+    if (HasRequiredModule) {
       let updateState = false;
       // Null location means default location
       if ('location' in bookmark && bookmark.location === null) {
@@ -256,7 +256,7 @@ export default class BMPropertiesWin extends React.Component {
   gbHandler(selection: SelectORMType) {
     const { ormod: module, keys } = selection;
     const key = keys[0];
-    if (key && ModuleInstalled) {
+    if (key && HasRequiredModule) {
       this.setState((prevState: BMPropertiesState) => {
         const { bookmark } = clone(prevState);
         const bm = bookmark as BookmarkType;
@@ -275,7 +275,7 @@ export default class BMPropertiesWin extends React.Component {
   }
 
   vkHandler(selection: SelectVKMType) {
-    if (ModuleInstalled) {
+    if (HasRequiredModule) {
       this.setState((prevState: BMPropertiesState) => {
         const { bookmark } = clone(prevState);
         const bm = bookmark as BookmarkType;
@@ -339,7 +339,7 @@ export default class BMPropertiesWin extends React.Component {
                 <SelectVK
                   initialVKM={location}
                   options={{ lastchapters: [] }}
-                  disabled={!ModuleInstalled}
+                  disabled={!HasRequiredModule}
                   onSelection={vkHandler}
                 />
               </Row>
@@ -350,7 +350,7 @@ export default class BMPropertiesWin extends React.Component {
                 <SelectOR
                   initialORM={selectORM}
                   enableParentSelection
-                  disabled={!ModuleInstalled}
+                  disabled={!HasRequiredModule}
                   onSelection={gbHandler}
                 />
               </Row>

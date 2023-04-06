@@ -130,7 +130,7 @@ export default class AboutWin extends React.Component implements ModinfoParent {
     ) : undefined;
 
     const opts = { ns: 'branding' };
-    const programTitle = G.i18n.exists('producedBy', opts)
+    const producedBy = G.i18n.exists('producedBy', opts)
       ? G.i18n.t('producedBy', opts)
       : '';
 
@@ -149,7 +149,7 @@ export default class AboutWin extends React.Component implements ModinfoParent {
                       className="splash-text"
                       value={G.Data.read('buildInfo')}
                     />
-                    <Label className="splash-text" value={programTitle} />
+                    <Label className="splash-text" value={producedBy} />
                   </Vbox>
                 </Hbox>
               </Vbox>

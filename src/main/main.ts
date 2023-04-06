@@ -185,15 +185,15 @@ const openXulswordWindow = () => {
   G.Prefs.setComplexValue(`OpenWindows`, {}, 'windows');
 
   const opts = { ns: 'branding' };
-  const programTitle = G.i18n.exists('programTitle', opts)
-    ? G.i18n.t('programTitle', opts)
+  const programTitle = G.i18n.exists('program.title', opts)
+    ? G.i18n.t('program.title', opts)
     : 'xulsword';
   const xulswordWindow = BrowserWindow.fromId(
     G.Window.open({
       type: 'xulsword',
       className: 'skin',
       persist: true,
-      saveIfAppClosed: false, // main win doesn't used window prefs when starting
+      saveIfAppClosed: false, // main win doesn't use window prefs when starting
       options: {
         title: programTitle,
         fullscreenable: true,
@@ -581,8 +581,15 @@ app
   .whenReady()
   .then(() => {
     if (G.Prefs.getBoolPref('global.InternetPermission')) {
+      const opts = { ns: 'branding' };
+      const programTitle = G.i18n.exists('program.title', opts)
+        ? G.i18n.t('program.title', opts)
+        : 'xulsword';
       autoUpdater.logger = log;
-      autoUpdater.checkForUpdatesAndNotify();
+      autoUpdater.checkForUpdatesAndNotify({
+        title: programTitle,
+        body: G.i18n.t('updater.message.body', { v1: '' }),
+      });
     }
     return init();
   })

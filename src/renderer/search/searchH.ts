@@ -76,7 +76,7 @@ export function getLuceneSearchText(searchtext0: string) {
 }
 
 // Return an array of book codes from a KJV book-scope string.
-function scopeBooks(scope: string): string[] {
+function kjvScopeBooks(scope: string): string[] {
   const books: string[] = [];
   scope.split(/\s+/).forEach((seg) => {
     const bk = seg.split('-');
@@ -109,20 +109,23 @@ function getScopes(
     }
   }
   if (module && module in G.Tab && G.Tab[module].isVerseKey) {
-    const scopebooks = scopeBooks(input);
+    let kjvscope = input;
+    if (kjvscope === 'all') {
+      kjvscope = Object.values(C.SupportedBooks)
+        .map((books) => `${books[0]}-${books.at(-1)}`)
+        .join(' ');
+    } else if (C.SupportedBookGroups.includes(kjvscope as any)) {
+      const books =
+        kjvscope in C.SupportedBooks && (C.SupportedBooks as any)[kjvscope];
+      if (books) kjvscope = `${books[0]}-${books.at(-1)}`;
+    }
+    const scopebooks = kjvScopeBooks(kjvscope);
     const modbooks = G.getBooksInModule(module); // are in v11n order
 
     let contStart: OSISBookType | '' = '';
     let contEnd: OSISBookType | '' = '';
     modbooks.forEach((bk) => {
-      let keep = false;
-      if (input === 'all') keep = true;
-      else if (C.SupportedBookGroups.includes(input as BookGroupType)) {
-        keep = C.SupportedBooks[input as BookGroupType].some((b) => b === bk);
-      } else {
-        keep = scopebooks.some((b) => b === bk);
-      }
-      if (keep) {
+      if (scopebooks.includes(bk)) {
         if (single) scopes.push(bk);
         if (!contStart) contStart = bk;
         contEnd = bk;
@@ -137,9 +140,9 @@ function getScopes(
   return scopes;
 }
 
-export async function search(sthis: SearchWin) {
-  LibSwordSearch.sthis = sthis;
-  const state = sthis.state as SearchWinState;
+export async function search(xthis: SearchWin): Promise<boolean> {
+  LibSwordSearch.sthis = xthis;
+  const state = xthis.state as SearchWinState;
   const { module, displayBible: db, searchtext } = state;
   let { searchtype } = state;
   if (state.progress !== 0) return false;
@@ -151,7 +154,9 @@ export async function search(sthis: SearchWin) {
   const displayBible = isBible ? module : db;
 
   if (!hasIndex && /lemma:/.test(state.searchtext)) {
-    return createSearchIndex(sthis, module);
+    await createSearchIndex(xthis, module);
+    setTimeout(() => search(xthis), 500);
+    return false;
   }
 
   const s: Partial<SearchWinState> = {
@@ -250,7 +255,7 @@ export async function search(sthis: SearchWin) {
     flags
   );
 
-  sthis.setState(s);
+  xthis.setState(s);
 
   return true;
 }
@@ -771,6 +776,7 @@ export default async function handler(
             };
             this.setState(s);
             await createSearchIndex(this, module);
+            setTimeout(() => search(this), 500);
           }
           break;
         }
