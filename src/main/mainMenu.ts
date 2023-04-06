@@ -107,9 +107,10 @@ function buildModuleMenus(menu: Menu) {
       rgtabs.forEach((t) => {
         if (t.tabType === type) {
           disableParent = false;
+          const { Description } = t.conf;
           const newItem = new MenuItem({
             id: `showtab_${panelIndex}_${t.module}`,
-            label: t.label + (t.description ? ` --- ${t.description}` : ''),
+            label: t.label + (Description ? ` --- ${Description.locale}` : ''),
             type: 'checkbox',
             // icon: path.join(G.Dirs.path.xsAsset, 'icons', '16x16', `${tab}.png`),
             click: d(() => {

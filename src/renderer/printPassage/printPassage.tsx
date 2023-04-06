@@ -267,7 +267,8 @@ export default class PrintPassageWin extends React.Component {
     const vkmod = chapters?.vkmod;
     if (!vkmod || !chapters) return null;
 
-    const isHebrew = /^heb?$/i.test(G.Tab[vkmod].lang);
+    const lang = G.Tab[vkmod].conf.Lang;
+    const isHebrew = lang && /^heb?$/i.test(lang);
     const tr = isHebrew ? 1 : 0;
 
     return (

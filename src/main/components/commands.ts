@@ -39,7 +39,7 @@ import Dirs from './dirs';
 import LibSword from './libsword';
 
 import type {
-  AddCaller,
+  GAddCaller,
   AudioPath,
   BookmarkFolderType,
   BookmarkItemType,
@@ -63,7 +63,7 @@ import type { BMPropertiesStateWinArg } from '../../renderer/bmProperties/bmProp
 // Require the calling window argument for Prefs.set calls, so window -2 (to all
 // follow Pref changes with update to all windows and main process) can be passed
 // to Prefs.
-const Prefs = PrefsX as AddCaller['Prefs'];
+const Prefs = PrefsX as GAddCaller['Prefs'];
 
 const Commands = {
   openModuleManager(): void {

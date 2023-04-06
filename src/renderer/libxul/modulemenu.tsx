@@ -68,8 +68,8 @@ class ModuleMenu extends React.Component {
                   .map((tab) => {
                     if (tab.type === type) {
                       let { label } = tab;
-                      if (description && tab.description)
-                        label += ` ${tab.description}`;
+                      if (description && tab.conf.Description)
+                        label += ` ${tab.conf.Description.locale}`;
                       return (
                         <option
                           className={tab.labelClass}

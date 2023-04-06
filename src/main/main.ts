@@ -470,7 +470,7 @@ const init = async () => {
     const lngmodules = Array.from(
       new Set(
         G.Tabs.filter(
-          (t) => t.type === C.BIBLE && t.lang?.replace(/-.*$/, '') === slng
+          (t) => t.type === C.BIBLE && t.conf.Lang?.replace(/-.*$/, '') === slng
         )
           .map((t) => t.module)
           .sort()
@@ -478,7 +478,7 @@ const init = async () => {
             G.Tabs.filter(
               (t) =>
                 t.type === C.BIBLE &&
-                t.lang?.replace(/-.*$/, '') === C.FallbackLanguage[lng]
+                t.conf.Lang?.replace(/-.*$/, '') === C.FallbackLanguage[lng]
             )
               .map((t) => t.module)
               .sort()

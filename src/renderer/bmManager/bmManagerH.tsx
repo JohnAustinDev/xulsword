@@ -27,10 +27,10 @@ import type {
   BookmarkFolderType,
   BookmarkItemType,
   ContextData,
+  MethodAddCaller,
   GType,
   LocationORType,
   LocationVKType,
-  PrefsSetComplexValueWithCaller,
 } from '../../type';
 import type { TCellInfo, TRowLocation } from '../libxul/table';
 import type BMManagerWin from './bmManager';
@@ -292,11 +292,15 @@ export function buttonHandler(this: BMManagerWin, e: React.SyntheticEvent) {
           } as Partial<BMManagerState>);
           G.Commands.print()
             .then(() => {
-              (G.Prefs.setComplexValue as PrefsSetComplexValueWithCaller)(
+              (
+                G.Prefs.setComplexValue as MethodAddCaller<
+                  GType['Prefs']['setComplexValue']
+                >
+              )(
                 'bookmarkManager.printItems',
                 null as typeof S.prefs.bookmarkManager.printItems,
                 'prefs',
-                -1 // notify self to update ('this'.setState is gone by now)
+                -1 // notify self to update (because 'this'.setState is garbage by now)
               );
               return true;
             })

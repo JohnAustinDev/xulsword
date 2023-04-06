@@ -10,12 +10,12 @@ import CommandsX from './components/commands';
 import Viewport from './components/viewport';
 import Data from './components/data';
 
-import type { AddCaller, ContextData, LocationVKType } from '../type';
+import type { GAddCaller, ContextData, LocationVKType } from '../type';
 import type { AboutWinState } from '../renderer/about/about';
 
 // Require the calling window argument, since rg will not add it when
 // Commands are called from the main process.
-const Commands = CommandsX as AddCaller['Commands'];
+const Commands = CommandsX as GAddCaller['Commands'];
 
 const defaultContextData: ContextData = { type: 'general' };
 

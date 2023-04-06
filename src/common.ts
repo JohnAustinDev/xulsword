@@ -995,8 +995,8 @@ export function bookmarkLabel(
     return vk.readable(undefined, true);
   }
   const ks = l.key.split(C.GBKSEP);
-  const tab = l.module && l.module in g.Tab && g.Tab[l.module];
-  ks.unshift(tab ? tab.description : l.module);
+  const tab = (l.module && l.module in g.Tab && g.Tab[l.module]) || null;
+  ks.unshift(tab?.conf.Description ? tab.conf.Description.locale : l.module);
   while (ks[2] && ks[0] === ks[1]) {
     ks.shift();
   }
@@ -1476,12 +1476,14 @@ export function sortTabsByRelevance(
   const order: TabTypes[] = ['Texts', 'Comms', 'Genbks', 'Dicts'];
   const localeRelevance = (t: TabType): number => {
     let r = 0;
-    if (t.lang === locale) r -= 4;
-    if (t.lang === C.FallbackLanguage[locale]) r -= 3;
-    if (t.lang.replace(/-.*$/, '') === locale.replace(/-.*$/, '')) r -= 2;
+    const lang = t.conf.Lang;
+    if (lang === locale) r -= 4;
+    if (lang === C.FallbackLanguage[locale]) r -= 3;
+    if (lang && lang.replace(/-.*$/, '') === locale.replace(/-.*$/, '')) r -= 2;
     if (
-      t.lang.replace(/-.*$/, '') ===
-      C.FallbackLanguage[locale].replace(/-.*$/, '')
+      lang &&
+      lang.replace(/-.*$/, '') ===
+        C.FallbackLanguage[locale].replace(/-.*$/, '')
     )
       r -= 1;
     if (

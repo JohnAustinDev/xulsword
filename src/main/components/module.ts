@@ -373,7 +373,7 @@ export async function installZIPs(
                     : destdir
                 );
                 const conf = parseSwordConf({
-                  string: confstr,
+                  confString: confstr,
                   filename: entry.name,
                   sourceRepository: dest.path,
                 });
@@ -805,7 +805,7 @@ async function downloadRepoConfs(
       const rconf = {} as DownloadRepoConfsType;
       rconf.strconf = buffer.toString('utf8');
       const conf = parseSwordConf({
-        string: rconf.strconf,
+        confString: rconf.strconf,
         filename: header.name.replace(/^.*?mods\.d\//, ''),
         sourceRepository: manifest,
       });
@@ -1067,7 +1067,7 @@ const Module = {
       return Promise.resolve(er.message);
     }
     const conf = parseSwordConf({
-      string: confbuf.toString('utf8'),
+      confString: confbuf.toString('utf8'),
       filename: confname,
       sourceRepository: download,
     });

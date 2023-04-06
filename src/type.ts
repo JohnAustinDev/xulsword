@@ -378,6 +378,9 @@ export type BookType = {
   indexInBookGroup: number;
 };
 
+export type OSISBookType =
+  typeof C.SupportedBooks[keyof typeof C.SupportedBooks][number];
+
 export type ConfigType = {
   [key in
     | 'direction'
@@ -398,8 +401,19 @@ export type FontFaceType = {
   url?: string;
 };
 
-export type OSISBookType =
-  typeof C.SupportedBooks[keyof typeof C.SupportedBooks][number];
+export type TabTypes = 'Texts' | 'Comms' | 'Dicts' | 'Genbks';
+
+export type TabType = {
+  module: string;
+  conf: SwordConfType;
+  tabType: TabTypes;
+  type: ModTypes;
+  isVerseKey: boolean;
+  direction: 'ltr' | 'rtl';
+  v11n: V11nType | '';
+  label: string;
+  labelClass: string;
+};
 
 export type ModTypes =
   | 'Biblical Texts'
@@ -541,8 +555,9 @@ export type GenBookTOC = {
 };
 
 // GenBookKeys describes GenBooks structure (chapter names/order/hierarchy)
-// as well as maps all GenBook keys. Keys are dileneated by C.GBKSEP and keys
-// ending with C.GBKSEP are parent nodes.
+// as well as maps all GenBook keys. Key order is ctitical (each parent is
+// followed by its children, in order). GenBook key separator is C.GBKSEP and
+// parent nodes always end with C.GBKSEP.
 export type GenBookKeys = string[];
 
 // AudioPath describes a chapter's address on disk. IMPORTANT: only the first
@@ -551,8 +566,8 @@ export type GenBookKeys = string[];
 // Ex: ['Prov', 1] is the disk path Prov/001.*
 export type AudioPath = [(number | OSISBookType)?, ...number[]];
 
-// GenBookAudio describes audio chapter keys, existence and disk address.
-// NOTE: gbkey MUST be a key to a GenBook SWORD module.
+// GenBookAudio describes audio chapter keys, existence, and disk address.
+// Each gbkey is a key to a GenBook SWORD module entry.
 export type GenBookAudio = {
   [gbkey: string]: AudioPath;
 };
@@ -572,7 +587,7 @@ export type VerseKeyAudio = {
 };
 
 // VerseKeyAudioConf same as VerseKeyAudio but short and readable for
-// config file. Ex: { 'Prov': ['0-10', '12'] }
+// config files. Ex: { 'Prov': ['0-10', '12'] }
 export type VerseKeyAudioConf = {
   [osisBookCode in OSISBookType]?: string[];
 };
@@ -598,30 +613,6 @@ export type GenBookAudioFile = {
   key: string;
   path: AudioPath;
   swordModule?: string;
-};
-
-export type TabTypes = 'Texts' | 'Comms' | 'Dicts' | 'Genbks';
-
-export type TabType = {
-  module: string;
-  type: ModTypes;
-  version: string;
-  lang: string;
-  direction: 'ltr' | 'rtl';
-  v11n: V11nType | '';
-  label: string;
-  labelClass: string;
-  tabType: TabTypes;
-  isCommDir: boolean;
-  isVerseKey: boolean;
-  index: number;
-  description: string;
-  directory: string;
-  confPath: string;
-  audio: { [index: string]: string };
-  audioCode: string;
-  obsoletes: string[];
-  conf: SwordConfType;
 };
 
 export type RowSelection = { rows: [number, number] }[];
@@ -687,8 +678,7 @@ export type PrefStoreType =
   | 'bookmarks'
   | 'fonts'
   | 'style'
-  | 'windows'
-  | string;
+  | 'windows';
 
 export type PrefPrimative = number | string | boolean | null | undefined;
 export type PrefObject = {
@@ -698,14 +688,6 @@ export type PrefValue =
   | PrefPrimative
   | PrefObject
   | (PrefPrimative | PrefObject | PrefValue)[];
-
-export type GMethodAddCaller<M extends (...args: any) => any> = (
-  ...arg: [...Parameters<M>, number]
-) => ReturnType<M>;
-
-export type GAddCaller<G extends { [k: string]: (...args: any[]) => any }> = {
-  [K in keyof G]: GMethodAddCaller<G[K]>;
-};
 
 export type TreeNodeInfoPref = Pick<
   TreeNodeInfo,
@@ -755,15 +737,21 @@ export type TransactionType = {
   store?: PrefStoreType;
 };
 
-export type AddCaller = {
-  [obj in typeof GBuilder['includeCallingWindow'][number]]: GAddCaller<
+export type MethodAddCaller<M extends (...args: any) => any> = (
+  ...arg: [...Parameters<M>, number]
+) => ReturnType<M>;
+
+export type ObjectAddCaller<
+  T extends { [k: string]: (...args: any[]) => any }
+> = {
+  [K in keyof T]: MethodAddCaller<T[K]>;
+};
+
+export type GAddCaller = {
+  [obj in typeof GBuilder['includeCallingWindow'][number]]: ObjectAddCaller<
     GType[obj]
   >;
 };
-
-export type PrefsSetComplexValueWithCaller = GMethodAddCaller<
-  GType['Prefs']['setComplexValue']
->;
 
 export type GType = {
   // Getters
@@ -808,13 +796,15 @@ export type GType = {
 };
 
 // This GBuilder object will be used in the main/mg and renderer/rg
-// modules at runtime to create two different types of G objects
-// sharing the same GType interface: one will be available in the
-// main process and the other in renderer processes. The main process
-// G object accesses everything directly. But the renderer process
-// G object requests everything through IPC from the main process G
-// object. All getter and 'CACHEfunc' data of the renderer G object
-// is cached in the renderer. IMPORTANT: async functions must be
+// modules at runtime to create two different types of G objects sharing
+// the same GType interface: one will be available in the main process
+// and the other in renderer processes. The main process G object accesses
+// everything directly. But the renderer process G object requests
+// everything through IPC from the main process G object. All getter and
+// 'CACHEfunc' data of the renderer G object is cached in the renderer.
+// GBuilder includeCallingWindow object methods will have an extra
+// argument appended before they are executed in the main process which
+// contains the calling window's id. IMPORTANT: async functions must be
 // listed in asyncFuncs or runtime errors will result!
 const func = () => {};
 const CACHEfunc = () => 'cacheable';
@@ -828,12 +818,14 @@ export const GBuilder: GType & {
     [keyof GType, (keyof GType['LibSword'])[]]
   ];
 
-  // Methods of includeCallingWindow classes must not use rest parameters
-  // or default values in their function definition's argument lists. This
-  // is because Function.length is used to append the calling window by
-  // mg.ts, and Function.length does not include rest parameters or default
-  // arguments. Using rest parameters or default arguments would thus
-  // result in overwriting the last argument by the calling window id!
+  // IMPORTANT: Methods of includeCallingWindow classes must not use rest
+  // parameters or default values in their function definition's argument
+  // lists, nor may they be getter functions. This is because Function.length
+  // is used to append the calling window by mg.ts, and Function.length does
+  // not include rest parameters or default arguments. Additionally getter
+  // functions have zero arguments or Function.length. Using rest parameters
+  // or default arguments would result in overwriting the last argument by
+  // the calling window id!
   includeCallingWindow: ['Prefs', 'Window', 'Commands', 'Module'];
 } = {
   asyncFuncs: [
@@ -903,6 +895,7 @@ export const GBuilder: GType & {
   },
 
   Prefs: {
+    // uses includeCallingWindow
     has: func as any,
     getPrefOrCreate: func as any,
     getCharPref: func as any,
@@ -962,6 +955,7 @@ export const GBuilder: GType & {
   },
 
   Commands: {
+    // uses includeCallingWindow
     openModuleManager: func as any,
     installXulswordModules: func as any,
     removeModule: func as any,
@@ -1002,6 +996,7 @@ export const GBuilder: GType & {
   },
 
   Module: {
+    // uses includeCallingWindow
     crossWireMasterRepoList: func as any,
     repositoryListing: func as any,
     download: func as any,
@@ -1014,8 +1009,7 @@ export const GBuilder: GType & {
   },
 
   Window: {
-    // NOTE: Window cannot use getter functions, because its
-    // G methods pass calling window as an extra argument.
+    // uses includeCallingWindow
     descriptions: func as any,
     open: func as any,
     setComplexValue: func as any,

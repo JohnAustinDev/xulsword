@@ -28,18 +28,23 @@ export default function parseSwordConf(
   config:
     | LocalFile
     | {
-        string: string;
+        confString: string;
         filename: string;
         sourceRepository: Repository | string;
       }
 ): SwordConfType {
-  let string: string;
+  // Find and save sourceRepository and filename
+  let confString: string;
   let filename: string;
   let sourceRepositoryOrPath: Repository | string;
-  if ('string' in config) {
-    ({ string, filename, sourceRepository: sourceRepositoryOrPath } = config);
+  if ('confString' in config) {
+    ({
+      confString,
+      filename,
+      sourceRepository: sourceRepositoryOrPath,
+    } = config);
   } else {
-    string = config.readFile();
+    confString = config.readFile();
     filename = config.leafName;
     sourceRepositoryOrPath = config.path;
   }
@@ -62,7 +67,9 @@ export default function parseSwordConf(
           custom: true,
         };
   const reports: NewModuleReportType[] = [];
-  const lines = string.split(/[\n\r]+/);
+  const lines = confString.split(/[\n\r]+/);
+
+  // Fill in the SwordConfType return value
   const r = { filename, sourceRepository } as SwordConfType;
   C.SwordConf.repeatable.forEach((en) => {
     r[en] = [];
@@ -80,9 +87,11 @@ export default function parseSwordConf(
     } else {
       m = l.match(/^([A-Za-z0-9_.]+)\s*=\s*(.*?)\s*$/);
       if (m) {
+        // Handle an entry:
         const entry = m[1] as any;
         let value = m[2] as string;
         const entryBase = entry.substring(0, entry.indexOf('_')) || entry;
+
         // Handle line continuation.
         if (
           C.SwordConf.continuation.includes(entryBase) &&
@@ -97,6 +106,7 @@ export default function parseSwordConf(
           }
           value = nval;
         }
+
         // Check for HTML where it shouldn't be.
         const htmlTags = value.match(/<\w+[^>]*>/g);
         if (htmlTags) {
@@ -111,6 +121,7 @@ export default function parseSwordConf(
             });
           }
         }
+
         // Check for RTF where it shouldn't be.
         const rtfControlWords = value.match(/\\\w[\w\d]*/);
         if (rtfControlWords) {
@@ -120,6 +131,7 @@ export default function parseSwordConf(
             });
           }
         }
+
         // Save the value according to value type.
         if (entryBase === 'History') {
           const [, version, locale] = entry.split('_');
@@ -160,7 +172,7 @@ export default function parseSwordConf(
           r[ent] = value.split(C.SwordConf.delimited[ent]);
         } else if (C.SwordConf.repeatable.includes(entry)) {
           const ent = entry as typeof C.SwordConf.repeatable[number];
-          r[ent]?.push(value);
+          r[ent]?.push(value as any);
         } else if (C.SwordConf.integer.includes(entry)) {
           const ent = entry as typeof C.SwordConf.integer[number];
           r[ent] = Number(value);
@@ -182,6 +194,18 @@ export default function parseSwordConf(
       }
     }
   }
+
+  // Check, warn and fix SWORD enums
+  const direction: SwordConfType['Direction'][] = ['LtoR', 'RtoL', 'BiDi'];
+  if (r.Direction && !direction.includes(r.Direction)) {
+    const was = r.Direction;
+    r.Direction = /rt/i.test(r.Direction) ? 'RtoL' : 'LtoR';
+    reports.push({
+      warning: `Config Direction must be one of '${direction}'; was '${was}'; is '${r.Direction}'`,
+    });
+  }
+
+  // Add remaining non-SWORD-standard entries
   r.xsmType = 'none';
   if (r.ModDrv === 'audio') r.xsmType = 'XSM_audio';
   else if (r.DataPath.endsWith('.xsm')) r.xsmType = 'XSM';
@@ -190,6 +214,8 @@ export default function parseSwordConf(
   else if (r.ModDrv.includes('Com')) r.moduleType = 'Commentaries';
   else if (r.ModDrv.includes('LD')) r.moduleType = 'Lexicons / Dictionaries';
   else if (r.xsmType === 'XSM_audio') r.moduleType = r.xsmType;
+
+  // Add module name to reports
   r.reports = reports.map((rp) => {
     const nr: any = {};
     Object.entries(rp).forEach((entry) => {
