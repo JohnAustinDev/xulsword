@@ -850,6 +850,7 @@ export default class ModuleManager
                         height="2em"
                         initialVK={vkAudioDialog.initial}
                         options={vkAudioDialog.options}
+                        allowNotInstalled
                         onSelection={dialogOnChange}
                       />
                     </>
@@ -858,7 +859,11 @@ export default class ModuleManager
                     <>
                       <Label value={gbAudioDialog.conf.module} />
                       <SelectOR
-                        selectORM={gbAudioDialog.selection}
+                        key={[
+                          gbAudioDialog.selection.otherMod,
+                          ...gbAudioDialog.selection.keys,
+                        ].join('.')}
+                        initialORM={gbAudioDialog.selection}
                         otherMods={[]}
                         nodeLists={gbAudioDialog.options.nodeLists}
                         enableMultipleSelection

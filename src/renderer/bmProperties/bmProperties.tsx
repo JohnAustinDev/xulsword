@@ -15,6 +15,7 @@ import {
   localizeBookmark,
   localizeBookmarks,
   getModuleOfObject,
+  keep,
 } from '../../common';
 import S from '../../defaultPrefs';
 import G from '../rg';
@@ -34,6 +35,7 @@ import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
 import './bmProperties.css';
 
 import type {
+  BMItem,
   BookmarkComm,
   BookmarkItem,
   BookmarkItemType,
@@ -270,7 +272,15 @@ export default class BMPropertiesWin extends React.Component {
         if (module !== getModuleOfObject(prevState.bookmark)) {
           bookmark =
             module && module in G.Tab
-              ? locationToBookmark(selection, prevState.bookmark.id)
+              ? locationToBookmark(
+                  selection,
+                  keep(prevState.bookmark, [
+                    'id',
+                    'note',
+                    'noteLocale',
+                    'creationDate',
+                  ])
+                )
               : bmdefault;
         } else {
           const { bookmark: prevbm } = prevState;
@@ -500,19 +510,21 @@ function initialBookmark(): BookmarkItemType | undefined {
   return bookmark;
 }
 
-// Convert the location of an installed module into a bookmark. If id is
-// passed, the new bookmark will have that id, or else a new id is given.
+// Convert the location of an installed module into a bookmark. If
+// copyItem is passed, the new bookmark will have those values copied,
+// or else a new values are given.
 function locationToBookmark(
   location: LocationVKType | LocationVKCommType | LocationORType,
-  id?: string
+  copyItem?: Partial<BMItem>
 ): BookmarkType {
   const item: BookmarkItem = {
-    id: id || randomID(),
+    id: randomID(),
     label: '',
     labelLocale: G.i18n.language as 'en',
     note: '',
     noteLocale: '',
     creationDate: new Date().valueOf(),
+    ...copyItem,
   };
   let newmb: BookmarkTexts | BookmarkComm | BookmarkOther;
   if ('commMod' in location) {

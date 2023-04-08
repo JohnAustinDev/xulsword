@@ -1210,7 +1210,7 @@ async function promptAudioChapters(
             book: books[0],
             chapter: 1,
             lastchapter: 1,
-            vkMod: '',
+            vkMod: conf.module,
             v11n: 'KJV',
           };
           d.selection = d.initial;
@@ -1308,7 +1308,7 @@ function handleError(xthis: ModuleManager, er: any, modrepkeys: string[]) {
     ? Intent.WARNING
     : Intent.DANGER;
   xthis.addToast({
-    message: er.toString(),
+    message: er.message,
     timeout: 5000,
     intent: newintent,
   });

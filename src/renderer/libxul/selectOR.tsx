@@ -12,11 +12,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { TreeNodeInfo } from '@blueprintjs/core';
 import {
-  clone,
   dictTreeNodes,
   findFirstLeafNode,
-  diff,
-  keep,
   ofClass,
   findTreeNode,
   genBookTreeNodes,
@@ -27,7 +24,6 @@ import {
 import C from '../../constant';
 import G from '../rg';
 import { getAllDictionaryKeyList } from '../viewport/zdictionary';
-import log from '../log';
 import { addClass, xulDefaultProps, XulProps, xulPropTypes } from './xul';
 import { Vbox } from './boxes';
 import Menulist from './menulist';
@@ -54,13 +50,9 @@ type FamilyNodes = {
   childNodes: TreeNodeInfo[];
 };
 
-// The SelectOR can either keep its own state OR work as a controlled
-// component. Properties of the initial prop that are undefined are
-// controlled by the corresponding select prop and internal state is
-// ignored, meaning the onSelection callback must be used to control
-// the select prop of the component. Properties of the initial prop that
-// are set will have their state kept withinin the component and any
-// corresponding select prop will be ignored.
+// The SelectOR maintains its own state starting at initialORM. So
+// onSelection must be used to read component selection. The key
+// prop may be used to reset state to latest initialORM at any time.
 //
 // The otherMods prop is an array of INSTALLED non-versekey modules to
 // select from. If left undefined, all installed non-versekey modules will
@@ -69,24 +61,22 @@ type FamilyNodes = {
 // The nodeLists prop is a list of versekey mods to select from which need
 // NOT BE INSTALLED since the module and node list is provided.
 //
-// If initialORM or selectORM selects a module which is not installed, and
-// also has no corresponding nodeLists[] entry, all selectors but the module
-// selector will be disabled.
+// If initialORM selects a module which is not installed, and also has no
+// corresponding nodeLists[] entry, all selectors but the module selector
+// will be disabled.
 export interface SelectORProps extends XulProps {
-  initialORM?: Partial<SelectORMType>;
-  selectORM?: Partial<SelectORMType>;
+  initialORM: SelectORMType;
   otherMods?: string[];
   nodeLists?: NodeListOR[];
   enableMultipleSelection: boolean;
   enableParentSelection: boolean;
   disabled: boolean;
-  onSelection?: (selection: SelectORMType | undefined, id?: string) => void;
+  onSelection: (selection: SelectORMType | undefined, id?: string) => void;
 }
 
 const defaultProps = {
   ...xulDefaultProps,
   initialORM: undefined,
-  selectORM: undefined,
   otherMods: undefined,
   nodeLists: undefined,
   enableMultipleSelection: false,
@@ -97,18 +87,17 @@ const defaultProps = {
 
 const propTypes = {
   ...xulPropTypes,
-  initialORM: PropTypes.object,
-  selectORM: PropTypes.object,
+  initialORM: PropTypes.object.isRequired,
   otherMods: PropTypes.arrayOf(PropTypes.string),
   nodeLists: PropTypes.arrayOf(PropTypes.object),
   enableMultipleSelection: PropTypes.bool,
   enableParentSelection: PropTypes.bool,
   disabled: PropTypes.bool,
-  onSelection: PropTypes.func,
+  onSelection: PropTypes.func.isRequired,
 };
 
 interface SelectORState {
-  stateORM: SelectORMType | undefined;
+  selection: SelectORMType;
 }
 
 class SelectOR extends React.Component {
@@ -128,7 +117,7 @@ class SelectOR extends React.Component {
       keys: [],
     };
     const s: SelectORState = {
-      stateORM: {
+      selection: {
         ...defaultORM,
         ...initialORM,
       },
@@ -136,29 +125,12 @@ class SelectOR extends React.Component {
     this.state = s;
 
     this.onChange = this.onChange.bind(this);
-    this.checkSelection = this.checkSelection.bind(this);
-    this.realStateORM = this.realStateORM.bind(this);
-    this.skipUpdate = this.skipUpdate.bind(this);
     this.openParent = this.openParent.bind(this);
-  }
-
-  componentDidMount(): void {
-    const { checkSelection } = this;
-    checkSelection();
-  }
-
-  componentDidUpdate(
-    _prevProps: SelectORProps,
-    prevState: SelectORState
-  ): void {
-    const { checkSelection } = this;
-    checkSelection(prevState);
   }
 
   onChange(ev: React.SyntheticEvent) {
     const props = this.props as SelectORProps;
     const { onSelection } = props;
-    const { realStateORM, skipUpdate } = this;
     const e = ev as React.ChangeEvent<HTMLSelectElement>;
     const targ = ofClass(
       ['select-module', 'select-parent', 'select-child'],
@@ -168,7 +140,7 @@ class SelectOR extends React.Component {
       const { value } = e.target;
       const tabType = (value && value in G.Tab && G.Tab[value].tabType) || '';
       this.setState((prevState: SelectORState) => {
-        let stateORM: SelectORMType | undefined = realStateORM(prevState);
+        let { selection } = prevState;
         if (targ.type === 'select-module') {
           let nodes: TreeNodeInfo[] = [];
           if (tabType === 'Genbks') {
@@ -178,114 +150,46 @@ class SelectOR extends React.Component {
           }
           const leafNode = findFirstLeafNode(nodes, nodes);
           const keys = leafNode ? [leafNode.id.toString()] : [];
-          stateORM = { otherMod: value, keys };
-        } else if (stateORM && targ.type === 'select-parent') {
-          stateORM.keys = [e.target.value];
-        } else if (stateORM && targ.type === 'select-child') {
-          stateORM.keys = Array.from(e.target.selectedOptions).map(
+          selection = { otherMod: value, keys };
+        } else if (selection && targ.type === 'select-parent') {
+          selection.keys = [e.target.value];
+        } else if (selection && targ.type === 'select-child') {
+          selection.keys = Array.from(e.target.selectedOptions).map(
             (o) => o.value
           );
         } else {
           throw new Error(`Unrecognized select: '${targ.type}'`);
         }
-        if (onSelection) {
-          onSelection(stateORM, props.id);
-        }
-        return skipUpdate(prevState.stateORM, stateORM)
-          ? null
-          : ({ stateORM } as Partial<SelectORState>);
+        onSelection(selection, props.id);
+        return { selection } as Partial<SelectORState>;
       });
-    }
-  }
-
-  // Insure state and onSelection contains the real select values.
-  checkSelection(prevState?: SelectORState) {
-    const { stateORM } = prevState || {};
-    const props = this.props as SelectORProps;
-    const { onSelection } = props;
-    const { realStateORM } = this;
-    const realORM = realStateORM();
-    if (!prevState || diff(stateORM, realORM)) {
-      if (onSelection) onSelection(realORM);
-      this.setState({ stateORM: realORM } as Partial<SelectORState>);
     }
   }
 
   openParent(id: string) {
     const props = this.props as SelectORProps;
     const { onSelection } = props;
-    const { realStateORM, skipUpdate } = this;
     this.setState((prevState: SelectORState) => {
-      const stateORM = realStateORM(prevState);
-      if (!stateORM) return null;
-      stateORM.keys = [id];
-      if (onSelection) onSelection(stateORM, props.id);
-      return skipUpdate(prevState.stateORM, stateORM)
-        ? null
-        : ({ stateORM } as Partial<SelectORState>);
+      const { selection } = prevState;
+      selection.keys = [id];
+      onSelection(selection, props.id);
+      return { selection } as Partial<SelectORState>;
     });
-  }
-
-  // Don't trigger a state update when only ignored state values change.
-  skipUpdate(
-    prevStateORM: SelectORMType | undefined,
-    newStateORM: SelectORMType | undefined
-  ): boolean {
-    const props = this.props as SelectORProps;
-    const { initialORM } = props;
-    if (initialORM) {
-      if (prevStateORM && newStateORM) {
-        const p = keep(
-          prevStateORM,
-          Object.keys(initialORM) as (keyof typeof initialORM)[]
-        );
-        const n = keep(
-          newStateORM,
-          Object.keys(initialORM) as (keyof typeof initialORM)[]
-        );
-        return !diff(p, n);
-      }
-      return prevStateORM === newStateORM;
-    }
-    return true;
-  }
-
-  // Use the selectORM child prop if initialORM child prop is not defined.
-  // Otherwise, use the stateORM child prop.
-  realStateORM(prevState?: Partial<SelectORState>): SelectORMType | undefined {
-    const props = this.props as SelectORProps;
-    const state = clone(prevState || this.state) as SelectORState;
-    const { selectORM, initialORM } = props;
-    const { stateORM } = state;
-    const selection = stateORM;
-    if (selection) {
-      const checkProps: (keyof SelectORMType)[] = ['otherMod', 'keys'];
-      checkProps.forEach((p) => {
-        if (!(initialORM && p in initialORM)) {
-          if (selectORM && p in selectORM) selection[p] = selectORM[p] as any;
-          else
-            log.warn(
-              `SelectOR selectORM.${p} and initialORM.${p} are both undefined.`
-            );
-        }
-      });
-    }
-    return selection;
   }
 
   render() {
     const props = this.props as SelectORProps;
+    const state = this.state as SelectORState;
+    const { selection } = state;
     const {
+      disabled,
       otherMods: otherModsProp,
       nodeLists,
       enableMultipleSelection,
       enableParentSelection,
     } = props;
-    const { disabled } = props;
-    const { realStateORM, openParent, onChange } = this;
-    const realState = realStateORM();
-    if (!realState) return null;
-    const { otherMod, keys } = realState;
+    const { openParent, onChange } = this;
+    const { otherMod, keys } = selection;
 
     // Get modules to be made available for selection, and their node lists:
     const list: NodeListOR[] = nodeLists || [];

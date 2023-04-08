@@ -37,7 +37,7 @@ import Spacer from './spacer';
 // will be available. If a module which is not installed is selected, its
 // location cannot be changed.
 export interface SelectAnyProps extends XulProps {
-  initial?: LocationTypes[TabTypes];
+  initial: LocationTypes[TabTypes];
   modules?: string[];
   disabled?: boolean;
   onSelection: (
@@ -55,7 +55,7 @@ const defaultProps = {
 
 const propTypes = {
   ...xulPropTypes,
-  initial: PropTypes.object,
+  initial: PropTypes.object.isRequired,
   modules: PropTypes.arrayOf(PropTypes.string),
   disabled: PropTypes.bool,
   onSelection: PropTypes.func.isRequired,

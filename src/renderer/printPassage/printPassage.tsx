@@ -271,6 +271,9 @@ export default class PrintPassageWin extends React.Component {
     const isHebrew = lang && /^heb?$/i.test(lang);
     const tr = isHebrew ? 1 : 0;
 
+    const { book: b, chapter: c1, lastchapter: c2 } = chapters;
+    const keySelectVK = [vkMod, b, c1, c2].join('.');
+
     return (
       <>
         <div
@@ -288,7 +291,8 @@ export default class PrintPassageWin extends React.Component {
               >
                 <SelectVK
                   id="chapters"
-                  selectVK={{ ...chapters, vkMod }}
+                  key={keySelectVK}
+                  initialVK={{ ...chapters, vkMod }}
                   options={{
                     verses: [],
                     lastverses: [],

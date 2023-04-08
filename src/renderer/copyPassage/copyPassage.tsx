@@ -190,7 +190,7 @@ export default class CopyPassageWin extends React.Component {
         <div id="testdiv" />
         <Groupbox caption={G.i18n.t('passage.label')}>
           <SelectVK
-            initialVK={passage}
+            initialVK={passage || { book: 'Gen', chapter: 1, v11n: 'KJV' }}
             options={{ lastchapters: [] }}
             onSelection={(selection: SelectVKType) => {
               this.setState({ passage: selection });
