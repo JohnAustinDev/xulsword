@@ -275,6 +275,7 @@ class SelectOR extends React.Component {
         className="select-module"
         value={otherMod}
         modules={list.map((x) => x.otherMod)}
+        allowNotInstalled
         disabled={
           disabled || (otherMod === list[0].otherMod && list.length === 1)
         }

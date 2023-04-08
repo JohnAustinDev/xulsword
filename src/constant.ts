@@ -17,8 +17,6 @@ import type {
   V11nType,
 } from './type';
 
-// TODO!: GenBook audio chooser audio icons not appearing.
-// TODO!: GenBook audio download without module installed not working.
 // TODO: Add sword protocol support.
 // Environment variables:
 // - NODE_ENV - Set in package.json to control the build process

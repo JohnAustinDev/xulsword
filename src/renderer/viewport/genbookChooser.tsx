@@ -215,14 +215,9 @@ class GenbookChooser extends React.Component {
                   } else {
                     this.treeNodes[treekey].push(...childNodes);
                   }
-                  forEachNode(this.treeNodes[treekey], (node) => {
-                    const key = node.id
-                      .toString()
-                      .split(C.GBKSEP)
-                      .slice(1)
-                      .join(C.GBKSEP);
-                    audioGenBookNode(node, m, key);
-                  });
+                  forEachNode(this.treeNodes[treekey], (node) =>
+                    audioGenBookNode(node, m, node.id.toString())
+                  );
                   const key = keys[i];
                   return (
                     <TreeView

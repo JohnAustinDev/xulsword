@@ -24,12 +24,14 @@ and give a fixed width */
   border-bottom: 2px solid rgb(225, 195, 230);
   border-radius: 8px;
   background: white;
-  transition: 0.5s;
+  transition: 0.25s;
 }
 
 .genbook-chooser .scroll-parent:hover {
   max-width: 800px;
   filter: drop-shadow(10px 10px 2px #777777);
+  transition: 0.5s;
+  transition-delay: 1s;
 }
 
 html[dir='rtl'] .genbook-chooser .scroll-parent {
@@ -42,4 +44,11 @@ html[dir='rtl'] .genbook-chooser .scroll-parent:hover {
 }
 html[dir='rtl'] .bp4-tree-node-label {
   transform: scaleX(-1);
+}
+
+.genbook-chooser .fadebot {
+  margin-bottom: -28px;
+}
+.genbook-chooser .bp4-tree-node-caret-none + .bp4-icon-volume-up {
+  margin-inline-start: -24px;
 }

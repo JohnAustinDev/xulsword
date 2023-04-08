@@ -478,6 +478,7 @@ class SelectVK extends React.Component {
               value={vkmod}
               modules={modules}
               disabled={disabled}
+              allowNotInstalled={allowNotInstalled}
               onChange={handleChange}
             />
           )}
