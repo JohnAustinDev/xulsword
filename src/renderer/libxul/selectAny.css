@@ -1,0 +1,28 @@
+.selectany .any-module.vksel select {
+  max-width: 100px;
+}
+
+.selectany .selectvk .vk-vkmod,
+.selectany .selector .select-module {
+  display: none;
+}
+
+.selectany .selector {
+  flex-basis: 100%;
+}
+
+.selectany .select-parent,
+.selectany .select-child {
+  width: calc(100% - 10px);
+}
+.selectany .select-parent select,
+.selectany .select-child select {
+  width: 100%;
+}
+.selectany .selectvk {
+  margin-inline-end: -8px;
+}
+
+.selectany .selector .menulist + .menulist {
+  margin-top: 5px;
+}

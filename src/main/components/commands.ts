@@ -52,12 +52,13 @@ import type {
   ScrollType,
   SearchType,
   VerseKeyAudioFile,
+  LocationVKCommType,
 } from '../../type';
 import type { WindowRootState } from '../../renderer/renderer';
 import type { AboutWinState } from '../../renderer/about/about';
 import type { PrintPassageState } from '../../renderer/printPassage/printPassage';
 import type { CopyPassageState } from '../../renderer/copyPassage/copyPassage';
-import type { SelectVKMType } from '../../renderer/libxul/selectVK';
+import type { SelectVKType } from '../../renderer/libxul/selectVK';
 import type { BMPropertiesStateWinArg } from '../../renderer/bmProperties/bmProperties';
 
 // Require the calling window argument for Prefs.set calls, so window -2 (to all
@@ -195,7 +196,7 @@ const Commands = {
         const { key, swordModule } = audio;
         if (swordModule) {
           this.goToLocationGB({
-            module: swordModule,
+            otherMod: swordModule,
             key,
           });
         }
@@ -672,13 +673,13 @@ const Commands = {
       'xulsword.location'
     ) as typeof S.prefs.xulsword.location;
     if (panels && location) {
-      const vkmod = panels.find((p) => p && p in tab && tab[p].isVerseKey);
-      const vk11n = (vkmod && tab[vkmod].v11n) || 'KJV';
-      const passage: SelectVKMType | null =
-        location && vkmod
+      const vkMod = panels.find((p) => p && p in tab && tab[p].isVerseKey);
+      const vk11n = (vkMod && tab[vkMod].v11n) || 'KJV';
+      const passage: SelectVKType | null =
+        location && vkMod
           ? {
               ...verseKey(location).location(vk11n),
-              vkmod,
+              vkMod,
             }
           : null;
       const copyPassageState: Partial<CopyPassageState> = {
@@ -838,8 +839,7 @@ const Commands = {
     titleKey: string,
     bmPropertiesState: Partial<BMPropertiesStateWinArg>,
     newitem?: {
-      location: LocationVKType | LocationORType | null | undefined;
-      module?: string;
+      location?: LocationVKType | LocationVKCommType | LocationORType;
     }
   ): void {
     let bookmark: any | undefined;
@@ -946,7 +946,7 @@ const Commands = {
     scroll?: ScrollType | undefined
   ): void {
     const tab = getTab();
-    if (location.module in tab) {
+    if (location.otherMod in tab) {
       const xulsword: Partial<typeof S.prefs.xulsword> = Viewport.setPanels(
         location,
         {
@@ -959,19 +959,21 @@ const Commands = {
     } else shell.beep();
   },
 
-  // If SelectVKMType (which includes vkmod) is passed, and vkmod is not a Bible (is
+  // If SelectVKMType (which includes vkMod) is passed, and vkMod is not a Bible (is
   // a commentary) then the main viewport will be updated to show that module in a
   // panel, unless it is already showing.
   goToLocationVK(
-    newlocation: LocationVKType | SelectVKMType,
-    newselection?: LocationVKType,
+    newlocation: LocationVKType | LocationVKCommType,
+    newselection?: LocationVKType | LocationVKCommType,
     newscroll?: ScrollType
   ): void {
     const tab = getTab();
-    if (!('vkmod' in newlocation) || newlocation.vkmod in tab) {
+    const vkMod =
+      ('commMod' in newlocation && newlocation.commMod) || newlocation.vkMod;
+    if (!vkMod || vkMod in tab) {
       let xulsword: Partial<typeof S.prefs.xulsword> = {};
-      if ('vkmod' in newlocation && newlocation.isBible === false) {
-        xulsword = Viewport.setPanels(newlocation.vkmod, {
+      if (vkMod) {
+        xulsword = Viewport.setPanels(vkMod, {
           skipCallbacks: true,
           clearRendererCaches: false,
         });

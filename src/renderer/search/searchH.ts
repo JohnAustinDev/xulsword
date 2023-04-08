@@ -432,7 +432,7 @@ export function formatResult(div: HTMLDivElement, state: SearchWinState) {
           case C.GENBOOK:
           case C.DICTIONARY: {
             if (locationGB) {
-              const { module: m, key } = locationGB;
+              const { otherMod: m, key } = locationGB;
               sanitizeHTML(a, key);
               a.className = `cs-${m}`;
               // p.ch may contain . so careful using split('.')!
@@ -823,7 +823,7 @@ export default async function handler(
               const module = p.shift();
               if (module && module in G.Tab) {
                 G.Commands.goToLocationGB({
-                  module,
+                  otherMod: module,
                   key: decodeURIComponent(p.shift() || ''),
                 });
               }

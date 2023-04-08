@@ -36,9 +36,12 @@ import type {
   GenBookAudio,
   ModulesCache,
   TreeNodeInfoPref,
+  LocationVKType,
+  LocationVKCommType,
+  LocationTypes,
 } from './type';
 import type { TreeNodeInfo } from '@blueprintjs/core';
-import type { SelectVKMType } from './renderer/libxul/selectVK';
+import type { SelectVKType } from './renderer/libxul/selectVK';
 import type { SelectORMType } from './renderer/libxul/selectOR';
 import type { getSampleText } from './renderer/bookmarks';
 import type { verseKey } from './renderer/htmlData';
@@ -729,6 +732,81 @@ export function getPanelWidths(
   return panelWidths;
 }
 
+// Get the 'location' of any panel, or get the first of a particular type
+// of location from all panels, or both (returning null if conditions are
+// not satisfied).
+export function xulswordLocation(
+  Tab: GType['Tab'],
+  Prefs: GType['Prefs'],
+  tabType: 'Texts',
+  panelIndex?: number
+): LocationVKType | undefined;
+export function xulswordLocation(
+  Tab: GType['Tab'],
+  Prefs: GType['Prefs'],
+  tabType: 'Comms',
+  panelIndex?: number
+): LocationVKCommType | undefined;
+export function xulswordLocation(
+  Tab: GType['Tab'],
+  Prefs: GType['Prefs'],
+  tabType: 'Genbks' | 'Dicts',
+  panelIndex?: number
+): LocationORType | undefined;
+export function xulswordLocation(
+  Tab: GType['Tab'],
+  Prefs: GType['Prefs'],
+  tabType?: undefined,
+  panelIndex?: number
+): LocationVKType | LocationVKCommType | LocationORType | undefined;
+export function xulswordLocation(
+  Tab: GType['Tab'],
+  Prefs: GType['Prefs'],
+  tabType?: TabTypes,
+  panelIndex?: number
+): LocationVKType | LocationVKCommType | LocationORType | undefined {
+  const panels = Prefs.getComplexValue(
+    'xulsword.panels'
+  ) as typeof S.prefs.xulsword.panels;
+  let r: LocationVKType | LocationVKCommType | LocationORType | undefined;
+  for (let i = 0; i < panels.length; i += 1) {
+    const m = panels[i];
+    if (
+      m &&
+      (panelIndex === undefined || panelIndex === i) &&
+      (!tabType || Tab[m].tabType === tabType)
+    ) {
+      switch (Tab[m].tabType) {
+        case 'Texts':
+        case 'Comms': {
+          const location = Prefs.getComplexValue(
+            'xulsword.location'
+          ) as typeof S.prefs.xulsword.location;
+          if (location && Tab[m].tabType === 'Comms') {
+            r = { ...location, commMod: m };
+          } else if (location) {
+            r = { ...location, vkMod: m };
+          }
+          return r;
+        }
+        case 'Genbks':
+        case 'Dicts': {
+          const keys = Prefs.getComplexValue(
+            'xulsword.keys'
+          ) as typeof S.prefs.xulsword.keys;
+          const key = keys[i];
+          if (key) {
+            r = { otherMod: m, key };
+          }
+          return r;
+        }
+        default:
+      }
+    }
+  }
+  return r;
+}
+
 // Convert a range-form string array into a number array.
 // Ex: ['1-3', '2-4', '7'] => [1,2,3,4,7]
 export function audioConfNumbers(strings: string[]): number[] {
@@ -769,6 +847,26 @@ export function audioConfStrings(chapters: number[] | boolean[]): string[] {
     if (r[0] === r[1]) return `${r[0]}`;
     return `${r[0]}-${r[1]}`;
   });
+}
+
+// Find the module associated with any location or bookmark item,
+// or return null if there is none.
+export function getModuleOfObject(
+  bookmarkOrLocation:
+    | BookmarkItemType
+    | LocationTypes[TabTypes]
+    | SelectORMType
+    | SelectVKType
+): string | null {
+  let location: LocationTypes[TabTypes] | SelectORMType | SelectVKType;
+  if ('type' in bookmarkOrLocation) {
+    const { type } = bookmarkOrLocation;
+    if (type === 'folder') return null;
+    location = bookmarkOrLocation.location;
+  } else location = bookmarkOrLocation;
+  if ('commMod' in location) return location.commMod;
+  if ('v11n' in location) return location.vkMod || null;
+  return location.otherMod;
 }
 
 export function bookmarkItemIconPath(
@@ -988,15 +1086,22 @@ export function pasteBookmarkItems(
 export function bookmarkLabel(
   g: GType,
   verseKeyFunc: typeof verseKey,
-  l: SelectVKMType | LocationORType
+  l: LocationVKType | LocationVKCommType | LocationORType
 ): string {
+  if ('commMod' in l) {
+    const { commMod } = l;
+    const vk = verseKeyFunc(l);
+    const readable = vk.readable(undefined, true);
+    const t = (commMod in g.Tab && g.Tab[commMod]) || null;
+    return `${t ? t.label : g.i18n.t('Comms')}: ${readable}`;
+  }
   if ('v11n' in l) {
     const vk = verseKeyFunc(l);
     return vk.readable(undefined, true);
   }
   const ks = l.key.split(C.GBKSEP);
-  const tab = (l.module && l.module in g.Tab && g.Tab[l.module]) || null;
-  ks.unshift(tab?.conf.Description ? tab.conf.Description.locale : l.module);
+  const tab = (l.otherMod && l.otherMod in g.Tab && g.Tab[l.otherMod]) || null;
+  ks.unshift(tab?.conf.Description ? tab.conf.Description.locale : l.otherMod);
   while (ks[2] && ks[0] === ks[1]) {
     ks.shift();
   }
@@ -1052,7 +1157,6 @@ export function localizeBookmarks(
   folder: BookmarkFolderType,
   getSampleTextFunc?: typeof getSampleText
 ) {
-  const locale = g.i18n.language as 'en';
   localizeBookmark(g, verseKeyFunc, folder);
   forEachBookmarkItem(folder.childNodes, (item) => {
     localizeBookmark(g, verseKeyFunc, item);
@@ -1062,9 +1166,7 @@ export function localizeBookmarks(
       !item.sampleText &&
       item.location
     ) {
-      const st = getSampleTextFunc(item.location, locale);
-      item.sampleText = st.sampleText;
-      item.sampleModule = st.sampleModule;
+      item.sampleText = getSampleTextFunc(item.location);
     }
   });
 }
@@ -1148,7 +1250,7 @@ export function findTreeSiblings(
 export function findFirstLeafNode(
   nodes: TreeNodeInfo[],
   candidates: (string | TreeNodeInfo)[]
-): TreeNodeInfo {
+): TreeNodeInfo | undefined {
   const candidateNodes = candidates.map((c) => {
     if (typeof c === 'string') {
       if (!nodes)
@@ -1391,7 +1493,7 @@ export function readDeprecatedGenBookAudioConf(
 }
 
 export function getDeprecatedVerseKeyAudioConf(
-  vkey: SelectVKMType
+  vkey: SelectVKType
 ): DeprecatedAudioChaptersConf {
   const { book, chapter, lastchapter } = vkey;
   return { bk: book, ch1: chapter, ch2: lastchapter || chapter };

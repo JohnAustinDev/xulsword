@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import type { paperSizes } from './renderer/libxul/printSettings';
-import type { SelectVKMType } from './renderer/libxul/selectVK';
+import type { SelectVKType } from './renderer/libxul/selectVK';
 import type { StyleType } from './renderer/style';
 import type { TablePropColumn, TinitialRowSort } from './renderer/libxul/table';
 import type {
@@ -543,7 +543,7 @@ const S = {
         introduction: boolean;
         crossrefsText: boolean;
       },
-      chapters: null as SelectVKMType | null,
+      chapters: null as SelectVKType | null,
     },
 
     print: {

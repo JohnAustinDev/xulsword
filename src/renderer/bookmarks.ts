@@ -1,18 +1,11 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-nested-ternary */
 import Cache from '../cache';
-import { clone, JSON_attrib_parse, localizeBookmark, ofClass } from '../common';
-import RefParser from '../refParser';
+import { clone, localizeBookmark } from '../common';
 import C from '../constant';
 import S from '../defaultPrefs';
 import G from './rg';
-import {
-  findElementData,
-  mergeElementData,
-  updateDataAttribute,
-  verseKey,
-} from './htmlData';
+import { updateDataAttribute, verseKey } from './htmlData';
 import { bookmarkItemIcon, getMaxVerse } from './rutil';
 
 import type {
@@ -20,18 +13,16 @@ import type {
   BookmarkItemType,
   BookmarkTreeNode,
   BookmarkType,
-  ContextData,
   LocationORType,
+  LocationVKCommType,
   LocationVKType,
-  SearchType,
   SwordFilterType,
   SwordFilterValueType,
 } from '../type';
 import type { HTMLData } from './htmlData';
 import type { AtextProps } from './viewport/atext';
 import type { LibSwordResponse } from './viewport/ztext';
-import type { SelectVKMType } from './libxul/selectVK';
-import { locationVKText } from './viewport/zversekey';
+import type { SelectVKType } from './libxul/selectVK';
 
 type BookmarkMapType = { [key: string]: BookmarkInfoHTML[] };
 
@@ -120,13 +111,13 @@ export function getBookmarkMap(): BookmarkMapType {
           const { location } = item;
           let k = '';
           if (location && 'v11n' in location) {
-            const { vkmod } = location;
+            const { vkMod } = location;
             const kjvl = verseKey(location).location('KJV');
             const { book, chapter, verse } = kjvl;
             k = [book, chapter, verse, 'KJV'].join('.');
-            if (tabType === 'Comms') k += `.${vkmod}`;
+            if (tabType === 'Comms') k += `.${vkMod}`;
           } else if (location) {
-            const { module, key } = location;
+            const { otherMod: module, key } = location;
             k = [module, key].join(C.GBKSEP);
           }
           const info = getBookmarkInfo(item);
@@ -154,7 +145,7 @@ export function getBookmarkMap(): BookmarkMapType {
 // Find the bookmarks associated with either a Bible chapter or module/key
 // pair.
 export function findBookmarks(
-  location: LocationVKType | LocationORType | SelectVKMType
+  location: LocationVKType | LocationORType | SelectVKType
 ): BookmarkInfoHTML[] {
   const bookmarkMap = getBookmarkMap();
   if ('v11n' in location) {
@@ -163,9 +154,9 @@ export function findBookmarks(
     const chBookmarks: BookmarkInfoHTML[] = [];
     for (let x = 0; x <= getMaxVerse('KJV', `${book} ${chapter}`); x += 1) {
       let k = [book, chapter, x, 'KJV'].join('.');
-      if ('vkmod' in location) {
-        const { vkmod } = location;
-        k += `.${vkmod}`;
+      if ('vkMod' in location) {
+        const { vkMod } = location;
+        k += `.${vkMod}`;
       }
       if (k in bookmarkMap) {
         chBookmarks.push(...bookmarkMap[k]);
@@ -174,7 +165,7 @@ export function findBookmarks(
     return chBookmarks;
   }
   if (location) {
-    const { module, key } = location;
+    const { otherMod: module, key } = location;
     const k = [module, key].join(C.GBKSEP);
     if (k in bookmarkMap) return bookmarkMap[k];
   }
@@ -295,14 +286,14 @@ export default function addBookmarks(
   const { module, location, modkey } = props;
   if (module && module in G.Tab) {
     const { isVerseKey } = G.Tab[module];
-    let bmlocation: LocationORType | LocationVKType | SelectVKMType | null =
+    let bmlocation: LocationORType | LocationVKType | SelectVKType | null =
       null;
     if (isVerseKey && location && G.Tab[module].tabType === 'Comms') {
-      bmlocation = { ...location, vkmod: module };
+      bmlocation = { ...location, vkMod: module };
     } else if (isVerseKey && location) {
       bmlocation = location;
     } else if (!isVerseKey && modkey) {
-      bmlocation = { module, key: modkey };
+      bmlocation = { otherMod: module, key: modkey };
     }
     if (bmlocation) {
       const bookmarks = findBookmarks(bmlocation);
@@ -325,70 +316,61 @@ export function parseParagraphs(text: string): string[] {
 }
 
 export function getSampleText(
-  l: LocationORType | SelectVKMType,
-  locale?: typeof C.Locales[number][0]
-): { sampleText: string; sampleModule: string } {
+  l: LocationVKType | LocationVKCommType | LocationORType
+): string {
   let sampleText = '';
-  let sampleModule = '';
   if ('v11n' in l) {
-    const vk = l as SelectVKMType;
-    const { book } = vk;
-    const { vkmod } = vk;
-    const isComm = vkmod in G.Tab && G.Tab[vkmod].tabType === 'Comms';
-    const searchMods: string[] = [vkmod];
-    if (locale && book) {
-      // Look for an installed sampleText module associated with the locale.
-      const configs = G.LocaleConfigs;
-      const locales = [locale, C.FallbackLanguage[locale]];
-      searchMods.unshift(
-        ...locales.reduce(
-          (p, c) =>
-            c in configs
-              ? p.concat(configs[c].AssociatedModules?.split(/\s*,\s*/) || [])
-              : p,
-          [] as string[]
-        )
-      );
-    }
-    if (searchMods.length) {
-      const vktxt = locationVKText(
-        l,
-        searchMods[0],
-        searchMods,
-        false,
-        isComm,
-        true
-      );
-      if (vktxt) {
-        const { module, text } = vktxt;
-        sampleText = text;
-        sampleModule = module;
-      }
+    const { book, chapter, verse, lastverse, vkMod } = l;
+    const loc = [book, chapter];
+    if (verse) loc.push(verse);
+    if (verse && lastverse && lastverse > verse) loc.push(lastverse);
+    let module = vkMod || '';
+    if ('commMod' in l) module = l.commMod;
+    if (module && module in G.Tab) {
+      sampleText = G.LibSword.getVerseText(
+        module,
+        loc.join('.'),
+        false
+      ).replace(/\n/g, ' ');
     }
   } else {
-    const { module, key, paragraph } = l;
-    if (module && module in G.Tab) {
+    const { otherMod, key, paragraph } = l;
+    if (otherMod && otherMod in G.Tab) {
       // Set SWORD filter options
       const options = {} as { [key in SwordFilterType]: SwordFilterValueType };
       Object.entries(C.SwordFilters).forEach((entry) => {
         [options[entry[0] as SwordFilterType]] = C.SwordFilterValues;
       });
       let text = '';
-      if (G.Tab[module].type === C.GENBOOK) {
-        text = G.LibSword.getGenBookChapterText(l.module, l.key, options);
-      } else if (G.Tab[module].type === C.DICTIONARY) {
-        text = G.LibSword.getDictionaryEntry(module, key, options);
+      if (G.Tab[otherMod].type === C.GENBOOK) {
+        text = G.LibSword.getGenBookChapterText(l.otherMod, l.key, options);
+      } else if (G.Tab[otherMod].type === C.DICTIONARY) {
+        text = G.LibSword.getDictionaryEntry(otherMod, key, options);
       }
       const paragraphs = parseParagraphs(text);
       const i = paragraph && paragraphs[paragraph] ? paragraph : 0;
       sampleText = paragraphs[i];
-      sampleModule = module;
     }
   }
   sampleText = sampleText
     .replace(/<[^>]+>/g, '')
     .substring(0, C.UI.BMProperties.sampleTextLength);
-  return { sampleText, sampleModule };
+  return sampleText;
+}
+
+// Convert bookmark childNodes of a folder into tree nodes.
+export function bookmarkTreeNodes(
+  items: BookmarkItemType[] | BookmarkTreeNode[],
+  only?: 'folder' | 'bookmark', // undefined = all
+  selectedIDs?: string | string[], // undefined = none
+  expandedIDs?: string | string[], // undefined = all
+  cloned = false
+): BookmarkTreeNode[] {
+  return items
+    .map((item) =>
+      bookmarkTreeNode(item, only, selectedIDs, expandedIDs, cloned)
+    )
+    .filter(Boolean) as BookmarkTreeNode[];
 }
 
 // Convert a bookmark item into a tree node.
@@ -438,162 +420,4 @@ export function bookmarkTreeNode(
     }
   }
   return null;
-}
-
-// Convert bookmark childNodes of a folder into tree nodes.
-export function bookmarkTreeNodes(
-  items: BookmarkItemType[] | BookmarkTreeNode[],
-  only?: 'folder' | 'bookmark', // undefined = all
-  selectedIDs?: string | string[], // undefined = none
-  expandedIDs?: string | string[], // undefined = all
-  cloned = false
-): BookmarkTreeNode[] {
-  return items
-    .map((item) =>
-      bookmarkTreeNode(item, only, selectedIDs, expandedIDs, cloned)
-    )
-    .filter(Boolean) as BookmarkTreeNode[];
-}
-
-// Return contextual data for use by context menus.
-export function getContextData(elem: HTMLElement): ContextData {
-  const atextx = ofClass(['atext'], elem);
-  const atext = atextx ? atextx.element : null;
-  const tabx = ofClass(['tab'], elem);
-  const atab = tabx ? tabx.element : null;
-
-  const elemData = findElementData(elem);
-
-  // Get selection and target elements from selection
-  let selection: string | undefined;
-  const selElems: HTMLElement[] = [];
-  const selob = getSelection();
-  if (selob && !selob.isCollapsed && !/^\s*$/.test(selob.toString())) {
-    selection = selob.toString();
-    const fn = selob.focusNode;
-    if (fn && fn.nodeType === 1) {
-      selElems.push(fn as HTMLElement);
-    }
-    const an = selob.anchorNode;
-    if (an && an.nodeType === 1) {
-      selElems.push(an as HTMLElement);
-    }
-  }
-  const selDatas = selElems.map((el) => findElementData(el));
-
-  let atextData: HTMLData | null = null;
-  if (atext?.dataset.data) {
-    atextData = JSON_attrib_parse(atext.dataset.data) as HTMLData;
-  }
-
-  let atabData: HTMLData | null = null;
-  if (atab?.dataset.module) {
-    atabData = {
-      context: atab?.dataset.module,
-    };
-  }
-
-  const contextData = mergeElementData([
-    elemData,
-    ...selDatas,
-    atextData,
-    atabData,
-  ]);
-
-  let context: string | undefined;
-  if (contextData) context = contextData.context;
-
-  let location: LocationVKType | undefined;
-  if (contextData) location = contextData.location;
-
-  let locationGB: LocationORType | undefined;
-  if (contextData) locationGB = contextData.locationGB;
-
-  let bookmark: string | undefined;
-  if (contextData) bookmark = contextData.bmitem;
-  if (!bookmark && (locationGB || location)) {
-    const bm = findBookmarks(
-      (locationGB || location) as LocationVKType | LocationORType
-    );
-    if (bm[0]) bookmark = bm[0].id;
-  }
-
-  let panelIndexs;
-  if (atext) panelIndexs = atext.dataset.index;
-  else if (atab) panelIndexs = atab.dataset.index;
-  const panelIndex = panelIndexs ? Number(panelIndexs) : undefined;
-
-  const isPinned = Boolean(atext && atext.dataset.ispinned === 'true');
-
-  const tab = atab?.dataset.module;
-
-  const v11n =
-    (context && context in G.Tab && G.Tab[context].v11n) || undefined;
-  let selectionParsedVK: LocationVKType | undefined;
-  if (selection) {
-    selectionParsedVK =
-      new RefParser(G.i18n, { uncertain: true }).parse(selection, v11n || null)
-        ?.location || undefined;
-  }
-
-  // Find location lastverse
-  if (selDatas.length > 1) {
-    const l = selDatas[1]?.location || null;
-    if (
-      location &&
-      l &&
-      location.book === l.book &&
-      location.chapter === l.chapter
-    ) {
-      location.lastverse = l.verse;
-      const { verse, lastverse } = location;
-      if (verse && lastverse && verse > lastverse) {
-        location.verse = lastverse;
-        location.lastverse = verse;
-      }
-    }
-  }
-
-  let search: SearchType | undefined;
-  let lemma: string | undefined;
-  const snx = ofClass(['sn'], elem);
-  const lemmaArray: string[] = [];
-  if (snx && context) {
-    Array.from(snx.element.classList).forEach((cls) => {
-      if (cls === 'sn') return;
-      const [type, lemmaStr] = cls.split('_');
-      if (type !== 'S' || !lemmaStr) return;
-      const lemmaNum = Number(lemmaStr.substring(1));
-      // SWORD filters >= 5627 out- not valid it says
-      if (
-        Number.isNaN(Number(lemmaNum)) ||
-        (lemmaStr.startsWith('G') && lemmaNum >= 5627)
-      )
-        return;
-      lemmaArray.push(`lemma: ${lemmaStr}`);
-    });
-    lemma = lemmaArray.length ? lemmaArray.join(' ') : undefined;
-    if (lemma && context) {
-      search = {
-        module: context,
-        searchtext: lemma,
-        type: 'SearchAdvanced',
-      };
-    }
-  }
-
-  return {
-    type: 'general',
-    location,
-    locationGB,
-    bookmark,
-    context,
-    tab,
-    lemma,
-    panelIndex,
-    isPinned,
-    selection,
-    selectionParsedVK,
-    search,
-  };
 }

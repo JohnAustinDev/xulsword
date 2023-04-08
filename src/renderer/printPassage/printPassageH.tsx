@@ -20,7 +20,7 @@ import type {
   SwordFilterValueType,
 } from '../../type';
 import type { LibSwordResponse } from '../viewport/ztext';
-import type { SelectVKMType } from '../libxul/selectVK';
+import type { SelectVKType } from '../libxul/selectVK';
 import type PrintPassageWin from './printPassage';
 import type { PrintPassageState } from './printPassage';
 
@@ -46,7 +46,7 @@ export function handler(this: PrintPassageWin, ex: React.SyntheticEvent) {
 
 export function vkSelectHandler(
   this: PrintPassageWin,
-  selection: SelectVKMType
+  selection: SelectVKType
 ) {
   if (selection) {
     const { book } = selection;
@@ -171,20 +171,20 @@ export function bibleChapterText(
   return '';
 }
 
-export function validPassage(passage: SelectVKMType | null): SelectVKMType {
+export function validPassage(passage: SelectVKType | null): SelectVKType {
   let chapters = clone(passage);
-  if (!chapters || !chapters.vkmod || !isValidVKM(chapters, chapters.vkmod)) {
-    const vkmod = G.Tabs.find((t) => t.type === C.BIBLE)?.module || '';
+  if (!chapters || !chapters.vkMod || !isValidVKM(chapters, chapters.vkMod)) {
+    const vkMod = G.Tabs.find((t) => t.type === C.BIBLE)?.module || '';
     chapters = {
-      vkmod,
-      ...getValidVK(vkmod),
+      vkMod,
+      ...getValidVK(vkMod),
       lastchapter: 1,
     };
   }
   const { lastchapter, v11n } = chapters;
   if (!v11n) {
-    const { vkmod } = chapters;
-    chapters.v11n = (vkmod in G.Tab && G.Tab[vkmod].v11n) || 'KJV';
+    const { vkMod } = chapters;
+    chapters.v11n = (vkMod in G.Tab && G.Tab[vkMod].v11n) || 'KJV';
   }
   if (!lastchapter || lastchapter < chapters.chapter) {
     chapters.lastchapter = chapters.chapter;

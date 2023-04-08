@@ -47,10 +47,10 @@ import type {
   OSISBookType,
   QuerablePromise,
 } from '../../type';
-import type { SelectVKMType, SelectVKProps } from '../libxul/selectVK';
+import type { SelectVKType, SelectVKProps } from '../libxul/selectVK';
 import type ModuleManager from './manager';
 import type { ManagerState } from './manager';
-import type { ORModNodeList, SelectORMType } from '../libxul/selectOR';
+import type { NodeListOR, SelectORMType } from '../libxul/selectOR';
 
 export const Tables = ['language', 'module', 'repository'] as const;
 
@@ -84,11 +84,11 @@ export const Saved = {
 export type VersekeyDialog = {
   type: 'versekey';
   conf: SwordConfType;
-  selection: SelectVKMType;
-  initial: SelectVKProps['initialVKM'];
+  selection: SelectVKType;
+  initial: SelectVKProps['initialVK'];
   options: SelectVKProps['options'];
   chapters: VerseKeyAudio;
-  callback: (result: SelectVKMType | SelectORMType | null) => void;
+  callback: (result: SelectVKType | SelectORMType | null) => void;
 };
 
 export type GenBookDialog = {
@@ -96,9 +96,9 @@ export type GenBookDialog = {
   conf: SwordConfType;
   selection: SelectORMType;
   initial: undefined;
-  options: { ormodNodeLists?: ORModNodeList[]; gbmods?: string[] };
+  options: { nodeLists?: NodeListOR[]; gbmods?: string[] };
   chapters: GenBookAudioConf;
-  callback: (result: SelectVKMType | SelectORMType | null) => void;
+  callback: (result: SelectVKType | SelectORMType | null) => void;
 };
 
 export type TRepCellInfo = TCellInfo & {
@@ -1186,7 +1186,7 @@ async function promptAudioChapters(
   if (conf.xsmType === 'XSM_audio') {
     const { AudioChapters } = conf;
     if (AudioChapters) {
-      let audio: SelectVKMType | SelectORMType | null = null;
+      let audio: SelectVKType | SelectORMType | null = null;
       audio = await new Promise((resolve) => {
         // Subtract audio files that are already installed.
         const installed = G.AudioConfs[conf.module]?.AudioChapters;
@@ -1210,7 +1210,7 @@ async function promptAudioChapters(
             book: books[0],
             chapter: 1,
             lastchapter: 1,
-            vkmod: '',
+            vkMod: '',
             v11n: 'KJV',
           };
           d.selection = d.initial;
@@ -1227,7 +1227,7 @@ async function promptAudioChapters(
             lastchapters: ch,
             verses: [],
             lastverses: [],
-            vkmods: [],
+            vkMods: [],
           };
         } else {
           const d = dialog as GenBookDialog;
@@ -1242,13 +1242,13 @@ async function promptAudioChapters(
               : {};
           d.type = 'genbook';
           d.selection = {
-            ormod: conf.module,
+            otherMod: conf.module,
             keys: [],
           };
           d.options = {
-            ormodNodeLists: [
+            nodeLists: [
               {
-                ormod: conf.module,
+                otherMod: conf.module,
                 label: conf.Description?.locale || conf.module,
                 labelClass: 'cs-locale',
                 nodes: forEachNode(
@@ -1282,7 +1282,7 @@ async function promptAudioChapters(
       if (audio) {
         // TODO: Implement swordzip API on server.
         let bkchs: DeprecatedAudioChaptersConf;
-        if ('ormod' in audio) {
+        if ('otherMod' in audio) {
           bkchs = getDeprecatedGenBookAudioConf(audio);
         } else {
           bkchs = getDeprecatedVerseKeyAudioConf(audio);

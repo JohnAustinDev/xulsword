@@ -457,8 +457,8 @@ const Window = {
     };
     win.on('resize', resize);
     win.on('resized', resize);
-    win.on('move', resize);
-    win.on('moved', resize);
+    win.on('move', () => updateBounds(id));
+    win.on('moved', () => updateBounds(id));
     win.on('maximize', resize);
     win.on('unmaximize', resize);
     win.once('close', () => win?.webContents.send('close'));

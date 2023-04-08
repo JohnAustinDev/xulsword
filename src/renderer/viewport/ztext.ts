@@ -158,7 +158,7 @@ export function libswordText(
             const id = `${stringHash(k1)}.0`;
             const data: HTMLData = {
               type: 'dictkey',
-              locationGB: { module, key: k1 },
+              locationGB: { otherMod: module, key: k1 },
             };
             html += `<div id="${id}" class="dictkey" data-data="${JSON_attrib_stringify(
               data
@@ -327,7 +327,7 @@ export function textChange(
           atext.dataset.data
         ) as HTMLData;
         if (locationGB) {
-          const { module: m, key: k } = locationGB;
+          const { otherMod: m, key: k } = locationGB;
           const key = genbookChange(m, k, next);
           if (key) {
             newPartialPinProps.modkey = key;

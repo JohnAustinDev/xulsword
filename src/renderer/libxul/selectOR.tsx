@@ -31,18 +31,19 @@ import log from '../log';
 import { addClass, xulDefaultProps, XulProps, xulPropTypes } from './xul';
 import { Vbox } from './boxes';
 import Menulist from './menulist';
+import ModuleMenu from './modulemenu';
 import './selectOR.css';
 
 // Allow users to select one or more chapters from any non-versekey SWORD
 // module parent node.
 
 export type SelectORMType = {
-  ormod: string; // Genbks | Dicts SWORD module code
+  otherMod: string; // Genbks | Dicts SWORD module code
   keys: string[];
 };
 
-export type ORModNodeList = {
-  ormod: string; // Genbks | Dicts SWORD module code
+export type NodeListOR = {
+  otherMod: string; // Genbks | Dicts SWORD module code
   label: string;
   labelClass: string;
   nodes: TreeNodeInfo[];
@@ -61,32 +62,36 @@ type FamilyNodes = {
 // are set will have their state kept withinin the component and any
 // corresponding select prop will be ignored.
 //
-// The ormods prop is an array of INSTALLED Genbks|Dicts modules to select
-// from. If left undefined, all installed non-versekey modules will be
-// available.
+// The otherMods prop is an array of INSTALLED non-versekey modules to
+// select from. If left undefined, all installed non-versekey modules will
+// be available.
 //
-// The ormodNodeLists prop is a list of Genbks|Dicts mods which need NOT BE
-// INSTALLED but the name and node list must be provided as ormodNodeLists[].
+// The nodeLists prop is a list of versekey mods to select from which need
+// NOT BE INSTALLED since the module and node list is provided.
+//
+// If initialORM or selectORM selects a module which is not installed, and
+// also has no corresponding nodeLists[] entry, all selectors but the module
+// selector will be disabled.
 export interface SelectORProps extends XulProps {
   initialORM?: Partial<SelectORMType>;
   selectORM?: Partial<SelectORMType>;
-  ormods?: string[];
-  ormodNodeLists?: ORModNodeList[];
-  enableMultipleSelection?: boolean;
-  enableParentSelection?: boolean;
-  disabled?: boolean;
-  onSelection?: (selection: SelectORMType, id?: string) => void;
+  otherMods?: string[];
+  nodeLists?: NodeListOR[];
+  enableMultipleSelection: boolean;
+  enableParentSelection: boolean;
+  disabled: boolean;
+  onSelection?: (selection: SelectORMType | undefined, id?: string) => void;
 }
 
 const defaultProps = {
   ...xulDefaultProps,
   initialORM: undefined,
   selectORM: undefined,
-  ormods: undefined,
-  ormodNodeLists: undefined,
+  otherMods: undefined,
+  nodeLists: undefined,
   enableMultipleSelection: false,
   enableParentSelection: false,
-  disabled: undefined,
+  disabled: false,
   onSelection: undefined,
 };
 
@@ -94,8 +99,8 @@ const propTypes = {
   ...xulPropTypes,
   initialORM: PropTypes.object,
   selectORM: PropTypes.object,
-  ormods: PropTypes.arrayOf(PropTypes.string),
-  ormodNodeLists: PropTypes.arrayOf(PropTypes.object),
+  otherMods: PropTypes.arrayOf(PropTypes.string),
+  nodeLists: PropTypes.arrayOf(PropTypes.object),
   enableMultipleSelection: PropTypes.bool,
   enableParentSelection: PropTypes.bool,
   disabled: PropTypes.bool,
@@ -103,7 +108,7 @@ const propTypes = {
 };
 
 interface SelectORState {
-  stateORM: SelectORMType;
+  stateORM: SelectORMType | undefined;
 }
 
 class SelectOR extends React.Component {
@@ -111,15 +116,13 @@ class SelectOR extends React.Component {
 
   static propTypes: typeof propTypes;
 
-  prevValues: SelectORMType;
-
   constructor(props: SelectORProps) {
     super(props);
-    const { initialORM, ormods, ormodNodeLists } = props;
+    const { initialORM, otherMods, nodeLists } = props;
     const defaultORM: SelectORMType = {
-      ormod:
-        (ormods && ormods[0]) ||
-        (ormodNodeLists && ormodNodeLists[0].ormod) ||
+      otherMod:
+        (otherMods && otherMods[0]) ||
+        (nodeLists && nodeLists[0].otherMod) ||
         G.Tabs.find((t) => !t.isVerseKey)?.module ||
         '',
       keys: [],
@@ -131,8 +134,6 @@ class SelectOR extends React.Component {
       },
     };
     this.state = s;
-
-    this.prevValues = clone(s.stateORM);
 
     this.onChange = this.onChange.bind(this);
     this.checkSelection = this.checkSelection.bind(this);
@@ -146,9 +147,12 @@ class SelectOR extends React.Component {
     checkSelection();
   }
 
-  componentDidUpdate(): void {
+  componentDidUpdate(
+    _prevProps: SelectORProps,
+    prevState: SelectORState
+  ): void {
     const { checkSelection } = this;
-    checkSelection();
+    checkSelection(prevState);
   }
 
   onChange(ev: React.SyntheticEvent) {
@@ -161,26 +165,32 @@ class SelectOR extends React.Component {
       e.currentTarget
     );
     if (targ) {
+      const { value } = e.target;
+      const tabType = (value && value in G.Tab && G.Tab[value].tabType) || '';
       this.setState((prevState: SelectORState) => {
-        let stateORM = realStateORM(prevState);
+        let stateORM: SelectORMType | undefined = realStateORM(prevState);
         if (targ.type === 'select-module') {
-          const ormod = e.target.value;
-          const nodes =
-            G.Tab[ormod].type === C.GENBOOK
-              ? genBookTreeNodes(G.DiskCache, G.LibSword, ormod)
-              : dictTreeNodes(getAllDictionaryKeyList(ormod), ormod);
-          const keys = [findFirstLeafNode(nodes, nodes).id.toString()];
-          stateORM = { ormod, keys };
-        } else if (targ.type === 'select-parent') {
+          let nodes: TreeNodeInfo[] = [];
+          if (tabType === 'Genbks') {
+            nodes = genBookTreeNodes(G.DiskCache, G.LibSword, value);
+          } else if (tabType === 'Dicts') {
+            nodes = dictTreeNodes(getAllDictionaryKeyList(value), value);
+          }
+          const leafNode = findFirstLeafNode(nodes, nodes);
+          const keys = leafNode ? [leafNode.id.toString()] : [];
+          stateORM = { otherMod: value, keys };
+        } else if (stateORM && targ.type === 'select-parent') {
           stateORM.keys = [e.target.value];
-        } else if (targ.type === 'select-child') {
+        } else if (stateORM && targ.type === 'select-child') {
           stateORM.keys = Array.from(e.target.selectedOptions).map(
             (o) => o.value
           );
         } else {
           throw new Error(`Unrecognized select: '${targ.type}'`);
         }
-        if (onSelection) onSelection(stateORM, props.id);
+        if (onSelection) {
+          onSelection(stateORM, props.id);
+        }
         return skipUpdate(prevState.stateORM, stateORM)
           ? null
           : ({ stateORM } as Partial<SelectORState>);
@@ -188,15 +198,16 @@ class SelectOR extends React.Component {
     }
   }
 
-  // Insure state and onSelection contains final select values
-  checkSelection() {
+  // Insure state and onSelection contains the real select values.
+  checkSelection(prevState?: SelectORState) {
+    const { stateORM } = prevState || {};
     const props = this.props as SelectORProps;
     const { onSelection } = props;
-    const { prevValues, realStateORM } = this;
-    const stateORM = realStateORM();
-    if (diff(stateORM, prevValues)) {
-      if (onSelection) onSelection(prevValues);
-      this.setState({ stateORM: prevValues } as Partial<SelectORState>);
+    const { realStateORM } = this;
+    const realORM = realStateORM();
+    if (!prevState || diff(stateORM, realORM)) {
+      if (onSelection) onSelection(realORM);
+      this.setState({ stateORM: realORM } as Partial<SelectORState>);
     }
   }
 
@@ -206,6 +217,7 @@ class SelectOR extends React.Component {
     const { realStateORM, skipUpdate } = this;
     this.setState((prevState: SelectORState) => {
       const stateORM = realStateORM(prevState);
+      if (!stateORM) return null;
       stateORM.keys = [id];
       if (onSelection) onSelection(stateORM, props.id);
       return skipUpdate(prevState.stateORM, stateORM)
@@ -215,90 +227,101 @@ class SelectOR extends React.Component {
   }
 
   // Don't trigger a state update when only ignored state values change.
-  skipUpdate(prevStateORM: SelectORMType, newStateORM: SelectORMType): boolean {
+  skipUpdate(
+    prevStateORM: SelectORMType | undefined,
+    newStateORM: SelectORMType | undefined
+  ): boolean {
     const props = this.props as SelectORProps;
     const { initialORM } = props;
     if (initialORM) {
-      const p = keep(
-        prevStateORM,
-        Object.keys(initialORM) as (keyof typeof initialORM)[]
-      );
-      const n = keep(
-        newStateORM,
-        Object.keys(initialORM) as (keyof typeof initialORM)[]
-      );
-      return !diff(p, n);
+      if (prevStateORM && newStateORM) {
+        const p = keep(
+          prevStateORM,
+          Object.keys(initialORM) as (keyof typeof initialORM)[]
+        );
+        const n = keep(
+          newStateORM,
+          Object.keys(initialORM) as (keyof typeof initialORM)[]
+        );
+        return !diff(p, n);
+      }
+      return prevStateORM === newStateORM;
     }
     return true;
   }
 
   // Use the selectORM child prop if initialORM child prop is not defined.
   // Otherwise, use the stateORM child prop.
-  realStateORM(prevState?: Partial<SelectORState>): SelectORMType {
+  realStateORM(prevState?: Partial<SelectORState>): SelectORMType | undefined {
     const props = this.props as SelectORProps;
     const state = clone(prevState || this.state) as SelectORState;
     const { selectORM, initialORM } = props;
     const { stateORM } = state;
     const selection = stateORM;
-    const checkProps: (keyof SelectORState['stateORM'])[] = ['ormod', 'keys'];
-    checkProps.forEach((p) => {
-      if (!(initialORM && p in initialORM)) {
-        if (selectORM && p in selectORM) selection[p] = selectORM[p] as any;
-        else
-          log.warn(
-            `SelectOR selectORM.${p} and initialORM.${p} are both undefined.`
-          );
-      }
-    });
+    if (selection) {
+      const checkProps: (keyof SelectORMType)[] = ['otherMod', 'keys'];
+      checkProps.forEach((p) => {
+        if (!(initialORM && p in initialORM)) {
+          if (selectORM && p in selectORM) selection[p] = selectORM[p] as any;
+          else
+            log.warn(
+              `SelectOR selectORM.${p} and initialORM.${p} are both undefined.`
+            );
+        }
+      });
+    }
     return selection;
   }
 
   render() {
     const props = this.props as SelectORProps;
     const {
-      ormods: ormodsProp,
-      ormodNodeLists,
+      otherMods: otherModsProp,
+      nodeLists,
       enableMultipleSelection,
       enableParentSelection,
     } = props;
-    let { disabled } = props;
+    const { disabled } = props;
     const { realStateORM, openParent, onChange } = this;
-    const { ormod, keys } = realStateORM();
+    const realState = realStateORM();
+    if (!realState) return null;
+    const { otherMod, keys } = realState;
 
     // Get modules to be made available for selection, and their node lists:
-    const list: ORModNodeList[] = ormodNodeLists || [];
-    const propNodeLists = (
-      ormodsProp && !ormodsProp.length
+    const list: NodeListOR[] = nodeLists || [];
+    const propNodeLists: NodeListOR[] = (
+      otherModsProp && !otherModsProp.length
         ? []
-        : ormodsProp || G.Tabs.map((t) => t.module)
+        : otherModsProp || G.Tabs.map((t) => t.module)
     )
-      .filter(
-        (m) =>
-          m && m in G.Tab && [C.GENBOOK, C.DICTIONARY].includes(G.Tab[m].type)
-      )
+      .filter((m) => m && m in G.Tab && !G.Tab[m].isVerseKey)
       .map((m) => {
+        let nodes: TreeNodeInfo[] = [];
+        if (G.Tab[m].tabType === 'Genbks') {
+          nodes = genBookTreeNodes(G.DiskCache, G.LibSword, m);
+        } else if (G.Tab[m].tabType === 'Dicts') {
+          nodes = dictTreeNodes(getAllDictionaryKeyList(m), m);
+        }
         return {
-          ormod: m,
+          otherMod: m,
           label: G.Tab[m].label,
           labelClass: G.Tab[m].labelClass,
-          nodes:
-            G.Tab[m].type === C.GENBOOK
-              ? genBookTreeNodes(G.DiskCache, G.LibSword, m)
-              : dictTreeNodes(getAllDictionaryKeyList(m), m),
+          nodes,
         };
       });
     list.push(...propNodeLists);
 
-    const isDictMod = ormod in G.Tab && G.Tab[ormod].tabType === 'Dicts';
-    let nodes = list.find((l) => l.ormod === ormod)?.nodes || [];
+    const isDictMod = otherMod in G.Tab && G.Tab[otherMod].tabType === 'Dicts';
+    let nodes = list.find((l) => l.otherMod === otherMod)?.nodes || [];
+    let selectedModuleIsInstalled: boolean;
     if (!nodes || nodes.length === 0) {
+      selectedModuleIsInstalled = false;
       // If there is no no list available (ie. the module is no longer
       // installed) then create a dummy node list with no options.
       // Note: it's ok to treat Dict as GBmod here since this dummy
       // cannot be edited.
-      disabled = true;
-      const ancIDs = gbAncestorIDs(keys[0]);
-      ancIDs.push(keys[0]);
+      const ancIDs = keys[0] ? gbAncestorIDs(keys[0]) : [];
+      if (keys[0]) ancIDs.push(keys[0]);
       let pn: TreeNodeInfo | undefined;
       for (let i = 0; i < ancIDs.length; i += 1) {
         const p = ancIDs[i].split(C.GBKSEP);
@@ -316,12 +339,12 @@ class SelectOR extends React.Component {
         pn = n;
       }
       list.push({
-        ormod,
-        label: ormod,
+        otherMod,
+        label: otherMod,
         labelClass: 'cs-locale',
         nodes,
       });
-    }
+    } else selectedModuleIsInstalled = true;
     if (!nodes || !nodes.length) return null;
     const selectedNodes = keys.map((k) => findTreeNode(nodes, k));
     const showNodes = (
@@ -329,9 +352,12 @@ class SelectOR extends React.Component {
         ? nodes
         : selectedNodes
     ) as TreeNodeInfo[];
+    const leafNode = findFirstLeafNode(nodes, showNodes);
+    if (!leafNode) return null;
+
     const { ancestorNodes, childNodes } = nodeFamily(
       nodes,
-      findFirstLeafNode(nodes, showNodes),
+      leafNode,
       isDictMod
     );
 
@@ -339,25 +365,17 @@ class SelectOR extends React.Component {
     const selects: JSX.Element[] = [];
 
     // Module selector
-    this.prevValues.ormod = ormod;
     selects.push(
-      <Menulist
+      <ModuleMenu
+        key={['sm', otherMod].join('.')}
         className="select-module"
-        key={['sm', ormod].join('.')}
-        value={ormod}
-        disabled={disabled || (ormod === list[0].ormod && list.length === 1)}
+        value={otherMod}
+        modules={list.map((x) => x.otherMod)}
+        disabled={
+          disabled || (otherMod === list[0].otherMod && list.length === 1)
+        }
         onChange={onChange}
-      >
-        {list.map((x) => (
-          <option
-            key={['smop', x.ormod].join('.')}
-            className={x.labelClass}
-            value={x.ormod}
-          >
-            {x.label}
-          </option>
-        ))}
-      </Menulist>
+      />
     );
 
     // Ancestor selector(s) if any
@@ -372,7 +390,7 @@ class SelectOR extends React.Component {
             ].join(' ')}
             key={['sp', n.id].join('.')}
             value={n.id.toString()}
-            disabled={disabled}
+            disabled={disabled || !selectedModuleIsInstalled}
             data-index={i}
             onChange={onChange}
           >
@@ -380,7 +398,7 @@ class SelectOR extends React.Component {
               const label = cn.label.toString();
               const className = !Number.isNaN(Number(label))
                 ? undefined
-                : `cs-${ormod}`;
+                : `cs-${otherMod}`;
               return (
                 <option
                   key={['spop', cn.id].join('.')}
@@ -397,42 +415,46 @@ class SelectOR extends React.Component {
     );
 
     // Child selector
-    this.prevValues.keys = keys;
     const value = enableMultipleSelection ? keys : keys[0];
     const parentNode = ancestorNodes.at(-1);
-    selects.push(
-      <Menulist
-        className="select-child"
-        key={['ch', parentNode ? parentNode.id : module].join('.')}
-        multiple={!!enableMultipleSelection}
-        value={value}
-        disabled={disabled}
-        onChange={onChange}
-      >
-        {childNodes.map((n) => {
-          const className = !Number.isNaN(Number(n.label))
-            ? undefined
-            : `cs-${ormod}`;
-          const clickHandler = {} as any;
-          if (enableMultipleSelection && n.childNodes && n.childNodes.length) {
-            clickHandler[enableParentSelection ? 'onDoubleClick' : 'onClick'] =
-              (e: React.MouseEvent<HTMLSelectElement>) => {
+    if (childNodes.length) {
+      selects.push(
+        <Menulist
+          className="select-child"
+          key={['ch', parentNode ? parentNode.id : module].join('.')}
+          multiple={!!enableMultipleSelection}
+          value={value}
+          disabled={disabled || !selectedModuleIsInstalled}
+          onChange={onChange}
+        >
+          {childNodes.map((n) => {
+            const className = !Number.isNaN(Number(n.label))
+              ? undefined
+              : `cs-${otherMod}`;
+            const clickHandler = {} as any;
+            if (enableMultipleSelection && n.childNodes?.length) {
+              clickHandler[
+                enableParentSelection ? 'onDoubleClick' : 'onClick'
+              ] = (e: React.MouseEvent<HTMLSelectElement>) => {
                 openParent(e.currentTarget.value);
               };
-          }
-          return (
-            <option
-              key={['chop', n.id].join('.')}
-              className={className}
-              value={n.id}
-              {...clickHandler}
-            >
-              {`${n.childNodes && n.childNodes.length ? '❭ ' : ''}${n.label}`}
-            </option>
-          );
-        })}
-      </Menulist>
-    );
+            }
+            const ids = [n.id];
+            n.childNodes?.forEach((cn) => ids.push(cn.id));
+            return (
+              <option
+                key={['chop', className, ...ids].join('.')}
+                className={className}
+                value={n.id}
+                {...clickHandler}
+              >
+                {`${n.childNodes && n.childNodes.length ? '❭ ' : ''}${n.label}`}
+              </option>
+            );
+          })}
+        </Menulist>
+      );
+    }
 
     return (
       <Vbox {...addClass('selector', this.props)} pack="start" align="start">

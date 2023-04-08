@@ -4,14 +4,17 @@
 import { ItemRendererProps } from '@blueprintjs/select';
 import React from 'react';
 import {
+  clone,
   findBookmarkItem,
   findParentOfBookmarkItem,
   forEachBookmarkItem,
+  getModuleOfObject,
   ofClass,
   randomID,
   stringHash,
   tableRowsToSelection,
   tableSelectDataRows,
+  xulswordLocation,
 } from '../../common';
 import S from '../../defaultPrefs';
 import C from '../../constant';
@@ -26,7 +29,7 @@ import '@blueprintjs/select/lib/css/blueprint-select.css';
 import type {
   BookmarkFolderType,
   BookmarkItemType,
-  ContextData,
+  ContextDataType,
   MethodAddCaller,
   GType,
   LocationORType,
@@ -112,9 +115,9 @@ export function onDoubleClick(this: BMManagerWin, ex: React.SyntheticEvent) {
   if (bookmark) {
     const bookmarkItem = findBookmarkItem(rootfolder, bookmark);
     if (bookmarkItem?.type === 'bookmark' && bookmarkItem.location) {
-      const { location } = bookmarkItem;
+      const { location } = clone(bookmarkItem);
       if ('v11n' in location) {
-        location.isBible = bookmarkItem.tabType === 'Texts';
+        delete location.vkMod;
         G.Commands.goToLocationVK(location, location);
       } else {
         G.Commands.goToLocationGB(location);
@@ -181,20 +184,12 @@ export function buttonHandler(this: BMManagerWin, e: React.SyntheticEvent) {
         break;
       }
       case 'add': {
-        const xulsword = G.Prefs.getComplexValue(
-          'xulsword'
-        ) as typeof S.prefs.xulsword;
-        const { panels, location } = xulsword;
-        let module = panels.find((m) => m && m in G.Tab && G.Tab[m].isVerseKey);
-        if (!module) module = G.Tabs.find((t) => t.isVerseKey)?.module;
-        if (module) {
-          titleKey = 'menu.bookmark.add';
-          bmPropertiesState = {
-            treeSelection: selectedFolder,
-            anyChildSelectable: false,
-          };
-          newitem = { module, location };
-        }
+        titleKey = 'menu.bookmark.add';
+        bmPropertiesState = {
+          treeSelection: selectedFolder,
+          anyChildSelectable: false,
+        };
+        newitem = { location: xulswordLocation(G.Tab, G.Prefs) };
         break;
       }
       case 'properties': {
@@ -356,7 +351,9 @@ export function itemRenderer(
   let sampleText = '';
   let sampleModule = '';
   if (item.type === 'bookmark') {
-    ({ sampleText, sampleModule } = item);
+    ({ sampleText } = item);
+    const { location } = item;
+    sampleModule = getModuleOfObject(location) || '';
   }
   const shortRE1 = new RegExp(
     `^(.{${C.UI.BMManager.searchResultBreakAfter}}.*?)\\b.*$`
@@ -422,7 +419,9 @@ export function getTableData(
     let sampleText = '';
     let sampleModule = '';
     if (item.type === 'bookmark') {
-      ({ sampleText, sampleModule } = item);
+      ({ sampleText } = item);
+      const { location } = item;
+      sampleModule = getModuleOfObject(location) || '';
     }
     const classes: string[] = [];
     if (cut && cut.includes(id)) {
@@ -483,10 +482,10 @@ export function getTableData(
 export function bmContextData(
   this: BMManagerWin,
   elem: HTMLElement
-): ContextData {
+): ContextDataType {
   const { selectedItems } = this.state as BMManagerState;
   const data = this.tableData;
-  const r: ContextData = { type: 'bookmarkManager' };
+  const r: ContextDataType = { type: 'bookmarkManager' };
   const point = ofClass(['bp4-table-cell'], elem);
   if (point) {
     const ri = point.element.className.match(/\bbp4-table-cell-row-(\d+)\b/);
@@ -530,7 +529,7 @@ export function printableItem(
             </span>
           );
         } else if (location) {
-          const { module, key } = location;
+          const { otherMod: module, key } = location;
           ref = (
             <>
               {key.split(C.GBKSEP).map((k, i) => (

@@ -18,8 +18,8 @@ import type {
   OSISBookType,
   TransactionType,
   BookmarkItemType,
+  LocationVKCommType,
 } from '../type';
-import type { SelectVKMType } from '../renderer/libxul/selectVK';
 
 type BMkeys =
   | keyof BookmarkItem
@@ -81,7 +81,6 @@ const bmPropertyTypes: Record<BMkeys, any> = {
   ] as StringRegex,
   location: 'location',
   sampleText: 'string',
-  sampleModule: 'string',
   childNodes: 'array',
   hasCaret: 'boolean',
   isExpanded: 'boolean',
@@ -102,7 +101,6 @@ const bmRequiredBookmarkProps: (keyof BookmarkType)[] = [
   'tabType',
   'location',
   'sampleText',
-  'sampleModule',
 ];
 
 const bmRequiredFolderProps: (keyof BookmarkFolderType)[] = ['childNodes'];
@@ -154,10 +152,22 @@ function isValidItem(
       switch (type) {
         case 'location': {
           if (v && typeof v === 'object') {
-            if ('v11n' in v) {
-              const v2 = v as LocationVKType;
+            if ('commMod' in v) {
+              const v2 = v as LocationVKCommType;
+              const { commMod, v11n } = v2;
               const vk = verseKey(v2);
-              if (!vk.book) {
+              if (!vk.book || !commMod || !v11n) {
+                isValid = false;
+                newmods.reports.push({
+                  error: `Bookmark ${item.id} location failed to validate: ${v}`,
+                });
+                log.debug(`FAILED:`, item, k, v);
+              } else isValid = true;
+            } else if ('v11n' in v) {
+              const v2 = v as LocationVKType;
+              const { v11n } = v2;
+              const vk = verseKey(v2);
+              if (!vk.book || !v11n) {
                 isValid = false;
                 newmods.reports.push({
                   error: `Bookmark ${item.id} location failed to validate: ${v}`,
@@ -166,10 +176,10 @@ function isValidItem(
               } else isValid = true;
             } else {
               const v2 = v as LocationORType;
-              const { module, key, paragraph } = v2;
+              const { otherMod, key, paragraph } = v2;
               isValid =
-                !!module &&
-                typeof module === 'string' &&
+                !!otherMod &&
+                typeof otherMod === 'string' &&
                 !!key &&
                 typeof key === 'string' &&
                 !(paragraph && typeof paragraph !== 'number');
@@ -258,6 +268,7 @@ export function importDeprecatedBookmarks(
   const bms: [string, number, BookmarkItemType | null][] = filedata
     .split('<bMRet>')
     .map((record) => {
+      let ret: [string, number, BookmarkItemType | null] = ['', 0, null];
       const propertyValues = record.split('<bg/>');
       let parentID = propertyValues.shift();
       if (parentID === deprecatedRootID) parentID = parentFolder.id;
@@ -296,7 +307,7 @@ export function importDeprecatedBookmarks(
           creationDate: Date.parse(CREATIONDATE),
         };
         if (TYPE === 'Folder') {
-          return [
+          ret = [
             parentID,
             Number(index),
             {
@@ -307,37 +318,44 @@ export function importDeprecatedBookmarks(
               childNodes: [],
             },
           ];
-        }
-        let location: SelectVKMType | LocationORType;
-        if (isVerseKey) {
-          location = {
-            vkmod: MODULE,
-            book: BOOK as OSISBookType,
-            chapter: Number(CHAPTER),
-            verse: Number(VERSE),
-            lastverse: Number(LASTVERSE),
-            v11n: 'KJV',
-          };
+        } else if (isVerseKey) {
+          ret = [
+            parentID,
+            Number(index),
+            {
+              ...item,
+              type: 'bookmark',
+              tabType: 'Texts',
+              location: {
+                vkMod: MODULE,
+                book: BOOK as OSISBookType,
+                chapter: Number(CHAPTER),
+                verse: Number(VERSE),
+                lastverse: Number(LASTVERSE),
+                v11n: 'KJV',
+              },
+              sampleText: BMTEXT,
+              hasCaret: false,
+            },
+          ];
         } else {
           const paragraph =
             VERSE && !Number.isNaN(Number(VERSE)) ? Number(VERSE) : undefined;
-          location = { module: MODULE, key: CHAPTER, paragraph };
+          ret = [
+            parentID,
+            Number(index),
+            {
+              ...item,
+              type: 'bookmark',
+              tabType: 'Genbks',
+              location: { otherMod: MODULE, key: CHAPTER, paragraph },
+              sampleText: BMTEXT,
+              hasCaret: false,
+            },
+          ];
         }
-        return [
-          parentID,
-          Number(index),
-          {
-            ...item,
-            type: 'bookmark',
-            tabType: isVerseKey ? 'Texts' : 'Genbks',
-            location,
-            sampleText: BMTEXT,
-            sampleModule: MODULE,
-            hasCaret: false,
-          },
-        ];
       }
-      return ['', 0, null];
+      return ret;
     });
   // Now assemble them in the return folder
   bms

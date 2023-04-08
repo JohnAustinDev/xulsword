@@ -21,11 +21,57 @@ import './selectVK.css';
 
 import type {
   BookGroupType,
+  LocationVKCommType,
   LocationVKType,
   OSISBookType,
-  V11nType,
 } from '../../type';
 import ModuleMenu from './modulemenu';
+
+export type SelectVKType =
+  | (LocationVKType & {
+      lastchapter?: number;
+    })
+  | (LocationVKCommType & {
+      lastchapter?: number;
+    });
+
+export const defaultVKM: SelectVKType = {
+  book: 'Gen',
+  chapter: 1,
+  v11n: 'KJV',
+};
+
+// The SelectVK will either keep its own location state OR be a
+// totally controlled component: If the 'initialVK' prop is
+// undefined, the component will be totally controlled by the
+// selectVK prop and will keep no state of its own. If the
+// 'initialVK' prop is defined, state will be kept internally,
+// and any selection prop value will be ignored.
+//
+// If options are left undefined, valid lists will be automatically
+// created. Otherwise only the listed options (that are valid) will
+// be provided. If an option is [] then the corresponding selector
+// will be hidden. If the vkMods option is [] its selector will be
+// hidden and available selections will include entire verse system,
+// otherwise the available selections will include only options
+// within the selected vkMod.
+//
+// If initialVK or selectVK selects a module that is not installed,
+// all selectors but the module selector will be disabled.
+export interface SelectVKProps extends XulProps {
+  initialVK?: SelectVKType;
+  selectVK?: SelectVKType;
+  options: {
+    books?: string[];
+    chapters?: number[];
+    lastchapters?: number[];
+    verses?: number[];
+    lastverses?: number[];
+    vkMods?: string[] | 'Texts' | 'Comms';
+  };
+  disabled: boolean;
+  onSelection: (selection: SelectVKType | undefined, id?: string) => void;
+}
 
 const defaultProps = {
   ...xulDefaultProps,
@@ -35,7 +81,7 @@ const defaultProps = {
     lastChapters: undefined,
     verses: undefined,
     lastverses: undefined,
-    vkmods: undefined,
+    vkMods: undefined,
   },
   disabled: false,
   onSelection: undefined,
@@ -43,22 +89,22 @@ const defaultProps = {
 
 const propTypes = {
   ...xulPropTypes,
-  initialVKM: PropTypes.shape({
+  initialVK: PropTypes.shape({
     book: PropTypes.string,
     chapter: PropTypes.number,
     verse: PropTypes.number,
     lastchapter: PropTypes.number,
     lastverse: PropTypes.number,
-    vkmod: PropTypes.string,
+    vkMod: PropTypes.string,
     v11n: PropTypes.string,
   }),
-  selectVKM: PropTypes.shape({
+  selectVK: PropTypes.shape({
     book: PropTypes.string,
     chapter: PropTypes.number,
     verse: PropTypes.number,
     lastchapter: PropTypes.number,
     lastverse: PropTypes.number,
-    vkmod: PropTypes.string,
+    vkMod: PropTypes.string,
     v11n: PropTypes.string,
   }),
   options: PropTypes.shape({
@@ -67,97 +113,54 @@ const propTypes = {
     verses: PropTypes.arrayOf(PropTypes.number),
     lastchapters: PropTypes.arrayOf(PropTypes.number),
     lastverses: PropTypes.arrayOf(PropTypes.number),
-    vkmods: PropTypes.arrayOf(PropTypes.string),
+    vkMods: PropTypes.oneOfType([
+      PropTypes.arrayOf(PropTypes.string),
+      PropTypes.string,
+    ]),
   }),
   disabled: PropTypes.bool,
   onSelection: PropTypes.func,
 };
 
-export type SelectVKMType = LocationVKType & {
-  vkmod: string;
-  lastchapter?: number;
-  isBible?: boolean;
-};
-
-export const defaultVKM = {
-  book: 'Gen' as OSISBookType,
-  chapter: 1,
-  vkmod: '',
-  v11n: 'KJV' as V11nType,
-};
-
-// The VKSelect will either keep its own location state OR be a
-// totally controlled component: If the 'initialVKM' prop is
-// undefined, the component will be totally controlled by the
-// selectVKM prop and will keep no state of its own. If the
-// 'initialVKM' prop is defined, state will be kept internally,
-// and any selection prop value will be ignored.
-
-// If options are left undefined, valid lists will be automatically
-// created. Otherwise only the listed options (that are valid) will
-// be provided. If an option is [] then the corresponding selector
-// will be hidden. If the vkmods option is [] its selector will be
-// hidden and available selections will include entire verse system,
-// otherwise the available selections will include only options
-// within the selected vkmod.
-export interface SelectVKProps extends XulProps {
-  initialVKM: SelectVKMType | undefined;
-  selectVKM: SelectVKMType | undefined;
-  options: {
-    books?: string[];
-    chapters?: number[];
-    lastchapters?: number[];
-    verses?: number[];
-    lastverses?: number[];
-    vkmods?: string[];
-  };
-  disabled: boolean;
-  onSelection: (selection: SelectVKMType, id: string) => void;
-}
-
 interface SelectVKState {
-  selection: SelectVKMType | null;
+  selection: SelectVKType | undefined;
 }
 
 export type SelectVKChangeEvents =
   | React.ChangeEvent<HTMLInputElement>
   | React.ChangeEvent<HTMLSelectElement>;
 
-// React Bibleselect
+// React VerseKey Select
 class SelectVK extends React.Component {
   static defaultProps: typeof defaultProps;
 
   static propTypes: typeof propTypes;
 
-  newselection: SelectVKMType | null;
+  selectValues: SelectVKType | undefined;
 
   constructor(props: SelectVKProps) {
     super(props);
 
     const s: SelectVKState = {
-      selection: props.initialVKM || null,
+      selection: props.initialVK,
     };
     this.state = s;
 
-    this.newselection = null;
+    this.selectValues = undefined;
 
+    this.checkSelection = this.checkSelection.bind(this);
     this.handleChange = this.handleChange.bind(this);
     this.getNumberOptions = this.getNumberOptions.bind(this);
   }
 
-  componentDidUpdate(prevProps: SelectVKProps, prevState: SelectVKState) {
-    const { selection: stateVKM } = prevState;
-    const { initialVKM } = prevProps;
-    const { newselection } = this;
-    if (initialVKM !== undefined && newselection) {
-      const d = diff(stateVKM, newselection);
-      if (d) {
-        const s: Partial<SelectVKState> = {
-          selection: newselection,
-        };
-        this.setState(s);
-      }
-    }
+  componentDidMount() {
+    const { checkSelection } = this;
+    checkSelection();
+  }
+
+  componentDidUpdate(_prevProps: SelectVKProps, prevState: SelectVKState) {
+    const { checkSelection } = this;
+    checkSelection(prevState);
   }
 
   // Get an updated selection based on last user input, and call onSelection.
@@ -166,7 +169,7 @@ class SelectVK extends React.Component {
     const state = this.state as SelectVKState;
     const props = this.props as SelectVKProps;
     const { selection: stateVKM } = state;
-    const { initialVKM, selectVKM: propsVKM } = props;
+    const { initialVK, selectVK: propsVK } = props;
     const e = es as SelectVKChangeEvents;
     const cls = ofClass(
       [
@@ -180,19 +183,27 @@ class SelectVK extends React.Component {
       e.target
     );
     if (cls) {
-      let s = initialVKM === undefined ? propsVKM : stateVKM;
-      s = s ? clone(s) : defaultVKM;
+      let s: SelectVKType | undefined =
+        initialVK === undefined ? propsVK : stateVKM || undefined;
+      s = s ? (clone(s) as SelectVKType) : defaultVKM;
       const { onSelection } = this.props as SelectVKProps;
       const { value } = e.target;
       const [, id] = cls.type.split('-');
       switch (id) {
         case 'vkmod': {
-          s.vkmod = value;
+          const isComm = value in G.Tab && G.Tab[value].tabType === 'Comms';
+          if (isComm) {
+            (s as LocationVKCommType).commMod = value;
+            s.vkMod = undefined;
+          } else {
+            if ('commMod' in s) delete (s as any).commMod;
+            s.vkMod = value;
+          }
           s.v11n = (value in G.Tab && G.Tab[value].v11n) || 'KJV';
           break;
         }
         case 'book': {
-          if (initialVKM !== undefined) {
+          if (initialVK !== undefined) {
             s.chapter = 1;
             s.verse = 1;
             s.lastchapter = 1;
@@ -204,7 +215,7 @@ class SelectVK extends React.Component {
         default: {
           s[id as 'chapter' | 'lastchapter' | 'verse' | 'lastverse'] =
             Number(value);
-          if (initialVKM !== undefined) {
+          if (initialVK !== undefined) {
             let updateverse = false;
             if (id === 'chapter') {
               updateverse = true;
@@ -214,16 +225,20 @@ class SelectVK extends React.Component {
             if (updateverse) s.verse = 1;
             if (id === 'lastchapter') updateverse = true;
             if (updateverse) {
+              let module = s.vkMod;
+              if ('commMod' in s) module = (s as LocationVKCommType).commMod;
               s.lastverse = getMaxVerse(
-                (s.vkmod in G.Tab && G.Tab[s.vkmod].v11n) || s.v11n || 'KJV',
+                (module && module in G.Tab && G.Tab[module].v11n) ||
+                  s.v11n ||
+                  'KJV',
                 `${s.book}.${s.lastchapter}`
               );
             }
           }
         }
       }
-      if (initialVKM !== undefined) {
-        this.setState({ selection: s });
+      if (initialVK !== undefined) {
+        this.setState({ selection: s } as SelectVKState);
       }
       if (typeof onSelection === 'function') {
         onSelection(s, props.id || '');
@@ -239,7 +254,7 @@ class SelectVK extends React.Component {
     max: number
   ) {
     const props = this.props as SelectVKProps;
-    const { initialVKM } = props;
+    const { initialVK } = props;
     let oc = options;
     if (!oc) {
       oc = [];
@@ -251,12 +266,12 @@ class SelectVK extends React.Component {
     }
     const ocf = oc.filter((c) => c >= min && c <= max);
     let nsel = selected;
-    if (initialVKM !== undefined) {
+    if (initialVK !== undefined) {
       if (nsel && ocf && !ocf.includes(nsel)) {
         [nsel] = ocf;
       }
     }
-    if (nsel && this.newselection) this.newselection[selector] = nsel;
+    if (nsel && this.selectValues) this.selectValues[selector] = nsel;
     if (nsel && !ocf.includes(nsel)) {
       ocf.push(nsel);
     }
@@ -269,25 +284,61 @@ class SelectVK extends React.Component {
       ));
   }
 
+  checkSelection(prevState?: SelectVKState) {
+    const props = this.props as SelectVKProps;
+    const { id, initialVK, onSelection } = props;
+    const { selection: stateVKM } = prevState || {};
+    const { selectValues } = this;
+    if (!prevState || (initialVK !== undefined && selectValues)) {
+      const d = diff(stateVKM, selectValues);
+      if (d) {
+        const s: Partial<SelectVKState> = {
+          selection: selectValues,
+        };
+        if (onSelection) onSelection(selectValues, id?.toString());
+        this.setState(s);
+      }
+    }
+  }
+
   render() {
     const props = this.props as SelectVKProps;
     const state = this.state as SelectVKState;
 
-    // Use selectVKM prop if initialVKM is undefined, otherwise use stateVKM.
-    const { selectVKM: propsVKM, initialVKM } = props;
+    // Use selectVK prop if initialVK is undefined, otherwise use stateVKM.
+    const { selectVK: propsVK, initialVK } = props;
     const { selection: stateVKM } = state;
-    let selection = initialVKM === undefined ? propsVKM : stateVKM;
+    let selection = initialVK === undefined ? propsVK : stateVKM;
     if (!selection) selection = defaultVKM;
 
-    this.newselection = {} as SelectVKMType;
-    const { book, chapter, verse, lastverse, lastchapter, vkmod } = selection;
+    this.selectValues = (stateVKM ? clone(stateVKM) : {}) as SelectVKType;
+    const { book, chapter, verse, lastverse, lastchapter } = selection;
+    let { vkMod } = selection;
+    if ('commMod' in selection) {
+      ({ commMod: vkMod } = selection as LocationVKCommType);
+    }
     const { options, disabled } = props;
-    const { books, chapters, lastchapters, verses, lastverses, vkmods } =
-      options;
+    const {
+      books,
+      chapters,
+      lastchapters,
+      verses,
+      lastverses,
+      vkMods: vkm,
+    } = options;
     const { handleChange } = this;
 
-    const tab = (vkmod && G.Tab[vkmod]) || null;
+    const tab = (vkMod && G.Tab[vkMod]) || null;
     const v11n = (tab && tab.v11n) || selection.v11n || 'KJV';
+    const isComm = tab && tab.tabType === 'Comms';
+    let modules: string[];
+    if (Array.isArray(vkm)) {
+      modules = vkm.filter((m) => m && m in G.Tab && G.Tab[m].isVerseKey);
+    } else if (vkm === 'Texts' || vkm === 'Comms') {
+      modules = G.Tabs.filter((t) => t.tabType === vkm).map((t) => t.module);
+    } else {
+      modules = G.Tabs.filter((t) => t.isVerseKey).map((t) => t.module);
+    }
 
     // Get the appropriate options for each selector, adjusting selection
     // only if the component is keeping its own selection state and the
@@ -296,8 +347,7 @@ class SelectVK extends React.Component {
     // Bible book options are either those passed in the books prop or are
     // all books in the verse system. When the module selector is visible
     // and an installed module is selected, books not present in the module
-    // are removed from the list. All books are sorted in v11n order and
-    // are unique.
+    // are removed from the list. All books are sorted in v11n order.
     const bkbgs = (books ||
       G.BkChsInV11n[v11n].map((r) => r[0])) as OSISBookType[];
     const bookset: Set<OSISBookType> = new Set();
@@ -310,18 +360,18 @@ class SelectVK extends React.Component {
       }
     });
     const filteredbooks =
-      tab && vkmods?.length !== 0
+      tab && modules?.length !== 0
         ? Array.from(bookset).filter((b) =>
             G.getBooksInModule(tab.module).includes(b)
           )
         : Array.from(bookset);
     let sel = book;
-    if (initialVKM !== undefined) {
+    if (initialVK !== undefined) {
       if (sel && !filteredbooks.includes(sel)) {
         [sel] = filteredbooks;
       }
     }
-    this.newselection.book = sel;
+    this.selectValues.book = sel;
     if (sel && !filteredbooks.includes(sel)) {
       filteredbooks.push(sel);
     }
@@ -376,23 +426,26 @@ class SelectVK extends React.Component {
         : 0
     );
 
-    // Bible module options are either those of the vkmods prop or all installed
-    // Bible modules. If the books prop is controlling book options, modules not
-    // containing the selected book are removed.
-    const controlledBook = (books?.length || 0) > 0 && book;
-    const thevkmods =
-      vkmods || G.Tabs.filter((t) => t.type === C.BIBLE).map((t) => t.module);
-    const newvkmods = thevkmods.filter(
-      (m) => !controlledBook || G.getBooksInModule(m).includes(controlledBook)
-    );
-    let vksel = vkmod;
-    if (initialVKM !== undefined) {
-      if (!vksel || !newvkmods.includes(vksel)) {
-        [vksel] = newvkmods;
+    // Module options are either those of the vkMods prop or all installed VerseKey
+    // modules. If the books prop is controlling book options, modules not containing
+    // the selected book are removed.
+    if ((books?.length || 0) > 0) {
+      modules = modules.filter((m) => G.getBooksInModule(m).includes(book));
+    }
+    let vkSel = vkMod;
+    if (initialVK !== undefined) {
+      if (!vkSel || !modules.includes(vkSel)) {
+        [vkSel] = modules;
       }
     }
-    this.newselection.vkmod = vksel;
-    this.newselection.v11n = v11n;
+    if (vkMod && isComm) {
+      (this.selectValues as LocationVKCommType).commMod = vkMod;
+      this.selectValues.vkMod = undefined;
+    } else {
+      delete (this.selectValues as any).commMod;
+      this.selectValues.vkMod = vkMod;
+    }
+    this.selectValues.v11n = v11n;
 
     const {
       book: b,
@@ -400,8 +453,12 @@ class SelectVK extends React.Component {
       verse: v,
       lastverse: lv,
       lastchapter: lc,
-      vkmod: vm,
-    } = this.newselection;
+    } = this.selectValues;
+    let { vkMod: vkmod } = this.selectValues;
+    if ('commMod' in this.selectValues) {
+      vkmod = this.selectValues.commMod;
+    }
+    const selectedModuleIsInstalled = vkmod && vkmod in G.Tab;
 
     return (
       <Hbox pack="start" align="center" {...addClass('selectvk', this.props)}>
@@ -410,7 +467,7 @@ class SelectVK extends React.Component {
             className="vk-book"
             value={b}
             options={newbooks}
-            disabled={disabled}
+            disabled={disabled || !selectedModuleIsInstalled}
             onChange={handleChange}
           />
         )}
@@ -419,7 +476,7 @@ class SelectVK extends React.Component {
             className="vk-chapter"
             value={(c || 1).toString()}
             options={newchapters}
-            disabled={disabled}
+            disabled={disabled || !selectedModuleIsInstalled}
             onChange={handleChange}
           />
         )}
@@ -430,7 +487,7 @@ class SelectVK extends React.Component {
               className="vk-verse"
               value={(v || 1).toString()}
               options={newverses}
-              disabled={disabled}
+              disabled={disabled || !selectedModuleIsInstalled}
               onChange={handleChange}
             />
           </>
@@ -444,7 +501,7 @@ class SelectVK extends React.Component {
             className="vk-lastchapter"
             value={(lc || chapter || 1).toString()}
             options={newlastchapters}
-            disabled={disabled}
+            disabled={disabled || !selectedModuleIsInstalled}
             onChange={handleChange}
           />
         )}
@@ -456,20 +513,22 @@ class SelectVK extends React.Component {
             className="vk-lastverse"
             value={(lv || verse || 1).toString()}
             options={newlastverses}
-            disabled={disabled}
+            disabled={disabled || !selectedModuleIsInstalled}
             onChange={handleChange}
           />
         )}
         <Spacer flex="1" />
-        {newvkmods.length > 0 && (
-          <ModuleMenu
-            className="vk-vkmod"
-            value={vm}
-            modules={newvkmods}
-            disabled={disabled}
-            onChange={handleChange}
-          />
-        )}
+        <div className="mod-select">
+          {modules.length > 0 && (
+            <ModuleMenu
+              className="vk-vkmod"
+              value={vkmod}
+              modules={modules}
+              disabled={disabled}
+              onChange={handleChange}
+            />
+          )}
+        </div>
       </Hbox>
     );
   }

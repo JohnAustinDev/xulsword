@@ -20,7 +20,6 @@ import type {
   PinPropsType,
   V11nType,
   OSISBookType,
-  TabTypes,
   TabType,
 } from '../../type';
 import type Xulsword from '../xulsword/xulsword';

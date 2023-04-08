@@ -196,7 +196,7 @@ export function setViewportPanels(
   const panelWidths = getPanelWidths({ panels, ilModules, isPinned });
   // If a module is already showing, just update its key (if it has one).
   modules.forEach((x, ix) => {
-    const m = !x || typeof x === 'string' ? x : x.module;
+    const m = !x || typeof x === 'string' ? x : x.otherMod;
     const k = !x || typeof x === 'string' ? '' : x.key;
     if (m) {
       const p = panels.indexOf(m);
@@ -230,7 +230,7 @@ export function setViewportPanels(
       if (typeof m === 'string') {
         module = m;
       } else if (m) {
-        ({ module, key } = m);
+        ({ otherMod: module, key } = m);
       }
       if (module) {
         const { isVerseKey } = Tab[module];

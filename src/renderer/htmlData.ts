@@ -143,10 +143,10 @@ export function libSwordData2XulswordData(dataIn: LibSwordHTMLData): HTMLData {
   let location: LocationVKType | undefined =
     ch !== null && !Number.isNaN(Number(ch))
       ? {
-          book: bk || '',
+          book: bk || 'Gen',
           chapter: Number(ch),
-          verse: vs,
-          lastverse: lv,
+          verse: vs ?? undefined,
+          lastverse: lv ?? undefined,
           v11n: (mod && mod in G.Tab && G.Tab[mod].v11n) || null,
         }
       : undefined;
@@ -159,13 +159,13 @@ export function libSwordData2XulswordData(dataIn: LibSwordHTMLData): HTMLData {
         location = verseKey(r, G.Tab[b].v11n || null).location();
       } else {
         locationGB = {
-          module: m[1],
+          otherMod: m[1],
           key: decodeOSISRef(m[2]), // required for dt, dtl. Others??
         };
       }
     }
   } else if (mod && mod in G.Tab && !G.Tab[mod].isVerseKey && key) {
-    locationGB = { module: mod, key };
+    locationGB = { otherMod: mod, key };
   }
   const r: HTMLData = {
     type: type || undefined,
@@ -388,7 +388,7 @@ export function updateDataAttribute<T extends HTMLElement | string | null>(
 export function elementData(
   elem: HTMLElement,
   mode: HTMLElementSearchModes,
-  onlyFirst: true
+  onlyFirst?: true | undefined
 ): HTMLData | null;
 
 export function elementData(
@@ -400,13 +400,13 @@ export function elementData(
 export function elementData(
   elem: HTMLElement,
   mode = 'self' as HTMLElementSearchModes,
-  onlyFirst = true as boolean
+  onlyFirst?: boolean
 ): HTMLData | HTMLData[] | null {
   const tofind = (el: HTMLElement): boolean => {
     if ('data' in el.dataset) return true;
     return classTypeRE.test(el.className);
   };
-  if (onlyFirst) {
+  if (onlyFirst || onlyFirst === undefined) {
     const r = findElements(elem, mode, tofind, true);
     return r ? getElementData(r) : null;
   }
@@ -445,7 +445,7 @@ export function mergeElementData(datas: (HTMLData | null)[]): HTMLData | null {
 export function findElementData(elem: HTMLElement | null): HTMLData | null {
   if (!elem) return null;
   const datas: (HTMLData | null)[] = [];
-  datas.push(elementData(elem, 'self', true));
+  datas.push(elementData(elem, 'self'));
   datas.push(elementData(elem, 'descendant', true));
   datas.push(...elementData(elem, 'ancestor', false));
   const r = mergeElementData(datas);

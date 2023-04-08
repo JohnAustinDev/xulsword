@@ -3,21 +3,21 @@ import { BrowserWindow } from 'electron';
 import contextMenuCreator from 'electron-context-menu';
 import log from 'electron-log';
 import i18n from 'i18next';
-import { findBookmarkItem } from '../common';
+import { findBookmarkItem, xulswordLocation } from '../common';
 import S from '../defaultPrefs';
 import G from './mg';
 import CommandsX from './components/commands';
 import Viewport from './components/viewport';
 import Data from './components/data';
 
-import type { GAddCaller, ContextData, LocationVKType } from '../type';
+import type { GAddCaller, ContextDataType, LocationVKType } from '../type';
 import type { AboutWinState } from '../renderer/about/about';
 
 // Require the calling window argument, since rg will not add it when
 // Commands are called from the main process.
 const Commands = CommandsX as GAddCaller['Commands'];
 
-const defaultContextData: ContextData = { type: 'general' };
+const defaultContextData: ContextDataType = { type: 'general' };
 
 export type ContextMenuType = typeof contextMenu;
 
@@ -28,7 +28,7 @@ export default function contextMenu(
   // Custom context-menu target data is written to Data to be read when
   // the menu is being built.
   const cm = () => {
-    return (Data.read('contextData') || defaultContextData) as ContextData;
+    return (Data.read('contextData') || defaultContextData) as ContextDataType;
   };
 
   dispose.push(
@@ -63,7 +63,7 @@ export default function contextMenu(
         services: 'Services',
       },
 
-      prepend: (actions, params) => {
+      prepend: (actions) => {
         const d = cm();
         const generalMenu = [
           {
@@ -137,10 +137,9 @@ export default function contextMenu(
             enabled:
               bookmarkItem?.type === 'bookmark' && !!bookmarkItem.location,
             click: () => {
-              if (bookmarkItem?.type === 'bookmark' && bookmarkItem.location) {
-                const { location, tabType } = bookmarkItem;
+              if (bookmarkItem?.type === 'bookmark') {
+                const { location } = bookmarkItem;
                 if ('v11n' in location) {
-                  location.isBible = tabType === 'Texts';
                   Commands.goToLocationVK(
                     location,
                     location,
@@ -158,7 +157,7 @@ export default function contextMenu(
         return generalMenu;
       },
 
-      append: (actions, params) => {
+      append: (actions) => {
         const d = cm();
         const generalMenu = [
           {
@@ -220,14 +219,13 @@ export default function contextMenu(
             visible: Object.keys(d).length > 0,
             enabled: Boolean((d.context && d.location) || d.locationGB),
             click: () => {
-              const { context: module, location, locationGB } = d;
-              if ((module && location) || locationGB) {
+              const { location, locationGB, locationCOMM } = d;
+              if (location || locationGB || locationCOMM) {
                 Commands.openBookmarkProperties(
                   i18n.t('menu.bookmark.add'),
                   {},
                   {
-                    location: locationGB || location,
-                    module: module || undefined,
+                    location: locationCOMM || locationGB || location,
                   },
                   window.id
                 );
@@ -239,14 +237,13 @@ export default function contextMenu(
             visible: Object.keys(d).length > 0,
             enabled: Boolean((d.context && d.location) || d.locationGB),
             click: () => {
-              const { context: module, location, locationGB } = d;
-              if ((module && location) || locationGB) {
+              const { location, locationGB, locationCOMM } = d;
+              if (location || locationGB || locationCOMM) {
                 Commands.openBookmarkProperties(
                   i18n.t('menu.usernote.add'),
                   {},
                   {
-                    location: locationGB || location,
-                    module: module || undefined,
+                    location: locationCOMM || locationGB || location,
                   },
                   window.id
                 );
@@ -279,16 +276,6 @@ export default function contextMenu(
             },
           },
         ];
-
-        const xulsword = G.Prefs.getComplexValue(
-          'xulsword'
-        ) as typeof S.prefs.xulsword;
-        const { location: xslocation, panels } = xulsword;
-        const module =
-          d.context ||
-          panels.find((m) => m && m in G.Tab && G.Tab[m].isVerseKey) ||
-          G.Tabs.find((t) => t.isVerseKey)?.module ||
-          '';
 
         const bookmarkManagerMenu: Electron.MenuItemConstructorOptions[] = [
           {
@@ -392,7 +379,7 @@ export default function contextMenu(
                 Commands.openBookmarkProperties(
                   i18n.t('menu.bookmark.add'),
                   { treeSelection: d.bookmark, anyChildSelectable: true },
-                  { location: xslocation, module },
+                  { location: xulswordLocation(G.Tab, G.Prefs) },
                   window.id
                 );
               }
@@ -407,7 +394,7 @@ export default function contextMenu(
                   i18n.t('menu.folder.add'),
                   { treeSelection: d.bookmark, anyChildSelectable: false },
                   {
-                    location: null,
+                    location: undefined,
                   },
                   window.id
                 );

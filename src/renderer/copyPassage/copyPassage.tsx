@@ -27,7 +27,7 @@ import Groupbox from '../libxul/groupbox';
 import Checkbox from '../libxul/checkbox';
 import { Hbox, Vbox } from '../libxul/boxes';
 import Button from '../libxul/button';
-import SelectVK, { SelectVKMType } from '../libxul/selectVK';
+import SelectVK, { SelectVKType } from '../libxul/selectVK';
 import '../libsword.css';
 import '../viewport/atext.css';
 import './copyPassage.css';
@@ -43,7 +43,7 @@ const propTypes = xulPropTypes;
 type CopyPassageProps = XulProps;
 
 const notStatePrefDefault = {
-  passage: null as SelectVKMType | null,
+  passage: null as SelectVKType | null,
 };
 
 export type CopyPassageState = typeof notStatePrefDefault &
@@ -78,7 +78,7 @@ export default class CopyPassageWin extends React.Component {
       if (!s.passage.verse) s.passage.verse = 1;
       if (!s.passage.lastchapter) s.passage.lastchapter = s.passage.chapter;
       if (!s.passage.lastverse) {
-        const { v11n } = G.Tab[s.passage.vkmod];
+        const { v11n } = (s.passage.vkMod && G.Tab[s.passage.vkMod]) || {};
         s.passage.lastverse = getMaxVerse(
           v11n || s.passage.v11n || 'KJV',
           `${s.passage.book}.${s.passage.lastchapter}`
@@ -133,7 +133,7 @@ export default class CopyPassageWin extends React.Component {
               crossrefs: 'notebox',
               usernotes: 'notebox',
             },
-            module: passage.vkmod,
+            module: passage.vkMod,
             ilModule: '',
             ilModuleOption: [],
             modkey: '',
@@ -190,9 +190,9 @@ export default class CopyPassageWin extends React.Component {
         <div id="testdiv" />
         <Groupbox caption={G.i18n.t('passage.label')}>
           <SelectVK
-            initialVKM={passage}
+            initialVK={passage}
             options={{ lastchapters: [] }}
-            onSelection={(selection: SelectVKMType) => {
+            onSelection={(selection: SelectVKType) => {
               this.setState({ passage: selection });
             }}
           />

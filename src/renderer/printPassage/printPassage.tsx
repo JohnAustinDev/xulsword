@@ -143,9 +143,9 @@ export default class PrintPassageWin extends React.Component {
       setStatePref('prefs', 'printPassage', prevState, state);
       const { checkbox } = state;
       if (!chapters) return;
-      const { vkmod, book, chapter, lastchapter, v11n } = chapters;
+      const { vkMod, book, chapter, lastchapter, v11n } = chapters;
       const show = { ...checkbox, strongs: false, morph: false };
-      const renderkey = stringHash(vkmod, chapter, lastchapter, show);
+      const renderkey = stringHash(vkMod, chapter, lastchapter, show);
       if (lastchapter && tdiv.dataset.renderkey !== renderkey) {
         tdiv.dataset.renderkey = renderkey;
         const rendering = renderPromises.find((p) => p.isPending);
@@ -155,7 +155,7 @@ export default class PrintPassageWin extends React.Component {
         }
         renderPromises = [];
         const settings = {
-          module: vkmod,
+          module: vkMod,
           show,
           ilModule: undefined,
           ilModuleOption: [],
@@ -264,10 +264,10 @@ export default class PrintPassageWin extends React.Component {
     const { checkbox, chapters, progress } = state;
     const { print } = this.props as PrintPassageProps;
     const { handler, vkSelectHandler } = this;
-    const vkmod = chapters?.vkmod;
-    if (!vkmod || !chapters) return null;
+    const vkMod = chapters?.vkMod;
+    if (!vkMod || !chapters) return null;
 
-    const lang = G.Tab[vkmod].conf.Lang;
+    const lang = G.Tab[vkMod].conf.Lang;
     const isHebrew = lang && /^heb?$/i.test(lang);
     const tr = isHebrew ? 1 : 0;
 
@@ -276,7 +276,7 @@ export default class PrintPassageWin extends React.Component {
         <div
           ref={print.text}
           className="print print-pageable-text userFontBase"
-          dir={G.Tab[vkmod].direction || 'auto'}
+          dir={G.Tab[vkMod].direction || 'auto'}
         />
 
         {print.controls.current &&
@@ -288,7 +288,7 @@ export default class PrintPassageWin extends React.Component {
               >
                 <SelectVK
                   id="chapters"
-                  selectVKM={{ ...chapters, vkmod }}
+                  selectVK={{ ...chapters, vkMod }}
                   options={{
                     verses: [],
                     lastverses: [],

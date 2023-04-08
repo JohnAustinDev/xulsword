@@ -246,15 +246,15 @@ export function getStrongsModAndKey(
   switch (type) {
     case 'S': {
       // Strongs Hebrew or Greek tags
-      let feature: 'hebrewDef' | 'greekDef' | null = null;
+      let feature: 'HebrewDef' | 'GreekDef' | null = null;
       if (key.charAt(0) === 'H') {
-        feature = 'hebrewDef';
+        feature = 'HebrewDef';
       } else if (key.charAt(0) === 'G') {
         if (Number(key.substring(1)) >= 5627) {
           if (reason) reason.reason = `${key.substring(1)} >= 5627?`;
           return { mod, key }; // SWORD filters these out- not valid it says
         }
-        feature = 'greekDef';
+        feature = 'GreekDef';
       }
       if (feature) {
         const f = G.Prefs.getComplexValue(
@@ -275,7 +275,7 @@ export function getStrongsModAndKey(
         return { mod, key };
       }
 
-      const styp = feature === 'hebrewDef' ? 'H' : 'G';
+      const styp = feature === 'HebrewDef' ? 'H' : 'G';
       const snum = Number(key.substring(1));
       if (Number.isNaN(Number(snum))) {
         if (reason) reason.reason = `${snum}?`;

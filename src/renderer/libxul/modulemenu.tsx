@@ -20,6 +20,7 @@ const defaultProps = {
   value: '',
   description: false,
   disabled: false,
+  allowNotInstalled: false,
   modules: [],
   types: [],
 };
@@ -29,6 +30,7 @@ const propTypes = {
   value: PropTypes.string,
   description: PropTypes.bool,
   disabled: PropTypes.bool,
+  allowNotInstalled: PropTypes.bool,
   modules: PropTypes.arrayOf(PropTypes.string),
   types: PropTypes.arrayOf(PropTypes.string),
 };
@@ -37,6 +39,7 @@ interface ModuleMenuProps extends XulProps {
   value: string;
   description: boolean; // show description or not
   disabled: boolean;
+  allowNotInstalled: boolean;
   modules: string[]; // show only these modules or all if []
   types: ModTypes[]; // show only these types or all if []
 }
@@ -48,14 +51,22 @@ class ModuleMenu extends React.Component {
 
   render() {
     const props = this.props as ModuleMenuProps;
-    const { description, modules, types } = props;
+    const { description, modules, types, allowNotInstalled } = props;
 
     const mtabs = modules.length
       ? modules.filter((m) => m in G.Tab).map((m) => G.Tab[m])
       : G.Tabs;
 
+    const notInstalled = modules.filter((m) => !(m in G.Tab));
+
     return (
       <Menulist {...addClass('modulemenu', props)}>
+        {allowNotInstalled &&
+          notInstalled.map((m) => (
+            <option className={`cs-${m}`} key={[m].join('.')} value={m}>
+              {m}
+            </option>
+          ))}
         {Object.keys(C.SupportedTabTypes).map((typ) => {
           const type = typ as ModTypes;
           if (
@@ -63,7 +74,10 @@ class ModuleMenu extends React.Component {
             mtabs.some((tab) => tab.type === type)
           )
             return (
-              <optgroup key={type} label={G.i18n.t(C.SupportedTabTypes[type])}>
+              <optgroup
+                key={[type].join('.')}
+                label={G.i18n.t(C.SupportedTabTypes[type])}
+              >
                 {mtabs
                   .map((tab) => {
                     if (tab.type === type) {
@@ -73,7 +87,7 @@ class ModuleMenu extends React.Component {
                       return (
                         <option
                           className={tab.labelClass}
-                          key={tab.module}
+                          key={[tab.module].join('.')}
                           value={tab.module}
                         >
                           {label}

@@ -17,10 +17,7 @@ import type {
   V11nType,
 } from './type';
 
-// TODO!: Commentary bmProperties should not show SelectVK, should have different label, and sampleText from commentary.
-// TODO!: Add sword protocol support.
-// TODO!: Figure out hang using old Prefs?
-// TODO!: Fix ModuleManager not updating module or language tables after initial repo update, possibly related to columns etc. not having keys?
+// TODO: Add sword protocol support.
 // Environment variables:
 // - NODE_ENV - Set in package.json to control the build process
 //     (will be set to either 'development' or 'production').

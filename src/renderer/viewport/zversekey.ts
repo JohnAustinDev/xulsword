@@ -204,7 +204,7 @@ export function locationVKText(
       if (text && text.length > 7) {
         return {
           location: modloc.location(v11n),
-          module,
+          vkMod: module,
           text,
         };
       }
@@ -291,17 +291,17 @@ export function parseExtendedVKRef(
           // chapter:verse
           vk.chapter = Number(chvs1);
           vk.verse = Number(vrs);
-          vk.lastverse = chvs2 ? Number(chvs2) : null;
+          vk.lastverse = chvs2 ? Number(chvs2) : undefined;
         } else if (ch && vs) {
           // we're in verse context, so numbers are verses.
           vk.chapter = ch;
           vk.verse = Number(chvs1);
-          vk.lastverse = chvs2 ? Number(chvs2) : null;
+          vk.lastverse = chvs2 ? Number(chvs2) : undefined;
         } else {
           // we're in book or chapter context, so numbers are chapters.
           vk.chapter = Number(chvs1);
-          vk.verse = null;
-          vk.lastverse = null;
+          vk.verse = undefined;
+          vk.lastverse = undefined;
         }
       }
     }
@@ -354,7 +354,7 @@ export function getRefHTML(
       const inf = typeof info === 'object' ? clone(info) : {};
       let resolve: TextVKType = {
         location: locOrStr,
-        module: mod,
+        vkMod: mod,
         text: '',
       };
       if (showText || locOrStr.subid) {
@@ -369,7 +369,7 @@ export function getRefHTML(
             inf
           ) || resolve;
       }
-      const { location, module, text } = resolve;
+      const { location, vkMod: module, text } = resolve;
       if (module && module in G.Tab && location.book) {
         const { direction, label, labelClass } = G.Tab[module];
         const crref = ['crref'];
@@ -602,9 +602,7 @@ export function getIntroductions(mod: string, vkeytext: string) {
 
 export function getChapterHeading(
   location: AtextPropsType['location'],
-  module: AtextPropsType['module'],
-  ilModuleOption: AtextPropsType['ilModuleOption'],
-  ilModule: AtextPropsType['ilModule']
+  module: AtextPropsType['module']
 ) {
   if (!location || !module) return { textHTML: '', intronotes: '' };
   const { book, chapter } = location;

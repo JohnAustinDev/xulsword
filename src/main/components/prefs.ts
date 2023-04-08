@@ -487,7 +487,9 @@ const Prefs = {
       // such as global.locale, caches must be cleared before prefs are updated!
       if (clearRendererCaches) {
         BrowserWindow.getAllWindows().forEach((w) => {
-          log.debug(`Prefs is clearing renderer caches: clearRendererCaches=true`);
+          log.debug(
+            `Prefs is clearing renderer caches: clearRendererCaches=true`
+          );
           w.webContents.send('cache-reset');
         });
       }

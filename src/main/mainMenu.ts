@@ -10,7 +10,12 @@ import {
   MenuItem,
 } from 'electron';
 import path from 'path';
-import { bookmarkItemIconPath, clone, localizeBookmark } from '../common';
+import {
+  bookmarkItemIconPath,
+  clone,
+  localizeBookmark,
+  xulswordLocation,
+} from '../common';
 import C from '../constant';
 import S from '../defaultPrefs';
 import G from './mg';
@@ -18,7 +23,6 @@ import Window, { getBrowserWindows } from './components/window';
 import Commands from './components/commands';
 import { verseKey } from './minit';
 
-import type { PrintPassageState } from '../renderer/printPassage/printPassage';
 import type { BookmarkFolderType, SearchType, TabTypes } from '../type';
 import type { PrefCallbackType } from './components/prefs';
 
@@ -232,7 +236,8 @@ function bookmarkProgramMenu(
         if ('location' in bm) {
           if (bm.location) {
             if ('v11n' in bm.location) {
-              bm.location.isBible = bm.tabType === 'Texts';
+              // Don't change panels, just the location, by removing vkMod.
+              if (bm.tabType === 'Texts') delete bm.location.vkMod;
               Commands.goToLocationVK(bm.location, bm.location);
             } else Commands.goToLocationGB(bm.location);
           }
@@ -454,23 +459,20 @@ export default class MainMenuBuilder {
           label: ts('menu.printPassage'),
           accelerator: tx('menu.print.ac', ['CommandOrControl']),
           click: d(() => {
-            let options: Partial<PrintPassageState> | undefined;
-            const location = G.Prefs.getComplexValue(
-              'xulsword.location'
-            ) as typeof S.prefs.xulsword.location;
-            const panels = G.Prefs.getComplexValue(
-              'xulsword.panels'
-            ) as typeof S.prefs.xulsword.panels;
-            const vkmod =
-              panels.find(
-                (m) => m && m in G.Tab && G.Tab[m].tabType === 'Texts'
-              ) ||
-              G.Tabs.find((t) => t.tabType === 'Texts')?.module ||
-              '';
-            if (location && vkmod) {
-              options = { chapters: { ...location, vkmod } };
+            let location = xulswordLocation(G.Tab, G.Prefs, 'Texts');
+            if (!location) {
+              location =
+                (G.Prefs.getComplexValue(
+                  'xulsword.location'
+                ) as typeof S.prefs.xulsword.location) || undefined;
             }
-            Commands.printPassage(options);
+            if (location) {
+              let vkMod = G.Tabs.find((t) => t.tabType === 'Texts')?.module;
+              if ('vkMod' in location && location.vkMod) ({ vkMod } = location);
+              if (location && vkMod) {
+                Commands.printPassage({ chapters: { ...location, vkMod } });
+              }
+            }
           }),
         },
         {
@@ -818,15 +820,7 @@ export default class MainMenuBuilder {
               G.i18n.t('i18n:menu.bookmark.add'),
               {},
               {
-                location: G.Prefs.getComplexValue(
-                  'xulsword.location'
-                ) as typeof S.prefs.xulsword.location,
-                module:
-                  (
-                    G.Prefs.getComplexValue(
-                      'xulsword.panels'
-                    ) as typeof S.prefs.xulsword.panels
-                  ).find((m) => m && G.Tab[m].isVerseKey) || '',
+                location: xulswordLocation(G.Tab, G.Prefs),
               }
             )
           ),
@@ -839,15 +833,7 @@ export default class MainMenuBuilder {
               G.i18n.t('menu.usernote.add'),
               {},
               {
-                location: G.Prefs.getComplexValue(
-                  'xulsword.location'
-                ) as typeof S.prefs.xulsword.location,
-                module:
-                  (
-                    G.Prefs.getComplexValue(
-                      'xulsword.panels'
-                    ) as typeof S.prefs.xulsword.panels
-                  ).find((m) => m && G.Tab[m].isVerseKey) || '',
+                location: xulswordLocation(G.Tab, G.Prefs),
               }
             )
           ),
@@ -860,7 +846,7 @@ export default class MainMenuBuilder {
               G.i18n.t('menu.folder.add'),
               {},
               {
-                location: null,
+                location: undefined,
               }
             )
           ),

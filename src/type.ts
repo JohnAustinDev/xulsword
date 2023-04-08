@@ -8,7 +8,7 @@ import type {
 } from 'electron';
 import type i18n from 'i18next';
 import type React from 'react';
-import { TreeNode, TreeNodeInfo } from '@blueprintjs/core';
+import { TreeNodeInfo } from '@blueprintjs/core';
 import S from './defaultPrefs';
 import type C from './constant';
 import type {
@@ -44,7 +44,6 @@ import type LibSword from './main/components/libsword';
 import type MainPrintHandler from './main/print';
 import type { canRedo, canUndo } from './main/bookmarks';
 import type Viewport from './main/components/viewport';
-import type { SelectVKMType } from './renderer/libxul/selectVK';
 
 declare global {
   export interface Window {
@@ -301,29 +300,34 @@ export type CipherKey = { conf: SwordConfType; cipherKey: string };
 
 export type LocationTypes = {
   Texts: LocationVKType;
-  Comms: LocationVKType;
+  Comms: LocationVKCommType;
   Genbks: LocationORType;
   Dicts: LocationORType;
 };
 
+export type LocationVKType = {
+  book: OSISBookType;
+  chapter: number;
+  v11n: V11nType | null;
+  verse?: number;
+  lastverse?: number;
+  subid?: string;
+  vkMod?: string;
+};
+
+export type LocationVKCommType = LocationVKType & {
+  commMod: string;
+};
+
 export type LocationORType = {
-  module: string;
+  otherMod: string;
   key: string;
   paragraph?: number; // Not implemented
 };
 
-export type LocationVKType = {
-  book: OSISBookType | '';
-  chapter: number;
-  v11n: V11nType | null;
-  verse?: number | null;
-  lastverse?: number | null;
-  subid?: string | null;
-};
-
 export type TextVKType = {
   location: LocationVKType;
-  module: string;
+  vkMod: string;
   text: string;
 };
 
@@ -340,11 +344,12 @@ export type LookupInfo = {
   possibleV11nMismatch: boolean;
 };
 
-export type ContextData = {
+export type ContextDataType = {
   type: 'general' | 'bookmarkManager';
   search?: SearchType;
   location?: LocationVKType;
   locationGB?: LocationORType;
+  locationCOMM?: LocationVKCommType;
   context?: string;
   tab?: string;
   lemma?: string;
@@ -714,18 +719,33 @@ export type BMItem = {
   tabType?: TabTypes;
 };
 
-export type BookmarkType = BookmarkItem & {
+export type BookmarkTexts = BookmarkItem & {
   type: 'bookmark';
-  tabType: TabTypes;
-  location: SelectVKMType | LocationORType | null;
+  tabType: 'Texts';
+  location: LocationVKType;
   sampleText: string;
-  sampleModule: string;
+};
+
+export type BookmarkComm = BookmarkItem & {
+  type: 'bookmark';
+  tabType: 'Comms';
+  location: LocationVKCommType;
+  sampleText: string;
+};
+
+export type BookmarkOther = BookmarkItem & {
+  type: 'bookmark';
+  tabType: 'Genbks' | 'Dicts';
+  location: LocationORType;
+  sampleText: string;
 };
 
 export type BookmarkFolderType = BookmarkItem & {
   type: 'folder';
   childNodes: BookmarkItemType[];
 };
+
+export type BookmarkType = BookmarkTexts | BookmarkComm | BookmarkOther;
 
 export type BookmarkItemType = BookmarkFolderType | BookmarkType;
 

@@ -76,7 +76,7 @@ import type {
   TonEditableCellChanged,
   TonRowsReordered,
 } from '../libxul/table';
-import type { SelectVKProps, SelectVKMType } from '../libxul/selectVK';
+import type { SelectVKProps, SelectVKType } from '../libxul/selectVK';
 import type { ModinfoParent } from '../libxul/modinfo';
 import { WindowRootState } from 'renderer/renderer';
 
@@ -848,7 +848,7 @@ export default class ModuleManager
                       <div>{vkAudioDialog.conf.Description?.locale}</div>
                       <SelectVK
                         height="2em"
-                        initialVKM={vkAudioDialog.initial}
+                        initialVK={vkAudioDialog.initial}
                         options={vkAudioDialog.options}
                         onSelection={dialogOnChange}
                       />
@@ -859,8 +859,8 @@ export default class ModuleManager
                       <Label value={gbAudioDialog.conf.module} />
                       <SelectOR
                         selectORM={gbAudioDialog.selection}
-                        ormods={[]}
-                        ormodNodeLists={gbAudioDialog.options.ormodNodeLists}
+                        otherMods={[]}
+                        nodeLists={gbAudioDialog.options.nodeLists}
                         enableMultipleSelection
                         onSelection={dialogOnChange}
                       />
@@ -1175,7 +1175,7 @@ ModuleManager.propTypes = propTypes;
 
 function audioDialogOnChange(
   this: ModuleManager,
-  selection: SelectVKMType | SelectORMType
+  selection: SelectVKType | SelectORMType | undefined
 ) {
   this.sState((prevState) => {
     const { showAudioDialog: sad } = prevState;
@@ -1187,7 +1187,7 @@ function audioDialogOnChange(
       } as H.VersekeyDialog | H.GenBookDialog;
       if (showAudioDialog[0].type === 'versekey') {
         const dvk = showAudioDialog[0] as H.VersekeyDialog;
-        const sel = selection as SelectVKMType;
+        const sel = selection as SelectVKType;
         if (sel.book) {
           const af = dvk.chapters[sel.book];
           let ch: number[] | undefined;

@@ -203,7 +203,7 @@ class Popup extends React.Component {
         const { book, chapter } = location;
         infokey = stringHash(type, reflist, book, chapter, context);
       } else if (locationGB) {
-        const { module, key } = locationGB;
+        const { otherMod: module, key } = locationGB;
         infokey = stringHash(type, reflist, module, key, context);
       } else {
         infokey = stringHash(type, reflist, context);

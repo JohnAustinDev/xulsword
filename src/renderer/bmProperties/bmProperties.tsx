@@ -14,6 +14,7 @@ import {
   bookmarkLabel,
   localizeBookmark,
   localizeBookmarks,
+  getModuleOfObject,
 } from '../../common';
 import S from '../../defaultPrefs';
 import G from '../rg';
@@ -25,8 +26,7 @@ import Grid, { Column, Columns, Row, Rows } from '../libxul/grid';
 import { Hbox, Vbox } from '../libxul/boxes';
 import Label from '../libxul/label';
 import Textbox from '../libxul/textbox';
-import SelectVK, { SelectVKMType } from '../libxul/selectVK';
-import SelectOR, { SelectORMType } from '../libxul/selectOR';
+import SelectAny from '../libxul/selectAny';
 import Button from '../libxul/button';
 import Spacer from '../libxul/spacer';
 import TreeView from '../libxul/treeview';
@@ -34,13 +34,20 @@ import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
 import './bmProperties.css';
 
 import type {
+  BookmarkComm,
   BookmarkItem,
   BookmarkItemType,
+  BookmarkOther,
+  BookmarkTexts,
   BookmarkType,
   GType,
   LocationORType,
+  LocationTypes,
+  LocationVKCommType,
   LocationVKType,
+  TabTypes,
 } from '../../type';
+import type { SelectVKType } from '../libxul/selectVK';
 
 const Bookmarks = G.Prefs.getComplexValue(
   'rootfolder',
@@ -61,7 +68,7 @@ export type BMPropertiesStateWinArg = Omit<BMPropertiesState, 'bookmark'> & {
   bookmark: string;
 };
 
-const bmdefault: BookmarkType = {
+const bmdefault: BookmarkTexts = {
   type: 'bookmark',
   tabType: 'Texts',
   id: '',
@@ -71,7 +78,7 @@ const bmdefault: BookmarkType = {
   noteLocale: '',
   creationDate: Date.now(),
   location: {
-    vkmod: '',
+    vkMod: '',
     book: 'Gen',
     chapter: 1,
     verse: 1,
@@ -79,7 +86,6 @@ const bmdefault: BookmarkType = {
     v11n: 'KJV',
   },
   sampleText: '',
-  sampleModule: '',
 };
 
 const defaultState: BMPropertiesState = {
@@ -103,7 +109,7 @@ const defaultState: BMPropertiesState = {
 //                              Otherwise it's the default folder (or bookmark loc-
 //                              ation if anyChildSelectable is set) for the new item.
 // hide                    []  -hide the input selector(s) having the given id(s)
-const winState0 = windowArguments('bmPropertiesState') as Parameters<
+const windowArgState = windowArguments('bmPropertiesState') as Parameters<
   GType['Commands']['openBookmarkProperties']
 >[1];
 
@@ -125,22 +131,28 @@ export default class BMPropertiesWin extends React.Component {
   constructor(props: BMPropertiesProps) {
     super(props);
 
-    const state = initialState();
+    const state: BMPropertiesState = {
+      ...defaultState,
+      ...windowArgState,
+      bookmark: initialBookmark() || bmdefault,
+    };
+
     if (!state) {
       G.Window.close();
       return;
     }
 
-    // Check if a required module is installed.
-    const l = (state.bookmark as BookmarkType).location;
-    if (l) {
-      let reqmod = '';
-      if ('v11n' in l && state.bookmark.tabType === 'Comms') {
-        ({ vkmod: reqmod } = l);
-      } else if (!('v11n' in l)) {
-        ({ module: reqmod } = l);
-      }
-      if (!reqmod || reqmod in G.Tab) HasRequiredModule = true;
+    // Check that any required module is installed.
+    const module = getModuleOfObject(state.bookmark);
+    let vkMod;
+    if (
+      state.bookmark.type === 'bookmark' &&
+      'v11n' in state.bookmark.location
+    ) {
+      ({ vkMod } = state.bookmark.location);
+    }
+    if (!module || vkMod || module in G.Tab) {
+      HasRequiredModule = true;
     }
 
     // Select bookmark item's parent folder or location
@@ -151,9 +163,8 @@ export default class BMPropertiesWin extends React.Component {
     this.state = state;
 
     this.treeHandler = this.treeHandler.bind(this);
-    this.vkHandler = this.vkHandler.bind(this);
-    this.gbHandler = this.gbHandler.bind(this);
-    this.handler = this.handler.bind(this);
+    this.locationHandler = this.locationHandler.bind(this);
+    this.eventHandler = this.eventHandler.bind(this);
   }
 
   componentDidMount() {
@@ -175,7 +186,7 @@ export default class BMPropertiesWin extends React.Component {
             ? bookmarkLabel(
                 G,
                 verseKey,
-                bookmark.location as LocationORType | SelectVKMType
+                bookmark.location as LocationORType | SelectVKType
               )
             : G.i18n.t('menu.folder.add');
       }
@@ -186,9 +197,7 @@ export default class BMPropertiesWin extends React.Component {
         bookmark.location
       ) {
         updateState = true;
-        const st = getSampleText(bookmark.location, G.i18n.language as 'en');
-        bookmark.sampleText = st.sampleText;
-        bookmark.sampleModule = st.sampleModule;
+        bookmark.sampleText = getSampleText(bookmark.location);
       }
       if (updateState) {
         this.setState({
@@ -199,7 +208,7 @@ export default class BMPropertiesWin extends React.Component {
     }
   }
 
-  handler(ex: React.SyntheticEvent) {
+  eventHandler(ex: React.SyntheticEvent) {
     const { id: eid } = ex.currentTarget;
     switch (eid) {
       case 'note':
@@ -253,37 +262,46 @@ export default class BMPropertiesWin extends React.Component {
     this.setState({ treeSelection: ts.toString() });
   }
 
-  gbHandler(selection: SelectORMType) {
-    const { ormod: module, keys } = selection;
-    const key = keys[0];
-    if (key && HasRequiredModule) {
+  locationHandler(selection: LocationTypes[TabTypes] | undefined) {
+    const module = (selection && getModuleOfObject(selection)) || null;
+    if (module && selection && HasRequiredModule) {
       this.setState((prevState: BMPropertiesState) => {
-        const { bookmark } = clone(prevState);
-        const bm = bookmark as BookmarkType;
-        bm.location = {
-          module,
-          key,
-          paragraph: undefined,
-        };
-        bm.label = bookmarkLabel(G, verseKey, bm.location);
-        const st = getSampleText(bm.location, G.i18n.language as 'en');
-        bm.sampleText = st.sampleText;
-        bm.sampleModule = st.sampleModule;
-        return { bookmark };
-      });
-    }
-  }
-
-  vkHandler(selection: SelectVKMType) {
-    if (HasRequiredModule) {
-      this.setState((prevState: BMPropertiesState) => {
-        const { bookmark } = clone(prevState);
-        const bm = bookmark as BookmarkType;
-        bm.location = selection;
-        bm.label = bookmarkLabel(G, verseKey, bm.location);
-        const st = getSampleText(bm.location, G.i18n.language as 'en');
-        bm.sampleText = st.sampleText;
-        bm.sampleModule = st.sampleModule;
+        let bookmark: BookmarkItemType;
+        if (module !== getModuleOfObject(prevState.bookmark)) {
+          bookmark =
+            module && module in G.Tab
+              ? locationToBookmark(selection, prevState.bookmark.id)
+              : bmdefault;
+        } else {
+          const { bookmark: prevbm } = prevState;
+          const label = bookmarkLabel(G, verseKey, selection);
+          const sampleText = getSampleText(selection);
+          if ('commMod' in selection) {
+            bookmark = {
+              ...(prevbm as BookmarkComm),
+              tabType: 'Comms',
+              location: selection,
+              label,
+              sampleText,
+            };
+          } else if ('v11n' in selection) {
+            bookmark = {
+              ...(prevbm as BookmarkTexts),
+              tabType: 'Texts',
+              location: selection,
+              label,
+              sampleText,
+            };
+          } else {
+            bookmark = {
+              ...(prevbm as BookmarkOther),
+              location: selection,
+              tabType: G.Tab[module].tabType as 'Genbks' | 'Dicts',
+              label: bookmarkLabel(G, verseKey, selection),
+              sampleText: getSampleText(selection),
+            };
+          }
+        }
         return { bookmark };
       });
     }
@@ -291,7 +309,7 @@ export default class BMPropertiesWin extends React.Component {
 
   render() {
     const state = this.state as BMPropertiesState;
-    const { treeHandler, gbHandler, handler, vkHandler } = this;
+    const { treeHandler, eventHandler, locationHandler } = this;
     const { bookmark, hide, treeSelection, anyChildSelectable } = state;
     const { label, labelLocale, note, noteLocale } = localizeBookmark(
       G,
@@ -303,20 +321,11 @@ export default class BMPropertiesWin extends React.Component {
       ({ location } = bookmark);
       if (location === null) location = bmdefault.location;
     }
-    let selectORM: SelectORMType | undefined;
-    if (location && !('v11n' in location)) {
-      const { module: ormod, key } = location;
-      const child = key;
-      selectORM = {
-        ormod,
-        keys: child ? [child] : [],
-      };
-    }
 
     let sampleText: string | undefined;
     let sampleModule: string | undefined;
     if (bookmark.type === 'bookmark') {
-      ({ sampleText, sampleModule } = bookmark);
+      ({ sampleText } = bookmark);
     }
 
     const treeNode = bookmarkTreeNode(
@@ -324,6 +333,10 @@ export default class BMPropertiesWin extends React.Component {
       anyChildSelectable ? undefined : 'folder',
       treeSelection || undefined
     );
+
+    const modules = G.Tabs.map((t) => t.module);
+    const module = (location && getModuleOfObject(location)) || '';
+    if (module && !modules.includes(module)) modules.unshift(module);
 
     return (
       <Vbox className="bmproperties">
@@ -333,25 +346,14 @@ export default class BMPropertiesWin extends React.Component {
             <Column width="minmax(min-content, 1fr)" />
           </Columns>
           <Rows>
-            {!hide.includes('location') && location && 'v11n' in location && (
+            {!hide.includes('location') && location && (
               <Row>
                 <Label value={G.i18n.t('location.label')} />
-                <SelectVK
-                  initialVKM={location}
-                  options={{ lastchapters: [] }}
+                <SelectAny
+                  initial={location}
+                  modules={modules}
                   disabled={!HasRequiredModule}
-                  onSelection={vkHandler}
-                />
-              </Row>
-            )}
-            {!hide.includes('location') && selectORM && (
-              <Row>
-                <Label value={G.i18n.t('location.label')} />
-                <SelectOR
-                  initialORM={selectORM}
-                  enableParentSelection
-                  disabled={!HasRequiredModule}
-                  onSelection={gbHandler}
+                  onSelection={locationHandler}
                 />
               </Row>
             )}
@@ -363,7 +365,7 @@ export default class BMPropertiesWin extends React.Component {
                   className={`cs-${labelLocale}`}
                   maxLength="128"
                   value={label}
-                  onChange={handler}
+                  onChange={eventHandler}
                 />
               </Row>
             )}
@@ -376,7 +378,7 @@ export default class BMPropertiesWin extends React.Component {
                   multiline
                   maxLength="128"
                   value={note.replace(/^\s+(?=\S)/, '')}
-                  onChange={handler}
+                  onChange={eventHandler}
                 />
               </Row>
             )}
@@ -410,10 +412,10 @@ export default class BMPropertiesWin extends React.Component {
         </Grid>
         <Hbox className="dialog-buttons" pack="end" align="end">
           <Spacer flex="10" />
-          <Button id="cancel" flex="1" fill="x" onClick={handler}>
+          <Button id="cancel" flex="1" fill="x" onClick={eventHandler}>
             {G.i18n.t('cancel.label')}
           </Button>
-          <Button id="ok" flex="1" fill="x" onClick={handler}>
+          <Button id="ok" flex="1" fill="x" onClick={eventHandler}>
             {G.i18n.t('ok.label')}
           </Button>
         </Hbox>
@@ -426,50 +428,26 @@ BMPropertiesWin.propTypes = propTypes;
 
 renderToRoot(<BMPropertiesWin />, { initialState: { resetOnResize: false } });
 
-function initialState(): BMPropertiesState | null {
-  const winarg = winState0 as Partial<BMPropertiesState>;
-  let bookmark: BookmarkItemType = clone(bmdefault);
-  if (newitem || !winState0?.bookmark) {
-    let location = bmdefault.location as
+function initialBookmark(): BookmarkItemType | undefined {
+  let bookmark: BookmarkItemType | undefined;
+  if (newitem || !windowArgState?.bookmark) {
+    let location:
       | LocationVKType
+      | LocationVKCommType
       | LocationORType
       | undefined;
-    if (newitem && 'location' in newitem) {
-      location = newitem.location || undefined;
-    }
-    let module = G.Tabs.find((t) => t.isVerseKey)?.module || '';
-    if (newitem && 'module' in newitem && newitem.module) {
-      module = newitem.module;
-    }
+    if (newitem && 'location' in newitem) location = newitem.location;
     const item: BookmarkItem = {
       id: randomID(),
       type: 'folder',
       label: G.i18n.t('newFolder'),
       labelLocale: G.i18n.language as 'en',
       note: '',
-      noteLocale: G.i18n.language as 'en',
+      noteLocale: '',
       creationDate: new Date().valueOf(),
     };
     if (location) {
-      if (module && 'v11n' in location) {
-        const t = (module in G.Tab && G.Tab[module]) || null;
-        bookmark = {
-          ...item,
-          type: 'bookmark',
-          label: '',
-          labelLocale: '',
-          location: {
-            ...location,
-            vkmod: module || '',
-            v11n: t?.v11n || 'KJV',
-          },
-          sampleText: '',
-          sampleModule: '',
-          tabType: t?.tabType || 'Texts',
-        };
-      } else if (!('v11n' in location)) {
-        const { module: ormod } = location;
-        const t = (ormod in G.Tab && G.Tab[ormod]) || null;
+      if ('commMod' in location) {
         bookmark = {
           ...item,
           type: 'bookmark',
@@ -477,9 +455,32 @@ function initialState(): BMPropertiesState | null {
           labelLocale: '',
           location,
           sampleText: '',
-          sampleModule: '',
-          tabType: t?.tabType || 'Genbks',
+          tabType: 'Comms',
         };
+      } else if ('v11n' in location) {
+        bookmark = {
+          ...item,
+          type: 'bookmark',
+          label: '',
+          labelLocale: '',
+          location,
+          sampleText: '',
+          tabType: 'Texts',
+        };
+      } else {
+        const { otherMod } = location;
+        const tabType = otherMod in G.Tab && G.Tab[otherMod].tabType;
+        if (tabType === 'Dicts' || tabType === 'Genbks') {
+          bookmark = {
+            ...item,
+            type: 'bookmark',
+            label: '',
+            labelLocale: '',
+            location,
+            sampleText: '',
+            tabType,
+          };
+        }
       }
     } else {
       bookmark = {
@@ -488,18 +489,62 @@ function initialState(): BMPropertiesState | null {
         childNodes: [],
       };
     }
-  } else if ('bookmark' in winState0) {
-    const { bookmark: bmid } = winState0;
+  } else if ('bookmark' in windowArgState) {
+    const { bookmark: bmid } = windowArgState;
     if (bmid) {
       const item = findBookmarkItem(Bookmarks, bmid) || undefined;
       if (item) bookmark = item;
-    } else return null;
-  } else return null;
+    }
+  }
 
-  const s: BMPropertiesState = {
-    ...defaultState,
-    ...winarg,
-    bookmark,
+  return bookmark;
+}
+
+// Convert the location of an installed module into a bookmark. If id is
+// passed, the new bookmark will have that id, or else a new id is given.
+function locationToBookmark(
+  location: LocationVKType | LocationVKCommType | LocationORType,
+  id?: string
+): BookmarkType {
+  const item: BookmarkItem = {
+    id: id || randomID(),
+    label: '',
+    labelLocale: G.i18n.language as 'en',
+    note: '',
+    noteLocale: '',
+    creationDate: new Date().valueOf(),
   };
-  return s;
+  let newmb: BookmarkTexts | BookmarkComm | BookmarkOther;
+  if ('commMod' in location) {
+    newmb = {
+      ...item,
+      type: 'bookmark',
+      tabType: 'Comms',
+      location,
+      sampleText: getSampleText(location),
+    };
+  } else if ('v11n' in location) {
+    newmb = {
+      ...item,
+      type: 'bookmark',
+      tabType: 'Texts',
+      location,
+      sampleText: getSampleText(location),
+    };
+  } else {
+    const { otherMod } = location;
+    let tabType = (otherMod in G.Tab && G.Tab[otherMod].tabType) || 'Genbks';
+    if (tabType === 'Texts' || tabType === 'Comms') {
+      tabType = 'Dicts';
+      location.key = '';
+    }
+    newmb = {
+      ...item,
+      type: 'bookmark',
+      tabType,
+      location,
+      sampleText: getSampleText(location),
+    };
+  }
+  return newmb;
 }

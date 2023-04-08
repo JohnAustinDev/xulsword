@@ -636,7 +636,7 @@ class Atext extends React.Component {
 
     const data: HTMLData = { type: 'text' };
     if (module && ['Dicts', 'Genbks'].includes(G.Tab[module].tabType)) {
-      if (module && modkey) data.locationGB = { module, key: modkey };
+      if (module && modkey) data.locationGB = { otherMod: module, key: modkey };
     } else if (location) data.location = location;
 
     return (

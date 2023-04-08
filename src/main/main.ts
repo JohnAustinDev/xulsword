@@ -494,10 +494,10 @@ const init = async () => {
       }
       return p;
     });
-    const vkmod = panels.filter(
+    const vkMod = panels.filter(
       (p) => p && p in G.Tab && G.Tab[p].isVerseKey
     )[0];
-    const books = ((vkmod && G.getBooksInModule(vkmod)) || []).sort((a, b) => {
+    const books = ((vkMod && G.getBooksInModule(vkMod)) || []).sort((a, b) => {
       const ab = G.Book[a] as BookType;
       const bb = G.Book[b] as BookType;
       if (ab.bookGroup === 'nt' && bb.bookGroup !== 'nt') return -1;
@@ -512,7 +512,7 @@ const init = async () => {
         book: books[0],
         chapter: 1,
         verse: 1,
-        v11n: (vkmod && G.Tab[vkmod].v11n) || 'KJV',
+        v11n: (vkMod && G.Tab[vkMod].v11n) || 'KJV',
       };
     }
     G.Prefs.setComplexValue('xulsword.panels', panels);
