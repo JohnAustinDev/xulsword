@@ -12,7 +12,7 @@ import PropTypes from 'prop-types';
 import { dString } from '../../common';
 import C from '../../constant';
 import G from '../rg';
-import { audioIcon, clearPending, getMaxChapter } from '../rutil';
+import { audioConfig, audioIcon, clearPending, getMaxChapter } from '../rutil';
 import { Hbox, Vbox } from '../libxul/boxes';
 import Spacer from '../libxul/spacer';
 import {
@@ -327,7 +327,9 @@ class Chooser extends React.Component {
               // chooser width according to the longest book name of all bookGroups.
             }
             <BookGroupList
-              className="sizer"
+              className={`sizer${
+                (audioConfig(headingsModule) && ' audio') || ''
+              }`}
               availableBooks={new Set([longestBook])}
               headingsModule={headingsModule}
               hideUnavailableBooks
@@ -514,6 +516,7 @@ function ChapterMenu(props: {
               audioIcon(headingsModule, bkcode, ch, onAudioClick)}
           </div>
         );
+        ch += 1;
       } else {
         cells.push(<div key={[bkcode, ch].join('.')} className="emptych" />);
       }

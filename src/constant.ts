@@ -111,7 +111,7 @@ const C = {
     },
     Chooser: {
       bookgroupHoverDelay: 300, // ms until bookGroup is changed
-      mouseScrollMargin: 80, // px inward from top or bottom border
+      mouseScrollMargin: 40, // px inward from top or bottom border
       headingMenuOpenDelay: 400, // ms until BIble heading menu opens
     },
     Popup: {

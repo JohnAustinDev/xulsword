@@ -368,11 +368,14 @@ export default function handler(
         case 'chaptermenucell': {
           const { book, chapter, v11n } = targ.element.dataset;
           if (book && chapter) {
-            const newloc = chapterChange({
-              book: book as OSISBookType,
-              chapter: Number(chapter),
-              v11n: v11n as V11nType,
-            });
+            const newloc = chapterChange(
+              {
+                book: book as OSISBookType,
+                chapter: Number(chapter),
+                v11n: v11n as V11nType,
+              },
+              0
+            );
             if (newloc) {
               this.setState({
                 location: newloc,

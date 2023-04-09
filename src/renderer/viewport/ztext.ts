@@ -229,12 +229,7 @@ export function libswordText(
     location &&
     ilModuleOption
   ) {
-    const headInfo = getChapterHeading(
-      location,
-      module,
-      ilModuleOption,
-      ilModule
-    );
+    const headInfo = getChapterHeading(location, module);
     r.textHTML = headInfo.textHTML + r.textHTML;
     r.intronotes = headInfo.intronotes;
   }

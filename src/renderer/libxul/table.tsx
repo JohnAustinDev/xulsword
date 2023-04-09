@@ -30,6 +30,7 @@ import {
   Table2 as BPTable,
   Utils,
 } from '@blueprintjs/table';
+import G from '../rg';
 import {
   addClass,
   xulDefaultProps,
@@ -446,7 +447,11 @@ class Table extends React.Component {
     // Create data columns, one for each data column.
     this.datacolumns = [];
     columns.forEach((c) => {
-      const { heading, datacolumn } = c;
+      const { datacolumn } = c;
+      let { heading } = c;
+      if (heading.startsWith('i18n:')) {
+        heading = G.i18n.t(c.heading.substring(5));
+      }
       this.datacolumns[datacolumn] = new TextSortableColumn(
         heading || '',
         datacolumn

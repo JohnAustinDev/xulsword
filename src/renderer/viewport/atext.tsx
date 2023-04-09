@@ -590,6 +590,7 @@ class Atext extends React.Component {
       maximizeNoteBox,
       ilModuleOption,
       ilModule,
+      show,
       onAudioClick,
       bbDragEnd,
     } = props;
@@ -633,6 +634,7 @@ class Atext extends React.Component {
       } else classes.push('verse-per-line-com');
       if (moduleAlwaysVersePerLine) classes.push('always-vpl');
     }
+    if (show.headings) classes.push('headings');
 
     const data: HTMLData = { type: 'text' };
     if (module && ['Dicts', 'Genbks'].includes(G.Tab[module].tabType)) {

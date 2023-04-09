@@ -224,8 +224,8 @@ export default class Xulsword extends React.Component {
           const { location: hloc, selection: hsel } = histitem;
           const versekey = verseKey(hloc, location.v11n);
           if (versekey.verse === 1) {
-            versekey.verse = null;
-            versekey.lastverse = null;
+            versekey.verse = undefined;
+            versekey.lastverse = undefined;
           }
           // Verse comes from verse or selection; lastverse comes from selection.
           if (hsel && hsel.verse && hsel.verse > 1) {

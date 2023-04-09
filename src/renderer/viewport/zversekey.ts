@@ -1039,7 +1039,7 @@ export function findVerseElement(
 // returns changes between books as null, although this could be coded in.
 export function chapterChange(
   location: LocationVKType | null,
-  chDelta = 1
+  chDelta: number
 ): LocationVKType | null {
   if (!location || !location.v11n) return null;
   const { book } = location;
@@ -1059,7 +1059,7 @@ export function chapterChange(
 // change cannot be done with certainty.
 export function verseChange(
   location: LocationVKType | null,
-  vsDelta?: number
+  vsDelta: number
 ): LocationVKType | null {
   if (!location) return null;
   let { book, chapter, verse } = location;

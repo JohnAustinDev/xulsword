@@ -197,16 +197,6 @@ export default class ModuleManager
     s.tables.module.data = H.Saved.module.data;
     s.tables.repository.data = H.Saved.repository.data;
     s.internetPermission = G.Prefs.getBoolPref('global.InternetPermission');
-    (['language', 'module', 'repository'] as const).forEach((t) => {
-      const table = s[t];
-      if (table) {
-        table.columns.forEach((c) => {
-          if (c.heading.startsWith('i18n:')) {
-            c.heading = G.i18n.t(c.heading.substring(5));
-          }
-        });
-      }
-    });
 
     this.state = s;
 

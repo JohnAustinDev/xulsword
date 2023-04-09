@@ -167,9 +167,13 @@ html[dir='rtl'] .bookgrouplist {
   margin-bottom: 2px;
 }
 .sizer .bookgroupitem {
-  /* Extra fudge because names with the same number
-     of letters may have slightly different widths. */
+  /* Extra fudge because names with the same number of letters may
+  have slightly different widths. */
   padding-inline-end: 5px;
+}
+.sizer.audio .bookgroupitem {
+  /* 16px + 4px to leave space for audio icon. */
+  padding-inline-end: 20px;
 }
 .bookgroupitem.selected {
   background: rgb(230, 200, 255);
@@ -194,6 +198,9 @@ html[dir='rtl'] .bookgrouplist {
   flex-basis: 100%;
   flex-shrink: 1;
   margin-inline-end: 2px;
+}
+.bookgroupitem .audio-icon {
+  margin-inline-end: 4px;
 }
 .bookgroupitem .charrow {
   position: relative;

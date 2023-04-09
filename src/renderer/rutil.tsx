@@ -152,6 +152,19 @@ export function scrollIntoView(
   }
 }
 
+export function audioConfig(module?: string): SwordConfType | undefined {
+  let audioConf;
+  if (module) {
+    audioConf = G.AudioConfs[module];
+    if (!audioConf && module in G.Tab) {
+      const codes = G.Tab[module].conf.AudioCode || [];
+      const i = codes.findIndex((code) => code in G.AudioConfs);
+      if (i !== -1) audioConf = G.AudioConfs[codes[i]];
+    }
+  }
+  return audioConf;
+}
+
 // Return an audio file for the given VerseKey module, book and chapter,
 // or null if there isn't one.
 export function verseKeyAudioFile(
@@ -159,12 +172,7 @@ export function verseKeyAudioFile(
   book?: OSISBookType,
   chapter?: number
 ): VerseKeyAudioFile | null {
-  let audioConf = G.AudioConfs[swordModule];
-  if (!audioConf && swordModule in G.Tab) {
-    const codes = G.Tab[swordModule].conf.AudioCode || [];
-    const i = codes.findIndex((code) => code in G.AudioConfs);
-    if (i !== -1) audioConf = G.AudioConfs[codes[i]];
-  }
+  const audioConf = audioConfig(swordModule);
   if (audioConf) {
     const { AudioChapters } = audioConf;
     let boolarray: boolean[] = [];
@@ -206,12 +214,7 @@ export function genBookAudioFile(
   swordModule: string,
   key: string
 ): GenBookAudioFile | null {
-  let audioConf = G.AudioConfs[swordModule];
-  if (!audioConf && swordModule in G.Tab) {
-    const codes = G.Tab[swordModule].conf.AudioCode || [];
-    const i = codes.findIndex((code) => code in G.AudioConfs);
-    if (i !== -1) audioConf = G.AudioConfs[codes[i]];
-  }
+  const audioConf = audioConfig(swordModule);
   if (audioConf) {
     const { AudioChapters } = audioConf;
     if (AudioChapters && !isAudioVerseKey(AudioChapters)) {

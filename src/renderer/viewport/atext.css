@@ -63,6 +63,22 @@ html[dir='rtl'] .atext .text-win {
   background-position: 20px;
 }
 
+.atext .audio-icon {
+  margin-inline-start: 5px;
+  margin-bottom: 5px;
+}
+.atext .audio-icon svg {
+  width: 20px;
+  height: 20px;
+}
+.atext.headings .audio-icon {
+  margin-inline-start: 30px;
+  margin-top: 10px;
+}
+.atext .audio-icon + .sb > .chapterhead:first-child {
+  padding-top: 5px;
+}
+
 .atext .sb {
   flex-basis: 0px;
   padding: 0px 30px;

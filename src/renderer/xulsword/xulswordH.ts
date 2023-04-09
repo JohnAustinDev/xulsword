@@ -202,10 +202,10 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
               if (id === 'chapter__input') {
                 pvk.chapter = Number(value);
                 pvk.verse = 1;
-                newloc = chapterChange(pvk.location());
+                newloc = chapterChange(pvk.location(), 0);
               } else {
                 pvk.verse = Number(value);
-                newloc = verseChange(pvk.location());
+                newloc = verseChange(pvk.location(), 0);
               }
               if (newloc) {
                 const s: Partial<XulswordState> = {
@@ -257,7 +257,8 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
                 book,
                 chapter,
                 v11n: G.Tab[swordModule].v11n || null,
-              })
+              }),
+              1
             );
             if (nk)
               afile = verseKeyAudioFile(
