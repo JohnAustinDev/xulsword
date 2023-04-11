@@ -88,6 +88,8 @@ if (G.Prefs.getBoolPref('global.InternetPermission')) {
 
 G.LibSword.init();
 
+let ProgramTitle = 'xulsword';
+
 const AvailableLanguages = [
   ...new Set(
     C.Locales.map((l) => {
@@ -184,10 +186,6 @@ const openXulswordWindow = () => {
   G.Prefs.deleteUserPref(`OpenOnStartup`, 'windows');
   G.Prefs.setComplexValue(`OpenWindows`, {}, 'windows');
 
-  const opts = { ns: 'branding' };
-  const programTitle = G.i18n.exists('program.title', opts)
-    ? G.i18n.t('program.title', opts)
-    : 'xulsword';
   const xulswordWindow = BrowserWindow.fromId(
     G.Window.open({
       type: 'xulsword',
@@ -195,7 +193,7 @@ const openXulswordWindow = () => {
       persist: true,
       saveIfAppClosed: false, // main win doesn't use window prefs when starting
       options: {
-        title: programTitle,
+        title: ProgramTitle,
         fullscreenable: true,
         ...C.UI.Window.large,
       },
@@ -520,6 +518,10 @@ const init = async () => {
     G.Prefs.setComplexValue('xulsword.tabs', tabs);
   }
 
+  const opts = { ns: 'branding' };
+  if (G.i18n.exists('program.title', opts))
+    ProgramTitle = G.i18n.t('program.title', opts);
+
   log.catchErrors({
     showDialog: false,
     onError(error, versions, submitIssue) {
@@ -581,13 +583,9 @@ app
   .whenReady()
   .then(() => {
     if (G.Prefs.getBoolPref('global.InternetPermission')) {
-      const opts = { ns: 'branding' };
-      const programTitle = G.i18n.exists('program.title', opts)
-        ? G.i18n.t('program.title', opts)
-        : 'xulsword';
       autoUpdater.logger = log;
       autoUpdater.checkForUpdatesAndNotify({
-        title: programTitle,
+        title: ProgramTitle,
         body: G.i18n.t('updater.message.body', { v1: '' }),
       });
     }
@@ -604,12 +602,12 @@ app
         options:
           C.isDevelopment && C.DevSplash === 2
             ? {
-                title: 'xulsword',
+                title: ProgramTitle,
                 width: 500,
                 height: 400,
               }
             : {
-                title: 'xulsword',
+                title: ProgramTitle,
                 width: 500,
                 height: 375,
                 alwaysOnTop: true,

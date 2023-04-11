@@ -20,7 +20,10 @@ html.splash,
   height: 100%;
 }
 
-.splash-text {
+.splash-text .label {
   font-size: 14px;
   color: rgb(77, 37, 143);
+}
+.splash-text {
+  padding-bottom: 3px;
 }

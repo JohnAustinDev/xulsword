@@ -29,8 +29,8 @@ renderToRoot(
       <Vbox id="layer1" flex="1" />
       <Vbox id="layer2" flex="1" pack="end">
         <Hbox align="center">
-          <Vbox flex="1" pack="start" align="center">
-            <Label className="splash-text" value={producedBy} />
+          <Vbox className="splash-text" flex="1" pack="start" align="center">
+            <Label value={producedBy} />
           </Vbox>
         </Hbox>
       </Vbox>

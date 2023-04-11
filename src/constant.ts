@@ -54,6 +54,8 @@ const C = {
 
   isDevelopment,
 
+  URL: 'https://github.com/JohnAustinDev/xulsword',
+
   SWORDEngineVersion: '1.8.1',
 
   MAXVERSE: 176,

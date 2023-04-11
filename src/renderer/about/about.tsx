@@ -4,6 +4,7 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable react/static-property-placement */
 import React from 'react';
+import C from '../../constant';
 import G from '../rg';
 import renderToRoot from '../renderer';
 import { windowArguments } from '../rutil';
@@ -144,12 +145,23 @@ export default class AboutWin extends React.Component implements ModinfoParent {
               <Vbox id="layer1" flex="1" />
               <Vbox id="layer2" flex="1" pack="end">
                 <Hbox align="center">
-                  <Vbox flex="1" pack="start" align="center">
-                    <Label
-                      className="splash-text"
-                      value={G.Data.read('buildInfo')}
-                    />
-                    <Label className="splash-text" value={producedBy} />
+                  <Vbox
+                    className="splash-text"
+                    flex="1"
+                    pack="start"
+                    align="center"
+                  >
+                    <Label value={producedBy} />
+                    <Spacer />
+                    <Label value={G.Data.read('buildInfo')} />
+                    <a
+                      className="label"
+                      target="_blank"
+                      rel="noreferrer"
+                      href={C.URL}
+                    >
+                      {C.URL}
+                    </a>
                   </Vbox>
                 </Hbox>
               </Vbox>

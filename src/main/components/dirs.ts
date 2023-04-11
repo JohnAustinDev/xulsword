@@ -7,7 +7,6 @@ export type DirsDirectories = {
   TmpD: string;
   xsAsset: string;
   xsAsar: string;
-  xsProgram: string;
   xsPrefDefD: string;
   xsResDefD: string;
   ProfD: string;
@@ -24,6 +23,10 @@ export type DirsDirectories = {
 
 const Dirs = { path: {} as DirsDirectories };
 
+// NOTE: The app directory is not exposed in the production app. Also
+// don't try to read package.json in production by bundling it, as this
+// has security implications.
+
 Dirs.path.xsAsset = app.isPackaged
   ? path.join(process.resourcesPath, 'assets')
   : path.join(__dirname, '..', '..', '..', 'assets');
@@ -35,8 +38,6 @@ Dirs.path.xsAsar = app.isPackaged
   : path.join(__dirname, '..', '..', '..', 'build', 'app');
 
 Dirs.path.TmpD = app.getPath('temp');
-
-Dirs.path.xsProgram = path.join(process.resourcesPath, '..');
 
 Dirs.path.xsPrefDefD = path.join(Dirs.path.xsAsset, 'defaults', 'preferences');
 

@@ -19,6 +19,13 @@ html.about #root {
   padding-top: 5px;
 }
 
+#layer2 {
+  background-position: 0 -8px;
+}
+.splash-text .spacer {
+  height: 259px;
+}
+
 #contributors.hide > div {
   background-color: transparent;
   padding-top: 52%;
@@ -41,4 +48,3 @@ html.about #root {
   display: block;
   height: 1.2em;
 }
-

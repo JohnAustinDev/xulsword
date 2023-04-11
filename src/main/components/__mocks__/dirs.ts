@@ -13,7 +13,6 @@ const CrosswireRoot = String(process.env.HOME);
 Dirs.path.xsAsset = path.join(__dirname, '..', '..', '..', 'assets');
 // Dirs.path.xsAsar = path.join(__dirname, '..', '..', 'build', 'app');
 // Dirs.path.TmpD = app.getPath('temp');
-// Dirs.path.xsProgram = path.join(process.resourcesPath, '..');
 Dirs.path.ProfD = path.join(CrosswireRoot, '.crosswire', 'xulsword');
 // Dirs.path.xsPrefD = path.join(Dirs.path.ProfD, C.PREFERENCES);
 Dirs.path.xsResD = path.join(Dirs.path.ProfD, 'resources');

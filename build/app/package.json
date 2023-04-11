@@ -1,8 +1,8 @@
 {
   "name": "xulsword",
-  "productName": "xulsword",
-  "version": "4.0.1",
-  "description": "Accessible Bible study software.",
+  "productName": "MK",
+  "description": "Электронная Библия",
+  "version": "4.0.2",
   "main": "./dist/main/main.js",
   "author": {
     "name": "John Austin",

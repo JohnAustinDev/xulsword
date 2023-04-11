@@ -790,7 +790,7 @@ const Commands = {
     const extensions = ['json'];
     const obj = await dialog.showSaveDialog(xswindow, {
       title: i18n.t('to.label'),
-      defaultPath: fpath.join(Dirs.path.xsProgram, 'exported-bookmarks.json'),
+      defaultPath: 'exported-bookmarks.json',
       filters: [
         {
           name: extensions.map((x) => x.toUpperCase()).join(', '),

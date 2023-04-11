@@ -5,7 +5,12 @@
 import log from 'electron-log';
 import path from 'path';
 import i18next from 'i18next';
-import { app, BrowserWindow, BrowserWindowConstructorOptions } from 'electron';
+import {
+  app,
+  BrowserWindow,
+  BrowserWindowConstructorOptions,
+  shell,
+} from 'electron';
 import { drop, keep, randomID } from '../../common';
 import Cache from '../../cache';
 import C from '../../constant';
@@ -212,7 +217,7 @@ function updateOptions(descriptor: Omit<WindowDescriptorType, 'id'>): void {
   if (persistedDescriptor) {
     Object.entries(persistedDescriptor).forEach((entry) => {
       const [key, val] = entry;
-      (descriptor as any)[key] = val;
+      if (key !== 'options') (descriptor as any)[key] = val;
     });
     let o: BrowserWindowConstructorOptions = {};
     if (persistedDescriptor.options) ({ options: o } = persistedDescriptor);
@@ -433,6 +438,8 @@ const Window = {
 
     if (d.type !== 'xulsword') win.removeMenu();
 
+    win.setTitle(descriptor.options.title || '');
+
     // Add window to registry
     WindowRegistry[win.id] = d;
 
@@ -466,6 +473,10 @@ const Window = {
       Prefs.deleteUserPref(`OpenWindows.w${id}`, 'windows');
       WindowRegistry[id] = null;
       disposables.forEach((dispose) => dispose());
+    });
+    win.webContents.setWindowOpenHandler(({ url }) => {
+      shell.openExternal(url);
+      return { action: 'deny' };
     });
 
     return win.id;
