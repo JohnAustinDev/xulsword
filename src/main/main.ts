@@ -211,9 +211,9 @@ const openXulswordWindow = () => {
 
   updateGlobalModulePrefs();
 
-  const BuildInfo = `${app.getName()} ${app.getVersion()} (${app.getLocale()}) ${
-    process.platform
-  }-${process.arch}, el:${process.versions.electron}, ch:${
+  const BuildInfo = `${app.getName()} ${app.getVersion()} (${
+    G.i18n.language
+  }) ${process.platform}-${process.arch}, el:${process.versions.electron}, ch:${
     process.versions.chrome
   }`;
   log.info(BuildInfo);
@@ -522,6 +522,14 @@ const init = async () => {
   if (G.i18n.exists('program.title', opts))
     ProgramTitle = G.i18n.t('program.title', opts);
 
+  if (G.Prefs.getBoolPref('global.InternetPermission')) {
+    autoUpdater.logger = log;
+    autoUpdater.checkForUpdatesAndNotify({
+      title: ProgramTitle,
+      body: G.i18n.t('updater.message.body', { v1: '' }),
+    });
+  }
+
   log.catchErrors({
     showDialog: false,
     onError(error, versions, submitIssue) {
@@ -582,13 +590,6 @@ app.on('activate', () => {
 app
   .whenReady()
   .then(() => {
-    if (G.Prefs.getBoolPref('global.InternetPermission')) {
-      autoUpdater.logger = log;
-      autoUpdater.checkForUpdatesAndNotify({
-        title: ProgramTitle,
-        body: G.i18n.t('updater.message.body', { v1: '' }),
-      });
-    }
     return init();
   })
   .then(() => {
