@@ -70,6 +70,10 @@
   height: 100%;
 }
 
+.indexing-dialog {
+  padding: 3em;
+}
+
 .result-container,
 .result-container > div,
 .result-container > div > div {

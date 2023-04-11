@@ -56,6 +56,7 @@
    "bookmarks.example.folder1" : "Knowing God",
    "bookmarks.example.folder2" : "Born Again",
    "bookmarks.example.note" : "You can put your own notes in the text.",
+   "buildingIndex.label" : "Building Search Index...",
    "cancel.label" : "Cancel",
    "choose.label" : "Choose…",
    "chooseFolder.label" : "Choose Folder",

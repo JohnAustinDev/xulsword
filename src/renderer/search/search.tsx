@@ -32,6 +32,7 @@ import Grid, { Column, Columns, Row, Rows } from '../libxul/grid';
 import Textbox from '../libxul/textbox';
 import Spacer from '../libxul/spacer';
 import Stack from '../libxul/stack';
+import Dialog from '../libxul/dialog';
 import ModuleMenu from '../libxul/modulemenu';
 import handlerH, {
   search,
@@ -41,6 +42,7 @@ import handlerH, {
   lexicon,
   strongsCSS,
   getSearchResults,
+  createSearchIndex,
 } from './searchH';
 import './search.css';
 
@@ -67,6 +69,7 @@ const initialState = {
   pageindex: 0 as number, // first results index to show
   progress: 0 as number, // -1=indeterminate, 0=hidden, 1=complete
   progressLabel: '' as string, // changing progress label
+  indexing: false as boolean, // indexer is running
 };
 
 const ScopeRadioOptions = ['all', 'book', 'ot', 'nt', 'other'] as const;
@@ -101,6 +104,7 @@ const noPersist = ['results', 'pageindex', 'progress', 'progressLabel'].concat(
 )[];
 
 let resetState = null as null | SearchWinState;
+let windowLoaded = false;
 
 export type SearchWinState = PopupParentState & typeof initialState;
 
@@ -175,7 +179,19 @@ export default class SearchWin extends React.Component implements PopupParent {
         }
       })
     );
-    if (module && G.LibSword.luceneEnabled(module)) search(this);
+    if (!windowLoaded && module) {
+      if (G.LibSword.luceneEnabled(module)) {
+        search(this);
+      } else {
+        createSearchIndex(this, module)
+          .then((result) => {
+            if (result) search(this);
+            return true;
+          })
+          .catch((er) => log.error(er));
+      }
+    }
+    windowLoaded = true;
   }
 
   componentDidUpdate(_prevProps: any, prevState: SearchWinState) {
@@ -296,6 +312,7 @@ export default class SearchWin extends React.Component implements PopupParent {
       popupReset,
       gap,
       elemdata,
+      indexing,
     } = state;
 
     const searchTypes: SearchType['type'][] = [
@@ -365,6 +382,17 @@ export default class SearchWin extends React.Component implements PopupParent {
 
     return (
       <Vbox className="searchwin">
+        {indexing && (
+          <Dialog
+            className="indexing-dialog"
+            key="indexing"
+            body={
+              <Vbox pack="center" align="center">
+                <Label value={G.i18n.t('buildingIndex.label')} />
+              </Vbox>
+            }
+          />
+        )}
         {popupParent &&
           elemdata &&
           elemdata.length &&
@@ -448,7 +476,7 @@ export default class SearchWin extends React.Component implements PopupParent {
                       />
                     ))}
                   </Groupbox>
-                  {!searchindex && (
+                  {!searchindex && !indexing && (
                     <>
                       <Vbox />
                       <Vbox align="center">

@@ -4,6 +4,8 @@
 /* eslint-disable no-bitwise */
 /* eslint-disable import/no-duplicates */
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import React from 'react';
+import Subscription from '../../subscription';
 import { dString, escapeRE, getCSS, sanitizeHTML } from '../../common';
 import C from '../../constant';
 import S from '../../defaultPrefs';
@@ -12,6 +14,10 @@ import log from '../log';
 import { getElementData, verseKey } from '../htmlData';
 import { windowArguments } from '../rutil';
 import { getStrongsModAndKey } from '../viewport/zdictionary';
+import { delayHandler } from '../libxul/xul';
+import Dialog from '../libxul/dialog';
+import { Vbox } from '../libxul/boxes';
+import Label from '../libxul/label';
 
 import type {
   BookGroupType,
@@ -141,6 +147,7 @@ function getScopes(
 }
 
 export async function search(xthis: SearchWin): Promise<boolean> {
+  log.debug(`SEARCHING...`);
   LibSwordSearch.sthis = xthis;
   const state = xthis.state as SearchWinState;
   const { module, displayBible: db, searchtext } = state;
@@ -153,9 +160,9 @@ export async function search(xthis: SearchWin): Promise<boolean> {
   const isBible = G.Tab[module].type === C.BIBLE;
   const displayBible = isBible ? module : db;
 
-  if (!hasIndex && /lemma:/.test(state.searchtext)) {
-    await createSearchIndex(xthis, module);
-    setTimeout(() => search(xthis), 500);
+  if (!hasIndex) {
+    const result = await createSearchIndex(xthis, module);
+    if (result) return search(xthis);
     return false;
   }
 
@@ -377,23 +384,32 @@ export async function getSearchResults(
   return r || '';
 }
 
-async function createSearchIndex(xthis: SearchWin, module: string) {
+export async function createSearchIndex(xthis: SearchWin, module: string) {
   if (module && module in G.Tab) {
-    const s: Partial<SearchWinState> = {
-      results: 0,
-      pageindex: 0,
-      progress: 0.01,
-      progressLabel: G.i18n.t('BuildingIndex'),
-    };
-    xthis.setState(s);
-    const winid = descriptor.id;
-    try {
-      const result = await G.LibSword.searchIndexBuild(module, winid);
-      if (result) search(xthis);
-    } catch (er: any) {
-      log.error(er);
-    }
+    return new Promise((resolve, reject) => {
+      const s: Partial<SearchWinState> = {
+        results: 0,
+        pageindex: 0,
+        progress: 0.01,
+        progressLabel: G.i18n.t('BuildingIndex'),
+        indexing: true,
+      };
+      xthis.setState(s);
+      const winid = descriptor.id;
+      // Add a delay before and after index creation to insure UI is responsive.
+      setTimeout(() => {
+        log.debug(`BUILDING searchIndexBuild...`);
+        G.LibSword.searchIndexBuild(module, winid)
+          .then((result) => {
+            xthis.setState({ indexing: false } as Partial<SearchWinState>);
+            setTimeout(() => resolve(result), 1);
+            return result;
+          })
+          .catch((er) => reject(er));
+      }, 1);
+    });
   }
+  return false;
 }
 
 export function formatResult(div: HTMLDivElement, state: SearchWinState) {
@@ -775,8 +791,8 @@ export default async function handler(
               searchtype: 'SearchAnyWord',
             };
             this.setState(s);
-            await createSearchIndex(this, module);
-            setTimeout(() => search(this), 500);
+            const result = await createSearchIndex(this, module);
+            if (result) search(this);
           }
           break;
         }

@@ -536,7 +536,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   ): Promise<boolean> {
     return new Promise((resolve, reject) => {
       if (this.isReady(true)) {
-        Window.modal([{ modal: 'darkened', window: 'all' }]);
+        Window.modal([{ modal: 'transparent', window: 'all' }]);
         const workerjs = app.isPackaged
           ? path.join(__dirname, 'indexWorker.js')
           : path.join(__dirname, '../indexWorker.js');

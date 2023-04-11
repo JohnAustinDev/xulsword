@@ -43,6 +43,7 @@
    "bookmarks.example.folder1" : "Ma’lum Xudo",
    "bookmarks.example.folder2" : "Qaytadan tug‘ildi",
    "bookmarks.example.note" : "Siz o‘zingizning shaxsiy izohlaringizni va xatcho‘plaringizni yaratishingiz mumkin.",
+   "buildingIndex.label" : "Qidiruv indeksi yaratilyapti...",
    "cancel.label" : "Bekor qilish",
    "chooseFolder.label" : "Jildni tanlash",
    "chooseFont.label" : "Shrift",
