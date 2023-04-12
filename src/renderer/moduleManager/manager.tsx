@@ -1139,7 +1139,7 @@ export default class ModuleManager
             </Vbox>
           }
           buttons={
-            <>
+            <Hbox pack="end" align="start" className="dialog-buttons">
               <Spacer width="10px" />
               <Checkbox
                 id="internet.rememberChoice"
@@ -1158,7 +1158,7 @@ export default class ModuleManager
               <Button id="internet.no" flex="1" fill="x" onClick={eventHandler}>
                 {G.i18n.t('no.label')}
               </Button>
-            </>
+            </Hbox>
           }
         />
       </Vbox>

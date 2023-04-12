@@ -17,7 +17,7 @@ Modules may be installed from the Internet however.
 - **Original language study features**. Gain deeper understanding of any Bible
   translation through comparison to ancient original language texts and
   instant concordance lookup.
-- **Comprehensive and lighting fast search capability**. The indexed C++ search
+- **Comprehensive and lightning fast search capability**. The indexed C++ search
   engine works without Internet and enables you to dig deep into God's Word.
 - **Complete internationalization** including right-to-left languages.
 - **Very readable texts**. Formatted texts are displayed on screen the way they look

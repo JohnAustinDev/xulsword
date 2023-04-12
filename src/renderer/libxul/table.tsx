@@ -315,6 +315,8 @@ class TextSortableColumn extends AbstractSortableColumn {
       if (column.hideable && columns.filter((c) => c.visible).length > 1) {
         let { heading } = column;
         if (heading.startsWith('icon:')) heading = '';
+        else if (heading.startsWith('i18n:'))
+          heading = G.i18n.t(heading.substring(5));
         items.push(<MenuDivider key="divider.1" />);
         items.push(
           <MenuItem
@@ -335,7 +337,10 @@ class TextSortableColumn extends AbstractSortableColumn {
           const icon = (
             heading.startsWith('icon:') ? heading.substring(5) : 'plus'
           ) as IconName;
-          const text = heading.startsWith('icon:') ? '' : heading;
+          let text = heading;
+          if (heading.startsWith('icon:')) text = '';
+          else if (heading.startsWith('i18n:'))
+            text = G.i18n.t(heading.substring(5));
           items.push(
             <MenuItem
               key={['add', heading].join('.')}
