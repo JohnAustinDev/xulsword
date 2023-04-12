@@ -184,7 +184,7 @@ export function validPassage(passage: SelectVKType | null): SelectVKType {
   const { lastchapter, v11n } = chapters;
   if (!v11n) {
     const { vkMod } = chapters;
-    chapters.v11n = (vkMod in G.Tab && G.Tab[vkMod].v11n) || 'KJV';
+    chapters.v11n = (vkMod && vkMod in G.Tab && G.Tab[vkMod].v11n) || 'KJV';
   }
   if (!lastchapter || lastchapter < chapters.chapter) {
     chapters.lastchapter = chapters.chapter;

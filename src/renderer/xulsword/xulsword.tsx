@@ -494,6 +494,13 @@ export default class Xulsword extends React.Component {
               title={G.i18n.t('headingsButton.tooltip')}
             />
             <Button
+              id="dictlinks"
+              checked={show.dictlinks}
+              icon={<Icon icon="search-template" size={28} />}
+              onClick={handler}
+              title={G.i18n.t('dictButton.tooltip')}
+            />
+            <Button
               id="footnotes"
               checked={show.footnotes}
               icon={<Icon icon="manually-entered-data" size={28} />}
@@ -506,13 +513,6 @@ export default class Xulsword extends React.Component {
               icon={<Icon icon="link" size={28} />}
               onClick={handler}
               title={G.i18n.t('crossrefsButton.tooltip')}
-            />
-            <Button
-              id="dictlinks"
-              checked={show.dictlinks}
-              icon={<Icon icon="search-template" size={28} />}
-              onClick={handler}
-              title={G.i18n.t('dictButton.tooltip')}
             />
           </Hbox>
 

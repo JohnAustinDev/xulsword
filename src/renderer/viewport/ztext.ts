@@ -80,12 +80,7 @@ export function libswordText(
   // Read Libsword according to module type
   switch (type) {
     case C.BIBLE: {
-      if (
-        location &&
-        location.book &&
-        module &&
-        G.getBooksInModule(module).includes(location.book)
-      ) {
+      if (location && location.book && module) {
         const { book, chapter } = location;
         if (ilModule) {
           r.textHTML += G.LibSword.getChapterTextMulti(
@@ -106,12 +101,7 @@ export function libswordText(
       break;
     }
     case C.COMMENTARY: {
-      if (
-        location &&
-        location.book &&
-        module &&
-        G.getBooksInModule(module).includes(location.book)
-      ) {
+      if (location && location.book && module) {
         const { book, chapter } = location;
         r.textHTML += G.LibSword.getChapterText(
           module,

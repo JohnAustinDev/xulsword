@@ -312,7 +312,9 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
       const nowover = e.relatedTarget as HTMLElement | null;
       if (!nowover?.classList.contains('npopup')) {
         AddedRules.reverse().forEach((r) => {
-          r.sheet.deleteRule(r.index);
+          if (r.index < r.sheet.cssRules.length) {
+            r.sheet.deleteRule(r.index);
+          }
         });
         AddedRules = [];
       }

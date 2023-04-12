@@ -516,7 +516,6 @@ function ChapterMenu(props: {
               audioIcon(headingsModule, bkcode, ch, onAudioClick)}
           </div>
         );
-        ch += 1;
       } else {
         cells.push(<div key={[bkcode, ch].join('.')} className="emptych" />);
       }

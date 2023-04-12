@@ -208,6 +208,15 @@ html[dir='rtl'] .snbut {
   font-size: medium;
 }
 
+.popup-fail:not(.reason) .fail-reason,
+.popup-fail:not(.requires) .fail-requires {
+  display: none;
+}
+.popup-fail {
+  margin-top: 1em;
+  padding: 5px;
+  border: 1px dashed rgba(255, 0, 0, 0.5);
+}
 .popup-fail > div > * {
   display: inline-block;
 }

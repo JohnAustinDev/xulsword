@@ -270,16 +270,17 @@ export function getStrongsModAndKey(
                 feature
               ];
             if (requires?.length) reason.requires.push(...requires);
-          } else reason.reason = `${key.charAt(0)}?`;
+          } else reason.reason = `${snclass}?`;
         }
         return { mod, key };
       }
 
       const styp = feature === 'HebrewDef' ? 'H' : 'G';
       const snum = Number(key.substring(1));
-      if (Number.isNaN(Number(snum))) {
-        if (reason) reason.reason = `${snum}?`;
+      if (!snum || Number.isNaN(Number(snum))) {
+        if (reason) reason.reason = `${snclass}? (${snum} isNaN)`;
         key = null;
+        mod = null;
         return { mod, key };
       }
       const pad4 =
@@ -309,7 +310,7 @@ export function getStrongsModAndKey(
         }
         if (mod && k < keys.length) key = keys[k];
         if ((!mod || !key) && reason) {
-          reason.reason = `${snum}?`;
+          reason.reason = `${snclass}? (${snum})`;
         }
       }
       break;
@@ -327,11 +328,15 @@ export function getStrongsModAndKey(
         'global.popup.feature'
       ) as typeof S.prefs.global.popup.feature;
       mod = f.GreekParse || G.FeatureModules.GreekParse[0] || null;
+      if (!mod && reason) {
+        reason.reason = `${snclass} (SM?)`;
+      }
       break;
     }
 
     default: {
       // meaning of tag is unknown
+      if (reason) reason.reason = `${snclass}? (${type})`;
       log.warn(`Unknown Strongs type: '${type}'`);
       key = null;
     }
@@ -387,7 +392,9 @@ export function getLemmaHTML(
           sep +
           buttonHTML +
           markup2html(replaceLinks(entry, info.mod), info.mod);
-      } else html += sep + buttonHTML + info.key;
+      } else if (reason) {
+        reason.reason = `${info.mod}:${info.key}?`;
+      }
     } else
       html +=
         sep + buttonHTML + strongsClassArray[i].replace(/S_(DSS|MT)_/g, '$1: '); // DSS|MT for SPVar module

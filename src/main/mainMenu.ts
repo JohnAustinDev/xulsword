@@ -539,26 +539,25 @@ export default class MainMenuBuilder {
 
     const switches = [
       'headings',
+      'dictlinks',
       'footnotes',
       'crossrefs',
-      'dictlinks',
       'usernotes',
       'strongs',
       'morph',
       'versenums',
       'redwords',
     ];
+    const radios = ['footnotes', 'crossrefs', 'usernotes'];
 
     const allswitches = switches.map((x: any) => {
       return `xulsword.show.${x}`;
     });
 
-    const textSwitches: MenuItemConstructorOptions[] = switches
-      .filter((s) => {
-        return s !== 'morph'; // this options does not have a menu item
-      })
-      .map((key) => {
-        return {
+    const textSwitches: MenuItemConstructorOptions[] = [];
+    switches.forEach((key) => {
+      if (key !== 'morph') {
+        textSwitches.push({
           label: ts(`menu.view.${key}`),
           id: `xulsword.show.${key}`,
           type: 'checkbox',
@@ -570,33 +569,31 @@ export default class MainMenuBuilder {
             }
             toggleSwitch(keys);
           }),
-        };
-      });
-
-    const radios = ['footnotes', 'crossrefs', 'usernotes'];
-
-    const displayLocation: MenuItemConstructorOptions[] = radios.map((name) => {
-      return {
-        label: ts(`menu.view.place.${name}`),
-        submenu: [
-          {
-            label: ts('menu.view.popups'),
-            id: `xulsword.place.${name}_val_popup`,
-            type: 'radio',
-            click: d(() => {
-              radioSwitch(`xulsword.place.${name}`, 'popup');
-            }),
-          },
-          {
-            label: ts('menu.view.notebox'),
-            id: `xulsword.place.${name}_val_notebox`,
-            type: 'radio',
-            click: d(() => {
-              radioSwitch(`xulsword.place.${name}`, 'notebox');
-            }),
-          },
-        ],
-      };
+        });
+        if (radios.includes(key)) {
+          textSwitches.push({
+            label: ts(`menu.view.place.${key}`),
+            submenu: [
+              {
+                label: ts('menu.view.popups'),
+                id: `xulsword.place.${key}_val_popup`,
+                type: 'radio',
+                click: d(() => {
+                  radioSwitch(`xulsword.place.${key}`, 'popup');
+                }),
+              },
+              {
+                label: ts('menu.view.notebox'),
+                id: `xulsword.place.${key}_val_notebox`,
+                type: 'radio',
+                click: d(() => {
+                  radioSwitch(`xulsword.place.${key}`, 'notebox');
+                }),
+              },
+            ],
+          });
+        }
+      }
     });
 
     const textTabs: MenuItemConstructorOptions[] = showtabs.map((t) => {
@@ -661,8 +658,6 @@ export default class MainMenuBuilder {
             toggleSwitch(allswitches, false);
           }),
         },
-        { type: 'separator' },
-        ...displayLocation,
         { type: 'separator' },
         ...textTabs,
         {

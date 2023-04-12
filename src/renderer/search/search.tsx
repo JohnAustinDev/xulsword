@@ -242,7 +242,9 @@ export default class SearchWin extends React.Component implements PopupParent {
 
     if (res.dataset.count !== count.toString()) {
       strongsCSS.added.forEach((r) => {
-        strongsCSS.sheet.deleteRule(r);
+        if (r < strongsCSS.sheet.cssRules.length) {
+          strongsCSS.sheet.deleteRule(r);
+        }
       });
       strongsCSS.added = [];
     }

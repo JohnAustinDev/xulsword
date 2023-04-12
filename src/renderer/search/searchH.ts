@@ -572,7 +572,9 @@ function getSearchMatches(
 
 export function hilightStrongs(strongs: RegExpMatchArray | null) {
   strongsCSS.added.forEach((r) => {
-    strongsCSS.sheet.deleteRule(r);
+    if (r < strongsCSS.sheet.cssRules.length) {
+      strongsCSS.sheet.deleteRule(r);
+    }
   });
   strongsCSS.added = [];
   strongs?.forEach((s) => {

@@ -215,7 +215,8 @@ export function getBooksInVKModule(module: string): OSISBookType[] {
         const bk = book[code];
         const verse1 = LibSword.getVerseText(module, `${bk.code} 1:1`, false);
         if (!verse1 || verse1 === fake) {
-          const verse2 = LibSword.getVerseText(module, `${bk.code} 1:2`, false);
+          // Lopukhin Colossians starts at verse 3, so used verse 3 instead of 2 here:
+          const verse2 = LibSword.getVerseText(module, `${bk.code} 1:3`, false);
           if (!verse2 || verse1 === verse2) return;
         }
         osis.push(bk.code);
@@ -546,7 +547,9 @@ export async function getSystemFonts(): Promise<string[]> {
         .map((f) => f.fontFamily)
         .concat(fonts);
       allfonts = Array.from(new Set(allfonts));
-      Cache.write(allfonts, 'fontList');
+      if (!Cache.has('fontList')) {
+        Cache.write(allfonts, 'fontList');
+      }
       return allfonts;
     } catch (err: any) {
       log.error(err);

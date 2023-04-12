@@ -24,6 +24,34 @@ import type { PopupState } from './popup';
 
 export type FailReason = { requires: string[]; reason?: string };
 
+export function getFailReasonHTML(failReason: FailReason): string {
+  const { reason, requires } = failReason;
+  if (reason || requires.length) {
+    const d = JSON_attrib_stringify({
+      type: 'requiremod',
+      reflist: requires,
+    } as HTMLData);
+    const classes = ['popup-fail'];
+    if (reason) classes.push('reason');
+    if (requires.length) classes.push('requires');
+    return `
+      <div class="${classes.join(' ')}">
+        <div class="fail-reason">${reason ?? ''}</div>
+        <div class="fail-requires">
+          <span class="label">${G.i18n.t('module-required.message')}</span>
+          <div class="requiremod button" data-data="${d}">
+            <div class="button-box">
+              <div class="bp4-button">
+                ${G.i18n.t('install.label')}
+              </div>
+            </div>
+          </div>
+        <div>
+      </div>`;
+  }
+  return '';
+}
+
 // Get html for Popup target with the help of any extra info. If html
 // cannot be generated, an object is returned with information about
 // the reason.
@@ -164,27 +192,8 @@ export function getPopupHTML(
       throw Error(`Unhandled popup type '${type}'.`);
   }
 
-  const { reason, requires } = failReason;
-  if (reason || requires.length) {
-    const d = JSON_attrib_stringify({
-      type: 'requiremod',
-      reflist: requires,
-    } as HTMLData);
-    return `${html}
-      <div class="popup-fail">
-        <div class="fail-reason">${reason ?? ''}</div>
-        <div>
-          <span class="label">${G.i18n.t('module-required.message')}</span>
-          <div class="requiremod button" data-data="${d}">
-            <div class="button-box">
-              <div class="bp4-button">
-                ${G.i18n.t('install.label')}
-              </div>
-            </div>
-          </div>
-        <div>
-      </div>`;
-  }
+  if (failReason) html += getFailReasonHTML(failReason);
+
   return html;
 }
 

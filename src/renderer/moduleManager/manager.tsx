@@ -1139,7 +1139,7 @@ export default class ModuleManager
             </Vbox>
           }
           buttons={
-            <Hbox pack="end" align="start" className="dialog-buttons">
+            <Hbox className="dialog-buttons" flex="1" pack="end" align="center">
               <Spacer width="10px" />
               <Checkbox
                 id="internet.rememberChoice"

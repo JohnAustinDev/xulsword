@@ -111,7 +111,7 @@
     "host": "github.com",
     "protocol": "https",
     "channel": "latest",
-    "releaseType": "prerelease"
+    "releaseType": "release"
   },
   "repository": {
     "type": "git",
