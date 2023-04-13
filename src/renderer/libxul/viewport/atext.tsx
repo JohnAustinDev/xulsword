@@ -10,18 +10,18 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
-import { getElementData, HTMLData, verseKey } from '../htmlData';
-import Cache from '../../cache';
-import C from '../../constant';
+import { getElementData, HTMLData, verseKey } from '../../htmlData';
+import Cache from '../../../cache';
+import C from '../../../constant';
 import {
   diff,
   JSON_attrib_stringify,
   keep,
   sanitizeHTML,
   stringHash,
-} from '../../common';
-import G from '../rg';
-import log from '../log';
+} from '../../../common';
+import G from '../../rg';
+import log from '../../log';
 import {
   clearPending,
   getMaxChapter,
@@ -29,17 +29,17 @@ import {
   scrollIntoView,
   windowArguments,
   audioIcon,
-} from '../rutil';
+} from '../../rutil';
 import {
   xulDefaultProps,
   xulPropTypes,
   XulProps,
   addClass,
   topHandle,
-} from '../libxul/xul';
-import DragSizer from '../libxul/dragsizer';
-import { Vbox, Hbox, Box } from '../libxul/boxes';
-import Spacer from '../libxul/spacer';
+} from '../xul';
+import DragSizer from '../dragsizer';
+import { Vbox, Hbox, Box } from '../boxes';
+import Spacer from '../spacer';
 import { libswordText, textChange } from './ztext';
 import {
   highlight,
@@ -48,10 +48,10 @@ import {
   findVerseElement,
 } from './zversekey';
 import handlerH from './atextH';
-import '../libsword.css';
+import '../../libsword.css';
 import './atext.css';
 
-import type { AtextPropsType, PinPropsType } from '../../type';
+import type { AtextPropsType, PinPropsType } from '../../../type';
 
 const defaultProps = {
   ...xulDefaultProps,

@@ -7,13 +7,13 @@ import {
   getCSS,
   ofClass,
   sanitizeHTML,
-} from '../../common';
-import C from '../../constant';
-import S from '../../defaultPrefs';
-import G from '../rg';
-import { getElementData } from '../htmlData';
-import log from '../log';
-import { scrollIntoView } from '../rutil';
+} from '../../../common';
+import C from '../../../constant';
+import S from '../../../defaultPrefs';
+import G from '../../rg';
+import { getElementData } from '../../htmlData';
+import log from '../../log';
+import { scrollIntoView } from '../../rutil';
 import { aTextWheelScroll, getRefHTML } from './zversekey';
 
 import type Atext from './atext';

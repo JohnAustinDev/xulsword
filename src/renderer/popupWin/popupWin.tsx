@@ -20,9 +20,9 @@ import {
   PopupParentState,
   ViewportPopupProps,
   PopupParentInitState,
-} from './popupParentH';
-import Popup from './popup';
-import '../viewport/atext.css';
+} from '../libxul/popup/popupParentH';
+import Popup from '../libxul/popup/popup';
+import '../libxul/viewport/atext.css';
 
 const defaultProps = xulDefaultProps;
 

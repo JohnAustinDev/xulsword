@@ -5,7 +5,6 @@
 /* eslint-disable import/no-duplicates */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
-import Subscription from '../../subscription';
 import { dString, escapeRE, getCSS, sanitizeHTML } from '../../common';
 import C from '../../constant';
 import S from '../../defaultPrefs';
@@ -13,11 +12,7 @@ import G from '../rg';
 import log from '../log';
 import { getElementData, verseKey } from '../htmlData';
 import { windowArguments } from '../rutil';
-import { getStrongsModAndKey } from '../viewport/zdictionary';
-import { delayHandler } from '../libxul/xul';
-import Dialog from '../libxul/dialog';
-import { Vbox } from '../libxul/boxes';
-import Label from '../libxul/label';
+import { getStrongsModAndKey } from '../libxul/viewport/zdictionary';
 
 import type {
   BookGroupType,

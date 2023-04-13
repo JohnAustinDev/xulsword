@@ -2,15 +2,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-loop-func */
 import React from 'react';
-import C from '../../constant';
-import S from '../../defaultPrefs';
-import Cache from '../../cache';
-import { clone, escapeRE, ofClass, sortTabsByRelevance } from '../../common';
-import { getElementData, verseKey } from '../htmlData';
-import G from '../rg';
-import { scrollIntoView, windowArguments } from '../rutil';
-import { delayHandler } from '../libxul/xul';
-import log from '../log';
+import C from '../../../constant';
+import S from '../../../defaultPrefs';
+import Cache from '../../../cache';
+import { clone, escapeRE, ofClass, sortTabsByRelevance } from '../../../common';
+import { getElementData, verseKey } from '../../htmlData';
+import G from '../../rg';
+import { scrollIntoView, windowArguments } from '../../rutil';
+import { delayHandler } from '../xul';
+import log from '../../log';
 import { textChange } from './ztext';
 import { aTextWheelScroll, chapterChange } from './zversekey';
 
@@ -21,13 +21,13 @@ import type {
   V11nType,
   OSISBookType,
   TabType,
-} from '../../type';
-import type Xulsword from '../xulsword/xulsword';
-import type { XulswordState } from '../xulsword/xulsword';
-import type { DragSizerVal } from '../libxul/dragsizer';
+} from '../../../type';
+import type Xulsword from '../../xulsword/xulsword';
+import type { XulswordState } from '../../xulsword/xulsword';
+import type { DragSizerVal } from '../dragsizer';
 import type { AtextStateType } from './atext';
-import type ViewportWin from './viewportWin';
-import type { ViewportWinState } from './viewportWin';
+import type ViewportWin from '../../viewportWin/viewportWin';
+import type { ViewportWinState } from '../../viewportWin/viewportWin';
 
 const WindowDescriptor = windowArguments();
 

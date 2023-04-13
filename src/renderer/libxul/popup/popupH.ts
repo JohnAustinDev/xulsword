@@ -5,12 +5,12 @@ import {
   clone,
   findBookmarkItem,
   ofClass,
-} from '../../common';
-import S from '../../defaultPrefs';
-import G from '../rg';
-import { addBookmarksToNotes, getBookmarkInfo } from '../bookmarks';
-import { getElementData } from '../htmlData';
-import log from '../log';
+} from '../../../common';
+import S from '../../../defaultPrefs';
+import G from '../../rg';
+import { addBookmarksToNotes, getBookmarkInfo } from '../../bookmarks';
+import { getElementData } from '../../htmlData';
+import log from '../../log';
 import { getDictEntryHTML, getLemmaHTML } from '../viewport/zdictionary';
 import {
   getIntroductions,
@@ -18,7 +18,7 @@ import {
   parseExtendedVKRef,
 } from '../viewport/zversekey';
 
-import type { HTMLData } from '../htmlData';
+import type { HTMLData } from '../../htmlData';
 import type Popup from './popup';
 import type { PopupState } from './popup';
 

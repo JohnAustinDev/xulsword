@@ -10,8 +10,8 @@ import { dependencies as externals } from '../../build/app/package.json';
 export const xulswordWindows = [
   'splash',
   'xulsword',
-  'viewport/viewportWin',
-  'popup/popupWin',
+  'viewportWin',
+  'popupWin',
   'chooseFont',
   'moduleManager',
   'removeModule',

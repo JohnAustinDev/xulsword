@@ -10,16 +10,16 @@ import {
 import C from '../../constant';
 import G from '../rg';
 import addBookmarks from '../bookmarks';
-import { getValidVK, isValidVKM } from '../rutil';
-import { getDictEntryHTML } from '../viewport/zdictionary';
-import { getNoteHTML, getIntroductions } from '../viewport/zversekey';
+import { isValidVKM } from '../rutil';
+import { getDictEntryHTML } from '../libxul/viewport/zdictionary';
+import { getNoteHTML, getIntroductions } from '../libxul/viewport/zversekey';
 
 import type {
   AtextPropsType,
   SwordFilterType,
   SwordFilterValueType,
 } from '../../type';
-import type { LibSwordResponse } from '../viewport/ztext';
+import type { LibSwordResponse } from '../libxul/viewport/ztext';
 import type { SelectVKType } from '../libxul/selectVK';
 import type PrintPassageWin from './printPassage';
 import type { PrintPassageState } from './printPassage';
@@ -177,8 +177,10 @@ export function validPassage(passage: SelectVKType | null): SelectVKType {
     const vkMod = G.Tabs.find((t) => t.type === C.BIBLE)?.module || '';
     chapters = {
       vkMod,
-      ...getValidVK(vkMod),
+      book: (vkMod && G.getBooksInModule(vkMod)[0]) || 'Gen',
+      chapter: 1,
       lastchapter: 1,
+      v11n: (vkMod && vkMod in G.Tab && G.Tab[vkMod].v11n) || 'KJV',
     };
   }
   const { lastchapter, v11n } = chapters;

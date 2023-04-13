@@ -957,7 +957,7 @@ export default class ModuleManager
                   <Table
                     flex="1"
                     id="module"
-                    key={stringHash(module.columns, modtable.render)}
+                    cellRendererDependencies={[module.columns, modtable.render]}
                     data={modtable.data}
                     columns={module.columns}
                     selectedRegions={module.selection}

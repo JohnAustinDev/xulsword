@@ -1,17 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
-import { clone, ofClass } from '../../common';
-import C from '../../constant';
-import S from '../../defaultPrefs';
-import G from '../rg';
-import { findElementData, updateDataAttribute } from '../htmlData';
-import log from '../log';
-import { scrollIntoView, windowArguments } from '../rutil';
-import { delayHandler } from '../libxul/xul';
+import { clone, ofClass } from '../../../common';
+import C from '../../../constant';
+import S from '../../../defaultPrefs';
+import G from '../../rg';
+import { findElementData, updateDataAttribute } from '../../htmlData';
+import log from '../../log';
+import { scrollIntoView, windowArguments } from '../../rutil';
+import { delayHandler } from '../xul';
 import { getPopupHTML } from './popupH';
 
-import type { PlaceType, ShowType } from '../../type';
-import type { HTMLData } from '../htmlData';
+import type { PlaceType, ShowType } from '../../../type';
+import type { HTMLData } from '../../htmlData';
 import type Atext from '../viewport/atext';
 
 const WindowDescriptor = windowArguments();

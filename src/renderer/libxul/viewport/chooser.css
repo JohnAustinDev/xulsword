@@ -61,7 +61,7 @@
 }
 .chooser .close-chooser {
   position: absolute;
-  background: url(../images/close0.png);
+  background: url(../../images/close0.png);
   width: 15px;
   height: 15px;
   top: 13px;
@@ -73,7 +73,7 @@ html[dir='rtl'] .chooser .close-chooser {
   right: 9px;
 }
 .chooser .close-chooser:hover {
-  background: url(../images/close1.png);
+  background: url(../../images/close1.png);
 }
 .chooser .bookgroup:first-child {
   border-top-left-radius: 8px;
@@ -100,22 +100,22 @@ html[dir='rtl'] .chooser .bookgroup:last-child {
   background-repeat: no-repeat;
 }
 html.ky-Arab .label.ot {
-  background-image: url('../../../assets/locales/ky-Arab/OT.png');
+  background-image: url('../../../../assets/locales/ky-Arab/OT.png');
 }
 html.ky-Arab .label.nt {
-  background-image: url('../../../assets/locales/ky-Arab/NT.png');
+  background-image: url('../../../../assets/locales/ky-Arab/NT.png');
 }
 html.fa .label.ot {
-  background-image: url('../../../assets/locales/fa/OT.png');
+  background-image: url('../../../../assets/locales/fa/OT.png');
 }
 html.fa .label.nt {
-  background-image: url('../../../assets/locales/fa/NT.png');
+  background-image: url('../../../../assets/locales/fa/NT.png');
 }
 html.ug .label.ot {
-  background-image: url('../../../assets/locales/ug/OT.png');
+  background-image: url('../../../../assets/locales/ug/OT.png');
 }
 html.ug .label.nt {
-  background-image: url('../../../assets/locales/ug/NT.png');
+  background-image: url('../../../../assets/locales/ug/NT.png');
 }
 .chooser .book-list {
   position: relative;
@@ -206,25 +206,25 @@ html[dir='rtl'] .bookgrouplist {
   position: relative;
   top: 2px;
   margin-inline-end: 2px;
-  background: url(../images/arrow.png);
+  background: url(../../images/arrow.png);
   width: 15px;
   height: 12px;
 }
 .bookgroupitem .hasAudo {
   margin-inline-end: 2px;
-  background-image: url('../images/listen-small.png');
+  background-image: url('../../images/listen-small.png');
   opacity: 0.6;
   width: 15px;
   height: 13px;
 }
 html[dir='rtl'] .bookgroupitem .charrow {
-  background: url(../images/arrow-rtl.png);
+  background: url(../../images/arrow-rtl.png);
 }
 .bookgroupitem:not(.disabled):hover .charrow {
-  background: url(../images/arrow2.png);
+  background: url(../../images/arrow2.png);
 }
 html[dir='rtl'] .bookgroupitem:not(.disabled):hover .charrow {
-  background: url(../images/arrow2-rtl.png);
+  background: url(../../images/arrow2-rtl.png);
 }
 
 /* ChapterMenu Component */
@@ -269,7 +269,7 @@ html[dir='rtl'] .chaptermenu {
   margin-inline-start: 2px;
   position: relative;
   top: 2px;
-  content: url('../images/listen-small.png');
+  content: url('../../images/listen-small.png');
   width: 15px;
   height: 13px;
   opacity: 0.5;

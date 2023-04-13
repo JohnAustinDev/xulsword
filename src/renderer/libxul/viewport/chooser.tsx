@@ -9,12 +9,17 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { dString } from '../../common';
-import C from '../../constant';
-import G from '../rg';
-import { audioConfig, audioIcon, clearPending, getMaxChapter } from '../rutil';
-import { Hbox, Vbox } from '../libxul/boxes';
-import Spacer from '../libxul/spacer';
+import { dString } from '../../../common';
+import C from '../../../constant';
+import G from '../../rg';
+import {
+  audioConfig,
+  audioIcon,
+  clearPending,
+  getMaxChapter,
+} from '../../rutil';
+import { Hbox, Vbox } from '../boxes';
+import Spacer from '../spacer';
 import {
   xulDefaultProps,
   xulPropTypes,
@@ -22,7 +27,7 @@ import {
   addClass,
   delayHandler,
   topHandle,
-} from '../libxul/xul';
+} from '../xul';
 import handlerH from './chooserH';
 import './chooser.css';
 
@@ -33,7 +38,7 @@ import type {
   OSISBookType,
   V11nType,
   VerseKeyAudioFile,
-} from '../../type';
+} from '../../../type';
 
 const defaultProps = {
   ...xulDefaultProps,

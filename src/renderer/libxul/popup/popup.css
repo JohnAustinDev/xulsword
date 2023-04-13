@@ -60,7 +60,7 @@ html[dir='rtl'] .npopup {
   margin-inline-end: 5px;
 }
 .popupheader .towindow {
-  background: url('../images/towindow.png');
+  background: url('../../images/towindow.png');
   margin-inline-end: 10px;
   flex-shrink: 0;
   width: 20px;
@@ -81,7 +81,7 @@ html[dir='rtl'] .npopup {
 }
 .draghandle {
   cursor: move;
-  background-image: url('../images/draghandle.png');
+  background-image: url('../../images/draghandle.png');
   height: 12px;
   width: 40px;
 }
@@ -118,7 +118,7 @@ html[dir='rtl'] .snbut {
 }
 .snbut:after {
   display: inline-block;
-  content: url(../images/search.png);
+  content: url(../../images/search.png);
   width: 30px;
   height: 18px;
   overflow: hidden;

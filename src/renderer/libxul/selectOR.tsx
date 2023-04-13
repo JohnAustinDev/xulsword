@@ -23,7 +23,7 @@ import {
 } from '../../common';
 import C from '../../constant';
 import G from '../rg';
-import { getAllDictionaryKeyList } from '../viewport/zdictionary';
+import { getAllDictionaryKeyList } from './viewport/zdictionary';
 import { addClass, xulDefaultProps, XulProps, xulPropTypes } from './xul';
 import { Vbox } from './boxes';
 import Menulist from './menulist';

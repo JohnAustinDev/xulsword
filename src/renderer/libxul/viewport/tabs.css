@@ -48,7 +48,7 @@ menupopup {
 .tabs .mts-tab .anchorbutton {
   width: 12px;
   height: 12px;
-  background-image: url(../images/dropdown-menu.png);
+  background-image: url(../../images/dropdown-menu.png);
 }
 .tabs .mto-tab {
   display: block;

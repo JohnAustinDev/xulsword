@@ -34,17 +34,17 @@ import Menupopup from '../libxul/menupopup';
 import Bookselect from '../libxul/bookselect';
 import Spacer from '../libxul/spacer';
 import Textbox from '../libxul/textbox';
-import Viewport from '../viewport/viewport';
+import Viewport from '../libxul/viewport/viewport';
 import viewportParentH, {
   closeMenupopups,
   bbDragEnd as bbDragEndH,
   showNewModules,
-} from '../viewport/viewportParentH';
+} from '../libxul/viewport/viewportParentH';
 import handlerH from './xulswordH';
 import './xulsword.css';
 
 import type { HistoryVKType, XulswordStateArgType } from '../../type';
-import type Atext from '../viewport/atext';
+import type Atext from '../libxul/viewport/atext';
 
 const defaultProps = xulDefaultProps;
 

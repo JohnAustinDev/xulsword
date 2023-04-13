@@ -19,9 +19,6 @@
 .search-grid > .grid-row-cell:nth-of-type(2) label {
   white-space: unset;
 }
-#scopeselect {
-  padding-inline-start: 18px;
-}
 #scopeselect select {
   width: 100%;
 }

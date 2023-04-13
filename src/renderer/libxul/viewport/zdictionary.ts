@@ -1,16 +1,16 @@
 /* eslint-disable no-continue */
-import { JSON_attrib_stringify } from '../../common';
-import S from '../../defaultPrefs';
-import C from '../../constant';
-import G from '../rg';
-import log from '../log';
+import { JSON_attrib_stringify } from '../../../common';
+import S from '../../../defaultPrefs';
+import C from '../../../constant';
+import G from '../../rg';
+import log from '../../log';
 
 import type {
   ModulesCache,
   SwordFilterType,
   SwordFilterValueType,
-} from '../../type';
-import type { HTMLData } from '../htmlData';
+} from '../../../type';
+import type { HTMLData } from '../../htmlData';
 import type { FailReason } from '../popup/popupH';
 
 const DictKeyTransform: { [i: string]: (key: string) => string } = {

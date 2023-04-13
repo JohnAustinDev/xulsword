@@ -7,7 +7,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { clone, getModuleOfObject, randomID } from '../../common';
 import G from '../rg';
-import { getAllDictionaryKeyList } from '../viewport/zdictionary';
+import { getAllDictionaryKeyList } from './viewport/zdictionary';
 import { htmlAttribs, xulDefaultProps, XulProps, xulPropTypes } from './xul';
 import SelectVK from './selectVK';
 import SelectOR from './selectOR';

@@ -194,29 +194,21 @@ class SelectVK extends React.Component {
         default: {
           s[id as 'chapter' | 'lastchapter' | 'verse' | 'lastverse'] =
             Number(value);
-          let updateverse = false;
-          if (id === 'chapter') {
-            updateverse = true;
-            if (!s.lastchapter || s.lastchapter < s.chapter)
-              s.lastchapter = s.chapter;
-          }
-          if (updateverse) s.verse = 1;
-          if (id === 'lastchapter') updateverse = true;
-          if (updateverse) {
-            const module = getModuleOfObject(s);
-            s.lastverse = getMaxVerse(
-              (module && module in G.Tab && G.Tab[module].v11n) ||
-                s.v11n ||
-                'KJV',
-              `${s.book}.${s.lastchapter}`
-            );
+          if (id === 'chapter' || id === 'lastchapter') {
+            s.verse = 1;
+            s.lastverse = 1;
           }
         }
       }
-      this.setState({ selection: s } as SelectVKState);
-      if (typeof onSelection === 'function') {
-        onSelection(s, props.id);
-      }
+      this.setState((prevState: SelectVKState) => {
+        if (diff(prevState.selection, s)) {
+          if (typeof onSelection === 'function') {
+            onSelection(s, props.id);
+          }
+          return { selection: s } as SelectVKState;
+        }
+        return null;
+      });
     }
   }
 

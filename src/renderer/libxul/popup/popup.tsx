@@ -11,29 +11,33 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { JSON_attrib_stringify, sanitizeHTML, stringHash } from '../../common';
-import S from '../../defaultPrefs';
-import C from '../../constant';
-import G from '../rg';
-import { libswordImgSrc, windowArguments } from '../rutil';
+import {
+  JSON_attrib_stringify,
+  sanitizeHTML,
+  stringHash,
+} from '../../../common';
+import S from '../../../defaultPrefs';
+import C from '../../../constant';
+import G from '../../rg';
+import { libswordImgSrc, windowArguments } from '../../rutil';
 import {
   topHandle,
   htmlAttribs,
   xulDefaultProps,
   XulProps,
   xulPropTypes,
-} from '../libxul/xul';
-import { Box, Hbox } from '../libxul/boxes';
+} from '../xul';
+import { Box, Hbox } from '../boxes';
 import { getRefBible } from '../viewport/zversekey';
 import popupH, { getPopupHTML } from './popupH';
-import '../libsword.css';
+import '../../libsword.css';
 import './popup.css';
 // These classes are used by generated HTML:
-import '../libxul/label.css';
-import '../libxul/button.css';
+import '../label.css';
+import '../button.css';
 
-import type { FeatureMods } from '../../type';
-import type { HTMLData } from '../htmlData';
+import type { FeatureMods } from '../../../type';
+import type { HTMLData } from '../../htmlData';
 
 const defaultProps = {
   ...xulDefaultProps,

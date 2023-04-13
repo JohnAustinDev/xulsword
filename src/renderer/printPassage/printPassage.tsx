@@ -35,7 +35,7 @@ import {
   bibleChapterText,
 } from './printPassageH';
 import '../libsword.css';
-import '../viewport/atext.css';
+import '../libxul/viewport/atext.css';
 import './printPassage.css';
 
 import type { OSISBookType, QuerablePromise } from '../../type';

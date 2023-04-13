@@ -8,18 +8,13 @@
 /* eslint-disable import/order */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { clone, genBookTreeNodes, gbAncestorIDs } from '../../common';
-import C from '../../constant';
-import G from '../rg';
-import { audioGenBookNode } from '../rutil';
-import { Hbox, Vbox } from '../libxul/boxes';
-import {
-  xulDefaultProps,
-  xulPropTypes,
-  XulProps,
-  addClass,
-} from '../libxul/xul';
-import TreeView, { forEachNode } from '../libxul/treeview';
+import { clone, genBookTreeNodes, gbAncestorIDs } from '../../../common';
+import C from '../../../constant';
+import G from '../../rg';
+import { audioGenBookNode } from '../../rutil';
+import { Hbox, Vbox } from '../boxes';
+import { xulDefaultProps, xulPropTypes, XulProps, addClass } from '../xul';
+import TreeView, { forEachNode } from '../treeview';
 import './chooser.css';
 import './genbookChooser.css';
 

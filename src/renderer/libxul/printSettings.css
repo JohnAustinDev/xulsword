@@ -1,9 +1,6 @@
 .printsettings {
   width: fit-content;
 }
-.printsettings .groupbox-body > div > * {
-  margin-bottom: 10px;
-}
 .printsettings .textbox {
   width: 3em;
   text-align: right;

@@ -20,7 +20,7 @@ import {
   popupParentHandler as popupParentHandlerH,
   popupHandler as popupHandlerH,
   PopupParentInitState,
-} from '../popup/popupParentH';
+} from '../libxul/popup/popupParentH';
 import Button from '../libxul/button';
 import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
 import { Box, Hbox, Vbox } from '../libxul/boxes';
@@ -47,7 +47,7 @@ import handlerH, {
 import './search.css';
 
 import type { BookGroupType, SearchType } from '../../type';
-import Popup from '../popup/popup';
+import Popup from '../libxul/popup/popup';
 
 const defaultProps = xulDefaultProps;
 

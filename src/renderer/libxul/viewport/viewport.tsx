@@ -12,8 +12,8 @@
 import React, { SyntheticEvent } from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
-import C from '../../constant';
-import { getPanelWidths, stringHash } from '../../common';
+import C from '../../../constant';
+import { getPanelWidths, stringHash } from '../../../common';
 import Popup from '../popup/popup';
 import {
   popupParentHandler as popupParentHandlerH,
@@ -23,18 +23,18 @@ import {
   ViewportPopupProps,
   PopupParentInitState,
 } from '../popup/popupParentH';
-import G from '../rg';
-import log from '../log';
-import { verseKey } from '../htmlData';
-import { clearPending } from '../rutil';
+import G from '../../rg';
+import log from '../../log';
+import { verseKey } from '../../htmlData';
+import { clearPending } from '../../rutil';
 import {
   addClass,
   xulDefaultProps,
   xulPropTypes,
   XulProps,
   topHandle,
-} from '../libxul/xul';
-import { Hbox, Vbox } from '../libxul/boxes';
+} from '../xul';
+import { Hbox, Vbox } from '../boxes';
 import Chooser from './chooser';
 import GenbookChooser from './genbookChooser';
 import Tabs from './tabs';
@@ -46,8 +46,8 @@ import type {
   LocationVKType,
   VerseKeyAudioFile,
   XulswordStateArgType,
-} from '../../type';
-import type S from '../../defaultPrefs';
+} from '../../../type';
+import type S from '../../../defaultPrefs';
 
 const defaultProps = xulDefaultProps;
 

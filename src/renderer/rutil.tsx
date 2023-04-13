@@ -346,18 +346,6 @@ export function isValidVK(location: LocationVKType): boolean {
   return true;
 }
 
-// Return a valid LocationVK in the given module. If module is '' then
-// Gen.1.1.1.KJV is returned.
-export function getValidVK(module: string): LocationVKType {
-  return {
-    book: (module && G.getBooksInModule(module)[0]) || 'Gen',
-    chapter: 1,
-    verse: 1,
-    lastverse: 1,
-    v11n: (module && module in G.Tab && G.Tab[module].v11n) || 'KJV',
-  };
-}
-
 // LibSword.getMaxChapter returns an erroneous number if vkeytext's
 // book is not part of v11n, so it would be necessary to check here
 // first. But a LibSword call is unnecessary with G.BooksInV11n.

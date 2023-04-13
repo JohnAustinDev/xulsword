@@ -365,6 +365,8 @@ const defaultProps = {
   enableMultipleSelection: false,
   enableColumnReordering: false,
 
+  cellRendererDependencies: undefined,
+
   onCellClick: undefined,
   onEditableCellChanged: undefined,
   onRowsReordered: undefined,
@@ -388,6 +390,8 @@ const propTypes = {
   enableMultipleSelection: PropTypes.bool,
   enableColumnReordering: PropTypes.bool,
 
+  cellRendererDependencies: PropTypes.array,
+
   onCellClick: PropTypes.func,
   onEditableCellChanged: PropTypes.func,
   onRowsReordered: PropTypes.func,
@@ -406,6 +410,8 @@ export type TableProps = XulProps & {
   selectionModes?: RegionCardinality[];
   enableMultipleSelection?: boolean;
   enableColumnReordering?: boolean;
+
+  cellRendererDependencies?: React.DependencyList;
 
   onCellClick?: TonCellClick;
   onEditableCellChanged?: TonEditableCellChanged;
@@ -502,7 +508,7 @@ class Table extends React.Component {
       )[0];
       if (parent) {
         let top = 0;
-        if (id && id in Table.scrollTop) top = Table.scrollTop[id] - 30;
+        if (id && id in Table.scrollTop) top = Table.scrollTop[id];
         parent.scrollTop = top;
       }
       resizeColumns();
@@ -743,6 +749,7 @@ class Table extends React.Component {
       enableMultipleSelection,
       enableColumnReordering,
       tableCompRef,
+      cellRendererDependencies,
     } = props;
     const {
       datacolumns,
@@ -810,6 +817,7 @@ class Table extends React.Component {
           enableColumnReordering={enableColumnReordering}
           enableRowHeader={false}
           enableFocusedCell={false}
+          cellRendererDependencies={cellRendererDependencies}
           onColumnsReordered={onColumnsReordered}
           onColumnWidthChanged={onColumnWidthChanged}
           ref={tableCompRef}

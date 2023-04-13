@@ -3,8 +3,8 @@
 import React from 'react';
 import RefParser from '../../refParser';
 import { clone, ofClass } from '../../common';
-import { chapterChange, verseChange } from '../viewport/zversekey';
-import { genbookChange } from '../viewport/ztext';
+import { chapterChange, verseChange } from '../libxul/viewport/zversekey';
+import { genbookChange } from '../libxul/viewport/ztext';
 import { genBookAudioFile, verseKeyAudioFile } from '../rutil';
 import { verseKey } from '../htmlData';
 import G from '../rg';

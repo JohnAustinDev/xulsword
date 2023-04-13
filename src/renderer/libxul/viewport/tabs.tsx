@@ -6,17 +6,12 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import C from '../../constant';
-import { ofClass } from '../../common';
-import {
-  xulDefaultProps,
-  xulPropTypes,
-  XulProps,
-  htmlAttribs,
-} from '../libxul/xul';
-import { AnchorButton } from '../libxul/button';
-import Menupopup from '../libxul/menupopup';
-import G from '../rg';
+import C from '../../../constant';
+import { ofClass } from '../../../common';
+import { xulDefaultProps, xulPropTypes, XulProps, htmlAttribs } from '../xul';
+import { AnchorButton } from '../button';
+import Menupopup from '../menupopup';
+import G from '../../rg';
 import './tabs.css';
 
 const defaultProps = xulDefaultProps;

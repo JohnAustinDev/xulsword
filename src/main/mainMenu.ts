@@ -93,47 +93,63 @@ function panelLabels() {
   return labels;
 }
 
-function buildModuleMenus(menu: Menu) {
-  const rgtabs = clone(G.Tabs).reverse();
-  showtabs.forEach((showtab) => {
-    const [typekey, type] = showtab;
-    let disableParent = true;
-    panelLabels().forEach((pl) => {
-      const panelIndex =
-        pl === 'menu.view.allwindows'
-          ? -1
-          : Number(pl.substring(pl.length - 1)) - 1;
-      const tabmenu = menu.getMenuItemById(`menu_${typekey}_${pl}`);
-      const submenu = tabmenu?.submenu;
-      if (!submenu) throw Error(`No tabmenu: menu_${typekey}_${pl}`);
-      const { items } = submenu;
-      while (items[0].id !== `showAll_${typekey}_${pl}`) items.shift();
-      rgtabs.forEach((t) => {
-        if (t.tabType === type) {
-          disableParent = false;
-          const { Description } = t.conf;
-          const newItem = new MenuItem({
-            id: `showtab_${panelIndex}_${t.module}`,
-            label: t.label + (Description ? ` --- ${Description.locale}` : ''),
-            type: 'checkbox',
-            // icon: path.join(G.Dirs.path.xsAsset, 'icons', '16x16', `${tab}.png`),
-            click: d(() => {
-              G.Viewport.setTabs(panelIndex, t.module, 'toggle');
-            }),
+function updateModuleMenus(menux?: Menu) {
+  const menu = menux || Menu.getApplicationMenu();
+  if (menu) {
+    const ps = G.Prefs.getComplexValue(
+      'xulsword.panels'
+    ) as typeof S.prefs.xulsword.panels;
+    const rgtabs = clone(G.Tabs).reverse();
+    showtabs.forEach((showtab) => {
+      const [typekey, type] = showtab;
+      let disableParent = true;
+      panelLabels().forEach((pl) => {
+        const panelIndex =
+          pl === 'menu.view.allwindows'
+            ? -1
+            : Number(pl.substring(pl.length - 1)) - 1;
+        const tabmenu = menu.getMenuItemById(`menu_${typekey}_${pl}`);
+        const submenu = tabmenu?.submenu;
+        if (!submenu) throw Error(`No tabmenu: menu_${typekey}_${pl}`);
+        const { items } = submenu;
+        while (items[0].id !== `showAll_${typekey}_${pl}`) items.shift();
+        rgtabs.forEach((t) => {
+          if (t.tabType === type) {
+            disableParent = false;
+            const { Description } = t.conf;
+            const newItem = new MenuItem({
+              id: `showtab_${panelIndex}_${t.module}`,
+              label:
+                t.label + (Description ? ` --- ${Description.locale}` : ''),
+              type: 'checkbox',
+              // icon: path.join(G.Dirs.path.xsAsset, 'icons', '16x16', `${tab}.png`),
+              click: d(() => {
+                G.Viewport.setTabs(panelIndex, t.module, 'toggle');
+              }),
+            });
+            submenu.insert(0, newItem);
+          }
+        });
+        if (panelIndex !== -1) {
+          const winMenuIds = showtabs.map((tk) => `menu_${tk[0]}_${pl}`);
+          winMenuIds.push(`menu_showAll_${pl}`);
+          winMenuIds.push(`menu_hideAll_${pl}`);
+          winMenuIds.forEach((id) => {
+            const item = menu.getMenuItemById(id);
+            if (item) item.enabled = ps[panelIndex] !== null;
           });
-          submenu.insert(0, newItem);
         }
       });
+      const parent = menu.getMenuItemById(`parent_${typekey}`);
+      if (parent) parent.enabled = !disableParent;
     });
-    const parent = menu.getMenuItemById(`parent_${typekey}`);
-    if (parent) parent.enabled = !disableParent;
-  });
+  }
 }
 
 // While updating the menu, a set of controlling Pref keys is collected.
 // This set of keys will be monitored such that when one of them is changed,
 // the menu will again be updated.
-function updateMenuFromPref(menux?: Menu | null) {
+function updateCheckboxAndRadiosFromPref(menux?: Menu | null) {
   const panels = G.Prefs.getComplexValue(
     'xulsword.panels'
   ) as typeof S.prefs.xulsword.panels;
@@ -205,7 +221,7 @@ export const pushPrefsToMenu: PrefCallbackType = (winid, store, key, val) => {
         Object.keys(val as any).forEach((k) => keys.push(`${key}.${k}`));
       } else keys.push(key);
       if (keys.some((k) => menuPref.includes(k))) {
-        updateMenuFromPref();
+        updateCheckboxAndRadiosFromPref();
       }
     }
     if (store === 'bookmarks') {
@@ -370,8 +386,8 @@ export default class MainMenuBuilder {
         : this.buildDefaultTemplate();
     addShortcutKeys(template);
     const menu = Menu.buildFromTemplate(template);
-    buildModuleMenus(menu);
-    updateMenuFromPref(menu);
+    updateModuleMenus(menu);
+    updateCheckboxAndRadiosFromPref(menu);
     if (update) {
       const appMenu = Menu.getApplicationMenu();
       if (appMenu) {
@@ -393,6 +409,9 @@ export default class MainMenuBuilder {
           'bookmarks'
         ) as typeof S.bookmarks.rootfolder
       ).childNodes.length > 0;
+    const panels = G.Prefs.getComplexValue(
+      'xulsword.panels'
+    ) as typeof S.prefs.xulsword.panels;
 
     const subMenuFile: MenuItemConstructorOptions = {
       role: 'fileMenu',
@@ -611,6 +630,7 @@ export default class MainMenuBuilder {
             return {
               label: ts(pl),
               id: `menu_${typekey}_${pl}`,
+              enabled: panelIndex === -1 || Boolean(panels[panelIndex]),
               submenu: [
                 {
                   id: `showAll_${typekey}_${pl}`,
@@ -669,6 +689,8 @@ export default class MainMenuBuilder {
                 : Number(pl.substring(pl.length - 1)) - 1;
             return {
               label: ts(pl),
+              id: `menu_showAll_${pl}`,
+              enabled: panelIndex === -1 || Boolean(panels[panelIndex]),
               click: d(() => {
                 G.Viewport.setTabs(panelIndex, 'all', 'show');
               }),
@@ -684,6 +706,8 @@ export default class MainMenuBuilder {
                 : Number(pl.substring(pl.length - 1)) - 1;
             return {
               label: ts(pl),
+              id: `menu_hideAll_${pl}`,
+              enabled: panelIndex === -1 || Boolean(panels[panelIndex]),
               click: d(() => {
                 G.Viewport.setTabs(panelIndex, 'all', 'hide');
               }),
@@ -743,13 +767,11 @@ export default class MainMenuBuilder {
             {
               label: ts('fontsAndColors.label'),
               click: d(() => {
-                const panels = G.Prefs.getComplexValue(
+                const ps = G.Prefs.getComplexValue(
                   'xulsword.panels'
                 ) as typeof S.prefs.xulsword.panels;
                 const module =
-                  panels.find((m) => m) ||
-                  (G.Tabs[0] && G.Tabs[0].module) ||
-                  '';
+                  ps.find((m) => m) || (G.Tabs[0] && G.Tabs[0].module) || '';
                 Commands.openFontsColors(module);
               }),
             },
@@ -860,26 +882,24 @@ export default class MainMenuBuilder {
       submenu.push(...bookmarkProgramMenu(bookmarks));
     }
 
-    const initialPanels = G.Prefs.getComplexValue(
-      'xulsword.panels'
-    ) as typeof S.prefs.xulsword.panels;
     const subMenuWindows: MenuItemConstructorOptions = {
       role: 'windowMenu',
       label: ts('menu.windows'),
-      submenu: initialPanels.map((_p: string | null, i: number) => {
+      submenu: panels.map((_p: string | null, i: number) => {
         const n = i + 1;
         return {
           label: ts(`menu.windows.${n}win`),
           id: `xulsword.panels_val_${n}`,
           type: 'radio',
           click: d(() => {
-            const panels = G.Prefs.getComplexValue(
+            const ps = G.Prefs.getComplexValue(
               'xulsword.panels'
             ) as typeof S.prefs.xulsword.panels;
-            const newpans = panels.map((panel: string | null, x: number) => {
+            const newpans = ps.map((panel: string | null, x: number) => {
               return x > i ? null : panel || '';
             });
             G.Prefs.setComplexValue('xulsword.panels', newpans);
+            updateModuleMenus();
           }),
         };
       }),

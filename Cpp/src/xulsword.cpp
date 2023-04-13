@@ -1579,12 +1579,13 @@ int xulsword::search(const char *mod, const char *srchstr, const char *scope, in
     else {*workKeys = module->search(searchString.c_str(), type1, flags, 0, 0, &savePercentComplete, NULL);}
    }
 
-  // For Windows, sorting is done in swmodule.cpp and does not need to be done again here.
-  // This ListKey sort implementation is unbearably slow when there are many results.
-  #ifndef WIN32
+  // For Windows, sorting was done in swmodule.cpp and did not need to be done again here.
+  // That apparently changed with xulsword 4.0. This ListKey sort implementation is
+  // unbearably slow when there are many results.
+  //#ifndef WIN32
     // 2048 is Sort By Relevance flag
     if ((flags & 2048) != 2048) workKeys->sort();
-  #endif
+  //#endif
 
   // If not a new search append new results to existing key
   if (!newsearch) {

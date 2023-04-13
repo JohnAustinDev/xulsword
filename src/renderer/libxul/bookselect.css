@@ -37,6 +37,8 @@
   height: auto;
   margin: 0px;
   padding: 0px;
+  -webkit-box-shadow: unset;
+  box-shadow: unset;
   border: none;
   border-radius: unset;
   padding-inline-start: unset;

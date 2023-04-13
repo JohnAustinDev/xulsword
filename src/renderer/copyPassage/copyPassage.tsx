@@ -21,7 +21,7 @@ import {
   getStatePref,
   setStatePref,
 } from '../rutil';
-import { libswordText } from '../viewport/ztext';
+import { libswordText } from '../libxul/viewport/ztext';
 import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
 import Groupbox from '../libxul/groupbox';
 import Checkbox from '../libxul/checkbox';
@@ -29,7 +29,7 @@ import { Hbox, Vbox } from '../libxul/boxes';
 import Button from '../libxul/button';
 import SelectVK, { SelectVKType } from '../libxul/selectVK';
 import '../libsword.css';
-import '../viewport/atext.css';
+import '../libxul/viewport/atext.css';
 import './copyPassage.css';
 
 import type VerseKey from '../../verseKey';

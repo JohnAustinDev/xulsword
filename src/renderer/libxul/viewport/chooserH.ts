@@ -1,11 +1,11 @@
 /* eslint-disable import/no-duplicates */
 import React from 'react';
-import { ofClass, sanitizeHTML } from '../../common';
-import C from '../../constant';
-import G from '../rg';
-import { delayHandler } from '../libxul/xul';
+import { ofClass, sanitizeHTML } from '../../../common';
+import C from '../../../constant';
+import G from '../../rg';
+import { delayHandler } from '../xul';
 
-import type { BookGroupType } from '../../type';
+import type { BookGroupType } from '../../../type';
 import type Chooser from './chooser';
 import type { ChooserProps, ChooserState } from './chooser';
 

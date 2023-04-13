@@ -25,16 +25,16 @@ import {
   xulPropTypes,
 } from '../libxul/xul';
 import { Hbox, Vbox } from '../libxul/boxes';
-import Viewport from './viewport';
+import Viewport from '../libxul/viewport/viewport';
 import viewportParentH, {
   closeMenupopups,
   vpWindowState,
   bbDragEnd as bbDragEndH,
   showNewModules,
-} from './viewportParentH';
+} from '../libxul/viewport/viewportParentH';
 
 import type { XulswordStateArgType } from '../../type';
-import type Atext from './atext';
+import type Atext from '../libxul/viewport/atext';
 
 const defaultProps = xulDefaultProps;
 
