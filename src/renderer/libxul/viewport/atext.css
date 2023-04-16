@@ -280,9 +280,6 @@ html[dir='rtl'] .notebox-maximizer {
   width: 17px;
   height: 20px;
 }
-.versePerLineButton:not(:first-child) > div {
-  top: -20px;
-}
 .sb[dir='rtl'] .versePerLineButton > div {
   left: auto;
   right: -25px;

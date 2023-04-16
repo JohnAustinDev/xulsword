@@ -411,9 +411,12 @@ DEFINITION OF A 'XULSWORD REFERENCE':
     if (this.isReady(true)) {
       const pkey = 'toc';
       if (!DiskCache.has(pkey, gbmod)) {
-        const toc = JSON_parse(
-          libxulsword.GetGenBookTableOfContents(gbmod)
-        ) as GenBookTOC;
+        const t = libxulsword
+          .GetGenBookTableOfContents(gbmod)
+          // EnumaElish module has a TOC entry with this illegal control character:
+          // eslint-disable-next-line no-control-regex
+          .replace(/[	]/g, ' ');
+        const toc = JSON_parse(t) as GenBookTOC;
         DiskCache.write(pkey, readGenBookLibSword(toc) as GenBookKeys, gbmod);
       }
       return DiskCache.read(pkey, gbmod) as ModulesCache[string]['toc'];

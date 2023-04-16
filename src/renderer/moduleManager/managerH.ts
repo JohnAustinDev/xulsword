@@ -182,9 +182,11 @@ export const RepCol = {
   iInfo: 4,
 } as const;
 
-export const Downloads: {
-  [downloadKey: string]: QuerablePromise<number | string>;
-} = {};
+export const Downloads: QuerablePromise<
+  ({
+    [downloadKey: string]: number | string;
+  } | null)[]
+>[] = [];
 
 export type ModuleUpdates = {
   doInstall: boolean;
@@ -201,19 +203,21 @@ export function setDownloadProgress(
   dlkey: string,
   prog: number
 ) {
-  let { downloads } = Progressing;
-  const di = downloads.findIndex((d) => d[0] === dlkey);
-  if (di === -1) downloads.push([dlkey, prog]);
-  else downloads[di][1] = prog;
-  if (downloads.every((d) => d[1] === -1)) downloads = [];
-  const progress = !downloads.length
-    ? null
-    : [
-        downloads.reduce((p, c) => p + (c[1] === -1 ? 1 : c[1]), 0),
-        downloads.length,
-      ];
-  xthis.sState({ progress });
-  Progressing.downloads = downloads;
+  if (prog !== -1 || Progressing.downloads.find((v) => v[0] === dlkey)) {
+    let { downloads } = Progressing;
+    const di = downloads.findIndex((d) => d[0] === dlkey);
+    if (di === -1) downloads.push([dlkey, prog]);
+    else downloads[di][1] = prog;
+    if (downloads.every((d) => d[1] === -1)) downloads = [];
+    const progress = !downloads.length
+      ? null
+      : [
+          downloads.reduce((p, c) => p + (c[1] === -1 ? 1 : c[1]), 0),
+          downloads.length,
+        ];
+    xthis.sState({ progress });
+    Progressing.downloads = downloads;
+  }
 }
 
 export function onRowsReordered(
@@ -422,10 +426,6 @@ export async function eventHandler(
         }
         case 'ok': {
           try {
-            const downloads = Object.keys(Downloads).map((k) =>
-              keyToDownload(k)
-            );
-            const promises = Object.values(Downloads);
             const installed: SwordConfType[] = [];
             const removeMods: { name: string; repo: Repository }[] = [];
             const moveMods: {
@@ -433,10 +433,7 @@ export async function eventHandler(
               fromRepo: any;
               toRepo: Repository;
             }[] = [];
-            promises.forEach((p) => {
-              if (p.isPending) p.reject(`time-out`);
-            });
-            const downloadResults = await Promise.allSettled(promises);
+            const downloadResults = await Promise.allSettled(Downloads);
             G.Window.modal([
               { modal: 'transparent', window: 'all' },
               { modal: 'darkened', window: { type: 'xulsword' } },
@@ -518,25 +515,36 @@ export async function eventHandler(
             // Install modules
             const install: Parameters<GType['Module']['installDownloads']>[0] =
               [];
-            downloadResults.forEach((dlr, i) => {
+            downloadResults.forEach((dlr) => {
               if (dlr.status === 'fulfilled' && dlr.value) {
-                // Find the moduleData row associated with this download. The moduleData
-                // audio download URLs do not include the chapter range, so it must be
-                // removed from the download URL (and don't change original download object!).
-                const dl = clone(downloads[i]);
-                if ('http' in dl) dl.http = dl.http.replace(/&bk=.*$/, '');
-                const downloadkey = downloadKey(dl);
-                const key = Object.keys(moduleData).find(
-                  (k) => downloadKey(getModuleDownload(k)) === downloadkey
-                );
-                if (key && moduleData[key][ModCol.iInstalled] === ON) {
-                  install.push({
-                    download: downloads[i],
-                    toRepo: builtinRepos(G.i18n, G.Dirs.path)[
-                      moduleData[key][ModCol.iInfo].shared ? 0 : 1
-                    ],
-                  });
-                }
+                const { value } = dlr;
+                value.forEach((v) => {
+                  if (v) {
+                    Object.entries(v).forEach((entry) => {
+                      const [downloadkey, result] = entry;
+                      if (typeof result === 'number' && result > 0) {
+                        // Find the moduleData row associated with this download. The moduleData
+                        // audio download URLs do not include the chapter range, so it must be
+                        // removed from the download URL (and don't change original download object!).
+                        const dl = keyToDownload(downloadkey);
+                        if ('http' in dl)
+                          dl.http = dl.http.replace(/&bk=.*$/, '');
+                        const key = Object.keys(moduleData).find(
+                          (k) =>
+                            downloadKey(getModuleDownload(k)) === downloadkey
+                        );
+                        if (key && moduleData[key][ModCol.iInstalled] === ON) {
+                          install.push({
+                            download: dl,
+                            toRepo: builtinRepos(G.i18n, G.Dirs.path)[
+                              moduleData[key][ModCol.iInfo].shared ? 0 : 1
+                            ],
+                          });
+                        }
+                      }
+                    });
+                  }
+                });
               }
             });
             G.Module.installDownloads(
@@ -642,22 +650,12 @@ export async function eventHandler(
           break;
         }
         case 'moduleCancel': {
-          const { moduleData } = Saved;
-          G.Module.cancel(
-            Object.entries(moduleData)
-              .filter((entry) => entry[1][ModCol.iInfo].loading)
-              .map((entry) => {
-                const dl = getModuleDownload(entry[0]);
-                if (dl) {
-                  entry[1][ModCol.iInfo].intent = intent(
-                    ModCol.iInstalled,
-                    'warning'
-                  );
-                }
-                return dl;
-              })
-              .filter((d) => d !== null) as Download[]
-          );
+          await G.Module.cancelOngoingDownloads();
+          this.addToast({
+            message: C.UI.Manager.cancelMsg,
+            timeout: 5000,
+            intent: Intent.SUCCESS,
+          });
           Progressing.downloads = [];
           this.sState({ progress: null });
           break;
@@ -856,7 +854,6 @@ export function handleListings(
         drow[RepCol.iInfo].loading = false;
         drow[RepCol.iInfo].intent = intent(RepCol.iState, 'none');
         if (typeof l === 'string') {
-          log.warn(l);
           const newintent = l.startsWith(C.UI.Manager.cancelMsg)
             ? Intent.WARNING
             : Intent.DANGER;
@@ -889,7 +886,6 @@ export function handleListings(
     // Then only local repositories are being considered, with no table to update.
     listingsAndErrors.forEach((l, i) => {
       if (typeof l === 'string') {
-        log.warn(l);
         xthis.addToast({
           message: l,
           timeout: 5000,
@@ -913,10 +909,10 @@ export function handleListings(
   }
 }
 
-// Check enabled repository listings for installed modules that have
-// newer versions available, or have been obsoleted. Begin downloading
-// the updates, but ask whether to replace each installed module with
-// the update before doing so. This function should be called after
+// Check enabled repository listings (except beta and attic) for installed
+// modules that have newer versions available, or have been obsoleted. Begin
+// downloading the updates, but ask whether to replace each installed module
+// with the update before doing so. This function should be called after
 // updateRepositoryLists().
 export function checkForModuleUpdates(xthis: ModuleManager) {
   const { repositoryListings, repository: reptable, moduleLangData } = Saved;
@@ -954,6 +950,9 @@ export function checkForModuleUpdates(xthis: ModuleManager) {
       const { conf } = row[ModCol.iInfo];
       if (
         inst.sourceRepository &&
+        !['CrossWire Attic', 'CrossWire Beta'].includes(
+          conf.sourceRepository.name
+        ) &&
         conf.xsmType !== 'XSM_audio' &&
         // module is to be obsoleted
         (conf.Obsoletes?.includes(inst.module) ||
@@ -1143,7 +1142,7 @@ export function getModuleRowXsmSiblings(modrepkey: string): string[] {
   return [modrepkey];
 }
 
-function getModuleDownload(modrepkey: string): Download | null {
+export function getModuleDownload(modrepkey: string): Download | null {
   const { moduleData } = Saved;
   const data = (modrepkey in moduleData && moduleData[modrepkey]) ?? null;
   if (!data) return null;
@@ -1304,14 +1303,22 @@ function handleError(xthis: ModuleManager, er: any, modrepkeys: string[]) {
   const { module: modtable } = state.tables;
   const { moduleData } = Saved;
   log.error(er);
-  const newintent = er.message.startsWith(C.UI.Manager.cancelMsg)
-    ? Intent.WARNING
-    : Intent.DANGER;
-  xthis.addToast({
-    message: er.message,
-    timeout: 5000,
-    intent: newintent,
-  });
+  let message;
+  if (typeof er === 'string') message = er;
+  if (er && typeof er === 'object' && 'message' in er) {
+    ({ message } = er);
+  }
+  const newintent =
+    message && message.startsWith(C.UI.Manager.cancelMsg)
+      ? Intent.WARNING
+      : Intent.DANGER;
+  if (message) {
+    xthis.addToast({
+      message: er.message,
+      timeout: 5000,
+      intent: newintent,
+    });
+  }
   modrepkeys.forEach((k) => {
     moduleData[k][ModCol.iInfo].loading = false;
     moduleData[k][ModCol.iInfo].intent = intent(ModCol.iInstalled, newintent);
@@ -1322,9 +1329,14 @@ function handleError(xthis: ModuleManager, er: any, modrepkeys: string[]) {
 
 // Perform async repository module downloads corresponding to a given
 // set of module configs.
-export function download(xthis: ModuleManager, configs: SwordConfType[]): void {
+export async function download(
+  xthis: ModuleManager,
+  configs: SwordConfType[]
+): Promise<void> {
   const { module: modtable } = Saved;
-  configs.forEach(async (conf) => {
+
+  // Get download objects, prompting user as necessary.
+  const dlpromises = configs.map(async (conf) => {
     const modkey = repositoryModuleKey(conf);
     const modkeys = getModuleRowXsmSiblings(modkey);
     const dlobj = getModuleDownload(modkey);
@@ -1340,28 +1352,55 @@ export function download(xthis: ModuleManager, configs: SwordConfType[]): void {
           else throw new Error(C.UI.Manager.cancelMsg);
         } catch (er) {
           handleError(xthis, er, [modkey]);
-          return;
+          return null;
         }
       }
-      const downloadkey = downloadKey(dlobj);
-      try {
-        Downloads[downloadkey] = querablePromise(G.Module.download(dlobj));
-        const dl = await Downloads[downloadkey];
-        modkeys.forEach((k) => {
-          moduleData[k][ModCol.iInfo].loading = false;
-        });
+    }
+    return dlobj;
+  });
+  let dlobjs: (Download | null)[];
+  try {
+    dlobjs = await Promise.all(dlpromises);
+  } catch (er) {
+    log.error(er);
+    dlobjs = [];
+  }
+
+  // Download using the array of download objects
+  const downloads = querablePromise(G.Module.downloads(dlobjs));
+  Downloads.push(downloads);
+  let dls: ({ [key: string]: string | number } | null)[];
+  try {
+    dls = await downloads;
+  } catch (er) {
+    dls = [];
+    dlobjs.forEach((dl) => {
+      const k = downloadKey(dl);
+      setDownloadProgress(xthis, k, -1);
+      dls.push({ [k]: 0 });
+    });
+  }
+
+  // Now that all downloads are complete, update the module table.
+  dls.forEach((dl, i) => {
+    if (dl) {
+      const { moduleData } = Saved;
+      Object.values(dl).forEach((result) => {
+        const modrepkey = repositoryModuleKey(configs[i]);
+        const modkeys = getModuleRowXsmSiblings(modrepkey);
         let newintent: Intent = Intent.NONE;
-        if (typeof dl === 'string') {
-          log.warn(dl);
-          newintent = dl.startsWith(C.UI.Manager.cancelMsg)
-            ? Intent.WARNING
-            : Intent.DANGER;
-          xthis.addToast({
-            message: dl,
-            timeout: 5000,
-            intent: newintent,
-          });
-        } else if (dl > 0) {
+        if (typeof result === 'string') {
+          if (result.startsWith(C.UI.Manager.cancelMsg)) {
+            newintent = Intent.WARNING;
+          } else {
+            newintent = Intent.DANGER;
+            xthis.addToast({
+              message: result,
+              timeout: 5000,
+              intent: newintent,
+            });
+          }
+        } else if (result > 0) {
           newintent = Intent.SUCCESS;
           modkeys.forEach((k) => {
             moduleData[k][ModCol.iInstalled] = ON;
@@ -1378,15 +1417,10 @@ export function download(xthis: ModuleManager, configs: SwordConfType[]): void {
             newintent
           );
         });
-        setTableState(xthis, 'module', null, modtable.data, true);
-      } catch (er) {
-        handleError(xthis, er, modkeys);
-        if (Progressing.downloads.find((v) => v[0] === downloadkey)) {
-          setDownloadProgress(xthis, downloadkey, -1);
-        }
-      }
+      });
     }
   });
+  setTableState(xthis, 'module', null, modtable.data, true);
 }
 
 function modtableUpdate(
@@ -1396,6 +1430,7 @@ function modtableUpdate(
   iRemove = false
 ) {
   const { moduleData } = Saved;
+  const doDownload: SwordConfType[] = [];
   const cancel: Download[] = [];
   configs.forEach((conf, i) => {
     const row = moduleData[repositoryModuleKey(conf)];
@@ -1407,7 +1442,7 @@ function modtableUpdate(
         // if installing a module is already installed or downloaded, just check the installed box
         row[ModCol.iInstalled] = ON;
         // otherwise download the module
-      } else download(xthis, [conf]);
+      } else doDownload.push(conf);
     } else if (row[ModCol.iInfo].loading) {
       // if uninstalling a module that is loading, cancel the download
       row[ModCol.iInfo].intent = intent(ModCol.iInstalled, 'warning');
@@ -1421,6 +1456,7 @@ function modtableUpdate(
     }
   });
   if (cancel.length) G.Module.cancel(cancel);
+  if (doDownload.length) download(xthis, doDownload);
   if (configs.length) setTableState(xthis, 'module', null, null, true);
 }
 

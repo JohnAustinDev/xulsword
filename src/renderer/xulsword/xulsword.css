@@ -1,6 +1,9 @@
 .xulsword {
   overflow: hidden;
 }
+.xulsword .bp4-portal .dialog-body {
+  padding: 0 20px;
+}
 .xulsword .controlbar .start-spacer {
   width: 15px;
 }

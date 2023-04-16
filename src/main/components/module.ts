@@ -27,15 +27,17 @@ import {
   ftpCancel,
   getFile,
   getDir,
-  destroyFTPconnection,
   getFileHTTP,
   getFiles,
-  list,
+  getListing,
   untargz,
   ListingElementR,
   httpCancel,
-  ftpCancelReset,
-  ftpCancelCause,
+  ftpCancelableInit,
+  failCause,
+  ftpCancelable,
+  downloadCancel,
+  logid,
 } from '../ftphttp';
 
 import type {
@@ -68,8 +70,6 @@ export const CipherKeyModules: {
 // CrossWire SWORD Standard TODOS:
 // TODO CrossWire wiki mentions LangSortOrder! Report change to KeySort
 // TODO CrossWire Eusebian_vs and Eusebian_num share a single conf file. Support this?
-
-let Downloads: { [downloadKey: string]: ZIP } = {};
 
 // Return the ModTypes type derived from a module config's ModDrv entry,
 // or return null if it's not a ModTypes type.
@@ -109,7 +109,7 @@ export function moduleUnsupported(
   }
   if (!minimumVersion || minimumVersion === C.NOTFOUND) minimumVersion = '0';
   const type = getTypeFromModDrv(moddrv);
-  if (type && Object.keys(C.SupportedTabTypes).includes(type)) {
+  if (type && type in C.SupportedTabTypes) {
     if (versionCompare(C.SWORDEngineVersion, minimumVersion) < 0) {
       reasons.push({
         error: `(${module2}) Requires SWORD engine version > ${minimumVersion} (using ${C.SWORDEngineVersion}).`,
@@ -776,7 +776,7 @@ async function downloadRepoConfs(
     let bufs: Buffer[] | null = null;
     try {
       if (!/Could not get file size/i.test(er)) throw er;
-      listing = await list(
+      listing = await getListing(
         manifest.domain,
         fpath.posix.join(manifest.path, 'mods.d'),
         cancelkey,
@@ -822,6 +822,19 @@ async function downloadRepoConfs(
   return repositoryConfs;
 }
 
+const ModuleDownloads = {
+  ongoing: {} as { [downloadKey: string]: Promise<ZIP | string> | undefined },
+  finished: {} as { [downloadKey: string]: ZIP },
+};
+
+function logdls() {
+  const ongoing = Object.keys(ModuleDownloads.ongoing);
+  const example = ongoing.slice(-5).map((x) => logid(x));
+  return `ongoing=${ongoing.length}(${example}) finished=${
+    Object.keys(ModuleDownloads.finished).length
+  }`;
+}
+
 const Module = {
   // Return a promise for the CrossWire master repository list as an
   // array of Download objects. These can be passed to repositoryListing()
@@ -838,7 +851,7 @@ const Module = {
       builtin: true,
     };
     const cancelkey = downloadKey(mr);
-    if (ftpCancelReset(cancelkey)) return C.UI.Manager.cancelMsg;
+    if (ftpCancelableInit(cancelkey)) return C.UI.Manager.cancelMsg;
     const result: Repository[] | string = [];
     let fbuffer: Buffer;
     try {
@@ -905,8 +918,10 @@ const Module = {
 
           // REMOTE repository conf files.
           const cancelkey = downloadKey(manifest);
-          if (ftpCancelReset(cancelkey)) {
-            return C.UI.Manager.cancelMsg;
+          if (ftpCancelableInit(cancelkey)) {
+            return Promise.resolve(
+              failCause(cancelkey, C.UI.Manager.cancelMsg)
+            );
           }
           let threshProgress = 0;
           let done = false;
@@ -924,12 +939,14 @@ const Module = {
           let repconfs: DownloadRepoConfsType[];
           try {
             repconfs = await downloadRepoConfs(manifest, cancelkey, progress);
+          } catch (er: any) {
+            return Promise.resolve(failCause(cancelkey, er));
+          }
+          try {
+            ftpCancelable(cancelkey);
           } catch (er) {
-            const cause = ftpCancelCause(cancelkey, er as Error | string);
-            return Promise.reject(
-              cause && typeof cause === 'object' && 'message' in cause
-                ? cause.message
-                : cause
+            return await Promise.resolve(
+              failCause(cancelkey, C.UI.Manager.cancelMsg)
             );
           }
           return repconfs.map((rc) => rc.conf);
@@ -953,14 +970,106 @@ const Module = {
       });
   },
 
+  // Download an array of SWORD modules and save them as zip objects for later
+  // installation by installDownload. Returns the number of files in each zip
+  // if successful, or a string error/cancel message otherwise.
+  async downloads(
+    downloads: (Download | null)[]
+  ): Promise<({ [downloadKey: string]: number | string } | null)[]> {
+    const callingWinID = (arguments[1] ?? -1) as number;
+    const dls: (Download | string | null)[] = downloads.map((dl) => {
+      if (dl !== null) {
+        const downloadkey = downloadKey(dl);
+        if (ftpCancelableInit(downloadkey)) {
+          return failCause(downloadkey, C.UI.Manager.cancelMsg);
+        }
+      }
+      return dl;
+    });
+    dls.forEach((dl) => {
+      if (dl && typeof dl !== 'string') {
+        const key = downloadKey(dl);
+        ModuleDownloads.ongoing[key] = undefined;
+      }
+    });
+    log.debug(`DOWNLOADS: ${downloads.length} items! ${logdls()}`);
+    const rs = await Promise.all(
+      dls.map((dl) => {
+        if (dl === null) return null;
+        return typeof dl === 'string'
+          ? Promise.resolve(dl)
+          : this.download(dl, callingWinID, true);
+      })
+    );
+    const res = downloads.map((dl, i) => {
+      const key = downloadKey(dl);
+      const result = rs[i];
+      return result ? { [key]: result } : null;
+    });
+
+    log.debug(`DOWNLOADS COMPLETE: ${downloads.length} items! ${logdls()}`);
+    return res;
+  },
+
   // Download a SWORD module from a repository and save it as a zip object
   // for later installation by installDownload. Returns the number of files
   // if successful, or a string error/cancel message otherwise.
-  async download(download: Download): Promise<number | string> {
+  async download(
+    download: Download,
+    winID: number,
+    alreadyReset?: boolean
+  ): Promise<number | string> {
+    let callingWinID = (arguments[3] ?? -1) as number;
+    if (typeof winID === 'number') callingWinID = winID;
+    const key = downloadKey(download);
+    if (!alreadyReset && ftpCancelableInit(key)) {
+      return failCause(key, C.UI.Manager.cancelMsg);
+    }
+    let dl = ModuleDownloads.finished[key];
+    if (!dl) {
+      let downloadPromise = ModuleDownloads.ongoing[key];
+      if (!downloadPromise) {
+        downloadPromise = this.download2(download, callingWinID);
+        ModuleDownloads.ongoing[key] = downloadPromise;
+      }
+      if (!alreadyReset) {
+        log.debug(`DOWNLOAD: 1 items! ${logdls()}`);
+      }
+      let dlx: ZIP | string;
+      try {
+        dlx = await downloadPromise;
+      } catch (er) {
+        log.info(`Download error follows:`);
+        log.error(er);
+        return C.UI.Manager.cancelMsg;
+      } finally {
+        delete ModuleDownloads.ongoing[key];
+      }
+      if (typeof dlx === 'string') {
+        log.debug(`DOWNLOAD FAILED: 1 items! ${logdls()}`);
+        return dlx;
+      }
+      dl = dlx;
+      ModuleDownloads.finished[key] = dl;
+    } else {
+      // Since this was already downloaded, report finished progress
+      let w = BrowserWindow.fromId(callingWinID);
+      w?.webContents.send('progress', -1, key);
+      w = null;
+    }
+    if (!alreadyReset) {
+      log.debug(`DOWNLOAD COMPLETE: 1 items! ${logdls()}`);
+    }
+    return dl.getEntries().length;
+  },
+
+  async download2(
+    download: Download,
+    callingWinID: number
+  ): Promise<ZIP | string> {
     const { type } = download;
-    const callingWinID = (arguments[1] ?? -1) as number;
     const downloadkey = downloadKey(download);
-    if (ftpCancelReset(downloadkey)) return C.UI.Manager.cancelMsg;
+    log.debug(`Starting download: `, logid(downloadkey));
 
     let threshProgress = 0;
     let done = false;
@@ -973,126 +1082,109 @@ const Module = {
         done = prog === -1;
       }
     };
-    const logerror = (er: any) => {
-      const msg = (er?.message || '') as string;
-      if (msg.includes(C.UI.Manager.cancelMsg) || msg === 'canceled') {
-        log.debug(er);
-      } else log.error(er);
+
+    const returnMsg = (msg: string | Error) => {
+      progress(-1);
+      log.debug(`Failed download: ${logid(downloadkey)} ${logdls()}`);
+      return failCause(downloadkey, msg);
     };
 
-    // Audio XSM modules (HTTP download)
-    if (type === 'http') {
-      const { http, confname } = download;
-      progress(0);
-      try {
+    const returnZIP = (zip: ZIP) => {
+      progress(-1);
+      log.debug(`Successful download: ${logid(downloadkey)} ${logdls()}`);
+      return zip;
+    };
+
+    try {
+      // Audio XSM modules (HTTP download)
+      if (type === 'http') {
+        const { http, confname } = download;
+        progress(0);
         const tmpdir = new LocalFile(Window.tmpDir({ id: callingWinID })[0]);
-        if (tmpdir.exists()) {
-          log.silly(`downloadFileHTTP`, http, tmpdir.path);
-          const dlfile = await getFileHTTP(
-            http,
-            tmpdir.append(randomID()),
+        if (!tmpdir.exists()) {
+          return await Promise.resolve(
+            returnMsg(`Could not create tmp directory '${tmpdir.path}'.`)
+          );
+        }
+        const dlfile = await getFileHTTP(
+          http,
+          tmpdir.append(randomID()),
+          downloadkey,
+          (p: number) => {
+            if (p && p !== -1) progress(p * (3 / 4));
+          }
+        );
+        ftpCancelable(downloadkey);
+
+        const zip = new ZIP(dlfile.path);
+        // The conf file is required, so add it to the zip if not already present.
+        let hasConf = false;
+        zip.forEach((ze) => {
+          if (ze.entryName.endsWith(confname)) hasConf = true;
+        });
+        if (!hasConf) {
+          const confs = await downloadRepoConfs(
+            { ...download, file: C.SwordRepoManifest, type: 'ftp' },
             downloadkey,
             (p: number) => {
-              if (p && p !== -1) progress(p * (3 / 4));
+              if (p && p !== -1) progress(3 / 4 + p / 4);
             }
           );
-          const zip = new ZIP(dlfile.path);
-          // The conf file is required, so add it to the zip if not already present.
-          let hasConf = false;
-          zip.forEach((ze) => {
-            if (ze.entryName.endsWith(confname)) hasConf = true;
-          });
-          if (!hasConf) {
-            const confs = await downloadRepoConfs(
-              { ...download, file: C.SwordRepoManifest, type: 'ftp' },
-              downloadkey,
-              (p: number) => {
-                if (p && p !== -1) progress(3 / 4 + p / 4);
-              }
+          ftpCancelable(downloadkey);
+          const strconf = confs.find(
+            (rc) => rc.conf.filename === confname
+          )?.strconf;
+          if (strconf) {
+            zip.addFile(
+              fpath.posix.join('mods.d', confname),
+              Buffer.from(strconf)
             );
-            const strconf = confs.find(
-              (rc) => rc.conf.filename === confname
-            )?.strconf;
-            if (strconf) {
-              zip.addFile(
-                fpath.posix.join('mods.d', confname),
-                Buffer.from(strconf)
-              );
-            } else {
-              progress(-1);
-              return await Promise.resolve(
-                `Could not locate ${confname} at '${download.domain}/${download.path}'.`
-              );
-            }
+          } else {
+            return await Promise.resolve(
+              returnMsg(`Could not locate ${confname}.`)
+            );
           }
-          Downloads[downloadkey] = zip;
-          progress(-1);
-          return await Promise.resolve(1);
         }
-        throw new Error(`Could not create tmp directory '${tmpdir.path}'.`);
-      } catch (er: any) {
-        progress(-1);
-        logerror(er);
-        return Promise.resolve(er.message);
+        return await Promise.resolve(returnZIP(zip));
       }
 
       // Other XSM modules are ZIP files
-    } else if (type === 'ftp') {
-      const { domain, path, file } = download;
-      const fp = fpath.posix.join(path, file);
-      log.silly(`downloadXSM`, domain, fp);
-      progress(0);
-      try {
+      if (type === 'ftp') {
+        const { domain, path, file } = download;
+        const fp = fpath.posix.join(path, file);
+        progress(0);
         const zipBuf = await getFile(domain, fp, downloadkey, progress);
-        Downloads[downloadkey] = new ZIP(zipBuf);
-        progress(-1);
-        return await Promise.resolve(1);
-      } catch (er: any) {
-        progress(-1);
-        logerror(er);
-        return Promise.resolve(er.message);
+        ftpCancelable(downloadkey);
+        return await Promise.resolve(returnZIP(new ZIP(zipBuf)));
       }
-    }
 
-    // Standard SWORD modules. First download conf file.
-    const { domain, path, confname } = download;
-    const confpath = fpath.posix.join(path, 'mods.d', confname);
-    let confbuf;
-    progress(0);
-    try {
-      confbuf = await getFile(domain, confpath, downloadkey);
-    } catch (er: any) {
-      progress(-1);
-      logerror(er);
-      return Promise.resolve(er.message);
-    }
-    const conf = parseSwordConf({
-      confString: confbuf.toString('utf8'),
-      filename: confname,
-      sourceRepository: download,
-    });
-    // Download module contents
-    const datapath = confModulePath(conf.DataPath);
-    if (datapath) {
-      const modpath = fpath.posix.join(path, datapath);
-      let modfiles;
-      try {
-        modfiles = await getDir(
-          domain,
-          modpath,
-          /\/lucene\//,
-          downloadkey,
-          progress
-        );
-      } catch (er: any) {
-        progress(-1);
-        logerror(er);
-        // Multi-connection operations should check ftpCancelCause
-        const cause = ftpCancelCause(downloadkey, er);
-        return Promise.resolve(
-          typeof cause === 'string' ? cause : cause.message
+      // Standard SWORD modules. First download conf file.
+      const { domain, path, confname } = download;
+      const confpath = fpath.posix.join(path, 'mods.d', confname);
+      progress(0);
+      const confbuf = await getFile(domain, confpath, downloadkey);
+      ftpCancelable(downloadkey);
+      const conf = parseSwordConf({
+        confString: confbuf.toString('utf8'),
+        filename: confname,
+        sourceRepository: download,
+      });
+      // Then download module contents
+      const datapath = confModulePath(conf.DataPath);
+      if (!datapath) {
+        return await Promise.resolve(
+          returnMsg(`Unexpected DataPath in ${confname}: ${conf.DataPath}`)
         );
       }
+      const modpath = fpath.posix.join(path, datapath);
+      const modfiles = await getDir(
+        domain,
+        modpath,
+        /\/lucene\//,
+        downloadkey,
+        progress
+      );
+      ftpCancelable(downloadkey);
       const zip = new ZIP();
       zip.addFile(fpath.posix.join('mods.d', confname), confbuf);
       modfiles.forEach((fp) => {
@@ -1101,17 +1193,37 @@ const Module = {
           fp.buffer
         );
       });
-      Downloads[downloadkey] = zip;
-      progress(-1);
-      return Promise.resolve(zip.getEntries().length);
+      return await Promise.resolve(returnZIP(zip));
+    } catch (er: any) {
+      return Promise.resolve(returnMsg(er));
     }
-    progress(-1);
-    const msg = `Unexpected DataPath in ${confname}: ${conf.DataPath}`;
-    log.silly(msg);
-    return Promise.resolve(msg);
   },
 
-  // Cancel in-process downloads and/or previous downloads.
+  async cancelOngoingDownloads(): Promise<number> {
+    const keys = Object.keys(ModuleDownloads.ongoing);
+    const values = Object.values(ModuleDownloads.ongoing);
+    log.debug(`CANCEL ONGOING: ${keys.length} items! ${logdls()}`);
+    downloadCancel(keys);
+    let canceled: any[] = [];
+    try {
+      canceled = await Promise.allSettled(values);
+    } catch (er) {
+      // Do nothing, handled by this.download()
+    }
+    let cnt = 0;
+    canceled.forEach((r) => {
+      if (r.status === 'fulfilled') {
+        cnt += 1;
+      } else {
+        log.debug(r.reason);
+      }
+    });
+    keys.forEach((key) => delete ModuleDownloads.ongoing[key]);
+    log.debug(`CANCELS ONGOING COMPLETE: ${keys.length} items! ${logdls()}`);
+    return cnt;
+  },
+
+  // Cancel in-process downloads AND previous downloads.
   // IMPORTANT: cancel() without arguments should always be
   // called when a session is finished, to delete all waiting
   // connections.
@@ -1120,26 +1232,27 @@ const Module = {
     if (downloads === undefined) {
       canceled += httpCancel();
       canceled += ftpCancel(undefined, 'canceled');
-      destroyFTPconnection();
-      canceled += Object.keys(Downloads).length;
-      Downloads = {};
+      canceled += Object.keys(ModuleDownloads.finished).length;
+      Object.keys(ModuleDownloads.finished).forEach((key) => {
+        delete ModuleDownloads.finished[key];
+      });
       return canceled;
     }
-    downloads?.forEach((dl) => {
+    log.debug(`CANCELS: ${downloads.length} items! ${logdls()}`);
+    const ongoing = Object.keys(ModuleDownloads.ongoing);
+    downloads.forEach((dl) => {
       let cnt = 0;
       const downloadkey = downloadKey(dl);
-      if ('http' in dl) {
-        cnt += httpCancel(downloadkey);
-      } else {
-        cnt += ftpCancel(downloadkey, 'canceled');
+      if (ongoing.includes(downloadkey)) {
+        cnt += downloadCancel(downloadkey);
       }
-      log.verbose(`Module.cancel(${downloadkey}) = ${cnt}`);
-      if (downloadkey in Downloads) {
-        delete Downloads[downloadkey];
+      if (downloadkey in ModuleDownloads.finished) {
+        delete ModuleDownloads.finished[downloadkey];
         cnt += 1;
       }
       canceled += cnt;
     });
+    log.debug(`CANCELS INITIATED: ${downloads.length} items! ${logdls()}`);
     return canceled;
   },
 
@@ -1150,7 +1263,7 @@ const Module = {
   ): Promise<NewModulesType> {
     const zipobj: ZIP[] = [];
     const destdir: string[] = [];
-    Object.entries(Downloads).forEach((entry) => {
+    Object.entries(ModuleDownloads.finished).forEach((entry) => {
       const [downloadkey, zipo] = entry;
       const save = installs.find(
         (s) => downloadKey(s.download) === downloadkey
@@ -1163,7 +1276,9 @@ const Module = {
         }
       }
     });
-    Downloads = {};
+    Object.keys(ModuleDownloads.finished).forEach((key) => {
+      delete ModuleDownloads.finished[key];
+    });
     return modalInstall(zipobj, destdir, callingWinID);
   },
 
@@ -1246,4 +1361,4 @@ const Module = {
   },
 };
 
-export default Module;
+export default Module as Omit<typeof Module, 'download2'>;

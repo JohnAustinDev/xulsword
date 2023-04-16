@@ -12,7 +12,7 @@ import PropTypes from 'prop-types';
 import ReactDOM from 'react-dom';
 import { ProgressBar } from '@blueprintjs/core';
 import Subscription from '../../subscription';
-import { diff, sanitizeHTML, stringHash, querablePromise } from '../../common';
+import { diff, sanitizeHTML, stringHash } from '../../common';
 import S from '../../defaultPrefs';
 import G from '../rg';
 import renderToRoot, { RootPrintType } from '../renderer';
@@ -38,7 +38,7 @@ import '../libsword.css';
 import '../libxul/viewport/atext.css';
 import './printPassage.css';
 
-import type { OSISBookType, QuerablePromise } from '../../type';
+import type { OSISBookType } from '../../type';
 
 // TODO: As of 11/22 @page {@bottom-center {content: counter(page);}} does not work
 
@@ -89,7 +89,7 @@ export default class PrintPassageWin extends React.Component {
 
   static propTypes: typeof propTypes;
 
-  renderPromises: QuerablePromise<string>[];
+  renderPromises: Promise<string>[];
 
   pagebuttons: React.RefObject<HTMLDivElement>;
 
@@ -148,11 +148,6 @@ export default class PrintPassageWin extends React.Component {
       const renderkey = stringHash(vkMod, chapter, lastchapter, show);
       if (lastchapter && tdiv.dataset.renderkey !== renderkey) {
         tdiv.dataset.renderkey = renderkey;
-        const rendering = renderPromises.find((p) => p.isPending);
-        if (rendering) {
-          rendering.reject(new Error('Canceled'));
-          return;
-        }
         renderPromises = [];
         const settings = {
           module: vkMod,
@@ -235,7 +230,7 @@ export default class PrintPassageWin extends React.Component {
                 };
               });
               try {
-                renderPromises = funcs.map((f) => querablePromise(f()));
+                renderPromises = funcs.map((f) => f());
                 const html2 = await Promise.all(renderPromises);
                 const { print: pr } = xthis.props as PrintPassageProps;
                 const tdivx = pr.text.current;
@@ -245,7 +240,7 @@ export default class PrintPassageWin extends React.Component {
                 }
                 log.debug(`Finished loading ${html2.length} chapters to DOM`);
               } catch (er) {
-                log.warn(er);
+                log.debug(er);
               } finally {
                 xthis.setState({ progress: -1 });
                 Subscription.publish.setRendererRootState({

@@ -63,16 +63,15 @@ Object.entries(GBuilder).forEach((entry) => {
               if (!Cache.has(ckey)) Cache.write(result, ckey);
               return result;
             })
-            .catch((er: unknown) => {
+            .catch(() => {
               log.warn(
                 `Promise rejection in ${logtag(
                   name,
                   undefined,
                   args,
                   cacheable
-                )}. Error message follows:`
+                )}`
               );
-              log.error(er);
             });
         }
         Cache.write(window.ipc.sendSync('global', name, ...args), ckey);
@@ -121,16 +120,10 @@ Object.entries(GBuilder).forEach((entry) => {
                   if (!Cache.has(ckey)) Cache.write(result, ckey);
                   return result;
                 })
-                .catch((er: unknown) => {
+                .catch(() => {
                   log.warn(
-                    `Promise rejection in: ${logtag(
-                      name,
-                      m,
-                      args,
-                      cacheable
-                    )}. Error message follows:`
+                    `Promise rejection in: ${logtag(name, m, args, cacheable)}`
                   );
-                  log.error(er);
                 });
             }
             Cache.write(window.ipc.sendSync('global', name, m, ...args), ckey);

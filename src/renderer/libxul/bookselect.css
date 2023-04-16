@@ -17,7 +17,7 @@
 }
 
 .bookselect .stack > div {
-  padding: 2px 2px 3px;
+  padding: 3px 3px 3px;
   padding-inline-start: 4px;
 }
 .bookselect .stack > div:first-child,

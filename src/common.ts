@@ -527,31 +527,29 @@ export function ofClass(
 
 // Returns a promise whose state can be queried or can be rejected at will.
 export function querablePromise<T>(promise: Promise<T>): QuerablePromise<T> {
-  /* eslint-disable @typescript-eslint/no-unused-vars */
   if ('isFulfilled' in promise) return promise as QuerablePromise<T>;
-  let isPending = true;
-  let isRejected = false;
-  let isFulfilled = false;
-
   const result = promise.then(
     (v) => {
-      isFulfilled = true;
-      isPending = false;
+      result.isFulfilled = true;
+      result.isPending = false;
       return v;
     },
     (e) => {
-      isRejected = true;
-      isPending = false;
+      result.isRejected = true;
+      result.isPending = false;
       throw e;
     }
   ) as QuerablePromise<T>;
 
+  result.isPending = true;
+  result.isRejected = false;
+  result.isFulfilled = false;
+
   result.reject = (er: any) => {
-    result.reject(er);
+    throw er;
   };
 
   return result;
-  /* eslint-enable @typescript-eslint/no-unused-vars */
 }
 
 // Replaces character with codes <32 with " " (these may occur in text/footnotes at times- code 30 is used for sure)
@@ -1663,20 +1661,24 @@ export function downloadKey(dl: Download | null): string {
     custom: 1,
     builtin: 1,
   };
-  return Object.keys(ms)
+  const inner = Object.keys(ms)
     .filter((m) => m in dl && dl[m as keyof typeof dl])
     .map((m) => `${m}:${dl[m as keyof typeof dl]}`)
     .join('][');
+  return `[${inner}]`;
 }
 
 // Return a Download object from a download key. NOTE: The 'disabled'
 // property will not be restored (it will be undefined).
 export function keyToDownload(downloadkey: string): Download {
   const dl: any = {};
-  downloadkey.split('][').forEach((x) => {
-    const i = x.indexOf(':');
-    dl[x.substring(0, i)] = x.substring(i + 1);
-  });
+  downloadkey
+    .substring(1, downloadkey.length - 1)
+    .split('][')
+    .forEach((x) => {
+      const i = x.indexOf(':');
+      dl[x.substring(0, i)] = x.substring(i + 1);
+    });
   return dl as Download;
 }
 

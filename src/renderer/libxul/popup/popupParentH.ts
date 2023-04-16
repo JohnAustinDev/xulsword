@@ -349,7 +349,7 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
             if (!(locale in news)) news[locale] = [];
             news[locale].unshift(...reflist);
             G.Prefs.setComplexValue('moduleManager.suggested', news);
-            // Enable all repositories
+            // Enable all repositories except beta and attic
             G.Prefs.setComplexValue(
               'moduleManager.repositories.disabled',
               null as typeof S.prefs.moduleManager.repositories.disabled

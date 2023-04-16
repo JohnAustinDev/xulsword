@@ -24,6 +24,7 @@ import {
   builtinRepos,
   repositoryModuleKey,
   stringHash,
+  keyToDownload,
 } from '../../common';
 import C from '../../constant';
 import S from '../../defaultPrefs';
@@ -341,33 +342,26 @@ export default class ModuleManager
             H.setTableState(this, 'repository', null, repository.data, true);
           }
           // Set individual module progress bars
-          const modIndex = module.data.findIndex((r) => {
-            const { repo, conf } = r[H.ModCol.iInfo];
-            const mod = r[H.ModCol.iModule];
-            return (
-              downloadKey({
-                ...repo,
-                module: mod,
-                confname: conf.filename,
-                type: 'module',
-              }) === id
-            );
-          });
-          const moddrow = module.data[modIndex];
-          if (moddrow && prog === -1) {
-            if (moddrow[H.ModCol.iInfo].conf.xsmType !== 'none') {
-              Object.values(module.data)
-                .filter((r) => {
-                  return (
-                    r[H.ModCol.iInfo].conf.DataPath ===
-                    moddrow[H.ModCol.iInfo].conf.DataPath
-                  );
-                })
-                .forEach((r: TModuleTableRow) => {
-                  r[H.ModCol.iInfo].loading = false;
-                });
-            } else moddrow[H.ModCol.iInfo].loading = false;
-            H.setTableState(this, 'module');
+          const dl = keyToDownload(id);
+          if (dl.type === 'http' && dl.http.includes('&bk=')) {
+            dl.http = dl.http.replace(/&bk=.*$/, '');
+          }
+          const dlkey = downloadKey(dl);
+          const modIndexes = module.data
+            .map((r, i) =>
+              dlkey ===
+              downloadKey(
+                H.getModuleDownload(repositoryModuleKey(r[H.ModCol.iInfo].conf))
+              )
+                ? i
+                : null
+            )
+            .filter((v) => v !== null) as number[];
+          if (prog === -1) {
+            modIndexes.forEach((i) => {
+              module.data[i][H.ModCol.iInfo].loading = false;
+            });
+            H.setTableState(this, 'module', null, module.data, true);
           }
         }
       })
@@ -957,6 +951,7 @@ export default class ModuleManager
                   <Table
                     flex="1"
                     id="module"
+                    key={language.open.toString()}
                     cellRendererDependencies={[module.columns, modtable.render]}
                     data={modtable.data}
                     columns={module.columns}
