@@ -2,7 +2,7 @@
   "name": "xulsword",
   "productName": "MK",
   "description": "Электронная Библия",
-  "version": "4.0.5",
+  "version": "4.0.6",
   "main": "./dist/main/main.js",
   "author": {
     "name": "John Austin",
