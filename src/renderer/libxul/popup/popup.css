@@ -28,6 +28,13 @@ html[dir='rtl'] .npopup {
   box-shadow: 3px 3px 5px 6px #ccc;
   cursor: default;
 }
+.npopup.hide .npopupTX {
+  opacity: 0;
+}
+.npopup:not(.hide) .npopupTX {
+  opacity: 1;
+  transition: opacity 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+}
 .pinned .npopupTX {
   background: rgb(248 246 248);
 }

@@ -474,7 +474,12 @@ export async function eventHandler(
               });
               const removeResult = await G.Module.remove(removeMods);
               removeResult.forEach((r, i) => {
-                if (!r) log.warn(`Failed to remove module: ${removeMods[i]}`);
+                if (!r)
+                  this.addToast({
+                    message: `Failed to remove module: '${removeMods[i].name}'`,
+                    timeout: 5000,
+                    intent: Intent.DANGER,
+                  });
               });
             }
 
@@ -509,7 +514,12 @@ export async function eventHandler(
             });
             const moveResult = await G.Module.move(moveMods);
             moveResult.forEach((r, i) => {
-              if (!r) log.warn(`Failed to move module: ${moveMods[i]}`);
+              if (!r)
+                this.addToast({
+                  message: `Failed to move module: '${removeMods[i].name}'`,
+                  timeout: 5000,
+                  intent: Intent.DANGER,
+                });
             });
 
             // Install modules

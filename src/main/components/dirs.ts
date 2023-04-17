@@ -78,10 +78,15 @@ dirNames.forEach((dir) => {
 // Install default resources?
 {
   const resd = (Dirs as any).xsResD as LocalFile;
+  if (!resd.exists()) resd.create(LocalFile.DIRECTORY_TYPE);
   const resdefd = (Dirs as any).xsResDefD as LocalFile;
-  if (!resd.exists() && resdefd.exists()) {
-    resdefd.copyTo(resd.parent, resdefd.leafName, true);
-  }
+  resdefd.directoryEntries.forEach((sub) => {
+    const to = resd.clone().append(sub);
+    if (!to.exists()) {
+      const from = resdefd.clone().append(sub);
+      from.copyTo(to.parent, from.leafName, true);
+    }
+  });
 }
 
 // Create user directories if they don't exist.

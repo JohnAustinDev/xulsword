@@ -221,86 +221,145 @@ export function scanAudio(
 
 // Move or remove one or more modules. Returns the number of modules
 // succesfully (re)moved. If moveTo is set, the removed modules will
-// be moved (copied) there if it is an existing path, otherwise nothing
-// will be done and 0 is returned. NOTE: audio modules only and always
-// exist in the xsAudio directory and cannot be moved. NOTE-2: LibSword
-// can be ready upon entering this function, but it will be quit before
-// modules are removed, then other functions are responsible for
-// restarting it.
-export function moveRemoveModule(
+// be copied to moveTo if moveTo exists. If it does not exist, nothing
+// will be done and 0 is returned. If the copy destination fails to
+// delete, or the copy fails, the source module will not be deleted. If
+// the entire module cannot be deleted (conf file and data directory)
+// the module is left as it was before the delete operation.
+// NOTE: audio modules only and always exist in the xsAudio directory
+// and cannot be moved.
+// NOTE: LibSword can be ready upon entering this function, but it will
+// be quit before modules are removed, then other functions are responsible
+// for restarting it.
+export function moveRemoveModules(
+  modules: string,
+  repositoryPath: string,
+  moveTo?: string
+): boolean;
+export function moveRemoveModules(
+  modules: string[],
+  repositoryPath: string,
+  moveTo?: string
+): boolean[];
+export function moveRemoveModules(
   modules: string | string[],
   repositoryPath: string,
   moveTo?: string
-): number {
+): boolean | boolean[] {
   let move = (moveTo && new LocalFile(moveTo)) || null;
   if (move && (!move.exists() || !move.isDirectory())) move = null;
   if (moveTo && move === null) {
     log.error(`Destination does not exist '${moveTo}'.`);
-    return 0;
+    return Array.isArray(modules) ? modules.map(() => false) : false;
   }
-  LibSword.quit();
-  let num = 0;
-  const ma = Array.isArray(modules) ? modules : [modules];
-  ma.forEach((m) => {
+  if (moveTo && repositoryPath === Dirs.path.xsAudio) {
+    log.error(`Cannot move audio '${moveTo}'.`);
+    return Array.isArray(modules) ? modules.map(() => false) : false;
+  }
+  if (LibSword.isReady()) LibSword.quit();
+  const results: boolean[] = [];
+  (Array.isArray(modules) ? modules : [modules]).forEach((m) => {
     const moddir = new LocalFile(repositoryPath);
     moddir.append('mods.d');
     const subs = moddir.directoryEntries;
     if (subs) {
       subs.forEach((conf) => {
-        const f = moddir.clone();
-        f.append(conf);
-        if (!f.isDirectory() && f.path.endsWith('.conf')) {
-          const c = parseSwordConf(f);
+        const confFile = moddir.clone();
+        confFile.append(conf);
+        if (!confFile.isDirectory() && confFile.path.endsWith('.conf')) {
+          const c = parseSwordConf(confFile);
           if (c.module === m) {
-            if (move && repositoryPath !== Dirs.path.xsAudio) {
+            // If we're moving, delete any destination module first, so we can
+            // abort the move that fails.
+            if (move && !moveRemoveModules(m, move.clone().path)) {
+              results.push(false);
+              return;
+            }
+            let toConfFile;
+            if (move) {
               const tomodsd = move.clone().append('mods.d');
               tomodsd.create(LocalFile.DIRECTORY_TYPE);
-              f.copyTo(tomodsd);
+              confFile.copyTo(tomodsd);
+              toConfFile = tomodsd.append(confFile.leafName);
+              if (!toConfFile.exists()) {
+                results.push(false);
+                return;
+              }
             }
-            f.remove();
+            // Keep contents of conf file in case module delete fails, so
+            // original state an be restored if needed.
+            const conftext = confFile.readFile();
+            confFile.remove();
+            if (confFile.exists()) {
+              results.push(false);
+              return;
+            }
             if (repositoryPath === Dirs.path.xsAudio) {
               const audiodir = new LocalFile(repositoryPath);
               audiodir.append('modules').append(c.module);
               if (audiodir.isDirectory()) {
                 audiodir.remove(true);
               }
-              num += 1;
+              if (audiodir.exists()) {
+                if (!confFile.exists() && conftext) {
+                  confFile.writeFile(conftext);
+                }
+                results.push(false);
+                return;
+              }
             } else {
               const modulePath = confModulePath(c.DataPath);
-              if (modulePath) {
-                const md = new LocalFile(repositoryPath);
-                md.append(modulePath);
-                if (move) {
-                  const to = move.clone();
-                  const dirs = modulePath.split('/').filter(Boolean);
-                  dirs.pop();
-                  dirs.forEach((sub) => {
-                    to.append(sub);
-                    if (!to.exists()) {
-                      to.create(LocalFile.DIRECTORY_TYPE);
-                    }
-                  });
-                  md.copyTo(to, null, true);
+              if (!modulePath) {
+                confFile.writeFile(conftext);
+                results.push(false);
+                return;
+              }
+              const md = new LocalFile(repositoryPath);
+              md.append(modulePath);
+              if (move) {
+                const to = move.clone();
+                const dirs = modulePath.split('/').filter(Boolean);
+                dirs.pop();
+                dirs.forEach((sub) => {
+                  to.append(sub);
+                  if (!to.exists()) {
+                    to.create(LocalFile.DIRECTORY_TYPE);
+                  }
+                });
+                md.copyTo(to, null, true);
+                if (!to.append(md.leafName).exists()) {
+                  // Don't leave a half moved module, then abort.
+                  toConfFile?.remove();
+                  results.push(false);
+                  return;
                 }
-                if (md.exists()) md.remove(true);
-                num += 1;
+              }
+              if (md.exists()) md.remove(true);
+              if (md.exists()) {
+                if (!confFile.exists() && conftext) {
+                  confFile.writeFile(conftext);
+                }
+                results.push(false);
+                return;
               }
             }
+            DiskCache.delete(null, m);
+            results.push(true);
           }
         }
       });
     }
   });
-  return num;
+  return Array.isArray(modules) ? results : results[0];
 }
 
 // Install an array of xulsword module zip objects. Errors will be
 // reported via NewModulesType (not thrown) if there are problems
 // to report during installation. Progress will be sent via IPC to
 // the xulsword window. NOTE: destdir will be ignored when installing
-// xulsword specific module components. NOTE-2: LibSword should be ready
-// upon entering this function, but it will be quit before modules
-// are installed, then another function must be responsible for
+// xulsword specific module components. NOTE-2: This function does not
+// require LibSword. If it's running, LibSword will be quit before
+// modules are installed then another function is responsible for
 // restarting it.
 export async function installZIPs(
   zips: ZIP[],
@@ -310,24 +369,31 @@ export async function installZIPs(
   return new Promise((resolve) => {
     const newmods: NewModulesType = clone(C.NEWMODS);
     if (zips.length) {
-      // Get installed module list to remove any obsoleted modules.
-      const installed: { module: string; dir: string; cipherKey: string }[] =
-        [];
-      if (!LibSword.isReady()) LibSword.init();
-      const mods: string = LibSword.getModuleList();
-      if (mods !== C.NOMODULES) {
-        mods.split(C.CONFSEP).forEach((ms) => {
-          const module = ms.split(';')[0];
-          let dir = LibSword.getModuleInformation(
-            module,
-            'AbsoluteDataPath'
-          ).replace(/\/modules\/.*$/, '');
-          dir = fpath.resolve(dir).split(fpath.sep).join('/');
-          const cipherKey = LibSword.getModuleInformation(module, 'CipherKey');
-          installed.push({ module, dir, cipherKey });
+      // Get installed modules (to remove any obsoleted modules).
+      const installed: {
+        module: string;
+        repoDir: string;
+        CipherKey: string | undefined;
+      }[] = [];
+      const readRepoConfFiles = (modsd: LocalFile) => {
+        modsd.directoryEntries.forEach((confFile) => {
+          const file = modsd.clone().append(confFile);
+          if (!file.isDirectory && file.leafName.endsWith('.conf')) {
+            const conf = parseSwordConf(file);
+            const { module, CipherKey } = conf;
+            installed.push({
+              module,
+              CipherKey,
+              repoDir: modsd.append('..').path,
+            });
+          }
         });
-      }
-      LibSword.quit();
+      };
+      readRepoConfFiles(Dirs.xsModsUser.append('mods.d'));
+      readRepoConfFiles(Dirs.xsModsCommon.append('mods.d'));
+
+      if (LibSword.isReady()) LibSword.quit();
+
       // Initialize progress reporter
       let progTot = 0;
       let progNow = 0;
@@ -399,7 +465,7 @@ export async function installZIPs(
                 if (
                   conf.CipherKey === '' &&
                   installed.find(
-                    (mo) => mo.cipherKey !== '' && mo.cipherKey !== C.NOTFOUND
+                    (mo) => mo.CipherKey !== '' && mo.CipherKey !== C.NOTFOUND
                   )
                 ) {
                   modreports.push({
@@ -422,12 +488,12 @@ export async function installZIPs(
                     } else {
                       // Remove any existing module having this name unless it would be downgraded.
                       const existing = parseSwordConf(confdest);
-                      const replace =
+                      if (
                         versionCompare(
                           conf.Version ?? 0,
                           existing.Version ?? 0
-                        ) !== -1;
-                      if (!replace) {
+                        ) === -1
+                      ) {
                         modreports.push({
                           error: `(${conf.module}) ${
                             conf.Version ?? 0
@@ -435,7 +501,7 @@ export async function installZIPs(
                             existing.module
                           }.`,
                         });
-                      } else if (!moveRemoveModule([conf.module], destdir)) {
+                      } else if (!moveRemoveModules(conf.module, destdir)) {
                         modreports.push({
                           error: `(${conf.module}) Could not remove existing module.`,
                         });
@@ -457,7 +523,7 @@ export async function installZIPs(
                     });
                     obsoletes.forEach((om) => {
                       const omdir = installed.find((ins) => ins.module === om);
-                      if (omdir && !moveRemoveModule(om, omdir.dir)) {
+                      if (omdir && !moveRemoveModules(om, omdir.repoDir)) {
                         modreports.push({
                           warning: `(${conf.module}) Could not remove obsoleted module(s).`,
                         });
@@ -1288,16 +1354,13 @@ const Module = {
   async remove(
     modules: { name: string; repo: Repository }[]
   ): Promise<boolean[]> {
-    const results: boolean[] | PromiseLike<boolean[]> = [];
-    modules.forEach((module) => {
+    return modules.map((module) => {
       const { name, repo } = module;
       if (isRepoLocal(repo)) {
-        results.push(!!moveRemoveModule([name], repo.path));
-        DiskCache.delete(null, name);
+        return moveRemoveModules(name, repo.path);
       }
+      return false;
     });
-
-    return results;
   },
 
   // Set windows to modal before calling this function!
@@ -1306,15 +1369,13 @@ const Module = {
   async move(
     modules: { name: string; fromRepo: Repository; toRepo: Repository }[]
   ): Promise<boolean[]> {
-    const results: boolean[] | PromiseLike<boolean[]> = [];
-    modules.forEach((module) => {
+    return modules.map((module) => {
       const { name, fromRepo, toRepo } = module;
       if (isRepoLocal(fromRepo) && isRepoLocal(toRepo)) {
-        results.push(!!moveRemoveModule([name], fromRepo.path, toRepo.path));
+        return moveRemoveModules(name, fromRepo.path, toRepo.path);
       }
+      return false;
     });
-
-    return results;
   },
 
   writeConf(confFilePath: string, contents: string): void {
@@ -1334,7 +1395,7 @@ const Module = {
   setCipherKeys(keys: CipherKey[], callerWinID?: number): void {
     if (keys.length) {
       Window.modal([{ modal: 'darkened', window: 'all' }]);
-      LibSword.quit();
+      if (LibSword.isReady()) LibSword.quit();
       keys.forEach((k) => {
         const { conf, cipherKey } = k;
         const { module } = conf;

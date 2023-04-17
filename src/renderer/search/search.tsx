@@ -215,6 +215,12 @@ export default class SearchWin extends React.Component implements PopupParent {
       G.Window.setComplexValue('pstate', pstate);
     }
 
+    const { popupParent, elemdata } = state;
+    if (popupParent && elemdata && elemdata.length) {
+      // Do the fade in effect
+      popupParent.getElementsByClassName('npopup')[0]?.classList.remove('hide');
+    }
+
     const { displayBible, module, pageindex, results, searchtext } = state;
     const { resref, lexref } = this;
     const res = resref !== null ? resref.current : null;
@@ -400,6 +406,7 @@ export default class SearchWin extends React.Component implements PopupParent {
           elemdata.length &&
           ReactDOM.createPortal(
             <Popup
+              className="hide"
               key={[gap, elemdata.length, popupReset].join('.')}
               elemdata={elemdata}
               gap={gap}

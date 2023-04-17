@@ -248,7 +248,8 @@ export function failCause(cancelkey: string, er?: Error | string): string {
     }
   }
   const str = typeof ret === 'string' ? ret : ret.message;
-  const cause = `(${logid(cancelkey)}) ${str}`;
+  const { domain } = keyToDownload(cancelkey);
+  const cause = `(${domain} ${logid(cancelkey)}) ${str}`;
   log.debug(cause);
   if (str === C.UI.Manager.cancelMsg) return C.UI.Manager.cancelMsg;
   return cause;

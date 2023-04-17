@@ -326,6 +326,7 @@ export default class ModuleManager
         const state = this.state as ManagerState;
         if (id) {
           H.setDownloadProgress(this, id, prog);
+          const { moduleData } = H.Saved;
           // Set individual repository progress bars
           const { repository, module } = state.tables;
           const repoIndex = repository.data.findIndex(
@@ -347,20 +348,16 @@ export default class ModuleManager
             dl.http = dl.http.replace(/&bk=.*$/, '');
           }
           const dlkey = downloadKey(dl);
-          const modIndexes = module.data
-            .map((r, i) =>
-              dlkey ===
-              downloadKey(
-                H.getModuleDownload(repositoryModuleKey(r[H.ModCol.iInfo].conf))
-              )
-                ? i
-                : null
-            )
-            .filter((v) => v !== null) as number[];
           if (prog === -1) {
-            modIndexes.forEach((i) => {
-              module.data[i][H.ModCol.iInfo].loading = false;
-            });
+            Object.entries(moduleData)
+              .filter((e) => {
+                const [k] = e;
+                return downloadKey(H.getModuleDownload(k)) === dlkey;
+              })
+              .forEach((e) => {
+                const [, r] = e;
+                r[H.ModCol.iInfo].loading = false;
+              });
             H.setTableState(this, 'module', null, module.data, true);
           }
         }

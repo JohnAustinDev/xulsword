@@ -62,6 +62,7 @@
    "chooseFolder.label" : "Выбор папки",
    "chooseFont.label" : "Шрифт",
    "chooseModule.label" : "Модули",
+   "chooserBookGroup_Apocrypha" : "Апокрифы",
    "chooserBookGroup_nt" : "Новый",
    "chooserBookGroup_ot" : "Ветхий",
    "cipherKey.prompt" : "Пожалуйста, введите ключ расшифровки текста Библии.",

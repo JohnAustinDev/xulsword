@@ -87,10 +87,12 @@ class xulsword {
   private:
   SWMgr *MyManager;
 
+  // Javascript callbacks
   void (*ThrowJS)(const char *);
   void (*ReportProgress)(int);
 
-  ModMap::iterator modIterator; //Iterator for modules
+  //Iterator for modules
+  ModMap::iterator modIterator;
 
   bool Footnotes;
   bool Headings;
@@ -165,6 +167,7 @@ class xulsword {
   void  setCipherKey(const char *mod, const char *cipherkey, bool useSecModule);
   const char *getModuleList();
   const char *getModuleInformation(const char *mod, const char *paramname);
+  void freeLibxulsword();
 };
 
 #endif

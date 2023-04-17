@@ -62,6 +62,7 @@
    "chooseFolder.label" : "Choose Folder",
    "chooseFont.label" : "Font",
    "chooseModule.label" : "Module",
+   "chooserBookGroup_Apocrypha" : "Apocrypha",
    "chooserBookGroup_nt" : "New Testmnt",
    "chooserBookGroup_ot" : "Old Testmnt",
    "cipherKey.prompt" : "Please enter the Bible text decryption key.",

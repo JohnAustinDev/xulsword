@@ -508,8 +508,8 @@ xulsword::~xulsword() {
   //delete(SWLogXS); deleted by _staticSystemLog
   //delete(StringMgrXS); deleted by _staticsystemStringMgr
 
-  //deleting MyManager causes mozalloc to abort for some reason,
-  //so xulsword objects are never deleted
+  //deleting MyManager here causes mozalloc to abort for some reason,
+  //so instead of deleting xulsword objects, they are left until the process ends.
   if (MyManager) {
     delete(MyManager); // will delete MarkupFilterMgrXS
     MyManager = NULL;
@@ -1864,6 +1864,14 @@ const char *xulsword::getModuleInformation(const char *mod, const char *paramnam
   SWBuf check = assureValidUTF8(paramstring.c_str());
   ResultBuf.set(check.c_str());
   return ResultBuf.c_str();
+}
+
+/********************************************************************
+FreeLibxulsword
+*********************************************************************/
+void xulsword::freeLibxulsword() {
+  delete MyManager;
+  MyManager = NULL;
 }
 
 // END class xulsword

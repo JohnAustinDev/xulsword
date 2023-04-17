@@ -37,9 +37,12 @@ xulsword *GetXulsword(char *path, void (*throwJS)(const char *), char *(*toUpper
 }
 
 void FreeLibxulsword(xulsword *tofree) {
-  // deleting a xulsword object causes unpredictable access violations,
+  // Deleting a xulsword object causes unpredictable access violations,
   // so let created xulsword objects live until the end of the process
-  // even if they're not referenced any longer.
+  // even if they're not referenced any longer. However, an unreferenced
+  // xulsword object may still keep locks to NTFS files, so freeLibxulsword
+  // is used to release those file locks.
+  return my_xulsword->freeLibxulsword();
   /*
   SWLog::getSystemLog()->logDebug("(c++ FreeLibxulsword) FREEING xulsword");
   if (tofree && tofree != my_xulsword) delete tofree;

@@ -119,8 +119,8 @@ const C = {
     Popup: {
       openGap: 0, // open popup px below target element
       strongsOpenGap: 80, // px
-      openDelay: 200, // ms between hover and popup opening
-      strongsOpenDelay: 750, // ms
+      openDelay: 100, // ms between hover and popup opening
+      strongsOpenDelay: 550, // ms
       wheelDeadTime: 1000, // ms of dead-time after wheel-scroll
     },
     Atext: {

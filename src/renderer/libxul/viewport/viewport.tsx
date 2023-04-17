@@ -131,9 +131,12 @@ class Viewport extends React.Component implements PopupParent {
 
   componentDidUpdate() {
     const state = this.state as ViewportState;
-    const { popupParent } = state;
+    const { popupParent, elemdata } = state;
     if (popupParent && !document.body.contains(popupParent)) {
       this.setState({ popupParent: null });
+    } else if (popupParent && elemdata && elemdata.length) {
+      // Do the fade in effect
+      popupParent.getElementsByClassName('npopup')[0]?.classList.remove('hide');
     }
   }
 
@@ -414,6 +417,7 @@ class Viewport extends React.Component implements PopupParent {
               elemdata.length &&
               ReactDOM.createPortal(
                 <Popup
+                  className="hide"
                   key={[gap, elemdata.length, popupReset].join('.')}
                   elemdata={elemdata}
                   gap={gap}

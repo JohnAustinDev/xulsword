@@ -396,6 +396,10 @@ export async function createSearchIndex(xthis: SearchWin, module: string) {
         log.debug(`BUILDING searchIndexBuild...`);
         G.LibSword.searchIndexBuild(module, winid)
           .then((result) => {
+            // For some reason, indexing sometimes seems to corrupt the order of
+            // booksInModule, so try reset all caches as a work-around.
+            G.resetMain();
+            G.Window.reset('cache-reset', 'all');
             xthis.setState({ indexing: false } as Partial<SearchWinState>);
             setTimeout(() => resolve(result), 1);
             return result;
