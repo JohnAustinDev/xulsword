@@ -61,13 +61,8 @@ const electronDebug = require('electron-debug');
   log.transports.console.level = C.LogLevel;
   log.transports.file.level = C.LogLevel;
   log.transports.file.resolvePath = () => logfile.path;
-  log.catchErrors({ onError: (er: Error) => log.error(er) });
 }
 log.info(`Starting ${app.getName()} isDevelopment='${C.isDevelopment}'`);
-
-process.on('unhandledRejection', (reason, promise) => {
-  log.error('Unhandled Main Process Rejection at:', promise, 'reason:', reason);
-});
 
 addBookmarkTransaction(
   -1,
@@ -142,6 +137,9 @@ function showApp() {
     }, 1000);
   }
 }
+ipcMain.on('error-report', (_e: IpcMainEvent, message: string) => {
+  throw Error(message);
+});
 
 ipcMain.on('did-finish-render', (event: IpcMainEvent) => {
   let callingWin = BrowserWindow.fromWebContents(event.sender);
@@ -533,36 +531,38 @@ const init = async () => {
   log.catchErrors({
     showDialog: false,
     onError(error, versions, submitIssue) {
-      // eslint-disable-next-line promise/no-promise-in-callback
-      dialog
-        .showMessageBox({
-          title: G.i18n.t('error-detected'),
-          message: error.message,
-          detail: error.stack,
-          type: 'error',
-          buttons: ['Ignore', 'Report', 'Exit'],
-        })
-        .then((result) => {
-          if (result.response === 1 && submitIssue) {
-            submitIssue(
-              'https://github.com/JohnAustinDev/xulsword/issues/new',
-              {
-                title: `Error report for ${versions?.app || 'unknown'}`,
-                body:
-                  `Error:\n\`\`\`${error.stack}\n\`\`\`\n` +
-                  `OS: ${versions?.os || 'unknown'}`,
-              }
-            );
+      if (!error.message.includes('net::ERR_INTERNET_DISCONNECTED')) {
+        // eslint-disable-next-line promise/no-promise-in-callback
+        dialog
+          .showMessageBox({
+            title: G.i18n.t('error-detected'),
+            message: error.message,
+            detail: error.stack,
+            type: 'error',
+            buttons: ['Ignore', 'Report', 'Exit'],
+          })
+          .then((result) => {
+            if (result.response === 1 && submitIssue) {
+              submitIssue(
+                'https://github.com/JohnAustinDev/xulsword/issues/new',
+                {
+                  title: `Error report for ${versions?.app || 'unknown'}`,
+                  body:
+                    `Error:\n\`\`\`${error.stack}\n\`\`\`\n` +
+                    `OS: ${versions?.os || 'unknown'}`,
+                }
+              );
+              return result;
+            }
+            if (result.response === 2) {
+              app.quit();
+            }
             return result;
-          }
-          if (result.response === 2) {
-            app.quit();
-          }
-          return result;
-        })
-        .catch((err) => {
-          throw Error(err);
-        });
+          })
+          .catch((err) => {
+            log.error(err);
+          });
+      }
     },
   });
 };

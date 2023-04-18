@@ -83,6 +83,7 @@ type RendererChannels =
   | 'did-finish-render'
   | 'print-or-preview'
   | 'log'
+  | 'error-report'
   | 'close'
   | 'resize'
   | 'progress'

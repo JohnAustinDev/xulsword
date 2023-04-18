@@ -51,18 +51,16 @@ Cache.write(`${descriptor.type}:${descriptor.id}`, 'windowID');
 log.debug(`Initializing new window:`, descriptor);
 
 window.onerror = (errorMsg, url, line) => {
-  log.error(`${errorMsg} at: ${url} line: ${line}`);
+  const msg = `${errorMsg} at: ${url} line: ${line}`;
+  window.ipc.send('error-report', msg);
   return false;
 };
 
 window.addEventListener('unhandledrejection', (event) => {
-  log.error(
-    'Unhandled Renderer Process rejection (promise: ',
-    event.promise,
-    ', reason: ',
-    event.reason,
-    ').'
-  );
+  const reason =
+    typeof event.reason === 'string' ? event.reason : event.reason.stack;
+  const msg = `Unhandled renderer rejection: ${reason}`;
+  window.ipc.send('error-report', msg);
 });
 
 window.ipc.on('cache-reset', () => {
