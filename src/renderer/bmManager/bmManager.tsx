@@ -441,23 +441,22 @@ const print: BMManagerProps['print'] = {
 
 renderToRoot(<BMManagerWin id="bookmarkManager" print={print} />, {
   print: { ...print, pageable: true },
-});
-
-window.ipc.once('close', () => {
-  G.Prefs.setComplexValue(
-    'bookmarkManager.cut',
-    null as typeof S.prefs.bookmarkManager.cut
-  );
-  G.Prefs.setComplexValue(
-    'bookmarkManager.copy',
-    null as typeof S.prefs.bookmarkManager.copy
-  );
-  G.Prefs.setCharPref(
-    'bookmarkManager.selectedFolder',
-    S.bookmarks.rootfolder.id as typeof S.prefs.bookmarkManager.selectedFolder
-  );
-  G.Prefs.setComplexValue(
-    'bookmarkManager.printItems',
-    null as typeof S.prefs.bookmarkManager.printItems
-  );
+  onunload: () => {
+    G.Prefs.setComplexValue(
+      'bookmarkManager.cut',
+      null as typeof S.prefs.bookmarkManager.cut
+    );
+    G.Prefs.setComplexValue(
+      'bookmarkManager.copy',
+      null as typeof S.prefs.bookmarkManager.copy
+    );
+    G.Prefs.setCharPref(
+      'bookmarkManager.selectedFolder',
+      S.bookmarks.rootfolder.id as typeof S.prefs.bookmarkManager.selectedFolder
+    );
+    G.Prefs.setComplexValue(
+      'bookmarkManager.printItems',
+      null as typeof S.prefs.bookmarkManager.printItems
+    );
+  },
 });

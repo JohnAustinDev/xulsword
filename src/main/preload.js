@@ -28,7 +28,6 @@ const validChannels = [
   'print-or-preview', // to main to do print, printToPDF or preview PDF
   'log', // to main for logging
   'error-report', // to main to report an error
-  'close', // from main when renderer window is being closed
   'resize', // from main when renderer window is being resized
   'progress', // from main for progress meter
   'modal', // from main to make windows temporarily modal

@@ -84,7 +84,6 @@ type RendererChannels =
   | 'print-or-preview'
   | 'log'
   | 'error-report'
-  | 'close'
   | 'resize'
   | 'progress'
   | 'modal'
@@ -135,7 +134,7 @@ export type WindowDescriptorType = {
   dataID: string;
   options: BrowserWindowConstructorOptions;
   className?: string;
-  persist?: boolean; // persist window arguments between restarts for a type
+  typePersistBounds?: boolean;
   saveIfAppClosed?: boolean;
   notResizable?: boolean;
   fitToContent?: boolean;

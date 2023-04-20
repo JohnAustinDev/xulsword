@@ -71,7 +71,7 @@ const Commands = {
     Window.open({
       type: 'moduleManager',
       className: 'skin',
-      persist: true,
+      typePersistBounds: true,
       saveIfAppClosed: true,
       options: {
         title: i18n.t('menu.addNewModule'),
@@ -169,7 +169,7 @@ const Commands = {
     Window.open({
       type: 'removeModule',
       className: 'skin',
-      persist: true,
+      typePersistBounds: true,
       saveIfAppClosed: true,
       options: {
         title: i18n.t('menu.removeModule'),
@@ -593,7 +593,7 @@ const Commands = {
     Window.open({
       type: 'printPassage',
       className: 'skin',
-      persist: true,
+      typePersistBounds: true,
       additionalArguments: { passageWinState },
       options: {
         title: i18n.t('menu.printPassage'),
@@ -658,7 +658,7 @@ const Commands = {
       type: 'searchHelp',
       className: 'skin',
       fitToContent: true,
-      persist: true,
+      typePersistBounds: true,
       options: {
         width: 800,
         title: `${i18n.t('searchHelp.title')}`,
@@ -824,7 +824,7 @@ const Commands = {
     Window.open({
       type: 'bmManager',
       className: 'skin',
-      persist: true,
+      typePersistBounds: true,
       saveIfAppClosed: true,
       options: {
         title: i18n.t('bookmark.manager.title'),

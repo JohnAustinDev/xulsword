@@ -30,10 +30,6 @@ import handlerH, {
 } from './chooseFontH';
 import './chooseFont.css';
 
-window.ipc.once('close', () => {
-  preclose();
-});
-
 const defaultProps = xulDefaultProps;
 
 const propTypes = {
@@ -345,4 +341,8 @@ export default class ChooseFontWin extends React.Component {
 ChooseFontWin.defaultProps = defaultProps;
 ChooseFontWin.propTypes = propTypes;
 
-renderToRoot(<ChooseFontWin height="100%" />);
+renderToRoot(<ChooseFontWin height="100%" />, {
+  onunload: () => {
+    preclose();
+  },
+});

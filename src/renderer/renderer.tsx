@@ -479,16 +479,17 @@ export default async function renderToRoot(
     </StrictMode>
   );
 
-  window.ipc.on('close', () => {
+  window.onbeforeunload = () => {
     if (typeof onunload === 'function') onunload();
     Cache.clear();
     const dataID = window.processR.argv().at(-1);
     if (typeof dataID === 'string' && G.Data.has(dataID)) {
       G.Data.delete(dataID);
     }
-  });
+  };
 
   if (typeof onload === 'function') onload();
+
   setTimeout(() => {
     if (descriptor?.fitToContent) {
       const htmlElem = document.getElementsByTagName('html')[0];

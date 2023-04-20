@@ -199,35 +199,36 @@ function setWindowPref(
 
 // All Windows are created with BrowserWindow.show = false so they
 // will not be shown until the custom 'did-finish-render' event.
-// NOTE: This function modifies descriptor.options in place.
+// NOTE: This function modifies descriptor and descriptor.options in place.
 function updateOptions(descriptor: Omit<WindowDescriptorType, 'id'>): void {
   if (!descriptor.options) descriptor.options = {};
 
   // Overwrite descriptor and its options with any persisted values.
   let persistedDescriptor: WindowDescriptorType | undefined;
   if (
-    descriptor.persist &&
+    descriptor.typePersistBounds &&
     Prefs.has(`PersistForType.${descriptor.type}`, 'complex', 'windows')
   ) {
     persistedDescriptor = Prefs.getComplexValue(
       `PersistForType.${descriptor.type}`,
       'windows'
     ) as WindowDescriptorType;
-  }
-  if (persistedDescriptor) {
-    Object.entries(persistedDescriptor).forEach((entry) => {
-      const [key, val] = entry;
-      if (key !== 'options') (descriptor as any)[key] = val;
-    });
-    let o: BrowserWindowConstructorOptions = {};
-    if (persistedDescriptor.options) ({ options: o } = persistedDescriptor);
-    descriptor.options = {
-      ...descriptor.options,
-      ...o,
-    };
+    if (persistedDescriptor) {
+      Object.entries(persistedDescriptor).forEach((entry) => {
+        const [key, val] = entry;
+        if (key !== 'options') (descriptor as any)[key] = val;
+      });
+      let o: BrowserWindowConstructorOptions = {};
+      if (persistedDescriptor.options) ({ options: o } = persistedDescriptor);
+      descriptor.options = {
+        ...descriptor.options,
+        ...o,
+      };
+    }
   }
 
-  const { dataID, openWithBounds, notResizable, persist, options } = descriptor;
+  const { dataID, openWithBounds, notResizable, typePersistBounds, options } =
+    descriptor;
 
   // All windows must have these same options.
   options.show = false;
@@ -244,7 +245,8 @@ function updateOptions(descriptor: Omit<WindowDescriptorType, 'id'>): void {
   options.resizable = !notResizable;
 
   // fitToContent windows are up-sized after their content has loaded.
-  const cancelFitToContent = !notResizable && persist && persistedDescriptor;
+  const cancelFitToContent =
+    !notResizable && typePersistBounds && persistedDescriptor;
   if (cancelFitToContent) descriptor.fitToContent = false;
   if (descriptor.fitToContent) {
     options.width = 50;
@@ -261,6 +263,10 @@ function updateOptions(descriptor: Omit<WindowDescriptorType, 'id'>): void {
       options.x = xs.x + openWithBounds.x + xs.windowFrameThicknessLeft;
       options.y = xs.y + openWithBounds.y + xs.windowFrameThicknessTop;
     }
+    // openWithBounds only takes effect the first time a window is opened. The
+    // window may be moved or resized after opening and those bounds will be
+    // persisted and used if the window is ever re-opened.
+    delete descriptor.openWithBounds;
   }
 
   // Since webPreferences.additionalArguments are string arguments with limited
@@ -385,7 +391,7 @@ function updateBounds(winid: number) {
         desc.options = { ...desc.options, x, y, width, height };
         Prefs.setComplexValue(`OpenWindows.w${winid}`, desc, 'windows');
       }
-      if (desc.persist && desc.options) {
+      if (desc.typePersistBounds && desc.options) {
         let { options: o } = desc;
         o = keep(o, ['width', 'height', 'x', 'y']);
         Prefs.setComplexValue(
@@ -468,7 +474,6 @@ const Window = {
     win.on('moved', () => updateBounds(id));
     win.on('maximize', resize);
     win.on('unmaximize', resize);
-    win.once('close', () => win?.webContents.send('close'));
     win.once('closed', () => {
       Prefs.deleteUserPref(`OpenWindows.w${id}`, 'windows');
       WindowRegistry[id] = null;

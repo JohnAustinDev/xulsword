@@ -89,7 +89,10 @@ export function libswordText(
             false,
             options
           ).replace(/interV2/gm, `cs-${ilModule}`);
-        } else {
+        } else if (G.getBooksInVKModule(module).includes(book)) {
+          // We needed to check that the module contains the book, because
+          // LibSword will silently return text from elsewhere in a module
+          // if the module does not include the requested book!
           r.textHTML += G.LibSword.getChapterText(
             module,
             `${book}.${chapter}`,

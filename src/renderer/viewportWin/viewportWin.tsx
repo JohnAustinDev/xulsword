@@ -59,6 +59,8 @@ let windowState = windowArguments('xulswordState') as Pick<
   typeof vpWindowState[number]
 >;
 
+let WindowTitle = '';
+
 export type ViewportWinState = typeof statePrefDefault &
   typeof notStatePrefDefault &
   typeof windowState;
@@ -93,6 +95,7 @@ export default class ViewportWin extends React.Component {
     this.viewportParentHandler = viewportParentH.bind(this);
     this.bbDragEnd = bbDragEndH.bind(this);
     this.xulswordStateHandler = this.xulswordStateHandler.bind(this);
+    this.updateWindowTitle = this.updateWindowTitle.bind(this);
 
     this.destroy = [];
 
@@ -109,6 +112,7 @@ export default class ViewportWin extends React.Component {
     this.destroy.push(
       Subscription.subscribe.modulesInstalled(showNewModules.bind(this))
     );
+    this.updateWindowTitle();
   }
 
   componentDidUpdate(
@@ -136,12 +140,26 @@ export default class ViewportWin extends React.Component {
         G.Window.mergeValue('xulswordState', changedWindowState);
       }
     }
+    this.updateWindowTitle();
   }
 
   componentWillUnmount() {
     clearPending(this, ['dictkeydownTO', 'wheelScrollTO']);
     this.destroy.forEach((func) => func());
     this.destroy = [];
+  }
+
+  updateWindowTitle() {
+    const { panels, ilModules } = this.state as ViewportWinState;
+    const i = panels.findIndex((p) => p !== null);
+    const m = panels[i];
+    const ilm = ilModules[i];
+    let title = (m && G.Tab[m].label) || '';
+    if (ilm) title += ` | ${G.Tab[ilm].label}`;
+    if (title !== WindowTitle) {
+      G.Window.setTitle(title);
+      WindowTitle = title;
+    }
   }
 
   xulswordStateHandler(s: XulswordStateArgType): void {

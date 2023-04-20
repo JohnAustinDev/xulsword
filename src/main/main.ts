@@ -188,7 +188,7 @@ const openXulswordWindow = () => {
     G.Window.open({
       type: 'xulsword',
       className: 'skin',
-      persist: true,
+      typePersistBounds: true,
       saveIfAppClosed: false, // main win doesn't use window prefs when starting
       options: {
         title: ProgramTitle,
