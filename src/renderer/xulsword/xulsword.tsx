@@ -294,7 +294,7 @@ export default class Xulsword extends React.Component {
     const bookset: Set<string> = new Set();
     panels.forEach((m, i) => {
       if (m && !isPinned[i] && G.Tab[m].isVerseKey) {
-        G.getBooksInModule(m).forEach((bk) => bookset.add(bk));
+        G.getBooksInVKModule(m).forEach((bk) => bookset.add(bk));
       }
     });
     const booklist = [...bookset].sort((a: string, b: string) => {

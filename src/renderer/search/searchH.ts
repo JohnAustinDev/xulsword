@@ -121,7 +121,7 @@ function getScopes(
       if (books) kjvscope = `${books[0]}-${books.at(-1)}`;
     }
     const scopebooks = kjvScopeBooks(kjvscope);
-    const modbooks = G.getBooksInModule(module); // are in v11n order
+    const modbooks = G.getBooksInVKModule(module); // are in v11n order
 
     let contStart: OSISBookType | '' = '';
     let contEnd: OSISBookType | '' = '';

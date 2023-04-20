@@ -232,7 +232,7 @@ html[dir='rtl'] .notebox-maximizer {
   margin-top: 1em;
 }
 .head-line-break {
-  display: flex;
+  display: inline-block;
   clear: both;
   margin-bottom: 30px;
 }
@@ -267,13 +267,16 @@ html[dir='rtl'] .notebox-maximizer {
 
 /* Verse-per-line button */
 .versePerLineButton {
-  position: absolute;
-  display: block;
-  width: 0px;
-  height: 0px;
+  position: relative;
+  display: inline-block;
+  height: 1em;
+  /* border insures it appears at beginning of verse
+   even when verse text is empty */
+  border: 1px solid transparent;
 }
 .versePerLineButton > div {
-  position: relative;
+  position: absolute;
+  display: inline-block;
   left: -25px;
   background: url('../../images/versePerLine.png');
   background-position: 0px 0px;

@@ -313,7 +313,7 @@ class SelectVK extends React.Component {
     const filteredbooks =
       tab && modules?.length !== 0
         ? Array.from(bookset).filter((b) =>
-            G.getBooksInModule(tab.module).includes(b)
+            G.getBooksInVKModule(tab.module).includes(b)
           )
         : Array.from(bookset);
     let sel = book;
@@ -379,7 +379,7 @@ class SelectVK extends React.Component {
     // modules. If the books prop is controlling book options, modules not containing
     // the selected book are removed.
     if ((books?.length || 0) > 0) {
-      modules = modules.filter((m) => G.getBooksInModule(m).includes(book));
+      modules = modules.filter((m) => G.getBooksInVKModule(m).includes(book));
     }
     let vkSel = vkMod;
     if (!vkSel || !modules.includes(vkSel)) {

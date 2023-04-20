@@ -337,7 +337,7 @@ export default class SearchWin extends React.Component implements PopupParent {
       if (
         module &&
         !['ot', 'nt'].includes(bg) &&
-        G.getBooksInModule(module).some((bk) => {
+        G.getBooksInVKModule(module).some((bk) => {
           const x = C.SupportedBooks[bg] as any;
           return x.includes(bk);
         })

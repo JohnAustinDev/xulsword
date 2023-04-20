@@ -297,45 +297,43 @@ export function getTabs(): TabType[] {
         });
         if (!tabType) return;
 
-        // Find conf file. Look at file name, then search contents if necessary
+        // Find conf file. First look for typical file name (lowercase of module code),
+        // then search contents when necessary.
         let p = LibSword.getModuleInformation(
           module,
           'AbsoluteDataPath'
         ).replace(/[\\/]/g, path.sep);
         if (p.slice(-1) !== path.sep) p += path.sep;
-        p = p.replace(/[\\/]modules[\\/].*?$/, `${path.sep}mods.d`);
-        let confFile = new LocalFile(
-          `${p + path.sep + module.toLowerCase()}.conf`
+        const modsd = p.replace(/[\\/]modules[\\/].*?$/, `${path.sep}mods.d`);
+        let confFile: LocalFile | null = new LocalFile(
+          `${modsd + path.sep + module.toLowerCase()}.conf`
         );
         if (!confFile.exists()) {
-          confFile = new LocalFile(`${p + path.sep + module}.conf`);
+          // Try another possibility (unchanged case module code).
+          confFile = new LocalFile(`${modsd + path.sep + module}.conf`);
           if (!confFile.exists()) {
-            confFile = new LocalFile(p);
+            confFile = null;
+            // Otherwise parse the module code from every conf file looking for a match.
+            const modsdDir = new LocalFile(modsd);
             const modRE = new RegExp(`^\\[${module}\\]`);
-            if (confFile.exists() && confFile.isDirectory()) {
-              const files = confFile.directoryEntries;
-              let found: LocalFile | null = null;
+            if (modsdDir.exists() && modsdDir.isDirectory()) {
+              const files = modsdDir.directoryEntries;
               files?.forEach((file) => {
-                if (found) return;
-                const f = confFile.clone().append(file);
+                if (confFile) return;
+                const f = modsdDir.clone().append(file);
                 if (!f.isDirectory() && /\.conf$/.test(f.leafName)) {
                   const cdata = f.readFile();
-                  if (modRE.test(cdata)) {
-                    found = f;
-                  }
+                  if (modRE.test(cdata)) confFile = f;
                 }
               });
-              if (found) confFile = found;
             }
           }
         }
-        const confPath = confFile.path;
-        if (!confFile.exists()) {
-          log.warn(
-            `config file not found: "${p}$/${module.toLowerCase()}.conf"`
-          );
+        if (!confFile || !confFile.exists()) {
+          log.warn(`A config file for '${module}' was not found in '${modsd}'`);
           return;
         }
+        const confPath = confFile.path;
         const conf = parseSwordConf(confFile);
         const cipherKey = LibSword.getModuleInformation(module, 'CipherKey');
         if (cipherKey !== C.NOTFOUND) {

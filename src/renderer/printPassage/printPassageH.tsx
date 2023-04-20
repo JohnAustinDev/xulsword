@@ -111,7 +111,7 @@ export function bibleChapterText(
       notes: '',
       intronotes: '',
     };
-    if (location.book && G.getBooksInModule(module).includes(location.book)) {
+    if (location.book && G.getBooksInVKModule(module).includes(location.book)) {
       response.textHTML = G.LibSword.getChapterText(
         module,
         `${book}.${chapter}`,
@@ -177,7 +177,7 @@ export function validPassage(passage: SelectVKType | null): SelectVKType {
     const vkMod = G.Tabs.find((t) => t.type === C.BIBLE)?.module || '';
     chapters = {
       vkMod,
-      book: (vkMod && G.getBooksInModule(vkMod)[0]) || 'Gen',
+      book: (vkMod && G.getBooksInVKModule(vkMod)[0]) || 'Gen',
       chapter: 1,
       lastchapter: 1,
       v11n: (vkMod && vkMod in G.Tab && G.Tab[vkMod].v11n) || 'KJV',

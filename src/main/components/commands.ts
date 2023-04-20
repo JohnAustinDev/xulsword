@@ -75,6 +75,8 @@ const Commands = {
       saveIfAppClosed: true,
       options: {
         title: i18n.t('menu.addNewModule'),
+        width: 800,
+        height: 800,
       },
     });
   },

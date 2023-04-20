@@ -208,7 +208,7 @@ function newLocation(
   if (tabType === 'Texts') {
     r = {
       vkMod: module,
-      book: G.getBooksInModule(module)[0],
+      book: G.getBooksInVKModule(module)[0],
       chapter: 1,
       verse: 1,
       lastverse: 1,
@@ -217,7 +217,7 @@ function newLocation(
   } else if (tabType === 'Comms') {
     r = {
       commMod: module,
-      book: G.getBooksInModule(module)[0],
+      book: G.getBooksInVKModule(module)[0],
       chapter: 1,
       verse: 1,
       lastverse: 1,

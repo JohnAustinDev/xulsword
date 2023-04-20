@@ -796,7 +796,7 @@ export type GType = {
   inlineAudioFile: typeof inlineAudioFile;
   resetMain: typeof resetMain;
   getSystemFonts: typeof getSystemFonts;
-  getBooksInModule: typeof getBooksInVKModule;
+  getBooksInVKModule: typeof getBooksInVKModule;
   publishSubscription: typeof publishSubscription;
   canUndo: typeof canUndo;
   canRedo: typeof canRedo;
@@ -869,9 +869,8 @@ export const GBuilder: GType & {
         'repositoryListing',
         'download',
         'downloads',
-        'remove',
-        'move',
         'cancelOngoingDownloads',
+        'cancel',
         'installDownloads',
       ],
     ],
@@ -900,7 +899,7 @@ export const GBuilder: GType & {
   inlineFile: CACHEfunc as any,
   inlineAudioFile: CACHEfunc as any,
   getSystemFonts: CACHEfunc as any,
-  getBooksInModule: CACHEfunc as any,
+  getBooksInVKModule: CACHEfunc as any,
   resetMain: func as any,
   publishSubscription: func as any,
   canUndo: func as any,

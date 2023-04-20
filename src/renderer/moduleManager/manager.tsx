@@ -439,24 +439,7 @@ export default class ModuleManager
     );
     newTableData = newTableData.sort((a, b) => a[0].localeCompare(b[0]));
     H.setTableState(this, 'language', null, newTableData, true);
-
-    const { selection } = state.language;
-    if (selection.length) {
-      const selectedRegions = this.languageCodesToTableSelection(selection);
-      const firstSelectedRegion = selectedRegions[0];
-      if (firstSelectedRegion) {
-        const { languageTableCompRef } = this;
-        const tc = languageTableCompRef.current;
-        if (
-          tc &&
-          typeof tc === 'object' &&
-          'scrollToRegion' in tc &&
-          typeof tc.scrollToRegion === 'function'
-        ) {
-          tc.scrollToRegion(firstSelectedRegion);
-        }
-      }
-    }
+    H.scrollToSelectedLanguage(this);
   }
 
   // Convert the language table string array selection to a current language table
@@ -1193,6 +1176,7 @@ function audioDialogOnChange(
   });
 }
 
-export function onunload() {
-  G.Module.cancel(); // closes all FTP connections
+export async function onunload() {
+  // close all FTP connections
+  G.Module.cancel();
 }

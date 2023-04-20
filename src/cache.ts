@@ -29,6 +29,10 @@ const Cache = {
     }
   },
 
+  // If args is undefined, all caches will be cleared except those marked as 'noclear'.
+  // If args is provided, all caches matching the same arguments will be cleared
+  // (including those set with 'noclear'). So if a cache is ['foo', 'bar'] then
+  // clear('foo') will clear that as well as any other cache whose first argument is 'foo'.
   clear(...args: string[]) {
     const name = args.length ? args.join('+') : '';
     if (!args.length) {
@@ -37,6 +41,10 @@ const Cache = {
       });
     } else if (name in this.storage) {
       delete this.storage[name];
+    } else {
+      Object.keys(this.storage).forEach((k) => {
+        if (k.startsWith(`${name}+`)) delete this.storage[k];
+      });
     }
   },
 };

@@ -1,5 +1,7 @@
-/* Move border from container to scroll-parent (below),
-and give a fixed width */
+.genbook-chooser {
+  height: calc(100% - 25px);
+}
+
 .genbook-chooser .chooser-container {
   width: 200px;
   border-inline-start: unset;
@@ -46,8 +48,11 @@ html[dir='rtl'] .bp4-tree-node-label {
   transform: scaleX(-1);
 }
 
+.genbook-chooser .fadetop {
+  display: none;
+}
 .genbook-chooser .fadebot {
-  margin-bottom: -28px;
+  display: none;
 }
 .genbook-chooser .bp4-tree-node-caret-none + .bp4-icon-volume-up {
   margin-inline-start: -24px;

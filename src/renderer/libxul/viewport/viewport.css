@@ -25,6 +25,9 @@ html[dir='rtl'] .viewport .open-chooser {
   background: url(../../images/open1.png);
 }
 
+.viewport .genbook-chooser {
+  margin-top: 25px;
+}
 .viewport .chooser {
   padding-inline-end: 10px;
 }

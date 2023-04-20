@@ -43,7 +43,7 @@ const scaleLimit = { min: 25, max: 150 };
 
 const dark: Partial<WindowRootState> = {
   modal: 'darkened',
-  progress: 'undefined',
+  progress: 'indefinite',
 };
 
 const normal: Partial<WindowRootState> = {

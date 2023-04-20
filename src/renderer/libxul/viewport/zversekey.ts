@@ -189,7 +189,7 @@ export function locationVKText(
     const isOK =
       (type === C.BIBLE && commentaries !== 'only') ||
       (type === C.COMMENTARY && commentaries);
-    if (isOK && v11n && book && G.getBooksInModule(module).includes(book)) {
+    if (isOK && v11n && book && G.getBooksInVKModule(module).includes(book)) {
       let text;
       const modloc = verseKey(loc);
       if (loc.subid) {

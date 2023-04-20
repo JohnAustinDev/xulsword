@@ -195,7 +195,7 @@ export type ModuleUpdates = {
 };
 
 export const Progressing = {
-  downloads: [] as [string, number][], // [id, percent]
+  ids: [] as [string, number][], // [id, percent]
 };
 
 export function setDownloadProgress(
@@ -203,20 +203,17 @@ export function setDownloadProgress(
   dlkey: string,
   prog: number
 ) {
-  if (prog !== -1 || Progressing.downloads.find((v) => v[0] === dlkey)) {
-    let { downloads } = Progressing;
-    const di = downloads.findIndex((d) => d[0] === dlkey);
-    if (di === -1) downloads.push([dlkey, prog]);
-    else downloads[di][1] = prog;
-    if (downloads.every((d) => d[1] === -1)) downloads = [];
-    const progress = !downloads.length
+  if (prog !== -1 || Progressing.ids.find((v) => v[0] === dlkey)) {
+    let { ids } = Progressing;
+    const idi = ids.findIndex((d) => d[0] === dlkey);
+    if (idi === -1) ids.push([dlkey, prog]);
+    else ids[idi][1] = prog;
+    if (ids.every((d) => d[1] === -1)) ids = [];
+    const progress = !ids.length
       ? null
-      : [
-          downloads.reduce((p, c) => p + (c[1] === -1 ? 1 : c[1]), 0),
-          downloads.length,
-        ];
+      : [ids.reduce((p, c) => p + (c[1] === -1 ? 1 : c[1]), 0), ids.length];
     xthis.sState({ progress });
-    Progressing.downloads = downloads;
+    Progressing.ids = ids;
   }
 }
 
@@ -392,8 +389,10 @@ export async function eventHandler(
             true,
             {
               language: { ...state.language, open },
+              module: { ...state.module, selection: [] },
             }
           );
+          scrollToSelectedLanguage(this);
           break;
         }
         case 'moduleInfo': {
@@ -434,10 +433,12 @@ export async function eventHandler(
               toRepo: Repository;
             }[] = [];
             const downloadResults = await Promise.allSettled(Downloads);
-            G.Window.modal([
-              { modal: 'transparent', window: 'all' },
-              { modal: 'darkened', window: { type: 'xulsword' } },
-            ]);
+            G.Window.modal([{ modal: 'transparent', window: 'all' }]);
+            G.publishSubscription(
+              'setRendererRootState',
+              { renderers: { type: 'xulsword' } },
+              { progress: 'indefinite' }
+            );
             // Un-persist these table selections.
             setTableState(this, 'module', { selection: [] });
             setTableState(this, 'repository', { selection: [] });
@@ -472,7 +473,7 @@ export async function eventHandler(
                   }
                 }
               });
-              const removeResult = await G.Module.remove(removeMods);
+              const removeResult = G.Module.remove(removeMods);
               removeResult.forEach((r, i) => {
                 if (!r)
                   this.addToast({
@@ -512,7 +513,7 @@ export async function eventHandler(
                 }
               }
             });
-            const moveResult = await G.Module.move(moveMods);
+            const moveResult = G.Module.move(moveMods);
             moveResult.forEach((r, i) => {
               if (!r)
                 this.addToast({
@@ -564,7 +565,13 @@ export async function eventHandler(
             G.Window.close();
           } catch (er) {
             log.error(er);
+          } finally {
             G.Window.modal([{ modal: 'off', window: 'all' }]);
+            G.publishSubscription(
+              'setRendererRootState',
+              { renderers: { type: 'xulsword' } },
+              { progress: -1 }
+            );
           }
           break;
         }
@@ -666,7 +673,7 @@ export async function eventHandler(
             timeout: 5000,
             intent: Intent.SUCCESS,
           });
-          Progressing.downloads = [];
+          Progressing.ids = [];
           this.sState({ progress: null });
           break;
         }
@@ -700,9 +707,8 @@ export async function eventHandler(
   }
 }
 
-// Select or unselect a row of a table. If the ctrl or shift key is pressed,
-// the current selection will be modified accordingly. Returns the new
-// selection. NOTE: returned selection is type state.table[table].selection.
+// Select or unselect a row of a table. Returns the new selection.
+// NOTE: returned selection is type state.table[table].selection.
 export function rowSelect(
   xthis: ModuleManager,
   e: React.MouseEvent,
@@ -1465,7 +1471,7 @@ function modtableUpdate(
       row[ModCol.iInfo].intent = intent(ModCol.iInstalled, 'none');
     }
   });
-  if (cancel.length) G.Module.cancel(cancel);
+  if (cancel.length) G.Module.cancelOngoingDownloads(cancel);
   if (doDownload.length) download(xthis, doDownload);
   if (configs.length) setTableState(xthis, 'module', null, null, true);
 }
@@ -1574,6 +1580,28 @@ export function allAudioInstalled(conf: SwordConfType): boolean {
     allInstalled = true;
   }
   return allInstalled;
+}
+
+export function scrollToSelectedLanguage(xthis: ModuleManager) {
+  const { selection } = (xthis.state as ManagerState).language;
+  if (selection.length) {
+    const selectedRegions = xthis.languageCodesToTableSelection(selection);
+    const firstSelectedRegion = selectedRegions[0];
+    if (firstSelectedRegion) {
+      const { languageTableCompRef } = xthis;
+      const tc = languageTableCompRef.current;
+      if (
+        tc &&
+        typeof tc === 'object' &&
+        'scrollToRegion' in tc &&
+        typeof tc.scrollToRegion === 'function'
+      ) {
+        let firstRow = firstSelectedRegion.rows[0];
+        if (firstRow > 5) firstRow -= 5;
+        tc.scrollToRegion({ rows: [firstRow, firstRow] });
+      }
+    }
+  }
 }
 
 // The following functions return custom callbacks meant to be sent

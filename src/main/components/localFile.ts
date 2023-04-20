@@ -152,7 +152,9 @@ export default class LocalFile {
 
   get directoryEntries(): string[] {
     if (!this.isDirectory()) {
-      return [];
+      throw new Error(
+        `LocalFile reading directoryEntries on File: ${this.path}`
+      );
     }
     return fs.readdirSync(this.path, { encoding: 'utf-8' });
   }
@@ -160,6 +162,9 @@ export default class LocalFile {
   // This was not part of LocalFile, but added for convenience. Reads UTF-8
   // encoded file contents and returns as string.
   readFile(options?: any): string {
+    if (this.isDirectory()) {
+      throw new Error(`LocalFile readFile on Directory: ${this.path}`);
+    }
     const ops = options || {};
     ops.encoding = 'utf-8';
     return fs.readFileSync(this.path, ops) as unknown as string;
@@ -167,6 +172,9 @@ export default class LocalFile {
 
   // This was not part of LocalFile, but added for convenience.
   readBuf(options?: any): Buffer {
+    if (this.isDirectory()) {
+      throw new Error(`LocalFile readBuf on Directory: ${this.path}`);
+    }
     const ops = options || {};
     ops.encoding = null;
     return fs.readFileSync(this.path, ops);
@@ -184,6 +192,9 @@ export default class LocalFile {
   // This was not part of LocalFile, but added for convenience. Writes UTF-8
   // encoded string to file.
   writeFile(data: string | Buffer, options?: fs.WriteFileOptions) {
+    if (this.isDirectory()) {
+      throw new Error(`LocalFile writeFile on Directory: ${this.path}`);
+    }
     const o = options || { mode: FPERM };
     if (typeof o !== 'string' && typeof data === 'string' && !o.encoding) {
       o.encoding = 'utf8';

@@ -183,7 +183,7 @@ class Viewport extends React.Component implements PopupParent {
     const availableBooks = new Set();
     panels.forEach((m, i) => {
       if (m && !isPinned[i] && G.Tab[m].isVerseKey) {
-        G.getBooksInModule(m).forEach((bk) => availableBooks.add(bk));
+        G.getBooksInVKModule(m).forEach((bk) => availableBooks.add(bk));
       }
     });
 
@@ -335,7 +335,8 @@ class Viewport extends React.Component implements PopupParent {
         ['ot', 'nt'].includes(bg) ||
         panels.some(
           (p) =>
-            p && G.getBooksInModule(p).some((bk) => G.Book[bk].bookGroup === bg)
+            p &&
+            G.getBooksInVKModule(p).some((bk) => G.Book[bk].bookGroup === bg)
         )
     );
 

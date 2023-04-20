@@ -5,6 +5,7 @@ import fpath from 'path';
 import { BrowserWindow } from 'electron';
 import ZIP from 'adm-zip';
 import log from 'electron-log';
+import Cache from '../../cache';
 import {
   clone,
   downloadKey,
@@ -15,6 +16,7 @@ import {
   versionCompare,
   pad,
   mergeNewModules,
+  repositoryKey,
 } from '../../common';
 import Subscription from '../../subscription';
 import C from '../../constant';
@@ -24,7 +26,6 @@ import LocalFile from './localFile';
 import Dirs from './dirs';
 import LibSword from './libsword';
 import {
-  ftpCancel,
   getFile,
   getDir,
   getFileHTTP,
@@ -32,12 +33,12 @@ import {
   getListing,
   untargz,
   ListingElementR,
-  httpCancel,
   ftpCancelableInit,
   failCause,
   ftpCancelable,
   downloadCancel,
   logid,
+  destroyFTPconnections,
 } from '../ftphttp';
 
 import type {
@@ -129,17 +130,16 @@ export function moduleUnsupported(
 }
 
 // Return a path beginning with 'modules/' to a specific module's installation
-// directory by interpereting a SWORD DataPath config entry value. Returns
-// null if the path does not satisfy the SWORD standard (see
-// https://wiki.crosswire.org/DevTools:conf_Files)
+// directory by interpereting a SWORD DataPath config entry value.
 export function confModulePath(aDataPath: string): string | null {
   if (!aDataPath || !aDataPath.startsWith('./modules')) return null;
-  let dataPath = aDataPath.substring(2);
-  dataPath = dataPath.replace(/\/[^/]*$/, '');
+  const dataPath = aDataPath.substring(2);
   const subs = dataPath.split('/');
-  let requiredSubs = 4;
-  if (['devotionals', 'glossaries'].includes(subs[3])) requiredSubs = 5;
-  return subs.length === requiredSubs ? subs.join('/') : null;
+  let modDir = 4;
+  if (['devotionals', 'glossaries'].includes(subs[3])) modDir = 5;
+  if (subs.length === modDir) return subs.join('/');
+  if (subs.length > modDir) return subs.slice(0, modDir).join('/');
+  return null;
 }
 
 function recurseAudioDirectory(
@@ -257,98 +257,100 @@ export function moveRemoveModules(
     return Array.isArray(modules) ? modules.map(() => false) : false;
   }
   if (LibSword.isReady()) LibSword.quit();
-  const results: boolean[] = [];
-  (Array.isArray(modules) ? modules : [modules]).forEach((m) => {
-    const moddir = new LocalFile(repositoryPath);
-    moddir.append('mods.d');
-    const subs = moddir.directoryEntries;
-    if (subs) {
-      subs.forEach((conf) => {
-        const confFile = moddir.clone();
-        confFile.append(conf);
+  const moddir = new LocalFile(repositoryPath);
+  moddir.append('mods.d');
+
+  if (!Cache.has('RepoConfigObjects', repositoryPath)) {
+    Cache.write(
+      moddir.directoryEntries.map((c) => {
+        const confFile = moddir.clone().append(c);
         if (!confFile.isDirectory() && confFile.path.endsWith('.conf')) {
-          const c = parseSwordConf(confFile);
-          if (c.module === m) {
-            // If we're moving, delete any destination module first, so we can
-            // abort the move that fails.
-            if (move && !moveRemoveModules(m, move.clone().path)) {
-              results.push(false);
-              return;
-            }
-            let toConfFile;
-            if (move) {
-              const tomodsd = move.clone().append('mods.d');
-              tomodsd.create(LocalFile.DIRECTORY_TYPE);
-              confFile.copyTo(tomodsd);
-              toConfFile = tomodsd.append(confFile.leafName);
-              if (!toConfFile.exists()) {
-                results.push(false);
-                return;
-              }
-            }
-            // Keep contents of conf file in case module delete fails, so
-            // original state an be restored if needed.
-            const conftext = confFile.readFile();
-            confFile.remove();
-            if (confFile.exists()) {
-              results.push(false);
-              return;
-            }
-            if (repositoryPath === Dirs.path.xsAudio) {
-              const audiodir = new LocalFile(repositoryPath);
-              audiodir.append('modules').append(c.module);
-              if (audiodir.isDirectory()) {
-                audiodir.remove(true);
-              }
-              if (audiodir.exists()) {
-                if (!confFile.exists() && conftext) {
-                  confFile.writeFile(conftext);
-                }
-                results.push(false);
-                return;
-              }
-            } else {
-              const modulePath = confModulePath(c.DataPath);
-              if (!modulePath) {
-                confFile.writeFile(conftext);
-                results.push(false);
-                return;
-              }
-              const md = new LocalFile(repositoryPath);
-              md.append(modulePath);
-              if (move) {
-                const to = move.clone();
-                const dirs = modulePath.split('/').filter(Boolean);
-                dirs.pop();
-                dirs.forEach((sub) => {
-                  to.append(sub);
-                  if (!to.exists()) {
-                    to.create(LocalFile.DIRECTORY_TYPE);
-                  }
-                });
-                md.copyTo(to, null, true);
-                if (!to.append(md.leafName).exists()) {
-                  // Don't leave a half moved module, then abort.
-                  toConfFile?.remove();
-                  results.push(false);
-                  return;
-                }
-              }
-              if (md.exists()) md.remove(true);
-              if (md.exists()) {
-                if (!confFile.exists() && conftext) {
-                  confFile.writeFile(conftext);
-                }
-                results.push(false);
-                return;
-              }
-            }
-            DiskCache.delete(null, m);
-            results.push(true);
-          }
+          return parseSwordConf(confFile);
         }
-      });
+        return null;
+      }),
+      'RepoConfigObjects',
+      repositoryPath
+    );
+  }
+  const confs = Cache.read(
+    'RepoConfigObjects',
+    repositoryPath
+  ) as SwordConfType[];
+
+  const results = (Array.isArray(modules) ? modules : [modules]).map((m) => {
+    const conf = confs.find((c) => c && c.module === m);
+    if (!conf) return !move;
+    const confFile = moddir.clone().append(conf.filename);
+    // If we're moving, delete any destination module first, so we can
+    // abort the move that fails.
+    if (move && !moveRemoveModules(m, move.clone().path)) {
+      return false;
     }
+    let toConfFile;
+    if (move) {
+      const tomodsd = move.clone().append('mods.d');
+      tomodsd.create(LocalFile.DIRECTORY_TYPE);
+      confFile.copyTo(tomodsd);
+      toConfFile = tomodsd.append(confFile.leafName);
+      if (!toConfFile.exists()) {
+        return false;
+      }
+    }
+    // Keep contents of conf file in case module delete fails, so
+    // original state an be restored if needed.
+    const conftext = confFile.readFile();
+    confFile.remove();
+    if (confFile.exists()) {
+      return false;
+    }
+    if (repositoryPath === Dirs.path.xsAudio) {
+      const audiodir = new LocalFile(repositoryPath);
+      audiodir.append('modules').append(conf.module);
+      if (audiodir.isDirectory()) {
+        audiodir.remove(true);
+      }
+      if (audiodir.exists()) {
+        if (!confFile.exists() && conftext) {
+          confFile.writeFile(conftext);
+        }
+        return false;
+      }
+    } else {
+      const modulePath = confModulePath(conf.DataPath);
+      if (!modulePath) {
+        confFile.writeFile(conftext);
+        return false;
+      }
+      const md = new LocalFile(repositoryPath);
+      md.append(modulePath);
+      if (move) {
+        const to = move.clone();
+        const dirs = modulePath.split('/').filter(Boolean);
+        dirs.pop();
+        dirs.forEach((sub) => {
+          to.append(sub);
+          if (!to.exists()) {
+            to.create(LocalFile.DIRECTORY_TYPE);
+          }
+        });
+        md.copyTo(to, null, true);
+        if (!to.append(md.leafName).exists()) {
+          // Don't leave a half moved module, then abort.
+          toConfFile?.remove();
+          return false;
+        }
+      }
+      if (md.exists()) md.remove(true);
+      if (md.exists()) {
+        if (!confFile.exists() && conftext) {
+          confFile.writeFile(conftext);
+        }
+        return false;
+      }
+    }
+    DiskCache.delete(null, m);
+    return true;
   });
   return Array.isArray(modules) ? results : results[0];
 }
@@ -367,6 +369,7 @@ export async function installZIPs(
   callingWinID?: number
 ): Promise<NewModulesType> {
   return new Promise((resolve) => {
+    Cache.clear('RepoConfigObjects');
     const newmods: NewModulesType = clone(C.NEWMODS);
     if (zips.length) {
       // Get installed modules (to remove any obsoleted modules).
@@ -1265,10 +1268,17 @@ const Module = {
     }
   },
 
-  async cancelOngoingDownloads(): Promise<number> {
-    const keys = Object.keys(ModuleDownloads.ongoing);
-    const values = Object.values(ModuleDownloads.ongoing);
-    log.debug(`CANCEL ONGOING: ${keys.length} items! ${logdls()}`);
+  async cancelOngoingDownloads(downloads?: Download[]): Promise<number> {
+    const toCancel = downloads
+      ? downloads.reduce((p, c) => {
+          const k = downloadKey(c);
+          if (k in ModuleDownloads.ongoing) p[k] = ModuleDownloads.ongoing[k];
+          return p;
+        }, {} as typeof ModuleDownloads.ongoing)
+      : ModuleDownloads.ongoing;
+    const keys = Object.keys(toCancel);
+    const values = Object.values(toCancel);
+    log.debug(`CANCEL-ONGOING: ${keys.length} items! ${logdls()}`);
     downloadCancel(keys);
     let canceled: any[] = [];
     try {
@@ -1285,41 +1295,31 @@ const Module = {
       }
     });
     keys.forEach((key) => delete ModuleDownloads.ongoing[key]);
-    log.debug(`CANCELS ONGOING COMPLETE: ${keys.length} items! ${logdls()}`);
+    log.debug(`CANCEL-ONGOING COMPLETE: ${keys.length} items! ${logdls()}`);
     return cnt;
   },
 
-  // Cancel in-process downloads AND previous downloads.
+  // Cancel ongoing downloads AND previous downloads.
   // IMPORTANT: cancel() without arguments should always be
   // called when a session is finished, to delete all waiting
-  // connections.
-  cancel(downloads?: Download[]): number {
-    let canceled = 0;
-    if (downloads === undefined) {
-      canceled += httpCancel();
-      canceled += ftpCancel(undefined, 'canceled');
-      canceled += Object.keys(ModuleDownloads.finished).length;
-      Object.keys(ModuleDownloads.finished).forEach((key) => {
-        delete ModuleDownloads.finished[key];
-      });
-      return canceled;
-    }
-    log.debug(`CANCELS: ${downloads.length} items! ${logdls()}`);
-    const ongoing = Object.keys(ModuleDownloads.ongoing);
-    downloads.forEach((dl) => {
-      let cnt = 0;
-      const downloadkey = downloadKey(dl);
-      if (ongoing.includes(downloadkey)) {
-        cnt += downloadCancel(downloadkey);
-      }
-      if (downloadkey in ModuleDownloads.finished) {
-        delete ModuleDownloads.finished[downloadkey];
-        cnt += 1;
-      }
-      canceled += cnt;
+  // FTP connections etc.
+  async cancel(downloads?: Download[]): Promise<number> {
+    let cnt = await this.cancelOngoingDownloads(downloads);
+    if (!downloads) destroyFTPconnections();
+    const finished = downloads
+      ? downloads.reduce((p, c) => {
+          const k = downloadKey(c);
+          if (k in ModuleDownloads.finished) p[k] = ModuleDownloads.finished[k];
+          return p;
+        }, {} as typeof ModuleDownloads.finished)
+      : ModuleDownloads.finished;
+    const nfk = Object.keys(finished).length;
+    Object.keys(finished).forEach((key) => {
+      delete ModuleDownloads.finished[key];
+      cnt += 1;
     });
-    log.debug(`CANCELS INITIATED: ${downloads.length} items! ${logdls()}`);
-    return canceled;
+    log.debug(`CANCEL-FINISHED COMPLETE: ${nfk} items! ${logdls()}`);
+    return cnt;
   },
 
   // Set windows to modal before calling this function!
@@ -1351,9 +1351,8 @@ const Module = {
   // Set windows to modal before calling this function!
   // After this function, if installDownloads() will not be called,
   // then modulesInstalled must be published on the main process.
-  async remove(
-    modules: { name: string; repo: Repository }[]
-  ): Promise<boolean[]> {
+  remove(modules: { name: string; repo: Repository }[]): boolean[] {
+    Cache.clear('RepoConfigObjects');
     return modules.map((module) => {
       const { name, repo } = module;
       if (isRepoLocal(repo)) {
@@ -1366,9 +1365,10 @@ const Module = {
   // Set windows to modal before calling this function!
   // After this function, if installDownloads() will not be called,
   // then modulesInstalled must be published on the main process.
-  async move(
+  move(
     modules: { name: string; fromRepo: Repository; toRepo: Repository }[]
-  ): Promise<boolean[]> {
+  ): boolean[] {
+    Cache.clear('RepoConfigObjects');
     return modules.map((module) => {
       const { name, fromRepo, toRepo } = module;
       if (isRepoLocal(fromRepo) && isRepoLocal(toRepo)) {

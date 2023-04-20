@@ -224,6 +224,14 @@ export function libswordText(
     r.intronotes = headInfo.intronotes;
   }
 
+  // Add versePerLineButton
+  if (G.Tab[module].tabType === 'Texts') {
+    r.textHTML = r.textHTML.replace(
+      /(<span[^>]*class="vs\b[^>]*>)/,
+      '$1<span class="versePerLineButton"><div></div></span>'
+    );
+  }
+
   return r;
 }
 

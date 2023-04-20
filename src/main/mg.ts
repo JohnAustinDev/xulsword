@@ -226,9 +226,9 @@ class GClass implements GType {
     return getSystemFonts(...args);
   }
 
-  getBooksInModule(
-    ...args: Parameters<GType['getBooksInModule']>
-  ): ReturnType<GType['getBooksInModule']> {
+  getBooksInVKModule(
+    ...args: Parameters<GType['getBooksInVKModule']>
+  ): ReturnType<GType['getBooksInVKModule']> {
     return getBooksInVKModule(...args);
   }
 

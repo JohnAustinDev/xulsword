@@ -13,7 +13,7 @@ import React, {
 } from 'react';
 import { createRoot } from 'react-dom/client';
 import PropTypes from 'prop-types';
-import { Intent, ProgressBar, Tag } from '@blueprintjs/core';
+import { Intent, ProgressBar, Spinner, Tag } from '@blueprintjs/core';
 import Subscription from '../subscription';
 import { sanitizeHTML, stringHash } from '../common';
 import Cache from '../cache';
@@ -110,8 +110,10 @@ const InitialState = {
   modal: 'off' as ModalType,
   iframeFilePath: '' as string,
   resetOnResize: true as boolean,
-  progress: -1 as number | 'undefined',
+  progress: -1 as number | 'indefinite',
 };
+
+export type WindowRootState = typeof InitialState;
 
 type WindowRootProps = WindowRootOptions & {
   children: ReactElement;
@@ -372,14 +374,20 @@ function WindowRoot(props: WindowRootProps) {
           return p;
         }, {})}
       >
-        {s.progress[0] !== -1 && (
-          <ProgressBar
-            className="modal-progressbar"
-            value={s.progress[0] === 'undefined' ? undefined : s.progress[0]}
-            intent="primary"
-            animate
-            stripes
-          />
+        {s.progress[0] !== -1 && s.progress[0] !== 'indefinite' && (
+          <div className="progress-container progressbar">
+            <ProgressBar
+              value={s.progress[0]}
+              intent="primary"
+              animate
+              stripes
+            />
+          </div>
+        )}
+        {s.progress[0] !== -1 && s.progress[0] === 'indefinite' && (
+          <div className="progress-container spinner">
+            <Spinner intent={Intent.PRIMARY} />
+          </div>
         )}
       </Hbox>
     ) : null;
@@ -438,8 +446,6 @@ export type WindowRootOptions = {
   onload?: (() => void) | null;
   onunload?: (() => void) | null;
 };
-
-export type WindowRootState = typeof InitialState;
 
 export default async function renderToRoot(
   component: ReactElement,

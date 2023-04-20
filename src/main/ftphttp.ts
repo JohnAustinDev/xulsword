@@ -26,7 +26,7 @@ const OperationTimeoutFTP = 5000;
 
 let MaxDomainConnections: { [domain: string]: number } = {};
 
-let FtpCancelable: {
+const FtpCancelable: {
   [cancelkey: string]: {
     cause: 'canceled' | Error | null;
     // callbacks is array of [ operation-id, callback[] ]
@@ -159,18 +159,13 @@ export function downloadCancel(
 // is 'canceled' by user, but stream errors etc. can also initiate a
 // cancellation, and then such an error should be passed as the cause.
 export function ftpCancel(
-  cancelkey?: string | string[],
+  cancelkey: string | string[],
   cause?: 'canceled' | Error
 ): number {
-  if (cancelkey === undefined) {
-    destroyFTPconnections();
-    FtpCancelable = {};
-    MaxDomainConnections = {};
-    return 1;
-  }
   let n = 0;
   const keys = Array.isArray(cancelkey) ? cancelkey : [cancelkey];
-  // Add cancel cause to each before running any callbacks.
+  // Add cancel cause to each before running any callbacks, because cause
+  // signals that the key has been canceled.
   keys.forEach((k) => {
     if (!FtpCancelable[k].cause) {
       FtpCancelable[k].cause = cause || 'canceled';
@@ -255,8 +250,9 @@ export function failCause(cancelkey: string, er?: Error | string): string {
   return cause;
 }
 
-// Close and free FTP connections to a particular domain, or all domains.
-export function destroyFTPconnections(domain?: string | null, quiet = false) {
+// Close and free FTP connections to a particular domain, or all domains. Also
+// reset MaxDomainConnections.
+export function destroyFTPconnections(domain?: string | null) {
   if (domain) {
     if (domain in activeConnections) {
       Object.keys(FtpCancelable).forEach((key) => {
@@ -277,10 +273,9 @@ export function destroyFTPconnections(domain?: string | null, quiet = false) {
       waitingConnections[domain] = [];
     }
   } else {
-    Object.keys(activeConnections).forEach((d) =>
-      destroyFTPconnections(d, quiet)
-    );
+    Object.keys(activeConnections).forEach((d) => destroyFTPconnections(d));
   }
+  MaxDomainConnections = {};
 }
 
 // Move a connection from active to waiting.
@@ -438,7 +433,7 @@ async function getActiveConnection(
     if (c === 'too-many-connections') {
       cmsg -= 100;
       if (cmsg < 0) {
-        log.debug(`Waiting for a free connection to ${domain}.`);
+        log.silly(`Waiting for a free connection to ${domain}.`);
         cmsg = cint;
       }
       await new Promise((resolve) => setTimeout(() => resolve(true), 100));

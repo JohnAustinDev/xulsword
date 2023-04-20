@@ -43,7 +43,7 @@ import '@blueprintjs/table/lib/css/table.css';
 import './table.css';
 
 import { Box } from './boxes';
-import { clone, ofClass } from 'common';
+import { clone, ofClass, randomID } from 'common';
 
 export type TablePropColumn = {
   datacolumn: number;
@@ -271,7 +271,7 @@ class TextSortableColumn extends AbstractSortableColumn {
     if (a === undefined && b !== undefined) return -1;
     if (b === undefined && a !== undefined) return 1;
     if (a === undefined && b === undefined) return 0;
-    return a.toString().localeCompare(b);
+    return a.toString().localeCompare(b.toString());
   }
 
   protected renderMenu(
@@ -294,22 +294,20 @@ class TextSortableColumn extends AbstractSortableColumn {
         TextSortableColumn.compare(b, a)
       );
     };
-    const items: JSX.Element[] = [];
+    const items: JSX.Element[][] = [];
     if (column.sortable) {
-      items.push(
+      items.push([
         <MenuItem
           key={['sort-asc', this.dataColIndex].join('.')}
           icon="sort-asc"
           onClick={sortAsc}
-        />
-      );
-      items.push(
+        />,
         <MenuItem
           key={['sort-desc', this.dataColIndex].join('.')}
           icon="sort-desc"
           onClick={sortDesc}
-        />
-      );
+        />,
+      ]);
     }
     if (onColumnHide) {
       if (column.hideable && columns.filter((c) => c.visible).length > 1) {
@@ -317,19 +315,16 @@ class TextSortableColumn extends AbstractSortableColumn {
         if (heading.startsWith('icon:')) heading = '';
         else if (heading.startsWith('i18n:'))
           heading = G.i18n.t(heading.substring(5));
-        items.push(<MenuDivider key="divider.1" />);
-        items.push(
+        items.push([
           <MenuItem
             key={['delete', this.dataColIndex].join('.')}
             icon="delete"
             text={heading}
             onClick={() => columnHide(propColumnIndex, propColumnIndex)}
-          />
-        );
+          />,
+        ]);
       }
-      if (columns.some((c) => c.hideable && !c.visible)) {
-        items.push(<MenuDivider key="divider.2" />);
-      }
+      const hideableItems: JSX.Element[] = [];
       columns.forEach((c) => {
         const { datacolumn, hideable, visible, heading } = c;
         if (hideable && !visible) {
@@ -341,7 +336,7 @@ class TextSortableColumn extends AbstractSortableColumn {
           if (heading.startsWith('icon:')) text = '';
           else if (heading.startsWith('i18n:'))
             text = G.i18n.t(heading.substring(5));
-          items.push(
+          hideableItems.push(
             <MenuItem
               key={['add', heading].join('.')}
               icon={icon}
@@ -352,8 +347,12 @@ class TextSortableColumn extends AbstractSortableColumn {
         }
         return null;
       });
+      if (hideableItems.length) items.push(hideableItems);
+      for (let i = items.length - 1; i > 0; i -= 1) {
+        items.splice(i, 0, [<MenuDivider key={`divider.${i}`} />]);
+      }
     }
-    return items.length ? <Menu>{items}</Menu> : <></>;
+    return items.length ? <Menu>{items.flat()}</Menu> : <></>;
   }
 }
 
@@ -424,6 +423,7 @@ export type TableProps = XulProps & {
 };
 
 type TableState = {
+  reset: string;
   sortedIndexMap: number[];
   sparseCellData: { [i: string]: string };
   sparseCellIntent: { [i: string]: Intent };
@@ -451,6 +451,7 @@ class Table extends React.Component {
     const { columns, initialRowSort } = props;
 
     const s: TableState = {
+      reset: randomID(),
       sortedIndexMap: [],
       sparseCellData: {},
       sparseCellIntent: {},
@@ -701,7 +702,15 @@ class Table extends React.Component {
     const dataCol = columns[propColumnIndex].datacolumn;
     const sortedIndexMap = Utils.times(data.length, (i: number) => i);
     sortedIndexMap.sort((a: number, b: number) => {
-      return comparator(data[a][dataCol], data[b][dataCol]);
+      let aa = data[a][dataCol];
+      if (typeof aa === 'function') {
+        aa = aa(a, dataCol);
+      }
+      let bb = data[b][dataCol];
+      if (typeof bb === 'function') {
+        bb = bb(b, dataCol);
+      }
+      return comparator(aa, bb);
     });
     if (
       sim.length !== sortedIndexMap.length ||
@@ -709,7 +718,7 @@ class Table extends React.Component {
     ) {
       if (s) s.sortedIndexMap = sortedIndexMap;
       else {
-        this.sState({ sortedIndexMap });
+        this.sState({ sortedIndexMap, reset: randomID() });
       }
       if (onRowsReordered) {
         onRowsReordered(propColumnIndex, direction, sortedIndexMap);
@@ -751,6 +760,7 @@ class Table extends React.Component {
       tableCompRef,
       cellRendererDependencies,
     } = props;
+    const { reset } = state;
     const {
       datacolumns,
       onCellClick,
@@ -809,6 +819,7 @@ class Table extends React.Component {
         dir="ltr"
       >
         <BPTable
+          key={reset}
           numRows={numRows}
           columnWidths={tableColumnWidths}
           selectedRegions={selectedRegions}

@@ -1732,26 +1732,45 @@ export function tableRowsToSelection(rows: number[]): RowSelection {
 }
 
 // Return a new selection after toggling a data row, by adding or
-// subtracting from the current selection as appropriate.
+// subtracting from the current selection as appropriate. If the ctrl
+// or shift key is pressed, the current selection will be handled
+// accordingly.
 export function tableSelectDataRows(
   toggleDataRow: number,
   selectedDataRows: number[],
   e: React.MouseEvent
 ): number[] {
-  const rows = clone(selectedDataRows.sort());
-  const isSelected = rows.includes(toggleDataRow);
-  if (rows.length && (e.ctrlKey || e.shiftKey)) {
-    const prev = rows.filter((r) => r < toggleDataRow).pop();
-    const start = prev === undefined || e.ctrlKey ? toggleDataRow : prev + 1;
-    for (let x = start; x <= toggleDataRow; x += 1) {
-      if (!isSelected) rows.push(x);
-      else if (rows.includes(x)) {
-        rows.splice(rows.indexOf(x), 1);
+  const selectedRows = Array.from(new Set(selectedDataRows));
+  selectedRows.sort((a, b) => a - b);
+  const toggleSelected = selectedRows.includes(toggleDataRow);
+  if (selectedRows.length && (e.ctrlKey || e.shiftKey)) {
+    // Decide if selecting upwards or downwards
+    if (selectedRows[0] > toggleDataRow) {
+      // select upwards:
+      // Get the first selected row after the clicked row.
+      const prev = selectedRows[0];
+      const start = e.ctrlKey ? toggleDataRow : prev - 1;
+      for (let x = start; x >= toggleDataRow; x -= 1) {
+        if (!toggleSelected) selectedRows.push(x);
+        else if (selectedRows.includes(x)) {
+          selectedRows.splice(selectedRows.indexOf(x), 1);
+        }
+      }
+    } else {
+      // select downwards:
+      // Get the first selected row before the clicked row.
+      const prev = selectedRows.filter((r) => r < toggleDataRow).pop();
+      const start = prev === undefined || e.ctrlKey ? toggleDataRow : prev + 1;
+      for (let x = start; x <= toggleDataRow; x += 1) {
+        if (!toggleSelected) selectedRows.push(x);
+        else if (selectedRows.includes(x)) {
+          selectedRows.splice(selectedRows.indexOf(x), 1);
+        }
       }
     }
-    return rows;
+    return selectedRows;
   }
-  return isSelected ? [] : [toggleDataRow];
+  return toggleSelected ? [] : [toggleDataRow];
 }
 
 // Append entries of 'b' to 'a'. So 'a' is modified in place, while 'b'

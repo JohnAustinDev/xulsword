@@ -37,10 +37,15 @@ html .skin {
   outline: 1px solid rgb(216 213 213);
   box-shadow: 8px 8px 2px 1px rgb(0 0 0 / 22%);
 }
-#overlay .modal-progressbar {
+#overlay .progressbar {
   width: 80%;
   max-width: 300px;
-  background: rgb(87, 73, 95);
+}
+#overlay .progress-container {
+  border-radius: 16px;
+  padding: 20px;
+  background: whitesmoke;
+  filter: drop-shadow(5px 5px 2px #111111);
 }
 
 /* Anchor (undo blueprint.css colors) */

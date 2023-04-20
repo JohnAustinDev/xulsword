@@ -239,6 +239,11 @@ const openXulswordWindow = () => {
   xswinSubscriptions.push(
     Subscription.subscribe.modulesInstalled(
       (newmods: NewModulesType, callingWinID?: number) => {
+        G.publishSubscription(
+          'setRendererRootState',
+          { renderers: { type: 'all' } },
+          { progress: 'indefinite' }
+        );
         const newErrors = newmods.reports.map((r) => r.error).filter(Boolean);
         const newWarns = newmods.reports.map((r) => r.warning).filter(Boolean);
         if (newErrors.length) {
@@ -278,16 +283,21 @@ const openXulswordWindow = () => {
               G.Viewport.setTabs(-1, conf.module, 'show', undefined, true);
             });
         }
+        G.publishSubscription(
+          'setRendererRootState',
+          { renderers: { type: 'all' } },
+          { progress: -1 }
+        );
+        G.Window.modal([{ modal: 'off', window: 'all' }]);
         if (callingWinID) {
           setTimeout(() => {
             publishSubscription(
               'modulesInstalled',
-              { renderers: { id: callingWinID }, main: false },
+              { renderers: { id: callingWinID } },
               newmods
             );
           }, 1);
         }
-        G.Window.modal([{ modal: 'off', window: 'all' }]);
       }
     )
   );
@@ -493,13 +503,15 @@ const init = async () => {
     const vkMod = panels.filter(
       (p) => p && p in G.Tab && G.Tab[p].isVerseKey
     )[0];
-    const books = ((vkMod && G.getBooksInModule(vkMod)) || []).sort((a, b) => {
-      const ab = G.Book[a] as BookType;
-      const bb = G.Book[b] as BookType;
-      if (ab.bookGroup === 'nt' && bb.bookGroup !== 'nt') return -1;
-      if (ab.bookGroup !== 'nt' && bb.bookGroup === 'nt') return 1;
-      return ab.index < bb.index ? -1 : ab.index > bb.index ? 1 : 0;
-    });
+    const books = ((vkMod && G.getBooksInVKModule(vkMod)) || []).sort(
+      (a, b) => {
+        const ab = G.Book[a] as BookType;
+        const bb = G.Book[b] as BookType;
+        if (ab.bookGroup === 'nt' && bb.bookGroup !== 'nt') return -1;
+        if (ab.bookGroup !== 'nt' && bb.bookGroup === 'nt') return 1;
+        return ab.index < bb.index ? -1 : ab.index > bb.index ? 1 : 0;
+      }
+    );
     if (
       books.length &&
       (location === null || !books.includes(location.book as any))
@@ -531,7 +543,10 @@ const init = async () => {
   log.catchErrors({
     showDialog: false,
     onError(error, versions, submitIssue) {
-      if (!error.message.includes('net::ERR_INTERNET_DISCONNECTED')) {
+      if (
+        !C.isDevelopment &&
+        !error.message.includes('net::ERR_INTERNET_DISCONNECTED')
+      ) {
         // eslint-disable-next-line promise/no-promise-in-callback
         dialog
           .showMessageBox({

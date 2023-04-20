@@ -133,7 +133,7 @@ interface ModinfoProps extends XulProps {
 }
 
 type SwordConfExtraType = SwordConfType & {
-  modUnique: string;
+  confID: string;
   confPath: string | null;
   label: string;
   style: string;
@@ -158,7 +158,7 @@ function Modinfo(props: ModinfoProps) {
         confPath: null as null | string,
         label: m in G.Tab ? G.Tab[m].label : m,
         style: m in G.Tab ? G.Tab[m].labelClass : 'cs-LTR_DEFAULT',
-        modUnique: stringHash(repositoryModuleKey(c)),
+        confID: stringHash(repositoryModuleKey(c)),
       };
       if (c && isRepoLocal(c.sourceRepository)) {
         data.confPath = [c.sourceRepository.path, 'mods.d', c.filename].join(
@@ -173,7 +173,7 @@ function Modinfo(props: ModinfoProps) {
     .sort((a, b) => a.label.localeCompare(b.label));
 
   const showConf: SwordConfExtraType | null =
-    (showConfx && configs.find((c) => c.modUnique === showConfx)) || null;
+    (showConfx && configs.find((c) => c.confID === showConfx)) || null;
 
   const conftext: string[] =
     (showConf?.confPath &&
@@ -207,9 +207,9 @@ function Modinfo(props: ModinfoProps) {
                     <ul>
                       {configs.map((c) =>
                         c.moduleType === g || c.xsmType === g ? (
-                          <li key={`lm${c.module}`}>
+                          <li key={`lm${c.confID}`}>
                             <a
-                              href={`#${['module', c.modUnique].join('.')}`}
+                              href={`#${['module', c.confID].join('.')}`}
                               className={c.style}
                             >
                               {c.label}
@@ -225,16 +225,16 @@ function Modinfo(props: ModinfoProps) {
           ))}
         {configs?.map((c) => (
           <div
-            id={['module', c.modUnique].join('.')}
+            key={`ml${c.confID}`}
+            id={['module', c.confID].join('.')}
             className={`modlist x-${c.module}`}
-            key={`ml${c.module}`}
           >
             <div className="head1">
               <span className={`cs-${c.module}`}>{c.module}</span>
               {showLinkList && (
                 <a
                   href="#"
-                  id={['top', c.modUnique].join('.')}
+                  id={['top', c.confID].join('.')}
                   className="top-link"
                   onClick={buttonHandler}
                 >
@@ -252,7 +252,7 @@ function Modinfo(props: ModinfoProps) {
               {c.confPath && !(showConf === c) && (
                 <>
                   <Button
-                    id={['more', c.modUnique].join('.')}
+                    id={['more', c.confID].join('.')}
                     onClick={buttonHandler}
                   >
                     {G.i18n.t('more.label')}
@@ -262,7 +262,7 @@ function Modinfo(props: ModinfoProps) {
               {showConf && showConf === c && (
                 <>
                   <Button
-                    id={['less', c.modUnique].join('.')}
+                    id={['less', c.confID].join('.')}
                     onClick={buttonHandler}
                   >
                     {G.i18n.t('less.label')}
@@ -270,13 +270,13 @@ function Modinfo(props: ModinfoProps) {
                   {editConf !== undefined && textarea !== undefined && (
                     <>
                       <Button
-                        id={['edit', c.modUnique].join('.')}
+                        id={['edit', c.confID].join('.')}
                         onClick={buttonHandler}
                       >
                         {G.i18n.t('menu.edit')}
                       </Button>
                       <Button
-                        id={['save', c.modUnique].join('.')}
+                        id={['save', c.confID].join('.')}
                         disabled={!editConf}
                         onClick={buttonHandler}
                       >
@@ -291,11 +291,11 @@ function Modinfo(props: ModinfoProps) {
               <div>
                 <Label
                   className="confpath-label"
-                  control={`ta.${c.module}`}
+                  control={`ta.${c.confID}`}
                   value={c.confPath || ''}
                 />
                 <textarea
-                  id={['ta', c.modUnique].join('.')}
+                  id={['ta', c.confID].join('.')}
                   defaultValue={conftext.join('\n')}
                   className={editConf ? 'editable' : 'readonly'}
                   autoComplete="off"
