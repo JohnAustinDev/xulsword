@@ -968,6 +968,7 @@ export const GBuilder: GType & {
     search: func as any,
     getSearchResults: func as any,
     searchIndexDelete: func as any,
+    searchIndexCancel: func as any,
     searchIndexBuild: func as any,
     setGlobalOption: func as any,
     setGlobalOptions: func as any,
@@ -1053,9 +1054,10 @@ export const GBuilder: GType & {
   },
 
   Viewport: {
+    sortTabsByLocale: func as any,
     getTabChange: func as any,
     getPanelChange: func as any,
-    getNewModuleChange: func as any,
+    getModuleChange: func as any,
     setXulswordTabs: func as any,
     setXulswordPanels: func as any,
   },

@@ -34,7 +34,6 @@ import {
 } from './components/window';
 
 import type {
-  BookType,
   NewModulesType,
   WindowDescriptorPrefType,
   WindowDescriptorType,
@@ -284,8 +283,8 @@ const openXulswordWindow = () => {
           if (callingWinID === xulswordWindow.id) {
             G.Prefs.mergeValue(
               'xulsword',
-              Viewport.getNewModuleChange(
-                newmods,
+              Viewport.getModuleChange(
+                newmods.modules.map((c) => c.module),
                 G.Prefs.getComplexValue('xulsword') as typeof S.prefs.xulsword
               ),
               'prefs',
@@ -472,70 +471,19 @@ const init = async () => {
 
   // If there are no tabs, choose a Bible and a location from the installed modules,
   // (preferring the locale language), and show that tab.
-  let panels = G.Prefs.getComplexValue(
-    'xulsword.panels'
-  ) as typeof S.prefs.xulsword.panels;
-  let location = G.Prefs.getComplexValue(
-    'xulsword.location'
-  ) as typeof S.prefs.xulsword.location;
-  let tabs = G.Prefs.getComplexValue(
-    'xulsword.tabs'
-  ) as typeof S.prefs.xulsword.tabs;
-  if (tabs.every((tb) => tb === null || !tb.length)) {
-    const slng = lng.replace(/-.*$/, '');
-    const lngmodules = Array.from(
-      new Set(
-        G.Tabs.filter(
-          (t) => t.type === C.BIBLE && t.conf.Lang?.replace(/-.*$/, '') === slng
-        )
-          .map((t) => t.module)
-          .sort()
-          .concat(
-            G.Tabs.filter(
-              (t) =>
-                t.type === C.BIBLE &&
-                t.conf.Lang?.replace(/-.*$/, '') === C.FallbackLanguage[lng]
-            )
-              .map((t) => t.module)
-              .sort()
-          )
-      )
-    );
-    tabs = panels.map((p) => (p === null ? null : lngmodules));
-    let x = -1;
-    panels = panels.map((p) => {
-      if (p === '') {
-        if (x < lngmodules.length - 1) x += 1;
-        return lngmodules[x];
-      }
-      return p;
-    });
-    const vkMod = panels.filter(
-      (p) => p && p in G.Tab && G.Tab[p].isVerseKey
-    )[0];
-    const books = ((vkMod && G.getBooksInVKModule(vkMod)) || []).sort(
-      (a, b) => {
-        const ab = G.Book[a] as BookType;
-        const bb = G.Book[b] as BookType;
-        if (ab.bookGroup === 'nt' && bb.bookGroup !== 'nt') return -1;
-        if (ab.bookGroup !== 'nt' && bb.bookGroup === 'nt') return 1;
-        return ab.index < bb.index ? -1 : ab.index > bb.index ? 1 : 0;
-      }
-    );
-    if (
-      books.length &&
-      (location === null || !books.includes(location.book as any))
-    ) {
-      location = {
-        book: books[0],
-        chapter: 1,
-        verse: 1,
-        v11n: (vkMod && G.Tab[vkMod].v11n) || 'KJV',
-      };
+  const xulsword = G.Prefs.getComplexValue(
+    'xulsword'
+  ) as typeof S.prefs.xulsword;
+  const { tabs } = xulsword;
+  if (tabs.every((tb) => !tb || !tb.length)) {
+    const modules = Viewport.sortTabsByLocale(G.Tabs.map((t) => t.module));
+    if (modules[0]) {
+      G.Viewport.getModuleChange(modules, xulsword, {
+        maintainWidePanels: true,
+        maintainPins: false,
+      });
+      G.Prefs.mergeValue('xulsword', xulsword);
     }
-    G.Prefs.setComplexValue('xulsword.panels', panels);
-    G.Prefs.setComplexValue('xulsword.location', location);
-    G.Prefs.setComplexValue('xulsword.tabs', tabs);
   }
 
   const opts = { ns: 'branding' };

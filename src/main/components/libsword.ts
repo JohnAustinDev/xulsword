@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { app, BrowserWindow } from 'electron';
-import { fork } from 'child_process';
+import { ChildProcess, fork } from 'child_process';
 import log from 'electron-log';
 import path from 'path';
 import { repositoryKey, isRepoLocal, JSON_parse } from '../../common';
@@ -88,6 +88,8 @@ const LibSword = {
   searchedID: '' as string,
 
   searchingID: '' as string,
+
+  indexingID: {} as { [modcode: string]: ChildProcess },
 
   init(): boolean {
     if (this.libxulsword) return false;
@@ -531,6 +533,24 @@ DEFINITION OF A 'XULSWORD REFERENCE':
     return false;
   },
 
+  searchIndexCancel(modcode: string, callingWinId?: number): boolean {
+    if (modcode in this.indexingID) {
+      const indexer = this.indexingID[modcode];
+      indexer.kill();
+      if (callingWinId) {
+        let w = BrowserWindow.fromId(Number(callingWinId));
+        if (w) {
+          w.webContents.send('progress', -1, 'search.indexer');
+          w = null;
+        }
+      }
+      delete this.indexingID[modcode];
+      log.debug(`indexer killed`);
+      return this.searchIndexDelete(modcode);
+    }
+    return true;
+  },
+
   // searchIndexBuild
   // Before starting to build a new search index, call 'searchIndexDelete()'
   async searchIndexBuild(
@@ -538,12 +558,12 @@ DEFINITION OF A 'XULSWORD REFERENCE':
     callingWinId?: number
   ): Promise<boolean> {
     return new Promise((resolve, reject) => {
-      if (this.isReady(true)) {
-        Window.modal([{ modal: 'transparent', window: 'all' }]);
+      if (this.isReady(true) && !(modcode in this.indexingID)) {
         const workerjs = app.isPackaged
           ? path.join(__dirname, 'indexWorker.js')
           : path.join(__dirname, '../indexWorker.js');
         const indexer = fork(workerjs);
+        this.indexingID[modcode] = indexer;
         const sendProgress = (percent: number) => {
           if (callingWinId) {
             let w = BrowserWindow.fromId(Number(callingWinId));
@@ -555,9 +575,9 @@ DEFINITION OF A 'XULSWORD REFERENCE':
           }
         };
         const done = () => {
-          Window.modal([{ modal: 'off', window: 'all' }]);
           sendProgress(0);
           if (indexer && indexer.exitCode === null) indexer.kill();
+          delete this.indexingID[modcode];
         };
         indexer.on('error', (er: Error) => {
           done();
@@ -567,14 +587,20 @@ DEFINITION OF A 'XULSWORD REFERENCE':
           'message',
           (indexerMsg: { msg: string; percent: number }) => {
             const { msg, percent } = indexerMsg;
-            log.silly(`indexer message:`, msg, percent);
+            if (msg !== 'working') {
+              log.debug(`indexer responded:`, msg, percent);
+            }
             sendProgress(percent);
             if (msg === 'finished') {
               done();
               resolve(true);
+            } else if (msg !== 'working') {
+              done();
+              resolve(false);
             }
           }
         );
+        log.debug(`indexer send:`, this.moduleDirectories, modcode);
         indexer.send({ modsd: this.moduleDirectories, modcode });
       } else resolve(false);
     });
@@ -674,6 +700,7 @@ export type LibSwordType = Omit<
   | 'checkerror'
   | 'searchingID'
   | 'searchedID'
+  | 'indexingID'
 >;
 
 export default LibSword as LibSwordType;

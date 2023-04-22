@@ -10,7 +10,6 @@ import { getBooksInVKModule, getTab, getTabs } from '../minit';
 
 import type {
   LocationORType,
-  NewModulesType,
   SwordFeatures,
   TabType,
   TabTypes,
@@ -45,55 +44,64 @@ type PanelChangeState = Pick<
   | 'keys'
 >;
 
-// Sort tabslist in place by type and then by language relevance to a locale.
-function sortTabsByLocale(tablist: TabType[], locale: string): void {
-  const order: TabTypes[] = ['Texts', 'Comms', 'Genbks', 'Dicts'];
-  const localeRelevance = (t: TabType): number => {
-    let r = 0;
-    const lang = t.conf.Lang;
-    if (lang === locale) r -= 4;
-    if (lang === C.FallbackLanguage[locale]) r -= 3;
-    if (lang && lang.replace(/-.*$/, '') === locale.replace(/-.*$/, '')) r -= 2;
-    if (
-      lang &&
-      lang.replace(/-.*$/, '') ===
-        C.FallbackLanguage[locale].replace(/-.*$/, '')
-    )
-      r -= 1;
-    if (
-      (
-        [
-          'StrongsNumbers',
-          'GreekDef',
-          'HebrewDef ',
-          'GreekParse',
-          'HebrewParse',
-          'Glossary',
-        ] as SwordFeatures[]
-      ).some((f) => t.conf.Feature?.includes(f))
-    )
-      r += 1;
-    return r;
-  };
-  tablist.sort((a, b) => {
-    const ai = order.findIndex((t) => a.tabType === t);
-    const ar = localeRelevance(a);
-    const bi = order.findIndex((t) => b.tabType === t);
-    const br = localeRelevance(b);
-    if (ar === 1 && br < 1) return 1;
-    if (br === 1 && ar < 1) return -1;
-    if (ai !== bi) return ai < bi ? -1 : 1;
-    if (ar === br) return 0;
-    return ar < br ? -1 : 1;
-  });
-}
-
 const Viewport = {
+  // Sort tabslist in place by type and then by language relevance to a locale.
+  sortTabsByLocale<T extends TabType[] | string[]>(
+    tablist: T,
+    alocale?: string
+  ): T {
+    const locale = alocale || i18n.language;
+    const Tab = getTab();
+    const order: TabTypes[] = ['Texts', 'Comms', 'Genbks', 'Dicts'];
+    const localeRelevance = (t: TabType): number => {
+      let r = 0;
+      const lang = t.conf.Lang;
+      if (lang === locale) r -= 4;
+      if (lang === C.FallbackLanguage[locale]) r -= 3;
+      if (lang && lang.replace(/-.*$/, '') === locale.replace(/-.*$/, ''))
+        r -= 2;
+      if (
+        lang &&
+        lang.replace(/-.*$/, '') ===
+          C.FallbackLanguage[locale].replace(/-.*$/, '')
+      )
+        r -= 1;
+      if (
+        (
+          [
+            'StrongsNumbers',
+            'GreekDef',
+            'HebrewDef ',
+            'GreekParse',
+            'HebrewParse',
+            'Glossary',
+          ] as SwordFeatures[]
+        ).some((f) => t.conf.Feature?.includes(f))
+      )
+        r += 1;
+      return r;
+    };
+    tablist.sort((ax, bx) => {
+      const a = typeof ax === 'string' ? Tab[ax] : ax;
+      const b = typeof bx === 'string' ? Tab[bx] : bx;
+      const ai = order.findIndex((t) => a.tabType === t);
+      const ar = localeRelevance(a);
+      const bi = order.findIndex((t) => b.tabType === t);
+      const br = localeRelevance(b);
+      if (ar === 1 && br < 1) return 1;
+      if (br === 1 && ar < 1) return -1;
+      if (ai !== bi) return ai < bi ? -1 : 1;
+      if (ar === br) return 0;
+      return ar < br ? -1 : 1;
+    });
+    return tablist;
+  },
+
   // Modify xulsword state changing the tab banks of one, or all, panels. The
   // tab(s) for a module, a list of modules, a type of module, or all modules,
   // will be updated. Those tabs may be shown, hidden, or toggled.
   // NOTE: The passed state is modified in place as well as returned, unless
-  // called by G.Viewport, in which case the passed state is NOT modified.
+  // called from a renderer, in which case the passed state is NOT modified.
   getTabChange<T extends TabChangeState>(
     options: Partial<TabChangeOptions>,
     state: T
@@ -129,9 +137,7 @@ const Viewport = {
       }
       default: {
         const ms = Array.isArray(whichTab) ? whichTab : [whichTab];
-        const mods: (TabType | null)[] = ms.map(
-          (m) => (m && m in Tab && Tab[m]) || null
-        );
+        const mods = ms.map((m) => (m && m in Tab && Tab[m]) || null);
         whichTabs = mods.filter(Boolean) as TabType[];
       }
     }
@@ -148,7 +154,7 @@ const Viewport = {
       doWhat2 = dwh ? 'hide' : 'show';
     }
     panelIndexes.forEach((pi: number) => {
-      const bank = tabs[pi];
+      const bank = tabs[pi] === undefined ? [] : tabs[pi];
       if (bank) {
         const newtabs = bank
           .map((m) => m && m in Tab && Tab[m])
@@ -166,7 +172,7 @@ const Viewport = {
             }
           }
         });
-        sortTabsByLocale(newtabs, i18n.language);
+        this.sortTabsByLocale(newtabs);
         tabs[pi] = newtabs.map((t) => t.module);
       }
     });
@@ -230,7 +236,7 @@ const Viewport = {
   // panel is updated and it does not have a tab for the new module, that tab will be
   // added to the panel. Viewport location may also be updated.
   // NOTE: The passed state is modified in place as well as returned, unless
-  // called by G.Viewport, in which case the passed state is NOT modified.
+  // called from a renderer, in which case the passed state is NOT modified.
   getPanelChange<T extends PanelChangeState>(
     options: Partial<PanelChangeOptions>,
     state: T
@@ -259,94 +265,96 @@ const Viewport = {
     else if (Array.isArray(whichPanel)) allowedPanels = whichPanel;
     else allowedPanels = [whichPanel];
     const panelWidths = getPanelWidths({ panels, ilModules, isPinned });
-    // If a module is already showing, just update its key (if it has one).
-    modules.forEach((x, ix) => {
-      const m = !x || typeof x === 'string' ? x : x.otherMod;
-      const k = !x || typeof x === 'string' ? '' : x.key;
-      if (m) {
-        const p = panels.indexOf(m);
-        if (p !== -1) {
-          if (k) keys[p] = k;
-          modules[ix] = undefined;
-          allowedPanels = allowedPanels.filter((i) => panels[i] !== m);
-        }
-      }
-    });
     const modulesUpdated: string[] = [];
-    if (allowedPanels[0] !== undefined) {
-      let panelIndex = allowedPanels[0];
-      let moduleIndex = 0;
-      for (
-        ;
-        moduleIndex < modules.length && panelIndex < panels.length;
-        panelIndex += 1
+    let panelIndex = 0;
+    let moduleIndex = 0;
+    for (; moduleIndex < modules.length && panelIndex < panels.length; ) {
+      if (!modules[moduleIndex]) {
+        moduleIndex += 1;
+        continue;
+      }
+      if (
+        panels[panelIndex] === null ||
+        !allowedPanels.includes(panelIndex) ||
+        (maintainPins && isPinned[panelIndex])
       ) {
-        if (!modules[moduleIndex]) {
-          moduleIndex += 1;
-          continue;
-        }
-        if (panels[panelIndex] === null) {
-          panelIndex += 1;
-          continue;
-        }
-        const m = modules[moduleIndex];
-        let module: string | undefined;
-        let key: typeof S.prefs.xulsword.keys[number] | undefined;
-        if (typeof m === 'string') {
-          module = m;
-        } else if (m) {
-          ({ otherMod: module, key } = m);
-        }
-        if (module) {
+        const n =
+          maintainWidePanels && (panelWidths[panelIndex] ?? 0) > 1
+            ? (panelWidths[panelIndex] as number)
+            : 1;
+        panelIndex += n;
+        continue;
+      }
+      const m = modules[moduleIndex];
+      let module: string | undefined;
+      let key: typeof S.prefs.xulsword.keys[number] | undefined;
+      if (typeof m === 'string') {
+        module = m;
+      } else if (m) {
+        ({ otherMod: module, key } = m);
+      }
+      if (module) {
+        // Check if this module is already showing; if so we can just call it done
+        // (after updating its key if it has one, and dis-allowing any change to the
+        // existing panel).
+        const p = panels.indexOf(module);
+        if (p !== -1) {
+          if (key) keys[p] = key;
+          let n =
+            maintainWidePanels && (panelWidths[p] ?? 0) > 1
+              ? (panelWidths[p] as number)
+              : 1;
+          do {
+            allowedPanels.splice(allowedPanels.indexOf(p + n - 1), 1);
+            n -= 1;
+          } while (n);
+        } else {
           const { isVerseKey } = Tab[module];
-          if (
-            allowedPanels.includes(panelIndex) &&
-            !(maintainPins && isPinned[panelIndex])
-          ) {
-            if (!maintainWidePanels) {
-              panels[panelIndex] = module;
-              if (key) keys[panelIndex] = key;
+          if (!maintainWidePanels) {
+            panels[panelIndex] = module;
+            if (key) keys[panelIndex] = key;
+            else if (!isVerseKey) {
+              keys[panelIndex] = null;
+            }
+            isPinned[panelIndex] = false;
+            if (!tabs[panelIndex]?.includes(module)) {
+              this.getTabChange(
+                { panelIndex, whichTab: [module], doWhat: 'show' },
+                state
+              );
+              ({ panels, tabs, location } = state);
+            }
+          } else {
+            for (let x = 0; x < (panelWidths[panelIndex] ?? 1); x += 1) {
+              panels[panelIndex + x] = module;
+              if (key) keys[panelIndex + x] = key;
               else if (!isVerseKey) {
-                keys[panelIndex] = null;
+                keys[panelIndex + x] = null;
               }
-              isPinned[panelIndex] = false;
-              if (!tabs[panelIndex]?.includes(module)) {
+              isPinned[panelIndex + x] = false;
+              if (!tabs[panelIndex + x]?.includes(module)) {
                 this.getTabChange(
-                  { panelIndex, whichTab: [module], doWhat: 'show' },
+                  {
+                    panelIndex: panelIndex + x,
+                    whichTab: [module],
+                    doWhat: 'show',
+                  },
                   state
                 );
                 ({ panels, tabs, location } = state);
               }
-            } else {
-              for (let x = 0; x < (panelWidths[panelIndex] ?? 1); x += 1) {
-                panels[panelIndex + x] = module;
-                if (key) keys[panelIndex + x] = key;
-                else if (!isVerseKey) {
-                  keys[panelIndex + x] = null;
-                }
-                isPinned[panelIndex + x] = false;
-                if (!tabs[panelIndex + x]?.includes(module)) {
-                  this.getTabChange(
-                    {
-                      panelIndex: panelIndex + x,
-                      whichTab: [module],
-                      doWhat: 'show',
-                    },
-                    state
-                  );
-                  ({ panels, tabs, location } = state);
-                }
-              }
             }
-            modulesUpdated.push(module);
-            modules[moduleIndex] = undefined;
-            moduleIndex += 1;
           }
+          modulesUpdated.push(module);
         }
+        panelIndex += 1;
       }
+      modules[moduleIndex] = undefined;
+      moduleIndex += 1;
     }
+
     if (modulesUpdated.length) {
-      // Insure location will be in the scope of a viewport versekey module.
+      // Insure location will be in the scope of some viewport versekey module.
       const { book } = location || {};
       if (
         !book ||
@@ -375,37 +383,30 @@ const Viewport = {
 
   // Modify the xulsword state object adding new modules to tabs and panels.
   // NOTE: The passed state is modified in place as well as returned, unless
-  // called by G.Viewport, in which case the passed state is NOT modified.
-  getNewModuleChange<T extends PanelChangeState>(
-    newmods: NewModulesType,
+  // called from a renderer, in which case the passed state is NOT modified.
+  getModuleChange<T extends PanelChangeState>(
+    modules: string[],
     state: T,
     options?: Partial<TabChangeOptions & PanelChangeOptions>
   ): T {
     const Tab = getTab();
-    const whichTab = newmods.modules
-      .filter(
-        (c) =>
-          c.xsmType !== 'XSM_audio' &&
-          c.module &&
-          c.module in Tab &&
-          Tab[c.module]
-      )
-      .map((c) => Tab[c.module]);
+    const whichTab = modules.filter(
+      (m) => m && m in Tab && Tab[m] && Tab[m].conf.xsmType !== 'XSM_audio'
+    );
     if (whichTab.length) {
       this.getTabChange(
         {
           panelIndex: -1,
           doWhat: 'show',
           ...options,
-          whichTab: whichTab.map((t) => t.module),
+          whichTab: modules,
         },
         state
       );
-      sortTabsByLocale(whichTab, i18n.language);
       this.getPanelChange(
         {
           ...options,
-          whichModuleOrLocGB: whichTab.map((t) => t.module),
+          whichModuleOrLocGB: modules,
         },
         state
       );

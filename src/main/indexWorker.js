@@ -12,8 +12,8 @@ global.ReportSearchIndexerProgress = (percent) => {
   process.send({ msg: 'working', percent });
 };
 
-process.on('message', (m) => {
-  const { modsd, modcode } = m;
+process.on('message', (obj) => {
+  const { modsd, modcode } = obj;
   let success = false;
   if (Array.isArray(modsd)) {
     const mf = modsd.filter((p) => existsSync(p));
@@ -33,9 +33,8 @@ process.on('message', (m) => {
       if (success) success = libxulsword.SearchIndexBuild(modcode);
     }
   }
-  if (!success) {
-    throw new Error(`indexWorker failed: ${m}`);
-  }
-  process.send({ msg: 'finished', percent: 100 });
+  if (success) {
+    process.send({ msg: 'finished', percent: 100 });
+  } else process.send({ msg: 'failed', percent: 100 });
   process.disconnect();
 });

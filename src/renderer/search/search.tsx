@@ -42,7 +42,9 @@ import handlerH, {
   lexicon,
   strongsCSS,
   getSearchResults,
-  createSearchIndex,
+  Indexing,
+  canelAutoIndexing as cancelAutoIndexing,
+  descriptor,
 } from './searchH';
 import './search.css';
 
@@ -67,7 +69,7 @@ const initialState = {
   displayBible: '' as string, // current module for Bible search results
   results: null as number | null, // count and page-result are returned at different times
   pageindex: 0 as number, // first results index to show
-  progress: 0 as number, // -1=indeterminate, 0=hidden, 1=complete
+  progress: -1 as number,
   progressLabel: '' as string, // changing progress label
   indexing: false as boolean, // indexer is running
 };
@@ -179,18 +181,7 @@ export default class SearchWin extends React.Component implements PopupParent {
         }
       })
     );
-    if (!windowLoaded && module) {
-      if (G.LibSword.luceneEnabled(module)) {
-        search(this);
-      } else {
-        createSearchIndex(this, module)
-          .then((result) => {
-            if (result) search(this);
-            return true;
-          })
-          .catch((er) => log.error(er));
-      }
-    }
+    if (!windowLoaded && module) search(this);
     windowLoaded = true;
   }
 
@@ -453,7 +444,7 @@ export default class SearchWin extends React.Component implements PopupParent {
                   <Button
                     id="searchButton"
                     icon="search"
-                    disabled={progress !== 0 || !module}
+                    disabled={progress !== -1 || !module}
                     onClick={handler}
                   >
                     {G.i18n.t('menu.search')}
@@ -491,7 +482,7 @@ export default class SearchWin extends React.Component implements PopupParent {
                       <Vbox align="center">
                         <Button
                           id="createIndexButton"
-                          disabled={progress !== 0}
+                          disabled={progress !== -1}
                           onClick={handler}
                         >
                           {G.i18n.t('createIndex.label')}
@@ -601,27 +592,27 @@ export default class SearchWin extends React.Component implements PopupParent {
                 <Button
                   id="pagefirst"
                   icon="double-chevron-up"
-                  disabled={progress !== 0}
+                  disabled={progress !== -1}
                   onClick={handler}
                 />
                 <Spacer orient="vertical" flex="1" />
                 <Button
                   id="pageprev"
                   icon="chevron-up"
-                  disabled={progress !== 0}
+                  disabled={progress !== -1}
                   onClick={handler}
                 />
                 <Button
                   id="pagenext"
                   icon="chevron-down"
-                  disabled={progress !== 0}
+                  disabled={progress !== -1}
                   onClick={handler}
                 />
                 <Spacer orient="vertical" flex="1" />
                 <Button
                   id="pagelast"
                   icon="double-chevron-down"
-                  disabled={progress !== 0}
+                  disabled={progress !== -1}
                   onClick={handler}
                 />
               </Vbox>
@@ -632,10 +623,10 @@ export default class SearchWin extends React.Component implements PopupParent {
               <span>{searchStatus}</span>
             </Box>
             <Spacer flex="1" />
-            {progress !== 0 && (
+            {progress !== -1 && (
               <Hbox align="center">
                 {progressLabel && <Label value={`${progressLabel}:`} />}
-                <ProgressBar value={progress === -1 ? undefined : progress} />
+                <ProgressBar value={progress} />
               </Hbox>
             )}
           </Hbox>
@@ -649,4 +640,10 @@ SearchWin.propTypes = propTypes;
 
 renderToRoot(<SearchWin height="100%" />, {
   initialState: { resetOnResize: false },
+  onunload: () => {
+    if (Indexing.current) {
+      G.LibSword.searchIndexCancel(Indexing.current, descriptor.id);
+      cancelAutoIndexing(Indexing.current);
+    }
+  },
 });

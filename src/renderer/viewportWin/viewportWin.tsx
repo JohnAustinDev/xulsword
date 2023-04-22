@@ -113,27 +113,29 @@ export default class ViewportWin extends React.Component {
     this.destroy.push(
       Subscription.subscribe.modulesInstalled((newmods: NewModulesType) => {
         const state = this.state as ViewportWinState;
-        const newstate = G.Viewport.getNewModuleChange(newmods, state, {
-          maintainWidePanels: true,
-          maintainPins: true,
-        });
-        const whichTab = newmods.modules
-          .filter(
-            (c) =>
-              c.xsmType !== 'XSM_audio' &&
-              c.module &&
-              c.module in G.Tab &&
-              G.Tab[c.module]
-          )
-          .map((c) => c.module);
+        const whichTab = G.Viewport.sortTabsByLocale(
+          newmods.modules
+            .filter(
+              (c) =>
+                c.xsmType !== 'XSM_audio' &&
+                c.module &&
+                c.module in G.Tab &&
+                G.Tab[c.module]
+            )
+            .map((c) => c.module)
+        );
+        this.persistState(
+          state,
+          G.Viewport.getModuleChange(whichTab, state, {
+            maintainWidePanels: true,
+            maintainPins: false,
+          })
+        );
         G.Viewport.setXulswordTabs({
           whichTab,
           doWhat: 'show',
           panelIndex: -1,
         });
-        if (newstate) {
-          this.persistState(state, { ...state, ...newstate });
-        }
       })
     );
     this.updateWindowTitle();

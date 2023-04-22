@@ -740,7 +740,8 @@ export function getPanelWidths(
         if (f === panels.length) break;
         const modulef = panels[f];
         if (
-          !modulef ||
+          modulef === null ||
+          modulef === undefined ||
           [modulef, !!ilModules[f], !!isPinned[f]].join('.') !== key
         )
           break;

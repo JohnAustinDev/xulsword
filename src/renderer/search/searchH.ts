@@ -40,7 +40,7 @@ const libSwordSearchTypes = {
 
 export const searchArg = windowArguments('search') as SearchType;
 
-const descriptor = windowArguments();
+export const descriptor = windowArguments();
 
 export const strongsCSS = {
   css: null as { sheet: CSSStyleSheet; rule: CSSRule; index: number } | null,
@@ -54,6 +54,16 @@ const LibSwordSearch = {
   params: null as LibSwordSearchType | null,
   id: '',
 };
+
+export function canelAutoIndexing(module: string) {
+  const csai = G.Prefs.getComplexValue(
+    'global.cancelSearchAutoIndex'
+  ) as typeof S.prefs.global.cancelSearchAutoIndex;
+  if (!csai.includes(module)) {
+    csai.push(module);
+    G.Prefs.setComplexValue('global.cancelSearchAutoIndex', csai);
+  }
+}
 
 export function getLuceneSearchText(searchtext0: string) {
   let searchtext = searchtext0;
@@ -147,24 +157,22 @@ export async function search(xthis: SearchWin): Promise<boolean> {
   const state = xthis.state as SearchWinState;
   const { module, displayBible: db, searchtext } = state;
   let { searchtype } = state;
-  if (state.progress !== 0) return false;
+  if (state.progress !== -1) return false;
   if (!/\S\S/.test(state.searchtext)) return false;
   if (!module || !(module in G.Tab)) return false;
 
-  const hasIndex = G.LibSword.luceneEnabled(module);
+  let hasIndex = G.LibSword.luceneEnabled(module);
   const isBible = G.Tab[module].type === C.BIBLE;
   const displayBible = isBible ? module : db;
 
   if (!hasIndex) {
-    const result = await createSearchIndex(xthis, module);
-    if (result) return search(xthis);
-    return false;
+    hasIndex = await autoCreateSearchIndex(xthis, module);
   }
 
   const s: Partial<SearchWinState> = {
     results: 0,
     pageindex: 0,
-    progress: 0,
+    progress: -1,
     progressLabel: '',
     displayBible,
   };
@@ -318,7 +326,7 @@ async function libSwordSearch(
       G.Window.modal([{ modal: 'off', window: 'not-self' }]);
       if (LibSwordSearch.sthis) {
         const s: Partial<SearchWinState> = {
-          progress: 0,
+          progress: -1,
           progressLabel: '',
         };
         LibSwordSearch.sthis.setState(s);
@@ -379,17 +387,36 @@ export async function getSearchResults(
   return r || '';
 }
 
-export async function createSearchIndex(xthis: SearchWin, module: string) {
+export async function autoCreateSearchIndex(
+  xthis: SearchWin,
+  module: string
+): Promise<boolean> {
+  let result = false;
+  const csai = G.Prefs.getComplexValue(
+    'global.cancelSearchAutoIndex'
+  ) as typeof S.prefs.global.cancelSearchAutoIndex;
+  if (!csai.includes(module)) {
+    result = await createSearchIndex(xthis, module);
+  }
+  return result;
+}
+
+export const Indexing = { current: '' };
+export async function createSearchIndex(
+  xthis: SearchWin,
+  module: string
+): Promise<boolean> {
   if (module && module in G.Tab) {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       const s: Partial<SearchWinState> = {
         results: 0,
         pageindex: 0,
-        progress: 0.01,
+        progress: 0,
         progressLabel: G.i18n.t('BuildingIndex'),
         indexing: true,
       };
       xthis.setState(s);
+      Indexing.current = module;
       const winid = descriptor.id;
       // Add a delay before and after index creation to insure UI is responsive.
       setTimeout(() => {
@@ -400,11 +427,23 @@ export async function createSearchIndex(xthis: SearchWin, module: string) {
             // booksInModule, so try reset all caches as a work-around.
             G.resetMain();
             G.Window.reset('cache-reset', 'all');
-            xthis.setState({ indexing: false } as Partial<SearchWinState>);
+            if (!result) canelAutoIndexing(module);
             setTimeout(() => resolve(result), 1);
             return result;
           })
-          .catch((er) => reject(er));
+          .finally(() => {
+            xthis.setState({
+              indexing: false,
+              progress: -1,
+              progressLabel: '',
+            } as Partial<SearchWinState>);
+            Indexing.current = '';
+          })
+          .catch((er) => {
+            log.debug(er);
+            canelAutoIndexing(module);
+            resolve(false);
+          });
       }, 1);
     });
   }
