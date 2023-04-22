@@ -234,7 +234,7 @@ class GClass implements GType {
 
   publishSubscription<S extends keyof SubscriptionType['publish']>(
     s: S,
-    ops?: {
+    ops: {
       renderers?:
         | Partial<WindowDescriptorType>
         | Partial<WindowDescriptorType>[];

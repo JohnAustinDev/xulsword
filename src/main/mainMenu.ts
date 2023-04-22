@@ -25,6 +25,7 @@ import { verseKey } from './minit';
 
 import type { BookmarkFolderType, SearchType, TabTypes } from '../type';
 import type { PrefCallbackType } from './components/prefs';
+import Viewport from './components/viewport';
 
 type Modifiers =
   | 'CommandOrControl' // 'accel' in XUL
@@ -124,7 +125,11 @@ function updateModuleMenus(menux?: Menu) {
               type: 'checkbox',
               // icon: path.join(G.Dirs.path.xsAsset, 'icons', '16x16', `${tab}.png`),
               click: d(() => {
-                G.Viewport.setTabs(panelIndex, t.module, 'toggle');
+                Viewport.setXulswordTabs({
+                  panelIndex,
+                  whichTab: t.module,
+                  doWhat: 'toggle',
+                });
               }),
             });
             submenu.insert(0, newItem);
@@ -636,14 +641,22 @@ export default class MainMenuBuilder {
                   id: `showAll_${typekey}_${pl}`,
                   label: ts('menu.view.showAll'),
                   click: d(() => {
-                    G.Viewport.setTabs(panelIndex, type, 'show');
+                    Viewport.setXulswordTabs({
+                      panelIndex,
+                      whichTab: type,
+                      doWhat: 'show',
+                    });
                   }),
                 },
                 {
                   id: `hideAll_${typekey}_${pl}`,
                   label: ts('menu.view.hideAll'),
                   click: d(() => {
-                    G.Viewport.setTabs(panelIndex, type, 'hide');
+                    Viewport.setXulswordTabs({
+                      panelIndex,
+                      whichTab: type,
+                      doWhat: 'hide',
+                    });
                   }),
                 },
               ],
@@ -692,7 +705,11 @@ export default class MainMenuBuilder {
               id: `menu_showAll_${pl}`,
               enabled: panelIndex === -1 || Boolean(panels[panelIndex]),
               click: d(() => {
-                G.Viewport.setTabs(panelIndex, 'all', 'show');
+                Viewport.setXulswordTabs({
+                  panelIndex,
+                  whichTab: 'all',
+                  doWhat: 'show',
+                });
               }),
             };
           }),
@@ -709,7 +726,11 @@ export default class MainMenuBuilder {
               id: `menu_hideAll_${pl}`,
               enabled: panelIndex === -1 || Boolean(panels[panelIndex]),
               click: d(() => {
-                G.Viewport.setTabs(panelIndex, 'all', 'hide');
+                Viewport.setXulswordTabs({
+                  panelIndex,
+                  whichTab: 'all',
+                  doWhat: 'hide',
+                });
               }),
             };
           }),

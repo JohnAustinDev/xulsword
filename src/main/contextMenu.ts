@@ -118,7 +118,11 @@ export default function contextMenu(
             click: () => {
               const mod = d.tab || d.context;
               if (mod && d.panelIndex !== undefined)
-                Viewport.setTabs(d.panelIndex, mod, 'hide');
+                Viewport.setXulswordTabs({
+                  panelIndex: d.panelIndex,
+                  whichTab: mod,
+                  doWhat: 'hide',
+                });
             },
           },
         ];

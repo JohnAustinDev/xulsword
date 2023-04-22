@@ -132,10 +132,6 @@ const Commands = {
       Subscription.publish.modulesInstalled(r, callingWinID);
       return r;
     };
-    Window.modal([
-      { modal: 'transparent', window: 'all' },
-      { modal: 'darkened', window: { type: 'xulsword' } },
-    ]);
     if (paths) {
       // Install array of file paths
       if (Array.isArray(paths)) {
@@ -572,10 +568,10 @@ const Commands = {
       if (windowToPrint) {
         const rootState: Partial<WindowRootState> = winRootState || {};
         rootState.showPrintOverlay = true;
-        rootState.modal = 'outlined';
+        rootState.modal = 'dropshadow';
         publishSubscription<'setRendererRootState'>(
           'setRendererRootState',
-          { renderers: { id: windowToPrint.id }, main: false },
+          { renderers: { id: windowToPrint.id } },
           rootState
         );
         const destroy = Subscription.subscribe.asyncTaskComplete(() => {
@@ -949,13 +945,12 @@ const Commands = {
   ): void {
     const tab = getTab();
     if (location.otherMod in tab) {
-      const xulsword: Partial<typeof S.prefs.xulsword> = Viewport.setPanels(
-        location,
-        {
+      const xulsword: Partial<typeof S.prefs.xulsword> =
+        Viewport.setXulswordPanels({
+          whichModuleOrLocGB: location,
           skipCallbacks: true,
           clearRendererCaches: false,
-        }
-      );
+        });
       xulsword.scroll = scroll || { verseAt: 'center' };
       Prefs.mergeValue('xulsword', xulsword, 'prefs', false, false, -2);
     } else shell.beep();
@@ -975,7 +970,8 @@ const Commands = {
     if (!vkMod || vkMod in tab) {
       let xulsword: Partial<typeof S.prefs.xulsword> = {};
       if (vkMod) {
-        xulsword = Viewport.setPanels(vkMod, {
+        xulsword = Viewport.setXulswordPanels({
+          whichModuleOrLocGB: vkMod,
           skipCallbacks: true,
           clearRendererCaches: false,
         });

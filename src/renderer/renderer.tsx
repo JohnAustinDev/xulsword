@@ -482,10 +482,6 @@ export default async function renderToRoot(
   window.onbeforeunload = () => {
     if (typeof onunload === 'function') onunload();
     Cache.clear();
-    const dataID = window.processR.argv().at(-1);
-    if (typeof dataID === 'string' && G.Data.has(dataID)) {
-      G.Data.delete(dataID);
-    }
   };
 
   if (typeof onload === 'function') onload();

@@ -351,15 +351,15 @@ export function publishSubscription<
   S extends keyof SubscriptionType['publish']
 >(
   subscription: S,
-  options?: {
+  options: {
     renderers?: Partial<WindowDescriptorType> | Partial<WindowDescriptorType>[];
     main?: boolean;
   },
   ...args: Parameters<SubscriptionType['publish'][S]>
 ) {
   const { renderers, main } = {
-    renderers: { type: 'all' } as Partial<WindowDescriptorType>,
-    main: true,
+    renderers: {} as Partial<WindowDescriptorType>,
+    main: false,
     ...options,
   };
   if (main) Subscription.doPublish(subscription, ...args);
@@ -477,6 +477,7 @@ const Window = {
     win.once('closed', () => {
       Prefs.deleteUserPref(`OpenWindows.w${id}`, 'windows');
       WindowRegistry[id] = null;
+      if (Data.has(d.dataID)) Data.delete(d.dataID);
       disposables.forEach((dispose) => dispose());
     });
     win.webContents.setWindowOpenHandler(({ url }) => {

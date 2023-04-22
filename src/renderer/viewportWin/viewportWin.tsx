@@ -7,7 +7,7 @@
 import React from 'react';
 import Subscription from '../../subscription';
 import S from '../../defaultPrefs';
-import { keep, diff, drop } from '../../common';
+import { keep, diff, drop, validateViewportModulePrefs } from '../../common';
 import G from '../rg';
 import renderToRoot from '../renderer';
 import log from '../log';
@@ -30,10 +30,9 @@ import viewportParentH, {
   closeMenupopups,
   vpWindowState,
   bbDragEnd as bbDragEndH,
-  showNewModules,
 } from '../libxul/viewport/viewportParentH';
 
-import type { XulswordStateArgType } from '../../type';
+import type { NewModulesType, XulswordStateArgType } from '../../type';
 import type Atext from '../libxul/viewport/atext';
 
 const defaultProps = xulDefaultProps;
@@ -90,12 +89,14 @@ export default class ViewportWin extends React.Component {
       ...notStatePrefDefault,
       ...windowState,
     };
+    validateViewportModulePrefs(G.Tabs, s);
     this.state = s;
 
     this.viewportParentHandler = viewportParentH.bind(this);
     this.bbDragEnd = bbDragEndH.bind(this);
     this.xulswordStateHandler = this.xulswordStateHandler.bind(this);
     this.updateWindowTitle = this.updateWindowTitle.bind(this);
+    this.persistState = this.persistState.bind(this);
 
     this.destroy = [];
 
@@ -110,7 +111,30 @@ export default class ViewportWin extends React.Component {
       registerUpdateStateFromPref('prefs', 'xulsword', this, statePrefDefault)
     );
     this.destroy.push(
-      Subscription.subscribe.modulesInstalled(showNewModules.bind(this))
+      Subscription.subscribe.modulesInstalled((newmods: NewModulesType) => {
+        const state = this.state as ViewportWinState;
+        const newstate = G.Viewport.getNewModuleChange(newmods, state, {
+          maintainWidePanels: true,
+          maintainPins: true,
+        });
+        const whichTab = newmods.modules
+          .filter(
+            (c) =>
+              c.xsmType !== 'XSM_audio' &&
+              c.module &&
+              c.module in G.Tab &&
+              G.Tab[c.module]
+          )
+          .map((c) => c.module);
+        G.Viewport.setXulswordTabs({
+          whichTab,
+          doWhat: 'show',
+          panelIndex: -1,
+        });
+        if (newstate) {
+          this.persistState(state, { ...state, ...newstate });
+        }
+      })
     );
     this.updateWindowTitle();
   }
@@ -120,6 +144,18 @@ export default class ViewportWin extends React.Component {
     prevState: ViewportWinState
   ) {
     const state = this.state as ViewportWinState;
+    this.persistState(prevState, state);
+    this.updateWindowTitle();
+  }
+
+  componentWillUnmount() {
+    clearPending(this, ['dictkeydownTO', 'wheelScrollTO']);
+    this.destroy.forEach((func) => func());
+    this.destroy = [];
+  }
+
+  persistState(prevState: ViewportWinState, state: ViewportWinState) {
+    windowState = keep(state, vpWindowState) as typeof windowState;
     const { scroll } = state;
     if (!scroll?.skipWindowUpdate) {
       setStatePref(
@@ -129,24 +165,13 @@ export default class ViewportWin extends React.Component {
         state,
         Object.keys(statePrefDefault)
       );
-      windowState = keep(state, vpWindowState) as typeof windowState;
-      const changedWindowState = diff(
-        keep(prevState, vpWindowState),
-        windowState
-      );
-      if (changedWindowState) {
-        if (changedWindowState.scroll?.skipTextUpdate)
-          delete changedWindowState.scroll.skipTextUpdate;
-        G.Window.mergeValue('xulswordState', changedWindowState);
+      if (scroll?.skipTextUpdate) delete scroll.skipTextUpdate;
+      const newWindowState = diff(prevState, windowState);
+      if (newWindowState) {
+        G.Window.mergeValue('xulswordState', newWindowState);
       }
     }
-    this.updateWindowTitle();
-  }
-
-  componentWillUnmount() {
-    clearPending(this, ['dictkeydownTO', 'wheelScrollTO']);
-    this.destroy.forEach((func) => func());
-    this.destroy = [];
+    this.setState(diff(prevState, state) ?? null);
   }
 
   updateWindowTitle() {
@@ -163,7 +188,8 @@ export default class ViewportWin extends React.Component {
   }
 
   xulswordStateHandler(s: XulswordStateArgType): void {
-    this.setState(s);
+    const state = this.state as ViewportWinState;
+    this.persistState(state, { ...state, ...s });
   }
 
   render() {

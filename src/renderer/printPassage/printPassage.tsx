@@ -364,7 +364,7 @@ renderToRoot(<PrintPassageWin print={print} />, {
   print: { ...print, pageable: true, dialogEnd: 'close' },
   initialState: {
     showPrintOverlay: true,
-    modal: 'outlined',
+    modal: 'dropshadow',
     iframeFilePath: '',
     progress: -1,
   },

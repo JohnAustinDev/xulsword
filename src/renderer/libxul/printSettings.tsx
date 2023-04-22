@@ -47,7 +47,7 @@ const dark: Partial<WindowRootState> = {
 };
 
 const normal: Partial<WindowRootState> = {
-  modal: 'outlined',
+  modal: 'dropshadow',
   iframeFilePath: '',
   progress: -1,
 };
@@ -320,7 +320,10 @@ export default class PrintSettings extends React.Component {
               printDisabled: false,
               progress: -1,
             });
-            G.publishSubscription('asyncTaskComplete');
+            G.publishSubscription('asyncTaskComplete', {
+              renderers: { type: 'all' },
+              main: true,
+            });
             break;
           }
           default:

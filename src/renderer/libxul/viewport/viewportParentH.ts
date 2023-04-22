@@ -5,22 +5,19 @@ import React from 'react';
 import C from '../../../constant';
 import S from '../../../defaultPrefs';
 import Cache from '../../../cache';
-import { clone, escapeRE, ofClass, sortTabsByRelevance } from '../../../common';
+import { clone, escapeRE, ofClass } from '../../../common';
 import { getElementData, verseKey } from '../../htmlData';
 import G from '../../rg';
 import { scrollIntoView, windowArguments } from '../../rutil';
 import { delayHandler } from '../xul';
-import log from '../../log';
 import { textChange } from './ztext';
 import { aTextWheelScroll, chapterChange } from './zversekey';
 
 import type {
   BookGroupType,
-  NewModulesType,
   PinPropsType,
   V11nType,
   OSISBookType,
-  TabType,
 } from '../../../type';
 import type Xulsword from '../../xulsword/xulsword';
 import type { XulswordState } from '../../xulsword/xulsword';
@@ -69,23 +66,6 @@ export function closeMenupopups(component: React.Component) {
       if (historyMenupopup) s.historyMenupopup = undefined;
       return s;
     });
-  }
-}
-
-// Replace current module choices with newly installed modules
-// without breaking multi-column panels.
-export function showNewModules(
-  this: Xulsword | ViewportWin,
-  newmods: NewModulesType
-) {
-  const newTabs = newmods.modules
-    .map((m) => (m && m.module in G.Tab && G.Tab[m.module]) || null)
-    .filter(Boolean) as TabType[];
-  const sortedTabs = sortTabsByRelevance(newTabs, G.i18n.language);
-  if (sortedTabs.length) {
-    const nms = sortedTabs.map((t) => t.module);
-    log.debug(`showNewModules (sorted): ${nms}`);
-    G.Viewport.setPanels(nms);
   }
 }
 

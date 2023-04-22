@@ -182,7 +182,12 @@ export type WindowArgType =
   | 'not-self'
   | 'children';
 
-export type ModalType = 'off' | 'darkened' | 'outlined' | 'transparent';
+export type ModalType =
+  | 'off'
+  | 'darkened'
+  | 'dropshadow'
+  | 'outlined'
+  | 'transparent';
 
 // - skipTextUpdate allows a speedup when Atext content does not need to be updated,
 // such as verseAt bottom: only the target panel needs to be fully rendered, then
@@ -1048,7 +1053,10 @@ export const GBuilder: GType & {
   },
 
   Viewport: {
-    setTabs: func as any,
-    setPanels: func as any,
+    getTabChange: func as any,
+    getPanelChange: func as any,
+    getNewModuleChange: func as any,
+    setXulswordTabs: func as any,
+    setXulswordPanels: func as any,
   },
 };

@@ -6,7 +6,6 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 import React from 'react';
 import { Icon } from '@blueprintjs/core';
-import Subscription from '../../subscription';
 import { dString, clone } from '../../common';
 import C from '../../constant';
 import S from '../../defaultPrefs';
@@ -38,7 +37,6 @@ import Viewport from '../libxul/viewport/viewport';
 import viewportParentH, {
   closeMenupopups,
   bbDragEnd as bbDragEndH,
-  showNewModules,
 } from '../libxul/viewport/viewportParentH';
 import handlerH from './xulswordH';
 import './xulsword.css';
@@ -109,9 +107,6 @@ export default class Xulsword extends React.Component {
 
   componentDidMount() {
     this.destroy.push(registerUpdateStateFromPref('prefs', 'xulsword', this));
-    this.destroy.push(
-      Subscription.subscribe.modulesInstalled(showNewModules.bind(this))
-    );
   }
 
   componentDidUpdate(_prevProps: XulswordProps, prevState: XulswordState) {

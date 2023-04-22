@@ -10,13 +10,19 @@ import C from '../constant';
 import S from '../defaultPrefs';
 import VerseKey from '../verseKey';
 import RefParser, { RefParserOptionsType } from '../refParser';
-import { isASCII, JSON_parse } from '../common';
+import {
+  isASCII,
+  JSON_parse,
+  validateViewportModulePrefs,
+  keep,
+} from '../common';
 import Cache from '../cache';
 import Subscription from '../subscription';
 import Dirs from './components/dirs';
 import Prefs from './components/prefs';
 import LibSword from './components/libsword';
 import LocalFile from './components/localFile';
+import Window from './components/window';
 import { moduleUnsupported, CipherKeyModules } from './components/module';
 import getFontFamily from './fontfamily';
 import parseSwordConf from './parseSwordConf';
@@ -614,31 +620,26 @@ export function getFeatureModules(): FeatureMods {
   return Cache.read('swordFeatureMods');
 }
 
-// Xulsword state prefs and other global prefs should only reference
-// installed modules or be ''.  This function insures that is the case.
-export function updateGlobalModulePrefs() {
+// Xulsword state prefs and certain global prefs should only reference
+// installed modules or be empty string. This function insures that is
+// the case.
+export function validateGlobalModulePrefs() {
   const Tabs = getTabs();
-  const xulsword: Partial<typeof S.prefs.xulsword> = {};
+
+  const xsprops: (keyof typeof S.prefs.xulsword)[] = [
+    'panels',
+    'ilModules',
+    'mtModules',
+    'tabs',
+  ];
+  const xulsword = keep(
+    Prefs.getComplexValue('xulsword') as typeof S.prefs.xulsword,
+    xsprops
+  );
+
+  validateViewportModulePrefs(Tabs, xulsword);
+
   const globalPopup: Partial<typeof S.prefs.global.popup> = {};
-
-  (['panels', 'ilModules', 'mtModules'] as const).forEach((p) => {
-    const prop = Prefs.getComplexValue(`xulsword.${p}`) as any[];
-    xulsword[p] = prop.map((m) => {
-      const n = p === 'panels' ? '' : null;
-      if (m && !Tabs.find((t) => t.module === m)) return n;
-      return m;
-    });
-  });
-
-  const tabs = Prefs.getComplexValue(
-    'xulsword.tabs'
-  ) as typeof S.prefs.xulsword.tabs;
-  tabs.forEach((p, i) => {
-    if (p) {
-      tabs[i] = p.filter((m) => Tabs.find((t) => t.module === m));
-    }
-  });
-  xulsword.tabs = tabs;
 
   const vklookup = Prefs.getComplexValue(
     'global.popup.vklookup'
@@ -683,6 +684,10 @@ export function updateGlobalModulePrefs() {
   // they would re-render with invalid module prefs.
   Prefs.mergeValue('global.popup', globalPopup, 'prefs', true, false);
   Prefs.mergeValue('xulsword', xulsword, 'prefs', false, true);
+
+  // Any viewportWin windows also need modules to be checked,
+  // which happens in viewportWin component contructor.
+  Window.reset('component-reset', { type: 'viewportWin' });
 }
 
 export function resetMain() {

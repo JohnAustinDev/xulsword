@@ -786,13 +786,9 @@ export default class ModuleManager
       if (!resetOnResize) {
         const { id } = windowDescriptor;
         resetOnResize = true;
-        G.publishSubscription(
-          'setRendererRootState',
-          { renderers: { id }, main: false },
-          {
-            resetOnResize,
-          } as Partial<WindowRootState>
-        );
+        G.publishSubscription('setRendererRootState', { renderers: { id } }, {
+          resetOnResize,
+        } as Partial<WindowRootState>);
       }
       return (
         <Vbox {...addClass('modulemanager', props)} flex="1" height="100%">

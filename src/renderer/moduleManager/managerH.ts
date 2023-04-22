@@ -29,6 +29,7 @@ import {
 import C from '../../constant';
 import S from '../../defaultPrefs';
 import G from '../rg';
+import { windowArguments } from '../rutil';
 import log from '../log';
 import { TCellInfo, TCellLocation } from '../libxul/table';
 import { forEachNode } from '../libxul/treeview';
@@ -51,6 +52,8 @@ import type { SelectVKType, SelectVKProps } from '../libxul/selectVK';
 import type ModuleManager from './manager';
 import type { ManagerState } from './manager';
 import type { NodeListOR, SelectORMType } from '../libxul/selectOR';
+
+const windowDescriptor = windowArguments();
 
 export const Tables = ['language', 'module', 'repository'] as const;
 
@@ -436,7 +439,9 @@ export async function eventHandler(
             G.Window.modal([{ modal: 'transparent', window: 'all' }]);
             G.publishSubscription(
               'setRendererRootState',
-              { renderers: { type: 'xulsword' } },
+              {
+                renderers: [{ type: 'xulsword' }, { id: windowDescriptor.id }],
+              },
               { progress: 'indefinite' }
             );
             // Un-persist these table selections.
@@ -569,7 +574,9 @@ export async function eventHandler(
             G.Window.modal([{ modal: 'off', window: 'all' }]);
             G.publishSubscription(
               'setRendererRootState',
-              { renderers: { type: 'xulsword' } },
+              {
+                renderers: [{ type: 'xulsword' }, { id: windowDescriptor.id }],
+              },
               { progress: -1 }
             );
           }

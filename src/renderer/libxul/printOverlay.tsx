@@ -40,7 +40,7 @@ export default function PrintOverlay(props: PrintOverlayProps) {
   const backHandler = () =>
     Subscription.publish.setRendererRootState({
       showPrintOverlay: true,
-      modal: 'outlined',
+      modal: 'dropshadow',
       iframeFilePath: '',
       printDisabled: false,
       progress: -1,

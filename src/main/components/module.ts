@@ -794,6 +794,10 @@ export async function modalInstall(
 ): Promise<NewModulesType> {
   const r: NewModulesType = result || clone(C.NEWMODS);
   if (zipmods.length) {
+    Window.modal([
+      { modal: 'transparent', window: 'all' },
+      { modal: 'darkened', window: { id: callingWinID } },
+    ]);
     const zips: (ZIP | null)[] = [];
     zipmods.forEach((zipmod) => {
       if (typeof zipmod === 'string') {

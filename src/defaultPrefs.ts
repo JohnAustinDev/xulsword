@@ -141,7 +141,7 @@ const S = {
       } as PlaceType,
 
       showChooser: true as boolean,
-      tabs: [] as (string[] | null)[],
+      tabs: [[]] as (string[] | null)[],
       panels: ['', '', null] as (string | null)[],
       ilModules: [] as (string | null)[],
       mtModules: [] as (string | null)[],
@@ -614,9 +614,11 @@ const S = {
 };
 
 // Fill out these variable length default arrays
-(['isPinned', 'noteBoxHeight', 'maximizeNoteBox'] as const).forEach((p) => {
-  const v = S.prefs.xulsword[p][0];
-  (S.prefs.xulsword as any)[p] = S.prefs.xulsword.panels.map(() => v as any);
-});
+(['tabs', 'isPinned', 'noteBoxHeight', 'maximizeNoteBox'] as const).forEach(
+  (p) => {
+    const v = S.prefs.xulsword[p][0];
+    (S.prefs.xulsword as any)[p] = S.prefs.xulsword.panels.map(() => v as any);
+  }
+);
 
 export default S;

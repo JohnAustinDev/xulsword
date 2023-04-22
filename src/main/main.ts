@@ -20,11 +20,12 @@ import { clone, JSON_parse, keep } from '../common';
 import C from '../constant';
 import S from '../defaultPrefs';
 import G from './mg';
-import { getCipherFailConfs, getTabs, updateGlobalModulePrefs } from './minit';
+import { getCipherFailConfs, validateGlobalModulePrefs } from './minit';
 import MainMenuBuilder, { pushPrefsToMenu } from './mainMenu';
 import contextMenu from './contextMenu';
 import MainPrintHandler from './print';
 import LocalFile from './components/localFile';
+import Viewport from './components/viewport';
 import { CipherKeyModules } from './components/module';
 import {
   WindowRegistry,
@@ -189,7 +190,7 @@ const openXulswordWindow = () => {
       type: 'xulsword',
       className: 'skin',
       typePersistBounds: true,
-      saveIfAppClosed: false, // main win doesn't use window prefs when starting
+      saveIfAppClosed: false, // main win doesn't use OpenOnStartup pref when starting
       options: {
         title: ProgramTitle,
         fullscreenable: true,
@@ -207,7 +208,7 @@ const openXulswordWindow = () => {
   const menuBuilder = new MainMenuBuilder(xulswordWindow);
   menuBuilder.buildMenu();
 
-  updateGlobalModulePrefs();
+  validateGlobalModulePrefs();
 
   const BuildInfo = `${app.getName()} ${app.getVersion()} (${
     G.i18n.language
@@ -232,18 +233,20 @@ const openXulswordWindow = () => {
       G.LibSword.quit();
       Cache.clear();
       G.LibSword.init();
-      updateGlobalModulePrefs();
-      menuBuilder.buildMenu();
+      validateGlobalModulePrefs();
+      menuBuilder.buildMenu(true);
     })
   );
   xswinSubscriptions.push(
     Subscription.subscribe.modulesInstalled(
       (newmods: NewModulesType, callingWinID?: number) => {
-        G.publishSubscription(
-          'setRendererRootState',
-          { renderers: { type: 'all' } },
-          { progress: 'indefinite' }
-        );
+        if (callingWinID) {
+          G.publishSubscription(
+            'setRendererRootState',
+            { renderers: { id: callingWinID } },
+            { progress: 'indefinite' }
+          );
+        }
         const newErrors = newmods.reports.map((r) => r.error).filter(Boolean);
         const newWarns = newmods.reports.map((r) => r.warning).filter(Boolean);
         if (newErrors.length) {
@@ -274,30 +277,37 @@ const openXulswordWindow = () => {
           (nmconf) =>
             !newmods.nokeymods.some((nkconf) => nkconf.module === nmconf.module)
         );
-        if (!newmods.modules.length && !getTabs().length) {
-          G.Viewport.setTabs(-1, 'all', 'hide', undefined, true);
-        } else {
-          newmods.modules
-            .filter((c) => c.xsmType !== 'XSM_audio')
-            .forEach((conf) => {
-              G.Viewport.setTabs(-1, conf.module, 'show', undefined, true);
-            });
-        }
-        G.publishSubscription(
-          'setRendererRootState',
-          { renderers: { type: 'all' } },
-          { progress: -1 }
-        );
-        G.Window.modal([{ modal: 'off', window: 'all' }]);
         if (callingWinID) {
-          setTimeout(() => {
-            publishSubscription(
-              'modulesInstalled',
-              { renderers: { id: callingWinID } },
-              newmods
+          // At this point, all windows' modules have been checked and updated to
+          // reference only installed modules. We just need to add new tabs and
+          // new modules to panels.
+          if (callingWinID === xulswordWindow.id) {
+            G.Prefs.mergeValue(
+              'xulsword',
+              Viewport.getNewModuleChange(
+                newmods,
+                G.Prefs.getComplexValue('xulsword') as typeof S.prefs.xulsword
+              ),
+              'prefs',
+              false,
+              true
             );
-          }, 1);
+          } else {
+            setTimeout(() => {
+              publishSubscription(
+                'modulesInstalled',
+                { renderers: { id: callingWinID } },
+                newmods
+              );
+            }, 1);
+          }
+          G.publishSubscription(
+            'setRendererRootState',
+            { renderers: { id: callingWinID } },
+            { progress: -1 }
+          );
         }
+        G.Window.modal([{ modal: 'off', window: 'all' }]);
       }
     )
   );
@@ -307,7 +317,7 @@ const openXulswordWindow = () => {
   if (Object.keys(CipherKeyModules).length) {
     publishSubscription(
       'modulesInstalled',
-      { renderers: { id: xulswordWindow.id }, main: false },
+      { renderers: { id: xulswordWindow.id } },
       {
         ...clone(C.NEWMODS),
         nokeymods: getCipherFailConfs(),

@@ -32,7 +32,6 @@ import type {
   BookmarkItemType,
   TabType,
   TabTypes,
-  SwordFeatures,
   GenBookAudio,
   ModulesCache,
   TreeNodeInfoPref,
@@ -693,6 +692,32 @@ export function pad(
   const c = char.toString().substring(0, 1);
   while (r.length < len) r = `${c}${r}`;
   return r;
+}
+
+// Modify the given state in place removing any references to viewport
+// modules that are not currently installed.
+export function validateViewportModulePrefs(
+  Tabs: TabType[],
+  state: Pick<
+    typeof S.prefs.xulsword,
+    'panels' | 'ilModules' | 'mtModules' | 'tabs'
+  >
+) {
+  (['panels', 'ilModules', 'mtModules'] as const).forEach((p) => {
+    const prop = state[p] as any[];
+    state[p] = prop.map((m) => {
+      const n = p === 'panels' ? '' : null;
+      if (m && !Tabs.find((t) => t.module === m)) return n;
+      return m;
+    });
+  });
+
+  const { tabs } = state;
+  tabs.forEach((p, i) => {
+    if (p) {
+      tabs[i] = p.filter((m) => Tabs.find((t) => t.module === m));
+    }
+  });
 }
 
 // Figure out the relative width of each panel due to adjacent panels
@@ -1566,52 +1591,6 @@ export function subtractGenBookAudioChapters(
     }
   });
   return r;
-}
-
-// Sort modules by type and then by language relevance to a locale.
-export function sortTabsByRelevance(
-  tablist: TabType[],
-  locale: string
-): TabType[] {
-  const order: TabTypes[] = ['Texts', 'Comms', 'Genbks', 'Dicts'];
-  const localeRelevance = (t: TabType): number => {
-    let r = 0;
-    const lang = t.conf.Lang;
-    if (lang === locale) r -= 4;
-    if (lang === C.FallbackLanguage[locale]) r -= 3;
-    if (lang && lang.replace(/-.*$/, '') === locale.replace(/-.*$/, '')) r -= 2;
-    if (
-      lang &&
-      lang.replace(/-.*$/, '') ===
-        C.FallbackLanguage[locale].replace(/-.*$/, '')
-    )
-      r -= 1;
-    if (
-      (
-        [
-          'StrongsNumbers',
-          'GreekDef',
-          'HebrewDef ',
-          'GreekParse',
-          'HebrewParse',
-          'Glossary',
-        ] as SwordFeatures[]
-      ).some((f) => t.conf.Feature?.includes(f))
-    )
-      r += 1;
-    return r;
-  };
-  return tablist.sort((a, b) => {
-    const ai = order.findIndex((t) => a.tabType === t);
-    const ar = localeRelevance(a);
-    const bi = order.findIndex((t) => b.tabType === t);
-    const br = localeRelevance(b);
-    if (ar === 1 && br < 1) return 1;
-    if (br === 1 && ar < 1) return -1;
-    if (ai !== bi) return ai < bi ? -1 : 1;
-    if (ar === br) return 0;
-    return ar < br ? -1 : 1;
-  });
 }
 
 // Compare \d.\d.\d type version numbers (like SWORD modules).
