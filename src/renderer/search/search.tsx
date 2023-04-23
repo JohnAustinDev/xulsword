@@ -7,7 +7,14 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { ProgressBar } from '@blueprintjs/core';
-import { clone, diff, drop, dString, sanitizeHTML } from '../../common';
+import {
+  cancelAutoIndexing,
+  clone,
+  diff,
+  drop,
+  dString,
+  sanitizeHTML,
+} from '../../common';
 import C from '../../constant';
 import S from '../../defaultPrefs';
 import G from '../rg';
@@ -43,7 +50,6 @@ import handlerH, {
   strongsCSS,
   getSearchResults,
   Indexing,
-  canelAutoIndexing as cancelAutoIndexing,
   descriptor,
 } from './searchH';
 import './search.css';
@@ -643,7 +649,7 @@ renderToRoot(<SearchWin height="100%" />, {
   onunload: () => {
     if (Indexing.current) {
       G.LibSword.searchIndexCancel(Indexing.current, descriptor.id);
-      cancelAutoIndexing(Indexing.current);
+      cancelAutoIndexing(G.Prefs, Indexing.current);
     }
   },
 });

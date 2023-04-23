@@ -965,6 +965,7 @@ export const GBuilder: GType & {
     getGenBookChapterText: func as any,
     getGenBookTableOfContents: CACHEfunc as any,
     luceneEnabled: func as any,
+    startBackgroundSearchIndexer: func as any,
     search: func as any,
     getSearchResults: func as any,
     searchIndexDelete: func as any,

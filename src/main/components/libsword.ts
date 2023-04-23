@@ -3,13 +3,18 @@ import { app, BrowserWindow } from 'electron';
 import { ChildProcess, fork } from 'child_process';
 import log from 'electron-log';
 import path from 'path';
-import { repositoryKey, isRepoLocal, JSON_parse } from '../../common';
+import {
+  repositoryKey,
+  isRepoLocal,
+  JSON_parse,
+  cancelAutoIndexing,
+} from '../../common';
 import Cache from '../../cache';
+import S from '../../defaultPrefs';
 import C from '../../constant';
 import LocalFile from './localFile';
 import Dirs from './dirs';
 import Prefs from './prefs';
-import Window from './window';
 
 import type {
   GenBookTOC,
@@ -91,6 +96,8 @@ const LibSword = {
 
   indexingID: {} as { [modcode: string]: ChildProcess },
 
+  backgroundIndexerTO: null as NodeJS.Timeout | null,
+
   init(): boolean {
     if (this.libxulsword) return false;
 
@@ -132,6 +139,9 @@ const LibSword = {
 
   quit(): void {
     if (this.libxulsword) {
+      Object.keys(this.indexingID).forEach((module) =>
+        this.searchIndexCancel(module)
+      );
       libxulsword.FreeLibXulsword();
       log.verbose('DELETED libxulsword object');
     }
@@ -523,6 +533,83 @@ DEFINITION OF A 'XULSWORD REFERENCE':
     return false;
   },
 
+  // Index each unindexed module in the background. Does nothing if any modules are
+  // already being indexed. If an index fails, or takes too long and is canceled, it
+  // will not be attempted again unless the module is re-installed. However the user
+  // can always click the create index button.
+  async startBackgroundSearchIndexer() {
+    const doIndex = async (mod: string): Promise<boolean> => {
+      let success: boolean;
+      try {
+        success = await this.searchIndexBuild(mod);
+      } catch (er) {
+        success = false;
+        log.debug(er);
+      }
+      if (!success) {
+        log.info('Failed background index: ', module);
+        cancelAutoIndexing(Prefs, mod);
+      }
+      return success;
+    };
+
+    const canceled = () =>
+      Prefs.getComplexValue(
+        'global.cancelSearchAutoIndex'
+      ) as typeof S.prefs.global.cancelSearchAutoIndex;
+
+    if (Object.keys(this.indexingID).length === 0) {
+      const modlist = LibSword.getModuleList();
+      let modules =
+        modlist === C.NOMODULES
+          ? []
+          : modlist.split('<nx>').map((x) => x.split(';')[0]);
+
+      let msg = 'yes';
+      while (modules.length) {
+        if (!this.isReady()) break;
+        modules = modules.filter(
+          (m) => !canceled().includes(m) && !this.luceneEnabled(m)
+        );
+        if (msg) {
+          log.info(
+            `Starting background indexer. (${modules.length} modules, ${
+              canceled().length
+            } canceled)`
+          );
+          msg = '';
+        }
+        const module = modules.pop();
+        if (module) {
+          this.backgroundIndexerTO = setTimeout(() => {
+            log.info('Timeout background index: ', module);
+            this.searchIndexCancel(module);
+            cancelAutoIndexing(Prefs, module);
+            this.backgroundIndexerTO = null;
+          }, C.UI.Search.backgroundIndexerTimeout);
+          // Index one at a time, don't break their PC...
+          // eslint-disable-next-line no-await-in-loop
+          const success = await doIndex(module);
+          if (success) {
+            log.debug(`Finished background index: `, module);
+          }
+          if (this.backgroundIndexerTO) {
+            clearTimeout(this.backgroundIndexerTO);
+            this.backgroundIndexerTO = null;
+          }
+        }
+      }
+
+      if (!modules.length) {
+        log.info(
+          `All auto-indexable modules are indexed. (${
+            canceled().length
+          } canceled)`
+        );
+      }
+    }
+  },
+
   // searchIndexDelete
   // Deletes the search index of modname.
   searchIndexDelete(modname: string): boolean {
@@ -531,24 +618,6 @@ DEFINITION OF A 'XULSWORD REFERENCE':
       return true;
     }
     return false;
-  },
-
-  searchIndexCancel(modcode: string, callingWinId?: number): boolean {
-    if (modcode in this.indexingID) {
-      const indexer = this.indexingID[modcode];
-      indexer.kill();
-      if (callingWinId) {
-        let w = BrowserWindow.fromId(Number(callingWinId));
-        if (w) {
-          w.webContents.send('progress', -1, 'search.indexer');
-          w = null;
-        }
-      }
-      delete this.indexingID[modcode];
-      log.debug(`indexer killed`);
-      return this.searchIndexDelete(modcode);
-    }
-    return true;
   },
 
   // searchIndexBuild
@@ -588,7 +657,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
           (indexerMsg: { msg: string; percent: number }) => {
             const { msg, percent } = indexerMsg;
             if (msg !== 'working') {
-              log.debug(`indexer responded:`, msg, percent);
+              log.silly(`indexer responded:`, msg, percent);
             }
             sendProgress(percent);
             if (msg === 'finished') {
@@ -600,10 +669,28 @@ DEFINITION OF A 'XULSWORD REFERENCE':
             }
           }
         );
-        log.debug(`indexer send:`, this.moduleDirectories, modcode);
+        log.silly(`indexer send:`, this.moduleDirectories, modcode);
         indexer.send({ modsd: this.moduleDirectories, modcode });
       } else resolve(false);
     });
+  },
+
+  searchIndexCancel(modcode: string, callingWinId?: number): boolean {
+    if (modcode in this.indexingID) {
+      const indexer = this.indexingID[modcode];
+      indexer.kill();
+      if (callingWinId) {
+        let w = BrowserWindow.fromId(Number(callingWinId));
+        if (w) {
+          w.webContents.send('progress', -1, 'search.indexer');
+          w = null;
+        }
+      }
+      delete this.indexingID[modcode];
+      log.debug(`indexer killed`);
+      return this.searchIndexDelete(modcode);
+    }
+    return true;
   },
 
   /* *****************************************************************************
@@ -701,6 +788,7 @@ export type LibSwordType = Omit<
   | 'searchingID'
   | 'searchedID'
   | 'indexingID'
+  | 'backgroundIndexerTO'
 >;
 
 export default LibSword as LibSwordType;

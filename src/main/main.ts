@@ -307,6 +307,20 @@ const openXulswordWindow = () => {
           );
         }
         G.Window.modal([{ modal: 'off', window: 'all' }]);
+        // Wait until after reset before using Prefs, or renderers will throw.
+        const csai = G.Prefs.getComplexValue(
+          'global.cancelSearchAutoIndex'
+        ) as typeof S.prefs.global.cancelSearchAutoIndex;
+        newmods.modules.forEach((m) => {
+          G.DiskCache.delete(null, m.module);
+          if (csai.includes(m.module)) {
+            csai.splice(csai.indexOf(m.module), 1);
+          }
+        });
+        setTimeout(
+          () => G.LibSword.startBackgroundSearchIndexer(),
+          C.UI.Search.backgroundIndexerStartupWait
+        );
       }
     )
   );
@@ -335,6 +349,13 @@ const openXulswordWindow = () => {
       })
     );
   }
+
+  xulswordWindow.on('ready-to-show', () =>
+    setTimeout(
+      () => G.LibSword.startBackgroundSearchIndexer(),
+      C.UI.Search.backgroundIndexerStartupWait
+    )
+  );
 
   xulswordWindow.on('close', () => {
     // Persist open windows for the next restart
@@ -478,10 +499,14 @@ const init = async () => {
   if (tabs.every((tb) => !tb || !tb.length)) {
     const modules = Viewport.sortTabsByLocale(G.Tabs.map((t) => t.module));
     if (modules[0]) {
-      G.Viewport.getModuleChange(modules, xulsword, {
-        maintainWidePanels: true,
-        maintainPins: false,
-      });
+      G.Viewport.getPanelChange(
+        {
+          whichModuleOrLocGB: modules,
+          maintainWidePanels: true,
+          maintainPins: false,
+        },
+        xulsword
+      );
       G.Prefs.mergeValue('xulsword', xulsword);
     }
   }

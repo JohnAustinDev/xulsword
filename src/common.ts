@@ -720,6 +720,16 @@ export function validateViewportModulePrefs(
   });
 }
 
+export function cancelAutoIndexing(Prefs: GType['Prefs'], module: string) {
+  const csai = Prefs.getComplexValue(
+    'global.cancelSearchAutoIndex'
+  ) as typeof S.prefs.global.cancelSearchAutoIndex;
+  if (!csai.includes(module)) {
+    csai.push(module);
+    Prefs.setComplexValue('global.cancelSearchAutoIndex', csai);
+  }
+}
+
 // Figure out the relative width of each panel due to adjacent panels
 // sharing common module and isPinned settings etc. In such case, the
 // first panel of the matching group will widen to take up the whole
@@ -732,8 +742,8 @@ export function getPanelWidths(
   const panelWidths: (number | null)[] = [];
   for (let i = 0; i < panels.length; i += 1) {
     const panel = panels[i];
-    panelWidths[i] = panel || panel === '' ? 1 : null;
-    if (panel) {
+    panelWidths[i] = panel !== null && panel !== undefined ? 1 : null;
+    if (panel !== null && panel !== undefined) {
       const key = [panel, !!ilModules[i], !!isPinned[i]].join('.');
       let f = i + 1;
       for (;;) {

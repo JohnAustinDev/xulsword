@@ -50,26 +50,23 @@ const Viewport = {
     tablist: T,
     alocale?: string
   ): T {
-    const locale = alocale || i18n.language;
+    const locale = (alocale || i18n.language).replace(/-.*$/, '');
+    const locale2 = C.FallbackLanguage[i18n.language].replace(/-.*$/, '');
     const Tab = getTab();
     const order: TabTypes[] = ['Texts', 'Comms', 'Genbks', 'Dicts'];
+    const locales = C.Locales.map((l) => l[0].replace(/-.*$/, ''));
     const localeRelevance = (t: TabType): number => {
       let r = 0;
-      const lang = t.conf.Lang;
-      if (lang === locale) r -= 4;
-      if (lang === C.FallbackLanguage[locale]) r -= 3;
-      if (lang && lang.replace(/-.*$/, '') === locale.replace(/-.*$/, ''))
+      const lang = t.conf.Lang?.replace(/-.*$/, '') ?? '';
+      if (lang && lang === locale) {
+        r -= 3;
+      } else if (lang && lang === locale2) {
         r -= 2;
-      if (
-        lang &&
-        lang.replace(/-.*$/, '') ===
-          C.FallbackLanguage[locale].replace(/-.*$/, '')
-      )
+      } else if (lang && locales.includes(lang)) {
         r -= 1;
-      if (
+      } else if (
         (
           [
-            'StrongsNumbers',
             'GreekDef',
             'HebrewDef ',
             'GreekParse',
@@ -77,8 +74,9 @@ const Viewport = {
             'Glossary',
           ] as SwordFeatures[]
         ).some((f) => t.conf.Feature?.includes(f))
-      )
+      ) {
         r += 1;
+      }
       return r;
     };
     tablist.sort((ax, bx) => {
@@ -88,11 +86,11 @@ const Viewport = {
       const ar = localeRelevance(a);
       const bi = order.findIndex((t) => b.tabType === t);
       const br = localeRelevance(b);
+      if (ai !== bi) return ai - bi;
       if (ar === 1 && br < 1) return 1;
       if (br === 1 && ar < 1) return -1;
-      if (ai !== bi) return ai < bi ? -1 : 1;
       if (ar === br) return 0;
-      return ar < br ? -1 : 1;
+      return ar - br;
     });
     return tablist;
   },
@@ -295,7 +293,7 @@ const Viewport = {
       }
       if (module) {
         // Check if this module is already showing; if so we can just call it done
-        // (after updating its key if it has one, and dis-allowing any change to the
+        // (after updating its key if it has one, and dis-allowing changes to the
         // existing panel).
         const p = panels.indexOf(module);
         if (p !== -1) {

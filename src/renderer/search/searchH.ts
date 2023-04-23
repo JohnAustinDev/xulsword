@@ -5,7 +5,13 @@
 /* eslint-disable import/no-duplicates */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
-import { dString, escapeRE, getCSS, sanitizeHTML } from '../../common';
+import {
+  cancelAutoIndexing,
+  dString,
+  escapeRE,
+  getCSS,
+  sanitizeHTML,
+} from '../../common';
 import C from '../../constant';
 import S from '../../defaultPrefs';
 import G from '../rg';
@@ -54,16 +60,6 @@ const LibSwordSearch = {
   params: null as LibSwordSearchType | null,
   id: '',
 };
-
-export function canelAutoIndexing(module: string) {
-  const csai = G.Prefs.getComplexValue(
-    'global.cancelSearchAutoIndex'
-  ) as typeof S.prefs.global.cancelSearchAutoIndex;
-  if (!csai.includes(module)) {
-    csai.push(module);
-    G.Prefs.setComplexValue('global.cancelSearchAutoIndex', csai);
-  }
-}
 
 export function getLuceneSearchText(searchtext0: string) {
   let searchtext = searchtext0;
@@ -427,7 +423,7 @@ export async function createSearchIndex(
             // booksInModule, so try reset all caches as a work-around.
             G.resetMain();
             G.Window.reset('cache-reset', 'all');
-            if (!result) canelAutoIndexing(module);
+            if (!result) cancelAutoIndexing(G.Prefs, module);
             setTimeout(() => resolve(result), 1);
             return result;
           })
@@ -441,7 +437,7 @@ export async function createSearchIndex(
           })
           .catch((er) => {
             log.debug(er);
-            canelAutoIndexing(module);
+            cancelAutoIndexing(G.Prefs, module);
             resolve(false);
           });
       }, 1);
