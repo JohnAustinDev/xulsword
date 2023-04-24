@@ -720,13 +720,13 @@ export function validateViewportModulePrefs(
   });
 }
 
-export function cancelAutoIndexing(Prefs: GType['Prefs'], module: string) {
+export function noAutoSearchIndex(Prefs: GType['Prefs'], module: string) {
   const csai = Prefs.getComplexValue(
-    'global.cancelSearchAutoIndex'
-  ) as typeof S.prefs.global.cancelSearchAutoIndex;
+    'global.noAutoSearchIndex'
+  ) as typeof S.prefs.global.noAutoSearchIndex;
   if (!csai.includes(module)) {
     csai.push(module);
-    Prefs.setComplexValue('global.cancelSearchAutoIndex', csai);
+    Prefs.setComplexValue('global.noAutoSearchIndex', csai);
   }
 }
 

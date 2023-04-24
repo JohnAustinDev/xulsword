@@ -7,7 +7,7 @@ import {
   repositoryKey,
   isRepoLocal,
   JSON_parse,
-  cancelAutoIndexing,
+  noAutoSearchIndex,
 } from '../../common';
 import Cache from '../../cache';
 import S from '../../defaultPrefs';
@@ -538,73 +538,93 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // will not be attempted again unless the module is re-installed. However the user
   // can always click the create index button.
   async startBackgroundSearchIndexer() {
-    const doIndex = async (mod: string): Promise<boolean> => {
-      let success: boolean;
-      try {
-        success = await this.searchIndexBuild(mod);
-      } catch (er) {
-        success = false;
-        log.debug(er);
-      }
-      if (!success) {
-        log.info('Failed background index: ', module);
-        cancelAutoIndexing(Prefs, mod);
-      }
-      return success;
+    const index = async (mod: string): Promise<[boolean, number]> => {
+      const start = new Date().valueOf();
+      const successP = this.searchIndexBuild(mod);
+      const timeoutP = new Promise((resolve: (r: number) => void, reject) => {
+        this.backgroundIndexerTO = setTimeout(() => {
+          this.backgroundIndexerTO = null;
+          reject(this.searchIndexCancel(mod));
+        }, C.UI.Search.backgroundIndexerTimeout);
+        return successP
+          .then((s) => {
+            const end = new Date().valueOf();
+            resolve(Math.ceil((end - start) / 1000));
+            return s;
+          })
+          .catch((er) => {
+            reject(er);
+            return false;
+          })
+          .finally(() => {
+            if (this.backgroundIndexerTO) {
+              clearTimeout(this.backgroundIndexerTO);
+              this.backgroundIndexerTO = null;
+            }
+          });
+      });
+      return Promise.all([successP, timeoutP]);
     };
 
-    const canceled = () =>
+    const skip = () =>
       Prefs.getComplexValue(
-        'global.cancelSearchAutoIndex'
-      ) as typeof S.prefs.global.cancelSearchAutoIndex;
+        'global.noAutoSearchIndex'
+      ) as typeof S.prefs.global.noAutoSearchIndex;
 
     if (Object.keys(this.indexingID).length === 0) {
+      const timeout = Math.floor(C.UI.Search.backgroundIndexerTimeout / 60000);
       const modlist = LibSword.getModuleList();
       let modules =
         modlist === C.NOMODULES
           ? []
           : modlist.split('<nx>').map((x) => x.split(';')[0]);
-
-      let msg = 'yes';
+      let msg = false;
+      let failed = 0;
+      const start = new Date().valueOf();
       while (modules.length) {
         if (!this.isReady()) break;
         modules = modules.filter(
-          (m) => !canceled().includes(m) && !this.luceneEnabled(m)
+          (m) => !skip().includes(m) && !this.luceneEnabled(m)
         );
-        if (msg) {
-          log.info(
-            `Starting background indexer. (${modules.length} modules, ${
-              canceled().length
-            } canceled)`
-          );
-          msg = '';
-        }
         const module = modules.pop();
         if (module) {
-          this.backgroundIndexerTO = setTimeout(() => {
-            log.info('Timeout background index: ', module);
-            this.searchIndexCancel(module);
-            cancelAutoIndexing(Prefs, module);
-            this.backgroundIndexerTO = null;
-          }, C.UI.Search.backgroundIndexerTimeout);
-          // Index one at a time, don't break their PC...
-          // eslint-disable-next-line no-await-in-loop
-          const success = await doIndex(module);
-          if (success) {
-            log.debug(`Finished background index: `, module);
+          let success: [boolean, number];
+          if (!msg) {
+            log.info(
+              `Starting background indexer. (${modules.length + 1} modules, ${
+                skip().length
+              } skipped, ${timeout} minute timeout per module)`
+            );
+            msg = true;
           }
-          if (this.backgroundIndexerTO) {
-            clearTimeout(this.backgroundIndexerTO);
-            this.backgroundIndexerTO = null;
+          try {
+            // Index one at a time, don't try and break their PC...
+            // eslint-disable-next-line no-await-in-loop
+            success = await index(module);
+          } catch (er: unknown) {
+            success = [false, 0];
+            if (er === Boolean(er)) {
+              log.info(`Index timeout reached: ${module} (${timeout} minutes)`);
+              if (!er) {
+                log.error(`Index cancel failed: ${module}`);
+              }
+            } else log.error(er);
+          }
+          if (success.every((v) => v)) {
+            log.info(`Finished background index: ${module} (${success[1]}s)`);
+          } else {
+            log.warn(`Failed background index: ${module}`);
+            failed += 1;
+            noAutoSearchIndex(Prefs, module);
           }
         }
       }
-
       if (!modules.length) {
+        const end = new Date().valueOf();
         log.info(
-          `All auto-indexable modules are indexed. (${
-            canceled().length
-          } canceled)`
+          `Finished background indexer. (${failed} failed, ${
+            Math.round((end - start) / 600) / 100
+          } minutes)`
         );
       }
     }
@@ -614,8 +634,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // Deletes the search index of modname.
   searchIndexDelete(modname: string): boolean {
     if (this.isReady(true)) {
-      libxulsword.SearchIndexDelete(modname);
-      return true;
+      return libxulsword.SearchIndexDelete(modname);
     }
     return false;
   },
@@ -688,7 +707,9 @@ DEFINITION OF A 'XULSWORD REFERENCE':
       }
       delete this.indexingID[modcode];
       log.debug(`indexer killed`);
-      return this.searchIndexDelete(modcode);
+      if (this.luceneEnabled(modcode)) {
+        return this.searchIndexDelete(modcode);
+      }
     }
     return true;
   },

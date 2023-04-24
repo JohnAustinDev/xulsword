@@ -152,8 +152,8 @@ const C = {
         QUOTESTART: ['"', '"'],
         QUOTEEND: ['"', '"'],
       },
-      backgroundIndexerStartupWait: 10000, // 60000, // wait before starting background indexer
-      backgroundIndexerTimeout: 600000, // max time working on an index before canceling it
+      backgroundIndexerStartupWait: 20000, // wait before starting background indexer
+      backgroundIndexerTimeout: 600000, // time working on background index before canceling
     },
     BMProperties: {
       sampleTextLength: 1024,

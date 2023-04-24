@@ -6,7 +6,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import {
-  cancelAutoIndexing,
+  noAutoSearchIndex,
   dString,
   escapeRE,
   getCSS,
@@ -389,8 +389,8 @@ export async function autoCreateSearchIndex(
 ): Promise<boolean> {
   let result = false;
   const csai = G.Prefs.getComplexValue(
-    'global.cancelSearchAutoIndex'
-  ) as typeof S.prefs.global.cancelSearchAutoIndex;
+    'global.noAutoSearchIndex'
+  ) as typeof S.prefs.global.noAutoSearchIndex;
   if (!csai.includes(module)) {
     result = await createSearchIndex(xthis, module);
   }
@@ -423,7 +423,7 @@ export async function createSearchIndex(
             // booksInModule, so try reset all caches as a work-around.
             G.resetMain();
             G.Window.reset('cache-reset', 'all');
-            if (!result) cancelAutoIndexing(G.Prefs, module);
+            if (!result) noAutoSearchIndex(G.Prefs, module);
             setTimeout(() => resolve(result), 1);
             return result;
           })
@@ -437,7 +437,7 @@ export async function createSearchIndex(
           })
           .catch((er) => {
             log.debug(er);
-            cancelAutoIndexing(G.Prefs, module);
+            noAutoSearchIndex(G.Prefs, module);
             resolve(false);
           });
       }, 1);

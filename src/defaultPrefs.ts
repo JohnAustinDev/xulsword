@@ -108,7 +108,7 @@ const S = {
           [feature in keyof FeatureMods]?: string;
         },
       },
-      cancelSearchAutoIndex: [] as string[],
+      noAutoSearchIndex: [] as string[],
     },
 
     xulsword: {

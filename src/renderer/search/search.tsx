@@ -8,7 +8,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { ProgressBar } from '@blueprintjs/core';
 import {
-  cancelAutoIndexing,
+  noAutoSearchIndex,
   clone,
   diff,
   drop,
@@ -649,7 +649,7 @@ renderToRoot(<SearchWin height="100%" />, {
   onunload: () => {
     if (Indexing.current) {
       G.LibSword.searchIndexCancel(Indexing.current, descriptor.id);
-      cancelAutoIndexing(G.Prefs, Indexing.current);
+      noAutoSearchIndex(G.Prefs, Indexing.current);
     }
   },
 });

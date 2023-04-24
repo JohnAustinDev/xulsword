@@ -308,15 +308,15 @@ const openXulswordWindow = () => {
         }
         G.Window.modal([{ modal: 'off', window: 'all' }]);
         // Wait until after reset before using Prefs, or renderers will throw.
-        const csai = G.Prefs.getComplexValue(
-          'global.cancelSearchAutoIndex'
-        ) as typeof S.prefs.global.cancelSearchAutoIndex;
+        const nasi = G.Prefs.getComplexValue(
+          'global.noAutoSearchIndex'
+        ) as typeof S.prefs.global.noAutoSearchIndex;
         newmods.modules.forEach((m) => {
-          G.DiskCache.delete(null, m.module);
-          if (csai.includes(m.module)) {
-            csai.splice(csai.indexOf(m.module), 1);
+          if (nasi.includes(m.module)) {
+            nasi.splice(nasi.indexOf(m.module), 1);
           }
         });
+        G.Prefs.setComplexValue('global.noAutoSearchIndex', nasi);
         setTimeout(
           () => G.LibSword.startBackgroundSearchIndexer(),
           C.UI.Search.backgroundIndexerStartupWait
