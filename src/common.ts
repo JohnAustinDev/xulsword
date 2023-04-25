@@ -46,44 +46,6 @@ import type { getSampleText } from './renderer/bookmarks';
 import type { verseKey } from './renderer/htmlData';
 import type { XulswordState } from './renderer/xulsword/xulsword';
 
-// These built-in local repositories cannot be disabled, deleted or changed.
-// Implemented as a function to allow G.i18n to initialize.
-export function builtinRepos(
-  i18n: GType['i18n'],
-  DirsPath: GType['Dirs']['path']
-): Repository[] {
-  const opts = { ns: 'branding' };
-  const programTitle = i18n.exists('program.title', opts)
-    ? i18n.t('program.title', opts)
-    : 'xulsword';
-  return [
-    {
-      name: i18n.t('shared.label'),
-      domain: 'file://',
-      path: DirsPath.xsModsCommon,
-      builtin: true,
-      disabled: false,
-      custom: false,
-    },
-    {
-      name: programTitle,
-      domain: 'file://',
-      path: DirsPath.xsModsUser,
-      builtin: true,
-      disabled: false,
-      custom: false,
-    },
-    {
-      name: i18n.t('audio.label'),
-      domain: 'file://',
-      path: DirsPath.xsAudio,
-      builtin: true,
-      disabled: false,
-      custom: false,
-    },
-  ];
-}
-
 export function escapeRE(text: string) {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -297,6 +259,50 @@ export function mapp(
     }
   });
   return workObj;
+}
+
+// Strings beginning with 'i18n:' are intended for possible localization. The
+// branding namespace is checked first, followed by xulsword. If there is no
+// localization, the key is returned with 'i18n:' prefix removed.
+export function localizeString(i18n: GType['i18n'], str: string): string {
+  if (str.startsWith('i18n:')) {
+    const ans = ['branding', 'xulsword'].find((ns) =>
+      i18n.exists(str.substring(5), { ns })
+    );
+    if (ans) return i18n.t(str.substring(5), { ns: ans });
+    return str.substring(5);
+  }
+  return str;
+}
+
+// Resolve a xulsword:// file path into an absolute local file path.
+export function resolveXulswordPath(
+  DirsPath: GType['Dirs']['path'],
+  path: string
+): string {
+  if (path.startsWith('xulsword://')) {
+    const dirs = path.substring('xulsword://'.length).split('/');
+    if (dirs[0] && dirs[0] in DirsPath) {
+      dirs[0] = DirsPath[dirs[0] as keyof typeof DirsPath];
+      return dirs.join('/');
+    }
+    throw new Error(`Unrecognized xulsword path: ${dirs[0]}`);
+  }
+  return path;
+}
+
+// Built-in local repositories cannot be disabled, deleted or changed.
+// Implemented as a function to allow G.i18n to initialize.
+export function builtinRepos(
+  i18n: GType['i18n'],
+  DirsPath: GType['Dirs']['path']
+): Repository[] {
+  const birs = clone(C.SwordBultinRepositories);
+  birs.forEach((r) => {
+    r.name = localizeString(i18n, r.name);
+    r.path = resolveXulswordPath(DirsPath, r.path);
+  });
+  return birs;
 }
 
 export function prefType(
@@ -1159,27 +1165,27 @@ export function forEachBookmarkItem(
 // Apply localization to a bookmark (NOT recursive and does NOT add
 // sampleText).
 export function localizeBookmark(
-  g: GType,
+  G: GType,
   verseKeyFunc: typeof verseKey,
   item: BookmarkItemType
 ): BookmarkItemType {
   const { label, note } = item;
-  const loc = g.i18n.language as 'en';
-  if (label.startsWith('i18n:')) {
-    const i18nKey = label.substring(5);
-    if (i18nKey === 'label' && item.type === 'bookmark') {
+  const nlabel = localizeString(G.i18n, label);
+  if (nlabel !== label) {
+    if (nlabel === 'label' && item.type === 'bookmark') {
       const { location } = item;
       item.label = location
-        ? bookmarkLabel(g, verseKeyFunc, location)
+        ? bookmarkLabel(G, verseKeyFunc, location)
         : 'label';
     } else {
-      item.label = g.i18n.t(i18nKey);
+      item.label = nlabel;
     }
-    item.labelLocale = loc;
+    item.labelLocale = G.i18n.language as 'en';
   }
-  if (note.startsWith('i18n:') && g.i18n.exists(note.substring(5))) {
-    item.note = g.i18n.t(note.substring(5));
-    item.noteLocale = loc;
+  const lnote = localizeString(G.i18n, note);
+  if (lnote !== note) {
+    item.note = lnote;
+    item.noteLocale = G.i18n.language as 'en';
   }
   return item;
 }

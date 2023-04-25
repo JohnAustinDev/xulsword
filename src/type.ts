@@ -639,7 +639,7 @@ export type NewModulesType = {
 };
 
 export type Repository = {
-  name: string;
+  name: string | 'i18n:lookup';
   domain: string;
   path: string;
   custom: boolean; // repository is created by user (and can be deleted)

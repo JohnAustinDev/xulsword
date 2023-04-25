@@ -163,9 +163,9 @@ const Viewport = {
               doWhat2 === 'toggle'
                 ? !bank.includes(t.module)
                 : doWhat2 === 'show';
-            if (show && !bank.includes(t.module)) {
+            if (show && !newtabs.includes(t)) {
               newtabs.push(t);
-            } else if (!show && bank.includes(t.module)) {
+            } else if (!show && newtabs.includes(t)) {
               newtabs.splice(newtabs.indexOf(t), 1);
             }
           }
@@ -179,10 +179,9 @@ const Viewport = {
     if (panelIndexes.length === 1 && panels[panelIndexes[0]] === null)
       panels[panelIndexes[0]] = '';
 
-    // Insure a panel's module vars point to modules that are included in the
-    // panel's tab bank, and rather than leave a panel's display module as
-    // empty string, if we can choose some module, and a book too if none
-    // is selected, then do so.
+    // Insure the module showing in each panel is one of the panel's tabs, and rather
+    // than leave a panel's display module as empty string, if we can choose some
+    // module do so, and choose a book too if none is selected.
     state.mtModules = mtModules.map((m: string | null, i: number) => {
       const nvali = tabs[i];
       return m && nvali && nvali.includes(m) ? m : null;

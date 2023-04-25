@@ -80,13 +80,15 @@ dirNames.forEach((dir) => {
   const resd = (Dirs as any).xsResD as LocalFile;
   if (!resd.exists()) resd.create(LocalFile.DIRECTORY_TYPE);
   const resdefd = (Dirs as any).xsResDefD as LocalFile;
-  resdefd.directoryEntries.forEach((sub) => {
-    const to = resd.clone().append(sub);
-    if (!to.exists()) {
-      const from = resdefd.clone().append(sub);
-      from.copyTo(to.parent, from.leafName, true);
-    }
-  });
+  if (resdefd.exists()) {
+    resdefd.directoryEntries.forEach((sub) => {
+      const to = resd.clone().append(sub);
+      if (!to.exists()) {
+        const from = resdefd.clone().append(sub);
+        from.copyTo(to.parent, from.leafName, true);
+      }
+    });
+  }
 }
 
 // Create user directories if they don't exist.

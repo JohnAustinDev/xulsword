@@ -855,7 +855,7 @@ export default class MainMenuBuilder {
           accelerator: tx('menu.bmitem.add.ac', ['CommandOrControl']),
           click: d(() =>
             Commands.openBookmarkProperties(
-              G.i18n.t('i18n:menu.bookmark.add'),
+              G.i18n.t('menu.bookmark.add'),
               {},
               {
                 location: xulswordLocation(G.Tab, G.Prefs),

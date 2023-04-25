@@ -477,19 +477,6 @@ const init = async () => {
     })
     .catch((e) => log.error(e));
 
-  // Set i18n reliant pref values
-  const repositories = G.Prefs.getComplexValue(
-    'moduleManager.repositories'
-  ) as ManagerStatePref['repositories'];
-  if (repositories) {
-    repositories.xulsword.forEach((repo) => {
-      const key = `${repo.name}.repository.label`;
-      const opts = { ns: 'branding' };
-      if (G.i18n.exists(key, opts)) repo.name = G.i18n.t(key, opts);
-    });
-    G.Prefs.setComplexValue('moduleManager.repositories', repositories);
-  }
-
   // If there are no tabs, choose a Bible and a location from the installed modules,
   // (preferring the locale language), and show that tab.
   const xulsword = G.Prefs.getComplexValue(

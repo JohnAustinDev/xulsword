@@ -155,7 +155,24 @@ const S = {
     moduleManager: {
       suggested: null as { [fallbackLang: string]: string[] } | null,
       repositories: {
-        xulsword: [],
+        xulsword: [
+          {
+            name: 'i18n:IBT_XSM',
+            domain: 'ftp.ibt.org.ru',
+            path: '/pub/modxsm',
+            builtin: false,
+            disabled: false,
+            custom: false,
+          },
+          {
+            name: 'i18n:IBT_Audio',
+            domain: 'ftp.ibt.org.ru',
+            path: '/pub/modaudio',
+            builtin: false,
+            disabled: false,
+            custom: false,
+          },
+        ],
         custom: [],
         disabled: null,
       } as {
@@ -338,7 +355,7 @@ const S = {
           },
           {
             datacolumn: 13,
-            heading: 'icon:folder-shared',
+            heading: 'i18n:shared.label',
             width: 88,
             hideable: false,
             sortable: true,

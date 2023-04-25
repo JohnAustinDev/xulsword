@@ -25,6 +25,7 @@ import {
   tableSelectDataRows,
   querablePromise,
   gbPaths,
+  localizeString,
 } from '../../common';
 import C from '../../constant';
 import S from '../../defaultPrefs';
@@ -1042,6 +1043,7 @@ function promptAndInstall(xthis: ModuleManager, updatesx: ModuleUpdates[]) {
       (mud.updateTo.Abbreviation?.locale || mud.updateTo.module) ?? '?';
     let message: string;
     const { installed: from } = mud;
+    const toName = localizeString(G.i18n, mud.updateTo.sourceRepository.name);
     if (from) {
       const history =
         mud.updateTo.History?.filter(
@@ -1049,9 +1051,9 @@ function promptAndInstall(xthis: ModuleManager, updatesx: ModuleUpdates[]) {
         )
           .map((h) => h[1].locale)
           .join('\n') ?? '';
-      message = `${abbr} ${mud.updateTo.Version}: ${history} (${mud.updateTo.sourceRepository.name}, ${mud.updateTo.module})`;
+      message = `${abbr} ${mud.updateTo.Version}: ${history} (${toName}, ${mud.updateTo.module})`;
     } else {
-      message = `${abbr} ${mud.updateTo.Description?.locale} (${mud.updateTo.sourceRepository.name}, ${mud.updateTo.module})`;
+      message = `${abbr} ${mud.updateTo.Description?.locale} (${toName}, ${mud.updateTo.module})`;
     }
     xthis.addToast({
       timeout: -1,

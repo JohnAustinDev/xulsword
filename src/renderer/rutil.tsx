@@ -19,6 +19,7 @@ import {
   bookmarkItemIconPath,
   audioConfNumbers,
   gbPaths,
+  localizeString,
 } from '../common';
 import C from '../constant';
 import S from '../defaultPrefs';
@@ -89,7 +90,7 @@ export function libswordImgSrc(container: HTMLElement) {
       let src: string | undefined;
       const m = img.dataset.src.match(/^file:\/\/(.*)$/i);
       if (m) {
-        if (m[1].match(/^(\w:\\|\/)/)) src = G.inlineFile(m[1], 'base64');
+        if (m[1].match(/^(\w:[/\\]|\/)/)) src = G.inlineFile(m[1], 'base64');
         else {
           log.error(`Image source is not absolute: ${m[1]}`);
         }
@@ -581,7 +582,7 @@ export function moduleInfoHTML(configs: SwordConfType[]): string {
               .join('');
           } else if (sf === 'sourceRepository') {
             const v = c[f] as Repository;
-            value = v.name || '';
+            value = localizeString(G.i18n, v.name) || '';
           } else value = c[f]?.toString() || '';
 
           if (![sc.htmllink, 'History'].flat().includes(sf)) {

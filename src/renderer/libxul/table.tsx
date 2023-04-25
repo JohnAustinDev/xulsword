@@ -43,7 +43,7 @@ import '@blueprintjs/table/lib/css/table.css';
 import './table.css';
 
 import { Box } from './boxes';
-import { clone, ofClass, randomID } from 'common';
+import { clone, localizeString, ofClass, randomID } from 'common';
 
 export type TablePropColumn = {
   datacolumn: number;
@@ -313,8 +313,7 @@ class TextSortableColumn extends AbstractSortableColumn {
       if (column.hideable && columns.filter((c) => c.visible).length > 1) {
         let { heading } = column;
         if (heading.startsWith('icon:')) heading = '';
-        else if (heading.startsWith('i18n:'))
-          heading = G.i18n.t(heading.substring(5));
+        else heading = localizeString(G.i18n, heading);
         items.push([
           <MenuItem
             key={['delete', this.dataColIndex].join('.')}
@@ -334,8 +333,7 @@ class TextSortableColumn extends AbstractSortableColumn {
           ) as IconName;
           let text = heading;
           if (heading.startsWith('icon:')) text = '';
-          else if (heading.startsWith('i18n:'))
-            text = G.i18n.t(heading.substring(5));
+          else text = localizeString(G.i18n, heading);
           hideableItems.push(
             <MenuItem
               key={['add', heading].join('.')}
@@ -460,10 +458,7 @@ class Table extends React.Component {
     this.datacolumns = [];
     columns.forEach((c) => {
       const { datacolumn } = c;
-      let { heading } = c;
-      if (heading.startsWith('i18n:')) {
-        heading = G.i18n.t(c.heading.substring(5));
-      }
+      const heading = localizeString(G.i18n, c.heading);
       this.datacolumns[datacolumn] = new TextSortableColumn(
         heading || '',
         datacolumn

@@ -574,11 +574,15 @@ DEFINITION OF A 'XULSWORD REFERENCE':
     if (Object.keys(this.indexingID).length === 0) {
       const timeout = Math.floor(C.UI.Search.backgroundIndexerTimeout / 60000);
       const modlist = LibSword.getModuleList();
-      let modules =
-        modlist === C.NOMODULES
-          ? []
-          : modlist.split('<nx>').map((x) => x.split(';')[0]);
+      let modules = Array.from(
+        new Set(
+          modlist === C.NOMODULES
+            ? []
+            : modlist.split('<nx>').map((x) => x.split(';')[0])
+        )
+      );
       let msg = false;
+      let passed = 0;
       let failed = 0;
       const start = new Date().valueOf();
       while (modules.length) {
@@ -610,7 +614,8 @@ DEFINITION OF A 'XULSWORD REFERENCE':
               }
             } else log.error(er);
           }
-          if (success.every((v) => v)) {
+          if (success[0]) {
+            passed += 1;
             log.info(`Finished background index: ${module} (${success[1]}s)`);
           } else {
             log.warn(`Failed background index: ${module}`);
@@ -619,12 +624,16 @@ DEFINITION OF A 'XULSWORD REFERENCE':
           }
         }
       }
-      if (!modules.length) {
+      if (passed || failed) {
         const end = new Date().valueOf();
         log.info(
           `Finished background indexer. (${failed} failed, ${
             Math.round((end - start) / 600) / 100
           } minutes)`
+        );
+      } else {
+        log.info(
+          `No modules to index. (${modlist.split('<nx>').length} modules)`
         );
       }
     }

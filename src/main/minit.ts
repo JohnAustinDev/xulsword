@@ -543,6 +543,9 @@ export function getModuleFonts(): FontFaceType[] {
   return Cache.read('ModuleFonts');
 }
 
+// Return a list of available fonts, which include both those installed on
+// the system, as well as all fonts referenced by modules. Modules reference
+// fonts via URL or LocalFile.
 export async function getSystemFonts(): Promise<string[]> {
   if (!Cache.has('fontList')) {
     try {

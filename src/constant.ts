@@ -9,6 +9,7 @@ import type {
   FeatureMods,
   ModTypes,
   NewModulesType,
+  Repository,
   ShowType,
   SwordConfigEntries,
   SwordFilterType,
@@ -360,6 +361,33 @@ const C = {
 
   SwordModuleStartRE: /^\[([A-Za-z0-9_-]+)\]\s*$/,
   SwordModuleCharsRE: /^[A-Za-z0-9_-]+$/,
+
+  SwordBultinRepositories: [
+    {
+      name: 'i18n:shared.label',
+      domain: 'file://',
+      path: 'xulsword://xsModsCommon',
+      builtin: true,
+      disabled: false,
+      custom: false,
+    },
+    {
+      name: 'i18n:program.title',
+      domain: 'file://',
+      path: 'xulsword://xsModsUser',
+      builtin: true,
+      disabled: false,
+      custom: false,
+    },
+    {
+      name: 'i18n:audio.label',
+      domain: 'file://',
+      path: 'xulsword://xsAudio',
+      builtin: true,
+      disabled: false,
+      custom: false,
+    },
+  ] as Repository[],
 
   SwordConf: {
     // default is string
