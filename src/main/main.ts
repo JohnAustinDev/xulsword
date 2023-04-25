@@ -16,7 +16,7 @@ import log, { LogLevel } from 'electron-log';
 import path from 'path';
 import Subscription from '../subscription';
 import Cache from '../cache';
-import { clone, JSON_parse, keep } from '../common';
+import { clone, JSON_parse, keep, localizeString } from '../common';
 import C from '../constant';
 import S from '../defaultPrefs';
 import G from './mg';
@@ -83,7 +83,7 @@ if (G.Prefs.getBoolPref('global.InternetPermission')) {
 
 G.LibSword.init();
 
-let ProgramTitle = 'xulsword';
+let ProgramTitle = '';
 
 const AvailableLanguages = [
   ...new Set(
@@ -498,9 +498,7 @@ const init = async () => {
     }
   }
 
-  const opts = { ns: 'branding' };
-  if (G.i18n.exists('program.title', opts))
-    ProgramTitle = G.i18n.t('program.title', opts);
+  ProgramTitle = localizeString(G.i18n, 'i18n:program.title');
 
   if (G.Prefs.getBoolPref('global.InternetPermission')) {
     autoUpdater.logger = log;
