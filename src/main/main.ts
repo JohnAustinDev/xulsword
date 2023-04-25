@@ -548,6 +548,24 @@ const init = async () => {
       }
     },
   });
+
+  // These user Pref compatibility updates may eventually be removed once they are
+  // no longer relevant.
+  // - moduleManager.repositories.xulsword was moved from branding to defaultPrefs
+  //   in 4.0.10-alpha.5
+  if (
+    (
+      G.Prefs.getComplexValue(
+        'moduleManager.repositories.xulsword'
+      ) as typeof S.prefs.moduleManager.repositories.xulsword
+    ).length === 0
+  ) {
+    log.info(`Applying pref update to: moduleManager.repositories.xulsword`);
+    G.Prefs.setComplexValue(
+      'moduleManager.repositories.xulsword',
+      S.prefs.moduleManager.repositories.xulsword
+    );
+  }
 };
 
 app.on('will-quit', () => {
