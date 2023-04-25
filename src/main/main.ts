@@ -159,7 +159,10 @@ ipcMain.on('did-finish-render', (event: IpcMainEvent) => {
       callingWin.focus();
     } else {
       syncShow.readyToShow = true;
-      if (SyncShow.every((x) => x.readyToShow)) showApp();
+      if (SyncShow.every((x) => x.readyToShow)) {
+        showApp();
+        G.getSystemFonts(); // Just a good time to do this in the background...
+      }
     }
     callingWin = null;
   }
