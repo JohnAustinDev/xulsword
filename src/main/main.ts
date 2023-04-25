@@ -565,6 +565,12 @@ const init = async () => {
       'moduleManager.repositories.xulsword',
       S.prefs.moduleManager.repositories.xulsword
     );
+    const columns = G.Prefs.getComplexValue(
+      'moduleManager.module.columns'
+    ) as typeof S.prefs.moduleManager.module.columns;
+    // eslint-disable-next-line prefer-destructuring
+    columns[13] = S.prefs.moduleManager.module.columns[13];
+    G.Prefs.setComplexValue('moduleManager.module.columns', columns);
   }
 };
 
