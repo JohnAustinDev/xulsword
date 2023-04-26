@@ -1,12 +1,12 @@
 .pdf-preview,
 .html-preview,
-.html-page {
+.htmlPage {
   height: 100%;
   margin: 0;
   overflow: hidden;
 }
 
-.html-page {
+.htmlPage {
   overflow: visible; /* make overlay shadow visible */
 }
 
@@ -31,24 +31,23 @@
 
 @media print {
   .print-settings,
-  .spacer,
   #overlay {
     display: none !important;
   }
 
   /* IMPORTANT: flex display breaks print paging! */
-  .html-preview,
-  .preview-flex,
-  .content {
+  .pageable .html-preview,
+  .pageable .preview-flex,
+  .pageable .content {
     display: block !important;
   }
 
   html,
   body,
   #root,
-  .html-preview,
-  .html-page,
-  #reset {
+  .pageable.html-preview,
+  .pageable .htmlPage,
+  .pageable #reset {
     overflow: unset !important;
   }
 }

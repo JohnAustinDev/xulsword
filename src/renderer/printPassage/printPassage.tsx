@@ -70,7 +70,7 @@ const propTypes = {
 };
 
 type PrintPassageProps = XulProps & {
-  print: Pick<RootPrintType, 'text' | 'controls'>;
+  print: Pick<RootPrintType, 'printContainer' | 'controls'>;
 };
 
 const notStatePrefDefault = {
@@ -133,7 +133,7 @@ export default class PrintPassageWin extends React.Component {
   ) {
     const state = this.state as PrintPassageState;
     const { print } = this.props as PrintPassageProps;
-    const tdiv = print.text.current;
+    const tdiv = print.printContainer.current;
     let { renderPromises } = this;
     const { chapters } = state;
     const valid = validPassage(chapters);
@@ -208,7 +208,7 @@ export default class PrintPassageWin extends React.Component {
                       if (html[i]) resolve(html[i]);
                       else {
                         const { print: pr } = xthis.props as PrintPassageProps;
-                        const tdivx = pr.text.current;
+                        const tdivx = pr.printContainer.current;
                         if (tdivx && key === tdivx.dataset.renderkey) {
                           log.silly(`Building chapter ${c[0]} ${c[1]}`);
                           prog += 1;
@@ -233,7 +233,7 @@ export default class PrintPassageWin extends React.Component {
                 renderPromises = funcs.map((f) => f());
                 const html2 = await Promise.all(renderPromises);
                 const { print: pr } = xthis.props as PrintPassageProps;
-                const tdivx = pr.text.current;
+                const tdivx = pr.printContainer.current;
                 if (tdivx) {
                   sanitizeHTML(tdivx, html2.join());
                   libswordImgSrc(tdivx);
@@ -272,8 +272,8 @@ export default class PrintPassageWin extends React.Component {
     return (
       <>
         <div
-          ref={print.text}
-          className="print print-pageable-text userFontBase"
+          ref={print.printContainer}
+          className="printContainer userFontBase"
           dir={G.Tab[vkMod].direction || 'auto'}
         />
 
@@ -356,7 +356,7 @@ PrintPassageWin.defaultProps = defaultProps;
 PrintPassageWin.propTypes = propTypes;
 
 const print: PrintPassageProps['print'] = {
-  text: React.createRef() as React.RefObject<HTMLDivElement>,
+  printContainer: React.createRef() as React.RefObject<HTMLDivElement>,
   controls: React.createRef() as React.RefObject<HTMLDivElement>,
 };
 

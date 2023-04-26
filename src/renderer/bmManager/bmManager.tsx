@@ -61,7 +61,7 @@ const propTypes = {
 };
 
 type BMManagerProps = XulProps & {
-  print: Pick<RootPrintType, 'text'>;
+  print: Pick<RootPrintType, 'printContainer'>;
 };
 
 const defaultNotStatePref = {
@@ -227,10 +227,10 @@ export default class BMManagerWin extends React.Component {
       return (
         <div
           {...htmlAttribs(
-            ['bmmanager print print-pageable-text userFontBase'],
+            ['bmmanager print printContainer userFontBase'],
             props
           )}
-          ref={print.text}
+          ref={print.printContainer}
         >
           {printItems.map((itemID) => this.printableItem(itemID))}
         </div>
@@ -436,7 +436,7 @@ BMManagerWin.defaultProps = defaultProps;
 BMManagerWin.propTypes = propTypes;
 
 const print: BMManagerProps['print'] = {
-  text: React.createRef(),
+  printContainer: React.createRef(),
 };
 
 renderToRoot(<BMManagerWin id="bookmarkManager" print={print} />, {

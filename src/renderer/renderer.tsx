@@ -434,8 +434,8 @@ WindowRoot.defaultProps = {
 export type RootPrintType = {
   pageable: boolean;
   dialogEnd: 'cancel' | 'close';
-  page: React.RefObject<HTMLDivElement>;
-  text: React.RefObject<HTMLDivElement>;
+  htmlPage: React.RefObject<HTMLDivElement>;
+  printContainer: React.RefObject<HTMLDivElement>;
   controls: React.RefObject<HTMLDivElement>;
   settings: React.RefObject<HTMLDivElement>;
 };
@@ -455,11 +455,11 @@ export default async function renderToRoot(
 ) {
   const { onload, onunload } = options || {};
   const { print: printArg, initialState: initialStateArg } = options || {};
-  const print = {
+  const print: RootPrintType = {
     pageable: false,
     dialogEnd: 'cancel' as const,
-    page: React.createRef() as React.RefObject<HTMLDivElement>,
-    text: React.createRef() as React.RefObject<HTMLDivElement>,
+    htmlPage: React.createRef() as React.RefObject<HTMLDivElement>,
+    printContainer: React.createRef() as React.RefObject<HTMLDivElement>,
     controls: React.createRef() as React.RefObject<HTMLDivElement>,
     settings: React.createRef() as React.RefObject<HTMLDivElement>,
     ...printArg,

@@ -267,13 +267,10 @@ html[dir='rtl'] .notebox-maximizer {
 
 /* Verse-per-line button */
 .versePerLineButton {
+  display: block;
   position: relative;
-  display: inline-block;
-  height: 1em;
-  /* border insures it appears at beginning of verse
-   even when verse text is empty */
-  border: 1px solid transparent;
 }
+
 .versePerLineButton > div {
   position: absolute;
   display: inline-block;

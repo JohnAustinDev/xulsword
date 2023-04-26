@@ -26,16 +26,16 @@
   z-index: 1; /* required during full screen for some reason */
 }
 
-.print-pageable-text {
+.pageable .printContainer {
   height: 100%;
   overflow: hidden;
   scroll-snap-type: x mandatory;
 }
-.print-pageable-text > * {
+.pageable .printContainer > * {
   scroll-snap-align: start;
 }
 
-.html-page {
+.htmlPage {
   position: relative;
 }
 .page-buttons {
@@ -48,7 +48,7 @@
     display: none !important;
   }
 
-  .print-pageable-text {
+  .pageable .printContainer {
     overflow: unset !important;
   }
 }

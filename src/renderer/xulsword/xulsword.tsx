@@ -448,7 +448,7 @@ export default class Xulsword extends React.Component {
             </Hbox>
           </Vbox>
 
-          <Spacer flex="1" orient="vertical" />
+          <Spacer flex="1" style={{ minWidth: '15px' }} orient="vertical" />
 
           <Hbox id="search-tool">
             <Vbox pack="start" align="center">
@@ -478,7 +478,7 @@ export default class Xulsword extends React.Component {
             </Vbox>
           </Hbox>
 
-          <Spacer flex="1" orient="vertical" />
+          <Spacer flex="1" style={{ minWidth: '10px' }} orient="vertical" />
 
           <Hbox id="optionButtons" align="start">
             <Button
@@ -511,7 +511,7 @@ export default class Xulsword extends React.Component {
             />
           </Hbox>
 
-          <Spacer flex="1" orient="vertical" />
+          <Spacer flex="1" style={{ minWidth: '10px' }} orient="vertical" />
         </Hbox>
 
         <Hbox pack="start" flex="1">

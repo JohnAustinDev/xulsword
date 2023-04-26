@@ -34,8 +34,7 @@ type PrintOverlayProps = XulProps & {
 
 export default function PrintOverlay(props: PrintOverlayProps) {
   const { iframeFilePath, content, printDisabled, print } = props;
-  let page;
-  if (print) ({ page } = print);
+  const { pageable, htmlPage } = print;
 
   const backHandler = () =>
     Subscription.publish.setRendererRootState({
@@ -62,10 +61,14 @@ export default function PrintOverlay(props: PrintOverlayProps) {
         </Vbox>
       )}
       {!iframeFilePath && (
-        <Hbox className="html-preview" pack="end" align="stretch">
+        <Hbox
+          className={`html-preview ${pageable ? 'pageable' : 'not-pageable'}`}
+          pack="end"
+          align="stretch"
+        >
           <Vbox className="preview-flex" pack="center" align="center" flex="1">
             <Spacer orient="horizontal" flex="1" />
-            <div id="html-page" className="html-page" ref={page}>
+            <div id="html-page" className="htmlPage" ref={htmlPage}>
               <div className="scale">
                 <div className="content">{content}</div>
               </div>
