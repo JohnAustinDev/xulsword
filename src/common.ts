@@ -261,6 +261,13 @@ export function mapp(
   return workObj;
 }
 
+// Font family names that are css keywords or contain numeric or punctuation
+// characters require quotes. But quotes are always allowed. So to normalize,
+// all font-family strings will be double quoted.
+export function normalizeFontFamily(fontFamily: string): string {
+  return `"${fontFamily.replace(/^['"](.*)['"]$/, '$1')}"`;
+}
+
 // Strings beginning with 'i18n:' are intended for possible localization. The
 // branding namespace is checked first, followed by xulsword. If there is no
 // localization, the key is returned with 'i18n:' prefix removed.

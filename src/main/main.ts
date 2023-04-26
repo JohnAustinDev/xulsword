@@ -159,10 +159,7 @@ ipcMain.on('did-finish-render', (event: IpcMainEvent) => {
       callingWin.focus();
     } else {
       syncShow.readyToShow = true;
-      if (SyncShow.every((x) => x.readyToShow)) {
-        showApp();
-        G.getSystemFonts(); // Just a good time to do this in the background...
-      }
+      if (SyncShow.every((x) => x.readyToShow)) showApp();
     }
     callingWin = null;
   }
@@ -510,6 +507,9 @@ const init = async () => {
       body: G.i18n.t('updater.message.body', { v1: '' }),
     });
   }
+
+  // Do this in the background...
+  G.getSystemFonts();
 
   log.catchErrors({
     showDialog: false,

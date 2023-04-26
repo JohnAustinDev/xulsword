@@ -2,6 +2,11 @@
   position: relative;
 }
 
+.chooseFont #fontsGrid .grid-cell {
+  display: flex;
+  align-items: center;
+}
+
 .chooseFont select {
   width: 200px;
 }
@@ -20,12 +25,12 @@
   margin: 3px;
 }
 
-.chooseFont .picker-button .color-box > div {
+.chooseFont .picker-button .chrome-picker {
   position: absolute;
   top: 0px;
   right: 50%;
 }
-html[dir='rtl'].chooseFont .picker-button .color-box > div {
+html[dir='rtl'].chooseFont .picker-button .chrome-picker {
   right: unset;
   left: 50%;
 }

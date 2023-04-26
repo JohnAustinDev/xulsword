@@ -1,3 +1,4 @@
+import { normalizeFontFamily } from 'common';
 import type { ConfigType } from '../type';
 import C from '../constant';
 import S from '../defaultPrefs';
@@ -5,7 +6,7 @@ import G from './rg';
 import log from './log';
 
 export type StyleType = {
-  [i in 'locale' | 'module']?: {
+  [i in 'locale' | 'module']: {
     [key in string | 'default']: Partial<ConfigType>;
   };
 };
@@ -212,7 +213,9 @@ class DynamicStyleSheet {
         if (path) {
           url2 = G.inlineFile(path, 'base64');
         }
-        const rule = `@font-face {font-family:'${fontFamily}'; src:url("${url2}");}`;
+        const rule = `@font-face {font-family:${normalizeFontFamily(
+          fontFamily
+        )}; src:url("${url2}");}`;
         sheet.insertRule(rule, sheet.cssRules.length);
       });
 

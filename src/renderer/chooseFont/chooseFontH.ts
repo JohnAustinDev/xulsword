@@ -1,7 +1,8 @@
 /* eslint-disable import/no-duplicates */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import C from '../../constant';
-import { clone, ofClass } from '../../common';
+import { clone, diff, ofClass } from '../../common';
+import log from '../log';
 import G from '../rg';
 
 import type { ConfigType } from '../../type';
@@ -36,14 +37,14 @@ const sliders = {
   lineHeight: { min: 1, max: 1.8, steps: 16, unit: '' },
 } as const;
 
-// Return new CSS states that correspond to a particular module's
-// user style. This is used to update ChooseFontWinState to display
-// the values of a module's user styles.
-export function extractModuleStyleState(
-  module: string,
-  style: StyleType
+// Return a partial chooseFont state (just the C.ConfigTemplate props) that will
+// display the values of a particular module style (or the module default style).
+export function styleToState(
+  style: StyleType,
+  module: string | 'default'
 ): Partial<ChooseFontWinState> {
-  const s: Partial<ChooseFontWinState> = { module };
+  const state: Partial<ChooseFontWinState> =
+    module === 'default' ? {} : { module };
   if (module && style) {
     Object.entries(C.ConfigTemplate).forEach((entry) => {
       const skey = entry[0] as keyof ChooseFontWinState;
@@ -62,80 +63,77 @@ export function extractModuleStyleState(
               b: Number(match[3]),
               a: Number(match[4]),
             };
-            s[skey] = color as any;
+            state[skey] = color as any;
           } else if (skey in sliders) {
             const lkey = skey as keyof typeof sliders;
             const { min, max, unit } = sliders[lkey];
             let p = Number(v.replace(unit, '')) || min + (max - min) / 2;
             p = 100 * ((p - min) / (max - min));
-            s[skey] = p as any;
-          } else s[skey] = v as any;
+            state[skey] = p as any;
+          } else state[skey] = v as any;
         } else {
-          s[skey] = startingState[skey] as any;
+          state[skey] = startingState[skey] as any;
         }
       }
     });
   }
-  return s;
+  return state;
 }
 
-// Return an updated StyleType by applying a state's CSS properties and
-// checkbox directives to a clone of its style property. The resulting style
-// can be saved to state or prefs, or applied to texts as a preview. Checkbox
-// directives are: removeModuleUserStyles, removeAllUserStyles, and makeDefault.
-// If removeAllUserStyles is checked, then all module StyleType configs
-// (including 'default') will be removed.
-export function getStyleFromState(state: ChooseFontWinState): StyleType {
+// Return an updated StyleType from a chooseFont state according to the state's
+// checkbox directives. The resulting style can be saved to state or prefs, or
+// applied to texts as a preview. Checkbox directives are: removeModuleUserStyles,
+// removeAllUserStyles, and makeDefault. If removeAllUserStyles is checked, then
+// all module StyleType configs (including 'default') will be removed.
+export function stateToStyle(state: ChooseFontWinState): StyleType {
   const {
     makeDefault,
     removeModuleUserStyles,
     removeAllUserStyles,
     module,
-    style,
+    style: oldstyle,
   } = state;
-  const newstyle = (style ? clone(style) : {}) as StyleType;
+
+  const style: StyleType = clone(oldstyle);
   function updateModuleStyle(modname: string | 'default', unset = false) {
-    if (!('module' in newstyle) || !newstyle.module) newstyle.module = {};
-    if (!(modname in newstyle.module) || !newstyle.module[modname])
-      newstyle.module[modname] = {};
-    Object.entries(C.ConfigTemplate).forEach((entry) => {
-      const skey = entry[0] as keyof ChooseFontWinState;
-      const ckey = entry[0] as keyof ConfigType;
-      if (entry[1].CSS) {
-        const config = newstyle.module && newstyle.module[modname];
-        if (config && typeof config === 'object') {
-          if (unset) {
-            if (newstyle.module) delete newstyle.module[modname];
-          } else {
-            let v = (state[skey] || null) as any;
-            if (v && typeof v === 'object' && 'r' in v)
-              v = `rgba(${v.r}, ${v.g}, ${v.b}, ${v.a})`;
-            if (Object.keys(sliders).includes(skey)) {
-              const lkey = skey as keyof typeof sliders;
-              const { min, max, steps, unit } = sliders[lkey];
-              const vpercent = Math.round((v * steps) / 100) / steps;
-              v = [min + vpercent * (max - min), unit].join('');
-            }
-            config[ckey] = v;
+    if (unset) {
+      delete style.module[modname];
+    } else {
+      const config = {} as ConfigType;
+      Object.entries(C.ConfigTemplate).forEach((entry) => {
+        const skey = entry[0] as keyof ChooseFontWinState;
+        const ckey = entry[0] as keyof ConfigType;
+        if (entry[1].CSS) {
+          let v = (state[skey] || null) as any;
+          if (v && typeof v === 'object' && 'r' in v)
+            v = `rgba(${v.r}, ${v.g}, ${v.b}, ${v.a})`;
+          if (Object.keys(sliders).includes(skey)) {
+            const lkey = skey as keyof typeof sliders;
+            const { min, max, steps, unit } = sliders[lkey];
+            const vpercent = Math.round((v * steps) / 100) / steps;
+            v = [min + vpercent * (max - min), unit].join('');
           }
+          config[ckey] = v;
         }
-      }
-    });
+      });
+      style.module[modname] = config;
+    }
   }
   if (removeAllUserStyles) {
-    if ('module' in newstyle) delete newstyle.module;
+    style.module = {};
   } else if (makeDefault) {
     updateModuleStyle('default');
+    if (module) updateModuleStyle(module, true);
   } else if (module && removeModuleUserStyles) {
     updateModuleStyle(module, true);
   } else if (module) {
     updateModuleStyle(module);
   }
-  return newstyle;
+  return style;
 }
 
-// Set a state value and also update state's style according to the result. If
-// value is undefined, the value type is assumed to be boolean and will be toggled.
+// Set a state property value and then do stateToStyle() to update state.style as well.
+// If value is undefined, the value type is assumed to be boolean and will be toggled.
 export function setStateValue(
   this: ChooseFontWin,
   key: keyof ChooseFontWinState,
@@ -147,7 +145,7 @@ export function setStateValue(
     else newState[key] = value;
     const s: Partial<ChooseFontWinState> = {
       [key]: newState[key],
-      style: getStyleFromState(newState),
+      style: stateToStyle(newState),
     };
     return s;
   });
@@ -168,8 +166,8 @@ export function computedStyle(module: string | null, key: string) {
       const [, r, g, b, , ax] = (cs[skey].match(rgbaRE) || []).map((n) =>
         Number(n)
       );
-      const a = ax || 1;
-      return !Number.isNaN(Number(r)) ? { r, g, b, a } : null;
+      const a = Number.isNaN(ax) ? 1 : ax;
+      return Number.isNaN(r) ? null : { r, g, b, a };
     }
   }
   return null;
@@ -194,7 +192,13 @@ export default function handler(this: ChooseFontWin, e: React.SyntheticEvent) {
         }
         case 'ok': {
           const okConfirmed = () => {
-            G.Prefs.setComplexValue('style', getStyleFromState(state), 'style');
+            const { module } = state;
+            const style = stateToStyle(state);
+            if (module && !diff(style.module.default, style.module[module])) {
+              delete style.module[module];
+            }
+            log.debug(`ChooseFont style: `, style);
+            G.Prefs.setComplexValue('style', style, 'style');
             preclose();
             G.Window.close();
           };
@@ -212,8 +216,8 @@ export default function handler(this: ChooseFontWin, e: React.SyntheticEvent) {
         }
         case 'background':
         case 'color': {
-          const menu = ofClass(['menu'], target);
-          if (!menu) this.setStateValue(`${currentTarget.id}open`);
+          const onPicker = ofClass(['chrome-picker'], target);
+          if (!onPicker) this.setStateValue(`${currentTarget.id}open`);
           break;
         }
         default:
@@ -229,34 +233,44 @@ export default function handler(this: ChooseFontWin, e: React.SyntheticEvent) {
         case 'removeModuleUserStyles':
         case 'removeAllUserStyles':
         case 'makeDefault': {
-          // When one of these becomes checked, a clone of the current style
+          // When one of these becomes checked, a clone of the previous style
           // is saved as its state value, and all other inputs become disabled.
-          // Then the user has the choice to either save the new style or restore
-          // the saved style by unchecking the checkbox.
-          this.setState((prevState: ChooseFontWinState) => {
-            const newState = clone(prevState) as ChooseFontWinState;
-            let newStyle;
-            const cbvalue = newState[targid];
-            if (!cbvalue) {
-              newState[targid] = newState.style;
-              newStyle = getStyleFromState(newState);
-            } else {
-              newStyle = cbvalue;
-              newState[targid] = null;
+          // Then the user only has the choice to either apply the new style or
+          // restore the saved style by unchecking the checkbox.
+          this.setState(
+            (
+              prevState0: ChooseFontWinState
+            ): Partial<ChooseFontWinState> | null => {
+              const prevState = clone(prevState0) as ChooseFontWinState;
+              if (prevState.module) {
+                let style;
+                if (!prevState[targid]) {
+                  prevState[targid] = prevState.style;
+                  style = stateToStyle(prevState);
+                } else {
+                  style = prevState[targid] as StyleType;
+                  prevState[targid] = null;
+                }
+                return {
+                  [targid]: prevState[targid],
+                  style,
+                  ...styleToState(
+                    style,
+                    targid === 'makeDefault' && prevState[targid]
+                      ? 'default'
+                      : prevState.module
+                  ),
+                };
+              }
+              return null;
             }
-            const s: Partial<ChooseFontWinState> = {
-              [targid]: newState[targid],
-              style: newStyle,
-              ...extractModuleStyleState(newState.module || '', newStyle),
-            };
-            return s;
-          });
+          );
           break;
         }
         case 'module': {
           const select = target as HTMLSelectElement;
           this.setState((prevState: ChooseFontWinState) => {
-            return extractModuleStyleState(select.value, prevState.style);
+            return styleToState(prevState.style, select.value);
           });
           break;
         }

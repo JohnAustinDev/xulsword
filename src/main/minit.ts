@@ -15,6 +15,7 @@ import {
   JSON_parse,
   validateViewportModulePrefs,
   keep,
+  normalizeFontFamily,
 } from '../common';
 import Cache from '../cache';
 import Subscription from '../subscription';
@@ -553,7 +554,9 @@ export async function getSystemFonts(): Promise<string[]> {
       let allfonts = getModuleFonts()
         .map((f) => f.fontFamily)
         .concat(fonts);
-      allfonts = Array.from(new Set(allfonts));
+      allfonts = Array.from(
+        new Set(allfonts.map((f) => normalizeFontFamily(f)))
+      );
       if (!Cache.has('fontList')) {
         Cache.write(allfonts, 'fontList');
       }

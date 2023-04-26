@@ -5,7 +5,7 @@ import type { ReactElementLike } from 'prop-types';
 import React from 'react';
 import { ChromePicker as ColorPicker } from 'react-color';
 import { Slider } from '@blueprintjs/core';
-import { diff } from '../../common';
+import { diff, normalizeFontFamily } from '../../common';
 import G from '../rg';
 import renderToRoot from '../renderer';
 import log from '../log';
@@ -22,13 +22,15 @@ import Dialog from '../libxul/dialog';
 import Grid, { Columns, Column, Rows, Row } from '../libxul/grid';
 import Spacer from '../libxul/spacer';
 import handlerH, {
-  extractModuleStyleState,
+  styleToState,
   startingState,
   setStateValue as setStateValueH,
   preclose,
   computedStyle,
 } from './chooseFontH';
 import './chooseFont.css';
+
+const nocolor = { r: 128, g: 128, b: 128, a: 128 };
 
 const defaultProps = xulDefaultProps;
 
@@ -58,6 +60,8 @@ export default class ChooseFontWin extends React.Component {
 
   static propTypes: typeof propTypes;
 
+  value: { [p in keyof ChooseFontWinState]?: ChooseFontWinState[p] };
+
   handler: (e: React.SyntheticEvent) => void;
 
   setStateValue: (key: keyof ChooseFontWinState, value?: any) => void;
@@ -67,10 +71,13 @@ export default class ChooseFontWin extends React.Component {
 
     const { module } = windowArguments('chooseFontState') as { module: string };
 
-    this.state = {
+    const s: ChooseFontWinState = {
       ...startingState,
-      ...extractModuleStyleState(module, startingState.style),
+      ...styleToState(startingState.style, module),
     };
+    this.state = s;
+
+    this.value = {};
 
     this.handler = handlerH.bind(this);
     this.setStateValue = setStateValueH.bind(this);
@@ -93,11 +100,14 @@ export default class ChooseFontWin extends React.Component {
       G.Window.reset('dynamic-stylesheet-reset', 'all');
       log.silly('componentDidUpdate style:', state.style);
     }
+    const { value } = this;
+    const d = diff(state, value);
+    if (d) this.setState(d);
   }
 
   render() {
     const state = this.state as ChooseFontWinState;
-    const { handler, setStateValue } = this;
+    const { value, handler, setStateValue } = this;
     const {
       module,
       makeDefault,
@@ -111,11 +121,10 @@ export default class ChooseFontWin extends React.Component {
       ruSureDialog,
     } = state;
 
-    const showBackgroundRow = false;
     const fontOptions: ReactElementLike[] = [
       <option key="empty" value="" label={G.i18n.t('choose.label')} />,
     ];
-    if (fonts) {
+    if (fonts.length) {
       fontOptions.splice(
         1,
         0,
@@ -144,20 +153,26 @@ export default class ChooseFontWin extends React.Component {
       const x = computed as any;
       x[key] = state[key] || computedStyle(module, key) || startingState[key];
     });
-
-    const nocolor = { r: 128, g: 128, b: 128, a: 128 };
-    const fc = (!disabled && computed.color) || nocolor;
-    const bc = (!disabled && computed.background) || nocolor;
+    value.fontFamily = normalizeFontFamily(computed.fontFamily);
+    value.color = computed.color || nocolor;
+    value.background = null; // disable background, who would use it?
+    const { fontFamily, color, background } = value;
+    let colorCSS;
+    if (color) {
+      const { r: cr, g: cg, b: cb, a: ca } = disabled ? nocolor : color;
+      colorCSS = `background-color: rgb(${cr}, ${cg}, ${cb}, ${ca});`;
+    }
+    let backgroundCSS;
+    if (background) {
+      const { r: br, g: bg, b: bb, a: ba } = disabled ? nocolor : background;
+      backgroundCSS = `background-color: rgb(${br}, ${bg}, ${bb}, ${ba});`;
+    }
 
     return (
       <Vbox>
         <style>{`
-        #color .color-box {
-          background-color: rgb(${fc.r}, ${fc.g}, ${fc.b}, ${fc.a});
-        }
-        #background .color-box {
-          background-color: rgb(${bc.r}, ${bc.g}, ${bc.b}, ${bc.a});
-        }`}</style>
+        #color .color-box {${colorCSS}}
+        #background .color-box {${backgroundCSS}}`}</style>
         {ruSureDialog && (
           <Dialog
             body={G.i18n.t('dialog.confirmDelete')}
@@ -211,7 +226,7 @@ export default class ChooseFontWin extends React.Component {
                 />
                 <Menulist
                   id="fontFamily"
-                  value={computed.fontFamily}
+                  value={fontFamily}
                   options={fontOptions}
                   disabled={disabled}
                   onChange={handler}
@@ -265,7 +280,7 @@ export default class ChooseFontWin extends React.Component {
                   <div className="color-box">
                     {coloropen && (
                       <ColorPicker
-                        color={fc}
+                        color={disabled ? nocolor : color}
                         defaultView="rgb"
                         onChange={(c: PickerColorType) => {
                           this.setState({ color: c.rgb });
@@ -275,7 +290,7 @@ export default class ChooseFontWin extends React.Component {
                   </div>
                 </Button>
               </Row>
-              {showBackgroundRow && (
+              {background && (
                 <Row>
                   <Hbox />
                   <Hbox />
@@ -292,7 +307,7 @@ export default class ChooseFontWin extends React.Component {
                     <div className="color-box">
                       {backgroundopen && (
                         <ColorPicker
-                          color={bc}
+                          color={disabled ? nocolor : background}
                           defaultView="rgb"
                           onChange={(c: PickerColorType) => {
                             this.setState({ background: c.rgb });
