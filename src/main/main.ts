@@ -514,10 +514,7 @@ const init = async () => {
   log.catchErrors({
     showDialog: false,
     onError(error, versions, submitIssue) {
-      if (
-        !C.isDevelopment &&
-        !error.message.includes('net::ERR_INTERNET_DISCONNECTED')
-      ) {
+      if (!C.isDevelopment && !error.message.includes('net::ERR')) {
         // eslint-disable-next-line promise/no-promise-in-callback
         dialog
           .showMessageBox({
@@ -568,9 +565,13 @@ const init = async () => {
       'moduleManager.repositories.xulsword',
       S.prefs.moduleManager.repositories.xulsword
     );
-    const columns = G.Prefs.getComplexValue(
-      'moduleManager.module.columns'
-    ) as typeof S.prefs.moduleManager.module.columns;
+  }
+  // - moduleManager.module.columns[13] heading changed in 4.0.10-alpha.5
+  const columns = G.Prefs.getComplexValue(
+    'moduleManager.module.columns'
+  ) as typeof S.prefs.moduleManager.module.columns;
+  if (columns[13].heading.startsWith('icon:')) {
+    log.info(`Applying pref update to: moduleManager.module.columns[13]`);
     // eslint-disable-next-line prefer-destructuring
     columns[13] = S.prefs.moduleManager.module.columns[13];
     G.Prefs.setComplexValue('moduleManager.module.columns', columns);

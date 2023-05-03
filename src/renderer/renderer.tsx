@@ -15,7 +15,7 @@ import { createRoot } from 'react-dom/client';
 import PropTypes from 'prop-types';
 import { Intent, ProgressBar, Spinner, Tag } from '@blueprintjs/core';
 import Subscription from '../subscription';
-import { sanitizeHTML, stringHash } from '../common';
+import { randomID, sanitizeHTML, stringHash } from '../common';
 import Cache from '../cache';
 import C from '../constant';
 import G from './rg';
@@ -103,7 +103,7 @@ const propTypes = {
 };
 
 const InitialState = {
-  reset: 0 as number,
+  reset: '' as string,
   dialogs: [] as ReactElement[],
   showPrintOverlay: false as boolean,
   printDisabled: false,
@@ -116,6 +116,7 @@ const InitialState = {
 export type WindowRootState = typeof InitialState;
 
 type WindowRootProps = WindowRootOptions & {
+  isPrintContainer: boolean;
   children: ReactElement;
 };
 
@@ -130,7 +131,7 @@ type StateArray<M extends keyof WindowRootState> = [
 const delayHandlerThis = {};
 
 function WindowRoot(props: WindowRootProps) {
-  const { children, print, initialState: istate } = props;
+  const { children, print, isPrintContainer, initialState: istate } = props;
 
   const s = {} as { [k in keyof typeof InitialState]: StateArray<k> };
   stateme.forEach((me) => {
@@ -147,7 +148,7 @@ function WindowRoot(props: WindowRootProps) {
       );
       DynamicStyleSheet.update(G.Data.read('stylesheetData'));
       Cache.clear();
-      s.reset[1](s.reset[0] + 1);
+      s.reset[1](randomID());
     });
   });
 
@@ -191,7 +192,7 @@ function WindowRoot(props: WindowRootProps) {
         delayHandler.bind(delayHandlerThis)(
           () => {
             log.debug(`Renderer reset (component): ${descriptor.id}`);
-            s.reset[1](s.reset[0] + 1);
+            s.reset[1](randomID());
           },
           C.UI.Window.resizeDelay,
           'resizeTO'
@@ -254,7 +255,7 @@ function WindowRoot(props: WindowRootProps) {
         );
         DynamicStyleSheet.update(G.Data.read('stylesheetData'));
         Cache.clear();
-        s.reset[1](s.reset[0] + 1);
+        s.reset[1](randomID());
         const dialog: ReactElement[] = [];
         const cipherKeys: CipherKey[] = [];
         const setCipherKey = () => {
@@ -416,6 +417,7 @@ function WindowRoot(props: WindowRootProps) {
       <PrintOverlay
         content={content}
         print={print}
+        isPrintContainer={isPrintContainer}
         printDisabled={s.printDisabled[0]}
         iframeFilePath={s.iframeFilePath[0]}
       />
@@ -434,7 +436,7 @@ WindowRoot.defaultProps = {
 export type RootPrintType = {
   pageable: boolean;
   dialogEnd: 'cancel' | 'close';
-  htmlPage: React.RefObject<HTMLDivElement>;
+  pageView: React.RefObject<HTMLDivElement>;
   printContainer: React.RefObject<HTMLDivElement>;
   controls: React.RefObject<HTMLDivElement>;
   settings: React.RefObject<HTMLDivElement>;
@@ -458,7 +460,7 @@ export default async function renderToRoot(
   const print: RootPrintType = {
     pageable: false,
     dialogEnd: 'cancel' as const,
-    htmlPage: React.createRef() as React.RefObject<HTMLDivElement>,
+    pageView: React.createRef() as React.RefObject<HTMLDivElement>,
     printContainer: React.createRef() as React.RefObject<HTMLDivElement>,
     controls: React.createRef() as React.RefObject<HTMLDivElement>,
     settings: React.createRef() as React.RefObject<HTMLDivElement>,
@@ -473,7 +475,11 @@ export default async function renderToRoot(
 
   root.render(
     <StrictMode>
-      <WindowRoot print={print} initialState={initialState}>
+      <WindowRoot
+        print={print}
+        isPrintContainer={!options?.print?.printContainer}
+        initialState={initialState}
+      >
         {component}
       </WindowRoot>
     </StrictMode>

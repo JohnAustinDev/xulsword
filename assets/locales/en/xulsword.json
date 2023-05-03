@@ -101,6 +101,7 @@
    "locale_direction" : "ltr",
    "location.label" : "Location",
    "makeDefault.label" : "Set as default",
+   "maximumPages" : "Printing pages",
    "menu.addNewModule" : "Add New Modules",
    "menu.bmitem.add.ac" : "D",
    "menu.bookmark.add" : "New Bookmark...",

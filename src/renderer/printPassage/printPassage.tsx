@@ -14,6 +14,7 @@ import { ProgressBar } from '@blueprintjs/core';
 import Subscription from '../../subscription';
 import { diff, sanitizeHTML, stringHash } from '../../common';
 import S from '../../defaultPrefs';
+import C from '../../constant';
 import G from '../rg';
 import renderToRoot, { RootPrintType } from '../renderer';
 import {
@@ -89,8 +90,6 @@ export default class PrintPassageWin extends React.Component {
 
   static propTypes: typeof propTypes;
 
-  renderPromises: Promise<string>[];
-
   pagebuttons: React.RefObject<HTMLDivElement>;
 
   handler: typeof handlerH;
@@ -113,8 +112,6 @@ export default class PrintPassageWin extends React.Component {
     // before first render!
     setStatePref('prefs', 'printPassage', null, s);
 
-    this.renderPromises = [];
-
     this.pagebuttons = React.createRef();
 
     this.handler = handlerH.bind(this);
@@ -134,21 +131,23 @@ export default class PrintPassageWin extends React.Component {
     const state = this.state as PrintPassageState;
     const { print } = this.props as PrintPassageProps;
     const tdiv = print.printContainer.current;
-    let { renderPromises } = this;
-    const { chapters } = state;
+    const { chapters, progress } = state;
     const valid = validPassage(chapters);
-    if (diff(chapters, valid)) {
+    if (prevState.progress !== -1 && progress === -1) {
+      Subscription.publish.setRendererRootState({
+        printDisabled: false,
+      });
+    } else if (diff(chapters, valid)) {
       this.setState({ chapters: valid });
     } else if (tdiv) {
       setStatePref('prefs', 'printPassage', prevState, state);
-      const { checkbox } = state;
       if (!chapters) return;
+      const { checkbox } = state;
       const { vkMod, book, chapter, lastchapter, v11n } = chapters;
       const show = { ...checkbox, strongs: false, morph: false };
       const renderkey = stringHash(vkMod, chapter, lastchapter, show);
       if (lastchapter && tdiv.dataset.renderkey !== renderkey) {
         tdiv.dataset.renderkey = renderkey;
-        renderPromises = [];
         const settings = {
           module: vkMod,
           show,
@@ -194,13 +193,13 @@ export default class PrintPassageWin extends React.Component {
         this.setState({ progress: 0 });
         setTimeout(
           () =>
-            (async function writeToDOM(
+            (async (
               xthis: PrintPassageWin,
               key: string,
               chaps: [OSISBookType, number][],
               html: string[]
-            ) {
-              let prog = 0;
+            ) => {
+              let pages = 0;
               const funcs = chaps.map((c, i) => {
                 return async (): Promise<string> => {
                   return new Promise((resolve, reject) =>
@@ -211,8 +210,10 @@ export default class PrintPassageWin extends React.Component {
                         const tdivx = pr.printContainer.current;
                         if (tdivx && key === tdivx.dataset.renderkey) {
                           log.silly(`Building chapter ${c[0]} ${c[1]}`);
-                          prog += 1;
-                          xthis.setState({ progress: prog / chaps.length });
+                          pages += 1;
+                          xthis.setState({
+                            progress: pages / C.UI.Print.maxPages,
+                          });
                           resolve(
                             bibleChapterText({
                               ...settings,
@@ -230,22 +231,39 @@ export default class PrintPassageWin extends React.Component {
                 };
               });
               try {
-                renderPromises = funcs.map((f) => f());
-                const html2 = await Promise.all(renderPromises);
-                const { print: pr } = xthis.props as PrintPassageProps;
-                const tdivx = pr.printContainer.current;
-                if (tdivx) {
-                  sanitizeHTML(tdivx, html2.join());
-                  libswordImgSrc(tdivx);
+                const div = print.printContainer.current;
+                if (div) {
+                  div.innerHTML = '';
+                  let done = false;
+                  while (funcs.length) {
+                    const func = funcs.shift() as () => Promise<string>;
+                    if (!done) {
+                      log.debug(
+                        `Loading chapter to DOM: ${chaps.length - funcs.length}`
+                      );
+                      const h = await func();
+                      div.innerHTML += sanitizeHTML(h);
+                      libswordImgSrc(div);
+                      pages = Math.floor(div.scrollWidth / div.clientWidth);
+                      // Exceeding this may cause Electron.webContents.printToPDF to hang.
+                      if (pages > C.UI.Print.maxPages) {
+                        done = true;
+                        log.info(
+                          `Stopping passage render at ${pages} pages (skipped ${funcs.length} chapters}).`
+                        );
+                      }
+                    }
+                  }
+                  log.debug(
+                    `Finished loading ${Math.floor(
+                      div.scrollWidth / div.clientWidth
+                    )} pages to DOM`
+                  );
                 }
-                log.debug(`Finished loading ${html2.length} chapters to DOM`);
               } catch (er) {
                 log.debug(er);
               } finally {
                 xthis.setState({ progress: -1 });
-                Subscription.publish.setRendererRootState({
-                  printDisabled: false,
-                });
               }
             })(this, renderkey, renderChaps, renderHTML),
           1000
@@ -296,7 +314,7 @@ export default class PrintPassageWin extends React.Component {
                 />
                 {progress !== -1 && (
                   <ProgressBar
-                    value={progress}
+                    value={undefined}
                     intent="primary"
                     animate
                     stripes

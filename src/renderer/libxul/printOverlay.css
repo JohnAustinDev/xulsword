@@ -1,12 +1,12 @@
 .pdf-preview,
-.html-preview,
-.htmlPage {
+.printoverlay,
+.pageView {
   height: 100%;
   margin: 0;
   overflow: hidden;
 }
 
-.htmlPage {
+.pageView {
   overflow: visible; /* make overlay shadow visible */
 }
 
@@ -20,34 +20,34 @@
 
 .content {
   position: relative; /* for overlay */
-  display: grid;
   background: white;
 }
 
-.print-settings {
-  padding: 10px 10px 10px 0;
-  margin-inline-start: -5px;
-}
-
 @media print {
-  .print-settings,
+  .printoverlay > *:not(.pageView-container),
   #overlay {
     display: none !important;
   }
 
   /* IMPORTANT: flex display breaks print paging! */
-  .pageable .html-preview,
-  .pageable .preview-flex,
-  .pageable .content {
+  .printoverlay,
+  .pageView-container,
+  .pageView,
+  .scale,
+  .content,
+  .printContainer {
     display: block !important;
   }
 
   html,
   body,
   #root,
-  .pageable.html-preview,
-  .pageable .htmlPage,
-  .pageable #reset {
-    overflow: unset !important;
+  .pageable.printoverlay,
+  .pageable .pageView-container,
+  .pageable .pageView,
+  .pageable .scale,
+  .pageable .content,
+  .pageable .printContainer {
+    overflow: visible !important;
   }
 }

@@ -1,3 +1,4 @@
+/* eslint-disable no-continue */
 /* eslint-disable react/forbid-prop-types */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react/jsx-props-no-spreading */
@@ -10,10 +11,17 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
-import { Icon, Intent, Position, Toaster } from '@blueprintjs/core';
+import {
+  IToastProps,
+  Icon,
+  Intent,
+  Position,
+  Toaster,
+} from '@blueprintjs/core';
 import Subscription from '../../subscription';
-import { clone } from '../../common';
+import { clone, diff, keep, randomID } from '../../common';
 import S from '../../defaultPrefs';
+import C from '../../constant';
 import G from '../rg';
 import log from '../log';
 import { getStatePref, setStatePref } from '../rutil';
@@ -53,7 +61,11 @@ const normal: Partial<WindowRootState> = {
   progress: -1,
 };
 
-const pmargin = 20;
+const headerTemplate = '<span></span>';
+const footerTemplate = `
+  <div style="font-size: 8px; padding-inline-start: 10px;">
+    <span class="pageNumber"></span> / <span class="totalPages"></span>
+  </div>`;
 
 const defaultProps = {
   ...xulDefaultProps,
@@ -67,18 +79,17 @@ const propTypes = {
   dialogEnd: PropTypes.string,
 };
 
-type PrintProps = XulProps & {
+type PrintSettingsProps = XulProps & {
   print: RootPrintType;
   printDisabled: boolean;
 };
 
 const notStatePref = {
-  scrollLeft: 0 as number,
-  showpaging: false as boolean,
-  htmlPageW: 0 as number,
+  page: 0 as number,
+  pages: 0 as number,
 };
 
-export type PrintState = typeof S.prefs.print & typeof notStatePref;
+export type PrintSettingsState = typeof S.prefs.print & typeof notStatePref;
 
 export default class PrintSettings extends React.Component {
   static defaultProps: typeof defaultProps;
@@ -99,20 +110,16 @@ export default class PrintSettings extends React.Component {
 
   pagebuttons: React.RefObject<HTMLDivElement>;
 
+  pageScrollW: number;
+
   resetTO: NodeJS.Timeout | null;
 
   toaster: Toaster | undefined;
 
-  refHandlers = {
-    toaster: (ref: Toaster) => {
-      this.toaster = ref;
-    },
-  };
-
-  constructor(props: PrintProps) {
+  constructor(props: PrintSettingsProps) {
     super(props);
 
-    const s: PrintState = {
+    const s: PrintSettingsState = {
       ...(getStatePref('prefs', 'print') as typeof S.prefs.print),
       ...notStatePref,
     };
@@ -130,9 +137,11 @@ export default class PrintSettings extends React.Component {
       scale: React.createRef(),
     };
 
-    this.updatePageButtons = this.updatePageButtons.bind(this);
-    this.updatePageWidth = this.updatePageWidth.bind(this);
+    this.addToast = this.addToast.bind(this);
+    this.getPageInfo = this.getPageInfo.bind(this);
+    this.scrollToPage = this.scrollToPage.bind(this);
 
+    this.pageScrollW = 0;
     this.pagebuttons = React.createRef();
     this.iframe = React.createRef();
 
@@ -140,110 +149,123 @@ export default class PrintSettings extends React.Component {
   }
 
   componentDidMount() {
-    this.updatePageButtons();
-    this.updatePageWidth();
+    this.forceUpdate(); // to re-render now with print.settings
   }
 
-  componentDidUpdate(_prevProps: PrintProps, prevState: PrintState) {
+  componentDidUpdate(
+    prevProps: PrintSettingsProps,
+    prevState: PrintSettingsState
+  ) {
+    const { pages } = this.state as PrintSettingsState;
+    const { printDisabled, print } = this.props as PrintSettingsProps;
+    const { pageable } = print;
     setStatePref('prefs', 'print', prevState, this.state);
-    this.updatePageButtons();
-    this.updatePageWidth();
+    // If we're multi-page and certain state prefs were changed, reset root now,
+    // so content can be redrawn, because the page limit means content will change.
+    if (
+      pageable &&
+      diff(
+        prevState,
+        keep(this.state as PrintSettingsState, [
+          'landscape',
+          'margins',
+          'pageSize',
+          'scale',
+          'twoColumns',
+        ])
+      )
+    ) {
+      Subscription.publish.setRendererRootState({ reset: randomID() });
+    } else if (!pages || (prevProps.printDisabled && !printDisabled)) {
+      // Update number of pages if printDisabled was just set to false.
+      this.setPages();
+    }
   }
 
   async handler(e: React.SyntheticEvent<any, any>) {
-    const props = this.props as PrintProps;
-    const { print } = props;
-    const { printContainer, pageable } = print;
-    const state = this.state as PrintState;
-    // Electron marginsType must be undefined for paged media to work
-    // properly, and must be 1 (no margins) for window print margins to
-    // work via the CSS @page rules.
-    const marginsType = pageable ? undefined : 1;
-    // The margins state should never be passed to Electron because
-    // margins are handled through CSS @page rules. Also, landscape
-    // and pageSize do not need to be passed because they are also
-    // handled through CSS @page rules.
-    const electronOptions = { marginsType };
-    const { selectRefs } = this;
+    const state = this.state as PrintSettingsState;
+    const { selectRefs, scrollToPage } = this;
     const target = e.currentTarget as HTMLElement;
     const [id, id2] = target.id.split('.');
+    const round = (n: number): number => {
+      return Math.round(n * 100) / 100;
+    };
     switch (e.type) {
       case 'click': {
-        const container = printContainer.current;
+        const { landscape, pageSize, margins, page, pages } = state;
+        const electronOptions: Electron.PrintToPDFOptions = {
+          landscape,
+          displayHeaderFooter: true,
+          printBackground: true,
+          scale: 1,
+          pageSize,
+          margins: {
+            top: round((margins.top * convertToPx.mm) / convertToPx.in),
+            right: round((margins.right * convertToPx.mm) / convertToPx.in),
+            bottom: round((margins.bottom * convertToPx.mm) / convertToPx.in),
+            left: round((margins.left * convertToPx.mm) / convertToPx.in),
+          },
+          pageRanges: `1-${pages}`,
+          headerTemplate,
+          footerTemplate,
+          preferCSSPageSize: false,
+        };
         switch (id) {
           case 'pagefirst': {
-            if (container) {
-              container.scrollLeft = 0;
-              this.setState({
-                scrollLeft: 0,
-              } as Partial<PrintState>);
-            }
+            scrollToPage(1);
+            this.setState({
+              page: 1,
+            } as Partial<PrintSettingsState>);
             break;
           }
           case 'pageprev': {
-            if (container) {
-              this.setState((prevState: PrintState) => {
-                let { scrollLeft } = prevState;
-                scrollLeft -= 1.2 * container.clientWidth;
-                container.scrollLeft = scrollLeft;
-                // CSS Scroll Snap adjusts scrollLeft here!
-                return {
-                  scrollLeft: container.scrollLeft,
-                } as Partial<PrintState>;
-              });
-            }
+            const newPage = page > 1 ? page - 1 : page;
+            scrollToPage(newPage);
+            this.setState({
+              page: newPage,
+            } as Partial<PrintSettingsState>);
             break;
           }
           case 'pagenext': {
-            if (container) {
-              this.setState((prevState: PrintState) => {
-                let { scrollLeft } = prevState;
-                scrollLeft += 1.2 * container.clientWidth;
-                container.scrollLeft = scrollLeft;
-                // CSS Scroll Snap adjusts scrollLeft here!
-                return {
-                  scrollLeft: container.scrollLeft,
-                } as Partial<PrintState>;
-              });
-            }
+            const newPage = page < pages ? page + 1 : page;
+            scrollToPage(newPage);
+            this.setState({
+              page: newPage,
+            } as Partial<PrintSettingsState>);
             break;
           }
           case 'pagelast': {
-            if (container) {
-              this.setState((prevState: PrintState) => {
-                let { scrollLeft } = prevState;
-                scrollLeft = container.scrollWidth - container.clientWidth;
-                container.scrollLeft = scrollLeft;
-                // CSS Scroll Snap adjusts scrollLeft here!
-                return {
-                  scrollLeft: container.scrollLeft,
-                } as Partial<PrintState>;
-              });
-            }
+            scrollToPage(pages);
+            this.setState({
+              page: pages,
+            } as Partial<PrintSettingsState>);
             break;
           }
           case 'portrait':
           case 'landscape': {
-            const s: Partial<PrintState> = {
+            const s: Partial<PrintSettingsState> = {
               landscape: id === 'landscape',
+              pages: 0,
             };
             this.setState(s);
             break;
           }
           case 'columns': {
-            const s: Partial<PrintState> = {
+            const s: Partial<PrintSettingsState> = {
               twoColumns: id2 === '2',
+              pages: 0,
             };
             this.setState(s);
             break;
           }
           case 'margin': {
-            this.setState((prevState: PrintState) => {
+            this.setState((prevState: PrintSettingsState) => {
               const s = {
                 margins: clone(prevState.margins),
-              } as PrintState;
+                pages: 0,
+              } as PrintSettingsState;
               const input = e.target as HTMLInputElement;
-              s.margins[id2 as keyof PrintState['margins']] = Number(
+              s.margins[id2 as keyof PrintSettingsState['margins']] = Number(
                 input.value
               );
               return s;
@@ -343,8 +365,9 @@ export default class PrintSettings extends React.Component {
         switch (id) {
           case 'pageSize': {
             const select = e.target as HTMLSelectElement;
-            const s: Partial<PrintState> = {
+            const s: Partial<PrintSettingsState> = {
               pageSize: select.value as any,
+              pages: 0,
             };
             this.setState(s);
             break;
@@ -365,8 +388,9 @@ export default class PrintSettings extends React.Component {
               const id2x = id2 as keyof PrintSettings['selectRefs']['margins'];
               const select = selectRefs.margins[id2x].current;
               if (select) {
-                const s: Partial<PrintState> = {
+                const s: Partial<PrintSettingsState> = {
                   margins: { ...state.margins, [id2]: Number(select.value) },
+                  pages: 0,
                 };
                 this.setState(s);
               }
@@ -378,7 +402,7 @@ export default class PrintSettings extends React.Component {
                 let scale = Number(select.value);
                 if (scale > scaleLimit.max) scale = scaleLimit.max;
                 if (scale < scaleLimit.min) scale = scaleLimit.min;
-                const s: Partial<PrintState> = { scale };
+                const s: Partial<PrintSettingsState> = { scale, pages: 0 };
                 this.setState(s);
               }
               break;
@@ -396,157 +420,271 @@ export default class PrintSettings extends React.Component {
     }
   }
 
-  updatePageButtons() {
-    const { showpaging } = this.state as PrintState;
-    const { print } = this.props as PrintProps;
-    const { printContainer } = print;
-    const showpagingNow =
-      (printContainer?.current?.scrollWidth ?? 0) >
-      (printContainer?.current?.clientWidth ?? 0);
-    if (showpaging !== showpagingNow)
-      this.setState({ showpaging: showpagingNow } as Partial<PrintState>);
-  }
-
-  updatePageWidth() {
-    const state = this.state as PrintState;
-    const { print } = this.props as PrintProps;
-    const { settings } = print;
-    if (settings.current) {
+  getPageInfo(): {
+    paperSize: typeof paperSizes[number];
+    initialPageViewW: number;
+    pageViewW: number;
+    pageViewH: number;
+    contentW: number;
+    contentH: number;
+    pageViewToContentScale: number;
+    realPaperW: number;
+    realPaperH: number;
+    pageViewMaxH: number;
+    pagebuttonsW: number;
+    pageToContentScale: number;
+  } {
+    const { landscape, pageSize, margins } = this.state as PrintSettingsState;
+    const { print } = this.props as PrintSettingsProps;
+    const { pageable, settings, printContainer } = print;
+    const { pagebuttons } = this;
+    if (settings.current && printContainer.current) {
       const settingsW = (settings.current.parentElement as HTMLDivElement)
         .clientWidth;
-      // htmlPageW can be anything, but it must be known
-      let htmlPageW = window.innerWidth - settingsW - 2 * pmargin;
-      if (htmlPageW < 100) htmlPageW = 100;
-      if (htmlPageW !== state.htmlPageW) {
-        const s: Partial<PrintState> = {
-          htmlPageW,
-        };
-        this.setState(s);
+      // initialPageViewW can be anything, but it must be known
+      let initialPageViewW =
+        window.innerWidth - settingsW - 3 * C.UI.Print.viewMargin;
+      if (initialPageViewW < 100) initialPageViewW = 100;
+
+      const paperSize = paperSizes.find(
+        (p) => p.type === pageSize
+      ) as typeof paperSizes[number];
+      const realPaperW = paperSize[landscape ? 'h' : 'w'];
+      const realPaperH = paperSize[landscape ? 'w' : 'h'];
+
+      const pageViewMaxH = window.innerHeight - 2 * C.UI.Print.viewMargin;
+      const pagebuttonsW = pagebuttons?.current?.offsetWidth || 200;
+
+      let pageToContentScale = 1;
+      if (!pageable) {
+        const contentOnlyW = window.innerWidth;
+        const realContentOnlyW =
+          realPaperW * convertToPx[paperSize.u] -
+          margins.left * convertToPx.mm -
+          margins.right * convertToPx.mm;
+        pageToContentScale = realContentOnlyW / contentOnlyW;
       }
+
+      const contentMarginLeft =
+        (margins.left * convertToPx.mm) / pageToContentScale;
+      const contentMarginRight =
+        (margins.right * convertToPx.mm) / pageToContentScale;
+      const contentW = pageable
+        ? realPaperW * convertToPx[paperSize.u]
+        : window.innerWidth + contentMarginLeft + contentMarginRight;
+      const contentH = pageable
+        ? realPaperH * convertToPx[paperSize.u]
+        : contentW * (realPaperH / realPaperW);
+
+      let pageViewW = initialPageViewW;
+      let pageViewH = pageViewW * (realPaperH / realPaperW);
+      let pageViewToContentScale = pageViewW / contentW;
+      if (pageViewH > pageViewMaxH) {
+        pageViewH = pageViewMaxH;
+        pageViewW = pageViewH * (realPaperW / realPaperH);
+        pageViewToContentScale = pageViewW / contentW;
+      }
+
+      return {
+        paperSize,
+        initialPageViewW,
+        pageViewH,
+        realPaperW,
+        realPaperH,
+        pageViewMaxH,
+        pagebuttonsW,
+        pageViewToContentScale,
+        pageViewW,
+        pageToContentScale,
+        contentW,
+        contentH,
+      };
+    }
+    return {
+      paperSize: paperSizes[0],
+      initialPageViewW: 0,
+      pageViewH: 0,
+      realPaperW: 0,
+      realPaperH: 0,
+      pageViewMaxH: 0,
+      pagebuttonsW: 0,
+      pageViewToContentScale: 0,
+      pageViewW: 0,
+      pageToContentScale: 0,
+      contentW: 0,
+      contentH: 0,
+    };
+  }
+
+  setPages() {
+    const { twoColumns } = this.state as PrintSettingsState;
+    const { print } = this.props as PrintSettingsProps;
+    const { printContainer } = print;
+    if (!printContainer.current) return;
+    const { offsetWidth } = printContainer.current;
+    const lastColumn = document.getElementById('adjustLastColumn');
+    if (lastColumn) lastColumn.remove();
+    printContainer.current.scrollLeft = 0;
+    const { pageViewToContentScale } = this.getPageInfo();
+    // Find the exact distance required to scroll between adjacent pages. Do this
+    // by examining all printContainer children and measuring the difference between
+    // the left side of the left-most client-rectangle and the left side of the
+    // left-most client-rectangle that is greater than the page's offsetWidth.
+    let xleft = -1;
+    let xright = -1;
+    const descendants = printContainer.current.querySelectorAll(
+      ':scope *'
+    ) as NodeListOf<HTMLElement>;
+    descendants.forEach((n) => {
+      const { left } = n.getBoundingClientRect();
+      if (left && (left < xleft || xleft === -1)) {
+        xleft = left;
+      } else if ((left - xleft) / pageViewToContentScale > offsetWidth) {
+        if (left < xright || xright === -1) xright = left;
+      }
+    });
+    this.pageScrollW = (xright - xleft) / pageViewToContentScale;
+    // If the final two-column page has only one column, we need to make an
+    // adjustment or else the second to last column appears duplicated.
+    if (twoColumns) {
+      let xlast = 0;
+      descendants.forEach((n) => {
+        const { left } = n.getBoundingClientRect();
+        if (left > xlast) xlast = left;
+      });
+      const perc = (xlast - xleft) / pageViewToContentScale / this.pageScrollW;
+      const over = perc - Math.floor(perc);
+      if (over > 0 && over < 0.5) {
+        const div = document.createElement('div');
+        div.id = 'adjustLastColumn';
+        printContainer.current.insertBefore(div, null);
+      }
+    }
+    // Set and report results.
+    const pages =
+      this.pageScrollW > 1
+        ? Math.ceil(printContainer.current.scrollWidth / this.pageScrollW)
+        : 1;
+    this.setState({ page: 1, pages });
+    if (pages > C.UI.Print.maxPages) {
+      this.addToast({
+        message: `${G.i18n.t('maximumPages')}: 1-${pages}`,
+        timeout: 5000,
+        intent: Intent.WARNING,
+      });
+    }
+  }
+
+  addToast(toast: IToastProps) {
+    if (this.toaster) this.toaster.show(toast);
+  }
+
+  scrollToPage(page?: number) {
+    const { print } = this.props as PrintSettingsProps;
+    const { printContainer } = print;
+    const { pageScrollW } = this;
+    if (printContainer.current) {
+      printContainer.current.scrollLeft = page ? (page - 1) * pageScrollW : 0;
     }
   }
 
   render() {
-    const props = this.props as PrintProps;
-    const state = this.state as PrintState;
+    const { landscape, pageSize, twoColumns, scale, margins, page, pages } =
+      this.state as PrintSettingsState;
+    const { print, printDisabled } = this.props as PrintSettingsProps;
     const {
-      landscape,
-      pageSize,
-      twoColumns,
-      scale,
-      margins,
-      showpaging,
-      htmlPageW,
-    } = state;
-    const { print, printDisabled } = props;
-    const { pageable, htmlPage, controls, settings, dialogEnd } = print;
-    const { handler, selectRefs, pagebuttons } = this;
+      pageable,
+      pageView,
+      controls,
+      printContainer,
+      settings,
+      dialogEnd,
+    } = print;
+    const { selectRefs, pagebuttons, getPageInfo, handler } = this;
 
-    const psize = paperSizes.find(
-      (p) => p.type === pageSize
-    ) as typeof paperSizes[number];
-
-    const pwidth = psize[landscape ? 'h' : 'w'];
-    const pheight = psize[landscape ? 'w' : 'h'];
-
-    const maxh = window.innerHeight - 30;
-
-    const pagebuttonsW = pagebuttons?.current?.offsetWidth || 200;
-
-    let htmlPageH = htmlPageW * (pheight / pwidth);
-    let hpScale = htmlPageW / (pwidth * convertToPx[psize.u]);
-    let htmlLeft = 0;
-    let htmlContW = htmlPageW;
-    if (htmlPageH > maxh) {
-      htmlPageH = maxh;
-      htmlContW = htmlPageH * (pwidth / pheight);
-      hpScale = htmlPageH / (pheight * convertToPx[psize.u]);
-      htmlLeft = (htmlPageW - htmlContW) / 2;
-    }
-    const spScale = htmlPageW / window.innerWidth;
-
-    const style = `
-      .htmlPage {
-        width: ${htmlPageW}px;
-        height: ${htmlPageH}px;
-        left: ${htmlLeft ? pmargin + htmlLeft : 0}px;
+    let style = '';
+    const i = getPageInfo();
+    if (i.realPaperW) {
+      // Page margins for multi-page (pageable) printouts must use print margins (not
+      // content margins) in order to work properly. But print HTML must use content
+      // margins in order to show a preview of the printout.
+      // NOTE: pageable content width and height must not be set for print to work!
+      style = `
+      .pageView {
+        width: ${i.pageViewW}px;
+        height: ${i.pageViewH}px;
       }
       .page-buttons {
-        left: ${htmlContW / 2 - 0.5 * pagebuttonsW}px;
+        left: ${i.pageViewW / 2 - 0.5 * i.pagebuttonsW}px;
       }
       .scale {
-        transform: scale(${hpScale});
+        transform: scale(${i.pageViewToContentScale});
       }
       .content {
-        width: ${pwidth}${psize.u};
-        height: ${pheight}${psize.u};
-        padding-top: ${margins.top}mm;
-        padding-right: ${margins.right}mm;
-        padding-bottom: ${margins.bottom}mm;
-        padding-left: ${margins.left}mm;
-        top: 0;
+        width: ${i.contentW}px;
+        height: ${i.contentH}px;
+        padding-top: ${(margins.top * convertToPx.mm) / i.pageToContentScale}px;
+        padding-right: ${
+          (margins.right * convertToPx.mm) / i.pageToContentScale
+        }px;
+        padding-bottom: ${
+          (margins.bottom * convertToPx.mm) / i.pageToContentScale
+        }px;
+        padding-left: ${
+          (margins.left * convertToPx.mm) / i.pageToContentScale
+        }px;
       }
       .userFontBase {
         font-size: ${scale / 100}em;
       }
-      ${
-        pageable
-          ? `
       .pageable .printContainer {
         column-count: ${twoColumns ? 2 : 1}
-      }`
-          : ''
       }
+
       @media print {
-        @page {
-          size: ${pwidth}${psize.u} ${pheight}${psize.u};
-          margin-top: ${margins.top}mm;
-          margin-right: ${margins.right}mm;
-          margin-bottom: ${margins.bottom}mm;
-          margin-left: ${margins.left}mm;
-        }
-        .htmlPage {
+        .pageView {
           width: unset;
           height: unset;
-          left: unset;
         }
         .scale {
-          transform: scale(1);
+          transform: scale(${i.pageToContentScale});
         }
         .content  {
-          ${
-            pageable
-              ? `
-          width: unset;
-          height: unset;`
-              : `
-          width: calc(${pwidth}${psize.u} - ${margins.right + margins.left}mm);
-          height: calc(${pheight}${psize.u} - ${
-                  margins.top + margins.bottom
-                }mm);`
-          }
-          top: unset;
+          width: ${100 / i.pageToContentScale}vw;
+          height: ${100 / i.pageToContentScale}vh;
           padding-top: unset;
           padding-right: unset;
           padding-bottom: unset;
           padding-left: unset;
         }
+        .pageable .content {
+          width: unset !important;
+          height: unset !important;
+        }
       }
     `;
-    log.debug(style);
+    }
+    // log.debug('style: ', style);
+
+    const showpaging =
+      pageable &&
+      (printContainer.current?.scrollWidth ?? 0) >
+        (printContainer.current?.clientWidth ?? 0);
 
     return (
-      <Vbox {...addClass('printsettings', props)}>
+      <Vbox {...addClass('printsettings', this.props)}>
         <Toaster
           canEscapeKeyClear
           position={Position.TOP}
           usePortal
-          ref={this.refHandlers.toaster}
+          ref={(ref: Toaster) => {
+            this.toaster = ref;
+          }}
         />
-        {htmlPage?.current &&
+        {pageView?.current &&
           showpaging &&
           ReactDOM.createPortal(
-            <Hbox className="page-buttons" domref={pagebuttons}>
+            <Hbox className="page-buttons" align="center" domref={pagebuttons}>
               <Button
                 id="pagefirst"
                 icon="double-chevron-left"
@@ -561,8 +699,13 @@ export default class PrintSettings extends React.Component {
                 icon="double-chevron-right"
                 onClick={handler}
               />
+              {page > 0 && (
+                <div className="label-container">
+                  <Label value={`( ${page} / ${pages})`} />
+                </div>
+              )}
             </Hbox>,
-            htmlPage.current
+            pageView.current
           )}
         <style>{style}</style>
         <div className="printControls" ref={controls} />

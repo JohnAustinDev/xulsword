@@ -226,10 +226,7 @@ export default class BMManagerWin extends React.Component {
     if (printItems) {
       return (
         <div
-          {...htmlAttribs(
-            ['bmmanager print printContainer userFontBase'],
-            props
-          )}
+          {...htmlAttribs(['printContainer userFontBase'], props)}
           ref={print.printContainer}
         >
           {printItems.map((itemID) => this.printableItem(itemID))}

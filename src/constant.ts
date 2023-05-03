@@ -156,6 +156,10 @@ const C = {
       backgroundIndexerStartupWait: 20000, // wait before starting background indexer
       backgroundIndexerTimeout: 600000, // time working on background index before canceling
     },
+    Print: {
+      viewMargin: 20, // margin around and between top level components
+      maxPages: 20, // Exceeding some number causes Electron.webContents.printToPDF to hang!
+    },
     BMProperties: {
       sampleTextLength: 1024,
     },

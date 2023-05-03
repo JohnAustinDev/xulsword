@@ -570,9 +570,9 @@ const S = {
       twoColumns: false as boolean,
       scale: 100 as number,
       margins: {
-        top: 30 as number,
+        top: 20 as number,
         right: 20 as number,
-        bottom: 30 as number,
+        bottom: 20 as number,
         left: 20 as number,
       },
     },

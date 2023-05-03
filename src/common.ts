@@ -381,8 +381,8 @@ export function decodeOSISRef(aRef: string) {
   return work ? `${work}:${targ}` : targ;
 }
 
-// This function should always be used when writing to innerHTML. It
-// may be updated to improve security at some point.
+// This function should always be used when writing to innerHTML.
+// TODO!: Update to improve security.
 export function sanitizeHTML<T extends string | HTMLElement>(
   parentOrHtml: T,
   html?: string

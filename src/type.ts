@@ -364,6 +364,7 @@ export type ContextDataType = {
   isPinned?: boolean;
   selection?: string;
   selectionParsedVK?: LocationVKType;
+  windowDescriptor?: WindowDescriptorPrefType;
 };
 
 export type BookGroupType =

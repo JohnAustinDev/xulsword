@@ -51,57 +51,57 @@
   font-weight: bold;
 }
 
+.bmmanager .label {
+  white-space: normal;
+}
+
 /* Print styles */
-#reset:not(.printp) .bmmanager.print > *,
-#reset.printp .bmmanager:not(.print) > * {
+#reset:not(.printp) .printContainer > * {
   /* prevent bookmark text from flashing during print transition */
   display: none;
 }
-.bmmanager.print .label {
+.printContainer.label {
   font-weight: bold;
 }
-.bmmanager.print .folder > .label {
+.printContainer .folder > .label {
   font-size: 1.3em;
 }
-.bmmanager.print .folder::before {
+.printContainer .folder::before {
   content: '';
   display: block;
   height: 2em;
 }
-.bmmanager.print .folder:first-child::before {
+.printContainer.folder:first-child::before {
   content: '';
   display: block;
   height: 1em;
 }
-.bmmanager.print .bookmark::before {
+.printContainer .bookmark::before {
   content: '';
   display: block;
   height: 1em;
 }
-.bmmanager.print .bookmark:first-child::before {
+.printContainer .bookmark:first-child::before {
   content: '';
   display: block;
   height: unset;
 }
-.bmmanager.print .label::before,
-.bmmanager.print .label::after,
-.bmmanager.print .usernote::before,
-.bmmanager.print .usernote::after,
-.bmmanager.print .sampleText::before,
-.bmmanager.print .sampleText::after {
+.printContainer .label::before,
+.printContainer.label::after,
+.printContainer .usernote::before,
+.printContainer .usernote::after,
+.printContainer.sampleText::before,
+.printContainer .sampleText::after {
   content: '';
   display: block;
 }
-.bmmanager .label {
-  white-space: normal;
-}
-.bmmanager.print .ref {
+.printContainer .ref {
   font-style: italic;
   white-space: nowrap;
 }
-.bmmanager.print .ref::before {
+.printContainer .ref::before {
   content: ' (';
 }
-.bmmanager.print .ref::after {
+.printContainer .ref::after {
   content: ')';
 }

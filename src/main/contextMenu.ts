@@ -212,7 +212,7 @@ export default function contextMenu(
           {
             label: i18n.t('menu.print'),
             visible: true,
-            enabled: true,
+            enabled: d.windowDescriptor && !d.windowDescriptor.notResizable,
             click: () => {
               Commands.print(undefined, window.id);
             },

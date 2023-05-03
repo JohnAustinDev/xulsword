@@ -2,6 +2,8 @@ import { JSON_attrib_parse, ofClass } from '../common';
 import RefParser from '../refParser';
 import G from './rg';
 import { findElementData, mergeElementData } from './htmlData';
+import { findBookmarks } from './bookmarks';
+import { windowArguments } from './rutil';
 
 import type {
   ContextDataType,
@@ -11,7 +13,8 @@ import type {
   SearchType,
 } from '../type';
 import type { HTMLData } from './htmlData';
-import { findBookmarks } from './bookmarks';
+
+const windowDescriptor = windowArguments();
 
 // Return target data usable by context menus.
 export default function ContextData(elem: HTMLElement): ContextDataType {
@@ -167,5 +170,6 @@ export default function ContextData(elem: HTMLElement): ContextDataType {
     selection,
     selectionParsedVK,
     search,
+    windowDescriptor,
   };
 }

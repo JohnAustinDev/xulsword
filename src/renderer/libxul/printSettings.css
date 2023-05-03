@@ -1,3 +1,6 @@
+.printsettings-container {
+  margin-inline-end: -5px;
+}
 .printsettings {
   width: fit-content;
 }
@@ -26,25 +29,35 @@
   z-index: 1; /* required during full screen for some reason */
 }
 
-.pageable .printContainer {
-  height: 100%;
-  overflow: hidden;
-  scroll-snap-type: x mandatory;
-}
-.pageable .printContainer > * {
-  scroll-snap-align: start;
-}
-
-.htmlPage {
+.pageView {
   position: relative;
 }
 .page-buttons {
   position: absolute;
   bottom: 0px;
 }
+.page-buttons .label-container {
+  position: relative;
+}
+.page-buttons .label-container .label {
+  position: absolute;
+  top: -9px;
+}
+
+.pageable .printContainer {
+  height: 100%;
+  overflow: hidden;
+}
+
+#adjustLastColumn {
+  width: 200%;
+  border: 1px solid transparent;
+}
 
 @media print {
-  .page-buttons {
+  .page-buttons,
+  #adjustLastColumn,
+  .bp4-toast {
     display: none !important;
   }
 

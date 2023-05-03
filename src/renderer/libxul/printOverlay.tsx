@@ -5,6 +5,7 @@
 import React, { ReactElement } from 'react';
 import PropTypes from 'prop-types';
 import Subscription from '../../subscription';
+import C from '../../constant';
 import G from '../rg';
 import { Hbox, Vbox } from './boxes';
 import Button from './button';
@@ -26,15 +27,19 @@ const propTypes = {
 };
 
 type PrintOverlayProps = XulProps & {
-  content: ReactElement; // content to print will be shown in the overlay
+  content: ReactElement; // content to be shown in the print overlay
   print: RootPrintType;
+  // Is content also the printContainer? (pageable content currently provides
+  // its own printContainer, but not sure if that's always required)
+  isPrintContainer: boolean;
   printDisabled: boolean;
   iframeFilePath: string; // filepath of a PDF preview of the content
 };
 
 export default function PrintOverlay(props: PrintOverlayProps) {
-  const { iframeFilePath, content, printDisabled, print } = props;
-  const { pageable, htmlPage } = print;
+  const { iframeFilePath, content, printDisabled, print, isPrintContainer } =
+    props;
+  const { pageable, pageView, printContainer } = print;
 
   const backHandler = () =>
     Subscription.publish.setRendererRootState({
@@ -62,23 +67,28 @@ export default function PrintOverlay(props: PrintOverlayProps) {
       )}
       {!iframeFilePath && (
         <Hbox
-          className={`html-preview ${pageable ? 'pageable' : 'not-pageable'}`}
-          pack="end"
+          className={`printoverlay ${pageable ? 'pageable' : 'not-pageable'}`}
+          pack="center"
           align="stretch"
         >
-          <Vbox className="preview-flex" pack="center" align="center" flex="1">
-            <Spacer orient="horizontal" flex="1" />
-            <div id="html-page" className="htmlPage" ref={htmlPage}>
+          <Vbox className="pageView-container" pack="center" align="center">
+            <div className="pageView" ref={pageView}>
               <div className="scale">
-                <div className="content">{content}</div>
+                {!isPrintContainer && <div className="content">{content}</div>}
+                {isPrintContainer && (
+                  <div
+                    className="content printContainer userFontBase"
+                    ref={printContainer}
+                  >
+                    {content}
+                  </div>
+                )}
               </div>
             </div>
-            <Spacer orient="horizontal" flex="1" />
           </Vbox>
-          <Vbox className="print-settings">
-            <Spacer flex="1" />
+          <Spacer width={C.UI.Print.viewMargin} />
+          <Vbox className="printsettings-container" pack="center">
             <PrintSettings printDisabled={printDisabled} print={print} />
-            <Spacer flex="1" />
           </Vbox>
         </Hbox>
       )}
