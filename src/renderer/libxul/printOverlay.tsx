@@ -5,6 +5,7 @@
 import React, { ReactElement } from 'react';
 import PropTypes from 'prop-types';
 import Subscription from '../../subscription';
+import { b64toBlob } from '../../common';
 import C from '../../constant';
 import G from '../rg';
 import { Hbox, Vbox } from './boxes';
@@ -55,7 +56,15 @@ export default function PrintOverlay(props: PrintOverlayProps) {
       {iframeFilePath && (
         <Vbox className="pdf-preview" pack="start" align="stretch">
           <Hbox flex="1">
-            <iframe key={iframeFilePath} src={G.inlineFile(iframeFilePath)} />
+            <iframe
+              key={iframeFilePath}
+              src={URL.createObjectURL(
+                b64toBlob(
+                  G.inlineFile(iframeFilePath, 'base64', true),
+                  'application/pdf'
+                )
+              )}
+            />
           </Hbox>
           <Hbox className="dialog-buttons" pack="end" align="end">
             <Spacer flex="10" />

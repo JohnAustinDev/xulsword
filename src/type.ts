@@ -41,7 +41,6 @@ import type Module from './main/components/module';
 import type Window from './main/components/window';
 import type { DirsRendererType } from './main/components/dirs';
 import type LibSword from './main/components/libsword';
-import type MainPrintHandler from './main/print';
 import type { canRedo, canUndo } from './main/bookmarks';
 import type Viewport from './main/components/viewport';
 
@@ -60,11 +59,6 @@ declare global {
         func: (...args: any[]) => any
       ) => () => void;
     };
-    ipcTS: {
-      printOrPreview: (
-        ...args: Shift<Parameters<typeof MainPrintHandler>>
-      ) => ReturnType<typeof MainPrintHandler>;
-    };
     processR: {
       [envar in EnvironmentVars]: () => string;
     } & {
@@ -81,7 +75,6 @@ declare global {
 type RendererChannels =
   | 'global'
   | 'did-finish-render'
-  | 'print-or-preview'
   | 'log'
   | 'error-report'
   | 'resize'
@@ -841,7 +834,8 @@ export const GBuilder: GType & {
     [keyof GType, (keyof GType['getSystemFonts'])[]],
     [keyof GType, (keyof GType['Commands'])[]],
     [keyof GType, (keyof GType['Module'])[]],
-    [keyof GType, (keyof GType['LibSword'])[]]
+    [keyof GType, (keyof GType['LibSword'])[]],
+    [keyof GType, (keyof GType['Window'])[]]
   ];
 
   // IMPORTANT: Methods of includeCallingWindow classes must not use rest
@@ -880,6 +874,7 @@ export const GBuilder: GType & {
       ],
     ],
     ['LibSword', ['searchIndexBuild', 'search']],
+    ['Window', ['print', 'printToPDF']],
   ],
 
   includeCallingWindow: ['Prefs', 'Window', 'Commands', 'Module'],
@@ -1053,6 +1048,8 @@ export const GBuilder: GType & {
     moveToFront: func as any,
     moveToBack: func as any,
     close: func as any,
+    print: func as any,
+    printToPDF: func as any,
   },
 
   Viewport: {

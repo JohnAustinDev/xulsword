@@ -44,6 +44,11 @@
   top: -9px;
 }
 
+/* column-gap MUST always be specified so
+ getComputedStyle().columnGap doesn't return NaN */
+.printContainer {
+  column-gap: 1em;
+}
 .pageable .printContainer {
   height: 100%;
   overflow: hidden;

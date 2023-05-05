@@ -359,6 +359,28 @@ export function getStatePref(
   return state;
 }
 
+// An inline data URL is limited to about 2MB. The solution is convert the data to
+// a blob. The blob can then be used with URL.createObjectURL() which can be > 200MB.
+export function b64toBlob(b64Data: string, contentType = '', sliceSize = 512) {
+  const byteCharacters = atob(b64Data);
+  const byteArrays = [];
+
+  for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+    const slice = byteCharacters.slice(offset, offset + sliceSize);
+
+    const byteNumbers = new Array(slice.length);
+    for (let i = 0; i < slice.length; i += 1) {
+      byteNumbers[i] = slice.charCodeAt(i);
+    }
+
+    const byteArray = new Uint8Array(byteNumbers);
+    byteArrays.push(byteArray);
+  }
+
+  const blob = new Blob(byteArrays, { type: contentType });
+  return blob;
+}
+
 // Decode an osisRef that was encoded using _(\d+)_ encoding, where
 // special characters are encoded as Unicode char-code numbers with
 // an underscore before and after. If the osisRef includes a work

@@ -25,7 +25,6 @@ contextBridge.exposeInMainWorld('processR', {
 const validChannels = [
   'global', // to+from main for use by the G object
   'did-finish-render', // to main when window has finished rendering
-  'print-or-preview', // to main to do print, printToPDF or preview PDF
   'log', // to main for logging
   'error-report', // to main to report an error
   'resize', // from main when renderer window is being resized
@@ -37,13 +36,6 @@ const validChannels = [
   'dynamic-stylesheet-reset', // from main when dynamic stylesheet should be re-created
   'publish-subscription', // from main when a renderer subscription should be published
 ];
-
-// TypeScriptable IPC functions
-contextBridge.exposeInMainWorld('ipcTS', {
-  printOrPreview(...args) {
-    return ipcRenderer.invoke('print-or-preview', ...args);
-  },
-});
 
 contextBridge.exposeInMainWorld('ipc', {
   // Trigger a channel event which ipcMain is to listen for. If a single

@@ -158,7 +158,7 @@ const C = {
     },
     Print: {
       viewMargin: 20, // margin around and between top level components
-      maxPages: 20, // Exceeding some number causes Electron.webContents.printToPDF to hang!
+      maxPages: 25,
     },
     BMProperties: {
       sampleTextLength: 1024,

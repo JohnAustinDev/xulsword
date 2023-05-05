@@ -4,11 +4,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import log from 'electron-log';
 import path from 'path';
-import i18next from 'i18next';
+import i18n from 'i18next';
 import {
   app,
   BrowserWindow,
   BrowserWindowConstructorOptions,
+  dialog,
+  SaveDialogOptions,
   shell,
 } from 'electron';
 import { drop, keep, randomID } from '../../common';
@@ -36,6 +38,8 @@ import type contextMenu from '../contextMenu';
 import type { PrefCallbackType } from './prefs';
 
 export let resolveHtmlPath: (htmlFileName: string) => string;
+
+const printPreviewTmps: LocalFile[] = [];
 
 if (process.env.NODE_ENV === 'development') {
   const port = process.env.PORT || 1212;
@@ -290,9 +294,9 @@ export const pushPrefsToWindows: PrefCallbackType = (
   if (winid < 0 || winid === BrowserWindow.getFocusedWindow()?.id) {
     if (store === 'prefs' && idOrKey === 'global.locale') {
       const lng = Prefs.getCharPref('global.locale');
-      i18next
+      i18n
         .loadLanguages(lng)
-        .then(() => i18next.changeLanguage(lng))
+        .then(() => i18n.changeLanguage(lng))
         .then(() => {
           Cache.clear();
           Window.reset('all', 'all');
@@ -639,6 +643,98 @@ const Window = {
       winids.push(w.id);
     });
     return winids;
+  },
+
+  async print(
+    electronOptions: Electron.WebContentsPrintOptions,
+    window?: WindowArgType | null
+  ): Promise<void> {
+    const win = getBrowserWindows(window, arguments[2])[0];
+    if (win) {
+      // NOTE!: Electron contents.print() does not seem to work at all.
+      // It complains there are no available printers (when there are)
+      // but even when contents.getPrinters is used, nothing is returned.
+      // On the other hand, window.print() works just fine, so that is
+      // currently used instead.
+      // Send to a printer
+      const opts = electronOptions as Electron.WebContentsPrintOptions;
+      return new Promise((resolve, reject) => {
+        log.debug(`print: `, opts);
+        win.webContents.print(
+          opts,
+          (suceeded: boolean, failureReason: string) => {
+            if (suceeded) resolve();
+            else reject(failureReason);
+          }
+        );
+      });
+    }
+    return Promise.resolve();
+  },
+
+  async printToPDF(
+    electronOptions: Electron.PrintToPDFOptions & {
+      destination: 'prompt-for-file' | 'iframe';
+    },
+    window?: WindowArgType | null
+  ): Promise<string> {
+    const win = getBrowserWindows(window, arguments[2])[0];
+    if (win) {
+      const { destination } = electronOptions;
+      if (destination === 'prompt-for-file') {
+        // Print to a user selected PDF file
+        const saveops: SaveDialogOptions = {
+          title: i18n.t('menu.print'),
+          filters: [
+            {
+              name: 'PDF',
+              extensions: ['pdf'],
+            },
+          ],
+          properties: ['createDirectory'],
+        };
+        let result;
+        try {
+          result = await ((win && dialog.showSaveDialog(win, saveops)) || null);
+        } catch (er) {
+          return Promise.reject(er);
+        }
+        if (result && !result.canceled && result.filePath) {
+          log.debug(`printToPDF: `, electronOptions);
+          try {
+            const data = await win.webContents.printToPDF(electronOptions);
+            if (data) {
+              const outfile = new LocalFile(result.filePath);
+              outfile.writeFile(data);
+              return await Promise.resolve(outfile.path);
+            }
+          } catch (er) {
+            return Promise.reject(er);
+          }
+        }
+        return '';
+      }
+      // Print to temporary PDF file displayed in preview iframe
+      printPreviewTmps.forEach((f) => {
+        if (f.exists()) f.remove();
+      });
+      const tmp = new LocalFile(Window.tmpDir({ type: 'xulsword' })[0]);
+      if (tmp.exists() && tmp.isDirectory()) {
+        tmp.append(`${randomID()}.pdf`);
+        log.debug(`printToPDF: `, electronOptions);
+        try {
+          const data = await win.webContents.printToPDF(electronOptions);
+          if (data) {
+            tmp.writeFile(data);
+            printPreviewTmps.push(tmp);
+            return await Promise.resolve(tmp.path);
+          }
+        } catch (er) {
+          return Promise.reject(er);
+        }
+      }
+    }
+    return '';
   },
 };
 

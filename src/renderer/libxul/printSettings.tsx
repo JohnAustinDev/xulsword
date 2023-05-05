@@ -23,7 +23,6 @@ import { clone, diff, keep, randomID } from '../../common';
 import S from '../../defaultPrefs';
 import C from '../../constant';
 import G from '../rg';
-import log from '../log';
 import { getStatePref, setStatePref } from '../rutil';
 import { Hbox, Vbox } from './boxes';
 import Button from './button';
@@ -63,9 +62,11 @@ const normal: Partial<WindowRootState> = {
 
 const headerTemplate = '<span></span>';
 const footerTemplate = `
-  <div style="font-size: 8px; padding-inline-start: 10px;">
+  <div style="font-size: 8px; padding-inline-start: 50px;">
     <span class="pageNumber"></span> / <span class="totalPages"></span>
   </div>`;
+
+const { platform } = window.processR;
 
 const defaultProps = {
   ...xulDefaultProps,
@@ -273,14 +274,31 @@ export default class PrintSettings extends React.Component {
             break;
           }
           case 'print': {
+            const options: Electron.WebContentsPrintOptions = {
+              ...electronOptions,
+              silent: false,
+              color: false,
+              margins: {
+                marginType: 'custom',
+                top: round(margins.top * convertToPx.mm),
+                right: round(margins.right * convertToPx.mm),
+                bottom: round(margins.bottom * convertToPx.mm),
+                left: round(margins.left * convertToPx.mm),
+              },
+              scaleFactor: 1,
+              pagesPerSheet: 1,
+              collate: false,
+              copies: 1,
+              pageRanges: [{ from: 1, to: pages }],
+              dpi: { horizontal: convertToPx.in, vertical: convertToPx.in },
+              header: '',
+              footer: '',
+            };
             Subscription.publish.setRendererRootState(dark);
-            window.print();
-            Subscription.publish.setRendererRootState(normal);
-            /* See print.ts - seems to be Electron bug?
-            const path = window.ipcTS
-              .printOrPreview(
-                electronOptions as Electron.WebContentsPrintOptions
-              )
+            G.Window.print(options)
+              .finally(() => {
+                Subscription.publish.setRendererRootState(normal);
+              })
               .catch((er) => {
                 if (this.toaster) {
                   this.toaster.show({
@@ -288,20 +306,15 @@ export default class PrintSettings extends React.Component {
                     intent: Intent.WARNING,
                   });
                 }
-              })
-              .finally(() => {
-                Subscription.publish.setRendererRootState(normal);
               });
-              */
             break;
           }
           case 'printToPDF': {
             Subscription.publish.setRendererRootState(dark);
-            window.ipcTS
-              .printOrPreview({
-                destination: 'prompt-for-file',
-                ...electronOptions,
-              })
+            G.Window.printToPDF({
+              destination: 'prompt-for-file',
+              ...electronOptions,
+            })
               .then(() => {
                 return Subscription.publish.setRendererRootState(normal);
               })
@@ -315,11 +328,10 @@ export default class PrintSettings extends React.Component {
           }
           case 'printPreview': {
             Subscription.publish.setRendererRootState(dark);
-            window.ipcTS
-              .printOrPreview({
-                destination: 'iframe',
-                ...electronOptions,
-              })
+            G.Window.printToPDF({
+              destination: 'iframe',
+              ...electronOptions,
+            })
               .then((iframeFilePath: string) => {
                 return Subscription.publish.setRendererRootState({
                   iframeFilePath,
@@ -425,13 +437,13 @@ export default class PrintSettings extends React.Component {
     initialPageViewW: number;
     pageViewW: number;
     pageViewH: number;
-    contentW: number;
-    contentH: number;
-    pageViewToContentScale: number;
     realPaperW: number;
     realPaperH: number;
+    contentW: number;
+    contentH: number;
     pageViewMaxH: number;
     pagebuttonsW: number;
+    pageViewToContentScale: number;
     pageToContentScale: number;
   } {
     const { landscape, pageSize, margins } = this.state as PrintSettingsState;
@@ -441,7 +453,7 @@ export default class PrintSettings extends React.Component {
     if (settings.current && printContainer.current) {
       const settingsW = (settings.current.parentElement as HTMLDivElement)
         .clientWidth;
-      // initialPageViewW can be anything, but it must be known
+      // initialPageViewW can be anything, but it must have a known value.
       let initialPageViewW =
         window.innerWidth - settingsW - 3 * C.UI.Print.viewMargin;
       if (initialPageViewW < 100) initialPageViewW = 100;
@@ -488,83 +500,62 @@ export default class PrintSettings extends React.Component {
       return {
         paperSize,
         initialPageViewW,
+        pageViewW,
         pageViewH,
         realPaperW,
         realPaperH,
+        contentW,
+        contentH,
         pageViewMaxH,
         pagebuttonsW,
         pageViewToContentScale,
-        pageViewW,
         pageToContentScale,
-        contentW,
-        contentH,
       };
     }
     return {
       paperSize: paperSizes[0],
       initialPageViewW: 0,
+      pageViewW: 0,
       pageViewH: 0,
       realPaperW: 0,
       realPaperH: 0,
+      contentW: 0,
+      contentH: 0,
       pageViewMaxH: 0,
       pagebuttonsW: 0,
       pageViewToContentScale: 0,
-      pageViewW: 0,
       pageToContentScale: 0,
-      contentW: 0,
-      contentH: 0,
     };
   }
 
   setPages() {
     const { twoColumns } = this.state as PrintSettingsState;
     const { print } = this.props as PrintSettingsProps;
-    const { printContainer } = print;
-    if (!printContainer.current) return;
-    const { offsetWidth } = printContainer.current;
+    const { current } = print.printContainer;
+    if (!current) return;
+    const { offsetWidth } = current;
     const lastColumn = document.getElementById('adjustLastColumn');
     if (lastColumn) lastColumn.remove();
-    printContainer.current.scrollLeft = 0;
-    const { pageViewToContentScale } = this.getPageInfo();
-    // Find the exact distance required to scroll between adjacent pages. Do this
-    // by examining all printContainer children and measuring the difference between
-    // the left side of the left-most client-rectangle and the left side of the
-    // left-most client-rectangle that is greater than the page's offsetWidth.
-    let xleft = -1;
-    let xright = -1;
-    const descendants = printContainer.current.querySelectorAll(
-      ':scope *'
-    ) as NodeListOf<HTMLElement>;
-    descendants.forEach((n) => {
-      const { left } = n.getBoundingClientRect();
-      if (left && (left < xleft || xleft === -1)) {
-        xleft = left;
-      } else if ((left - xleft) / pageViewToContentScale > offsetWidth) {
-        if (left < xright || xright === -1) xright = left;
-      }
-    });
-    this.pageScrollW = (xright - xleft) / pageViewToContentScale;
+    current.scrollLeft = 0;
+    const scrollLeftMax = current.scrollWidth - current.offsetWidth;
+    // Find the exact distance required to scroll between adjacent pages.
+    const { paddingLeft, paddingRight, columnGap } = getComputedStyle(current);
+    this.pageScrollW =
+      offsetWidth -
+      Number(paddingLeft.slice(0, -2)) -
+      Number(paddingRight.slice(0, -2)) +
+      Number(columnGap.slice(0, -2));
+    let pages = 1 + scrollLeftMax / this.pageScrollW;
     // If the final two-column page has only one column, we need to make an
     // adjustment or else the second to last column appears duplicated.
-    if (twoColumns) {
-      let xlast = 0;
-      descendants.forEach((n) => {
-        const { left } = n.getBoundingClientRect();
-        if (left > xlast) xlast = left;
-      });
-      const perc = (xlast - xleft) / pageViewToContentScale / this.pageScrollW;
-      const over = perc - Math.floor(perc);
-      if (over > 0 && over < 0.5) {
-        const div = document.createElement('div');
-        div.id = 'adjustLastColumn';
-        printContainer.current.insertBefore(div, null);
-      }
-    }
+    const over = pages - Math.floor(pages);
+    if (twoColumns && over > 0.25) {
+      pages = Math.ceil(pages);
+      const div = document.createElement('div');
+      div.id = 'adjustLastColumn';
+      current.insertBefore(div, null);
+    } else pages = Math.round(pages);
     // Set and report results.
-    const pages =
-      this.pageScrollW > 1
-        ? Math.ceil(printContainer.current.scrollWidth / this.pageScrollW)
-        : 1;
     this.setState({ page: 1, pages });
     if (pages > C.UI.Print.maxPages) {
       this.addToast({
@@ -581,10 +572,15 @@ export default class PrintSettings extends React.Component {
 
   scrollToPage(page?: number) {
     const { print } = this.props as PrintSettingsProps;
-    const { printContainer } = print;
+    const { current } = print.printContainer;
     const { pageScrollW } = this;
-    if (printContainer.current) {
-      printContainer.current.scrollLeft = page ? (page - 1) * pageScrollW : 0;
+    if (current) {
+      let scrollLeft = 0;
+      if (page) {
+        scrollLeft = (page - 1) * pageScrollW;
+        if (current.getAttribute('dir') === 'rtl') scrollLeft *= -1;
+      }
+      current.scrollLeft = scrollLeft;
     }
   }
 
@@ -606,8 +602,13 @@ export default class PrintSettings extends React.Component {
     const i = getPageInfo();
     if (i.realPaperW) {
       // Page margins for multi-page (pageable) printouts must use print margins (not
-      // content margins) in order to work properly. But print HTML must use content
-      // margins in order to show a preview of the printout.
+      // CSS content margins) in order to work properly. But print HTML must use CSS
+      // content margins in order to show a preview of the printout. Print margins and
+      // page size and orientation can be passed as options to webContents print and
+      // printToPDF methods, or else CSS print media @page properties may be used. In
+      // printSettings, BOTH methods are used, with the same values. This is because
+      // only one or the other seems to work in certain cases, and specifying both
+      // doesn't seem to cause problems.
       // NOTE: pageable content width and height must not be set for print to work!
       style = `
       .pageView {
@@ -642,6 +643,13 @@ export default class PrintSettings extends React.Component {
       }
 
       @media print {
+        @page {
+          size: ${i.realPaperW}${i.paperSize.u} ${i.realPaperH}${i.paperSize.u};
+          margin-top: ${margins.top}mm;
+          margin-right: ${margins.right}mm;
+          margin-bottom: ${margins.bottom}mm;
+          margin-left: ${margins.left}mm;
+        }
         .pageView {
           width: unset;
           height: unset;
@@ -667,6 +675,7 @@ export default class PrintSettings extends React.Component {
     // log.debug('style: ', style);
 
     const showpaging =
+      !printDisabled &&
       pageable &&
       (printContainer.current?.scrollWidth ?? 0) >
         (printContainer.current?.clientWidth ?? 0);
@@ -831,16 +840,23 @@ export default class PrintSettings extends React.Component {
           </Vbox>
         </Groupbox>
         <Hbox className="dialog-buttons" pack="end" align="end">
-          <Button
-            id="print"
-            icon="print"
-            flex="1"
-            fill="x"
-            disabled={printDisabled}
-            onClick={handler}
-          >
-            {G.i18n.t('menu.print')}
-          </Button>
+          {
+            // Printing in at least Ubuntu 20 core dumps! So Disallow
+            // in linux for now (the PDF can be created and then printed
+            // separately)
+          }
+          {platform !== 'linux' && (
+            <Button
+              id="print"
+              icon="print"
+              flex="1"
+              fill="x"
+              disabled={printDisabled}
+              onClick={handler}
+            >
+              {G.i18n.t('menu.print')}
+            </Button>
+          )}
           <Button
             id="printToPDF"
             icon="document"

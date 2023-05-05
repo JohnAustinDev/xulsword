@@ -23,7 +23,6 @@ import G from './mg';
 import { getCipherFailConfs, validateGlobalModulePrefs } from './minit';
 import MainMenuBuilder, { pushPrefsToMenu } from './mainMenu';
 import contextMenu from './contextMenu';
-import MainPrintHandler from './print';
 import LocalFile from './components/localFile';
 import Viewport from './components/viewport';
 import { CipherKeyModules } from './components/module';
@@ -164,8 +163,6 @@ ipcMain.on('did-finish-render', (event: IpcMainEvent) => {
     callingWin = null;
   }
 });
-
-ipcMain.handle('print-or-preview', MainPrintHandler);
 
 ipcMain.on(
   'log',

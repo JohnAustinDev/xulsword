@@ -114,6 +114,7 @@ export default class PrintPassageWin extends React.Component {
 
     this.pagebuttons = React.createRef();
 
+    this.renderChapters = this.renderChapters.bind(this);
     this.handler = handlerH.bind(this);
     this.vkSelectHandler = vkSelectHandlerH.bind(this);
   }
@@ -141,134 +142,135 @@ export default class PrintPassageWin extends React.Component {
       this.setState({ chapters: valid });
     } else if (tdiv) {
       setStatePref('prefs', 'printPassage', prevState, state);
-      if (!chapters) return;
-      const { checkbox } = state;
-      const { vkMod, book, chapter, lastchapter, v11n } = chapters;
-      const show = { ...checkbox, strongs: false, morph: false };
-      const renderkey = stringHash(vkMod, chapter, lastchapter, show);
-      if (lastchapter && tdiv.dataset.renderkey !== renderkey) {
-        tdiv.dataset.renderkey = renderkey;
-        const settings = {
-          module: vkMod,
-          show,
-          ilModule: undefined,
-          ilModuleOption: [],
-          modkey: '',
-          place: {
-            footnotes: 'notebox',
-            crossrefs: 'notebox',
-            usernotes: 'notebox',
-          } as const,
-        };
-        const renderChaps: [OSISBookType, number][] = [];
-        for (let ch = chapter; ch <= lastchapter; ch += 1) {
-          if (book) renderChaps.push([book, ch]);
-        }
+      this.renderChapters();
+    }
+  }
 
-        // Write first page to DOM for user to see right away
-        sanitizeHTML(tdiv, '');
-        let pageIsFull = false;
-        const renderHTML: string[] = [];
-        renderChaps.forEach((c) => {
-          if (!pageIsFull && tdiv) {
-            log.silly(`Showing chapter ${c[0]} ${c[1]}`);
-            renderHTML.push(
-              bibleChapterText({
-                ...settings,
-                location: { book: c[0], chapter: c[1], v11n },
-              })
-            );
-            sanitizeHTML(tdiv, renderHTML.join());
-            if (tdiv.scrollWidth > tdiv.offsetWidth) {
-              pageIsFull = true;
-            }
-          }
-        });
-        log.debug(`Finished previewing ${renderHTML.length} chapters to DOM`);
-
-        // Then asynchronously generate all other chapters with a progress bar
-        Subscription.publish.setRendererRootState({
-          printDisabled: true,
-        });
-        this.setState({ progress: 0 });
-        setTimeout(
-          () =>
-            (async (
-              xthis: PrintPassageWin,
-              key: string,
-              chaps: [OSISBookType, number][],
-              html: string[]
-            ) => {
-              let pages = 0;
-              const funcs = chaps.map((c, i) => {
-                return async (): Promise<string> => {
-                  return new Promise((resolve, reject) =>
-                    setTimeout(() => {
-                      if (html[i]) resolve(html[i]);
-                      else {
-                        const { print: pr } = xthis.props as PrintPassageProps;
-                        const tdivx = pr.printContainer.current;
-                        if (tdivx && key === tdivx.dataset.renderkey) {
-                          log.silly(`Building chapter ${c[0]} ${c[1]}`);
-                          pages += 1;
-                          xthis.setState({
-                            progress: pages / C.UI.Print.maxPages,
-                          });
-                          resolve(
-                            bibleChapterText({
-                              ...settings,
-                              location: {
-                                book: c[0],
-                                chapter: c[1],
-                                v11n,
-                              },
-                            })
-                          );
-                        } else reject(new Error(`Canceled`));
-                      }
-                    }, 1)
-                  );
-                };
-              });
-              try {
-                const div = print.printContainer.current;
-                if (div) {
-                  div.innerHTML = '';
-                  let done = false;
-                  while (funcs.length) {
-                    const func = funcs.shift() as () => Promise<string>;
-                    if (!done) {
-                      log.debug(
-                        `Loading chapter to DOM: ${chaps.length - funcs.length}`
-                      );
-                      const h = await func();
-                      div.innerHTML += sanitizeHTML(h);
-                      libswordImgSrc(div);
-                      pages = Math.floor(div.scrollWidth / div.clientWidth);
-                      // Exceeding this may cause Electron.webContents.printToPDF to hang.
-                      if (pages > C.UI.Print.maxPages) {
-                        done = true;
-                        log.info(
-                          `Stopping passage render at ${pages} pages (skipped ${funcs.length} chapters}).`
-                        );
-                      }
-                    }
-                  }
-                  log.debug(
-                    `Finished loading ${Math.floor(
-                      div.scrollWidth / div.clientWidth
-                    )} pages to DOM`
-                  );
-                }
-              } catch (er) {
-                log.debug(er);
-              } finally {
-                xthis.setState({ progress: -1 });
-              }
-            })(this, renderkey, renderChaps, renderHTML),
-          1000
-        );
+  renderChapters() {
+    const state = this.state as PrintPassageState;
+    const { chapters } = state;
+    const { print } = this.props as PrintPassageProps;
+    const tdiv = print.printContainer.current;
+    if (!tdiv || !chapters) return;
+    const { checkbox } = state;
+    const { vkMod, book, chapter, lastchapter, v11n } = chapters;
+    const show = { ...checkbox, strongs: false, morph: false };
+    const renderkey = stringHash(vkMod, chapter, lastchapter, show);
+    if (lastchapter && tdiv.dataset.renderkey !== renderkey) {
+      tdiv.dataset.renderkey = renderkey;
+      const settings = {
+        module: vkMod,
+        show,
+        ilModule: undefined,
+        ilModuleOption: [],
+        modkey: '',
+        place: {
+          footnotes: 'notebox',
+          crossrefs: 'notebox',
+          usernotes: 'notebox',
+        } as const,
+      };
+      const renderChaps: [OSISBookType, number][] = [];
+      for (let ch = chapter; ch <= lastchapter; ch += 1) {
+        if (book) renderChaps.push([book, ch]);
       }
+
+      // Write first page to DOM for user to see right away
+      sanitizeHTML(tdiv, '');
+      let pageIsFull = false;
+      const renderHTML: string[] = [];
+      renderChaps.forEach((c) => {
+        if (!pageIsFull && tdiv) {
+          log.silly(`Showing chapter ${c[0]} ${c[1]}`);
+          renderHTML.push(
+            bibleChapterText({
+              ...settings,
+              location: { book: c[0], chapter: c[1], v11n },
+            })
+          );
+          sanitizeHTML(tdiv, renderHTML.join());
+          if (tdiv.scrollWidth > tdiv.offsetWidth) {
+            pageIsFull = true;
+          }
+        }
+      });
+      log.debug(`Finished previewing ${renderHTML.length} chapters to DOM`);
+
+      // Then asynchronously generate all other chapters with a progress bar
+      Subscription.publish.setRendererRootState({
+        printDisabled: true,
+      });
+      this.setState({ progress: 0 });
+      // Pause here so first page will appear to user.
+      setTimeout(async () => {
+        let pages = 0;
+        const funcs = renderChaps.map((c, i) => {
+          return async (): Promise<string> => {
+            return new Promise((resolve, reject) =>
+              setTimeout(() => {
+                if (renderHTML[i]) resolve(renderHTML[i]);
+                else {
+                  const tdivx = (this.props as PrintPassageProps).print
+                    .printContainer.current;
+                  if (tdivx && tdivx.dataset.renderkey === renderkey) {
+                    // log.debug(`Building chapter ${c[0]} ${c[1]}`);
+                    pages += 1;
+                    this.setState({
+                      progress: pages / C.UI.Print.maxPages,
+                    });
+                    resolve(
+                      bibleChapterText({
+                        ...settings,
+                        location: {
+                          book: c[0],
+                          chapter: c[1],
+                          v11n,
+                        },
+                      })
+                    );
+                  } else reject(new Error(`Canceled`));
+                }
+              }, 1)
+            );
+          };
+        });
+        let div = print.printContainer.current;
+        if (div && div.dataset.renderkey === renderkey) {
+          div.innerHTML = '';
+          try {
+            while (funcs.length) {
+              const func = funcs.shift() as () => Promise<string>;
+              log.debug(
+                `Loading chapter to DOM: ${renderChaps.length - funcs.length}`
+              );
+              const h = await func();
+              div = print.printContainer.current;
+              if (!div || div.dataset.renderkey !== renderkey) break;
+              div.innerHTML += sanitizeHTML(h);
+              libswordImgSrc(div);
+              pages = Math.floor(div.scrollWidth / div.clientWidth);
+              if (pages > C.UI.Print.maxPages) {
+                log.info(
+                  `Stopping passage render at ${pages} pages (skipped ${funcs.length} chapters}).`
+                );
+                break;
+              }
+            }
+            if (div) {
+              log.debug(
+                `Finished loading ${Math.floor(
+                  div.scrollWidth / div.clientWidth
+                )} pages to DOM`
+              );
+            }
+          } catch (er) {
+            log.debug(er);
+          }
+        }
+        if (div && div.dataset.renderkey === renderkey) {
+          this.setState({ progress: -1 });
+        }
+      }, 1);
     }
   }
 
