@@ -391,7 +391,10 @@ class Viewport extends React.Component implements PopupParent {
                   tabWidth,
                   tabsi ? [...tabsi] : 'none',
                   ilModules[i],
-                  mtModules[i]
+                  mtModules[i],
+                  Math.round(
+                    atextRefs[i].current?.sbref.current?.offsetWidth || 0
+                  )
                 );
                 if (!tabsi) return <Hbox key={key} style={{ width }} />;
                 return (

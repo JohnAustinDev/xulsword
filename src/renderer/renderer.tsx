@@ -168,7 +168,9 @@ function WindowRoot(props: WindowRootProps) {
         const val = v as any;
         if (val !== undefined) {
           const setMe = s[S][1] as (a: any) => any;
-          setMe(val);
+          if (state.showPrintOverlay === true && S === 'reset') {
+            setTimeout(() => setMe(val), 1);
+          } else setMe(val);
         }
       });
     });

@@ -559,7 +559,7 @@ export default class PrintSettings extends React.Component {
     this.setState({ page: 1, pages });
     if (pages > C.UI.Print.maxPages) {
       this.addToast({
-        message: `${G.i18n.t('maximumPages')}: 1-${pages}`,
+        message: `${G.i18n.t('printPages.label')}: 1-${pages}`,
         timeout: 5000,
         intent: Intent.WARNING,
       });

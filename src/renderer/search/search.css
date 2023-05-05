@@ -196,8 +196,6 @@ html[dir='rtl'] .resultBox .modulemenu {
 }
 
 /* PRINTING STYLES */
-/*
-#reset.printp .resultBox .slist {
-  white-space: normal;
+.printContainer * {
+  text-decoration: unset !important;
 }
-*/

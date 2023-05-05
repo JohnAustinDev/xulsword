@@ -17,6 +17,7 @@ import {
   pasteBookmarkItems as PasteBookmarkItems,
   moveBookmarkItems,
   gbPaths,
+  randomID,
 } from '../../common';
 import Subscription from '../../subscription';
 import C from '../../constant';
@@ -566,9 +567,12 @@ const Commands = {
         arguments[1] ?? getBrowserWindows({ type: 'xulsword' })[0].id;
       const windowToPrint = BrowserWindow.fromId(callingWinID);
       if (windowToPrint) {
-        const rootState: Partial<WindowRootState> = winRootState || {};
-        rootState.showPrintOverlay = true;
-        rootState.modal = 'dropshadow';
+        const rootState: Partial<WindowRootState> = {
+          reset: randomID(),
+          ...winRootState,
+          showPrintOverlay: true,
+          modal: 'dropshadow',
+        };
         publishSubscription<'setRendererRootState'>(
           'setRendererRootState',
           { renderers: { id: windowToPrint.id } },

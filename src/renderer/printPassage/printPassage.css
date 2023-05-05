@@ -39,8 +39,9 @@ div.dict-entry-heading {
   text-decoration: none !important;
 }
 
-@media print {
-  .chapter-start:not(.chapterfirst) {
-    break-before: page;
-  }
+:is(h1, h2, h3, h4),
+span:has(:is(h1, h2, h3, h4)),
+.chapterhead {
+  break-after: avoid;
+  break-inside: avoid;
 }

@@ -111,7 +111,7 @@ const noPersist = ['results', 'pageindex', 'progress', 'progressLabel'].concat(
   | 'progressLabel'
 )[];
 
-let resetState = null as null | SearchWinState;
+let reMountState = null as null | SearchWinState;
 let windowLoaded = false;
 
 export type SearchWinState = PopupParentState & typeof initialState;
@@ -166,8 +166,9 @@ export default class SearchWin extends React.Component implements PopupParent {
     }
 
     const pstate = windowArguments('pstate') as SearchWinState;
-    this.state = resetState || pstate || s;
+    this.state = reMountState || pstate || s;
 
+    this.updateResults = this.updateResults.bind(this);
     this.handler = handlerH.bind(this);
     this.popupParentHandler = popupParentHandlerH.bind(this);
     this.popupHandler = popupHandlerH.bind(this);
@@ -188,36 +189,47 @@ export default class SearchWin extends React.Component implements PopupParent {
       })
     );
     if (!windowLoaded && module) search(this);
+    else this.updateResults();
     windowLoaded = true;
   }
 
   componentDidUpdate(_prevProps: any, prevState: SearchWinState) {
     const state = this.state as SearchWinState;
-    resetState = clone(state);
-    const pstate = drop(state, noPersist) as Omit<
+    reMountState = clone(state);
+    // Save changed window prefs (plus initials to obtain complete state).
+    const persistState = drop(state, noPersist) as Omit<
       SearchWinState,
       typeof noPersist[number]
     >;
-    const psx = pstate as any;
+    const psx = persistState as any;
     const isx = initialState as any;
     if (
       diff(
         { ...prevState, popupParent: null },
-        { ...pstate, popupParent: null }
+        { ...persistState, popupParent: null }
       )
     ) {
       noPersist.forEach((p) => {
         psx[p] = isx[p];
       });
-      G.Window.setComplexValue('pstate', pstate);
+      G.Window.setComplexValue('pstate', persistState);
     }
 
+    // Apply popup fade-in effect
     const { popupParent, elemdata } = state;
     if (popupParent && elemdata && elemdata.length) {
-      // Do the fade in effect
       popupParent.getElementsByClassName('npopup')[0]?.classList.remove('hide');
     }
 
+    this.updateResults();
+  }
+
+  componentWillUnmount() {
+    this.destroy.forEach((d) => d());
+  }
+
+  updateResults() {
+    const state = this.state as SearchWinState;
     const { displayBible, module, pageindex, results, searchtext } = state;
     const { resref, lexref } = this;
     const res = resref !== null ? resref.current : null;
@@ -292,10 +304,6 @@ export default class SearchWin extends React.Component implements PopupParent {
     }
 
     lexupdate(dModule, dModuleIsStrongs);
-  }
-
-  componentWillUnmount() {
-    this.destroy.forEach((d) => d());
   }
 
   render() {
