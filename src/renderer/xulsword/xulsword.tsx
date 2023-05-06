@@ -114,7 +114,6 @@ export default class Xulsword extends React.Component {
     const { scroll } = state;
     if (!scroll?.skipWindowUpdate) {
       const statex = clone(state);
-      if (statex.scroll?.skipTextUpdate) delete statex.scroll.skipTextUpdate;
       setStatePref('prefs', 'xulsword', prevState, statex);
       // Add page to history after a short delay
       const { location } = state;

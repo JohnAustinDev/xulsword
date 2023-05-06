@@ -345,16 +345,11 @@ export function textChange(
   const newPinProps = newPartialPinProps as PinPropsType;
   newPinProps.scroll = null;
   if (type === C.BIBLE && columns > 1) {
-    const skipTextUpdate: boolean[] = [];
-    atext.parentNode?.childNodes.forEach((_n, i) => {
-      skipTextUpdate[i] = panelIndex !== i;
-    });
     newPinProps.scroll = next
       ? { verseAt: 'top' }
       : {
           verseAt: 'bottom',
           skipWindowUpdate: true,
-          skipTextUpdate,
         };
   } else if (type === C.BIBLE || type === C.COMMENTARY) {
     newPinProps.scroll = { verseAt: 'top' };
@@ -362,5 +357,6 @@ export function textChange(
   if (type === C.BIBLE) {
     newPinProps.selection = null;
   }
-  return newPinProps && Object.keys(newPinProps).length ? newPinProps : null;
+  if (newPinProps && Object.keys(newPinProps).length) return newPinProps;
+  return null;
 }

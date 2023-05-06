@@ -167,7 +167,6 @@ export default class ViewportWin extends React.Component {
         state,
         Object.keys(statePrefDefault)
       );
-      if (scroll?.skipTextUpdate) delete scroll.skipTextUpdate;
       const newWindowState = diff(prevState, windowState);
       if (newWindowState) {
         G.Window.mergeValue('xulswordState', newWindowState);

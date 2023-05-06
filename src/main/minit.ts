@@ -587,19 +587,26 @@ export function getFeatureModules(): FeatureMods {
       greek: [],
       hebrew: [],
     };
+    const Tab = getTab();
     getTabs().forEach((tab) => {
       const { module, type } = tab;
-      let mlang = LibSword.getModuleInformation(module, 'Lang');
-      const dash = mlang.indexOf('-');
-      mlang = mlang.substring(0, dash === -1 ? mlang.length : dash);
-      if (module !== 'LXX' && type === C.BIBLE && /^grc$/i.test(mlang))
+      const mlang = LibSword.getModuleInformation(module, 'Lang');
+      if (type === C.BIBLE && mlang === 'grc') {
         xulswordFeatureMods.greek.push(module);
-      else if (
+      } else if (
         type === C.BIBLE &&
-        /^heb?$/i.test(mlang) &&
-        !/HebModern/i.test(module)
-      )
+        (mlang === 'hbo' || ['OSMHB', 'WLC', 'Aleppo'].includes(module))
+      ) {
         xulswordFeatureMods.hebrew.push(module);
+      }
+      // Until xulsword updates the SWORD engine, only SynodalProt and KJV versifications
+      // can be supported.
+      xulswordFeatureMods.greek = xulswordFeatureMods.greek.filter((m) =>
+        Object.keys(C.SupportedV11nMaps).includes(Tab[m].v11n)
+      );
+      xulswordFeatureMods.hebrew = xulswordFeatureMods.hebrew.filter((m) =>
+        Object.keys(C.SupportedV11nMaps).includes(Tab[m].v11n)
+      );
 
       // These Strongs feature modules do not have Strongs number keys, and so cannot be used
       const notStrongsKeyed = new RegExp(

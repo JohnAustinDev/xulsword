@@ -88,9 +88,7 @@ export const stateWinPrefs = {
   maxNoteBoxHeight: null as number | null,
 };
 
-const notStateWinPrefs = {
-  origSelectDomNode: null as HTMLDivElement | null,
-};
+const notStateWinPrefs = {};
 
 export type AtextStateType = typeof stateWinPrefs & typeof notStateWinPrefs;
 
@@ -181,7 +179,6 @@ class Atext extends React.Component {
     const state = this.state as AtextStateType;
     const { columns, isPinned, panelIndex, xulswordState } = props;
     const { pin, maxNoteBoxHeight } = state as AtextStateType;
-    let { origSelectDomNode } = state;
 
     // Decide what needs to be updated...
     // pinProps are the currently active props according to the panel's
@@ -189,10 +186,6 @@ class Atext extends React.Component {
     const pinProps = keep(pin && isPinned ? pin : props, C.PinProps);
     // scrollProps are current props that effect scrolling
     const scrollProps = keep({ ...props, ...pinProps }, C.ScrollPropsVK);
-    const { scroll } = scrollProps;
-    // skip all render side-effects if skipTextUpdate is set
-    if (scroll?.skipTextUpdate && scroll.skipTextUpdate[panelIndex])
-      return false;
 
     let newState: Partial<AtextStateType> = diff(pin, pinProps)
       ? { pin: pinProps }
@@ -241,7 +234,6 @@ class Atext extends React.Component {
         const update = writekey !== sbe.dataset.libsword;
         if (update) {
           this.writeLibSword2DOM(libswordProps, panelIndex, 'overwrite');
-          origSelectDomNode = null;
         }
         // SCROLL
         const doscroll =
@@ -297,7 +289,6 @@ class Atext extends React.Component {
                     location: { ...libswordProps.location, chapter: prepend },
                   };
                   this.writeLibSword2DOM(pre, panelIndex, 'prepend');
-                  origSelectDomNode = null;
                   v = findVerseElement(
                     sbe,
                     libswordProps.location.chapter,
@@ -340,8 +331,6 @@ class Atext extends React.Component {
                 const info = (sib && getElementData(sib)) || null;
                 if (info && info.location) {
                   const { book, chapter, verse: vs } = info.location;
-                  const skipTextUpdate: boolean[] = [];
-                  skipTextUpdate[panelIndex] = true;
                   const location = verseKey(
                     [book, chapter, vs].join('.'),
                     libswordProps.location.v11n
@@ -352,19 +341,13 @@ class Atext extends React.Component {
                       pin: {
                         ...pinProps,
                         location,
-                        scroll: {
-                          verseAt: 'top',
-                          skipTextUpdate,
-                        },
+                        scroll: { verseAt: 'top' },
                       },
                     };
                   } else {
                     xulswordState({
                       location,
-                      scroll: {
-                        verseAt: 'top',
-                        skipTextUpdate,
-                      },
+                      scroll: { verseAt: 'top' },
                     });
                   }
                 }
@@ -410,7 +393,6 @@ class Atext extends React.Component {
                     location: { ...libswordProps.location, chapter: append },
                   };
                   this.writeLibSword2DOM(app, panelIndex, 'append');
-                  origSelectDomNode = null;
                   append += 1;
                 }
               }
@@ -471,20 +453,12 @@ class Atext extends React.Component {
           }
         }, 1);
       }
-      // This adds the interlinear original language select element:
-      const { ilModule, ilModuleOption } = props;
-      if (
-        ilModule &&
-        ilModuleOption &&
-        ilModuleOption.length > 1 &&
-        !origSelectDomNode
-      ) {
-        origSelectDomNode = (sbe.getElementsByClassName('origselect')[0] ||
-          null) as HTMLDivElement | null;
-        if (origSelectDomNode) newState.origSelectDomNode = origSelectDomNode;
-      }
     }
-    if (Object.keys(newState).length) this.setState(newState);
+    const d = diff(state, newState);
+    if (Object.keys(newState).length && d) {
+      console.log(state, d);
+      this.setState(d);
+    }
     return true;
   }
 
@@ -577,7 +551,7 @@ class Atext extends React.Component {
     const state = this.state as AtextStateType;
     const props = this.props as AtextProps;
     const { handler } = this;
-    const { maxNoteBoxHeight, versePerLine, origSelectDomNode } = state;
+    const { maxNoteBoxHeight, versePerLine } = state;
     const {
       columns,
       isPinned,
@@ -641,6 +615,8 @@ class Atext extends React.Component {
       if (module && modkey) data.locationGB = { otherMod: module, key: modkey };
     } else if (location) data.location = location;
 
+    const showSelect = ilModule && ilModuleOption && ilModuleOption.length > 1;
+
     return (
       <Vbox
         {...addClass(classes, props)}
@@ -670,17 +646,8 @@ class Atext extends React.Component {
           </div>
         </Box>
 
-        {module &&
-          audioIcon(
-            module,
-            isVerseKey ? location?.book || '' : modkey,
-            location?.chapter,
-            onAudioClick
-          )}
-
-        {origSelectDomNode &&
-          // This React portal injects a React select into rendered LibSword HTML.
-          ReactDOM.createPortal(
+        {showSelect && (
+          <Hbox className="origselect" pack="end">
             <select defaultValue={ilModule} onClick={handler}>
               {ilModuleOption.map((m) => {
                 return (
@@ -693,8 +660,16 @@ class Atext extends React.Component {
                   </option>
                 );
               })}
-            </select>,
-            origSelectDomNode
+            </select>
+          </Hbox>
+        )}
+
+        {module &&
+          audioIcon(
+            module,
+            isVerseKey ? location?.book || '' : modkey,
+            location?.chapter,
+            onAudioClick
           )}
 
         <Vbox

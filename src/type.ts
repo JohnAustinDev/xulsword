@@ -182,16 +182,10 @@ export type ModalType =
   | 'outlined'
   | 'transparent';
 
-// - skipTextUpdate allows a speedup when Atext content does not need to be updated,
-// such as verseAt bottom: only the target panel needs to be fully rendered, then
-// a verseAt top scroll is done for all other Atext instances. NOTE: skipTextUpdate
-// only applies to the calling window; if skipTextUpdate is sent to other windows,
-// it will be removed and will have no effect.
 // - skipWindowUpdate prevents temporary states from being saved to Prefs or broadcast
 // to other windows.
 export type ScrollType = {
   verseAt: 'top' | 'center' | 'bottom';
-  skipTextUpdate?: boolean[];
   skipWindowUpdate?: boolean;
 } | null;
 
@@ -374,7 +368,7 @@ export type BookGroupType =
   | 'Other';
 
 export type BookType = {
-  code: string;
+  code: OSISBookType;
   name: string;
   longname: string;
   index: number;

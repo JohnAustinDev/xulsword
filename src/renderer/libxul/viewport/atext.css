@@ -63,6 +63,17 @@ html[dir='rtl'] .atext .text-win {
   background-position: 20px;
 }
 
+.atext .origselect {
+  position: absolute;
+  top: 5px;
+  right: 12px;
+}
+
+html[dir='rtl'] .atext .origselect {
+  right: unset;
+  left: 12px;
+}
+
 .atext .audio-icon {
   margin-inline-start: 5px;
   margin-bottom: 5px;
@@ -227,9 +238,6 @@ html[dir='rtl'] .notebox-maximizer {
 }
 .introlink.empty {
   display: none;
-}
-.origselect select {
-  margin-top: 1em;
 }
 .head-line-break {
   display: inline-block;

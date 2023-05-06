@@ -356,7 +356,10 @@ class TextSortableColumn extends AbstractSortableColumn {
 
 const defaultProps = {
   ...xulDefaultProps,
-  sortRowsByDataColumn: undefined,
+  initialRowSort: {
+    propColumnIndex: 0,
+    direction: 'ascending',
+  },
   selectedRegions: undefined,
   selectionModes: SelectionModes.ROWS_ONLY,
   enableMultipleSelection: false,
@@ -402,7 +405,7 @@ const propTypes = {
 export type TableProps = XulProps & {
   data: TData;
   columns: TablePropColumn[];
-  initialRowSort?: TinitialRowSort;
+  initialRowSort: TinitialRowSort;
   selectedRegions?: Region[];
   selectionModes?: RegionCardinality[];
   enableMultipleSelection?: boolean;
@@ -464,17 +467,15 @@ class Table extends React.Component {
         datacolumn
       );
     });
-    if (initialRowSort) {
-      const { propColumnIndex: column, direction } = initialRowSort;
-      this.sortByColumn(
-        column,
-        direction,
-        direction === 'ascending'
-          ? (a, b) => TextSortableColumn.compare(a, b)
-          : (a, b) => TextSortableColumn.compare(b, a),
-        s
-      );
-    }
+    const { propColumnIndex: column, direction } = initialRowSort;
+    this.sortByColumn(
+      column,
+      direction,
+      direction === 'ascending'
+        ? (a, b) => TextSortableColumn.compare(a, b)
+        : (a, b) => TextSortableColumn.compare(b, a),
+      s
+    );
     this.state = s;
 
     this.tableDomRef = React.createRef();

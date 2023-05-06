@@ -202,9 +202,10 @@ class Viewport extends React.Component implements PopupParent {
           G.FeatureModules.hebrew[0] || G.FeatureModules.greek[0]
         );
         const bk = location.book in G.Book ? G.Book[location.book] : null;
-        if (bk && (bk.bookGroup === 'ot' || bk.bookGroup === 'nt')) {
-          const ml =
-            G.FeatureModules[bk.bookGroup === 'nt' ? 'greek' : 'hebrew'];
+        if (bk) {
+          const ml = G.FeatureModules.greek
+            .concat(G.FeatureModules.hebrew)
+            .filter((m) => G.getBooksInVKModule(m).includes(bk.code));
           if (ml.length) ilModuleOptions[i] = ml;
         }
       }

@@ -636,7 +636,6 @@ export function getChapterHeading(
   const int = G.i18n.t('IntroLink', toptions);
   html += '<div class="chapinfo">';
   html += `<div class="introlink${inc}" data-data="${ind}">${int}</div>`;
-  html += '<div class="origselect"></div>';
   html += '</div>';
 
   html += '</div>';
@@ -862,15 +861,10 @@ function aTextWheelScroll2(
       }
     }
     if (newloc) {
-      const skipTextUpdate: boolean[] = [];
-      skipTextUpdate[panelIndex] = columns === 1;
       if (parentstate) {
         ret = {
           location: newloc,
-          scroll: {
-            verseAt: 'top',
-            skipTextUpdate,
-          },
+          scroll: { verseAt: 'top' },
         };
       }
       if (atextstate?.pin) {
@@ -878,10 +872,7 @@ function aTextWheelScroll2(
           pin: {
             ...atextstate.pin,
             location: newloc,
-            scroll: {
-              verseAt: 'top',
-              skipTextUpdate,
-            },
+            scroll: { verseAt: 'top' },
           },
         };
       }
