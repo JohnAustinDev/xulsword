@@ -60,6 +60,8 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
         case 'nextchap': {
           this.setState((prevState: XulswordState) => {
             const { location } = prevState;
+            // TODO!: This v11n is sometimes null for some reason, and causes this
+            // operation to fail.
             if (location) {
               const l = verseKey(location);
               l.verse = 1;

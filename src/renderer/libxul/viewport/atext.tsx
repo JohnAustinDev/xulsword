@@ -114,10 +114,6 @@ class Atext extends React.Component {
   constructor(props: AtextProps) {
     super(props);
 
-    windowState[props.panelIndex] = windowArguments(
-      `atext${props.panelIndex}State`
-    ) as AtextStateType;
-
     const s: AtextStateType = {
       ...stateWinPrefs,
       ...notStateWinPrefs,
@@ -140,21 +136,14 @@ class Atext extends React.Component {
   componentDidUpdate(_prevProps: AtextProps, prevState: AtextStateType) {
     const { panelIndex } = this.props as AtextProps;
     const state = this.state as AtextStateType;
-    if (this.onUpdate()) {
-      windowState[panelIndex] = keep(
-        state,
-        Object.keys(stateWinPrefs) as (keyof typeof stateWinPrefs)[]
-      );
-      const changedState = diff(
-        keep(
-          prevState,
-          Object.keys(stateWinPrefs) as (keyof typeof stateWinPrefs)[]
-        ),
-        windowState[panelIndex]
-      );
-      if (changedState) {
-        G.Window.mergeValue(`atext${panelIndex}State`, changedState);
-      }
+    this.onUpdate();
+    windowState[panelIndex] = keep(
+      state,
+      Object.keys(stateWinPrefs) as (keyof typeof stateWinPrefs)[]
+    );
+    const changedState = diff(prevState, windowState[panelIndex]);
+    if (changedState) {
+      G.Window.mergeValue(`atext${panelIndex}State`, changedState);
     }
   }
 

@@ -229,7 +229,7 @@ const C = {
     'ky-Arab': 'en',
     'ky-Cyrl': 'ru',
     'ru-CA': 'ru',
-    sl: 'ru',
+    sl: 'en',
     'tk-Latn': 'en',
     'tt-Cyrl': 'ru',
     'uz-Cyrl': 'ru',
