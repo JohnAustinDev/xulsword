@@ -19,7 +19,7 @@ PHP_METHOD(phpsword, getChapterText)
     const char *vkeymod; size_t l1;
     const char *vkeytext; size_t l2;
     if (zend_parse_parameters_throw(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &vkeymod, &l1, &vkeytext, &l2) != FAILURE) {
-      char *ret = sword->getChapterText(vkeymod, vkeytext);
+      const char *ret = sword->getChapterText(vkeymod, vkeytext);
       if (ret) {RETURN_STRING(ret);}
     }
   }
@@ -32,7 +32,7 @@ PHP_METHOD(phpsword, getFootnotes)
   sword_object *obj = Z_SWORD;
   sword = obj->sword;
   if (sword != NULL) {
-    char *ret = sword->getFootnotes();
+    const char *ret = sword->getFootnotes();
     if (ret) {RETURN_STRING(ret);}
   }
   RETURN_EMPTY_STRING();
@@ -44,7 +44,7 @@ PHP_METHOD(phpsword, getCrossRefs)
   sword_object *obj = Z_SWORD;
   sword = obj->sword;
   if (sword != NULL) {
-    char *ret = sword->getCrossRefs();
+    const char *ret = sword->getCrossRefs();
     if (ret) {RETURN_STRING(ret);}
   }
   RETURN_EMPTY_STRING();
@@ -56,7 +56,7 @@ PHP_METHOD(phpsword, getNotes)
   sword_object *obj = Z_SWORD;
   sword = obj->sword;
   if (sword != NULL) {
-    char *ret = sword->getNotes();
+    const char *ret = sword->getNotes();
     if (ret) {RETURN_STRING(ret);}
   }
   RETURN_EMPTY_STRING();
@@ -72,7 +72,7 @@ PHP_METHOD(phpsword, getChapterTextMulti)
     char *vkeytext; size_t l2;
     zend_bool keepnotes;
     if (zend_parse_parameters_throw(ZEND_NUM_ARGS() TSRMLS_CC, "ssb", &vkeymodlist, &l1, &vkeytext, &l2, &keepnotes) != FAILURE) {
-      char *ret = sword->getChapterTextMulti(vkeymodlist, vkeytext, keepnotes);
+      const char *ret = sword->getChapterTextMulti(vkeymodlist, vkeytext, keepnotes);
       if (ret) {RETURN_STRING(ret);}
     }
   }
@@ -88,7 +88,7 @@ PHP_METHOD(phpsword, getVerseText)
     char *vkeymod; size_t l1;
     char *vkeytext; size_t l2;
     if (zend_parse_parameters_throw(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &vkeymod, &l1, &vkeytext, &l2) != FAILURE) {
-      char *ret = sword->getVerseText(vkeymod, vkeytext);
+      const char *ret = sword->getVerseText(vkeymod, vkeytext);
       if (ret) {RETURN_STRING(ret);}
     }
   }
@@ -133,7 +133,7 @@ PHP_METHOD(phpsword, getVerseSystem)
   if (sword != NULL) {
     char *mod; size_t l1;
     if (zend_parse_parameters_throw(ZEND_NUM_ARGS() TSRMLS_CC, "s", &mod, &l1) != FAILURE) {
-      char *ret = sword->getVerseSystem(mod);
+      const char *ret = sword->getVerseSystem(mod);
       if (ret) {RETURN_STRING(ret);}
     }
   }
@@ -148,7 +148,7 @@ PHP_METHOD(phpsword, getModuleBooks)
   if (sword != NULL) {
     char *mod; size_t l1;
     if (zend_parse_parameters_throw(ZEND_NUM_ARGS() TSRMLS_CC, "s", &mod, &l1) != FAILURE) {
-      char *ret = sword->getModuleBooks(mod);
+      const char *ret = sword->getModuleBooks(mod);
       if (ret) {RETURN_STRING(ret);}
     }
   }
@@ -164,7 +164,7 @@ PHP_METHOD(phpsword, parseVerseKey)
     char *vkeymod; size_t l1;
     char *vkeytext; size_t l2;
     if (zend_parse_parameters_throw(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &vkeymod, &l1, &vkeytext, &l2) != FAILURE) {
-      char *ret = sword->parseVerseKey(vkeymod, vkeytext);
+      const char *ret = sword->parseVerseKey(vkeymod, vkeytext);
       if (ret) {RETURN_STRING(ret);}
     }
   }
@@ -181,7 +181,7 @@ PHP_METHOD(phpsword, convertLocation)
     char *vkeytext; size_t l2;
     char *toVS; size_t l3;
     if (zend_parse_parameters_throw(ZEND_NUM_ARGS() TSRMLS_CC, "sss", &frVS, &l1, &vkeytext, &l2,  &toVS, &l3) != FAILURE) {
-      char *ret = sword->convertLocation(frVS, vkeytext, toVS);
+      const char *ret = sword->convertLocation(frVS, vkeytext, toVS);
       if (ret) {RETURN_STRING(ret);}
     }
   }
@@ -197,7 +197,7 @@ PHP_METHOD(phpsword, getIntroductions)
     char *vkeymod; size_t l1;
     char *bname; size_t l2;
     if (zend_parse_parameters_throw(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &vkeymod, &l1, &bname, &l2) != FAILURE) {
-      char *ret = sword->getIntroductions(vkeymod, bname);
+      const char *ret = sword->getIntroductions(vkeymod, bname);
       if (ret) {RETURN_STRING(ret);}
     }
   }
@@ -213,7 +213,7 @@ PHP_METHOD(phpsword, getDictionaryEntry)
     char *lexdictmod; size_t l1;
     char *key; size_t l2;
     if (zend_parse_parameters_throw(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &lexdictmod, &l1, &key, &l2) != FAILURE) {
-      char *ret = sword->getDictionaryEntry(lexdictmod, key);
+      const char *ret = sword->getDictionaryEntry(lexdictmod, key);
       if (ret) {RETURN_STRING(ret);}
     }
   }
@@ -228,7 +228,7 @@ PHP_METHOD(phpsword, getAllDictionaryKeys)
   if (sword != NULL) {
     char *lexdictmod; size_t l1;
     if (zend_parse_parameters_throw(ZEND_NUM_ARGS() TSRMLS_CC, "s", &lexdictmod, &l1) != FAILURE) {
-      char *ret = sword->getAllDictionaryKeys(lexdictmod);
+      const char *ret = sword->getAllDictionaryKeys(lexdictmod);
       if (ret) {RETURN_STRING(ret);}
     }
   }
@@ -244,7 +244,7 @@ PHP_METHOD(phpsword, getGenBookChapterText)
     char *gbmod; size_t l1;
     char *treekey; size_t l2;
     if (zend_parse_parameters_throw(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &gbmod, &l1, &treekey, &l2) != FAILURE) {
-      char *ret = sword->getGenBookChapterText(gbmod, treekey);
+      const char *ret = sword->getGenBookChapterText(gbmod, treekey);
       if (ret) {RETURN_STRING(ret);}
     }
   }
@@ -259,7 +259,7 @@ PHP_METHOD(phpsword, getGenBookTableOfContents)
   if (sword != NULL) {
     char *gbmod; size_t l1;
     if (zend_parse_parameters_throw(ZEND_NUM_ARGS() TSRMLS_CC, "s", &gbmod, &l1) != FAILURE) {
-      char *ret = sword->getGenBookTableOfContents(gbmod);
+      const char *ret = sword->getGenBookTableOfContents(gbmod);
       if (ret) {RETURN_STRING(ret);}
     }
   }
@@ -311,7 +311,7 @@ PHP_METHOD(phpsword, getSearchResults)
     zend_bool keepStrongs;
     zend_bool referencesOnly;
     if (zend_parse_parameters_throw(ZEND_NUM_ARGS() TSRMLS_CC, "sllbb", &mod, &l1, &first, &num, &keepStrongs, &referencesOnly) != FAILURE) {
-      char *ret = sword->getSearchResults(mod, first, num, keepStrongs, NULL, referencesOnly);
+      const char *ret = sword->getSearchResults(mod, first, num, keepStrongs, NULL, referencesOnly);
       if (ret) {RETURN_STRING(ret);}
     }
   }
@@ -341,7 +341,7 @@ PHP_METHOD(phpsword, getGlobalOption)
   if (sword != NULL) {
     char *option; size_t l1;
     if (zend_parse_parameters_throw(ZEND_NUM_ARGS() TSRMLS_CC, "s", &option, &l1) != FAILURE) {
-      char *ret = sword->getGlobalOption(option);
+      const char *ret = sword->getGlobalOption(option);
       if (ret) {RETURN_STRING(ret);}
     }
   }
@@ -371,7 +371,7 @@ PHP_METHOD(phpsword, getModuleList)
   sword_object *obj = Z_SWORD;
   sword = obj->sword;
   if (sword != NULL) {
-    char *ret = sword->getModuleList();
+    const char *ret = sword->getModuleList();
     if (ret) {RETURN_STRING(ret);}
   }
   RETURN_EMPTY_STRING();
@@ -386,23 +386,7 @@ PHP_METHOD(phpsword, getModuleInformation)
     char *mod; size_t l1;
     char *paramname; size_t l2;
     if (zend_parse_parameters_throw(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &mod, &l1, &paramname, &l2) != FAILURE) {
-      char *ret = sword->getModuleInformation(mod, paramname);
-      if (ret) {RETURN_STRING(ret);}
-    }
-  }
-  RETURN_EMPTY_STRING();
-}
-
-PHP_METHOD(phpsword, translate)
-{
-  xulsword *sword;
-  sword_object *obj = Z_SWORD;
-  sword = obj->sword;
-  if (sword != NULL) {
-    char *text; size_t l1;
-    char *localeName; size_t l2;
-    if (zend_parse_parameters_throw(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &text, &l1, &localeName, &l2) != FAILURE) {
-      char *ret = sword->translate(text, localeName);
+      const char *ret = sword->getModuleInformation(mod, paramname);
       if (ret) {RETURN_STRING(ret);}
     }
   }
@@ -437,6 +421,5 @@ static const zend_function_entry sword_methods[] = {
     PHP_ME(phpsword,  setCipherKey,                  NULL, ZEND_ACC_PUBLIC)
     PHP_ME(phpsword,  getModuleList,                 NULL, ZEND_ACC_PUBLIC)
     PHP_ME(phpsword,  getModuleInformation,          NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(phpsword,  translate,                     NULL, ZEND_ACC_PUBLIC)
     {NULL, NULL, NULL}
 };
