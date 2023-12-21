@@ -1,6 +1,7 @@
 #!/bin/bash
 
-cd $( dirname -- "$0"; )
+cd "$( dirname "${BASH_SOURCE[0]}" )"
+XULSWORD=$( pwd )
 
 # This script installs dependencies and builds the libxulsword
 # dynamic library and libxulsword native node-module.
@@ -10,11 +11,14 @@ if [[ $EUID -eq 0 ]]; then
    exit 1
 fi
 
-if [ -e /vagrant ]; then export CONTEXT="guest"; else export CONTEXT="host"; fi
+if [ -e /vagrant ]; then export VAGRANT="guest"; else export VAGRANT="host"; fi
 
-if [ "$CONTEXT" = "guest" ]; then cd /vagrant; fi
-
-source ./setenv
+if [ "$VAGRANT" = "guest" ]; then
+  if [[ -e "/vagrant/setenv" ]]; then
+    XULSWORD=/vagrant
+  fi
+fi
+source "$XULSWORD/setenv"
 
 DBG=
 # DBG='-D CMAKE_BUILD_TYPE=Debug'
@@ -26,7 +30,7 @@ PKG_DEPS="$PKG_DEPS debhelper binutils gcc-multilib dpkg-dev"
 # for Clucene build
 PKG_DEPS="$PKG_DEPS debhelper libboost-dev"
 # for VM build
-if [ "$CONTEXT" = "guest" ]; then PKG_DEPS="$PKG_DEPS libxshmfence1 libglu1 libnss3-dev libgdk-pixbuf2.0-dev libgtk-3-dev libxss-dev libasound2"; fi
+if [ "$VAGRANT" = "guest" ]; then PKG_DEPS="$PKG_DEPS libxshmfence1 libglu1 libnss3-dev libgdk-pixbuf2.0-dev libgtk-3-dev libxss-dev libasound2"; fi
 
 if [ "$WINMACHINE" != "no" ]; then
   # BUILD DEPENDENCIES (for cross compiling libxulsword as a Windows dll)
@@ -37,24 +41,27 @@ fi
 # PKG_DEPS="$PKG_DEPS llvm-12 llvm-12-linker-tools llvm-12-tools clang-12 lldb-12 lld-12"
 
 if [ $(dpkg -s $PKG_DEPS 2>&1 | grep "not installed" | wc -m) -ne 0 ]; then
-  if [ "$CONTEXT" = "guest" ]; then
+  if [ "$VAGRANT" = "guest" ]; then
     sudo dpkg --add-architecture i386
     sudo apt-get update
     sudo apt-get install -y $PKG_DEPS
   else
     echo First, you need to install missing packages with:
     echo .
-    echo sudo apt install ${PKG_DEPS}
+    echo sudo apt-get install ${PKG_DEPS}
     echo .
     echo Then run this script again.
     exit;
   fi
 fi
 
-# If this is a guest VM, then clone the host code to VM and build everything within
-# the VM so as not to modify any host build files. Also git must be used (vs. copied
-# from host) so that line endings will be correct on both the host and the guest.
-if [ "$CONTEXT" = "guest" ]; then
+# If XULSWORD is /vagrant, then clone the host code to VM and build
+# everything within the VM so as not to fill the host with build files
+# for another machine. Then copy only the output files to the host.
+# Also git must be used (vs. copied from host) so that line endings will
+# be correct on both the host and the guest.
+COPY_TO_HOST=
+if [ "$XULSWORD" = "/vagrant" ]; then
   if [ ! -e "$HOME/src" ]; then
     mkdir "$HOME/src";
     cd "$HOME/src"
@@ -63,9 +70,10 @@ if [ "$CONTEXT" = "guest" ]; then
     cd "$HOME/src/xulsword"
     git pull
   fi
+  XULSWORD="$HOME/src/xulsword"
+  COPY_TO_HOST=1
 fi
 
-if [ "$CONTEXT" = "guest" ]; then export XULSWORD="$HOME/src/xulsword"; else export XULSWORD="$( pwd -P )"; fi
 cd "$XULSWORD"
 export CPP="$XULSWORD/Cpp"
 
@@ -98,7 +106,7 @@ fi
 # Create an archive directory to cache source code
 ARCHIVEDIR="$XULSWORD/archive"
 if [ ! -e "$ARCHIVEDIR" ]; then mkdir "$ARCHIVEDIR"; fi
-if [ "$CONTEXT" = "guest" ]; then ARCHHOST="/vagrant/archive"; else ARCHHOST=$ARCHIVEDIR; fi
+if [ -n $COPY_TO_HOST ]; then ARCHHOST="/vagrant/archive"; else ARCHHOST=$ARCHIVEDIR; fi
 
 function getSource() {
   echo "Getting source $gzfile from '$url'"
@@ -262,8 +270,8 @@ if [ ! -e "$CPP/build" ]; then
   fi
   chmod ugo+x "$LIBDIR/"*
 
-  # If this is Vagrant, then copy the finished library to the host machine
-  if [ "$CONTEXT" = "guest" ]; then
+  # If COPY_TO_HOST then copy the finished library to the host machine
+  if [ -n $COPY_TO_HOST ]; then
     HLIBDIR="/vagrant/Cpp/lib"
     if [ -e "$HLIBDIR" ]; then rm -rf "$HLIBDIR"; fi
     cp -r "$LIBDIR" "$HLIBDIR"
@@ -295,8 +303,8 @@ if [ "$WINMACHINE" != "no" ]; then
     fi
     chmod ugo+x "$LIBDIR/"*
 
-    # If this is Vagrant, then copy the finished library to the host machine
-    if [ "$CONTEXT" = "guest" ]; then
+    # If COPY_TO_HOST then copy the finished library to the host machine
+    if [ -n $COPY_TO_HOST ]; then
       HLIBDIR="/vagrant/Cpp/lib.$XCWD"
       if [ -e "$HLIBDIR" ]; then rm -rf "$HLIBDIR"; fi
       cp -r "$LIBDIR" "$HLIBDIR"
@@ -313,8 +321,8 @@ if [ "$LIBXULSWORD_ONLY" = "yes" ]; then exit 0; fi
 cd "$XULSWORD"
 yarn
 
-# If this is Vagrant then copy node_modules to host to save download time
-if [ "$CONTEXT" = "guest" ]; then
+# If COPY_TO_HOST then copy node_modules to host to save download time
+if [ -n $COPY_TO_HOST ]; then
   if [ ! -e "/vagrant/node_modules" ]; then
     cp -r "$XULSWORD/node_modules" "/vagrant"
   fi
