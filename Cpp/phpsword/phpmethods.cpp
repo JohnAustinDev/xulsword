@@ -1,3 +1,10 @@
+#if ZEND_EXTENSION_API_NO > 20180731
+  /* Zend multi-threading no longer needs this macro */
+  #define TSRMLS_CC
+  /* Zend detects destructor by name (__destruct) and this macro went away.
+   * It doesn't hurt to keep it though for 20180731. */
+  #define ZEND_ACC_DTOR (1 << 14)
+#endif
 
 /********************************************************************
 PHPSWORD Object Methods

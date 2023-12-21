@@ -1,6 +1,11 @@
 #include "xulsword.h"
 #include "phpsword.h"
 
+#if ZEND_EXTENSION_API_NO > 20180731
+  /* Zend multi-threading no longer needs this macro */
+  #define TSRMLS_DC
+#endif
+
 /* See https://www.zend.com/embedding-c-data-into-php-objects */
 
 /* Z_SWORD returns the sword-object pointer within PHP_METHOD */
