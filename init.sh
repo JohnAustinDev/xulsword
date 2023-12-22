@@ -131,6 +131,7 @@ function getSource() {
   if [ ! -e "$ARCHIVEDIR/$gzfile" ]; then
     # If file is already on host, copy it.
     if [ -e "$ARCHHOST/$gzfile" ]; then
+      echo "Using archived file: $gzfile"
       cp "$ARCHHOST/$gzfile" "$ARCHIVEDIR/$gzfile"
     # Otherwise if it's sword, use subversion to get the rev needed.
     elif [ "$url" = "http://crosswire.org/svn/sword/trunk" ]; then
@@ -141,7 +142,7 @@ function getSource() {
       rm -rf "$dirin"
     # Otherwise if there is no url, we're done.
     elif [ -z "$url" ]; then
-      echo "Download $gzfile:"
+      echo "Downloading $gzfile:"
       echo "Place it in the xulsword/archive directory."
       echo "Then start this script again ($gzfile does not allow auto-downloads)"
       exit 1;
