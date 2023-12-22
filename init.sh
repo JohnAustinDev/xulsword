@@ -150,6 +150,9 @@ function getSource() {
     else
       cd "$ARCHIVEDIR"
       curl -o "$gzfile" "$url"
+      if [ -e "/vagrant/archive" ]; then
+        cp "$gzfile" "/vagrant/archive"
+      fi
     fi
   fi
   
