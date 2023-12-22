@@ -109,26 +109,44 @@ if [ ! -e "$ARCHIVEDIR" ]; then mkdir "$ARCHIVEDIR"; fi
 if [ -n $COPY_TO_HOST ]; then ARCHHOST="/vagrant/archive"; else ARCHHOST=$ARCHIVEDIR; fi
 
 function getSource() {
-  echo "Getting source $gzfile from '$url'"
+  echo "Getting source code:"
+  echo url=$url
+  echo gzfile=$gzfile
+  echo dirin=$dirin
+  echo dirout=$dirout
+  echo ARCHIVEDIR=$ARCHIVEDIR
+  echo ARCHHOST=$ARCHHOST
+  echo swordRev=$swordRev
+  
+  if [ -e "$XULSWORD/Cpp/$dirout" ]; then
+    echo "ERROR: source already exists at $dirout"
+    exit 1;
+  fi
+  
   if [ ! -e "$ARCHIVEDIR/$gzfile" ]; then
+    # If file is already on host, copy it.
     if [ -e "$ARCHHOST/$gzfile" ]; then
       cp "$ARCHHOST/$gzfile" "$ARCHIVEDIR/$gzfile"
+    # Otherwise if it's sword, use subversion to get the rev needed.
     elif [ "$url" = "http://crosswire.org/svn/sword/trunk" ]; then
       cd "$ARCHIVEDIR"
       svn checkout -r $swordRev $url "$dirin"
-      find "$dirin" -type d -name '.svn' -exec rm -rf {} \;
+      rm -rf "$dirin/.svn"
       tar -czvf "$gzfile" "$dirin"
       rm -rf "$dirin"
+    # Otherwise if there is no url, we're done.
     elif [ -z "$url" ]; then
       echo "Download $gzfile:"
       echo "Place it in the xulsword/archive directory."
       echo "Then start this script again ($gzfile does not allow auto-downloads)"
-      exit
+      exit 1;
+    # Download from the url
     else
       cd "$ARCHIVEDIR"
       curl -o "$gzfile" "$url"
     fi
   fi
+  
   if [ -e "$ARCHIVEDIR/$gzfile" ]; then
     cd "$XULSWORD/Cpp"
     tar -xf "$ARCHIVEDIR/$gzfile"
@@ -256,8 +274,8 @@ fi
 if [ ! -e "$CPP/build" ]; then
   mkdir "$CPP/build"
   cd "$CPP/build"
-  cmake $DBG -D SWORD_NO_ICU="No" -D CMAKE_INCLUDE_PATH="$CPP/install/usr/local/include" -D CMAKE_LIBRARY_PATH="$CPP/install/usr/local/lib" ..
-  make DESTDIR="$CPP/install" install
+  cmake $DBG -D SWORD_NO_ICU="No" -D CMAKE_INCLUDE_PATH="$CPP/install/usr/local/include" -D CMAKE_LIBRARY_PATH="$CPP/install/usr/local/lib" -D LIB_INSTALL_DIR="$CPP/install/usr/local/lib" ..
+  make install
 
   # Install the lib and all dependencies and strip them
   LIBDIR="$CPP/lib"
@@ -282,8 +300,8 @@ if [ "$WINMACHINE" != "no" ]; then
   if [ ! -e "$CPP/build.$XCWD" ]; then
     mkdir "$CPP/build.$XCWD"
     cd "$CPP/build.$XCWD"
-    cmake $DBG -DCMAKE_TOOLCHAIN_FILE="$CPP/windows/toolchain.cmake" -D SWORD_NO_ICU="No" -D CMAKE_INCLUDE_PATH="$CPP/install.$XCWD/usr/local/include" -D CMAKE_LIBRARY_PATH="$CPP/install.$XCWD/usr/local/lib" ..
-    make DESTDIR="$CPP/install.$XCWD" install
+    cmake $DBG -DCMAKE_TOOLCHAIN_FILE="$CPP/windows/toolchain.cmake" -D SWORD_NO_ICU="No" -D CMAKE_INCLUDE_PATH="$CPP/install.$XCWD/usr/local/include" -D CMAKE_LIBRARY_PATH="$CPP/install.$XCWD/usr/local/lib" -D LIB_INSTALL_DIR="$CPP/install.$XCWD/usr/local/lib" ..
+    make install
 
     # Install the DLL and all ming dependencies beyond the node executable and strip them
     LIBDIR="$CPP/lib.$XCWD"
