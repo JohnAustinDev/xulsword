@@ -1,5 +1,10 @@
 #!/bin/bash
 
+export XULSWORD
+export CPP
+export NVM_DIR
+export VAGRANT
+
 cd "$( dirname "${BASH_SOURCE[0]}" )"
 XULSWORD=$( pwd )
 
@@ -11,7 +16,7 @@ if [[ $EUID -eq 0 ]]; then
    exit 1
 fi
 
-if [ -e /vagrant ]; then export VAGRANT="guest"; else export VAGRANT="host"; fi
+if [ -e /vagrant ]; then VAGRANT="guest"; else VAGRANT="host"; fi
 
 if [ "$VAGRANT" = "guest" ]; then
   if [[ -e "/vagrant/setenv" ]]; then
@@ -75,12 +80,12 @@ if [ "$XULSWORD" = "/vagrant" ]; then
 fi
 
 cd "$XULSWORD"
-export CPP="$XULSWORD/Cpp"
+CPP="$XULSWORD/Cpp"
 
 if [ "$LIBXULSWORD_ONLY" = "no" ]; then
   # Install node.js using nvm so our dev environment can use the latest
   # LTS version of node.js. Then install yarn and dependant node modules.
-  export NVM_DIR="$HOME/.nvm"
+  NVM_DIR="$HOME/.nvm"
   curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash
   [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
   [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
