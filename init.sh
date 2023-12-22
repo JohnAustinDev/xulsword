@@ -67,6 +67,7 @@ fi
 # be correct on both the host and the guest.
 COPY_TO_HOST=
 if [ "$XULSWORD" = "/vagrant" ]; then
+  COPY_TO_HOST=1
   if [ ! -e "$HOME/src" ]; then
     mkdir "$HOME/src";
     cd "$HOME/src"
@@ -76,7 +77,6 @@ if [ "$XULSWORD" = "/vagrant" ]; then
     git pull
   fi
   XULSWORD="$HOME/src/xulsword"
-  COPY_TO_HOST=1
 fi
 
 cd "$XULSWORD"
@@ -111,7 +111,7 @@ fi
 # Create an archive directory to cache source code
 ARCHIVEDIR="$XULSWORD/archive"
 if [ ! -e "$ARCHIVEDIR" ]; then mkdir "$ARCHIVEDIR"; fi
-if [ -n $COPY_TO_HOST ]; then ARCHHOST="/vagrant/archive"; else ARCHHOST=$ARCHIVEDIR; fi
+if [ -e "/vagrant/archive" ]; then ARCHHOST="/vagrant/archive"; else ARCHHOST=$ARCHIVEDIR; fi
 
 function getSource() {
   echo "Getting source code:"
