@@ -566,7 +566,7 @@ const S = {
 
     print: {
       landscape: false as boolean,
-      pageSize: 'Letter' as typeof paperSizes[number]['type'],
+      pageSize: 'A4' as typeof paperSizes[number]['type'],
       twoColumns: false as boolean,
       scale: 100 as number,
       margins: {
