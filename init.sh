@@ -298,7 +298,7 @@ if [ ! -e "$CPP/build" ]; then
   chmod ugo+x "$LIBDIR/"*
 
   # If COPY_TO_HOST then copy the finished library to the host machine
-  if [ -n $COPY_TO_HOST ]; then
+  if [ ! -z $COPY_TO_HOST ]; then
     HLIBDIR="/vagrant/Cpp/lib"
     if [ -e "$HLIBDIR" ]; then rm -rf "$HLIBDIR"; fi
     cp -r "$LIBDIR" "$HLIBDIR"
@@ -331,7 +331,7 @@ if [ "$WINMACHINE" != "no" ]; then
     chmod ugo+x "$LIBDIR/"*
 
     # If COPY_TO_HOST then copy the finished library to the host machine
-    if [ -n $COPY_TO_HOST ]; then
+    if [ ! -z $COPY_TO_HOST ]; then
       HLIBDIR="/vagrant/Cpp/lib.$XCWD"
       if [ -e "$HLIBDIR" ]; then rm -rf "$HLIBDIR"; fi
       cp -r "$LIBDIR" "$HLIBDIR"
@@ -349,7 +349,7 @@ cd "$XULSWORD"
 yarn
 
 # If COPY_TO_HOST then copy node_modules to host to save download time
-if [ -n $COPY_TO_HOST ]; then
+if [ ! -z $COPY_TO_HOST ]; then
   if [ ! -e "/vagrant/node_modules" ]; then
     cp -r "$XULSWORD/node_modules" "/vagrant"
   fi
