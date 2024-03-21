@@ -4,6 +4,13 @@
 #if ZEND_EXTENSION_API_NO > 20180731
   /* Zend multi-threading no longer needs this macro */
   #define TSRMLS_DC
+  
+  ZEND_BEGIN_ARG_INFO_EX(__construct, 0, 0, 1)
+    ZEND_ARG_INFO(0, repo_paths)
+  ZEND_END_ARG_INFO()
+
+  ZEND_BEGIN_ARG_INFO_EX(__destruct, 0, 0, 0)
+  ZEND_END_ARG_INFO()
 #endif
 
 /* See https://www.zend.com/embedding-c-data-into-php-objects */
