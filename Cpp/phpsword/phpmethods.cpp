@@ -4,131 +4,8 @@
   /* Zend detects destructor by name (__destruct) and this macro went away.
    * It doesn't hurt to keep it though for 20180731. */
   #define ZEND_ACC_DTOR (1 << 14)
-  
-/* See: /usr/include/php/20220829/Zend */
-/* #define ZEND_BEGIN_ARG_INFO_EX(name, _unused, return_reference, required_num_args)  */
-/* #define ZEND_ARG_INFO(pass_by_ref, name) */
-/* #define ZEND_ARG_OBJ_INFO(pass_by_ref, name, class_name, allow_null) */
-  
-ZEND_BEGIN_ARG_INFO_EX(getChapterText, 0, 0, 2)
-  ZEND_ARG_INFO(0, vkeymod)
-  ZEND_ARG_INFO(0, vkeytext)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(getFootnotes, 0, 0, 0)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(getCrossRefs, 0, 0, 0)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(getNotes, 0, 0, 0)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(getChapterTextMulti, 0, 0, 3)
-  ZEND_ARG_INFO(0, vkeymodlist)
-  ZEND_ARG_INFO(0, vkeytext)
-  ZEND_ARG_INFO(0, keepnotes)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(getVerseText, 0, 0, 2)
-  ZEND_ARG_INFO(0, vkeymod)
-  ZEND_ARG_INFO(0, vkeytext)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(getMaxChapter, 0, 0, 2)
-  ZEND_ARG_INFO(0, v11n)
-  ZEND_ARG_INFO(0, vkeytext)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(getMaxVerse, 0, 0, 2)
-  ZEND_ARG_INFO(0, v11n)
-  ZEND_ARG_INFO(0, vkeytext)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(getVerseSystem, 0, 0, 1)
-  ZEND_ARG_INFO(0, module)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(parseVerseKey, 0, 0, 2)
-  ZEND_ARG_INFO(0, vkeymod)
-  ZEND_ARG_INFO(0, vkeytext)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(convertLocation, 0, 0, 3)
-  ZEND_ARG_INFO(0, frVS)
-  ZEND_ARG_INFO(0, vkeytext)
-  ZEND_ARG_INFO(0, toVS)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(getIntroductions, 0, 0, 3)
-  ZEND_ARG_INFO(0, vkeymod)
-  ZEND_ARG_INFO(0, bname)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(getDictionaryEntry, 0, 0, 2)
-  ZEND_ARG_INFO(0, lexdictmod)
-  ZEND_ARG_INFO(0, key)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(getAllDictionaryKeys, 0, 0, 1)
-  ZEND_ARG_INFO(0, lexdictmod)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(getGenBookChapterText, 0, 0, 2)
-  ZEND_ARG_INFO(0, gbmod)
-  ZEND_ARG_INFO(0, treekey)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(getGenBookTableOfContents, 0, 0, 1)
-  ZEND_ARG_INFO(0, gbmod)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(luceneEnabled, 0, 0, 1)
-  ZEND_ARG_INFO(0, mod)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(search, 0, 0, 6)
-  ZEND_ARG_INFO(0, mod)
-  ZEND_ARG_INFO(0, srchstr)
-  ZEND_ARG_INFO(0, scope)
-  ZEND_ARG_INFO(0, type)
-  ZEND_ARG_INFO(0, flags)
-  ZEND_ARG_INFO(0, newsearch)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(getSearchResults, 0, 0, 5)
-  ZEND_ARG_INFO(0, mod)
-  ZEND_ARG_INFO(0, first)
-  ZEND_ARG_INFO(0, num)
-  ZEND_ARG_INFO(0, keepStrongs)
-  ZEND_ARG_INFO(0, referencesOnly)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(setGlobalOption, 0, 0, 2)
-  ZEND_ARG_INFO(0, option)
-  ZEND_ARG_INFO(0, setting)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(getGlobalOption, 0, 0, 1)
-  ZEND_ARG_INFO(0, option)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(setCipherKey, 0, 0, 3)
-  ZEND_ARG_INFO(0, mod)
-  ZEND_ARG_INFO(0, cipherkey)
-  ZEND_ARG_INFO(0, useSecModule)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(getModuleList, 0, 0, 0)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(getModuleInformation, 0, 0, 2)
-  ZEND_ARG_INFO(0, mod)
-  ZEND_ARG_INFO(0, param_name)
-ZEND_END_ARG_INFO()
-
 #endif
-
+  
 /********************************************************************
 PHPSWORD Object Methods
 *********************************************************************/
@@ -516,33 +393,167 @@ PHP_METHOD(phpsword, getModuleInformation)
   RETURN_EMPTY_STRING();
 }
 
+
+/* See: /usr/include/php/20220829/Zend */
+/* #define ZEND_BEGIN_ARG_INFO_EX(name, _unused, return_reference, required_num_args)  */
+/* #define ZEND_ARG_INFO(pass_by_ref, name) */
+/* #define ZEND_ARG_OBJ_INFO(pass_by_ref, name, class_name, allow_null) */
+  
+ZEND_BEGIN_ARG_INFO_EX(arginfo_getChapterText, 0, 0, 2)
+  ZEND_ARG_INFO(0, vkeymod)
+  ZEND_ARG_INFO(0, vkeytext)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_getFootnotes, 0, 0, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_getCrossRefs, 0, 0, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_getNotes, 0, 0, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_getChapterTextMulti, 0, 0, 3)
+  ZEND_ARG_INFO(0, vkeymodlist)
+  ZEND_ARG_INFO(0, vkeytext)
+  ZEND_ARG_INFO(0, keepnotes)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_getVerseText, 0, 0, 2)
+  ZEND_ARG_INFO(0, vkeymod)
+  ZEND_ARG_INFO(0, vkeytext)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_getMaxChapter, 0, 0, 2)
+  ZEND_ARG_INFO(0, v11n)
+  ZEND_ARG_INFO(0, vkeytext)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_getMaxVerse, 0, 0, 2)
+  ZEND_ARG_INFO(0, v11n)
+  ZEND_ARG_INFO(0, vkeytext)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_getVerseSystem, 0, 0, 1)
+  ZEND_ARG_INFO(0, module)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_getModuleBooks, 0, 0, 1)
+  ZEND_ARG_INFO(0, module)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_parseVerseKey, 0, 0, 2)
+  ZEND_ARG_INFO(0, vkeymod)
+  ZEND_ARG_INFO(0, vkeytext)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_convertLocation, 0, 0, 3)
+  ZEND_ARG_INFO(0, frVS)
+  ZEND_ARG_INFO(0, vkeytext)
+  ZEND_ARG_INFO(0, toVS)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_getIntroductions, 0, 0, 3)
+  ZEND_ARG_INFO(0, vkeymod)
+  ZEND_ARG_INFO(0, bname)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_getDictionaryEntry, 0, 0, 2)
+  ZEND_ARG_INFO(0, lexdictmod)
+  ZEND_ARG_INFO(0, key)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_getAllDictionaryKeys, 0, 0, 1)
+  ZEND_ARG_INFO(0, lexdictmod)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_getGenBookChapterText, 0, 0, 2)
+  ZEND_ARG_INFO(0, gbmod)
+  ZEND_ARG_INFO(0, treekey)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_getGenBookTableOfContents, 0, 0, 1)
+  ZEND_ARG_INFO(0, gbmod)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_luceneEnabled, 0, 0, 1)
+  ZEND_ARG_INFO(0, mod)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_search, 0, 0, 6)
+  ZEND_ARG_INFO(0, mod)
+  ZEND_ARG_INFO(0, srchstr)
+  ZEND_ARG_INFO(0, scope)
+  ZEND_ARG_INFO(0, type)
+  ZEND_ARG_INFO(0, flags)
+  ZEND_ARG_INFO(0, newsearch)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_getSearchResults, 0, 0, 5)
+  ZEND_ARG_INFO(0, mod)
+  ZEND_ARG_INFO(0, first)
+  ZEND_ARG_INFO(0, num)
+  ZEND_ARG_INFO(0, keepStrongs)
+  ZEND_ARG_INFO(0, referencesOnly)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_setGlobalOption, 0, 0, 2)
+  ZEND_ARG_INFO(0, option)
+  ZEND_ARG_INFO(0, setting)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_getGlobalOption, 0, 0, 1)
+  ZEND_ARG_INFO(0, option)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_setCipherKey, 0, 0, 3)
+  ZEND_ARG_INFO(0, mod)
+  ZEND_ARG_INFO(0, cipherkey)
+  ZEND_ARG_INFO(0, useSecModule)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_getModuleList, 0, 0, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_getModuleInformation, 0, 0, 2)
+  ZEND_ARG_INFO(0, mod)
+  ZEND_ARG_INFO(0, param_name)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_construct, 0, 0, 1)
+  ZEND_ARG_INFO(0, repo_paths)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_destruct, 0, 0, 0)
+ZEND_END_ARG_INFO()
+
 static const zend_function_entry sword_methods[] = {
-    PHP_ME(phpsword,  __construct, NULL, ZEND_ACC_PUBLIC | ZEND_ACC_CTOR)
-    PHP_ME(phpsword,  __destruct,  NULL, ZEND_ACC_PUBLIC | ZEND_ACC_DTOR)
-    PHP_ME(phpsword,  getChapterText,                NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(phpsword,  getFootnotes,                  NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(phpsword,  getCrossRefs,                  NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(phpsword,  getNotes,                      NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(phpsword,  getChapterTextMulti,           NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(phpsword,  getVerseText,                  NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(phpsword,  getMaxChapter,                 NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(phpsword,  getMaxVerse,                   NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(phpsword,  getVerseSystem,                NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(phpsword,  getModuleBooks,                NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(phpsword,  parseVerseKey,                 NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(phpsword,  convertLocation,               NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(phpsword,  getIntroductions,              NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(phpsword,  getDictionaryEntry,            NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(phpsword,  getAllDictionaryKeys,          NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(phpsword,  getGenBookChapterText,         NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(phpsword,  getGenBookTableOfContents,     NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(phpsword,  luceneEnabled,                 NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(phpsword,  search,                        NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(phpsword,  getSearchResults,              NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(phpsword,  setGlobalOption,               NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(phpsword,  getGlobalOption,               NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(phpsword,  setCipherKey,                  NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(phpsword,  getModuleList,                 NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(phpsword,  getModuleInformation,          NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(phpsword,  __construct, arginfo_construct, ZEND_ACC_PUBLIC | ZEND_ACC_CTOR)
+    PHP_ME(phpsword,  __destruct,  arginfo_destruct, ZEND_ACC_PUBLIC | ZEND_ACC_DTOR)
+    PHP_ME(phpsword,  getChapterText,                arginfo_getChapterText, ZEND_ACC_PUBLIC)
+    PHP_ME(phpsword,  getFootnotes,                  arginfo_getFootnotes, ZEND_ACC_PUBLIC)
+    PHP_ME(phpsword,  getCrossRefs,                  arginfo_getCrossRefs, ZEND_ACC_PUBLIC)
+    PHP_ME(phpsword,  getNotes,                      arginfo_getNotes, ZEND_ACC_PUBLIC)
+    PHP_ME(phpsword,  getChapterTextMulti,           arginfo_getChapterTextMulti, ZEND_ACC_PUBLIC)
+    PHP_ME(phpsword,  getVerseText,                  arginfo_getVerseText, ZEND_ACC_PUBLIC)
+    PHP_ME(phpsword,  getMaxChapter,                 arginfo_getMaxChapter, ZEND_ACC_PUBLIC)
+    PHP_ME(phpsword,  getMaxVerse,                   arginfo_getMaxVerse, ZEND_ACC_PUBLIC)
+    PHP_ME(phpsword,  getVerseSystem,                arginfo_getVerseSystem, ZEND_ACC_PUBLIC)
+    PHP_ME(phpsword,  getModuleBooks,                arginfo_getModuleBooks, ZEND_ACC_PUBLIC)
+    PHP_ME(phpsword,  parseVerseKey,                 arginfo_parseVerseKey, ZEND_ACC_PUBLIC)
+    PHP_ME(phpsword,  convertLocation,               arginfo_convertLocation, ZEND_ACC_PUBLIC)
+    PHP_ME(phpsword,  getIntroductions,              arginfo_getIntroductions, ZEND_ACC_PUBLIC)
+    PHP_ME(phpsword,  getDictionaryEntry,            arginfo_getDictionaryEntry, ZEND_ACC_PUBLIC)
+    PHP_ME(phpsword,  getAllDictionaryKeys,          arginfo_getAllDictionaryKeys, ZEND_ACC_PUBLIC)
+    PHP_ME(phpsword,  getGenBookChapterText,         arginfo_getGenBookChapterText, ZEND_ACC_PUBLIC)
+    PHP_ME(phpsword,  getGenBookTableOfContents,     arginfo_getGenBookTableOfContents, ZEND_ACC_PUBLIC)
+    PHP_ME(phpsword,  luceneEnabled,                 arginfo_luceneEnabled, ZEND_ACC_PUBLIC)
+    PHP_ME(phpsword,  search,                        arginfo_search, ZEND_ACC_PUBLIC)
+    PHP_ME(phpsword,  getSearchResults,              arginfo_getSearchResults, ZEND_ACC_PUBLIC)
+    PHP_ME(phpsword,  setGlobalOption,               arginfo_setGlobalOption, ZEND_ACC_PUBLIC)
+    PHP_ME(phpsword,  getGlobalOption,               arginfo_getGlobalOption, ZEND_ACC_PUBLIC)
+    PHP_ME(phpsword,  setCipherKey,                  arginfo_setCipherKey, ZEND_ACC_PUBLIC)
+    PHP_ME(phpsword,  getModuleList,                 arginfo_getModuleList, ZEND_ACC_PUBLIC)
+    PHP_ME(phpsword,  getModuleInformation,          arginfo_getModuleInformation, ZEND_ACC_PUBLIC)
     {NULL, NULL, NULL}
 };
