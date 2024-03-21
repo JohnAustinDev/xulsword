@@ -4,6 +4,129 @@
   /* Zend detects destructor by name (__destruct) and this macro went away.
    * It doesn't hurt to keep it though for 20180731. */
   #define ZEND_ACC_DTOR (1 << 14)
+  
+/* See: /usr/include/php/20220829/Zend */
+/* #define ZEND_BEGIN_ARG_INFO_EX(name, _unused, return_reference, required_num_args)  */
+/* #define ZEND_ARG_INFO(pass_by_ref, name) */
+/* #define ZEND_ARG_OBJ_INFO(pass_by_ref, name, class_name, allow_null) */
+  
+ZEND_BEGIN_ARG_INFO_EX(getChapterText, 0, 0, 2)
+  ZEND_ARG_INFO(0, vkeymod)
+  ZEND_ARG_INFO(0, vkeytext)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(getFootnotes, 0, 0, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(getCrossRefs, 0, 0, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(getNotes, 0, 0, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(getChapterTextMulti, 0, 0, 3)
+  ZEND_ARG_INFO(0, vkeymodlist)
+  ZEND_ARG_INFO(0, vkeytext)
+  ZEND_ARG_INFO(0, keepnotes)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(getVerseText, 0, 0, 2)
+  ZEND_ARG_INFO(0, vkeymod)
+  ZEND_ARG_INFO(0, vkeytext)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(getMaxChapter, 0, 0, 2)
+  ZEND_ARG_INFO(0, v11n)
+  ZEND_ARG_INFO(0, vkeytext)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(getMaxVerse, 0, 0, 2)
+  ZEND_ARG_INFO(0, v11n)
+  ZEND_ARG_INFO(0, vkeytext)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(getVerseSystem, 0, 0, 1)
+  ZEND_ARG_INFO(0, module)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(parseVerseKey, 0, 0, 2)
+  ZEND_ARG_INFO(0, vkeymod)
+  ZEND_ARG_INFO(0, vkeytext)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(convertLocation, 0, 0, 3)
+  ZEND_ARG_INFO(0, frVS)
+  ZEND_ARG_INFO(0, vkeytext)
+  ZEND_ARG_INFO(0, toVS)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(getIntroductions, 0, 0, 3)
+  ZEND_ARG_INFO(0, vkeymod)
+  ZEND_ARG_INFO(0, bname)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(getDictionaryEntry, 0, 0, 2)
+  ZEND_ARG_INFO(0, lexdictmod)
+  ZEND_ARG_INFO(0, key)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(getAllDictionaryKeys, 0, 0, 1)
+  ZEND_ARG_INFO(0, lexdictmod)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(getGenBookChapterText, 0, 0, 2)
+  ZEND_ARG_INFO(0, gbmod)
+  ZEND_ARG_INFO(0, treekey)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(getGenBookTableOfContents, 0, 0, 1)
+  ZEND_ARG_INFO(0, gbmod)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(luceneEnabled, 0, 0, 1)
+  ZEND_ARG_INFO(0, mod)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(search, 0, 0, 6)
+  ZEND_ARG_INFO(0, mod)
+  ZEND_ARG_INFO(0, srchstr)
+  ZEND_ARG_INFO(0, scope)
+  ZEND_ARG_INFO(0, type)
+  ZEND_ARG_INFO(0, flags)
+  ZEND_ARG_INFO(0, newsearch)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(getSearchResults, 0, 0, 5)
+  ZEND_ARG_INFO(0, mod)
+  ZEND_ARG_INFO(0, first)
+  ZEND_ARG_INFO(0, num)
+  ZEND_ARG_INFO(0, keepStrongs)
+  ZEND_ARG_INFO(0, referencesOnly)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(setGlobalOption, 0, 0, 2)
+  ZEND_ARG_INFO(0, option)
+  ZEND_ARG_INFO(0, setting)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(getGlobalOption, 0, 0, 1)
+  ZEND_ARG_INFO(0, option)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(setCipherKey, 0, 0, 3)
+  ZEND_ARG_INFO(0, mod)
+  ZEND_ARG_INFO(0, cipherkey)
+  ZEND_ARG_INFO(0, useSecModule)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(getModuleList, 0, 0, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(getModuleInformation, 0, 0, 2)
+  ZEND_ARG_INFO(0, mod)
+  ZEND_ARG_INFO(0, param_name)
+ZEND_END_ARG_INFO()
+
 #endif
 
 /********************************************************************
