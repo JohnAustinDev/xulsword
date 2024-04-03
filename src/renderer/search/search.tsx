@@ -14,13 +14,13 @@ import {
   drop,
   dString,
   sanitizeHTML,
-} from '../../common';
-import C from '../../constant';
-import S from '../../defaultPrefs';
-import G from '../rg';
+} from '../../common.ts';
+import C from '../../constant.ts';
+import S from '../../defaultPrefs.ts';
+import G from '../rg.ts';
 import renderToRoot from '../renderer';
-import log from '../log';
-import { windowArguments } from '../rutil';
+import log from '../log.ts';
+import { windowArguments } from '../rutil.tsx';
 import {
   PopupParent,
   PopupParentState,
@@ -29,18 +29,18 @@ import {
   PopupParentInitState,
 } from '../libxul/popup/popupParentH';
 import Button from '../libxul/button';
-import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
-import { Box, Hbox, Vbox } from '../libxul/boxes';
+import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul.tsx';
+import { Box, Hbox, Vbox } from '../libxul/boxes.tsx';
 import Groupbox from '../libxul/groupbox';
-import Label from '../libxul/label';
-import Menulist from '../libxul/menulist';
+import Label from '../libxul/label.tsx';
+import Menulist from '../libxul/menulist.tsx';
 import Radio from '../libxul/radio';
 import Grid, { Column, Columns, Row, Rows } from '../libxul/grid';
 import Textbox from '../libxul/textbox';
-import Spacer from '../libxul/spacer';
+import Spacer from '../libxul/spacer.tsx';
 import Stack from '../libxul/stack';
 import Dialog from '../libxul/dialog';
-import ModuleMenu from '../libxul/modulemenu';
+import ModuleMenu from '../libxul/modulemenu.tsx';
 import handlerH, {
   search,
   searchArg,
@@ -54,7 +54,7 @@ import handlerH, {
 } from './searchH';
 import './search.css';
 
-import type { BookGroupType, SearchType } from '../../type';
+import type { BookGroupType, SearchType } from '../../type.ts';
 import Popup from '../libxul/popup/popup';
 
 const defaultProps = xulDefaultProps;

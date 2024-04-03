@@ -11,13 +11,13 @@ import {
   escapeRE,
   getCSS,
   sanitizeHTML,
-} from '../../common';
-import C from '../../constant';
-import S from '../../defaultPrefs';
-import G from '../rg';
-import log from '../log';
-import { getElementData, verseKey } from '../htmlData';
-import { windowArguments } from '../rutil';
+} from '../../common.ts';
+import C from '../../constant.ts';
+import S from '../../defaultPrefs.ts';
+import G from '../rg.ts';
+import log from '../log.ts';
+import { getElementData, verseKey } from '../htmlData.ts';
+import { windowArguments } from '../rutil.tsx';
 import { getStrongsModAndKey } from '../libxul/viewport/zdictionary';
 
 import type {
@@ -26,7 +26,7 @@ import type {
   OSISBookType,
   SearchType,
   V11nType,
-} from '../../type';
+} from '../../type.ts';
 import type { SearchWinState } from './search';
 import type SearchWin from './search';
 

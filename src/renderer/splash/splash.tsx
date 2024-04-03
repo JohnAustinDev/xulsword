@@ -1,8 +1,8 @@
 import React from 'react';
-import G from '../rg';
+import G from '../rg.ts';
 import renderToRoot from '../renderer';
-import { Hbox, Vbox } from '../libxul/boxes';
-import Label from '../libxul/label';
+import { Hbox, Vbox } from '../libxul/boxes.tsx';
+import Label from '../libxul/label.tsx';
 import Stack from '../libxul/stack';
 import './splash.css';
 

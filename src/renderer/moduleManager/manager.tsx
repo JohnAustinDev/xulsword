@@ -26,31 +26,31 @@ import {
   stringHash,
   keyToDownload,
   localizeString,
-} from '../../common';
-import C from '../../constant';
-import S from '../../defaultPrefs';
-import G from '../rg';
-import log from '../log';
+} from '../../common.ts';
+import C from '../../constant.ts';
+import S from '../../defaultPrefs.ts';
+import G from '../rg.ts';
+import log from '../log.ts';
 import {
   getStatePref,
   getLangReadable,
   setStatePref,
   windowArguments,
-} from '../rutil';
+} from '../rutil.tsx';
 import {
   addClass,
   xulDefaultProps,
   XulProps,
   xulPropTypes,
-} from '../libxul/xul';
+} from '../libxul/xul.tsx';
 import Button from '../libxul/button';
-import { Hbox, Vbox, Box } from '../libxul/boxes';
+import { Hbox, Vbox, Box } from '../libxul/boxes.tsx';
 import Groupbox from '../libxul/groupbox';
 import SelectVK from '../libxul/selectVK';
 import SelectOR, { SelectORProps, SelectORMType } from '../libxul/selectOR';
 import Table, { TablePropColumn } from '../libxul/table';
-import Spacer from '../libxul/spacer';
-import Label from '../libxul/label';
+import Spacer from '../libxul/spacer.tsx';
+import Label from '../libxul/label.tsx';
 import DragSizer, { DragSizerVal } from '../libxul/dragsizer';
 import Checkbox from '../libxul/checkbox';
 import Dialog from '../libxul/dialog';
@@ -67,7 +67,7 @@ import type {
   RepositoryListing,
   RowSelection,
   SwordConfType,
-} from '../../type';
+} from '../../type.ts';
 import type {
   TLanguageTableRow,
   TModuleTableRow,

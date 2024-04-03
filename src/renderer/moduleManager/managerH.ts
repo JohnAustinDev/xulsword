@@ -26,12 +26,12 @@ import {
   querablePromise,
   gbPaths,
   localizeString,
-} from '../../common';
-import C from '../../constant';
-import S from '../../defaultPrefs';
-import G from '../rg';
-import { windowArguments } from '../rutil';
-import log from '../log';
+} from '../../common.ts';
+import C from '../../constant.ts';
+import S from '../../defaultPrefs.ts';
+import G from '../rg.ts';
+import { windowArguments } from '../rutil.tsx';
+import log from '../log.ts';
 import { TCellInfo, TCellLocation } from '../libxul/table';
 import { forEachNode } from '../libxul/treeview';
 
@@ -48,7 +48,7 @@ import type {
   GenBookAudioConf,
   OSISBookType,
   QuerablePromise,
-} from '../../type';
+} from '../../type.ts';
 import type { SelectVKType, SelectVKProps } from '../libxul/selectVK';
 import type ModuleManager from './manager';
 import type { ManagerState } from './manager';

@@ -8,17 +8,17 @@
 /* eslint-disable import/order */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { clone, genBookTreeNodes, gbAncestorIDs } from '../../../common';
-import C from '../../../constant';
-import G from '../../rg';
-import { audioGenBookNode } from '../../rutil';
-import { Hbox, Vbox } from '../boxes';
-import { xulDefaultProps, xulPropTypes, XulProps, addClass } from '../xul';
-import TreeView, { forEachNode } from '../treeview';
+import { clone, genBookTreeNodes, gbAncestorIDs } from '../../../common.ts';
+import C from '../../../constant.ts';
+import G from '../../rg.ts';
+import { audioGenBookNode } from '../../rutil.tsx';
+import { Hbox, Vbox } from '../boxes.tsx';
+import { xulDefaultProps, xulPropTypes, XulProps, addClass } from '../xul.tsx';
+import TreeView, { forEachNode } from '../treeview.tsx';
 import './chooser.css';
 import './genbookChooser.css';
 
-import type { Tree, TreeNodeInfo } from '@blueprintjs/core';
+import type { Tree, TreeNodeInfo } from '@blueprintjs/core.tsx';
 import type {
   GenBookAudioFile,
   VerseKeyAudioFile,

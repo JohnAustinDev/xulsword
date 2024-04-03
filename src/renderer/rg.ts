@@ -1,13 +1,13 @@
 /* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { JSON_stringify, stringHash } from '../common';
-import Cache from '../cache';
-import { GBuilder } from '../type';
-import C from '../constant';
-import log from './log';
+import { JSON_stringify, stringHash } from '../common.ts';
+import Cache from '../cache.ts';
+import { GBuilder } from '../type.ts';
+import C from '../constant.ts';
+import log from './log.ts';
 
-import type { GType } from '../type';
+import type { GType } from '../type.ts';
 
 function logtag(
   name: string,

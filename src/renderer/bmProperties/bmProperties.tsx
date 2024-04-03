@@ -16,22 +16,22 @@ import {
   localizeBookmarks,
   getModuleOfObject,
   keep,
-} from '../../common';
-import S from '../../defaultPrefs';
-import G from '../rg';
+} from '../../common.ts';
+import S from '../../defaultPrefs.ts';
+import G from '../rg.ts';
 import renderToRoot from '../renderer';
-import { verseKey } from '../htmlData';
-import { windowArguments } from '../rutil';
+import { verseKey } from '../htmlData.ts';
+import { windowArguments } from '../rutil.tsx';
 import { bookmarkTreeNode, getSampleText } from '../bookmarks';
 import Grid, { Column, Columns, Row, Rows } from '../libxul/grid';
-import { Hbox, Vbox } from '../libxul/boxes';
-import Label from '../libxul/label';
+import { Hbox, Vbox } from '../libxul/boxes.tsx';
+import Label from '../libxul/label.tsx';
 import Textbox from '../libxul/textbox';
 import SelectAny from '../libxul/selectAny';
 import Button from '../libxul/button';
-import Spacer from '../libxul/spacer';
+import Spacer from '../libxul/spacer.tsx';
 import TreeView from '../libxul/treeview';
-import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
+import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul.tsx';
 import './bmProperties.css';
 
 import type {
@@ -48,7 +48,7 @@ import type {
   LocationVKCommType,
   LocationVKType,
   TabTypes,
-} from '../../type';
+} from '../../type.ts';
 import type { SelectVKType } from '../libxul/selectVK';
 
 const Bookmarks = G.Prefs.getComplexValue(

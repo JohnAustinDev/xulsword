@@ -4,8 +4,8 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { addClass, xulDefaultProps, xulPropTypes, XulProps } from './xul';
-import { Box } from './boxes';
+import { addClass, xulDefaultProps, xulPropTypes, XulProps } from './xul.tsx';
+import { Box } from './boxes.tsx';
 import './menulist.css';
 
 // XUL menulist

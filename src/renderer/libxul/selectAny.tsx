@@ -5,13 +5,13 @@
 /* eslint-disable react/forbid-prop-types */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { clone, getModuleOfObject, randomID } from '../../common';
-import G from '../rg';
-import { getAllDictionaryKeyList } from './viewport/zdictionary';
-import { htmlAttribs, xulDefaultProps, XulProps, xulPropTypes } from './xul';
-import SelectVK from './selectVK';
-import SelectOR from './selectOR';
-import ModuleMenu from './modulemenu';
+import { clone, getModuleOfObject, randomID } from '../../common.ts';
+import G from '../rg.ts';
+import { getAllDictionaryKeyList } from './viewport/zdictionary.ts';
+import { htmlAttribs, xulDefaultProps, XulProps, xulPropTypes } from './xul.tsx';
+import SelectVK from './selectVK.tsx';
+import SelectOR from './selectOR.tsx';
+import ModuleMenu from './modulemenu.tsx';
 import './selectAny.css';
 
 import type {
@@ -20,11 +20,11 @@ import type {
   LocationVKCommType,
   LocationVKType,
   TabTypes,
-} from '../../type';
-import type { SelectVKType } from './selectVK';
-import type { SelectORMType } from './selectOR';
-import { Hbox } from './boxes';
-import Spacer from './spacer';
+} from '../../type.ts';
+import type { SelectVKType } from './selectVK.tsx';
+import type { SelectORMType } from './selectOR.tsx';
+import { Hbox } from './boxes.tsx';
+import Spacer from './spacer.tsx';
 
 // Allow users to select any location from any kind of module.
 

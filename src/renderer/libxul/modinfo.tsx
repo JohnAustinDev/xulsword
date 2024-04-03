@@ -10,17 +10,17 @@ import {
   repositoryModuleKey,
   sanitizeHTML,
   stringHash,
-} from '../../common';
-import C from '../../constant';
-import G from '../rg';
-import { moduleInfoHTML } from '../rutil';
-import { xulDefaultProps, xulPropTypes, XulProps, htmlAttribs } from './xul';
-import Button from './button';
-import Label from './label';
+} from '../../common.ts';
+import C from '../../constant.ts';
+import G from '../rg.ts';
+import { moduleInfoHTML } from '../rutil.tsx';
+import { xulDefaultProps, xulPropTypes, XulProps, htmlAttribs } from './xul.tsx';
+import Button from './button.tsx';
+import Label from './label.tsx';
 import '../libsword.css'; // modinfo uses .head1
 import './modinfo.css';
 
-import type { ModTypes, SwordConfType, TabTypes } from '../../type';
+import type { ModTypes, SwordConfType, TabTypes } from '../../type.ts';
 
 // Parent component should have this included in its state and state-type.
 export const modinfoParentInitialState = {

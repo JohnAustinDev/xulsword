@@ -4,15 +4,15 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { clearPending } from '../rutil';
+import { clearPending } from '../rutil.tsx';
 import {
   delayHandler,
   addClass,
   xulDefaultProps,
   xulPropTypes,
   XulProps,
-} from './xul';
-import { Box } from './boxes';
+} from './xul.tsx';
+import { Box } from './boxes.tsx';
 import './textbox.css';
 
 const defaultProps = {

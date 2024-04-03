@@ -2,18 +2,18 @@
 /* eslint-disable import/no-duplicates */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-continue */
-import C from '../../../constant';
-import S from '../../../defaultPrefs';
+import C from '../../../constant.ts';
+import S from '../../../defaultPrefs.ts';
 import {
   clone,
   dString,
   getLocalizedChapterTerm,
   JSON_attrib_stringify,
-} from '../../../common';
-import { getElementData, verseKey } from '../../htmlData';
-import { getCompanionModules, getMaxChapter, getMaxVerse } from '../../rutil';
-import G from '../../rg';
-import { delayHandler } from '../xul';
+} from '../../../common.ts';
+import { getElementData, verseKey } from '../../htmlData.ts';
+import { getCompanionModules, getMaxChapter, getMaxVerse } from '../../rutil.tsx';
+import G from '../../rg.ts';
+import { delayHandler } from '../xul.tsx';
 
 import type {
   AtextPropsType,
@@ -23,14 +23,14 @@ import type {
   ShowType,
   TabTypes,
   TextVKType,
-} from '../../../type';
-import type { HTMLData } from '../../htmlData';
-import type Xulsword from '../../xulsword/xulsword';
-import type { XulswordState } from '../../xulsword/xulsword';
-import type Atext from './atext';
-import type { AtextStateType } from './atext';
-import type ViewportWin from '../../viewportWin/viewportWin';
-import type { ViewportWinState } from '../../viewportWin/viewportWin';
+} from '../../../type.ts';
+import type { HTMLData } from '../../htmlData.ts';
+import type Xulsword from '../../xulsword/xulsword.tsx';
+import type { XulswordState } from '../../xulsword/xulsword.tsx';
+import type Atext from './atext.tsx';
+import type { AtextStateType } from './atext.tsx';
+import type ViewportWin from '../../viewportWin/viewportWin.tsx';
+import type { ViewportWinState } from '../../viewportWin/viewportWin.tsx';
 
 // Return modules (optionally of a particular type) that are associated with
 // the current locale and tab settings.

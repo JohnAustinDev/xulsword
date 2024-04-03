@@ -30,19 +30,19 @@ import {
   Table2 as BPTable,
   Utils,
 } from '@blueprintjs/table';
-import G from '../rg';
+import G from '../rg.ts';
 import {
   addClass,
   xulDefaultProps,
   XulProps,
   xulPropTypes,
   topHandle,
-} from './xul';
+} from './xul.tsx';
 import '@blueprintjs/popover2/lib/css/blueprint-popover2.css';
 import '@blueprintjs/table/lib/css/table.css';
 import './table.css';
 
-import { Box } from './boxes';
+import { Box } from './boxes.tsx';
 import { clone, localizeString, ofClass, randomID } from 'common';
 
 export type TablePropColumn = {

@@ -1,14 +1,14 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useLayoutEffect } from 'react';
-import { dString, sanitizeHTML } from '../../common';
-import C from '../../constant';
-import G from '../rg';
+import { dString, sanitizeHTML } from '../../common.ts';
+import C from '../../constant.ts';
+import G from '../rg.ts';
 import renderToRoot from '../renderer';
-import { xulDefaultProps, xulPropTypes } from '../libxul/xul';
+import { xulDefaultProps, xulPropTypes } from '../libxul/xul.tsx';
 import './searchHelp.css';
 
-import type { SearchType } from '../../type';
+import type { SearchType } from '../../type.ts';
 
 function write(id: string, html: string) {
   const elem = document.getElementById(id);

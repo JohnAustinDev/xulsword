@@ -2,9 +2,9 @@
 /* eslint-disable no-nested-ternary */
 /* eslint-disable no-bitwise */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import C from './constant';
-import S from './defaultPrefs';
-import Cache from './cache';
+import C from './constant.ts';
+import S from './defaultPrefs.ts';
+import Cache from './cache.ts';
 
 import type { Region } from '@blueprintjs/table';
 import type {

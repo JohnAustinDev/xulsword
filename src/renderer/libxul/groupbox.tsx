@@ -3,12 +3,12 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { keep, drop } from '../../common';
-import { addClass, xulDefaultProps, xulPropTypes, XulProps } from './xul';
-import Label from './label';
-import Image from './image';
+import { keep, drop } from '../../common.ts';
+import { addClass, xulDefaultProps, xulPropTypes, XulProps } from './xul.tsx';
+import Label from './label.tsx';
+import Image from './image.tsx';
 import './groupbox.css';
-import { Box, Hbox, Vbox } from './boxes';
+import { Box, Hbox, Vbox } from './boxes.tsx';
 
 // XUL deck
 const defaultProps = {

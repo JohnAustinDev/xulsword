@@ -1,18 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
-import { clone, ofClass } from '../../../common';
-import C from '../../../constant';
-import S from '../../../defaultPrefs';
-import G from '../../rg';
-import { findElementData, updateDataAttribute } from '../../htmlData';
-import log from '../../log';
-import { scrollIntoView, windowArguments } from '../../rutil';
-import { delayHandler } from '../xul';
-import { getPopupHTML } from './popupH';
+import { clone, ofClass } from '../../../common.ts';
+import C from '../../../constant.ts';
+import S from '../../../defaultPrefs.ts';
+import G from '../../rg.ts';
+import { findElementData, updateDataAttribute } from '../../htmlData.ts';
+import log from '../../log.ts';
+import { scrollIntoView, windowArguments } from '../../rutil.tsx';
+import { delayHandler } from '../xul.tsx';
+import { getPopupHTML } from './popupH.ts';
 
-import type { PlaceType, ShowType } from '../../../type';
-import type { HTMLData } from '../../htmlData';
-import type Atext from '../viewport/atext';
+import type { PlaceType, ShowType } from '../../../type.ts';
+import type { HTMLData } from '../../htmlData.ts';
+import type Atext from '../viewport/atext.tsx';
 
 const WindowDescriptor = windowArguments();
 let WheelScrolling = false;

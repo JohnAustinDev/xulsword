@@ -4,25 +4,25 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable react/static-property-placement */
 import React from 'react';
-import C from '../../constant';
-import G from '../rg';
+import C from '../../constant.ts';
+import G from '../rg.ts';
 import renderToRoot from '../renderer';
-import { windowArguments } from '../rutil';
-import { Hbox, Vbox } from '../libxul/boxes';
-import Label from '../libxul/label';
+import { windowArguments } from '../rutil.tsx';
+import { Hbox, Vbox } from '../libxul/boxes.tsx';
+import Label from '../libxul/label.tsx';
 import Stack from '../libxul/stack';
 import Button from '../libxul/button';
-import Spacer from '../libxul/spacer';
+import Spacer from '../libxul/spacer.tsx';
 import Modinfo, {
   modinfoParentInitialState,
   modinfoParentHandler as modinfoParentHandlerH,
 } from '../libxul/modinfo';
-import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
+import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul.tsx';
 import '../splash/splash.css';
 import './about.css';
 
 import type { ModinfoParent } from '../libxul/modinfo';
-import type { SwordConfType } from '../../type';
+import type { SwordConfType } from '../../type.ts';
 
 const defaultProps = xulDefaultProps;
 

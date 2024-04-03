@@ -3,8 +3,8 @@
 /* eslint-disable react/jsx-props-no-spreading */
 
 import React from 'react';
-import { Vbox } from './boxes';
-import { addClass, xulDefaultProps, xulPropTypes, XulProps } from './xul';
+import { Vbox } from './boxes.tsx';
+import { addClass, xulDefaultProps, xulPropTypes, XulProps } from './xul.tsx';
 import './menupopup.css';
 
 // XUL menupopup

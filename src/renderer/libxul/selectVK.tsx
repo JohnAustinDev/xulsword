@@ -8,24 +8,23 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { clone, diff, getModuleOfObject, ofClass } from '../../common';
-import C from '../../constant';
-import G from '../rg';
-import { getMaxChapter, getMaxVerse } from '../rutil';
-import { addClass, xulDefaultProps, XulProps, xulPropTypes } from './xul';
-import { Hbox } from './boxes';
-import Label from './label';
-import Spacer from './spacer';
-import Menulist from './menulist';
-import './selectVK.css';
+import { clone, diff, getModuleOfObject, ofClass } from '../../common.ts';
+import C from '../../constant.ts';
+import G from '../rg.ts';
+import { getMaxChapter, getMaxVerse } from '../rutil.tsx';
+import { addClass, xulDefaultProps, XulProps, xulPropTypes } from './xul.tsx';
+import { Hbox } from './boxes.tsx';
+import Label from './label.tsx';
+import Spacer from './spacer.tsx';
+import Menulist from './menulist.tsx';
 
 import type {
   BookGroupType,
   LocationVKCommType,
   LocationVKType,
   OSISBookType,
-} from '../../type';
-import ModuleMenu from './modulemenu';
+} from '../../type.ts';
+import ModuleMenu from './modulemenu.tsx';
 
 export type SelectVKType =
   | (LocationVKType & {

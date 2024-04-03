@@ -18,23 +18,23 @@ import {
   Position,
   Toaster,
 } from '@blueprintjs/core';
-import Subscription from '../../subscription';
-import { clone, diff, keep, randomID } from '../../common';
-import S from '../../defaultPrefs';
-import C from '../../constant';
-import G from '../rg';
-import { getStatePref, setStatePref } from '../rutil';
-import { Hbox, Vbox } from './boxes';
-import Button from './button';
-import Spacer from './spacer';
-import { addClass, xulDefaultProps, XulProps, xulPropTypes } from './xul';
-import Menulist from './menulist';
-import Textbox from './textbox';
-import Label from './label';
-import Groupbox from './groupbox';
+import Subscription from '../../subscription.ts';
+import { clone, diff, keep, randomID } from '../../common.ts';
+import S from '../../defaultPrefs.ts';
+import C from '../../constant.ts';
+import G from '../rg.ts';
+import { getStatePref, setStatePref } from '../rutil.tsx';
+import { Hbox, Vbox } from './boxes.tsx';
+import Button from './button.tsx';
+import Spacer from './spacer.tsx';
+import { addClass, xulDefaultProps, XulProps, xulPropTypes } from './xul.tsx';
+import Menulist from './menulist.tsx';
+import Textbox from './textbox.tsx';
+import Label from './label.tsx';
+import Groupbox from './groupbox.tsx';
 import './printSettings.css';
 
-import type { RootPrintType, WindowRootState } from '../renderer';
+import type { RootPrintType, WindowRootState } from '../renderer.tsx';
 
 export const paperSizes = [
   { type: 'A3', w: 297, h: 420, u: 'mm' },

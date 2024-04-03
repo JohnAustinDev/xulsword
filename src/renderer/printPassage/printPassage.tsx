@@ -12,19 +12,19 @@ import PropTypes from 'prop-types';
 import ReactDOM from 'react-dom';
 import { ProgressBar } from '@blueprintjs/core';
 import Subscription from '../../subscription';
-import { diff, sanitizeHTML, stringHash } from '../../common';
-import S from '../../defaultPrefs';
-import C from '../../constant';
-import G from '../rg';
+import { diff, sanitizeHTML, stringHash } from '../../common.ts';
+import S from '../../defaultPrefs.ts';
+import C from '../../constant.ts';
+import G from '../rg.ts';
 import renderToRoot, { RootPrintType } from '../renderer';
 import {
   windowArguments,
   getStatePref,
   setStatePref,
   libswordImgSrc,
-} from '../rutil';
-import log from '../log';
-import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
+} from '../rutil.tsx';
+import log from '../log.ts';
+import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul.tsx';
 import Grid, { Column, Columns, Row, Rows } from '../libxul/grid';
 import Groupbox from '../libxul/groupbox';
 import Checkbox from '../libxul/checkbox';
@@ -39,7 +39,7 @@ import '../libsword.css';
 import '../libxul/viewport/atext.css';
 import './printPassage.css';
 
-import type { OSISBookType } from '../../type';
+import type { OSISBookType } from '../../type.ts';
 
 // TODO: As of 11/22 @page {@bottom-center {content: counter(page);}} does not work
 

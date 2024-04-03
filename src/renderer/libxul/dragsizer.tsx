@@ -6,7 +6,7 @@
 /* eslint-disable react/static-property-placement */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { xulDefaultProps, xulPropTypes, XulProps } from './xul';
+import { xulDefaultProps, xulPropTypes, XulProps } from './xul.tsx';
 import './dragsizer.css';
 
 export type DragSizerVal = {

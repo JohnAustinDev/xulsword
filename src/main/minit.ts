@@ -9,7 +9,7 @@ import fontList from 'font-list';
 import C from '../constant';
 import S from '../defaultPrefs';
 import VerseKey from '../verseKey';
-import RefParser, { RefParserOptionsType } from '../refParser';
+import RefParser, { RefParserOptionsType } from '../refParser.ts';
 import {
   isASCII,
   JSON_parse,

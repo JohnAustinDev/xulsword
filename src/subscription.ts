@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import type { ContextMenuType } from './main/contextMenu';
-import type { PrefCallbackType } from './main/components/prefs';
-import type { NewModulesType } from './type';
-import type { WindowRootState } from './renderer/renderer';
+import type { ContextMenuType } from './main/contextMenu.ts';
+import type { PrefCallbackType } from './main/components/prefs.ts';
+import type { NewModulesType } from './type.ts';
+import type { WindowRootState } from './renderer/renderer.tsx';
 
 // Publish callback opportunities to subscribers. To publish for subscribers
 // in other processes, use G.publishSubscription in conjunctions with Subscribe.

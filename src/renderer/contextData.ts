@@ -1,9 +1,9 @@
-import { JSON_attrib_parse, ofClass } from '../common';
-import RefParser from '../refParser';
-import G from './rg';
-import { findElementData, mergeElementData } from './htmlData';
+import { JSON_attrib_parse, ofClass } from '../common.ts';
+import RefParser from '../refParser.ts';
+import G from './rg.ts';
+import { findElementData, mergeElementData } from './htmlData.ts';
 import { findBookmarks } from './bookmarks';
-import { windowArguments } from './rutil';
+import { windowArguments } from './rutil.tsx';
 
 import type {
   ContextDataType,
@@ -11,8 +11,8 @@ import type {
   LocationVKType,
   LocationVKCommType,
   SearchType,
-} from '../type';
-import type { HTMLData } from './htmlData';
+} from '../type.ts';
+import type { HTMLData } from './htmlData.ts';
 
 const windowDescriptor = windowArguments();
 

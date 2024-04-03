@@ -3,17 +3,17 @@
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable react/static-property-placement */
 import React from 'react';
-import { diff } from '../../common';
-import G from '../rg';
+import { diff } from '../../common.ts';
+import G from '../rg.ts';
 import renderToRoot from '../renderer';
-import { windowArguments } from '../rutil';
+import { windowArguments } from '../rutil.tsx';
 import {
   addClass,
   xulDefaultProps,
   XulProps,
   xulPropTypes,
-} from '../libxul/xul';
-import { Vbox } from '../libxul/boxes';
+} from '../libxul/xul.tsx';
+import { Vbox } from '../libxul/boxes.tsx';
 import {
   popupHandler as popupHandlerH,
   PopupParent,

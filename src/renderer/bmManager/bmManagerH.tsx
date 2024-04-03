@@ -15,14 +15,14 @@ import {
   tableRowsToSelection,
   tableSelectDataRows,
   xulswordLocation,
-} from '../../common';
-import S from '../../defaultPrefs';
-import C from '../../constant';
-import G from '../rg';
-import { verseKey } from '../htmlData';
-import { bookmarkItemIcon } from '../rutil';
-import log from '../log';
-import Label from '../libxul/label';
+} from '../../common.ts';
+import S from '../../defaultPrefs.ts';
+import C from '../../constant.ts';
+import G from '../rg.ts';
+import { verseKey } from '../htmlData.ts';
+import { bookmarkItemIcon } from '../rutil.tsx';
+import log from '../log.ts';
+import Label from '../libxul/label.tsx';
 import './bmManager.css';
 import '@blueprintjs/select/lib/css/blueprint-select.css';
 
@@ -34,7 +34,7 @@ import type {
   GType,
   LocationORType,
   LocationVKType,
-} from '../../type';
+} from '../../type.ts';
 import type { TCellInfo, TRowLocation } from '../libxul/table';
 import type BMManagerWin from './bmManager';
 import type { BMManagerState } from './bmManager';

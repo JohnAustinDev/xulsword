@@ -4,9 +4,9 @@
 import React, { ReactElement } from 'react';
 import PropTypes from 'prop-types';
 import { Classes, Dialog as BPDialog } from '@blueprintjs/core';
-import { drop } from '../../common';
-import { xulDefaultProps, xulPropTypes, XulProps } from './xul';
-import { Hbox } from './boxes';
+import { drop } from '../../common.ts';
+import { xulDefaultProps, xulPropTypes, XulProps } from './xul.tsx';
+import { Hbox } from './boxes.tsx';
 
 // XUL label
 const defaultProps = {

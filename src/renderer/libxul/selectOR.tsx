@@ -20,14 +20,14 @@ import {
   findTreeAncestors,
   findTreeSiblings,
   gbAncestorIDs,
-} from '../../common';
-import C from '../../constant';
-import G from '../rg';
-import { getAllDictionaryKeyList } from './viewport/zdictionary';
-import { addClass, xulDefaultProps, XulProps, xulPropTypes } from './xul';
-import { Vbox } from './boxes';
-import Menulist from './menulist';
-import ModuleMenu from './modulemenu';
+} from '../../common.ts';
+import C from '../../constant.ts';
+import G from '../rg.ts';
+import { getAllDictionaryKeyList } from './viewport/zdictionary.ts';
+import { addClass, xulDefaultProps, XulProps, xulPropTypes } from './xul.tsx';
+import { Vbox } from './boxes.tsx';
+import Menulist from './menulist.tsx';
+import ModuleMenu from './modulemenu.tsx';
 import './selectOR.css';
 
 // Allow users to select one or more chapters from any non-versekey SWORD

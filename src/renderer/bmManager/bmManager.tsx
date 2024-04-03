@@ -18,22 +18,22 @@ import {
   randomID,
   stringHash,
   tableRowsToSelection,
-} from '../../common';
-import S from '../../defaultPrefs';
-import G from '../rg';
+} from '../../common.ts';
+import S from '../../defaultPrefs.ts';
+import G from '../rg.ts';
 import renderToRoot, { RootPrintType } from '../renderer';
 import {
   registerUpdateStateFromPref,
   setStatePref,
   getStatePref,
-} from '../rutil';
+} from '../rutil.tsx';
 import { bookmarkTreeNodes, getSampleText } from '../bookmarks';
-import { verseKey } from '../htmlData';
+import { verseKey } from '../htmlData.ts';
 import Table from '../libxul/table';
 import DragSizer, { DragSizerVal } from '../libxul/dragsizer';
 import Groupbox from '../libxul/groupbox';
-import { Hbox, Vbox } from '../libxul/boxes';
-import Label from '../libxul/label';
+import { Hbox, Vbox } from '../libxul/boxes.tsx';
+import Label from '../libxul/label.tsx';
 import TreeView from '../libxul/treeview';
 import Button from '../libxul/button';
 import {
@@ -42,7 +42,7 @@ import {
   xulPropTypes,
   addClass,
   htmlAttribs,
-} from '../libxul/xul';
+} from '../libxul/xul.tsx';
 import * as H from './bmManagerH';
 import './bmManager.css';
 import '@blueprintjs/select/lib/css/blueprint-select.css';
@@ -51,7 +51,7 @@ import type {
   BookmarkFolderType,
   BookmarkItemType,
   BookmarkTreeNode,
-} from '../../type';
+} from '../../type.ts';
 
 const defaultProps = xulDefaultProps;
 

@@ -1,9 +1,9 @@
 import { normalizeFontFamily } from 'common';
-import type { ConfigType } from '../type';
-import C from '../constant';
-import S from '../defaultPrefs';
-import G from './rg';
-import log from './log';
+import type { ConfigType } from '../type.ts';
+import C from '../constant.ts';
+import S from '../defaultPrefs.ts';
+import G from './rg.ts';
+import log from './log.ts';
 
 export type StyleType = {
   [i in 'locale' | 'module']: {

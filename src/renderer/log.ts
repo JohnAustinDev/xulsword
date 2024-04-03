@@ -2,9 +2,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type ElectronLog from 'electron-log';
 import type { LogLevel } from 'electron-log';
-import C from '../constant';
-import { JSON_stringify } from '../common';
-import Cache from '../cache';
+import C from '../constant.ts';
+import { JSON_stringify } from '../common.ts';
+import Cache from '../cache.ts';
 
 const levels = ['error', 'warn', 'info', 'verbose', 'debug', 'silly'];
 

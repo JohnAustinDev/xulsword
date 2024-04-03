@@ -6,12 +6,12 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import C from '../../../constant';
-import { ofClass } from '../../../common';
-import { xulDefaultProps, xulPropTypes, XulProps, htmlAttribs } from '../xul';
-import { AnchorButton } from '../button';
-import Menupopup from '../menupopup';
-import G from '../../rg';
+import C from '../../../constant.ts';
+import { ofClass } from '../../../common.ts';
+import { xulDefaultProps, xulPropTypes, XulProps, htmlAttribs } from '../xul.tsx';
+import { AnchorButton } from '../button.tsx';
+import Menupopup from '../menupopup.tsx';
+import G from '../../rg.ts';
 import './tabs.css';
 
 const defaultProps = xulDefaultProps;

@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import C from './constant';
-import { clone, dString } from './common';
+import C from './constant.ts';
+import { clone, dString } from './common.ts';
 
-import type { GType, LocationVKType, OSISBookType, V11nType } from './type';
-import type RefParser from './refParser';
+import type { GType, LocationVKType, OSISBookType, V11nType } from './type.ts';
+import type RefParser from './refParser.ts';
 
 type VerseKeyGtype = {
   convertLocation: GType['LibSword']['convertLocation'];

@@ -5,22 +5,22 @@ import type { ReactElementLike } from 'prop-types';
 import React from 'react';
 import { ChromePicker as ColorPicker } from 'react-color';
 import { Slider } from '@blueprintjs/core';
-import { diff, normalizeFontFamily } from '../../common';
-import G from '../rg';
+import { diff, normalizeFontFamily } from '../../common.ts';
+import G from '../rg.ts';
 import renderToRoot from '../renderer';
-import log from '../log';
-import { windowArguments } from '../rutil';
-import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
-import { Hbox, Vbox } from '../libxul/boxes';
+import log from '../log.ts';
+import { windowArguments } from '../rutil.tsx';
+import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul.tsx';
+import { Hbox, Vbox } from '../libxul/boxes.tsx';
 import Groupbox from '../libxul/groupbox';
-import Label from '../libxul/label';
+import Label from '../libxul/label.tsx';
 import Button from '../libxul/button';
 import Checkbox from '../libxul/checkbox';
-import Menulist from '../libxul/menulist';
-import ModuleMenu from '../libxul/modulemenu';
+import Menulist from '../libxul/menulist.tsx';
+import ModuleMenu from '../libxul/modulemenu.tsx';
 import Dialog from '../libxul/dialog';
 import Grid, { Columns, Column, Rows, Row } from '../libxul/grid';
-import Spacer from '../libxul/spacer';
+import Spacer from '../libxul/spacer.tsx';
 import handlerH, {
   styleToState,
   startingState,

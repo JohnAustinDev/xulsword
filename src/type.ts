@@ -9,8 +9,8 @@ import type {
 import type i18n from 'i18next';
 import type React from 'react';
 import { TreeNodeInfo } from '@blueprintjs/core';
-import S from './defaultPrefs';
-import type C from './constant';
+import S from './defaultPrefs.ts';
+import type C from './constant.ts';
 import type {
   resetMain,
   getSystemFonts,
@@ -27,22 +27,22 @@ import type {
   getModuleFonts,
   getFeatureModules,
   getBkChsInV11n,
-} from './main/minit';
+} from './main/minit.ts';
 import type {
   publishSubscription,
   resolveHtmlPath,
-} from './main/components/window';
-import type { inlineFile, inlineAudioFile } from './main/components/localFile';
-import type Prefs from './main/components/prefs';
-import type DiskCache from './main/components/diskcache';
-import type Commands from './main/components/commands';
-import type Data from './main/components/data';
-import type Module from './main/components/module';
-import type Window from './main/components/window';
-import type { DirsRendererType } from './main/components/dirs';
-import type LibSword from './main/components/libsword';
-import type { canRedo, canUndo } from './main/bookmarks';
-import type Viewport from './main/components/viewport';
+} from './main/components/window.ts';
+import type { inlineFile, inlineAudioFile } from './main/components/localFile.ts';
+import type Prefs from './main/components/prefs.ts';
+import type DiskCache from './main/components/diskcache.ts';
+import type Commands from './main/components/commands.ts';
+import type Data from './main/components/data.ts';
+import type Module from './main/components/module.ts';
+import type Window from './main/components/window.ts';
+import type { DirsRendererType } from './main/components/dirs.ts';
+import type LibSword from './main/components/libsword.ts';
+import type { canRedo, canUndo } from './main/bookmarks.ts';
+import type Viewport from './main/components/viewport.ts';
 
 declare global {
   export interface Window {

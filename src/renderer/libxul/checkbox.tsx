@@ -4,9 +4,9 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Hbox } from './boxes';
-import Label from './label';
-import { xulDefaultProps, xulPropTypes, XulProps, addClass } from './xul';
+import { Hbox } from './boxes.tsx';
+import Label from './label.tsx';
+import { xulDefaultProps, xulPropTypes, XulProps, addClass } from './xul.tsx';
 import './checkbox.css';
 
 // XUL button

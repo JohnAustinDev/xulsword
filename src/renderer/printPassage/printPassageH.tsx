@@ -6,11 +6,11 @@ import {
   decodeOSISRef,
   dString,
   getLocalizedChapterTerm,
-} from '../../common';
-import C from '../../constant';
-import G from '../rg';
+} from '../../common.ts';
+import C from '../../constant.ts';
+import G from '../rg.ts';
 import addBookmarks from '../bookmarks';
-import { isValidVKM } from '../rutil';
+import { isValidVKM } from '../rutil.tsx';
 import { getDictEntryHTML } from '../libxul/viewport/zdictionary';
 import { getNoteHTML, getIntroductions } from '../libxul/viewport/zversekey';
 
@@ -18,7 +18,7 @@ import type {
   AtextPropsType,
   SwordFilterType,
   SwordFilterValueType,
-} from '../../type';
+} from '../../type.ts';
 import type { LibSwordResponse } from '../libxul/viewport/ztext';
 import type { SelectVKType } from '../libxul/selectVK';
 import type PrintPassageWin from './printPassage';

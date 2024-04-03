@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import Cache from './cache';
-import C from './constant';
-import { iString } from './common';
+import Cache from './cache.ts';
+import C from './constant.ts';
+import { iString } from './common.ts';
 
 import type {
   BookGroupType,
@@ -9,7 +9,7 @@ import type {
   V11nType,
   GType,
   OSISBookType,
-} from './type';
+} from './type.ts';
 
 type IdentifyBookType = {
   code: OSISBookType | '';

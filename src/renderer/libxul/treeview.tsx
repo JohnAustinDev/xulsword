@@ -5,9 +5,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Tree, TreeEventHandler, TreeNodeInfo } from '@blueprintjs/core';
-import C from '../../constant';
-import { clone, diff } from '../../common';
-import { xulDefaultProps, XulProps, xulPropTypes } from './xul';
+import C from '../../constant.ts';
+import { clone, diff } from '../../common.ts';
+import { xulDefaultProps, XulProps, xulPropTypes } from './xul.tsx';
 
 // The initialState of all nodes in the tree is required. If selectedIDs is defined
 // then onSelection must also be defined so that selection can be controlled by the

@@ -2,7 +2,7 @@
 /* eslint-disable react/jsx-props-no-spreading */
 
 import React from 'react';
-import { xulDefaultProps, xulPropTypes, XulProps, htmlAttribs } from './xul';
+import { xulDefaultProps, xulPropTypes, XulProps, htmlAttribs } from './xul.tsx';
 import './stack.css';
 
 // XUL stack

@@ -10,18 +10,18 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
-import { getElementData, HTMLData, verseKey } from '../../htmlData';
-import Cache from '../../../cache';
-import C from '../../../constant';
+import { getElementData, HTMLData, verseKey } from '../../htmlData.ts';
+import Cache from '../../../cache.ts';
+import C from '../../../constant.ts';
 import {
   diff,
   JSON_attrib_stringify,
   keep,
   sanitizeHTML,
   stringHash,
-} from '../../../common';
-import G from '../../rg';
-import log from '../../log';
+} from '../../../common.ts';
+import G from '../../rg.ts';
+import log from '../../log.ts';
 import {
   clearPending,
   getMaxChapter,
@@ -29,29 +29,29 @@ import {
   scrollIntoView,
   windowArguments,
   audioIcon,
-} from '../../rutil';
+} from '../../rutil.tsx';
 import {
   xulDefaultProps,
   xulPropTypes,
   XulProps,
   addClass,
   topHandle,
-} from '../xul';
-import DragSizer from '../dragsizer';
-import { Vbox, Hbox, Box } from '../boxes';
-import Spacer from '../spacer';
-import { libswordText, textChange } from './ztext';
+} from '../xul.tsx';
+import DragSizer from '../dragsizer.tsx';
+import { Vbox, Hbox, Box } from '../boxes.tsx';
+import Spacer from '../spacer.tsx';
+import { libswordText, textChange } from './ztext.ts';
 import {
   highlight,
   versekeyScroll,
   trimNotes,
   findVerseElement,
 } from './zversekey';
-import handlerH from './atextH';
+import handlerH from './atextH.ts';
 import '../../libsword.css';
 import './atext.css';
 
-import type { AtextPropsType, PinPropsType } from '../../../type';
+import type { AtextPropsType, PinPropsType } from '../../../type.ts';
 
 const defaultProps = {
   ...xulDefaultProps,

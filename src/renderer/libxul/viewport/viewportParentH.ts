@@ -2,29 +2,29 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-loop-func */
 import React from 'react';
-import C from '../../../constant';
-import S from '../../../defaultPrefs';
-import Cache from '../../../cache';
-import { clone, escapeRE, ofClass } from '../../../common';
-import { getElementData, verseKey } from '../../htmlData';
-import G from '../../rg';
-import { scrollIntoView, windowArguments } from '../../rutil';
-import { delayHandler } from '../xul';
-import { textChange } from './ztext';
-import { aTextWheelScroll, chapterChange } from './zversekey';
+import C from '../../../constant.ts';
+import S from '../../../defaultPrefs.ts';
+import Cache from '../../../cache.ts';
+import { clone, escapeRE, ofClass } from '../../../common.ts';
+import { getElementData, verseKey } from '../../htmlData.ts';
+import G from '../../rg.ts';
+import { scrollIntoView, windowArguments } from '../../rutil.tsx';
+import { delayHandler } from '../xul.tsx';
+import { textChange } from './ztext.ts';
+import { aTextWheelScroll, chapterChange } from './zversekey.ts';
 
 import type {
   BookGroupType,
   PinPropsType,
   V11nType,
   OSISBookType,
-} from '../../../type';
-import type Xulsword from '../../xulsword/xulsword';
-import type { XulswordState } from '../../xulsword/xulsword';
-import type { DragSizerVal } from '../dragsizer';
-import type { AtextStateType } from './atext';
-import type ViewportWin from '../../viewportWin/viewportWin';
-import type { ViewportWinState } from '../../viewportWin/viewportWin';
+} from '../../../type.ts';
+import type Xulsword from '../../xulsword/xulsword.tsx';
+import type { XulswordState } from '../../xulsword/xulsword.tsx';
+import type { DragSizerVal } from '../dragsizer.tsx';
+import type { AtextStateType } from './atext.tsx';
+import type ViewportWin from '../../viewportWin/viewportWin.tsx';
+import type { ViewportWinState } from '../../viewportWin/viewportWin.tsx';
 
 const WindowDescriptor = windowArguments();
 

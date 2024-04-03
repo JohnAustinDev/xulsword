@@ -8,12 +8,12 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import C from '../../constant';
-import G from '../rg';
-import { addClass, xulDefaultProps, xulPropTypes, XulProps } from './xul';
-import Menulist from './menulist';
+import C from '../../constant.ts';
+import G from '../rg.ts';
+import { addClass, xulDefaultProps, xulPropTypes, XulProps } from './xul.tsx';
+import Menulist from './menulist.tsx';
 
-import type { ModTypes } from '../../type';
+import type { ModTypes } from '../../type.ts';
 
 const defaultProps = {
   ...xulDefaultProps,

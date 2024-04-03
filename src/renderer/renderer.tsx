@@ -15,20 +15,20 @@ import { createRoot } from 'react-dom/client';
 import PropTypes from 'prop-types';
 import { Intent, ProgressBar, Spinner, Tag } from '@blueprintjs/core';
 import Subscription from '../subscription';
-import { randomID, sanitizeHTML, stringHash } from '../common';
-import Cache from '../cache';
-import C from '../constant';
-import G from './rg';
+import { randomID, sanitizeHTML, stringHash } from '../common.ts';
+import Cache from '../cache.ts';
+import C from '../constant.ts';
+import G from './rg.ts';
 import DynamicStyleSheet from './style';
 import ContextData from './contextData';
-import { windowArguments } from './rutil';
-import log from './log';
-import { delayHandler, xulCaptureEvents, xulDefaultProps } from './libxul/xul';
-import { Hbox } from './libxul/boxes';
+import { windowArguments } from './rutil.tsx';
+import log from './log.ts';
+import { delayHandler, xulCaptureEvents, xulDefaultProps } from './libxul/xul.tsx';
+import { Hbox } from './libxul/boxes.tsx';
 import Dialog from './libxul/dialog';
-import Spacer from './libxul/spacer';
+import Spacer from './libxul/spacer.tsx';
 import Button from './libxul/button';
-import Label from './libxul/label';
+import Label from './libxul/label.tsx';
 import Textbox from './libxul/textbox';
 import PrintOverlay from './libxul/printOverlay';
 
@@ -43,7 +43,7 @@ import type {
   ModalType,
   NewModulesType,
   WindowDescriptorPrefType,
-} from '../type';
+} from '../type.ts';
 import type { SubscriptionType } from '../subscription';
 
 const descriptor = windowArguments();

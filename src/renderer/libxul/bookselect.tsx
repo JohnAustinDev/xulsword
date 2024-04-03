@@ -7,20 +7,20 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import RefParser from '../../refParser';
-import G from '../rg';
+import RefParser from '../../refParser.ts';
+import G from '../rg.ts';
 import {
   addClass,
   xulDefaultProps,
   xulPropTypes,
   XulProps,
   xulStyle,
-} from './xul';
-import { Box } from './boxes';
-import Spacer from './spacer';
-import Stack from './stack';
-import Menulist from './menulist';
-import Textbox from './textbox';
+} from './xul.tsx';
+import { Box } from './boxes.tsx';
+import Spacer from './spacer.tsx';
+import Stack from './stack.tsx';
+import Menulist from './menulist.tsx';
+import Textbox from './textbox.tsx';
 import './bookselect.css';
 
 // XUL Bookselect

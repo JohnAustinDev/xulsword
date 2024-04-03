@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable no-nested-ternary */
-import Cache from '../cache';
-import { clone, localizeBookmark } from '../common';
-import C from '../constant';
-import S from '../defaultPrefs';
-import G from './rg';
-import { updateDataAttribute, verseKey } from './htmlData';
-import { bookmarkItemIcon, getMaxVerse } from './rutil';
+import Cache from '../cache.ts';
+import { clone, localizeBookmark } from '../common.ts';
+import C from '../constant.ts';
+import S from '../defaultPrefs.ts';
+import G from './rg.ts';
+import { updateDataAttribute, verseKey } from './htmlData.ts';
+import { bookmarkItemIcon, getMaxVerse } from './rutil.tsx';
 
 import type {
   BookmarkFolderType,
@@ -18,8 +18,8 @@ import type {
   LocationVKType,
   SwordFilterType,
   SwordFilterValueType,
-} from '../type';
-import type { HTMLData } from './htmlData';
+} from '../type.ts';
+import type { HTMLData } from './htmlData.ts';
 import type { AtextProps } from './libxul/viewport/atext';
 import type { LibSwordResponse } from './libxul/viewport/ztext';
 import type { SelectVKType } from './libxul/selectVK';

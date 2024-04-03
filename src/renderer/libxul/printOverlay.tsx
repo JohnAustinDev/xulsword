@@ -4,18 +4,18 @@
 /* eslint-disable react/forbid-prop-types */
 import React, { ReactElement } from 'react';
 import PropTypes from 'prop-types';
-import Subscription from '../../subscription';
-import { b64toBlob } from '../../common';
-import C from '../../constant';
-import G from '../rg';
-import { Hbox, Vbox } from './boxes';
-import Button from './button';
-import Spacer from './spacer';
-import PrintSettings from './printSettings';
-import { xulDefaultProps, XulProps, xulPropTypes } from './xul';
+import Subscription from '../../subscription.ts';
+import { b64toBlob } from '../../common.ts';
+import C from '../../constant.ts';
+import G from '../rg.ts';
+import { Hbox, Vbox } from './boxes.tsx';
+import Button from './button.tsx';
+import Spacer from './spacer.tsx';
+import PrintSettings from './printSettings.tsx';
+import { xulDefaultProps, XulProps, xulPropTypes } from './xul.tsx';
 import './printOverlay.css';
 
-import type { RootPrintType } from '../renderer';
+import type { RootPrintType } from '../renderer.tsx';
 
 const defaultProps = xulDefaultProps;
 

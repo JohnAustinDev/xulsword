@@ -1,10 +1,10 @@
 /* eslint-disable no-nested-ternary */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import type { paperSizes } from './renderer/libxul/printSettings';
-import type { SelectVKType } from './renderer/libxul/selectVK';
+import type { paperSizes } from './renderer/libxul/printSettings.tsx';
+import type { SelectVKType } from './renderer/libxul/selectVK.tsx';
 import type { StyleType } from './renderer/style';
-import type { TablePropColumn, TinitialRowSort } from './renderer/libxul/table';
+import type { TablePropColumn, TinitialRowSort } from './renderer/libxul/table.tsx';
 import type {
   AudioPrefType,
   BookmarkFolderType,
@@ -17,7 +17,7 @@ import type {
   ScrollType,
   ShowType,
   WindowPrefsType,
-} from './type';
+} from './type.ts';
 
 // The S object's properties are pref stores whose values are default PrefObjects.
 // S PrefObject types determine the expected type throughout xulsword. After they

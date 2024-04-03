@@ -1,17 +1,17 @@
 /* eslint-disable no-continue */
-import { JSON_attrib_stringify } from '../../../common';
-import S from '../../../defaultPrefs';
-import C from '../../../constant';
-import G from '../../rg';
-import log from '../../log';
+import { JSON_attrib_stringify } from '../../../common.ts';
+import S from '../../../defaultPrefs.ts';
+import C from '../../../constant.ts';
+import G from '../../rg.ts';
+import log from '../../log.ts';
 
 import type {
   ModulesCache,
   SwordFilterType,
   SwordFilterValueType,
-} from '../../../type';
-import type { HTMLData } from '../../htmlData';
-import type { FailReason } from '../popup/popupH';
+} from '../../../type.ts';
+import type { HTMLData } from '../../htmlData.ts';
+import type { FailReason } from '../popup/popupH.ts';
 
 const DictKeyTransform: { [i: string]: (key: string) => string } = {
   StrongsHebrew: (key) => {

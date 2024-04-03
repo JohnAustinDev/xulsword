@@ -5,22 +5,22 @@ import {
   clone,
   findBookmarkItem,
   ofClass,
-} from '../../../common';
-import S from '../../../defaultPrefs';
-import G from '../../rg';
-import { addBookmarksToNotes, getBookmarkInfo } from '../../bookmarks';
-import { getElementData } from '../../htmlData';
-import log from '../../log';
-import { getDictEntryHTML, getLemmaHTML } from '../viewport/zdictionary';
+} from '../../../common.ts';
+import S from '../../../defaultPrefs.ts';
+import G from '../../rg.ts';
+import { addBookmarksToNotes, getBookmarkInfo } from '../../bookmarks.ts';
+import { getElementData } from '../../htmlData.ts';
+import log from '../../log.ts';
+import { getDictEntryHTML, getLemmaHTML } from '../viewport/zdictionary.ts';
 import {
   getIntroductions,
   getNoteHTML,
   parseExtendedVKRef,
 } from '../viewport/zversekey';
 
-import type { HTMLData } from '../../htmlData';
-import type Popup from './popup';
-import type { PopupState } from './popup';
+import type { HTMLData } from '../../htmlData.ts';
+import type Popup from './popup.tsx';
+import type { PopupState } from './popup.tsx';
 
 export type FailReason = { requires: string[]; reason?: string };
 

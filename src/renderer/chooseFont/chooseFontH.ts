@@ -1,11 +1,11 @@
 /* eslint-disable import/no-duplicates */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import C from '../../constant';
-import { clone, diff, ofClass } from '../../common';
-import log from '../log';
-import G from '../rg';
+import C from '../../constant.ts';
+import { clone, diff, ofClass } from '../../common.ts';
+import log from '../log.ts';
+import G from '../rg.ts';
 
-import type { ConfigType } from '../../type';
+import type { ConfigType } from '../../type.ts';
 import type { StyleType } from '../style';
 import type ChooseFontWin from './chooseFont';
 import type { ChooseFontWinState, ColorType } from './chooseFont';

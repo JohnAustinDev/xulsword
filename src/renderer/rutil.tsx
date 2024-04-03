@@ -8,7 +8,7 @@
 /* eslint-disable import/prefer-default-export */
 import React from 'react';
 import { Icon, TreeNodeInfo } from '@blueprintjs/core';
-import Cache from '../cache';
+import Cache from '../cache.ts';
 import {
   diff,
   isAudioVerseKey,
@@ -20,12 +20,12 @@ import {
   audioConfNumbers,
   gbPaths,
   localizeString,
-} from '../common';
-import C from '../constant';
-import S from '../defaultPrefs';
-import G from './rg';
-import { getElementData, verseKey } from './htmlData';
-import log from './log';
+} from '../common.ts';
+import C from '../constant.ts';
+import S from '../defaultPrefs.ts';
+import G from './rg.ts';
+import { getElementData, verseKey } from './htmlData.ts';
+import log from './log.ts';
 
 import type {
   AudioPath,
@@ -47,7 +47,7 @@ import type {
   VerseKeyAudio,
   VerseKeyAudioFile,
   WindowDescriptorPrefType,
-} from '../type';
+} from '../type.ts';
 
 export function component(
   comp: any

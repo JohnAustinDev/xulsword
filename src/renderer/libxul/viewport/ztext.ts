@@ -1,25 +1,25 @@
 /* eslint-disable no-nested-ternary */
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import C from '../../../constant';
-import Cache from '../../../cache';
+import C from '../../../constant.ts';
+import Cache from '../../../cache.ts';
 import {
   dString,
   escapeRE,
   JSON_attrib_parse,
   JSON_attrib_stringify,
   stringHash,
-} from '../../../common';
-import { getElementData } from '../../htmlData';
-import G from '../../rg';
-import addBookmarks from '../../bookmarks';
+} from '../../../common.ts';
+import { getElementData } from '../../htmlData.ts';
+import G from '../../rg.ts';
+import addBookmarks from '../../bookmarks.ts';
 import {
   getNoteHTML,
   getChapterHeading,
   chapterChange,
   pageChange,
 } from './zversekey';
-import { getAllDictionaryKeyList, getDictEntryHTML } from './zdictionary';
+import { getAllDictionaryKeyList, getDictEntryHTML } from './zdictionary.ts';
 
 import type {
   AtextPropsType,
@@ -27,8 +27,8 @@ import type {
   PlaceType,
   SwordFilterType,
   SwordFilterValueType,
-} from '../../../type';
-import type { HTMLData } from '../../htmlData';
+} from '../../../type.ts';
+import type { HTMLData } from '../../htmlData.ts';
 
 export type LibSwordResponse = {
   textHTML: string;

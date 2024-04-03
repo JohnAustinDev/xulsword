@@ -7,17 +7,17 @@ import {
   getCSS,
   ofClass,
   sanitizeHTML,
-} from '../../../common';
-import C from '../../../constant';
-import S from '../../../defaultPrefs';
-import G from '../../rg';
-import { getElementData } from '../../htmlData';
-import log from '../../log';
-import { scrollIntoView } from '../../rutil';
-import { aTextWheelScroll, getRefHTML } from './zversekey';
+} from '../../../common.ts';
+import C from '../../../constant.ts';
+import S from '../../../defaultPrefs.ts';
+import G from '../../rg.ts';
+import { getElementData } from '../../htmlData.ts';
+import log from '../../log.ts';
+import { scrollIntoView } from '../../rutil.tsx';
+import { aTextWheelScroll, getRefHTML } from './zversekey.ts';
 
-import type Atext from './atext';
-import type { AtextProps, AtextStateType } from './atext';
+import type Atext from './atext.tsx';
+import type { AtextProps, AtextStateType } from './atext.tsx';
 
 let AddedRules: { sheet: CSSStyleSheet; index: number }[] = [];
 

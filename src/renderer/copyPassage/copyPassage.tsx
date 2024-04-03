@@ -7,11 +7,11 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable react/static-property-placement */
 import React from 'react';
-import { sanitizeHTML } from '../../common';
-import S from '../../defaultPrefs';
-import G from '../rg';
+import { sanitizeHTML } from '../../common.ts';
+import S from '../../defaultPrefs.ts';
+import G from '../rg.ts';
 import renderToRoot from '../renderer';
-import { verseKey } from '../htmlData';
+import { verseKey } from '../htmlData.ts';
 import {
   windowArguments,
   computed2inlineStyle,
@@ -20,19 +20,19 @@ import {
   getMaxVerse,
   getStatePref,
   setStatePref,
-} from '../rutil';
+} from '../rutil.tsx';
 import { libswordText } from '../libxul/viewport/ztext';
-import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
+import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul.tsx';
 import Groupbox from '../libxul/groupbox';
 import Checkbox from '../libxul/checkbox';
-import { Hbox, Vbox } from '../libxul/boxes';
+import { Hbox, Vbox } from '../libxul/boxes.tsx';
 import Button from '../libxul/button';
 import SelectVK, { SelectVKType } from '../libxul/selectVK';
 import '../libsword.css';
 import '../libxul/viewport/atext.css';
 import './copyPassage.css';
 
-import type VerseKey from '../../verseKey';
+import type VerseKey from '../../verseKey.ts';
 
 // TODO: CopyPassage font is underlined when viewed in LibreOffice.
 

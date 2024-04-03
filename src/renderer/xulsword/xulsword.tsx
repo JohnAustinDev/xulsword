@@ -6,19 +6,19 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 import React from 'react';
 import { Icon } from '@blueprintjs/core';
-import { dString, clone } from '../../common';
-import C from '../../constant';
-import S from '../../defaultPrefs';
-import G from '../rg';
+import { dString, clone } from '../../common.ts';
+import C from '../../constant.ts';
+import S from '../../defaultPrefs.ts';
+import G from '../rg.ts';
 import renderToRoot from '../renderer';
-import log from '../log';
-import { verseKey } from '../htmlData';
+import log from '../log.ts';
+import { verseKey } from '../htmlData.ts';
 import {
   registerUpdateStateFromPref,
   getStatePref,
   clearPending,
   setStatePref,
-} from '../rutil';
+} from '../rutil.tsx';
 import {
   addClass,
   delayHandler,
@@ -26,12 +26,12 @@ import {
   xulDefaultProps,
   XulProps,
   xulPropTypes,
-} from '../libxul/xul';
+} from '../libxul/xul.tsx';
 import Button, { AnchorButton } from '../libxul/button';
-import { Box, Hbox, Vbox } from '../libxul/boxes';
+import { Box, Hbox, Vbox } from '../libxul/boxes.tsx';
 import Menupopup from '../libxul/menupopup';
 import Bookselect from '../libxul/bookselect';
-import Spacer from '../libxul/spacer';
+import Spacer from '../libxul/spacer.tsx';
 import Textbox from '../libxul/textbox';
 import Viewport from '../libxul/viewport/viewport';
 import viewportParentH, {
@@ -41,7 +41,7 @@ import viewportParentH, {
 import handlerH from './xulswordH';
 import './xulsword.css';
 
-import type { HistoryVKType, XulswordStateArgType } from '../../type';
+import type { HistoryVKType, XulswordStateArgType } from '../../type.ts';
 import type Atext from '../libxul/viewport/atext';
 
 const defaultProps = xulDefaultProps;

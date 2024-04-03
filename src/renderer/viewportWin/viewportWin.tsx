@@ -6,25 +6,25 @@
 /* eslint-disable jsx-a11y/media-has-caption */
 import React from 'react';
 import Subscription from '../../subscription';
-import S from '../../defaultPrefs';
-import { keep, diff, drop, validateViewportModulePrefs } from '../../common';
-import G from '../rg';
+import S from '../../defaultPrefs.ts';
+import { keep, diff, drop, validateViewportModulePrefs } from '../../common.ts';
+import G from '../rg.ts';
 import renderToRoot from '../renderer';
-import log from '../log';
+import log from '../log.ts';
 import {
   clearPending,
   getStatePref,
   registerUpdateStateFromPref,
   setStatePref,
   windowArguments,
-} from '../rutil';
+} from '../rutil.tsx';
 import {
   topHandle,
   xulDefaultProps,
   XulProps,
   xulPropTypes,
-} from '../libxul/xul';
-import { Hbox, Vbox } from '../libxul/boxes';
+} from '../libxul/xul.tsx';
+import { Hbox, Vbox } from '../libxul/boxes.tsx';
 import Viewport from '../libxul/viewport/viewport';
 import viewportParentH, {
   closeMenupopups,
@@ -32,7 +32,7 @@ import viewportParentH, {
   bbDragEnd as bbDragEndH,
 } from '../libxul/viewport/viewportParentH';
 
-import type { NewModulesType, XulswordStateArgType } from '../../type';
+import type { NewModulesType, XulswordStateArgType } from '../../type.ts';
 import type Atext from '../libxul/viewport/atext';
 
 const defaultProps = xulDefaultProps;

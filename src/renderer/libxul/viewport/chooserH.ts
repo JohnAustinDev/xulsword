@@ -1,13 +1,13 @@
 /* eslint-disable import/no-duplicates */
 import React from 'react';
-import { ofClass, sanitizeHTML } from '../../../common';
-import C from '../../../constant';
-import G from '../../rg';
-import { delayHandler } from '../xul';
+import { ofClass, sanitizeHTML } from '../../../common.ts';
+import C from '../../../constant.ts';
+import G from '../../rg.ts';
+import { delayHandler } from '../xul.tsx';
 
-import type { BookGroupType } from '../../../type';
-import type Chooser from './chooser';
-import type { ChooserProps, ChooserState } from './chooser';
+import type { BookGroupType } from '../../../type.ts';
+import type Chooser from './chooser.tsx';
+import type { ChooserProps, ChooserState } from './chooser.tsx';
 
 export default function handler(this: Chooser, es: React.SyntheticEvent): void {
   const target = es.target as HTMLElement;

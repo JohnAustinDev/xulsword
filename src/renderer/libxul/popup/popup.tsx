@@ -15,29 +15,29 @@ import {
   JSON_attrib_stringify,
   sanitizeHTML,
   stringHash,
-} from '../../../common';
-import S from '../../../defaultPrefs';
-import C from '../../../constant';
-import G from '../../rg';
-import { libswordImgSrc, windowArguments } from '../../rutil';
+} from '../../../common.ts';
+import S from '../../../defaultPrefs.ts';
+import C from '../../../constant.ts';
+import G from '../../rg.ts';
+import { libswordImgSrc, windowArguments } from '../../rutil.tsx';
 import {
   topHandle,
   htmlAttribs,
   xulDefaultProps,
   XulProps,
   xulPropTypes,
-} from '../xul';
-import { Box, Hbox } from '../boxes';
-import { getRefBible } from '../viewport/zversekey';
-import popupH, { getPopupHTML } from './popupH';
+} from '../xul.tsx';
+import { Box, Hbox } from '../boxes.tsx';
+import { getRefBible } from '../viewport/zversekey.ts';
+import popupH, { getPopupHTML } from './popupH.ts';
 import '../../libsword.css';
 import './popup.css';
 // These classes are used by generated HTML:
 import '../label.css';
 import '../button.css';
 
-import type { FeatureMods } from '../../../type';
-import type { HTMLData } from '../../htmlData';
+import type { FeatureMods } from '../../../type.ts';
+import type { HTMLData } from '../../htmlData.ts';
 
 const defaultProps = {
   ...xulDefaultProps,

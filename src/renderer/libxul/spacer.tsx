@@ -3,7 +3,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { xulDefaultProps, xulPropTypes, XulProps, htmlAttribs } from './xul';
+import { xulDefaultProps, xulPropTypes, XulProps, htmlAttribs } from './xul.tsx';
 
 // XUL spacer
 const defaultProps = {
