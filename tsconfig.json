@@ -24,5 +24,6 @@
     "allowJs": true,
     "allowImportingTsExtensions": true,
   },
-  "exclude": ["test", "build/release", "build/app/dist", ".erb/dll"]
+  "exclude": ["test", "build/release", "build/app/dist", ".erb/dll"],
+  "include": ["./.eslintrc.js", "./src/browser/*", "./src/server/*", "./src/main/*"],
 }
