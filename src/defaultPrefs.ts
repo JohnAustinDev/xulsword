@@ -1,9 +1,7 @@
 /* eslint-disable no-nested-ternary */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import type { paperSizes } from './renderer/libxul/printSettings.tsx';
 import type { SelectVKType } from './renderer/libxul/selectVK.tsx';
-import type { StyleType } from './renderer/style';
+import type { StyleType } from './renderer/style.ts';
 import type { TablePropColumn, TinitialRowSort } from './renderer/libxul/table.tsx';
 import type {
   AudioPrefType,

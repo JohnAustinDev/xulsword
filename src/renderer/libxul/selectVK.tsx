@@ -1,7 +1,6 @@
 /* eslint-disable react/no-did-update-set-state */
 /* eslint-disable no-nested-ternary */
 /* eslint-disable react/forbid-prop-types */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react/static-property-placement */
 /* eslint-disable react/destructuring-assignment */
 /* eslint-disable react/jsx-props-no-spreading */

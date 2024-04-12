@@ -4,7 +4,6 @@
 /* eslint-disable import/order */
 /* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable no-continue */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable import/prefer-default-export */
 import React from 'react';
 import { Icon, TreeNodeInfo } from '@blueprintjs/core';

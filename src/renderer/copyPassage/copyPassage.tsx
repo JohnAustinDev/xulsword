@@ -1,6 +1,5 @@
 /* eslint-disable no-await-in-loop */
 /* eslint-disable no-restricted-syntax */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react/no-did-update-set-state */
 /* eslint-disable react/no-array-index-key */
 /* eslint-disable jsx-a11y/anchor-is-valid */
@@ -10,7 +9,7 @@ import React from 'react';
 import { sanitizeHTML } from '../../common.ts';
 import S from '../../defaultPrefs.ts';
 import G from '../rg.ts';
-import renderToRoot from '../renderer';
+import renderToRoot from '../renderer.tsx';
 import { verseKey } from '../htmlData.ts';
 import {
   windowArguments,
@@ -21,13 +20,13 @@ import {
   getStatePref,
   setStatePref,
 } from '../rutil.tsx';
-import { libswordText } from '../libxul/viewport/ztext';
+import { libswordText } from '../libxul/viewport/ztext.ts';
 import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul.tsx';
-import Groupbox from '../libxul/groupbox';
-import Checkbox from '../libxul/checkbox';
+import Groupbox from '../libxul/groupbox.tsx';
+import Checkbox from '../libxul/checkbox.tsx';
 import { Hbox, Vbox } from '../libxul/boxes.tsx';
-import Button from '../libxul/button';
-import SelectVK, { SelectVKType } from '../libxul/selectVK';
+import Button from '../libxul/button.tsx';
+import SelectVK, { SelectVKType } from '../libxul/selectVK.tsx';
 import '../libsword.css';
 import '../libxul/viewport/atext.css';
 import './copyPassage.css';

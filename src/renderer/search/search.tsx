@@ -1,7 +1,6 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable @typescript-eslint/no-use-before-define */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react/static-property-placement */
 /* eslint-disable jsx-a11y/control-has-associated-label */
 import React from 'react';
@@ -18,7 +17,7 @@ import {
 import C from '../../constant.ts';
 import S from '../../defaultPrefs.ts';
 import G from '../rg.ts';
-import renderToRoot from '../renderer';
+import renderToRoot from '../renderer.tsx';
 import log from '../log.ts';
 import { windowArguments } from '../rutil.tsx';
 import {
@@ -27,19 +26,19 @@ import {
   popupParentHandler as popupParentHandlerH,
   popupHandler as popupHandlerH,
   PopupParentInitState,
-} from '../libxul/popup/popupParentH';
-import Button from '../libxul/button';
+} from '../libxul/popup/popupParentH.tsx';
+import Button from '../libxul/button.tsx';
 import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul.tsx';
 import { Box, Hbox, Vbox } from '../libxul/boxes.tsx';
-import Groupbox from '../libxul/groupbox';
+import Groupbox from '../libxul/groupbox.tsx';
 import Label from '../libxul/label.tsx';
 import Menulist from '../libxul/menulist.tsx';
-import Radio from '../libxul/radio';
-import Grid, { Column, Columns, Row, Rows } from '../libxul/grid';
-import Textbox from '../libxul/textbox';
+import Radio from '../libxul/radio.tsx';
+import Grid, { Column, Columns, Row, Rows } from '../libxul/grid.tsx';
+import Textbox from '../libxul/textbox.tsx';
 import Spacer from '../libxul/spacer.tsx';
-import Stack from '../libxul/stack';
-import Dialog from '../libxul/dialog';
+import Stack from '../libxul/stack.tsx';
+import Dialog from '../libxul/dialog.tsx';
 import ModuleMenu from '../libxul/modulemenu.tsx';
 import handlerH, {
   search,
@@ -51,11 +50,11 @@ import handlerH, {
   getSearchResults,
   Indexing,
   descriptor,
-} from './searchH';
+} from './searchH.ts';
 import './search.css';
 
 import type { BookGroupType, SearchType } from '../../type.ts';
-import Popup from '../libxul/popup/popup';
+import Popup from '../libxul/popup/popup.tsx';
 
 const defaultProps = xulDefaultProps;
 

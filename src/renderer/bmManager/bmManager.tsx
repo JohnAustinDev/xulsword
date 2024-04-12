@@ -3,7 +3,6 @@
 /* eslint-disable react/no-unused-state */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/no-noninteractive-element-interactions */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable react/static-property-placement */
 import type { Table2 as BPTable } from '@blueprintjs/table';
@@ -21,21 +20,21 @@ import {
 } from '../../common.ts';
 import S from '../../defaultPrefs.ts';
 import G from '../rg.ts';
-import renderToRoot, { RootPrintType } from '../renderer';
+import renderToRoot, { RootPrintType } from '../renderer.tsx';
 import {
   registerUpdateStateFromPref,
   setStatePref,
   getStatePref,
 } from '../rutil.tsx';
-import { bookmarkTreeNodes, getSampleText } from '../bookmarks';
+import { bookmarkTreeNodes, getSampleText } from '../bookmarks.ts';
 import { verseKey } from '../htmlData.ts';
-import Table from '../libxul/table';
-import DragSizer, { DragSizerVal } from '../libxul/dragsizer';
-import Groupbox from '../libxul/groupbox';
+import Table from '../libxul/table.tsx';
+import DragSizer, { DragSizerVal } from '../libxul/dragsizer.tsx';
+import Groupbox from '../libxul/groupbox.tsx';
 import { Hbox, Vbox } from '../libxul/boxes.tsx';
 import Label from '../libxul/label.tsx';
-import TreeView from '../libxul/treeview';
-import Button from '../libxul/button';
+import TreeView from '../libxul/treeview.tsx';
+import Button from '../libxul/button.tsx';
 import {
   xulDefaultProps,
   XulProps,
@@ -43,7 +42,7 @@ import {
   addClass,
   htmlAttribs,
 } from '../libxul/xul.tsx';
-import * as H from './bmManagerH';
+import * as H from './bmManagerH.tsx';
 import './bmManager.css';
 import '@blueprintjs/select/lib/css/blueprint-select.css';
 

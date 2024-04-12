@@ -1,6 +1,5 @@
 /* eslint-disable no-continue */
 /* eslint-disable react/forbid-prop-types */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable jsx-a11y/iframe-has-title */
 /* eslint-disable react/no-did-update-set-state */

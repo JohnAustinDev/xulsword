@@ -1,10 +1,9 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useLayoutEffect } from 'react';
 import { dString, sanitizeHTML } from '../../common.ts';
 import C from '../../constant.ts';
 import G from '../rg.ts';
-import renderToRoot from '../renderer';
+import renderToRoot from '../renderer.tsx';
 import { xulDefaultProps, xulPropTypes } from '../libxul/xul.tsx';
 import './searchHelp.css';
 

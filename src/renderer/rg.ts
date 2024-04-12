@@ -1,6 +1,5 @@
 /* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-use-before-define */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { JSON_stringify, stringHash } from '../common.ts';
 import Cache from '../cache.ts';
 import { GBuilder } from '../type.ts';

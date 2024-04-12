@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { app, BrowserWindow } from 'electron';
 import { ChildProcess, fork } from 'child_process';
 import log from 'electron-log';
@@ -8,13 +7,13 @@ import {
   isRepoLocal,
   JSON_parse,
   noAutoSearchIndex,
-} from '../../common';
-import Cache from '../../cache';
-import S from '../../defaultPrefs';
-import C from '../../constant';
-import LocalFile from './localFile';
-import Dirs from './dirs';
-import Prefs from './prefs';
+} from '../../common.ts';
+import Cache from '../../cache.ts';
+import S from '../../defaultPrefs.ts';
+import C from '../../constant.ts';
+import LocalFile from './localFile.ts';
+import Dirs from './dirs.ts';
+import Prefs from './prefs.ts';
 
 import type {
   GenBookTOC,
@@ -25,9 +24,9 @@ import type {
   V11nType,
   GenBookKeys,
   ModulesCache,
-} from '../../type';
-import type { ManagerStatePref } from '../../renderer/moduleManager/manager';
-import DiskCache from './diskcache';
+} from '../../type.ts';
+import type { ManagerStatePref } from '../../renderer/moduleManager/manager.tsx';
+import DiskCache from './diskcache.ts';
 
 const { libxulsword } = require('libxulsword');
 
@@ -62,7 +61,6 @@ global.ToUpperCase = (aString) => {
   return '';
 };
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 global.ReportSearchIndexerProgress = (_intgr) => {};
 
 /*

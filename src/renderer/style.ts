@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { normalizeFontFamily } from 'common';
 import type { ConfigType } from '../type.ts';
 import C from '../constant.ts';

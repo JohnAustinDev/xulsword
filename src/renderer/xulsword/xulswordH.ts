@@ -1,17 +1,16 @@
 /* eslint-disable import/no-duplicates */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import RefParser from '../../refParser.ts';
 import { clone, ofClass } from '../../common.ts';
-import { chapterChange, verseChange } from '../libxul/viewport/zversekey';
-import { genbookChange } from '../libxul/viewport/ztext';
+import { chapterChange, verseChange } from '../libxul/viewport/zversekey.ts';
+import { genbookChange } from '../libxul/viewport/ztext.ts';
 import { genBookAudioFile, verseKeyAudioFile } from '../rutil.tsx';
 import { verseKey } from '../htmlData.ts';
 import G from '../rg.ts';
 
 import type { GenBookAudioFile, ShowType, VerseKeyAudioFile } from '../../type.ts';
-import type Xulsword from './xulsword';
-import type { XulswordState } from './xulsword';
+import type Xulsword from './xulsword.tsx';
+import type { XulswordState } from './xulsword.tsx';
 
 export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
   const state = this.state as XulswordState;

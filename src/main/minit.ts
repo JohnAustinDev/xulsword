@@ -1,14 +1,13 @@
 /* eslint-disable no-nested-ternary */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable import/no-mutable-exports */
 import log from 'electron-log';
 import path from 'path';
 import fs from 'fs';
 import i18n from 'i18next';
 import fontList from 'font-list';
-import C from '../constant';
-import S from '../defaultPrefs';
-import VerseKey from '../verseKey';
+import C from '../constant.ts';
+import S from '../defaultPrefs.ts';
+import VerseKey from '../verseKey.ts';
 import RefParser, { RefParserOptionsType } from '../refParser.ts';
 import {
   isASCII,
@@ -16,17 +15,17 @@ import {
   validateViewportModulePrefs,
   keep,
   normalizeFontFamily,
-} from '../common';
-import Cache from '../cache';
-import Subscription from '../subscription';
-import Dirs from './components/dirs';
-import Prefs from './components/prefs';
-import LibSword from './components/libsword';
-import LocalFile from './components/localFile';
-import Window from './components/window';
-import { moduleUnsupported, CipherKeyModules } from './components/module';
-import getFontFamily from './fontfamily';
-import parseSwordConf from './parseSwordConf';
+} from '../common.ts';
+import Cache from '../cache.ts';
+import Subscription from '../subscription.ts';
+import Dirs from './components/dirs.ts';
+import Prefs from './components/prefs.ts';
+import LibSword from './components/libsword.ts';
+import LocalFile from './components/localFile.ts';
+import Window from './components/window.ts';
+import { moduleUnsupported, CipherKeyModules } from './components/module.ts';
+import getFontFamily from './fontfamily.js';
+import parseSwordConf from './parseSwordConf.ts';
 
 import type {
   TabType,
@@ -42,7 +41,7 @@ import type {
   OSISBookType,
   SwordFeatureMods,
   XulswordFeatureMods,
-} from '../type';
+} from '../type.ts';
 
 // Get all supported books in locale order. NOTE: xulsword ignores individual
 // module book order in lieu of locale book order or xulsword default order

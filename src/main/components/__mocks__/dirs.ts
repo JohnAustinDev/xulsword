@@ -1,11 +1,10 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 // import { app } from 'electron';
 import path from 'path';
-import LocalFile from '../localFile';
+import LocalFile from '../localFile.ts';
 
-import type { GType } from '../../../type';
-import type { DirsDirectories } from '../dirs';
+import type { GType } from '../../../type.ts';
+import type { DirsDirectories } from '../dirs.ts';
 
 const Dirs = { path: {} } as GType['Dirs'];
 const CrosswireRoot = String(process.env.HOME);

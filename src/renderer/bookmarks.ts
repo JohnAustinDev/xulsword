@@ -20,9 +20,9 @@ import type {
   SwordFilterValueType,
 } from '../type.ts';
 import type { HTMLData } from './htmlData.ts';
-import type { AtextProps } from './libxul/viewport/atext';
-import type { LibSwordResponse } from './libxul/viewport/ztext';
-import type { SelectVKType } from './libxul/selectVK';
+import type { AtextProps } from './libxul/viewport/atext.tsx';
+import type { LibSwordResponse } from './libxul/viewport/ztext.ts';
+import type { SelectVKType } from './libxul/selectVK.tsx';
 
 type BookmarkMapType = { [key: string]: BookmarkInfoHTML[] };
 

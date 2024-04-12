@@ -1,10 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import log from 'electron-log';
-import { JSON_parse, JSON_stringify } from '../../common';
-import C from '../../constant';
-import { PrefObject } from '../../type';
-import Dirs from './dirs';
+import { JSON_parse, JSON_stringify } from '../../common.ts';
+import C from '../../constant.ts';
+import { PrefObject } from '../../type.ts';
+import Dirs from './dirs.ts';
 
 // Cache to disk store PrefValue data referenced by key.
 const DiskCache = {

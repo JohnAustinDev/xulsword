@@ -2,7 +2,6 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable no-nested-ternary */
 /* eslint-disable react/jsx-props-no-spreading */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react/static-property-placement */
 /* eslint-disable jsx-a11y/control-has-associated-label */
 import React from 'react';
@@ -43,22 +42,22 @@ import {
   XulProps,
   xulPropTypes,
 } from '../libxul/xul.tsx';
-import Button from '../libxul/button';
+import Button from '../libxul/button.tsx';
 import { Hbox, Vbox, Box } from '../libxul/boxes.tsx';
-import Groupbox from '../libxul/groupbox';
-import SelectVK from '../libxul/selectVK';
-import SelectOR, { SelectORProps, SelectORMType } from '../libxul/selectOR';
-import Table, { TablePropColumn } from '../libxul/table';
+import Groupbox from '../libxul/groupbox.tsx';
+import SelectVK from '../libxul/selectVK.tsx';
+import SelectOR, { SelectORProps, SelectORMType } from '../libxul/selectOR.tsx';
+import Table, { TablePropColumn } from '../libxul/table.tsx';
 import Spacer from '../libxul/spacer.tsx';
 import Label from '../libxul/label.tsx';
-import DragSizer, { DragSizerVal } from '../libxul/dragsizer';
-import Checkbox from '../libxul/checkbox';
-import Dialog from '../libxul/dialog';
+import DragSizer, { DragSizerVal } from '../libxul/dragsizer.tsx';
+import Checkbox from '../libxul/checkbox.tsx';
+import Dialog from '../libxul/dialog.tsx';
 import Modinfo, {
   modinfoParentInitialState,
   modinfoParentHandler as modinfoParentHandlerH,
-} from '../libxul/modinfo';
-import * as H from './managerH';
+} from '../libxul/modinfo.tsx';
+import * as H from './managerH.ts';
 import './manager.css';
 
 import type {
@@ -72,14 +71,14 @@ import type {
   TLanguageTableRow,
   TModuleTableRow,
   TRepositoryTableRow,
-} from './managerH';
+} from './managerH.ts';
 import type {
   TonCellClick,
   TonEditableCellChanged,
   TonRowsReordered,
-} from '../libxul/table';
-import type { SelectVKProps, SelectVKType } from '../libxul/selectVK';
-import type { ModinfoParent } from '../libxul/modinfo';
+} from '../libxul/table.tsx';
+import type { SelectVKProps, SelectVKType } from '../libxul/selectVK.tsx';
+import type { ModinfoParent } from '../libxul/modinfo.tsx';
 import { WindowRootState } from 'renderer/renderer';
 
 G.Module.cancel();

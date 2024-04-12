@@ -1,6 +1,6 @@
 import type { ipcRenderer as IPCRenderer } from 'electron';
 import { io } from 'socket.io-client';
-import { processR, ipc } from '../main/preload2';
+import { processR, ipc } from '../main/preload2.js';
 
 // To run the Electron app in a browser, Electron's contextBridge
 // and ipcRenderer modules have been replaced by custom modules

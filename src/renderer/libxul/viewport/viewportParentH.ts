@@ -1,5 +1,4 @@
 /* eslint-disable import/no-duplicates */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-loop-func */
 import React from 'react';
 import C from '../../../constant.ts';

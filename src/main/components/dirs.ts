@@ -1,7 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { app } from 'electron';
 import path from 'path';
-import LocalFile from './localFile';
+import LocalFile from './localFile.ts';
 
 export type DirsDirectories = {
   TmpD: string;

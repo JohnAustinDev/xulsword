@@ -6,22 +6,22 @@
 import React from 'react';
 import C from '../../constant.ts';
 import G from '../rg.ts';
-import renderToRoot from '../renderer';
+import renderToRoot from '../renderer.tsx';
 import { windowArguments } from '../rutil.tsx';
 import { Hbox, Vbox } from '../libxul/boxes.tsx';
 import Label from '../libxul/label.tsx';
-import Stack from '../libxul/stack';
-import Button from '../libxul/button';
+import Stack from '../libxul/stack.tsx';
+import Button from '../libxul/button.tsx';
 import Spacer from '../libxul/spacer.tsx';
 import Modinfo, {
   modinfoParentInitialState,
   modinfoParentHandler as modinfoParentHandlerH,
-} from '../libxul/modinfo';
+} from '../libxul/modinfo.tsx';
 import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul.tsx';
 import '../splash/splash.css';
 import './about.css';
 
-import type { ModinfoParent } from '../libxul/modinfo';
+import type { ModinfoParent } from '../libxul/modinfo.tsx';
 import type { SwordConfType } from '../../type.ts';
 
 const defaultProps = xulDefaultProps;

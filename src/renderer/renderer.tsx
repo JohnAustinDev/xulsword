@@ -2,7 +2,6 @@
 /* eslint-disable react/forbid-prop-types */
 /* eslint-disable jsx-a11y/iframe-has-title */
 /* eslint-disable react/jsx-props-no-spreading */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable import/no-mutable-exports */
 import React, {
   ReactElement,
@@ -14,23 +13,23 @@ import React, {
 import { createRoot } from 'react-dom/client';
 import PropTypes from 'prop-types';
 import { Intent, ProgressBar, Spinner, Tag } from '@blueprintjs/core';
-import Subscription from '../subscription';
+import Subscription from '../subscription.ts';
 import { randomID, sanitizeHTML, stringHash } from '../common.ts';
 import Cache from '../cache.ts';
 import C from '../constant.ts';
 import G from './rg.ts';
-import DynamicStyleSheet from './style';
-import ContextData from './contextData';
+import DynamicStyleSheet from './style.ts';
+import ContextData from './contextData.ts';
 import { windowArguments } from './rutil.tsx';
 import log from './log.ts';
 import { delayHandler, xulCaptureEvents, xulDefaultProps } from './libxul/xul.tsx';
 import { Hbox } from './libxul/boxes.tsx';
-import Dialog from './libxul/dialog';
+import Dialog from './libxul/dialog.tsx';
 import Spacer from './libxul/spacer.tsx';
-import Button from './libxul/button';
+import Button from './libxul/button.tsx';
 import Label from './libxul/label.tsx';
-import Textbox from './libxul/textbox';
-import PrintOverlay from './libxul/printOverlay';
+import Textbox from './libxul/textbox.tsx';
+import PrintOverlay from './libxul/printOverlay.tsx';
 
 // Global CSS imports
 import 'normalize.css/normalize.css';
@@ -44,7 +43,7 @@ import type {
   NewModulesType,
   WindowDescriptorPrefType,
 } from '../type.ts';
-import type { SubscriptionType } from '../subscription';
+import type { SubscriptionType } from '../subscription.ts';
 
 const descriptor = windowArguments();
 Cache.write(`${descriptor.type}:${descriptor.id}`, 'windowID');

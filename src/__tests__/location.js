@@ -1,6 +1,6 @@
 /* eslint-disable no-continue */
-import LibSword from '../main/components/libsword';
-import C from '../constant';
+import LibSword from '../main/components/libsword.ts';
+import C from '../constant.ts';
 
 const Location = {
   modname: null,

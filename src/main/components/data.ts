@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 // Store anything transferable for sharing between any processes.
 // NOTE: Don't use this in renderer processes unless data needs

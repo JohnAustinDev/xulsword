@@ -1,5 +1,5 @@
+/* eslint-disable no-unused-vars */
 /* eslint-disable no-nested-ternary */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import type { LogLevel } from 'electron-log';
 import type {
@@ -16,7 +16,7 @@ import type {
   SwordFilterValueType,
   TabTypes,
   V11nType,
-} from './type';
+} from './type.ts';
 
 // TODO: Add sword protocol support.
 // Environment variables:

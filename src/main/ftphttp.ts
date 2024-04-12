@@ -6,7 +6,6 @@
 /* eslint-disable promise/no-promise-in-callback */
 /* eslint-disable promise/param-names */
 /* eslint-disable prefer-rest-params */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { session } from 'electron';
 import fpath from 'path';
 import log from 'electron-log';
@@ -14,11 +13,11 @@ import FTP, { ListingElement } from 'ftp';
 import GUNZIP from 'gunzip-maybe';
 import TAR from 'tar-stream';
 import { Stream, Readable } from 'stream';
-import { keyToDownload, randomID } from '../common';
-import C from '../constant';
-import LocalFile from './components/localFile';
+import { keyToDownload, randomID } from '../common.ts';
+import C from '../constant.ts';
+import LocalFile from './components/localFile.ts';
 
-import type { HTTPDownload } from '../type';
+import type { HTTPDownload } from '../type.ts';
 
 export type ListingElementR = ListingElement & { subdir: string };
 

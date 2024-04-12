@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable import/no-duplicates */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-continue */
 import C from '../../../constant.ts';
 import S from '../../../defaultPrefs.ts';

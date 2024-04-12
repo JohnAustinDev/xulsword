@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react/static-property-placement */
 /* eslint-disable jsx-a11y/control-has-associated-label */
 import type { ReactElementLike } from 'prop-types';
@@ -7,19 +6,19 @@ import { ChromePicker as ColorPicker } from 'react-color';
 import { Slider } from '@blueprintjs/core';
 import { diff, normalizeFontFamily } from '../../common.ts';
 import G from '../rg.ts';
-import renderToRoot from '../renderer';
+import renderToRoot from '../renderer.tsx';
 import log from '../log.ts';
 import { windowArguments } from '../rutil.tsx';
 import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul.tsx';
 import { Hbox, Vbox } from '../libxul/boxes.tsx';
-import Groupbox from '../libxul/groupbox';
+import Groupbox from '../libxul/groupbox.tsx';
 import Label from '../libxul/label.tsx';
-import Button from '../libxul/button';
-import Checkbox from '../libxul/checkbox';
+import Button from '../libxul/button.tsx';
+import Checkbox from '../libxul/checkbox.tsx';
 import Menulist from '../libxul/menulist.tsx';
 import ModuleMenu from '../libxul/modulemenu.tsx';
-import Dialog from '../libxul/dialog';
-import Grid, { Columns, Column, Rows, Row } from '../libxul/grid';
+import Dialog from '../libxul/dialog.tsx';
+import Grid, { Columns, Column, Rows, Row } from '../libxul/grid.tsx';
 import Spacer from '../libxul/spacer.tsx';
 import handlerH, {
   styleToState,
@@ -27,7 +26,7 @@ import handlerH, {
   setStateValue as setStateValueH,
   preclose,
   computedStyle,
-} from './chooseFontH';
+} from './chooseFontH.ts';
 import './chooseFont.css';
 
 const nocolor = { r: 128, g: 128, b: 128, a: 128 };

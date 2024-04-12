@@ -1,5 +1,4 @@
 /* eslint-disable import/no-duplicates */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   JSON_attrib_stringify,
   clone,
@@ -16,7 +15,7 @@ import {
   getIntroductions,
   getNoteHTML,
   parseExtendedVKRef,
-} from '../viewport/zversekey';
+} from '../viewport/zversekey.ts';
 
 import type { HTMLData } from '../../htmlData.ts';
 import type Popup from './popup.tsx';

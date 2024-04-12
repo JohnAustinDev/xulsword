@@ -1,6 +1,5 @@
 /* eslint-disable no-nested-ternary */
 /* eslint-disable no-restricted-syntax */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import C from '../../../constant.ts';
 import Cache from '../../../cache.ts';
 import {
@@ -18,7 +17,7 @@ import {
   getChapterHeading,
   chapterChange,
   pageChange,
-} from './zversekey';
+} from './zversekey.ts';
 import { getAllDictionaryKeyList, getDictEntryHTML } from './zdictionary.ts';
 
 import type {

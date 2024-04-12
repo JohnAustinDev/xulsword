@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import { clone, ofClass } from '../../../common.ts';
 import C from '../../../constant.ts';

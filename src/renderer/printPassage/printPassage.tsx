@@ -1,7 +1,6 @@
 /* eslint-disable react/forbid-prop-types */
 /* eslint-disable no-await-in-loop */
 /* eslint-disable no-restricted-syntax */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react/no-did-update-set-state */
 /* eslint-disable react/no-array-index-key */
 /* eslint-disable jsx-a11y/anchor-is-valid */
@@ -11,12 +10,12 @@ import React, { ReactElement } from 'react';
 import PropTypes from 'prop-types';
 import ReactDOM from 'react-dom';
 import { ProgressBar } from '@blueprintjs/core';
-import Subscription from '../../subscription';
+import Subscription from '../../subscription.ts';
 import { diff, sanitizeHTML, stringHash } from '../../common.ts';
 import S from '../../defaultPrefs.ts';
 import C from '../../constant.ts';
 import G from '../rg.ts';
-import renderToRoot, { RootPrintType } from '../renderer';
+import renderToRoot, { RootPrintType } from '../renderer.tsx';
 import {
   windowArguments,
   getStatePref,
@@ -25,16 +24,16 @@ import {
 } from '../rutil.tsx';
 import log from '../log.ts';
 import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul.tsx';
-import Grid, { Column, Columns, Row, Rows } from '../libxul/grid';
-import Groupbox from '../libxul/groupbox';
-import Checkbox from '../libxul/checkbox';
-import SelectVK from '../libxul/selectVK';
+import Grid, { Column, Columns, Row, Rows } from '../libxul/grid.tsx';
+import Groupbox from '../libxul/groupbox.tsx';
+import Checkbox from '../libxul/checkbox.tsx';
+import SelectVK from '../libxul/selectVK.tsx';
 import {
   handler as handlerH,
   vkSelectHandler as vkSelectHandlerH,
   validPassage,
   bibleChapterText,
-} from './printPassageH';
+} from './printPassageH.ts';
 import '../libsword.css';
 import '../libxul/viewport/atext.css';
 import './printPassage.css';

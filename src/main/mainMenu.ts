@@ -1,6 +1,5 @@
 /* eslint-disable no-nested-ternary */
 /* eslint-disable @typescript-eslint/no-use-before-define */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   app,
   Menu,
@@ -15,17 +14,17 @@ import {
   clone,
   localizeBookmark,
   xulswordLocation,
-} from '../common';
-import C from '../constant';
-import S from '../defaultPrefs';
-import G from './mg';
-import Window, { getBrowserWindows } from './components/window';
-import Commands from './components/commands';
-import { verseKey } from './minit';
+} from '../common.ts';
+import C from '../constant.ts';
+import S from '../defaultPrefs.ts';
+import G from './mg.ts';
+import Window, { getBrowserWindows } from './components/window.ts';
+import Commands from './components/commands.ts';
+import { verseKey } from './minit.ts';
 
-import type { BookmarkFolderType, SearchType, TabTypes } from '../type';
-import type { PrefCallbackType } from './components/prefs';
-import Viewport from './components/viewport';
+import type { BookmarkFolderType, SearchType, TabTypes } from '../type.ts';
+import type { PrefCallbackType } from './components/prefs.ts';
+import Viewport from './components/viewport.ts';
 
 type Modifiers =
   | 'CommandOrControl' // 'accel' in XUL

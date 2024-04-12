@@ -1,16 +1,15 @@
 /* eslint-disable prefer-rest-params */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { BrowserWindow } from 'electron';
 import log from 'electron-log';
 import path from 'path';
 import fs from 'fs';
-import S from '../../defaultPrefs';
-import { clone, diff, JSON_parse, JSON_stringify, mapp } from '../../common';
-import Subscription from '../../subscription';
-import LocalFile from './localFile';
-import Dirs from './dirs';
+import S from '../../defaultPrefs.ts';
+import { clone, diff, JSON_parse, JSON_stringify, mapp } from '../../common.ts';
+import Subscription from '../../subscription.ts';
+import LocalFile from './localFile.ts';
+import Dirs from './dirs.ts';
 
-import type { PrefObject, PrefStoreType, PrefValue } from '../../type';
+import type { PrefObject, PrefStoreType, PrefValue } from '../../type.ts';
 
 export type PrefCallbackType = (
   callingWinID: number,

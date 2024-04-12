@@ -1,17 +1,16 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { BrowserWindow } from 'electron';
 import contextMenuCreator from 'electron-context-menu';
 import log from 'electron-log';
 import i18n from 'i18next';
-import { findBookmarkItem, xulswordLocation } from '../common';
-import S from '../defaultPrefs';
-import G from './mg';
-import CommandsX from './components/commands';
-import Viewport from './components/viewport';
-import Data from './components/data';
+import { findBookmarkItem, xulswordLocation } from '../common.ts';
+import S from '../defaultPrefs.ts';
+import G from './mg.ts';
+import CommandsX from './components/commands.ts';
+import Viewport from './components/viewport.ts';
+import Data from './components/data.ts';
 
-import type { GAddCaller, ContextDataType, LocationVKType } from '../type';
-import type { AboutWinState } from '../renderer/about/about';
+import type { GAddCaller, ContextDataType, LocationVKType } from '../type.ts';
+import type { AboutWinState } from '../renderer/about/about.tsx';
 
 // Require the calling window argument, since rg will not add it when
 // Commands are called from the main process.

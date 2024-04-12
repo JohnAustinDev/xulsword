@@ -5,7 +5,6 @@
 /* eslint-disable class-methods-use-this */
 /* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable react/forbid-prop-types */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react/static-property-placement */
 /* eslint-disable max-classes-per-file */
 /* eslint-disable react/jsx-props-no-spreading */

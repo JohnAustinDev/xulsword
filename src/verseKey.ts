@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import C from './constant.ts';
 import { clone, dString } from './common.ts';
 

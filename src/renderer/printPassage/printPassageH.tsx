@@ -1,5 +1,4 @@
 /* eslint-disable import/no-duplicates */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-use-before-define */
 import {
   clone,
@@ -9,20 +8,20 @@ import {
 } from '../../common.ts';
 import C from '../../constant.ts';
 import G from '../rg.ts';
-import addBookmarks from '../bookmarks';
+import addBookmarks from '../bookmarks.ts';
 import { isValidVKM } from '../rutil.tsx';
-import { getDictEntryHTML } from '../libxul/viewport/zdictionary';
-import { getNoteHTML, getIntroductions } from '../libxul/viewport/zversekey';
+import { getDictEntryHTML } from '../libxul/viewport/zdictionary.ts';
+import { getNoteHTML, getIntroductions } from '../libxul/viewport/zversekey.ts';
 
 import type {
   AtextPropsType,
   SwordFilterType,
   SwordFilterValueType,
 } from '../../type.ts';
-import type { LibSwordResponse } from '../libxul/viewport/ztext';
-import type { SelectVKType } from '../libxul/selectVK';
-import type PrintPassageWin from './printPassage';
-import type { PrintPassageState } from './printPassage';
+import type { LibSwordResponse } from '../libxul/viewport/ztext.ts';
+import type { SelectVKType } from '../libxul/selectVK.tsx';
+import type PrintPassageWin from './printPassage.tsx';
+import type { PrintPassageState } from './printPassage.tsx';
 
 export function handler(this: PrintPassageWin, ex: React.SyntheticEvent) {
   switch (ex.type) {

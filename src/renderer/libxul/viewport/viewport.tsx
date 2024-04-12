@@ -6,7 +6,6 @@
 /* eslint-disable jsx-a11y/control-has-associated-label */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react/static-property-placement */
 /* eslint-disable react/jsx-props-no-spreading */
 import React, { SyntheticEvent } from 'react';
@@ -22,7 +21,7 @@ import {
   PopupParentState,
   ViewportPopupProps,
   PopupParentInitState,
-} from '../popup/popupParentH';
+} from '../popup/popupParentH.ts';
 import G from '../../rg.ts';
 import log from '../../log.ts';
 import { verseKey } from '../../htmlData.ts';

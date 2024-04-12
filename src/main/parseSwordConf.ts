@@ -1,9 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import i18n from 'i18next';
 import path from 'path';
-import Dirs from './components/dirs';
+import Dirs from './components/dirs.ts';
 
-import C from '../constant';
+import C from '../constant.ts';
 import {
   builtinRepos,
   isAudioVerseKey,
@@ -11,7 +10,7 @@ import {
   readDeprecatedGenBookAudioConf,
   readDeprecatedVerseKeyAudioConf,
   readVerseKeyAudioConf,
-} from '../common';
+} from '../common.ts';
 import {
   DeprecatedAudioChaptersConf,
   GenBookAudioConf,
@@ -19,8 +18,8 @@ import {
   Repository,
   SwordConfType,
   VerseKeyAudioConf,
-} from '../type';
-import type LocalFile from './components/localFile';
+} from '../type.ts';
+import type LocalFile from './components/localFile.ts';
 
 // Return a SwordConfType object from a config LocalFile, or else from
 // the string contents of a config file.

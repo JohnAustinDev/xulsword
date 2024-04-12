@@ -1,11 +1,10 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react/no-unused-state */
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable react/static-property-placement */
 import React from 'react';
 import { diff } from '../../common.ts';
 import G from '../rg.ts';
-import renderToRoot from '../renderer';
+import renderToRoot from '../renderer.tsx';
 import { windowArguments } from '../rutil.tsx';
 import {
   addClass,
@@ -20,8 +19,8 @@ import {
   PopupParentState,
   ViewportPopupProps,
   PopupParentInitState,
-} from '../libxul/popup/popupParentH';
-import Popup from '../libxul/popup/popup';
+} from '../libxul/popup/popupParentH.tsx';
+import Popup from '../libxul/popup/popup.tsx';
 import '../libxul/viewport/atext.css';
 
 const defaultProps = xulDefaultProps;

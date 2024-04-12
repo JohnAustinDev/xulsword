@@ -1,5 +1,4 @@
 /* eslint-disable no-nested-ternary */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
@@ -14,31 +13,31 @@ import {
 import { autoUpdater } from 'electron-updater';
 import log, { LogLevel } from 'electron-log';
 import path from 'path';
-import Subscription from '../subscription';
-import Cache from '../cache';
-import { clone, JSON_parse, keep, localizeString } from '../common';
-import C from '../constant';
-import S from '../defaultPrefs';
-import G from './mg';
-import { getCipherFailConfs, validateGlobalModulePrefs } from './minit';
-import MainMenuBuilder, { pushPrefsToMenu } from './mainMenu';
-import contextMenu from './contextMenu';
-import LocalFile from './components/localFile';
-import Viewport from './components/viewport';
-import { CipherKeyModules } from './components/module';
+import Subscription from '../subscription.ts';
+import Cache from '../cache.ts';
+import { clone, JSON_parse, keep, localizeString } from '../common.ts';
+import C from '../constant.ts';
+import S from '../defaultPrefs.ts';
+import G from './mg.ts';
+import { getCipherFailConfs, validateGlobalModulePrefs } from './minit.ts';
+import MainMenuBuilder, { pushPrefsToMenu } from './mainMenu.ts';
+import contextMenu from './contextMenu.ts';
+import LocalFile from './components/localFile.ts';
+import Viewport from './components/viewport.ts';
+import { CipherKeyModules } from './components/module.ts';
 import {
   WindowRegistry,
   pushPrefsToWindows,
   publishSubscription,
-} from './components/window';
+} from './components/window.ts';
 
 import type {
   NewModulesType,
   WindowDescriptorPrefType,
   WindowDescriptorType,
-} from '../type';
-import type { ManagerStatePref } from '../renderer/moduleManager/manager';
-import { addBookmarkTransaction } from './bookmarks';
+} from '../type.ts';
+import type { ManagerStatePref } from '../renderer/moduleManager/manager.tsx';
+import { addBookmarkTransaction } from './bookmarks.ts';
 
 const i18nBackendMain = require('i18next-fs-backend');
 const installer = require('electron-devtools-installer');

@@ -1,19 +1,18 @@
 /* eslint-disable no-continue */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-nested-ternary */
 import i18n from 'i18next';
-import { getPanelWidths, keep } from '../../common';
-import C from '../../constant';
-import S from '../../defaultPrefs';
-import Prefs from './prefs';
-import { getBooksInVKModule, getTab, getTabs } from '../minit';
+import { getPanelWidths, keep } from '../../common.ts';
+import C from '../../constant.ts';
+import S from '../../defaultPrefs.ts';
+import Prefs from './prefs.ts';
+import { getBooksInVKModule, getTab, getTabs } from '../minit.ts';
 
 import type {
   LocationORType,
   SwordFeatures,
   TabType,
   TabTypes,
-} from '../../type';
+} from '../../type.ts';
 
 type TabChangeOptions = {
   panelIndex: number; // which panel(s) (-1 is all)

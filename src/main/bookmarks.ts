@@ -1,11 +1,10 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-nested-ternary */
 import log from 'electron-log';
-import C from '../constant';
-import S from '../defaultPrefs';
-import { clone, randomID, replaceASCIIcontrolChars } from '../common';
-import { verseKey } from './minit';
-import { PrefCallbackType } from './components/prefs';
+import C from '../constant.ts';
+import S from '../defaultPrefs.ts';
+import { clone, randomID, replaceASCIIcontrolChars } from '../common.ts';
+import { verseKey } from './minit.ts';
+import { PrefCallbackType } from './components/prefs.ts';
 
 import type {
   BookmarkFolderType,
@@ -19,7 +18,7 @@ import type {
   TransactionType,
   BookmarkItemType,
   LocationVKCommType,
-} from '../type';
+} from '../type.ts';
 
 type BMkeys =
   | keyof BookmarkItem

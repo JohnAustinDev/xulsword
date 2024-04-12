@@ -19,18 +19,18 @@ import {
 } from '../../common.ts';
 import S from '../../defaultPrefs.ts';
 import G from '../rg.ts';
-import renderToRoot from '../renderer';
+import renderToRoot from '../renderer.tsx';
 import { verseKey } from '../htmlData.ts';
 import { windowArguments } from '../rutil.tsx';
-import { bookmarkTreeNode, getSampleText } from '../bookmarks';
-import Grid, { Column, Columns, Row, Rows } from '../libxul/grid';
+import { bookmarkTreeNode, getSampleText } from '../bookmarks.ts';
+import Grid, { Column, Columns, Row, Rows } from '../libxul/grid.tsx';
 import { Hbox, Vbox } from '../libxul/boxes.tsx';
 import Label from '../libxul/label.tsx';
-import Textbox from '../libxul/textbox';
-import SelectAny from '../libxul/selectAny';
-import Button from '../libxul/button';
+import Textbox from '../libxul/textbox.tsx';
+import SelectAny from '../libxul/selectAny.tsx';
+import Button from '../libxul/button.tsx';
 import Spacer from '../libxul/spacer.tsx';
-import TreeView from '../libxul/treeview';
+import TreeView from '../libxul/treeview.tsx';
 import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul.tsx';
 import './bmProperties.css';
 
@@ -49,7 +49,7 @@ import type {
   LocationVKType,
   TabTypes,
 } from '../../type.ts';
-import type { SelectVKType } from '../libxul/selectVK';
+import type { SelectVKType } from '../libxul/selectVK.tsx';
 
 const Bookmarks = G.Prefs.getComplexValue(
   'rootfolder',

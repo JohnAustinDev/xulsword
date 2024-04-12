@@ -2,7 +2,7 @@ import { JSON_attrib_parse, ofClass } from '../common.ts';
 import RefParser from '../refParser.ts';
 import G from './rg.ts';
 import { findElementData, mergeElementData } from './htmlData.ts';
-import { findBookmarks } from './bookmarks';
+import { findBookmarks } from './bookmarks.ts';
 import { windowArguments } from './rutil.tsx';
 
 import type {

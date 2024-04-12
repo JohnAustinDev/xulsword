@@ -3,7 +3,6 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable no-bitwise */
 /* eslint-disable import/no-duplicates */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import {
   noAutoSearchIndex,
@@ -18,7 +17,7 @@ import G from '../rg.ts';
 import log from '../log.ts';
 import { getElementData, verseKey } from '../htmlData.ts';
 import { windowArguments } from '../rutil.tsx';
-import { getStrongsModAndKey } from '../libxul/viewport/zdictionary';
+import { getStrongsModAndKey } from '../libxul/viewport/zdictionary.ts';
 
 import type {
   BookGroupType,
@@ -27,8 +26,8 @@ import type {
   SearchType,
   V11nType,
 } from '../../type.ts';
-import type { SearchWinState } from './search';
-import type SearchWin from './search';
+import type { SearchWinState } from './search.tsx';
+import type SearchWin from './search.tsx';
 
 export type SearchMatchType = {
   term: string;

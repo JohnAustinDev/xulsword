@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable prefer-rest-params */
 import type ZIP from 'adm-zip';
 import { BrowserWindow, dialog, OpenDialogSyncOptions, shell } from 'electron';
@@ -18,26 +17,26 @@ import {
   moveBookmarkItems,
   gbPaths,
   randomID,
-} from '../../common';
-import Subscription from '../../subscription';
-import C from '../../constant';
-import S from '../../defaultPrefs';
-import parseSwordConf from '../parseSwordConf';
+} from '../../common.ts';
+import Subscription from '../../subscription.ts';
+import C from '../../constant.ts';
+import S from '../../defaultPrefs.ts';
+import parseSwordConf from '../parseSwordConf.ts';
 import importBookmarkObject, {
   canRedo,
   canUndo,
   importDeprecatedBookmarks,
   Transaction,
-} from '../bookmarks';
-import { verseKey, getTab, getAudioConfs } from '../minit';
-import Viewport from './viewport';
-import DiskCache from './diskcache';
-import PrefsX from './prefs';
-import LocalFile from './localFile';
-import { modalInstall, scanAudio } from './module';
-import Window, { getBrowserWindows, publishSubscription } from './window';
-import Dirs from './dirs';
-import LibSword from './libsword';
+} from '../bookmarks.ts';
+import { verseKey, getTab, getAudioConfs } from '../minit.ts';
+import Viewport from './viewport.ts';
+import DiskCache from './diskcache.ts';
+import PrefsX from './prefs.ts';
+import LocalFile from './localFile.ts';
+import { modalInstall, scanAudio } from './module.ts';
+import Window, { getBrowserWindows, publishSubscription } from './window.ts';
+import Dirs from './dirs.ts';
+import LibSword from './libsword.ts';
 
 import type {
   GAddCaller,
@@ -54,13 +53,13 @@ import type {
   SearchType,
   VerseKeyAudioFile,
   LocationVKCommType,
-} from '../../type';
-import type { WindowRootState } from '../../renderer/renderer';
-import type { AboutWinState } from '../../renderer/about/about';
-import type { PrintPassageState } from '../../renderer/printPassage/printPassage';
-import type { CopyPassageState } from '../../renderer/copyPassage/copyPassage';
-import type { SelectVKType } from '../../renderer/libxul/selectVK';
-import type { BMPropertiesStateWinArg } from '../../renderer/bmProperties/bmProperties';
+} from '../../type.ts';
+import type { WindowRootState } from '../../renderer/renderer.tsx';
+import type { AboutWinState } from '../../renderer/about/about.tsx';
+import type { PrintPassageState } from '../../renderer/printPassage/printPassage.tsx';
+import type { CopyPassageState } from '../../renderer/copyPassage/copyPassage.tsx';
+import type { SelectVKType } from '../../renderer/libxul/selectVK.tsx';
+import type { BMPropertiesStateWinArg } from '../../renderer/bmProperties/bmProperties.tsx';
 
 // Require the calling window argument for Prefs.set calls, so window -2 (to all
 // follow Pref changes with update to all windows and main process) can be passed

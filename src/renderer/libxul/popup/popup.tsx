@@ -8,7 +8,6 @@
 /* eslint-disable react/no-did-update-set-state */
 /* eslint-disable react/forbid-prop-types */
 /* eslint-disable react/static-property-placement */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import PropTypes from 'prop-types';
 import {

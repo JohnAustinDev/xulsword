@@ -1,5 +1,4 @@
 /* eslint-disable class-methods-use-this */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-use-before-define */
 import {
   clipboard,
@@ -10,21 +9,21 @@ import {
   shell,
 } from 'electron';
 import i18next from 'i18next';
-import { GBuilder, WindowDescriptorType } from '../type';
-import { canRedo, canUndo } from './bookmarks';
-import Viewport from './components/viewport';
-import { inlineAudioFile, inlineFile } from './components/localFile';
-import Dirs from './components/dirs';
-import DiskCache from './components/diskcache';
-import Prefs from './components/prefs';
-import LibSword from './components/libsword';
-import Data from './components/data';
+import { GBuilder, WindowDescriptorType } from '../type.ts';
+import { canRedo, canUndo } from './bookmarks.ts';
+import Viewport from './components/viewport.ts';
+import { inlineAudioFile, inlineFile } from './components/localFile.ts';
+import Dirs from './components/dirs.ts';
+import DiskCache from './components/diskcache.ts';
+import Prefs from './components/prefs.ts';
+import LibSword from './components/libsword.ts';
+import Data from './components/data.ts';
 import Window, {
   publishSubscription,
   resolveHtmlPath,
-} from './components/window';
-import Module from './components/module';
-import Commands from './components/commands';
+} from './components/window.ts';
+import Module from './components/module.ts';
+import Commands from './components/commands.ts';
 import {
   getBooks,
   getBook,
@@ -41,10 +40,10 @@ import {
   getFeatureModules,
   localeConfig,
   getConfig,
-} from './minit';
+} from './minit.ts';
 
-import type { GType } from '../type';
-import type { SubscriptionType } from '../subscription';
+import type { GType } from '../type.ts';
+import type { SubscriptionType } from '../subscription.ts';
 
 // Handle global variable calls from renderer processes
 function handleGlobal(

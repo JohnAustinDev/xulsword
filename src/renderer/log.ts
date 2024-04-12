@@ -1,5 +1,4 @@
 /* eslint-disable no-console */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import type ElectronLog from 'electron-log';
 import type { LogLevel } from 'electron-log';
 import C from '../constant.ts';

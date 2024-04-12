@@ -1,6 +1,6 @@
 /* eslint-disable prettier/prettier */
-import LibSword from '../main/components/libsword';
-import Location from './location';
+import LibSword from '../main/components/libsword.ts';
+import Location from './location.js';
 
 // JavaScript Document
 /*

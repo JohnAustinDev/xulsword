@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable react/static-property-placement */
 /* eslint-disable jsx-a11y/media-has-caption */
@@ -10,7 +9,7 @@ import { dString, clone } from '../../common.ts';
 import C from '../../constant.ts';
 import S from '../../defaultPrefs.ts';
 import G from '../rg.ts';
-import renderToRoot from '../renderer';
+import renderToRoot from '../renderer.tsx';
 import log from '../log.ts';
 import { verseKey } from '../htmlData.ts';
 import {
@@ -27,22 +26,22 @@ import {
   XulProps,
   xulPropTypes,
 } from '../libxul/xul.tsx';
-import Button, { AnchorButton } from '../libxul/button';
+import Button, { AnchorButton } from '../libxul/button.tsx';
 import { Box, Hbox, Vbox } from '../libxul/boxes.tsx';
-import Menupopup from '../libxul/menupopup';
-import Bookselect from '../libxul/bookselect';
+import Menupopup from '../libxul/menupopup.tsx';
+import Bookselect from '../libxul/bookselect.tsx';
 import Spacer from '../libxul/spacer.tsx';
-import Textbox from '../libxul/textbox';
-import Viewport from '../libxul/viewport/viewport';
+import Textbox from '../libxul/textbox.tsx';
+import Viewport from '../libxul/viewport/viewport.tsx';
 import viewportParentH, {
   closeMenupopups,
   bbDragEnd as bbDragEndH,
-} from '../libxul/viewport/viewportParentH';
-import handlerH from './xulswordH';
+} from '../libxul/viewport/viewportParentH.tsx';
+import handlerH from './xulswordH.ts';
 import './xulsword.css';
 
 import type { HistoryVKType, XulswordStateArgType } from '../../type.ts';
-import type Atext from '../libxul/viewport/atext';
+import type Atext from '../libxul/viewport/atext.tsx';
 
 const defaultProps = xulDefaultProps;
 

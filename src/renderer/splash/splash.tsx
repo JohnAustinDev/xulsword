@@ -1,9 +1,9 @@
 import React from 'react';
 import G from '../rg.ts';
-import renderToRoot from '../renderer';
+import renderToRoot from '../renderer.tsx';
 import { Hbox, Vbox } from '../libxul/boxes.tsx';
 import Label from '../libxul/label.tsx';
-import Stack from '../libxul/stack';
+import Stack from '../libxul/stack.tsx';
 import './splash.css';
 
 const overlay = G.inlineFile(

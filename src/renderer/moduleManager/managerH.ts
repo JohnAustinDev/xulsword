@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-nested-ternary */
 /* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable import/no-duplicates */
@@ -32,8 +31,8 @@ import S from '../../defaultPrefs.ts';
 import G from '../rg.ts';
 import { windowArguments } from '../rutil.tsx';
 import log from '../log.ts';
-import { TCellInfo, TCellLocation } from '../libxul/table';
-import { forEachNode } from '../libxul/treeview';
+import { TCellInfo, TCellLocation } from '../libxul/table.tsx';
+import { forEachNode } from '../libxul/treeview.tsx';
 
 import type {
   DeprecatedAudioChaptersConf,
@@ -49,10 +48,10 @@ import type {
   OSISBookType,
   QuerablePromise,
 } from '../../type.ts';
-import type { SelectVKType, SelectVKProps } from '../libxul/selectVK';
-import type ModuleManager from './manager';
-import type { ManagerState } from './manager';
-import type { NodeListOR, SelectORMType } from '../libxul/selectOR';
+import type { SelectVKType, SelectVKProps } from '../libxul/selectVK.tsx';
+import type ModuleManager from './manager.tsx';
+import type { ManagerState } from './manager.tsx';
+import type { NodeListOR, SelectORMType } from '../libxul/selectOR.tsx';
 
 const windowDescriptor = windowArguments();
 

@@ -1,10 +1,8 @@
 /* eslint-disable jsx-a11y/control-has-associated-label */
 /* eslint-disable react/forbid-prop-types */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable jsx-a11y/anchor-is-valid */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react/static-property-placement */
 /* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
@@ -46,7 +44,7 @@ import {
   versekeyScroll,
   trimNotes,
   findVerseElement,
-} from './zversekey';
+} from './zversekey.ts';
 import handlerH from './atextH.ts';
 import '../../libsword.css';
 import './atext.css';

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable jsx-a11y/iframe-has-title */
 /* eslint-disable react/static-property-placement */
 /* eslint-disable react/forbid-prop-types */

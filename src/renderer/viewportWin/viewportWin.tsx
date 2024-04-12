@@ -1,15 +1,14 @@
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable react/static-property-placement */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/media-has-caption */
 import React from 'react';
-import Subscription from '../../subscription';
+import Subscription from '../../subscription.ts';
 import S from '../../defaultPrefs.ts';
 import { keep, diff, drop, validateViewportModulePrefs } from '../../common.ts';
 import G from '../rg.ts';
-import renderToRoot from '../renderer';
+import renderToRoot from '../renderer.tsx';
 import log from '../log.ts';
 import {
   clearPending,
@@ -25,15 +24,15 @@ import {
   xulPropTypes,
 } from '../libxul/xul.tsx';
 import { Hbox, Vbox } from '../libxul/boxes.tsx';
-import Viewport from '../libxul/viewport/viewport';
+import Viewport from '../libxul/viewport/viewport.tsx';
 import viewportParentH, {
   closeMenupopups,
   vpWindowState,
   bbDragEnd as bbDragEndH,
-} from '../libxul/viewport/viewportParentH';
+} from '../libxul/viewport/viewportParentH.tsx';
 
 import type { NewModulesType, XulswordStateArgType } from '../../type.ts';
-import type Atext from '../libxul/viewport/atext';
+import type Atext from '../libxul/viewport/atext.tsx';
 
 const defaultProps = xulDefaultProps;
 

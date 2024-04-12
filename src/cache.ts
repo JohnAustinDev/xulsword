@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 // Cache any data according to string keys. Calling noclear on a key will prevent it
 // from being cleared when Cache.clear() is called, but it may always be cleared if

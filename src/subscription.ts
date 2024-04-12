@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import type { ContextMenuType } from './main/contextMenu.ts';
 import type { PrefCallbackType } from './main/components/prefs.ts';

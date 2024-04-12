@@ -1,14 +1,13 @@
 /* eslint-disable import/no-duplicates */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import C from '../../constant.ts';
 import { clone, diff, ofClass } from '../../common.ts';
 import log from '../log.ts';
 import G from '../rg.ts';
 
 import type { ConfigType } from '../../type.ts';
-import type { StyleType } from '../style';
-import type ChooseFontWin from './chooseFont';
-import type { ChooseFontWinState, ColorType } from './chooseFont';
+import type { StyleType } from '../style.ts';
+import type ChooseFontWin from './chooseFont.tsx';
+import type { ChooseFontWinState, ColorType } from './chooseFont.tsx';
 
 export const startingState = {
   module: '' as string | null, // will be initialized by windowArguments()

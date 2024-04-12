@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import Cache from './cache.ts';
 import C from './constant.ts';
 import { iString } from './common.ts';

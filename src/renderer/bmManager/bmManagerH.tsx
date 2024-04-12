@@ -35,9 +35,9 @@ import type {
   LocationORType,
   LocationVKType,
 } from '../../type.ts';
-import type { TCellInfo, TRowLocation } from '../libxul/table';
-import type BMManagerWin from './bmManager';
-import type { BMManagerState } from './bmManager';
+import type { TCellInfo, TRowLocation } from '../libxul/table.tsx';
+import type BMManagerWin from './bmManager.tsx';
+import type { BMManagerState } from './bmManager.tsx';
 
 type CellInfo = TCellInfo & {
   id: string;

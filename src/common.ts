@@ -1,7 +1,6 @@
 /* eslint-disable import/order */
 /* eslint-disable no-nested-ternary */
 /* eslint-disable no-bitwise */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import C from './constant.ts';
 import S from './defaultPrefs.ts';
 import Cache from './cache.ts';
@@ -38,13 +37,13 @@ import type {
   LocationVKType,
   LocationVKCommType,
   LocationTypes,
-} from './type';
+} from './type.ts';
 import type { TreeNodeInfo } from '@blueprintjs/core';
-import type { SelectVKType } from './renderer/libxul/selectVK';
-import type { SelectORMType } from './renderer/libxul/selectOR';
-import type { getSampleText } from './renderer/bookmarks';
-import type { verseKey } from './renderer/htmlData';
-import type { XulswordState } from './renderer/xulsword/xulsword';
+import type { SelectVKType } from './renderer/libxul/selectVK.tsx';
+import type { SelectORMType } from './renderer/libxul/selectOR.tsx';
+import type { getSampleText } from './renderer/bookmarks.ts';
+import type { verseKey } from './renderer/htmlData.ts';
+import type { XulswordState } from './renderer/xulsword/xulsword.tsx';
 
 export function escapeRE(text: string) {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

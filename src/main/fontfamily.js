@@ -1,6 +1,6 @@
 /* eslint-disable prettier/prettier */
 import log from 'electron-log';
-import LocalFile from './components/localFile';
+import LocalFile from './components/localFile.ts';
 
 // return a font file's fontFamily value
 export default function getFontFamily(fontpath) {

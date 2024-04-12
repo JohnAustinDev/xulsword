@@ -1,12 +1,11 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import fs from 'fs';
 import path from 'path';
-import { pad } from '../../common';
-import Subscription from '../../subscription';
-import C from '../../constant';
+import { pad } from '../../common.ts';
+import Subscription from '../../subscription.ts';
+import C from '../../constant.ts';
 
-import type { GenBookAudioFile, GType, VerseKeyAudioFile } from '../../type';
+import type { GenBookAudioFile, GType, VerseKeyAudioFile } from '../../type.ts';
 
 const FPERM = 0o666;
 // const DPERM = 0o666;

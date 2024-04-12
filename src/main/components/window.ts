@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable prefer-rest-params */
 /* eslint-disable import/no-mutable-exports */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import log from 'electron-log';
 import path from 'path';
 import i18n from 'i18next';
@@ -13,15 +12,15 @@ import {
   SaveDialogOptions,
   shell,
 } from 'electron';
-import { drop, keep, randomID } from '../../common';
-import Cache from '../../cache';
-import C from '../../constant';
-import S from '../../defaultPrefs';
-import Subscription from '../../subscription';
-import Dirs from './dirs';
-import Data from './data';
-import Prefs from './prefs';
-import LocalFile from './localFile';
+import { drop, keep, randomID } from '../../common.ts';
+import Cache from '../../cache.ts';
+import C from '../../constant.ts';
+import S from '../../defaultPrefs.ts';
+import Subscription from '../../subscription.ts';
+import Dirs from './dirs.ts';
+import Data from './data.ts';
+import Prefs from './prefs.ts';
+import LocalFile from './localFile.ts';
 
 import type {
   WindowArgType,
@@ -32,10 +31,10 @@ import type {
   PrefValue,
   PrefObject,
   WindowDescriptorPrefType,
-} from '../../type';
-import type { SubscriptionType } from '../../subscription';
-import type contextMenu from '../contextMenu';
-import type { PrefCallbackType } from './prefs';
+} from '../../type.ts';
+import type { SubscriptionType } from '../../subscription.ts';
+import type contextMenu from '../contextMenu.ts';
+import type { PrefCallbackType } from './prefs.ts';
 
 export let resolveHtmlPath: (htmlFileName: string) => string;
 

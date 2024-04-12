@@ -1,11 +1,10 @@
 /* eslint-disable prefer-rest-params */
 /* eslint-disable no-continue */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import fpath from 'path';
 import { BrowserWindow } from 'electron';
 import ZIP from 'adm-zip';
 import log from 'electron-log';
-import Cache from '../../cache';
+import Cache from '../../cache.ts';
 import {
   clone,
   downloadKey,
@@ -17,14 +16,14 @@ import {
   pad,
   mergeNewModules,
   repositoryKey,
-} from '../../common';
-import Subscription from '../../subscription';
-import C from '../../constant';
-import parseSwordConf from '../parseSwordConf';
-import Window, { getBrowserWindows } from './window';
-import LocalFile from './localFile';
-import Dirs from './dirs';
-import LibSword from './libsword';
+} from '../../common.ts';
+import Subscription from '../../subscription.ts';
+import C from '../../constant.ts';
+import parseSwordConf from '../parseSwordConf.ts';
+import Window, { getBrowserWindows } from './window.ts';
+import LocalFile from './localFile.ts';
+import Dirs from './dirs.ts';
+import LibSword from './libsword.ts';
 import {
   getFile,
   getDir,
@@ -39,7 +38,7 @@ import {
   downloadCancel,
   logid,
   destroyFTPconnections,
-} from '../ftphttp';
+} from '../ftphttp.ts';
 
 import type {
   CipherKey,
@@ -57,8 +56,8 @@ import type {
   VerseKeyAudioConf,
   VerseKeyAudioFile,
   OSISBookType,
-} from '../../type';
-import DiskCache from './diskcache';
+} from '../../type.ts';
+import DiskCache from './diskcache.ts';
 
 export const CipherKeyModules: {
   [module: string]: {
