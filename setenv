@@ -4,7 +4,10 @@
 export LIBXULSWORD_MAJOR=1
 export LIBXULSWORD_MINOR=5
 export LIBXULSWORD_REVIS=6
-export LIBXULSWORD_ONLY=no
+
+if [[ -z "$LIBXULSWORD_ONLY" ]]; then
+  export LIBXULSWORD_ONLY=no
+fi
 
 if [ -e /vagrant ]; then export CONTEXT="guest"; else export CONTEXT="host"; fi
 if [ "$CONTEXT" = "guest" ]; then export XULSWORD="$HOME/src/xulsword"; else export XULSWORD="$( pwd -P )"; fi
@@ -13,8 +16,9 @@ export LIBXULSWORD="$XULSWORD/build/app/node_modules/libxulsword"
 
 # Set WINMACHINE to x86 or x64 to compile Windows 32 bit or 64 bit, respectively.
 # Or set to 'no' to skip compile for windows.
-export WINMACHINE=x86
-
+if [[ -z "$WINMACHINE" ]]; then
+  export WINMACHINE=x86
+fi
 export TOOLCHAIN_PREFIX=i686-w64-mingw32
 export ADDRESS_MODEL=32
 if [ "$WINMACHINE" = "x64" ]; then

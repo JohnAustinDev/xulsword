@@ -5,7 +5,7 @@ import { processR, ipc } from '../main/preload2';
 // To run the Electron app in a browser, Electron's contextBridge
 // and ipcRenderer modules have been replaced by custom modules
 // that use socket.io.
-const socket = io('ws://127.0.0.1:3099');
+const socket = io('ws://127.0.0.1:3000');
 
 const ipcRenderer = {
   send: (channel, ...args) => {
