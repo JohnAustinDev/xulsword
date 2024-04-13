@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow } from 'electron'; // may be undefined
 import { ChildProcess, fork } from 'child_process';
 import log from 'electron-log';
 import path from 'path';
@@ -28,7 +28,7 @@ import type {
 import type { ManagerStatePref } from '../../renderer/moduleManager/manager.tsx';
 import DiskCache from './diskcache.ts';
 
-const { libxulsword } = require('libxulsword');
+const { libxulsword } = require('../../../build/app/node_modules/libxulsword');
 
 // Convert the raw GenBookTOC (output of LibSword.getGenBookTableOfContents())
 // into an array of C.GBKSEP delimited keys.
@@ -654,14 +654,14 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   ): Promise<boolean> {
     return new Promise((resolve, reject) => {
       if (this.isReady(true) && !(modcode in this.indexingID)) {
-        const workerjs = app.isPackaged
+        const workerjs = app?.isPackaged
           ? path.join(__dirname, 'indexWorker.js')
           : path.join(__dirname, '../indexWorker.js');
         const indexer = fork(workerjs);
         this.indexingID[modcode] = indexer;
         const sendProgress = (percent: number) => {
           if (callingWinId) {
-            let w = BrowserWindow.fromId(Number(callingWinId));
+            let w = BrowserWindow?.fromId(Number(callingWinId)) ?? null;
             if (w) {
               const progress = percent / 100;
               w.webContents.send('progress', progress, 'search.indexer');
@@ -706,7 +706,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
       const indexer = this.indexingID[modcode];
       indexer.kill();
       if (callingWinId) {
-        let w = BrowserWindow.fromId(Number(callingWinId));
+        let w = BrowserWindow?.fromId(Number(callingWinId)) ?? null;
         if (w) {
           w.webContents.send('progress', -1, 'search.indexer');
           w = null;

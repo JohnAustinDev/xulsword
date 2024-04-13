@@ -1,22 +1,14 @@
 /* eslint-disable class-methods-use-this */
 /* eslint-disable @typescript-eslint/no-use-before-define */
-import { clipboard, shell } from 'electron';
 import i18next from 'i18next';
-import { WindowDescriptorType } from '../type.ts';
 import { canRedo, canUndo } from './bookmarks.ts';
-import Viewport from './components/viewport.ts';
 import { inlineAudioFile, inlineFile } from './components/localFile.ts';
 import Dirs from './components/dirs.ts';
 import DiskCache from './components/diskcache.ts';
 import Prefs from './components/prefs.ts';
 import LibSword from './components/libsword.ts';
 import Data from './components/data.ts';
-import Window, {
-  publishSubscription,
-  resolveHtmlPath,
-} from './components/window.ts';
 import Module from './components/module.ts';
-import Commands from './components/commands.ts';
 import {
   getBooks,
   getBook,
@@ -36,15 +28,12 @@ import {
 } from './minit.ts';
 
 import type { GType } from '../type.ts';
-import type { SubscriptionType } from '../subscription.ts';
 
-// This G object is for use in the main electron process, and it shares
+// This G object is for use on the nodejs server, and it shares
 // the same interface as the renderer's G object. Properties of this
-// object directly access main process data and modules.
-class GClass implements GType {
+// object directly access server data and modules.
+class GClass2 implements Omit<GType, 'Window' | 'clipboard' | 'Commands' | 'Shell' | 'Viewport' | 'resolveHtmlPath' | 'publishSubscription'> {
   i18n;
-
-  clipboard;
 
   LibSword;
 
@@ -54,31 +43,18 @@ class GClass implements GType {
 
   Dirs;
 
-  Commands;
-
-  Shell;
-
   Data;
-
-  Window;
 
   Module;
 
-  Viewport;
-
   constructor() {
     this.i18n = i18next;
-    this.clipboard = clipboard;
     this.LibSword = LibSword;
     this.Prefs = Prefs;
     this.DiskCache = DiskCache;
     this.Dirs = Dirs;
-    this.Commands = Commands;
-    this.Shell = shell;
     this.Data = Data;
-    this.Window = Window;
     this.Module = Module;
-    this.Viewport = Viewport;
   }
 
   get Books() {
@@ -133,12 +109,6 @@ class GClass implements GType {
     return process.platform;
   }
 
-  resolveHtmlPath(
-    ...args: Parameters<GType['resolveHtmlPath']>
-  ): ReturnType<GType['resolveHtmlPath']> {
-    return resolveHtmlPath(...args);
-  }
-
   inlineFile(
     ...args: Parameters<GType['inlineFile']>
   ): ReturnType<GType['inlineFile']> {
@@ -169,19 +139,6 @@ class GClass implements GType {
     return getBooksInVKModule(...args);
   }
 
-  publishSubscription<S extends keyof SubscriptionType['publish']>(
-    s: S,
-    ops: {
-      renderers?:
-        | Partial<WindowDescriptorType>
-        | Partial<WindowDescriptorType>[];
-      main?: boolean;
-    },
-    ...args: Parameters<SubscriptionType['publish'][S]>
-  ) {
-    return publishSubscription(s, ops, ...args);
-  }
-
   canUndo(...args: Parameters<GType['canUndo']>): ReturnType<GType['canUndo']> {
     return canUndo(...args);
   }
@@ -191,6 +148,6 @@ class GClass implements GType {
   }
 }
 
-const G = new GClass();
+const G = new GClass2();
 
 export default G;

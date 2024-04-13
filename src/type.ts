@@ -1,4 +1,6 @@
 /* eslint-disable import/no-duplicates */
+import S from './defaultPrefs.ts';
+import { TreeNodeInfo } from '@blueprintjs/core';
 import type {
   BrowserWindowConstructorOptions,
   clipboard,
@@ -6,8 +8,6 @@ import type {
 } from 'electron';
 import type i18n from 'i18next';
 import type React from 'react';
-import { TreeNodeInfo } from '@blueprintjs/core';
-import S from './defaultPrefs.ts';
 import type C from './constant.ts';
 import type {
   resetMain,

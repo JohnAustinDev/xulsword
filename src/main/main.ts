@@ -1,5 +1,4 @@
 /* eslint-disable no-nested-ternary */
-
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
 import {
@@ -9,20 +8,22 @@ import {
   BrowserWindow,
   ipcMain,
   IpcMainEvent,
+  IpcMainInvokeEvent,
 } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log, { LogLevel } from 'electron-log';
-import path from 'path';
 import Subscription from '../subscription.ts';
 import Cache from '../cache.ts';
 import { clone, JSON_parse, keep, localizeString } from '../common.ts';
 import C from '../constant.ts';
 import S from '../defaultPrefs.ts';
 import G from './mg.ts';
+import handleGlobal from './handleGlobal.ts';
+import path from 'path';
+import LocalFile from './components/localFile.ts';
 import { getCipherFailConfs, validateGlobalModulePrefs } from './minit.ts';
 import MainMenuBuilder, { pushPrefsToMenu } from './mainMenu.ts';
 import contextMenu from './contextMenu.ts';
-import LocalFile from './components/localFile.ts';
 import Viewport from './components/viewport.ts';
 import { CipherKeyModules } from './components/module.ts';
 import {
@@ -30,21 +31,21 @@ import {
   pushPrefsToWindows,
   publishSubscription,
 } from './components/window.ts';
+import { addBookmarkTransaction } from './bookmarks.ts';
 
 import type {
+  GType,
   NewModulesType,
   WindowDescriptorPrefType,
   WindowDescriptorType,
 } from '../type.ts';
 import type { ManagerStatePref } from '../renderer/moduleManager/manager.tsx';
-import { addBookmarkTransaction } from './bookmarks.ts';
 
 const i18nBackendMain = require('i18next-fs-backend');
 const installer = require('electron-devtools-installer');
 const sourceMapSupport = require('source-map-support');
 const electronDebug = require('electron-debug');
 
-// Init xulsword logfile.
 {
   const logfile = new LocalFile(
     path.join(G.Dirs.path.ProfD, 'logs', `xulsword.${Date.now()}.log`)
@@ -135,6 +136,23 @@ function showApp() {
     }, 1000);
   }
 }
+
+ipcMain.on(
+  'global',
+  (event: IpcMainEvent, name: keyof GType, ...args: any[]) => {
+    const win = BrowserWindow.fromWebContents(event.sender)?.id ?? -1
+    event.returnValue = handleGlobal(win, name, ...args);
+  }
+);
+
+ipcMain.handle(
+  'global',
+  (event: IpcMainInvokeEvent, name: keyof GType, ...args: any[]) => {
+    const win = BrowserWindow.fromWebContents(event.sender)?.id ?? -1
+    return handleGlobal(win, name, ...args);
+  }
+);
+
 ipcMain.on('error-report', (_e: IpcMainEvent, message: string) => {
   throw Error(message);
 });

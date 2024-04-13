@@ -1,4 +1,4 @@
-import { app } from 'electron';
+import { app } from 'electron'; // may be undefined
 import path from 'path';
 import LocalFile from './localFile.ts';
 
@@ -26,23 +26,23 @@ const Dirs = { path: {} as DirsDirectories };
 // don't try to read package.json in production by bundling it, as this
 // has security implications.
 
-Dirs.path.xsAsset = app.isPackaged
+Dirs.path.xsAsset = app?.isPackaged
   ? path.join(process.resourcesPath, 'assets')
   : path.join(__dirname, '..', '..', '..', 'assets');
 
 // Packaged filename should be 'app.asar' if package.json has build.asar
 // set to true. Or it should be 'app' otherwise.
-Dirs.path.xsAsar = app.isPackaged
+Dirs.path.xsAsar = app?.isPackaged
   ? path.join(process.resourcesPath, 'app.asar')
   : path.join(__dirname, '..', '..', '..', 'build', 'app');
 
-Dirs.path.TmpD = app.getPath('temp');
+Dirs.path.TmpD = app?.getPath('temp') || '/tmp';
 
 Dirs.path.xsPrefDefD = path.join(Dirs.path.xsAsset, 'defaults', 'preferences');
 
 Dirs.path.xsResDefD = path.join(Dirs.path.xsAsset, 'defaults', 'resources');
 
-Dirs.path.ProfD = app.getPath('userData');
+Dirs.path.ProfD = app?.getPath('userData') || process.env.PROFD || '/tmp';
 
 Dirs.path.xsPrefD = path.join(Dirs.path.ProfD, 'preferences');
 
@@ -50,7 +50,8 @@ Dirs.path.xsResD = path.join(Dirs.path.ProfD, 'resources');
 
 Dirs.path.xsCache = path.join(Dirs.path.ProfD, 'cache');
 
-Dirs.path.xsModsUser = path.join(Dirs.path.ProfD, 'resources');
+Dirs.path.xsModsUser = (app && path.join(Dirs.path.ProfD, 'resources'))
+  || process.env.USWORDDIR || '/tmp';;
 
 Dirs.path.xsFonts = path.join(Dirs.path.xsResD, 'fonts');
 
@@ -60,9 +61,13 @@ Dirs.path.xsBookmarks = path.join(Dirs.path.xsResD, 'bookmarks');
 
 Dirs.path.xsVideo = path.join(Dirs.path.xsResD, 'video');
 
-Dirs.path.xsModsCommon = /^win32|darwin$/.test(process.platform)
-  ? path.join(app.getPath('appData'), 'Sword')
-  : path.join(app.getPath('home'), '.sword');
+if (app) {
+  Dirs.path.xsModsCommon = /^win32|darwin$/.test(process.platform)
+    ? path.join(app.getPath('appData'), 'Sword')
+    : path.join(app.getPath('home'), '.sword');
+} else {
+  Dirs.path.xsModsCommon = process.env.SWORDDIR || '/tmp';
+}
 
 // Add getters for LocalFiles.
 const dirNames = Object.getOwnPropertyNames(Dirs.path);
