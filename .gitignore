@@ -10,6 +10,7 @@ Cpp/boost*
 Cpp/clucene*
 Cpp/sword*
 Cpp/build*
+*/libxulsword/build
 
 # Logs
 logs

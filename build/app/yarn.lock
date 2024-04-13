@@ -4,10 +4,11 @@
 
 bindings@~1.2.1:
   version "1.2.1"
-  resolved "https://registry.yarnpkg.com/bindings/-/bindings-1.2.1.tgz#14ad6113812d2d37d72e67b4cacb4bb726505f11"
+  resolved "https://registry.npmjs.org/bindings/-/bindings-1.2.1.tgz"
   integrity sha512-u4cBQNepWxYA55FunZSM7wMi55yQaN0otnhhilNoWHq0MfOfJeQx0v0mRRpolGOExPjZcl6FtB0BB8Xkb88F0g==
 
-libxulsword@./node_modules/libxulsword:
-  version "1.5.1"
+"libxulsword@file:../../node_modules_xulsword/libxulsword":
+  version "1.5.6"
+  resolved "file:../../node_modules_xulsword/libxulsword"
   dependencies:
     bindings "~1.2.1"
