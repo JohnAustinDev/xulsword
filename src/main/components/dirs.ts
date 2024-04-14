@@ -42,7 +42,7 @@ Dirs.path.xsPrefDefD = path.join(Dirs.path.xsAsset, 'defaults', 'preferences');
 
 Dirs.path.xsResDefD = path.join(Dirs.path.xsAsset, 'defaults', 'resources');
 
-Dirs.path.ProfD = app?.getPath('userData') || process.env.PROFD || '/tmp';
+Dirs.path.ProfD = app?.getPath('userData') || process.env.XSProfD || '/tmp';
 
 Dirs.path.xsPrefD = path.join(Dirs.path.ProfD, 'preferences');
 
@@ -51,7 +51,7 @@ Dirs.path.xsResD = path.join(Dirs.path.ProfD, 'resources');
 Dirs.path.xsCache = path.join(Dirs.path.ProfD, 'cache');
 
 Dirs.path.xsModsUser = (app && path.join(Dirs.path.ProfD, 'resources'))
-  || process.env.USWORDDIR || '/tmp';;
+  || process.env.XSModsUser || '/tmp';
 
 Dirs.path.xsFonts = path.join(Dirs.path.xsResD, 'fonts');
 
@@ -66,7 +66,7 @@ if (app) {
     ? path.join(app.getPath('appData'), 'Sword')
     : path.join(app.getPath('home'), '.sword');
 } else {
-  Dirs.path.xsModsCommon = process.env.SWORDDIR || '/tmp';
+  Dirs.path.xsModsCommon = process.env.XSModsCommon || '/tmp';
 }
 
 // Add getters for LocalFiles.

@@ -19,6 +19,7 @@ module.exports = (api) => {
   const development = api.env(developmentEnvironments);
 
   return {
+    // sourceMaps: 'inline',
     presets: [
       // @babel/preset-env will automatically target our browserslist targets
       require('@babel/preset-env'),

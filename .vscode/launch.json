@@ -7,7 +7,20 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Xulsword",
+            "name": "xulsword server",
+            "runtimeExecutable": "yarn",
+            "runtimeArgs": ["start-server"],
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "outFiles": [
+                "${workspaceFolder}/**/*.js"
+            ]
+        },
+	{
+            "type": "node",
+            "request": "launch",
+            "name": "xulsword",
             "runtimeExecutable": "yarn",
             "runtimeArgs": ["start"],
             "skipFiles": [

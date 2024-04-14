@@ -20,7 +20,7 @@
     "start": "node -r @babel/register ./.erb/scripts/check-port-in-use.js && yarn start:renderer",
     "start:main": "cross-env NODE_ENV=development LD_LIBRARY_PATH=./Cpp/lib electron -r ./.erb/scripts/babel-register ./src/main/main.ts",
     "start:renderer": "cross-env NODE_ENV=development webpack serve --config ./.erb/configs/webpack.config.renderer.dev.babel.js",
-    "start-server": "cross-env NODE_ENV=development LD_LIBRARY_PATH=./Cpp/lib node -r ./.erb/scripts/babel-register ./src/server/server.ts",
+    "start-server": "node -r ./.erb/scripts/babel-register ./src/server/start.ts",
     "test": "jest"
   },
   "lint-staged": {

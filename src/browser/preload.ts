@@ -5,24 +5,38 @@ import { processR, ipc } from '../main/preload2.js';
 // To run the Electron app in a browser, Electron's contextBridge
 // and ipcRenderer modules have been replaced by custom modules
 // that use socket.io.
-const socket = io('ws://127.0.0.1:3000');
+
+const origin = window.location.origin;
+const reacthost = origin.replace(/^https?/, 'ws').replace(/(:\d+)?$/, ':3000');
+const socket = io(reacthost);
 
 const ipcRenderer = {
   send: (channel, ...args) => {
-    socket.emit(channel, args);
+    const arg = Array.isArray(args) ? args : [args];
+    socket.emit(channel, arg, () => {});
   },
-  invoke: (channel, ...args) => {
+  invoke: async (channel, ...args) => {
     return new Promise((resolve, reject) => {
-      try {
-        socket.emit(channel, args, resolve);
-      } catch (er) {
-        reject(er);
-      }
+      const arg = Array.isArray(args) ? args : [args];
+      socket.emit(channel, arg, (resp: any) => {
+        resolve(resp);
+      });
     });
   },
   sendSync: async (channel, ...args) => {
-    const response = await socket.emitWithAck(channel, args);
-    return response;
+    const p = new Promise((resolve, reject) => {
+      const arg = Array.isArray(args) ? args : [args];
+      socket.emit(channel, arg, (resp: any) => {
+        resolve(resp);
+      });
+    });
+    if (!('then' in p)) throw Error(`Not a promise!`);
+    const r = await p;
+    console.log(r);
+    if (r && typeof r === 'object' && 'then' in r) {
+      throw Error(`Should not be a promise!`);
+    }
+    return r;
   },
   on: (channel, strippedfunc) => {
     socket.on(channel, strippedfunc);

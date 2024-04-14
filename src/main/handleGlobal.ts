@@ -1,4 +1,5 @@
 import { GBuilder, GType } from '../type.ts';
+import G from '../main/mgServer.ts';
 
 // Handle global variable calls from renderer processes
 export default function handleGlobal(

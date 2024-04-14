@@ -55,7 +55,7 @@ declare global {
       once: (
         channel: RendererChannels,
         func: (...args: any[]) => any
-      ) => () => void;
+      ) => void;
     };
     processR: {
       [envar in EnvironmentVars]: () => string;

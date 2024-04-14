@@ -1,14 +1,16 @@
 import { Server } from 'socket.io';
 import log, { LogLevel } from 'electron-log';
+import { GType } from '../type.ts';
+import { JSON_parse } from '../common.ts';
 import C from '../constant.ts';
 import G from '../main/mgServer.ts';
 import handleGlobal from '../main/handleGlobal.ts';
-import { GType } from '../type.ts';
-import { JSON_parse } from '../common.ts';
 
 const i18nBackendMain = require('i18next-fs-backend');
 
 G.LibSword.init();
+
+log.info(`Loaded modules: ${G.LibSword.getModuleList()}`);
 
 const AvailableLanguages = [
   ...new Set(
@@ -67,7 +69,14 @@ const init = async (lng: string) => {
 
 const server = require('http').createServer();
 
-const io = new Server(server);
+const io = new Server(server, {
+  cors: {
+    origin: 'http://127.0.0.1:8080',
+    methods: ['GET', 'POST'],
+    // allowHeaders: ['my-custom-header'],
+    // credentials: true,
+  }
+});
 
 io.on('connection', (socket) => {
   init('en');
@@ -85,8 +94,12 @@ io.on('connection', (socket) => {
 
   socket.on(
     'global',
-    (name: keyof GType, args: any[], callback) => {
-      callback(handleGlobal(-1, name, ...args));
+    (name: keyof GType, ...args: any[]) => {
+      const callback = args.pop();
+      const r = handleGlobal(-1, name, ...args);
+      log.debug(`${name}(${args}) = ${r}`);
+      if (typeof callback === 'function') callback(r);
+      else throw Error(`G called with no callback: ${name}`);
     }
   );
 

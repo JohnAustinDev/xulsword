@@ -9,6 +9,5 @@ bindings@~1.2.1:
 
 "libxulsword@file:../../node_modules_xulsword/libxulsword":
   version "1.5.6"
-  resolved "file:../../node_modules_xulsword/libxulsword"
   dependencies:
     bindings "~1.2.1"
