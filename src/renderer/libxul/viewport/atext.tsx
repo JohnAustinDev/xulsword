@@ -6,7 +6,6 @@
 /* eslint-disable react/static-property-placement */
 /* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
-import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import { getElementData, HTMLData, verseKey } from '../../htmlData.ts';
 import Cache from '../../../cache.ts';
@@ -25,7 +24,6 @@ import {
   getMaxChapter,
   libswordImgSrc,
   scrollIntoView,
-  windowArguments,
   audioIcon,
 } from '../../rutil.tsx';
 import {

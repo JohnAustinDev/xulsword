@@ -17,7 +17,7 @@ import TreeView, { forEachNode } from '../treeview.tsx';
 import './chooser.css';
 import './genbookChooser.css';
 
-import type { Tree, TreeNodeInfo } from '@blueprintjs/core.tsx';
+import type { Tree, TreeNodeInfo } from '@blueprintjs/core';
 import type {
   GenBookAudioFile,
   VerseKeyAudioFile,

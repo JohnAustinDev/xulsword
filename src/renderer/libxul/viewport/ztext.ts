@@ -282,8 +282,7 @@ export function textChange(
   next: boolean,
   prevState?: PinPropsType
 ): PinPropsType | Partial<PinPropsType> | null {
-  const { columns: cx, module, index } = atext.dataset;
-  const panelIndex = Number(index);
+  const { columns: cx, module } = atext.dataset;
   const columns = Number(cx);
   if (!columns || !module) return null;
   const { type } = G.Tab[module];

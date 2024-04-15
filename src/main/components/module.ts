@@ -15,7 +15,6 @@ import {
   versionCompare,
   pad,
   mergeNewModules,
-  repositoryKey,
 } from '../../common.ts';
 import Subscription from '../../subscription.ts';
 import C from '../../constant.ts';

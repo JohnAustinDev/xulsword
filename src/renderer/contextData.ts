@@ -105,9 +105,9 @@ export default function ContextData(elem: HTMLElement): ContextDataType {
     (context && context in G.Tab && G.Tab[context].v11n) || undefined;
   let selectionParsedVK: LocationVKType | undefined;
   if (selection) {
-    selectionParsedVK =
-      new RefParser(G.i18n, { uncertain: true }).parse(selection, v11n || null)
-        ?.location || undefined;
+    const parsed = new RefParser(G.i18n, { uncertain: true })
+      .parse(selection, v11n || null);
+    selectionParsedVK = parsed && parsed.location.book ? parsed.location : undefined;
   }
 
   // Find location lastverse

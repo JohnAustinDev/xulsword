@@ -3,6 +3,7 @@ import type { ContextMenuType } from './main/contextMenu.ts';
 import type { PrefCallbackType } from './main/components/prefs.ts';
 import type { NewModulesType } from './type.ts';
 import type { WindowRootState } from './renderer/renderer.tsx';
+import type { Socket } from 'socket.io-client';
 
 // Publish callback opportunities to subscribers. To publish for subscribers
 // in other processes, use G.publishSubscription in conjunctions with Subscribe.
@@ -19,8 +20,9 @@ const subscriptions = {
     callingWinID?: number
   ) => void,
   asyncTaskComplete: {} as () => unknown,
+  socketConnected: {} as (s: Socket) => unknown,
 
-  // These are subscribe once (used to avoid dependency cycles):
+  // These are subscribed once (used to avoid dependency cycles):
   resetMain: {} as () => void,
   setRendererRootState: {} as (state: Partial<WindowRootState>) => void,
 };
@@ -35,6 +37,7 @@ export interface SubscriptionType {
       func: typeof subscriptions['asyncTaskComplete']
     ) => () => void;
     windowCreated: (func: typeof subscriptions['windowCreated']) => () => void;
+    socketConnected: (func: typeof subscriptions['socketConnected']) => () => void;
     resetMain: (func: typeof subscriptions['resetMain']) => () => void;
     setRendererRootState: (
       func: typeof subscriptions['setRendererRootState']
@@ -54,6 +57,9 @@ export interface SubscriptionType {
     windowCreated: (
       ...args: Parameters<typeof subscriptions['windowCreated']>
     ) => ReturnType<typeof subscriptions['windowCreated']>[];
+    socketConnected: (
+      ...args: Parameters<typeof subscriptions['socketConnected']>
+    ) => ReturnType<typeof subscriptions['socketConnected']>[];
     resetMain: (
       ...args: Parameters<typeof subscriptions['resetMain']>
     ) => ReturnType<typeof subscriptions['resetMain']>[];

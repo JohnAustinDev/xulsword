@@ -828,7 +828,6 @@ function aTextWheelScroll2(
       : (null as XulswordState | ViewportWinState | null);
   const location = atextstate?.pin?.location || parentstate?.location;
   if (location) {
-    const panelIndex = Number(atext.dataset.index);
     const columns = Number(atext.dataset.columns);
     const { module } = atext.dataset;
     let newloc;

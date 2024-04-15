@@ -1,34 +1,46 @@
 import type { ipcRenderer as IPCRenderer } from 'electron';
-import { io } from 'socket.io-client';
+import { Socket, io } from 'socket.io-client';
+import Subscription from '../subscription.ts';
 import { processR, ipc } from '../main/preload2.js';
 
 // To run the Electron app in a browser, Electron's contextBridge
 // and ipcRenderer modules have been replaced by custom modules
 // that use socket.io.
-
-const origin = window.location.origin;
-const reacthost = origin.replace(/^https?/, 'ws').replace(/(:\d+)?$/, ':3000');
-const socket = io(reacthost);
+let socket: Socket | null = null;
+const socketConnect = () => {
+  const origin = window.location.origin;
+  const hosturl = origin.replace(/^https?/, 'ws').replace(/(:\d+)?$/, ':3000');
+  socket = io(hosturl);
+  let published = false;
+  socket.on('connect', () => {
+    // connect is called even on reconnect, so only publish this once.
+    if (socket && !published) Subscription.publish.socketConnected(socket);
+    published = true;
+  });
+}
 
 const ipcRenderer = {
   send: (channel, ...args) => {
     const arg = Array.isArray(args) ? args : [args];
-    socket.emit(channel, arg, () => {});
+    if (socket) socket.emit(channel, arg, () => {});
+    else throw new Error(`No socket connection.`);
   },
   invoke: async (channel, ...args) => {
     return new Promise((resolve, reject) => {
       const arg = Array.isArray(args) ? args : [args];
-      socket.emit(channel, arg, (resp: any) => {
+      if (socket) socket.emit(channel, arg, (resp: any) => {
         resolve(resp);
       });
+      else reject(`No socket connection.`);
     });
   },
   sendSync: async (channel, ...args) => {
     const p = new Promise((resolve, reject) => {
       const arg = Array.isArray(args) ? args : [args];
-      socket.emit(channel, arg, (resp: any) => {
+      if (socket) socket.emit(channel, arg, (resp: any) => {
         resolve(resp);
       });
+      else reject(`No socket connection.`);
     });
     if (!('then' in p)) throw Error(`Not a promise!`);
     const r = await p;
@@ -39,20 +51,23 @@ const ipcRenderer = {
     return r;
   },
   on: (channel, strippedfunc) => {
-    socket.on(channel, strippedfunc);
+    if(socket) socket.on(channel, strippedfunc);
+    else throw new Error(`No socket connection.`);
     return undefined as unknown as typeof ipcRenderer;
   },
   once: (channel, strippedfunc) => {
-    socket.on(channel, (response: any) => {
+    if (socket) socket.on(channel, (response: any) => {
       strippedfunc(response);
       ipcRenderer.removeListener(channel, strippedfunc);
     });
+    else throw new Error(`No socket connection.`);
     return undefined as unknown as typeof ipcRenderer;
   },
   removeListener: (channel, strippedfunc) => {
-    socket.listeners(channel).forEach((lf) => {
-      if (lf === strippedfunc) socket.off(channel, lf);
+    if (socket) socket.listeners(channel).forEach((lf) => {
+      if (socket && lf === strippedfunc) socket.off(channel, lf);
     });
+    else throw new Error(`No socket connection.`);
     return undefined as unknown as typeof ipcRenderer;
   },
 } as typeof IPCRenderer;
@@ -72,3 +87,5 @@ const process: Partial<NodeJS.Process> = {
 window.processR = processR(process);
 
 window.ipc = ipc(ipcRenderer);
+
+export default socketConnect;

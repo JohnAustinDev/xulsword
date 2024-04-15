@@ -175,17 +175,19 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
               value,
               location?.v11n || null
             )?.location;
-            // Check that the entered location exists.
-            if (newloc && !newloc.chapter) newloc.chapter = 1;
-            if (newloc && !newloc.verse) newloc.verse = 1;
-            if (newloc && verseChange(newloc, 0)) {
-              const s: Partial<XulswordState> = {
-                location: newloc,
-                selection: newloc.verse === 1 ? null : newloc,
-                scroll: { verseAt: 'center' },
-                bsreset: prevState.bsreset + 1,
-              };
-              return s;
+            if (newloc && newloc.book) {
+              // Check that the entered location exists.
+              if (newloc && !newloc.chapter) newloc.chapter = 1;
+              if (newloc && !newloc.verse) newloc.verse = 1;
+              if (newloc && verseChange(newloc, 0)) {
+                const s: Partial<XulswordState> = {
+                  location: newloc,
+                  selection: newloc.verse === 1 ? null : newloc,
+                  scroll: { verseAt: 'center' },
+                  bsreset: prevState.bsreset + 1,
+                };
+                return s;
+              }
             }
             return { bsreset: prevState.bsreset + 1 };
           });

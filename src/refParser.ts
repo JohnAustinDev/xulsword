@@ -27,6 +27,14 @@ type LocalizedBookType = {
   };
 };
 
+type invalidLocationVKType = {
+  v11n: V11nType,
+  book: '',
+  chapter: 0,
+  verse: null,
+  lastverse: null,
+};
+
 export type RefParserOptionsType = {
   locales?: string[]; // search just these locales for book names (default is all locales)
 
@@ -250,7 +258,7 @@ export default class RefParser {
   parse(
     text2parse: string,
     v11n: V11nType | null
-  ): { location: LocationVKType; locale: string | null } | null {
+  ): { location: LocationVKType | invalidLocationVKType; locale: string | null } | null {
     let text = text2parse;
     text = text.replace(/[^\s\p{L}\p{N}:-]/gu, ' ');
     text = text.replace(/\s+/g, ' ');
@@ -260,14 +268,14 @@ export default class RefParser {
       return null;
     }
 
-    const r: { location: LocationVKType; locale: string | null } = {
+    const r: { location: LocationVKType | invalidLocationVKType; locale: string | null } = {
       location: {
         v11n,
         book: '',
         chapter: 0,
         verse: null,
         lastverse: null,
-      },
+      } as invalidLocationVKType,
       locale: null,
     };
 

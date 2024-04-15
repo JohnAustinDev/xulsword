@@ -84,10 +84,11 @@ type RendererChannels =
   | 'dynamic-stylesheet-reset'
   | 'publish-subscription';
 
+/*
 type Shift<T extends any[]> = T extends [infer _, ...infer Elements]
   ? Elements
   : [];
-
+*/
 export type QuerablePromise<T> = Promise<T> & {
   isFulfilled: boolean;
   isPending: boolean;

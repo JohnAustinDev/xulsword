@@ -28,6 +28,7 @@ import {
   SelectionModes,
   Table2 as BPTable,
   Utils,
+  IColumnProps,
 } from '@blueprintjs/table';
 import G from '../rg.ts';
 import {
@@ -248,14 +249,12 @@ abstract class AbstractSortableColumn implements TSortableColumn {
         )}
       </ColumnHeaderCell2>
     );
-    return (
-      <Column
-        key={this.dataColIndex}
-        cellRenderer={cellRenderer}
-        columnHeaderCellRenderer={columnHeaderCellRenderer}
-        name={this.name}
-      />
-    );
+    return new Column({
+      key: this.dataColIndex,
+      cellRenderer,
+      columnHeaderCellRenderer,
+      name: this.name,
+    } as IColumnProps) as unknown as JSX.Element;
   }
 
   protected abstract renderMenu(

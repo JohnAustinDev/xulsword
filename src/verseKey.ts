@@ -35,10 +35,20 @@ export default class VerseKey {
     this.#parser = parser;
     this.#bkChsInV11n = bkChsInV11n;
     this.#gfunctions = gfunction;
-    this.#loc =
-      typeof location === 'string'
-        ? this.parseLocation(location, v11n)
-        : clone(location);
+    if (typeof location === 'string') {
+      const parsed = this.parseLocation(location, v11n);
+      if (parsed.book) {
+        this.#loc = parsed as LocationVKType;
+      } else {
+        this.#loc = {
+          book: 'Gen',
+          chapter: 1,
+          v11n: 'KJV',
+        };
+      }
+    } else {
+      this.#loc = clone(location);
+    }
     this.#v11nCurrent = v11n || this.#loc.v11n;
   }
 
@@ -196,7 +206,7 @@ export default class VerseKey {
     if (!tov11n || !this.#loc.v11n) return this.#loc;
     if (this.#loc.v11n === tov11n) return this.#loc;
     if (!this.#doConvertLocation(tov11n)) return this.#loc;
-    return this.parseLocation(
+    const parsed = this.parseLocation(
       this.#gfunctions.convertLocation(
         this.#loc.v11n,
         [
@@ -211,6 +221,8 @@ export default class VerseKey {
       ),
       tov11n
     );
+    if (parsed.book) return parsed as LocationVKType;
+    return { book: 'Gen', chapter: 1, v11n: 'KJV' };
   }
 
   // Return a readable string like 'Genesis 4:5-6'. Since book, chapter and
