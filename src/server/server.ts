@@ -1,10 +1,13 @@
 import { Server } from 'socket.io';
 import log, { LogLevel } from 'electron-log';
+import Setenv from '../setenv.ts';
 import { GType } from '../type.ts';
 import { JSON_parse } from '../common.ts';
 import C from '../constant.ts';
 import G from '../main/mgServer.ts';
 import handleGlobal from '../main/handleGlobal.ts';
+
+Setenv(`${__dirname}/../../server_env.json`);
 
 const i18nBackendMain = require('i18next-fs-backend');
 

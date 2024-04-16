@@ -969,6 +969,7 @@ export const GBuilder: GType & {
 
   Dirs: {
     path: 'getter' as any,
+    init: func as any,
   },
 
   Commands: {

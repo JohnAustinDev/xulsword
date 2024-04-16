@@ -13,7 +13,7 @@ Cpp/build*
 */libxulsword/build
 
 # xulsword-server
-webserver_config.json
+server_env.json
 
 # Logs
 logs
