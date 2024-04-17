@@ -33,6 +33,7 @@ import {
   getFeatureModules,
   localeConfig,
   getConfig,
+  cachePreload,
 } from './minit.ts';
 
 import type { GType } from '../type.ts';
@@ -188,6 +189,10 @@ class GClass implements GType {
 
   canRedo(...args: Parameters<GType['canRedo']>): ReturnType<GType['canRedo']> {
     return canRedo(...args);
+  }
+
+  cachePreload(...args: Parameters<GType['cachePreload']>): ReturnType<GType['cachePreload']> {
+    return cachePreload(G, ...args);
   }
 }
 

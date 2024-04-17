@@ -37,6 +37,7 @@ import type {
   LocationVKType,
   LocationVKCommType,
   LocationTypes,
+  GCallType,
 } from './type.ts';
 import type { TreeNodeInfo } from '@blueprintjs/core';
 import type { SelectVKType } from './renderer/libxul/selectVK.tsx';
@@ -456,6 +457,18 @@ export function stringHash(...args: any): string {
   const num = stringHashNum(r.join('y'));
 
   return `x${num < 0 ? 'm' : ''}${Math.abs(num)}`;
+}
+
+export function GCacheKey(acall: GCallType): string {
+  const [name, m, args] = acall;
+  if (m === null && typeof args === 'undefined') {
+    return `G.${name}`;
+  } else if (m === null) {
+    return `G.${name}(${stringHash(...args)})`;
+  } else if (typeof args === 'undefined') {
+    return `G.${name}.${m}`;
+  }
+  return `G.${name}.${m}(${stringHash(...args)})`;
 }
 
 export function randomID(): string {

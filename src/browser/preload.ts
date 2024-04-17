@@ -2,6 +2,10 @@ import type { ipcRenderer as IPCRenderer } from 'electron';
 import { Socket, io } from 'socket.io-client';
 import Subscription from '../subscription.ts';
 import { processR, ipc } from '../main/preload2.js';
+import { GCallType } from '../type.ts';
+import G from '../renderer/rg.ts';
+import { Gcachekey } from '../common.ts';
+import Cache from '../cache.ts';
 
 // To run the Electron app in a browser, Electron's contextBridge
 // and ipcRenderer modules have been replaced by custom modules
@@ -20,35 +24,23 @@ const socketConnect = () => {
 }
 
 const ipcRenderer = {
-  send: (channel, ...args) => {
-    const arg = Array.isArray(args) ? args : [args];
-    if (socket) socket.emit(channel, arg, () => {});
+  send: (channel, ...args: any[]) => {
+    if (socket) socket.emit(channel, args, () => {});
     else throw new Error(`No socket connection.`);
   },
-  invoke: async (channel, ...args) => {
+  invoke: async (channel, ...args: any[]) => {
     return new Promise((resolve, reject) => {
-      const arg = Array.isArray(args) ? args : [args];
-      if (socket) socket.emit(channel, arg, (resp: any) => {
-        resolve(resp);
-      });
+      if (socket) socket.emit(channel, args, (resp: any) => resolve(resp));
       else reject(`No socket connection.`);
     });
   },
-  sendSync: async (channel, ...args) => {
-    const p = new Promise((resolve, reject) => {
-      const arg = Array.isArray(args) ? args : [args];
-      if (socket) socket.emit(channel, arg, (resp: any) => {
-        resolve(resp);
-      });
-      else reject(`No socket connection.`);
-    });
-    if (!('then' in p)) throw Error(`Not a promise!`);
-    const r = await p;
-    console.log(r);
-    if (r && typeof r === 'object' && 'then' in r) {
-      throw Error(`Should not be a promise!`);
-    }
-    return r;
+  // Synchronous data does not work over the internet as the main thread
+  // should never be blocked for the length of time required to resolve
+  // the data. Therefore data must either be preloaded into the cache, or
+  // else a special call must be used that is capable of waiting for the
+  // data and handling it later.
+  sendSync: (channel, ...args) => {
+    return;
   },
   on: (channel, strippedfunc) => {
     if(socket) socket.on(channel, strippedfunc);
@@ -81,7 +73,7 @@ const process: Partial<NodeJS.Process> = {
     DEBUG_PROD: 'false',
     LOGLEVEL: 'debug',
   },
-  platform: 'linux',
+  platform: 'browser' as 'linux',
 };
 
 window.processR = processR(process);
@@ -89,3 +81,18 @@ window.processR = processR(process);
 window.ipc = ipc(ipcRenderer);
 
 export default socketConnect;
+
+export async function cachePreload(calls: GCallType[]) {
+  const resp = await G.cachePreload(calls);
+  if (resp.length !== calls.length) {
+    throw new Error(`cachePreload did not return the correct data.`);
+  }
+  while (calls.length) {
+    const acall = calls.pop();
+    const aresult = resp.pop();
+    if (acall) {
+      const cacheKey = Gcachekey(acall);
+      Cache.write(aresult, cacheKey);
+    }
+  }
+}

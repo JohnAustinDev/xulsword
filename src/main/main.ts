@@ -34,6 +34,7 @@ import {
 import { addBookmarkTransaction } from './bookmarks.ts';
 
 import type {
+  GCallType,
   GType,
   NewModulesType,
   WindowDescriptorPrefType,
@@ -139,17 +140,17 @@ function showApp() {
 
 ipcMain.on(
   'global',
-  (event: IpcMainEvent, name: keyof GType, ...args: any[]) => {
+  (event: IpcMainEvent, acall: GCallType) => {
     const win = BrowserWindow.fromWebContents(event.sender)?.id ?? -1
-    event.returnValue = handleGlobal(win, name, ...args);
+    event.returnValue = handleGlobal(win, acall);
   }
 );
 
 ipcMain.handle(
   'global',
-  (event: IpcMainInvokeEvent, name: keyof GType, ...args: any[]) => {
+  (event: IpcMainInvokeEvent, acall: GCallType) => {
     const win = BrowserWindow.fromWebContents(event.sender)?.id ?? -1
-    return handleGlobal(win, name, ...args);
+    return handleGlobal(win, acall);
   }
 );
 

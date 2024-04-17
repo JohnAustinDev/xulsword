@@ -1,13 +1,14 @@
-import { GBuilder, GType } from '../type.ts';
+import { GBuilder, GCallType } from '../type.ts';
 import G from '../main/mgServer.ts';
 
 // Handle global variable calls from renderer processes
 export default function handleGlobal(
   win: number,
-  name: keyof GType,
-  ...args: any[]
+  args: GCallType
 ) {
   let ret = null;
+  const name: string = args.shift();
+  const m: string | null = args.shift();
   const { includeCallingWindow } = GBuilder;
   if (name in GBuilder) {
     const gBuilder = GBuilder as any;
@@ -16,8 +17,7 @@ export default function handleGlobal(
       ret = g[name];
     } else if (typeof gBuilder[name] === 'function') {
       ret = g[name](...args);
-    } else if (typeof gBuilder[name] === 'object') {
-      const m = args.shift();
+    } else if (m && typeof gBuilder[name] === 'object') {
       if (gBuilder[name][m] === 'getter') {
         ret = g[name][m];
       } else if (typeof gBuilder[name][m] === 'function') {

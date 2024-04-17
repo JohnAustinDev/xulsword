@@ -41,7 +41,28 @@ import type {
   OSISBookType,
   SwordFeatureMods,
   XulswordFeatureMods,
+  GCallType,
 } from '../type.ts';
+
+export type CachePreloadType = (calls: GCallType[]) => any[];
+export const cachePreload = (G: GType, calls: GCallType[]): any[] => {
+  const resp: any[] = [];
+  const g = G as any;
+  calls.forEach((c) => {
+    const [name, m, args] = c;
+    if (m === null && typeof args === 'undefined') {
+      resp.push(g[name]);
+    } else if (m === null) {
+      resp.push(g[name](...args));
+    } else if (typeof args === undefined) {
+      resp.push(g[name][m]);
+    } else {
+      resp.push(g[name][m](...args));
+    }
+  });
+
+  return resp;
+}
 
 // Get all supported books in locale order. NOTE: xulsword ignores individual
 // module book order in lieu of locale book order or xulsword default order

@@ -1,8 +1,6 @@
 /* eslint-disable class-methods-use-this */
 /* eslint-disable @typescript-eslint/no-use-before-define */
 import i18next from 'i18next';
-import { canRedo, canUndo } from './bookmarks.ts';
-import { inlineAudioFile, inlineFile } from './components/localFile.ts';
 import Dirs from './components/dirs.ts';
 import DiskCache from './components/diskcache.ts';
 import Prefs from './components/prefs.ts';
@@ -17,7 +15,6 @@ import {
   getBooksInVKModule,
   getBkChsInV11n,
   getSystemFonts,
-  resetMain,
   getAudioConfs,
   getLocaleConfigs,
   getModuleConfigDefault,
@@ -25,14 +22,18 @@ import {
   getFeatureModules,
   localeConfig,
   getConfig,
+  cachePreload,
 } from './minit.ts';
 
-import type { GType } from '../type.ts';
+import type { GAType, GType } from '../type.ts';
 
 // This G object is for use on the nodejs server, and it shares
 // the same interface as the renderer's G object. Properties of this
 // object directly access server data and modules.
-class GClass2 implements Omit<GType, 'Window' | 'clipboard' | 'Commands' | 'Shell' | 'Viewport' | 'resolveHtmlPath' | 'publishSubscription'> {
+class GClass2 implements Partial<GType> {
+
+  // TODO!: Great care must be taken to insure public usage of these
+  // functions is safe and secure!!
   i18n;
 
   LibSword;
@@ -105,28 +106,6 @@ class GClass2 implements Omit<GType, 'Window' | 'clipboard' | 'Commands' | 'Shel
     return getBkChsInV11n();
   }
 
-  get OPSYS() {
-    return process.platform;
-  }
-
-  inlineFile(
-    ...args: Parameters<GType['inlineFile']>
-  ): ReturnType<GType['inlineFile']> {
-    return inlineFile(...args);
-  }
-
-  inlineAudioFile(
-    ...args: Parameters<GType['inlineAudioFile']>
-  ): ReturnType<GType['inlineAudioFile']> {
-    return inlineAudioFile(...args);
-  }
-
-  resetMain(
-    ...args: Parameters<GType['resetMain']>
-  ): ReturnType<GType['resetMain']> {
-    return resetMain(...args);
-  }
-
   getSystemFonts(
     ...args: Parameters<GType['getSystemFonts']>
   ): ReturnType<GType['getSystemFonts']> {
@@ -139,12 +118,10 @@ class GClass2 implements Omit<GType, 'Window' | 'clipboard' | 'Commands' | 'Shel
     return getBooksInVKModule(...args);
   }
 
-  canUndo(...args: Parameters<GType['canUndo']>): ReturnType<GType['canUndo']> {
-    return canUndo(...args);
-  }
-
-  canRedo(...args: Parameters<GType['canRedo']>): ReturnType<GType['canRedo']> {
-    return canRedo(...args);
+  cachePreload(
+    ...args: Parameters<GType['cachePreload']>
+  ): ReturnType<GType['cachePreload']> {
+    return cachePreload(G as GType, ...args);
   }
 }
 

@@ -25,6 +25,8 @@ import type {
   getModuleFonts,
   getFeatureModules,
   getBkChsInV11n,
+  cachePreload,
+  CachePreloadType,
 } from './main/minit.ts';
 import type {
   publishSubscription,
@@ -765,6 +767,8 @@ export type GAddCaller = {
   >;
 };
 
+export type GCallType = [string, string | null, ...any[]];
+
 export type GType = {
   // Getters
   Books: ReturnType<typeof getBooks>;
@@ -791,6 +795,7 @@ export type GType = {
   publishSubscription: typeof publishSubscription;
   canUndo: typeof canUndo;
   canRedo: typeof canRedo;
+  cachePreload: CachePreloadType;
 
   // Objects
   i18n: Pick<typeof i18n, 't' | 'exists' | 'language'>;
@@ -807,10 +812,48 @@ export type GType = {
   Window: typeof Window;
 };
 
+// TODO!: Fix this with wacky TypeScript!
+// export type GAType = Omit<GType, >
+
+// temporary... (see above)
+export type GAType = {
+  // Getters
+  Books: Promise<ReturnType<typeof getBooks>>;
+  Book: Promise<ReturnType<typeof getBook>>;
+  Tabs: Promise<ReturnType<typeof getTabs>>;
+  Tab: Promise<ReturnType<typeof getTab>>;
+  Config: Promise<ReturnType<typeof getConfig>>;
+  AudioConfs: Promise<ReturnType<typeof getAudioConfs>>;
+  ProgramConfig: Promise<ReturnType<typeof localeConfig>>;
+  LocaleConfigs: Promise<ReturnType<typeof getLocaleConfigs>>;
+  ModuleConfigDefault: Promise<ReturnType<typeof getModuleConfigDefault>>;
+  ModuleFonts: Promise<ReturnType<typeof getModuleFonts>>;
+  FeatureModules: Promise<ReturnType<typeof getFeatureModules>>;
+  BkChsInV11n: Promise<ReturnType<typeof getBkChsInV11n>>;
+
+  // Functions
+  getSystemFonts: typeof getSystemFonts;
+  getBooksInVKModule: Promise<typeof getBooksInVKModule>;
+  cachePreload: Promise<CachePreloadType>;
+
+  // Objects
+  i18n: Pick<typeof i18n, 't' | 'exists' | 'language'>;
+  Prefs: typeof Prefs;
+  DiskCache: typeof DiskCache;
+  LibSword: typeof LibSword;
+  Dirs: DirsRendererType;
+  Data: typeof Data;
+  Module: typeof Module;
+};
+
+export type GCType = {
+  [k in keyof GAType]: string;
+};
+
 // This GBuilder object will be used in the main/mg and renderer/rg
-// modules at runtime to create two different types of G objects sharing
+// modules at runtime to create different types of G objects sharing
 // the same GType interface: one will be available in the main process
-// and the other in renderer processes. The main process G object accesses
+// and another in renderer processes. The main process G object accesses
 // everything directly. But the renderer process G object requests
 // everything through IPC from the main process G object. All getter and
 // 'CACHEfunc' data of the renderer G object is cached in the renderer.
@@ -825,6 +868,7 @@ export const GBuilder: GType & {
   // errors will result!
   asyncFuncs: [
     [keyof GType, (keyof GType['getSystemFonts'])[]],
+    [keyof GType, (keyof GType['cachePreload'])[]],
     [keyof GType, (keyof GType['Commands'])[]],
     [keyof GType, (keyof GType['Module'])[]],
     [keyof GType, (keyof GType['LibSword'])[]],
@@ -840,9 +884,13 @@ export const GBuilder: GType & {
   // or default arguments would result in overwriting the last argument by
   // the calling window id!
   includeCallingWindow: ['Prefs', 'Window', 'Commands', 'Module'];
+
+  // Only these functions and objects are accessible via Internet.
+  internetFuncs: string[];
 } = {
   asyncFuncs: [
     ['getSystemFonts', []],
+    ['cachePreload', []],
     [
       'Commands',
       [
@@ -872,6 +920,31 @@ export const GBuilder: GType & {
 
   includeCallingWindow: ['Prefs', 'Window', 'Commands', 'Module'],
 
+  internetFuncs: [
+    'Books',
+    'Book',
+    'Tabs',
+    'Tab',
+    'Config',
+    'AudioConfs',
+    'ProgramConfig',
+    'LocaleConfigs',
+    'ModuleConfigDefault',
+    'ModuleFonts',
+    'FeatureModules',
+    'BkChsInV11n',
+    'getSystemFonts',
+    'getBooksInVKModule',
+    'cachePreload',
+    'i18n',
+    'Prefs',
+    'DiskCache',
+    'LibSword',
+    'Dirs',
+    'Data',
+    'Module'
+  ],
+
   // Getters
   Books: 'getter' as any,
   Book: 'getter' as any,
@@ -897,6 +970,7 @@ export const GBuilder: GType & {
   publishSubscription: func as any,
   canUndo: func as any,
   canRedo: func as any,
+  cachePreload: func as any,
 
   // Objects
   i18n: {

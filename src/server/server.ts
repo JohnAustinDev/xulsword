@@ -1,8 +1,7 @@
 import { Server } from 'socket.io';
 import log, { LogLevel } from 'electron-log';
 import Setenv from '../setenv.ts';
-import { GType } from '../type.ts';
-import { JSON_parse } from '../common.ts';
+import { JSON_parse, GCacheKey } from '../common.ts';
 import C from '../constant.ts';
 import G from '../main/mgServer.ts';
 import handleGlobal from '../main/handleGlobal.ts';
@@ -97,12 +96,13 @@ io.on('connection', (socket) => {
 
   socket.on(
     'global',
-    (name: keyof GType, ...args: any[]) => {
-      const callback = args.pop();
-      const r = handleGlobal(-1, name, ...args);
-      log.debug(`${name}(${args}) = ${r}`);
+    (arg: any[], callback: (r: any) => void) => {
+      const acall = arg.pop();
+      const r = handleGlobal(-1, acall);
+      const [name, m] = acall;
+      log.debug(`${GCacheKey(acall)} = ${r}`);
       if (typeof callback === 'function') callback(r);
-      else throw Error(`G called with no callback: ${name}`);
+      else throw Error(`G called with no callback: ${name}.[${m}]`);
     }
   );
 
