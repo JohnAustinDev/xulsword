@@ -4,8 +4,9 @@ import Subscription from '../subscription.ts';
 import { processR, ipc } from '../main/preload2.js';
 import { GCallType } from '../type.ts';
 import G from '../renderer/rg.ts';
-import { Gcachekey } from '../common.ts';
+import { GCacheKey } from '../common.ts';
 import Cache from '../cache.ts';
+import type { GetBooksInVKModules } from '../main/minit.ts';
 
 // To run the Electron app in a browser, Electron's contextBridge
 // and ipcRenderer modules have been replaced by custom modules
@@ -91,8 +92,18 @@ export async function cachePreload(calls: GCallType[]) {
     const acall = calls.pop();
     const aresult = resp.pop();
     if (acall) {
-      const cacheKey = Gcachekey(acall);
+      const cacheKey = GCacheKey(acall);
       Cache.write(aresult, cacheKey);
+
+      // Some calls return data that is identical to other calls, so preload the cache
+      // for those others as well.
+      if (acall[0] === 'GetBooksInVKModules') {
+        Object.entries(aresult as ReturnType<typeof GetBooksInVKModules>).forEach((entry) => {
+          const [module, bookArray] = entry;
+          const k = GCacheKey(['getBooksInVKModule', null, [module]]);
+          Cache.write(bookArray, k);
+        });
+      }
     }
   }
 }

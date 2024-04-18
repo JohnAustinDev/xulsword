@@ -514,7 +514,7 @@ function ChapterMenu(props: {
             onMouseEnter={dlyhandler}
             onMouseLeave={handler}
           >
-            {dString(G.i18n, ch)}
+            {dString(G, ch)}
             {headingsModule &&
               onAudioClick &&
               audioIcon(headingsModule, bkcode, ch, onAudioClick)}

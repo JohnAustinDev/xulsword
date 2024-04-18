@@ -25,8 +25,8 @@ import type {
   getModuleFonts,
   getFeatureModules,
   getBkChsInV11n,
-  cachePreload,
-  CachePreloadType,
+  GCachePreloadType,
+  GetBooksInVKModules,
 } from './main/minit.ts';
 import type {
   publishSubscription,
@@ -65,6 +65,7 @@ declare global {
       argv: () => string[];
       platform: string;
     };
+    renderPromises: RenderPromiseComponent['renderPromise'][];
   }
 
   function ToUpperCase(str: string): string;
@@ -767,9 +768,32 @@ export type GAddCaller = {
   >;
 };
 
-export type GCallType = [string, string | null, ...any[]];
+export interface RenderPromiseComponent {
+  renderPromise: {
+    self: React.Component;
+    calls: GCallType[];
+    uncacheableCalls: {
+      [key: string]: {
+        promise: Promise<any>;
+        resolved: any;
+      };
+    }
+  }
+}
+
+export type RenderPromiseState = {
+  renderPromiseID: number;
+}
+
+export type GCallType = [
+  keyof GType | keyof GAType,
+  keyof GType[keyof GType] | keyof GAType[keyof GAType] | null,
+  any[] | undefined
+];
 
 export type GType = {
+  gtype: 'sync';
+
   // Getters
   Books: ReturnType<typeof getBooks>;
   Book: ReturnType<typeof getBook>;
@@ -784,6 +808,7 @@ export type GType = {
   FeatureModules: ReturnType<typeof getFeatureModules>;
   BkChsInV11n: ReturnType<typeof getBkChsInV11n>;
   OPSYS: NodeJS.Platform;
+  GetBooksInVKModules: ReturnType<typeof GetBooksInVKModules>;
 
   // Functions
   resolveHtmlPath: typeof resolveHtmlPath;
@@ -795,7 +820,7 @@ export type GType = {
   publishSubscription: typeof publishSubscription;
   canUndo: typeof canUndo;
   canRedo: typeof canRedo;
-  cachePreload: CachePreloadType;
+  cachePreload: GCachePreloadType;
 
   // Objects
   i18n: Pick<typeof i18n, 't' | 'exists' | 'language'>;
@@ -817,6 +842,8 @@ export type GType = {
 
 // temporary... (see above)
 export type GAType = {
+  gtype: 'async';
+
   // Getters
   Books: Promise<ReturnType<typeof getBooks>>;
   Book: Promise<ReturnType<typeof getBook>>;
@@ -830,24 +857,45 @@ export type GAType = {
   ModuleFonts: Promise<ReturnType<typeof getModuleFonts>>;
   FeatureModules: Promise<ReturnType<typeof getFeatureModules>>;
   BkChsInV11n: Promise<ReturnType<typeof getBkChsInV11n>>;
+  GetBooksInVKModules: Promise<ReturnType<typeof GetBooksInVKModules>>;
 
   // Functions
-  getSystemFonts: typeof getSystemFonts;
-  getBooksInVKModule: Promise<typeof getBooksInVKModule>;
-  cachePreload: Promise<CachePreloadType>;
+  getSystemFonts: (...args: Parameters<typeof getSystemFonts>)
+    => Promise<ReturnType<typeof getSystemFonts>>;
+  getBooksInVKModule: (...args: Parameters<typeof getBooksInVKModule>)
+    => Promise<ReturnType<typeof getBooksInVKModule>>;
+  cachePreload: (...args: Parameters<GCachePreloadType>)
+    => Promise<ReturnType<GCachePreloadType>>;
 
   // Objects
-  i18n: Pick<typeof i18n, 't' | 'exists' | 'language'>;
-  Prefs: typeof Prefs;
-  DiskCache: typeof DiskCache;
-  LibSword: typeof LibSword;
-  Dirs: DirsRendererType;
-  Data: typeof Data;
-  Module: typeof Module;
-};
-
-export type GCType = {
-  [k in keyof GAType]: string;
+  i18n: {
+    [k in keyof Omit<GType['i18n'], 'language'>]: (...args: Parameters<GType['i18n'][k]>)
+       => Promise<ReturnType<GType['i18n'][k]>>
+  } & { language: Promise<GType['i18n']['language']>};
+  Prefs: {
+    [k in keyof GType['Prefs']]: (...args: Parameters<GType['Prefs'][k]>)
+       => Promise<ReturnType<GType['Prefs'][k]>>
+  };
+  DiskCache: {
+    [k in keyof GType['DiskCache']]: (...args: Parameters<GType['DiskCache'][k]>)
+       => Promise<ReturnType<GType['DiskCache'][k]>>
+  };
+  LibSword: {
+    [k in keyof GType['LibSword']]: (...args: Parameters<GType['LibSword'][k]>)
+       => Promise<ReturnType<GType['LibSword'][k]>>
+  };
+  Dirs: {
+    [k in keyof Omit<GType['Dirs'], 'path'>]: (...args: Parameters<GType['Dirs'][k]>)
+       => Promise<ReturnType<GType['Dirs'][k]>>;
+  } & { path: Promise<GType['Dirs']['path']>};
+  Data: {
+    [k in keyof GType['Data']]: (...args: Parameters<GType['Data'][k]>)
+       => Promise<ReturnType<GType['Data'][k]>>
+  };
+  Module: {
+    [k in keyof GType['Module']]: (...args: Parameters<GType['Module'][k]>)
+       => Promise<ReturnType<GType['Module'][k]>>
+  };
 };
 
 // This GBuilder object will be used in the main/mg and renderer/rg
@@ -863,6 +911,7 @@ export type GCType = {
 // listed in asyncFuncs or runtime errors will result!
 const func = () => {};
 const CACHEfunc = () => 'cacheable';
+if (typeof window !== 'undefined') window.renderPromises = [];
 export const GBuilder: GType & {
   // async functions must be listed in asyncFuncs or runtime
   // errors will result!
@@ -935,6 +984,7 @@ export const GBuilder: GType & {
     'BkChsInV11n',
     'getSystemFonts',
     'getBooksInVKModule',
+    'GetBooksInVKModules',
     'cachePreload',
     'i18n',
     'Prefs',
@@ -944,6 +994,8 @@ export const GBuilder: GType & {
     'Data',
     'Module'
   ],
+
+  gtype: 'sync',
 
   // Getters
   Books: 'getter' as any,
@@ -959,6 +1011,7 @@ export const GBuilder: GType & {
   FeatureModules: 'getter' as any,
   BkChsInV11n: 'getter' as any,
   OPSYS: 'getter' as any,
+  GetBooksInVKModules: 'getter' as any,
 
   // Functions
   resolveHtmlPath: CACHEfunc as any,

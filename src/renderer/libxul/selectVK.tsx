@@ -7,21 +7,24 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { clone, diff, getModuleOfObject, ofClass } from '../../common.ts';
+import { clone, diff, getModuleOfObject, handleRenderPromises, ofClass } from '../../common.ts';
 import C from '../../constant.ts';
-import G from '../rg.ts';
-import { getMaxChapter, getMaxVerse } from '../rutil.tsx';
+import G, { GA } from '../rg.ts';
+import { getMaxChapter, getMaxVerseSA } from '../rutil.tsx';
 import { addClass, xulDefaultProps, XulProps, xulPropTypes } from './xul.tsx';
 import { Hbox } from './boxes.tsx';
 import Label from './label.tsx';
 import Spacer from './spacer.tsx';
 import Menulist from './menulist.tsx';
+import './selectVK.css';
 
 import type {
   BookGroupType,
   LocationVKCommType,
   LocationVKType,
   OSISBookType,
+  RenderPromiseState,
+  RenderPromiseComponent,
 } from '../../type.ts';
 import ModuleMenu from './modulemenu.tsx';
 
@@ -104,7 +107,7 @@ const propTypes = {
   onSelection: PropTypes.func.isRequired,
 };
 
-interface SelectVKState {
+type SelectVKState = RenderPromiseState & {
   selection: SelectVKType;
 }
 
@@ -113,22 +116,30 @@ export type SelectVKChangeEvents =
   | React.ChangeEvent<HTMLSelectElement>;
 
 // React VerseKey Select
-class SelectVK extends React.Component {
+class SelectVK extends React.Component implements RenderPromiseComponent {
   static defaultProps: typeof defaultProps;
 
   static propTypes: typeof propTypes;
 
   selectValues: SelectVKType;
 
+  renderPromise: RenderPromiseComponent['renderPromise'];
+
   constructor(props: SelectVKProps) {
     super(props);
 
     const s: SelectVKState = {
       selection: props.initialVK,
+      renderPromiseID: 0,
     };
     this.state = s;
 
     this.selectValues = props.initialVK;
+    this.renderPromise = {
+      self: this,
+      calls: [],
+      uncacheableCalls: {},
+    }
 
     this.checkSelection = this.checkSelection.bind(this);
     this.handleChange = this.handleChange.bind(this);
@@ -141,8 +152,9 @@ class SelectVK extends React.Component {
   }
 
   componentDidUpdate(_prevProps: SelectVKProps, prevState: SelectVKState) {
-    const { checkSelection } = this;
+    const { checkSelection, renderPromise } = this;
     checkSelection(prevState);
+    handleRenderPromises(GA, renderPromise);
   }
 
   // Get an updated selection based on last user input, and call onSelection.
@@ -276,7 +288,7 @@ class SelectVK extends React.Component {
     const { options, disabled, allowNotInstalled } = props;
     const { books, chapters, lastchapters, verses, lastverses, vkMods } =
       options;
-    const { handleChange } = this;
+    const { handleChange, renderPromise } = this;
 
     const tab = (vkMod && G.Tab[vkMod]) || null;
     const v11n = (tab && tab.v11n) || selection.v11n || 'KJV';
@@ -349,7 +361,7 @@ class SelectVK extends React.Component {
       verse,
       verses,
       1,
-      v11n ? getMaxVerse(v11n, `${book}.${chapter}`) : 0
+      v11n ? getMaxVerseSA(v11n, `${book}.${chapter}`, renderPromise) : 0
     );
 
     const newlastchapters = this.getNumberOptions(
@@ -366,11 +378,12 @@ class SelectVK extends React.Component {
       lastverses,
       (newlastchapters.length === 0 && verse) || 1,
       v11n
-        ? getMaxVerse(
-            v11n,
-            `${book}.${newlastchapters.length === 0 ? chapter : lastchapter}`
-          )
-        : 0
+      ? getMaxVerseSA(
+          v11n,
+          `${book}.${newlastchapters.length === 0 ? chapter : lastchapter}`,
+          renderPromise
+        )
+      : 0
     );
 
     // Module options are either those of the vkMods prop or all installed VerseKey
@@ -465,7 +478,7 @@ class SelectVK extends React.Component {
           {modules.length > 0 && (
             <ModuleMenu
               className="vk-vkmod"
-              value={vkmod}
+              value={vkmod || modules[0]}
               modules={modules}
               disabled={disabled}
               allowNotInstalled={allowNotInstalled}

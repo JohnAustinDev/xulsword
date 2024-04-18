@@ -19,10 +19,11 @@ import {
   audioConfNumbers,
   gbPaths,
   localizeString,
+  trySyncOrPromise,
 } from '../common.ts';
 import C from '../constant.ts';
 import S from '../defaultPrefs.ts';
-import G from './rg.ts';
+import G, { GA } from './rg.ts';
 import { getElementData, verseKey } from './htmlData.ts';
 import log from './log.ts';
 
@@ -39,6 +40,7 @@ import type {
   PrefObject,
   PrefStoreType,
   PrefValue,
+  RenderPromiseComponent,
   Repository,
   SwordConfLocalized,
   SwordConfType,
@@ -365,9 +367,27 @@ export function getMaxChapter(v11n: V11nType, vkeytext: string) {
 export function getMaxVerse(v11n: V11nType, vkeytext: string) {
   const { chapter } = verseKey(vkeytext, v11n);
   const maxch = getMaxChapter(v11n, vkeytext);
-  return chapter <= maxch && chapter > 0
-    ? G.LibSword.getMaxVerse(v11n, vkeytext)
-    : 0;
+  if (chapter <= maxch && chapter > 0) {
+    return G.LibSword.getMaxVerse(v11n, vkeytext);
+  }
+  return 0;
+}
+export function getMaxVerseSA(
+  v11n: V11nType,
+  vkeytext: string,
+  promise: RenderPromiseComponent['renderPromise'],
+) {
+  const { chapter } = verseKey(vkeytext, v11n);
+  const maxch = getMaxChapter(v11n, vkeytext);
+  if (chapter <= maxch && chapter > 0) {
+    const data = trySyncOrPromise(G, GA, [
+      'LibSword',
+      'getMaxVerse',
+      [v11n, vkeytext]
+    ], promise) as number | Promise<number>;
+    if (typeof data !== 'undefined') return data as number;
+  }
+  return 0;
 }
 
 export function getCompanionModules(mod: string) {
@@ -581,7 +601,7 @@ export function moduleInfoHTML(configs: SwordConfType[]): string {
               .join('');
           } else if (sf === 'sourceRepository') {
             const v = c[f] as Repository;
-            value = localizeString(G.i18n, v.name) || '';
+            value = localizeString(G, v.name) || '';
           } else value = c[f]?.toString() || '';
 
           if (![sc.htmllink, 'History'].flat().includes(sf)) {

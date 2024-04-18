@@ -24,11 +24,7 @@ async function asyncRequest(
       return result;
     })
     .catch(() => {
-      const [name, m, args] = thecall;
-      const msg = `${asyncFuncs.some((en) => en[0] === name) ? 'async ' : ''
-      }G.${name}${m ? `.${m}` : ''
-      }(${JSON_stringify(args).substring(0, 64)}...)${cacheable ? ' cache miss' : ''}`;
-      log.warn(`Promise rejection in ${msg}`);
+      log.warn(`Promise rejection in ${JSON_stringify(thecall)}`);
     });
 }
 
@@ -41,9 +37,9 @@ function request(
   if (Cache.has(ckey)) return Cache.read(ckey);
   if (context === 'browser') {
     if (cacheable)
-      throw new Error(`Cache must be preloaded in browser context: ${thecall}`);
+      throw new Error(`Cache must be preloaded in browser context: ${JSON_stringify(thecall)}`);
     else
-      throw new Error(`The GA version of this method must be used in browser context: ${thecall}`);
+      throw new Error(`The GA version of this method must be used in browser context: ${JSON_stringify(thecall)}`);
   }
   log.silly(`${ckey} miss`);
   return window.ipc.sendSync('global', thecall);
@@ -65,7 +61,7 @@ function request(
 // using G. Just use G.cachePreload() to load the cache before any
 // synchronous G calls.
 const G = {} as GType;
-const GA = {} as GAType;
+export const GA = {} as GAType;
 const { asyncFuncs } = GBuilder;
 Object.entries(GBuilder).forEach((entry) => {
   if ([
@@ -76,11 +72,14 @@ Object.entries(GBuilder).forEach((entry) => {
   const gBuilder = GBuilder as any;
   const g = G as any;
   const ga = GA as any;
-  const name = entry[0] as keyof typeof GBuilder;
+  const name = entry[0] as keyof Omit<typeof GBuilder,
+    'asyncFuncs' |
+    'includeCallingWindow' |
+    'internetFuncs'>;
   const value = entry[1] as any;
   if (context !== 'browser' || gBuilder.internetFuncs.includes(name)) {
     if (value === 'getter') {
-      const acall: GCallType = [name, null];
+      const acall: GCallType = [name, null, undefined];
       const ckey = GCacheKey(acall);
       Object.defineProperty(G, name, {
         get() {
@@ -95,7 +94,7 @@ Object.entries(GBuilder).forEach((entry) => {
     } else if (typeof value === 'function') {
       const cacheable = value();
       g[name] = (...args: unknown[]) => {
-        const acall: GCallType = [name, null, ...args];
+        const acall: GCallType = [name, null, args];
         const ckey = GCacheKey(acall);
         if (asyncFuncs.some((en) => en[0] === name)) {
           return asyncRequest(ckey, cacheable, acall);
@@ -103,7 +102,7 @@ Object.entries(GBuilder).forEach((entry) => {
         return request(ckey, cacheable, acall);
       };
       ga[name] = (...args: unknown[]) => {
-        const acall: GCallType = [name, null, ...args];
+        const acall: GCallType = [name, null, args];
         const ckey = GCacheKey(acall);
         return asyncRequest(ckey, cacheable, acall);
       };
@@ -115,7 +114,7 @@ Object.entries(GBuilder).forEach((entry) => {
           ga[name] = {};
         }
         if (gBuilder[name][m] === 'getter') {
-          const acall: GCallType = [name, m];
+          const acall: GCallType = [name, m, undefined];
           const ckey = GCacheKey(acall);
           Object.defineProperty(g[name], m, {
             get() {
@@ -130,7 +129,7 @@ Object.entries(GBuilder).forEach((entry) => {
         } else if (typeof gBuilder[name][m] === 'function') {
           const cacheable = gBuilder[name][m]();
           g[name][m] = (...args: unknown[]) => {
-            const acall: GCallType = [name, m, ...args];
+            const acall: GCallType = [name, m, args];
             const ckey = GCacheKey(acall);
             if (
               (asyncFuncs as [string, string[]][]).some(
@@ -142,7 +141,7 @@ Object.entries(GBuilder).forEach((entry) => {
             return request(ckey, cacheable, acall);
           };
           ga[name][m] = (...args: unknown[]) => {
-            const acall: GCallType = [name, m, ...args];
+            const acall: GCallType = [name, m, args];
             const ckey = GCacheKey(acall);
             return asyncRequest(ckey, cacheable, acall);
           };

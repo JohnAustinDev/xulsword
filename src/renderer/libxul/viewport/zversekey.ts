@@ -509,8 +509,8 @@ export function getNoteHTML(
           // Write cell #4: chapter and verse
           html += '<div class="fncol4">';
           if (chapter && verse) {
-            const ch = dString(G.i18n, chapter);
-            const vs = dString(G.i18n, verse);
+            const ch = dString(G, chapter);
+            const vs = dString(G, verse);
             const fnldata = JSON_attrib_stringify({
               type: 'fnlink',
               location,

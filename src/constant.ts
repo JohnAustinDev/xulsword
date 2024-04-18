@@ -95,6 +95,7 @@ const C = {
         width: 1024,
         height: 728,
       },
+      networkRequestBatchDelay: 50,
     },
     Xulsword: {
       maxHistoryMenuLength: 20,

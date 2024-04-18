@@ -311,7 +311,7 @@ class TextSortableColumn extends AbstractSortableColumn {
       if (column.hideable && columns.filter((c) => c.visible).length > 1) {
         let { heading } = column;
         if (heading.startsWith('icon:')) heading = '';
-        else heading = localizeString(G.i18n, heading);
+        else heading = localizeString(G, heading);
         items.push([
           <MenuItem
             key={['delete', this.dataColIndex].join('.')}
@@ -331,7 +331,7 @@ class TextSortableColumn extends AbstractSortableColumn {
           ) as IconName;
           let text = heading;
           if (heading.startsWith('icon:')) text = '';
-          else text = localizeString(G.i18n, heading);
+          else text = localizeString(G, heading);
           hideableItems.push(
             <MenuItem
               key={['add', heading].join('.')}
@@ -459,7 +459,7 @@ class Table extends React.Component {
     this.datacolumns = [];
     columns.forEach((c) => {
       const { datacolumn } = c;
-      const heading = localizeString(G.i18n, c.heading);
+      const heading = localizeString(G, c.heading);
       this.datacolumns[datacolumn] = new TextSortableColumn(
         heading || '',
         datacolumn

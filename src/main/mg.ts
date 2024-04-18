@@ -34,6 +34,7 @@ import {
   localeConfig,
   getConfig,
   cachePreload,
+  GetBooksInVKModules,
 } from './minit.ts';
 
 import type { GType } from '../type.ts';
@@ -43,6 +44,8 @@ import type { SubscriptionType } from '../subscription.ts';
 // the same interface as the renderer's G object. Properties of this
 // object directly access main process data and modules.
 class GClass implements GType {
+  gtype;
+
   i18n;
 
   clipboard;
@@ -68,6 +71,7 @@ class GClass implements GType {
   Viewport;
 
   constructor() {
+    this.gtype = 'sync' as 'sync';
     this.i18n = i18next;
     this.clipboard = clipboard;
     this.LibSword = LibSword;
@@ -132,6 +136,10 @@ class GClass implements GType {
 
   get OPSYS() {
     return process.platform;
+  }
+
+  get GetBooksInVKModules() {
+    return GetBooksInVKModules();
   }
 
   resolveHtmlPath(

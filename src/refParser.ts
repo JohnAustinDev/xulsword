@@ -191,7 +191,7 @@ export default class RefParser {
       const { i18n } = this;
       if (i18n) {
         locales.forEach((loc) => {
-          const test = iString(i18n, name, loc);
+          const test = iString(i18n, name, loc).toString();
           if (test === name) return;
           name = test;
           locale = loc;

@@ -272,7 +272,7 @@ async function libSwordSearch(
   libswordSearchType: number,
   flags: number
 ): Promise<number | null> {
-  let grandTotal = null;
+  let grandTotal: number | null = null;
   if (module && module in G.Tab) {
     // Only one active search is allowed at a time, so make other windows
     // modal if scopes.length > 1.

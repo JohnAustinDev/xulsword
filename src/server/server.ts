@@ -1,7 +1,8 @@
 import { Server } from 'socket.io';
+import i18n from 'i18next';
 import log, { LogLevel } from 'electron-log';
 import Setenv from '../setenv.ts';
-import { JSON_parse, GCacheKey } from '../common.ts';
+import { JSON_parse, GCacheKey, JSON_stringify } from '../common.ts';
 import C from '../constant.ts';
 import G from '../main/mgServer.ts';
 import handleGlobal from '../main/handleGlobal.ts';
@@ -27,7 +28,7 @@ const AvailableLanguages = [
 ];
 
 const init = async (lng: string) => {
-  await G.i18n
+  await i18n
     .use(i18nBackendMain)
     .init({
       lng,
@@ -62,7 +63,7 @@ const init = async (lng: string) => {
       keySeparator: false,
     })
     .catch((e) => {
-      log.error(e);
+      log.error(`ERROR: ${e}`);
     });
 
   // Do this in the background...
@@ -83,26 +84,32 @@ const io = new Server(server, {
 io.on('connection', (socket) => {
   init('en');
 
-  socket.on('error-report', (message: string) => {
-    throw Error(message);
-  });
+  socket.on(
+    'error-report',
+    (args: any[], callback: (r: any) => void) => {
+      const [message] = args;
+      throw Error(message);
+    }
+  );
 
   socket.on(
     'log',
-    (type: LogLevel, windowID: string, json: string) => {
+    (args: any[], callback: (r: any) => void) => {
+      const [type, windowID, json] = args;
       log[type](windowID, ...JSON_parse(json));
     }
   );
 
   socket.on(
     'global',
-    (arg: any[], callback: (r: any) => void) => {
-      const acall = arg.pop();
+    (args: any[], callback: (r: any) => void) => {
+      const acall = args.shift();
       const r = handleGlobal(-1, acall);
-      const [name, m] = acall;
-      log.debug(`${GCacheKey(acall)} = ${r}`);
+      log.debug(`On global: ${JSON_stringify(acall)}`);
       if (typeof callback === 'function') callback(r);
-      else throw Error(`G called with no callback: ${name}.[${m}]`);
+      else {
+        throw Error(`G callback is not a function, is '${typeof callback}': ${JSON_stringify(acall)}`);
+      }
     }
   );
 

@@ -500,7 +500,7 @@ export async function eventHandler(
                     (c) => repositoryModuleKey(c) === modkey
                   );
                   if (conf?.sourceRepository.builtin) {
-                    const toRepo = builtinRepos(G.i18n, G.Dirs.path)[
+                    const toRepo = builtinRepos(G)[
                       shared ? 0 : 1
                     ];
                     if (
@@ -552,7 +552,7 @@ export async function eventHandler(
                         if (key && moduleData[key][ModCol.iInstalled] === ON) {
                           install.push({
                             download: dl,
-                            toRepo: builtinRepos(G.i18n, G.Dirs.path)[
+                            toRepo: builtinRepos(G)[
                               moduleData[key][ModCol.iInfo].shared ? 0 : 1
                             ],
                           });
@@ -1042,7 +1042,7 @@ function promptAndInstall(xthis: ModuleManager, updatesx: ModuleUpdates[]) {
       (mud.updateTo.Abbreviation?.locale || mud.updateTo.module) ?? '?';
     let message: string;
     const { installed: from } = mud;
-    const toName = localizeString(G.i18n, mud.updateTo.sourceRepository.name);
+    const toName = localizeString(G, mud.updateTo.sourceRepository.name);
     if (from) {
       const history =
         mud.updateTo.History?.filter(
@@ -1549,7 +1549,7 @@ export function selectionToDataRows(
 
 // Create a new repository table row from a Repository object.
 export function repositoryToRow(repo: Repository): TRepositoryTableRow {
-  const on = builtinRepos(G.i18n, G.Dirs.path)
+  const on = builtinRepos(G)
     .map((r) => repositoryKey(r))
     .includes(repositoryKey(repo))
     ? ALWAYS_ON

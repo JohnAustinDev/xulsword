@@ -44,20 +44,22 @@ import type {
   GCallType,
 } from '../type.ts';
 
-export type CachePreloadType = (calls: GCallType[]) => any[];
-export const cachePreload = (G: GType, calls: GCallType[]): any[] => {
+export type GCachePreloadType = (calls: GCallType[]) => any[];
+export function cachePreload(G: GType, calls: GCallType[]): any[] {
   const resp: any[] = [];
   const g = G as any;
-  calls.forEach((c) => {
+  calls.forEach((c: GCallType) => {
     const [name, m, args] = c;
     if (m === null && typeof args === 'undefined') {
       resp.push(g[name]);
-    } else if (m === null) {
+    } else if (m === null && typeof args !== 'undefined') {
       resp.push(g[name](...args));
-    } else if (typeof args === undefined) {
+    } else if (m && typeof args === 'undefined') {
       resp.push(g[name][m]);
-    } else {
+    } else if (m && Array.isArray(args)) {
       resp.push(g[name][m](...args));
+    } else {
+      throw new Error(`cachePreload: bad G call`);
     }
   });
 
@@ -211,6 +213,14 @@ export function getBkChsInV11n(): {
   }
 
   return Cache.read('bkChsInV11n');
+}
+
+export function GetBooksInVKModules(): { [k:string]: OSISBookType[] } {
+  const r: { [k:string]: OSISBookType[] } = {};
+  getTabs().forEach((t) => {
+    r[t.module] = getBooksInVKModule(t.module);
+  });
+  return r;
 }
 
 export function getBooksInVKModule(module: string): OSISBookType[] {

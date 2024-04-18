@@ -373,7 +373,7 @@ export default class ModuleManager
   loadRepositoryTable(repos?: Repository[]): Repository[] {
     const state = this.state as ManagerState;
     const { repositories } = state;
-    let allrepos = builtinRepos(G.i18n, G.Dirs.path);
+    let allrepos = builtinRepos(G);
     if (repositories) {
       const { xulsword, custom } = repositories;
       allrepos = allrepos.concat(xulsword, custom, repos || []);
@@ -391,7 +391,7 @@ export default class ModuleManager
       let lng = G.i18n.language;
       if (!['en', 'ru'].includes(lng)) lng = C.FallbackLanguage[lng];
       repoTableData.push([
-        localizeString(G.i18n, repo.name),
+        localizeString(G, repo.name),
         repo.domain,
         repo.path,
         repo.disabled ? H.OFF : on,
@@ -502,13 +502,13 @@ export default class ModuleManager
             } else if (c.xsmType === 'XSM_audio') {
               mtype = `XSM ${G.i18n.t('audio.label')}`;
             }
-            const reponame = localizeString(G.i18n, c.sourceRepository.name);
+            const reponame = localizeString(G, c.sourceRepository.name);
             const d = [] as unknown as TModuleTableRow;
             d[H.ModCol.iInfo] = {
               repo: c.sourceRepository,
               shared:
                 c.sourceRepository.path ===
-                builtinRepos(G.i18n, G.Dirs.path)[0].path,
+                builtinRepos(G)[0].path,
               classes: H.modclasses(),
               tooltip: H.tooltip('VALUE', [
                 H.ModCol.iShared,

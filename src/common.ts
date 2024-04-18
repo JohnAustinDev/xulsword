@@ -4,6 +4,7 @@
 import C from './constant.ts';
 import S from './defaultPrefs.ts';
 import Cache from './cache.ts';
+import { GBuilder } from './type.ts';
 
 import type { Region } from '@blueprintjs/table';
 import type {
@@ -38,6 +39,9 @@ import type {
   LocationVKCommType,
   LocationTypes,
   GCallType,
+  GAType,
+  RenderPromiseComponent,
+  RenderPromiseState,
 } from './type.ts';
 import type { TreeNodeInfo } from '@blueprintjs/core';
 import type { SelectVKType } from './renderer/libxul/selectVK.tsx';
@@ -45,6 +49,93 @@ import type { SelectORMType } from './renderer/libxul/selectOR.tsx';
 import type { getSampleText } from './renderer/bookmarks.ts';
 import type { verseKey } from './renderer/htmlData.ts';
 import type { XulswordState } from './renderer/xulsword/xulsword.tsx';
+
+// In browser context, synchronous G calls are not allowed, so either the
+// data must be preloaded into the cache, or must be returned with a promise.
+// This function checks the cache and renderPromises for the data and returns
+// it if it is found, otherwise it returns a promise for the data which will
+// be obtained asynchronously. Promises for cacheable data are not dispatched
+// until handleRenderPromises() is called to dispatch them together, requiring
+// fewer network traversals to obtain the data. But non cacheable data is
+// dispatched immediately, saved locally, and consumed after the component is
+// re-rendered.
+export function trySyncOrPromise(
+  G: GType,
+  GA: GAType,
+  gcall: GCallType,
+  promise: RenderPromiseComponent['renderPromise'],
+): any | undefined {
+  const key = GCacheKey(gcall);
+  if (promise.uncacheableCalls[key]?.resolved) {
+    const result = promise.uncacheableCalls[key]?.resolved;
+    delete promise.uncacheableCalls[key];
+    return result; // previous uncacheable data's promise is resolved!
+  }
+  if (Cache.has(key)) return Cache.read(key); // data in the cache!
+  const g: any = window.processR.platform === 'browser' ? GA : G;
+  const [name, method, args] = gcall;
+  if (name in g) {
+    if (!method && typeof args === undefined) {
+      promise.calls.push(gcall)
+    } else if (!method && Array.isArray(args)) {
+      const cacheable = GBuilder[name]();
+      if (cacheable) promise.calls.push(gcall);
+      else if (!(key in promise.uncacheableCalls)) {
+        promise.uncacheableCalls[key] = {
+          promise: g[name](...args),
+          resolved: undefined,
+        };
+      }
+    } else if (typeof method === 'string' && method in g[name] && args === undefined) {
+      promise.calls.push(gcall)
+    } else if (typeof method === 'string' && method in g[name] && Array.isArray(args)) {
+      const cacheable = GBuilder[name][method]();
+      if (cacheable) promise.calls.push(gcall);
+      else if (!(key in promise.uncacheableCalls)) {
+        promise.uncacheableCalls[key] = {
+          promise: g[name][method](...args),
+          resolved: undefined,
+        };
+      }
+    }
+    return undefined; // must wait for the data!
+  }
+  throw new Error(`Bad gtype=${g.gtype} call: ${gcall}`);
+}
+
+export function handleRenderPromises(
+  GA: GAType,
+  rp: RenderPromiseComponent['renderPromise']
+) {
+  Object.entries(rp.uncacheableCalls).forEach((entry) => {
+    const [key, v] = entry;
+    v.promise.then((r) => {
+      rp.uncacheableCalls[key].resolved = r;
+      rp.self.setState({ renderPromiseID: Math.random() } as RenderPromiseState);
+    });
+  });
+
+  // Add cacheable calls to global queue, wait a bit, then handle
+  // them all-together.
+  window.renderPromises.push(rp);
+  setTimeout(async () => {
+    const calls: GCallType[] = [];
+    const components: React.Component[] = [];
+    const renders: (() => void)[] = [];
+    window.renderPromises.forEach((rp) => {
+      calls.concat(rp.calls);
+      if (!components.find((c) => c === rp.self)) {
+        components.push(rp.self);
+        renders.push(() => {
+          rp.self.setState({ renderPromiseID: Math.random() } as RenderPromiseState);
+        });
+      }
+    });
+    window.renderPromises = [];
+    await GA.cachePreload(calls);
+    renders.forEach((r) => r());
+  }, C.UI.Window.networkRequestBatchDelay);
+}
 
 export function escapeRE(text: string) {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -271,7 +362,8 @@ export function normalizeFontFamily(fontFamily: string): string {
 // Strings beginning with 'i18n:' are intended for possible localization. The
 // branding namespace is checked first, followed by xulsword. If there is no
 // localization, the key is returned with 'i18n:' prefix removed.
-export function localizeString(i18n: GType['i18n'], str: string): string {
+export function localizeString(GorI: GType | GType['i18n'], str: string): string {
+  const i18n = 'i18n' in GorI ? GorI.i18n : GorI;
   if (str.startsWith('i18n:')) {
     const ans = ['branding', 'xulsword'].find((ns) =>
       i18n.exists(str.substring(5), { ns })
@@ -301,13 +393,15 @@ export function resolveXulswordPath(
 // Built-in local repositories cannot be disabled, deleted or changed.
 // Implemented as a function to allow G.i18n to initialize.
 export function builtinRepos(
-  i18n: GType['i18n'],
-  DirsPath: GType['Dirs']['path']
+  GorI: GType | GType['i18n'],
+  DirsPath?: GType['Dirs']['path']
 ): Repository[] {
+  const i18n = 'i18n' in GorI ? GorI.i18n : GorI;
+  const dpath = 'Dirs' in GorI ? GorI.Dirs.path : DirsPath as GType['Dirs']['path'];
   const birs = clone(C.SwordBultinRepositories);
   birs.forEach((r) => {
     r.name = localizeString(i18n, r.name);
-    r.path = resolveXulswordPath(DirsPath, r.path);
+    r.path = resolveXulswordPath(dpath, r.path);
   });
   return birs;
 }
@@ -463,12 +557,15 @@ export function GCacheKey(acall: GCallType): string {
   const [name, m, args] = acall;
   if (m === null && typeof args === 'undefined') {
     return `G.${name}`;
-  } else if (m === null) {
+  } else if (m === null && Array.isArray(args)) {
     return `G.${name}(${stringHash(...args)})`;
-  } else if (typeof args === 'undefined') {
+  } else if (typeof m === 'string' && typeof args === 'undefined') {
     return `G.${name}.${m}`;
+  } else if (typeof m === 'string' && Array.isArray(args)) {
+    return `G.${name}.${m}(${stringHash(...args)})`;
+  } else {
+    throw new Error(`GCacheKey bad call: '${acall}'`);
   }
-  return `G.${name}.${m}(${stringHash(...args)})`;
 }
 
 export function randomID(): string {
@@ -620,11 +717,12 @@ export function isASCII(text: string) {
   return !notASCII;
 }
 
-// converts any normal digits in a string or number into localized digits
+// Returns localized digits 0-9 in that order.
 function getLocalizedNumerals(
-  i18n: GType['i18n'],
+  GorI: GType | GType['i18n'],
   locale: string
 ): string[] | null {
+  const i18n = 'i18n' in GorI ? GorI.i18n : GorI;
   if (!Cache.has('locnums', locale)) {
     let l = null;
     const toptions = { lng: locale, ns: 'numbers' };
@@ -645,13 +743,15 @@ function getLocalizedNumerals(
   return Cache.read('locnums', locale);
 }
 
+// converts any ASCII digits in a string into localized digits.
 export function dString(
-  i18n: GType['i18n'],
+  GorI: GType | GType['i18n'],
   string: string | number,
   locale?: string
 ) {
+  const i18n = 'i18n' in GorI ? GorI.i18n : GorI;
   const loc = locale || i18n.language;
-  const l = getLocalizedNumerals(i18n, loc);
+  const l = getLocalizedNumerals(GorI, loc);
   let s = string.toString();
   if (l !== null) {
     for (let i = 0; i <= 9; i += 1) {
@@ -663,12 +763,13 @@ export function dString(
 
 // converts any localized digits in a string into ASCII digits
 export function iString(
-  i18n: GType['i18n'],
+  GorI: GType | GType['i18n'],
   locstring: string | number,
   locale?: string
 ) {
+  const i18n = 'i18n' in GorI ? GorI.i18n : GorI;
   const loc = locale || i18n.language;
-  const l = getLocalizedNumerals(i18n, loc);
+  const l = getLocalizedNumerals(GorI, loc);
   let s = locstring.toString();
   if (l !== null) {
     for (let i = 0; i <= 9; i += 1) {
@@ -679,15 +780,16 @@ export function iString(
 }
 
 export function getLocalizedChapterTerm(
-  i18n: GType['i18n'],
+  GorI: GType | GType['i18n'],
   book: string,
   chapter: number,
   locale: string
 ) {
+  const i18n = 'i18n' in GorI ? GorI.i18n : GorI;
   const k1 = `${book}_Chaptext`;
   const k2 = 'Chaptext';
   const toptions = {
-    v1: dString(i18n, chapter, locale),
+    v1: dString(GorI, chapter, locale),
     lng: locale,
     ns: 'books',
   };
@@ -1165,7 +1267,7 @@ export function pasteBookmarkItems(
 }
 
 export function bookmarkLabel(
-  g: GType,
+  G: GType,
   verseKeyFunc: typeof verseKey,
   l: LocationVKType | LocationVKCommType | LocationORType
 ): string {
@@ -1173,15 +1275,15 @@ export function bookmarkLabel(
     const { commMod } = l;
     const vk = verseKeyFunc(l);
     const readable = vk.readable(undefined, true);
-    const t = (commMod in g.Tab && g.Tab[commMod]) || null;
-    return `${t ? t.label : g.i18n.t('Comms')}: ${readable}`;
+    const t = (commMod in G.Tab && G.Tab[commMod]) || null;
+    return `${t ? t.label : G.i18n.t('Comms')}: ${readable}`;
   }
   if ('v11n' in l) {
     const vk = verseKeyFunc(l);
     return vk.readable(undefined, true);
   }
   const ks = l.key.split(C.GBKSEP);
-  const tab = (l.otherMod && l.otherMod in g.Tab && g.Tab[l.otherMod]) || null;
+  const tab = (l.otherMod && l.otherMod in G.Tab && G.Tab[l.otherMod]) || null;
   ks.unshift(tab?.conf.Description ? tab.conf.Description.locale : l.otherMod);
   while (ks[2] && ks[0] === ks[1]) {
     ks.shift();
@@ -1211,7 +1313,8 @@ export function localizeBookmark(
   item: BookmarkItemType
 ): BookmarkItemType {
   const { label, note } = item;
-  const nlabel = localizeString(G.i18n, label);
+  const nlabel = localizeString(G, label);
+  const lang = G.i18n.language as 'en';
   if (nlabel !== label) {
     if (nlabel === 'label' && item.type === 'bookmark') {
       const { location } = item;
@@ -1221,12 +1324,12 @@ export function localizeBookmark(
     } else {
       item.label = nlabel;
     }
-    item.labelLocale = G.i18n.language as 'en';
+    item.labelLocale = lang;
   }
-  const lnote = localizeString(G.i18n, note);
+  const lnote = localizeString(G, note);
   if (lnote !== note) {
     item.note = lnote;
-    item.noteLocale = G.i18n.language as 'en';
+    item.noteLocale = lang;
   }
   return item;
 }
