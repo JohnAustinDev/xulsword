@@ -1,12 +1,13 @@
 /* eslint-disable import/no-duplicates */
 import React from 'react';
+import C from '../../constant.ts';
 import RefParser from '../../refParser.ts';
 import { clone, ofClass } from '../../common.ts';
+import G from '../rg.ts';
 import { chapterChange, verseChange } from '../libxul/viewport/zversekey.ts';
 import { genbookChange } from '../libxul/viewport/ztext.ts';
 import { genBookAudioFile, verseKeyAudioFile } from '../rutil.tsx';
 import { verseKey } from '../htmlData.ts';
-import G from '../rg.ts';
 
 import type { GenBookAudioFile, ShowType, VerseKeyAudioFile } from '../../type.ts';
 import type Xulsword from './xulsword.tsx';
@@ -171,7 +172,14 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
         case 'book__textbox__input': {
           this.setState((prevState: XulswordState) => {
             const { location } = prevState;
-            const newloc = new RefParser(G.i18n).parse(
+            const newloc = new RefParser(
+              G.i18n.language,
+              G.getLocaleDigits(true),
+              G.getLocalizedBooks(true),
+              {
+                locales: C.Locales.map((l) => l[0]),
+              }
+            ).parse(
               value,
               location?.v11n || null
             )?.location;

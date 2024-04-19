@@ -42,6 +42,7 @@ import type {
   SwordFeatureMods,
   XulswordFeatureMods,
   GCallType,
+  BookGroupType,
 } from '../type.ts';
 
 export type GCachePreloadType = (calls: GCallType[]) => any[];
@@ -50,13 +51,23 @@ export function cachePreload(G: GType, calls: GCallType[]): any[] {
   const g = G as any;
   calls.forEach((c: GCallType) => {
     const [name, m, args] = c;
+    if (!(name in g)) throw new Error(`'${name}' is not a member of G`);
     if (m === null && typeof args === 'undefined') {
       resp.push(g[name]);
     } else if (m === null && typeof args !== 'undefined') {
+      if (typeof g[name] !== 'function') {
+        throw new Error(`'${name}' is not a method of G`);
+      }
       resp.push(g[name](...args));
     } else if (m && typeof args === 'undefined') {
+      if (!(m in g[name])) {
+        throw new Error(`'${m.toString()}' is not a member of G.${name}`);
+      }
       resp.push(g[name][m]);
     } else if (m && Array.isArray(args)) {
+      if (!(m in g[name]) || typeof g[name][m] !== 'function') {
+        throw new Error(`'${m.toString()}' is not a method of G.${name}`);
+      }
       resp.push(g[name][m](...args));
     } else {
       throw new Error(`cachePreload: bad G call`);
@@ -485,8 +496,14 @@ export function verseKey(
   options?: RefParserOptionsType
 ): VerseKey {
   return new VerseKey(
-    new RefParser(i18n, options),
+    new RefParser(
+      i18n.language,
+      getLocaleDigits(true),
+      getLocalizedBooks(true),
+      options
+    ),
     getBkChsInV11n(),
+    i18n.t('locale_direction'),
     {
       convertLocation: (
         fromv11n: V11nType,
@@ -903,4 +920,61 @@ export function getLocaleConfigs(): { [i: string]: ConfigType } {
     Cache.write(ret, 'localeConfigs');
   }
   return Cache.read('localeConfigs');
+}
+
+export function getLocaleDigits(getAll = false): {[locale: string]: string[] | null } {
+  const locs = getAll ? C.Locales.map((l) => l[0]) : [i18n.language];
+  const r: {[locale: string]: string[] | null} = {};
+  locs.forEach((lng: any) => {
+    let l = null;
+    const toptions = { lng, ns: 'numbers' };
+    for (let i = 0; i <= 9; i += 1) {
+      const key = `n${i}`;
+      if (i18n.exists(key, toptions) && !/^\s*$/.test(i18n.t(key, toptions))) {
+        if (l === null) {
+          l = [];
+          for (let x = 0; x <= 9; x += 1) {
+            l.push(x.toString());
+          }
+        }
+        l[i] = i18n.t(key, toptions);
+      }
+    }
+    r[lng] = l;
+  });
+  return r;
+}
+
+export function getLocalizedBooks(getAll = false): {
+  [locale: string]: {
+    [code: string]: [string[], string[], string[]];
+  };
+} {
+  const locs = getAll ? C.Locales.map((l) => l[0]) : [i18n.language];
+  // Currently xulsword locales only include ot and nt books.
+  const r: {
+    [locale: string]: {
+      [code: string]: [string[], string[], string[]];
+    };
+  } = {};
+  locs.forEach((locale) => {
+    r[locale] = {};
+    const toptions = { lng: locale, ns: 'books' };
+    ['ot', 'nt'].forEach((bgs) => {
+      const bg = bgs as BookGroupType;
+      C.SupportedBooks[bg].forEach((code) => {
+        const keys = [code, `Long${code}`, `${code}Variations`];
+        r[locale][code] = keys.map((key) => {
+          let str = '';
+          // Must test for key's existence. Using return === key as the
+          // existence check gives false fails: ex. Job === Job.
+          if (i18n && i18n.exists(key, toptions)) {
+            str = i18n.t(key, toptions);
+          }
+          return str ? str.split(/\s*,\s*/) : [];
+        }) as any;
+      });
+    });
+  });
+  return r;
 }

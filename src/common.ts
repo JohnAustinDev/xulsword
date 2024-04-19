@@ -1,10 +1,12 @@
 /* eslint-disable import/order */
 /* eslint-disable no-nested-ternary */
 /* eslint-disable no-bitwise */
+import log from './renderer/log.ts';
 import C from './constant.ts';
 import S from './defaultPrefs.ts';
 import Cache from './cache.ts';
 import { GBuilder } from './type.ts';
+import { getLocaleDigits } from './main/minit.ts';
 
 import type { Region } from '@blueprintjs/table';
 import type {
@@ -111,6 +113,9 @@ export function handleRenderPromises(
     const [key, v] = entry;
     v.promise.then((r) => {
       rp.uncacheableCalls[key].resolved = r;
+      if (window.processR.XULSWORD_ENV() === 'development') {
+        console.log(`Component reload: ${key}`);
+      }
       rp.self.setState({ renderPromiseID: Math.random() } as RenderPromiseState);
     });
   });
@@ -127,13 +132,18 @@ export function handleRenderPromises(
       if (!components.find((c) => c === rp.self)) {
         components.push(rp.self);
         renders.push(() => {
+          if (window.processR.XULSWORD_ENV() === 'development') {
+            console.log(`Component reload: ${JSON_stringify(calls)}`);
+          }
           rp.self.setState({ renderPromiseID: Math.random() } as RenderPromiseState);
         });
       }
     });
     window.renderPromises = [];
-    await GA.cachePreload(calls);
-    renders.forEach((r) => r());
+    if (calls.length) {
+      await GA.cachePreload(calls);
+      renders.forEach((r) => r());
+    }
   }, C.UI.Window.networkRequestBatchDelay);
 }
 
@@ -717,43 +727,15 @@ export function isASCII(text: string) {
   return !notASCII;
 }
 
-// Returns localized digits 0-9 in that order.
-function getLocalizedNumerals(
-  GorI: GType | GType['i18n'],
-  locale: string
-): string[] | null {
-  const i18n = 'i18n' in GorI ? GorI.i18n : GorI;
-  if (!Cache.has('locnums', locale)) {
-    let l = null;
-    const toptions = { lng: locale, ns: 'numbers' };
-    for (let i = 0; i <= 9; i += 1) {
-      const key = `n${i}`;
-      if (i18n.exists(key, toptions) && !/^\s*$/.test(i18n.t(key, toptions))) {
-        if (l === null) {
-          l = [];
-          for (let x = 0; x <= 9; x += 1) {
-            l.push(x.toString());
-          }
-        }
-        l[i] = i18n.t(key, toptions);
-      }
-    }
-    Cache.write(l, 'locnums', locale);
-  }
-  return Cache.read('locnums', locale);
-}
-
 // converts any ASCII digits in a string into localized digits.
 export function dString(
-  GorI: GType | GType['i18n'],
+  localeDigits: ReturnType<typeof getLocaleDigits>,
   string: string | number,
-  locale?: string
+  locale: string
 ) {
-  const i18n = 'i18n' in GorI ? GorI.i18n : GorI;
-  const loc = locale || i18n.language;
-  const l = getLocalizedNumerals(GorI, loc);
   let s = string.toString();
-  if (l !== null) {
+  const l = localeDigits[locale];
+  if (l) {
     for (let i = 0; i <= 9; i += 1) {
       s = s.replaceAll(i.toString(), l[i]);
     }
@@ -761,26 +743,9 @@ export function dString(
   return s;
 }
 
-// converts any localized digits in a string into ASCII digits
-export function iString(
-  GorI: GType | GType['i18n'],
-  locstring: string | number,
-  locale?: string
-) {
-  const i18n = 'i18n' in GorI ? GorI.i18n : GorI;
-  const loc = locale || i18n.language;
-  const l = getLocalizedNumerals(GorI, loc);
-  let s = locstring.toString();
-  if (l !== null) {
-    for (let i = 0; i <= 9; i += 1) {
-      s = s.replaceAll(l[i], i.toString());
-    }
-  }
-  return s;
-}
-
 export function getLocalizedChapterTerm(
   GorI: GType | GType['i18n'],
+  localeDigits: ReturnType<typeof getLocaleDigits>,
   book: string,
   chapter: number,
   locale: string
@@ -789,7 +754,7 @@ export function getLocalizedChapterTerm(
   const k1 = `${book}_Chaptext`;
   const k2 = 'Chaptext';
   const toptions = {
-    v1: dString(GorI, chapter, locale),
+    v1: dString(localeDigits, chapter, locale),
     lng: locale,
     ns: 'books',
   };

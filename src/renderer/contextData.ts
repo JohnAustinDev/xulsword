@@ -1,5 +1,6 @@
 import { JSON_attrib_parse, ofClass } from '../common.ts';
 import RefParser from '../refParser.ts';
+import C from './constant.ts';
 import G from './rg.ts';
 import { findElementData, mergeElementData } from './htmlData.ts';
 import { findBookmarks } from './bookmarks.ts';
@@ -105,8 +106,15 @@ export default function ContextData(elem: HTMLElement): ContextDataType {
     (context && context in G.Tab && G.Tab[context].v11n) || undefined;
   let selectionParsedVK: LocationVKType | undefined;
   if (selection) {
-    const parsed = new RefParser(G.i18n, { uncertain: true })
-      .parse(selection, v11n || null);
+    const parsed = new RefParser(
+      G.i18n.language,
+      G.getLocaleDigits(true),
+      G.getLocalizedBooks(true),
+      {
+        locales: C.Locales.map((l) => l[0]),
+        uncertain: true
+      }
+    ).parse(selection, v11n || null);
     selectionParsedVK = parsed && parsed.location.book ? parsed.location : undefined;
   }
 

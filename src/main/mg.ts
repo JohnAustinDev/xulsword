@@ -35,6 +35,8 @@ import {
   getConfig,
   cachePreload,
   GetBooksInVKModules,
+  getLocalizedBooks,
+  getLocaleDigits,
 } from './minit.ts';
 
 import type { GType } from '../type.ts';
@@ -176,6 +178,18 @@ class GClass implements GType {
     ...args: Parameters<GType['getBooksInVKModule']>
   ): ReturnType<GType['getBooksInVKModule']> {
     return getBooksInVKModule(...args);
+  }
+
+  getLocalizedBooks(
+    ...args: Parameters<GType['getLocalizedBooks']>
+  ): ReturnType<GType['getLocalizedBooks']> {
+    return getLocalizedBooks(...args);
+  }
+
+  getLocaleDigits(
+    ...args: Parameters<GType['getLocaleDigits']>
+  ): ReturnType<GType['getLocaleDigits']> {
+    return getLocaleDigits(...args);
   }
 
   publishSubscription<S extends keyof SubscriptionType['publish']>(

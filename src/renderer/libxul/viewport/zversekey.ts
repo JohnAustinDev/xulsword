@@ -509,8 +509,8 @@ export function getNoteHTML(
           // Write cell #4: chapter and verse
           html += '<div class="fncol4">';
           if (chapter && verse) {
-            const ch = dString(G, chapter);
-            const vs = dString(G, verse);
+            const ch = dString(G.getLocaleDigits(), chapter, G.i18n.language);
+            const vs = dString(G.getLocaleDigits(), verse, G.i18n.language);
             const fnldata = JSON_attrib_stringify({
               type: 'fnlink',
               location,
@@ -620,6 +620,7 @@ export function getChapterHeading(
   html += `<div class="chapbk">${G.i18n.t(book, toptions)}</div>`;
   html += `<div class="chapch">${getLocalizedChapterTerm(
     G.i18n,
+    G.getLocaleDigits(true),
     book,
     chapter,
     l

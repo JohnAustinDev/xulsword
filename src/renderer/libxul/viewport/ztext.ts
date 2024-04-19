@@ -205,11 +205,11 @@ export function libswordText(
   if (
     G.Tab[module].isVerseKey &&
     moduleLocale &&
-    dString(G, 1, moduleLocale) !== dString(G, 1, 'en')
+    dString(G.getLocaleDigits(true), 1, moduleLocale) !== dString(G.getLocaleDigits(true), 1, 'en')
   ) {
     const verseNm = new RegExp('(<sup class="versenum">)(\\d+)(</sup>)', 'g');
     r.textHTML = r.textHTML.replace(verseNm, (_str, p1, p2, p3) => {
-      return p1 + dString(G, p2, moduleLocale) + p3;
+      return p1 + dString(G.getLocaleDigits(true), p2, moduleLocale) + p3;
     });
   }
 

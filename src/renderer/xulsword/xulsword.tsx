@@ -398,7 +398,7 @@ export default class Xulsword extends React.Component {
                 maxLength="3"
                 pattern={/^[0-9]+$/}
                 value={
-                  location?.chapter ? dString(G, location.chapter) : ''
+                  location?.chapter ? dString(G.getLocaleDigits(), location.chapter, G.i18n.language) : ''
                 }
                 timeout="600"
                 disabled={navdisabled}
@@ -425,7 +425,7 @@ export default class Xulsword extends React.Component {
                 width="50px"
                 maxLength="3"
                 pattern={/^[0-9]+$/}
-                value={location?.verse ? dString(G, location.verse) : ''}
+                value={location?.verse ? dString(G.getLocaleDigits(), location.verse, G.i18n.language) : ''}
                 timeout="600"
                 disabled={navdisabled}
                 onChange={handler}

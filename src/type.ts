@@ -27,6 +27,8 @@ import type {
   getBkChsInV11n,
   GCachePreloadType,
   GetBooksInVKModules,
+  getLocaleDigits,
+  getLocalizedBooks,
 } from './main/minit.ts';
 import type {
   publishSubscription,
@@ -817,6 +819,8 @@ export type GType = {
   resetMain: typeof resetMain;
   getSystemFonts: typeof getSystemFonts;
   getBooksInVKModule: typeof getBooksInVKModule;
+  getLocalizedBooks: typeof getLocalizedBooks;
+  getLocaleDigits: typeof getLocaleDigits;
   publishSubscription: typeof publishSubscription;
   canUndo: typeof canUndo;
   canRedo: typeof canRedo;
@@ -837,10 +841,6 @@ export type GType = {
   Window: typeof Window;
 };
 
-// TODO!: Fix this with wacky TypeScript!
-// export type GAType = Omit<GType, >
-
-// temporary... (see above)
 export type GAType = {
   gtype: 'async';
 
@@ -864,6 +864,10 @@ export type GAType = {
     => Promise<ReturnType<typeof getSystemFonts>>;
   getBooksInVKModule: (...args: Parameters<typeof getBooksInVKModule>)
     => Promise<ReturnType<typeof getBooksInVKModule>>;
+  getLocalizedBooks: (...args: Parameters<typeof getLocalizedBooks>)
+    => Promise<ReturnType<typeof getLocalizedBooks>>;
+  getLocaleDigits: (...args: Parameters<typeof getLocaleDigits>)
+    => Promise<ReturnType<typeof getLocaleDigits>>;
   cachePreload: (...args: Parameters<GCachePreloadType>)
     => Promise<ReturnType<GCachePreloadType>>;
 
@@ -935,7 +939,7 @@ export const GBuilder: GType & {
   includeCallingWindow: ['Prefs', 'Window', 'Commands', 'Module'];
 
   // Only these functions and objects are accessible via Internet.
-  internetFuncs: string[];
+  internetCapable: string[];
 } = {
   asyncFuncs: [
     ['getSystemFonts', []],
@@ -969,7 +973,7 @@ export const GBuilder: GType & {
 
   includeCallingWindow: ['Prefs', 'Window', 'Commands', 'Module'],
 
-  internetFuncs: [
+  internetCapable: [
     'Books',
     'Book',
     'Tabs',
@@ -984,6 +988,8 @@ export const GBuilder: GType & {
     'BkChsInV11n',
     'getSystemFonts',
     'getBooksInVKModule',
+    'getLocalizedBooks',
+    'getLocaleDigits',
     'GetBooksInVKModules',
     'cachePreload',
     'i18n',
@@ -1019,6 +1025,8 @@ export const GBuilder: GType & {
   inlineAudioFile: CACHEfunc as any,
   getSystemFonts: CACHEfunc as any,
   getBooksInVKModule: CACHEfunc as any,
+  getLocalizedBooks: CACHEfunc as any,
+  getLocaleDigits: CACHEfunc as any,
   resetMain: func as any,
   publishSubscription: func as any,
   canUndo: func as any,

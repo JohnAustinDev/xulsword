@@ -1,7 +1,7 @@
 import Cache from './cache.ts';
 import C from './constant.ts';
-import { iString } from './common.ts';
 
+import type { getLocaleDigits, getLocalizedBooks } from './main/minit.ts';
 import type {
   BookGroupType,
   LocationVKType,
@@ -21,12 +21,6 @@ type BookNamePartsType = {
   locale: string | null;
 };
 
-type LocalizedBookType = {
-  [locale: string]: {
-    [code: string]: [string[], string[], string[]];
-  };
-};
-
 type invalidLocationVKType = {
   v11n: V11nType,
   book: '',
@@ -36,7 +30,7 @@ type invalidLocationVKType = {
 };
 
 export type RefParserOptionsType = {
-  locales?: string[]; // search just these locales for book names (default is all locales)
+  locales?: string[]; // search just these locales for book names (undefined is current locale only)
 
   onlyOsisCode?: boolean; // search OSIS book codes and not locales
 
@@ -64,12 +58,21 @@ export default class RefParser {
 
   osisStringLC: string;
 
-  localizedBooks: LocalizedBookType;
+  locale: string;
 
-  i18n: GType['i18n'] | null;
+  localeDigits: ReturnType<typeof getLocaleDigits>;
 
-  constructor(i18n: GType['i18n'] | null, options?: RefParserOptionsType) {
-    this.locales = C.Locales.map((l) => l[0]);
+  localizedBooks: ReturnType<typeof getLocalizedBooks>;
+
+  constructor(
+    locale: string,
+    localeDigits: ReturnType<typeof getLocaleDigits>,
+    localizedBooks: ReturnType<typeof getLocalizedBooks>,
+    options?: RefParserOptionsType
+  ) {
+    this.locale = locale;
+    this.localeDigits = localeDigits;
+    this.localizedBooks = localizedBooks;
     this.onlyOsisCode = false;
     this.noVariations = false;
     this.exactMatch = false;
@@ -78,38 +81,20 @@ export default class RefParser {
       return `${p}${C.SupportedBooks[bg].join('.')}.`;
     }, '.');
     this.osisStringLC = this.osisString.toLowerCase();
-    this.i18n = i18n;
-    if (!Cache.has('RefParseLocale')) {
-      const rpl = {} as LocalizedBookType;
-      C.Locales.forEach((locarray) => {
-        const [loc] = locarray;
-        rpl[loc] = {};
-        const toptions = { lng: loc, ns: 'books' };
-        ['ot', 'nt'].forEach((bgs) => {
-          const bg = bgs as BookGroupType;
-          C.SupportedBooks[bg].forEach((code) => {
-            const keys = [code, `Long${code}`, `${code}Variations`];
-            rpl[loc][code] = keys.map((key) => {
-              let str = '';
-              // Must test for key's existence. Using return === key as the
-              // existence check gives false fails: ex. Job === Job.
-              if (i18n && i18n.exists(key, toptions)) {
-                str = i18n.t(key, toptions);
-              }
-              return str ? str.split(/\s*,\s*/) : [];
-            }) as any;
-          });
-        });
-      });
-      Cache.write(rpl, 'RefParseLocale');
-    }
-    this.localizedBooks = Cache.read('RefParseLocale');
+    this.locales = [this.locale]
     if (options) {
       Object.entries(options).forEach((entry) => {
         const name = entry[0] as keyof RefParserOptionsType;
         const val = entry[1] as any;
         this[name] = val;
       });
+    }
+    if (!this.locales.includes(this.locale)) {
+      throw new Error(`RefParser missing locale: '${this.locale}'`);
+    } else if (!this.locales.every((l) => l in this.localeDigits && l in this.localizedBooks)) {
+      throw new Error(`Missing RefParser data: locales=${this.locales
+        } localeDigits=${Object.keys(this.localeDigits)
+        } localizedBooks=${Object.keys(this.localizedBooks)}`);
     }
   }
 
@@ -139,26 +124,29 @@ export default class RefParser {
         C.SupportedBooks[bg].forEach((code) => {
           if (codes.size && exact) return;
           let codeMatches = false;
-          this.localizedBooks[loc][code].forEach((lnamea, i) => {
-            if (codeMatches || (i === 2 && this.noVariations)) return;
-            lnamea.forEach((lname) => {
-              if (codeMatches || !lname) return;
-              const test = this.#getBookNameParts(lname, loc);
-              if (inbook.number === test.number) {
-                let s;
-                let l;
-                // Don't allow swapping of variations, which may be abbreviated.
-                if (test.name.length < inbook.name.length && i !== 2) {
-                  s = test.name.toLowerCase();
-                  l = inbook.name.toLowerCase();
-                } else {
-                  s = inbook.name.toLowerCase();
-                  l = test.name.toLowerCase();
+          const locbooks = this.localizedBooks[loc];
+          if (locbooks) {
+            locbooks[code].forEach((lnamea, i) => {
+              if (codeMatches || (i === 2 && this.noVariations)) return;
+              lnamea.forEach((lname) => {
+                if (codeMatches || !lname) return;
+                const test = this.#getBookNameParts(lname, loc);
+                if (inbook.number === test.number) {
+                  let s;
+                  let l;
+                  // Don't allow swapping of variations, which may be abbreviated.
+                  if (test.name.length < inbook.name.length && i !== 2) {
+                    s = test.name.toLowerCase();
+                    l = inbook.name.toLowerCase();
+                  } else {
+                    s = inbook.name.toLowerCase();
+                    l = test.name.toLowerCase();
+                  }
+                  codeMatches = exact ? s === l : l.startsWith(s);
                 }
-                codeMatches = exact ? s === l : l.startsWith(s);
-              }
+              });
             });
-          });
+          }
           if (codeMatches) {
             codes.add(code);
             if (!bookInfo.code) {
@@ -188,15 +176,19 @@ export default class RefParser {
     if (!Cache.has(ckey)) {
       let locale: string | null = null;
       const locales = alocale ? [alocale] : this.locales;
-      const { i18n } = this;
-      if (i18n) {
-        locales.forEach((loc) => {
-          const test = iString(i18n, name, loc).toString();
-          if (test === name) return;
-          name = test;
-          locale = loc;
-        });
-      }
+      const { localeDigits } = this;
+      locales.forEach((loc) => {
+        let test = name.toString();
+        const a = localeDigits[loc];
+        if (a !== null) {
+          for (let i = 0; i <= 9; i += 1) {
+            test = test.replaceAll(a[i], i.toString());
+          }
+        }
+        if (test === name) return;
+        name = test;
+        locale = loc;
+      });
 
       const parts = name.split(' ');
 

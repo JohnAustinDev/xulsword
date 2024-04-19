@@ -130,11 +130,11 @@ export function bibleChapterText(
     // Localize verse numbers to match the module
     if (
       moduleLocale &&
-      dString(G, 1, moduleLocale) !== dString(G, 1, 'en')
+      dString(G.getLocaleDigits(true), 1, moduleLocale) !== dString(G.getLocaleDigits(true), 1, 'en')
     ) {
       const verseNm = new RegExp('(<sup class="versenum">)(\\d+)(</sup>)', 'g');
       textHTML = textHTML.replace(verseNm, (_str, p1, p2, p3) => {
-        return p1 + dString(G, p2, moduleLocale || undefined) + p3;
+        return p1 + dString(G.getLocaleDigits(true), p2, moduleLocale || G.i18n.language) + p3;
       });
     }
 
@@ -153,7 +153,13 @@ export function bibleChapterText(
       <div class="${headclass.join(' ')}">
         <div class="chaptitle" >
           <div class="chapbk">${G.i18n.t(book, toptions)}</div>
-          <div class="chapch">${getLocalizedChapterTerm(G.i18n, book, chapter, moduleLocale)}</div>
+          <div class="chapch">${getLocalizedChapterTerm(
+            G.i18n,
+            G.getLocaleDigits(true),
+            book,
+            chapter,
+            moduleLocale
+          )}</div>
         </div>
       </div>`;
     }

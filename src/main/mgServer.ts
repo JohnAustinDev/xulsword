@@ -24,6 +24,8 @@ import {
   getConfig,
   cachePreload,
   GetBooksInVKModules,
+  getLocalizedBooks,
+  getLocaleDigits,
 } from './minit.ts';
 
 import type { GAType, GType } from '../type.ts';
@@ -123,6 +125,18 @@ class GAClass implements GAType {
     ...args: Parameters<GType['getBooksInVKModule']>
   ): Promise<ReturnType<GType['getBooksInVKModule']>> {
     return getBooksInVKModule(...args) as any;
+  }
+
+  getLocalizedBooks(
+    ...args: Parameters<GType['getLocalizedBooks']>
+  ): Promise<ReturnType<GType['getLocalizedBooks']>> {
+    return getLocalizedBooks(...args) as any;
+  }
+
+  getLocaleDigits(
+    ...args: Parameters<GType['getLocaleDigits']>
+  ): Promise<ReturnType<GType['getLocaleDigits']>> {
+    return getLocaleDigits(...args) as any;
   }
 
   cachePreload(

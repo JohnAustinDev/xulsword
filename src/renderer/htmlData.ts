@@ -463,9 +463,22 @@ export function verseKey(
   v11n?: V11nType | null,
   options?: RefParserOptionsType
 ): VerseKey {
+  let locales: boolean = false;
+  if (options) {
+    const { locales: l } = options;
+    if (l && l.some((x) => x !== G.i18n.language)) {
+      locales = true;
+    }
+  }
   return new VerseKey(
-    new RefParser(G.i18n, options),
+    new RefParser(
+      G.i18n.language,
+      G.getLocaleDigits(locales),
+      G.getLocalizedBooks(locales),
+      options
+    ),
     G.BkChsInV11n,
+    G.i18n.t('locale_direction'),
     {
       convertLocation: (
         fromv11n: V11nType,

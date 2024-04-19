@@ -85,10 +85,12 @@ class Bookselect extends React.Component {
 
     // noVariations is important for autocomplete because some
     // variations are short abbreviations.
-    this.parser = new RefParser(G.i18n, {
-      locales: [G.i18n.language],
-      noVariations: true,
-    });
+    this.parser = new RefParser(
+      G.i18n.language,
+      G.getLocaleDigits(),
+      G.getLocalizedBooks(),
+      { noVariations: true }
+    );
 
     this.getBookOptions = this.getBookOptions.bind(this);
     this.textboxChange = this.textboxChange.bind(this);

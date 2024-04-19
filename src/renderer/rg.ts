@@ -64,20 +64,20 @@ const G = {} as GType;
 export const GA = {} as GAType;
 const { asyncFuncs } = GBuilder;
 Object.entries(GBuilder).forEach((entry) => {
-  if ([
+  if (([
     'asyncFuncs',
     'includeCallingWindow',
-    'internetFuncs'
-  ].includes(entry[0])) return;
+    'internetCapable'
+  ] as (keyof typeof GBuilder)[]).includes(entry[0] as any)) return;
   const gBuilder = GBuilder as any;
   const g = G as any;
   const ga = GA as any;
   const name = entry[0] as keyof Omit<typeof GBuilder,
     'asyncFuncs' |
     'includeCallingWindow' |
-    'internetFuncs'>;
+    'internetCapable'>;
   const value = entry[1] as any;
-  if (context !== 'browser' || gBuilder.internetFuncs.includes(name)) {
+  if (context !== 'browser' || GBuilder.internetCapable.includes(name)) {
     if (value === 'getter') {
       const acall: GCallType = [name, null, undefined];
       const ckey = GCacheKey(acall);

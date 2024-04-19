@@ -19,6 +19,8 @@ export default class VerseKey {
 
   #bkChsInV11n: GType['BkChsInV11n'];
 
+  #localeDirection: 'ltr' | 'rtl';
+
   #gfunctions: VerseKeyGtype;
 
   #loc: LocationVKType;
@@ -28,12 +30,14 @@ export default class VerseKey {
   constructor(
     parser: RefParser,
     bkChsInV11n: GType['BkChsInV11n'],
+    localeDirection: 'ltr' | 'rtl',
     gfunction: VerseKeyGtype,
     location: LocationVKType | string,
     v11n?: V11nType | null
   ) {
     this.#parser = parser;
     this.#bkChsInV11n = bkChsInV11n;
+    this.#localeDirection = localeDirection;
     this.#gfunctions = gfunction;
     if (typeof location === 'string') {
       const parsed = this.parseLocation(location, v11n);
@@ -234,8 +238,8 @@ export default class VerseKey {
     const Book = this.#gfunctions.Book();
     const tov11n = v11n || this.#v11nCurrent;
     const l = this.location(tov11n);
-    const { i18n } = this.#parser;
-    const guidir = i18n?.t('locale_direction').toLowerCase() || 'ltr';
+    const { locale, localeDigits } = this.#parser;
+    const guidir = this.#localeDirection;
     let d = guidir === 'rtl' ? '&rlm;' : '&lrm;';
     if (notHTML)
       d =
@@ -258,6 +262,6 @@ export default class VerseKey {
     }
     parts.push('');
     const res = parts.join(d);
-    return i18n ? dString(i18n, res) : res;
+    return dString(localeDigits, res, locale);
   }
 }
