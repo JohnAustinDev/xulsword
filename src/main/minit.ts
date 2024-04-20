@@ -15,6 +15,7 @@ import {
   validateViewportModulePrefs,
   keep,
   normalizeFontFamily,
+  JSON_stringify,
 } from '../common.ts';
 import Cache from '../cache.ts';
 import Subscription from '../subscription.ts';
@@ -70,7 +71,7 @@ export function cachePreload(G: GType, calls: GCallType[]): any[] {
       }
       resp.push(g[name][m](...args));
     } else {
-      throw new Error(`cachePreload: bad G call`);
+      throw new Error(`cachePreload bad G call: ${JSON_stringify(c)}`);
     }
   });
 

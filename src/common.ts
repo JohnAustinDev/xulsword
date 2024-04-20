@@ -1,7 +1,6 @@
 /* eslint-disable import/order */
 /* eslint-disable no-nested-ternary */
 /* eslint-disable no-bitwise */
-import log from './renderer/log.ts';
 import C from './constant.ts';
 import S from './defaultPrefs.ts';
 import Cache from './cache.ts';
@@ -340,6 +339,23 @@ export function diff<T>(pv1: any, pv2: T, depth = 1): Partial<T> | undefined {
     }
   }
   return difference;
+}
+
+// Convert PrefValue number-strings to numbers recursively.
+export function strings2Numbers(x: any): any {
+  if (typeof x === 'string' && !Number.isNaN(Number(x))) {
+    return Number(x);
+  } else if (Array.isArray(x)) {
+    return x.map((y) => strings2Numbers(y));
+  } else if (x && typeof x === 'object') {
+    const z: any = {};
+    Object.entries(x).forEach((entry) => {
+      const [p, v] = entry;
+      z[p] = strings2Numbers(v);
+    });
+    return z;
+  }
+  return x;
 }
 
 // Apply a function to every PrefValue of a prefObject, recursively,

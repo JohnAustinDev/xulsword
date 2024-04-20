@@ -6,7 +6,6 @@ import type {
   BookGroupType,
   LocationVKType,
   V11nType,
-  GType,
   OSISBookType,
 } from './type.ts';
 

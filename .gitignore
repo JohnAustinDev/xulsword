@@ -39,6 +39,11 @@ build/app/dist
 build/release
 .erb/dll
 archive.tgz
+*.d.ts
+*.d.ts.map
+*.js
+*.js.map
+
 
 .idea
 npm-debug.log.*

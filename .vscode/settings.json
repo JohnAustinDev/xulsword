@@ -59,6 +59,13 @@
   "javascript.format.enable": false,
   "typescript.format.enable": false,
 
+  "files.exclude": {
+    "**/*.js": true,
+    "**/*.d.ts": true,
+    "**/*.d.ts.map": true,
+    "**/*.js.map": true,
+  },
+
   "search.exclude": {
     ".git": true,
     ".eslintcache": true,

@@ -1,11 +1,11 @@
 {
   "compilerOptions": {
+    "emitDeclarationOnly": true,
     "target": "ES2021",
     "module": "CommonJS",
     "lib": ["dom", "esnext"],
     "declaration": true,
     "declarationMap": true,
-    "noEmit": true,
     "jsx": "react",
     "strict": true,
     "pretty": true,
