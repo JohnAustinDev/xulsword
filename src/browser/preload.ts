@@ -40,7 +40,7 @@ const ipcRenderer = {
   // the data. Therefore data must either be preloaded into the cache, or
   // else a special call must be used that is capable of waiting for the
   // data and handling it later.
-  sendSync: (channel, ...args) => {
+  sendSync: (_channel, ..._args) => {
     return;
   },
   on: (channel, strippedfunc) => {

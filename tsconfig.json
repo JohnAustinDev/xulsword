@@ -25,5 +25,5 @@
     "allowImportingTsExtensions": true,
     "skipLibCheck": true,
   },
-  "include": ["./.eslintrc.js", "./src/*"],
+  "include": ["./src/**/*"],
 }

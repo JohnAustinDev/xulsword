@@ -2,7 +2,7 @@ import { Server } from 'socket.io';
 import i18n from 'i18next';
 import log, { LogLevel } from 'electron-log';
 import Setenv from '../setenv.ts';
-import { JSON_parse, GCacheKey, JSON_stringify } from '../common.ts';
+import { JSON_parse, JSON_stringify } from '../common.ts';
 import C from '../constant.ts';
 import G from '../main/mgServer.ts';
 import handleGlobal from '../main/handleGlobal.ts';
@@ -86,7 +86,7 @@ io.on('connection', (socket) => {
 
   socket.on(
     'error-report',
-    (args: any[], callback: (r: any) => void) => {
+    (args: any[], _callback: (r: any) => void) => {
       const [message] = args;
       throw Error(message);
     }
@@ -94,9 +94,9 @@ io.on('connection', (socket) => {
 
   socket.on(
     'log',
-    (args: any[], callback: (r: any) => void) => {
+    (args: any[], _callback: (r: any) => void) => {
       const [type, windowID, json] = args;
-      log[type](windowID, ...JSON_parse(json));
+      log[type as LogLevel](windowID, ...JSON_parse(json));
     }
   );
 

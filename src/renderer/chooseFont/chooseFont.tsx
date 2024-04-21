@@ -2,7 +2,7 @@
 /* eslint-disable jsx-a11y/control-has-associated-label */
 import type { ReactElementLike } from 'prop-types';
 import React from 'react';
-import { ChromePicker as ColorPicker } from 'react-color';
+import { ChromePicker as ColorPicker, ColorResult } from 'react-color';
 import { Slider } from '@blueprintjs/core';
 import { diff, normalizeFontFamily } from '../../common.ts';
 import G from '../rg.ts';
@@ -44,12 +44,6 @@ export type ColorType = {
   g: number;
   b: number;
   a: number;
-};
-
-type PickerColorType = {
-  rgb: ColorType;
-  hex: string;
-  hsl: { h: number; s: number; l: number; a: number };
 };
 
 export type ChooseFontWinState = typeof startingState;
@@ -174,7 +168,7 @@ export default class ChooseFontWin extends React.Component {
         #background .color-box {${backgroundCSS}}`}</style>
         {ruSureDialog && (
           <Dialog
-            body={G.i18n.t('dialog.confirmDelete')}
+            body={<>G.i18n.t('dialog.confirmDelete')</>}
             buttons={
               <>
                 <Spacer flex="10" />
@@ -280,8 +274,7 @@ export default class ChooseFontWin extends React.Component {
                     {coloropen && (
                       <ColorPicker
                         color={disabled ? nocolor : color}
-                        defaultView="rgb"
-                        onChange={(c: PickerColorType) => {
+                        onChange={(c: ColorResult) => {
                           this.setState({ color: c.rgb });
                         }}
                       />
@@ -307,8 +300,7 @@ export default class ChooseFontWin extends React.Component {
                       {backgroundopen && (
                         <ColorPicker
                           color={disabled ? nocolor : background}
-                          defaultView="rgb"
-                          onChange={(c: PickerColorType) => {
+                          onChange={(c: ColorResult) => {
                             this.setState({ background: c.rgb });
                           }}
                         />

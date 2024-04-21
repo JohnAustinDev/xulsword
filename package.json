@@ -233,6 +233,7 @@
     "@types/jest": "^26.0.24",
     "@types/node": "^18.18.0",
     "@types/react": "^18.2.0",
+    "@types/react-color": "^3.0.12",
     "@types/react-dom": "^18.2.0",
     "@types/react-test-renderer": "^17.0.1",
     "@types/socket.io-client": "^3.0.0",

@@ -35,7 +35,6 @@ import { addBookmarkTransaction } from './bookmarks.ts';
 
 import type {
   GCallType,
-  GType,
   NewModulesType,
   WindowDescriptorPrefType,
   WindowDescriptorType,

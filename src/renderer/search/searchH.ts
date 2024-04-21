@@ -694,9 +694,9 @@ export async function lexicon(lexdiv: HTMLDivElement, state: SearchWinState) {
       a.textContent = strongNum;
 
       const span1 = lexlist.appendChild(document.createElement('span'));
-      span1.textContent = ` - [${dString(G.i18n, 1)}-${dString(
-        G.i18n,
-        total
+      span1.textContent = ` - [${
+        dString(G.getLocaleDigits(), 1, G.i18n.language)}-${
+        dString(G.getLocaleDigits(), total, G.i18n.language
       )}]: `;
 
       const span2 = lexlist.appendChild(document.createElement('span'));
@@ -764,9 +764,9 @@ export async function lexicon(lexdiv: HTMLDivElement, state: SearchWinState) {
         });
         sanitizeHTML(
           lexlist,
-          `${mtype} - [${dString(G.i18n, 1)}-${dString(
-            G.i18n,
-            total
+          `${mtype} - [${
+              dString(G.getLocaleDigits(), 1, G.i18n.language)}-${
+              dString(G.getLocaleDigits(), total, G.i18n.language
           )}]: ${sns.join(', ')}`
         );
       }

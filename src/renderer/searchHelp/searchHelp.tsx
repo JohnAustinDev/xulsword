@@ -62,7 +62,7 @@ function SearchHelpWin() {
     type.forEach((t, i) => {
       write(
         ['name', t].join('.'),
-        `${dString(G.i18n, i + 1)}) ${G.i18n.t(`${t}.label`)}: `
+        `${dString(G.getLocaleDigits(), i + 1, G.i18n.language)}) ${G.i18n.t(`${t}.label`)}: `
       );
       write(['desc', t].join('.'), `${G.i18n.t(`${t}.description`)}`);
     });

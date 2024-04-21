@@ -6,7 +6,6 @@ import type {
   clipboard,
   Shell,
 } from 'electron';
-import type i18n from 'i18next';
 import type React from 'react';
 import type C from './constant.ts';
 import type {
@@ -827,7 +826,11 @@ export type GType = {
   cachePreload: GCachePreloadType;
 
   // Objects
-  i18n: Pick<typeof i18n, 't' | 'exists' | 'language'>;
+  i18n: {
+    t: (k: string, opts?: any) => string;
+    exists: (k: string, opts?: any) => boolean;
+    language: string
+  };
   clipboard: Pick<typeof clipboard, 'write'>;
   Prefs: typeof Prefs;
   DiskCache: typeof DiskCache;

@@ -382,13 +382,13 @@ export default class SearchWin extends React.Component implements PopupParent {
     const { i18n } = G;
     if (count > C.UI.Search.resultsPerPage) {
       searchStatus = G.i18n.t('searchStatusPage', {
-        v1: dString(i18n, pageindex + 1),
-        v2: dString(i18n, lasti),
-        v3: dString(i18n, count),
+        v1: dString(G.getLocaleDigits(), pageindex + 1, i18n.language),
+        v2: dString(G.getLocaleDigits(), lasti, i18n.language),
+        v3: dString(G.getLocaleDigits(), count, i18n.language),
       });
     } else {
       searchStatus = G.i18n.t('searchStatusAll', {
-        v1: dString(i18n, count),
+        v1: dString(G.getLocaleDigits(), count, i18n.language),
       });
     }
 

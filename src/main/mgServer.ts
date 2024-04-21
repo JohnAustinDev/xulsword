@@ -28,12 +28,12 @@ import {
   getLocaleDigits,
 } from './minit.ts';
 
-import type { GAType, GType } from '../type.ts';
+import type { GType } from '../type.ts';
 
 // This G object is for use on the nodejs server, and it shares
 // the same interface as the renderer's G object. Properties of this
 // object directly access server data and modules.
-class GAClass implements GAType {
+class GAClass implements Partial<GType> {
   gtype;
 
   // TODO!: Great care must be taken to insure public usage of these
@@ -53,96 +53,96 @@ class GAClass implements GAType {
   Module;
 
   constructor() {
-    this.gtype = 'async' as 'async';
+    this.gtype = 'async' as any;
     this.i18n = i18next;
-    this.LibSword = LibSword;
+    this.LibSword = LibSword ;
     this.Prefs = Prefs;
     this.DiskCache = DiskCache;
-    this.Dirs = Dirs;
+    this.Dirs = Dirs
     this.Data = Data;
     this.Module = Module;
   }
 
   get Books() {
-    return getBooks() as any;
+    return getBooks();
   }
 
   get Book() {
-    return getBook() as any;
+    return getBook();
   }
 
   get Tabs() {
-    return getTabs() as any;
+    return getTabs();
   }
 
   get Tab() {
-    return getTab() as any;
+    return getTab();
   }
 
   get Config() {
-    return getConfig() as any;
+    return getConfig();
   }
 
   get AudioConfs() {
-    return getAudioConfs() as any;
+    return getAudioConfs();
   }
 
   get LocaleConfigs() {
-    return getLocaleConfigs() as any;
+    return getLocaleConfigs();
   }
 
   get ModuleConfigDefault() {
-    return getModuleConfigDefault() as any;
+    return getModuleConfigDefault();
   }
 
   get ProgramConfig() {
-    return localeConfig(i18next.language) as any;
+    return localeConfig(i18next.language);
   }
 
   get ModuleFonts() {
-    return getModuleFonts() as any;
+    return getModuleFonts();
   }
 
   get FeatureModules() {
-    return getFeatureModules() as any;
+    return getFeatureModules();
   }
 
   get BkChsInV11n() {
-    return getBkChsInV11n() as any;
+    return getBkChsInV11n();
   }
 
   get GetBooksInVKModules() {
-    return GetBooksInVKModules() as any;
+    return GetBooksInVKModules();
   }
 
   getSystemFonts(
     ...args: Parameters<GType['getSystemFonts']>
-  ): Promise<ReturnType<GType['getSystemFonts']>> {
-    return getSystemFonts(...args) as any;
+  ): ReturnType<GType['getSystemFonts']> {
+    return getSystemFonts(...args);
   }
 
   getBooksInVKModule(
     ...args: Parameters<GType['getBooksInVKModule']>
-  ): Promise<ReturnType<GType['getBooksInVKModule']>> {
-    return getBooksInVKModule(...args) as any;
+  ): ReturnType<GType['getBooksInVKModule']> {
+    return getBooksInVKModule(...args);
   }
 
   getLocalizedBooks(
     ...args: Parameters<GType['getLocalizedBooks']>
-  ): Promise<ReturnType<GType['getLocalizedBooks']>> {
-    return getLocalizedBooks(...args) as any;
+  ): ReturnType<GType['getLocalizedBooks']>{
+    return getLocalizedBooks(...args);
   }
 
   getLocaleDigits(
     ...args: Parameters<GType['getLocaleDigits']>
-  ): Promise<ReturnType<GType['getLocaleDigits']>> {
-    return getLocaleDigits(...args) as any;
+  ): ReturnType<GType['getLocaleDigits']> {
+    return getLocaleDigits(...args);
   }
 
   cachePreload(
     ...args: Parameters<GType['cachePreload']>
-  ): Promise<ReturnType<GType['cachePreload']>> {
-    return cachePreload(G as any, ...args) as any;
+  ): ReturnType<GType['cachePreload']> {
+    return cachePreload(G as any, ...args);
   }
 }
 

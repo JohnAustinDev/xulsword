@@ -478,7 +478,7 @@ export function verseKey(
       options
     ),
     G.BkChsInV11n,
-    G.i18n.t('locale_direction'),
+    G.i18n.t('locale_direction') as 'ltr' | 'rtl',
     {
       convertLocation: (
         fromv11n: V11nType,
