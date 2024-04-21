@@ -12,7 +12,7 @@ import S from '../../../defaultPrefs.ts';
 import G from '../../rg.ts';
 import { getElementData } from '../../htmlData.ts';
 import log from '../../log.ts';
-import { scrollIntoView } from '../../rutil.tsx';
+import { scrollIntoView } from '../../rutil.ts';
 import { aTextWheelScroll, getRefHTML } from './zversekey.ts';
 
 import type Atext from './atext.tsx';

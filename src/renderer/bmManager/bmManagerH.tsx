@@ -20,7 +20,7 @@ import S from '../../defaultPrefs.ts';
 import C from '../../constant.ts';
 import G from '../rg.ts';
 import { verseKey } from '../htmlData.ts';
-import { bookmarkItemIcon } from '../rutil.tsx';
+import bookmarkItemIcon from './bookmarkItemIcon.tsx';
 import log from '../log.ts';
 import Label from '../libxul/label.tsx';
 import './bmManager.css';

@@ -5,8 +5,6 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable no-continue */
 /* eslint-disable import/prefer-default-export */
-import React from 'react';
-import { Icon, TreeNodeInfo } from '@blueprintjs/core';
 import Cache from '../cache.ts';
 import {
   diff,
@@ -15,7 +13,6 @@ import {
   keep,
   versionCompare,
   getStatePref as getStatePref2,
-  bookmarkItemIconPath,
   audioConfNumbers,
   gbPaths,
   localizeString,
@@ -29,8 +26,6 @@ import log from './log.ts';
 
 import type {
   AudioPath,
-  BookmarkItemType,
-  BookmarkTreeNode,
   GenBookAudio,
   GenBookAudioConf,
   GenBookAudioFile,
@@ -49,6 +44,7 @@ import type {
   VerseKeyAudioFile,
   WindowDescriptorPrefType,
 } from '../type.ts';
+import type { TreeNodeInfo } from '@blueprintjs/core';
 
 export function component(
   comp: any
@@ -265,35 +261,6 @@ export function audioGenBookNode(
   return false;
 }
 
-export function audioIcon(
-  module: string,
-  bookOrKey: OSISBookType | string,
-  chapter: number | undefined,
-  audioHandler: (audio: VerseKeyAudioFile | GenBookAudioFile) => void
-): JSX.Element | null {
-  let afile: VerseKeyAudioFile | GenBookAudioFile | null = null;
-  if (G.Tab[module].isVerseKey) {
-    const book = bookOrKey as OSISBookType;
-    afile = verseKeyAudioFile(module, book, chapter);
-  } else if (G.Tab[module].tabType === 'Genbks' && bookOrKey) {
-    afile = genBookAudioFile(module, bookOrKey);
-  }
-  if (afile) {
-    const handler = ((ax: VerseKeyAudioFile | GenBookAudioFile) => {
-      return (e: React.SyntheticEvent) => {
-        e.stopPropagation();
-        audioHandler(ax);
-      };
-    })(afile);
-    return (
-      <div className="audio-icon" onClick={handler}>
-        <Icon icon="volume-up" />
-      </div>
-    );
-  }
-  return null;
-}
-
 // Returns the audio files listed in a config file as GenBookAudio.
 export function readGenBookAudioConf(
   audio: GenBookAudioConf,
@@ -504,13 +471,6 @@ export function getLangReadable(code: string): string {
         : languageNames.en[code2];
   }
   return name || code;
-}
-
-export function bookmarkItemIcon(
-  item: BookmarkTreeNode | BookmarkItemType
-): JSX.Element {
-  const path = bookmarkItemIconPath(G, item);
-  return <img className="bmicon" src={G.inlineFile(path)} />;
 }
 
 export function moduleInfoHTML(configs: SwordConfType[]): string {

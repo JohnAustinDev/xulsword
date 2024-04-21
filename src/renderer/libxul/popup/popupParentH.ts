@@ -5,7 +5,7 @@ import S from '../../../defaultPrefs.ts';
 import G from '../../rg.ts';
 import { findElementData, updateDataAttribute } from '../../htmlData.ts';
 import log from '../../log.ts';
-import { scrollIntoView, windowArguments } from '../../rutil.tsx';
+import { scrollIntoView, windowArguments } from '../../rutil.ts';
 import { delayHandler } from '../xul.tsx';
 import { getPopupHTML } from './popupH.ts';
 

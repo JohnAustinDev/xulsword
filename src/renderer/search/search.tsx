@@ -19,7 +19,7 @@ import S from '../../defaultPrefs.ts';
 import G from '../rg.ts';
 import renderToRoot from '../renderer.tsx';
 import log from '../log.ts';
-import { windowArguments } from '../rutil.tsx';
+import { windowArguments } from '../rutil.ts';
 import {
   PopupParent,
   PopupParentState,

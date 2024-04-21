@@ -9,7 +9,6 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { TreeNodeInfo } from '@blueprintjs/core';
 import {
   dictTreeNodes,
   findFirstLeafNode,
@@ -28,6 +27,8 @@ import { Vbox } from './boxes.tsx';
 import Menulist from './menulist.tsx';
 import ModuleMenu from './modulemenu.tsx';
 import './selectOR.css';
+
+import type { TreeNodeInfo } from '@blueprintjs/core';
 
 // Allow users to select one or more chapters from any non-versekey SWORD
 // module parent node.

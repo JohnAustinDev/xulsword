@@ -10,9 +10,10 @@ import PropTypes from 'prop-types';
 import { clone, diff, getModuleOfObject, handleRenderPromises, ofClass } from '../../common.ts';
 import C from '../../constant.ts';
 import G, { GA } from '../rg.ts';
-import { getMaxChapter, getMaxVerseSA } from '../rutil.tsx';
+import { getMaxChapter, getMaxVerseSA } from '../rutil.ts';
 import { addClass, xulDefaultProps, XulProps, xulPropTypes } from './xul.tsx';
 import { Hbox } from './boxes.tsx';
+import ModuleMenu from './modulemenu.tsx';
 import Label from './label.tsx';
 import Spacer from './spacer.tsx';
 import Menulist from './menulist.tsx';
@@ -26,7 +27,6 @@ import type {
   RenderPromiseState,
   RenderPromiseComponent,
 } from '../../type.ts';
-import ModuleMenu from './modulemenu.tsx';
 
 export type SelectVKType =
   | (LocationVKType & {

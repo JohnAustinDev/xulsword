@@ -10,7 +10,7 @@ import {
   JSON_attrib_stringify,
 } from '../../../common.ts';
 import { getElementData, verseKey } from '../../htmlData.ts';
-import { getCompanionModules, getMaxChapter, getMaxVerse } from '../../rutil.tsx';
+import { getCompanionModules, getMaxChapter, getMaxVerse } from '../../rutil.ts';
 import G from '../../rg.ts';
 import { delayHandler } from '../xul.tsx';
 

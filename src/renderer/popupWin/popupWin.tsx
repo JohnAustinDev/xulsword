@@ -5,7 +5,7 @@ import React from 'react';
 import { diff } from '../../common.ts';
 import G from '../rg.ts';
 import renderToRoot from '../renderer.tsx';
-import { windowArguments } from '../rutil.tsx';
+import { windowArguments } from '../rutil.ts';
 import {
   addClass,
   xulDefaultProps,

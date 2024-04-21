@@ -18,7 +18,7 @@ import {
 import S from '../../../defaultPrefs.ts';
 import C from '../../../constant.ts';
 import G from '../../rg.ts';
-import { libswordImgSrc, windowArguments } from '../../rutil.tsx';
+import { libswordImgSrc, windowArguments } from '../../rutil.ts';
 import {
   topHandle,
   htmlAttribs,

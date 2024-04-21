@@ -4,10 +4,11 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Button as BPButton } from '@blueprintjs/core';
-import type { ButtonProps as BPButtonProps } from '@blueprintjs/core';
 import { keep } from '../../common.ts';
 import { xulDefaultProps, xulPropTypes, XulProps, htmlAttribs } from './xul.tsx';
 import './button.css';
+
+import type { ButtonProps as BPButtonProps } from '@blueprintjs/core';
 
 // XUL button
 const defaultProps = {

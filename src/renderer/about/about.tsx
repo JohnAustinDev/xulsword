@@ -7,7 +7,7 @@ import React from 'react';
 import C from '../../constant.ts';
 import G from '../rg.ts';
 import renderToRoot from '../renderer.tsx';
-import { windowArguments } from '../rutil.tsx';
+import { windowArguments } from '../rutil.ts';
 import { Hbox, Vbox } from '../libxul/boxes.tsx';
 import Label from '../libxul/label.tsx';
 import Stack from '../libxul/stack.tsx';

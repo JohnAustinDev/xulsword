@@ -35,7 +35,7 @@ import {
   getLangReadable,
   setStatePref,
   windowArguments,
-} from '../rutil.tsx';
+} from '../rutil.ts';
 import {
   addClass,
   xulDefaultProps,

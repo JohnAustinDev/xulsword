@@ -8,7 +8,7 @@ import { diff, normalizeFontFamily } from '../../common.ts';
 import G from '../rg.ts';
 import renderToRoot from '../renderer.tsx';
 import log from '../log.ts';
-import { windowArguments } from '../rutil.tsx';
+import { windowArguments } from '../rutil.ts';
 import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul.tsx';
 import { Hbox, Vbox } from '../libxul/boxes.tsx';
 import Groupbox from '../libxul/groupbox.tsx';

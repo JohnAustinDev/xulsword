@@ -5,7 +5,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import type { ReactElementLike } from 'prop-types';
-import { component } from '../rutil.tsx';
+import { component } from '../rutil.ts';
 import { xulDefaultProps, xulPropTypes, XulProps, htmlAttribs } from './xul.tsx';
 import './grid.css';
 

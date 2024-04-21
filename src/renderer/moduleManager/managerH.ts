@@ -29,7 +29,7 @@ import {
 import C from '../../constant.ts';
 import S from '../../defaultPrefs.ts';
 import G from '../rg.ts';
-import { windowArguments } from '../rutil.tsx';
+import { windowArguments } from '../rutil.ts';
 import log from '../log.ts';
 import { TCellInfo, TCellLocation } from '../libxul/table.tsx';
 import { forEachNode } from '../libxul/treeview.tsx';

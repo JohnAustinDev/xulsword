@@ -24,8 +24,7 @@ import {
   getMaxChapter,
   libswordImgSrc,
   scrollIntoView,
-  audioIcon,
-} from '../../rutil.tsx';
+} from '../../rutil.ts';
 import {
   xulDefaultProps,
   xulPropTypes,
@@ -44,6 +43,7 @@ import {
   findVerseElement,
 } from './zversekey.ts';
 import handlerH from './atextH.ts';
+import audioIcon from './audioIcon.tsx';
 import '../../libsword.css';
 import './atext.css';
 

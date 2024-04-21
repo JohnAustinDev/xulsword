@@ -13,7 +13,7 @@ import {
 } from '../../common.ts';
 import C from '../../constant.ts';
 import G from '../rg.ts';
-import { moduleInfoHTML } from '../rutil.tsx';
+import { moduleInfoHTML } from '../rutil.ts';
 import { xulDefaultProps, xulPropTypes, XulProps, htmlAttribs } from './xul.tsx';
 import Button from './button.tsx';
 import Label from './label.tsx';

@@ -17,7 +17,7 @@ import {
   getStatePref,
   clearPending,
   setStatePref,
-} from '../rutil.tsx';
+} from '../rutil.ts';
 import {
   addClass,
   delayHandler,

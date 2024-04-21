@@ -6,7 +6,8 @@ import C from '../constant.ts';
 import S from '../defaultPrefs.ts';
 import G from './rg.ts';
 import { updateDataAttribute, verseKey } from './htmlData.ts';
-import { bookmarkItemIcon, getMaxVerse } from './rutil.tsx';
+import { getMaxVerse } from './rutil.ts';
+import bookmarkItemIcon from './bmManager/bookmarkItemIcon.tsx';
 
 import type {
   BookmarkFolderType,

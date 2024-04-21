@@ -10,7 +10,7 @@ if [[ -z "$LIBXULSWORD_ONLY" ]]; then
 fi
 
 if [ -e /vagrant ]; then export CONTEXT="guest"; else export CONTEXT="host"; fi
-if [ "$CONTEXT" = "guest" ]; then export XULSWORD="$HOME/src/xulsword"; else export XULSWORD="$( pwd -P )"; fi
+export XULSWORD="$( pwd -P )"
 export CPP="$XULSWORD/Cpp"
 export LIBXULSWORD="$XULSWORD/build/app/node_modules/libxulsword"
 

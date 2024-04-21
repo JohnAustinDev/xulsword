@@ -21,7 +21,7 @@ import S from '../../defaultPrefs.ts';
 import G from '../rg.ts';
 import renderToRoot from '../renderer.tsx';
 import { verseKey } from '../htmlData.ts';
-import { windowArguments } from '../rutil.tsx';
+import { windowArguments } from '../rutil.ts';
 import { bookmarkTreeNode, getSampleText } from '../bookmarks.ts';
 import Grid, { Column, Columns, Row, Rows } from '../libxul/grid.tsx';
 import { Hbox, Vbox } from '../libxul/boxes.tsx';

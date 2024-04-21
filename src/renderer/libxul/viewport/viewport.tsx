@@ -25,7 +25,7 @@ import {
 import G from '../../rg.ts';
 import log from '../../log.ts';
 import { verseKey } from '../../htmlData.ts';
-import { clearPending } from '../../rutil.tsx';
+import { clearPending } from '../../rutil.ts';
 import {
   addClass,
   xulDefaultProps,

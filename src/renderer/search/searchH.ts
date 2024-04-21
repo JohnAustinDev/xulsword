@@ -16,7 +16,7 @@ import S from '../../defaultPrefs.ts';
 import G from '../rg.ts';
 import log from '../log.ts';
 import { getElementData, verseKey } from '../htmlData.ts';
-import { windowArguments } from '../rutil.tsx';
+import { windowArguments } from '../rutil.ts';
 import { getStrongsModAndKey } from '../libxul/viewport/zdictionary.ts';
 
 import type {

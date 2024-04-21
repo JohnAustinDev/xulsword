@@ -19,7 +19,7 @@ import {
   getMaxVerse,
   getStatePref,
   setStatePref,
-} from '../rutil.tsx';
+} from '../rutil.ts';
 import { libswordText } from '../libxul/viewport/ztext.ts';
 import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul.tsx';
 import Groupbox from '../libxul/groupbox.tsx';

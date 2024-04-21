@@ -21,7 +21,7 @@ import {
   getStatePref,
   setStatePref,
   libswordImgSrc,
-} from '../rutil.tsx';
+} from '../rutil.ts';
 import log from '../log.ts';
 import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul.tsx';
 import Grid, { Column, Columns, Row, Rows } from '../libxul/grid.tsx';

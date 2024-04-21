@@ -20,7 +20,7 @@ import C from '../constant.ts';
 import G from './rg.ts';
 import DynamicStyleSheet from './style.ts';
 import ContextData from './contextData.ts';
-import { windowArguments } from './rutil.tsx';
+import { windowArguments } from './rutil.ts';
 import log from './log.ts';
 import { delayHandler, xulCaptureEvents, xulDefaultProps } from './libxul/xul.tsx';
 import { Hbox } from './libxul/boxes.tsx';

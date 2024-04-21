@@ -13,10 +13,9 @@ import C from '../../../constant.ts';
 import G from '../../rg.ts';
 import {
   audioConfig,
-  audioIcon,
   clearPending,
   getMaxChapter,
-} from '../../rutil.tsx';
+} from '../../rutil.ts';
 import { Hbox, Vbox } from '../boxes.tsx';
 import Spacer from '../spacer.tsx';
 import {
@@ -28,6 +27,7 @@ import {
   topHandle,
 } from '../xul.tsx';
 import handlerH from './chooserH.ts';
+import audioIcon from './audioIcon.tsx';
 import './chooser.css';
 
 import type {

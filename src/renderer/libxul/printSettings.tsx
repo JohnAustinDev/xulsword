@@ -22,7 +22,7 @@ import { clone, diff, keep, randomID } from '../../common.ts';
 import S from '../../defaultPrefs.ts';
 import C from '../../constant.ts';
 import G from '../rg.ts';
-import { getStatePref, setStatePref } from '../rutil.tsx';
+import { getStatePref, setStatePref } from '../rutil.ts';
 import { Hbox, Vbox } from './boxes.tsx';
 import Button from './button.tsx';
 import Spacer from './spacer.tsx';

@@ -1,0 +1,6 @@
+{
+  "PRODUCTION": 0,
+  "XSProfD": "$Site1/app-profile",
+  "XSModsUser": "$Site1/htdocs/ftpmirror/pub/modsword/raw",
+  "XSModsCommon": "$Site1/htdocs/ftpmirror/private/modsword/raw"
+}

@@ -7,7 +7,7 @@ import Cache from '../../../cache.ts';
 import { clone, escapeRE, ofClass } from '../../../common.ts';
 import { getElementData, verseKey } from '../../htmlData.ts';
 import G from '../../rg.ts';
-import { scrollIntoView, windowArguments } from '../../rutil.tsx';
+import { scrollIntoView, windowArguments } from '../../rutil.ts';
 import { delayHandler } from '../xul.tsx';
 import { textChange } from './ztext.ts';
 import { aTextWheelScroll, chapterChange } from './zversekey.ts';

@@ -9,7 +9,7 @@ import {
 import C from '../../constant.ts';
 import G from '../rg.ts';
 import addBookmarks from '../bookmarks.ts';
-import { isValidVKM } from '../rutil.tsx';
+import { isValidVKM } from '../rutil.ts';
 import { getDictEntryHTML } from '../libxul/viewport/zdictionary.ts';
 import { getNoteHTML, getIntroductions } from '../libxul/viewport/zversekey.ts';
 

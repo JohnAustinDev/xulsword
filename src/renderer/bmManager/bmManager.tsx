@@ -5,7 +5,6 @@
 /* eslint-disable jsx-a11y/no-noninteractive-element-interactions */
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable react/static-property-placement */
-import type { Table2 as BPTable } from '@blueprintjs/table';
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Suggest2 } from '@blueprintjs/select';
@@ -25,7 +24,7 @@ import {
   registerUpdateStateFromPref,
   setStatePref,
   getStatePref,
-} from '../rutil.tsx';
+} from '../rutil.ts';
 import { bookmarkTreeNodes, getSampleText } from '../bookmarks.ts';
 import { verseKey } from '../htmlData.ts';
 import Table from '../libxul/table.tsx';
@@ -46,6 +45,7 @@ import * as H from './bmManagerH.tsx';
 import './bmManager.css';
 import '@blueprintjs/select/lib/css/blueprint-select.css';
 
+import type { Table2 as BPTable } from '@blueprintjs/table';
 import type {
   BookmarkFolderType,
   BookmarkItemType,

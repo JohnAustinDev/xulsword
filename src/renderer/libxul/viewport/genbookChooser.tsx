@@ -10,7 +10,7 @@ import PropTypes from 'prop-types';
 import { clone, genBookTreeNodes, gbAncestorIDs } from '../../../common.ts';
 import C from '../../../constant.ts';
 import G from '../../rg.ts';
-import { audioGenBookNode } from '../../rutil.tsx';
+import { audioGenBookNode } from '../../rutil.ts';
 import { Hbox, Vbox } from '../boxes.tsx';
 import { xulDefaultProps, xulPropTypes, XulProps, addClass } from '../xul.tsx';
 import TreeView, { forEachNode } from '../treeview.tsx';

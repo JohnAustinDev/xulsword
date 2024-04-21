@@ -16,7 +16,7 @@ import {
   registerUpdateStateFromPref,
   setStatePref,
   windowArguments,
-} from '../rutil.tsx';
+} from '../rutil.ts';
 import {
   topHandle,
   xulDefaultProps,

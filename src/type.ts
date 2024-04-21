@@ -1,6 +1,7 @@
 /* eslint-disable import/no-duplicates */
 import S from './defaultPrefs.ts';
-import { TreeNodeInfo } from '@blueprintjs/core';
+
+import type { TreeNodeInfo } from '@blueprintjs/core';
 import type {
   BrowserWindowConstructorOptions,
   clipboard,

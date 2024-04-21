@@ -6,7 +6,7 @@ import { clone, ofClass } from '../../common.ts';
 import G from '../rg.ts';
 import { chapterChange, verseChange } from '../libxul/viewport/zversekey.ts';
 import { genbookChange } from '../libxul/viewport/ztext.ts';
-import { genBookAudioFile, verseKeyAudioFile } from '../rutil.tsx';
+import { genBookAudioFile, verseKeyAudioFile } from '../rutil.ts';
 import { verseKey } from '../htmlData.ts';
 
 import type { GenBookAudioFile, ShowType, VerseKeyAudioFile } from '../../type.ts';

@@ -3,7 +3,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { clearPending } from '../rutil.tsx';
+import { clearPending } from '../rutil.ts';
 import {
   delayHandler,
   addClass,
