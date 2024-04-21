@@ -734,7 +734,7 @@ export function versekeyScroll(
   // find the element to scroll to
   let av = sbe.firstChild as ChildNode | null;
   let v = null as HTMLElement | null;
-  let vf = null;
+  let vf = null as HTMLElement | null;
   while (av && !v) {
     const pi = getElementData(av as HTMLElement);
     const p = pi?.location || null;

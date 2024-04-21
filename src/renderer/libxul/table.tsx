@@ -30,6 +30,7 @@ import {
   Utils,
   IColumnProps,
 } from '@blueprintjs/table';
+import { clone, localizeString, ofClass, randomID } from '../../common.ts';
 import G from '../rg.ts';
 import {
   addClass,
@@ -43,7 +44,6 @@ import '@blueprintjs/table/lib/css/table.css';
 import './table.css';
 
 import { Box } from './boxes.tsx';
-import { clone, localizeString, ofClass, randomID } from 'common';
 
 export type TablePropColumn = {
   datacolumn: number;

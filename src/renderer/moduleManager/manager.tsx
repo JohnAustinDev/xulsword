@@ -79,7 +79,7 @@ import type {
 } from '../libxul/table.tsx';
 import type { SelectVKProps, SelectVKType } from '../libxul/selectVK.tsx';
 import type { ModinfoParent } from '../libxul/modinfo.tsx';
-import { WindowRootState } from 'renderer/renderer';
+import { WindowRootState } from '../renderer.ts';
 
 G.Module.cancel();
 
