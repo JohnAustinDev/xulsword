@@ -310,7 +310,7 @@ export function diff<T>(pv1: any, pv2: T, depth = 1): Partial<T> | undefined {
         return diff(pv1[i], v, depth - 1) !== undefined;
       })
     ) {
-      difference = pv2;
+      difference = clone(pv2);
     }
   } else if (Object.keys(pv2).length === 0) {
     if (Object.keys(pv1).length !== 0) difference = {};
@@ -335,7 +335,7 @@ export function diff<T>(pv1: any, pv2: T, depth = 1): Partial<T> | undefined {
       Object.keys(obj1).forEach((k1) => {
         if (!(k1 in obj2) && !difference) difference = {};
       });
-      if (difference) difference = obj2 as T;
+      if (difference) difference = clone(obj2) as T;
     }
   }
   return difference;
