@@ -7,13 +7,14 @@ import log from './log.ts';
 
 import type { GAType, GCallType, GType } from '../type.ts';
 
-const context = window.processR?.platform || 'browser';
-
 async function asyncRequest(
   ckey: string,
   cacheable: boolean,
   thecall: GCallType
 ) {
+  if (!allowed(thecall)) {
+    throw new Error(`Async G call unsupported in browser environment: ${JSON_stringify(thecall)}`);
+  }
   if (!cacheable) Cache.clear(ckey);
   if (Cache.has(ckey)) return Promise.resolve(Cache.read(ckey));
   log.silly(`${ckey} miss`);
@@ -33,9 +34,12 @@ function request(
   cacheable: boolean,
   thecall: GCallType
 ) {
+  if (!allowed(thecall)) {
+    throw new Error(`Sync G call unsupported in browser environment: ${JSON_stringify(thecall)}`);
+  }
   if (!cacheable) Cache.clear(ckey);
   if (Cache.has(ckey)) return Cache.read(ckey);
-  if (context === 'browser') {
+  if (window.processR.platform === 'browser') {
     if (cacheable)
       throw new Error(`Cache must be preloaded in browser context: ${JSON_stringify(thecall)}`);
     else
@@ -43,6 +47,15 @@ function request(
   }
   log.silly(`${ckey} miss`);
   return window.ipc.sendSync('global', thecall);
+}
+
+function allowed(thecall: GCallType): boolean {
+  const [name, method] = thecall;
+  const is = name && GBuilder.internetSafe.find((x) => x[0] === name);
+  if (window.processR.platform && window.processR.platform !== 'browser') return true;
+  if (is && !method && is[1].length === 0) return true;
+  if (is && (is[1] as any).includes(method)) return true;
+  return false;
 }
 
 // This G object is used in renderer processes, and shares the same
@@ -64,20 +77,21 @@ const G = {} as GType;
 export const GA = {} as GAType;
 const { asyncFuncs } = GBuilder;
 Object.entries(GBuilder).forEach((entry) => {
-  if (([
+  if (!([
+    'gtype',
     'asyncFuncs',
     'includeCallingWindow',
-    'internetCapable'
-  ] as (keyof typeof GBuilder)[]).includes(entry[0] as any)) return;
-  const gBuilder = GBuilder as any;
-  const g = G as any;
-  const ga = GA as any;
-  const name = entry[0] as keyof Omit<typeof GBuilder,
-    'asyncFuncs' |
-    'includeCallingWindow' |
-    'internetCapable'>;
-  const value = entry[1] as any;
-  if (context !== 'browser' || GBuilder.internetCapable.includes(name)) {
+    'internetSafe'
+  ] as (keyof typeof GBuilder)[]).includes(entry[0] as any)) {
+    const gBuilder = GBuilder as any;
+    const g = G as any;
+    const ga = GA as any;
+    const name = entry[0] as keyof Omit<typeof GBuilder,
+      'gtype' |
+      'asyncFuncs' |
+      'includeCallingWindow' |
+      'internetSafe'>;
+    const value = entry[1] as any;
     if (value === 'getter') {
       const acall: GCallType = [name, null, undefined];
       const ckey = GCacheKey(acall);

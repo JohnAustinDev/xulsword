@@ -6,11 +6,17 @@ import { JSON_stringify } from '../common.ts';
 export default function handleGlobal(
   win: number,
   acall: GCallType,
+  trusted = false, // internetSafe or not?
 ) {
   let ret = null;
   const [name, m, args] = acall;
   const { includeCallingWindow } = GBuilder;
-  if (name in GBuilder) {
+  let allow = false;
+  const is = name && GBuilder.internetSafe.find((x) => x[0] === name);
+  if (trusted) allow = true;
+  else if (is && !m && is[1].length === 0) allow = true;
+  else if (is && (is[1] as any).includes(m)) allow = true;
+  if (name && name in GBuilder && allow) {
     const gBuilder = GBuilder as any;
     const g = G as any;
     if (typeof args === 'undefined' && gBuilder[name] === 'getter') {
@@ -33,13 +39,13 @@ export default function handleGlobal(
         }
         ret = g[name][m](...args);
       } else {
-        throw Error(`Unhandled method: ${JSON_stringify(acall)}`);
+        throw Error(`Unhandled global ipc method: ${JSON_stringify(acall)}`);
       }
     } else {
       throw Error(`Unhandled global ipc type ${gBuilder[name]}: ${JSON_stringify(acall)}`);
     }
   } else {
-    throw Error(`Unhandled global ipc request: ${JSON_stringify(acall)}`);
+    throw Error(`Disallowed global ipc request: ${JSON_stringify(acall)}`);
   }
 
   return ret;

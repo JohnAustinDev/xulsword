@@ -11,7 +11,7 @@ type DirsMainType = typeof Dirs & {
   [key in keyof typeof dirs]: LocalFile;
 };
 
-export type DirsRendererType = typeof Dirs;
+export type DirsRendererType = Omit<typeof Dirs, 'init'>;
 
 const dirs = {
   TmpD: '',

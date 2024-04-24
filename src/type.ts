@@ -845,66 +845,54 @@ export type GType = {
   Window: typeof Window;
 };
 
-export type GAType = {
-  gtype: 'async';
-
-  // Getters
-  Books: Promise<ReturnType<typeof getBooks>>;
-  Book: Promise<ReturnType<typeof getBook>>;
-  Tabs: Promise<ReturnType<typeof getTabs>>;
-  Tab: Promise<ReturnType<typeof getTab>>;
-  Config: Promise<ReturnType<typeof getConfig>>;
-  AudioConfs: Promise<ReturnType<typeof getAudioConfs>>;
-  ProgramConfig: Promise<ReturnType<typeof localeConfig>>;
-  LocaleConfigs: Promise<ReturnType<typeof getLocaleConfigs>>;
-  ModuleConfigDefault: Promise<ReturnType<typeof getModuleConfigDefault>>;
-  ModuleFonts: Promise<ReturnType<typeof getModuleFonts>>;
-  FeatureModules: Promise<ReturnType<typeof getFeatureModules>>;
-  BkChsInV11n: Promise<ReturnType<typeof getBkChsInV11n>>;
-  GetBooksInVKModules: Promise<ReturnType<typeof GetBooksInVKModules>>;
-
-  // Functions
-  getSystemFonts: (...args: Parameters<typeof getSystemFonts>)
-    => Promise<ReturnType<typeof getSystemFonts>>;
-  getBooksInVKModule: (...args: Parameters<typeof getBooksInVKModule>)
-    => Promise<ReturnType<typeof getBooksInVKModule>>;
-  getLocalizedBooks: (...args: Parameters<typeof getLocalizedBooks>)
-    => Promise<ReturnType<typeof getLocalizedBooks>>;
-  getLocaleDigits: (...args: Parameters<typeof getLocaleDigits>)
-    => Promise<ReturnType<typeof getLocaleDigits>>;
-  cachePreload: (...args: Parameters<GCachePreloadType>)
-    => Promise<ReturnType<GCachePreloadType>>;
-
-  // Objects
-  i18n: {
-    [k in keyof Omit<GType['i18n'], 'language'>]: (...args: Parameters<GType['i18n'][k]>)
-       => Promise<ReturnType<GType['i18n'][k]>>
-  } & { language: Promise<GType['i18n']['language']>};
-  Prefs: {
-    [k in keyof GType['Prefs']]: (...args: Parameters<GType['Prefs'][k]>)
-       => Promise<ReturnType<GType['Prefs'][k]>>
+export type GAType = { gtype: 'async' }
+  & { [k in keyof Pick<GType,
+        'Books' |
+        'Book' |
+        'Tabs' |
+        'Tab' |
+        'Config' |
+        'AudioConfs' |
+        'ProgramConfig' |
+        'LocaleConfigs' |
+        'ModuleConfigDefault' |
+        'ModuleFonts' |
+        'FeatureModules' |
+        'BkChsInV11n' |
+        'OPSYS' |
+        'GetBooksInVKModules'>
+      ]: Promise<GType[k]>
+  }
+  & { [k in keyof Pick<GType,
+        'resolveHtmlPath' |
+        'inlineFile' |
+        'inlineAudioFile' |
+        'resetMain' |
+        'getSystemFonts' |
+        'getBooksInVKModule' |
+        'getLocalizedBooks' |
+        'getLocaleDigits' |
+        'publishSubscription' |
+        'canUndo' |
+        'canRedo' |
+        'cachePreload'>
+      ]: (...args: Parameters<GType[k]>) => Promise<ReturnType<GType[k]>>
+  }
+  & { [k in keyof Pick<GType,
+        'i18n' |
+        'clipboard' |
+        'Prefs' |
+        'DiskCache' |
+        'LibSword' |
+        'Dirs' |
+        'Commands' |
+        'Shell' |
+        'Data' |
+        'Module' |
+        'Viewport' |
+        'Window'>
+      ]: unknown;
   };
-  DiskCache: {
-    [k in keyof GType['DiskCache']]: (...args: Parameters<GType['DiskCache'][k]>)
-       => Promise<ReturnType<GType['DiskCache'][k]>>
-  };
-  LibSword: {
-    [k in keyof GType['LibSword']]: (...args: Parameters<GType['LibSword'][k]>)
-       => Promise<ReturnType<GType['LibSword'][k]>>
-  };
-  Dirs: {
-    [k in keyof Omit<GType['Dirs'], 'path'>]: (...args: Parameters<GType['Dirs'][k]>)
-       => Promise<ReturnType<GType['Dirs'][k]>>;
-  } & { path: Promise<GType['Dirs']['path']>};
-  Data: {
-    [k in keyof GType['Data']]: (...args: Parameters<GType['Data'][k]>)
-       => Promise<ReturnType<GType['Data'][k]>>
-  };
-  Module: {
-    [k in keyof GType['Module']]: (...args: Parameters<GType['Module'][k]>)
-       => Promise<ReturnType<GType['Module'][k]>>
-  };
-};
 
 // This GBuilder object will be used in the main/mg and renderer/rg
 // modules at runtime to create different types of G objects sharing
@@ -921,6 +909,16 @@ const func = () => {};
 const CACHEfunc = () => 'cacheable';
 if (typeof window !== 'undefined') window.renderPromises = [];
 export const GBuilder: GType & {
+  // IMPORTANT: Methods of includeCallingWindow classes must not use rest
+  // parameters or default values in their function definition's argument
+  // lists, nor may they be getter functions. This is because Function.length
+  // is used to append the calling window by mg.ts, and Function.length does
+  // not include rest parameters or default arguments. Additionally getter
+  // functions have zero arguments or Function.length. Using rest parameters
+  // or default arguments would result in overwriting the last argument by
+  // the calling window id!
+  includeCallingWindow: ['Prefs', 'Window', 'Commands', 'Module'];
+
   // async functions must be listed in asyncFuncs or runtime
   // errors will result!
   asyncFuncs: [
@@ -932,77 +930,119 @@ export const GBuilder: GType & {
     [keyof GType, (keyof GType['Window'])[]]
   ];
 
-  // IMPORTANT: Methods of includeCallingWindow classes must not use rest
-  // parameters or default values in their function definition's argument
-  // lists, nor may they be getter functions. This is because Function.length
-  // is used to append the calling window by mg.ts, and Function.length does
-  // not include rest parameters or default arguments. Additionally getter
-  // functions have zero arguments or Function.length. Using rest parameters
-  // or default arguments would result in overwriting the last argument by
-  // the calling window id!
-  includeCallingWindow: ['Prefs', 'Window', 'Commands', 'Module'];
-
-  // Only these functions and objects are accessible via Internet.
-  internetCapable: string[];
+  // Only these functions and object methods will be accessible via Internet.
+  internetSafe: [
+    [(keyof GType), (keyof GType['Books'])[]],
+    [(keyof GType), (keyof GType['Book'])[]],
+    [(keyof GType), (keyof GType['Tabs'])[]],
+    [(keyof GType), (keyof GType['Tab'])[]],
+    //[(keyof GAType), (keyof GType['Config'])[]],
+    //[(keyof GAType), (keyof GType['AudioConfs'])[]],
+    //[(keyof GAType), (keyof GType['ProgramConfig'])[]],
+    //[(keyof GAType), (keyof GType['LocaleConfigs'])[]],
+    //[(keyof GAType), (keyof GType['ModuleConfigDefault'])[]],
+    [(keyof GType), (keyof GType['ModuleFonts'])[]],
+    [(keyof GType), (keyof GType['FeatureModules'])[]],
+    [(keyof GType), (keyof GType['BkChsInV11n'])[]],
+    //[(keyof GAType), (keyof GType['getSystemFonts'])[]],
+    [(keyof GType), (keyof GType['getBooksInVKModule'])[]],
+    [(keyof GType), (keyof GType['getLocalizedBooks'])[]],
+    [(keyof GType), (keyof GType['getLocaleDigits'])[]],
+    [(keyof GType), (keyof GType['GetBooksInVKModules'])[]],
+    [(keyof GType), (keyof GType['cachePreload'])[]],
+    [(keyof GType), (keyof GType['i18n'])[]],
+    [(keyof GType), (keyof GType['LibSword'])[]],
+  ];
 } = {
+  includeCallingWindow: ['Prefs', 'Window', 'Commands', 'Module'],
+
   asyncFuncs: [
-    ['getSystemFonts', []],
-    ['cachePreload', []],
-    [
-      'Commands',
-      [
-        'installXulswordModules',
+    ['getSystemFonts',
+      []],
+    ['cachePreload',
+      []],
+    ['Commands',
+      ['installXulswordModules',
         'exportAudio',
         'importAudio',
         'importBookmarks',
         'exportBookmarks',
-        'print',
-      ],
-    ],
-    [
-      'Module',
-      [
-        'crossWireMasterRepoList',
+        'print']],
+    ['Module',
+      ['crossWireMasterRepoList',
         'repositoryListing',
         'download',
         'downloads',
         'cancelOngoingDownloads',
         'cancel',
-        'installDownloads',
-      ],
-    ],
-    ['LibSword', ['searchIndexBuild', 'search']],
-    ['Window', ['print', 'printToPDF']],
+        'installDownloads']],
+    ['LibSword',
+      ['searchIndexBuild',
+        'search']],
+    ['Window',
+      ['print',
+        'printToPDF']],
   ],
 
-  includeCallingWindow: ['Prefs', 'Window', 'Commands', 'Module'],
-
-  internetCapable: [
-    'Books',
-    'Book',
-    'Tabs',
-    'Tab',
-    'Config',
-    'AudioConfs',
-    'ProgramConfig',
-    'LocaleConfigs',
-    'ModuleConfigDefault',
-    'ModuleFonts',
-    'FeatureModules',
-    'BkChsInV11n',
-    'getSystemFonts',
-    'getBooksInVKModule',
-    'getLocalizedBooks',
-    'getLocaleDigits',
-    'GetBooksInVKModules',
-    'cachePreload',
-    'i18n',
-    'Prefs',
-    'DiskCache',
-    'LibSword',
-    'Dirs',
-    'Data',
-    'Module'
+  internetSafe: [
+    ['Books',
+      []],
+    ['Book',
+      []],
+    ['Tabs',
+      []],
+    ['Tab',
+      []],
+    /*['Config',
+      []],
+    ['AudioConfs',
+      []],
+    ['ProgramConfig',
+      []],
+    ['LocaleConfigs',
+      []],
+    ['ModuleConfigDefault',
+      []],*/
+    ['ModuleFonts',
+      []],
+    ['FeatureModules',
+      []],
+    ['BkChsInV11n',
+      []],
+    /*['getSystemFonts',
+      []],*/
+    ['getBooksInVKModule',
+      []],
+    ['getLocalizedBooks',
+      []],
+    ['getLocaleDigits',
+      []],
+    ['GetBooksInVKModules',
+      []],
+    ['cachePreload',
+      []],
+    ['i18n',
+      ['t',
+        'exists',
+        'language']],
+    ['LibSword',
+      ['getMaxChapter',
+      'getMaxVerse',
+      'getChapterText',
+      'getChapterTextMulti',
+      'getFootnotes',
+      'getCrossRefs',
+      'getNotes',
+      'getVerseText',
+      'getVerseSystem',
+      'convertLocation',
+      'getIntroductions',
+      'getDictionaryEntry',
+      'getAllDictionaryKeys',
+      'getGenBookChapterText',
+      'getGenBookTableOfContents',
+      'search',
+      'getSearchResults']],
   ],
 
   gtype: 'sync',
@@ -1108,7 +1148,6 @@ export const GBuilder: GType & {
 
   Dirs: {
     path: 'getter' as any,
-    init: func as any,
   },
 
   Commands: {

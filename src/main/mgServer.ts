@@ -1,12 +1,7 @@
 /* eslint-disable class-methods-use-this */
 /* eslint-disable @typescript-eslint/no-use-before-define */
 import i18next from 'i18next';
-import Dirs from './components/dirs.ts';
-import DiskCache from './components/diskcache.ts';
-import Prefs from './components/prefs.ts';
 import LibSword from './components/libsword.ts';
-import Data from './components/data.ts';
-import Module from './components/module.ts';
 import {
   getBooks,
   getBook,
@@ -42,25 +37,10 @@ class GAClass implements Partial<GType> {
 
   LibSword;
 
-  Prefs;
-
-  DiskCache;
-
-  Dirs;
-
-  Data;
-
-  Module;
-
   constructor() {
     this.gtype = 'async' as any;
     this.i18n = i18next;
-    this.LibSword = LibSword ;
-    this.Prefs = Prefs;
-    this.DiskCache = DiskCache;
-    this.Dirs = Dirs
-    this.Data = Data;
-    this.Module = Module;
+    this.LibSword = LibSword;
   }
 
   get Books() {

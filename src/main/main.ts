@@ -141,7 +141,7 @@ ipcMain.on(
   'global',
   (event: IpcMainEvent, acall: GCallType) => {
     const win = BrowserWindow.fromWebContents(event.sender)?.id ?? -1
-    event.returnValue = handleGlobal(win, acall);
+    event.returnValue = handleGlobal(win, acall, true);
   }
 );
 
@@ -149,7 +149,7 @@ ipcMain.handle(
   'global',
   (event: IpcMainInvokeEvent, acall: GCallType) => {
     const win = BrowserWindow.fromWebContents(event.sender)?.id ?? -1
-    return handleGlobal(win, acall);
+    return handleGlobal(win, acall, true);
   }
 );
 

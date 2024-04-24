@@ -4,10 +4,10 @@ import log, { LogLevel } from 'electron-log';
 import Setenv from '../setenv.ts';
 import { JSON_parse, JSON_stringify } from '../common.ts';
 import C from '../constant.ts';
-import G from '../main/mgServer.ts';
+import G from '../main/mg.ts';
 import handleGlobal from '../main/handleGlobal.ts';
 
-Setenv(`${__dirname}/../../server_env.json`);
+Setenv(`${__dirname}/server_env.json`);
 
 const i18nBackendMain = require('i18next-fs-backend');
 
@@ -74,7 +74,7 @@ const server = require('http').createServer();
 
 const io = new Server(server, {
   cors: {
-    origin: 'http://127.0.0.1:8080',
+    origin: process.env.CORS_ORIGIN,
     methods: ['GET', 'POST'],
     // allowHeaders: ['my-custom-header'],
     // credentials: true,
@@ -88,7 +88,7 @@ io.on('connection', (socket) => {
     'error-report',
     (args: any[], _callback: (r: any) => void) => {
       const [message] = args;
-      throw Error(message);
+      log.error(message);
     }
   );
 
@@ -96,7 +96,11 @@ io.on('connection', (socket) => {
     'log',
     (args: any[], _callback: (r: any) => void) => {
       const [type, windowID, json] = args;
-      log[type as LogLevel](windowID, ...JSON_parse(json));
+      try {
+        log[type as LogLevel](windowID, ...JSON_parse(json));
+      } catch (er) {
+        log.error(er);
+      }
     }
   );
 
@@ -104,11 +108,16 @@ io.on('connection', (socket) => {
     'global',
     (args: any[], callback: (r: any) => void) => {
       const acall = args.shift();
-      const r = handleGlobal(-1, acall);
-      log.debug(`On global: ${JSON_stringify(acall)}`);
+      let r;
+      try {
+        r = handleGlobal(-1, acall, false);
+        log.debug(`On global: ${JSON_stringify(acall)}`);
+      } catch (er) {
+        log.error(er);
+      }
       if (typeof callback === 'function') callback(r);
       else {
-        throw Error(`G callback is not a function, is '${typeof callback}': ${JSON_stringify(acall)}`);
+        log.error(`G callback is not a function, is '${typeof callback}': ${JSON_stringify(acall)}`);
       }
     }
   );
