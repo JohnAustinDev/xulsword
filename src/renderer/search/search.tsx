@@ -26,7 +26,7 @@ import {
   popupParentHandler as popupParentHandlerH,
   popupHandler as popupHandlerH,
   PopupParentInitState,
-} from '../libxul/popup/popupParentH.tsx';
+} from '../libxul/popup/popupParentH.ts';
 import Button from '../libxul/button.tsx';
 import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul.tsx';
 import { Box, Hbox, Vbox } from '../libxul/boxes.tsx';

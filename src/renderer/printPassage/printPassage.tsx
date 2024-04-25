@@ -33,7 +33,7 @@ import {
   vkSelectHandler as vkSelectHandlerH,
   validPassage,
   bibleChapterText,
-} from './printPassageH.ts';
+} from './printPassageH.tsx';
 import '../libsword.css';
 import '../libxul/viewport/atext.css';
 import './printPassage.css';

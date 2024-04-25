@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from 'electron'; // may be undefined
+import { BrowserWindow } from 'electron'; // may be undefined
 import { ChildProcess, fork } from 'child_process';
 import log from 'electron-log';
 import path from 'path';
@@ -28,7 +28,7 @@ import type {
 import type { ManagerStatePref } from '../../renderer/moduleManager/manager.tsx';
 import DiskCache from './diskcache.ts';
 
-const { libxulsword } = require('../../../build/app/node_modules/libxulsword');
+const { libxulsword } = require('libxulsword');
 
 // Convert the raw GenBookTOC (output of LibSword.getGenBookTableOfContents())
 // into an array of C.GBKSEP delimited keys.
@@ -84,7 +84,9 @@ Valid for Dictionary modules:
 */
 
 const LibSword = {
-  libxulsword: null as null | Record<string, unknown>,
+  libxulsword: null as any,
+
+  initialized: false as boolean,
 
   moduleDirectories: [] as string[],
 
@@ -97,7 +99,9 @@ const LibSword = {
   backgroundIndexerTO: null as NodeJS.Timeout | null,
 
   init(): boolean {
-    if (this.libxulsword) return false;
+    if (this.initialized) return false;
+
+    this.libxulsword = libxulsword;
 
     log.verbose('Initializing libsword...');
 
@@ -127,27 +131,28 @@ const LibSword = {
     log.verbose(`module directories: ${this.moduleDirectories}`);
 
     // Get our xulsword instance...
-    this.libxulsword = libxulsword.GetXulsword(
+    this.libxulsword.GetXulsword(
       this.moduleDirectories.join(', ')
     );
     log.verbose(`CREATED libxulsword object`);
+    this.initialized = true;
 
     return true;
   },
 
   quit(): void {
-    if (this.libxulsword) {
+    if (this.initialized) {
       Object.keys(this.indexingID).forEach((module) =>
         this.searchIndexCancel(module)
       );
-      libxulsword.FreeLibXulsword();
+      this.libxulsword.FreeLibXulsword();
       log.verbose('DELETED libxulsword object');
     }
-    this.libxulsword = null;
+    this.initialized = false;
   },
 
   isReady(err?: boolean): boolean {
-    if (this.libxulsword) return true;
+    if (this.initialized) return true;
     if (err) {
       log.error(
         `libsword was called while uninitialized: ${new Error().stack}`
@@ -192,7 +197,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   ): string {
     if (options) this.setGlobalOptions(options);
     if (this.isReady(true)) {
-      const chapterText = libxulsword.GetChapterText(modname, vkeytext);
+      const chapterText = this.libxulsword.GetChapterText(modname, vkeytext);
       return chapterText;
     }
     return '';
@@ -215,7 +220,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   ): string {
     if (this.isReady(true)) {
       if (options) this.setGlobalOptions(options);
-      const chapterTextMulti = libxulsword.GetChapterTextMulti(
+      const chapterTextMulti = this.libxulsword.GetChapterTextMulti(
         modstrlist,
         vkeytext,
         keepnotes
@@ -233,7 +238,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // getChapterText() or getChapterTextMulti() must be called before notes can be read.
   getFootnotes(): string {
     if (this.isReady(true)) {
-      const footnotes = libxulsword.GetFootnotes();
+      const footnotes = this.libxulsword.GetFootnotes();
       return footnotes;
     }
     return '';
@@ -244,7 +249,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // getChapterText() or getChapterTextMulti() must be called before notes can be read.
   getCrossRefs(): string {
     if (this.isReady(true)) {
-      const crossRefs = libxulsword.GetCrossRefs();
+      const crossRefs = this.libxulsword.GetCrossRefs();
       return crossRefs;
     }
     return '';
@@ -256,7 +261,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // order is: v1-footnotes, v1-crossrefs, v2-footnotes, v2-crossrefs, etc
   getNotes(): string {
     if (this.isReady(true)) {
-      const notes = libxulsword.GetNotes();
+      const notes = this.libxulsword.GetNotes();
       return notes;
     }
     return '';
@@ -276,7 +281,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
     keepTextNotes: boolean
   ): string {
     if (this.isReady(true)) {
-      const verseText = libxulsword.GetVerseText(
+      const verseText = this.libxulsword.GetVerseText(
         vkeymod,
         vkeytext,
         keepTextNotes
@@ -294,7 +299,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // function first, before calling.
   getMaxChapter(v11n: V11nType, vkeytext: string): number {
     if (this.isReady(true)) {
-      const intgr = libxulsword.GetMaxChapter(v11n, vkeytext);
+      const intgr = this.libxulsword.GetMaxChapter(v11n, vkeytext);
       return intgr;
     }
     return 0;
@@ -308,7 +313,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // function first, before calling.
   getMaxVerse(v11n: V11nType, vkeytext: string): number {
     if (this.isReady(true)) {
-      const intgr = libxulsword.GetMaxVerse(v11n, vkeytext);
+      const intgr = this.libxulsword.GetMaxVerse(v11n, vkeytext);
       return intgr;
     }
     return 0;
@@ -318,7 +323,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // Returns the verse system of module Mod.
   getVerseSystem(modname: string): V11nType {
     if (this.isReady(true)) {
-      return libxulsword.GetVerseSystem(modname);
+      return this.libxulsword.GetVerseSystem(modname);
     }
     return 'KJV';
   },
@@ -338,7 +343,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
     tov11n: V11nType
   ): string {
     if (this.isReady(true)) {
-      return libxulsword.ConvertLocation(fromv11n, vkeytext, tov11n);
+      return this.libxulsword.ConvertLocation(fromv11n, vkeytext, tov11n);
     }
     return '';
   },
@@ -352,7 +357,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // If Vkeymod is not a versekey type module, an error is returned.
   getIntroductions(vkeymod: string, bname: string): string {
     if (this.isReady(true)) {
-      const introductions = libxulsword.GetIntroductions(vkeymod, bname);
+      const introductions = this.libxulsword.GetIntroductions(vkeymod, bname);
       return introductions;
     }
     return '';
@@ -369,7 +374,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   ): string {
     if (this.isReady(true)) {
       if (options) this.setGlobalOptions(options);
-      const dictionaryEntry = libxulsword.GetDictionaryEntry(lexdictmod, key);
+      const dictionaryEntry = this.libxulsword.GetDictionaryEntry(lexdictmod, key);
       return dictionaryEntry;
     }
     return '';
@@ -383,7 +388,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
       const pkey = 'keylist';
       if (!DiskCache.has(pkey, lexdictmod)) {
         // Don't save this version to prefs; the sorted version will be saved later!
-        return libxulsword
+        return this.libxulsword
           .GetAllDictionaryKeys(lexdictmod)
           .split('<nx>') as string[];
       }
@@ -405,7 +410,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   ): string {
     if (this.isReady(true)) {
       if (options) this.setGlobalOptions(options);
-      const genBookChapterText = libxulsword.GetGenBookChapterText(
+      const genBookChapterText = this.libxulsword.GetGenBookChapterText(
         gbmod,
         treekey
       );
@@ -421,7 +426,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
     if (this.isReady(true)) {
       const pkey = 'toc';
       if (!DiskCache.has(pkey, gbmod)) {
-        const t = libxulsword
+        const t = this.libxulsword
           .GetGenBookTableOfContents(gbmod)
           // EnumaElish module has a TOC entry with this illegal control character:
           // eslint-disable-next-line no-control-regex
@@ -479,7 +484,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
         // not exist in the module, SWORD may crash!
         // NOTE: This libxulsword function is not a Node-API async function, so
         // it will block Node's event loop until it finishes.
-        const intgr = libxulsword.Search(
+        const intgr = this.libxulsword.Search(
           modname,
           srchstr,
           scope,
@@ -516,7 +521,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
       );
 
       if (!num) return ''; // no reason to call libxulsword
-      return libxulsword.GetSearchResults(modname, first, num, keepStrongs);
+      return this.libxulsword.GetSearchResults(modname, first, num, keepStrongs);
     }
     return null;
   },
@@ -525,7 +530,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // Will return true if indexed searching is available for the current module, false otherwise.
   luceneEnabled(modname: string): boolean {
     if (this.isReady(true)) {
-      const enabled = libxulsword.LuceneEnabled(modname);
+      const enabled = this.libxulsword.LuceneEnabled(modname);
       return enabled;
     }
     return false;
@@ -641,7 +646,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // Deletes the search index of modname.
   searchIndexDelete(modname: string): boolean {
     if (this.isReady(true)) {
-      return libxulsword.SearchIndexDelete(modname);
+      return this.libxulsword.SearchIndexDelete(modname);
     }
     return false;
   },
@@ -654,9 +659,10 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   ): Promise<boolean> {
     return new Promise((resolve, reject) => {
       if (this.isReady(true) && !(modcode in this.indexingID)) {
-        const workerjs = app?.isPackaged
-          ? path.join(__dirname, 'indexWorker.js')
-          : path.join(__dirname, '../indexWorker.js');
+        const name = process.env.NODE_ENV === 'production'
+          ? 'indexWorker.js'
+          : 'indexWorker.dev.js';
+        const workerjs = Dirs.xsAsar.append(`dist/${name}`).path;
         const indexer = fork(workerjs);
         this.indexingID[modcode] = indexer;
         const sendProgress = (percent: number) => {
@@ -738,7 +744,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
     setting: SwordFilterValueType
   ): void {
     if (this.isReady(true)) {
-      libxulsword.SetGlobalOption(option, setting);
+      this.libxulsword.SetGlobalOption(option, setting);
     }
   },
 
@@ -756,7 +762,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // Option must one of the above option strings. Either 'Off' or 'On' will be returned.
   getGlobalOption(option: SwordFilterType): string {
     if (this.isReady(true)) {
-      const globalOption = libxulsword.GetGlobalOption(option);
+      const globalOption = this.libxulsword.GetGlobalOption(option);
       return globalOption;
     }
     return '';
@@ -771,7 +777,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   getModuleList(): string {
     if (this.isReady(true)) {
       if (!Cache.has('libswordModueList')) {
-        Cache.write(libxulsword.GetModuleList(), 'libswordModueList');
+        Cache.write(this.libxulsword.GetModuleList(), 'libswordModueList');
       }
       return Cache.read('libswordModueList');
     }
@@ -790,7 +796,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
     paramname: keyof SwordConfigEntries | 'AbsoluteDataPath'
   ): string {
     if (this.isReady(true)) {
-      const moduleInformation = libxulsword.GetModuleInformation(
+      const moduleInformation = this.libxulsword.GetModuleInformation(
         modname,
         paramname
       );
@@ -802,6 +808,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
 
 export type LibSwordType = Omit<
   typeof LibSword,
+  | 'initialized'
   | 'moduleDirectories'
   | 'checkCipherKeys'
   | 'libxulsword'

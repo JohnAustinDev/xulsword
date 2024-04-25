@@ -16,6 +16,7 @@ import {
   keep,
   normalizeFontFamily,
   JSON_stringify,
+  pad,
 } from '../common.ts';
 import Cache from '../cache.ts';
 import Subscription from '../subscription.ts';
@@ -44,6 +45,8 @@ import type {
   XulswordFeatureMods,
   GCallType,
   BookGroupType,
+  VerseKeyAudioFile,
+  GenBookAudioFile,
 } from '../type.ts';
 
 export type GCachePreloadType = (calls: GCallType[]) => any[];
@@ -978,4 +981,62 @@ export function getLocalizedBooks(getAll = false): {
     });
   });
   return r;
+}
+
+export function inlineFile(
+  fpath: string,
+  encoding = 'base64' as BufferEncoding,
+  noHeader = false
+): string {
+  const file = new LocalFile(fpath);
+  const mimeTypes = {
+    jpg: 'image/jpeg',
+    jpeg: 'image/jpeg',
+    png: 'image/png',
+    gif: 'image/gif',
+    ttf: 'font/ttf',
+    svg: 'image/svg+xml',
+    otf: 'font/otf',
+    css: 'text/css',
+    pdf: 'application/pdf',
+    mp3: 'audio/mpeg',
+    ogg: 'audio/ogg',
+  } as any;
+  const contentType =
+    // eslint-disable-next-line no-useless-escape
+    mimeTypes[fpath.replace(/^.*\.([^\.]+)$/, '$1').toLowerCase()];
+  if (!file.exists() || (!noHeader && !contentType)) return '';
+  const rawbuf = file.readBuf();
+  return noHeader
+    ? rawbuf.toString(encoding)
+    : `data:${contentType};${encoding},${rawbuf.toString(encoding)}`;
+}
+
+export function inlineAudioFile(
+  audio: VerseKeyAudioFile | GenBookAudioFile | null
+): string {
+  if (audio) {
+    const { path: apath, audioModule } = audio;
+    const G = Subscription.doPublish('getG') as GType[];
+    if (audioModule && G) {
+      const file = new LocalFile(G[0].Dirs.path.xsAudio);
+      file.append('modules');
+      file.append(audioModule);
+      const leaf = pad(apath.pop() || 0, 3, 0);
+      while (apath.length) {
+        const p = apath.shift() as string | number;
+        if (!Number.isNaN(Number(p))) {
+          file.append(pad(p, 3, 0));
+        } else file.append(p.toString());
+      }
+      for (let x = 0; x < C.SupportedAudio.length; x += 1) {
+        const ext = C.SupportedAudio[x];
+        const afile = file.clone().append(`${leaf}.${ext}`);
+        if (afile.exists()) {
+          return inlineFile(afile.path);
+        }
+      }
+    }
+  }
+  return '';
 }

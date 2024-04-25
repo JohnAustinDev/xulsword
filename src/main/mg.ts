@@ -5,7 +5,6 @@ import i18next from 'i18next';
 import { WindowDescriptorType } from '../type.ts';
 import { canRedo, canUndo } from './bookmarks.ts';
 import Viewport from './components/viewport.ts';
-import { inlineAudioFile, inlineFile } from './components/localFile.ts';
 import Dirs from './components/dirs.ts';
 import DiskCache from './components/diskcache.ts';
 import Prefs from './components/prefs.ts';
@@ -37,6 +36,8 @@ import {
   GetBooksInVKModules,
   getLocalizedBooks,
   getLocaleDigits,
+  inlineAudioFile,
+  inlineFile
 } from './minit.ts';
 
 import type { GType } from '../type.ts';

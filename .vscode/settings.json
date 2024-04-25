@@ -60,10 +60,10 @@
   "typescript.format.enable": false,
 
   "files.exclude": {
-    "**/*.js": true,
-    "**/*.d.ts": true,
-    "**/*.d.ts.map": true,
-    "**/*.js.map": true,
+    "./src/*.js": true,
+    "./src/*.d.ts": true,
+    "./src/*.d.ts.map": true,
+    "./src/*.js.map": true,
   },
 
   "search.exclude": {

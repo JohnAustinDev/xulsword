@@ -1,9 +1,9 @@
-import { GBuilder, GCallType } from '../type.ts';
-import G from '../main/mgServer.ts';
+import { GBuilder, GCallType, GType } from '../type.ts';
 import { JSON_stringify } from '../common.ts';
 
 // Handle global variable calls from renderer processes
 export default function handleGlobal(
+  G: GType | Partial<GType>,
   win: number,
   acall: GCallType,
   trusted = false, // internetSafe or not?
@@ -37,6 +37,7 @@ export default function handleGlobal(
         ) {
           args[g[name][m].length] = win;
         }
+        console.log(name, m, args);
         ret = g[name][m](...args);
       } else {
         throw Error(`Unhandled global ipc method: ${JSON_stringify(acall)}`);

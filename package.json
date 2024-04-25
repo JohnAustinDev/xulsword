@@ -3,9 +3,11 @@
   "productName": "MK",
   "description": "Электронная Библия",
   "scripts": {
-    "build": "concurrently \"yarn build:main\" \"yarn build:renderer\"",
+    "build": "concurrently \"yarn build:main\" \"yarn build:renderer\" \"yarn build:other\"",
     "build:main": "cross-env NODE_ENV=production webpack --config ./.erb/configs/webpack.config.main.prod.babel.js",
     "build:renderer": "cross-env NODE_ENV=production webpack --config ./.erb/configs/webpack.config.renderer.prod.babel.js",
+    "build:other": "cross-env NODE_ENV=production webpack --config ./.erb/configs/webpack.config.other.prod.babel.js",
+    "build:other-dev": "cross-env NODE_ENV=development webpack --config ./.erb/configs/webpack.config.other.dev.babel.js",
     "install-libxulsword": "node ./node_modules_xulsword/libxulsword/install.js",
     "lint": "cross-env NODE_ENV=development eslint . --cache",
     "package": "node -r @babel/register ./.erb/scripts/clean.js dist release && yarn build && electron-builder build --publish never",
@@ -17,7 +19,7 @@
     "release-32win": "yarn && cross-env PKLIB=32win yarn install-libxulsword && yarn build && electron-builder build --publish always --win --ia32 && cross-env PKLIB=linux yarn install-libxulsword",
     "release-64win": "yarn && cross-env PKLIB=64win yarn install-libxulsword && yarn build && electron-builder build --publish always --win --x64 && cross-env PKLIB=linux yarn install-libxulsword",
     "postinstall": "node -r @babel/register .erb/scripts/check-native-dep.js && electron-builder install-app-deps && yarn cross-env NODE_ENV=development webpack --config ./.erb/configs/webpack.config.renderer.dev.dll.babel.js && opencollective-postinstall && yarn-deduplicate yarn.lock",
-    "start": "node -r @babel/register ./.erb/scripts/check-port-in-use.js && yarn start:renderer",
+    "start": "node -r @babel/register ./.erb/scripts/check-port-in-use.js && yarn build:other-dev && yarn start:renderer",
     "start:main": "cross-env NODE_ENV=development LD_LIBRARY_PATH=./Cpp/lib electron -r ./.erb/scripts/babel-register ./src/main/main.ts",
     "start:renderer": "cross-env NODE_ENV=development webpack serve --config ./.erb/configs/webpack.config.renderer.dev.babel.js",
     "start-server": "cross-env LD_LIBRARY_PATH=./Cpp/lib node -r ./.erb/scripts/babel-register --preserve-symlinks --preserve-symlinks-main ./src/server/server.ts",
@@ -41,12 +43,13 @@
     "npmRebuild": false,
     "productName": "MK",
     "appId": "org.xulsword",
-    "asar": true,
+    "asar": false,
     "asarUnpack": "**\\*.{node,dll}",
     "files": [
       "dist",
       "node_modules",
-      "package.json"
+      "package.json",
+      "!dist/widgets*"
     ],
     "afterPack": "./afterPack.js",
     "afterSign": ".erb/scripts/notarize.js",

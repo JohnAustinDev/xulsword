@@ -29,7 +29,7 @@ import viewportParentH, {
   closeMenupopups,
   vpWindowState,
   bbDragEnd as bbDragEndH,
-} from '../libxul/viewport/viewportParentH.tsx';
+} from '../libxul/viewport/viewportParentH.ts';
 
 import type { NewModulesType, XulswordStateArgType } from '../../type.ts';
 import type Atext from '../libxul/viewport/atext.tsx';

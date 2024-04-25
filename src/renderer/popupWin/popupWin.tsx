@@ -19,7 +19,7 @@ import {
   PopupParentState,
   ViewportPopupProps,
   PopupParentInitState,
-} from '../libxul/popup/popupParentH.tsx';
+} from '../libxul/popup/popupParentH.ts';
 import Popup from '../libxul/popup/popup.tsx';
 import '../libxul/viewport/atext.css';
 

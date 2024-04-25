@@ -90,8 +90,8 @@ if [ "$LIBXULSWORD_ONLY" = "no" ]; then
   [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
   [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
-  nvm install 18.12.1
-  nvm use 18.12.1
+  nvm install 20.12.2
+  nvm use 20.12.2
   npm i --global yarn
 fi
 

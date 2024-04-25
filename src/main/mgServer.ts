@@ -128,4 +128,4 @@ class GAClass implements Partial<GType> {
 
 const G = new GAClass();
 
-export default G;
+export default G as Partial<GType>;

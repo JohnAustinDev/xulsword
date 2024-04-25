@@ -5,9 +5,12 @@ import Setenv from '../setenv.ts';
 import { JSON_parse, JSON_stringify } from '../common.ts';
 import C from '../constant.ts';
 import G from '../main/mg.ts';
+import GServer from '../main/mgServer.ts';
 import handleGlobal from '../main/handleGlobal.ts';
 
 Setenv(`${__dirname}/server_env.json`);
+
+G.Dirs.init();
 
 const i18nBackendMain = require('i18next-fs-backend');
 
@@ -110,7 +113,7 @@ io.on('connection', (socket) => {
       const acall = args.shift();
       let r;
       try {
-        r = handleGlobal(-1, acall, false);
+        r = handleGlobal(GServer, -1, acall, false);
         log.debug(`On global: ${JSON_stringify(acall)}`);
       } catch (er) {
         log.error(er);

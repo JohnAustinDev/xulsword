@@ -41,6 +41,8 @@ import type {
 } from '../type.ts';
 import type { ManagerStatePref } from '../renderer/moduleManager/manager.tsx';
 
+G.Dirs.init();
+
 const i18nBackendMain = require('i18next-fs-backend');
 const installer = require('electron-devtools-installer');
 const sourceMapSupport = require('source-map-support');
@@ -141,7 +143,7 @@ ipcMain.on(
   'global',
   (event: IpcMainEvent, acall: GCallType) => {
     const win = BrowserWindow.fromWebContents(event.sender)?.id ?? -1
-    event.returnValue = handleGlobal(win, acall, true);
+    event.returnValue = handleGlobal(G, win, acall, true);
   }
 );
 
@@ -149,7 +151,7 @@ ipcMain.handle(
   'global',
   (event: IpcMainInvokeEvent, acall: GCallType) => {
     const win = BrowserWindow.fromWebContents(event.sender)?.id ?? -1
-    return handleGlobal(win, acall, true);
+    return handleGlobal(G, win, acall, true);
   }
 );
 

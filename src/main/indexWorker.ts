@@ -1,4 +1,5 @@
-const { existsSync } = require('fs');
+import fs from 'fs';
+
 const { libxulsword } = require('libxulsword');
 
 // Libxulsword requires both these callbacks to be defined.
@@ -9,14 +10,16 @@ global.ToUpperCase = (aString) => {
   return '';
 };
 global.ReportSearchIndexerProgress = (percent) => {
-  process.send({ msg: 'working', percent });
+  if (typeof process?.send === 'function') {
+    process.send({ msg: 'working', percent });
+  }
 };
 
-process.on('message', (obj) => {
+process.on('message', (obj: { modsd: string, modcode: string }) => {
   const { modsd, modcode } = obj;
   let success = false;
   if (Array.isArray(modsd)) {
-    const mf = modsd.filter((p) => existsSync(p));
+    const mf = modsd.filter((p) => fs.existsSync(p));
     if (mf.length) {
       success = libxulsword.GetXulsword(mf.join(', '));
     }
@@ -25,7 +28,7 @@ process.on('message', (obj) => {
     const mods = libxulsword
       .GetModuleList()
       .split('<nx>')
-      .map((s) => s.split(';')[0]);
+      .map((s: string) => s.split(';')[0]);
     if (mods.includes(modcode)) {
       if (libxulsword.LuceneEnabled(modcode)) {
         success = libxulsword.SearchIndexDelete(modcode);
@@ -33,8 +36,10 @@ process.on('message', (obj) => {
       if (success) success = libxulsword.SearchIndexBuild(modcode);
     }
   }
-  if (success) {
-    process.send({ msg: 'finished', percent: 100 });
-  } else process.send({ msg: 'failed', percent: 100 });
-  process.disconnect();
+  if (typeof process?.send === 'function') {
+    if (success) {
+      process.send({ msg: 'finished', percent: 100 });
+    } else process.send({ msg: 'failed', percent: 100 });
+    process.disconnect();
+  }
 });

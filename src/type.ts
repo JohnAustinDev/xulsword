@@ -29,12 +29,13 @@ import type {
   GetBooksInVKModules,
   getLocaleDigits,
   getLocalizedBooks,
+  inlineFile,
+  inlineAudioFile,
 } from './main/minit.ts';
 import type {
   publishSubscription,
   resolveHtmlPath,
 } from './main/components/window.ts';
-import type { inlineFile, inlineAudioFile } from './main/components/localFile.ts';
 import type Prefs from './main/components/prefs.ts';
 import type DiskCache from './main/components/diskcache.ts';
 import type Commands from './main/components/commands.ts';

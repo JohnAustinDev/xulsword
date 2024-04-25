@@ -36,7 +36,7 @@ import Viewport from '../libxul/viewport/viewport.tsx';
 import viewportParentH, {
   closeMenupopups,
   bbDragEnd as bbDragEndH,
-} from '../libxul/viewport/viewportParentH.tsx';
+} from '../libxul/viewport/viewportParentH.ts';
 import handlerH from './xulswordH.ts';
 import './xulsword.css';
 
