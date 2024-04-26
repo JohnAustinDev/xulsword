@@ -12,9 +12,6 @@ Cpp/sword*
 Cpp/build*
 */libxulsword/build
 
-# xulsword-server
-server_env.json
-
 # Logs
 logs
 *.log
