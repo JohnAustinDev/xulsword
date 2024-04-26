@@ -1,6 +1,24 @@
 #!/bin/bash
 # Run this script from this directory with 'source ./setenv' to set build environment variables.
 
+# - NODE_ENV - Set in package.json to control the build process
+#     (will be set to either 'development' or 'production').
+NODE_ENV=production
+
+# - DEBUG_PROD - Set by you to 'true' BEFORE packaging to enable
+#     dev source maps and dev-tools in a production build (but the
+#     main process is still not accesible via current vscode config).
+#     Also enables other production debug behaviour (more logging).
+DEBUG_PROD=false
+
+# - XULSWORD_ENV - Set by you to 'production' for debugging production
+#     only behaviour, like i18n, splash and log, in a development
+#     environment (including main process debugging via vscode).
+XULSWORD_ENV=normal
+
+# - LOGLEVEL - Set to "silly" | "info" | "debug" | "error" | "warn" | "verbose"
+LOGLEVEL=error
+
 export LIBXULSWORD_MAJOR=1
 export LIBXULSWORD_MINOR=5
 export LIBXULSWORD_REVIS=6

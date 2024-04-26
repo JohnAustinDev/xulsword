@@ -2,6 +2,7 @@ import path from 'path';
 import fs from 'fs';
 import webpack from 'webpack';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
+import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import chalk from 'chalk';
 import { merge } from 'webpack-merge';
 import { spawn, execSync } from 'child_process';
@@ -45,7 +46,16 @@ export default merge(baseConfig, {
   },
 
   module: {
-    rules: rulesDev,
+    // Replace rules[0] of rulesDev with this:
+    rules: rulesDev.map((x, i) => i ? x : {
+      test: /\.[jt]sx?$/,
+      exclude: /node_modules/,
+      use: [
+        {
+          loader: require.resolve('babel-loader'),
+        },
+      ],
+    }),
   },
   plugins: [
     new webpack.NoEmitOnErrorsPlugin(),

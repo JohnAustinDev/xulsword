@@ -1,13 +1,4 @@
-import type { ipcRenderer as IPCRenderer } from 'electron';
 import { Socket, io } from 'socket.io-client';
-import Subscription from '../subscription.ts';
-import { processR, ipc } from '../main/preload2.js';
-import { GCallType } from '../type.ts';
-import G from '../renderer/rg.ts';
-import { GCacheKey } from '../common.ts';
-import Cache from '../cache.ts';
-
-import type { GetBooksInVKModules } from '../main/minit.ts';
 
 // To run the Electron app in a browser, Electron's contextBridge
 // and ipcRenderer modules have been replaced by custom modules
@@ -17,14 +8,27 @@ const socketConnect = () => {
   const origin = window.location.origin;
   const hosturl = origin.replace(/^https?/, 'ws').replace(/(:\d+)?$/, ':3000');
   socket = io(hosturl);
-  let published = false;
-  socket.on('connect', () => {
-    // connect is called even on reconnect, so only publish this once.
-    if (socket && !published) Subscription.publish.socketConnected(socket);
-    published = true;
-  });
+  return socket;
 }
+export default socketConnect;
 
+// THIS FILE SHOULD BE KEPT THE SAME AS MAIN/PRELOAD.JS
+const validChannels = [
+  'global', // to+from main for use by the G object
+  'did-finish-render', // to main when window has finished rendering
+  'log', // to main for logging
+  'error-report', // to main to report an error
+  'resize', // from main when renderer window is being resized
+  'progress', // from main for progress meter
+  'modal', // from main to make windows temporarily modal
+  'update-state-from-pref', // from main when state-prefs should be updated
+  'component-reset', // from main when window top react component should be remounted
+  'cache-reset', // from main when caches should be cleared
+  'dynamic-stylesheet-reset', // from main when dynamic stylesheet should be re-created
+  'publish-subscription', // from main when a renderer subscription should be published
+];
+
+// This is a polyfill for Electron ipcRenderer:
 const ipcRenderer = {
   send: (channel, ...args: any[]) => {
     if (socket) socket.emit(channel, args, () => {});
@@ -47,64 +51,116 @@ const ipcRenderer = {
   on: (channel, strippedfunc) => {
     if(socket) socket.on(channel, strippedfunc);
     else throw new Error(`No socket connection.`);
-    return undefined as unknown as typeof ipcRenderer;
+    return undefined as unknown as Electron.IpcRenderer;
   },
   once: (channel, strippedfunc) => {
     if (socket) socket.on(channel, (response: any) => {
       strippedfunc(response);
-      ipcRenderer.removeListener(channel, strippedfunc);
+      if (socket) socket.listeners(channel).forEach((lf) => {
+        if (socket && lf === strippedfunc) socket.off(channel, lf);
+      });
+      else throw new Error(`No socket connection.`);
     });
     else throw new Error(`No socket connection.`);
-    return undefined as unknown as typeof ipcRenderer;
+    return undefined as unknown as Electron.IpcRenderer;
   },
   removeListener: (channel, strippedfunc) => {
     if (socket) socket.listeners(channel).forEach((lf) => {
       if (socket && lf === strippedfunc) socket.off(channel, lf);
     });
     else throw new Error(`No socket connection.`);
-    return undefined as unknown as typeof ipcRenderer;
+    return undefined as unknown as Electron.IpcRenderer;
   },
-} as typeof IPCRenderer;
+} as Electron.IpcRenderer;
 
-const process: Partial<NodeJS.Process> = {
+// THIS IS IDENTICAL TO MAIN/PRELOAD.JS:
+window.ipc = {
+  // Trigger a channel event which ipcMain is to listen for. If a single
+  // response from ipcMain is desired, then 'invoke' should likely be used.
+  // Otherwise event.reply() can respond from ipcMain if the renderer has
+  // also added a listener for it.
+  send: (channel: string, ...args: any[]) => {
+    if (validChannels.includes(channel)) {
+      ipcRenderer.send(channel, ...args);
+    } else throw Error(`ipc send bad channel: ${channel}`);
+  },
+
+  // Trigger a channel event which ipcMain is to listen for and respond to
+  // using ipcMain.handle(), returning a promise containing the result arg(s).
+  invoke: (channel: string, ...args: any[]) => {
+    if (validChannels.includes(channel)) {
+      return ipcRenderer.invoke(channel, ...args);
+    }
+    throw Error(`ipc invoke bad channel: ${channel}`);
+  },
+
+  // Make a synchronous call to ipcMain, blocking the renderer until ipcMain
+  // responds using event.returnValue. Using invoke instead will not block the
+  // renderer process.
+  sendSync: (channel: string, ...args: any[]) => {
+    if (validChannels.includes(channel)) {
+      return ipcRenderer.sendSync(channel, ...args);
+    }
+    throw Error(`ipc sendSync bad channel: ${channel}`);
+  },
+
+  // Add listener func to be called after events from a channel of ipcMain
+  on: (channel: string, func: (...args: any[]) => any) => {
+    if (validChannels.includes(channel)) {
+      // Deliberately strip event as it includes `sender`
+      const strippedfunc = (_event: any, ...args: any[]) => {
+        func(...args);
+      };
+      ipcRenderer.on(channel, strippedfunc);
+      return () => {
+        ipcRenderer.removeListener(channel, strippedfunc);
+      };
+    }
+    throw Error(`ipc on bad channel: ${channel}`);
+  },
+
+  // One time listener func to be called after next event from a channel of
+  // ipcMain.
+  once: (channel: string, func: (...args: any[]) => any) => {
+    if (validChannels.includes(channel)) {
+      // Deliberately strip event as it includes `sender`
+      const strippedfunc = (_event: any, ...args: any[]) => {
+        func(...args);
+      };
+      ipcRenderer.once(channel, strippedfunc);
+    } else throw Error(`ipc once bad channel: ${channel}`);
+  },
+};
+
+// This is a polyfill for Electron process.
+const process = {
   argv: [],
   // TODO!: Finish this
   env: {
     NODE_ENV: 'development',
-    XULSWORD_ENV: 'development',
+    XULSWORD_ENV: 'normal',
     DEBUG_PROD: 'false',
     LOGLEVEL: 'debug',
   },
   platform: 'browser' as 'linux',
 };
 
-window.processR = processR(process);
-
-window.ipc = ipc(ipcRenderer);
-
-export default socketConnect;
-
-export async function cachePreload(calls: GCallType[]) {
-  const resp = await G.cachePreload(calls);
-  if (resp.length !== calls.length) {
-    throw new Error(`cachePreload did not return the correct data.`);
-  }
-  while (calls.length) {
-    const acall = calls.pop();
-    const aresult = resp.pop();
-    if (acall) {
-      const cacheKey = GCacheKey(acall);
-      Cache.write(aresult, cacheKey);
-
-      // Some calls return data that is identical to other calls, so preload the cache
-      // for those others as well.
-      if (acall[0] === 'GetBooksInVKModules') {
-        Object.entries(aresult as ReturnType<typeof GetBooksInVKModules>).forEach((entry) => {
-          const [module, bookArray] = entry;
-          const k = GCacheKey(['getBooksInVKModule', null, [module]]);
-          Cache.write(bookArray, k);
-        });
-      }
-    }
-  }
+// THIS IS IDENTICAL TO MAIN/PRELOAD.JS
+window.processR = {
+  argv: () => {
+    return process.argv;
+  },
+  NODE_ENV: () => {
+    return process.env.NODE_ENV;
+  },
+  XULSWORD_ENV: () => {
+    return process.env.XULSWORD_ENV;
+  },
+  DEBUG_PROD: () => {
+    return process.env.DEBUG_PROD;
+  },
+  LOGLEVEL: () => {
+    return process.env.LOGLEVEL;
+  },
+  platform: process.platform,
 }

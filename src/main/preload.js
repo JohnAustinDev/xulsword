@@ -1,7 +1,15 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
-// The following is IDENTICAL to ./preload2.js, but js modules cannot be
-// imported into electron preload.js files.
+// If you think you can do this with TypeScript and module requires, good luck, as
+// you will spend a day getting all the compile (dev, prod) options working
+// correctly. Electron is VERY picky about preload.js and does not treat it lilke
+// normal js, but Electron reports: 'preload.js did not load' which you will see often.
+
+// NOTE: crashReporter is not an Electron 22 preload electron require option.
+// But crashReporter is unnecessary since the main process reports for renderer
+// processes as well as for itself.
+
+// THIS FILE SHOULD BE KEPT THE SAME AS BROWSER/PRELOAD.TS
 const validChannels = [
   'global', // to+from main for use by the G object
   'did-finish-render', // to main when window has finished rendering
@@ -16,28 +24,6 @@ const validChannels = [
   'dynamic-stylesheet-reset', // from main when dynamic stylesheet should be re-created
   'publish-subscription', // from main when a renderer subscription should be published
 ];
-
-// NOTE: crashReporter is not an Electron 22 preload electron require option.
-// But crashReporter unnecessary since the main process reports for renderer
-// processes as well as for itself.
-contextBridge.exposeInMainWorld('processR', {
-  argv: () => {
-    return process.argv;
-  },
-  NODE_ENV: () => {
-    return process.env.NODE_ENV;
-  },
-  XULSWORD_ENV: () => {
-    return process.env.XULSWORD_ENV;
-  },
-  DEBUG_PROD: () => {
-    return process.env.DEBUG_PROD;
-  },
-  LOGLEVEL: () => {
-    return process.env.LOGLEVEL;
-  },
-  platform: process.platform,
-});
 
 contextBridge.exposeInMainWorld('ipc', {
   // Trigger a channel event which ipcMain is to listen for. If a single
@@ -73,7 +59,7 @@ contextBridge.exposeInMainWorld('ipc', {
   on: (channel, func) => {
     if (validChannels.includes(channel)) {
       // Deliberately strip event as it includes `sender`
-      const strippedfunc = (event, ...args) => {
+      const strippedfunc = (_event, ...args) => {
         func(...args);
       };
       ipcRenderer.on(channel, strippedfunc);
@@ -89,10 +75,30 @@ contextBridge.exposeInMainWorld('ipc', {
   once: (channel, func) => {
     if (validChannels.includes(channel)) {
       // Deliberately strip event as it includes `sender`
-      const strippedfunc = (event, ...args) => {
+      const strippedfunc = (_event, ...args) => {
         func(...args);
       };
       ipcRenderer.once(channel, strippedfunc);
     } else throw Error(`ipc once bad channel: ${channel}`);
   },
+});
+
+contextBridge.exposeInMainWorld('processR', {
+  argv: () => {
+    return process.argv;
+  },
+  NODE_ENV: () => {
+    return process.env.NODE_ENV;
+  },
+  XULSWORD_ENV: () => {
+    return process.env.XULSWORD_ENV;
+  },
+  DEBUG_PROD: () => {
+    return process.env.DEBUG_PROD;
+  },
+  LOGLEVEL: () => {
+    return process.env.LOGLEVEL;
+
+  },
+  platform: process.platform,
 });
