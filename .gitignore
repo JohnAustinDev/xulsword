@@ -36,10 +36,10 @@ build/app/dist
 build/release
 .erb/dll
 archive.tgz
-*.d.ts
-*.d.ts.map
-*.js
-*.js.map
+src/**/*.d.ts
+src/**/*.d.ts.map
+src/**/*.js
+src/**/*.js.map
 
 
 .idea
