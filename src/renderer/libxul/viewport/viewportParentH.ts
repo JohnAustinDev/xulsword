@@ -18,8 +18,8 @@ import type {
   V11nType,
   OSISBookType,
 } from '../../../type.ts';
-import type Xulsword from '../../xulsword/xulsword.tsx';
-import type { XulswordState } from '../../xulsword/xulsword.tsx';
+import type Xulsword from '../../xulswordWin/xulsword.tsx';
+import type { XulswordState } from '../../xulswordWin/xulsword.tsx';
 import type { DragSizerVal } from '../dragsizer.tsx';
 import type { AtextStateType } from './atext.tsx';
 import type ViewportWin from '../../viewportWin/viewportWin.tsx';
@@ -234,7 +234,8 @@ export default function handler(
       switch (targ.type) {
         case 'text-win': {
           const cols = atext?.dataset.columns;
-          if (atext && cols !== undefined) {
+          if (window.processR.platform !== 'browser'
+             && atext && cols !== undefined) {
             // Save new window's XulswordState
             const xulswordState: Partial<XulswordState> = {};
             vpWindowState.forEach((name) => {

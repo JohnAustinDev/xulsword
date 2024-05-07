@@ -111,7 +111,7 @@ export type EnvironmentVars =
 export type WindowRegistryType = (WindowDescriptorType | null)[];
 
 export type WindowTypes =
-  | 'xulsword'
+  | 'xulswordWin'
   | 'splash'
   | 'viewportWin'
   | 'popupWin'
@@ -939,9 +939,9 @@ export const GBuilder: GType & {
     [(keyof GType), (keyof GType['Tab'])[]],
     //[(keyof GAType), (keyof GType['Config'])[]],
     //[(keyof GAType), (keyof GType['AudioConfs'])[]],
-    //[(keyof GAType), (keyof GType['ProgramConfig'])[]],
+    [(keyof GAType), (keyof GType['ProgramConfig'])[]],
     //[(keyof GAType), (keyof GType['LocaleConfigs'])[]],
-    //[(keyof GAType), (keyof GType['ModuleConfigDefault'])[]],
+    [(keyof GAType), (keyof GType['ModuleConfigDefault'])[]],
     [(keyof GType), (keyof GType['ModuleFonts'])[]],
     [(keyof GType), (keyof GType['FeatureModules'])[]],
     [(keyof GType), (keyof GType['BkChsInV11n'])[]],
@@ -998,12 +998,12 @@ export const GBuilder: GType & {
       []],
     ['AudioConfs',
       []],
+    ['LocaleConfigs',
+      []],*/
     ['ProgramConfig',
       []],
-    ['LocaleConfigs',
-      []],
     ['ModuleConfigDefault',
-      []],*/
+      []],
     ['ModuleFonts',
       []],
     ['FeatureModules',

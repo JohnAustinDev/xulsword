@@ -10,7 +10,7 @@ import { dependencies as externals } from '../../build/app/package.json';
 
 export const xulswordWindows = [
   'splash',
-  'xulsword',
+  'xulswordWin',
   'viewportWin',
   'popupWin',
   'chooseFont',
@@ -26,7 +26,8 @@ export const xulswordWindows = [
 ];
 
 export const xulswordEntries = [
-  path.join(webpackPaths.srcPath, 'browser/widgets')
+  path.join(webpackPaths.srcPath, 'browser/widgets'),
+  path.join(webpackPaths.srcPath, 'browser/bible-browser')
 ];
 
 export default {

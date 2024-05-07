@@ -23,6 +23,7 @@ import S from '../defaultPrefs.ts';
 import G, { GA } from './rg.ts';
 import { getElementData, verseKey } from './htmlData.ts';
 import log from './log.ts';
+import CookiePrefs from './cookiePrefs.ts';
 
 import type {
   AudioPath,
@@ -380,8 +381,9 @@ export function getStatePref<P extends PrefObject>(
   id: string | null,
   defaultPrefs?: P
 ): P | PrefObject {
-  if (defaultPrefs) return getStatePref2(G.Prefs, store, id, defaultPrefs) as P;
-  return getStatePref2(G.Prefs, store, id) as PrefObject;
+  const prefs = window.processR.platform === 'browser' ? CookiePrefs : G.Prefs;
+  if (defaultPrefs) return getStatePref2(prefs, store, id, defaultPrefs) as P;
+  return getStatePref2(prefs, store, id) as PrefObject;
 }
 
 // Push state changes of statePrefKeys value to Prefs.
@@ -398,12 +400,13 @@ export function setStatePref(
     if (st) keys = Object.keys(id ? st[id] : st);
   }
   if (keys) {
+    const prefs = window.processR.platform === 'browser' ? CookiePrefs : G.Prefs;
     const newStatePref = keep(state, keys);
-    if (prevState === null) G.Prefs.mergeValue(id, newStatePref, store);
+    if (prevState === null) prefs.mergeValue(id, newStatePref, store);
     else {
       const prvStatePref = keep(prevState, keys);
       const d = diff(prvStatePref, newStatePref);
-      if (d) G.Prefs.mergeValue(id, d, store);
+      if (d) prefs.mergeValue(id, d, store);
     }
   }
 }

@@ -445,7 +445,7 @@ const Window = {
 
     win.loadURL(resolveHtmlPath(`${d.type}.html`));
 
-    if (d.type !== 'xulsword') win.removeMenu();
+    if (d.type !== 'xulswordWin') win.removeMenu();
 
     win.setTitle(descriptor.options.title || '');
 
@@ -717,7 +717,7 @@ const Window = {
       printPreviewTmps.forEach((f) => {
         if (f.exists()) f.remove();
       });
-      const tmp = new LocalFile(Window.tmpDir({ type: 'xulsword' })[0]);
+      const tmp = new LocalFile(Window.tmpDir({ type: 'xulswordWin' })[0]);
       if (tmp.exists() && tmp.isDirectory()) {
         tmp.append(`${randomID()}.pdf`);
         log.debug(`printToPDF: `, electronOptions);

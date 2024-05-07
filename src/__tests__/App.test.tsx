@@ -1,7 +1,7 @@
 import React from 'react';
 import '@testing-library/jest-dom';
 import { render } from '@testing-library/react';
-import Xulsword from '../renderer/xulsword/xulsword.tsx';
+import Xulsword from '../renderer/xulswordWin/xulsword.tsx';
 
 describe('Main', () => {
   it('should render', () => {

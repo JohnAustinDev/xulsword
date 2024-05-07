@@ -60,6 +60,9 @@ const Dirs = {
       Dirs.path.xsResDefD = path.join(Dirs.path.xsAsset, 'defaults', 'resources');
 
       Dirs.path.ProfD = app?.getPath('userData') || process.env.XSProfD || '/tmp';
+      if (!Dirs.path.ProfD.startsWith('/')) {
+        throw new Error("Profile direcory path must be absolute. Is XSProfD environment var a relative path?");
+      }
 
       Dirs.path.xsPrefD = path.join(Dirs.path.ProfD, 'preferences');
 

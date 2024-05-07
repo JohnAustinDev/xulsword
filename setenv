@@ -3,7 +3,8 @@
 
 # - NODE_ENV - Set in package.json to control the build process
 #     (will be set to either 'development' or 'production').
-NODE_ENV=production
+#NODE_ENV=production
+NODE_ENV=development
 
 # - DEBUG_PROD - Set by you to 'true' BEFORE packaging to enable
 #     dev source maps and dev-tools in a production build (but the

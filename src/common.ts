@@ -49,7 +49,7 @@ import type { SelectVKType } from './renderer/libxul/selectVK.tsx';
 import type { SelectORMType } from './renderer/libxul/selectOR.tsx';
 import type { getSampleText } from './renderer/bookmarks.ts';
 import type { verseKey } from './renderer/htmlData.ts';
-import type { XulswordState } from './renderer/xulsword/xulsword.tsx';
+import type { XulswordState } from './renderer/xulswordWin/xulsword.tsx';
 
 // In browser context, synchronous G calls are not allowed, so either the
 // data must be preloaded into the cache, or must be returned with a promise.
@@ -185,6 +185,28 @@ export function JSON_parse(s: string, anyx?: Exclude<any, undefined>): any {
     });
   }
   return any;
+}
+
+export function setCookie(cname: string, cvalue: PrefObject, exdays: number) {
+  const d = new Date();
+  d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+  let expires = "expires="+d.toUTCString();
+  document.cookie = cname + "=" + JSON_stringify(cvalue) + ";" + expires + ";path=/";
+}
+
+export function getCookie(cname: string): PrefObject | null {
+  let name = cname + "=";
+  let ca = document.cookie.split(';');
+  for (let i = 0; i < ca.length; i++) {
+    let c = ca[i];
+    while (c.charAt(0) == ' ') {
+      c = c.substring(1);
+    }
+    if (c.indexOf(name) == 0) {
+      return JSON_parse(c.substring(name.length, c.length));
+    }
+  }
+  return null;
 }
 
 // eslint-disable-next-line @typescript-eslint/naming-convention

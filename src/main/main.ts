@@ -202,7 +202,7 @@ const openXulswordWindow = () => {
 
   const xulswordWindow = BrowserWindow.fromId(
     G.Window.open({
-      type: 'xulsword',
+      type: 'xulswordWin',
       className: 'skin',
       typePersistBounds: true,
       saveIfAppClosed: false, // main win doesn't use OpenOnStartup pref when starting
@@ -610,7 +610,7 @@ app.on('will-quit', () => {
 app.on('activate', () => {
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
-  if (!WindowRegistry.some((wd) => wd && wd.type === 'xulsword'))
+  if (!WindowRegistry.some((wd) => wd && wd.type === 'xulswordWin'))
     openXulswordWindow();
 });
 

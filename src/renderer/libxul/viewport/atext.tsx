@@ -138,7 +138,7 @@ class Atext extends React.Component {
       Object.keys(stateWinPrefs) as (keyof typeof stateWinPrefs)[]
     );
     const changedState = diff(prevState, windowState[panelIndex]);
-    if (changedState) {
+    if (window.processR.platform !== 'browser' && changedState) {
       G.Window.mergeValue(`atext${panelIndex}State`, changedState);
     }
   }

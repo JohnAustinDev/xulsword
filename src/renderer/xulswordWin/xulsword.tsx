@@ -9,8 +9,6 @@ import { dString, clone } from '../../common.ts';
 import C from '../../constant.ts';
 import S from '../../defaultPrefs.ts';
 import G from '../rg.ts';
-import renderToRoot from '../renderer.tsx';
-import log from '../log.ts';
 import { verseKey } from '../htmlData.ts';
 import {
   registerUpdateStateFromPref,
@@ -543,12 +541,3 @@ export default class Xulsword extends React.Component {
 }
 Xulsword.defaultProps = defaultProps;
 Xulsword.propTypes = propTypes;
-
-const onload = () => {
-  log.verbose('Loading Xulsword!');
-  setTimeout(() => {
-    G.Window.moveToBack();
-  }, 100);
-};
-
-renderToRoot(<Xulsword />, { onload });

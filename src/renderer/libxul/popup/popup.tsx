@@ -127,7 +127,8 @@ class Popup extends React.Component {
     const { npopup } = this;
     const { isWindow } = this.props as PopupProps;
     const popup = npopup?.current;
-    if (isWindow && popup) {
+    if (window.processR.platform !== 'browser'
+        && isWindow && popup) {
       const maxlen = Math.floor((popup.clientWidth - 50) / 10);
       const search = ['crref', 'lemma-header', 'popup-text'];
       let title;

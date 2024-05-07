@@ -24,8 +24,8 @@ import type {
   TextVKType,
 } from '../../../type.ts';
 import type { HTMLData } from '../../htmlData.ts';
-import type Xulsword from '../../xulsword/xulsword.tsx';
-import type { XulswordState } from '../../xulsword/xulsword.tsx';
+import type Xulsword from '../../xulswordWin/xulsword.tsx';
+import type { XulswordState } from '../../xulswordWin/xulsword.tsx';
 import type Atext from './atext.tsx';
 import type { AtextStateType } from './atext.tsx';
 import type ViewportWin from '../../viewportWin/viewportWin.tsx';

@@ -4,9 +4,9 @@ import { Socket, io } from 'socket.io-client';
 // and ipcRenderer modules have been replaced by custom modules
 // that use socket.io.
 let socket: Socket | null = null;
-const socketConnect = () => {
-  const origin = window.location.origin;
-  const hosturl = origin.replace(/^https?/, 'ws').replace(/(:\d+)?$/, ':3000');
+const socketConnect = (origin?: string) => {
+  const ro = origin || window.location.origin;
+  const hosturl = ro.replace(/^https?/, 'ws').replace(/(:\d+)?$/, ':3000');
   socket = io(hosturl);
   return socket;
 }

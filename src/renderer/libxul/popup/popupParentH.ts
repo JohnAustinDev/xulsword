@@ -286,7 +286,11 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
           break;
         }
         case 'popupCloseLink': {
-          if (parent !== popupParent) G.Window.close();
+          if (parent !== popupParent) {
+            if (window.processR.platform !== 'browser') {
+              G.Window.close();
+            }
+          }
           else {
             const s: Partial<PopupParentState> = { popupParent: null };
             this.setState(s);
@@ -314,7 +318,7 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
           const { elemdata } = state;
           const boxes = parent.getElementsByClassName('npopupTX');
           const box = boxes ? boxes[0] : (null as HTMLElement | null);
-          if (box) {
+          if (window.processR.platform !== 'browser' && box) {
             const b = box.getBoundingClientRect();
             const popupState: Pick<PopupParentState, 'elemdata'> = { elemdata };
             G.Window.open({
