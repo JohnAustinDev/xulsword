@@ -1,35 +1,35 @@
-.xulsword {
+.xulswordWin {
   overflow: hidden;
 }
-.xulsword .bp4-portal .dialog-body {
+.xulswordWin .bp4-portal .dialog-body {
   padding: 0 20px;
 }
-.xulsword .controlbar .start-spacer {
+.xulswordWin .controlbar .start-spacer {
   width: 15px;
 }
-.xulsword .bp4-button {
+.xulswordWin .bp4-button {
   min-height: unset;
 }
-.xulsword #closeplayer {
+.xulswordWin #closeplayer {
   margin-inline-start: 10px !important;
 }
-.xulsword .controlbar .button,
-.xulsword .controlbar .button > div,
-.xulsword .controlbar button {
+.xulswordWin .controlbar .button,
+.xulswordWin .controlbar .button > div,
+.xulswordWin .controlbar button {
   width: 100%;
 }
-.xulsword .controlbar .textbox {
+.xulswordWin .controlbar .textbox {
   font-size: 15px;
 }
-.xulsword .controlbar #search-tool .vbox > div {
+.xulswordWin .controlbar #search-tool .vbox > div {
   width: 100%;
 }
-.xulsword .controlbar #historymenu {
+.xulswordWin .controlbar #historymenu {
   position: relative;
 }
-.xulsword .controlbar #book,
-.xulsword .controlbar #chapter,
-.xulsword .controlbar #verse {
+.xulswordWin .controlbar #book,
+.xulswordWin .controlbar #chapter,
+.xulswordWin .controlbar #verse {
   margin-top: 0;
   margin-bottom: 2px;
 }

@@ -1,14 +1,12 @@
 /* eslint-disable prefer-rest-params */
-import S from '../defaultPrefs.ts';
-import { clone, diff, getCookie, mapp, setCookie } from '../common.ts';
-import Subscription from '../subscription.ts';
-import log from './log.ts';
+import S from './defaultPrefs.ts';
+import { clone, diff, JSON_parse, JSON_stringify, mapp } from './common.ts';
+import Subscription from './subscription.ts';
 
-import type { PrefObject, PrefStoreType, PrefValue } from '../type';
-
-// CookiePref is not used in the Electron application, but only in browser
-// implentations. It has the same interface as G.Prefs, but only stores data
-// in the renderer using cookies, never to localFiles.
+import type { BrowserWindow } from 'electron';
+import type ElectronLog from 'electron-log';
+import type LocalFile from './main/components/localFile.ts';
+import type { PrefObject, PrefStoreType, PrefValue } from './type.ts';
 
 export type PrefCallbackType = (
   callingWinID: number,
@@ -17,17 +15,57 @@ export type PrefCallbackType = (
   value: PrefValue
 ) => void;
 
-const Prefs = {
-  // True means write sources to cookie after every change
-  writeOnChange: false,
+export type PrefStorage = {
+  exists: LocalFile['exists'];
+  writeFile: LocalFile['writeFile'];
+  readFile: LocalFile['readFile'];
+};
+
+export type PrefsGType = Omit<
+  Prefs,
+  | 'writeOnChange'
+  | 'browserWindow'
+  | 'storage'
+  | 'log'
+  | 'stores'
+  | 'getStore'
+  | 'getKeyValueFromStore'
+  | 'isType'
+  | 'writeStore'
+  | 'setPref'
+  | 'findDefaultValue'
+  | 'findDefaultValueInS'
+>;
+
+export default class Prefs {
+  // True means write sources to disk after every change
+  writeOnChange = false as boolean;
+
+  browserWindow = null as typeof BrowserWindow | null;
+
+  storage = null as ((aStore: string) => PrefStorage) | null;
+
+  log = null as ElectronLog.LogFunctions | null;
 
   // Cache all persistent data
-  stores: {} as {
+  stores = {} as {
     [i in string | PrefStoreType]: {
-      file: string; // This is now a cookie name
+      store: PrefStorage;
       data: any;
     };
-  },
+  };
+
+  constructor(
+    storage: Prefs['storage'],
+    log: ElectronLog.LogFunctions,
+    writeOnChange?: Prefs['writeOnChange'],
+    browserWindow?: Prefs['browserWindow']
+  ) {
+    this.storage = storage;
+    this.log = log;
+    this.browserWindow = browserWindow || null;
+    this.writeOnChange = !!writeOnChange;
+  }
 
   has(
     key: string,
@@ -38,48 +76,48 @@ const Prefs = {
     if (value === undefined) return false;
     if (!this.isType(type, value)) return false;
     return true;
-  },
+  }
 
   // Get a string pref value. Error if key is not String, or is missing from store.
   getCharPref(key: string, aStore?: PrefStoreType): string {
     return this.getPrefOrCreate(key, 'string', undefined, aStore) as string;
-  },
+  }
 
   // Set a string pref value. Error if key is not String.
   setCharPref(key: string, value: string, aStore?: PrefStoreType): boolean {
     return this.setPref(key, 'string', value, aStore, arguments[3] ?? -1);
-  },
+  }
 
   // Get a Boolean pref value. Error if key is not Boolean, or is missing from store.
   getBoolPref(key: string, aStore?: PrefStoreType): boolean {
     return this.getPrefOrCreate(key, 'boolean', undefined, aStore) as boolean;
-  },
+  }
 
   // Set a Boolean pref value. Error if key is not Boolean.
   setBoolPref(key: string, value: boolean, aStore?: PrefStoreType): boolean {
     return this.setPref(key, 'boolean', value, aStore, arguments[3] ?? -1);
-  },
+  }
 
   // Get a number pref value (does no need to be an integer). Error if key is
   // not a number, or is missing from store.
   getIntPref(key: string, aStore?: PrefStoreType): number {
     return this.getPrefOrCreate(key, 'number', undefined, aStore) as number;
-  },
+  }
 
   // Set a Boolean pref value. Error if key is not a number.
   setIntPref(key: string, value: number, aStore?: PrefStoreType): boolean {
     return this.setPref(key, 'number', value, aStore, arguments[3] ?? -1);
-  },
+  }
 
   // Get a complex pref value. Error if key is not complex, or is missing from store.
   getComplexValue(key: string, aStore?: PrefStoreType): unknown {
     return this.getPrefOrCreate(key, 'complex', undefined, aStore);
-  },
+  }
 
   // Set a Boolean pref value. Error if key is not an number.
   setComplexValue(key: string, value: any, aStore?: PrefStoreType): boolean {
     return this.setPref(key, 'complex', value, aStore, arguments[3] ?? -1);
-  },
+  }
 
   // Sets individual properties of a key or a store, leaving the others untouched.
   mergeValue(
@@ -98,12 +136,12 @@ const Prefs = {
       skipCallbacks,
       clearRendererCaches
     );
-  },
+  }
 
   // Remove the key from a store
   deleteUserPref(key: string, aStore?: PrefStoreType): boolean {
     return this.setPref(key, 'any', undefined, aStore, arguments[2] ?? -1);
-  },
+  }
 
   // Find the S default value of any key in any store. If the store is not part
   // of S, undefined is returned.
@@ -119,7 +157,7 @@ const Prefs = {
       return s;
     }
     return undefined;
-  },
+  }
 
   // Return the default value for a key. If store is in S and no default is found,
   // an error is thrown. Otherwise undefined is returned. The default value will
@@ -142,7 +180,7 @@ const Prefs = {
       return value;
     }
     return defaultValue;
-  },
+  }
 
   isType(
     type: 'string' | 'number' | 'boolean' | 'complex' | 'any',
@@ -155,7 +193,7 @@ const Prefs = {
       }
     }
     return true;
-  },
+  }
 
   // Return the pref value of the given type and create it if it doesn't exist.
   // Exceptions are thrown if:
@@ -259,41 +297,46 @@ const Prefs = {
     }
 
     return value;
-  },
+  }
 
   // Get persistent data from source json files
   getStore(aStorex: string, getDefaultStore = false): PrefObject {
     // Create a new store if needed
     const aStore = getDefaultStore ? `${aStorex}_default` : aStorex;
     if (this.stores === null || !(aStore in this.stores)) {
-      this.stores = {
-        ...this.stores,
-        [aStore]: {
-          file: aStore,
-          data: null,
-        },
-      };
+      if (this.storage) {
+        this.stores = {
+          ...this.stores,
+          [aStore]: {
+            store: this.storage(aStore),
+            data: null,
+          },
+        };
+      } else throw new Error('Prefs has not been initialized!');
     }
 
     const s = this.stores[aStore];
 
     // Read the data unless it has already been read
     if (!s.data) {
-      const cv = getCookie(s.file);
-      if (cv) {
-        if (cv && typeof cv === 'object') {
-          s.data = cv;
+      if (s.store.exists()) {
+        const data = s.store.readFile();
+        if (data && data.length) {
+          const json = JSON_parse(data.toString());
+          if (json && typeof json === 'object') {
+            s.data = json;
+          }
         }
         if (!s.data || typeof s.data !== 'object' || Array.isArray(s.data)) {
           throw Error(
-            `Read of JSON Prefs store did not return a PrefObject (store='${s.file}', contents='${s.data}').`
+            `Read of JSON Prefs store did not return a PrefObject (store='${aStore}', contents='${s.data}').`
           );
         }
       } else s.data = {};
     }
 
     return s.data;
-  },
+  }
 
   // If getDefaultStore is null, only the store will be searched, if it is
   // false, the store will be searched followed by the default store. If it
@@ -333,20 +376,20 @@ const Prefs = {
       throw Error(`Missing Prefs key: '${key}' of '${aStore}' store`);
     }
     return clone(keyvalue);
-  },
+  }
 
-  // Write persistent data to cookies. If there is no data object
+  // Write persistent data to source json files. If there is no data object
   // for the store, then there have been no set/gets on the store, and nothing
   // will be written. True is returned on success.
   writeStore(aStore: PrefStoreType = 'prefs') {
     if (!this.stores) {
-      log.warn(`Failed to write to non-existent store: '${aStore}.`);
+      this.log?.warn(`Failed to write to non-existent store: '${aStore}.`);
       return false;
     }
 
     const s = this.stores[aStore];
     if (!s.data || typeof s.data !== 'object') {
-      log.warn(
+      this.log?.warn(
         `No data written to store: store='${aStore}', PrefValue='${s.data}'`
       );
       return false;
@@ -357,17 +400,25 @@ const Prefs = {
     Object.keys(s.data).forEach((k) => {
       if (!allStoreKeys.includes(k)) {
         delete s.data[k];
-        log.info(
+        this.log?.info(
           `Deleting outdated user preference: key='${k}', store='${aStore}'`
         );
       }
     });
 
-    setCookie(s.file, s.data, 365);
-    log.verbose(`Persisted store: ${s.file}`);
+    const json = JSON_stringify(s.data, 2);
+    if (json) {
+      s.store.writeFile(json);
+      this.log?.verbose(`Persisted store: ${aStore}`);
+    } else {
+      this.log?.warn(
+        `Failed to write to store: '${aStore}' PrefValue did not stringify.`
+      );
+      return false;
+    }
 
     return true;
-  },
+  }
 
   writeAllStores(): void {
     if (!this.writeOnChange && this.stores !== null) {
@@ -377,7 +428,7 @@ const Prefs = {
         }
       });
     }
-  },
+  }
 
   // Write a key value pair to a store, and return true if succesfull. If the
   // value is undefined, the key will be removed from the store. If the value
@@ -392,7 +443,7 @@ const Prefs = {
     storex: PrefStoreType | undefined,
     callingWinID: number,
     skipCallbacks?: boolean,
-    _clearRendererCaches?: boolean
+    clearRendererCaches?: boolean
   ): boolean {
     if (key === null && type !== 'merge')
       throw new Error(`Pref key is null. Must use merge.`);
@@ -415,7 +466,7 @@ const Prefs = {
       }
     } else if (!this.isType(type, value)) {
       const msg = `Prefs was given the wrong type (expected='${type}', given='${value}', key='${key}', store='${store}').`;
-      if (type === 'complex') log.warn(msg);
+      if (type === 'complex') this.log?.warn(msg);
       else throw new Error(msg);
     }
     // Get (or create) the parent object of the key.
@@ -468,16 +519,14 @@ const Prefs = {
       // Reset renderer caches if requested. When pref values are being pushed
       // to renderer windows that are incompatible with currently cached data,
       // such as global.locale, caches must be cleared before prefs are updated!
-      /*
-      if (_clearRendererCaches) {
-        BrowserWindow.getAllWindows().forEach((w) => {
-          log.debug(
+      if (clearRendererCaches && this.browserWindow) {
+        this.browserWindow.getAllWindows().forEach((w) => {
+          this.log?.debug(
             `Prefs is clearing renderer caches: clearRendererCaches=true`
           );
           w.webContents.send('cache-reset');
         });
-      }*/
-
+      }
       // Call any registered callbacks if value was successfully changed.
       if (
         (skipCallbacks === undefined && valueChanged) ||
@@ -500,20 +549,6 @@ const Prefs = {
     }
 
     return success;
-  },
+  }
 };
 
-export type PrefsGType = Omit<
-  typeof Prefs,
-  | 'writeOnChange'
-  | 'stores'
-  | 'getStore'
-  | 'getKeyValueFromStore'
-  | 'isType'
-  | 'writeStore'
-  | 'setPref'
-  | 'findDefaultValue'
-  | 'findDefaultValueInS'
->;
-
-export default Prefs as PrefsGType;

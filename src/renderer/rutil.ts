@@ -23,7 +23,7 @@ import S from '../defaultPrefs.ts';
 import G, { GA } from './rg.ts';
 import { getElementData, verseKey } from './htmlData.ts';
 import log from './log.ts';
-import CookiePrefs from './cookiePrefs.ts';
+import CookiePrefs from './prefs.ts';
 
 import type {
   AudioPath,

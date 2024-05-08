@@ -2,11 +2,12 @@ import SocketConnect from './preload.ts';
 import React, { StrictMode, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { cachePreload, decodeJSData } from "./bcommon.ts";
+import { randomID } from "../common.ts";
 import C from '../constant.ts';
 import S from '../defaultPrefs.ts';
 import Subscription from '../subscription.ts';
+import CookiePrefs from '../renderer/prefs.ts';
 import Xulsword, { XulswordProps } from "../renderer/xulswordWin/xulsword.tsx";
-import { randomID, setCookie } from "../common.ts";
 
 import type { GCallType, PrefObject } from "../type.ts";
 
@@ -49,6 +50,9 @@ const preloads: GCallType[] = [
   ['ProgramConfig', null],
   ['getLocaleDigits', null, []],
   ['getLocalizedBooks', null, []],
+  ['FeatureModules', null],
+  ['AudioConfs', null],
+  ['Config', null],
   ['i18n', 'exists', ['chooserBookGroup_ot']],
   ['i18n', 'exists', ['chooserBookGroup_nt']],
   ...(Object.values(C.SupportedTabTypes)
@@ -56,7 +60,7 @@ const preloads: GCallType[] = [
   ...localePreload.map((x) => ['i18n', 't', x]),
 ];
 
-// React element controller:
+// Top React element controller:
 function Controller(
   props: {
     id: string;
@@ -66,13 +70,28 @@ function Controller(
 ) {
   const { id, initial, defprefs } = props;
   const [state, setState] = useState(initial);
+  const $lang = 'en'; // TODO!: <---
+  const $dir = 'ltr'; // TODO!: <---
 
-  setCookie('prefs_default', {
+  CookiePrefs.setComplexValue('xulsword', {
     ...S.prefs.xulsword,
     ...defprefs
-  }, 30);
+  }, 'prefs_default' as 'prefs');
 
-  return <Xulsword id={id} {...state} />;
+  const html =
+    document.getElementsByTagName('html')[0] as HTMLHtmlElement | undefined;
+  if (html) {
+    html.classList.add('skin', 'xulswordWin', 'cs-locale', $lang);
+    html.setAttribute('dir', $dir);
+  }
+
+  return (
+    <div id="root">
+      <div id="reset">
+        <Xulsword id={id} {...state} />
+      </div>
+    </div>
+  );
 }
 
 // Each SelectVK will keep its own state, providing chapter selection from any
