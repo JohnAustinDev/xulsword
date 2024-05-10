@@ -25,6 +25,7 @@ import {
   libswordImgSrc,
   scrollIntoView,
 } from '../../rutil.ts';
+import RenderPromise from '../../renderPromise.ts';
 import {
   xulDefaultProps,
   xulPropTypes,
@@ -35,7 +36,7 @@ import {
 import DragSizer from '../dragsizer.tsx';
 import { Vbox, Hbox, Box } from '../boxes.tsx';
 import Spacer from '../spacer.tsx';
-import { libswordText, textChange } from './ztext.ts';
+import { LibSwordResponse, libswordText, textChange } from './ztext.ts';
 import {
   highlight,
   versekeyScroll,
@@ -48,6 +49,7 @@ import '../../libsword.css';
 import './atext.css';
 
 import type { AtextPropsType, PinPropsType } from '../../../type.ts';
+import type { RenderPromiseComponent, RenderPromiseState } from '../../renderPromise.ts';
 
 const defaultProps = {
   ...xulDefaultProps,
@@ -86,7 +88,10 @@ export const stateWinPrefs = {
 
 const notStateWinPrefs = {};
 
-export type AtextStateType = typeof stateWinPrefs & typeof notStateWinPrefs;
+export type AtextStateType =
+  typeof stateWinPrefs &
+  typeof notStateWinPrefs &
+  RenderPromiseState;
 
 // Window arguments that are used to set initial state must be updated locally
 // and in Prefs, so that a component reset or program restart won't cause
@@ -94,7 +99,7 @@ export type AtextStateType = typeof stateWinPrefs & typeof notStateWinPrefs;
 const windowState: Partial<AtextStateType>[] = [];
 
 // XUL Atext
-class Atext extends React.Component {
+class Atext extends React.Component implements RenderPromiseComponent {
   static defaultProps: typeof defaultProps;
 
   static propTypes: typeof propTypes;
@@ -107,6 +112,8 @@ class Atext extends React.Component {
 
   nbref: React.RefObject<HTMLDivElement>;
 
+  renderPromise: RenderPromiseComponent['renderPromise'];
+
   constructor(props: AtextProps) {
     super(props);
 
@@ -114,6 +121,7 @@ class Atext extends React.Component {
       ...stateWinPrefs,
       ...notStateWinPrefs,
       ...windowState[props.panelIndex],
+      renderPromiseID: 0,
     };
     this.state = s;
 
@@ -123,6 +131,8 @@ class Atext extends React.Component {
     this.onUpdate = this.onUpdate.bind(this);
     this.writeLibSword2DOM = this.writeLibSword2DOM.bind(this);
     this.handler = handlerH.bind(this);
+
+    this.renderPromise = new RenderPromise(this);
   }
 
   componentDidMount() {
@@ -132,6 +142,7 @@ class Atext extends React.Component {
   componentDidUpdate(_prevProps: AtextProps, prevState: AtextStateType) {
     const { panelIndex } = this.props as AtextProps;
     const state = this.state as AtextStateType;
+    const { renderPromise } = this;
     this.onUpdate();
     windowState[panelIndex] = keep(
       state,
@@ -141,6 +152,7 @@ class Atext extends React.Component {
     if (window.processR.platform !== 'browser' && changedState) {
       G.Window.mergeValue(`atext${panelIndex}State`, changedState);
     }
+    renderPromise.dispatch();
   }
 
   componentWillUnmount() {
@@ -152,8 +164,8 @@ class Atext extends React.Component {
   // LibSword to write text to the already rendered component's sb
   // (scripture box) and nb (note box) divs. It first checks if sb
   // already contains the necessary LibSword response and if not,
-  // caches the required response and updates sb and nb contents.
-  // It then does any srolling, highlighting, footnote adjustments
+  // requests it and caches the response and updates sb and nb contents.
+  // It then does any scrolling, highlighting, footnote adjustments
   // etc. which must wait until Atext contains the LibSword response.
   // Also, the pin state is updated if it has changed, and a few other
   // things. NOTE: the related hashes must be stored on the HTML element
@@ -164,6 +176,7 @@ class Atext extends React.Component {
     const state = this.state as AtextStateType;
     const { columns, isPinned, panelIndex, xulswordState } = props;
     const { pin, maxNoteBoxHeight } = state as AtextStateType;
+    const { renderPromise } = this;
 
     // Decide what needs to be updated...
     // pinProps are the currently active props according to the panel's
@@ -212,16 +225,23 @@ class Atext extends React.Component {
         },
         panelIndex
       );
-      const done =
+      const skipUpdate =
         scrollProps.scroll?.verseAt === 'bottom' &&
         (columns === 1 || type !== C.BIBLE);
-      if (libswordProps && !done) {
+      if (libswordProps && !skipUpdate) {
         const update = writekey !== sbe.dataset.libsword;
         if (update) {
-          this.writeLibSword2DOM(libswordProps, panelIndex, 'overwrite');
+          this.writeLibSword2DOM(
+            libswordProps,
+            panelIndex,
+            'overwrite',
+            newState,
+            renderPromise
+          );
         }
         // SCROLL
         const doscroll =
+          !renderPromise.waiting() &&
           scrollProps.scroll &&
           (update || scrollkey !== sbe.dataset.scroll) &&
           isVerseKey;
@@ -264,6 +284,7 @@ class Atext extends React.Component {
                   }
                 }
                 while (
+                  !renderPromise.waiting() &&
                   v &&
                   prepend > 0 &&
                   ((!rtl && v.offsetLeft < sbe.offsetWidth) ||
@@ -273,7 +294,13 @@ class Atext extends React.Component {
                     ...libswordProps,
                     location: { ...libswordProps.location, chapter: prepend },
                   };
-                  this.writeLibSword2DOM(pre, panelIndex, 'prepend');
+                  this.writeLibSword2DOM(
+                    pre,
+                    panelIndex,
+                    'prepend',
+                    newState,
+                    renderPromise
+                  );
                   v = findVerseElement(
                     sbe,
                     libswordProps.location.chapter,
@@ -284,7 +311,7 @@ class Atext extends React.Component {
                 // Hide starting verses until the selected verse is visible above the notebox.
                 sib = sbe.firstChild as HTMLElement | null;
                 const nbc = nbe.parentNode as HTMLElement;
-                while (v && sib) {
+                while (!renderPromise.waiting() && v && sib) {
                   const offpage =
                     (!rtl && v.offsetLeft > sbe.offsetWidth) ||
                     (rtl && v.offsetLeft <= 0);
@@ -302,38 +329,40 @@ class Atext extends React.Component {
                   } while (!finished);
                 }
                 // Change state to first visible verse.
-                if (!sib) sib = sbe.firstChild as HTMLElement | null;
-                while (
-                  sib &&
-                  !(
-                    'classList' in sib &&
-                    sib.classList.contains('vs') &&
-                    sib.style.display !== 'none'
-                  )
-                ) {
-                  sib = sib.nextSibling as HTMLElement | null;
-                }
-                const info = (sib && getElementData(sib)) || null;
-                if (info && info.location) {
-                  const { book, chapter, verse: vs } = info.location;
-                  const location = verseKey(
-                    [book, chapter, vs].join('.'),
-                    libswordProps.location.v11n
-                  ).location();
-                  if (isPinned) {
-                    newState = {
-                      ...newState,
-                      pin: {
-                        ...pinProps,
+                if (!renderPromise.waiting()) {
+                  if (!sib) sib = sbe.firstChild as HTMLElement | null;
+                  while (
+                    sib &&
+                    !(
+                      'classList' in sib &&
+                      sib.classList.contains('vs') &&
+                      sib.style.display !== 'none'
+                    )
+                  ) {
+                    sib = sib.nextSibling as HTMLElement | null;
+                  }
+                  const info = (sib && getElementData(sib)) || null;
+                  if (info && info.location) {
+                    const { book, chapter, verse: vs } = info.location;
+                    const location = verseKey(
+                      [book, chapter, vs].join('.'),
+                      libswordProps.location.v11n
+                    ).location();
+                    if (isPinned) {
+                      newState = {
+                        ...newState,
+                        pin: {
+                          ...pinProps,
+                          location,
+                          scroll: { verseAt: 'top' },
+                        },
+                      };
+                    } else {
+                      xulswordState({
                         location,
                         scroll: { verseAt: 'top' },
-                      },
-                    };
-                  } else {
-                    xulswordState({
-                      location,
-                      scroll: { verseAt: 'top' },
-                    });
+                      });
+                    }
                   }
                 }
               } else {
@@ -372,12 +401,22 @@ class Atext extends React.Component {
                 const max = v11n
                   ? getMaxChapter(v11n, libswordProps.location.book)
                   : 0;
-                while (append <= max && sbe.scrollWidth <= sbe.offsetWidth) {
+                while (
+                  !renderPromise.waiting() &&
+                  append <= max &&
+                  sbe.scrollWidth <= sbe.offsetWidth
+                ) {
                   const app = {
                     ...libswordProps,
                     location: { ...libswordProps.location, chapter: append },
                   };
-                  this.writeLibSword2DOM(app, panelIndex, 'append');
+                  this.writeLibSword2DOM(
+                    app,
+                    panelIndex,
+                    'append',
+                    newState,
+                    renderPromise
+                  );
                   append += 1;
                 }
               }
@@ -460,7 +499,9 @@ class Atext extends React.Component {
       | 'show'
     >,
     i: number,
-    flag: 'overwrite' | 'prepend' | 'append'
+    flag: 'overwrite' | 'prepend' | 'append',
+    newState: Partial<AtextStateType>,
+    renderPromise: RenderPromiseComponent['renderPromise'],
   ) {
     const { sbref, nbref } = this;
     const sbe = sbref !== null ? sbref.current : null;
@@ -474,61 +515,72 @@ class Atext extends React.Component {
         i
       );
       if (!Cache.has(libswordHash)) {
-        Cache.write(libswordText(libswordProps, i), libswordHash);
+        Cache.write(
+          libswordText(
+            libswordProps,
+            i,
+            newState,
+            renderPromise
+          ),
+          libswordHash
+        );
       }
-      const response = Cache.read(libswordHash);
-      log.silly(
-        `${flag} panel ${i} ${verseKey(
-          libswordProps.location || ''
-        ).osisRef()}:`
-      );
-      const isDict =
-        libswordProps.module &&
-        G.Tab[libswordProps.module].type === C.DICTIONARY;
-      let fntable = (!isDict ? nbe.firstChild : null) as HTMLElement | null;
-      let sb;
-      let nb;
-      switch (flag) {
-        case 'overwrite':
-          sb = response.textHTML;
-          nb = response.noteHTML;
-          break;
-        case 'prepend': {
-          if (fntable) {
-            sb = response.textHTML + sbe.innerHTML;
-            nb = response.noteHTML + fntable.innerHTML;
+      const response = Cache.read(libswordHash) as LibSwordResponse;
+      if (renderPromise.waiting()) Cache.clear(libswordHash);
+      else {
+        log.silly(
+          `${flag} panel ${i} ${verseKey(
+            libswordProps.location || ''
+          ).osisRef()}:`
+        );
+        const isDict =
+          libswordProps.module &&
+          G.Tab[libswordProps.module].type === C.DICTIONARY;
+        let fntable = (!isDict ? nbe.firstChild : null) as HTMLElement | null;
+        let sb;
+        let nb;
+        switch (flag) {
+          case 'overwrite':
+            sb = response.textHTML;
+            nb = response.noteHTML;
+            break;
+          case 'prepend': {
+            if (fntable) {
+              sb = response.textHTML + sbe.innerHTML;
+              nb = response.noteHTML + fntable.innerHTML;
+            }
+            break;
           }
-          break;
-        }
-        case 'append': {
-          if (fntable) {
-            sb = sbe.innerHTML + response.textHTML;
-            nb = fntable.innerHTML + response.noteHTML;
+          case 'append': {
+            if (fntable) {
+              sb = sbe.innerHTML + response.textHTML;
+              nb = fntable.innerHTML + response.noteHTML;
+            }
+            break;
           }
-          break;
+          default:
+            throw Error('writeLibSword unrecognized flag');
         }
-        default:
-          throw Error('writeLibSword unrecognized flag');
+        if (nb !== undefined && !isDict) {
+          nb = `<div class="fntable">${nb}</div>`;
+        }
+        if (sb !== undefined) {
+          sanitizeHTML(sbe, sb);
+          libswordImgSrc(sbe);
+        }
+        if (nb !== undefined) {
+          sanitizeHTML(nbe, nb);
+          libswordImgSrc(nbe);
+        }
+        if (flag === 'overwrite') {
+          sbe.dataset.libsword = libswordHash;
+          sbe.dataset.scroll = undefined;
+        }
+        const nbc = nbe.parentNode as any;
+        fntable = nbe.firstChild as HTMLElement | null;
+        if (!fntable?.innerText && !isDict) nbc.classList.add('noteboxEmpty');
+        else nbc.classList.remove('noteboxEmpty');
       }
-      if (nb !== undefined && !isDict) {
-        nb = `<div class="fntable">${nb}</div>`;
-      }
-      if (sb !== undefined) {
-        sanitizeHTML(sbe, sb);
-        libswordImgSrc(sbe);
-      }
-      if (nb !== undefined) {
-        sanitizeHTML(nbe, nb);
-        libswordImgSrc(nbe);
-      }
-      if (flag === 'overwrite') {
-        sbe.dataset.libsword = libswordHash;
-        sbe.dataset.scroll = undefined;
-      }
-      const nbc = nbe.parentNode as any;
-      fntable = nbe.firstChild as HTMLElement | null;
-      if (!fntable?.innerText && !isDict) nbc.classList.add('noteboxEmpty');
-      else nbc.classList.remove('noteboxEmpty');
     }
   }
 

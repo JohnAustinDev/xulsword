@@ -7,7 +7,7 @@
 /* eslint-disable import/order */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { clone, genBookTreeNodes, gbAncestorIDs } from '../../../common.ts';
+import { clone, gbAncestorIDs } from '../../../common.ts';
 import C from '../../../constant.ts';
 import G from '../../rg.ts';
 import { audioGenBookNode } from '../../rutil.ts';
@@ -183,11 +183,7 @@ class GenbookChooser extends React.Component {
                   if (!(treekey in treeRef)) {
                     treeRef[treekey] = React.createRef();
                   }
-                  const childNodes = genBookTreeNodes(
-                    G.DiskCache,
-                    G.LibSword,
-                    m
-                  );
+                  const childNodes = G.genBookTreeNodes(m);
                   const toc = G.LibSword.getGenBookTableOfContents(m);
                   const tocKeys = Object.keys(toc);
                   this.treeNodes[treekey] = [];

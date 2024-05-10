@@ -36,7 +36,6 @@ import type {
   PrefObject,
   PrefStoreType,
   PrefValue,
-  RenderPromiseComponent,
   Repository,
   SwordConfLocalized,
   SwordConfType,
@@ -46,6 +45,7 @@ import type {
   WindowDescriptorPrefType,
 } from '../type.ts';
 import type { TreeNodeInfo } from '@blueprintjs/core';
+import type RenderPromise from './renderPromise.ts';
 
 export function component(
   comp: any
@@ -268,7 +268,7 @@ export function readGenBookAudioConf(
   gbmod: string
 ): GenBookAudio {
   const r: GenBookAudio = {};
-  const allGbKeys = gbPaths(G.DiskCache, G.LibSword, gbmod);
+  const allGbKeys = gbPaths(G.genBookTreeNodes(gbmod));
   Object.entries(audio).forEach((entry) => {
     const [pathx, str] = entry;
     const px = pathx.split('/').filter(Boolean);
@@ -343,7 +343,7 @@ export function getMaxVerse(v11n: V11nType, vkeytext: string) {
 export function getMaxVerseSA(
   v11n: V11nType,
   vkeytext: string,
-  promise: RenderPromiseComponent['renderPromise'],
+  promise: RenderPromise,
 ) {
   const { chapter } = verseKey(vkeytext, v11n);
   const maxch = getMaxChapter(v11n, vkeytext);

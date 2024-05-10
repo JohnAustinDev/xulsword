@@ -7,10 +7,11 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { clone, diff, getModuleOfObject, handleRenderPromises, ofClass } from '../../common.ts';
+import { clone, diff, getModuleOfObject, ofClass } from '../../common.ts';
 import C from '../../constant.ts';
-import G, { GA } from '../rg.ts';
+import G from '../rg.ts';
 import { getMaxChapter, getMaxVerseSA } from '../rutil.ts';
+import RenderPromise from '../renderPromise.ts';
 import { addClass, xulDefaultProps, XulProps, xulPropTypes } from './xul.tsx';
 import { Hbox } from './boxes.tsx';
 import ModuleMenu from './modulemenu.tsx';
@@ -24,9 +25,8 @@ import type {
   LocationVKCommType,
   LocationVKType,
   OSISBookType,
-  RenderPromiseState,
-  RenderPromiseComponent,
 } from '../../type.ts';
+import type { RenderPromiseComponent, RenderPromiseState } from '../renderPromise.ts';
 
 export type SelectVKType =
   | (LocationVKType & {
@@ -123,7 +123,7 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
 
   selectValues: SelectVKType;
 
-  renderPromise: RenderPromiseComponent['renderPromise'];
+  renderPromise: RenderPromise;
 
   constructor(props: SelectVKProps) {
     super(props);
@@ -135,11 +135,7 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
     this.state = s;
 
     this.selectValues = props.initialVK;
-    this.renderPromise = {
-      self: this,
-      calls: [],
-      uncacheableCalls: {},
-    }
+    this.renderPromise = new RenderPromise(this);
 
     this.checkSelection = this.checkSelection.bind(this);
     this.handleChange = this.handleChange.bind(this);
@@ -154,7 +150,7 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
   componentDidUpdate(_prevProps: SelectVKProps, prevState: SelectVKState) {
     const { checkSelection, renderPromise } = this;
     checkSelection(prevState);
-    handleRenderPromises(GA, renderPromise);
+    renderPromise.dispatch();
   }
 
   // Get an updated selection based on last user input, and call onSelection.

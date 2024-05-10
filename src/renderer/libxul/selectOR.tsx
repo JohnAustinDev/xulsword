@@ -14,14 +14,14 @@ import {
   findFirstLeafNode,
   ofClass,
   findTreeNode,
-  genBookTreeNodes,
   findTreeAncestors,
   findTreeSiblings,
   gbAncestorIDs,
+  trySyncOrPromise,
 } from '../../common.ts';
 import C from '../../constant.ts';
-import G from '../rg.ts';
-import { getAllDictionaryKeyList } from './viewport/zdictionary.ts';
+import G, { GA } from '../rg.ts';
+import RenderPromise from '../renderPromise.ts';
 import { addClass, xulDefaultProps, XulProps, xulPropTypes } from './xul.tsx';
 import { Vbox } from './boxes.tsx';
 import Menulist from './menulist.tsx';
@@ -29,6 +29,7 @@ import ModuleMenu from './modulemenu.tsx';
 import './selectOR.css';
 
 import type { TreeNodeInfo } from '@blueprintjs/core';
+import type { RenderPromiseComponent, RenderPromiseState } from '../renderPromise.ts';
 
 // Allow users to select one or more chapters from any non-versekey SWORD
 // module parent node.
@@ -96,14 +97,16 @@ const propTypes = {
   onSelection: PropTypes.func.isRequired,
 };
 
-interface SelectORState {
+type SelectORState = RenderPromiseState & {
   selection: SelectORMType;
 }
 
-class SelectOR extends React.Component {
+class SelectOR extends React.Component implements RenderPromiseComponent {
   static defaultProps: typeof defaultProps;
 
   static propTypes: typeof propTypes;
+
+  renderPromise: RenderPromise;
 
   constructor(props: SelectORProps) {
     super(props);
@@ -121,11 +124,19 @@ class SelectOR extends React.Component {
         ...defaultORM,
         ...initialORM,
       },
+      renderPromiseID: 0,
     };
     this.state = s;
 
     this.onChange = this.onChange.bind(this);
     this.openParent = this.openParent.bind(this);
+
+    this.renderPromise = new RenderPromise(this);
+  }
+
+  componentDidUpdate() {
+    const { renderPromise } = this;
+    renderPromise.dispatch();
   }
 
   onChange(ev: React.SyntheticEvent) {
@@ -139,14 +150,24 @@ class SelectOR extends React.Component {
     if (targ) {
       const { value } = e.target;
       const tabType = (value && value in G.Tab && G.Tab[value].tabType) || '';
-      this.setState((prevState: SelectORState) => {
+      this.setState(async (prevState: SelectORState) => {
         let { selection } = prevState;
         if (targ.type === 'select-module') {
           let nodes: TreeNodeInfo[] = [];
           if (tabType === 'Genbks') {
-            nodes = genBookTreeNodes(G.DiskCache, G.LibSword, value);
+            try {
+              nodes = G.genBookTreeNodes(value);
+            } catch(er) {
+              nodes = await GA.genBookTreeNodes(value);
+            }
           } else if (tabType === 'Dicts') {
-            nodes = dictTreeNodes(getAllDictionaryKeyList(value), value);
+            let keylist;
+            try {
+              keylist = G.getAllDictionaryKeyList(value);
+            } catch(er) {
+              keylist = await GA.getAllDictionaryKeyList(value);
+            }
+            nodes = dictTreeNodes(keylist, value);
           }
           const leafNode = findFirstLeafNode(nodes, nodes);
           const keys = leafNode ? [leafNode.id.toString()] : [];
@@ -188,7 +209,7 @@ class SelectOR extends React.Component {
       enableMultipleSelection,
       enableParentSelection,
     } = props;
-    const { openParent, onChange } = this;
+    const { openParent, onChange, renderPromise } = this;
     const { otherMod, keys } = selection;
 
     // Get modules to be made available for selection, and their node lists:
@@ -202,9 +223,17 @@ class SelectOR extends React.Component {
       .map((m) => {
         let nodes: TreeNodeInfo[] = [];
         if (G.Tab[m].tabType === 'Genbks') {
-          nodes = genBookTreeNodes(G.DiskCache, G.LibSword, m);
+          const n = trySyncOrPromise(G, GA,
+            ['genBookTreeNodes', null, [m]],
+            renderPromise
+          )
+          if (!renderPromise.waiting()) nodes = n;
         } else if (G.Tab[m].tabType === 'Dicts') {
-          nodes = dictTreeNodes(getAllDictionaryKeyList(m), m);
+          const keylist = trySyncOrPromise(G, GA,
+            ['getAllDictionaryKeyList', null, [m]],
+            renderPromise
+          );
+          if (!renderPromise.waiting()) nodes = dictTreeNodes(keylist, m);
         }
         return {
           otherMod: m,

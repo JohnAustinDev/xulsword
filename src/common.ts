@@ -34,15 +34,11 @@ import type {
   TabType,
   TabTypes,
   GenBookAudio,
-  ModulesCache,
-  TreeNodeInfoPref,
   LocationVKType,
   LocationVKCommType,
   LocationTypes,
   GCallType,
   GAType,
-  RenderPromiseComponent,
-  RenderPromiseState,
 } from './type.ts';
 import type { TreeNodeInfo } from '@blueprintjs/core';
 import type { SelectVKType } from './renderer/libxul/selectVK.tsx';
@@ -50,100 +46,65 @@ import type { SelectORMType } from './renderer/libxul/selectOR.tsx';
 import type { getSampleText } from './renderer/bookmarks.ts';
 import type { verseKey } from './renderer/htmlData.ts';
 import type { XulswordState } from './renderer/xulswordWin/xulsword.tsx';
+import type RenderPromise from './renderer/renderPromise.ts';
 
 // In browser context, synchronous G calls are not allowed, so either the
 // data must be preloaded into the cache, or must be returned with a promise.
 // This function checks the cache and renderPromises for the data and returns
-// it if it is found, otherwise it returns a promise for the data which will
+// it if it is found. Otherwise if not in browser context, the data is retrieved
+// syncronously using G, otherwise it returns a promise for the data which will
 // be obtained asynchronously. Promises for cacheable data are not dispatched
 // until handleRenderPromises() is called to dispatch them together, requiring
 // fewer network traversals to obtain the data. But non cacheable data is
-// dispatched immediately, saved locally, and consumed after the component is
+// dispatched immediately, and saved locally, and consumed after the component is
 // re-rendered.
 export function trySyncOrPromise(
   G: GType,
   GA: GAType,
   gcall: GCallType,
-  promise: RenderPromiseComponent['renderPromise'],
+  promise?: RenderPromise,
 ): any | undefined {
   const key = GCacheKey(gcall);
-  if (promise.uncacheableCalls[key]?.resolved) {
+  if (promise?.uncacheableCalls[key]?.resolved) {
     const result = promise.uncacheableCalls[key]?.resolved;
     delete promise.uncacheableCalls[key];
     return result; // previous uncacheable data's promise is resolved!
   }
   if (Cache.has(key)) return Cache.read(key); // data in the cache!
-  const g: any = window.processR.platform === 'browser' ? GA : G;
-  const [name, method, args] = gcall;
-  if (name in g) {
-    if (!method && typeof args === undefined) {
-      promise.calls.push(gcall)
-    } else if (!method && Array.isArray(args)) {
-      const cacheable = GBuilder[name]();
-      if (cacheable) promise.calls.push(gcall);
-      else if (!(key in promise.uncacheableCalls)) {
-        promise.uncacheableCalls[key] = {
-          promise: g[name](...args),
-          resolved: undefined,
-        };
+  if (window.processR.platform !== 'browser') {
+    return G.callBatch([gcall]); // works even for non-cacheable data
+  } else if (promise) {
+    const g: any = GA;
+    const [name, method, args] = gcall;
+    if (name in g) {
+      if (!method && typeof args === undefined) {
+        promise.calls.push(gcall)
+      } else if (!method && Array.isArray(args)) {
+        const cacheable = GBuilder[name]();
+        if (cacheable) promise.calls.push(gcall);
+        else if (!(key in promise.uncacheableCalls)) {
+          promise.uncacheableCalls[key] = {
+            promise: g[name](...args),
+            resolved: undefined,
+          };
+        }
+      } else if (typeof method === 'string' && method in g[name] && args === undefined) {
+        promise.calls.push(gcall)
+      } else if (typeof method === 'string' && method in g[name] && Array.isArray(args)) {
+        const cacheable = GBuilder[name][method]();
+        if (cacheable) promise.calls.push(gcall);
+        else if (!(key in promise.uncacheableCalls)) {
+          promise.uncacheableCalls[key] = {
+            promise: g[name][method](...args),
+            resolved: undefined,
+          };
+        }
       }
-    } else if (typeof method === 'string' && method in g[name] && args === undefined) {
-      promise.calls.push(gcall)
-    } else if (typeof method === 'string' && method in g[name] && Array.isArray(args)) {
-      const cacheable = GBuilder[name][method]();
-      if (cacheable) promise.calls.push(gcall);
-      else if (!(key in promise.uncacheableCalls)) {
-        promise.uncacheableCalls[key] = {
-          promise: g[name][method](...args),
-          resolved: undefined,
-        };
-      }
+      return undefined; // must wait for the data!
     }
-    return undefined; // must wait for the data!
+    throw new Error(`Bad gtype=${g.gtype} call: ${gcall}`);
   }
-  throw new Error(`Bad gtype=${g.gtype} call: ${gcall}`);
-}
-
-export function handleRenderPromises(
-  GA: GAType,
-  rp: RenderPromiseComponent['renderPromise']
-) {
-  Object.entries(rp.uncacheableCalls).forEach((entry) => {
-    const [key, v] = entry;
-    v.promise.then((r) => {
-      rp.uncacheableCalls[key].resolved = r;
-      if (window.processR.XULSWORD_ENV() === 'development') {
-        console.log(`Component reload: ${key}`);
-      }
-      rp.self.setState({ renderPromiseID: Math.random() } as RenderPromiseState);
-    });
-  });
-
-  // Add cacheable calls to global queue, wait a bit, then handle
-  // them all-together.
-  window.renderPromises.push(rp);
-  setTimeout(async () => {
-    const calls: GCallType[] = [];
-    const components: React.Component[] = [];
-    const renders: (() => void)[] = [];
-    window.renderPromises.forEach((rp) => {
-      calls.concat(rp.calls);
-      if (!components.find((c) => c === rp.self)) {
-        components.push(rp.self);
-        renders.push(() => {
-          if (window.processR.XULSWORD_ENV() === 'development') {
-            console.log(`Component reload: ${JSON_stringify(calls)}`);
-          }
-          rp.self.setState({ renderPromiseID: Math.random() } as RenderPromiseState);
-        });
-      }
-    });
-    window.renderPromises = [];
-    if (calls.length) {
-      await GA.cachePreload(calls);
-      renders.forEach((r) => r());
-    }
-  }, C.UI.Window.networkRequestBatchDelay);
+  throw new Error(`In this context trySyncOrPromise requires the promise argument: ${gcall}`);
 }
 
 export function escapeRE(text: string) {
@@ -1488,45 +1449,8 @@ export function dictTreeNodes(
   return Cache.read(ckey);
 }
 
-// Important: allGbKeys must be output of getGenBookTableOfContents().
-export function genBookTreeNodes(
-  diskCache: GType['DiskCache'],
-  libsword: GType['LibSword'],
-  module: string,
-  expanded?: boolean
-): TreeNodeInfo[] {
-  const pkey = 'treenodes';
-  if (!diskCache.has(pkey, module)) {
-    diskCache.write(
-      pkey,
-      hierarchy(
-        libsword.getGenBookTableOfContents(module).map((gbkey) => {
-          const label = gbkey.split(C.GBKSEP);
-          if (gbkey.endsWith(C.GBKSEP)) label.pop();
-          const n: TreeNodeInfoPref = {
-            id: gbkey,
-            label: label[label.length - 1],
-            className: module ? `cs-${module}` : 'cs-LTR_DEFAULT',
-            hasCaret: gbkey.endsWith(C.GBKSEP),
-          };
-          return n;
-        })
-      ) as ModulesCache[string]['treenodes'],
-      module
-    );
-  }
-  const nodeinfos = diskCache.read(pkey, module) as TreeNodeInfoPref[];
-  nodeinfos.forEach((n) => {
-    if (expanded !== undefined && 'hasCaret' in n && n.hasCaret)
-      n.isExpanded = !!expanded;
-  });
-  return nodeinfos;
-}
-
 export function gbPaths(
-  diskCache: GType['DiskCache'],
-  libsword: GType['LibSword'],
-  gbmod: string
+  genbkTreeNodes: TreeNodeInfo[],
 ): GenBookAudio {
   const r: GenBookAudio = {};
   function addPath(nodes: TreeNodeInfo[], parentPath?: number[]) {
@@ -1542,7 +1466,7 @@ export function gbPaths(
     });
     return nodes;
   }
-  addPath(genBookTreeNodes(diskCache, libsword, gbmod));
+  addPath(genbkTreeNodes);
   return r;
 }
 

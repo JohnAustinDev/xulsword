@@ -137,7 +137,6 @@ export function getPopupHTML(
             html = getDictEntryHTML(
               reflist[0].replace(/^.*?:/, ''),
               context,
-              false,
               failReason
             );
           }
@@ -171,7 +170,7 @@ export function getPopupHTML(
             if (!dword) dword = ref.substring(colon + 1);
           }
         });
-        html = getDictEntryHTML(dword, dnames.join(';'), false, failReason);
+        html = getDictEntryHTML(dword, dnames.join(';'), failReason);
       }
       break;
     }

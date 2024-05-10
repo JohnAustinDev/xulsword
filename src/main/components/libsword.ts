@@ -374,7 +374,12 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   ): string {
     if (this.isReady(true)) {
       if (options) this.setGlobalOptions(options);
-      const dictionaryEntry = this.libxulsword.GetDictionaryEntry(lexdictmod, key);
+      let dictionaryEntry;
+      try {
+        dictionaryEntry = this.libxulsword.GetDictionaryEntry(lexdictmod, key);
+      } catch(er) {
+        dictionaryEntry = C.NOTFOUND;
+      }
       return dictionaryEntry;
     }
     return '';

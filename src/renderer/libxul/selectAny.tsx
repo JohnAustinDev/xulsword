@@ -5,8 +5,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { clone, getModuleOfObject, randomID } from '../../common.ts';
-import G from '../rg.ts';
-import { getAllDictionaryKeyList } from './viewport/zdictionary.ts';
+import G, { GA } from '../rg.ts';
 import { htmlAttribs, xulDefaultProps, XulProps, xulPropTypes } from './xul.tsx';
 import SelectVK from './selectVK.tsx';
 import SelectOR from './selectOR.tsx';
@@ -14,6 +13,7 @@ import ModuleMenu from './modulemenu.tsx';
 import './selectAny.css';
 
 import type {
+  GType,
   LocationORType,
   LocationTypes,
   LocationVKCommType,
@@ -104,7 +104,7 @@ class SelectAny extends React.Component {
     onSelection(location, id);
   }
 
-  onModuleChange(e: React.ChangeEvent<HTMLSelectElement>) {
+  async onModuleChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const { location: oldloc } = this.state as SelectAnyState;
     const module = e.target.value;
     const newType = G.Tab[module].tabType;
@@ -113,7 +113,11 @@ class SelectAny extends React.Component {
       let intloc: LocationVKType | LocationVKCommType;
       if (oldloc && 'v11n' in oldloc) intloc = oldloc;
       else {
-        intloc = LastVKLocation || (newLocation(module) as LocationVKType);
+        if (LastVKLocation === undefined) {
+          intloc = await newLocation(module) as LocationVKType;
+        } else {
+          intloc = LastVKLocation;
+        }
       }
       location = clone(intloc);
       location.vkMod = module;
@@ -123,7 +127,11 @@ class SelectAny extends React.Component {
       if (oldloc && 'v11n' in oldloc) {
         intloc = oldloc;
       } else {
-        intloc = LastVKLocation || (newLocation(module) as LocationVKCommType);
+        if (LastVKLocation === undefined) {
+          intloc = await newLocation(module) as LocationVKCommType;
+        } else {
+          intloc = LastVKLocation;
+        }
       }
       location = clone(intloc);
       location.vkMod = undefined;
@@ -132,7 +140,7 @@ class SelectAny extends React.Component {
       if (oldloc && 'v11n' in oldloc) {
         LastVKLocation = clone(oldloc);
       }
-      location = newLocation(module);
+      location = await newLocation(module);
     }
     this.setState({
       location,
@@ -199,9 +207,9 @@ SelectAny.propTypes = propTypes;
 export default SelectAny;
 
 // Pick a valid location from any installed module.
-function newLocation(
+async function newLocation(
   module: string
-): LocationVKType | LocationVKCommType | LocationORType {
+): Promise<LocationVKType | LocationVKCommType | LocationORType> {
   const { tabType, v11n } = G.Tab[module];
   let r: LocationVKType | LocationVKCommType | LocationORType;
   if (tabType === 'Texts') {
@@ -223,15 +231,23 @@ function newLocation(
       v11n: v11n || null,
     };
   } else if (tabType === 'Dicts') {
-    r = {
-      otherMod: module,
-      key: getAllDictionaryKeyList(module)[0],
-    };
+    let key;
+    try {
+      key = G.getAllDictionaryKeyList(module)[0];
+    } catch(er) {
+      const keylist = await GA.getAllDictionaryKeyList(module);
+      key = keylist[0];
+    }
+    r = { otherMod: module, key };
   } else {
-    r = {
-      otherMod: module,
-      key: G.LibSword.getGenBookTableOfContents(module)[0],
-    };
+    let key;
+    try {
+      key = G.LibSword.getGenBookTableOfContents(module)[0];
+    } catch(er) {
+      const toc = await (GA.LibSword as any).getGenBookTableOfContents(module);
+      key = toc[0];
+    }
+    r = { otherMod: module, key };
   }
   return r;
 }

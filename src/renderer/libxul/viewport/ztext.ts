@@ -8,9 +8,10 @@ import {
   JSON_attrib_parse,
   JSON_attrib_stringify,
   stringHash,
+  trySyncOrPromise,
 } from '../../../common.ts';
 import { getElementData } from '../../htmlData.ts';
-import G from '../../rg.ts';
+import G, { GA } from '../../rg.ts';
 import addBookmarks from '../../bookmarks.ts';
 import {
   getNoteHTML,
@@ -18,7 +19,7 @@ import {
   chapterChange,
   pageChange,
 } from './zversekey.ts';
-import { getAllDictionaryKeyList, getDictEntryHTML } from './zdictionary.ts';
+import { dictKeyToday, getDictEntryGCalls, getDictEntryHTML } from './zdictionary.ts';
 
 import type {
   AtextPropsType,
@@ -27,7 +28,9 @@ import type {
   SwordFilterType,
   SwordFilterValueType,
 } from '../../../type.ts';
+import type RenderPromise from '../../renderPromise.ts';
 import type { HTMLData } from '../../htmlData.ts';
+import type { AtextStateType } from './atext.tsx';
 
 export type LibSwordResponse = {
   textHTML: string;
@@ -47,9 +50,11 @@ export function libswordText(
     | 'place'
     | 'show'
   >,
-  n: number
+  n: number,
+  newState?: Partial<AtextStateType>,
+  renderPromise?: RenderPromise
 ): LibSwordResponse {
-  const r = {
+  const r: LibSwordResponse = {
     textHTML: '',
     noteHTML: '',
     notes: '',
@@ -82,22 +87,39 @@ export function libswordText(
       if (location && location.book && module) {
         const { book, chapter } = location;
         if (ilModule) {
-          r.textHTML += G.LibSword.getChapterTextMulti(
-            `${module},${ilModule}`,
-            `${book}.${chapter}`,
-            false,
-            options
-          ).replace(/interV2/gm, `cs-${ilModule}`);
+          const chtxt = trySyncOrPromise(
+            G, GA,
+            ['LibSword', 'getChapterTextMulti', [
+              `${module},${ilModule}`,
+              `${book}.${chapter}`,
+              false,
+              options
+            ]],
+            renderPromise
+          );
+          if (!renderPromise?.waiting()) {
+            r.textHTML += chtxt.replace(/interV2/gm, `cs-${ilModule}`);
+          }
         } else if (G.getBooksInVKModule(module).includes(book)) {
           // We needed to check that the module contains the book, because
           // LibSword will silently return text from elsewhere in a module
           // if the module does not include the requested book!
-          r.textHTML += G.LibSword.getChapterText(
-            module,
-            `${book}.${chapter}`,
-            options
+          const results = trySyncOrPromise(
+            G, GA,
+            ['callBatch', null, [[
+              ['LibSword', 'getChapterText', [
+                module,
+                `${book}.${chapter}`,
+                options
+              ]],
+              ['LibSword', 'getNotes', undefined]
+            ]]],
+            renderPromise
           );
-          r.notes += G.LibSword.getNotes();
+          if (!renderPromise?.waiting()) {
+            r.textHTML += results[0];
+            r.notes += results[1];
+          }
         }
       }
       break;
@@ -105,74 +127,102 @@ export function libswordText(
     case C.COMMENTARY: {
       if (location && location.book && module) {
         const { book, chapter } = location;
-        r.textHTML += G.LibSword.getChapterText(
-          module,
-          `${book}.${chapter}`,
-          options
+        const results = trySyncOrPromise(
+          G, GA,
+          ['callBatch', null, [[
+            ['LibSword', 'getChapterText', [
+              module,
+              `${book}.${chapter}`,
+              options
+            ]],
+            ['LibSword', 'getNotes', undefined]
+          ]]],
+          renderPromise
         );
-        r.notes += G.LibSword.getNotes();
+        if (!renderPromise?.waiting()) {
+          r.textHTML += results[0];
+          r.notes += results[1];
+        }
       }
       break;
     }
     case C.GENBOOK: {
       if (modkey) {
-        r.textHTML += G.LibSword.getGenBookChapterText(module, modkey, options);
-        r.noteHTML += G.LibSword.getNotes();
+        const results = trySyncOrPromise(
+          G, GA,
+          ['callBatch', null, [[
+            ['LibSword', 'getGenBookChapterText', [
+              module,
+              modkey,
+              options
+            ]],
+            ['LibSword', 'getNotes', undefined]
+          ]]],
+          renderPromise
+        );
+        if (!renderPromise?.waiting()) {
+          r.textHTML += results[0];
+          r.noteHTML += results[1];
+        }
       }
       break;
     }
     case C.DICTIONARY: {
-      G.LibSword.setGlobalOptions(options);
       // For dictionaries, noteHTML is a key selector. Cache both
       // the keyList and the key selector for a big speedup.
       // Cache is used rather than memoization when there is a strictly
       // limited number of cache possibliities (ie. one per module).
-      // Cache is also used for DailyDevotion - if the key is not in the,
+      // Cache is also used for DailyDevotion - if the key is not in the
       // Cache use today's date instead of the key.
-      const keylist = getAllDictionaryKeyList(module);
-      let key = modkey;
-      if (
-        G.FeatureModules.DailyDevotion.includes(module) &&
-        !Cache.has('DailyDevotion', module)
-      ) {
-        const today = new Date();
-        const mo = today.getMonth() + 1;
-        const dy = today.getDate();
-        key = `${mo < 10 ? '0' : ''}${String(mo)}.${dy < 10 ? '0' : ''}${dy}`;
-        Cache.write(true, 'DailyDevotion', module);
-      }
-      if (!key || !keylist.includes(key)) [key] = keylist;
-      if (key) {
-        // Build and cache the selector list.
-        if (!Cache.has('keyHTML', module)) {
-          let html = '';
-          keylist.forEach((k1: any) => {
-            const id = `${stringHash(k1)}.0`;
-            const data: HTMLData = {
-              type: 'dictkey',
-              locationGB: { otherMod: module, key: k1 },
-            };
-            html += `<div id="${id}" class="dictkey" data-data="${JSON_attrib_stringify(
-              data
-            )}">${k1}</div>`;
-          });
-          Cache.write(html, 'keyHTML', module);
-        }
+      const results = trySyncOrPromise(
+        G, GA,
+        ['callBatch', null, [[
+          ['getAllDictionaryKeyList', null, [module]],
+          ...getDictEntryGCalls(modkey, module),
+        ]]],
+        renderPromise
+      );
+      if (!renderPromise?.waiting()) {
+        results.shift(); // drop the first result
+        const keylist = results.shift();
+        const key = dictKeyToday(modkey, module);
+        if (key && keylist.includes(key)) {
+          // Build and cache the selector list.
+          if (!Cache.has('keyHTML', module)) {
+            let html = '';
+            keylist.forEach((k1: any) => {
+              const id = `${stringHash(k1)}.0`;
+              const data: HTMLData = {
+                type: 'dictkey',
+                locationGB: { otherMod: module, key: k1 },
+              };
+              html += `<div id="${id}" class="dictkey" data-data="${JSON_attrib_stringify(
+                data
+              )}">${k1}</div>`;
+            });
+            Cache.write(html, 'keyHTML', module);
+          }
 
-        // Set the final results
-        const de = getDictEntryHTML(key, module, true);
-        r.textHTML += `<div class="dictentry">${de}</div>`;
-        const sel = new RegExp(`(dictkey)([^>]*">${escapeRE(key)}<)`);
-        const list = Cache.read('keyHTML', module)
-          .replace(sel, '$1 dictselectkey$2')
-          .replace(/(?<=id="[^"]+\.)0(?=")/g, n.toString());
-        r.noteHTML += `
-          <div class="dictlist">
-            <div class="headerbox">
-              <input type="text" value="${key}" class="cs-${module} dictkeyinput" spellcheck="false"/ >
-            </div>
-            <div class="keylist">${list}</div>
-          </div>`;
+          // Set the final results.
+          let de = getDictEntryHTML(key, module, undefined, [results]);
+          r.textHTML += `<div class="dictentry">${de}</div>`;
+          const sel = new RegExp(`(dictkey)([^>]*">${escapeRE(key)}<)`);
+          const list = Cache.read('keyHTML', module)
+            .replace(sel, '$1 dictselectkey$2')
+            .replace(/(?<=id="[^"]+\.)0(?=")/g, n.toString());
+          r.noteHTML += `
+            <div class="dictlist">
+              <div class="headerbox">
+                <input type="text" value="${key}" class="cs-${module} dictkeyinput" spellcheck="false"/ >
+              </div>
+              <div class="keylist">${list}</div>
+            </div>`;
+        } else if (newState?.pin) {
+          newState.pin = {
+            ...newState.pin,
+            modkey: keylist[0],
+          };
+        }
       }
       break;
     }

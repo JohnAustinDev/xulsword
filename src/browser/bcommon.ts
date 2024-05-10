@@ -13,10 +13,10 @@ import type { SelectORMType, SelectORProps } from "../renderer/libxul/selectOR.t
 export type ChaplistVKType = { [bk in OSISBookType]?: [number, string][] }
 export type ChaplistORType = [string, string, string][]; // [order, key, url]
 
-export async function cachePreload(calls: GCallType[]) {
-  const resp = await G.cachePreload(calls);
+export async function callBatch(calls: GCallType[]) {
+  const resp = await G.callBatch(calls);
   if (resp.length !== calls.length) {
-    throw new Error(`cachePreload did not return the correct data.`);
+    throw new Error(`callBatch did not return the correct data.`);
   }
   while (calls.length) {
     const acall = calls.pop();

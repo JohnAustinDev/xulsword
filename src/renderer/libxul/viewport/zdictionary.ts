@@ -1,12 +1,13 @@
 /* eslint-disable no-continue */
 import { JSON_attrib_stringify } from '../../../common.ts';
+import Cache from '../../../cache.ts';
 import S from '../../../defaultPrefs.ts';
 import C from '../../../constant.ts';
 import G from '../../rg.ts';
 import log from '../../log.ts';
 
 import type {
-  ModulesCache,
+  GCallType,
   SwordFilterType,
   SwordFilterValueType,
 } from '../../../type.ts';
@@ -142,7 +143,7 @@ function replaceLinks(entry: string, mod: string) {
 
       if (mod && mod in G.Tab) {
         let r = G.LibSword.getDictionaryEntry(mod, l[1].toUpperCase());
-        if (!r) r = G.LibSword.getDictionaryEntry(mod, l[1]);
+        if (r === C.NOTFOUND) r = G.LibSword.getDictionaryEntry(mod, l[1]);
         if (r) html = html.replace(l[0], r);
       }
     }
@@ -151,28 +152,68 @@ function replaceLinks(entry: string, mod: string) {
   return html;
 }
 
+export function dictKeyToday(modkey: string, module: string): string {
+  let key = modkey;
+  if (
+    G.FeatureModules.DailyDevotion.includes(module) &&
+    !Cache.has('DailyDevotion', module)
+  ) {
+    const today = new Date();
+    const mo = today.getMonth() + 1;
+    const dy = today.getDate();
+    key = `${mo < 10 ? '0' : ''}${String(mo)}.${dy < 10 ? '0' : ''}${dy}`;
+    Cache.write(true, 'DailyDevotion', module);
+  }
+  return key;
+}
+
+function getAlwaysOnOptions() {
+  const options = {} as { [key in SwordFilterType]: SwordFilterValueType };
+  Object.entries(C.SwordFilters).forEach((entry) => {
+    const sword = entry[0] as SwordFilterType;
+    if (C.AlwaysOn[C.DICTIONARY].includes(sword)) {
+      [, options[sword]] = C.SwordFilterValues;
+    }
+  });
+  return options;
+}
+
+export function getDictEntryGCalls(modkey: string, module: string): (GCallType | null)[] {
+  const calls: (GCallType | null)[] = [];
+  const key = dictKeyToday(modkey, module);
+  // Allow case differences in module code references.
+  let m = module;
+  if (!(m in G.Tab)) {
+    const mlc = m.toLowerCase();
+    m = Object.keys(G.Tab).find((md) => md.toLowerCase() === mlc) || '';
+  }
+  if (m && m in G.Tab && G.Tab[m].type === C.DICTIONARY) {
+    const k = DictKeyTransform[m] ? DictKeyTransform[m](key) : key;
+    calls.push(['LibSword', 'setGlobalOptions', [getAlwaysOnOptions()]]);
+    calls.push(['LibSword', 'getDictionaryEntry', [m, k]]);
+    calls.push(['LibSword', 'getDictionaryEntry', [m, k.toUpperCase()]]);
+    calls.push(['LibSword', 'getModuleInformation', [m, 'Description']]);
+  } else calls.push(null, null, null, null);
+
+  return calls;
+}
+
 export function getDictEntryHTML(
   key: string,
   modules: string,
-  libswordFiltersReady = false,
-  reason?: FailReason
-) {
+  reason?: FailReason,
+  GcallResults?: [string | null, string | null, string | null][]
+): string {
   const mods = modules.split(';');
 
-  if (!libswordFiltersReady) {
-    const options = {} as { [key in SwordFilterType]: SwordFilterValueType };
-    Object.entries(C.SwordFilters).forEach((entry) => {
-      const sword = entry[0] as SwordFilterType;
-      if (C.AlwaysOn[C.DICTIONARY].includes(sword)) {
-        [, options[sword]] = C.SwordFilterValues;
-      }
-    });
-    G.LibSword.setGlobalOptions(options);
+  if (typeof GcallResults === 'undefined') {
+    G.LibSword.setGlobalOptions(getAlwaysOnOptions());
   }
 
   let html = '';
   let sep = '';
   mods.forEach((mx) => {
+    const results = Array.isArray(GcallResults) ? GcallResults.shift() : null;
     // Allow case differences in module code references.
     let m = mx;
     if (!(m in G.Tab)) {
@@ -181,32 +222,25 @@ export function getDictEntryHTML(
     }
     if (m && m in G.Tab && G.Tab[m].type === C.DICTIONARY) {
       const k = DictKeyTransform[m] ? DictKeyTransform[m](key) : key;
-      let h = '';
-      try {
-        h = G.LibSword.getDictionaryEntry(m, k);
-      } catch (er) {
-        h = '';
-      }
-      if (!h) {
-        try {
-          h = G.LibSword.getDictionaryEntry(m, k.toUpperCase());
-        } catch (er) {
-          h = '';
-        }
+      let h = results ? results[0] : G.LibSword.getDictionaryEntry(m, k);
+      if (h === C.NOTFOUND) {
+        h = results ? results[1] : G.LibSword.getDictionaryEntry(m, k.toUpperCase());
       }
       if (h) h = markup2html(replaceLinks(h, m), m);
       if (mods.length === 1) {
         html += h;
       } else {
         html = html.replace(/^(<br>)+/, '');
-        const dictTitle = G.LibSword.getModuleInformation(m, 'Description');
+        const dictTitle = results
+          ? results[2]
+          : G.LibSword.getModuleInformation(m, 'Description');
         html += `${sep}
-        <div class="cs-${m}">${
-          dictTitle === C.NOTFOUND
-            ? ''
-            : `<div class="dict-description">${dictTitle}</div>`
-        }${h}
-        </div>`;
+          <div class="cs-${m}">${
+            dictTitle === C.NOTFOUND
+              ? ''
+              : `<div class="dict-description">${dictTitle}</div>`
+          }${h}
+          </div>`;
         sep = `<div class="dict-sep"></div>`;
       }
     }
@@ -300,14 +334,12 @@ export function getStrongsModAndKey(
       // try out key possibilities until we find a correct key for this mod
       if (mod && mod in G.Tab) {
         let k;
+        let r;
         for (k = 0; k < keys.length; k += 1) {
-          try {
-            if (G.LibSword.getDictionaryEntry(mod, keys[k])) break;
-          } catch (er) {
-            mod = null;
-            break;
-          }
+          r = G.LibSword.getDictionaryEntry(mod, keys[k]);
+          if (r !== C.NOTFOUND) break;
         }
+        if (r === C.NOTFOUND) mod = null;
         if (mod && k < keys.length) key = keys[k];
         if ((!mod || !key) && reason) {
           reason.reason = `${snclass}? (${snum})`;
@@ -409,91 +441,4 @@ export function getLemmaHTML(
       <div class="lemma-header">${matchingPhrase}</div>
       ${html}
     <div>`;
-}
-
-export function getAllDictionaryKeyList(module: string): string[] {
-  const pkey = 'keylist';
-  if (!G.DiskCache.has(pkey, module)) {
-    let list = G.LibSword.getAllDictionaryKeys(module);
-    list.pop();
-    // KeySort entry enables localized list sorting by character collation.
-    // Square brackets are used to separate any arbitrary JDK 1.4 case
-    // sensitive regular expressions which are to be treated as single
-    // characters during the sort comparison. Also, a single set of curly
-    // brackets can be used around a regular expression which matches any
-    // characters/patterns that need to be ignored during the sort comparison.
-    // IMPORTANT: Any square or curly bracket within regular expressions must
-    // have had an additional backslash added before it.
-    const sort0 = G.LibSword.getModuleInformation(module, 'KeySort');
-    if (sort0 !== C.NOTFOUND) {
-      const sort = `-${sort0}0123456789`;
-      const getignRE = /(?<!\\)\{(.*?)(?<!\\)\}/; // captures the ignore regex
-      const getsrtRE = /^\[(.*?)(?<!\\)\]/; // captures sorting regexes
-      const getescRE = /\\(?=[{}[\]])/g; // matches the KeySort escapes
-      const ignoreREs: RegExp[] = [/\s/];
-      const ignREm = sort.match(getignRE);
-      if (ignREm) ignoreREs.push(new RegExp(ignREm[1].replace(getescRE, '')));
-      let sort2 = sort.replace(getignRE, '');
-      let sortREs: [number, number, RegExp][] = [];
-      for (let i = 0; sort2.length; i += 1) {
-        let re = sort2.substring(0, 1);
-        let rlen = 1;
-        const mt = sort2.match(getsrtRE);
-        if (mt) {
-          [, re] = mt;
-          rlen = re.length + 2;
-        }
-        sortREs.push([i, re.length, new RegExp(`^(${re})`)]);
-        sort2 = sort2.substring(rlen);
-      }
-      sortREs = sortREs.sort((a, b) => {
-        const [, alen] = a;
-        const [, blen] = b;
-        if (alen > blen) return -1;
-        if (alen < blen) return 1;
-        return 0;
-      });
-      list = list.sort((aa, bb) => {
-        let a = aa;
-        let b = bb;
-        ignoreREs.forEach((re) => {
-          a = aa.replace(re, '');
-          b = bb.replace(re, '');
-        });
-        for (; a.length && b.length; ) {
-          let x;
-          let am;
-          let bm;
-          for (x = 0; x < sortREs.length; x += 1) {
-            const [, , re] = sortREs[x];
-            if (am === undefined && re.test(a)) am = sortREs[x];
-            if (bm === undefined && re.test(b)) bm = sortREs[x];
-          }
-          if (am !== undefined && bm !== undefined) {
-            const [ia, , rea] = am;
-            const [ib, , reb] = bm;
-            if (ia < ib) return -1;
-            if (ia > ib) return 1;
-            a = a.replace(rea, '');
-            b = b.replace(reb, '');
-          } else if (am !== undefined && bm === undefined) {
-            return -1;
-          } else if (am === undefined && bm !== undefined) {
-            return 1;
-          }
-          const ax = a.charCodeAt(0);
-          const bx = b.charCodeAt(0);
-          if (ax < bx) return -1;
-          if (ax > bx) return 1;
-          a = a.substring(1);
-          b = b.substring(1);
-        }
-        if (a.length && !b.length) return -1;
-        if (!a.length && b.length) return 1;
-        return 0;
-      });
-    }
-    G.DiskCache.write(pkey, list, module);
-  }
-  return G.DiskCache.read(pkey, module) as ModulesCache[string]['keylist'];
 }

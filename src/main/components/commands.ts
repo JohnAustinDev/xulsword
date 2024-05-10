@@ -28,15 +28,13 @@ import importBookmarkObject, {
   importDeprecatedBookmarks,
   Transaction,
 } from '../bookmarks.ts';
-import { verseKey, getTab, getAudioConfs } from '../minit.ts';
+import { verseKey, getTab, getAudioConfs, genBookTreeNodes } from '../minit.ts';
 import Viewport from './viewport.ts';
-import DiskCache from './diskcache.ts';
 import PrefsX from './prefs.ts';
 import LocalFile from './localFile.ts';
 import { modalInstall, scanAudio } from './module.ts';
 import Window, { getBrowserWindows, publishSubscription } from './window.ts';
 import Dirs from './dirs.ts';
-import LibSword from './libsword.ts';
 
 import type {
   GAddCaller,
@@ -95,7 +93,7 @@ const Commands = {
     const destDir =
       Dirs.path[toSharedModuleDir ? 'xsModsCommon' : 'xsModsUser'];
     const callingWinID: number =
-      arguments[2] ?? getBrowserWindows({ type: 'xulsword' })[0].id;
+      arguments[2] ?? getBrowserWindows({ type: 'xulswordWin' })[0].id;
     const extensions = ['zip', 'xsm', 'xsb', 'txt', 'json'];
     const options: OpenDialogSyncOptions = {
       title: i18n.t('menu.addNewModule'),
@@ -155,7 +153,7 @@ const Commands = {
       options.defaultPath = paths;
     }
     const obj = await dialog.showOpenDialog(
-      getBrowserWindows({ type: 'xulsword' })[0],
+      getBrowserWindows({ type: 'xulswordWin' })[0],
       options
     );
     return modalInstall2(obj.filePaths, destDir, callingWinID);
@@ -215,7 +213,7 @@ const Commands = {
 
   async exportAudio() {
     let xswindow: BrowserWindow | null = getBrowserWindows({
-      type: 'xulsword',
+      type: 'xulswordWin',
     })[0];
     const tab = getTab();
     const gbpaths = {} as { [module: string]: GenBookAudio };
@@ -224,7 +222,7 @@ const Commands = {
       if (module in gbpaths) {
         paths = gbpaths[module];
       } else if (module && module in tab) {
-        paths = gbPaths(DiskCache, LibSword, module);
+        paths = gbPaths(genBookTreeNodes(module));
         gbpaths[module] = paths;
       }
       const entry = Object.entries(paths).find((e) => !diff(path, e[1]));
@@ -351,7 +349,7 @@ const Commands = {
 
   async importAudio() {
     const obj = await dialog.showOpenDialog(
-      getBrowserWindows({ type: 'xulsword' })[0],
+      getBrowserWindows({ type: 'xulswordWin' })[0],
       {
         title: i18n.t('from.label'),
         properties: ['openDirectory'],
@@ -362,7 +360,7 @@ const Commands = {
       let ctot = 0;
       const tab = getTab();
       let xswindow: BrowserWindow | null = getBrowserWindows({
-        type: 'xulsword',
+        type: 'xulswordWin',
       })[0];
       const callingWinID = xswindow.id;
       const audioExtRE = new RegExp(`^\\.(${C.SupportedAudio.join('|')})$`);
@@ -426,7 +424,7 @@ const Commands = {
             if (module in gbpaths) {
               paths = gbpaths[module];
             } else if (module in tab && tab[module].type === C.GENBOOK) {
-              paths = gbPaths(DiskCache, LibSword, module);
+              paths = gbPaths(genBookTreeNodes(module));
               gbpaths[module] = paths;
             }
             dest.append('modules').append(module);
@@ -563,7 +561,7 @@ const Commands = {
   async print(winRootState?: Partial<WindowRootState>): Promise<void> {
     return new Promise((resolve) => {
       const callingWinID: number =
-        arguments[1] ?? getBrowserWindows({ type: 'xulsword' })[0].id;
+        arguments[1] ?? getBrowserWindows({ type: 'xulswordWin' })[0].id;
       const windowToPrint = BrowserWindow.fromId(callingWinID);
       if (windowToPrint) {
         const rootState: Partial<WindowRootState> = {
@@ -704,7 +702,7 @@ const Commands = {
   openFontsColors(module: string): void {
     let win: BrowserWindow | null =
       BrowserWindow.fromId(arguments[1] ?? -1) ||
-      getBrowserWindows({ type: 'xulsword' })[0];
+      getBrowserWindows({ type: 'xulswordWin' })[0];
     Window.open({
       type: 'chooseFont',
       notResizable: true,
@@ -729,7 +727,7 @@ const Commands = {
     const extensions = ['json', 'xsb', 'txt'];
     let importFiles: string[] | undefined = paths;
     let callingWin: BrowserWindow | undefined = getBrowserWindows({
-      type: 'xulsword',
+      type: 'xulswordWin',
     })[0];
     if (!paths) {
       const obj = await dialog.showOpenDialog(callingWin, {
@@ -786,7 +784,7 @@ const Commands = {
 
   async exportBookmarks(folderID?: string) {
     let xswindow: BrowserWindow | null = getBrowserWindows({
-      type: 'xulsword',
+      type: 'xulswordWin',
     })[0];
     const extensions = ['json'];
     const obj = await dialog.showSaveDialog(xswindow, {

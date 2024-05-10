@@ -32,12 +32,14 @@ import {
   getFeatureModules,
   localeConfig,
   getConfig,
-  cachePreload,
+  callBatch,
   GetBooksInVKModules,
   getLocalizedBooks,
   getLocaleDigits,
   inlineAudioFile,
-  inlineFile
+  inlineFile,
+  getAllDictionaryKeyList,
+  genBookTreeNodes
 } from './minit.ts';
 
 import type { GType } from '../type.ts';
@@ -214,8 +216,16 @@ class GClass implements GType {
     return canRedo(...args);
   }
 
-  cachePreload(...args: Parameters<GType['cachePreload']>): ReturnType<GType['cachePreload']> {
-    return cachePreload(G, ...args);
+  callBatch(...args: Parameters<GType['callBatch']>): ReturnType<GType['callBatch']> {
+    return callBatch(G, ...args);
+  }
+
+  getAllDictionaryKeyList(...args: Parameters<GType['getAllDictionaryKeyList']>): ReturnType<GType['getAllDictionaryKeyList']> {
+    return getAllDictionaryKeyList(...args);
+  }
+
+  genBookTreeNodes(...args: Parameters<GType['genBookTreeNodes']>): ReturnType<GType['genBookTreeNodes']> {
+    return genBookTreeNodes(...args);
   }
 }
 

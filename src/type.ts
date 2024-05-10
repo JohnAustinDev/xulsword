@@ -31,6 +31,8 @@ import type {
   getLocalizedBooks,
   inlineFile,
   inlineAudioFile,
+  getAllDictionaryKeyList,
+  genBookTreeNodes,
 } from './main/minit.ts';
 import type {
   publishSubscription,
@@ -46,6 +48,7 @@ import type { DirsRendererType } from './main/components/dirs.ts';
 import type LibSword from './main/components/libsword.ts';
 import type { canRedo, canUndo } from './main/bookmarks.ts';
 import type Viewport from './main/components/viewport.ts';
+import type RenderPromise from './renderer/renderPromise.ts';
 
 declare global {
   export interface Window {
@@ -68,7 +71,7 @@ declare global {
       argv: () => string[];
       platform: string;
     };
-    renderPromises: RenderPromiseComponent['renderPromise'][];
+    renderPromises: RenderPromise[];
   }
 
   function ToUpperCase(str: string): string;
@@ -771,23 +774,6 @@ export type GAddCaller = {
   >;
 };
 
-export interface RenderPromiseComponent {
-  renderPromise: {
-    self: React.Component;
-    calls: GCallType[];
-    uncacheableCalls: {
-      [key: string]: {
-        promise: Promise<any>;
-        resolved: any;
-      };
-    }
-  }
-}
-
-export type RenderPromiseState = {
-  renderPromiseID: number;
-}
-
 export type GCallType = [
   keyof GType | keyof GAType,
   keyof GType[keyof GType] | keyof GAType[keyof GAType] | null,
@@ -825,13 +811,15 @@ export type GType = {
   publishSubscription: typeof publishSubscription;
   canUndo: typeof canUndo;
   canRedo: typeof canRedo;
-  cachePreload: GCachePreloadType;
+  callBatch: GCachePreloadType;
+  getAllDictionaryKeyList: typeof getAllDictionaryKeyList;
+  genBookTreeNodes: typeof genBookTreeNodes;
 
   // Objects
   i18n: {
     t: (k: string, opts?: any) => string;
     exists: (k: string, opts?: any) => boolean;
-    language: string
+    language: string;
   };
   clipboard: Pick<typeof clipboard, 'write'>;
   Prefs: typeof Prefs;
@@ -876,7 +864,9 @@ export type GAType = { gtype: 'async' }
         'publishSubscription' |
         'canUndo' |
         'canRedo' |
-        'cachePreload'>
+        'callBatch' |
+        'getAllDictionaryKeyList' |
+        'genBookTreeNodes'>
       ]: (...args: Parameters<GType[k]>) => Promise<ReturnType<GType[k]>>
   }
   & { [k in keyof Pick<GType,
@@ -924,7 +914,7 @@ export const GBuilder: GType & {
   // errors will result!
   asyncFuncs: [
     [keyof GType, (keyof GType['getSystemFonts'])[]],
-    [keyof GType, (keyof GType['cachePreload'])[]],
+    [keyof GType, (keyof GType['callBatch'])[]],
     [keyof GType, (keyof GType['Commands'])[]],
     [keyof GType, (keyof GType['Module'])[]],
     [keyof GType, (keyof GType['LibSword'])[]],
@@ -950,7 +940,9 @@ export const GBuilder: GType & {
     [(keyof GType), (keyof GType['getLocalizedBooks'])[]],
     [(keyof GType), (keyof GType['getLocaleDigits'])[]],
     [(keyof GType), (keyof GType['GetBooksInVKModules'])[]],
-    [(keyof GType), (keyof GType['cachePreload'])[]],
+    [(keyof GType), (keyof GType['callBatch'])[]],
+    [(keyof GType), (keyof GType['getAllDictionaryKeyList'])[]],
+    [(keyof GType), (keyof GType['genBookTreeNodes'])[]],
     [(keyof GType), (keyof GType['i18n'])[]],
     [(keyof GType), (keyof GType['LibSword'])[]],
   ];
@@ -960,7 +952,7 @@ export const GBuilder: GType & {
   asyncFuncs: [
     ['getSystemFonts',
       []],
-    ['cachePreload',
+    ['callBatch',
       []],
     ['Commands',
       ['installXulswordModules',
@@ -1020,7 +1012,11 @@ export const GBuilder: GType & {
       []],
     ['GetBooksInVKModules',
       []],
-    ['cachePreload',
+    ['callBatch',
+      []],
+    ['getAllDictionaryKeyList',
+      []],
+    ['genBookTreeNodes',
       []],
     ['i18n',
       ['t',
@@ -1076,7 +1072,9 @@ export const GBuilder: GType & {
   publishSubscription: func as any,
   canUndo: func as any,
   canRedo: func as any,
-  cachePreload: func as any,
+  callBatch: func as any,
+  getAllDictionaryKeyList: CACHEfunc as any,
+  genBookTreeNodes: CACHEfunc as any,
 
   // Objects
   i18n: {

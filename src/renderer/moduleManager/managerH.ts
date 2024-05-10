@@ -440,7 +440,7 @@ export async function eventHandler(
             G.publishSubscription(
               'setRendererRootState',
               {
-                renderers: [{ type: 'xulsword' }, { id: windowDescriptor.id }],
+                renderers: [{ type: 'xulswordWin' }, { id: windowDescriptor.id }],
               },
               { progress: 'indefinite' }
             );
@@ -565,7 +565,7 @@ export async function eventHandler(
             });
             G.Module.installDownloads(
               install,
-              G.Window.descriptions({ type: 'xulsword' })[0]?.id
+              G.Window.descriptions({ type: 'xulswordWin' })[0]?.id
             );
             G.Window.close();
           } catch (er) {
@@ -575,7 +575,7 @@ export async function eventHandler(
             G.publishSubscription(
               'setRendererRootState',
               {
-                renderers: [{ type: 'xulsword' }, { id: windowDescriptor.id }],
+                renderers: [{ type: 'xulswordWin' }, { id: windowDescriptor.id }],
               },
               { progress: -1 }
             );
@@ -1261,7 +1261,7 @@ async function promptAudioChapters(
           if (!Object.keys(ac).length) return resolve(null);
           const paths =
             conf.module in G.Tab
-              ? gbPaths(G.DiskCache, G.LibSword, conf.module)
+              ? gbPaths(G.genBookTreeNodes(conf.module))
               : {};
           d.type = 'genbook';
           d.selection = {

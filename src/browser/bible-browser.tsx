@@ -1,7 +1,7 @@
 import SocketConnect from './preload.ts';
 import React, { StrictMode, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { cachePreload, decodeJSData } from "./bcommon.ts";
+import { callBatch, decodeJSData } from "./bcommon.ts";
 import { randomID } from "../common.ts";
 import C from '../constant.ts';
 import S from '../defaultPrefs.ts';
@@ -100,7 +100,7 @@ function Controller(
 // component where only chapters listed in data-chaplist will be available
 // for selection.
 Subscription.subscribe.socketConnected((_socket) => {
-  cachePreload(preloads).then(() => {
+  callBatch(preloads).then(() => {
     if (bibleBrowser) {
       const id = randomID();
       bibleBrowser.setAttribute('id', id);

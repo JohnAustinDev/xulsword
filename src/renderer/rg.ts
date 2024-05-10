@@ -71,7 +71,7 @@ function allowed(thecall: GCallType): boolean {
 // safe methods are provided and all responses are asynchronous.
 // - Although IPC via Internet is async, it is possible to preload
 // data to the cache asynchronously and retrieve it synchronously
-// using G. Just use G.cachePreload() to load the cache before any
+// using G. Just use G.callBatch() to load the cache before any
 // synchronous G calls.
 const G = {} as GType;
 export const GA = {} as GAType;
