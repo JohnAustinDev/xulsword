@@ -17,7 +17,7 @@ import {
   findTreeAncestors,
   findTreeSiblings,
   gbAncestorIDs,
-  trySyncOrPromise,
+  trySyncOrRenderPromise,
 } from '../../common.ts';
 import C from '../../constant.ts';
 import G, { GA } from '../rg.ts';
@@ -29,6 +29,7 @@ import ModuleMenu from './modulemenu.tsx';
 import './selectOR.css';
 
 import type { TreeNodeInfo } from '@blueprintjs/core';
+import type { TreeNodeInfoPref } from '../../type.ts';
 import type { RenderPromiseComponent, RenderPromiseState } from '../renderPromise.ts';
 
 // Allow users to select one or more chapters from any non-versekey SWORD
@@ -223,16 +224,16 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
       .map((m) => {
         let nodes: TreeNodeInfo[] = [];
         if (G.Tab[m].tabType === 'Genbks') {
-          const n = trySyncOrPromise(G, GA,
+          const n = trySyncOrRenderPromise(G, GA,
             ['genBookTreeNodes', null, [m]],
             renderPromise
-          )
+          ) as TreeNodeInfoPref[];
           if (!renderPromise.waiting()) nodes = n;
         } else if (G.Tab[m].tabType === 'Dicts') {
-          const keylist = trySyncOrPromise(G, GA,
+          const keylist = trySyncOrRenderPromise(G, GA,
             ['getAllDictionaryKeyList', null, [m]],
             renderPromise
-          );
+          ) as string[];
           if (!renderPromise.waiting()) nodes = dictTreeNodes(keylist, m);
         }
         return {

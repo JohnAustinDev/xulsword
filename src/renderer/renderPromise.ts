@@ -1,5 +1,5 @@
 
-import { JSON_stringify } from "../common.ts";
+import { JSON_stringify, callBatchThenCache } from "../common.ts";
 import C from "../constant.ts";
 import { GA } from "./rg";
 
@@ -66,7 +66,7 @@ export default class RenderPromise {
       });
       window.renderPromises = [];
       if (calls.length) {
-        await GA.callBatch(calls);
+        await callBatchThenCache(GA, calls);
         renders.forEach((r) => r());
       }
     }, C.UI.Window.networkRequestBatchDelay);

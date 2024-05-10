@@ -13,7 +13,7 @@
         "skipFiles": [
             "<node_internals>/**"
         ],
-    },
+      },
 	    {
             "type": "node",
             "request": "launch",
@@ -21,11 +21,17 @@
             "runtimeExecutable": "yarn",
             "runtimeArgs": ["start"],
             "skipFiles": [
-                "<node_internals>/**"
+              "<node_internals>/**",
             ],
             "outFiles": [
-                "${workspaceFolder}/**/*.js"
-            ]
-        }
+                "${workspaceFolder}/src/**/*.js"
+            ],
+        },
+        {
+          "name": "Attach to Process",
+          "type": "node",
+          "request": "attach",
+          "processId": "${command:PickProcess}"
+        },
     ]
 }

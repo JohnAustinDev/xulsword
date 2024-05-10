@@ -5,5 +5,5 @@ import {
 } from '../configs/webpack.paths.js';
 
 if (!fs.existsSync(srcNodeModulesPath) && fs.existsSync(appNodeModulesPath)) {
-  fs.symlinkSync(appNodeModulesPath, srcNodeModulesPath, 'junction');
+  fs.symlinkSync('../build/app/node_modules', srcNodeModulesPath, 'junction');
 }

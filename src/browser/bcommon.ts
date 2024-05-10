@@ -1,42 +1,14 @@
 
 import C from '../constant.ts';
-import G from '../renderer/rg.ts';
-import { GCacheKey, hierarchy, strings2Numbers } from '../common.ts';
-import Cache from '../cache.ts';
+import { hierarchy, strings2Numbers } from '../common.ts';
 
 import type { TreeNodeInfo } from '@blueprintjs/core';
-import type { GCallType, OSISBookType, TreeNodeInfoPref } from '../type.ts';
-import type { GetBooksInVKModules } from '../main/minit.ts';
+import type { OSISBookType, TreeNodeInfoPref } from '../type.ts';
 import type { SelectVKType } from "../renderer/libxul/selectVK.tsx";
 import type { SelectORMType, SelectORProps } from "../renderer/libxul/selectOR.tsx";
 
 export type ChaplistVKType = { [bk in OSISBookType]?: [number, string][] }
 export type ChaplistORType = [string, string, string][]; // [order, key, url]
-
-export async function callBatch(calls: GCallType[]) {
-  const resp = await G.callBatch(calls);
-  if (resp.length !== calls.length) {
-    throw new Error(`callBatch did not return the correct data.`);
-  }
-  while (calls.length) {
-    const acall = calls.pop();
-    const aresult = resp.pop();
-    if (acall) {
-      const cacheKey = GCacheKey(acall);
-      Cache.write(aresult, cacheKey);
-
-      // Some calls return data that is identical to other calls, so preload the cache
-      // for those others as well.
-      if (acall[0] === 'GetBooksInVKModules') {
-        Object.entries(aresult as ReturnType<typeof GetBooksInVKModules>).forEach((entry) => {
-          const [module, bookArray] = entry;
-          const k = GCacheKey(['getBooksInVKModule', null, [module]]);
-          Cache.write(bookArray, k);
-        });
-      }
-    }
-  }
-}
 
 export function handleAction(type: string, id: string, ...args: any[]) {
   switch(type) {

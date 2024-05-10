@@ -1,10 +1,11 @@
-import SocketConnect from './preload.ts';
 import React, { StrictMode, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { callBatch, decodeJSData } from "./bcommon.ts";
-import { randomID } from "../common.ts";
+import SocketConnect from './preload.ts';
+import { decodeJSData } from "./bcommon.ts";
+import { callBatchThenCache, randomID } from "../common.ts";
 import C from '../constant.ts';
 import S from '../defaultPrefs.ts';
+import { GA } from "../renderer/rg.ts";
 import Subscription from '../subscription.ts';
 import CookiePrefs from '../renderer/prefs.ts';
 import Xulsword, { XulswordProps } from "../renderer/xulswordWin/xulsword.tsx";
@@ -69,7 +70,7 @@ function Controller(
   }
 ) {
   const { id, initial, defprefs } = props;
-  const [state, setState] = useState(initial);
+  const [state, _setState] = useState(initial);
   const $lang = 'en'; // TODO!: <---
   const $dir = 'ltr'; // TODO!: <---
 
@@ -100,7 +101,7 @@ function Controller(
 // component where only chapters listed in data-chaplist will be available
 // for selection.
 Subscription.subscribe.socketConnected((_socket) => {
-  callBatch(preloads).then(() => {
+  callBatchThenCache(GA, preloads).then(() => {
     if (bibleBrowser) {
       const id = randomID();
       bibleBrowser.setAttribute('id', id);

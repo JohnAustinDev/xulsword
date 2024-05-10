@@ -73,7 +73,7 @@ export function callBatch(G: GType, calls: (GCallType | null)[]): (any | null)[]
         if (!(m in g[name])) {
           throw new Error(`'${m.toString()}' is not a member of G.${name}`);
         }
-        resp.push(g[name][m]);
+        resp.push(g[name][m]());
       } else if (m && Array.isArray(args)) {
         if (!(m in g[name]) || typeof g[name][m] !== 'function') {
           throw new Error(`'${m.toString()}' is not a method of G.${name}`);

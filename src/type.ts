@@ -811,6 +811,7 @@ export type GType = {
   publishSubscription: typeof publishSubscription;
   canUndo: typeof canUndo;
   canRedo: typeof canRedo;
+  // callBatch is not cacheable! Always use callBatchThenCache or callBatchThenCacheSync.
   callBatch: GCachePreloadType;
   getAllDictionaryKeyList: typeof getAllDictionaryKeyList;
   genBookTreeNodes: typeof genBookTreeNodes;
@@ -896,8 +897,8 @@ export type GAType = { gtype: 'async' }
 // argument appended before they are executed in the main process which
 // contains the calling window's id. IMPORTANT: async functions must be
 // listed in asyncFuncs or runtime errors will result!
-const func = () => {};
-const CACHEfunc = () => 'cacheable';
+const func = () => false;
+const CACHEfunc = () => true;
 if (typeof window !== 'undefined') window.renderPromises = [];
 export const GBuilder: GType & {
   // IMPORTANT: Methods of includeCallingWindow classes must not use rest
@@ -914,7 +915,6 @@ export const GBuilder: GType & {
   // errors will result!
   asyncFuncs: [
     [keyof GType, (keyof GType['getSystemFonts'])[]],
-    [keyof GType, (keyof GType['callBatch'])[]],
     [keyof GType, (keyof GType['Commands'])[]],
     [keyof GType, (keyof GType['Module'])[]],
     [keyof GType, (keyof GType['LibSword'])[]],
@@ -951,8 +951,6 @@ export const GBuilder: GType & {
 
   asyncFuncs: [
     ['getSystemFonts',
-      []],
-    ['callBatch',
       []],
     ['Commands',
       ['installXulswordModules',

@@ -16,7 +16,7 @@ import {
   audioConfNumbers,
   gbPaths,
   localizeString,
-  trySyncOrPromise,
+  trySyncOrRenderPromise,
 } from '../common.ts';
 import C from '../constant.ts';
 import S from '../defaultPrefs.ts';
@@ -332,7 +332,7 @@ export function getMaxChapter(v11n: V11nType, vkeytext: string) {
 // LibSword.getMaxVerse returns an erroneous number if vkeytext's
 // chapter is not part of v11n, so check here first.
 // NOTE: main process has this same function.
-export function getMaxVerse(v11n: V11nType, vkeytext: string) {
+export function getMaxVerse(v11n: V11nType, vkeytext: string): number {
   const { chapter } = verseKey(vkeytext, v11n);
   const maxch = getMaxChapter(v11n, vkeytext);
   if (chapter <= maxch && chapter > 0) {
@@ -344,16 +344,16 @@ export function getMaxVerseSA(
   v11n: V11nType,
   vkeytext: string,
   promise: RenderPromise,
-) {
+): number {
   const { chapter } = verseKey(vkeytext, v11n);
   const maxch = getMaxChapter(v11n, vkeytext);
   if (chapter <= maxch && chapter > 0) {
-    const data = trySyncOrPromise(G, GA, [
+    const data = trySyncOrRenderPromise(G, GA, [
       'LibSword',
       'getMaxVerse',
       [v11n, vkeytext]
-    ], promise) as number | Promise<number>;
-    if (typeof data !== 'undefined') return data as number;
+    ], promise) as number | undefined;
+    if (typeof data !== 'undefined') return data;
   }
   return 0;
 }

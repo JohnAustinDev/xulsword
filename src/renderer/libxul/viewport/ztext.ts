@@ -8,7 +8,7 @@ import {
   JSON_attrib_parse,
   JSON_attrib_stringify,
   stringHash,
-  trySyncOrPromise,
+  trySyncOrRenderPromise,
 } from '../../../common.ts';
 import { getElementData } from '../../htmlData.ts';
 import G, { GA } from '../../rg.ts';
@@ -87,7 +87,7 @@ export function libswordText(
       if (location && location.book && module) {
         const { book, chapter } = location;
         if (ilModule) {
-          const chtxt = trySyncOrPromise(
+          const chtxt = trySyncOrRenderPromise(
             G, GA,
             ['LibSword', 'getChapterTextMulti', [
               `${module},${ilModule}`,
@@ -97,14 +97,14 @@ export function libswordText(
             ]],
             renderPromise
           );
-          if (!renderPromise?.waiting()) {
+          if (!renderPromise?.waiting() && typeof chtxt === 'string') {
             r.textHTML += chtxt.replace(/interV2/gm, `cs-${ilModule}`);
           }
         } else if (G.getBooksInVKModule(module).includes(book)) {
           // We needed to check that the module contains the book, because
           // LibSword will silently return text from elsewhere in a module
           // if the module does not include the requested book!
-          const results = trySyncOrPromise(
+          const results = trySyncOrRenderPromise(
             G, GA,
             ['callBatch', null, [[
               ['LibSword', 'getChapterText', [
@@ -112,11 +112,11 @@ export function libswordText(
                 `${book}.${chapter}`,
                 options
               ]],
-              ['LibSword', 'getNotes', undefined]
+              ['LibSword', 'getNotes', []]
             ]]],
             renderPromise
           );
-          if (!renderPromise?.waiting()) {
+          if (!renderPromise?.waiting() && Array.isArray(results)) {
             r.textHTML += results[0];
             r.notes += results[1];
           }
@@ -127,7 +127,7 @@ export function libswordText(
     case C.COMMENTARY: {
       if (location && location.book && module) {
         const { book, chapter } = location;
-        const results = trySyncOrPromise(
+        const results = trySyncOrRenderPromise(
           G, GA,
           ['callBatch', null, [[
             ['LibSword', 'getChapterText', [
@@ -135,11 +135,11 @@ export function libswordText(
               `${book}.${chapter}`,
               options
             ]],
-            ['LibSword', 'getNotes', undefined]
+            ['LibSword', 'getNotes', []]
           ]]],
           renderPromise
         );
-        if (!renderPromise?.waiting()) {
+        if (!renderPromise?.waiting() && Array.isArray(results)) {
           r.textHTML += results[0];
           r.notes += results[1];
         }
@@ -148,7 +148,7 @@ export function libswordText(
     }
     case C.GENBOOK: {
       if (modkey) {
-        const results = trySyncOrPromise(
+        const results = trySyncOrRenderPromise(
           G, GA,
           ['callBatch', null, [[
             ['LibSword', 'getGenBookChapterText', [
@@ -156,11 +156,11 @@ export function libswordText(
               modkey,
               options
             ]],
-            ['LibSword', 'getNotes', undefined]
+            ['LibSword', 'getNotes', []]
           ]]],
           renderPromise
         );
-        if (!renderPromise?.waiting()) {
+        if (!renderPromise?.waiting() && Array.isArray(results)) {
           r.textHTML += results[0];
           r.noteHTML += results[1];
         }
@@ -174,7 +174,7 @@ export function libswordText(
       // limited number of cache possibliities (ie. one per module).
       // Cache is also used for DailyDevotion - if the key is not in the
       // Cache use today's date instead of the key.
-      const results = trySyncOrPromise(
+      const results = trySyncOrRenderPromise(
         G, GA,
         ['callBatch', null, [[
           ['getAllDictionaryKeyList', null, [module]],
@@ -182,9 +182,9 @@ export function libswordText(
         ]]],
         renderPromise
       );
-      if (!renderPromise?.waiting()) {
+      if (!renderPromise?.waiting() && Array.isArray(results)) {
         results.shift(); // drop the first result
-        const keylist = results.shift();
+        const keylist = results.shift() as string[];
         const key = dictKeyToday(modkey, module);
         if (key && keylist.includes(key)) {
           // Build and cache the selector list.
@@ -204,7 +204,7 @@ export function libswordText(
           }
 
           // Set the final results.
-          let de = getDictEntryHTML(key, module, undefined, [results]);
+          let de = getDictEntryHTML(key, module, undefined, [results as [string, string, string]]);
           r.textHTML += `<div class="dictentry">${de}</div>`;
           const sel = new RegExp(`(dictkey)([^>]*">${escapeRE(key)}<)`);
           const list = Cache.read('keyHTML', module)

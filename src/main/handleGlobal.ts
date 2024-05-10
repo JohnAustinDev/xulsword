@@ -37,7 +37,6 @@ export default function handleGlobal(
         ) {
           args[g[name][m].length] = win;
         }
-        console.log(name, m, args);
         ret = g[name][m](...args);
       } else {
         throw Error(`Unhandled global ipc method: ${JSON_stringify(acall)}`);

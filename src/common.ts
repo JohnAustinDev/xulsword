@@ -41,6 +41,7 @@ import type {
   GAType,
 } from './type.ts';
 import type { TreeNodeInfo } from '@blueprintjs/core';
+import type { GetBooksInVKModules } from './main/minit.ts';
 import type { SelectVKType } from './renderer/libxul/selectVK.tsx';
 import type { SelectORMType } from './renderer/libxul/selectOR.tsx';
 import type { getSampleText } from './renderer/bookmarks.ts';
@@ -58,12 +59,12 @@ import type RenderPromise from './renderer/renderPromise.ts';
 // fewer network traversals to obtain the data. But non cacheable data is
 // dispatched immediately, and saved locally, and consumed after the component is
 // re-rendered.
-export function trySyncOrPromise(
+export function trySyncOrRenderPromise(
   G: GType,
   GA: GAType,
   gcall: GCallType,
   promise?: RenderPromise,
-): any | undefined {
+): PrefValue | undefined {
   const key = GCacheKey(gcall);
   if (promise?.uncacheableCalls[key]?.resolved) {
     const result = promise.uncacheableCalls[key]?.resolved;
@@ -72,7 +73,12 @@ export function trySyncOrPromise(
   }
   if (Cache.has(key)) return Cache.read(key); // data in the cache!
   if (window.processR.platform !== 'browser') {
-    return G.callBatch([gcall]); // works even for non-cacheable data
+    const [name, _method, args] = gcall;
+    let calls;
+    if (name === 'callBatch' && Array.isArray(args)) {
+      calls = args[0] as GCallType[];
+    } else calls = [gcall];
+    return callBatchThenCacheSync(G, calls);
   } else if (promise) {
     const g: any = GA;
     const [name, method, args] = gcall;
@@ -105,6 +111,115 @@ export function trySyncOrPromise(
     throw new Error(`Bad gtype=${g.gtype} call: ${gcall}`);
   }
   throw new Error(`In this context trySyncOrPromise requires the promise argument: ${gcall}`);
+}
+
+export function callBatchThenCacheSync(
+  G: GType,
+  calls: GCallType[]
+): any[] {
+  // All calls must be synchronous, so check.
+  const { asyncFuncs } = GBuilder;
+  const asyncCall = calls.find(
+    (c) => asyncFuncs.find(
+      (a) => a[0] === c[0] && (!c[1] || (a[1] as any).includes(c[1]))
+    )
+  );
+  if (asyncCall !== undefined) {
+    throw new Error(`G.callBatch member must not be async: ${asyncCall}`);
+  }
+
+  const resp = getCallsFromCache(calls);
+
+  if (calls.find((c) => c !== null)) {
+    const respSync = G.callBatch(calls);
+    if (respSync.length !== calls.length) {
+      throw new Error(`callBatch sync did not return the correct data.`);
+    }
+    respSync.forEach((v, x) => {if (v !== null) resp[x] = v});
+  }
+
+  writeCallsToCache(calls, resp);
+
+  return resp;
+}
+
+export async function callBatchThenCache(
+  GA: GAType,
+  calls: GCallType[]
+): Promise<any[]> {
+  // The calls must be synchronous, so check.
+  const { asyncFuncs } = GBuilder;
+  const asyncCall = calls.find(
+    (c) => asyncFuncs.find(
+      (a) => a[0] === c[0] && (!c[1] || (a[1] as any).includes(c[1]))
+    )
+  );
+  if (asyncCall !== undefined) {
+    throw new Error(`G.callBatch member must not be async: ${asyncCall}`);
+  }
+
+  const resp = getCallsFromCache(calls);
+
+  if (calls.find((c) => c !== null)) {
+    const respAsync = await GA.callBatch(calls);
+    if (respAsync.length !== calls.length) {
+      throw new Error(`callBatch async did not return the correct data.`);
+    }
+    respAsync.forEach((v, x) => {if (v !== null) resp[x] = v});
+  }
+
+  writeCallsToCache(calls, resp);
+
+  return resp;
+}
+
+function getCallsFromCache(calls: (GCallType | null)[]): (PrefValue | undefined)[] {
+  const results: (PrefValue | undefined)[] = [];
+  for (let x = 0; x < calls.length; x++) {
+    let result = undefined;
+    const call = calls[x];
+    if (call && isCallCacheable(call)) {
+      const cacheKey = GCacheKey(call);
+      if (Cache.has(cacheKey)) {
+        result = Cache.read(cacheKey);
+        calls[x] = null;
+      }
+    }
+    results.push(result);
+  }
+
+  return results;
+}
+
+export function isCallCacheable(call: GCallType): boolean {
+  let cacheable = true;
+  if (Array.isArray(call[2])) {
+    cacheable = call[1] ? GBuilder[call[0]][call[1]]() : GBuilder[call[0]]();
+  }
+  return cacheable;
+}
+
+function writeCallsToCache(calls: (GCallType | null)[], resp: any[]) {
+  for (let x = 0; x < calls.length; x++) {
+    const acall = calls[x];
+    const aresult = resp[x];
+    if (acall) {
+      if (isCallCacheable(acall)) {
+        const cacheKey = GCacheKey(acall);
+        Cache.write(aresult, cacheKey);
+      }
+
+      // Some calls return data that is identical to other calls, so preload the cache
+      // for those others as well.
+      if (acall[0] === 'GetBooksInVKModules') {
+        Object.entries(aresult as ReturnType<typeof GetBooksInVKModules>).forEach((entry) => {
+          const [module, bookArray] = entry;
+          const k = GCacheKey(['getBooksInVKModule', null, [module]]);
+          Cache.write(bookArray, k);
+        });
+      }
+    }
+  }
 }
 
 export function escapeRE(text: string) {

@@ -1,11 +1,12 @@
-import SocketConnect from './preload.ts';
 import React, { StrictMode, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { callBatch, handleAction, decodeJSData, createNodeList } from "./bcommon.ts";
+import SocketConnect from './preload.ts';
+import { handleAction, decodeJSData, createNodeList } from "./bcommon.ts";
+import { callBatchThenCache, diff, randomID } from "../common.ts";
 import C from '../constant.ts';
+import { GA } from "../renderer/rg.ts";
 import Subscription from '../subscription.ts';
 import SelectVK from "../renderer/libxul/selectVK.tsx";
-import { diff, randomID } from "../common.ts";
 import SelectOR from "../renderer/libxul/selectOR.tsx";
 
 import type { GCallType } from "../type.ts";
@@ -132,7 +133,7 @@ function Controller(
 // component where only chapters listed in data-chaplist will be available
 // for selection.
 Subscription.subscribe.socketConnected((_socket) => {
-  callBatch(preloads).then(() => {
+  callBatchThenCache(GA, preloads).then(() => {
     const selectVKs = document.getElementsByClassName('select-container');
     (Array.from(selectVKs) as HTMLDivElement[])
       .forEach((selectvk) => {

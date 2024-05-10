@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 
-cd "$( dirname "${BASH_SOURCE[0]}" )"
+cd "$( dirname "${BASH_SOURCE[0]}" )/../../"
 XULSWORD="$(pwd)"
 
 export LD_LIBRARY_PATH=./Cpp/lib 
