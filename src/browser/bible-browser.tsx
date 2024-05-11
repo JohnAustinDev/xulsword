@@ -2,12 +2,12 @@ import React, { StrictMode, useState } from "react";
 import { createRoot } from "react-dom/client";
 import SocketConnect from './preload.ts';
 import { decodeJSData } from "./bcommon.ts";
-import { callBatchThenCache, randomID } from "../common.ts";
+import { randomID } from "../common.ts";
 import C from '../constant.ts';
 import S from '../defaultPrefs.ts';
-import { GA } from "../renderer/rg.ts";
+import G, { GA } from "../renderer/rg.ts";
 import Subscription from '../subscription.ts';
-import CookiePrefs from '../renderer/prefs.ts';
+import { callBatchThenCache } from "../renderer/renderPromise.ts";
 import Xulsword, { XulswordProps } from "../renderer/xulswordWin/xulsword.tsx";
 
 import type { GCallType, PrefObject } from "../type.ts";
@@ -50,7 +50,9 @@ const preloads: GCallType[] = [
   ['ModuleConfigDefault', null],
   ['ProgramConfig', null],
   ['getLocaleDigits', null, []],
+  ['getLocaleDigits', null, [true]],
   ['getLocalizedBooks', null, []],
+  ['getLocalizedBooks', null, [true]],
   ['FeatureModules', null],
   ['AudioConfs', null],
   ['Config', null],
@@ -74,7 +76,7 @@ function Controller(
   const $lang = 'en'; // TODO!: <---
   const $dir = 'ltr'; // TODO!: <---
 
-  CookiePrefs.setComplexValue('xulsword', {
+  G.Prefs.setComplexValue('xulsword', {
     ...S.prefs.xulsword,
     ...defprefs
   }, 'prefs_default' as 'prefs');

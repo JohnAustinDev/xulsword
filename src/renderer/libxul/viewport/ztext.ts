@@ -8,18 +8,18 @@ import {
   JSON_attrib_parse,
   JSON_attrib_stringify,
   stringHash,
-  trySyncOrRenderPromise,
 } from '../../../common.ts';
 import { getElementData } from '../../htmlData.ts';
-import G, { GA } from '../../rg.ts';
+import G from '../../rg.ts';
 import addBookmarks from '../../bookmarks.ts';
+import { PreloadData } from '../../renderPromise.ts';
 import {
   getNoteHTML,
   getChapterHeading,
   chapterChange,
   pageChange,
 } from './zversekey.ts';
-import { dictKeyToday, getDictEntryGCalls, getDictEntryHTML } from './zdictionary.ts';
+import { dictKeyToday, getDictEntryHTML } from './zdictionary.ts';
 
 import type {
   AtextPropsType,
@@ -51,8 +51,8 @@ export function libswordText(
     | 'show'
   >,
   n: number,
+  renderPromise: RenderPromise | null,
   newState?: Partial<AtextStateType>,
-  renderPromise?: RenderPromise
 ): LibSwordResponse {
   const r: LibSwordResponse = {
     textHTML: '',
@@ -81,44 +81,41 @@ export function libswordText(
     options['Morphological Tags'] = on;
   }
 
+  const preloadData = new PreloadData(renderPromise);
+
   // Read Libsword according to module type
   switch (type) {
     case C.BIBLE: {
       if (location && location.book && module) {
         const { book, chapter } = location;
         if (ilModule) {
-          const chtxt = trySyncOrRenderPromise(
-            G, GA,
-            ['LibSword', 'getChapterTextMulti', [
-              `${module},${ilModule}`,
-              `${book}.${chapter}`,
-              false,
-              options
-            ]],
-            renderPromise
-          );
-          if (!renderPromise?.waiting() && typeof chtxt === 'string') {
+          preloadData.use({
+            call: ['LibSword', 'getChapterTextMulti', [`${module},${ilModule}`, `${book}.${chapter}`, false, options]],
+            def: ''
+          }, { check: { module, ilModule, book, chapter, options }});
+          getChapterHeading(location, module, preloadData);
+          preloadData.dispatch();
+          const [chtxt] = preloadData.use() as string[];
+          if (!renderPromise?.waiting()) {
             r.textHTML += chtxt.replace(/interV2/gm, `cs-${ilModule}`);
           }
         } else if (G.getBooksInVKModule(module).includes(book)) {
           // We needed to check that the module contains the book, because
           // LibSword will silently return text from elsewhere in a module
           // if the module does not include the requested book!
-          const results = trySyncOrRenderPromise(
-            G, GA,
-            ['callBatch', null, [[
-              ['LibSword', 'getChapterText', [
-                module,
-                `${book}.${chapter}`,
-                options
-              ]],
-              ['LibSword', 'getNotes', []]
-            ]]],
-            renderPromise
-          );
-          if (!renderPromise?.waiting() && Array.isArray(results)) {
-            r.textHTML += results[0];
-            r.notes += results[1];
+          preloadData.use({
+            call: ['LibSword', 'getChapterText', [module, `${book}.${chapter}`, options]],
+            def: ''
+          }, {
+            call: ['LibSword', 'getNotes', []],
+            def: '',
+          }, { check: { module, book, chapter, options }});
+          getChapterHeading(location, module, preloadData);
+          preloadData.dispatch();
+          const [textHTML, notes] = preloadData.use();
+          if (!renderPromise?.waiting()) {
+            r.textHTML += textHTML;
+            r.notes += notes;
           }
         }
       }
@@ -127,42 +124,36 @@ export function libswordText(
     case C.COMMENTARY: {
       if (location && location.book && module) {
         const { book, chapter } = location;
-        const results = trySyncOrRenderPromise(
-          G, GA,
-          ['callBatch', null, [[
-            ['LibSword', 'getChapterText', [
-              module,
-              `${book}.${chapter}`,
-              options
-            ]],
-            ['LibSword', 'getNotes', []]
-          ]]],
-          renderPromise
-        );
-        if (!renderPromise?.waiting() && Array.isArray(results)) {
-          r.textHTML += results[0];
-          r.notes += results[1];
+        preloadData.use({
+          call: ['LibSword', 'getChapterText', [module, `${book}.${chapter}`, options]],
+          def: '',
+        }, {
+          call: ['LibSword', 'getNotes', []],
+          def: '',
+        }, { check: { module, book, chapter, options }});
+        preloadData.dispatch();
+        const [textHTML, notes] = preloadData.use();
+        if (!renderPromise?.waiting()) {
+          r.textHTML += textHTML;
+          r.notes += notes;
         }
       }
       break;
     }
     case C.GENBOOK: {
       if (modkey) {
-        const results = trySyncOrRenderPromise(
-          G, GA,
-          ['callBatch', null, [[
-            ['LibSword', 'getGenBookChapterText', [
-              module,
-              modkey,
-              options
-            ]],
-            ['LibSword', 'getNotes', []]
-          ]]],
-          renderPromise
-        );
-        if (!renderPromise?.waiting() && Array.isArray(results)) {
-          r.textHTML += results[0];
-          r.noteHTML += results[1];
+        preloadData.use({
+          call: ['LibSword', 'getGenBookChapterText', [module, modkey, options]],
+          def: ''
+        }, {
+          call: ['LibSword', 'getNotes', []],
+          def: ''
+        }, { check: { module, modkey, options }});
+        preloadData.dispatch();
+        const [textHTML, noteHTML] = preloadData.use();
+        if (!renderPromise?.waiting()) {
+          r.textHTML += textHTML;
+          r.noteHTML += noteHTML;
         }
       }
       break;
@@ -174,18 +165,15 @@ export function libswordText(
       // limited number of cache possibliities (ie. one per module).
       // Cache is also used for DailyDevotion - if the key is not in the
       // Cache use today's date instead of the key.
-      const results = trySyncOrRenderPromise(
-        G, GA,
-        ['callBatch', null, [[
-          ['getAllDictionaryKeyList', null, [module]],
-          ...getDictEntryGCalls(modkey, module),
-        ]]],
-        renderPromise
-      );
-      if (!renderPromise?.waiting() && Array.isArray(results)) {
-        results.shift(); // drop the first result
-        const keylist = results.shift() as string[];
-        const key = dictKeyToday(modkey, module);
+      const key = dictKeyToday(modkey, module);
+      preloadData.use({
+        call:['getAllDictionaryKeyList', null, [module]],
+        def: []
+      }, { check: { module }});
+      getDictEntryHTML(key, module, undefined, preloadData);
+      preloadData.dispatch();
+      const [keylist] = preloadData.use();
+      if (!renderPromise?.waiting()) {
         if (key && keylist.includes(key)) {
           // Build and cache the selector list.
           if (!Cache.has('keyHTML', module)) {
@@ -204,7 +192,7 @@ export function libswordText(
           }
 
           // Set the final results.
-          let de = getDictEntryHTML(key, module, undefined, [results as [string, string, string]]);
+          const de = getDictEntryHTML(key, module, undefined, preloadData);
           r.textHTML += `<div class="dictentry">${de}</div>`;
           const sel = new RegExp(`(dictkey)([^>]*">${escapeRE(key)}<)`);
           const list = Cache.read('keyHTML', module)
@@ -264,16 +252,14 @@ export function libswordText(
   }
 
   // Add chapter heading and intronotes
-  if (
+  if (r.textHTML &&
     G.Tab[module].isVerseKey &&
     show.headings &&
-    r.textHTML &&
     location &&
-    ilModuleOption
-  ) {
-    const headInfo = getChapterHeading(location, module);
-    r.textHTML = headInfo.textHTML + r.textHTML;
-    r.intronotes = headInfo.intronotes;
+    ilModuleOption) {
+    const headInfo = getChapterHeading(location, module, preloadData);
+      r.textHTML = headInfo.textHTML + r.textHTML;
+      r.intronotes = headInfo.intronotes;
   }
 
   // Add versePerLineButton

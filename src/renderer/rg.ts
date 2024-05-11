@@ -4,6 +4,7 @@ import { JSON_stringify, GCacheKey, isCallCacheable } from '../common.ts';
 import Cache from '../cache.ts';
 import { GBuilder } from '../type.ts';
 import log from './log.ts';
+import CookiePrefs from './prefs.ts';
 
 import type { GAType, GCallType, GType } from '../type.ts';
 
@@ -140,23 +141,38 @@ Object.entries(GBuilder).forEach((entry) => {
             },
           });
         } else if (typeof gBuilder[name][m] === 'function') {
-          g[name][m] = (...args: unknown[]) => {
-            const acall: GCallType = [name, m, args];
-            const ckey = GCacheKey(acall);
-            if (
-              (asyncFuncs as [string, string[]][]).some(
-                (en) => en[0] === name && en[1].includes(m)
-              )
-            ) {
+          if (name !== 'Prefs' || window.processR.platform !== 'browser') {
+            g[name][m] = (...args: unknown[]) => {
+              const acall: GCallType = [name, m, args];
+              const ckey = GCacheKey(acall);
+              if (
+                (asyncFuncs as [string, string[]][]).some(
+                  (en) => en[0] === name && en[1].includes(m)
+                )
+              ) {
+                return asyncRequest(ckey, acall);
+              }
+              return request(ckey, acall);
+            };
+            ga[name][m] = (...args: unknown[]) => {
+              const acall: GCallType = [name, m, args];
+              const ckey = GCacheKey(acall);
               return asyncRequest(ckey, acall);
-            }
-            return request(ckey, acall);
-          };
-          ga[name][m] = (...args: unknown[]) => {
-            const acall: GCallType = [name, m, args];
-            const ckey = GCacheKey(acall);
-            return asyncRequest(ckey, acall);
-          };
+            };
+          } else {
+            // Then use Prefs cookie rather than server file.
+            g.Prefs[m] = (...args: unknown[]) => {
+              if (
+                (asyncFuncs as [string, string[]][]).some(
+                  (en) => en[0] === name && en[1].includes(m)
+                )
+              ) {
+                throw new Error(`G async cookie Pref methods not implemented: ${m}`);
+              }
+              return (CookiePrefs as any)[m](...args);
+            };
+            ga.Prefs[m] = g.Prefs[m];
+          }
         } else {
           throw Error(
             `Unhandled GBuilder ${name}.${m} type ${typeof gBuilder[name][m]}`

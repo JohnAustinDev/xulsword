@@ -16,14 +16,12 @@ import {
   audioConfNumbers,
   gbPaths,
   localizeString,
-  trySyncOrRenderPromise,
 } from '../common.ts';
 import C from '../constant.ts';
 import S from '../defaultPrefs.ts';
 import G, { GA } from './rg.ts';
 import { getElementData, verseKey } from './htmlData.ts';
 import log from './log.ts';
-import CookiePrefs from './prefs.ts';
 
 import type {
   AudioPath,
@@ -45,7 +43,7 @@ import type {
   WindowDescriptorPrefType,
 } from '../type.ts';
 import type { TreeNodeInfo } from '@blueprintjs/core';
-import type RenderPromise from './renderPromise.ts';
+import type { PreloadData } from './renderPromise.ts';
 
 export function component(
   comp: any
@@ -332,28 +330,23 @@ export function getMaxChapter(v11n: V11nType, vkeytext: string) {
 // LibSword.getMaxVerse returns an erroneous number if vkeytext's
 // chapter is not part of v11n, so check here first.
 // NOTE: main process has this same function.
-export function getMaxVerse(v11n: V11nType, vkeytext: string): number {
-  const { chapter } = verseKey(vkeytext, v11n);
-  const maxch = getMaxChapter(v11n, vkeytext);
-  if (chapter <= maxch && chapter > 0) {
-    return G.LibSword.getMaxVerse(v11n, vkeytext);
-  }
-  return 0;
-}
-export function getMaxVerseSA(
+export function getMaxVerse(
   v11n: V11nType,
   vkeytext: string,
-  promise: RenderPromise,
+  preloadData?: PreloadData
 ): number {
   const { chapter } = verseKey(vkeytext, v11n);
   const maxch = getMaxChapter(v11n, vkeytext);
   if (chapter <= maxch && chapter > 0) {
-    const data = trySyncOrRenderPromise(G, GA, [
-      'LibSword',
-      'getMaxVerse',
-      [v11n, vkeytext]
-    ], promise) as number | undefined;
-    if (typeof data !== 'undefined') return data;
+    if (preloadData) {
+      const [r] = preloadData.use({
+        call: ['LibSword', 'getMaxVerse', [v11n, vkeytext]],
+        def: 0 },
+        { check: { v11n, vkeytext } }
+      );
+      return r;
+    }
+    return G.LibSword.getMaxVerse(v11n, vkeytext);
   }
   return 0;
 }
@@ -381,9 +374,8 @@ export function getStatePref<P extends PrefObject>(
   id: string | null,
   defaultPrefs?: P
 ): P | PrefObject {
-  const prefs = window.processR.platform === 'browser' ? CookiePrefs : G.Prefs;
-  if (defaultPrefs) return getStatePref2(prefs, store, id, defaultPrefs) as P;
-  return getStatePref2(prefs, store, id) as PrefObject;
+  if (defaultPrefs) return getStatePref2(G.Prefs, store, id, defaultPrefs) as P;
+  return getStatePref2(G.Prefs, store, id) as PrefObject;
 }
 
 // Push state changes of statePrefKeys value to Prefs.
@@ -400,13 +392,12 @@ export function setStatePref(
     if (st) keys = Object.keys(id ? st[id] : st);
   }
   if (keys) {
-    const prefs = window.processR.platform === 'browser' ? CookiePrefs : G.Prefs;
     const newStatePref = keep(state, keys);
-    if (prevState === null) prefs.mergeValue(id, newStatePref, store);
+    if (prevState === null) G.Prefs.mergeValue(id, newStatePref, store);
     else {
       const prvStatePref = keep(prevState, keys);
       const d = diff(prvStatePref, newStatePref);
-      if (d) prefs.mergeValue(id, d, store);
+      if (d) G.Prefs.mergeValue(id, d, store);
     }
   }
 }

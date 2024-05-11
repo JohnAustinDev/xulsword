@@ -7,10 +7,10 @@ import G from '../../rg.ts';
 import log from '../../log.ts';
 
 import type {
-  GCallType,
   SwordFilterType,
   SwordFilterValueType,
 } from '../../../type.ts';
+import type { PreloadData } from '../../renderPromise.ts';
 import type { HTMLData } from '../../htmlData.ts';
 import type { FailReason } from '../popup/popupH.ts';
 
@@ -178,62 +178,51 @@ function getAlwaysOnOptions() {
   return options;
 }
 
-export function getDictEntryGCalls(modkey: string, module: string): (GCallType | null)[] {
-  const calls: (GCallType | null)[] = [];
-  const key = dictKeyToday(modkey, module);
-  // Allow case differences in module code references.
-  let m = module;
-  if (!(m in G.Tab)) {
-    const mlc = m.toLowerCase();
-    m = Object.keys(G.Tab).find((md) => md.toLowerCase() === mlc) || '';
-  }
-  if (m && m in G.Tab && G.Tab[m].type === C.DICTIONARY) {
-    const k = DictKeyTransform[m] ? DictKeyTransform[m](key) : key;
-    calls.push(['LibSword', 'setGlobalOptions', [getAlwaysOnOptions()]]);
-    calls.push(['LibSword', 'getDictionaryEntry', [m, k]]);
-    calls.push(['LibSword', 'getDictionaryEntry', [m, k.toUpperCase()]]);
-    calls.push(['LibSword', 'getModuleInformation', [m, 'Description']]);
-  } else calls.push(null, null, null, null);
-
-  return calls;
-}
-
 export function getDictEntryHTML(
   key: string,
   modules: string,
   reason?: FailReason,
-  GcallResults?: [string | null, string | null, string | null][]
+  preloadData?: PreloadData,
 ): string {
   const mods = modules.split(';');
 
-  if (typeof GcallResults === 'undefined') {
+  if (preloadData) {
+    preloadData.use({
+      call: ['LibSword', 'setGlobalOptions', [getAlwaysOnOptions()]],
+      def: null
+    });
+  } else {
     G.LibSword.setGlobalOptions(getAlwaysOnOptions());
   }
 
   let html = '';
   let sep = '';
   mods.forEach((mx) => {
-    const results = Array.isArray(GcallResults) ? GcallResults.shift() : null;
     // Allow case differences in module code references.
-    let m = mx;
-    if (!(m in G.Tab)) {
-      const mlc = m.toLowerCase();
-      m = Object.keys(G.Tab).find((md) => md.toLowerCase() === mlc) || '';
-    }
+    const mlc = mx.toLowerCase();
+    const m = mx in G.Tab ? mx : Object.keys(G.Tab).find((md) => md.toLowerCase() === mlc) || '';
     if (m && m in G.Tab && G.Tab[m].type === C.DICTIONARY) {
       const k = DictKeyTransform[m] ? DictKeyTransform[m](key) : key;
-      let h = results ? results[0] : G.LibSword.getDictionaryEntry(m, k);
-      if (h === C.NOTFOUND) {
-        h = results ? results[1] : G.LibSword.getDictionaryEntry(m, k.toUpperCase());
+      let h1, h2, dictTitle;
+      if (preloadData) {
+        [h1, h2, dictTitle] = preloadData.use(
+          { call: ['LibSword', 'getDictionaryEntry', [m, k]], def: '' },
+          { call: ['LibSword', 'getDictionaryEntry', [m, k.toUpperCase()]], def: '' },
+          { call: ['LibSword', 'getModuleInformation', [m, 'Description']], def: '' },
+          { check: { m, k } }
+        );
+      } else {
+        h1 = G.LibSword.getDictionaryEntry(m, k);
+        h2 = G.LibSword.getDictionaryEntry(m, k.toUpperCase());
+        dictTitle = G.LibSword.getModuleInformation(m, 'Description');
       }
+      let h = h1;
+      if (h === C.NOTFOUND) h = h2;
       if (h) h = markup2html(replaceLinks(h, m), m);
       if (mods.length === 1) {
         html += h;
       } else {
         html = html.replace(/^(<br>)+/, '');
-        const dictTitle = results
-          ? results[2]
-          : G.LibSword.getModuleInformation(m, 'Description');
         html += `${sep}
           <div class="cs-${m}">${
             dictTitle === C.NOTFOUND

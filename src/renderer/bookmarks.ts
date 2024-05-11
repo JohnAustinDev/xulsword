@@ -149,26 +149,28 @@ export function findBookmarks(
   location: LocationVKType | LocationORType | SelectVKType
 ): BookmarkInfoHTML[] {
   const bookmarkMap = getBookmarkMap();
-  if ('v11n' in location) {
-    const kjvl = verseKey(location).location('KJV');
-    const { book, chapter } = kjvl;
-    const chBookmarks: BookmarkInfoHTML[] = [];
-    for (let x = 0; x <= getMaxVerse('KJV', `${book} ${chapter}`); x += 1) {
-      let k = [book, chapter, x, 'KJV'].join('.');
-      if ('vkMod' in location) {
-        const { vkMod } = location;
-        k += `.${vkMod}`;
+  if (Object.keys(bookmarkMap).length) {
+    if ('v11n' in location) {
+      const kjvl = verseKey(location).location('KJV');
+      const { book, chapter } = kjvl;
+      const chBookmarks: BookmarkInfoHTML[] = [];
+      for (let x = 0; x <= getMaxVerse('KJV', `${book} ${chapter}`); x += 1) {
+        let k = [book, chapter, x, 'KJV'].join('.');
+        if ('vkMod' in location) {
+          const { vkMod } = location;
+          k += `.${vkMod}`;
+        }
+        if (k in bookmarkMap) {
+          chBookmarks.push(...bookmarkMap[k]);
+        }
       }
-      if (k in bookmarkMap) {
-        chBookmarks.push(...bookmarkMap[k]);
-      }
+      return chBookmarks;
     }
-    return chBookmarks;
-  }
-  if (location) {
-    const { otherMod: module, key } = location;
-    const k = [module, key].join(C.GBKSEP);
-    if (k in bookmarkMap) return bookmarkMap[k];
+    if (location) {
+      const { otherMod: module, key } = location;
+      const k = [module, key].join(C.GBKSEP);
+      if (k in bookmarkMap) return bookmarkMap[k];
+    }
   }
   return [];
 }

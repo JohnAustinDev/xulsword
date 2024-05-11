@@ -516,12 +516,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
       );
       if (!Cache.has(libswordHash)) {
         Cache.write(
-          libswordText(
-            libswordProps,
-            i,
-            newState,
-            renderPromise
-          ),
+          libswordText(libswordProps, i, renderPromise, newState),
           libswordHash
         );
       }

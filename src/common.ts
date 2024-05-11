@@ -38,158 +38,14 @@ import type {
   LocationVKCommType,
   LocationTypes,
   GCallType,
-  GAType,
 } from './type.ts';
 import type { TreeNodeInfo } from '@blueprintjs/core';
-import type { GetBooksInVKModules } from './main/minit.ts';
 import type { SelectVKType } from './renderer/libxul/selectVK.tsx';
 import type { SelectORMType } from './renderer/libxul/selectOR.tsx';
 import type { getSampleText } from './renderer/bookmarks.ts';
 import type { verseKey } from './renderer/htmlData.ts';
 import type { XulswordState } from './renderer/xulswordWin/xulsword.tsx';
-import type RenderPromise from './renderer/renderPromise.ts';
-
-// In browser context, synchronous G calls are not allowed, so either the
-// data must be preloaded into the cache, or must be returned with a promise.
-// This function checks the cache and renderPromises for the data and returns
-// it if it is found. Otherwise if not in browser context, the data is retrieved
-// syncronously using G, otherwise it returns a promise for the data which will
-// be obtained asynchronously. Promises for cacheable data are not dispatched
-// until handleRenderPromises() is called to dispatch them together, requiring
-// fewer network traversals to obtain the data. But non cacheable data is
-// dispatched immediately, and saved locally, and consumed after the component is
-// re-rendered.
-export function trySyncOrRenderPromise(
-  G: GType,
-  GA: GAType,
-  gcall: GCallType,
-  promise?: RenderPromise,
-): PrefValue | undefined {
-  const key = GCacheKey(gcall);
-  if (promise?.uncacheableCalls[key]?.resolved) {
-    const result = promise.uncacheableCalls[key]?.resolved;
-    delete promise.uncacheableCalls[key];
-    return result; // previous uncacheable data's promise is resolved!
-  }
-  if (Cache.has(key)) return Cache.read(key); // data in the cache!
-  if (window.processR.platform !== 'browser') {
-    const [name, _method, args] = gcall;
-    let calls;
-    if (name === 'callBatch' && Array.isArray(args)) {
-      calls = args[0] as GCallType[];
-    } else calls = [gcall];
-    return callBatchThenCacheSync(G, calls);
-  } else if (promise) {
-    const g: any = GA;
-    const [name, method, args] = gcall;
-    if (name in g) {
-      if (!method && typeof args === undefined) {
-        promise.calls.push(gcall)
-      } else if (!method && Array.isArray(args)) {
-        const cacheable = GBuilder[name]();
-        if (cacheable) promise.calls.push(gcall);
-        else if (!(key in promise.uncacheableCalls)) {
-          promise.uncacheableCalls[key] = {
-            promise: g[name](...args),
-            resolved: undefined,
-          };
-        }
-      } else if (typeof method === 'string' && method in g[name] && args === undefined) {
-        promise.calls.push(gcall)
-      } else if (typeof method === 'string' && method in g[name] && Array.isArray(args)) {
-        const cacheable = GBuilder[name][method]();
-        if (cacheable) promise.calls.push(gcall);
-        else if (!(key in promise.uncacheableCalls)) {
-          promise.uncacheableCalls[key] = {
-            promise: g[name][method](...args),
-            resolved: undefined,
-          };
-        }
-      }
-      return undefined; // must wait for the data!
-    }
-    throw new Error(`Bad gtype=${g.gtype} call: ${gcall}`);
-  }
-  throw new Error(`In this context trySyncOrPromise requires the promise argument: ${gcall}`);
-}
-
-export function callBatchThenCacheSync(
-  G: GType,
-  calls: GCallType[]
-): any[] {
-  // All calls must be synchronous, so check.
-  const { asyncFuncs } = GBuilder;
-  const asyncCall = calls.find(
-    (c) => asyncFuncs.find(
-      (a) => a[0] === c[0] && (!c[1] || (a[1] as any).includes(c[1]))
-    )
-  );
-  if (asyncCall !== undefined) {
-    throw new Error(`G.callBatch member must not be async: ${asyncCall}`);
-  }
-
-  const resp = getCallsFromCache(calls);
-
-  if (calls.find((c) => c !== null)) {
-    const respSync = G.callBatch(calls);
-    if (respSync.length !== calls.length) {
-      throw new Error(`callBatch sync did not return the correct data.`);
-    }
-    respSync.forEach((v, x) => {if (v !== null) resp[x] = v});
-  }
-
-  writeCallsToCache(calls, resp);
-
-  return resp;
-}
-
-export async function callBatchThenCache(
-  GA: GAType,
-  calls: GCallType[]
-): Promise<any[]> {
-  // The calls must be synchronous, so check.
-  const { asyncFuncs } = GBuilder;
-  const asyncCall = calls.find(
-    (c) => asyncFuncs.find(
-      (a) => a[0] === c[0] && (!c[1] || (a[1] as any).includes(c[1]))
-    )
-  );
-  if (asyncCall !== undefined) {
-    throw new Error(`G.callBatch member must not be async: ${asyncCall}`);
-  }
-
-  const resp = getCallsFromCache(calls);
-
-  if (calls.find((c) => c !== null)) {
-    const respAsync = await GA.callBatch(calls);
-    if (respAsync.length !== calls.length) {
-      throw new Error(`callBatch async did not return the correct data.`);
-    }
-    respAsync.forEach((v, x) => {if (v !== null) resp[x] = v});
-  }
-
-  writeCallsToCache(calls, resp);
-
-  return resp;
-}
-
-function getCallsFromCache(calls: (GCallType | null)[]): (PrefValue | undefined)[] {
-  const results: (PrefValue | undefined)[] = [];
-  for (let x = 0; x < calls.length; x++) {
-    let result = undefined;
-    const call = calls[x];
-    if (call && isCallCacheable(call)) {
-      const cacheKey = GCacheKey(call);
-      if (Cache.has(cacheKey)) {
-        result = Cache.read(cacheKey);
-        calls[x] = null;
-      }
-    }
-    results.push(result);
-  }
-
-  return results;
-}
+import type { PreloadData } from './renderer/renderPromise.ts';
 
 export function isCallCacheable(call: GCallType): boolean {
   let cacheable = true;
@@ -197,29 +53,6 @@ export function isCallCacheable(call: GCallType): boolean {
     cacheable = call[1] ? GBuilder[call[0]][call[1]]() : GBuilder[call[0]]();
   }
   return cacheable;
-}
-
-function writeCallsToCache(calls: (GCallType | null)[], resp: any[]) {
-  for (let x = 0; x < calls.length; x++) {
-    const acall = calls[x];
-    const aresult = resp[x];
-    if (acall) {
-      if (isCallCacheable(acall)) {
-        const cacheKey = GCacheKey(acall);
-        Cache.write(aresult, cacheKey);
-      }
-
-      // Some calls return data that is identical to other calls, so preload the cache
-      // for those others as well.
-      if (acall[0] === 'GetBooksInVKModules') {
-        Object.entries(aresult as ReturnType<typeof GetBooksInVKModules>).forEach((entry) => {
-          const [module, bookArray] = entry;
-          const k = GCacheKey(['getBooksInVKModule', null, [module]]);
-          Cache.write(bookArray, k);
-        });
-      }
-    }
-  }
 }
 
 export function escapeRE(text: string) {
@@ -840,7 +673,8 @@ export function getLocalizedChapterTerm(
   localeDigits: ReturnType<typeof getLocaleDigits>,
   book: string,
   chapter: number,
-  locale: string
+  locale: string,
+  preloadData?: PreloadData,
 ) {
   const i18n = 'i18n' in GorI ? GorI.i18n : GorI;
   const k1 = `${book}_Chaptext`;
@@ -850,6 +684,18 @@ export function getLocalizedChapterTerm(
     lng: locale,
     ns: 'books',
   };
+
+  if (preloadData) {
+    const [exists, tk1, tk2] = preloadData.use(
+      { call: ['i18n', 'exists', [k1, toptions]], def: false },
+      { call: ['i18n', 't', [k1, toptions]], def: k1 },
+      { call: ['i18n', 't', [k2, toptions]], def: k2 },
+      { check: { k1, k2, toptions }}
+    );
+    const r1 = exists && tk1;
+    return r1 && !/^\s*$/.test(r1) ? r1 : tk2;
+  }
+
   const r1 = i18n.exists(k1, toptions) && i18n.t(k1, toptions);
   return r1 && !/^\s*$/.test(r1) ? r1 : i18n.t(k2, toptions);
 }

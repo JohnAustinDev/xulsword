@@ -24,6 +24,7 @@ import type {
   TextVKType,
 } from '../../../type.ts';
 import type { HTMLData } from '../../htmlData.ts';
+import type { PreloadData } from '../../renderPromise.ts';
 import type Xulsword from '../../xulswordWin/xulsword.tsx';
 import type { XulswordState } from '../../xulswordWin/xulsword.tsx';
 import type Atext from './atext.tsx';
@@ -576,18 +577,26 @@ export function getNoteHTML(
 }
 
 // Turns headings on before reading introductions
-export function getIntroductions(mod: string, vkeytext: string) {
+export function getIntroductions(
+  mod: string,
+  vkeytext: string,
+  preloadData?: PreloadData,
+) {
   if (!(mod in G.Tab) || !G.Tab[mod].isVerseKey) {
     return { textHTML: '', intronotes: '' };
   }
 
-  G.LibSword.setGlobalOption('Headings', 'On');
-
-  let intro = G.LibSword.getIntroductions(mod, vkeytext);
-  const notes = G.LibSword.getNotes();
-
-  const x = G.Prefs.getBoolPref('xulsword.show.headings') ? 1 : 0;
-  G.LibSword.setGlobalOption('Headings', C.SwordFilterValues[x]);
+  let intro: string, notes: string;
+  if (preloadData) {
+    [intro, notes] = preloadData.use(
+      { call: ['LibSword', 'getIntroductions', [mod, vkeytext]], def: '' },
+      { call: ['LibSword', 'getNotes', []], def: '' },
+      { check: { mod, vkeytext }}
+    );
+  } else {
+    intro = G.LibSword.getIntroductions(mod, vkeytext);
+    notes = G.LibSword.getNotes();
+  }
 
   if (
     !intro ||
@@ -601,7 +610,8 @@ export function getIntroductions(mod: string, vkeytext: string) {
 
 export function getChapterHeading(
   location: AtextPropsType['location'],
-  module: AtextPropsType['module']
+  module: AtextPropsType['module'],
+  preloadData?: PreloadData,
 ) {
   if (!location || !module) return { textHTML: '', intronotes: '' };
   const { book, chapter } = location;
@@ -609,7 +619,28 @@ export function getChapterHeading(
   if (!l) l = G.i18n.language; // otherwise use current program locale
   const toptions = { lng: l, ns: 'books' };
 
-  const intro = getIntroductions(module, `${book} ${chapter}`);
+  const intro = getIntroductions(module, `${book} ${chapter}`, preloadData);
+
+  let localizedBook: string, int: string;
+  if (preloadData) {
+    [localizedBook, int] = preloadData.use(
+      { call: ['i18n', 't', [book, toptions]], def: book },
+      { call: ['i18n', 't', ['IntroLink', toptions]], def: '' },
+      { check: { book, toptions }}
+    )
+  } else {
+    localizedBook = G.i18n.t(book, toptions);
+    int = G.i18n.t('IntroLink', toptions);
+  }
+
+  const localizedChapTerm = getLocalizedChapterTerm(
+    G.i18n,
+    G.getLocaleDigits(true),
+    book,
+    chapter,
+    l,
+    preloadData
+  );
 
   // Chapter heading has style of the locale associated with the module, or else
   // current program locale if no associated locale is installed.
@@ -617,14 +648,8 @@ export function getChapterHeading(
     chapter === 1 ? ' chapterfirst' : ''
   } cs-${l}">`;
   html += '<div class="chaptitle" >';
-  html += `<div class="chapbk">${G.i18n.t(book, toptions)}</div>`;
-  html += `<div class="chapch">${getLocalizedChapterTerm(
-    G.i18n,
-    G.getLocaleDigits(true),
-    book,
-    chapter,
-    l
-  )}</div>`;
+  html += `<div class="chapbk">${localizedBook}</div>`;
+  html += `<div class="chapch">${localizedChapTerm}</div>`;
   html += '</div>';
 
   const inc = !intro.textHTML ? ' empty' : '';
@@ -633,7 +658,7 @@ export function getChapterHeading(
     location,
     context: module,
   });
-  const int = G.i18n.t('IntroLink', toptions);
+
   html += '<div class="chapinfo">';
   html += `<div class="introlink${inc}" data-data="${ind}">${int}</div>`;
   html += '</div>';

@@ -17,11 +17,10 @@ import {
   findTreeAncestors,
   findTreeSiblings,
   gbAncestorIDs,
-  trySyncOrRenderPromise,
 } from '../../common.ts';
 import C from '../../constant.ts';
 import G, { GA } from '../rg.ts';
-import RenderPromise from '../renderPromise.ts';
+import RenderPromise, { PreloadData } from '../renderPromise.ts';
 import { addClass, xulDefaultProps, XulProps, xulPropTypes } from './xul.tsx';
 import { Vbox } from './boxes.tsx';
 import Menulist from './menulist.tsx';
@@ -29,7 +28,6 @@ import ModuleMenu from './modulemenu.tsx';
 import './selectOR.css';
 
 import type { TreeNodeInfo } from '@blueprintjs/core';
-import type { TreeNodeInfoPref } from '../../type.ts';
 import type { RenderPromiseComponent, RenderPromiseState } from '../renderPromise.ts';
 
 // Allow users to select one or more chapters from any non-versekey SWORD
@@ -215,25 +213,20 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
 
     // Get modules to be made available for selection, and their node lists:
     const list: NodeListOR[] = nodeLists || [];
-    const propNodeLists: NodeListOR[] = (
+    const propNodeListsMods: string[] = (
       otherModsProp && !otherModsProp.length
         ? []
         : otherModsProp || G.Tabs.map((t) => t.module)
-    )
-      .filter((m) => m && m in G.Tab && !G.Tab[m].isVerseKey)
-      .map((m) => {
+    ).filter((m) => m && m in G.Tab && !G.Tab[m].isVerseKey);
+
+    const getNodeLists = (mods: string[]): NodeListOR[] => {
+      return mods.map((m) => {
         let nodes: TreeNodeInfo[] = [];
         if (G.Tab[m].tabType === 'Genbks') {
-          const n = trySyncOrRenderPromise(G, GA,
-            ['genBookTreeNodes', null, [m]],
-            renderPromise
-          ) as TreeNodeInfoPref[];
+          const [n] = preloadData.use({ call: ['genBookTreeNodes', null, [m]], def: []}, {check: { m }});
           if (!renderPromise.waiting()) nodes = n;
         } else if (G.Tab[m].tabType === 'Dicts') {
-          const keylist = trySyncOrRenderPromise(G, GA,
-            ['getAllDictionaryKeyList', null, [m]],
-            renderPromise
-          ) as string[];
+          const [keylist] = preloadData.use({ call: ['getAllDictionaryKeyList', null, [m]], def: []}, {check: { m }});
           if (!renderPromise.waiting()) nodes = dictTreeNodes(keylist, m);
         }
         return {
@@ -242,7 +235,13 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
           labelClass: G.Tab[m].labelClass,
           nodes,
         };
-      });
+      }
+    )};
+    const preloadData = new PreloadData(renderPromise);
+    getNodeLists(propNodeListsMods);
+    preloadData.dispatch();
+    const propNodeLists: NodeListOR[] = getNodeLists(propNodeListsMods);
+
     list.push(...propNodeLists);
 
     const isDictMod = otherMod in G.Tab && G.Tab[otherMod].tabType === 'Dicts';

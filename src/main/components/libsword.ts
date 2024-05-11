@@ -357,7 +357,10 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // If Vkeymod is not a versekey type module, an error is returned.
   getIntroductions(vkeymod: string, bname: string): string {
     if (this.isReady(true)) {
+      const headings = this.libxulsword.GetGlobalOption('Headings');
+      this.libxulsword.SetGlobalOption('Headings', 'On');
       const introductions = this.libxulsword.GetIntroductions(vkeymod, bname);
+      if (headings === 'Off') this.libxulsword.SetGlobalOption('Headings', headings);
       return introductions;
     }
     return '';

@@ -80,7 +80,7 @@ export default class RefParser {
       return `${p}${C.SupportedBooks[bg].join('.')}.`;
     }, '.');
     this.osisStringLC = this.osisString.toLowerCase();
-    this.locales = [this.locale]
+    this.locales = [];
     if (options) {
       Object.entries(options).forEach((entry) => {
         const name = entry[0] as keyof RefParserOptionsType;
@@ -88,6 +88,9 @@ export default class RefParser {
         this[name] = val;
       });
     }
+    this.locales = Array.isArray(this.locales)
+      ? this.locales.concat(this.locale)
+      : [this.locale];
     if (!this.locales.includes(this.locale)) {
       throw new Error(`RefParser missing locale: '${this.locale}'`);
     } else if (!this.locales.every((l) => l in this.localeDigits && l in this.localizedBooks)) {

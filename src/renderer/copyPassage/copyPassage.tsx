@@ -137,7 +137,8 @@ export default class CopyPassageWin extends React.Component {
             ilModuleOption: [],
             modkey: '',
           },
-          0
+          0,
+          null
         );
         const div = testdiv.appendChild(document.createElement('div'));
         div.classList.add('text');
