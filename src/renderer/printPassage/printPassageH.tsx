@@ -146,8 +146,6 @@ export function bibleChapterText(
         <div class="chaptitle" >
           <div class="chapbk">${G.i18n.t(book, toptions)}</div>
           <div class="chapch">${getLocalizedChapterTerm(
-            G.i18n,
-            G.getLocaleDigits(true),
             book,
             chapter,
             moduleLocale

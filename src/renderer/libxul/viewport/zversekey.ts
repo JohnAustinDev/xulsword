@@ -644,8 +644,6 @@ export function getChapterHeading(
   }
 
   const localizedChapTerm = getLocalizedChapterTerm(
-    G.i18n,
-    G.getLocaleDigits(true),
     book,
     chapter,
     l,

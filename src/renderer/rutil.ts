@@ -289,32 +289,22 @@ export function readGenBookAudioConf(
 }
 
 export function getLocalizedChapterTerm(
-  GorI: GType | GType['i18n'],
-  localeDigits: ReturnType<typeof getLocaleDigits>,
   book: string,
   chapter: number,
   locale: string,
   renderPromise?: RenderPromise,
 ) {
-  let i18n, g;
-  if ('i18n' in GorI) {
-    i18n = GorI.i18n;
-    g = GorI;
-  } else {
-    i18n = GorI;
-    g = null;
-  }
   const k1 = `${book}_Chaptext`;
   const k2 = 'Chaptext';
   const toptions = {
-    v1: dString(localeDigits, chapter, locale),
+    v1: dString(G.getLocaleDigits(true), chapter, locale),
     lng: locale,
     ns: 'books',
   };
 
-  if (g && renderPromise) {
+  if (G && renderPromise) {
     const [exists, tk1, tk2] = trySyncOrPromise(
-      g,
+      G,
       renderPromise,
       [
         ['i18n', 'exists', [k1, toptions]],
@@ -327,8 +317,8 @@ export function getLocalizedChapterTerm(
     return r1 && !/^\s*$/.test(r1) ? r1 : tk2;
   }
 
-  const r1 = i18n.exists(k1, toptions) && i18n.t(k1, toptions);
-  return r1 && !/^\s*$/.test(r1) ? r1 : i18n.t(k2, toptions);
+  const r1 = G.i18n.exists(k1, toptions) && G.i18n.t(k1, toptions);
+  return r1 && !/^\s*$/.test(r1) ? r1 : G.i18n.t(k2, toptions);
 }
 
 // Does location surely exist in the module? It's assumed if a book is included,

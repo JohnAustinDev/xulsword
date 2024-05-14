@@ -35,9 +35,12 @@ export function trySyncOrPromise(
     callBatchThenCacheSync(G, calls.filter((_gc, i) => results[i] === undefined));
     return getCallsFromCacheAndClear(calls);
   } else if (promise) {
-    const results = getCallsFromCacheAndClear(calls);
-    promise.calls.push(...calls.filter((_gc, i) => results[i] === undefined));
-    return results.map((r, i) => defaultValues && r === undefined ? defaultValues[i] : r);
+    const presults = getCallsFromCacheAndClear(calls);
+    if (presults.some((r) => r === undefined)) {
+      const pcalls = calls.filter((_call, i) => presults[i] === undefined);
+      promise.calls.push(...pcalls);
+    }
+    return presults.map((r, i) => defaultValues && r === undefined ? defaultValues[i] : r);
   }
   throw new Error(`In this context trySyncOrPromise requires the promise argument: ${JSON_stringify(calls)}`);
 }
@@ -55,35 +58,54 @@ export default class RenderPromise {
     return !!(this.calls.length);
   }
 
+  getGlobalRenderPromises(): RenderPromise[] {
+    if (Cache.has('renderPromises')) {
+      return Cache.read('renderPromises') as RenderPromise[];
+    } else return [];
+  }
+
+  setGlobalRenderPromises(rps: RenderPromise[]): void {
+    if (Cache.has('renderPromises')) Cache.clear('renderPromises');
+    Cache.write(rps, 'renderPromises');
+  }
+
   dispatch() {
     // Add calls to the global list, then wait a bit, request list results
     // from the server, cache the results, then re-render the requesting
     // components.
-    window.renderPromises.push(this);
-    setTimeout(async () => {
-      const calls: GCallType[] = [];
-      const components: React.Component[] = [];
-      const renders: (() => void)[] = [];
-      window.renderPromises.forEach((rp) => {
-        calls.concat(rp.calls);
-        if (!components.find((c) => c === rp.component)) {
-          components.push(rp.component);
-          renders.push(() => {
-            if (window.processR.XULSWORD_ENV() === 'development') {
-              console.log(`Component reload: ${JSON_stringify(calls)}`);
+    const { calls } = this;
+    if (calls.length) {
+      const rps = this.getGlobalRenderPromises();
+      rps.push(this);
+      this.setGlobalRenderPromises(rps);
+      setTimeout(async () => {
+        const calls: GCallType[] = [];
+        const components: React.Component[] = [];
+        const renders: (() => void)[] = [];
+        const rps = this.getGlobalRenderPromises();
+        this.setGlobalRenderPromises([]);
+        rps.forEach((rp) => {
+          if (rp.calls.length) {
+            if (!components.find((c) => c === rp.component)) {
+              components.push(rp.component);
+              renders.push(() => {
+                rp.component.setState({ renderPromiseID: Math.random() } as RenderPromiseState);
+              });
             }
-            rp.component.setState({ renderPromiseID: Math.random() } as RenderPromiseState);
-          });
-        }
-      });
-      window.renderPromises = [];
+            while(rp.calls.length) calls.push(rp.calls.shift() as GCallType);
+          }
+        });
 
-      const calls2 = calls.filter((call) => {
-        return !isCallCacheable(GBuilder, call) || !Cache.has(promiseCacheKey(call))
-      });
-      if (calls2.length) await callBatchThenCache(GA, calls2);
-      renders.forEach((r) => r());
-    }, C.UI.Window.networkRequestBatchDelay);
+        const callsStillNeeded = calls.filter((call) => {
+          return !isCallCacheable(GBuilder, call) || !Cache.has(promiseCacheKey(call))
+        });
+
+        if (callsStillNeeded.length) await callBatchThenCache(GA, callsStillNeeded);
+
+        renders.forEach((r) => r());
+
+      }, C.UI.Window.networkRequestBatchDelay);
+    }
   }
 }
 
@@ -148,7 +170,7 @@ function disallowedAsCallBatch(calls: GCallType[]): string | boolean {
 // Even 'uncacheable' G data is cached for a time. Then if all
 // values are succesfully returned, the 'uncacheable' data is cleared
 // from the cache after a delay.
-function getCallsFromCacheAndClear(calls: GCallType[]) {
+function getCallsFromCacheAndClear(calls: GCallType[]): PrefValue[] {
   const results = calls.map((call) => getCallFromCache(call));
   const success = !results.some((r) => r === undefined);
   if (success) {
@@ -177,7 +199,7 @@ function getCallFromCache(call: GCallType | null): PrefValue | undefined {
 // values are succesfully returned, the 'uncacheable' data is cleared
 // from the cache at that time.
 function writeCallToCache(call: GCallType | null, result: any) {
-  if (call) {
+  if (call && result !== undefined) {
     const cacheKey = promiseCacheKey(call);
     if (!Cache.has(cacheKey)) Cache.write(result, cacheKey);
 
