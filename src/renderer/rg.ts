@@ -15,18 +15,17 @@ async function asyncRequest(
   if (!allowed(thecall)) {
     throw new Error(`Async G call unsupported in browser environment: ${JSON_stringify(thecall)}`);
   }
-  if (Cache.has(ckey)) return Promise.resolve(Cache.read(ckey));
-  const cacheable = isCallCacheable(thecall);
+  const cacheable = isCallCacheable(GBuilder, thecall);
+  if (cacheable && Cache.has(ckey)) return Promise.resolve(Cache.read(ckey));
   log.silly(`${ckey} ${JSON_stringify(thecall)} async ${cacheable ? 'miss' : 'uncacheable'}`);
-  return window.ipc
-    .invoke('global', thecall)
-    .then((result: unknown) => {
-      if (cacheable) Cache.write(result, ckey);
-      return result;
-    })
-    .catch((er: any) => {
-      log.warn(`Promise rejection in ${JSON_stringify(thecall)}:\n${er.toString()}`);
-    });
+  let result;
+  try {
+    result = await window.ipc.invoke('global', thecall);
+    if (cacheable) Cache.write(result, ckey);
+  } catch (er: any) {
+    throw new Error(`Promise rejection in ${JSON_stringify(thecall)}:\n${er.toString()}`);
+  }
+  return result;
 }
 
 function request(
@@ -36,8 +35,8 @@ function request(
   if (!allowed(thecall)) {
     throw new Error(`Sync G call unsupported in browser environment: ${JSON_stringify(thecall)}`);
   }
-  if (Cache.has(ckey)) return Cache.read(ckey);
-  const cacheable = isCallCacheable(thecall);
+  const cacheable = isCallCacheable(GBuilder, thecall);
+  if (cacheable && Cache.has(ckey)) return Cache.read(ckey);
   if (window.processR.platform === 'browser') {
     if (cacheable)
       throw new Error(`Cache must be preloaded in browser context: ${JSON_stringify(thecall)}`);
@@ -47,15 +46,23 @@ function request(
   log.silly(`${ckey} ${JSON_stringify(thecall)} sync ${cacheable ? 'miss' : 'uncacheable'}`);
   const result = window.ipc.sendSync('global', thecall);
   if (cacheable) Cache.write(result, ckey);
+
   return result;
 }
 
 function allowed(thecall: GCallType): boolean {
-  const [name, method] = thecall;
+  const [name, method, args] = thecall;
+  if (name === 'callBatch') {
+    if (args) {
+      const alls = args[0].map((c: GCallType) => allowed(c));
+      return alls.every((x: boolean) => x);
+    }
+    return false;
+  }
   const is = name && GBuilder.internetSafe.find((x) => x[0] === name);
   if (window.processR.platform && window.processR.platform !== 'browser') return true;
-  if (is && !method && is[1].length === 0) return true;
-  if (is && (is[1] as any).includes(method)) return true;
+  if (is !== undefined && !method && is[1].length === 0) return true;
+  if (is !== undefined && (is[1] as any).includes(method)) return true;
   return false;
 }
 

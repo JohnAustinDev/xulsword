@@ -5,6 +5,7 @@ import Cache from '../../../cache.ts';
 import {
   dString,
   escapeRE,
+  getSwordOptions,
   JSON_attrib_parse,
   JSON_attrib_stringify,
   stringHash,
@@ -12,7 +13,7 @@ import {
 import { getElementData } from '../../htmlData.ts';
 import G from '../../rg.ts';
 import addBookmarks from '../../bookmarks.ts';
-import { PreloadData } from '../../renderPromise.ts';
+import { trySyncOrPromise } from '../../renderPromise.ts';
 import {
   getNoteHTML,
   getChapterHeading,
@@ -25,8 +26,6 @@ import type {
   AtextPropsType,
   PinPropsType,
   PlaceType,
-  SwordFilterType,
-  SwordFilterValueType,
 } from '../../../type.ts';
 import type RenderPromise from '../../renderPromise.ts';
 import type { HTMLData } from '../../htmlData.ts';
@@ -51,7 +50,7 @@ export function libswordText(
     | 'show'
   >,
   n: number,
-  renderPromise: RenderPromise | null,
+  renderPromise?: RenderPromise,
   newState?: Partial<AtextStateType>,
 ): LibSwordResponse {
   const r: LibSwordResponse = {
@@ -68,20 +67,12 @@ export function libswordText(
   const moduleLocale = G.Config[module].AssociatedLocale;
 
   // Set SWORD filter options
-  const options = {} as { [key in SwordFilterType]: SwordFilterValueType };
-  Object.entries(C.SwordFilters).forEach((entry) => {
-    const sword = entry[0] as SwordFilterType;
-    let showi = show[entry[1]] ? 1 : 0;
-    if (C.AlwaysOn[type].includes(sword)) showi = 1;
-    options[sword] = C.SwordFilterValues[showi];
-  });
+  const options = getSwordOptions(show, type);
   if (ilModule) {
     const [, on] = C.SwordFilterValues;
     options["Strong's Numbers"] = on;
     options['Morphological Tags'] = on;
   }
-
-  const preloadData = new PreloadData(renderPromise);
 
   // Read Libsword according to module type
   switch (type) {
@@ -89,13 +80,10 @@ export function libswordText(
       if (location && location.book && module) {
         const { book, chapter } = location;
         if (ilModule) {
-          preloadData.use({
-            call: ['LibSword', 'getChapterTextMulti', [`${module},${ilModule}`, `${book}.${chapter}`, false, options]],
-            def: ''
-          }, { check: { module, ilModule, book, chapter, options }});
-          getChapterHeading(location, module, preloadData);
-          preloadData.dispatch();
-          const [chtxt] = preloadData.use() as string[];
+          const [chtxt] = trySyncOrPromise(G, renderPromise || null,
+            [['LibSword', 'getChapterTextMulti', [`${module},${ilModule}`, `${book}.${chapter}`, false, options]]],
+            ['']
+          ) as string[];
           if (!renderPromise?.waiting()) {
             r.textHTML += chtxt.replace(/interV2/gm, `cs-${ilModule}`);
           }
@@ -103,16 +91,12 @@ export function libswordText(
           // We needed to check that the module contains the book, because
           // LibSword will silently return text from elsewhere in a module
           // if the module does not include the requested book!
-          preloadData.use({
-            call: ['LibSword', 'getChapterText', [module, `${book}.${chapter}`, options]],
-            def: ''
-          }, {
-            call: ['LibSword', 'getNotes', []],
-            def: '',
-          }, { check: { module, book, chapter, options }});
-          getChapterHeading(location, module, preloadData);
-          preloadData.dispatch();
-          const [textHTML, notes] = preloadData.use();
+          const [textHTML, notes] = trySyncOrPromise(G, renderPromise || null,
+            [
+              ['LibSword', 'getChapterText', [module, `${book}.${chapter}`, options]],
+              ['LibSword', 'getNotes', ['getChapterText', [module, `${book}.${chapter}`, options]]]
+            ], ['', '']
+          ) as string[];
           if (!renderPromise?.waiting()) {
             r.textHTML += textHTML;
             r.notes += notes;
@@ -124,15 +108,13 @@ export function libswordText(
     case C.COMMENTARY: {
       if (location && location.book && module) {
         const { book, chapter } = location;
-        preloadData.use({
-          call: ['LibSword', 'getChapterText', [module, `${book}.${chapter}`, options]],
-          def: '',
-        }, {
-          call: ['LibSword', 'getNotes', []],
-          def: '',
-        }, { check: { module, book, chapter, options }});
-        preloadData.dispatch();
-        const [textHTML, notes] = preloadData.use();
+        const [textHTML, notes] = trySyncOrPromise(G, renderPromise || null,
+          [
+            ['LibSword', 'getChapterText', [module, `${book}.${chapter}`, options]],
+            ['LibSword', 'getNotes', ['getChapterText', [module, `${book}.${chapter}`, options]]]
+          ],
+          ['', '']
+        ) as string[];
         if (!renderPromise?.waiting()) {
           r.textHTML += textHTML;
           r.notes += notes;
@@ -142,15 +124,13 @@ export function libswordText(
     }
     case C.GENBOOK: {
       if (modkey) {
-        preloadData.use({
-          call: ['LibSword', 'getGenBookChapterText', [module, modkey, options]],
-          def: ''
-        }, {
-          call: ['LibSword', 'getNotes', []],
-          def: ''
-        }, { check: { module, modkey, options }});
-        preloadData.dispatch();
-        const [textHTML, noteHTML] = preloadData.use();
+        const [textHTML, noteHTML] = trySyncOrPromise(G, renderPromise || null,
+          [
+            ['LibSword', 'getGenBookChapterText', [module, modkey, options]],
+            ['LibSword', 'getNotes', ['getGenBookChapterText', [module, modkey, options]]]
+          ],
+          ['', '']
+        ) as [string, string];
         if (!renderPromise?.waiting()) {
           r.textHTML += textHTML;
           r.noteHTML += noteHTML;
@@ -166,13 +146,10 @@ export function libswordText(
       // Cache is also used for DailyDevotion - if the key is not in the
       // Cache use today's date instead of the key.
       const key = dictKeyToday(modkey, module);
-      preloadData.use({
-        call:['getAllDictionaryKeyList', null, [module]],
-        def: []
-      }, { check: { module }});
-      getDictEntryHTML(key, module, undefined, preloadData);
-      preloadData.dispatch();
-      const [keylist] = preloadData.use();
+      const [keylist] = trySyncOrPromise(G, renderPromise || null,
+        [['getAllDictionaryKeyList', null, [module]]],
+        [[]]
+      ) as string[][];
       if (!renderPromise?.waiting()) {
         if (key && keylist.includes(key)) {
           // Build and cache the selector list.
@@ -192,7 +169,7 @@ export function libswordText(
           }
 
           // Set the final results.
-          const de = getDictEntryHTML(key, module, undefined, preloadData);
+          const de = getDictEntryHTML(key, module, undefined, renderPromise);
           r.textHTML += `<div class="dictentry">${de}</div>`;
           const sel = new RegExp(`(dictkey)([^>]*">${escapeRE(key)}<)`);
           const list = Cache.read('keyHTML', module)
@@ -257,7 +234,7 @@ export function libswordText(
     show.headings &&
     location &&
     ilModuleOption) {
-    const headInfo = getChapterHeading(location, module, preloadData);
+    const headInfo = getChapterHeading(location, module, renderPromise);
       r.textHTML = headInfo.textHTML + r.textHTML;
       r.intronotes = headInfo.intronotes;
   }
@@ -290,11 +267,19 @@ function dictionaryChange(atext: HTMLElement, next: boolean): string | null {
 export function genbookChange(
   module: string,
   modkey: string,
-  next: boolean
+  next: boolean,
+  renderPromise?: RenderPromise
 ): string | null {
   let tocs: string[] = [];
   if (module) {
-    tocs = G.LibSword.getGenBookTableOfContents(module);
+    if (renderPromise) {
+      [tocs] = trySyncOrPromise(G, renderPromise,
+        [['LibSword', 'getGenBookTableOfContents', [module]]],
+        [[]]
+      ) as string[][]
+    } else {
+      tocs = G.LibSword.getGenBookTableOfContents(module);
+    }
     if (modkey) {
       const toc = tocs.indexOf(modkey);
       if (toc !== -1) {
@@ -316,7 +301,8 @@ export function genbookChange(
 export function textChange(
   atext: HTMLElement,
   next: boolean,
-  prevState?: PinPropsType
+  prevState?: PinPropsType,
+  renderPromise?: RenderPromise
 ): PinPropsType | Partial<PinPropsType> | null {
   const { columns: cx, module } = atext.dataset;
   const columns = Number(cx);
@@ -329,7 +315,7 @@ export function textChange(
     case C.COMMENTARY: {
       let location;
       if (type === C.BIBLE && columns > 1) {
-        location = pageChange(atext, next);
+        location = pageChange(atext, next, renderPromise);
       } else {
         const firstVerse = sbe.getElementsByClassName('vs')[0] as
           | HTMLElement
@@ -358,7 +344,7 @@ export function textChange(
         ) as HTMLData;
         if (locationGB) {
           const { otherMod: m, key: k } = locationGB;
-          const key = genbookChange(m, k, next);
+          const key = genbookChange(m, k, next, renderPromise);
           if (key) {
             newPartialPinProps.modkey = key;
           } else return null;

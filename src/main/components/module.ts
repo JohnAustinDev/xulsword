@@ -1418,7 +1418,7 @@ const Module = {
       newmods.modules.push(...keys.map((k) => k.conf));
       Subscription.publish.modulesInstalled(
         newmods,
-        callerWinID ?? getBrowserWindows({ type: 'xulsword' })[0].id
+        callerWinID ?? getBrowserWindows({ type: 'xulswordWin' })[0].id
       );
     }
   },

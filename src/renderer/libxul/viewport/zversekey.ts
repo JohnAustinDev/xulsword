@@ -6,11 +6,12 @@ import S from '../../../defaultPrefs.ts';
 import {
   clone,
   dString,
-  getLocalizedChapterTerm,
+  getSwordOptions,
   JSON_attrib_stringify,
 } from '../../../common.ts';
 import { getElementData, verseKey } from '../../htmlData.ts';
-import { getCompanionModules, getMaxChapter, getMaxVerse } from '../../rutil.ts';
+import { getCompanionModules, getMaxChapter, getMaxVerse, getLocalizedChapterTerm } from '../../rutil.ts';
+import RenderPromise, { trySyncOrPromise } from '../../renderPromise.ts';
 import G from '../../rg.ts';
 import { delayHandler } from '../xul.tsx';
 
@@ -24,7 +25,6 @@ import type {
   TextVKType,
 } from '../../../type.ts';
 import type { HTMLData } from '../../htmlData.ts';
-import type { PreloadData } from '../../renderPromise.ts';
 import type Xulsword from '../../xulswordWin/xulsword.tsx';
 import type { XulswordState } from '../../xulswordWin/xulsword.tsx';
 import type Atext from './atext.tsx';
@@ -106,8 +106,10 @@ export function getRefBible(
 function getFootnoteText(location: LocationVKType, module: string): string {
   const { book, chapter, verse, subid } = location;
   if (subid) {
-    G.LibSword.getChapterText(module, `${book} ${chapter}`);
-    const notes = G.LibSword.getNotes().split(/(?=<div[^>]+class="nlist")/);
+    const options = getSwordOptions(G, G.Tab[module].type);
+    G.LibSword.getChapterText(module, `${book} ${chapter}`, options);
+    const notes = G.LibSword.getNotes('getChapterText', [module, `${book} ${chapter}`, options])
+      .split(/(?=<div[^>]+class="nlist")/);
     for (let x = 0; x < notes.length; x += 1) {
       const osisID = notes[x].match(/data-osisID="(.*?)"/); // getAttribute('data-osisID');
       if (osisID && osisID[1] === `${book}.${chapter}.${verse}!${subid}`) {
@@ -195,10 +197,12 @@ export function locationVKText(
       if (loc.subid) {
         text = getFootnoteText(loc, mod);
       } else {
+        const options = getSwordOptions(G, G.Tab[module].type);
         text = G.LibSword.getVerseText(
           module,
           modloc.osisRef(v11n),
-          keepNotes
+          keepNotes,
+          options
         ).replace(/\n/g, ' ');
       }
       if (text && text.length > 7) {
@@ -580,22 +584,26 @@ export function getNoteHTML(
 export function getIntroductions(
   mod: string,
   vkeytext: string,
-  preloadData?: PreloadData,
+  renderPromise?: RenderPromise,
 ) {
   if (!(mod in G.Tab) || !G.Tab[mod].isVerseKey) {
     return { textHTML: '', intronotes: '' };
   }
 
   let intro: string, notes: string;
-  if (preloadData) {
-    [intro, notes] = preloadData.use(
-      { call: ['LibSword', 'getIntroductions', [mod, vkeytext]], def: '' },
-      { call: ['LibSword', 'getNotes', []], def: '' },
-      { check: { mod, vkeytext }}
-    );
+  const options = getSwordOptions(G, G.Tab[mod].type);
+  const args = [mod, vkeytext, options] as Parameters<typeof G.LibSword.getIntroductions>;
+  if (renderPromise) {
+    [intro, notes] = trySyncOrPromise(G, renderPromise,
+      [
+        ['LibSword', 'getIntroductions', args],
+        ['LibSword', 'getNotes', ['getIntroductions', args]]
+      ],
+      ['', '']
+    ) as [string, string, string];
   } else {
-    intro = G.LibSword.getIntroductions(mod, vkeytext);
-    notes = G.LibSword.getNotes();
+    intro = G.LibSword.getIntroductions(args[0], args[1], args[2]);
+    notes = G.LibSword.getNotes('getIntroductions', args);
   }
 
   if (
@@ -611,7 +619,7 @@ export function getIntroductions(
 export function getChapterHeading(
   location: AtextPropsType['location'],
   module: AtextPropsType['module'],
-  preloadData?: PreloadData,
+  renderPromise?: RenderPromise,
 ) {
   if (!location || !module) return { textHTML: '', intronotes: '' };
   const { book, chapter } = location;
@@ -619,15 +627,17 @@ export function getChapterHeading(
   if (!l) l = G.i18n.language; // otherwise use current program locale
   const toptions = { lng: l, ns: 'books' };
 
-  const intro = getIntroductions(module, `${book} ${chapter}`, preloadData);
+  const intro = getIntroductions(module, `${book} ${chapter}`, renderPromise);
 
   let localizedBook: string, int: string;
-  if (preloadData) {
-    [localizedBook, int] = preloadData.use(
-      { call: ['i18n', 't', [book, toptions]], def: book },
-      { call: ['i18n', 't', ['IntroLink', toptions]], def: '' },
-      { check: { book, toptions }}
-    )
+  if (renderPromise) {
+    [localizedBook, int] = trySyncOrPromise(G, renderPromise,
+      [
+        ['i18n', 't', [book, toptions]],
+        ['i18n', 't', ['IntroLink', toptions]]
+      ],
+      [book, '']
+    ) as [OSISBookType, string]
   } else {
     localizedBook = G.i18n.t(book, toptions);
     int = G.i18n.t('IntroLink', toptions);
@@ -639,7 +649,7 @@ export function getChapterHeading(
     book,
     chapter,
     l,
-    preloadData
+    renderPromise
   );
 
   // Chapter heading has style of the locale associated with the module, or else
@@ -680,19 +690,20 @@ export function getChapterHeading(
 // ignoreNotebox is true, v is considered visible even if it's behind
 // the notebox (useful for multi-column scrolling to prevent notebox
 // flashing).
-function verseIsVisible(v: HTMLElement, ignoreNotebox = false): boolean {
+function verseIsVisible(vx: Element, ignoreNotebox = false): boolean {
+  const v = vx as HTMLElement;
   // return false if we're not a verse
-  if (!v?.classList?.contains('vs') || !('parentNode' in v)) return false;
-  const sb = v.parentNode as HTMLElement;
-  const nbc = sb?.nextSibling as HTMLElement;
-  const nb = nbc?.lastChild as HTMLElement;
-  const atext = sb?.parentNode as HTMLElement;
+  if (!v?.classList?.contains('vs') || !('parentElement' in v)) return false;
+  const sb = v.parentElement as HTMLElement;
+  const nbc = sb?.nextElementSibling as HTMLElement;
+  const nb = nbc?.lastElementChild as HTMLElement;
+  const atext = sb?.parentElement as HTMLElement;
   if (!sb || !nbc || !nb || !atext || !atext.classList.contains('atext'))
     return false;
   const { module, columns: clx } = atext.dataset;
   const columns = Number(clx);
   if (!module) return false;
-  const hd = sb.previousSibling as HTMLElement;
+  const hd = sb.previousElementSibling as HTMLElement | null;
 
   // return false if we're not visible or being displayed
   const style = window.getComputedStyle(v);
@@ -703,7 +714,7 @@ function verseIsVisible(v: HTMLElement, ignoreNotebox = false): boolean {
     return (
       v.offsetTop - sb.offsetTop >= sb.scrollTop &&
       v.offsetTop - sb.offsetTop <
-        sb.scrollTop + sb.offsetHeight - hd.offsetHeight
+        sb.scrollTop + sb.offsetHeight - (hd?.offsetHeight ?? 0)
     );
   }
 
@@ -719,7 +730,7 @@ function verseIsVisible(v: HTMLElement, ignoreNotebox = false): boolean {
       !ignoreNotebox &&
       v.offsetLeft > sb.offsetWidth - 1.1 * nb.offsetWidth &&
       v.offsetTop + (partialVerse ? 0 : v.offsetHeight) >
-        atext.offsetHeight - nbc.offsetHeight - hd.offsetHeight
+        atext.offsetHeight - nbc.offsetHeight - (hd?.offsetHeight ?? 0)
     ) {
       return false;
     }
@@ -757,7 +768,7 @@ export function versekeyScroll(
   sbe.scrollLeft = 0; // commentary may have been non-zero
 
   // find the element to scroll to
-  let av = sbe.firstChild as ChildNode | null;
+  let av = sbe.firstElementChild as Element | null;
   let v = null as HTMLElement | null;
   let vf = null as HTMLElement | null;
   while (av && !v) {
@@ -777,7 +788,7 @@ export function versekeyScroll(
       )
         v = av as HTMLElement;
     }
-    av = av.nextSibling;
+    av = av.nextElementSibling;
   }
 
   // if not found, use first verse in current chapter
@@ -788,9 +799,9 @@ export function versekeyScroll(
 
   // perform appropriate scroll action
   let vOffsetTop = v.offsetTop;
-  let vt = v as HTMLElement | null;
-  while (vt && vt.parentNode !== v.offsetParent) {
-    vt = vt.parentNode as HTMLElement | null;
+  let vt: HTMLElement | null = v;
+  while (vt && vt.parentElement !== v.offsetParent) {
+    vt = vt.parentElement;
     if (vt && vt.offsetTop) vOffsetTop -= vt.offsetTop;
   }
 
@@ -864,9 +875,9 @@ function aTextWheelScroll2(
     else {
       // get first verse which begins in window
       const sb = atext.getElementsByClassName('sb')[0];
-      let v = sb.firstChild as HTMLElement | null;
+      let v = sb.firstElementChild;
       while (v && !verseIsVisible(v)) {
-        v = v.nextSibling as HTMLElement | null;
+        v = v.nextElementSibling;
       }
       if (!v) return null;
       const p = getElementData(v);
@@ -950,7 +961,7 @@ export function highlight(
   if (verse) {
     const lv = lastverse || verse;
     // Then find the verse element(s) to highlight
-    let av = sbe.firstChild as HTMLElement | null;
+    let av = sbe.firstElementChild;
     while (av) {
       const vi = getElementData(av);
       const { type, location } = vi;
@@ -963,7 +974,7 @@ export function highlight(
         if (hi) av.classList.add('hl');
       }
 
-      av = av.nextSibling as HTMLElement | null;
+      av = av.nextElementSibling;
     }
   }
 }
@@ -972,17 +983,17 @@ export function trimNotes(sbe: HTMLElement, nbe: HTMLElement): boolean {
   let havefn = false;
 
   // get first chapter/verse
-  let vf = sbe.firstChild as HTMLElement | null;
+  let vf = sbe.firstElementChild;
   while (vf && !verseIsVisible(vf, true)) {
-    vf = vf.nextSibling as HTMLElement | null;
+    vf = vf.nextElementSibling;
   }
 
   // get last chapter/verse
-  const atext = sbe.parentNode as HTMLElement;
+  const atext = sbe.parentElement as HTMLElement;
   const multicol = atext.dataset.columns !== '1';
-  let vl = sbe.lastChild as HTMLElement | null;
+  let vl = sbe.lastElementChild;
   while (vl && !verseIsVisible(vl, !multicol)) {
-    vl = vl.previousSibling as HTMLElement | null;
+    vl = vl.previousElementSibling;
   }
 
   const fi = vf ? getElementData(vf) : null;
@@ -1033,17 +1044,18 @@ export function findVerseElement(
   chapter: number,
   verse: number
 ): HTMLElement | null {
-  let c = sbe.firstChild as HTMLElement | null;
+  let c = sbe.firstElementChild;
   while (c) {
-    if (c.classList?.contains('vs') && c.dataset.title) {
-      const [, ch, vs, lv] = c.dataset.title.split('.');
+    const hc = c as HTMLElement;
+    if (c.classList?.contains('vs') && hc.dataset.title) {
+      const [, ch, vs, lv] = hc.dataset.title.split('.');
       if (Number(ch) === chapter) {
         for (let x = Number(vs); x <= Number(lv); x += 1) {
-          if (x === verse) return c;
+          if (x === verse) return hc;
         }
       }
     }
-    c = c.nextSibling as HTMLElement | null;
+    c = c.nextElementSibling;
   }
   return null;
 }
@@ -1113,7 +1125,8 @@ export function verseChange(
 // For multi-column Bibles only.
 export function pageChange(
   atext: HTMLElement,
-  next: boolean
+  next: boolean,
+  renderPromise?: RenderPromise
 ): LocationVKType | null {
   if (!next) {
     let firstVerse: HTMLElement | undefined;
@@ -1157,11 +1170,10 @@ export function pageChange(
             verse,
             v11n,
           });
-          if (
-            vk.chapter <= getMaxChapter(v11n, vk.osisRef()) &&
-            (!vk.verse || vk.verse <= getMaxVerse(v11n, vk.osisRef()))
-          )
-            return vk.location();
+          if (vk.chapter <= getMaxChapter(v11n, vk.osisRef())) {
+            const maxv = getMaxVerse(v11n, vk.osisRef(), renderPromise);
+            if (!vk.verse || vk.verse <= maxv) return vk.location();
+          }
         }
       }
     }

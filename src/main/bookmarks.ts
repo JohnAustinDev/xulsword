@@ -1,10 +1,10 @@
 /* eslint-disable no-nested-ternary */
 import log from 'electron-log';
+import { PrefCallbackType } from '../prefs.ts';
 import C from '../constant.ts';
 import S from '../defaultPrefs.ts';
 import { clone, randomID, replaceASCIIcontrolChars } from '../common.ts';
 import { verseKey } from './minit.ts';
-import { PrefCallbackType } from './components/prefs.ts';
 
 import type {
   BookmarkFolderType,

@@ -2,6 +2,10 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
 import i18next from 'i18next';
 import LibSword from './components/libsword.ts';
+import DiskCache from './components/diskcache.ts';
+import Dirs from './components/dirs.ts';
+import Data from './components/data.ts';
+import Viewport from './components/viewport.ts';
 import {
   getBooks,
   getBook,
@@ -27,10 +31,26 @@ import {
 
 import type { GType } from '../type.ts';
 
+// Methods of GI are the same as G but without those that are Electron
+// only or not used by the server (such as Prefs).
 // This G object is for use on the nodejs server, and it shares
 // the same interface as the renderer's G object. Properties of this
 // object directly access server data and modules.
-class GAClass implements Partial<GType> {
+class GIClass implements Omit<GType,
+  'clipboard' |
+  'Prefs' |
+  'Commands' |
+  'Shell' |
+  'Window' |
+  'Module' |
+  'OPSYS' |
+  'resolveHtmlPath' |
+  'inlineFile' |
+  'inlineAudioFile' |
+  'resetMain' |
+  'publishSubscription' |
+  'canUndo' |
+  'canRedo' > {
   gtype;
 
   // TODO!: Great care must be taken to insure public usage of these
@@ -39,10 +59,22 @@ class GAClass implements Partial<GType> {
 
   LibSword;
 
+  DiskCache;
+
+  Dirs;
+
+  Data;
+
+  Viewport;
+
   constructor() {
     this.gtype = 'async' as any;
     this.i18n = i18next;
     this.LibSword = LibSword;
+    this.DiskCache = DiskCache;
+    this.Dirs = Dirs;
+    this.Data = Data;
+    this.Viewport = Viewport;
   }
 
   get Books() {
@@ -124,7 +156,7 @@ class GAClass implements Partial<GType> {
   callBatch(
     ...args: Parameters<GType['callBatch']>
   ): ReturnType<GType['callBatch']> {
-    return callBatch(G as any, ...args);
+    return callBatch(GI as any, ...args);
   }
 
   getAllDictionaryKeyList(
@@ -140,6 +172,6 @@ class GAClass implements Partial<GType> {
   }
 }
 
-const G = new GAClass();
+const GI = new GIClass();
 
-export default G as Partial<GType>;
+export default GI;

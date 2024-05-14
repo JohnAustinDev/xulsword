@@ -9,6 +9,7 @@ import type {
 } from 'electron';
 import type React from 'react';
 import type C from './constant.ts';
+import type { PrefsGType } from './prefs.ts';
 import type {
   resetMain,
   getSystemFonts,
@@ -38,7 +39,6 @@ import type {
   publishSubscription,
   resolveHtmlPath,
 } from './main/components/window.ts';
-import type Prefs from './main/components/prefs.ts';
 import type DiskCache from './main/components/diskcache.ts';
 import type Commands from './main/components/commands.ts';
 import type Data from './main/components/data.ts';
@@ -811,7 +811,7 @@ export type GType = {
   publishSubscription: typeof publishSubscription;
   canUndo: typeof canUndo;
   canRedo: typeof canRedo;
-  // callBatch is not cacheable! Always use callBatchThenCache or callBatchThenCacheSync.
+  // IMPORTANT: callBatch is not cacheable! Always use callBatchThenCache or callBatchThenCacheSync.
   callBatch: GCachePreloadType;
   getAllDictionaryKeyList: typeof getAllDictionaryKeyList;
   genBookTreeNodes: typeof genBookTreeNodes;
@@ -823,7 +823,7 @@ export type GType = {
     language: string;
   };
   clipboard: Pick<typeof clipboard, 'write'>;
-  Prefs: typeof Prefs;
+  Prefs: PrefsGType;
   DiskCache: typeof DiskCache;
   LibSword: typeof LibSword;
   Dirs: DirsRendererType;
@@ -1116,18 +1116,18 @@ export const GBuilder: GType & {
     isReady: func as any,
     getMaxChapter: CACHEfunc as any,
     getMaxVerse: CACHEfunc as any,
-    getChapterText: func as any,
-    getChapterTextMulti: func as any,
-    getFootnotes: func as any,
-    getCrossRefs: func as any,
-    getNotes: func as any,
-    getVerseText: func as any,
+    getChapterText: CACHEfunc as any,
+    getChapterTextMulti: CACHEfunc as any,
+    getFootnotes: CACHEfunc as any,
+    getCrossRefs: CACHEfunc as any,
+    getNotes: CACHEfunc as any,
+    getVerseText: CACHEfunc as any,
     getVerseSystem: CACHEfunc as any,
     convertLocation: CACHEfunc as any,
-    getIntroductions: func as any,
-    getDictionaryEntry: func as any,
+    getIntroductions: CACHEfunc as any,
+    getDictionaryEntry: CACHEfunc as any,
     getAllDictionaryKeys: CACHEfunc as any,
-    getGenBookChapterText: func as any,
+    getGenBookChapterText: CACHEfunc as any,
     getGenBookTableOfContents: CACHEfunc as any,
     luceneEnabled: func as any,
     startBackgroundSearchIndexer: func as any,

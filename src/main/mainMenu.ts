@@ -21,10 +21,10 @@ import G from './mg.ts';
 import Window, { getBrowserWindows } from './components/window.ts';
 import Commands from './components/commands.ts';
 import { verseKey } from './minit.ts';
+import Viewport from './components/viewport.ts';
 
 import type { BookmarkFolderType, SearchType, TabTypes } from '../type.ts';
-import type { PrefCallbackType } from './components/prefs.ts';
-import Viewport from './components/viewport.ts';
+import type { PrefCallbackType } from '../prefs.ts';
 
 type Modifiers =
   | 'CommandOrControl' // 'accel' in XUL
@@ -230,7 +230,7 @@ export const pushPrefsToMenu: PrefCallbackType = (winid, store, key, val) => {
     }
     if (store === 'bookmarks') {
       let xs: BrowserWindow | undefined = getBrowserWindows({
-        type: 'xulsword',
+        type: 'xulswordWin',
       })[0];
       if (xs) {
         const menuBuilder = new MainMenuBuilder(xs);
@@ -510,7 +510,7 @@ export default class MainMenuBuilder {
           role: 'quit',
           label: ts('menu.quit'),
           click: d(() => {
-            Window.close({ type: 'xulsword' });
+            Window.close({ type: 'xulswordWin' });
           }),
         },
       ],

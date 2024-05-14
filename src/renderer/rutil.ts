@@ -16,15 +16,19 @@ import {
   audioConfNumbers,
   gbPaths,
   localizeString,
+  dString,
 } from '../common.ts';
 import C from '../constant.ts';
 import S from '../defaultPrefs.ts';
-import G, { GA } from './rg.ts';
+import G from './rg.ts';
 import { getElementData, verseKey } from './htmlData.ts';
+import { trySyncOrPromise } from './renderPromise.ts';
 import log from './log.ts';
 
+import type { TreeNodeInfo } from '@blueprintjs/core';
 import type {
   AudioPath,
+  GType,
   GenBookAudio,
   GenBookAudioConf,
   GenBookAudioFile,
@@ -42,8 +46,8 @@ import type {
   VerseKeyAudioFile,
   WindowDescriptorPrefType,
 } from '../type.ts';
-import type { TreeNodeInfo } from '@blueprintjs/core';
-import type { PreloadData } from './renderPromise.ts';
+import type { getLocaleDigits } from '../main/minit.ts';
+import type RenderPromise from './renderPromise.ts';
 
 export function component(
   comp: any
@@ -284,6 +288,49 @@ export function readGenBookAudioConf(
   return r;
 }
 
+export function getLocalizedChapterTerm(
+  GorI: GType | GType['i18n'],
+  localeDigits: ReturnType<typeof getLocaleDigits>,
+  book: string,
+  chapter: number,
+  locale: string,
+  renderPromise?: RenderPromise,
+) {
+  let i18n, g;
+  if ('i18n' in GorI) {
+    i18n = GorI.i18n;
+    g = GorI;
+  } else {
+    i18n = GorI;
+    g = null;
+  }
+  const k1 = `${book}_Chaptext`;
+  const k2 = 'Chaptext';
+  const toptions = {
+    v1: dString(localeDigits, chapter, locale),
+    lng: locale,
+    ns: 'books',
+  };
+
+  if (g && renderPromise) {
+    const [exists, tk1, tk2] = trySyncOrPromise(
+      g,
+      renderPromise,
+      [
+        ['i18n', 'exists', [k1, toptions]],
+        ['i18n', 't', [k1, toptions]],
+        ['i18n', 't', [k2, toptions]]
+      ],
+      [false, k1, k2]
+    ) as [boolean, string, string];
+    const r1 = exists && tk1;
+    return r1 && !/^\s*$/.test(r1) ? r1 : tk2;
+  }
+
+  const r1 = i18n.exists(k1, toptions) && i18n.t(k1, toptions);
+  return r1 && !/^\s*$/.test(r1) ? r1 : i18n.t(k2, toptions);
+}
+
 // Does location surely exist in the module? It's assumed if a book is included,
 // then so are all of its chapters and verses.
 export function isValidVKM(location: LocationVKType, module: string): boolean {
@@ -333,17 +380,16 @@ export function getMaxChapter(v11n: V11nType, vkeytext: string) {
 export function getMaxVerse(
   v11n: V11nType,
   vkeytext: string,
-  preloadData?: PreloadData
+  renderPromise?: RenderPromise
 ): number {
   const { chapter } = verseKey(vkeytext, v11n);
   const maxch = getMaxChapter(v11n, vkeytext);
   if (chapter <= maxch && chapter > 0) {
-    if (preloadData) {
-      const [r] = preloadData.use({
-        call: ['LibSword', 'getMaxVerse', [v11n, vkeytext]],
-        def: 0 },
-        { check: { v11n, vkeytext } }
-      );
+    if (renderPromise) {
+      const [r] = trySyncOrPromise(G, renderPromise,
+        [['LibSword', 'getMaxVerse', [v11n, vkeytext]]],
+        [0]
+      ) as number[];
       return r;
     }
     return G.LibSword.getMaxVerse(v11n, vkeytext);

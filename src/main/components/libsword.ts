@@ -14,6 +14,7 @@ import C from '../../constant.ts';
 import LocalFile from './localFile.ts';
 import Dirs from './dirs.ts';
 import Prefs from './prefs.ts';
+import DiskCache from './diskcache.ts';
 
 import type {
   GenBookTOC,
@@ -26,7 +27,6 @@ import type {
   ModulesCache,
 } from '../../type.ts';
 import type { ManagerStatePref } from '../../renderer/moduleManager/manager.tsx';
-import DiskCache from './diskcache.ts';
 
 const { libxulsword } = require('libxulsword');
 
@@ -193,9 +193,9 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   getChapterText(
     modname: string,
     vkeytext: string,
-    options?: { [key in SwordFilterType]?: SwordFilterValueType }
+    options: { [key in SwordFilterType]: SwordFilterValueType }
   ): string {
-    if (options) this.setGlobalOptions(options);
+    this.setGlobalOptions(options);
     if (this.isReady(true)) {
       const chapterText = this.libxulsword.GetChapterText(modname, vkeytext);
       return chapterText;
@@ -206,7 +206,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // getChapterTextMulti
   // Will return chapter text in interlinear style.
   // Footnote markers are NOT included unless keepnotes is true.
-  // Vkeymodlist is formatted as follows: 'UZV,TR,RSTE'. The first module must be a
+  // modstrlist is formatted as follows: 'UZV,TR,RSTE'. The first module must be a
   //   versekey module or an error is returned. If any successive module is not a
   //   versekey module, it is simply ignored. Verse numbers retured are those of
   //   the first module listed, subsequent modules return the same reference as
@@ -215,11 +215,11 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   getChapterTextMulti(
     modstrlist: string,
     vkeytext: string,
-    keepnotes?: boolean,
-    options?: { [key in SwordFilterType]?: SwordFilterValueType }
+    keepnotes: boolean,
+    options: { [key in SwordFilterType]: SwordFilterValueType }
   ): string {
     if (this.isReady(true)) {
-      if (options) this.setGlobalOptions(options);
+      this.setGlobalOptions(options);
       const chapterTextMulti = this.libxulsword.GetChapterTextMulti(
         modstrlist,
         vkeytext,
@@ -230,13 +230,19 @@ DEFINITION OF A 'XULSWORD REFERENCE':
     return '';
   },
 
-  // IMPORTANT: THE FOLLOWING 3 ROUTINES MUST BE CALLED AFTER getChapterText
-  // or getChapterTextMulti() ARE CALLED!
+  // IMPORTANT: THE FOLLOWING 3 ROUTINES MUST BE CALLED AFTER ONE OF THESE:
+  // getChapterText() | getChapterTextMulti() | getIntroductions() | getGenBookChapterText()
+
+  // IMPORTANT: Although passed arguments are not used by the following 3 routines, they
+  // are still required and must be set correctly, in order for the G cache to return the
+  // correct notes!
 
   // getFootnotes
   // Will return the footnotes (or empty string if there aren't any).
-  // getChapterText() or getChapterTextMulti() must be called before notes can be read.
-  getFootnotes(): string {
+  getFootnotes(
+    _type: 'getChapterText' | 'getChapterTextMulti' | 'getIntroductions' | 'getGenBookChapterText',
+    _prevArguments: any[]
+  ): string {
     if (this.isReady(true)) {
       const footnotes = this.libxulsword.GetFootnotes();
       return footnotes;
@@ -246,8 +252,10 @@ DEFINITION OF A 'XULSWORD REFERENCE':
 
   // getCrossRefs
   // Will return the cross references (or empty string if there aren't any).
-  // getChapterText() or getChapterTextMulti() must be called before notes can be read.
-  getCrossRefs(): string {
+  getCrossRefs(
+    _type: 'getChapterText' | 'getChapterTextMulti' | 'getIntroductions' | 'getGenBookChapterText',
+    _prevArguments: any[]
+  ): string {
     if (this.isReady(true)) {
       const crossRefs = this.libxulsword.GetCrossRefs();
       return crossRefs;
@@ -257,9 +265,11 @@ DEFINITION OF A 'XULSWORD REFERENCE':
 
   // getNotes
   // Will return both footnotes and cross references interleaved.
-  // getChapterText() or getChapterTextMulti() must be called before notes can be read.
   // order is: v1-footnotes, v1-crossrefs, v2-footnotes, v2-crossrefs, etc
-  getNotes(): string {
+  getNotes(
+    _type: 'getChapterText' | 'getChapterTextMulti' | 'getIntroductions' | 'getGenBookChapterText',
+    _prevArguments: any[]
+  ): string {
     if (this.isReady(true)) {
       const notes = this.libxulsword.GetNotes();
       return notes;
@@ -278,9 +288,11 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   getVerseText(
     vkeymod: string,
     vkeytext: string,
-    keepTextNotes: boolean
+    keepTextNotes: boolean,
+    options: { [key in SwordFilterType]: SwordFilterValueType }
   ): string {
     if (this.isReady(true)) {
+      this.setGlobalOptions(options);
       const verseText = this.libxulsword.GetVerseText(
         vkeymod,
         vkeytext,
@@ -355,12 +367,15 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // Will return the introduction for a given short book name in module Vkeymod,
   //   if one exists in the version. If there is not introduction, '' is returned.
   // If Vkeymod is not a versekey type module, an error is returned.
-  getIntroductions(vkeymod: string, bname: string): string {
+  getIntroductions(
+    vkeymod: string,
+    bname: string,
+    options: { [key in SwordFilterType]: SwordFilterValueType }
+  ): string {
     if (this.isReady(true)) {
-      const headings = this.libxulsword.GetGlobalOption('Headings');
-      this.libxulsword.SetGlobalOption('Headings', 'On');
+      options.Headings = 'On';
+      this.setGlobalOptions(options);
       const introductions = this.libxulsword.GetIntroductions(vkeymod, bname);
-      if (headings === 'Off') this.libxulsword.SetGlobalOption('Headings', headings);
       return introductions;
     }
     return '';
@@ -373,10 +388,10 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   getDictionaryEntry(
     lexdictmod: string,
     key: string,
-    options?: { [key in SwordFilterType]?: SwordFilterValueType }
+    options: { [key in SwordFilterType]: SwordFilterValueType }
   ): string {
     if (this.isReady(true)) {
-      if (options) this.setGlobalOptions(options);
+      this.setGlobalOptions(options);
       let dictionaryEntry;
       try {
         dictionaryEntry = this.libxulsword.GetDictionaryEntry(lexdictmod, key);
@@ -414,10 +429,10 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   getGenBookChapterText(
     gbmod: string,
     treekey: string,
-    options?: { [key in SwordFilterType]?: SwordFilterValueType }
+    options: { [key in SwordFilterType]: SwordFilterValueType }
   ): string {
     if (this.isReady(true)) {
-      if (options) this.setGlobalOptions(options);
+      this.setGlobalOptions(options);
       const genBookChapterText = this.libxulsword.GetGenBookChapterText(
         gbmod,
         treekey

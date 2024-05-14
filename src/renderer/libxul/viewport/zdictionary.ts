@@ -1,16 +1,12 @@
 /* eslint-disable no-continue */
-import { JSON_attrib_stringify } from '../../../common.ts';
+import { JSON_attrib_stringify, getSwordOptions } from '../../../common.ts';
 import Cache from '../../../cache.ts';
 import S from '../../../defaultPrefs.ts';
 import C from '../../../constant.ts';
 import G from '../../rg.ts';
 import log from '../../log.ts';
+import RenderPromise, { trySyncOrPromise } from '../../renderPromise.ts';
 
-import type {
-  SwordFilterType,
-  SwordFilterValueType,
-} from '../../../type.ts';
-import type { PreloadData } from '../../renderPromise.ts';
 import type { HTMLData } from '../../htmlData.ts';
 import type { FailReason } from '../popup/popupH.ts';
 
@@ -141,9 +137,10 @@ function replaceLinks(entry: string, mod: string) {
         if (l[1] === 'ἀγαλλίασις') l[1] = ' ἈΓΑΛΛΊΑΣΙΣ'; // key needs space before!
       }
 
+      const options = getSwordOptions(G, C.DICTIONARY);
       if (mod && mod in G.Tab) {
-        let r = G.LibSword.getDictionaryEntry(mod, l[1].toUpperCase());
-        if (r === C.NOTFOUND) r = G.LibSword.getDictionaryEntry(mod, l[1]);
+        let r = G.LibSword.getDictionaryEntry(mod, l[1].toUpperCase(), options);
+        if (r === C.NOTFOUND) r = G.LibSword.getDictionaryEntry(mod, l[1], options);
         if (r) html = html.replace(l[0], r);
       }
     }
@@ -167,33 +164,15 @@ export function dictKeyToday(modkey: string, module: string): string {
   return key;
 }
 
-function getAlwaysOnOptions() {
-  const options = {} as { [key in SwordFilterType]: SwordFilterValueType };
-  Object.entries(C.SwordFilters).forEach((entry) => {
-    const sword = entry[0] as SwordFilterType;
-    if (C.AlwaysOn[C.DICTIONARY].includes(sword)) {
-      [, options[sword]] = C.SwordFilterValues;
-    }
-  });
-  return options;
-}
-
 export function getDictEntryHTML(
   key: string,
   modules: string,
   reason?: FailReason,
-  preloadData?: PreloadData,
+  renderPromise?: RenderPromise,
 ): string {
   const mods = modules.split(';');
 
-  if (preloadData) {
-    preloadData.use({
-      call: ['LibSword', 'setGlobalOptions', [getAlwaysOnOptions()]],
-      def: null
-    });
-  } else {
-    G.LibSword.setGlobalOptions(getAlwaysOnOptions());
-  }
+  const options = getSwordOptions(G, C.DICTIONARY);
 
   let html = '';
   let sep = '';
@@ -204,16 +183,18 @@ export function getDictEntryHTML(
     if (m && m in G.Tab && G.Tab[m].type === C.DICTIONARY) {
       const k = DictKeyTransform[m] ? DictKeyTransform[m](key) : key;
       let h1, h2, dictTitle;
-      if (preloadData) {
-        [h1, h2, dictTitle] = preloadData.use(
-          { call: ['LibSword', 'getDictionaryEntry', [m, k]], def: '' },
-          { call: ['LibSword', 'getDictionaryEntry', [m, k.toUpperCase()]], def: '' },
-          { call: ['LibSword', 'getModuleInformation', [m, 'Description']], def: '' },
-          { check: { m, k } }
-        );
+      if (renderPromise) {
+        [h1, h2, dictTitle] = trySyncOrPromise(G, renderPromise,
+          [
+            ['LibSword', 'getDictionaryEntry', [m, k, options]],
+            ['LibSword', 'getDictionaryEntry', [m, k.toUpperCase(), options]],
+            ['LibSword', 'getModuleInformation', [m, 'Description']]
+          ],
+          ['', '', '']
+        ) as [string, string, string];
       } else {
-        h1 = G.LibSword.getDictionaryEntry(m, k);
-        h2 = G.LibSword.getDictionaryEntry(m, k.toUpperCase());
+        h1 = G.LibSword.getDictionaryEntry(m, k, options);
+        h2 = G.LibSword.getDictionaryEntry(m, k.toUpperCase(), options);
         dictTitle = G.LibSword.getModuleInformation(m, 'Description');
       }
       let h = h1;
@@ -321,11 +302,12 @@ export function getStrongsModAndKey(
       ];
 
       // try out key possibilities until we find a correct key for this mod
+      const options = getSwordOptions(G, C.DICTIONARY);
       if (mod && mod in G.Tab) {
         let k;
         let r;
         for (k = 0; k < keys.length; k += 1) {
-          r = G.LibSword.getDictionaryEntry(mod, keys[k]);
+          r = G.LibSword.getDictionaryEntry(mod, keys[k], options);
           if (r !== C.NOTFOUND) break;
         }
         if (r === C.NOTFOUND) mod = null;
@@ -405,9 +387,10 @@ export function getLemmaHTML(
       buttonHTML += `<button type="button" class="snbut" data-data="${d}">${code}</button>`;
     }
 
+    const options = getSwordOptions(G, C.DICTIONARY);
     if (info.key && info.mod && info.mod in G.Tab) {
       if (Number(info.key) === 0) continue; // skip G tags with no number
-      const entry = G.LibSword.getDictionaryEntry(info.mod, info.key);
+      const entry = G.LibSword.getDictionaryEntry(info.mod, info.key, options);
       if (entry) {
         html +=
           sep +

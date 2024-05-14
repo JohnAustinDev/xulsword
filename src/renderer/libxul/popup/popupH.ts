@@ -3,6 +3,7 @@ import {
   JSON_attrib_stringify,
   clone,
   findBookmarkItem,
+  getSwordOptions,
   ofClass,
 } from '../../../common.ts';
 import S from '../../../defaultPrefs.ts';
@@ -77,8 +78,9 @@ export function getPopupHTML(
         if (context in G.Tab) {
           const { book, chapter } = location;
           // getChapterText must be called before getNotes
-          G.LibSword.getChapterText(context, `${book}.${chapter}`);
-          const notes = G.LibSword.getNotes();
+          const options = getSwordOptions(G, G.Tab[context].type);
+          G.LibSword.getChapterText(context, `${book}.${chapter}`, options);
+          const notes = G.LibSword.getNotes('getChapterText', [context, `${book}.${chapter}`, options]);
           // a note element's title does not include type, but its nlist does
           html = getNoteHTML(notes, null, 0, !testonly, `${type}.${title}`);
         } else failReason.requires.push(context);

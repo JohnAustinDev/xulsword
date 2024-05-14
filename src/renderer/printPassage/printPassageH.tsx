@@ -4,20 +4,16 @@ import {
   clone,
   decodeOSISRef,
   dString,
-  getLocalizedChapterTerm,
+  getSwordOptions,
 } from '../../common.ts';
 import C from '../../constant.ts';
 import G from '../rg.ts';
 import addBookmarks from '../bookmarks.ts';
-import { isValidVKM } from '../rutil.ts';
+import { isValidVKM, getLocalizedChapterTerm } from '../rutil.ts';
 import { getDictEntryHTML } from '../libxul/viewport/zdictionary.ts';
 import { getNoteHTML, getIntroductions } from '../libxul/viewport/zversekey.ts';
 
-import type {
-  AtextPropsType,
-  SwordFilterType,
-  SwordFilterValueType,
-} from '../../type.ts';
+import type { AtextPropsType } from '../../type.ts';
 import type { LibSwordResponse } from '../libxul/viewport/ztext.ts';
 import type { SelectVKType } from '../libxul/selectVK.tsx';
 import type PrintPassageWin from './printPassage.tsx';
@@ -91,13 +87,7 @@ export function bibleChapterText(
     const { book, chapter } = location;
 
     // Set SWORD filter options
-    const options = {} as { [key in SwordFilterType]: SwordFilterValueType };
-    Object.entries(C.SwordFilters).forEach((entry) => {
-      const sword = entry[0] as SwordFilterType;
-      let showi = show[entry[1]] ? 1 : 0;
-      if (C.AlwaysOn[C.BIBLE].includes(sword)) showi = 1;
-      options[sword] = C.SwordFilterValues[showi];
-    });
+    const options = getSwordOptions(show, C.BIBLE);
     const [off] = C.SwordFilterValues;
     options["Strong's Numbers"] = off;
     options['Morphological Tags'] = off;
@@ -116,7 +106,9 @@ export function bibleChapterText(
         `${book}.${chapter}`,
         options
       );
-      response.notes = G.LibSword.getNotes();
+      response.notes = G.LibSword.getNotes('getChapterText',
+        [module, `${book}.${chapter}`, options]
+      );
       if (show.usernotes) addBookmarks(response, { ...props, modkey: '' });
       response.noteHTML = getNoteHTML(response.notes, show, 0, crossrefsText);
     }

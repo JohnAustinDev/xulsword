@@ -465,8 +465,8 @@ class Atext extends React.Component implements RenderPromiseComponent {
         }
         // PREV / NEXT LINKS
         setTimeout(() => {
-          const prev = textChange(atext, false);
-          const next = textChange(atext, true);
+          const prev = textChange(atext, false, undefined, renderPromise);
+          const next = textChange(atext, true, undefined, renderPromise);
           const prevdis = atext.classList.contains('prev-disabled');
           const nextdis = atext.classList.contains('next-disabled');
           if ((!prev && !prevdis) || (prev && prevdis)) {

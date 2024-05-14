@@ -18,6 +18,7 @@ import {
   JSON_stringify,
   pad,
   hierarchy,
+  getSwordOptions,
 } from '../common.ts';
 import Cache from '../cache.ts';
 import Subscription from '../subscription.ts';
@@ -62,9 +63,12 @@ export function callBatch(G: GType, calls: (GCallType | null)[]): (any | null)[]
     if (c !== null) {
       const [name, m, args] = c;
       if (!(name in g)) throw new Error(`'${name}' is not a member of G`);
-      if (m === null && typeof args === 'undefined') {
+      if (m && typeof m !== 'string') {
+        throw new Error(`G.${name} method name is not a string: '${typeof m}`);
+      }
+      if (!m && typeof args === 'undefined') {
         resp.push(g[name]);
-      } else if (m === null && typeof args !== 'undefined') {
+      } else if (!m && typeof args !== 'undefined') {
         if (typeof g[name] !== 'function') {
           throw new Error(`'${name}' is not a method of G`);
         }
@@ -73,7 +77,7 @@ export function callBatch(G: GType, calls: (GCallType | null)[]): (any | null)[]
         if (!(m in g[name])) {
           throw new Error(`'${m.toString()}' is not a member of G.${name}`);
         }
-        resp.push(g[name][m]());
+        resp.push(g[name][m]);
       } else if (m && Array.isArray(args)) {
         if (!(m in g[name]) || typeof g[name][m] !== 'function') {
           throw new Error(`'${m.toString()}' is not a method of G.${name}`);
@@ -257,6 +261,7 @@ export function getBooksInVKModule(module: string): OSISBookType[] {
     const isVerseKey = /(text|com)/i.test(
       LibSword.getModuleInformation(module, 'ModDrv')
     );
+    const options = getSwordOptions(false, C.BIBLE);
     const osis: string[] = [];
     if (isVerseKey) {
       const v11nbooks = bkChsInV11n[v11n].map((x) => x[0]);
@@ -269,13 +274,13 @@ export function getBooksInVKModule(module: string): OSISBookType[] {
       // results are returned, test two verses to make sure they are
       // different and are not the empty string, to determine whether
       // the book is missing from the module.
-      const fake = LibSword.getVerseText(module, 'FAKE 1:1', false);
+      const fake = LibSword.getVerseText(module, 'FAKE 1:1', false, options);
       v11nbooks.forEach((code: string) => {
         const bk = book[code];
-        const verse1 = LibSword.getVerseText(module, `${bk.code} 1:1`, false);
+        const verse1 = LibSword.getVerseText(module, `${bk.code} 1:1`, false, options);
         if (!verse1 || verse1 === fake) {
           // Lopukhin Colossians starts at verse 3, so used verse 3 instead of 2 here:
-          const verse2 = LibSword.getVerseText(module, `${bk.code} 1:3`, false);
+          const verse2 = LibSword.getVerseText(module, `${bk.code} 1:3`, false, options);
           if (!verse2 || verse1 === verse2) return;
         }
         osis.push(bk.code);

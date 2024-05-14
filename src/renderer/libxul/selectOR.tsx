@@ -20,7 +20,7 @@ import {
 } from '../../common.ts';
 import C from '../../constant.ts';
 import G, { GA } from '../rg.ts';
-import RenderPromise, { PreloadData } from '../renderPromise.ts';
+import RenderPromise, { trySyncOrPromise } from '../renderPromise.ts';
 import { addClass, xulDefaultProps, XulProps, xulPropTypes } from './xul.tsx';
 import { Vbox } from './boxes.tsx';
 import Menulist from './menulist.tsx';
@@ -29,6 +29,7 @@ import './selectOR.css';
 
 import type { TreeNodeInfo } from '@blueprintjs/core';
 import type { RenderPromiseComponent, RenderPromiseState } from '../renderPromise.ts';
+import { TreeNodeInfoPref } from 'type.ts';
 
 // Allow users to select one or more chapters from any non-versekey SWORD
 // module parent node.
@@ -219,28 +220,29 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
         : otherModsProp || G.Tabs.map((t) => t.module)
     ).filter((m) => m && m in G.Tab && !G.Tab[m].isVerseKey);
 
-    const getNodeLists = (mods: string[]): NodeListOR[] => {
-      return mods.map((m) => {
-        let nodes: TreeNodeInfo[] = [];
-        if (G.Tab[m].tabType === 'Genbks') {
-          const [n] = preloadData.use({ call: ['genBookTreeNodes', null, [m]], def: []}, {check: { m }});
-          if (!renderPromise.waiting()) nodes = n;
-        } else if (G.Tab[m].tabType === 'Dicts') {
-          const [keylist] = preloadData.use({ call: ['getAllDictionaryKeyList', null, [m]], def: []}, {check: { m }});
-          if (!renderPromise.waiting()) nodes = dictTreeNodes(keylist, m);
-        }
-        return {
-          otherMod: m,
-          label: G.Tab[m].label,
-          labelClass: G.Tab[m].labelClass,
-          nodes,
-        };
+
+    const propNodeLists: NodeListOR[] = propNodeListsMods.map((m) => {
+      let nodes: TreeNodeInfo[] = [];
+      if (G.Tab[m].tabType === 'Genbks') {
+        const [n] = trySyncOrPromise(G, renderPromise,
+          [['genBookTreeNodes', null, [m]]],
+          [[]]
+        ) as TreeNodeInfoPref[][];
+        if (!renderPromise.waiting()) nodes = n;
+      } else if (G.Tab[m].tabType === 'Dicts') {
+        const [keylist] = trySyncOrPromise(G, renderPromise,
+          [['getAllDictionaryKeyList', null, [m]]],
+          [[]]
+        ) as string[][];
+        if (!renderPromise.waiting()) nodes = dictTreeNodes(keylist, m);
       }
-    )};
-    const preloadData = new PreloadData(renderPromise);
-    getNodeLists(propNodeListsMods);
-    preloadData.dispatch();
-    const propNodeLists: NodeListOR[] = getNodeLists(propNodeListsMods);
+      return {
+        otherMod: m,
+        label: G.Tab[m].label,
+        labelClass: G.Tab[m].labelClass,
+        nodes,
+      };
+    });
 
     list.push(...propNodeLists);
 

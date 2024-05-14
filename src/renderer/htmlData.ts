@@ -194,7 +194,8 @@ export function libSwordData2XulswordData(dataIn: LibSwordHTMLData): HTMLData {
 // - reflist: is an array of UTF8 strings
 // - ch: is UTF8 (may be a number or a key)
 // - all other properties: are ASCII
-export function getElementData(elem: string | HTMLElement): HTMLData {
+export function getElementData(elemx: string | Element): HTMLData {
+  const elem = elemx as string | HTMLElement;
   // First look for the data attribute and return it if it exists:
   if (typeof elem === 'string') {
     const m = elem.match(/^[^<]*<[^>]+data-data="([^"]*)"/);

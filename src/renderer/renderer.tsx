@@ -216,7 +216,7 @@ function WindowRoot(props: WindowRootProps) {
   // Installer drag-and-drop setup:
   useEffect(() => {
     const root = document.getElementById('root');
-    if (root && ['xulsword', 'viewportWin'].includes(descriptor.type ?? '')) {
+    if (root && ['xulswordWin', 'viewportWin'].includes(descriptor.type ?? '')) {
       root.ondragover = (e) => {
         e.preventDefault();
         s.modal[1]('outlined');

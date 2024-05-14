@@ -4,11 +4,11 @@
 import C from './constant.ts';
 import S from './defaultPrefs.ts';
 import Cache from './cache.ts';
-import { GBuilder } from './type.ts';
-import { getLocaleDigits } from './main/minit.ts';
 
 import type { Region } from '@blueprintjs/table';
+import type { getLocaleDigits } from './main/minit.ts';
 import type {
+  GBuilder,
   Download,
   FTPDownload,
   ModFTPDownload,
@@ -38,6 +38,10 @@ import type {
   LocationVKCommType,
   LocationTypes,
   GCallType,
+  SwordFilterType,
+  SwordFilterValueType,
+  ModTypes,
+  ShowType,
 } from './type.ts';
 import type { TreeNodeInfo } from '@blueprintjs/core';
 import type { SelectVKType } from './renderer/libxul/selectVK.tsx';
@@ -45,12 +49,11 @@ import type { SelectORMType } from './renderer/libxul/selectOR.tsx';
 import type { getSampleText } from './renderer/bookmarks.ts';
 import type { verseKey } from './renderer/htmlData.ts';
 import type { XulswordState } from './renderer/xulswordWin/xulsword.tsx';
-import type { PreloadData } from './renderer/renderPromise.ts';
 
-export function isCallCacheable(call: GCallType): boolean {
+export function isCallCacheable(gBuilder: typeof GBuilder, call: GCallType): boolean {
   let cacheable = true;
   if (Array.isArray(call[2])) {
-    cacheable = call[1] ? GBuilder[call[0]][call[1]]() : GBuilder[call[0]]();
+    cacheable = call[1] ? gBuilder[call[0]][call[1]]() : gBuilder[call[0]]();
   }
   return cacheable;
 }
@@ -668,38 +671,6 @@ export function dString(
   return s;
 }
 
-export function getLocalizedChapterTerm(
-  GorI: GType | GType['i18n'],
-  localeDigits: ReturnType<typeof getLocaleDigits>,
-  book: string,
-  chapter: number,
-  locale: string,
-  preloadData?: PreloadData,
-) {
-  const i18n = 'i18n' in GorI ? GorI.i18n : GorI;
-  const k1 = `${book}_Chaptext`;
-  const k2 = 'Chaptext';
-  const toptions = {
-    v1: dString(localeDigits, chapter, locale),
-    lng: locale,
-    ns: 'books',
-  };
-
-  if (preloadData) {
-    const [exists, tk1, tk2] = preloadData.use(
-      { call: ['i18n', 'exists', [k1, toptions]], def: false },
-      { call: ['i18n', 't', [k1, toptions]], def: k1 },
-      { call: ['i18n', 't', [k2, toptions]], def: k2 },
-      { check: { k1, k2, toptions }}
-    );
-    const r1 = exists && tk1;
-    return r1 && !/^\s*$/.test(r1) ? r1 : tk2;
-  }
-
-  const r1 = i18n.exists(k1, toptions) && i18n.t(k1, toptions);
-  return r1 && !/^\s*$/.test(r1) ? r1 : i18n.t(k2, toptions);
-}
-
 // Removes white-space, trailing or leading punctuation, "x" (note symbol),
 // and leading digits (for verse numbers)
 export function cleanDoubleClickSelection(sel: string) {
@@ -780,6 +751,32 @@ export function noAutoSearchIndex(Prefs: GType['Prefs'], module: string) {
     csai.push(module);
     Prefs.setComplexValue('global.noAutoSearchIndex', csai);
   }
+}
+
+// Return requested valid SWORD render options:
+// If show is G, then values of Prefs 'xulsword.show' will be used.
+export function getSwordOptions(
+  show: typeof S.prefs.xulsword.show | boolean | GType,
+  modType: ModTypes
+): { [key in SwordFilterType]: SwordFilterValueType } {
+  // Set SWORD filter options
+  const options = {} as { [key in SwordFilterType]: SwordFilterValueType };
+  let show2: typeof S.prefs.xulsword.show;
+  if (typeof show === 'object') {
+    if ('headings' in show) show2 = show;
+    else show2 = show.Prefs.getComplexValue('xulsword.show') as typeof S.prefs.xulsword.show;
+  } else {
+    show2 = {} as typeof S.prefs.xulsword.show;
+    Object.values(C.SwordFilters).forEach((v) => show2[v] = show);
+  }
+  Object.entries(C.SwordFilters).forEach((entry) => {
+    const sword = entry[0] as SwordFilterType;
+    const xs = entry[1] as keyof ShowType
+    let showi = show2[xs] ? 1 : 0;
+    if (C.AlwaysOn[modType].includes(sword)) showi = 1;
+    options[sword] = C.SwordFilterValues[showi];
+  });
+  return options;
 }
 
 // Figure out the relative width of each panel due to adjacent panels

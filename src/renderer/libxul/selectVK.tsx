@@ -11,7 +11,7 @@ import { clone, diff, getModuleOfObject, ofClass } from '../../common.ts';
 import C from '../../constant.ts';
 import G from '../rg.ts';
 import { getMaxChapter, getMaxVerse } from '../rutil.ts';
-import RenderPromise, { PreloadData } from '../renderPromise.ts';
+import RenderPromise from '../renderPromise.ts';
 import { addClass, xulDefaultProps, XulProps, xulPropTypes } from './xul.tsx';
 import { Hbox } from './boxes.tsx';
 import ModuleMenu from './modulemenu.tsx';
@@ -360,37 +360,28 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
       v11n && book ? getMaxChapter(v11n, book) : 0
     );
 
-    const getNewVerses = () => {
-      const r = {} as { newverses: React.JSX.Element[]; newlastverses: React.JSX.Element[]};
-      r.newverses = this.getNumberOptions(
-        'verse',
-        verse,
-        verses,
-        1,
-        v11n ? getMaxVerse(v11n, `${book}.${chapter}`, preloadData) : 0
-      );
 
-      r.newlastverses = this.getNumberOptions(
-        'lastverse',
-        lastverse,
-        lastverses,
-        (newlastchapters.length === 0 && verse) || 1,
-        v11n
-        ? getMaxVerse(
-            v11n,
-            `${book}.${newlastchapters.length === 0 ? chapter : lastchapter}`,
-            preloadData
-          )
-        : 0
-      );
-      return r;
-    };
+    const newverses = this.getNumberOptions(
+      'verse',
+      verse,
+      verses,
+      1,
+      v11n ? getMaxVerse(v11n, `${book}.${chapter}`, renderPromise) : 0
+    );
 
-    const preloadData = new PreloadData(renderPromise);
-    getNewVerses();
-    preloadData.dispatch();
-    const { newverses, newlastverses } = getNewVerses();
-
+    const newlastverses = this.getNumberOptions(
+      'lastverse',
+      lastverse,
+      lastverses,
+      (newlastchapters.length === 0 && verse) || 1,
+      v11n
+      ? getMaxVerse(
+          v11n,
+          `${book}.${newlastchapters.length === 0 ? chapter : lastchapter}`,
+          renderPromise
+        )
+      : 0
+    );
 
     // Module options are either those of the vkMods prop or all installed VerseKey
     // modules. If the books prop is controlling book options, modules not containing

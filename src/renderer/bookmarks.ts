@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable no-nested-ternary */
 import Cache from '../cache.ts';
-import { clone, localizeBookmark } from '../common.ts';
+import { clone, getSwordOptions, localizeBookmark } from '../common.ts';
 import C from '../constant.ts';
 import S from '../defaultPrefs.ts';
 import G from './rg.ts';
@@ -330,16 +330,18 @@ export function getSampleText(
     let module = vkMod || '';
     if ('commMod' in l) module = l.commMod;
     if (module && module in G.Tab) {
+      const options = getSwordOptions(G, G.Tab[module].type);
       sampleText = G.LibSword.getVerseText(
         module,
         loc.join('.'),
-        false
+        false,
+        options
       ).replace(/\n/g, ' ');
     }
   } else {
     const { otherMod, key, paragraph } = l;
     if (otherMod && otherMod in G.Tab) {
-      // Set SWORD filter options
+      // Turn off all SWORD filter options
       const options = {} as { [key in SwordFilterType]: SwordFilterValueType };
       Object.entries(C.SwordFilters).forEach((entry) => {
         [options[entry[0] as SwordFilterType]] = C.SwordFilterValues;

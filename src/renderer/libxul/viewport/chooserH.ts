@@ -1,6 +1,6 @@
 /* eslint-disable import/no-duplicates */
 import React from 'react';
-import { ofClass, sanitizeHTML } from '../../../common.ts';
+import { getSwordOptions, ofClass, sanitizeHTML } from '../../../common.ts';
 import C from '../../../constant.ts';
 import G from '../../rg.ts';
 import { delayHandler } from '../xul.tsx';
@@ -65,10 +65,9 @@ export default function handler(this: Chooser, es: React.SyntheticEvent): void {
             headingmenu.removeChild(headingmenu.firstChild);
           }
           // Set LibSword options and read the chapter
-          G.LibSword.setGlobalOptions({
-            Headings: 'On',
-            'Verse Numbers': 'On',
-          });
+          const options = getSwordOptions(false, C.BIBLE);
+          options.Headings = 'On';
+          options['Verse Numbers'] = 'On';
           // Regex gets array of headings and their following verse tags
           const hdplus =
             /<h\d[^>]*class="head1[^"]*"[^>]*>.*?<\/h\d>.*?<sup[^>]*>\d+<\/sup>/gim;
@@ -78,7 +77,8 @@ export default function handler(this: Chooser, es: React.SyntheticEvent): void {
           const vs = /<sup[^>]*>(\d+)<\/sup>/i; // Get verse from above
           const chtxt = G.LibSword.getChapterText(
             headingsModule,
-            `${book}.${chapter}`
+            `${book}.${chapter}`,
+            options
           );
           const headings = chtxt.match(hdplus);
           if (headings) {

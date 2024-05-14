@@ -32,9 +32,9 @@ import type {
   PrefObject,
   WindowDescriptorPrefType,
 } from '../../type.ts';
+import type { PrefCallbackType } from '../../prefs.ts';
 import type { SubscriptionType } from '../../subscription.ts';
 import type contextMenu from '../contextMenu.ts';
-import type { PrefCallbackType } from './prefs.ts';
 
 export let resolveHtmlPath: (htmlFileName: string) => string;
 
