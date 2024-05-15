@@ -20,7 +20,6 @@ import {
 } from '../rutil.ts';
 import {
   topHandle,
-  xulDefaultProps,
   XulProps,
   xulPropTypes,
 } from '../libxul/xul.tsx';
@@ -35,8 +34,6 @@ import viewportParentH, {
 import type { NewModulesType, XulswordStateArgType } from '../../type.ts';
 import type Atext from '../libxul/viewport/atext.tsx';
 import type { RenderPromiseComponent, RenderPromiseState } from '../renderPromise.ts';
-
-const defaultProps = xulDefaultProps;
 
 const propTypes = xulPropTypes;
 
@@ -67,7 +64,6 @@ export type ViewportWinState = typeof statePrefDefault &
   RenderPromiseState;
 
 export default class ViewportWin extends React.Component implements RenderPromiseComponent {
-  static defaultProps: typeof defaultProps;
 
   static propTypes: typeof propTypes;
 
@@ -264,7 +260,6 @@ export default class ViewportWin extends React.Component implements RenderPromis
     );
   }
 }
-ViewportWin.defaultProps = defaultProps;
 ViewportWin.propTypes = propTypes;
 
 renderToRoot(<ViewportWin pack="start" height="100%" />);

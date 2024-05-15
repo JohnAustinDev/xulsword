@@ -12,7 +12,7 @@ import C from '../../../constant.ts';
 import G from '../../rg.ts';
 import { audioGenBookNode } from '../../rutil.ts';
 import { Hbox, Vbox } from '../boxes.tsx';
-import { xulDefaultProps, xulPropTypes, XulProps, addClass } from '../xul.tsx';
+import { xulPropTypes, XulProps, addClass } from '../xul.tsx';
 import TreeView, { forEachNode } from '../treeview.tsx';
 import './chooser.css';
 import './genbookChooser.css';
@@ -23,10 +23,6 @@ import type {
   XulswordStateArgType,
 } from '../../../type.ts';
 import type { Tree, TreeNodeInfo } from '@blueprintjs/core';
-
-const defaultProps = {
-  ...xulDefaultProps,
-};
 
 const propTypes = {
   ...xulPropTypes,
@@ -48,8 +44,6 @@ export interface GenbookChooserState {
 }
 
 class GenbookChooser extends React.Component {
-  static defaultProps: typeof defaultProps;
-
   static propTypes: typeof propTypes;
 
   treeNodes: {
@@ -241,7 +235,6 @@ class GenbookChooser extends React.Component {
     );
   }
 }
-GenbookChooser.defaultProps = defaultProps;
 GenbookChooser.propTypes = propTypes;
 
 export default GenbookChooser;

@@ -6,11 +6,10 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Hbox } from './boxes.tsx';
 import Label from './label.tsx';
-import { xulDefaultProps, xulPropTypes, XulProps, addClass } from './xul.tsx';
+import { xulPropTypes, XulProps, addClass } from './xul.tsx';
 import './checkbox.css';
 
 // XUL button
-const defaultProps = xulDefaultProps;
 
 const propTypes = {
   ...xulPropTypes,
@@ -38,8 +37,6 @@ interface CheckboxState {
 }
 
 class Checkbox extends React.Component {
-  static defaultProps: typeof defaultProps;
-
   static propTypes: typeof propTypes;
 
   constructor(props: CheckboxProps) {
@@ -73,7 +70,6 @@ class Checkbox extends React.Component {
     );
   }
 }
-Checkbox.defaultProps = defaultProps;
 Checkbox.propTypes = propTypes;
 
 export default Checkbox;

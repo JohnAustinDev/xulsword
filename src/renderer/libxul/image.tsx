@@ -3,11 +3,9 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { xulDefaultProps, xulPropTypes, XulProps, htmlAttribs } from './xul.tsx';
+import { xulPropTypes, XulProps, htmlAttribs } from './xul.tsx';
 
 // XUL image
-const defaultProps = xulDefaultProps;
-
 const propTypes = {
   ...xulPropTypes,
   src: PropTypes.string,
@@ -19,7 +17,6 @@ interface ImageProps extends XulProps {
 function Image(props: ImageProps) {
   return <img {...htmlAttribs('image', props)} src={props.src} alt="" />;
 }
-Image.defaultProps = defaultProps;
 Image.propTypes = propTypes;
 
 export default Image;

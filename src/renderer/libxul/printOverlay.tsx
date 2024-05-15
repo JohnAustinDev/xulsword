@@ -11,12 +11,10 @@ import { Hbox, Vbox } from './boxes.tsx';
 import Button from './button.tsx';
 import Spacer from './spacer.tsx';
 import PrintSettings from './printSettings.tsx';
-import { xulDefaultProps, XulProps, xulPropTypes } from './xul.tsx';
+import { XulProps, xulPropTypes } from './xul.tsx';
 import './printOverlay.css';
 
 import type { RootPrintType } from '../renderer.tsx';
-
-const defaultProps = xulDefaultProps;
 
 const propTypes = {
   ...xulPropTypes,
@@ -103,5 +101,4 @@ export default function PrintOverlay(props: PrintOverlayProps) {
     </>
   );
 }
-PrintOverlay.defaultProps = defaultProps;
 PrintOverlay.propTypes = propTypes;

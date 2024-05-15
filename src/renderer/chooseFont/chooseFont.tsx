@@ -9,7 +9,7 @@ import G from '../rg.ts';
 import renderToRoot from '../renderer.tsx';
 import log from '../log.ts';
 import { windowArguments } from '../rutil.ts';
-import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul.tsx';
+import { XulProps, xulPropTypes } from '../libxul/xul.tsx';
 import { Hbox, Vbox } from '../libxul/boxes.tsx';
 import Groupbox from '../libxul/groupbox.tsx';
 import Label from '../libxul/label.tsx';
@@ -31,8 +31,6 @@ import './chooseFont.css';
 
 const nocolor = { r: 128, g: 128, b: 128, a: 128 };
 
-const defaultProps = xulDefaultProps;
-
 const propTypes = {
   ...xulPropTypes,
 };
@@ -49,8 +47,6 @@ export type ColorType = {
 export type ChooseFontWinState = typeof startingState;
 
 export default class ChooseFontWin extends React.Component {
-  static defaultProps: typeof defaultProps;
-
   static propTypes: typeof propTypes;
 
   value: { [p in keyof ChooseFontWinState]?: ChooseFontWinState[p] };
@@ -344,7 +340,6 @@ export default class ChooseFontWin extends React.Component {
     );
   }
 }
-ChooseFontWin.defaultProps = defaultProps;
 ChooseFontWin.propTypes = propTypes;
 
 renderToRoot(<ChooseFontWin height="100%" />, {

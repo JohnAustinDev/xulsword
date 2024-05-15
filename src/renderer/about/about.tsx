@@ -17,14 +17,12 @@ import Modinfo, {
   modinfoParentInitialState,
   modinfoParentHandler as modinfoParentHandlerH,
 } from '../libxul/modinfo.tsx';
-import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul.tsx';
+import { XulProps, xulPropTypes } from '../libxul/xul.tsx';
 import '../splash/splash.css';
 import './about.css';
 
 import type { ModinfoParent } from '../libxul/modinfo.tsx';
 import type { SwordConfType } from '../../type.ts';
-
-const defaultProps = xulDefaultProps;
 
 const propTypes = xulPropTypes;
 
@@ -40,8 +38,6 @@ export type AboutWinState = typeof initialState &
   typeof modinfoParentInitialState;
 
 export default class AboutWin extends React.Component implements ModinfoParent {
-  static defaultProps: typeof defaultProps;
-
   static propTypes: typeof propTypes;
 
   modinfoRefs: {
@@ -226,7 +222,6 @@ export default class AboutWin extends React.Component implements ModinfoParent {
     );
   }
 }
-AboutWin.defaultProps = defaultProps;
 AboutWin.propTypes = propTypes;
 
 renderToRoot(<AboutWin />, { initialState: { resetOnResize: false } });

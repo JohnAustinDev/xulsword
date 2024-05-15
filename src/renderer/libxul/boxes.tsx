@@ -2,18 +2,15 @@
 /* eslint-disable react/jsx-props-no-spreading */
 
 import React from 'react';
-import { xulDefaultProps, xulPropTypes, XulProps, htmlAttribs } from './xul.tsx';
+import { xulPropTypes, XulProps, htmlAttribs } from './xul.tsx';
 import './boxes.css';
 
 // XUL box
-const defaultProps = xulDefaultProps;
-
 const propTypes = xulPropTypes;
 
 function Box(props: XulProps) {
   return <div {...htmlAttribs('box', props)}>{props.children}</div>;
 }
-Box.defaultProps = defaultProps;
 Box.propTypes = propTypes;
 
 // XUL hbox
@@ -27,7 +24,6 @@ function Hbox(props: XulProps) {
     </Box>
   );
 }
-Hbox.defaultProps = defaultProps;
 Hbox.propTypes = propTypes;
 
 // XUL vbox
@@ -41,7 +37,6 @@ function Vbox(props: XulProps) {
     </Box>
   );
 }
-Vbox.defaultProps = defaultProps;
 Vbox.propTypes = propTypes;
 
 export { Box, Hbox, Vbox };

@@ -4,12 +4,10 @@
 
 import React from 'react';
 import { Vbox } from './boxes.tsx';
-import { addClass, xulDefaultProps, xulPropTypes, XulProps } from './xul.tsx';
+import { addClass, xulPropTypes, XulProps } from './xul.tsx';
 import './menupopup.css';
 
 // XUL menupopup
-const defaultProps = xulDefaultProps;
-
 const propTypes = {
   ...xulPropTypes,
 };
@@ -21,7 +19,6 @@ function Menupopup(props: XulProps) {
     </Vbox>
   );
 }
-Menupopup.defaultProps = defaultProps;
 Menupopup.propTypes = propTypes;
 
 export default Menupopup;

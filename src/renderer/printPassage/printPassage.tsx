@@ -23,7 +23,7 @@ import {
   libswordImgSrc,
 } from '../rutil.ts';
 import log from '../log.ts';
-import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul.tsx';
+import { XulProps, xulPropTypes } from '../libxul/xul.tsx';
 import Grid, { Column, Columns, Row, Rows } from '../libxul/grid.tsx';
 import Groupbox from '../libxul/groupbox.tsx';
 import Checkbox from '../libxul/checkbox.tsx';
@@ -62,8 +62,6 @@ const switches = [
   ],
 ] as const;
 
-const defaultProps = xulDefaultProps;
-
 const propTypes = {
   ...xulPropTypes,
   print: PropTypes.object.isRequired,
@@ -85,7 +83,6 @@ export type PrintPassageState = typeof S.prefs.printPassage &
   typeof notStatePrefDefault;
 
 export default class PrintPassageWin extends React.Component {
-  static defaultProps: typeof defaultProps;
 
   static propTypes: typeof propTypes;
 
@@ -371,7 +368,6 @@ export default class PrintPassageWin extends React.Component {
     );
   }
 }
-PrintPassageWin.defaultProps = defaultProps;
 PrintPassageWin.propTypes = propTypes;
 
 const print: PrintPassageProps['print'] = {

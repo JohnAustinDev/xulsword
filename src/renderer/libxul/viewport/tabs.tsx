@@ -7,13 +7,11 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import C from '../../../constant.ts';
 import { ofClass } from '../../../common.ts';
-import { xulDefaultProps, xulPropTypes, XulProps, htmlAttribs } from '../xul.tsx';
+import { xulPropTypes, XulProps, htmlAttribs } from '../xul.tsx';
 import { AnchorButton } from '../button.tsx';
 import Menupopup from '../menupopup.tsx';
 import G from '../../rg.ts';
 import './tabs.css';
-
-const defaultProps = xulDefaultProps;
 
 const propTypes = {
   ...xulPropTypes,
@@ -43,8 +41,6 @@ interface TabsState {
 
 // XUL Tabs
 class Tabs extends React.Component {
-  static defaultProps: typeof defaultProps;
-
   static propTypes: typeof propTypes;
 
   tabsref: React.RefObject<HTMLDivElement>;
@@ -235,7 +231,6 @@ class Tabs extends React.Component {
     );
   }
 }
-Tabs.defaultProps = defaultProps;
 Tabs.propTypes = propTypes;
 
 export default Tabs;

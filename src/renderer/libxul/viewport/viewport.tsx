@@ -29,7 +29,6 @@ import { verseKey } from '../../htmlData.ts';
 import { clearPending } from '../../rutil.ts';
 import {
   addClass,
-  xulDefaultProps,
   xulPropTypes,
   XulProps,
   topHandle,
@@ -49,8 +48,6 @@ import type {
 } from '../../../type.ts';
 import type S from '../../../defaultPrefs.ts';
 import type { RenderPromiseState } from '../../renderPromise.ts';
-
-const defaultProps = xulDefaultProps;
 
 const propTypes = {
   ...xulPropTypes,
@@ -105,7 +102,6 @@ type ViewportState = PopupParentState & RenderPromiseState & {
 };
 
 class Viewport extends React.Component implements PopupParent {
-  static defaultProps: typeof defaultProps;
 
   static propTypes: typeof propTypes;
 
@@ -497,7 +493,6 @@ class Viewport extends React.Component implements PopupParent {
     );
   }
 }
-Viewport.defaultProps = defaultProps;
 Viewport.propTypes = propTypes;
 
 export default Viewport;

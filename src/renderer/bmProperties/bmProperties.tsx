@@ -31,7 +31,7 @@ import SelectAny from '../libxul/selectAny.tsx';
 import Button from '../libxul/button.tsx';
 import Spacer from '../libxul/spacer.tsx';
 import TreeView from '../libxul/treeview.tsx';
-import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul.tsx';
+import { XulProps, xulPropTypes } from '../libxul/xul.tsx';
 import './bmProperties.css';
 
 import type {
@@ -119,15 +119,11 @@ const newitem = windowArguments('newitem') as Parameters<
   GType['Commands']['openBookmarkProperties']
 >[2];
 
-const defaultProps = xulDefaultProps;
-
 const propTypes = xulPropTypes;
 
 type BMPropertiesProps = XulProps;
 
 export default class BMPropertiesWin extends React.Component {
-  static defaultProps: typeof defaultProps;
-
   static propTypes: typeof propTypes;
 
   constructor(props: BMPropertiesProps) {
@@ -433,7 +429,6 @@ export default class BMPropertiesWin extends React.Component {
     );
   }
 }
-BMPropertiesWin.defaultProps = defaultProps;
 BMPropertiesWin.propTypes = propTypes;
 
 renderToRoot(<BMPropertiesWin />, { initialState: { resetOnResize: false } });

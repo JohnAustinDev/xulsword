@@ -117,7 +117,6 @@ export type SelectVKChangeEvents =
 
 // React VerseKey Select
 class SelectVK extends React.Component implements RenderPromiseComponent {
-  static defaultProps: typeof defaultProps;
 
   static propTypes: typeof propTypes;
 

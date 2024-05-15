@@ -9,7 +9,6 @@ import renderToRoot from '../renderer.tsx';
 import { windowArguments } from '../rutil.ts';
 import {
   addClass,
-  xulDefaultProps,
   XulProps,
   xulPropTypes,
 } from '../libxul/xul.tsx';
@@ -25,8 +24,6 @@ import Popup from '../libxul/popup/popup.tsx';
 import '../libxul/viewport/atext.css';
 import type { RenderPromiseState } from '../renderPromise.ts';
 
-const defaultProps = xulDefaultProps;
-
 const propTypes = {
   ...xulPropTypes,
 };
@@ -38,7 +35,6 @@ type PopupWinState = PopupParentState & RenderPromiseState;
 let windowState = windowArguments('popupState') as Partial<PopupWinState>;
 
 export default class PopupWin extends React.Component implements PopupParent {
-  static defaultProps: typeof defaultProps;
 
   static propTypes: typeof propTypes;
 
@@ -89,7 +85,6 @@ export default class PopupWin extends React.Component implements PopupParent {
     );
   }
 }
-PopupWin.defaultProps = defaultProps;
 PopupWin.propTypes = propTypes;
 
 renderToRoot(<PopupWin height="100%" />);

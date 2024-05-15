@@ -21,7 +21,7 @@ import {
   setStatePref,
 } from '../rutil.ts';
 import { libswordText } from '../libxul/viewport/ztext.ts';
-import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul.tsx';
+import { XulProps, xulPropTypes } from '../libxul/xul.tsx';
 import Groupbox from '../libxul/groupbox.tsx';
 import Checkbox from '../libxul/checkbox.tsx';
 import { Hbox, Vbox } from '../libxul/boxes.tsx';
@@ -34,8 +34,6 @@ import './copyPassage.css';
 import type VerseKey from '../../verseKey.ts';
 
 // TODO: CopyPassage font is underlined when viewed in LibreOffice.
-
-const defaultProps = xulDefaultProps;
 
 const propTypes = xulPropTypes;
 
@@ -60,8 +58,6 @@ if (openedWinState) {
 }
 
 export default class CopyPassageWin extends React.Component {
-  static defaultProps: typeof defaultProps;
-
   static propTypes: typeof propTypes;
 
   constructor(props: CopyPassageProps) {
@@ -137,8 +133,7 @@ export default class CopyPassageWin extends React.Component {
             ilModuleOption: [],
             modkey: '',
           },
-          0,
-          null
+          0
         );
         const div = testdiv.appendChild(document.createElement('div'));
         div.classList.add('text');
@@ -238,7 +233,6 @@ export default class CopyPassageWin extends React.Component {
     );
   }
 }
-CopyPassageWin.defaultProps = defaultProps;
 CopyPassageWin.propTypes = propTypes;
 
 renderToRoot(<CopyPassageWin />);

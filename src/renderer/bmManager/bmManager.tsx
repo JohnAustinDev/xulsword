@@ -35,7 +35,6 @@ import Label from '../libxul/label.tsx';
 import TreeView from '../libxul/treeview.tsx';
 import Button from '../libxul/button.tsx';
 import {
-  xulDefaultProps,
   XulProps,
   xulPropTypes,
   addClass,
@@ -51,8 +50,6 @@ import type {
   BookmarkItemType,
   BookmarkTreeNode,
 } from '../../type.ts';
-
-const defaultProps = xulDefaultProps;
 
 const propTypes = {
   ...xulPropTypes,
@@ -77,8 +74,6 @@ export type BMManagerState = typeof S.prefs.bookmarkManager &
   };
 
 export default class BMManagerWin extends React.Component {
-  static defaultProps: typeof defaultProps;
-
   static propTypes: typeof propTypes;
 
   localizedRootFolderClone: BookmarkFolderType | null;
@@ -428,7 +423,6 @@ export default class BMManagerWin extends React.Component {
     );
   }
 }
-BMManagerWin.defaultProps = defaultProps;
 BMManagerWin.propTypes = propTypes;
 
 const print: BMManagerProps['print'] = {

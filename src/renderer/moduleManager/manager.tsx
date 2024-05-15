@@ -38,7 +38,6 @@ import {
 } from '../rutil.ts';
 import {
   addClass,
-  xulDefaultProps,
   XulProps,
   xulPropTypes,
 } from '../libxul/xul.tsx';
@@ -87,10 +86,6 @@ let MasterRepoListDownloaded = false;
 let resetOnResize = false;
 const windowDescriptor = windowArguments();
 
-const defaultProps = {
-  ...xulDefaultProps,
-};
-
 const propTypes = {
   ...xulPropTypes,
   id: PropTypes.oneOf(['moduleManager', 'removeModule']),
@@ -135,8 +130,6 @@ export default class ModuleManager
   extends React.Component
   implements ModinfoParent
 {
-  static defaultProps: typeof defaultProps;
-
   static propTypes: typeof propTypes;
 
   destroy: (() => void)[];
@@ -1122,7 +1115,6 @@ export default class ModuleManager
     );
   }
 }
-ModuleManager.defaultProps = defaultProps;
 ModuleManager.propTypes = propTypes;
 
 function audioDialogOnChange(

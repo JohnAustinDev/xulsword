@@ -21,7 +21,6 @@ import {
   addClass,
   delayHandler,
   topHandle,
-  xulDefaultProps,
   XulProps,
   xulPropTypes,
 } from '../libxul/xul.tsx';
@@ -43,8 +42,6 @@ import type { HistoryVKType, XulswordStateArgType } from '../../type.ts';
 import type { RenderPromiseComponent, RenderPromiseState } from '../renderPromise.ts';
 import type Atext from '../libxul/viewport/atext.tsx';
 
-const defaultProps = xulDefaultProps;
-
 const propTypes = xulPropTypes;
 
 export type XulswordProps = XulProps;
@@ -63,7 +60,6 @@ export type XulswordState = typeof notStatePrefDefault &
   RenderPromiseState;
 
 export default class Xulsword extends React.Component implements RenderPromiseComponent{
-  static defaultProps: typeof defaultProps;
 
   static propTypes: typeof propTypes;
 
@@ -549,5 +545,4 @@ export default class Xulsword extends React.Component implements RenderPromiseCo
     );
   }
 }
-Xulsword.defaultProps = defaultProps;
 Xulsword.propTypes = propTypes;

@@ -29,7 +29,7 @@ import {
   PopupParentInitState,
 } from '../libxul/popup/popupParentH.ts';
 import Button from '../libxul/button.tsx';
-import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul.tsx';
+import { XulProps, xulPropTypes } from '../libxul/xul.tsx';
 import { Box, Hbox, Vbox } from '../libxul/boxes.tsx';
 import Groupbox from '../libxul/groupbox.tsx';
 import Label from '../libxul/label.tsx';
@@ -57,8 +57,6 @@ import './search.css';
 import type { BookGroupType, SearchType } from '../../type.ts';
 import type { RenderPromiseState } from '../renderPromise.ts';
 import Popup from '../libxul/popup/popup.tsx';
-
-const defaultProps = xulDefaultProps;
 
 const propTypes = {
   ...xulPropTypes,
@@ -118,7 +116,6 @@ let windowLoaded = false;
 export type SearchWinState = PopupParentState & RenderPromiseState & typeof initialState;
 
 export default class SearchWin extends React.Component implements PopupParent {
-  static defaultProps: typeof defaultProps;
 
   static propTypes: typeof propTypes;
 
@@ -657,7 +654,6 @@ export default class SearchWin extends React.Component implements PopupParent {
     );
   }
 }
-SearchWin.defaultProps = defaultProps;
 SearchWin.propTypes = propTypes;
 
 renderToRoot(<SearchWin height="100%" />, {
