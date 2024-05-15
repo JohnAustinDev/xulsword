@@ -51,7 +51,7 @@ The build has two parts: a Node.js project and a native libxulsword C++ library.
 must be set by running `source ./setenv`.
 
 1. Install nvm on Linux, Windows or Mac. On Windows [nvm for Windows](https://github.com/coreybutler/nvm-windows) is recommended.
-2. Use nvm to select Node version 18.12.1. On Windows, select the x86 architecture with: `nvm install 18.12.1 32` followed by `nvm use 18.12.1 32` to select it. Install yarn globally with: `nvm -i global yarn`. On Windows, administrator priviledge is required for these steps (subsequent steps do not require admin priviledge).
+2. Use nvm to select Node version 20.12.2. On Windows, select the x86 architecture with: `nvm install 20.12.2` followed by `nvm use 20.12.2 32` to select it. Install yarn globally with: `nvm -i global yarn`. On Windows, administrator priviledge is required for these steps (subsequent steps do not require admin priviledge).
 3. Run `source ./setenv` to set environment variables. On Windows, the Git Bash shell that comes with [Git for Windows](https://gitforwindows.org/) can be used to run this, and subsequent command line steps.
 4. Build the native libxulsword C++ dynamic library for your system (this step only needs to be done once and won't be needed again until the rare occasion that xulsword/Cpp C++ source changes):
 
