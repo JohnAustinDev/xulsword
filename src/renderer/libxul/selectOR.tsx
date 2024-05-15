@@ -224,15 +224,17 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
     const propNodeLists: NodeListOR[] = propNodeListsMods.map((m) => {
       let nodes: TreeNodeInfo[] = [];
       if (G.Tab[m].tabType === 'Genbks') {
-        const [n] = trySyncOrPromise(G, renderPromise,
+        const [n] = trySyncOrPromise(G,
           [['genBookTreeNodes', null, [m]]],
-          [[]]
+          [[]],
+          renderPromise
         ) as TreeNodeInfoPref[][];
         if (!renderPromise.waiting()) nodes = n;
       } else if (G.Tab[m].tabType === 'Dicts') {
-        const [keylist] = trySyncOrPromise(G, renderPromise,
+        const [keylist] = trySyncOrPromise(G,
           [['getAllDictionaryKeyList', null, [m]]],
-          [[]]
+          [[]],
+          renderPromise,
         ) as string[][];
         if (!renderPromise.waiting()) nodes = dictTreeNodes(keylist, m);
       }

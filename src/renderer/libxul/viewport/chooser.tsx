@@ -11,6 +11,7 @@ import PropTypes from 'prop-types';
 import { dString } from '../../../common.ts';
 import C from '../../../constant.ts';
 import G from '../../rg.ts';
+import RenderPromise from '../../renderPromise.ts';
 import {
   audioConfig,
   clearPending,
@@ -38,6 +39,7 @@ import type {
   V11nType,
   VerseKeyAudioFile,
 } from '../../../type.ts';
+import type{ RenderPromiseComponent, RenderPromiseState } from '../../renderPromise.ts';
 
 const defaultProps = {
   ...xulDefaultProps,
@@ -71,7 +73,7 @@ export interface ChooserProps extends XulProps {
   onAudioClick: (audio?: VerseKeyAudioFile | GenBookAudioFile) => void;
 }
 
-export interface ChooserState {
+export type ChooserState = RenderPromiseState & {
   // The visible bookGroup
   bookGroup: BookGroupType;
   // The index (base 0) of the topmost visible
@@ -81,7 +83,7 @@ export interface ChooserState {
 
 let chooserCompRef: Chooser | undefined;
 
-class Chooser extends React.Component {
+class Chooser extends React.Component implements RenderPromiseComponent {
   static defaultProps: typeof defaultProps;
 
   static propTypes: typeof propTypes;
@@ -106,6 +108,8 @@ class Chooser extends React.Component {
 
   handler: (e: React.SyntheticEvent) => void;
 
+  renderPromise: RenderPromise;
+
   constructor(props: ChooserProps) {
     super(props);
     const { selection, bookGroups, hideUnavailableBooks } = props;
@@ -122,7 +126,7 @@ class Chooser extends React.Component {
       slideIndex[g] = 0;
     });
 
-    const s: ChooserState = { bookGroup, slideIndex };
+    const s: ChooserState = { bookGroup, slideIndex, renderPromiseID: 0 };
     this.state = s;
 
     let longest = 0;
@@ -141,6 +145,8 @@ class Chooser extends React.Component {
     this.rowRef = React.createRef();
 
     this.handler = handlerH.bind(this);
+
+    this.renderPromise = new RenderPromise(this);
 
     if (
       !hideUnavailableBooks &&
@@ -168,6 +174,11 @@ class Chooser extends React.Component {
   componentWillUnmount() {
     clearPending(this, ['bookgroupTO', 'headingmenuTO']);
     clearPending(this, 'slideInterval', true);
+  }
+
+  componentDidUpdate() {
+    const { renderPromise } = this;
+    renderPromise.dispatch();
   }
 
   maxScrollIndex(): number {

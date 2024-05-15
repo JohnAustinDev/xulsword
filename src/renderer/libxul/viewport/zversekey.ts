@@ -55,6 +55,7 @@ function workingModules(type?: TabTypes) {
 // Bible reference can be found, null is returned.
 export function getRefBible(
   anyTypeModule: string,
+  renderPromise: RenderPromise,
   info?: Partial<LookupInfo>
 ): string | null {
   const inf = (typeof info === 'object' ? info : {}) as Partial<LookupInfo>;
@@ -73,7 +74,7 @@ export function getRefBible(
   }
   // Otherwise does mod have a Bible companion?
   if (!refbible) {
-    const arefx = getCompanionModules(anyTypeModule);
+    const arefx = getCompanionModules(anyTypeModule, renderPromise);
     const aref = arefx
       .map((m) => {
         // Allow case differences in module code references.
@@ -103,13 +104,23 @@ export function getRefBible(
   return refbible || null;
 }
 
-function getFootnoteText(location: LocationVKType, module: string): string {
+function getFootnoteText(
+  location: LocationVKType,
+  module: string,
+  renderPromise?: RenderPromise
+): string {
   const { book, chapter, verse, subid } = location;
   if (subid) {
     const options = getSwordOptions(G, G.Tab[module].type);
-    G.LibSword.getChapterText(module, `${book} ${chapter}`, options);
-    const notes = G.LibSword.getNotes('getChapterText', [module, `${book} ${chapter}`, options])
-      .split(/(?=<div[^>]+class="nlist")/);
+    const [_text, notesx] = trySyncOrPromise(G,
+      [
+        ['LibSword', 'getChapterText', [module, `${book} ${chapter}`, options]],
+        ['LibSword', 'getNotes', ['getChapterText', [module, `${book} ${chapter}`, options]]]
+      ],
+      ['', ''],
+      renderPromise
+    ) as string[];
+    const notes = notesx.split(/(?=<div[^>]+class="nlist")/);
     for (let x = 0; x < notes.length; x += 1) {
       const osisID = notes[x].match(/data-osisID="(.*?)"/); // getAttribute('data-osisID');
       if (osisID && osisID[1] === `${book}.${chapter}.${verse}!${subid}`) {
@@ -139,6 +150,7 @@ export function locationVKText(
   keepNotesx?: boolean,
   commentaries?: boolean | 'only' | null | undefined,
   findAny?: boolean,
+  renderPromise?: RenderPromise,
   info?: Partial<LookupInfo>
 ): TextVKType | null {
   const keepNotes = keepNotesx === undefined ? true : keepNotesx;
@@ -163,7 +175,7 @@ export function locationVKText(
     (mtype === C.BIBLE && commentaries !== 'only') ||
     (mtype === C.COMMENTARY && commentaries);
   if (!location.subid && targetmod && !modOK && altModules !== false) {
-    const companions = getCompanionModules(targetmod);
+    const companions = getCompanionModules(targetmod, renderPromise);
     const compOK = companions.find((compx) => {
       let comp = compx;
       if (!(comp in tab)) {
@@ -193,17 +205,21 @@ export function locationVKText(
       (type === C.COMMENTARY && commentaries);
     if (isOK && v11n && book && G.getBooksInVKModule(module).includes(book)) {
       let text;
-      const modloc = verseKey(loc);
+      const modloc = verseKey(loc, undefined, undefined, renderPromise);
       if (loc.subid) {
-        text = getFootnoteText(loc, mod);
+        text = getFootnoteText(loc, mod, renderPromise);
       } else {
         const options = getSwordOptions(G, G.Tab[module].type);
-        text = G.LibSword.getVerseText(
-          module,
-          modloc.osisRef(v11n),
-          keepNotes,
-          options
-        ).replace(/\n/g, ' ');
+        [text] = trySyncOrPromise(G,
+          [['LibSword', 'getVerseText', [
+            module,
+            modloc.osisRef(v11n),
+            keepNotes,
+            options,]]],
+          [''],
+          renderPromise
+        ) as string[]
+        text = text.replace(/\n/g, ' ');
       }
       if (text && text.length > 7) {
         return {
@@ -336,8 +352,9 @@ export function getRefHTML(
   extref: string,
   targetmod: string,
   context: LocationVKType,
-  showText?: boolean,
-  keepNotes?: boolean,
+  showText: boolean,
+  keepNotes: boolean,
+  renderPromise?: RenderPromise,
   info?: Partial<LookupInfo>
 ): string {
   const locale =
@@ -370,6 +387,7 @@ export function getRefHTML(
             keepNotes,
             false,
             true,
+            renderPromise,
             inf
           ) || resolve;
       }
@@ -423,7 +441,8 @@ export function getNoteHTML(
   show: Partial<ShowType> | null, // null to show all types of notes
   panelIndex = 0, // used for IDs
   openCRs = false, // show scripture reference texts or not
-  keepOnlyThisNote = '' // type.title of a single note to keep
+  keepOnlyThisNote = '', // type.title of a single note to keep
+  renderPromise?: RenderPromise
 ) {
   if (!notes) return '';
 
@@ -544,6 +563,7 @@ export function getNoteHTML(
                   location,
                   openCRs,
                   keepNotes,
+                  renderPromise,
                   info
                 );
               }
@@ -590,21 +610,16 @@ export function getIntroductions(
     return { textHTML: '', intronotes: '' };
   }
 
-  let intro: string, notes: string;
   const options = getSwordOptions(G, G.Tab[mod].type);
   const args = [mod, vkeytext, options] as Parameters<typeof G.LibSword.getIntroductions>;
-  if (renderPromise) {
-    [intro, notes] = trySyncOrPromise(G, renderPromise,
-      [
-        ['LibSword', 'getIntroductions', args],
-        ['LibSword', 'getNotes', ['getIntroductions', args]]
-      ],
-      ['', '']
-    ) as [string, string, string];
-  } else {
-    intro = G.LibSword.getIntroductions(args[0], args[1], args[2]);
-    notes = G.LibSword.getNotes('getIntroductions', args);
-  }
+  let [intro, notes] = trySyncOrPromise(G,
+    [
+      ['LibSword', 'getIntroductions', args],
+      ['LibSword', 'getNotes', ['getIntroductions', args]]
+    ],
+    ['', ''],
+    renderPromise
+  ) as [string, string, string];
 
   if (
     !intro ||
@@ -629,19 +644,15 @@ export function getChapterHeading(
 
   const intro = getIntroductions(module, `${book} ${chapter}`, renderPromise);
 
-  let localizedBook: string, int: string;
-  if (renderPromise) {
-    [localizedBook, int] = trySyncOrPromise(G, renderPromise,
-      [
-        ['i18n', 't', [book, toptions]],
-        ['i18n', 't', ['IntroLink', toptions]]
-      ],
-      [book, '']
-    ) as [OSISBookType, string]
-  } else {
-    localizedBook = G.i18n.t(book, toptions);
-    int = G.i18n.t('IntroLink', toptions);
-  }
+
+  const [localizedBook, int] = trySyncOrPromise(G,
+    [
+      ['i18n', 't', [book, toptions]],
+      ['i18n', 't', ['IntroLink', toptions]]
+    ],
+    [book, ''],
+    renderPromise
+  ) as [OSISBookType, string]
 
   const localizedChapTerm = getLocalizedChapterTerm(
     book,
@@ -848,7 +859,8 @@ export function versekeyScroll(
 function aTextWheelScroll2(
   count: number,
   atext: HTMLElement,
-  prevState: XulswordState | ViewportWinState | AtextStateType
+  prevState: XulswordState | ViewportWinState | AtextStateType,
+  renderPromise?: RenderPromise
 ) {
   let ret:
     | Partial<XulswordState>
@@ -867,7 +879,7 @@ function aTextWheelScroll2(
     const { module } = atext.dataset;
     let newloc;
     // Multi-column wheel scroll simply adds a verse delta to verse state.
-    if (columns > 1) newloc = verseChange(location, count);
+    if (columns > 1) newloc = verseChange(location, count, renderPromise);
     // Single-column wheel scroll allows default browser smooth scroll for
     // a certain period before updaing verse state to the new top verse.
     else {
@@ -925,9 +937,10 @@ export function aTextWheelScroll(
     const { columns } = atext.dataset;
     delayHandler.bind(caller)(
       () => {
+        const { renderPromise } = caller;
         caller.setState(
           (prevState: XulswordState | ViewportWinState | AtextStateType) => {
-            const s = aTextWheelScroll2(WheelSteps, atext, prevState);
+            const s = aTextWheelScroll2(WheelSteps, atext, prevState, renderPromise);
             WheelSteps = 0;
             return s;
           }
@@ -1084,20 +1097,21 @@ export function chapterChange(
 // change cannot be done with certainty.
 export function verseChange(
   location: LocationVKType | null,
-  vsDelta: number
+  vsDelta: number,
+  renderPromise?: RenderPromise
 ): LocationVKType | null {
   if (!location) return null;
   let { book, chapter, verse } = location;
   const { v11n } = location;
   if (!verse || !v11n) return null;
   if (vsDelta) verse += vsDelta;
-  const maxvs = getMaxVerse(v11n, [book, chapter].join('.'));
+  const maxvs = getMaxVerse(v11n, [book, chapter].join('.'), renderPromise);
   let ps;
   if (verse < 1) {
     if (!vsDelta) return null;
     ps = chapterChange(location, -1);
     if (!ps) return null;
-    verse = getMaxVerse(v11n, `${ps.book}.${ps.chapter}`);
+    verse = getMaxVerse(v11n, `${ps.book}.${ps.chapter}`, renderPromise);
     book = ps.book;
     chapter = ps.chapter;
   } else if (verse > maxvs) {

@@ -10,6 +10,7 @@ import S from '../../../defaultPrefs.ts';
 import G from '../../rg.ts';
 import { addBookmarksToNotes, getBookmarkInfo } from '../../bookmarks.ts';
 import { getElementData } from '../../htmlData.ts';
+import { trySyncOrPromise } from '../../renderPromise.ts';
 import log from '../../log.ts';
 import { getDictEntryHTML, getLemmaHTML } from '../viewport/zdictionary.ts';
 import {
@@ -19,6 +20,7 @@ import {
 } from '../viewport/zversekey.ts';
 
 import type { HTMLData } from '../../htmlData.ts';
+import type RenderPromise from '../../renderPromise.ts';
 import type Popup from './popup.tsx';
 import type { PopupState } from './popup.tsx';
 
@@ -57,6 +59,7 @@ export function getFailReasonHTML(failReason: FailReason): string {
 // the reason.
 export function getPopupHTML(
   data: HTMLData,
+  renderPromise: RenderPromise,
   testonly?: boolean // is elem renderable as a popup?
 ): string {
   const {
@@ -79,10 +82,16 @@ export function getPopupHTML(
           const { book, chapter } = location;
           // getChapterText must be called before getNotes
           const options = getSwordOptions(G, G.Tab[context].type);
-          G.LibSword.getChapterText(context, `${book}.${chapter}`, options);
-          const notes = G.LibSword.getNotes('getChapterText', [context, `${book}.${chapter}`, options]);
+          const [notes] = trySyncOrPromise(G,
+            [
+              ['LibSword', 'getChapterText', [context, `${book}.${chapter}`, options]],
+              ['LibSword', 'getNotes', ['getChapterText', [context, `${book}.${chapter}`, options]]]
+            ],
+            ['', ''],
+            renderPromise
+          ) as string[];
           // a note element's title does not include type, but its nlist does
-          html = getNoteHTML(notes, null, 0, !testonly, `${type}.${title}`);
+          html = getNoteHTML(notes, null, 0, !testonly, `${type}.${title}`, renderPromise);
         } else failReason.requires.push(context);
       }
       break;
@@ -104,7 +113,9 @@ export function getPopupHTML(
               addBookmarksToNotes([bmi], '', context),
               null,
               0,
-              !testonly
+              !testonly,
+              undefined,
+              renderPromise
             );
           }
         } else failReason.requires.push(context);
@@ -133,13 +144,16 @@ export function getPopupHTML(
               `<div class="nlist" data-title="${dt}">${bibleReflist}</div>`,
               null,
               0,
-              !testonly
+              !testonly,
+              undefined,
+              renderPromise
             );
           } else if (reflist && reflist[0]) {
             html = getDictEntryHTML(
               reflist[0].replace(/^.*?:/, ''),
               context,
-              failReason
+              failReason,
+              renderPromise
             );
           }
         } else failReason.requires.push(context);
@@ -153,7 +167,7 @@ export function getPopupHTML(
           const snlist = className.trim().split(' ');
           if (snlist && snlist.length > 1) {
             snlist.shift();
-            html = getLemmaHTML(snlist, snphrase, context, failReason);
+            html = getLemmaHTML(snlist, snphrase, context, renderPromise, failReason);
           }
         } else failReason.requires.push(context);
       }
@@ -172,7 +186,7 @@ export function getPopupHTML(
             if (!dword) dword = ref.substring(colon + 1);
           }
         });
-        html = getDictEntryHTML(dword, dnames.join(';'), failReason);
+        html = getDictEntryHTML(dword, dnames.join(';'), failReason, renderPromise);
       }
       break;
     }
@@ -181,7 +195,7 @@ export function getPopupHTML(
       if (context && location) {
         if (context in G.Tab) {
           const { book, chapter } = location;
-          const intro = getIntroductions(context, `${book}.${chapter}`);
+          const intro = getIntroductions(context, `${book}.${chapter}`, renderPromise);
           if (intro && intro.textHTML) html = intro.textHTML;
         } else failReason.requires.push(context);
       }
@@ -206,7 +220,8 @@ export default function handler(this: Popup, e: React.MouseEvent) {
         target
       );
       if (!targ || targ.type === 'npopup') return;
-      if (!getPopupHTML(getElementData(targ.element), true)) {
+      if (!getPopupHTML(getElementData(targ.element), this.renderPromise, true)
+          && !this.renderPromise.waiting()) {
         targ.element.classList.add('empty');
         log.debug(
           `Popup failed without reported reason: ${targ.element.classList}`

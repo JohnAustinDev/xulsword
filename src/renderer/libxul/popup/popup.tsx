@@ -19,6 +19,7 @@ import S from '../../../defaultPrefs.ts';
 import C from '../../../constant.ts';
 import G from '../../rg.ts';
 import { libswordImgSrc, windowArguments } from '../../rutil.ts';
+import RenderPromise from '../../renderPromise.ts';
 import {
   topHandle,
   htmlAttribs,
@@ -37,6 +38,7 @@ import '../button.css';
 
 import type { FeatureMods } from '../../../type.ts';
 import type { HTMLData } from '../../htmlData.ts';
+import type { RenderPromiseComponent, RenderPromiseState } from '../../renderPromise.ts';
 
 const defaultProps = {
   ...xulDefaultProps,
@@ -67,7 +69,7 @@ export interface PopupProps extends XulProps {
   onPopupContextMenu: (e: React.SyntheticEvent) => void | undefined;
 }
 
-export interface PopupState {
+export type PopupState = RenderPromiseState & {
   drag: {
     dragging: boolean;
     adjustment: number; // keep popup bottom edge on the viewport
@@ -90,7 +92,7 @@ export interface PopupState {
 // to a target element within which it will appear (usually the
 // same element as elemdata[0] but this is not necessary), and
 // isWindow should be false (the default).
-class Popup extends React.Component {
+class Popup extends React.Component implements RenderPromiseComponent {
   static defaultProps: typeof defaultProps;
 
   static propTypes: typeof propTypes;
@@ -99,12 +101,15 @@ class Popup extends React.Component {
 
   handler: (e: React.MouseEvent) => void;
 
+  renderPromise: RenderPromise;
+
   constructor(props: PopupProps) {
     super(props);
 
     this.state = {
       drag: null,
-    };
+      renderPromiseID: 0,
+    } as PopupState;
 
     this.npopup = React.createRef();
 
@@ -113,6 +118,8 @@ class Popup extends React.Component {
     this.setTitle = this.setTitle.bind(this);
     this.selector = this.selector.bind(this);
     this.positionPopup = this.positionPopup.bind(this);
+
+    this.renderPromise = new RenderPromise(this);
   }
 
   componentDidMount() {
@@ -120,7 +127,9 @@ class Popup extends React.Component {
   }
 
   componentDidUpdate() {
+    const { renderPromise } = this;
     this.update();
+    renderPromise.dispatch();
   }
 
   setTitle() {
@@ -193,7 +202,7 @@ class Popup extends React.Component {
   // Write popup contents from LibSword, and update state if popup
   // was repositioned.
   update() {
-    const { npopup } = this;
+    const { npopup, renderPromise } = this;
     const props = this.props as PopupProps;
     const { elemdata, isWindow } = props;
     const pts = npopup?.current?.getElementsByClassName('popup-text');
@@ -214,13 +223,15 @@ class Popup extends React.Component {
       }
       if (infokey) {
         if (!pt.dataset.infokey || pt.dataset.infokey !== infokey) {
-          const html = getPopupHTML(data);
-          pt.dataset.infokey = infokey;
-          sanitizeHTML(pt, html);
-          libswordImgSrc(pt);
+          const html = getPopupHTML(data, renderPromise, false);
+          if (!renderPromise.waiting()) {
+            pt.dataset.infokey = infokey;
+            sanitizeHTML(pt, html);
+            libswordImgSrc(pt);
+          }
           const parent = npopup.current.parentNode as HTMLElement | null;
           if (!isWindow && parent) {
-            if (html) {
+            if (html || renderPromise.waiting()) {
               parent.classList.remove('empty');
             } else parent.classList.add('empty');
           }
@@ -299,7 +310,7 @@ class Popup extends React.Component {
         'global.popup.feature'
       ) as typeof S.prefs.global.popup.feature;
 
-    const bibleMod = context && getRefBible(context);
+    const bibleMod = context && getRefBible(context, this.renderPromise);
 
     let cls = 'cs-locale';
     if (isWindow) cls += ` ownWindow viewport`;

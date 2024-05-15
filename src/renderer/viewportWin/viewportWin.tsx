@@ -9,6 +9,7 @@ import S from '../../defaultPrefs.ts';
 import { keep, diff, drop, validateViewportModulePrefs } from '../../common.ts';
 import G from '../rg.ts';
 import renderToRoot from '../renderer.tsx';
+import RenderPromise from '../renderPromise.ts';
 import log from '../log.ts';
 import {
   clearPending,
@@ -33,6 +34,7 @@ import viewportParentH, {
 
 import type { NewModulesType, XulswordStateArgType } from '../../type.ts';
 import type Atext from '../libxul/viewport/atext.tsx';
+import type { RenderPromiseComponent, RenderPromiseState } from '../renderPromise.ts';
 
 const defaultProps = xulDefaultProps;
 
@@ -61,9 +63,10 @@ let WindowTitle = '';
 
 export type ViewportWinState = typeof statePrefDefault &
   typeof notStatePrefDefault &
-  typeof windowState;
+  typeof windowState &
+  RenderPromiseState;
 
-export default class ViewportWin extends React.Component {
+export default class ViewportWin extends React.Component implements RenderPromiseComponent {
   static defaultProps: typeof defaultProps;
 
   static propTypes: typeof propTypes;
@@ -80,6 +83,8 @@ export default class ViewportWin extends React.Component {
 
   atextRefs: React.RefObject<Atext>[];
 
+  renderPromise: RenderPromise;
+
   constructor(props: ViewportWinProps) {
     super(props);
 
@@ -87,6 +92,7 @@ export default class ViewportWin extends React.Component {
       ...getStatePref('prefs', 'xulsword', statePrefDefault),
       ...notStatePrefDefault,
       ...windowState,
+      renderPromiseID: 0,
     };
     validateViewportModulePrefs(G.Tabs, s);
     this.state = s;
@@ -103,6 +109,8 @@ export default class ViewportWin extends React.Component {
     s.panels.forEach(() => {
       this.atextRefs.push(React.createRef());
     });
+
+    this.renderPromise = new RenderPromise(this);
   }
 
   componentDidMount() {
@@ -144,9 +152,11 @@ export default class ViewportWin extends React.Component {
     _prevProps: ViewportWinProps,
     prevState: ViewportWinState
   ) {
+    const { renderPromise } = this;
     const state = this.state as ViewportWinState;
     this.persistState(prevState, state);
     this.updateWindowTitle();
+    renderPromise.dispatch();
   }
 
   componentWillUnmount() {

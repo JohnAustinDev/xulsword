@@ -185,6 +185,7 @@ export default function handler(
   this: Xulsword | ViewportWin,
   es: React.SyntheticEvent<any>
 ) {
+  const { renderPromise } = this;
   const state = this.state as XulswordState | ViewportWinState;
   const { location } = state;
   const { panels } = state;
@@ -459,7 +460,7 @@ export default function handler(
         case 'nextchaplink': {
           if (atext) {
             setState(this, atext, (prevState: PinPropsType) => {
-              return textChange(atext, targ.type === 'nextchaplink', prevState);
+              return textChange(atext, targ.type === 'nextchaplink', prevState, renderPromise);
             });
           }
           break;

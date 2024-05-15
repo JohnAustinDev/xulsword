@@ -14,6 +14,7 @@ import type Xulsword from './xulsword.tsx';
 import type { XulswordState } from './xulsword.tsx';
 
 export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
+  const { renderPromise } = this;
   const state = this.state as XulswordState;
   const { target } = es;
   const currentId = es.currentTarget?.id;
@@ -89,7 +90,8 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
             if (location) {
               const newloc = verseChange(
                 location,
-                currentId === 'prevverse' ? -1 : 1
+                currentId === 'prevverse' ? -1 : 1,
+                renderPromise
               );
               if (newloc) {
                 const s: Partial<XulswordState> = {
@@ -187,7 +189,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
               // Check that the entered location exists.
               if (newloc && !newloc.chapter) newloc.chapter = 1;
               if (newloc && !newloc.verse) newloc.verse = 1;
-              if (newloc && verseChange(newloc, 0)) {
+              if (newloc && verseChange(newloc, 0, renderPromise)) {
                 const s: Partial<XulswordState> = {
                   location: newloc,
                   selection: newloc.verse === 1 ? null : newloc,
@@ -216,7 +218,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
                 newloc = chapterChange(pvk.location(), 0);
               } else {
                 pvk.verse = Number(value);
-                newloc = verseChange(pvk.location(), 0);
+                newloc = verseChange(pvk.location(), 0, renderPromise);
               }
               if (newloc) {
                 const s: Partial<XulswordState> = {

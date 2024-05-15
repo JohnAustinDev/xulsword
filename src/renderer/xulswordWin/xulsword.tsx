@@ -9,6 +9,7 @@ import { dString, clone } from '../../common.ts';
 import C from '../../constant.ts';
 import S from '../../defaultPrefs.ts';
 import G from '../rg.ts';
+import RenderPromise from '../renderPromise.ts';
 import { verseKey } from '../htmlData.ts';
 import {
   registerUpdateStateFromPref,
@@ -39,6 +40,7 @@ import handlerH from './xulswordH.ts';
 import './xulsword.css';
 
 import type { HistoryVKType, XulswordStateArgType } from '../../type.ts';
+import type { RenderPromiseComponent, RenderPromiseState } from '../renderPromise.ts';
 import type Atext from '../libxul/viewport/atext.tsx';
 
 const defaultProps = xulDefaultProps;
@@ -57,9 +59,10 @@ const notStatePrefDefault = {
 };
 
 export type XulswordState = typeof notStatePrefDefault &
-  typeof S.prefs.xulsword;
+  typeof S.prefs.xulsword &
+  RenderPromiseState;
 
-export default class Xulsword extends React.Component {
+export default class Xulsword extends React.Component implements RenderPromiseComponent{
   static defaultProps: typeof defaultProps;
 
   static propTypes: typeof propTypes;
@@ -80,12 +83,15 @@ export default class Xulsword extends React.Component {
 
   atextRefs: React.RefObject<Atext>[];
 
+  renderPromise: RenderPromise;
+
   constructor(props: XulswordProps) {
     super(props);
 
     const s: XulswordState = {
       ...notStatePrefDefault,
       ...(getStatePref('prefs', 'xulsword') as typeof S.prefs.xulsword),
+      renderPromiseID: 0,
     };
     this.state = s;
 
@@ -100,6 +106,8 @@ export default class Xulsword extends React.Component {
     s.panels.forEach(() => {
       this.atextRefs.push(React.createRef());
     });
+
+    this.renderPromise = new RenderPromise(this);
   }
 
   componentDidMount() {
@@ -107,6 +115,7 @@ export default class Xulsword extends React.Component {
   }
 
   componentDidUpdate(_prevProps: XulswordProps, prevState: XulswordState) {
+    const { renderPromise } = this;
     const state = this.state as XulswordState;
     const { scroll } = state;
     if (!scroll?.skipWindowUpdate) {
@@ -124,6 +133,7 @@ export default class Xulsword extends React.Component {
         )();
       }
     }
+    renderPromise.dispatch();
   }
 
   componentWillUnmount() {

@@ -4,6 +4,7 @@
 import React from 'react';
 import { diff } from '../../common.ts';
 import G from '../rg.ts';
+import RenderPromise from '../renderPromise.ts';
 import renderToRoot from '../renderer.tsx';
 import { windowArguments } from '../rutil.ts';
 import {
@@ -22,6 +23,7 @@ import {
 } from '../libxul/popup/popupParentH.ts';
 import Popup from '../libxul/popup/popup.tsx';
 import '../libxul/viewport/atext.css';
+import type { RenderPromiseState } from '../renderPromise.ts';
 
 const defaultProps = xulDefaultProps;
 
@@ -31,7 +33,7 @@ const propTypes = {
 
 type PopupWinProps = ViewportPopupProps & XulProps;
 
-type PopupWinState = PopupParentState;
+type PopupWinState = PopupParentState & RenderPromiseState;
 
 let windowState = windowArguments('popupState') as Partial<PopupWinState>;
 
@@ -42,18 +44,24 @@ export default class PopupWin extends React.Component implements PopupParent {
 
   popupHandler: typeof popupHandlerH;
 
+  renderPromise: RenderPromise;
+
   constructor(props: PopupWinProps) {
     super(props);
 
     this.state = {
       ...PopupParentInitState,
       ...windowState,
-    };
+      renderPromiseID: 0,
+    } as PopupWinState;
 
     this.popupHandler = popupHandlerH.bind(this);
+
+    this.renderPromise = new RenderPromise(this);
   }
 
   componentDidUpdate(_prevProps: PopupWinProps, prevState: PopupWinState) {
+    const { renderPromise } = this;
     const state = this.state as PopupWinState;
     windowState = state;
     const changedState = diff(
@@ -61,6 +69,7 @@ export default class PopupWin extends React.Component implements PopupParent {
       { ...state, popupParent: null }
     );
     if (changedState) G.Window.mergeValue('popupState', changedState);
+    renderPromise.dispatch();
   }
 
   render() {

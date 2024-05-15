@@ -12,7 +12,6 @@ import S from '../../../defaultPrefs.ts';
 import G from '../../rg.ts';
 import { getElementData } from '../../htmlData.ts';
 import log from '../../log.ts';
-import { scrollIntoView } from '../../rutil.ts';
 import { aTextWheelScroll, getRefHTML } from './zversekey.ts';
 
 import type Atext from './atext.tsx';
@@ -27,7 +26,10 @@ function scroll2Note(atext: HTMLElement, id: string) {
   const note = document.getElementById(id);
   if (!note) return false;
   note.classList.add('fnselected');
-  scrollIntoView(note, atext);
+  const nb = atext.querySelector('.nb');
+  if (nb) {
+    nb.scrollTop = note.offsetTop - note.offsetHeight;
+  }
   return true;
 }
 
@@ -84,7 +86,8 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
                       module,
                       location,
                       row.classList.contains('cropened'),
-                      false
+                      false,
+                      this.renderPromise
                     )
                   );
                 }

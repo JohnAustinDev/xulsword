@@ -10,13 +10,14 @@ import { delayHandler } from '../xul.tsx';
 import { getPopupHTML } from './popupH.ts';
 
 import type { PlaceType, ShowType } from '../../../type.ts';
+import type { RenderPromiseComponent } from '../../renderPromise.ts';
 import type { HTMLData } from '../../htmlData.ts';
 import type Atext from '../viewport/atext.tsx';
 
 const WindowDescriptor = windowArguments();
 let WheelScrolling = false;
 
-export interface PopupParent {
+export type PopupParent = RenderPromiseComponent & {
   state: React.ComponentState;
   props: React.ComponentProps<any>;
   setState: React.Component['setState'];
@@ -79,7 +80,7 @@ export function popupParentHandler(
       const show: ShowType | undefined =
         (atr && isPinned && isPinned[index] && atr.state.pin.show) || sh;
       const e = es as React.MouseEvent;
-      const { popupDelayTO } = this;
+      const { popupDelayTO, renderPromise } = this;
       const { popupParent } = state;
       if (popupDelayTO) clearTimeout(popupDelayTO);
       e.preventDefault();
@@ -121,7 +122,7 @@ export function popupParentHandler(
         default:
       }
       if (data && openPopup && !popupParent) {
-        if (getPopupHTML(data, true)) {
+        if (getPopupHTML(data, renderPromise, true) || renderPromise.waiting()) {
           delayHandler.bind(this)(
             (el: HTMLElement, dt: HTMLData, gp: number) => {
               updateDataAttribute(el, dt);

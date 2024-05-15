@@ -23,6 +23,7 @@ import {
   PopupParentInitState,
 } from '../popup/popupParentH.ts';
 import G from '../../rg.ts';
+import RenderPromise from '../../renderPromise.ts';
 import log from '../../log.ts';
 import { verseKey } from '../../htmlData.ts';
 import { clearPending } from '../../rutil.ts';
@@ -47,6 +48,7 @@ import type {
   XulswordStateArgType,
 } from '../../../type.ts';
 import type S from '../../../defaultPrefs.ts';
+import type { RenderPromiseState } from '../../renderPromise.ts';
 
 const defaultProps = xulDefaultProps;
 
@@ -98,7 +100,7 @@ type ViewportProps = ViewportPopupProps &
     xulswordStateHandler: (s: XulswordStateArgType) => void;
   };
 
-type ViewportState = PopupParentState & {
+type ViewportState = PopupParentState & RenderPromiseState & {
   reset: number;
 };
 
@@ -115,20 +117,26 @@ class Viewport extends React.Component implements PopupParent {
 
   popupUnblockTO: PopupParent['popupUnblockTO'];
 
+  renderPromise: RenderPromise;
+
   constructor(props: ViewportProps) {
     super(props);
 
     const s: ViewportState = {
       ...PopupParentInitState,
       reset: 0,
+      renderPromiseID: 0,
     };
     this.state = s;
 
     this.popupParentHandler = popupParentHandlerH.bind(this);
     this.popupHandler = popupHandlerH.bind(this);
+
+    this.renderPromise = new RenderPromise(this);
   }
 
   componentDidUpdate() {
+    const { renderPromise } = this;
     const state = this.state as ViewportState;
     const { popupParent, elemdata } = state;
     if (popupParent && !document.body.contains(popupParent)) {
@@ -137,6 +145,7 @@ class Viewport extends React.Component implements PopupParent {
       // Do the fade in effect
       popupParent.getElementsByClassName('npopup')[0]?.classList.remove('hide');
     }
+    renderPromise.dispatch();
   }
 
   componentWillUnmount() {

@@ -80,9 +80,10 @@ export function libswordText(
       if (location && location.book && module) {
         const { book, chapter } = location;
         if (ilModule) {
-          const [chtxt] = trySyncOrPromise(G, renderPromise || null,
+          const [chtxt] = trySyncOrPromise(G,
             [['LibSword', 'getChapterTextMulti', [`${module},${ilModule}`, `${book}.${chapter}`, false, options]]],
-            ['']
+            [''],
+            renderPromise || null
           ) as string[];
           if (!renderPromise?.waiting()) {
             r.textHTML += chtxt.replace(/interV2/gm, `cs-${ilModule}`);
@@ -91,11 +92,12 @@ export function libswordText(
           // We needed to check that the module contains the book, because
           // LibSword will silently return text from elsewhere in a module
           // if the module does not include the requested book!
-          const [textHTML, notes] = trySyncOrPromise(G, renderPromise || null,
+          const [textHTML, notes] = trySyncOrPromise(G,
             [
               ['LibSword', 'getChapterText', [module, `${book}.${chapter}`, options]],
               ['LibSword', 'getNotes', ['getChapterText', [module, `${book}.${chapter}`, options]]]
-            ], ['', '']
+            ], ['', ''],
+            renderPromise || null
           ) as string[];
           if (!renderPromise?.waiting()) {
             r.textHTML += textHTML;
@@ -108,12 +110,13 @@ export function libswordText(
     case C.COMMENTARY: {
       if (location && location.book && module) {
         const { book, chapter } = location;
-        const [textHTML, notes] = trySyncOrPromise(G, renderPromise || null,
+        const [textHTML, notes] = trySyncOrPromise(G,
           [
             ['LibSword', 'getChapterText', [module, `${book}.${chapter}`, options]],
             ['LibSword', 'getNotes', ['getChapterText', [module, `${book}.${chapter}`, options]]]
           ],
-          ['', '']
+          ['', ''],
+          renderPromise || null
         ) as string[];
         if (!renderPromise?.waiting()) {
           r.textHTML += textHTML;
@@ -124,12 +127,13 @@ export function libswordText(
     }
     case C.GENBOOK: {
       if (modkey) {
-        const [textHTML, noteHTML] = trySyncOrPromise(G, renderPromise || null,
+        const [textHTML, noteHTML] = trySyncOrPromise(G,
           [
             ['LibSword', 'getGenBookChapterText', [module, modkey, options]],
             ['LibSword', 'getNotes', ['getGenBookChapterText', [module, modkey, options]]]
           ],
-          ['', '']
+          ['', ''],
+          renderPromise || null
         ) as [string, string];
         if (!renderPromise?.waiting()) {
           r.textHTML += textHTML;
@@ -146,9 +150,10 @@ export function libswordText(
       // Cache is also used for DailyDevotion - if the key is not in the
       // Cache use today's date instead of the key.
       const key = dictKeyToday(modkey, module);
-      const [keylist] = trySyncOrPromise(G, renderPromise || null,
+      const [keylist] = trySyncOrPromise(G,
         [['getAllDictionaryKeyList', null, [module]]],
-        [[]]
+        [[]],
+        renderPromise || null
       ) as string[][];
       if (!renderPromise?.waiting()) {
         if (key && keylist.includes(key)) {
@@ -213,7 +218,7 @@ export function libswordText(
         return shownb[s];
       })
     )
-      r.noteHTML += getNoteHTML(r.notes, shownb, n);
+      r.noteHTML += getNoteHTML(r.notes, shownb, n, undefined, undefined, renderPromise);
   }
 
   // Localize verse numbers to match the module
@@ -272,14 +277,11 @@ export function genbookChange(
 ): string | null {
   let tocs: string[] = [];
   if (module) {
-    if (renderPromise) {
-      [tocs] = trySyncOrPromise(G, renderPromise,
-        [['LibSword', 'getGenBookTableOfContents', [module]]],
-        [[]]
-      ) as string[][]
-    } else {
-      tocs = G.LibSword.getGenBookTableOfContents(module);
-    }
+    [tocs] = trySyncOrPromise(G,
+      [['LibSword', 'getGenBookTableOfContents', [module]]],
+      [[]],
+      renderPromise
+    ) as string[][]
     if (modkey) {
       const toc = tocs.indexOf(modkey);
       if (toc !== -1) {

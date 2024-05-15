@@ -18,6 +18,7 @@ import C from '../../constant.ts';
 import S from '../../defaultPrefs.ts';
 import G from '../rg.ts';
 import renderToRoot from '../renderer.tsx';
+import RenderPromise from '../renderPromise.ts';
 import log from '../log.ts';
 import { windowArguments } from '../rutil.ts';
 import {
@@ -54,6 +55,7 @@ import handlerH, {
 import './search.css';
 
 import type { BookGroupType, SearchType } from '../../type.ts';
+import type { RenderPromiseState } from '../renderPromise.ts';
 import Popup from '../libxul/popup/popup.tsx';
 
 const defaultProps = xulDefaultProps;
@@ -113,7 +115,7 @@ const noPersist = ['results', 'pageindex', 'progress', 'progressLabel'].concat(
 let reMountState = null as null | SearchWinState;
 let windowLoaded = false;
 
-export type SearchWinState = PopupParentState & typeof initialState;
+export type SearchWinState = PopupParentState & RenderPromiseState & typeof initialState;
 
 export default class SearchWin extends React.Component implements PopupParent {
   static defaultProps: typeof defaultProps;
@@ -136,6 +138,8 @@ export default class SearchWin extends React.Component implements PopupParent {
 
   destroy: (() => void)[];
 
+  renderPromise: RenderPromise;
+
   constructor(props: SearchWinProps) {
     super(props);
 
@@ -153,6 +157,7 @@ export default class SearchWin extends React.Component implements PopupParent {
         G.Tab[searchArg.module].type === C.BIBLE
           ? searchArg.module
           : abible?.module ?? '',
+      renderPromiseID: 0,
     };
     // Adjustments for special startup situations
     if (!(s.module in G.Tab)) s.module = abible?.module || '';
@@ -175,6 +180,8 @@ export default class SearchWin extends React.Component implements PopupParent {
     this.resref = React.createRef();
     this.lexref = React.createRef();
     this.destroy = [];
+
+    this.renderPromise = new RenderPromise(this);
   }
 
   componentDidMount() {
@@ -193,6 +200,7 @@ export default class SearchWin extends React.Component implements PopupParent {
   }
 
   componentDidUpdate(_prevProps: any, prevState: SearchWinState) {
+    const { renderPromise } = this;
     const state = this.state as SearchWinState;
     reMountState = clone(state);
     // Save changed window prefs (plus initials to obtain complete state).
@@ -221,6 +229,7 @@ export default class SearchWin extends React.Component implements PopupParent {
     }
 
     this.updateResults();
+    renderPromise.dispatch();
   }
 
   componentWillUnmount() {

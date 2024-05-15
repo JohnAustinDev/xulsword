@@ -26,9 +26,9 @@ export type RenderPromiseState = {
 // is returned.
 export function trySyncOrPromise(
   G: GType,
-  promise: RenderPromise | null,
   calls: GCallType[],
-  defaultValues?: PrefValue[]
+  defaultValues?: PrefValue[],
+  promise?: RenderPromise | null,
 ): PrefValue[] {
   if (window.processR.platform !== 'browser') {
     const results = calls.map((call) => getCallFromCache(call));
@@ -78,19 +78,15 @@ export default class RenderPromise {
       const rps = this.getGlobalRenderPromises();
       rps.push(this);
       this.setGlobalRenderPromises(rps);
-      setTimeout(async () => {
+      setTimeout(() => {
         const calls: GCallType[] = [];
         const components: React.Component[] = [];
-        const renders: (() => void)[] = [];
         const rps = this.getGlobalRenderPromises();
         this.setGlobalRenderPromises([]);
         rps.forEach((rp) => {
           if (rp.calls.length) {
             if (!components.find((c) => c === rp.component)) {
               components.push(rp.component);
-              renders.push(() => {
-                rp.component.setState({ renderPromiseID: Math.random() } as RenderPromiseState);
-              });
             }
             while(rp.calls.length) calls.push(rp.calls.shift() as GCallType);
           }
@@ -100,9 +96,11 @@ export default class RenderPromise {
           return !isCallCacheable(GBuilder, call) || !Cache.has(promiseCacheKey(call))
         });
 
-        if (callsStillNeeded.length) await callBatchThenCache(GA, callsStillNeeded);
-
-        renders.forEach((r) => r());
+        callBatchThenCache(GA, callsStillNeeded).then(() => {
+          components.forEach((component) => {
+            component.setState({ renderPromiseID: Math.random() } as RenderPromiseState);
+          });
+        });
 
       }, C.UI.Window.networkRequestBatchDelay);
     }
@@ -113,15 +111,17 @@ export function callBatchThenCacheSync(
   G: GType,
   calls: GCallType[]
 ) {
-  const disallowed = disallowedAsCallBatch(calls);
-  if (!disallowed) {
-    const results = G.callBatch(calls);
-    if (results.length !== calls.length) {
-      throw new Error(`callBatch sync did not return the correct data.`);
+  if (calls.length) {
+    const disallowed = disallowedAsCallBatch(calls);
+    if (!disallowed) {
+      const results = G.callBatch(calls);
+      if (results.length !== calls.length) {
+        throw new Error(`callBatch sync did not return the correct data.`);
+      }
+      calls.forEach((call, i) => writeCallToCache(call, results[i]));
+    } else if (typeof disallowed === 'string') {
+      throw new Error(disallowed);
     }
-    calls.forEach((call, i) => writeCallToCache(call, results[i]));
-  } else if (typeof disallowed === 'string') {
-    throw new Error(disallowed);
   }
 }
 
@@ -129,22 +129,17 @@ export async function callBatchThenCache(
   GA: GAType,
   calls: GCallType[],
 ): Promise<void> {
-
-  const disallowed = disallowedAsCallBatch(calls);
-  if (!disallowed) {
-    let results;
-    try {
-      results = await GA.callBatch(calls);
-    } catch (er) {
-      log.error(er);
-      results = [];
+  if (calls.length) {
+    const disallowed = disallowedAsCallBatch(calls);
+    if (!disallowed) {
+      const results = await GA.callBatch(calls);
+      if (results.length !== calls.length) {
+        throw new Error(`callBatch async did not return the correct data.`);
+      }
+      calls.forEach((call, i) => writeCallToCache(call, results[i]));
+    } else if (typeof disallowed === 'string') {
+      throw new Error(disallowed);
     }
-    if (results.length !== calls.length) {
-      throw new Error(`callBatch async did not return the correct data.`);
-    }
-    calls.forEach((call, i) => writeCallToCache(call, results[i]));
-  } else if (typeof disallowed === 'string') {
-    throw new Error(disallowed);
   }
 }
 

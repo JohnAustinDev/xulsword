@@ -28,7 +28,6 @@ import log from './log.ts';
 import type { TreeNodeInfo } from '@blueprintjs/core';
 import type {
   AudioPath,
-  GType,
   GenBookAudio,
   GenBookAudioConf,
   GenBookAudioFile,
@@ -46,7 +45,6 @@ import type {
   VerseKeyAudioFile,
   WindowDescriptorPrefType,
 } from '../type.ts';
-import type { getLocaleDigits } from '../main/minit.ts';
 import type RenderPromise from './renderPromise.ts';
 
 export function component(
@@ -303,15 +301,14 @@ export function getLocalizedChapterTerm(
   };
 
   if (G && renderPromise) {
-    const [exists, tk1, tk2] = trySyncOrPromise(
-      G,
-      renderPromise,
+    const [exists, tk1, tk2] = trySyncOrPromise(G,
       [
         ['i18n', 'exists', [k1, toptions]],
         ['i18n', 't', [k1, toptions]],
         ['i18n', 't', [k2, toptions]]
       ],
-      [false, k1, k2]
+      [false, k1, k2],
+      renderPromise
     ) as [boolean, string, string];
     const r1 = exists && tk1;
     return r1 && !/^\s*$/.test(r1) ? r1 : tk2;
@@ -375,20 +372,22 @@ export function getMaxVerse(
   const { chapter } = verseKey(vkeytext, v11n);
   const maxch = getMaxChapter(v11n, vkeytext);
   if (chapter <= maxch && chapter > 0) {
-    if (renderPromise) {
-      const [r] = trySyncOrPromise(G, renderPromise,
-        [['LibSword', 'getMaxVerse', [v11n, vkeytext]]],
-        [0]
-      ) as number[];
-      return r;
-    }
-    return G.LibSword.getMaxVerse(v11n, vkeytext);
+    const [r] = trySyncOrPromise(G,
+      [['LibSword', 'getMaxVerse', [v11n, vkeytext]]],
+      [0],
+      renderPromise
+    ) as number[];
+    return r;
   }
   return 0;
 }
 
-export function getCompanionModules(mod: string) {
-  const cms = G.LibSword.getModuleInformation(mod, 'Companion');
+export function getCompanionModules(mod: string, renderPromise?: RenderPromise) {
+  const [cms] = trySyncOrPromise(G,
+      [['LibSword', 'getModuleInformation', [mod, 'Companion']]],
+      [C.NOTFOUND],
+      renderPromise
+    ) as string[]
   if (cms !== C.NOTFOUND) return cms.split(/\s*,\s*/);
   return [];
 }

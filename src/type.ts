@@ -1037,7 +1037,8 @@ export const GBuilder: GType & {
       'getGenBookChapterText',
       'getGenBookTableOfContents',
       'search',
-      'getSearchResults']],
+      'getSearchResults',
+      'getModuleInformation']],
   ],
 
   gtype: 'sync',

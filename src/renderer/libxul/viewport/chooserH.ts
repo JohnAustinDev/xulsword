@@ -3,6 +3,7 @@ import React from 'react';
 import { getSwordOptions, ofClass, sanitizeHTML } from '../../../common.ts';
 import C from '../../../constant.ts';
 import G from '../../rg.ts';
+import { trySyncOrPromise } from '../../renderPromise.ts';
 import { delayHandler } from '../xul.tsx';
 
 import type { BookGroupType } from '../../../type.ts';
@@ -10,6 +11,7 @@ import type Chooser from './chooser.tsx';
 import type { ChooserProps, ChooserState } from './chooser.tsx';
 
 export default function handler(this: Chooser, es: React.SyntheticEvent): void {
+  const { renderPromise } = this;
   const target = es.target as HTMLElement;
   switch (es.type) {
     case 'click': {
@@ -75,11 +77,11 @@ export default function handler(this: Chooser, es: React.SyntheticEvent): void {
           const hd = /<h\d([^>]*class="head1[^"]*"[^>]*>)(.*?)<\/h\d>/i;
           // Rexgex parses verse number from array member strings
           const vs = /<sup[^>]*>(\d+)<\/sup>/i; // Get verse from above
-          const chtxt = G.LibSword.getChapterText(
-            headingsModule,
-            `${book}.${chapter}`,
-            options
-          );
+          const [chtxt] = trySyncOrPromise(G,
+            [['LibSword', 'getChapterText', [headingsModule, `${book}.${chapter}`, options]]],
+            [''],
+            renderPromise
+          ) as string[];
           const headings = chtxt.match(hdplus);
           if (headings) {
             let hr = false;

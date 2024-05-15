@@ -182,21 +182,15 @@ export function getDictEntryHTML(
     const m = mx in G.Tab ? mx : Object.keys(G.Tab).find((md) => md.toLowerCase() === mlc) || '';
     if (m && m in G.Tab && G.Tab[m].type === C.DICTIONARY) {
       const k = DictKeyTransform[m] ? DictKeyTransform[m](key) : key;
-      let h1, h2, dictTitle;
-      if (renderPromise) {
-        [h1, h2, dictTitle] = trySyncOrPromise(G, renderPromise,
-          [
-            ['LibSword', 'getDictionaryEntry', [m, k, options]],
-            ['LibSword', 'getDictionaryEntry', [m, k.toUpperCase(), options]],
-            ['LibSword', 'getModuleInformation', [m, 'Description']]
-          ],
-          ['', '', '']
-        ) as [string, string, string];
-      } else {
-        h1 = G.LibSword.getDictionaryEntry(m, k, options);
-        h2 = G.LibSword.getDictionaryEntry(m, k.toUpperCase(), options);
-        dictTitle = G.LibSword.getModuleInformation(m, 'Description');
-      }
+      const [h1, h2, dictTitle] = trySyncOrPromise(G,
+        [
+          ['LibSword', 'getDictionaryEntry', [m, k, options]],
+          ['LibSword', 'getDictionaryEntry', [m, k.toUpperCase(), options]],
+          ['LibSword', 'getModuleInformation', [m, 'Description']]
+        ],
+        ['', '', ''],
+        renderPromise
+      ) as [string, string, string];
       let h = h1;
       if (h === C.NOTFOUND) h = h2;
       if (h) h = markup2html(replaceLinks(h, m), m);
@@ -230,6 +224,7 @@ export function getDictEntryHTML(
 
 export function getStrongsModAndKey(
   snclass: string,
+  renderPromise?: RenderPromise,
   reason?: FailReason
 ): {
   mod: string | null;
@@ -307,7 +302,11 @@ export function getStrongsModAndKey(
         let k;
         let r;
         for (k = 0; k < keys.length; k += 1) {
-          r = G.LibSword.getDictionaryEntry(mod, keys[k], options);
+          [r] = trySyncOrPromise(G,
+            [['LibSword', 'getDictionaryEntry', [mod, keys[k], options]]],
+            [C.NOTFOUND],
+            renderPromise
+          ) as string[];
           if (r !== C.NOTFOUND) break;
         }
         if (r === C.NOTFOUND) mod = null;
@@ -360,6 +359,7 @@ export function getLemmaHTML(
   strongsClassArray: string[],
   matchingPhrase: string,
   sourcemod: string,
+  renderPromise?: RenderPromise,
   reason?: FailReason
 ) {
   // Start building html
@@ -367,7 +367,7 @@ export function getLemmaHTML(
   let sep = '';
   let info;
   for (let i = 0; i < strongsClassArray.length; i += 1) {
-    info = getStrongsModAndKey(strongsClassArray[i], reason);
+    info = getStrongsModAndKey(strongsClassArray[i], renderPromise, reason);
     if (!info.mod) continue;
 
     // add a button to search for this Strong's number
