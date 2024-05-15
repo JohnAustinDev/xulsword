@@ -7,21 +7,11 @@ import { clearPending } from '../rutil.ts';
 import {
   delayHandler,
   addClass,
-  xulDefaultProps,
   xulPropTypes,
   XulProps,
 } from './xul.tsx';
 import { Box } from './boxes.tsx';
 import './textbox.css';
-
-const defaultProps = {
-  ...xulDefaultProps,
-  multiline: false,
-  readonly: false,
-  disabled: false,
-  timeout: 0,
-  type: 'text',
-};
 
 const propTypes = {
   ...xulPropTypes,
@@ -38,15 +28,15 @@ const propTypes = {
 };
 
 interface TextboxProps extends XulProps {
-  maxLength?: string | undefined;
-  multiline: boolean;
-  pattern?: RegExp | undefined;
-  readonly: boolean;
-  inputRef?: React.RefObject<HTMLInputElement> | undefined;
-  disabled: boolean;
-  timeout: string | number;
-  type: string;
-  value?: string | undefined;
+  maxLength?: string;
+  multiline?: boolean;
+  pattern?: RegExp;
+  readonly?: boolean;
+  inputRef?: React.RefObject<HTMLInputElement>;
+  disabled?: boolean;
+  timeout?: string | number;
+  type?: string;
+  value?: string;
 }
 
 interface TextboxState {
@@ -61,8 +51,6 @@ type TBevent =
 
 // XUL textbox
 class Textbox extends React.Component {
-  static defaultProps: typeof defaultProps;
-
   static propTypes: typeof propTypes;
 
   // The key method of resetting a React text input to its props value does
@@ -116,7 +104,7 @@ class Textbox extends React.Component {
             evt.currentTarget = currentTarget;
             onChange(evt);
           },
-          timeout,
+          timeout || 0,
           'changeTO'
         )(e, e.currentTarget);
         e.stopPropagation();
@@ -130,7 +118,9 @@ class Textbox extends React.Component {
     const props = this.props as TextboxProps;
     const state = this.state as TextboxState;
     const { handleChange } = this;
-    const useTextArea = !!(props.type === 'text' && props.multiline);
+    let { type } = props;
+    if (!type) type = 'text';
+    const useTextArea = !!(type === 'text' && props.multiline);
 
     const value = props.disabled ? props.value : state.value;
 
@@ -149,7 +139,7 @@ class Textbox extends React.Component {
         {!useTextArea && (
           <input
             id={`${props.id}__input`}
-            type={props.type ? props.type : 'text'}
+            type={props.type}
             disabled={props.disabled}
             maxLength={props.maxLength ? Number(props.maxLength) : undefined}
             readOnly={props.readonly}
@@ -163,7 +153,6 @@ class Textbox extends React.Component {
     );
   }
 }
-Textbox.defaultProps = defaultProps;
 Textbox.propTypes = propTypes;
 
 export default Textbox;

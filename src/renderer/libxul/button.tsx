@@ -5,19 +5,12 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Button as BPButton } from '@blueprintjs/core';
 import { keep } from '../../common.ts';
-import { xulDefaultProps, xulPropTypes, XulProps, htmlAttribs } from './xul.tsx';
+import { xulPropTypes, XulProps, htmlAttribs } from './xul.tsx';
 import './button.css';
 
 import type { ButtonProps as BPButtonProps } from '@blueprintjs/core';
 
 // XUL button
-const defaultProps = {
-  ...xulDefaultProps,
-  fill: undefined,
-  checked: false,
-  dlgType: undefined,
-};
-
 const propTypes = {
   ...xulPropTypes,
   fill: PropTypes.oneOf(['xy', 'x', 'y']),
@@ -66,13 +59,11 @@ function Button(props: ButtonProps) {
     </div>
   );
 }
-Button.defaultProps = defaultProps;
 Button.propTypes = propTypes;
 
 export default Button;
 
-export function AnchorButton(props: XulProps & { disabled: boolean }) {
-  const { disabled } = props;
+export function AnchorButton({ disabled = false, ...props }: XulProps & { disabled: boolean }) {
   return (
     <a
       type="button"
@@ -83,5 +74,4 @@ export function AnchorButton(props: XulProps & { disabled: boolean }) {
     </a>
   );
 }
-AnchorButton.defaultProps = { ...xulDefaultProps, disabled: false };
 AnchorButton.propTypes = { ...xulPropTypes, disabled: PropTypes.bool };

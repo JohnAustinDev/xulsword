@@ -3,15 +3,10 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { xulDefaultProps, xulPropTypes, XulProps, htmlAttribs } from './xul.tsx';
+import { xulPropTypes, XulProps, htmlAttribs } from './xul.tsx';
 import './label.css';
 
 // XUL label
-const defaultProps = {
-  ...xulDefaultProps,
-  value: '',
-};
-
 const propTypes = {
   ...xulPropTypes,
   control: PropTypes.string,
@@ -22,16 +17,16 @@ interface LabelProps extends XulProps {
   control?: string | undefined;
   value: string;
 }
-function Label(props: LabelProps) {
+
+function Label({ value = '', ...props }: LabelProps) {
   const { control } = props;
 
   return (
     <label htmlFor={control} {...htmlAttribs('label', props)}>
-      {props.value}
+      {value}
     </label>
   );
 }
-Label.defaultProps = defaultProps;
 Label.propTypes = propTypes;
 
 export default Label;

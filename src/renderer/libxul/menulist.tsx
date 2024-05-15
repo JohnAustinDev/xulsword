@@ -3,18 +3,11 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { addClass, xulDefaultProps, xulPropTypes, XulProps } from './xul.tsx';
+import { addClass, xulPropTypes, XulProps } from './xul.tsx';
 import { Box } from './boxes.tsx';
 import './menulist.css';
 
 // XUL menulist
-const defaultProps = {
-  ...xulDefaultProps,
-  disabled: false,
-  multiple: false,
-  options: null,
-};
-
 const propTypes = {
   ...xulPropTypes,
   disabled: PropTypes.bool,
@@ -35,13 +28,13 @@ interface MenulistProps extends XulProps {
   value?: string | string[] | undefined;
 }
 
-function Menulist(props: MenulistProps) {
+function Menulist({ disabled = false, multiple = false, ...props }: MenulistProps) {
   return (
     <Box {...addClass('menulist xsinput', props)}>
       <select
         id={props.id ? `${props.id}__select` : undefined}
-        disabled={props.disabled}
-        multiple={props.multiple}
+        disabled={disabled}
+        multiple={multiple}
         size={props.size}
         value={props.value}
         onChange={() => {}}
@@ -52,7 +45,6 @@ function Menulist(props: MenulistProps) {
     </Box>
   );
 }
-Menulist.defaultProps = defaultProps;
 Menulist.propTypes = propTypes;
 
 export default Menulist;

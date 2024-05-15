@@ -20,7 +20,6 @@ import {
 import { Hbox, Vbox } from '../boxes.tsx';
 import Spacer from '../spacer.tsx';
 import {
-  xulDefaultProps,
   xulPropTypes,
   XulProps,
   addClass,
@@ -41,15 +40,6 @@ import type {
 } from '../../../type.ts';
 import type{ RenderPromiseComponent, RenderPromiseState } from '../../renderPromise.ts';
 
-const defaultProps = {
-  ...xulDefaultProps,
-  bookGroups: ['ot', 'nt'],
-  selection: '',
-  availableBooks: new Set(),
-  hideUnavailableBooks: false,
-  v11n: 'KJV',
-};
-
 const propTypes = {
   ...xulPropTypes,
   bookGroups: PropTypes.arrayOf(PropTypes.string),
@@ -63,11 +53,11 @@ const propTypes = {
 };
 
 export interface ChooserProps extends XulProps {
-  bookGroups: BookGroupType[];
+  bookGroups?: BookGroupType[];
   selection: OSISBookType | '';
-  availableBooks: Set<string> | undefined;
-  hideUnavailableBooks: boolean;
-  headingsModule: string | undefined;
+  availableBooks?: Set<string>;
+  hideUnavailableBooks?: boolean;
+  headingsModule?: string;
   v11n: V11nType;
   onCloseChooserClick: (e: any) => void;
   onAudioClick: (audio?: VerseKeyAudioFile | GenBookAudioFile) => void;
@@ -84,7 +74,6 @@ export type ChooserState = RenderPromiseState & {
 let chooserCompRef: Chooser | undefined;
 
 class Chooser extends React.Component implements RenderPromiseComponent {
-  static defaultProps: typeof defaultProps;
 
   static propTypes: typeof propTypes;
 
@@ -112,7 +101,9 @@ class Chooser extends React.Component implements RenderPromiseComponent {
 
   constructor(props: ChooserProps) {
     super(props);
-    const { selection, bookGroups, hideUnavailableBooks } = props;
+    const { selection, hideUnavailableBooks } = props;
+    let { bookGroups } = props;
+    if (!bookGroups) bookGroups = ['ot', 'nt'];
     chooserCompRef = this;
 
     let bookGroup: BookGroupType =
@@ -280,13 +271,14 @@ class Chooser extends React.Component implements RenderPromiseComponent {
       this;
     const {
       availableBooks,
-      bookGroups,
       headingsModule,
       selection,
       v11n,
       onCloseChooserClick,
       onAudioClick,
     } = props;
+    let { bookGroups } = props;
+    if (!bookGroups) bookGroups = ['ot', 'nt'];
     const { bookGroup, slideIndex } = state;
 
     const label: any = {};
@@ -378,7 +370,6 @@ class Chooser extends React.Component implements RenderPromiseComponent {
     );
   }
 }
-Chooser.defaultProps = defaultProps;
 Chooser.propTypes = propTypes;
 
 export default Chooser;
@@ -437,15 +428,6 @@ function BookGroupList(
     </Vbox>
   );
 }
-BookGroupList.defaultProps = {
-  bookGroup: undefined,
-  selection: undefined,
-  availableBooks: undefined,
-  headingsModule: undefined,
-  hideUnavailableBooks: false,
-  handler: undefined,
-  onAudioClick: undefined,
-};
 
 function BookGroupItem(
   props: {
@@ -485,12 +467,6 @@ function BookGroupItem(
     </Hbox>
   );
 }
-BookGroupItem.defaultProps = {
-  classes: undefined,
-  headingsModule: undefined,
-  handler: undefined,
-  onAudioClick: undefined,
-};
 
 function ChapterMenu(props: {
   headingsModule?: string;
@@ -553,8 +529,3 @@ function ChapterMenu(props: {
     </div>
   );
 }
-ChapterMenu.defaultProps = {
-  headingsModule: undefined,
-  handler: undefined,
-  onAudioClick: undefined,
-};

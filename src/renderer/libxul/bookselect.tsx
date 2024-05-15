@@ -10,7 +10,6 @@ import RefParser from '../../refParser.ts';
 import G from '../rg.ts';
 import {
   addClass,
-  xulDefaultProps,
   xulPropTypes,
   XulProps,
   xulStyle,
@@ -40,12 +39,6 @@ import './bookselect.css';
 // the Textbox is simply returned to its original value without
 // firing onChange.
 
-const defaultProps = {
-  ...xulDefaultProps,
-  options: [],
-  disabled: false,
-};
-
 const propTypes = {
   ...xulPropTypes,
   options: PropTypes.arrayOf(PropTypes.string).isRequired,
@@ -68,8 +61,6 @@ interface BookselectState {
 }
 
 class Bookselect extends React.Component {
-  static defaultProps: typeof defaultProps;
-
   static propTypes: typeof propTypes;
 
   textInput: React.RefObject<HTMLInputElement>;
@@ -230,7 +221,6 @@ class Bookselect extends React.Component {
     );
   }
 }
-Bookselect.defaultProps = defaultProps;
 Bookselect.propTypes = propTypes;
 
 export default Bookselect;

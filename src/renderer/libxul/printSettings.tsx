@@ -26,7 +26,7 @@ import { getStatePref, setStatePref } from '../rutil.ts';
 import { Hbox, Vbox } from './boxes.tsx';
 import Button from './button.tsx';
 import Spacer from './spacer.tsx';
-import { addClass, xulDefaultProps, XulProps, xulPropTypes } from './xul.tsx';
+import { addClass, XulProps, xulPropTypes } from './xul.tsx';
 import Menulist from './menulist.tsx';
 import Textbox from './textbox.tsx';
 import Label from './label.tsx';
@@ -67,11 +67,6 @@ const footerTemplate = `
 
 const { platform } = window.processR;
 
-const defaultProps = {
-  ...xulDefaultProps,
-  printDisabled: false,
-};
-
 const propTypes = {
   ...xulPropTypes,
   print: PropTypes.object.isRequired,
@@ -81,7 +76,7 @@ const propTypes = {
 
 type PrintSettingsProps = XulProps & {
   print: RootPrintType;
-  printDisabled: boolean;
+  printDisabled?: boolean;
 };
 
 const notStatePref = {
@@ -92,8 +87,6 @@ const notStatePref = {
 export type PrintSettingsState = typeof S.prefs.print & typeof notStatePref;
 
 export default class PrintSettings extends React.Component {
-  static defaultProps: typeof defaultProps;
-
   static propTypes: typeof propTypes;
 
   iframe: React.RefObject<HTMLIFrameElement>;
@@ -884,5 +877,4 @@ export default class PrintSettings extends React.Component {
     );
   }
 }
-PrintSettings.defaultProps = defaultProps;
 PrintSettings.propTypes = propTypes;

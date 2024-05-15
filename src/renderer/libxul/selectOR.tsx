@@ -21,7 +21,7 @@ import {
 import C from '../../constant.ts';
 import G, { GA } from '../rg.ts';
 import RenderPromise, { trySyncOrPromise } from '../renderPromise.ts';
-import { addClass, xulDefaultProps, XulProps, xulPropTypes } from './xul.tsx';
+import { addClass, XulProps, xulPropTypes } from './xul.tsx';
 import { Vbox } from './boxes.tsx';
 import Menulist from './menulist.tsx';
 import ModuleMenu from './modulemenu.tsx';
@@ -69,22 +69,11 @@ export interface SelectORProps extends XulProps {
   initialORM: SelectORMType;
   otherMods?: string[];
   nodeLists?: NodeListOR[];
-  enableMultipleSelection: boolean;
-  enableParentSelection: boolean;
-  disabled: boolean;
+  enableMultipleSelection?: boolean;
+  enableParentSelection?: boolean;
+  disabled?: boolean;
   onSelection: (selection: SelectORMType | undefined, id?: string) => void;
 }
-
-const defaultProps = {
-  ...xulDefaultProps,
-  initialORM: undefined,
-  otherMods: undefined,
-  nodeLists: undefined,
-  enableMultipleSelection: false,
-  enableParentSelection: false,
-  disabled: false,
-  onSelection: undefined,
-};
 
 const propTypes = {
   ...xulPropTypes,
@@ -102,8 +91,6 @@ type SelectORState = RenderPromiseState & {
 }
 
 class SelectOR extends React.Component implements RenderPromiseComponent {
-  static defaultProps: typeof defaultProps;
-
   static propTypes: typeof propTypes;
 
   renderPromise: RenderPromise;
@@ -401,7 +388,6 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
     );
   }
 }
-SelectOR.defaultProps = defaultProps;
 SelectOR.propTypes = propTypes;
 
 export default SelectOR;

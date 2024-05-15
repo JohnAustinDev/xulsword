@@ -4,7 +4,7 @@ import { dString, sanitizeHTML } from '../../common.ts';
 import C from '../../constant.ts';
 import G from '../rg.ts';
 import renderToRoot from '../renderer.tsx';
-import { xulDefaultProps, xulPropTypes } from '../libxul/xul.tsx';
+import { xulPropTypes } from '../libxul/xul.tsx';
 import './searchHelp.css';
 
 import type { SearchType } from '../../type.ts';
@@ -107,8 +107,6 @@ function SearchHelpWin() {
     </div>
   );
 }
-
-SearchHelpWin.defaultProps = xulDefaultProps;
 SearchHelpWin.propTypes = xulPropTypes;
 
 renderToRoot(<SearchHelpWin height="100%" />);

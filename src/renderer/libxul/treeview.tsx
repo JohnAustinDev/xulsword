@@ -6,7 +6,7 @@ import PropTypes from 'prop-types';
 import { Tree, TreeEventHandler, TreeNodeInfo } from '@blueprintjs/core';
 import C from '../../constant.ts';
 import { clone, diff } from '../../common.ts';
-import { xulDefaultProps, XulProps, xulPropTypes } from './xul.tsx';
+import { XulProps, xulPropTypes } from './xul.tsx';
 
 // The initialState of all nodes in the tree is required. If selectedIDs is defined
 // then onSelection must also be defined so that selection can be controlled by the
@@ -23,18 +23,6 @@ export type TreeViewProps = XulProps & {
   onExpansion: (ids: (string | number)[]) => void;
   onNodeClick: TreeEventHandler;
   treeRef: React.RefObject<Tree>;
-};
-
-const defaultProps = {
-  ...xulDefaultProps,
-  enableMultipleSelection: true,
-  selectedIDs: undefined,
-  expandedIDs: undefined,
-  bpClassName: undefined,
-  onSelection: undefined,
-  onExpansion: undefined,
-  onNodeClick: undefined,
-  treeRef: undefined,
 };
 
 const propTypes = {
@@ -183,14 +171,13 @@ function usePreviousExpansion<V>(value: V) {
   return ref.current;
 }
 
-const TreeView = (props: TreeViewProps) => {
+const TreeView = ({ enableMultipleSelection = true, ...props }: TreeViewProps) => {
   const {
     className,
     bpClassName,
     initialState,
     selectedIDs,
     expandedIDs,
-    enableMultipleSelection,
     onSelection,
     onExpansion,
     onNodeClick,
@@ -347,7 +334,6 @@ const TreeView = (props: TreeViewProps) => {
     />
   );
 };
-TreeView.defaultProps = defaultProps;
 TreeView.propTypes = propTypes;
 
 export default TreeView;

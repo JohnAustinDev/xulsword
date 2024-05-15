@@ -4,18 +4,13 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { keep, drop } from '../../common.ts';
-import { addClass, xulDefaultProps, xulPropTypes, XulProps } from './xul.tsx';
+import { addClass, xulPropTypes, XulProps } from './xul.tsx';
 import Label from './label.tsx';
 import Image from './image.tsx';
-import './groupbox.css';
 import { Box, Hbox, Vbox } from './boxes.tsx';
+import './groupbox.css';
 
 // XUL deck
-const defaultProps = {
-  ...xulDefaultProps,
-  orient: 'vertical',
-};
-
 const propTypes = {
   ...xulPropTypes,
   caption: PropTypes.string,
@@ -27,25 +22,24 @@ type GroupboxProps = XulProps & {
   image?: string;
 };
 
-function Groupbox(props: GroupboxProps) {
+function Groupbox({ orient = 'vertical', ...props }: GroupboxProps) {
   const { caption, image } = props;
   // These props should be passed to the groupbox body
   const passToBody = ['align', 'orient', 'pack'] as const;
   return (
-    <Vbox {...drop(addClass('groupbox', props), passToBody)}>
+    <Vbox {...drop(addClass('groupbox', { orient, ...props }), passToBody)}>
       {caption && (
         <Hbox className="groupbox-title" align="start" pack="start">
           <Image className="caption-icon" src={image} />
           <Label className="caption-text" flex="1" value={caption} />
         </Hbox>
       )}
-      <Box {...addClass('groupbox-body', keep(props, passToBody))} flex="1">
+      <Box {...addClass('groupbox-body', keep({ orient, ...props }, passToBody))} flex="1">
         {props.children}
       </Box>
     </Vbox>
   );
 }
-Groupbox.defaultProps = defaultProps;
 Groupbox.propTypes = propTypes;
 
 export default Groupbox;

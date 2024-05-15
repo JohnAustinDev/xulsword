@@ -12,7 +12,7 @@ import C from '../../constant.ts';
 import G from '../rg.ts';
 import { getMaxChapter, getMaxVerse } from '../rutil.ts';
 import RenderPromise from '../renderPromise.ts';
-import { addClass, xulDefaultProps, XulProps, xulPropTypes } from './xul.tsx';
+import { addClass, XulProps, xulPropTypes } from './xul.tsx';
 import { Hbox } from './boxes.tsx';
 import ModuleMenu from './modulemenu.tsx';
 import Label from './label.tsx';
@@ -52,7 +52,7 @@ export type SelectVKType =
 // all selectors but the module selector will be disabled.
 export interface SelectVKProps extends XulProps {
   initialVK: SelectVKType;
-  options: {
+  options?: {
     books?: string[];
     chapters?: number[];
     lastchapters?: number[];
@@ -60,25 +60,10 @@ export interface SelectVKProps extends XulProps {
     lastverses?: number[];
     vkMods?: string[] | 'Texts' | 'Comms';
   };
-  disabled: boolean;
-  allowNotInstalled: boolean;
+  disabled?: boolean;
+  allowNotInstalled?: boolean;
   onSelection: (selection: SelectVKType | undefined, id?: string) => void;
 }
-
-const defaultProps = {
-  ...xulDefaultProps,
-  options: {
-    books: undefined,
-    chapters: undefined,
-    lastChapters: undefined,
-    verses: undefined,
-    lastverses: undefined,
-    vkMods: undefined,
-  },
-  disabled: false,
-  allowNotInstalled: false,
-  onSelection: undefined,
-};
 
 const propTypes = {
   ...xulPropTypes,
@@ -117,7 +102,6 @@ export type SelectVKChangeEvents =
 
 // React VerseKey Select
 class SelectVK extends React.Component implements RenderPromiseComponent {
-
   static propTypes: typeof propTypes;
 
   selectValues: SelectVKType;
@@ -282,7 +266,7 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
     const vkMod = getModuleOfObject(selection);
     const { options, disabled, allowNotInstalled } = props;
     const { books, chapters, lastchapters, verses, lastverses, vkMods } =
-      options;
+      options || {};
     const { handleChange, renderPromise } = this;
 
     const tab = (vkMod && G.Tab[vkMod]) || null;
@@ -469,7 +453,7 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
             onChange={handleChange}
           />
         )}
-        <Spacer flex="1" />
+        <Spacer orient="horizontal" flex="1" />
         <div className="mod-select">
           {modules.length > 0 && (
             <ModuleMenu
@@ -486,7 +470,6 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
     );
   }
 }
-SelectVK.defaultProps = defaultProps;
 SelectVK.propTypes = propTypes;
 
 export default SelectVK;

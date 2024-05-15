@@ -6,14 +6,13 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { clone, getModuleOfObject, randomID } from '../../common.ts';
 import G, { GA } from '../rg.ts';
-import { htmlAttribs, xulDefaultProps, XulProps, xulPropTypes } from './xul.tsx';
+import { htmlAttribs, XulProps, xulPropTypes } from './xul.tsx';
 import SelectVK from './selectVK.tsx';
 import SelectOR from './selectOR.tsx';
 import ModuleMenu from './modulemenu.tsx';
 import './selectAny.css';
 
 import type {
-  GType,
   LocationORType,
   LocationTypes,
   LocationVKCommType,
@@ -45,13 +44,6 @@ export interface SelectAnyProps extends XulProps {
   ) => void;
 }
 
-const defaultProps = {
-  ...xulDefaultProps,
-  initial: { book: 'Gen', chapter: 1, v11n: 'KJV' },
-  modules: undefined,
-  disabled: false,
-};
-
 const propTypes = {
   ...xulPropTypes,
   initial: PropTypes.object.isRequired,
@@ -68,13 +60,14 @@ interface SelectAnyState {
 let LastVKLocation: LocationVKType | LocationVKCommType | undefined;
 
 class SelectAny extends React.Component {
-  static defaultProps: typeof defaultProps;
-
   static propTypes: typeof propTypes;
 
   constructor(props: SelectAnyProps) {
     super(props);
-    const { initial } = props;
+    let { initial } = props;
+    if (!initial) {
+      initial = { book: 'Gen', chapter: 1, v11n: 'KJV' };
+    }
 
     const s: SelectAnyState = {
       location: initial,
@@ -155,7 +148,7 @@ class SelectAny extends React.Component {
     const { onChange, onModuleChange } = this;
 
     if (!location) return null;
-    const module = getModuleOfObject(location);
+    const module = getModuleOfObject(location) || '';
 
     let select: JSX.Element;
     if ('v11n' in location) {
@@ -201,7 +194,6 @@ class SelectAny extends React.Component {
     );
   }
 }
-SelectAny.defaultProps = defaultProps;
 SelectAny.propTypes = propTypes;
 
 export default SelectAny;

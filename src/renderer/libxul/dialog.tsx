@@ -5,16 +5,10 @@ import React, { ReactElement } from 'react';
 import PropTypes from 'prop-types';
 import { Classes, Dialog as BPDialog } from '@blueprintjs/core';
 import { drop } from '../../common.ts';
-import { xulDefaultProps, xulPropTypes, XulProps } from './xul.tsx';
+import { xulPropTypes, XulProps } from './xul.tsx';
 import { Hbox } from './boxes.tsx';
 
 // XUL label
-const defaultProps = {
-  ...xulDefaultProps,
-  body: null,
-  buttons: null,
-};
-
 const propTypes = {
   ...xulPropTypes,
   body: PropTypes.element,
@@ -22,8 +16,8 @@ const propTypes = {
 };
 
 interface DialogProps extends XulProps {
-  body: ReactElement | null;
-  buttons: ReactElement | null;
+  body?: ReactElement | null;
+  buttons?: ReactElement | null;
 }
 
 function Dialog(props: DialogProps) {
@@ -39,7 +33,6 @@ function Dialog(props: DialogProps) {
     </BPDialog>
   );
 }
-Dialog.defaultProps = defaultProps;
 Dialog.propTypes = propTypes;
 
 export default Dialog;

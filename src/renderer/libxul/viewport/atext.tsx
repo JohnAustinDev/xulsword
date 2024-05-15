@@ -27,7 +27,6 @@ import {
 } from '../../rutil.ts';
 import RenderPromise from '../../renderPromise.ts';
 import {
-  xulDefaultProps,
   xulPropTypes,
   XulProps,
   addClass,
@@ -50,11 +49,6 @@ import './atext.css';
 
 import type { AtextPropsType, PinPropsType } from '../../../type.ts';
 import type { RenderPromiseComponent, RenderPromiseState } from '../../renderPromise.ts';
-
-const defaultProps = {
-  ...xulDefaultProps,
-  ownWindow: false,
-};
 
 const propTypes = {
   ...xulPropTypes,
@@ -100,7 +94,6 @@ const windowState: Partial<AtextStateType>[] = [];
 
 // XUL Atext
 class Atext extends React.Component implements RenderPromiseComponent {
-  static defaultProps: typeof defaultProps;
 
   static propTypes: typeof propTypes;
 
@@ -739,7 +732,6 @@ class Atext extends React.Component implements RenderPromiseComponent {
     );
   }
 }
-Atext.defaultProps = defaultProps;
 Atext.propTypes = propTypes;
 
 export default Atext;

@@ -6,15 +6,10 @@ import PropTypes from 'prop-types';
 import { stringHash } from '../../common.ts';
 import { Hbox } from './boxes.tsx';
 import Label from './label.tsx';
-import { xulDefaultProps, xulPropTypes, XulProps, addClass } from './xul.tsx';
+import { xulPropTypes, XulProps, addClass } from './xul.tsx';
 import './radio.css';
 
 // XUL Radio
-const defaultProps = {
-  ...xulDefaultProps,
-  disabled: false,
-};
-
 const propTypes = {
   ...xulPropTypes,
   name: PropTypes.string,
@@ -50,7 +45,6 @@ function Radio(props: RadioProps) {
     </Hbox>
   );
 }
-Radio.defaultProps = defaultProps;
 Radio.propTypes = propTypes;
 
 export default Radio;

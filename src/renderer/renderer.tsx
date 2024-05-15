@@ -22,7 +22,7 @@ import DynamicStyleSheet from './style.ts';
 import ContextData from './contextData.ts';
 import { windowArguments } from './rutil.ts';
 import log from './log.ts';
-import { delayHandler, xulCaptureEvents, xulDefaultProps } from './libxul/xul.tsx';
+import { delayHandler, xulCaptureEvents } from './libxul/xul.tsx';
 import { Hbox } from './libxul/boxes.tsx';
 import Dialog from './libxul/dialog.tsx';
 import Spacer from './libxul/spacer.tsx';
@@ -428,11 +428,6 @@ function WindowRoot(props: WindowRootProps) {
   return content;
 }
 WindowRoot.propTypes = propTypes;
-WindowRoot.defaultProps = {
-  ...xulDefaultProps,
-  onload: null,
-  onunload: null,
-};
 
 export type RootPrintType = {
   pageable: boolean;

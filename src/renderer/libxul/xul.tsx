@@ -37,9 +37,6 @@ export const xulCaptureEvents = [
   'onContextMenuCapture',
 ] as const;
 
-// Default prop values
-export const xulDefaultProps = {};
-
 // PropTypes checking for XUL attributes
 export const xulPropTypes = {
   align: PropTypes.oneOf(['start', 'center', 'end', 'baseline', 'stretch']),
@@ -119,7 +116,7 @@ export type XulProps = {
   width?: string | number | undefined;
   title?: string | undefined;
 } & {
-  [k in typeof xulEvents[number]]?: (e: React.SyntheticEvent<any>) => void;
+  [k in typeof xulEvents[number]]?: (e: any) => void | Promise<void>;
 } & {
   [k in typeof xulCaptureEvents[number]]?: (
     e: React.SyntheticEvent<any>

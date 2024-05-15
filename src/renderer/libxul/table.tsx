@@ -25,16 +25,15 @@ import {
   EditableCell2,
   Region,
   RegionCardinality,
-  SelectionModes,
   Table2 as BPTable,
   Utils,
   IColumnProps,
+  SelectionModes,
 } from '@blueprintjs/table';
 import { clone, localizeString, ofClass, randomID } from '../../common.ts';
 import G from '../rg.ts';
 import {
   addClass,
-  xulDefaultProps,
   XulProps,
   xulPropTypes,
   topHandle,
@@ -352,29 +351,6 @@ class TextSortableColumn extends AbstractSortableColumn {
   }
 }
 
-const defaultProps = {
-  ...xulDefaultProps,
-  initialRowSort: {
-    propColumnIndex: 0,
-    direction: 'ascending',
-  },
-  selectedRegions: undefined,
-  selectionModes: SelectionModes.ROWS_ONLY,
-  enableMultipleSelection: false,
-  enableColumnReordering: false,
-
-  cellRendererDependencies: undefined,
-
-  onCellClick: undefined,
-  onEditableCellChanged: undefined,
-  onRowsReordered: undefined,
-  onColumnsReordered: undefined,
-  onColumnWidthChanged: undefined,
-  onColumnHide: undefined,
-
-  tableCompRef: undefined,
-};
-
 const propTypes = {
   ...xulPropTypes,
   data: PropTypes.arrayOf(PropTypes.array).isRequired,
@@ -403,7 +379,7 @@ const propTypes = {
 export type TableProps = XulProps & {
   data: TData;
   columns: TablePropColumn[];
-  initialRowSort: TinitialRowSort;
+  initialRowSort?: TinitialRowSort;
   selectedRegions?: Region[];
   selectionModes?: RegionCardinality[];
   enableMultipleSelection?: boolean;
@@ -418,7 +394,7 @@ export type TableProps = XulProps & {
   onColumnWidthChanged?: (propColumns: TablePropColumn[]) => void;
   onColumnHide?: (propColumns: TablePropColumn[]) => void;
 
-  tableCompRef: React.LegacyRef<BPTable> | undefined;
+  tableCompRef?: React.LegacyRef<BPTable>;
 };
 
 type TableState = {
@@ -429,8 +405,6 @@ type TableState = {
 };
 
 class Table extends React.Component {
-  static defaultProps: typeof defaultProps;
-
   static propTypes: typeof propTypes;
 
   static scrollTop: { [id: string]: number };
@@ -447,7 +421,12 @@ class Table extends React.Component {
 
   constructor(props: TableProps) {
     super(props);
-    const { columns, initialRowSort } = props;
+    const { columns } = props;
+    let { initialRowSort } = props;
+    if (!initialRowSort) initialRowSort = {
+      propColumnIndex: 0,
+      direction: 'ascending',
+    };
 
     const s: TableState = {
       reset: randomID(),
@@ -817,7 +796,7 @@ class Table extends React.Component {
           numRows={numRows}
           columnWidths={tableColumnWidths}
           selectedRegions={selectedRegions}
-          selectionModes={selectionModes}
+          selectionModes={selectionModes || SelectionModes.ROWS_ONLY}
           enableMultipleSelection={enableMultipleSelection}
           enableColumnReordering={enableColumnReordering}
           enableRowHeader={false}
@@ -833,7 +812,6 @@ class Table extends React.Component {
     );
   }
 }
-Table.defaultProps = defaultProps;
 Table.propTypes = propTypes;
 Table.scrollTop = {};
 

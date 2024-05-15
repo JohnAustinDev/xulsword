@@ -14,7 +14,7 @@ import {
 import C from '../../constant.ts';
 import G from '../rg.ts';
 import { moduleInfoHTML } from '../rutil.ts';
-import { xulDefaultProps, xulPropTypes, XulProps, htmlAttribs } from './xul.tsx';
+import { xulPropTypes, XulProps, htmlAttribs } from './xul.tsx';
 import Button from './button.tsx';
 import Label from './label.tsx';
 import '../libsword.css'; // modinfo uses .head1
@@ -106,12 +106,6 @@ export function modinfoParentHandler(
 }
 
 // XUL Sword module info and config
-const defaultProps = {
-  ...xulDefaultProps,
-  showConf: '',
-  editConf: undefined,
-};
-
 const propTypes = {
   ...xulPropTypes,
   configs: PropTypes.arrayOf(PropTypes.object).isRequired,
@@ -139,10 +133,9 @@ type SwordConfExtraType = SwordConfType & {
   style: string;
 };
 
-function Modinfo(props: ModinfoProps) {
+function Modinfo({ showConf = '', ...props }: ModinfoProps) {
   const {
     configs: configsx,
-    showConf: showConfx,
     editConf,
     refs,
     buttonHandler,
@@ -172,12 +165,12 @@ function Modinfo(props: ModinfoProps) {
     })
     .sort((a, b) => a.label.localeCompare(b.label));
 
-  const showConf: SwordConfExtraType | null =
-    (showConfx && configs.find((c) => c.confID === showConfx)) || null;
+  const showConfET: SwordConfExtraType | null =
+    (showConf && configs.find((c) => c.confID === showConf)) || null;
 
   const conftext: string[] =
-    (showConf?.confPath &&
-      G.inlineFile(showConf.confPath, 'utf8', true).split('\n')) ||
+    (showConfET?.confPath &&
+      G.inlineFile(showConfET.confPath, 'utf8', true).split('\n')) ||
     [];
 
   const showLinkList = configs.length > 4;
@@ -249,7 +242,7 @@ function Modinfo(props: ModinfoProps) {
               }}
             />
             <div>
-              {c.confPath && !(showConf === c) && (
+              {c.confPath && !(showConfET === c) && (
                 <>
                   <Button
                     id={['more', c.confID].join('.')}
@@ -259,7 +252,7 @@ function Modinfo(props: ModinfoProps) {
                   </Button>
                 </>
               )}
-              {showConf && showConf === c && (
+              {showConfET && showConfET === c && (
                 <>
                   <Button
                     id={['less', c.confID].join('.')}
@@ -287,7 +280,7 @@ function Modinfo(props: ModinfoProps) {
                 </>
               )}
             </div>
-            {showConf && showConf === c && (
+            {showConfET && showConfET === c && (
               <div>
                 <Label
                   className="confpath-label"
@@ -315,7 +308,6 @@ function Modinfo(props: ModinfoProps) {
     </div>
   );
 }
-Modinfo.defaultProps = defaultProps;
 Modinfo.propTypes = propTypes;
 
 export default Modinfo;

@@ -6,7 +6,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import type { ReactElementLike } from 'prop-types';
 import { component } from '../rutil.ts';
-import { xulDefaultProps, xulPropTypes, XulProps, htmlAttribs } from './xul.tsx';
+import { xulPropTypes, XulProps, htmlAttribs } from './xul.tsx';
 import './grid.css';
 
 // XUL columns
@@ -21,11 +21,6 @@ function Rows(props: { children: any }) {
 }
 Rows.displayName = 'Rows';
 
-const RowColDefaultProps = {
-  flex: undefined,
-  span: 1,
-  children: undefined,
-};
 const RowColPropTypes = {
   flex: PropTypes.string,
   span: PropTypes.number,
@@ -50,13 +45,9 @@ type ColumnProps = RowColProps & {
     | 'min-content'
     | 'minmax(<min>, <max>)';
 };
-function Column(props: ColumnProps) {
+function Column({ span = 1, width = 'auto', ...props }: ColumnProps) {
   return <>{props.children}</>;
 }
-Column.defaultProps = {
-  ...RowColDefaultProps,
-  width: 'auto',
-};
 Column.propTypes = {
   ...RowColPropTypes,
   width: PropTypes.string,
@@ -72,13 +63,9 @@ type RowProps = RowColProps & {
     | 'min-content'
     | 'minmax(<min>, <max>)';
 };
-function Row(props: RowProps) {
+function Row({ span = 1, height = 'auto', ...props }: RowProps) {
   return <>{props.children}</>;
 }
-Row.defaultProps = {
-  ...RowColDefaultProps,
-  height: 'auto',
-};
 Row.propTypes = {
   ...RowColPropTypes,
   height: PropTypes.string,
@@ -88,8 +75,6 @@ Row.displayName = 'Row';
 export { Columns, Column, Rows, Row };
 
 // XUL grid
-const defaultProps = xulDefaultProps;
-
 const propTypes = xulPropTypes;
 
 function Grid(props: XulProps) {
@@ -194,7 +179,6 @@ function Grid(props: XulProps) {
 
   return <div {...htmlAttribs('grid', gridProps)}>{gridcells}</div>;
 }
-Grid.defaultProps = defaultProps;
 Grid.propTypes = propTypes;
 
 export default Grid;

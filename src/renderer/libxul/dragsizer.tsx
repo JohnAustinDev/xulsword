@@ -5,21 +5,13 @@
 /* eslint-disable react/static-property-placement */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { xulDefaultProps, xulPropTypes, XulProps } from './xul.tsx';
+import { xulPropTypes, XulProps } from './xul.tsx';
 import './dragsizer.css';
 
 export type DragSizerVal = {
   mousePos: number; // mouse position
   sizerPos: number; // sizer position (never < min or > max)
   isMinMax: boolean | null; // false = is-min, true = is-max, null or undefined = neither.
-};
-
-const defaultProps = {
-  ...xulDefaultProps,
-  min: 0,
-  max: null,
-  shrink: false,
-  lift: false,
 };
 
 // NOTE: onDragStart plus either onDragging or onDragEnd must be
@@ -38,9 +30,9 @@ interface DragSizerProps extends XulProps {
   onDragStart: (e: React.MouseEvent) => number;
   onDragging?: (e: React.MouseEvent, value: DragSizerVal) => void;
   onDragEnd?: (e: React.MouseEvent, value: DragSizerVal) => void;
-  min: number;
-  max: number | null;
-  shrink: boolean; // moving in positive direction redices the stateProp value
+  min?: number;
+  max?: number | null;
+  shrink?: boolean; // moving in positive direction redices the stateProp value
 }
 
 interface DragSizerState {
@@ -49,8 +41,6 @@ interface DragSizerState {
 }
 
 class DragSizer extends React.Component {
-  static defaultProps: typeof defaultProps;
-
   static propTypes: typeof propTypes;
 
   sizerRef: React.RefObject<HTMLDivElement>;
@@ -137,7 +127,9 @@ class DragSizer extends React.Component {
     const { dragging, startpos } = this.state as DragSizerState;
     if (dragging !== null) {
       const props = this.props as DragSizerProps;
-      const { orient, shrink, min, max, onDragging } = props;
+      const { orient, shrink, max, onDragging } = props;
+      let { min } = props;
+      if (!min) min = 0;
       const sizerElem = this.sizerRef.current as HTMLDivElement | undefined;
       e.preventDefault();
       if (sizerElem) {
@@ -184,7 +176,6 @@ class DragSizer extends React.Component {
     );
   }
 }
-DragSizer.defaultProps = defaultProps;
 DragSizer.propTypes = propTypes;
 
 export default DragSizer;

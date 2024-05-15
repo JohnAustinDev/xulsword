@@ -23,7 +23,6 @@ import RenderPromise from '../../renderPromise.ts';
 import {
   topHandle,
   htmlAttribs,
-  xulDefaultProps,
   XulProps,
   xulPropTypes,
 } from '../xul.tsx';
@@ -39,11 +38,6 @@ import '../button.css';
 import type { FeatureMods } from '../../../type.ts';
 import type { HTMLData } from '../../htmlData.ts';
 import type { RenderPromiseComponent, RenderPromiseState } from '../../renderPromise.ts';
-
-const defaultProps = {
-  ...xulDefaultProps,
-  isWindow: false,
-};
 
 const propTypes = {
   ...xulPropTypes,
@@ -62,7 +56,7 @@ export interface PopupProps extends XulProps {
   key: string;
   elemdata: HTMLData[] | null; // data of target elements
   gap: number | undefined; // Pixel distance between target element and top of popup window
-  isWindow: boolean; // Set to true to use popup in windowed mode
+  isWindow?: boolean; // Set to true to use popup in windowed mode
   onPopupClick: (e: React.SyntheticEvent) => void;
   onSelectChange: (e: React.SyntheticEvent) => void;
   onMouseLeftPopup: (e: React.SyntheticEvent) => void | undefined;
@@ -93,8 +87,6 @@ export type PopupState = RenderPromiseState & {
 // same element as elemdata[0] but this is not necessary), and
 // isWindow should be false (the default).
 class Popup extends React.Component implements RenderPromiseComponent {
-  static defaultProps: typeof defaultProps;
-
   static propTypes: typeof propTypes;
 
   npopup: React.RefObject<HTMLDivElement>;
@@ -384,7 +376,6 @@ class Popup extends React.Component implements RenderPromiseComponent {
     );
   }
 }
-Popup.defaultProps = defaultProps;
 Popup.propTypes = propTypes;
 
 export default Popup;

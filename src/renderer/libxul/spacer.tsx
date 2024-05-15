@@ -3,26 +3,26 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { xulDefaultProps, xulPropTypes, XulProps, htmlAttribs } from './xul.tsx';
+import { xulPropTypes, XulProps, htmlAttribs } from './xul.tsx';
+import { Box } from './boxes.tsx';
 
 // XUL spacer
-const defaultProps = {
-  ...xulDefaultProps,
-  orient: 'horizontal',
-};
-
 const propTypes = {
   ...xulPropTypes,
   // eslint-disable-next-line react/no-unused-prop-types
   orient: PropTypes.oneOf(['horizontal', 'vertical']),
 };
 
-type SpacerProps = XulProps;
+type SpacerProps = XulProps & {
+  orient?: 'horizontal' | 'vertical';
+};
 
-function Spacer(props: SpacerProps) {
-  return <div {...htmlAttribs('spacer', props)}>{props.children}</div>;
+function Spacer({ orient = 'horizontal', ...props }: SpacerProps) {
+  return (
+  <Box {...htmlAttribs('spacer', { orient, ...props })}>
+    {props.children}
+  </Box>);
 }
-Spacer.defaultProps = defaultProps;
 Spacer.propTypes = propTypes;
 
 export default Spacer;
