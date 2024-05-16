@@ -8,9 +8,10 @@ if [[ "$OUTDIR" =~ ^\. ]]; then OUTDIR="$(pwd)/./$OUTDIR"; fi
 cd "$( dirname "${BASH_SOURCE[0]}" )/../../"
 
 rm "$OUTDIR/dist/"*;
-rm "./build/app/dist/"*;
+rm -rf "./build/app/dist/"*;
 
 source ./setenv
+
 if [[ "$NODE_ENV" == "development" ]]; then
   yarn build:other-dev
 else

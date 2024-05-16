@@ -1,6 +1,8 @@
 #!/bin/bash
 # Run this script from this directory with 'source ./setenv' to set build environment variables.
 
+XULSWORD_SERVER_DIST=/server/dist/
+
 # - NODE_ENV - Set in package.json to control the build process
 #     (will be set to either 'development' or 'production').
 #NODE_ENV=production

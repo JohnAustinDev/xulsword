@@ -12,7 +12,7 @@ import Xulsword, { XulswordProps } from "../renderer/xulswordWin/xulsword.tsx";
 
 import 'normalize.css/normalize.css';
 import '@blueprintjs/icons/lib/css/blueprint-icons.css';
-// import '@blueprintjs/core/lib/css/blueprint.css';
+import '@blueprintjs/core/lib/css/blueprint.css';
 import '../renderer/global-htm.css';
 
 import type { GCallType, PrefObject } from "../type.ts";

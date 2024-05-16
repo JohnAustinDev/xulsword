@@ -4,6 +4,8 @@
   "XULSWORD_ENV": "normal",
   "LOGLEVEL": "debug",
   "CORS_ORIGIN": "http://127.0.0.1:8080",
+  "ROOTPATH": "./htdocs",
+  "PUBPATHS": "pub/modsword/raw;pub2/modsword/raw",
   "XSProfD": "./app-profile",
   "XSModsUser": "./htdocs/ftpmirror/pub/modsword/raw",
   "XSModsCommon": "./htdocs/ftpmirror/private/modsword/raw"

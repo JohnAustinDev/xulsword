@@ -198,7 +198,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
     this.setGlobalOptions(options);
     if (this.isReady(true)) {
       const chapterText = this.libxulsword.GetChapterText(modname, vkeytext);
-      return chapterText;
+      return publicPaths(chapterText);
     }
     return '';
   },
@@ -225,7 +225,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
         vkeytext,
         keepnotes
       );
-      return chapterTextMulti;
+      return publicPaths(chapterTextMulti);
     }
     return '';
   },
@@ -245,7 +245,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   ): string {
     if (this.isReady(true)) {
       const footnotes = this.libxulsword.GetFootnotes();
-      return footnotes;
+      return publicPaths(footnotes);
     }
     return '';
   },
@@ -258,7 +258,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   ): string {
     if (this.isReady(true)) {
       const crossRefs = this.libxulsword.GetCrossRefs();
-      return crossRefs;
+      return publicPaths(crossRefs);
     }
     return '';
   },
@@ -272,7 +272,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   ): string {
     if (this.isReady(true)) {
       const notes = this.libxulsword.GetNotes();
-      return notes;
+      return publicPaths(notes);
     }
     return '';
   },
@@ -376,7 +376,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
       options.Headings = 'On';
       this.setGlobalOptions(options);
       const introductions = this.libxulsword.GetIntroductions(vkeymod, bname);
-      return introductions;
+      return publicPaths(introductions);
     }
     return '';
   },
@@ -398,7 +398,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
       } catch(er) {
         dictionaryEntry = C.NOTFOUND;
       }
-      return dictionaryEntry;
+      return publicPaths(dictionaryEntry);
     }
     return '';
   },
@@ -437,7 +437,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
         gbmod,
         treekey
       );
-      return genBookChapterText;
+      return publicPaths(genBookChapterText);
     }
     return '';
   },
@@ -847,3 +847,34 @@ export type LibSwordType = Omit<
 >;
 
 export default LibSword as LibSwordType;
+
+// Check that filePath is publicly accessible, and if so return just the public
+// portion of the file path. Otherwise return an empty string if file is not
+// publicly accessible.
+function parsePublicPath(filePath: string): string {
+  const root = process.env.ROOTPATH;
+  const publics = process.env.PUBPATHS;
+  if (root && publics) {
+    const pubs = publics.split(';');
+    for (let i = 0; i < pubs.length; i++) {
+      const pub = pubs[i];
+      if (filePath.startsWith([root, pub].join('/'))) {
+        return filePath.replace(root, '');
+      }
+    };
+  }
+  return '';
+}
+
+// Check and convert all file references according in our context.
+function publicPaths(aString: string): string {
+  if (!BrowserWindow) {
+    // If running as a public server on the Internet
+    return aString.replace(/(file:\/\/)(.*?)(["'\s\n])/ig, (_m, m1, m2) => {
+      const pp = parsePublicPath(m1);
+      if (!pp) return m2;
+      return `${pp}${m2}`;
+    });
+  }
+  return aString;
+}

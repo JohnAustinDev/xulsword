@@ -38,7 +38,7 @@ export default merge(baseConfig, {
 
   output: {
     path: webpackPaths.distPath,
-    publicPath: '/',
+    publicPath: process.env.XULSWORD_SERVER_DIST,
     filename: '[name].dev.js',
     library: {
       type: 'umd',
