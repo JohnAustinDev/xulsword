@@ -110,7 +110,7 @@ html[dir='rtl'] .resultBox .modulemenu {
 .searchStatus > div {
   margin: 0 10px;
 }
-.searchStatus .bp4-progress-bar {
+.searchStatus .bp5-progress-bar {
   margin-inline-start: 5px;
   width: 200px;
 }

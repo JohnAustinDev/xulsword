@@ -15,14 +15,14 @@ import { XulProps, xulPropTypes } from './xul.tsx';
 // then only one node will be selected at a time.
 export type TreeViewProps = XulProps & {
   initialState: TreeNodeInfo[];
-  enableMultipleSelection: boolean;
-  selectedIDs: (string | number)[];
-  expandedIDs: (string | number)[];
-  bpClassName: string; // a BluePrint class for the Tree element
-  onSelection: (ids: (string | number)[]) => void;
-  onExpansion: (ids: (string | number)[]) => void;
-  onNodeClick: TreeEventHandler;
-  treeRef: React.RefObject<Tree>;
+  enableMultipleSelection?: boolean;
+  selectedIDs?: (string | number)[];
+  expandedIDs?: (string | number)[];
+  bpClassName?: string; // a BluePrint class for the Tree element
+  onSelection?: (ids: (string | number)[]) => void;
+  onExpansion?: (ids: (string | number)[]) => void;
+  onNodeClick?: TreeEventHandler;
+  treeRef?: React.RefObject<Tree>;
 };
 
 const propTypes = {
@@ -183,7 +183,7 @@ const TreeView = ({ enableMultipleSelection = true, ...props }: TreeViewProps) =
     onNodeClick,
     treeRef: treeRef0,
   } = props;
-  const treeRef1 = React.createRef();
+  const treeRef1 = React.createRef() as React.RefObject<Tree>;
   const treeRef = treeRef0 || treeRef1;
 
   const [nodes, dispatch] = React.useReducer(treeReducer, initialState);

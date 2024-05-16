@@ -682,10 +682,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   ): Promise<boolean> {
     return new Promise((resolve, reject) => {
       if (this.isReady(true) && !(modcode in this.indexingID)) {
-        const name = process.env.NODE_ENV === 'production'
-          ? 'indexWorker.js'
-          : 'indexWorker.dev.js';
-        const workerjs = Dirs.xsAsar.append(`dist/${name}`).path;
+        const workerjs = Dirs.xsAsar.append(`dist/main/indexWorker.js`).path;
         const indexer = fork(workerjs);
         this.indexingID[modcode] = indexer;
         const sendProgress = (percent: number) => {

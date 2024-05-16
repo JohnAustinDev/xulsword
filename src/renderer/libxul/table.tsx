@@ -21,14 +21,14 @@ import {
 import {
   Cell,
   Column,
-  ColumnHeaderCell2,
+  ColumnHeaderCell,
   EditableCell2,
   Region,
   RegionCardinality,
   Table2 as BPTable,
   Utils,
-  IColumnProps,
   SelectionModes,
+  CellRenderer,
 } from '@blueprintjs/table';
 import { clone, localizeString, ofClass, randomID } from '../../common.ts';
 import G from '../rg.ts';
@@ -38,7 +38,6 @@ import {
   xulPropTypes,
   topHandle,
 } from './xul.tsx';
-import '@blueprintjs/popover2/lib/css/blueprint-popover2.css';
 import '@blueprintjs/table/lib/css/table.css';
 import './table.css';
 
@@ -158,7 +157,32 @@ abstract class AbstractSortableColumn implements TSortableColumn {
     props: TableProps,
     state: TableState
   ) {
-    const cellRenderer = (tableRowIndex: number, tableColIndex: number) => {
+    const menuRenderer = this.renderMenu.bind(
+      this,
+      columnHide,
+      sortByColumn,
+      props
+    );
+
+    const columnHeaderCellRenderer = () => (
+      <ColumnHeaderCell
+        className={[
+          `data-col-${this.dataColIndex}`,
+          this.name ? '' : 'no-name',
+          this.name?.startsWith('icon:') ? 'header-icon' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+        name={(this.name?.startsWith('icon:') ? '' : this.name) || ''}
+        menuRenderer={menuRenderer}
+      >
+        {this.name.startsWith('icon:') && (
+          <Icon icon={this.name.substring(5) as any} size={20} intent="none" />
+        )}
+      </ColumnHeaderCell>
+    );
+
+    const cellRenderer: CellRenderer = (tableRowIndex: number, tableColIndex: number) => {
       const cellData = getCellData(tableRowIndex, tableColIndex);
       let { value } = cellData;
       const { info, row, dataColIndex } = cellData;
@@ -225,35 +249,13 @@ abstract class AbstractSortableColumn implements TSortableColumn {
         </Cell>
       );
     };
-    const menuRenderer = this.renderMenu.bind(
-      this,
-      columnHide,
-      sortByColumn,
-      props
-    );
-    const columnHeaderCellRenderer = () => (
-      <ColumnHeaderCell2
-        className={[
-          `data-col-${this.dataColIndex}`,
-          this.name ? '' : 'no-name',
-          this.name?.startsWith('icon:') ? 'header-icon' : '',
-        ]
-          .filter(Boolean)
-          .join(' ')}
-        name={(this.name?.startsWith('icon:') ? '' : this.name) || ''}
-        menuRenderer={menuRenderer}
-      >
-        {this.name.startsWith('icon:') && (
-          <Icon icon={this.name.substring(5) as any} size={20} intent="none" />
-        )}
-      </ColumnHeaderCell2>
-    );
-    return new Column({
-      key: this.dataColIndex,
-      cellRenderer,
-      columnHeaderCellRenderer,
-      name: this.name,
-    } as IColumnProps) as unknown as JSX.Element;
+
+    return <Column
+      key={this.dataColIndex}
+      cellRenderer={cellRenderer}
+      columnHeaderCellRenderer={columnHeaderCellRenderer}
+      name={this.name}
+    />;
   }
 
   protected abstract renderMenu(
@@ -298,11 +300,13 @@ class TextSortableColumn extends AbstractSortableColumn {
           key={['sort-asc', this.dataColIndex].join('.')}
           icon="sort-asc"
           onClick={sortAsc}
+          text=""
         />,
         <MenuItem
           key={['sort-desc', this.dataColIndex].join('.')}
           icon="sort-desc"
           onClick={sortDesc}
+          text=""
         />,
       ]);
     }
@@ -478,7 +482,7 @@ class Table extends React.Component {
     const t = tableRef.current;
     if (t) {
       const parent = t.getElementsByClassName(
-        'bp4-table-quadrant-scroll-container'
+        'bp5-table-quadrant-scroll-container'
       )[0];
       if (parent) {
         let top = 0;
@@ -496,7 +500,7 @@ class Table extends React.Component {
     const t = tableRef.current;
     if (t) {
       const parent = t.getElementsByClassName(
-        'bp4-table-quadrant-scroll-container'
+        'bp5-table-quadrant-scroll-container'
       )[0];
       if (parent && id) {
         Table.scrollTop[id] = parent.scrollTop;
@@ -703,11 +707,11 @@ class Table extends React.Component {
     const props = this.props as TableProps;
     const { columns, onCellClick } = props;
     if (onCellClick) {
-      const cell = ofClass(['bp4-table-cell'], e.target);
+      const cell = ofClass(['bp5-table-cell'], e.target);
       if (cell) {
-        const rowt = cell.element.className.match(/bp4-table-cell-row-(\d+)\b/);
+        const rowt = cell.element.className.match(/bp5-table-cell-row-(\d+)\b/);
         const tableRowIndex = rowt ? Number(rowt[1]) : -1;
-        const colt = cell.element.className.match(/bp4-table-cell-col-(\d+)\b/);
+        const colt = cell.element.className.match(/bp5-table-cell-col-(\d+)\b/);
         const tableColIndex = colt ? Number(colt[1]) : -1;
         const propColumn = columns.filter((c) => c.visible)[tableColIndex];
         onCellClick(e as React.MouseEvent, {

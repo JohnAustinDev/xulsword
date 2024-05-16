@@ -7,7 +7,7 @@
 /* eslint-disable react/static-property-placement */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Suggest2 } from '@blueprintjs/select';
+import { Suggest } from '@blueprintjs/select';
 import {
   clone,
   diff,
@@ -141,7 +141,7 @@ export default class BMManagerWin extends React.Component {
     this.scrollToItem = H.scrollToItem.bind(this);
     this.printableItem = H.printableItem.bind(this);
 
-    this.tableCompRef = React.createRef();
+    this.tableCompRef = React.createRef() as React.RefObject<BPTable>;
   }
 
   componentDidMount() {
@@ -342,7 +342,7 @@ export default class BMManagerWin extends React.Component {
             title={G.i18n.t('menu.print')}
           />
           <Vbox className="search" flex="1" onChange={onQueryChange}>
-            <Suggest2
+            <Suggest
               fill
               query={query}
               items={this.searchableItems}

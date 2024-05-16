@@ -8,7 +8,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {
   Intent,
-  IToastProps,
+  ToastProps,
+  OverlayToaster,
   Position,
   ProgressBar,
   Toaster,
@@ -148,8 +149,8 @@ export default class ModuleManager
   toaster: Toaster | undefined;
 
   refHandlers = {
-    toaster: (ref: Toaster) => {
-      this.toaster = ref;
+    toaster: (ref: Toaster | null) => {
+      if (ref) this.toaster = ref;
     },
   };
 
@@ -681,7 +682,7 @@ export default class ModuleManager
     });
   }
 
-  addToast(toast: IToastProps) {
+  addToast(toast: ToastProps) {
     if (this.toaster) this.toaster.show(toast);
   }
 
@@ -771,7 +772,7 @@ export default class ModuleManager
       }
       return (
         <Vbox {...addClass('modulemanager', props)} flex="1" height="100%">
-          <Toaster
+          <OverlayToaster
             canEscapeKeyClear
             position={Position.TOP}
             usePortal
@@ -1131,8 +1132,9 @@ function audioDialogOnChange(
       } as H.VersekeyDialog | H.GenBookDialog;
       if (showAudioDialog[0].type === 'versekey') {
         const dvk = showAudioDialog[0] as H.VersekeyDialog;
+        const { options } = dvk;
         const sel = selection as SelectVKType;
-        if (sel.book) {
+        if (sel.book && options) {
           const af = dvk.chapters[sel.book];
           let ch: number[] | undefined;
           if (af) {
@@ -1140,8 +1142,8 @@ function audioDialogOnChange(
               .map((n, i) => (n ? i : undefined))
               .filter(Boolean) as number[];
           }
-          dvk.options.chapters = ch;
-          dvk.options.lastchapters = ch;
+          options.chapters = ch;
+          options.lastchapters = ch;
         }
       }
       return { showAudioDialog };

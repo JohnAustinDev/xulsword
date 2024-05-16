@@ -4,7 +4,7 @@
   height: 100%;
 }
 
-.table .bp4-table-container {
+.table .bp5-table-container {
   position: absolute;
   top: 0px;
   left: 0px;
@@ -13,34 +13,34 @@
   overflow-y: auto;
   width: max-content;
 }
-.table .bp4-table-container:focus {
+.table .bp5-table-container:focus {
   outline: none;
 }
-.table:not(.width-resizable) .bp4-table-container {
+.table:not(.width-resizable) .bp5-table-container {
   width: 100%;
 }
 
-.table .bp4-table-quadrant-scroll-container {
+.table .bp5-table-quadrant-scroll-container {
   overflow-x: hidden;
 }
 
-.bp4-table-column-headers .no-name .bp4-table-column-name-text,
-.bp4-table-column-headers .header-icon .bp4-table-column-name-text {
+.bp5-table-column-headers .no-name .bp5-table-column-name-text,
+.bp5-table-column-headers .header-icon .bp5-table-column-name-text {
   height: 30px;
 }
 
 /* header-icon types don't have headings, so remove the extra space */
-.bp4-table-column-headers .header-icon .bp4-popover-target {
+.bp5-table-column-headers .header-icon .bp5-popover-target {
   position: relative;
   top: 5px;
   left: -10px;
 }
-.bp4-table-column-headers .header-icon .bp4-table-header-content .bp4-icon {
+.bp5-table-column-headers .header-icon .bp5-table-header-content .bp5-icon {
   display: block;
   position: absolute;
   top: -24px;
   left: calc(50% - 10px);
 }
-.bp4-table-last-in-row .bp4-table-th-menu-container .bp4-icon {
+.bp5-table-last-in-row .bp5-table-th-menu-container .bp5-icon {
   margin-right: 14px;
 }

@@ -174,9 +174,9 @@
     }
   },
   "dependencies": {
-    "@blueprintjs/core": "^4.2.0",
-    "@blueprintjs/select": "^4.9.10",
-    "@blueprintjs/table": "^4.1.4",
+    "@blueprintjs/core": "^5.10.3",
+    "@blueprintjs/select": "^5.1.5",
+    "@blueprintjs/table": "^5.1.5",
     "adm-zip": "^0.5.9",
     "child_process": "^1.0.2",
     "electron": "^22.0.0",

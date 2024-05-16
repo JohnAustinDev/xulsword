@@ -43,7 +43,7 @@ export function getFailReasonHTML(failReason: FailReason): string {
           <span class="label">${G.i18n.t('module-required.message')}</span>
           <div class="requiremod button" data-data="${d}">
             <div class="button-box">
-              <div class="bp4-button">
+              <div class="bp5-button">
                 ${G.i18n.t('install.label')}
               </div>
             </div>

@@ -34,7 +34,6 @@ function Button(props: ButtonProps) {
     'active',
     'alignText',
     'disabled',
-    'elementRef',
     'icon',
     'intent',
     'large',

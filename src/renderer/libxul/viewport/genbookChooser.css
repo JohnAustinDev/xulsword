@@ -44,7 +44,7 @@ html[dir='rtl'] .genbook-chooser .scroll-parent {
 html[dir='rtl'] .genbook-chooser .scroll-parent:hover {
   right: -5px;
 }
-html[dir='rtl'] .bp4-tree-node-label {
+html[dir='rtl'] .bp5-tree-node-label {
   transform: scaleX(-1);
 }
 
@@ -54,6 +54,6 @@ html[dir='rtl'] .bp4-tree-node-label {
 .genbook-chooser .fadebot {
   display: none;
 }
-.genbook-chooser .bp4-tree-node-caret-none + .bp4-icon-volume-up {
+.genbook-chooser .bp5-tree-node-caret-none + .bp5-icon-volume-up {
   margin-inline-start: -24px;
 }

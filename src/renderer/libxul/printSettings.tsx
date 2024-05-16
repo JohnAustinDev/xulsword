@@ -11,11 +11,12 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import {
-  IToastProps,
+  ToastProps,
   Icon,
   Intent,
   Position,
   Toaster,
+  OverlayToaster,
 } from '@blueprintjs/core';
 import Subscription from '../../subscription.ts';
 import { clone, diff, keep, randomID } from '../../common.ts';
@@ -558,7 +559,7 @@ export default class PrintSettings extends React.Component {
     }
   }
 
-  addToast(toast: IToastProps) {
+  addToast(toast: ToastProps) {
     if (this.toaster) this.toaster.show(toast);
   }
 
@@ -674,12 +675,12 @@ export default class PrintSettings extends React.Component {
 
     return (
       <Vbox {...addClass('printsettings', this.props)}>
-        <Toaster
+        <OverlayToaster
           canEscapeKeyClear
           position={Position.TOP}
           usePortal
-          ref={(ref: Toaster) => {
-            this.toaster = ref;
+          ref={(ref: Toaster | null) => {
+            if (ref) this.toaster = ref;
           }}
         />
         {pageView?.current &&

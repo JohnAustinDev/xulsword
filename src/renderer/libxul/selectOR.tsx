@@ -29,7 +29,7 @@ import './selectOR.css';
 
 import type { TreeNodeInfo } from '@blueprintjs/core';
 import type { RenderPromiseComponent, RenderPromiseState } from '../renderPromise.ts';
-import { TreeNodeInfoPref } from 'type.ts';
+import type { TreeNodeInfoPref } from 'type.ts';
 
 // Allow users to select one or more chapters from any non-versekey SWORD
 // module parent node.

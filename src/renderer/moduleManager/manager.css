@@ -30,7 +30,7 @@
 
 #languageListOpen {
   margin: 10px 5px 5px 5px;
-  padding:5px;
+  padding: 5px;
 }
 
 .module-deck {
@@ -53,11 +53,11 @@
   padding: 10px;
 }
 
-.moduleManager .bp4-dialog-body .label {
+.moduleManager .bp5-dialog-body .label {
   white-space: unset;
   margin-bottom: 10px;
 }
-.moduleManager .bp4-dialog-body .label:first-child {
+.moduleManager .bp5-dialog-body .label:first-child {
   font-size: large;
   margin-bottom: 20px;
 }
