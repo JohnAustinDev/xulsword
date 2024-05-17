@@ -870,10 +870,10 @@ function parsePublicPath(filePath: string): string {
 function publicPaths(aString: string): string {
   if (!BrowserWindow) {
     // If running as a public server on the Internet
-    return aString.replace(/(file:\/\/)(.*?)(["'\s\n])/ig, (_m, m1, m2) => {
-      const pp = parsePublicPath(m1);
-      if (!pp) return m2;
-      return `${pp}${m2}`;
+    return aString.replace(/(file:\/\/)(.*?)(["'\s\n])/ig, (_m, _m1, m2, m3) => {
+      const pp = parsePublicPath(m2);
+      if (!pp) return m3;
+      return `${pp}${m3}`;
     });
   }
   return aString;

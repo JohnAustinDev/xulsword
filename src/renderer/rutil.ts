@@ -86,13 +86,20 @@ export function libswordImgSrc(container: HTMLElement) {
   Array.from(container.getElementsByTagName('img')).forEach((img) => {
     if (img.dataset.src) {
       let src: string | undefined;
-      const m = img.dataset.src.match(/^file:\/\/(.*)$/i);
-      if (m) {
-        if (m[1].match(/^(\w:[/\\]|\/)/)) src = G.inlineFile(m[1], 'base64');
-        else {
-          log.error(`Image source is not absolute: ${m[1]}`);
+      if (window.processR.platform === 'browser') {
+        if (img.dataset.src.startsWith('/')) {
+          src = img.dataset.src;
+        }
+      } else {
+        const m = img.dataset.src.match(/^file:\/\/(.*)$/i);
+        if (m) {
+          if (m[1].match(/^(\w:[/\\]|\/)/)) src = G.inlineFile(m[1], 'base64');
+          else {
+            log.error(`Image source is not absolute: ${m[1]}`);
+          }
         }
       }
+
       if (src) {
         img.src = src;
       } else {

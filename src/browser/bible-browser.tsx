@@ -108,8 +108,8 @@ function Controller(
 // component where only chapters listed in data-chaplist will be available
 // for selection.
 Subscription.subscribe.socketConnected((_socket) => {
-  callBatchThenCache(GA, preloads).then(() => {
-    if (bibleBrowser) {
+  callBatchThenCache(GA, preloads).then((success) => {
+    if (success && bibleBrowser) {
       const id = randomID();
       bibleBrowser.setAttribute('id', id);
       const { props, defprefs: dp } = bibleBrowser.dataset;

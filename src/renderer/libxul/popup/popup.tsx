@@ -12,6 +12,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {
   JSON_attrib_stringify,
+  ofClass,
   sanitizeHTML,
   stringHash,
 } from '../../../common.ts';
@@ -149,12 +150,12 @@ class Popup extends React.Component implements RenderPromiseComponent {
   }
 
   // Set root location of popup, and if it is overflowing the bottom of
-  // the viewport, then drag it up.
-  positionPopup() {
+  // the text area, then drag it up.
+  positionPopup(force = false as boolean) {
     const { npopup } = this;
     const { isWindow, gap } = this.props as PopupProps;
     const state = this.state as PopupState;
-    if (!state.drag && !isWindow) {
+    if ((force || !state.drag) && !isWindow) {
       const popup = npopup?.current;
       const parent = popup?.parentNode as HTMLElement | null;
       if (popup && parent) {
@@ -174,14 +175,15 @@ class Popup extends React.Component implements RenderPromiseComponent {
           } else test = test.parentNode;
         }
         popup.style.top = `${parent.offsetTop - scrolltop}px`;
-        // Adjust the popup upward if it would extend beyond the bottom of the screen
-        const margin = 22;
+        // Adjust the popup upward if it would extend beyond the bottom of the text area.
+        const margin = 10;
         const box = popup.firstChild as HTMLElement | null;
-        if (box) {
-          const boxbottom = box.getBoundingClientRect().bottom;
-          const viewportHeight = window.innerHeight;
-          if (boxbottom > viewportHeight - margin) {
-            const adjustment = Math.round(viewportHeight - boxbottom - margin);
+        const text = ofClass('atext', popup);
+        if (box && text) {
+          const pupbottom = box.getBoundingClientRect().bottom;
+          const textbottom = text.element.getBoundingClientRect().bottom;
+          if (pupbottom > textbottom - margin) {
+            const adjustment = Math.round(textbottom - pupbottom - margin);
             drag.adjustment = adjustment;
             box.style.top = `${(gap || 0) + adjustment}px`;
           }
@@ -220,6 +222,7 @@ class Popup extends React.Component implements RenderPromiseComponent {
             pt.dataset.infokey = infokey;
             sanitizeHTML(pt, html);
             libswordImgSrc(pt);
+            this.positionPopup(true);
           }
           const parent = npopup.current.parentNode as HTMLElement | null;
           if (!isWindow && parent) {
@@ -307,6 +310,8 @@ class Popup extends React.Component implements RenderPromiseComponent {
     let cls = 'cs-locale';
     if (isWindow) cls += ` ownWindow viewport`;
 
+    const isBrowser = window.processR.platform === 'browser';
+
     return (
       <div
         {...htmlAttribs(`npopup ${cls}`, props)}
@@ -327,7 +332,7 @@ class Popup extends React.Component implements RenderPromiseComponent {
           data-data={JSON_attrib_stringify(data)}
         >
           <Hbox pack="start" align="center" className="popupheader">
-            {!isWindow && <div className="towindow" />}
+            {!isWindow && !isBrowser && <div className="towindow" />}
             {elemdata && elemdata.length > 1 && (
               <div>
                 <a className="popupBackLink">{G.i18n.t('back.label')}</a>

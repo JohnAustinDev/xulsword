@@ -4,7 +4,6 @@ import Cache from '../cache.ts';
 import { GBuilder } from "../type.ts";
 import C from "../constant.ts";
 import { GA } from "./rg";
-import log from "./log.ts";
 
 import type { GAType, GCallType, GType, PrefValue } from "../type.ts";
 import type { GetBooksInVKModules } from "../main/minit.ts";
@@ -114,7 +113,7 @@ export function callBatchThenCacheSync(
   if (calls.length) {
     const disallowed = disallowedAsCallBatch(calls);
     if (!disallowed) {
-      const results = G.callBatch(calls);
+      const results = G.callBatch(prune(calls));
       if (results.length !== calls.length) {
         throw new Error(`callBatch sync did not return the correct data.`);
       }
@@ -128,11 +127,11 @@ export function callBatchThenCacheSync(
 export async function callBatchThenCache(
   GA: GAType,
   calls: GCallType[],
-): Promise<void> {
+): Promise<boolean> {
   if (calls.length) {
     const disallowed = disallowedAsCallBatch(calls);
     if (!disallowed) {
-      const results = await GA.callBatch(calls);
+      const results = await GA.callBatch(prune(calls));
       if (results.length !== calls.length) {
         throw new Error(`callBatch async did not return the correct data.`);
       }
@@ -141,6 +140,7 @@ export async function callBatchThenCache(
       throw new Error(disallowed);
     }
   }
+  return true;
 }
 
 function disallowedAsCallBatch(calls: GCallType[]): string | boolean {
@@ -216,4 +216,15 @@ function promiseCacheKey(acall: GCallType): string {
   if (cacheable) return ckey;
   // Non-cacheable data will be cached and used and then deleted after some delay.
   return `x-${ckey}`;
+}
+
+function prune(calls: GCallType[]): GCallType[] {
+  for (let i = 0; i < calls.length; i++) {
+    if (calls[i]) {
+      const ckey = promiseCacheKey(calls[i]);
+      const x = calls.findIndex((c, i2) => i2 > i && promiseCacheKey(c) === ckey);
+      if (x !== -1) calls.splice(x, 1);
+    }
+  }
+  return calls;
 }

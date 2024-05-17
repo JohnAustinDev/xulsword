@@ -223,7 +223,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
         (columns === 1 || type !== C.BIBLE);
       if (libswordProps && !skipUpdate) {
         const update = writekey !== sbe.dataset.libsword;
-        if (update) {
+        if (!renderPromise.waiting() && update) {
           this.writeLibSword2DOM(
             libswordProps,
             panelIndex,
@@ -239,7 +239,6 @@ class Atext extends React.Component implements RenderPromiseComponent {
           (update || scrollkey !== sbe.dataset.scroll) &&
           isVerseKey;
         if (doscroll) {
-          sbe.dataset.scroll = scrollkey;
           // Multi-column Bibles...
           if (columns > 1 && type === C.BIBLE && libswordProps.location) {
             const rtl = G.Config[module].direction === 'rtl';
@@ -414,11 +413,14 @@ class Atext extends React.Component implements RenderPromiseComponent {
                 }
               }
             }
+            if (!renderPromise.waiting()) sbe.dataset.scroll = scrollkey;
           } else {
             versekeyScroll(sbe, scrollProps);
+            sbe.dataset.scroll = scrollkey;
           }
         } else if (update && type === C.GENBOOK && columns > 1 && sbe) {
           sbe.scrollLeft = 0;
+          sbe.dataset.scroll = scrollkey;
         } else if (update && type === C.DICTIONARY) {
           const { modkey } = libswordProps;
           const id = `${stringHash(modkey)}.${panelIndex}`;
@@ -437,38 +439,42 @@ class Atext extends React.Component implements RenderPromiseComponent {
               }
             }
           }
+          sbe.dataset.scroll = scrollkey;
         }
-        // HIGHLIGHT
-        if (
-          (update || highlightkey !== sbe.dataset.highlightkey) &&
-          !isPinned &&
-          selection &&
-          type === C.BIBLE
-        ) {
-          highlight(sbe, selection, module);
-          sbe.dataset.highlightkey = highlightkey;
-        }
-        // TRIM NOTES
-        if (columns > 1 && (update || doscroll)) {
-          const empty = !trimNotes(sbe, nbe);
-          const nbc = nbe.parentNode as any;
-          if ((empty || !nbc.innerText) && type !== 'Lexicons / Dictionaries') {
-            nbc.classList.add('noteboxEmpty');
-          } else nbc.classList.remove('noteboxEmpty');
-        }
-        // PREV / NEXT LINKS
-        setTimeout(() => {
-          const prev = textChange(atext, false, undefined, renderPromise);
-          const next = textChange(atext, true, undefined, renderPromise);
-          const prevdis = atext.classList.contains('prev-disabled');
-          const nextdis = atext.classList.contains('next-disabled');
-          if ((!prev && !prevdis) || (prev && prevdis)) {
-            atext.classList.toggle('prev-disabled');
+
+        if (!renderPromise.waiting()) {
+          // HIGHLIGHT
+          if (
+            (update || highlightkey !== sbe.dataset.highlightkey) &&
+            !isPinned &&
+            selection &&
+            type === C.BIBLE
+          ) {
+            highlight(sbe, selection, module);
+            sbe.dataset.highlightkey = highlightkey;
           }
-          if ((!next && !nextdis) || (next && nextdis)) {
-            atext.classList.toggle('next-disabled');
+          // TRIM NOTES
+          if (columns > 1 && (update || doscroll)) {
+            const empty = !trimNotes(sbe, nbe);
+            const nbc = nbe.parentNode as any;
+            if ((empty || !nbc.innerText) && type !== 'Lexicons / Dictionaries') {
+              nbc.classList.add('noteboxEmpty');
+            } else nbc.classList.remove('noteboxEmpty');
           }
-        }, 1);
+          // PREV / NEXT LINKS
+          setTimeout(() => {
+            const prev = textChange(atext, false, undefined, renderPromise);
+            const next = textChange(atext, true, undefined, renderPromise);
+            const prevdis = atext.classList.contains('prev-disabled');
+            const nextdis = atext.classList.contains('next-disabled');
+            if ((!prev && !prevdis) || (prev && prevdis)) {
+              atext.classList.toggle('prev-disabled');
+            }
+            if ((!next && !nextdis) || (next && nextdis)) {
+              atext.classList.toggle('next-disabled');
+            }
+          }, 1);
+        }
       }
     }
     const d = diff(state, newState);
@@ -642,6 +648,8 @@ class Atext extends React.Component implements RenderPromiseComponent {
 
     const showSelect = ilModule && ilModuleOption && ilModuleOption.length > 1;
 
+    const isBrowser = window.processR.platform === 'browser';
+
     return (
       <Vbox
         {...addClass(classes, props)}
@@ -659,7 +667,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
       >
         <div className="sbcontrols">
           {isVerseKey && <div className="text-pin" />}
-          {!ownWindow && <div className="text-win" />}
+          {!ownWindow  && !isBrowser && <div className="text-win" />}
         </div>
 
         <Box className="hd">
