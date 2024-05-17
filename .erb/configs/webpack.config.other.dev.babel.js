@@ -39,7 +39,7 @@ export default merge(baseConfig, {
   output: {
     path: webpackPaths.distPath,
     publicPath: process.env.XULSWORD_SERVER_DIST,
-    filename: '[name].dev.js',
+    filename: '[name].js',
     library: {
       type: 'umd',
     },
@@ -47,14 +47,35 @@ export default merge(baseConfig, {
 
   module: {
     // Replace rules[0] of rulesDev with this:
-    rules: rulesDev.map((x, i) => i ? x : {
-      test: /\.[jt]sx?$/,
-      exclude: /node_modules/,
-      use: [
-        {
-          loader: require.resolve('babel-loader'),
-        },
-      ],
+    rules: rulesDev.map((x, i) => {
+      if (i === 0) return {
+        test: /\.[jt]sx?$/,
+        exclude: /node_modules/,
+        use: [
+          {
+            loader: require.resolve('babel-loader'),
+          },
+        ],
+      };
+      if (i === 1) return {
+        test: /\.css$/,
+        use: [
+          {
+            loader: MiniCssExtractPlugin.loader,
+            options: {
+              // `./dist` can't be inerhited for publicPath for styles. Otherwise generated paths will be ./dist/dist
+              publicPath: './',
+            },
+          },
+          {
+            loader: 'css-loader',
+            options: {
+              sourceMap: true,
+            },
+          },
+        ],
+      };
+      return x;
     }),
   },
   plugins: [
@@ -78,6 +99,10 @@ export default merge(baseConfig, {
 
     new webpack.LoaderOptionsPlugin({
       debug: true,
+    }),
+
+    new MiniCssExtractPlugin({
+      filename: '[name]-style.css',
     }),
 
   ],
