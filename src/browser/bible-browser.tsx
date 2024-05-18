@@ -74,23 +74,28 @@ function Controller(
     id: string;
     initial: Partial<XulswordProps>;
     defprefs: PrefObject;
+    locale: string;
+    dir: string;
   }
 ) {
-  const { id, initial, defprefs } = props;
+  const { id, initial, defprefs, locale, dir } = props;
   const [state, _setState] = useState(initial);
-  const $lang = 'en'; // TODO!: <---
-  const $dir = 'ltr'; // TODO!: <---
 
   G.Prefs.setComplexValue('xulsword', {
     ...S.prefs.xulsword,
     ...defprefs
   }, 'prefs_default' as 'prefs');
 
+  G.Prefs.setComplexValue('global', {
+    ...S.prefs.global,
+    locale,
+  }, 'prefs_default' as 'prefs');
+
   const html =
     document.getElementsByTagName('html')[0] as HTMLHtmlElement | undefined;
   if (html) {
-    html.classList.add('skin', 'xulswordWin', 'cs-locale', $lang);
-    html.setAttribute('dir', $dir);
+    html.classList.add('skin', 'xulswordWin', 'cs-locale', locale);
+    html.setAttribute('dir', dir);
   }
 
   return (
@@ -112,7 +117,7 @@ Subscription.subscribe.socketConnected((_socket) => {
     if (success && bibleBrowser) {
       const id = randomID();
       bibleBrowser.setAttribute('id', id);
-      const { props, defprefs: dp } = bibleBrowser.dataset;
+      const { props, defprefs: dp, locale, dir } = bibleBrowser.dataset;
       if (props && dp) {
         const initial = decodeJSData(props) as XulswordProps;
         const defprefs = decodeJSData(dp) as PrefObject;
@@ -121,7 +126,9 @@ Subscription.subscribe.socketConnected((_socket) => {
             <Controller
               id={id}
               defprefs={defprefs}
-              initial={initial} />
+              initial={initial}
+              locale={locale || 'en'}
+              dir={dir || 'ltr'} />
           </StrictMode>);
       }
       bibleBrowser.removeAttribute('data-props');
