@@ -19,7 +19,7 @@ import {
   gbAncestorIDs,
 } from '../../common.ts';
 import C from '../../constant.ts';
-import G, { GA } from '../rg.ts';
+import G from '../rg.ts';
 import RenderPromise, { trySyncOrPromise } from '../renderPromise.ts';
 import { addClass, XulProps, xulPropTypes } from './xul.tsx';
 import { Vbox } from './boxes.tsx';
@@ -129,6 +129,7 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
   onChange(ev: React.SyntheticEvent) {
     const props = this.props as SelectORProps;
     const { onSelection } = props;
+    const { renderPromise } = this;
     const e = ev as React.ChangeEvent<HTMLSelectElement>;
     const targ = ofClass(
       ['select-module', 'select-parent', 'select-child'],
@@ -142,18 +143,13 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
         if (targ.type === 'select-module') {
           let nodes: TreeNodeInfo[] = [];
           if (tabType === 'Genbks') {
-            try {
-              nodes = G.genBookTreeNodes(value);
-            } catch(er) {
-              nodes = await GA.genBookTreeNodes(value);
-            }
+            [nodes] = trySyncOrPromise([
+              ['genBookTreeNodes', null, [value]]
+            ], [], renderPromise) as TreeNodeInfoPref[][];
           } else if (tabType === 'Dicts') {
-            let keylist;
-            try {
-              keylist = G.getAllDictionaryKeyList(value);
-            } catch(er) {
-              keylist = await GA.getAllDictionaryKeyList(value);
-            }
+            const [keylist] = trySyncOrPromise([
+              ['getAllDictionaryKeyList', null, [value]]
+            ], [], renderPromise) as string[][];
             nodes = dictTreeNodes(keylist, value);
           }
           const leafNode = findFirstLeafNode(nodes, nodes);
@@ -211,14 +207,14 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
     const propNodeLists: NodeListOR[] = propNodeListsMods.map((m) => {
       let nodes: TreeNodeInfo[] = [];
       if (G.Tab[m].tabType === 'Genbks') {
-        const [n] = trySyncOrPromise(G,
+        const [n] = trySyncOrPromise(
           [['genBookTreeNodes', null, [m]]],
           [[]],
           renderPromise
         ) as TreeNodeInfoPref[][];
         if (!renderPromise.waiting()) nodes = n;
       } else if (G.Tab[m].tabType === 'Dicts') {
-        const [keylist] = trySyncOrPromise(G,
+        const [keylist] = trySyncOrPromise(
           [['getAllDictionaryKeyList', null, [m]]],
           [[]],
           renderPromise,

@@ -80,7 +80,7 @@ export function libswordText(
       if (location && location.book && module) {
         const { book, chapter } = location;
         if (ilModule) {
-          const [chtxt] = trySyncOrPromise(G,
+          const [chtxt] = trySyncOrPromise(
             [['LibSword', 'getChapterTextMulti', [`${module},${ilModule}`, `${book}.${chapter}`, false, options]]],
             [''],
             renderPromise || null
@@ -92,8 +92,7 @@ export function libswordText(
           // We needed to check that the module contains the book, because
           // LibSword will silently return text from elsewhere in a module
           // if the module does not include the requested book!
-          const [textHTML, notes] = trySyncOrPromise(G,
-            [
+          const [textHTML, notes] = trySyncOrPromise([
               ['LibSword', 'getChapterText', [module, `${book}.${chapter}`, options]],
               ['LibSword', 'getNotes', ['getChapterText', [module, `${book}.${chapter}`, options]]]
             ], ['', ''],
@@ -110,8 +109,7 @@ export function libswordText(
     case C.COMMENTARY: {
       if (location && location.book && module) {
         const { book, chapter } = location;
-        const [textHTML, notes] = trySyncOrPromise(G,
-          [
+        const [textHTML, notes] = trySyncOrPromise([
             ['LibSword', 'getChapterText', [module, `${book}.${chapter}`, options]],
             ['LibSword', 'getNotes', ['getChapterText', [module, `${book}.${chapter}`, options]]]
           ],
@@ -127,8 +125,7 @@ export function libswordText(
     }
     case C.GENBOOK: {
       if (modkey) {
-        const [textHTML, noteHTML] = trySyncOrPromise(G,
-          [
+        const [textHTML, noteHTML] = trySyncOrPromise([
             ['LibSword', 'getGenBookChapterText', [module, modkey, options]],
             ['LibSword', 'getNotes', ['getGenBookChapterText', [module, modkey, options]]]
           ],
@@ -150,7 +147,7 @@ export function libswordText(
       // Cache is also used for DailyDevotion - if the key is not in the
       // Cache use today's date instead of the key.
       const key = dictKeyToday(modkey, module);
-      const [keylist] = trySyncOrPromise(G,
+      const [keylist] = trySyncOrPromise(
         [['getAllDictionaryKeyList', null, [module]]],
         [[]],
         renderPromise || null
@@ -277,7 +274,7 @@ export function genbookChange(
 ): string | null {
   let tocs: string[] = [];
   if (module) {
-    [tocs] = trySyncOrPromise(G,
+    [tocs] = trySyncOrPromise(
       [['LibSword', 'getGenBookTableOfContents', [module]]],
       [[]],
       renderPromise

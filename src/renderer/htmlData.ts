@@ -489,7 +489,7 @@ export function verseKey(
         vkeytext: string,
         tov11n: V11nType
       ) => {
-        const [newloc] = trySyncOrPromise(G,
+        const [newloc] = trySyncOrPromise(
           [['LibSword', 'convertLocation', [fromv11n, vkeytext, tov11n]]],
           [vkeytext],
           renderPromise

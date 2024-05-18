@@ -2,7 +2,6 @@
 import React from 'react';
 import { getSwordOptions, ofClass, sanitizeHTML } from '../../../common.ts';
 import C from '../../../constant.ts';
-import G from '../../rg.ts';
 import { trySyncOrPromise } from '../../renderPromise.ts';
 import { delayHandler } from '../xul.tsx';
 
@@ -77,7 +76,7 @@ export default function handler(this: Chooser, es: React.SyntheticEvent): void {
           const hd = /<h\d([^>]*class="head1[^"]*"[^>]*>)(.*?)<\/h\d>/i;
           // Rexgex parses verse number from array member strings
           const vs = /<sup[^>]*>(\d+)<\/sup>/i; // Get verse from above
-          const [chtxt] = trySyncOrPromise(G,
+          const [chtxt] = trySyncOrPromise(
             [['LibSword', 'getChapterText', [headingsModule, `${book}.${chapter}`, options]]],
             [''],
             renderPromise

@@ -118,7 +118,13 @@ io.on('connection', (socket) => {
       } catch (er) {
         log.error(er);
       }
-      if (typeof callback === 'function') callback(r);
+      if (typeof callback === 'function') {
+        if (r instanceof Promise) {
+          r.then((result) => callback(result)).catch((er) => log.error(er));
+        } else {
+          callback(r);
+        }
+      }
       else {
         log.error(`G callback is not a function, is '${typeof callback}': ${JSON_stringify(acall)}`);
       }

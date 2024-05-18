@@ -775,8 +775,8 @@ export type GAddCaller = {
 };
 
 export type GCallType = [
-  keyof GType | keyof GAType,
-  keyof GType[keyof GType] | keyof GAType[keyof GAType] | null,
+  keyof GType,
+  keyof GType[keyof GType] | null,
   any[] | undefined
 ];
 
@@ -811,8 +811,10 @@ export type GType = {
   publishSubscription: typeof publishSubscription;
   canUndo: typeof canUndo;
   canRedo: typeof canRedo;
-  // IMPORTANT: callBatch is not cacheable! Always use callBatchThenCache or callBatchThenCacheSync.
-  callBatch: GCachePreloadType;
+  // IMPORTANT: callBatch is not cacheable! Always use callBatchThenCache.
+  callBatch: (...args: Parameters<GCachePreloadType>) => Promise<ReturnType<GCachePreloadType>>;
+  // IMPORTANT: callBatchSync is not cacheable! Always use callBatchThenCacheSync.
+  callBatchSync: GCachePreloadType;
   getAllDictionaryKeyList: typeof getAllDictionaryKeyList;
   genBookTreeNodes: typeof genBookTreeNodes;
 
@@ -834,57 +836,6 @@ export type GType = {
   Viewport: typeof Viewport;
   Window: typeof Window;
 };
-
-export type GAType = { gtype: 'async' }
-  & { [k in keyof Pick<GType,
-        'Books' |
-        'Book' |
-        'Tabs' |
-        'Tab' |
-        'Config' |
-        'AudioConfs' |
-        'ProgramConfig' |
-        'LocaleConfigs' |
-        'ModuleConfigDefault' |
-        'ModuleFonts' |
-        'FeatureModules' |
-        'BkChsInV11n' |
-        'OPSYS' |
-        'GetBooksInVKModules'>
-      ]: Promise<GType[k]>
-  }
-  & { [k in keyof Pick<GType,
-        'resolveHtmlPath' |
-        'inlineFile' |
-        'inlineAudioFile' |
-        'resetMain' |
-        'getSystemFonts' |
-        'getBooksInVKModule' |
-        'getLocalizedBooks' |
-        'getLocaleDigits' |
-        'publishSubscription' |
-        'canUndo' |
-        'canRedo' |
-        'callBatch' |
-        'getAllDictionaryKeyList' |
-        'genBookTreeNodes'>
-      ]: (...args: Parameters<GType[k]>) => Promise<ReturnType<GType[k]>>
-  }
-  & { [k in keyof Pick<GType,
-        'i18n' |
-        'clipboard' |
-        'Prefs' |
-        'DiskCache' |
-        'LibSword' |
-        'Dirs' |
-        'Commands' |
-        'Shell' |
-        'Data' |
-        'Module' |
-        'Viewport' |
-        'Window'>
-      ]: unknown;
-  };
 
 // This GBuilder object will be used in the main/mg and renderer/rg
 // modules at runtime to create different types of G objects sharing
@@ -915,6 +866,7 @@ export const GBuilder: GType & {
   // errors will result!
   asyncFuncs: [
     [keyof GType, (keyof GType['getSystemFonts'])[]],
+    [keyof GType, (keyof GType['callBatch'])[]],
     [keyof GType, (keyof GType['Commands'])[]],
     [keyof GType, (keyof GType['Module'])[]],
     [keyof GType, (keyof GType['LibSword'])[]],
@@ -927,11 +879,11 @@ export const GBuilder: GType & {
     [(keyof GType), (keyof GType['Book'])[]],
     [(keyof GType), (keyof GType['Tabs'])[]],
     [(keyof GType), (keyof GType['Tab'])[]],
-    [(keyof GAType), (keyof GType['Config'])[]],
-    [(keyof GAType), (keyof GType['AudioConfs'])[]],
-    [(keyof GAType), (keyof GType['ProgramConfig'])[]],
+    [(keyof GType), (keyof GType['Config'])[]],
+    [(keyof GType), (keyof GType['AudioConfs'])[]],
+    [(keyof GType), (keyof GType['ProgramConfig'])[]],
     //[(keyof GAType), (keyof GType['LocaleConfigs'])[]],
-    [(keyof GAType), (keyof GType['ModuleConfigDefault'])[]],
+    [(keyof GType), (keyof GType['ModuleConfigDefault'])[]],
     [(keyof GType), (keyof GType['ModuleFonts'])[]],
     [(keyof GType), (keyof GType['FeatureModules'])[]],
     [(keyof GType), (keyof GType['BkChsInV11n'])[]],
@@ -951,6 +903,8 @@ export const GBuilder: GType & {
 
   asyncFuncs: [
     ['getSystemFonts',
+      []],
+    ['callBatch',
       []],
     ['Commands',
       ['installXulswordModules',
@@ -1072,6 +1026,7 @@ export const GBuilder: GType & {
   canUndo: func as any,
   canRedo: func as any,
   callBatch: func as any,
+  callBatchSync: func as any,
   getAllDictionaryKeyList: CACHEfunc as any,
   genBookTreeNodes: CACHEfunc as any,
 

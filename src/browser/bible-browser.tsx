@@ -5,7 +5,7 @@ import { decodeJSData } from "./bcommon.ts";
 import { randomID } from "../common.ts";
 import C from '../constant.ts';
 import S from '../defaultPrefs.ts';
-import G, { GA } from "../renderer/rg.ts";
+import G from "../renderer/rg.ts";
 import Subscription from '../subscription.ts';
 import { callBatchThenCache } from "../renderer/renderPromise.ts";
 import Xulsword, { XulswordProps } from "../renderer/xulswordWin/xulsword.tsx";
@@ -42,7 +42,6 @@ const localePreload = [
 ];
 
 const preloads: GCallType[] = [
-  ['i18n', 'language'],
   ['Book', null],
   ['Tab', null],
   ['Tabs', null],
@@ -78,18 +77,8 @@ function Controller(
     dir: string;
   }
 ) {
-  const { id, initial, defprefs, locale, dir } = props;
+  const { id, initial, locale, dir } = props;
   const [state, _setState] = useState(initial);
-
-  G.Prefs.setComplexValue('xulsword', {
-    ...S.prefs.xulsword,
-    ...defprefs
-  }, 'prefs_default' as 'prefs');
-
-  G.Prefs.setComplexValue('global', {
-    ...S.prefs.global,
-    locale,
-  }, 'prefs_default' as 'prefs');
 
   const html =
     document.getElementsByTagName('html')[0] as HTMLHtmlElement | undefined;
@@ -113,7 +102,21 @@ function Controller(
 // component where only chapters listed in data-chaplist will be available
 // for selection.
 Subscription.subscribe.socketConnected((_socket) => {
-  callBatchThenCache(GA, preloads).then((success) => {
+  if (bibleBrowser) {
+    const { defprefs: dp, locale } = bibleBrowser.dataset;
+    if (dp) {
+      const defprefs = decodeJSData(dp) as PrefObject;
+      G.Prefs.setComplexValue('global', {
+        ...S.prefs.global,
+        locale,
+      }, 'prefs_default' as 'prefs');
+      G.Prefs.setComplexValue('xulsword', {
+        ...S.prefs.xulsword,
+        ...defprefs
+      }, 'prefs_default' as 'prefs');
+    }
+  }
+  callBatchThenCache(preloads).then((success) => {
     if (success && bibleBrowser) {
       const id = randomID();
       bibleBrowser.setAttribute('id', id);

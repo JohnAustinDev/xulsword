@@ -153,10 +153,16 @@ class GIClass implements Omit<GType,
     return getLocaleDigits(...args);
   }
 
-  callBatch(
+  async callBatch(
     ...args: Parameters<GType['callBatch']>
   ): ReturnType<GType['callBatch']> {
-    return callBatch(GI as any, ...args);
+    return callBatch(GI, ...args);
+  }
+
+  callBatchSync(
+    ...args: Parameters<GType['callBatchSync']>
+  ): ReturnType<GType['callBatchSync']> {
+    return callBatch(GI, ...args);
   }
 
   getAllDictionaryKeyList(

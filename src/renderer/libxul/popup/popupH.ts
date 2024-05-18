@@ -82,7 +82,7 @@ export function getPopupHTML(
           const { book, chapter } = location;
           // getChapterText must be called before getNotes
           const options = getSwordOptions(G, G.Tab[context].type);
-          const [notes] = trySyncOrPromise(G,
+          const [notes] = trySyncOrPromise(
             [
               ['LibSword', 'getChapterText', [context, `${book}.${chapter}`, options]],
               ['LibSword', 'getNotes', ['getChapterText', [context, `${book}.${chapter}`, options]]]

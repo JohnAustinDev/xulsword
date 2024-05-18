@@ -308,8 +308,7 @@ export function getLocalizedChapterTerm(
   };
 
   if (G && renderPromise) {
-    const [exists, tk1, tk2] = trySyncOrPromise(G,
-      [
+    const [exists, tk1, tk2] = trySyncOrPromise([
         ['i18n', 'exists', [k1, toptions]],
         ['i18n', 't', [k1, toptions]],
         ['i18n', 't', [k2, toptions]]
@@ -379,7 +378,7 @@ export function getMaxVerse(
   const { chapter } = verseKey(vkeytext, v11n);
   const maxch = getMaxChapter(v11n, vkeytext);
   if (chapter <= maxch && chapter > 0) {
-    const [r] = trySyncOrPromise(G,
+    const [r] = trySyncOrPromise(
       [['LibSword', 'getMaxVerse', [v11n, vkeytext]]],
       [0],
       renderPromise
@@ -390,7 +389,7 @@ export function getMaxVerse(
 }
 
 export function getCompanionModules(mod: string, renderPromise?: RenderPromise) {
-  const [cms] = trySyncOrPromise(G,
+  const [cms] = trySyncOrPromise(
       [['LibSword', 'getModuleInformation', [mod, 'Companion']]],
       [C.NOTFOUND],
       renderPromise

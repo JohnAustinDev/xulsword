@@ -4,7 +4,6 @@ import SocketConnect from './preload.ts';
 import { handleAction, decodeJSData, createNodeList } from "./bcommon.ts";
 import { diff, randomID } from "../common.ts";
 import C from '../constant.ts';
-import { GA } from "../renderer/rg.ts";
 import Subscription from '../subscription.ts';
 import { callBatchThenCache } from "../renderer/renderPromise.ts";
 import SelectVK from "../renderer/libxul/selectVK.tsx";
@@ -16,7 +15,6 @@ import type { SelectVKProps, SelectVKType } from "../renderer/libxul/selectVK.ts
 import type { SelectORMType, SelectORProps } from "../renderer/libxul/selectOR.tsx";
 
 const preloads: GCallType[] = [
-  ['i18n', 'language'],
   ['Book', null],
   ['Tab', null],
   ['Tabs', null],
@@ -134,7 +132,7 @@ function Controller(
 // component where only chapters listed in data-chaplist will be available
 // for selection.
 Subscription.subscribe.socketConnected((_socket) => {
-  callBatchThenCache(GA, preloads).then(() => {
+  callBatchThenCache(preloads).then(() => {
     const selectVKs = document.getElementsByClassName('select-container');
     (Array.from(selectVKs) as HTMLDivElement[])
       .forEach((selectvk) => {

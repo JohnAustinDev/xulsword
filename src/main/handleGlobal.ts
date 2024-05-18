@@ -19,13 +19,12 @@ export default function handleGlobal(
   if (name && name in GBuilder && allow) {
     const gBuilder = GBuilder as any;
     const g = G as any;
-    if (typeof args === 'undefined' && gBuilder[name] === 'getter') {
+    if (!Array.isArray(args) && gBuilder[name] === 'getter') {
       ret = g[name];
-    } else if (typeof args !== 'undefined' &&
-      typeof gBuilder[name] === 'function') {
+    } else if (Array.isArray(args) && typeof gBuilder[name] === 'function') {
       ret = g[name](...args);
     } else if (m && typeof gBuilder[name] === 'object') {
-      if (typeof args === 'undefined' && gBuilder[name][m] === 'getter') {
+      if (!Array.isArray(args) && gBuilder[name][m] === 'getter') {
         ret = g[name][m];
       } else if (Array.isArray(args) && typeof gBuilder[name][m] === 'function') {
         if (

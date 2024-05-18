@@ -182,8 +182,7 @@ export function getDictEntryHTML(
     const m = mx in G.Tab ? mx : Object.keys(G.Tab).find((md) => md.toLowerCase() === mlc) || '';
     if (m && m in G.Tab && G.Tab[m].type === C.DICTIONARY) {
       const k = DictKeyTransform[m] ? DictKeyTransform[m](key) : key;
-      const [h1, h2, dictTitle] = trySyncOrPromise(G,
-        [
+      const [h1, h2, dictTitle] = trySyncOrPromise([
           ['LibSword', 'getDictionaryEntry', [m, k, options]],
           ['LibSword', 'getDictionaryEntry', [m, k.toUpperCase(), options]],
           ['LibSword', 'getModuleInformation', [m, 'Description']]
@@ -302,7 +301,7 @@ export function getStrongsModAndKey(
         let k;
         let r;
         for (k = 0; k < keys.length; k += 1) {
-          [r] = trySyncOrPromise(G,
+          [r] = trySyncOrPromise(
             [['LibSword', 'getDictionaryEntry', [mod, keys[k], options]]],
             [C.NOTFOUND],
             renderPromise

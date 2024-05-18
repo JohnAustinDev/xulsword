@@ -54,9 +54,10 @@ import type {
   ModulesCache,
   TreeNodeInfoPref,
 } from '../type.ts';
+import type GI from './mgServer.ts';
 
 export type GCachePreloadType = (calls: (GCallType | null)[]) => (any | null)[];
-export function callBatch(G: GType, calls: (GCallType | null)[]): (any | null)[] {
+export function callBatch(G: GType | typeof GI, calls: (GCallType | null)[]): (any | null)[] {
   const resp: any[] = [];
   const g = G as any;
   calls.forEach((c: (GCallType | null)) => {
@@ -66,14 +67,14 @@ export function callBatch(G: GType, calls: (GCallType | null)[]): (any | null)[]
       if (m && typeof m !== 'string') {
         throw new Error(`G.${name} method name is not a string: '${typeof m}`);
       }
-      if (!m && typeof args === 'undefined') {
+      if (!m && !Array.isArray(args)) {
         resp.push(g[name]);
-      } else if (!m && typeof args !== 'undefined') {
+      } else if (!m && Array.isArray(args)) {
         if (typeof g[name] !== 'function') {
           throw new Error(`'${name}' is not a method of G`);
         }
         resp.push(g[name](...args));
-      } else if (m && typeof args === 'undefined') {
+      } else if (m && !Array.isArray(args)) {
         if (!(m in g[name])) {
           throw new Error(`'${m.toString()}' is not a member of G.${name}`);
         }

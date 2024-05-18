@@ -1,12 +1,12 @@
 /* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-use-before-define */
-import { JSON_stringify, GCacheKey, isCallCacheable } from '../common.ts';
+import { JSON_stringify, GCacheKey, isCallCacheable, clone } from '../common.ts';
 import Cache from '../cache.ts';
 import { GBuilder } from '../type.ts';
 import log from './log.ts';
 import CookiePrefs from './prefs.ts';
 
-import type { GAType, GCallType, GType } from '../type.ts';
+import type { GCallType, GType } from '../type.ts';
 
 async function asyncRequest(
   ckey: string,
@@ -18,9 +18,10 @@ async function asyncRequest(
   const cacheable = isCallCacheable(GBuilder, thecall);
   if (cacheable && Cache.has(ckey)) return Promise.resolve(Cache.read(ckey));
   log.silly(`${ckey} ${JSON_stringify(thecall)} async ${cacheable ? 'miss' : 'uncacheable'}`);
+  const call = window.processR.platform === 'browser' ? publicCall(thecall) : thecall;
   let result;
   try {
-    result = await window.ipc.invoke('global', thecall);
+    result = await window.ipc.invoke('global', call);
     if (cacheable) Cache.write(result, ckey);
   } catch (er: any) {
     throw new Error(`Promise rejection in ${JSON_stringify(thecall)}:\n${er.toString()}`);
@@ -41,7 +42,7 @@ function request(
     if (cacheable)
       throw new Error(`Cache must be preloaded in browser context: ${JSON_stringify(thecall)}`);
     else
-      throw new Error(`The GA version of this method must be used in browser context: ${JSON_stringify(thecall)}`);
+      throw new Error(`This uncacheable call requires G.callBatch in browser context: ${JSON_stringify(thecall)}`);
   }
   log.silly(`${ckey} ${JSON_stringify(thecall)} sync ${cacheable ? 'miss' : 'uncacheable'}`);
   const result = window.ipc.sendSync('global', thecall);
@@ -66,6 +67,31 @@ function allowed(thecall: GCallType): boolean {
   return false;
 }
 
+function publicCall(thecall: GCallType): GCallType {
+  const [name, method] = thecall;
+  let args = thecall[2];
+  if (name === 'callBatch' && args) {
+    const calls = args[0].map((call: GCallType) => {
+      return publicCall(call);
+    });
+    return [name, method, [calls]];
+  } else if (args) {
+    // Add lng option to G.i18n.t() and G.i18n.exists().
+    if (name === 'i18n' && typeof method === 'string'
+        && ['t', 'exists'].includes(method)) {
+      // Add language to all i18n calls, unless already present.
+      const options = (args.length > 1 ? args[1] : {}) as Parameters<typeof G.i18n.t>[1];
+      if (typeof options.lng !== 'string') {
+        options.lng = G.Prefs.getCharPref('global.locale');
+      }
+      const newargs = clone(args);
+      if (newargs.length) newargs[1] = options;
+      return [name, method, newargs];
+    }
+  }
+  return [name, method, args];
+}
+
 // This G object is used in renderer processes, and shares the same
 // interface as a main process G object. Properties of this object
 // access data and objects via IPC from the main process G object.
@@ -74,15 +100,13 @@ function allowed(thecall: GCallType): boolean {
 // is subject to security restrictions, so in this context certain
 // G functions will throw an error.
 // - IPC via the Internet also requires G functionality to be
-// completely async. To accomodate this requirement, a GA object
-// is provided having the same interface as G, but only Internet
-// safe methods are provided and all responses are asynchronous.
+// completely async. To accomodate this requirement, syncronous
+// must be made via G.callBatch() which is asyncronous.
 // - Although IPC via Internet is async, it is possible to preload
-// data to the cache asynchronously and retrieve it synchronously
-// using G. Just use G.callBatch() to load the cache before any
-// synchronous G calls.
+// data to the cache asynchronously and then retrieve it synchronously
+// using G. Just use callBatchThenCache to load the cache before any
+// of these synchronous G calls.
 const G = {} as GType;
-export const GA = {} as GAType;
 const { asyncFuncs } = GBuilder;
 Object.entries(GBuilder).forEach((entry) => {
   if (!([
@@ -93,7 +117,6 @@ Object.entries(GBuilder).forEach((entry) => {
   ] as (keyof typeof GBuilder)[]).includes(entry[0] as any)) {
     const gBuilder = GBuilder as any;
     const g = G as any;
-    const ga = GA as any;
     const name = entry[0] as keyof Omit<typeof GBuilder,
       'gtype' |
       'asyncFuncs' |
@@ -108,11 +131,6 @@ Object.entries(GBuilder).forEach((entry) => {
           return request(ckey, acall);
         },
       });
-      Object.defineProperty(GA, name, {
-        get() {
-          return asyncRequest(ckey, acall);
-        },
-      });
     } else if (typeof value === 'function') {
       g[name] = (...args: unknown[]) => {
         const acall: GCallType = [name, null, args];
@@ -122,29 +140,24 @@ Object.entries(GBuilder).forEach((entry) => {
         }
         return request(ckey, acall);
       };
-      ga[name] = (...args: unknown[]) => {
-        const acall: GCallType = [name, null, args];
-        const ckey = GCacheKey(acall);
-        return asyncRequest(ckey, acall);
-      };
     } else if (typeof value === 'object') {
       const methods = Object.getOwnPropertyNames(value);
       methods.forEach((m) => {
         if (g[name] === undefined) {
           g[name] = {};
-          ga[name] = {};
         }
         if (gBuilder[name][m] === 'getter') {
           const acall: GCallType = [name, m, undefined];
           const ckey = GCacheKey(acall);
           Object.defineProperty(g[name], m, {
             get() {
+              // In Browsers, i18n.language is never used, rather global.locale pref
+              // is specified in all i18n calls, so return that value here.
+              if (name === 'i18n' && m === 'language'
+                && window.processR.platform === 'browser') {
+              return G.Prefs.getCharPref('global.locale')
+            }
               return request(ckey, acall);
-            },
-          });
-          Object.defineProperty(ga[name], m, {
-            get() {
-              return asyncRequest(ckey, acall);
             },
           });
         } else if (typeof gBuilder[name][m] === 'function') {
@@ -161,11 +174,6 @@ Object.entries(GBuilder).forEach((entry) => {
               }
               return request(ckey, acall);
             };
-            ga[name][m] = (...args: unknown[]) => {
-              const acall: GCallType = [name, m, args];
-              const ckey = GCacheKey(acall);
-              return asyncRequest(ckey, acall);
-            };
           } else {
             // Then use Prefs cookie rather than server file.
             g.Prefs[m] = (...args: unknown[]) => {
@@ -178,7 +186,6 @@ Object.entries(GBuilder).forEach((entry) => {
               }
               return (CookiePrefs as any)[m](...args);
             };
-            ga.Prefs[m] = g.Prefs[m];
           }
         } else {
           throw Error(

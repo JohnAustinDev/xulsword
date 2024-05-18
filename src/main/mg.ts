@@ -216,7 +216,11 @@ class GClass implements GType {
     return canRedo(...args);
   }
 
-  callBatch(...args: Parameters<GType['callBatch']>): ReturnType<GType['callBatch']> {
+  async callBatch(...args: Parameters<GType['callBatch']>): ReturnType<GType['callBatch']> {
+    return callBatch(G, ...args);
+  }
+
+  callBatchSync(...args: Parameters<GType['callBatchSync']>): ReturnType<GType['callBatchSync']> {
     return callBatch(G, ...args);
   }
 

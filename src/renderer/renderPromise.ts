@@ -3,9 +3,9 @@ import { GCacheKey, JSON_stringify, isCallCacheable } from "../common.ts";
 import Cache from '../cache.ts';
 import { GBuilder } from "../type.ts";
 import C from "../constant.ts";
-import { GA } from "./rg";
+import G from '../renderer/rg.ts';
 
-import type { GAType, GCallType, GType, PrefValue } from "../type.ts";
+import type { GCallType, PrefValue } from "../type.ts";
 import type { GetBooksInVKModules } from "../main/minit.ts";
 
 export interface RenderPromiseComponent {
@@ -24,14 +24,13 @@ export type RenderPromiseState = {
 // added to the parent component's renderPromise call list, and a default value
 // is returned.
 export function trySyncOrPromise(
-  G: GType,
   calls: GCallType[],
   defaultValues?: PrefValue[],
   promise?: RenderPromise | null,
 ): PrefValue[] {
   if (window.processR.platform !== 'browser') {
     const results = calls.map((call) => getCallFromCache(call));
-    callBatchThenCacheSync(G, calls.filter((_gc, i) => results[i] === undefined));
+    callBatchThenCacheSync(calls.filter((_gc, i) => results[i] === undefined));
     return getCallsFromCacheAndClear(calls);
   } else if (promise) {
     const presults = getCallsFromCacheAndClear(calls);
@@ -95,7 +94,7 @@ export default class RenderPromise {
           return !isCallCacheable(GBuilder, call) || !Cache.has(promiseCacheKey(call))
         });
 
-        callBatchThenCache(GA, callsStillNeeded).then(() => {
+        callBatchThenCache(callsStillNeeded).then(() => {
           components.forEach((component) => {
             component.setState({ renderPromiseID: Math.random() } as RenderPromiseState);
           });
@@ -107,13 +106,12 @@ export default class RenderPromise {
 }
 
 export function callBatchThenCacheSync(
-  G: GType,
   calls: GCallType[]
 ) {
   if (calls.length) {
     const disallowed = disallowedAsCallBatch(calls);
     if (!disallowed) {
-      const results = G.callBatch(prune(calls));
+      const results = G.callBatchSync(prune(calls));
       if (results.length !== calls.length) {
         throw new Error(`callBatch sync did not return the correct data.`);
       }
@@ -125,13 +123,12 @@ export function callBatchThenCacheSync(
 }
 
 export async function callBatchThenCache(
-  GA: GAType,
   calls: GCallType[],
 ): Promise<boolean> {
   if (calls.length) {
     const disallowed = disallowedAsCallBatch(calls);
     if (!disallowed) {
-      const results = await GA.callBatch(prune(calls));
+      const results = await G.callBatch(prune(calls));
       if (results.length !== calls.length) {
         throw new Error(`callBatch async did not return the correct data.`);
       }
@@ -140,6 +137,7 @@ export async function callBatchThenCache(
       throw new Error(disallowed);
     }
   }
+
   return true;
 }
 

@@ -112,8 +112,7 @@ function getFootnoteText(
   const { book, chapter, verse, subid } = location;
   if (subid) {
     const options = getSwordOptions(G, G.Tab[module].type);
-    const [_text, notesx] = trySyncOrPromise(G,
-      [
+    const [_text, notesx] = trySyncOrPromise([
         ['LibSword', 'getChapterText', [module, `${book} ${chapter}`, options]],
         ['LibSword', 'getNotes', ['getChapterText', [module, `${book} ${chapter}`, options]]]
       ],
@@ -210,12 +209,13 @@ export function locationVKText(
         text = getFootnoteText(loc, mod, renderPromise);
       } else {
         const options = getSwordOptions(G, G.Tab[module].type);
-        [text] = trySyncOrPromise(G,
-          [['LibSword', 'getVerseText', [
+        [text] = trySyncOrPromise([
+          ['LibSword', 'getVerseText', [
             module,
             modloc.osisRef(v11n),
             keepNotes,
-            options,]]],
+            options,]
+          ]],
           [''],
           renderPromise
         ) as string[]
@@ -612,8 +612,7 @@ export function getIntroductions(
 
   const options = getSwordOptions(G, G.Tab[mod].type);
   const args = [mod, vkeytext, options] as Parameters<typeof G.LibSword.getIntroductions>;
-  let [intro, notes] = trySyncOrPromise(G,
-    [
+  let [intro, notes] = trySyncOrPromise([
       ['LibSword', 'getIntroductions', args],
       ['LibSword', 'getNotes', ['getIntroductions', args]]
     ],
@@ -645,8 +644,7 @@ export function getChapterHeading(
   const intro = getIntroductions(module, `${book} ${chapter}`, renderPromise);
 
 
-  const [localizedBook, int] = trySyncOrPromise(G,
-    [
+  const [localizedBook, int] = trySyncOrPromise([
       ['i18n', 't', [book, toptions]],
       ['i18n', 't', ['IntroLink', toptions]]
     ],
