@@ -781,8 +781,6 @@ export type GCallType = [
 ];
 
 export type GType = {
-  gtype: 'sync';
-
   // Getters
   Books: ReturnType<typeof getBooks>;
   Book: ReturnType<typeof getBook>;
@@ -882,12 +880,10 @@ export const GBuilder: GType & {
     [(keyof GType), (keyof GType['Config'])[]],
     [(keyof GType), (keyof GType['AudioConfs'])[]],
     [(keyof GType), (keyof GType['ProgramConfig'])[]],
-    //[(keyof GAType), (keyof GType['LocaleConfigs'])[]],
     [(keyof GType), (keyof GType['ModuleConfigDefault'])[]],
     [(keyof GType), (keyof GType['ModuleFonts'])[]],
     [(keyof GType), (keyof GType['FeatureModules'])[]],
     [(keyof GType), (keyof GType['BkChsInV11n'])[]],
-    //[(keyof GAType), (keyof GType['getSystemFonts'])[]],
     [(keyof GType), (keyof GType['getBooksInVKModule'])[]],
     [(keyof GType), (keyof GType['getLocalizedBooks'])[]],
     [(keyof GType), (keyof GType['getLocaleDigits'])[]],
@@ -942,8 +938,6 @@ export const GBuilder: GType & {
       []],
     ['AudioConfs',
       []],
-    /*['LocaleConfigs',
-      []],*/
     ['ProgramConfig',
       []],
     ['ModuleConfigDefault',
@@ -954,8 +948,6 @@ export const GBuilder: GType & {
       []],
     ['BkChsInV11n',
       []],
-    /*['getSystemFonts',
-      []],*/
     ['getBooksInVKModule',
       []],
     ['getLocalizedBooks',
@@ -995,8 +987,6 @@ export const GBuilder: GType & {
       'getModuleInformation']],
   ],
 
-  gtype: 'sync',
-
   // Getters
   Books: 'getter' as any,
   Book: 'getter' as any,
@@ -1021,14 +1011,14 @@ export const GBuilder: GType & {
   getBooksInVKModule: CACHEfunc as any,
   getLocalizedBooks: CACHEfunc as any,
   getLocaleDigits: CACHEfunc as any,
+  getAllDictionaryKeyList: CACHEfunc as any,
+  genBookTreeNodes: CACHEfunc as any,
   resetMain: func as any,
   publishSubscription: func as any,
   canUndo: func as any,
   canRedo: func as any,
   callBatch: func as any,
   callBatchSync: func as any,
-  getAllDictionaryKeyList: CACHEfunc as any,
-  genBookTreeNodes: CACHEfunc as any,
 
   // Objects
   i18n: {

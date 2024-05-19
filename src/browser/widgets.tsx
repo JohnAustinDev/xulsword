@@ -4,7 +4,6 @@ import SocketConnect from './preload.ts';
 import { handleAction, decodeJSData, createNodeList } from "./bcommon.ts";
 import { diff, randomID } from "../common.ts";
 import C from '../constant.ts';
-import Subscription from '../subscription.ts';
 import { callBatchThenCache } from "../renderer/renderPromise.ts";
 import SelectVK from "../renderer/libxul/selectVK.tsx";
 import SelectOR from "../renderer/libxul/selectOR.tsx";
@@ -44,7 +43,11 @@ const selectORDefault = {
   onSelection: () => {},
 } as SelectORProps;
 
-// React element controller:
+// Each SelectVK will keep its own state, providing chapter selection from any
+// installed SWORD module, unless the parent div has a valid data-chaplist
+// attribute value. In that case the SelectVK will become a controlled
+// component where only chapters listed in data-chaplist will be available
+// for selection.
 function Controller(
   props: {
     id: string;
@@ -57,7 +60,7 @@ function Controller(
   const { id, action, initial, selector, chaplist } = props;
   const [state, setState] = useState(() => {
     // Initialize state values with default and Drupal values.
-    const s = {} as SelectVKProps;
+    const s = {} as Partial<SelectVKProps> | Partial<SelectORProps>;
     const def = selector === 'selectOR' ? selectORDefault : selectVKDefault;
     Object.entries(def).forEach((entry) => {
       let [prop, v] = entry;
@@ -68,9 +71,10 @@ function Controller(
     // initial VK is in the Chaplist, and the selecVK shows only chapters
     // in Chaplist.
     if (chaplist && !Array.isArray(chaplist) && selector === 'selectVK') {
+      const ss = s as SelectVKProps;
       const books = Object.keys(chaplist);
       if (books.length) {
-        const vk = s.initialVK;
+        const vk = ss.initialVK;
         const { book } = vk;
         if (!books.includes(book)) {
           vk.book = books[0] as any;
@@ -80,8 +84,9 @@ function Controller(
         if (!chaplist[vk.book]?.find((x) => x[0] == vk.chapter)) {
           vk.chapter = (chaplist[vk.book] as any)[0][0] || 1;
         }
-        s.options.books = Object.keys(chaplist);
-        s.options.chapters =
+        if (typeof ss.options === 'undefined') ss.options = {};
+        ss.options.books = Object.keys(chaplist);
+        ss.options.chapters =
           chaplist[vk.book]?.map((x) => x[0]).sort((a, b) => a - b) || [vk.chapter];
       }
     }
@@ -92,7 +97,8 @@ function Controller(
   const onSelectVK = (selection: SelectVKType) => {
     const { book } = selection;
     const chaplist = props.chaplist as ChaplistVKType;
-    setState((prevState) => {
+    setState((ps) => {
+      const prevState = ps as SelectVKProps;
       let newState = prevState;
       const chapterArray = chaplist && chaplist[book];
       if (chapterArray) {
@@ -119,58 +125,52 @@ function Controller(
     if (action) handleAction(action, id, selection, chaplist);
   }
 
-  if (selector === 'selectVK')
-    return (<SelectVK {...state} onSelection={onSelectVK} />);
+  if (selector === 'selectVK') {
+    return (<SelectVK {...state as any} onSelection={onSelectVK} />);
+  }
   else if (selector === 'selectOR')
-    return (<SelectOR {...state} onSelection={onSelectOR} />);
+    return (<SelectOR {...state as any} onSelection={onSelectOR} />);
   return null;
 }
-
-// Each SelectVK will keep its own state, providing chapter selection from any
-// installed SWORD module, unless the parent div has a valid data-chaplist
-// attribute value. In that case the SelectVK will become a controlled
-// component where only chapters listed in data-chaplist will be available
-// for selection.
-Subscription.subscribe.socketConnected((_socket) => {
-  callBatchThenCache(preloads).then(() => {
-    const selectVKs = document.getElementsByClassName('select-container');
-    (Array.from(selectVKs) as HTMLDivElement[])
-      .forEach((selectvk) => {
-        const id = randomID();
-        selectvk.setAttribute('id', id);
-        const { props, chaplist: cl, onselect, selector } = selectvk.dataset;
-        let chaplist: ChaplistVKType | ChaplistORType | undefined;
-        if (cl && selector === 'selectVK') {
-          chaplist = decodeJSData(cl) as ChaplistVKType;
-        } else if (cl && selector === 'selectOR') {
-          chaplist = decodeJSData(cl) as ChaplistORType;
-          chaplist.forEach((x) => x[0] = x[0].toString());
-        }
-        if (props) {
-          const initial = decodeJSData(props);
-          if (selector === 'selectOR' && Array.isArray(chaplist)) {
-            createNodeList(chaplist, initial as SelectORProps);
-          }
-          createRoot(selectvk).render(
-            <StrictMode>
-              <Controller
-                id={id}
-                selector={selector as 'selectVK' | 'selectOR'}
-                action={onselect}
-                chaplist={chaplist}
-                initial={initial as SelectVKProps | SelectORProps} />
-            </StrictMode>);
-        }
-        selectvk.removeAttribute('data-props');
-        selectvk.removeAttribute('data-chaplist');
-      });
-  });
-});
 
 const socket = SocketConnect();
 let published = false;
 socket.on('connect', () => {
   // connect is called even on reconnect, so only publish this once.
-  if (socket && !published) Subscription.publish.socketConnected(socket);
-  published = true;
+  if (socket && !published) {
+    published = true;
+    callBatchThenCache(preloads).then(() => {
+      const selectVKs = document.getElementsByClassName('select-container');
+      (Array.from(selectVKs) as HTMLDivElement[])
+        .forEach((selectvk) => {
+          const id = randomID();
+          selectvk.setAttribute('id', id);
+          const { props, chaplist: cl, onselect, selector } = selectvk.dataset;
+          let chaplist: ChaplistVKType | ChaplistORType | undefined;
+          if (cl && selector === 'selectVK') {
+            chaplist = decodeJSData(cl) as ChaplistVKType;
+          } else if (cl && selector === 'selectOR') {
+            chaplist = decodeJSData(cl) as ChaplistORType;
+            chaplist.forEach((x) => x[0] = x[0].toString());
+          }
+          if (props) {
+            const initial = decodeJSData(props);
+            if (selector === 'selectOR' && Array.isArray(chaplist)) {
+              createNodeList(chaplist, initial as SelectORProps);
+            }
+            createRoot(selectvk).render(
+              <StrictMode>
+                <Controller
+                  id={id}
+                  selector={selector as 'selectVK' | 'selectOR'}
+                  action={onselect}
+                  chaplist={chaplist}
+                  initial={initial as SelectVKProps | SelectORProps} />
+              </StrictMode>);
+          }
+          selectvk.removeAttribute('data-props');
+          selectvk.removeAttribute('data-chaplist');
+        });
+    });
+  }
 });

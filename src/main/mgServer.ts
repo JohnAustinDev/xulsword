@@ -51,8 +51,6 @@ class GIClass implements Omit<GType,
   'publishSubscription' |
   'canUndo' |
   'canRedo' > {
-  gtype;
-
   // TODO!: Great care must be taken to insure public usage of these
   // functions is safe and secure!!
   i18n;
@@ -68,7 +66,6 @@ class GIClass implements Omit<GType,
   Viewport;
 
   constructor() {
-    this.gtype = 'async' as any;
     this.i18n = i18next;
     this.LibSword = LibSword;
     this.DiskCache = DiskCache;

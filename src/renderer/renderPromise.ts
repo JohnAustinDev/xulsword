@@ -210,12 +210,12 @@ function writeCallToCache(call: GCallType | null, result: any) {
 
 function promiseCacheKey(acall: GCallType): string {
   const ckey = GCacheKey(acall);
-  const cacheable = isCallCacheable(GBuilder, acall);
-  if (cacheable) return ckey;
+  if (isCallCacheable(GBuilder, acall)) return ckey;
   // Non-cacheable data will be cached and used and then deleted after some delay.
   return `x-${ckey}`;
 }
 
+// Remove duplicate calls from a batch.
 function prune(calls: GCallType[]): GCallType[] {
   for (let i = 0; i < calls.length; i++) {
     if (calls[i]) {

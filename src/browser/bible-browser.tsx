@@ -6,7 +6,6 @@ import { randomID } from "../common.ts";
 import C from '../constant.ts';
 import S from '../defaultPrefs.ts';
 import G from "../renderer/rg.ts";
-import Subscription from '../subscription.ts';
 import { callBatchThenCache } from "../renderer/renderPromise.ts";
 import Xulsword, { XulswordProps } from "../renderer/xulswordWin/xulsword.tsx";
 
@@ -67,18 +66,18 @@ const preloads: GCallType[] = [
   ...localePreload.map((x) => ['i18n', 't', x]),
 ];
 
-// Top React element controller:
+// React element controller:
 function Controller(
   props: {
     id: string;
-    initial: Partial<XulswordProps>;
+    xsprops: Xulsword['props'];
     defprefs: PrefObject;
     locale: string;
     dir: string;
   }
 ) {
-  const { id, initial, locale, dir } = props;
-  const [state, _setState] = useState(initial);
+  const { id, xsprops, locale, dir } = props;
+  const [state, _setState] = useState(xsprops);
 
   const html =
     document.getElementsByTagName('html')[0] as HTMLHtmlElement | undefined;
@@ -96,58 +95,51 @@ function Controller(
   );
 }
 
-// Each SelectVK will keep its own state, providing chapter selection from any
-// installed SWORD module, unless the parent div has a valid data-chaplist
-// attribute value. In that case the SelectVK will become a controlled
-// component where only chapters listed in data-chaplist will be available
-// for selection.
-Subscription.subscribe.socketConnected((_socket) => {
-  if (bibleBrowser) {
-    const { defprefs: dp, locale } = bibleBrowser.dataset;
-    if (dp) {
-      const defprefs = decodeJSData(dp) as PrefObject;
-      G.Prefs.setComplexValue('global', {
-        ...S.prefs.global,
-        locale,
-      }, 'prefs_default' as 'prefs');
-      G.Prefs.setComplexValue('xulsword', {
-        ...S.prefs.xulsword,
-        ...defprefs
-      }, 'prefs_default' as 'prefs');
-    }
-  }
-  callBatchThenCache(preloads).then((success) => {
-    if (success && bibleBrowser) {
-      const id = randomID();
-      bibleBrowser.setAttribute('id', id);
-      const { props, defprefs: dp, locale, dir } = bibleBrowser.dataset;
-      if (props && dp) {
-        const initial = decodeJSData(props) as XulswordProps;
-        const defprefs = decodeJSData(dp) as PrefObject;
-        createRoot(bibleBrowser).render(
-          <StrictMode>
-            <Controller
-              id={id}
-              defprefs={defprefs}
-              initial={initial}
-              locale={locale || 'en'}
-              dir={dir || 'ltr'} />
-          </StrictMode>);
-      }
-      bibleBrowser.removeAttribute('data-props');
-      bibleBrowser.removeAttribute('data-defprefs');
-    }
-  });
-});
-
 const bibleBrowser = document
   .getElementsByClassName('bible-browser')[0] as HTMLDivElement | undefined;
+
 if (bibleBrowser) {
   const socket = SocketConnect(bibleBrowser.dataset.origin);
   let published = false;
   socket.on('connect', () => {
     // connect is called even on reconnect, so only publish this once.
-    if (socket && !published) Subscription.publish.socketConnected(socket);
-    published = true;
+    if (!published && bibleBrowser) {
+      published = true;
+      const { defprefs: dp, locale } = bibleBrowser.dataset;
+      if (dp) {
+        const defprefs = decodeJSData(dp) as PrefObject;
+        G.Prefs.setComplexValue('global', {
+          ...S.prefs.global,
+          locale,
+        }, 'prefs_default' as 'prefs');
+        G.Prefs.setComplexValue('xulsword', {
+          ...S.prefs.xulsword,
+          ...defprefs
+        }, 'prefs_default' as 'prefs');
+      }
+
+      callBatchThenCache(preloads).then((success) => {
+        if (success) {
+          const id = randomID();
+          bibleBrowser.setAttribute('id', id);
+          const { props, defprefs: dp, locale, dir } = bibleBrowser.dataset;
+          if (props && dp) {
+            const initial = decodeJSData(props) as XulswordProps;
+            const defprefs = decodeJSData(dp) as PrefObject;
+            createRoot(bibleBrowser).render(
+              <StrictMode>
+                <Controller
+                  id={id}
+                  defprefs={defprefs}
+                  xsprops={initial}
+                  locale={locale || 'en'}
+                  dir={dir || 'ltr'} />
+              </StrictMode>);
+          }
+          bibleBrowser.removeAttribute('data-props');
+          bibleBrowser.removeAttribute('data-defprefs');
+        }
+      });
+    }
   });
 }

@@ -1,7 +1,7 @@
 import { Server } from 'socket.io';
 import i18n from 'i18next';
 import log, { LogLevel } from 'electron-log';
-import Setenv from '../setenv.ts';
+import Setenv from './setenv.ts';
 import { JSON_parse, JSON_stringify } from '../common.ts';
 import C from '../constant.ts';
 import G from '../main/mg.ts';
@@ -132,6 +132,5 @@ io.on('connection', (socket) => {
   );
 
 });
-
 
 io.listen(3000);
