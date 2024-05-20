@@ -10,8 +10,7 @@ import {
 } from '../common.ts';
 import RefParser from '../refParser.ts';
 import VerseKey from '../verseKey.ts';
-import G from './rg.ts';
-import { trySyncOrPromise } from './renderPromise.ts';
+import G, { GI } from './rg.ts';
 
 import type {
   LocationORType,
@@ -489,11 +488,11 @@ export function verseKey(
         vkeytext: string,
         tov11n: V11nType
       ) => {
-        const [newloc] = trySyncOrPromise(
-          [['LibSword', 'convertLocation', [fromv11n, vkeytext, tov11n]]],
-          [vkeytext],
-          renderPromise
-        ) as string[];
+        const newloc = GI.LibSword.convertLocation(vkeytext, renderPromise,
+          fromv11n,
+          vkeytext,
+          tov11n
+        );
         return newloc;
       },
       Book: () => {

@@ -11,9 +11,9 @@ import {
   stringHash,
 } from '../../../common.ts';
 import { getElementData } from '../../htmlData.ts';
-import G from '../../rg.ts';
+import G, { GI } from '../../rg.ts';
 import addBookmarks from '../../bookmarks.ts';
-import { trySyncOrPromise } from '../../renderPromise.ts';
+import { GCallsOrPromise } from '../../renderPromise.ts';
 import {
   getNoteHTML,
   getChapterHeading,
@@ -80,11 +80,12 @@ export function libswordText(
       if (location && location.book && module) {
         const { book, chapter } = location;
         if (ilModule) {
-          const [chtxt] = trySyncOrPromise(
-            [['LibSword', 'getChapterTextMulti', [`${module},${ilModule}`, `${book}.${chapter}`, false, options]]],
-            [''],
-            renderPromise || null
-          ) as string[];
+          const chtxt = GI.LibSword.getChapterTextMulti('', renderPromise,
+            `${module},${ilModule}`,
+            `${book}.${chapter}`,
+            false,
+            options
+          );
           if (!renderPromise?.waiting()) {
             r.textHTML += chtxt.replace(/interV2/gm, `cs-${ilModule}`);
           }
@@ -92,7 +93,7 @@ export function libswordText(
           // We needed to check that the module contains the book, because
           // LibSword will silently return text from elsewhere in a module
           // if the module does not include the requested book!
-          const [textHTML, notes] = trySyncOrPromise([
+          const [textHTML, notes] = GCallsOrPromise([
               ['LibSword', 'getChapterText', [module, `${book}.${chapter}`, options]],
               ['LibSword', 'getNotes', ['getChapterText', [module, `${book}.${chapter}`, options]]]
             ], ['', ''],
@@ -109,7 +110,7 @@ export function libswordText(
     case C.COMMENTARY: {
       if (location && location.book && module) {
         const { book, chapter } = location;
-        const [textHTML, notes] = trySyncOrPromise([
+        const [textHTML, notes] = GCallsOrPromise([
             ['LibSword', 'getChapterText', [module, `${book}.${chapter}`, options]],
             ['LibSword', 'getNotes', ['getChapterText', [module, `${book}.${chapter}`, options]]]
           ],
@@ -125,7 +126,7 @@ export function libswordText(
     }
     case C.GENBOOK: {
       if (modkey) {
-        const [textHTML, noteHTML] = trySyncOrPromise([
+        const [textHTML, noteHTML] = GCallsOrPromise([
             ['LibSword', 'getGenBookChapterText', [module, modkey, options]],
             ['LibSword', 'getNotes', ['getGenBookChapterText', [module, modkey, options]]]
           ],
@@ -147,11 +148,7 @@ export function libswordText(
       // Cache is also used for DailyDevotion - if the key is not in the
       // Cache use today's date instead of the key.
       const key = dictKeyToday(modkey, module);
-      const [keylist] = trySyncOrPromise(
-        [['getAllDictionaryKeyList', null, [module]]],
-        [[]],
-        renderPromise || null
-      ) as string[][];
+      const keylist = GI.getAllDictionaryKeyList([], renderPromise, module);
       if (!renderPromise?.waiting()) {
         if (key && keylist.includes(key)) {
           // Build and cache the selector list.
@@ -274,11 +271,7 @@ export function genbookChange(
 ): string | null {
   let tocs: string[] = [];
   if (module) {
-    [tocs] = trySyncOrPromise(
-      [['LibSword', 'getGenBookTableOfContents', [module]]],
-      [[]],
-      renderPromise
-    ) as string[][]
+    tocs = GI.LibSword.getGenBookTableOfContents([], renderPromise, module);
     if (modkey) {
       const toc = tocs.indexOf(modkey);
       if (toc !== -1) {

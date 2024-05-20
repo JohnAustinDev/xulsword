@@ -3,9 +3,9 @@ import { JSON_attrib_stringify, getSwordOptions } from '../../../common.ts';
 import Cache from '../../../cache.ts';
 import S from '../../../defaultPrefs.ts';
 import C from '../../../constant.ts';
-import G from '../../rg.ts';
+import G, { GI } from '../../rg.ts';
 import log from '../../log.ts';
-import RenderPromise, { trySyncOrPromise } from '../../renderPromise.ts';
+import RenderPromise from '../../renderPromise.ts';
 
 import type { HTMLData } from '../../htmlData.ts';
 import type { FailReason } from '../popup/popupH.ts';
@@ -182,14 +182,9 @@ export function getDictEntryHTML(
     const m = mx in G.Tab ? mx : Object.keys(G.Tab).find((md) => md.toLowerCase() === mlc) || '';
     if (m && m in G.Tab && G.Tab[m].type === C.DICTIONARY) {
       const k = DictKeyTransform[m] ? DictKeyTransform[m](key) : key;
-      const [h1, h2, dictTitle] = trySyncOrPromise([
-          ['LibSword', 'getDictionaryEntry', [m, k, options]],
-          ['LibSword', 'getDictionaryEntry', [m, k.toUpperCase(), options]],
-          ['LibSword', 'getModuleInformation', [m, 'Description']]
-        ],
-        ['', '', ''],
-        renderPromise
-      ) as [string, string, string];
+      const h1 = GI.LibSword.getDictionaryEntry('', renderPromise, m, k, options);
+      const h2 = GI.LibSword.getDictionaryEntry('', renderPromise, m, k.toUpperCase(), options);
+      const dictTitle = GI.LibSword.getModuleInformation('', renderPromise, m, 'Description');
       let h = h1;
       if (h === C.NOTFOUND) h = h2;
       if (h) h = markup2html(replaceLinks(h, m), m);
@@ -301,11 +296,7 @@ export function getStrongsModAndKey(
         let k;
         let r;
         for (k = 0; k < keys.length; k += 1) {
-          [r] = trySyncOrPromise(
-            [['LibSword', 'getDictionaryEntry', [mod, keys[k], options]]],
-            [C.NOTFOUND],
-            renderPromise
-          ) as string[];
+          r = GI.LibSword.getDictionaryEntry(C.NOTFOUND, renderPromise, mod, keys[k], options);
           if (r !== C.NOTFOUND) break;
         }
         if (r === C.NOTFOUND) mod = null;

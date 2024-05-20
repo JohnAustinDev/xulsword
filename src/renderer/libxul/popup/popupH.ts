@@ -10,7 +10,7 @@ import S from '../../../defaultPrefs.ts';
 import G from '../../rg.ts';
 import { addBookmarksToNotes, getBookmarkInfo } from '../../bookmarks.ts';
 import { getElementData } from '../../htmlData.ts';
-import { trySyncOrPromise } from '../../renderPromise.ts';
+import { GCallsOrPromise } from '../../renderPromise.ts';
 import log from '../../log.ts';
 import { getDictEntryHTML, getLemmaHTML } from '../viewport/zdictionary.ts';
 import {
@@ -82,7 +82,7 @@ export function getPopupHTML(
           const { book, chapter } = location;
           // getChapterText must be called before getNotes
           const options = getSwordOptions(G, G.Tab[context].type);
-          const [notes] = trySyncOrPromise(
+          const [notes] = GCallsOrPromise(
             [
               ['LibSword', 'getChapterText', [context, `${book}.${chapter}`, options]],
               ['LibSword', 'getNotes', ['getChapterText', [context, `${book}.${chapter}`, options]]]

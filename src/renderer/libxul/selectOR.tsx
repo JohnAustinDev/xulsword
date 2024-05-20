@@ -19,8 +19,8 @@ import {
   gbAncestorIDs,
 } from '../../common.ts';
 import C from '../../constant.ts';
-import G from '../rg.ts';
-import RenderPromise, { trySyncOrPromise } from '../renderPromise.ts';
+import G, { GI } from '../rg.ts';
+import RenderPromise from '../renderPromise.ts';
 import { addClass, XulProps, xulPropTypes } from './xul.tsx';
 import { Vbox } from './boxes.tsx';
 import Menulist from './menulist.tsx';
@@ -29,7 +29,6 @@ import './selectOR.css';
 
 import type { TreeNodeInfo } from '@blueprintjs/core';
 import type { RenderPromiseComponent, RenderPromiseState } from '../renderPromise.ts';
-import type { TreeNodeInfoPref } from 'type.ts';
 
 // Allow users to select one or more chapters from any non-versekey SWORD
 // module parent node.
@@ -143,13 +142,9 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
         if (targ.type === 'select-module') {
           let nodes: TreeNodeInfo[] = [];
           if (tabType === 'Genbks') {
-            [nodes] = trySyncOrPromise([
-              ['genBookTreeNodes', null, [value]]
-            ], [], renderPromise) as TreeNodeInfoPref[][];
+            nodes = GI.genBookTreeNodes([], renderPromise, value);
           } else if (tabType === 'Dicts') {
-            const [keylist] = trySyncOrPromise([
-              ['getAllDictionaryKeyList', null, [value]]
-            ], [], renderPromise) as string[][];
+            const keylist = GI.getAllDictionaryKeyList([], renderPromise, value);
             nodes = dictTreeNodes(keylist, value);
           }
           const leafNode = findFirstLeafNode(nodes, nodes);
@@ -207,18 +202,10 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
     const propNodeLists: NodeListOR[] = propNodeListsMods.map((m) => {
       let nodes: TreeNodeInfo[] = [];
       if (G.Tab[m].tabType === 'Genbks') {
-        const [n] = trySyncOrPromise(
-          [['genBookTreeNodes', null, [m]]],
-          [[]],
-          renderPromise
-        ) as TreeNodeInfoPref[][];
+        const n = GI.genBookTreeNodes([], renderPromise, m);
         if (!renderPromise.waiting()) nodes = n;
       } else if (G.Tab[m].tabType === 'Dicts') {
-        const [keylist] = trySyncOrPromise(
-          [['getAllDictionaryKeyList', null, [m]]],
-          [[]],
-          renderPromise,
-        ) as string[][];
+        const keylist = GI.getAllDictionaryKeyList([], renderPromise, m);
         if (!renderPromise.waiting()) nodes = dictTreeNodes(keylist, m);
       }
       return {

@@ -20,9 +20,8 @@ import {
 } from '../common.ts';
 import C from '../constant.ts';
 import S from '../defaultPrefs.ts';
-import G from './rg.ts';
+import G, { GI } from './rg.ts';
 import { getElementData, verseKey } from './htmlData.ts';
-import { trySyncOrPromise } from './renderPromise.ts';
 import log from './log.ts';
 
 import type { TreeNodeInfo } from '@blueprintjs/core';
@@ -297,7 +296,7 @@ export function getLocalizedChapterTerm(
   book: string,
   chapter: number,
   locale: string,
-  renderPromise?: RenderPromise,
+  rp?: RenderPromise,
 ) {
   const k1 = `${book}_Chaptext`;
   const k2 = 'Chaptext';
@@ -306,22 +305,11 @@ export function getLocalizedChapterTerm(
     lng: locale,
     ns: 'books',
   };
-
-  if (G && renderPromise) {
-    const [exists, tk1, tk2] = trySyncOrPromise([
-        ['i18n', 'exists', [k1, toptions]],
-        ['i18n', 't', [k1, toptions]],
-        ['i18n', 't', [k2, toptions]]
-      ],
-      [false, k1, k2],
-      renderPromise
-    ) as [boolean, string, string];
-    const r1 = exists && tk1;
-    return r1 && !/^\s*$/.test(r1) ? r1 : tk2;
-  }
-
-  const r1 = G.i18n.exists(k1, toptions) && G.i18n.t(k1, toptions);
-  return r1 && !/^\s*$/.test(r1) ? r1 : G.i18n.t(k2, toptions);
+  const exists = GI.i18n.exists(false, rp, k1, toptions);
+  const tk1 = GI.i18n.t(k1, rp, k1, toptions);
+  const tk2 = GI.i18n.t(k2, rp, k2, toptions);
+  const r1 = exists && tk1;
+  return r1 && !/^\s*$/.test(r1) ? r1 : tk2;
 }
 
 // Does location surely exist in the module? It's assumed if a book is included,
@@ -378,22 +366,13 @@ export function getMaxVerse(
   const { chapter } = verseKey(vkeytext, v11n);
   const maxch = getMaxChapter(v11n, vkeytext);
   if (chapter <= maxch && chapter > 0) {
-    const [r] = trySyncOrPromise(
-      [['LibSword', 'getMaxVerse', [v11n, vkeytext]]],
-      [0],
-      renderPromise
-    ) as number[];
-    return r;
+    return GI.LibSword.getMaxChapter(0, renderPromise, v11n, vkeytext);
   }
   return 0;
 }
 
 export function getCompanionModules(mod: string, renderPromise?: RenderPromise) {
-  const [cms] = trySyncOrPromise(
-      [['LibSword', 'getModuleInformation', [mod, 'Companion']]],
-      [C.NOTFOUND],
-      renderPromise
-    ) as string[]
+  const cms = GI.LibSword.getModuleInformation(C.NOTFOUND, renderPromise, mod, 'Companion');
   if (cms !== C.NOTFOUND) return cms.split(/\s*,\s*/);
   return [];
 }

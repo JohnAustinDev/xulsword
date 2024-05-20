@@ -780,6 +780,9 @@ export type GCallType = [
   any[] | undefined
 ];
 
+type RenderPromiseArgs<ARGS extends Parameters<any>>
+  = [PrefValue, RenderPromise | undefined | null, ...ARGS];
+
 export type GType = {
   // Getters
   Books: ReturnType<typeof getBooks>;
@@ -834,6 +837,50 @@ export type GType = {
   Viewport: typeof Viewport;
   Window: typeof Window;
 };
+
+export type GIType = {
+  [name in keyof Pick<GType,
+    'Books' |
+    'Book' |
+    'Tabs' |
+    'Tab' |
+    'Config' |
+    'AudioConfs' |
+    'ProgramConfig' |
+    'LocaleConfigs' |
+    'ModuleConfigDefault' |
+    'ModuleFonts' |
+    'FeatureModules' |
+    'BkChsInV11n' |
+    'GetBooksInVKModules'>
+  ]: (...args: RenderPromiseArgs<[]>) => GType[name];
+} & {
+  [name in keyof Pick<GType,
+    'getSystemFonts' |
+    'getBooksInVKModule' |
+    'getLocalizedBooks' |
+    'getLocaleDigits' |
+    'callBatch' |
+    'callBatchSync' |
+    'getAllDictionaryKeyList' |
+    'genBookTreeNodes'>
+  ]: (...args: RenderPromiseArgs<Parameters<GType[name]>>) => ReturnType<GType[name]>;
+} & {
+  i18n: {
+    [m in 'exists' |  't']: (...args: RenderPromiseArgs<Parameters<GType['i18n'][m]>>)
+      => ReturnType<GType['i18n'][m]>;
+  }
+} & {
+  LibSword: {
+    [m in keyof GType['LibSword']]: (...args: RenderPromiseArgs<Parameters<GType['LibSword'][m]>>)
+      => ReturnType<GType['LibSword'][m]>;
+  }
+} & {
+  Viewport: {
+    [m in keyof GType['Viewport']]: (...args: RenderPromiseArgs<Parameters<GType['Viewport'][m]>>)
+      => ReturnType<GType['Viewport'][m]>;
+  }
+}
 
 // This GBuilder object will be used in the main/mg and renderer/rg
 // modules at runtime to create different types of G objects sharing

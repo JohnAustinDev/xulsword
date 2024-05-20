@@ -3,7 +3,7 @@ import { GCacheKey, JSON_stringify, isCallCacheable } from "../common.ts";
 import Cache from '../cache.ts';
 import { GBuilder } from "../type.ts";
 import C from "../constant.ts";
-import G from '../renderer/rg.ts';
+import G from './rg.ts';
 
 import type { GCallType, PrefValue } from "../type.ts";
 import type { GetBooksInVKModules } from "../main/minit.ts";
@@ -23,7 +23,7 @@ export type RenderPromiseState = {
 // is allowed. Or, when sync is not allowed, calls that are not in the cache are
 // added to the parent component's renderPromise call list, and a default value
 // is returned.
-export function trySyncOrPromise(
+export function GCallsOrPromise(
   calls: GCallType[],
   defaultValues?: PrefValue[],
   promise?: RenderPromise | null,
@@ -111,7 +111,7 @@ export function callBatchThenCacheSync(
   if (calls.length) {
     const disallowed = disallowedAsCallBatch(calls);
     if (!disallowed) {
-      const results = G.callBatchSync(prune(calls));
+      const results = G.callBatchSync(calls);
       if (results.length !== calls.length) {
         throw new Error(`callBatch sync did not return the correct data.`);
       }
@@ -128,7 +128,7 @@ export async function callBatchThenCache(
   if (calls.length) {
     const disallowed = disallowedAsCallBatch(calls);
     if (!disallowed) {
-      const results = await G.callBatch(prune(calls));
+      const results = await G.callBatch(calls);
       if (results.length !== calls.length) {
         throw new Error(`callBatch async did not return the correct data.`);
       }
@@ -213,16 +213,4 @@ function promiseCacheKey(acall: GCallType): string {
   if (isCallCacheable(GBuilder, acall)) return ckey;
   // Non-cacheable data will be cached and used and then deleted after some delay.
   return `x-${ckey}`;
-}
-
-// Remove duplicate calls from a batch.
-function prune(calls: GCallType[]): GCallType[] {
-  for (let i = 0; i < calls.length; i++) {
-    if (calls[i]) {
-      const ckey = promiseCacheKey(calls[i]);
-      const x = calls.findIndex((c, i2) => i2 > i && promiseCacheKey(c) === ckey);
-      if (x !== -1) calls.splice(x, 1);
-    }
-  }
-  return calls;
 }

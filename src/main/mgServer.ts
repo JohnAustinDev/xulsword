@@ -2,9 +2,6 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
 import i18next from 'i18next';
 import LibSword from './components/libsword.ts';
-import DiskCache from './components/diskcache.ts';
-import Dirs from './components/dirs.ts';
-import Data from './components/data.ts';
 import Viewport from './components/viewport.ts';
 import {
   getBooks,
@@ -29,48 +26,27 @@ import {
   genBookTreeNodes,
 } from './minit.ts';
 
-import type { GType } from '../type.ts';
+import type { GIType, GType } from '../type.ts';
+
+type GIClassType = { [k in keyof GIType]: GType[k] };
 
 // Methods of GI are the same as G but without those that are Electron
 // only or not used by the server (such as Prefs).
 // This G object is for use on the nodejs server, and it shares
 // the same interface as the renderer's G object. Properties of this
 // object directly access server data and modules.
-class GIClass implements Omit<GType,
-  'clipboard' |
-  'Prefs' |
-  'Commands' |
-  'Shell' |
-  'Window' |
-  'Module' |
-  'OPSYS' |
-  'resolveHtmlPath' |
-  'inlineFile' |
-  'inlineAudioFile' |
-  'resetMain' |
-  'publishSubscription' |
-  'canUndo' |
-  'canRedo' > {
+class GIClass implements GIClassType {
   // TODO!: Great care must be taken to insure public usage of these
   // functions is safe and secure!!
   i18n;
 
   LibSword;
 
-  DiskCache;
-
-  Dirs;
-
-  Data;
-
   Viewport;
 
   constructor() {
     this.i18n = i18next;
     this.LibSword = LibSword;
-    this.DiskCache = DiskCache;
-    this.Dirs = Dirs;
-    this.Data = Data;
     this.Viewport = Viewport;
   }
 

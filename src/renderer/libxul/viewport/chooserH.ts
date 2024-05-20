@@ -2,7 +2,7 @@
 import React from 'react';
 import { getSwordOptions, ofClass, sanitizeHTML } from '../../../common.ts';
 import C from '../../../constant.ts';
-import { trySyncOrPromise } from '../../renderPromise.ts';
+import { GI } from '../../rg.ts';
 import { delayHandler } from '../xul.tsx';
 
 import type { BookGroupType } from '../../../type.ts';
@@ -34,7 +34,7 @@ export default function handler(this: Chooser, es: React.SyntheticEvent): void {
           if (
             bookgroup &&
             state.bookGroup !== bookgroup &&
-            bookGroups.includes(bookgroup)
+            bookGroups?.includes(bookgroup)
           )
             delayHandler.bind(this)(
               () => {
@@ -76,11 +76,11 @@ export default function handler(this: Chooser, es: React.SyntheticEvent): void {
           const hd = /<h\d([^>]*class="head1[^"]*"[^>]*>)(.*?)<\/h\d>/i;
           // Rexgex parses verse number from array member strings
           const vs = /<sup[^>]*>(\d+)<\/sup>/i; // Get verse from above
-          const [chtxt] = trySyncOrPromise(
-            [['LibSword', 'getChapterText', [headingsModule, `${book}.${chapter}`, options]]],
-            [''],
-            renderPromise
-          ) as string[];
+          const chtxt = GI.LibSword.getChapterText('', renderPromise,
+            headingsModule,
+            `${book}.${chapter}`,
+            options
+          );
           const headings = chtxt.match(hdplus);
           if (headings) {
             let hr = false;

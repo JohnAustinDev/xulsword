@@ -5,8 +5,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { clone, getModuleOfObject, randomID } from '../../common.ts';
-import G from '../rg.ts';
-import RenderPromise, { trySyncOrPromise } from '../renderPromise.ts';
+import G, { GI } from '../rg.ts';
+import RenderPromise from '../renderPromise.ts';
 import { htmlAttribs, XulProps, xulPropTypes } from './xul.tsx';
 import SelectVK from './selectVK.tsx';
 import SelectOR from './selectOR.tsx';
@@ -237,14 +237,10 @@ async function newLocation(
       v11n: v11n || null,
     };
   } else if (tabType === 'Dicts') {
-    const [keylist] = trySyncOrPromise([
-      ['getAllDictionaryKeyList', null, [module]]
-    ], [], renderPromise) as string[][];
+    const keylist = GI.getAllDictionaryKeyList([], renderPromise, module);
     r = { otherMod: module, key: keylist[0] };
   } else {
-    const [toc] = trySyncOrPromise([
-      ['LibSword', 'getGenBookTableOfContents', [module]]
-    ], [], renderPromise) as string[][];
+    const toc = GI.LibSword.getGenBookTableOfContents([], renderPromise, module);
     r = { otherMod: module, key: toc[0] };
   }
   return r;

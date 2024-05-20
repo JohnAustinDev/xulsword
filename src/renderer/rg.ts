@@ -3,19 +3,21 @@
 import { JSON_stringify, GCacheKey, isCallCacheable, clone } from '../common.ts';
 import Cache from '../cache.ts';
 import { GBuilder } from '../type.ts';
+import { GCallsOrPromise } from './renderPromise.ts';
 import log from './log.ts';
 import CookiePrefs from './prefs.ts';
 
-import type { GCallType, GType } from '../type.ts';
+import type { GCallType, GIType, GType, PrefValue } from '../type.ts';
+import type RenderPromise from './renderPromise.ts';
 
 async function asyncRequest(
-  ckey: string,
   thecall: GCallType
 ) {
   if (!allowed(thecall)) {
     throw new Error(`Async G call unsupported in browser environment: ${JSON_stringify(thecall)}`);
   }
   const cacheable = isCallCacheable(GBuilder, thecall);
+  const ckey = GCacheKey(thecall);
   if (cacheable && Cache.has(ckey)) return Promise.resolve(Cache.read(ckey));
   log.silly(`${ckey} ${JSON_stringify(thecall)} async ${cacheable ? 'miss' : 'uncacheable'}`);
   const call = window.processR.platform === 'browser' ? publicCall(thecall) : thecall;
@@ -30,12 +32,12 @@ async function asyncRequest(
 }
 
 function request(
-  ckey: string,
   thecall: GCallType
 ) {
   if (!allowed(thecall)) {
     throw new Error(`Sync G call unsupported in browser environment: ${JSON_stringify(thecall)}`);
   }
+  const ckey = GCacheKey(thecall);
   const cacheable = isCallCacheable(GBuilder, thecall);
   if (cacheable && Cache.has(ckey)) return Cache.read(ckey);
   if (window.processR.platform === 'browser') {
@@ -106,7 +108,17 @@ function publicCall(thecall: GCallType): GCallType {
 // data to the cache asynchronously and then retrieve it synchronously
 // using G. Just use callBatchThenCache to load the cache before any
 // of these synchronous G calls.
+// - To accommodate all this, a GI object is provided which shares the
+// same interface as G, but with only the synchronous Internet-allowed
+// G methods available, plus two extra arguments are required for every
+// call (and even G getters require these extra arguments):
+//   1) A default value to use when the requested value cannot be obtained
+//      synchronously.
+//   2) A RenderPromise to collect the unobtained synchronous calls, and
+//      dispatch them later, to be followed by component re-endering
+//      once the requested values have been obtained asynchronously.
 const G = {} as GType;
+export const GI = {} as GIType;
 const { asyncFuncs } = GBuilder;
 Object.entries(GBuilder).forEach((entry) => {
   if (!([
@@ -117,6 +129,7 @@ Object.entries(GBuilder).forEach((entry) => {
   ] as (keyof typeof GBuilder)[]).includes(entry[0] as any)) {
     const gBuilder = GBuilder as any;
     const g = G as any;
+    const gi = GI as any;
     const name = entry[0] as keyof Omit<typeof GBuilder,
       'gtype' |
       'asyncFuncs' |
@@ -125,55 +138,64 @@ Object.entries(GBuilder).forEach((entry) => {
     const value = entry[1] as any;
     if (value === 'getter') {
       const acall: GCallType = [name, null, undefined];
-      const ckey = GCacheKey(acall);
       Object.defineProperty(G, name, {
         get() {
-          return request(ckey, acall);
+          return request(acall);
         },
       });
+      gi[name] = (def: PrefValue, rp: RenderPromise) => {
+        return GCallsOrPromise([acall], [def], rp)[0];
+      }
     } else if (typeof value === 'function') {
+      const isAsync = asyncFuncs.some((en) => name && en[0] === name);
       g[name] = (...args: unknown[]) => {
         const acall: GCallType = [name, null, args];
-        const ckey = GCacheKey(acall);
-        if (asyncFuncs.some((en) => en[0] === name)) {
-          return asyncRequest(ckey, acall);
-        }
-        return request(ckey, acall);
+        if (isAsync) return asyncRequest(acall);
+        return request(acall);
       };
+      if (!isAsync) {
+        gi[name] = (def: PrefValue, rp: RenderPromise, ...args: unknown[]) => {
+          const acall: GCallType = [name, null, args];
+          return GCallsOrPromise([acall], [def], rp)[0];
+        }
+      }
     } else if (typeof value === 'object') {
       const methods = Object.getOwnPropertyNames(value);
       methods.forEach((m) => {
-        if (g[name] === undefined) {
-          g[name] = {};
-        }
+        if (g[name] === undefined) g[name] = {};
+        if (gi[name] === undefined) gi[name] = {};
         if (gBuilder[name][m] === 'getter') {
           const acall: GCallType = [name, m, undefined];
-          const ckey = GCacheKey(acall);
           Object.defineProperty(g[name], m, {
             get() {
               // In Browsers, i18n.language is never used, rather global.locale pref
-              // is specified in all i18n calls, so return that value here.
+              // is specified in all i18n calls, so return it in this special case.
               if (name === 'i18n' && m === 'language'
-                && window.processR.platform === 'browser') {
-              return G.Prefs.getCharPref('global.locale')
-            }
-              return request(ckey, acall);
+                  && window.processR.platform === 'browser') {
+                return G.Prefs.getCharPref('global.locale')
+              }
+              return request(acall);
             },
           });
+          gi[name][m] = (def: PrefValue, rp: RenderPromise) => {
+            return GCallsOrPromise([acall], [def], rp)[0];
+          };
         } else if (typeof gBuilder[name][m] === 'function') {
+          const isAsync = (asyncFuncs as [string, string[]][]).some(
+            (asf) => name && m && asf[0] === name && asf[1].includes(m)
+          );
           if (name !== 'Prefs' || window.processR.platform !== 'browser') {
             g[name][m] = (...args: unknown[]) => {
               const acall: GCallType = [name, m, args];
-              const ckey = GCacheKey(acall);
-              if (
-                (asyncFuncs as [string, string[]][]).some(
-                  (en) => en[0] === name && en[1].includes(m)
-                )
-              ) {
-                return asyncRequest(ckey, acall);
-              }
-              return request(ckey, acall);
+              if (isAsync) return asyncRequest(acall);
+              return request(acall);
             };
+            if (!isAsync) {
+              gi[name][m] = (def: PrefValue, rp: RenderPromise, ...args: unknown[]) => {
+                const acall: GCallType = [name, m, args];
+                return GCallsOrPromise([acall], [def], rp)[0];
+              };
+            }
           } else {
             // Then use Prefs cookie rather than server file.
             g.Prefs[m] = (...args: unknown[]) => {

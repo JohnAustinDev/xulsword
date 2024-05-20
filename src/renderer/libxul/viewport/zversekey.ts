@@ -11,8 +11,8 @@ import {
 } from '../../../common.ts';
 import { getElementData, verseKey } from '../../htmlData.ts';
 import { getCompanionModules, getMaxChapter, getMaxVerse, getLocalizedChapterTerm } from '../../rutil.ts';
-import RenderPromise, { trySyncOrPromise } from '../../renderPromise.ts';
-import G from '../../rg.ts';
+import RenderPromise, { GCallsOrPromise } from '../../renderPromise.ts';
+import G, { GI } from '../../rg.ts';
 import { delayHandler } from '../xul.tsx';
 
 import type {
@@ -112,7 +112,7 @@ function getFootnoteText(
   const { book, chapter, verse, subid } = location;
   if (subid) {
     const options = getSwordOptions(G, G.Tab[module].type);
-    const [_text, notesx] = trySyncOrPromise([
+    const [_text, notesx] = GCallsOrPromise([
         ['LibSword', 'getChapterText', [module, `${book} ${chapter}`, options]],
         ['LibSword', 'getNotes', ['getChapterText', [module, `${book} ${chapter}`, options]]]
       ],
@@ -209,16 +209,12 @@ export function locationVKText(
         text = getFootnoteText(loc, mod, renderPromise);
       } else {
         const options = getSwordOptions(G, G.Tab[module].type);
-        [text] = trySyncOrPromise([
-          ['LibSword', 'getVerseText', [
-            module,
-            modloc.osisRef(v11n),
-            keepNotes,
-            options,]
-          ]],
-          [''],
-          renderPromise
-        ) as string[]
+        let text = GI.LibSword.getVerseText('', renderPromise,
+          module,
+          modloc.osisRef(v11n),
+          keepNotes,
+          options
+        );
         text = text.replace(/\n/g, ' ');
       }
       if (text && text.length > 7) {
@@ -612,7 +608,7 @@ export function getIntroductions(
 
   const options = getSwordOptions(G, G.Tab[mod].type);
   const args = [mod, vkeytext, options] as Parameters<typeof G.LibSword.getIntroductions>;
-  let [intro, notes] = trySyncOrPromise([
+  let [intro, notes] = GCallsOrPromise([
       ['LibSword', 'getIntroductions', args],
       ['LibSword', 'getNotes', ['getIntroductions', args]]
     ],
@@ -637,21 +633,16 @@ export function getChapterHeading(
 ) {
   if (!location || !module) return { textHTML: '', intronotes: '' };
   const { book, chapter } = location;
-  let l = G.Config[module].AssociatedLocale;
-  if (!l) l = G.i18n.language; // otherwise use current program locale
+  const config = GI.Config({}, renderPromise);
+  let l;
+  if (module in config) l = config[module].AssociatedLocale;
+  if (!l) l = G.i18n.language;
   const toptions = { lng: l, ns: 'books' };
 
   const intro = getIntroductions(module, `${book} ${chapter}`, renderPromise);
 
-
-  const [localizedBook, int] = trySyncOrPromise([
-      ['i18n', 't', [book, toptions]],
-      ['i18n', 't', ['IntroLink', toptions]]
-    ],
-    [book, ''],
-    renderPromise
-  ) as [OSISBookType, string]
-
+  const localizedBook = GI.i18n.t(book, renderPromise, book, toptions);
+  const int = GI.i18n.t('', renderPromise, 'IntroLink', toptions);
   const localizedChapTerm = getLocalizedChapterTerm(
     book,
     chapter,
