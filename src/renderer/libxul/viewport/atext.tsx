@@ -129,7 +129,9 @@ class Atext extends React.Component implements RenderPromiseComponent {
   }
 
   componentDidMount() {
+    const { renderPromise } = this;
     this.onUpdate();
+    renderPromise.dispatch();
   }
 
   componentDidUpdate(_prevProps: AtextProps, prevState: AtextStateType) {
@@ -502,7 +504,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
     i: number,
     flag: 'overwrite' | 'prepend' | 'append',
     newState: Partial<AtextStateType>,
-    renderPromise: RenderPromiseComponent['renderPromise'],
+    renderPromise: RenderPromise,
   ) {
     const { sbref, nbref } = this;
     const sbe = sbref !== null ? sbref.current : null;

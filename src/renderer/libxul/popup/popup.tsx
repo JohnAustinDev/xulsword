@@ -116,7 +116,9 @@ class Popup extends React.Component implements RenderPromiseComponent {
   }
 
   componentDidMount() {
+    const { renderPromise } = this;
     this.update();
+    renderPromise.dispatch();
   }
 
   componentDidUpdate() {

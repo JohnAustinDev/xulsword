@@ -110,6 +110,7 @@ export default class ViewportWin extends React.Component implements RenderPromis
   }
 
   componentDidMount() {
+    const { renderPromise } = this;
     this.destroy.push(
       registerUpdateStateFromPref('prefs', 'xulsword', this, statePrefDefault)
     );
@@ -142,6 +143,7 @@ export default class ViewportWin extends React.Component implements RenderPromis
       })
     );
     this.updateWindowTitle();
+    renderPromise.dispatch();
   }
 
   componentDidUpdate(

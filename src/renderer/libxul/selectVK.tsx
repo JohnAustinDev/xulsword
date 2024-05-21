@@ -126,8 +126,9 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
   }
 
   componentDidMount() {
-    const { checkSelection } = this;
+    const { renderPromise, checkSelection } = this;
     checkSelection();
+    renderPromise.dispatch();
   }
 
   componentDidUpdate(_prevProps: SelectVKProps, prevState: SelectVKState) {

@@ -238,7 +238,7 @@ export function locationVKText(
   let result = (targetmod && tryText(location, targetmod)) || null;
   if (!result && altModules && !location.subid) {
     altModules.forEach((m) => {
-      if (!result) {
+      if (!renderPromise?.waiting() && !result) {
         result = tryText(location, m);
         if (result) {
           i.alternate = true;
@@ -248,7 +248,7 @@ export function locationVKText(
     });
     if (!result && findAny) {
       G.Tabs.forEach((t) => {
-        if (!result) {
+        if (!renderPromise?.waiting() && !result) {
           result = tryText(location, t.module);
           if (result) {
             i.anytab = true;

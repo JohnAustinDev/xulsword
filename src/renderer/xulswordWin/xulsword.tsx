@@ -107,7 +107,9 @@ export default class Xulsword extends React.Component implements RenderPromiseCo
   }
 
   componentDidMount() {
+    const { renderPromise } = this;
     this.destroy.push(registerUpdateStateFromPref('prefs', 'xulsword', this));
+    renderPromise.dispatch();
   }
 
   componentDidUpdate(_prevProps: XulswordProps, prevState: XulswordState) {
@@ -316,8 +318,8 @@ export default class Xulsword extends React.Component implements RenderPromiseCo
       else viewportReset.push(m);
     });
 
-    const left = GI.i18n.t('', renderPromise, 'locale_direction') === 'ltr' ? 'left' : 'right';
-    const right = GI.i18n.t('', renderPromise, 'locale_direction') !== 'ltr' ? 'left' : 'right';
+    const left = GI.i18n.t('ltr', renderPromise, 'locale_direction') === 'ltr' ? 'left' : 'right';
+    const right = GI.i18n.t('ltr', renderPromise, 'locale_direction') !== 'ltr' ? 'left' : 'right';
 
     return (
       <Vbox

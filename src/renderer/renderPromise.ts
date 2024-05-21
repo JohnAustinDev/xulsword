@@ -43,10 +43,51 @@ export function GCallsOrPromise(
   throw new Error(`In this context trySyncOrPromise requires the promise argument: ${JSON_stringify(calls)}`);
 }
 
+// A render promise is associated with a React component. When rendering of that
+// component requires data that is not available in the cache, a call for that data
+// is added to the component's render promise. Render promises from all components
+// are periodically processed, all at the same time. A batch of required data is
+// requested from the server and each component is guaranteed to be re-rendered at
+// least once after all its required data is available.
 export default class RenderPromise {
   component: React.Component;
 
   calls = [] as GCallType[];
+
+  static batchDispatch() {
+    const docalls: GCallType[] = [];
+    const dorender: React.Component[] = [];
+    RenderPromise.getGlobalRenderPromises().forEach((rp) => {
+      if (rp.calls.length) {
+        if (!dorender.find((c) => c === rp.component)) {
+          dorender.push(rp.component);
+        }
+        while(rp.calls.length) docalls.push(rp.calls.shift() as GCallType);
+      }
+    });
+    RenderPromise.setGlobalRenderPromises([]);
+
+    const nextBatch = docalls.filter((call) => {
+      return !isCallCacheable(GBuilder, call) || !Cache.has(promiseCacheKey(call))
+    });
+
+    callBatchThenCache(flatPrune(nextBatch)).then((_success) => {
+      dorender.forEach((component) => {
+        component.setState({ renderPromiseID: Math.random() } as RenderPromiseState);
+      });
+    });
+  }
+
+  static getGlobalRenderPromises(): RenderPromise[] {
+    if (Cache.has('renderPromises')) {
+      return Cache.read('renderPromises') as RenderPromise[];
+    } else return [];
+  }
+
+  static setGlobalRenderPromises(rps: RenderPromise[]): void {
+    if (Cache.has('renderPromises')) Cache.clear('renderPromises');
+    Cache.write(rps, 'renderPromises');
+  }
 
   constructor(component: React.Component) {
     this.component = component;
@@ -56,51 +97,16 @@ export default class RenderPromise {
     return !!(this.calls.length);
   }
 
-  getGlobalRenderPromises(): RenderPromise[] {
-    if (Cache.has('renderPromises')) {
-      return Cache.read('renderPromises') as RenderPromise[];
-    } else return [];
-  }
-
-  setGlobalRenderPromises(rps: RenderPromise[]): void {
-    if (Cache.has('renderPromises')) Cache.clear('renderPromises');
-    Cache.write(rps, 'renderPromises');
-  }
-
   dispatch() {
     // Add calls to the global list, then wait a bit, request list results
     // from the server, cache the results, then re-render the requesting
     // components.
     const { calls } = this;
     if (calls.length) {
-      const rps = this.getGlobalRenderPromises();
+      const rps = RenderPromise.getGlobalRenderPromises();
       rps.push(this);
-      this.setGlobalRenderPromises(rps);
-      setTimeout(() => {
-        const calls: GCallType[] = [];
-        const components: React.Component[] = [];
-        const rps = this.getGlobalRenderPromises();
-        this.setGlobalRenderPromises([]);
-        rps.forEach((rp) => {
-          if (rp.calls.length) {
-            if (!components.find((c) => c === rp.component)) {
-              components.push(rp.component);
-            }
-            while(rp.calls.length) calls.push(rp.calls.shift() as GCallType);
-          }
-        });
-
-        const callsStillNeeded = calls.filter((call) => {
-          return !isCallCacheable(GBuilder, call) || !Cache.has(promiseCacheKey(call))
-        });
-
-        callBatchThenCache(callsStillNeeded).then(() => {
-          components.forEach((component) => {
-            component.setState({ renderPromiseID: Math.random() } as RenderPromiseState);
-          });
-        });
-
-      }, C.UI.Window.networkRequestBatchDelay);
+      RenderPromise.setGlobalRenderPromises(rps);
+      setTimeout(() => RenderPromise.batchDispatch(), C.UI.Window.networkRequestBatchDelay);
     }
   }
 }
@@ -212,4 +218,34 @@ function promiseCacheKey(acall: GCallType): string {
   const ckey = GCacheKey(acall);
   // Non-cacheable data will be cached and then deleted after some delay.
   return isCallCacheable(GBuilder, acall) ? ckey : `x-${ckey}`;
+}
+
+function flatcalls(calls: GCallType[]): GCallType[] {
+  const flat: GCallType[] = [];
+  for (let i = 0; i < calls.length; i++) {
+    if (['callBatch', 'callBatchSync'].includes(calls[i][0])) {
+      const args = calls[i][2];
+      if (Array.isArray(args)) {
+        const batchcalls = args[1] as GCallType[];
+        flat.push(...batchcalls);
+      }
+    } else flat.push(calls[i]);
+  }
+  return flat;
+}
+
+
+function flatPrune(calls: GCallType[]): GCallType[] {
+  const flat = flatcalls(calls);
+  for (let i = 0; i < flat.length; i++) {
+    if (flat[i]) {
+      const ckey = promiseCacheKey(flat[i]);
+      for(;;) {
+        const x = flat.findIndex((c, i2) => i2 > i && promiseCacheKey(c) === ckey);
+        if (x === -1) break;
+        flat.splice(x, 1);
+      }
+    }
+  }
+  return flat;
 }

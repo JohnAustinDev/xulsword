@@ -81,13 +81,14 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
   componentDidMount() {
     const props = this.props as GenbookChooserProps;
     const { panels } = props;
-    const { scrollTo } = this;
+    const { renderPromise, scrollTo } = this;
     const firstGenbookKeyIndex = panels.findIndex(
       (m) => m && m in G.Tab && G.Tab[m].tabType === 'Genbks'
     );
     if (firstGenbookKeyIndex !== -1) {
       scrollTo(firstGenbookKeyIndex, undefined, 1000);
     }
+    renderPromise.dispatch();
   }
 
   componentDidUpdate(prevProps: GenbookChooserProps) {

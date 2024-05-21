@@ -70,7 +70,9 @@ class Tabs extends React.Component implements RenderPromiseComponent {
   // Only when the tabs key prop changes will React instantiate a new tabs
   // component and thus resize the tabs to the current window.
   componentDidMount() {
+    const { renderPromise } = this;
     this.checkTabWidth();
+    renderPromise.dispatch();
   }
 
   componentDidUpdate() {

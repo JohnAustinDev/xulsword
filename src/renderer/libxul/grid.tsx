@@ -56,7 +56,7 @@ Column.displayName = 'Column';
 
 // XUL row
 type RowProps = RowColProps & {
-  height:
+  height?:
     | string
     | 'auto'
     | 'max-content'

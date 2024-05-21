@@ -149,7 +149,7 @@ class Chooser extends React.Component implements RenderPromiseComponent {
   }
 
   componentDidMount() {
-    const { containerRef, rowRef } = this;
+    const { containerRef, rowRef, renderPromise } = this;
     const container = containerRef?.current;
     const row = rowRef?.current;
     if (container && row) {
@@ -160,6 +160,7 @@ class Chooser extends React.Component implements RenderPromiseComponent {
       };
       this.rowHeight = row.clientHeight - 2;
     }
+    renderPromise.dispatch();
   }
 
   componentWillUnmount() {

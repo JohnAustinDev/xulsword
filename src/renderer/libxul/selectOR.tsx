@@ -120,6 +120,11 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
     this.renderPromise = new RenderPromise(this);
   }
 
+  componentDidMount() {
+    const { renderPromise } = this;
+    renderPromise.dispatch();
+  }
+
   componentDidUpdate() {
     const { renderPromise } = this;
     renderPromise.dispatch();
