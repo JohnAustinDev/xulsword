@@ -10,7 +10,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { dString } from '../../../common.ts';
 import C from '../../../constant.ts';
-import G from '../../rg.ts';
+import G, { GI } from '../../rg.ts';
 import RenderPromise from '../../renderPromise.ts';
 import {
   audioConfig,
@@ -267,7 +267,7 @@ class Chooser extends React.Component implements RenderPromiseComponent {
   render() {
     const props = this.props as ChooserProps;
     const state = this.state as ChooserState;
-    const { handler, rowHeight, longestBook, containerRef, sliderRef, rowRef } =
+    const { handler, rowHeight, longestBook, containerRef, sliderRef, rowRef, renderPromise } =
       this;
     const {
       availableBooks,
@@ -285,8 +285,8 @@ class Chooser extends React.Component implements RenderPromiseComponent {
     const useLabelImage: any = {};
     bookGroups.forEach((bg) => {
       const tkey = `chooserBookGroup_${bg}`;
-      if (G.i18n.exists(tkey)) {
-        label[bg] = G.i18n.t(tkey);
+      if (GI.i18n.exists(false, renderPromise, tkey)) {
+        label[bg] = GI.i18n.t('', renderPromise, tkey);
         useLabelImage[bg] = /^\s*$/.test(label[bg]);
       } else label[bg] = bg.replaceAll('_', ' ').substring(0, 12);
     });

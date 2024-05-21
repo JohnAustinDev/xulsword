@@ -9,7 +9,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { clone, gbAncestorIDs } from '../../../common.ts';
 import C from '../../../constant.ts';
-import G from '../../rg.ts';
+import G, { GI } from '../../rg.ts';
+import RenderPromise from '../../renderPromise.ts';
 import { audioGenBookNode } from '../../rutil.ts';
 import { Hbox, Vbox } from '../boxes.tsx';
 import { xulPropTypes, XulProps, addClass } from '../xul.tsx';
@@ -23,6 +24,7 @@ import type {
   XulswordStateArgType,
 } from '../../../type.ts';
 import type { Tree, TreeNodeInfo } from '@blueprintjs/core';
+import type { RenderPromiseComponent, RenderPromiseState } from '../../renderPromise.ts';
 
 const propTypes = {
   ...xulPropTypes,
@@ -39,11 +41,11 @@ export interface GenbookChooserProps extends XulProps {
   xulswordStateHandler: (s: XulswordStateArgType) => void;
 }
 
-export interface GenbookChooserState {
+export type GenbookChooserState = RenderPromiseState & {
   expandedIDs: string[][];
 }
 
-class GenbookChooser extends React.Component {
+class GenbookChooser extends React.Component implements RenderPromiseComponent {
   static propTypes: typeof propTypes;
 
   treeNodes: {
@@ -54,12 +56,15 @@ class GenbookChooser extends React.Component {
     [treekey: string]: React.RefObject<Tree>;
   };
 
+  renderPromise: RenderPromise;
+
   constructor(props: GenbookChooserProps) {
     super(props);
     const { panels } = props;
 
     const s: GenbookChooserState = {
       expandedIDs: panels.map(() => []),
+      renderPromiseID: 0,
     };
     this.state = s;
 
@@ -69,6 +74,8 @@ class GenbookChooser extends React.Component {
     this.expandKeyParents = this.expandKeyParents.bind(this);
     this.onNodeClick = this.onNodeClick.bind(this);
     this.scrollTo = this.scrollTo.bind(this);
+
+    this.renderPromise = new RenderPromise(this);
   }
 
   componentDidMount() {
@@ -84,6 +91,7 @@ class GenbookChooser extends React.Component {
   }
 
   componentDidUpdate(prevProps: GenbookChooserProps) {
+    const { renderPromise } = this;
     const { keys: prevkeys } = prevProps;
     const props = this.props as GenbookChooserProps;
     const { keys } = props;
@@ -94,6 +102,7 @@ class GenbookChooser extends React.Component {
     if (firstChangedKeyIndex !== -1) {
       scrollTo(firstChangedKeyIndex, { block: 'center', behavior: 'smooth' });
     }
+    renderPromise.dispatch();
   }
 
   onNodeClick(
@@ -159,7 +168,7 @@ class GenbookChooser extends React.Component {
     const state = this.state as GenbookChooserState;
     const { panels, keys, xulswordStateHandler } = props;
     const { expandedIDs } = state;
-    const { treeRef, onNodeClick } = this;
+    const { treeRef, renderPromise, onNodeClick } = this;
 
     return (
       <Vbox {...addClass(`chooser genbook-chooser`, props)}>
@@ -177,8 +186,8 @@ class GenbookChooser extends React.Component {
                   if (!(treekey in treeRef)) {
                     treeRef[treekey] = React.createRef();
                   }
-                  const childNodes = G.genBookTreeNodes(m);
-                  const toc = G.LibSword.getGenBookTableOfContents(m);
+                  const childNodes = GI.genBookTreeNodes([], renderPromise, m);
+                  const toc = GI.LibSword.getGenBookTableOfContents([], renderPromise, m);
                   const tocKeys = Object.keys(toc);
                   this.treeNodes[treekey] = [];
                   if (

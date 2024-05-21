@@ -8,7 +8,7 @@ import { Icon } from '@blueprintjs/core';
 import { dString, clone } from '../../common.ts';
 import C from '../../constant.ts';
 import S from '../../defaultPrefs.ts';
-import G from '../rg.ts';
+import G, { GI } from '../rg.ts';
 import RenderPromise from '../renderPromise.ts';
 import { verseKey } from '../htmlData.ts';
 import {
@@ -147,6 +147,7 @@ export default class Xulsword extends React.Component implements RenderPromiseCo
   addHistory = (add?: HistoryVKType): void => {
     const { location, selection, history, historyIndex } = this
       .state as XulswordState;
+    const { renderPromise } = this;
     if (!location || (add && add.location.v11n !== location.v11n)) return;
     const newhist: HistoryVKType = add || {
       location,
@@ -156,7 +157,7 @@ export default class Xulsword extends React.Component implements RenderPromiseCo
     // before comparing so duplicate history is not recorded when v11n
     // switches with a module having a different v11n.
     if (history[historyIndex]) {
-      const locvk = verseKey(history[historyIndex].location, location.v11n);
+      const locvk = verseKey(history[historyIndex].location, location.v11n, undefined, renderPromise);
       if (location.book === locvk.book && location.chapter === locvk.chapter)
         return;
     }
@@ -174,6 +175,7 @@ export default class Xulsword extends React.Component implements RenderPromiseCo
   // promote is true, move that history entry to history[0].
   setHistory = (index: number, promote = false): void => {
     const { history: h } = this.state as XulswordState;
+    const { renderPromise } = this;
     if (
       index < 0 ||
       index > h.length - 1 ||
@@ -187,7 +189,7 @@ export default class Xulsword extends React.Component implements RenderPromiseCo
         // To update state to a history index without changing the selected
         // modules, history needs to be converted to the current v11n.
         const { location: hloc, selection: hsel } = history[index];
-        const newloc = verseKey(hloc, location.v11n).location();
+        const newloc = verseKey(hloc, location.v11n, undefined, renderPromise).location();
         const newsel = hsel ? verseKey(hsel, location.v11n).location() : null;
         if (promote) {
           const targ = history.splice(index, 1);
@@ -209,6 +211,7 @@ export default class Xulsword extends React.Component implements RenderPromiseCo
   // Build and return a history menupopup from state.
   historyMenu = (state: XulswordState) => {
     const { history, historyIndex, location } = state;
+    const { renderPromise } = this;
     let is = historyIndex - Math.round(C.UI.Xulsword.maxHistoryMenuLength / 2);
     if (is < 0) is = 0;
     let ie = is + C.UI.Xulsword.maxHistoryMenuLength;
@@ -219,7 +222,7 @@ export default class Xulsword extends React.Component implements RenderPromiseCo
       <Menupopup>
         {items.map((histitem, i) => {
           const { location: hloc, selection: hsel } = histitem;
-          const versekey = verseKey(hloc, location.v11n);
+          const versekey = verseKey(hloc, location.v11n, undefined, renderPromise);
           if (versekey.verse === 1) {
             versekey.verse = undefined;
             versekey.lastverse = undefined;
@@ -260,6 +263,7 @@ export default class Xulsword extends React.Component implements RenderPromiseCo
       atextRefs,
       handler,
       viewportParentHandler,
+      renderPromise,
       bbDragEnd,
       xulswordStateHandler,
     } = this;
@@ -312,8 +316,8 @@ export default class Xulsword extends React.Component implements RenderPromiseCo
       else viewportReset.push(m);
     });
 
-    const left = G.i18n.t('locale_direction') === 'ltr' ? 'left' : 'right';
-    const right = G.i18n.t('locale_direction') !== 'ltr' ? 'left' : 'right';
+    const left = GI.i18n.t('', renderPromise, 'locale_direction') === 'ltr' ? 'left' : 'right';
+    const right = GI.i18n.t('', renderPromise, 'locale_direction') !== 'ltr' ? 'left' : 'right';
 
     return (
       <Vbox
@@ -328,7 +332,7 @@ export default class Xulsword extends React.Component implements RenderPromiseCo
           <Vbox id="navigator-tool" pack="start">
             {!audio.open && (
               <Hbox id="historyButtons" align="center">
-                <Box flex="40%" title={G.i18n.t('history.back.tooltip')}>
+                <Box flex="40%" title={GI.i18n.t('', renderPromise, 'history.back.tooltip')}>
                   <Button
                     id="back"
                     icon={`chevron-${left}`}
@@ -339,10 +343,10 @@ export default class Xulsword extends React.Component implements RenderPromiseCo
                       historyIndex === history.length - 1
                     }
                   >
-                    {G.i18n.t('back.label')}
+                    {GI.i18n.t('', renderPromise, 'back.label')}
                   </Button>
                 </Box>
-                <Box title={G.i18n.t('history.all.tooltip')}>
+                <Box title={GI.i18n.t('', renderPromise, 'history.all.tooltip')}>
                   <Button
                     id="historymenu"
                     icon={`double-chevron-${left}`}
@@ -353,14 +357,14 @@ export default class Xulsword extends React.Component implements RenderPromiseCo
                     {historyMenupopup || <span />}
                   </Button>
                 </Box>
-                <Box flex="40%" title={G.i18n.t('history.forward.tooltip')}>
+                <Box flex="40%" title={GI.i18n.t('', renderPromise, 'history.forward.tooltip')}>
                   <Button
                     id="forward"
                     rightIcon={`chevron-${right}`}
                     onClick={handler}
                     disabled={navdisabled || historyIndex === 0}
                   >
-                    {G.i18n.t('history.forward.label')}
+                    {GI.i18n.t('', renderPromise, 'history.forward.label')}
                   </Button>
                 </Box>
               </Hbox>
@@ -380,7 +384,7 @@ export default class Xulsword extends React.Component implements RenderPromiseCo
                   </div>
                 </Vbox>
                 <Button id="closeplayer" flex="1" onClick={handler}>
-                  {G.i18n.t('close.label')}
+                  {GI.i18n.t('', renderPromise, 'close.label')}
                 </Button>
               </Hbox>
             )}
@@ -465,16 +469,16 @@ export default class Xulsword extends React.Component implements RenderPromiseCo
                     if (b) b.click();
                   }
                 }}
-                title={G.i18n.t('searchbox.tooltip')}
+                title={GI.i18n.t('', renderPromise, 'searchbox.tooltip')}
               />
-              <Box title={G.i18n.t('search.tooltip')}>
+              <Box title={GI.i18n.t('', renderPromise, 'search.tooltip')}>
                 <Button
                   id="searchButton"
                   icon="search"
                   disabled={searchDisabled}
                   onClick={handler}
                 >
-                  {G.i18n.t('menu.search')}
+                  {GI.i18n.t('', renderPromise, 'menu.search')}
                 </Button>
               </Box>
             </Vbox>
@@ -488,28 +492,28 @@ export default class Xulsword extends React.Component implements RenderPromiseCo
               checked={show.headings}
               icon={<Icon icon="widget-header" size={28} />}
               onClick={handler}
-              title={G.i18n.t('headingsButton.tooltip')}
+              title={GI.i18n.t('', renderPromise, 'headingsButton.tooltip')}
             />
             <Button
               id="dictlinks"
               checked={show.dictlinks}
               icon={<Icon icon="search-template" size={28} />}
               onClick={handler}
-              title={G.i18n.t('dictButton.tooltip')}
+              title={GI.i18n.t('', renderPromise, 'dictButton.tooltip')}
             />
             <Button
               id="footnotes"
               checked={show.footnotes}
               icon={<Icon icon="manually-entered-data" size={28} />}
               onClick={handler}
-              title={G.i18n.t('notesButton.tooltip')}
+              title={GI.i18n.t('', renderPromise, 'notesButton.tooltip')}
             />
             <Button
               id="crossrefs"
               checked={show.crossrefs}
               icon={<Icon icon="link" size={28} />}
               onClick={handler}
-              title={G.i18n.t('crossrefsButton.tooltip')}
+              title={GI.i18n.t('', renderPromise, 'crossrefsButton.tooltip')}
             />
           </Hbox>
 

@@ -363,7 +363,7 @@ export function getMaxVerse(
   vkeytext: string,
   renderPromise?: RenderPromise
 ): number {
-  const { chapter } = verseKey(vkeytext, v11n);
+  const { chapter } = verseKey(vkeytext, v11n, undefined, renderPromise);
   const maxch = getMaxChapter(v11n, vkeytext);
   if (chapter <= maxch && chapter > 0) {
     return GI.LibSword.getMaxChapter(0, renderPromise, v11n, vkeytext);
@@ -487,7 +487,10 @@ export function getLangReadable(code: string): string {
   return name || code;
 }
 
-export function moduleInfoHTML(configs: SwordConfType[]): string {
+export function moduleInfoHTML(
+  configs: SwordConfType[],
+  renderPromise?: RenderPromise
+): string {
   const esc = (s: string): string => {
     if (!s) return '';
     return s.replace(/[&<>"']/g, (m) => {
@@ -557,7 +560,7 @@ export function moduleInfoHTML(configs: SwordConfType[]): string {
             const v = c[f] as ModTypes;
             const tt =
               (v in C.SupportedTabTypes && C.SupportedTabTypes[v]) || '';
-            value = G.i18n.t(tt || 'Genbks');
+            value = GI.i18n.t('', renderPromise, tt || 'Genbks');
           } else if (sf === 'Lang') {
             const v = c[f] as string;
             const [l, s] = v.split('-');

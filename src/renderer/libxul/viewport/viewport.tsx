@@ -313,7 +313,9 @@ class Viewport extends React.Component implements PopupParent {
         locs.push(
           verseKey(
             { book, chapter, verse, v11n },
-            tov11n || undefined
+            tov11n || undefined,
+            undefined,
+            this.renderPromise
           ).location()
         );
       });
@@ -363,7 +365,7 @@ class Viewport extends React.Component implements PopupParent {
         {chooser === 'bible' && showingChooser && (
           <Chooser
             key={[reset, location?.book].join('.')}
-            selection={location?.book}
+            selection={location?.book || ''}
             v11n={chooserV11n}
             headingsModule={firstUnpinnedBible}
             bookGroups={bookGroups}

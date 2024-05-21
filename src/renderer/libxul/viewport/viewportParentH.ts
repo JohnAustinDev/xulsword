@@ -382,7 +382,9 @@ export default function handler(
                 verse: Number(v),
                 v11n,
               },
-              location.v11n
+              location.v11n,
+              undefined,
+              renderPromise
             ).location();
             this.setState({
               location: newloc,

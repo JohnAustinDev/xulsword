@@ -17,7 +17,7 @@ import {
   sanitizeHTML,
   stringHash,
 } from '../../../common.ts';
-import G from '../../rg.ts';
+import G, { GI } from '../../rg.ts';
 import log from '../../log.ts';
 import {
   clearPending,
@@ -338,7 +338,9 @@ class Atext extends React.Component implements RenderPromiseComponent {
                     const { book, chapter, verse: vs } = info.location;
                     const location = verseKey(
                       [book, chapter, vs].join('.'),
-                      libswordProps.location.v11n
+                      libswordProps.location.v11n,
+                      undefined,
+                      renderPromise
                     ).location();
                     if (isPinned) {
                       newState = {
@@ -450,7 +452,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
             selection &&
             type === C.BIBLE
           ) {
-            highlight(sbe, selection, module);
+            highlight(sbe, selection, module, renderPromise);
             sbe.dataset.highlightkey = highlightkey;
           }
           // TRIM NOTES
@@ -524,7 +526,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
       else {
         log.silly(
           `${flag} panel ${i} ${verseKey(
-            libswordProps.location || ''
+            libswordProps.location || '', undefined, undefined, renderPromise
           ).osisRef()}:`
         );
         const isDict =
@@ -581,7 +583,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
   render() {
     const state = this.state as AtextStateType;
     const props = this.props as AtextProps;
-    const { handler } = this;
+    const { renderPromise, handler } = this;
     const { maxNoteBoxHeight, versePerLine } = state;
     const {
       columns,
@@ -673,8 +675,12 @@ class Atext extends React.Component implements RenderPromiseComponent {
         <Box className="hd">
           <div className="navlink">
             <span className="navlink-span">{prevArrow}</span>
-            <a className="prevchaplink">{G.i18n.t('PrevChaptext')}</a>{' '}
-            <a className="nextchaplink">{G.i18n.t('NextChaptext')}</a>{' '}
+            <a className="prevchaplink">
+              {GI.i18n.t('', renderPromise, 'PrevChaptext')}
+            </a>{' '}
+            <a className="nextchaplink">
+              {GI.i18n.t('', renderPromise, 'NextChaptext')}
+            </a>{' '}
             <span className="navlink-span">{nextArrow}</span>
           </div>
         </Box>

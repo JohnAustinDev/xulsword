@@ -10,8 +10,11 @@ import { ofClass } from '../../../common.ts';
 import { xulPropTypes, XulProps, htmlAttribs } from '../xul.tsx';
 import { AnchorButton } from '../button.tsx';
 import Menupopup from '../menupopup.tsx';
-import G from '../../rg.ts';
+import G, { GI } from '../../rg.ts';
+import RenderPromise from '../../renderPromise.ts';
 import './tabs.css';
+
+import type { RenderPromiseComponent, RenderPromiseState } from '../../renderPromise.ts';
 
 const propTypes = {
   ...xulPropTypes,
@@ -34,16 +37,18 @@ interface TabsProps extends XulProps {
   mtModule: string | undefined;
 }
 
-interface TabsState {
+type TabsState = RenderPromiseState & {
   multiTabs: string[];
   multiTabMenupopup: any;
 }
 
 // XUL Tabs
-class Tabs extends React.Component {
+class Tabs extends React.Component implements RenderPromiseComponent {
   static propTypes: typeof propTypes;
 
   tabsref: React.RefObject<HTMLDivElement>;
+
+  renderPromise: RenderPromise;
 
   constructor(props: TabsProps) {
     super(props);
@@ -51,12 +56,15 @@ class Tabs extends React.Component {
     this.state = {
       multiTabMenupopup: null,
       multiTabs: [],
-    };
+      renderPromiseID: 0,
+    } as TabsState;
     this.tabsref = React.createRef();
     this.checkTabWidth = this.checkTabWidth.bind(this);
     this.multiTabButtonClick = this.multiTabButtonClick.bind(this);
     this.getTab = this.getTab.bind(this);
     this.getMultiTabSelection = this.getMultiTabSelection.bind(this);
+
+    this.renderPromise = new RenderPromise(this);
   }
 
   // Only when the tabs key prop changes will React instantiate a new tabs
@@ -65,16 +73,22 @@ class Tabs extends React.Component {
     this.checkTabWidth();
   }
 
+  componentDidUpdate() {
+    const { renderPromise } = this;
+    renderPromise.dispatch();
+  }
+
   getTab(
     m: string | undefined,
     type: string,
     classes: string,
-    children: any = null
+    children: any = null,
+    renderPromise: RenderPromise,
   ) {
     const { panelIndex: i } = this.props as TabsProps;
     const tabType = !m || type === 'ilt-tab' ? 'Texts' : G.Tab[m].tabType;
     const label =
-      !m || type === 'ilt-tab' ? G.i18n.t('ORIGLabelTab') : G.Tab[m].label;
+      !m || type === 'ilt-tab' ? GI.i18n.t('', renderPromise, 'ORIGLabelTab') : G.Tab[m].label;
     return (
       <div
         key={`${type}_${i}_${m}`}
@@ -154,6 +168,7 @@ class Tabs extends React.Component {
   }
 
   multiTabButtonClick(e: any) {
+    const { renderPromise } = this;
     const { multiTabMenupopup } = this.state as TabsState;
     if (
       !multiTabMenupopup ||
@@ -172,7 +187,9 @@ class Tabs extends React.Component {
               return this.getTab(
                 m,
                 'mto-tab',
-                m === this.getMultiTabSelection(multiTabs) ? 'selected' : ''
+                m === this.getMultiTabSelection(multiTabs) ? 'selected' : '',
+                null,
+                renderPromise
               );
             })}
           </Menupopup>
@@ -186,8 +203,9 @@ class Tabs extends React.Component {
     const { multiTabs, multiTabMenupopup } = this.state as TabsState;
     const { module, isPinned, panelIndex, tabs, ilModule, ilModuleOption } =
       this.props as TabsProps;
+    const { renderPromise } = this;
 
-    let ilTabLabel = G.i18n.t('ORIGLabelTab');
+    let ilTabLabel = GI.i18n.t('', renderPromise, 'ORIGLabelTab');
     if (!ilTabLabel) ilTabLabel = 'ilt';
 
     const mtMod = this.getMultiTabSelection(multiTabs);
@@ -207,11 +225,11 @@ class Tabs extends React.Component {
         data-index={panelIndex}
         data-ispinned={isPinned}
       >
-        {module && isPinned && this.getTab(module, 'reg-tab', 'active')}
+        {module && isPinned && this.getTab(module, 'reg-tab', 'active', null, renderPromise)}
         {tabs.map((m: string) => {
           if (isPinned || !m || multiTabs.includes(m)) return null;
           const selected = m === module ? 'active' : '';
-          return this.getTab(m, 'reg-tab', selected);
+          return this.getTab(m, 'reg-tab', selected, null, renderPromise);
         })}
         {!isPinned &&
           multiTabs.length > 0 &&
@@ -222,11 +240,12 @@ class Tabs extends React.Component {
             module === mtMod ? 'active' : '',
             <AnchorButton onClick={this.multiTabButtonClick}>
               {multiTabMenupopup}
-            </AnchorButton>
+            </AnchorButton>,
+            renderPromise,
           )}
         {!isPinned &&
           (ilModule === 'disabled' || ilModuleOption[0]) &&
-          this.getTab(ilModuleOption[0], 'ilt-tab', ilcls, null)}
+          this.getTab(ilModuleOption[0], 'ilt-tab', ilcls, null, renderPromise)}
       </div>
     );
   }

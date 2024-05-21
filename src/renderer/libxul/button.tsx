@@ -62,7 +62,7 @@ Button.propTypes = propTypes;
 
 export default Button;
 
-export function AnchorButton({ disabled = false, ...props }: XulProps & { disabled: boolean }) {
+export function AnchorButton({ disabled = false, ...props }: XulProps & { disabled?: boolean }) {
   return (
     <a
       type="button"

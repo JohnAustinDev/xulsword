@@ -78,8 +78,8 @@ class Bookselect extends React.Component {
     // variations are short abbreviations.
     this.parser = new RefParser(
       G.i18n.language,
-      G.getLocaleDigits(),
-      G.getLocalizedBooks(),
+      G.getLocaleDigits(true),
+      G.getLocalizedBooks(true),
       { noVariations: true }
     );
 

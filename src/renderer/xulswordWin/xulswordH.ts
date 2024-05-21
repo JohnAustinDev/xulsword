@@ -64,7 +64,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
             // TODO!: This v11n is sometimes null for some reason, and causes this
             // operation to fail.
             if (location) {
-              const l = verseKey(location);
+              const l = verseKey(location, undefined, undefined, renderPromise);
               l.verse = 1;
               const newloc = chapterChange(
                 l.location(),
@@ -158,7 +158,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
                 chapter: 1,
                 verse: 1,
                 v11n: location.v11n,
-              });
+              }, undefined, undefined, renderPromise);
               const s: Partial<XulswordState> = {
                 location: newloc.location(),
                 selection: newloc.location(),
@@ -210,7 +210,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
             // reset Bookselect on Enter key even if chapter doesn't change
             const bsreset = prevState.bsreset + 1;
             if (location) {
-              const pvk = verseKey(location);
+              const pvk = verseKey(location, undefined, undefined, renderPromise);
               let newloc;
               if (id === 'chapter__input') {
                 pvk.chapter = Number(value);
@@ -270,7 +270,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
                 book,
                 chapter,
                 v11n: G.Tab[swordModule].v11n || null,
-              }),
+              }, undefined, undefined, renderPromise),
               1
             );
             if (nk)

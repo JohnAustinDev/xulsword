@@ -18,7 +18,7 @@ import {
 } from '../../../common.ts';
 import S from '../../../defaultPrefs.ts';
 import C from '../../../constant.ts';
-import G from '../../rg.ts';
+import G, { GI } from '../../rg.ts';
 import { libswordImgSrc, windowArguments } from '../../rutil.ts';
 import RenderPromise from '../../renderPromise.ts';
 import {
@@ -335,12 +335,12 @@ class Popup extends React.Component implements RenderPromiseComponent {
             {!isWindow && !isBrowser && <div className="towindow" />}
             {elemdata && elemdata.length > 1 && (
               <div>
-                <a className="popupBackLink">{G.i18n.t('back.label')}</a>
+                <a className="popupBackLink">{GI.i18n.t('', this.renderPromise, 'back.label')}</a>
               </div>
             )}
             {elemdata && elemdata.length === 1 && (
               <div>
-                <a className="popupCloseLink">{G.i18n.t('close')}</a>
+                <a className="popupCloseLink">{GI.i18n.t('', this.renderPromise, 'close')}</a>
               </div>
             )}
             {!isWindow && <div className="draghandle" />}

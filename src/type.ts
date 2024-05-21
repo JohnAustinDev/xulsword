@@ -780,9 +780,6 @@ export type GCallType = [
   any[] | undefined
 ];
 
-type RenderPromiseArgs<ARGS extends Parameters<any>>
-  = [PrefValue, RenderPromise | undefined | null, ...ARGS];
-
 export type GType = {
   // Getters
   Books: ReturnType<typeof getBooks>;
@@ -838,6 +835,9 @@ export type GType = {
   Window: typeof Window;
 };
 
+type RenderPromiseArgs<FUNC extends (...args: any[]) => any>
+  = [ReturnType<FUNC>, RenderPromise | undefined | null, ...Parameters<FUNC>];
+
 // Internet safe GType main (server):
 export type GITypeMain = { [name in keyof GIRendererType]: GType[name] };
 
@@ -857,7 +857,7 @@ export type GIRendererType = {
     'FeatureModules' |
     'BkChsInV11n' |
     'GetBooksInVKModules'>
-  ]: (...args: RenderPromiseArgs<[]>) => GType[name];
+  ]: (...args: RenderPromiseArgs<GType[name]>) => GType[name];
 } & {
   [name in keyof Pick<GType,
     'getSystemFonts' |
@@ -868,20 +868,20 @@ export type GIRendererType = {
     'callBatchSync' |
     'getAllDictionaryKeyList' |
     'genBookTreeNodes'>
-  ]: (...args: RenderPromiseArgs<Parameters<GType[name]>>) => ReturnType<GType[name]>;
+  ]: (...args: RenderPromiseArgs<GType[name]>) => ReturnType<GType[name]>;
 } & {
   i18n: {
-    [m in 'exists' |  't']: (...args: RenderPromiseArgs<Parameters<GType['i18n'][m]>>)
+    [m in 'exists' |  't']: (...args: RenderPromiseArgs<GType['i18n'][m]>)
       => ReturnType<GType['i18n'][m]>;
   }
 } & {
   LibSword: {
-    [m in keyof GType['LibSword']]: (...args: RenderPromiseArgs<Parameters<GType['LibSword'][m]>>)
+    [m in keyof GType['LibSword']]: (...args: RenderPromiseArgs<GType['LibSword'][m]>)
       => ReturnType<GType['LibSword'][m]>;
   }
 } & {
   Viewport: {
-    [m in keyof GType['Viewport']]: (...args: RenderPromiseArgs<Parameters<GType['Viewport'][m]>>)
+    [m in keyof GType['Viewport']]: (...args: RenderPromiseArgs<GType['Viewport'][m]>)
       => ReturnType<GType['Viewport'][m]>;
   }
 }

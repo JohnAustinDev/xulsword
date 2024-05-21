@@ -191,7 +191,12 @@ export function locationVKText(
     const tov11n = compOK && tab[compOK].v11n;
     if (tov11n) {
       targetmod = compOK;
-      location = verseKey(location).location(tov11n);
+      location = verseKey(
+        location,
+        undefined,
+        undefined,
+        renderPromise
+      ).location(tov11n);
       i.companion = true;
     }
   }
@@ -270,7 +275,8 @@ const NoterefRE = /^\s*([^!]+)!(.*?)\s*$/;
 export function parseExtendedVKRef(
   extref: string,
   context?: LocationVKType,
-  locales?: string[]
+  locales?: string[],
+  renderPromise?: RenderPromise
 ): (LocationVKType | string)[] {
   const reflistA = extref.split(/\s*;\s*/);
   for (let i = 0; i < reflistA.length; i += 1) {
@@ -293,7 +299,7 @@ export function parseExtendedVKRef(
       [, ref, noteID] = noteref;
     }
     const options = locales && locales.length ? { locales } : undefined;
-    const vk = verseKey(ref, null, options);
+    const vk = verseKey(ref, null, options, renderPromise);
     if (!vk.book && bk) {
       const match = ref
         .replace(/[^\s\p{L}\p{N}:-]/gu, ' ')
@@ -356,7 +362,7 @@ export function getRefHTML(
   const locale =
     (targetmod in G.Config && G.Config[targetmod].AssociatedLocale) ||
     G.i18n.language;
-  const list = parseExtendedVKRef(extref, context, [locale]);
+  const list = parseExtendedVKRef(extref, context, [locale], renderPromise);
   const alternates = workingModules();
   const mod = targetmod || alternates[0] || '';
   const html: string[] = [];
@@ -415,7 +421,7 @@ export function getRefHTML(
         h += `
           <bdi>
             <a class="${crref.join(' ')}" data-data="${crd}">
-              ${verseKey(location).readable()}
+              ${verseKey(location, undefined, undefined, renderPromise).readable()}
             </a>
             ${q}${text ? ': ' : ''}
           </bdi>
@@ -633,7 +639,7 @@ export function getChapterHeading(
 ) {
   if (!location || !module) return { textHTML: '', intronotes: '' };
   const { book, chapter } = location;
-  const config = GI.Config({}, renderPromise);
+  const config = G.Config;
   let l;
   if (module in config) l = config[module].AssociatedLocale;
   if (!l) l = G.i18n.language;
@@ -890,7 +896,7 @@ function aTextWheelScroll2(
             chapter,
             verse,
             v11n,
-          }).location(location.v11n);
+          }, undefined, undefined, renderPromise).location(location.v11n);
         }
       }
     }
@@ -946,7 +952,8 @@ export function aTextWheelScroll(
 export function highlight(
   sbe: HTMLElement,
   selection: LocationVKType,
-  module: string
+  module: string,
+  renderPromise: RenderPromise
 ) {
   // First unhilight everything
   Array.from(sbe.getElementsByClassName('hl')).forEach((v) => {
@@ -956,7 +963,9 @@ export function highlight(
   if (!selection) return;
   const { book, chapter, verse, lastverse } = verseKey(
     selection,
-    G.Tab[module].v11n || undefined
+    G.Tab[module].v11n || undefined,
+    undefined,
+    renderPromise
   ).location();
   if (verse) {
     const lv = lastverse || verse;
@@ -1170,7 +1179,7 @@ export function pageChange(
             chapter,
             verse,
             v11n,
-          });
+          }, undefined, undefined, renderPromise);
           if (vk.chapter <= getMaxChapter(v11n, vk.osisRef())) {
             const maxv = getMaxVerse(v11n, vk.osisRef(), renderPromise);
             if (!vk.verse || vk.verse <= maxv) return vk.location();

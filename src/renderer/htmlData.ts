@@ -156,7 +156,7 @@ export function libSwordData2XulswordData(dataIn: LibSwordHTMLData): HTMLData {
       const [, b, r] = m;
       if (b && b in G.Tab && G.Tab[b].isVerseKey) {
         context = b;
-        location = verseKey(r, G.Tab[b].v11n || null).location();
+        location = verseKey(r, G.Tab[b].v11n || null, undefined, null).location();
       } else {
         locationGB = {
           otherMod: m[1],
@@ -460,47 +460,51 @@ export function findElementData(elem: HTMLElement | null): HTMLData | null {
   return r;
 }
 
+// If renderPromise is null, convertLocation will return the input text unchanged, and
+// text direction will always be right-to-left.
 export function verseKey(
   versekey: LocationVKType | string,
   v11n?: V11nType | null,
   options?: RefParserOptionsType,
-  renderPromise?: RenderPromise
+  renderPromise?: RenderPromise | null
 ): VerseKey {
-  let locales: boolean = false;
-  if (options) {
-    const { locales: l } = options;
-    if (l && l.some((x) => x !== G.i18n.language)) {
-      locales = true;
+
+  let localeDirection: 'ltr' | 'rtl' = 'ltr';
+
+  let convertLocation = (
+    _fromv11n: V11nType,
+    vkeytext: string,
+    _tov11n: V11nType
+  ) => {return vkeytext};
+  if (renderPromise !== null) {
+    localeDirection = GI.i18n.t('ltr', renderPromise, 'locale_direction') as 'ltr';
+    convertLocation = (
+      fromv11n: V11nType,
+      vkeytext: string,
+      tov11n: V11nType
+    ) => {
+      const newloc = GI.LibSword.convertLocation(vkeytext, renderPromise,
+        fromv11n,
+        vkeytext,
+        tov11n
+      );
+      return newloc;
     }
   }
+
   return new VerseKey(
     new RefParser(
       G.i18n.language,
-      G.getLocaleDigits(locales),
-      G.getLocalizedBooks(locales),
+      G.getLocaleDigits(true),
+      G.getLocalizedBooks(true),
       options
     ),
     G.BkChsInV11n,
-    G.i18n.t('locale_direction') as 'ltr' | 'rtl',
+    localeDirection,
     {
-      convertLocation: (
-        fromv11n: V11nType,
-        vkeytext: string,
-        tov11n: V11nType
-      ) => {
-        const newloc = GI.LibSword.convertLocation(vkeytext, renderPromise,
-          fromv11n,
-          vkeytext,
-          tov11n
-        );
-        return newloc;
-      },
-      Book: () => {
-        return G.Book;
-      },
-      Tab: () => {
-        return G.Tab;
-      },
+      convertLocation,
+      Book: () => G.Book,
+      Tab: () => G.Tab,
     },
     versekey,
     v11n

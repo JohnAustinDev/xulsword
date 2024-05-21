@@ -7,7 +7,7 @@ import {
   ofClass,
 } from '../../../common.ts';
 import S from '../../../defaultPrefs.ts';
-import G from '../../rg.ts';
+import G, { GI } from '../../rg.ts';
 import { addBookmarksToNotes, getBookmarkInfo } from '../../bookmarks.ts';
 import { getElementData } from '../../htmlData.ts';
 import { GCallsOrPromise } from '../../renderPromise.ts';
@@ -26,7 +26,10 @@ import type { PopupState } from './popup.tsx';
 
 export type FailReason = { requires: string[]; reason?: string };
 
-export function getFailReasonHTML(failReason: FailReason): string {
+export function getFailReasonHTML(
+  failReason: FailReason,
+  renderPromise: RenderPromise
+): string {
   const { reason, requires } = failReason;
   if (reason || requires.length) {
     const d = JSON_attrib_stringify({
@@ -40,11 +43,13 @@ export function getFailReasonHTML(failReason: FailReason): string {
       <div class="${classes.join(' ')}">
         <div class="fail-reason">${reason ?? ''}</div>
         <div class="fail-requires">
-          <span class="label">${G.i18n.t('module-required.message')}</span>
+          <span class="label">${
+            GI.i18n.t('', renderPromise, 'module-required.message')
+          }</span>
           <div class="requiremod button" data-data="${d}">
             <div class="button-box">
               <div class="bp5-button">
-                ${G.i18n.t('install.label')}
+                ${GI.i18n.t('', renderPromise, 'install.label')}
               </div>
             </div>
           </div>
@@ -129,7 +134,12 @@ export function getPopupHTML(
       if (context && reflist) {
         if (context in G.Tab) {
           const bibleReflist = reflist.join(';');
-          const parsed = parseExtendedVKRef(bibleReflist, location);
+          const parsed = parseExtendedVKRef(
+            bibleReflist,
+            location,
+            [],
+            renderPromise
+          );
           if (parsed.length) {
             let b = 'Gen';
             let c = 0;
@@ -206,7 +216,7 @@ export function getPopupHTML(
       throw Error(`Unhandled popup type '${type}'.`);
   }
 
-  if (failReason) html += getFailReasonHTML(failReason);
+  if (failReason) html += getFailReasonHTML(failReason, renderPromise);
 
   return html;
 }
