@@ -32,7 +32,6 @@ import {
   getFeatureModules,
   localeConfig,
   getConfig,
-  callBatch,
   GetBooksInVKModules,
   getLocalizedBooks,
   getLocaleDigits,
@@ -41,6 +40,7 @@ import {
   getAllDictionaryKeyList,
   genBookTreeNodes
 } from './minit.ts';
+import { callBatch } from './handleGlobal.ts';
 
 import type { GType } from '../type.ts';
 import type { SubscriptionType } from '../subscription.ts';

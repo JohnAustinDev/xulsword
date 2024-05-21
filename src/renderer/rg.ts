@@ -7,7 +7,7 @@ import { GCallsOrPromise } from './renderPromise.ts';
 import log from './log.ts';
 import CookiePrefs from './prefs.ts';
 
-import type { GCallType, GIType, GType, PrefValue } from '../type.ts';
+import type { GCallType, GIRendererType, GType, PrefValue } from '../type.ts';
 import type RenderPromise from './renderPromise.ts';
 
 async function asyncRequest(
@@ -118,7 +118,7 @@ function publicCall(thecall: GCallType): GCallType {
 //      dispatch them later, to be followed by component re-endering
 //      once the requested values have been obtained asynchronously.
 const G = {} as GType;
-export const GI = {} as GIType;
+export const GI = {} as GIRendererType;
 const { asyncFuncs } = GBuilder;
 Object.entries(GBuilder).forEach((entry) => {
   if (!([

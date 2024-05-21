@@ -18,24 +18,22 @@ import {
   getFeatureModules,
   localeConfig,
   getConfig,
-  callBatch,
   GetBooksInVKModules,
   getLocalizedBooks,
   getLocaleDigits,
   getAllDictionaryKeyList,
   genBookTreeNodes,
 } from './minit.ts';
+import { callBatch } from './handleGlobal.ts';
 
-import type { GIType, GType } from '../type.ts';
-
-type GIClassType = { [k in keyof GIType]: GType[k] };
+import type { GITypeMain, GType } from '../type.ts';
 
 // Methods of GI are the same as G but without those that are Electron
 // only or not used by the server (such as Prefs).
 // This G object is for use on the nodejs server, and it shares
 // the same interface as the renderer's G object. Properties of this
 // object directly access server data and modules.
-class GIClass implements GIClassType {
+class GIClass implements GITypeMain {
   // TODO!: Great care must be taken to insure public usage of these
   // functions is safe and secure!!
   i18n;

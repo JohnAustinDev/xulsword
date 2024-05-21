@@ -305,11 +305,11 @@ export function getLocalizedChapterTerm(
     lng: locale,
     ns: 'books',
   };
-  const exists = GI.i18n.exists(false, rp, k1, toptions);
-  const tk1 = GI.i18n.t(k1, rp, k1, toptions);
-  const tk2 = GI.i18n.t(k2, rp, k2, toptions);
-  const r1 = exists && tk1;
-  return r1 && !/^\s*$/.test(r1) ? r1 : tk2;
+  const tkExists = GI.i18n.exists(false, rp, k1, toptions);
+  const tk = tkExists ? GI.i18n.t(k1, rp, k1, toptions) : '';
+  const r2 = GI.i18n.t(k2, rp, k2, toptions);
+  const r1 = tkExists && !/^\s*$/.test(tk) && tk;
+  return r1 || r2;
 }
 
 // Does location surely exist in the module? It's assumed if a book is included,

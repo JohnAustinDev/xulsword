@@ -26,7 +26,6 @@ import type {
   getModuleFonts,
   getFeatureModules,
   getBkChsInV11n,
-  GCachePreloadType,
   GetBooksInVKModules,
   getLocaleDigits,
   getLocalizedBooks,
@@ -47,6 +46,7 @@ import type Window from './main/components/window.ts';
 import type { DirsRendererType } from './main/components/dirs.ts';
 import type LibSword from './main/components/libsword.ts';
 import type { canRedo, canUndo } from './main/bookmarks.ts';
+import type { CallBatch } from './main/handleGlobal.ts';
 import type Viewport from './main/components/viewport.ts';
 import type RenderPromise from './renderer/renderPromise.ts';
 
@@ -813,9 +813,9 @@ export type GType = {
   canUndo: typeof canUndo;
   canRedo: typeof canRedo;
   // IMPORTANT: callBatch is not cacheable! Always use callBatchThenCache.
-  callBatch: (...args: Parameters<GCachePreloadType>) => Promise<ReturnType<GCachePreloadType>>;
+  callBatch: (...args: Parameters<CallBatch>) => Promise<ReturnType<CallBatch>>;
   // IMPORTANT: callBatchSync is not cacheable! Always use callBatchThenCacheSync.
-  callBatchSync: GCachePreloadType;
+  callBatchSync: CallBatch;
   getAllDictionaryKeyList: typeof getAllDictionaryKeyList;
   genBookTreeNodes: typeof genBookTreeNodes;
 
@@ -838,7 +838,11 @@ export type GType = {
   Window: typeof Window;
 };
 
-export type GIType = {
+// Internet safe GType main (server):
+export type GITypeMain = { [name in keyof GIRendererType]: GType[name] };
+
+// Internet safe GType renderer (browser) require render-promise arguments:
+export type GIRendererType = {
   [name in keyof Pick<GType,
     'Books' |
     'Book' |

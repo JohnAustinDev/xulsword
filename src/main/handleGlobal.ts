@@ -1,9 +1,9 @@
-import { GBuilder, GCallType, GType } from '../type.ts';
+import { GBuilder, GCallType, GITypeMain as GIMainType, GType } from '../type.ts';
 import { JSON_stringify } from '../common.ts';
 
 // Handle global variable calls from renderer processes
 export default function handleGlobal(
-  G: GType | Partial<GType>,
+  GX: GType | GIMainType,
   win: number,
   acall: GCallType,
   trusted = false, // internetSafe or not?
@@ -18,25 +18,23 @@ export default function handleGlobal(
   else if (is && (is[1] as any).includes(m)) allow = true;
   if (name && name in GBuilder && allow) {
     const gBuilder = GBuilder as any;
-    const g = G as any;
+    const gx = GX as any;
     if (!Array.isArray(args) && gBuilder[name] === 'getter') {
-      ret = g[name];
+      ret = gx[name];
     } else if (Array.isArray(args) && typeof gBuilder[name] === 'function') {
-      ret = g[name](...args);
+      ret = gx[name](...args);
     } else if (m && typeof gBuilder[name] === 'object') {
       if (!Array.isArray(args) && gBuilder[name][m] === 'getter') {
-        ret = g[name][m];
+        ret = gx[name][m];
       } else if (Array.isArray(args) && typeof gBuilder[name][m] === 'function') {
         if (
-          typeof args !== 'undefined' &&
-          includeCallingWindow.includes(
-            name as typeof includeCallingWindow[number]
-          ) &&
-          typeof args[g[name][m].length] === 'undefined'
+          Array.isArray(args) &&
+          includeCallingWindow.includes(name as any) &&
+          typeof args[gx[name][m].length] === 'undefined'
         ) {
-          args[g[name][m].length] = win;
+          args[gx[name][m].length] = win;
         }
-        ret = g[name][m](...args);
+        ret = gx[name][m](...args);
       } else {
         throw Error(`Unhandled global ipc method: ${JSON_stringify(acall)}`);
       }
@@ -48,4 +46,21 @@ export default function handleGlobal(
   }
 
   return ret;
+}
+
+export type CallBatch = (calls: (GCallType | null)[]) => (any | null)[];
+
+// All batch calls are considered anonymous-window and are untrusted.
+export function callBatch(
+  GX: GType | GIMainType,
+  calls: Parameters<CallBatch>[0]
+): ReturnType<CallBatch> {
+  const resp: any[] = [];
+
+  calls.forEach((c: (GCallType | null)) => {
+    if (c === null) resp.push(null);
+    else resp.push(handleGlobal(GX, -1, c, false));
+  });
+
+  return resp;
 }

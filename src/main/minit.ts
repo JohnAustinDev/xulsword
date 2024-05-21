@@ -15,7 +15,6 @@ import {
   validateViewportModulePrefs,
   keep,
   normalizeFontFamily,
-  JSON_stringify,
   pad,
   hierarchy,
   getSwordOptions,
@@ -47,51 +46,12 @@ import type {
   OSISBookType,
   SwordFeatureMods,
   XulswordFeatureMods,
-  GCallType,
   BookGroupType,
   VerseKeyAudioFile,
   GenBookAudioFile,
   ModulesCache,
   TreeNodeInfoPref,
 } from '../type.ts';
-import type GI from './mgServer.ts';
-
-export type GCachePreloadType = (calls: (GCallType | null)[]) => (any | null)[];
-export function callBatch(G: GType | typeof GI, calls: (GCallType | null)[]): (any | null)[] {
-  const resp: any[] = [];
-  const g = G as any;
-  calls.forEach((c: (GCallType | null)) => {
-    if (c !== null) {
-      const [name, m, args] = c;
-      if (!(name in g)) throw new Error(`'${name}' is not a member of G`);
-      if (m && typeof m !== 'string') {
-        throw new Error(`G.${name} method name is not a string: '${typeof m}`);
-      }
-      if (!m && !Array.isArray(args)) {
-        resp.push(g[name]);
-      } else if (!m && Array.isArray(args)) {
-        if (typeof g[name] !== 'function') {
-          throw new Error(`'${name}' is not a method of G`);
-        }
-        resp.push(g[name](...args));
-      } else if (m && !Array.isArray(args)) {
-        if (!(m in g[name])) {
-          throw new Error(`'${m.toString()}' is not a member of G.${name}`);
-        }
-        resp.push(g[name][m]);
-      } else if (m && Array.isArray(args)) {
-        if (!(m in g[name]) || typeof g[name][m] !== 'function') {
-          throw new Error(`'${m.toString()}' is not a method of G.${name}`);
-        }
-        resp.push(g[name][m](...args));
-      } else {
-        throw new Error(`callBatch bad G call: ${JSON_stringify(c)}`);
-      }
-    } else resp.push(null);
-  });
-
-  return resp;
-}
 
 // Get all supported books in locale order. NOTE: xulsword ignores individual
 // module book order in lieu of locale book order or xulsword default order

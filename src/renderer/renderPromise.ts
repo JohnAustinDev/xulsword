@@ -210,7 +210,6 @@ function writeCallToCache(call: GCallType | null, result: any) {
 
 function promiseCacheKey(acall: GCallType): string {
   const ckey = GCacheKey(acall);
-  if (isCallCacheable(GBuilder, acall)) return ckey;
-  // Non-cacheable data will be cached and used and then deleted after some delay.
-  return `x-${ckey}`;
+  // Non-cacheable data will be cached and then deleted after some delay.
+  return isCallCacheable(GBuilder, acall) ? ckey : `x-${ckey}`;
 }
