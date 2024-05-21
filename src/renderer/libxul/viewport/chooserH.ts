@@ -76,12 +76,14 @@ export default function handler(this: Chooser, es: React.SyntheticEvent): void {
           const hd = /<h\d([^>]*class="head1[^"]*"[^>]*>)(.*?)<\/h\d>/i;
           // Rexgex parses verse number from array member strings
           const vs = /<sup[^>]*>(\d+)<\/sup>/i; // Get verse from above
-          const chtxt = GI.LibSword.getChapterText('', renderPromise,
+          const { text } = GI.LibSword.getChapterText(
+            { text: '', notes: '' },
+            renderPromise,
             headingsModule,
             `${book}.${chapter}`,
             options
           );
-          const headings = chtxt.match(hdplus);
+          const headings = text.match(hdplus);
           if (headings) {
             let hr = false;
             for (let x = 0; x < headings.length; x += 1) {

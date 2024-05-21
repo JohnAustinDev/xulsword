@@ -10,7 +10,6 @@ import S from '../../../defaultPrefs.ts';
 import G, { GI } from '../../rg.ts';
 import { addBookmarksToNotes, getBookmarkInfo } from '../../bookmarks.ts';
 import { getElementData } from '../../htmlData.ts';
-import { GCallsOrPromise } from '../../renderPromise.ts';
 import log from '../../log.ts';
 import { getDictEntryHTML, getLemmaHTML } from '../viewport/zdictionary.ts';
 import {
@@ -85,16 +84,13 @@ export function getPopupHTML(
       if (location && title && context) {
         if (context in G.Tab) {
           const { book, chapter } = location;
-          // getChapterText must be called before getNotes
-          const options = getSwordOptions(G, G.Tab[context].type);
-          const [notes] = GCallsOrPromise(
-            [
-              ['LibSword', 'getChapterText', [context, `${book}.${chapter}`, options]],
-              ['LibSword', 'getNotes', ['getChapterText', [context, `${book}.${chapter}`, options]]]
-            ],
-            ['', ''],
-            renderPromise
-          ) as string[];
+          const { notes } = GI.LibSword.getChapterText(
+            { text: '', notes: '' },
+            renderPromise,
+            context,
+            `${book}.${chapter}`,
+            getSwordOptions(G, G.Tab[context].type)
+          );
           // a note element's title does not include type, but its nlist does
           html = getNoteHTML(notes, null, 0, !testonly, `${type}.${title}`, renderPromise);
         } else failReason.requires.push(context);

@@ -187,24 +187,27 @@ DEFINITION OF A 'XULSWORD REFERENCE':
 */
 
   // getChapterText
-  // Will return a chapter of text with footnote markers from module Vkeymod.
-  // Vkeymod must be a module having a key type of versekey (Bibles & commentaries),
-  // otherwise null is returned.
+  // Will return a chapter of text with footnote markers, and associated footnotes
+  // from module Vkeymod. Vkeymod must be a module having a key type of versekey
+  // (Bibles & commentaries), otherwise empty string is returned.
   getChapterText(
     modname: string,
     vkeytext: string,
     options: { [key in SwordFilterType]: SwordFilterValueType }
-  ): string {
-    this.setGlobalOptions(options);
+  ): { text: string; notes: string } {
     if (this.isReady(true)) {
-      const chapterText = this.libxulsword.GetChapterText(modname, vkeytext);
-      return publicPaths(chapterText);
+      Object.entries(options).forEach((entry) => {
+        this.libxulsword.SetGlobalOption(entry[0], entry[1]);
+      });
+      const text = this.libxulsword.GetChapterText(modname, vkeytext);
+      const notes = this.libxulsword.GetNotes();
+      return { text: publicPaths(text), notes: publicPaths(notes) };
     }
-    return '';
+    return { text: '', notes: '' };
   },
 
   // getChapterTextMulti
-  // Will return chapter text in interlinear style.
+  // Will return chapter text and notes in interlinear style.
   // Footnote markers are NOT included unless keepnotes is true.
   // modstrlist is formatted as follows: 'UZV,TR,RSTE'. The first module must be a
   //   versekey module or an error is returned. If any successive module is not a
@@ -217,64 +220,20 @@ DEFINITION OF A 'XULSWORD REFERENCE':
     vkeytext: string,
     keepnotes: boolean,
     options: { [key in SwordFilterType]: SwordFilterValueType }
-  ): string {
+  ): { text: string; notes: string } {
     if (this.isReady(true)) {
-      this.setGlobalOptions(options);
-      const chapterTextMulti = this.libxulsword.GetChapterTextMulti(
+      Object.entries(options).forEach((entry) => {
+        this.libxulsword.SetGlobalOption(entry[0], entry[1]);
+      });
+      const text = this.libxulsword.GetChapterTextMulti(
         modstrlist,
         vkeytext,
         keepnotes
       );
-      return publicPaths(chapterTextMulti);
-    }
-    return '';
-  },
-
-  // IMPORTANT: THE FOLLOWING 3 ROUTINES MUST BE CALLED AFTER ONE OF THESE:
-  // getChapterText() | getChapterTextMulti() | getIntroductions() | getGenBookChapterText()
-
-  // IMPORTANT: Although passed arguments are not used by the following 3 routines, they
-  // are still required and must be set correctly, in order for the G cache to return the
-  // correct notes!
-
-  // getFootnotes
-  // Will return the footnotes (or empty string if there aren't any).
-  getFootnotes(
-    _type: 'getChapterText' | 'getChapterTextMulti' | 'getIntroductions' | 'getGenBookChapterText',
-    _prevArguments: any[]
-  ): string {
-    if (this.isReady(true)) {
-      const footnotes = this.libxulsword.GetFootnotes();
-      return publicPaths(footnotes);
-    }
-    return '';
-  },
-
-  // getCrossRefs
-  // Will return the cross references (or empty string if there aren't any).
-  getCrossRefs(
-    _type: 'getChapterText' | 'getChapterTextMulti' | 'getIntroductions' | 'getGenBookChapterText',
-    _prevArguments: any[]
-  ): string {
-    if (this.isReady(true)) {
-      const crossRefs = this.libxulsword.GetCrossRefs();
-      return publicPaths(crossRefs);
-    }
-    return '';
-  },
-
-  // getNotes
-  // Will return both footnotes and cross references interleaved.
-  // order is: v1-footnotes, v1-crossrefs, v2-footnotes, v2-crossrefs, etc
-  getNotes(
-    _type: 'getChapterText' | 'getChapterTextMulti' | 'getIntroductions' | 'getGenBookChapterText',
-    _prevArguments: any[]
-  ): string {
-    if (this.isReady(true)) {
       const notes = this.libxulsword.GetNotes();
-      return publicPaths(notes);
+      return { text: publicPaths(text), notes: publicPaths(notes) };
     }
-    return '';
+    return { text: '', notes: '' };
   },
 
   // getVerseText
@@ -292,7 +251,9 @@ DEFINITION OF A 'XULSWORD REFERENCE':
     options: { [key in SwordFilterType]: SwordFilterValueType }
   ): string {
     if (this.isReady(true)) {
-      this.setGlobalOptions(options);
+      Object.entries(options).forEach((entry) => {
+        this.libxulsword.SetGlobalOption(entry[0], entry[1]);
+      });
       const verseText = this.libxulsword.GetVerseText(
         vkeymod,
         vkeytext,
@@ -364,43 +325,51 @@ DEFINITION OF A 'XULSWORD REFERENCE':
    * RETRIEVING FOOTNOTES, CROSS REFERENCES, INTRODUCTIONS, DICTIONARY ENTRIES, ETC.:
    ****************************************************************************** */
   // getIntroductions
-  // Will return the introduction for a given short book name in module Vkeymod,
-  //   if one exists in the version. If there is not introduction, '' is returned.
-  // If Vkeymod is not a versekey type module, an error is returned.
+  // Will return the introduction and associated notes for a given short book name in
+  // module Vkeymod, if one exists in the version. If there is not introduction, ''
+  // is returned. If Vkeymod is not a versekey type module, an error is returned.
   getIntroductions(
     vkeymod: string,
     bname: string,
     options: { [key in SwordFilterType]: SwordFilterValueType }
-  ): string {
+  ): { text: string; notes: string } {
     if (this.isReady(true)) {
       options.Headings = 'On';
-      this.setGlobalOptions(options);
+      Object.entries(options).forEach((entry) => {
+        this.libxulsword.SetGlobalOption(entry[0], entry[1]);
+      });
       const introductions = this.libxulsword.GetIntroductions(vkeymod, bname);
-      return publicPaths(introductions);
+      const notes = this.libxulsword.GetNotes();
+      return { text: publicPaths(introductions), notes: publicPaths(notes) };
     }
-    return '';
+    return { text: '', notes: '' };
   },
 
   // getDictionaryEntry
-  // Will return the dictionary entry, or '' if the entry is not found.
-  // An exception is thrown if the dictionary itself is not found, or if the
-  //   Lexdictmod is not of type StrKey.
+  // Will return the dictionary entry, and its notes, or NOTFOUND if the entry
+  // is not found. An exception is thrown if the dictionary itself is not found,
+  // or if the Lexdictmod is not of type StrKey.
   getDictionaryEntry(
     lexdictmod: string,
     key: string,
     options: { [key in SwordFilterType]: SwordFilterValueType }
-  ): string {
+  ): { text: string; notes: string } {
     if (this.isReady(true)) {
-      this.setGlobalOptions(options);
-      let dictionaryEntry;
+      Object.entries(options).forEach((entry) => {
+        this.libxulsword.SetGlobalOption(entry[0], entry[1]);
+      });
+      let text;
+      let notes;
       try {
-        dictionaryEntry = this.libxulsword.GetDictionaryEntry(lexdictmod, key);
+        text = this.libxulsword.GetDictionaryEntry(lexdictmod, key);
+        notes = this.libxulsword.GetNotes();
       } catch(er) {
-        dictionaryEntry = C.NOTFOUND;
+        text = C.NOTFOUND;
+        notes = ''
       }
-      return publicPaths(dictionaryEntry);
+      return { text: publicPaths(text), notes: publicPaths(notes) };
     }
-    return '';
+    return { text: C.NOTFOUND, notes: '' };
   },
 
   // getAllDictionaryKeys
@@ -424,22 +393,25 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   },
 
   // getGenBookChapterText
-  // Returns chapter text for key Treekey in GenBook module Gbmod.
+  // Returns chapter text and notes for key Treekey in GenBook module Gbmod.
   // Returns an error if module Gbmod is not a TreeKey mod.
   getGenBookChapterText(
     gbmod: string,
     treekey: string,
     options: { [key in SwordFilterType]: SwordFilterValueType }
-  ): string {
+  ): { text: string; notes: string } {
     if (this.isReady(true)) {
-      this.setGlobalOptions(options);
-      const genBookChapterText = this.libxulsword.GetGenBookChapterText(
+      Object.entries(options).forEach((entry) => {
+        this.libxulsword.SetGlobalOption(entry[0], entry[1]);
+      });
+      const text = this.libxulsword.GetGenBookChapterText(
         gbmod,
         treekey
       );
-      return publicPaths(genBookChapterText);
+      const notes = this.libxulsword.GetNotes();
+      return { text: publicPaths(text), notes: publicPaths(notes) };
     }
-    return '';
+    return { text: '', notes: '' };
   },
 
   // getGenBookTableOfContents
@@ -745,47 +717,6 @@ DEFINITION OF A 'XULSWORD REFERENCE':
       }
     }
     return true;
-  },
-
-  /* *****************************************************************************
-   * SETTING/READING GLOBAL OPTIONS FOR RENDERING SCRIPTURE TEXTS:
-   ***************************************************************************** */
-  // setGlobalOption
-  // 'Option' is one of the following and can have a 'Setting' of either 'Off' or 'On':
-  //   'Footnotes'
-  //   'Headings'
-  //   'Cross-references'
-  //   'Words of Christ in Red'
-  //   'Verse Numbers'
-  //   'Hebrew Cantillation'
-  //   'Hebrew Vowel Points'
-  setGlobalOption(
-    option: SwordFilterType,
-    setting: SwordFilterValueType
-  ): void {
-    if (this.isReady(true)) {
-      this.libxulsword.SetGlobalOption(option, setting);
-    }
-  },
-
-  // This is a IPC speedup function setting multiple options with a single request.
-  setGlobalOptions(options: {
-    [key in SwordFilterType]?: SwordFilterValueType;
-  }): void {
-    Object.entries(options).forEach((entry) => {
-      const option = entry[0] as SwordFilterType;
-      this.setGlobalOption(option, entry[1]);
-    });
-  },
-
-  // getGlobalOption
-  // Option must one of the above option strings. Either 'Off' or 'On' will be returned.
-  getGlobalOption(option: SwordFilterType): string {
-    if (this.isReady(true)) {
-      const globalOption = this.libxulsword.GetGlobalOption(option);
-      return globalOption;
-    }
-    return '';
   },
 
   /* ******************************************************************************

@@ -4,7 +4,7 @@ import Cache from '../cache.ts';
 import { clone, getSwordOptions, localizeBookmark } from '../common.ts';
 import C from '../constant.ts';
 import S from '../defaultPrefs.ts';
-import G from './rg.ts';
+import G, { GI } from './rg.ts';
 import { updateDataAttribute, verseKey } from './htmlData.ts';
 import { getMaxVerse } from './rutil.ts';
 import bookmarkItemIcon from './bmManager/bookmarkItemIcon.tsx';
@@ -24,6 +24,7 @@ import type { HTMLData } from './htmlData.ts';
 import type { AtextProps } from './libxul/viewport/atext.tsx';
 import type { LibSwordResponse } from './libxul/viewport/ztext.ts';
 import type { SelectVKType } from './libxul/selectVK.tsx';
+import RenderPromise from './renderPromise.ts';
 
 type BookmarkMapType = { [key: string]: BookmarkInfoHTML[] };
 
@@ -319,7 +320,8 @@ export function parseParagraphs(text: string): string[] {
 }
 
 export function getSampleText(
-  l: LocationVKType | LocationVKCommType | LocationORType
+  l: LocationVKType | LocationVKCommType | LocationORType,
+  renderPromise?: RenderPromise
 ): string {
   let sampleText = '';
   if ('v11n' in l) {
@@ -348,9 +350,21 @@ export function getSampleText(
       });
       let text = '';
       if (G.Tab[otherMod].type === C.GENBOOK) {
-        text = G.LibSword.getGenBookChapterText(l.otherMod, l.key, options);
+        ({ text } = GI.LibSword.getGenBookChapterText(
+          { text: '', notes: '' },
+          renderPromise,
+          l.otherMod,
+          l.key,
+          options
+        ));
       } else if (G.Tab[otherMod].type === C.DICTIONARY) {
-        text = G.LibSword.getDictionaryEntry(otherMod, key, options);
+        ({ text } = GI.LibSword.getDictionaryEntry(
+          { text: C.NOTFOUND, notes: '' },
+          renderPromise,
+          otherMod,
+          key,
+          options
+        ));
       }
       const paragraphs = parseParagraphs(text);
       const i = paragraph && paragraphs[paragraph] ? paragraph : 0;

@@ -111,15 +111,14 @@ function getFootnoteText(
 ): string {
   const { book, chapter, verse, subid } = location;
   if (subid) {
-    const options = getSwordOptions(G, G.Tab[module].type);
-    const [_text, notesx] = GCallsOrPromise([
-        ['LibSword', 'getChapterText', [module, `${book} ${chapter}`, options]],
-        ['LibSword', 'getNotes', ['getChapterText', [module, `${book} ${chapter}`, options]]]
-      ],
-      ['', ''],
-      renderPromise
-    ) as string[];
-    const notes = notesx.split(/(?=<div[^>]+class="nlist")/);
+    const { notes: n } = GI.LibSword.getChapterText(
+      { text: '', notes: '' },
+      renderPromise,
+      module,
+      `${book} ${chapter}`,
+      getSwordOptions(G, G.Tab[module].type)
+    );
+    const notes = n.split(/(?=<div[^>]+class="nlist")/);
     for (let x = 0; x < notes.length; x += 1) {
       const osisID = notes[x].match(/data-osisID="(.*?)"/); // getAttribute('data-osisID');
       if (osisID && osisID[1] === `${book}.${chapter}.${verse}!${subid}`) {
@@ -612,16 +611,15 @@ export function getIntroductions(
     return { textHTML: '', intronotes: '' };
   }
 
-  const options = getSwordOptions(G, G.Tab[mod].type);
-  const args = [mod, vkeytext, options] as Parameters<typeof G.LibSword.getIntroductions>;
-  let [intro, notes] = GCallsOrPromise([
-      ['LibSword', 'getIntroductions', args],
-      ['LibSword', 'getNotes', ['getIntroductions', args]]
-    ],
-    ['', ''],
-    renderPromise
-  ) as [string, string, string];
+  const { text, notes } = GI.LibSword.getIntroductions(
+    { text: '', notes: ''},
+    renderPromise,
+    mod,
+    vkeytext,
+    getSwordOptions(G, G.Tab[mod].type)
+  )
 
+  let intro = text;
   if (
     !intro ||
     intro.length < 10 ||

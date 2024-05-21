@@ -101,14 +101,13 @@ export function bibleChapterText(
       intronotes: '',
     };
     if (location.book && G.getBooksInVKModule(module).includes(location.book)) {
-      response.textHTML = G.LibSword.getChapterText(
+      const { text, notes } = G.LibSword.getChapterText(
         module,
         `${book}.${chapter}`,
         options
       );
-      response.notes = G.LibSword.getNotes('getChapterText',
-        [module, `${book}.${chapter}`, options]
-      );
+      response.textHTML = text;
+      response.notes = notes;
       if (show.usernotes) addBookmarks(response, { ...props, modkey: '' });
       response.noteHTML = getNoteHTML(response.notes, show, 0, crossrefsText);
     }

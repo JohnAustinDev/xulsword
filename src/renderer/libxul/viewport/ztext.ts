@@ -80,27 +80,30 @@ export function libswordText(
       if (location && location.book && module) {
         const { book, chapter } = location;
         if (ilModule) {
-          const chtxt = GI.LibSword.getChapterTextMulti('', renderPromise,
+          const { text } = GI.LibSword.getChapterTextMulti(
+            { text: '', notes: '' },
+            renderPromise,
             `${module},${ilModule}`,
             `${book}.${chapter}`,
             false,
             options
           );
           if (!renderPromise?.waiting()) {
-            r.textHTML += chtxt.replace(/interV2/gm, `cs-${ilModule}`);
+            r.textHTML += text.replace(/interV2/gm, `cs-${ilModule}`);
           }
         } else if (G.getBooksInVKModule(module).includes(book)) {
           // We needed to check that the module contains the book, because
           // LibSword will silently return text from elsewhere in a module
           // if the module does not include the requested book!
-          const [textHTML, notes] = GCallsOrPromise([
-              ['LibSword', 'getChapterText', [module, `${book}.${chapter}`, options]],
-              ['LibSword', 'getNotes', ['getChapterText', [module, `${book}.${chapter}`, options]]]
-            ], ['', ''],
-            renderPromise || null
-          ) as string[];
+          const { text, notes } = GI.LibSword.getChapterText(
+            { text: '', notes: '' },
+            renderPromise,
+            module,
+            `${book}.${chapter}`,
+            options
+          );
           if (!renderPromise?.waiting()) {
-            r.textHTML += textHTML;
+            r.textHTML += text;
             r.notes += notes;
           }
         }
@@ -110,15 +113,15 @@ export function libswordText(
     case C.COMMENTARY: {
       if (location && location.book && module) {
         const { book, chapter } = location;
-        const [textHTML, notes] = GCallsOrPromise([
-            ['LibSword', 'getChapterText', [module, `${book}.${chapter}`, options]],
-            ['LibSword', 'getNotes', ['getChapterText', [module, `${book}.${chapter}`, options]]]
-          ],
-          ['', ''],
-          renderPromise || null
-        ) as string[];
+        const { text, notes } = GI.LibSword.getChapterText(
+          { text: '', notes: '' },
+          renderPromise,
+          module,
+          `${book}.${chapter}`,
+          options
+        );
         if (!renderPromise?.waiting()) {
-          r.textHTML += textHTML;
+          r.textHTML += text;
           r.notes += notes;
         }
       }
@@ -126,16 +129,16 @@ export function libswordText(
     }
     case C.GENBOOK: {
       if (modkey) {
-        const [textHTML, noteHTML] = GCallsOrPromise([
-            ['LibSword', 'getGenBookChapterText', [module, modkey, options]],
-            ['LibSword', 'getNotes', ['getGenBookChapterText', [module, modkey, options]]]
-          ],
-          ['', ''],
-          renderPromise || null
-        ) as [string, string];
+        const { text, notes } = GI.LibSword.getGenBookChapterText(
+          { text: '', notes: '' },
+          renderPromise,
+          module,
+          modkey,
+          options
+        )
         if (!renderPromise?.waiting()) {
-          r.textHTML += textHTML;
-          r.noteHTML += noteHTML;
+          r.textHTML += text;
+          r.noteHTML += notes;
         }
       }
       break;

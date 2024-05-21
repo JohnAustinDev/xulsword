@@ -119,7 +119,7 @@ function markup2html(entry: string, mod: string) {
 }
 
 // some TEI mods (like AbbottSmith, Strong) may use @LINK, so replace these here.
-function replaceLinks(entry: string, mod: string) {
+function replaceLinks(entry: string, mod: string, renderPromise?: RenderPromise) {
   let html = entry;
   const link = html.match(/(@LINK\s+[^\s<]+)/g);
   if (link) {
@@ -139,9 +139,21 @@ function replaceLinks(entry: string, mod: string) {
 
       const options = getSwordOptions(G, C.DICTIONARY);
       if (mod && mod in G.Tab) {
-        let r = G.LibSword.getDictionaryEntry(mod, l[1].toUpperCase(), options);
-        if (r === C.NOTFOUND) r = G.LibSword.getDictionaryEntry(mod, l[1], options);
-        if (r) html = html.replace(l[0], r);
+        let { text } = GI.LibSword.getDictionaryEntry(
+          { text: C.NOTFOUND, notes: '' },
+          renderPromise,
+          mod,
+          l[1].toUpperCase(),
+          options
+        );
+        if (text === C.NOTFOUND) ({ text } = GI.LibSword.getDictionaryEntry(
+          { text: C.NOTFOUND, notes: '' },
+          renderPromise,
+          mod,
+          l[1],
+          options
+        ));
+        if (text) html = html.replace(l[0], text);
       }
     }
   }
@@ -182,12 +194,24 @@ export function getDictEntryHTML(
     const m = mx in G.Tab ? mx : Object.keys(G.Tab).find((md) => md.toLowerCase() === mlc) || '';
     if (m && m in G.Tab && G.Tab[m].type === C.DICTIONARY) {
       const k = DictKeyTransform[m] ? DictKeyTransform[m](key) : key;
-      const h1 = GI.LibSword.getDictionaryEntry('', renderPromise, m, k, options);
-      const h2 = GI.LibSword.getDictionaryEntry('', renderPromise, m, k.toUpperCase(), options);
+      const { text: h1 } = GI.LibSword.getDictionaryEntry(
+        { text: C.NOTFOUND, notes: ''},
+        renderPromise,
+        m,
+        k,
+        options
+      );
+      const { text: h2 } = GI.LibSword.getDictionaryEntry(
+        { text: C.NOTFOUND, notes: '' },
+        renderPromise,
+        m,
+        k.toUpperCase(),
+        options
+      );
       const dictTitle = GI.LibSword.getModuleInformation('', renderPromise, m, 'Description');
       let h = h1;
       if (h === C.NOTFOUND) h = h2;
-      if (h) h = markup2html(replaceLinks(h, m), m);
+      if (h) h = markup2html(replaceLinks(h, m, renderPromise), m);
       if (mods.length === 1) {
         html += h;
       } else {
@@ -294,12 +318,18 @@ export function getStrongsModAndKey(
       const options = getSwordOptions(G, C.DICTIONARY);
       if (mod && mod in G.Tab) {
         let k;
-        let r;
+        let text;
         for (k = 0; k < keys.length; k += 1) {
-          r = GI.LibSword.getDictionaryEntry(C.NOTFOUND, renderPromise, mod, keys[k], options);
-          if (r !== C.NOTFOUND) break;
+          ({ text } = GI.LibSword.getDictionaryEntry(
+            { text: C.NOTFOUND, notes: '' },
+            renderPromise,
+            mod,
+            keys[k],
+            options
+          ));
+          if (text !== C.NOTFOUND) break;
         }
-        if (r === C.NOTFOUND) mod = null;
+        if (text === C.NOTFOUND) mod = null;
         if (mod && k < keys.length) key = keys[k];
         if ((!mod || !key) && reason) {
           reason.reason = `${snclass}? (${snum})`;
@@ -380,12 +410,18 @@ export function getLemmaHTML(
     const options = getSwordOptions(G, C.DICTIONARY);
     if (info.key && info.mod && info.mod in G.Tab) {
       if (Number(info.key) === 0) continue; // skip G tags with no number
-      const entry = G.LibSword.getDictionaryEntry(info.mod, info.key, options);
-      if (entry) {
+      const { text } = GI.LibSword.getDictionaryEntry(
+        { text: '', notes: '' },
+        renderPromise,
+        info.mod,
+        info.key,
+        options
+      );
+      if (text) {
         html +=
           sep +
           buttonHTML +
-          markup2html(replaceLinks(entry, info.mod), info.mod);
+          markup2html(replaceLinks(text, info.mod, renderPromise), info.mod);
       } else if (reason) {
         reason.reason = `${info.mod}:${info.key}?`;
       }
