@@ -52,15 +52,21 @@ export function GCallsOrPromise(
 export default class RenderPromise {
   component: React.Component;
 
-  calls = [] as GCallType[];
+  calls: GCallType[];
+
+  callbacks: (() => void)[];
 
   static batchDispatch() {
     const docalls: GCallType[] = [];
     const dorender: React.Component[] = [];
+    const docallback: (() => void)[] = [];
     RenderPromise.getGlobalRenderPromises().forEach((rp) => {
       if (rp.calls.length) {
         if (!dorender.find((c) => c === rp.component)) {
           dorender.push(rp.component);
+        }
+        if (!docallback.find((cb) => rp.callbacks.includes(cb))) {
+          while(rp.callbacks.length) docallback.push(rp.callbacks.shift() as () => void);
         }
         while(rp.calls.length) docalls.push(rp.calls.shift() as GCallType);
       }
@@ -75,6 +81,7 @@ export default class RenderPromise {
       dorender.forEach((component) => {
         component.setState({ renderPromiseID: Math.random() } as RenderPromiseState);
       });
+      docallback.forEach((callback) => callback());
     });
   }
 
@@ -91,6 +98,8 @@ export default class RenderPromise {
 
   constructor(component: React.Component) {
     this.component = component;
+    this.calls = [];
+    this.callbacks = [];
   }
 
   waiting(): boolean {

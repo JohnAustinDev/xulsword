@@ -48,6 +48,7 @@ import type LibSword from './main/components/libsword.ts';
 import type { canRedo, canUndo } from './main/bookmarks.ts';
 import type { CallBatch } from './main/handleGlobal.ts';
 import type Viewport from './main/components/viewport.ts';
+import type { getExtRefHTML, locationVKText } from './main/versetext.ts';
 import type RenderPromise from './renderer/renderPromise.ts';
 
 declare global {
@@ -815,6 +816,8 @@ export type GType = {
   callBatchSync: CallBatch;
   getAllDictionaryKeyList: typeof getAllDictionaryKeyList;
   genBookTreeNodes: typeof genBookTreeNodes;
+  getExtRefHTML: typeof getExtRefHTML;
+  locationVKText: typeof locationVKText;
 
   // Objects
   i18n: {
@@ -867,7 +870,9 @@ export type GIRendererType = {
     'callBatch' |
     'callBatchSync' |
     'getAllDictionaryKeyList' |
-    'genBookTreeNodes'>
+    'genBookTreeNodes' |
+    'getExtRefHTML' |
+    'locationVKText'>
   ]: (...args: RenderPromiseArgs<GType[name]>) => ReturnType<GType[name]>;
 } & {
   i18n: {
@@ -942,6 +947,8 @@ export const GBuilder: GType & {
     [(keyof GType), (keyof GType['callBatch'])[]],
     [(keyof GType), (keyof GType['getAllDictionaryKeyList'])[]],
     [(keyof GType), (keyof GType['genBookTreeNodes'])[]],
+    [(keyof GType), (keyof GType['getExtRefHTML'])[]],
+    [(keyof GType), (keyof GType['locationVKText'])[]],
     [(keyof GType), (keyof GType['i18n'])[]],
     [(keyof GType), (keyof GType['LibSword'])[]],
   ];
@@ -1013,6 +1020,10 @@ export const GBuilder: GType & {
       []],
     ['genBookTreeNodes',
       []],
+    ['getExtRefHTML',
+      []],
+    ['locationVKText',
+      []],
     ['i18n',
       ['t',
         'exists',
@@ -1061,6 +1072,8 @@ export const GBuilder: GType & {
   getLocaleDigits: CACHEfunc as any,
   getAllDictionaryKeyList: CACHEfunc as any,
   genBookTreeNodes: CACHEfunc as any,
+  getExtRefHTML: CACHEfunc as any,
+  locationVKText: CACHEfunc as any,
   resetMain: func as any,
   publishSubscription: func as any,
   canUndo: func as any,

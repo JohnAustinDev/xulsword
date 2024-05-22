@@ -52,6 +52,7 @@ import type {
   ModulesCache,
   TreeNodeInfoPref,
 } from '../type.ts';
+import type RenderPromise from '../renderer/renderPromise.ts';
 
 // Get all supported books in locale order. NOTE: xulsword ignores individual
 // module book order in lieu of locale book order or xulsword default order
@@ -470,7 +471,8 @@ export function getMaxVerse(v11n: V11nType, vkeytext: string) {
 export function verseKey(
   versekey: LocationVKType | string,
   v11n?: V11nType | null,
-  options?: RefParserOptionsType
+  options?: RefParserOptionsType,
+  _renderPromise?: RenderPromise | null // only used in renderer implementation
 ): VerseKey {
   return new VerseKey(
     new RefParser(

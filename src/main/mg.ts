@@ -16,6 +16,7 @@ import Window, {
 } from './components/window.ts';
 import Module from './components/module.ts';
 import Commands from './components/commands.ts';
+import { getExtRefHTML, locationVKText } from './versetext.ts';
 import {
   getBooks,
   getBook,
@@ -227,6 +228,14 @@ class GClass implements GType {
 
   genBookTreeNodes(...args: Parameters<GType['genBookTreeNodes']>): ReturnType<GType['genBookTreeNodes']> {
     return genBookTreeNodes(...args);
+  }
+
+  getExtRefHTML(...args: Parameters<GType['getExtRefHTML']>): ReturnType<GType['getExtRefHTML']> {
+    return getExtRefHTML(...args);
+  }
+
+  locationVKText(...args: Parameters<GType['locationVKText']>): ReturnType<GType['locationVKText']> {
+    return locationVKText(...args);
   }
 }
 

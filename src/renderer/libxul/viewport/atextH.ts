@@ -9,10 +9,10 @@ import {
 } from '../../../common.ts';
 import C from '../../../constant.ts';
 import S from '../../../defaultPrefs.ts';
-import G from '../../rg.ts';
+import G, { GI } from '../../rg.ts';
 import { getElementData } from '../../htmlData.ts';
 import log from '../../log.ts';
-import { aTextWheelScroll, getRefHTML } from './zversekey.ts';
+import { aTextWheelScroll } from './zversekey.ts';
 
 import type Atext from './atext.tsx';
 import type { AtextProps, AtextStateType } from './atext.tsx';
@@ -33,7 +33,7 @@ function scroll2Note(atext: HTMLElement, id: string) {
   return true;
 }
 
-export default function handler(this: Atext, es: React.SyntheticEvent) {
+export default async function handler(this: Atext, es: React.SyntheticEvent) {
   switch (es.type) {
     case 'click': {
       const e = es as React.MouseEvent;
@@ -52,6 +52,7 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
       const { module, panelIndex: index } = props;
       const target = es.target as HTMLElement;
       const atext = es.currentTarget as HTMLElement;
+      const { renderPromise } = this;
       e.preventDefault();
       let popupParent: any = ofClass(['npopup'], target);
       popupParent = popupParent ? popupParent.element : null;
@@ -79,17 +80,14 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
                 const el = col5.element;
                 const refs = el.dataset.reflist;
                 if (refs) {
-                  sanitizeHTML(
-                    el,
-                    getRefHTML(
-                      refs,
-                      module,
-                      location,
-                      row.classList.contains('cropened'),
-                      false,
-                      this.renderPromise
-                    )
-                  );
+                  const [html] = await G.callBatch([['getExtRefHTML', null, [
+                    refs,
+                    module,
+                    location,
+                    row.classList.contains('cropened'),
+                    false,
+                  ]]]);
+                  sanitizeHTML(el, html);
                 }
               }
               if (id) scroll2Note(atext, id);
@@ -324,13 +322,15 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
     }
 
     case 'wheel': {
-      const e = es as React.WheelEvent;
-      const { isPinned, module } = this.props as AtextProps;
-      if (isPinned && module) {
-        const atext = es.currentTarget as HTMLElement;
-        const { type } = G.Tab[module];
-        if (atext && type !== C.DICTIONARY && !ofClass(['nbc'], es.target)) {
-          aTextWheelScroll(e, atext, this);
+      if (window.processR.platform !== 'browser') {
+        const e = es as React.WheelEvent;
+        const { isPinned, module } = this.props as AtextProps;
+        if (isPinned && module) {
+          const atext = es.currentTarget as HTMLElement;
+          const { type } = G.Tab[module];
+          if (atext && type !== C.DICTIONARY && !ofClass(['nbc'], es.target)) {
+            aTextWheelScroll(e, atext, this);
+          }
         }
       }
       break;

@@ -156,7 +156,7 @@ export function popupParentHandler(
     }
 
     case 'wheel': {
-      if ('popupDelayTO' in this) {
+      if (window.processR.platform !== 'browser' && 'popupDelayTO' in this) {
         // Block popup for a time when mouse-wheel is turned, and then
         // wait until the mouse moves again to re-enable the popup.
         if (this.popupDelayTO) clearTimeout(this.popupDelayTO);

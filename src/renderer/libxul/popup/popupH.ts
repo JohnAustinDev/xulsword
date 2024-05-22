@@ -6,16 +6,16 @@ import {
   getSwordOptions,
   ofClass,
 } from '../../../common.ts';
+import parseExtendedVKRef from '../../../extrefParser.ts';
 import S from '../../../defaultPrefs.ts';
 import G, { GI } from '../../rg.ts';
 import { addBookmarksToNotes, getBookmarkInfo } from '../../bookmarks.ts';
-import { getElementData } from '../../htmlData.ts';
+import { getElementData, verseKey } from '../../htmlData.ts';
 import log from '../../log.ts';
 import { getDictEntryHTML, getLemmaHTML } from '../viewport/zdictionary.ts';
 import {
   getIntroductions,
   getNoteHTML,
-  parseExtendedVKRef,
 } from '../viewport/zversekey.ts';
 
 import type { HTMLData } from '../../htmlData.ts';
@@ -131,6 +131,7 @@ export function getPopupHTML(
         if (context in G.Tab) {
           const bibleReflist = reflist.join(';');
           const parsed = parseExtendedVKRef(
+            verseKey,
             bibleReflist,
             location,
             [],
