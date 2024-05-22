@@ -149,7 +149,7 @@ class Viewport extends React.Component implements PopupParent {
   }
 
   render() {
-    const { popupHandler } = this;
+    const { renderPromise, popupHandler } = this;
     const props = this.props as ViewportProps;
     const state = this.state as ViewportState;
     const {
@@ -174,6 +174,8 @@ class Viewport extends React.Component implements PopupParent {
       atextRefs,
     } = this.props as ViewportProps;
     const { reset, elemdata, gap, popupParent, popupReset } = state;
+
+    const Book = G.Book(G.i18n.language);
 
     // Only versekey panels can be pinned
     const isVerseKey = panels.map((m) => Boolean(m && G.Tab[m].isVerseKey));
@@ -205,7 +207,7 @@ class Viewport extends React.Component implements PopupParent {
         panelHasILOptions[i] = Boolean(
           G.FeatureModules.hebrew[0] || G.FeatureModules.greek[0]
         );
-        const bk = location.book in G.Book ? G.Book[location.book] : null;
+        const bk = location.book in Book ? Book[location.book] : null;
         if (bk) {
           const ml = G.FeatureModules.greek
             .concat(G.FeatureModules.hebrew)
@@ -315,7 +317,7 @@ class Viewport extends React.Component implements PopupParent {
             { book, chapter, verse, v11n },
             tov11n || undefined,
             undefined,
-            this.renderPromise
+            renderPromise
           ).location()
         );
       });
@@ -343,7 +345,7 @@ class Viewport extends React.Component implements PopupParent {
         panels.some(
           (p) =>
             p &&
-            G.getBooksInVKModule(p).some((bk) => G.Book[bk].bookGroup === bg)
+            G.getBooksInVKModule(p).some((bk) => Book[bk].bookGroup === bg)
         )
     );
 

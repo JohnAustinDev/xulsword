@@ -105,10 +105,12 @@ class Chooser extends React.Component implements RenderPromiseComponent {
     let { bookGroups } = props;
     if (!bookGroups) bookGroups = ['ot', 'nt'];
     chooserCompRef = this;
+    const Book = G.Book(G.i18n.language);
+    const Books = G.Books(G.i18n.language);
 
     let bookGroup: BookGroupType =
-      selection && selection in G.Book
-        ? G.Book[selection].bookGroup
+      selection && selection in Book
+        ? Book[selection].bookGroup
         : bookGroups[0];
     if (!bookGroups.includes(bookGroup)) [bookGroup] = bookGroups;
 
@@ -121,8 +123,8 @@ class Chooser extends React.Component implements RenderPromiseComponent {
     this.state = s;
 
     let longest = 0;
-    this.longestBook = G.Books[0].code;
-    G.Books.forEach((bk) => {
+    this.longestBook = Books[0].code;
+    Books.forEach((bk) => {
       if (bk.name.length > longest) {
         longest = bk.name.length;
         this.longestBook = bk.code;
@@ -218,11 +220,12 @@ class Chooser extends React.Component implements RenderPromiseComponent {
   slideUp(rows = 1, showBook?: string) {
     const { bookGroup, slideIndex } = this.state as ChooserState;
     const { hideUnavailableBooks } = this.props as ChooserProps;
+    const Book = G.Book(G.i18n.language);
 
     // If showBook is set and the book is visible, then stop.
     const shbk: BookType | null =
-      !hideUnavailableBooks && showBook && showBook in G.Book
-        ? G.Book[showBook]
+      !hideUnavailableBooks && showBook && showBook in Book
+        ? Book[showBook]
         : null;
     if (shbk && shbk.bookGroup === bookGroup) {
       if (slideIndex[bookGroup] === 0) {
@@ -397,17 +400,19 @@ function BookGroupList(
     handler,
     onAudioClick,
   } = props;
+  const Book = G.Book(G.i18n.language);
+  const Books = G.Books(G.i18n.language);
   const listOfBookIndexes: number[] = [];
   if (bookGroup) {
     C.SupportedBooks[bookGroup].forEach((code) => {
-      listOfBookIndexes.push(G.Book[code].index);
+      listOfBookIndexes.push(Book[code].index);
     });
-  } else G.Books.forEach((_b, i) => listOfBookIndexes.push(i));
+  } else Books.forEach((_b, i) => listOfBookIndexes.push(i));
   return (
     <Vbox {...addClass('bookgrouplist', props)}>
       {listOfBookIndexes.map((b) => {
         if (b === null) return null;
-        const bk = G.Books[b];
+        const bk = Books[b];
         const classes = [];
         if (selection && bk.code === selection) classes.push('selected');
         if (availableBooks && !availableBooks.has(bk.code)) {
@@ -442,6 +447,7 @@ function BookGroupItem(
 ) {
   const { sName, classes, headingsModule, handler, onAudioClick, v11n } = props;
   const c = classes || [];
+  const Book = G.Book(G.i18n.language);
   return (
     <Hbox
       {...addClass(['bookgroupitem'].concat(c), props)}
@@ -449,7 +455,7 @@ function BookGroupItem(
       data-book={sName}
       data-v11n={v11n}
     >
-      <div className="label">{G.Book[sName].name}</div>
+      <div className="label">{Book[sName].name}</div>
 
       {headingsModule &&
         onAudioClick &&

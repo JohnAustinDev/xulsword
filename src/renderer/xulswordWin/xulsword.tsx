@@ -192,7 +192,9 @@ export default class Xulsword extends React.Component implements RenderPromiseCo
         // modules, history needs to be converted to the current v11n.
         const { location: hloc, selection: hsel } = history[index];
         const newloc = verseKey(hloc, location.v11n, undefined, renderPromise).location();
-        const newsel = hsel ? verseKey(hsel, location.v11n).location() : null;
+        const newsel = hsel
+          ? verseKey(hsel, location.v11n, undefined, renderPromise).location()
+          : null;
         if (promote) {
           const targ = history.splice(index, 1);
           history.splice(0, 0, targ[0]);
@@ -300,9 +302,10 @@ export default class Xulsword extends React.Component implements RenderPromiseCo
         G.getBooksInVKModule(m).forEach((bk) => bookset.add(bk));
       }
     });
+    const Book = G.Book(G.i18n.language);
     const booklist = [...bookset].sort((a: string, b: string) => {
-      if (G.Book[a].index < G.Book[b].index) return -1;
-      if (G.Book[a].index > G.Book[b].index) return 1;
+      if (Book[a].index < Book[b].index) return -1;
+      if (Book[a].index > Book[b].index) return 1;
       return 0;
     });
 

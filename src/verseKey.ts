@@ -6,7 +6,7 @@ import type RefParser from './refParser.ts';
 
 type VerseKeyGtype = {
   convertLocation: GType['LibSword']['convertLocation'];
-  Book: () => GType['Book'];
+  Book: () => ReturnType<GType['Book']>;
   Tab: () => GType['Tab'];
 };
 

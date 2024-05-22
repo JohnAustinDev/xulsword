@@ -58,8 +58,10 @@ import type RenderPromise from '../renderer/renderPromise.ts';
 // module book order in lieu of locale book order or xulsword default order
 // (see C.SupportedBooks). Doing so provides a common order for book lists
 // etc., simpler data structures, and a better experience for the user.
-export function getBooks(): BookType[] {
-  if (!Cache.has('books')) {
+export function getBooks(locale?: string): BookType[] {
+  const loc: string
+    = (C.Locales.find((l) => l[0] === locale) && locale) || i18n.language;
+  if (!Cache.has('books', loc)) {
     let books: BookType[] = [];
     let index = 0;
     C.SupportedBookGroups.forEach(
@@ -77,12 +79,7 @@ export function getBooks(): BookType[] {
         });
       }
     );
-    const stfile = path.join(
-      Dirs.path.xsAsset,
-      'locales',
-      i18n.language,
-      'books.json'
-    );
+    const stfile = path.join(Dirs.path.xsAsset, 'locales', loc, 'books.json');
     const raw = fs.readFileSync(stfile);
     let data: any;
     if (raw && raw.length) {
@@ -122,21 +119,18 @@ export function getBooks(): BookType[] {
       }
     });
 
-    Cache.write(books, 'books');
+    Cache.write(books, 'books', loc);
   }
 
-  return Cache.read('books');
+  return Cache.read('books', loc);
 }
 
-export function getBook(): { [i: string]: BookType } {
-  if (!Cache.has('book')) {
-    const book: { [i: string]: BookType } = {};
-    getBooks().forEach((bk: BookType) => {
-      book[bk.code] = bk;
-    });
-    Cache.write(book, 'book');
-  }
-  return Cache.read('book');
+export function getBook(locale?: string): { [code: string]: BookType } {
+  const loc: string
+    = (C.Locales.find((l) => l[0] === locale) && locale) || i18n.language;
+  const book: ReturnType<typeof getBook> = {};
+  getBooks(loc).forEach((bk: BookType) => {book[bk.code] = bk});
+  return book;
 }
 
 export function getBkChsInV11n(): {
@@ -924,18 +918,17 @@ export function getLocaleDigits(getAll = false): {[locale: string]: string[] | n
   return r;
 }
 
-export function getLocalizedBooks(getAll = false): {
+export function getLocalizedBooks(getAll = false as boolean | string[]): {
   [locale: string]: {
     [code: string]: [string[], string[], string[]];
   };
 } {
-  const locs = getAll ? C.Locales.map((l) => l[0]) : [i18n.language];
+  const locs: string[] = [];
+  if (Array.isArray(getAll)) locs.push(...getAll);
+  else if (getAll) locs.push(...C.Locales.map((l) => l[0]));
+  else locs.push(i18n.language);
   // Currently xulsword locales only include ot and nt books.
-  const r: {
-    [locale: string]: {
-      [code: string]: [string[], string[], string[]];
-    };
-  } = {};
+  const r: ReturnType<typeof getLocalizedBooks> = {};
   locs.forEach((locale) => {
     r[locale] = {};
     const toptions = { lng: locale, ns: 'books' };

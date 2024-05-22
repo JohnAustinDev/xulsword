@@ -3,7 +3,6 @@ import { createRoot } from "react-dom/client";
 import SocketConnect from './preload.ts';
 import { decodeJSData } from "./bcommon.ts";
 import { randomID } from "../common.ts";
-import C from '../constant.ts';
 import S from '../defaultPrefs.ts';
 import G from "../renderer/rg.ts";
 import { callBatchThenCache } from "../renderer/renderPromise.ts";
@@ -15,26 +14,6 @@ import '@blueprintjs/core/lib/css/blueprint.css';
 import '../renderer/global-htm.css';
 
 import type { GCallType, PrefObject } from "../type.ts";
-
-const preloads: GCallType[] = [
-  ['Books', null, undefined],
-  ['Book', null, undefined],
-  ['Tabs', null, undefined],
-  ['Tab', null, undefined],
-  ['BkChsInV11n', null, undefined],
-  ['GetBooksInVKModules', null, undefined],
-  ['getLocaleDigits', null, [false]],
-  ['getLocaleDigits', null, [true]],
-  ['getLocalizedBooks', null, []],
-  ['getLocalizedBooks', null, [true]],
-  ['getLocaleDigits', null, []],
-  ['getLocalizedBooks', null, [false]],
-  ['ModuleConfigDefault', null, undefined],
-  ['ProgramConfig', null, undefined],
-  ['FeatureModules', null, undefined],
-  ['AudioConfs', null, undefined],
-  ['Config', null, undefined],
-];
 
 // React element controller:
 function Controller(
@@ -56,10 +35,17 @@ function Controller(
     html.setAttribute('dir', dir);
   }
 
+  // Wheel scroll is wonky in the Browser, so disable. 
+  const wheelCapture = (e: React.SyntheticEvent<any>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    return true;
+  };
+
   return (
     <div id="root">
       <div id="reset">
-        <Xulsword id={id} {...state} />
+        <Xulsword onWheelCapture={wheelCapture} id={id} {...state} />
       </div>
     </div>
   );
@@ -87,6 +73,24 @@ if (bibleBrowser) {
           ...defprefs
         }, 'prefs_default' as 'prefs');
       }
+
+      const preloads: GCallType[] = [
+        ['Tabs', null, undefined],
+        ['Tab', null, undefined],
+        ['BkChsInV11n', null, undefined],
+        ['GetBooksInVKModules', null, undefined],
+        ['getLocaleDigits', null, [false]],
+        ['getLocaleDigits', null, [true]],
+        ['getLocalizedBooks', null, [true]],
+        ['getLocaleDigits', null, []],
+        ['ModuleConfigDefault', null, undefined],
+        ['ProgramConfig', null, undefined],
+        ['FeatureModules', null, undefined],
+        ['AudioConfs', null, undefined],
+        ['Config', null, undefined],
+        ['Books', null, [locale]],
+        ['Book', null, [locale]],
+      ];
 
       callBatchThenCache(preloads).then((success) => {
         if (success) {

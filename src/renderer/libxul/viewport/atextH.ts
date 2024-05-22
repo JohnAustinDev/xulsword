@@ -322,15 +322,13 @@ export default async function handler(this: Atext, es: React.SyntheticEvent) {
     }
 
     case 'wheel': {
-      if (window.processR.platform !== 'browser') {
-        const e = es as React.WheelEvent;
-        const { isPinned, module } = this.props as AtextProps;
-        if (isPinned && module) {
-          const atext = es.currentTarget as HTMLElement;
-          const { type } = G.Tab[module];
-          if (atext && type !== C.DICTIONARY && !ofClass(['nbc'], es.target)) {
-            aTextWheelScroll(e, atext, this);
-          }
+      const e = es as React.WheelEvent;
+      const { isPinned, module } = this.props as AtextProps;
+      if (isPinned && module) {
+        const atext = es.currentTarget as HTMLElement;
+        const { type } = G.Tab[module];
+        if (atext && type !== C.DICTIONARY && !ofClass(['nbc'], es.target)) {
+          aTextWheelScroll(e, atext, this);
         }
       }
       break;

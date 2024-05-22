@@ -316,8 +316,9 @@ export default function handler(
         }
         case 'bookgroup': {
           const { bookgroup, v11n } = targ.element.dataset;
+          const Book = G.Book(G.i18n.language);
           const bg = bookgroup as BookGroupType;
-          const bk = bookgroup ? G.Book[C.SupportedBooks[bg][0]] : null;
+          const bk = bookgroup ? Book[C.SupportedBooks[bg][0]] : null;
           if (bk) {
             this.setState({
               location: {

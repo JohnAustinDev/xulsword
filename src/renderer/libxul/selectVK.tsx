@@ -269,6 +269,7 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
     const { books, chapters, lastchapters, verses, lastverses, vkMods } =
       options || {};
     const { handleChange, renderPromise } = this;
+    const Book = G.Book(G.i18n.language);
 
     const tab = (vkMod && G.Tab[vkMod]) || null;
     const v11n = (tab && tab.v11n) || selection.v11n || 'KJV';
@@ -296,7 +297,7 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
       if (C.SupportedBookGroups.includes(bkbg as any)) {
         const bg = bkbg as BookGroupType;
         C.SupportedBooks[bg].forEach((b) => bookset.add(b));
-      } else if (G.Book[bkbg]) {
+      } else if (Book[bkbg]) {
         bookset.add(bkbg as OSISBookType);
       }
     });
@@ -316,15 +317,15 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
     }
     const newbooks = filteredbooks
       .sort((a, b) => {
-        const aa = G.Book[a];
-        const bb = G.Book[b];
+        const aa = Book[a];
+        const bb = Book[b];
         if (!aa) return -1;
         if (!bb) return 1;
         return aa.index > bb.index ? 1 : aa.index < bb.index ? -1 : 0;
       })
       .map((b) => (
-        <option key={G.Book[b].code} value={G.Book[b].code}>
-          {G.Book[b].name}
+        <option key={Book[b].code} value={Book[b].code}>
+          {Book[b].name}
         </option>
       ));
 

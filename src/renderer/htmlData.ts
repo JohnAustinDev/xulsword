@@ -465,17 +465,24 @@ export function findElementData(elem: HTMLElement | null): HTMLData | null {
 export function verseKey(
   versekey: LocationVKType | string,
   v11n?: V11nType | null,
-  options?: RefParserOptionsType,
+  optionsx?: RefParserOptionsType,
   renderPromise?: RenderPromise | null
 ): VerseKey {
 
-  let localeDirection: 'ltr' | 'rtl' = 'ltr';
+  const options = optionsx || {};
+  let locales = [G.i18n.language];
+  if (options.locales) {
+    locales.push(...options.locales.filter((l) => l !== G.i18n.language));
+  }
+  options.locales = locales;
 
+  let localeDirection: 'ltr' | 'rtl' = 'ltr';
   let convertLocation = (
     _fromv11n: V11nType,
     vkeytext: string,
     _tov11n: V11nType
   ) => {return vkeytext};
+
   if (renderPromise !== null) {
     localeDirection = GI.i18n.t('ltr', renderPromise, 'locale_direction') as 'ltr';
     convertLocation = (
@@ -503,7 +510,7 @@ export function verseKey(
     localeDirection,
     {
       convertLocation,
-      Book: () => G.Book,
+      Book: () => G.Book(G.i18n.language),
       Tab: () => G.Tab,
     },
     versekey,

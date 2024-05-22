@@ -541,11 +541,15 @@ function aTextWheelScroll2(
         const { book, chapter, verse } = p.location;
         if (book && chapter && verse) {
           newloc = verseKey({
-            book: book as OSISBookType,
-            chapter,
-            verse,
-            v11n,
-          }, undefined, undefined, renderPromise).location(location.v11n);
+              book: book as OSISBookType,
+              chapter,
+              verse,
+              v11n,
+            },
+            undefined,
+            undefined,
+            renderPromise || null
+          ).location(location.v11n);
         }
       }
     }
@@ -614,7 +618,7 @@ export function highlight(
     selection,
     G.Tab[module].v11n || undefined,
     undefined,
-    renderPromise
+    renderPromise || null
   ).location();
   if (verse) {
     const lv = lastverse || verse;
@@ -828,7 +832,7 @@ export function pageChange(
             chapter,
             verse,
             v11n,
-          }, undefined, undefined, renderPromise);
+          }, undefined, undefined, renderPromise || null);
           if (vk.chapter <= getMaxChapter(v11n, vk.osisRef())) {
             return vk.location();
           }

@@ -783,8 +783,6 @@ export type GCallType = [
 
 export type GType = {
   // Getters
-  Books: ReturnType<typeof getBooks>;
-  Book: ReturnType<typeof getBook>;
   Tabs: ReturnType<typeof getTabs>;
   Tab: ReturnType<typeof getTab>;
   Config: ReturnType<typeof getConfig>;
@@ -799,6 +797,8 @@ export type GType = {
   GetBooksInVKModules: ReturnType<typeof GetBooksInVKModules>;
 
   // Functions
+  Books: typeof getBooks;
+  Book: typeof getBook;
   resolveHtmlPath: typeof resolveHtmlPath;
   inlineFile: typeof inlineFile;
   inlineAudioFile: typeof inlineAudioFile;
@@ -847,8 +847,6 @@ export type GITypeMain = { [name in keyof GIRendererType]: GType[name] };
 // Internet safe GType renderer (browser) require render-promise arguments:
 export type GIRendererType = {
   [name in keyof Pick<GType,
-    'Books' |
-    'Book' |
     'Tabs' |
     'Tab' |
     'Config' |
@@ -863,6 +861,8 @@ export type GIRendererType = {
   ]: (...args: RenderPromiseArgs<GType[name]>) => GType[name];
 } & {
   [name in keyof Pick<GType,
+    'Books' |
+    'Book' |
     'getSystemFonts' |
     'getBooksInVKModule' |
     'getLocalizedBooks' |
@@ -929,8 +929,6 @@ export const GBuilder: GType & {
 
   // Only these functions and object methods will be accessible via Internet.
   internetSafe: [
-    [(keyof GType), (keyof GType['Books'])[]],
-    [(keyof GType), (keyof GType['Book'])[]],
     [(keyof GType), (keyof GType['Tabs'])[]],
     [(keyof GType), (keyof GType['Tab'])[]],
     [(keyof GType), (keyof GType['Config'])[]],
@@ -940,6 +938,8 @@ export const GBuilder: GType & {
     [(keyof GType), (keyof GType['ModuleFonts'])[]],
     [(keyof GType), (keyof GType['FeatureModules'])[]],
     [(keyof GType), (keyof GType['BkChsInV11n'])[]],
+    [(keyof GType), (keyof GType['Books'])[]],
+    [(keyof GType), (keyof GType['Book'])[]],
     [(keyof GType), (keyof GType['getBooksInVKModule'])[]],
     [(keyof GType), (keyof GType['getLocalizedBooks'])[]],
     [(keyof GType), (keyof GType['getLocaleDigits'])[]],
@@ -984,10 +984,6 @@ export const GBuilder: GType & {
   ],
 
   internetSafe: [
-    ['Books',
-      []],
-    ['Book',
-      []],
     ['Tabs',
       []],
     ['Tab',
@@ -1005,6 +1001,10 @@ export const GBuilder: GType & {
     ['FeatureModules',
       []],
     ['BkChsInV11n',
+      []],
+    ['Books',
+      []],
+    ['Book',
       []],
     ['getBooksInVKModule',
       []],
@@ -1047,8 +1047,6 @@ export const GBuilder: GType & {
   ],
 
   // Getters
-  Books: 'getter' as any,
-  Book: 'getter' as any,
   Tabs: 'getter' as any,
   Tab: 'getter' as any,
   Config: 'getter' as any,
@@ -1063,6 +1061,8 @@ export const GBuilder: GType & {
   GetBooksInVKModules: 'getter' as any,
 
   // Functions
+  Books: CACHEfunc as any,
+  Book: CACHEfunc as any,
   resolveHtmlPath: CACHEfunc as any,
   inlineFile: CACHEfunc as any,
   inlineAudioFile: CACHEfunc as any,

@@ -84,14 +84,16 @@ export function getLuceneSearchText(searchtext0: string) {
 // Return an array of book codes from a KJV book-scope string.
 function kjvScopeBooks(scope: string): string[] {
   const books: string[] = [];
+  const Book = G.Book(G.i18n.language);
+  const Books = G.Books(G.i18n.language);
   scope.split(/\s+/).forEach((seg) => {
     const bk = seg.split('-');
-    let beg = bk[0] in G.Book ? G.Book[bk[0]].index : -1;
-    const end = bk.length === 2 && bk[1] in G.Book ? G.Book[bk[1]].index : beg;
+    let beg = bk[0] in Book ? Book[bk[0]].index : -1;
+    const end = bk.length === 2 && bk[1] in Book ? Book[bk[1]].index : beg;
     if (beg === -1) beg = end;
     if (beg !== -1) {
       for (let i = beg; i <= end; i += 1) {
-        books.push(G.Books[i].code);
+        books.push(Books[i].code);
       }
     }
   });
@@ -299,9 +301,10 @@ async function libSwordSearch(
           id
         );
         if (scopes.length > 1 && LibSwordSearch.sthis) {
+          const Book = G.Book(G.i18n.language);
           const s: Partial<SearchWinState> = {
             progress: (i + 1) / scopes.length,
-            progressLabel: scope in G.Book ? G.Book[scope].name : scope,
+            progressLabel: scope in Book ? Book[scope].name : scope,
           };
           LibSwordSearch.sthis.setState(s);
         }

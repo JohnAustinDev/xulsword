@@ -89,14 +89,6 @@ class GClass implements GType {
     this.Viewport = Viewport;
   }
 
-  get Books() {
-    return getBooks();
-  }
-
-  get Book() {
-    return getBook();
-  }
-
   get Tabs() {
     return getTabs();
   }
@@ -143,6 +135,18 @@ class GClass implements GType {
 
   get GetBooksInVKModules() {
     return GetBooksInVKModules();
+  }
+
+  Books(
+    ...args: Parameters<GType['Books']>
+  ): ReturnType<GType['Books']> {
+    return getBooks(...args);
+  }
+
+  Book(
+    ...args: Parameters<GType['Book']>
+  ): ReturnType<GType['Book']> {
+    return getBook(...args);
   }
 
   resolveHtmlPath(

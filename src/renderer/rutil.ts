@@ -363,7 +363,7 @@ export function getMaxVerse(
   vkeytext: string,
   renderPromise?: RenderPromise
 ): number {
-  const { chapter } = verseKey(vkeytext, v11n, undefined, renderPromise);
+  const { chapter } = verseKey(vkeytext, v11n, undefined, renderPromise || null);
   const maxch = getMaxChapter(v11n, vkeytext);
   if (chapter <= maxch && chapter > 0) {
     return GI.LibSword.getMaxChapter(0, renderPromise, v11n, vkeytext);

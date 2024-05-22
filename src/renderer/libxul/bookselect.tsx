@@ -93,7 +93,7 @@ class Bookselect extends React.Component {
   getBookOptions = (): PropTypes.ReactElementLike[] => {
     const { options } = this.props as BookselectProps;
     const { book } = this.state as BookselectState;
-    const { Book } = G;
+    const Book = G.Book(G.i18n.language);
     const books = options.map((bk) => {
       return (
         <option key={bk} value={bk}>
@@ -185,9 +185,10 @@ class Bookselect extends React.Component {
     // option as it is the only way to update Bookselect state without
     // effecting Textbox state.
     const { book } = state;
+    const Books = G.Books(G.i18n.language);
     let bookName = book;
-    for (let x = 0; x < G.Books.length; x += 1) {
-      if (book && G.Books[x].code === book) bookName = G.Books[x].name;
+    for (let x = 0; x < Books.length; x += 1) {
+      if (book && Books[x].code === book) bookName = Books[x].name;
     }
 
     return (
