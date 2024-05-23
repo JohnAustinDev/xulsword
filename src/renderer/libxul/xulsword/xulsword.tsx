@@ -5,42 +5,42 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 import React from 'react';
 import { Icon } from '@blueprintjs/core';
-import { dString, clone } from '../../common.ts';
-import C from '../../constant.ts';
-import S from '../../defaultPrefs.ts';
-import G, { GI } from '../rg.ts';
-import RenderPromise from '../renderPromise.ts';
-import { verseKey } from '../htmlData.ts';
+import { dString, clone } from '../../../common.ts';
+import C from '../../../constant.ts';
+import S from '../../../defaultPrefs.ts';
+import G, { GI } from '../../rg.ts';
+import RenderPromise from '../../renderPromise.ts';
+import { verseKey } from '../../htmlData.ts';
 import {
   registerUpdateStateFromPref,
   getStatePref,
   clearPending,
   setStatePref,
-} from '../rutil.ts';
+} from '../../rutil.ts';
 import {
   addClass,
   delayHandler,
   topHandle,
   XulProps,
   xulPropTypes,
-} from '../libxul/xul.tsx';
-import Button, { AnchorButton } from '../libxul/button.tsx';
-import { Box, Hbox, Vbox } from '../libxul/boxes.tsx';
-import Menupopup from '../libxul/menupopup.tsx';
-import Bookselect from '../libxul/bookselect.tsx';
-import Spacer from '../libxul/spacer.tsx';
-import Textbox from '../libxul/textbox.tsx';
-import Viewport from '../libxul/viewport/viewport.tsx';
+} from '../xul.tsx';
+import Button, { AnchorButton } from '../button.tsx';
+import { Box, Hbox, Vbox } from '../boxes.tsx';
+import Menupopup from '../menupopup.tsx';
+import Bookselect from '../bookselect.tsx';
+import Spacer from '../spacer.tsx';
+import Textbox from '../textbox.tsx';
+import Viewport from '../viewport/viewport.tsx';
 import viewportParentH, {
   closeMenupopups,
   bbDragEnd as bbDragEndH,
-} from '../libxul/viewport/viewportParentH.ts';
+} from '../viewport/viewportParentH.ts';
 import handlerH from './xulswordH.ts';
 import './xulsword.css';
 
-import type { HistoryVKType, XulswordStateArgType } from '../../type.ts';
-import type { RenderPromiseComponent, RenderPromiseState } from '../renderPromise.ts';
-import type Atext from '../libxul/viewport/atext.tsx';
+import type { HistoryVKType, XulswordStateArgType } from '../../../type.ts';
+import type { RenderPromiseComponent, RenderPromiseState } from '../../renderPromise.ts';
+import type Atext from '../viewport/atext.tsx';
 
 const propTypes = xulPropTypes;
 

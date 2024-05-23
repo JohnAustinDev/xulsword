@@ -1,41 +1,42 @@
 import React, { StrictMode, useState } from "react";
 import { createRoot } from "react-dom/client";
 import SocketConnect from './preload.ts';
-import { decodeJSData } from "./bcommon.ts";
+import { decodeJSData, saveToPrefs, setGlobalLocale } from "./bcommon.ts";
 import { randomID } from "../common.ts";
-import S from '../defaultPrefs.ts';
+import C from "../constant.ts";
 import G from "../renderer/rg.ts";
 import { callBatchThenCache } from "../renderer/renderPromise.ts";
-import Xulsword, { XulswordProps } from "../renderer/xulswordWin/xulsword.tsx";
+import Xulsword from "../renderer/libxul/xulsword/xulsword.tsx";
 
 import 'normalize.css/normalize.css';
 import '@blueprintjs/icons/lib/css/blueprint-icons.css';
 import '@blueprintjs/core/lib/css/blueprint.css';
 import '../renderer/global-htm.css';
 
-import type { GCallType, PrefObject } from "../type.ts";
+import type { GCallType, PrefObject, PrefRoot } from "../type.ts";
 
 // React element controller:
 function Controller(
   props: {
     id: string;
     xsprops: Xulsword['props'];
-    defprefs: PrefObject;
-    locale: string;
-    dir: string;
+    locale?: string;
   }
 ) {
-  const { id, xsprops, locale, dir } = props;
+  const { id, xsprops, locale } = props;
   const [state, _setState] = useState(xsprops);
 
   const html =
     document.getElementsByTagName('html')[0] as HTMLHtmlElement | undefined;
   if (html) {
-    html.classList.add('skin', 'xulswordWin', 'cs-locale', locale);
-    html.setAttribute('dir', dir);
+    html.classList.add('skin', 'xulswordWin', 'cs-locale', locale || '');
+    html.setAttribute(
+      'dir',
+      C.Locales.reduce((p, c) => c[0] === locale ? c[2] : p, 'ltr')
+    );
   }
 
-  // Wheel scroll is wonky in the Browser, so disable. 
+  // Wheel scroll is wonky in the Browser, so disable it for now.
   const wheelCapture = (e: React.SyntheticEvent<any>) => {
     e.preventDefault();
     e.stopPropagation();
@@ -61,18 +62,11 @@ if (bibleBrowser) {
     // connect is called even on reconnect, so only publish this once.
     if (!published && bibleBrowser) {
       published = true;
-      const { defprefs: dp, locale } = bibleBrowser.dataset;
-      if (dp) {
-        const defprefs = decodeJSData(dp) as PrefObject;
-        G.Prefs.setComplexValue('global', {
-          ...S.prefs.global,
-          locale,
-        }, 'prefs_default' as 'prefs');
-        G.Prefs.setComplexValue('xulsword', {
-          ...S.prefs.xulsword,
-          ...defprefs
-        }, 'prefs_default' as 'prefs');
-      }
+      const { props: propsraw, prefs: prefsraw, langcode } = bibleBrowser.dataset;
+      const props = decodeJSData(propsraw) as PrefObject;
+      const prefs = decodeJSData(prefsraw) as Partial<PrefRoot>;
+      const locale = setGlobalLocale(prefs, langcode);
+      saveToPrefs(G, prefs);
 
       const preloads: GCallType[] = [
         ['Tabs', null, undefined],
@@ -96,22 +90,16 @@ if (bibleBrowser) {
         if (success) {
           const id = randomID();
           bibleBrowser.setAttribute('id', id);
-          const { props, defprefs: dp, locale, dir } = bibleBrowser.dataset;
-          if (props && dp) {
-            const initial = decodeJSData(props) as XulswordProps;
-            const defprefs = decodeJSData(dp) as PrefObject;
-            createRoot(bibleBrowser).render(
-              <StrictMode>
-                <Controller
-                  id={id}
-                  defprefs={defprefs}
-                  xsprops={initial}
-                  locale={locale || 'en'}
-                  dir={dir || 'ltr'} />
-              </StrictMode>);
-          }
+          createRoot(bibleBrowser).render(
+            <StrictMode>
+              <Controller
+                id={id}
+                xsprops={props}
+                locale={locale}
+              />
+            </StrictMode>);
           bibleBrowser.removeAttribute('data-props');
-          bibleBrowser.removeAttribute('data-defprefs');
+          bibleBrowser.removeAttribute('data-prefs');
         }
       });
     }

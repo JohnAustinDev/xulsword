@@ -18,8 +18,8 @@ import type {
   V11nType,
   OSISBookType,
 } from '../../../type.ts';
-import type Xulsword from '../../xulswordWin/xulsword.tsx';
-import type { XulswordState } from '../../xulswordWin/xulsword.tsx';
+import type Xulsword from '../xulsword/xulsword.tsx';
+import type { XulswordState } from '../xulsword/xulsword.tsx';
 import type { DragSizerVal } from '../dragsizer.tsx';
 import type { AtextStateType } from './atext.tsx';
 import type ViewportWin from '../../viewportWin/viewportWin.tsx';

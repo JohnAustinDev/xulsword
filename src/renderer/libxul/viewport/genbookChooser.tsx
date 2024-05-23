@@ -7,7 +7,7 @@
 /* eslint-disable import/order */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { clone, gbAncestorIDs } from '../../../common.ts';
+import { clone, gbAncestorIDs, stringHash } from '../../../common.ts';
 import C from '../../../constant.ts';
 import G, { GI } from '../../rg.ts';
 import RenderPromise from '../../renderPromise.ts';
@@ -169,7 +169,7 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
     const state = this.state as GenbookChooserState;
     const { panels, keys, xulswordStateHandler } = props;
     const { expandedIDs } = state;
-    const { treeRef, renderPromise, onNodeClick } = this;
+    const { treeRef, treeNodes, renderPromise, onNodeClick } = this;
 
     return (
       <Vbox {...addClass(`chooser genbook-chooser`, props)}>
@@ -189,17 +189,16 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
                   }
                   const childNodes = GI.genBookTreeNodes([], renderPromise, m);
                   const toc = GI.LibSword.getGenBookTableOfContents([], renderPromise, m);
-                  const tocKeys = Object.keys(toc);
-                  this.treeNodes[treekey] = [];
+                  treeNodes[treekey] = [];
                   if (
                     a.length > 1 &&
                     !(
-                      tocKeys.length === 1 &&
+                      toc.length === 1 &&
                       t?.label.toLocaleLowerCase() ===
-                        tocKeys[0].toLocaleLowerCase()
+                        toc[0].toLocaleLowerCase()
                     )
                   ) {
-                    this.treeNodes[treekey].push({
+                    treeNodes[treekey].push({
                       id: m,
                       label: t?.label || m,
                       className: t?.labelClass || 'cs-LTR_DEFAULT',
@@ -207,16 +206,16 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
                       childNodes,
                     });
                   } else {
-                    this.treeNodes[treekey].push(...childNodes);
+                    treeNodes[treekey].push(...childNodes);
                   }
-                  forEachNode(this.treeNodes[treekey], (node) =>
+                  forEachNode(treeNodes[treekey], (node) =>
                     audioGenBookNode(node, m, node.id.toString())
                   );
-                  const key = keys[i];
+                  const key = keys[i] || toc[0];
                   return (
                     <TreeView
-                      key={[treekey].join('.')}
-                      initialState={this.treeNodes[treekey]}
+                      key={stringHash(treekey, treeNodes[treekey])}
+                      initialState={treeNodes[treekey]}
                       selectedIDs={key ? [key] : []}
                       expandedIDs={expandedIDs[i]}
                       onSelection={(sel) =>

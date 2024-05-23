@@ -1,15 +1,15 @@
 /* eslint-disable import/no-duplicates */
 import React from 'react';
-import C from '../../constant.ts';
-import RefParser from '../../refParser.ts';
-import { clone, ofClass } from '../../common.ts';
-import G from '../rg.ts';
-import { chapterChange, verseChange } from '../libxul/viewport/zversekey.ts';
-import { genbookChange } from '../libxul/viewport/ztext.ts';
-import { genBookAudioFile, verseKeyAudioFile } from '../rutil.ts';
-import { verseKey } from '../htmlData.ts';
+import C from '../../../constant.ts';
+import RefParser from '../../../refParser.ts';
+import { clone, ofClass } from '../../../common.ts';
+import G from '../../rg.ts';
+import { chapterChange, verseChange } from '../viewport/zversekey.ts';
+import { genbookChange } from '../viewport/ztext.ts';
+import { genBookAudioFile, verseKeyAudioFile } from '../../rutil.ts';
+import { verseKey } from '../../htmlData.ts';
 
-import type { GenBookAudioFile, ShowType, VerseKeyAudioFile } from '../../type.ts';
+import type { GenBookAudioFile, ShowType, VerseKeyAudioFile } from '../../../type.ts';
 import type Xulsword from './xulsword.tsx';
 import type { XulswordState } from './xulsword.tsx';
 

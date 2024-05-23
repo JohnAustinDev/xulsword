@@ -66,13 +66,13 @@
 #textnav #nextchap,
 #textnav #nextverse {
   display: block;
-  background: url(../images/smallButtonIncrement.png);
+  background: url(../../images/smallButtonIncrement.png);
   margin-bottom: 1px;
 }
 #textnav #prevchap,
 #textnav #prevverse {
   display: block;
-  background: url(../images/smallButtonDecrement.png);
+  background: url(../../images/smallButtonDecrement.png);
   margin-top: 1px;
 }
 #textnav .anchorbutton {

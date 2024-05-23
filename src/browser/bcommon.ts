@@ -1,14 +1,57 @@
 
 import C from '../constant.ts';
-import { hierarchy, strings2Numbers } from '../common.ts';
+import S from '../defaultPrefs.ts';
+import { hierarchy, mergePrefRoot, strings2Numbers } from '../common.ts';
 
 import type { TreeNodeInfo } from '@blueprintjs/core';
-import type { OSISBookType, TreeNodeInfoPref } from '../type.ts';
+import type { GType, OSISBookType, PrefRoot, TreeNodeInfoPref } from '../type.ts';
 import type { SelectVKType } from "../renderer/libxul/selectVK.tsx";
 import type { SelectORMType, SelectORProps } from "../renderer/libxul/selectOR.tsx";
 
 export type ChaplistVKType = { [bk in OSISBookType]?: [number, string][] }
 export type ChaplistORType = [string, string, string][]; // [order, key, url]
+
+// Insure a partial prefs root object has a valid locale set in it.
+export function setGlobalLocale(prefs: Partial<PrefRoot>, langcode?: string): string {
+  let global: Partial<typeof S.prefs.global> = { locale: langcode };
+  const { prefs: p } = prefs;
+  if (!p) prefs.prefs = { global }
+  else {
+    const { global: g } = p;
+    if (!g || typeof g !== 'object') p.global = global;
+    else global = g as Partial<typeof S.prefs.global>;
+  };
+  let { locale: l } = global;
+  if (!l || !C.Locales.some((x) => x[0] === l)) l = 'en';
+  global.locale = l;
+  return l;
+}
+
+export function getProps<T extends { [prop: string]: any }>(
+  props: Partial<T>,
+  defaultProps: T
+): T {
+  const newProps = {} as T;
+  Object.entries(defaultProps).forEach((entry) => {
+    const [prop, v] = entry;
+    (newProps as any)[prop] = typeof props[prop] !== 'undefined' ? props[prop] : v;
+  });
+  return newProps as T;
+}
+
+export function saveToPrefs(G: GType, prefs: Partial<PrefRoot>) {
+  const defs = mergePrefRoot(prefs, S);
+  Object.entries(prefs).forEach((entry) => {
+    const [store, prefobj] = entry;
+    Object.keys(prefobj).forEach((rootkey) => {
+      G.Prefs.setComplexValue(
+        rootkey,
+        defs[store as keyof PrefRoot][rootkey],
+        `${store}_default` as 'prefs'
+      );
+    })
+  });
+}
 
 export function handleAction(type: string, id: string, ...args: any[]) {
   switch(type) {
@@ -106,7 +149,8 @@ export function createNodeList(
     props.initialORM.keys = [nodes[0].id.toString()];
 }
 
-export function decodeJSData(str: string): any {
+export function decodeJSData(str?: string): any {
+  if (!str) return {};
   return strings2Numbers(JSON.parse(decompressString(decodeURIComponent(str))));
 }
 

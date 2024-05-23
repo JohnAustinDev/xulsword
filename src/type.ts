@@ -695,6 +695,9 @@ export type PrefValue =
   | PrefPrimative
   | PrefObject
   | (PrefPrimative | PrefObject | PrefValue)[];
+export type PrefRoot = {
+  [rootkey in keyof typeof S]: PrefObject;
+}
 
 export type TreeNodeInfoPref = Pick<
   TreeNodeInfo,

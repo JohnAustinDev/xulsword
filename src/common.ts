@@ -42,13 +42,14 @@ import type {
   SwordFilterValueType,
   ModTypes,
   ShowType,
+  PrefRoot,
 } from './type.ts';
 import type { TreeNodeInfo } from '@blueprintjs/core';
 import type { SelectVKType } from './renderer/libxul/selectVK.tsx';
 import type { SelectORMType } from './renderer/libxul/selectOR.tsx';
 import type { getSampleText } from './renderer/bookmarks.ts';
 import type { verseKey } from './renderer/htmlData.ts';
-import type { XulswordState } from './renderer/xulswordWin/xulsword.tsx';
+import type { XulswordState } from './renderer/libxul/xulsword/xulsword.tsx';
 
 export function isCallCacheable(gBuilder: typeof GBuilder, call: GCallType): boolean {
   let cacheable = true;
@@ -352,6 +353,26 @@ export function prefType(
   return ['string', 'number', 'boolean'].includes(t)
     ? (t as 'string' | 'number' | 'boolean')
     : 'complex';
+}
+
+// Shallow merge rootkey object properties (ie. merge complete.prefs.global properties).
+export function mergePrefRoot(sparse: Partial<PrefRoot>, complete: PrefRoot): PrefRoot {
+  const merged: PrefRoot = clone(complete);
+  Object.entries(merged).forEach((entry) => {
+    const [store, prefobj] = entry;
+    if (store in sparse) {
+      Object.entries(prefobj).forEach((entry2) => {
+        const [rootkey, prefobj2] = entry2;
+        if (typeof prefobj2 === 'object' && rootkey in (sparse as any)[store]){
+          merged[store as keyof PrefRoot][rootkey] = {
+            ...prefobj2,
+            ...(sparse as any)[store][rootkey],
+          };
+        }
+      });
+    }
+  });
+  return merged;
 }
 
 // Return values of key/value pairs of component state Prefs. Component
