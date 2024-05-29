@@ -23,13 +23,13 @@ import {
   topHandle,
   XulProps,
   xulPropTypes,
-} from '../xul.tsx';
-import Button, { AnchorButton } from '../button.tsx';
-import { Box, Hbox, Vbox } from '../boxes.tsx';
-import Menupopup from '../menupopup.tsx';
-import Bookselect from '../bookselect.tsx';
-import Spacer from '../spacer.tsx';
-import Textbox from '../textbox.tsx';
+} from '../../libxul/xul.tsx';
+import Button, { AnchorButton } from '../../libxul/button.tsx';
+import { Box, Hbox, Vbox } from '../../libxul/boxes.tsx';
+import Menupopup from '../../libxul/menupopup.tsx';
+import Bookselect from '../../libxul/bookselect.tsx';
+import Spacer from '../../libxul/spacer.tsx';
+import Textbox from '../../libxul/textbox.tsx';
 import Viewport from '../viewport/viewport.tsx';
 import viewportParentH, {
   closeMenupopups,
@@ -40,7 +40,7 @@ import './xulsword.css';
 
 import type { HistoryVKType, XulswordStateArgType } from '../../../type.ts';
 import type { RenderPromiseComponent, RenderPromiseState } from '../../renderPromise.ts';
-import type Atext from '../viewport/atext.tsx';
+import type Atext from '../atext/atext.tsx';
 
 const propTypes = xulPropTypes;
 

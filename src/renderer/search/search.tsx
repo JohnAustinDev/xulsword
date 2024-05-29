@@ -27,7 +27,7 @@ import {
   popupParentHandler as popupParentHandlerH,
   popupHandler as popupHandlerH,
   PopupParentInitState,
-} from '../libxul/popup/popupParentH.ts';
+} from '../components/popup/popupParentH.ts';
 import Button from '../libxul/button.tsx';
 import { XulProps, xulPropTypes } from '../libxul/xul.tsx';
 import { Box, Hbox, Vbox } from '../libxul/boxes.tsx';
@@ -56,7 +56,7 @@ import './search.css';
 
 import type { BookGroupType, SearchType } from '../../type.ts';
 import type { RenderPromiseState } from '../renderPromise.ts';
-import Popup from '../libxul/popup/popup.tsx';
+import Popup from '../components/popup/popup.tsx';
 
 const propTypes = {
   ...xulPropTypes,

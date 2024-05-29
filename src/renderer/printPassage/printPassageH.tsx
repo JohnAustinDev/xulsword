@@ -10,11 +10,11 @@ import C from '../../constant.ts';
 import G from '../rg.ts';
 import addBookmarks from '../bookmarks.ts';
 import { isValidVKM, getLocalizedChapterTerm } from '../rutil.ts';
-import { getDictEntryHTML } from '../libxul/viewport/zdictionary.ts';
-import { getNoteHTML, getIntroductions } from '../libxul/viewport/zversekey.ts';
+import { getDictEntryHTML } from '../components/atext/zdictionary.ts';
+import { getNoteHTML, getIntroductions } from '../components/atext/zversekey.ts';
 
 import type { AtextPropsType } from '../../type.ts';
-import type { LibSwordResponse } from '../libxul/viewport/ztext.ts';
+import type { LibSwordResponse } from '../components/atext/ztext.ts';
 import type { SelectVKType } from '../libxul/selectVK.tsx';
 import type PrintPassageWin from './printPassage.tsx';
 import type { PrintPassageState } from './printPassage.tsx';

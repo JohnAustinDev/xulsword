@@ -31,10 +31,10 @@ import {
   XulProps,
   addClass,
   topHandle,
-} from '../xul.tsx';
-import DragSizer from '../dragsizer.tsx';
-import { Vbox, Hbox, Box } from '../boxes.tsx';
-import Spacer from '../spacer.tsx';
+} from '../../libxul/xul.tsx';
+import DragSizer from '../../libxul/dragsizer.tsx';
+import { Vbox, Hbox, Box } from '../../libxul/boxes.tsx';
+import Spacer from '../../libxul/spacer.tsx';
 import { LibSwordResponse, libswordText, textChange } from './ztext.ts';
 import {
   highlight,
@@ -43,7 +43,7 @@ import {
   findVerseElement,
 } from './zversekey.ts';
 import handlerH from './atextH.ts';
-import audioIcon from './audioIcon.tsx';
+import audioIcon from '../audioIcon/audioIcon.tsx';
 import '../../libsword.css';
 import './atext.css';
 

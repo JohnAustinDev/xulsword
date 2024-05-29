@@ -26,15 +26,15 @@ import {
   htmlAttribs,
   XulProps,
   xulPropTypes,
-} from '../xul.tsx';
-import { Box, Hbox } from '../boxes.tsx';
-import { getRefBible } from '../viewport/zversekey.ts';
+} from '../../libxul/xul.tsx';
+import { Box, Hbox } from '../../libxul/boxes.tsx';
+import { getRefBible } from '../atext/zversekey.ts';
 import popupH, { getPopupHTML } from './popupH.ts';
 import '../../libsword.css';
 import './popup.css';
 // These classes are used by generated HTML:
-import '../label.css';
-import '../button.css';
+import '../../libxul/label.css';
+import '../../libxul/button.css';
 
 import type { FeatureMods } from '../../../type.ts';
 import type { HTMLData } from '../../htmlData.ts';

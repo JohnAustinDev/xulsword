@@ -11,7 +11,7 @@ import {
 import { getElementData, verseKey } from '../../htmlData.ts';
 import { getCompanionModules, getMaxChapter, getMaxVerse, getLocalizedChapterTerm } from '../../rutil.ts';
 import G, { GI } from '../../rg.ts';
-import { delayHandler } from '../xul.tsx';
+import { delayHandler } from '../../libxul/xul.tsx';
 
 import type {
   AtextPropsType,

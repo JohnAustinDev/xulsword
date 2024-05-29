@@ -32,12 +32,12 @@ import {
   xulPropTypes,
   XulProps,
   topHandle,
-} from '../xul.tsx';
-import { Hbox, Vbox } from '../boxes.tsx';
-import Chooser from './chooser.tsx';
-import GenbookChooser from './genbookChooser.tsx';
-import Tabs from './tabs.tsx';
-import Atext from './atext.tsx';
+} from '../../libxul/xul.tsx';
+import { Hbox, Vbox } from '../../libxul/boxes.tsx';
+import Chooser from '../chooser/chooser.tsx';
+import GenbookChooser from '../genbookChooser/genbookChooser.tsx';
+import Tabs from '../tabs/tabs.tsx';
+import Atext from '../atext/atext.tsx';
 import './viewport.css';
 
 import type {

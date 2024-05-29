@@ -19,9 +19,9 @@ import {
   PopupParentState,
   ViewportPopupProps,
   PopupParentInitState,
-} from '../libxul/popup/popupParentH.ts';
-import Popup from '../libxul/popup/popup.tsx';
-import '../libxul/viewport/atext.css';
+} from '../components/popup/popupParentH.ts';
+import Popup from '../components/popup/popup.tsx';
+import '../components/atext/atext.css';
 import type { RenderPromiseState } from '../renderPromise.ts';
 
 const propTypes = {

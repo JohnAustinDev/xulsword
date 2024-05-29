@@ -12,10 +12,10 @@ import C from '../../../constant.ts';
 import G, { GI } from '../../rg.ts';
 import RenderPromise from '../../renderPromise.ts';
 import { audioGenBookNode } from '../../rutil.ts';
-import { Hbox, Vbox } from '../boxes.tsx';
-import { xulPropTypes, XulProps, addClass } from '../xul.tsx';
-import TreeView, { forEachNode } from '../treeview.tsx';
-import './chooser.css';
+import { Hbox, Vbox } from '../../libxul/boxes.tsx';
+import { xulPropTypes, XulProps, addClass } from '../../libxul/xul.tsx';
+import TreeView, { forEachNode } from '../../libxul/treeview.tsx';
+import '../chooser/chooser.css';
 import './genbookChooser.css';
 
 import type {

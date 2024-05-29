@@ -17,17 +17,17 @@ import {
   clearPending,
   getMaxChapter,
 } from '../../rutil.ts';
-import { Hbox, Vbox } from '../boxes.tsx';
-import Spacer from '../spacer.tsx';
+import { Hbox, Vbox } from '../../libxul/boxes.tsx';
+import Spacer from '../../libxul/spacer.tsx';
 import {
   xulPropTypes,
   XulProps,
   addClass,
   delayHandler,
   topHandle,
-} from '../xul.tsx';
+} from '../../libxul/xul.tsx';
 import handlerH from './chooserH.ts';
-import audioIcon from './audioIcon.tsx';
+import audioIcon from '../audioIcon/audioIcon.tsx';
 import './chooser.css';
 
 import type {

@@ -21,8 +21,8 @@ import type {
   SwordFilterValueType,
 } from '../type.ts';
 import type { HTMLData } from './htmlData.ts';
-import type { AtextProps } from './libxul/viewport/atext.tsx';
-import type { LibSwordResponse } from './libxul/viewport/ztext.ts';
+import type { AtextProps } from './components/atext/atext.tsx';
+import type { LibSwordResponse } from './components/atext/ztext.ts';
 import type { SelectVKType } from './libxul/selectVK.tsx';
 import RenderPromise from './renderPromise.ts';
 

@@ -13,7 +13,6 @@ import {
 import { getElementData } from '../../htmlData.ts';
 import G, { GI } from '../../rg.ts';
 import addBookmarks from '../../bookmarks.ts';
-import { GCallsOrPromise } from '../../renderPromise.ts';
 import {
   getNoteHTML,
   getChapterHeading,

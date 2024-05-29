@@ -8,9 +8,9 @@ import { clone, escapeRE, ofClass } from '../../../common.ts';
 import { getElementData, verseKey } from '../../htmlData.ts';
 import G from '../../rg.ts';
 import { scrollIntoView, windowArguments } from '../../rutil.ts';
-import { delayHandler } from '../xul.tsx';
-import { textChange } from './ztext.ts';
-import { aTextWheelScroll, chapterChange } from './zversekey.ts';
+import { delayHandler } from '../../libxul/xul.tsx';
+import { textChange } from '../atext/ztext.ts';
+import { aTextWheelScroll, chapterChange } from '../atext/zversekey.ts';
 
 import type {
   BookGroupType,
@@ -20,8 +20,8 @@ import type {
 } from '../../../type.ts';
 import type Xulsword from '../xulsword/xulsword.tsx';
 import type { XulswordState } from '../xulsword/xulsword.tsx';
-import type { DragSizerVal } from '../dragsizer.tsx';
-import type { AtextStateType } from './atext.tsx';
+import type { DragSizerVal } from '../../libxul/dragsizer.tsx';
+import type { AtextStateType } from '../atext/atext.tsx';
 import type ViewportWin from '../../viewportWin/viewportWin.tsx';
 import type { ViewportWinState } from '../../viewportWin/viewportWin.tsx';
 

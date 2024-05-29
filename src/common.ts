@@ -49,7 +49,7 @@ import type { SelectVKType } from './renderer/libxul/selectVK.tsx';
 import type { SelectORMType } from './renderer/libxul/selectOR.tsx';
 import type { getSampleText } from './renderer/bookmarks.ts';
 import type { verseKey } from './renderer/htmlData.ts';
-import type { XulswordState } from './renderer/libxul/xulsword/xulsword.tsx';
+import type { XulswordState } from './renderer/components/xulsword/xulsword.tsx';
 
 export function isCallCacheable(gBuilder: typeof GBuilder, call: GCallType): boolean {
   let cacheable = true;

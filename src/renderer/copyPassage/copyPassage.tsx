@@ -20,7 +20,7 @@ import {
   getStatePref,
   setStatePref,
 } from '../rutil.ts';
-import { libswordText } from '../libxul/viewport/ztext.ts';
+import { libswordText } from '../components/atext/ztext.ts';
 import { XulProps, xulPropTypes } from '../libxul/xul.tsx';
 import Groupbox from '../libxul/groupbox.tsx';
 import Checkbox from '../libxul/checkbox.tsx';
@@ -28,7 +28,7 @@ import { Hbox, Vbox } from '../libxul/boxes.tsx';
 import Button from '../libxul/button.tsx';
 import SelectVK, { SelectVKType } from '../libxul/selectVK.tsx';
 import '../libsword.css';
-import '../libxul/viewport/atext.css';
+import '../components/atext/atext.css';
 import './copyPassage.css';
 
 import type VerseKey from '../../verseKey.ts';
@@ -224,7 +224,7 @@ export default class CopyPassageWin extends React.Component {
             <Button onClick={passageToClipboard}>
               {G.i18n.t('menu.edit.copy')}
             </Button>
-            <Button id="cancel" onClick={() => G.Window.close()}>
+            <Button id="cancel" onClick={() => {G.Window.close()}}>
               {G.i18n.t('cancel.label')}
             </Button>
           </Hbox>

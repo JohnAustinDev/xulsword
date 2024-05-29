@@ -6,13 +6,13 @@ import G from '../../rg.ts';
 import { findElementData, updateDataAttribute } from '../../htmlData.ts';
 import log from '../../log.ts';
 import { scrollIntoView, windowArguments } from '../../rutil.ts';
-import { delayHandler } from '../xul.tsx';
+import { delayHandler } from '../../libxul/xul.tsx';
 import { getPopupHTML } from './popupH.ts';
 
 import type { PlaceType, ShowType } from '../../../type.ts';
 import type { RenderPromiseComponent } from '../../renderPromise.ts';
 import type { HTMLData } from '../../htmlData.ts';
-import type Atext from '../viewport/atext.tsx';
+import type Atext from '../atext/atext.tsx';
 
 const WindowDescriptor = windowArguments();
 let WheelScrolling = false;

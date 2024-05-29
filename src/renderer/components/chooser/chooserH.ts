@@ -3,7 +3,7 @@ import React from 'react';
 import { getSwordOptions, ofClass, sanitizeHTML } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { GI } from '../../rg.ts';
-import { delayHandler } from '../xul.tsx';
+import { delayHandler } from '../../libxul/xul.tsx';
 
 import type { BookGroupType } from '../../../type.ts';
 import type Chooser from './chooser.tsx';

@@ -24,15 +24,15 @@ import {
   xulPropTypes,
 } from '../libxul/xul.tsx';
 import { Hbox, Vbox } from '../libxul/boxes.tsx';
-import Viewport from '../libxul/viewport/viewport.tsx';
+import Viewport from '../components/viewport/viewport.tsx';
 import viewportParentH, {
   closeMenupopups,
   vpWindowState,
   bbDragEnd as bbDragEndH,
-} from '../libxul/viewport/viewportParentH.ts';
+} from '../components/viewport/viewportParentH.ts';
 
 import type { NewModulesType, XulswordStateArgType } from '../../type.ts';
-import type Atext from '../libxul/viewport/atext.tsx';
+import type Atext from '../components/atext/atext.tsx';
 import type { RenderPromiseComponent, RenderPromiseState } from '../renderPromise.ts';
 
 const propTypes = xulPropTypes;

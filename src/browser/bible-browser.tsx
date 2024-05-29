@@ -6,7 +6,7 @@ import { randomID } from "../common.ts";
 import C from "../constant.ts";
 import G from "../renderer/rg.ts";
 import { callBatchThenCache } from "../renderer/renderPromise.ts";
-import Xulsword from "../renderer/libxul/xulsword/xulsword.tsx";
+import Xulsword from "../renderer/components/xulsword/xulsword.tsx";
 
 import 'normalize.css/normalize.css';
 import '@blueprintjs/icons/lib/css/blueprint-icons.css';
@@ -38,7 +38,6 @@ function Controller(
 
   // Wheel scroll is wonky in the Browser, so disable it for now.
   const wheelCapture = (e: React.SyntheticEvent<any>) => {
-    e.preventDefault();
     e.stopPropagation();
     return true;
   };
@@ -88,18 +87,16 @@ if (bibleBrowser) {
 
       callBatchThenCache(preloads).then((success) => {
         if (success) {
-          const id = randomID();
-          bibleBrowser.setAttribute('id', id);
+          bibleBrowser.removeAttribute('data-props');
+          bibleBrowser.removeAttribute('data-prefs');
           createRoot(bibleBrowser).render(
             <StrictMode>
               <Controller
-                id={id}
+                id={randomID()}
                 xsprops={props}
                 locale={locale}
               />
             </StrictMode>);
-          bibleBrowser.removeAttribute('data-props');
-          bibleBrowser.removeAttribute('data-prefs');
         }
       });
     }

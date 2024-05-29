@@ -12,11 +12,11 @@ import G, { GI } from '../../rg.ts';
 import { addBookmarksToNotes, getBookmarkInfo } from '../../bookmarks.ts';
 import { getElementData, verseKey } from '../../htmlData.ts';
 import log from '../../log.ts';
-import { getDictEntryHTML, getLemmaHTML } from '../viewport/zdictionary.ts';
+import { getDictEntryHTML, getLemmaHTML } from '../atext/zdictionary.ts';
 import {
   getIntroductions,
   getNoteHTML,
-} from '../viewport/zversekey.ts';
+} from '../atext/zversekey.ts';
 
 import type { HTMLData } from '../../htmlData.ts';
 import type RenderPromise from '../../renderPromise.ts';
