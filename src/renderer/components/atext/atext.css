@@ -162,7 +162,6 @@ html[dir='rtl'] .notebox-maximizer {
 
 .atext .nb {
   height: 100%;
-  font-size: 0.9rem;
   overflow: auto;
   background: rgb(240, 235, 240);
   border: 2px solid rgb(150, 150, 150);

@@ -2,14 +2,14 @@
 import React from 'react';
 import { getSwordOptions, ofClass, sanitizeHTML } from '../../../common.ts';
 import C from '../../../constant.ts';
-import { GI } from '../../rg.ts';
+import G, { GI } from '../../rg.ts';
 import { delayHandler } from '../../libxul/xul.tsx';
 
-import type { BookGroupType } from '../../../type.ts';
+import type { BookGroupType, GType } from '../../../type.ts';
 import type Chooser from './chooser.tsx';
 import type { ChooserProps, ChooserState } from './chooser.tsx';
 
-export default function handler(this: Chooser, es: React.SyntheticEvent): void {
+export default async function handler(this: Chooser, es: React.SyntheticEvent): Promise<void> {
   const { renderPromise } = this;
   const target = es.target as HTMLElement;
   switch (es.type) {
@@ -76,13 +76,12 @@ export default function handler(this: Chooser, es: React.SyntheticEvent): void {
           const hd = /<h\d([^>]*class="head1[^"]*"[^>]*>)(.*?)<\/h\d>/i;
           // Rexgex parses verse number from array member strings
           const vs = /<sup[^>]*>(\d+)<\/sup>/i; // Get verse from above
-          const { text } = GI.LibSword.getChapterText(
-            { text: '', notes: '' },
-            renderPromise,
+          const [gct] = await G.callBatch([['LibSword', 'getChapterText', [
             headingsModule,
             `${book}.${chapter}`,
             options
-          );
+          ]]]);
+          const { text } = gct;
           const headings = text.match(hdplus);
           if (headings) {
             let hr = false;
