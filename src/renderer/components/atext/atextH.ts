@@ -52,7 +52,6 @@ export default async function handler(this: Atext, es: React.SyntheticEvent) {
       const { module, panelIndex: index } = props;
       const target = es.target as HTMLElement;
       const atext = es.currentTarget as HTMLElement;
-      const { renderPromise } = this;
       e.preventDefault();
       let popupParent: any = ofClass(['npopup'], target);
       popupParent = popupParent ? popupParent.element : null;

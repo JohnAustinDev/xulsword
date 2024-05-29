@@ -1278,7 +1278,7 @@
   dependencies:
     tslib "~2.6.2"
 
-"@blueprintjs/core@^5", "@blueprintjs/core@^5.10.3":
+"@blueprintjs/core@^5.10.3":
   version "5.10.3"
   resolved "https://registry.yarnpkg.com/@blueprintjs/core/-/core-5.10.3.tgz#92daf209ceb1b4bc33c3fb8c53287e63430bf0b9"
   integrity sha512-QlfvAkZOimeyJKs9+EKd52nYfHd1yltSJQLAmv0+0wF/5m+eQ5jeWjF8Mr/vwq2EqiC3pS2+i3mivORvxXTgDg==
@@ -1303,7 +1303,7 @@
     classnames "^2.3.1"
     tslib "~2.6.2"
 
-"@blueprintjs/select@^5":
+"@blueprintjs/select@^5.1.5":
   version "5.1.5"
   resolved "https://registry.yarnpkg.com/@blueprintjs/select/-/select-5.1.5.tgz#bcf17932d2da38dc91175d5240e5b0babf8012c7"
   integrity sha512-7oSO6fmZ9lZpzPpAuxoIzgczTWvyNmUOxDUAzO5LltcKL5jNg9V8L/wADNvRTrr9MAw8IbVwEw5fPDeZ8iP3Vg==
@@ -1313,7 +1313,7 @@
     classnames "^2.3.1"
     tslib "~2.6.2"
 
-"@blueprintjs/table@^5":
+"@blueprintjs/table@^5.1.5":
   version "5.1.5"
   resolved "https://registry.yarnpkg.com/@blueprintjs/table/-/table-5.1.5.tgz#87279e2d38d742b66a74f7fcc2d932a591e26e63"
   integrity sha512-b5hlBykPQEVCmC3O2ug2pI32Wr64pwS/Jfs9b/746v7+tgvBraMH4uWBnyRyEyCh04uQur/X5DaPNCUSHR0izw==

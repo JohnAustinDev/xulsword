@@ -220,9 +220,11 @@ export type AtextPropsType = Pick<
   panelIndex: number;
   columns: number;
   ownWindow: boolean;
+
+  xulswordState: (s: XulswordStateArgType) => void;
+
   onAudioClick: (audio: VerseKeyAudioFile | GenBookAudioFile) => void;
   bbDragEnd: (e: React.MouseEvent, value: any) => void;
-  xulswordState: (s: XulswordStateArgType) => void;
 };
 
 export type PinPropsType = Pick<AtextPropsType, typeof C.PinProps[number]>;

@@ -1,7 +1,6 @@
 .atext {
   position: relative;
   vertical-align: top;
-  font-size: 1.1em;
   background: rgb(255, 243, 255);
   border: 2px solid rgb(200, 170, 205);
   border-radius: 8px;
@@ -163,7 +162,7 @@ html[dir='rtl'] .notebox-maximizer {
 
 .atext .nb {
   height: 100%;
-  font-size: 0.9em;
+  font-size: 0.9rem;
   overflow: auto;
   background: rgb(240, 235, 240);
   border: 2px solid rgb(150, 150, 150);
@@ -201,7 +200,7 @@ html[dir='rtl'] .notebox-maximizer {
 }
 .chaptitle {
   float: left;
-  font-size: 1.6em;
+  font-size: 1.6rem;
   font-weight: bold;
   color: rgb(110, 85, 110);
 }
@@ -231,7 +230,7 @@ html[dir='rtl'] .notebox-maximizer {
   float: left;
 }
 .introlink {
-  font-size: 1.2em;
+  font-size: 1.1rem;
   text-decoration: underline;
   color: blue;
   cursor: pointer;
@@ -344,7 +343,7 @@ html[dir='rtl'] .notebox-maximizer {
 }
 .fndash {
   width: 6px;
-  height: 0.3em;
+  height: 0.3rem;
   border-top: 1px solid rgb(150, 150, 150);
 }
 .fncol3 {
@@ -428,7 +427,7 @@ html[dir='rtl'] .fncol3 {
 }
 .cropened .cr-sep:after {
   content: '';
-  padding-inline-end: 0em;
+  padding-inline-end: 0;
 }
 .fntext.opposing-program-direction {
   display: inline-block;
@@ -501,10 +500,10 @@ html[dir='rtl'] .fncol3 {
   padding: 10px;
 }
 .sb td .head1 {
-  font-size: 1em !important;
+  font-size: 1rem !important;
 }
 .sb td .head2 {
-  font-size: 1em !important;
+  font-size: 1rem !important;
 }
 
 /* PRINTING STYLES */

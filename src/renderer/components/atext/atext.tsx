@@ -230,7 +230,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
             libswordProps,
             panelIndex,
             'overwrite',
-            newState,
+            xulswordState,
             renderPromise
           );
         }
@@ -292,7 +292,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
                     pre,
                     panelIndex,
                     'prepend',
-                    newState,
+                    xulswordState,
                     renderPromise
                   );
                   v = findVerseElement(
@@ -410,7 +410,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
                     app,
                     panelIndex,
                     'append',
-                    newState,
+                    xulswordState,
                     renderPromise
                   );
                   append += 1;
@@ -430,7 +430,9 @@ class Atext extends React.Component implements RenderPromiseComponent {
           const id = `${stringHash(modkey)}.${panelIndex}`;
           const keyelem = document.getElementById(id);
           if (keyelem) {
-            scrollIntoView(keyelem, nbe, 40);
+            if (window.processR.platform !== 'browser') {
+              scrollIntoView(keyelem, nbe, 40);
+            }
             const dictlist = keyelem.parentNode
               ?.parentNode as HTMLElement | null;
             if (dictlist) {
@@ -503,7 +505,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
     >,
     i: number,
     flag: 'overwrite' | 'prepend' | 'append',
-    newState: Partial<AtextStateType>,
+    xulswordState: AtextPropsType['xulswordState'],
     renderPromise: RenderPromise,
   ) {
     const { sbref, nbref } = this;
@@ -519,7 +521,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
       );
       if (!Cache.has(libswordHash)) {
         Cache.write(
-          libswordText(libswordProps, i, renderPromise, newState),
+          libswordText(libswordProps, i, renderPromise, xulswordState),
           libswordHash
         );
       }

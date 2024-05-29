@@ -3,6 +3,7 @@
 import C from '../../../constant.ts';
 import Cache from '../../../cache.ts';
 import {
+  clone,
   dString,
   escapeRE,
   getSwordOptions,
@@ -26,9 +27,9 @@ import type {
   PinPropsType,
   PlaceType,
 } from '../../../type.ts';
+import type S from '../../../defaultPrefs.ts';
 import type RenderPromise from '../../renderPromise.ts';
 import type { HTMLData } from '../../htmlData.ts';
-import type { AtextStateType } from './atext.tsx';
 
 export type LibSwordResponse = {
   textHTML: string;
@@ -50,7 +51,7 @@ export function libswordText(
   >,
   n: number,
   renderPromise?: RenderPromise,
-  newState?: Partial<AtextStateType>,
+  xulswordState?: AtextPropsType['xulswordState'],
 ): LibSwordResponse {
   const r: LibSwordResponse = {
     textHTML: '',
@@ -183,11 +184,12 @@ export function libswordText(
               </div>
               <div class="keylist">${list}</div>
             </div>`;
-        } else if (newState?.pin) {
-          newState.pin = {
-            ...newState.pin,
-            modkey: keylist[0],
-          };
+        } else if (xulswordState) {
+          xulswordState((prevState: typeof S.prefs.xulsword) => {
+            const { keys } = clone(prevState);
+            keys[n] = keylist[0];
+            return { keys };
+          });
         }
       }
       break;
