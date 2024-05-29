@@ -57,7 +57,7 @@ must be set by running `source ./setenv`.
 
 - Download the [boost_1_80_0.tar.gz](https://www.boost.org/users/download/) source code package (check for the right version number; you may need to go to the history section to find previous releases). Create an `archive` sub-directory under `xulsword` and place the source package there (boost doesn't support scripted downloads).
 - Install [VirtualBox](https://www.virtualbox.org/wiki/Downloads) and [Vagrant](https://www.vagrantup.com/), and run `vagrant up`. Native libraries for each system will eventually appear in the Cpp/lib directories.
-- Install the shared library for your particular operating system by running `yarn install-libxulsword`. The apporpriate binaries will be installed to `build/app/node_modules/libxulsword/build/Release`.
+- Install the shared library for your particular operating system by running `yarn install-libxulsword`. The apporpriate binaries will be installed to the libxulsword nodejs module.
 
 5. Run `yarn` to install Node.js dependencies.
 6. Start xulsword with `yarn start`.
