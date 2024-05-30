@@ -165,10 +165,12 @@ export default class CopyPassageWin extends React.Component {
           })
         );
       }
-      refdiv.innerHTML = `
+      sanitizeHTML(
+        refdiv, `
         <span class="cs-locale">
           (${vks.map((vk) => vk.readable()).join('-')})
-        </span>`;
+        </span>`
+      );
       G.clipboard.write({
         html: testdiv.innerHTML,
         text: elem2text(testdiv),

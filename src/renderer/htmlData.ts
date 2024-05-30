@@ -209,17 +209,17 @@ export function getElementData(elemx: string | Element): HTMLData {
   // to find LibSwordHTMLData data and convert it to HTMLData.
   let className: string | null = null;
   let title: string | null = null;
-  let innerHTML = '';
+  let innerHtmlValue = '';
   if (typeof elem === 'string') {
     const mt = elem.match(/^[^<]*<[^>]+data-title\s*=\s*["']([^"']*)["']/);
     if (mt !== null) [, title] = mt;
     const mc = elem.match(/^[^<]*<[^>]+class\s*=\s*["']([^"']*)["']/);
     if (mc !== null) [, className] = mc;
     const mi = elem.match(/^[^<]*<[^>]*>(.*?)<[^>]*>[^>]*$/);
-    if (mi) [, innerHTML] = mi;
+    if (mi) [, innerHtmlValue] = mi;
   } else if (elem.className) {
     title = elem.dataset.title || null;
-    ({ className, innerHTML } = elem);
+    ({ className, innerHTML: innerHtmlValue } = elem);
   }
 
   const r: LibSwordHTMLData = {
@@ -322,9 +322,9 @@ export function getElementData(elemx: string | Element): HTMLData {
           }
         });
         if (type === 'sr' && !r.reflist) {
-          r.reflist = innerHTML.split(/\s*;\s*/);
+          r.reflist = innerHtmlValue.split(/\s*;\s*/);
         } else if (type === 'sn') {
-          r.snphrase = innerHTML.replace(/<[^>]*>/g, '').trim();
+          r.snphrase = innerHtmlValue.replace(/<[^>]*>/g, '').trim();
         }
         break;
       }

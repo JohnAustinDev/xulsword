@@ -1,6 +1,7 @@
 /* eslint-disable import/order */
 /* eslint-disable no-nested-ternary */
 /* eslint-disable no-bitwise */
+import DOMPurify from 'dompurify';
 import C from './constant.ts';
 import S from './defaultPrefs.ts';
 import Cache from './cache.ts';
@@ -457,13 +458,12 @@ export function decodeOSISRef(aRef: string) {
 }
 
 // This function should always be used when writing to innerHTML.
-// TODO!: Update to improve security.
 export function sanitizeHTML<T extends string | HTMLElement>(
   parentOrHtml: T,
   html?: string
 ): T {
   const sanitize = (s?: string): string => {
-    return s || '';
+    return DOMPurify.sanitize(s || '', { USE_PROFILES: { html: true } });
   };
   if (typeof parentOrHtml === 'string') {
     return sanitize(parentOrHtml) as T;

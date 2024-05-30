@@ -2,15 +2,14 @@
 import React from 'react';
 import { getSwordOptions, ofClass, sanitizeHTML } from '../../../common.ts';
 import C from '../../../constant.ts';
-import G, { GI } from '../../rg.ts';
+import G from '../../rg.ts';
 import { delayHandler } from '../../libxul/xul.tsx';
 
-import type { BookGroupType, GType } from '../../../type.ts';
+import type { BookGroupType } from '../../../type.ts';
 import type Chooser from './chooser.tsx';
 import type { ChooserProps, ChooserState } from './chooser.tsx';
 
 export default async function handler(this: Chooser, es: React.SyntheticEvent): Promise<void> {
-  const { renderPromise } = this;
   const target = es.target as HTMLElement;
   switch (es.type) {
     case 'click': {

@@ -1,3 +1,4 @@
+"use strict"
 import { Server } from 'socket.io';
 import i18n from 'i18next';
 import log, { LogLevel } from 'electron-log';

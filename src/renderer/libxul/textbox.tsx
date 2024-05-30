@@ -3,6 +3,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import DOMPurify from 'dompurify';
 import { clearPending } from '../rutil.ts';
 import {
   delayHandler,
@@ -96,7 +97,8 @@ class Textbox extends React.Component {
     // otherwise call the parent's onChange function (using a delay
     // if props.timeout has a value).
     if (!pattern || pattern.test(target.value) || /^\s*$/.test(target.value)) {
-      this.setState({ value: target.value });
+      const value = DOMPurify.sanitize(target.value);
+      this.setState({ value });
       if (typeof onChange === 'function') {
         delayHandler.bind(this)(
           (evt, currentTarget) => {
@@ -122,7 +124,8 @@ class Textbox extends React.Component {
     if (!type) type = 'text';
     const useTextArea = !!(type === 'text' && props.multiline);
 
-    const value = props.disabled ? props.value : state.value;
+    const v = props.disabled ? props.value : state.value;
+    const value = DOMPurify.sanitize(v || '');
 
     return (
       <Box {...addClass('textbox xsinput', props)} onChange={handleChange}>

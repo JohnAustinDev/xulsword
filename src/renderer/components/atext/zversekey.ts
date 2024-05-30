@@ -153,7 +153,7 @@ export function getNoteHTML(
           : [type, nid, 'unavailable', context]
       ).join('.');
       if (!keepOnlyThisNote || keepNote === keepOnlyThisNote) {
-        const innerHTML = anote.replace(containerTagsRE, '');
+        const innerHhtmlValue = anote.replace(containerTagsRE, '');
         // Check if this note should be displayed, and if not then skip it
         const notetypes = { fn: 'footnotes', cr: 'crossrefs', un: 'usernotes' };
         Object.entries(notetypes).forEach((entry) => {
@@ -196,7 +196,7 @@ export function getNoteHTML(
           html += '</div>';
 
           // Write cell #5: note body
-          const ccls = type === 'cr' ? ` data-reflist="${innerHTML}"` : '';
+          const ccls = type === 'cr' ? ` data-reflist="${innerHhtmlValue}"` : '';
           html += `<div class="fncol5"${ccls}>`;
 
           switch (type) {
@@ -205,13 +205,13 @@ export function getNoteHTML(
                 // If this is a cross reference, then parse the note body for references and display them
                 const info = {} as Partial<LookupInfo>;
                 const keepNotes = false;
-                const tmod = /^[\w\d]+:/.test(innerHTML)
-                  ? innerHTML.split(':')[0]
+                const tmod = /^[\w\d]+:/.test(innerHhtmlValue)
+                  ? innerHhtmlValue.split(':')[0]
                   : context;
                 html += GI.getExtRefHTML(
                   '',
                   renderPromise,
-                  innerHTML,
+                  innerHhtmlValue,
                   tmod || '',
                   location,
                   openCRs,
@@ -230,12 +230,12 @@ export function getNoteHTML(
               ) {
                 opdir = ' opposing-program-direction';
               }
-              html += `<bdi><span class="fntext${opdir}">${innerHTML}</span></bdi>`;
+              html += `<bdi><span class="fntext${opdir}">${innerHhtmlValue}</span></bdi>`;
               break;
             }
             case 'un': {
               // If this is a usernote, then add direction entities and style
-              html += `<bdi><span class="noteBoxUserNote">${innerHTML}</span></bdi>`;
+              html += `<bdi><span class="noteBoxUserNote">${innerHhtmlValue}</span></bdi>`;
               break;
             }
             default:
