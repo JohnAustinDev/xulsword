@@ -1,7 +1,7 @@
 
 import C from '../constant.ts';
 import S from '../defaultPrefs.ts';
-import { hierarchy, mergePrefRoot, strings2Numbers } from '../common.ts';
+import { JSON_parse, hierarchy, mergePrefRoot, strings2Numbers } from '../common.ts';
 
 import type { TreeNodeInfo } from '@blueprintjs/core';
 import type { GType, OSISBookType, PrefRoot, TreeNodeInfoPref } from '../type.ts';
@@ -151,7 +151,7 @@ export function createNodeList(
 
 export function decodeJSData(str?: string): any {
   if (!str) return {};
-  return strings2Numbers(JSON.parse(decompressString(decodeURIComponent(str))));
+  return strings2Numbers(JSON_parse(decompressString(decodeURIComponent(str))));
 }
 
 // Zip compress to reduce string length for strings that contain repetitions.

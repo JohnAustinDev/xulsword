@@ -48,7 +48,7 @@ const platform =
 const C = {
   DevToolsopen: isDevelopment ? false : env('DEBUG_PROD') === 'true',
 
-  LogLevel: (/\S+/.test(env('LOGLEVEL') ?? '') ||
+  LogLevel: (env('LOGLEVEL') ||
     (isDevelopment ? 'debug' : productionLogLevel)) as LogLevel,
 
   DevSplash: 1 as 0 | 1 | 2, // 0 normal, 1 skip, 2 debug
@@ -82,6 +82,14 @@ const C = {
   SYSTEMNEWLINE:
     platform === 'win32' ? '\r\n' : platform === 'darwin' ? '\r' : '\n',
   FSSEP: platform === 'win32' ? '\\' : '/',
+
+  Server: {
+    maxDataStringLength: 200000,
+    maxDataRecursion: 10,
+    maxDataArrayLength: 512,
+    maxDataObjectKeys: 512,
+    port: Number(env('XSPORT')) || 3000,
+  },
 
   // xulsword UI constants
   UI: {

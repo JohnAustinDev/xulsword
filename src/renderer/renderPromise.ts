@@ -127,7 +127,7 @@ export function callBatchThenCacheSync(
     const disallowed = disallowedAsCallBatch(calls);
     if (!disallowed) {
       const results = G.callBatchSync(calls);
-      if (results.length !== calls.length) {
+      if (!results || results.length !== calls.length) {
         throw new Error(`callBatch sync did not return the correct data.`);
       }
       calls.forEach((call, i) => writeCallToCache(call, results[i]));
@@ -144,7 +144,7 @@ export async function callBatchThenCache(
     const disallowed = disallowedAsCallBatch(calls);
     if (!disallowed) {
       const results = await G.callBatch(calls);
-      if (results.length !== calls.length) {
+      if (!results || results.length !== calls.length) {
         throw new Error(`callBatch async did not return the correct data.`);
       }
       calls.forEach((call, i) => writeCallToCache(call, results[i]));

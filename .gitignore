@@ -12,6 +12,7 @@ Cpp/sword*
 Cpp/build*
 Cpp/phpsword
 */libxulsword/build
+process.js
 
 # Logs
 logs

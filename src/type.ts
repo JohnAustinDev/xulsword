@@ -110,7 +110,8 @@ export type EnvironmentVars =
   | 'NODE_ENV'
   | 'XULSWORD_ENV'
   | 'DEBUG_PROD'
-  | 'LOGLEVEL';
+  | 'LOGLEVEL'
+  | 'XSPORT';
 
 export type WindowRegistryType = (WindowDescriptorType | null)[];
 

@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-use-before-define */
-import { JSON_stringify, GCacheKey, isCallCacheable, clone } from '../common.ts';
+import { JSON_stringify, GCacheKey, isCallCacheable, clone, invalidData } from '../common.ts';
 import Cache from '../cache.ts';
 import { GBuilder } from '../type.ts';
 import { GCallsOrPromise } from './renderPromise.ts';
@@ -24,6 +24,11 @@ async function asyncRequest(
   let result;
   try {
     result = await window.ipc.invoke('global', call);
+    const invalid = invalidData(result, window.processR.platform);
+    if (invalid) {
+      log.error(`Invalid async data response: ${invalid}`);
+      return undefined;
+    }
     if (cacheable) Cache.write(result, ckey);
   } catch (er: any) {
     throw new Error(`Promise rejection in ${JSON_stringify(thecall)}:\n${er.toString()}`);
@@ -48,6 +53,11 @@ function request(
   }
   log.silly(`${ckey} ${JSON_stringify(thecall)} sync ${cacheable ? 'miss' : 'uncacheable'}`);
   const result = window.ipc.sendSync('global', thecall);
+  const invalid = invalidData(result, window.processR.platform);
+  if (invalid) {
+    log.error(`Invalid data response: ${invalid}`);
+    return undefined;
+  }
   if (cacheable) Cache.write(result, ckey);
 
   return result;

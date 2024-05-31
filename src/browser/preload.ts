@@ -1,12 +1,13 @@
 import { Socket, io } from 'socket.io-client';
+import process from '../../process.js';
 
 // To run the Electron app in a browser, Electron's contextBridge
 // and ipcRenderer modules have been replaced by custom modules
 // that use socket.io.
 let socket: Socket | null = null;
-const socketConnect = (origin?: string) => {
+const socketConnect = (port: number, origin?: string) => {
   const ro = origin || window.location.origin;
-  const hosturl = ro.replace(/^https?/, 'ws').replace(/(:\d+)?$/, ':3000');
+  const hosturl = ro.replace(/^http/, 'ws').replace(/(:\d+)?$/, `:${port}`);
   socket = io(hosturl);
   return socket;
 }
@@ -132,19 +133,6 @@ window.ipc = {
   },
 };
 
-// This is a polyfill for Electron process.
-const process = {
-  argv: [],
-  // TODO!: Finish this
-  env: {
-    NODE_ENV: 'development',
-    XULSWORD_ENV: 'normal',
-    DEBUG_PROD: 'false',
-    LOGLEVEL: 'debug',
-  },
-  platform: 'browser' as 'linux',
-};
-
 // THIS IS IDENTICAL TO MAIN/PRELOAD.JS
 window.processR = {
   argv: () => {
@@ -161,6 +149,9 @@ window.processR = {
   },
   LOGLEVEL: () => {
     return process.env.LOGLEVEL;
+  },
+  XSPORT: () => {
+    return process.env.XSPORT;
   },
   platform: process.platform,
 }

@@ -122,7 +122,7 @@ function ControllerOR(
   return (<SelectOR {...state as any} />);
 }
 
-const socket = SocketConnect();
+const socket = SocketConnect(C.Server.port);
 let published = false;
 socket.on('connect', () => {
   // connect is called even on reconnect, so only publish this once.

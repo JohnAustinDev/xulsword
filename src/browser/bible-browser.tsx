@@ -55,7 +55,7 @@ const bibleBrowser = document
   .getElementsByClassName('bible-browser')[0] as HTMLDivElement | undefined;
 
 if (bibleBrowser) {
-  const socket = SocketConnect(bibleBrowser.dataset.origin);
+  const socket = SocketConnect(C.Server.port, bibleBrowser.dataset.origin);
   let published = false;
   socket.on('connect', () => {
     // connect is called even on reconnect, so only publish this once.

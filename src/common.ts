@@ -6,6 +6,7 @@ import C from './constant.ts';
 import S from './defaultPrefs.ts';
 import Cache from './cache.ts';
 
+import type { ElectronLog } from 'electron-log';
 import type { Region } from '@blueprintjs/table';
 import type { getLocaleDigits } from './main/minit.ts';
 import type {
@@ -90,7 +91,12 @@ export function JSON_stringify(
 // deletion of undefined array elements rather than setting to undefined.
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export function JSON_parse(s: string, anyx?: Exclude<any, undefined>): any {
-  const any = anyx !== undefined ? anyx : JSON.parse(s);
+  let any;
+  try {
+    any = anyx !== undefined ? anyx : JSON.parse(s);
+  } catch (er) {
+    any = undefined;
+  }
   if (any === undefined || any === null) return any;
   if (typeof any === 'object') {
     Object.entries(any).forEach((entry) => {
@@ -147,27 +153,29 @@ export function deepClone<T>(obj: T): T {
 // either primitives, arrays or other data objects.
 export function clone<T>(obj: T, ancestors: any[] = []): T {
   const anc = ancestors.slice();
-  let copy: any;
-  if (obj === null || typeof obj !== 'object') copy = obj;
-  else if (Array.isArray(obj)) {
-    copy = [];
-    anc.push(obj);
-    obj.forEach((p) => copy.push(clone(p, anc)));
-  } else {
-    copy = {};
-    const o = obj as any;
-    if (anc.includes(o)) {
+  let copy: any = undefined;
+  if (!['function', 'symbol'].includes(typeof obj)) {
+    if (obj === null || typeof obj !== 'object') copy = obj;
+    else if (Array.isArray(obj)) {
+      copy = [];
+      anc.push(obj);
+      obj.forEach((p) => copy.push(clone(p, anc)));
+    } else {
+      copy = {};
+      const o = obj as any;
+      if (anc.includes(o)) {
+        anc.push(o);
+        throw new Error(
+          `Clone reference to ancestor loop: ${anc
+            .map((a) => JSON_stringify(a, 1))
+            .join('\n')}`
+        );
+      }
       anc.push(o);
-      throw new Error(
-        `Clone reference to ancestor loop: ${anc
-          .map((a) => JSON_stringify(a, 1))
-          .join('\n')}`
-      );
+      Object.entries(o).forEach((entry) => {
+        copy[entry[0]] = clone(entry[1], anc);
+      });
     }
-    anc.push(o);
-    Object.entries(o).forEach((entry) => {
-      copy[entry[0]] = clone(entry[1], anc);
-    });
   }
   return copy as T;
 }
@@ -253,6 +261,73 @@ export function diff<T>(pv1: any, pv2: T, depth = 1): Partial<T> | undefined {
     }
   }
   return difference;
+}
+
+// Return a reason message if data is invalid, or null if it is valid.
+export function invalidData(
+  data: any,
+  platform: typeof window.processR.platform,
+  depth = 0,
+  log?: ElectronLog
+): string | null {
+  if (platform === 'browser') {
+    if (C.LogLevel === 'silly' && depth === 0 && log) testData(data, log);
+    if (depth > C.Server.maxDataRecursion) {
+      return `Argument max recursion exceeded. [was ${depth}]`
+    }
+    if (['function', 'symbol'].includes(typeof data)) {
+      return `Argument improper type. [was ${typeof data}]`;
+    }
+    if (typeof data === 'string') {
+      if (data.length > C.Server.maxDataStringLength) {
+        return `Argument string too long. [was ${data.length}]`;
+      }
+    } else if (Array.isArray(data)) {
+        if (data.length > C.Server.maxDataArrayLength) {
+          return `Argument array too long. [was ${data.length}]`;
+        }
+        const d = data.find((v) => invalidData(v, platform, depth + 1) !== null);
+        if (d !== undefined) return invalidData(d, platform, depth + 1);
+    } else if (data && typeof data === 'object') {
+      if (Object.keys(data).length > C.Server.maxDataObjectKeys) {
+        return `Argument object had too many keys. [was ${Object.keys(data).length}]`;
+      }
+      const d = Object.values(data).find((v) => invalidData(v, platform, depth + 1) !== null);
+      if (d !== undefined) return invalidData(d, platform, depth + 1);
+    }
+  }
+  return null;
+}
+
+// This is used just to report data packet sizes and is only called during debug.
+export function testData(data: any, log: ElectronLog, depth = 0, info = {
+  maxDataRecursion: 0,
+  maxDataStringLength: 0,
+  maxDataArrayLength: 0,
+  maxDataObjectKeys: 0,
+  serialized: 0,
+}) {
+  const {
+    maxDataRecursion: rec,
+    maxDataStringLength: stl,
+    maxDataArrayLength: dal,
+    maxDataObjectKeys: dok
+  } = info;
+  if (depth > rec) info.maxDataRecursion = depth;
+  if (typeof data === 'string') {
+    if (data.length > stl) info.maxDataStringLength = data.length;
+  } else if (Array.isArray(data)) {
+      if (data.length > dal) info.maxDataArrayLength = data.length;
+      data.forEach((v) => testData(v, log, depth + 1, info));
+  } else if (data && typeof data === 'object') {
+    if (Object.keys(data).length > dok) {
+      info.maxDataObjectKeys = Object.keys(data).length;
+    }
+    Object.values(data).forEach((v) => testData(v, log, depth + 1, info));
+  }
+  if (depth === 0) log.debug(`Data: ${JSON_stringify(info)}`);
+  info.serialized = JSON_stringify(data).length;
+  return info;
 }
 
 // Convert PrefValue number-strings to numbers recursively.
