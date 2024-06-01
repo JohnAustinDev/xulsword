@@ -4,6 +4,7 @@ import Cache from '../cache.ts';
 import { GBuilder } from "../type.ts";
 import C from "../constant.ts";
 import G from './rg.ts';
+import { getWaitRetry } from "./rutil.ts";
 
 import type { GCallType, PrefValue } from "../type.ts";
 import type { GetBooksInVKModules } from "../main/minit.ts";
@@ -57,32 +58,53 @@ export default class RenderPromise {
   callbacks: (() => void)[];
 
   static batchDispatch() {
-    const docalls: GCallType[] = [];
-    const dorender: React.Component[] = [];
-    const docallback: (() => void)[] = [];
-    RenderPromise.getGlobalRenderPromises().forEach((rp) => {
-      if (rp.calls.length) {
-        if (!dorender.find((c) => c === rp.component)) {
-          dorender.push(rp.component);
-        }
-        if (!docallback.find((cb) => rp.callbacks.includes(cb))) {
-          while(rp.callbacks.length) docallback.push(rp.callbacks.shift() as () => void);
-        }
-        while(rp.calls.length) docalls.push(rp.calls.shift() as GCallType);
-      }
-    });
-    RenderPromise.setGlobalRenderPromises([]);
-
-    const nextBatch = docalls.filter((call) => {
-      return !isCallCacheable(GBuilder, call) || !Cache.has(promiseCacheKey(call))
-    });
-
-    callBatchThenCache(flatPrune(nextBatch)).then((_success) => {
-      dorender.forEach((component) => {
-        component.setState({ renderPromiseID: Math.random() } as RenderPromiseState);
+    const renderPromises = RenderPromise.getGlobalRenderPromises();
+    if (renderPromises.length) {
+      const rpdispatch = renderPromises.map((rp) => {
+        const nrp = new RenderPromise(rp.component);
+        nrp.calls = rp.calls;
+        rp.calls = [];
+        nrp.callbacks = rp.callbacks;
+        rp.callbacks = [];
+        return nrp;
       });
-      docallback.forEach((callback) => callback());
-    });
+      RenderPromise.setGlobalRenderPromises([]);
+
+      const nextBatch = rpdispatch.reduce((p, c) => {
+        const calls = c.calls.filter((call) => {
+          return !isCallCacheable(GBuilder, call) || !Cache.has(promiseCacheKey(call))
+        });
+        p.push(...calls);
+        return p;
+      }, [] as GCallType[]);
+
+      callBatchThenCache(flatPrune(nextBatch)).then((doWait) => {
+        if (!doWait) {
+          const done: (React.Component | (() => void))[] = [];
+          rpdispatch.forEach((rp) => {
+            const { component, callbacks } = rp;
+            if (!done.includes(component)) {
+              done.push(component);
+              component.setState({ renderPromiseID: Math.random() } as RenderPromiseState);
+            }
+            callbacks.forEach((callback) => {
+              if (!done.includes(callback)) {
+                done.push(callback);
+                callback();
+              }
+            });
+          });
+        } else {
+          // The server has asked us to wait and try again! So undo what
+          // we did and reschedule everything after the requested delay.
+          RenderPromise.setGlobalRenderPromises([
+            ...RenderPromise.getGlobalRenderPromises(),
+            ...rpdispatch,
+          ]);
+          setTimeout(() => RenderPromise.batchDispatch(), doWait);
+        }
+      });
+    }
   }
 
   static getGlobalRenderPromises(): RenderPromise[] {
@@ -115,7 +137,7 @@ export default class RenderPromise {
       const rps = RenderPromise.getGlobalRenderPromises();
       rps.push(this);
       RenderPromise.setGlobalRenderPromises(rps);
-      setTimeout(() => RenderPromise.batchDispatch(), C.UI.Window.networkRequestBatchDelay);
+      setTimeout(() => RenderPromise.batchDispatch(), C.Server.networkRequestBatchDelay);
     }
   }
 }
@@ -139,11 +161,13 @@ export function callBatchThenCacheSync(
 
 export async function callBatchThenCache(
   calls: GCallType[],
-): Promise<boolean> {
+): Promise<number> {
   if (calls.length) {
     const disallowed = disallowedAsCallBatch(calls);
     if (!disallowed) {
       const results = await G.callBatch(calls);
+      const doWait = getWaitRetry(results);
+      if (doWait) return doWait;
       if (!results || results.length !== calls.length) {
         throw new Error(`callBatch async did not return the correct data.`);
       }
@@ -153,7 +177,7 @@ export async function callBatchThenCache(
     }
   }
 
-  return true;
+  return 0;
 }
 
 function disallowedAsCallBatch(calls: GCallType[]): string | boolean {
@@ -186,7 +210,7 @@ function getCallsFromCacheAndClear(calls: GCallType[]): PrefValue[] {
       const cacheKey = promiseCacheKey(call);
       if (!isCallCacheable(GBuilder, call)) setTimeout(
         () => Cache.clear(cacheKey),
-        C.UI.Window.networkRequestMinCache
+        C.Server.networkRequestMinCache
       );
     });
   }

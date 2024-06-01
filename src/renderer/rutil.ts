@@ -113,6 +113,12 @@ export function libswordImgSrc(container: HTMLElement) {
   });
 }
 
+export function getWaitRetry(result: any): number {
+  return typeof result === 'object' && 'limitedDoWait' in result
+    ? result.limitedDoWait
+    : 0;
+}
+
 export function clearPending(
   obj: any,
   name: string[] | string,

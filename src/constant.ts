@@ -84,11 +84,22 @@ const C = {
   FSSEP: platform === 'win32' ? '\\' : '/',
 
   Server: {
-    maxDataStringLength: 200000,
+    maxDataStringLength: 200000, // bytes
+    maxLogJson: 10000, // bytes
     maxDataRecursion: 10,
     maxDataArrayLength: 512,
     maxDataObjectKeys: 512,
     port: Number(env('XSPORT')) || 3000,
+    ipLimit: isDevelopment ? {
+      points: 5,  // x ip hits
+      duration: 1 // per y second
+    } : {
+      points: 25,  // x ip hits
+      duration: 5 // per y second
+    },
+    limitedMustWait: isDevelopment ? 1000 : 5000, // ms
+    networkRequestMinCache: 60000, // ms
+    networkRequestBatchDelay: 50, // ms
   },
 
   // xulsword UI constants
@@ -103,8 +114,6 @@ const C = {
         width: 1024,
         height: 728,
       },
-      networkRequestBatchDelay: 50,
-      networkRequestMinCache: 1000
     },
     Xulsword: {
       maxHistoryMenuLength: 20,

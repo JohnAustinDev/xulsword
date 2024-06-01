@@ -10,7 +10,10 @@ const levels = ['error', 'warn', 'info', 'verbose', 'debug', 'silly'];
 function rlog(level: LogLevel, ...args: any[]) {
   if (levels.indexOf(level) <= levels.indexOf(C.LogLevel)) {
     const windowID = Cache.has('windowID') ? Cache.read('windowID') : '?:?';
-    window.ipc.send('log', level, `[${windowID}]`, JSON_stringify(args));
+    // Browser can only log error or warn to server.
+    if (window.processR.platform !== 'browser' || levels.indexOf(level) <= levels.indexOf('warn')) {
+      window.ipc.send('log', level, `[${windowID}]`, JSON_stringify(args));
+    }
     if (C.isDevelopment) {
       console.log(`[${windowID}]`, ...args);
     }

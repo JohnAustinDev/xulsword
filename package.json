@@ -192,13 +192,15 @@
     "helmet": "^7.1.0",
     "i18next": "^21.2.4",
     "i18next-fs-backend": "^2.1.1",
+    "rate-limiter-flexible": "^5.0.3",
     "react": "^18.2.0",
     "react-color": "^2.19.3",
     "react-dom": "^18.2.0",
     "regenerator-runtime": "^0.13.5",
     "socket.io": "^4.7.5",
     "socket.io-client": "^4.7.5",
-    "tar-stream": "^2.2.0"
+    "tar-stream": "^2.2.0",
+    "toobusy-js": "^0.5.1"
   },
   "devDependencies": {
     "@babel/core": "^7.14.8",
@@ -247,6 +249,7 @@
     "@types/react-test-renderer": "^17.0.1",
     "@types/socket.io-client": "^3.0.0",
     "@types/tar-stream": "^2.2.2",
+    "@types/toobusy-js": "^0.5.4",
     "@types/webpack-env": "^1.16.0",
     "@typescript-eslint/eslint-plugin": "^6.4.0",
     "babel-jest": "^26.1.0",

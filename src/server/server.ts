@@ -1,22 +1,24 @@
 "use strict"
-import { Server } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 import i18n from 'i18next';
 import helmet from 'helmet';
 import session from 'express-session';
+import { RateLimiterMemory } from 'rate-limiter-flexible';
+import toobusy from 'toobusy-js';
 import log, { LogLevel } from 'electron-log';
 import Setenv from './setenv.ts';
-import { JSON_parse, invalidData as invd } from '../common.ts';
+import { JSON_parse, JSON_stringify, invalidData as invd } from '../common.ts';
 import C from '../constant.ts';
 import G from '../main/mg.ts';
 import GServer from '../main/mgServer.ts';
 import handleGlobal from '../main/handleGlobal.ts';
 import { GCallType } from 'type.ts';
 
-const invalidData = (data: any, platform: any, depth = 0) => { return invd(data, platform, depth, log) };
-
 Setenv(`${__dirname}/server_env.json`);
 
 G.Dirs.init();
+
+const invalidData = (data: any, platform: any, depth = 0) => { return invd(data, platform, depth, log) };
 
 const logfile = G.Dirs.ProfD.append('xulsword.log');
 log.transports.console.level = C.LogLevel;
@@ -104,75 +106,94 @@ io.engine.use(session({
   cookie: { secure: true, sameSite: true }
 }));
 
+const rateLimiter = new RateLimiterMemory(C.Server.ipLimit);
+
 io.on('connection', (socket) => {
   init('en');
 
   socket.on(
     'error-report',
-    (args: any[], _callback: (r: any) => void) => {
-      const invalid = invalidArgs(args);
-      if (!invalid && args.length === 1) {
-        const [message] = args;
-        if (typeof message === 'string') {
-          log.error(`error-report: ${message}`);
-          return;
+    async (args: any[], _callback: (r: any) => void) => {
+      const limited = await isLimited(socket, args);
+      if (!limited) {
+        const invalid = invalidArgs(args);
+        if (!invalid && args.length === 1) {
+          const [message] = args;
+          if (typeof message === 'string') {
+            log.error(`error-report: ${message}`);
+            return;
+          }
         }
+        log.error(`Ignoring 'error-report' call made with improper arguments. (${invalid})`);
+      } else {
+        // ignore
       }
-      log.error(`Ignoring 'error-report' call made with improper arguments. (${invalid})`);
     }
   );
 
   socket.on(
     'log',
-    (args: any[], _callback: (r: any) => void) => {
-      const invalid = invalidArgs(args);
-      if (!invalid && args.length === 3) {
-        const [type, windowID, json] = args;
-        const logargs = JSON_parse(json);
-        if (type in log
-            && !Number.isNaN(Number(windowID))
-            && Array.isArray(logargs)) {
-          try {
-            log[type as LogLevel](windowID, ...logargs);
-          } catch (er: any) {
-            log.error(er.toString());
+    async (args: any[], _callback: (r: any) => void) => {
+      const limited = await isLimited(socket, args);
+      if (!limited) {
+        const invalid = invalidArgs(args);
+        if (!invalid && args.length === 3) {
+          const [type, windowID, json] = args;
+          const logargs = json.length > C.Server.maxLogJson
+            ? [`log too long. [${json.length}]`]
+            : JSON_parse(json);
+          if (type in log
+              && ['string', 'number'].includes(typeof windowID)
+              && Array.isArray(logargs)) {
+            try {
+              log[type as LogLevel](windowID, ...logargs);
+            } catch (er: any) {
+              log.error(er.toString());
+            }
+            return;
           }
-          return;
         }
+        log.error(`Ignoring 'log' call made with improper arguments. (${invalid})`);
+      } else {
+        // ignore
       }
-      log.error(`Ignoring 'log' call made with improper arguments. (${invalid})`);
     }
   );
 
   socket.on(
     'global',
-    (args: any[], callback: (r: any) => void) => {
-      log.debug(`Global ${args[0][0].startsWith('callBatch') ? 'batch of ' + (args[0][2] as any)[0].length : args[0]}`);
-      const invalid = invalidArgs(args);
-      if (!invalid && args.length === 1 && typeof callback === 'function') {
-        const acall = args.shift() as GCallType;
-        if (Array.isArray(acall) && acall.length && acall.length <= 3) {
-          let r;
-          try {
-            r = handleGlobal(GServer, -1, acall, false);
-          } catch (er) {
-            log.error(er);
-          }
-          if (r instanceof Promise) {
-            r.then((result) => {
-              const invalid = invalidData(result, 'browser');
-              if (!invalid) callback(result);
+    async (args: any[], callback: (r: any) => void) => {
+      const limited = await isLimited(socket, args, true);
+      if (!limited) {
+        log.debug(`Global ${args[0][0].startsWith('callBatch') ? 'batch of ' + (args[0][2] as any)[0].length : args[0]}`);
+        const invalid = invalidArgs(args);
+        if (!invalid && args.length === 1 && typeof callback === 'function') {
+          const acall = args.shift() as GCallType;
+          if (Array.isArray(acall) && acall.length && acall.length <= 3) {
+            let r;
+            try {
+              r = handleGlobal(GServer, -1, acall, false);
+            } catch (er) {
+              log.error(er);
+            }
+            if (r instanceof Promise) {
+              r.then((result) => {
+                const invalid = invalidData(result, 'browser');
+                if (!invalid) callback(result);
+                else log.error(invalid);
+              }).catch((er) => log.error(er));
+            } else {
+              const invalid = invalidData(r, 'browser');
+              if (!invalid) callback(r);
               else log.error(invalid);
-            }).catch((er) => log.error(er));
-          } else {
-            const invalid = invalidData(r, 'browser');
-            if (!invalid) callback(r);
-            else log.error(invalid);
+            }
+            return;
           }
-          return;
         }
+        log.error(`Ignoring 'global' call made with improper arguments. (${invalid})`);
+      } else if (typeof callback === 'function') {
+        callback({ limitedDoWait: C.Server.limitedMustWait });
       }
-      log.error(`Ignoring 'global' call made with improper arguments. (${invalid})`);
     }
   );
 
@@ -185,4 +206,23 @@ function invalidArgs<T>(args: T[]): string | null {
   return Array.isArray(args)
     ? invalidData(args, 'browser')
     : `Arguments must be an array. (was ${typeof args})`;
+}
+
+async function isLimited(
+  socket: Socket,
+  args: any[],
+  checkbusy = false
+): Promise<boolean> {
+  if (checkbusy && toobusy()) {
+    log.warn(`server too busy ${socket.handshake.address}`);
+    return true;
+  }
+  try {
+    await rateLimiter.consume(socket.handshake.address);
+    return false;
+  } catch (er) {
+    const msg = C.isDevelopment ? JSON_stringify(args) : args.length;
+    log.warn(`rate limiting ${socket.handshake.address} [${msg}]`);
+    return true;
+  }
 }

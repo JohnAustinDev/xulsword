@@ -3,6 +3,7 @@
 import { JSON_stringify, GCacheKey, isCallCacheable, clone, invalidData } from '../common.ts';
 import Cache from '../cache.ts';
 import { GBuilder } from '../type.ts';
+import { getWaitRetry } from './rutil.ts';
 import { GCallsOrPromise } from './renderPromise.ts';
 import log from './log.ts';
 import CookiePrefs from './prefs.ts';
@@ -29,7 +30,7 @@ async function asyncRequest(
       log.error(`Invalid async data response: ${invalid}`);
       return undefined;
     }
-    if (cacheable) Cache.write(result, ckey);
+    if (cacheable && !getWaitRetry(result)) Cache.write(result, ckey);
   } catch (er: any) {
     throw new Error(`Promise rejection in ${JSON_stringify(thecall)}:\n${er.toString()}`);
   }

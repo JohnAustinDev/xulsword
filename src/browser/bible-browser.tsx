@@ -85,8 +85,7 @@ if (bibleBrowser) {
         ['Book', null, [locale]],
       ];
 
-      callBatchThenCache(preloads).then((success) => {
-        if (success) {
+      callBatchThenCache(preloads).then(() => {
           bibleBrowser.removeAttribute('data-props');
           bibleBrowser.removeAttribute('data-prefs');
           createRoot(bibleBrowser).render(
@@ -97,7 +96,6 @@ if (bibleBrowser) {
                 locale={locale}
               />
             </StrictMode>);
-        }
       });
     }
   });
