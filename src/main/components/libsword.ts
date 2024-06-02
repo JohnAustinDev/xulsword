@@ -1,4 +1,4 @@
-import { BrowserWindow } from 'electron'; // may be undefined
+import { BrowserWindow } from 'electron'; // undefined in server mode
 import { ChildProcess, fork } from 'child_process';
 import log from 'electron-log';
 import path from 'path';
@@ -11,6 +11,7 @@ import {
 import Cache from '../../cache.ts';
 import S from '../../defaultPrefs.ts';
 import C from '../../constant.ts';
+import { publicPaths } from '../parseSwordConf.ts';
 import LocalFile from './localFile.ts';
 import Dirs from './dirs.ts';
 import Prefs from './prefs.ts';
@@ -778,34 +779,3 @@ export type LibSwordType = Omit<
 >;
 
 export default LibSword as LibSwordType;
-
-// Check that filePath is publicly accessible, and if so return just the public
-// portion of the file path. Otherwise return an empty string if file is not
-// publicly accessible.
-function parsePublicPath(filePath: string): string {
-  const root = process.env.ROOTPATH;
-  const publics = process.env.PUBPATHS;
-  if (root && publics) {
-    const pubs = publics.split(';');
-    for (let i = 0; i < pubs.length; i++) {
-      const pub = pubs[i];
-      if (filePath.startsWith([root, pub].join('/'))) {
-        return filePath.replace(root, '');
-      }
-    };
-  }
-  return '';
-}
-
-// Check and convert all file references according in our context.
-function publicPaths(aString: string): string {
-  if (!BrowserWindow) {
-    // If running as a public server on the Internet
-    return aString.replace(/(file:\/\/)(.*?)(["'\s\n])/ig, (_m, _m1, m2, m3) => {
-      const pp = parsePublicPath(m2);
-      if (!pp) return m3;
-      return `${pp}${m3}`;
-    });
-  }
-  return aString;
-}

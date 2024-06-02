@@ -98,7 +98,9 @@ contextBridge.exposeInMainWorld('processR', {
   },
   LOGLEVEL: () => {
     return process.env.LOGLEVEL;
-
+  },
+  XSPORT: () => {
+    return process.env.XSPORT;
   },
   platform: process.platform,
 });

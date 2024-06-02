@@ -16,6 +16,9 @@ export default function handleGlobal(
   if (trusted) allow = true;
   else if (is && !m && is[1].length === 0) allow = true;
   else if (is && (is[1] as any).includes(m)) allow = true;
+  if (!trusted && name === 'LibSword' && m === 'AbsoluteDataPath') {
+    allow = false;
+  }
   if (name && name in GBuilder && allow) {
     const gBuilder = GBuilder as any;
     const gx = GX as any;

@@ -864,7 +864,7 @@ export type GIRendererType = {
     'FeatureModules' |
     'BkChsInV11n' |
     'GetBooksInVKModules'>
-  ]: (...args: RenderPromiseArgs<GType[name]>) => GType[name];
+  ]: (a: GType[name], b: RenderPromise) => GType[name];
 } & {
   [name in keyof Pick<GType,
     'Books' |

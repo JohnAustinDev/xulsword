@@ -1,5 +1,6 @@
 /* eslint-disable no-nested-ternary */
 /* eslint-disable import/no-mutable-exports */
+import { BrowserWindow } from 'electron'; // undefined in server mode
 import log from 'electron-log';
 import path from 'path';
 import fs from 'fs';
@@ -29,7 +30,7 @@ import LocalFile from './components/localFile.ts';
 import Window from './components/window.ts';
 import { moduleUnsupported, CipherKeyModules } from './components/module.ts';
 import getFontFamily from './fontfamily.js';
-import parseSwordConf from './parseSwordConf.ts';
+import parseSwordConf, { publicPaths } from './parseSwordConf.ts';
 
 import type { TreeNodeInfo } from '@blueprintjs/core';
 import type {
@@ -545,8 +546,12 @@ export function getModuleFonts(): FontFaceType[] {
     }
 
     Object.values(fonts).forEach((info) => {
-      if (info.fontFamily !== 'unknown' && info.fontFamily !== 'dir')
-        ret.push({ fontFamily: info.fontFamily, path: info.path });
+      if (info.fontFamily !== 'unknown' && info.fontFamily !== 'dir') {
+        const path = publicPaths(
+          BrowserWindow ? info.path : info.path.replace(/^(file:\/\/)?/i, 'file://')
+        );
+        ret.push({ fontFamily: info.fontFamily, path });
+      }
     });
 
     // Look for module config Font URL. A module's Font entry may be a URL or a
@@ -727,7 +732,7 @@ export function resetMain() {
   Subscription.publish.resetMain();
 }
 
-export function getModuleConfig(mod: string) {
+export function getModuleConfig(mod: string): ConfigType {
   if (!Cache.has(`moduleConfig${mod}`)) {
     const moduleConfig = {} as ConfigType;
 
@@ -762,7 +767,9 @@ export function getModuleConfig(mod: string) {
         'AbsoluteDataPath'
       ).replaceAll('\\', '/');
       const p2 = `${p}${p.slice(-1) === '/' ? '' : '/'}`;
-      moduleConfig.PreferredCSSXHTML = `${p2}${moduleConfig.PreferredCSSXHTML}`;
+      let pcx = `${p2}${moduleConfig.PreferredCSSXHTML}`;
+      if (!BrowserWindow) pcx = publicPaths(pcx.replace(/^(file:\/\/)?/i, 'file://'));
+      moduleConfig.PreferredCSSXHTML = pcx;
     }
 
     // Assign associated locales
@@ -809,7 +816,7 @@ export function getConfig() {
   return Cache.read(cacheName) as typeof config;
 }
 
-export function getModuleConfigDefault() {
+export function getModuleConfigDefault(): ConfigType {
   return getModuleConfig('LTR_DEFAULT');
 }
 
