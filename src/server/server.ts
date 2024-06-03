@@ -113,6 +113,7 @@ io.engine.use(session({
 }));
 
 const rateLimiter = new RateLimiterMemory(C.Server.ipLimit);
+toobusy.maxLag(140); // default 70ms
 
 io.on('connection', (socket) => {
   init('en');
