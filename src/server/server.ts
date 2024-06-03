@@ -5,6 +5,7 @@ import helmet from 'helmet';
 import session from 'express-session';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
 import toobusy from 'toobusy-js';
+import memorystore from 'memorystore';
 import log, { LogLevel } from 'electron-log';
 import Setenv from './setenv.ts';
 import { JSON_parse, JSON_stringify, invalidData as invd } from '../common.ts';
@@ -97,13 +98,18 @@ const io = new Server(server, {
   }
 });
 
+const MemoryStore = memorystore(session);
 io.engine.use(helmet());
 io.engine.use(session({
   secret: 'fk95DSfgj7fUkldf',
   name: 'ibtxulsword',
   resave: false,
   saveUninitialized: false,
-  cookie: { secure: true, sameSite: true }
+  cookie: { secure: true, sameSite: true },
+  store: new MemoryStore({
+    checkPeriod: 86400000, // prune expires every 24h
+    max: 20000000,
+  }),
 }));
 
 const rateLimiter = new RateLimiterMemory(C.Server.ipLimit);
