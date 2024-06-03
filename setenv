@@ -1,26 +1,74 @@
 #!/bin/bash
 # Run this script from this directory with 'source ./setenv' to set build environment variables.
 
-XULSWORD_SERVER_DIST=/server/dist/
+if [[ -z "$XULSWORD_SERVER_DIST" ]];
+then
+  export XULSWORD_SERVER_DIST=/modules/custom/amod/dist/
+else
+  export XULSWORD_SERVER_DIST=$XULSWORD_SERVER_DIST
+fi
 
 # - NODE_ENV - Set in package.json to control the build process
 #     (will be set to either 'development' or 'production').
 #NODE_ENV=production
-NODE_ENV=development
+if [[ -z "$NODE_ENV" ]];
+then
+  export NODE_ENV=development
+else
+  export NODE_ENV=$NODE_ENV
+fi
 
 # - DEBUG_PROD - Set by you to 'true' BEFORE packaging to enable
 #     dev source maps and dev-tools in a production build (but the
 #     main process is still not accesible via current vscode config).
 #     Also enables other production debug behaviour (more logging).
-DEBUG_PROD=false
+if [[ -z "$DEBUG_PROD" ]];
+then
+  export DEBUG_PROD=false
+else
+  export DEBUG_PROD=$DEBUG_PROD
+fi
 
 # - XULSWORD_ENV - Set by you to 'production' for debugging production
 #     only behaviour, like i18n, splash and log, in a development
 #     environment (including main process debugging via vscode).
-XULSWORD_ENV=normal
+if [[ -z "$XULSWORD_ENV" ]];
+then
+  export XULSWORD_ENV=normal
+else
+  export XULSWORD_ENV=$XULSWORD_ENV
+fi
 
 # - LOGLEVEL - Set to "silly" | "info" | "debug" | "error" | "warn" | "verbose"
-LOGLEVEL=error
+if [[ -z "$LOGLEVEL" ]];
+then
+  export LOGLEVEL=error
+else
+  export LOGLEVEL=$LOGLEVEL
+fi
+
+# - XSPORT - The port that xulsword will use.
+if [[ -z "$XSPORT" ]];
+then
+  export XSPORT=3000
+else
+  export XSPORT=$XSPORT
+fi
+
+echo "// This is a polyfill for Electron process used by src/browser/preload.ts.
+const process = {
+  argv: [],
+  env: {
+    NODE_ENV: '$NODE_ENV',
+    XULSWORD_ENV: '$XULSWORD_ENV',
+    DEBUG_PROD: '$DEBUG_PROD',
+    LOGLEVEL: '$LOGLEVEL',
+    XSPORT: '$XSPORT',
+  },
+  platform: 'browser',
+};
+
+export default process;" > ./process.js
 
 export LIBXULSWORD_MAJOR=1
 export LIBXULSWORD_MINOR=5
