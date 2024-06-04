@@ -29,6 +29,35 @@ function ControllerVK(
   }
 ) {
   const { id, action, initial, chaplist } = props;
+
+  const onSelectVK = (selection?: SelectVKType) => {
+    if (selection) {
+      const { book } = selection;
+      const chaplist = props.chaplist as DataVKType;
+      setState((ps) => {
+        const prevState = ps as SelectVKProps;
+        let newState = prevState;
+        const chapterArray = chaplist && chaplist[book];
+        if (chapterArray) {
+          const s = {
+            ...prevState,
+            initialVK: selection,
+            options: {
+              ...prevState.options,
+              chapters: chapterArray.map((x) => x[0]).sort((a, b) => a - b),
+            },
+          };
+          if (prevState.initialVK.book !== book) s.initialVK.chapter = 1;
+          if (typeof diff(s, prevState) !== 'undefined') newState = s;
+        }
+        if (action && newState !== prevState) {
+          handleAction(action, id, selection, chaplist);
+        }
+        return newState;
+      });
+    }
+  }
+
   const [state, setState] = useState(() => {
     const s = getProps(initial, {
       initialVK: { book: 'Gen', chapter: 1, v11n: 'KJV' },
@@ -62,34 +91,6 @@ function ControllerVK(
     return s;
   });
 
-  const onSelectVK = (selection?: SelectVKType) => {
-    if (selection) {
-      const { book } = selection;
-      const chaplist = props.chaplist as DataVKType;
-      setState((ps) => {
-        const prevState = ps as SelectVKProps;
-        let newState = prevState;
-        const chapterArray = chaplist && chaplist[book];
-        if (chapterArray) {
-          const s = {
-            ...prevState,
-            initialVK: selection,
-            options: {
-              ...prevState.options,
-              chapters: chapterArray.map((x) => x[0]).sort((a, b) => a - b),
-            },
-          };
-          if (prevState.initialVK.book !== book) s.initialVK.chapter = 1;
-          if (typeof diff(s, prevState) !== 'undefined') newState = s;
-        }
-        if (action && newState !== prevState) {
-          handleAction(action, id, selection, chaplist);
-        }
-        return newState;
-      });
-    }
-  }
-
   return (<SelectVK {...state as any} />);
 }
 
@@ -102,6 +103,12 @@ function ControllerOR(
   }
 ) {
   const { id, initial } = props;
+
+  const onSelectOR = (selection?: SelectORMType) => {
+    const { action, chaplist } = props;
+    if (action) handleAction(action, id, selection, chaplist);
+  }
+
   const [state, _setState] = useState(() => {
     return getProps(initial, {
       initialORM: { otherMod: 'genbk', keys: [] },
@@ -114,11 +121,6 @@ function ControllerOR(
     });
   });
 
-  const onSelectOR = (selection?: SelectORMType) => {
-    const { action, chaplist } = props;
-    if (action) handleAction(action, id, selection, chaplist);
-  }
-
   return (<SelectOR {...state as any} />);
 }
 
@@ -130,8 +132,8 @@ socket.on('connect', () => {
     published = true;
 
     let langcode;
-    const selectVK = document.getElementsByClassName('select-container')[0];
-    if (selectVK) ({ langcode } = (selectVK as HTMLDivElement).dataset);
+    const widget = document.getElementsByClassName('widget-container')[0];
+    if (widget) ({ langcode } = (widget as HTMLDivElement).dataset);
     const prefs: Partial<PrefRoot> = {};
     const locale = setGlobalLocale(prefs, langcode);
     saveToPrefs(G, prefs);
@@ -141,8 +143,8 @@ socket.on('connect', () => {
       ['Tabs', null, undefined],
       ['BkChsInV11n', null, undefined],
       ['GetBooksInVKModules', null, undefined],
-      ['getLocaleDigits', null, [false]],
-      ['getLocalizedBooks', null, [false]],
+      ['getLocaleDigits', null, [true]],
+      ['getLocalizedBooks', null, [true]],
       ['Book', null, [locale]],
       ['i18n','t',['locale_direction']],
       ...(Object.values(C.SupportedTabTypes)
@@ -150,7 +152,7 @@ socket.on('connect', () => {
     ];
 
     callBatchThenCache(preloads).then(() => {
-      const widgets = document.getElementsByClassName('select-container');
+      const widgets = document.getElementsByClassName('widget-container');
       (Array.from(widgets) as HTMLDivElement[])
         .forEach((widget) => {
           const id = randomID();

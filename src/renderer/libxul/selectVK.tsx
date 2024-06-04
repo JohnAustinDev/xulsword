@@ -455,9 +455,9 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
             onChange={handleChange}
           />
         )}
-        <Spacer orient="horizontal" flex="1" />
         <div className="mod-select">
-          {modules.length > 0 && (
+          {modules.length > 0 && (<>
+            <Spacer orient="horizontal" flex="1" />
             <ModuleMenu
               className="vk-vkmod"
               value={vkmod || modules[0]}
@@ -466,7 +466,7 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
               allowNotInstalled={allowNotInstalled}
               onChange={handleChange}
             />
-          )}
+          </>)}
         </div>
       </Hbox>
     );
