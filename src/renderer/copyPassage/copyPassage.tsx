@@ -168,7 +168,7 @@ export default class CopyPassageWin extends React.Component {
       sanitizeHTML(
         refdiv, `
         <span class="cs-locale">
-          (${vks.map((vk) => vk.readable()).join('-')})
+          (${vks.map((vk) => vk.readable(G.i18n.language)).join('-')})
         </span>`
       );
       G.clipboard.write({

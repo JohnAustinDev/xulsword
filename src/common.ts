@@ -55,8 +55,10 @@ import type { XulswordState } from './renderer/components/xulsword/xulsword.tsx'
 
 export function isCallCacheable(gBuilder: typeof GBuilder, call: GCallType): boolean {
   let cacheable = true;
-  if (Array.isArray(call[2])) {
-    cacheable = call[1] ? gBuilder[call[0]][call[1]]() : gBuilder[call[0]]();
+  const [name, method, args] = call;
+  if (Array.isArray(args)) {
+    const gb = gBuilder as any;
+    cacheable = method ? gb[name][method]() : gb[name]();
   }
   return cacheable;
 }
@@ -1270,13 +1272,13 @@ export function bookmarkLabel(
   if ('commMod' in l) {
     const { commMod } = l;
     const vk = verseKeyFunc(l);
-    const readable = vk.readable(undefined, true);
+    const readable = vk.readable(G.i18n.language, null, true);
     const t = (commMod in G.Tab && G.Tab[commMod]) || null;
     return `${t ? t.label : G.i18n.t('Comms')}: ${readable}`;
   }
   if ('v11n' in l) {
     const vk = verseKeyFunc(l);
-    return vk.readable(undefined, true);
+    return vk.readable(G.i18n.language, null, true);
   }
   const ks = l.key.split(C.GBKSEP);
   const tab = (l.otherMod && l.otherMod in G.Tab && G.Tab[l.otherMod]) || null;

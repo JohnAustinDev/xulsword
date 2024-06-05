@@ -18,16 +18,14 @@ import type { HTMLData } from "../renderer/htmlData";
 export function getExtRefHTML(
   extref: string,
   targetmod: string,
+  locale: string,
   context: LocationVKType,
   showText: boolean,
   keepNotes: boolean,
   info?: Partial<LookupInfo>
 ): string {
-  const locale =
-    (targetmod in G.Config && G.Config[targetmod].AssociatedLocale) ||
-    G.i18n.language;
   const list = parseExtendedVKRef(verseKey, extref, context, [locale]);
-  const alternates = workingModules();
+  const alternates = workingModules(locale);
   const mod = targetmod || alternates[0] || '';
   const html: string[] = [];
   list.forEach((locOrStr) => {
@@ -84,7 +82,7 @@ export function getExtRefHTML(
         h += `
           <bdi>
             <a class="${crref.join(' ')}" data-data="${crd}">
-              ${verseKey(location).readable()}
+              ${verseKey(location).readable(locale)}
             </a>
             ${q}${text ? ': ' : ''}
           </bdi>
@@ -250,8 +248,8 @@ function getFootnoteText(
 
 // Return modules (optionally of a particular type) that are associated with
 // the current locale and tab settings.
-function workingModules(type?: TabTypes) {
-  const am = G.ProgramConfig.AssociatedModules;
+function workingModules(locale: string, type?: TabTypes) {
+  const am = G.LocaleConfigs[locale].AssociatedModules;
   const alternates = new Set(am ? am.split(',') : undefined);
   const tabs = G.Prefs.getComplexValue(
     'xulsword.tabs'

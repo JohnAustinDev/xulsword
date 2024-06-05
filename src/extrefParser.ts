@@ -12,7 +12,6 @@ import type { verseKey } from "./renderer/htmlData";
 // values using previously read information (as is often required
 // following commas). Initial context may be supplied using the
 // context argument. Segments which fail to parse as Scripture
-
 // references are silently ignored.
 export default function parseExtendedVKRef(
   verseKeyFunc: typeof verseKey,
@@ -35,6 +34,7 @@ export default function parseExtendedVKRef(
   let bk = (context?.book || '') as OSISBookType | '';
   let ch = context?.chapter || 0;
   let vs = context?.verse || 0;
+  let v11n = context?.v11n || null;
   reflistA.forEach((r) => {
     let ref = r;
     let noteID;
@@ -43,7 +43,7 @@ export default function parseExtendedVKRef(
       [, ref, noteID] = noteref;
     }
     const options = locales && locales.length ? { locales } : undefined;
-    const vk = verseKeyFunc(ref, null, options, renderPromise);
+    const vk = verseKeyFunc(ref, v11n, options, renderPromise || null);
     if (!vk.book && bk) {
       const match = ref
         .replace(/[^\s\p{L}\p{N}:-]/gu, ' ')

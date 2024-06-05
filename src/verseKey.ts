@@ -5,8 +5,8 @@ import type { GType, LocationVKType, OSISBookType, V11nType } from './type.ts';
 import type RefParser from './refParser.ts';
 
 type VerseKeyGtype = {
-  convertLocation: GType['LibSword']['convertLocation'];
-  Book: () => ReturnType<GType['Book']>;
+  convertLocation?: GType['LibSword']['convertLocation'];
+  Book: GType['Book'];
   Tab: () => GType['Tab'];
 };
 
@@ -19,8 +19,6 @@ export default class VerseKey {
 
   #bkChsInV11n: GType['BkChsInV11n'];
 
-  #localeDirection: 'ltr' | 'rtl';
-
   #gfunctions: VerseKeyGtype;
 
   #loc: LocationVKType;
@@ -30,14 +28,12 @@ export default class VerseKey {
   constructor(
     parser: RefParser,
     bkChsInV11n: GType['BkChsInV11n'],
-    localeDirection: 'ltr' | 'rtl',
     gfunction: VerseKeyGtype,
     location: LocationVKType | string,
     v11n?: V11nType | null
   ) {
     this.#parser = parser;
     this.#bkChsInV11n = bkChsInV11n;
-    this.#localeDirection = localeDirection;
     this.#gfunctions = gfunction;
     if (typeof location === 'string') {
       const parsed = this.parseLocation(location, v11n);
@@ -119,7 +115,7 @@ export default class VerseKey {
   // if the book is not included in tov11n. Also LibSword only converts
   // between systems in C.SupportedV11nMaps. So these things must be
   // checked before ever calling LibSword.
-  #doConvertLocation(tov11n: V11nType) {
+  #allowConvertLocation(tov11n: V11nType) {
     const fromv11n = this.#loc.v11n;
     if (fromv11n === tov11n) return false;
     if (!fromv11n || !tov11n) return false;
@@ -209,7 +205,9 @@ export default class VerseKey {
     const tov11n = v11n || this.#v11nCurrent;
     if (!tov11n || !this.#loc.v11n) return this.#loc;
     if (this.#loc.v11n === tov11n) return this.#loc;
-    if (!this.#doConvertLocation(tov11n)) return this.#loc;
+    if (!this.#allowConvertLocation(tov11n) || !this.#gfunctions.convertLocation) {
+      return this.#loc;
+    }
     const parsed = this.parseLocation(
       this.#gfunctions.convertLocation(
         this.#loc.v11n,
@@ -234,12 +232,15 @@ export default class VerseKey {
   // the visual order of separating punctuation. The HTML <bdi> tag is intended for
   // these situations. But, in order to return either HTML or UTF8, this function
   // uses HTML entities instead.
-  readable(v11n?: V11nType, notHTML = false): string {
-    const Book = this.#gfunctions.Book();
-    const tov11n = v11n || this.#v11nCurrent;
-    const l = this.location(tov11n);
-    const { locale, localeDigits } = this.#parser;
-    const guidir = this.#localeDirection;
+  readable(
+    locale: string,
+    v11n = null as V11nType | null,
+    notHTML = false as boolean
+  ): string {
+    const { localeDigits } = this.#parser;
+    const Book = this.#gfunctions.Book(locale);
+    const l = this.location(v11n || this.#v11nCurrent);
+    const guidir = C.Locales.reduce((p, c) => c[0] === locale ? c[2] : p, 'ltr');
     let d = guidir === 'rtl' ? '&rlm;' : '&lrm;';
     if (notHTML)
       d =

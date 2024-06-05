@@ -8,8 +8,8 @@
         "type": "node",
         "request": "launch",
         "name": "server",
-        "runtimeExecutable": "yarn",
-        "runtimeArgs": ["start-server"],
+        "runtimeExecutable": "bash",
+        "runtimeArgs": ["${workspaceFolder}/src/server/start-server.sh"],
         "skipFiles": [
             "<node_internals>/**"
         ],

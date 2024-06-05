@@ -525,7 +525,7 @@ export function printableItem(
         if (location && 'v11n' in location) {
           ref = (
             <span className="ref versekey cs-locale">
-              {verseKey(location).readable(undefined, true)}
+              {verseKey(location).readable(G.i18n.language, null, true)}
             </span>
           );
         } else if (location) {

@@ -82,6 +82,7 @@ export default async function handler(this: Atext, es: React.SyntheticEvent) {
                   const [html] = await G.callBatch([['getExtRefHTML', null, [
                     refs,
                     module,
+                    G.i18n.language,
                     location,
                     row.classList.contains('cropened'),
                     false,

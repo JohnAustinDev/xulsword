@@ -57,19 +57,15 @@ export default class RefParser {
 
   osisStringLC: string;
 
-  locale: string;
-
   localeDigits: ReturnType<typeof getLocaleDigits>;
 
   localizedBooks: ReturnType<typeof getLocalizedBooks>;
 
   constructor(
-    locale: string,
     localeDigits: ReturnType<typeof getLocaleDigits>,
     localizedBooks: ReturnType<typeof getLocalizedBooks>,
     options?: RefParserOptionsType
   ) {
-    this.locale = locale;
     this.localeDigits = localeDigits;
     this.localizedBooks = localizedBooks;
     this.onlyOsisCode = false;
@@ -88,12 +84,7 @@ export default class RefParser {
         this[name] = val;
       });
     }
-    this.locales = Array.isArray(this.locales)
-      ? this.locales.concat(this.locale)
-      : [this.locale];
-    if (!this.locales.includes(this.locale)) {
-      throw new Error(`RefParser missing locale: '${this.locale}'`);
-    } else if (!this.locales.every((l) => l in this.localeDigits && l in this.localizedBooks)) {
+    if (!this.locales.every((l) => l in this.localeDigits && l in this.localizedBooks)) {
       throw new Error(`Missing RefParser data: locales=${this.locales
         } localeDigits=${Object.keys(this.localeDigits)
         } localizedBooks=${Object.keys(this.localizedBooks)}`);

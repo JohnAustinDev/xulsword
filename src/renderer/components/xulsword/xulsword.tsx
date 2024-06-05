@@ -248,7 +248,7 @@ export default class Xulsword extends React.Component implements RenderPromiseCo
                 e.stopPropagation();
               }}
             >
-              {versekey.readable(undefined, true)}
+              {versekey.readable(G.i18n.language, null, true)}
             </div>
           );
         })}

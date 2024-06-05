@@ -8,6 +8,7 @@ import {
   getSwordOptions,
   JSON_attrib_stringify,
 } from '../../../common.ts';
+import parseExtendedVKRef from '../../../extrefParser.ts';
 import { getElementData, verseKey } from '../../htmlData.ts';
 import { getCompanionModules, getMaxChapter, getMaxVerse, getLocalizedChapterTerm } from '../../rutil.ts';
 import G, { GI } from '../../rg.ts';
@@ -84,9 +85,18 @@ export function getRefBible(
   return refbible || null;
 }
 
-// The 'notes' argument is an HTML string containing one or more nlist
-// notes, possibly contained by a div. An nlist note contains a single
-// verse-key textual note.
+// Returns the HTML needed to fill a note-box.
+// The 'notes' argument is an HTML string of one chapter's worth of notes.
+// Each note is an 'nlist' div. A single note may be an extended cross-
+// reference containing many individual cross-references. All cross-
+// references are displayed in one of these possible ways:
+// - Text only, for quick display, as required in browser mode.
+// - Links only, requires server processing to parse and determine link
+//   targets.
+// - Links plus reference texts, requires even more server processing to
+//   determine link targets plus locate installed modules capable of
+//   suppling the reference text for each target. In browser mode, this
+//   display should only be provided upon user request.
 export function getNoteHTML(
   notes: string,
   show: Partial<ShowType> | null, // null to show all types of notes
@@ -153,7 +163,7 @@ export function getNoteHTML(
           : [type, nid, 'unavailable', context]
       ).join('.');
       if (!keepOnlyThisNote || keepNote === keepOnlyThisNote) {
-        const innerHhtmlValue = anote.replace(containerTagsRE, '');
+        const innerHtmlValue = anote.replace(containerTagsRE, '');
         // Check if this note should be displayed, and if not then skip it
         const notetypes = { fn: 'footnotes', cr: 'crossrefs', un: 'usernotes' };
         Object.entries(notetypes).forEach((entry) => {
@@ -196,28 +206,41 @@ export function getNoteHTML(
           html += '</div>';
 
           // Write cell #5: note body
-          const ccls = type === 'cr' ? ` data-reflist="${innerHhtmlValue}"` : '';
+          const ccls = type === 'cr' ? ` data-reflist="${innerHtmlValue}"` : '';
           html += `<div class="fncol5"${ccls}>`;
 
           switch (type) {
             case 'cr': {
               if (location) {
                 // If this is a cross reference, then parse the note body for references and display them
-                const info = {} as Partial<LookupInfo>;
-                const keepNotes = false;
-                const tmod = /^[\w\d]+:/.test(innerHhtmlValue)
-                  ? innerHhtmlValue.split(':')[0]
-                  : context;
-                html += GI.getExtRefHTML(
-                  '',
-                  renderPromise,
-                  innerHhtmlValue,
-                  tmod || '',
-                  location,
-                  openCRs,
-                  keepNotes,
-                  info
-                );
+                if (window.processR.platform === 'browser' && !openCRs) {
+                  const vks = parseExtendedVKRef(verseKey, innerHtmlValue, location);
+                  html += vks
+                    .map((vk) => typeof vk === 'string'
+                      ? vk
+                      : verseKey(vk, location.v11n).readable(G.i18n.language))
+                    .join('; ');
+                } else {
+                  const info = {} as Partial<LookupInfo>;
+                  const keepNotes = false;
+                  const tmod = /^[\w\d]+:/.test(innerHtmlValue)
+                    ? innerHtmlValue.split(':')[0]
+                    : context;
+                  const locale =
+                    (tmod && tmod in G.Config && G.Config[tmod].AssociatedLocale)
+                    || G.i18n.language;
+                  html += GI.getExtRefHTML(
+                    '',
+                    renderPromise,
+                    innerHtmlValue,
+                    tmod || '',
+                    locale,
+                    location,
+                    openCRs,
+                    keepNotes,
+                    info
+                  );
+                }
               }
               break;
             }
@@ -230,12 +253,12 @@ export function getNoteHTML(
               ) {
                 opdir = ' opposing-program-direction';
               }
-              html += `<bdi><span class="fntext${opdir}">${innerHhtmlValue}</span></bdi>`;
+              html += `<bdi><span class="fntext${opdir}">${innerHtmlValue}</span></bdi>`;
               break;
             }
             case 'un': {
               // If this is a usernote, then add direction entities and style
-              html += `<bdi><span class="noteBoxUserNote">${innerHhtmlValue}</span></bdi>`;
+              html += `<bdi><span class="noteBoxUserNote">${innerHtmlValue}</span></bdi>`;
               break;
             }
             default:

@@ -460,8 +460,8 @@ export function findElementData(elem: HTMLElement | null): HTMLData | null {
   return r;
 }
 
-// If renderPromise is null, convertLocation will return the input text unchanged, and
-// text direction will always be right-to-left.
+// If renderPromise is null, convertLocation will return the input
+// unchanged.
 export function verseKey(
   versekey: LocationVKType | string,
   v11n?: V11nType | null,
@@ -469,6 +469,7 @@ export function verseKey(
   renderPromise?: RenderPromise | null
 ): VerseKey {
 
+  // Minimal parser options are 'locales: [locale]'
   const options = optionsx || {};
   let locales = [G.i18n.language];
   if (options.locales) {
@@ -476,15 +477,8 @@ export function verseKey(
   }
   options.locales = locales;
 
-  let localeDirection: 'ltr' | 'rtl' = 'ltr';
-  let convertLocation = (
-    _fromv11n: V11nType,
-    vkeytext: string,
-    _tov11n: V11nType
-  ) => {return vkeytext};
-
+  let convertLocation;
   if (renderPromise !== null) {
-    localeDirection = GI.i18n.t('ltr', renderPromise, 'locale_direction') as 'ltr';
     convertLocation = (
       fromv11n: V11nType,
       vkeytext: string,
@@ -501,13 +495,11 @@ export function verseKey(
 
   return new VerseKey(
     new RefParser(
-      G.i18n.language,
       G.getLocaleDigits(true),
       G.getLocalizedBooks(true),
       options
     ),
     G.BkChsInV11n,
-    localeDirection,
     {
       convertLocation,
       Book: () => G.Book(G.i18n.language),

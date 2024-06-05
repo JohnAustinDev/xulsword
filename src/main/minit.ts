@@ -471,13 +471,11 @@ export function verseKey(
 ): VerseKey {
   return new VerseKey(
     new RefParser(
-      i18n.language,
       getLocaleDigits(true),
       getLocalizedBooks(true),
       options
     ),
     getBkChsInV11n(),
-    i18n.t('locale_direction'),
     {
       convertLocation: (
         fromv11n: V11nType,
@@ -486,8 +484,8 @@ export function verseKey(
       ) => {
         return LibSword.convertLocation(fromv11n, vkeytext, tov11n);
       },
-      Book: () => {
-        return getBook();
+      Book: (locale?: string) => {
+        return getBook(locale);
       },
       Tab: () => {
         return getTab();

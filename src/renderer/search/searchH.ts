@@ -474,7 +474,7 @@ export function formatResult(div: HTMLDivElement, state: SearchWinState) {
               // Translate from module to DisplayBible
               const vsys = G.LibSword.getVerseSystem(module);
               const v = verseKey(location, vsys);
-              sanitizeHTML(a, v.readable(G.LibSword.getVerseSystem(dModule)));
+              sanitizeHTML(a, v.readable(G.i18n.language, G.LibSword.getVerseSystem(dModule)));
               a.className = 'cs-locale';
               a.id = ['verselink', vsys, v.osisRef()].join('.');
             }

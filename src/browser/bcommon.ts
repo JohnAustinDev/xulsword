@@ -22,7 +22,7 @@ export function setGlobalLocale(prefs: Partial<PrefRoot>, langcode?: string): st
     else global = g as Partial<typeof S.prefs.global>;
   };
   let { locale: l } = global;
-  if (!l || !C.Locales.some((x) => x[0] === l)) l = 'en';
+  if (!l || !C.Locales.some((x) => x[0] === l)) l = langcode ?? 'en';
   global.locale = l;
   return l;
 }
