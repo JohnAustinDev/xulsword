@@ -47,6 +47,15 @@ function Controller(
     return true;
   };
 
+  // Cancel Tarapro page loader overlay.
+  setTimeout(() => {
+    const win = frameElement?.ownerDocument.defaultView;
+    if (win) {
+      (win as any).bibleBrowserIsLoading = false;
+      (win as any).jQuery(".loader").fadeOut( 'slow' );
+    }
+  }, 1);
+
   return (
     <div id="root">
       <div id="reset">
