@@ -27,7 +27,7 @@ async function asyncRequest(
     result = await window.ipc.invoke('global', call);
     const invalid = invalidData(result, window.processR.platform);
     if (invalid) {
-      log.error(`Invalid async data response: ${invalid}`);
+      error(`Invalid async data response: ${invalid}`);
       return undefined;
     }
     if (cacheable && !getWaitRetry(result)) Cache.write(result, ckey);
@@ -56,7 +56,7 @@ function request(
   const result = window.ipc.sendSync('global', thecall);
   const invalid = invalidData(result, window.processR.platform);
   if (invalid) {
-    log.error(`Invalid data response: ${invalid}`);
+    error(`Invalid data response: ${invalid}`);
     return undefined;
   }
   if (cacheable) Cache.write(result, ckey);
@@ -105,6 +105,10 @@ function publicCall(thecall: GCallType): GCallType {
   return [name, method, args];
 }
 
+function error(er: any) {
+  log.error(`${er.toString()}${'stack' in er ? ' ' + er.stack : ''}`);
+}
+
 // This G object is used in renderer processes, and shares the same
 // interface as a main process G object. Properties of this object
 // access data and objects via IPC from the main process G object.
@@ -151,23 +155,37 @@ Object.entries(GBuilder).forEach((entry) => {
       const acall: GCallType = [name, null, undefined];
       Object.defineProperty(G, name, {
         get() {
-          return request(acall);
+          let req;
+          try {req = request(acall)} catch (er: any) {error(er)}
+          return req;
         },
       });
       gi[name] = (def: PrefValue, rp: RenderPromise) => {
-        return GCallsOrPromise([acall], [def], rp)[0];
+        let req;
+        try {
+          req = GCallsOrPromise([acall], [def], rp)[0];
+        } catch (er: any) {error(er)}
+        return req;
       }
     } else if (typeof value === 'function') {
       const isAsync = asyncFuncs.some((en) => name && en[0] === name);
       g[name] = (...args: unknown[]) => {
         const acall: GCallType = [name, null, args];
-        if (isAsync) return asyncRequest(acall);
-        return request(acall);
+        let req;
+        try {
+          if (isAsync) req = asyncRequest(acall);
+          else req = request(acall);
+        } catch (er: any) {error(er)}
+        return req;
       };
       if (!isAsync) {
         gi[name] = (def: PrefValue, rp: RenderPromise, ...args: unknown[]) => {
           const acall: GCallType = [name, null, args];
-          return GCallsOrPromise([acall], [def], rp)[0];
+          let req;
+          try {
+            req = GCallsOrPromise([acall], [def], rp)[0];
+          } catch (er: any) {error(er)}
+          return req;
         }
       }
     } else if (typeof value === 'object') {
@@ -181,15 +199,24 @@ Object.entries(GBuilder).forEach((entry) => {
             get() {
               // In Browsers, i18n.language is never used, rather global.locale pref
               // is specified in all i18n calls, so return it in this special case.
-              if (name === 'i18n' && m === 'language'
-                  && window.processR.platform === 'browser') {
-                return G.Prefs.getCharPref('global.locale')
-              }
-              return request(acall);
+              let req;
+              try {
+                if (name === 'i18n' && m === 'language'
+                    && window.processR.platform === 'browser') {
+                  req = G.Prefs.getCharPref('global.locale')
+                } else {
+                  req = request(acall);
+                }
+              } catch (er: any) {error(er)}
+              return req;
             },
           });
           gi[name][m] = (def: PrefValue, rp: RenderPromise) => {
-            return GCallsOrPromise([acall], [def], rp)[0];
+            let req;
+            try {
+              req = GCallsOrPromise([acall], [def], rp)[0];
+            } catch (er: any) {error(er)}
+            return req;
           };
         } else if (typeof gBuilder[name][m] === 'function') {
           const isAsync = (asyncFuncs as [string, string[]][]).some(
@@ -198,36 +225,49 @@ Object.entries(GBuilder).forEach((entry) => {
           if (name !== 'Prefs' || window.processR.platform !== 'browser') {
             g[name][m] = (...args: unknown[]) => {
               const acall: GCallType = [name, m, args];
-              if (isAsync) return asyncRequest(acall);
-              return request(acall);
+              let req;
+              try {
+                if (isAsync) req = asyncRequest(acall);
+                else req = request(acall);
+              } catch (er: any) {error(er)}
+              return req;
             };
             if (!isAsync) {
               gi[name][m] = (def: PrefValue, rp: RenderPromise, ...args: unknown[]) => {
                 const acall: GCallType = [name, m, args];
-                return GCallsOrPromise([acall], [def], rp)[0];
+                let req;
+                try {
+                  req = GCallsOrPromise([acall], [def], rp)[0];
+                } catch (er: any) {error(er)}
+                return req;
               };
             }
           } else {
             // Then use Prefs cookie rather than server file.
             g.Prefs[m] = (...args: unknown[]) => {
+              let req;
               if (
                 (asyncFuncs as [string, string[]][]).some(
                   (en) => en[0] === name && en[1].includes(m)
                 )
               ) {
-                throw new Error(`G async cookie Pref methods not implemented: ${m}`);
+                error(`G async cookie Pref methods not implemented: ${m}`);
+              } else {
+                try {
+                  req = (CookiePrefs as any)[m](...args);
+                } catch (er: any) {error(er)}
               }
-              return (CookiePrefs as any)[m](...args);
+              return req;
             };
           }
         } else {
-          throw Error(
+          error(
             `Unhandled GBuilder ${name}.${m} type ${typeof gBuilder[name][m]}`
           );
         }
       });
     } else {
-      throw Error(`Unhandled GBuilder ${name} value ${value}`);
+      error(`Unhandled GBuilder ${name} value ${value}`);
     }
   }
 });

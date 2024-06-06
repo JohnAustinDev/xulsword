@@ -1,4 +1,6 @@
 "use strict"
+globalThis.isPublicServer = true;
+
 import { Server, Socket } from 'socket.io';
 import i18n from 'i18next';
 import helmet from 'helmet';

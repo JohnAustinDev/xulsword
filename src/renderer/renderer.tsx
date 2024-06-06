@@ -68,9 +68,11 @@ window.ipc.on('cache-reset', () => {
   Cache.write(`${descriptor.type}:${descriptor.id}`, 'windowID');
 });
 
-DynamicStyleSheet.update(G.Data.read('stylesheetData'));
+const dynamicStyleSheet = new DynamicStyleSheet(document);
+
+dynamicStyleSheet.update(G.Data.read('stylesheetData'));
 window.ipc.on('dynamic-stylesheet-reset', () =>
-  DynamicStyleSheet.update(G.Data.read('stylesheetData'))
+  dynamicStyleSheet.update(G.Data.read('stylesheetData'))
 );
 
 // Set window type and language classes on the root html element.
@@ -145,7 +147,7 @@ function WindowRoot(props: WindowRootProps) {
       log.debug(
         `Renderer reset (stylesheet, cache, component): ${descriptor.id}`
       );
-      DynamicStyleSheet.update(G.Data.read('stylesheetData'));
+      dynamicStyleSheet.update(G.Data.read('stylesheetData'));
       Cache.clear();
       s.reset[1](randomID());
     });
@@ -254,7 +256,7 @@ function WindowRoot(props: WindowRootProps) {
         log.debug(
           `Renderer reset (cache, stylesheet, component): ${descriptor.id}`
         );
-        DynamicStyleSheet.update(G.Data.read('stylesheetData'));
+        dynamicStyleSheet.update(G.Data.read('stylesheetData'));
         Cache.clear();
         s.reset[1](randomID());
         const dialog: ReactElement[] = [];

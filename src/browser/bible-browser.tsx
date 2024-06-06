@@ -6,6 +6,7 @@ import { randomID } from "../common.ts";
 import C from "../constant.ts";
 import G from "../renderer/rg.ts";
 import { callBatchThenCache } from "../renderer/renderPromise.ts";
+import DynamicStyleSheet from '../renderer/style.ts';
 import Xulsword from "../renderer/components/xulsword/xulsword.tsx";
 
 import 'normalize.css/normalize.css';
@@ -14,6 +15,8 @@ import '@blueprintjs/core/lib/css/blueprint.css';
 import '../renderer/global-htm.css';
 
 import type { GCallType, PrefObject, PrefRoot } from "../type.ts";
+
+let dynamicStyleSheet: DynamicStyleSheet | undefined;
 
 // React element controller:
 function Controller(
@@ -35,6 +38,8 @@ function Controller(
       C.Locales.reduce((p, c) => c[0] === locale ? c[2] : p, 'ltr')
     );
   }
+
+  dynamicStyleSheet?.update();
 
   // Wheel scroll is wonky in the Browser, so disable it for now.
   const wheelCapture = (e: React.SyntheticEvent<any>) => {
@@ -77,10 +82,12 @@ if (bibleBrowser) {
         ['getLocalizedBooks', null, [true]],
         ['getLocaleDigits', null, []],
         ['ModuleConfigDefault', null, undefined],
+        ['ModuleFonts', null, undefined],
         ['ProgramConfig', null, undefined],
+        ['LocaleConfigs', null, undefined],
+        ['Config', null, undefined],
         ['FeatureModules', null, undefined],
         ['AudioConfs', null, undefined],
-        ['Config', null, undefined],
         ['Books', null, [locale]],
         ['Book', null, [locale]],
       ];
@@ -88,6 +95,7 @@ if (bibleBrowser) {
       callBatchThenCache(preloads).then(() => {
           bibleBrowser.removeAttribute('data-props');
           bibleBrowser.removeAttribute('data-prefs');
+          dynamicStyleSheet = new DynamicStyleSheet(document);
           createRoot(bibleBrowser).render(
             <StrictMode>
               <Controller

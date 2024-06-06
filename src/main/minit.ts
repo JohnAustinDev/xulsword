@@ -1,6 +1,5 @@
 /* eslint-disable no-nested-ternary */
 /* eslint-disable import/no-mutable-exports */
-import { BrowserWindow } from 'electron'; // undefined in server mode
 import log from 'electron-log';
 import path from 'path';
 import fs from 'fs';
@@ -30,7 +29,7 @@ import LocalFile from './components/localFile.ts';
 import Window from './components/window.ts';
 import { moduleUnsupported, CipherKeyModules } from './components/module.ts';
 import getFontFamily from './fontfamily.js';
-import parseSwordConf, { publicPaths } from './parseSwordConf.ts';
+import parseSwordConf, { fileFullPath, serverPublicPath } from './parseSwordConf.ts';
 
 import type { TreeNodeInfo } from '@blueprintjs/core';
 import type {
@@ -545,9 +544,8 @@ export function getModuleFonts(): FontFaceType[] {
 
     Object.values(fonts).forEach((info) => {
       if (info.fontFamily !== 'unknown' && info.fontFamily !== 'dir') {
-        const path = publicPaths(
-          BrowserWindow ? info.path : info.path.replace(/^(file:\/\/)?/i, 'file://')
-        );
+        let path = info.path;
+        if (globalThis.isPublicServer) path = serverPublicPath(path);
         ret.push({ fontFamily: info.fontFamily, path });
       }
     });
@@ -766,7 +764,7 @@ export function getModuleConfig(mod: string): ConfigType {
       ).replaceAll('\\', '/');
       const p2 = `${p}${p.slice(-1) === '/' ? '' : '/'}`;
       let pcx = `${p2}${moduleConfig.PreferredCSSXHTML}`;
-      if (!BrowserWindow) pcx = publicPaths(pcx.replace(/^(file:\/\/)?/i, 'file://'));
+      if (globalThis.isPublicServer) pcx = serverPublicPath(pcx);
       moduleConfig.PreferredCSSXHTML = pcx;
     }
 
@@ -956,11 +954,20 @@ export function getLocalizedBooks(getAll = false as boolean | string[]): {
   return r;
 }
 
+// Return the contents of a file. In Electron mode, filepath is an absolute
+// path. In public server mode, it is a server path and must be public or else
+// empty string will be returned.
 export function inlineFile(
-  fpath: string,
+  filepath: string,
   encoding = 'base64' as BufferEncoding,
   noHeader = false
 ): string {
+  let fpath = filepath;
+  if (globalThis.isPublicServer) {
+    const spath = fileFullPath(filepath);
+    if (!spath) return '';
+    fpath = spath;
+  }
   const file = new LocalFile(fpath);
   const mimeTypes = {
     jpg: 'image/jpeg',
@@ -985,6 +992,9 @@ export function inlineFile(
     : `data:${contentType};${encoding},${rawbuf.toString(encoding)}`;
 }
 
+// Return the contents of an audio file. In Electron mode, filepath is an absolute
+// path. In public server mode, it is a server path and must be public or else
+// empty string will be returned.
 export function inlineAudioFile(
   audio: VerseKeyAudioFile | GenBookAudioFile | null
 ): string {
@@ -1006,7 +1016,11 @@ export function inlineAudioFile(
         const ext = C.SupportedAudio[x];
         const afile = file.clone().append(`${leaf}.${ext}`);
         if (afile.exists()) {
-          return inlineFile(afile.path);
+          let apath = afile.path;
+          if (globalThis.isPublicServer) {
+            apath = serverPublicPath(apath);
+          }
+          if (apath) return inlineFile(apath);
         }
       }
     }

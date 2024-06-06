@@ -209,8 +209,8 @@ class Viewport extends React.Component implements PopupParent {
         );
         const bk = location.book in Book ? Book[location.book] : null;
         if (bk) {
-          const ml = G.FeatureModules.greek
-            .concat(G.FeatureModules.hebrew)
+          const ml = G.FeatureModules.hebrew
+            .concat(G.FeatureModules.greek)
             .filter((m) => G.getBooksInVKModule(m).includes(bk.code));
           if (ml.length) ilModuleOptions[i] = ml;
         }

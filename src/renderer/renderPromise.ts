@@ -51,21 +51,22 @@ export function GCallsOrPromise(
 // requested from the server and each component is guaranteed to be re-rendered at
 // least once after all its required data is available.
 export default class RenderPromise {
-  component: React.Component;
+  component: React.Component | null;
+
+  callback: (() => void) | null;
 
   calls: GCallType[];
-
-  callbacks: (() => void)[];
 
   static batchDispatch() {
     const renderPromises = RenderPromise.getGlobalRenderPromises();
     if (renderPromises.length) {
       const rpdispatch = renderPromises.map((rp) => {
-        const nrp = new RenderPromise(rp.component);
+        const resolve = rp.component || rp.callback || (() => {return});
+        const nrp = new RenderPromise(resolve);
         nrp.calls = rp.calls;
         rp.calls = [];
-        nrp.callbacks = rp.callbacks;
-        rp.callbacks = [];
+        nrp.callback = rp.callback;
+        rp.callback = null;
         return nrp;
       });
       RenderPromise.setGlobalRenderPromises([]);
@@ -82,17 +83,15 @@ export default class RenderPromise {
         if (!doWait) {
           const done: (React.Component | (() => void))[] = [];
           rpdispatch.forEach((rp) => {
-            const { component, callbacks } = rp;
-            if (!done.includes(component)) {
+            const { component, callback } = rp;
+            if (component && !done.includes(component)) {
               done.push(component);
               component.setState({ renderPromiseID: Math.random() } as RenderPromiseState);
             }
-            callbacks.forEach((callback) => {
-              if (!done.includes(callback)) {
-                done.push(callback);
-                callback();
-              }
-            });
+            if (callback && !done.includes(callback)) {
+              done.push(callback);
+              callback();
+            }
           });
         } else {
           // The server has asked us to wait and try again! So undo what
@@ -118,10 +117,16 @@ export default class RenderPromise {
     Cache.write(rps, 'renderPromises');
   }
 
-  constructor(component: React.Component) {
-    this.component = component;
+  constructor(componentOrCallback: React.Component | (() => void)) {
+    this.component = null;
+    this.callback = null;
     this.calls = [];
-    this.callbacks = [];
+
+    if (typeof componentOrCallback === 'function') {
+      this.callback = componentOrCallback;
+    } else {
+      this.component = componentOrCallback;
+    }
   }
 
   waiting(): boolean {

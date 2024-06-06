@@ -24,6 +24,8 @@ import {
   getLocaleDigits,
   getAllDictionaryKeyList,
   genBookTreeNodes,
+  inlineFile,
+  inlineAudioFile,
 } from './minit.ts';
 import { callBatch } from './handleGlobal.ts';
 
@@ -103,6 +105,18 @@ class GIClass implements GITypeMain {
     ...args: Parameters<GType['Book']>
   ): ReturnType<GType['Book']> {
     return getBook(...args);
+  }
+
+  inlineFile(
+    ...args: Parameters<GType['inlineFile']>
+  ): ReturnType<GType['inlineFile']> {
+    return inlineFile(...args);
+  }
+
+  inlineAudioFile(
+    ...args: Parameters<GType['inlineAudioFile']>
+  ): ReturnType<GType['inlineAudioFile']> {
+    return inlineAudioFile(...args);
   }
 
   getSystemFonts(

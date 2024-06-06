@@ -1,10 +1,12 @@
 /* eslint-disable no-unused-vars */
 import { normalizeFontFamily } from '../common.ts';
-import type { ConfigType } from '../type.ts';
 import C from '../constant.ts';
 import S from '../defaultPrefs.ts';
-import G from './rg.ts';
+import G, { GI } from './rg.ts';
+import RenderPromise from './renderPromise.ts';
 import log from './log.ts';
+
+import type { ConfigType } from '../type.ts';
 
 export type StyleType = {
   [i in 'locale' | 'module']: {
@@ -81,39 +83,42 @@ function insertModuleCSS(
   sheet: CSSStyleSheet,
   prefix: string,
   module: string,
-  path: string
+  path: string,
+  renderPromise?: RenderPromise,
 ) {
-  const css = G.inlineFile(path, 'utf8').substring(
+  const css = GI.inlineFile('', renderPromise, path, 'utf8').substring(
     'data:text/css;utf8,'.length
   );
 
-  const m = css
-    .replace(/[\n\r]+/g, ' ')
-    .replace(/\/\*.*?\*\//g, '')
-    .match(/[^{]+\{[^}]*\}/g);
-  if (m) {
-    m.forEach((rule) => {
-      const selrul = rule.split(/(?={)/);
-      if (selrul) {
-        const [sel, rul] = selrul;
-        const newsel = sel
-          .split(',')
-          .map((s) => {
-            return s
-              ? `.${prefix}-${module} ${s.trim()}, ${s.trim()}.${prefix}-${module}`
-              : '';
-          })
-          .join(', ');
-        if (rul) {
-          try {
-            sheet.insertRule(`${newsel} ${rul.trim()}`);
-            log.debug(`Added CSS rule: ${newsel} ${rul.trim()}`);
-          } catch (er) {
-            log.warn(er);
+  if (css) {
+    const m = css
+      .replace(/[\n\r]+/g, ' ')
+      .replace(/\/\*.*?\*\//g, '')
+      .match(/[^{]+\{[^}]*\}/g);
+    if (m) {
+      m.forEach((rule) => {
+        const selrul = rule.split(/(?={)/);
+        if (selrul) {
+          const [sel, rul] = selrul;
+          const newsel = sel
+            .split(',')
+            .map((s) => {
+              return s
+                ? `.${prefix}-${module} ${s.trim()}, ${s.trim()}.${prefix}-${module}`
+                : '';
+            })
+            .join(', ');
+          if (rul) {
+            try {
+              sheet.insertRule(`${newsel} ${rul.trim()}`);
+              log.debug(`Added CSS rule: ${newsel} ${rul.trim()}`);
+            } catch (er) {
+              log.warn(er);
+            }
           }
         }
-      }
-    });
+      });
+    }
   }
 }
 
@@ -130,7 +135,7 @@ function insertModuleCSS(
 //   1) User preference defaults for each rule type (module, locale)
 //   2) Config values
 //   3) User preference values for each instance (of module or locale)
-class DynamicStyleSheet {
+export default class DynamicStyleSheet {
   sheet: CSSStyleSheet | null;
 
   style: StyleType;
@@ -154,6 +159,8 @@ class DynamicStyleSheet {
 
   update(styleConfigs?: StyleType) {
     const { sheet } = this;
+
+    const renderPromise = new RenderPromise(() => this.update(styleConfigs));
 
     // Create CSS classes and rules according to user pref style.
     const prefStyleConfigs = G.Prefs.getComplexValue(
@@ -188,7 +195,8 @@ class DynamicStyleSheet {
                   sheet,
                   prefix,
                   instance,
-                  config.PreferredCSSXHTML
+                  config.PreferredCSSXHTML,
+                  renderPromise
                 );
               }
               // User Pref for this type and instance
@@ -212,12 +220,14 @@ class DynamicStyleSheet {
         const { fontFamily, path, url } = font;
         let url2 = url;
         if (path) {
-          url2 = G.inlineFile(path, 'base64');
+          url2 = GI.inlineFile('', renderPromise, path, 'base64');
         }
-        const rule = `@font-face {font-family:${normalizeFontFamily(
-          fontFamily
-        )}; src:url("${url2}");}`;
-        sheet.insertRule(rule, sheet.cssRules.length);
+        if (url2) {
+          const rule = `@font-face {font-family:${normalizeFontFamily(
+            fontFamily
+          )}; src:url("${url2}");}`;
+          sheet.insertRule(rule, sheet.cssRules.length);
+        }
       });
 
       // Create userFontBase rule according to the global.font user pref.
@@ -232,5 +242,3 @@ class DynamicStyleSheet {
     }
   }
 }
-
-export default new DynamicStyleSheet(document);

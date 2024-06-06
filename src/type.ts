@@ -75,6 +75,8 @@ declare global {
     renderPromises: RenderPromise[];
   }
 
+  var isPublicServer: boolean;
+
   function ToUpperCase(str: string): string;
 
   function ReportSearchIndexerProgress(percent: number): void;
@@ -783,7 +785,7 @@ export type GAddCaller = {
 
 export type GCallType = [
   keyof GType,
-  keyof GType[keyof GType] | null,
+  string | null,
   any[] | undefined
 ];
 
@@ -869,6 +871,8 @@ export type GIRendererType = {
   [name in keyof Pick<GType,
     'Books' |
     'Book' |
+    'inlineFile' |
+    'inlineAudioFile' |
     'getSystemFonts' |
     'getBooksInVKModule' |
     'getLocalizedBooks' |
@@ -940,12 +944,15 @@ export const GBuilder: GType & {
     [(keyof GType), (keyof GType['Config'])[]],
     [(keyof GType), (keyof GType['AudioConfs'])[]],
     [(keyof GType), (keyof GType['ProgramConfig'])[]],
+    [(keyof GType), (keyof GType['LocaleConfigs'])[]],
     [(keyof GType), (keyof GType['ModuleConfigDefault'])[]],
     [(keyof GType), (keyof GType['ModuleFonts'])[]],
     [(keyof GType), (keyof GType['FeatureModules'])[]],
     [(keyof GType), (keyof GType['BkChsInV11n'])[]],
     [(keyof GType), (keyof GType['Books'])[]],
     [(keyof GType), (keyof GType['Book'])[]],
+    [(keyof GType), (keyof GType['inlineFile'])[]],
+    [(keyof GType), (keyof GType['inlineAudioFile'])[]],
     [(keyof GType), (keyof GType['getBooksInVKModule'])[]],
     [(keyof GType), (keyof GType['getLocalizedBooks'])[]],
     [(keyof GType), (keyof GType['getLocaleDigits'])[]],
@@ -1000,6 +1007,8 @@ export const GBuilder: GType & {
       []],
     ['ProgramConfig',
       []],
+    ['LocaleConfigs',
+      []],
     ['ModuleConfigDefault',
       []],
     ['ModuleFonts',
@@ -1011,6 +1020,10 @@ export const GBuilder: GType & {
     ['Books',
       []],
     ['Book',
+      []],
+    ['inlineFile',
+      []],
+    ['inlineAudioFile',
       []],
     ['getBooksInVKModule',
       []],

@@ -1,4 +1,3 @@
-import { BrowserWindow } from 'electron'; // undefined in server mode
 import i18n from 'i18next';
 import path from 'path';
 import Dirs from './components/dirs.ts';
@@ -225,31 +224,46 @@ export default function parseSwordConf(
   });
 
   // In server mode, filter entries that contain file references.
-  if (!BrowserWindow) {
-    let dp = r.DataPath;
-    if (dp.startsWith('/')) dp = `file://${dp}`;
-    r.DataPath = publicPaths(dp);
+  if (globalThis.isPublicServer) {
+    r.DataPath = serverPublicPath(r.DataPath);
     if ((/^file:\/\//i).test(r.sourceRepository.domain)) {
       r.sourceRepository.domain = process.env.CORS_ORIGIN || '';
-      r.sourceRepository.path = publicPaths(r.sourceRepository.path.replace(/^(file:\/\/)?/i, 'file:\/\/'));
+      r.sourceRepository.path = serverPublicPath(r.sourceRepository.path);
     }
   }
 
   return r;
 }
 
-// Check that filePath is publicly accessible, and if so return just the public
-// portion of the file path. Otherwise return an empty string if file is not
-// publicly accessible.
-export function parsePublicPath(filePath: string): string {
+// Take a server path and return the full path IF it is public, or else return
+// null if it is not public. IMPORTANT: never return a fileFullPath string in
+// any response from a public server, as full server paths should be kept secret.
+export function fileFullPath(serverPublicPath: string): string | null {
   const root = process.env.ROOTPATH;
   const publics = process.env.PUBPATHS;
   if (root && publics) {
     const pubs = publics.split(';');
     for (let i = 0; i < pubs.length; i++) {
       const pub = pubs[i];
-      if (filePath.startsWith([root, pub].join('/'))) {
-        return filePath.replace(root, '');
+      if (serverPublicPath.startsWith(pub)) {
+        return [root, serverPublicPath].join('/');
+      }
+    }
+  }
+  return null;
+}
+
+// Returns a server public path or an empty string. If filePath is publicly
+// accessible, the public portion of the file path is returned.
+export function serverPublicPath(fileFullPath: string): string {
+  const root = process.env.ROOTPATH;
+  const publics = process.env.PUBPATHS;
+  if (root && publics) {
+    const pubs = publics.split(';');
+    for (let i = 0; i < pubs.length; i++) {
+      const pub = pubs[i];
+      if (fileFullPath.startsWith([root, pub].join('/'))) {
+        return fileFullPath.replace(root, '');
       }
     };
   }
@@ -259,14 +273,10 @@ export function parsePublicPath(filePath: string): string {
 // Check and convert all file references according in our context. In Electron,
 // file paths remain unchanged, but in server mode, file paths are converted
 // into server URLs, or are filtered out if they are not in a public directory.
-export function publicPaths(aString: string): string {
-  if (!BrowserWindow) {
+export function publicFiles(aString: string): string {
+  if (globalThis.isPublicServer) {
     // If running as a public server on the Internet
-    return aString.replace(/(file:\/\/)(.*?)(["'\s\n])/ig, (_m, _m1, m2, m3) => {
-      const pp = parsePublicPath(m2);
-      if (!pp) return m3;
-      return `${pp}${m3}`;
-    });
+    return aString.replace(/(file:\/\/)(\S+)/ig, (_m, _m1, m2) => serverPublicPath(m2));
   }
   return aString;
 }

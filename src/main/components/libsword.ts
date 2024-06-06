@@ -11,7 +11,7 @@ import {
 import Cache from '../../cache.ts';
 import S from '../../defaultPrefs.ts';
 import C from '../../constant.ts';
-import { publicPaths } from '../parseSwordConf.ts';
+import { publicFiles } from '../parseSwordConf.ts';
 import LocalFile from './localFile.ts';
 import Dirs from './dirs.ts';
 import Prefs from './prefs.ts';
@@ -202,7 +202,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
       });
       const text = this.libxulsword.GetChapterText(modname, vkeytext);
       const notes = this.libxulsword.GetNotes();
-      return { text: publicPaths(text), notes: publicPaths(notes) };
+      return { text: publicFiles(text), notes: publicFiles(notes) };
     }
     return { text: '', notes: '' };
   },
@@ -232,7 +232,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
         keepnotes
       );
       const notes = this.libxulsword.GetNotes();
-      return { text: publicPaths(text), notes: publicPaths(notes) };
+      return { text: publicFiles(text), notes: publicFiles(notes) };
     }
     return { text: '', notes: '' };
   },
@@ -341,7 +341,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
       });
       const introductions = this.libxulsword.GetIntroductions(vkeymod, bname);
       const notes = this.libxulsword.GetNotes();
-      return { text: publicPaths(introductions), notes: publicPaths(notes) };
+      return { text: publicFiles(introductions), notes: publicFiles(notes) };
     }
     return { text: '', notes: '' };
   },
@@ -368,7 +368,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
         text = C.NOTFOUND;
         notes = ''
       }
-      return { text: publicPaths(text), notes: publicPaths(notes) };
+      return { text: publicFiles(text), notes: publicFiles(notes) };
     }
     return { text: C.NOTFOUND, notes: '' };
   },
@@ -410,7 +410,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
         treekey
       );
       const notes = this.libxulsword.GetNotes();
-      return { text: publicPaths(text), notes: publicPaths(notes) };
+      return { text: publicFiles(text), notes: publicFiles(notes) };
     }
     return { text: '', notes: '' };
   },
