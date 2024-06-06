@@ -187,7 +187,8 @@ async function isLimited(
   args: any[],
   checkbusy = false
 ): Promise<boolean> {
-  if (checkbusy && toobusy()) {
+  // Check-busy is disabled for now...
+  if (false && checkbusy && toobusy()) {
     log.warn(`${socket.handshake.address} › server too busy.`);
     return true;
   }
