@@ -26,7 +26,7 @@
    "SearchAnyWord.label" : "düzüminde şeýle sözler bolan aýatlary tapmak",
    "SearchExactText.description" : "bar bolan ýerleriň ählisinde anyk sözi, söz bölegini ýa-da jümläni tapmak",
    "SearchExactText.label" : "edil şu teksti tapmak",
-   "SearchSimilar.description" : "Şu söze meňzeş sözli aýatlary tapmak. Mysal üçin, &quot;aýan&quot; sözüni girizseňiz, &quot;aý&quot;, &quot;aýak&quot;, &quot;aýal&quot;, &quot;aýlan&quot; ýaly sözleriň bary tapylar.",
+   "SearchSimilar.description" : "Şu söze meňzeş sözli aýatlary tapmak. Mysal üçin, \"aýan\" sözüni girizseňiz, \"aý\", \"aýak\", \"aýal\", \"aýlan\" ýaly sözleriň bary tapylar.",
    "SearchSimilar.label" : "şeýle sözli aýatlary tapmak",
    "Searching" : "gözleg ({{v1}})",
    "Texts" : "Mukaddes Ýazgylar",

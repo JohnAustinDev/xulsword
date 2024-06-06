@@ -21,7 +21,7 @@
    "SINGLECharWildCard" : "",
    "Search" : "검색",
    "SearchAdvanced.description" : "아래 테이블에 제시된 특수 검색어를 사용하여 고급 검색을 할 수 있습니다.",
-   "SearchAdvanced.label" : "고급 검색(위 &quot;도움말&quot; 메뉴 참조)",
+   "SearchAdvanced.label" : "고급 검색(위 \"도움말\" 메뉴 참조)",
    "SearchAnyWord.description" : "원하는 단어가 포함된 구절을 찾습니다.",
    "SearchAnyWord.label" : "원하는 단어가 포함된 구절 검색",
    "SearchExactText.description" : "원하는 정확한 문장과 일치하는 구절을 찾습니다.",
@@ -62,7 +62,7 @@
    "dlgFrom" : "원본 오디오파일 위치",
    "dlgTo" : "오디어 파일 저장 위치",
    "error-detected" : "프로그램 오류가 발견되었습니다. 이 문제를 개발자에게 알리려면 \"{{v1}}\"를 누르세요.",
-   "from.label" : "부터",
+   "from.label" : "시작지점",
    "gospel.label" : "복음",
    "headingsButton.label" : "표제",
    "headingsButton.tooltip" : "표제 표시/감춤",
@@ -227,7 +227,7 @@
    "searchbox.tooltip" : "'단어 뒤에 ''*''를 붙여 보세요. 단어 중 ''?'' 혹은 ''~''를 넣어 보세요.'",
    "searchtext.label" : "단어나 문장 구절을 찾으세요",
    "stop.label" : "멈춤",
-   "to.label" : "까지",
+   "to.label" : "마침지점",
    "wisdom.label" : "지혜, 금언책",
    "yes.label" : "예"
 }
