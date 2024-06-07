@@ -492,6 +492,20 @@ export default class Xulsword extends React.Component implements RenderPromiseCo
           <Spacer flex="1" style={{ minWidth: '10px' }} orient="vertical" />
 
           <Hbox id="optionButtons" align="start">
+            {window.processR.platform === 'browser' && (<>
+              <Button
+                id="addcolumn"
+                checked={true}
+                icon={<Icon icon="add-column-right" size={28} />}
+                onClick={handler}
+              />
+              <Button
+                id="removecolumn"
+                checked={true}
+                icon={<Icon icon="remove-column-right" size={28} />}
+                onClick={handler}
+              /></>
+            )}
             <Button
               id="headings"
               checked={show.headings}

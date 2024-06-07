@@ -16,7 +16,7 @@ import Subscription from '../subscription.ts';
 import Cache from '../cache.ts';
 import { clone, JSON_parse, keep, localizeString } from '../common.ts';
 import C from '../constant.ts';
-import S from '../defaultPrefs.ts';
+import S, { completePanelPrefDefaultArrays } from '../defaultPrefs.ts';
 import G from './mg.ts';
 import handleGlobal from './handleGlobal.ts';
 import path from 'path';
@@ -40,6 +40,10 @@ import type {
   WindowDescriptorType,
 } from '../type.ts';
 import type { ManagerStatePref } from '../renderer/moduleManager/manager.tsx';
+
+completePanelPrefDefaultArrays(
+  (G.Prefs.getComplexValue('xulsword.panels') as typeof S.prefs.xulsword.panels).length
+);
 
 G.Dirs.init();
 

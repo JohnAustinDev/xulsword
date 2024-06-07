@@ -2,7 +2,8 @@
 import React from 'react';
 import C from '../../../constant.ts';
 import RefParser from '../../../refParser.ts';
-import { clone, ofClass } from '../../../common.ts';
+import { clone, ofClass, randomID } from '../../../common.ts';
+import S, { completePanelPrefDefaultArrays } from '../../../defaultPrefs.ts';
 import G from '../../rg.ts';
 import { chapterChange, verseChange } from '../atext/zversekey.ts';
 import { genbookChange } from '../atext/ztext.ts';
@@ -10,6 +11,7 @@ import { genBookAudioFile, verseKeyAudioFile } from '../../rutil.ts';
 import { verseKey } from '../../htmlData.ts';
 
 import type { GenBookAudioFile, ShowType, VerseKeyAudioFile } from '../../../type.ts';
+import type { BrowserProps } from '../../../browser/bible-browser.tsx';
 import type Xulsword from './xulsword.tsx';
 import type { XulswordState } from './xulsword.tsx';
 
@@ -134,6 +136,32 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
           });
           break;
         }
+        case 'addcolumn':
+        case 'removecolumn':
+          const xs = clone(G.Prefs.getComplexValue('xulsword') as typeof S.prefs.xulsword);
+          const { panels } = xs;
+          const oldN = panels.length;
+          let newN = oldN + (currentId === 'addcolumn' ? 1 : -1);
+          if (newN < 1) newN = 1;
+          if (newN > C.UI.Browser.maxPanels) newN = C.UI.Browser.maxPanels;
+          if (newN !== oldN) {
+            C.PanelPrefArrays.forEach((pref) => {
+              const a = xs[pref];
+              if (newN > oldN) {
+                (a as any).push(a[a.length - 1]);
+              } else {
+                a.pop();
+              }
+            });
+            G.Prefs.setComplexValue('xulsword', xs);
+            completePanelPrefDefaultArrays(newN);
+            window.browserState((prevState: BrowserProps) => {
+              const s = clone(prevState);
+              s.key = randomID();
+              return s;
+            });
+          }
+          break;
         default:
           throw Error(
             `Unhandled xulswordHandler onClick event on '${currentId}'`
@@ -175,7 +203,6 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
           this.setState((prevState: XulswordState) => {
             const { location } = prevState;
             const newloc = new RefParser(
-              G.i18n.language,
               G.getLocaleDigits(true),
               G.getLocalizedBooks(true),
               {

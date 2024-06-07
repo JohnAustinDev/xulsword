@@ -115,6 +115,9 @@ const C = {
         height: 728,
       },
     },
+    Browser: {
+      maxPanels: 4,
+    },
     Xulsword: {
       maxHistoryMenuLength: 20,
       historyDelay: 1000, // ms before new location is saved
@@ -561,5 +564,16 @@ const C = {
   // the same values as the previous rendering, and the same is true of
   // the LibSwordProps, then scrolling is also unnecessary.
   ScrollPropsVK: ['module', 'location', 'scroll', 'columns'] as const,
+
+  PanelPrefArrays: [
+    'panels',
+    'keys',
+    'ilModules',
+    'mtModules',
+    'tabs',
+    'isPinned',
+    'noteBoxHeight',
+    'maximizeNoteBox'
+  ] as const,
 };
 export default C;

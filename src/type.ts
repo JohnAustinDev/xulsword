@@ -50,6 +50,7 @@ import type { CallBatch } from './main/handleGlobal.ts';
 import type Viewport from './main/components/viewport.ts';
 import type { getExtRefHTML, locationVKText } from './main/versetext.ts';
 import type RenderPromise from './renderer/renderPromise.ts';
+import type { BrowserProps } from './browser/bible-browser.tsx';
 
 declare global {
   export interface Window {
@@ -75,11 +76,11 @@ declare global {
     renderPromises: RenderPromise[];
   }
 
-  var isPublicServer: boolean;
-
   function ToUpperCase(str: string): string;
-
   function ReportSearchIndexerProgress(percent: number): void;
+
+  var isPublicServer: boolean;
+  function browserState(arg: BrowserProps | ((ps: BrowserProps) => BrowserProps)): void;
 }
 
 type RendererChannels =

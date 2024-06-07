@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import SocketConnect from './preload.ts';
 import { decodeJSData, saveToPrefs, setGlobalLocale } from "./bcommon.ts";
 import { randomID } from "../common.ts";
+import { completePanelPrefDefaultArrays } from "../defaultPrefs.ts";
 import C from "../constant.ts";
 import G from "../renderer/rg.ts";
 import { callBatchThenCache } from "../renderer/renderPromise.ts";
@@ -13,21 +14,25 @@ import 'normalize.css/normalize.css';
 import '@blueprintjs/icons/lib/css/blueprint-icons.css';
 import '@blueprintjs/core/lib/css/blueprint.css';
 import '../renderer/global-htm.css';
+import './bible-browser.css';
 
 import type { GCallType, PrefObject, PrefRoot } from "../type.ts";
 
 let dynamicStyleSheet: DynamicStyleSheet | undefined;
 
+export type BrowserProps = {
+  id: string;
+  xsprops: Xulsword['props'];
+  locale?: string;
+  key?: string;
+};
+
 // React element controller:
-function Controller(
-  props: {
-    id: string;
-    xsprops: Xulsword['props'];
-    locale?: string;
-  }
-) {
+function Controller(props: BrowserProps) {
   const { id, xsprops, locale } = props;
-  const [state, _setState] = useState(xsprops);
+  const [state, setState] = useState(xsprops);
+
+  window.browserState = setState;
 
   const html =
     document.getElementsByTagName('html')[0] as HTMLHtmlElement | undefined;
@@ -57,10 +62,8 @@ function Controller(
   }, 1);
 
   return (
-    <div id="root">
-      <div id="reset">
-        <Xulsword onWheelCapture={wheelCapture} id={id} {...state} />
-      </div>
+    <div id="reset">
+      <Xulsword onWheelCapture={wheelCapture} id={id} {...state} />
     </div>
   );
 }
@@ -68,15 +71,17 @@ function Controller(
 const socket = SocketConnect(C.Server.port, window.location.origin);
 let published = false;
 socket.on('connect', () => {
-  const { body } = document;
+  const root = document.querySelector('#root');
   const { dataset } = frameElement as HTMLIFrameElement;
 
   // connect is called even on reconnect, so only publish this once.
-  if (!published && body && dataset) {
+  if (!published && root && dataset) {
     published = true;
     const { props: propsraw, prefs: prefsraw, langcode } = dataset;
     const props = decodeJSData(propsraw) as PrefObject;
     const prefs = decodeJSData(prefsraw) as Partial<PrefRoot>;
+    const numPanels = (prefs.prefs?.xulsword as any)?.panels?.length || 2;
+    completePanelPrefDefaultArrays(numPanels);
     const locale = setGlobalLocale(prefs, langcode);
     saveToPrefs(G, prefs);
 
@@ -102,7 +107,7 @@ socket.on('connect', () => {
 
     callBatchThenCache(preloads).then(() => {
         dynamicStyleSheet = new DynamicStyleSheet(document);
-        createRoot(body).render(
+        createRoot(root).render(
           <StrictMode>
             <Controller
               id={randomID()}

@@ -1,4 +1,6 @@
 /* eslint-disable no-nested-ternary */
+import C from './constant.ts';
+
 import type { paperSizes } from './renderer/libxul/printSettings.tsx';
 import type { SelectVKType } from './renderer/libxul/selectVK.tsx';
 import type { StyleType } from './renderer/style.ts';
@@ -114,7 +116,7 @@ const S = {
       selection: null as LocationVKType | null,
       scroll: null as ScrollType,
 
-      keys: [] as (string | null)[],
+      keys: [null] as (string | null)[],
 
       audio: { open: false, file: null } as AudioPrefType,
       history: [] as HistoryVKType[],
@@ -141,9 +143,9 @@ const S = {
 
       showChooser: true as boolean,
       tabs: [[]] as (string[] | null)[],
-      panels: ['', '', null] as (string | null)[],
-      ilModules: [] as (string | null)[],
-      mtModules: [] as (string | null)[],
+      panels: [''] as (string | null)[],
+      ilModules: [null] as (string | null)[],
+      mtModules: [null] as (string | null)[],
 
       isPinned: [false] as boolean[],
       noteBoxHeight: [200] as number[],
@@ -629,12 +631,17 @@ const S = {
   },
 };
 
-// Fill out these variable length default arrays
-(['tabs', 'isPinned', 'noteBoxHeight', 'maximizeNoteBox'] as const).forEach(
-  (p) => {
-    const v = S.prefs.xulsword[p][0];
-    (S.prefs.xulsword as any)[p] = S.prefs.xulsword.panels.map(() => v as any);
-  }
-);
+export function completePanelPrefDefaultArrays(numPanels: number) {
+  // Complete these variable length default arrays.
+  C.PanelPrefArrays.forEach(
+    (p) => {
+      const vf = [];
+      for (let i = 0; i < numPanels; i++) {
+        vf.push(S.prefs.xulsword[p][0])
+      }
+      (S.prefs.xulsword as any)[p] = vf;
+    }
+  );
+}
 
 export default S;

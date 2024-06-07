@@ -107,7 +107,6 @@ export default function ContextData(elem: HTMLElement): ContextDataType {
   let selectionParsedVK: LocationVKType | undefined;
   if (selection) {
     const parsed = new RefParser(
-      G.i18n.language,
       G.getLocaleDigits(true),
       G.getLocalizedBooks(true),
       {
