@@ -20,6 +20,7 @@ fi
 
 if [[ "$?" == "0" ]]; then
   cp "./build/app/dist/"* "$OUTDIR/dist"
+  cp "./src/browser/bible-browser.html" "$OUTDIR/dist"
 else
   echo "ERROR: react build failed."
   exit 1;

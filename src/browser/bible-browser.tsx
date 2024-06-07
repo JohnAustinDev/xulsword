@@ -50,7 +50,7 @@ function Controller(
   // Cancel Tarapro page loader overlay.
   setTimeout(() => {
     const win = frameElement?.ownerDocument.defaultView;
-    if (win) {
+    if (win && 'jQuery' in win) {
       (win as any).bibleBrowserIsLoading = false;
       (win as any).jQuery(".loader").fadeOut( 'slow' );
     }
@@ -65,55 +65,51 @@ function Controller(
   );
 }
 
-const bibleBrowser = document
-  .getElementsByClassName('bible-browser')[0] as HTMLDivElement | undefined;
+const socket = SocketConnect(C.Server.port, window.location.origin);
+let published = false;
+socket.on('connect', () => {
+  const { body } = document;
+  const { dataset } = frameElement as HTMLIFrameElement;
 
-if (bibleBrowser) {
-  const socket = SocketConnect(C.Server.port, bibleBrowser.dataset.origin);
-  let published = false;
-  socket.on('connect', () => {
-    // connect is called even on reconnect, so only publish this once.
-    if (!published && bibleBrowser) {
-      published = true;
-      const { props: propsraw, prefs: prefsraw, langcode } = bibleBrowser.dataset;
-      const props = decodeJSData(propsraw) as PrefObject;
-      const prefs = decodeJSData(prefsraw) as Partial<PrefRoot>;
-      const locale = setGlobalLocale(prefs, langcode);
-      saveToPrefs(G, prefs);
+  // connect is called even on reconnect, so only publish this once.
+  if (!published && body && dataset) {
+    published = true;
+    const { props: propsraw, prefs: prefsraw, langcode } = dataset;
+    const props = decodeJSData(propsraw) as PrefObject;
+    const prefs = decodeJSData(prefsraw) as Partial<PrefRoot>;
+    const locale = setGlobalLocale(prefs, langcode);
+    saveToPrefs(G, prefs);
 
-      const preloads: GCallType[] = [
-        ['Tabs', null, undefined],
-        ['Tab', null, undefined],
-        ['BkChsInV11n', null, undefined],
-        ['GetBooksInVKModules', null, undefined],
-        ['getLocaleDigits', null, [false]],
-        ['getLocaleDigits', null, [true]],
-        ['getLocalizedBooks', null, [true]],
-        ['getLocaleDigits', null, []],
-        ['ModuleConfigDefault', null, undefined],
-        ['ModuleFonts', null, undefined],
-        ['ProgramConfig', null, undefined],
-        ['LocaleConfigs', null, undefined],
-        ['Config', null, undefined],
-        ['FeatureModules', null, undefined],
-        ['AudioConfs', null, undefined],
-        ['Books', null, [locale]],
-        ['Book', null, [locale]],
-      ];
+    const preloads: GCallType[] = [
+      ['Tabs', null, undefined],
+      ['Tab', null, undefined],
+      ['BkChsInV11n', null, undefined],
+      ['GetBooksInVKModules', null, undefined],
+      ['getLocaleDigits', null, [false]],
+      ['getLocaleDigits', null, [true]],
+      ['getLocalizedBooks', null, [true]],
+      ['getLocaleDigits', null, []],
+      ['ModuleConfigDefault', null, undefined],
+      ['ModuleFonts', null, undefined],
+      ['ProgramConfig', null, undefined],
+      ['LocaleConfigs', null, undefined],
+      ['Config', null, undefined],
+      ['FeatureModules', null, undefined],
+      ['AudioConfs', null, undefined],
+      ['Books', null, [locale]],
+      ['Book', null, [locale]],
+    ];
 
-      callBatchThenCache(preloads).then(() => {
-          bibleBrowser.removeAttribute('data-props');
-          bibleBrowser.removeAttribute('data-prefs');
-          dynamicStyleSheet = new DynamicStyleSheet(document);
-          createRoot(bibleBrowser).render(
-            <StrictMode>
-              <Controller
-                id={randomID()}
-                xsprops={props}
-                locale={locale}
-              />
-            </StrictMode>);
-      });
-    }
-  });
-}
+    callBatchThenCache(preloads).then(() => {
+        dynamicStyleSheet = new DynamicStyleSheet(document);
+        createRoot(body).render(
+          <StrictMode>
+            <Controller
+              id={randomID()}
+              xsprops={props}
+              locale={locale}
+            />
+          </StrictMode>);
+    });
+  }
+});
