@@ -331,7 +331,8 @@ class Viewport extends React.Component implements PopupParent {
       ? 'genbook'
       : 'bible';
 
-    const showingChooser = showChooser || chooser === 'genbook';
+    const showingChooser = showChooser ||
+      (window.processR.platform !== 'browser' && chooser === 'genbook');
     const chooserV11n =
       panels.reduce(
         (p, c) => p || (c && c in G.Tab && G.Tab[c].v11n) || null,

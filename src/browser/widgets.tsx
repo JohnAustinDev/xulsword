@@ -1,7 +1,7 @@
 import React, { StrictMode, useState } from "react";
 import { createRoot } from "react-dom/client";
 import SocketConnect from './preload.ts';
-import { handleAction, decodeJSData, createNodeList, setGlobalLocale, getProps, saveToPrefs } from "./bcommon.ts";
+import { handleAction, decodeJSData, createNodeList, setGlobalLocale, getProps, writePrefsStores } from "./bcommon.ts";
 import { diff, randomID } from "../common.ts";
 import C from '../constant.ts';
 import G from "../renderer/rg.ts";
@@ -136,7 +136,7 @@ socket.on('connect', () => {
     if (widget) ({ langcode } = (widget as HTMLDivElement).dataset);
     const prefs: Partial<PrefRoot> = {};
     const locale = setGlobalLocale(prefs, langcode);
-    saveToPrefs(G, prefs);
+    writePrefsStores(G, prefs);
 
     const preloads: GCallType[] = [
       ['Tab', null, undefined],

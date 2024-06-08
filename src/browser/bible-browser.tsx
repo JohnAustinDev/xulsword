@@ -1,9 +1,8 @@
 import React, { StrictMode, useState } from "react";
 import { createRoot } from "react-dom/client";
 import SocketConnect from './preload.ts';
-import { decodeJSData, saveToPrefs, setGlobalLocale } from "./bcommon.ts";
-import { randomID } from "../common.ts";
-import { completePanelPrefDefaultArrays } from "../defaultPrefs.ts";
+import { decodeJSData, writePrefsStores, setGlobalLocale } from "./bcommon.ts";
+import { randomID, setGlobalPanels } from "../common.ts";
 import C from "../constant.ts";
 import G from "../renderer/rg.ts";
 import { callBatchThenCache } from "../renderer/renderPromise.ts";
@@ -80,10 +79,14 @@ socket.on('connect', () => {
     const { props: propsraw, prefs: prefsraw, langcode } = dataset;
     const props = decodeJSData(propsraw) as PrefObject;
     const prefs = decodeJSData(prefsraw) as Partial<PrefRoot>;
-    const numPanels = (prefs.prefs?.xulsword as any)?.panels?.length || 2;
-    completePanelPrefDefaultArrays(numPanels);
+    window.browserMaxPanels = Math.ceil(window.innerWidth / 300);
+    let numPanels = (prefs.prefs?.xulsword as any)?.panels?.length
+      || window.browserMaxPanels;
+    if (window.innerWidth < 800) numPanels = 1;
+    setGlobalPanels(prefs, numPanels);
     const locale = setGlobalLocale(prefs, langcode);
-    saveToPrefs(G, prefs);
+    writePrefsStores(G, prefs);
+    if (window.innerWidth < 500) G.Prefs.setBoolPref('xulsword.showChooser', false);
 
     const preloads: GCallType[] = [
       ['Tabs', null, undefined],

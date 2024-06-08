@@ -39,7 +39,7 @@ export function getProps<T extends { [prop: string]: any }>(
   return newProps as T;
 }
 
-export function saveToPrefs(G: GType, prefs: Partial<PrefRoot>) {
+export function writePrefsStores(G: GType, prefs: Partial<PrefRoot>) {
   const defs = mergePrefRoot(prefs, S);
   Object.entries(prefs).forEach((entry) => {
     const [store, prefobj] = entry;
@@ -49,6 +49,8 @@ export function saveToPrefs(G: GType, prefs: Partial<PrefRoot>) {
         defs[store as keyof PrefRoot][rootkey],
         `${store}_default` as 'prefs'
       );
+      // Read the store to initialize it.
+      G.Prefs.getComplexValue(rootkey, store as 'prefs');
     })
   });
 }

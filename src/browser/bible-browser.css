@@ -1,3 +1,46 @@
+#main-controlbar {
+  flex-wrap: wrap;
+  align-items: center;
+}
+#main-controlbar > .spacer:first-child {
+  display: none;
+}
+#search-tool {
+  margin-bottom: 5px;
+}
+@media(max-width: 768px) {
+  #search-tool {
+    width: 100%;
+  }
+}
+#search-tool > div {
+  max-width: 150px;
+}
+#navigator-tool {
+  min-width: unset;
+}
+#historyButtons {
+  margin-left: -44px;
+}
+#historyButtons > div:not(:nth-child(2)) {
+  display: none;
+}
+#searchText {
+  margin: 0;
+}
+
+@media(max-width: 500px) {
+  .chooser {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 10;
+  }
+}
+.open-chooser {
+  display: none;
+}
+
 .cs-OSMHB {
   font-size: 20px;
 }

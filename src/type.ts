@@ -81,6 +81,7 @@ declare global {
 
   var isPublicServer: boolean;
   function browserState(arg: BrowserProps | ((ps: BrowserProps) => BrowserProps)): void;
+  var browserMaxPanels: number | undefined;
 }
 
 type RendererChannels =

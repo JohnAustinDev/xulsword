@@ -2,8 +2,8 @@
 import React from 'react';
 import C from '../../../constant.ts';
 import RefParser from '../../../refParser.ts';
-import { clone, ofClass, randomID } from '../../../common.ts';
-import S, { completePanelPrefDefaultArrays } from '../../../defaultPrefs.ts';
+import { clone, ofClass, randomID, setGlobalPanels } from '../../../common.ts';
+
 import G from '../../rg.ts';
 import { chapterChange, verseChange } from '../atext/zversekey.ts';
 import { genbookChange } from '../atext/ztext.ts';
@@ -43,7 +43,13 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
             return {
               historyMenupopup: prevState.historyMenupopup
                 ? undefined
-                : this.historyMenu(prevState),
+                : this.historyMenu(
+                    prevState,
+                    (e, index) => {
+                      this.setHistory(index, true);
+                      e.stopPropagation();
+                    }
+                  ),
             };
           });
           break;
@@ -136,32 +142,24 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
           });
           break;
         }
+        case 'choosermenu': {
+          this.setState((prevState: XulswordState) => {
+            let { showChooser } = prevState;
+            showChooser = !showChooser;
+            return { showChooser };
+          });
+          break;
+        }
         case 'addcolumn':
-        case 'removecolumn':
-          const xs = clone(G.Prefs.getComplexValue('xulsword') as typeof S.prefs.xulsword);
-          const { panels } = xs;
-          const oldN = panels.length;
-          let newN = oldN + (currentId === 'addcolumn' ? 1 : -1);
-          if (newN < 1) newN = 1;
-          if (newN > C.UI.Browser.maxPanels) newN = C.UI.Browser.maxPanels;
-          if (newN !== oldN) {
-            C.PanelPrefArrays.forEach((pref) => {
-              const a = xs[pref];
-              if (newN > oldN) {
-                (a as any).push(a[a.length - 1]);
-              } else {
-                a.pop();
-              }
-            });
-            G.Prefs.setComplexValue('xulsword', xs);
-            completePanelPrefDefaultArrays(newN);
+        case 'removecolumn': {
+          setGlobalPanels(G.Prefs, 0, (currentId === 'addcolumn' ? 1 : -1));
             window.browserState((prevState: BrowserProps) => {
               const s = clone(prevState);
               s.key = randomID();
               return s;
             });
-          }
           break;
+        }
         default:
           throw Error(
             `Unhandled xulswordHandler onClick event on '${currentId}'`

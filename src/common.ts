@@ -3,7 +3,7 @@
 /* eslint-disable no-bitwise */
 import DOMPurify from 'dompurify';
 import C from './constant.ts';
-import S from './defaultPrefs.ts';
+import S, { completePanelPrefDefaultArrays } from './defaultPrefs.ts';
 import Cache from './cache.ts';
 
 import type { ElectronLog } from 'electron-log';
@@ -875,6 +875,48 @@ export function getSwordOptions(
     options[sword] = C.SwordFilterValues[showi];
   });
   return options;
+}
+// Set the number of globally available text panels. If G.Prefs is passed in,
+// the global preferences will read and updated, but if it is a root prefs object
+// (because no preferences are stored yet, or we're checking prefs before storing
+// them) it will be modified in place and not written to the store. If numPanels
+// is 0, then the delta will be applied to current pref instead.
+export function setGlobalPanels(
+  prefs: GType['Prefs'] | Partial<PrefRoot>,
+  numPanels: number,
+  delta = 0
+) {
+  let xs: typeof S.prefs.xulsword;
+  if ('setComplexValue' in prefs) {
+    xs = clone(prefs.getComplexValue('xulsword') as typeof S.prefs.xulsword);
+  } else {
+    if (!('prefs' in prefs)) prefs.prefs = {};
+    const p = prefs.prefs as any;
+    if (!('xulsword' in p)) p.xulsword = {};
+    xs = p.xulsword;
+    if (!('panels' in xs)) (xs as any).panels = [''];
+  }
+  const { panels } = xs;
+  const maxN = window.browserMaxPanels || 4;
+  let newN = numPanels || panels.length + delta;
+  if (newN < 1) newN = 1;
+  if (newN > maxN) newN = maxN;
+  C.PanelPrefArrays.forEach((pref) => {
+    const a = xs[pref];
+    while(a && a.length !== newN) {
+      if (newN > a.length) {
+        (a as any).push(a[a.length - 1]);
+      } else {
+        a.pop();
+      }
+    }
+  });
+  if ('setComplexValue' in prefs) {
+    prefs.setComplexValue('xulsword', xs);
+  }
+
+  completePanelPrefDefaultArrays(newN);
+  return newN;
 }
 
 // Figure out the relative width of each panel due to adjacent panels

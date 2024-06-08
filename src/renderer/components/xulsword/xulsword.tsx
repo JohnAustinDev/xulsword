@@ -10,7 +10,6 @@ import C from '../../../constant.ts';
 import S from '../../../defaultPrefs.ts';
 import G, { GI } from '../../rg.ts';
 import RenderPromise from '../../renderPromise.ts';
-import { verseKey } from '../../htmlData.ts';
 import {
   registerUpdateStateFromPref,
   getStatePref,
@@ -26,7 +25,6 @@ import {
 } from '../../libxul/xul.tsx';
 import Button, { AnchorButton } from '../../libxul/button.tsx';
 import { Box, Hbox, Vbox } from '../../libxul/boxes.tsx';
-import Menupopup from '../../libxul/menupopup.tsx';
 import Bookselect from '../../libxul/bookselect.tsx';
 import Spacer from '../../libxul/spacer.tsx';
 import Textbox from '../../libxul/textbox.tsx';
@@ -36,9 +34,14 @@ import viewportParentH, {
   bbDragEnd as bbDragEndH,
 } from '../viewport/viewportParentH.ts';
 import handlerH from './xulswordH.ts';
+import {
+  addHistory as addHistoryH,
+  setHistory as setHistoryH,
+  historyMenu as historyMenuH
+} from './history.tsx';
 import './xulsword.css';
 
-import type { HistoryVKType, XulswordStateArgType } from '../../../type.ts';
+import type { XulswordStateArgType } from '../../../type.ts';
 import type { RenderPromiseComponent, RenderPromiseState } from '../../renderPromise.ts';
 import type Atext from '../atext/atext.tsx';
 
@@ -69,6 +72,12 @@ export default class Xulsword extends React.Component implements RenderPromiseCo
 
   bbDragEnd: (e: React.MouseEvent, value: any) => void;
 
+  addHistory: typeof addHistoryH;
+
+  setHistory: typeof setHistoryH;
+
+  historyMenu: typeof historyMenuH;
+
   historyTO: NodeJS.Timeout | undefined;
 
   dictkeydownTO: NodeJS.Timeout | undefined;
@@ -95,6 +104,9 @@ export default class Xulsword extends React.Component implements RenderPromiseCo
     this.viewportParentHandler = viewportParentH.bind(this);
     this.bbDragEnd = bbDragEndH.bind(this);
     this.xulswordStateHandler = this.xulswordStateHandler.bind(this);
+    this.addHistory = addHistoryH.bind(this);
+    this.setHistory = setHistoryH.bind(this);
+    this.historyMenu = historyMenuH.bind(this);
 
     this.destroy = [];
 
@@ -139,122 +151,6 @@ export default class Xulsword extends React.Component implements RenderPromiseCo
     this.destroy.forEach((func) => func());
     this.destroy = [];
   }
-
-  // A history item has the type HistoryTypeVK and only a single
-  // verse selection for a chapter will be successively saved in
-  // history. If add is supplied, its v11n must be the same as
-  // current v11n or nothing will be recorded. The history entry
-  // will be recorded at the current historyIndex, and the history
-  // array size will be limited to maxHistoryMenuLength.
-  addHistory = (add?: HistoryVKType): void => {
-    const { location, selection, history, historyIndex } = this
-      .state as XulswordState;
-    const { renderPromise } = this;
-    if (!location || (add && add.location.v11n !== location.v11n)) return;
-    const newhist: HistoryVKType = add || {
-      location,
-      selection,
-    };
-    // Don't record multiple entries for the same chapter, and convert vlln
-    // before comparing so duplicate history is not recorded when v11n
-    // switches with a module having a different v11n.
-    if (history[historyIndex]) {
-      const locvk = verseKey(history[historyIndex].location, location.v11n, undefined, renderPromise);
-      if (location.book === locvk.book && location.chapter === locvk.chapter)
-        return;
-    }
-    this.setState((prevState: XulswordState) => {
-      const newhistory = clone(prevState.history);
-      newhistory.splice(prevState.historyIndex, 0, newhist);
-      if (newhistory.length > C.UI.Xulsword.maxHistoryMenuLength) {
-        newhistory.pop();
-      }
-      return { history: newhistory };
-    });
-  };
-
-  // Set scripture location state to a particular history index. Also, if
-  // promote is true, move that history entry to history[0].
-  setHistory = (index: number, promote = false): void => {
-    const { history: h } = this.state as XulswordState;
-    const { renderPromise } = this;
-    if (
-      index < 0 ||
-      index > h.length - 1 ||
-      index > C.UI.Xulsword.maxHistoryMenuLength
-    )
-      return;
-    this.setState((prevState: XulswordState) => {
-      let ret: Partial<XulswordState> | null = null;
-      const { history, location } = clone(prevState) as XulswordState;
-      if (location) {
-        // To update state to a history index without changing the selected
-        // modules, history needs to be converted to the current v11n.
-        const { location: hloc, selection: hsel } = history[index];
-        const newloc = verseKey(hloc, location.v11n, undefined, renderPromise).location();
-        const newsel = hsel
-          ? verseKey(hsel, location.v11n, undefined, renderPromise).location()
-          : null;
-        if (promote) {
-          const targ = history.splice(index, 1);
-          history.splice(0, 0, targ[0]);
-        }
-        ret = {
-          location: newloc,
-          selection: newsel,
-          scroll: { verseAt: 'center' },
-          history,
-          historyIndex: promote ? 0 : index,
-          historyMenupopup: undefined,
-        };
-      }
-      return ret;
-    });
-  };
-
-  // Build and return a history menupopup from state.
-  historyMenu = (state: XulswordState) => {
-    const { history, historyIndex, location } = state;
-    const { renderPromise } = this;
-    let is = historyIndex - Math.round(C.UI.Xulsword.maxHistoryMenuLength / 2);
-    if (is < 0) is = 0;
-    let ie = is + C.UI.Xulsword.maxHistoryMenuLength;
-    if (ie > history.length) ie = history.length;
-    const items = history.slice(is, ie);
-    if (!items || !items.length || !location) return null;
-    return (
-      <Menupopup>
-        {items.map((histitem, i) => {
-          const { location: hloc, selection: hsel } = histitem;
-          const versekey = verseKey(hloc, location.v11n, undefined, renderPromise);
-          if (versekey.verse === 1) {
-            versekey.verse = undefined;
-            versekey.lastverse = undefined;
-          }
-          // Verse comes from verse or selection; lastverse comes from selection.
-          if (hsel && hsel.verse && hsel.verse > 1) {
-            versekey.verse = hsel.verse;
-            if (hsel.lastverse && hsel.lastverse > hsel.verse)
-              versekey.lastverse = hsel.lastverse;
-          }
-          const index = i + is;
-          const selected = index === historyIndex ? 'selected' : '';
-          return (
-            <div
-              key={[selected, index, histitem].join('.')}
-              className={selected}
-              onClick={(e) => {
-                this.setHistory(index, true);
-                e.stopPropagation();
-              }}
-            >
-              {versekey.readable(G.i18n.language, null, true)}
-            </div>
-          );
-        })}
-      </Menupopup>
-    );
-  };
 
   xulswordStateHandler(s: XulswordStateArgType): void {
     this.setState(s);
@@ -332,7 +228,21 @@ export default class Xulsword extends React.Component implements RenderPromiseCo
         {...topHandle('onClick', () => closeMenupopups(this), props)}
       >
         <Hbox id="main-controlbar" pack="start" className="controlbar skin">
-          <Spacer className="start-spacer" orient="vertical" />
+          <Spacer className="start-spacer" />
+
+          {window.processR.platform === 'browser' && <>
+            <Hbox pack="start">
+              <Button
+                id="choosermenu"
+                checked={showChooser}
+                icon={
+                  <Icon icon={showChooser ? 'menu-closed' : 'menu-open'} size={28} />
+                }
+                onClick={handler}
+              />
+            </Hbox>
+            <Box flex="1"/></>
+          }
 
           <Vbox id="navigator-tool" pack="start">
             {!audio.open && (
@@ -394,72 +304,74 @@ export default class Xulsword extends React.Component implements RenderPromiseCo
               </Hbox>
             )}
 
-            <Hbox id="textnav" align="center">
-              <Bookselect
-                id="book"
-                sizetopopup="none"
-                flex="1"
-                selection={location?.book}
-                options={booklist}
-                disabled={navdisabled}
-                key={[location?.book, bsreset].join('.')}
-                onChange={handler}
-              />
-              <Textbox
-                id="chapter"
-                width="50px"
-                maxLength="3"
-                pattern={/^[0-9]+$/}
-                value={
-                  location?.chapter ? dString(G.getLocaleDigits(), location.chapter, G.i18n.language) : ''
-                }
-                timeout="600"
-                disabled={navdisabled}
-                key={`c${location?.chapter}`}
-                onChange={handler}
-                onClick={handler}
-              />
-              <Vbox>
-                <AnchorButton
-                  id="nextchap"
+            {window.processR.platform !== 'browser' &&
+              <Hbox id="textnav" align="center">
+                <Bookselect
+                  id="book"
+                  sizetopopup="none"
+                  flex="1"
+                  selection={location?.book}
+                  options={booklist}
                   disabled={navdisabled}
+                  key={[location?.book, bsreset].join('.')}
+                  onChange={handler}
+                />
+                <Textbox
+                  id="chapter"
+                  width="50px"
+                  maxLength="3"
+                  pattern={/^[0-9]+$/}
+                  value={
+                    location?.chapter ? dString(G.getLocaleDigits(), location.chapter, G.i18n.language) : ''
+                  }
+                  timeout="600"
+                  disabled={navdisabled}
+                  key={`c${location?.chapter}`}
+                  onChange={handler}
                   onClick={handler}
                 />
-                <AnchorButton
-                  id="prevchap"
+                <Vbox>
+                  <AnchorButton
+                    id="nextchap"
+                    disabled={navdisabled}
+                    onClick={handler}
+                  />
+                  <AnchorButton
+                    id="prevchap"
+                    disabled={navdisabled}
+                    onClick={handler}
+                  />
+                </Vbox>
+                <span>:</span>
+                <Textbox
+                  id="verse"
+                  key={`v${location?.verse}`}
+                  width="50px"
+                  maxLength="3"
+                  pattern={/^[0-9]+$/}
+                  value={location?.verse ? dString(G.getLocaleDigits(), location.verse, G.i18n.language) : ''}
+                  timeout="600"
                   disabled={navdisabled}
+                  onChange={handler}
                   onClick={handler}
                 />
-              </Vbox>
-              <span>:</span>
-              <Textbox
-                id="verse"
-                key={`v${location?.verse}`}
-                width="50px"
-                maxLength="3"
-                pattern={/^[0-9]+$/}
-                value={location?.verse ? dString(G.getLocaleDigits(), location.verse, G.i18n.language) : ''}
-                timeout="600"
-                disabled={navdisabled}
-                onChange={handler}
-                onClick={handler}
-              />
-              <Vbox>
-                <AnchorButton
-                  id="nextverse"
-                  disabled={navdisabled}
-                  onClick={handler}
-                />
-                <AnchorButton
-                  id="prevverse"
-                  disabled={navdisabled}
-                  onClick={handler}
-                />
-              </Vbox>
-            </Hbox>
+                <Vbox>
+                  <AnchorButton
+                    id="nextverse"
+                    disabled={navdisabled}
+                    onClick={handler}
+                  />
+                  <AnchorButton
+                    id="prevverse"
+                    disabled={navdisabled}
+                    onClick={handler}
+                  />
+                </Vbox>
+              </Hbox>
+              }
           </Vbox>
 
-          <Spacer flex="1" style={{ minWidth: '15px' }} orient="vertical" />
+          <Spacer flex="1" style={{ minWidth: '15px' }} />
 
           <Hbox id="search-tool">
             <Vbox pack="start" align="center">
@@ -489,19 +401,19 @@ export default class Xulsword extends React.Component implements RenderPromiseCo
             </Vbox>
           </Hbox>
 
-          <Spacer flex="1" style={{ minWidth: '10px' }} orient="vertical" />
+          <Spacer flex="1" style={{ minWidth: '10px' }} />
 
           <Hbox id="optionButtons" align="start">
-            {window.processR.platform === 'browser' && (<>
+            {window.browserMaxPanels && (<>
               <Button
                 id="addcolumn"
-                checked={true}
+                checked={panels.length < window.browserMaxPanels}
                 icon={<Icon icon="add-column-right" size={28} />}
                 onClick={handler}
               />
               <Button
                 id="removecolumn"
-                checked={true}
+                checked={panels.length > 1}
                 icon={<Icon icon="remove-column-right" size={28} />}
                 onClick={handler}
               /></>
@@ -536,7 +448,7 @@ export default class Xulsword extends React.Component implements RenderPromiseCo
             />
           </Hbox>
 
-          <Spacer flex="1" style={{ minWidth: '10px' }} orient="vertical" />
+          <Spacer flex="1" style={{ minWidth: '10px' }} />
         </Hbox>
 
         <Hbox pack="start" flex="1">
