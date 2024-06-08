@@ -41,11 +41,11 @@ import type {
 } from '../type.ts';
 import type { ManagerStatePref } from '../renderer/moduleManager/manager.tsx';
 
+G.Dirs.init();
+
 completePanelPrefDefaultArrays(
   (G.Prefs.getComplexValue('xulsword.panels') as typeof S.prefs.xulsword.panels).length
 );
-
-G.Dirs.init();
 
 const i18nBackendMain = require('i18next-fs-backend');
 const installer = require('electron-devtools-installer');
