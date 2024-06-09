@@ -31,6 +31,9 @@ export default merge(baseConfig, {
   module: require('./webpack.config.renderer.dev.babel').default.module,
 
   entry: {
+    // NOTE: ONLY PACKAGE.JSON 'dependencies' ARE INCLUDED IN THE DLL, BUT NOT
+    // 'devDependencies'. SO MOVE UNNEEDED OR PROBLEMATIC MODULES TO 'devDependencies'.
+    // Really, all dependencies in xulsword/package.json are 'devDependencies'.
     renderer: Object.keys(dependencies || {}),
   },
 
