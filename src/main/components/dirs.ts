@@ -73,7 +73,7 @@ const Dirs = {
       Dirs.path.xsModsUser = (app && path.join(Dirs.path.ProfD, 'resources'))
       || process.env.XSModsUser || '/tmp';
 
-      Dirs.path.xsFonts = path.join(Dirs.path.xsResD, 'fonts');
+      Dirs.path.xsFonts = process.env.XSFonts || path.join(Dirs.path.xsResD, 'fonts');
 
       Dirs.path.xsAudio = path.join(Dirs.path.xsResD, 'audio');
 

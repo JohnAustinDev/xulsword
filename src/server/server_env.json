@@ -1,12 +1,9 @@
 {
-  "NODE_ENV": "development",
-  "DEBUG_PROD": "false",
-  "XULSWORD_ENV": "normal",
-  "LOGLEVEL": "debug",
   "CORS_ORIGIN": "http://127.0.0.1:8080",
-  "ROOTPATH": "./htdocs",
-  "PUBPATHS": "pub/modsword/raw;pub2/modsword/raw",
-  "XSProfD": "./app-profile",
-  "XSModsUser": "./htdocs/ftpmirror/pub/modsword/raw",
-  "XSModsCommon": "./htdocs/ftpmirror/private/modsword/raw"
+  "ROOTPATH": "/vagrant/htdocs",
+  "PUBPATHS": "ftpmirror/pub;ftpmirror/private/modsword/raw;sites/default/files",
+  "XSProfD": "/vagrant/app-profile",
+  "XSModsUser": "/vagrant/htdocs/ftpmirror/pub/modsword/raw",
+  "XSModsCommon": "/vagrant/htdocs/ftpmirror/private/modsword/raw",
+  "XSFonts": "/vagrant/htdocs/ftpmirror/pub/fonts"
 }
