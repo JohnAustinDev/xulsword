@@ -10,12 +10,19 @@ import type { SelectVKType } from "../renderer/libxul/selectVK.tsx";
 import type { SelectORMType, SelectORProps } from "../renderer/libxul/selectOR.tsx";
 
 export type ChaplistVKType = { [bk in OSISBookType]?: [number, string][] }
+
 export type ChaplistORType = [string, string, string][]; // [order, key, url]
-export type OptionData = {
+
+export type SelectData = {
+  title: string,
+  items: unknown[],
+};
+
+export type FileItems = {
   format: string,
   types: string[],
   osisbooks: OSISBookType[],
-  label: string,
+  filename: string,
   size: string,
   url: string,
 }[];
@@ -92,24 +99,28 @@ export function handleAction(type: string, id: string, ...args: any[]) {
         const [key] = keys;
         const da = chaplist.find((x) => x[1] === key);
         if (da) {
-          const url = da[2];
-            player.setAttribute('src', url.replace(/^base:/, ''));
-            player.play().catch((_er) => {});
+          player.setAttribute('src', da[2].replace(/^base:/, ''));
+          player.play().catch((_er) => {});
         }
       }
       break;
     }
-    case 'update_ebook_table': {
-      const [dataValue] = args as [OptionData[number]];
-      const tr = document.getElementById(id)?.parentElement?.parentElement;
-      if (tr) {
-        const a = tr.querySelector('td:nth-child(2) a');
-        if (a) {
-          a.setAttribute('href', dataValue.url.replace(/^base:/, ''));
-          a.textContent = getEBookTitle(dataValue, true);
+    case 'update_url': {
+      const [pubtitle, item] = args as [string, unknown];
+      const elem = document.getElementById(id)?.previousElementSibling;
+      if (elem && item && typeof item === 'object') {
+        const { url, size } = item as any;
+        const a = elem.querySelector('a');
+        if (a && url) {
+          a.setAttribute('href', url.replace(/^base:/, ''));
+          a.textContent = optionText(item, true, pubtitle);
+          if (size && a.parentElement?.tagName === 'SPAN') {
+            const sizeSpan = a.parentElement.nextElementSibling;
+            if (sizeSpan && sizeSpan.tagName === 'SPAN') {
+              sizeSpan.textContent = ` (${size})`;
+            }
+          }
         }
-        const size = tr.querySelector('td:nth-child(3)');
-        if (size) size.textContent = dataValue.size;
       }
       break;
     }
@@ -126,41 +137,40 @@ export function optionKey(data: unknown): string {
   return randomID();
 }
 
-export function optionText(data: unknown): string {
+export function optionText(data: unknown, long = false, title = ''): string {
   if (data && typeof data === 'object' && 'url' in data) {
-    return getEBookTitle(data as OptionData[number]);
+    return getEBookTitle(data as FileItems[number], long, title);
   }
   return 'unknown';
 }
 
-export function getEBookTitle(data: OptionData[number], long = false): string {
-  const { types, osisbooks } = data;
-  let { label } = data;
-  let title = '';
-  // look for: /some/path/uzb__Muqaddas-Kitob__74-Xaritalar__Supl__63hszo5nc.pdf
-  const filename = data.url.split('/').pop();
-  if (filename) {
-    const p = filename.split('__');
-    p.pop(); // remove time
-    p.pop(); // remove type code
-    title = (p.pop() || '').replace(/^\d+\-/, ''); // title without weight
-    const labeltry = p.pop();
-    if (title && labeltry && labeltry.length !== 3) label = labeltry;
-  }
-  if (types.includes('part')) {
-    const Book = G.Book(G.i18n.language);
-    const books = osisbooks.map((bk) => Book[bk].name).join(', ');
-    return long ? `${label} (${books})` : books;
-  }
+// Generate a short or long title for an eBook file. The forms of the title are:
+// short: 'Full publication', books (for bible), title (for all others).
+// long: publication-name, publication-name: books (for bible), publication-name: title (others)
+export function getEBookTitle(data: FileItems[number], long = false, pubname = ''): string {
+  const { types, osisbooks, filename } = data;
+
+  const Book = G.Book(G.i18n.language);
+  const books = osisbooks.map((bk) => Book[bk].name).join(', ');
+
+  const pn = filename.split('__');
+  if (pn[0].length === 3) pn.shift();
+  const remove: string[] = osisbooks.slice();
+  remove.push(...types);
+  if (pubname) remove.push(pubname);
+  const pn2 = pn.filter((s) => !remove.includes(s));
+  const title = pn2[pn2.length - 1] || '';
+
   if (['full', 'compilation'].some((x) => types.includes(x))) {
-    return label;
-  }
-  if (title) return long ? `${label} (${title})` : title;
-  const type = data.types[0];
-  if (type) {
-    return long ? `${label} (${G.i18n.t(type)})` : G.i18n.t(type);
-  }
-  return label;
+    return long ? pubname || filename : G.i18n.t('Full publication');
+  } else if (types.includes('part')) {
+    return long ? `${pubname || filename}: ${books}` : books;
+  } else if (pubname) {
+    if (title) return long ? `${pubname}: ${title}` : title;
+    return long ? `${pubname}: ${G.i18n.t(types[0])}` : G.i18n.t(types[0]);
+  } else if (title) return title;
+
+  return filename;
 }
 
 // Convert raw gen-book chaplist data from Drupal into a valid xulsword nodelist.

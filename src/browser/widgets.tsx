@@ -1,7 +1,7 @@
-import React, { ChangeEvent, StrictMode, useState } from "react";
+import React, { ChangeEvent, StrictMode, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import SocketConnect from './preload.ts';
-import { handleAction, decodeJSData, createNodeList, setGlobalLocale, getProps, writePrefsStores, getEBookTitle, optionKey, optionText } from "./bcommon.ts";
+import { handleAction, decodeJSData, createNodeList, setGlobalLocale, getProps, writePrefsStores, optionKey, optionText } from "./bcommon.ts";
 import { clone, diff, randomID } from "../common.ts";
 import C from '../constant.ts';
 import G from "../renderer/rg.ts";
@@ -12,7 +12,7 @@ import SelectOR from "../renderer/libxul/selectOR.tsx";
 import Menulist from "../renderer/libxul/menulist.tsx";
 
 import type { GCallType, PrefRoot } from "../type.ts";
-import type { ChaplistVKType, ChaplistORType, OptionData } from "./bcommon.ts";
+import type { ChaplistVKType, ChaplistORType, SelectData } from "./bcommon.ts";
 import type { SelectVKProps, SelectVKType } from "../renderer/libxul/selectVK.tsx";
 import type { SelectORMType, SelectORProps } from "../renderer/libxul/selectOR.tsx";
 import type { MenulistProps } from "../renderer/libxul/menulist.tsx";
@@ -128,20 +128,24 @@ function ControllerSelect(
   props: {
     id: string;
     initial: Omit<MenulistProps, 'onChange'>;
-    data?: unknown[];
+    data?: SelectData;
     action?: string;
   }
 ) {
-  const { id, initial, data, action } = props;
+  const { initial, data, action, id } = props;
+
+  // Number strings always come from Drupal as numbers, but React.propTypes expects a string value.
+  const { value } = initial;
+  if (typeof value === 'number') initial.value = (value as any).toString();
 
   const onChange = (e: React.SyntheticEvent<HTMLSelectElement, ChangeEvent>) => {
     const select = e.target as HTMLSelectElement;
-    if (action && data) handleAction(action, id, data[Number(select.value)]);
     setState((prevState: Omit<MenulistProps, 'onChange'>) => {
       const newState = clone(prevState);
       newState.value = select.value;
       return newState;
     });
+    jQuery(`#${id}`).prev().fadeTo(1, 0).fadeTo(1000, 1);
   }
 
   const [state, setState] = useState(() => {
@@ -152,9 +156,17 @@ function ControllerSelect(
     });
   });
 
+  useEffect(() => {
+    const { value } = state;
+    const index = value && typeof value === 'string' ? Number(value) || 0 : 0;
+    if (action && data) handleAction(action, id, data.title, data.items[index]);
+  }, [state.value]);
+
   const options = data
-    ? data.map((d, i) =>
-        <option key={optionKey(d)} value={i.toString()}>{optionText(d)}</option>
+    ? data.items.map((d, i) =>
+        <option key={optionKey(d)} value={i.toString()}>
+          {optionText(d, false, data.title)}
+        </option>
       )
     : [];
 
@@ -184,6 +196,8 @@ socket.on('connect', () => {
       ['getLocalizedBooks', null, [true]],
       ['Book', null, [locale]],
       ['i18n','t',['locale_direction']],
+      ['i18n','t',['Full publication']],
+      ['i18n','t',['supplemental']],
       ...(Object.values(C.SupportedTabTypes)
         .map((type) => ['i18n', 't', [type, { lng: locale }]] as any))
     ];
@@ -230,7 +244,7 @@ socket.on('connect', () => {
                   <ControllerSelect
                     id={id}
                     action={action}
-                    data={decodeJSData(data) as OptionData}
+                    data={decodeJSData(data) as SelectData}
                     initial={decodeJSData(p) as MenulistProps} />
                 </StrictMode>);
               break;
