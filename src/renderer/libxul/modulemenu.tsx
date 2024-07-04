@@ -25,16 +25,16 @@ const propTypes = {
 };
 
 interface ModuleMenuProps extends XulProps {
-  value?: string;
+  value: string;
   description?: boolean; // show description or not
   disabled?: boolean;
   allowNotInstalled?: boolean;
   modules?: string[]; // show only these modules or all if []
   types?: ModTypes[]; // show only these types or all if []
+  onChange: (e: any) => void | Promise<void>;
 }
 
 export default function ModuleMenu({
-  value = '',
   description = false,
   disabled = false,
   allowNotInstalled = false,

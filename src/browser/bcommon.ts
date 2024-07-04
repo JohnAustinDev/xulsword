@@ -1,7 +1,8 @@
 
 import C from '../constant.ts';
+import G from "../renderer/rg.ts";
 import S from '../defaultPrefs.ts';
-import { JSON_parse, hierarchy, mergePrefRoot, strings2Numbers } from '../common.ts';
+import { JSON_parse, hierarchy, mergePrefRoot, randomID, strings2Numbers } from '../common.ts';
 
 import type { TreeNodeInfo } from '@blueprintjs/core';
 import type { GType, OSISBookType, PrefRoot, TreeNodeInfoPref } from '../type.ts';
@@ -10,6 +11,14 @@ import type { SelectORMType, SelectORProps } from "../renderer/libxul/selectOR.t
 
 export type ChaplistVKType = { [bk in OSISBookType]?: [number, string][] }
 export type ChaplistORType = [string, string, string][]; // [order, key, url]
+export type OptionData = {
+  format: string,
+  types: string[],
+  osisbooks: OSISBookType[],
+  label: string,
+  size: string,
+  url: string,
+}[];
 
 // Insure a partial prefs root object has a valid locale set in it.
 export function setGlobalLocale(prefs: Partial<PrefRoot>, langcode?: string): string {
@@ -28,7 +37,7 @@ export function setGlobalLocale(prefs: Partial<PrefRoot>, langcode?: string): st
 }
 
 export function getProps<T extends { [prop: string]: any }>(
-  props: Partial<T>,
+  props: T,
   defaultProps: T
 ): T {
   const newProps = {} as T;
@@ -71,8 +80,8 @@ export function handleAction(type: string, id: string, ...args: any[]) {
           player.play().catch((_er) => {});
         }
       }
+      break;
     }
-    break;
     case 'genbk_audio_Play': {
       const [selection, chaplist] = args as [SelectORMType, ChaplistORType];
       // A Drupal selectOR item follows its associated audio player item.
@@ -88,12 +97,70 @@ export function handleAction(type: string, id: string, ...args: any[]) {
             player.play().catch((_er) => {});
         }
       }
+      break;
     }
-    break;
+    case 'update_ebook_table': {
+      const [dataValue] = args as [OptionData[number]];
+      const tr = document.getElementById(id)?.parentElement?.parentElement;
+      if (tr) {
+        const a = tr.querySelector('td:nth-child(2) a');
+        if (a) {
+          a.setAttribute('href', dataValue.url.replace(/^base:/, ''));
+          a.textContent = getEBookTitle(dataValue, true);
+        }
+        const size = tr.querySelector('td:nth-child(3)');
+        if (size) size.textContent = dataValue.size;
+      }
+      break;
+    }
     default:
       throw new Error(`Unsupported action: '${type}'`);
   }
   return;
+}
+
+export function optionKey(data: unknown): string {
+  if (data && typeof data === 'object' && 'url' in data) {
+    return data.url as string;
+  }
+  return randomID();
+}
+
+export function optionText(data: unknown): string {
+  if (data && typeof data === 'object' && 'url' in data) {
+    return getEBookTitle(data as OptionData[number]);
+  }
+  return 'unknown';
+}
+
+export function getEBookTitle(data: OptionData[number], long = false): string {
+  const { types, osisbooks } = data;
+  let { label } = data;
+  let title = '';
+  // look for: /some/path/uzb__Muqaddas-Kitob__74-Xaritalar__Supl__63hszo5nc.pdf
+  const filename = data.url.split('/').pop();
+  if (filename) {
+    const p = filename.split('__');
+    p.pop(); // remove time
+    p.pop(); // remove type code
+    title = (p.pop() || '').replace(/^\d+\-/, ''); // title without weight
+    const labeltry = p.pop();
+    if (title && labeltry && labeltry.length !== 3) label = labeltry;
+  }
+  if (types.includes('part')) {
+    const Book = G.Book(G.i18n.language);
+    const books = osisbooks.map((bk) => Book[bk].name).join(', ');
+    return long ? `${label} (${books})` : books;
+  }
+  if (['full', 'compilation'].some((x) => types.includes(x))) {
+    return label;
+  }
+  if (title) return long ? `${label} (${title})` : title;
+  const type = data.types[0];
+  if (type) {
+    return long ? `${label} (${G.i18n.t(type)})` : G.i18n.t(type);
+  }
+  return label;
 }
 
 // Convert raw gen-book chaplist data from Drupal into a valid xulsword nodelist.
