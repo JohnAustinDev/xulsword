@@ -21,6 +21,7 @@ export type FileItems = Array<{
   format: string;
   types: string[];
   osisbooks: OSISBookType[];
+  name: string;
   filename: string;
   size: string;
   url: string;
@@ -144,31 +145,19 @@ export function optionText(data: unknown, long = false, title = ''): string {
 
 // Generate a short or long title for an eBook file. The forms of the title are:
 // short: 'Full publication', books (for bible), title (for all others).
-// long: publication-name, publication-name: books (for bible), publication-name: title (others)
+// long: publication-name, books: publication-name (for bible), title: publication-name (others)
 export function getEBookTitle(data: FileItems[number], long = false, pubname = ''): string {
-  const { types, osisbooks, filename } = data;
+  const { types, osisbooks, name } = data;
 
   const Book = G.Book(G.i18n.language);
   const books = osisbooks.map((bk) => Book[bk].name).join(', ');
 
-  const pn = filename.split('__');
-  if (pn[0].length === 3) pn.shift();
-  const remove: string[] = osisbooks.slice();
-  remove.push(...types);
-  if (pubname) remove.push(pubname);
-  const pn2 = pn.filter((s) => !remove.includes(s));
-  const title = pn2[pn2.length - 1] || '';
-
   if (['full', 'compilation'].some((x) => types.includes(x))) {
-    return long ? pubname || filename : G.i18n.t('Full publication');
+    return long ? pubname : G.i18n.t('Full publication');
   } else if (types.includes('part')) {
-    return long ? `${pubname || filename}: ${books}` : books;
-  } else if (pubname) {
-    if (title) return long ? `${pubname}: ${title}` : title;
-    return long ? `${pubname}: ${G.i18n.t(types[0])}` : G.i18n.t(types[0]);
-  } else if (title) return title;
-
-  return filename;
+    return long ? `${books}: ${pubname}` : books;
+  }
+  return long && name !== pubname ? `${name}: ${pubname}` : name;
 }
 
 // Convert raw gen-book chaplist data from Drupal into a valid xulsword nodelist.
