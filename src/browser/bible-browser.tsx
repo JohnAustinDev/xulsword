@@ -1,13 +1,14 @@
-import React, { StrictMode, useState } from "react";
-import { createRoot } from "react-dom/client";
+import React, { StrictMode, useState } from 'react';
+import { createRoot } from 'react-dom/client';
 import SocketConnect from './preload.ts';
-import { decodeJSData, writePrefsStores, setGlobalLocale } from "./bcommon.ts";
-import { randomID, setGlobalPanels } from "../common.ts";
-import C from "../constant.ts";
-import G from "../renderer/rg.ts";
-import { callBatchThenCache } from "../renderer/renderPromise.ts";
+import { decodeJSData, writePrefsStores, setGlobalLocale } from './bcommon.ts';
+import { randomID, setGlobalPanels } from '../common.ts';
+import C from '../constant.ts';
+import G from '../renderer/rg.ts';
+import log from '../renderer/log.ts';
+import { callBatchThenCache } from '../renderer/renderPromise.ts';
 import DynamicStyleSheet from '../renderer/style.ts';
-import Xulsword from "../renderer/components/xulsword/xulsword.tsx";
+import Xulsword from '../renderer/components/xulsword/xulsword.tsx';
 
 import 'normalize.css/normalize.css';
 import '@blueprintjs/icons/lib/css/blueprint-icons.css';
@@ -15,7 +16,7 @@ import '@blueprintjs/core/lib/css/blueprint.css';
 import '../renderer/global-htm.css';
 import './bible-browser.css';
 
-import type { GCallType, PrefObject, PrefRoot } from "../type.ts";
+import type { GCallType, PrefObject, PrefRoot } from '../type.ts';
 
 let dynamicStyleSheet: DynamicStyleSheet | undefined;
 
@@ -27,7 +28,7 @@ export type BrowserProps = {
 };
 
 // React element controller:
-function Controller(props: BrowserProps) {
+function Controller(props: BrowserProps): React.JSX.Element {
   const { id, xsprops, locale } = props;
   const [state, setState] = useState(xsprops);
 
@@ -36,7 +37,7 @@ function Controller(props: BrowserProps) {
   const html =
     document.getElementsByTagName('html')[0] as HTMLHtmlElement | undefined;
   if (html) {
-    html.classList.add('skin', 'xulswordWin', 'cs-locale', locale || '');
+    html.classList.add('skin', 'xulswordWin', 'cs-locale', locale ?? '');
     html.setAttribute(
       'dir',
       C.Locales.reduce((p, c) => c[0] === locale ? c[2] : p, 'ltr')
@@ -46,7 +47,7 @@ function Controller(props: BrowserProps) {
   dynamicStyleSheet?.update();
 
   // Wheel scroll is wonky in the Browser, so disable it for now.
-  const wheelCapture = (e: React.SyntheticEvent<any>) => {
+  const wheelCapture = (e: React.SyntheticEvent<any>): boolean => {
     e.stopPropagation();
     return true;
   };
@@ -56,7 +57,7 @@ function Controller(props: BrowserProps) {
     const win = frameElement?.ownerDocument.defaultView;
     if (win && 'jQuery' in win) {
       (win as any).bibleBrowserIsLoading = false;
-      (win as any).jQuery(".loader").fadeOut( 'slow' );
+      (win as any).jQuery('.loader').fadeOut('slow');
     }
   }, 1);
 
@@ -80,8 +81,8 @@ socket.on('connect', () => {
     const props = decodeJSData(propsraw) as PrefObject;
     const prefs = decodeJSData(prefsraw) as Partial<PrefRoot>;
     window.browserMaxPanels = Math.ceil(window.innerWidth / 300);
-    let numPanels = (prefs.prefs?.xulsword as any)?.panels?.length
-      || window.browserMaxPanels;
+    let numPanels: number = (prefs.prefs?.xulsword as any)?.panels?.length ||
+      window.browserMaxPanels;
     if (window.innerWidth < 800) numPanels = 1;
     setGlobalPanels(prefs, numPanels);
     const locale = setGlobalLocale(prefs, langcode);
@@ -105,12 +106,12 @@ socket.on('connect', () => {
       ['FeatureModules', null, undefined],
       ['AudioConfs', null, undefined],
       ['Books', null, [locale]],
-      ['Book', null, [locale]],
+      ['Book', null, [locale]]
     ];
 
     callBatchThenCache(preloads).then(() => {
-        dynamicStyleSheet = new DynamicStyleSheet(document);
-        createRoot(root).render(
+      dynamicStyleSheet = new DynamicStyleSheet(document);
+      createRoot(root).render(
           <StrictMode>
             <Controller
               id={randomID()}
@@ -118,6 +119,6 @@ socket.on('connect', () => {
               locale={locale}
             />
           </StrictMode>);
-    });
+    }).catch((er) => { log.error(er); });
   }
 });

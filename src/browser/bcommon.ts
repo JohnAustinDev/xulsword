@@ -1,53 +1,52 @@
-
 import C from '../constant.ts';
-import G from "../renderer/rg.ts";
+import G from '../renderer/rg.ts';
 import S from '../defaultPrefs.ts';
 import { JSON_parse, hierarchy, mergePrefRoot, randomID, strings2Numbers } from '../common.ts';
 
 import type { TreeNodeInfo } from '@blueprintjs/core';
 import type { GType, OSISBookType, PrefRoot, TreeNodeInfoPref } from '../type.ts';
-import type { SelectVKType } from "../renderer/libxul/selectVK.tsx";
-import type { SelectORMType, SelectORProps } from "../renderer/libxul/selectOR.tsx";
+import type { SelectVKType } from '../renderer/libxul/selectVK.tsx';
+import type { SelectORMType, SelectORProps } from '../renderer/libxul/selectOR.tsx';
 
-export type ChaplistVKType = { [bk in OSISBookType]?: [number, string][] }
+export type ChaplistVKType = { [bk in OSISBookType]?: Array<[number, string]> }
 
-export type ChaplistORType = [string, string, string][]; // [order, key, url]
+export type ChaplistORType = Array<[string, string, string]> // [order, key, url]
 
 export type SelectData = {
-  title: string,
-  items: unknown[],
-};
+  title: string;
+  items: unknown[];
+}
 
-export type FileItems = {
-  format: string,
-  types: string[],
-  osisbooks: OSISBookType[],
-  filename: string,
-  size: string,
-  url: string,
-}[];
+export type FileItems = Array<{
+  format: string;
+  types: string[];
+  osisbooks: OSISBookType[];
+  filename: string;
+  size: string;
+  url: string;
+}>
 
 // Insure a partial prefs root object has a valid locale set in it.
 export function setGlobalLocale(prefs: Partial<PrefRoot>, langcode?: string): string {
   let global: Partial<typeof S.prefs.global> = { locale: langcode };
   const { prefs: p } = prefs;
-  if (!p) prefs.prefs = { global }
+  if (!p) prefs.prefs = { global };
   else {
     const { global: g } = p;
     if (!g || typeof g !== 'object') p.global = global;
     else global = g as Partial<typeof S.prefs.global>;
-  };
+  }
   let { locale: l } = global;
   if (!l || !C.Locales.some((x) => x[0] === l)) l = langcode ?? 'en';
   global.locale = l;
   return l;
 }
 
-export function getProps<T extends { [prop: string]: any }>(
+export function getProps<T extends Record<string, any>>(
   props: T,
   defaultProps: T
 ): T {
-  const newProps = {} as T;
+  const newProps = {};
   Object.entries(defaultProps).forEach((entry) => {
     const [prop, v] = entry;
     (newProps as any)[prop] = typeof props[prop] !== 'undefined' ? props[prop] : v;
@@ -55,7 +54,7 @@ export function getProps<T extends { [prop: string]: any }>(
   return newProps as T;
 }
 
-export function writePrefsStores(G: GType, prefs: Partial<PrefRoot>) {
+export function writePrefsStores(G: GType, prefs: Partial<PrefRoot>): void {
   const defs = mergePrefRoot(prefs, S);
   Object.entries(prefs).forEach((entry) => {
     const [store, prefobj] = entry;
@@ -67,15 +66,15 @@ export function writePrefsStores(G: GType, prefs: Partial<PrefRoot>) {
       );
       // Read the store to initialize it.
       G.Prefs.getComplexValue(rootkey, store as 'prefs');
-    })
+    });
   });
 }
 
-export function handleAction(type: string, id: string, ...args: any[]) {
-  switch(type) {
+export function handleAction(type: string, id: string, ...args: any[]): void {
+  switch (type) {
     case 'bible_audio_Play': {
-      const [selection, chaplist]
-        = args as [SelectVKType, ChaplistVKType];
+      const [selection, chaplist] =
+        args as [SelectVKType, ChaplistVKType];
       // A Drupal selectVK item follows its associated audio player item.
       const player = document.getElementById(id)?.parentElement
         ?.previousElementSibling?.querySelector('audio') as HTMLAudioElement | undefined;
@@ -109,7 +108,7 @@ export function handleAction(type: string, id: string, ...args: any[]) {
       const [pubtitle, item] = args as [string, unknown];
       const elem = document.getElementById(id)?.previousElementSibling;
       if (elem && item && typeof item === 'object') {
-        const { url, size } = item as any;
+        const { url, size } = item as { url?: string; size?: string };
         const a = elem.querySelector('a');
         if (a && url) {
           a.setAttribute('href', url.replace(/^base:/, ''));
@@ -127,7 +126,6 @@ export function handleAction(type: string, id: string, ...args: any[]) {
     default:
       throw new Error(`Unsupported action: '${type}'`);
   }
-  return;
 }
 
 export function optionKey(data: unknown): string {
@@ -177,11 +175,11 @@ export function getEBookTitle(data: FileItems[number], long = false, pubname = '
 export function createNodeList(
   chaplist: ChaplistORType,
   props: SelectORProps
-) {
+): void {
   // chaplist members are like: ['2/4/5', The/chapter/titles', 'url']
   // The Drupal chaplist is file data, and so does not include any parent
   // entries required by hierarchy(). So parents must be added before sorting.
-  const parent = (ch: ChaplistORType[number]): ChaplistORType[number] | null=> {
+  const parent = (ch: ChaplistORType[number]): ChaplistORType[number] | null => {
     const o = ch[0].split('/');
     const p = ch[1].split('/');
     o.pop(); p.pop();
@@ -192,9 +190,9 @@ export function createNodeList(
   };
   chaplist.forEach((x) => {
     const p = parent(x);
-    if (p && !chaplist.find((c) => c[1] === p[1])) {chaplist.push(p);}
+    if (p && !chaplist.find((c) => c[1] === p[1])) { chaplist.push(p); }
   });
-  const treenodes: TreeNodeInfo<{}>[] = chaplist.sort((a, b) => {
+  const treenodes: Array<TreeNodeInfo<Record<string, unknown>>> = chaplist.sort((a, b) => {
     const ap = a[0].split('/').map((x) => Number(x));
     const bp = b[0].split('/').map((x) => Number(x));
     for (let x = 0; x < ap.length; x++) {
@@ -208,24 +206,22 @@ export function createNodeList(
     }
     return 0;
   }).map((x) => {
-    const [_order, key, _url] = x;
+    const [, key] = x;
     return {
       id: key,
-      label: key.replace(/\/$/, '').split('/').pop(),
+      label: key.replace(/\/$/, '').split('/').pop() ?? '',
       className: 'cs-LTR_DEFAULT',
-      hasCaret: key.endsWith(C.GBKSEP),
-      icon: undefined,
-    } as TreeNodeInfoPref;
+      hasCaret: key.endsWith(C.GBKSEP)
+    } satisfies TreeNodeInfoPref;
   });
-  const nodes = hierarchy(treenodes as any);
+  const nodes = hierarchy(treenodes);
   props.nodeLists = [{
     otherMod: props.initialORM.otherMod,
     label: 'genbk',
     labelClass: 'cs-LTR_DEFAULT',
-    nodes,
+    nodes
   }];
-  if (!treenodes.find((n) => n.id === props.initialORM.keys[0]))
-    props.initialORM.keys = [nodes[0].id.toString()];
+  if (!treenodes.find((n) => n.id === props.initialORM.keys[0])) { props.initialORM.keys = [nodes[0].id.toString()]; }
 }
 
 export function decodeJSData(str?: string): any {
@@ -234,24 +230,24 @@ export function decodeJSData(str?: string): any {
 }
 
 // Zip compress to reduce string length for strings that contain repetitions.
-export function compressString(str: string) {
-  const e: { [k: string]: number } = {};
-  let f = str.split('');
-  const d: (string | number)[] = [];
+export function compressString(str: string): string {
+  const e: Record<string, number> = {};
+  const f = str.split('');
+  const d: Array<string | number> = [];
   let a: string = f[0];
   let g = 256;
   let c: string;
   for (let b = 1; b < f.length; b++) {
     c = f[b];
-    if (null != e[a + c]) a += c;
+    if (e[a + c] != null) a += c;
     else {
-      d.push(1 < a.length ? e[a] : a.charCodeAt(0));
+      d.push(a.length > 1 ? e[a] : a.charCodeAt(0));
       e[a + c] = g;
       g++;
       a = c;
     }
   }
-  d.push(1 < a.length ? e[a] : a.charCodeAt(0));
+  d.push(a.length > 1 ? e[a] : a.charCodeAt(0));
   for (let b = 0; b < d.length; b++) {
     d[b] = String.fromCharCode(d[b] as number);
   }
@@ -259,13 +255,13 @@ export function compressString(str: string) {
 }
 
 // Decompress a zipped compressString().
-export function decompressString(str: string) {
+export function decompressString(str: string): string {
   let a: string;
-  const e: { [k: string]: number | string } = {};
+  const e: Record<string, number | string> = {};
   const d = str.split('');
   let c: string = d[0];
   let f = d[0];
-  const g = [c]
+  const g = [c];
   const h = 256;
   let o = 256;
   for (let b = 1; b < d.length; b++) {
