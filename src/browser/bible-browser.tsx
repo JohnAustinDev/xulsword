@@ -1,7 +1,7 @@
 import React, { StrictMode, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import SocketConnect from './preload.ts';
-import { decodeJSData, writePrefsStores, setGlobalLocale } from './bcommon.ts';
+import { writePrefsStores, setGlobalLocale, componentData } from './bcommon.ts';
 import { randomID, setGlobalPanels } from '../common.ts';
 import C from '../constant.ts';
 import G from '../renderer/rg.ts';
@@ -16,21 +16,16 @@ import '@blueprintjs/core/lib/css/blueprint.css';
 import '../renderer/global-htm.css';
 import './bible-browser.css';
 
-import type { GCallType, PrefObject, PrefRoot } from '../type.ts';
+import type { GCallType } from '../type.ts';
 
 let dynamicStyleSheet: DynamicStyleSheet | undefined;
 
-export type BrowserProps = {
-  id: string;
-  xsprops: Xulsword['props'];
-  locale?: string;
-  key?: string;
-};
+export type BrowserControllerState = { locale: string; cntlkey: string };
 
 // React element controller:
-function Controller(props: BrowserProps): React.JSX.Element {
-  const { id, xsprops, locale } = props;
-  const [state, setState] = useState(xsprops);
+function Controller(props: BrowserControllerState): React.JSX.Element {
+  const { locale } = props;
+  const [state, setState] = useState(props);
 
   window.browserState = setState;
 
@@ -63,7 +58,7 @@ function Controller(props: BrowserProps): React.JSX.Element {
 
   return (
     <div id="reset">
-      <Xulsword onWheelCapture={wheelCapture} id={id} {...state} />
+      <Xulsword onWheelCapture={wheelCapture} {...state} />
     </div>
   );
 }
@@ -72,53 +67,52 @@ const socket = SocketConnect(C.Server.port, window.location.origin);
 let published = false;
 socket.on('connect', () => {
   const root = document.querySelector('#root');
-  const { dataset } = frameElement as HTMLIFrameElement;
 
   // connect is called even on reconnect, so only publish this once.
-  if (!published && root && dataset) {
+  if (!published && frameElement && root) {
     published = true;
-    const { props: propsraw, prefs: prefsraw, langcode } = dataset;
-    const props = decodeJSData(propsraw) as PrefObject;
-    const prefs = decodeJSData(prefsraw) as Partial<PrefRoot>;
-    window.browserMaxPanels = Math.ceil(window.innerWidth / 300);
-    let numPanels: number = (prefs.prefs?.xulsword as any)?.panels?.length ||
+    const compData = componentData(frameElement);
+    const { component } = compData;
+    if (component === 'bibleBrowser') {
+      const { prefs, langcode } = compData;
+      window.browserMaxPanels = Math.ceil(window.innerWidth / 300);
+      let numPanels: number = (prefs.prefs?.xulsword as any)?.panels?.length ||
       window.browserMaxPanels;
-    if (window.innerWidth < 800) numPanels = 1;
-    setGlobalPanels(prefs, numPanels);
-    const locale = setGlobalLocale(prefs, langcode);
-    writePrefsStores(G, prefs);
-    if (window.innerWidth < 500) G.Prefs.setBoolPref('xulsword.showChooser', false);
+      if (window.innerWidth < 800) numPanels = 1;
+      setGlobalPanels(prefs, numPanels);
+      const locale = setGlobalLocale(prefs, langcode);
+      writePrefsStores(G, prefs);
+      if (window.innerWidth < 500) G.Prefs.setBoolPref('xulsword.showChooser', false);
 
-    const preloads: GCallType[] = [
-      ['Tabs', null, undefined],
-      ['Tab', null, undefined],
-      ['BkChsInV11n', null, undefined],
-      ['GetBooksInVKModules', null, undefined],
-      ['getLocaleDigits', null, [false]],
-      ['getLocaleDigits', null, [true]],
-      ['getLocalizedBooks', null, [true]],
-      ['getLocaleDigits', null, []],
-      ['ModuleConfigDefault', null, undefined],
-      ['ModuleFonts', null, undefined],
-      ['ProgramConfig', null, undefined],
-      ['LocaleConfigs', null, undefined],
-      ['Config', null, undefined],
-      ['FeatureModules', null, undefined],
-      ['AudioConfs', null, undefined],
-      ['Books', null, [locale]],
-      ['Book', null, [locale]]
-    ];
+      const preloads: GCallType[] = [
+        ['Tabs', null, undefined],
+        ['Tab', null, undefined],
+        ['BkChsInV11n', null, undefined],
+        ['GetBooksInVKModules', null, undefined],
+        ['getLocaleDigits', null, [false]],
+        ['getLocaleDigits', null, [true]],
+        ['getLocalizedBooks', null, [true]],
+        ['getLocaleDigits', null, []],
+        ['ModuleConfigDefault', null, undefined],
+        ['ModuleFonts', null, undefined],
+        ['ProgramConfig', null, undefined],
+        ['LocaleConfigs', null, undefined],
+        ['Config', null, undefined],
+        ['FeatureModules', null, undefined],
+        ['AudioConfs', null, undefined],
+        ['Books', null, [locale]],
+        ['Book', null, [locale]]
+      ];
 
-    callBatchThenCache(preloads).then(() => {
-      dynamicStyleSheet = new DynamicStyleSheet(document);
-      createRoot(root).render(
+      callBatchThenCache(preloads).then(() => {
+        dynamicStyleSheet = new DynamicStyleSheet(document);
+        createRoot(root).render(
           <StrictMode>
             <Controller
-              id={randomID()}
-              xsprops={props}
               locale={locale}
-            />
+              cntlkey={randomID()}/>
           </StrictMode>);
-    }).catch((er) => { log.error(er); });
+      }).catch((er) => { log.error(er); });
+    }
   }
 });

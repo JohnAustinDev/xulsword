@@ -1,12 +1,15 @@
 import C from '../constant.ts';
 import G from '../renderer/rg.ts';
 import S from '../defaultPrefs.ts';
-import { JSON_parse, hierarchy, mergePrefRoot, randomID, strings2Numbers } from '../common.ts';
+import { hierarchy, mergePrefRoot, randomID } from '../common.ts';
 
 import type { TreeNodeInfo } from '@blueprintjs/core';
 import type { GType, OSISBookType, PrefRoot, TreeNodeInfoPref } from '../type.ts';
-import type { SelectVKType } from '../renderer/libxul/selectVK.tsx';
+import type { SelectVKProps, SelectVKType } from '../renderer/libxul/selectVK.tsx';
 import type { SelectORMType, SelectORProps } from '../renderer/libxul/selectOR.tsx';
+import type { MenulistProps } from '../renderer/libxul/menulist.tsx';
+
+declare const drupalSettings: any;
 
 export type ChaplistVKType = { [bk in OSISBookType]?: Array<[number, string]> }
 
@@ -14,18 +17,71 @@ export type ChaplistORType = Array<[string, string, string]> // [order, key, url
 
 export type SelectData = {
   title: string;
-  items: unknown[];
+  base: string;
+  items: FileItem[];
 }
 
-export type FileItems = Array<{
-  format: string;
-  types: string[];
-  osisbooks: OSISBookType[];
+export type FileItem = {
   name: string;
-  filename: string;
   size: string;
-  url: string;
-}>
+  path: string;
+  types: string[];
+  osisbook: OSISBookType;
+}
+
+export type selectVKCompData = {
+  component: 'selectVK';
+  action: 'bible_audio_Play';
+  langcode: string;
+  props: SelectVKProps;
+  data: ChaplistVKType;
+}
+
+export type selectORCompData = {
+  component: 'selectOR';
+  action: 'genbk_audio_Play';
+  langcode: string;
+  props: SelectORProps;
+  data: ChaplistORType;
+}
+
+export type selectOptionsCompData = {
+  component: 'selectOptions';
+  action: 'update_url';
+  langcode: string;
+  props: MenulistProps;
+  data: SelectData;
+}
+
+export type browserCompData = {
+  component: 'bibleBrowser';
+  langcode: string;
+  prefs: Partial<PrefRoot>;
+}
+
+export type ComponentData =
+  browserCompData |
+  selectVKCompData |
+  selectORCompData |
+  selectOptionsCompData;
+
+export function componentData(elem: Element): ComponentData {
+  let drupalData: Record<string, ComponentData> | undefined;
+  if (elem.tagName === 'IFRAME') {
+    const parentWindow = frameElement?.ownerDocument?.defaultView;
+    if (parentWindow) {
+      drupalData = (parentWindow as any).drupalSettings?.react;
+    }
+  } else {
+    drupalData = drupalSettings?.react;
+  }
+  if (drupalData) {
+    const mydata = drupalData[elem.id] as ComponentData | undefined;
+    if (mydata) return mydata;
+    throw new Error(`No drupalSettings data for id '${elem.id}'.`);
+  }
+  throw new Error('No drupalSettings data found.');
+}
 
 // Insure a partial prefs root object has a valid locale set in it.
 export function setGlobalLocale(prefs: Partial<PrefRoot>, langcode?: string): string {
@@ -106,14 +162,15 @@ export function handleAction(type: string, id: string, ...args: any[]): void {
       break;
     }
     case 'update_url': {
-      const [pubtitle, item] = args as [string, unknown];
+      const [title, base, items, index] = args as [string, string, FileItem[], number];
       const elem = document.getElementById(id)?.previousElementSibling;
+      const item = items[index];
       if (elem && item && typeof item === 'object') {
-        const { url, size } = item as { url?: string; size?: string };
+        const { path, size } = item;
         const a = elem.querySelector('a');
-        if (a && url) {
-          a.setAttribute('href', url.replace(/^base:/, ''));
-          a.textContent = optionText(item, true, pubtitle);
+        if (a && path) {
+          a.setAttribute('href', `${base}/${path}`);
+          a.textContent = optionText(item, true, title, items.length === 1);
           if (size && a.parentElement?.tagName === 'SPAN') {
             const sizeSpan = a.parentElement.nextElementSibling;
             if (sizeSpan && sizeSpan.tagName === 'SPAN') {
@@ -130,32 +187,30 @@ export function handleAction(type: string, id: string, ...args: any[]): void {
 }
 
 export function optionKey(data: unknown): string {
-  if (data && typeof data === 'object' && 'url' in data) {
-    return data.url as string;
+  if (data && typeof data === 'object' && 'path' in data) {
+    return data.path as string;
   }
   return randomID();
 }
 
-export function optionText(data: unknown, long = false, title = ''): string {
-  if (data && typeof data === 'object' && 'url' in data) {
-    return getEBookTitle(data as FileItems[number], long, title);
+export function optionText(data: unknown, long = false, title = '', onlyOption = false): string {
+  if (data && typeof data === 'object' && 'path' in data) {
+    return getEBookTitle(data as FileItem, long, title, onlyOption);
   }
   return 'unknown';
 }
 
 // Generate a short or long title for an eBook file. The forms of the title are:
-// short: 'Full publication', books (for bible), title (for all others).
+// short: 'Full publication' or 'Compilation', books (for bible), title (for all others).
 // long: publication-name, books: publication-name (for bible), title: publication-name (others)
-export function getEBookTitle(data: FileItems[number], long = false, pubname = ''): string {
-  const { types, osisbooks, name } = data;
-
+export function getEBookTitle(data: FileItem, long = false, pubname = '', onlyOption = false): string {
+  const { types, osisbook, name } = data;
   const Book = G.Book(G.i18n.language);
-  const books = osisbooks.map((bk) => Book[bk].name).join(', ');
 
-  if (['full', 'compilation'].some((x) => types.includes(x))) {
+  if (!onlyOption && ['full', 'compilation'].some((x) => types.includes(x))) {
     return long ? pubname : G.i18n.t('Full publication');
   } else if (types.includes('part')) {
-    return long ? `${books}: ${pubname}` : books;
+    return long ? `${Book[osisbook].name}: ${pubname}` : Book[osisbook].name;
   }
   return long && name !== pubname ? `${name}: ${pubname}` : name;
 }
@@ -211,56 +266,4 @@ export function createNodeList(
     nodes
   }];
   if (!treenodes.find((n) => n.id === props.initialORM.keys[0])) { props.initialORM.keys = [nodes[0].id.toString()]; }
-}
-
-export function decodeJSData(str?: string): any {
-  if (!str) return {};
-  return strings2Numbers(JSON_parse(decompressString(decodeURIComponent(str))));
-}
-
-// Zip compress to reduce string length for strings that contain repetitions.
-export function compressString(str: string): string {
-  const e: Record<string, number> = {};
-  const f = str.split('');
-  const d: Array<string | number> = [];
-  let a: string = f[0];
-  let g = 256;
-  let c: string;
-  for (let b = 1; b < f.length; b++) {
-    c = f[b];
-    if (e[a + c] != null) a += c;
-    else {
-      d.push(a.length > 1 ? e[a] : a.charCodeAt(0));
-      e[a + c] = g;
-      g++;
-      a = c;
-    }
-  }
-  d.push(a.length > 1 ? e[a] : a.charCodeAt(0));
-  for (let b = 0; b < d.length; b++) {
-    d[b] = String.fromCharCode(d[b] as number);
-  }
-  return d.join('');
-}
-
-// Decompress a zipped compressString().
-export function decompressString(str: string): string {
-  let a: string;
-  const e: Record<string, number | string> = {};
-  const d = str.split('');
-  let c: string = d[0];
-  let f = d[0];
-  const g = [c];
-  const h = 256;
-  let o = 256;
-  for (let b = 1; b < d.length; b++) {
-    const dbc = d[b].charCodeAt(0);
-    a = h > dbc ? d[b] : e[dbc] ? e[dbc].toString() : f + c;
-    g.push(a);
-    c = a.charAt(0);
-    e[o] = f + c;
-    o++;
-    f = a;
-  }
-  return g.join('');
 }

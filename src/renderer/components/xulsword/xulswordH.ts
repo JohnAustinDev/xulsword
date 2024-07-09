@@ -11,7 +11,7 @@ import { genBookAudioFile, verseKeyAudioFile } from '../../rutil.ts';
 import { verseKey } from '../../htmlData.ts';
 
 import type { GenBookAudioFile, ShowType, VerseKeyAudioFile } from '../../../type.ts';
-import type { BrowserProps } from '../../../browser/bible-browser.tsx';
+import type { BrowserControllerState } from '../../../browser/bible-browser.tsx';
 import type Xulsword from './xulsword.tsx';
 import type { XulswordState } from './xulsword.tsx';
 
@@ -153,7 +153,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
         case 'addcolumn':
         case 'removecolumn': {
           setGlobalPanels(G.Prefs, 0, (currentId === 'addcolumn' ? 1 : -1));
-            window.browserState((prevState: BrowserProps) => {
+            window.browserState((prevState: BrowserControllerState) => {
               const s = clone(prevState);
               s.key = randomID();
               return s;

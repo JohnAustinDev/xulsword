@@ -1,8 +1,8 @@
 import React, { StrictMode, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import SocketConnect from './preload.ts';
-import { handleAction, decodeJSData, createNodeList, setGlobalLocale, getProps, writePrefsStores, optionKey, optionText } from './bcommon.ts';
-import { clone, diff, randomID } from '../common.ts';
+import { handleAction, createNodeList, setGlobalLocale, getProps, writePrefsStores, optionKey, optionText, componentData } from './bcommon.ts';
+import { clone, diff } from '../common.ts';
 import C from '../constant.ts';
 import G from '../renderer/rg.ts';
 import log from '../renderer/log.ts';
@@ -19,19 +19,18 @@ import type { SelectORMType, SelectORProps } from '../renderer/libxul/selectOR.t
 import type { MenulistProps } from '../renderer/libxul/menulist.tsx';
 
 // Each SelectVK will keep its own state, providing chapter selection from any
-// installed SWORD module, unless the parent div has a valid data-chaplist
-// attribute value. In that case the SelectVK will become a controlled
-// component where only chapters listed in data-chaplist will be available
-// for selection.
+// installed SWORD module, unless the chaplist is set. In that case the SelectVK
+// will become a controlled component where only chapters listed in data-chaplist
+// will be available for selection.
 function ControllerVK (
   props: {
-    id: string;
+    compid: string;
     initial: Omit<SelectVKProps, 'onSelection'>;
     chaplist?: ChaplistVKType;
     action?: string;
   }
 ): React.JSX.Element {
-  const { id, action, initial, chaplist } = props;
+  const { compid, action, initial, chaplist } = props;
 
   const onSelectVK = (selection?: SelectVKType): void => {
     if (selection) {
@@ -53,7 +52,7 @@ function ControllerVK (
           if (typeof diff(s, prevState) !== 'undefined') newState = s;
         }
         if (action && newState !== prevState) {
-          handleAction(action, id, selection, chaplist);
+          handleAction(action, compid, selection, chaplist);
         }
         return newState;
       });
@@ -97,17 +96,17 @@ function ControllerVK (
 
 function ControllerOR (
   props: {
-    id: string;
+    compid: string;
     initial: Partial<SelectORProps>;
     chaplist?: ChaplistORType;
     action?: string;
   }
 ): React.JSX.Element {
-  const { id, initial } = props;
+  const { compid, initial } = props;
 
   const onSelectOR = (selection?: SelectORMType): void => {
     const { action, chaplist } = props;
-    if (action) handleAction(action, id, selection, chaplist);
+    if (action) handleAction(action, compid, selection, chaplist);
   };
 
   const [state] = useState(() => {
@@ -126,17 +125,17 @@ function ControllerOR (
 
 function ControllerSelect (
   props: {
-    id: string;
+    compid: string;
     initial: Omit<MenulistProps, 'onChange'>;
     data?: SelectData;
     action?: string;
   }
 ): React.JSX.Element {
-  const { initial, data, action, id } = props;
+  const { initial, data, action, compid } = props;
 
-  // Number strings always come from Drupal as numbers, but React.propTypes expects a string value.
+  // Although this value is a number, MenuList expects a string.
   const { value } = initial;
-  if (typeof value === 'number') initial.value = (value as any).toString();
+  if (Number.isInteger(value)) initial.value = value.toString();
 
   const onChange = (e: React.SyntheticEvent<HTMLSelectElement, ChangeEvent>): void => {
     const select = e.target as HTMLSelectElement;
@@ -145,7 +144,7 @@ function ControllerSelect (
       newState.value = select.value;
       return newState;
     });
-    jQuery(`#${id}`).prev().fadeTo(1, 0).fadeTo(1000, 1);
+    jQuery(`#${compid}`).prev().fadeTo(1, 0).fadeTo(1000, 1);
   };
 
   const [state, setState] = useState(() => {
@@ -159,7 +158,10 @@ function ControllerSelect (
   useEffect(() => {
     const { value } = state;
     const index = value && typeof value === 'string' ? Number(value) || 0 : 0;
-    if (action && data) handleAction(action, id, data.title, data.items[index]);
+    if (data) {
+      const { title, base, items } = data;
+      if (action && data) handleAction(action, compid, title, base, items, index);
+    }
   }, [state.value]);
 
   const options = data
@@ -180,9 +182,12 @@ socket.on('connect', () => {
   if (!published) {
     published = true;
 
-    let langcode;
-    const widget = document.getElementsByClassName('widget-container')[0];
-    if (widget) ({ langcode } = (widget as HTMLDivElement).dataset);
+    let langcode = 'en';
+    const widget = document.getElementsByClassName('widget-container');
+    if (widget?.length) {
+      const data = componentData(widget[0]);
+      langcode = data.langcode;
+    }
     const prefs: Partial<PrefRoot> = {};
     const locale = setGlobalLocale(prefs, langcode);
     writePrefsStores(G, prefs);
@@ -197,7 +202,6 @@ socket.on('connect', () => {
       ['Book', null, [locale]],
       ['i18n', 't', ['locale_direction']],
       ['i18n', 't', ['Full publication']],
-      ['i18n', 't', ['supplemental']],
       ...(Object.values(C.SupportedTabTypes)
         .map((type) => ['i18n', 't', [type, { lng: locale }]] as any))
     ];
@@ -206,50 +210,51 @@ socket.on('connect', () => {
       const widgets = document.getElementsByClassName('widget-container');
       (Array.from(widgets) as HTMLDivElement[])
         .forEach((widget) => {
-          const id = randomID();
-          widget.setAttribute('id', id);
-          const { props: p, data, action, widget: widgetType } = widget.dataset;
-          switch (widgetType) {
+          const { id: compid } = widget;
+          const compData = componentData(widget);
+          const { component } = compData;
+          switch (component) {
             case 'selectVK': {
+              const { action, data, props } = compData;
               createRoot(widget).render(
                 <StrictMode>
                   <ControllerVK
-                    id={id}
+                    compid={compid}
                     action={action}
-                    chaplist={decodeJSData(data) as ChaplistVKType}
-                    initial={decodeJSData(p) as SelectVKProps} />
+                    chaplist={data}
+                    initial={props} />
                 </StrictMode>);
               break;
             }
             case 'selectOR': {
-              const props = decodeJSData(p) as SelectORProps;
-              const chaplist = decodeJSData(data) as ChaplistORType;
-              chaplist.forEach((x) => { x[0] = x[0].toString(); });
-              if (Array.isArray(chaplist)) {
-                createNodeList(chaplist, props);
+              const { action, data, props } = compData;
+              data.forEach((x) => { x[0] = x[0].toString(); });
+              if (Array.isArray(data)) {
+                createNodeList(data, props);
               }
               createRoot(widget).render(
                 <StrictMode>
                   <ControllerOR
-                    id={id}
+                    compid={compid}
                     action={action}
-                    chaplist={chaplist}
+                    chaplist={data}
                     initial={props} />
                 </StrictMode>);
               break;
             }
             case 'selectOptions': {
+              const { action, data, props } = compData;
               createRoot(widget).render(
                 <StrictMode>
                   <ControllerSelect
-                    id={id}
+                    compid={compid}
                     action={action}
-                    data={decodeJSData(data) as SelectData}
-                    initial={decodeJSData(p) as MenulistProps} />
+                    data={data}
+                    initial={props} />
                 </StrictMode>);
               break;
             }
-            default: log.error(`Unknown widget type '${widgetType}'`);
+            default: log.error(`Unknown widget type '${component}'`);
           }
           widget.removeAttribute('data-props');
           widget.removeAttribute('data-chaplist');

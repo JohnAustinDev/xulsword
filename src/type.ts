@@ -50,7 +50,7 @@ import type { CallBatch } from './main/handleGlobal.ts';
 import type Viewport from './main/components/viewport.ts';
 import type { getExtRefHTML, locationVKText } from './main/versetext.ts';
 import type RenderPromise from './renderer/renderPromise.ts';
-import type { BrowserProps } from './browser/bible-browser.tsx';
+import type { BrowserControllerState } from './browser/bible-browser.tsx';
 
 declare global {
   export interface Window {
@@ -80,7 +80,7 @@ declare global {
   function ReportSearchIndexerProgress(percent: number): void;
 
   var isPublicServer: boolean;
-  function browserState(arg: BrowserProps | ((ps: BrowserProps) => BrowserProps)): void;
+  function browserState(arg: BrowserControllerState | ((ps: BrowserControllerState) => BrowserControllerState)): void;
   var browserMaxPanels: number | undefined;
 }
 
