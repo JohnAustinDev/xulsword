@@ -1,40 +1,27 @@
-/* eslint-disable no-continue */
-/* eslint-disable react/forbid-prop-types */
-/* eslint-disable react/jsx-props-no-spreading */
-/* eslint-disable jsx-a11y/iframe-has-title */
-/* eslint-disable react/no-did-update-set-state */
-/* eslint-disable react/no-array-index-key */
-/* eslint-disable jsx-a11y/anchor-is-valid */
-/* eslint-disable @typescript-eslint/no-use-before-define */
-/* eslint-disable react/static-property-placement */
+/* eslint-disable @typescript-eslint/unbound-method */
 import React from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
-import {
-  ToastProps,
-  Icon,
-  Intent,
-  Position,
-  Toaster,
-  OverlayToaster,
-} from '@blueprintjs/core';
+import { Icon, Intent, Position, OverlayToaster } from '@blueprintjs/core';
 import Subscription from '../../subscription.ts';
 import { clone, diff, keep, randomID } from '../../common.ts';
-import S from '../../defaultPrefs.ts';
 import C from '../../constant.ts';
 import G from '../rg.ts';
 import { getStatePref, setStatePref } from '../rutil.ts';
 import { Hbox, Vbox } from './boxes.tsx';
 import Button from './button.tsx';
 import Spacer from './spacer.tsx';
-import { addClass, XulProps, xulPropTypes } from './xul.tsx';
+import { addClass, xulPropTypes } from './xul.tsx';
 import Menulist from './menulist.tsx';
 import Textbox from './textbox.tsx';
 import Label from './label.tsx';
 import Groupbox from './groupbox.tsx';
 import './printSettings.css';
 
+import type { Toaster, ToastProps } from '@blueprintjs/core';
+import type S from '../../defaultPrefs.ts';
 import type { RootPrintType, WindowRootState } from '../renderer.tsx';
+import type { XulProps } from './xul.tsx';
 
 export const paperSizes = [
   { type: 'A3', w: 297, h: 420, u: 'mm' },
@@ -148,7 +135,7 @@ export default class PrintSettings extends React.Component {
 
   componentDidUpdate(
     prevProps: PrintSettingsProps,
-    prevState: PrintSettingsState
+    prevState: PrintSettingsState,
   ) {
     const { pages } = this.state as PrintSettingsState;
     const { printDisabled, print } = this.props as PrintSettingsProps;
@@ -166,7 +153,7 @@ export default class PrintSettings extends React.Component {
           'pageSize',
           'scale',
           'twoColumns',
-        ])
+        ]),
       )
     ) {
       Subscription.publish.setRendererRootState({ reset: randomID() });
@@ -260,7 +247,7 @@ export default class PrintSettings extends React.Component {
               } as PrintSettingsState;
               const input = e.target as HTMLInputElement;
               s.margins[id2 as keyof PrintSettingsState['margins']] = Number(
-                input.value
+                input.value,
               );
               return s;
             });
@@ -426,7 +413,7 @@ export default class PrintSettings extends React.Component {
   }
 
   getPageInfo(): {
-    paperSize: typeof paperSizes[number];
+    paperSize: (typeof paperSizes)[number];
     initialPageViewW: number;
     pageViewW: number;
     pageViewH: number;
@@ -452,8 +439,8 @@ export default class PrintSettings extends React.Component {
       if (initialPageViewW < 100) initialPageViewW = 100;
 
       const paperSize = paperSizes.find(
-        (p) => p.type === pageSize
-      ) as typeof paperSizes[number];
+        (p) => p.type === pageSize,
+      ) as (typeof paperSizes)[number];
       const realPaperW = paperSize[landscape ? 'h' : 'w'];
       const realPaperH = paperSize[landscape ? 'w' : 'h'];
 
@@ -707,7 +694,7 @@ export default class PrintSettings extends React.Component {
                 </div>
               )}
             </Hbox>,
-            pageView.current
+            pageView.current,
           )}
         <style>{style}</style>
         <div className="printControls" ref={controls} />

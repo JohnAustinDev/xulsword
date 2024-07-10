@@ -1,5 +1,7 @@
-import { GBuilder, GCallType, GITypeMain as GIMainType, GType } from '../type.ts';
+import { GBuilder } from '../type.ts';
 import { JSON_stringify } from '../common.ts';
+
+import type { GCallType, GITypeMain as GIMainType, GType } from '../type.ts';
 
 // Handle global variable calls from renderer processes
 export default function handleGlobal(
@@ -29,10 +31,13 @@ export default function handleGlobal(
     } else if (m && typeof gBuilder[name] === 'object') {
       if (!Array.isArray(args) && gBuilder[name][m] === 'getter') {
         ret = gx[name][m];
-      } else if (Array.isArray(args) && typeof gBuilder[name][m] === 'function') {
+      } else if (
+        Array.isArray(args) &&
+        typeof gBuilder[name][m] === 'function'
+      ) {
         if (
           Array.isArray(args) &&
-          includeCallingWindow.includes(name as any) &&
+          includeCallingWindow.includes(name as never) &&
           typeof args[gx[name][m].length] === 'undefined'
         ) {
           args[gx[name][m].length] = win;
@@ -42,7 +47,9 @@ export default function handleGlobal(
         throw Error(`Unhandled global ipc method: ${JSON_stringify(acall)}`);
       }
     } else {
-      throw Error(`Unhandled global ipc type ${gBuilder[name]}: ${JSON_stringify(acall)}`);
+      throw Error(
+        `Unhandled global ipc type ${gBuilder[name]}: ${JSON_stringify(acall)}`,
+      );
     }
   } else {
     throw Error(`Disallowed global ipc request: ${JSON_stringify(acall)}`);
@@ -51,16 +58,16 @@ export default function handleGlobal(
   return ret;
 }
 
-export type CallBatch = (calls: (GCallType | null)[]) => (any | null)[];
+export type CallBatch = (calls: Array<GCallType | null>) => Array<any | null>;
 
 // All batch calls are considered anonymous-window and are untrusted.
 export function callBatch(
   GX: GType | GIMainType,
-  calls: Parameters<CallBatch>[0]
+  calls: Parameters<CallBatch>[0],
 ): ReturnType<CallBatch> {
   const resp: any[] = [];
 
-  calls.forEach((c: (GCallType | null)) => {
+  calls.forEach((c: GCallType | null) => {
     if (c === null) resp.push(null);
     else resp.push(handleGlobal(GX, -1, c, false));
   });

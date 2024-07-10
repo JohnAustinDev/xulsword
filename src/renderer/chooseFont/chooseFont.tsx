@@ -1,15 +1,13 @@
-/* eslint-disable react/static-property-placement */
-/* eslint-disable jsx-a11y/control-has-associated-label */
 import type { ReactElementLike } from 'prop-types';
 import React from 'react';
-import { ChromePicker as ColorPicker, ColorResult } from 'react-color';
+import { ChromePicker as ColorPicker } from 'react-color';
 import { Slider } from '@blueprintjs/core';
 import { diff, normalizeFontFamily } from '../../common.ts';
 import G from '../rg.ts';
 import renderToRoot from '../renderer.tsx';
 import log from '../log.ts';
 import { windowArguments } from '../rutil.ts';
-import { XulProps, xulPropTypes } from '../libxul/xul.tsx';
+import { xulPropTypes } from '../libxul/xul.tsx';
 import { Hbox, Vbox } from '../libxul/boxes.tsx';
 import Groupbox from '../libxul/groupbox.tsx';
 import Label from '../libxul/label.tsx';
@@ -28,6 +26,9 @@ import handlerH, {
   computedStyle,
 } from './chooseFontH.ts';
 import './chooseFont.css';
+
+import type { ColorResult } from 'react-color';
+import type { XulProps } from '../libxul/xul.tsx';
 
 const nocolor = { r: 128, g: 128, b: 128, a: 128 };
 
@@ -78,7 +79,9 @@ export default class ChooseFontWin extends React.Component {
         this.setState({ fonts });
         return true;
       })
-      .catch((err: Error) => log.error(err));
+      .catch((err: Error) => {
+        log.error(err);
+      });
   }
 
   componentDidUpdate(_prevProps: any, prevState: ChooseFontWinState) {
@@ -121,18 +124,18 @@ export default class ChooseFontWin extends React.Component {
           return (
             <option key={font} value={font} label={font.replace(/['"]/g, '')} />
           );
-        })
+        }),
       );
     }
 
     const disabled = Boolean(
-      removeModuleUserStyles || makeDefault || removeAllUserStyles
+      removeModuleUserStyles || makeDefault || removeAllUserStyles,
     );
     const disableRD = Boolean(makeDefault || removeAllUserStyles);
     const disableMD = Boolean(removeModuleUserStyles || removeAllUserStyles);
     const disableAD = Boolean(removeModuleUserStyles || makeDefault);
 
-    const compute: (keyof ChooseFontWinState)[] = [
+    const compute: Array<keyof ChooseFontWinState> = [
       'fontFamily',
       'color',
       'background',
@@ -164,14 +167,26 @@ export default class ChooseFontWin extends React.Component {
         #background .color-box {${backgroundCSS}}`}</style>
         {ruSureDialog && (
           <Dialog
-            body={<>G.i18n.t('dialog.confirmDelete')</>}
+            body={<>{G.i18n.t('dialog.confirmDelete')}</>}
             buttons={
               <>
                 <Spacer flex="10" />
-                <Button flex="1" fill="x" onClick={() => ruSureDialog(false)}>
+                <Button
+                  flex="1"
+                  fill="x"
+                  onClick={() => {
+                    ruSureDialog(false);
+                  }}
+                >
                   {G.i18n.t('no.label')}
                 </Button>
-                <Button flex="1" fill="x" onClick={() => ruSureDialog(true)}>
+                <Button
+                  flex="1"
+                  fill="x"
+                  onClick={() => {
+                    ruSureDialog(true);
+                  }}
+                >
                   {G.i18n.t('yes.label')}
                 </Button>
                 <Spacer width="10px" />
@@ -346,4 +361,6 @@ renderToRoot(<ChooseFontWin height="100%" />, {
   onunload: () => {
     preclose();
   },
+}).catch((er) => {
+  log.error(er);
 });

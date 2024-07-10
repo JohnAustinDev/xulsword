@@ -1,15 +1,4 @@
-/* eslint-disable react-hooks/rules-of-hooks */
-/* eslint-disable react/forbid-prop-types */
-/* eslint-disable jsx-a11y/iframe-has-title */
-/* eslint-disable react/jsx-props-no-spreading */
-/* eslint-disable import/no-mutable-exports */
-import React, {
-  ReactElement,
-  StrictMode,
-  SyntheticEvent,
-  useEffect,
-  useState,
-} from 'react';
+import React, { StrictMode, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import PropTypes from 'prop-types';
 import { Intent, ProgressBar, Spinner, Tag } from '@blueprintjs/core';
@@ -37,6 +26,7 @@ import '@blueprintjs/icons/lib/css/blueprint-icons.css';
 import '@blueprintjs/core/lib/css/blueprint.css';
 import './global-htm.css';
 
+import type { ReactElement, SyntheticEvent } from 'react';
 import type {
   CipherKey,
   ModalType,
@@ -44,13 +34,15 @@ import type {
   WindowDescriptorPrefType,
 } from '../type.ts';
 import type { SubscriptionType } from '../subscription.ts';
+import type { StyleType } from './style.ts';
 
 const descriptor = windowArguments();
 Cache.write(`${descriptor.type}:${descriptor.id}`, 'windowID');
 log.debug(`Initializing new window:`, descriptor);
 
-window.onerror = (errorMsg, url, line) => {
-  const msg = `${errorMsg} at: ${url} line: ${line}`;
+window.onerror = (er, url, line) => {
+  const er2 = typeof er === 'object' ? er.type : er;
+  const msg = `${er2} at: ${url} line: ${line}`;
   window.ipc.send('error-report', msg);
   return false;
 };
@@ -70,10 +62,10 @@ window.ipc.on('cache-reset', () => {
 
 const dynamicStyleSheet = new DynamicStyleSheet(document);
 
-dynamicStyleSheet.update(G.Data.read('stylesheetData'));
-window.ipc.on('dynamic-stylesheet-reset', () =>
-  dynamicStyleSheet.update(G.Data.read('stylesheetData'))
-);
+dynamicStyleSheet.update(G.Data.read('stylesheetData') as StyleType);
+window.ipc.on('dynamic-stylesheet-reset', () => {
+  dynamicStyleSheet.update(G.Data.read('stylesheetData') as StyleType);
+});
 
 // Set window type and language classes on the root html element.
 const classes: string[] = [];
@@ -122,11 +114,11 @@ type WindowRootProps = WindowRootOptions & {
 };
 
 // Key order must never change for React hooks to work!
-const stateme = Object.keys(InitialState) as (keyof typeof InitialState)[];
+const stateme = Object.keys(InitialState) as Array<keyof typeof InitialState>;
 
 type StateArray<M extends keyof WindowRootState> = [
   WindowRootState[M],
-  (a: WindowRootState[M]) => void
+  (a: WindowRootState[M]) => void,
 ];
 
 const delayHandlerThis = {};
@@ -145,9 +137,9 @@ function WindowRoot(props: WindowRootProps) {
   useEffect(() => {
     return window.ipc.on('component-reset', () => {
       log.debug(
-        `Renderer reset (stylesheet, cache, component): ${descriptor.id}`
+        `Renderer reset (stylesheet, cache, component): ${descriptor.id}`,
       );
-      dynamicStyleSheet.update(G.Data.read('stylesheetData'));
+      dynamicStyleSheet.update(G.Data.read('stylesheetData') as StyleType);
       Cache.clear();
       s.reset[1](randomID());
     });
@@ -198,8 +190,8 @@ function WindowRoot(props: WindowRootProps) {
             s.reset[1](randomID());
           },
           C.UI.Window.resizeDelay,
-          'resizeTO'
-        )
+          'resizeTO',
+        ),
       );
     }
     return () => {};
@@ -209,16 +201,19 @@ function WindowRoot(props: WindowRootProps) {
   useEffect(() => {
     return window.ipc.on(
       'publish-subscription',
-      (subscription: keyof SubscriptionType['publish'], ...args: any) => {
+      (subscription: keyof SubscriptionType['publish'], ...args: unknown[]) => {
         Subscription.doPublish(subscription, ...args);
-      }
+      },
     );
   });
 
   // Installer drag-and-drop setup:
   useEffect(() => {
     const root = document.getElementById('root');
-    if (root && ['xulswordWin', 'viewportWin'].includes(descriptor.type ?? '')) {
+    if (
+      root &&
+      ['xulswordWin', 'viewportWin'].includes(descriptor.type ?? '')
+    ) {
       root.ondragover = (e) => {
         e.preventDefault();
         s.modal[1]('outlined');
@@ -231,9 +226,9 @@ function WindowRoot(props: WindowRootProps) {
         e.preventDefault();
         if (e.dataTransfer?.files.length) {
           G.Commands.installXulswordModules(
-            Array.from(e.dataTransfer.files).map((f) => f.path) || []
-          ).catch((err) => {
-            throw Error(err);
+            Array.from(e.dataTransfer.files).map((f) => f.path) || [],
+          ).catch((er) => {
+            log.error(er);
           });
         } else {
           s.modal[1]('off');
@@ -254,9 +249,9 @@ function WindowRoot(props: WindowRootProps) {
     return Subscription.subscribe.modulesInstalled(
       (newmods: NewModulesType) => {
         log.debug(
-          `Renderer reset (cache, stylesheet, component): ${descriptor.id}`
+          `Renderer reset (cache, stylesheet, component): ${descriptor.id}`,
         );
-        dynamicStyleSheet.update(G.Data.read('stylesheetData'));
+        dynamicStyleSheet.update(G.Data.read('stylesheetData') as StyleType);
         Cache.clear();
         s.reset[1](randomID());
         const dialog: ReactElement[] = [];
@@ -292,7 +287,7 @@ function WindowRoot(props: WindowRootProps) {
                           {msg}
                         </Tag>
                       );
-                    })
+                    }),
                   )}
                 </>
               }
@@ -302,13 +297,15 @@ function WindowRoot(props: WindowRootProps) {
                   <Button
                     flex="1"
                     fill="x"
-                    onClick={() => s.dialogs[1](s.dialogs[0].splice(0, 1))}
+                    onClick={() => {
+                      s.dialogs[1](s.dialogs[0].splice(0, 1));
+                    }}
                   >
                     {G.i18n.t('ok.label')}
                   </Button>
                 </>
               }
-            />
+            />,
           );
         }
         newmods.nokeymods.forEach((conf) => {
@@ -353,13 +350,13 @@ function WindowRoot(props: WindowRootProps) {
                   </Button>
                 </>
               }
-            />
+            />,
           );
         });
         if (dialog.length) {
           s.dialogs[1](dialog);
         }
-      }
+      },
     );
   });
 
@@ -451,17 +448,17 @@ export default async function renderToRoot(
   component: ReactElement,
   options?: Partial<Omit<WindowRootOptions, 'print'>> & {
     print?: Partial<RootPrintType>;
-  }
+  },
 ) {
   const { onload, onunload } = options || {};
   const { print: printArg, initialState: initialStateArg } = options || {};
   const print: RootPrintType = {
     pageable: false,
     dialogEnd: 'cancel' as const,
-    pageView: React.createRef() as React.RefObject<HTMLDivElement>,
-    printContainer: React.createRef() as React.RefObject<HTMLDivElement>,
-    controls: React.createRef() as React.RefObject<HTMLDivElement>,
-    settings: React.createRef() as React.RefObject<HTMLDivElement>,
+    pageView: React.createRef(),
+    printContainer: React.createRef(),
+    controls: React.createRef(),
+    settings: React.createRef(),
     ...printArg,
   };
   const initialState = {
@@ -480,7 +477,7 @@ export default async function renderToRoot(
       >
         {component}
       </WindowRoot>
-    </StrictMode>
+    </StrictMode>,
   );
 
   window.onbeforeunload = () => {

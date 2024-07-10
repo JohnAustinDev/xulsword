@@ -1,8 +1,4 @@
-/* eslint-disable react/forbid-prop-types */
-/* eslint-disable jsx-a11y/anchor-is-valid */
-/* eslint-disable react/destructuring-assignment */
-/* eslint-disable react/jsx-props-no-spreading */
-
+/* eslint-disable @typescript-eslint/no-misused-promises */
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -14,7 +10,7 @@ import {
 import C from '../../constant.ts';
 import G from '../rg.ts';
 import { moduleInfoHTML } from '../rutil.ts';
-import { xulPropTypes, XulProps, htmlAttribs } from './xul.tsx';
+import { xulPropTypes, type XulProps, htmlAttribs } from './xul.tsx';
 import Button from './button.tsx';
 import Label from './label.tsx';
 import '../libsword.css'; // modinfo uses .head1
@@ -29,19 +25,19 @@ export const modinfoParentInitialState = {
 };
 
 // Parent component should implement this interface.
-export interface ModinfoParent {
+export type ModinfoParent = {
   modinfoRefs: {
     textarea: React.RefObject<HTMLTextAreaElement>;
     container: React.RefObject<HTMLDivElement>;
   };
   setState: React.Component['setState'];
-}
+};
 
 // Parent component should pass this function (bound) to the
 // Modinfo buttonHandler prop.
 export function modinfoParentHandler(
   this: ModinfoParent,
-  e: React.SyntheticEvent
+  e: React.SyntheticEvent,
 ): void {
   switch (e.type) {
     case 'click': {
@@ -115,7 +111,7 @@ const propTypes = {
   buttonHandler: PropTypes.func.isRequired,
 };
 
-interface ModinfoProps extends XulProps {
+type ModinfoProps = {
   configs: SwordConfType[];
   showConf: string; // unique id of conf to show
   editConf: boolean | undefined; // is showConf editable?
@@ -124,7 +120,7 @@ interface ModinfoProps extends XulProps {
     textarea: React.RefObject<HTMLTextAreaElement>; // ref to retreive conf edits
   };
   buttonHandler: (e: React.SyntheticEvent) => void | Promise<void>;
-}
+} & XulProps;
 
 type SwordConfExtraType = SwordConfType & {
   confID: string;
@@ -134,12 +130,7 @@ type SwordConfExtraType = SwordConfType & {
 };
 
 function Modinfo({ showConf = '', ...props }: ModinfoProps) {
-  const {
-    configs: configsx,
-    editConf,
-    refs,
-    buttonHandler,
-  } = props;
+  const { configs: configsx, editConf, refs, buttonHandler } = props;
   const { container, textarea } = refs;
 
   // Is not possible to edit or (currently) view a config file unless it
@@ -155,7 +146,7 @@ function Modinfo({ showConf = '', ...props }: ModinfoProps) {
       };
       if (c && isRepoLocal(c.sourceRepository)) {
         data.confPath = [c.sourceRepository.path, 'mods.d', c.filename].join(
-          '/'
+          '/',
         );
       }
       return {
@@ -193,7 +184,7 @@ function Modinfo({ showConf = '', ...props }: ModinfoProps) {
                     {G.i18n.t(
                       ((g in C.SupportedTabTypes &&
                         C.SupportedTabTypes[g as ModTypes]) ||
-                        'Genbks') as TabTypes
+                        'Genbks') as TabTypes,
                     )}
                   </div>
                   <div className="listbox">
@@ -208,7 +199,7 @@ function Modinfo({ showConf = '', ...props }: ModinfoProps) {
                               {c.label}
                             </a>
                           </li>
-                        ) : null
+                        ) : null,
                       )}
                     </ul>
                   </div>

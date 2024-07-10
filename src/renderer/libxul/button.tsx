@@ -5,7 +5,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Button as BPButton } from '@blueprintjs/core';
 import { keep } from '../../common.ts';
-import { xulPropTypes, XulProps, htmlAttribs } from './xul.tsx';
+import { xulPropTypes, type XulProps, htmlAttribs } from './xul.tsx';
 import './button.css';
 
 import type { ButtonProps as BPButtonProps } from '@blueprintjs/core';
@@ -62,7 +62,10 @@ Button.propTypes = propTypes;
 
 export default Button;
 
-export function AnchorButton({ disabled = false, ...props }: XulProps & { disabled?: boolean }) {
+export function AnchorButton({
+  disabled = false,
+  ...props
+}: XulProps & { disabled?: boolean }) {
   return (
     <a
       type="button"

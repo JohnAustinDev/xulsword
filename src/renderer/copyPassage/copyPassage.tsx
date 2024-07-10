@@ -1,13 +1,6 @@
-/* eslint-disable no-await-in-loop */
-/* eslint-disable no-restricted-syntax */
-/* eslint-disable react/no-did-update-set-state */
-/* eslint-disable react/no-array-index-key */
-/* eslint-disable jsx-a11y/anchor-is-valid */
-/* eslint-disable @typescript-eslint/no-use-before-define */
-/* eslint-disable react/static-property-placement */
+/* eslint-disable @typescript-eslint/unbound-method */
 import React from 'react';
 import { sanitizeHTML } from '../../common.ts';
-import S from '../../defaultPrefs.ts';
 import G from '../rg.ts';
 import renderToRoot from '../renderer.tsx';
 import { verseKey } from '../htmlData.ts';
@@ -20,18 +13,22 @@ import {
   getStatePref,
   setStatePref,
 } from '../rutil.ts';
+import log from '../log.ts';
 import { libswordText } from '../components/atext/ztext.ts';
-import { XulProps, xulPropTypes } from '../libxul/xul.tsx';
+import { xulPropTypes } from '../libxul/xul.tsx';
 import Groupbox from '../libxul/groupbox.tsx';
 import Checkbox from '../libxul/checkbox.tsx';
 import { Hbox, Vbox } from '../libxul/boxes.tsx';
 import Button from '../libxul/button.tsx';
-import SelectVK, { SelectVKType } from '../libxul/selectVK.tsx';
+import SelectVK from '../libxul/selectVK.tsx';
 import '../libsword.css';
 import '../components/atext/atext.css';
 import './copyPassage.css';
 
+import type S from '../../defaultPrefs.ts';
 import type VerseKey from '../../verseKey.ts';
+import type { XulProps } from '../libxul/xul.tsx';
+import type { SelectVKType } from '../libxul/selectVK.tsx';
 
 // TODO: CopyPassage font is underlined when viewed in LibreOffice.
 
@@ -47,7 +44,7 @@ export type CopyPassageState = typeof notStatePrefDefault &
   typeof S.prefs.copyPassage;
 
 const openedWinState = windowArguments(
-  'copyPassageState'
+  'copyPassageState',
 ) as Partial<CopyPassageState> | null;
 if (openedWinState) {
   Object.entries(openedWinState).forEach((entry) => {
@@ -76,7 +73,7 @@ export default class CopyPassageWin extends React.Component {
         const { v11n } = (s.passage.vkMod && G.Tab[s.passage.vkMod]) || {};
         s.passage.lastverse = getMaxVerse(
           v11n || s.passage.v11n || 'KJV',
-          `${s.passage.book}.${s.passage.lastchapter}`
+          `${s.passage.book}.${s.passage.lastchapter}`,
         );
       }
     }
@@ -87,7 +84,7 @@ export default class CopyPassageWin extends React.Component {
 
   componentDidUpdate(
     _prevProps: CopyPassageProps,
-    prevState: CopyPassageState
+    prevState: CopyPassageState,
   ) {
     setStatePref('prefs', 'copyPassage', prevState, this.state);
   }
@@ -133,7 +130,7 @@ export default class CopyPassageWin extends React.Component {
             ilModuleOption: [],
             modkey: '',
           },
-          0
+          0,
         );
         const div = testdiv.appendChild(document.createElement('div'));
         div.classList.add('text');
@@ -141,7 +138,7 @@ export default class CopyPassageWin extends React.Component {
         htmlVerses(
           div,
           ch === passage.chapter ? passage.verse || 1 : 1,
-          ch === passage.lastchapter ? passage.lastverse || null : null
+          ch === passage.lastchapter ? passage.lastverse || null : null,
         );
         computed2inlineStyle(div);
       }
@@ -154,7 +151,7 @@ export default class CopyPassageWin extends React.Component {
           verseKey({
             ...passage,
             lastverse: undefined,
-          })
+          }),
         );
         vks.push(
           verseKey({
@@ -162,14 +159,15 @@ export default class CopyPassageWin extends React.Component {
             chapter: passage.lastchapter || passage.chapter,
             verse: passage.lastverse,
             lastverse: undefined,
-          })
+          }),
         );
       }
       sanitizeHTML(
-        refdiv, `
+        refdiv,
+        `
         <span class="cs-locale">
           (${vks.map((vk) => vk.readable(G.i18n.language)).join('-')})
-        </span>`
+        </span>`,
       );
       G.clipboard.write({
         html: testdiv.innerHTML,
@@ -206,7 +204,7 @@ export default class CopyPassageWin extends React.Component {
                     id={cb}
                     label={G.i18n.t(`menu.view.${cb}`)}
                     checked={checked}
-                    onChange={() =>
+                    onChange={() => {
                       this.setState((prevState: CopyPassageState) => {
                         const s: Partial<CopyPassageState> = {
                           checkboxes: {
@@ -215,8 +213,8 @@ export default class CopyPassageWin extends React.Component {
                           },
                         };
                         return s;
-                      })
-                    }
+                      });
+                    }}
                   />
                 );
               })}
@@ -226,7 +224,12 @@ export default class CopyPassageWin extends React.Component {
             <Button onClick={passageToClipboard}>
               {G.i18n.t('menu.edit.copy')}
             </Button>
-            <Button id="cancel" onClick={() => {G.Window.close()}}>
+            <Button
+              id="cancel"
+              onClick={() => {
+                G.Window.close();
+              }}
+            >
               {G.i18n.t('cancel.label')}
             </Button>
           </Hbox>
@@ -237,4 +240,6 @@ export default class CopyPassageWin extends React.Component {
 }
 CopyPassageWin.propTypes = propTypes;
 
-renderToRoot(<CopyPassageWin />);
+renderToRoot(<CopyPassageWin />).catch((er) => {
+  log.error(er);
+});

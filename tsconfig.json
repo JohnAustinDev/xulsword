@@ -23,7 +23,7 @@
     "resolveJsonModule": true,
     "allowJs": true,
     "allowImportingTsExtensions": true,
-    "skipLibCheck": true,
+    "skipLibCheck": true
   },
-  "include": ["./src/**/*"],
+  "include": ["./src/**/*"]
 }

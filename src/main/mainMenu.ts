@@ -1,13 +1,7 @@
 /* eslint-disable no-nested-ternary */
 /* eslint-disable @typescript-eslint/no-use-before-define */
-import {
-  app,
-  Menu,
-  shell,
-  BrowserWindow,
-  MenuItemConstructorOptions,
-  MenuItem,
-} from 'electron';
+import { app, Menu, shell, MenuItem } from 'electron';
+import log from 'electron-log';
 import path from 'path';
 import {
   bookmarkItemIconPath,
@@ -16,13 +10,14 @@ import {
   xulswordLocation,
 } from '../common.ts';
 import C from '../constant.ts';
-import S from '../defaultPrefs.ts';
 import G from './mg.ts';
 import Window, { getBrowserWindows } from './components/window.ts';
 import Commands from './components/commands.ts';
 import { verseKey } from './minit.ts';
 import Viewport from './components/viewport.ts';
 
+import type S from '../defaultPrefs.ts';
+import type { BrowserWindow, MenuItemConstructorOptions } from 'electron';
 import type { BookmarkFolderType, SearchType, TabTypes } from '../type.ts';
 import type { PrefCallbackType } from '../prefs.ts';
 
@@ -35,10 +30,10 @@ type Modifiers =
   | 'Super'
   | 'Meta';
 
-interface DarwinMenuItemConstructorOptions extends MenuItemConstructorOptions {
+type DarwinMenuItemConstructorOptions = {
   selector?: string;
   submenu?: DarwinMenuItemConstructorOptions[] | Menu;
-}
+} & MenuItemConstructorOptions;
 
 // Debug mode menu clicks allow menu to close, avoiding debugger lockup.
 function d(func: () => void): any {
@@ -74,7 +69,7 @@ function radioSwitch(name: string | string[], value: any) {
   });
 }
 
-const showtabs: [string, TabTypes][] = [
+const showtabs: Array<[string, TabTypes]> = [
   ['showtexttabs', 'Texts'],
   ['showcommtabs', 'Comms'],
   ['showbooktabs', 'Genbks'],
@@ -84,7 +79,7 @@ const showtabs: [string, TabTypes][] = [
 function panelLabels() {
   const labels: string[] = [];
   const panels = G.Prefs.getComplexValue(
-    'xulsword.panels'
+    'xulsword.panels',
   ) as typeof S.prefs.xulsword.panels;
   panels.forEach((_panel: string | null, i: number) => {
     labels.push(`menu.view.window${i + 1}`);
@@ -97,7 +92,7 @@ function updateModuleMenus(menux?: Menu) {
   const menu = menux || Menu.getApplicationMenu();
   if (menu) {
     const ps = G.Prefs.getComplexValue(
-      'xulsword.panels'
+      'xulsword.panels',
     ) as typeof S.prefs.xulsword.panels;
     const rgtabs = clone(G.Tabs).reverse();
     showtabs.forEach((showtab) => {
@@ -155,9 +150,9 @@ function updateModuleMenus(menux?: Menu) {
 // the menu will again be updated.
 function updateCheckboxAndRadiosFromPref(menux?: Menu | null) {
   const panels = G.Prefs.getComplexValue(
-    'xulsword.panels'
+    'xulsword.panels',
   ) as typeof S.prefs.xulsword.panels;
-  const menuPref: Set<string> = new Set();
+  const menuPref = new Set<string>();
   function add(pref: string) {
     menuPref.add(pref.split('.').slice(0, 2).join('.'));
   }
@@ -170,7 +165,7 @@ function updateCheckboxAndRadiosFromPref(menux?: Menu | null) {
           const panelIndex = Number(pi);
           add('xulsword.tabs');
           const pval = G.Prefs.getComplexValue(
-            'xulsword.tabs'
+            'xulsword.tabs',
           ) as typeof S.prefs.xulsword.tabs;
           if (panelIndex === -1) {
             i.checked = pval.every((p: any) => !p || p.includes(mod));
@@ -186,7 +181,7 @@ function updateCheckboxAndRadiosFromPref(menux?: Menu | null) {
         if (pref === 'xulsword.panels') {
           add(pref);
           const numPanels = panels.filter(
-            (m: string | null) => m || m === ''
+            (m: string | null) => m || m === '',
           ).length;
           if (numPanels === Number(str)) i.checked = true;
         } else if (str !== '') {
@@ -222,7 +217,7 @@ export const pushPrefsToMenu: PrefCallbackType = (winid, store, key, val) => {
     if (store === 'prefs') {
       const keys: string[] = [];
       if (!key.includes('.') && typeof val === 'object') {
-        Object.keys(val as any).forEach((k) => keys.push(`${key}.${k}`));
+        Object.keys(val as never).forEach((k) => keys.push(`${key}.${k}`));
       } else keys.push(key);
       if (keys.some((k) => menuPref.includes(k))) {
         updateCheckboxAndRadiosFromPref();
@@ -242,7 +237,7 @@ export const pushPrefsToMenu: PrefCallbackType = (winid, store, key, val) => {
 };
 
 function bookmarkProgramMenu(
-  bookmarks: BookmarkFolderType
+  bookmarks: BookmarkFolderType,
 ): MenuItemConstructorOptions[] {
   return bookmarks.childNodes
     .map((bm) => localizeBookmark(G, verseKey, bm))
@@ -271,12 +266,12 @@ function addShortcutKeys(submenu?: MenuItemConstructorOptions[]): void {
     const sc = /(?!<&)&([^&])/;
 
     const numbers: string[] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) =>
-      n.toString()
+      n.toString(),
     );
 
     // Collect every letter of every label in this submenu and sort them.
-    const uc: Set<string> = new Set();
-    const lc: Set<string> = new Set();
+    const uc = new Set<string>();
+    const lc = new Set<string>();
     submenu.forEach((item) => {
       const { label } = item;
       if (label) {
@@ -324,9 +319,9 @@ function addShortcutKeys(submenu?: MenuItemConstructorOptions[]): void {
     };
     doAdd(numbers.concat(ucLetters));
     doAdd(lcLetters);
-    submenu.forEach((item) =>
-      addShortcutKeys(item.submenu as MenuItemConstructorOptions[] | undefined)
-    );
+    submenu.forEach((item) => {
+      addShortcutKeys(item.submenu as MenuItemConstructorOptions[] | undefined);
+    });
   }
 }
 
@@ -340,12 +335,12 @@ function ts(key: string, sckey?: string): string {
     (re) => {
       if (re.test(key)) {
         const m = key.match(re);
-        if (m && m[1] && Number(m[1]) > 3) {
+        if (m?.[1] && Number(m[1]) > 3) {
           fix = G.i18n.t(key.replace(m[1], '3'));
           fix = fix.replace('3', m[1]);
         }
       }
-    }
+    },
   );
   if (fix) return fix;
 
@@ -367,7 +362,7 @@ function ts(key: string, sckey?: string): string {
 function tx(key: string, modifiers?: Modifiers[]): string | undefined {
   const text = G.i18n.t(key);
   if (!text) return undefined;
-  if (modifiers && modifiers.length) {
+  if (modifiers?.length) {
     return `${modifiers.join('+')}+${text}`;
   }
   return text;
@@ -410,11 +405,11 @@ export default class MainMenuBuilder {
       (
         G.Prefs.getComplexValue(
           'rootfolder',
-          'bookmarks'
+          'bookmarks',
         ) as typeof S.bookmarks.rootfolder
       ).childNodes.length > 0;
     const panels = G.Prefs.getComplexValue(
-      'xulsword.panels'
+      'xulsword.panels',
     ) as typeof S.prefs.xulsword.panels;
 
     const subMenuFile: MenuItemConstructorOptions = {
@@ -434,7 +429,9 @@ export default class MainMenuBuilder {
             {
               label: ts('menu.newModule.fromFile'),
               click: d(() => {
-                Commands.installXulswordModules();
+                Commands.installXulswordModules().catch((er) => {
+                  log.error(er);
+                });
               }),
             },
           ],
@@ -449,32 +446,40 @@ export default class MainMenuBuilder {
         {
           label: ts('menu.importAudio'),
           click: d(() => {
-            Commands.importAudio();
+            Commands.importAudio().catch((er) => {
+              log.error(er);
+            });
           }),
         },
         {
           label: ts('menu.exportAudio'),
           enabled: !!G.Dirs.xsAudio.append('modules').directoryEntries.length,
           click: d(() => {
-            Commands.exportAudio();
+            Commands.exportAudio().catch((er) => {
+              log.error(er);
+            });
           }),
         },
         { type: 'separator' },
         {
           label: `${ts('menu.import').replace(/[.…]+$/, '')} ${G.i18n.t(
-            'menu.bookmarks'
+            'menu.bookmarks',
           )}`,
           click: d(() => {
-            Commands.importBookmarks();
+            Commands.importBookmarks().catch((er) => {
+              log.error(er);
+            });
           }),
         },
         {
           label: `${ts('menu.export').replace(/[.…]+$/, '')} ${G.i18n.t(
-            'menu.bookmarks'
+            'menu.bookmarks',
           )}`,
           enabled: haveBookmarks,
           click: d(() => {
-            Commands.exportBookmarks();
+            Commands.exportBookmarks().catch((er) => {
+              log.error(er);
+            });
           }),
         },
         { type: 'separator' },
@@ -486,7 +491,7 @@ export default class MainMenuBuilder {
             if (!location) {
               location =
                 (G.Prefs.getComplexValue(
-                  'xulsword.location'
+                  'xulsword.location',
                 ) as typeof S.prefs.xulsword.location) || undefined;
             }
             if (location) {
@@ -502,7 +507,9 @@ export default class MainMenuBuilder {
           label: ts('menu.print'),
           accelerator: tx('menu.print.ac', ['CommandOrControl', 'Shift']),
           click: d(() => {
-            Commands.print();
+            Commands.print().catch((er) => {
+              log.error(er);
+            });
           }),
         },
         { type: 'separator' },
@@ -626,7 +633,7 @@ export default class MainMenuBuilder {
         label: ts(`menu.view.${typekey}`),
         icon: path.join(G.Dirs.path.xsAsset, 'icons', '16x16', `${type}.png`),
         submenu: [
-          ...panelLabels().map((pl: any) => {
+          ...panelLabels().map((pl: string) => {
             const panelIndex =
               pl === 'menu.view.allwindows'
                 ? -1
@@ -694,7 +701,7 @@ export default class MainMenuBuilder {
         ...textTabs,
         {
           label: ts('menu.view.showAll'),
-          submenu: panelLabels().map((pl: any) => {
+          submenu: panelLabels().map((pl: string) => {
             const panelIndex =
               pl === 'menu.view.allwindows'
                 ? -1
@@ -715,7 +722,7 @@ export default class MainMenuBuilder {
         },
         {
           label: ts('menu.view.hideAll'),
-          submenu: panelLabels().map((pl: any) => {
+          submenu: panelLabels().map((pl: string) => {
             const panelIndex =
               pl === 'menu.view.allwindows'
                 ? -1
@@ -788,10 +795,9 @@ export default class MainMenuBuilder {
               label: ts('fontsAndColors.label'),
               click: d(() => {
                 const ps = G.Prefs.getComplexValue(
-                  'xulsword.panels'
+                  'xulsword.panels',
                 ) as typeof S.prefs.xulsword.panels;
-                const module =
-                  ps.find((m) => m) || (G.Tabs[0] && G.Tabs[0].module) || '';
+                const module = ps.find((m) => m) || G.Tabs[0]?.module || '';
                 Commands.openFontsColors(module);
               }),
             },
@@ -852,48 +858,48 @@ export default class MainMenuBuilder {
         {
           label: ts('menu.bookmark.add'),
           accelerator: tx('menu.bmitem.add.ac', ['CommandOrControl']),
-          click: d(() =>
+          click: d(() => {
             Commands.openBookmarkProperties(
               G.i18n.t('menu.bookmark.add'),
               {},
               {
                 location: xulswordLocation(G.Tab, G.Prefs),
-              }
-            )
-          ),
+              },
+            );
+          }),
         },
         {
           label: ts('menu.usernote.add'),
           accelerator: tx('menu.bmitem.add.ac', ['CommandOrControl', 'Shift']),
-          click: d(() =>
+          click: d(() => {
             Commands.openBookmarkProperties(
               G.i18n.t('menu.usernote.add'),
               {},
               {
                 location: xulswordLocation(G.Tab, G.Prefs),
-              }
-            )
-          ),
+              },
+            );
+          }),
         },
         {
           label: ts('menu.folder.add'),
           accelerator: tx('menu.bmitem.add.ac', ['Alt', 'Shift']),
-          click: d(() =>
+          click: d(() => {
             Commands.openBookmarkProperties(
               G.i18n.t('menu.folder.add'),
               {},
               {
                 location: undefined,
-              }
-            )
-          ),
+              },
+            );
+          }),
         },
       ],
     };
 
     const bookmarks = G.Prefs.getComplexValue(
       'rootfolder',
-      'bookmarks'
+      'bookmarks',
     ) as typeof S.bookmarks.rootfolder;
 
     if (bookmarks && bookmarks.childNodes.length) {
@@ -913,7 +919,7 @@ export default class MainMenuBuilder {
           type: 'radio',
           click: d(() => {
             const ps = G.Prefs.getComplexValue(
-              'xulsword.panels'
+              'xulsword.panels',
             ) as typeof S.prefs.xulsword.panels;
             const newpans = ps.map((panel: string | null, x: number) => {
               return x > i ? null : panel || '';
@@ -1088,27 +1094,41 @@ export default class MainMenuBuilder {
         {
           label: 'Learn More',
           click() {
-            shell.openExternal('https://electronjs.org');
+            shell.openExternal('https://electronjs.org').catch((er) => {
+              log.error(er);
+            });
           },
         },
         {
           label: 'Documentation',
           click() {
-            shell.openExternal(
-              'https://github.com/electron/electron/tree/main/docs#readme'
-            );
+            shell
+              .openExternal(
+                'https://github.com/electron/electron/tree/main/docs#readme',
+              )
+              .catch((er) => {
+                log.error(er);
+              });
           },
         },
         {
           label: 'Community Discussions',
           click() {
-            shell.openExternal('https://www.electronjs.org/community');
+            shell
+              .openExternal('https://www.electronjs.org/community')
+              .catch((er) => {
+                log.error(er);
+              });
           },
         },
         {
           label: 'Search Issues',
           click() {
-            shell.openExternal('https://github.com/electron/electron/issues');
+            shell
+              .openExternal('https://github.com/electron/electron/issues')
+              .catch((er) => {
+                log.error(er);
+              });
           },
         },
       ],

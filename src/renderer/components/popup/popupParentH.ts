@@ -1,7 +1,7 @@
-import React from 'react';
+import type React from 'react';
 import { clone, ofClass } from '../../../common.ts';
 import C from '../../../constant.ts';
-import S from '../../../defaultPrefs.ts';
+import type S from '../../../defaultPrefs.ts';
 import G from '../../rg.ts';
 import { findElementData, updateDataAttribute } from '../../htmlData.ts';
 import log from '../../log.ts';
@@ -25,7 +25,7 @@ export type PopupParent = RenderPromiseComponent & {
   popupUnblockTO?: NodeJS.Timeout | undefined;
   popupHandler: typeof popupHandler;
   popupParentHandler?: typeof popupParentHandler;
-}
+};
 
 export const PopupParentInitState = {
   elemdata: [] as HTMLData[] | null, // popup target element data
@@ -41,13 +41,13 @@ export type ViewportPopupProps = {
   place: PlaceType;
   show: ShowType;
   isPinned: boolean[];
-  atextRefs: React.RefObject<Atext>[];
+  atextRefs: Array<React.RefObject<Atext>>;
 };
 
 export function popupParentHandler(
   this: PopupParent,
   es: React.SyntheticEvent,
-  module?: string
+  module?: string,
 ) {
   switch (es.type) {
     case 'mouseover': {
@@ -58,7 +58,7 @@ export function popupParentHandler(
       let targ = ofClass(
         ['cr', 'fn', 'un', 'sn', 'sr', 'dt', 'dtl', 'introlink', 'searchterm'],
         es.target,
-        'self'
+        'self',
       );
       // searchterm will be a child span of sn and the sn parent is needed, not the searchterm.
       if (targ?.type === 'searchterm') {
@@ -72,8 +72,8 @@ export function popupParentHandler(
       const type = module ? G.Tab[module].type : null;
       const { place: pl, show: sh, atextRefs, isPinned } = props;
       const atext = ofClass(['atext'], target);
-      const index = Number(atext?.element && atext.element.dataset.index) || 0;
-      const atr = ((atext && atextRefs && atextRefs[index].current) ||
+      const index = Number(atext?.element?.dataset.index) || 0;
+      const atr = ((atext && atextRefs?.[index].current) ||
         null) as PopupParent | null;
       const place: PlaceType | undefined =
         (atr && isPinned && isPinned[index] && atr.state.pin.place) || pl;
@@ -122,7 +122,10 @@ export function popupParentHandler(
         default:
       }
       if (data && openPopup && !popupParent) {
-        if (getPopupHTML(data, renderPromise, true) || renderPromise.waiting()) {
+        if (
+          getPopupHTML(data, renderPromise, true) ||
+          renderPromise.waiting()
+        ) {
           delayHandler.bind(this)(
             (el: HTMLElement, dt: HTMLData, gp: number) => {
               updateDataAttribute(el, dt);
@@ -136,14 +139,14 @@ export function popupParentHandler(
             targ.type === 'sn'
               ? C.UI.Popup.strongsOpenDelay
               : C.UI.Popup.openDelay,
-            'popupDelayTO'
+            'popupDelayTO',
           )(elem, data, gap);
         } else {
           elem.classList.add('empty');
           log.debug(
             `Mouseover failed without reported reason: `,
             targ.type,
-            data
+            data,
           );
         }
       }
@@ -167,7 +170,7 @@ export function popupParentHandler(
             WheelScrolling = false;
           },
           C.UI.Popup.wheelDeadTime,
-          'popupUnblockTO'
+          'popupUnblockTO',
         )(this);
       }
       break;
@@ -211,7 +214,7 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
           'npopup',
           'requiremod',
         ],
-        es.target
+        es.target,
       );
       if (!targ) return;
       const state = this.state as PopupParentState;
@@ -250,9 +253,10 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
         case 'gfn': {
           if (data) {
             const gfns = parent.getElementsByClassName('gfn');
-            Array.from(gfns).forEach((gfn: any) => {
-              if (gfn !== elem && gfn.dataset.title === data.title)
-                scrollIntoView(gfn, parent);
+            Array.from(gfns).forEach((gfn) => {
+              const gfne = gfn as HTMLElement;
+              if (gfn !== elem && gfne.dataset.title === data.title)
+                scrollIntoView(gfne, parent);
             });
           }
           break;
@@ -291,8 +295,7 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
             if (window.processR.platform !== 'browser') {
               G.Window.close();
             }
-          }
-          else {
+          } else {
             const s: Partial<PopupParentState> = { popupParent: null };
             this.setState(s);
           }
@@ -346,7 +349,7 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
           const { reflist } = data || {};
           if (reflist?.length) {
             const suggested = G.Prefs.getComplexValue(
-              'moduleManager.suggested'
+              'moduleManager.suggested',
             ) as typeof S.prefs.moduleManager.suggested;
             const news = suggested || {};
             const locale = G.i18n.language;
@@ -356,7 +359,7 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
             // Enable all repositories except beta and attic
             G.Prefs.setComplexValue(
               'moduleManager.repositories.disabled',
-              null as typeof S.prefs.moduleManager.repositories.disabled
+              null as typeof S.prefs.moduleManager.repositories.disabled,
             );
             // Open the module manager window, which should then auto-
             // download the suggestions.
@@ -366,7 +369,7 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
         }
         default:
           throw Error(
-            `Unhandled popupHandler click class: '${elem.className}'`
+            `Unhandled popupHandler click class: '${elem.className}'`,
           );
       }
       break;
@@ -379,7 +382,7 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
         const { value } = t;
         this.setState((prevState: PopupParentState) => {
           const { elemdata } = clone(prevState);
-          if (t.dataset.module && elemdata && elemdata.length) {
+          if (t.dataset.module && elemdata?.length) {
             const orig = elemdata[elemdata.length - 1];
             if (orig.context && value) {
               G.Prefs.mergeValue('global.popup.vklookup', {

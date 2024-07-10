@@ -1,5 +1,3 @@
-/* eslint-disable no-nested-ternary */
-/* eslint-disable no-restricted-syntax */
 import C from '../../../constant.ts';
 import Cache from '../../../cache.ts';
 import {
@@ -22,11 +20,7 @@ import {
 } from './zversekey.ts';
 import { dictKeyToday, getDictEntryHTML } from './zdictionary.ts';
 
-import type {
-  AtextPropsType,
-  PinPropsType,
-  PlaceType,
-} from '../../../type.ts';
+import type { AtextPropsType, PinPropsType, PlaceType } from '../../../type.ts';
 import type S from '../../../defaultPrefs.ts';
 import type RenderPromise from '../../renderPromise.ts';
 import type { HTMLData } from '../../htmlData.ts';
@@ -77,7 +71,7 @@ export function libswordText(
   // Read Libsword according to module type
   switch (type) {
     case C.BIBLE: {
-      if (location && location.book && module) {
+      if (location?.book && module) {
         const { book, chapter } = location;
         if (ilModule) {
           const { text } = GI.LibSword.getChapterTextMulti(
@@ -86,7 +80,7 @@ export function libswordText(
             `${module},${ilModule}`,
             `${book}.${chapter}`,
             false,
-            options
+            options,
           );
           if (!renderPromise?.waiting()) {
             r.textHTML += text.replace(/interV2/gm, `cs-${ilModule}`);
@@ -100,7 +94,7 @@ export function libswordText(
             renderPromise,
             module,
             `${book}.${chapter}`,
-            options
+            options,
           );
           if (!renderPromise?.waiting()) {
             r.textHTML += text;
@@ -111,14 +105,14 @@ export function libswordText(
       break;
     }
     case C.COMMENTARY: {
-      if (location && location.book && module) {
+      if (location?.book && module) {
         const { book, chapter } = location;
         const { text, notes } = GI.LibSword.getChapterText(
           { text: '', notes: '' },
           renderPromise,
           module,
           `${book}.${chapter}`,
-          options
+          options,
         );
         if (!renderPromise?.waiting()) {
           r.textHTML += text;
@@ -134,8 +128,8 @@ export function libswordText(
           renderPromise,
           module,
           modkey,
-          options
-        )
+          options,
+        );
         if (!renderPromise?.waiting()) {
           r.textHTML += text;
           r.noteHTML += notes;
@@ -164,7 +158,7 @@ export function libswordText(
                 locationGB: { otherMod: module, key: k1 },
               };
               html += `<div id="${id}" class="dictkey" data-data="${JSON_attrib_stringify(
-                data
+                data,
               )}">${k1}</div>`;
             });
             Cache.write(html, 'keyHTML', module);
@@ -202,51 +196,64 @@ export function libswordText(
 
   // handle footnotes.
   if (G.Tab[module].isVerseKey) {
-    const notetypes: (keyof PlaceType)[] = [
+    const notetypes: Array<keyof PlaceType> = [
       'footnotes',
       'crossrefs',
       'usernotes',
     ];
-    const shownb: any = {};
+    const shownb = {} as Record<(typeof notetypes)[number], boolean>;
     notetypes.forEach((nt) => {
       shownb[nt] = show[nt] && place && place[nt] === 'notebox';
     });
     if (
       Object.keys(shownb).some((s) => {
-        return shownb[s];
+        return shownb[s as keyof PlaceType];
       })
     )
-      r.noteHTML += getNoteHTML(r.notes, shownb, n, undefined, undefined, renderPromise);
+      r.noteHTML += getNoteHTML(
+        r.notes,
+        shownb,
+        n,
+        undefined,
+        undefined,
+        renderPromise,
+      );
   }
 
   // Localize verse numbers to match the module
   if (
     G.Tab[module].isVerseKey &&
     moduleLocale &&
-    dString(G.getLocaleDigits(true), 1, moduleLocale) !== dString(G.getLocaleDigits(true), 1, 'en')
+    dString(G.getLocaleDigits(true), 1, moduleLocale) !==
+      dString(G.getLocaleDigits(true), 1, 'en')
   ) {
-    const verseNm = new RegExp('(<sup class="versenum">)(\\d+)(</sup>)', 'g');
-    r.textHTML = r.textHTML.replace(verseNm, (_str, p1, p2, p3) => {
-      return p1 + dString(G.getLocaleDigits(true), p2, moduleLocale) + p3;
-    });
+    const verseNm = /(<sup class="versenum">)(\d+)(<\/sup>)/g;
+    r.textHTML = r.textHTML.replace(
+      verseNm,
+      (_str, p1: string, p2: string, p3: string) => {
+        return p1 + dString(G.getLocaleDigits(true), p2, moduleLocale) + p3;
+      },
+    );
   }
 
   // Add chapter heading and intronotes
-  if (r.textHTML &&
+  if (
+    r.textHTML &&
     G.Tab[module].isVerseKey &&
     show.headings &&
     location &&
-    ilModuleOption) {
+    ilModuleOption
+  ) {
     const headInfo = getChapterHeading(location, module, renderPromise);
-      r.textHTML = headInfo.textHTML + r.textHTML;
-      r.intronotes = headInfo.intronotes;
+    r.textHTML = headInfo.textHTML + r.textHTML;
+    r.intronotes = headInfo.intronotes;
   }
 
   // Add versePerLineButton
   if (G.Tab[module].tabType === 'Texts') {
     r.textHTML = r.textHTML.replace(
       /(<span[^>]*class="vs\b[^>]*>)/,
-      '$1<span class="versePerLineButton"><div></div></span>'
+      '$1<span class="versePerLineButton"><div></div></span>',
     );
   }
 
@@ -258,7 +265,7 @@ export function libswordText(
 function dictionaryChange(atext: HTMLElement, next: boolean): string | null {
   const keyels = atext.getElementsByClassName('dictselectkey');
   let newkey;
-  if (keyels && keyels[0]) {
+  if (keyels?.[0]) {
     let key = keyels[0] as any;
     key = next ? key.nextSibling : key.previousSibling;
     if (key) newkey = key.innerText;
@@ -271,7 +278,7 @@ export function genbookChange(
   module: string,
   modkey: string,
   next: boolean,
-  renderPromise?: RenderPromise
+  renderPromise?: RenderPromise,
 ): string | null {
   let tocs: string[] = [];
   if (module) {
@@ -298,7 +305,7 @@ export function textChange(
   atext: HTMLElement,
   next: boolean,
   prevState?: PinPropsType,
-  renderPromise?: RenderPromise
+  renderPromise?: RenderPromise,
 ): PinPropsType | Partial<PinPropsType> | null {
   const { columns: cx, module } = atext.dataset;
   const columns = Number(cx);
@@ -336,7 +343,7 @@ export function textChange(
     case C.GENBOOK: {
       if (atext.dataset.data) {
         const { locationGB } = JSON_attrib_parse(
-          atext.dataset.data
+          atext.dataset.data,
         ) as HTMLData;
         if (locationGB) {
           const { otherMod: m, key: k } = locationGB;

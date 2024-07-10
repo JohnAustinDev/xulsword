@@ -4,22 +4,33 @@ import S from '../defaultPrefs.ts';
 import { hierarchy, mergePrefRoot, randomID } from '../common.ts';
 
 import type { TreeNodeInfo } from '@blueprintjs/core';
-import type { GType, OSISBookType, PrefRoot, TreeNodeInfoPref } from '../type.ts';
-import type { SelectVKProps, SelectVKType } from '../renderer/libxul/selectVK.tsx';
-import type { SelectORMType, SelectORProps } from '../renderer/libxul/selectOR.tsx';
+import type {
+  GType,
+  OSISBookType,
+  PrefRoot,
+  TreeNodeInfoPref,
+} from '../type.ts';
+import type {
+  SelectVKProps,
+  SelectVKType,
+} from '../renderer/libxul/selectVK.tsx';
+import type {
+  SelectORMType,
+  SelectORProps,
+} from '../renderer/libxul/selectOR.tsx';
 import type { MenulistProps } from '../renderer/libxul/menulist.tsx';
 
 declare const drupalSettings: any;
 
-export type ChaplistVKType = { [bk in OSISBookType]?: Array<[number, string]> }
+export type ChaplistVKType = { [bk in OSISBookType]?: Array<[number, string]> };
 
-export type ChaplistORType = Array<[string, string, string]> // [order, key, url]
+export type ChaplistORType = Array<[string, string, string]>; // [order, key, url]
 
 export type SelectData = {
   title: string;
   base: string;
   items: FileItem[];
-}
+};
 
 export type FileItem = {
   name: string;
@@ -27,7 +38,7 @@ export type FileItem = {
   path: string;
   types: string[];
   osisbook: OSISBookType;
-}
+};
 
 export type selectVKCompData = {
   component: 'selectVK';
@@ -35,7 +46,7 @@ export type selectVKCompData = {
   langcode: string;
   props: SelectVKProps;
   data: ChaplistVKType;
-}
+};
 
 export type selectORCompData = {
   component: 'selectOR';
@@ -43,7 +54,7 @@ export type selectORCompData = {
   langcode: string;
   props: SelectORProps;
   data: ChaplistORType;
-}
+};
 
 export type selectOptionsCompData = {
   component: 'selectOptions';
@@ -51,19 +62,19 @@ export type selectOptionsCompData = {
   langcode: string;
   props: MenulistProps;
   data: SelectData;
-}
+};
 
 export type browserCompData = {
   component: 'bibleBrowser';
   langcode: string;
   prefs: Partial<PrefRoot>;
-}
+};
 
 export type ComponentData =
-  browserCompData |
-  selectVKCompData |
-  selectORCompData |
-  selectOptionsCompData;
+  | browserCompData
+  | selectVKCompData
+  | selectORCompData
+  | selectOptionsCompData;
 
 export function componentData(elem: Element): ComponentData {
   let drupalData: Record<string, ComponentData> | undefined;
@@ -84,7 +95,10 @@ export function componentData(elem: Element): ComponentData {
 }
 
 // Insure a partial prefs root object has a valid locale set in it.
-export function setGlobalLocale(prefs: Partial<PrefRoot>, langcode?: string): string {
+export function setGlobalLocale(
+  prefs: Partial<PrefRoot>,
+  langcode?: string,
+): string {
   let global: Partial<typeof S.prefs.global> = { locale: langcode };
   const { prefs: p } = prefs;
   if (!p) prefs.prefs = { global };
@@ -101,12 +115,13 @@ export function setGlobalLocale(prefs: Partial<PrefRoot>, langcode?: string): st
 
 export function getProps<T extends Record<string, any>>(
   props: T,
-  defaultProps: T
+  defaultProps: T,
 ): T {
   const newProps = {};
   Object.entries(defaultProps).forEach((entry) => {
     const [prop, v] = entry;
-    (newProps as any)[prop] = typeof props[prop] !== 'undefined' ? props[prop] : v;
+    (newProps as any)[prop] =
+      typeof props[prop] !== 'undefined' ? props[prop] : v;
   });
   return newProps as T;
 }
@@ -119,7 +134,7 @@ export function writePrefsStores(G: GType, prefs: Partial<PrefRoot>): void {
       G.Prefs.setComplexValue(
         rootkey,
         defs[store as keyof PrefRoot][rootkey],
-        `${store}_default` as 'prefs'
+        `${store}_default` as 'prefs',
       );
       // Read the store to initialize it.
       G.Prefs.getComplexValue(rootkey, store as 'prefs');
@@ -130,11 +145,13 @@ export function writePrefsStores(G: GType, prefs: Partial<PrefRoot>): void {
 export function handleAction(type: string, id: string, ...args: any[]): void {
   switch (type) {
     case 'bible_audio_Play': {
-      const [selection, chaplist] =
-        args as [SelectVKType, ChaplistVKType];
+      const [selection, chaplist] = args as [SelectVKType, ChaplistVKType];
       // A Drupal selectVK item follows its associated audio player item.
-      const player = document.getElementById(id)?.parentElement
-        ?.previousElementSibling?.querySelector('audio') as HTMLAudioElement | undefined;
+      const player = document
+        .getElementById(id)
+        ?.parentElement?.previousElementSibling?.querySelector('audio') as
+        | HTMLAudioElement
+        | undefined;
       if (player) {
         const { book, chapter } = selection;
         const chaparray = chaplist[book]?.find((ca) => ca[0] === chapter);
@@ -148,8 +165,11 @@ export function handleAction(type: string, id: string, ...args: any[]): void {
     case 'genbk_audio_Play': {
       const [selection, chaplist] = args as [SelectORMType, ChaplistORType];
       // A Drupal selectOR item follows its associated audio player item.
-      const player = document.getElementById(id)?.parentElement
-        ?.previousElementSibling?.querySelector('audio') as HTMLAudioElement | undefined;
+      const player = document
+        .getElementById(id)
+        ?.parentElement?.previousElementSibling?.querySelector('audio') as
+        | HTMLAudioElement
+        | undefined;
       if (player) {
         const { keys } = selection;
         const [key] = keys;
@@ -162,7 +182,12 @@ export function handleAction(type: string, id: string, ...args: any[]): void {
       break;
     }
     case 'update_url': {
-      const [title, base, items, index] = args as [string, string, FileItem[], number];
+      const [title, base, items, index] = args as [
+        string,
+        string,
+        FileItem[],
+        number,
+      ];
       const elem = document.getElementById(id)?.previousElementSibling;
       const item = items[index];
       if (elem && item && typeof item === 'object') {
@@ -193,7 +218,12 @@ export function optionKey(data: unknown): string {
   return randomID();
 }
 
-export function optionText(data: unknown, long = false, title = '', onlyOption = false): string {
+export function optionText(
+  data: unknown,
+  long = false,
+  title = '',
+  onlyOption = false,
+): string {
   if (data && typeof data === 'object' && 'path' in data) {
     return getEBookTitle(data as FileItem, long, title, onlyOption);
   }
@@ -203,7 +233,12 @@ export function optionText(data: unknown, long = false, title = '', onlyOption =
 // Generate a short or long title for an eBook file. The forms of the title are:
 // short: 'Full publication' or 'Compilation', books (for bible), title (for all others).
 // long: publication-name, books: publication-name (for bible), title: publication-name (others)
-export function getEBookTitle(data: FileItem, long = false, pubname = '', onlyOption = false): string {
+export function getEBookTitle(
+  data: FileItem,
+  long = false,
+  pubname = '',
+  onlyOption = false,
+): string {
   const { types, osisbook, name } = data;
   const Book = G.Book(G.i18n.language);
 
@@ -218,15 +253,18 @@ export function getEBookTitle(data: FileItem, long = false, pubname = '', onlyOp
 // Convert raw gen-book chaplist data from Drupal into a valid xulsword nodelist.
 export function createNodeList(
   chaplist: ChaplistORType,
-  props: SelectORProps
+  props: SelectORProps,
 ): void {
   // chaplist members are like: ['2/4/5', The/chapter/titles', 'url']
   // The Drupal chaplist is file data, and so does not include any parent
   // entries required by hierarchy(). So parents must be added before sorting.
-  const parent = (ch: ChaplistORType[number]): ChaplistORType[number] | null => {
+  const parent = (
+    ch: ChaplistORType[number],
+  ): ChaplistORType[number] | null => {
     const o = ch[0].split('/');
     const p = ch[1].split('/');
-    o.pop(); p.pop();
+    o.pop();
+    p.pop();
     if (o.length) {
       return [o.concat('').join('/'), p.concat('').join('/'), ''];
     }
@@ -234,36 +272,50 @@ export function createNodeList(
   };
   chaplist.forEach((x) => {
     const p = parent(x);
-    if (p && !chaplist.find((c) => c[1] === p[1])) { chaplist.push(p); }
-  });
-  const treenodes: Array<TreeNodeInfo<Record<string, unknown>>> = chaplist.sort((a, b) => {
-    const ap = a[0].split('/').map((x) => Number(x));
-    const bp = b[0].split('/').map((x) => Number(x));
-    for (let x = 0; x < ap.length; x++) {
-      if (typeof ap[x] === 'undefined' && typeof bp[x] !== 'undefined') {
-        return -1;
-      } else if (typeof ap[x] !== 'undefined' && typeof bp[x] === 'undefined') {
-        return 1;
-      } else if (typeof ap[x] !== 'undefined' && typeof bp[x] !== 'undefined') {
-        if (ap[x] !== bp[x]) return ap[x] - bp[x];
-      }
+    if (p && !chaplist.find((c) => c[1] === p[1])) {
+      chaplist.push(p);
     }
-    return 0;
-  }).map((x) => {
-    const [, key] = x;
-    return {
-      id: key,
-      label: key.replace(/\/$/, '').split('/').pop() ?? '',
-      className: 'cs-LTR_DEFAULT',
-      hasCaret: key.endsWith(C.GBKSEP)
-    } satisfies TreeNodeInfoPref;
   });
+  const treenodes: Array<TreeNodeInfo<Record<string, unknown>>> = chaplist
+    .sort((a, b) => {
+      const ap = a[0].split('/').map((x) => Number(x));
+      const bp = b[0].split('/').map((x) => Number(x));
+      for (let x = 0; x < ap.length; x++) {
+        if (typeof ap[x] === 'undefined' && typeof bp[x] !== 'undefined') {
+          return -1;
+        } else if (
+          typeof ap[x] !== 'undefined' &&
+          typeof bp[x] === 'undefined'
+        ) {
+          return 1;
+        } else if (
+          typeof ap[x] !== 'undefined' &&
+          typeof bp[x] !== 'undefined'
+        ) {
+          if (ap[x] !== bp[x]) return ap[x] - bp[x];
+        }
+      }
+      return 0;
+    })
+    .map((x) => {
+      const [, key] = x;
+      return {
+        id: key,
+        label: key.replace(/\/$/, '').split('/').pop() ?? '',
+        className: 'cs-LTR_DEFAULT',
+        hasCaret: key.endsWith(C.GBKSEP),
+      } satisfies TreeNodeInfoPref;
+    });
   const nodes = hierarchy(treenodes);
-  props.nodeLists = [{
-    otherMod: props.initialORM.otherMod,
-    label: 'genbk',
-    labelClass: 'cs-LTR_DEFAULT',
-    nodes
-  }];
-  if (!treenodes.find((n) => n.id === props.initialORM.keys[0])) { props.initialORM.keys = [nodes[0].id.toString()]; }
+  props.nodeLists = [
+    {
+      otherMod: props.initialORM.otherMod,
+      label: 'genbk',
+      labelClass: 'cs-LTR_DEFAULT',
+      nodes,
+    },
+  ];
+  if (!treenodes.find((n) => n.id === props.initialORM.keys[0])) {
+    props.initialORM.keys = [nodes[0].id.toString()];
+  }
 }

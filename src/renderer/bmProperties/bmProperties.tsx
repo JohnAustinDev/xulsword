@@ -1,8 +1,4 @@
-/* eslint-disable react/no-did-update-set-state */
-/* eslint-disable react/no-array-index-key */
-/* eslint-disable jsx-a11y/anchor-is-valid */
-/* eslint-disable @typescript-eslint/no-use-before-define */
-/* eslint-disable react/static-property-placement */
+/* eslint-disable @typescript-eslint/unbound-method */
 import React from 'react';
 import {
   clone,
@@ -21,6 +17,7 @@ import S from '../../defaultPrefs.ts';
 import G from '../rg.ts';
 import renderToRoot from '../renderer.tsx';
 import { verseKey } from '../htmlData.ts';
+import log from '../log.ts';
 import { windowArguments } from '../rutil.ts';
 import { bookmarkTreeNode, getSampleText } from '../bookmarks.ts';
 import Grid, { Column, Columns, Row, Rows } from '../libxul/grid.tsx';
@@ -31,7 +28,7 @@ import SelectAny from '../libxul/selectAny.tsx';
 import Button from '../libxul/button.tsx';
 import Spacer from '../libxul/spacer.tsx';
 import TreeView from '../libxul/treeview.tsx';
-import { XulProps, xulPropTypes } from '../libxul/xul.tsx';
+import { xulPropTypes } from '../libxul/xul.tsx';
 import './bmProperties.css';
 
 import type {
@@ -49,11 +46,12 @@ import type {
   LocationVKType,
   TabTypes,
 } from '../../type.ts';
+import type { XulProps } from '../libxul/xul.tsx';
 import type { SelectVKType } from '../libxul/selectVK.tsx';
 
 const Bookmarks = G.Prefs.getComplexValue(
   'rootfolder',
-  'bookmarks'
+  'bookmarks',
 ) as typeof S.bookmarks.rootfolder;
 localizeBookmarks(G, verseKey, Bookmarks);
 
@@ -63,7 +61,7 @@ export type BMPropertiesState = {
   bookmark: BookmarkItemType;
   treeSelection: string;
   anyChildSelectable: boolean; // Set to allow bookmark selection, before which bm will be inserted
-  hide: ('folder' | 'name' | 'location' | 'note' | 'text')[];
+  hide: Array<'folder' | 'name' | 'location' | 'note' | 'text'>;
 };
 
 export type BMPropertiesStateWinArg = Omit<BMPropertiesState, 'bookmark'> & {
@@ -184,7 +182,7 @@ export default class BMPropertiesWin extends React.Component {
             ? bookmarkLabel(
                 G,
                 verseKey,
-                bookmark.location as LocationORType | SelectVKType
+                bookmark.location as LocationORType | SelectVKType,
               )
             : G.i18n.t('menu.folder.add');
       }
@@ -232,7 +230,7 @@ export default class BMPropertiesWin extends React.Component {
       case 'ok': {
         const rootfolder = G.Prefs.getComplexValue(
           'rootfolder',
-          'bookmarks'
+          'bookmarks',
         ) as typeof S.bookmarks.rootfolder;
         const state = this.state as BMPropertiesState;
         const { treeSelection, bookmark } = state;
@@ -241,7 +239,7 @@ export default class BMPropertiesWin extends React.Component {
         const moved = moveBookmarkItems(
           rootfolder,
           itemOrID,
-          treeSelection || rootfolder.id
+          treeSelection || rootfolder.id,
         );
         if (moved) {
           G.Prefs.setComplexValue('rootfolder', rootfolder, 'bookmarks');
@@ -255,7 +253,7 @@ export default class BMPropertiesWin extends React.Component {
     }
   }
 
-  treeHandler(selection: (string | number)[]) {
+  treeHandler(selection: Array<string | number>) {
     const ts = selection[0] || '';
     this.setState({ treeSelection: ts.toString() });
   }
@@ -275,7 +273,7 @@ export default class BMPropertiesWin extends React.Component {
                     'note',
                     'noteLocale',
                     'creationDate',
-                  ])
+                  ]),
                 )
               : bmdefault;
         } else {
@@ -320,7 +318,7 @@ export default class BMPropertiesWin extends React.Component {
     const { label, labelLocale, note, noteLocale } = localizeBookmark(
       G,
       verseKey,
-      bookmark
+      bookmark,
     );
     let location;
     if (bookmark.type === 'bookmark') {
@@ -337,7 +335,7 @@ export default class BMPropertiesWin extends React.Component {
     const treeNode = bookmarkTreeNode(
       Bookmarks,
       anyChildSelectable ? undefined : 'folder',
-      treeSelection || undefined
+      treeSelection || undefined,
     );
 
     const modules = G.Tabs.map((t) => t.module);
@@ -431,7 +429,11 @@ export default class BMPropertiesWin extends React.Component {
 }
 BMPropertiesWin.propTypes = propTypes;
 
-renderToRoot(<BMPropertiesWin />, { initialState: { resetOnResize: false } });
+renderToRoot(<BMPropertiesWin />, {
+  initialState: { resetOnResize: false },
+}).catch((er) => {
+  log.error(er);
+});
 
 function initialBookmark(): BookmarkItemType | undefined {
   let bookmark: BookmarkItemType | undefined;
@@ -510,7 +512,7 @@ function initialBookmark(): BookmarkItemType | undefined {
 // or else a new values are given.
 function locationToBookmark(
   location: LocationVKType | LocationVKCommType | LocationORType,
-  copyItem?: Partial<BMItem>
+  copyItem?: Partial<BMItem>,
 ): BookmarkType {
   const item: BookmarkItem = {
     id: randomID(),

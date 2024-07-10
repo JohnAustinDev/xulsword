@@ -1,21 +1,12 @@
-/* eslint-disable react/forbid-prop-types */
-/* eslint-disable no-await-in-loop */
-/* eslint-disable no-restricted-syntax */
-/* eslint-disable react/no-did-update-set-state */
-/* eslint-disable react/no-array-index-key */
-/* eslint-disable jsx-a11y/anchor-is-valid */
-/* eslint-disable @typescript-eslint/no-use-before-define */
-/* eslint-disable react/static-property-placement */
-import React, { ReactElement } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import ReactDOM from 'react-dom';
 import { ProgressBar } from '@blueprintjs/core';
 import Subscription from '../../subscription.ts';
 import { diff, sanitizeHTML, stringHash } from '../../common.ts';
-import S from '../../defaultPrefs.ts';
 import C from '../../constant.ts';
 import G from '../rg.ts';
-import renderToRoot, { RootPrintType } from '../renderer.tsx';
+import renderToRoot from '../renderer.tsx';
 import {
   windowArguments,
   getStatePref,
@@ -23,7 +14,7 @@ import {
   libswordImgSrc,
 } from '../rutil.ts';
 import log from '../log.ts';
-import { XulProps, xulPropTypes } from '../libxul/xul.tsx';
+import { xulPropTypes } from '../libxul/xul.tsx';
 import Grid, { Column, Columns, Row, Rows } from '../libxul/grid.tsx';
 import Groupbox from '../libxul/groupbox.tsx';
 import Checkbox from '../libxul/checkbox.tsx';
@@ -38,7 +29,11 @@ import '../libsword.css';
 import '../components/atext/atext.css';
 import './printPassage.css';
 
+import type { ReactElement } from 'react';
 import type { OSISBookType } from '../../type.ts';
+import type S from '../../defaultPrefs.ts';
+import type { RootPrintType } from '../renderer.tsx';
+import type { XulProps } from '../libxul/xul.tsx';
 
 // TODO: As of 11/22 @page {@bottom-center {content: counter(page);}} does not work
 
@@ -76,14 +71,13 @@ const notStatePrefDefault = {
 };
 
 let openedWinState = windowArguments(
-  'passageWinState'
+  'passageWinState',
 ) as Partial<PrintPassageState> | null;
 
 export type PrintPassageState = typeof S.prefs.printPassage &
   typeof notStatePrefDefault;
 
 export default class PrintPassageWin extends React.Component {
-
   static propTypes: typeof propTypes;
 
   pagebuttons: React.RefObject<HTMLDivElement>;
@@ -123,7 +117,7 @@ export default class PrintPassageWin extends React.Component {
 
   componentDidUpdate(
     _prevProps: PrintPassageProps,
-    prevState: PrintPassageState
+    prevState: PrintPassageState,
   ) {
     const state = this.state as PrintPassageState;
     const { print } = this.props as PrintPassageProps;
@@ -166,7 +160,7 @@ export default class PrintPassageWin extends React.Component {
           usernotes: 'notebox',
         } as const,
       };
-      const renderChaps: [OSISBookType, number][] = [];
+      const renderChaps: Array<[OSISBookType, number]> = [];
       for (let ch = chapter; ch <= lastchapter; ch += 1) {
         if (book) renderChaps.push([book, ch]);
       }
@@ -182,7 +176,7 @@ export default class PrintPassageWin extends React.Component {
             bibleChapterText({
               ...settings,
               location: { book: c[0], chapter: c[1], v11n },
-            })
+            }),
           );
           sanitizeHTML(tdiv, renderHTML.join());
           if (tdiv.scrollWidth > tdiv.offsetWidth) {
@@ -197,12 +191,13 @@ export default class PrintPassageWin extends React.Component {
         printDisabled: true,
       });
       this.setState({ progress: 0 });
+
       // Pause here so first page will appear to user.
-      setTimeout(async () => {
+      const defer = async () => {
         let pages = 0;
-        const funcs = renderChaps.map((c, i) => {
+        const funcs = renderChaps.map(async (c, i) => {
           return async (): Promise<string> => {
-            return new Promise((resolve, reject) =>
+            return await new Promise((resolve, reject) =>
               setTimeout(() => {
                 if (renderHTML[i]) resolve(renderHTML[i]);
                 else {
@@ -222,11 +217,11 @@ export default class PrintPassageWin extends React.Component {
                           chapter: c[1],
                           v11n,
                         },
-                      })
+                      }),
                     );
                   } else reject(new Error(`Canceled`));
                 }
-              }, 1)
+              }, 1),
             );
           };
         });
@@ -235,11 +230,12 @@ export default class PrintPassageWin extends React.Component {
           div.innerHTML = '';
           try {
             while (funcs.length) {
-              const func = funcs.shift() as () => Promise<string>;
+              const func = funcs.shift() as Promise<() => Promise<string>>;
               log.debug(
-                `Loading chapter to DOM: ${renderChaps.length - funcs.length}`
+                `Loading chapter to DOM: ${renderChaps.length - funcs.length}`,
               );
-              const h = await func();
+              const f = await func;
+              const h = await f();
               div = print.printContainer.current;
               if (!div || div.dataset.renderkey !== renderkey) break;
               div.innerHTML += sanitizeHTML(h);
@@ -247,7 +243,7 @@ export default class PrintPassageWin extends React.Component {
               pages = Math.floor(div.scrollWidth / div.clientWidth);
               if (pages > C.UI.Print.maxPages) {
                 log.info(
-                  `Stopping passage render at ${pages} pages (skipped ${funcs.length} chapters}).`
+                  `Stopping passage render at ${pages} pages (skipped ${funcs.length} chapters}).`,
                 );
                 break;
               }
@@ -255,8 +251,8 @@ export default class PrintPassageWin extends React.Component {
             if (div) {
               log.debug(
                 `Finished loading ${Math.floor(
-                  div.scrollWidth / div.clientWidth
-                )} pages to DOM`
+                  div.scrollWidth / div.clientWidth,
+                )} pages to DOM`,
               );
             }
           } catch (er) {
@@ -266,6 +262,12 @@ export default class PrintPassageWin extends React.Component {
         if (div && div.dataset.renderkey === renderkey) {
           this.setState({ progress: -1 });
         }
+      };
+
+      setTimeout(() => {
+        defer().catch((er) => {
+          log.error(er);
+        });
       }, 1);
     }
   }
@@ -362,7 +364,7 @@ export default class PrintPassageWin extends React.Component {
                 </Grid>
               </Groupbox>
             </>,
-            print.controls.current
+            print.controls.current,
           )}
       </>
     );
@@ -371,8 +373,8 @@ export default class PrintPassageWin extends React.Component {
 PrintPassageWin.propTypes = propTypes;
 
 const print: PrintPassageProps['print'] = {
-  printContainer: React.createRef() as React.RefObject<HTMLDivElement>,
-  controls: React.createRef() as React.RefObject<HTMLDivElement>,
+  printContainer: React.createRef(),
+  controls: React.createRef(),
 };
 
 renderToRoot(<PrintPassageWin print={print} />, {
@@ -383,4 +385,6 @@ renderToRoot(<PrintPassageWin print={print} />, {
     iframeFilePath: '',
     progress: -1,
   },
+}).catch((er) => {
+  log.error(er);
 });

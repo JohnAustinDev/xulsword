@@ -1,7 +1,16 @@
 import React, { StrictMode, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import SocketConnect from './preload.ts';
-import { handleAction, createNodeList, setGlobalLocale, getProps, writePrefsStores, optionKey, optionText, componentData } from './bcommon.ts';
+import {
+  handleAction,
+  createNodeList,
+  setGlobalLocale,
+  getProps,
+  writePrefsStores,
+  optionKey,
+  optionText,
+  componentData,
+} from './bcommon.ts';
 import { clone, diff } from '../common.ts';
 import C from '../constant.ts';
 import G from '../renderer/rg.ts';
@@ -14,22 +23,26 @@ import Menulist from '../renderer/libxul/menulist.tsx';
 import type { ChangeEvent } from 'react';
 import type { GCallType, PrefRoot } from '../type.ts';
 import type { ChaplistVKType, ChaplistORType, SelectData } from './bcommon.ts';
-import type { SelectVKProps, SelectVKType } from '../renderer/libxul/selectVK.tsx';
-import type { SelectORMType, SelectORProps } from '../renderer/libxul/selectOR.tsx';
+import type {
+  SelectVKProps,
+  SelectVKType,
+} from '../renderer/libxul/selectVK.tsx';
+import type {
+  SelectORMType,
+  SelectORProps,
+} from '../renderer/libxul/selectOR.tsx';
 import type { MenulistProps } from '../renderer/libxul/menulist.tsx';
 
 // Each SelectVK will keep its own state, providing chapter selection from any
 // installed SWORD module, unless the chaplist is set. In that case the SelectVK
 // will become a controlled component where only chapters listed in data-chaplist
 // will be available for selection.
-function ControllerVK (
-  props: {
-    compid: string;
-    initial: Omit<SelectVKProps, 'onSelection'>;
-    chaplist?: ChaplistVKType;
-    action?: string;
-  }
-): React.JSX.Element {
+function ControllerVK(props: {
+  compid: string;
+  initial: Omit<SelectVKProps, 'onSelection'>;
+  chaplist?: ChaplistVKType;
+  action?: string;
+}): React.JSX.Element {
   const { compid, action, initial, chaplist } = props;
 
   const onSelectVK = (selection?: SelectVKType): void => {
@@ -45,8 +58,8 @@ function ControllerVK (
             initialVK: selection,
             options: {
               ...prevState.options,
-              chapters: chapterArray.map((x) => x[0]).sort((a, b) => a - b)
-            }
+              chapters: chapterArray.map((x) => x[0]).sort((a, b) => a - b),
+            },
           };
           if (prevState.initialVK.book !== book) s.initialVK.chapter = 1;
           if (typeof diff(s, prevState) !== 'undefined') newState = s;
@@ -64,7 +77,7 @@ function ControllerVK (
       initialVK: { book: 'Gen', chapter: 1, v11n: 'KJV' },
       options: {},
       disabled: false,
-      allowNotInstalled: true
+      allowNotInstalled: true,
     });
     // If VK chaplist is set and contains at least one chapter, make sure
     // initial VK is in the Chaplist, and the selecVK shows only chapters
@@ -84,24 +97,23 @@ function ControllerVK (
         }
         if (typeof s.options === 'undefined') s.options = {};
         s.options.books = Object.keys(chaplist);
-        s.options.chapters =
-          chaplist[vk.book]?.map((x) => x[0]).sort((a, b) => a - b) ?? [vk.chapter];
+        s.options.chapters = chaplist[vk.book]
+          ?.map((x) => x[0])
+          .sort((a, b) => a - b) ?? [vk.chapter];
       }
     }
     return s;
   });
 
-  return (<SelectVK onSelection={onSelectVK} {...state as any} />);
+  return <SelectVK onSelection={onSelectVK} {...(state as any)} />;
 }
 
-function ControllerOR (
-  props: {
-    compid: string;
-    initial: Partial<SelectORProps>;
-    chaplist?: ChaplistORType;
-    action?: string;
-  }
-): React.JSX.Element {
+function ControllerOR(props: {
+  compid: string;
+  initial: Partial<SelectORProps>;
+  chaplist?: ChaplistORType;
+  action?: string;
+}): React.JSX.Element {
   const { compid, initial } = props;
 
   const onSelectOR = (selection?: SelectORMType): void => {
@@ -116,28 +128,28 @@ function ControllerOR (
       otherMods: [],
       disabled: false,
       enableMultipleSelection: false,
-      enableParentSelection: false
+      enableParentSelection: false,
     });
   });
 
-  return (<SelectOR onSelection={onSelectOR} {...state as any} />);
+  return <SelectOR onSelection={onSelectOR} {...(state as any)} />;
 }
 
-function ControllerSelect (
-  props: {
-    compid: string;
-    initial: Omit<MenulistProps, 'onChange'>;
-    data?: SelectData;
-    action?: string;
-  }
-): React.JSX.Element {
+function ControllerSelect(props: {
+  compid: string;
+  initial: Omit<MenulistProps, 'onChange'>;
+  data?: SelectData;
+  action?: string;
+}): React.JSX.Element {
   const { initial, data, action, compid } = props;
 
   // Although this value is a number, MenuList expects a string.
   const { value } = initial;
   if (Number.isInteger(value)) initial.value = value.toString();
 
-  const onChange = (e: React.SyntheticEvent<HTMLSelectElement, ChangeEvent>): void => {
+  const onChange = (
+    e: React.SyntheticEvent<HTMLSelectElement, ChangeEvent>,
+  ): void => {
     const select = e.target as HTMLSelectElement;
     setState((prevState: Omit<MenulistProps, 'onChange'>) => {
       const newState = clone(prevState);
@@ -151,7 +163,7 @@ function ControllerSelect (
     return getProps(initial, {
       disabled: false,
       multiple: false,
-      value: '0'
+      value: '0',
     });
   });
 
@@ -160,19 +172,24 @@ function ControllerSelect (
     const index = value && typeof value === 'string' ? Number(value) || 0 : 0;
     if (data) {
       const { title, base, items } = data;
-      if (action && data) handleAction(action, compid, title, base, items, index);
+      if (action && data)
+        handleAction(action, compid, title, base, items, index);
     }
   }, [state.value]);
 
   const options = data
-    ? data.items.map((d, i) =>
+    ? data.items.map((d, i) => (
         <option key={optionKey(d)} value={i.toString()}>
           {optionText(d, false, data.title)}
         </option>
-    )
+      ))
     : [];
 
-  return <Menulist onChange={onChange} {...state as any}>{options}</Menulist>;
+  return (
+    <Menulist onChange={onChange} {...(state as any)}>
+      {options}
+    </Menulist>
+  );
 }
 
 const socket = SocketConnect(C.Server.port);
@@ -202,14 +219,15 @@ socket.on('connect', () => {
       ['Book', null, [locale]],
       ['i18n', 't', ['locale_direction']],
       ['i18n', 't', ['Full publication']],
-      ...(Object.values(C.SupportedTabTypes)
-        .map((type) => ['i18n', 't', [type, { lng: locale }]] as any))
+      ...Object.values(C.SupportedTabTypes).map(
+        (type) => ['i18n', 't', [type, { lng: locale }]] as any,
+      ),
     ];
 
-    callBatchThenCache(preloads).then(() => {
-      const widgets = document.getElementsByClassName('widget-container');
-      (Array.from(widgets) as HTMLDivElement[])
-        .forEach((widget) => {
+    callBatchThenCache(preloads)
+      .then(() => {
+        const widgets = document.getElementsByClassName('widget-container');
+        (Array.from(widgets) as HTMLDivElement[]).forEach((widget) => {
           const { id: compid } = widget;
           const compData = componentData(widget);
           const { component } = compData;
@@ -222,13 +240,17 @@ socket.on('connect', () => {
                     compid={compid}
                     action={action}
                     chaplist={data}
-                    initial={props} />
-                </StrictMode>);
+                    initial={props}
+                  />
+                </StrictMode>,
+              );
               break;
             }
             case 'selectOR': {
               const { action, data, props } = compData;
-              data.forEach((x) => { x[0] = x[0].toString(); });
+              data.forEach((x) => {
+                x[0] = x[0].toString();
+              });
               if (Array.isArray(data)) {
                 createNodeList(data, props);
               }
@@ -238,8 +260,10 @@ socket.on('connect', () => {
                     compid={compid}
                     action={action}
                     chaplist={data}
-                    initial={props} />
-                </StrictMode>);
+                    initial={props}
+                  />
+                </StrictMode>,
+              );
               break;
             }
             case 'selectOptions': {
@@ -250,15 +274,21 @@ socket.on('connect', () => {
                     compid={compid}
                     action={action}
                     data={data}
-                    initial={props} />
-                </StrictMode>);
+                    initial={props}
+                  />
+                </StrictMode>,
+              );
               break;
             }
-            default: log.error(`Unknown widget type '${component}'`);
+            default:
+              log.error(`Unknown widget type '${component}'`);
           }
           widget.removeAttribute('data-props');
           widget.removeAttribute('data-chaplist');
         });
-    }).catch((er) => { log.error(er); });
+      })
+      .catch((er) => {
+        log.error(er);
+      });
   }
 });

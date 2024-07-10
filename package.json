@@ -24,20 +24,6 @@
     "start:renderer": "cross-env NODE_ENV=development webpack serve --config ./.erb/configs/webpack.config.renderer.dev.babel.js",
     "start-server": "cross-env LD_LIBRARY_PATH=./Cpp/lib node -r ./.erb/scripts/babel-register --preserve-symlinks --preserve-symlinks-main ./src/server/server.ts"
   },
-  "lint-staged": {
-    "*.{js,jsx,ts,tsx}": [
-      "cross-env NODE_ENV=development eslint --cache"
-    ],
-    "*.json,.{babelrc,eslintrc,prettierrc}": [
-      "prettier --ignore-path .eslintignore --parser json --write"
-    ],
-    "*.{css,scss}": [
-      "prettier --ignore-path .eslintignore --single-quote --write"
-    ],
-    "*.{html,md,yml}": [
-      "prettier --ignore-path .eslintignore --single-quote --write"
-    ]
-  },
   "build": {
     "npmRebuild": false,
     "productName": "MK",
@@ -166,11 +152,6 @@
     ],
     "singleQuote": true
   },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
-  },
   "dependencies": {
     "@babel/core": "^7.24.7",
     "@babel/plugin-proposal-decorators": "^7.14.5",
@@ -219,7 +200,6 @@
     "instead": "^1.0.3",
     "memorystore": "^1.6.7",
     "opencollective-postinstall": "^2.0.3",
-    "prettier": "^2.2.1",
     "rate-limiter-flexible": "^5.0.3",
     "react": "^18.2.0",
     "react-color": "^2.19.3",
@@ -277,14 +257,15 @@
     "enzyme": "^3.11.0",
     "enzyme-to-json": "^3.6.2",
     "eslint": "^8.0.1",
+    "eslint-config-prettier": "^9.1.0",
     "eslint-config-standard-with-typescript": "^43.0.1",
     "eslint-plugin-import": "^2.25.2",
     "eslint-plugin-n": "^15.0.0 || ^16.0.0 ",
     "eslint-plugin-promise": "^6.0.0",
     "eslint-plugin-react": "^7.34.1",
     "html-webpack-plugin": "^5.3.1",
-    "lint-staged": "^10.5.4",
     "mini-css-extract-plugin": "^1.6.0",
+    "prettier": "^3.3.2",
     "regenerator-runtime": "^0.13.5",
     "webpack": "^5.36.2",
     "webpack-bundle-analyzer": "^4.7.0",

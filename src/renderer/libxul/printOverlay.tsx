@@ -1,7 +1,4 @@
-/* eslint-disable jsx-a11y/iframe-has-title */
-/* eslint-disable react/static-property-placement */
-/* eslint-disable react/forbid-prop-types */
-import React, { ReactElement } from 'react';
+import React, { type ReactElement } from 'react';
 import PropTypes from 'prop-types';
 import Subscription from '../../subscription.ts';
 import { b64toBlob } from '../../common.ts';
@@ -11,7 +8,7 @@ import { Hbox, Vbox } from './boxes.tsx';
 import Button from './button.tsx';
 import Spacer from './spacer.tsx';
 import PrintSettings from './printSettings.tsx';
-import { XulProps, xulPropTypes } from './xul.tsx';
+import { type XulProps, xulPropTypes } from './xul.tsx';
 import './printOverlay.css';
 
 import type { RootPrintType } from '../renderer.tsx';
@@ -39,7 +36,7 @@ export default function PrintOverlay(props: PrintOverlayProps) {
     props;
   const { pageable, pageView, printContainer } = print;
 
-  const backHandler = () =>
+  const backHandler = () => {
     Subscription.publish.setRendererRootState({
       showPrintOverlay: true,
       modal: 'dropshadow',
@@ -47,6 +44,7 @@ export default function PrintOverlay(props: PrintOverlayProps) {
       printDisabled: false,
       progress: -1,
     });
+  };
 
   return (
     <>
@@ -58,8 +56,8 @@ export default function PrintOverlay(props: PrintOverlayProps) {
               src={URL.createObjectURL(
                 b64toBlob(
                   G.inlineFile(iframeFilePath, 'base64', true),
-                  'application/pdf'
-                )
+                  'application/pdf',
+                ),
               )}
             />
           </Hbox>

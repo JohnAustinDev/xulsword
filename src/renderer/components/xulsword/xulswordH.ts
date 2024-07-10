@@ -1,16 +1,20 @@
-/* eslint-disable import/no-duplicates */
-import React from 'react';
 import C from '../../../constant.ts';
 import RefParser from '../../../refParser.ts';
 import { clone, ofClass, randomID, setGlobalPanels } from '../../../common.ts';
-
 import G from '../../rg.ts';
-import { chapterChange, verseChange } from '../atext/zversekey.ts';
-import { genbookChange } from '../atext/ztext.ts';
 import { genBookAudioFile, verseKeyAudioFile } from '../../rutil.ts';
 import { verseKey } from '../../htmlData.ts';
+import log from '../../log.ts';
+import { chapterChange, verseChange } from '../atext/zversekey.ts';
+import { genbookChange } from '../atext/ztext.ts';
 
-import type { GenBookAudioFile, ShowType, VerseKeyAudioFile } from '../../../type.ts';
+import type React from 'react';
+import type {
+  GenBookAudioFile,
+  OSISBookType,
+  ShowType,
+  VerseKeyAudioFile,
+} from '../../../type.ts';
 import type { BrowserControllerState } from '../../../browser/bible-browser.tsx';
 import type Xulsword from './xulsword.tsx';
 import type { XulswordState } from './xulsword.tsx';
@@ -43,13 +47,10 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
             return {
               historyMenupopup: prevState.historyMenupopup
                 ? undefined
-                : this.historyMenu(
-                    prevState,
-                    (e, index) => {
-                      this.setHistory(index, true);
-                      e.stopPropagation();
-                    }
-                  ),
+                : this.historyMenu(prevState, (e, index) => {
+                    this.setHistory(index, true);
+                    e.stopPropagation();
+                  }),
             };
           });
           break;
@@ -61,7 +62,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
         case 'chapter':
         case 'verse': {
           const tbp = ofClass(['textbox'], target);
-          const tb = tbp && tbp.element.getElementsByTagName('input');
+          const tb = tbp?.element.getElementsByTagName('input');
           if (tb) tb[0].select();
           break;
         }
@@ -76,7 +77,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
               l.verse = 1;
               const newloc = chapterChange(
                 l.location(),
-                currentId === 'prevchap' ? -1 : 1
+                currentId === 'prevchap' ? -1 : 1,
               );
               if (newloc) {
                 const s: Partial<XulswordState> = {
@@ -99,7 +100,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
               const newloc = verseChange(
                 location,
                 currentId === 'prevverse' ? -1 : 1,
-                renderPromise
+                renderPromise,
               );
               if (newloc) {
                 const s: Partial<XulswordState> = {
@@ -118,8 +119,8 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
           let module = state.panels.find((m) => m);
           if (!module && G.Tabs.length) module = G.Tabs[0].module;
           const tbp = document.getElementById('searchText');
-          const tb = tbp && tbp.getElementsByTagName('input');
-          const searchtext = tb && tb[0].value;
+          const tb = tbp?.getElementsByTagName('input');
+          const searchtext = tb?.[0].value;
           if (searchtext && module && module in G.Tab) {
             G.Commands.search({
               module,
@@ -152,17 +153,17 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
         }
         case 'addcolumn':
         case 'removecolumn': {
-          setGlobalPanels(G.Prefs, 0, (currentId === 'addcolumn' ? 1 : -1));
-            window.browserState((prevState: BrowserControllerState) => {
-              const s = clone(prevState);
-              s.key = randomID();
-              return s;
-            });
+          setGlobalPanels(G.Prefs, 0, currentId === 'addcolumn' ? 1 : -1);
+          window.browserState((prevState: BrowserControllerState) => {
+            const s = clone(prevState);
+            s.cntlkey = randomID();
+            return s;
+          });
           break;
         }
         default:
           throw Error(
-            `Unhandled xulswordHandler onClick event on '${currentId}'`
+            `Unhandled xulswordHandler onClick event on '${currentId}'`,
           );
       }
       break;
@@ -173,18 +174,23 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
       // will be the same element as target. So target.id must be used here.
       if (!('value' in es.target)) return;
       if (!('id' in es.target)) return;
-      const { id, value } = es.target as any;
+      const { id, value } = es.target as { id: string; value: string };
       switch (id) {
         case 'book__menulist__select': {
           this.setState((prevState: XulswordState) => {
             const { location } = prevState;
             if (location) {
-              const newloc = verseKey({
-                book: value,
-                chapter: 1,
-                verse: 1,
-                v11n: location.v11n,
-              }, undefined, undefined, renderPromise);
+              const newloc = verseKey(
+                {
+                  book: value as OSISBookType,
+                  chapter: 1,
+                  verse: 1,
+                  v11n: location.v11n,
+                },
+                undefined,
+                undefined,
+                renderPromise,
+              );
               const s: Partial<XulswordState> = {
                 location: newloc.location(),
                 selection: newloc.location(),
@@ -205,11 +211,8 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
               G.getLocalizedBooks(true),
               {
                 locales: C.Locales.map((l) => l[0]),
-              }
-            ).parse(
-              value,
-              location?.v11n || null
-            )?.location;
+              },
+            ).parse(value, location?.v11n || null)?.location;
             if (newloc && newloc.book) {
               // Check that the entered location exists.
               if (newloc && !newloc.chapter) newloc.chapter = 1;
@@ -235,7 +238,12 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
             // reset Bookselect on Enter key even if chapter doesn't change
             const bsreset = prevState.bsreset + 1;
             if (location) {
-              const pvk = verseKey(location, undefined, undefined, renderPromise);
+              const pvk = verseKey(
+                location,
+                undefined,
+                undefined,
+                renderPromise,
+              );
               let newloc;
               if (id === 'chapter__input') {
                 pvk.chapter = Number(value);
@@ -267,7 +275,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
         }
         default:
           throw Error(
-            `Unhandled xulswordHandler onChange event on '${currentId}'`
+            `Unhandled xulswordHandler onChange event on '${currentId}'`,
           );
       }
       break;
@@ -277,7 +285,10 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
       const player: HTMLAudioElement | undefined = document
         .getElementById('player')
         ?.getElementsByTagName('audio')[0];
-      if (player) player.play();
+      if (player)
+        player.play().catch((er) => {
+          log.error(er);
+        });
       break;
     }
 
@@ -291,18 +302,23 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
           if ('book' in file) {
             const { book, chapter } = file;
             const nk = chapterChange(
-              verseKey({
-                book,
-                chapter,
-                v11n: G.Tab[swordModule].v11n || null,
-              }, undefined, undefined, renderPromise),
-              1
+              verseKey(
+                {
+                  book,
+                  chapter,
+                  v11n: G.Tab[swordModule].v11n || null,
+                },
+                undefined,
+                undefined,
+                renderPromise,
+              ),
+              1,
             );
             if (nk)
               afile = verseKeyAudioFile(
                 swordModule,
                 nk.book || undefined,
-                nk.chapter
+                nk.chapter,
               );
           } else if ('key' in file) {
             const { key: k } = file;

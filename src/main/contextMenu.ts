@@ -1,4 +1,3 @@
-import { BrowserWindow } from 'electron';
 import contextMenuCreator from 'electron-context-menu';
 import log from 'electron-log';
 import i18n from 'i18next';
@@ -9,7 +8,8 @@ import CommandsX from './components/commands.ts';
 import Viewport from './components/viewport.ts';
 import Data from './components/data.ts';
 
-import type { GAddCaller, ContextDataType, LocationVKType } from '../type.ts';
+import type { BrowserWindow } from 'electron';
+import type { GAddCaller, ContextDataType } from '../type.ts';
 import type { AboutWinState } from '../renderer/about/about.tsx';
 
 // Require the calling window argument, since rg will not add it when
@@ -22,7 +22,7 @@ export type ContextMenuType = typeof contextMenu;
 
 export default function contextMenu(
   window: BrowserWindow,
-  dispose: (() => void)[]
+  dispose: Array<() => void>,
 ): void {
   // Custom context-menu target data is written to Data to be read when
   // the menu is being built.
@@ -36,7 +36,7 @@ export default function contextMenu(
 
       showInspectElement: Boolean(
         process.env.NODE_ENV === 'development' ||
-          process.env.DEBUG_PROD === 'true'
+          process.env.DEBUG_PROD === 'true',
       ),
 
       showSearchWithGoogle: false,
@@ -112,7 +112,7 @@ export default function contextMenu(
             label: i18n.t('menu.context.close'),
             visible: Object.keys(d).length > 0,
             enabled: Boolean(
-              (d.tab || d.context) && d.panelIndex !== undefined
+              (d.tab || d.context) && d.panelIndex !== undefined,
             ),
             click: () => {
               const mod = d.tab || d.context;
@@ -128,7 +128,7 @@ export default function contextMenu(
 
         const Bookmarks = G.Prefs.getComplexValue(
           'rootfolder',
-          'bookmarks'
+          'bookmarks',
         ) as typeof S.bookmarks.rootfolder;
         const { bookmark } = d;
         const bookmarkItem =
@@ -147,7 +147,7 @@ export default function contextMenu(
                     location,
                     location,
                     undefined,
-                    window.id
+                    window.id,
                   );
                 } else {
                   Commands.goToLocationGB(location, undefined, window.id);
@@ -176,7 +176,7 @@ export default function contextMenu(
                     searchtext: selection,
                     type: 'SearchExactText',
                   },
-                  window.id
+                  window.id,
                 );
             },
           },
@@ -185,7 +185,7 @@ export default function contextMenu(
             visible: Object.keys(d).length > 0,
             enabled: Boolean(d.selectionParsedVK),
             click: () => {
-              const loc = d.selectionParsedVK as LocationVKType;
+              const loc = d.selectionParsedVK;
               if (typeof loc === 'object') {
                 Commands.goToLocationVK(loc, loc, undefined, window.id);
               }
@@ -202,7 +202,7 @@ export default function contextMenu(
                   locationVK,
                   locationVK,
                   undefined,
-                  window.id
+                  window.id,
                 );
               }
             },
@@ -213,7 +213,9 @@ export default function contextMenu(
             visible: true,
             enabled: d.windowDescriptor && !d.windowDescriptor.notResizable,
             click: () => {
-              Commands.print(undefined, window.id);
+              Commands.print(undefined, window.id).catch((er) => {
+                log.error(er);
+              });
             },
           },
           actions.separator(),
@@ -230,7 +232,7 @@ export default function contextMenu(
                   {
                     location: locationCOMM || locationGB || location,
                   },
-                  window.id
+                  window.id,
                 );
               }
             },
@@ -248,7 +250,7 @@ export default function contextMenu(
                   {
                     location: locationCOMM || locationGB || location,
                   },
-                  window.id
+                  window.id,
                 );
               }
             },
@@ -263,7 +265,7 @@ export default function contextMenu(
                   i18n.t('menu.usernote.properties'),
                   { bookmark: d.bookmark, anyChildSelectable: true },
                   undefined,
-                  window.id
+                  window.id,
                 );
               }
             },
@@ -288,17 +290,19 @@ export default function contextMenu(
             click: () => {
               G.Prefs.setComplexValue(
                 'bookmarkManager.printItems',
-                d.bookmarks as typeof S.prefs.bookmarkManager.printItems
+                d.bookmarks as typeof S.prefs.bookmarkManager.printItems,
               );
               Commands.print(undefined, window.id)
                 .then(() => {
                   G.Prefs.setComplexValue(
                     'bookmarkManager.printItems',
-                    null as typeof S.prefs.bookmarkManager.printItems
+                    null as typeof S.prefs.bookmarkManager.printItems,
                   );
                   return true;
                 })
-                .catch((er) => log.error(er));
+                .catch((er) => {
+                  log.error(er);
+                });
             },
           },
           actions.separator(),
@@ -330,14 +334,14 @@ export default function contextMenu(
             label: i18n.t('menu.edit.paste'),
             enabled: Boolean(
               G.Prefs.getComplexValue('bookmarkManager.cut') ||
-                G.Prefs.getComplexValue('bookmarkManager.copy')
+                G.Prefs.getComplexValue('bookmarkManager.copy'),
             ),
             click: () => {
               const cut = G.Prefs.getComplexValue(
-                'bookmarkManager.cut'
+                'bookmarkManager.cut',
               ) as typeof S.prefs.bookmarkManager.cut;
               const copy = G.Prefs.getComplexValue(
-                'bookmarkManager.copy'
+                'bookmarkManager.copy',
               ) as typeof S.prefs.bookmarkManager.copy;
               G.Prefs.setComplexValue('bookmarkManager.cut', null);
               G.Prefs.setComplexValue('bookmarkManager.copy', null);
@@ -383,7 +387,7 @@ export default function contextMenu(
                   i18n.t('menu.bookmark.add'),
                   { treeSelection: d.bookmark, anyChildSelectable: true },
                   { location: xulswordLocation(G.Tab, G.Prefs) },
-                  window.id
+                  window.id,
                 );
               }
             },
@@ -399,7 +403,7 @@ export default function contextMenu(
                   {
                     location: undefined,
                   },
-                  window.id
+                  window.id,
                 );
               }
             },
@@ -417,7 +421,7 @@ export default function contextMenu(
                   i18n.t('menu.edit.properties'),
                   { bookmark: d.bookmark, anyChildSelectable: true },
                   undefined,
-                  window.id
+                  window.id,
                 );
               }
             },
@@ -427,7 +431,7 @@ export default function contextMenu(
         if (d.type === 'bookmarkManager') return bookmarkManagerMenu;
         return generalMenu;
       },
-    })
+    }),
   );
 
   // This context-menu handler must come last after contextMenuCreator, to

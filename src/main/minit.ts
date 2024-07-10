@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/consistent-type-assertions */
+/* eslint-disable @typescript-eslint/no-dynamic-delete */
 /* eslint-disable no-nested-ternary */
 /* eslint-disable import/no-mutable-exports */
 import log from 'electron-log';
@@ -6,9 +8,9 @@ import fs from 'fs';
 import i18n from 'i18next';
 import fontList from 'font-list';
 import C from '../constant.ts';
-import S from '../defaultPrefs.ts';
+
 import VerseKey from '../verseKey.ts';
-import RefParser, { RefParserOptionsType } from '../refParser.ts';
+import RefParser from '../refParser.ts';
 import {
   isASCII,
   JSON_parse,
@@ -28,10 +30,15 @@ import LibSword from './components/libsword.ts';
 import LocalFile from './components/localFile.ts';
 import Window from './components/window.ts';
 import { moduleUnsupported, CipherKeyModules } from './components/module.ts';
-import getFontFamily from './fontfamily.js';
-import parseSwordConf, { fileFullPath, serverPublicPath } from './parseSwordConf.ts';
+import getFontFamily from './fontfamily.ts';
+import { bkChsInV11n } from './bkChsInV11n.ts';
+import parseSwordConf, {
+  fileFullPath,
+  serverPublicPath,
+} from './parseSwordConf.ts';
 
 import type { TreeNodeInfo } from '@blueprintjs/core';
+import type S from '../defaultPrefs.ts';
 import type {
   TabType,
   BookType,
@@ -52,6 +59,7 @@ import type {
   ModulesCache,
   TreeNodeInfoPref,
 } from '../type.ts';
+import type { RefParserOptionsType } from '../refParser.ts';
 import type RenderPromise from '../renderer/renderPromise.ts';
 
 // Get all supported books in locale order. NOTE: xulsword ignores individual
@@ -59,13 +67,13 @@ import type RenderPromise from '../renderer/renderPromise.ts';
 // (see C.SupportedBooks). Doing so provides a common order for book lists
 // etc., simpler data structures, and a better experience for the user.
 export function getBooks(locale?: string): BookType[] {
-  const loc: string
-    = (C.Locales.find((l) => l[0] === locale) && locale) || i18n.language;
+  const loc: string =
+    (C.Locales.find((l) => l[0] === locale) && locale) || i18n.language;
   if (!Cache.has('books', loc)) {
     let books: BookType[] = [];
     let index = 0;
     C.SupportedBookGroups.forEach(
-      (bookGroup: typeof C.SupportedBookGroups[any]) => {
+      (bookGroup: (typeof C.SupportedBookGroups)[any]) => {
         C.SupportedBooks[bookGroup].forEach((code, bgi: number) => {
           books.push({
             code,
@@ -77,12 +85,12 @@ export function getBooks(locale?: string): BookType[] {
           });
           index += 1;
         });
-      }
+      },
     );
     const stfile = path.join(Dirs.path.xsAsset, 'locales', loc, 'books.json');
     const raw = fs.readFileSync(stfile);
     let data: any;
-    if (raw && raw.length) {
+    if (raw?.length) {
       const json = JSON_parse(raw.toString());
       if (json && typeof json === 'object') {
         data = json;
@@ -125,16 +133,18 @@ export function getBooks(locale?: string): BookType[] {
   return Cache.read('books', loc);
 }
 
-export function getBook(locale?: string): { [code: string]: BookType } {
-  const loc: string
-    = (C.Locales.find((l) => l[0] === locale) && locale) || i18n.language;
+export function getBook(locale?: string): Record<string, BookType> {
+  const loc: string =
+    (C.Locales.find((l) => l[0] === locale) && locale) || i18n.language;
   const book: ReturnType<typeof getBook> = {};
-  getBooks(loc).forEach((bk: BookType) => {book[bk.code] = bk});
+  getBooks(loc).forEach((bk: BookType) => {
+    book[bk.code] = bk;
+  });
   return book;
 }
 
 export function getBkChsInV11n(): {
-  [key in V11nType]: [string, number][];
+  [key in V11nType]: Array<[OSISBookType, number]>;
 } {
   if (!Cache.has('bkChsInV11n')) {
     // Data was parsed from sword/include/*.h files using /util/readCanons.pl
@@ -158,28 +168,7 @@ export function getBkChsInV11n(): {
       SynodalProt: { ot: 0, nt: 1 },
       Vulg: { ot: 0, nt: 0 },
     };
-    /* eslint-disable prettier/prettier */
-    const bkChsInV11n: GType['BkChsInV11n'] = {
-      KJV:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['Ruth',4],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['1Chr',29],['2Chr',36],['Ezra',10],['Neh',13],['Esth',10],['Job',42],['Ps',150],['Prov',31],['Eccl',12],['Song',8],['Isa',66],['Jer',52],['Lam',5],['Ezek',48],['Dan',12],['Hos',14],['Joel',3],['Amos',9],['Obad',1],['Jonah',4],['Mic',7],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',4],['Matt',28],['Mark',16],['Luke',24],['John',21],['Acts',28],['Rom',16],['1Cor',16],['2Cor',13],['Gal',6],['Eph',6],['Phil',4],['Col',4],['1Thess',5],['2Thess',3],['1Tim',6],['2Tim',4],['Titus',3],['Phlm',1],['Heb',13],['Jas',5],['1Pet',5],['2Pet',3],['1John',5],['2John',1],['3John',1],['Jude',1],['Rev',22]],
-      Calvin:[],
-      Catholic:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['Ruth',4],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['1Chr',29],['2Chr',36],['Ezra',10],['Neh',13],['Tob',14],['Jdt',16],['Esth',10],['1Macc',16],['2Macc',15],['Job',42],['Ps',150],['Prov',31],['Eccl',12],['Song',8],['Wis',19],['Sir',51],['Isa',66],['Jer',52],['Lam',5],['Bar',6],['Ezek',48],['Dan',14],['Hos',14],['Joel',4],['Amos',9],['Obad',1],['Jonah',4],['Mic',7],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',3]],
-      Catholic2:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['Ruth',4],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['1Chr',29],['2Chr',36],['Ezra',10],['Neh',13],['Tob',14],['Jdt',16],['Esth',16],['1Macc',16],['2Macc',15],['Job',42],['Ps',150],['Prov',31],['Eccl',12],['Song',8],['Wis',19],['Sir',51],['Isa',66],['Jer',52],['Lam',5],['Bar',6],['Ezek',48],['Dan',14],['Hos',14],['Joel',4],['Amos',9],['Obad',1],['Jonah',4],['Mic',7],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',3]],
-      DarbyFr:[],
-      German:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['Ruth',4],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['1Chr',29],['2Chr',36],['Ezra',10],['Neh',13],['Esth',10],['Job',42],['Ps',150],['Prov',31],['Eccl',12],['Song',8],['Isa',66],['Jer',52],['Lam',5],['Ezek',48],['Dan',12],['Hos',14],['Joel',4],['Amos',9],['Obad',1],['Jonah',4],['Mic',7],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',3]],
-      KJVA:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['Ruth',4],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['1Chr',29],['2Chr',36],['Ezra',10],['Neh',13],['Esth',10],['Job',42],['Ps',150],['Prov',31],['Eccl',12],['Song',8],['Isa',66],['Jer',52],['Lam',5],['Ezek',48],['Dan',12],['Hos',14],['Joel',3],['Amos',9],['Obad',1],['Jonah',4],['Mic',7],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',4],['1Esd',9],['2Esd',16],['Tob',14],['Jdt',16],['AddEsth',16],['Wis',19],['Sir',51],['Bar',6],['PrAzar',1],['Sus',1],['Bel',1],['PrMan',1],['1Macc',16],['2Macc',15]],
-      Leningrad:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['Isa',66],['Jer',52],['Ezek',48],['Hos',14],['Joel',4],['Amos',9],['Obad',1],['Jonah',4],['Mic',7],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',3],['1Chr',29],['2Chr',36],['Ps',150],['Job',42],['Prov',31],['Ruth',4],['Song',8],['Eccl',12],['Lam',5],['Esth',10],['Dan',12],['Ezra',10],['Neh',13]],
-      Luther:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['Ruth',4],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['1Chr',29],['2Chr',36],['Ezra',10],['Neh',13],['Esth',10],['Job',42],['Ps',150],['Prov',31],['Eccl',12],['Song',8],['Isa',66],['Jer',52],['Lam',5],['Ezek',48],['Dan',12],['Hos',14],['Joel',4],['Amos',9],['Obad',1],['Jonah',4],['Mic',7],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',3],['Jdt',16],['Wis',19],['Tob',14],['Sir',51],['Bar',6],['1Macc',16],['2Macc',15],['AddEsth',7],['AddDan',3],['PrMan',1],['Matt',28],['Mark',16],['Luke',24],['John',21],['Acts',28],['Rom',16],['1Cor',16],['2Cor',13],['Gal',6],['Eph',6],['Phil',4],['Col',4],['1Thess',5],['2Thess',3],['1Tim',6],['2Tim',4],['Titus',3],['Phlm',1],['1Pet',5],['2Pet',3],['1John',5],['2John',1],['3John',1],['Heb',13],['Jas',5],['Jude',1],['Rev',22]],
-      LXX:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['Ruth',4],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['1Chr',29],['2Chr',36],['1Esd',9],['Ezra',10],['Neh',13],['Esth',16],['Jdt',16],['Tob',14],['1Macc',16],['2Macc',15],['3Macc',7],['4Macc',18],['Ps',151],['PrMan',1],['Prov',31],['Eccl',12],['Song',8],['Job',42],['Wis',19],['Sir',51],['PssSol',18],['Hos',14],['Amos',9],['Mic',7],['Joel',4],['Obad',1],['Jonah',4],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',4],['Isa',66],['Jer',52],['Bar',5],['Lam',5],['EpJer',1],['Ezek',48],['PrAzar',1],['Sus',1],['Dan',12],['Bel',1],['1En',108],['Odes',14]],
-      MT:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['Isa',66],['Jer',52],['Ezek',48],['Hos',14],['Joel',4],['Amos',9],['Obad',1],['Jonah',4],['Mic',7],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',3],['Ps',150],['Job',42],['Prov',31],['Ruth',4],['Song',8],['Eccl',12],['Lam',5],['Esth',10],['Dan',12],['Ezra',10],['Neh',13],['1Chr',29],['2Chr',36]],
-      NRSV:[],
-      NRSVA:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['Ruth',4],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['1Chr',29],['2Chr',36],['Ezra',10],['Neh',13],['Esth',10],['Job',42],['Ps',150],['Prov',31],['Eccl',12],['Song',8],['Isa',66],['Jer',52],['Lam',5],['Ezek',48],['Dan',12],['Hos',14],['Joel',3],['Amos',9],['Obad',1],['Jonah',4],['Mic',7],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',4],['Tob',14],['Jdt',16],['EsthGr',16],['Wis',19],['Sir',51],['Bar',6],['PrAzar',1],['Sus',1],['Bel',1],['1Macc',16],['2Macc',15],['1Esd',9],['PrMan',1],['AddPs',1],['3Macc',7],['2Esd',16],['4Macc',18]],
-      Orthodox:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['Ruth',4],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['1Chr',29],['2Chr',36],['1Esd',9],['Ezra',10],['Neh',13],['Tob',14],['Jdt',16],['Esth',16],['1Macc',16],['2Macc',15],['3Macc',7],['Ps',151],['PrMan',1],['Job',42],['Prov',31],['Eccl',12],['Song',8],['Wis',19],['Sir',51],['Hos',14],['Amos',9],['Mic',7],['Joel',4],['Obad',1],['Jonah',4],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',4],['Isa',66],['Jer',52],['Bar',5],['Lam',5],['EpJer',1],['Ezek',48],['Sus',1],['Dan',12],['Bel',1],['4Macc',18]],
-      Segond:[],
-      Synodal:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['Ruth',4],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['1Chr',29],['2Chr',36],['PrMan',1],['Ezra',10],['Neh',13],['1Esd',9],['Tob',14],['Jdt',16],['Esth',10],['Job',42],['Ps',151],['Prov',31],['Eccl',12],['Song',8],['Wis',19],['Sir',51],['Isa',66],['Jer',52],['Lam',5],['EpJer',1],['Bar',5],['Ezek',48],['Dan',14],['Hos',14],['Joel',3],['Amos',9],['Obad',1],['Jonah',4],['Mic',7],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',4],['1Macc',16],['2Macc',15],['3Macc',7],['2Esd',16],['Matt',28],['Mark',16],['Luke',24],['John',21],['Acts',28],['Jas',5],['1Pet',5],['2Pet',3],['1John',5],['2John',1],['3John',1],['Jude',1],['Rom',16],['1Cor',16],['2Cor',13],['Gal',6],['Eph',6],['Phil',4],['Col',4],['1Thess',5],['2Thess',3],['1Tim',6],['2Tim',4],['Titus',3],['Phlm',1],['Heb',13],['Rev',22]],
-      SynodalProt:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['Ruth',4],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['1Chr',29],['2Chr',36],['Ezra',10],['Neh',13],['Esth',10],['Job',42],['Ps',150],['Prov',31],['Eccl',12],['Song',8],['Isa',66],['Jer',52],['Lam',5],['Ezek',48],['Dan',12],['Hos',14],['Joel',3],['Amos',9],['Obad',1],['Jonah',4],['Mic',7],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',4]],
-      Vulg:[['Gen',50],['Exod',40],['Lev',27],['Num',36],['Deut',34],['Josh',24],['Judg',21],['Ruth',4],['1Sam',31],['2Sam',24],['1Kgs',22],['2Kgs',25],['1Chr',29],['2Chr',36],['Ezra',10],['Neh',13],['Tob',14],['Jdt',16],['Esth',16],['Job',42],['Ps',150],['Prov',31],['Eccl',12],['Song',8],['Wis',19],['Sir',51],['Isa',66],['Jer',52],['Lam',5],['Bar',6],['Ezek',48],['Dan',14],['Hos',14],['Joel',3],['Amos',9],['Obad',1],['Jonah',4],['Mic',7],['Nah',3],['Hab',3],['Zeph',3],['Hag',2],['Zech',14],['Mal',4],['1Macc',16],['2Macc',15],['Matt',28],['Mark',16],['Luke',24],['John',21],['Acts',28],['Rom',16],['1Cor',16],['2Cor',13],['Gal',6],['Eph',6],['Phil',4],['Col',4],['1Thess',5],['2Thess',3],['1Tim',6],['2Tim',4],['Titus',3],['Phlm',1],['Heb',13],['Jas',5],['1Pet',5],['2Pet',3],['1John',5],['2John',1],['3John',1],['Jude',1],['Rev',22],['PrMan',1],['1Esd',9],['2Esd',16],['AddPs',1],['EpLao',1]],
-    };
-    /* eslint-enable prettier/prettier */
+
     const kjvot = bkChsInV11n.KJV.slice(0, 39);
     const kjvnt = bkChsInV11n.KJV.slice(39);
     Object.keys(bkChsInV11n).forEach((k) => {
@@ -197,8 +186,8 @@ export function getBkChsInV11n(): {
   return Cache.read('bkChsInV11n');
 }
 
-export function GetBooksInVKModules(): { [k:string]: OSISBookType[] } {
-  const r: { [k:string]: OSISBookType[] } = {};
+export function GetBooksInVKModules(): Record<string, OSISBookType[]> {
+  const r: Record<string, OSISBookType[]> = {};
   getTabs().forEach((t) => {
     r[t.module] = getBooksInVKModule(t.module);
   });
@@ -211,16 +200,16 @@ export function getBooksInVKModule(module: string): OSISBookType[] {
     const book = getBook();
     let v11n = LibSword.getModuleInformation(
       module,
-      'Versification'
+      'Versification',
     ) as V11nType;
     if (v11n === C.NOTFOUND) v11n = 'KJV';
     const isVerseKey = /(text|com)/i.test(
-      LibSword.getModuleInformation(module, 'ModDrv')
+      LibSword.getModuleInformation(module, 'ModDrv'),
     );
     const options = getSwordOptions(false, C.BIBLE);
     const osis: string[] = [];
     if (isVerseKey) {
-      const v11nbooks = bkChsInV11n[v11n].map((x) => x[0]);
+      const v11nbooks = bkChsInV11n[v11n].map((x: any) => x[0]);
       // When references to missing books are requested from SWORD,
       // the previous (or last?) book in the module is usually quietly
       // used and read from instead! The exception seems to be when a
@@ -233,10 +222,20 @@ export function getBooksInVKModule(module: string): OSISBookType[] {
       const fake = LibSword.getVerseText(module, 'FAKE 1:1', false, options);
       v11nbooks.forEach((code: string) => {
         const bk = book[code];
-        const verse1 = LibSword.getVerseText(module, `${bk.code} 1:1`, false, options);
+        const verse1 = LibSword.getVerseText(
+          module,
+          `${bk.code} 1:1`,
+          false,
+          options,
+        );
         if (!verse1 || verse1 === fake) {
           // Lopukhin Colossians starts at verse 3, so used verse 3 instead of 2 here:
-          const verse2 = LibSword.getVerseText(module, `${bk.code} 1:3`, false, options);
+          const verse2 = LibSword.getVerseText(
+            module,
+            `${bk.code} 1:3`,
+            false,
+            options,
+          );
           if (!verse2 || verse1 === verse2) return;
         }
         osis.push(bk.code);
@@ -321,12 +320,12 @@ export function getTabs(): TabType[] {
         // then search contents when necessary.
         let p = LibSword.getModuleInformation(
           module,
-          'AbsoluteDataPath'
+          'AbsoluteDataPath',
         ).replace(/[\\/]/g, path.sep);
         if (p.slice(-1) !== path.sep) p += path.sep;
         const modsd = p.replace(/[\\/]modules[\\/].*?$/, `${path.sep}mods.d`);
         let confFile: LocalFile | null = new LocalFile(
-          `${modsd + path.sep + module.toLowerCase()}.conf`
+          `${modsd + path.sep + module.toLowerCase()}.conf`,
         );
         if (!confFile.exists()) {
           // Try another possibility (unchanged case module code).
@@ -375,7 +374,7 @@ export function getTabs(): TabType[] {
           tabType,
           isVerseKey,
           direction: /^rt.?l$/i.test(
-            LibSword.getModuleInformation(module, 'Direction')
+            LibSword.getModuleInformation(module, 'Direction'),
           )
             ? 'rtl'
             : 'ltr',
@@ -409,9 +408,9 @@ export function getTabs(): TabType[] {
   return Cache.read('tabs');
 }
 
-export function getTab(): { [i: string]: TabType } {
+export function getTab(): Record<string, TabType> {
   if (!Cache.has('tab')) {
-    const tab: { [i: string]: TabType } = {};
+    const tab: Record<string, TabType> = {};
     const tabs = getTabs();
     tabs.forEach((t) => {
       tab[t.module] = t;
@@ -432,8 +431,8 @@ export function getCipherFailConfs(): SwordConfType[] {
     .filter(Boolean) as SwordConfType[];
 }
 
-export function getAudioConfs(): { [module: string]: SwordConfType } {
-  const confs: { [module: string]: SwordConfType } = {};
+export function getAudioConfs(): Record<string, SwordConfType> {
+  const confs: Record<string, SwordConfType> = {};
   const audio = Dirs.xsAudio.clone().append('mods.d');
   audio.directoryEntries.forEach((d) => {
     const f = audio.clone().append(d);
@@ -452,7 +451,7 @@ export function getMaxChapter(v11n: V11nType, vkeytext: string) {
   const [book] = vkeytext.split(/[\s.:]/);
   const bkChsInV11n = getBkChsInV11n();
   if (!(v11n in bkChsInV11n)) return 0;
-  const v = bkChsInV11n[v11n].find((x) => x[0] === book);
+  const v = bkChsInV11n[v11n].find((x: any) => x[0] === book);
   return v ? v[1] : 0;
 }
 
@@ -466,20 +465,16 @@ export function verseKey(
   versekey: LocationVKType | string,
   v11n?: V11nType | null,
   options?: RefParserOptionsType,
-  _renderPromise?: RenderPromise | null // only used in renderer implementation
+  _renderPromise?: RenderPromise | null, // only used in renderer implementation
 ): VerseKey {
   return new VerseKey(
-    new RefParser(
-      getLocaleDigits(true),
-      getLocalizedBooks(true),
-      options
-    ),
+    new RefParser(getLocaleDigits(true), getLocalizedBooks(true), options),
     getBkChsInV11n(),
     {
       convertLocation: (
         fromv11n: V11nType,
         vkeytext: string,
-        tov11n: V11nType
+        tov11n: V11nType,
       ) => {
         return LibSword.convertLocation(fromv11n, vkeytext, tov11n);
       },
@@ -491,7 +486,7 @@ export function verseKey(
       },
     },
     versekey,
-    v11n
+    v11n,
   );
 }
 
@@ -499,7 +494,7 @@ export function verseKey(
 // than a fontFamily, then parse the URL. Otherwise return null.
 function fontURL(mod: string) {
   const url = LibSword.getModuleInformation(mod, 'Font').match(
-    /(\w+:\/\/[^"')]+)\s*$/
+    /(\w+:\/\/[^"')]+)\s*$/,
   );
   return url
     ? { fontFamily: `_${url[1].replace(/[^\w\d]/g, '_')}`, url: url[1] }
@@ -576,7 +571,7 @@ export async function getSystemFonts(): Promise<string[]> {
         .map((f) => f.fontFamily)
         .concat(fonts);
       allfonts = Array.from(
-        new Set(allfonts.map((f) => normalizeFontFamily(f)))
+        new Set(allfonts.map((f) => normalizeFontFamily(f))),
       );
       if (!Cache.has('fontList')) {
         Cache.write(allfonts, 'fontList');
@@ -586,7 +581,7 @@ export async function getSystemFonts(): Promise<string[]> {
       log.error(err);
     }
   }
-  return Promise.resolve(Cache.read('fontList') as string[]);
+  return await Promise.resolve(Cache.read('fontList') as string[]);
 }
 
 // Search through installed modules to find which features have
@@ -623,17 +618,15 @@ export function getFeatureModules(): FeatureMods {
       // Until xulsword updates the SWORD engine, only SynodalProt and KJV versifications
       // can be supported.
       xulswordFeatureMods.greek = xulswordFeatureMods.greek.filter((m) =>
-        Object.keys(C.SupportedV11nMaps).includes(Tab[m].v11n)
+        Object.keys(C.SupportedV11nMaps).includes(Tab[m].v11n),
       );
       xulswordFeatureMods.hebrew = xulswordFeatureMods.hebrew.filter((m) =>
-        Object.keys(C.SupportedV11nMaps).includes(Tab[m].v11n)
+        Object.keys(C.SupportedV11nMaps).includes(Tab[m].v11n),
       );
 
       // These Strongs feature modules do not have Strongs number keys, and so cannot be used
-      const notStrongsKeyed = new RegExp(
-        '^(AbbottSmith|InvStrongsRealGreek|InvStrongsRealHebrew)$',
-        'i'
-      );
+      const notStrongsKeyed =
+        /^(AbbottSmith|InvStrongsRealGreek|InvStrongsRealHebrew)$/i;
       if (!notStrongsKeyed.test(module)) {
         const feature = LibSword.getModuleInformation(module, 'Feature');
         const features = feature.split(C.CONFSEP);
@@ -647,7 +640,7 @@ export function getFeatureModules(): FeatureMods {
     });
     Cache.write(
       { ...swordFeatureMods, ...xulswordFeatureMods },
-      'swordFeatureMods'
+      'swordFeatureMods',
     );
   }
 
@@ -660,7 +653,7 @@ export function getFeatureModules(): FeatureMods {
 export function validateGlobalModulePrefs() {
   const Tabs = getTabs();
 
-  const xsprops: (keyof typeof S.prefs.xulsword)[] = [
+  const xsprops: Array<keyof typeof S.prefs.xulsword> = [
     'panels',
     'ilModules',
     'mtModules',
@@ -668,7 +661,7 @@ export function validateGlobalModulePrefs() {
   ];
   const xulsword = keep(
     Prefs.getComplexValue('xulsword') as typeof S.prefs.xulsword,
-    xsprops
+    xsprops,
   );
 
   validateViewportModulePrefs(Tabs, xulsword);
@@ -676,7 +669,7 @@ export function validateGlobalModulePrefs() {
   const globalPopup: Partial<typeof S.prefs.global.popup> = {};
 
   const vklookup = Prefs.getComplexValue(
-    'global.popup.vklookup'
+    'global.popup.vklookup',
   ) as typeof S.prefs.global.popup.vklookup;
   Object.entries(vklookup).forEach((entry) => {
     const m = entry[0] as keyof typeof S.prefs.global.popup.feature;
@@ -688,7 +681,7 @@ export function validateGlobalModulePrefs() {
   globalPopup.vklookup = vklookup;
 
   const feature = Prefs.getComplexValue(
-    'global.popup.feature'
+    'global.popup.feature',
   ) as typeof S.prefs.global.popup.feature;
   Object.entries(feature).forEach((entry) => {
     const f = entry[0] as keyof typeof S.prefs.global.popup.feature;
@@ -704,10 +697,9 @@ export function validateGlobalModulePrefs() {
     const f = entry[0] as keyof typeof S.prefs.global.popup.feature;
     const fmods = entry[1];
     if (!(f in feature) && Array.isArray(fmods) && fmods.length) {
-      const pref = C.LocalePreferredFeature[
-        i18n.language === 'en' ? 'en' : 'ru'
-      ][f] as string[] | undefined;
-      feature[f] = (pref && pref.find((m) => fmods.includes(m))) || fmods[0];
+      const pref =
+        C.LocalePreferredFeature[i18n.language === 'en' ? 'en' : 'ru'][f];
+      feature[f] = pref?.find((m) => fmods.includes(m)) || fmods[0];
     }
   });
   globalPopup.feature = feature;
@@ -760,7 +752,7 @@ export function getModuleConfig(mod: string): ConfigType {
     if (moduleConfig.PreferredCSSXHTML) {
       const p = LibSword.getModuleInformation(
         mod,
-        'AbsoluteDataPath'
+        'AbsoluteDataPath',
       ).replaceAll('\\', '/');
       const p2 = `${p}${p.slice(-1) === '/' ? '' : '/'}`;
       let pcx = `${p2}${moduleConfig.PreferredCSSXHTML}`;
@@ -787,7 +779,7 @@ export function getModuleConfig(mod: string): ConfigType {
     let { fontFamily } = moduleConfig;
     if (fontFamily) {
       const font = getModuleFonts().find(
-        (f) => fontFamily && f.path?.split('/').pop()?.includes(fontFamily)
+        (f) => fontFamily && f.path?.split('/').pop()?.includes(fontFamily),
       );
       if (font) fontFamily = font.fontFamily;
       moduleConfig.fontFamily = fontFamily.replace(/"/g, "'");
@@ -801,7 +793,7 @@ export function getModuleConfig(mod: string): ConfigType {
 }
 
 export function getConfig() {
-  const config: { [module: string]: ConfigType } = {};
+  const config: Record<string, ConfigType> = {};
   const cacheName = 'getConfig';
   if (!Cache.has(cacheName)) {
     getTabs().forEach((t) => {
@@ -836,10 +828,10 @@ export function localeConfig(locale: string) {
   // Module associations...
   const tabs = getTabs();
   const { AssociatedModules } = lconfig;
-  const ams = (AssociatedModules && AssociatedModules.split(/\s*,\s*/)) || [];
+  const ams = AssociatedModules?.split(/\s*,\s*/) || [];
   lconfig.AssociatedModules = null;
-  const assocmods: Set<string> = new Set(
-    ams.filter((m) => tabs.find((t) => t.module === m))
+  const assocmods = new Set<string>(
+    ams.filter((m) => tabs.find((t) => t.module === m)),
   );
   // Associate with modules having configs that associate with this locale.
   tabs.forEach((t) => {
@@ -875,9 +867,9 @@ export function localeConfig(locale: string) {
   return lconfig;
 }
 
-export function getLocaleConfigs(): { [i: string]: ConfigType } {
+export function getLocaleConfigs(): Record<string, ConfigType> {
   if (!Cache.has('localeConfigs')) {
-    const ret = {} as { [i: string]: ConfigType };
+    const ret = {} as Record<string, ConfigType>;
     // Default locale config must have all CSS settings in order to
     // override unrelated ancestor config CSS.
     ret.locale = localeConfig(i18n.language);
@@ -889,7 +881,7 @@ export function getLocaleConfigs(): { [i: string]: ConfigType } {
         ret.locale[key] = v;
       }
     });
-    C.Locales.forEach((l: any) => {
+    C.Locales.forEach((l: (typeof C.Locales)[number]) => {
       const [lang] = l;
       ret[lang] = localeConfig(lang);
     });
@@ -898,9 +890,11 @@ export function getLocaleConfigs(): { [i: string]: ConfigType } {
   return Cache.read('localeConfigs');
 }
 
-export function getLocaleDigits(getAll = false): {[locale: string]: string[] | null } {
+export function getLocaleDigits(
+  getAll = false,
+): Record<string, string[] | null> {
   const locs = getAll ? C.Locales.map((l) => l[0]) : [i18n.language];
-  const r: {[locale: string]: string[] | null} = {};
+  const r: Record<string, string[] | null> = {};
   locs.forEach((lng: any) => {
     let l = null;
     const toptions = { lng, ns: 'numbers' };
@@ -921,11 +915,9 @@ export function getLocaleDigits(getAll = false): {[locale: string]: string[] | n
   return r;
 }
 
-export function getLocalizedBooks(getAll = false as boolean | string[]): {
-  [locale: string]: {
-    [code: string]: [string[], string[], string[]];
-  };
-} {
+export function getLocalizedBooks(
+  getAll = false as boolean | string[],
+): Record<string, Record<string, [string[], string[], string[]]>> {
   const locs: string[] = [];
   if (Array.isArray(getAll)) locs.push(...getAll);
   else if (getAll) locs.push(...C.Locales.map((l) => l[0]));
@@ -960,7 +952,7 @@ export function getLocalizedBooks(getAll = false as boolean | string[]): {
 export function inlineFile(
   filepath: string,
   encoding = 'base64' as BufferEncoding,
-  noHeader = false
+  noHeader = false,
 ): string {
   let fpath = filepath;
   if (globalThis.isPublicServer) {
@@ -996,7 +988,7 @@ export function inlineFile(
 // path. In public server mode, it is a server path and must be public or else
 // empty string will be returned.
 export function inlineAudioFile(
-  audio: VerseKeyAudioFile | GenBookAudioFile | null
+  audio: VerseKeyAudioFile | GenBookAudioFile | null,
 ): string {
   if (audio) {
     const { path: apath, audioModule } = audio;
@@ -1051,7 +1043,7 @@ export function getAllDictionaryKeyList(module: string): string[] {
       const ignREm = sort.match(getignRE);
       if (ignREm) ignoreREs.push(new RegExp(ignREm[1].replace(getescRE, '')));
       let sort2 = sort.replace(getignRE, '');
-      let sortREs: [number, number, RegExp][] = [];
+      let sortREs: Array<[number, number, RegExp]> = [];
       for (let i = 0; sort2.length; i += 1) {
         let re = sort2.substring(0, 1);
         let rlen = 1;
@@ -1118,7 +1110,7 @@ export function getAllDictionaryKeyList(module: string): string[] {
 // Important: allGbKeys must be output of getGenBookTableOfContents().
 export function genBookTreeNodes(
   module: string,
-  expanded?: boolean
+  expanded?: boolean,
 ): TreeNodeInfo[] {
   const pkey = 'treenodes';
   if (!DiskCache.has(pkey, module)) {
@@ -1135,9 +1127,9 @@ export function genBookTreeNodes(
             hasCaret: gbkey.endsWith(C.GBKSEP),
           };
           return n;
-        })
-      ) as ModulesCache[string]['treenodes'],
-      module
+        }),
+      ),
+      module,
     );
   }
   const nodeinfos = DiskCache.read(pkey, module) as TreeNodeInfoPref[];

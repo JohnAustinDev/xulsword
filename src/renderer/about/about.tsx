@@ -1,13 +1,10 @@
-/* eslint-disable react/no-did-update-set-state */
-/* eslint-disable react/no-array-index-key */
-/* eslint-disable jsx-a11y/anchor-is-valid */
-/* eslint-disable @typescript-eslint/no-use-before-define */
-/* eslint-disable react/static-property-placement */
+/* eslint-disable @typescript-eslint/unbound-method */
 import React from 'react';
 import C from '../../constant.ts';
 import G from '../rg.ts';
 import renderToRoot from '../renderer.tsx';
 import { windowArguments } from '../rutil.ts';
+import log from '../log.ts';
 import { Hbox, Vbox } from '../libxul/boxes.tsx';
 import Label from '../libxul/label.tsx';
 import Stack from '../libxul/stack.tsx';
@@ -17,7 +14,7 @@ import Modinfo, {
   modinfoParentInitialState,
   modinfoParentHandler as modinfoParentHandlerH,
 } from '../libxul/modinfo.tsx';
-import { XulProps, xulPropTypes } from '../libxul/xul.tsx';
+import { type XulProps, xulPropTypes } from '../libxul/xul.tsx';
 import '../splash/splash.css';
 import './about.css';
 
@@ -51,7 +48,7 @@ export default class AboutWin extends React.Component implements ModinfoParent {
     super(props);
 
     const argState = windowArguments(
-      'aboutWinState'
+      'aboutWinState',
     ) as Partial<AboutWinState> | null;
 
     const s: AboutWinState = {
@@ -116,7 +113,7 @@ export default class AboutWin extends React.Component implements ModinfoParent {
       (G.Prefs.getComplexValue('global.Contributors') as string[]) || [];
 
     const overlay = G.inlineFile(
-      `${G.Dirs.path.xsAsset}/splash-overlay-${G.i18n.language}.png`
+      `${G.Dirs.path.xsAsset}/splash-overlay-${G.i18n.language}.png`,
     );
     const style = overlay ? (
       <style>
@@ -224,4 +221,8 @@ export default class AboutWin extends React.Component implements ModinfoParent {
 }
 AboutWin.propTypes = propTypes;
 
-renderToRoot(<AboutWin />, { initialState: { resetOnResize: false } });
+renderToRoot(<AboutWin />, { initialState: { resetOnResize: false } }).catch(
+  (er) => {
+    log.error(er);
+  },
+);

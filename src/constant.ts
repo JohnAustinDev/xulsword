@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/consistent-type-assertions */
 /* eslint-disable no-unused-vars */
 /* eslint-disable no-nested-ternary */
 
@@ -90,13 +91,15 @@ const C = {
     maxDataArrayLength: 512,
     maxDataObjectKeys: 512,
     port: Number(env('XSPORT')) || 3000,
-    ipLimit: isDevelopment ? {
-      points: 5,  // x ip hits
-      duration: 1 // per y second
-    } : {
-      points: 25,  // x ip hits
-      duration: 5 // per y second
-    },
+    ipLimit: isDevelopment
+      ? {
+          points: 5, // x ip hits
+          duration: 1, // per y second
+        }
+      : {
+          points: 25, // x ip hits
+          duration: 5, // per y second
+        },
     limitedMustWait: isDevelopment ? 1000 : 5000, // ms
     networkRequestMinCache: 60000, // ms
     networkRequestBatchDelay: 50, // ms
@@ -196,7 +199,7 @@ const C = {
   //   modConf = a module config file entry
   //   localeConf = a locale config.json entry
   // It also specifies any corresponding CSS property if there is one.
-/* eslint-disable prettier/prettier */
+  // prettier-ignore
   ConfigTemplate: {
     direction:        { modConf:"Direction",         localeConf:"Direction",      CSS:"direction" },
     fontFamily:       { modConf:"Font",              localeConf:"Font",           CSS:"font-family" },
@@ -208,13 +211,12 @@ const C = {
     AssociatedModules:{ modConf:null,                localeConf:"DefaultModule",  CSS:null },
     AssociatedLocale: { modConf:"Lang",              localeConf:null,             CSS:null },
     PreferredCSSXHTML:{ modConf:"PreferredCSSXHTML", localeConf:null,             CSS:null }
-  } as { [key in keyof ConfigType]: {
+  } satisfies { [key in keyof ConfigType]: {
       modConf: keyof SwordConfigEntries | null,
       localeConf: string | null,
       CSS: string | null
     }
   },
-  /* eslint-enable prettier/prettier */
 
   // This should be the same as the global-html.css html rule.
   LocaleDefaultConfigCSS: {
@@ -256,7 +258,7 @@ const C = {
     'tt-Cyrl': 'ru',
     'uz-Cyrl': 'ru',
     'uz-Latn': 'en',
-  } as { [i: string]: string },
+  } as Record<string, string>,
 
   // SupportedV11ns are the versification systems supported by libxulsword's
   // current SWORD engine.
@@ -307,7 +309,7 @@ const C = {
     'Vulgate_and_other_later_Latin_mss',
     'Other',
   ] as BookGroupType[],
-  /* eslint-disable prettier/prettier */
+  // prettier-ignore
   SupportedBooks: {
     ot: [
       'Gen','Exod','Lev','Num','Deut','Josh','Judg','Ruth','1Sam','2Sam',
@@ -356,7 +358,6 @@ const C = {
       'TatDiat','PsMet'
     ]
   } as const,
-  /* eslint-enable prettier/prettier */
 
   BIBLE: 'Biblical Texts' as ModTypes,
   DICTIONARY: 'Lexicons / Dictionaries' as ModTypes,
@@ -573,7 +574,7 @@ const C = {
     'tabs',
     'isPinned',
     'noteBoxHeight',
-    'maximizeNoteBox'
+    'maximizeNoteBox',
   ] as const,
 };
 export default C;

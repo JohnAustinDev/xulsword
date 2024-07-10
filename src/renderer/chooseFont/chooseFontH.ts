@@ -1,4 +1,3 @@
-/* eslint-disable import/no-duplicates */
 import C from '../../constant.ts';
 import { clone, diff, ofClass } from '../../common.ts';
 import log from '../log.ts';
@@ -40,7 +39,7 @@ const sliders = {
 // display the values of a particular module style (or the module default style).
 export function styleToState(
   style: StyleType,
-  module: string | 'default'
+  module: string | 'default',
 ): Partial<ChooseFontWinState> {
   const state: Partial<ChooseFontWinState> =
     module === 'default' ? {} : { module };
@@ -49,7 +48,7 @@ export function styleToState(
       const skey = entry[0] as keyof ChooseFontWinState;
       const ckey = entry[0] as keyof ConfigType;
       if (entry[1].CSS) {
-        const config = style.module && style.module[module];
+        const config = style.module?.[module];
         const v = config && ckey in config ? config[ckey] : null;
         if (v) {
           const match =
@@ -135,12 +134,22 @@ export function stateToStyle(state: ChooseFontWinState): StyleType {
 // If value is undefined, the value type is assumed to be boolean and will be toggled.
 export function setStateValue(
   this: ChooseFontWin,
-  key: keyof ChooseFontWinState,
-  value?: ChooseFontWinState
-) {
+  key: 'coloropen' | 'backgroundopen',
+): void;
+export function setStateValue<K extends keyof ChooseFontWinState>(
+  this: ChooseFontWin,
+  key: K,
+  value: ChooseFontWinState[K],
+): void;
+export function setStateValue<K extends keyof ChooseFontWinState>(
+  this: ChooseFontWin,
+  key: K,
+  value?: ChooseFontWinState[K],
+): void {
   this.setState((prevState: ChooseFontWinState) => {
-    const newState = clone(prevState) as any;
-    if (value === undefined) newState[key] = !newState[key];
+    const newState = clone(prevState);
+    if (typeof value === 'undefined')
+      newState[key as 'coloropen' | 'backgroundopen'] = !newState[key];
     else newState[key] = value;
     const s: Partial<ChooseFontWinState> = {
       [key]: newState[key],
@@ -163,7 +172,7 @@ export function computedStyle(module: string | null, key: string) {
       const skey: keyof CSSStyleDeclaration =
         key === 'color' ? key : `${key}Color`;
       const [, r, g, b, , ax] = (cs[skey].match(rgbaRE) || []).map((n) =>
-        Number(n)
+        Number(n),
       );
       const a = Number.isNaN(ax) ? 1 : ax;
       return Number.isNaN(r) ? null : { r, g, b, a };
@@ -221,7 +230,7 @@ export default function handler(this: ChooseFontWin, e: React.SyntheticEvent) {
         }
         default:
           throw Error(
-            `Unhandled chooseFontH click on id '${currentTarget.id}'`
+            `Unhandled chooseFontH click on id '${currentTarget.id}'`,
           );
       }
       break;
@@ -238,9 +247,9 @@ export default function handler(this: ChooseFontWin, e: React.SyntheticEvent) {
           // restore the saved style by unchecking the checkbox.
           this.setState(
             (
-              prevState0: ChooseFontWinState
+              prevState0: ChooseFontWinState,
             ): Partial<ChooseFontWinState> | null => {
-              const prevState = clone(prevState0) as ChooseFontWinState;
+              const prevState = clone(prevState0);
               if (prevState.module) {
                 let style;
                 if (!prevState[targid]) {
@@ -257,12 +266,12 @@ export default function handler(this: ChooseFontWin, e: React.SyntheticEvent) {
                     style,
                     targid === 'makeDefault' && prevState[targid]
                       ? 'default'
-                      : prevState.module
+                      : prevState.module,
                   ),
                 };
               }
               return null;
-            }
+            },
           );
           break;
         }

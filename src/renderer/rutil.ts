@@ -1,10 +1,3 @@
-/* eslint-disable jsx-a11y/alt-text */
-/* eslint-disable jsx-a11y/no-static-element-interactions */
-/* eslint-disable jsx-a11y/click-events-have-key-events */
-/* eslint-disable import/order */
-/* eslint-disable @typescript-eslint/no-use-before-define */
-/* eslint-disable no-continue */
-/* eslint-disable import/prefer-default-export */
 import Cache from '../cache.ts';
 import {
   diff,
@@ -47,11 +40,11 @@ import type {
 import type RenderPromise from './renderPromise.ts';
 
 export function component(
-  comp: any
+  comp: any,
 ): { displayName: string; props: any } | null {
   const c1 = comp as React.Component;
   const p = c1 && typeof c1 === 'object' && 'props' in c1 ? c1.props : null;
-  const c2 = comp as any;
+  const c2 = comp;
   const displayName: string =
     (c2 && typeof c2 === 'object' && 'type' in c2 && c2.type.displayName) || '';
   if (p) {
@@ -65,7 +58,7 @@ export function component(
 export function windowArguments(prop?: undefined): WindowDescriptorPrefType;
 export function windowArguments(prop: string): PrefValue;
 export function windowArguments(
-  prop: string | undefined
+  prop: string | undefined,
 ): PrefValue | WindowDescriptorPrefType {
   const dataID = window.processR.argv().at(-1);
   if (typeof dataID === 'string' && G.Data.has(dataID)) {
@@ -104,7 +97,7 @@ export function libswordImgSrc(container: HTMLElement) {
       } else {
         img.src = G.inlineFile(
           [G.Dirs.path.xsAsset, 'icons', '20x20', 'media.svg'].join(C.FSSEP),
-          'base64'
+          'base64',
         );
         img.classList.add('image-not-found');
       }
@@ -122,12 +115,12 @@ export function getWaitRetry(result: any): number {
 export function clearPending(
   obj: any,
   name: string[] | string,
-  isInterval = false
+  isInterval = false,
 ) {
   const names = Array.isArray(name) ? name : [name];
   names.forEach((n) => {
     if (n in obj) {
-      const cl = obj[n];
+      const cl = obj[n] as ReturnType<typeof setTimeout | typeof setInterval>;
       if (cl) {
         if (isInterval) clearInterval(cl);
         else clearTimeout(cl);
@@ -145,7 +138,7 @@ export function clearPending(
 export function scrollIntoView(
   elem: HTMLElement,
   ancestor: HTMLElement,
-  percent = 30
+  percent = 30,
 ) {
   elem.scrollIntoView();
   let st: HTMLElement | null = elem;
@@ -181,7 +174,7 @@ export function audioConfig(module?: string): SwordConfType | undefined {
 export function verseKeyAudioFile(
   swordModule: string,
   book?: OSISBookType,
-  chapter?: number
+  chapter?: number,
 ): VerseKeyAudioFile | null {
   const audioConf = audioConfig(swordModule);
   if (audioConf) {
@@ -223,7 +216,7 @@ export function verseKeyAudioFile(
 // or null if there isn't one.
 export function genBookAudioFile(
   swordModule: string,
-  key: string
+  key: string,
 ): GenBookAudioFile | null {
   const audioConf = audioConfig(swordModule);
   if (audioConf) {
@@ -234,12 +227,12 @@ export function genBookAudioFile(
         Cache.write(
           readGenBookAudioConf(ac, swordModule),
           'readGenBookAudioConf',
-          swordModule
+          swordModule,
         );
       }
       const ac2 = Cache.read(
         'readGenBookAudioConf',
-        swordModule
+        swordModule,
       ) as GenBookAudio;
       if (key in ac2) {
         return {
@@ -259,7 +252,7 @@ export function genBookAudioFile(
 export function audioGenBookNode(
   node: TreeNodeInfo,
   module: string,
-  key: string
+  key: string,
 ): boolean {
   let afile: GenBookAudioFile | null = null;
   if (!G.Tab[module].isVerseKey && G.Tab[module].tabType === 'Genbks' && key) {
@@ -277,7 +270,7 @@ export function audioGenBookNode(
 // Returns the audio files listed in a config file as GenBookAudio.
 export function readGenBookAudioConf(
   audio: GenBookAudioConf,
-  gbmod: string
+  gbmod: string,
 ): GenBookAudio {
   const r: GenBookAudio = {};
   const allGbKeys = gbPaths(G.genBookTreeNodes(gbmod));
@@ -323,7 +316,7 @@ export function getLocalizedChapterTerm(
 export function isValidVKM(location: LocationVKType, module: string): boolean {
   if (!isValidVK(location)) return false;
   if (!module || !(module in G.Tab)) return false;
-  if (!G.getBooksInVKModule(module).includes(location.book as any)) {
+  if (!G.getBooksInVKModule(module).includes(location.book as never)) {
     return false;
   }
   return true;
@@ -367,9 +360,14 @@ export function getMaxChapter(v11n: V11nType, vkeytext: string) {
 export function getMaxVerse(
   v11n: V11nType,
   vkeytext: string,
-  renderPromise?: RenderPromise
+  renderPromise?: RenderPromise,
 ): number {
-  const { chapter } = verseKey(vkeytext, v11n, undefined, renderPromise || null);
+  const { chapter } = verseKey(
+    vkeytext,
+    v11n,
+    undefined,
+    renderPromise || null,
+  );
   const maxch = getMaxChapter(v11n, vkeytext);
   if (chapter <= maxch && chapter > 0) {
     return GI.LibSword.getMaxChapter(0, renderPromise, v11n, vkeytext);
@@ -377,8 +375,16 @@ export function getMaxVerse(
   return 0;
 }
 
-export function getCompanionModules(mod: string, renderPromise?: RenderPromise) {
-  const cms = GI.LibSword.getModuleInformation(C.NOTFOUND, renderPromise, mod, 'Companion');
+export function getCompanionModules(
+  mod: string,
+  renderPromise?: RenderPromise,
+) {
+  const cms = GI.LibSword.getModuleInformation(
+    C.NOTFOUND,
+    renderPromise,
+    mod,
+    'Companion',
+  );
   if (cms !== C.NOTFOUND) return cms.split(/\s*,\s*/);
   return [];
 }
@@ -388,34 +394,38 @@ export function getCompanionModules(mod: string, renderPromise?: RenderPromise) 
 // a prefs json file whose key begins with the component id.
 export function getStatePref(
   store: keyof typeof S,
-  id: string | null
+  id: string | null,
 ): PrefObject;
 export function getStatePref<P extends PrefObject>(
   store: keyof typeof S,
   id: string | null,
-  defaultPrefs: P
+  defaultPrefs: P,
 ): P;
 export function getStatePref<P extends PrefObject>(
   store: keyof typeof S,
   id: string | null,
-  defaultPrefs?: P
+  defaultPrefs?: P,
 ): P | PrefObject {
   if (defaultPrefs) return getStatePref2(G.Prefs, store, id, defaultPrefs) as P;
-  return getStatePref2(G.Prefs, store, id) as PrefObject;
+  return getStatePref2(G.Prefs, store, id);
 }
 
 // Push state changes of statePrefKeys value to Prefs.
 export function setStatePref(
   store: PrefStoreType,
   id: string | null,
-  prevState: { [key: string]: any } | null,
-  state: { [key: string]: any },
-  statePrefKeys?: string[] // default is all applicable S keys
+  prevState: Record<string, any> | null,
+  state: Record<string, any>,
+  statePrefKeys?: string[], // default is all applicable S keys
 ) {
   let keys = statePrefKeys?.slice();
   if (!keys) {
-    const st = store in S ? (S as any)[store] : null;
-    if (st) keys = Object.keys(id ? st[id] : st);
+    const st: PrefObject = store in S ? (S as any)[store] : null;
+    if (st) {
+      if (id)
+        if (st && id in st) keys = Object.keys(st[id] as PrefObject);
+        else keys = Object.keys(st);
+    }
   }
   if (keys) {
     const newStatePref = keep(state, keys);
@@ -435,7 +445,7 @@ export function registerUpdateStateFromPref(
   store: PrefStoreType,
   id: string | null,
   c: React.Component,
-  defaultPrefs?: { [prefkey: string]: PrefValue } // default is all
+  defaultPrefs?: Record<string, PrefValue>, // default is all
 ) {
   const updateStateFromPref = (prefs: string | string[], aStorex?: string) => {
     const aStore = aStorex || 'prefs';
@@ -466,8 +476,8 @@ export function registerUpdateStateFromPref(
 }
 
 let languageNames: {
-  en: { [code: string]: string };
-  self: { [code: string]: string };
+  en: Record<string, string>;
+  self: Record<string, string>;
 };
 export function getLangReadable(code: string): string {
   if (/^en(-*|_*)$/.test(code)) return 'English';
@@ -475,7 +485,7 @@ export function getLangReadable(code: string): string {
   if (!languageNames) {
     const path = `${G.Dirs.path.xsAsset}/locales/languageNames.json`;
     const json = G.inlineFile(path, 'utf8', true);
-    languageNames = JSON_parse(json);
+    languageNames = JSON_parse(json) as typeof languageNames;
   }
   let name = code;
   const code2 = code.replace(/-.*$/, '');
@@ -495,7 +505,7 @@ export function getLangReadable(code: string): string {
 
 export function moduleInfoHTML(
   configs: SwordConfType[],
-  renderPromise?: RenderPromise
+  renderPromise?: RenderPromise,
 ): string {
   const esc = (s: string): string => {
     if (!s) return '';
@@ -515,7 +525,7 @@ export function moduleInfoHTML(
     });
   };
   const gethtml = (c: SwordConfType): string => {
-    const fields: (keyof SwordConfType)[] = [
+    const fields: Array<keyof SwordConfType> = [
       'Lang',
       'moduleType',
       'module',
@@ -550,16 +560,16 @@ export function moduleInfoHTML(
         if (c[f] && !(description && description === about)) {
           const sf = f as any;
           let value: string;
-          if (sc.localization.includes(sf)) {
+          if (sc.localization.includes(sf as never)) {
             const v = c[f] as SwordConfLocalized;
             value = lang in v ? v[lang] : v.en;
             if (sf.startsWith('CopyrightContact')) {
               value = `${sf.substring('CopyrightContact'.length)}: ${value}`;
             }
-          } else if (sc.repeatable.includes(sf)) {
+          } else if (sc.repeatable.includes(sf as never)) {
             const v = c[f] as string[];
             value = v.join(', ');
-          } else if (sc.integer.includes(sf)) {
+          } else if (sc.integer.includes(sf as never)) {
             const v = c[f] as number;
             value = v.toString();
           } else if (sf === 'moduleType') {
@@ -573,7 +583,7 @@ export function moduleInfoHTML(
             value = getLangReadable(l);
             if (s) value += ` (${s})`;
           } else if (sf === 'History') {
-            const v = c[f] as [string, SwordConfLocalized][];
+            const v = c[f] as Array<[string, SwordConfLocalized]>;
             value = v
               .sort((a, b) => versionCompare(a[0], b[0]))
               .map((x) => {
@@ -587,7 +597,7 @@ export function moduleInfoHTML(
             value = localizeString(G, v.name) || '';
           } else value = c[f]?.toString() || '';
 
-          if (![sc.htmllink, 'History'].flat().includes(sf)) {
+          if (![sc.htmllink, 'History'].flat().includes(sf as never)) {
             value = esc(value);
           } else {
             value = value.replace(/<a[^>]*>/g, (m) => {
@@ -595,10 +605,10 @@ export function moduleInfoHTML(
               return m.replace(/( target="[^"]*"|(?=>))/, ' target="_blank"');
             });
           }
-          if (sc.rtf.includes(sf)) {
+          if (sc.rtf.includes(sf as never)) {
             value = value.replace(
               /\\qc([^\\]+)(?=\\)/g,
-              '<div class="rtf-qc">$1</div>'
+              '<div class="rtf-qc">$1</div>',
             );
             value = value.replaceAll('\\pard', '');
             value = value.replaceAll('\\par', '<br>');
@@ -614,14 +624,14 @@ export function moduleInfoHTML(
     html.push(gethtml(conf));
   });
   return `<div class="module-info">${html.join(
-    '<div class="separator"></div>'
+    '<div class="separator"></div>',
   )}</div>`;
 }
 
 // Replace stylesheet and other CSS with inline CSS.
 export function computed2inlineStyle(
   elemx: HTMLElement | ChildNode,
-  ignore?: CSSStyleDeclaration
+  ignore?: CSSStyleDeclaration,
 ): HTMLElement | null {
   const elem = elemx as HTMLElement;
   const style = getComputedStyle(elem);
@@ -637,7 +647,7 @@ export function computed2inlineStyle(
     if (replacement) {
       elem.parentElement.insertBefore(
         document.createElement(replacement),
-        elem
+        elem,
       );
       elem.parentElement.removeChild(elem);
     }
@@ -663,7 +673,7 @@ export function computed2inlineStyle(
 export function htmlVerses(
   div: HTMLElement,
   verse: number,
-  lastverse: number | null // null means last verse of chapter
+  lastverse: number | null, // null means last verse of chapter
 ): HTMLElement {
   let keeping = lastverse === null;
   Array.from(div.children)

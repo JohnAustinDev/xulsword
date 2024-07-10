@@ -4,7 +4,10 @@ import C from './constant.ts';
 import type { paperSizes } from './renderer/libxul/printSettings.tsx';
 import type { SelectVKType } from './renderer/libxul/selectVK.tsx';
 import type { StyleType } from './renderer/style.ts';
-import type { TablePropColumn, TinitialRowSort } from './renderer/libxul/table.tsx';
+import type {
+  TablePropColumn,
+  TinitialRowSort,
+} from './renderer/libxul/table.tsx';
 import type {
   AudioPrefType,
   BookmarkFolderType,
@@ -50,9 +53,7 @@ import type {
 // TODO: Write an installer script to delete arbitrary PrefValues during an update.
 const S = {
   fonts: {
-    fonts: {} as {
-      [i: string]: { fontFamily: string; path: string };
-    },
+    fonts: {} as Record<string, { fontFamily: string; path: string }>,
   },
   style: {
     style: {
@@ -101,9 +102,7 @@ const S = {
       fontSize: 2 as number,
       locale: '' as string,
       popup: {
-        vklookup: {} as {
-          [module: string]: string;
-        },
+        vklookup: {} as Record<string, string>,
         feature: {} as {
           [feature in keyof FeatureMods]?: string;
         },
@@ -116,7 +115,7 @@ const S = {
       selection: null as LocationVKType | null,
       scroll: null as ScrollType,
 
-      keys: [null] as (string | null)[],
+      keys: [null] as Array<string | null>,
 
       audio: { open: false, file: null } as AudioPrefType,
       history: [] as HistoryVKType[],
@@ -142,10 +141,10 @@ const S = {
       } as PlaceType,
 
       showChooser: true as boolean,
-      tabs: [[]] as (string[] | null)[],
-      panels: [''] as (string | null)[],
-      ilModules: [null] as (string | null)[],
-      mtModules: [null] as (string | null)[],
+      tabs: [[]] as Array<string[] | null>,
+      panels: [''] as Array<string | null>,
+      ilModules: [null] as Array<string | null>,
+      mtModules: [null] as Array<string | null>,
 
       isPinned: [false] as boolean[],
       noteBoxHeight: [200] as number[],
@@ -153,7 +152,7 @@ const S = {
     },
 
     moduleManager: {
-      suggested: null as { [fallbackLang: string]: string[] } | null,
+      suggested: null as Record<string, string[]> | null,
       repositories: {
         xulsword: [
           {
@@ -566,7 +565,7 @@ const S = {
 
     print: {
       landscape: false as boolean,
-      pageSize: 'A4' as typeof paperSizes[number]['type'],
+      pageSize: 'A4' as (typeof paperSizes)[number]['type'],
       twoColumns: false as boolean,
       scale: 100 as number,
       margins: {
@@ -633,15 +632,13 @@ const S = {
 
 export function completePanelPrefDefaultArrays(numPanels: number) {
   // Complete these variable length default arrays.
-  C.PanelPrefArrays.forEach(
-    (p) => {
-      const vf = [];
-      for (let i = 0; i < numPanels; i++) {
-        vf.push(S.prefs.xulsword[p][0])
-      }
-      (S.prefs.xulsword as any)[p] = vf;
+  C.PanelPrefArrays.forEach((p) => {
+    const vf = [];
+    for (let i = 0; i < numPanels; i++) {
+      vf.push(S.prefs.xulsword[p][0]);
     }
-  );
+    (S.prefs.xulsword as any)[p] = vf;
+  });
 }
 
 export default S;

@@ -1,13 +1,8 @@
-/* eslint-disable jsx-a11y/control-has-associated-label */
-/* eslint-disable react/forbid-prop-types */
-/* eslint-disable jsx-a11y/anchor-is-valid */
-/* eslint-disable jsx-a11y/click-events-have-key-events */
-/* eslint-disable jsx-a11y/no-static-element-interactions */
-/* eslint-disable react/static-property-placement */
-/* eslint-disable react/jsx-props-no-spreading */
+/* eslint-disable @typescript-eslint/no-misused-promises */
+/* eslint-disable no-unmodified-loop-condition */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { getElementData, HTMLData, verseKey } from '../../htmlData.ts';
+import { getElementData, verseKey } from '../../htmlData.ts';
 import Cache from '../../../cache.ts';
 import C from '../../../constant.ts';
 import {
@@ -26,16 +21,11 @@ import {
   scrollIntoView,
 } from '../../rutil.ts';
 import RenderPromise from '../../renderPromise.ts';
-import {
-  xulPropTypes,
-  XulProps,
-  addClass,
-  topHandle,
-} from '../../libxul/xul.tsx';
+import { xulPropTypes, addClass, topHandle } from '../../libxul/xul.tsx';
 import DragSizer from '../../libxul/dragsizer.tsx';
 import { Vbox, Hbox, Box } from '../../libxul/boxes.tsx';
 import Spacer from '../../libxul/spacer.tsx';
-import { LibSwordResponse, libswordText, textChange } from './ztext.ts';
+import { libswordText, textChange } from './ztext.ts';
 import {
   highlight,
   versekeyScroll,
@@ -48,7 +38,13 @@ import '../../libsword.css';
 import './atext.css';
 
 import type { AtextPropsType, PinPropsType } from '../../../type.ts';
-import type { RenderPromiseComponent, RenderPromiseState } from '../../renderPromise.ts';
+import type {
+  RenderPromiseComponent,
+  RenderPromiseState,
+} from '../../renderPromise.ts';
+import type { HTMLData } from '../../htmlData.ts';
+import type { XulProps } from '../../libxul/xul.tsx';
+import type { LibSwordResponse } from './ztext.ts';
 
 const propTypes = {
   ...xulPropTypes,
@@ -82,19 +78,17 @@ export const stateWinPrefs = {
 
 const notStateWinPrefs = {};
 
-export type AtextStateType =
-  typeof stateWinPrefs &
+export type AtextStateType = typeof stateWinPrefs &
   typeof notStateWinPrefs &
   RenderPromiseState;
 
 // Window arguments that are used to set initial state must be updated locally
 // and in Prefs, so that a component reset or program restart won't cause
 // reversion to initial state.
-const windowState: Partial<AtextStateType>[] = [];
+const windowState: Array<Partial<AtextStateType>> = [];
 
 // XUL Atext
 class Atext extends React.Component implements RenderPromiseComponent {
-
   static propTypes: typeof propTypes;
 
   handler: typeof handlerH;
@@ -141,7 +135,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
     this.onUpdate();
     windowState[panelIndex] = keep(
       state,
-      Object.keys(stateWinPrefs) as (keyof typeof stateWinPrefs)[]
+      Object.keys(stateWinPrefs) as Array<keyof typeof stateWinPrefs>,
     );
     const changedState = diff(prevState, windowState[panelIndex]);
     if (window.processR.platform !== 'browser' && changedState) {
@@ -170,7 +164,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
     const props = this.props as AtextProps;
     const state = this.state as AtextStateType;
     const { columns, isPinned, panelIndex, xulswordState } = props;
-    const { pin, maxNoteBoxHeight } = state as AtextStateType;
+    const { pin, maxNoteBoxHeight } = state;
     const { renderPromise } = this;
 
     // Decide what needs to be updated...
@@ -202,13 +196,13 @@ class Atext extends React.Component implements RenderPromiseComponent {
       const { type, isVerseKey } = G.Tab[module];
       const scrollkey = stringHash(scrollProps);
       // libswordProps are current props that effect LibSword output
-      const keepme: readonly (keyof AtextPropsType)[] = C.LibSwordProps[type];
+      const keepme: ReadonlyArray<keyof AtextPropsType> = C.LibSwordProps[type];
       const libswordProps = keep(
         {
           ...props,
           ...pinProps,
         },
-        keepme
+        keepme,
       );
       const highlightkey = stringHash(libswordProps.location);
       // IMPORTANT: verse doesn't effect libsword output, so always remove
@@ -218,7 +212,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
           ...libswordProps,
           location: { ...libswordProps.location, verse: 0 },
         },
-        panelIndex
+        panelIndex,
       );
       const skipUpdate =
         scrollProps.scroll?.verseAt === 'bottom' &&
@@ -231,7 +225,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
             panelIndex,
             'overwrite',
             xulswordState,
-            renderPromise
+            renderPromise,
           );
         }
         // SCROLL
@@ -248,7 +242,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
             let v = findVerseElement(
               sbe,
               libswordProps.location.chapter,
-              verse
+              verse,
             );
             if (v) {
               let sib: HTMLElement | null;
@@ -293,12 +287,12 @@ class Atext extends React.Component implements RenderPromiseComponent {
                     panelIndex,
                     'prepend',
                     xulswordState,
-                    renderPromise
+                    renderPromise,
                   );
                   v = findVerseElement(
                     sbe,
                     libswordProps.location.chapter,
-                    verse
+                    verse,
                   );
                   prepend -= 1;
                 }
@@ -336,13 +330,13 @@ class Atext extends React.Component implements RenderPromiseComponent {
                     sib = sib.nextSibling as HTMLElement | null;
                   }
                   const info = (sib && getElementData(sib)) || null;
-                  if (info && info.location) {
+                  if (info?.location) {
                     const { book, chapter, verse: vs } = info.location;
                     const location = verseKey(
                       [book, chapter, vs].join('.'),
                       libswordProps.location.v11n,
                       undefined,
-                      renderPromise
+                      renderPromise,
                     ).location();
                     if (isPinned) {
                       newState = {
@@ -391,7 +385,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
                 let append = C.MAXCHAPTER + 1;
                 if (lastv) {
                   const i = getElementData(lastv);
-                  if (i && i.location) append = i.location.chapter + 1;
+                  if (i?.location) append = i.location.chapter + 1;
                 }
                 const v11n = G.Tab[module].v11n || null;
                 const max = v11n
@@ -411,7 +405,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
                     panelIndex,
                     'append',
                     xulswordState,
-                    renderPromise
+                    renderPromise,
                   );
                   append += 1;
                 }
@@ -437,7 +431,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
               ?.parentNode as HTMLElement | null;
             if (dictlist) {
               const dki = dictlist.getElementsByClassName(
-                'dictkeyinput'
+                'dictkeyinput',
               ) as unknown as HTMLInputElement[] | null;
               if (dki) {
                 dki[0].focus();
@@ -463,7 +457,10 @@ class Atext extends React.Component implements RenderPromiseComponent {
           if (columns > 1 && (update || doscroll)) {
             const empty = !trimNotes(sbe, nbe);
             const nbc = nbe.parentNode as any;
-            if ((empty || !nbc.innerText) && type !== 'Lexicons / Dictionaries') {
+            if (
+              (empty || !nbc.innerText) &&
+              type !== 'Lexicons / Dictionaries'
+            ) {
               nbc.classList.add('noteboxEmpty');
             } else nbc.classList.remove('noteboxEmpty');
           }
@@ -517,12 +514,12 @@ class Atext extends React.Component implements RenderPromiseComponent {
           ...libswordProps,
           location: { ...libswordProps.location, verse: 0 },
         },
-        i
+        i,
       );
       if (!Cache.has(libswordHash)) {
         Cache.write(
           libswordText(libswordProps, i, renderPromise, xulswordState),
-          libswordHash
+          libswordHash,
         );
       }
       const response = Cache.read(libswordHash) as LibSwordResponse;
@@ -530,8 +527,11 @@ class Atext extends React.Component implements RenderPromiseComponent {
       else {
         log.silly(
           `${flag} panel ${i} ${verseKey(
-            libswordProps.location || '', undefined, undefined, renderPromise
-          ).osisRef()}:`
+            libswordProps.location || '',
+            undefined,
+            undefined,
+            renderPromise,
+          ).osisRef()}:`,
         );
         const isDict =
           libswordProps.module &&
@@ -673,7 +673,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
       >
         <div className="sbcontrols">
           {isVerseKey && <div className="text-pin" />}
-          {!ownWindow  && !isBrowser && <div className="text-win" />}
+          {!ownWindow && !isBrowser && <div className="text-win" />}
         </div>
 
         <Box className="hd">
@@ -712,7 +712,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
             module,
             isVerseKey ? location?.book || '' : modkey,
             location?.chapter,
-            onAudioClick
+            onAudioClick,
           )}
 
         <Vbox

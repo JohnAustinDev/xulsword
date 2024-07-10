@@ -6,7 +6,7 @@ import PropTypes from 'prop-types';
 import { stringHash } from '../../common.ts';
 import { Hbox } from './boxes.tsx';
 import Label from './label.tsx';
-import { xulPropTypes, XulProps, addClass } from './xul.tsx';
+import { xulPropTypes, type XulProps, addClass } from './xul.tsx';
 import './radio.css';
 
 // XUL Radio
@@ -19,13 +19,13 @@ const propTypes = {
   value: PropTypes.string,
 };
 
-interface RadioProps extends XulProps {
+type RadioProps = {
   name: string;
   checked: boolean;
   disabled?: boolean | undefined;
   label: string;
   value: string;
-}
+} & XulProps;
 
 function Radio(props: RadioProps) {
   const { name, checked, disabled, label, value } = props;

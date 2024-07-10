@@ -1,5 +1,4 @@
-/* eslint-disable import/no-duplicates */
-import React from 'react';
+import type React from 'react';
 import { getSwordOptions, ofClass, sanitizeHTML } from '../../../common.ts';
 import C from '../../../constant.ts';
 import G from '../../rg.ts';
@@ -9,7 +8,10 @@ import type { BookGroupType } from '../../../type.ts';
 import type Chooser from './chooser.tsx';
 import type { ChooserProps, ChooserState } from './chooser.tsx';
 
-export default async function handler(this: Chooser, es: React.SyntheticEvent): Promise<void> {
+export default async function handler(
+  this: Chooser,
+  es: React.SyntheticEvent,
+): Promise<void> {
   const target = es.target as HTMLElement;
   switch (es.type) {
     case 'click': {
@@ -22,7 +24,7 @@ export default async function handler(this: Chooser, es: React.SyntheticEvent): 
       const e = es as React.MouseEvent;
       const targ = ofClass(
         ['bookgroup', 'bookgroupitem', 'chaptermenucell'],
-        target
+        target,
       );
       if (!targ) return;
       const { bookGroups, headingsModule } = this.props as ChooserProps;
@@ -40,7 +42,7 @@ export default async function handler(this: Chooser, es: React.SyntheticEvent): 
                 this.setState({ bookGroup: bookgroup });
               },
               C.UI.Chooser.bookgroupHoverDelay,
-              'bookgroupTO'
+              'bookgroupTO',
             )(es);
           break;
         }
@@ -59,7 +61,7 @@ export default async function handler(this: Chooser, es: React.SyntheticEvent): 
           const { book, chapter } = targ.element.dataset;
           if (!book || !chapter || !headingsModule) return;
           const headingmenu = chapterMenu.element.getElementsByClassName(
-            'headingmenu'
+            'headingmenu',
           )[0] as HTMLElement;
           while (headingmenu.firstChild) {
             headingmenu.removeChild(headingmenu.firstChild);
@@ -75,11 +77,13 @@ export default async function handler(this: Chooser, es: React.SyntheticEvent): 
           const hd = /<h\d([^>]*class="head1[^"]*"[^>]*>)(.*?)<\/h\d>/i;
           // Rexgex parses verse number from array member strings
           const vs = /<sup[^>]*>(\d+)<\/sup>/i; // Get verse from above
-          const [gct] = await G.callBatch([['LibSword', 'getChapterText', [
-            headingsModule,
-            `${book}.${chapter}`,
-            options
-          ]]]);
+          const [gct] = (await G.callBatch([
+            [
+              'LibSword',
+              'getChapterText',
+              [headingsModule, `${book}.${chapter}`, options],
+            ],
+          ])) as Array<ReturnType<typeof G.LibSword.getChapterText>>;
           const { text } = gct;
           const headings = text.match(hdplus);
           if (headings) {
@@ -97,7 +101,7 @@ export default async function handler(this: Chooser, es: React.SyntheticEvent): 
                     if (hr)
                       headingmenu.appendChild(document.createElement('hr'));
                     const a = headingmenu.appendChild(
-                      document.createElement('a')
+                      document.createElement('a'),
                     );
                     sanitizeHTML(a, text);
                     a.className = `heading-link cs-${headingsModule}`;
@@ -118,7 +122,7 @@ export default async function handler(this: Chooser, es: React.SyntheticEvent): 
               headingmenu.style.top = `${Number(
                 -2 +
                   (1 + Math.floor((Number(chapter) - 1) / 10)) *
-                    row.offsetHeight
+                    row.offsetHeight,
               )}px`;
               chapterMenu.element.classList.add('show');
             }
@@ -141,7 +145,7 @@ export default async function handler(this: Chooser, es: React.SyntheticEvent): 
       if (this.headingmenuTO) clearTimeout(this.headingmenuTO);
       const chmenu = ofClass(['chaptermenu'], target);
       const relatedTarget = e.relatedTarget as HTMLElement | null;
-      if (chmenu && relatedTarget && relatedTarget.classList) {
+      if (chmenu && relatedTarget?.classList) {
         if (!relatedTarget.classList.contains('headingmenu')) {
           chmenu.element.classList.remove('show');
         }

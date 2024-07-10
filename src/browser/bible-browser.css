@@ -8,7 +8,7 @@
 #search-tool {
   margin-bottom: 5px;
 }
-@media(max-width: 768px) {
+@media (max-width: 768px) {
   #search-tool {
     width: 100%;
   }
@@ -29,7 +29,7 @@
   margin: 0;
 }
 
-@media(max-width: 500px) {
+@media (max-width: 500px) {
   .chooser {
     position: absolute;
     top: 0;

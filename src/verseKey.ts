@@ -15,13 +15,13 @@ type VerseKeyGtype = {
 // IMPORTANT: This class depends on data from the calling process, requiring
 // access functions be supplied from the calling process during instantiation.
 export default class VerseKey {
-  #parser: RefParser;
+  readonly #parser: RefParser;
 
-  #bkChsInV11n: GType['BkChsInV11n'];
+  readonly #bkChsInV11n: GType['BkChsInV11n'];
 
-  #gfunctions: VerseKeyGtype;
+  readonly #gfunctions: VerseKeyGtype;
 
-  #loc: LocationVKType;
+  readonly #loc: LocationVKType;
 
   #v11nCurrent: V11nType | null;
 
@@ -30,7 +30,7 @@ export default class VerseKey {
     bkChsInV11n: GType['BkChsInV11n'],
     gfunction: VerseKeyGtype,
     location: LocationVKType | string,
-    v11n?: V11nType | null
+    v11n?: V11nType | null,
   ) {
     this.#parser = parser;
     this.#bkChsInV11n = bkChsInV11n;
@@ -205,7 +205,10 @@ export default class VerseKey {
     const tov11n = v11n || this.#v11nCurrent;
     if (!tov11n || !this.#loc.v11n) return this.#loc;
     if (this.#loc.v11n === tov11n) return this.#loc;
-    if (!this.#allowConvertLocation(tov11n) || !this.#gfunctions.convertLocation) {
+    if (
+      !this.#allowConvertLocation(tov11n) ||
+      !this.#gfunctions.convertLocation
+    ) {
       return this.#loc;
     }
     const parsed = this.parseLocation(
@@ -219,9 +222,9 @@ export default class VerseKey {
         ]
           .filter(Boolean)
           .join('.'),
-        tov11n
+        tov11n,
       ),
-      tov11n
+      tov11n,
     );
     if (parsed.book) return parsed as LocationVKType;
     return { book: 'Gen', chapter: 1, v11n: 'KJV' };
@@ -235,12 +238,15 @@ export default class VerseKey {
   readable(
     locale: string,
     v11n = null as V11nType | null,
-    notHTML = false as boolean
+    notHTML = false as boolean,
   ): string {
     const { localeDigits } = this.#parser;
     const Book = this.#gfunctions.Book(locale);
     const l = this.location(v11n || this.#v11nCurrent);
-    const guidir = C.Locales.reduce((p, c) => c[0] === locale ? c[2] : p, 'ltr');
+    const guidir = C.Locales.reduce(
+      (p, c) => (c[0] === locale ? c[2] : p),
+      'ltr',
+    );
     let d = guidir === 'rtl' ? '&rlm;' : '&lrm;';
     if (notHTML)
       d =

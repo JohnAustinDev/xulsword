@@ -1,12 +1,10 @@
-/* eslint-disable jsx-a11y/click-events-have-key-events */
-/* eslint-disable jsx-a11y/no-static-element-interactions */
-/* eslint-disable react/jsx-props-no-spreading */
-/* eslint-disable jsx-a11y/control-has-associated-label */
-/* eslint-disable react/static-property-placement */
+/* eslint-disable @typescript-eslint/unbound-method */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { xulPropTypes, XulProps } from './xul.tsx';
+import { xulPropTypes } from './xul.tsx';
 import './dragsizer.css';
+
+import type { XulProps } from './xul.tsx';
 
 export type DragSizerVal = {
   mousePos: number; // mouse position
@@ -26,26 +24,26 @@ const propTypes = {
   shrink: PropTypes.bool,
 };
 
-interface DragSizerProps extends XulProps {
+type DragSizerProps = {
   onDragStart: (e: React.MouseEvent) => number;
   onDragging?: (e: React.MouseEvent, value: DragSizerVal) => void;
   onDragEnd?: (e: React.MouseEvent, value: DragSizerVal) => void;
   min?: number;
   max?: number | null;
   shrink?: boolean; // moving in positive direction redices the stateProp value
-}
+} & XulProps;
 
-interface DragSizerState {
+type DragSizerState = {
   dragging: number | null;
   startpos: number;
-}
+};
 
 class DragSizer extends React.Component {
   static propTypes: typeof propTypes;
 
   sizerRef: React.RefObject<HTMLDivElement>;
 
-  listeners: [string, (e: any) => void][];
+  listeners: Array<[string, (e: any) => void]>;
 
   constructor(props: DragSizerProps) {
     super(props);

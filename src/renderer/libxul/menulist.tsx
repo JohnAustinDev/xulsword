@@ -3,7 +3,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { addClass, xulPropTypes, XulProps } from './xul.tsx';
+import { addClass, xulPropTypes, type XulProps } from './xul.tsx';
 import { Box } from './boxes.tsx';
 import './menulist.css';
 
@@ -31,16 +31,20 @@ const propTypes = {
   ]),
 };
 
-export interface MenulistProps extends XulProps {
+export type MenulistProps = {
   disabled?: boolean;
   multiple?: boolean;
-  options?: React.ReactElement<HTMLOptionElement>[];
+  options?: Array<React.ReactElement<HTMLOptionElement>>;
   size?: number | undefined;
   value: string | string[];
   onChange: (e: any) => void | Promise<void>;
-}
+} & XulProps;
 
-function Menulist({ disabled = false, multiple = false, ...props }: MenulistProps) {
+function Menulist({
+  disabled = false,
+  multiple = false,
+  ...props
+}: MenulistProps) {
   return (
     <Box {...addClass('menulist xsinput', props)}>
       <select

@@ -1,47 +1,30 @@
-/* eslint-disable react/sort-comp */
-/* eslint-disable react/jsx-no-bind */
-/* eslint-disable import/order */
-/* eslint-disable no-nested-ternary */
-/* eslint-disable class-methods-use-this */
-/* eslint-disable @typescript-eslint/no-use-before-define */
-/* eslint-disable react/forbid-prop-types */
-/* eslint-disable react/static-property-placement */
-/* eslint-disable max-classes-per-file */
-/* eslint-disable react/jsx-props-no-spreading */
+/* eslint-disable @typescript-eslint/unbound-method */
 import React from 'react';
 import PropTypes from 'prop-types';
-import {
-  Icon,
-  IconName,
-  Intent,
-  Menu,
-  MenuDivider,
-  MenuItem,
-} from '@blueprintjs/core';
+import { Icon, Intent, Menu, MenuDivider, MenuItem } from '@blueprintjs/core';
 import {
   Cell,
   Column,
   ColumnHeaderCell,
   EditableCell2,
-  Region,
-  RegionCardinality,
   Table2 as BPTable,
   Utils,
   SelectionModes,
-  CellRenderer,
 } from '@blueprintjs/table';
 import { clone, localizeString, ofClass, randomID } from '../../common.ts';
 import G from '../rg.ts';
-import {
-  addClass,
-  XulProps,
-  xulPropTypes,
-  topHandle,
-} from './xul.tsx';
+import { addClass, xulPropTypes, topHandle } from './xul.tsx';
+import { Box } from './boxes.tsx';
 import '@blueprintjs/table/lib/css/table.css';
 import './table.css';
 
-import { Box } from './boxes.tsx';
+import type { IconName } from '@blueprintjs/core';
+import type {
+  Region,
+  RegionCardinality,
+  CellRenderer,
+} from '@blueprintjs/table';
+import type { XulProps } from './xul.tsx';
 
 export type TablePropColumn = {
   datacolumn: number;
@@ -60,14 +43,14 @@ export type TinitialRowSort = {
 export type TonRowsReordered = (
   propColumnIndex: number,
   direction: 'ascending' | 'descending',
-  tableToDataRowMap: number[]
+  tableToDataRowMap: number[],
 ) => void;
 
 export type TonCellClick = (e: React.MouseEvent, cell: TCellLocation) => void;
 
 export type TonEditableCellChanged = (
   cell: TCellLocation,
-  value: string
+  value: string,
 ) => void;
 
 export type TRowLocation = {
@@ -102,17 +85,17 @@ export type TCellInfo = {
 
 type ColumnHide = (
   togglePropColIndex: number,
-  targetPropColIndex: number
+  targetPropColIndex: number,
 ) => void;
 
 type TCellValidator = (
   tableRowIndex: number,
-  tableColIndex: number
+  tableColIndex: number,
 ) => (val: string) => void;
 
 type TCellSetter = (
   tableRowIndex: number,
-  tableColIndex: number
+  tableColIndex: number,
 ) => (val: string) => void;
 
 type TCellLookupResult = {
@@ -124,29 +107,32 @@ type TCellLookupResult = {
 
 type TCellLookup = (
   tableRowIndex: number,
-  tableColIndex: number
+  tableColIndex: number,
 ) => TCellLookupResult;
 
 type TSortCallback = (
   propColumnIndex: number,
   direction: 'ascending' | 'descending',
-  comparator: (a: any, b: any) => number
+  comparator: (a: any, b: any) => number,
 ) => void;
 
-interface TSortableColumn {
-  getColumn(
+type TSortableColumn = {
+  getColumn: (
     columnHide: ColumnHide,
     getCellData: TCellLookup,
     sortByColumn: TSortCallback,
     cellValidator: TCellValidator,
     cellSetter: TCellSetter,
     props: TableProps,
-    state: TableState
-  ): JSX.Element;
-}
+    state: TableState,
+  ) => JSX.Element;
+};
 
 abstract class AbstractSortableColumn implements TSortableColumn {
-  constructor(protected name: string, protected dataColIndex: number) {}
+  constructor(
+    protected name: string,
+    protected dataColIndex: number,
+  ) {}
 
   public getColumn(
     columnHide: ColumnHide,
@@ -155,13 +141,13 @@ abstract class AbstractSortableColumn implements TSortableColumn {
     cellValidator: TCellValidator,
     cellSetter: TCellSetter,
     props: TableProps,
-    state: TableState
+    state: TableState,
   ) {
     const menuRenderer = this.renderMenu.bind(
       this,
       columnHide,
       sortByColumn,
-      props
+      props,
     );
 
     const columnHeaderCellRenderer = () => (
@@ -182,7 +168,10 @@ abstract class AbstractSortableColumn implements TSortableColumn {
       </ColumnHeaderCell>
     );
 
-    const cellRenderer: CellRenderer = (tableRowIndex: number, tableColIndex: number) => {
+    const cellRenderer: CellRenderer = (
+      tableRowIndex: number,
+      tableColIndex: number,
+    ) => {
       const cellData = getCellData(tableRowIndex, tableColIndex);
       let { value } = cellData;
       const { info, row, dataColIndex } = cellData;
@@ -250,18 +239,20 @@ abstract class AbstractSortableColumn implements TSortableColumn {
       );
     };
 
-    return <Column
-      key={this.dataColIndex}
-      cellRenderer={cellRenderer}
-      columnHeaderCellRenderer={columnHeaderCellRenderer}
-      name={this.name}
-    />;
+    return (
+      <Column
+        key={this.dataColIndex}
+        cellRenderer={cellRenderer}
+        columnHeaderCellRenderer={columnHeaderCellRenderer}
+        name={this.name}
+      />
+    );
   }
 
   protected abstract renderMenu(
     columnHide: ColumnHide,
     sortByColumn: TSortCallback,
-    props: TableProps
+    props: TableProps,
   ): JSX.Element;
 }
 
@@ -276,21 +267,21 @@ class TextSortableColumn extends AbstractSortableColumn {
   protected renderMenu(
     columnHide: ColumnHide,
     sortByColumn: TSortCallback,
-    props: TableProps
+    props: TableProps,
   ) {
     const { onColumnHide, columns } = props;
     const propColumnIndex = columns.findIndex(
-      (c) => c.datacolumn === this.dataColIndex
+      (c) => c.datacolumn === this.dataColIndex,
     );
     const column = columns[propColumnIndex];
     const sortAsc = () => {
       sortByColumn(propColumnIndex, 'ascending', (a, b) =>
-        TextSortableColumn.compare(a, b)
+        TextSortableColumn.compare(a, b),
       );
     };
     const sortDesc = () => {
       sortByColumn(propColumnIndex, 'descending', (a, b) =>
-        TextSortableColumn.compare(b, a)
+        TextSortableColumn.compare(b, a),
       );
     };
     const items: JSX.Element[][] = [];
@@ -320,7 +311,9 @@ class TextSortableColumn extends AbstractSortableColumn {
             key={['delete', this.dataColIndex].join('.')}
             icon="delete"
             text={heading}
-            onClick={() => columnHide(propColumnIndex, propColumnIndex)}
+            onClick={() => {
+              columnHide(propColumnIndex, propColumnIndex);
+            }}
           />,
         ]);
       }
@@ -340,8 +333,10 @@ class TextSortableColumn extends AbstractSortableColumn {
               key={['add', heading].join('.')}
               icon={icon}
               text={text}
-              onClick={() => columnHide(dcol, propColumnIndex)}
-            />
+              onClick={() => {
+                columnHide(dcol, propColumnIndex);
+              }}
+            />,
           );
         }
         return null;
@@ -404,14 +399,14 @@ export type TableProps = XulProps & {
 type TableState = {
   reset: string;
   sortedIndexMap: number[];
-  sparseCellData: { [i: string]: string };
-  sparseCellIntent: { [i: string]: Intent };
+  sparseCellData: Record<string, string>;
+  sparseCellIntent: Record<string, Intent>;
 };
 
 class Table extends React.Component {
   static propTypes: typeof propTypes;
 
-  static scrollTop: { [id: string]: number };
+  static scrollTop: Record<string, number>;
 
   static dataKey = (rowIndex: number, columnIndex: number) => {
     return `${rowIndex}-${columnIndex}`;
@@ -427,10 +422,11 @@ class Table extends React.Component {
     super(props);
     const { columns } = props;
     let { initialRowSort } = props;
-    if (!initialRowSort) initialRowSort = {
-      propColumnIndex: 0,
-      direction: 'ascending',
-    };
+    if (!initialRowSort)
+      initialRowSort = {
+        propColumnIndex: 0,
+        direction: 'ascending',
+      };
 
     const s: TableState = {
       reset: randomID(),
@@ -445,7 +441,7 @@ class Table extends React.Component {
       const heading = localizeString(G, c.heading);
       this.datacolumns[datacolumn] = new TextSortableColumn(
         heading || '',
-        datacolumn
+        datacolumn,
       );
     });
     const { propColumnIndex: column, direction } = initialRowSort;
@@ -455,7 +451,7 @@ class Table extends React.Component {
       direction === 'ascending'
         ? (a, b) => TextSortableColumn.compare(a, b)
         : (a, b) => TextSortableColumn.compare(b, a),
-      s
+      s,
     );
     this.state = s;
 
@@ -482,7 +478,7 @@ class Table extends React.Component {
     const t = tableRef.current;
     if (t) {
       const parent = t.getElementsByClassName(
-        'bp5-table-quadrant-scroll-container'
+        'bp5-table-quadrant-scroll-container',
       )[0];
       if (parent) {
         let top = 0;
@@ -500,7 +496,7 @@ class Table extends React.Component {
     const t = tableRef.current;
     if (t) {
       const parent = t.getElementsByClassName(
-        'bp5-table-quadrant-scroll-container'
+        'bp5-table-quadrant-scroll-container',
       )[0];
       if (parent && id) {
         Table.scrollTop[id] = parent.scrollTop;
@@ -549,7 +545,7 @@ class Table extends React.Component {
             tableColIndex,
             dataColIndex: propColumn.datacolumn,
           },
-          value
+          value,
         );
     };
   }
@@ -568,7 +564,7 @@ class Table extends React.Component {
   }
 
   setSparseState<T>(stateKey: string, dataKey: string, value: T) {
-    const stateData = (this.state as any)[stateKey] as { [key: string]: T };
+    const stateData = (this.state as any)[stateKey] as Record<string, T>;
     const values = { ...stateData, [dataKey]: value };
     this.sState({ [stateKey]: values });
   }
@@ -609,11 +605,11 @@ class Table extends React.Component {
       if (newcolumns.filter((c) => c.visible).length > 0) {
         if (enableColumnReordering && toggle.visible && target) {
           const itogg = newcolumns.findIndex(
-            (c) => c.datacolumn === toggle.datacolumn
+            (c) => c.datacolumn === toggle.datacolumn,
           );
           const togg = newcolumns.splice(itogg, 1);
           const itarg = newcolumns.findIndex(
-            (c) => c.datacolumn === target.datacolumn
+            (c) => c.datacolumn === target.datacolumn,
           );
           newcolumns.splice(itarg + 1, 0, togg[0]);
         }
@@ -634,10 +630,10 @@ class Table extends React.Component {
           columns.filter((c) => c.visible),
           oldIndex,
           newIndex,
-          length
+          length,
         ) || [];
       const newcolumns = resizeColumns(
-        tableColumns.concat(columns.filter((c) => !c.visible))
+        tableColumns.concat(columns.filter((c) => !c.visible)),
       );
       onColumnsReordered(newcolumns);
     }
@@ -652,7 +648,7 @@ class Table extends React.Component {
       columns = clone(columns);
       const visible = columns.filter((c) => c.visible);
       const nextcol = visible[tableColumnIndex + 1];
-      if (nextcol && nextcol.width) {
+      if (nextcol?.width) {
         const orig = visible[tableColumnIndex].width || 0;
         nextcol.width = Math.round(nextcol.width - size + orig);
         if (nextcol.width < 20) nextcol.width = 20;
@@ -671,7 +667,7 @@ class Table extends React.Component {
     propColumnIndex: number,
     direction: 'ascending' | 'descending',
     comparator: (a: any, b: any) => number,
-    s?: Pick<TableState, 'sortedIndexMap'>
+    s?: Pick<TableState, 'sortedIndexMap'>,
   ) {
     const state = this.state as TableState;
     const sim = state?.sortedIndexMap || [];
@@ -760,8 +756,8 @@ class Table extends React.Component {
           this.cellValidator,
           this.cellSetter,
           props,
-          state
-        )
+          state,
+        ),
       );
     const tableColumnWidths = columns
       .filter((c) => c.visible)

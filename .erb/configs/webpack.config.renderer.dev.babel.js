@@ -28,8 +28,8 @@ xulswordWindows.forEach((xsw) => {
       'webpack/hot/only-dev-server',
       'core-js',
       'regenerator-runtime/runtime',
-      path.join(webpackPaths.srcRendererPath, dir + '/' + file)
-    ]
+      path.join(webpackPaths.srcRendererPath, dir + '/' + file),
+    ],
   };
 });
 
@@ -43,7 +43,7 @@ const port = process.env.PORT || 1212;
 const publicPath = webpackPaths.distRendererPath;
 const manifest = path.resolve(webpackPaths.dllPath, 'renderer.json');
 const requiredByDLLConfig = module.parent.filename.includes(
-  'webpack.config.renderer.dev.dll'
+  'webpack.config.renderer.dev.dll',
 );
 
 /**
@@ -55,8 +55,8 @@ if (
 ) {
   console.log(
     chalk.black.bgYellow.bold(
-      'The DLL files are missing. Sit back while we build them for you with "yarn build-dll"'
-    )
+      'The DLL files are missing. Sit back while we build them for you with "yarn build-dll"',
+    ),
   );
   execSync('yarn postinstall');
 }
@@ -114,28 +114,29 @@ export default merge(baseConfig, {
     }),
 
     new ReactRefreshWebpackPlugin(),
-
-  ].concat(xulswordWindows.map((xsw) => {
-    let name = xsw;
-    if (xsw.indexOf('/') !== -1) {
-      const p = xsw.split('/');
-      name = p[p.length - 1];
-    }
-    return new HtmlWebpackPlugin({
-      filename: path.join(name + '.html'),
-      template: path.join(webpackPaths.srcRendererPath, 'root.html'),
-      chunks: [name],
-      minify: {
-        collapseWhitespace: true,
-        removeAttributeQuotes: true,
-        removeComments: true,
-      },
-      isBrowser: false,
-      env: process.env.NODE_ENV,
-      isDevelopment: process.env.NODE_ENV !== 'production',
-      nodeModules: webpackPaths.appNodeModulesPath,
-    });
-  })),
+  ].concat(
+    xulswordWindows.map((xsw) => {
+      let name = xsw;
+      if (xsw.indexOf('/') !== -1) {
+        const p = xsw.split('/');
+        name = p[p.length - 1];
+      }
+      return new HtmlWebpackPlugin({
+        filename: path.join(name + '.html'),
+        template: path.join(webpackPaths.srcRendererPath, 'root.html'),
+        chunks: [name],
+        minify: {
+          collapseWhitespace: true,
+          removeAttributeQuotes: true,
+          removeComments: true,
+        },
+        isBrowser: false,
+        env: process.env.NODE_ENV,
+        isDevelopment: process.env.NODE_ENV !== 'production',
+        nodeModules: webpackPaths.appNodeModulesPath,
+      });
+    }),
+  ),
 
   node: {
     __dirname: false,

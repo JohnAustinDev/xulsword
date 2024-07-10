@@ -29,13 +29,14 @@ function Controller(props: BrowserControllerState): React.JSX.Element {
 
   window.browserState = setState;
 
-  const html =
-    document.getElementsByTagName('html')[0] as HTMLHtmlElement | undefined;
+  const html = document.getElementsByTagName('html')[0] as
+    | HTMLHtmlElement
+    | undefined;
   if (html) {
     html.classList.add('skin', 'xulswordWin', 'cs-locale', locale ?? '');
     html.setAttribute(
       'dir',
-      C.Locales.reduce((p, c) => c[0] === locale ? c[2] : p, 'ltr')
+      C.Locales.reduce((p, c) => (c[0] === locale ? c[2] : p), 'ltr'),
     );
   }
 
@@ -76,13 +77,15 @@ socket.on('connect', () => {
     if (component === 'bibleBrowser') {
       const { prefs, langcode } = compData;
       window.browserMaxPanels = Math.ceil(window.innerWidth / 300);
-      let numPanels: number = (prefs.prefs?.xulsword as any)?.panels?.length ||
-      window.browserMaxPanels;
+      let numPanels: number =
+        (prefs.prefs?.xulsword as any)?.panels?.length ||
+        window.browserMaxPanels;
       if (window.innerWidth < 800) numPanels = 1;
       setGlobalPanels(prefs, numPanels);
       const locale = setGlobalLocale(prefs, langcode);
       writePrefsStores(G, prefs);
-      if (window.innerWidth < 500) G.Prefs.setBoolPref('xulsword.showChooser', false);
+      if (window.innerWidth < 500)
+        G.Prefs.setBoolPref('xulsword.showChooser', false);
 
       const preloads: GCallType[] = [
         ['Tabs', null, undefined],
@@ -101,18 +104,21 @@ socket.on('connect', () => {
         ['FeatureModules', null, undefined],
         ['AudioConfs', null, undefined],
         ['Books', null, [locale]],
-        ['Book', null, [locale]]
+        ['Book', null, [locale]],
       ];
 
-      callBatchThenCache(preloads).then(() => {
-        dynamicStyleSheet = new DynamicStyleSheet(document);
-        createRoot(root).render(
-          <StrictMode>
-            <Controller
-              locale={locale}
-              cntlkey={randomID()}/>
-          </StrictMode>);
-      }).catch((er) => { log.error(er); });
+      callBatchThenCache(preloads)
+        .then(() => {
+          dynamicStyleSheet = new DynamicStyleSheet(document);
+          createRoot(root).render(
+            <StrictMode>
+              <Controller locale={locale} cntlkey={randomID()} />
+            </StrictMode>,
+          );
+        })
+        .catch((er) => {
+          log.error(er);
+        });
     }
   }
 });

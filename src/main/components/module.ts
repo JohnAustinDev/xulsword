@@ -1,5 +1,4 @@
 /* eslint-disable prefer-rest-params */
-/* eslint-disable no-continue */
 import fpath from 'path';
 import { BrowserWindow } from 'electron';
 import ZIP from 'adm-zip';
@@ -15,6 +14,7 @@ import {
   versionCompare,
   pad,
   mergeNewModules,
+  unknown2String,
 } from '../../common.ts';
 import Subscription from '../../subscription.ts';
 import C from '../../constant.ts';
@@ -30,7 +30,6 @@ import {
   getFiles,
   getListing,
   untargz,
-  ListingElementR,
   ftpCancelableInit,
   failCause,
   ftpCancelable,
@@ -57,14 +56,16 @@ import type {
   OSISBookType,
 } from '../../type.ts';
 import DiskCache from './diskcache.ts';
+import type { ListingElementR } from '../ftphttp.ts';
 
-export const CipherKeyModules: {
-  [module: string]: {
+export const CipherKeyModules: Record<
+  string,
+  {
     confPath: string;
     cipherKey: string;
     numBooks: number | null; // null means unknown
-  };
-} = {};
+  }
+> = {};
 
 // CrossWire SWORD Standard TODOS:
 // TODO CrossWire wiki mentions LangSortOrder! Report change to KeySort
@@ -73,7 +74,7 @@ export const CipherKeyModules: {
 // Return the ModTypes type derived from a module config's ModDrv entry,
 // or return null if it's not a ModTypes type.
 export function getTypeFromModDrv(
-  modDrv: string
+  modDrv: string,
 ): ModTypes | 'XSM_audio' | null {
   if (modDrv.includes('Text')) return 'Biblical Texts';
   if (modDrv.includes('LD')) return 'Lexicons / Dictionaries';
@@ -88,7 +89,7 @@ export function getTypeFromModDrv(
 // Returns [] if the module is supported. If the module is passed by name, LibSword
 // will be used to read config information, otherwise LibSword will not be called.
 export function moduleUnsupported(
-  module: string | SwordConfType
+  module: string | SwordConfType,
 ): NewModuleReportType[] {
   const reasons: NewModuleReportType[] = [];
   const conf = typeof module === 'string' ? null : module;
@@ -143,7 +144,7 @@ export function confModulePath(aDataPath: string): string | null {
 function recurseAudioDirectory(
   dir: LocalFile,
   ancOrSelfx?: string[],
-  audiox?: GenBookAudioConf
+  audiox?: GenBookAudioConf,
 ): GenBookAudioConf {
   const audio = audiox || {};
   const ancOrSelf = ancOrSelfx?.slice() || [];
@@ -168,7 +169,7 @@ function recurseAudioDirectory(
 // repoPath/dataPath, and return the results.
 export function scanAudio(
   repoPath: string,
-  dataPath: string
+  dataPath: string,
 ): GenBookAudioConf | VerseKeyAudioConf {
   const scan = new LocalFile(repoPath);
   if (scan.exists() && scan.isDirectory()) {
@@ -177,7 +178,7 @@ export function scanAudio(
     if (scan.exists() && scan.isDirectory()) {
       const subs = scan.directoryEntries;
       const isVerseKey = subs.find((bk) =>
-        Object.values(C.SupportedBooks).find((bg: any) => bg.includes(bk))
+        Object.values(C.SupportedBooks).find((bg: any) => bg.includes(bk)),
       );
       if (!isVerseKey) return recurseAudioDirectory(scan);
       const r = {} as VerseKeyAudioConf;
@@ -193,12 +194,12 @@ export function scanAudio(
               const audioFile = scan2.clone().append(chapter);
               if (!audioFile.isDirectory()) {
                 const chn = Number(
-                  audioFile.leafName.replace(/^(\d+).*?$/, '$1')
+                  audioFile.leafName.replace(/^(\d+).*?$/, '$1'),
                 );
                 if (!Number.isNaN(chn)) boolArray[chn] = true;
                 else {
                   log.warn(
-                    `Skipping audio file with name: ${audioFile.leafName}`
+                    `Skipping audio file with name: ${audioFile.leafName}`,
                   );
                 }
               } else
@@ -232,17 +233,17 @@ export function scanAudio(
 export function moveRemoveModules(
   modules: string,
   repositoryPath: string,
-  moveTo?: string
+  moveTo?: string,
 ): boolean;
 export function moveRemoveModules(
   modules: string[],
   repositoryPath: string,
-  moveTo?: string
+  moveTo?: string,
 ): boolean[];
 export function moveRemoveModules(
   modules: string | string[],
   repositoryPath: string,
-  moveTo?: string
+  moveTo?: string,
 ): boolean | boolean[] {
   let move = (moveTo && new LocalFile(moveTo)) || null;
   if (move && (!move.exists() || !move.isDirectory())) move = null;
@@ -268,12 +269,12 @@ export function moveRemoveModules(
         return null;
       }),
       'RepoConfigObjects',
-      repositoryPath
+      repositoryPath,
     );
   }
   const confs = Cache.read(
     'RepoConfigObjects',
-    repositoryPath
+    repositoryPath,
   ) as SwordConfType[];
 
   const results = (Array.isArray(modules) ? modules : [modules]).map((m) => {
@@ -364,18 +365,18 @@ export function moveRemoveModules(
 export async function installZIPs(
   zips: ZIP[],
   destdirs?: string | string[],
-  callingWinID?: number
+  callingWinID?: number,
 ): Promise<NewModulesType> {
-  return new Promise((resolve) => {
+  return await new Promise((resolve) => {
     Cache.clear('RepoConfigObjects');
     const newmods: NewModulesType = clone(C.NEWMODS);
     if (zips.length) {
       // Get installed modules (to remove any obsoleted modules).
-      const installed: {
+      const installed: Array<{
         module: string;
         repoDir: string;
         CipherKey: string | undefined;
-      }[] = [];
+      }> = [];
       const readRepoConfFiles = (modsd: LocalFile) => {
         modsd.directoryEntries.forEach((confFile) => {
           const file = modsd.clone().append(confFile);
@@ -426,7 +427,7 @@ export async function installZIPs(
           if (!ac && bc) return 1;
           return 0;
         });
-        const confs = {} as { [i: string]: SwordConfType };
+        const confs = {} as Record<string, SwordConfType>;
         sortedZipEntries.forEach((entry) => {
           if (!entry.entryName.endsWith('/')) {
             log.silly(`Processing Entry: ${entry.entryName}`);
@@ -437,7 +438,7 @@ export async function installZIPs(
                 const dest = new LocalFile(
                   /^ModDrv\s*=\s*audio\b/m.test(confstr)
                     ? Dirs.path.xsAudio
-                    : destdir
+                    : destdir,
                 );
                 const conf = parseSwordConf({
                   confString: confstr,
@@ -466,7 +467,7 @@ export async function installZIPs(
                 if (
                   conf.CipherKey === '' &&
                   installed.find(
-                    (mo) => mo.CipherKey !== '' && mo.CipherKey !== C.NOTFOUND
+                    (mo) => mo.CipherKey !== '' && mo.CipherKey !== C.NOTFOUND,
                   )
                 ) {
                   modreports.push({
@@ -492,7 +493,7 @@ export async function installZIPs(
                       if (
                         versionCompare(
                           conf.Version ?? 0,
-                          existing.Version ?? 0
+                          existing.Version ?? 0,
                         ) === -1
                       ) {
                         modreports.push({
@@ -656,8 +657,8 @@ export async function installZIPs(
                   dirs.findIndex(
                     (d) =>
                       Object.entries(C.SupportedBooks).some((bg: any) =>
-                        bg[1].includes(d)
-                      ) || /^\d+/.test(d)
+                        bg[1].includes(d),
+                      ) || /^\d+/.test(d),
                   ) === 2
                 ) {
                   dirs.shift();
@@ -672,7 +673,7 @@ export async function installZIPs(
                 dirs.unshift('modules');
                 const bookOrSub = dirs[2];
                 const isVerseKey = Object.values(C.SupportedBooks).some(
-                  (bg: any) => bg.includes(bookOrSub)
+                  (bg: any) => bg.includes(bookOrSub),
                 );
                 // Convert deprecated GenBook path to new form.
                 if (!isVerseKey && deprecatedZip) {
@@ -680,7 +681,7 @@ export async function installZIPs(
                   dirs = dirs.map((d, ix) =>
                     ix < 2
                       ? d
-                      : pad(Number(d.replace(/^(\d+).*?$/, '$1')) - 1, 3, 0)
+                      : pad(Number(d.replace(/^(\d+).*?$/, '$1')) - 1, 3, 0),
                   );
                   dirs.splice(2, 0, '000');
                 }
@@ -731,15 +732,15 @@ export async function installZIPs(
                     let str = confFile.readFile();
                     str = str.replace(
                       /^DataPath\b.*$/m,
-                      `DataPath=${dataPath}`
+                      `DataPath=${dataPath}`,
                     );
                     const audioChapters = scanAudio(
                       Dirs.xsAudio.path,
-                      dataPath
+                      dataPath,
                     );
                     str = str.replace(
                       /^AudioChapters\b.*$/m,
-                      `AudioChapters=${JSON_stringify(audioChapters)}`
+                      `AudioChapters=${JSON_stringify(audioChapters)}`,
                     );
                     confFile.writeFile(str);
                   }
@@ -785,10 +786,10 @@ export async function installZIPs(
 //   'modulesInstalled' subscription is run on the callingWin window, where
 //    errors/warnings are reported and new modules may be shown etc.
 export async function modalInstall(
-  zipmods: (ZIP | string)[],
+  zipmods: Array<ZIP | string>,
   destdir?: string | string[],
   callingWinID?: number,
-  result?: NewModulesType
+  result?: NewModulesType,
 ): Promise<NewModulesType> {
   const r: NewModulesType = result || clone(C.NEWMODS);
   if (zipmods.length) {
@@ -796,7 +797,7 @@ export async function modalInstall(
       { modal: 'transparent', window: 'all' },
       { modal: 'darkened', window: { id: callingWinID } },
     ]);
-    const zips: (ZIP | null)[] = [];
+    const zips: Array<ZIP | null> = [];
     zipmods.forEach((zipmod) => {
       if (typeof zipmod === 'string') {
         const zipfile = new LocalFile(zipmod);
@@ -829,36 +830,37 @@ type DownloadRepoConfsType = {
 async function downloadRepoConfs(
   manifest: FTPDownload,
   cancelkey: string,
-  progress?: (p: number) => void
+  progress?: (p: number) => void,
 ): Promise<DownloadRepoConfsType[]> {
   const repositoryConfs: DownloadRepoConfsType[] = [];
-  let files: { header: { name: string }; content: Buffer }[] = [];
+  let files: Array<{ header: { name: string }; content: Buffer }> = [];
   try {
     const targzbuf = await getFile(
       manifest.domain,
       fpath.posix.join(manifest.path, manifest.file),
       cancelkey,
-      progress
+      progress,
     );
     files = await untargz(targzbuf);
-  } catch (er: any) {
+  } catch (er) {
     // If there was no SwordRepoManifest, then download every conf file.
     let listing: ListingElementR[] | null = null;
     let bufs: Buffer[] | null = null;
     try {
-      if (!/Could not get file size/i.test(er)) throw er;
+      if (!/Could not get file size/i.test(unknown2String(er, ['message'])))
+        throw er;
       listing = await getListing(
         manifest.domain,
         fpath.posix.join(manifest.path, 'mods.d'),
         cancelkey,
         '',
-        1
+        1,
       );
       bufs = await getFiles(
         manifest.domain,
         listing.map((l) => fpath.posix.join(manifest.path, 'mods.d', l.name)),
         cancelkey,
-        progress
+        progress,
       );
       bufs.forEach((b, i) => {
         if (files && listing) {
@@ -867,7 +869,7 @@ async function downloadRepoConfs(
       });
     } catch (err: any) {
       if (progress) progress(-1);
-      return Promise.reject(err);
+      return await Promise.reject(err);
     }
   }
   files.forEach((r) => {
@@ -894,14 +896,14 @@ async function downloadRepoConfs(
 }
 
 const ModuleDownloads = {
-  ongoing: {} as { [downloadKey: string]: Promise<ZIP | string> | undefined },
-  finished: {} as { [downloadKey: string]: ZIP },
+  ongoing: {} as Record<string, Promise<ZIP | string> | undefined>,
+  finished: {} as Record<string, ZIP>,
 };
 
 function logdls() {
   const ongoing = Object.keys(ModuleDownloads.ongoing);
   const example = ongoing.slice(-5).map((x) => logid(x));
-  return `ongoing=${ongoing.length}(${example}) finished=${
+  return `ongoing=${ongoing.length}(${example.join(', ')}) finished=${
     Object.keys(ModuleDownloads.finished).length
   }`;
 }
@@ -929,7 +931,7 @@ const Module = {
       fbuffer = await getFile(
         mr.domain,
         fpath.posix.join(mr.path, mr.file),
-        cancelkey
+        cancelkey,
       );
     } catch (er: any) {
       return er.message;
@@ -960,11 +962,11 @@ const Module = {
   // window, but results are not returned until all repositories have
   // been completely handled.
   async repositoryListing(
-    manifests: (FTPDownload | null)[]
-  ): Promise<(RepositoryListing | string)[]> {
-    const callingWinID = (arguments[1] ?? -1) as number;
+    manifests: Array<FTPDownload | null>,
+  ): Promise<Array<RepositoryListing | string>> {
+    const callingWinID = (arguments[1] as number) ?? -1;
     // Get an array of Promises that will progress in parallel.
-    const promises: Promise<RepositoryListing | string>[] = manifests.map(
+    const promises: Array<Promise<RepositoryListing | string>> = manifests.map(
       async (manifest) => {
         if (manifest && !manifest.disabled) {
           // LOCAL repository conf files
@@ -990,8 +992,8 @@ const Module = {
           // REMOTE repository conf files.
           const cancelkey = downloadKey(manifest);
           if (ftpCancelableInit(cancelkey)) {
-            return Promise.resolve(
-              failCause(cancelkey, C.UI.Manager.cancelMsg)
+            return await Promise.resolve(
+              failCause(cancelkey, C.UI.Manager.cancelMsg),
             );
           }
           let threshProgress = 0;
@@ -1010,25 +1012,27 @@ const Module = {
           let repconfs: DownloadRepoConfsType[];
           try {
             repconfs = await downloadRepoConfs(manifest, cancelkey, progress);
-          } catch (er: any) {
-            return Promise.resolve(failCause(cancelkey, er));
+          } catch (er) {
+            return await Promise.resolve(
+              failCause(cancelkey, unknown2String(er, ['message'])),
+            );
           }
           try {
             ftpCancelable(cancelkey);
           } catch (er) {
             return await Promise.resolve(
-              failCause(cancelkey, C.UI.Manager.cancelMsg)
+              failCause(cancelkey, C.UI.Manager.cancelMsg),
             );
           }
           return repconfs.map((rc) => rc.conf);
         }
         return null;
-      }
+      },
     );
     // Wait for all Promises to be settled before returning any repo data.
-    return Promise.allSettled(promises)
+    return await Promise.allSettled(promises)
       .then((results) => {
-        const ret: (RepositoryListing | string)[] = [];
+        const ret: Array<RepositoryListing | string> = [];
         results.forEach((result) => {
           if (result.status === 'fulfilled')
             ret.push(result.value as RepositoryListing);
@@ -1037,7 +1041,8 @@ const Module = {
         return ret;
       })
       .catch((er) => {
-        throw new Error(er);
+        log.error(er);
+        return [];
       });
   },
 
@@ -1045,10 +1050,10 @@ const Module = {
   // installation by installDownload. Returns the number of files in each zip
   // if successful, or a string error/cancel message otherwise.
   async downloads(
-    downloads: (Download | null)[]
-  ): Promise<({ [downloadKey: string]: number | string } | null)[]> {
+    downloads: Array<Download | null>,
+  ): Promise<Array<Record<string, number | string> | null>> {
     const callingWinID = (arguments[1] ?? -1) as number;
-    const dls: (Download | string | null)[] = downloads.map((dl) => {
+    const dls: Array<Download | string | null> = downloads.map((dl) => {
       if (dl !== null) {
         const downloadkey = downloadKey(dl);
         if (ftpCancelableInit(downloadkey)) {
@@ -1065,12 +1070,12 @@ const Module = {
     });
     log.debug(`DOWNLOADS: ${downloads.length} items! ${logdls()}`);
     const rs = await Promise.all(
-      dls.map((dl) => {
+      dls.map(async (dl) => {
         if (dl === null) return null;
         return typeof dl === 'string'
-          ? Promise.resolve(dl)
-          : this.download(dl, callingWinID, true);
-      })
+          ? await Promise.resolve(dl)
+          : await this.download(dl, callingWinID, true);
+      }),
     );
     const res = downloads.map((dl, i) => {
       const key = downloadKey(dl);
@@ -1088,7 +1093,7 @@ const Module = {
   async download(
     download: Download,
     winID: number,
-    alreadyReset?: boolean
+    alreadyReset?: boolean,
   ): Promise<number | string> {
     let callingWinID = (arguments[3] ?? -1) as number;
     if (typeof winID === 'number') callingWinID = winID;
@@ -1136,7 +1141,7 @@ const Module = {
 
   async download2(
     download: Download,
-    callingWinID: number
+    callingWinID: number,
   ): Promise<ZIP | string> {
     const { type } = download;
     const downloadkey = downloadKey(download);
@@ -1174,7 +1179,7 @@ const Module = {
         const tmpdir = new LocalFile(Window.tmpDir({ id: callingWinID })[0]);
         if (!tmpdir.exists()) {
           return await Promise.resolve(
-            returnMsg(`Could not create tmp directory '${tmpdir.path}'.`)
+            returnMsg(`Could not create tmp directory '${tmpdir.path}'.`),
           );
         }
         const dlfile = await getFileHTTP(
@@ -1183,7 +1188,7 @@ const Module = {
           downloadkey,
           (p: number) => {
             if (p && p !== -1) progress(p * (3 / 4));
-          }
+          },
         );
         ftpCancelable(downloadkey);
 
@@ -1199,20 +1204,20 @@ const Module = {
             downloadkey,
             (p: number) => {
               if (p && p !== -1) progress(3 / 4 + p / 4);
-            }
+            },
           );
           ftpCancelable(downloadkey);
           const strconf = confs.find(
-            (rc) => rc.conf.filename === confname
+            (rc) => rc.conf.filename === confname,
           )?.strconf;
           if (strconf) {
             zip.addFile(
               fpath.posix.join('mods.d', confname),
-              Buffer.from(strconf)
+              Buffer.from(strconf),
             );
           } else {
             return await Promise.resolve(
-              returnMsg(`Could not locate ${confname}.`)
+              returnMsg(`Could not locate ${confname}.`),
             );
           }
         }
@@ -1244,7 +1249,7 @@ const Module = {
       const datapath = confModulePath(conf.DataPath);
       if (!datapath) {
         return await Promise.resolve(
-          returnMsg(`Unexpected DataPath in ${confname}: ${conf.DataPath}`)
+          returnMsg(`Unexpected DataPath in ${confname}: ${conf.DataPath}`),
         );
       }
       const modpath = fpath.posix.join(path, datapath);
@@ -1253,7 +1258,7 @@ const Module = {
         modpath,
         /\/lucene\//,
         downloadkey,
-        progress
+        progress,
       );
       ftpCancelable(downloadkey);
       const zip = new ZIP();
@@ -1261,22 +1266,22 @@ const Module = {
       modfiles.forEach((fp) => {
         zip.addFile(
           fpath.posix.join(datapath, fp.listing.subdir, fp.listing.name),
-          fp.buffer
+          fp.buffer,
         );
       });
       return await Promise.resolve(returnZIP(zip));
-    } catch (er: any) {
-      return Promise.resolve(returnMsg(er));
+    } catch (er) {
+      return await Promise.resolve(returnMsg(unknown2String(er, ['message'])));
     }
   },
 
   async cancelOngoingDownloads(downloads?: Download[]): Promise<number> {
     const toCancel = downloads
-      ? downloads.reduce((p, c) => {
+      ? downloads.reduce<typeof ModuleDownloads.ongoing>((p, c) => {
           const k = downloadKey(c);
           if (k in ModuleDownloads.ongoing) p[k] = ModuleDownloads.ongoing[k];
           return p;
-        }, {} as typeof ModuleDownloads.ongoing)
+        }, {})
       : ModuleDownloads.ongoing;
     const keys = Object.keys(toCancel);
     const values = Object.values(toCancel);
@@ -1309,11 +1314,11 @@ const Module = {
     let cnt = await this.cancelOngoingDownloads(downloads);
     if (!downloads) destroyFTPconnections();
     const finished = downloads
-      ? downloads.reduce((p, c) => {
+      ? downloads.reduce<typeof ModuleDownloads.finished>((p, c) => {
           const k = downloadKey(c);
           if (k in ModuleDownloads.finished) p[k] = ModuleDownloads.finished[k];
           return p;
-        }, {} as typeof ModuleDownloads.finished)
+        }, {})
       : ModuleDownloads.finished;
     const nfk = Object.keys(finished).length;
     Object.keys(finished).forEach((key) => {
@@ -1326,15 +1331,15 @@ const Module = {
 
   // Set windows to modal before calling this function!
   async installDownloads(
-    installs: { download: Download; toRepo: Repository }[],
-    callingWinID?: number
+    installs: Array<{ download: Download; toRepo: Repository }>,
+    callingWinID?: number,
   ): Promise<NewModulesType> {
     const zipobj: ZIP[] = [];
     const destdir: string[] = [];
     Object.entries(ModuleDownloads.finished).forEach((entry) => {
       const [downloadkey, zipo] = entry;
       const save = installs.find(
-        (s) => downloadKey(s.download) === downloadkey
+        (s) => downloadKey(s.download) === downloadkey,
       );
       if (zipo && save && isRepoLocal(save.toRepo)) {
         const repo = new LocalFile(save.toRepo.path);
@@ -1347,13 +1352,13 @@ const Module = {
     Object.keys(ModuleDownloads.finished).forEach((key) => {
       delete ModuleDownloads.finished[key];
     });
-    return modalInstall(zipobj, destdir, callingWinID);
+    return await modalInstall(zipobj, destdir, callingWinID);
   },
 
   // Set windows to modal before calling this function!
   // After this function, if installDownloads() will not be called,
   // then modulesInstalled must be published on the main process.
-  remove(modules: { name: string; repo: Repository }[]): boolean[] {
+  remove(modules: Array<{ name: string; repo: Repository }>): boolean[] {
     Cache.clear('RepoConfigObjects');
     return modules.map((module) => {
       const { name, repo } = module;
@@ -1368,7 +1373,7 @@ const Module = {
   // After this function, if installDownloads() will not be called,
   // then modulesInstalled must be published on the main process.
   move(
-    modules: { name: string; fromRepo: Repository; toRepo: Repository }[]
+    modules: Array<{ name: string; fromRepo: Repository; toRepo: Repository }>,
   ): boolean[] {
     Cache.clear('RepoConfigObjects');
     return modules.map((module) => {
@@ -1418,7 +1423,7 @@ const Module = {
       newmods.modules.push(...keys.map((k) => k.conf));
       Subscription.publish.modulesInstalled(
         newmods,
-        callerWinID ?? getBrowserWindows({ type: 'xulswordWin' })[0].id
+        callerWinID ?? getBrowserWindows({ type: 'xulswordWin' })[0].id,
       );
     }
   },

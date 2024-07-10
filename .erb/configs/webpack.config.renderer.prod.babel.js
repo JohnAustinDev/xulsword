@@ -31,8 +31,8 @@ xulswordWindows.forEach((xsw) => {
     import: [
       'core-js',
       'regenerator-runtime/runtime',
-      path.join(webpackPaths.srcRendererPath, dir + '/' + name)
-    ]
+      path.join(webpackPaths.srcRendererPath, dir + '/' + name),
+    ],
   };
 });
 
@@ -105,24 +105,25 @@ export default merge(baseConfig, {
       openAnalyzer: process.env.OPEN_ANALYZER === 'true',
       analyzerPort: 8889,
     }),
-
-  ].concat(xulswordWindows.map((xsw) => {
-    let name = xsw;
-    if (xsw.indexOf('/') !== -1) {
-      const p = xsw.split('/');
-      name = p[p.length - 1];
-    }
-    return new HtmlWebpackPlugin({
-      filename: name + '.html',
-      template: path.join(webpackPaths.srcRendererPath, 'root.html'),
-      chunks: [name],
-      minify: {
-        collapseWhitespace: true,
-        removeAttributeQuotes: true,
-        removeComments: true,
-      },
-      isBrowser: false,
-      isDevelopment: process.env.NODE_ENV !== 'production',
-    });
-  })),
+  ].concat(
+    xulswordWindows.map((xsw) => {
+      let name = xsw;
+      if (xsw.indexOf('/') !== -1) {
+        const p = xsw.split('/');
+        name = p[p.length - 1];
+      }
+      return new HtmlWebpackPlugin({
+        filename: name + '.html',
+        template: path.join(webpackPaths.srcRendererPath, 'root.html'),
+        chunks: [name],
+        minify: {
+          collapseWhitespace: true,
+          removeAttributeQuotes: true,
+          removeComments: true,
+        },
+        isBrowser: false,
+        isDevelopment: process.env.NODE_ENV !== 'production',
+      });
+    }),
+  ),
 });

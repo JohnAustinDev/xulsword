@@ -22,12 +22,12 @@ export const xulswordWindows = [
   'printPassage',
   'copyPassage',
   'bmProperties',
-  'bmManager'
+  'bmManager',
 ];
 
 export const xulswordEntries = [
   path.join(webpackPaths.srcPath, 'browser/widgets'),
-  path.join(webpackPaths.srcPath, 'browser/bible-browser')
+  path.join(webpackPaths.srcPath, 'browser/bible-browser'),
 ];
 
 export default {
@@ -62,7 +62,7 @@ export default {
   resolve: {
     extensions: ['.js', '.jsx', '.json', '.ts', '.tsx'],
     modules: [webpackPaths.srcPath, 'node_modules'],
-    fallback: { "path": false, "fs": false },
+    fallback: { path: false, fs: false },
   },
 
   plugins: [

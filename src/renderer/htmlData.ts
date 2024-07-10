@@ -3,7 +3,6 @@ import {
   clone,
   decodeOSISRef,
   findElements,
-  HTMLElementSearchModes,
   JSON_attrib_parse,
   JSON_attrib_stringify,
   ofClass,
@@ -18,6 +17,7 @@ import type {
   OSISBookType,
   V11nType,
 } from '../type.ts';
+import type { HTMLElementSearchModes } from '../common.ts';
 import type { RefParserOptionsType } from '../refParser.ts';
 import type RenderPromise from './renderPromise.ts';
 
@@ -50,8 +50,8 @@ const otherElemClasses = [
 ] as const;
 
 export type DataElemClasses =
-  | typeof libSwordElemClasses[number]
-  | typeof otherElemClasses[number];
+  | (typeof libSwordElemClasses)[number]
+  | (typeof otherElemClasses)[number];
 
 // HTML element data. This data is encoded in the data-data attribute.
 export type HTMLData = {
@@ -70,7 +70,7 @@ export type HTMLData = {
 // LibSword HTML element data. Data is parsed from LibSword HTML output; from
 // data-title and class attributes, and inner text nodes:
 export type LibSwordHTMLData = {
-  type: typeof libSwordElemClasses[number] | null;
+  type: (typeof libSwordElemClasses)[number] | null;
   className: string | null;
   title: string | null;
   reflist: string[] | null;
@@ -102,30 +102,29 @@ type Value = {
 // If a null parameter value exists for a particular class expression, this
 // signifies the value should be provided by context. NOTE: the sr, dt, and
 // dtl class may have multiple ';' or ' ' separated references in their titles.
-/* eslint-disable prettier/prettier */
+// prettier-ignore
 export const LibSwordDataFormat: Record<typeof libSwordElemClasses[number], Value[]> = {
-  vs:     [ { re:new RegExp(/^(([^.]+)\.(\d+)\.(\d+))\.(\d+)\.([^.]+)$/),                                      bk:2,    ch:3,     vs:4,    lv:5,     mod:6, osisref:1 } ],
-  fn:     [ { re:new RegExp(/^(\d+)\.(unavailable)\.([^.]+)$/),                                         nid:1, bk:null, ch:null,  vs:null, lv:null,  mod:3, osisref:2 },
-            { re:new RegExp(/^(\d+)\.(([^.]+)\.(\d+)\.(\d+))\.([^.]+)$/),                               nid:1, bk:3,    ch:4,     vs:5,    lv:5,     mod:6, osisref:2 } ],
-  cr:     [ { re:new RegExp(/^(\d+)\.(([^.]+)\.(\d+)\.(\d+))\.([^.]+)$/),                               nid:1, bk:3,    ch:4,     vs:5,    lv:5,     mod:6, osisref:2 } ],
-  un:     [ { re:new RegExp(/^(.+?)\.(([^.]+)\.(\d+)\.(\d+))\.([^.]+)$/),                               nid:1, bk:3,    ch:4,     vs:5,    lv:5,     mod:6, osisref:2 },
-            { re:new RegExp(/^(.+?)\.[^.]+\.(.*)\.(\d+)\.([^.]+)$/),                                    nid:1, bk:null, ch:2,     vs:3,    lv:3,     mod:4 } ],
-  sr:     [ { re:new RegExp(/^(unavailable)\.([^.]+)$/),                                            reflist:1, bk:null, ch:null,  vs:null, lv:null,  mod:2, osisref:1 },
-            { re:new RegExp(/^((([^.]+)\.(\d+)\.(\d+))(;.*?)?)\.([^.]+)$/),                         reflist:1, bk:3,    ch:4,     vs:5,    lv:5,     mod:7, osisref:2 },
-            { re:new RegExp(/^((([^.]+)\.(\d+)\.(\d+)\s*-\s*[^.]+\.\d+\.(\d+))(;.*?)?)\.([^.]+)$/), reflist:1, bk:3,    ch:4,     vs:5,    lv:6,     mod:8, osisref:2 },
-            { re:new RegExp(/^(.*?)\.([^.]+)$/),                                                    reflist:1, bk:null, ch:null,  vs:null, lv:null,  mod:2 } ],
-  sn:     [ { re:new RegExp(/^([^.]+)\.(.*)$/),                                                     reflist:2, bk:null, ch:null,  vs:null, lv:null,  mod:1 } ],
-  gfn:    [ { re:new RegExp (/^(\d+)\.(fn|cr)\.(.*?)$/),                                           ntype:2, nid:1,                                   mod:3 } ],
+  vs:     [ { re:/^(([^.]+)\.(\d+)\.(\d+))\.(\d+)\.([^.]+)$/,                                      bk:2,    ch:3,     vs:4,    lv:5,     mod:6, osisref:1 } ],
+  fn:     [ { re:/^(\d+)\.(unavailable)\.([^.]+)$/,                                         nid:1, bk:null, ch:null,  vs:null, lv:null,  mod:3, osisref:2 },
+            { re:/^(\d+)\.(([^.]+)\.(\d+)\.(\d+))\.([^.]+)$/,                               nid:1, bk:3,    ch:4,     vs:5,    lv:5,     mod:6, osisref:2 } ],
+  cr:     [ { re:/^(\d+)\.(([^.]+)\.(\d+)\.(\d+))\.([^.]+)$/,                               nid:1, bk:3,    ch:4,     vs:5,    lv:5,     mod:6, osisref:2 } ],
+  un:     [ { re:/^(.+?)\.(([^.]+)\.(\d+)\.(\d+))\.([^.]+)$/,                               nid:1, bk:3,    ch:4,     vs:5,    lv:5,     mod:6, osisref:2 },
+            { re:/^(.+?)\.[^.]+\.(.*)\.(\d+)\.([^.]+)$/,                                    nid:1, bk:null, ch:2,     vs:3,    lv:3,     mod:4 } ],
+  sr:     [ { re:/^(unavailable)\.([^.]+)$/,                                            reflist:1, bk:null, ch:null,  vs:null, lv:null,  mod:2, osisref:1 },
+            { re:/^((([^.]+)\.(\d+)\.(\d+))(;.*?)?)\.([^.]+)$/,                         reflist:1, bk:3,    ch:4,     vs:5,    lv:5,     mod:7, osisref:2 },
+            { re:/^((([^.]+)\.(\d+)\.(\d+)\s*-\s*[^.]+\.\d+\.(\d+))(;.*?)?)\.([^.]+)$/, reflist:1, bk:3,    ch:4,     vs:5,    lv:6,     mod:8, osisref:2 },
+            { re:/^(.*?)\.([^.]+)$/,                                                    reflist:1, bk:null, ch:null,  vs:null, lv:null,  mod:2 } ],
+  sn:     [ { re:/^([^.]+)\.(.*)$/,                                                     reflist:2, bk:null, ch:null,  vs:null, lv:null,  mod:1 } ],
+  gfn:    [ { re:/^(\d+)\.(fn|cr)\.(.*?)$/,                                            ntype:2, nid:1,                                   mod:3 } ],
   // dt and dtl allow [:.] as delineator for backward compatibility < 2.23 ([:] is correct)
-  dt:     [ { re:new RegExp(/^((([^:.]+)[:.]([^.]+))(\s+[^:.]+[:.][^.]+)?)\.([^.]+)$/),      reflist:1, bk:null, ch:4,    vs:null, lv:null, mod:3, osisref:2 } ],
-  dtl:    [ { re:new RegExp(/^((([^:.]+)[:.]([^.]+))(\s+[^:.]+[:.][^.]+)?)\.([^.]+)$/),      reflist:1, bk:null, ch:4,    vs:null, lv:null, mod:3, osisref:2 } ],
-  nlist:  [ { re:new RegExp(/^(\w+)\.([^.]*)\.(([^.]+)\.(\d+)\.(\d+))\.([^.]+)$/),              ntype:1, nid:2, bk:4,    ch:5,     vs:6,    lv:6,    mod:7, osisref:3 },
-            { re:new RegExp(/^(\w+)\.([^.]*)\.(([^.]+)(\.(0)(\.(0))?)?)\.([^.]+)$/),            ntype:1, nid:2, bk:4,    ch:6,     vs:8,    lv:8,    mod:9, osisref:3 },
-            { re:new RegExp(/^(un)\.([^.]*)\.[^.]*\.(.*)\.(\d+)\.([^.]+)$/),                    ntype:1, nid:2, bk:null, ch:3,     vs:4,    lv:4,    mod:5 } ],
-  slist:  [ { re:new RegExp(/^([^.]*)\.([^.]*)$/),                                                              bk:null, ch:1,     vs:null, lv:null, mod:2 },
-            { re:new RegExp(/^(([^.]*)\.(\d+)\.(\d+))\.([^.]*)$/),                                              bk:2,    ch:3,     vs:4,    lv:4,    mod:5, osisref:1 } ],
+  dt:     [ { re:/^((([^:.]+)[:.]([^.]+))(\s+[^:.]+[:.][^.]+)?)\.([^.]+)$/,               reflist:1, bk:null, ch:4,    vs:null, lv:null, mod:3, osisref:2 } ],
+  dtl:    [ { re:/^((([^:.]+)[:.]([^.]+))(\s+[^:.]+[:.][^.]+)?)\.([^.]+)$/,               reflist:1, bk:null, ch:4,    vs:null, lv:null, mod:3, osisref:2 } ],
+  nlist:  [ { re:/^(\w+)\.([^.]*)\.(([^.]+)\.(\d+)\.(\d+))\.([^.]+)$/,              ntype:1, nid:2, bk:4,    ch:5,     vs:6,    lv:6,    mod:7, osisref:3 },
+            { re:/^(\w+)\.([^.]*)\.(([^.]+)(\.(0)(\.(0))?)?)\.([^.]+)$/,            ntype:1, nid:2, bk:4,    ch:6,     vs:8,    lv:8,    mod:9, osisref:3 },
+            { re:/^(un)\.([^.]*)\.[^.]*\.(.*)\.(\d+)\.([^.]+)$/,                    ntype:1, nid:2, bk:null, ch:3,     vs:4,    lv:4,    mod:5 } ],
+  slist:  [ { re:/^([^.]*)\.([^.]*)$/,                                                              bk:null, ch:1,     vs:null, lv:null, mod:2 },
+            { re:/^(([^.]*)\.(\d+)\.(\d+))\.([^.]*)$/,                                              bk:2,    ch:3,     vs:4,    lv:4,    mod:5, osisref:1 } ],
 };
-/* eslint-enable prettier/prettier */
 
 // Convert from LibSword data to xulsword data type.
 export function libSwordData2XulswordData(dataIn: LibSwordHTMLData): HTMLData {
@@ -156,7 +155,12 @@ export function libSwordData2XulswordData(dataIn: LibSwordHTMLData): HTMLData {
       const [, b, r] = m;
       if (b && b in G.Tab && G.Tab[b].isVerseKey) {
         context = b;
-        location = verseKey(r, G.Tab[b].v11n || null, undefined, null).location();
+        location = verseKey(
+          r,
+          G.Tab[b].v11n || null,
+          undefined,
+          null,
+        ).location();
       } else {
         locationGB = {
           otherMod: m[1],
@@ -180,7 +184,7 @@ export function libSwordData2XulswordData(dataIn: LibSwordHTMLData): HTMLData {
   };
   // Make JSON string as short as possible:
   Object.keys(r).forEach(
-    (k) => (r as any)[k] === undefined && delete (r as any)[k]
+    (k) => (r as any)[k] === undefined && delete (r as any)[k],
   );
   return r;
 }
@@ -240,7 +244,7 @@ export function getElementData(elemx: string | Element): HTMLData {
 
   const mt = className?.match(/^([^\-\s]*)/);
   if (mt && mt[1] in LibSwordDataFormat) {
-    r.type = mt[1] as typeof libSwordElemClasses[number];
+    r.type = mt[1] as (typeof libSwordElemClasses)[number];
   }
   const { type } = r;
   ({ title } = r);
@@ -263,7 +267,7 @@ export function getElementData(elemx: string | Element): HTMLData {
             // convert integers into Number type, rather than String type
             if (
               typeof parsed === 'string' &&
-              parsed.indexOf('.') === -1 &&
+              !parsed.includes('.') &&
               !Number.isNaN(Number(parsed))
             ) {
               r[p] = Number(parsed) as any;
@@ -289,13 +293,14 @@ export function getElementData(elemx: string | Element): HTMLData {
               if (p === 'reflist') {
                 if (['dtl', 'dt'].includes(type)) {
                   // Backward Compatibility to < 2.23
-                  if (parsed?.indexOf(':') === -1) {
-                    parsed = (parsed as string)?.replace(/ /g, '_32_');
-                    parsed = (parsed as string)?.replace(/;/g, ' ');
-                    parsed = (parsed as string)?.replace(
-                      /((^|\s)\w+)\./g,
-                      '$1:'
-                    );
+                  if (
+                    parsed &&
+                    !Array.isArray(parsed) &&
+                    !parsed.includes(':')
+                  ) {
+                    parsed = parsed.replace(/ /g, '_32_');
+                    parsed = parsed.replace(/;/g, ' ');
+                    parsed = parsed.replace(/((^|\s)\w+)\./g, '$1:');
                   }
                   parsed = (parsed as string).split(/ +/);
                 } else if (type === 'sr') {
@@ -334,7 +339,7 @@ export function getElementData(elemx: string | Element): HTMLData {
 }
 
 function removeDataAttribute<T extends HTMLElement | string | null>(
-  elem: HTMLElement | string | null
+  elem: HTMLElement | string | null,
 ): T {
   if (typeof elem === 'string') {
     return elem.replace(/^([^<]*<[^>]*) data-data="[^"]*"/, '$1') as T;
@@ -348,13 +353,13 @@ function removeDataAttribute<T extends HTMLElement | string | null>(
 
 export function writeDataAttribute<T extends HTMLElement | string>(
   elem: T,
-  data: HTMLData | null
+  data: HTMLData | null,
 ): T {
   if (typeof elem === 'string') {
     const elem2: string = removeDataAttribute(elem);
     return elem2.replace(
       /^([^<]*<[^>]*)>/,
-      `$1 data-data="${JSON_attrib_stringify(data)}">`
+      `$1 data-data="${JSON_attrib_stringify(data)}">`,
     ) as T;
   }
   if (elem) {
@@ -366,7 +371,7 @@ export function writeDataAttribute<T extends HTMLElement | string>(
 
 export function updateDataAttribute<T extends HTMLElement | string | null>(
   elem: T,
-  data: HTMLData | null
+  data: HTMLData | null,
 ): T {
   if (elem) {
     if (!data) {
@@ -389,19 +394,19 @@ export function updateDataAttribute<T extends HTMLElement | string | null>(
 export function elementData(
   elem: HTMLElement,
   mode: HTMLElementSearchModes,
-  onlyFirst?: true | undefined
+  onlyFirst?: true | undefined,
 ): HTMLData | null;
 
 export function elementData(
   elem: HTMLElement,
   mode: HTMLElementSearchModes,
-  onlyFirst: false
+  onlyFirst: false,
 ): HTMLData[];
 
 export function elementData(
   elem: HTMLElement,
   mode = 'self' as HTMLElementSearchModes,
-  onlyFirst?: boolean
+  onlyFirst?: boolean,
 ): HTMLData | HTMLData[] | null {
   const tofind = (el: HTMLElement): boolean => {
     if ('data' in el.dataset) return true;
@@ -413,21 +418,27 @@ export function elementData(
   }
   return findElements(elem, mode, tofind, false)
     .map((el) => (el && getElementData(el)) || undefined)
-    .filter(Boolean) as HTMLData[];
+    .filter(Boolean);
 }
 
 // Merge a priority ordered array of HTMLData objects into one. Certain
 // attributes are kept consistent so they are guaranteed to originate
 // from the same source data object.
-export function mergeElementData(datas: (HTMLData | null)[]): HTMLData | null {
+export function mergeElementData(
+  datas: Array<HTMLData | null>,
+): HTMLData | null {
   const datas2 = datas.filter(Boolean) as HTMLData[];
   const r = clone(datas2.shift());
   if (r) {
-    const keepConsistent = ['type', 'nid', 'title'] as (keyof HTMLData)[];
+    const keepConsistent: Array<keyof HTMLData> = [
+      'type',
+      'nid',
+      'title',
+    ] as const;
     datas2.forEach((d) => {
       Object.entries(d).forEach((entry) => {
         const [p, v] = entry;
-        if (keepConsistent.includes(p as any)) {
+        if (keepConsistent.includes(p as never)) {
           if (!r.type && p === 'type' && v) {
             keepConsistent.forEach((pc) => {
               (r as any)[pc] = d[pc];
@@ -445,7 +456,7 @@ export function mergeElementData(datas: (HTMLData | null)[]): HTMLData | null {
 // result as a single data object, or return null if no data objects are found.
 export function findElementData(elem: HTMLElement | null): HTMLData | null {
   if (!elem) return null;
-  const datas: (HTMLData | null)[] = [];
+  const datas: Array<HTMLData | null> = [];
   datas.push(elementData(elem, 'self'));
   datas.push(elementData(elem, 'descendant', true));
   datas.push(...elementData(elem, 'ancestor', false));
@@ -466,12 +477,11 @@ export function verseKey(
   versekey: LocationVKType | string,
   v11n?: V11nType | null,
   optionsx?: RefParserOptionsType,
-  renderPromise?: RenderPromise | null
+  renderPromise?: RenderPromise | null,
 ): VerseKey {
-
   // Minimal parser options are 'locales: [locale]'
   const options = optionsx || {};
-  let locales = [G.i18n.language];
+  const locales = [G.i18n.language];
   if (options.locales) {
     locales.push(...options.locales.filter((l) => l !== G.i18n.language));
   }
@@ -482,23 +492,21 @@ export function verseKey(
     convertLocation = (
       fromv11n: V11nType,
       vkeytext: string,
-      tov11n: V11nType
+      tov11n: V11nType,
     ) => {
-      const newloc = GI.LibSword.convertLocation(vkeytext, renderPromise,
+      const newloc = GI.LibSword.convertLocation(
+        vkeytext,
+        renderPromise,
         fromv11n,
         vkeytext,
-        tov11n
+        tov11n,
       );
       return newloc;
-    }
+    };
   }
 
   return new VerseKey(
-    new RefParser(
-      G.getLocaleDigits(true),
-      G.getLocalizedBooks(true),
-      options
-    ),
+    new RefParser(G.getLocaleDigits(true), G.getLocalizedBooks(true), options),
     G.BkChsInV11n,
     {
       convertLocation,
@@ -506,6 +514,6 @@ export function verseKey(
       Tab: () => G.Tab,
     },
     versekey,
-    v11n
+    v11n,
   );
 }

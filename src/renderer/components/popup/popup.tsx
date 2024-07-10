@@ -1,13 +1,3 @@
-/* eslint-disable no-empty */
-/* eslint-disable react/jsx-props-no-spreading */
-/* eslint-disable jsx-a11y/click-events-have-key-events */
-/* eslint-disable jsx-a11y/anchor-is-valid */
-/* eslint-disable max-classes-per-file */
-/* eslint-disable jsx-a11y/no-static-element-interactions */
-/* eslint-disable jsx-a11y/mouse-events-have-key-events */
-/* eslint-disable react/no-did-update-set-state */
-/* eslint-disable react/forbid-prop-types */
-/* eslint-disable react/static-property-placement */
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -16,17 +6,11 @@ import {
   sanitizeHTML,
   stringHash,
 } from '../../../common.ts';
-import S from '../../../defaultPrefs.ts';
 import C from '../../../constant.ts';
 import G, { GI } from '../../rg.ts';
 import { libswordImgSrc, windowArguments } from '../../rutil.ts';
 import RenderPromise from '../../renderPromise.ts';
-import {
-  topHandle,
-  htmlAttribs,
-  XulProps,
-  xulPropTypes,
-} from '../../libxul/xul.tsx';
+import { topHandle, htmlAttribs, xulPropTypes } from '../../libxul/xul.tsx';
 import { Box, Hbox } from '../../libxul/boxes.tsx';
 import { getRefBible } from '../atext/zversekey.ts';
 import popupH, { getPopupHTML } from './popupH.ts';
@@ -37,8 +21,13 @@ import '../../libxul/label.css';
 import '../../libxul/button.css';
 
 import type { FeatureMods } from '../../../type.ts';
+import type S from '../../../defaultPrefs.ts';
 import type { HTMLData } from '../../htmlData.ts';
-import type { RenderPromiseComponent, RenderPromiseState } from '../../renderPromise.ts';
+import type {
+  RenderPromiseComponent,
+  RenderPromiseState,
+} from '../../renderPromise.ts';
+import type { XulProps } from '../../libxul/xul.tsx';
 
 const propTypes = {
   ...xulPropTypes,
@@ -51,7 +40,7 @@ const propTypes = {
   onPopupContextMenu: PropTypes.func,
 };
 
-export interface PopupProps extends XulProps {
+export type PopupProps = {
   // key must be set correctly for popup to update, like:
   // key={[gap, elemdata.length, popupReset].join('.')}
   key: string;
@@ -60,9 +49,9 @@ export interface PopupProps extends XulProps {
   isWindow?: boolean; // Set to true to use popup in windowed mode
   onPopupClick: (e: React.SyntheticEvent) => void;
   onSelectChange: (e: React.SyntheticEvent) => void;
-  onMouseLeftPopup: (e: React.SyntheticEvent) => void | undefined;
-  onPopupContextMenu: (e: React.SyntheticEvent) => void | undefined;
-}
+  onMouseLeftPopup: (e: React.SyntheticEvent) => void;
+  onPopupContextMenu: (e: React.SyntheticEvent) => void;
+} & XulProps;
 
 export type PopupState = RenderPromiseState & {
   drag: {
@@ -71,7 +60,7 @@ export type PopupState = RenderPromiseState & {
     x: number[];
     y: number[];
   } | null;
-}
+};
 
 // To show/hide a popup, either Popup should be rendered, or not.
 // Popup shows information about particular types of elements (a
@@ -131,14 +120,13 @@ class Popup extends React.Component implements RenderPromiseComponent {
     const { npopup } = this;
     const { isWindow } = this.props as PopupProps;
     const popup = npopup?.current;
-    if (window.processR.platform !== 'browser'
-        && isWindow && popup) {
+    if (window.processR.platform !== 'browser' && isWindow && popup) {
       const maxlen = Math.floor((popup.clientWidth - 50) / 10);
       const search = ['crref', 'lemma-header', 'popup-text'];
       let title;
       for (let x = 0; !title && x < search.length; x += 1) {
         const els = popup.getElementsByClassName(search[x]);
-        if (els && els[0]) {
+        if (els?.[0]) {
           const elem = els[0] as HTMLElement;
           title = elem?.textContent;
           title = title?.replace(/[\n\s]+/g, ' ');
@@ -204,7 +192,7 @@ class Popup extends React.Component implements RenderPromiseComponent {
     const pts = npopup?.current?.getElementsByClassName('popup-text');
     if (!npopup.current || !pts) throw Error(`Popup.updateContent no npopup.`);
     const pt = pts[0] as HTMLElement;
-    const data = elemdata && elemdata[elemdata.length - 1];
+    const data = elemdata?.[elemdata.length - 1];
     if (data) {
       const { type, reflist, context, location, locationGB } = data;
       let infokey;
@@ -243,7 +231,7 @@ class Popup extends React.Component implements RenderPromiseComponent {
     mods: string[],
     selected: string | null,
     module?: string | undefined,
-    feature?: string | undefined
+    feature?: string | undefined,
   ) {
     const props = this.props as PopupProps;
     if (!module && !feature) return null;
@@ -277,7 +265,7 @@ class Popup extends React.Component implements RenderPromiseComponent {
     const { handler, npopup } = this;
     const { drag } = state;
     const { elemdata, gap, isWindow } = props;
-    const data = (elemdata && elemdata[elemdata.length - 1]) || null;
+    const data = elemdata?.[elemdata.length - 1] || null;
     let context: string | undefined;
     let type: string | undefined;
     if (data) ({ context, type } = data);
@@ -290,7 +278,7 @@ class Popup extends React.Component implements RenderPromiseComponent {
     let boxlocation;
     if (!isWindow) {
       const maxHeight = window.innerHeight / 2;
-      const leftd = drag && drag.x[0] ? drag.x[1] - drag.x[0] : 0;
+      const leftd = drag?.x[0] ? drag.x[1] - drag.x[0] : 0;
       const left = windowArguments('type') === 'search' ? leftd : 'auto';
       let top = gap || 0;
       if (drag) top += drag.adjustment + (drag.y[1] || 0) - (drag.y[0] || 0);
@@ -304,7 +292,7 @@ class Popup extends React.Component implements RenderPromiseComponent {
     let gpfeature: typeof S.prefs.global.popup.feature | undefined;
     if (type === 'sn')
       gpfeature = G.Prefs.getComplexValue(
-        'global.popup.feature'
+        'global.popup.feature',
       ) as typeof S.prefs.global.popup.feature;
 
     const bibleMod = context && getRefBible(context, this.renderPromise);
@@ -319,7 +307,9 @@ class Popup extends React.Component implements RenderPromiseComponent {
         {...htmlAttribs(`npopup ${cls}`, props)}
         {...topHandle('onMouseLeave', props.onMouseLeftPopup, props)}
         {...topHandle('onContextMenu', props.onPopupContextMenu, props)}
-        onWheel={(e) => e.stopPropagation()}
+        onWheel={(e) => {
+          e.stopPropagation();
+        }}
         ref={npopup}
       >
         <div
@@ -337,12 +327,16 @@ class Popup extends React.Component implements RenderPromiseComponent {
             {!isWindow && !isBrowser && <div className="towindow" />}
             {elemdata && elemdata.length > 1 && (
               <div>
-                <a className="popupBackLink">{GI.i18n.t('', this.renderPromise, 'back.label')}</a>
+                <a className="popupBackLink">
+                  {GI.i18n.t('', this.renderPromise, 'back.label')}
+                </a>
               </div>
             )}
             {elemdata && elemdata.length === 1 && (
               <div>
-                <a className="popupCloseLink">{GI.i18n.t('', this.renderPromise, 'close')}</a>
+                <a className="popupCloseLink">
+                  {GI.i18n.t('', this.renderPromise, 'close')}
+                </a>
               </div>
             )}
             {!isWindow && <div className="draghandle" />}
@@ -359,14 +353,15 @@ class Popup extends React.Component implements RenderPromiseComponent {
                 if (data.className && regex.test(data.className)) {
                   const fmods = G.FeatureModules[feature];
                   if (fmods?.length && Array.isArray(fmods)) {
-                    let selmod = (gpfeature as any)[feature] || null;
+                    let selmod: string | null =
+                      (gpfeature as any)[feature] || null;
                     if (!selmod && fmods[0]) {
                       [selmod] = fmods;
                       if (gpfeature) {
                         gpfeature[feature] = selmod;
                         G.Prefs.setComplexValue(
                           'global.popup.feature',
-                          gpfeature as typeof S.prefs.global.popup.feature
+                          gpfeature,
                         );
                       }
                     }

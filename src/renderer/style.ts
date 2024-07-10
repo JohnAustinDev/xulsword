@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import { normalizeFontFamily } from '../common.ts';
 import C from '../constant.ts';
-import S from '../defaultPrefs.ts';
+import type S from '../defaultPrefs.ts';
 import G, { GI } from './rg.ts';
 import RenderPromise from './renderPromise.ts';
 import log from './log.ts';
@@ -27,7 +27,7 @@ const defaultStyle: Partial<StyleType> = {
 function getConfig(
   styleType?: StyleType,
   type?: keyof StyleType,
-  key?: string
+  key?: string,
 ): Partial<ConfigType> | null {
   let config: Partial<ConfigType> | null = null;
   if (styleType && type && key) {
@@ -36,7 +36,7 @@ function getConfig(
       config = type0[key];
     }
     const typeDef = defaultStyle[type];
-    const configDef = typeDef && typeDef[key];
+    const configDef = typeDef?.[key];
     if (configDef) {
       config = {
         ...configDef,
@@ -50,7 +50,7 @@ function getConfig(
 function createStyleRule(
   selector: string,
   config: Partial<ConfigType>,
-  important?: boolean
+  important?: boolean,
 ): string {
   let rule = `${selector} {`;
   Object.entries(C.ConfigTemplate).forEach((entry) => {
@@ -71,7 +71,7 @@ function insertRule(
   prefix: string,
   instance: string,
   config?: Partial<ConfigType> | null,
-  important?: boolean
+  important?: boolean,
 ) {
   if (config) {
     const r = createStyleRule(`.${prefix}-${instance}`, config, important);
@@ -87,7 +87,7 @@ function insertModuleCSS(
   renderPromise?: RenderPromise,
 ) {
   const css = GI.inlineFile('', renderPromise, path, 'utf8').substring(
-    'data:text/css;utf8,'.length
+    'data:text/css;utf8,'.length,
   );
 
   if (css) {
@@ -144,9 +144,10 @@ export default class DynamicStyleSheet {
     const style = doc.createElement('style');
     doc.head.appendChild(style);
     this.sheet = style.sheet;
-    const module = { default: G.ModuleConfigDefault } as {
-      [i: string]: ConfigType;
-    };
+    const module = { default: G.ModuleConfigDefault } as Record<
+      string,
+      ConfigType
+    >;
     Object.entries(G.Config).forEach((entry) => {
       const [mod, config] = entry;
       module[mod] = config;
@@ -160,12 +161,14 @@ export default class DynamicStyleSheet {
   update(styleConfigs?: StyleType) {
     const { sheet } = this;
 
-    const renderPromise = new RenderPromise(() => this.update(styleConfigs));
+    const renderPromise = new RenderPromise(() => {
+      this.update(styleConfigs);
+    });
 
     // Create CSS classes and rules according to user pref style.
     const prefStyleConfigs = G.Prefs.getComplexValue(
       'style',
-      'style'
+      'style',
     ) as typeof S.style.style;
     const style = styleConfigs || prefStyleConfigs;
     const classPrefixes = ['cs'];
@@ -185,7 +188,7 @@ export default class DynamicStyleSheet {
                 sheet,
                 prefix,
                 instance,
-                getConfig(style, type, 'default')
+                getConfig(style, type, 'default'),
               );
               // Config for this type and instance (particular module or locale config)
               insertRule(sheet, prefix, instance, config);
@@ -196,7 +199,7 @@ export default class DynamicStyleSheet {
                   prefix,
                   instance,
                   config.PreferredCSSXHTML,
-                  renderPromise
+                  renderPromise,
                 );
               }
               // User Pref for this type and instance
@@ -205,7 +208,7 @@ export default class DynamicStyleSheet {
                 prefix,
                 instance,
                 getConfig(style, type, instance),
-                true
+                true,
               );
             }
           });
@@ -224,7 +227,7 @@ export default class DynamicStyleSheet {
         }
         if (url2) {
           const rule = `@font-face {font-family:${normalizeFontFamily(
-            fontFamily
+            fontFamily,
           )}; src:url("${url2}");}`;
           sheet.insertRule(rule, sheet.cssRules.length);
         }
@@ -235,7 +238,7 @@ export default class DynamicStyleSheet {
       const px = C.UI.Atext.fontSize + C.UI.Atext.fontSizeOptionDelta * (x - 2);
       sheet.insertRule(
         `.userFontBase {font-size:${px}px;}`,
-        sheet.cssRules.length
+        sheet.cssRules.length,
       );
 
       log.silly('Stylesheet: ', sheet);

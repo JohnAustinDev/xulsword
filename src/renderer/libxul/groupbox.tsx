@@ -4,7 +4,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { keep, drop } from '../../common.ts';
-import { addClass, xulPropTypes, XulProps } from './xul.tsx';
+import { addClass, xulPropTypes, type XulProps } from './xul.tsx';
 import Label from './label.tsx';
 import Image from './image.tsx';
 import { Box, Hbox, Vbox } from './boxes.tsx';
@@ -34,7 +34,10 @@ function Groupbox({ orient = 'vertical', ...props }: GroupboxProps) {
           <Label className="caption-text" flex="1" value={caption} />
         </Hbox>
       )}
-      <Box {...addClass('groupbox-body', keep({ orient, ...props }, passToBody))} flex="1">
+      <Box
+        {...addClass('groupbox-body', keep({ orient, ...props }, passToBody))}
+        flex="1"
+      >
         {props.children}
       </Box>
     </Vbox>

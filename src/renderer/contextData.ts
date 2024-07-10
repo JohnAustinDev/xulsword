@@ -88,7 +88,7 @@ export default function ContextData(elem: HTMLElement): ContextDataType {
   if (contextData) bookmark = contextData.bmitem;
   if (!bookmark && (locationGB || location)) {
     const bm = findBookmarks(
-      (locationGB || location) as LocationVKType | LocationORType
+      (locationGB || location) as LocationVKType | LocationORType,
     );
     if (bm[0]) bookmark = bm[0].id;
   }
@@ -111,10 +111,11 @@ export default function ContextData(elem: HTMLElement): ContextDataType {
       G.getLocalizedBooks(true),
       {
         locales: C.Locales.map((l) => l[0]),
-        uncertain: true
-      }
+        uncertain: true,
+      },
     ).parse(selection, v11n || null);
-    selectionParsedVK = parsed && parsed.location.book ? parsed.location : undefined;
+    selectionParsedVK =
+      parsed && parsed.location.book ? parsed.location : undefined;
   }
 
   // Find location lastverse

@@ -1,14 +1,14 @@
-/* eslint-disable import/no-duplicates */
-import React from 'react';
+import type React from 'react';
 import {
   cleanDoubleClickSelection,
   clone,
   getCSS,
+  JSON_stringify,
   ofClass,
   sanitizeHTML,
 } from '../../../common.ts';
 import C from '../../../constant.ts';
-import S from '../../../defaultPrefs.ts';
+import type S from '../../../defaultPrefs.ts';
 import G from '../../rg.ts';
 import { getElementData } from '../../htmlData.ts';
 import log from '../../log.ts';
@@ -17,7 +17,7 @@ import { aTextWheelScroll } from './zversekey.ts';
 import type Atext from './atext.tsx';
 import type { AtextProps, AtextStateType } from './atext.tsx';
 
-let AddedRules: { sheet: CSSStyleSheet; index: number }[] = [];
+let AddedRules: Array<{ sheet: CSSStyleSheet; index: number }> = [];
 
 function scroll2Note(atext: HTMLElement, id: string) {
   Array.from(atext.getElementsByClassName('fnselected')).forEach((note) => {
@@ -45,7 +45,7 @@ export default async function handler(this: Atext, es: React.SyntheticEvent) {
           'image-viewport',
           'dictkeyinput',
         ],
-        es.target
+        es.target,
       );
       if (targ === null) return;
       const props = this.props as AtextProps;
@@ -79,14 +79,20 @@ export default async function handler(this: Atext, es: React.SyntheticEvent) {
                 const el = col5.element;
                 const refs = el.dataset.reflist;
                 if (refs) {
-                  const [html] = await G.callBatch([['getExtRefHTML', null, [
-                    refs,
-                    module,
-                    G.i18n.language,
-                    location,
-                    row.classList.contains('cropened'),
-                    false,
-                  ]]]);
+                  const [html] = (await G.callBatch([
+                    [
+                      'getExtRefHTML',
+                      null,
+                      [
+                        refs,
+                        module,
+                        G.i18n.language,
+                        location,
+                        row.classList.contains('cropened'),
+                        false,
+                      ],
+                    ],
+                  ])) as string[];
                   sanitizeHTML(el, html);
                 }
               }
@@ -192,7 +198,7 @@ export default async function handler(this: Atext, es: React.SyntheticEvent) {
     case 'mouseover': {
       const targ = ofClass(
         ['cr', 'fn', 'sn', 'un', 'image-viewport'],
-        es.target
+        es.target,
       );
       if (targ === null) return;
       const props = this.props as AtextProps;
@@ -249,9 +255,9 @@ export default async function handler(this: Atext, es: React.SyntheticEvent) {
                 sheet.insertRule(
                   matchingStrongs.rule.cssText.replace(
                     `matchingStrongs${x}`,
-                    cls
+                    cls,
                   ),
-                  i
+                  i,
                 );
                 AddedRules.push({ sheet, index: i });
               }
@@ -286,7 +292,7 @@ export default async function handler(this: Atext, es: React.SyntheticEvent) {
           if (p) {
             Object.entries(p).forEach((entry) => {
               const [m, val] = entry;
-              msg += `\n${m}=${val || 'null'}`;
+              msg += `\n${m}=${JSON_stringify(val)}`;
             });
           }
           log.warn(msg);

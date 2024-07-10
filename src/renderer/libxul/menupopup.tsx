@@ -4,7 +4,7 @@
 
 import React from 'react';
 import { Vbox } from './boxes.tsx';
-import { addClass, xulPropTypes, XulProps } from './xul.tsx';
+import { addClass, xulPropTypes, type XulProps } from './xul.tsx';
 import './menupopup.css';
 
 // XUL menupopup

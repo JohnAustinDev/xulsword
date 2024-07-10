@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-var-requires */
 const { contextBridge, ipcRenderer } = require('electron');
 
 // If you think you can do this with TypeScript and module requires, good luck, as
@@ -38,9 +40,9 @@ contextBridge.exposeInMainWorld('ipc', {
 
   // Trigger a channel event which ipcMain is to listen for and respond to
   // using ipcMain.handle(), returning a promise containing the result arg(s).
-  invoke: (channel, ...args) => {
+  invoke: async (channel, ...args) => {
     if (validChannels.includes(channel)) {
-      return ipcRenderer.invoke(channel, ...args);
+      return await ipcRenderer.invoke(channel, ...args);
     }
     throw Error(`ipc invoke bad channel: ${channel}`);
   },

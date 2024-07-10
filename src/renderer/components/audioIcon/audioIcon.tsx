@@ -1,15 +1,15 @@
 import React from 'react';
-import { Icon } from "@blueprintjs/core";
+import { Icon } from '@blueprintjs/core';
 import G from '../../rg.ts';
-import { genBookAudioFile, verseKeyAudioFile } from "../../rutil.ts";
+import { genBookAudioFile, verseKeyAudioFile } from '../../rutil.ts';
 
-import type { GenBookAudioFile, OSISBookType, VerseKeyAudioFile } from "type";
+import type { GenBookAudioFile, OSISBookType, VerseKeyAudioFile } from 'type';
 
 export default function audioIcon(
   module: string,
   bookOrKey: OSISBookType | string,
   chapter: number | undefined,
-  audioHandler: (audio: VerseKeyAudioFile | GenBookAudioFile) => void
+  audioHandler: (audio: VerseKeyAudioFile | GenBookAudioFile) => void,
 ): JSX.Element | null {
   let afile: VerseKeyAudioFile | GenBookAudioFile | null = null;
   if (G.Tab[module].isVerseKey) {

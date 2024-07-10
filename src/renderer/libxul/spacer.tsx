@@ -3,7 +3,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { xulPropTypes, XulProps, htmlAttribs } from './xul.tsx';
+import { xulPropTypes, type XulProps, htmlAttribs } from './xul.tsx';
 import { Box } from './boxes.tsx';
 
 // XUL spacer
@@ -19,9 +19,8 @@ type SpacerProps = XulProps & {
 
 function Spacer({ orient = 'horizontal', ...props }: SpacerProps) {
   return (
-  <Box {...htmlAttribs('spacer', { orient, ...props })}>
-    {props.children}
-  </Box>);
+    <Box {...htmlAttribs('spacer', { orient, ...props })}>{props.children}</Box>
+  );
 }
 Spacer.propTypes = propTypes;
 

@@ -28,17 +28,13 @@ const validChannels = [
   'component-reset', // from main when window top react component should be remounted
   'cache-reset', // from main when caches should be cleared
   'dynamic-stylesheet-reset', // from main when dynamic stylesheet should be re-created
-  'publish-subscription' // from main when a renderer subscription should be published
+  'publish-subscription', // from main when a renderer subscription should be published
 ];
 
 // This is a polyfill for Electron ipcRenderer:
-const ipcRenderer: Pick<Electron.IpcRenderer,
-'send' |
-'invoke' |
-'sendSync' |
-'on' |
-'once' |
-'removeListener'
+const ipcRenderer: Pick<
+  Electron.IpcRenderer,
+  'send' | 'invoke' | 'sendSync' | 'on' | 'once' | 'removeListener'
 > = {
   send: (channel: string, ...args: unknown[]) => {
     if (socket) socket.emit(channel, args, () => {});
@@ -46,7 +42,10 @@ const ipcRenderer: Pick<Electron.IpcRenderer,
   },
   invoke: async (channel: string, ...args: unknown[]) => {
     return await new Promise((resolve, reject) => {
-      if (socket) socket.emit(channel, args, (resp: any) => { resolve(resp); });
+      if (socket)
+        socket.emit(channel, args, (resp: any) => {
+          resolve(resp);
+        });
       else reject(new Error('No socket connection.'));
     });
   },
@@ -55,7 +54,9 @@ const ipcRenderer: Pick<Electron.IpcRenderer,
   // the data. Therefore data must either be preloaded into the cache, or
   // else a special call must be used that is capable of waiting for the
   // data and handling it later.
-  sendSync: (_channel: string, ..._args: unknown[]): null => { return null; },
+  sendSync: (_channel: string, ..._args: unknown[]): null => {
+    return null;
+  },
   on: (channel: string, strippedfunc: (...args: any[]) => unknown) => {
     if (socket) socket.on(channel, strippedfunc);
     else throw new Error('No socket connection.');
@@ -74,14 +75,17 @@ const ipcRenderer: Pick<Electron.IpcRenderer,
     } else throw new Error('No socket connection.');
     return undefined as unknown as Electron.IpcRenderer;
   },
-  removeListener: (channel: string, strippedfunc: (...args: unknown[]) => unknown) => {
+  removeListener: (
+    channel: string,
+    strippedfunc: (...args: unknown[]) => unknown,
+  ) => {
     if (socket) {
       socket.listeners(channel).forEach((lf) => {
         if (socket && lf === strippedfunc) socket.off(channel, lf);
       });
     } else throw new Error('No socket connection.');
     return undefined as unknown as Electron.IpcRenderer;
-  }
+  },
 };
 
 // THIS IS IDENTICAL TO MAIN/PRELOAD.JS:
@@ -140,7 +144,7 @@ window.ipc = {
       };
       ipcRenderer.once(channel, strippedfunc);
     } else throw Error(`ipc once bad channel: ${channel}`);
-  }
+  },
 };
 
 // THIS IS IDENTICAL TO MAIN/PRELOAD.JS
@@ -163,5 +167,5 @@ window.processR = {
   XSPORT: () => {
     return process.env.XSPORT;
   },
-  platform: process.platform
+  platform: process.platform,
 };

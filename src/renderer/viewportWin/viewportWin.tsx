@@ -1,8 +1,4 @@
-/* eslint-disable react/jsx-props-no-spreading */
-/* eslint-disable react/static-property-placement */
-/* eslint-disable jsx-a11y/no-static-element-interactions */
-/* eslint-disable jsx-a11y/click-events-have-key-events */
-/* eslint-disable jsx-a11y/media-has-caption */
+/* eslint-disable @typescript-eslint/unbound-method */
 import React from 'react';
 import Subscription from '../../subscription.ts';
 import S from '../../defaultPrefs.ts';
@@ -18,11 +14,7 @@ import {
   setStatePref,
   windowArguments,
 } from '../rutil.ts';
-import {
-  topHandle,
-  XulProps,
-  xulPropTypes,
-} from '../libxul/xul.tsx';
+import { topHandle, xulPropTypes } from '../libxul/xul.tsx';
 import { Hbox, Vbox } from '../libxul/boxes.tsx';
 import Viewport from '../components/viewport/viewport.tsx';
 import viewportParentH, {
@@ -33,7 +25,11 @@ import viewportParentH, {
 
 import type { NewModulesType, XulswordStateArgType } from '../../type.ts';
 import type Atext from '../components/atext/atext.tsx';
-import type { RenderPromiseComponent, RenderPromiseState } from '../renderPromise.ts';
+import type {
+  RenderPromiseComponent,
+  RenderPromiseState,
+} from '../renderPromise.ts';
+import type { XulProps } from '../libxul/xul.tsx';
 
 const propTypes = xulPropTypes;
 
@@ -45,7 +41,7 @@ const notStatePrefDefault = {
 
 const statePrefDefault = drop(S.prefs.xulsword, vpWindowState) as Omit<
   typeof S.prefs.xulsword,
-  typeof vpWindowState[number]
+  (typeof vpWindowState)[number]
 >;
 
 // Window arguments that are used to set initial state must be updated locally
@@ -53,7 +49,7 @@ const statePrefDefault = drop(S.prefs.xulsword, vpWindowState) as Omit<
 // reversion to initial state.
 let windowState = windowArguments('xulswordState') as Pick<
   typeof S.prefs.xulsword,
-  typeof vpWindowState[number]
+  (typeof vpWindowState)[number]
 >;
 
 let WindowTitle = '';
@@ -63,8 +59,10 @@ export type ViewportWinState = typeof statePrefDefault &
   typeof windowState &
   RenderPromiseState;
 
-export default class ViewportWin extends React.Component implements RenderPromiseComponent {
-
+export default class ViewportWin
+  extends React.Component
+  implements RenderPromiseComponent
+{
   static propTypes: typeof propTypes;
 
   viewportParentHandler: any;
@@ -75,9 +73,9 @@ export default class ViewportWin extends React.Component implements RenderPromis
 
   wheelScrollTO: NodeJS.Timeout | undefined;
 
-  destroy: (() => void)[];
+  destroy: Array<() => void>;
 
-  atextRefs: React.RefObject<Atext>[];
+  atextRefs: Array<React.RefObject<Atext>>;
 
   renderPromise: RenderPromise;
 
@@ -112,7 +110,7 @@ export default class ViewportWin extends React.Component implements RenderPromis
   componentDidMount() {
     const { renderPromise } = this;
     this.destroy.push(
-      registerUpdateStateFromPref('prefs', 'xulsword', this, statePrefDefault)
+      registerUpdateStateFromPref('prefs', 'xulsword', this, statePrefDefault),
     );
     this.destroy.push(
       Subscription.subscribe.modulesInstalled((newmods: NewModulesType) => {
@@ -124,23 +122,23 @@ export default class ViewportWin extends React.Component implements RenderPromis
                 c.xsmType !== 'XSM_audio' &&
                 c.module &&
                 c.module in G.Tab &&
-                G.Tab[c.module]
+                G.Tab[c.module],
             )
-            .map((c) => c.module)
+            .map((c) => c.module),
         );
         this.persistState(
           state,
           G.Viewport.getModuleChange(whichTab, state, {
             maintainWidePanels: true,
             maintainPins: false,
-          })
+          }),
         );
         G.Viewport.setXulswordTabs({
           whichTab,
           doWhat: 'show',
           panelIndex: -1,
         });
-      })
+      }),
     );
     this.updateWindowTitle();
     renderPromise.dispatch();
@@ -148,7 +146,7 @@ export default class ViewportWin extends React.Component implements RenderPromis
 
   componentDidUpdate(
     _prevProps: ViewportWinProps,
-    prevState: ViewportWinState
+    prevState: ViewportWinState,
   ) {
     const { renderPromise } = this;
     const state = this.state as ViewportWinState;
@@ -159,7 +157,9 @@ export default class ViewportWin extends React.Component implements RenderPromis
 
   componentWillUnmount() {
     clearPending(this, ['dictkeydownTO', 'wheelScrollTO']);
-    this.destroy.forEach((func) => func());
+    this.destroy.forEach((func) => {
+      func();
+    });
     this.destroy = [];
   }
 
@@ -172,7 +172,7 @@ export default class ViewportWin extends React.Component implements RenderPromis
         'xulsword',
         prevState,
         state,
-        Object.keys(statePrefDefault)
+        Object.keys(statePrefDefault),
       );
       const newWindowState = diff(prevState, windowState);
       if (newWindowState) {
@@ -231,7 +231,13 @@ export default class ViewportWin extends React.Component implements RenderPromis
     return (
       <Vbox
         {...this.props}
-        {...topHandle('onClick', () => closeMenupopups(this), this.props)}
+        {...topHandle(
+          'onClick',
+          () => {
+            closeMenupopups(this);
+          },
+          this.props,
+        )}
       >
         <Hbox flex="1">
           <Viewport
@@ -264,4 +270,6 @@ export default class ViewportWin extends React.Component implements RenderPromis
 }
 ViewportWin.propTypes = propTypes;
 
-renderToRoot(<ViewportWin pack="start" height="100%" />);
+renderToRoot(<ViewportWin pack="start" height="100%" />).catch((er) => {
+  log.error(er);
+});

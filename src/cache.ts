@@ -1,9 +1,8 @@
-
 // Cache any data according to string keys. Calling noclear on a key will prevent it
 // from being cleared when Cache.clear() is called, but it may always be cleared if
 // cleared explicitly, ie. Cache.clear(name).
 const Cache = {
-  storage: {} as { [i: string]: any },
+  storage: {} as Record<string, any>,
 
   noclears: [] as string[],
 

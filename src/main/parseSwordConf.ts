@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/consistent-type-assertions */
 import i18n from 'i18next';
 import path from 'path';
 import Dirs from './components/dirs.ts';
@@ -11,7 +12,8 @@ import {
   readDeprecatedVerseKeyAudioConf,
   readVerseKeyAudioConf,
 } from '../common.ts';
-import {
+
+import type {
   DeprecatedAudioChaptersConf,
   GenBookAudioConf,
   NewModuleReportType,
@@ -30,7 +32,7 @@ export default function parseSwordConf(
         confString: string;
         filename: string;
         sourceRepository: Repository | string;
-      }
+      },
 ): SwordConfType {
   // Find and save sourceRepository and filename
   let confString: string;
@@ -51,7 +53,7 @@ export default function parseSwordConf(
     const p = path.parse(sourceRepositoryOrPath);
     const mypath = path.normalize(p.dir.replace(/[/\\]mods\.d.*$/, ''));
     const srcrepo = builtinRepos(i18n, Dirs.path).find(
-      (r) => path.normalize(r.path) === mypath
+      (r) => path.normalize(r.path) === mypath,
     );
     if (srcrepo) sourceRepositoryOrPath = srcrepo;
   }
@@ -88,12 +90,13 @@ export default function parseSwordConf(
       if (m) {
         // Handle an entry:
         const entry = m[1] as any;
-        let value = m[2] as string;
-        const entryBase = entry.substring(0, entry.indexOf('_')) || entry;
+        let value = m[2];
+        const entryBase: string =
+          entry.substring(0, entry.indexOf('_')) || entry;
 
         // Handle line continuation.
         if (
-          C.SwordConf.continuation.includes(entryBase) &&
+          C.SwordConf.continuation.includes(entryBase as never) &&
           value.endsWith('\\')
         ) {
           let nval = value.substring(0, value.length - 1);
@@ -109,7 +112,7 @@ export default function parseSwordConf(
         // Check for HTML where it shouldn't be.
         const htmlTags = value.match(/<\w+[^>]*>/g);
         if (htmlTags) {
-          if (!C.SwordConf.htmllink.includes(entryBase)) {
+          if (!C.SwordConf.htmllink.includes(entryBase as never)) {
             reports.push({
               warning: `Config entry '${entry}' should not contain HTML.`,
             });
@@ -124,7 +127,7 @@ export default function parseSwordConf(
         // Check for RTF where it shouldn't be.
         const rtfControlWords = value.match(/\\\w[\w\d]*/);
         if (rtfControlWords) {
-          if (!C.SwordConf.rtf.includes(entryBase)) {
+          if (!C.SwordConf.rtf.includes(entryBase as never)) {
             reports.push({
               warning: `Config entry '${entry}' should not contain RTF.`,
             });
@@ -145,38 +148,40 @@ export default function parseSwordConf(
             if (!eold) r.History.push(enew);
           }
         } else if (entryBase === 'AudioChapters') {
-          let ac = JSON_parse(value);
+          const ac = JSON_parse(value);
           if (Array.isArray(ac) && 'bk' in ac[0]) {
             // Deprecated bk, ch1, ch2 API
-            ac = ac as DeprecatedAudioChaptersConf[];
+            const acx = ac as DeprecatedAudioChaptersConf[];
             if (
               Object.values(C.SupportedBooks).some((bg: any) =>
-                bg.includes(ac[0].bk)
+                bg.includes(acx[0].bk),
               )
             ) {
-              r.AudioChapters = readDeprecatedVerseKeyAudioConf(ac);
+              r.AudioChapters = readDeprecatedVerseKeyAudioConf(acx);
             } else {
-              r.AudioChapters = readDeprecatedGenBookAudioConf(ac);
+              r.AudioChapters = readDeprecatedGenBookAudioConf(acx);
             }
           } else {
-            ac = ac as VerseKeyAudioConf | GenBookAudioConf;
-            if (isAudioVerseKey(ac)) {
-              r.AudioChapters = readVerseKeyAudioConf(ac);
+            const acy = ac as VerseKeyAudioConf | GenBookAudioConf;
+            if (isAudioVerseKey(acy)) {
+              r.AudioChapters = readVerseKeyAudioConf(acy);
             } else {
-              r.AudioChapters = ac;
+              r.AudioChapters = acy;
             }
           }
-        } else if (Object.keys(C.SwordConf.delimited).includes(entry)) {
+        } else if (
+          Object.keys(C.SwordConf.delimited).includes(entry as never)
+        ) {
           const ent = entry as keyof typeof C.SwordConf.delimited;
           r[ent] = value.split(C.SwordConf.delimited[ent]);
-        } else if (C.SwordConf.repeatable.includes(entry)) {
-          const ent = entry as typeof C.SwordConf.repeatable[number];
-          r[ent]?.push(value as any);
-        } else if (C.SwordConf.integer.includes(entry)) {
-          const ent = entry as typeof C.SwordConf.integer[number];
+        } else if (C.SwordConf.repeatable.includes(entry as never)) {
+          const ent = entry as (typeof C.SwordConf.repeatable)[number];
+          r[ent]?.push(value as never);
+        } else if (C.SwordConf.integer.includes(entry as never)) {
+          const ent = entry as (typeof C.SwordConf.integer)[number];
           r[ent] = Number(value);
-        } else if (C.SwordConf.localization.includes(entryBase)) {
-          const ent = entryBase as typeof C.SwordConf.localization[number];
+        } else if (C.SwordConf.localization.includes(entryBase as never)) {
+          const ent = entryBase as (typeof C.SwordConf.localization)[number];
           const loc = entry.substring(entryBase.length + 1) || 'en';
           if (!(ent in r)) r[ent] = {};
           const o = r[ent];
@@ -195,12 +200,12 @@ export default function parseSwordConf(
   }
 
   // Check, warn and fix SWORD enums
-  const direction: SwordConfType['Direction'][] = ['LtoR', 'RtoL', 'BiDi'];
+  const direction = ['LtoR', 'RtoL', 'BiDi'];
   if (r.Direction && !direction.includes(r.Direction)) {
     const was = r.Direction;
     r.Direction = /rt/i.test(r.Direction) ? 'RtoL' : 'LtoR';
     reports.push({
-      warning: `Config Direction must be one of '${direction}'; was '${was}'; is '${r.Direction}'`,
+      warning: `Config Direction must be one of '${direction.toString()}'; was '${was}'; is '${r.Direction}'`,
     });
   }
 
@@ -226,7 +231,7 @@ export default function parseSwordConf(
   // In server mode, filter entries that contain file references.
   if (globalThis.isPublicServer) {
     r.DataPath = serverPublicPath(r.DataPath);
-    if ((/^file:\/\//i).test(r.sourceRepository.domain)) {
+    if (/^file:\/\//i.test(r.sourceRepository.domain)) {
       r.sourceRepository.domain = process.env.CORS_ORIGIN || '';
       r.sourceRepository.path = serverPublicPath(r.sourceRepository.path);
     }
@@ -265,7 +270,7 @@ export function serverPublicPath(fileFullPath: string): string {
       if (fileFullPath.startsWith([root, pub].join('/'))) {
         return fileFullPath.replace(root, '');
       }
-    };
+    }
   }
   return '';
 }
@@ -276,7 +281,9 @@ export function serverPublicPath(fileFullPath: string): string {
 export function publicFiles(aString: string): string {
   if (globalThis.isPublicServer) {
     // If running as a public server on the Internet
-    return aString.replace(/(file:\/\/)(\S+)/ig, (_m, _m1, m2) => serverPublicPath(m2));
+    return aString.replace(/(file:\/\/)(\S+)/gi, (_m, _m1, m2: string) =>
+      serverPublicPath(m2),
+    );
   }
   return aString;
 }

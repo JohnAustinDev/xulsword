@@ -1,6 +1,5 @@
 /* eslint-disable prefer-rest-params */
-import type ZIP from 'adm-zip';
-import { BrowserWindow, dialog, OpenDialogSyncOptions, shell } from 'electron';
+import { BrowserWindow, dialog, shell } from 'electron';
 import fpath from 'path';
 import log from 'electron-log';
 import i18n from 'i18next';
@@ -36,10 +35,11 @@ import { modalInstall, scanAudio } from './module.ts';
 import Window, { getBrowserWindows, publishSubscription } from './window.ts';
 import Dirs from './dirs.ts';
 
+import type { OpenDialogSyncOptions } from 'electron';
+import type ZIP from 'adm-zip';
 import type {
   GAddCaller,
   AudioPath,
-  BookmarkFolderType,
   BookmarkItemType,
   GenBookAudio,
   GenBookAudioFile,
@@ -88,7 +88,7 @@ const Commands = {
   // argument is provided, or an existing directory path is provided.
   async installXulswordModules(
     paths?: string[] | string, // file, file[], directory, directory/* or undefined=choose-files
-    toSharedModuleDir?: boolean
+    toSharedModuleDir?: boolean,
   ): Promise<NewModulesType> {
     const destDir =
       Dirs.path[toSharedModuleDir ? 'xsModsCommon' : 'xsModsUser'];
@@ -110,19 +110,19 @@ const Commands = {
       return fileArray.filter((f) => extRE.test(f));
     };
     const modalInstall2 = async (
-      mods: (ZIP | string)[],
+      mods: Array<ZIP | string>,
       destdir?: string | string[],
-      callingWinID2?: number
+      callingWinID2?: number,
     ): Promise<NewModulesType> => {
       const r: NewModulesType = clone(C.NEWMODS);
       const bookmarkMods = mods.filter(
-        (m) => typeof m === 'string' && /\.(xsb|txt|json)$/i.test(m)
+        (m) => typeof m === 'string' && /\.(xsb|txt|json)$/i.test(m),
       ) as string[];
       if (bookmarkMods.length) {
         await this.importBookmarks(bookmarkMods, undefined, r);
       }
       const zipmods = mods.filter(
-        (m) => typeof m !== 'string' || !/\.(xsb|txt|json)$/i.test(m)
+        (m) => typeof m !== 'string' || !/\.(xsb|txt|json)$/i.test(m),
       );
       if (zipmods.length) {
         await modalInstall(zipmods, destdir, callingWinID2, r);
@@ -133,7 +133,7 @@ const Commands = {
     if (paths) {
       // Install array of file paths
       if (Array.isArray(paths)) {
-        return modalInstall2(filter(paths), destDir, callingWinID);
+        return await modalInstall2(filter(paths), destDir, callingWinID);
       }
       // Install all modules in a directory
       if (paths.endsWith('/*')) {
@@ -142,21 +142,21 @@ const Commands = {
         if (file.isDirectory()) {
           list.push(...filter(file.directoryEntries));
         }
-        return modalInstall2(list, destDir, callingWinID);
+        return await modalInstall2(list, destDir, callingWinID);
       }
       const file = new LocalFile(paths);
       // ZIP file to install
       if (!file.isDirectory()) {
-        return modalInstall2(filter([file.path]), destDir, callingWinID);
+        return await modalInstall2(filter([file.path]), destDir, callingWinID);
       }
       // Choose from existing directory.
       options.defaultPath = paths;
     }
     const obj = await dialog.showOpenDialog(
       getBrowserWindows({ type: 'xulswordWin' })[0],
-      options
+      options,
     );
-    return modalInstall2(obj.filePaths, destDir, callingWinID);
+    return await modalInstall2(obj.filePaths, destDir, callingWinID);
   },
 
   removeModule() {
@@ -177,7 +177,7 @@ const Commands = {
       if (
         'book' in audio &&
         Object.values(C.SupportedBooks).some((bg: any) =>
-          bg.includes(audio.book)
+          bg.includes(audio.book),
         )
       ) {
         const { book, chapter, swordModule } = audio;
@@ -216,7 +216,7 @@ const Commands = {
       type: 'xulswordWin',
     })[0];
     const tab = getTab();
-    const gbpaths = {} as { [module: string]: GenBookAudio };
+    const gbpaths = {} as Record<string, GenBookAudio>;
     function title(module: string, path: number[]): string {
       let paths = {} as GenBookAudio;
       if (module in gbpaths) {
@@ -286,7 +286,7 @@ const Commands = {
               if (
                 dirs[0] &&
                 Object.values(C.SupportedBooks).some((bg: any) =>
-                  bg.includes(dirs[0])
+                  bg.includes(dirs[0]),
                 )
               ) {
                 // Copy VerseKey audio file...
@@ -353,7 +353,7 @@ const Commands = {
       {
         title: i18n.t('from.label'),
         properties: ['openDirectory'],
-      }
+      },
     );
     if (obj.filePaths[0]) {
       let tot = 0;
@@ -388,9 +388,9 @@ const Commands = {
         if (prog === -1) xswindow = null;
       };
       let modsd: LocalFile | null = null;
-      const gbpaths = {} as { [module: string]: GenBookAudio };
+      const gbpaths = {} as Record<string, GenBookAudio>;
       const newmods = clone(C.NEWMODS);
-      const smodules: Set<string> = new Set();
+      const smodules = new Set<string>();
       let singleModule: string | undefined;
       const fromdir = new LocalFile(obj.filePaths[0]);
       const parent = fpath
@@ -453,7 +453,7 @@ const Commands = {
             if (
               path.length &&
               (Object.values(C.SupportedBooks).some((bg: any) =>
-                bg.includes(path[0])
+                bg.includes(path[0]),
               ) ||
                 !Number.isNaN(Number(path[0]))) &&
               !path.slice(1).some((x) => Number.isNaN(Number(x)))
@@ -468,7 +468,7 @@ const Commands = {
               if (
                 book &&
                 Object.values(C.SupportedBooks).some((bg: any) =>
-                  bg.includes(book)
+                  bg.includes(book),
                 )
               ) {
                 audiofile = {
@@ -479,11 +479,11 @@ const Commands = {
                 };
               } else {
                 const entry = Object.entries(paths).find(
-                  (e) => !diff(path, e[1])
+                  (e) => !diff(path, e[1]),
                 );
                 audiofile = {
                   audioModule: module,
-                  key: (entry && entry[0]) || '',
+                  key: entry?.[0] || '',
                   path,
                 };
               }
@@ -506,7 +506,7 @@ const Commands = {
       modules.forEach((module) => {
         const myconf = myconfs && myconfs.find((c) => c && c.module === module);
         const destconf = Object.values(destconfs).find(
-          (c) => c && c.module === module
+          (c) => c && c.module === module,
         );
         const mycfile =
           (myconf && modsd?.clone().append(myconf.filename)) || null;
@@ -527,19 +527,19 @@ const Commands = {
           // If necessary, auto-generate bare minimum config file
           destcfile = Dirs.xsAudio.append('mods.d').append(confname);
           destcfile.writeFile(
-            `[${module}]\nModDrv=audio\nDataPath=./modules/${module}\nVersion=0.0.1\nDescription=Imported audio\nAudioChapters={}`
+            `[${module}]\nModDrv=audio\nDataPath=./modules/${module}\nVersion=0.0.1\nDescription=Imported audio\nAudioChapters={}`,
           );
         }
         // Update config AudioChapters
         if (destcfile && destcfile.exists()) {
           const audioChapters = scanAudio(
             Dirs.xsAudio.path,
-            `./modules/${module}`
+            `./modules/${module}`,
           );
           let str = destcfile.readFile();
           str = str.replace(
             /^AudioChapters\b.*$/m,
-            `AudioChapters=${JSON_stringify(audioChapters)}`
+            `AudioChapters=${JSON_stringify(audioChapters)}`,
           );
           destcfile.writeFile(str);
           newmods.modules.push(parseSwordConf(destcfile));
@@ -549,7 +549,7 @@ const Commands = {
         }
       });
       log.info(
-        `Imported ${tot} audio files out of ${importFiles.length} files`
+        `Imported ${tot} audio files out of ${importFiles.length} files`,
       );
       log.info(`Updated ${ctot} of ${modules.length} audio config files.`);
       if (modules.length) {
@@ -559,7 +559,7 @@ const Commands = {
   },
 
   async print(winRootState?: Partial<WindowRootState>): Promise<void> {
-    return new Promise((resolve) => {
+    await new Promise<void>((resolve) => {
       const callingWinID: number =
         arguments[1] ?? getBrowserWindows({ type: 'xulswordWin' })[0].id;
       const windowToPrint = BrowserWindow.fromId(callingWinID);
@@ -573,7 +573,7 @@ const Commands = {
         publishSubscription<'setRendererRootState'>(
           'setRendererRootState',
           { renderers: { id: windowToPrint.id } },
-          rootState
+          rootState,
         );
         const destroy = Subscription.subscribe.asyncTaskComplete(() => {
           destroy();
@@ -666,10 +666,10 @@ const Commands = {
   copyPassage(state?: Partial<CopyPassageState>) {
     const tab = getTab();
     const panels = PrefsX.getComplexValue(
-      'xulsword.panels'
+      'xulsword.panels',
     ) as typeof S.prefs.xulsword.panels;
     const location = PrefsX.getComplexValue(
-      'xulsword.location'
+      'xulsword.location',
     ) as typeof S.prefs.xulsword.location;
     if (panels && location) {
       const vkMod = panels.find((p) => p && p in tab && tab[p].isVerseKey);
@@ -701,7 +701,7 @@ const Commands = {
 
   openFontsColors(module: string): void {
     let win: BrowserWindow | null =
-      BrowserWindow.fromId(arguments[1] ?? -1) ||
+      BrowserWindow.fromId((arguments[1] as number) ?? -1) ||
       getBrowserWindows({ type: 'xulswordWin' })[0];
     Window.open({
       type: 'chooseFont',
@@ -722,7 +722,7 @@ const Commands = {
   async importBookmarks(
     paths?: string[],
     toFolder?: string | string[],
-    result?: NewModulesType
+    result?: NewModulesType,
   ): Promise<NewModulesType> {
     const extensions = ['json', 'xsb', 'txt'];
     let importFiles: string[] | undefined = paths;
@@ -743,7 +743,7 @@ const Commands = {
       if (obj) importFiles = obj.filePaths;
     }
     const r = result || clone(C.NEWMODS);
-    if (importFiles && importFiles.length) {
+    if (importFiles?.length) {
       const rootid = S.bookmarks.rootfolder.id;
       let parentFolder: string[] = importFiles.map(() => rootid);
       if (toFolder) {
@@ -755,14 +755,14 @@ const Commands = {
       }
       const bookmarks = PrefsX.getComplexValue(
         'rootfolder',
-        'bookmarks'
+        'bookmarks',
       ) as typeof S.bookmarks.rootfolder;
       importFiles?.forEach((path, i) => {
         const folderID = parentFolder[i] || rootid;
         const findFolder = findBookmarkItem(bookmarks, folderID);
         let folder = bookmarks;
         if (findFolder && 'childNodes' in findFolder) {
-          folder = findFolder as BookmarkFolderType;
+          folder = findFolder;
         }
         const file = new LocalFile(path);
         if (file.exists() && !file.isDirectory()) {
@@ -802,7 +802,7 @@ const Commands = {
     if (obj && !obj.canceled && obj.filePath) {
       const bookmarks = PrefsX.getComplexValue(
         'rootfolder',
-        'bookmarks'
+        'bookmarks',
       ) as typeof S.bookmarks.rootfolder;
       const folder = folderID
         ? findBookmarkItem(bookmarks, folderID)
@@ -839,7 +839,7 @@ const Commands = {
     bmPropertiesState: Partial<BMPropertiesStateWinArg>,
     newitem?: {
       location?: LocationVKType | LocationVKCommType | LocationORType;
-    }
+    },
   ): void {
     let bookmark: any | undefined;
     let treeSelection: any | undefined;
@@ -872,7 +872,7 @@ const Commands = {
   deleteBookmarkItems(itemIDs: string[]): boolean {
     const bookmarks = PrefsX.getComplexValue(
       'rootfolder',
-      'bookmarks'
+      'bookmarks',
     ) as typeof S.bookmarks.rootfolder;
     const items = itemIDs.map((id) => DeleteBookmarkItem(bookmarks, id));
     if (items.length && !items.some((i) => i === null)) {
@@ -888,11 +888,11 @@ const Commands = {
   // Returns true if the move was successful.
   moveBookmarkItems(
     itemsOrIDs: string[] | BookmarkItemType[],
-    targetID: string
+    targetID: string,
   ): boolean {
     const bookmarks = PrefsX.getComplexValue(
       'rootfolder',
-      'bookmarks'
+      'bookmarks',
     ) as typeof S.bookmarks.rootfolder;
     const moved = moveBookmarkItems(bookmarks, itemsOrIDs, targetID);
     if (moved.length && !moved.includes(null)) {
@@ -905,11 +905,11 @@ const Commands = {
   pasteBookmarkItems(
     cut: string[] | null,
     copy: string[] | null,
-    targetID: string
+    targetID: string,
   ): boolean {
     const bookmarks = PrefsX.getComplexValue(
       'rootfolder',
-      'bookmarks'
+      'bookmarks',
     ) as typeof S.bookmarks.rootfolder;
     const pasted = PasteBookmarkItems(bookmarks, cut, copy, targetID);
     if (pasted.length && !pasted.includes(null)) {
@@ -922,8 +922,7 @@ const Commands = {
   openAbout(state?: Partial<AboutWinState>): void {
     const tab = getTab();
     const t =
-      (state?.configs &&
-        state.configs.length &&
+      (state?.configs?.length &&
         state.configs[0].module in tab &&
         tab[state.configs[0].module]) ||
       null;
@@ -935,14 +934,14 @@ const Commands = {
       options: {
         width: 510,
         height: 425,
-        title: `${i18n.t('menu.help.about')} ${(t && t.label) || ''}`,
+        title: `${i18n.t('menu.help.about')} ${t?.label || ''}`,
       },
     });
   },
 
   goToLocationGB(
     location: LocationORType,
-    scroll?: ScrollType | undefined
+    scroll?: ScrollType | undefined,
   ): void {
     const tab = getTab();
     if (location.otherMod in tab) {
@@ -963,7 +962,7 @@ const Commands = {
   goToLocationVK(
     newlocation: LocationVKType | LocationVKCommType,
     newselection?: LocationVKType | LocationVKCommType,
-    newscroll?: ScrollType
+    newscroll?: ScrollType,
   ): void {
     const tab = getTab();
     const vkMod =

@@ -1,19 +1,8 @@
-/* eslint-disable jsx-a11y/control-has-associated-label */
-/* eslint-disable @typescript-eslint/no-unused-expressions */
-/* eslint-disable react/static-property-placement */
-/* eslint-disable react/destructuring-assignment */
-/* eslint-disable react/jsx-props-no-spreading */
-
 import React from 'react';
 import PropTypes from 'prop-types';
 import RefParser from '../../refParser.ts';
 import G from '../rg.ts';
-import {
-  addClass,
-  xulPropTypes,
-  XulProps,
-  xulStyle,
-} from './xul.tsx';
+import { addClass, xulPropTypes, type XulProps, xulStyle } from './xul.tsx';
 import { Box } from './boxes.tsx';
 import Spacer from './spacer.tsx';
 import Stack from './stack.tsx';
@@ -47,18 +36,18 @@ const propTypes = {
   sizetopopup: PropTypes.string,
 };
 
-interface BookselectProps extends XulProps {
+type BookselectProps = {
   options: string[];
   selection?: string | undefined;
   disabled?: boolean | undefined;
   sizetopopup?: string | undefined;
-}
+} & XulProps;
 
-interface BookselectState {
+type BookselectState = {
   book: string | undefined;
   pattern: RegExp;
   autocomp: boolean;
-}
+};
 
 class Bookselect extends React.Component {
   static propTypes: typeof propTypes;
@@ -79,7 +68,7 @@ class Bookselect extends React.Component {
     this.parser = new RefParser(
       G.getLocaleDigits(true),
       G.getLocalizedBooks(true),
-      { noVariations: true }
+      { noVariations: true },
     );
 
     this.getBookOptions = this.getBookOptions.bind(this);
@@ -141,7 +130,7 @@ class Bookselect extends React.Component {
       case 'Enter': {
         if (typeof onChange === 'function') {
           e.type = 'change';
-          onChange(e);
+          void onChange(e);
           e.stopPropagation();
         }
         break;
@@ -198,7 +187,7 @@ class Bookselect extends React.Component {
               id={`${props.id}__menulist`}
               options={this.getBookOptions()}
               disabled={props.disabled}
-              value={book}
+              value={book ?? ''}
               onChange={this.selectChange}
             />
           </Box>

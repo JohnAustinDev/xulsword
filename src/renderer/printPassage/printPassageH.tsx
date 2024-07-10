@@ -11,7 +11,10 @@ import G from '../rg.ts';
 import addBookmarks from '../bookmarks.ts';
 import { isValidVKM, getLocalizedChapterTerm } from '../rutil.ts';
 import { getDictEntryHTML } from '../components/atext/zdictionary.ts';
-import { getNoteHTML, getIntroductions } from '../components/atext/zversekey.ts';
+import {
+  getNoteHTML,
+  getIntroductions,
+} from '../components/atext/zversekey.ts';
 
 import type { AtextPropsType } from '../../type.ts';
 import type { LibSwordResponse } from '../components/atext/ztext.ts';
@@ -41,7 +44,7 @@ export function handler(this: PrintPassageWin, ex: React.SyntheticEvent) {
 
 export function vkSelectHandler(
   this: PrintPassageWin,
-  selection: SelectVKType
+  selection: SelectVKType,
 ) {
   if (selection) {
     const { book } = selection;
@@ -53,7 +56,7 @@ export function vkSelectHandler(
       }
       return {
         chapters: { ...selection },
-      } as Partial<PrintPassageState>;
+      } satisfies Partial<PrintPassageState>;
     });
   } else this.setState({ chapters: null });
 }
@@ -78,12 +81,17 @@ function getDictionaryLinks(textHTML: string): string {
 }
 
 export function bibleChapterText(
-  props: Pick<AtextPropsType, 'module' | 'location' | 'show'>
+  props: Pick<AtextPropsType, 'module' | 'location'> & {
+    show: AtextPropsType['show'] & {
+      introduction: boolean;
+      crossrefsText: boolean;
+    };
+  },
 ): string {
   const { module, location, show } = props;
   if (module && location && show) {
     const { headings } = show;
-    const { crossrefsText, introduction } = show as any;
+    const { crossrefsText, introduction } = show;
     const { book, chapter } = location;
 
     // Set SWORD filter options
@@ -104,7 +112,7 @@ export function bibleChapterText(
       const { text, notes } = G.LibSword.getChapterText(
         module,
         `${book}.${chapter}`,
-        options
+        options,
       );
       response.textHTML = text;
       response.notes = notes;
@@ -121,12 +129,24 @@ export function bibleChapterText(
     // Localize verse numbers to match the module
     if (
       moduleLocale &&
-      dString(G.getLocaleDigits(true), 1, moduleLocale) !== dString(G.getLocaleDigits(true), 1, 'en')
+      dString(G.getLocaleDigits(true), 1, moduleLocale) !==
+        dString(G.getLocaleDigits(true), 1, 'en')
     ) {
-      const verseNm = new RegExp('(<sup class="versenum">)(\\d+)(</sup>)', 'g');
-      textHTML = textHTML.replace(verseNm, (_str, p1, p2, p3) => {
-        return p1 + dString(G.getLocaleDigits(true), p2, moduleLocale || G.i18n.language) + p3;
-      });
+      const verseNm = /(<sup class="versenum">)(\d+)(<\/sup>)/g;
+      textHTML = textHTML.replace(
+        verseNm,
+        (_str, p1: string, p2: string, p3: string) => {
+          return (
+            p1 +
+            dString(
+              G.getLocaleDigits(true),
+              p2,
+              moduleLocale || G.i18n.language,
+            ) +
+            p3
+          );
+        },
+      );
     }
 
     // Get introduction
@@ -139,7 +159,6 @@ export function bibleChapterText(
     if (headings && textHTML) {
       const headclass = ['chapterhead', `cs-${moduleLocale}`];
       if (chapter === 1) headclass.push('chapterfirst');
-      /* eslint-disable prettier/prettier */
       headHTML = `
       <div class="${headclass.join(' ')}">
         <div class="chaptitle" >
@@ -147,7 +166,7 @@ export function bibleChapterText(
           <div class="chapch">${getLocalizedChapterTerm(
             book,
             chapter,
-            moduleLocale
+            moduleLocale,
           )}</div>
         </div>
       </div>`;
@@ -160,7 +179,6 @@ export function bibleChapterText(
       ${textHTML}
       <div class="footnotes"></div>${noteHTML}
       <div class="dictionary-links"></div>${getDictionaryLinks(textHTML)}`;
-       /* eslint-enable prettier/prettier */
   }
   return '';
 }

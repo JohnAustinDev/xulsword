@@ -1,18 +1,11 @@
-/* eslint-disable import/order */
-/* eslint-disable @typescript-eslint/no-use-before-define */
-/* eslint-disable no-nested-ternary */
-/* eslint-disable react/jsx-props-no-spreading */
-/* eslint-disable react/static-property-placement */
-/* eslint-disable jsx-a11y/control-has-associated-label */
+/* eslint-disable @typescript-eslint/unbound-method */
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
   Intent,
-  ToastProps,
   OverlayToaster,
   Position,
   ProgressBar,
-  Toaster,
 } from '@blueprintjs/core';
 import {
   downloadKey,
@@ -28,7 +21,6 @@ import {
   localizeString,
 } from '../../common.ts';
 import C from '../../constant.ts';
-import S from '../../defaultPrefs.ts';
 import G from '../rg.ts';
 import log from '../log.ts';
 import {
@@ -37,20 +29,16 @@ import {
   setStatePref,
   windowArguments,
 } from '../rutil.ts';
-import {
-  addClass,
-  XulProps,
-  xulPropTypes,
-} from '../libxul/xul.tsx';
+import { addClass, xulPropTypes } from '../libxul/xul.tsx';
 import Button from '../libxul/button.tsx';
 import { Hbox, Vbox, Box } from '../libxul/boxes.tsx';
 import Groupbox from '../libxul/groupbox.tsx';
 import SelectVK from '../libxul/selectVK.tsx';
-import SelectOR, { SelectORProps, SelectORMType } from '../libxul/selectOR.tsx';
-import Table, { TablePropColumn } from '../libxul/table.tsx';
+import SelectOR from '../libxul/selectOR.tsx';
+import Table from '../libxul/table.tsx';
 import Spacer from '../libxul/spacer.tsx';
 import Label from '../libxul/label.tsx';
-import DragSizer, { DragSizerVal } from '../libxul/dragsizer.tsx';
+import DragSizer from '../libxul/dragsizer.tsx';
 import Checkbox from '../libxul/checkbox.tsx';
 import Dialog from '../libxul/dialog.tsx';
 import Modinfo, {
@@ -60,6 +48,7 @@ import Modinfo, {
 import * as H from './managerH.ts';
 import './manager.css';
 
+import type { Toaster, ToastProps } from '@blueprintjs/core';
 import type {
   ModTypes,
   Repository,
@@ -67,6 +56,7 @@ import type {
   RowSelection,
   SwordConfType,
 } from '../../type.ts';
+import type S from '../../defaultPrefs.ts';
 import type {
   TLanguageTableRow,
   TModuleTableRow,
@@ -76,12 +66,18 @@ import type {
   TonCellClick,
   TonEditableCellChanged,
   TonRowsReordered,
+  TablePropColumn,
 } from '../libxul/table.tsx';
 import type { SelectVKProps, SelectVKType } from '../libxul/selectVK.tsx';
+import type { SelectORProps, SelectORMType } from '../libxul/selectOR.tsx';
 import type { ModinfoParent } from '../libxul/modinfo.tsx';
-import { WindowRootState } from '../renderer.ts';
+import type { XulProps } from '../libxul/xul.tsx';
+import type { DragSizerVal } from '../libxul/dragsizer.tsx';
+import type { WindowRootState } from '../renderer.ts';
 
-G.Module.cancel();
+G.Module.cancel().catch((er) => {
+  log.error(er);
+});
 
 let MasterRepoListDownloaded = false;
 let resetOnResize = false;
@@ -99,7 +95,7 @@ export type ManagerProps = XulProps & {
 const notStatePref = {
   infoConfigs: [] as SwordConfType[],
   progress: null as number[] | null,
-  showAudioDialog: [] as (H.VersekeyDialog | H.GenBookDialog)[],
+  showAudioDialog: [] as Array<H.VersekeyDialog | H.GenBookDialog>,
   tables: {
     language: {
       data: [] as TLanguageTableRow[],
@@ -133,10 +129,10 @@ export default class ModuleManager
 {
   static propTypes: typeof propTypes;
 
-  destroy: (() => void)[];
+  destroy: Array<() => void>;
 
   tableRef: {
-    [table in typeof H.Tables[number]]: React.RefObject<HTMLDivElement>;
+    [table in (typeof H.Tables)[number]]: React.RefObject<HTMLDivElement>;
   };
 
   languageTableCompRef;
@@ -154,7 +150,7 @@ export default class ModuleManager
     },
   };
 
-  onRowsReordered: { [table: string]: TonRowsReordered };
+  onRowsReordered: Record<string, TonRowsReordered>;
 
   onRepoCellClick: TonCellClick;
 
@@ -176,7 +172,7 @@ export default class ModuleManager
     // sState is just for better TypeScript functionality
     s:
       | Partial<ManagerState>
-      | ((prevState: ManagerState) => Partial<ManagerState> | null)
+      | ((prevState: ManagerState) => Partial<ManagerState> | null),
   ) => void;
 
   constructor(props: ManagerProps) {
@@ -196,7 +192,7 @@ export default class ModuleManager
     this.state = s;
 
     this.tableRef = {} as typeof this.tableRef;
-    H.Tables.forEach((t: typeof H.Tables[number]) => {
+    H.Tables.forEach((t: (typeof H.Tables)[number]) => {
       this.tableRef[t] = React.createRef();
     });
 
@@ -236,7 +232,9 @@ export default class ModuleManager
     const { repositories } = state;
     // If we are managing external repositories, Internet is required.
     if (repositories && !state.internetPermission) return;
-    this.loadTables();
+    this.loadTables().catch((er) => {
+      log.error(er);
+    });
   }
 
   componentDidUpdate(_prevProps: any, prevState: ManagerState) {
@@ -247,7 +245,9 @@ export default class ModuleManager
   }
 
   componentWillUnmount() {
-    this.destroy.forEach((func) => func());
+    this.destroy.forEach((func) => {
+      func();
+    });
     this.destroy = [];
   }
 
@@ -256,12 +256,12 @@ export default class ModuleManager
     const loadLocalRepos = async () => {
       H.Saved.repository.data = [];
       H.Saved.repositoryListings = [];
-      let listing: (RepositoryListing | string)[] = [];
+      let listing: Array<RepositoryListing | string> = [];
       try {
         listing = await G.Module.repositoryListing(
           this.loadRepositoryTable().map((r) => {
             return { ...r, file: C.SwordRepoManifest, type: 'ftp' };
-          })
+          }),
         );
       } catch (err) {
         log.warn(err);
@@ -296,14 +296,15 @@ export default class ModuleManager
         // module table to remain empty until all repository listings have
         // been downloaded, and certain repos may take a long time. So
         // instead it is called on each repo separately.
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.loadRepositoryTable(remoteRepos).map(async (r, i, a) => {
-          return G.Module.repositoryListing([
+          return await G.Module.repositoryListing([
             { ...r, file: C.SwordRepoManifest, type: 'ftp' },
           ])
             .then((list) => {
               H.handleListings(
                 this,
-                a.map((_lr, ir) => (ir === i ? list[0] : null))
+                a.map((_lr, ir) => (ir === i ? list[0] : null)),
               );
               return true;
             })
@@ -311,7 +312,10 @@ export default class ModuleManager
               log.error(er);
             });
         });
-      } else loadLocalRepos();
+      } else
+        loadLocalRepos().catch((er) => {
+          log.error(er);
+        });
     }
 
     // Instantiate progress handler
@@ -329,7 +333,7 @@ export default class ModuleManager
                 ...r[H.RepCol.iInfo].repo,
                 file: C.SwordRepoManifest,
                 type: 'ftp',
-              }) === id
+              }) === id,
           );
           const repdrow = repository.data[repoIndex];
           if (repdrow && prog === -1 && repdrow[H.RepCol.iInfo].loading) {
@@ -355,7 +359,7 @@ export default class ModuleManager
             H.setTableState(this, 'module', null, module.data, true);
           }
         }
-      })
+      }),
     );
   }
 
@@ -374,9 +378,9 @@ export default class ModuleManager
     }
     const repoTableData: TRepositoryTableRow[] = [];
     allrepos.forEach((repo) => {
-      if (repositories && repositories.disabled !== null && !repo.builtin) {
+      if (repositories?.disabled !== null && !repo.builtin) {
         repo.disabled =
-          repositories.disabled.includes(repositoryKey(repo)) || false;
+          repositories?.disabled.includes(repositoryKey(repo)) || false;
       }
       const css = H.classes([H.RepCol.iState], ['checkbox-column']);
       const canedit = repo.custom ? H.editable() : false;
@@ -409,7 +413,7 @@ export default class ModuleManager
     const state = this.state as ManagerState;
     const { repository: repotable } = state.tables;
     const { repositoryListings } = H.Saved;
-    const langs: Set<string> = new Set();
+    const langs = new Set<string>();
     repositoryListings.forEach((listing, i) => {
       if (
         Array.isArray(listing) &&
@@ -424,7 +428,7 @@ export default class ModuleManager
     });
     let newTableData: TLanguageTableRow[] = [];
     Array.from(langs).forEach((l) =>
-      newTableData.push([getLangReadable(l), { code: l }])
+      newTableData.push([getLangReadable(l), { code: l }]),
     );
     newTableData = newTableData.sort((a, b) => a[0].localeCompare(b[0]));
     H.setTableState(this, 'language', null, newTableData, true);
@@ -441,7 +445,7 @@ export default class ModuleManager
         .map((code) => {
           return data.findIndex((r) => r[H.LanCol.iInfo].code === code);
         })
-        .filter((r) => r !== -1)
+        .filter((r) => r !== -1),
     );
   }
 
@@ -500,9 +504,7 @@ export default class ModuleManager
             const d = [] as unknown as TModuleTableRow;
             d[H.ModCol.iInfo] = {
               repo: c.sourceRepository,
-              shared:
-                c.sourceRepository.path ===
-                builtinRepos(G)[0].path,
+              shared: c.sourceRepository.path === builtinRepos(G)[0].path,
               classes: H.modclasses(),
               tooltip: H.tooltip('VALUE', [
                 H.ModCol.iShared,
@@ -524,9 +526,8 @@ export default class ModuleManager
                 : `${c.sourceRepository.domain}/${c.sourceRepository.path}`);
             d[H.ModCol.iVersion] = c.Version || '';
             d[H.ModCol.iLang] = c.Lang || '?';
-            d[H.ModCol.iSize] =
-              (c.InstallSize && c.InstallSize.toString()) || '';
-            d[H.ModCol.iFeatures] = (c.Feature && c.Feature.join(', ')) || '';
+            d[H.ModCol.iSize] = c.InstallSize?.toString() || '';
+            d[H.ModCol.iFeatures] = c.Feature?.join(', ') || '';
             d[H.ModCol.iVersification] = c.Versification || 'KJV';
             d[H.ModCol.iScope] = c.Scope || '';
             d[H.ModCol.iCopyright] =
@@ -568,7 +569,7 @@ export default class ModuleManager
               (ci) =>
                 c.module === ci.module &&
                 c.Version === ci.Version &&
-                c.xsmType === ci.xsmType
+                c.xsmType === ci.xsmType,
             );
           if (repoIsRemote && modInLocalXulswordOrAudio) {
             const localModKey = repositoryModuleKey(modInLocalXulswordOrAudio);
@@ -596,16 +597,16 @@ export default class ModuleManager
                   (ci) =>
                     c.module === ci.module &&
                     c.Version === ci.Version &&
-                    c.xsmType === ci.xsmType
+                    c.xsmType === ci.xsmType,
                 )) &&
             // and not if in remote-non-xsm and a remote XSM is listed.
             (!repoIsRemote ||
               c.xsmType !== 'none' ||
               !remoteXSM.find(
-                (ci) => c.module === ci.module && c.Version === ci.Version
+                (ci) => c.module === ci.module && c.Version === ci.Version,
               ))
           ) {
-            const code = (c.Lang && c.Lang.replace(/-.*$/, '')) || 'en';
+            const code = c.Lang?.replace(/-.*$/, '') || 'en';
             if (!(code in moduleLangData)) moduleLangData[code] = [];
             moduleLangData[code].push(modrow);
             moduleLangData.allmodules.push(modrow);
@@ -619,14 +620,14 @@ export default class ModuleManager
       'module',
       null,
       this.filterModuleTable(languageSelection, null),
-      true
+      true,
     );
   }
 
   // Return sorted and filtered (by language selection) module table data.
   filterModuleTable(
     languageSelection?: string[] | null,
-    langTableOpen?: boolean | null
+    langTableOpen?: boolean | null,
   ): TModuleTableRow[] {
     const state = this.state as ManagerState;
     const codes = languageSelection ?? state.language.selection;
@@ -734,7 +735,8 @@ export default class ModuleManager
         !repository?.selection.length ||
         !H.selectionToDataRows('repository', repository.selection).every(
           (r) =>
-            repotable.data[r] && repotable.data[r][H.RepCol.iInfo]?.repo?.custom
+            repotable.data[r] &&
+            repotable.data[r][H.RepCol.iInfo]?.repo?.custom,
         ),
       repoCancel: !repotable.data.find((r) => r[H.RepCol.iInfo].loading),
     };
@@ -744,11 +746,11 @@ export default class ModuleManager
     let gbAudioDialog;
     if (showAudioDialog[0]) {
       if (showAudioDialog[0].type === 'versekey')
-        vkAudioDialog = showAudioDialog[0] as H.VersekeyDialog;
-      else gbAudioDialog = showAudioDialog[0] as H.GenBookDialog;
+        vkAudioDialog = showAudioDialog[0];
+      else gbAudioDialog = showAudioDialog[0];
     }
 
-    const handleColumns = (table: typeof H.Tables[number]) => {
+    const handleColumns = (table: (typeof H.Tables)[number]) => {
       return (columns: TablePropColumn[]) => {
         this.sState((prevState) => {
           const ptable = clone(prevState[table]);
@@ -868,11 +870,11 @@ export default class ModuleManager
                 </Groupbox>
                 <DragSizer
                   onDragStart={() => state.language.width}
-                  onDragEnd={(_e: React.MouseEvent, v: DragSizerVal) =>
+                  onDragEnd={(_e: React.MouseEvent, v: DragSizerVal) => {
                     this.sState({
                       language: { ...state.language, width: v.sizerPos },
-                    })
-                  }
+                    });
+                  }}
                   min={75}
                   max={250}
                   orient="vertical"
@@ -962,11 +964,11 @@ export default class ModuleManager
             <div>
               <DragSizer
                 onDragStart={() => repository.height}
-                onDragEnd={(_e: React.MouseEvent, v: DragSizerVal) =>
+                onDragEnd={(_e: React.MouseEvent, v: DragSizerVal) => {
                   this.sState({
                     repository: { ...repository, height: v.sizerPos },
-                  })
-                }
+                  });
+                }}
                 orient="horizontal"
                 min={200}
                 shrink
@@ -1031,11 +1033,11 @@ export default class ModuleManager
               <Button
                 flex="1"
                 fill="x"
-                onClick={() =>
+                onClick={() => {
                   this.sState({
                     repository: { ...repository, open: false },
-                  })
-                }
+                  });
+                }}
               >
                 {G.i18n.t('less.label')}
               </Button>
@@ -1044,9 +1046,9 @@ export default class ModuleManager
               <Button
                 flex="1"
                 fill="x"
-                onClick={() =>
-                  this.sState({ repository: { ...repository, open: true } })
-                }
+                onClick={() => {
+                  this.sState({ repository: { ...repository, open: true } });
+                }}
               >
                 {G.i18n.t('moduleSources.label')}
               </Button>
@@ -1120,7 +1122,7 @@ ModuleManager.propTypes = propTypes;
 
 function audioDialogOnChange(
   this: ModuleManager,
-  selection: SelectVKType | SelectORMType | undefined
+  selection: SelectVKType | SelectORMType | undefined,
 ) {
   this.sState((prevState) => {
     const { showAudioDialog: sad } = prevState;
@@ -1131,7 +1133,7 @@ function audioDialogOnChange(
         selection,
       } as H.VersekeyDialog | H.GenBookDialog;
       if (showAudioDialog[0].type === 'versekey') {
-        const dvk = showAudioDialog[0] as H.VersekeyDialog;
+        const dvk = showAudioDialog[0];
         const { options } = dvk;
         const sel = selection as SelectVKType;
         if (sel.book && options) {
@@ -1154,5 +1156,7 @@ function audioDialogOnChange(
 
 export async function onunload() {
   // close all FTP connections
-  G.Module.cancel();
+  G.Module.cancel().catch((er) => {
+    log.error(er);
+  });
 }

@@ -41,7 +41,7 @@ module.exports = (api) => {
       require('@babel/plugin-proposal-do-expressions'),
 
       // Stage 2
-      [require('@babel/plugin-proposal-decorators'), {version: "legacy"}],
+      [require('@babel/plugin-proposal-decorators'), { version: 'legacy' }],
       require('@babel/plugin-proposal-function-sent'),
       require('@babel/plugin-transform-export-namespace-from'),
       require('@babel/plugin-transform-numeric-separator'),

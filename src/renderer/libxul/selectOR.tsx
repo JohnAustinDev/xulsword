@@ -1,12 +1,4 @@
-/* eslint-disable @typescript-eslint/no-use-before-define */
-/* eslint-disable jsx-a11y/control-has-associated-label */
-/* eslint-disable react/no-did-update-set-state */
-/* eslint-disable no-nested-ternary */
-/* eslint-disable react/forbid-prop-types */
-/* eslint-disable react/static-property-placement */
-/* eslint-disable react/destructuring-assignment */
-/* eslint-disable react/jsx-props-no-spreading */
-
+/* eslint-disable @typescript-eslint/unbound-method */
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -21,14 +13,18 @@ import {
 import C from '../../constant.ts';
 import G, { GI } from '../rg.ts';
 import RenderPromise from '../renderPromise.ts';
-import { addClass, XulProps, xulPropTypes } from './xul.tsx';
+import { addClass, xulPropTypes } from './xul.tsx';
 import { Vbox } from './boxes.tsx';
 import Menulist from './menulist.tsx';
 import ModuleMenu from './modulemenu.tsx';
 import './selectOR.css';
 
 import type { TreeNodeInfo } from '@blueprintjs/core';
-import type { RenderPromiseComponent, RenderPromiseState } from '../renderPromise.ts';
+import type {
+  RenderPromiseComponent,
+  RenderPromiseState,
+} from '../renderPromise.ts';
+import type { XulProps } from './xul.tsx';
 
 // Allow users to select one or more chapters from any non-versekey SWORD
 // module parent node.
@@ -64,7 +60,7 @@ type FamilyNodes = {
 // If initialORM selects a module which is not installed, and also has no
 // corresponding nodeLists[] entry, all selectors but the module selector
 // will be disabled.
-export interface SelectORProps extends XulProps {
+export type SelectORProps = {
   initialORM: SelectORMType;
   otherMods?: string[];
   nodeLists?: NodeListOR[];
@@ -72,7 +68,7 @@ export interface SelectORProps extends XulProps {
   enableParentSelection?: boolean;
   disabled?: boolean;
   onSelection: (selection: SelectORMType | undefined, id?: string) => void;
-}
+} & XulProps;
 
 const propTypes = {
   ...xulPropTypes,
@@ -87,7 +83,7 @@ const propTypes = {
 
 type SelectORState = RenderPromiseState & {
   selection: SelectORMType;
-}
+};
 
 class SelectOR extends React.Component implements RenderPromiseComponent {
   static propTypes: typeof propTypes;
@@ -99,8 +95,8 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
     const { initialORM, otherMods, nodeLists } = props;
     const defaultORM: SelectORMType = {
       otherMod:
-        (otherMods && otherMods[0]) ||
-        (nodeLists && nodeLists[0].otherMod) ||
+        otherMods?.[0] ||
+        nodeLists?.[0].otherMod ||
         G.Tabs.find((t) => !t.isVerseKey)?.module ||
         '',
       keys: [],
@@ -137,7 +133,7 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
     const e = ev as React.ChangeEvent<HTMLSelectElement>;
     const targ = ofClass(
       ['select-module', 'select-parent', 'select-child'],
-      e.currentTarget
+      e.currentTarget,
     );
     if (targ) {
       const { value } = e.target;
@@ -149,7 +145,11 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
           if (tabType === 'Genbks') {
             nodes = GI.genBookTreeNodes([], renderPromise, value);
           } else if (tabType === 'Dicts') {
-            const keylist = GI.getAllDictionaryKeyList([], renderPromise, value);
+            const keylist = GI.getAllDictionaryKeyList(
+              [],
+              renderPromise,
+              value,
+            );
             nodes = dictTreeNodes(keylist, value);
           }
           const leafNode = findFirstLeafNode(nodes, nodes);
@@ -159,7 +159,7 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
           selection.keys = [e.target.value];
         } else if (selection && targ.type === 'select-child') {
           selection.keys = Array.from(e.target.selectedOptions).map(
-            (o) => o.value
+            (o) => o.value,
           );
         } else {
           throw new Error(`Unrecognized select: '${targ.type}'`);
@@ -202,7 +202,6 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
         ? []
         : otherModsProp || G.Tabs.map((t) => t.module)
     ).filter((m) => m && m in G.Tab && !G.Tab[m].isVerseKey);
-
 
     const propNodeLists: NodeListOR[] = propNodeListsMods.map((m) => {
       let nodes: TreeNodeInfo[] = [];
@@ -257,7 +256,7 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
         nodes,
       });
     } else selectedModuleIsInstalled = true;
-    if (!nodes || !nodes.length) return null;
+    if (!nodes?.length) return null;
     const selectedNodes = keys.map((k) => findTreeNode(nodes, k));
     const showNodes = (
       !selectedNodes.length || selectedNodes.some((kn) => !kn)
@@ -270,7 +269,7 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
     const { ancestorNodes, childNodes } = nodeFamily(
       nodes,
       leafNode,
-      isDictMod
+      isDictMod,
     );
 
     // Generate all HTML select elements
@@ -288,7 +287,7 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
           disabled || (otherMod === list[0].otherMod && list.length === 1)
         }
         onChange={onChange}
-      />
+      />,
     );
 
     // Ancestor selector(s) if any
@@ -308,7 +307,7 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
             onChange={onChange}
           >
             {children.map((cn) => {
-              const label = cn.label.toString();
+              const label = cn.label;
               const className = !Number.isNaN(Number(label))
                 ? undefined
                 : `cs-${otherMod}`;
@@ -324,7 +323,7 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
             })}
           </Menulist>
         );
-      })
+      }),
     );
 
     // Child selector
@@ -361,11 +360,11 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
                 value={n.id}
                 {...clickHandler}
               >
-                {`${n.childNodes && n.childNodes.length ? '❭ ' : ''}${n.label}`}
+                {n.childNodes?.length ? `${'❭ '}` : n.label}
               </option>
             );
           })}
-        </Menulist>
+        </Menulist>,
       );
     }
 
@@ -387,16 +386,16 @@ export default SelectOR;
 function nodeFamily(
   nodes: TreeNodeInfo[],
   node: string | TreeNodeInfo,
-  isDictMod: boolean
+  isDictMod: boolean,
 ): FamilyNodes {
   const selectedChildID = typeof node === 'string' ? node : node.id.toString();
   const { ancestors: ancestorNodes } = findTreeAncestors(
     selectedChildID,
     nodes,
-    isDictMod
+    isDictMod,
   );
   const parentNode = ancestorNodes.at(-1);
-  if (parentNode && parentNode.childNodes) {
+  if (parentNode?.childNodes) {
     const { childNodes } = parentNode;
     return {
       ancestorNodes,

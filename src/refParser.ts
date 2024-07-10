@@ -21,11 +21,11 @@ type BookNamePartsType = {
 };
 
 type invalidLocationVKType = {
-  v11n: V11nType,
-  book: '',
-  chapter: 0,
-  verse: null,
-  lastverse: null,
+  v11n: V11nType;
+  book: '';
+  chapter: 0;
+  verse: null;
+  lastverse: null;
 };
 
 export type RefParserOptionsType = {
@@ -64,7 +64,7 @@ export default class RefParser {
   constructor(
     localeDigits: ReturnType<typeof getLocaleDigits>,
     localizedBooks: ReturnType<typeof getLocalizedBooks>,
-    options?: RefParserOptionsType
+    options?: RefParserOptionsType,
   ) {
     this.localeDigits = localeDigits;
     this.localizedBooks = localizedBooks;
@@ -84,10 +84,18 @@ export default class RefParser {
         this[name] = val;
       });
     }
-    if (!this.locales.every((l) => l in this.localeDigits && l in this.localizedBooks)) {
-      throw new Error(`Missing RefParser data: locales=${this.locales
-        } localeDigits=${Object.keys(this.localeDigits)
-        } localizedBooks=${Object.keys(this.localizedBooks)}`);
+    if (
+      !this.locales.every(
+        (l) => l in this.localeDigits && l in this.localizedBooks,
+      )
+    ) {
+      throw new Error(
+        `Missing RefParser data: locales=${this.locales.join(
+          ', ',
+        )} localeDigits=${Object.keys(this.localeDigits).join(
+          ', ',
+        )} localizedBooks=${Object.keys(this.localizedBooks).join(', ')}`,
+      );
     }
   }
 
@@ -100,7 +108,7 @@ export default class RefParser {
   #compareAgainstLocale(
     exact: boolean,
     inbook: BookNamePartsType,
-    bookInfo: IdentifyBookType
+    bookInfo: IdentifyBookType,
   ): number {
     let { locales } = this;
     // If there is an inbook.locale (where getBookNameParts() was succesfull), make
@@ -109,7 +117,7 @@ export default class RefParser {
       locales = locales.filter((l) => l !== inbook.locale);
       locales.unshift(inbook.locale);
     }
-    const codes: Set<string> = new Set();
+    const codes = new Set<string>();
     locales.forEach((loc) => {
       // Currently xulsword locales only include ot and nt books.
       ['ot', 'nt'].forEach((bgs) => {
@@ -213,7 +221,7 @@ export default class RefParser {
     if (osisi) {
       const code = this.osisString.substring(
         osisi,
-        this.osisString.indexOf('.', osisi)
+        this.osisString.indexOf('.', osisi),
       ) as OSISBookType;
       r.code = code;
       return r;
@@ -242,8 +250,11 @@ export default class RefParser {
   // while missing verse and lastverse are returned as null.
   parse(
     text2parse: string,
-    v11n: V11nType | null
-  ): { location: LocationVKType | invalidLocationVKType; locale: string | null } | null {
+    v11n: V11nType | null,
+  ): {
+    location: LocationVKType | invalidLocationVKType;
+    locale: string | null;
+  } | null {
     let text = text2parse;
     text = text.replace(/[^\s\p{L}\p{N}:-]/gu, ' ');
     text = text.replace(/\s+/g, ' ');
@@ -253,31 +264,55 @@ export default class RefParser {
       return null;
     }
 
-    const r: { location: LocationVKType | invalidLocationVKType; locale: string | null } = {
+    const r: {
+      location: LocationVKType | invalidLocationVKType;
+      locale: string | null;
+    } = {
       location: {
-        v11n,
+        v11n: v11n ?? 'KJV',
         book: '',
         chapter: 0,
         verse: null,
         lastverse: null,
-      } as invalidLocationVKType,
+      } satisfies invalidLocationVKType,
       locale: null,
     };
 
     let has1chap = false;
     let shft = 0; // book=1, chap=2, verse=3, lastverse=4
-    /* eslint-disable prettier/prettier */
     let p = null;
-    if (p === null) {p = text.match(/^(.+?)\s+(\d+)\s*:\s*(\d+)\s*-\s*(\d+)$/);               } // book 1:2-3
-    if (p === null) {p = text.match(/^(.+?)\s+(\d+)\s*:\s*(\d+)$/);                           } // book 4:5
-    if (p === null) {p = text.match(/^(.+?)\s+(\d+)$/);                                       } // book 6
-    if (p === null) {p = text.match(/^(.+?)\s+[v|V].*(\d+)$/);          if (p) has1chap=true; } // book v6 THIS VARIES WITH LOCALE!
-    if (p === null) {p = text.match(/^(\d+)$/);                         if (p) shft=1;        } // 6
-    if (p === null) {p = text.match(/^(\d+)\s*:\s*(\d+)\s*-\s*(\d+)$/); if (p) shft=1;        } // 1:2-3
-    if (p === null) {p = text.match(/^(\d+)\s*:\s*(\d+)$/);             if (p) shft=1;        } // 4:5
-    if (p === null) {p = text.match(/^(\d+)\s*-\s*(\d+)$/);             if (p) shft=2;        } // 4-5
-    if (p === null) {p = text.match(/^(.*?)$/);                                               } // book
-    /* eslint-enable prettier/prettier */
+    if (p === null) {
+      p = text.match(/^(.+?)\s+(\d+)\s*:\s*(\d+)\s*-\s*(\d+)$/);
+    } // book 1:2-3
+    if (p === null) {
+      p = text.match(/^(.+?)\s+(\d+)\s*:\s*(\d+)$/);
+    } // book 4:5
+    if (p === null) {
+      p = text.match(/^(.+?)\s+(\d+)$/);
+    } // book 6
+    if (p === null) {
+      p = text.match(/^(.+?)\s+[v|V].*(\d+)$/);
+      if (p) has1chap = true;
+    } // book v6 THIS VARIES WITH LOCALE!
+    if (p === null) {
+      p = text.match(/^(\d+)$/);
+      if (p) shft = 1;
+    } // 6
+    if (p === null) {
+      p = text.match(/^(\d+)\s*:\s*(\d+)\s*-\s*(\d+)$/);
+      if (p) shft = 1;
+    } // 1:2-3
+    if (p === null) {
+      p = text.match(/^(\d+)\s*:\s*(\d+)$/);
+      if (p) shft = 1;
+    } // 4:5
+    if (p === null) {
+      p = text.match(/^(\d+)\s*-\s*(\d+)$/);
+      if (p) shft = 2;
+    } // 4-5
+    if (p === null) {
+      p = text.match(/^(.*?)$/);
+    } // book
 
     if (p) {
       while (shft) {

@@ -1,6 +1,3 @@
-/* eslint-disable no-nested-ternary */
-/* eslint-disable @typescript-eslint/no-use-before-define */
-/* eslint-disable import/no-duplicates */
 import { Intent } from '@blueprintjs/core';
 import {
   clone,
@@ -27,11 +24,9 @@ import {
   localizeString,
 } from '../../common.ts';
 import C from '../../constant.ts';
-import S from '../../defaultPrefs.ts';
 import G from '../rg.ts';
 import { windowArguments } from '../rutil.ts';
 import log from '../log.ts';
-import { TCellInfo, TCellLocation } from '../libxul/table.tsx';
 import { forEachNode } from '../libxul/treeview.tsx';
 
 import type {
@@ -48,10 +43,12 @@ import type {
   OSISBookType,
   QuerablePromise,
 } from '../../type.ts';
+import type S from '../../defaultPrefs.ts';
 import type { SelectVKType, SelectVKProps } from '../libxul/selectVK.tsx';
 import type ModuleManager from './manager.tsx';
 import type { ManagerState } from './manager.tsx';
 import type { NodeListOR, SelectORMType } from '../libxul/selectOR.tsx';
+import type { TCellInfo, TCellLocation } from '../libxul/table.tsx';
 
 const windowDescriptor = windowArguments();
 
@@ -61,9 +58,9 @@ export const Tables = ['language', 'module', 'repository'] as const;
 export const Saved = {
   repositoryListings: [] as RepositoryListing[],
 
-  moduleData: {} as { [modrepKey: string]: TModuleTableRow },
+  moduleData: {} as Record<string, TModuleTableRow>,
 
-  moduleLangData: {} as { [langcode: string]: TModuleTableRow[] },
+  moduleLangData: {} as Record<string, TModuleTableRow[]>,
 
   language: {
     data: [] as TLanguageTableRow[],
@@ -137,7 +134,7 @@ export type TModuleTableRow = [
   (dataRow: number, dataCol: number) => typeof ON | typeof OFF,
   typeof ON | typeof OFF,
   typeof ON | typeof OFF,
-  TModCellInfo
+  TModCellInfo,
 ];
 
 export type TRepositoryTableRow = [
@@ -145,7 +142,7 @@ export type TRepositoryTableRow = [
   string,
   string,
   typeof ON | typeof OFF | typeof ALWAYS_ON,
-  TRepCellInfo
+  TRepCellInfo,
 ];
 
 export const ON = '☑';
@@ -185,11 +182,9 @@ export const RepCol = {
   iInfo: 4,
 } as const;
 
-export const Downloads: QuerablePromise<
-  ({
-    [downloadKey: string]: number | string;
-  } | null)[]
->[] = [];
+export const Downloads: Array<
+  QuerablePromise<Array<Record<string, number | string> | null>>
+> = [];
 
 export type ModuleUpdates = {
   doInstall: boolean;
@@ -198,13 +193,13 @@ export type ModuleUpdates = {
 };
 
 export const Progressing = {
-  ids: [] as [string, number][], // [id, percent]
+  ids: [] as Array<[string, number]>, // [id, percent]
 };
 
 export function setDownloadProgress(
   xthis: ModuleManager,
   dlkey: string,
-  prog: number
+  prog: number,
 ) {
   if (prog !== -1 || Progressing.ids.find((v) => v[0] === dlkey)) {
     let { ids } = Progressing;
@@ -222,10 +217,10 @@ export function setDownloadProgress(
 
 export function onRowsReordered(
   this: ModuleManager,
-  table: typeof Tables[number],
+  table: (typeof Tables)[number],
   propColumnIndex: number,
   direction: 'ascending' | 'descending',
-  tableToDataRowMap: number[]
+  tableToDataRowMap: number[],
 ) {
   const state = this.state as ManagerState;
   const tbl = state[table];
@@ -243,7 +238,7 @@ export function onRowsReordered(
         table,
         { rowSort: { propColumnIndex, direction } },
         null,
-        true
+        true,
       );
     }
   }
@@ -252,7 +247,7 @@ export function onRowsReordered(
 export function onLangCellClick(
   this: ModuleManager,
   e: React.MouseEvent,
-  cell: TCellLocation
+  cell: TCellLocation,
 ) {
   const newSelection = rowSelect(this, e, 'language', cell.tableRowIndex);
   this.loadModuleTable(newSelection as string[]);
@@ -261,12 +256,12 @@ export function onLangCellClick(
 export function onModCellClick(
   this: ModuleManager,
   e: React.MouseEvent,
-  cell: TCellLocation
+  cell: TCellLocation,
 ) {
   const disabled = ofClass(['disabled'], e.target);
   if (!disabled) {
     const state = this.state as ManagerState;
-    const { module } = state as ManagerState;
+    const { module } = state;
     const { module: modtable } = Saved;
     const { selection } = module;
     const { dataRowIndex: row, tableRowIndex, dataColIndex: col } = cell;
@@ -283,7 +278,7 @@ export function onModCellClick(
         this,
         col === ModCol.iRemove ? !is : is,
         datarows.map((ri) => modtable.data[ri][ModCol.iInfo].conf),
-        col === ModCol.iRemove
+        col === ModCol.iRemove,
       );
     } else if (drow && col === ModCol.iShared) {
       // Shared column clicks
@@ -307,7 +302,7 @@ export function onModCellClick(
 export function onRepoCellClick(
   this: ModuleManager,
   e: React.MouseEvent,
-  cell: TCellLocation
+  cell: TCellLocation,
 ) {
   const state = this.state as ManagerState;
   const { repository } = state;
@@ -322,10 +317,12 @@ export function onRepoCellClick(
       switchRepo(
         this,
         (selrows.includes(tableRowIndex) ? selrows : [tableRowIndex]).map(
-          (r) => Saved.repository.tableToDataRowMap[r] ?? r
+          (r) => Saved.repository.tableToDataRowMap[r] ?? r,
         ),
-        repotable.data[row][RepCol.iState] === OFF
-      );
+        repotable.data[row][RepCol.iState] === OFF,
+      ).catch((er) => {
+        log.error(er);
+      });
     } else if (row > -1 && col < RepCol.iState) {
       rowSelect(this, e, 'repository', tableRowIndex);
     }
@@ -335,7 +332,7 @@ export function onRepoCellClick(
 export function onCellEdited(
   this: ModuleManager,
   cell: TCellLocation,
-  value: string
+  value: string,
 ) {
   const table = 'repository';
   const state = this.state as ManagerState;
@@ -348,7 +345,7 @@ export function onCellEdited(
     const drow = tablestate.data[row];
     if (table === 'repository' && drow) {
       const crindex = newCustomRepos.findIndex(
-        (r) => repositoryKey(r) === repositoryKey(drow[RepCol.iInfo].repo)
+        (r) => repositoryKey(r) === repositoryKey(drow[RepCol.iInfo].repo),
       );
       if (crindex !== -1) {
         newCustomRepos.splice(crindex, 1);
@@ -365,7 +362,12 @@ export function onCellEdited(
         (col === RepCol.iDomain || col === RepCol.iPath) &&
         drow[RepCol.iState] === OFF
       ) {
-        setTimeout(() => switchRepo(this, [row], true), 100);
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
+        setTimeout(async () => {
+          await switchRepo(this, [row], true).catch((er) => {
+            log.error(er);
+          });
+        }, 100);
       }
     }
   }
@@ -373,7 +375,7 @@ export function onCellEdited(
 
 export async function eventHandler(
   this: ModuleManager,
-  ev: React.SyntheticEvent
+  ev: React.SyntheticEvent,
 ) {
   switch (ev.type) {
     case 'click': {
@@ -393,7 +395,7 @@ export async function eventHandler(
             {
               language: { ...state.language, open },
               module: { ...state.module, selection: [] },
-            }
+            },
           );
           scrollToSelectedLanguage(this);
           break;
@@ -429,20 +431,23 @@ export async function eventHandler(
         case 'ok': {
           try {
             const installed: SwordConfType[] = [];
-            const removeMods: { name: string; repo: Repository }[] = [];
-            const moveMods: {
+            const removeMods: Array<{ name: string; repo: Repository }> = [];
+            const moveMods: Array<{
               name: any;
               fromRepo: any;
               toRepo: Repository;
-            }[] = [];
+            }> = [];
             const downloadResults = await Promise.allSettled(Downloads);
             G.Window.modal([{ modal: 'transparent', window: 'all' }]);
             G.publishSubscription(
               'setRendererRootState',
               {
-                renderers: [{ type: 'xulswordWin' }, { id: windowDescriptor.id }],
+                renderers: [
+                  { type: 'xulswordWin' },
+                  { id: windowDescriptor.id },
+                ],
               },
-              { progress: 'indefinite' }
+              { progress: 'indefinite' },
             );
             // Un-persist these table selections.
             setTableState(this, 'module', { selection: [] });
@@ -468,7 +473,7 @@ export async function eventHandler(
                 if (row[ModCol.iInstalled] === OFF) {
                   const modkey = repositoryModuleKey(row[ModCol.iInfo].conf);
                   const lconf = installed.find(
-                    (c) => repositoryModuleKey(c) === modkey
+                    (c) => repositoryModuleKey(c) === modkey,
                   );
                   if (lconf) {
                     removeMods.push({
@@ -497,12 +502,10 @@ export async function eventHandler(
                 if (!removeMods.map((m) => m.name).includes(module)) {
                   const modkey = repositoryModuleKey(row[ModCol.iInfo].conf);
                   const conf = installed.find(
-                    (c) => repositoryModuleKey(c) === modkey
+                    (c) => repositoryModuleKey(c) === modkey,
                   );
                   if (conf?.sourceRepository.builtin) {
-                    const toRepo = builtinRepos(G)[
-                      shared ? 0 : 1
-                    ];
+                    const toRepo = builtinRepos(G)[shared ? 0 : 1];
                     if (
                       conf &&
                       repositoryKey(conf.sourceRepository) !==
@@ -547,14 +550,15 @@ export async function eventHandler(
                           dl.http = dl.http.replace(/&bk=.*$/, '');
                         const key = Object.keys(moduleData).find(
                           (k) =>
-                            downloadKey(getModuleDownload(k)) === downloadkey
+                            downloadKey(getModuleDownload(k)) === downloadkey,
                         );
                         if (key && moduleData[key][ModCol.iInstalled] === ON) {
                           install.push({
                             download: dl,
-                            toRepo: builtinRepos(G)[
-                              moduleData[key][ModCol.iInfo].shared ? 0 : 1
-                            ],
+                            toRepo:
+                              builtinRepos(G)[
+                                moduleData[key][ModCol.iInfo].shared ? 0 : 1
+                              ],
                           });
                         }
                       }
@@ -565,8 +569,10 @@ export async function eventHandler(
             });
             G.Module.installDownloads(
               install,
-              G.Window.descriptions({ type: 'xulswordWin' })[0]?.id
-            );
+              G.Window.descriptions({ type: 'xulswordWin' })[0]?.id,
+            ).catch((er) => {
+              log.error(er);
+            });
             G.Window.close();
           } catch (er) {
             log.error(er);
@@ -575,9 +581,12 @@ export async function eventHandler(
             G.publishSubscription(
               'setRendererRootState',
               {
-                renderers: [{ type: 'xulswordWin' }, { id: windowDescriptor.id }],
+                renderers: [
+                  { type: 'xulswordWin' },
+                  { id: windowDescriptor.id },
+                ],
               },
-              { progress: -1 }
+              { progress: -1 },
             );
           }
           break;
@@ -601,7 +610,7 @@ export async function eventHandler(
             row[RepCol.iInfo].classes = classes(
               [RepCol.iState],
               ['checkbox-column'],
-              ['custom-repo']
+              ['custom-repo'],
             );
             row[RepCol.iInfo].editable = editable();
             repotables.data.unshift(row);
@@ -610,7 +619,9 @@ export async function eventHandler(
             setTableState(this, 'repository', null, repotables.data, true, {
               repositories: { ...repositories, custom: newCustomRepos },
             });
-            switchRepo(this, [0], false);
+            switchRepo(this, [0], false).catch((er) => {
+              log.error(er);
+            });
           }
           break;
         }
@@ -633,7 +644,8 @@ export async function eventHandler(
                 repositoryListings.splice(r, 1);
                 const crIndex = repositories.custom.findIndex(
                   (ro) =>
-                    repositoryKey(ro) === repositoryKey(drow[RepCol.iInfo].repo)
+                    repositoryKey(ro) ===
+                    repositoryKey(drow[RepCol.iInfo].repo),
                 );
                 if (crIndex !== -1) {
                   newCustomRepos.splice(crIndex, 1);
@@ -656,7 +668,7 @@ export async function eventHandler(
               .map((r, ri) =>
                 r[RepCol.iInfo].loading !== false && r[RepCol.iState] !== OFF
                   ? ri
-                  : null
+                  : null,
               )
               .filter((ri) => ri !== null)
               .map((rix) => {
@@ -668,8 +680,10 @@ export async function eventHandler(
                   file: C.SwordRepoManifest,
                   type: 'ftp',
                 };
-              })
-          );
+              }),
+          ).catch((er) => {
+            log.error(er);
+          });
           setTableState(this, 'repository', null, repotable.data, true);
           break;
         }
@@ -687,7 +701,7 @@ export async function eventHandler(
         case 'internet': {
           const allow = idext === 'yes';
           const cb = document.getElementById(
-            'internet.rememberChoice__input'
+            'internet.rememberChoice__input',
           ) as HTMLInputElement | null;
           if (cb && cb.checked) {
             G.Prefs.setBoolPref('global.InternetPermission', allow);
@@ -696,7 +710,10 @@ export async function eventHandler(
             internetPermission: allow,
           };
           this.setState(s);
-          if (allow) this.loadTables();
+          if (allow)
+            this.loadTables().catch((er) => {
+              log.error(er);
+            });
           // If the answer is no, then close the window, as there is
           // nothing else to be done here.
           else G.Window.close();
@@ -704,7 +721,7 @@ export async function eventHandler(
         }
         default:
           throw Error(
-            `Unhandled ModuleManager click event ${e.currentTarget.id}`
+            `Unhandled ModuleManager click event ${e.currentTarget.id}`,
           );
       }
       break;
@@ -719,8 +736,8 @@ export async function eventHandler(
 export function rowSelect(
   xthis: ModuleManager,
   e: React.MouseEvent,
-  table: typeof Tables[number],
-  row: number
+  table: (typeof Tables)[number],
+  row: number,
 ): RowSelection | string[] {
   const state = xthis.state as ManagerState;
   const tbl = state[table];
@@ -733,11 +750,11 @@ export function rowSelect(
       rows = selection
         .map((code) => {
           const rx = langTableData.findIndex(
-            (r) => r[LanCol.iInfo].code === code
+            (r) => r[LanCol.iInfo].code === code,
           );
           return rx === -1 ? 0 : rx;
         })
-        .sort();
+        .sort((a, b) => a - b);
     } else {
       rows = selectionToTableRows(selection as RowSelection);
     }
@@ -745,7 +762,7 @@ export function rowSelect(
     if (table === 'language') {
       const { data: langTableData } = state.tables.language;
       newSelection = selectionToTableRows(newSelection).map(
-        (r) => langTableData[r][LanCol.iInfo].code
+        (r) => langTableData[r][LanCol.iInfo].code,
       );
     }
     const sel = newSelection as any;
@@ -768,7 +785,7 @@ function getDisabledRepos(xthis: ModuleManager) {
           .map((r) =>
             r[RepCol.iInfo].repo.disabled
               ? repositoryKey(r[RepCol.iInfo].repo)
-              : ''
+              : '',
           )
           .filter(Boolean);
   }
@@ -779,7 +796,7 @@ function repoRowEnableDisable(
   enable: boolean,
   row: TRepositoryTableRow,
   disabledRepos: string[],
-  stateIntent = Intent.NONE as Intent
+  stateIntent = Intent.NONE as Intent,
 ): string[] {
   const rowkey = repositoryKey(row[RepCol.iInfo].repo);
   const disabledIndex = disabledRepos.findIndex((drs) => {
@@ -806,7 +823,7 @@ function repoRowEnableDisable(
 export async function switchRepo(
   xthis: ModuleManager,
   rows: number[],
-  onOrOff?: boolean
+  onOrOff?: boolean,
 ) {
   const state = xthis.state as ManagerState;
   const { repositories } = state;
@@ -837,14 +854,17 @@ export async function switchRepo(
         }
       }
     });
-    if (cancel.length) G.Module.cancel(cancel.filter((o) => o));
+    if (cancel.length)
+      G.Module.cancel(cancel.filter((o) => o)).catch((er) => {
+        log.error(er);
+      });
     const disreps = disabled
       ? {
           repositories: { ...repositories, disabled },
         }
       : undefined;
     setTableState(xthis, 'repository', null, repoTableData, true, disreps);
-    const newrepos: (FTPDownload | null)[] = repoTableData.map((r, i) => {
+    const newrepos: Array<FTPDownload | null> = repoTableData.map((r, i) => {
       return !rows.includes(i) || cancel[i] || r[RepCol.iInfo].repo.disabled
         ? null
         : {
@@ -863,7 +883,7 @@ export async function switchRepo(
 // possible module updates of installed modules.
 export function handleListings(
   xthis: ModuleManager,
-  listingsAndErrors: (RepositoryListing | string)[]
+  listingsAndErrors: Array<RepositoryListing | string>,
 ): void {
   const state = xthis.state as ManagerState;
   const { repositories } = state;
@@ -974,7 +994,7 @@ export function checkForModuleUpdates(xthis: ModuleManager) {
       if (
         inst.sourceRepository &&
         !['CrossWire Attic', 'CrossWire Beta'].includes(
-          conf.sourceRepository.name
+          conf.sourceRepository.name,
         ) &&
         conf.xsmType !== 'XSM_audio' &&
         // module is to be obsoleted
@@ -990,16 +1010,16 @@ export function checkForModuleUpdates(xthis: ModuleManager) {
               (swm, x) =>
                 inst.module === swm &&
                 versionCompare(
-                  (conf.SwordVersions && conf.SwordVersions[x]) ?? 0,
-                  inst.Version ?? 0
-                ) === 1
+                  conf.SwordVersions?.[x] ?? 0,
+                  inst.Version ?? 0,
+                ) === 1,
             ) &&
             !conf.SwordModules?.some(
               (swm, x) =>
                 versionCompare(
                   updateable.find((im) => im.module === swm)?.Version ?? 0,
-                  (conf.SwordVersions && conf.SwordVersions[x]) ?? 0
-                ) === 1
+                  conf.SwordVersions?.[x] ?? 0,
+                ) === 1,
             )))
       ) {
         candidates.push({
@@ -1033,7 +1053,7 @@ const ModuleUpdatePrompted: string[] = [];
 function promptAndInstall(xthis: ModuleManager, updatesx: ModuleUpdates[]) {
   // Only initiate prompt/download once per module per window lifetime.
   const updates = updatesx.filter(
-    (mud) => !ModuleUpdatePrompted.includes(mud.updateTo.module)
+    (mud) => !ModuleUpdatePrompted.includes(mud.updateTo.module),
   );
   ModuleUpdatePrompted.push(...updatesx.map((mud) => mud.updateTo.module));
   // Show a toast to ask permission to install each update.
@@ -1046,7 +1066,7 @@ function promptAndInstall(xthis: ModuleManager, updatesx: ModuleUpdates[]) {
     if (from) {
       const history =
         mud.updateTo.History?.filter(
-          (h) => versionCompare(h[0], from.Version ?? 0) === 1
+          (h) => versionCompare(h[0], from.Version ?? 0) === 1,
         )
           .map((h) => h[1].locale)
           .join('\n') ?? '';
@@ -1080,7 +1100,7 @@ function promptAndInstall(xthis: ModuleManager, updatesx: ModuleUpdates[]) {
 function installModuleUpdates(
   xthis: ModuleManager,
   moduleUpdates: ModuleUpdates[],
-  on: boolean
+  on: boolean,
 ) {
   const ons: boolean[] = [];
   const rows: SwordConfType[] = [];
@@ -1103,29 +1123,29 @@ function installModuleUpdates(
 function checkForSuggestions(xthis: ModuleManager) {
   const { moduleLangData } = Saved;
   const suggested = G.Prefs.getComplexValue(
-    'moduleManager.suggested'
+    'moduleManager.suggested',
   ) as typeof S.prefs.moduleManager.suggested;
   const locale = G.i18n.language;
-  if (suggested && suggested[locale]) {
+  if (suggested?.[locale]) {
     // Filter from Prefs any suggested mods that are already installed.
     suggested[locale] = suggested[locale].filter(
       (m) =>
         !Object.values(moduleLangData.allmodules).some(
-          (r) => r[ModCol.iModule] === m && r[ModCol.iInstalled] !== OFF
-        )
+          (r) => r[ModCol.iModule] === m && r[ModCol.iInstalled] !== OFF,
+        ),
     );
     if (locale in suggested && suggested[locale].length) {
       // Build the list of modules to suggest.
       const suggestions: ModuleUpdates[] = [];
       suggested[locale].forEach((m) => {
         const row: TModuleTableRow | null = Object.values(
-          moduleLangData.allmodules
+          moduleLangData.allmodules,
         ).reduce((p: TModuleTableRow | null, c: TModuleTableRow) => {
           if (c[ModCol.iModule] !== m) return p;
           if (!p) return c;
           return versionCompare(
             c[ModCol.iInfo].conf.Version || 0,
-            p[ModCol.iInfo].conf.Version || 0
+            p[ModCol.iInfo].conf.Version || 0,
           ) === 1
             ? c
             : p;
@@ -1141,7 +1161,7 @@ function checkForSuggestions(xthis: ModuleManager) {
       // Remove modules being suggested from Prefs, so that user only sees
       // a particular suggestion once, ever.
       suggested[locale] = suggested[locale].filter(
-        (m) => !suggestions.find((mud) => mud.updateTo.module === m)
+        (m) => !suggestions.find((mud) => mud.updateTo.module === m),
       );
       G.Prefs.setComplexValue('moduleManager.suggested', suggested);
       promptAndInstall(xthis, suggestions);
@@ -1159,7 +1179,7 @@ export function getModuleRowXsmSiblings(modrepkey: string): string[] {
         entry[1][ModCol.iInfo].conf.DataPath ===
         data[ModCol.iInfo].conf.DataPath
           ? entry[0]
-          : null
+          : null,
       )
       .filter((i) => i !== null) as string[];
   }
@@ -1204,7 +1224,7 @@ export function getModuleDownload(modrepkey: string): Download | null {
 
 async function promptAudioChapters(
   xthis: ModuleManager,
-  conf: SwordConfType
+  conf: SwordConfType,
 ): Promise<string> {
   if (conf.xsmType === 'XSM_audio') {
     const { AudioChapters } = conf;
@@ -1215,7 +1235,9 @@ async function promptAudioChapters(
         const installed = G.AudioConfs[conf.module]?.AudioChapters;
         const dialog: Partial<VersekeyDialog> | Partial<GenBookDialog> = {
           conf,
-          callback: (result) => resolve(result),
+          callback: (result) => {
+            resolve(result);
+          },
         };
         if (isAudioVerseKey(AudioChapters)) {
           const d = dialog as VersekeyDialog;
@@ -1226,7 +1248,10 @@ async function promptAudioChapters(
           const books = Object.entries(ac)
             .filter((e) => e[1].some((v) => v))
             .map((e) => e[0]) as OSISBookType[];
-          if (!books.length) return resolve(null);
+          if (!books.length) {
+            resolve(null);
+            return;
+          }
           d.type = 'versekey';
           d.chapters = ac;
           d.initial = {
@@ -1258,7 +1283,10 @@ async function promptAudioChapters(
           ac = installed
             ? subtractGenBookAudioChapters(ac, installed as GenBookAudioConf)
             : ac;
-          if (!Object.keys(ac).length) return resolve(null);
+          if (!Object.keys(ac).length) {
+            resolve(null);
+            return;
+          }
           const paths =
             conf.module in G.Tab
               ? gbPaths(G.genBookTreeNodes(conf.module))
@@ -1283,14 +1311,15 @@ async function promptAudioChapters(
                       .filter(Boolean)
                       .map((s) => Number(s.replace(/^(\d+).*?$/, '$1')));
                     const entry = Object.entries(paths).find(
-                      (e) => !diff(e[1], path)
+                      (e) => !diff(e[1], path),
                     );
                     const keys = (entry ? entry[0] : '').split(C.GBKSEP);
                     let label = '';
                     while (keys.length && !label) label = keys.pop() || '';
                     n.label =
+                      // eslint-disable-next-line @typescript-eslint/no-base-to-string
                       label || n.label.toString().replace(/^\d+\s(.*?)$/, '$1');
-                  }
+                  },
                 ),
               },
             ],
@@ -1300,7 +1329,7 @@ async function promptAudioChapters(
         const state = xthis.state as ManagerState;
         const { showAudioDialog } = state;
         showAudioDialog.push(d);
-        return xthis.setState({ showAudioDialog });
+        xthis.setState({ showAudioDialog });
       });
       if (audio) {
         // TODO: Implement swordzip API on server.
@@ -1315,7 +1344,7 @@ async function promptAudioChapters(
       }
     } else {
       throw new Error(
-        `Audio config is missing AudioChapters: '${conf.module}'`
+        `Audio config is missing AudioChapters: '${conf.module}'`,
       );
     }
   }
@@ -1332,10 +1361,9 @@ function handleError(xthis: ModuleManager, er: any, modrepkeys: string[]) {
   if (er && typeof er === 'object' && 'message' in er) {
     ({ message } = er);
   }
-  const newintent =
-    message && message.startsWith(C.UI.Manager.cancelMsg)
-      ? Intent.WARNING
-      : Intent.DANGER;
+  const newintent = message?.startsWith(C.UI.Manager.cancelMsg)
+    ? Intent.WARNING
+    : Intent.DANGER;
   if (message) {
     xthis.addToast({
       message: er.message,
@@ -1355,7 +1383,7 @@ function handleError(xthis: ModuleManager, er: any, modrepkeys: string[]) {
 // set of module configs.
 export async function download(
   xthis: ModuleManager,
-  configs: SwordConfType[]
+  configs: SwordConfType[],
 ): Promise<void> {
   const { module: modtable } = Saved;
 
@@ -1382,7 +1410,7 @@ export async function download(
     }
     return dlobj;
   });
-  let dlobjs: (Download | null)[];
+  let dlobjs: Array<Download | null>;
   try {
     dlobjs = await Promise.all(dlpromises);
   } catch (er) {
@@ -1393,7 +1421,7 @@ export async function download(
   // Download using the array of download objects
   const downloads = querablePromise(G.Module.downloads(dlobjs));
   Downloads.push(downloads);
-  let dls: ({ [key: string]: string | number } | null)[];
+  let dls: Array<Record<string, string | number> | null>;
   try {
     dls = await downloads;
   } catch (er) {
@@ -1438,7 +1466,7 @@ export async function download(
         modkeys.forEach((k) => {
           moduleData[k][ModCol.iInfo].intent = intent(
             ModCol.iInstalled,
-            newintent
+            newintent,
           );
         });
       });
@@ -1451,7 +1479,7 @@ function modtableUpdate(
   xthis: ModuleManager,
   on: boolean | boolean[],
   configs: SwordConfType[],
-  iRemove = false
+  iRemove = false,
 ) {
   const { moduleData } = Saved;
   const doDownload: SwordConfType[] = [];
@@ -1479,8 +1507,14 @@ function modtableUpdate(
       row[ModCol.iInfo].intent = intent(ModCol.iInstalled, 'none');
     }
   });
-  if (cancel.length) G.Module.cancelOngoingDownloads(cancel);
-  if (doDownload.length) download(xthis, doDownload);
+  if (cancel.length)
+    G.Module.cancelOngoingDownloads(cancel).catch((er) => {
+      log.error(er);
+    });
+  if (doDownload.length)
+    download(xthis, doDownload).catch((er) => {
+      log.error(er);
+    });
   if (configs.length) setTableState(xthis, 'module', null, null, true);
 }
 
@@ -1491,7 +1525,7 @@ function modtableUpdate(
 // Change other ModuleManager state
 export function setTableState(
   xthis: ModuleManager,
-  table: typeof Tables[number],
+  table: (typeof Tables)[number],
   tableState?: Partial<
     ManagerState['language' | 'module' | 'repository']
   > | null,
@@ -1501,7 +1535,7 @@ export function setTableState(
     | TRepositoryTableRow[]
     | null,
   tableReset?: boolean,
-  s?: Partial<ManagerState>
+  s?: Partial<ManagerState>,
 ) {
   const state = xthis.state as ManagerState;
   const news: Partial<ManagerState> = s || {};
@@ -1530,8 +1564,8 @@ export function setTableState(
 // Given a table selection, return the selected data rows in ascending order.
 // This is like selectionToRows, but returns data rows rather than table rows.
 export function selectionToDataRows(
-  table: typeof Tables[number],
-  selection: RowSelection | string[]
+  table: (typeof Tables)[number],
+  selection: RowSelection | string[],
 ): number[] {
   if (table === 'language') {
     return selection
@@ -1574,15 +1608,15 @@ export function allAudioInstalled(conf: SwordConfType): boolean {
       !Object.keys(
         subtractVerseKeyAudioChapters(
           remoteAudioChapters as VerseKeyAudio,
-          localAudioChapters as VerseKeyAudio
-        )
+          localAudioChapters as VerseKeyAudio,
+        ),
       ).length) ||
     (!isAudioVerseKey(remoteAudioChapters) &&
       !Object.keys(
         subtractGenBookAudioChapters(
           remoteAudioChapters as GenBookAudioConf,
-          localAudioChapters as GenBookAudioConf
-        )
+          localAudioChapters as GenBookAudioConf,
+        ),
       ).length)
   ) {
     allInstalled = true;
@@ -1636,7 +1670,7 @@ export function intent(columnIndex: number, theIntent: Intent) {
 export function classes(
   columnIndexArray: number[],
   theClasses: string[],
-  wholeRowClasses?: string[]
+  wholeRowClasses?: string[],
 ) {
   return (_ri: number, ci: number) => {
     const cs = wholeRowClasses?.slice() || [];
@@ -1651,7 +1685,9 @@ export function classes(
 export function modclasses() {
   return (ri: number, ci: number) => {
     const cs: string[] = [];
-    if ([ModCol.iShared, ModCol.iInstalled, ModCol.iRemove].includes(ci as any))
+    if (
+      [ModCol.iShared, ModCol.iInstalled, ModCol.iRemove].includes(ci as never)
+    )
       cs.push('checkbox-column');
     const drow = Saved.module.data[ri];
     if (drow && drow[ModCol.iInstalled] === OFF && ci === ModCol.iShared) {

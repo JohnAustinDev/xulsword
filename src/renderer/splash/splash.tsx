@@ -1,13 +1,14 @@
 import React from 'react';
 import G from '../rg.ts';
 import renderToRoot from '../renderer.tsx';
+import log from '../log.ts';
 import { Hbox, Vbox } from '../libxul/boxes.tsx';
 import Label from '../libxul/label.tsx';
 import Stack from '../libxul/stack.tsx';
 import './splash.css';
 
 const overlay = G.inlineFile(
-  `${G.Dirs.path.xsAsset}/splash-overlay-${G.i18n.language}.png`
+  `${G.Dirs.path.xsAsset}/splash-overlay-${G.i18n.language}.png`,
 );
 const style = overlay ? (
   <style>
@@ -35,5 +36,7 @@ renderToRoot(
         </Hbox>
       </Vbox>
     </Stack>
-  </Vbox>
-);
+  </Vbox>,
+).catch((er) => {
+  log.error(er);
+});

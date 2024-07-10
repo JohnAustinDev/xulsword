@@ -1,13 +1,10 @@
-/* eslint-disable @typescript-eslint/no-use-before-define */
-/* eslint-disable react/jsx-props-no-spreading */
-/* eslint-disable react/static-property-placement */
-/* eslint-disable react/forbid-prop-types */
+/* eslint-disable @typescript-eslint/unbound-method */
 import React from 'react';
 import PropTypes from 'prop-types';
 import { clone, getModuleOfObject, randomID } from '../../common.ts';
 import G, { GI } from '../rg.ts';
 import RenderPromise from '../renderPromise.ts';
-import { htmlAttribs, XulProps, xulPropTypes } from './xul.tsx';
+import { htmlAttribs, type XulProps, xulPropTypes } from './xul.tsx';
 import SelectVK from './selectVK.tsx';
 import SelectOR from './selectOR.tsx';
 import { Hbox } from './boxes.tsx';
@@ -22,7 +19,10 @@ import type {
   LocationVKType,
   TabTypes,
 } from '../../type.ts';
-import type { RenderPromiseComponent, RenderPromiseState } from '../renderPromise.ts';
+import type {
+  RenderPromiseComponent,
+  RenderPromiseState,
+} from '../renderPromise.ts';
 import type { SelectVKType } from './selectVK.tsx';
 import type { SelectORMType } from './selectOR.tsx';
 
@@ -36,15 +36,15 @@ import type { SelectORMType } from './selectOR.tsx';
 // (which need not be installed). If left undefined, all installed modules
 // will be available. If a module which is not installed is selected, its
 // location cannot be changed.
-export interface SelectAnyProps extends XulProps {
+export type SelectAnyProps = {
   initial: LocationTypes[TabTypes];
   modules?: string[];
   disabled?: boolean;
   onSelection: (
     selection: LocationTypes[TabTypes] | undefined,
-    id?: string
+    id?: string,
   ) => void;
-}
+} & XulProps;
 
 const propTypes = {
   ...xulPropTypes,
@@ -57,7 +57,7 @@ const propTypes = {
 type SelectAnyState = RenderPromiseState & {
   location: LocationTypes[TabTypes] | undefined;
   reset: string;
-}
+};
 
 let LastVKLocation: LocationVKType | LocationVKCommType | undefined;
 
@@ -76,7 +76,7 @@ class SelectAny extends React.Component implements RenderPromiseComponent {
     const s: SelectAnyState = {
       location: initial,
       reset: randomID(),
-      renderPromiseID: 0
+      renderPromiseID: 0,
     };
     this.state = s;
 
@@ -125,7 +125,7 @@ class SelectAny extends React.Component implements RenderPromiseComponent {
       if (oldloc && 'v11n' in oldloc) intloc = oldloc;
       else {
         if (LastVKLocation === undefined) {
-          intloc = await newLocation(module, renderPromise) as LocationVKType;
+          intloc = (await newLocation(module, renderPromise)) as LocationVKType;
         } else {
           intloc = LastVKLocation;
         }
@@ -139,7 +139,10 @@ class SelectAny extends React.Component implements RenderPromiseComponent {
         intloc = oldloc;
       } else {
         if (LastVKLocation === undefined) {
-          intloc = await newLocation(module, renderPromise) as LocationVKCommType;
+          intloc = (await newLocation(
+            module,
+            renderPromise,
+          )) as LocationVKCommType;
         } else {
           intloc = LastVKLocation;
         }
@@ -219,7 +222,7 @@ export default SelectAny;
 // Pick a valid location from any installed module.
 async function newLocation(
   module: string,
-  renderPromise: RenderPromise
+  renderPromise: RenderPromise,
 ): Promise<LocationVKType | LocationVKCommType | LocationORType> {
   const { tabType, v11n } = G.Tab[module];
   let r: LocationVKType | LocationVKCommType | LocationORType;
@@ -245,7 +248,11 @@ async function newLocation(
     const keylist = GI.getAllDictionaryKeyList([], renderPromise, module);
     r = { otherMod: module, key: keylist[0] };
   } else {
-    const toc = GI.LibSword.getGenBookTableOfContents([], renderPromise, module);
+    const toc = GI.LibSword.getGenBookTableOfContents(
+      [],
+      renderPromise,
+      module,
+    );
     r = { otherMod: module, key: toc[0] };
   }
   return r;

@@ -1,16 +1,16 @@
 /* eslint-disable no-continue */
 import { JSON_attrib_stringify, getSwordOptions } from '../../../common.ts';
 import Cache from '../../../cache.ts';
-import S from '../../../defaultPrefs.ts';
+import type S from '../../../defaultPrefs.ts';
 import C from '../../../constant.ts';
 import G, { GI } from '../../rg.ts';
 import log from '../../log.ts';
-import RenderPromise from '../../renderPromise.ts';
+import type RenderPromise from '../../renderPromise.ts';
 
 import type { HTMLData } from '../../htmlData.ts';
 import type { FailReason } from '../popup/popupH.ts';
 
-const DictKeyTransform: { [i: string]: (key: string) => string } = {
+const DictKeyTransform: Record<string, (key: string) => string> = {
   StrongsHebrew: (key) => {
     const t = '00000';
     return t.substring(0, t.length - key.length) + key;
@@ -44,7 +44,7 @@ function replaceTags(entry: string, tag: string, subclass?: string | RegExp) {
         p[0],
         `<span class="markup-${tag}${mclass ? `-${mclass}` : ''}${
           rend ? ` markup_${rend[1]}` : ''
-        }">`
+        }">`,
       );
     }
   } while (html2 !== html);
@@ -66,7 +66,7 @@ function markup2html(entry: string, mod: string) {
         p[0],
         `<span class="markup-sense">${n ? `<b>${n}</b>` : ''}${
           n && !/^[.]/.test(p[2]) ? '. ' : ''
-        }${p[2]}`
+        }${p[2]}`,
       );
     }
   } while (html !== html2);
@@ -91,7 +91,7 @@ function markup2html(entry: string, mod: string) {
       }
       html = html.replace(
         p[0],
-        `<span class="${mclass}" data-title="${mtitle}">`
+        `<span class="${mclass}" data-title="${mtitle}">`,
       );
     }
   } while (html !== html2);
@@ -119,7 +119,11 @@ function markup2html(entry: string, mod: string) {
 }
 
 // some TEI mods (like AbbottSmith, Strong) may use @LINK, so replace these here.
-function replaceLinks(entry: string, mod: string, renderPromise?: RenderPromise) {
+function replaceLinks(
+  entry: string,
+  mod: string,
+  renderPromise?: RenderPromise,
+) {
   let html = entry;
   const link = html.match(/(@LINK\s+[^\s<]+)/g);
   if (link) {
@@ -144,15 +148,16 @@ function replaceLinks(entry: string, mod: string, renderPromise?: RenderPromise)
           renderPromise,
           mod,
           l[1].toUpperCase(),
-          options
+          options,
         );
-        if (text === C.NOTFOUND) ({ text } = GI.LibSword.getDictionaryEntry(
-          { text: C.NOTFOUND, notes: '' },
-          renderPromise,
-          mod,
-          l[1],
-          options
-        ));
+        if (text === C.NOTFOUND)
+          ({ text } = GI.LibSword.getDictionaryEntry(
+            { text: C.NOTFOUND, notes: '' },
+            renderPromise,
+            mod,
+            l[1],
+            options,
+          ));
         if (text) html = html.replace(l[0], text);
       }
     }
@@ -191,24 +196,32 @@ export function getDictEntryHTML(
   mods.forEach((mx) => {
     // Allow case differences in module code references.
     const mlc = mx.toLowerCase();
-    const m = mx in G.Tab ? mx : Object.keys(G.Tab).find((md) => md.toLowerCase() === mlc) || '';
+    const m =
+      mx in G.Tab
+        ? mx
+        : Object.keys(G.Tab).find((md) => md.toLowerCase() === mlc) || '';
     if (m && m in G.Tab && G.Tab[m].type === C.DICTIONARY) {
       const k = DictKeyTransform[m] ? DictKeyTransform[m](key) : key;
       const { text: h1 } = GI.LibSword.getDictionaryEntry(
-        { text: C.NOTFOUND, notes: ''},
+        { text: C.NOTFOUND, notes: '' },
         renderPromise,
         m,
         k,
-        options
+        options,
       );
       const { text: h2 } = GI.LibSword.getDictionaryEntry(
         { text: C.NOTFOUND, notes: '' },
         renderPromise,
         m,
         k.toUpperCase(),
-        options
+        options,
       );
-      const dictTitle = GI.LibSword.getModuleInformation('', renderPromise, m, 'Description');
+      const dictTitle = GI.LibSword.getModuleInformation(
+        '',
+        renderPromise,
+        m,
+        'Description',
+      );
       let h = h1;
       if (h === C.NOTFOUND) h = h2;
       if (h) h = markup2html(replaceLinks(h, m, renderPromise), m);
@@ -243,7 +256,7 @@ export function getDictEntryHTML(
 export function getStrongsModAndKey(
   snclass: string,
   renderPromise?: RenderPromise,
-  reason?: FailReason
+  reason?: FailReason,
 ): {
   mod: string | null;
   key: string | null;
@@ -252,7 +265,7 @@ export function getStrongsModAndKey(
   let key = null;
   let mod = null;
   const parts = snclass.split('_');
-  if (!parts || !parts[1]) {
+  if (!parts?.[1]) {
     if (reason) reason.reason = `${snclass}?`;
     return { mod: null, key: null };
   }
@@ -275,7 +288,7 @@ export function getStrongsModAndKey(
       }
       if (feature) {
         const f = G.Prefs.getComplexValue(
-          'global.popup.feature'
+          'global.popup.feature',
         ) as typeof S.prefs.global.popup.feature;
         mod = (feature in f && f[feature]) || null;
       }
@@ -325,7 +338,7 @@ export function getStrongsModAndKey(
             renderPromise,
             mod,
             keys[k],
-            options
+            options,
           ));
           if (text !== C.NOTFOUND) break;
         }
@@ -347,7 +360,7 @@ export function getStrongsModAndKey(
     case 'SM': {
       // no lookup module available for these yet...
       const f = G.Prefs.getComplexValue(
-        'global.popup.feature'
+        'global.popup.feature',
       ) as typeof S.prefs.global.popup.feature;
       mod = f.GreekParse || G.FeatureModules.GreekParse[0] || null;
       if (!mod && reason) {
@@ -380,7 +393,7 @@ export function getLemmaHTML(
   matchingPhrase: string,
   sourcemod: string,
   renderPromise?: RenderPromise,
-  reason?: FailReason
+  reason?: FailReason,
 ) {
   // Start building html
   let html = '';
@@ -415,7 +428,7 @@ export function getLemmaHTML(
         renderPromise,
         info.mod,
         info.key,
-        options
+        options,
       );
       if (text) {
         html +=
@@ -435,7 +448,7 @@ export function getLemmaHTML(
 
   // Add heading now that we know module styling
   return `
-    <div class="lemma-html cs-${info && info.mod ? info.mod : 'Program'}">
+    <div class="lemma-html cs-${info?.mod ? info.mod : 'Program'}">
       <div class="lemma-header">${matchingPhrase}</div>
       ${html}
     <div>`;

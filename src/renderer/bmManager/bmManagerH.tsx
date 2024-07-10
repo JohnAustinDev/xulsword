@@ -1,7 +1,3 @@
-/* eslint-disable @typescript-eslint/no-this-alias */
-/* eslint-disable jsx-a11y/click-events-have-key-events */
-/* eslint-disable jsx-a11y/no-noninteractive-element-interactions */
-import { ItemRendererProps } from '@blueprintjs/select';
 import React from 'react';
 import {
   clone,
@@ -26,6 +22,7 @@ import Label from '../libxul/label.tsx';
 import './bmManager.css';
 import '@blueprintjs/select/lib/css/blueprint-select.css';
 
+import type { ItemRendererProps } from '@blueprintjs/select';
 import type {
   BookmarkFolderType,
   BookmarkItemType,
@@ -49,7 +46,7 @@ export type TableRow = [
   JSX.Element,
   JSX.Element,
   string,
-  CellInfo
+  CellInfo,
 ];
 
 export const Col = {
@@ -62,7 +59,7 @@ export const Col = {
 
 export function onFolderSelection(
   this: BMManagerWin,
-  ids: (string | number)[]
+  ids: Array<string | number>,
 ): void {
   if (ids[0]) {
     const clicked = ids[0].toString();
@@ -85,7 +82,7 @@ export function onFolderSelection(
 export function onCellClick(
   this: BMManagerWin,
   e: React.MouseEvent,
-  cell: TRowLocation
+  cell: TRowLocation,
 ): void {
   this.setState((prevState: BMManagerState) => {
     const { dataRowIndex } = cell;
@@ -97,7 +94,7 @@ export function onCellClick(
         prevSelectedItems
           .map((id) => data.findIndex((r) => r[Col.iInfo].id === id))
           .filter((r) => r !== -1),
-        e
+        e,
       );
       const s: Partial<BMManagerState> = {
         selectedItems: selectedDataRows.map((i) => data[i][Col.iInfo].id),
@@ -156,7 +153,7 @@ export function onItemSelect(this: BMManagerWin, item: BookmarkItemType) {
 
 export function onQueryChange(
   this: BMManagerWin,
-  e: React.SyntheticEvent<HTMLSelectElement>
+  e: React.SyntheticEvent<HTMLSelectElement>,
 ) {
   this.setState({ query: (e.target as HTMLSelectElement).value });
 }
@@ -198,7 +195,7 @@ export function buttonHandler(this: BMManagerWin, e: React.SyntheticEvent) {
           if (item) {
             const parent = findParentOfBookmarkItem(
               rootfolder,
-              selectedItems[0]
+              selectedItems[0],
             );
             bmPropertiesState = {
               bookmark: item.id,
@@ -273,11 +270,15 @@ export function buttonHandler(this: BMManagerWin, e: React.SyntheticEvent) {
         break;
       }
       case 'import': {
-        G.Commands.importBookmarks();
+        G.Commands.importBookmarks().catch((er) => {
+          log.error(er);
+        });
         break;
       }
       case 'export': {
-        G.Commands.exportBookmarks();
+        G.Commands.exportBookmarks().catch((er) => {
+          log.error(er);
+        });
         break;
       }
       case 'print': {
@@ -289,17 +290,19 @@ export function buttonHandler(this: BMManagerWin, e: React.SyntheticEvent) {
             .then(() => {
               (
                 G.Prefs.setComplexValue as MethodAddCaller<
-                  GType['Prefs']['setComplexValue']
+                  typeof G.Prefs.setComplexValue
                 >
               )(
                 'bookmarkManager.printItems',
                 null as typeof S.prefs.bookmarkManager.printItems,
                 'prefs',
-                -1 // notify self to update (because 'this'.setState is garbage by now)
+                -1, // notify self to update (because 'this'.setState is garbage by now)
               );
               return true;
             })
-            .catch((er) => log.error(er));
+            .catch((er) => {
+              log.error(er);
+            });
         }
         break;
       }
@@ -311,7 +314,7 @@ export function buttonHandler(this: BMManagerWin, e: React.SyntheticEvent) {
       G.Commands.openBookmarkProperties(
         G.i18n.t(titleKey),
         bmPropertiesState || {},
-        newitem
+        newitem,
       );
     }
   }
@@ -320,7 +323,7 @@ export function buttonHandler(this: BMManagerWin, e: React.SyntheticEvent) {
 export function itemPredicate(
   this: BMManagerWin,
   query: string,
-  item: BookmarkItemType
+  item: BookmarkItemType,
 ): boolean {
   const { label, note } = item;
   let sampleText = '';
@@ -344,7 +347,7 @@ export function itemPredicate(
 export function itemRenderer(
   this: BMManagerWin,
   item: BookmarkItemType,
-  itemProps: ItemRendererProps
+  itemProps: ItemRendererProps,
 ): JSX.Element | null {
   const { handleClick, ref } = itemProps;
   const { label, labelLocale, note, noteLocale } = item;
@@ -356,7 +359,7 @@ export function itemRenderer(
     sampleModule = getModuleOfObject(location) || '';
   }
   const shortRE1 = new RegExp(
-    `^(.{${C.UI.BMManager.searchResultBreakAfter}}.*?)\\b.*$`
+    `^(.{${C.UI.BMManager.searchResultBreakAfter}}.*?)\\b.*$`,
   );
   let notesh = note.replace(shortRE1, '$1');
   if (note.length > C.UI.BMManager.searchResultBreakAfter) notesh += '…';
@@ -395,7 +398,7 @@ export function inputValueRenderer(item: BookmarkItemType): string {
 }
 
 export function getSearchableItems(
-  folder: BookmarkFolderType
+  folder: BookmarkFolderType,
 ): BookmarkItemType[] {
   const searchableItems: BookmarkItemType[] = [];
   forEachBookmarkItem(folder.childNodes, (n) => {
@@ -411,7 +414,7 @@ function tooltip(rowArray: string[]) {
 }
 
 export function getTableData(
-  s: Pick<BMManagerState, 'rootfolder' | 'cut' | 'copy'>
+  s: Pick<BMManagerState, 'rootfolder' | 'cut' | 'copy'>,
 ): TableRow[] {
   const { rootfolder, cut, copy } = s;
   const getTableRow = (item: BookmarkItemType, level: number): TableRow => {
@@ -481,7 +484,7 @@ export function getTableData(
 
 export function bmContextData(
   this: BMManagerWin,
-  elem: HTMLElement
+  elem: HTMLElement,
 ): ContextDataType {
   const { selectedItems } = this.state as BMManagerState;
   const data = this.tableData;
@@ -492,7 +495,7 @@ export function bmContextData(
     if (ri) {
       const tableDataRowIndex = Number(ri[1]);
       const selectedDataRows = selectedItems.map((id) =>
-        data.findIndex((row) => row[Col.iInfo].id === id)
+        data.findIndex((row) => row[Col.iInfo].id === id),
       );
       const rows = selectedDataRows.includes(tableDataRowIndex)
         ? selectedDataRows
@@ -510,7 +513,7 @@ export function bmContextData(
 export function printableItem(
   this: BMManagerWin,
   itemOrID: string | BookmarkItemType,
-  level = 1
+  level = 1,
 ): JSX.Element | null {
   const { localizedRootFolderClone } = this;
   if (localizedRootFolderClone) {
@@ -519,23 +522,26 @@ export function printableItem(
         ? findBookmarkItem(localizedRootFolderClone, itemOrID)
         : itemOrID;
     if (item) {
+      let module: string = '';
       let ref: JSX.Element | null = null;
       if (item.type === 'bookmark') {
         const { location } = item;
         if (location && 'v11n' in location) {
+          module = location.vkMod ?? '';
           ref = (
             <span className="ref versekey cs-locale">
               {verseKey(location).readable(G.i18n.language, null, true)}
             </span>
           );
         } else if (location) {
-          const { otherMod: module, key } = location;
+          const { otherMod, key } = location;
+          module = otherMod;
           ref = (
             <>
               {key.split(C.GBKSEP).map((k, i) => (
                 <span
                   key={[k, i].join('.')}
-                  className={`ref gbkey level${i} cs-${module}`}
+                  className={`ref gbkey level${i} cs-${otherMod}`}
                 >
                   {k}
                 </span>

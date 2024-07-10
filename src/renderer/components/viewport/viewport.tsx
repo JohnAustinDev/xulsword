@@ -1,14 +1,4 @@
-/* eslint-disable @typescript-eslint/no-use-before-define */
-/* eslint-disable react/no-did-update-set-state */
-/* eslint-disable react/forbid-prop-types */
-/* eslint-disable no-continue */
-/* eslint-disable prefer-destructuring */
-/* eslint-disable jsx-a11y/control-has-associated-label */
-/* eslint-disable jsx-a11y/no-static-element-interactions */
-/* eslint-disable jsx-a11y/click-events-have-key-events */
-/* eslint-disable react/static-property-placement */
-/* eslint-disable react/jsx-props-no-spreading */
-import React, { SyntheticEvent } from 'react';
+import React from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import C from '../../../constant.ts';
@@ -17,9 +7,6 @@ import Popup from '../popup/popup.tsx';
 import {
   popupParentHandler as popupParentHandlerH,
   popupHandler as popupHandlerH,
-  PopupParent,
-  PopupParentState,
-  ViewportPopupProps,
   PopupParentInitState,
 } from '../popup/popupParentH.ts';
 import G from '../../rg.ts';
@@ -27,12 +14,7 @@ import RenderPromise from '../../renderPromise.ts';
 import log from '../../log.ts';
 import { verseKey } from '../../htmlData.ts';
 import { clearPending } from '../../rutil.ts';
-import {
-  addClass,
-  xulPropTypes,
-  XulProps,
-  topHandle,
-} from '../../libxul/xul.tsx';
+import { addClass, xulPropTypes, topHandle } from '../../libxul/xul.tsx';
 import { Hbox, Vbox } from '../../libxul/boxes.tsx';
 import Chooser from '../chooser/chooser.tsx';
 import GenbookChooser from '../genbookChooser/genbookChooser.tsx';
@@ -40,6 +22,7 @@ import Tabs from '../tabs/tabs.tsx';
 import Atext from '../atext/atext.tsx';
 import './viewport.css';
 
+import type { SyntheticEvent } from 'react';
 import type {
   GenBookAudioFile,
   LocationVKType,
@@ -48,6 +31,12 @@ import type {
 } from '../../../type.ts';
 import type S from '../../../defaultPrefs.ts';
 import type { RenderPromiseState } from '../../renderPromise.ts';
+import type { XulProps } from '../../libxul/xul.tsx';
+import type {
+  PopupParent,
+  PopupParentState,
+  ViewportPopupProps,
+} from '../popup/popupParentH.ts';
 
 const propTypes = {
   ...xulPropTypes,
@@ -97,12 +86,12 @@ type ViewportProps = ViewportPopupProps &
     xulswordStateHandler: (s: XulswordStateArgType) => void;
   };
 
-type ViewportState = PopupParentState & RenderPromiseState & {
-  reset: number;
-};
+type ViewportState = PopupParentState &
+  RenderPromiseState & {
+    reset: number;
+  };
 
 class Viewport extends React.Component implements PopupParent {
-
   static propTypes: typeof propTypes;
 
   popupParentHandler: typeof popupParentHandlerH;
@@ -137,7 +126,7 @@ class Viewport extends React.Component implements PopupParent {
     const { popupParent, elemdata } = state;
     if (popupParent && !document.body.contains(popupParent)) {
       this.setState({ popupParent: null });
-    } else if (popupParent && elemdata && elemdata.length) {
+    } else if (popupParent && elemdata?.length) {
       // Do the fade in effect
       popupParent.getElementsByClassName('npopup')[0]?.classList.remove('hide');
     }
@@ -205,7 +194,7 @@ class Viewport extends React.Component implements PopupParent {
         });
       if (panelHasBible && location?.book) {
         panelHasILOptions[i] = Boolean(
-          G.FeatureModules.hebrew[0] || G.FeatureModules.greek[0]
+          G.FeatureModules.hebrew[0] || G.FeatureModules.greek[0],
         );
         const bk = location.book in Book ? Book[location.book] : null;
         if (bk) {
@@ -262,7 +251,7 @@ class Viewport extends React.Component implements PopupParent {
     //   width, because the previous panel's width will be increased by an
     //   additional column. The previous panel's tab bank width will also grow
     //   accordingly.
-    const tabWidths: (number | null)[] = panels.map((panel, i) => {
+    const tabWidths: Array<number | null> = panels.map((panel, i) => {
       let r: number | null = tabs[i] ? 1 : 0;
       if (!panel && panel !== '') r = null;
       return r;
@@ -317,8 +306,8 @@ class Viewport extends React.Component implements PopupParent {
             { book, chapter, verse, v11n },
             tov11n || undefined,
             undefined,
-            renderPromise
-          ).location()
+            renderPromise,
+          ).location(),
         );
       });
     }
@@ -331,12 +320,13 @@ class Viewport extends React.Component implements PopupParent {
       ? 'genbook'
       : 'bible';
 
-    const showingChooser = showChooser ||
+    const showingChooser =
+      showChooser ||
       (window.processR.platform !== 'browser' && chooser === 'genbook');
     const chooserV11n =
       panels.reduce(
         (p, c) => p || (c && c in G.Tab && G.Tab[c].v11n) || null,
-        null
+        null,
       ) || 'KJV';
     const minWidth =
       (showingChooser ? 300 : 0) + C.UI.Viewport.minPanelWidth * numPanels;
@@ -346,8 +336,8 @@ class Viewport extends React.Component implements PopupParent {
         panels.some(
           (p) =>
             p &&
-            G.getBooksInVKModule(p).some((bk) => Book[bk].bookGroup === bg)
-        )
+            G.getBooksInVKModule(p).some((bk) => Book[bk].bookGroup === bg),
+        ),
     );
 
     let cls = '';
@@ -403,8 +393,8 @@ class Viewport extends React.Component implements PopupParent {
                   ilModules[i],
                   mtModules[i],
                   Math.round(
-                    atextRefs[i].current?.sbref.current?.offsetWidth || 0
-                  )
+                    atextRefs[i].current?.sbref.current?.offsetWidth || 0,
+                  ),
                 );
                 if (!tabsi) return <Hbox key={key} style={{ width }} />;
                 return (
@@ -427,8 +417,7 @@ class Viewport extends React.Component implements PopupParent {
 
           <Hbox className="textrow userFontBase" flex="1">
             {popupParent &&
-              elemdata &&
-              elemdata.length &&
+              elemdata?.length &&
               ReactDOM.createPortal(
                 <Popup
                   className="hide"
@@ -441,7 +430,7 @@ class Viewport extends React.Component implements PopupParent {
                   onMouseLeftPopup={popupHandler}
                   onPopupContextMenu={popupHandler}
                 />,
-                popupParent
+                popupParent,
               )}
 
             {panels.map((panel: string | null, i: number) => {
@@ -477,15 +466,15 @@ class Viewport extends React.Component implements PopupParent {
                       eHandler(e);
                       this.popupParentHandler(e, panel);
                     }}
-                    onMouseOut={(e: SyntheticEvent) =>
-                      this.popupParentHandler(e, panel)
-                    }
-                    onMouseOver={(e: SyntheticEvent) =>
-                      this.popupParentHandler(e, panel)
-                    }
-                    onMouseMove={(e: SyntheticEvent) =>
-                      this.popupParentHandler(e, panel)
-                    }
+                    onMouseOut={(e: SyntheticEvent) => {
+                      this.popupParentHandler(e, panel);
+                    }}
+                    onMouseOver={(e: SyntheticEvent) => {
+                      this.popupParentHandler(e, panel);
+                    }}
+                    onMouseMove={(e: SyntheticEvent) => {
+                      this.popupParentHandler(e, panel);
+                    }}
                     ref={atextRefs[i]}
                   />
                 );

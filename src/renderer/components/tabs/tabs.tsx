@@ -1,20 +1,21 @@
-/* eslint-disable jsx-a11y/click-events-have-key-events */
-/* eslint-disable jsx-a11y/no-static-element-interactions */
-/* eslint-disable react/static-property-placement */
-/* eslint-disable react/jsx-props-no-spreading */
-
+/* eslint-disable @typescript-eslint/unbound-method */
 import React from 'react';
 import PropTypes from 'prop-types';
 import C from '../../../constant.ts';
 import { ofClass } from '../../../common.ts';
-import { xulPropTypes, XulProps, htmlAttribs } from '../../libxul/xul.tsx';
+import { xulPropTypes, htmlAttribs } from '../../libxul/xul.tsx';
 import { AnchorButton } from '../../libxul/button.tsx';
 import Menupopup from '../../libxul/menupopup.tsx';
 import G, { GI } from '../../rg.ts';
 import RenderPromise from '../../renderPromise.ts';
 import './tabs.css';
 
-import type { RenderPromiseComponent, RenderPromiseState } from '../../renderPromise.ts';
+import type {
+  RenderPromiseComponent,
+  RenderPromiseState,
+} from '../../renderPromise.ts';
+import type { XulProps } from '../../libxul/xul.tsx';
+import type { TonCellClick } from 'renderer/libxul/table.tsx';
 
 const propTypes = {
   ...xulPropTypes,
@@ -27,20 +28,20 @@ const propTypes = {
   mtModule: PropTypes.string,
 };
 
-interface TabsProps extends XulProps {
+type TabsProps = {
   isPinned: boolean;
   module: string | undefined;
   panelIndex: number;
   tabs: string[];
   ilModule: string | undefined;
-  ilModuleOption: (string | undefined)[];
+  ilModuleOption: Array<string | undefined>;
   mtModule: string | undefined;
-}
+} & XulProps;
 
 type TabsState = RenderPromiseState & {
   multiTabs: string[];
   multiTabMenupopup: any;
-}
+};
 
 // XUL Tabs
 class Tabs extends React.Component implements RenderPromiseComponent {
@@ -90,7 +91,9 @@ class Tabs extends React.Component implements RenderPromiseComponent {
     const { panelIndex: i } = this.props as TabsProps;
     const tabType = !m || type === 'ilt-tab' ? 'Texts' : G.Tab[m].tabType;
     const label =
-      !m || type === 'ilt-tab' ? GI.i18n.t('', renderPromise, 'ORIGLabelTab') : G.Tab[m].label;
+      !m || type === 'ilt-tab'
+        ? GI.i18n.t('', renderPromise, 'ORIGLabelTab')
+        : G.Tab[m].label;
     return (
       <div
         key={`${type}_${i}_${m}`}
@@ -125,16 +128,16 @@ class Tabs extends React.Component implements RenderPromiseComponent {
     const newMultiTabs = multiTabs.slice();
     const tabsdiv = tabsref.current;
     const tdivs = tabsdiv?.getElementsByClassName(
-      'reg-tab'
+      'reg-tab',
     ) as HTMLCollectionOf<HTMLElement>;
     const twids =
       (tdivs &&
         Array.from(tdivs).map(
-          (d) => d.offsetWidth + 2 * C.UI.Viewport.TabMargin
+          (d) => d.offsetWidth + 2 * C.UI.Viewport.TabMargin,
         )) ||
       [];
     const iltab = tabsdiv?.getElementsByClassName(
-      'ilt-tab'
+      'ilt-tab',
     )[0] as HTMLElement | null;
     const iltwidth =
       (iltab && iltab.offsetWidth + 2 * C.UI.Viewport.TabMargin) || 0;
@@ -169,7 +172,7 @@ class Tabs extends React.Component implements RenderPromiseComponent {
     }
   }
 
-  multiTabButtonClick(e: any) {
+  multiTabButtonClick(e: React.SyntheticEvent<TonCellClick>) {
     const { renderPromise } = this;
     const { multiTabMenupopup } = this.state as TabsState;
     if (
@@ -191,7 +194,7 @@ class Tabs extends React.Component implements RenderPromiseComponent {
                 'mto-tab',
                 m === this.getMultiTabSelection(multiTabs) ? 'selected' : '',
                 null,
-                renderPromise
+                renderPromise,
               );
             })}
           </Menupopup>
@@ -227,7 +230,9 @@ class Tabs extends React.Component implements RenderPromiseComponent {
         data-index={panelIndex}
         data-ispinned={isPinned}
       >
-        {module && isPinned && this.getTab(module, 'reg-tab', 'active', null, renderPromise)}
+        {module &&
+          isPinned &&
+          this.getTab(module, 'reg-tab', 'active', null, renderPromise)}
         {tabs.map((m: string) => {
           if (isPinned || !m || multiTabs.includes(m)) return null;
           const selected = m === module ? 'active' : '';

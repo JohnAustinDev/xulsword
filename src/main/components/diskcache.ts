@@ -1,8 +1,7 @@
-
 import log from 'electron-log';
 import { JSON_parse, JSON_stringify } from '../../common.ts';
 import C from '../../constant.ts';
-import { PrefObject } from '../../type.ts';
+import { type PrefObject } from '../../type.ts';
 import Dirs from './dirs.ts';
 
 // Cache to disk store PrefValue data referenced by key.
@@ -75,7 +74,7 @@ const DiskCache = {
           cacheFile.writeFile(JSON_stringify(prefObj));
           log.verbose(`Persisted cache: ${cacheFile.path}`);
         } else {
-          log.error(`Invalid cache prefObject: ${prefObj}`);
+          log.error(`Invalid cache prefObject: ${JSON_stringify(prefObj)}`);
         }
       }
     });
@@ -90,7 +89,7 @@ const DiskCache = {
     storeFile.append(`${store}.json`);
     let s: PrefObject = {};
     if (storeFile.exists()) {
-      s = JSON_parse(storeFile.readFile());
+      s = JSON_parse(storeFile.readFile()) as PrefObject;
       if (!s && Array.isArray(s) && typeof s !== 'object') {
         s = {};
       }

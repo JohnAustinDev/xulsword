@@ -2,7 +2,6 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
 import { clipboard, shell } from 'electron';
 import i18next from 'i18next';
-import { WindowDescriptorType } from '../type.ts';
 import { canRedo, canUndo } from './bookmarks.ts';
 import Viewport from './components/viewport.ts';
 import Dirs from './components/dirs.ts';
@@ -39,11 +38,11 @@ import {
   inlineAudioFile,
   inlineFile,
   getAllDictionaryKeyList,
-  genBookTreeNodes
+  genBookTreeNodes,
 } from './minit.ts';
 import { callBatch } from './handleGlobal.ts';
 
-import type { GType } from '../type.ts';
+import type { GType, WindowDescriptorType } from '../type.ts';
 import type { SubscriptionType } from '../subscription.ts';
 
 // This G object is for use in the main electron process, and it shares
@@ -137,15 +136,11 @@ class GClass implements GType {
     return GetBooksInVKModules();
   }
 
-  Books(
-    ...args: Parameters<GType['Books']>
-  ): ReturnType<GType['Books']> {
+  Books(...args: Parameters<GType['Books']>): ReturnType<GType['Books']> {
     return getBooks(...args);
   }
 
-  Book(
-    ...args: Parameters<GType['Book']>
-  ): ReturnType<GType['Book']> {
+  Book(...args: Parameters<GType['Book']>): ReturnType<GType['Book']> {
     return getBook(...args);
   }
 
@@ -170,13 +165,13 @@ class GClass implements GType {
   resetMain(
     ...args: Parameters<GType['resetMain']>
   ): ReturnType<GType['resetMain']> {
-    return resetMain(...args);
+    resetMain(...args);
   }
 
-  getSystemFonts(
+  async getSystemFonts(
     ...args: Parameters<GType['getSystemFonts']>
   ): ReturnType<GType['getSystemFonts']> {
-    return getSystemFonts(...args);
+    return await getSystemFonts(...args);
   }
 
   getBooksInVKModule(
@@ -202,12 +197,12 @@ class GClass implements GType {
     ops: {
       renderers?:
         | Partial<WindowDescriptorType>
-        | Partial<WindowDescriptorType>[];
+        | Array<Partial<WindowDescriptorType>>;
       main?: boolean;
     },
     ...args: Parameters<SubscriptionType['publish'][S]>
   ) {
-    return publishSubscription(s, ops, ...args);
+    publishSubscription(s, ops, ...args);
   }
 
   canUndo(...args: Parameters<GType['canUndo']>): ReturnType<GType['canUndo']> {
@@ -218,27 +213,39 @@ class GClass implements GType {
     return canRedo(...args);
   }
 
-  async callBatch(...args: Parameters<GType['callBatch']>): ReturnType<GType['callBatch']> {
+  async callBatch(
+    ...args: Parameters<GType['callBatch']>
+  ): ReturnType<GType['callBatch']> {
     return callBatch(G, ...args);
   }
 
-  callBatchSync(...args: Parameters<GType['callBatchSync']>): ReturnType<GType['callBatchSync']> {
+  callBatchSync(
+    ...args: Parameters<GType['callBatchSync']>
+  ): ReturnType<GType['callBatchSync']> {
     return callBatch(G, ...args);
   }
 
-  getAllDictionaryKeyList(...args: Parameters<GType['getAllDictionaryKeyList']>): ReturnType<GType['getAllDictionaryKeyList']> {
+  getAllDictionaryKeyList(
+    ...args: Parameters<GType['getAllDictionaryKeyList']>
+  ): ReturnType<GType['getAllDictionaryKeyList']> {
     return getAllDictionaryKeyList(...args);
   }
 
-  genBookTreeNodes(...args: Parameters<GType['genBookTreeNodes']>): ReturnType<GType['genBookTreeNodes']> {
+  genBookTreeNodes(
+    ...args: Parameters<GType['genBookTreeNodes']>
+  ): ReturnType<GType['genBookTreeNodes']> {
     return genBookTreeNodes(...args);
   }
 
-  getExtRefHTML(...args: Parameters<GType['getExtRefHTML']>): ReturnType<GType['getExtRefHTML']> {
+  getExtRefHTML(
+    ...args: Parameters<GType['getExtRefHTML']>
+  ): ReturnType<GType['getExtRefHTML']> {
     return getExtRefHTML(...args);
   }
 
-  locationVKText(...args: Parameters<GType['locationVKText']>): ReturnType<GType['locationVKText']> {
+  locationVKText(
+    ...args: Parameters<GType['locationVKText']>
+  ): ReturnType<GType['locationVKText']> {
     return locationVKText(...args);
   }
 }

@@ -1,10 +1,3 @@
-/* eslint-disable react/forbid-prop-types */
-/* eslint-disable @typescript-eslint/no-use-before-define */
-/* eslint-disable react/no-unused-state */
-/* eslint-disable jsx-a11y/click-events-have-key-events */
-/* eslint-disable jsx-a11y/no-noninteractive-element-interactions */
-/* eslint-disable react/jsx-props-no-spreading */
-/* eslint-disable react/static-property-placement */
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Suggest } from '@blueprintjs/select';
@@ -19,27 +12,23 @@ import {
 } from '../../common.ts';
 import S from '../../defaultPrefs.ts';
 import G from '../rg.ts';
-import renderToRoot, { RootPrintType } from '../renderer.tsx';
+import renderToRoot from '../renderer.tsx';
 import {
   registerUpdateStateFromPref,
   setStatePref,
   getStatePref,
 } from '../rutil.ts';
+import log from '../log.ts';
 import { bookmarkTreeNodes, getSampleText } from '../bookmarks.ts';
 import { verseKey } from '../htmlData.ts';
 import Table from '../libxul/table.tsx';
-import DragSizer, { DragSizerVal } from '../libxul/dragsizer.tsx';
+import DragSizer from '../libxul/dragsizer.tsx';
 import Groupbox from '../libxul/groupbox.tsx';
 import { Hbox, Vbox } from '../libxul/boxes.tsx';
 import Label from '../libxul/label.tsx';
 import TreeView from '../libxul/treeview.tsx';
 import Button from '../libxul/button.tsx';
-import {
-  XulProps,
-  xulPropTypes,
-  addClass,
-  htmlAttribs,
-} from '../libxul/xul.tsx';
+import { xulPropTypes, addClass, htmlAttribs } from '../libxul/xul.tsx';
 import * as H from './bmManagerH.tsx';
 import './bmManager.css';
 import '@blueprintjs/select/lib/css/blueprint-select.css';
@@ -50,6 +39,9 @@ import type {
   BookmarkItemType,
   BookmarkTreeNode,
 } from '../../type.ts';
+import type { RootPrintType } from '../renderer.tsx';
+import type { DragSizerVal } from '../libxul/dragsizer.tsx';
+import type { XulProps } from '../libxul/xul.tsx';
 
 const propTypes = {
   ...xulPropTypes,
@@ -117,7 +109,7 @@ export default class BMManagerWin extends React.Component {
       ...defaultNotStatePref,
       ...(getStatePref(
         'prefs',
-        'bookmarkManager'
+        'bookmarkManager',
       ) as typeof S.prefs.bookmarkManager),
       ...(getStatePref('bookmarks', null) as typeof S.bookmarks),
     };
@@ -141,7 +133,7 @@ export default class BMManagerWin extends React.Component {
     this.scrollToItem = H.scrollToItem.bind(this);
     this.printableItem = H.printableItem.bind(this);
 
-    this.tableCompRef = React.createRef() as React.RefObject<BPTable>;
+    this.tableCompRef = React.createRef();
   }
 
   componentDidMount() {
@@ -194,14 +186,14 @@ export default class BMManagerWin extends React.Component {
           G,
           verseKey,
           this.localizedRootFolderClone,
-          getSampleText
+          getSampleText,
         );
         this.searchableItems = H.getSearchableItems(
-          this.localizedRootFolderClone
+          this.localizedRootFolderClone,
         );
         this.folderItems = bookmarkTreeNodes(
           this.localizedRootFolderClone.childNodes,
-          'folder'
+          'folder',
         );
         this.tableData = H.getTableData({
           ...state,
@@ -214,7 +206,7 @@ export default class BMManagerWin extends React.Component {
     const selectedRegions = tableRowsToSelection(
       selectedItems
         .map((id) => this.tableData.findIndex((r) => r[H.Col.iInfo].id === id))
-        .filter((i) => i !== -1)
+        .filter((i) => i !== -1),
     );
 
     if (printItems) {
@@ -324,7 +316,7 @@ export default class BMManagerWin extends React.Component {
             id="button.import"
             icon="import"
             title={`${G.i18n.t('menu.import').replace(/[.…]+$/, '')} ${G.i18n.t(
-              'menu.bookmarks'
+              'menu.bookmarks',
             )}`}
           />
           <Button
@@ -332,7 +324,7 @@ export default class BMManagerWin extends React.Component {
             icon="export"
             disabled={S.bookmarks.rootfolder.childNodes.length > 0}
             title={`${G.i18n.t('menu.export').replace(/[.…]+$/, '')} ${G.i18n.t(
-              'menu.bookmarks'
+              'menu.bookmarks',
             )}`}
           />
           <Button
@@ -399,7 +391,7 @@ export default class BMManagerWin extends React.Component {
             onContextMenu={(e: React.SyntheticEvent) => {
               G.Data.write(
                 this.bmContextData(e.target as HTMLElement),
-                'contextData'
+                'contextData',
               );
             }}
           >
@@ -411,9 +403,15 @@ export default class BMManagerWin extends React.Component {
               enableColumnReordering
               enableMultipleSelection
               onCellClick={this.onCellClick}
-              onColumnHide={(c) => this.setState({ columns: c })}
-              onColumnsReordered={(c) => this.setState({ columns: c })}
-              onColumnWidthChanged={(c) => this.setState({ columns: c })}
+              onColumnHide={(c) => {
+                this.setState({ columns: c });
+              }}
+              onColumnsReordered={(c) => {
+                this.setState({ columns: c });
+              }}
+              onColumnWidthChanged={(c) => {
+                this.setState({ columns: c });
+              }}
               onDoubleClick={this.onDoubleClick}
               tableCompRef={tableCompRef}
             />
@@ -434,19 +432,21 @@ renderToRoot(<BMManagerWin id="bookmarkManager" print={print} />, {
   onunload: () => {
     G.Prefs.setComplexValue(
       'bookmarkManager.cut',
-      null as typeof S.prefs.bookmarkManager.cut
+      null as typeof S.prefs.bookmarkManager.cut,
     );
     G.Prefs.setComplexValue(
       'bookmarkManager.copy',
-      null as typeof S.prefs.bookmarkManager.copy
+      null as typeof S.prefs.bookmarkManager.copy,
     );
     G.Prefs.setCharPref(
       'bookmarkManager.selectedFolder',
-      S.bookmarks.rootfolder.id as typeof S.prefs.bookmarkManager.selectedFolder
+      S.bookmarks.rootfolder.id,
     );
     G.Prefs.setComplexValue(
       'bookmarkManager.printItems',
-      null as typeof S.prefs.bookmarkManager.printItems
+      null as typeof S.prefs.bookmarkManager.printItems,
     );
   },
+}).catch((er) => {
+  log.error(er);
 });

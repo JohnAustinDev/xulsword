@@ -1,4 +1,3 @@
-
 import React from 'react';
 import renderToRoot from '../renderer.tsx';
 import G from '../rg.ts';
@@ -11,5 +10,7 @@ renderToRoot(<Xulsword />, {
     setTimeout(() => {
       G.Window.moveToBack();
     }, 100);
-  }
+  },
+}).catch((er) => {
+  log.error(er);
 });

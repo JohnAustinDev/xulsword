@@ -1,5 +1,5 @@
 import { BrowserWindow } from 'electron'; // undefined in server mode
-import { ChildProcess, fork } from 'child_process';
+import { fork } from 'child_process';
 import log from 'electron-log';
 import path from 'path';
 import {
@@ -7,16 +7,19 @@ import {
   isRepoLocal,
   JSON_parse,
   noAutoSearchIndex,
+  unknown2String,
+  JSON_stringify,
 } from '../../common.ts';
 import Cache from '../../cache.ts';
-import S from '../../defaultPrefs.ts';
 import C from '../../constant.ts';
 import { publicFiles } from '../parseSwordConf.ts';
 import LocalFile from './localFile.ts';
 import Dirs from './dirs.ts';
+import Data from './data.ts';
 import Prefs from './prefs.ts';
 import DiskCache from './diskcache.ts';
 
+import type { ChildProcess } from 'child_process';
 import type {
   GenBookTOC,
   Repository,
@@ -27,7 +30,12 @@ import type {
   GenBookKeys,
   ModulesCache,
 } from '../../type.ts';
+import type S from '../../defaultPrefs.ts';
 import type { ManagerStatePref } from '../../renderer/moduleManager/manager.tsx';
+import type {
+  MessagesFromIndexWorker,
+  MessagesToIndexWorker,
+} from '../indexWorker.ts';
 
 const { libxulsword } = require('libxulsword');
 
@@ -95,7 +103,8 @@ const LibSword = {
 
   searchingID: '' as string,
 
-  indexingID: {} as { [modcode: string]: ChildProcess },
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  indexingID: {} as Record<string, ChildProcess>,
 
   backgroundIndexerTO: null as NodeJS.Timeout | null,
 
@@ -108,7 +117,7 @@ const LibSword = {
 
     this.moduleDirectories = [Dirs.path.xsModsCommon, Dirs.path.xsModsUser];
     const repos = Prefs.getComplexValue(
-      'moduleManager.repositories'
+      'moduleManager.repositories',
     ) as ManagerStatePref['repositories'];
     if (repos) {
       const { custom, disabled } = repos;
@@ -129,12 +138,10 @@ const LibSword = {
       return test.exists() && test.isDirectory();
     });
 
-    log.verbose(`module directories: ${this.moduleDirectories}`);
+    log.verbose(`module directories: ${this.moduleDirectories.join(', ')}`);
 
     // Get our xulsword instance...
-    this.libxulsword.GetXulsword(
-      this.moduleDirectories.join(', ')
-    );
+    this.libxulsword.GetXulsword(this.moduleDirectories.join(', '));
     log.verbose(`CREATED libxulsword object`);
     this.initialized = true;
 
@@ -143,9 +150,9 @@ const LibSword = {
 
   quit(): void {
     if (this.initialized) {
-      Object.keys(this.indexingID).forEach((module) =>
-        this.searchIndexCancel(module)
-      );
+      Object.keys(this.indexingID).forEach((module) => {
+        this.searchIndexCancel(module);
+      });
       this.libxulsword.FreeLibXulsword();
       log.verbose('DELETED libxulsword object');
     }
@@ -156,7 +163,7 @@ const LibSword = {
     if (this.initialized) return true;
     if (err) {
       log.error(
-        `libsword was called while uninitialized: ${new Error().stack}`
+        `libsword was called while uninitialized: ${new Error().stack}`,
       );
     }
     return false;
@@ -194,14 +201,14 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   getChapterText(
     modname: string,
     vkeytext: string,
-    options: { [key in SwordFilterType]: SwordFilterValueType }
+    options: { [key in SwordFilterType]: SwordFilterValueType },
   ): { text: string; notes: string } {
     if (this.isReady(true)) {
       Object.entries(options).forEach((entry) => {
         this.libxulsword.SetGlobalOption(entry[0], entry[1]);
       });
-      const text = this.libxulsword.GetChapterText(modname, vkeytext);
-      const notes = this.libxulsword.GetNotes();
+      const text: string = this.libxulsword.GetChapterText(modname, vkeytext);
+      const notes: string = this.libxulsword.GetNotes();
       return { text: publicFiles(text), notes: publicFiles(notes) };
     }
     return { text: '', notes: '' };
@@ -220,18 +227,18 @@ DEFINITION OF A 'XULSWORD REFERENCE':
     modstrlist: string,
     vkeytext: string,
     keepnotes: boolean,
-    options: { [key in SwordFilterType]: SwordFilterValueType }
+    options: { [key in SwordFilterType]: SwordFilterValueType },
   ): { text: string; notes: string } {
     if (this.isReady(true)) {
       Object.entries(options).forEach((entry) => {
         this.libxulsword.SetGlobalOption(entry[0], entry[1]);
       });
-      const text = this.libxulsword.GetChapterTextMulti(
+      const text: string = this.libxulsword.GetChapterTextMulti(
         modstrlist,
         vkeytext,
-        keepnotes
+        keepnotes,
       );
-      const notes = this.libxulsword.GetNotes();
+      const notes: string = this.libxulsword.GetNotes();
       return { text: publicFiles(text), notes: publicFiles(notes) };
     }
     return { text: '', notes: '' };
@@ -249,7 +256,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
     vkeymod: string,
     vkeytext: string,
     keepTextNotes: boolean,
-    options: { [key in SwordFilterType]: SwordFilterValueType }
+    options: { [key in SwordFilterType]?: SwordFilterValueType },
   ): string {
     if (this.isReady(true)) {
       Object.entries(options).forEach((entry) => {
@@ -258,7 +265,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
       const verseText = this.libxulsword.GetVerseText(
         vkeymod,
         vkeytext,
-        keepTextNotes
+        keepTextNotes,
       );
       return verseText;
     }
@@ -314,7 +321,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   convertLocation(
     fromv11n: V11nType,
     vkeytext: string,
-    tov11n: V11nType
+    tov11n: V11nType,
   ): string {
     if (this.isReady(true)) {
       return this.libxulsword.ConvertLocation(fromv11n, vkeytext, tov11n);
@@ -332,15 +339,18 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   getIntroductions(
     vkeymod: string,
     bname: string,
-    options: { [key in SwordFilterType]: SwordFilterValueType }
+    options: { [key in SwordFilterType]: SwordFilterValueType },
   ): { text: string; notes: string } {
     if (this.isReady(true)) {
       options.Headings = 'On';
       Object.entries(options).forEach((entry) => {
         this.libxulsword.SetGlobalOption(entry[0], entry[1]);
       });
-      const introductions = this.libxulsword.GetIntroductions(vkeymod, bname);
-      const notes = this.libxulsword.GetNotes();
+      const introductions: string = this.libxulsword.GetIntroductions(
+        vkeymod,
+        bname,
+      );
+      const notes: string = this.libxulsword.GetNotes();
       return { text: publicFiles(introductions), notes: publicFiles(notes) };
     }
     return { text: '', notes: '' };
@@ -353,20 +363,20 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   getDictionaryEntry(
     lexdictmod: string,
     key: string,
-    options: { [key in SwordFilterType]: SwordFilterValueType }
+    options: { [key in SwordFilterType]: SwordFilterValueType },
   ): { text: string; notes: string } {
     if (this.isReady(true)) {
       Object.entries(options).forEach((entry) => {
         this.libxulsword.SetGlobalOption(entry[0], entry[1]);
       });
-      let text;
-      let notes;
+      let text: string;
+      let notes: string;
       try {
         text = this.libxulsword.GetDictionaryEntry(lexdictmod, key);
         notes = this.libxulsword.GetNotes();
-      } catch(er) {
+      } catch (er) {
         text = C.NOTFOUND;
-        notes = ''
+        notes = '';
       }
       return { text: publicFiles(text), notes: publicFiles(notes) };
     }
@@ -387,7 +397,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
       }
       return DiskCache.read(
         pkey,
-        lexdictmod
+        lexdictmod,
       ) as ModulesCache[string]['keylist'];
     }
     return [];
@@ -399,17 +409,17 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   getGenBookChapterText(
     gbmod: string,
     treekey: string,
-    options: { [key in SwordFilterType]: SwordFilterValueType }
+    options: { [key in SwordFilterType]: SwordFilterValueType },
   ): { text: string; notes: string } {
     if (this.isReady(true)) {
       Object.entries(options).forEach((entry) => {
         this.libxulsword.SetGlobalOption(entry[0], entry[1]);
       });
-      const text = this.libxulsword.GetGenBookChapterText(
+      const text: string = this.libxulsword.GetGenBookChapterText(
         gbmod,
-        treekey
+        treekey,
       );
-      const notes = this.libxulsword.GetNotes();
+      const notes: string = this.libxulsword.GetNotes();
       return { text: publicFiles(text), notes: publicFiles(notes) };
     }
     return { text: '', notes: '' };
@@ -422,13 +432,13 @@ DEFINITION OF A 'XULSWORD REFERENCE':
     if (this.isReady(true)) {
       const pkey = 'toc';
       if (!DiskCache.has(pkey, gbmod)) {
-        const t = this.libxulsword
+        const t: string = this.libxulsword
           .GetGenBookTableOfContents(gbmod)
           // EnumaElish module has a TOC entry with this illegal control character:
           // eslint-disable-next-line no-control-regex
           .replace(/[	]/g, ' ');
         const toc = JSON_parse(t) as GenBookTOC;
-        DiskCache.write(pkey, readGenBookLibSword(toc) as GenBookKeys, gbmod);
+        DiskCache.write(pkey, readGenBookLibSword(toc), gbmod);
       }
       return DiskCache.read(pkey, gbmod) as ModulesCache[string]['toc'];
     }
@@ -465,9 +475,9 @@ DEFINITION OF A 'XULSWORD REFERENCE':
     type: number,
     flags: number,
     newsearch: boolean,
-    searchID: string
+    searchID: string,
   ): Promise<number | null> {
-    return new Promise((resolve) => {
+    return await new Promise((resolve) => {
       if (
         this.isReady(true) &&
         ((newsearch && !this.searchingID) ||
@@ -480,17 +490,17 @@ DEFINITION OF A 'XULSWORD REFERENCE':
         // not exist in the module, SWORD may crash!
         // NOTE: This libxulsword function is not a Node-API async function, so
         // it will block Node's event loop until it finishes.
-        const intgr = this.libxulsword.Search(
+        const intgr: number = this.libxulsword.Search(
           modname,
           srchstr,
           scope,
           type,
           flags,
-          newsearch
+          newsearch,
         );
         this.searchedID = searchID;
         log.debug(
-          `search: modname=${modname} srchstr=${srchstr} scope=${scope} type=${type} flags=${flags} newsearch=${newsearch} searchID=${searchID} intgr=${intgr}`
+          `search: modname=${modname} srchstr=${srchstr} scope=${scope} type=${type} flags=${flags} newsearch=${newsearch} searchID=${searchID} intgr=${intgr}`,
         );
         resolve(intgr);
       } else resolve(null);
@@ -507,17 +517,22 @@ DEFINITION OF A 'XULSWORD REFERENCE':
     first: number,
     num: number,
     keepStrongs: boolean,
-    searchID: string
+    searchID: string,
   ): string | null {
     if (this.isReady(true) && searchID === this.searchedID) {
       this.searchingID = '';
 
       log.debug(
-        `getSearchResults: modname=${modname} first=${first} num=${num} keepStrongs=${keepStrongs} searchID=${searchID}`
+        `getSearchResults: modname=${modname} first=${first} num=${num} keepStrongs=${keepStrongs} searchID=${searchID}`,
       );
 
       if (!num) return ''; // no reason to call libxulsword
-      return this.libxulsword.GetSearchResults(modname, first, num, keepStrongs);
+      return this.libxulsword.GetSearchResults(
+        modname,
+        first,
+        num,
+        keepStrongs,
+      );
     }
     return null;
   },
@@ -532,109 +547,104 @@ DEFINITION OF A 'XULSWORD REFERENCE':
     return false;
   },
 
+  // Build a search index for a module, cancelling it if a timeout is reached
+  // before completion. Returns Promise<success>
+  async timedIndexer(module: string, timeout: number): Promise<boolean> {
+    if (this.backgroundIndexerTO) {
+      throw new Error(
+        `Attempted timedIndexer() with backgroundIndexerTO already set.`,
+      );
+    }
+    const start = new Date().valueOf();
+    this.backgroundIndexerTO = setTimeout(() => {
+      const tom = Math.floor(timeout / 60000);
+      log.warn(`Index timeout reached: ${module} (${tom} minutes)`);
+      this.backgroundIndexerTO = null;
+      this.searchIndexCancel(module);
+    }, timeout);
+    let success: boolean;
+    try {
+      success = await this.searchIndexBuild(module);
+      log.debug(`searchIndexBuild ${module} success=${success}`);
+    } catch (er) {
+      success = false;
+      log.debug(`searchIndexBuild failed: ${unknown2String(er, ['message'])}`);
+    }
+    if (this.backgroundIndexerTO) {
+      clearTimeout(this.backgroundIndexerTO);
+      this.backgroundIndexerTO = null;
+    }
+
+    log.debug(
+      `Finished background index, success=${success}: ${module} (${Math.ceil((new Date().valueOf() - start) / 1000)}s)`,
+    );
+    return success;
+  },
+
   // Index each unindexed module in the background. Does nothing if any modules are
   // already being indexed. If an index fails, or takes too long and is canceled, it
   // will not be attempted again unless the module is re-installed. However the user
   // can always click the create index button.
   async startBackgroundSearchIndexer() {
-    const index = async (mod: string): Promise<[boolean, number]> => {
-      const start = new Date().valueOf();
-      const successP = this.searchIndexBuild(mod);
-      const timeoutP = new Promise((resolve: (r: number) => void, reject) => {
-        this.backgroundIndexerTO = setTimeout(() => {
-          this.backgroundIndexerTO = null;
-          reject(this.searchIndexCancel(mod));
-        }, C.UI.Search.backgroundIndexerTimeout);
-        return successP
-          .then((s) => {
-            const end = new Date().valueOf();
-            resolve(Math.ceil((end - start) / 1000));
-            return s;
-          })
-          .catch((er) => {
-            reject(er);
-            return false;
-          })
-          .finally(() => {
-            if (this.backgroundIndexerTO) {
-              clearTimeout(this.backgroundIndexerTO);
-              this.backgroundIndexerTO = null;
-            }
-          });
-      });
-      return Promise.all([successP, timeoutP]);
-    };
+    if (Object.keys(this.indexingID).length !== 0 || !this.isReady()) return;
+    const start = new Date().valueOf();
+    const timeout = C.UI.Search.backgroundIndexerTimeout; // milliseconds
+    const modlist = LibSword.getModuleList();
+    const modules = Array.from(
+      new Set(
+        modlist === C.NOMODULES
+          ? []
+          : modlist.split('<nx>').map((x) => x.split(';')[0]),
+      ),
+    );
+    const modulesToIndex = modules.filter(
+      (m) =>
+        !(
+          Prefs.getComplexValue(
+            'global.noAutoSearchIndex',
+          ) as typeof S.prefs.global.noAutoSearchIndex
+        ).includes(m) && !this.luceneEnabled(m),
+    );
 
-    const skip = () =>
-      Prefs.getComplexValue(
-        'global.noAutoSearchIndex'
-      ) as typeof S.prefs.global.noAutoSearchIndex;
-
-    if (Object.keys(this.indexingID).length === 0) {
-      const timeout = Math.floor(C.UI.Search.backgroundIndexerTimeout / 60000);
-      const modlist = LibSword.getModuleList();
-      let modules = Array.from(
-        new Set(
-          modlist === C.NOMODULES
-            ? []
-            : modlist.split('<nx>').map((x) => x.split(';')[0])
-        )
+    if (modulesToIndex.length) {
+      log.info(
+        `Starting background indexer. (${modulesToIndex.length} modules to index, ${
+          modules.length - modulesToIndex.length
+        } skipped, ${Math.floor(timeout / 60000)} minute timeout per module)`,
       );
-      let msg = false;
-      let passed = 0;
-      let failed = 0;
-      const start = new Date().valueOf();
-      while (modules.length) {
-        if (!this.isReady()) break;
-        modules = modules.filter(
-          (m) => !skip().includes(m) && !this.luceneEnabled(m)
-        );
-        const module = modules.pop();
-        if (module) {
-          let success: [boolean, number];
-          if (!msg) {
-            log.info(
-              `Starting background indexer. (${modules.length + 1} modules, ${
-                skip().length
-              } skipped, ${timeout} minute timeout per module)`
-            );
-            msg = true;
-          }
-          try {
-            // Index one at a time, don't try and break their PC...
-            // eslint-disable-next-line no-await-in-loop
-            success = await index(module);
-          } catch (er: unknown) {
-            success = [false, 0];
-            if (er === Boolean(er)) {
-              log.info(`Index timeout reached: ${module} (${timeout} minutes)`);
-              if (!er) {
-                log.error(`Index cancel failed: ${module}`);
-              }
-            } else log.error(er);
-          }
-          if (success[0]) {
-            passed += 1;
-            log.info(`Finished background index: ${module} (${success[1]}s)`);
-          } else {
-            log.warn(`Failed background index: ${module}`);
-            failed += 1;
-            noAutoSearchIndex(Prefs, module);
-          }
+    }
+
+    // Index one module at a time, don't try and break their PC...
+    let passed = 0;
+    let failed = 0;
+    while (modulesToIndex.length) {
+      const module = modulesToIndex.pop();
+      if (module) {
+        let result: boolean;
+        try {
+          result = await this.timedIndexer(module, timeout);
+        } catch (er: unknown) {
+          result = false;
+          log.error(er);
+        }
+        if (result) passed += 1;
+        else {
+          failed += 1;
+          log.warn(`Failed background index: ${module}`);
+          noAutoSearchIndex(Prefs, module);
         }
       }
-      if (passed || failed) {
-        const end = new Date().valueOf();
-        log.info(
-          `Finished background indexer. (${failed} failed, ${
-            Math.round((end - start) / 600) / 100
-          } minutes)`
-        );
-      } else {
-        log.info(
-          `No modules to index. (${modlist.split('<nx>').length} modules)`
-        );
-      }
+    }
+
+    if (passed || failed) {
+      const end = new Date().valueOf();
+      log.info(
+        `Finished background indexer. (${failed} failed, ${
+          Math.round((end - start) / 600) / 100
+        } minutes)`,
+      );
+    } else {
+      log.info(`No modules to index. (${modulesToIndex.length} modules)`);
     }
   },
 
@@ -648,16 +658,29 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   },
 
   // searchIndexBuild
-  // Before starting to build a new search index, call 'searchIndexDelete()'
+  // Note: Workers handle messages synchronously (ie worker handlers are always
+  // run synchronously, even if they are async functions). So the only way to
+  // interrupt a worker that is working, is indexer.kill(), which will be
+  // effective. However in this case, the worker is of course immediately killed
+  // with no further responses from it. Therefore, the only to know when a worker
+  // has been terminated is to periodically check indexer.killed.
   async searchIndexBuild(
     modcode: string,
-    callingWinId?: number
+    callingWinId?: number,
   ): Promise<boolean> {
-    return new Promise((resolve, reject) => {
+    return await new Promise((resolve, reject) => {
       if (this.isReady(true) && !(modcode in this.indexingID)) {
         const workerjs = Dirs.xsAsar.append(`dist/main/indexWorker.js`).path;
         const indexer = fork(workerjs);
         this.indexingID[modcode] = indexer;
+
+        const watchForKill = setInterval(() => {
+          if (indexer.killed) {
+            doneError();
+            resolve(false);
+          }
+        }, 200);
+
         const sendProgress = (percent: number) => {
           if (callingWinId) {
             let w = BrowserWindow?.fromId(Number(callingWinId)) ?? null;
@@ -668,42 +691,82 @@ DEFINITION OF A 'XULSWORD REFERENCE':
             }
           }
         };
+
+        const send = (msg: MessagesToIndexWorker) => {
+          log.silly(`Xulsword sending to Index Worker: ${JSON_stringify(msg)}`);
+          indexer.send(msg);
+        };
+
         const done = () => {
           sendProgress(0);
-          if (indexer && indexer.exitCode === null) indexer.kill();
+          clearInterval(watchForKill);
           delete this.indexingID[modcode];
         };
-        indexer.on('error', (er: Error) => {
+
+        const doneError = () => {
           done();
-          reject(er);
-        });
-        indexer.on(
-          'message',
-          (indexerMsg: { msg: string; percent: number }) => {
-            const { msg, percent } = indexerMsg;
-            if (msg !== 'working') {
-              log.silly(`indexer responded:`, msg, percent);
-            }
-            sendProgress(percent);
-            if (msg === 'finished') {
-              done();
-              resolve(true);
-            } else if (msg !== 'working') {
-              done();
-              resolve(false);
+          if (indexer && !indexer.killed) {
+            indexer.kill();
+            log.debug(`indexer killed`);
+          }
+          if (this.luceneEnabled(modcode)) {
+            if (!this.searchIndexDelete(modcode)) {
+              log.error(`Failed to delete index after failure: ${modcode}`);
             }
           }
-        );
-        log.silly(`indexer send:`, this.moduleDirectories, modcode);
-        indexer.send({ modsd: this.moduleDirectories, modcode });
+        };
+
+        indexer.on('error', (er: Error) => {
+          doneError();
+          reject(er);
+        });
+
+        indexer.on('message', (indexerMsg: MessagesFromIndexWorker) => {
+          log.silly(
+            `Xulsword recieved from Index Worker: ${JSON_stringify(indexerMsg)}`,
+          );
+          const { msg } = indexerMsg;
+          switch (msg) {
+            case 'working': {
+              const { percent } = indexerMsg;
+              sendProgress(percent);
+              break;
+            }
+            case 'finished': {
+              done();
+              resolve(true);
+              break;
+            }
+            case 'failed': {
+              doneError();
+              resolve(false);
+              break;
+            }
+            default:
+              throw new Error(
+                `Unhandled message from index worker: ${JSON_stringify(indexerMsg)}`,
+              );
+          }
+        });
+
+        send({
+          command: 'log',
+          logfile: Data.read('logfile'),
+          loglevel: C.LogLevel,
+        });
+
+        send({
+          command: 'start',
+          directories: this.moduleDirectories,
+          module: modcode,
+        });
       } else resolve(false);
     });
   },
 
-  searchIndexCancel(modcode: string, callingWinId?: number): boolean {
+  searchIndexCancel(modcode: string, callingWinId?: number) {
     if (modcode in this.indexingID) {
-      const indexer = this.indexingID[modcode];
-      indexer.kill();
+      this.indexingID[modcode].kill();
       if (callingWinId) {
         let w = BrowserWindow?.fromId(Number(callingWinId)) ?? null;
         if (w) {
@@ -711,13 +774,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
           w = null;
         }
       }
-      delete this.indexingID[modcode];
-      log.debug(`indexer killed`);
-      if (this.luceneEnabled(modcode)) {
-        return this.searchIndexDelete(modcode);
-      }
     }
-    return true;
   },
 
   /* ******************************************************************************
@@ -745,12 +802,12 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   //   type infotype (eg. GlobalOptionFilter)
   getModuleInformation(
     modname: string,
-    paramname: keyof SwordConfigEntries | 'AbsoluteDataPath'
+    paramname: keyof SwordConfigEntries | 'AbsoluteDataPath',
   ): string {
     if (this.isReady(true)) {
       const moduleInformation = this.libxulsword.GetModuleInformation(
         modname,
-        paramname
+        paramname,
       );
       return moduleInformation;
     }
@@ -772,6 +829,7 @@ export type LibSwordType = Omit<
   | 'ReportProgress'
   | 'unlock'
   | 'checkerror'
+  | 'timedIndexer'
   | 'searchingID'
   | 'searchedID'
   | 'indexingID'

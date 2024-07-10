@@ -1,8 +1,7 @@
-/* eslint-disable prefer-rest-params */
 import path from 'path';
 import { BrowserWindow } from 'electron';
 import log from 'electron-log';
-import prefs, { PrefsGType } from '../../prefs.ts';
+import Mprefs, { type PrefsGType } from '../../prefs.ts';
 import LocalFile from './localFile.ts';
 import Dirs from './dirs.ts';
 
@@ -13,10 +12,10 @@ const fileStorage = (aStore: string) => {
 
   return new LocalFile(
     path.join(pdir, aStore.concat('.json')),
-    LocalFile.NO_CREATE
+    LocalFile.NO_CREATE,
   );
 };
 
-const Prefs = new prefs(fileStorage, log, false, BrowserWindow);
+const Prefs = new Mprefs(fileStorage, log, false, BrowserWindow);
 
 export default Prefs as PrefsGType;

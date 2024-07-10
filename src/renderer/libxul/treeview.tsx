@@ -1,12 +1,12 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable react/jsx-props-no-spreading */
-/* eslint-disable react/forbid-prop-types */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Tree, TreeEventHandler, TreeNodeInfo } from '@blueprintjs/core';
+import { Tree } from '@blueprintjs/core';
 import C from '../../constant.ts';
 import { clone, diff } from '../../common.ts';
-import { XulProps, xulPropTypes } from './xul.tsx';
+import { xulPropTypes } from './xul.tsx';
+
+import type { TreeEventHandler, TreeNodeInfo } from '@blueprintjs/core';
+import type { XulProps } from './xul.tsx';
 
 // The initialState of all nodes in the tree is required. If selectedIDs is defined
 // then onSelection must also be defined so that selection can be controlled by the
@@ -16,11 +16,11 @@ import { XulProps, xulPropTypes } from './xul.tsx';
 export type TreeViewProps = XulProps & {
   initialState: TreeNodeInfo[];
   enableMultipleSelection?: boolean;
-  selectedIDs?: (string | number)[];
-  expandedIDs?: (string | number)[];
+  selectedIDs?: Array<string | number>;
+  expandedIDs?: Array<string | number>;
   bpClassName?: string; // a BluePrint class for the Tree element
-  onSelection?: (ids: (string | number)[]) => void;
-  onExpansion?: (ids: (string | number)[]) => void;
+  onSelection?: (ids: Array<string | number>) => void;
+  onExpansion?: (ids: Array<string | number>) => void;
   onNodeClick?: TreeEventHandler;
   treeRef?: React.RefObject<Tree>;
 };
@@ -30,10 +30,10 @@ const propTypes = {
   initialState: PropTypes.arrayOf(PropTypes.any).isRequired,
   enableMultipleSelection: PropTypes.bool,
   selectedIDs: PropTypes.arrayOf(
-    PropTypes.oneOfType([PropTypes.string, PropTypes.number])
+    PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   ),
   expandedIDs: PropTypes.arrayOf(
-    PropTypes.oneOfType([PropTypes.string, PropTypes.number])
+    PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   ),
   bpClassName: PropTypes.string,
   onSelection: PropTypes.func,
@@ -57,7 +57,7 @@ type TreeAction =
 
 export function forEachNode(
   nodes: TreeNodeInfo[] | undefined,
-  callback: (node: TreeNodeInfo) => void
+  callback: (node: TreeNodeInfo) => void,
 ): TreeNodeInfo[] {
   if (nodes === undefined) {
     return [];
@@ -72,7 +72,7 @@ export function forEachNode(
 export function forNodeAtPath(
   nodes: TreeNodeInfo[],
   path: NodePath,
-  callback: (node: TreeNodeInfo) => void
+  callback: (node: TreeNodeInfo) => void,
 ): TreeNodeInfo {
   const nfp = Tree.nodeFromPath(path, nodes);
   callback(nfp);
@@ -107,8 +107,8 @@ function treeReducer(state: TreeNodeInfo[], action: TreeAction) {
   }
 }
 
-function getSelection(nodes?: TreeNodeInfo[]): (string | number)[] {
-  const r: (string | number)[] = [];
+function getSelection(nodes?: TreeNodeInfo[]): Array<string | number> {
+  const r: Array<string | number> = [];
   forEachNode(nodes, (node) => {
     if (node.isSelected) {
       r.push(node.id);
@@ -117,8 +117,8 @@ function getSelection(nodes?: TreeNodeInfo[]): (string | number)[] {
   return r;
 }
 
-function getExpansion(nodes?: TreeNodeInfo[]): (string | number)[] {
-  const r: (string | number)[] = [];
+function getExpansion(nodes?: TreeNodeInfo[]): Array<string | number> {
+  const r: Array<string | number> = [];
   forEachNode(nodes, (node) => {
     if (node.isExpanded) {
       r.push(node.id);
@@ -130,9 +130,9 @@ function getExpansion(nodes?: TreeNodeInfo[]): (string | number)[] {
 // Toggle/expand/collapse state of each id. If doExpand is null or
 // undefined, state is toggled.
 function updatedExpansion(
-  nowExpandedIDs: (string | number)[],
-  idsx: (string | number)[] | string | number,
-  doExpandx?: (boolean | null)[] | boolean | null
+  nowExpandedIDs: Array<string | number>,
+  idsx: Array<string | number> | string | number,
+  doExpandx?: Array<boolean | null> | boolean | null,
 ) {
   const ids = Array.isArray(idsx) ? idsx : [idsx];
   const doExpand = (
@@ -171,7 +171,10 @@ function usePreviousExpansion<V>(value: V) {
   return ref.current;
 }
 
-const TreeView = ({ enableMultipleSelection = true, ...props }: TreeViewProps) => {
+const TreeView = ({
+  enableMultipleSelection = true,
+  ...props
+}: TreeViewProps) => {
   const {
     className,
     bpClassName,
@@ -183,14 +186,14 @@ const TreeView = ({ enableMultipleSelection = true, ...props }: TreeViewProps) =
     onNodeClick,
     treeRef: treeRef0,
   } = props;
-  const treeRef1 = React.createRef() as React.RefObject<Tree>;
+  const treeRef1: React.RefObject<Tree> = React.createRef();
   const treeRef = treeRef0 || treeRef1;
 
   const [nodes, dispatch] = React.useReducer(treeReducer, initialState);
 
   // Get current and previous selection and expansion.
-  let selection: (string | number)[] = [];
-  let expansion: (string | number)[] = [];
+  let selection: Array<string | number> = [];
+  let expansion: Array<string | number> = [];
   if (selectedIDs) {
     let stop = false;
     forEachNode(nodes, (node) => {
@@ -252,13 +255,13 @@ const TreeView = ({ enableMultipleSelection = true, ...props }: TreeViewProps) =
     (
       node: TreeNodeInfo,
       nodePath: NodePath,
-      e: React.MouseEvent<HTMLElement>
+      e: React.MouseEvent<HTMLElement>,
     ) => {
       if (selectedIDs) {
         if (typeof onSelection === 'function') onSelection([node.id]);
         else
           throw new Error(
-            `TreeView: onSelection must be defined when selectedIDs are defined`
+            `TreeView: onSelection must be defined when selectedIDs are defined`,
           );
       } else {
         const originallySelected = node.isSelected;
@@ -275,7 +278,7 @@ const TreeView = ({ enableMultipleSelection = true, ...props }: TreeViewProps) =
       }
       if (onNodeClick) onNodeClick(node, nodePath, e);
     },
-    [selectedIDs, onSelection, onNodeClick, enableMultipleSelection]
+    [selectedIDs, onSelection, onNodeClick, enableMultipleSelection],
   );
 
   const handleNodeCollapse = React.useCallback(
@@ -286,7 +289,7 @@ const TreeView = ({ enableMultipleSelection = true, ...props }: TreeViewProps) =
           if (newExpandedIDs) onExpansion(newExpandedIDs);
         } else
           throw new Error(
-            `TreeView: onExpansion must be defined when expandedIDs are defined`
+            `TreeView: onExpansion must be defined when expandedIDs are defined`,
           );
       } else {
         dispatch({
@@ -295,7 +298,7 @@ const TreeView = ({ enableMultipleSelection = true, ...props }: TreeViewProps) =
         });
       }
     },
-    [expandedIDs, onExpansion]
+    [expandedIDs, onExpansion],
   );
 
   // Call onExpansion if controlled, or else dispatch expansion to state.
@@ -307,7 +310,7 @@ const TreeView = ({ enableMultipleSelection = true, ...props }: TreeViewProps) =
           if (newExpandedIDs) onExpansion(newExpandedIDs);
         } else
           throw new Error(
-            `TreeView: onExpansion must be defined when expandedIDs are defined`
+            `TreeView: onExpansion must be defined when expandedIDs are defined`,
           );
       } else {
         dispatch({
@@ -316,7 +319,7 @@ const TreeView = ({ enableMultipleSelection = true, ...props }: TreeViewProps) =
         });
       }
     },
-    [expandedIDs, onExpansion]
+    [expandedIDs, onExpansion],
   );
 
   const classes = ['treeview'];

@@ -1,15 +1,8 @@
-/* eslint-disable react/prefer-stateless-function */
-/* eslint-disable jsx-a11y/control-has-associated-label */
-/* eslint-disable @typescript-eslint/no-unused-expressions */
-/* eslint-disable react/static-property-placement */
-/* eslint-disable react/destructuring-assignment */
-/* eslint-disable react/jsx-props-no-spreading */
-
 import React from 'react';
 import PropTypes from 'prop-types';
 import C from '../../constant.ts';
 import G from '../rg.ts';
-import { addClass, xulPropTypes, XulProps } from './xul.tsx';
+import { addClass, xulPropTypes, type XulProps } from './xul.tsx';
 import Menulist from './menulist.tsx';
 
 import type { ModTypes } from '../../type.ts';
@@ -24,7 +17,7 @@ const propTypes = {
   types: PropTypes.arrayOf(PropTypes.string),
 };
 
-interface ModuleMenuProps extends XulProps {
+type ModuleMenuProps = {
   value: string;
   description?: boolean; // show description or not
   disabled?: boolean;
@@ -32,7 +25,7 @@ interface ModuleMenuProps extends XulProps {
   modules?: string[]; // show only these modules or all if []
   types?: ModTypes[]; // show only these types or all if []
   onChange: (e: any) => void | Promise<void>;
-}
+} & XulProps;
 
 export default function ModuleMenu({
   description = false,

@@ -1,10 +1,9 @@
-
 // Store anything transferable for sharing between any processes.
 // NOTE: Don't use this in renderer processes unless data needs
 // to be shared between processes, otherwise it is better to use
 // the Cache module, which never uses IPC.
 const Data = {
-  datastore: {} as { [i: string]: any },
+  datastore: {} as Record<string, any>,
 
   has(name: string): boolean {
     return name in this.datastore;

@@ -3,7 +3,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { xulPropTypes, XulProps, htmlAttribs } from './xul.tsx';
+import { xulPropTypes, type XulProps, htmlAttribs } from './xul.tsx';
 
 // XUL image
 const propTypes = {
@@ -11,9 +11,9 @@ const propTypes = {
   src: PropTypes.string,
 };
 
-interface ImageProps extends XulProps {
+type ImageProps = {
   src: string | undefined;
-}
+} & XulProps;
 function Image(props: ImageProps) {
   return <img {...htmlAttribs('image', props)} src={props.src} alt="" />;
 }

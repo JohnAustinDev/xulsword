@@ -12,7 +12,7 @@ export type PrefCallbackType = (
   callingWinID: number,
   store: PrefStoreType,
   key: string,
-  value: PrefValue
+  value: PrefValue,
 ) => void;
 
 export type PrefStorage = {
@@ -51,7 +51,7 @@ export default class Prefs {
   stores = {} as {
     [i in string | PrefStoreType]: {
       store: PrefStorage;
-      data: any;
+      data: PrefObject | null;
     };
   };
 
@@ -59,7 +59,7 @@ export default class Prefs {
     storage: Prefs['storage'],
     log: ElectronLog.LogFunctions,
     writeOnChange?: Prefs['writeOnChange'],
-    browserWindow?: Prefs['browserWindow']
+    browserWindow?: Prefs['browserWindow'],
   ) {
     this.storage = storage;
     this.log = log;
@@ -70,7 +70,7 @@ export default class Prefs {
   has(
     key: string,
     type: 'string' | 'number' | 'boolean' | 'complex' | 'any',
-    aStore?: PrefStoreType
+    aStore?: PrefStoreType,
   ): boolean {
     const value = this.getKeyValueFromStore(key, true, aStore || 'prefs');
     if (value === undefined) return false;
@@ -85,7 +85,13 @@ export default class Prefs {
 
   // Set a string pref value. Error if key is not String.
   setCharPref(key: string, value: string, aStore?: PrefStoreType): boolean {
-    return this.setPref(key, 'string', value, aStore, arguments[3] ?? -1);
+    return this.setPref(
+      key,
+      'string',
+      value,
+      aStore,
+      (arguments[3] as number) ?? -1,
+    );
   }
 
   // Get a Boolean pref value. Error if key is not Boolean, or is missing from store.
@@ -95,7 +101,13 @@ export default class Prefs {
 
   // Set a Boolean pref value. Error if key is not Boolean.
   setBoolPref(key: string, value: boolean, aStore?: PrefStoreType): boolean {
-    return this.setPref(key, 'boolean', value, aStore, arguments[3] ?? -1);
+    return this.setPref(
+      key,
+      'boolean',
+      value,
+      aStore,
+      (arguments[3] as number) ?? -1,
+    );
   }
 
   // Get a number pref value (does no need to be an integer). Error if key is
@@ -106,7 +118,13 @@ export default class Prefs {
 
   // Set a Boolean pref value. Error if key is not a number.
   setIntPref(key: string, value: number, aStore?: PrefStoreType): boolean {
-    return this.setPref(key, 'number', value, aStore, arguments[3] ?? -1);
+    return this.setPref(
+      key,
+      'number',
+      value,
+      aStore,
+      (arguments[3] as number) ?? -1,
+    );
   }
 
   // Get a complex pref value. Error if key is not complex, or is missing from store.
@@ -115,8 +133,18 @@ export default class Prefs {
   }
 
   // Set a Boolean pref value. Error if key is not an number.
-  setComplexValue(key: string, value: any, aStore?: PrefStoreType): boolean {
-    return this.setPref(key, 'complex', value, aStore, arguments[3] ?? -1);
+  setComplexValue(
+    key: string,
+    value: PrefValue,
+    aStore?: PrefStoreType,
+  ): boolean {
+    return this.setPref(
+      key,
+      'complex',
+      value,
+      aStore,
+      (arguments[3] as number) ?? -1,
+    );
   }
 
   // Sets individual properties of a key or a store, leaving the others untouched.
@@ -125,22 +153,28 @@ export default class Prefs {
     obj: PrefObject,
     aStore?: PrefStoreType,
     skipCallbacks?: boolean | undefined, // undefined means skip if no change
-    clearRendererCaches?: boolean
+    clearRendererCaches?: boolean,
   ): boolean {
     return this.setPref(
       key,
       'merge',
       obj,
       aStore,
-      arguments[5] ?? -1,
+      (arguments[5] as number) ?? -1,
       skipCallbacks,
-      clearRendererCaches
+      clearRendererCaches,
     );
   }
 
   // Remove the key from a store
   deleteUserPref(key: string, aStore?: PrefStoreType): boolean {
-    return this.setPref(key, 'any', undefined, aStore, arguments[2] ?? -1);
+    return this.setPref(
+      key,
+      'any',
+      undefined,
+      aStore,
+      (arguments[2] as number) ?? -1,
+    );
   }
 
   // Find the S default value of any key in any store. If the store is not part
@@ -170,7 +204,7 @@ export default class Prefs {
   findDefaultValue(
     key: string,
     defaultValue: PrefValue,
-    store: PrefStoreType
+    store: PrefStoreType,
   ): PrefValue {
     if (defaultValue === undefined) {
       const s = this.findDefaultValueInS(key, store);
@@ -184,10 +218,11 @@ export default class Prefs {
 
   isType(
     type: 'string' | 'number' | 'boolean' | 'complex' | 'any',
-    value: PrefValue
+    value: PrefValue,
   ): boolean {
     if (type !== 'any') {
       const type2 = type === 'complex' ? 'object' : type;
+      // eslint-disable-next-line valid-typeof
       if (typeof value !== type2) {
         return false;
       }
@@ -207,21 +242,21 @@ export default class Prefs {
     key: string,
     type: 'string' | 'number' | 'boolean' | 'complex',
     defvalx: PrefValue,
-    storex?: PrefStoreType
+    storex?: PrefStoreType,
   ): PrefValue {
-    const callingWinID = arguments[4] ?? -1;
+    const callingWinID = (arguments[4] as number) ?? -1;
     // Check input values
     if (defvalx !== undefined && !this.isType(type, defvalx)) {
       throw new Error(
-        `Default pref has wrong type. Expected '${type}', got '${typeof defvalx}'.`
+        `Default pref has wrong type. Expected '${type}', got '${typeof defvalx}'.`,
       );
     }
     const defval = clone(defvalx);
     const store = storex || 'prefs';
     const rootkey = key.split('.')[0];
-    if (store in S && !Object.keys((S as any)[store]).includes(rootkey)) {
+    if (store in S && !Object.keys(S[store]).includes(rootkey)) {
       throw new Error(
-        `Pref root key '${rootkey}' is unrecognized in '${store}'.`
+        `Pref root key '${rootkey}' is unrecognized in '${store}'.`,
       );
     }
     // Read the store to get the key value (without throwing if the key is missing).
@@ -242,16 +277,16 @@ export default class Prefs {
         const ancestorKey = ks.slice(0, i + 1).join('.');
         const ancestorSVal = this.findDefaultValueInS(
           ancestorKey,
-          store
+          store,
         ) as PrefObject;
         if (ancestorSVal === undefined) {
           throw new Error(
-            `Pref ancestor has no default: key='${key}', store='${store}', ancestorKey='${ancestorKey}'`
+            `Pref ancestor has no default: key='${key}', store='${store}', ancestorKey='${ancestorKey}'`,
           );
         }
         // Override S values with default store values, if any
         const ancestorDefVal = mapp(ancestorSVal, (k: string) =>
-          this.findDefaultValue([ancestorKey, k].join('.'), undefined, store)
+          this.findDefaultValue([ancestorKey, k].join('.'), undefined, store),
         );
         if (
           !this.setPref(
@@ -260,11 +295,11 @@ export default class Prefs {
             ancestorDefVal,
             store,
             callingWinID,
-            true
+            true,
           )
         ) {
           throw new Error(
-            `Failed setting ancestor default: key='${key}', store='${store}', ancestorKey='${ancestorKey}'`
+            `Failed setting ancestor default: key='${key}', store='${store}', ancestorKey='${ancestorKey}'`,
           );
         }
       }
@@ -279,7 +314,7 @@ export default class Prefs {
     if (value !== undefined && value !== storeValue) {
       if (!this.setPref(key, type, value, store, callingWinID, true)) {
         throw new Error(
-          `Failed to persist default value: key='${key}', store='${store}', value='${value}'`
+          `Failed to persist default value: key='${key}', store='${store}', value='${value?.toString()}'`,
         );
       }
     }
@@ -291,7 +326,7 @@ export default class Prefs {
       value = this.findDefaultValue(key, defval, store);
       if (!this.setPref(key, type, value, store, callingWinID, true)) {
         throw new Error(
-          `Failed to reset to default value: key='${key}', store='${store}', value='${value}'`
+          `Failed to reset to default value: key='${key}', store='${store}', value='${value?.toString()}'`,
         );
       }
     }
@@ -318,24 +353,27 @@ export default class Prefs {
     const s = this.stores[aStore];
 
     // Read the data unless it has already been read
-    if (!s.data) {
-      if (s.store.exists()) {
-        const data = s.store.readFile();
-        if (data && data.length) {
-          const json = JSON_parse(data.toString());
+    const { store } = s;
+    let { data } = s;
+    if (!data) {
+      if (store.exists()) {
+        const readData = store.readFile();
+        if (readData?.length) {
+          const json = JSON_parse(readData.toString());
           if (json && typeof json === 'object') {
-            s.data = json;
+            data = json as PrefObject;
+            s.data = data;
           }
         }
-        if (!s.data || typeof s.data !== 'object' || Array.isArray(s.data)) {
+        if (!data || typeof data !== 'object' || Array.isArray(data)) {
           throw Error(
-            `Read of JSON Prefs store did not return a PrefObject (store='${aStore}', contents='${s.data}').`
+            `Read of JSON Prefs store did not return a PrefObject (store='${aStore}', contents='${JSON_stringify(data)}').`,
           );
         }
       } else s.data = {};
     }
 
-    return s.data;
+    return data ?? {};
   }
 
   // If getDefaultStore is null, only the store will be searched, if it is
@@ -345,7 +383,7 @@ export default class Prefs {
     key: string,
     noErrorOnMissingKey: boolean,
     aStore: string,
-    getDefaultStore = false as boolean | null
+    getDefaultStore = false as boolean | null,
   ): PrefValue {
     const stobj = this.getStore(aStore, !!getDefaultStore);
     let keyExists = true;
@@ -369,7 +407,7 @@ export default class Prefs {
           key,
           noErrorOnMissingKey,
           aStore,
-          true
+          true,
         );
       }
       if (noErrorOnMissingKey) return undefined;
@@ -388,20 +426,21 @@ export default class Prefs {
     }
 
     const s = this.stores[aStore];
-    if (!s.data || typeof s.data !== 'object') {
+    const { data } = s;
+    if (!data || typeof data !== 'object') {
       this.log?.warn(
-        `No data written to store: store='${aStore}', PrefValue='${s.data}'`
+        `No data written to store: store='${aStore}', PrefValue='${data}'`,
       );
       return false;
     }
 
     // Prune unrecognized or outdated pref values
-    const allStoreKeys = aStore in S ? Object.keys((S as any)[aStore]) : [];
-    Object.keys(s.data).forEach((k) => {
+    const allStoreKeys = aStore in S ? Object.keys(S[aStore]) : [];
+    Object.keys(data).forEach((k) => {
       if (!allStoreKeys.includes(k)) {
-        delete s.data[k];
+        if (s?.data && k in s.data) delete s.data[k];
         this.log?.info(
-          `Deleting outdated user preference: key='${k}', store='${aStore}'`
+          `Deleting outdated user preference: key='${k}', store='${aStore}'`,
         );
       }
     });
@@ -412,7 +451,7 @@ export default class Prefs {
       this.log?.verbose(`Persisted store: ${aStore}`);
     } else {
       this.log?.warn(
-        `Failed to write to store: '${aStore}' PrefValue did not stringify.`
+        `Failed to write to store: '${aStore}' PrefValue did not stringify.`,
       );
       return false;
     }
@@ -443,7 +482,7 @@ export default class Prefs {
     storex: PrefStoreType | undefined,
     callingWinID: number,
     skipCallbacks?: boolean,
-    clearRendererCaches?: boolean
+    clearRendererCaches?: boolean,
   ): boolean {
     if (key === null && type !== 'merge')
       throw new Error(`Pref key is null. Must use merge.`);
@@ -461,11 +500,11 @@ export default class Prefs {
         valueobj = value;
       } else {
         throw new Error(
-          `Prefs merge failed because value is not a PrefObject (value='${value}', key='${key}', store='${store}').`
+          `Prefs merge failed because value is not a PrefObject (value='${value?.toString()}', key='${key}', store='${store}').`,
         );
       }
     } else if (!this.isType(type, value)) {
-      const msg = `Prefs was given the wrong type (expected='${type}', given='${value}', key='${key}', store='${store}').`;
+      const msg = `Prefs was given the wrong type (expected='${type}', given='${value?.toString()}', key='${key}', store='${store}').`;
       if (type === 'complex') this.log?.warn(msg);
       else throw new Error(msg);
     }
@@ -482,7 +521,7 @@ export default class Prefs {
             throw Error(
               `Prefs parent key is not a PrefObject: '${a
                 .slice(0, i + 1)
-                .join('.')}'`
+                .join('.')}'`,
             );
           }
           p = pd;
@@ -508,7 +547,7 @@ export default class Prefs {
         } else valueChanged = false;
       } else {
         throw new Error(
-          `Prefs merge failed because the key does not contain a PrefObject (key-value='${pp}', key='${key}', store='${store}').`
+          `Prefs merge failed because the key does not contain a PrefObject (key-value='${pp?.toString()}', key='${key}', store='${store}').`,
         );
       }
     } else p[k] = clone(value);
@@ -522,7 +561,7 @@ export default class Prefs {
       if (clearRendererCaches && this.browserWindow) {
         this.browserWindow.getAllWindows().forEach((w) => {
           this.log?.debug(
-            `Prefs is clearing renderer caches: clearRendererCaches=true`
+            `Prefs is clearing renderer caches: clearRendererCaches=true`,
           );
           w.webContents.send('cache-reset');
         });
@@ -550,5 +589,4 @@ export default class Prefs {
 
     return success;
   }
-};
-
+}

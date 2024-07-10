@@ -6,8 +6,10 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import type { ReactElementLike } from 'prop-types';
 import { component } from '../rutil.ts';
-import { xulPropTypes, XulProps, htmlAttribs } from './xul.tsx';
+import { xulPropTypes, htmlAttribs } from './xul.tsx';
 import './grid.css';
+
+import type { XulProps } from './xul.tsx';
 
 // XUL columns
 function Columns(props: { children: any }) {
@@ -38,7 +40,7 @@ type RowColProps = {
 
 // XUL column
 type ColumnProps = RowColProps & {
-  width:
+  width?:
     | string
     | 'auto'
     | 'max-content'
@@ -83,7 +85,7 @@ function Grid(props: XulProps) {
     parentIndex: number,
     count: { Row: number; Column: number },
     cells: ReactElementLike[],
-    template: { Row: string[]; Column: string[] }
+    template: { Row: string[]; Column: string[] },
   ): boolean {
     let success = false;
     const parentComp = component(parent);
@@ -127,7 +129,7 @@ function Grid(props: XulProps) {
                 }}
               >
                 {cell}
-              </div>
+              </div>,
             );
             success = true;
           }

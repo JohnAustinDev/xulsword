@@ -95,15 +95,11 @@ class GIClass implements GITypeMain {
     return GetBooksInVKModules();
   }
 
-  Books(
-    ...args: Parameters<GType['Books']>
-  ): ReturnType<GType['Books']> {
+  Books(...args: Parameters<GType['Books']>): ReturnType<GType['Books']> {
     return getBooks(...args);
   }
 
-  Book(
-    ...args: Parameters<GType['Book']>
-  ): ReturnType<GType['Book']> {
+  Book(...args: Parameters<GType['Book']>): ReturnType<GType['Book']> {
     return getBook(...args);
   }
 
@@ -119,10 +115,10 @@ class GIClass implements GITypeMain {
     return inlineAudioFile(...args);
   }
 
-  getSystemFonts(
+  async getSystemFonts(
     ...args: Parameters<GType['getSystemFonts']>
   ): ReturnType<GType['getSystemFonts']> {
-    return getSystemFonts(...args);
+    return await getSystemFonts(...args);
   }
 
   getBooksInVKModule(
@@ -133,7 +129,7 @@ class GIClass implements GITypeMain {
 
   getLocalizedBooks(
     ...args: Parameters<GType['getLocalizedBooks']>
-  ): ReturnType<GType['getLocalizedBooks']>{
+  ): ReturnType<GType['getLocalizedBooks']> {
     return getLocalizedBooks(...args);
   }
 
@@ -167,11 +163,15 @@ class GIClass implements GITypeMain {
     return genBookTreeNodes(...args);
   }
 
-  getExtRefHTML(...args: Parameters<GType['getExtRefHTML']>): ReturnType<GType['getExtRefHTML']> {
+  getExtRefHTML(
+    ...args: Parameters<GType['getExtRefHTML']>
+  ): ReturnType<GType['getExtRefHTML']> {
     return getExtRefHTML(...args);
   }
 
-  locationVKText(...args: Parameters<GType['locationVKText']>): ReturnType<GType['locationVKText']> {
+  locationVKText(
+    ...args: Parameters<GType['locationVKText']>
+  ): ReturnType<GType['locationVKText']> {
     return locationVKText(...args);
   }
 }

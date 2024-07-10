@@ -1,4 +1,4 @@
-/* eslint-disable import/order */
+/* eslint-disable @typescript-eslint/consistent-type-assertions */
 /* eslint-disable no-nested-ternary */
 /* eslint-disable no-bitwise */
 import DOMPurify from 'dompurify';
@@ -53,7 +53,10 @@ import type { getSampleText } from './renderer/bookmarks.ts';
 import type { verseKey } from './renderer/htmlData.ts';
 import type { XulswordState } from './renderer/components/xulsword/xulsword.tsx';
 
-export function isCallCacheable(gBuilder: typeof GBuilder, call: GCallType): boolean {
+export function isCallCacheable(
+  gBuilder: typeof GBuilder,
+  call: GCallType,
+): boolean {
   let cacheable = true;
   const [name, method, args] = call;
   if (Array.isArray(args)) {
@@ -73,14 +76,14 @@ export function escapeRE(text: string) {
 export function JSON_stringify(
   x: any,
   space?: number,
-  maxlen?: number
+  maxlen?: number,
 ): string {
   const str = JSON.stringify(
     x,
     (_k, v) => {
       return v === undefined ? '_undefined_' : v;
     },
-    space
+    space,
   );
   if (maxlen && str.length > maxlen) {
     throw new Error(`Exceeded maximum JSON string length of ${maxlen}`);
@@ -92,28 +95,31 @@ export function JSON_stringify(
 // using the JSON.parse reviver, because the reviver specification requires
 // deletion of undefined array elements rather than setting to undefined.
 // eslint-disable-next-line @typescript-eslint/naming-convention
-export function JSON_parse(s: string, anyx?: Exclude<any, undefined>): any {
-  let any;
+export function JSON_parse(
+  s: string,
+  varAnyx?: Exclude<unknown, undefined>,
+): unknown {
+  let varAny;
   try {
-    any = anyx !== undefined ? anyx : JSON.parse(s);
+    varAny = varAnyx !== undefined ? varAnyx : JSON.parse(s);
   } catch (er) {
-    any = undefined;
+    varAny = undefined;
   }
-  if (any === undefined || any === null) return any;
-  if (typeof any === 'object') {
-    Object.entries(any).forEach((entry) => {
+  if (varAny === undefined || varAny === null) return varAny;
+  if (varAny && typeof varAny === 'object') {
+    Object.entries(varAny as Record<string, unknown>).forEach((entry) => {
       const [k, v] = entry;
-      any[k] = v === '_undefined_' ? undefined : JSON_parse('', v);
+      varAny[k] = v === '_undefined_' ? undefined : JSON_parse('', v);
     });
   }
-  return any;
+  return varAny;
 }
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export function JSON_attrib_stringify(
   x: any,
   space?: number,
-  maxlen?: number
+  maxlen?: number,
 ): string {
   let str = JSON_stringify(x, space);
   str = str
@@ -124,7 +130,7 @@ export function JSON_attrib_stringify(
     .replace(/>/g, '%3E');
   if (maxlen && str.length > maxlen) {
     throw new Error(
-      `Exceeded maximum JSON attribute string length of ${maxlen}`
+      `Exceeded maximum JSON attribute string length of ${maxlen}`,
     );
   }
   return str;
@@ -133,7 +139,7 @@ export function JSON_attrib_stringify(
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export function JSON_attrib_parse(
   s: string,
-  anyx?: Exclude<any, undefined>
+  anyx?: Exclude<any, undefined>,
 ): any {
   const str = s
     .replace(/%3E/g, '>')
@@ -153,9 +159,9 @@ export function deepClone<T>(obj: T): T {
 
 // Copy a data object. Data objects have string keys with values that are
 // either primitives, arrays or other data objects.
-export function clone<T>(obj: T, ancestors: any[] = []): T {
+export function clone<T>(obj: T, ancestors: unknown[] = []): T {
   const anc = ancestors.slice();
-  let copy: any = undefined;
+  let copy: any;
   if (!['function', 'symbol'].includes(typeof obj)) {
     if (obj === null || typeof obj !== 'object') copy = obj;
     else if (Array.isArray(obj)) {
@@ -164,13 +170,13 @@ export function clone<T>(obj: T, ancestors: any[] = []): T {
       obj.forEach((p) => copy.push(clone(p, anc)));
     } else {
       copy = {};
-      const o = obj as any;
+      const o = obj as Record<string, unknown>;
       if (anc.includes(o)) {
         anc.push(o);
         throw new Error(
           `Clone reference to ancestor loop: ${anc
             .map((a) => JSON_stringify(a, 1))
-            .join('\n')}`
+            .join('\n')}`,
         );
       }
       anc.push(o);
@@ -183,29 +189,29 @@ export function clone<T>(obj: T, ancestors: any[] = []): T {
 }
 
 // Return a new source object keeping only certain keys from the original.
-export function keep<T extends { [key: string]: any }>(
+export function keep<T extends Record<string, any>>(
   source: T,
-  keepkeys: readonly (keyof T)[]
-): Pick<T, typeof keepkeys[number]> {
+  keepkeys: ReadonlyArray<keyof T>,
+): Pick<T, (typeof keepkeys)[number]> {
   const r = {} as any;
   Object.entries(source).forEach((entry) => {
     const [p, v] = entry;
     if (keepkeys.includes(p)) r[p] = v;
   });
-  return r as Pick<T, typeof keepkeys[number]>;
+  return r as Pick<T, (typeof keepkeys)[number]>;
 }
 
 // Return a new source object dropping certain keys from the original.
-export function drop<T extends { [key: string]: any }>(
+export function drop<T extends Record<string, any>>(
   source: T,
-  dropkeys: readonly (keyof T)[]
-): Omit<T, typeof dropkeys[number]> {
+  dropkeys: ReadonlyArray<keyof T>,
+): Omit<T, (typeof dropkeys)[number]> {
   const r = {} as any;
   Object.entries(source).forEach((entry) => {
     const [p, v] = entry;
     if (!dropkeys.includes(p)) r[p] = v;
   });
-  return r as Omit<T, typeof dropkeys[number]>;
+  return r as Omit<T, (typeof dropkeys)[number]>;
 }
 
 // Compare two PrefValues. It returns only the differences in pv2 compared to pv1,
@@ -237,7 +243,11 @@ export function diff<T>(pv1: any, pv2: T, depth = 1): Partial<T> | undefined {
       difference = clone(pv2);
     }
   } else if (Object.keys(pv2).length === 0) {
-    if (Object.keys(pv1).length !== 0) difference = {};
+    if (
+      typeof pv1 === 'object' &&
+      Object.keys(pv1 as Record<string, unknown>).length !== 0
+    )
+      difference = {};
   } else {
     // Data objects
     const obj1 = pv1 as PrefObject;
@@ -267,15 +277,15 @@ export function diff<T>(pv1: any, pv2: T, depth = 1): Partial<T> | undefined {
 
 // Return a reason message if data is invalid, or null if it is valid.
 export function invalidData(
-  data: any,
+  data: unknown,
   platform: typeof window.processR.platform,
   depth = 0,
-  log?: ElectronLog
+  log?: ElectronLog,
 ): string | null {
   if (platform === 'browser') {
     if (C.LogLevel === 'silly' && depth === 0 && log) testData(data, log);
     if (depth > C.Server.maxDataRecursion) {
-      return `Argument max recursion exceeded. [was ${depth}]`
+      return `Argument max recursion exceeded. [was ${depth}]`;
     }
     if (['function', 'symbol'].includes(typeof data)) {
       return `Argument improper type. [was ${typeof data}]`;
@@ -285,16 +295,18 @@ export function invalidData(
         return `Argument string too long. [was ${data.length}]`;
       }
     } else if (Array.isArray(data)) {
-        if (data.length > C.Server.maxDataArrayLength) {
-          return `Argument array too long. [was ${data.length}]`;
-        }
-        const d = data.find((v) => invalidData(v, platform, depth + 1) !== null);
-        if (d !== undefined) return invalidData(d, platform, depth + 1);
+      if (data.length > C.Server.maxDataArrayLength) {
+        return `Argument array too long. [was ${data.length}]`;
+      }
+      const d = data.find((v) => invalidData(v, platform, depth + 1) !== null);
+      if (d !== undefined) return invalidData(d, platform, depth + 1);
     } else if (data && typeof data === 'object') {
       if (Object.keys(data).length > C.Server.maxDataObjectKeys) {
         return `Argument object had too many keys. [was ${Object.keys(data).length}]`;
       }
-      const d = Object.values(data).find((v) => invalidData(v, platform, depth + 1) !== null);
+      const d = Object.values(data).find(
+        (v) => invalidData(v, platform, depth + 1) !== null,
+      );
       if (d !== undefined) return invalidData(d, platform, depth + 1);
     }
   }
@@ -302,25 +314,30 @@ export function invalidData(
 }
 
 // This is used just to report data packet sizes and is only called during debug.
-export function testData(data: any, log: ElectronLog, depth = 0, info = {
-  maxDataRecursion: 0,
-  maxDataStringLength: 0,
-  maxDataArrayLength: 0,
-  maxDataObjectKeys: 0,
-  serialized: 0,
-}) {
+export function testData(
+  data: unknown,
+  log: ElectronLog,
+  depth = 0,
+  info = {
+    maxDataRecursion: 0,
+    maxDataStringLength: 0,
+    maxDataArrayLength: 0,
+    maxDataObjectKeys: 0,
+    serialized: 0,
+  },
+) {
   const {
     maxDataRecursion: rec,
     maxDataStringLength: stl,
     maxDataArrayLength: dal,
-    maxDataObjectKeys: dok
+    maxDataObjectKeys: dok,
   } = info;
   if (depth > rec) info.maxDataRecursion = depth;
   if (typeof data === 'string') {
     if (data.length > stl) info.maxDataStringLength = data.length;
   } else if (Array.isArray(data)) {
-      if (data.length > dal) info.maxDataArrayLength = data.length;
-      data.forEach((v) => testData(v, log, depth + 1, info));
+    if (data.length > dal) info.maxDataArrayLength = data.length;
+    data.forEach((v) => testData(v, log, depth + 1, info));
   } else if (data && typeof data === 'object') {
     if (Object.keys(data).length > dok) {
       info.maxDataObjectKeys = Object.keys(data).length;
@@ -333,7 +350,7 @@ export function testData(data: any, log: ElectronLog, depth = 0, info = {
 }
 
 // Convert PrefValue number-strings to numbers recursively.
-export function strings2Numbers(x: any): any {
+export function strings2Numbers(x: unknown): unknown {
   if (typeof x === 'string' && !Number.isNaN(Number(x))) {
     return Number(x);
   } else if (Array.isArray(x)) {
@@ -354,16 +371,16 @@ export function strings2Numbers(x: any): any {
 export function mapp(
   obj: PrefObject,
   func: (key: string, val: PrefValue) => PrefValue,
-  workKey?: string
+  workKey?: string,
 ): PrefObject {
-  const workObj = {} as PrefObject;
+  const workObj: PrefObject = {};
   Object.entries(obj).forEach((entry) => {
     const [k, v] = entry;
     const key = workKey ? [workKey, k].join('.') : k;
     if (v === null || Array.isArray(v) || typeof v !== 'object') {
       workObj[k] = func(key, v);
     } else {
-      workObj[k] = mapp(v as PrefObject, func, key);
+      workObj[k] = mapp(v, func, key);
     }
   });
   return workObj;
@@ -379,11 +396,14 @@ export function normalizeFontFamily(fontFamily: string): string {
 // Strings beginning with 'i18n:' are intended for possible localization. The
 // branding namespace is checked first, followed by xulsword. If there is no
 // localization, the key is returned with 'i18n:' prefix removed.
-export function localizeString(GorI: GType | GType['i18n'], str: string): string {
+export function localizeString(
+  GorI: GType | GType['i18n'],
+  str: string,
+): string {
   const i18n = 'i18n' in GorI ? GorI.i18n : GorI;
   if (str.startsWith('i18n:')) {
     const ans = ['branding', 'xulsword'].find((ns) =>
-      i18n.exists(str.substring(5), { ns })
+      i18n.exists(str.substring(5), { ns }),
     );
     if (ans) return i18n.t(str.substring(5), { ns: ans });
     return str.substring(5);
@@ -394,7 +414,7 @@ export function localizeString(GorI: GType | GType['i18n'], str: string): string
 // Resolve a xulsword:// file path into an absolute local file path.
 export function resolveXulswordPath(
   DirsPath: GType['Dirs']['path'],
-  path: string
+  path: string,
 ): string {
   if (path.startsWith('xulsword://')) {
     const dirs = path.substring('xulsword://'.length).split('/');
@@ -411,20 +431,22 @@ export function resolveXulswordPath(
 // Implemented as a function to allow G.i18n to initialize.
 export function builtinRepos(
   GorI: GType | GType['i18n'],
-  DirsPath?: GType['Dirs']['path']
+  DirsPath?: GType['Dirs']['path'],
 ): Repository[] {
   const i18n = 'i18n' in GorI ? GorI.i18n : GorI;
-  const dpath = 'Dirs' in GorI ? GorI.Dirs.path : DirsPath as GType['Dirs']['path'];
+  const dpath = 'Dirs' in GorI ? GorI.Dirs.path : DirsPath;
   const birs = clone(C.SwordBultinRepositories);
-  birs.forEach((r) => {
-    r.name = localizeString(i18n, r.name);
-    r.path = resolveXulswordPath(dpath, r.path);
-  });
+  if (dpath) {
+    birs.forEach((r) => {
+      r.name = localizeString(i18n, r.name);
+      r.path = resolveXulswordPath(dpath, r.path);
+    });
+  }
   return birs;
 }
 
 export function prefType(
-  pval: PrefValue
+  pval: PrefValue,
 ): 'string' | 'number' | 'boolean' | 'complex' {
   let t = typeof pval;
   if (t === 'bigint') t = 'number';
@@ -434,14 +456,17 @@ export function prefType(
 }
 
 // Shallow merge rootkey object properties (ie. merge complete.prefs.global properties).
-export function mergePrefRoot(sparse: Partial<PrefRoot>, complete: PrefRoot): PrefRoot {
+export function mergePrefRoot(
+  sparse: Partial<PrefRoot>,
+  complete: PrefRoot,
+): PrefRoot {
   const merged: PrefRoot = clone(complete);
   Object.entries(merged).forEach((entry) => {
     const [store, prefobj] = entry;
     if (store in sparse) {
       Object.entries(prefobj).forEach((entry2) => {
         const [rootkey, prefobj2] = entry2;
-        if (typeof prefobj2 === 'object' && rootkey in (sparse as any)[store]){
+        if (typeof prefobj2 === 'object' && rootkey in (sparse as any)[store]) {
           merged[store as keyof PrefRoot][rootkey] = {
             ...prefobj2,
             ...(sparse as any)[store][rootkey],
@@ -460,29 +485,31 @@ export function getStatePref(
   prefs: GType['Prefs'],
   store: PrefStoreType,
   id: string | null,
-  defaultPrefs?: PrefObject // default is all
+  defaultPrefs?: PrefObject, // default is all
 ): PrefObject {
-  const state = {} as PrefObject;
+  const state: PrefObject = {};
   const sdef = store in S ? (S as any)[store] : null;
-  if (defaultPrefs || sdef) {
-    if (id) {
-      Object.entries(defaultPrefs || sdef[id]).forEach((entry) => {
+  const p1 = defaultPrefs || (sdef as Record<string, unknown>);
+  if (p1) {
+    const p2 = defaultPrefs || ((id && sdef[id]) as Record<string, unknown>);
+    if (id && p2) {
+      Object.entries(p2).forEach((entry) => {
         const [key, value] = entry;
         state[key] = prefs.getPrefOrCreate(
           `${id}.${String(key)}`,
           prefType(value as PrefValue),
           value as PrefValue,
-          store
+          store,
         );
       });
     } else {
-      Object.entries(defaultPrefs || sdef).forEach((entry) => {
+      Object.entries(p1).forEach((entry) => {
         const [sid, value] = entry;
         state[sid] = prefs.getPrefOrCreate(
           sid,
           prefType(value as PrefValue),
           value as PrefValue,
-          store
+          store,
         );
       });
     }
@@ -517,7 +544,7 @@ export function b64toBlob(b64Data: string, contentType = '', sliceSize = 512) {
 // an underscore before and after. If the osisRef includes a work
 // prefix, it will be left as-is.
 export function decodeOSISRef(aRef: string) {
-  const re = new RegExp(/_(\d+)_/);
+  const re = /_(\d+)_/;
   let work = '';
   let targ = aRef;
   const colon = aRef.indexOf(':');
@@ -537,7 +564,7 @@ export function decodeOSISRef(aRef: string) {
 // This function should always be used when writing to innerHTML.
 export function sanitizeHTML<T extends string | HTMLElement>(
   parentOrHtml: T,
-  html?: string
+  html?: string,
 ): T {
   const sanitize = (s?: string): string => {
     return DOMPurify.sanitize(s || '', { USE_PROFILES: { html: true } });
@@ -563,7 +590,7 @@ export function stringHashNum(str: string): number {
 
 // Return a hash string for any number of arguments of any type.
 // Object property order is inconsequential, everything else is.
-export function stringHash(...args: any): string {
+export function stringHash(...args: unknown[]): string {
   const r: string[] = [];
   args.forEach((arg: any) => {
     if (arg === null) r.push('null');
@@ -571,7 +598,7 @@ export function stringHash(...args: any): string {
     else if (typeof arg !== 'object') {
       r.push(`${arg}`);
     } else {
-      Object.entries(arg)
+      Object.entries(arg as Record<string, string | Record<string, unknown>>)
         .sort((a, b) => a[0].localeCompare(b[0]))
         .forEach((entry) => {
           const [p, v] = entry;
@@ -594,13 +621,13 @@ export function GCacheKey(acall: GCallType): string {
   if (m === null && typeof args === 'undefined') {
     return `G.${name}`;
   } else if (m === null && Array.isArray(args)) {
-    return `G.${name}(${stringHash(...args)})`;
+    return `G.${name}(${stringHash(...(args as unknown[]))})`;
   } else if (typeof m === 'string' && typeof args === 'undefined') {
     return `G.${name}.${m}`;
   } else if (typeof m === 'string' && Array.isArray(args)) {
-    return `G.${name}.${m}(${stringHash(...args)})`;
+    return `G.${name}.${m}(${stringHash(...(args as unknown[]))})`;
   } else {
-    throw new Error(`GCacheKey bad call: '${acall}'`);
+    throw new Error(`GCacheKey bad call: '${acall.toString()}'`);
   }
 }
 
@@ -619,21 +646,21 @@ export function findElements(
   start: HTMLElement,
   mode: HTMLElementSearchModes,
   testFunc: (elem: HTMLElement) => boolean,
-  onlyFirst: false
+  onlyFirst: false,
 ): HTMLElement[];
 
 export function findElements(
   start: HTMLElement,
   mode: HTMLElementSearchModes,
   testFunc: (elem: HTMLElement) => boolean,
-  onlyFirst: true
+  onlyFirst: true,
 ): HTMLElement | null;
 
 export function findElements(
   start: HTMLElement,
   mode: HTMLElementSearchModes,
   testFunc: (elem: HTMLElement) => boolean,
-  onlyFirst: true | false
+  onlyFirst: true | false,
 ): HTMLElement | null | HTMLElement[] {
   const onlyFirst2 = onlyFirst ?? true;
   const r: HTMLElement[] = [];
@@ -659,7 +686,7 @@ export function findElements(
                   chn as HTMLElement,
                   'descendant-or-self',
                   testFunc,
-                  false
+                  false,
                 )
               : [];
           })
@@ -686,7 +713,7 @@ export function findElements(
 export function ofClass(
   search: string | string[],
   element: HTMLElement | ParentNode | EventTarget | null,
-  mode?: HTMLElementSearchModes
+  mode?: HTMLElementSearchModes,
 ): { element: HTMLElement; type: string } | null {
   const amode = mode || 'ancestor-or-self';
   const searchclasses = Array.isArray(search) ? search : [search];
@@ -695,7 +722,7 @@ export function ofClass(
     element,
     amode,
     (el) => searchclasses.some((x) => el.classList && el.classList.contains(x)),
-    true
+    true,
   );
   if (!result) return null;
   const type =
@@ -717,7 +744,7 @@ export function querablePromise<T>(promise: Promise<T>): QuerablePromise<T> {
       result.isRejected = true;
       result.isPending = false;
       throw e;
-    }
+    },
   ) as QuerablePromise<T>;
 
   result.isPending = true;
@@ -757,7 +784,7 @@ export function isASCII(text: string) {
 export function dString(
   localeDigits: ReturnType<typeof getLocaleDigits>,
   string: string | number,
-  locale: string
+  locale: string,
 ) {
   let s = string.toString();
   const l = localeDigits[locale];
@@ -788,7 +815,7 @@ export function cleanDoubleClickSelection(sel: string) {
 // specified.
 export function getCSS(
   selectorStr: string,
-  aSheet?: CSSStyleSheet
+  aSheet?: CSSStyleSheet,
 ): { sheet: CSSStyleSheet; rule: CSSRule; index: number } | null {
   const selector = new RegExp(`^${escapeRE(selectorStr)}`);
   const sheets = aSheet ? [aSheet] : Array.from(document.styleSheets);
@@ -804,10 +831,29 @@ export function getCSS(
   return result;
 }
 
+// Convert an unknown variable into a string optionally checking
+// a list of possible properties.
+export function unknown2String(v: unknown, checkProps?: string[]): string {
+  let str: string;
+  if (typeof v === 'string') return v;
+  if (v && typeof v === 'object') {
+    const prop = checkProps?.reduce((p, c) => {
+      return !p && c in v && typeof v[c as never] === 'string' ? c : p;
+    }, '');
+    if (prop) return v[prop as never];
+  }
+  try {
+    str = (v as any).toString();
+  } catch (er) {
+    str = `variable is ${typeof v}`;
+  }
+  return str;
+}
+
 export function pad(
   padMe: string | number,
   len: number,
-  char: string | number
+  char: string | number,
 ): string {
   let r: string = padMe.toString();
   const c = char.toString().substring(0, 1);
@@ -822,7 +868,7 @@ export function validateViewportModulePrefs(
   state: Pick<
     typeof S.prefs.xulsword,
     'panels' | 'ilModules' | 'mtModules' | 'tabs'
-  >
+  >,
 ) {
   (['panels', 'ilModules', 'mtModules'] as const).forEach((p) => {
     const prop = state[p] as any[];
@@ -843,7 +889,7 @@ export function validateViewportModulePrefs(
 
 export function noAutoSearchIndex(Prefs: GType['Prefs'], module: string) {
   const csai = Prefs.getComplexValue(
-    'global.noAutoSearchIndex'
+    'global.noAutoSearchIndex',
   ) as typeof S.prefs.global.noAutoSearchIndex;
   if (!csai.includes(module)) {
     csai.push(module);
@@ -855,21 +901,24 @@ export function noAutoSearchIndex(Prefs: GType['Prefs'], module: string) {
 // If show is G, then values of Prefs 'xulsword.show' will be used.
 export function getSwordOptions(
   show: typeof S.prefs.xulsword.show | boolean | GType,
-  modType: ModTypes
+  modType: ModTypes,
 ): { [key in SwordFilterType]: SwordFilterValueType } {
   // Set SWORD filter options
   const options = {} as { [key in SwordFilterType]: SwordFilterValueType };
   let show2: typeof S.prefs.xulsword.show;
   if (typeof show === 'object') {
     if ('headings' in show) show2 = show;
-    else show2 = show.Prefs.getComplexValue('xulsword.show') as typeof S.prefs.xulsword.show;
+    else
+      show2 = show.Prefs.getComplexValue(
+        'xulsword.show',
+      ) as typeof S.prefs.xulsword.show;
   } else {
-    show2 = {} as typeof S.prefs.xulsword.show;
-    Object.values(C.SwordFilters).forEach((v) => show2[v] = show);
+    show2 = {} as any;
+    Object.values(C.SwordFilters).forEach((v) => (show2[v] = show));
   }
   Object.entries(C.SwordFilters).forEach((entry) => {
     const sword = entry[0] as SwordFilterType;
-    const xs = entry[1] as keyof ShowType
+    const xs = entry[1] as keyof ShowType;
     let showi = show2[xs] ? 1 : 0;
     if (C.AlwaysOn[modType].includes(sword)) showi = 1;
     options[sword] = C.SwordFilterValues[showi];
@@ -884,7 +933,7 @@ export function getSwordOptions(
 export function setGlobalPanels(
   prefs: GType['Prefs'] | Partial<PrefRoot>,
   numPanels: number,
-  delta = 0
+  delta = 0,
 ) {
   let xs: typeof S.prefs.xulsword;
   if ('setComplexValue' in prefs) {
@@ -903,7 +952,7 @@ export function setGlobalPanels(
   if (newN > maxN) newN = maxN;
   C.PanelPrefArrays.forEach((pref) => {
     const a = xs[pref];
-    while(a && a.length !== newN) {
+    while (a.length !== newN) {
       if (newN > a.length) {
         (a as any).push(a[a.length - 1]);
       } else {
@@ -925,10 +974,10 @@ export function setGlobalPanels(
 // width while the following matching panels will shrink to zero width.
 // A value of null is given for null or undefined panels.
 export function getPanelWidths(
-  xulswordState: Pick<XulswordState, 'panels' | 'ilModules' | 'isPinned'>
-): (number | null)[] {
+  xulswordState: Pick<XulswordState, 'panels' | 'ilModules' | 'isPinned'>,
+): Array<number | null> {
   const { panels, ilModules, isPinned } = xulswordState;
-  const panelWidths: (number | null)[] = [];
+  const panelWidths: Array<number | null> = [];
   for (let i = 0; i < panels.length; i += 1) {
     const panel = panels[i];
     panelWidths[i] = panel !== null && panel !== undefined ? 1 : null;
@@ -962,34 +1011,34 @@ export function xulswordLocation(
   Tab: GType['Tab'],
   Prefs: GType['Prefs'],
   tabType: 'Texts',
-  panelIndex?: number
+  panelIndex?: number,
 ): LocationVKType | undefined;
 export function xulswordLocation(
   Tab: GType['Tab'],
   Prefs: GType['Prefs'],
   tabType: 'Comms',
-  panelIndex?: number
+  panelIndex?: number,
 ): LocationVKCommType | undefined;
 export function xulswordLocation(
   Tab: GType['Tab'],
   Prefs: GType['Prefs'],
   tabType: 'Genbks' | 'Dicts',
-  panelIndex?: number
+  panelIndex?: number,
 ): LocationORType | undefined;
 export function xulswordLocation(
   Tab: GType['Tab'],
   Prefs: GType['Prefs'],
   tabType?: undefined,
-  panelIndex?: number
+  panelIndex?: number,
 ): LocationVKType | LocationVKCommType | LocationORType | undefined;
 export function xulswordLocation(
   Tab: GType['Tab'],
   Prefs: GType['Prefs'],
   tabType?: TabTypes,
-  panelIndex?: number
+  panelIndex?: number,
 ): LocationVKType | LocationVKCommType | LocationORType | undefined {
   const panels = Prefs.getComplexValue(
-    'xulsword.panels'
+    'xulsword.panels',
   ) as typeof S.prefs.xulsword.panels;
   let r: LocationVKType | LocationVKCommType | LocationORType | undefined;
   for (let i = 0; i < panels.length; i += 1) {
@@ -1003,7 +1052,7 @@ export function xulswordLocation(
         case 'Texts':
         case 'Comms': {
           const location = Prefs.getComplexValue(
-            'xulsword.location'
+            'xulsword.location',
           ) as typeof S.prefs.xulsword.location;
           if (location && Tab[m].tabType === 'Comms') {
             r = { ...location, commMod: m };
@@ -1015,7 +1064,7 @@ export function xulswordLocation(
         case 'Genbks':
         case 'Dicts': {
           const keys = Prefs.getComplexValue(
-            'xulsword.keys'
+            'xulsword.keys',
           ) as typeof S.prefs.xulsword.keys;
           const key = keys[i];
           if (key) {
@@ -1056,10 +1105,10 @@ export function audioConfStrings(chapters: number[] | boolean[]): string[] {
   if (chapters.some((ch) => typeof ch === 'number')) {
     nums = chapters.sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)) as number[];
   } else {
-    nums = chapters.map((ch, i) => (ch === true ? i : -1)) as number[];
+    nums = chapters.map((ch, i) => (ch === true ? i : -1));
     nums = nums.filter((ch) => ch !== -1);
   }
-  const ranges: [number, number][] = [];
+  const ranges: Array<[number, number]> = [];
   nums.forEach((n) => {
     if (!ranges.length) ranges.push([n, n]);
     else if (n === ranges[ranges.length - 1][1] + 1) {
@@ -1079,7 +1128,7 @@ export function getModuleOfObject(
     | BookmarkItemType
     | LocationTypes[TabTypes]
     | SelectORMType
-    | SelectVKType
+    | SelectVKType,
 ): string | null {
   let location: LocationTypes[TabTypes] | SelectORMType | SelectVKType;
   if ('type' in bookmarkOrLocation) {
@@ -1094,7 +1143,7 @@ export function getModuleOfObject(
 
 export function bookmarkItemIconPath(
   G: GType,
-  item: BookmarkTreeNode | BookmarkItemType
+  item: BookmarkTreeNode | BookmarkItemType,
 ): string {
   const { note } = item;
   let fname = 'folder.png';
@@ -1108,7 +1157,7 @@ export function bookmarkItemIconPath(
 export function findParentOfBookmarkItem(
   toSearch: BookmarkFolderType,
   id: string,
-  recurse = true
+  recurse = true,
 ): BookmarkFolderType | null {
   if (toSearch.id === id) return null;
   for (let x = 0; x < toSearch.childNodes.length; x += 1) {
@@ -1125,7 +1174,7 @@ export function findParentOfBookmarkItem(
 export function findBookmarkItem(
   searchIn: BookmarkFolderType,
   id: string,
-  recurse = true
+  recurse = true,
 ): BookmarkItemType | null {
   if (searchIn.id === id) return searchIn;
   for (let x = 0; x < searchIn.childNodes.length; x += 1) {
@@ -1142,7 +1191,7 @@ export function findBookmarkItem(
 // Returns null if the replacement failed, or returns the new item if successful.
 export function replaceBookmarkItem(
   bookmarks: BookmarkFolderType,
-  item: BookmarkItemType
+  item: BookmarkItemType,
 ): BookmarkItemType | null {
   if (item.id !== S.bookmarks.rootfolder.id) {
     const olditem = findBookmarkItem(bookmarks, item.id);
@@ -1162,7 +1211,7 @@ export function replaceBookmarkItem(
 
 export function deleteBookmarkItem(
   bookmarks: BookmarkFolderType,
-  itemID: string
+  itemID: string,
 ): BookmarkItemType | null {
   if (itemID !== S.bookmarks.rootfolder.id) {
     const item = findBookmarkItem(bookmarks, itemID);
@@ -1183,7 +1232,7 @@ export function deleteBookmarkItem(
 export function insertBookmarkItem(
   bookmarks: BookmarkFolderType,
   item: BookmarkItemType | null,
-  targetID: string
+  targetID: string,
 ): BookmarkItemType | null {
   if (item && item.id !== S.bookmarks.rootfolder.id) {
     let index = -1;
@@ -1207,7 +1256,7 @@ export function insertBookmarkItem(
 
 export function copyBookmarkItem(
   bookmarks: BookmarkFolderType,
-  itemID: string
+  itemID: string,
 ): BookmarkItemType | null {
   if (itemID !== S.bookmarks.rootfolder.id) {
     const copyChildNodes = (childNodes: BookmarkFolderType['childNodes']) => {
@@ -1236,8 +1285,8 @@ export function copyBookmarkItem(
 export function moveBookmarkItems(
   bookmarks: BookmarkFolderType,
   itemsOrIDs: BookmarkItemType[] | string[],
-  targetID: string
-): (BookmarkItemType | null)[] {
+  targetID: string,
+): Array<BookmarkItemType | null> {
   const itemsIncludeRoot = itemsOrIDs.some((item: any) => {
     if (typeof item === 'string' && item === S.bookmarks.rootfolder.id) {
       return true;
@@ -1248,7 +1297,7 @@ export function moveBookmarkItems(
     return false;
   });
   const objectsHaveUniqueIDs = !itemsOrIDs.some(
-    (item) => typeof item !== 'string' && findBookmarkItem(bookmarks, item.id)
+    (item) => typeof item !== 'string' && findBookmarkItem(bookmarks, item.id),
   );
   const targetNotDescendantOfIDs = !itemsOrIDs.some((id) => {
     if (typeof id === 'string') {
@@ -1270,7 +1319,7 @@ export function moveBookmarkItems(
         typeof itemOrID === 'string'
           ? deleteBookmarkItem(bookmarks, itemOrID)
           : itemOrID,
-        targetID
+        targetID,
       );
     });
   }
@@ -1281,13 +1330,13 @@ export function pasteBookmarkItems(
   bookmarks: BookmarkFolderType,
   cut: string[] | null,
   copy: string[] | null,
-  targetID: string
-): (BookmarkItemType | null)[] {
+  targetID: string,
+): Array<BookmarkItemType | null> {
   const itemsIncludeRoot = (cut || [])
     .concat(copy || [])
     .some((id) => id === S.bookmarks.rootfolder.id);
   if (!itemsIncludeRoot && targetID && (cut || copy)) {
-    let pasted: (BookmarkItemType | null)[] = [];
+    let pasted: Array<BookmarkItemType | null> = [];
     if (cut) {
       pasted = moveBookmarkItems(bookmarks, cut, targetID);
     } else if (copy) {
@@ -1296,7 +1345,7 @@ export function pasteBookmarkItems(
         pasted = moveBookmarkItems(
           bookmarks,
           copiedItems as BookmarkItemType[],
-          targetID
+          targetID,
         );
       }
     }
@@ -1309,7 +1358,7 @@ export function pasteBookmarkItems(
 export function bookmarkLabel(
   G: GType,
   verseKeyFunc: typeof verseKey,
-  l: LocationVKType | LocationVKCommType | LocationORType
+  l: LocationVKType | LocationVKCommType | LocationORType,
 ): string {
   if ('commMod' in l) {
     const { commMod } = l;
@@ -1333,7 +1382,7 @@ export function bookmarkLabel(
 
 export function forEachBookmarkItem(
   nodes: BookmarkItemType[] | undefined,
-  callback: (node: BookmarkItemType) => void
+  callback: (node: BookmarkItemType) => void,
 ): BookmarkItemType[] {
   if (nodes === undefined) {
     return [];
@@ -1350,7 +1399,7 @@ export function forEachBookmarkItem(
 export function localizeBookmark(
   G: GType,
   verseKeyFunc: typeof verseKey,
-  item: BookmarkItemType
+  item: BookmarkItemType,
 ): BookmarkItemType {
   const { label, note } = item;
   const nlabel = localizeString(G, label);
@@ -1379,7 +1428,7 @@ export function localizeBookmarks(
   g: GType,
   verseKeyFunc: typeof verseKey,
   folder: BookmarkFolderType,
-  getSampleTextFunc?: typeof getSampleText
+  getSampleTextFunc?: typeof getSampleText,
 ) {
   localizeBookmark(g, verseKeyFunc, folder);
   forEachBookmarkItem(folder.childNodes, (item) => {
@@ -1398,7 +1447,7 @@ export function localizeBookmarks(
 // Find the node having the id, or return undefined.
 export function findTreeNode(
   searchIn: TreeNodeInfo[],
-  id: string | number
+  id: string | number,
 ): TreeNodeInfo | undefined {
   if (searchIn) {
     for (let x = 0; x < searchIn.length; x += 1) {
@@ -1418,7 +1467,7 @@ export function findTreeNode(
 // empty array is returned.
 export function gbAncestorIDs(
   id: string | number,
-  isDictMod?: boolean // don't split dict mod keys
+  isDictMod?: boolean, // don't split dict mod keys
 ): string[] {
   let ancestors: string[] = [];
   const r1 = isDictMod ? [id.toString()] : id.toString().split(C.GBKSEP);
@@ -1442,10 +1491,10 @@ export function gbAncestorIDs(
 export function findTreeAncestors(
   id: string | number,
   nodes: TreeNodeInfo[],
-  isDictMod?: boolean // don't split dict mod keys
+  isDictMod?: boolean, // don't split dict mod keys
 ): { ancestors: TreeNodeInfo[]; self: TreeNodeInfo } {
   const anc = gbAncestorIDs(id, isDictMod).map((ids) =>
-    findTreeNode(nodes, ids)
+    findTreeNode(nodes, ids),
   );
   const slf = findTreeNode(nodes, id);
   if (anc.some((x) => x === undefined) || slf === undefined) {
@@ -1453,13 +1502,13 @@ export function findTreeAncestors(
   }
   return {
     ancestors: anc as TreeNodeInfo[],
-    self: slf as TreeNodeInfo,
+    self: slf,
   };
 }
 
 export function findTreeSiblings(
   id: string | number,
-  nodes: TreeNodeInfo[]
+  nodes: TreeNodeInfo[],
 ): TreeNodeInfo[] {
   const { ancestors } = findTreeAncestors(id, nodes);
   if (ancestors.length) {
@@ -1473,13 +1522,13 @@ export function findTreeSiblings(
 // A leaf node has no childNodes property, or else it is zero length.
 export function findFirstLeafNode(
   nodes: TreeNodeInfo[],
-  candidates: (string | TreeNodeInfo)[]
+  candidates: Array<string | TreeNodeInfo>,
 ): TreeNodeInfo | undefined {
   const candidateNodes = candidates.map((c) => {
     if (typeof c === 'string') {
       if (!nodes)
         throw new Error(
-          `'nodes' argument required when candidate is type 'string': '${c}'`
+          `'nodes' argument required when candidate is type 'string': '${c}'`,
         );
       const n = findTreeNode(nodes, c);
       if (!n) throw new Error(`node does not exist in nodes: '${c}'`);
@@ -1488,14 +1537,14 @@ export function findFirstLeafNode(
     return c;
   });
   const r = candidateNodes.find(
-    (n) => !('childNodes' in n) || n.childNodes?.length === 0
+    (n) => !('childNodes' in n) || n.childNodes?.length === 0,
   );
   if (r) return r;
   const rc = candidateNodes
     .map((n) =>
       'childNodes' in n && n.childNodes
         ? findFirstLeafNode(nodes, n.childNodes)
-        : null
+        : null,
     )
     .filter(Boolean) as TreeNodeInfo[];
   return rc[0] || candidateNodes[0];
@@ -1527,7 +1576,7 @@ export function hierarchy(nodes: TreeNodeInfo[]): TreeNodeInfo[] {
 
 export function dictTreeNodes(
   allDictionaryKeys: string[],
-  module?: string
+  module?: string,
 ): TreeNodeInfo[] {
   const ckey = `dictTreeNodes.${module}`;
   if (!Cache.has(ckey)) {
@@ -1541,15 +1590,13 @@ export function dictTreeNodes(
         };
         return r;
       }),
-      ckey
+      ckey,
     );
   }
   return Cache.read(ckey);
 }
 
-export function gbPaths(
-  genbkTreeNodes: TreeNodeInfo[],
-): GenBookAudio {
+export function gbPaths(genbkTreeNodes: TreeNodeInfo[]): GenBookAudio {
   const r: GenBookAudio = {};
   function addPath(nodes: TreeNodeInfo[], parentPath?: number[]) {
     const pp = parentPath || [];
@@ -1570,7 +1617,7 @@ export function gbPaths(
 
 export function genBookAudio2TreeNodes(
   audio: GenBookAudioConf,
-  module: string
+  module: string,
 ): TreeNodeInfo[] {
   const nodes: TreeNodeInfo[] = [];
   Object.entries(audio).forEach((entry) => {
@@ -1602,21 +1649,21 @@ export function genBookAudio2TreeNodes(
       });
   });
   return hierarchy(
-    nodes.sort((a, b) => a.id.toString().localeCompare(b.id.toString()))
+    nodes.sort((a, b) => a.id.toString().localeCompare(b.id.toString())),
   );
 }
 
 export function isAudioVerseKey(
-  audio: VerseKeyAudio | GenBookAudioConf
+  audio: VerseKeyAudio | GenBookAudioConf,
 ): boolean {
   const books = Object.keys(audio);
   return books.some((bk) =>
-    Object.values(C.SupportedBooks).some((bg: any) => bg.includes(bk))
+    Object.values(C.SupportedBooks).some((bg: any) => bg.includes(bk)),
   );
 }
 
 export function readVerseKeyAudioConf(audio: VerseKeyAudioConf): VerseKeyAudio {
-  const r = {} as VerseKeyAudio;
+  const r: VerseKeyAudio = {};
   Object.entries(audio).forEach((entry) => {
     const [bk, str] = entry;
     if (Object.values(C.SupportedBooks).some((bg: any) => bg.includes(bk))) {
@@ -1637,9 +1684,9 @@ export function readVerseKeyAudioConf(audio: VerseKeyAudioConf): VerseKeyAudio {
 }
 
 export function readDeprecatedVerseKeyAudioConf(
-  audio: DeprecatedAudioChaptersConf[]
+  audio: DeprecatedAudioChaptersConf[],
 ): VerseKeyAudio {
-  const r = {} as VerseKeyAudio;
+  const r: VerseKeyAudio = {};
   audio.forEach((entry) => {
     const { bk, ch1, ch2 } = entry;
     if (Object.values(C.SupportedBooks).some((bg: any) => bg.includes(bk))) {
@@ -1663,7 +1710,7 @@ export function readDeprecatedVerseKeyAudioConf(
 // of a module, only the 2nd, and indexing starts with 1. So these
 // must be updated to the new scheme.
 export function readDeprecatedGenBookAudioConf(
-  audio: DeprecatedAudioChaptersConf[]
+  audio: DeprecatedAudioChaptersConf[],
 ): GenBookAudioConf {
   const r: GenBookAudioConf = {};
   audio.forEach((entry) => {
@@ -1680,7 +1727,7 @@ export function readDeprecatedGenBookAudioConf(
 }
 
 export function getDeprecatedVerseKeyAudioConf(
-  vkey: SelectVKType
+  vkey: SelectVKType,
 ): DeprecatedAudioChaptersConf {
   const { book, chapter, lastchapter } = vkey;
   return { bk: book, ch1: chapter, ch2: lastchapter || chapter };
@@ -1691,7 +1738,7 @@ export function getDeprecatedVerseKeyAudioConf(
 // must be updated from the new scheme. IMPORTANT: the gbsel arg
 // selection must be a key to GenBookAudioConf and not GenBookAudio.
 export function getDeprecatedGenBookAudioConf(
-  gbsel: SelectORMType
+  gbsel: SelectORMType,
 ): DeprecatedAudioChaptersConf {
   const { keys } = gbsel;
   const k = keys[0].split(C.GBKSEP);
@@ -1707,7 +1754,7 @@ export function getDeprecatedGenBookAudioConf(
 
 export function subtractVerseKeyAudioChapters(
   audio: VerseKeyAudio,
-  subtract: VerseKeyAudio
+  subtract: VerseKeyAudio,
 ): VerseKeyAudio {
   const r = clone(audio);
   Object.entries(r).forEach((e) => {
@@ -1728,7 +1775,7 @@ export function subtractVerseKeyAudioChapters(
 // matching is not verbatim; only the index numbers are considered.
 export function subtractGenBookAudioChapters(
   audio: GenBookAudioConf,
-  subtract: GenBookAudioConf
+  subtract: GenBookAudioConf,
 ): GenBookAudioConf {
   const r = clone(audio);
   Object.keys(subtract).forEach((subkey) => {
@@ -1842,7 +1889,7 @@ export function repositoryModuleKey(conf: SwordConfType): string {
 
 // Convert a Blueprint.js Region selection to a list of table data rows.
 export function selectionToTableRows(regions: Region[]): number[] {
-  const sels: Set<number> = new Set();
+  const sels = new Set<number>();
   regions?.forEach((region) => {
     if (region.rows) {
       for (let r = region.rows[0]; r <= region.rows[1]; r += 1) {
@@ -1857,7 +1904,7 @@ export function selectionToTableRows(regions: Region[]): number[] {
 export function tableRowsToSelection(rows: number[]): RowSelection {
   const unique = new Set(rows);
   const sorted = Array.from(unique).sort((a: number, b: number) =>
-    a > b ? 1 : a < b ? -1 : 0
+    a > b ? 1 : a < b ? -1 : 0,
   );
   const selection: RowSelection = [];
   for (let i = 0; i < sorted.length; i += 1) {
@@ -1881,7 +1928,7 @@ export function tableRowsToSelection(rows: number[]): RowSelection {
 export function tableSelectDataRows(
   toggleDataRow: number,
   selectedDataRows: number[],
-  e: React.MouseEvent
+  e: React.MouseEvent,
 ): number[] {
   const selectedRows = Array.from(new Set(selectedDataRows));
   selectedRows.sort((a, b) => a - b);
@@ -1920,8 +1967,10 @@ export function tableSelectDataRows(
 // is untouched.
 export function mergeNewModules(a: NewModulesType, b: NewModulesType) {
   Object.entries(b).forEach((entry) => {
-    const [kx, v] = entry;
+    const [kx, vx] = entry;
     const k = kx as keyof typeof C.NEWMODS;
-    a[k].push(...(v as any[]));
+    const v = vx as any;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    a[k].push(...v);
   });
 }

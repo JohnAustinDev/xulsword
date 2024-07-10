@@ -1,8 +1,6 @@
-
-import type { LocationVKType, OSISBookType } from "./type";
-import type RenderPromise from "./renderer/renderPromise";
-import type { verseKey } from "./renderer/htmlData";
-
+import type { LocationVKType, OSISBookType } from './type';
+import type RenderPromise from './renderer/renderPromise';
+import type { verseKey } from './renderer/htmlData';
 
 // This function tries to read a ";" separated list of Scripture
 // references and returns an array of LocationVKType objects, one for
@@ -18,8 +16,8 @@ export default function parseExtendedVKRef(
   extref: string,
   context?: LocationVKType,
   locales?: string[],
-  renderPromise?: RenderPromise
-): (LocationVKType | string)[] {
+  renderPromise?: RenderPromise,
+): Array<LocationVKType | string> {
   const NoterefRE = /^\s*([^!]+)!(.*?)\s*$/;
   const reflistA = extref.split(/\s*;\s*/);
   for (let i = 0; i < reflistA.length; i += 1) {
@@ -30,11 +28,11 @@ export default function parseExtendedVKRef(
     reflistA.splice(i, 1, ...commas);
     i += commas.length - 1;
   }
-  const results: (LocationVKType | string)[] = [];
+  const results: Array<LocationVKType | string> = [];
   let bk = (context?.book || '') as OSISBookType | '';
   let ch = context?.chapter || 0;
   let vs = context?.verse || 0;
-  let v11n = context?.v11n || null;
+  const v11n = context?.v11n || null;
   reflistA.forEach((r) => {
     let ref = r;
     let noteID;
@@ -42,7 +40,7 @@ export default function parseExtendedVKRef(
     if (noteref) {
       [, ref, noteID] = noteref;
     }
-    const options = locales && locales.length ? { locales } : undefined;
+    const options = locales?.length ? { locales } : undefined;
     const vk = verseKeyFunc(ref, v11n, options, renderPromise || null);
     if (!vk.book && bk) {
       const match = ref

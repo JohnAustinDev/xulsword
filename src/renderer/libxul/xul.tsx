@@ -1,5 +1,6 @@
 import PropTypes from 'prop-types';
-import React from 'react';
+
+import type React from 'react';
 
 export const xulEvents = [
   'onClick',
@@ -53,7 +54,7 @@ export const xulPropTypes = {
   pack: PropTypes.oneOf(['start', 'center', 'end']),
   domref: PropTypes.any,
   style: PropTypes.objectOf(
-    PropTypes.oneOfType([PropTypes.string, PropTypes.number])
+    PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   ),
   width: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   title: PropTypes.string,
@@ -116,10 +117,10 @@ export type XulProps = {
   width?: string | number | undefined;
   title?: string | undefined;
 } & {
-  [k in typeof xulEvents[number]]?: (e: any) => void | Promise<void>;
+  [k in (typeof xulEvents)[number]]?: (e: any) => void | Promise<void>;
 } & {
-  [k in typeof xulCaptureEvents[number]]?: (
-    e: React.SyntheticEvent<any>
+  [k in (typeof xulCaptureEvents)[number]]?: (
+    e: React.SyntheticEvent<any>,
   ) => void;
 };
 
@@ -131,7 +132,7 @@ const bools = ['checked', 'disabled', 'hidden', 'readonly'] as const;
 // Returns props unchanged except having additional class name(s).
 export const addClass = <P extends XulProps>(
   classes: string | string[],
-  props: P
+  props: P,
 ): P => {
   const c = typeof classes === 'string' ? classes.split(' ') : classes;
   const cp = props.className ? props.className.split(' ') : [];
@@ -143,19 +144,22 @@ export const addClass = <P extends XulProps>(
 // Convert certain XUL props to a corresponding CSS style attribute.
 // These props take number values with or without qualifiers
 // for XUL backward compatibility.
-export const xulStyle = (props: any): React.CSSProperties | undefined => {
+export const xulStyle = (
+  props: Record<string, unknown>,
+): React.CSSProperties | undefined => {
   const s = {} as React.CSSProperties;
+  const { width, height, flex } = props;
   // width
-  if (props.width !== undefined)
-    s.width = /^\d+$/.test(props.width) ? `${props.width}px` : props.width;
+  if (typeof width === 'string' || typeof width === 'number')
+    s.width = /^\d+$/.test(width.toString()) ? `${width}px` : width;
 
   // height
-  if (props.height !== undefined)
-    s.height = /^\d+$/.test(props.height) ? `${props.height}px` : props.height;
+  if (typeof height === 'string' || typeof height === 'number')
+    s.height = /^\d+$/.test(height.toString()) ? `${height}px` : height;
 
   // flex
-  if (props.flex !== undefined) {
-    s.flexGrow = props.flex.replace(/\D/, '');
+  if (typeof flex === 'string' || typeof flex === 'number') {
+    s.flexGrow = flex.toString().replace(/\D/, '');
     s.flexShrink = s.flexGrow;
   }
 
@@ -166,19 +170,16 @@ export const xulStyle = (props: any): React.CSSProperties | undefined => {
 // requested additional classes in the processes.
 export const xulClass = (
   classes: string | string[],
-  props: XulProps & {
-    type: string;
-    checked: boolean;
-    disabled: boolean;
-    readonly: boolean;
-  }
+  props: Record<string, unknown>,
 ) => {
   const c1 = Array.isArray(classes) ? classes : classes.split(/\s+/);
-  const c2 = props.className ? props.className.split(/\s+/) : [];
-  const c3 = enums.map((c) => (props[c] ? `${c}-${props[c]}` : ''));
+  const c2 = props.className ? (props.className as string).split(/\s+/) : [];
+  const c3 = enums.map((c) =>
+    props[c] ? `${c}-${props[c] as string | number}` : '',
+  );
   const c4 = bools.map((c) => {
-    const v = props[c] as any;
-    return v && !/^false$/i.test(v) ? `${c}` : '';
+    const v = props[c] as boolean | string;
+    return v && !/^false$/i.test(v.toString()) ? `${c}` : '';
   });
   const set = [...new Set(c1.concat(c1, c2, c3, c4).filter(Boolean))];
   return { className: set.join(' ') };
@@ -186,14 +187,17 @@ export const xulClass = (
 
 // Convert all props to corresponding HTML element attribtues.
 // This must be used to pass props to all HTML elements but
-// should only used on HTML elements (not on React components).
-export const htmlAttribs = (className: string | string[], props: any) => {
+// should only be used on HTML elements (not on React components).
+export const htmlAttribs = (
+  className: string | string[],
+  props: Record<string, unknown>,
+): Record<string, unknown> => {
   if (props === null) return {};
   const r = {
     ...xulClass(className, props),
-  } as XulProps;
+  } as Record<string, unknown>;
   xulEvents.forEach((x) => {
-    if (props[x] !== undefined) r[x] = props[x];
+    if (typeof props[x] !== 'undefined') r[x] = props[x];
   });
   xulCaptureEvents.forEach((x) => {
     if (props[x] !== undefined) r[x] = props[x];
@@ -204,12 +208,14 @@ export const htmlAttribs = (className: string | string[], props: any) => {
   if (props.domref) a.ref = props.domref;
   if (props.title) r.title = props.title;
   if (props.dir) r.dir = props.dir;
-  const style = {
+
+  const { style } = props as { style?: React.CSSProperties };
+  const styleObj = {
     ...xulStyle(props),
-    ...props.style,
+    ...style,
   };
-  if (Object.keys(style).length) {
-    r.style = style;
+  if (Object.keys(styleObj).length) {
+    r.style = styleObj;
   }
   Object.entries(props).forEach((entry) => {
     const [p, val] = entry;
@@ -223,9 +229,9 @@ export const htmlAttribs = (className: string | string[], props: any) => {
 // level element. Otherwise any event prop of that same type on an instance
 // of that component would never be called.
 export const topHandle = (
-  name: typeof xulEvents[number] | typeof xulCaptureEvents[number],
+  name: (typeof xulEvents)[number] | (typeof xulCaptureEvents)[number],
   func?: (e: React.SyntheticEvent) => any,
-  props?: any
+  props?: any,
 ) => {
   return {
     [name]: (e: React.SyntheticEvent) => {
@@ -243,15 +249,21 @@ export const topHandle = (
 // Delay any function by ms milliseconds with only a
 // single (most recent) instance called after the delay.
 export function delayHandler(
-  this: any,
-  handler: (...args: any) => void | undefined,
+  this: unknown,
+  handler: (...args: any) => void,
   ms: number | string,
-  nameTO: string
+  nameTO: string,
 ) {
-  return (...args: any[]) => {
-    clearTimeout(this[nameTO]);
-    this[nameTO] = setTimeout(() => {
-      handler.call(this, ...args);
-    }, Number(ms) || 0);
+  return (...args: unknown[]) => {
+    if (this && typeof this === 'object') {
+      if (nameTO in this)
+        clearTimeout((this as any)[nameTO] as ReturnType<typeof setTimeout>);
+      (this as any)[nameTO] = setTimeout(
+        () => {
+          handler.call(this, ...args);
+        },
+        Number(ms) || 0,
+      );
+    }
   };
 }

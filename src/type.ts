@@ -1,6 +1,4 @@
 /* eslint-disable import/no-duplicates */
-import S from './defaultPrefs.ts';
-
 import type { TreeNodeInfo } from '@blueprintjs/core';
 import type {
   BrowserWindowConstructorOptions,
@@ -9,6 +7,7 @@ import type {
 } from 'electron';
 import type React from 'react';
 import type C from './constant.ts';
+import type S from './defaultPrefs.ts';
 import type { PrefsGType } from './prefs.ts';
 import type {
   resetMain,
@@ -53,6 +52,7 @@ import type RenderPromise from './renderer/renderPromise.ts';
 import type { BrowserControllerState } from './browser/bible-browser.tsx';
 
 declare global {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
   export interface Window {
     ipc: {
       send: (channel: RendererChannels, ...args: any[]) => void;
@@ -60,12 +60,9 @@ declare global {
       sendSync: (channel: RendererChannels, ...args: any[]) => any;
       on: (
         channel: RendererChannels,
-        func: (...args: any[]) => any
+        func: (...args: any[]) => any,
       ) => () => void;
-      once: (
-        channel: RendererChannels,
-        func: (...args: any[]) => any
-      ) => void;
+      once: (channel: RendererChannels, func: (...args: any[]) => any) => void;
     };
     processR: {
       [envar in EnvironmentVars]: () => string;
@@ -79,8 +76,14 @@ declare global {
   function ToUpperCase(str: string): string;
   function ReportSearchIndexerProgress(percent: number): void;
 
+  // eslint-disable-next-line no-var
   var isPublicServer: boolean;
-  function browserState(arg: BrowserControllerState | ((ps: BrowserControllerState) => BrowserControllerState)): void;
+  function browserState(
+    arg:
+      | BrowserControllerState
+      | ((ps: BrowserControllerState) => BrowserControllerState),
+  ): void;
+  // eslint-disable-next-line no-var
   var browserMaxPanels: number | undefined;
 }
 
@@ -117,7 +120,7 @@ export type EnvironmentVars =
   | 'LOGLEVEL'
   | 'XSPORT';
 
-export type WindowRegistryType = (WindowDescriptorType | null)[];
+export type WindowRegistryType = Array<WindowDescriptorType | null>;
 
 export type WindowTypes =
   | 'xulswordWin'
@@ -146,7 +149,7 @@ export type WindowDescriptorType = {
   notResizable?: boolean;
   fitToContent?: boolean;
   allowMultiple?: boolean;
-  additionalArguments?: { [k: string]: PrefValue };
+  additionalArguments?: Record<string, PrefValue>;
   openWithBounds?: {
     withinWindowID: number;
     x: number;
@@ -177,9 +180,10 @@ export type WindowDescriptorPrefType = Omit<WindowDescriptorType, 'options'> & {
   >;
 };
 
-export type WindowPrefsType = {
-  [wid: string]: WindowDescriptorPrefType | Record<string, never>;
-};
+export type WindowPrefsType = Record<
+  string,
+  WindowDescriptorPrefType | Record<string, never>
+>;
 
 export type WindowArgType =
   | Partial<WindowDescriptorType>
@@ -232,7 +236,7 @@ export type AtextPropsType = Pick<
   bbDragEnd: (e: React.MouseEvent, value: any) => void;
 };
 
-export type PinPropsType = Pick<AtextPropsType, typeof C.PinProps[number]>;
+export type PinPropsType = Pick<AtextPropsType, (typeof C.PinProps)[number]>;
 
 export type XulswordStateArgType =
   | Partial<typeof S.prefs.xulsword>
@@ -393,7 +397,7 @@ export type BookType = {
 };
 
 export type OSISBookType =
-  typeof C.SupportedBooks[keyof typeof C.SupportedBooks][number];
+  (typeof C.SupportedBooks)[keyof typeof C.SupportedBooks][number];
 
 export type ConfigType = {
   [key in
@@ -517,7 +521,7 @@ export type SwordConfigEntries = SwordConfXulsword &
     Obsoletes?: string[];
     Feature?: SwordFeatures[];
     GlobalOptionFilter?: string[];
-    History?: [string, SwordConfLocalized][];
+    History?: Array<[string, SwordConfLocalized]>;
   };
 
 export type SwordConfType = SwordConfigEntries &
@@ -531,9 +535,7 @@ export type SwordConfType = SwordConfigEntries &
     filename: string;
   };
 
-export type SwordConfLocalized = {
-  [locale: string | 'locale' | 'en']: string;
-};
+export type SwordConfLocalized = Record<string | 'locale' | 'en', string>;
 
 export type SwordFeatures =
   | 'StrongsNumbers'
@@ -554,13 +556,14 @@ export type XulswordFeatureMods = Record<XulswordFeatures, string[]>;
 
 export type FeatureMods = SwordFeatureMods & XulswordFeatureMods;
 
-export type ModulesCache = {
-  [module: string]: {
+export type ModulesCache = Record<
+  string,
+  {
     toc: GenBookKeys;
     keylist: string[];
     treenodes: TreeNodeInfo[];
-  };
-};
+  }
+>;
 
 // GenBookTOC describes GenBooks structure (chapter names/order/hierarchy).
 // Is output by LibSword but immediately converted to GenBookKeys.
@@ -582,17 +585,13 @@ export type AudioPath = [(number | OSISBookType)?, ...number[]];
 
 // GenBookAudio describes audio chapter keys, existence, and disk address.
 // Each gbkey is a key to a GenBook SWORD module entry.
-export type GenBookAudio = {
-  [gbkey: string]: AudioPath;
-};
+export type GenBookAudio = Record<string, AudioPath>;
 
 // GenBookAudioConf is similar to GenBookAudio but is short and readable for
 // use in config files. Ex: { '000 Title/002 Title/': ['0-10', '12'] }
 // NOTE: parentPath is composed of '/' delineated segments that MUST begin
 // with a three digit index number, but the title is optional.
-export type GenBookAudioConf = {
-  [parentPath: string]: string[];
-};
+export type GenBookAudioConf = Record<string, string[]>;
 
 // VerseKeyAudio describes chapter existence and disk address.
 // Ex: { Prov: [true,,true] } are disk paths Prov/000.mp3 and Prov/002.mp3
@@ -629,7 +628,7 @@ export type GenBookAudioFile = {
   swordModule?: string;
 };
 
-export type RowSelection = { rows: [number, number] }[];
+export type RowSelection = Array<{ rows: [number, number] }>;
 
 export type NewModuleReportType = { warning?: string; error?: string };
 
@@ -638,7 +637,7 @@ export type NewModulesType = {
   nokeymods: SwordConfType[];
   fonts: string[];
   bookmarks: string[];
-  audio: (VerseKeyAudioFile | GenBookAudioFile)[];
+  audio: Array<VerseKeyAudioFile | GenBookAudioFile>;
   reports: NewModuleReportType[];
 };
 
@@ -695,16 +694,14 @@ export type PrefStoreType =
   | 'windows';
 
 export type PrefPrimative = number | string | boolean | null | undefined;
-export type PrefObject = {
-  [i: string]: PrefValue;
-};
+export type PrefObject = Record<string, PrefValue>;
 export type PrefValue =
   | PrefPrimative
-  | PrefObject
-  | (PrefPrimative | PrefObject | PrefValue)[];
+  | { [k: string]: PrefValue }
+  | PrefValue[];
 export type PrefRoot = {
   [rootkey in keyof typeof S]: PrefObject;
-}
+};
 
 export type TreeNodeInfoPref = Pick<
   TreeNodeInfo,
@@ -723,9 +720,9 @@ export type BookmarkItem = BMItem &
 export type BMItem = {
   id: string; // unique id of item
   label: string | 'i18n:lookup'; // default is auto-generated; editable
-  labelLocale: typeof C.Locales[number][0] | ''; // locale of name
+  labelLocale: (typeof C.Locales)[number][0] | ''; // locale of name
   note: string | 'i18n:lookup'; // default is empty; editable
-  noteLocale: typeof C.Locales[number][0] | ''; // locale of note
+  noteLocale: (typeof C.Locales)[number][0] | ''; // locale of note
   creationDate: number; // ms epoch
   type?: 'bookmark' | 'folder';
   tabType?: TabTypes;
@@ -769,27 +766,22 @@ export type TransactionType = {
   store?: PrefStoreType;
 };
 
-export type MethodAddCaller<M extends (...args: any) => any> = (
-  ...arg: [...Parameters<M>, number]
+export type MethodAddCaller<M extends (...args: any[]) => any> = (
+  ...args2: [...Parameters<M>, number]
 ) => ReturnType<M>;
 
-export type ObjectAddCaller<
-  T extends { [k: string]: (...args: any[]) => any }
-> = {
-  [K in keyof T]: MethodAddCaller<T[K]>;
-};
+export type ObjectAddCaller<T extends Record<string, (...args: any[]) => any>> =
+  {
+    [K in keyof T]: MethodAddCaller<T[K]>;
+  };
 
 export type GAddCaller = {
-  [obj in typeof GBuilder['includeCallingWindow'][number]]: ObjectAddCaller<
+  [obj in (typeof GBuilder)['includeCallingWindow'][number]]: ObjectAddCaller<
     GType[obj]
   >;
 };
 
-export type GCallType = [
-  keyof GType,
-  string | null,
-  any[] | undefined
-];
+export type GCallType = [keyof GType, string | null, any[] | undefined];
 
 export type GType = {
   // Getters
@@ -848,60 +840,68 @@ export type GType = {
   Window: typeof Window;
 };
 
-type RenderPromiseArgs<FUNC extends (...args: any[]) => any>
-  = [ReturnType<FUNC>, RenderPromise | undefined | null, ...Parameters<FUNC>];
+type RenderPromiseArgs<FUNC extends (...args: any[]) => any> = [
+  ReturnType<FUNC>,
+  RenderPromise | undefined | null,
+  ...Parameters<FUNC>,
+];
 
 // Internet safe GType main (server):
 export type GITypeMain = { [name in keyof GIRendererType]: GType[name] };
 
 // Internet safe GType renderer (browser) require render-promise arguments:
 export type GIRendererType = {
-  [name in keyof Pick<GType,
-    'Tabs' |
-    'Tab' |
-    'Config' |
-    'AudioConfs' |
-    'ProgramConfig' |
-    'LocaleConfigs' |
-    'ModuleConfigDefault' |
-    'ModuleFonts' |
-    'FeatureModules' |
-    'BkChsInV11n' |
-    'GetBooksInVKModules'>
-  ]: (a: GType[name], b: RenderPromise) => GType[name];
+  [name in keyof Pick<
+    GType,
+    | 'Tabs'
+    | 'Tab'
+    | 'Config'
+    | 'AudioConfs'
+    | 'ProgramConfig'
+    | 'LocaleConfigs'
+    | 'ModuleConfigDefault'
+    | 'ModuleFonts'
+    | 'FeatureModules'
+    | 'BkChsInV11n'
+    | 'GetBooksInVKModules'
+  >]: (a: GType[name], b: RenderPromise) => GType[name];
 } & {
-  [name in keyof Pick<GType,
-    'Books' |
-    'Book' |
-    'inlineFile' |
-    'inlineAudioFile' |
-    'getSystemFonts' |
-    'getBooksInVKModule' |
-    'getLocalizedBooks' |
-    'getLocaleDigits' |
-    'callBatch' |
-    'callBatchSync' |
-    'getAllDictionaryKeyList' |
-    'genBookTreeNodes' |
-    'getExtRefHTML' |
-    'locationVKText'>
-  ]: (...args: RenderPromiseArgs<GType[name]>) => ReturnType<GType[name]>;
+  [name in keyof Pick<
+    GType,
+    | 'Books'
+    | 'Book'
+    | 'inlineFile'
+    | 'inlineAudioFile'
+    | 'getSystemFonts'
+    | 'getBooksInVKModule'
+    | 'getLocalizedBooks'
+    | 'getLocaleDigits'
+    | 'callBatch'
+    | 'callBatchSync'
+    | 'getAllDictionaryKeyList'
+    | 'genBookTreeNodes'
+    | 'getExtRefHTML'
+    | 'locationVKText'
+  >]: (...args: RenderPromiseArgs<GType[name]>) => ReturnType<GType[name]>;
 } & {
   i18n: {
-    [m in 'exists' |  't']: (...args: RenderPromiseArgs<GType['i18n'][m]>)
-      => ReturnType<GType['i18n'][m]>;
-  }
+    [m in 'exists' | 't']: (
+      ...args: RenderPromiseArgs<GType['i18n'][m]>
+    ) => ReturnType<GType['i18n'][m]>;
+  };
 } & {
   LibSword: {
-    [m in keyof GType['LibSword']]: (...args: RenderPromiseArgs<GType['LibSword'][m]>)
-      => ReturnType<GType['LibSword'][m]>;
-  }
+    [m in keyof GType['LibSword']]: (
+      ...args: RenderPromiseArgs<GType['LibSword'][m]>
+    ) => ReturnType<GType['LibSword'][m]>;
+  };
 } & {
   Viewport: {
-    [m in keyof GType['Viewport']]: (...args: RenderPromiseArgs<GType['Viewport'][m]>)
-      => ReturnType<GType['Viewport'][m]>;
-  }
-}
+    [m in keyof GType['Viewport']]: (
+      ...args: RenderPromiseArgs<GType['Viewport'][m]>
+    ) => ReturnType<GType['Viewport'][m]>;
+  };
+};
 
 // This GBuilder object will be used in the main/mg and renderer/rg
 // modules at runtime to create different types of G objects sharing
@@ -931,140 +931,120 @@ export const GBuilder: GType & {
   // async functions must be listed in asyncFuncs or runtime
   // errors will result!
   asyncFuncs: [
-    [keyof GType, (keyof GType['getSystemFonts'])[]],
-    [keyof GType, (keyof GType['callBatch'])[]],
-    [keyof GType, (keyof GType['Commands'])[]],
-    [keyof GType, (keyof GType['Module'])[]],
-    [keyof GType, (keyof GType['LibSword'])[]],
-    [keyof GType, (keyof GType['Window'])[]]
+    [keyof GType, Array<keyof GType['getSystemFonts']>],
+    [keyof GType, Array<keyof GType['callBatch']>],
+    [keyof GType, Array<keyof GType['Commands']>],
+    [keyof GType, Array<keyof GType['Module']>],
+    [keyof GType, Array<keyof GType['LibSword']>],
+    [keyof GType, Array<keyof GType['Window']>],
   ];
 
   // Only these functions and object methods will be accessible via Internet.
   internetSafe: [
-    [(keyof GType), (keyof GType['Tabs'])[]],
-    [(keyof GType), (keyof GType['Tab'])[]],
-    [(keyof GType), (keyof GType['Config'])[]],
-    [(keyof GType), (keyof GType['AudioConfs'])[]],
-    [(keyof GType), (keyof GType['ProgramConfig'])[]],
-    [(keyof GType), (keyof GType['LocaleConfigs'])[]],
-    [(keyof GType), (keyof GType['ModuleConfigDefault'])[]],
-    [(keyof GType), (keyof GType['ModuleFonts'])[]],
-    [(keyof GType), (keyof GType['FeatureModules'])[]],
-    [(keyof GType), (keyof GType['BkChsInV11n'])[]],
-    [(keyof GType), (keyof GType['Books'])[]],
-    [(keyof GType), (keyof GType['Book'])[]],
-    [(keyof GType), (keyof GType['inlineFile'])[]],
-    [(keyof GType), (keyof GType['inlineAudioFile'])[]],
-    [(keyof GType), (keyof GType['getBooksInVKModule'])[]],
-    [(keyof GType), (keyof GType['getLocalizedBooks'])[]],
-    [(keyof GType), (keyof GType['getLocaleDigits'])[]],
-    [(keyof GType), (keyof GType['GetBooksInVKModules'])[]],
-    [(keyof GType), (keyof GType['callBatch'])[]],
-    [(keyof GType), (keyof GType['getAllDictionaryKeyList'])[]],
-    [(keyof GType), (keyof GType['genBookTreeNodes'])[]],
-    [(keyof GType), (keyof GType['getExtRefHTML'])[]],
-    [(keyof GType), (keyof GType['locationVKText'])[]],
-    [(keyof GType), (keyof GType['i18n'])[]],
-    [(keyof GType), (keyof GType['LibSword'])[]],
+    [keyof GType, Array<keyof GType['Tabs']>],
+    [keyof GType, Array<keyof GType['Tab']>],
+    [keyof GType, Array<keyof GType['Config']>],
+    [keyof GType, Array<keyof GType['AudioConfs']>],
+    [keyof GType, Array<keyof GType['ProgramConfig']>],
+    [keyof GType, Array<keyof GType['LocaleConfigs']>],
+    [keyof GType, Array<keyof GType['ModuleConfigDefault']>],
+    [keyof GType, Array<keyof GType['ModuleFonts']>],
+    [keyof GType, Array<keyof GType['FeatureModules']>],
+    [keyof GType, Array<keyof GType['BkChsInV11n']>],
+    [keyof GType, Array<keyof GType['Books']>],
+    [keyof GType, Array<keyof GType['Book']>],
+    [keyof GType, Array<keyof GType['inlineFile']>],
+    [keyof GType, Array<keyof GType['inlineAudioFile']>],
+    [keyof GType, Array<keyof GType['getBooksInVKModule']>],
+    [keyof GType, Array<keyof GType['getLocalizedBooks']>],
+    [keyof GType, Array<keyof GType['getLocaleDigits']>],
+    [keyof GType, Array<keyof GType['GetBooksInVKModules']>],
+    [keyof GType, Array<keyof GType['callBatch']>],
+    [keyof GType, Array<keyof GType['getAllDictionaryKeyList']>],
+    [keyof GType, Array<keyof GType['genBookTreeNodes']>],
+    [keyof GType, Array<keyof GType['getExtRefHTML']>],
+    [keyof GType, Array<keyof GType['locationVKText']>],
+    [keyof GType, Array<keyof GType['i18n']>],
+    [keyof GType, Array<keyof GType['LibSword']>],
   ];
 } = {
   includeCallingWindow: ['Prefs', 'Window', 'Commands', 'Module'],
 
   asyncFuncs: [
-    ['getSystemFonts',
-      []],
-    ['callBatch',
-      []],
-    ['Commands',
-      ['installXulswordModules',
+    ['getSystemFonts', []],
+    ['callBatch', []],
+    [
+      'Commands',
+      [
+        'installXulswordModules',
         'exportAudio',
         'importAudio',
         'importBookmarks',
         'exportBookmarks',
-        'print']],
-    ['Module',
-      ['crossWireMasterRepoList',
+        'print',
+      ],
+    ],
+    [
+      'Module',
+      [
+        'crossWireMasterRepoList',
         'repositoryListing',
         'download',
         'downloads',
         'cancelOngoingDownloads',
         'cancel',
-        'installDownloads']],
-    ['LibSword',
-      ['searchIndexBuild',
-        'search']],
-    ['Window',
-      ['print',
-        'printToPDF']],
+        'installDownloads',
+      ],
+    ],
+    ['LibSword', ['searchIndexBuild', 'search']],
+    ['Window', ['print', 'printToPDF']],
   ],
 
   internetSafe: [
-    ['Tabs',
-      []],
-    ['Tab',
-      []],
-    ['Config',
-      []],
-    ['AudioConfs',
-      []],
-    ['ProgramConfig',
-      []],
-    ['LocaleConfigs',
-      []],
-    ['ModuleConfigDefault',
-      []],
-    ['ModuleFonts',
-      []],
-    ['FeatureModules',
-      []],
-    ['BkChsInV11n',
-      []],
-    ['Books',
-      []],
-    ['Book',
-      []],
-    ['inlineFile',
-      []],
-    ['inlineAudioFile',
-      []],
-    ['getBooksInVKModule',
-      []],
-    ['getLocalizedBooks',
-      []],
-    ['getLocaleDigits',
-      []],
-    ['GetBooksInVKModules',
-      []],
-    ['callBatch',
-      []],
-    ['getAllDictionaryKeyList',
-      []],
-    ['genBookTreeNodes',
-      []],
-    ['getExtRefHTML',
-      []],
-    ['locationVKText',
-      []],
-    ['i18n',
-      ['t',
-        'exists',
-        'language']],
-    ['LibSword',
-      ['getMaxChapter',
-      'getMaxVerse',
-      'getChapterText',
-      'getChapterTextMulti',
-      'getVerseText',
-      'getVerseSystem',
-      'convertLocation',
-      'getIntroductions',
-      'getDictionaryEntry',
-      'getAllDictionaryKeys',
-      'getGenBookChapterText',
-      'getGenBookTableOfContents',
-      'search',
-      'getSearchResults',
-      'getModuleInformation']],
+    ['Tabs', []],
+    ['Tab', []],
+    ['Config', []],
+    ['AudioConfs', []],
+    ['ProgramConfig', []],
+    ['LocaleConfigs', []],
+    ['ModuleConfigDefault', []],
+    ['ModuleFonts', []],
+    ['FeatureModules', []],
+    ['BkChsInV11n', []],
+    ['Books', []],
+    ['Book', []],
+    ['inlineFile', []],
+    ['inlineAudioFile', []],
+    ['getBooksInVKModule', []],
+    ['getLocalizedBooks', []],
+    ['getLocaleDigits', []],
+    ['GetBooksInVKModules', []],
+    ['callBatch', []],
+    ['getAllDictionaryKeyList', []],
+    ['genBookTreeNodes', []],
+    ['getExtRefHTML', []],
+    ['locationVKText', []],
+    ['i18n', ['t', 'exists', 'language']],
+    [
+      'LibSword',
+      [
+        'getMaxChapter',
+        'getMaxVerse',
+        'getChapterText',
+        'getChapterTextMulti',
+        'getVerseText',
+        'getVerseSystem',
+        'convertLocation',
+        'getIntroductions',
+        'getDictionaryEntry',
+        'getAllDictionaryKeys',
+        'getGenBookChapterText',
+        'getGenBookTableOfContents',
+        'search',
+        'getSearchResults',
+        'getModuleInformation',
+      ],
+    ],
   ],
 
   // Getters

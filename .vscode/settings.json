@@ -55,6 +55,7 @@
     "set": "cpp"
   },
 
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
   "javascript.validate.enable": false,
   "javascript.format.enable": false,
   "typescript.format.enable": false,
@@ -63,7 +64,7 @@
     "./src/*.js": true,
     "./src/*.d.ts": true,
     "./src/*.d.ts.map": true,
-    "./src/*.js.map": true,
+    "./src/*.js.map": true
   },
 
   "search.exclude": {
@@ -79,8 +80,6 @@
   },
   "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
   "cmake.sourceDirectory": "${workspaceFolder}/Cpp",
-  "emmet.excludeLanguages": [
-    "typescriptreact"
-  ],
+  "emmet.excludeLanguages": ["typescriptreact"],
   "typescript.tsdk": "node_modules/typescript/lib"
 }

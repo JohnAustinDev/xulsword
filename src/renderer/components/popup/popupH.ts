@@ -1,4 +1,3 @@
-/* eslint-disable import/no-duplicates */
 import {
   JSON_attrib_stringify,
   clone,
@@ -7,16 +6,13 @@ import {
   ofClass,
 } from '../../../common.ts';
 import parseExtendedVKRef from '../../../extrefParser.ts';
-import S from '../../../defaultPrefs.ts';
+import type S from '../../../defaultPrefs.ts';
 import G, { GI } from '../../rg.ts';
 import { addBookmarksToNotes, getBookmarkInfo } from '../../bookmarks.ts';
 import { getElementData, verseKey } from '../../htmlData.ts';
 import log from '../../log.ts';
 import { getDictEntryHTML, getLemmaHTML } from '../atext/zdictionary.ts';
-import {
-  getIntroductions,
-  getNoteHTML,
-} from '../atext/zversekey.ts';
+import { getIntroductions, getNoteHTML } from '../atext/zversekey.ts';
 
 import type { HTMLData } from '../../htmlData.ts';
 import type RenderPromise from '../../renderPromise.ts';
@@ -27,7 +23,7 @@ export type FailReason = { requires: string[]; reason?: string };
 
 export function getFailReasonHTML(
   failReason: FailReason,
-  renderPromise: RenderPromise
+  renderPromise: RenderPromise,
 ): string {
   const { reason, requires } = failReason;
   if (reason || requires.length) {
@@ -42,9 +38,11 @@ export function getFailReasonHTML(
       <div class="${classes.join(' ')}">
         <div class="fail-reason">${reason ?? ''}</div>
         <div class="fail-requires">
-          <span class="label">${
-            GI.i18n.t('', renderPromise, 'module-required.message')
-          }</span>
+          <span class="label">${GI.i18n.t(
+            '',
+            renderPromise,
+            'module-required.message',
+          )}</span>
           <div class="requiremod button" data-data="${d}">
             <div class="button-box">
               <div class="bp5-button">
@@ -64,7 +62,7 @@ export function getFailReasonHTML(
 export function getPopupHTML(
   data: HTMLData,
   renderPromise: RenderPromise,
-  testonly?: boolean // is elem renderable as a popup?
+  testonly?: boolean, // is elem renderable as a popup?
 ): string {
   const {
     type,
@@ -89,10 +87,17 @@ export function getPopupHTML(
             renderPromise,
             context,
             `${book}.${chapter}`,
-            getSwordOptions(G, G.Tab[context].type)
+            getSwordOptions(G, G.Tab[context].type),
           );
           // a note element's title does not include type, but its nlist does
-          html = getNoteHTML(notes, null, 0, !testonly, `${type}.${title}`, renderPromise);
+          html = getNoteHTML(
+            notes,
+            null,
+            0,
+            !testonly,
+            `${type}.${title}`,
+            renderPromise,
+          );
         } else failReason.requires.push(context);
       }
       break;
@@ -104,9 +109,9 @@ export function getPopupHTML(
           const bm = findBookmarkItem(
             G.Prefs.getComplexValue(
               'rootfolder',
-              'bookmarks'
+              'bookmarks',
             ) as typeof S.bookmarks.rootfolder,
-            bmitem
+            bmitem,
           );
           const bmi = (bm && 'location' in bm && getBookmarkInfo(bm)) || null;
           if (bmi) {
@@ -116,7 +121,7 @@ export function getPopupHTML(
               0,
               !testonly,
               undefined,
-              renderPromise
+              renderPromise,
             );
           }
         } else failReason.requires.push(context);
@@ -135,7 +140,7 @@ export function getPopupHTML(
             bibleReflist,
             location,
             [],
-            renderPromise
+            renderPromise,
           );
           if (parsed.length) {
             let b = 'Gen';
@@ -153,14 +158,14 @@ export function getPopupHTML(
               0,
               !testonly,
               undefined,
-              renderPromise
+              renderPromise,
             );
-          } else if (reflist && reflist[0]) {
+          } else if (reflist?.[0]) {
             html = getDictEntryHTML(
               reflist[0].replace(/^.*?:/, ''),
               context,
               failReason,
-              renderPromise
+              renderPromise,
             );
           }
         } else failReason.requires.push(context);
@@ -174,7 +179,13 @@ export function getPopupHTML(
           const snlist = className.trim().split(' ');
           if (snlist && snlist.length > 1) {
             snlist.shift();
-            html = getLemmaHTML(snlist, snphrase, context, renderPromise, failReason);
+            html = getLemmaHTML(
+              snlist,
+              snphrase,
+              context,
+              renderPromise,
+              failReason,
+            );
           }
         } else failReason.requires.push(context);
       }
@@ -193,7 +204,12 @@ export function getPopupHTML(
             if (!dword) dword = ref.substring(colon + 1);
           }
         });
-        html = getDictEntryHTML(dword, dnames.join(';'), failReason, renderPromise);
+        html = getDictEntryHTML(
+          dword,
+          dnames.join(';'),
+          failReason,
+          renderPromise,
+        );
       }
       break;
     }
@@ -202,8 +218,12 @@ export function getPopupHTML(
       if (context && location) {
         if (context in G.Tab) {
           const { book, chapter } = location;
-          const intro = getIntroductions(context, `${book}.${chapter}`, renderPromise);
-          if (intro && intro.textHTML) html = intro.textHTML;
+          const intro = getIntroductions(
+            context,
+            `${book}.${chapter}`,
+            renderPromise,
+          );
+          if (intro?.textHTML) html = intro.textHTML;
         } else failReason.requires.push(context);
       }
       break;
@@ -224,14 +244,16 @@ export default function handler(this: Popup, e: React.MouseEvent) {
     case 'mouseover': {
       const targ = ofClass(
         ['npopup', 'cr', 'fn', 'un', 'sn', 'sr', 'dt', 'dtl', 'introlink'],
-        target
+        target,
       );
       if (!targ || targ.type === 'npopup') return;
-      if (!getPopupHTML(getElementData(targ.element), this.renderPromise, true)
-          && !this.renderPromise.waiting()) {
+      if (
+        !getPopupHTML(getElementData(targ.element), this.renderPromise, true) &&
+        !this.renderPromise.waiting()
+      ) {
         targ.element.classList.add('empty');
         log.debug(
-          `Popup failed without reported reason: ${targ.element.classList}`
+          `Popup failed without reported reason: ${targ.element.classList.value}`,
         );
       }
       break;

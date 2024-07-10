@@ -1,13 +1,8 @@
-/* eslint-disable react/jsx-props-no-spreading */
-/* eslint-disable react/static-property-placement */
-/* eslint-disable jsx-a11y/media-has-caption */
-/* eslint-disable jsx-a11y/click-events-have-key-events */
-/* eslint-disable jsx-a11y/no-static-element-interactions */
+/* eslint-disable @typescript-eslint/unbound-method */
 import React from 'react';
 import { Icon } from '@blueprintjs/core';
 import { dString, clone } from '../../../common.ts';
 import C from '../../../constant.ts';
-import S from '../../../defaultPrefs.ts';
 import G, { GI } from '../../rg.ts';
 import RenderPromise from '../../renderPromise.ts';
 import {
@@ -20,7 +15,6 @@ import {
   addClass,
   delayHandler,
   topHandle,
-  XulProps,
   xulPropTypes,
 } from '../../libxul/xul.tsx';
 import Button, { AnchorButton } from '../../libxul/button.tsx';
@@ -37,13 +31,18 @@ import handlerH from './xulswordH.ts';
 import {
   addHistory as addHistoryH,
   setHistory as setHistoryH,
-  historyMenu as historyMenuH
+  historyMenu as historyMenuH,
 } from './history.tsx';
 import './xulsword.css';
 
 import type { XulswordStateArgType } from '../../../type.ts';
-import type { RenderPromiseComponent, RenderPromiseState } from '../../renderPromise.ts';
+import type {
+  RenderPromiseComponent,
+  RenderPromiseState,
+} from '../../renderPromise.ts';
+import type S from '../../../defaultPrefs.ts';
 import type Atext from '../atext/atext.tsx';
+import type { XulProps } from '../../libxul/xul.tsx';
 
 const propTypes = xulPropTypes;
 
@@ -62,8 +61,10 @@ export type XulswordState = typeof notStatePrefDefault &
   typeof S.prefs.xulsword &
   RenderPromiseState;
 
-export default class Xulsword extends React.Component implements RenderPromiseComponent{
-
+export default class Xulsword
+  extends React.Component
+  implements RenderPromiseComponent
+{
   static propTypes: typeof propTypes;
 
   handler: any;
@@ -84,9 +85,9 @@ export default class Xulsword extends React.Component implements RenderPromiseCo
 
   wheelScrollTO: NodeJS.Timeout | undefined;
 
-  destroy: (() => void)[];
+  destroy: Array<() => void>;
 
-  atextRefs: React.RefObject<Atext>[];
+  atextRefs: Array<React.RefObject<Atext>>;
 
   renderPromise: RenderPromise;
 
@@ -139,7 +140,7 @@ export default class Xulsword extends React.Component implements RenderPromiseCo
             this.addHistory();
           },
           C.UI.Xulsword.historyDelay,
-          'historyTO'
+          'historyTO',
         )();
       }
     }
@@ -148,7 +149,9 @@ export default class Xulsword extends React.Component implements RenderPromiseCo
 
   componentWillUnmount() {
     clearPending(this, ['historyTO', 'dictkeydownTO', 'wheelScrollTO']);
-    this.destroy.forEach((func) => func());
+    this.destroy.forEach((func) => {
+      func();
+    });
     this.destroy = [];
   }
 
@@ -192,7 +195,7 @@ export default class Xulsword extends React.Component implements RenderPromiseCo
     } = state;
 
     // Book options for Bookselect dropdown
-    const bookset: Set<string> = new Set();
+    const bookset = new Set<string>();
     panels.forEach((m, i) => {
       if (m && !isPinned[i] && G.Tab[m].isVerseKey) {
         G.getBooksInVKModule(m).forEach((bk) => bookset.add(bk));
@@ -217,37 +220,57 @@ export default class Xulsword extends React.Component implements RenderPromiseCo
       else viewportReset.push(m);
     });
 
-    const left = GI.i18n.t('ltr', renderPromise, 'locale_direction') === 'ltr' ? 'left' : 'right';
-    const right = GI.i18n.t('ltr', renderPromise, 'locale_direction') !== 'ltr' ? 'left' : 'right';
+    const left =
+      GI.i18n.t('ltr', renderPromise, 'locale_direction') === 'ltr'
+        ? 'left'
+        : 'right';
+    const right =
+      GI.i18n.t('ltr', renderPromise, 'locale_direction') !== 'ltr'
+        ? 'left'
+        : 'right';
 
     return (
       <Vbox
         {...addClass('xulsword', props)}
         pack="start"
         height="100%"
-        {...topHandle('onClick', () => closeMenupopups(this), props)}
+        {...topHandle(
+          'onClick',
+          () => {
+            closeMenupopups(this);
+          },
+          props,
+        )}
       >
         <Hbox id="main-controlbar" pack="start" className="controlbar skin">
           <Spacer className="start-spacer" />
 
-          {window.processR.platform === 'browser' && <>
-            <Hbox pack="start">
-              <Button
-                id="choosermenu"
-                checked={showChooser}
-                icon={
-                  <Icon icon={showChooser ? 'menu-closed' : 'menu-open'} size={28} />
-                }
-                onClick={handler}
-              />
-            </Hbox>
-            <Box flex="1"/></>
-          }
+          {window.processR.platform === 'browser' && (
+            <>
+              <Hbox pack="start">
+                <Button
+                  id="choosermenu"
+                  checked={showChooser}
+                  icon={
+                    <Icon
+                      icon={showChooser ? 'menu-closed' : 'menu-open'}
+                      size={28}
+                    />
+                  }
+                  onClick={handler}
+                />
+              </Hbox>
+              <Box flex="1" />
+            </>
+          )}
 
           <Vbox id="navigator-tool" pack="start">
             {!audio.open && (
               <Hbox id="historyButtons" align="center">
-                <Box flex="40%" title={GI.i18n.t('', renderPromise, 'history.back.tooltip')}>
+                <Box
+                  flex="40%"
+                  title={GI.i18n.t('', renderPromise, 'history.back.tooltip')}
+                >
                   <Button
                     id="back"
                     icon={`chevron-${left}`}
@@ -261,7 +284,9 @@ export default class Xulsword extends React.Component implements RenderPromiseCo
                     {GI.i18n.t('', renderPromise, 'back.label')}
                   </Button>
                 </Box>
-                <Box title={GI.i18n.t('', renderPromise, 'history.all.tooltip')}>
+                <Box
+                  title={GI.i18n.t('', renderPromise, 'history.all.tooltip')}
+                >
                   <Button
                     id="historymenu"
                     icon={`double-chevron-${left}`}
@@ -272,7 +297,14 @@ export default class Xulsword extends React.Component implements RenderPromiseCo
                     {historyMenupopup || <span />}
                   </Button>
                 </Box>
-                <Box flex="40%" title={GI.i18n.t('', renderPromise, 'history.forward.tooltip')}>
+                <Box
+                  flex="40%"
+                  title={GI.i18n.t(
+                    '',
+                    renderPromise,
+                    'history.forward.tooltip',
+                  )}
+                >
                   <Button
                     id="forward"
                     rightIcon={`chevron-${right}`}
@@ -304,7 +336,7 @@ export default class Xulsword extends React.Component implements RenderPromiseCo
               </Hbox>
             )}
 
-            {window.processR.platform !== 'browser' &&
+            {window.processR.platform !== 'browser' && (
               <Hbox id="textnav" align="center">
                 <Bookselect
                   id="book"
@@ -322,7 +354,13 @@ export default class Xulsword extends React.Component implements RenderPromiseCo
                   maxLength="3"
                   pattern={/^[0-9]+$/}
                   value={
-                    location?.chapter ? dString(G.getLocaleDigits(), location.chapter, G.i18n.language) : ''
+                    location?.chapter
+                      ? dString(
+                          G.getLocaleDigits(),
+                          location.chapter,
+                          G.i18n.language,
+                        )
+                      : ''
                   }
                   timeout="600"
                   disabled={navdisabled}
@@ -349,7 +387,15 @@ export default class Xulsword extends React.Component implements RenderPromiseCo
                   width="50px"
                   maxLength="3"
                   pattern={/^[0-9]+$/}
-                  value={location?.verse ? dString(G.getLocaleDigits(), location.verse, G.i18n.language) : ''}
+                  value={
+                    location?.verse
+                      ? dString(
+                          G.getLocaleDigits(),
+                          location.verse,
+                          G.i18n.language,
+                        )
+                      : ''
+                  }
                   timeout="600"
                   disabled={navdisabled}
                   onChange={handler}
@@ -368,7 +414,7 @@ export default class Xulsword extends React.Component implements RenderPromiseCo
                   />
                 </Vbox>
               </Hbox>
-              }
+            )}
           </Vbox>
 
           <Spacer flex="1" style={{ minWidth: '15px' }} />
@@ -404,19 +450,21 @@ export default class Xulsword extends React.Component implements RenderPromiseCo
           <Spacer flex="1" style={{ minWidth: '10px' }} />
 
           <Hbox id="optionButtons" align="start">
-            {window.browserMaxPanels && (<>
-              <Button
-                id="addcolumn"
-                checked={panels.length < window.browserMaxPanels}
-                icon={<Icon icon="add-column-right" size={28} />}
-                onClick={handler}
-              />
-              <Button
-                id="removecolumn"
-                checked={panels.length > 1}
-                icon={<Icon icon="remove-column-right" size={28} />}
-                onClick={handler}
-              /></>
+            {window.browserMaxPanels && (
+              <>
+                <Button
+                  id="addcolumn"
+                  checked={panels.length < window.browserMaxPanels}
+                  icon={<Icon icon="add-column-right" size={28} />}
+                  onClick={handler}
+                />
+                <Button
+                  id="removecolumn"
+                  checked={panels.length > 1}
+                  icon={<Icon icon="remove-column-right" size={28} />}
+                  onClick={handler}
+                />
+              </>
             )}
             <Button
               id="headings"

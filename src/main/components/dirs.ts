@@ -23,14 +23,14 @@ const dirs = {
 
 export type DirsDirectories = typeof dirs;
 
-export type DirsRendererType =  { path: DirsDirectories };
+export type DirsRendererType = { path: DirsDirectories };
 
 export type DirsMainType = DirsRendererType & {
   init: (pathOnly?: boolean) => void;
   initialized: boolean;
 } & {
   [key in keyof DirsDirectories]: LocalFile;
-}
+};
 
 const Dirs = {
   // how to lazy load paths (required for server). Using getter??
@@ -43,7 +43,7 @@ const Dirs = {
       // NOTE: The app directory is not exposed in the production app. Also
       // don't try to read package.json in production by bundling it, as this
       // has security implications.
-      Dirs.path.xsAsset =  app?.isPackaged
+      Dirs.path.xsAsset = app?.isPackaged
         ? path.join(process.resourcesPath, 'assets')
         : path.join(__dirname, '..', '..', '..', 'assets');
 
@@ -55,13 +55,24 @@ const Dirs = {
 
       Dirs.path.TmpD = app?.getPath('temp') || '/tmp';
 
-      Dirs.path.xsPrefDefD = path.join(Dirs.path.xsAsset, 'defaults', 'preferences');
+      Dirs.path.xsPrefDefD = path.join(
+        Dirs.path.xsAsset,
+        'defaults',
+        'preferences',
+      );
 
-      Dirs.path.xsResDefD = path.join(Dirs.path.xsAsset, 'defaults', 'resources');
+      Dirs.path.xsResDefD = path.join(
+        Dirs.path.xsAsset,
+        'defaults',
+        'resources',
+      );
 
-      Dirs.path.ProfD = app?.getPath('userData') || process.env.XSProfD || '/tmp';
+      Dirs.path.ProfD =
+        app?.getPath('userData') || process.env.XSProfD || '/tmp';
       if (!Dirs.path.ProfD.startsWith('/')) {
-        throw new Error("Profile direcory path must be absolute. Is XSProfD environment var a relative path?");
+        throw new Error(
+          'Profile direcory path must be absolute. Is XSProfD environment var a relative path?',
+        );
       }
 
       Dirs.path.xsPrefD = path.join(Dirs.path.ProfD, 'preferences');
@@ -70,10 +81,13 @@ const Dirs = {
 
       Dirs.path.xsCache = path.join(Dirs.path.ProfD, 'cache');
 
-      Dirs.path.xsModsUser = (app && path.join(Dirs.path.ProfD, 'resources'))
-      || process.env.XSModsUser || '/tmp';
+      Dirs.path.xsModsUser =
+        (app && path.join(Dirs.path.ProfD, 'resources')) ||
+        process.env.XSModsUser ||
+        '/tmp';
 
-      Dirs.path.xsFonts = process.env.XSFonts || path.join(Dirs.path.xsResD, 'fonts');
+      Dirs.path.xsFonts =
+        process.env.XSFonts || path.join(Dirs.path.xsResD, 'fonts');
 
       Dirs.path.xsAudio = path.join(Dirs.path.xsResD, 'audio');
 
@@ -81,26 +95,32 @@ const Dirs = {
 
       Dirs.path.xsVideo = path.join(Dirs.path.xsResD, 'video');
 
-      Dirs.path.xsModsCommon = app ? (/^win32|darwin$/.test(process.platform)
-        ? path.join(app.getPath('appData'), 'Sword')
-        : path.join(app.getPath('home'), '.sword')) : process.env.XSModsCommon || '/tmp';
+      Dirs.path.xsModsCommon = app
+        ? /^win32|darwin$/.test(process.platform)
+          ? path.join(app.getPath('appData'), 'Sword')
+          : path.join(app.getPath('home'), '.sword')
+        : process.env.XSModsCommon || '/tmp';
 
-      Dirs.path.xsLib = app ? app.getPath('exe') : `${__dirname}/../../../Cpp/lib`;
+      Dirs.path.xsLib = app
+        ? app.getPath('exe')
+        : path.join(__dirname, '..', '..', '..', 'Cpp', 'lib');
 
       if (!pathOnly) {
         // Create these directories if they don't exist.
-        ([
-          'ProfD',
-          'xsPrefD',
-          'xsResD',
-          'xsCache',
-          'xsModsUser',
-          'xsFonts',
-          'xsAudio',
-          'xsBookmarks',
-          'xsVideo',
-          'xsModsCommon',
-        ] as const).forEach((d) => {
+        (
+          [
+            'ProfD',
+            'xsPrefD',
+            'xsResD',
+            'xsCache',
+            'xsModsUser',
+            'xsFonts',
+            'xsAudio',
+            'xsBookmarks',
+            'xsVideo',
+            'xsModsCommon',
+          ] as const
+        ).forEach((d) => {
           Dirs[d].create(LocalFile.DIRECTORY_TYPE);
         });
         (['xsModsUser', 'xsModsCommon', 'xsAudio'] as const).forEach((d) => {
@@ -124,7 +144,7 @@ const Dirs = {
   },
 } as DirsMainType;
 
-(Object.keys(Dirs.path) as (keyof DirsDirectories)[]).forEach((d) => {
+(Object.keys(Dirs.path) as Array<keyof DirsDirectories>).forEach((d) => {
   // Add getters for LocalFiles.
   Object.defineProperty(Dirs, d, {
     get() {
@@ -133,4 +153,4 @@ const Dirs = {
   });
 });
 
-export default Dirs as DirsMainType;
+export default Dirs;

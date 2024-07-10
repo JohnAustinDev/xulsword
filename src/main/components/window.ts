@@ -4,15 +4,8 @@
 import log from 'electron-log';
 import path from 'path';
 import i18n from 'i18next';
-import {
-  app,
-  BrowserWindow,
-  BrowserWindowConstructorOptions,
-  dialog,
-  SaveDialogOptions,
-  shell,
-} from 'electron';
-import { drop, keep, randomID } from '../../common.ts';
+import { app, BrowserWindow, dialog, shell } from 'electron';
+import { drop, keep, randomID, unknown2String } from '../../common.ts';
 import Cache from '../../cache.ts';
 import C from '../../constant.ts';
 import S from '../../defaultPrefs.ts';
@@ -22,6 +15,10 @@ import Data from './data.ts';
 import Prefs from './prefs.ts';
 import LocalFile from './localFile.ts';
 
+import type {
+  BrowserWindowConstructorOptions,
+  SaveDialogOptions,
+} from 'electron';
 import type {
   WindowArgType,
   ResetType,
@@ -64,7 +61,7 @@ if (process.env.NODE_ENV === 'development') {
 // a window is closed.
 export function getBrowserWindows(
   winargs?: WindowArgType | null,
-  callerid?: number | null
+  callerid?: number | null,
 ): BrowserWindow[] {
   const cid = callerid ?? null;
   const caller = cid !== null ? BrowserWindow.fromId(cid) : null;
@@ -91,7 +88,9 @@ export function getBrowserWindows(
   } else if (winargs === 'all') {
     return BrowserWindow.getAllWindows();
   } else if (winargs && typeof winargs !== 'object') {
-    throw Error(`getBrowserWindows unexpected argument: '${winargs}'`);
+    throw Error(
+      `getBrowserWindows unexpected argument: '${unknown2String(winargs)}'`,
+    );
   } else if (winargs) {
     testwin = winargs;
   } else if (caller) {
@@ -140,13 +139,13 @@ function windowBounds(winid: number) {
 }
 
 function descriptorToPref(
-  descriptor: WindowDescriptorType
+  descriptor: WindowDescriptorType,
 ): WindowDescriptorPrefType {
   // Remove this intentional circular reference.
   if (descriptor.additionalArguments?.descriptor) {
     delete descriptor.additionalArguments.descriptor;
   }
-  const strip: (keyof BrowserWindowConstructorOptions)[] = [
+  const strip: Array<keyof BrowserWindowConstructorOptions> = [
     'parent',
     'icon',
     'trafficLightPosition',
@@ -166,13 +165,13 @@ function setWindowPref(
   key: string,
   value: PrefValue,
   merge: boolean,
-  windowID: number
+  windowID: number,
 ) {
   const descriptor = WindowRegistry[windowID];
   if (descriptor) {
     const prefs = Prefs.getComplexValue(
       'OpenWindows',
-      'windows'
+      'windows',
     ) as typeof S.windows.OpenWindows;
     const pk = `w${windowID}`;
     if (!(pk in prefs)) prefs[pk] = descriptorToPref(descriptor);
@@ -182,7 +181,9 @@ function setWindowPref(
         !['undefined', 'object'].includes(typeof value) ||
         Array.isArray(value)
       ) {
-        throw Error(`Window: merge value is not a data object: ${value}`);
+        throw Error(
+          `Window: merge value is not a data object: ${unknown2String(value)}`,
+        );
       }
       const v = value as PrefObject | undefined;
       const origval = additionalArguments[key];
@@ -190,7 +191,9 @@ function setWindowPref(
         !['undefined', 'object'].includes(typeof origval) ||
         Array.isArray(origval)
       ) {
-        throw Error(`Window: merge target is not a data object: ${origval}`);
+        throw Error(
+          `Window: merge target is not a data object: ${unknown2String(origval)}`,
+        );
       }
       const ov = origval as PrefObject | undefined;
       additionalArguments[key] = { ...ov, ...v };
@@ -214,7 +217,7 @@ function updateOptions(descriptor: Omit<WindowDescriptorType, 'id'>): void {
   ) {
     persistedDescriptor = Prefs.getComplexValue(
       `PersistForType.${descriptor.type}`,
-      'windows'
+      'windows',
     ) as WindowDescriptorType;
     if (persistedDescriptor) {
       Object.entries(persistedDescriptor).forEach((entry) => {
@@ -287,7 +290,7 @@ export const pushPrefsToWindows: PrefCallbackType = (
   winid,
   store,
   idOrKey, // ie. global or xulsword.panels
-  val
+  val,
 ) => {
   let pushKeyProps: string[] = [];
   if (winid < 0 || winid === BrowserWindow.getFocusedWindow()?.id) {
@@ -295,14 +298,14 @@ export const pushPrefsToWindows: PrefCallbackType = (
       const lng = Prefs.getCharPref('global.locale');
       i18n
         .loadLanguages(lng)
-        .then(() => i18n.changeLanguage(lng))
+        .then(async () => await i18n.changeLanguage(lng))
         .then(() => {
           Cache.clear();
           Window.reset('all', 'all');
           return true;
         })
-        .catch((err: any) => {
-          if (err) throw Error(err);
+        .catch((er: unknown) => {
+          log.error(er);
         });
     } else if (store === 'prefs' && idOrKey === 'global.fontSize') {
       Window.reset('dynamic-stylesheet-reset', 'all');
@@ -324,7 +327,7 @@ export const pushPrefsToWindows: PrefCallbackType = (
         }
       }
       if (store in S) {
-        Object.entries((S as any)[store]).forEach((e) => {
+        Object.entries(S[store]).forEach((e) => {
           const [id, props] = e;
           Object.keys(props as PrefObject).forEach((prop: string) => {
             allowed.push([id, prop].join('.'));
@@ -351,17 +354,19 @@ export const pushPrefsToWindows: PrefCallbackType = (
 // Publish any subscription on the main process and/or any other window
 // or group of windows.
 export function publishSubscription<
-  S extends keyof SubscriptionType['publish']
+  S extends keyof SubscriptionType['publish'],
 >(
   subscription: S,
   options: {
-    renderers?: Partial<WindowDescriptorType> | Partial<WindowDescriptorType>[];
+    renderers?:
+      | Partial<WindowDescriptorType>
+      | Array<Partial<WindowDescriptorType>>;
     main?: boolean;
   },
   ...args: Parameters<SubscriptionType['publish'][S]>
 ) {
   const { renderers, main } = {
-    renderers: {} as Partial<WindowDescriptorType>,
+    renderers: {} satisfies Partial<WindowDescriptorType>,
     main: false,
     ...options,
   };
@@ -386,7 +391,7 @@ function updateBounds(winid: number) {
     if (Prefs.has(`OpenWindows.w${winid}`, 'complex', 'windows')) {
       const desc = Prefs.getComplexValue(
         `OpenWindows.w${winid}`,
-        'windows'
+        'windows',
       ) as WindowDescriptorPrefType;
       const b = windowBounds(winid);
       if (b) {
@@ -400,7 +405,7 @@ function updateBounds(winid: number) {
         Prefs.setComplexValue(
           `PersistForType.${desc.type}`,
           { options: o },
-          'windows'
+          'windows',
         );
       }
     }
@@ -413,7 +418,7 @@ const Window = {
   // Returns the WindowDescriptorPrefTypes for the given window(s).
   descriptions(window?: WindowArgType): WindowDescriptorPrefType[] {
     const wins: WindowDescriptorPrefType[] = [];
-    getBrowserWindows(window, arguments[1]).forEach((win) => {
+    getBrowserWindows(window, arguments[1] as number).forEach((win) => {
       const wdt = WindowRegistry[win.id];
       if (wdt) wins.push(descriptorToPref(wdt));
     });
@@ -425,7 +430,10 @@ const Window = {
     // If window is a singleton, bring open window forward if it exists.
     if (!descriptor.allowMultiple) {
       const { type } = descriptor;
-      const [awin] = getBrowserWindows({ type }, arguments[1] ?? -1);
+      const [awin] = getBrowserWindows(
+        { type },
+        (arguments[1] as number) ?? -1,
+      );
       if (awin) {
         const { id } = awin;
         const [r] = Window.moveToFront({ id });
@@ -443,7 +451,9 @@ const Window = {
 
     if (C.DevToolsopen) win.webContents.openDevTools({ mode: 'detach' });
 
-    win.loadURL(resolveHtmlPath(`${d.type}.html`));
+    win.loadURL(resolveHtmlPath(`${d.type}.html`)).catch((er) => {
+      log.error(er);
+    });
 
     if (d.type !== 'xulswordWin') win.removeMenu();
 
@@ -456,16 +466,16 @@ const Window = {
     Prefs.setComplexValue(
       `OpenWindows.w${win.id}`,
       descriptorToPref(d),
-      'windows'
+      'windows',
     );
 
     // Window event handlers
     const { id } = win;
-    const disposables: (() => void)[] = [];
+    const disposables: Array<() => void> = [];
     win.once('ready-to-show', () =>
       Subscription.publish.windowCreated(
-        ...([win, disposables] as Parameters<typeof contextMenu>)
-      )
+        ...([win, disposables] as Parameters<typeof contextMenu>),
+      ),
     );
     const resize = () => {
       updateBounds(id);
@@ -473,18 +483,26 @@ const Window = {
     };
     win.on('resize', resize);
     win.on('resized', resize);
-    win.on('move', () => updateBounds(id));
-    win.on('moved', () => updateBounds(id));
+    win.on('move', () => {
+      updateBounds(id);
+    });
+    win.on('moved', () => {
+      updateBounds(id);
+    });
     win.on('maximize', resize);
     win.on('unmaximize', resize);
     win.once('closed', () => {
       Prefs.deleteUserPref(`OpenWindows.w${id}`, 'windows');
       WindowRegistry[id] = null;
       if (Data.has(d.dataID)) Data.delete(d.dataID);
-      disposables.forEach((dispose) => dispose());
+      disposables.forEach((dispose) => {
+        dispose();
+      });
     });
     win.webContents.setWindowOpenHandler(({ url }) => {
-      shell.openExternal(url);
+      shell.openExternal(url).catch((er) => {
+        log.error(er);
+      });
       return { action: 'deny' };
     });
 
@@ -494,19 +512,19 @@ const Window = {
   // Set the caller window's window prefs, or if calling window is undefined,
   // sets the default window state prefs.
   setComplexValue(key: string, value: PrefObject): void {
-    setWindowPref(key, value, false, arguments[2] ?? -1);
+    setWindowPref(key, value, false, (arguments[2] as number) ?? -1);
   },
 
   // Merge a key with the caller window's window prefs, or if calling window is
   // undefined, merge a key with the default window state prefs.
-  mergeValue(key: string, value: any) {
-    setWindowPref(key, value, true, arguments[2] ?? -1);
+  mergeValue(key: string, value: PrefValue) {
+    setWindowPref(key, value, true, (arguments[2] as number) ?? -1);
   },
 
   // Set the size of the given window(s) or else the calling window.
   setContentSize(w: number, h: number, window?: WindowArgType): number[] {
     const winids: number[] = [];
-    getBrowserWindows(window, arguments[3]).forEach((win) => {
+    getBrowserWindows(window, arguments[3] as number).forEach((win) => {
       win.setContentSize(Math.round(w), Math.round(h));
       winids.push(win.id);
     });
@@ -517,7 +535,7 @@ const Window = {
   // id(s).
   close(window?: WindowArgType): number[] {
     const winids: number[] = [];
-    getBrowserWindows(window, arguments[1]).forEach((win) => {
+    getBrowserWindows(window, arguments[1] as number).forEach((win) => {
       winids.push(win.id);
       win.close();
     });
@@ -528,17 +546,16 @@ const Window = {
   // These temp directories will be deleted when the associated window closes.
   tmpDir(window?: WindowArgType | null) {
     const ret: string[] = [];
-    getBrowserWindows(window, arguments[1]).forEach((win) => {
-      let w = win as any;
-      if (w && 'xstmpDir' in w) {
-        ret.push(w.xstmpDir);
+    getBrowserWindows(window, arguments[1] as number).forEach((win) => {
+      if (win && 'xstmpDir' in win) {
+        ret.push((win as any).xstmpDir as string);
       } else {
         const dir = Dirs.TmpD;
         dir.append(`xulsword_${win.id}`);
         dir.create(LocalFile.DIRECTORY_TYPE);
         if (dir.exists()) {
           ret.push(dir.path);
-          w.xstmpDir = dir.path;
+          (win as any).xstmpDir = dir.path;
           win.once(
             'closed',
             ((d) => {
@@ -546,11 +563,10 @@ const Window = {
                 const f = new LocalFile(d);
                 if (f.exists()) f.remove(true);
               };
-            })(dir.path)
+            })(dir.path),
           );
         }
       }
-      w = null;
     });
     return ret;
   },
@@ -558,10 +574,13 @@ const Window = {
   // Disable all event handlers on a window to insure user input is bocked for
   // a time, such as when LibSword is offline. Returns id of modal windows.
   modal(
-    modalx: ModalType | { modal: ModalType; window: WindowArgType }[]
+    modalx: ModalType | Array<{ modal: ModalType; window: WindowArgType }>,
   ): number[] {
     const winids: number[] = [];
-    (Array.isArray(modalx) ? modalx : [{ modal: modalx, window: arguments[1] }])
+    (Array.isArray(modalx)
+      ? modalx
+      : [{ modal: modalx, window: { id: arguments[1] as number } }]
+    )
       .reverse()
       .forEach((obj) => {
         const { modal, window } = obj;
@@ -582,8 +601,8 @@ const Window = {
     // here or previously appended arguments[2] will not work!
     const type = typex || 'all';
     const window = windowx || 'self';
-    let windows = getBrowserWindows(window, arguments[2]);
-    const winids: Set<number> = new Set();
+    let windows = getBrowserWindows(window, arguments[2] as number);
+    const winids = new Set<number>();
     windows.forEach((win) => {
       if (win) {
         const resets: ResetType[] = [
@@ -598,7 +617,7 @@ const Window = {
           if (!type || type === 'all' || type === r) {
             if (r === 'cache-reset') {
               log.debug(
-                `Clearing ${win.id} cache: Window.reset(${typex}, ${windowx})`
+                `Clearing ${win.id} cache: Window.reset(${typex}, ${windowx?.toString()})`,
               );
             }
             win.webContents.send(r);
@@ -612,7 +631,7 @@ const Window = {
   },
 
   moveToFront(window?: WindowArgType): number[] {
-    const front = getBrowserWindows(window, arguments[1]);
+    const front = getBrowserWindows(window, arguments[1] as number);
     const winids: number[] = [];
     BrowserWindow.getAllWindows().forEach((w) => {
       if (front.includes(w)) {
@@ -624,7 +643,7 @@ const Window = {
   },
 
   moveToBack(window?: WindowArgType): number[] {
-    const back = getBrowserWindows(window, arguments[1]);
+    const back = getBrowserWindows(window, arguments[1] as number);
     const winids: number[] = [];
     BrowserWindow.getAllWindows().forEach((w) => {
       if (!back.includes(w)) {
@@ -637,7 +656,7 @@ const Window = {
 
   setTitle(title: string, window?: WindowArgType): number[] {
     const winids: number[] = [];
-    getBrowserWindows(window, arguments[2]).forEach((w) => {
+    getBrowserWindows(window, arguments[2] as number).forEach((w) => {
       w.setTitle(title);
       winids.push(w.id);
     });
@@ -646,9 +665,9 @@ const Window = {
 
   async print(
     electronOptions: Electron.WebContentsPrintOptions,
-    window?: WindowArgType | null
+    window?: WindowArgType | null,
   ): Promise<void> {
-    const win = getBrowserWindows(window, arguments[2])[0];
+    const win = getBrowserWindows(window, arguments[2] as number)[0];
     if (win) {
       // NOTE!: Electron contents.print() does not seem to work at all.
       // It complains there are no available printers (when there are)
@@ -656,28 +675,29 @@ const Window = {
       // On the other hand, window.print() works just fine, so that is
       // currently used instead.
       // Send to a printer
-      const opts = electronOptions as Electron.WebContentsPrintOptions;
-      return new Promise((resolve, reject) => {
+      const opts = electronOptions;
+      await new Promise<void>((resolve, reject) => {
         log.debug(`print: `, opts);
         win.webContents.print(
           opts,
           (suceeded: boolean, failureReason: string) => {
             if (suceeded) resolve();
             else reject(failureReason);
-          }
+          },
         );
       });
+      return;
     }
-    return Promise.resolve();
+    await Promise.resolve();
   },
 
   async printToPDF(
     electronOptions: Electron.PrintToPDFOptions & {
       destination: 'prompt-for-file' | 'iframe';
     },
-    window?: WindowArgType | null
+    window?: WindowArgType | null,
   ): Promise<string> {
-    const win = getBrowserWindows(window, arguments[2])[0];
+    const win = getBrowserWindows(window, arguments[2] as number)[0];
     if (win) {
       const { destination } = electronOptions;
       if (destination === 'prompt-for-file') {
@@ -696,7 +716,7 @@ const Window = {
         try {
           result = await ((win && dialog.showSaveDialog(win, saveops)) || null);
         } catch (er) {
-          return Promise.reject(er);
+          return await Promise.reject(er);
         }
         if (result && !result.canceled && result.filePath) {
           log.debug(`printToPDF: `, electronOptions);
@@ -708,7 +728,7 @@ const Window = {
               return await Promise.resolve(outfile.path);
             }
           } catch (er) {
-            return Promise.reject(er);
+            return await Promise.reject(er);
           }
         }
         return '';
@@ -729,7 +749,7 @@ const Window = {
             return await Promise.resolve(tmp.path);
           }
         } catch (er) {
-          return Promise.reject(er);
+          return await Promise.reject(er);
         }
       }
     }

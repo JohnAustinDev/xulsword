@@ -1,9 +1,3 @@
-/* eslint-disable no-await-in-loop */
-/* eslint-disable no-restricted-syntax */
-/* eslint-disable @typescript-eslint/no-use-before-define */
-/* eslint-disable no-bitwise */
-/* eslint-disable import/no-duplicates */
-import React from 'react';
 import {
   noAutoSearchIndex,
   dString,
@@ -12,13 +6,13 @@ import {
   sanitizeHTML,
 } from '../../common.ts';
 import C from '../../constant.ts';
-import S from '../../defaultPrefs.ts';
 import G from '../rg.ts';
 import log from '../log.ts';
 import { getElementData, verseKey } from '../htmlData.ts';
 import { windowArguments } from '../rutil.ts';
 import { getStrongsModAndKey } from '../components/atext/zdictionary.ts';
 
+import type React from 'react';
 import type {
   BookGroupType,
   LocationVKType,
@@ -26,6 +20,7 @@ import type {
   SearchType,
   V11nType,
 } from '../../type.ts';
+import type S from '../../defaultPrefs.ts';
 import type { SearchWinState } from './search.tsx';
 import type SearchWin from './search.tsx';
 
@@ -72,7 +67,7 @@ export function getLuceneSearchText(searchtext0: string) {
     }
     searchtext = searchtext.replace(
       new RegExp(escapeRE(uiVal2), 'g'),
-      luceneVal
+      luceneVal,
     );
   });
   searchtext = searchtext.replace(/^\s*/, '');
@@ -107,7 +102,7 @@ function kjvScopeBooks(scope: string): string[] {
 function getScopes(
   input: 'all' | BookGroupType | string,
   module: string,
-  single = false
+  single = false,
 ): string[] {
   const scopes: string[] = [];
   function continuation(start: string, end: string, skip: boolean) {
@@ -122,7 +117,7 @@ function getScopes(
       kjvscope = Object.values(C.SupportedBooks)
         .map((books) => `${books[0]}-${books.at(-1)}`)
         .join(' ');
-    } else if (C.SupportedBookGroups.includes(kjvscope as any)) {
+    } else if (C.SupportedBookGroups.includes(kjvscope as never)) {
       const books =
         kjvscope in C.SupportedBooks && (C.SupportedBooks as any)[kjvscope];
       if (books) kjvscope = `${books[0]}-${books.at(-1)}`;
@@ -187,7 +182,7 @@ export async function search(xthis: SearchWin): Promise<boolean> {
     // If Lucene special operators are present, always search advanced.
     if (
       searchtextLS.search(
-        /(\+|-|&&|\|\||!|\(|\)|{|}|\[|\]|\^|"|~|\*|\?|:|\\|AND|OR|NOT)/
+        /(\+|-|&&|\|\||!|\(|\)|{|}|\[|\]|\^|"|~|\*|\?|:|\\|AND|OR|NOT)/,
       ) !== -1
     ) {
       searchtype = 'SearchAdvanced';
@@ -232,7 +227,7 @@ export async function search(xthis: SearchWin): Promise<boolean> {
       }
       case 'book': {
         const location = G.Prefs.getComplexValue(
-          'xulsword.location'
+          'xulsword.location',
         ) as typeof S.prefs.xulsword.location;
         if (location?.book) {
           scopes = getScopes(location.book, module, bookByBook);
@@ -250,7 +245,7 @@ export async function search(xthis: SearchWin): Promise<boolean> {
   // get Search flags
   // BUG NOTE: FLAGS = 2 DOESNT WORK FOR NON-ENGLISH/NON-LUCENE SEARCHES
   let flags = 2; // Turn "Ignore Case" flag on.
-  if (searchtype === 'SearchSimilar' || /~/.test(searchtextLS)) {
+  if (searchtype === 'SearchSimilar' || searchtextLS.includes('~')) {
     flags |= 2048; // Turn on Sort By Relevance flag
   }
 
@@ -259,7 +254,7 @@ export async function search(xthis: SearchWin): Promise<boolean> {
     searchtextLS,
     scopes,
     libSwordSearchType,
-    flags
+    flags,
   );
 
   xthis.setState(s);
@@ -272,7 +267,7 @@ async function libSwordSearch(
   searchtext: string,
   scopes: string[],
   libswordSearchType: number,
-  flags: number
+  flags: number,
 ): Promise<number | null> {
   let grandTotal: number | null = null;
   if (module && module in G.Tab) {
@@ -298,7 +293,7 @@ async function libSwordSearch(
           libswordSearchType,
           flags,
           i === 0,
-          id
+          id,
         );
         if (scopes.length > 1 && LibSwordSearch.sthis) {
           const Book = G.Book(G.i18n.language);
@@ -335,14 +330,14 @@ async function libSwordSearch(
   // If the result was null, the search engine was busy, so wait a
   // second for it to free up and try again.
   if (grandTotal === null) {
-    return new Promise((resolve) => {
+    return await new Promise((resolve) => {
       setTimeout(() => {
         const r = libSwordSearch(
           module,
           searchtext,
           scopes,
           libswordSearchType,
-          flags
+          flags,
         );
         resolve(r);
       }, 1000);
@@ -358,18 +353,18 @@ export async function getSearchResults(
   mod: string,
   i: number,
   maxPage: number,
-  keepstrings: boolean
+  keepstrings: boolean,
 ): Promise<string> {
   let r = G.LibSword.getSearchResults(
     mod,
     i,
     maxPage,
     keepstrings,
-    LibSwordSearch.id
+    LibSwordSearch.id,
   );
   if (r === null) {
     const c = await libSwordSearch(
-      ...(LibSwordSearch.params as LibSwordSearchType)
+      ...(LibSwordSearch.params as LibSwordSearchType),
     );
     if (c !== null) {
       r = G.LibSword.getSearchResults(
@@ -377,7 +372,7 @@ export async function getSearchResults(
         i,
         maxPage,
         keepstrings,
-        LibSwordSearch.id
+        LibSwordSearch.id,
       );
     }
   }
@@ -387,11 +382,11 @@ export async function getSearchResults(
 
 export async function autoCreateSearchIndex(
   xthis: SearchWin,
-  module: string
+  module: string,
 ): Promise<boolean> {
   let result = false;
   const csai = G.Prefs.getComplexValue(
-    'global.noAutoSearchIndex'
+    'global.noAutoSearchIndex',
   ) as typeof S.prefs.global.noAutoSearchIndex;
   if (!csai.includes(module)) {
     result = await createSearchIndex(xthis, module);
@@ -402,10 +397,10 @@ export async function autoCreateSearchIndex(
 export const Indexing = { current: '' };
 export async function createSearchIndex(
   xthis: SearchWin,
-  module: string
+  module: string,
 ): Promise<boolean> {
   if (module && module in G.Tab) {
-    return new Promise((resolve) => {
+    return await new Promise((resolve) => {
       const s: Partial<SearchWinState> = {
         results: 0,
         pageindex: 0,
@@ -426,7 +421,9 @@ export async function createSearchIndex(
             G.resetMain();
             G.Window.reset('cache-reset', 'all');
             if (!result) noAutoSearchIndex(G.Prefs, module);
-            setTimeout(() => resolve(result), 1);
+            setTimeout(() => {
+              resolve(result);
+            }, 1);
             return result;
           })
           .finally(() => {
@@ -474,7 +471,10 @@ export function formatResult(div: HTMLDivElement, state: SearchWinState) {
               // Translate from module to DisplayBible
               const vsys = G.LibSword.getVerseSystem(module);
               const v = verseKey(location, vsys);
-              sanitizeHTML(a, v.readable(G.i18n.language, G.LibSword.getVerseSystem(dModule)));
+              sanitizeHTML(
+                a,
+                v.readable(G.i18n.language, G.LibSword.getVerseSystem(dModule)),
+              );
               a.className = 'cs-locale';
               a.id = ['verselink', vsys, v.osisRef()].join('.');
             }
@@ -502,8 +502,8 @@ export function formatResult(div: HTMLDivElement, state: SearchWinState) {
           lastChild,
           markSearchMatches(
             lastChild.innerHTML,
-            getSearchMatches(searchtext, searchtype)
-          )
+            getSearchMatches(searchtext, searchtype),
+          ),
         );
       }
     });
@@ -512,7 +512,7 @@ export function formatResult(div: HTMLDivElement, state: SearchWinState) {
 
 function markSearchMatches(
   htmlStr: string,
-  matches: SearchMatchType[]
+  matches: SearchMatchType[],
 ): string {
   const repl = (re: RegExp, replacement: string) => {
     return html
@@ -528,12 +528,12 @@ function markSearchMatches(
     if (m.type === 'RegExp') {
       html = repl(
         new RegExp(m.term, 'gim'),
-        '$1<span class="searchterm">$2</span>$3'
+        '$1<span class="searchterm">$2</span>$3',
       );
     } else if (m.type === 'string') {
       html = repl(
         new RegExp(escapeRE(m.term), 'gim'),
-        '<span class="searchterm">$&</span>'
+        '<span class="searchterm">$&</span>',
       );
     }
   });
@@ -544,7 +544,7 @@ function markSearchMatches(
 // To highlight results, build regular expressions for matching them.
 function getSearchMatches(
   searchtext: string,
-  searchtype: SearchWinState['searchtype']
+  searchtype: SearchWinState['searchtype'],
 ) {
   let matches: SearchMatchType[] = [];
   let t = getLuceneSearchText(searchtext);
@@ -564,7 +564,7 @@ function getSearchMatches(
       t = t.replace(/ +/g, ';');
       t = t.replace(
         /(\+|-|&&|\|\||!|\(|\)|{|}|\[|\]|\^|~|:|"|\\|AND;|OR;|NOT;)/g,
-        ''
+        '',
       ); // Remove all control chars except [?";*]
       t = t.replace(/\?/g, '.'); // add dots before any ?s
       t = t.replace(/\*/g, '.*?'); // add dots before any *s
@@ -592,7 +592,7 @@ function getSearchMatches(
   function getMatchTermsArray(terms: string): SearchMatchType[] {
     const tr: SearchMatchType[] = [];
     terms.split(';').forEach((term) => {
-      if (!/lemma:/.test(term)) {
+      if (!term.includes('lemma:')) {
         const aTerm: SearchMatchType = { term: '', type: null };
         // Begin and End cannot be \W because non-English letters ARE \W!
         aTerm.term = `(^|\\s|–|\\(|>)(${term})(<|\\s|\\.|\\?|,|;|:|"|!|\\)|$)`;
@@ -623,7 +623,7 @@ export function hilightStrongs(strongs: RegExpMatchArray | null) {
     if (strongsCSS.css) {
       strongsCSS.sheet.insertRule(
         strongsCSS.css.rule.cssText.replace('matchingStrongs', c),
-        index
+        index,
       );
       strongsCSS.added.push(index);
     }
@@ -653,8 +653,8 @@ export async function lexicon(lexdiv: HTMLDivElement, state: SearchWinState) {
     lexdiv,
     markSearchMatches(
       await getSearchResults(dModule, 0, total, true),
-      getSearchMatches(searchtext, searchtype)
-    )
+      getSearchMatches(searchtext, searchtype),
+    ),
   );
 
   // If searching for a Strong's number, collect all its translations.
@@ -662,7 +662,7 @@ export async function lexicon(lexdiv: HTMLDivElement, state: SearchWinState) {
   if (strongs) {
     strongs.forEach((s) => {
       const c = `S_${s.replace(/lemma:\s*/, '')}`;
-      const snlex: { text: string; count: number }[] = [];
+      const snlex: Array<{ text: string; count: number }> = [];
 
       // Iterate through each and every element having this Strong's number
       Array.from(lexdiv.getElementsByClassName(c)).forEach((el) => {
@@ -697,10 +697,11 @@ export async function lexicon(lexdiv: HTMLDivElement, state: SearchWinState) {
       a.textContent = strongNum;
 
       const span1 = lexlist.appendChild(document.createElement('span'));
-      span1.textContent = ` - [${
-        dString(G.getLocaleDigits(), 1, G.i18n.language)}-${
-        dString(G.getLocaleDigits(), total, G.i18n.language
-      )}]: `;
+      span1.textContent = ` - [${dString(
+        G.getLocaleDigits(),
+        1,
+        G.i18n.language,
+      )}-${dString(G.getLocaleDigits(), total, G.i18n.language)}]: `;
 
       const span2 = lexlist.appendChild(document.createElement('span'));
       span2.className = `cs-${dModule}`;
@@ -717,7 +718,7 @@ export async function lexicon(lexdiv: HTMLDivElement, state: SearchWinState) {
       if (p) {
         const re = '\\bS_(G|H)\\d+\\b';
         const sclass = p.className.match(new RegExp(re, 'g'));
-        if (sclass && sclass.length) {
+        if (sclass?.length) {
           sclass.forEach((sc) => {
             const [mclass, mtypex] = Array.from(sc.match(new RegExp(re)) || []);
             const mtype = mtypex as keyof typeof strongsLists;
@@ -762,15 +763,20 @@ export async function lexicon(lexdiv: HTMLDivElement, state: SearchWinState) {
             `<span${cls} data-title="${[
               dModule,
               ...sts.strongs.split(' '),
-            ].join('.')}">${strongNum}</span>(${sts.count.toString()})`
+            ].join('.')}">${strongNum}</span>(${sts.count.toString()})`,
           );
         });
         sanitizeHTML(
           lexlist,
-          `${mtype} - [${
-              dString(G.getLocaleDigits(), 1, G.i18n.language)}-${
-              dString(G.getLocaleDigits(), total, G.i18n.language
-          )}]: ${sns.join(', ')}`
+          `${mtype} - [${dString(
+            G.getLocaleDigits(),
+            1,
+            G.i18n.language,
+          )}-${dString(
+            G.getLocaleDigits(),
+            total,
+            G.i18n.language,
+          )}]: ${sns.join(', ')}`,
         );
       }
     });
@@ -795,7 +801,7 @@ export async function lexicon(lexdiv: HTMLDivElement, state: SearchWinState) {
 
 export default async function handler(
   this: SearchWin,
-  e: React.SyntheticEvent
+  e: React.SyntheticEvent,
 ) {
   const state = this.state as SearchWinState;
   const target = e.target as HTMLElement;
@@ -815,7 +821,9 @@ export default async function handler(
           break;
         }
         case 'searchButton': {
-          search(this);
+          search(this).catch((er) => {
+            log.error(er);
+          });
           break;
         }
         case 'helpButton': {
@@ -830,7 +838,10 @@ export default async function handler(
             };
             this.setState(s);
             const result = await createSearchIndex(this, module);
-            if (result) search(this);
+            if (result)
+              search(this).catch((er) => {
+                log.error(er);
+              });
           }
           break;
         }

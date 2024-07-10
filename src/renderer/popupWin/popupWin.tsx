@@ -4,20 +4,17 @@
 import React from 'react';
 import { diff } from '../../common.ts';
 import G from '../rg.ts';
+import log from '../log.ts';
 import RenderPromise from '../renderPromise.ts';
 import renderToRoot from '../renderer.tsx';
 import { windowArguments } from '../rutil.ts';
-import {
-  addClass,
-  XulProps,
-  xulPropTypes,
-} from '../libxul/xul.tsx';
+import { addClass, type XulProps, xulPropTypes } from '../libxul/xul.tsx';
 import { Vbox } from '../libxul/boxes.tsx';
 import {
   popupHandler as popupHandlerH,
-  PopupParent,
-  PopupParentState,
-  ViewportPopupProps,
+  type PopupParent,
+  type PopupParentState,
+  type ViewportPopupProps,
   PopupParentInitState,
 } from '../components/popup/popupParentH.ts';
 import Popup from '../components/popup/popup.tsx';
@@ -35,7 +32,6 @@ type PopupWinState = PopupParentState & RenderPromiseState;
 let windowState = windowArguments('popupState') as Partial<PopupWinState>;
 
 export default class PopupWin extends React.Component implements PopupParent {
-
   static propTypes: typeof propTypes;
 
   popupHandler: typeof popupHandlerH;
@@ -62,7 +58,7 @@ export default class PopupWin extends React.Component implements PopupParent {
     windowState = state;
     const changedState = diff(
       { ...prevState, popupParent: null },
-      { ...state, popupParent: null }
+      { ...state, popupParent: null },
     );
     if (changedState) G.Window.mergeValue('popupState', changedState);
     renderPromise.dispatch();
@@ -75,7 +71,7 @@ export default class PopupWin extends React.Component implements PopupParent {
     return (
       <Vbox {...addClass('popupWin', this.props)}>
         <Popup
-          key={[elemdata && elemdata.length, popupReset].join('.')}
+          key={[elemdata?.length, popupReset].join('.')}
           elemdata={elemdata}
           onPopupClick={popupHandler}
           onSelectChange={popupHandler}
@@ -87,4 +83,6 @@ export default class PopupWin extends React.Component implements PopupParent {
 }
 PopupWin.propTypes = propTypes;
 
-renderToRoot(<PopupWin height="100%" />);
+renderToRoot(<PopupWin height="100%" />).catch((er) => {
+  log.error(er);
+});

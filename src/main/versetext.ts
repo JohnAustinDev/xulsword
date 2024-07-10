@@ -1,14 +1,12 @@
+import { JSON_attrib_stringify, clone, getSwordOptions } from '../common';
+import parseExtendedVKRef from '../extrefParser';
+import C from '../constant';
+import G from './mg.ts';
+import { verseKey } from './minit.ts';
 
-
-import { JSON_attrib_stringify, clone, getSwordOptions } from "../common";
-import parseExtendedVKRef from "../extrefParser";
-import C from "../constant";
-import S from "../defaultPrefs.ts";
-import G from "./mg.ts";
-import { verseKey } from "./minit.ts";
-
-import type { LocationVKType, LookupInfo, TabTypes, TextVKType } from "../type";
-import type { HTMLData } from "../renderer/htmlData";
+import type S from '../defaultPrefs.ts';
+import type { LocationVKType, LookupInfo, TabTypes, TextVKType } from '../type';
+import type { HTMLData } from '../renderer/htmlData';
 
 // Return an HTML Scripture reference list representing an extended reference.
 // An extended reference is a textual reference comprising a list of Scripture
@@ -22,7 +20,7 @@ export function getExtRefHTML(
   context: LocationVKType,
   showText: boolean,
   keepNotes: boolean,
-  info?: Partial<LookupInfo>
+  info?: Partial<LookupInfo>,
 ): string {
   const list = parseExtendedVKRef(verseKey, extref, context, [locale]);
   const alternates = workingModules(locale);
@@ -51,7 +49,7 @@ export function getExtRefHTML(
             keepNotes,
             false,
             true,
-            inf
+            inf,
           ) || resolve;
       }
       const { location, vkMod: module, text } = resolve;
@@ -67,7 +65,7 @@ export function getExtRefHTML(
           fntext.push('opposing-program-direction');
         }
         const altlabel = ['altlabel', labelClass];
-        const cc: (keyof LookupInfo)[] = ['alternate', 'anytab'];
+        const cc: Array<keyof LookupInfo> = ['alternate', 'anytab'];
         cc.forEach((c) => {
           if (inf[c]) altlabel.push(c);
         });
@@ -116,7 +114,7 @@ export function locationVKText(
   keepNotesx?: boolean,
   commentaries?: boolean | 'only' | null | undefined,
   findAny?: boolean,
-  info?: Partial<LookupInfo>
+  info?: Partial<LookupInfo>,
 ): TextVKType | null {
   const keepNotes = keepNotesx === undefined ? true : keepNotesx;
   const i = (typeof info === 'object' ? info : {}) as LookupInfo;
@@ -142,7 +140,8 @@ export function locationVKText(
   if (!location.subid && targetmod && !modOK && altModules !== false) {
     const companions: string[] = [];
     const companion = G.LibSword.getModuleInformation(targetmod, 'Companion');
-    if (companion !== C.NOTFOUND) companions.push(...companion.split(/\s*,\s*/));
+    if (companion !== C.NOTFOUND)
+      companions.push(...companion.split(/\s*,\s*/));
     const compOK = companions.find((compx) => {
       let comp = compx;
       if (!(comp in tab)) {
@@ -181,7 +180,7 @@ export function locationVKText(
           module,
           modloc.osisRef(v11n),
           keepNotes,
-          options
+          options,
         );
         text = text.replace(/\n/g, ' ');
       }
@@ -221,19 +220,16 @@ export function locationVKText(
       });
     }
   }
-  return result;
+  return result || null;
 }
 
-function getFootnoteText(
-  location: LocationVKType,
-  module: string
-): string {
+function getFootnoteText(location: LocationVKType, module: string): string {
   const { book, chapter, verse, subid } = location;
   if (subid) {
     const { notes: n } = G.LibSword.getChapterText(
       module,
       `${book} ${chapter}`,
-      getSwordOptions(G, G.Tab[module].type)
+      getSwordOptions(G, G.Tab[module].type),
     );
     const notes = n.split(/(?=<div[^>]+class="nlist")/);
     for (let x = 0; x < notes.length; x += 1) {
@@ -252,12 +248,12 @@ function workingModules(locale: string, type?: TabTypes) {
   const am = G.LocaleConfigs[locale].AssociatedModules;
   const alternates = new Set(am ? am.split(',') : undefined);
   const tabs = G.Prefs.getComplexValue(
-    'xulsword.tabs'
+    'xulsword.tabs',
   ) as typeof S.prefs.xulsword.tabs;
   tabs.forEach((tbk) => {
     if (tbk) tbk.forEach((t) => alternates.add(t));
   });
   return Array.from(alternates).filter(
-    (m) => !type || (m in G.Tab && G.Tab[m].tabType === type)
+    (m) => !type || (m in G.Tab && G.Tab[m].tabType === type),
   );
 }

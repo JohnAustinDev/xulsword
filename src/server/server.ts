@@ -1,40 +1,51 @@
-"use strict"
+/* eslint-disable import/first */
+'use strict';
 globalThis.isPublicServer = true;
 
-import { Server, Socket } from 'socket.io';
+import path from 'path';
+import { Server } from 'socket.io';
 import i18n from 'i18next';
 import helmet from 'helmet';
 import session from 'express-session';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
 import toobusy from 'toobusy-js';
 import memorystore from 'memorystore';
-import log, { LogLevel } from 'electron-log';
+import log from 'electron-log';
+import i18nBackendMain from 'i18next-fs-backend';
+import http from 'http';
 import Setenv from './setenv.ts';
 import { JSON_parse, JSON_stringify, invalidData as invd } from '../common.ts';
 import C from '../constant.ts';
 import G from '../main/mg.ts';
 import GServer from '../main/mgServer.ts';
 import handleGlobal from '../main/handleGlobal.ts';
-import { GCallType } from 'type.ts';
+
+import type { Socket } from 'socket.io';
+import type { LogLevel } from 'electron-log';
+import type { GCallType } from 'type.ts';
 
 // Environment vars are read from server_env.json when the server starts:
-Setenv(`${__dirname}/server_env.json`);
+Setenv(path.join(__dirname, 'server_env.json'));
 
 G.Dirs.init();
 
-const invalidData = (data: any, platform: any, depth = 0) => { return invd(data, platform, depth, log) };
+const invalidData = (data: unknown, platform: string, depth = 0) => {
+  return invd(data, platform, depth, log);
+};
 
 const logfile = G.Dirs.ProfD.append('xulsword.log');
 log.transports.console.level = C.LogLevel;
-log.transports.file.level = 'info'
+log.transports.file.level = 'info';
 log.transports.file.resolvePath = () => logfile.path;
-
-const i18nBackendMain = require('i18next-fs-backend');
 
 G.LibSword.init();
 
-log.info(`Loaded ${G.LibSword.getModuleList().split('<nx>').length} SWORD modules.`);
-log.info(`LogLevel: ${C.LogLevel}, Logfile: ${logfile.path}, Port: ${C.Server.port}`);
+log.info(
+  `Loaded ${G.LibSword.getModuleList().split('<nx>').length} SWORD modules.`,
+);
+log.info(
+  `LogLevel: ${C.LogLevel}, Logfile: ${logfile.path}, Port: ${C.Server.port}`,
+);
 
 const AvailableLanguages = [
   ...new Set(
@@ -44,38 +55,42 @@ const AvailableLanguages = [
       .map((l) => {
         return [l, l.replace(/-.*$/, '')];
       })
-      .flat()
+      .flat(),
   ),
 ];
 
-i18nInit('en');
+i18nInit('en').catch((er) => {
+  log.error(er);
+});
 
 // Do this in the background...
 // G.getSystemFonts();
 
-const server = require('http').createServer();
+const server = http.createServer();
 
 const io = new Server(server, {
   serveClient: false,
   cors: {
     origin: process.env.CORS_ORIGIN,
     methods: ['GET'],
-  }
+  },
 });
 
 const MemoryStore = memorystore(session);
 io.engine.use(helmet());
-io.engine.use(session({
-  secret: 'fk95DSfgj7fUkldf',
-  name: 'ibtxulsword',
-  resave: false,
-  saveUninitialized: false,
-  cookie: { secure: true, sameSite: true },
-  store: new MemoryStore({
-    checkPeriod: 86400000, // prune expires every 24h
-    max: 20000000,
+io.engine.use(
+  session({
+    secret: 'fk95DSfgj7fUkldf',
+    name: 'ibtxulsword',
+    resave: false,
+    saveUninitialized: false,
+    cookie: { secure: true, sameSite: true },
+    store: new MemoryStore({
+      checkPeriod: 86400000, // prune expires every 24h
+      max: 20000000,
+    }),
   }),
-}));
+);
 
 const rateLimiter = new RateLimiterMemory(C.Server.ipLimit);
 toobusy.maxLag(300); // in ms: default is 70
@@ -94,83 +109,93 @@ io.on('connection', (socket) => {
             return;
           }
         }
-        log.error(`${socket.handshake.address} › Ignoring 'error-report' call made with improper arguments. (${invalid})`);
+        log.error(
+          `${socket.handshake.address} › Ignoring 'error-report' call made with improper arguments. (${invalid})`,
+        );
       } else {
         // ignore
       }
-    }
+    },
   );
 
-  socket.on(
-    'log',
-    async (args: any[], _callback: (r: any) => void) => {
-      const limited = await isLimited(socket, args);
-      if (!limited) {
-        const invalid = invalidArgs(args);
-        if (!invalid && args.length === 3) {
-          const [type, windowID, json] = args;
-          const logargs = json.length > C.Server.maxLogJson
+  socket.on('log', async (args: any[], _callback: (r: any) => void) => {
+    const limited = await isLimited(socket, args);
+    if (!limited) {
+      const invalid = invalidArgs(args);
+      if (!invalid && args.length === 3) {
+        const [type, windowID, json] = args as [string, string, string];
+        const logargs =
+          json.length > C.Server.maxLogJson
             ? [`log too long. [${json.length}]`]
             : JSON_parse(json);
-          if (type in log
-              && ['string', 'number'].includes(typeof windowID)
-              && Array.isArray(logargs)) {
-            try {
-              log[type as LogLevel](windowID, `${socket.handshake.address} › `, ...logargs);
-            } catch (er: any) {
-              log.error(`${socket.handshake.address} › ${er.toString()}`);
-            }
-            return;
+        if (
+          type in log &&
+          ['string', 'number'].includes(typeof windowID) &&
+          Array.isArray(logargs)
+        ) {
+          try {
+            log[type as LogLevel](
+              windowID,
+              `${socket.handshake.address} › `,
+              ...(logargs as unknown[]),
+            );
+          } catch (er: any) {
+            log.error(`${socket.handshake.address} › ${er.toString()}`);
           }
+          return;
         }
-        log.error(`${socket.handshake.address} › Ignoring 'log' call made with improper arguments. (${invalid})`);
-      } else {
-        // ignore
       }
+      log.error(
+        `${socket.handshake.address} › Ignoring 'log' call made with improper arguments. (${invalid})`,
+      );
+    } else {
+      // ignore
     }
-  );
+  });
 
-  socket.on(
-    'global',
-    async (args: any[], callback: (r: any) => void) => {
-      const limited = await isLimited(socket, args, true);
-      if (!limited) {
-        const invalid = invalidArgs(args);
-        if (!invalid && args.length === 1 && typeof callback === 'function') {
-          const acall = args.shift() as GCallType;
-          let arginfo = `${acall[2]?.length} args`;
-          if (acall[0].startsWith('callBatch')) {
-            arginfo = `${(acall[2] as any)[0].length} calls`;
+  socket.on('global', async (args: any[], callback: (r: any) => void) => {
+    const limited = await isLimited(socket, args, true);
+    if (!limited) {
+      const invalid = invalidArgs(args);
+      if (!invalid && args.length === 1 && typeof callback === 'function') {
+        const acall = args.shift() as GCallType;
+        let arginfo = `${acall[2]?.length} args`;
+        if (acall[0].startsWith('callBatch')) {
+          arginfo = `${(acall[2] as any)[0].length} calls`;
+        }
+        log.info(
+          `${socket.handshake.address} › Global [${acall[0]}, ${acall[1]}, [${arginfo}]]`,
+        );
+        if (Array.isArray(acall) && acall.length && acall.length <= 3) {
+          let r;
+          try {
+            r = handleGlobal(GServer, -1, acall, false);
+          } catch (er: any) {
+            log.error(`${socket.handshake.address} › ${er}`);
           }
-          log.info(`${socket.handshake.address} › Global [${acall[0]}, ${acall[1]}, [${arginfo}]]`);
-          if (Array.isArray(acall) && acall.length && acall.length <= 3) {
-            let r;
-            try {
-              r = handleGlobal(GServer, -1, acall, false);
-            } catch (er) {
-              log.error(`${socket.handshake.address} › ${er}`);
-            }
-            if (r instanceof Promise) {
-              r.then((result) => {
-                const invalid = invalidData(result, 'browser');
-                if (!invalid) callback(result);
-                else log.error(`${socket.handshake.address} › ${invalid}`);
-              }).catch((er) => log.error(`${socket.handshake.address} › ${er}`));
-            } else {
-              const invalid = invalidData(r, 'browser');
-              if (!invalid) callback(r);
+          if (r instanceof Promise) {
+            r.then((result) => {
+              const invalid = invalidData(result, 'browser');
+              if (!invalid) callback(result);
               else log.error(`${socket.handshake.address} › ${invalid}`);
-            }
-            return;
+            }).catch((er) => {
+              log.error(`${socket.handshake.address} › ${er}`);
+            });
+          } else {
+            const invalid = invalidData(r, 'browser');
+            if (!invalid) callback(r);
+            else log.error(`${socket.handshake.address} › ${invalid}`);
           }
+          return;
         }
-        log.error(`${socket.handshake.address} › Ignoring 'global' call made with improper arguments. (${invalid})`);
-      } else if (typeof callback === 'function') {
-        callback({ limitedDoWait: C.Server.limitedMustWait });
       }
+      log.error(
+        `${socket.handshake.address} › Ignoring 'global' call made with improper arguments. (${invalid})`,
+      );
+    } else if (typeof callback === 'function') {
+      callback({ limitedDoWait: C.Server.limitedMustWait });
     }
-  );
-
+  });
 });
 
 io.listen(C.Server.port);
@@ -185,9 +210,10 @@ function invalidArgs<T>(args: T[]): string | null {
 async function isLimited(
   socket: Socket,
   args: any[],
-  checkbusy = false
+  checkbusy = false,
 ): Promise<boolean> {
   // Check-busy is disabled for now...
+  // eslint-disable-next-line no-constant-condition
   if (false && checkbusy && toobusy()) {
     log.warn(`${socket.handshake.address} › server too busy.`);
     return true;
@@ -240,4 +266,4 @@ async function i18nInit(lng: string) {
     .catch((e) => {
       log.error(`ERROR: ${e}`);
     });
-};
+}

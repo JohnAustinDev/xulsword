@@ -1,8 +1,6 @@
-/* eslint-disable import/no-duplicates */
-/* eslint-disable @typescript-eslint/no-loop-func */
-import React from 'react';
+import type React from 'react';
 import C from '../../../constant.ts';
-import S from '../../../defaultPrefs.ts';
+import type S from '../../../defaultPrefs.ts';
 import Cache from '../../../cache.ts';
 import { clone, escapeRE, ofClass } from '../../../common.ts';
 import { getElementData, verseKey } from '../../htmlData.ts';
@@ -71,11 +69,11 @@ export function closeMenupopups(component: React.Component) {
 export function bbDragEnd(
   this: Xulsword | ViewportWin,
   e: React.MouseEvent,
-  value: DragSizerVal
+  value: DragSizerVal,
 ) {
   const target = e.target as HTMLElement;
   const atext = ofClass(['atext'], target)?.element;
-  const index = Number(atext && atext.dataset.index);
+  const index = Number(atext?.dataset.index);
   if (atext && !Number.isNaN(Number(index))) {
     let { noteBoxHeight, maximizeNoteBox } = this
       .state as typeof S.prefs.xulsword;
@@ -96,7 +94,7 @@ export function bbDragEnd(
 function setState(
   comp: Xulsword | ViewportWin,
   atext: HTMLElement,
-  func: (prevState: PinPropsType) => Partial<PinPropsType> | null
+  func: (prevState: PinPropsType) => Partial<PinPropsType> | null,
 ) {
   const { index, ispinned } = atext.dataset;
   const panelIndex = Number(index);
@@ -151,7 +149,7 @@ function setState(
                 break;
               }
               default:
-                throw Error(`Unhandled PinProp '${key}'`);
+                throw Error(`Unhandled PinProp '${key as string}'`);
             }
           }
         });
@@ -183,7 +181,7 @@ function setState(
 
 export default function handler(
   this: Xulsword | ViewportWin,
-  es: React.SyntheticEvent<any>
+  es: React.SyntheticEvent<any>,
 ) {
   const { renderPromise } = this;
   const state = this.state as XulswordState | ViewportWinState;
@@ -226,7 +224,7 @@ export default function handler(
           'crref',
           'origoption',
         ],
-        target
+        target,
       );
       if (targ === null) return;
       e.preventDefault();
@@ -235,8 +233,11 @@ export default function handler(
       switch (targ.type) {
         case 'text-win': {
           const cols = atext?.dataset.columns;
-          if (window.processR.platform !== 'browser'
-             && atext && cols !== undefined) {
+          if (
+            window.processR.platform !== 'browser' &&
+            atext &&
+            cols !== undefined
+          ) {
             // Save new window's XulswordState
             const xulswordState: Partial<XulswordState> = {};
             vpWindowState.forEach((name) => {
@@ -248,14 +249,14 @@ export default function handler(
             const vpwTabs: any[] = [];
             xulswordState.panels?.forEach((pnl, i) => {
               const { tabs: tbs } = xulswordState;
-              vpwTabs[i] = index === i && tbs && tbs[i] ? tbs[i] : null;
+              vpwTabs[i] = index === i && tbs?.[i] ? tbs[i] : null;
               vpwPanels[i] =
                 index <= i && i < index + Number(cols) ? pnl : null;
             });
             xulswordState.panels = vpwPanels;
             xulswordState.tabs = vpwTabs;
             // Save new window's Atext states
-            const atextStates: { [i: string]: Partial<AtextStateType> } = {};
+            const atextStates: Record<string, Partial<AtextStateType>> = {};
             if ('atextRefs' in this) {
               vpwPanels.forEach((pnl, i) => {
                 if (pnl) {
@@ -356,7 +357,7 @@ export default function handler(
                 chapter: Number(chapter),
                 v11n: v11n as V11nType,
               },
-              0
+              0,
             );
             if (newloc) {
               this.setState({
@@ -385,7 +386,7 @@ export default function handler(
               },
               location.v11n,
               undefined,
-              renderPromise
+              renderPromise,
             ).location();
             this.setState({
               location: newloc,
@@ -463,7 +464,12 @@ export default function handler(
         case 'nextchaplink': {
           if (atext) {
             setState(this, atext, (prevState: PinPropsType) => {
-              return textChange(atext, targ.type === 'nextchaplink', prevState, renderPromise);
+              return textChange(
+                atext,
+                targ.type === 'nextchaplink',
+                prevState,
+                renderPromise,
+              );
             });
           }
           break;
@@ -471,8 +477,7 @@ export default function handler(
         case 'dt':
         case 'dtl':
           if (
-            p &&
-            p.locationGB &&
+            p?.locationGB &&
             elem.classList.contains('x-target_self') &&
             atext
           ) {
@@ -492,11 +497,13 @@ export default function handler(
           break;
         }
         case 'gfn': {
-          if (p && p.title) {
+          if (p?.title) {
             const parent = ofClass(['npopup', 'atext'], target);
             if (parent) {
-              const gfns = parent.element.getElementsByClassName('gfn');
-              Array.from(gfns).forEach((gfn: any) => {
+              const gfns = parent.element.getElementsByClassName(
+                'gfn',
+              ) as HTMLCollectionOf<HTMLElement>;
+              Array.from(gfns).forEach((gfn) => {
                 if (gfn !== elem && gfn.dataset.title === p.title)
                   scrollIntoView(gfn, parent.element);
               });
@@ -534,7 +541,7 @@ export default function handler(
         }
         default:
           throw Error(
-            `Unhandled handleViewport click event on '${target.className}'`
+            `Unhandled handleViewport click event on '${target.className}'`,
           );
       }
       break;
@@ -552,10 +559,10 @@ export default function handler(
             if (value && Cache.has('keylist', mod)) {
               const re = new RegExp(
                 `(^|<nx>)(${escapeRE(value)}[^<]*)<nx>`,
-                'i'
+                'i',
               );
               const firstMatch = `${Cache.read('keylist', mod).join(
-                '<nx>'
+                '<nx>',
               )}<nx>`.match(re);
               if (firstMatch) {
                 setState(this, atext, () => {
@@ -568,7 +575,7 @@ export default function handler(
             }
           },
           C.UI.Atext.dictKeyInputDelay,
-          'dictkeydownTO'
+          'dictkeydownTO',
         )(targ.element, panel);
       }
       break;

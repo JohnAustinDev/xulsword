@@ -1,9 +1,7 @@
-/* eslint-disable @typescript-eslint/no-use-before-define */
-/* eslint-disable no-nested-ternary */
 import Cache from '../cache.ts';
 import { clone, getSwordOptions, localizeBookmark } from '../common.ts';
 import C from '../constant.ts';
-import S from '../defaultPrefs.ts';
+import type S from '../defaultPrefs.ts';
 import G, { GI } from './rg.ts';
 import { updateDataAttribute, verseKey } from './htmlData.ts';
 import { getMaxVerse } from './rutil.ts';
@@ -19,14 +17,15 @@ import type {
   LocationVKType,
   SwordFilterType,
   SwordFilterValueType,
+  V11nType,
 } from '../type.ts';
 import type { HTMLData } from './htmlData.ts';
 import type { AtextProps } from './components/atext/atext.tsx';
 import type { LibSwordResponse } from './components/atext/ztext.ts';
 import type { SelectVKType } from './libxul/selectVK.tsx';
-import RenderPromise from './renderPromise.ts';
+import type RenderPromise from './renderPromise.ts';
 
-type BookmarkMapType = { [key: string]: BookmarkInfoHTML[] };
+type BookmarkMapType = Record<string, BookmarkInfoHTML[]>;
 
 type BookmarkInfoHTML = {
   id: string;
@@ -34,7 +33,7 @@ type BookmarkInfoHTML = {
   note: string;
   noteLocale: string;
   location: LocationORType | LocationVKType;
-  classes: ('bmitem' | 'bmnote')[];
+  classes: Array<'bmitem' | 'bmnote'>;
 };
 
 export function bmOsisRef(location: LocationORType | LocationVKType): string {
@@ -49,7 +48,7 @@ export function bmOsisRef(location: LocationORType | LocationVKType): string {
 function bmInfoToData(
   type: HTMLData['type'],
   bookmarkInfo: BookmarkInfoHTML,
-  module: string
+  module: string,
 ): HTMLData {
   const { location, id, n } = bookmarkInfo;
   return {
@@ -75,17 +74,17 @@ function marker(bookmarkInfo: BookmarkInfoHTML, module: string): string {
   return updateDataAttribute(
     // Match other notes from osis2xhtml_xs.cpp
     `<span class="un" data-title="${n}.${osisref}.${module}"></span>`,
-    bmInfoToData('un', bookmarkInfo, module)
+    bmInfoToData('un', bookmarkInfo, module),
   );
 }
 
 export function getBookmarkInfo(
-  bookmark: BookmarkType
+  bookmark: BookmarkType,
 ): BookmarkInfoHTML | null {
   const { id, note, noteLocale, location } = localizeBookmark(
     G,
     verseKey,
-    bookmark
+    bookmark,
   ) as BookmarkType;
   if (location) {
     const classes: BookmarkInfoHTML['classes'] = ['bmitem'];
@@ -134,20 +133,18 @@ export function getBookmarkMap(): BookmarkMapType {
     kmap(
       G.Prefs.getComplexValue(
         'rootfolder',
-        'bookmarks'
-      ) as typeof S.bookmarks.rootfolder
+        'bookmarks',
+      ) as typeof S.bookmarks.rootfolder,
     );
     Cache.write(keyBmitemIDMap, 'bookmarkMap');
   }
-  return Cache.read('bookmarkMap') as {
-    [kjvkey: string]: BookmarkInfoHTML[];
-  };
+  return Cache.read('bookmarkMap') as Record<string, BookmarkInfoHTML[]>;
 }
 
 // Find the bookmarks associated with either a Bible chapter or module/key
 // pair.
 export function findBookmarks(
-  location: LocationVKType | LocationORType | SelectVKType
+  location: LocationVKType | LocationORType | SelectVKType,
 ): BookmarkInfoHTML[] {
   const bookmarkMap = getBookmarkMap();
   if (Object.keys(bookmarkMap).length) {
@@ -181,7 +178,7 @@ export function addBookmarksToNotes(
   bookmarkInfos: BookmarkInfoHTML[],
   notes: string | '',
   module: string,
-  sort?: boolean
+  sort?: boolean,
 ): string {
   const notehtml = notes || `<div class="notes"></div>`;
   const ns = notehtml.match(/<div[^>]+>/);
@@ -198,7 +195,7 @@ export function addBookmarksToNotes(
           const t = `un.${n}.${bmOsisRef(l)}.${module}`;
           const nlist = updateDataAttribute(
             `<div class="nlist" data-title="${t}">${span}</div>`,
-            bmInfoToData('nlist', un, module)
+            bmInfoToData('nlist', un, module),
           );
           return `${p}${nlist}`;
         }, '') + newnotes;
@@ -210,8 +207,8 @@ export function addBookmarksToNotes(
         .sort((a, b) => {
           const ma = a.match(re);
           const mb = b.match(re);
-          const ia = Number(ma && ma[1].split('.')[2]) || 0;
-          const ib = Number(mb && mb[1].split('.')[2]) || 0;
+          const ia = Number(ma?.[1].split('.')[2]) || 0;
+          const ib = Number(mb?.[1].split('.')[2]) || 0;
           return ia < ib ? -1 : ia > ib ? 1 : 0;
         })
         .join('');
@@ -224,27 +221,27 @@ export function addBookmarksToNotes(
 export function addBookmarksToTextVK(
   bookmarkInfos: BookmarkInfoHTML[],
   textHTML: string,
-  module: string
+  module: string,
 ): string {
   return textHTML.replaceAll(
     // This regex comes from xulsword.cpp:
     /(<span data-title="([^."]*)\.(\d+)\.(\d+)\.(\d+)\.([^."]*)" class="vs )([^"]*?")([^>]*?>)/g,
     (tag, start, bk, ch, vs, lv, m, cls, end) => {
-      const kjvl = verseKey(
-        [bk, ch, vs, lv, m].join('.'),
-        (m && m in G.Tab && G.Tab[m]) || 'KJV'
-      ).location('KJV');
+      const v11n: V11nType = (m && m in G.Tab && G.Tab[m].v11n) || 'KJV';
+      const kjvl = verseKey([bk, ch, vs, lv, m].join('.'), v11n).location(
+        'KJV',
+      );
       const { verse, lastverse } = kjvl;
       for (let x = verse || 1; x <= (lastverse || verse || 1); x += 1) {
         const infos: BookmarkInfoHTML[] = bookmarkInfos.filter(
-          (info) => 'v11n' in info.location && info.location.verse === x
+          (info) => 'v11n' in info.location && info.location.verse === x,
         );
         if (infos.length) {
           const markerHTML = infos
             .map((info) => marker(info, module))
             .filter(Boolean)
             .join('');
-          const classes: Set<string> = new Set();
+          const classes = new Set<string>();
           infos.forEach((info) => {
             info.classes.forEach((c) => classes.add(c));
           });
@@ -254,20 +251,20 @@ export function addBookmarksToTextVK(
         }
       }
       return tag;
-    }
+    },
   );
 }
 
 export function addBookmarksToTextGB(
   bookmarkInfos: BookmarkInfoHTML[],
   textHTML: string,
-  module: string
+  module: string,
 ): string {
   const markerHTML = bookmarkInfos
     .map((info) => marker(info, module))
     .filter(Boolean)
     .join('');
-  const classes: Set<string> = new Set();
+  const classes = new Set<string>();
   bookmarkInfos.forEach((info) => {
     info.classes.forEach((c) => classes.add(c));
   });
@@ -276,7 +273,7 @@ export function addBookmarksToTextGB(
     let div = `${s}${[c, ...classes].join(' ')}${e}`;
     div = updateDataAttribute(
       div,
-      bmInfoToData('text', bookmarkInfos[0], module)
+      bmInfoToData('text', bookmarkInfos[0], module),
     );
     return `${markerHTML}${div}`;
   });
@@ -284,7 +281,7 @@ export function addBookmarksToTextGB(
 
 export default function addBookmarks(
   response: Pick<LibSwordResponse, 'textHTML' | 'notes'>,
-  props: Pick<AtextProps, 'module' | 'location' | 'modkey'>
+  props: Pick<AtextProps, 'module' | 'location' | 'modkey'>,
 ) {
   const { textHTML, notes } = response;
   const { module, location, modkey } = props;
@@ -321,7 +318,7 @@ export function parseParagraphs(text: string): string[] {
 
 export function getSampleText(
   l: LocationVKType | LocationVKCommType | LocationORType,
-  renderPromise?: RenderPromise
+  renderPromise?: RenderPromise,
 ): string {
   let sampleText = '';
   if ('v11n' in l) {
@@ -337,7 +334,7 @@ export function getSampleText(
         module,
         loc.join('.'),
         false,
-        options
+        options,
       ).replace(/\n/g, ' ');
     }
   } else {
@@ -355,7 +352,7 @@ export function getSampleText(
           renderPromise,
           l.otherMod,
           l.key,
-          options
+          options,
         ));
       } else if (G.Tab[otherMod].type === C.DICTIONARY) {
         ({ text } = GI.LibSword.getDictionaryEntry(
@@ -363,7 +360,7 @@ export function getSampleText(
           renderPromise,
           otherMod,
           key,
-          options
+          options,
         ));
       }
       const paragraphs = parseParagraphs(text);
@@ -383,11 +380,11 @@ export function bookmarkTreeNodes(
   only?: 'folder' | 'bookmark', // undefined = all
   selectedIDs?: string | string[], // undefined = none
   expandedIDs?: string | string[], // undefined = all
-  cloned = false
+  cloned = false,
 ): BookmarkTreeNode[] {
   return items
     .map((item) =>
-      bookmarkTreeNode(item, only, selectedIDs, expandedIDs, cloned)
+      bookmarkTreeNode(item, only, selectedIDs, expandedIDs, cloned),
     )
     .filter(Boolean) as BookmarkTreeNode[];
 }
@@ -398,7 +395,7 @@ export function bookmarkTreeNode(
   only?: 'folder' | 'bookmark', // undefined = all
   selectedIDs?: string | string[], // undefined = none
   expandedIDs?: string | string[], // undefined = all
-  cloned = false
+  cloned = false,
 ): BookmarkTreeNode | null {
   const selIDs =
     selectedIDs && typeof selectedIDs === 'string'
@@ -417,7 +414,7 @@ export function bookmarkTreeNode(
     ) {
       if (node.type === 'folder') {
         node.hasCaret = node.childNodes?.some(
-          (cn) => 'type' in cn && cn.type === 'folder' && cn.childNodes
+          (cn) => 'type' in cn && cn.type === 'folder' && cn.childNodes,
         );
         node.isExpanded = !expIDs || expIDs.includes(node.id.toString());
       }
@@ -429,11 +426,11 @@ export function bookmarkTreeNode(
           only,
           selIDs,
           expIDs,
-          true
+          true,
         );
       }
       node?.childNodes?.forEach((n) =>
-        bookmarkTreeNode(n as BookmarkTreeNode, only, selIDs, expIDs, true)
+        bookmarkTreeNode(n as BookmarkTreeNode, only, selIDs, expIDs, true),
       );
       return node;
     }

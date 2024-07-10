@@ -33,7 +33,9 @@ html.about #root {
 #contributors.show > div {
   background-color: rgba(0, 0, 0, 0.5);
   padding-top: 3%;
-  transition: background-color 2s, padding-top 2s;
+  transition:
+    background-color 2s,
+    padding-top 2s;
 }
 #contributors > div {
   height: 250px;

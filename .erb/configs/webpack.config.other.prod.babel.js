@@ -19,9 +19,7 @@ const entries = {};
 xulswordEntries.forEach((pth) => {
   const name = path.basename(pth);
   entries[name] = {
-    import: [
-      pth
-    ]
+    import: [pth],
   };
 });
 
@@ -93,6 +91,5 @@ export default merge(baseConfig, {
       openAnalyzer: process.env.OPEN_ANALYZER === 'true',
       analyzerPort: 8889,
     }),
-
   ],
 });

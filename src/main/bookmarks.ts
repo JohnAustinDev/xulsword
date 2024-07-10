@@ -1,6 +1,4 @@
-/* eslint-disable no-nested-ternary */
 import log from 'electron-log';
-import { PrefCallbackType } from '../prefs.ts';
 import C from '../constant.ts';
 import S from '../defaultPrefs.ts';
 import { clone, randomID, replaceASCIIcontrolChars } from '../common.ts';
@@ -19,13 +17,14 @@ import type {
   BookmarkItemType,
   LocationVKCommType,
 } from '../type.ts';
+import type { PrefCallbackType } from '../prefs.ts';
 
 type BMkeys =
   | keyof BookmarkItem
   | keyof BookmarkType
   | keyof BookmarkFolderType;
 
-type StringRegex = [string, RegExp];
+type StringRegex = [JSTypes, RegExp];
 
 // Storage for all undo/redo transactions (not just bookmarks)
 export const Transaction = {
@@ -48,7 +47,7 @@ export const addBookmarkTransaction: PrefCallbackType = (
   _callingWinID,
   store,
   key,
-  value
+  value,
 ) => {
   const { pause, list } = Transaction;
   if (!pause && store === 'bookmarks' && key === 'rootfolder') {
@@ -65,19 +64,19 @@ export const addBookmarkTransaction: PrefCallbackType = (
 };
 
 const bmTypes: BookmarkItemTypes = ['folder', 'bookmark'];
-
-const bmPropertyTypes: Record<BMkeys, any> = {
+type JSTypes = 'string' | 'number' | 'array' | 'boolean';
+const bmPropertyTypes: Record<BMkeys, JSTypes | 'location' | StringRegex> = {
   id: 'string',
   label: 'string',
   labelLocale: 'string',
   note: 'string',
   noteLocale: 'string',
   creationDate: 'number',
-  type: ['string', new RegExp(`^(${bmTypes.join('|')})$`)] as StringRegex,
+  type: ['string', new RegExp(`^(${bmTypes.join('|')})$`)],
   tabType: [
     'string',
     new RegExp(`^(${Object.values(C.SupportedTabTypes).join('|')})$`),
-  ] as StringRegex,
+  ],
   location: 'location',
   sampleText: 'string',
   childNodes: 'array',
@@ -86,7 +85,7 @@ const bmPropertyTypes: Record<BMkeys, any> = {
   isSelected: 'boolean',
 };
 
-const bmRequiredItemProps: (keyof BookmarkItem)[] = [
+const bmRequiredItemProps: Array<keyof BookmarkItem> = [
   'id',
   'label',
   'labelLocale',
@@ -96,13 +95,13 @@ const bmRequiredItemProps: (keyof BookmarkItem)[] = [
   'type',
 ];
 
-const bmRequiredBookmarkProps: (keyof BookmarkType)[] = [
+const bmRequiredBookmarkProps: Array<keyof BookmarkType> = [
   'tabType',
   'location',
   'sampleText',
 ];
 
-const bmRequiredFolderProps: (keyof BookmarkFolderType)[] = ['childNodes'];
+const bmRequiredFolderProps: Array<keyof BookmarkFolderType> = ['childNodes'];
 
 function hasProps(item: unknown, props: string[]): boolean {
   if (item && typeof item === 'object' && !Array.isArray(item)) {
@@ -114,7 +113,7 @@ function hasProps(item: unknown, props: string[]): boolean {
 // Validates a bookmark item, strips unknown properties, and gives new ids.
 function isValidItem(
   test: unknown,
-  newmods: NewModulesType
+  newmods: NewModulesType,
 ): BookmarkItemType | null {
   if (
     !test ||
@@ -144,8 +143,7 @@ function isValidItem(
   Object.entries(item).forEach((entry) => {
     const [k, v] = entry;
     if (!validationFailed && k in bmPropertyTypes) {
-      const validk: string | StringRegex =
-        bmPropertyTypes[k as keyof typeof bmPropertyTypes];
+      const validk = bmPropertyTypes[k as keyof typeof bmPropertyTypes];
       const type = Array.isArray(validk) ? validk[0] : validk;
       let isValid = false;
       switch (type) {
@@ -191,6 +189,7 @@ function isValidItem(
           break;
         }
         default: {
+          // eslint-disable-next-line valid-typeof
           isValid = typeof v === type;
           if (isValid && Array.isArray(validk)) {
             const v2 = v as string;
@@ -227,7 +226,7 @@ function isValidItem(
 export default function importBookmarkObject(
   objx: unknown, // test for BookmarkFolderType or { rootfolder: BookmarkFolderType }
   parentFolder: BookmarkFolderType,
-  results?: NewModulesType
+  results?: NewModulesType,
 ): NewModulesType {
   const r: NewModulesType = results || clone(C.NEWMODS);
   const obj =
@@ -239,7 +238,7 @@ export default function importBookmarkObject(
     r.bookmarks.push(isValid.id);
     if (isValid.id === S.bookmarks.rootfolder.id) {
       parentFolder.childNodes.push(
-        ...(isValid as BookmarkFolderType).childNodes
+        ...(isValid as BookmarkFolderType).childNodes,
       );
     } else {
       parentFolder.childNodes.push(isValid);
@@ -253,18 +252,15 @@ export default function importBookmarkObject(
 export function importDeprecatedBookmarks(
   fileContent: string,
   parentFolder: BookmarkFolderType,
-  results?: NewModulesType
+  results?: NewModulesType,
 ): NewModulesType {
   const r = results || clone(C.NEWMODS);
   const deprecatedRootID = 'http://www.xulsword.com/bookmarks/AllBookmarks';
 
-  let filedata = fileContent.replace(
-    new RegExp(`<nx/>[\n\r]+`, 'g'),
-    '<bMRet>'
-  );
+  let filedata = fileContent.replace(/<nx\/>[\n\r]+/g, '<bMRet>');
   filedata = replaceASCIIcontrolChars(filedata);
 
-  const bms: [string, number, BookmarkItemType | null][] = filedata
+  const bms: Array<[string, number, BookmarkItemType | null]> = filedata
     .split('<bMRet>')
     .map((record) => {
       let ret: [string, number, BookmarkItemType | null] = ['', 0, null];

@@ -1,8 +1,8 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useLayoutEffect } from 'react';
 import { dString, sanitizeHTML } from '../../common.ts';
 import C from '../../constant.ts';
 import G from '../rg.ts';
+import log from '../log.ts';
 import renderToRoot from '../renderer.tsx';
 import { xulPropTypes } from '../libxul/xul.tsx';
 import './searchHelp.css';
@@ -17,7 +17,7 @@ function write(id: string, html: string) {
 function getCellText(
   row: number,
   col: number,
-  rows: (keyof typeof C.UI.Search.symbol | null)[]
+  rows: Array<keyof typeof C.UI.Search.symbol | null>,
 ): string {
   if (col > 0 || row === 0) {
     return sanitizeHTML(G.i18n.t(`searchTable_${row}_${col}`));
@@ -37,14 +37,14 @@ function getCellText(
 }
 
 function SearchHelpWin() {
-  const type: SearchType['type'][] = [
+  const type: Array<SearchType['type']> = [
     'SearchAnyWord',
     'SearchExactText',
     'SearchAdvanced',
     'SearchSimilar',
   ];
 
-  const rows: (keyof typeof C.UI.Search.symbol | null)[] = [
+  const rows: Array<keyof typeof C.UI.Search.symbol | null> = [
     null,
     'MULTICharWildCard',
     'SINGLECharWildCard',
@@ -62,7 +62,7 @@ function SearchHelpWin() {
     type.forEach((t, i) => {
       write(
         ['name', t].join('.'),
-        `${dString(G.getLocaleDigits(), i + 1, G.i18n.language)}) ${G.i18n.t(`${t}.label`)}: `
+        `${dString(G.getLocaleDigits(), i + 1, G.i18n.language)}) ${G.i18n.t(`${t}.label`)}: `,
       );
       write(['desc', t].join('.'), `${G.i18n.t(`${t}.description`)}`);
     });
@@ -109,4 +109,6 @@ function SearchHelpWin() {
 }
 SearchHelpWin.propTypes = xulPropTypes;
 
-renderToRoot(<SearchHelpWin height="100%" />);
+renderToRoot(<SearchHelpWin height="100%" />).catch((er) => {
+  log.error(er);
+});

@@ -1,27 +1,15 @@
-/* eslint-disable no-restricted-globals */
-/* eslint-disable @typescript-eslint/no-use-before-define */
-/* eslint-disable jsx-a11y/no-static-element-interactions */
-/* eslint-disable jsx-a11y/click-events-have-key-events */
-/* eslint-disable jsx-a11y/mouse-events-have-key-events */
-/* eslint-disable react/static-property-placement */
-/* eslint-disable react/destructuring-assignment */
-/* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
 import PropTypes from 'prop-types';
 import { dString } from '../../../common.ts';
 import C from '../../../constant.ts';
 import G, { GI } from '../../rg.ts';
 import RenderPromise from '../../renderPromise.ts';
-import {
-  audioConfig,
-  clearPending,
-  getMaxChapter,
-} from '../../rutil.ts';
+import { audioConfig, clearPending, getMaxChapter } from '../../rutil.ts';
 import { Hbox, Vbox } from '../../libxul/boxes.tsx';
 import Spacer from '../../libxul/spacer.tsx';
 import {
   xulPropTypes,
-  XulProps,
+  type XulProps,
   addClass,
   delayHandler,
   topHandle,
@@ -38,7 +26,10 @@ import type {
   V11nType,
   VerseKeyAudioFile,
 } from '../../../type.ts';
-import type{ RenderPromiseComponent, RenderPromiseState } from '../../renderPromise.ts';
+import type {
+  RenderPromiseComponent,
+  RenderPromiseState,
+} from '../../renderPromise.ts';
 
 const propTypes = {
   ...xulPropTypes,
@@ -52,7 +43,7 @@ const propTypes = {
   onAudioClick: PropTypes.func.isRequired,
 };
 
-export interface ChooserProps extends XulProps {
+export type ChooserProps = {
   bookGroups?: BookGroupType[];
   selection: OSISBookType | '';
   availableBooks?: Set<string>;
@@ -61,20 +52,17 @@ export interface ChooserProps extends XulProps {
   v11n: V11nType;
   onCloseChooserClick: (e: any) => void;
   onAudioClick: (audio?: VerseKeyAudioFile | GenBookAudioFile) => void;
-}
+} & XulProps;
 
 export type ChooserState = RenderPromiseState & {
   // The visible bookGroup
   bookGroup: BookGroupType;
   // The index (base 0) of the topmost visible
   // book-item in each bookGroup slider
-  slideIndex: { [i: string]: number };
-}
-
-let chooserCompRef: Chooser | undefined;
+  slideIndex: Record<string, number>;
+};
 
 class Chooser extends React.Component implements RenderPromiseComponent {
-
   static propTypes: typeof propTypes;
 
   slideInterval: NodeJS.Timeout | undefined;
@@ -95,7 +83,7 @@ class Chooser extends React.Component implements RenderPromiseComponent {
 
   rowHeight: number;
 
-  handler: (e: React.SyntheticEvent) => void;
+  handler: (e: React.SyntheticEvent) => void | Promise<void>;
 
   renderPromise: RenderPromise;
 
@@ -104,7 +92,6 @@ class Chooser extends React.Component implements RenderPromiseComponent {
     const { selection, hideUnavailableBooks } = props;
     let { bookGroups } = props;
     if (!bookGroups) bookGroups = ['ot', 'nt'];
-    chooserCompRef = this;
     const Book = G.Book(G.i18n.language);
     const Books = G.Books(G.i18n.language);
 
@@ -271,8 +258,15 @@ class Chooser extends React.Component implements RenderPromiseComponent {
   render() {
     const props = this.props as ChooserProps;
     const state = this.state as ChooserState;
-    const { handler, rowHeight, longestBook, containerRef, sliderRef, rowRef, renderPromise } =
-      this;
+    const {
+      handler,
+      rowHeight,
+      longestBook,
+      containerRef,
+      sliderRef,
+      rowRef,
+      renderPromise,
+    } = this;
     const {
       availableBooks,
       headingsModule,
@@ -285,7 +279,7 @@ class Chooser extends React.Component implements RenderPromiseComponent {
     if (!bookGroups) bookGroups = ['ot', 'nt'];
     const { bookGroup, slideIndex } = state;
 
-    const label: any = {};
+    const label = {} as Record<(typeof bookGroups)[number], string>;
     const useLabelImage: any = {};
     bookGroups.forEach((bg) => {
       const tkey = `chooserBookGroup_${bg}`;
@@ -347,6 +341,7 @@ class Chooser extends React.Component implements RenderPromiseComponent {
               v11n={v11n}
               domref={rowRef}
               style={{ visibility: 'hidden' }}
+              chooserRef={this}
             />
             {
               // This is the real BookGroupList...
@@ -365,6 +360,7 @@ class Chooser extends React.Component implements RenderPromiseComponent {
               }}
               handler={handler}
               onAudioClick={onAudioClick}
+              chooserRef={this}
             />
           </Vbox>
         </Hbox>
@@ -386,9 +382,10 @@ function BookGroupList(
     availableBooks?: Set<string>;
     headingsModule?: string;
     hideUnavailableBooks?: boolean;
-    handler?: (e: React.SyntheticEvent) => void;
+    handler?: (e: React.SyntheticEvent) => void | Promise<void>;
     onAudioClick?: (audio?: VerseKeyAudioFile | GenBookAudioFile) => void;
-  } & XulProps
+    chooserRef: React.Component;
+  } & XulProps,
 ) {
   const {
     bookGroup,
@@ -399,6 +396,7 @@ function BookGroupList(
     v11n,
     handler,
     onAudioClick,
+    chooserRef,
   } = props;
   const Book = G.Book(G.i18n.language);
   const Books = G.Books(G.i18n.language);
@@ -428,6 +426,7 @@ function BookGroupList(
             v11n={v11n}
             handler={handler}
             onAudioClick={onAudioClick}
+            chooserRef={chooserRef}
           />
         );
       })}
@@ -443,9 +442,18 @@ function BookGroupItem(
     v11n: V11nType;
     handler?: (e: React.SyntheticEvent) => void;
     onAudioClick?: (audio?: VerseKeyAudioFile | GenBookAudioFile) => void;
-  } & XulProps
+    chooserRef: React.Component;
+  } & XulProps,
 ) {
-  const { sName, classes, headingsModule, handler, onAudioClick, v11n } = props;
+  const {
+    sName,
+    classes,
+    headingsModule,
+    handler,
+    onAudioClick,
+    v11n,
+    chooserRef,
+  } = props;
   const c = classes || [];
   const Book = G.Book(G.i18n.language);
   return (
@@ -469,6 +477,7 @@ function BookGroupItem(
           v11n={v11n}
           handler={handler}
           onAudioClick={onAudioClick}
+          chooserRef={chooserRef}
         />
       )}
     </Hbox>
@@ -481,14 +490,16 @@ function ChapterMenu(props: {
   v11n: V11nType;
   handler?: (e: React.SyntheticEvent) => void;
   onAudioClick?: (audio?: VerseKeyAudioFile | GenBookAudioFile) => void;
+  chooserRef: React.Component;
 }) {
-  const { headingsModule, bkcode, v11n, handler, onAudioClick } = props;
+  const { headingsModule, bkcode, v11n, handler, onAudioClick, chooserRef } =
+    props;
   const dlyhandler =
-    handler && chooserCompRef
-      ? delayHandler.bind(chooserCompRef)(
+    handler && chooserRef
+      ? delayHandler.bind(chooserRef)(
           handler,
           C.UI.Chooser.headingMenuOpenDelay,
-          'headingmenuTO'
+          'headingmenuTO',
         )
       : undefined;
   const chmenuCells = [];
@@ -512,7 +523,7 @@ function ChapterMenu(props: {
             {headingsModule &&
               onAudioClick &&
               audioIcon(headingsModule, bkcode, ch, onAudioClick)}
-          </div>
+          </div>,
         );
       } else {
         cells.push(<div key={[bkcode, ch].join('.')} className="emptych" />);
@@ -522,7 +533,7 @@ function ChapterMenu(props: {
     chmenuCells.push(
       <div key={row} className="chaptermenurow">
         {cells}
-      </div>
+      </div>,
     );
   }
   return (

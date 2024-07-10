@@ -1,10 +1,4 @@
-/* eslint-disable react/no-did-update-set-state */
-/* eslint-disable no-nested-ternary */
-/* eslint-disable react/forbid-prop-types */
-/* eslint-disable react/static-property-placement */
-/* eslint-disable react/destructuring-assignment */
-/* eslint-disable react/jsx-props-no-spreading */
-
+/* eslint-disable @typescript-eslint/unbound-method */
 import React from 'react';
 import PropTypes from 'prop-types';
 import { clone, diff, getModuleOfObject, ofClass } from '../../common.ts';
@@ -12,7 +6,7 @@ import C from '../../constant.ts';
 import G from '../rg.ts';
 import { getMaxChapter, getMaxVerse } from '../rutil.ts';
 import RenderPromise from '../renderPromise.ts';
-import { addClass, XulProps, xulPropTypes } from './xul.tsx';
+import { addClass, xulPropTypes } from './xul.tsx';
 import { Hbox } from './boxes.tsx';
 import ModuleMenu from './modulemenu.tsx';
 import Label from './label.tsx';
@@ -26,7 +20,11 @@ import type {
   LocationVKType,
   OSISBookType,
 } from '../../type.ts';
-import type { RenderPromiseComponent, RenderPromiseState } from '../renderPromise.ts';
+import type {
+  RenderPromiseComponent,
+  RenderPromiseState,
+} from '../renderPromise.ts';
+import type { XulProps } from './xul.tsx';
 
 export type SelectVKType =
   | (LocationVKType & {
@@ -50,7 +48,7 @@ export type SelectVKType =
 //
 // If initialVK or selectVK selects a module that is not installed,
 // all selectors but the module selector will be disabled.
-export interface SelectVKProps extends XulProps {
+export type SelectVKProps = {
   initialVK: SelectVKType;
   options?: {
     books?: string[];
@@ -63,7 +61,7 @@ export interface SelectVKProps extends XulProps {
   disabled?: boolean;
   allowNotInstalled?: boolean;
   onSelection: (selection: SelectVKType | undefined, id?: string) => void;
-}
+} & XulProps;
 
 const propTypes = {
   ...xulPropTypes,
@@ -94,7 +92,7 @@ const propTypes = {
 
 type SelectVKState = RenderPromiseState & {
   selection: SelectVKType;
-}
+};
 
 export type SelectVKChangeEvents =
   | React.ChangeEvent<HTMLInputElement>
@@ -153,7 +151,7 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
         'vk-verse',
         'vk-lastverse',
       ],
-      e.target
+      e.target,
     );
     if (cls) {
       const s: SelectVKType = clone(selection);
@@ -207,7 +205,7 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
     selected: number | null | undefined,
     options: number[] | undefined,
     min: number,
-    max: number
+    max: number,
   ) {
     const props = this.props as SelectVKProps;
     const { initialVK } = props;
@@ -292,9 +290,9 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
     // are removed from the list. All books are sorted in v11n order.
     const bkbgs = (books ||
       G.BkChsInV11n[v11n].map((r) => r[0])) as OSISBookType[];
-    const bookset: Set<OSISBookType> = new Set();
+    const bookset = new Set<OSISBookType>();
     bkbgs.forEach((bkbg: OSISBookType | BookGroupType) => {
-      if (C.SupportedBookGroups.includes(bkbg as any)) {
+      if (C.SupportedBookGroups.includes(bkbg as never)) {
         const bg = bkbg as BookGroupType;
         C.SupportedBooks[bg].forEach((b) => bookset.add(b));
       } else if (Book[bkbg]) {
@@ -304,7 +302,7 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
     const filteredbooks =
       tab && modules?.length !== 0
         ? Array.from(bookset).filter((b) =>
-            G.getBooksInVKModule(tab.module).includes(b)
+            G.getBooksInVKModule(tab.module).includes(b),
           )
         : Array.from(bookset);
     let sel = book;
@@ -334,7 +332,7 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
       chapter,
       chapters,
       1,
-      v11n && book ? getMaxChapter(v11n, book) : 0
+      v11n && book ? getMaxChapter(v11n, book) : 0,
     );
 
     const newlastchapters = this.getNumberOptions(
@@ -342,16 +340,15 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
       lastchapter,
       lastchapters,
       chapter || 1,
-      v11n && book ? getMaxChapter(v11n, book) : 0
+      v11n && book ? getMaxChapter(v11n, book) : 0,
     );
-
 
     const newverses = this.getNumberOptions(
       'verse',
       verse,
       verses,
       1,
-      v11n ? getMaxVerse(v11n, `${book}.${chapter}`, renderPromise) : 0
+      v11n ? getMaxVerse(v11n, `${book}.${chapter}`, renderPromise) : 0,
     );
 
     const newlastverses = this.getNumberOptions(
@@ -360,12 +357,12 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
       lastverses,
       (newlastchapters.length === 0 && verse) || 1,
       v11n
-      ? getMaxVerse(
-          v11n,
-          `${book}.${newlastchapters.length === 0 ? chapter : lastchapter}`,
-          renderPromise
-        )
-      : 0
+        ? getMaxVerse(
+            v11n,
+            `${book}.${newlastchapters.length === 0 ? chapter : lastchapter}`,
+            renderPromise,
+          )
+        : 0,
     );
 
     // Module options are either those of the vkMods prop or all installed VerseKey
@@ -456,17 +453,19 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
           />
         )}
         <div className="mod-select">
-          {modules.length > 0 && (<>
-            <Spacer orient="horizontal" flex="1" />
-            <ModuleMenu
-              className="vk-vkmod"
-              value={vkmod || modules[0]}
-              modules={modules}
-              disabled={disabled}
-              allowNotInstalled={allowNotInstalled}
-              onChange={handleChange}
-            />
-          </>)}
+          {modules.length > 0 && (
+            <>
+              <Spacer orient="horizontal" flex="1" />
+              <ModuleMenu
+                className="vk-vkmod"
+                value={vkmod || modules[0]}
+                modules={modules}
+                disabled={disabled}
+                allowNotInstalled={allowNotInstalled}
+                onChange={handleChange}
+              />
+            </>
+          )}
         </div>
       </Hbox>
     );

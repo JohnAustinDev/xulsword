@@ -1,8 +1,4 @@
-/* eslint-disable jsx-a11y/no-static-element-interactions */
-/* eslint-disable jsx-a11y/click-events-have-key-events */
-/* eslint-disable @typescript-eslint/no-use-before-define */
-/* eslint-disable react/static-property-placement */
-/* eslint-disable jsx-a11y/control-has-associated-label */
+/* eslint-disable @typescript-eslint/no-misused-promises */
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { ProgressBar } from '@blueprintjs/core';
@@ -15,21 +11,19 @@ import {
   sanitizeHTML,
 } from '../../common.ts';
 import C from '../../constant.ts';
-import S from '../../defaultPrefs.ts';
 import G from '../rg.ts';
 import renderToRoot from '../renderer.tsx';
 import RenderPromise from '../renderPromise.ts';
 import log from '../log.ts';
 import { windowArguments } from '../rutil.ts';
+import Popup from '../components/popup/popup.tsx';
 import {
-  PopupParent,
-  PopupParentState,
   popupParentHandler as popupParentHandlerH,
   popupHandler as popupHandlerH,
   PopupParentInitState,
 } from '../components/popup/popupParentH.ts';
 import Button from '../libxul/button.tsx';
-import { XulProps, xulPropTypes } from '../libxul/xul.tsx';
+import { xulPropTypes } from '../libxul/xul.tsx';
 import { Box, Hbox, Vbox } from '../libxul/boxes.tsx';
 import Groupbox from '../libxul/groupbox.tsx';
 import Label from '../libxul/label.tsx';
@@ -55,8 +49,13 @@ import handlerH, {
 import './search.css';
 
 import type { BookGroupType, SearchType } from '../../type.ts';
+import type S from '../../defaultPrefs.ts';
 import type { RenderPromiseState } from '../renderPromise.ts';
-import Popup from '../components/popup/popup.tsx';
+import type {
+  PopupParent,
+  PopupParentState,
+} from '../components/popup/popupParentH.ts';
+import type { XulProps } from '../libxul/xul.tsx';
 
 const propTypes = {
   ...xulPropTypes,
@@ -68,8 +67,11 @@ const initialState = {
   module: '' as string, // search module
   searchtext: '' as string, // search text
   searchtype: 'SearchExactText' as SearchType['type'], // type of search to do
-  scoperadio: 'all' as typeof ScopeRadioOptions[number], // scope radio value
-  scopeselect: 'gospel' as BookGroupType | typeof ScopeSelectOptions[number], // scope select value
+  scoperadio: 'all' as (typeof ScopeRadioOptions)[number], // scope radio value
+  scopeselect: 'gospel' as
+    | BookGroupType
+    | (typeof ScopeSelectOptions)[number]
+    | string, // scope select value
   moreLess: true as boolean, // more / less state
   displayBible: '' as string, // current module for Bible search results
   results: null as number | null, // count and page-result are returned at different times
@@ -101,22 +103,23 @@ const Scopemap = {
 
 // These state properties will not be persisted if xulsword is closed.
 const noPersist = ['results', 'pageindex', 'progress', 'progressLabel'].concat(
-  Object.keys(PopupParentInitState)
-) as (
+  Object.keys(PopupParentInitState),
+) as Array<
   | keyof typeof PopupParentInitState
   | 'results'
   | 'pageindex'
   | 'progress'
   | 'progressLabel'
-)[];
+>;
 
 let reMountState = null as null | SearchWinState;
 let windowLoaded = false;
 
-export type SearchWinState = PopupParentState & RenderPromiseState & typeof initialState;
+export type SearchWinState = PopupParentState &
+  RenderPromiseState &
+  typeof initialState;
 
 export default class SearchWin extends React.Component implements PopupParent {
-
   static propTypes: typeof propTypes;
 
   handler: typeof handlerH;
@@ -133,7 +136,7 @@ export default class SearchWin extends React.Component implements PopupParent {
 
   lexref: React.RefObject<HTMLDivElement>;
 
-  destroy: (() => void)[];
+  destroy: Array<() => void>;
 
   renderPromise: RenderPromise;
 
@@ -189,9 +192,12 @@ export default class SearchWin extends React.Component implements PopupParent {
         if (id === 'search.indexer') {
           this.setState({ progressLabel: '', progress: prog });
         }
-      })
+      }),
     );
-    if (!windowLoaded && module) search(this);
+    if (!windowLoaded && module)
+      search(this).catch((er) => {
+        log.error(er);
+      });
     else this.updateResults();
     windowLoaded = true;
   }
@@ -203,14 +209,14 @@ export default class SearchWin extends React.Component implements PopupParent {
     // Save changed window prefs (plus initials to obtain complete state).
     const persistState = drop(state, noPersist) as Omit<
       SearchWinState,
-      typeof noPersist[number]
+      (typeof noPersist)[number]
     >;
     const psx = persistState as any;
     const isx = initialState as any;
     if (
       diff(
         { ...prevState, popupParent: null },
-        { ...persistState, popupParent: null }
+        { ...persistState, popupParent: null },
       )
     ) {
       noPersist.forEach((p) => {
@@ -221,7 +227,7 @@ export default class SearchWin extends React.Component implements PopupParent {
 
     // Apply popup fade-in effect
     const { popupParent, elemdata } = state;
-    if (popupParent && elemdata && elemdata.length) {
+    if (popupParent && elemdata?.length) {
       popupParent.getElementsByClassName('npopup')[0]?.classList.remove('hide');
     }
 
@@ -230,7 +236,9 @@ export default class SearchWin extends React.Component implements PopupParent {
   }
 
   componentWillUnmount() {
-    this.destroy.forEach((d) => d());
+    this.destroy.forEach((d) => {
+      d();
+    });
   }
 
   updateResults() {
@@ -252,7 +260,9 @@ export default class SearchWin extends React.Component implements PopupParent {
         if (!dModule || !results || !dModuleIsStrongs) {
           sanitizeHTML(lex, '');
         } else {
-          lexicon(lex, state);
+          lexicon(lex, state).catch((er) => {
+            log.error(er);
+          });
         }
       }
       res.dataset.count = count.toString();
@@ -283,22 +293,22 @@ export default class SearchWin extends React.Component implements PopupParent {
         if (G.Tab[dModule].isVerseKey) {
           dModuleIsStrongs = /Strongs/i.test(
             G.LibSword.getModuleInformation(dModule, 'Feature') +
-              G.LibSword.getModuleInformation(dModule, 'GlobalOptionFilter')
+              G.LibSword.getModuleInformation(dModule, 'GlobalOptionFilter'),
           );
         }
-        if (dModuleIsStrongs && /lemma:/.test(searchtext)) {
+        if (dModuleIsStrongs && searchtext.includes('lemma:')) {
           hilightStrongs(searchtext.match(/lemma:\s*\S+/g));
         }
         getSearchResults(
           dModule,
           pageindex,
           C.UI.Search.resultsPerPage,
-          dModuleIsStrongs
+          dModuleIsStrongs,
         )
           .then((result) => {
             sanitizeHTML(res, result);
             formatResult(res, state);
-            return lexupdate(dModule, dModuleIsStrongs);
+            lexupdate(dModule, dModuleIsStrongs);
           })
           .catch((er) => {
             log.warn(er);
@@ -333,16 +343,18 @@ export default class SearchWin extends React.Component implements PopupParent {
       indexing,
     } = state;
 
-    const searchTypes: SearchType['type'][] = [
+    const searchTypes: Array<SearchType['type']> = [
       'SearchAnyWord',
       'SearchSimilar',
       'SearchExactText',
       'SearchAdvanced',
     ];
 
-    const sos = ScopeSelectOptions.slice() as SearchWinState['scopeselect'][];
+    const sos = ScopeSelectOptions.slice() as Array<
+      SearchWinState['scopeselect']
+    >;
 
-    if (searchArg.scope) sos.unshift(searchArg.scope as any);
+    if (searchArg.scope) sos.unshift(searchArg.scope);
     C.SupportedBookGroups.forEach((bg) => {
       if (
         module &&
@@ -374,7 +386,7 @@ export default class SearchWin extends React.Component implements PopupParent {
     });
 
     const location = G.Prefs.getComplexValue(
-      'xulsword.location'
+      'xulsword.location',
     ) as typeof S.prefs.xulsword.location;
 
     const searchindex = module && G.LibSword.luceneEnabled(module);
@@ -412,8 +424,7 @@ export default class SearchWin extends React.Component implements PopupParent {
           />
         )}
         {popupParent &&
-          elemdata &&
-          elemdata.length &&
+          elemdata?.length &&
           ReactDOM.createPortal(
             <Popup
               className="hide"
@@ -426,7 +437,7 @@ export default class SearchWin extends React.Component implements PopupParent {
               onMouseLeftPopup={popupHandler}
               onPopupContextMenu={popupHandler}
             />,
-            popupParent
+            popupParent,
           )}
         <Hbox pack="center">
           <Grid
@@ -664,4 +675,6 @@ renderToRoot(<SearchWin height="100%" />, {
       noAutoSearchIndex(G.Prefs, Indexing.current);
     }
   },
+}).catch((er) => {
+  log.error(er);
 });

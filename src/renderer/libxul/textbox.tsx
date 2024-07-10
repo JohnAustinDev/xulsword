@@ -1,18 +1,13 @@
-/* eslint-disable react/static-property-placement */
-/* eslint-disable react/jsx-props-no-spreading */
-
+/* eslint-disable @typescript-eslint/unbound-method */
 import React from 'react';
 import PropTypes from 'prop-types';
 import DOMPurify from 'dompurify';
 import { clearPending } from '../rutil.ts';
-import {
-  delayHandler,
-  addClass,
-  xulPropTypes,
-  XulProps,
-} from './xul.tsx';
+import { delayHandler, addClass, xulPropTypes } from './xul.tsx';
 import { Box } from './boxes.tsx';
 import './textbox.css';
+
+import type { XulProps } from './xul.tsx';
 
 const propTypes = {
   ...xulPropTypes,
@@ -28,7 +23,7 @@ const propTypes = {
   value: PropTypes.string,
 };
 
-interface TextboxProps extends XulProps {
+type TextboxProps = {
   maxLength?: string;
   multiline?: boolean;
   pattern?: RegExp;
@@ -38,13 +33,13 @@ interface TextboxProps extends XulProps {
   timeout?: string | number;
   type?: string;
   value?: string;
-}
+} & XulProps;
 
-interface TextboxState {
+type TextboxState = {
   value: string;
   lastPropsValue: string;
   lastStateValue: string;
-}
+};
 
 type TBevent =
   | React.SyntheticEvent<HTMLInputElement>
@@ -104,10 +99,10 @@ class Textbox extends React.Component {
           (evt, currentTarget) => {
             // currentTarget becomes null during the delay, so it must be reset
             evt.currentTarget = currentTarget;
-            onChange(evt);
+            void onChange(evt);
           },
           timeout || 0,
-          'changeTO'
+          'changeTO',
         )(e, e.currentTarget);
         e.stopPropagation();
       }

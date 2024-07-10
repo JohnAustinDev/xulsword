@@ -1,4 +1,4 @@
-
+/* eslint-disable @typescript-eslint/consistent-type-assertions */
 import type { ContextMenuType } from './main/contextMenu.ts';
 import type { PrefCallbackType } from './prefs.ts';
 import type { NewModulesType } from './type.ts';
@@ -9,113 +9,125 @@ import type { Socket } from 'socket.io-client';
 // in other processes, use G.publishSubscription in conjunctions with Subscribe.
 // Subscribe may also be used to avoid dependency cycles.
 
-// To add a new subscription option, add another key to subscriptions, and
-// to make it TypeScriptable, copy/paste/edit SubscriptionType.subscribe
-// and SubscriptionType.publish.
-const subscriptions = {
-  prefsChanged: {} as PrefCallbackType,
-  windowCreated: {} as ContextMenuType,
-  modulesInstalled: {} as (
-    newmods: NewModulesType,
-    callingWinID?: number
-  ) => void,
-  asyncTaskComplete: {} as () => unknown,
-  socketConnected: {} as (s: Socket) => unknown,
-
-  // These are subscribed once (used to avoid dependency cycles):
-  resetMain: {} as () => void,
-  setRendererRootState: {} as (state: Partial<WindowRootState>) => void,
+// To add a new subscription option, add another key to subscriptionsNames and
+// fixing the resulting TypeScript ESLint errors.
+const subscriptionsNames: Record<keyof SubscriptionTypes, null> = {
+  prefsChanged: null,
+  windowCreated: null,
+  modulesInstalled: null,
+  asyncTaskComplete: null,
+  socketConnected: null,
+  resetMain: null,
+  setRendererRootState: null,
 };
 
-export interface SubscriptionType {
+type SubscriptionTypes = {
+  prefsChanged: PrefCallbackType;
+  windowCreated: ContextMenuType;
+  modulesInstalled: (newmods: NewModulesType, callingWinID?: number) => void;
+  asyncTaskComplete: () => unknown;
+  socketConnected: (s: Socket) => unknown;
+  resetMain: () => void;
+  setRendererRootState: (state: Partial<WindowRootState>) => void;
+};
+
+export type SubscriptionType = {
   subscribe: {
-    prefsChanged: (func: typeof subscriptions['prefsChanged']) => () => void;
+    prefsChanged: (func: SubscriptionTypes['prefsChanged']) => () => void;
     modulesInstalled: (
-      func: typeof subscriptions['modulesInstalled']
+      func: SubscriptionTypes['modulesInstalled'],
     ) => () => void;
     asyncTaskComplete: (
-      func: typeof subscriptions['asyncTaskComplete']
+      func: SubscriptionTypes['asyncTaskComplete'],
     ) => () => void;
-    windowCreated: (func: typeof subscriptions['windowCreated']) => () => void;
-    socketConnected: (func: typeof subscriptions['socketConnected']) => () => void;
-    resetMain: (func: typeof subscriptions['resetMain']) => () => void;
+    windowCreated: (func: SubscriptionTypes['windowCreated']) => () => void;
+    socketConnected: (func: SubscriptionTypes['socketConnected']) => () => void;
+    resetMain: (func: SubscriptionTypes['resetMain']) => () => void;
     setRendererRootState: (
-      func: typeof subscriptions['setRendererRootState']
+      func: SubscriptionTypes['setRendererRootState'],
     ) => () => void;
   };
 
   publish: {
     prefsChanged: (
-      ...args: Parameters<typeof subscriptions['prefsChanged']>
-    ) => ReturnType<typeof subscriptions['prefsChanged']>[];
+      ...args: Parameters<SubscriptionTypes['prefsChanged']>
+    ) => Array<ReturnType<SubscriptionTypes['prefsChanged']>>;
     modulesInstalled: (
-      ...args: Parameters<typeof subscriptions['modulesInstalled']>
-    ) => ReturnType<typeof subscriptions['modulesInstalled']>[];
+      ...args: Parameters<SubscriptionTypes['modulesInstalled']>
+    ) => Array<ReturnType<SubscriptionTypes['modulesInstalled']>>;
     asyncTaskComplete: (
-      ...args: Parameters<typeof subscriptions['asyncTaskComplete']>
-    ) => ReturnType<typeof subscriptions['asyncTaskComplete']>[];
+      ...args: Parameters<SubscriptionTypes['asyncTaskComplete']>
+    ) => Array<ReturnType<SubscriptionTypes['asyncTaskComplete']>>;
     windowCreated: (
-      ...args: Parameters<typeof subscriptions['windowCreated']>
-    ) => ReturnType<typeof subscriptions['windowCreated']>[];
+      ...args: Parameters<SubscriptionTypes['windowCreated']>
+    ) => Array<ReturnType<SubscriptionTypes['windowCreated']>>;
     socketConnected: (
-      ...args: Parameters<typeof subscriptions['socketConnected']>
-    ) => ReturnType<typeof subscriptions['socketConnected']>[];
+      ...args: Parameters<SubscriptionTypes['socketConnected']>
+    ) => Array<ReturnType<SubscriptionTypes['socketConnected']>>;
     resetMain: (
-      ...args: Parameters<typeof subscriptions['resetMain']>
-    ) => ReturnType<typeof subscriptions['resetMain']>[];
+      ...args: Parameters<SubscriptionTypes['resetMain']>
+    ) => Array<ReturnType<SubscriptionTypes['resetMain']>>;
     setRendererRootState: (
-      ...args: Parameters<typeof subscriptions['setRendererRootState']>
-    ) => ReturnType<typeof subscriptions['setRendererRootState']>[];
+      ...args: Parameters<SubscriptionTypes['setRendererRootState']>
+    ) => Array<ReturnType<SubscriptionTypes['setRendererRootState']>>;
   };
 
   doSubscribe: (
     subscriptionName: string,
-    callback: (...args: any) => void
+    callback: (...args: any[]) => unknown,
   ) => () => void;
-  doPublish: (subscriptionName: string, ...args: any[]) => any[];
-}
+  doPublish: (subscriptionName: string, ...args: any[]) => unknown[];
+};
 
 class SubscriptionClass implements SubscriptionType {
   subscribe;
 
   publish;
 
-  store: { [i: string]: ((...args: any) => void)[] };
+  store: Record<string, Array<(...args: any) => void>>;
 
   constructor() {
-    this.store = {};
-    this.subscribe = subscriptions as any;
-    this.publish = {} as any;
-    Object.keys(subscriptions).forEach((sub) => {
-      const nsub = this.subscribe as any;
-      nsub[sub] = (func: any) => {
+    const subscribe = {} as SubscriptionType['subscribe'];
+    const publish = {} as SubscriptionType['publish'];
+    const names = Object.keys(subscriptionsNames) as Array<
+      keyof typeof subscriptionsNames
+    >;
+    names.forEach((sub) => {
+      subscribe[sub] = (func: (...args: any[]) => unknown) => {
         return this.doSubscribe(sub, func);
       };
-      this.publish[sub] = (...args: any) => {
-        return this.doPublish(sub as any, ...args);
+      publish[sub] = (...args: unknown[]): any => {
+        return this.doPublish(sub, ...args);
       };
     });
+    this.subscribe = subscribe;
+    this.publish = publish;
+    this.store = {};
   }
 
   // Register a callback for a subscription, and return a disposal
   // function to be called when the callback isn't needed any
   // longer (to prevent memory leaks).
-  doSubscribe(subscriptionName: string, callback: (...args: any) => void) {
+  doSubscribe(
+    subscriptionName: string,
+    callback: (...args: unknown[]) => unknown,
+  ) {
     if (!(subscriptionName in this.store)) this.store[subscriptionName] = [];
     this.store[subscriptionName].push(callback);
     return () => {
       this.store[subscriptionName] = this.store[subscriptionName].filter(
-        (cb) => cb !== callback
+        (cb) => cb !== callback,
       );
     };
   }
 
   // Call any callback functions that have been registered for a
   // particular subscription.
-  doPublish(subscriptionName: string, ...args: any[]) {
+  doPublish(subscriptionName: string, ...args: unknown[]): unknown[] {
     if (subscriptionName in this.store) {
-      return this.store[subscriptionName].map((cb) => {
-        return cb(...args);
+      return this.store[subscriptionName].map((cb: any) => {
+        const unk = cb(...args);
+        return unk ?? null;
       });
     }
     return [];

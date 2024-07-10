@@ -1,12 +1,10 @@
-/* eslint-disable no-continue */
-/* eslint-disable no-nested-ternary */
 import i18n from 'i18next';
 import { getPanelWidths, keep } from '../../common.ts';
 import C from '../../constant.ts';
-import S from '../../defaultPrefs.ts';
 import Prefs from './prefs.ts';
 import { getBooksInVKModule, getTab, getTabs } from '../minit.ts';
 
+import type S from '../../defaultPrefs.ts';
 import type {
   LocationORType,
   SwordFeatures,
@@ -22,7 +20,7 @@ type TabChangeOptions = {
 
 type PanelChangeOptions = {
   whichPanel: number | number[] | null;
-  whichModuleOrLocGB: string | LocationORType | (string | LocationORType)[];
+  whichModuleOrLocGB: string | LocationORType | Array<string | LocationORType>;
   maintainWidePanels: boolean;
   maintainPins: boolean;
 };
@@ -47,7 +45,7 @@ const Viewport = {
   // Sort tabslist in place by type and then by language relevance to a locale.
   sortTabsByLocale<T extends TabType[] | string[]>(
     tablist: T,
-    alocale?: string
+    alocale?: string,
   ): T {
     const locale = (alocale || i18n.language).replace(/-.*$/, '');
     const locale2 = C.FallbackLanguage[i18n.language].replace(/-.*$/, '');
@@ -101,7 +99,7 @@ const Viewport = {
   // called from a renderer, in which case the passed state is NOT modified.
   getTabChange<T extends TabChangeState>(
     options: Partial<TabChangeOptions>,
-    state: T
+    state: T,
   ): T {
     const { panels, mtModules, tabs } = state;
     const defaults: TabChangeOptions = {
@@ -202,11 +200,7 @@ const Viewport = {
           }
           panels[i] = nextmod;
           used[nextmod] = true;
-          if (
-            (!state.location || !state.location.book) &&
-            nextmod &&
-            Tab[nextmod].isVerseKey
-          ) {
+          if (!state.location?.book && nextmod && Tab[nextmod].isVerseKey) {
             const [book] = getBooksInVKModule(nextmod);
             const v11n = Tab[nextmod].v11n || null;
             if (book && v11n) {
@@ -235,7 +229,7 @@ const Viewport = {
   // called from a renderer, in which case the passed state is NOT modified.
   getPanelChange<T extends PanelChangeState>(
     options: Partial<PanelChangeOptions>,
-    state: T
+    state: T,
   ): T {
     const { ilModules, isPinned, keys } = state;
     let { panels, tabs, location } = state;
@@ -250,8 +244,8 @@ const Viewport = {
         ...defaults,
         ...options,
       };
-    const modules: (string | LocationORType | undefined)[] = Array.isArray(
-      whichModuleOrLocGB
+    const modules: Array<string | LocationORType | undefined> = Array.isArray(
+      whichModuleOrLocGB,
     )
       ? whichModuleOrLocGB
       : [whichModuleOrLocGB];
@@ -283,7 +277,7 @@ const Viewport = {
       }
       const m = modules[moduleIndex];
       let module: string | undefined;
-      let key: typeof S.prefs.xulsword.keys[number] | undefined;
+      let key: (typeof S.prefs.xulsword.keys)[number] | undefined;
       if (typeof m === 'string') {
         module = m;
       } else if (m) {
@@ -316,7 +310,7 @@ const Viewport = {
             if (!tabs[panelIndex]?.includes(module)) {
               this.getTabChange(
                 { panelIndex, whichTab: [module], doWhat: 'show' },
-                state
+                state,
               );
               ({ panels, tabs, location } = state);
             }
@@ -335,7 +329,7 @@ const Viewport = {
                     whichTab: [module],
                     doWhat: 'show',
                   },
-                  state
+                  state,
                 );
                 ({ panels, tabs, location } = state);
               }
@@ -360,7 +354,7 @@ const Viewport = {
               m &&
               m in Tab &&
               Tab[m].isVerseKey &&
-              getBooksInVKModule(m).includes(book)
+              getBooksInVKModule(m).includes(book),
           ))
       ) {
         const mfirst = panels.find((m) => m && m in Tab && Tab[m].isVerseKey);
@@ -383,11 +377,11 @@ const Viewport = {
   getModuleChange<T extends PanelChangeState>(
     modules: string[],
     state: T,
-    options?: Partial<TabChangeOptions & PanelChangeOptions>
+    options?: Partial<TabChangeOptions & PanelChangeOptions>,
   ): T {
     const Tab = getTab();
     const whichTab = modules.filter(
-      (m) => m && m in Tab && Tab[m] && Tab[m].conf.xsmType !== 'XSM_audio'
+      (m) => m && m in Tab && Tab[m] && Tab[m].conf.xsmType !== 'XSM_audio',
     );
     if (whichTab.length) {
       this.getTabChange(
@@ -397,14 +391,14 @@ const Viewport = {
           ...options,
           whichTab: modules,
         },
-        state
+        state,
       );
       this.getPanelChange(
         {
           ...options,
           whichModuleOrLocGB: modules,
         },
-        state
+        state,
       );
     }
     return state;
@@ -416,7 +410,7 @@ const Viewport = {
     options: Partial<TabChangeOptions> & {
       skipCallbacks?: boolean;
       clearRendererCaches?: boolean;
-    }
+    },
   ): Pick<
     typeof S.prefs.xulsword,
     'panels' | 'mtModules' | 'tabs' | 'location'
@@ -427,7 +421,7 @@ const Viewport = {
       ...options,
     };
     const xulsword = Prefs.getComplexValue(
-      'xulsword'
+      'xulsword',
     ) as typeof S.prefs.xulsword;
 
     this.getTabChange(options, xulsword);
@@ -438,7 +432,7 @@ const Viewport = {
       result,
       'prefs',
       skipCallbacks,
-      clearRendererCaches
+      clearRendererCaches,
     );
 
     return result;
@@ -451,7 +445,7 @@ const Viewport = {
     options: Partial<PanelChangeOptions> & {
       skipCallbacks?: boolean;
       clearRendererCaches?: boolean;
-    }
+    },
   ): Pick<
     typeof S.prefs.xulsword,
     'panels' | 'mtModules' | 'tabs' | 'keys' | 'isPinned' | 'location'
@@ -463,7 +457,7 @@ const Viewport = {
     };
 
     const xulsword = Prefs.getComplexValue(
-      'xulsword'
+      'xulsword',
     ) as typeof S.prefs.xulsword;
     this.getPanelChange(options, xulsword);
     const result = keep(xulsword, [
@@ -481,7 +475,7 @@ const Viewport = {
       result,
       'prefs',
       skipCallbacks,
-      clearRendererCaches
+      clearRendererCaches,
     );
 
     return result;

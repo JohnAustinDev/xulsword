@@ -1,4 +1,3 @@
-
 import fs from 'fs';
 import path from 'path';
 
@@ -31,7 +30,7 @@ export default class LocalFile {
       }
     } else {
       throw new Error(
-        `ERROR: initWithPath requires an absolute path: "${aPath}"`
+        `ERROR: initWithPath requires an absolute path: "${aPath}"`,
       );
     }
   }
@@ -50,7 +49,7 @@ export default class LocalFile {
 
     const newFile = new LocalFile(
       path.join(dir.path, name),
-      LocalFile.NO_CREATE
+      LocalFile.NO_CREATE,
     );
 
     if (this.exists() && dir.exists()) {
@@ -67,7 +66,7 @@ export default class LocalFile {
       }
     } else {
       throw new Error(
-        `ERROR: copyTo source and destination dir must exist: ${this.path} -> ${dir.path}`
+        `ERROR: copyTo source and destination dir must exist: ${this.path} -> ${dir.path}`,
       );
     }
 
@@ -85,7 +84,7 @@ export default class LocalFile {
   // true is returned, false otherwise.
   create(
     type: number,
-    options?: fs.MakeDirectoryOptions | fs.WriteFileOptions
+    options?: fs.MakeDirectoryOptions | fs.WriteFileOptions,
   ): boolean {
     if (this.path) {
       if (!this.exists()) {
@@ -112,7 +111,7 @@ export default class LocalFile {
   // sucessful, false otherwise.
   createUnique(
     type: number,
-    options?: fs.MakeDirectoryOptions | fs.WriteFileOptions
+    options?: fs.MakeDirectoryOptions | fs.WriteFileOptions,
   ) {
     if (this.path) {
       const max = 999;
@@ -147,7 +146,7 @@ export default class LocalFile {
   get directoryEntries(): string[] {
     if (!this.isDirectory()) {
       throw new Error(
-        `LocalFile directoryEntries expected a directory: ${this.path}`
+        `LocalFile directoryEntries expected a directory: ${this.path}`,
       );
     }
     return fs.readdirSync(this.path, { encoding: 'utf-8' });
@@ -155,30 +154,35 @@ export default class LocalFile {
 
   // This was not part of LocalFile, but added for convenience. Reads UTF-8
   // encoded file contents and returns as string.
-  readFile(options?: any): string {
+  readFile(options?: Parameters<typeof fs.readFileSync>[1]): string {
     if (this.isDirectory()) {
       throw new Error(`LocalFile readFile expected a file: ${this.path}`);
     }
-    const ops = options || {};
-    ops.encoding = 'utf-8';
-    return fs.readFileSync(this.path, ops) as unknown as string;
+    let opts = options;
+    if (opts && typeof opts === 'object' && !('encoding' in opts)) {
+      opts.encoding = 'utf-8';
+    }
+    if (!opts) opts = { encoding: 'utf-8' };
+    return fs.readFileSync(this.path, opts) as string;
   }
 
   // This was not part of LocalFile, but added for convenience.
-  readBuf(options?: any): Buffer {
+  readBuf(options?: Parameters<typeof fs.readFileSync>[1]): Buffer {
     if (this.isDirectory()) {
       throw new Error(`LocalFile readBuf expected a file: ${this.path}`);
     }
-    const ops = options || {};
-    ops.encoding = null;
-    return fs.readFileSync(this.path, ops);
+    if (options && typeof options === 'string') options = undefined;
+    if (options && typeof options === 'object' && 'encoding' in options) {
+      options.encoding = null;
+    }
+    return fs.readFileSync(this.path, options) as Buffer;
   }
 
   remove(recursive = false) {
     fs.rmSync(this.path, { recursive });
   }
 
-  stats(options?: any): fs.Stats | null {
+  stats(options?: Parameters<typeof fs.statSync>[1]) {
     if (!this.exists()) return null;
     return fs.statSync(this.path, options);
   }

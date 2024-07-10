@@ -1,8 +1,5 @@
-/* eslint-disable @typescript-eslint/no-use-before-define */
-/* eslint-disable import/no-duplicates */
-/* eslint-disable no-continue */
 import C from '../../../constant.ts';
-import S from '../../../defaultPrefs.ts';
+import type S from '../../../defaultPrefs.ts';
 import {
   dString,
   getSwordOptions,
@@ -10,7 +7,12 @@ import {
 } from '../../../common.ts';
 import parseExtendedVKRef from '../../../extrefParser.ts';
 import { getElementData, verseKey } from '../../htmlData.ts';
-import { getCompanionModules, getMaxChapter, getMaxVerse, getLocalizedChapterTerm } from '../../rutil.ts';
+import {
+  getCompanionModules,
+  getMaxChapter,
+  getMaxVerse,
+  getLocalizedChapterTerm,
+} from '../../rutil.ts';
 import G, { GI } from '../../rg.ts';
 import { delayHandler } from '../../libxul/xul.tsx';
 
@@ -37,9 +39,9 @@ import type { ViewportWinState } from '../../viewportWin/viewportWin.tsx';
 export function getRefBible(
   anyTypeModule: string,
   renderPromise: RenderPromise,
-  info?: Partial<LookupInfo>
+  info?: Partial<LookupInfo>,
 ): string | null {
-  const inf = (typeof info === 'object' ? info : {}) as Partial<LookupInfo>;
+  const inf = typeof info === 'object' ? info : {};
   // Information collected during this search:
   inf.companion = false;
   inf.userpref = false;
@@ -72,7 +74,7 @@ export function getRefBible(
   }
   // Finally, has the user specified a lookup for this module.
   const vklookup = G.Prefs.getComplexValue(
-    'global.popup.vklookup'
+    'global.popup.vklookup',
   ) as typeof S.prefs.global.popup.vklookup;
   let userPrefBible = refbible;
   if (anyTypeModule in vklookup && vklookup[anyTypeModule]) {
@@ -103,7 +105,7 @@ export function getNoteHTML(
   panelIndex = 0, // used for IDs
   openCRs = false, // show scripture reference texts or not
   keepOnlyThisNote = '', // type.title of a single note to keep
-  renderPromise?: RenderPromise
+  renderPromise?: RenderPromise,
 ) {
   if (!notes) return '';
 
@@ -151,7 +153,7 @@ export function getNoteHTML(
       // do not!.
       let type: string | undefined = nlistTitle.substring(
         0,
-        nlistTitle.indexOf('.')
+        nlistTitle.indexOf('.'),
       );
       let book;
       let chapter;
@@ -214,11 +216,17 @@ export function getNoteHTML(
               if (location) {
                 // If this is a cross reference, then parse the note body for references and display them
                 if (window.processR.platform === 'browser' && !openCRs) {
-                  const vks = parseExtendedVKRef(verseKey, innerHtmlValue, location);
+                  const vks = parseExtendedVKRef(
+                    verseKey,
+                    innerHtmlValue,
+                    location,
+                  );
                   html += vks
-                    .map((vk) => typeof vk === 'string'
-                      ? vk
-                      : verseKey(vk, location.v11n).readable(G.i18n.language))
+                    .map((vk) =>
+                      typeof vk === 'string'
+                        ? vk
+                        : verseKey(vk, location.v11n).readable(G.i18n.language),
+                    )
                     .join('; ');
                 } else {
                   const info = {} as Partial<LookupInfo>;
@@ -227,8 +235,10 @@ export function getNoteHTML(
                     ? innerHtmlValue.split(':')[0]
                     : context;
                   const locale =
-                    (tmod && tmod in G.Config && G.Config[tmod].AssociatedLocale)
-                    || G.i18n.language;
+                    (tmod &&
+                      tmod in G.Config &&
+                      G.Config[tmod].AssociatedLocale) ||
+                    G.i18n.language;
                   html += GI.getExtRefHTML(
                     '',
                     renderPromise,
@@ -238,7 +248,7 @@ export function getNoteHTML(
                     location,
                     openCRs,
                     keepNotes,
-                    info
+                    info,
                   );
                 }
               }
@@ -286,12 +296,12 @@ export function getIntroductions(
   }
 
   const { text, notes } = GI.LibSword.getIntroductions(
-    { text: '', notes: ''},
+    { text: '', notes: '' },
     renderPromise,
     mod,
     vkeytext,
-    getSwordOptions(G, G.Tab[mod].type)
-  )
+    getSwordOptions(G, G.Tab[mod].type),
+  );
 
   let intro = text;
   if (
@@ -325,7 +335,7 @@ export function getChapterHeading(
     book,
     chapter,
     l,
-    renderPromise
+    renderPromise,
   );
 
   // Chapter heading has style of the locale associated with the module, or else
@@ -434,17 +444,17 @@ function verseIsVisible(vx: Element, ignoreNotebox = false): boolean {
 // Implement Atext verse scroll for single column panels.
 export function versekeyScroll(
   sbe: HTMLElement,
-  scrollProps: Pick<AtextPropsType, typeof C.ScrollPropsVK[number]>
+  scrollProps: Pick<AtextPropsType, (typeof C.ScrollPropsVK)[number]>,
 ) {
   const { module, location, scroll } = scrollProps;
   if (!location) return;
   const { book, chapter, verse } = location;
-  if (!verse || scroll === null || scroll === undefined) return;
+  if (!verse || scroll === undefined) return;
 
   sbe.scrollLeft = 0; // commentary may have been non-zero
 
   // find the element to scroll to
-  let av = sbe.firstElementChild as Element | null;
+  let av = sbe.firstElementChild;
   let v = null as HTMLElement | null;
   let vf = null as HTMLElement | null;
   while (av && !v) {
@@ -478,7 +488,7 @@ export function versekeyScroll(
   let vt: HTMLElement | null = v;
   while (vt && vt.parentElement !== v.offsetParent) {
     vt = vt.parentElement;
-    if (vt && vt.offsetTop) vOffsetTop -= vt.offsetTop;
+    if (vt?.offsetTop) vOffsetTop -= vt.offsetTop;
   }
 
   // some special rules for commentaries
@@ -492,13 +502,13 @@ export function versekeyScroll(
     }
 
     // commentaries should never scroll verse to middle, only to top
-    if (scroll.verseAt === 'center') scroll.verseAt = 'top';
+    if (scroll?.verseAt === 'center') scroll.verseAt = 'top';
   }
   // if this is verse 1 then center becomes top
-  if (verse === 1 && scroll.verseAt === 'center') scroll.verseAt = 'top';
+  if (verse === 1 && scroll?.verseAt === 'center') scroll.verseAt = 'top';
 
   // scroll single column windows...
-  switch (scroll.verseAt) {
+  switch (scroll?.verseAt) {
     // put selected verse at the top of the window or link
     case 'top': {
       if (verse === 1) sbe.scrollTop = 0;
@@ -508,7 +518,7 @@ export function versekeyScroll(
     // put selected verse in the middle of the window or link
     case 'center': {
       const middle = Math.round(
-        vOffsetTop - sbe.offsetHeight / 2 + v.offsetHeight / 2
+        vOffsetTop - sbe.offsetHeight / 2 + v.offsetHeight / 2,
       );
       if (vOffsetTop < middle) {
         sbe.scrollTop = vOffsetTop;
@@ -519,7 +529,7 @@ export function versekeyScroll(
     }
 
     default:
-      throw Error(`Unsupported single column scroll "${scroll.verseAt}"`);
+      throw Error(`Unsupported single column scroll "${scroll?.verseAt}"`);
   }
 }
 
@@ -527,7 +537,7 @@ function aTextWheelScroll2(
   count: number,
   atext: HTMLElement,
   prevState: XulswordState | ViewportWinState | AtextStateType,
-  renderPromise?: RenderPromise
+  renderPromise?: RenderPromise,
 ) {
   let ret:
     | Partial<XulswordState>
@@ -563,7 +573,8 @@ function aTextWheelScroll2(
       if (p.location && v11n) {
         const { book, chapter, verse } = p.location;
         if (book && chapter && verse) {
-          newloc = verseKey({
+          newloc = verseKey(
+            {
               book: book as OSISBookType,
               chapter,
               verse,
@@ -571,7 +582,7 @@ function aTextWheelScroll2(
             },
             undefined,
             undefined,
-            renderPromise || null
+            renderPromise || null,
           ).location(location.v11n);
         }
       }
@@ -601,7 +612,7 @@ let WheelSteps = 0;
 export function aTextWheelScroll(
   e: React.WheelEvent,
   atext: HTMLElement,
-  caller: Xulsword | ViewportWin | Atext
+  caller: Xulsword | ViewportWin | Atext,
 ) {
   WheelSteps += Math.round(e.deltaY / 80);
   if (WheelSteps) {
@@ -611,16 +622,21 @@ export function aTextWheelScroll(
         const { renderPromise } = caller;
         caller.setState(
           (prevState: XulswordState | ViewportWinState | AtextStateType) => {
-            const s = aTextWheelScroll2(WheelSteps, atext, prevState, renderPromise);
+            const s = aTextWheelScroll2(
+              WheelSteps,
+              atext,
+              prevState,
+              renderPromise,
+            );
             WheelSteps = 0;
             return s;
-          }
+          },
         );
       },
       columns === '1'
         ? C.UI.Atext.wheelScrollDelay
         : C.UI.Atext.multiColWheelScrollDelay,
-      'wheelScrollTO'
+      'wheelScrollTO',
     )();
   }
 }
@@ -629,7 +645,7 @@ export function highlight(
   sbe: HTMLElement,
   selection: LocationVKType,
   module: string,
-  renderPromise: RenderPromise
+  renderPromise: RenderPromise,
 ) {
   // First unhilight everything
   Array.from(sbe.getElementsByClassName('hl')).forEach((v) => {
@@ -641,7 +657,7 @@ export function highlight(
     selection,
     G.Tab[module].v11n || undefined,
     undefined,
-    renderPromise || null
+    renderPromise || null,
   ).location();
   if (verse) {
     const lv = lastverse || verse;
@@ -727,7 +743,7 @@ export function trimNotes(sbe: HTMLElement, nbe: HTMLElement): boolean {
 export function findVerseElement(
   sbe: HTMLElement,
   chapter: number,
-  verse: number
+  verse: number,
 ): HTMLElement | null {
   let c = sbe.firstElementChild;
   while (c) {
@@ -751,9 +767,9 @@ export function findVerseElement(
 // returns changes between books as null, although this could be coded in.
 export function chapterChange(
   location: LocationVKType | null,
-  chDelta: number
+  chDelta: number,
 ): LocationVKType | null {
-  if (!location || !location.v11n) return null;
+  if (!location?.v11n) return null;
   const { book } = location;
   let { chapter } = location;
   if (chDelta) chapter += chDelta;
@@ -772,7 +788,7 @@ export function chapterChange(
 export function verseChange(
   location: LocationVKType | null,
   vsDelta: number,
-  renderPromise?: RenderPromise
+  renderPromise?: RenderPromise,
 ): LocationVKType | null {
   if (!location) return null;
   let { book, chapter, verse } = location;
@@ -812,12 +828,12 @@ export function verseChange(
 export function pageChange(
   atext: HTMLElement,
   next: boolean,
-  renderPromise?: RenderPromise
+  renderPromise?: RenderPromise,
 ): LocationVKType | null {
   if (!next) {
     let firstVerse: HTMLElement | undefined;
-    Array.from(atext.getElementsByClassName('vs')).forEach((v: any) => {
-      if (!firstVerse && verseIsVisible(v)) firstVerse = v;
+    Array.from(atext.getElementsByClassName('vs')).forEach((v) => {
+      if (!firstVerse && verseIsVisible(v)) firstVerse = v as HTMLElement;
     });
     if (firstVerse) {
       const ei = getElementData(firstVerse);
@@ -839,8 +855,8 @@ export function pageChange(
     let lastVerse: HTMLElement | undefined;
     Array.from(atext.getElementsByClassName('vs'))
       .reverse()
-      .forEach((v: any) => {
-        if (!lastVerse && verseIsVisible(v)) lastVerse = v;
+      .forEach((v) => {
+        if (!lastVerse && verseIsVisible(v)) lastVerse = v as HTMLElement;
       });
     if (lastVerse) {
       const edata = getElementData(lastVerse);
@@ -850,12 +866,17 @@ export function pageChange(
         const t = (context in G.Tab && G.Tab[context]) || null;
         const v11n = t?.v11n || null;
         if (v11n && book) {
-          const vk = verseKey({
-            book,
-            chapter,
-            verse,
-            v11n,
-          }, undefined, undefined, renderPromise || null);
+          const vk = verseKey(
+            {
+              book,
+              chapter,
+              verse,
+              v11n,
+            },
+            undefined,
+            undefined,
+            renderPromise || null,
+          );
           if (vk.chapter <= getMaxChapter(v11n, vk.osisRef())) {
             return vk.location();
           }
