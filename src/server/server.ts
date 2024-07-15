@@ -1,8 +1,8 @@
-/* eslint-disable import/first */
 'use strict';
 globalThis.isPublicServer = true;
 
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { Server } from 'socket.io';
 import i18n from 'i18next';
 import helmet from 'helmet';
@@ -22,10 +22,12 @@ import handleGlobal from '../main/handleGlobal.ts';
 
 import type { Socket } from 'socket.io';
 import type { LogLevel } from 'electron-log';
-import type { GCallType } from 'type.ts';
+import type { GCallType } from '../type.ts';
+
+const dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Environment vars are read from server_env.json when the server starts:
-Setenv(path.join(__dirname, 'server_env.json'));
+Setenv(path.join(dirname, 'server_env.json'));
 
 G.Dirs.init();
 
@@ -210,14 +212,15 @@ function invalidArgs<T>(args: T[]): string | null {
 async function isLimited(
   socket: Socket,
   args: any[],
-  checkbusy = false,
+  _checkbusy = false,
 ): Promise<boolean> {
   // Check-busy is disabled for now...
-  // eslint-disable-next-line no-constant-condition
-  if (false && checkbusy && toobusy()) {
+  /*
+  if (checkbusy && toobusy()) {
     log.warn(`${socket.handshake.address} › server too busy.`);
     return true;
   }
+  */
   try {
     await rateLimiter.consume(socket.handshake.address);
     return false;

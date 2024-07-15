@@ -1,7 +1,3 @@
-/* eslint-disable @typescript-eslint/consistent-type-assertions */
-/* eslint-disable @typescript-eslint/no-dynamic-delete */
-/* eslint-disable no-nested-ternary */
-/* eslint-disable import/no-mutable-exports */
 import log from 'electron-log';
 import path from 'path';
 import fs from 'fs';
@@ -539,7 +535,7 @@ export function getModuleFonts(): FontFaceType[] {
 
     Object.values(fonts).forEach((info) => {
       if (info.fontFamily !== 'unknown' && info.fontFamily !== 'dir') {
-        let path = info.path;
+        let { path } = info;
         if (globalThis.isPublicServer) path = serverPublicPath(path);
         ret.push({ fontFamily: info.fontFamily, path });
       }
@@ -673,7 +669,7 @@ export function validateGlobalModulePrefs() {
   ) as typeof S.prefs.global.popup.vklookup;
   Object.entries(vklookup).forEach((entry) => {
     const m = entry[0] as keyof typeof S.prefs.global.popup.feature;
-    const lumod = entry[1];
+    const [, lumod] = entry;
     if (!lumod || !Tabs.find((t) => t.module === lumod)) {
       delete vklookup[m];
     }
@@ -684,8 +680,7 @@ export function validateGlobalModulePrefs() {
     'global.popup.feature',
   ) as typeof S.prefs.global.popup.feature;
   Object.entries(feature).forEach((entry) => {
-    const f = entry[0] as keyof typeof S.prefs.global.popup.feature;
-    const m = entry[1];
+    const [f, m] = entry as [keyof typeof S.prefs.global.popup.feature, string];
     if (!m || !Tabs.find((t) => t.module === m)) {
       delete feature[f];
     }
@@ -694,8 +689,10 @@ export function validateGlobalModulePrefs() {
   // module from the available modules, if there are any.
   const featureModules = getFeatureModules();
   Object.entries(featureModules).forEach((entry) => {
-    const f = entry[0] as keyof typeof S.prefs.global.popup.feature;
-    const fmods = entry[1];
+    const [f, fmods] = entry as [
+      keyof typeof S.prefs.global.popup.feature,
+      string[],
+    ];
     if (!(f in feature) && Array.isArray(fmods) && fmods.length) {
       const pref =
         C.LocalePreferredFeature[i18n.language === 'en' ? 'en' : 'ru'][f];
@@ -727,8 +724,10 @@ export function getModuleConfig(mod: string): ConfigType {
     // All config properties should be present, having a valid value or null.
     // Read values from module's .conf file
     Object.entries(C.ConfigTemplate).forEach((entry) => {
-      const prop = entry[0] as keyof typeof C.ConfigTemplate;
-      const keyobj = entry[1];
+      const [prop, keyobj] = entry as [
+        keyof typeof C.ConfigTemplate,
+        (typeof entry)[1],
+      ];
       let r = null;
       if (keyobj.modConf) {
         if (mod !== 'LTR_DEFAULT') {
@@ -781,7 +780,7 @@ export function getModuleConfig(mod: string): ConfigType {
       const font = getModuleFonts().find(
         (f) => fontFamily && f.path?.split('/').pop()?.includes(fontFamily),
       );
-      if (font) fontFamily = font.fontFamily;
+      if (font) ({ fontFamily } = font);
       moduleConfig.fontFamily = fontFamily.replace(/"/g, "'");
       if (!/'.*'/.test(moduleConfig.fontFamily))
         moduleConfig.fontFamily = `'${moduleConfig.fontFamily}'`;
@@ -814,8 +813,10 @@ export function localeConfig(locale: string) {
   // All config properties should be present, having a valid value or null.
   // Read any values from locale's config.json file.
   Object.entries(C.ConfigTemplate).forEach((entry) => {
-    const prop = entry[0] as keyof typeof C.ConfigTemplate;
-    const keyobj = entry[1];
+    const [prop, keyobj] = entry as [
+      keyof typeof C.ConfigTemplate,
+      (typeof entry)[1],
+    ];
     let r = null;
     if (keyobj.localeConf !== null) {
       r = i18n.exists(keyobj.localeConf, toptions)
@@ -875,7 +876,7 @@ export function getLocaleConfigs(): Record<string, ConfigType> {
     ret.locale = localeConfig(i18n.language);
     Object.entries(C.ConfigTemplate).forEach((entry) => {
       const key = entry[0] as keyof ConfigType;
-      const typeobj = entry[1];
+      const [, typeobj] = entry;
       if (typeobj.CSS && !ret.locale[key]) {
         const v = C.LocaleDefaultConfigCSS[key] || 'inherit';
         ret.locale[key] = v;

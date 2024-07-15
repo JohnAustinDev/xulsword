@@ -181,7 +181,7 @@ export function libswordText(
         } else if (xulswordState) {
           xulswordState((prevState: typeof S.prefs.xulsword) => {
             const { keys } = clone(prevState);
-            keys[n] = keylist[0];
+            [keys[n]] = keylist;
             return { keys };
           });
         }
@@ -311,7 +311,7 @@ export function textChange(
   const columns = Number(cx);
   if (!columns || !module) return null;
   const { type } = G.Tab[module];
-  const sbe = atext.getElementsByClassName('sb')[0];
+  const [sbe] = Array.from(atext.getElementsByClassName('sb'));
   const newPartialPinProps: Partial<PinPropsType> = prevState || {};
   switch (type) {
     case C.BIBLE:
@@ -320,9 +320,9 @@ export function textChange(
       if (type === C.BIBLE && columns > 1) {
         location = pageChange(atext, next, renderPromise);
       } else {
-        const firstVerse = sbe.getElementsByClassName('vs')[0] as
-          | HTMLElement
-          | undefined;
+        const [firstVerse] = Array.from(
+          sbe.getElementsByClassName('vs'),
+        ) as Array<HTMLElement | undefined>;
         if (firstVerse) {
           const p = getElementData(firstVerse);
           const { location: l } = p;

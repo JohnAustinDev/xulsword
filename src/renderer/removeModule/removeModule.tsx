@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-misused-promises */
 import React from 'react';
 import renderToRoot from '../renderer.tsx';
 import log from '../log.ts';

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-misused-promises */
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -72,7 +71,7 @@ export function modinfoParentHandler(
             const { modinfoRefs } = this;
             const { textarea } = modinfoRefs;
             if (textarea?.current?.value) {
-              const { dataset } = textarea?.current;
+              const { dataset } = textarea?.current ?? {};
               const { confPath } = dataset;
               if (confPath) {
                 G.Module.writeConf(confPath, textarea.current.value);
@@ -119,7 +118,7 @@ type ModinfoProps = {
     container: React.RefObject<HTMLDivElement>; // ref to control scrolling
     textarea: React.RefObject<HTMLTextAreaElement>; // ref to retreive conf edits
   };
-  buttonHandler: (e: React.SyntheticEvent) => void | Promise<void>;
+  buttonHandler: (e: React.SyntheticEvent) => void;
 } & XulProps;
 
 type SwordConfExtraType = SwordConfType & {
@@ -227,8 +226,8 @@ function Modinfo({ showConf = '', ...props }: ModinfoProps) {
               )}
             </div>
             <div
-              // eslint-disable-next-line react/no-danger
               dangerouslySetInnerHTML={{
+                // eslint-disable-next-line @typescript-eslint/naming-convention
                 __html: sanitizeHTML((configs && moduleInfoHTML([c])) || ''),
               }}
             />

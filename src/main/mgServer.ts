@@ -1,5 +1,3 @@
-/* eslint-disable class-methods-use-this */
-/* eslint-disable @typescript-eslint/no-use-before-define */
 import i18next from 'i18next';
 import LibSword from './components/libsword.ts';
 import Viewport from './components/viewport.ts';

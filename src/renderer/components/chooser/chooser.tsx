@@ -83,7 +83,7 @@ class Chooser extends React.Component implements RenderPromiseComponent {
 
   rowHeight: number;
 
-  handler: (e: React.SyntheticEvent) => void | Promise<void>;
+  handler: (e: React.SyntheticEvent) => void;
 
   renderPromise: RenderPromise;
 
@@ -317,7 +317,6 @@ class Chooser extends React.Component implements RenderPromiseComponent {
                   <Spacer orient="horizontal" flex="1" />
                   {!useLabelImage[bg] &&
                     [...label[bg]].map((l, i) => {
-                      // eslint-disable-next-line react/no-array-index-key
                       return <div key={i}>{l}</div>;
                     })}
                   <Spacer orient="horizontal" flex="1" />
@@ -382,7 +381,7 @@ function BookGroupList(
     availableBooks?: Set<string>;
     headingsModule?: string;
     hideUnavailableBooks?: boolean;
-    handler?: (e: React.SyntheticEvent) => void | Promise<void>;
+    handler?: (e: React.SyntheticEvent) => void;
     onAudioClick?: (audio?: VerseKeyAudioFile | GenBookAudioFile) => void;
     chooserRef: React.Component;
   } & XulProps,

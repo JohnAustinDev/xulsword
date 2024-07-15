@@ -561,7 +561,7 @@ function aTextWheelScroll2(
     // a certain period before updaing verse state to the new top verse.
     else {
       // get first verse which begins in window
-      const sb = atext.getElementsByClassName('sb')[0];
+      const [sb] = Array.from(atext.getElementsByClassName('sb'));
       let v = sb.firstElementChild;
       while (v && !verseIsVisible(v)) {
         v = v.nextElementSibling;
@@ -802,15 +802,15 @@ export function verseChange(
     ps = chapterChange(location, -1);
     if (!ps) return null;
     verse = getMaxVerse(v11n, `${ps.book}.${ps.chapter}`, renderPromise);
-    book = ps.book;
-    chapter = ps.chapter;
+    ({ book } = ps);
+    ({ chapter } = ps);
   } else if (verse > maxvs) {
     if (!vsDelta) return null;
     ps = chapterChange(location, 1);
     if (!ps) return null;
     verse = 1;
-    book = ps.book;
-    chapter = ps.chapter;
+    ({ book } = ps);
+    ({ chapter } = ps);
   }
   return {
     book,

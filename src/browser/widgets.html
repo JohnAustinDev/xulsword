@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
   <head>
-    <title>Bible Browser</title>
+    <title>React Browser Widgets</title>
     <meta charset="utf-8" />
     <meta name="Generator" content="github.com/JohnAustinDev/xulsword" />
     <meta name="MobileOptimized" content="width" />
@@ -12,15 +12,32 @@
     <script>
       var drupalSettings = {
         react: {
-          'bible-browser': {
+          anOptionSelect: {
             langcode: 'en',
-            prefs: {},
+            props: {},
+            data: {},
+          },
+
+          aVerseSelect: {
+            langcode: 'en',
+            props: {},
+            data: {},
+          },
+
+          aGeneralBookSelect: {
+            langcode: 'en',
+            props: {},
+            data: {},
           },
         },
       };
     </script>
   </head>
   <body>
-    <div id="bible-browser" data-react="bible-browser"></div>
+    <div id="anOptionSelect" data-react="selectOR"></div>
+
+    <div id="aVerseSelect" data-react="selectVK"></div>
+
+    <div id="aGeneralBookSelect" data-react="selectOptions"></div>
   </body>
 </html>

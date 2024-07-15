@@ -1,4 +1,3 @@
-/* eslint-disable no-unmodified-loop-condition */
 import log from 'electron-log';
 import LocalFile from './components/localFile.ts';
 
@@ -126,11 +125,11 @@ export default function getFontFamily(fontpath: string) {
   const nameTable = {
     format: ushort(data[ptr], data[ptr + 1]),
     count: ushort(data[ptr + 2], data[ptr + 3]),
-    string_offset: ushort(data[ptr + 4], data[ptr + 5]),
-    nameRecord_offset: 6,
+    stringOffset: ushort(data[ptr + 4], data[ptr + 5]),
+    nameRecordOffset: 6,
   };
 
-  const r1ptr = ptr + nameTable.nameRecord_offset;
+  const r1ptr = ptr + nameTable.nameRecordOffset;
 
   for (let b = ptr + 6; b < r1ptr + 13 * nameTable.count; b += 1) {
     const data8 = read8();
@@ -159,7 +158,7 @@ export default function getFontFamily(fontpath: string) {
 
   // read the familyName string
   let familyName = null;
-  const s: number = ptr + nameTable.string_offset + aString.offset;
+  const s: number = ptr + nameTable.stringOffset + aString.offset;
   const e: number = s + aString.length;
 
   for (let b = r1ptr + 13 * nameTable.count; b < s + aString.length; b += 1) {

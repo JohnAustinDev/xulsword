@@ -117,7 +117,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
         }
         case 'searchButton': {
           let module = state.panels.find((m) => m);
-          if (!module && G.Tabs.length) module = G.Tabs[0].module;
+          if (!module && G.Tabs.length) [{ module }] = G.Tabs;
           const tbp = document.getElementById('searchText');
           const tb = tbp?.getElementsByTagName('input');
           const searchtext = tb?.[0].value;

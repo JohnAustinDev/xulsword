@@ -90,7 +90,7 @@ function ControllerVK(props: {
         if (!books.includes(book)) {
           vk.book = books[0] as any;
           const ts = chaplist[vk.book];
-          if (ts) vk.chapter = ts[0][0];
+          if (ts) [[vk.chapter]] = ts;
         }
         if (!chaplist[vk.book]?.find((x) => x[0] === vk.chapter)) {
           vk.chapter = (chaplist[vk.book] as any)[0][0] || 1;
@@ -203,7 +203,7 @@ socket.on('connect', () => {
     const widget = document.getElementsByClassName('widget-container');
     if (widget?.length) {
       const data = componentData(widget[0]);
-      langcode = data.langcode;
+      ({ langcode } = data);
     }
     const prefs: Partial<PrefRoot> = {};
     const locale = setGlobalLocale(prefs, langcode);

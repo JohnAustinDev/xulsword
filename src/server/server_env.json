@@ -1,9 +1,9 @@
 {
   "CORS_ORIGIN": "http://127.0.0.1:8080",
-  "ROOTPATH": "/vagrant/htdocs",
+  "ROOTPATH": "/home/dale/ibt/server/home/ibt/IBTSite/htdocs",
   "PUBPATHS": "ftpmirror/pub;ftpmirror/private/modsword/raw;sites/default/files",
-  "XSProfD": "/vagrant/app-profile",
-  "XSModsUser": "/vagrant/htdocs/ftpmirror/pub/modsword/raw",
-  "XSModsCommon": "/vagrant/htdocs/ftpmirror/private/modsword/raw",
-  "XSFonts": "/vagrant/htdocs/ftpmirror/pub/fonts"
+  "XSProfD": "/home/dale/src/xulsword/app-profile",
+  "XSModsUser": "/home/dale/ibt/server/home/ibt/IBTSite/htdocs/ftpmirror/pub/modsword/raw",
+  "XSModsCommon": "/home/dale/ibt/server/home/ibt/IBTSite/htdocs/ftpmirror/private/modsword/raw",
+  "XSFonts": "/home/dale/ibt/server/home/ibt/IBTSite/htdocs/ftpmirror/pub/fonts"
 }

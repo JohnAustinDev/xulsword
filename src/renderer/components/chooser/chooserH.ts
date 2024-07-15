@@ -3,15 +3,13 @@ import { getSwordOptions, ofClass, sanitizeHTML } from '../../../common.ts';
 import C from '../../../constant.ts';
 import G from '../../rg.ts';
 import { delayHandler } from '../../libxul/xul.tsx';
+import log from '../../log.ts';
 
 import type { BookGroupType } from '../../../type.ts';
 import type Chooser from './chooser.tsx';
 import type { ChooserProps, ChooserState } from './chooser.tsx';
 
-export default async function handler(
-  this: Chooser,
-  es: React.SyntheticEvent,
-): Promise<void> {
+export default function handler(this: Chooser, es: React.SyntheticEvent): void {
   const target = es.target as HTMLElement;
   switch (es.type) {
     case 'click': {
@@ -77,56 +75,64 @@ export default async function handler(
           const hd = /<h\d([^>]*class="head1[^"]*"[^>]*>)(.*?)<\/h\d>/i;
           // Rexgex parses verse number from array member strings
           const vs = /<sup[^>]*>(\d+)<\/sup>/i; // Get verse from above
-          const [gct] = (await G.callBatch([
+          G.callBatch([
             [
               'LibSword',
               'getChapterText',
               [headingsModule, `${book}.${chapter}`, options],
             ],
-          ])) as Array<ReturnType<typeof G.LibSword.getChapterText>>;
-          const { text } = gct;
-          const headings = text.match(hdplus);
-          if (headings) {
-            let hr = false;
-            for (let x = 0; x < headings.length; x += 1) {
-              const h = headings[x];
-              if (h) {
-                const mh = h.match(hd);
-                const mv = h.match(vs);
-                if (mh && mv) {
-                  const [, tag, txt] = mh;
-                  const [, verse] = mv;
-                  const text = txt.replace(/<[^>]*>/g, '');
-                  if (tag && text && !/^\s*$/.test(text)) {
-                    if (hr)
-                      headingmenu.appendChild(document.createElement('hr'));
-                    const a = headingmenu.appendChild(
-                      document.createElement('a'),
-                    );
-                    sanitizeHTML(a, text);
-                    a.className = `heading-link cs-${headingsModule}`;
-                    a.dataset.module = headingsModule;
-                    a.dataset.book = book;
-                    a.dataset.chapter = chapter;
-                    a.dataset.verse = verse;
-                    hr = true;
+          ])
+            .then((result) => {
+              const [gct] = result as Array<
+                ReturnType<typeof G.LibSword.getChapterText>
+              >;
+              const { text } = gct;
+              const headings = text.match(hdplus);
+              if (headings) {
+                let hr = false;
+                for (let x = 0; x < headings.length; x += 1) {
+                  const h = headings[x];
+                  if (h) {
+                    const mh = h.match(hd);
+                    const mv = h.match(vs);
+                    if (mh && mv) {
+                      const [, tag, txt] = mh;
+                      const [, verse] = mv;
+                      const text = txt.replace(/<[^>]*>/g, '');
+                      if (tag && text && !/^\s*$/.test(text)) {
+                        if (hr)
+                          headingmenu.appendChild(document.createElement('hr'));
+                        const a = headingmenu.appendChild(
+                          document.createElement('a'),
+                        );
+                        sanitizeHTML(a, text);
+                        a.className = `heading-link cs-${headingsModule}`;
+                        a.dataset.module = headingsModule;
+                        a.dataset.book = book;
+                        a.dataset.chapter = chapter;
+                        a.dataset.verse = verse;
+                        hr = true;
+                      }
+                    }
                   }
                 }
               }
-            }
-          }
-          // If headings were found, then display them inside the popup
-          if (headingmenu.childNodes.length) {
-            const row = chapterMenu.element.firstChild as HTMLElement;
-            if (row) {
-              headingmenu.style.top = `${Number(
-                -2 +
-                  (1 + Math.floor((Number(chapter) - 1) / 10)) *
-                    row.offsetHeight,
-              )}px`;
-              chapterMenu.element.classList.add('show');
-            }
-          }
+              // If headings were found, then display them inside the popup
+              if (headingmenu.childNodes.length) {
+                const row = chapterMenu.element.firstChild as HTMLElement;
+                if (row) {
+                  headingmenu.style.top = `${Number(
+                    -2 +
+                      (1 + Math.floor((Number(chapter) - 1) / 10)) *
+                        row.offsetHeight,
+                  )}px`;
+                  chapterMenu.element.classList.add('show');
+                }
+              }
+            })
+            .catch((er) => {
+              log.error(er);
+            });
           break;
         }
         default:

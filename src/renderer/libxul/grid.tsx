@@ -1,7 +1,3 @@
-/* eslint-disable react/no-unused-prop-types */
-/* eslint-disable react/destructuring-assignment */
-/* eslint-disable react/jsx-props-no-spreading */
-
 import React from 'react';
 import PropTypes from 'prop-types';
 import type { ReactElementLike } from 'prop-types';

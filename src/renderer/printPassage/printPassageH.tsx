@@ -1,5 +1,3 @@
-/* eslint-disable import/no-duplicates */
-/* eslint-disable @typescript-eslint/no-use-before-define */
 import {
   clone,
   decodeOSISRef,

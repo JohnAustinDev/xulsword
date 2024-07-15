@@ -2,6 +2,7 @@ import { BrowserWindow } from 'electron'; // undefined in server mode
 import { fork } from 'child_process';
 import log from 'electron-log';
 import path from 'path';
+import libxulsword from '../../../node_modules/libxulsword/libxulsword.mjs';
 import {
   repositoryKey,
   isRepoLocal,
@@ -36,8 +37,6 @@ import type {
   MessagesFromIndexWorker,
   MessagesToIndexWorker,
 } from '../indexWorker.ts';
-
-const { libxulsword } = require('libxulsword');
 
 // Convert the raw GenBookTOC (output of LibSword.getGenBookTableOfContents())
 // into an array of C.GBKSEP delimited keys.
@@ -103,7 +102,6 @@ const LibSword = {
 
   searchingID: '' as string,
 
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   indexingID: {} as Record<string, ChildProcess>,
 
   backgroundIndexerTO: null as NodeJS.Timeout | null,

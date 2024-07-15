@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/consistent-type-assertions */
 import type { ContextMenuType } from './main/contextMenu.ts';
 import type { PrefCallbackType } from './prefs.ts';
 import type { NewModulesType } from './type.ts';

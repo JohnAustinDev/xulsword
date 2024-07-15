@@ -48,7 +48,7 @@ export function closeMenupopups(component: React.Component) {
   const state = component.state as XulswordState & ViewportWinState;
   let historyMenupopup: any;
   if ('historyMenupopup' in component.state) {
-    historyMenupopup = state.historyMenupopup;
+    ({ historyMenupopup } = state);
   }
   let reset = 0;
   Array.from(document.getElementsByClassName('tabs')).forEach((t) => {

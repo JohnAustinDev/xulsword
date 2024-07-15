@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/unbound-method */
 import React from 'react';
 import {
   clone,
@@ -323,7 +322,7 @@ export default class BMPropertiesWin extends React.Component {
     let location;
     if (bookmark.type === 'bookmark') {
       ({ location } = bookmark);
-      if (location === null) location = bmdefault.location;
+      if (location === null) ({ location } = bmdefault);
     }
 
     let sampleText: string | undefined;
@@ -443,7 +442,7 @@ function initialBookmark(): BookmarkItemType | undefined {
       | LocationVKCommType
       | LocationORType
       | undefined;
-    if (newitem && 'location' in newitem) location = newitem.location;
+    if (newitem && 'location' in newitem) ({ location } = newitem);
     const item: BookmarkItem = {
       id: randomID(),
       type: 'folder',

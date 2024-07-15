@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/unbound-method */
 import React from 'react';
 import PropTypes from 'prop-types';
 import C from '../../../constant.ts';
@@ -15,7 +14,7 @@ import type {
   RenderPromiseState,
 } from '../../renderPromise.ts';
 import type { XulProps } from '../../libxul/xul.tsx';
-import type { TonCellClick } from 'renderer/libxul/table.tsx';
+import type { TonCellClick } from '../../libxul/table.tsx';
 
 const propTypes = {
   ...xulPropTypes,

@@ -142,7 +142,7 @@ const Viewport = {
     // state of the clicked menuitem's tab, and not each tab's previous state.
     let doWhat2 = doWhat;
     if (doWhat === 'toggle' && panelIndex === -1) {
-      const m = whichTabs[0];
+      const [m] = whichTabs;
       const dwh =
         m !== null &&
         tabs.every((t: any) => t === undefined || t?.includes(m.module));

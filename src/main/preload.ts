@@ -1,11 +1,5 @@
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-var-requires */
-const { contextBridge, ipcRenderer } = require('electron');
-
-// If you think you can do this with TypeScript and module requires, good luck, as
-// you will spend a day getting all the compile (dev, prod) options working
-// correctly. Electron is VERY picky about preload.js and does not treat it lilke
-// normal js, but Electron reports: 'preload.js did not load' which you will see often.
+/* eslint-disable @typescript-eslint/naming-convention */
+import { contextBridge, ipcRenderer } from 'electron';
 
 // NOTE: crashReporter is not an Electron 22 preload electron require option.
 // But crashReporter is unnecessary since the main process reports for renderer
@@ -32,7 +26,7 @@ contextBridge.exposeInMainWorld('ipc', {
   // response from ipcMain is desired, then 'invoke' should likely be used.
   // Otherwise event.reply() can respond from ipcMain if the renderer has
   // also added a listener for it.
-  send: (channel, ...args) => {
+  send: (channel: string, ...args: unknown[]) => {
     if (validChannels.includes(channel)) {
       ipcRenderer.send(channel, ...args);
     } else throw Error(`ipc send bad channel: ${channel}`);
@@ -40,7 +34,7 @@ contextBridge.exposeInMainWorld('ipc', {
 
   // Trigger a channel event which ipcMain is to listen for and respond to
   // using ipcMain.handle(), returning a promise containing the result arg(s).
-  invoke: async (channel, ...args) => {
+  invoke: async (channel: string, ...args: unknown[]) => {
     if (validChannels.includes(channel)) {
       return await ipcRenderer.invoke(channel, ...args);
     }
@@ -50,7 +44,7 @@ contextBridge.exposeInMainWorld('ipc', {
   // Make a synchronous call to ipcMain, blocking the renderer until ipcMain
   // responds using event.returnValue. Using invoke instead will not block the
   // renderer process.
-  sendSync: (channel, ...args) => {
+  sendSync: (channel: string, ...args: unknown[]) => {
     if (validChannels.includes(channel)) {
       return ipcRenderer.sendSync(channel, ...args);
     }
@@ -58,10 +52,10 @@ contextBridge.exposeInMainWorld('ipc', {
   },
 
   // Add listener func to be called after events from a channel of ipcMain
-  on: (channel, func) => {
+  on: (channel: string, func: (...args: unknown[]) => void) => {
     if (validChannels.includes(channel)) {
       // Deliberately strip event as it includes `sender`
-      const strippedfunc = (_event, ...args) => {
+      const strippedfunc = (_event: any, ...args: unknown[]) => {
         func(...args);
       };
       ipcRenderer.on(channel, strippedfunc);
@@ -74,10 +68,10 @@ contextBridge.exposeInMainWorld('ipc', {
 
   // One time listener func to be called after next event from a channel of
   // ipcMain.
-  once: (channel, func) => {
+  once: (channel: string, func: (...args: unknown[]) => void) => {
     if (validChannels.includes(channel)) {
       // Deliberately strip event as it includes `sender`
-      const strippedfunc = (_event, ...args) => {
+      const strippedfunc = (_event: any, ...args: unknown[]) => {
         func(...args);
       };
       ipcRenderer.once(channel, strippedfunc);

@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-misused-promises */
-/* eslint-disable no-unmodified-loop-condition */
 import React from 'react';
 import PropTypes from 'prop-types';
 import { getElementData, verseKey } from '../../htmlData.ts';
@@ -482,7 +480,6 @@ class Atext extends React.Component implements RenderPromiseComponent {
     }
     const d = diff(state, newState);
     if (Object.keys(newState).length && d) {
-      console.log(state, d);
       this.setState(d);
     }
     return true;

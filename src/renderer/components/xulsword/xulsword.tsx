@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/unbound-method */
 import React from 'react';
 import { Icon } from '@blueprintjs/core';
 import { dString, clone } from '../../../common.ts';

@@ -1,6 +1,8 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import { io } from 'socket.io-client';
 import process from '../../process.js';
 
+import type Electron from 'electron';
 import type { Socket } from 'socket.io-client';
 
 // To run the Electron app in a browser, Electron's contextBridge

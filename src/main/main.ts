@@ -1,9 +1,14 @@
-/* eslint-disable no-nested-ternary */
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
 import { app, crashReporter, dialog, BrowserWindow, ipcMain } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
+import i18nBackendMain from 'i18next-fs-backend';
+import devToolsInstaller, {
+  REACT_DEVELOPER_TOOLS,
+} from 'electron-devtools-installer';
+import { install as SourceMapInstall } from 'source-map-support';
+import electronDebug from 'electron-debug';
 import Subscription from '../subscription.ts';
 import Cache from '../cache.ts';
 import { clone, JSON_parse, keep, localizeString } from '../common.ts';
@@ -41,11 +46,6 @@ completePanelPrefDefaultArrays(
   (G.Prefs.getComplexValue('xulsword.panels') as typeof S.prefs.xulsword.panels)
     .length,
 );
-
-const i18nBackendMain = require('i18next-fs-backend');
-const installer = require('electron-devtools-installer');
-const sourceMapSupport = require('source-map-support');
-const electronDebug = require('electron-debug');
 
 {
   const logfile = new LocalFile(
@@ -119,7 +119,7 @@ if (
   process.env.NODE_ENV === 'development' ||
   process.env.DEBUG_PROD === 'true'
 ) {
-  sourceMapSupport.install();
+  SourceMapInstall();
 }
 
 // Make all windows appear at the same time, rather than each flashing
@@ -427,18 +427,9 @@ const init = async () => {
     process.env.NODE_ENV === 'development' ||
     process.env.DEBUG_PROD === 'true'
   ) {
-    await (async () => {
-      const forceDownload = !!process.env.UPGRADE_EXTENSIONS;
-      const extensions = ['REACT_DEVELOPER_TOOLS'];
-      return installer
-        .default(
-          extensions.map((name) => installer[name]),
-          forceDownload,
-        )
-        .catch((e: Error) => {
-          log.error(e);
-        });
-    })();
+    (devToolsInstaller as any)(REACT_DEVELOPER_TOOLS)
+      .then((name: string) => log.debug(`Added Extension:  ${name}`))
+      .catch((er: any) => log.error(er));
   }
 
   let lng = G.Prefs.getCharPref('global.locale');
@@ -547,7 +538,6 @@ const init = async () => {
     showDialog: false,
     onError(error, versions, submitIssue) {
       if (!C.isDevelopment && !error.message.includes('net::ERR')) {
-        // eslint-disable-next-line promise/no-promise-in-callback
         dialog
           .showMessageBox({
             title: G.i18n.t('error-detected'),

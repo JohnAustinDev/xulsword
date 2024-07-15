@@ -1,7 +1,3 @@
-/* eslint-disable react/static-property-placement */
-/* eslint-disable react/destructuring-assignment */
-/* eslint-disable react/jsx-props-no-spreading */
-
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Hbox } from './boxes.tsx';
@@ -13,7 +9,6 @@ import './checkbox.css';
 
 const propTypes = {
   ...xulPropTypes,
-  // eslint-disable-next-line react/no-unused-prop-types
   checked: PropTypes.bool,
   disabled: PropTypes.bool,
   label: PropTypes.string,

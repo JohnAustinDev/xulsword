@@ -1,8 +1,7 @@
-/* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable prefer-rest-params */
-/* eslint-disable import/no-mutable-exports */
 import log from 'electron-log';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import i18n from 'i18next';
 import { app, BrowserWindow, dialog, shell } from 'electron';
 import { drop, keep, randomID, unknown2String } from '../../common.ts';
@@ -33,6 +32,8 @@ import type { PrefCallbackType } from '../../prefs.ts';
 import type { SubscriptionType } from '../../subscription.ts';
 import type contextMenu from '../contextMenu.ts';
 
+const dirname = path.dirname(fileURLToPath(import.meta.url));
+
 export let resolveHtmlPath: (htmlFileName: string) => string;
 
 const printPreviewTmps: LocalFile[] = [];
@@ -46,7 +47,7 @@ if (process.env.NODE_ENV === 'development') {
   };
 } else {
   resolveHtmlPath = (htmlFileName: string) => {
-    return `file://${path.resolve(__dirname, '../renderer/', htmlFileName)}`;
+    return `file://${path.resolve(dirname, '../renderer/', htmlFileName)}`;
   };
 }
 
@@ -242,8 +243,8 @@ function updateOptions(descriptor: Omit<WindowDescriptorType, 'id'>): void {
   options.icon = path.join(Dirs.path.xsAsset, 'icon.png');
   if (!options.webPreferences) options.webPreferences = {};
   options.webPreferences.preload = app.isPackaged
-    ? path.join(__dirname, 'preload.js')
-    : path.join(__dirname, '../preload.js');
+    ? path.join(dirname, 'preload.mjs')
+    : path.join(dirname, '../preload.mjs');
   options.webPreferences.contextIsolation = true;
   options.webPreferences.nodeIntegration = false;
   options.webPreferences.webSecurity = true;
@@ -667,7 +668,7 @@ const Window = {
     electronOptions: Electron.WebContentsPrintOptions,
     window?: WindowArgType | null,
   ): Promise<void> {
-    const win = getBrowserWindows(window, arguments[2] as number)[0];
+    const [win] = getBrowserWindows(window, arguments[2] as number);
     if (win) {
       // NOTE!: Electron contents.print() does not seem to work at all.
       // It complains there are no available printers (when there are)
@@ -697,7 +698,7 @@ const Window = {
     },
     window?: WindowArgType | null,
   ): Promise<string> {
-    const win = getBrowserWindows(window, arguments[2] as number)[0];
+    const [win] = getBrowserWindows(window, arguments[2] as number);
     if (win) {
       const { destination } = electronOptions;
       if (destination === 'prompt-for-file') {

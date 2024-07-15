@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/consistent-type-assertions */
-/* eslint-disable no-nested-ternary */
-/* eslint-disable no-bitwise */
 import DOMPurify from 'dompurify';
 import C from './constant.ts';
 import S, { completePanelPrefDefaultArrays } from './defaultPrefs.ts';
@@ -567,6 +564,7 @@ export function sanitizeHTML<T extends string | HTMLElement>(
   html?: string,
 ): T {
   const sanitize = (s?: string): string => {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     return DOMPurify.sanitize(s || '', { USE_PROFILES: { html: true } });
   };
   if (typeof parentOrHtml === 'string') {
@@ -712,7 +710,7 @@ export function findElements(
 // class names is found, null is returned.
 export function ofClass(
   search: string | string[],
-  element: HTMLElement | ParentNode | EventTarget | null,
+  element: HTMLElement | EventTarget | null,
   mode?: HTMLElementSearchModes,
 ): { element: HTMLElement; type: string } | null {
   const amode = mode || 'ancestor-or-self';
@@ -1134,7 +1132,7 @@ export function getModuleOfObject(
   if ('type' in bookmarkOrLocation) {
     const { type } = bookmarkOrLocation;
     if (type === 'folder') return null;
-    location = bookmarkOrLocation.location;
+    ({ location } = bookmarkOrLocation);
   } else location = bookmarkOrLocation;
   if ('commMod' in location) return location.commMod;
   if ('v11n' in location) return location.vkMod || null;
@@ -1892,7 +1890,7 @@ export function selectionToTableRows(regions: Region[]): number[] {
   const sels = new Set<number>();
   regions?.forEach((region) => {
     if (region.rows) {
-      for (let r = region.rows[0]; r <= region.rows[1]; r += 1) {
+      for (let [r] = region.rows; r <= region.rows[1]; r += 1) {
         sels.add(r);
       }
     }
@@ -1938,7 +1936,7 @@ export function tableSelectDataRows(
     if (selectedRows[0] > toggleDataRow) {
       // select upwards:
       // Get the first selected row after the clicked row.
-      const prev = selectedRows[0];
+      const [prev] = selectedRows;
       const start = e.ctrlKey ? toggleDataRow : prev - 1;
       for (let x = start; x >= toggleDataRow; x -= 1) {
         if (!toggleSelected) selectedRows.push(x);
@@ -1970,7 +1968,6 @@ export function mergeNewModules(a: NewModulesType, b: NewModulesType) {
     const [kx, vx] = entry;
     const k = kx as keyof typeof C.NEWMODS;
     const v = vx as any;
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     a[k].push(...v);
   });
 }

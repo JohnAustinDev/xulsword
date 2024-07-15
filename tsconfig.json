@@ -1,29 +1,29 @@
 {
   "compilerOptions": {
-    "emitDeclarationOnly": true,
-    "target": "ES2021",
-    "module": "CommonJS",
-    "lib": ["dom", "esnext"],
+    "target": "es6",
+    "module": "nodenext",
+    /* "lib": ["dom", "esnext"], */
     "declaration": true,
     "declarationMap": true,
     "jsx": "react",
     "strict": true,
     "pretty": true,
     "sourceMap": true,
-    "baseUrl": "./src",
-    /* Additional Checks */
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
+
     /* Module Resolution Options */
-    "moduleResolution": "node",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "allowJs": true,
     "allowImportingTsExtensions": true,
+    "emitDeclarationOnly": true,
     "skipLibCheck": true
   },
-  "include": ["./src/**/*"]
+  "include": [
+    "./src/**/*",
+    "./scripts/**/*",
+    "./configs/**/*",
+    "./node_modules/libxulsword/**/*",
+    "./*.mjs"
+  ]
 }

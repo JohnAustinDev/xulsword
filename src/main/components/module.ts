@@ -664,14 +664,14 @@ export async function installZIPs(
                   dirs.shift();
                   deprecatedZip = true;
                 }
-                let audioCode = dirs[0];
+                let [audioCode] = dirs;
                 // For some reason path-audioCode case might not always
                 // match what is in the conf file, so use the conf file value.
                 const conf = Object.values(confs).pop();
                 if (conf) audioCode = conf.module;
                 dirs[0] = audioCode;
                 dirs.unshift('modules');
-                const bookOrSub = dirs[2];
+                const [, , bookOrSub] = dirs;
                 const isVerseKey = Object.values(C.SupportedBooks).some(
                   (bg: any) => bg.includes(bookOrSub),
                 );

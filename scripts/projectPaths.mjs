@@ -1,38 +1,41 @@
-const path = require('path');
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-const rootPath = path.join(__dirname, '../..');
+const dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const dllPath = path.join(__dirname, '../dll');
+const rootPath = path.join(dirname, '..');
+
+const dllPath = path.join(dirname, '..', '.dll');
 
 const srcPath = path.join(rootPath, 'src');
 const srcMainPath = path.join(srcPath, 'main');
 const srcRendererPath = path.join(srcPath, 'renderer');
+const srcNodeModulesPath = path.join(srcPath, 'node_modules');
 
 const buildPath = path.join(rootPath, 'build');
 const appPath = path.join(buildPath, 'app');
+const appDistPath = path.join(appPath, 'dist');
 const appPackagePath = path.join(appPath, 'package.json');
 const appNodeModulesPath = path.join(appPath, 'node_modules');
-const srcNodeModulesPath = path.join(srcPath, 'node_modules');
 
-const distPath = path.join(appPath, 'dist');
-const distMainPath = path.join(distPath, 'main');
-const distRendererPath = path.join(distPath, 'renderer');
+const webappPath = path.join(buildPath, 'webapp');
+const webappDistPath = path.join(webappPath, 'dist');
 
 const releasePath = path.join(buildPath, 'release');
 
-module.exports = {
+export default {
   rootPath,
   dllPath,
   srcPath,
   srcMainPath,
   srcRendererPath,
   buildPath,
+  webappPath,
+  webappDistPath,
   appPath,
   appPackagePath,
   appNodeModulesPath,
   srcNodeModulesPath,
-  distPath,
-  distMainPath,
-  distRendererPath,
+  appDistPath,
   releasePath,
 };

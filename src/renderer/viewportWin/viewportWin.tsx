@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/unbound-method */
 import React from 'react';
 import Subscription from '../../subscription.ts';
 import S from '../../defaultPrefs.ts';

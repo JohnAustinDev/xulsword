@@ -33,7 +33,7 @@ const libSwordSearchTypes = {
   REGEX: 0,
   PHRASE: -1,
   MULTIWORD: -2,
-  ENTRY_ATTRIBUTE: -3,
+  ENTRYATTRIBUTE: -3,
   LUCENE: -4,
   COMPOUND: -5,
 };
@@ -58,8 +58,7 @@ const LibSwordSearch = {
 export function getLuceneSearchText(searchtext0: string) {
   let searchtext = searchtext0;
   Object.entries(C.UI.Search.symbol).forEach((entry) => {
-    const k = entry[0];
-    const [uiVal, luceneVal] = entry[1];
+    const [k, [uiVal, luceneVal]] = entry;
     let uiVal2 = uiVal;
     if (G.i18n.exists(k)) {
       const kv = G.i18n.t(k);

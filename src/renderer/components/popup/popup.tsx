@@ -348,8 +348,7 @@ class Popup extends React.Component implements RenderPromiseComponent {
             {type === 'sn' &&
               data?.className &&
               Object.entries(C.SwordFeatureClasses).map((entry) => {
-                const feature = entry[0] as keyof FeatureMods;
-                const regex = entry[1];
+                const [feature, regex] = entry as [keyof FeatureMods, RegExp];
                 if (data.className && regex.test(data.className)) {
                   const fmods = G.FeatureModules[feature];
                   if (fmods?.length && Array.isArray(fmods)) {

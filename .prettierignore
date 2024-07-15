@@ -3,6 +3,5 @@ build
 Cpp
 node_modules
 util
-src/main/fontfamily.js
 src/xulsword/src/refParser.ts
 src/xulsword/src/renderer/htmlData.ts

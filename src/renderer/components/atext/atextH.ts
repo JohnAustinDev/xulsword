@@ -33,7 +33,7 @@ function scroll2Note(atext: HTMLElement, id: string) {
   return true;
 }
 
-export default async function handler(this: Atext, es: React.SyntheticEvent) {
+export default function handler(this: Atext, es: React.SyntheticEvent) {
   switch (es.type) {
     case 'click': {
       const e = es as React.MouseEvent;
@@ -79,7 +79,7 @@ export default async function handler(this: Atext, es: React.SyntheticEvent) {
                 const el = col5.element;
                 const refs = el.dataset.reflist;
                 if (refs) {
-                  const [html] = (await G.callBatch([
+                  G.callBatch([
                     [
                       'getExtRefHTML',
                       null,
@@ -92,8 +92,14 @@ export default async function handler(this: Atext, es: React.SyntheticEvent) {
                         false,
                       ],
                     ],
-                  ])) as string[];
-                  sanitizeHTML(el, html);
+                  ])
+                    .then((result) => {
+                      const [html] = result;
+                      sanitizeHTML(el, html);
+                    })
+                    .catch((er) => {
+                      log.error(er);
+                    });
                 }
               }
               if (id) scroll2Note(atext, id);

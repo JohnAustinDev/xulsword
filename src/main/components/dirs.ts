@@ -1,6 +1,9 @@
 import { app } from 'electron'; // may be undefined
 import path from 'path';
+import { fileURLToPath } from 'url';
 import LocalFile from './localFile.ts';
+
+const dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const dirs = {
   TmpD: '',
@@ -45,13 +48,13 @@ const Dirs = {
       // has security implications.
       Dirs.path.xsAsset = app?.isPackaged
         ? path.join(process.resourcesPath, 'assets')
-        : path.join(__dirname, '..', '..', '..', 'assets');
+        : path.join(dirname, '..', '..', '..', 'assets');
 
       // Packaged filename should be 'app.asar' if package.json has build.asar
       // set to true. Or it should be 'app' otherwise.
       Dirs.path.xsAsar = app?.isPackaged
         ? path.join(process.resourcesPath, 'app.asar')
-        : path.join(__dirname, '..', '..', '..', 'build', 'app');
+        : path.join(dirname, '..', '..', '..', 'build', 'app');
 
       Dirs.path.TmpD = app?.getPath('temp') || '/tmp';
 
@@ -103,7 +106,7 @@ const Dirs = {
 
       Dirs.path.xsLib = app
         ? app.getPath('exe')
-        : path.join(__dirname, '..', '..', '..', 'Cpp', 'lib');
+        : path.join(dirname, '..', '..', '..', 'Cpp', 'lib');
 
       if (!pathOnly) {
         // Create these directories if they don't exist.

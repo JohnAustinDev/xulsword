@@ -1,4 +1,3 @@
-/* eslint-disable no-continue */
 import { JSON_attrib_stringify, getSwordOptions } from '../../../common.ts';
 import Cache from '../../../cache.ts';
 import type S from '../../../defaultPrefs.ts';

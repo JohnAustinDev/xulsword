@@ -1,4 +1,3 @@
-/* eslint-disable no-nested-ternary */
 import C from './constant.ts';
 
 import type { paperSizes } from './renderer/libxul/printSettings.tsx';

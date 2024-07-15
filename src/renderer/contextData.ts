@@ -63,13 +63,13 @@ export default function ContextData(elem: HTMLElement): ContextDataType {
   ]);
 
   let context: string | undefined;
-  if (contextData) context = contextData.context;
+  if (contextData) ({ context } = contextData);
 
   let location: LocationVKType | undefined;
-  if (contextData) location = contextData.location;
+  if (contextData) ({ location } = contextData);
 
   let locationGB: LocationORType | undefined;
-  if (contextData) locationGB = contextData.locationGB;
+  if (contextData) ({ locationGB } = contextData);
 
   let locationCOMM: LocationVKCommType | undefined;
   if (

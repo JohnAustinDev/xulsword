@@ -99,7 +99,7 @@ function allowed(thecall: GCallType): boolean {
 
 function publicCall(thecall: GCallType): GCallType {
   const [name, method] = thecall;
-  const args = thecall[2];
+  const [, , args] = thecall;
   if (name === 'callBatch' && args) {
     const calls = args[0].map((call: GCallType) => {
       return publicCall(call);
@@ -187,7 +187,7 @@ Object.entries(GBuilder).forEach((entry) => {
       gi[name] = (def: PrefValue, rp: RenderPromise) => {
         let req;
         try {
-          req = GCallsOrPromise([acall], [def], rp)[0];
+          [req] = GCallsOrPromise([acall], [def], rp);
         } catch (er: any) {
           error(er);
         }
@@ -211,7 +211,7 @@ Object.entries(GBuilder).forEach((entry) => {
           const acall: GCallType = [name, null, args];
           let req;
           try {
-            req = GCallsOrPromise([acall], [def], rp)[0];
+            [req] = GCallsOrPromise([acall], [def], rp);
           } catch (er: any) {
             error(er);
           }
@@ -249,7 +249,7 @@ Object.entries(GBuilder).forEach((entry) => {
           gi[name][m] = (def: PrefValue, rp: RenderPromise) => {
             let req;
             try {
-              req = GCallsOrPromise([acall], [def], rp)[0];
+              [req] = GCallsOrPromise([acall], [def], rp);
             } catch (er: any) {
               error(er);
             }
@@ -280,7 +280,7 @@ Object.entries(GBuilder).forEach((entry) => {
                 const acall: GCallType = [name, m, args];
                 let req;
                 try {
-                  req = GCallsOrPromise([acall], [def], rp)[0];
+                  [req] = GCallsOrPromise([acall], [def], rp);
                 } catch (er: any) {
                   error(er);
                 }

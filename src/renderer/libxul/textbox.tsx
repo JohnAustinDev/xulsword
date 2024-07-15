@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/unbound-method */
 import React from 'react';
 import PropTypes from 'prop-types';
 import DOMPurify from 'dompurify';
@@ -15,7 +14,6 @@ const propTypes = {
   multiline: PropTypes.bool,
   pattern: PropTypes.instanceOf(RegExp),
   readonly: PropTypes.bool,
-  // eslint-disable-next-line react/forbid-prop-types
   inputRef: PropTypes.object,
   disabled: PropTypes.bool,
   timeout: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),

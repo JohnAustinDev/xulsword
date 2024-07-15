@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/unbound-method */
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -307,7 +306,7 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
             onChange={onChange}
           >
             {children.map((cn) => {
-              const label = cn.label;
+              const { label } = cn;
               const className = !Number.isNaN(Number(label))
                 ? undefined
                 : `cs-${otherMod}`;

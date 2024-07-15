@@ -3,7 +3,11 @@ import { Icon } from '@blueprintjs/core';
 import G from '../../rg.ts';
 import { genBookAudioFile, verseKeyAudioFile } from '../../rutil.ts';
 
-import type { GenBookAudioFile, OSISBookType, VerseKeyAudioFile } from 'type';
+import type {
+  GenBookAudioFile,
+  OSISBookType,
+  VerseKeyAudioFile,
+} from '../../../type.ts';
 
 export default function audioIcon(
   module: string,

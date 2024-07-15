@@ -1,6 +1,3 @@
-/* eslint-disable react/no-unused-state */
-/* eslint-disable react/jsx-props-no-spreading */
-/* eslint-disable react/static-property-placement */
 import React from 'react';
 import { diff } from '../../common.ts';
 import G from '../rg.ts';

@@ -40,7 +40,7 @@ export type FileItem = {
   osisbook: OSISBookType;
 };
 
-export type selectVKCompData = {
+export type SelectVKCompData = {
   component: 'selectVK';
   action: 'bible_audio_Play';
   langcode: string;
@@ -48,7 +48,7 @@ export type selectVKCompData = {
   data: ChaplistVKType;
 };
 
-export type selectORCompData = {
+export type SelectORCompData = {
   component: 'selectOR';
   action: 'genbk_audio_Play';
   langcode: string;
@@ -56,7 +56,7 @@ export type selectORCompData = {
   data: ChaplistORType;
 };
 
-export type selectOptionsCompData = {
+export type SelectOptionsCompData = {
   component: 'selectOptions';
   action: 'update_url';
   langcode: string;
@@ -64,17 +64,17 @@ export type selectOptionsCompData = {
   data: SelectData;
 };
 
-export type browserCompData = {
+export type BrowserCompData = {
   component: 'bibleBrowser';
   langcode: string;
   prefs: Partial<PrefRoot>;
 };
 
 export type ComponentData =
-  | browserCompData
-  | selectVKCompData
-  | selectORCompData
-  | selectOptionsCompData;
+  | BrowserCompData
+  | SelectVKCompData
+  | SelectORCompData
+  | SelectOptionsCompData;
 
 export function componentData(elem: Element): ComponentData {
   let drupalData: Record<string, ComponentData> | undefined;
@@ -157,7 +157,7 @@ export function handleAction(type: string, id: string, ...args: any[]): void {
         const chaparray = chaplist[book]?.find((ca) => ca[0] === chapter);
         if (chaparray) {
           player.setAttribute('src', chaparray[1].replace(/^base:/, ''));
-          player.play().catch((_er) => {});
+          player.play().catch(() => {});
         }
       }
       break;
@@ -176,7 +176,7 @@ export function handleAction(type: string, id: string, ...args: any[]): void {
         const da = chaplist.find((x) => x[1] === key);
         if (da) {
           player.setAttribute('src', da[2].replace(/^base:/, ''));
-          player.play().catch((_er) => {});
+          player.play().catch(() => {});
         }
       }
       break;

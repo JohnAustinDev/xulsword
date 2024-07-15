@@ -1,4 +1,4 @@
-import type { OSISBookType, V11nType } from '../type';
+import type { OSISBookType, V11nType } from '../type.ts';
 
 export const bkChsInV11n: {
   [key in V11nType]: Array<[OSISBookType, number]>;

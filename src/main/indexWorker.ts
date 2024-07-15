@@ -1,10 +1,9 @@
 import fs from 'fs';
 import log from 'electron-log';
-import { JSON_stringify } from 'common';
+import { JSON_stringify } from '../common.ts';
+import libxulsword from '../../node_modules/libxulsword/libxulsword.mjs';
 
 import type { LogLevel } from 'electron-log';
-
-const { libxulsword } = require('libxulsword');
 
 export type MessagesToIndexWorker =
   | {

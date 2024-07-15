@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/unbound-method */
 import React from 'react';
 import PropTypes from 'prop-types';
 import { clone, diff, getModuleOfObject, ofClass } from '../../common.ts';

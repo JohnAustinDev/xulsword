@@ -156,7 +156,7 @@ export default class SearchWin extends React.Component implements PopupParent {
         searchArg.module in G.Tab &&
         G.Tab[searchArg.module].type === C.BIBLE
           ? searchArg.module
-          : abible?.module ?? '',
+          : (abible?.module ?? ''),
       renderPromiseID: 0,
     };
     // Adjustments for special startup situations

@@ -1,5 +1,3 @@
-/* eslint-disable no-nested-ternary */
-/* eslint-disable @typescript-eslint/no-use-before-define */
 import { app, Menu, shell, MenuItem } from 'electron';
 import log from 'electron-log';
 import path from 'path';
@@ -224,9 +222,9 @@ export const pushPrefsToMenu: PrefCallbackType = (winid, store, key, val) => {
       }
     }
     if (store === 'bookmarks') {
-      let xs: BrowserWindow | undefined = getBrowserWindows({
+      let [xs]: Array<BrowserWindow | undefined> = getBrowserWindows({
         type: 'xulswordWin',
-      })[0];
+      });
       if (xs) {
         const menuBuilder = new MainMenuBuilder(xs);
         menuBuilder.buildMenu(true);

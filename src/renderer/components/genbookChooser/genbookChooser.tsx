@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/unbound-method */
 import React from 'react';
 import PropTypes from 'prop-types';
 import { clone, gbAncestorIDs, stringHash } from '../../../common.ts';
@@ -172,7 +171,7 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
         <Hbox className="chooser-container" flex="20">
           <div className="scroll-parent">
             {genbks(panels).map((x, _i, a) => {
-              const i = x[0];
+              const [i] = x;
               const m = panels[i];
               if (m) {
                 const treekey = [m, i].join('.');

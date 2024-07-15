@@ -281,7 +281,7 @@ function flatcalls(calls: GCallType[]): GCallType[] {
   const flat: GCallType[] = [];
   for (let i = 0; i < calls.length; i++) {
     if (['callBatch', 'callBatchSync'].includes(calls[i][0])) {
-      const args = calls[i][2];
+      const [, , args] = calls[i];
       if (Array.isArray(args)) {
         const batchcalls = args[1] as GCallType[];
         flat.push(...batchcalls);

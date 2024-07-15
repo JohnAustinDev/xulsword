@@ -1,6 +1,6 @@
-import type { LocationVKType, OSISBookType } from './type';
-import type RenderPromise from './renderer/renderPromise';
-import type { verseKey } from './renderer/htmlData';
+import type { LocationVKType, OSISBookType } from './type.ts';
+import type RenderPromise from './renderer/renderPromise.ts';
+import type { verseKey } from './renderer/htmlData.ts';
 
 // This function tries to read a ";" separated list of Scripture
 // references and returns an array of LocationVKType objects, one for

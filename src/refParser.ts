@@ -20,7 +20,7 @@ type BookNamePartsType = {
   locale: string | null;
 };
 
-type invalidLocationVKType = {
+type InvalidLocationVKType = {
   v11n: V11nType;
   book: '';
   chapter: 0;
@@ -252,7 +252,7 @@ export default class RefParser {
     text2parse: string,
     v11n: V11nType | null,
   ): {
-    location: LocationVKType | invalidLocationVKType;
+    location: LocationVKType | InvalidLocationVKType;
     locale: string | null;
   } | null {
     let text = text2parse;
@@ -265,7 +265,7 @@ export default class RefParser {
     }
 
     const r: {
-      location: LocationVKType | invalidLocationVKType;
+      location: LocationVKType | InvalidLocationVKType;
       locale: string | null;
     } = {
       location: {
@@ -274,7 +274,7 @@ export default class RefParser {
         chapter: 0,
         verse: null,
         lastverse: null,
-      } satisfies invalidLocationVKType,
+      } satisfies InvalidLocationVKType,
       locale: null,
     };
 

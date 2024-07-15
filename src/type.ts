@@ -1,4 +1,3 @@
-/* eslint-disable import/no-duplicates */
 import type { TreeNodeInfo } from '@blueprintjs/core';
 import type {
   BrowserWindowConstructorOptions,
@@ -76,14 +75,14 @@ declare global {
   function ToUpperCase(str: string): string;
   function ReportSearchIndexerProgress(percent: number): void;
 
-  // eslint-disable-next-line no-var
+  // eslint-disable-next-line no-var, @typescript-eslint/naming-convention
   var isPublicServer: boolean;
   function browserState(
     arg:
       | BrowserControllerState
       | ((ps: BrowserControllerState) => BrowserControllerState),
   ): void;
-  // eslint-disable-next-line no-var
+  // eslint-disable-next-line no-var, @typescript-eslint/naming-convention
   var browserMaxPanels: number | undefined;
 }
 

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/unbound-method */
 import React from 'react';
 import { sanitizeHTML } from '../../common.ts';
 import G from '../rg.ts';

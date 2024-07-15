@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 import { normalizeFontFamily } from '../common.ts';
 import C from '../constant.ts';
 import type S from '../defaultPrefs.ts';
@@ -55,7 +54,7 @@ function createStyleRule(
   let rule = `${selector} {`;
   Object.entries(C.ConfigTemplate).forEach((entry) => {
     const prop = entry[0] as keyof typeof C.ConfigTemplate;
-    const keyobj = entry[1];
+    const [, keyobj] = entry;
     if (keyobj.CSS && config[prop]) {
       rule += `${keyobj.CSS}: ${config[prop]}${
         important ? ' !important' : ''
@@ -179,7 +178,7 @@ export default class DynamicStyleSheet {
       classPrefixes.forEach((prefix) => {
         Object.entries(this.style).forEach((entry) => {
           const type = entry[0] as keyof StyleType;
-          const configobj = entry[1];
+          const [, configobj] = entry;
           Object.entries(configobj).forEach((entry2) => {
             const [instance, config] = entry2;
             if (instance !== 'default') {

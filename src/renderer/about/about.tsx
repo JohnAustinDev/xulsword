@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/unbound-method */
 import React from 'react';
 import C from '../../constant.ts';
 import G from '../rg.ts';

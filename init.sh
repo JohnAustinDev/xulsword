@@ -92,7 +92,9 @@ if [ "$LIBXULSWORD_ONLY" = "no" ]; then
 
   nvm install 22.2.0
   nvm use 22.2.0
-  npm i --global yarn
+  corepack enable
+  yarn set version stable
+  yarn install
 fi
 
 # Create a local Cpp installation directory where compiled libraries will

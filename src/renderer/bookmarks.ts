@@ -183,7 +183,7 @@ export function addBookmarksToNotes(
   const notehtml = notes || `<div class="notes"></div>`;
   const ns = notehtml.match(/<div[^>]+>/);
   if (ns) {
-    const divStart = ns[0];
+    const [divStart] = ns;
     let newnotes = notehtml.replace(divStart, '');
     newnotes = newnotes.replace(/<\/div>$/, '');
     newnotes =

@@ -321,8 +321,8 @@ function WindowRoot(props: WindowRootProps) {
                   {!!conf.UnlockInfo?.locale && (
                     <div
                       className="publisher-msg"
-                      // eslint-disable-next-line react/no-danger
                       dangerouslySetInnerHTML={{
+                        // eslint-disable-next-line @typescript-eslint/naming-convention
                         __html: sanitizeHTML(conf.UnlockInfo?.locale),
                       }}
                     />
@@ -489,8 +489,8 @@ export default async function renderToRoot(
 
   setTimeout(() => {
     if (descriptor?.fitToContent) {
-      const htmlElem = document.getElementsByTagName('html')[0];
-      const bodyElem = document.getElementsByTagName('body')[0];
+      const [htmlElem] = Array.from(document.getElementsByTagName('html'));
+      const [bodyElem] = Array.from(document.getElementsByTagName('body'));
       if (htmlElem && bodyElem) {
         const b = bodyElem.getBoundingClientRect();
         if (b) G.Window.setContentSize(b.width, b.height);

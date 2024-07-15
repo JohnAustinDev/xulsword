@@ -1,5 +1,3 @@
-/* eslint-disable class-methods-use-this */
-/* eslint-disable @typescript-eslint/no-use-before-define */
 import { clipboard, shell } from 'electron';
 import i18next from 'i18next';
 import { canRedo, canUndo } from './bookmarks.ts';

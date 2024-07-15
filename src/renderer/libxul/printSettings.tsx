@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/unbound-method */
 import React from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';

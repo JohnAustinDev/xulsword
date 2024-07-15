@@ -189,7 +189,6 @@ function isValidItem(
           break;
         }
         default: {
-          // eslint-disable-next-line valid-typeof
           isValid = typeof v === type;
           if (isValid && Array.isArray(validk)) {
             const v2 = v as string;
@@ -268,7 +267,7 @@ export function importDeprecatedBookmarks(
       let parentID = propertyValues.shift();
       if (parentID === deprecatedRootID) parentID = parentFolder.id;
       let id = propertyValues.shift();
-      if (id === deprecatedRootID) id = parentFolder.id;
+      if (id === deprecatedRootID) ({ id } = parentFolder);
       const index = Number(propertyValues.shift());
       if (parentID && id && !Number.isNaN(index)) {
         const [

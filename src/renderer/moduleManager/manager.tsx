@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/unbound-method */
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -296,22 +295,28 @@ export default class ModuleManager
         // module table to remain empty until all repository listings have
         // been downloaded, and certain repos may take a long time. So
         // instead it is called on each repo separately.
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.loadRepositoryTable(remoteRepos).map(async (r, i, a) => {
-          return await G.Module.repositoryListing([
-            { ...r, file: C.SwordRepoManifest, type: 'ftp' },
-          ])
-            .then((list) => {
-              H.handleListings(
-                this,
-                a.map((_lr, ir) => (ir === i ? list[0] : null)),
-              );
-              return true;
-            })
-            .catch((er) => {
+        const repos = this.loadRepositoryTable(remoteRepos).map((r, i, a) => {
+          return async () => {
+            let list: Array<RepositoryListing | string>;
+            try {
+              list = await G.Module.repositoryListing([
+                { ...r, file: C.SwordRepoManifest, type: 'ftp' },
+              ]);
+            } catch (er) {
               log.error(er);
-            });
+              list = [];
+            }
+            H.handleListings(
+              this,
+              a.map((_lr, ir) => (ir === i ? list[0] : null)),
+            );
+
+            return true;
+          };
         });
+        for (let x = 0; x < repos.length; x++) {
+          await repos[x]();
+        }
       } else
         loadLocalRepos().catch((er) => {
           log.error(er);
@@ -385,7 +390,7 @@ export default class ModuleManager
       const css = H.classes([H.RepCol.iState], ['checkbox-column']);
       const canedit = repo.custom ? H.editable() : false;
       const isloading = repo.disabled ? false : H.loading(H.RepCol.iState);
-      const on = repo.builtin ? H.ALWAYS_ON : H.ON;
+      const on = repo.builtin ? H.ALWAYSON : H.ON;
       let lng = G.i18n.language;
       if (!['en', 'ru'].includes(lng)) lng = C.FallbackLanguage[lng];
       repoTableData.push([
@@ -744,10 +749,10 @@ export default class ModuleManager
     // Set one or the other or neither (never both)
     let vkAudioDialog;
     let gbAudioDialog;
-    if (showAudioDialog[0]) {
-      if (showAudioDialog[0].type === 'versekey')
-        vkAudioDialog = showAudioDialog[0];
-      else gbAudioDialog = showAudioDialog[0];
+    const [nextDialog] = showAudioDialog;
+    if (nextDialog) {
+      if (nextDialog.type === 'versekey') vkAudioDialog = nextDialog;
+      else gbAudioDialog = nextDialog;
     }
 
     const handleColumns = (table: (typeof H.Tables)[number]) => {
@@ -1133,7 +1138,7 @@ function audioDialogOnChange(
         selection,
       } as H.VersekeyDialog | H.GenBookDialog;
       if (showAudioDialog[0].type === 'versekey') {
-        const dvk = showAudioDialog[0];
+        const [dvk] = showAudioDialog;
         const { options } = dvk;
         const sel = selection as SelectVKType;
         if (sel.book && options) {
@@ -1154,7 +1159,7 @@ function audioDialogOnChange(
   });
 }
 
-export async function onunload() {
+export function onunload() {
   // close all FTP connections
   G.Module.cancel().catch((er) => {
     log.error(er);

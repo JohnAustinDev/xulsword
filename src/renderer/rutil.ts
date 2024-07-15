@@ -80,7 +80,7 @@ export function libswordImgSrc(container: HTMLElement) {
       let src: string | undefined;
       if (window.processR.platform === 'browser') {
         if (img.dataset.src.startsWith('/')) {
-          src = img.dataset.src;
+          ({ src } = img.dataset);
         }
       } else {
         const m = img.dataset.src.match(/^file:\/\/(.*)$/i);
@@ -185,7 +185,7 @@ export function verseKeyAudioFile(
       let bk = book;
       let ch = chapter === undefined ? -1 : chapter;
       if (!bk) {
-        const entry = Object.entries(ac)[0];
+        const [entry] = Object.entries(ac);
         if (entry) {
           [, boolarray] = entry;
           const [b] = entry;

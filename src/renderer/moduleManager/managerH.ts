@@ -141,13 +141,13 @@ export type TRepositoryTableRow = [
   string,
   string,
   string,
-  typeof ON | typeof OFF | typeof ALWAYS_ON,
+  typeof ON | typeof OFF | typeof ALWAYSON,
   TRepCellInfo,
 ];
 
 export const ON = '☑';
 export const OFF = '☐';
-export const ALWAYS_ON = '￭';
+export const ALWAYSON = '￭';
 
 export const LanCol = {
   iName: 0,
@@ -362,9 +362,8 @@ export function onCellEdited(
         (col === RepCol.iDomain || col === RepCol.iPath) &&
         drow[RepCol.iState] === OFF
       ) {
-        // eslint-disable-next-line @typescript-eslint/no-misused-promises
-        setTimeout(async () => {
-          await switchRepo(this, [row], true).catch((er) => {
+        setTimeout(() => {
+          switchRepo(this, [row], true).catch((er) => {
             log.error(er);
           });
         }, 100);
@@ -804,7 +803,7 @@ function repoRowEnableDisable(
   });
   if (enable) {
     if (disabledIndex !== -1) disabledRepos.splice(disabledIndex, 1);
-    row[RepCol.iState] = row[RepCol.iInfo].repo.builtin ? ALWAYS_ON : ON;
+    row[RepCol.iState] = row[RepCol.iInfo].repo.builtin ? ALWAYSON : ON;
     row[RepCol.iInfo].repo.disabled = false;
     row[RepCol.iInfo].loading = loading(RepCol.iState);
     row[RepCol.iInfo].intent = intent(RepCol.iState, stateIntent);
@@ -912,7 +911,7 @@ export function handleListings(
           return null;
         }
         repositoryListings[i] = l;
-        if ([ON, ALWAYS_ON].includes(drow[RepCol.iState])) {
+        if ([ON, ALWAYSON].includes(drow[RepCol.iState])) {
           drow[RepCol.iInfo].intent = intent(RepCol.iState, 'success');
         }
         return l;
@@ -1317,7 +1316,6 @@ async function promptAudioChapters(
                     let label = '';
                     while (keys.length && !label) label = keys.pop() || '';
                     n.label =
-                      // eslint-disable-next-line @typescript-eslint/no-base-to-string
                       label || n.label.toString().replace(/^\d+\s(.*?)$/, '$1');
                   },
                 ),
@@ -1586,7 +1584,7 @@ export function repositoryToRow(repo: Repository): TRepositoryTableRow {
   const on = builtinRepos(G)
     .map((r) => repositoryKey(r))
     .includes(repositoryKey(repo))
-    ? ALWAYS_ON
+    ? ALWAYSON
     : ON;
   return [
     repo.name || '?',
@@ -1628,7 +1626,7 @@ export function scrollToSelectedLanguage(xthis: ModuleManager) {
   const { selection } = (xthis.state as ManagerState).language;
   if (selection.length) {
     const selectedRegions = xthis.languageCodesToTableSelection(selection);
-    const firstSelectedRegion = selectedRegions[0];
+    const [firstSelectedRegion] = selectedRegions;
     if (firstSelectedRegion) {
       const { languageTableCompRef } = xthis;
       const tc = languageTableCompRef.current;
@@ -1638,7 +1636,7 @@ export function scrollToSelectedLanguage(xthis: ModuleManager) {
         'scrollToRegion' in tc &&
         typeof tc.scrollToRegion === 'function'
       ) {
-        let firstRow = firstSelectedRegion.rows[0];
+        let [firstRow] = firstSelectedRegion.rows;
         if (firstRow > 5) firstRow -= 5;
         tc.scrollToRegion({ rows: [firstRow, firstRow] });
       }

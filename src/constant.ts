@@ -1,7 +1,4 @@
-/* eslint-disable @typescript-eslint/consistent-type-assertions */
-/* eslint-disable no-unused-vars */
-/* eslint-disable no-nested-ternary */
-
+/* eslint-disable @typescript-eslint/naming-convention */
 import type { LogLevel } from 'electron-log';
 import type {
   BookGroupType,

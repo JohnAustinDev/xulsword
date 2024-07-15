@@ -212,9 +212,9 @@ const Commands = {
   },
 
   async exportAudio() {
-    let xswindow: BrowserWindow | null = getBrowserWindows({
+    let [xswindow]: Array<BrowserWindow | null> = getBrowserWindows({
       type: 'xulswordWin',
-    })[0];
+    });
     const tab = getTab();
     const gbpaths = {} as Record<string, GenBookAudio>;
     function title(module: string, path: number[]): string {
@@ -359,9 +359,9 @@ const Commands = {
       let tot = 0;
       let ctot = 0;
       const tab = getTab();
-      let xswindow: BrowserWindow | null = getBrowserWindows({
+      let [xswindow]: Array<BrowserWindow | null> = getBrowserWindows({
         type: 'xulswordWin',
-      })[0];
+      });
       const callingWinID = xswindow.id;
       const audioExtRE = new RegExp(`^\\.(${C.SupportedAudio.join('|')})$`);
       const getImportFiles = (dir: LocalFile): LocalFile[] => {
@@ -436,8 +436,8 @@ const Commands = {
               if (sub) {
                 const subn = Number(sub.replace(/^(\d+).*?$/, '$1'));
                 const m2 = sub.match(/^(\d+)[-\s](.*?)$/); // legacy VerseKey markup
-                if (!book && m2) book = verseKey(m2[2]).book;
-                else if (!book) book = verseKey(sub).book;
+                if (!book && m2) ({ book } = verseKey(m2[2]));
+                else if (!book) ({ book } = verseKey(sub));
                 if (book) {
                   sub = book;
                   path.push(book);
@@ -726,9 +726,9 @@ const Commands = {
   ): Promise<NewModulesType> {
     const extensions = ['json', 'xsb', 'txt'];
     let importFiles: string[] | undefined = paths;
-    let callingWin: BrowserWindow | undefined = getBrowserWindows({
+    let [callingWin]: Array<BrowserWindow | undefined> = getBrowserWindows({
       type: 'xulswordWin',
-    })[0];
+    });
     if (!paths) {
       const obj = await dialog.showOpenDialog(callingWin, {
         title: i18n.t('menu.addNewModule'),
@@ -783,9 +783,9 @@ const Commands = {
   },
 
   async exportBookmarks(folderID?: string) {
-    let xswindow: BrowserWindow | null = getBrowserWindows({
+    let [xswindow]: Array<BrowserWindow | null> = getBrowserWindows({
       type: 'xulswordWin',
-    })[0];
+    });
     const extensions = ['json'];
     const obj = await dialog.showSaveDialog(xswindow, {
       title: i18n.t('to.label'),

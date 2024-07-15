@@ -2,20 +2,21 @@
   "name": "xulsword",
   "productName": "MK",
   "description": "Электронная Библия",
-  "version": "4.0.13",
-  "main": "./dist/main/main.js",
+  "version": "4.1.0",
+  "type": "module",
+  "main": "./dist/main/main.mjs",
   "author": {
     "name": "John Austin",
     "email": "gpl.programs.info@gmail.com",
     "url": "https://github.com/JohnAustinDev/xulsword"
   },
   "scripts": {
-    "link-modules": "node -r ../../.erb/scripts/babel-register.js ../../.erb/scripts/link-modules.js",
+    "link-modules": "node ../../scripts/link-modules.mjs",
     "postinstall": "yarn link-modules"
   },
   "license": "MIT",
   "dependencies": {
-    "libxulsword": "file:../../node_modules_xulsword/libxulsword",
-    "bindings": "~1.2.1"
+    "bindings": "~1.2.1",
+    "libxulsword": "file:../../node_modules/libxulsword"
   }
 }

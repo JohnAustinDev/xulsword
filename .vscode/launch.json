@@ -19,7 +19,16 @@
       "runtimeExecutable": "yarn",
       "runtimeArgs": ["start"],
       "skipFiles": ["<node_internals>/**"],
-      "outFiles": ["${workspaceFolder}/src/**/*.js"]
+      "outFiles": ["${workspaceFolder}/src/**/*"]
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Electron start-server",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["./build/webapp/dist/server/server.cjs"],
+      "skipFiles": ["<node_internals>/**"],
+      "outFiles": ["${workspaceFolder}/scripts/**/*"]
     },
     {
       "name": "Attach to Process",

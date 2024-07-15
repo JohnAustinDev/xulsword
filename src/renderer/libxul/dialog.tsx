@@ -1,6 +1,3 @@
-/* eslint-disable react/destructuring-assignment */
-/* eslint-disable react/jsx-props-no-spreading */
-
 import React, { type ReactElement } from 'react';
 import PropTypes from 'prop-types';
 import { Classes, Dialog as BPDialog } from '@blueprintjs/core';

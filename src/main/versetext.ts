@@ -1,12 +1,17 @@
-import { JSON_attrib_stringify, clone, getSwordOptions } from '../common';
-import parseExtendedVKRef from '../extrefParser';
-import C from '../constant';
+import { JSON_attrib_stringify, clone, getSwordOptions } from '../common.ts';
+import parseExtendedVKRef from '../extrefParser.ts';
+import C from '../constant.ts';
 import G from './mg.ts';
 import { verseKey } from './minit.ts';
 
 import type S from '../defaultPrefs.ts';
-import type { LocationVKType, LookupInfo, TabTypes, TextVKType } from '../type';
-import type { HTMLData } from '../renderer/htmlData';
+import type {
+  LocationVKType,
+  LookupInfo,
+  TabTypes,
+  TextVKType,
+} from '../type.ts';
+import type { HTMLData } from '../renderer/htmlData.ts';
 
 // Return an HTML Scripture reference list representing an extended reference.
 // An extended reference is a textual reference comprising a list of Scripture

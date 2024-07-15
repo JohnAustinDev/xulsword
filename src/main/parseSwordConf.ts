@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/consistent-type-assertions */
 import i18n from 'i18next';
 import path from 'path';
 import Dirs from './components/dirs.ts';
@@ -89,8 +88,8 @@ export default function parseSwordConf(
       m = l.match(/^([A-Za-z0-9_.]+)\s*=\s*(.*?)\s*$/);
       if (m) {
         // Handle an entry:
-        const entry = m[1] as any;
-        let value = m[2];
+        const [, entry] = m;
+        let [, , value] = m;
         const entryBase: string =
           entry.substring(0, entry.indexOf('_')) || entry;
 

@@ -222,7 +222,6 @@ export default class Prefs {
   ): boolean {
     if (type !== 'any') {
       const type2 = type === 'complex' ? 'object' : type;
-      // eslint-disable-next-line valid-typeof
       if (typeof value !== type2) {
         return false;
       }
@@ -253,7 +252,7 @@ export default class Prefs {
     }
     const defval = clone(defvalx);
     const store = storex || 'prefs';
-    const rootkey = key.split('.')[0];
+    const [rootkey] = key.split('.');
     if (store in S && !Object.keys(S[store]).includes(rootkey)) {
       throw new Error(
         `Pref root key '${rootkey}' is unrecognized in '${store}'.`,

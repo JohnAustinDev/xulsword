@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/unbound-method */
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Icon, Intent, Menu, MenuDivider, MenuItem } from '@blueprintjs/core';
@@ -477,9 +476,9 @@ class Table extends React.Component {
     const tableRef = domref || this.tableDomRef;
     const t = tableRef.current;
     if (t) {
-      const parent = t.getElementsByClassName(
+      const [parent] = t.getElementsByClassName(
         'bp5-table-quadrant-scroll-container',
-      )[0];
+      );
       if (parent) {
         let top = 0;
         if (id && id in Table.scrollTop) top = Table.scrollTop[id];
@@ -495,9 +494,9 @@ class Table extends React.Component {
     const tableRef = domref || this.tableDomRef;
     const t = tableRef.current;
     if (t) {
-      const parent = t.getElementsByClassName(
+      const [parent] = t.getElementsByClassName(
         'bp5-table-quadrant-scroll-container',
-      )[0];
+      );
       if (parent && id) {
         Table.scrollTop[id] = parent.scrollTop;
       }

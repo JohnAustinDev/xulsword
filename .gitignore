@@ -30,19 +30,28 @@ coverage
 # Dependency directory
 # https://www.npmjs.org/doc/misc/npm-faq.html#should-i-check-my-node_modules-folder-into-git
 node_modules
+!node_modules/libxulsword
 
 # OSX
 .DS_Store
 
-build/app/dist
+dist
 build/release
-.erb/dll
+.dll
 archive.tgz
 src/**/*.d.ts
 src/**/*.d.ts.map
 src/**/*.js
 src/**/*.js.map
 
+# yarn
+**/.pnp.*
+**/.yarn/*
+!**/.yarn/patches
+!**/.yarn/plugins
+!**/.yarn/releases
+!**/.yarn/sdks
+!**/.yarn/versions
 
 .idea
 npm-debug.log.*

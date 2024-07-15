@@ -43,6 +43,9 @@
 *.woff  binary
 *.woff2 binary
 *.node  binary
+*.gz    binary
+/.yarn/releases/** binary
+/.yarn/plugins/** binary
 
 # UPSHOT: 
 # Linux hosts may or may not have (it's redundant due to * text=auto):
