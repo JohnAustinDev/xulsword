@@ -15,7 +15,7 @@ import type {
   ShowType,
   VerseKeyAudioFile,
 } from '../../../type.ts';
-import type { BrowserControllerState } from '../../../browser/bible-browser.tsx';
+import type { BrowserControllerState } from '../../../browser/bibleBrowser.tsx';
 import type Xulsword from './xulsword.tsx';
 import type { XulswordState } from './xulsword.tsx';
 

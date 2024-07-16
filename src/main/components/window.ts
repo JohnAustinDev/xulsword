@@ -242,9 +242,9 @@ function updateOptions(descriptor: Omit<WindowDescriptorType, 'id'>): void {
   options.useContentSize = true;
   options.icon = path.join(Dirs.path.xsAsset, 'icon.png');
   if (!options.webPreferences) options.webPreferences = {};
-  options.webPreferences.preload = app.isPackaged
-    ? path.join(dirname, 'preload.mjs')
-    : path.join(dirname, '../preload.mjs');
+  options.webPreferences.preload = path.join(
+    dirname, '..', '..', '..', 'build', 'app', 'dist', 'preload', 'preload.js'
+  );
   options.webPreferences.contextIsolation = true;
   options.webPreferences.nodeIntegration = false;
   options.webPreferences.webSecurity = true;

@@ -48,7 +48,7 @@ import type { CallBatch } from './main/handleGlobal.ts';
 import type Viewport from './main/components/viewport.ts';
 import type { getExtRefHTML, locationVKText } from './main/versetext.ts';
 import type RenderPromise from './renderer/renderPromise.ts';
-import type { BrowserControllerState } from './browser/bible-browser.tsx';
+import type { BrowserControllerState } from './browser/bibleBrowser.tsx';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/consistent-type-definitions

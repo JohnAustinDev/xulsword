@@ -16,9 +16,9 @@
     "release-32win": "yarn && cross-env PKLIB=32win yarn install-libxulsword && yarn build && electron-builder build --publish always --win --ia32 && cross-env PKLIB=linux yarn install-libxulsword",
     "release-64win": "yarn && cross-env PKLIB=64win yarn install-libxulsword && yarn build && electron-builder build --publish always --win --x64 && cross-env PKLIB=linux yarn install-libxulsword",
     "postinstall": "electron-builder install-app-deps && yarn build:dll",
-    "start": "node ./scripts/check-port-in-use.mjs && webpack --env development --env renderer serve",
-    "start-webapp": "node ./scripts/check-port-in-use.mjs && webpack --env development --env browser serve",
-    "start:main": "yarn webpack --env development --env main && node ./build/app/dist/main/main.cjs",
+    "start": "node ./scripts/check-port-in-use.mjs && webpack --env development --env renderer && webpack serve --env development --env renderer",
+    "start-webapp": "node ./scripts/check-port-in-use.mjs && webpack serve --env development --env browser",
+    "start:main": "yarn webpack --env development --env main && electron ./build/app/dist/main/main.cjs",
     "start:server": "yarn webpack --env development --env server && node ./build/webapp/dist/server/server.cjs"
   },
   "build": {
@@ -263,5 +263,8 @@
     "webpack-dev-server": "^3.11.2",
     "webpack-merge": "^5.7.3"
   },
-  "packageManager": "yarn@4.3.1"
+  "packageManager": "yarn@4.3.1",
+  "devDependencies": {
+    "source-map-loader": "^5.0.0"
+  }
 }

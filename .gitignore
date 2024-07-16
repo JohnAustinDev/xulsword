@@ -1,8 +1,10 @@
 # xulsword
 .vagrant
 archive
+archive.tgz
 branding.json
 assets/defaults/preferences/
+assets/**/*missing.json
 Cpp/lib*
 Cpp/install*
 Cpp/zlib*
@@ -14,31 +16,12 @@ Cpp/phpsword
 */libxulsword/build
 process.js
 
-# Logs
-logs
-*.log
-
-# Runtime data
-pids
-*.pid
-*.seed
-
-# Coverage directory used by tools like istanbul
-coverage
-.eslintcache
-
-# Dependency directory
-# https://www.npmjs.org/doc/misc/npm-faq.html#should-i-check-my-node_modules-folder-into-git
 node_modules
 !node_modules/libxulsword
 
-# OSX
-.DS_Store
-
-dist
 build/release
 .dll
-archive.tgz
+**/dist
 src/**/*.d.ts
 src/**/*.d.ts.map
 src/**/*.js
@@ -52,16 +35,6 @@ src/**/*.js.map
 !**/.yarn/releases
 !**/.yarn/sdks
 !**/.yarn/versions
-
-.idea
-npm-debug.log.*
-*.css.d.ts
-*.sass.d.ts
-*.scss.d.ts
-
-*.missing.*
-
-*-console.log
 
 .vscode/perl-lang/
 .vstags

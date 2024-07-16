@@ -14,7 +14,7 @@ import 'normalize.css/normalize.css';
 import '@blueprintjs/icons/lib/css/blueprint-icons.css';
 import '@blueprintjs/core/lib/css/blueprint.css';
 import '../renderer/global-htm.css';
-import './bible-browser.css';
+import './bibleBrowser.css';
 
 import type { GCallType } from '../type.ts';
 

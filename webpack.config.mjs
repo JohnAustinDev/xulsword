@@ -38,7 +38,7 @@ const builds = {
 
   browser: [
     'web',
-    ['./src/browser/widgets.tsx', './src/browser/bible-browser.tsx'],
+    ['./src/browser/widgets.tsx', './src/browser/bibleBrowser.tsx'],
   ],
 };
 
@@ -96,6 +96,8 @@ export default function (opts) {
     const { rootPath, srcPath, appDistPath, webappDistPath } = projectPaths;
 
     return {
+      ...(development ? { devtool: 'source-map' } : {}),
+
       mode: development ? 'development' : 'production',
 
       target: builds[build][0],
@@ -114,9 +116,7 @@ export default function (opts) {
       // libxulsword is packaged by electron-builder not Webpack.
       externalsType: 'node-commonjs',
       externals: {
-        './build/Release/xulsword.node': `${
-          builds[build][0].includes('electron') ? '../../../' : '../../../../'
-        }node_modules/libxulsword/build/Release/xulsword.node`,
+        './build/Release/xulsword.node': '../../../../node_modules/libxulsword/build/Release/xulsword.node',
       },
 
       entry: builds[build][1].reduce((entries, entry) => {
@@ -141,8 +141,12 @@ export default function (opts) {
           }
         : {
             clean: true,
+            path: path.join(rootPath, '.dll', build),
             filename: 'dll.[name].js',
-            library: 'dll_[fullhash]',
+            library: {
+              name: '[name]_[fullhash]',
+              type: 'var',
+            }
           },
 
       module: {
@@ -245,11 +249,7 @@ export default function (opts) {
                       return new HtmlWebpackPlugin({
                         filename: `${name}.html`,
                         template: path.join(srcPath, build, template),
-                        minify: {
-                          collapseWhitespace: true,
-                          removeAttributeQuotes: true,
-                          removeComments: true,
-                        },
+                        chunks: [name],
                       });
                     }
                     return null;
@@ -261,13 +261,15 @@ export default function (opts) {
                     const manifest = path.join(
                       rootPath,
                       '.dll',
+                      build,
                       `${name}-manifest.json`,
                     );
                     if (fs.existsSync(manifest)) {
                       console.log(`NOTE: Utilizing DLL ${manifest}`);
                       return new webpack.DllReferencePlugin({
-                        context: srcPath,
+                        context: path.join(rootPath, '.dll', build),
                         manifest,
+                        sourceType: 'var',
                       });
                     }
                     return null;
@@ -276,14 +278,12 @@ export default function (opts) {
             : // Use this plugin only when building the dll:
               [
                 new webpack.DllPlugin({
-                  path: path.join(rootPath, '.dll', '[name]-manifest.json'),
-                  name: 'dll_[fullhash]',
+                  path: path.join(rootPath, '.dll', build, '[name]-manifest.json'),
+                  name: '[name]',
                 }),
               ],
         )
         .filter(Boolean),
-
-      ...(development ? { devtool: 'eval-source-map' } : {}),
 
       ...(['renderer', 'browser'].includes(build)
         ? {

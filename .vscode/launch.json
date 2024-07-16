@@ -15,20 +15,23 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "xulsword",
+      "name": "App electron server",
       "runtimeExecutable": "yarn",
-      "runtimeArgs": ["start"],
+      "runtimeArgs": ["start:main"],
       "skipFiles": ["<node_internals>/**"],
-      "outFiles": ["${workspaceFolder}/src/**/*"]
+      "outFiles": [
+        "${workspaceFolder}/build/app/dist/**/*",
+        "${workspaceFolder}/node_modules/electron-devtools-installer/dist/utils.js"
+      ]
     },
     {
       "type": "node",
       "request": "launch",
-      "name": "Electron start-server",
-      "runtimeExecutable": "node",
-      "runtimeArgs": ["./build/webapp/dist/server/server.cjs"],
+      "name": "WebApp node server",
+      "runtimeExecutable": "yarn",
+      "runtimeArgs": ["start:server"],
       "skipFiles": ["<node_internals>/**"],
-      "outFiles": ["${workspaceFolder}/scripts/**/*"]
+      "outFiles": ["${workspaceFolder}/build/webapp/dist/**/*"]
     },
     {
       "name": "Attach to Process",
