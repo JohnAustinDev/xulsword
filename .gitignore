@@ -14,7 +14,10 @@ Cpp/sword*
 Cpp/build*
 Cpp/phpsword
 */libxulsword/build
-process.js
+process_env.mjs
+
+# webapp
+app-profile
 
 node_modules
 !node_modules/libxulsword

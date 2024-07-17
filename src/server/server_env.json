@@ -1,5 +1,5 @@
 {
-  "CORS_ORIGIN": "http://127.0.0.1:8080",
+  "CORS_ORIGIN": "http://localhost:1212",
   "ROOTPATH": "/home/dale/ibt/server/home/ibt/IBTSite/htdocs",
   "PUBPATHS": "ftpmirror/pub;ftpmirror/private/modsword/raw;sites/default/files",
   "XSProfD": "/home/dale/src/xulsword/app-profile",

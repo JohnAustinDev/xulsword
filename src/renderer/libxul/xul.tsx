@@ -113,7 +113,7 @@ export type XulProps = {
   orient?: 'horizontal' | 'vertical' | undefined;
   pack?: 'start' | 'center' | 'end' | undefined;
   domref?: React.RefObject<any> | undefined;
-  style?: React.CSSProperties | undefined;
+  style?: Record<string, any> | undefined; // correct is: React.CSSProperties | undefined;
   width?: string | number | undefined;
   title?: string | undefined;
 } & {

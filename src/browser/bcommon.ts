@@ -29,7 +29,7 @@ export type ChaplistORType = Array<[string, string, string]>; // [order, key, ur
 export type SelectData = {
   title: string;
   base: string;
-  items: FileItem[];
+  items: FileItem[] | string[];
 };
 
 export type FileItem = {
@@ -40,58 +40,70 @@ export type FileItem = {
   osisbook: OSISBookType;
 };
 
-export type SelectVKCompData = {
+export type WidgetVKData = {
   component: 'selectVK';
-  action: 'bible_audio_Play';
+  action?: 'bible_audio_Play';
   langcode: string;
   props: SelectVKProps;
   data: ChaplistVKType;
 };
 
-export type SelectORCompData = {
+export type WidgetORData = {
   component: 'selectOR';
-  action: 'genbk_audio_Play';
+  action?: 'genbk_audio_Play';
   langcode: string;
   props: SelectORProps;
   data: ChaplistORType;
 };
 
-export type SelectOptionsCompData = {
-  component: 'selectOptions';
-  action: 'update_url';
+export type WidgetMenulistData = {
+  component: 'selectMenulist';
+  action?: 'update_url';
   langcode: string;
   props: MenulistProps;
   data: SelectData;
 };
 
-export type BrowserCompData = {
+export type BibleBrowserData = {
   component: 'bibleBrowser';
   langcode: string;
   prefs: Partial<PrefRoot>;
 };
 
 export type ComponentData =
-  | BrowserCompData
-  | SelectVKCompData
-  | SelectORCompData
-  | SelectOptionsCompData;
+  | BibleBrowserData
+  | WidgetVKData
+  | WidgetORData
+  | WidgetMenulistData;
 
-export function componentData(elem: Element): ComponentData {
-  let drupalData: Record<string, ComponentData> | undefined;
-  if (elem.tagName === 'IFRAME') {
-    const parentWindow = frameElement?.ownerDocument?.defaultView;
-    if (parentWindow) {
-      drupalData = (parentWindow as any).drupalSettings?.react;
+export function reactComponents(
+  document: Window['document'],
+): HTMLDivElement[] {
+  const comps = document.querySelectorAll(
+    'div[data-react-component]',
+  ) as NodeListOf<HTMLDivElement>;
+  return comps ? Array.from(comps) : [];
+}
+
+// A React Component's data is stored in a global called drupalSettings.
+// Look for a component's data in the current document and if not found,
+// and the component is in a iframe, then look in the parent window. If
+// no data is found there either, return null.
+export function componentData(component: HTMLDivElement): ComponentData | null {
+  const { id } = component;
+  if (id) {
+    let data;
+    if (drupalSettings?.react && id in drupalSettings.react)
+      data = drupalSettings.react[id];
+    const parentWin = frameElement?.ownerDocument?.defaultView;
+    const parentDatas = (parentWin as any)?.drupalSettings?.react;
+    if (parentDatas && id in parentDatas) data = parentDatas[id];
+    if (data) {
+      data.component = component.dataset.reactComponent;
+      return data;
     }
-  } else {
-    drupalData = drupalSettings?.react;
   }
-  if (drupalData) {
-    const mydata = drupalData[elem.id] as ComponentData | undefined;
-    if (mydata) return mydata;
-    throw new Error(`No drupalSettings data for id '${elem.id}'.`);
-  }
-  throw new Error('No drupalSettings data found.');
+  return null;
 }
 
 // Insure a partial prefs root object has a valid locale set in it.
@@ -226,7 +238,7 @@ export function optionText(
 ): string {
   if (data && typeof data === 'object' && 'path' in data) {
     return getEBookTitle(data as FileItem, long, title, onlyOption);
-  }
+  } else if (typeof data === 'string') return data;
   return 'unknown';
 }
 

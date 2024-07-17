@@ -2,7 +2,7 @@ import { BrowserWindow } from 'electron'; // undefined in server mode
 import { fork } from 'child_process';
 import log from 'electron-log';
 import path from 'path';
-import libxulsword from '../../../node_modules/libxulsword/libxulsword.mjs';
+import libxulsword from 'libxulsword';
 import {
   repositoryKey,
   isRepoLocal,

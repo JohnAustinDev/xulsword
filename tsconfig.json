@@ -1,16 +1,24 @@
 {
+  /* As of 2024, it is possible to use the TypeScript compiler to error-check
+  and generate runnable es6 code, instead ESLint and Webpack are used for the
+  following reasons:
+  - A bundler such as Webpack is, and will always be, required to produce a
+  browser optimized app or web app. Typescript itself is not a bundler.
+  - ESLint error-checking is easily configured to check front-end, back-end,
+  and config code differently; and the ESLint vscode plugin will enforce these
+  different rules while editing.
+  - ESLint and the ESLint vscode plugin consider tsconfig.json settings,
+  but the reverse is not true. So using TypeScript would require complex
+  mirroring of settings between different tools. */
   "compilerOptions": {
     "target": "es6",
     "module": "nodenext",
-    /* "lib": ["dom", "esnext"], */
     "declaration": true,
     "declarationMap": true,
     "jsx": "react",
     "strict": true,
     "pretty": true,
     "sourceMap": true,
-
-    /* Module Resolution Options */
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
@@ -22,7 +30,6 @@
   "include": [
     "./src/**/*",
     "./scripts/**/*",
-    "./configs/**/*",
     "./node_modules/libxulsword/**/*",
     "./*.mjs"
   ]

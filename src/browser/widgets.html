@@ -8,36 +8,49 @@
     <meta name="HandheldFriendly" content="true" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- Set drupalSettings.react[id] with initial conditions -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+
     <script>
       var drupalSettings = {
         react: {
-          anOptionSelect: {
+          selectMenulist_1: {
             langcode: 'en',
             props: {},
-            data: {},
+            data: {
+              title: 'A Title',
+              base: '/some-url',
+              items: ['Item 1', 'Item 2'],
+            },
           },
 
-          aVerseSelect: {
+          selectVK_1: {
             langcode: 'en',
             props: {},
-            data: {},
+            data: null,
           },
 
-          aGeneralBookSelect: {
+          selectOR_1: {
             langcode: 'en',
-            props: {},
-            data: {},
+            props: {
+              initialORM: {
+                otherMod: 'modname',
+                keys: ['First chapter']
+              }
+            },
+            data: [
+              [0, 'First chapter', ''],
+              [1, 'Second chapter', ''],
+            ],
           },
         },
       };
     </script>
   </head>
   <body>
-    <div id="anOptionSelect" data-react-component="selectOR"></div>
+<!--    <div id="selectOR_1" data-react-component="selectOR"></div> -->
 
-    <div id="aVerseSelect" data-react-component="selectVK"></div>
+    <div id="selectVK_1" data-react-component="selectVK"></div>
 
-    <div id="aGeneralBookSelect" data-react-component="selectOptions"></div>
+<!--    <div id="selectMenulist_1" data-react-component="selectMenulist"></div>-->
   </body>
 </html>

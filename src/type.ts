@@ -5,6 +5,9 @@ import type {
   Shell,
 } from 'electron';
 import type React from 'react';
+import type { processR } from './preload.ts';
+import type ipcMain from './preload.ts';
+import type { ipcRenderer } from './server/preload.ts';
 import type C from './constant.ts';
 import type S from './defaultPrefs.ts';
 import type { PrefsGType } from './prefs.ts';
@@ -48,27 +51,13 @@ import type { CallBatch } from './main/handleGlobal.ts';
 import type Viewport from './main/components/viewport.ts';
 import type { getExtRefHTML, locationVKText } from './main/versetext.ts';
 import type RenderPromise from './renderer/renderPromise.ts';
-import type { BrowserControllerState } from './browser/bibleBrowser.tsx';
+import type { BibleBrowserControllerState } from './browser/bibleBrowser/controller.tsx';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
   export interface Window {
-    ipc: {
-      send: (channel: RendererChannels, ...args: any[]) => void;
-      invoke: (channel: RendererChannels, ...args: any[]) => any;
-      sendSync: (channel: RendererChannels, ...args: any[]) => any;
-      on: (
-        channel: RendererChannels,
-        func: (...args: any[]) => any,
-      ) => () => void;
-      once: (channel: RendererChannels, func: (...args: any[]) => any) => void;
-    };
-    processR: {
-      [envar in EnvironmentVars]: () => string;
-    } & {
-      argv: () => string[];
-      platform: string;
-    };
+    ipc: typeof ipcMain | typeof ipcRenderer;
+    processR: typeof processR;
     renderPromises: RenderPromise[];
   }
 
@@ -77,10 +66,10 @@ declare global {
 
   // eslint-disable-next-line no-var, @typescript-eslint/naming-convention
   var isPublicServer: boolean;
-  function browserState(
+  function setBibleBrowserState(
     arg:
-      | BrowserControllerState
-      | ((ps: BrowserControllerState) => BrowserControllerState),
+      | BibleBrowserControllerState
+      | ((ps: BibleBrowserControllerState) => BibleBrowserControllerState),
   ): void;
   // eslint-disable-next-line no-var, @typescript-eslint/naming-convention
   var browserMaxPanels: number | undefined;

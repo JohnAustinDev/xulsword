@@ -243,7 +243,15 @@ function updateOptions(descriptor: Omit<WindowDescriptorType, 'id'>): void {
   options.icon = path.join(Dirs.path.xsAsset, 'icon.png');
   if (!options.webPreferences) options.webPreferences = {};
   options.webPreferences.preload = path.join(
-    dirname, '..', '..', '..', 'build', 'app', 'dist', 'preload', 'preload.js'
+    dirname,
+    '..',
+    '..',
+    '..',
+    'build',
+    'app',
+    'dist',
+    'preload',
+    'preload.js',
   );
   options.webPreferences.contextIsolation = true;
   options.webPreferences.nodeIntegration = false;

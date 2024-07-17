@@ -1,7 +1,7 @@
 import fs from 'fs';
 import log from 'electron-log';
 import { JSON_stringify } from '../common.ts';
-import libxulsword from '../../node_modules/libxulsword/libxulsword.mjs';
+import libxulsword from 'libxulsword';
 
 import type { LogLevel } from 'electron-log';
 

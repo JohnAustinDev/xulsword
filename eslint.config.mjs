@@ -30,8 +30,9 @@ const config = [
   ...ts.configs.recommended,
   ...fixupConfigRules(react),
   prettier,
+
+  // Rules to be applied only to src:
   {
-    // Rules to be applied only to src :
     files: ['src/**/*.{mjs,js,ts,tsx}'],
     rules: {
       'space-before-function-paren': 'off',
@@ -67,17 +68,19 @@ const config = [
       ],
     },
   },
+
+  // Rules to be applied only outside src (ie to config):
   {
-    // Rules to be applied only outside src (ie config):
     ignores: ['src/**/*'],
     rules: {
       'no-unused-vars': 'error',
       'no-unused-expressions': 'error',
     },
   },
+
+  // Rules to be applied to src and config code:
   {
     rules: {
-      // Rules to be applied everywhere:
       '@typescript-eslint/no-require-imports': 'error',
       '@typescript-eslint/no-misused-promises': 'error',
       '@typescript-eslint/no-floating-promises': 'error',

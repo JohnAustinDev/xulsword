@@ -14,8 +14,10 @@ const builds = {
 
   preload: ['electron-preload', ['./src/main/preload.ts']],
 
+  server: ['node', ['./src/server/server.ts']],
+
   renderer: [
-    'electron-renderer',
+    'web',
     [
       './src/renderer/splash/splash.tsx',
       './src/renderer/xulswordWin/xulswordWin.tsx',
@@ -34,11 +36,12 @@ const builds = {
     ],
   ],
 
-  server: ['node', ['./src/server/server.ts']],
-
   browser: [
     'web',
-    ['./src/browser/widgets.tsx', './src/browser/bibleBrowser.tsx'],
+    [
+      './src/browser/widgets/widgets.tsx',
+      './src/browser/bibleBrowser/bibleBrowser.tsx',
+    ],
   ],
 };
 
@@ -107,6 +110,7 @@ export default function (opts) {
       resolve: {
         extensions: ['.js', '.jsx', '.ts', '.tsx'],
         modules: [srcPath, 'node_modules'],
+        fallback: { path: false },
       },
 
       optimization: {
@@ -116,7 +120,8 @@ export default function (opts) {
       // libxulsword is packaged by electron-builder not Webpack.
       externalsType: 'node-commonjs',
       externals: {
-        './build/Release/xulsword.node': '../../../../node_modules/libxulsword/build/Release/xulsword.node',
+        './build/Release/xulsword.node':
+          '../../../../node_modules/libxulsword/build/Release/xulsword.node',
       },
 
       entry: builds[build][1].reduce((entries, entry) => {
@@ -146,7 +151,7 @@ export default function (opts) {
             library: {
               name: '[name]_[fullhash]',
               type: 'var',
-            }
+            },
           },
 
       module: {
@@ -278,7 +283,12 @@ export default function (opts) {
             : // Use this plugin only when building the dll:
               [
                 new webpack.DllPlugin({
-                  path: path.join(rootPath, '.dll', build, '[name]-manifest.json'),
+                  path: path.join(
+                    rootPath,
+                    '.dll',
+                    build,
+                    '[name]-manifest.json',
+                  ),
                   name: '[name]',
                 }),
               ],

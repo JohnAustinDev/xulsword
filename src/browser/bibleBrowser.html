@@ -8,7 +8,6 @@
     <meta name="HandheldFriendly" content="true" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- Set drupalSettings.react[id] with initial conditions -->
     <script>
       var drupalSettings = {
         react: {
@@ -21,6 +20,9 @@
     </script>
   </head>
   <body>
-    <div id="bible-browser" data-react-component="bible-browser"></div>
+    <div id="root">
+      <!-- id=root is expected by global-html.css -->
+      <div id="bible-browser" data-react-component="bible-browser"></div>
+    </div>
   </body>
 </html>

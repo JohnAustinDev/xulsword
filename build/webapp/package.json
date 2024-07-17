@@ -1,0 +1,22 @@
+{
+  "name": "web-app",
+  "productName": "xulsword web app",
+  "description": "Электронная Библия",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "./dist/server/server.mjs",
+  "author": {
+    "name": "John Austin",
+    "email": "gpl.programs.info@gmail.com",
+    "url": "https://github.com/JohnAustinDev/xulsword"
+  },
+  "scripts": {
+    "link-modules": "node ../../scripts/link-modules.mjs",
+    "postinstall": "yarn link-modules"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "bindings": "~1.2.1",
+    "libxulsword": "file:../../node_modules/libxulsword"
+  }
+}
