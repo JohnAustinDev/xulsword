@@ -3,12 +3,14 @@ import fs from 'fs';
 import path from 'path';
 import { spawn } from 'child_process';
 import webpack from 'webpack';
+import chalk from 'chalk';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import projectPaths from './scripts/projectPaths.mjs';
 import ReactRefreshWebpackPlugin from '@pmmmwh/react-refresh-webpack-plugin';
 
+// Webpack entry points to build, grouped by target.
 // prettier-ignore
 const builds = {
   main: [
@@ -62,6 +64,49 @@ const builds = {
   ],
 };
 
+// Vender modules don't change often, so are only compiled when 'yarn'
+// (ie 'yarn install') is run, and are then reused by webpack's
+// DllReferencePlugin.
+const dllModules = {
+  common: ['dompurify'],
+  node: [
+    'adm-zip',
+    'electron-log',
+    'express-session',
+    'font-list',
+    'ftp',
+    'gunzip-maybe',
+    'helmet',
+    'i18next',
+    'i18next-fs-backend',
+    'memorystore',
+    'rate-limiter-flexible',
+    'socket.io',
+    'socket.io-client',
+    'source-map-support',
+    'tar-stream',
+    'toobusy-js',
+  ],
+  'electron-main': [
+    'electron',
+    'electron-context-menu',
+    'electron-debug',
+    'electron-devtools-installer',
+    'electron-updater',
+  ],
+  'electron-preload': [],
+  web: [
+    '@blueprintjs/core',
+    '@blueprintjs/select',
+    '@blueprintjs/table',
+    'prop-types',
+    'react',
+    'react-color',
+    'react-dom',
+    'react-dom/client',
+  ],
+};
+
 export const devServerPort = 1212;
 
 const defaultEnvironment = {
@@ -82,18 +127,32 @@ const defaultEnvironment = {
 export const parallelism = 10;
 
 export default function (opts) {
-  console.log('Webpack configuration options: ', opts);
+  const { rootPath, srcPath, appDistPath, webappDistPath } = projectPaths;
 
-  const { development, production, packaged } = opts;
+  const { all, dll } = opts;
+  let { development, production, packaged } = opts;
+  if (dll) {
+    development = true;
+    production = false;
+    packaged = false;
+    opts.main = true;
+    opts.server = true;
+    opts.renderer = true;
+    opts.browser = true;
+  } else if (all) {
+    opts.main = true;
+    opts.preload = true;
+    opts.server = true;
+    opts.renderer = true;
+    opts.browser = true;
+  }
 
-  const dll = false; // TODO!: FIX THIS
-
+  // Validate webpack arguments...
   if ((!development && !production) || development === production) {
     throw new Error(
       `Must run webpack with either '--env production' or '--env development'`,
     );
   }
-
   if (Object.keys(builds).filter((x) => x in opts).length == 0) {
     throw new Error(
       `Must run webpack with one or more of: ${Object.keys(builds)
@@ -101,6 +160,18 @@ export default function (opts) {
         .join(' or ')}`,
     );
   }
+  const unrecognized = Object.keys(opts).find(
+    (k) =>
+      !Object.keys(builds)
+        .concat(['all', 'dll', 'development', 'production'])
+        .includes(k) && !k.startsWith('WEBPACK'),
+  );
+  if (unrecognized) {
+    throw new Error(`Unrecognized --env value: '${unrecognized}'`);
+  }
+
+  console.log('Webpack configuration options: ', opts);
+  if (dll) console.log('Building webpack dll...');
 
   // Return a config object for a build. Each --env build in the command line
   // will use this function to generate a config object to pass to Webpack.
@@ -132,10 +203,10 @@ export default function (opts) {
 
     const useUrlLoader = ['png'];
 
-    const { rootPath, srcPath, appDistPath, webappDistPath } = projectPaths;
+    const dllManifest = path.join(rootPath, '.dll', build, `manifest.json`);
 
     return {
-      ...(development ? { devtool: 'source-map' } : {}),
+      ...(development && !dll ? { devtool: 'source-map' } : {}),
 
       mode: development ? 'development' : 'production',
 
@@ -159,11 +230,19 @@ export default function (opts) {
       },
       externalsType: 'node-commonjs',
 
-      entry: builds[build][1].reduce((entries, entry) => {
-        const name = path.basename(entry).replace(/\.[^.]+$/, '');
-        entries[name] = entry;
-        return entries;
-      }, {}),
+      entry: !dll
+        ? builds[build][1].reduce((entries, entry) => {
+            const name = path.basename(entry).replace(/\.[^.]+$/, '');
+            entries[name] = entry;
+            return entries;
+          }, {})
+        : {
+            [build]: dllModules.common
+              .concat(dllModules[builds[build][0]])
+              .concat(
+                builds[build][0] === 'electron-main' ? dllModules.node : [],
+              ),
+          },
 
       output: !dll
         ? {
@@ -185,11 +264,8 @@ export default function (opts) {
         : {
             clean: true,
             path: path.join(rootPath, '.dll', build),
-            filename: 'dll.[name].js',
-            library: {
-              name: '[name]_[fullhash]',
-              type: 'var',
-            },
+            filename: 'dll.js',
+            library: `lib_${build}`,
           },
 
       module: {
@@ -258,32 +334,33 @@ export default function (opts) {
       },
 
       plugins: [
-        // Use these plugins whether building the dll or not:
         new MiniCssExtractPlugin(),
-
-        // Webpack will permanently set these build and environment variables
-        // to these values. Note: LOGLEVEL is purposefully left out so it will
-        // remain 'live', taking its value at time of execution rather than
-        // time of building.
-        new webpack.DefinePlugin({
-          'Build.isProduction': !!production,
-          'Build.isDevelopment': !!development,
-          'Build.isElectronApp': ['main', 'preload', 'renderer'].includes(
-            build,
-          ),
-          'Build.isWebApp': ['server', 'browser'].includes(build),
-          'Build.isClient': ['renderer', 'browser'].includes(build),
-          'Build.isServer': ['main', 'server'].includes(build),
-          'Build.isPackaged': !!packaged,
-          ...Object.entries(defaultEnvironment).reduce((entries, entry) => {
-            const [name, value] = entry;
-            entries[`process.env.${name}`] = JSON.stringify(
-              process.env[name] ?? value,
-            );
+        // While compiling the bundle, webpack will permanently set these build
+        // and environment variables to the following values. Note: LOGLEVEL is
+        // purposefully left out so it will remain 'live', taking on its value
+        // at time of execution rather than time of building.
+        new webpack.DefinePlugin(
+          Object.entries({
+            'Build.isProduction': !!production,
+            'Build.isDevelopment': !!development,
+            'Build.isElectronApp': ['main', 'preload', 'renderer'].includes(
+              build,
+            ),
+            'Build.isWebApp': ['server', 'browser'].includes(build),
+            'Build.isClient': ['renderer', 'browser'].includes(build),
+            'Build.isServer': ['main', 'server'].includes(build),
+            'Build.isPackaged': !!packaged,
+            ...Object.entries(defaultEnvironment).reduce((entries, entry) => {
+              const [name, value] = entry;
+              entries[`process.env.${name}`] = process.env[name] ?? value;
+              return entries;
+            }, {}),
+          }).reduce((entries, entry) => {
+            // Values to DefinePlugin must be stringified values!
+            entries[entry[0]] = JSON.stringify(entry[1]);
             return entries;
           }, {}),
-        }),
-
+        ),
         build !== 'browser'
           ? new webpack.IgnorePlugin({
               resourceRegExp: /original-fs/,
@@ -295,12 +372,10 @@ export default function (opts) {
           !dll
             ? // Use these plugins when NOT building the dll:
               [
-                build !== 'preload'
-                  ? new BundleAnalyzerPlugin({
-                      analyzerMode: 'static',
-                      openAnalyzer: false,
-                    })
-                  : null,
+                new BundleAnalyzerPlugin({
+                  analyzerMode: 'static',
+                  openAnalyzer: false,
+                }),
 
                 development && ['browser', 'renderer'].includes(build)
                   ? new ReactRefreshWebpackPlugin()
@@ -322,35 +397,25 @@ export default function (opts) {
                   }),
                 )
                 .concat(
-                  builds[build][1].map((entry) => {
-                    const name = path.basename(entry).replace(/\.[^.]+$/, '');
-                    const manifest = path.join(
-                      rootPath,
-                      '.dll',
-                      build,
-                      `${name}-manifest.json`,
-                    );
-                    if (fs.existsSync(manifest)) {
-                      console.log(`NOTE: Utilizing DLL ${manifest}`);
-                      return new webpack.DllReferencePlugin({
-                        context: path.join(rootPath, '.dll', build),
-                        manifest,
-                        sourceType: 'var',
-                      });
+                  (() => {
+                    {
+                      if (development && fs.existsSync(dllManifest)) {
+                        console.log(`NOTE: Utilizing DLL ${dllManifest}`);
+                        return new webpack.DllReferencePlugin({
+                          context: rootPath,
+                          manifest: dllManifest,
+                          name: `lib_${build}`,
+                        });
+                      }
+                      return null;
                     }
-                    return null;
-                  }),
+                  })(),
                 )
-            : // Use this plugin only when building the dll:
+            : // Use this plugin only when building a dll:
               [
                 new webpack.DllPlugin({
-                  path: path.join(
-                    rootPath,
-                    '.dll',
-                    build,
-                    '[name]-manifest.json',
-                  ),
-                  name: '[name]',
+                  path: path.join(rootPath, '.dll', build, `manifest.json`),
+                  name: `lib_${build}`,
                 }),
               ],
         )
@@ -380,7 +445,22 @@ export default function (opts) {
               before() {
                 const start =
                   build === 'renderer' ? 'start:main' : 'start:server';
-                console.log(`Starting devServer: ${start}...`);
+                console.log(
+                  chalk.bgGreen.bold(
+                    `Starting devServer with 'yarn ${start}'...`,
+                  ),
+                );
+                if (build === 'browser') {
+                  console.log(
+                    builds[build][1]
+                      .map((html) =>
+                        chalk.bgGreen.bold(
+                          `localhost:${devServerPort}/${path.parse(html).name}.html`,
+                        ),
+                      )
+                      .join('\n') + '\n',
+                  );
+                }
                 spawn('yarn', [start], {
                   shell: true,
                   env: process.env,

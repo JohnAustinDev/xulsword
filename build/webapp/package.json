@@ -1,7 +1,7 @@
 {
-  "name": "web-app",
+  "name": "xulsword-web-app",
   "productName": "xulsword web app",
-  "description": "Электронная Библия",
+  "description": "Web application built with xulsword",
   "version": "1.0.0",
   "type": "module",
   "main": "./dist/server/server.cjs",

@@ -4,9 +4,13 @@
   "description": "Электронная Библия",
   "type": "module",
   "scripts": {
-    "build": "yarn webpack --env production --env main --env renderer --env preload --env server --env browser",
-    "build:dll": "yarn webpack --env dll --env development --env main --env preload --env renderer --env server --env browser",
+    "start:app": "node ./scripts/check-port-in-use.mjs && webpack serve --env development --env preload --env renderer",
+    "start:webapp": "node ./scripts/check-port-in-use.mjs && webpack serve --env development --env browser",
+    "start:main": "yarn webpack --env development --env main && electron ./build/app",
+    "start:server": "yarn webpack --env development --env server && node ./build/webapp",
     "build:app": "yarn webpack --env packaged --env production --env main --env preload --env renderer",
+    "build:webapp": "yarn webpack --env production --env server --env browser",
+    "build:dll": "yarn webpack --env dll",
     "lint": "eslint . --cache",
     "package": "node ./scripts/clean.mjs dist release && yarn build && electron-builder build --publish never",
     "package-linux": "cross-env PKLIB=linux yarn install-libxulsword && yarn package --linux",
@@ -16,11 +20,7 @@
     "release-linux": "yarn && cross-env PKLIB=linux yarn install-libxulsword && yarn build && electron-builder build --publish always --linux",
     "release-32win": "yarn && cross-env PKLIB=32win yarn install-libxulsword && yarn build && electron-builder build --publish always --win --ia32 && cross-env PKLIB=linux yarn install-libxulsword",
     "release-64win": "yarn && cross-env PKLIB=64win yarn install-libxulsword && yarn build && electron-builder build --publish always --win --x64 && cross-env PKLIB=linux yarn install-libxulsword",
-    "postinstall": "electron-builder install-app-deps",
-    "start": "node ./scripts/check-port-in-use.mjs && webpack --env development --env preload && webpack serve --env development --env renderer",
-    "webapp": "node ./scripts/check-port-in-use.mjs && webpack serve --env development --env browser",
-    "start:main": "yarn webpack --env development --env main && electron ./build/app",
-    "start:server": "yarn webpack --env development --env server && node ./build/webapp"
+    "postinstall": "electron-builder install-app-deps && yarn build:dll"
   },
   "build": {
     "npmRebuild": false,
@@ -192,6 +192,7 @@
     "@types/toobusy-js": "^0.5.4",
     "@types/webpack-env": "^1.16.0",
     "@typescript-eslint/eslint-plugin": "^6.4.0",
+    "@typescript-eslint/parser": "^7.16.1",
     "adm-zip": "^0.5.14",
     "babel-loader": "^8.2.2",
     "babel-plugin-dev-expression": "^0.2.3",
@@ -249,6 +250,7 @@
     "sass-loader": "^11.0.1",
     "socket.io": "^4.7.5",
     "socket.io-client": "^4.7.5",
+    "source-map-loader": "^5.0.0",
     "source-map-support": "^0.5.21",
     "style-loader": "^2.0.0",
     "tar-stream": "^2.2.0",
@@ -264,8 +266,5 @@
     "webpack-dev-server": "^3.11.2",
     "webpack-merge": "^5.7.3"
   },
-  "packageManager": "yarn@4.3.1",
-  "devDependencies": {
-    "source-map-loader": "^5.0.0"
-  }
+  "packageManager": "yarn@4.3.1"
 }

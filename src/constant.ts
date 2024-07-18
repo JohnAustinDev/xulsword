@@ -17,15 +17,6 @@ import type {
 
 // TODO: Add sword protocol support.
 
-// NOTE: These Build values are permanently set at build time!
-Build.isProduction = false;
-Build.isDevelopment = false;
-Build.isElectronApp = false;
-Build.isWebApp = false;
-Build.isClient = false;
-Build.isServer = false;
-Build.isPackaged = false;
-
 function env(v: 'LOGLEVEL' | 'WEBAPP_PORT') {
   if ('process' in globalThis) return globalThis.process.env[v];
   if ('Process' in window) return window.ProcessInfo[v];

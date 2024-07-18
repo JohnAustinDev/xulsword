@@ -2838,7 +2838,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@typescript-eslint/parser@npm:7.16.1":
+"@typescript-eslint/parser@npm:7.16.1, @typescript-eslint/parser@npm:^7.16.1":
   version: 7.16.1
   resolution: "@typescript-eslint/parser@npm:7.16.1"
   dependencies:
@@ -13824,6 +13824,7 @@ __metadata:
     "@types/toobusy-js": "npm:^0.5.4"
     "@types/webpack-env": "npm:^1.16.0"
     "@typescript-eslint/eslint-plugin": "npm:^6.4.0"
+    "@typescript-eslint/parser": "npm:^7.16.1"
     adm-zip: "npm:^0.5.14"
     babel-loader: "npm:^8.2.2"
     babel-plugin-dev-expression: "npm:^0.2.3"
