@@ -60,7 +60,7 @@ export function windowArguments(prop: string): PrefValue;
 export function windowArguments(
   prop: string | undefined,
 ): PrefValue | WindowDescriptorPrefType {
-  const dataID = window.processR.argv().at(-1);
+  const dataID = window.ProcessInfo.argv().at(-1);
   if (typeof dataID === 'string' && G.Data.has(dataID)) {
     const data = G.Data.read(dataID) as WindowDescriptorPrefType;
     if (prop) {
@@ -78,7 +78,7 @@ export function libswordImgSrc(container: HTMLElement) {
   Array.from(container.getElementsByTagName('img')).forEach((img) => {
     if (img.dataset.src) {
       let src: string | undefined;
-      if (window.processR.platform === 'browser') {
+      if (Build.isWebApp) {
         if (img.dataset.src.startsWith('/')) {
           ({ src } = img.dataset);
         }
@@ -472,7 +472,7 @@ export function registerUpdateStateFromPref(
       }
     }
   };
-  return window.ipc.on('update-state-from-pref', updateStateFromPref);
+  return window.IPC.on('update-state-from-pref', updateStateFromPref);
 }
 
 let languageNames: {

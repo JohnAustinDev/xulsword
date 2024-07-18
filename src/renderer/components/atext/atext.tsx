@@ -136,7 +136,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
       Object.keys(stateWinPrefs) as Array<keyof typeof stateWinPrefs>,
     );
     const changedState = diff(prevState, windowState[panelIndex]);
-    if (window.processR.platform !== 'browser' && changedState) {
+    if (!Build.isWebApp && changedState) {
       G.Window.mergeValue(`atext${panelIndex}State`, changedState);
     }
     renderPromise.dispatch();
@@ -422,7 +422,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
           const id = `${stringHash(modkey)}.${panelIndex}`;
           const keyelem = document.getElementById(id);
           if (keyelem) {
-            if (window.processR.platform !== 'browser') {
+            if (!Build.isWebApp) {
               scrollIntoView(keyelem, nbe, 40);
             }
             const dictlist = keyelem.parentNode
@@ -651,8 +651,6 @@ class Atext extends React.Component implements RenderPromiseComponent {
 
     const showSelect = ilModule && ilModuleOption && ilModuleOption.length > 1;
 
-    const isBrowser = window.processR.platform === 'browser';
-
     return (
       <Vbox
         {...addClass(classes, props)}
@@ -670,7 +668,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
       >
         <div className="sbcontrols">
           {isVerseKey && <div className="text-pin" />}
-          {!ownWindow && !isBrowser && <div className="text-win" />}
+          {!ownWindow && !Build.isWebApp && <div className="text-win" />}
         </div>
 
         <Box className="hd">

@@ -1,6 +1,3 @@
-'use strict';
-globalThis.isPublicServer = true;
-
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { Server } from 'socket.io';
@@ -13,8 +10,7 @@ import memorystore from 'memorystore';
 import log from 'electron-log';
 import i18nBackendMain from 'i18next-fs-backend';
 import http from 'http';
-import Setenv from './setenv.ts';
-import { JSON_parse, JSON_stringify, invalidData as invd } from '../common.ts';
+import { JSON_parse, JSON_stringify, isInvalidWebAppData } from '../common.ts';
 import C from '../constant.ts';
 import G from '../main/mg.ts';
 import GServer from '../main/mgServer.ts';
@@ -24,18 +20,13 @@ import type { Socket } from 'socket.io';
 import type { LogLevel } from 'electron-log';
 import type { GCallType } from '../type.ts';
 
-const dirname = path.dirname(fileURLToPath(import.meta.url));
-
-// Environment vars are read from server_env.json when the server starts:
-Setenv(path.join(dirname, 'server_env.json'));
-
 G.Dirs.init();
 
-const invalidData = (data: unknown, platform: string, depth = 0) => {
-  return invd(data, platform, depth, log);
+const isInvalidWebAppDataLogged = (data: unknown, depth = 0) => {
+  return isInvalidWebAppData(data, depth, log);
 };
 
-const logfile = G.Dirs.ProfD.append('xulsword.log');
+const logfile = G.Dirs.LogDir.append('xulsword.log');
 log.transports.console.level = C.LogLevel;
 log.transports.file.level = 'info';
 log.transports.file.resolvePath = () => logfile.path;
@@ -46,7 +37,7 @@ log.info(
   `Loaded ${G.LibSword.getModuleList().split('<nx>').length} SWORD modules.`,
 );
 log.info(
-  `LogLevel: ${C.LogLevel}, Logfile: ${logfile.path}, Port: ${C.Server.port}`,
+  `LogLevel: ${C.LogLevel}, Logfile: ${logfile.path}, Port: ${process.env.WEBAPP_PORT}`,
 );
 
 const AvailableLanguages = [
@@ -73,7 +64,7 @@ const server = http.createServer();
 const io = new Server(server, {
   serveClient: false,
   cors: {
-    origin: process.env.CORS_ORIGIN,
+    origin: process.env.WEBAPP_DOMAIN_AND_PORT,
     methods: ['GET'],
   },
 });
@@ -177,14 +168,14 @@ io.on('connection', (socket) => {
           }
           if (r instanceof Promise) {
             r.then((result) => {
-              const invalid = invalidData(result, 'browser');
+              const invalid = isInvalidWebAppDataLogged(result);
               if (!invalid) callback(result);
               else log.error(`${socket.handshake.address} › ${invalid}`);
             }).catch((er) => {
               log.error(`${socket.handshake.address} › ${er}`);
             });
           } else {
-            const invalid = invalidData(r, 'browser');
+            const invalid = isInvalidWebAppDataLogged(r);
             if (!invalid) callback(r);
             else log.error(`${socket.handshake.address} › ${invalid}`);
           }
@@ -200,12 +191,12 @@ io.on('connection', (socket) => {
   });
 });
 
-io.listen(C.Server.port);
+io.listen(Number(process.env.WEBAPP_PORT));
 
 // Return a reason message if arguments are invalid or null if they are valid.
 function invalidArgs<T>(args: T[]): string | null {
   return Array.isArray(args)
-    ? invalidData(args, 'browser')
+    ? isInvalidWebAppDataLogged(args)
     : `Arguments must be an array. (was ${typeof args})`;
 }
 
@@ -225,7 +216,7 @@ async function isLimited(
     await rateLimiter.consume(socket.handshake.address);
     return false;
   } catch (er) {
-    const msg = C.isDevelopment ? JSON_stringify(args) : args.length;
+    const msg = Build.isDevelopment ? JSON_stringify(args) : args.length;
     log.warn(`${socket.handshake.address} › rate limiting. [${msg}]`);
     return true;
   }
@@ -253,7 +244,7 @@ async function i18nInit(lng: string) {
         // jsonIndent to use when storing json files
         jsonIndent: 2,
       },
-      saveMissing: C.isDevelopment,
+      saveMissing: Build.isDevelopment,
       saveMissingTo: 'current',
 
       react: {

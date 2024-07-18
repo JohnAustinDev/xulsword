@@ -117,7 +117,7 @@ export type XulProps = {
   width?: string | number | undefined;
   title?: string | undefined;
 } & {
-  [k in (typeof xulEvents)[number]]?: (e: any) => void | Promise<void>;
+  [k in (typeof xulEvents)[number]]?: (e: any) => void;
 } & {
   [k in (typeof xulCaptureEvents)[number]]?: (
     e: React.SyntheticEvent<any>,

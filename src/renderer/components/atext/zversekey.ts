@@ -215,7 +215,7 @@ export function getNoteHTML(
             case 'cr': {
               if (location) {
                 // If this is a cross reference, then parse the note body for references and display them
-                if (window.processR.platform === 'browser' && !openCRs) {
+                if (Build.isWebApp && !openCRs) {
                   const vks = parseExtendedVKRef(
                     verseKey,
                     innerHtmlValue,

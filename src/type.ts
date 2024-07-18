@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/consistent-type-definitions */
+/* eslint-disable @typescript-eslint/naming-convention */
+/* eslint-disable no-var */
 import type { TreeNodeInfo } from '@blueprintjs/core';
 import type {
   BrowserWindowConstructorOptions,
@@ -5,9 +8,8 @@ import type {
   Shell,
 } from 'electron';
 import type React from 'react';
-import type { processR } from './preload.ts';
-import type ipcMain from './preload.ts';
-import type { ipcRenderer } from './server/preload.ts';
+import type { getProcessInfo } from './preload.ts';
+import type getIPC from './preload.ts';
 import type C from './constant.ts';
 import type S from './defaultPrefs.ts';
 import type { PrefsGType } from './prefs.ts';
@@ -35,10 +37,7 @@ import type {
   getAllDictionaryKeyList,
   genBookTreeNodes,
 } from './main/minit.ts';
-import type {
-  publishSubscription,
-  resolveHtmlPath,
-} from './main/components/window.ts';
+import type { publishSubscription } from './main/components/window.ts';
 import type DiskCache from './main/components/diskcache.ts';
 import type Commands from './main/components/commands.ts';
 import type Data from './main/components/data.ts';
@@ -51,43 +50,26 @@ import type { CallBatch } from './main/handleGlobal.ts';
 import type Viewport from './main/components/viewport.ts';
 import type { getExtRefHTML, locationVKText } from './main/versetext.ts';
 import type RenderPromise from './renderer/renderPromise.ts';
-import type { BibleBrowserControllerState } from './browser/bibleBrowser/controller.tsx';
 
 declare global {
-  // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+  // These are available anywhere 'window' is defined (ie. browser, renderers):
   export interface Window {
-    ipc: typeof ipcMain | typeof ipcRenderer;
-    processR: typeof processR;
     renderPromises: RenderPromise[];
+    IPC: ReturnType<typeof getIPC>;
+    ProcessInfo: ReturnType<typeof getProcessInfo>;
   }
 
-  function ToUpperCase(str: string): string;
-  function ReportSearchIndexerProgress(percent: number): void;
-
-  // eslint-disable-next-line no-var, @typescript-eslint/naming-convention
-  var isPublicServer: boolean;
-  function setBibleBrowserState(
-    arg:
-      | BibleBrowserControllerState
-      | ((ps: BibleBrowserControllerState) => BibleBrowserControllerState),
-  ): void;
-  // eslint-disable-next-line no-var, @typescript-eslint/naming-convention
-  var browserMaxPanels: number | undefined;
+  // These are available everywhere:
+  var Build: {
+    isPackaged: boolean;
+    isProduction: boolean;
+    isDevelopment: boolean;
+    isElectronApp: boolean;
+    isWebApp: boolean;
+    isClient: boolean;
+    isServer: boolean;
+  };
 }
-
-type RendererChannels =
-  | 'global'
-  | 'did-finish-render'
-  | 'log'
-  | 'error-report'
-  | 'resize'
-  | 'progress'
-  | 'modal'
-  | 'update-state-from-pref'
-  | 'component-reset'
-  | 'cache-reset'
-  | 'dynamic-stylesheet-reset'
-  | 'publish-subscription';
 
 /*
 type Shift<T extends any[]> = T extends [infer _, ...infer Elements]
@@ -101,12 +83,10 @@ export type QuerablePromise<T> = Promise<T> & {
   reject: (er: any) => void;
 };
 
-export type EnvironmentVars =
-  | 'NODE_ENV'
-  | 'XULSWORD_ENV'
-  | 'DEBUG_PROD'
-  | 'LOGLEVEL'
-  | 'XSPORT';
+export type EnvironmentVars = keyof Pick<
+  ReturnType<typeof getProcessInfo>,
+  'LOGLEVEL' | 'WEBAPP_PORT'
+>;
 
 export type WindowRegistryType = Array<WindowDescriptorType | null>;
 
@@ -789,7 +769,6 @@ export type GType = {
   // Functions
   Books: typeof getBooks;
   Book: typeof getBook;
-  resolveHtmlPath: typeof resolveHtmlPath;
   inlineFile: typeof inlineFile;
   inlineAudioFile: typeof inlineAudioFile;
   resetMain: typeof resetMain;
@@ -1052,7 +1031,6 @@ export const GBuilder: GType & {
   // Functions
   Books: CACHEfunc as any,
   Book: CACHEfunc as any,
-  resolveHtmlPath: CACHEfunc as any,
   inlineFile: CACHEfunc as any,
   inlineAudioFile: CACHEfunc as any,
   getSystemFonts: CACHEfunc as any,

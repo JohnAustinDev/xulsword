@@ -3,7 +3,7 @@ import log from 'electron-log';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import i18n from 'i18next';
-import { app, BrowserWindow, dialog, shell } from 'electron';
+import { BrowserWindow, dialog, shell } from 'electron';
 import { drop, keep, randomID, unknown2String } from '../../common.ts';
 import Cache from '../../cache.ts';
 import C from '../../constant.ts';
@@ -34,20 +34,18 @@ import type contextMenu from '../contextMenu.ts';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
-export let resolveHtmlPath: (htmlFileName: string) => string;
-
 const printPreviewTmps: LocalFile[] = [];
 
-if (process.env.NODE_ENV === 'development') {
-  const port = process.env.PORT || 1212;
+let resolveHtmlPath: (htmlFileName: string) => string;
+if (Build.isPackaged) {
   resolveHtmlPath = (htmlFileName: string) => {
-    const url = new URL(`http://localhost:${port}`);
-    url.pathname = htmlFileName;
-    return url.href;
+    return `file://${path.resolve(dirname, '../renderer/', htmlFileName)}`;
   };
 } else {
   resolveHtmlPath = (htmlFileName: string) => {
-    return `file://${path.resolve(dirname, '../renderer/', htmlFileName)}`;
+    const url = new URL(`http://localhost:1212`);
+    url.pathname = htmlFileName;
+    return url.href;
   };
 }
 

@@ -19,7 +19,7 @@ import WidgetVK from './widgetVK.tsx';
 import WidgetOR from './widgetOR.tsx';
 import ControllerOptions from './widgetMenulist.tsx';
 
-const socket = SocketConnect(C.Server.port);
+const socket = SocketConnect(Number(window.ProcessInfo.WEBAPP_PORT));
 
 const widgets = reactComponents(document).filter((c) =>
   ['selectOR', 'selectVK', 'selectMenulist'].includes(

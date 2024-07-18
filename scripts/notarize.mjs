@@ -1,10 +1,13 @@
 /*global process */
 import { notarize } from 'electron-notarize';
-import projectPackage from '../../package.json' with { type: 'json' };
+import projectPackage from '../package.json' with { type: 'json' };
 
 const { build } = projectPackage;
 
 export default async function notarizeMacos(context) {
+
+  if (!process.env.TODO) return;
+
   const { electronPlatformName, appOutDir } = context;
   if (electronPlatformName !== 'darwin') {
     return;

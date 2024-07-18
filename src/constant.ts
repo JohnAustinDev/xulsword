@@ -3,7 +3,6 @@ import type { LogLevel } from 'electron-log';
 import type {
   BookGroupType,
   ConfigType,
-  EnvironmentVars,
   FeatureMods,
   ModTypes,
   NewModulesType,
@@ -17,41 +16,34 @@ import type {
 } from './type.ts';
 
 // TODO: Add sword protocol support.
-// Environment variables:
-// - NODE_ENV - Set in package.json to control the build process
-//     (will be set to either 'development' or 'production').
-// - DEBUG_PROD - Set by you to 'true' BEFORE packaging to enable
-//     dev source maps and dev-tools in a production build (but the
-//     main process is still not accesible via current vscode config).
-//     Also enables other production debug behaviour (more logging).
-// - XULSWORD_ENV - Set by you to 'production' for debugging production
-//     only behaviour, like i18n, splash and log, in a development
-//     environment (including main process debugging via vscode).
-// - LOGLEVEL - Set a particular logLevel everywhere.
-const env = (envvar: EnvironmentVars) => {
-  return typeof process === 'undefined'
-    ? window.processR[envvar]()
-    : process.env[envvar];
-};
 
-const isDevelopment =
-  env('NODE_ENV') === 'development' && env('XULSWORD_ENV') !== 'production';
+// NOTE: These Build values are permanently set at build time!
+Build.isProduction = false;
+Build.isDevelopment = false;
+Build.isElectronApp = false;
+Build.isWebApp = false;
+Build.isClient = false;
+Build.isServer = false;
+Build.isPackaged = false;
 
-const productionLogLevel = env('DEBUG_PROD') === 'true' ? 'silly' : 'info';
+function env(v: 'LOGLEVEL' | 'WEBAPP_PORT') {
+  if ('process' in globalThis) return globalThis.process.env[v];
+  if ('Process' in window) return window.ProcessInfo[v];
+}
 
-const platform =
-  typeof process === 'undefined' ? window.processR.platform : process.platform;
+function platform() {
+  if ('process' in globalThis) return globalThis.process.platform;
+  if ('Process' in window) return window.ProcessInfo.platform;
+}
 
 // COMMON GLOBAL CONSTANTS FOR MAIN AND RENDERER PROCESSES
 const C = {
-  DevToolsopen: isDevelopment ? false : env('DEBUG_PROD') === 'true',
+  DevToolsopen: Build.isDevelopment,
 
   LogLevel: (env('LOGLEVEL') ||
-    (isDevelopment ? 'debug' : productionLogLevel)) as LogLevel,
+    (Build.isDevelopment ? 'debug' : 'info')) as LogLevel,
 
   DevSplash: 1 as 0 | 1 | 2, // 0 normal, 1 skip, 2 debug
-
-  isDevelopment,
 
   URL: 'https://github.com/JohnAustinDev/xulsword',
 
@@ -78,8 +70,12 @@ const C = {
   HTTPUserAgent: 'xulsword4@xulsword.org',
 
   SYSTEMNEWLINE:
-    platform === 'win32' ? '\r\n' : platform === 'darwin' ? '\r' : '\n',
-  FSSEP: platform === 'win32' ? '\\' : '/',
+    platform() === 'win32'
+      ? '\r\n'
+      : platform() === 'darwin'
+        ? '\r'
+        : '\n',
+  FSSEP: platform() === 'win32' ? '\\' : '/',
 
   Server: {
     maxDataStringLength: 200000, // bytes
@@ -87,8 +83,7 @@ const C = {
     maxDataRecursion: 10,
     maxDataArrayLength: 512,
     maxDataObjectKeys: 512,
-    port: Number(env('XSPORT')) || 3000,
-    ipLimit: isDevelopment
+    ipLimit: Build.isDevelopment
       ? {
           points: 5, // x ip hits
           duration: 1, // per y second
@@ -97,7 +92,7 @@ const C = {
           points: 25, // x ip hits
           duration: 5, // per y second
         },
-    limitedMustWait: isDevelopment ? 1000 : 5000, // ms
+    limitedMustWait: Build.isDevelopment ? 1000 : 5000, // ms
     networkRequestMinCache: 60000, // ms
     networkRequestBatchDelay: 50, // ms
   },

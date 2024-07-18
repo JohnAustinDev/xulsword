@@ -43,7 +43,7 @@ log.debug(`Initializing new window:`, descriptor);
 window.onerror = (er, url, line) => {
   const er2 = typeof er === 'object' ? er.type : er;
   const msg = `${er2} at: ${url} line: ${line}`;
-  window.ipc.send('error-report', msg);
+  window.IPC.send('error-report', msg);
   return false;
 };
 
@@ -51,10 +51,10 @@ window.addEventListener('unhandledrejection', (event) => {
   const reason =
     typeof event.reason === 'string' ? event.reason : event.reason.stack;
   const msg = `Unhandled renderer rejection: ${reason}`;
-  window.ipc.send('error-report', msg);
+  window.IPC.send('error-report', msg);
 });
 
-window.ipc.on('cache-reset', () => {
+window.IPC.on('cache-reset', () => {
   Cache.clear();
   log.debug(`CLEARED ALL CACHES`);
   Cache.write(`${descriptor.type}:${descriptor.id}`, 'windowID');
@@ -63,7 +63,7 @@ window.ipc.on('cache-reset', () => {
 const dynamicStyleSheet = new DynamicStyleSheet(document);
 
 dynamicStyleSheet.update(G.Data.read('stylesheetData') as StyleType);
-window.ipc.on('dynamic-stylesheet-reset', () => {
+window.IPC.on('dynamic-stylesheet-reset', () => {
   dynamicStyleSheet.update(G.Data.read('stylesheetData') as StyleType);
 });
 
@@ -135,7 +135,7 @@ function WindowRoot(props: WindowRootProps) {
 
   // IPC component-reset setup:
   useEffect(() => {
-    return window.ipc.on('component-reset', () => {
+    return window.IPC.on('component-reset', () => {
       log.debug(
         `Renderer reset (stylesheet, cache, component): ${descriptor.id}`,
       );
@@ -147,7 +147,7 @@ function WindowRoot(props: WindowRootProps) {
 
   // Modal overlay:
   useEffect(() => {
-    return window.ipc.on('modal', (cssclass: ModalType) => {
+    return window.IPC.on('modal', (cssclass: ModalType) => {
       s.modal[1](cssclass);
     });
   });
@@ -171,7 +171,7 @@ function WindowRoot(props: WindowRootProps) {
 
   // Progress meter:
   useEffect(() => {
-    return window.ipc.on('progress', (prog: number, id?: string) => {
+    return window.IPC.on('progress', (prog: number, id?: string) => {
       if (!id) s.progress[1](prog);
     });
   });
@@ -182,7 +182,7 @@ function WindowRoot(props: WindowRootProps) {
       (s.resetOnResize[0] || s.showPrintOverlay[0]) &&
       s.dialogs[0].length === 0
     ) {
-      return window.ipc.on(
+      return window.IPC.on(
         'resize',
         delayHandler.bind(delayHandlerThis)(
           () => {
@@ -199,7 +199,7 @@ function WindowRoot(props: WindowRootProps) {
 
   // Publish arbitrary subscription:
   useEffect(() => {
-    return window.ipc.on(
+    return window.IPC.on(
       'publish-subscription',
       (subscription: keyof SubscriptionType['publish'], ...args: unknown[]) => {
         Subscription.doPublish(subscription, ...args);
@@ -266,7 +266,7 @@ function WindowRoot(props: WindowRootProps) {
         const haserror = newmods.reports.some((r) => r.error);
         const haswarning = newmods.reports.some((r) => r.warning);
         if (haserror) G.Shell.beep();
-        if (haserror || (C.isDevelopment && haswarning)) {
+        if (haserror || (Build.isDevelopment && haswarning)) {
           dialog.push(
             <Dialog
               className="modulesInstalled"
@@ -499,6 +499,6 @@ export default async function renderToRoot(
         htmlElem.classList.remove('fitToContent');
       }
     }
-    window.ipc.send('did-finish-render');
+    window.IPC.send('did-finish-render');
   }, 1);
 }

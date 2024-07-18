@@ -1,4 +1,6 @@
 /* eslint-disable @typescript-eslint/naming-convention */
+import type { LogLevel } from 'electron-log';
+
 const validChannels = [
   'global', // to+from main for use by the G object
   'did-finish-render', // to main when window has finished rendering
@@ -14,31 +16,22 @@ const validChannels = [
   'publish-subscription', // from main when a renderer subscription should be published
 ];
 
-export function processR(appenv: typeof process) {
+export function getProcessInfo(process: Pick<NodeJS.Process, 'argv' | 'env' | 'platform'>) {
   return {
     argv: () => {
-      return appenv.argv;
+      return process.argv;
     },
-    NODE_ENV: () => {
-      return appenv.env.NODE_ENV;
+    get LOGLEVEL() {
+      return process.env.LOGLEVEL as LogLevel;
     },
-    XULSWORD_ENV: () => {
-      return appenv.env.XULSWORD_ENV;
+    get WEBAPP_PORT() {
+      return process.env.WEBAPP_PORT;
     },
-    DEBUG_PROD: () => {
-      return appenv.env.DEBUG_PROD;
-    },
-    LOGLEVEL: () => {
-      return appenv.env.LOGLEVEL;
-    },
-    XSPORT: () => {
-      return appenv.env.XSPORT;
-    },
-    platform: appenv.platform,
+    platform: process.platform,
   };
 }
 
-export default function ipc(
+export default function getIPC(
   ipcRend: Pick<
     Electron.IpcRenderer,
     'send' | 'invoke' | 'sendSync' | 'on' | 'once' | 'removeListener'
@@ -49,7 +42,7 @@ export default function ipc(
     // response from ipcMain is desired, then 'invoke' should likely be used.
     // Otherwise event.reply() can respond from ipcMain if the renderer has
     // also added a listener for it.
-    send: (channel: string, ...args: unknown[]) => {
+    send: (channel: string, ...args: any[]) => {
       if (validChannels.includes(channel)) {
         ipcRend.send(channel, ...args);
       } else throw Error(`ipc send bad channel: ${channel}`);
@@ -57,7 +50,7 @@ export default function ipc(
 
     // Trigger a channel event which ipcMain is to listen for and respond to
     // using ipcMain.handle(), returning a promise containing the result arg(s).
-    invoke: async (channel: string, ...args: unknown[]) => {
+    invoke: async (channel: string, ...args: any[]) => {
       if (validChannels.includes(channel)) {
         return await ipcRend.invoke(channel, ...args);
       }
@@ -67,7 +60,7 @@ export default function ipc(
     // Make a synchronous call to ipcMain, blocking the renderer until ipcMain
     // responds using event.returnValue. Using invoke instead will not block the
     // renderer process.
-    sendSync: (channel: string, ...args: unknown[]) => {
+    sendSync: (channel: string, ...args: any[]) => {
       if (validChannels.includes(channel)) {
         return ipcRend.sendSync(channel, ...args);
       }
@@ -75,7 +68,7 @@ export default function ipc(
     },
 
     // Add listener func to be called after events from a channel of ipcMain
-    on: (channel: string, func: (...args: unknown[]) => void) => {
+    on: (channel: string, func: (...args: any[]) => void) => {
       if (validChannels.includes(channel)) {
         // Deliberately strip event as it includes `sender`
         const strippedfunc = (_event: any, ...args: unknown[]) => {
@@ -91,7 +84,7 @@ export default function ipc(
 
     // One time listener func to be called after next event from a channel of
     // ipcMain.
-    once: (channel: string, func: (...args: unknown[]) => void) => {
+    once: (channel: string, func: (...args: any[]) => void) => {
       if (validChannels.includes(channel)) {
         // Deliberately strip event as it includes `sender`
         const strippedfunc = (_event: any, ...args: unknown[]) => {

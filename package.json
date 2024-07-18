@@ -6,6 +6,7 @@
   "scripts": {
     "build": "yarn webpack --env production --env main --env renderer --env preload --env server --env browser",
     "build:dll": "yarn webpack --env dll --env development --env main --env preload --env renderer --env server --env browser",
+    "build:app": "yarn webpack --env packaged --env production --env main --env preload --env renderer",
     "lint": "eslint . --cache",
     "package": "node ./scripts/clean.mjs dist release && yarn build && electron-builder build --publish never",
     "package-linux": "cross-env PKLIB=linux yarn install-libxulsword && yarn package --linux",
@@ -18,8 +19,8 @@
     "postinstall": "electron-builder install-app-deps",
     "start": "node ./scripts/check-port-in-use.mjs && webpack --env development --env preload && webpack serve --env development --env renderer",
     "webapp": "node ./scripts/check-port-in-use.mjs && webpack serve --env development --env browser",
-    "start:main": "yarn webpack --env development --env main && electron ./build/app/dist/main/main.cjs",
-    "start:server": "yarn webpack --env development --env server && node ./build/webapp/dist/server/server.cjs"
+    "start:main": "yarn webpack --env development --env main && electron ./build/app",
+    "start:server": "yarn webpack --env development --env server && node ./build/webapp"
   },
   "build": {
     "npmRebuild": false,

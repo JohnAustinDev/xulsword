@@ -4,7 +4,7 @@
   "description": "Электронная Библия",
   "version": "1.0.0",
   "type": "module",
-  "main": "./dist/server/server.mjs",
+  "main": "./dist/server/server.cjs",
   "author": {
     "name": "John Austin",
     "email": "gpl.programs.info@gmail.com",

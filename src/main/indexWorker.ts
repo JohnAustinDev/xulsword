@@ -3,37 +3,20 @@ import log from 'electron-log';
 import { JSON_stringify } from '../common.ts';
 import libxulsword from 'libxulsword';
 
-import type { LogLevel } from 'electron-log';
-
-export type MessagesToIndexWorker =
-  | {
-      command: 'start';
-      directories: string[];
-      module: string;
-    }
-  | {
-      command: 'log';
-      logfile: string;
-      loglevel: LogLevel;
-    };
-
-export type MessagesFromIndexWorker =
-  | {
-      msg: 'finished' | 'failed';
-    }
-  | {
-      msg: 'working';
-      percent: number;
-    };
+import type {
+  CppGlobalMethods,
+  MessagesFromIndexWorker,
+  MessagesToIndexWorker,
+} from './components/libsword.ts';
 
 // Libxulsword requires both these callbacks to be defined.
-global.ToUpperCase = (aString) => {
+(globalThis as CppGlobalMethods).ToUpperCase = (aString) => {
   if (aString) {
     return aString.toUpperCase();
   }
   return '';
 };
-global.ReportSearchIndexerProgress = (percent) => {
+(globalThis as CppGlobalMethods).ReportSearchIndexerProgress = (percent) => {
   send({ msg: 'working', percent });
 };
 

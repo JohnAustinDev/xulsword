@@ -3,7 +3,7 @@ import {
   GCacheKey,
   isCallCacheable,
   clone,
-  invalidData,
+  isInvalidWebAppData,
 } from '../common.ts';
 import Cache from '../cache.ts';
 import { GBuilder } from '../type.ts';
@@ -28,12 +28,11 @@ async function asyncRequest(thecall: GCallType) {
   log.silly(
     `${ckey} ${JSON_stringify(thecall)} async ${cacheable ? 'miss' : 'uncacheable'}`,
   );
-  const call =
-    window.processR.platform === 'browser' ? publicCall(thecall) : thecall;
+  const call = Build.isWebApp ? publicCall(thecall) : thecall;
   let result;
   try {
-    result = await window.ipc.invoke('global', call);
-    const invalid = invalidData(result, window.processR.platform);
+    result = await window.IPC.invoke('global', call);
+    const invalid = Build.isWebApp && isInvalidWebAppData(result);
     if (invalid) {
       error(`Invalid async data response: ${invalid}`);
       return undefined;
@@ -56,7 +55,7 @@ function request(thecall: GCallType) {
   const ckey = GCacheKey(thecall);
   const cacheable = isCallCacheable(GBuilder, thecall);
   if (cacheable && Cache.has(ckey)) return Cache.read(ckey);
-  if (window.processR.platform === 'browser') {
+  if (Build.isWebApp) {
     if (cacheable)
       throw new Error(
         `Cache must be preloaded in browser context: ${JSON_stringify(thecall)}`,
@@ -69,8 +68,8 @@ function request(thecall: GCallType) {
   log.silly(
     `${ckey} ${JSON_stringify(thecall)} sync ${cacheable ? 'miss' : 'uncacheable'}`,
   );
-  const result = window.ipc.sendSync('global', thecall);
-  const invalid = invalidData(result, window.processR.platform);
+  const result = window.IPC.sendSync('global', thecall);
+  const invalid = Build.isWebApp && isInvalidWebAppData(result);
   if (invalid) {
     error(`Invalid data response: ${invalid}`);
     return undefined;
@@ -90,8 +89,7 @@ function allowed(thecall: GCallType): boolean {
     return false;
   }
   const is = name && GBuilder.internetSafe.find((x) => x[0] === name);
-  if (window.processR.platform && window.processR.platform !== 'browser')
-    return true;
+  if (!Build.isWebApp) return true;
   if (is !== undefined && !method && is[1].length === 0) return true;
   if (is !== undefined && (is[1] as any).includes(method)) return true;
   return false;
@@ -231,11 +229,7 @@ Object.entries(GBuilder).forEach((entry) => {
               // is specified in all i18n calls, so return it in this special case.
               let req;
               try {
-                if (
-                  name === 'i18n' &&
-                  m === 'language' &&
-                  window.processR.platform === 'browser'
-                ) {
+                if (name === 'i18n' && m === 'language' && Build.isWebApp) {
                   req = G.Prefs.getCharPref('global.locale');
                 } else {
                   req = request(acall);
@@ -259,7 +253,7 @@ Object.entries(GBuilder).forEach((entry) => {
           const isAsync = (asyncFuncs as Array<[string, string[]]>).some(
             (asf) => name && m && asf[0] === name && asf[1].includes(m),
           );
-          if (name !== 'Prefs' || window.processR.platform !== 'browser') {
+          if (name !== 'Prefs' || !Build.isWebApp) {
             g[name][m] = (...args: unknown[]) => {
               const acall: GCallType = [name, m, args];
               let req;

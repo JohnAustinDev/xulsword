@@ -120,7 +120,7 @@ class Popup extends React.Component implements RenderPromiseComponent {
     const { npopup } = this;
     const { isWindow } = this.props as PopupProps;
     const popup = npopup?.current;
-    if (window.processR.platform !== 'browser' && isWindow && popup) {
+    if (!Build.isWebApp && isWindow && popup) {
       const maxlen = Math.floor((popup.clientWidth - 50) / 10);
       const search = ['crref', 'lemma-header', 'popup-text'];
       let title;
@@ -300,8 +300,6 @@ class Popup extends React.Component implements RenderPromiseComponent {
     let cls = 'cs-locale';
     if (isWindow) cls += ` ownWindow viewport`;
 
-    const isBrowser = window.processR.platform === 'browser';
-
     return (
       <div
         {...htmlAttribs(`npopup ${cls}`, props)}
@@ -324,7 +322,7 @@ class Popup extends React.Component implements RenderPromiseComponent {
           data-data={JSON_attrib_stringify(data)}
         >
           <Hbox pack="start" align="center" className="popupheader">
-            {!isWindow && !isBrowser && <div className="towindow" />}
+            {!isWindow && !Build.isWebApp && <div className="towindow" />}
             {elemdata && elemdata.length > 1 && (
               <div>
                 <a className="popupBackLink">

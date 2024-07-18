@@ -14,7 +14,6 @@ Cpp/sword*
 Cpp/build*
 Cpp/phpsword
 */libxulsword/build
-process_env.mjs
 
 # webapp
 app-profile

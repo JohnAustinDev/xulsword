@@ -49,21 +49,19 @@ completePanelPrefDefaultArrays(
 
 {
   const logfile = new LocalFile(
-    path.join(G.Dirs.path.ProfD, 'logs', `xulsword.${Date.now()}.log`),
+    path.join(G.Dirs.path.LogDir, `xulsword.${Date.now()}.log`),
   );
   if (logfile.exists()) logfile.remove();
   G.Data.write(logfile.path, 'logfile');
   // The renderer log contains any renderer window entries that occur before
   // renderer.tsx, where their file is changed to the main/renderer log file.
-  const logfile2 = new LocalFile(
-    path.join(G.Dirs.path.ProfD, 'logs', 'renderer.log'),
-  );
+  const logfile2 = new LocalFile(path.join(G.Dirs.path.LogDir, 'renderer.log'));
   if (logfile2.exists()) logfile2.remove();
   log.transports.console.level = C.LogLevel;
   log.transports.file.level = C.LogLevel;
   log.transports.file.resolvePath = () => logfile.path;
 }
-log.info(`Starting ${app.getName()} isDevelopment='${C.isDevelopment}'`);
+log.info(`Starting ${app.getName()} isDevelopment='${Build.isDevelopment}'`);
 
 addBookmarkTransaction(
   -1,
@@ -115,10 +113,7 @@ const AvailableLanguages = [
 const appSubscriptions: Array<() => void> = [];
 appSubscriptions.push(Subscription.subscribe.windowCreated(contextMenu));
 
-if (
-  process.env.NODE_ENV === 'development' ||
-  process.env.DEBUG_PROD === 'true'
-) {
+if (Build.isDevelopment) {
   SourceMapInstall();
 }
 
@@ -132,7 +127,7 @@ function showApp() {
     if (i === SyncShow.length - 1) w?.focus();
   });
   SyncShow = [];
-  if (!(C.isDevelopment && C.DevSplash === 2)) {
+  if (!(Build.isDevelopment && C.DevSplash === 2)) {
     setTimeout(() => {
       G.Window.close({ type: 'splash' });
     }, 1000);
@@ -164,9 +159,7 @@ ipcMain.on('did-finish-render', (event: IpcMainEvent) => {
 
   if (callingWin) {
     const syncShow = SyncShow.find((x) => x.id === callingWin?.id);
-    if (process.env.START_MINIMIZED) {
-      callingWin.minimize();
-    } else if (!syncShow) {
+    if (!syncShow) {
       callingWin.show();
       callingWin.focus();
     } else {
@@ -354,10 +347,7 @@ const openXulswordWindow = () => {
     );
   }
 
-  if (
-    process.env.NODE_ENV === 'development' ||
-    process.env.DEBUG_PROD === 'true'
-  ) {
+  if (Build.isDevelopment) {
     xulswordWindow.on('ready-to-show', () =>
       electronDebug({
         showDevTools: C.DevToolsopen,
@@ -423,10 +413,7 @@ const openXulswordWindow = () => {
 };
 
 const init = async () => {
-  if (
-    process.env.NODE_ENV === 'development' ||
-    process.env.DEBUG_PROD === 'true'
-  ) {
+  if (Build.isDevelopment) {
     (devToolsInstaller as any)(REACT_DEVELOPER_TOOLS)
       .then((name: string) => log.debug(`Added Extension:  ${name}`))
       .catch((er: any) => log.error(er));
@@ -477,7 +464,7 @@ const init = async () => {
         // jsonIndent to use when storing json files
         jsonIndent: 2,
       },
-      saveMissing: C.isDevelopment,
+      saveMissing: Build.isDevelopment,
       saveMissingTo: 'current',
 
       react: {
@@ -537,7 +524,7 @@ const init = async () => {
   log.catchErrors({
     showDialog: false,
     onError(error, versions, submitIssue) {
-      if (!C.isDevelopment && !error.message.includes('net::ERR')) {
+      if (!Build.isDevelopment && !error.message.includes('net::ERR')) {
         dialog
           .showMessageBox({
             title: G.i18n.t('error-detected'),
@@ -628,15 +615,12 @@ app
     await init();
   })
   .then(() => {
-    if (
-      !process.env.START_MINIMIZED &&
-      !(C.isDevelopment && C.DevSplash === 1)
-    ) {
+    if (!(Build.isDevelopment && C.DevSplash === 1)) {
       G.Window.open({
         type: 'splash',
         notResizable: true,
         options:
-          C.isDevelopment && C.DevSplash === 2
+          Build.isDevelopment && C.DevSplash === 2
             ? {
                 title: ProgramTitle,
                 width: 500,

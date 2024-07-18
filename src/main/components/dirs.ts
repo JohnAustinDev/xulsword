@@ -1,17 +1,20 @@
-import { app } from 'electron'; // may be undefined
+import { app } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import LocalFile from './localFile.ts';
+
+// Note: app will be undefined when running as a web app
+const electronApp = app as typeof app | undefined;
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const dirs = {
   TmpD: '',
+  LogDir: '',
   xsAsset: '',
   xsAsar: '',
   xsPrefDefD: '',
   xsResDefD: '',
-  ProfD: '',
   xsPrefD: '',
   xsResD: '',
   xsCache: '',
@@ -43,20 +46,26 @@ const Dirs = {
 
   init: (pathOnly = false) => {
     if (!Dirs.initialized) {
+      const profD =
+        (Build.isElectronApp && electronApp?.getPath('userData')) ||
+        (process.env.WEBAPP_FILES as string);
+
+      Dirs.path.LogDir = path.join(process.env.LogDir || profD, 'logs');
+
       // NOTE: The app directory is not exposed in the production app. Also
       // don't try to read package.json in production by bundling it, as this
       // has security implications.
-      Dirs.path.xsAsset = app?.isPackaged
+      Dirs.path.xsAsset = Build.isPackaged
         ? path.join(process.resourcesPath, 'assets')
         : path.join(dirname, '..', '..', '..', 'assets');
 
       // Packaged filename should be 'app.asar' if package.json has build.asar
       // set to true. Or it should be 'app' otherwise.
-      Dirs.path.xsAsar = app?.isPackaged
+      Dirs.path.xsAsar = Build.isPackaged
         ? path.join(process.resourcesPath, 'app.asar')
         : path.join(dirname, '..', '..', '..', 'build', 'app');
 
-      Dirs.path.TmpD = app?.getPath('temp') || '/tmp';
+      Dirs.path.TmpD = electronApp?.getPath('temp') || '/tmp';
 
       Dirs.path.xsPrefDefD = path.join(
         Dirs.path.xsAsset,
@@ -70,49 +79,42 @@ const Dirs = {
         'resources',
       );
 
-      Dirs.path.ProfD =
-        app?.getPath('userData') || process.env.XSProfD || '/tmp';
-      if (!Dirs.path.ProfD.startsWith('/')) {
-        throw new Error(
-          'Profile direcory path must be absolute. Is XSProfD environment var a relative path?',
-        );
-      }
+      Dirs.path.xsPrefD = path.join(profD, 'preferences');
 
-      Dirs.path.xsPrefD = path.join(Dirs.path.ProfD, 'preferences');
+      Dirs.path.xsResD =
+        process.env.RESOURCEDIR || path.join(profD, 'resources');
 
-      Dirs.path.xsResD = path.join(Dirs.path.ProfD, 'resources');
-
-      Dirs.path.xsCache = path.join(Dirs.path.ProfD, 'cache');
+      Dirs.path.xsCache = path.join(profD, 'cache');
 
       Dirs.path.xsModsUser =
-        (app && path.join(Dirs.path.ProfD, 'resources')) ||
-        process.env.XSModsUser ||
-        '/tmp';
+        process.env.XSModsUser || path.join(profD, 'resources');
 
       Dirs.path.xsFonts =
         process.env.XSFonts || path.join(Dirs.path.xsResD, 'fonts');
 
-      Dirs.path.xsAudio = path.join(Dirs.path.xsResD, 'audio');
+      Dirs.path.xsAudio =
+        process.env.XSAudio || path.join(Dirs.path.xsResD, 'audio');
 
       Dirs.path.xsBookmarks = path.join(Dirs.path.xsResD, 'bookmarks');
 
       Dirs.path.xsVideo = path.join(Dirs.path.xsResD, 'video');
 
-      Dirs.path.xsModsCommon = app
-        ? /^win32|darwin$/.test(process.platform)
-          ? path.join(app.getPath('appData'), 'Sword')
-          : path.join(app.getPath('home'), '.sword')
-        : process.env.XSModsCommon || '/tmp';
+      Dirs.path.xsModsCommon =
+        process.env.XSModsCommon ||
+        (electronApp
+          ? /^win32|darwin$/.test(process.platform)
+            ? path.join(electronApp.getPath('appData'), 'Sword')
+            : path.join(electronApp.getPath('home'), '.sword')
+          : '/tmp');
 
-      Dirs.path.xsLib = app
-        ? app.getPath('exe')
+      Dirs.path.xsLib = electronApp
+        ? electronApp.getPath('exe')
         : path.join(dirname, '..', '..', '..', 'Cpp', 'lib');
 
       if (!pathOnly) {
         // Create these directories if they don't exist.
         (
           [
-            'ProfD',
             'xsPrefD',
             'xsResD',
             'xsCache',
@@ -124,7 +126,7 @@ const Dirs = {
             'xsModsCommon',
           ] as const
         ).forEach((d) => {
-          Dirs[d].create(LocalFile.DIRECTORY_TYPE);
+          Dirs[d].create(LocalFile.DIRECTORY_TYPE, { recursive: true });
         });
         (['xsModsUser', 'xsModsCommon', 'xsAudio'] as const).forEach((d) => {
           Dirs[d].clone().append('mods.d').create(LocalFile.DIRECTORY_TYPE);

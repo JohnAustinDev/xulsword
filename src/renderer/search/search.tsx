@@ -188,7 +188,7 @@ export default class SearchWin extends React.Component implements PopupParent {
     const state = this.state as SearchWinState;
     const { module } = state;
     this.destroy.push(
-      window.ipc.on('progress', (prog: number, id?: string) => {
+      window.IPC.on('progress', (prog: number, id?: string) => {
         if (id === 'search.indexer') {
           this.setState({ progressLabel: '', progress: prog });
         }

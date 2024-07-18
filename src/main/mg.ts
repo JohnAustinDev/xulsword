@@ -7,10 +7,7 @@ import DiskCache from './components/diskcache.ts';
 import Prefs from './components/prefs.ts';
 import LibSword from './components/libsword.ts';
 import Data from './components/data.ts';
-import Window, {
-  publishSubscription,
-  resolveHtmlPath,
-} from './components/window.ts';
+import Window, { publishSubscription } from './components/window.ts';
 import Module from './components/module.ts';
 import Commands from './components/commands.ts';
 import { getExtRefHTML, locationVKText } from './versetext.ts';
@@ -140,12 +137,6 @@ class GClass implements GType {
 
   Book(...args: Parameters<GType['Book']>): ReturnType<GType['Book']> {
     return getBook(...args);
-  }
-
-  resolveHtmlPath(
-    ...args: Parameters<GType['resolveHtmlPath']>
-  ): ReturnType<GType['resolveHtmlPath']> {
-    return resolveHtmlPath(...args);
   }
 
   inlineFile(

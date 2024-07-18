@@ -78,7 +78,7 @@ export default class LocalFile {
     return newFile;
   }
 
-  // Create a new directory or en empty file for this.path, depending on the
+  // Create a new directory or an empty file for this.path, depending on the
   // requested type. It does nothing if this.path already exists. The type
   // must be supplied or an error is thrown. If the file exists before return,
   // true is returned, false otherwise.

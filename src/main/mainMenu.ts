@@ -35,7 +35,7 @@ type DarwinMenuItemConstructorOptions = {
 
 // Debug mode menu clicks allow menu to close, avoiding debugger lockup.
 function d(func: () => void): any {
-  if (C.isDevelopment) {
+  if (Build.isDevelopment) {
     const dfunc = () => {
       setTimeout(func, 100);
     };
@@ -977,10 +977,7 @@ export default class MainMenuBuilder {
       subMenuHelp,
     ];
 
-    if (
-      process.env.NODE_ENV === 'development' ||
-      process.env.DEBUG_PROD === 'true'
-    ) {
+    if (Build.isDevelopment) {
       applicationMenuTemplate.push(subMenuDev);
     }
 
@@ -1132,11 +1129,7 @@ export default class MainMenuBuilder {
       ],
     };
 
-    const subMenuView =
-      process.env.NODE_ENV === 'development' ||
-      process.env.DEBUG_PROD === 'true'
-        ? subMenuViewDev
-        : subMenuViewProd;
+    const subMenuView = Build.isDevelopment ? subMenuViewDev : subMenuViewProd;
 
     return [subMenuAbout, subMenuEdit, subMenuView, subMenuWindow, subMenuHelp];
   }

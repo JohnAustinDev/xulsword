@@ -228,10 +228,10 @@ export default function parseSwordConf(
   });
 
   // In server mode, filter entries that contain file references.
-  if (globalThis.isPublicServer) {
+  if (Build.isServer) {
     r.DataPath = serverPublicPath(r.DataPath);
     if (/^file:\/\//i.test(r.sourceRepository.domain)) {
-      r.sourceRepository.domain = process.env.CORS_ORIGIN || '';
+      r.sourceRepository.domain = process.env.WEBAPP_DOMAIN_AND_PORT || '';
       r.sourceRepository.path = serverPublicPath(r.sourceRepository.path);
     }
   }
@@ -243,14 +243,15 @@ export default function parseSwordConf(
 // null if it is not public. IMPORTANT: never return a fileFullPath string in
 // any response from a public server, as full server paths should be kept secret.
 export function fileFullPath(serverPublicPath: string): string | null {
-  const root = process.env.ROOTPATH;
-  const publics = process.env.PUBPATHS;
+  const root = process.env.WEBAPP_SERVERROOT;
+  const publics = process.env.WEBAPP_PUBPATHS;
   if (root && publics) {
     const pubs = publics.split(';');
     for (let i = 0; i < pubs.length; i++) {
-      const pub = pubs[i];
-      if (serverPublicPath.startsWith(pub)) {
-        return [root, serverPublicPath].join('/');
+      const pub = pubs[i].substring(1);
+      const serverPublicPath2 = serverPublicPath.replace(/^\//, '');
+      if (serverPublicPath2.startsWith(pub)) {
+        return [root, serverPublicPath2].join('/');
       }
     }
   }
@@ -260,12 +261,12 @@ export function fileFullPath(serverPublicPath: string): string | null {
 // Returns a server public path or an empty string. If filePath is publicly
 // accessible, the public portion of the file path is returned.
 export function serverPublicPath(fileFullPath: string): string {
-  const root = process.env.ROOTPATH;
-  const publics = process.env.PUBPATHS;
+  const root = process.env.WEBAPP_SERVERROOT;
+  const publics = process.env.WEBAPP_PUBPATHS;
   if (root && publics) {
     const pubs = publics.split(';');
     for (let i = 0; i < pubs.length; i++) {
-      const pub = pubs[i];
+      const pub = pubs[i].substring(1);
       if (fileFullPath.startsWith([root, pub].join('/'))) {
         return fileFullPath.replace(root, '');
       }
@@ -278,7 +279,7 @@ export function serverPublicPath(fileFullPath: string): string {
 // file paths remain unchanged, but in server mode, file paths are converted
 // into server URLs, or are filtered out if they are not in a public directory.
 export function publicFiles(aString: string): string {
-  if (globalThis.isPublicServer) {
+  if (Build.isServer) {
     // If running as a public server on the Internet
     return aString.replace(/(file:\/\/)(\S+)/gi, (_m, _m1, m2: string) =>
       serverPublicPath(m2),

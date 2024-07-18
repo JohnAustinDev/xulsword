@@ -9,12 +9,29 @@ import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import projectPaths from './scripts/projectPaths.mjs';
 import ReactRefreshWebpackPlugin from '@pmmmwh/react-refresh-webpack-plugin';
 
+// prettier-ignore
 const builds = {
-  main: ['electron-main', ['./src/main/main.ts', './src/main/indexWorker.ts']],
+  main: [
+    'electron-main',
+    [
+      './src/main/main.ts',
+      './src/main/indexWorker.ts'
+    ]
+  ],
 
-  preload: ['electron-preload', ['./src/main/preload.ts']],
+  preload: [
+    'electron-preload',
+    [
+      './src/main/preload.ts'
+    ]
+  ],
 
-  server: ['node', ['./src/server/server.ts']],
+  server: [
+    'node',
+    [
+      './src/server/server.ts'
+    ]
+  ],
 
   renderer: [
     'web',
@@ -40,9 +57,26 @@ const builds = {
     'web',
     [
       './src/browser/widgets/widgets.tsx',
-      './src/browser/bibleBrowser/bibleBrowser.tsx',
+      './src/browser/bibleBrowser/bibleBrowser.tsx'
     ],
   ],
+};
+
+export const devServerPort = 1212;
+
+const defaultEnvironment = {
+  WEBAPP_DOMAIN_AND_PORT: `http://localhost:${devServerPort}`,
+  WEBAPP_FILES: path.join(projectPaths.rootPath, 'webapp'),
+  WEBAPP_SERVERROOT: path.join(projectPaths.rootPath, 'webapp', 'web'),
+  RESOURCEDIR: path.join(projectPaths.rootPath, 'webapp', 'web', 'resources'),
+  WEBAPP_PUBPATHS: '/',
+  WEBAPP_PORT: 3576,
+  WEBAPP_PUBLIC_DIST: '/',
+  XSModsCommon: '',
+  XSModsUser: '',
+  XSAudio: '',
+  XSFonts: '',
+  LogDir: '',
 };
 
 export const parallelism = 10;
@@ -50,7 +84,9 @@ export const parallelism = 10;
 export default function (opts) {
   console.log('Webpack configuration options: ', opts);
 
-  const { development, production, dll } = opts;
+  const { development, production, packaged } = opts;
+
+  const dll = false; // TODO!: FIX THIS
 
   if ((!development && !production) || development === production) {
     throw new Error(
@@ -118,11 +154,10 @@ export default function (opts) {
       },
 
       // libxulsword is packaged by electron-builder not Webpack.
-      externalsType: 'node-commonjs',
       externals: {
-        './build/Release/xulsword.node':
-          '../../../../node_modules/libxulsword/build/Release/xulsword.node',
+        './build/Release/xulsword.node': `../../node_modules/libxulsword/build/Release/xulsword.node`,
       },
+      externalsType: 'node-commonjs',
 
       entry: builds[build][1].reduce((entries, entry) => {
         const name = path.basename(entry).replace(/\.[^.]+$/, '');
@@ -142,7 +177,10 @@ export default function (opts) {
               browser: path.join(webappDistPath, 'browser'),
             }[build],
             publicPath:
-              build === 'browser' ? process.env.SERVER_PUBLIC_DIST : './',
+              build === 'browser'
+                ? process.env.WEBAPP_PUBLIC_DIST ||
+                  defaultEnvironment.WEBAPP_PUBLIC_DIST
+                : './',
           }
         : {
             clean: true,
@@ -223,6 +261,29 @@ export default function (opts) {
         // Use these plugins whether building the dll or not:
         new MiniCssExtractPlugin(),
 
+        // Webpack will permanently set these build and environment variables
+        // to these values. Note: LOGLEVEL is purposefully left out so it will
+        // remain 'live', taking its value at time of execution rather than
+        // time of building.
+        new webpack.DefinePlugin({
+          'Build.isProduction': !!production,
+          'Build.isDevelopment': !!development,
+          'Build.isElectronApp': ['main', 'preload', 'renderer'].includes(
+            build,
+          ),
+          'Build.isWebApp': ['server', 'browser'].includes(build),
+          'Build.isClient': ['renderer', 'browser'].includes(build),
+          'Build.isServer': ['main', 'server'].includes(build),
+          'Build.isPackaged': !!packaged,
+          ...Object.entries(defaultEnvironment).reduce((entries, entry) => {
+            const [name, value] = entry;
+            entries[`process.env.${name}`] = JSON.stringify(
+              process.env[name] ?? value,
+            );
+            return entries;
+          }, {}),
+        }),
+
         build !== 'browser'
           ? new webpack.IgnorePlugin({
               resourceRegExp: /original-fs/,
@@ -298,7 +359,7 @@ export default function (opts) {
       ...(['renderer', 'browser'].includes(build)
         ? {
             devServer: {
-              port: process.env.PORT || 1212,
+              port: devServerPort,
               publicPath: '/',
               compress: true,
               noInfo: false,

@@ -8,7 +8,9 @@ import {
   reactComponents,
   BibleBrowserData,
 } from '../bcommon.ts';
-import BibleBrowserController from './controller.tsx';
+import BibleBrowserController, {
+  BibleBrowserControllerGlobal,
+} from './controller.tsx';
 import { randomID, setGlobalPanels } from '../../common.ts';
 import C from '../../constant.ts';
 import G from '../../renderer/rg.ts';
@@ -18,7 +20,7 @@ import DynamicStyleSheet from '../../renderer/style.ts';
 
 import type { GCallType } from '../../type.ts';
 
-const socket = SocketConnect(C.Server.port, window.location.origin);
+const socket = SocketConnect(C.Server.socketPort, window.location.origin);
 let initialized = false;
 // connect is called even on reconnect, so only initialize once.
 socket.on('connect', () => {
@@ -32,9 +34,12 @@ socket.on('connect', () => {
     const { prefs, langcode } = componentData(
       bibleBrowserComp,
     ) as BibleBrowserData;
-    window.browserMaxPanels = Math.ceil(window.innerWidth / 300);
+    (window as BibleBrowserControllerGlobal).browserMaxPanels = Math.ceil(
+      window.innerWidth / 300,
+    );
     let numPanels: number =
-      (prefs.prefs?.xulsword as any)?.panels?.length || window.browserMaxPanels;
+      (prefs.prefs?.xulsword as any)?.panels?.length ||
+      (window as BibleBrowserControllerGlobal).browserMaxPanels;
     if (window.innerWidth < 800) numPanels = 1;
     setGlobalPanels(prefs, numPanels);
     const locale = setGlobalLocale(prefs, langcode);

@@ -34,6 +34,7 @@ import {
 } from './history.tsx';
 import './xulsword.css';
 
+import type { BibleBrowserControllerGlobal } from '../../../browser/bibleBrowser/controller.tsx';
 import type { XulswordStateArgType } from '../../../type.ts';
 import type {
   RenderPromiseComponent,
@@ -244,7 +245,7 @@ export default class Xulsword
         <Hbox id="main-controlbar" pack="start" className="controlbar skin">
           <Spacer className="start-spacer" />
 
-          {window.processR.platform === 'browser' && (
+          {Build.isWebApp && (
             <>
               <Hbox pack="start">
                 <Button
@@ -335,7 +336,7 @@ export default class Xulsword
               </Hbox>
             )}
 
-            {window.processR.platform !== 'browser' && (
+            {!Build.isWebApp && (
               <Hbox id="textnav" align="center">
                 <Bookselect
                   id="book"
@@ -449,11 +450,11 @@ export default class Xulsword
           <Spacer flex="1" style={{ minWidth: '10px' }} />
 
           <Hbox id="optionButtons" align="start">
-            {window.browserMaxPanels && (
+            {(window as BibleBrowserControllerGlobal).browserMaxPanels && (
               <>
                 <Button
                   id="addcolumn"
-                  checked={panels.length < window.browserMaxPanels}
+                  checked={panels.length < (window as any).browserMaxPanels}
                   icon={<Icon icon="add-column-right" size={28} />}
                   onClick={handler}
                 />

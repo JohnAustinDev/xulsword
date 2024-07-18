@@ -34,10 +34,7 @@ export default function contextMenu(
     contextMenuCreator({
       window,
 
-      showInspectElement: Boolean(
-        process.env.NODE_ENV === 'development' ||
-          process.env.DEBUG_PROD === 'true',
-      ),
+      showInspectElement: Build.isDevelopment,
 
       showSearchWithGoogle: false,
       showCopyImage: false,

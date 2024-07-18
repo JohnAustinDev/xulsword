@@ -325,7 +325,7 @@ export default class ModuleManager
 
     // Instantiate progress handler
     this.destroy.push(
-      window.ipc.on('progress', (prog: number, id?: string) => {
+      window.IPC.on('progress', (prog: number, id?: string) => {
         const state = this.state as ManagerState;
         if (id) {
           H.setDownloadProgress(this, id, prog);

@@ -15,13 +15,22 @@ export type BibleBrowserControllerProps = BibleBrowserControllerState & {
   dynamicStyleSheet: DynamicStyleSheet;
 };
 
+export type BibleBrowserControllerGlobal = {
+  setBibleBrowserState?: (
+    arg:
+      | BibleBrowserControllerState
+      | ((ps: BibleBrowserControllerState) => BibleBrowserControllerState),
+  ) => void;
+  browserMaxPanels?: number;
+} & typeof window;
+
 export default function BibleBrowserController(
   props: BibleBrowserControllerProps,
 ): React.JSX.Element {
   const { locale, renderKey, dynamicStyleSheet } = props;
   const [state, setState] = useState({ locale, renderKey });
 
-  window.setBibleBrowserState = setState;
+  (window as BibleBrowserControllerGlobal).setBibleBrowserState = setState;
 
   const html = document.getElementsByTagName('html')[0] as
     | HTMLHtmlElement

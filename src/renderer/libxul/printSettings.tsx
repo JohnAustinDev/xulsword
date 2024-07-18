@@ -52,8 +52,6 @@ const footerTemplate = `
     <span class="pageNumber"></span> / <span class="totalPages"></span>
   </div>`;
 
-const { platform } = window.processR;
-
 const propTypes = {
   ...xulPropTypes,
   print: PropTypes.object.isRequired,
@@ -162,7 +160,7 @@ export default class PrintSettings extends React.Component {
     }
   }
 
-  async handler(e: React.SyntheticEvent<any, any>) {
+  handler(e: React.SyntheticEvent<any, any>) {
     const state = this.state as PrintSettingsState;
     const { selectRefs, scrollToPage } = this;
     const target = e.currentTarget as HTMLElement;
@@ -824,7 +822,7 @@ export default class PrintSettings extends React.Component {
             // in linux for now (the PDF can be created and then printed
             // separately)
           }
-          {platform !== 'linux' && (
+          {window.ProcessInfo.platform !== 'linux' && (
             <Button
               id="print"
               icon="print"

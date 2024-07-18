@@ -21,6 +21,7 @@ import Prefs from './prefs.ts';
 import DiskCache from './diskcache.ts';
 
 import type { ChildProcess } from 'child_process';
+import type { LogLevel } from 'electron-log';
 import type {
   GenBookTOC,
   Repository,
@@ -33,10 +34,32 @@ import type {
 } from '../../type.ts';
 import type S from '../../defaultPrefs.ts';
 import type { ManagerStatePref } from '../../renderer/moduleManager/manager.tsx';
-import type {
-  MessagesFromIndexWorker,
-  MessagesToIndexWorker,
-} from '../indexWorker.ts';
+
+export type CppGlobalMethods = {
+  ToUpperCase: (str: string) => string;
+  ReportSearchIndexerProgress: (percent: number) => void;
+} & typeof globalThis;
+
+export type MessagesToIndexWorker =
+  | {
+      command: 'start';
+      directories: string[];
+      module: string;
+    }
+  | {
+      command: 'log';
+      logfile: string;
+      loglevel: LogLevel;
+    };
+
+export type MessagesFromIndexWorker =
+  | {
+      msg: 'finished' | 'failed';
+    }
+  | {
+      msg: 'working';
+      percent: number;
+    };
 
 // Convert the raw GenBookTOC (output of LibSword.getGenBookTableOfContents())
 // into an array of C.GBKSEP delimited keys.
@@ -62,14 +85,14 @@ function readGenBookLibSword(toc: GenBookTOC, parent?: string[]): GenBookKeys {
  * Callback functions available to libxulsword NodeJS addon
  ***************************************************************************** */
 
-global.ToUpperCase = (aString) => {
+(globalThis as CppGlobalMethods).ToUpperCase = (aString) => {
   if (aString) {
     return aString.toUpperCase();
   }
   return '';
 };
 
-global.ReportSearchIndexerProgress = (_intgr) => {};
+(globalThis as CppGlobalMethods).ReportSearchIndexerProgress = (_intgr) => {};
 
 /*
 This LibSword object is used to access all SWORD engine capabilities
@@ -668,7 +691,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   ): Promise<boolean> {
     return await new Promise((resolve, reject) => {
       if (this.isReady(true) && !(modcode in this.indexingID)) {
-        const workerjs = Dirs.xsAsar.append(`dist/main/indexWorker.js`).path;
+        const workerjs = Dirs.xsAsar.append(`dist/main/indexWorker.cjs`).path;
         const indexer = fork(workerjs);
         this.indexingID[modcode] = indexer;
 

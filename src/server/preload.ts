@@ -1,6 +1,6 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import { io } from 'socket.io-client';
-import ipc, { processR } from '../preload.ts';
-import processEnv from './process_env.ts';
+import getIPC, { getProcessInfo } from '../preload.ts';
 
 import type Electron from 'electron';
 import type { Socket } from 'socket.io-client';
@@ -8,10 +8,7 @@ import type { Socket } from 'socket.io-client';
 // To run the xulsword app as a webapp using a browser and NodeJS server,
 // Electron's ipcRenderer module must be replaced by s custom Inter Process
 // Communication object, which uses socket.io instead.
-export const ipcRenderer: Pick<
-  Electron.IpcRenderer,
-  'send' | 'invoke' | 'sendSync' | 'on' | 'once' | 'removeListener'
-> = {
+window.IPC = getIPC({
   send: (channel: string, ...args: unknown[]) => {
     if (socket) socket.emit(channel, args, () => {});
     else throw new Error('No socket connection.');
@@ -61,11 +58,16 @@ export const ipcRenderer: Pick<
     } else throw new Error('No socket connection.');
     return undefined as unknown as Electron.IpcRenderer;
   },
-};
+});
 
-window.ipc = ipc(ipcRenderer);
-
-window.processR = processR(processEnv);
+window.ProcessInfo = getProcessInfo({
+  argv: [],
+  env: {
+    LOGLEVEL: 'error',
+    WEBAPP_PORT: process.env.WEBAPP_PORT
+  },
+  platform: 'browser' as any,
+});
 
 let socket: Socket | null = null;
 const socketConnect = (port: number, origin?: string): Socket => {

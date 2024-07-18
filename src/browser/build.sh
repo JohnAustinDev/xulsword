@@ -1,6 +1,7 @@
 #!/usr/bin/bash
 
 OUTDIR=$1
+DEVELOPMENT=$2
 
 if [[ -z $OUTDIR || ! -d "$OUTDIR/dist/" ]]; then echo "ERROR: no dist '$OUTDIR/dist'." && exit 1; fi
 if [[ "$OUTDIR" =~ ^\. ]]; then OUTDIR="$(pwd)/./$OUTDIR"; fi
@@ -12,7 +13,7 @@ rm -rf "./build/app/dist/"*;
 
 source ./setenv
 
-if [[ "$NODE_ENV" == "development" ]]; then
+if [[ "$DEVELOPMENT" == "1" ]]; then
   yarn build:other-dev
 else
   yarn build:other

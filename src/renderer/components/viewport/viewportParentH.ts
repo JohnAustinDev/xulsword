@@ -233,11 +233,7 @@ export default function handler(
       switch (targ.type) {
         case 'text-win': {
           const cols = atext?.dataset.columns;
-          if (
-            window.processR.platform !== 'browser' &&
-            atext &&
-            cols !== undefined
-          ) {
+          if (!Build.isWebApp && atext && cols !== undefined) {
             // Save new window's XulswordState
             const xulswordState: Partial<XulswordState> = {};
             vpWindowState.forEach((name) => {

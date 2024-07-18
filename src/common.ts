@@ -49,6 +49,7 @@ import type { SelectORMType } from './renderer/libxul/selectOR.tsx';
 import type { getSampleText } from './renderer/bookmarks.ts';
 import type { verseKey } from './renderer/htmlData.ts';
 import type { XulswordState } from './renderer/components/xulsword/xulsword.tsx';
+import { BibleBrowserControllerGlobal } from './browser/bibleBrowser/controller.tsx';
 
 export function isCallCacheable(
   gBuilder: typeof GBuilder,
@@ -273,39 +274,37 @@ export function diff<T>(pv1: any, pv2: T, depth = 1): Partial<T> | undefined {
 }
 
 // Return a reason message if data is invalid, or null if it is valid.
-export function invalidData(
+export function isInvalidWebAppData(
   data: unknown,
-  platform: typeof window.processR.platform,
   depth = 0,
   log?: ElectronLog,
 ): string | null {
-  if (platform === 'browser') {
-    if (C.LogLevel === 'silly' && depth === 0 && log) testData(data, log);
-    if (depth > C.Server.maxDataRecursion) {
-      return `Argument max recursion exceeded. [was ${depth}]`;
+  if (C.LogLevel === 'silly' && depth === 0 && log) testData(data, log);
+
+  if (depth > C.Server.maxDataRecursion) {
+    return `Argument max recursion exceeded. [was ${depth}]`;
+  }
+  if (['function', 'symbol'].includes(typeof data)) {
+    return `Argument improper type. [was ${typeof data}]`;
+  }
+  if (typeof data === 'string') {
+    if (data.length > C.Server.maxDataStringLength) {
+      return `Argument string too long. [was ${data.length}]`;
     }
-    if (['function', 'symbol'].includes(typeof data)) {
-      return `Argument improper type. [was ${typeof data}]`;
+  } else if (Array.isArray(data)) {
+    if (data.length > C.Server.maxDataArrayLength) {
+      return `Argument array too long. [was ${data.length}]`;
     }
-    if (typeof data === 'string') {
-      if (data.length > C.Server.maxDataStringLength) {
-        return `Argument string too long. [was ${data.length}]`;
-      }
-    } else if (Array.isArray(data)) {
-      if (data.length > C.Server.maxDataArrayLength) {
-        return `Argument array too long. [was ${data.length}]`;
-      }
-      const d = data.find((v) => invalidData(v, platform, depth + 1) !== null);
-      if (d !== undefined) return invalidData(d, platform, depth + 1);
-    } else if (data && typeof data === 'object') {
-      if (Object.keys(data).length > C.Server.maxDataObjectKeys) {
-        return `Argument object had too many keys. [was ${Object.keys(data).length}]`;
-      }
-      const d = Object.values(data).find(
-        (v) => invalidData(v, platform, depth + 1) !== null,
-      );
-      if (d !== undefined) return invalidData(d, platform, depth + 1);
+    const d = data.find((v) => isInvalidWebAppData(v, depth + 1) !== null);
+    if (d !== undefined) return isInvalidWebAppData(d, depth + 1);
+  } else if (data && typeof data === 'object') {
+    if (Object.keys(data).length > C.Server.maxDataObjectKeys) {
+      return `Argument object had too many keys. [was ${Object.keys(data).length}]`;
     }
+    const d = Object.values(data).find(
+      (v) => isInvalidWebAppData(v, depth + 1) !== null,
+    );
+    if (d !== undefined) return isInvalidWebAppData(d, depth + 1);
   }
   return null;
 }
@@ -944,7 +943,7 @@ export function setGlobalPanels(
     if (!('panels' in xs)) (xs as any).panels = [''];
   }
   const { panels } = xs;
-  const maxN = window.browserMaxPanels || 4;
+  const maxN = (window as BibleBrowserControllerGlobal).browserMaxPanels || 4;
   let newN = numPanels || panels.length + delta;
   if (newN < 1) newN = 1;
   if (newN > maxN) newN = maxN;

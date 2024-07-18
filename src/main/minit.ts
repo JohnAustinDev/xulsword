@@ -536,7 +536,7 @@ export function getModuleFonts(): FontFaceType[] {
     Object.values(fonts).forEach((info) => {
       if (info.fontFamily !== 'unknown' && info.fontFamily !== 'dir') {
         let { path } = info;
-        if (globalThis.isPublicServer) path = serverPublicPath(path);
+        if (Build.isServer) path = serverPublicPath(path);
         ret.push({ fontFamily: info.fontFamily, path });
       }
     });
@@ -755,7 +755,7 @@ export function getModuleConfig(mod: string): ConfigType {
       ).replaceAll('\\', '/');
       const p2 = `${p}${p.slice(-1) === '/' ? '' : '/'}`;
       let pcx = `${p2}${moduleConfig.PreferredCSSXHTML}`;
-      if (globalThis.isPublicServer) pcx = serverPublicPath(pcx);
+      if (Build.isServer) pcx = serverPublicPath(pcx);
       moduleConfig.PreferredCSSXHTML = pcx;
     }
 
@@ -956,7 +956,7 @@ export function inlineFile(
   noHeader = false,
 ): string {
   let fpath = filepath;
-  if (globalThis.isPublicServer) {
+  if (Build.isServer) {
     const spath = fileFullPath(filepath);
     if (!spath) return '';
     fpath = spath;
@@ -1010,7 +1010,7 @@ export function inlineAudioFile(
         const afile = file.clone().append(`${leaf}.${ext}`);
         if (afile.exists()) {
           let apath = afile.path;
-          if (globalThis.isPublicServer) {
+          if (Build.isServer) {
             apath = serverPublicPath(apath);
           }
           if (apath) return inlineFile(apath);

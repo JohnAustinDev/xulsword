@@ -1,74 +1,43 @@
 #!/bin/bash
-# Run this script from this directory with 'source ./setenv' to set build environment variables.
+# Source this script from the current directory with 'source ./setenv' to
+# properly set environment variables. Comments indicate each variable
+# and their default value.
 
-if [[ -z "$XULSWORD_SERVER_DIST" ]];
-then
-  export XULSWORD_SERVER_DIST=/modules/custom/amod/dist/
-else
-  export XULSWORD_SERVER_DIST=$XULSWORD_SERVER_DIST
-fi
+# WEBAPP_DOMAIN_AND_PORT='http://localhost:1212'
 
-# - NODE_ENV - Set in package.json to control the build process
-#     (will be set to either 'development' or 'production').
-#NODE_ENV=production
-if [[ -z "$NODE_ENV" ]];
-then
-  export NODE_ENV=development
-else
-  export NODE_ENV=$NODE_ENV
-fi
+# WEBAPP_SERVERROOT=[xulsword]/webapp/web
 
-# - DEBUG_PROD - Set by you to 'true' BEFORE packaging to enable
-#     dev source maps and dev-tools in a production build (but the
-#     main process is still not accesible via current vscode config).
-#     Also enables other production debug behaviour (more logging).
-if [[ -z "$DEBUG_PROD" ]];
-then
-  export DEBUG_PROD=false
-else
-  export DEBUG_PROD=$DEBUG_PROD
-fi
+# WEBAPP_PORT=3576
 
-# - XULSWORD_ENV - Set by you to 'production' for debugging production
-#     only behaviour, like i18n, splash and log, in a development
-#     environment (including main process debugging via vscode).
-if [[ -z "$XULSWORD_ENV" ]];
-then
-  export XULSWORD_ENV=normal
-else
-  export XULSWORD_ENV=$XULSWORD_ENV
-fi
+# The full path to private directory where web app files are written and read.
+# WEBAPP_FILES=[xulsword]/webapp
 
-# - LOGLEVEL - Set to "silly" | "info" | "debug" | "error" | "warn" | "verbose"
-if [[ -z "$LOGLEVEL" ]];
-then
-  export LOGLEVEL=error
-else
-  export LOGLEVEL=$LOGLEVEL
-fi
+# Semicolon delimited list of public URLs relative to WEBAPP_SERVERROOT; each starting with slash.
+# WEBAPP_PUBPATHS=/
 
-# - XSPORT - The port that xulsword will use.
-if [[ -z "$XSPORT" ]];
-then
-  export XSPORT=3000
-else
-  export XSPORT=$XSPORT
-fi
+# The public URL on the web app server where webpacked files are served from.
+# WEBAPP_PUBLIC_DIST=/
 
-echo "// This is a polyfill for Electron process used by src/browser/preload.ts.
-const process = {
-  argv: [],
-  env: {
-    NODE_ENV: '$NODE_ENV',
-    XULSWORD_ENV: '$XULSWORD_ENV',
-    DEBUG_PROD: '$DEBUG_PROD',
-    LOGLEVEL: '$LOGLEVEL',
-    XSPORT: '$XSPORT',
-  },
-  platform: 'browser',
-};
+# RESOURCEDIR=[xulsword]/webapp/web/resources
 
-export default process;" > ./process.js
+# XSFonts=[xulsword]/webapp/web/resources/fonts
+
+# XSAudio=[xulsword]/webapp/web/resources/audio
+
+# XSModsUser=[xulsword]/webapp/web/resources
+
+# XSModsCommon=[HOME]/.sword
+
+# LogDir=[xulsword]/webapp/logs
+
+# Possible values are 'error', 'warn', 'info', 'verbose', 'debug', 'silly'
+# LOGLEVEL='debug'
+
+###############################################################################
+# libxulsword Cpp build environment variables:
+###############################################################################
+
+export LD_LIBRARY_PATH="./Cpp/lib"
 
 export LIBXULSWORD_MAJOR=1
 export LIBXULSWORD_MINOR=5
