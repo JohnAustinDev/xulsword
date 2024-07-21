@@ -18,11 +18,12 @@ import {
 } from '../../common.ts';
 import Subscription from '../../subscription.ts';
 import C from '../../constant.ts';
+import { CipherKeyModules } from '../minit.ts';
 import parseSwordConf from '../parseSwordConf.ts';
 import Window, { getBrowserWindows } from './window.ts';
 import LocalFile from './localFile.ts';
 import Dirs from './dirs.ts';
-import LibSword from './libsword.ts';
+import LibSword, { moduleUnsupported } from './libsword.ts';
 import {
   getFile,
   getDir,
@@ -43,13 +44,10 @@ import type {
   Download,
   FTPDownload,
   GenBookAudioFile,
-  ModTypes,
-  NewModuleReportType,
   NewModulesType,
   Repository,
   RepositoryListing,
   SwordConfType,
-  V11nType,
   GenBookAudioConf,
   VerseKeyAudioConf,
   VerseKeyAudioFile,
@@ -58,75 +56,9 @@ import type {
 import DiskCache from './diskcache.ts';
 import type { ListingElementR } from '../ftphttp.ts';
 
-export const CipherKeyModules: Record<
-  string,
-  {
-    confPath: string;
-    cipherKey: string;
-    numBooks: number | null; // null means unknown
-  }
-> = {};
-
 // CrossWire SWORD Standard TODOS:
 // TODO CrossWire wiki mentions LangSortOrder! Report change to KeySort
 // TODO CrossWire Eusebian_vs and Eusebian_num share a single conf file. Support this?
-
-// Return the ModTypes type derived from a module config's ModDrv entry,
-// or return null if it's not a ModTypes type.
-export function getTypeFromModDrv(
-  modDrv: string,
-): ModTypes | 'XSM_audio' | null {
-  if (modDrv.includes('Text')) return 'Biblical Texts';
-  if (modDrv.includes('LD')) return 'Lexicons / Dictionaries';
-  if (modDrv.includes('Com')) return 'Commentaries';
-  if (modDrv.includes('RawGenBook')) return 'Generic Books';
-  if (modDrv === 'audio') return 'XSM_audio';
-  if (modDrv.includes('RawFiles')) return null;
-  return null;
-}
-
-// Check a module's version and return rejection message(s) if it is not supported.
-// Returns [] if the module is supported. If the module is passed by name, LibSword
-// will be used to read config information, otherwise LibSword will not be called.
-export function moduleUnsupported(
-  module: string | SwordConfType,
-): NewModuleReportType[] {
-  const reasons: NewModuleReportType[] = [];
-  const conf = typeof module === 'string' ? null : module;
-  const module2 = (conf ? conf.module : module) as string;
-  let moddrv;
-  let minimumVersion;
-  let v11n;
-  if (conf) {
-    moddrv = conf.ModDrv;
-    minimumVersion = conf.MinimumVersion;
-    v11n = conf.Versification || 'KJV';
-  } else {
-    moddrv = LibSword.getModuleInformation(module2, 'ModDrv');
-    minimumVersion = LibSword.getModuleInformation(module2, 'MinimumVersion');
-    v11n = LibSword.getModuleInformation(module2, 'Versification');
-    if (v11n === C.NOTFOUND) v11n = 'KJV';
-  }
-  if (!minimumVersion || minimumVersion === C.NOTFOUND) minimumVersion = '0';
-  const type = getTypeFromModDrv(moddrv);
-  if (type && type in C.SupportedTabTypes) {
-    if (versionCompare(C.SWORDEngineVersion, minimumVersion) < 0) {
-      reasons.push({
-        error: `(${module2}) Requires SWORD engine version > ${minimumVersion} (using ${C.SWORDEngineVersion}).`,
-      });
-    }
-  } else if (!type && moddrv !== 'audio') {
-    reasons.push({
-      error: `(${module2}) Unsupported type '${type || moddrv}'.`,
-    });
-  }
-  if (!C.SupportedV11ns.includes(v11n as V11nType)) {
-    reasons.push({
-      error: `(${module2}) Unsupported verse system '${v11n}'.`,
-    });
-  }
-  return reasons;
-}
 
 // Return a path beginning with 'modules/' to a specific module's installation
 // directory by interpereting a SWORD DataPath config entry value.
@@ -392,7 +324,8 @@ export async function installZIPs(
         });
       };
       readRepoConfFiles(Dirs.xsModsUser.append('mods.d'));
-      readRepoConfFiles(Dirs.xsModsCommon.append('mods.d'));
+      if (Dirs.path.xsModsCommon)
+        readRepoConfFiles(Dirs.xsModsCommon.append('mods.d'));
 
       if (LibSword.isReady()) LibSword.quit();
 

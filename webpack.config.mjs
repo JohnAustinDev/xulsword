@@ -71,10 +71,8 @@ const dllModules = {
   common: ['dompurify'],
   node: [
     'adm-zip',
-    'electron-log',
     'express-session',
     'font-list',
-    'ftp',
     'gunzip-maybe',
     'helmet',
     'i18next',
@@ -92,7 +90,9 @@ const dllModules = {
     'electron-context-menu',
     'electron-debug',
     'electron-devtools-installer',
+    'electron-log',
     'electron-updater',
+    'ftp',
   ],
   'electron-preload': [],
   web: [
@@ -111,7 +111,7 @@ export const devServerPort = 1212;
 
 const defaultEnvironment = {
   WEBAPP_DOMAIN_AND_PORT: `http://localhost:${devServerPort}`,
-  WEBAPP_FILES: path.join(projectPaths.rootPath, 'webapp'),
+  WEBAPP_PROFILE: path.join(projectPaths.rootPath, 'profile_webapp'),
   WEBAPP_SERVERROOT: path.join(projectPaths.rootPath, 'webapp', 'web'),
   RESOURCEDIR: path.join(projectPaths.rootPath, 'webapp', 'web', 'resources'),
   WEBAPP_PUBPATHS: '/',
@@ -127,9 +127,12 @@ const defaultEnvironment = {
 export const parallelism = 10;
 
 export default function (opts) {
+  const envFlags = ['all', 'dll', 'packaged', 'development', 'production'];
+
   const { rootPath, srcPath, appDistPath, webappDistPath } = projectPaths;
 
-  const { all, dll } = opts;
+  const { all } = opts;
+  const dll = false; // TODO!: Fix dll?
   let { development, production, packaged } = opts;
   if (dll) {
     development = true;
@@ -137,6 +140,7 @@ export default function (opts) {
     packaged = false;
     opts.main = true;
     opts.server = true;
+    // Only about 250ms are saved on web targets.
     opts.renderer = true;
     opts.browser = true;
   } else if (all) {
@@ -162,9 +166,8 @@ export default function (opts) {
   }
   const unrecognized = Object.keys(opts).find(
     (k) =>
-      !Object.keys(builds)
-        .concat(['all', 'dll', 'development', 'production'])
-        .includes(k) && !k.startsWith('WEBPACK'),
+      !Object.keys(builds).concat(envFlags).includes(k) &&
+      !k.startsWith('WEBPACK'),
   );
   if (unrecognized) {
     throw new Error(`Unrecognized --env value: '${unrecognized}'`);
@@ -203,7 +206,14 @@ export default function (opts) {
 
     const useUrlLoader = ['png'];
 
-    const dllManifest = path.join(rootPath, '.dll', build, `manifest.json`);
+    const mydll = {
+      manifest: path.join(rootPath, '.dll', build, `manifest.json`),
+      path: path.join(rootPath, '.dll', build, 'dll.cjs'),
+      libname: `xs_${build}_lib`,
+      libtype: 'global',
+    };
+    mydll.use = development && fs.existsSync(mydll.manifest);
+    if (mydll.use) console.log(`NOTE: Utilizing DLL: ${mydll.path}`);
 
     return {
       ...(development && !dll ? { devtool: 'source-map' } : {}),
@@ -231,11 +241,15 @@ export default function (opts) {
       externalsType: 'node-commonjs',
 
       entry: !dll
-        ? builds[build][1].reduce((entries, entry) => {
-            const name = path.basename(entry).replace(/\.[^.]+$/, '');
-            entries[name] = entry;
-            return entries;
-          }, {})
+        ? builds[build][1].reduce(
+            (entries, entry) => {
+              const name = path.basename(entry).replace(/\.[^.]+$/, '');
+              entries[name] = { import: entry };
+              if (mydll.use) entries[name].dependOn = `${build}_dll`;
+              return entries;
+            },
+            mydll.use ? { [`${build}_dll`]: mydll.path } : {},
+          )
         : {
             [build]: dllModules.common
               .concat(dllModules[builds[build][0]])
@@ -263,9 +277,9 @@ export default function (opts) {
           }
         : {
             clean: true,
-            path: path.join(rootPath, '.dll', build),
-            filename: 'dll.js',
-            library: `lib_${build}`,
+            path: path.dirname(mydll.path),
+            filename: path.basename(mydll.path),
+            library: { name: mydll.libname, type: mydll.libtype },
           },
 
       module: {
@@ -372,10 +386,13 @@ export default function (opts) {
           !dll
             ? // Use these plugins when NOT building the dll:
               [
-                new BundleAnalyzerPlugin({
-                  analyzerMode: 'static',
-                  openAnalyzer: false,
-                }),
+                // Note: you can't analyze a preload file.
+                build !== 'preload'
+                  ? new BundleAnalyzerPlugin({
+                      analyzerMode: 'static',
+                      openAnalyzer: false,
+                    })
+                  : null,
 
                 development && ['browser', 'renderer'].includes(build)
                   ? new ReactRefreshWebpackPlugin()
@@ -397,25 +414,23 @@ export default function (opts) {
                   }),
                 )
                 .concat(
-                  (() => {
-                    {
-                      if (development && fs.existsSync(dllManifest)) {
-                        console.log(`NOTE: Utilizing DLL ${dllManifest}`);
-                        return new webpack.DllReferencePlugin({
+                  mydll.use
+                    ? [
+                        new webpack.DllReferencePlugin({
                           context: rootPath,
-                          manifest: dllManifest,
-                          name: `lib_${build}`,
-                        });
-                      }
-                      return null;
-                    }
-                  })(),
+                          manifest: mydll.manifest,
+                          name: mydll.libname,
+                        }),
+                      ]
+                    : [],
                 )
             : // Use this plugin only when building a dll:
               [
                 new webpack.DllPlugin({
-                  path: path.join(rootPath, '.dll', build, `manifest.json`),
-                  name: `lib_${build}`,
+                  path: mydll.manifest,
+                  name: mydll.libname,
+                  type: mydll.libtype,
+                  format: true,
                 }),
               ],
         )
@@ -447,7 +462,7 @@ export default function (opts) {
                   build === 'renderer' ? 'start:main' : 'start:server';
                 console.log(
                   chalk.bgGreen.bold(
-                    `Starting devServer with 'yarn ${start}'...`,
+                    `Starting devServer with 'yarn ${start}':`,
                   ),
                 );
                 if (build === 'browser') {

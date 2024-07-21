@@ -372,362 +372,367 @@ export function onCellEdited(
   }
 }
 
-export async function eventHandler(
-  this: ModuleManager,
-  ev: React.SyntheticEvent,
-) {
-  switch (ev.type) {
-    case 'click': {
-      const e = ev as React.MouseEvent;
-      const [id, idext] = e.currentTarget.id.split('.');
-      switch (id) {
-        case 'languageListClose':
-        case 'languageListOpen': {
-          const open = id === 'languageListOpen';
-          const state = this.state as ManagerState;
-          setTableState(
-            this,
-            'module',
-            null,
-            this.filterModuleTable(null, open),
-            true,
-            {
-              language: { ...state.language, open },
-              module: { ...state.module, selection: [] },
-            },
-          );
-          scrollToSelectedLanguage(this);
-          break;
-        }
-        case 'moduleInfo': {
-          const div = document.getElementById('moduleInfo');
-          if (div) {
+export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
+  (async () => {
+    switch (ev.type) {
+      case 'click': {
+        const e = ev as React.MouseEvent;
+        const [id, idext] = e.currentTarget.id.split('.');
+        switch (id) {
+          case 'languageListClose':
+          case 'languageListOpen': {
+            const open = id === 'languageListOpen';
             const state = this.state as ManagerState;
-            const { module } = state;
-            const { module: modtable } = state.tables;
-            const { selection } = module;
-            const infoConfigs = selectionToDataRows('module', selection)
-              .map((r) => {
-                return modtable.data[r][ModCol.iInfo].conf || null;
-              })
-              .filter(Boolean);
-            const s: Partial<ManagerState> = { infoConfigs };
-            this.setState(s);
-          }
-          break;
-        }
-        case 'moduleInfoBack': {
-          const s: Partial<ManagerState> = {
-            infoConfigs: [],
-          };
-          this.setState(s);
-          break;
-        }
-        case 'cancel': {
-          G.Window.close();
-          break;
-        }
-        case 'ok': {
-          try {
-            const installed: SwordConfType[] = [];
-            const removeMods: Array<{ name: string; repo: Repository }> = [];
-            const moveMods: Array<{
-              name: any;
-              fromRepo: any;
-              toRepo: Repository;
-            }> = [];
-            const downloadResults = await Promise.allSettled(Downloads);
-            G.Window.modal([{ modal: 'transparent', window: 'all' }]);
-            G.publishSubscription(
-              'setRendererRootState',
+            setTableState(
+              this,
+              'module',
+              null,
+              this.filterModuleTable(null, open),
+              true,
               {
-                renderers: [
-                  { type: 'xulswordWin' },
-                  { id: windowDescriptor.id },
-                ],
+                language: { ...state.language, open },
+                module: { ...state.module, selection: [] },
               },
-              { progress: 'indefinite' },
             );
-            // Un-persist these table selections.
-            setTableState(this, 'module', { selection: [] });
-            setTableState(this, 'repository', { selection: [] });
-            const state = this.state as ManagerState;
-            const { repositories } = state;
-            const { repository: repotable } = state.tables;
-            const { moduleData } = Saved;
-            // Get a list of all currently installed modules (those found in any
-            // enabled local repository).
-            repotable.data.forEach((rtd, i) => {
-              if (isRepoLocal(rtd[RepCol.iInfo].repo)) {
-                const listing = Saved.repositoryListings[i];
-                if (Array.isArray(listing)) {
-                  listing.forEach((c) => installed.push(c));
-                }
-              }
-            });
-
-            // Remove modules (only when there are no repositories)
-            if (!repositories) {
-              Object.values(moduleData).forEach((row) => {
-                if (row[ModCol.iInstalled] === OFF) {
-                  const modkey = repositoryModuleKey(row[ModCol.iInfo].conf);
-                  const lconf = installed.find(
-                    (c) => repositoryModuleKey(c) === modkey,
-                  );
-                  if (lconf) {
-                    removeMods.push({
-                      name: lconf.module,
-                      repo: lconf.sourceRepository,
-                    });
+            scrollToSelectedLanguage(this);
+            break;
+          }
+          case 'moduleInfo': {
+            const div = document.getElementById('moduleInfo');
+            if (div) {
+              const state = this.state as ManagerState;
+              const { module } = state;
+              const { module: modtable } = state.tables;
+              const { selection } = module;
+              const infoConfigs = selectionToDataRows('module', selection)
+                .map((r) => {
+                  return modtable.data[r][ModCol.iInfo].conf || null;
+                })
+                .filter(Boolean);
+              const s: Partial<ManagerState> = { infoConfigs };
+              this.setState(s);
+            }
+            break;
+          }
+          case 'moduleInfoBack': {
+            const s: Partial<ManagerState> = {
+              infoConfigs: [],
+            };
+            this.setState(s);
+            break;
+          }
+          case 'cancel': {
+            G.Window.close();
+            break;
+          }
+          case 'ok': {
+            try {
+              const installed: SwordConfType[] = [];
+              const removeMods: Array<{ name: string; repo: Repository }> = [];
+              const moveMods: Array<{
+                name: any;
+                fromRepo: any;
+                toRepo: Repository;
+              }> = [];
+              const downloadResults = await Promise.allSettled(Downloads);
+              G.Window.modal([{ modal: 'transparent', window: 'all' }]);
+              G.publishSubscription(
+                'setRendererRootState',
+                {
+                  renderers: [
+                    { type: 'xulswordWin' },
+                    { id: windowDescriptor.id },
+                  ],
+                },
+                { progress: 'indefinite' },
+              );
+              // Un-persist these table selections.
+              setTableState(this, 'module', { selection: [] });
+              setTableState(this, 'repository', { selection: [] });
+              const state = this.state as ManagerState;
+              const { repositories } = state;
+              const { repository: repotable } = state.tables;
+              const { moduleData } = Saved;
+              // Get a list of all currently installed modules (those found in any
+              // enabled local repository).
+              repotable.data.forEach((rtd, i) => {
+                if (isRepoLocal(rtd[RepCol.iInfo].repo)) {
+                  const listing = Saved.repositoryListings[i];
+                  if (Array.isArray(listing)) {
+                    listing.forEach((c) => installed.push(c));
                   }
                 }
               });
-              const removeResult = G.Module.remove(removeMods);
-              removeResult.forEach((r, i) => {
+
+              // Remove modules (only when there are no repositories)
+              if (!repositories) {
+                Object.values(moduleData).forEach((row) => {
+                  if (row[ModCol.iInstalled] === OFF) {
+                    const modkey = repositoryModuleKey(row[ModCol.iInfo].conf);
+                    const lconf = installed.find(
+                      (c) => repositoryModuleKey(c) === modkey,
+                    );
+                    if (lconf) {
+                      removeMods.push({
+                        name: lconf.module,
+                        repo: lconf.sourceRepository,
+                      });
+                    }
+                  }
+                });
+                const removeResult = G.Module.remove(removeMods);
+                removeResult.forEach((r, i) => {
+                  if (!r)
+                    this.addToast({
+                      message: `Failed to remove module: '${removeMods[i].name}'`,
+                      timeout: 5000,
+                      intent: Intent.DANGER,
+                    });
+                });
+              }
+
+              // Move modules (between the shared and xulsword builtins).
+              Object.values(moduleData).forEach((row) => {
+                if (row[ModCol.iInfo].conf.xsmType !== 'XSM_audio') {
+                  const { shared } = row[ModCol.iInfo];
+                  const module = row[ModCol.iModule];
+                  if (!removeMods.map((m) => m.name).includes(module)) {
+                    const modkey = repositoryModuleKey(row[ModCol.iInfo].conf);
+                    const conf = installed.find(
+                      (c) => repositoryModuleKey(c) === modkey,
+                    );
+                    if (conf?.sourceRepository.builtin) {
+                      const toRepo = builtinRepos(G)[shared ? 0 : 1];
+                      if (
+                        conf &&
+                        repositoryKey(conf.sourceRepository) !==
+                          repositoryKey(toRepo)
+                      ) {
+                        moveMods.push({
+                          name: module,
+                          fromRepo: conf.sourceRepository,
+                          toRepo,
+                        });
+                      }
+                    }
+                  }
+                }
+              });
+              const moveResult = G.Module.move(moveMods);
+              moveResult.forEach((r, i) => {
                 if (!r)
                   this.addToast({
-                    message: `Failed to remove module: '${removeMods[i].name}'`,
+                    message: `Failed to move module: '${removeMods[i].name}'`,
                     timeout: 5000,
                     intent: Intent.DANGER,
                   });
               });
-            }
 
-            // Move modules (between the shared and xulsword builtins).
-            Object.values(moduleData).forEach((row) => {
-              if (row[ModCol.iInfo].conf.xsmType !== 'XSM_audio') {
-                const { shared } = row[ModCol.iInfo];
-                const module = row[ModCol.iModule];
-                if (!removeMods.map((m) => m.name).includes(module)) {
-                  const modkey = repositoryModuleKey(row[ModCol.iInfo].conf);
-                  const conf = installed.find(
-                    (c) => repositoryModuleKey(c) === modkey,
-                  );
-                  if (conf?.sourceRepository.builtin) {
-                    const toRepo = builtinRepos(G)[shared ? 0 : 1];
-                    if (
-                      conf &&
-                      repositoryKey(conf.sourceRepository) !==
-                        repositoryKey(toRepo)
-                    ) {
-                      moveMods.push({
-                        name: module,
-                        fromRepo: conf.sourceRepository,
-                        toRepo,
+              // Install modules
+              const install: Parameters<
+                GType['Module']['installDownloads']
+              >[0] = [];
+              downloadResults.forEach((dlr) => {
+                if (dlr.status === 'fulfilled' && dlr.value) {
+                  const { value } = dlr;
+                  value.forEach((v) => {
+                    if (v) {
+                      Object.entries(v).forEach((entry) => {
+                        const [downloadkey, result] = entry;
+                        if (typeof result === 'number' && result > 0) {
+                          // Find the moduleData row associated with this download. The moduleData
+                          // audio download URLs do not include the chapter range, so it must be
+                          // removed from the download URL (and don't change original download object!).
+                          const dl = keyToDownload(downloadkey);
+                          if ('http' in dl)
+                            dl.http = dl.http.replace(/&bk=.*$/, '');
+                          const key = Object.keys(moduleData).find(
+                            (k) =>
+                              downloadKey(getModuleDownload(k)) === downloadkey,
+                          );
+                          if (
+                            key &&
+                            moduleData[key][ModCol.iInstalled] === ON
+                          ) {
+                            install.push({
+                              download: dl,
+                              toRepo:
+                                builtinRepos(G)[
+                                  moduleData[key][ModCol.iInfo].shared ? 0 : 1
+                                ],
+                            });
+                          }
+                        }
                       });
                     }
+                  });
+                }
+              });
+              G.Module.installDownloads(
+                install,
+                G.Window.descriptions({ type: 'xulswordWin' })[0]?.id,
+              ).catch((er) => {
+                log.error(er);
+              });
+              G.Window.close();
+            } catch (er) {
+              log.error(er);
+            } finally {
+              G.Window.modal([{ modal: 'off', window: 'all' }]);
+              G.publishSubscription(
+                'setRendererRootState',
+                {
+                  renderers: [
+                    { type: 'xulswordWin' },
+                    { id: windowDescriptor.id },
+                  ],
+                },
+                { progress: -1 },
+              );
+            }
+            break;
+          }
+          case 'repoAdd': {
+            const state = this.state as ManagerState;
+            const { repositories } = state;
+            if (repositories) {
+              const newCustomRepos = clone(repositories.custom);
+              const { repository: repotables } = state.tables;
+              const rawdata = Saved.repositoryListings;
+              const repo: Repository = {
+                name: '?',
+                domain: C.Downloader.localfile,
+                path: '?',
+                disabled: true,
+                custom: true,
+                builtin: false,
+              };
+              const row = repositoryToRow(repo);
+              row[RepCol.iInfo].classes = classes(
+                [RepCol.iState],
+                ['checkbox-column'],
+                ['custom-repo'],
+              );
+              row[RepCol.iInfo].editable = editable();
+              repotables.data.unshift(row);
+              rawdata.unshift(null);
+              newCustomRepos.push(repo);
+              setTableState(this, 'repository', null, repotables.data, true, {
+                repositories: { ...repositories, custom: newCustomRepos },
+              });
+              switchRepo(this, [0], false).catch((er) => {
+                log.error(er);
+              });
+            }
+            break;
+          }
+          case 'repoDelete': {
+            const state = this.state as ManagerState;
+            const { repositories, repository } = state;
+            if (repositories && repository) {
+              const newCustomRepos = clone(repositories.custom);
+              const { repository: repotable } = state.tables;
+              const { selection } = repository;
+              const repotableData = clone(repotable.data);
+              const { repositoryListings } = Saved;
+              const rows =
+                (repository && selectionToDataRows('repository', selection)) ||
+                [];
+              rows.reverse().forEach((r) => {
+                const drow = repotable.data[r];
+                if (drow && drow[RepCol.iInfo].repo.custom) {
+                  repotableData.splice(r, 1);
+                  repositoryListings.splice(r, 1);
+                  const crIndex = repositories.custom.findIndex(
+                    (ro) =>
+                      repositoryKey(ro) ===
+                      repositoryKey(drow[RepCol.iInfo].repo),
+                  );
+                  if (crIndex !== -1) {
+                    newCustomRepos.splice(crIndex, 1);
                   }
                 }
-              }
-            });
-            const moveResult = G.Module.move(moveMods);
-            moveResult.forEach((r, i) => {
-              if (!r)
-                this.addToast({
-                  message: `Failed to move module: '${removeMods[i].name}'`,
-                  timeout: 5000,
-                  intent: Intent.DANGER,
-                });
-            });
-
-            // Install modules
-            const install: Parameters<GType['Module']['installDownloads']>[0] =
-              [];
-            downloadResults.forEach((dlr) => {
-              if (dlr.status === 'fulfilled' && dlr.value) {
-                const { value } = dlr;
-                value.forEach((v) => {
-                  if (v) {
-                    Object.entries(v).forEach((entry) => {
-                      const [downloadkey, result] = entry;
-                      if (typeof result === 'number' && result > 0) {
-                        // Find the moduleData row associated with this download. The moduleData
-                        // audio download URLs do not include the chapter range, so it must be
-                        // removed from the download URL (and don't change original download object!).
-                        const dl = keyToDownload(downloadkey);
-                        if ('http' in dl)
-                          dl.http = dl.http.replace(/&bk=.*$/, '');
-                        const key = Object.keys(moduleData).find(
-                          (k) =>
-                            downloadKey(getModuleDownload(k)) === downloadkey,
-                        );
-                        if (key && moduleData[key][ModCol.iInstalled] === ON) {
-                          install.push({
-                            download: dl,
-                            toRepo:
-                              builtinRepos(G)[
-                                moduleData[key][ModCol.iInfo].shared ? 0 : 1
-                              ],
-                          });
-                        }
-                      }
-                    });
-                  }
-                });
-              }
-            });
-            G.Module.installDownloads(
-              install,
-              G.Window.descriptions({ type: 'xulswordWin' })[0]?.id,
+              });
+              setTableState(this, 'repository', null, repotableData, true, {
+                repositories: { ...repositories, custom: newCustomRepos },
+              });
+              this.loadLanguageTable();
+              this.loadModuleTable();
+            }
+            break;
+          }
+          case 'repoCancel': {
+            const state = this.state as ManagerState;
+            const { repository: repotable } = state.tables;
+            G.Module.cancel(
+              repotable.data
+                .map((r, ri) =>
+                  r[RepCol.iInfo].loading !== false && r[RepCol.iState] !== OFF
+                    ? ri
+                    : null,
+                )
+                .filter((ri) => ri !== null)
+                .map((rix) => {
+                  const ri = rix as number;
+                  const r = repotable.data[ri];
+                  r[RepCol.iInfo].intent = intent(RepCol.iState, 'warning');
+                  return {
+                    ...r[RepCol.iInfo].repo,
+                    file: C.SwordRepoManifest,
+                    type: 'ftp',
+                  };
+                }),
             ).catch((er) => {
               log.error(er);
             });
-            G.Window.close();
-          } catch (er) {
-            log.error(er);
-          } finally {
-            G.Window.modal([{ modal: 'off', window: 'all' }]);
-            G.publishSubscription(
-              'setRendererRootState',
-              {
-                renderers: [
-                  { type: 'xulswordWin' },
-                  { id: windowDescriptor.id },
-                ],
-              },
-              { progress: -1 },
-            );
+            setTableState(this, 'repository', null, repotable.data, true);
+            break;
           }
-          break;
-        }
-        case 'repoAdd': {
-          const state = this.state as ManagerState;
-          const { repositories } = state;
-          if (repositories) {
-            const newCustomRepos = clone(repositories.custom);
-            const { repository: repotables } = state.tables;
-            const rawdata = Saved.repositoryListings;
-            const repo: Repository = {
-              name: '?',
-              domain: C.Downloader.localfile,
-              path: '?',
-              disabled: true,
-              custom: true,
-              builtin: false,
+          case 'moduleCancel': {
+            await G.Module.cancelOngoingDownloads();
+            this.addToast({
+              message: C.UI.Manager.cancelMsg,
+              timeout: 5000,
+              intent: Intent.SUCCESS,
+            });
+            Progressing.ids = [];
+            this.sState({ progress: null });
+            break;
+          }
+          case 'internet': {
+            const allow = idext === 'yes';
+            const cb = document.getElementById(
+              'internet.rememberChoice__input',
+            ) as HTMLInputElement | null;
+            if (cb && cb.checked) {
+              G.Prefs.setBoolPref('global.InternetPermission', allow);
+            }
+            const s: Partial<ManagerState> = {
+              internetPermission: allow,
             };
-            const row = repositoryToRow(repo);
-            row[RepCol.iInfo].classes = classes(
-              [RepCol.iState],
-              ['checkbox-column'],
-              ['custom-repo'],
+            this.setState(s);
+            if (allow)
+              this.loadTables().catch((er) => {
+                log.error(er);
+              });
+            // If the answer is no, then close the window, as there is
+            // nothing else to be done here.
+            else G.Window.close();
+            break;
+          }
+          default:
+            throw Error(
+              `Unhandled ModuleManager click event ${e.currentTarget.id}`,
             );
-            row[RepCol.iInfo].editable = editable();
-            repotables.data.unshift(row);
-            rawdata.unshift(null);
-            newCustomRepos.push(repo);
-            setTableState(this, 'repository', null, repotables.data, true, {
-              repositories: { ...repositories, custom: newCustomRepos },
-            });
-            switchRepo(this, [0], false).catch((er) => {
-              log.error(er);
-            });
-          }
-          break;
         }
-        case 'repoDelete': {
-          const state = this.state as ManagerState;
-          const { repositories, repository } = state;
-          if (repositories && repository) {
-            const newCustomRepos = clone(repositories.custom);
-            const { repository: repotable } = state.tables;
-            const { selection } = repository;
-            const repotableData = clone(repotable.data);
-            const { repositoryListings } = Saved;
-            const rows =
-              (repository && selectionToDataRows('repository', selection)) ||
-              [];
-            rows.reverse().forEach((r) => {
-              const drow = repotable.data[r];
-              if (drow && drow[RepCol.iInfo].repo.custom) {
-                repotableData.splice(r, 1);
-                repositoryListings.splice(r, 1);
-                const crIndex = repositories.custom.findIndex(
-                  (ro) =>
-                    repositoryKey(ro) ===
-                    repositoryKey(drow[RepCol.iInfo].repo),
-                );
-                if (crIndex !== -1) {
-                  newCustomRepos.splice(crIndex, 1);
-                }
-              }
-            });
-            setTableState(this, 'repository', null, repotableData, true, {
-              repositories: { ...repositories, custom: newCustomRepos },
-            });
-            this.loadLanguageTable();
-            this.loadModuleTable();
-          }
-          break;
-        }
-        case 'repoCancel': {
-          const state = this.state as ManagerState;
-          const { repository: repotable } = state.tables;
-          G.Module.cancel(
-            repotable.data
-              .map((r, ri) =>
-                r[RepCol.iInfo].loading !== false && r[RepCol.iState] !== OFF
-                  ? ri
-                  : null,
-              )
-              .filter((ri) => ri !== null)
-              .map((rix) => {
-                const ri = rix as number;
-                const r = repotable.data[ri];
-                r[RepCol.iInfo].intent = intent(RepCol.iState, 'warning');
-                return {
-                  ...r[RepCol.iInfo].repo,
-                  file: C.SwordRepoManifest,
-                  type: 'ftp',
-                };
-              }),
-          ).catch((er) => {
-            log.error(er);
-          });
-          setTableState(this, 'repository', null, repotable.data, true);
-          break;
-        }
-        case 'moduleCancel': {
-          await G.Module.cancelOngoingDownloads();
-          this.addToast({
-            message: C.UI.Manager.cancelMsg,
-            timeout: 5000,
-            intent: Intent.SUCCESS,
-          });
-          Progressing.ids = [];
-          this.sState({ progress: null });
-          break;
-        }
-        case 'internet': {
-          const allow = idext === 'yes';
-          const cb = document.getElementById(
-            'internet.rememberChoice__input',
-          ) as HTMLInputElement | null;
-          if (cb && cb.checked) {
-            G.Prefs.setBoolPref('global.InternetPermission', allow);
-          }
-          const s: Partial<ManagerState> = {
-            internetPermission: allow,
-          };
-          this.setState(s);
-          if (allow)
-            this.loadTables().catch((er) => {
-              log.error(er);
-            });
-          // If the answer is no, then close the window, as there is
-          // nothing else to be done here.
-          else G.Window.close();
-          break;
-        }
-        default:
-          throw Error(
-            `Unhandled ModuleManager click event ${e.currentTarget.id}`,
-          );
+        break;
       }
-      break;
+      default:
+        throw Error(`Unhandled ModuleManager event type ${ev.type}`);
     }
-    default:
-      throw Error(`Unhandled ModuleManager event type ${ev.type}`);
-  }
+  })().catch((er) => {
+    log.error(er);
+  });
 }
 
 // Select or unselect a row of a table. Returns the new selection.

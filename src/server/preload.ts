@@ -64,7 +64,7 @@ window.ProcessInfo = getProcessInfo({
   argv: [],
   env: {
     LOGLEVEL: 'error',
-    WEBAPP_PORT: process.env.WEBAPP_PORT
+    WEBAPP_PORT: process.env.WEBAPP_PORT,
   },
   platform: 'browser' as any,
 });

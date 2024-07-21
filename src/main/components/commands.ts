@@ -88,8 +88,9 @@ const Commands = {
   // argument is provided, or an existing directory path is provided.
   async installXulswordModules(
     paths?: string[] | string, // file, file[], directory, directory/* or undefined=choose-files
-    toSharedModuleDir?: boolean,
+    toSharedModuleDirX?: boolean,
   ): Promise<NewModulesType> {
+    const toSharedModuleDir = Dirs.path.xsModsCommon && toSharedModuleDirX;
     const destDir =
       Dirs.path[toSharedModuleDir ? 'xsModsCommon' : 'xsModsUser'];
     const callingWinID: number =

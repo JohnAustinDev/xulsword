@@ -4,9 +4,9 @@
   "description": "Электронная Библия",
   "type": "module",
   "scripts": {
-    "start:app": "node ./scripts/check-port-in-use.mjs && webpack serve --env development --env preload --env renderer",
-    "start:webapp": "node ./scripts/check-port-in-use.mjs && webpack serve --env development --env browser",
-    "start:main": "yarn webpack --env development --env main && electron ./build/app",
+    "start:app": "node ./scripts/check-port-in-use.mjs && webpack serve --env development --env renderer",
+    "start:webapp": "node ./scripts/check-port-in-use.mjs && webpack serve --env development --env browser --env",
+    "start:main": "yarn webpack --env development --env main  --env preload && electron ./build/app/dist/main/main.cjs",
     "start:server": "yarn webpack --env development --env server && node ./build/webapp",
     "build:app": "yarn webpack --env packaged --env production --env main --env preload --env renderer",
     "build:webapp": "yarn webpack --env production --env server --env browser",

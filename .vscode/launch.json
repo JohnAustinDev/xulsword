@@ -7,14 +7,6 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "server",
-      "runtimeExecutable": "bash",
-      "runtimeArgs": ["${workspaceFolder}/src/server/start-server.sh"],
-      "skipFiles": ["<node_internals>/**"]
-    },
-    {
-      "type": "node",
-      "request": "launch",
       "name": "App electron server",
       "runtimeExecutable": "yarn",
       "runtimeArgs": ["start:main"],
@@ -30,6 +22,15 @@
       "name": "WebApp node server",
       "runtimeExecutable": "yarn",
       "runtimeArgs": ["start:server"],
+      "skipFiles": ["<node_internals>/**"],
+      "outFiles": ["${workspaceFolder}/build/webapp/dist/**/*"]
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Run node/electron on something",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["/home/dale/src/xulsword/test.cjs"],
       "skipFiles": ["<node_internals>/**"],
       "outFiles": ["${workspaceFolder}/build/webapp/dist/**/*"]
     },

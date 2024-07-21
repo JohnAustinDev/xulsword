@@ -10,6 +10,7 @@ import {
   noAutoSearchIndex,
   unknown2String,
   JSON_stringify,
+  versionCompare,
 } from '../../common.ts';
 import Cache from '../../cache.ts';
 import C from '../../constant.ts';
@@ -31,6 +32,9 @@ import type {
   V11nType,
   GenBookKeys,
   ModulesCache,
+  NewModuleReportType,
+  SwordConfType,
+  ModTypes,
 } from '../../type.ts';
 import type S from '../../defaultPrefs.ts';
 import type { ManagerStatePref } from '../../renderer/moduleManager/manager.tsx';
@@ -136,7 +140,10 @@ const LibSword = {
 
     log.verbose('Initializing libsword...');
 
-    this.moduleDirectories = [Dirs.path.xsModsCommon, Dirs.path.xsModsUser];
+    this.moduleDirectories = [
+      Dirs.path.xsModsCommon,
+      Dirs.path.xsModsUser,
+    ].filter(Boolean);
     const repos = Prefs.getComplexValue(
       'moduleManager.repositories',
     ) as ManagerStatePref['repositories'];
@@ -835,6 +842,63 @@ DEFINITION OF A 'XULSWORD REFERENCE':
     return '';
   },
 };
+
+// Return the ModTypes type derived from a module config's ModDrv entry,
+// or return null if it's not a ModTypes type.
+export function getTypeFromModDrv(
+  modDrv: string,
+): ModTypes | 'XSM_audio' | null {
+  if (modDrv.includes('Text')) return 'Biblical Texts';
+  if (modDrv.includes('LD')) return 'Lexicons / Dictionaries';
+  if (modDrv.includes('Com')) return 'Commentaries';
+  if (modDrv.includes('RawGenBook')) return 'Generic Books';
+  if (modDrv === 'audio') return 'XSM_audio';
+  if (modDrv.includes('RawFiles')) return null;
+  return null;
+}
+
+// Check a module's version and return rejection message(s) if it is not supported.
+// Returns [] if the module is supported. If the module is passed by name, LibSword
+// will be used to read config information, otherwise LibSword will not be called.
+export function moduleUnsupported(
+  module: string | SwordConfType,
+): NewModuleReportType[] {
+  const reasons: NewModuleReportType[] = [];
+  const conf = typeof module === 'string' ? null : module;
+  const module2 = (conf ? conf.module : module) as string;
+  let moddrv;
+  let minimumVersion;
+  let v11n;
+  if (conf) {
+    moddrv = conf.ModDrv;
+    minimumVersion = conf.MinimumVersion;
+    v11n = conf.Versification || 'KJV';
+  } else {
+    moddrv = LibSword.getModuleInformation(module2, 'ModDrv');
+    minimumVersion = LibSword.getModuleInformation(module2, 'MinimumVersion');
+    v11n = LibSword.getModuleInformation(module2, 'Versification');
+    if (v11n === C.NOTFOUND) v11n = 'KJV';
+  }
+  if (!minimumVersion || minimumVersion === C.NOTFOUND) minimumVersion = '0';
+  const type = getTypeFromModDrv(moddrv);
+  if (type && type in C.SupportedTabTypes) {
+    if (versionCompare(C.SWORDEngineVersion, minimumVersion) < 0) {
+      reasons.push({
+        error: `(${module2}) Requires SWORD engine version > ${minimumVersion} (using ${C.SWORDEngineVersion}).`,
+      });
+    }
+  } else if (!type && moddrv !== 'audio') {
+    reasons.push({
+      error: `(${module2}) Unsupported type '${type || moddrv}'.`,
+    });
+  }
+  if (!C.SupportedV11ns.includes(v11n as V11nType)) {
+    reasons.push({
+      error: `(${module2}) Unsupported verse system '${v11n}'.`,
+    });
+  }
+  return reasons;
+}
 
 export type LibSwordType = Omit<
   typeof LibSword,

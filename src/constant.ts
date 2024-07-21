@@ -61,11 +61,7 @@ const C = {
   HTTPUserAgent: 'xulsword4@xulsword.org',
 
   SYSTEMNEWLINE:
-    platform() === 'win32'
-      ? '\r\n'
-      : platform() === 'darwin'
-        ? '\r'
-        : '\n',
+    platform() === 'win32' ? '\r\n' : platform() === 'darwin' ? '\r' : '\n',
   FSSEP: platform() === 'win32' ? '\\' : '/',
 
   Server: {

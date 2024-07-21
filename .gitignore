@@ -16,7 +16,7 @@ Cpp/phpsword
 */libxulsword/build
 
 # webapp
-app-profile
+profile_webapp
 
 node_modules
 !node_modules/libxulsword

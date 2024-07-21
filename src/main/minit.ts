@@ -4,7 +4,6 @@ import fs from 'fs';
 import i18n from 'i18next';
 import fontList from 'font-list';
 import C from '../constant.ts';
-
 import VerseKey from '../verseKey.ts';
 import RefParser from '../refParser.ts';
 import {
@@ -22,10 +21,8 @@ import Subscription from '../subscription.ts';
 import Dirs from './components/dirs.ts';
 import Prefs from './components/prefs.ts';
 import DiskCache from './components/diskcache.ts';
-import LibSword from './components/libsword.ts';
+import LibSword, { moduleUnsupported } from './components/libsword.ts';
 import LocalFile from './components/localFile.ts';
-import Window from './components/window.ts';
-import { moduleUnsupported, CipherKeyModules } from './components/module.ts';
 import getFontFamily from './fontfamily.ts';
 import { bkChsInV11n } from './bkChsInV11n.ts';
 import parseSwordConf, {
@@ -56,6 +53,7 @@ import type {
   TreeNodeInfoPref,
 } from '../type.ts';
 import type { RefParserOptionsType } from '../refParser.ts';
+import type Window from './components/window.ts';
 import type RenderPromise from '../renderer/renderPromise.ts';
 
 // Get all supported books in locale order. NOTE: xulsword ignores individual
@@ -646,7 +644,7 @@ export function getFeatureModules(): FeatureMods {
 // Xulsword state prefs and certain global prefs should only reference
 // installed modules or be empty string. This function insures that is
 // the case.
-export function validateGlobalModulePrefs() {
+export function validateGlobalModulePrefs(windowComp: typeof Window) {
   const Tabs = getTabs();
 
   const xsprops: Array<keyof typeof S.prefs.xulsword> = [
@@ -709,8 +707,8 @@ export function validateGlobalModulePrefs() {
   Prefs.mergeValue('xulsword', xulsword, 'prefs', false, true);
 
   // Any viewportWin windows also need modules to be checked,
-  // which happens in viewportWin component contructor.
-  Window.reset('component-reset', { type: 'viewportWin' });
+  // which happens in viewportWin component contsructor.
+  windowComp.reset('component-reset', { type: 'viewportWin' });
 }
 
 export function resetMain() {
@@ -1140,3 +1138,12 @@ export function genBookTreeNodes(
   });
   return nodeinfos;
 }
+
+export const CipherKeyModules: Record<
+  string,
+  {
+    confPath: string;
+    cipherKey: string;
+    numBooks: number | null; // null means unknown
+  }
+> = {};

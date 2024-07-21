@@ -1,3 +1,10 @@
+div[data-react-component='bible-browser'] {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
 #main-controlbar {
   flex-wrap: wrap;
   align-items: center;

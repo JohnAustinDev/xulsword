@@ -1,38 +1,42 @@
 import React, { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import SocketConnect from '../../server/preload.ts';
+import { randomID, setGlobalPanels } from '../../common.ts';
+import G from '../../renderer/rg.ts';
+import log from '../../renderer/log.ts';
+import { callBatchThenCache } from '../../renderer/renderPromise.ts';
+import DynamicStyleSheet from '../../renderer/style.ts';
 import {
   writePrefsStores,
   setGlobalLocale,
-  componentData,
-  reactComponents,
+  getComponentSettings,
+  getReactComponents,
   BibleBrowserData,
 } from '../bcommon.ts';
 import BibleBrowserController, {
   BibleBrowserControllerGlobal,
 } from './controller.tsx';
-import { randomID, setGlobalPanels } from '../../common.ts';
-import C from '../../constant.ts';
-import G from '../../renderer/rg.ts';
-import log from '../../renderer/log.ts';
-import { callBatchThenCache } from '../../renderer/renderPromise.ts';
-import DynamicStyleSheet from '../../renderer/style.ts';
+import defaultSettings from './defaultSettings.ts';
 
 import type { GCallType } from '../../type.ts';
 
-const socket = SocketConnect(C.Server.socketPort, window.location.origin);
+const socket = SocketConnect(
+  Number(process.env.WEBAPP_PORT),
+  window.location.origin,
+);
 let initialized = false;
 // connect is called even on reconnect, so only initialize once.
 socket.on('connect', () => {
-  const bibleBrowserComps = reactComponents(document).filter(
+  const bibleBrowserComps = getReactComponents(document).filter(
     (x) => x.dataset.reactComponent === 'bible-browser',
   );
   if (bibleBrowserComps.length > 1)
     log.error('Only one Browser Bible component per document is supported.');
   else if (!initialized) {
     const [bibleBrowserComp] = bibleBrowserComps;
-    const { prefs, langcode } = componentData(
+    const { prefs, langcode } = getComponentSettings(
       bibleBrowserComp,
+      defaultSettings,
     ) as BibleBrowserData;
     (window as BibleBrowserControllerGlobal).browserMaxPanels = Math.ceil(
       window.innerWidth / 300,

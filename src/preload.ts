@@ -16,7 +16,9 @@ const validChannels = [
   'publish-subscription', // from main when a renderer subscription should be published
 ];
 
-export function getProcessInfo(process: Pick<NodeJS.Process, 'argv' | 'env' | 'platform'>) {
+export function getProcessInfo(
+  process: Pick<NodeJS.Process, 'argv' | 'env' | 'platform'>,
+) {
   return {
     argv: () => {
       return process.argv;

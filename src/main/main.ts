@@ -18,11 +18,15 @@ import G from './mg.ts';
 import handleGlobal from './handleGlobal.ts';
 import path from 'path';
 import LocalFile from './components/localFile.ts';
-import { getCipherFailConfs, validateGlobalModulePrefs } from './minit.ts';
+import Window from './components/window.ts';
+import {
+  getCipherFailConfs,
+  validateGlobalModulePrefs,
+  CipherKeyModules,
+} from './minit.ts';
 import MainMenuBuilder, { pushPrefsToMenu } from './mainMenu.ts';
 import contextMenu from './contextMenu.ts';
 import Viewport from './components/viewport.ts';
-import { CipherKeyModules } from './components/module.ts';
 import {
   WindowRegistry,
   pushPrefsToWindows,
@@ -213,7 +217,7 @@ const openXulswordWindow = () => {
   const menuBuilder = new MainMenuBuilder(xulswordWindow);
   menuBuilder.buildMenu();
 
-  validateGlobalModulePrefs();
+  validateGlobalModulePrefs(Window);
 
   const BuildInfo = `${app.getName()} ${app.getVersion()} (${
     G.i18n.language
@@ -238,7 +242,7 @@ const openXulswordWindow = () => {
       G.LibSword.quit();
       Cache.clear();
       G.LibSword.init();
-      validateGlobalModulePrefs();
+      validateGlobalModulePrefs(Window);
       menuBuilder.buildMenu(true);
     }),
   );

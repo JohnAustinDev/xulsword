@@ -11,7 +11,7 @@
   but the reverse is not true. So using TypeScript would require complex
   mirroring of settings between different tools. */
   "compilerOptions": {
-    "target": "es6",
+    "target": "esnext",
     "module": "nodenext",
     "declaration": true,
     "declarationMap": true,

@@ -3,35 +3,37 @@
 # properly set environment variables. Comments indicate each variable
 # and their default value.
 
-# WEBAPP_DOMAIN_AND_PORT='http://localhost:1212'
+# export WEBAPP_DOMAIN_AND_PORT='http://localhost:1212'
 
-# WEBAPP_SERVERROOT=[xulsword]/webapp/web
+# export WEBAPP_SERVERROOT=[xulsword]/webapp/web
 
-# WEBAPP_PORT=3576
+# export WEBAPP_PORT=3576
 
 # The full path to private directory where web app files are written and read.
-# WEBAPP_FILES=[xulsword]/webapp
+# export WEBAPP_PROFILE=[xulsword]/profile_webapp
 
 # Semicolon delimited list of public URLs relative to WEBAPP_SERVERROOT; each starting with slash.
-# WEBAPP_PUBPATHS=/
+# export WEBAPP_PUBPATHS=/
 
 # The public URL on the web app server where webpacked files are served from.
-# WEBAPP_PUBLIC_DIST=/
+# export WEBAPP_PUBLIC_DIST=/
 
-# RESOURCEDIR=[xulsword]/webapp/web/resources
+# export RESOURCEDIR=[xulsword]/webapp/web/resources
 
-# XSFonts=[xulsword]/webapp/web/resources/fonts
+# export XSFonts=[xulsword]/webapp/web/resources/fonts
 
-# XSAudio=[xulsword]/webapp/web/resources/audio
+# export XSAudio=[xulsword]/webapp/web/resources/audio
 
 # XSModsUser=[xulsword]/webapp/web/resources
+export XSModsUser=/home/dale/ibt/server/home/ibt/IBTSite/htdocs/ftpmirror/pub/modsword/raw
+export XSModsCommon=/home/dale/ibt/server/home/ibt/IBTSite/htdocs/ftpmirror/private/modsword/raw
 
-# XSModsCommon=[HOME]/.sword
+# export XSModsCommon=$HOME/.sword
 
-# LogDir=[xulsword]/webapp/logs
+# export LogDir=[xulsword]/webapp/logs
 
 # Possible values are 'error', 'warn', 'info', 'verbose', 'debug', 'silly'
-# LOGLEVEL='debug'
+# export LOGLEVEL='debug'
 
 ###############################################################################
 # libxulsword Cpp build environment variables:

@@ -487,7 +487,10 @@ export default class ModuleManager
           if (drow[H.RepCol.iState] !== H.OFF) {
             if (c.sourceRepository.path === G.Dirs.path.xsModsUser)
               repoType.localXulsword.push(c);
-            if (c.sourceRepository.path === G.Dirs.path.xsModsCommon)
+            if (
+              c.sourceRepository.path &&
+              c.sourceRepository.path === G.Dirs.path.xsModsCommon
+            )
               repoType.localShared.push(c);
             if (c.sourceRepository.path === G.Dirs.path.xsAudio)
               repoType.localAudio.push(c);

@@ -37,6 +37,6 @@ const cookieStorage = (aStore: string) => {
   };
 };
 
-const Prefs = new Rprefs(cookieStorage, log, false, null);
+const Prefs = new Rprefs(cookieStorage, log);
 
 export default Prefs as PrefsGType;

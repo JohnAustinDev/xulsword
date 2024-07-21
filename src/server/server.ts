@@ -1,5 +1,3 @@
-import path from 'path';
-import { fileURLToPath } from 'url';
 import { Server } from 'socket.io';
 import i18n from 'i18next';
 import helmet from 'helmet';
@@ -12,29 +10,30 @@ import i18nBackendMain from 'i18next-fs-backend';
 import http from 'http';
 import { JSON_parse, JSON_stringify, isInvalidWebAppData } from '../common.ts';
 import C from '../constant.ts';
-import G from '../main/mg.ts';
 import GServer from '../main/mgServer.ts';
 import handleGlobal from '../main/handleGlobal.ts';
+import Dirs from '../main/components/dirs.ts';
+import LibSword from '../main/components/libsword.ts';
 
 import type { Socket } from 'socket.io';
 import type { LogLevel } from 'electron-log';
 import type { GCallType } from '../type.ts';
 
-G.Dirs.init();
+Dirs.init();
 
 const isInvalidWebAppDataLogged = (data: unknown, depth = 0) => {
   return isInvalidWebAppData(data, depth, log);
 };
 
-const logfile = G.Dirs.LogDir.append('xulsword.log');
+const logfile = Dirs.LogDir.append(`server.${Date.now()}.log`);
 log.transports.console.level = C.LogLevel;
 log.transports.file.level = 'info';
 log.transports.file.resolvePath = () => logfile.path;
 
-G.LibSword.init();
+LibSword.init();
 
 log.info(
-  `Loaded ${G.LibSword.getModuleList().split('<nx>').length} SWORD modules.`,
+  `Loaded ${LibSword.getModuleList().split('<nx>').length} SWORD modules.`,
 );
 log.info(
   `LogLevel: ${C.LogLevel}, Logfile: ${logfile.path}, Port: ${process.env.WEBAPP_PORT}`,
@@ -238,9 +237,9 @@ async function i18nInit(lng: string) {
 
       backend: {
         // path where resources get loaded from
-        loadPath: `${G.Dirs.path.xsAsset}/locales/{{lng}}/{{ns}}.json`,
+        loadPath: `${Dirs.path.xsAsset}/locales/{{lng}}/{{ns}}.json`,
         // path to post missing resources
-        addPath: `${G.Dirs.path.xsAsset}/locales/{{lng}}/{{ns}}.missing.json`,
+        addPath: `${Dirs.path.xsAsset}/locales/{{lng}}/{{ns}}.missing.json`,
         // jsonIndent to use when storing json files
         jsonIndent: 2,
       },

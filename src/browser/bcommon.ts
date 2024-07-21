@@ -1,105 +1,66 @@
 import C from '../constant.ts';
-import G from '../renderer/rg.ts';
 import S from '../defaultPrefs.ts';
-import { hierarchy, mergePrefRoot, randomID } from '../common.ts';
+import { hierarchy, mergePrefRoot } from '../common.ts';
 
 import type { TreeNodeInfo } from '@blueprintjs/core';
+import type { GType, PrefRoot, TreeNodeInfoPref } from '../type.ts';
+import type { SelectORProps } from '../renderer/libxul/selectOR.tsx';
+import type { BibleBrowserSettings } from './bibleBrowser/defaultSettings.ts';
 import type {
-  GType,
-  OSISBookType,
-  PrefRoot,
-  TreeNodeInfoPref,
-} from '../type.ts';
-import type {
-  SelectVKProps,
-  SelectVKType,
-} from '../renderer/libxul/selectVK.tsx';
-import type {
-  SelectORMType,
-  SelectORProps,
-} from '../renderer/libxul/selectOR.tsx';
-import type { MenulistProps } from '../renderer/libxul/menulist.tsx';
+  ChaplistORType,
+  WidgetMenulistSettings,
+  WidgetORSettings,
+  WidgetVKSettings,
+} from './widgets/defaultSettings.ts';
 
-declare const drupalSettings: any;
-
-export type ChaplistVKType = { [bk in OSISBookType]?: Array<[number, string]> };
-
-export type ChaplistORType = Array<[string, string, string]>; // [order, key, url]
-
-export type SelectData = {
-  title: string;
-  base: string;
-  items: FileItem[] | string[];
+export type AllComponentsSettings = {
+  react: {
+    [id: string]: ComponentSettings;
+  };
 };
 
-export type FileItem = {
-  name: string;
-  size: string;
-  path: string;
-  types: string[];
-  osisbook: OSISBookType;
-};
+export type ComponentSettings =
+  | BibleBrowserSettings
+  | WidgetVKSettings
+  | WidgetORSettings
+  | WidgetMenulistSettings;
 
-export type WidgetVKData = {
-  component: 'selectVK';
-  action?: 'bible_audio_Play';
-  langcode: string;
-  props: SelectVKProps;
-  data: ChaplistVKType;
-};
-
-export type WidgetORData = {
-  component: 'selectOR';
-  action?: 'genbk_audio_Play';
-  langcode: string;
-  props: SelectORProps;
-  data: ChaplistORType;
-};
-
-export type WidgetMenulistData = {
-  component: 'selectMenulist';
-  action?: 'update_url';
-  langcode: string;
-  props: MenulistProps;
-  data: SelectData;
-};
-
-export type BibleBrowserData = {
-  component: 'bibleBrowser';
-  langcode: string;
-  prefs: Partial<PrefRoot>;
-};
-
-export type ComponentData =
-  | BibleBrowserData
-  | WidgetVKData
-  | WidgetORData
-  | WidgetMenulistData;
-
-export function reactComponents(
-  document: Window['document'],
-): HTMLDivElement[] {
-  const comps = document.querySelectorAll(
+// React components HTML elements have a data-react-component attribute
+// specifying the type.
+export function getReactComponents(doc: Window['document']): HTMLDivElement[] {
+  const comps = doc.querySelectorAll(
     'div[data-react-component]',
   ) as NodeListOf<HTMLDivElement>;
   return comps ? Array.from(comps) : [];
 }
 
-// A React Component's data is stored in a global called drupalSettings.
-// Look for a component's data in the current document and if not found,
-// and the component is in a iframe, then look in the parent window. If
-// no data is found there either, return null.
-export function componentData(component: HTMLDivElement): ComponentData | null {
+// Find and return initial state settings of a react component.
+// Return the first result of:
+// - window.drupalSettings.react[component-id]
+// - (iframe parent window).drupalSettings.react[component-id]
+// - defaultSettings.react[component-id]
+// - null
+export function getComponentSettings(
+  component: HTMLDivElement,
+  defaultSettings: AllComponentsSettings,
+): ComponentSettings | null {
   const { id } = component;
-  if (id) {
+  const { reactComponent } = component.dataset;
+  if (id && reactComponent) {
+    const win = window as any;
+    const parentWin = frameElement?.ownerDocument?.defaultView as any;
     let data;
-    if (drupalSettings?.react && id in drupalSettings.react)
-      data = drupalSettings.react[id];
-    const parentWin = frameElement?.ownerDocument?.defaultView;
-    const parentDatas = (parentWin as any)?.drupalSettings?.react;
-    if (parentDatas && id in parentDatas) data = parentDatas[id];
-    if (data) {
-      data.component = component.dataset.reactComponent;
+    if (win.drupalSettings?.react && id in win.drupalSettings.react)
+      data = win.drupalSettings.react[id];
+    else if (
+      parentWin?.drupalSettings?.react &&
+      id in parentWin.drupalSettings.react
+    )
+      data = parentWin.drupalSettings.react[id];
+    else if (defaultSettings?.react && id in defaultSettings.react)
+      data = defaultSettings.react[id];
+    if (typeof data !== 'undefined') {
+      data.component = reactComponent;
       return data;
     }
   }
@@ -154,118 +115,10 @@ export function writePrefsStores(G: GType, prefs: Partial<PrefRoot>): void {
   });
 }
 
-export function handleAction(type: string, id: string, ...args: any[]): void {
-  switch (type) {
-    case 'bible_audio_Play': {
-      const [selection, chaplist] = args as [SelectVKType, ChaplistVKType];
-      // A Drupal selectVK item follows its associated audio player item.
-      const player = document
-        .getElementById(id)
-        ?.parentElement?.previousElementSibling?.querySelector('audio') as
-        | HTMLAudioElement
-        | undefined;
-      if (player) {
-        const { book, chapter } = selection;
-        const chaparray = chaplist[book]?.find((ca) => ca[0] === chapter);
-        if (chaparray) {
-          player.setAttribute('src', chaparray[1].replace(/^base:/, ''));
-          player.play().catch(() => {});
-        }
-      }
-      break;
-    }
-    case 'genbk_audio_Play': {
-      const [selection, chaplist] = args as [SelectORMType, ChaplistORType];
-      // A Drupal selectOR item follows its associated audio player item.
-      const player = document
-        .getElementById(id)
-        ?.parentElement?.previousElementSibling?.querySelector('audio') as
-        | HTMLAudioElement
-        | undefined;
-      if (player) {
-        const { keys } = selection;
-        const [key] = keys;
-        const da = chaplist.find((x) => x[1] === key);
-        if (da) {
-          player.setAttribute('src', da[2].replace(/^base:/, ''));
-          player.play().catch(() => {});
-        }
-      }
-      break;
-    }
-    case 'update_url': {
-      const [title, base, items, index] = args as [
-        string,
-        string,
-        FileItem[],
-        number,
-      ];
-      const elem = document.getElementById(id)?.previousElementSibling;
-      const item = items[index];
-      if (elem && item && typeof item === 'object') {
-        const { path, size } = item;
-        const a = elem.querySelector('a');
-        if (a && path) {
-          a.setAttribute('href', `${base}/${path}`);
-          a.textContent = optionText(item, true, title, items.length === 1);
-          if (size && a.parentElement?.tagName === 'SPAN') {
-            const sizeSpan = a.parentElement.nextElementSibling;
-            if (sizeSpan && sizeSpan.tagName === 'SPAN') {
-              sizeSpan.textContent = ` (${size})`;
-            }
-          }
-        }
-      }
-      break;
-    }
-    default:
-      throw new Error(`Unsupported action: '${type}'`);
-  }
-}
-
-export function optionKey(data: unknown): string {
-  if (data && typeof data === 'object' && 'path' in data) {
-    return data.path as string;
-  }
-  return randomID();
-}
-
-export function optionText(
-  data: unknown,
-  long = false,
-  title = '',
-  onlyOption = false,
-): string {
-  if (data && typeof data === 'object' && 'path' in data) {
-    return getEBookTitle(data as FileItem, long, title, onlyOption);
-  } else if (typeof data === 'string') return data;
-  return 'unknown';
-}
-
-// Generate a short or long title for an eBook file. The forms of the title are:
-// short: 'Full publication' or 'Compilation', books (for bible), title (for all others).
-// long: publication-name, books: publication-name (for bible), title: publication-name (others)
-export function getEBookTitle(
-  data: FileItem,
-  long = false,
-  pubname = '',
-  onlyOption = false,
-): string {
-  const { types, osisbook, name } = data;
-  const Book = G.Book(G.i18n.language);
-
-  if (!onlyOption && ['full', 'compilation'].some((x) => types.includes(x))) {
-    return long ? pubname : G.i18n.t('Full publication');
-  } else if (types.includes('part')) {
-    return long ? `${Book[osisbook].name}: ${pubname}` : Book[osisbook].name;
-  }
-  return long && name !== pubname ? `${name}: ${pubname}` : name;
-}
-
 // Convert raw gen-book chaplist data from Drupal into a valid xulsword nodelist.
 export function createNodeList(
   chaplist: ChaplistORType,
-  props: SelectORProps,
+  props: Omit<SelectORProps, 'onSelection'>,
 ): void {
   // chaplist members are like: ['2/4/5', The/chapter/titles', 'url']
   // The Drupal chaplist is file data, and so does not include any parent

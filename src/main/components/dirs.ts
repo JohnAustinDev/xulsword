@@ -1,20 +1,22 @@
-import { app } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import LocalFile from './localFile.ts';
 
+import type { app as App } from 'electron';
+
 // Note: app will be undefined when running as a web app
-const electronApp = app as typeof app | undefined;
+const { app } = (await import('electron')) as { app: typeof App | undefined };
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const dirs = {
   TmpD: '',
-  LogDir: '',
+  xsLib: '',
   xsAsset: '',
   xsAsar: '',
   xsPrefDefD: '',
   xsResDefD: '',
+  LogDir: '',
   xsPrefD: '',
   xsResD: '',
   xsCache: '',
@@ -24,7 +26,6 @@ const dirs = {
   xsBookmarks: '',
   xsVideo: '',
   xsModsCommon: '',
-  xsLib: '',
 };
 
 export type DirsDirectories = typeof dirs;
@@ -47,8 +48,8 @@ const Dirs = {
   init: (pathOnly = false) => {
     if (!Dirs.initialized) {
       const profD =
-        (Build.isElectronApp && electronApp?.getPath('userData')) ||
-        (process.env.WEBAPP_FILES as string);
+        (Build.isElectronApp && app?.getPath('userData')) ||
+        (process.env.WEBAPP_PROFILE as string);
 
       Dirs.path.LogDir = path.join(process.env.LogDir || profD, 'logs');
 
@@ -65,7 +66,7 @@ const Dirs = {
         ? path.join(process.resourcesPath, 'app.asar')
         : path.join(dirname, '..', '..', '..', 'build', 'app');
 
-      Dirs.path.TmpD = electronApp?.getPath('temp') || '/tmp';
+      Dirs.path.TmpD = app?.getPath('temp') || '/tmp';
 
       Dirs.path.xsPrefDefD = path.join(
         Dirs.path.xsAsset,
@@ -86,8 +87,7 @@ const Dirs = {
 
       Dirs.path.xsCache = path.join(profD, 'cache');
 
-      Dirs.path.xsModsUser =
-        process.env.XSModsUser || path.join(profD, 'resources');
+      Dirs.path.xsModsUser = process.env.XSModsUser || Dirs.path.xsResD;
 
       Dirs.path.xsFonts =
         process.env.XSFonts || path.join(Dirs.path.xsResD, 'fonts');
@@ -101,20 +101,21 @@ const Dirs = {
 
       Dirs.path.xsModsCommon =
         process.env.XSModsCommon ||
-        (electronApp
+        (app
           ? /^win32|darwin$/.test(process.platform)
-            ? path.join(electronApp.getPath('appData'), 'Sword')
-            : path.join(electronApp.getPath('home'), '.sword')
-          : '/tmp');
+            ? path.join(app.getPath('appData'), 'Sword')
+            : path.join(app.getPath('home'), '.sword')
+          : '');
 
-      Dirs.path.xsLib = electronApp
-        ? electronApp.getPath('exe')
+      Dirs.path.xsLib = app
+        ? app.getPath('exe')
         : path.join(dirname, '..', '..', '..', 'Cpp', 'lib');
 
       if (!pathOnly) {
         // Create these directories if they don't exist.
         (
           [
+            'LogDir',
             'xsPrefD',
             'xsResD',
             'xsCache',
@@ -126,11 +127,15 @@ const Dirs = {
             'xsModsCommon',
           ] as const
         ).forEach((d) => {
-          Dirs[d].create(LocalFile.DIRECTORY_TYPE, { recursive: true });
+          if (d !== 'xsModsCommon' || Dirs.path.xsModsCommon) {
+            Dirs[d].create(LocalFile.DIRECTORY_TYPE, { recursive: true });
+          }
         });
         (['xsModsUser', 'xsModsCommon', 'xsAudio'] as const).forEach((d) => {
-          Dirs[d].clone().append('mods.d').create(LocalFile.DIRECTORY_TYPE);
-          Dirs[d].clone().append('modules').create(LocalFile.DIRECTORY_TYPE);
+          if (d !== 'xsModsCommon' || Dirs.path.xsModsCommon) {
+            Dirs[d].clone().append('mods.d').create(LocalFile.DIRECTORY_TYPE);
+            Dirs[d].clone().append('modules').create(LocalFile.DIRECTORY_TYPE);
+          }
         });
 
         // Install default resources?

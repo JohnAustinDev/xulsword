@@ -2,45 +2,48 @@ import React, { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import SocketConnect from '../../server/preload.ts';
 import {
-  createNodeList,
   setGlobalLocale,
   writePrefsStores,
-  componentData,
-  reactComponents,
+  getComponentSettings,
+  getReactComponents,
 } from './../bcommon.ts';
 import C from '../../constant.ts';
 import G from '../../renderer/rg.ts';
 import log from '../../renderer/log.ts';
 import { callBatchThenCache } from '../../renderer/renderPromise.ts';
-import type { GCallType, PrefRoot } from '../../type.ts';
-import type { ComponentData } from './../bcommon.ts';
-
 import WidgetVK from './widgetVK.tsx';
 import WidgetOR from './widgetOR.tsx';
 import ControllerOptions from './widgetMenulist.tsx';
+import defaultSettings from './defaultSettings.ts';
 
-const socket = SocketConnect(Number(window.ProcessInfo.WEBAPP_PORT));
+import type { PrefRoot } from '../../type.ts';
+import type { ComponentSettings } from './../bcommon.ts';
 
-const widgets = reactComponents(document).filter((c) =>
+const socket = SocketConnect(
+  Number(process.env.WEBAPP_PORT),
+  window.location.origin,
+);
+
+const widgets = getReactComponents(document).filter((c) =>
   ['selectOR', 'selectVK', 'selectMenulist'].includes(
     c.dataset.reactComponent || '',
   ),
 );
 if (widgets.length) {
-  let published = false;
+  let initialized = false;
   socket.on('connect', () => {
-    // connect is called even on reconnect, so only publish this once.
-    if (!published) {
-      published = true;
+    // connect is called even on reconnect, so only init widgets once.
+    if (!initialized) {
+      initialized = true;
 
       let langcode = 'en';
-      const data = componentData(widgets[0]);
-      if (data && langcode in data) ({ langcode } = data);
+      const settings = getComponentSettings(widgets[0], defaultSettings);
+      if (settings && langcode in settings) ({ langcode } = settings);
       const prefs: Partial<PrefRoot> = {};
       const locale = setGlobalLocale(prefs, langcode);
       writePrefsStores(G, prefs);
 
-      const preloads: GCallType[] = [
+      callBatchThenCache([
         ['Tab', null, undefined],
         ['Tabs', null, undefined],
         ['BkChsInV11n', null, undefined],
@@ -53,59 +56,36 @@ if (widgets.length) {
         ...Object.values(C.SupportedTabTypes).map(
           (type) => ['i18n', 't', [type, { lng: locale }]] as any,
         ),
-      ];
-
-      callBatchThenCache(preloads)
+      ])
         .then(() => {
           widgets.forEach((widget) => {
             const { id: compid } = widget;
-            const compData = componentData(widget) as ComponentData;
-            const { component } = compData;
+            const settings = getComponentSettings(
+              widget,
+              defaultSettings,
+            ) as ComponentSettings;
+            const { component } = settings;
             switch (component) {
               case 'selectVK': {
-                const { action, data, props } = compData;
                 createRoot(widget).render(
                   <StrictMode>
-                    <WidgetVK
-                      compid={compid}
-                      action={action}
-                      chaplist={data}
-                      initial={props}
-                    />
+                    <WidgetVK compid={compid} settings={settings} />
                   </StrictMode>,
                 );
                 break;
               }
               case 'selectOR': {
-                const { action, data, props } = compData;
-                data.forEach((x) => {
-                  x[0] = x[0].toString();
-                });
-                if (Array.isArray(data)) {
-                  createNodeList(data, props);
-                }
                 createRoot(widget).render(
                   <StrictMode>
-                    <WidgetOR
-                      compid={compid}
-                      action={action}
-                      chaplist={data}
-                      initial={props}
-                    />
+                    <WidgetOR compid={compid} settings={settings} />
                   </StrictMode>,
                 );
                 break;
               }
               case 'selectMenulist': {
-                const { action, data, props } = compData;
                 createRoot(widget).render(
                   <StrictMode>
-                    <ControllerOptions
-                      compid={compid}
-                      action={action}
-                      data={data}
-                      initial={props}
-                    />
+                    <ControllerOptions compid={compid} settings={settings} />
                   </StrictMode>,
                 );
                 break;
@@ -113,8 +93,6 @@ if (widgets.length) {
               default:
                 log.error(`Unknown widget type '${component}'`);
             }
-            widget.removeAttribute('data-props');
-            widget.removeAttribute('data-chaplist');
           });
         })
         .catch((er) => {

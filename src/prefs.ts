@@ -63,8 +63,8 @@ export default class Prefs {
   ) {
     this.storage = storage;
     this.log = log;
-    this.browserWindow = browserWindow || null;
-    this.writeOnChange = !!writeOnChange;
+    this.writeOnChange = writeOnChange ?? Build.isClient;
+    this.browserWindow = browserWindow ?? null;
   }
 
   has(

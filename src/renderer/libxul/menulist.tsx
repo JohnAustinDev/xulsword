@@ -25,6 +25,8 @@ const propTypes = {
   value: PropTypes.oneOfType([
     PropTypes.string,
     PropTypes.arrayOf(PropTypes.string),
+    PropTypes.number,
+    PropTypes.arrayOf(PropTypes.number),
   ]),
 };
 
@@ -33,7 +35,7 @@ export type MenulistProps = {
   multiple?: boolean;
   options?: Array<React.ReactElement<HTMLOptionElement>>;
   size?: number | undefined;
-  value: string | string[];
+  value: string | string[] | number | number[];
   onChange: (e: any) => void | Promise<void>;
 } & XulProps;
 
@@ -42,6 +44,12 @@ function Menulist({
   multiple = false,
   ...props
 }: MenulistProps) {
+  const { value: val } = props;
+  let value: string | string[];
+  if (typeof val === 'number') value = String(val);
+  else if (Array.isArray(val) && typeof val[0] === 'number')
+    value = val.map((v) => String(v));
+  else value = val as string | string[];
   return (
     <Box {...addClass('menulist xsinput', props)}>
       <select
@@ -49,7 +57,7 @@ function Menulist({
         disabled={disabled}
         multiple={multiple}
         size={props.size}
-        value={props.value}
+        value={value}
         onChange={() => {}}
       >
         {props.options}

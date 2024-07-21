@@ -1,5 +1,5 @@
 assets
-build
+build/release
 Cpp
 node_modules
 util
