@@ -1,7 +1,7 @@
 import Cache from './cache.ts';
 import C from './constant.ts';
 
-import type { getLocaleDigits, getLocalizedBooks } from './main/minit.ts';
+import type { getLocaleDigits, getLocalizedBooks } from './servers/common.ts';
 import type {
   BookGroupType,
   LocationVKType,

@@ -1,0 +1,97 @@
+.xulswordWin {
+  overflow: hidden;
+}
+.xulswordWin .bp5-portal .dialog-body {
+  padding: 0 20px;
+}
+.xulswordWin .controlbar .start-spacer {
+  width: 15px;
+}
+.xulswordWin .bp5-button {
+  min-height: unset;
+}
+.xulswordWin #closeplayer {
+  margin-inline-start: 10px !important;
+}
+.xulswordWin .controlbar .button,
+.xulswordWin .controlbar .button > div,
+.xulswordWin .controlbar button {
+  width: 100%;
+}
+.xulswordWin .controlbar .textbox {
+  font-size: 15px;
+}
+.xulswordWin .controlbar #search-tool .vbox > div {
+  width: 100%;
+}
+.xulswordWin .controlbar #historymenu {
+  position: relative;
+}
+.xulswordWin .controlbar #book,
+.xulswordWin .controlbar #chapter,
+.xulswordWin .controlbar #verse {
+  margin-top: 0;
+  margin-bottom: 2px;
+}
+
+#player > .vbox > div {
+  height: 30px;
+  background: #f6f7f9;
+  border: 1px solid rgb(197 197 197);
+  padding-top: 1px;
+  border-radius: 3px;
+}
+#player audio {
+  height: 25px;
+}
+
+#navigator-tool {
+  min-width: 390px;
+}
+#navigator-tool .button {
+  margin-left: 0;
+  margin-right: 0;
+}
+#navigator-tool #historymenu {
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+#textnav .bookselect {
+  min-width: 190px;
+}
+#textnav > span {
+  padding-inline-start: 4px;
+}
+#textnav #nextchap,
+#textnav #nextverse {
+  display: block;
+  background: url(../images/smallButtonIncrement.png);
+  margin-bottom: 1px;
+}
+#textnav #prevchap,
+#textnav #prevverse {
+  display: block;
+  background: url(../images/smallButtonDecrement.png);
+  margin-top: 1px;
+}
+#textnav .anchorbutton {
+  width: 15px;
+  height: 8px;
+  background-position: 0px 0px;
+}
+#textnav .anchorbutton:hover {
+  background-position: -15px 0px;
+}
+#textnav .textbox input {
+  text-align: center;
+}
+
+#searchButton {
+  margin: 0;
+  z-index: 1; /* allow bottom focus border to be visible */
+}
+
+#optionButtons button.off {
+  opacity: 0.5;
+}

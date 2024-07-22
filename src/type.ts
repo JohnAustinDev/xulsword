@@ -36,20 +36,20 @@ import type {
   inlineAudioFile,
   getAllDictionaryKeyList,
   genBookTreeNodes,
-} from './main/minit.ts';
-import type { publishSubscription } from './main/components/window.ts';
-import type DiskCache from './main/components/diskcache.ts';
-import type Commands from './main/components/commands.ts';
-import type Data from './main/components/data.ts';
-import type Module from './main/components/module.ts';
-import type Window from './main/components/window.ts';
-import type { DirsRendererType } from './main/components/dirs.ts';
-import type LibSword from './main/components/libsword.ts';
-import type { canRedo, canUndo } from './main/bookmarks.ts';
-import type { CallBatch } from './main/handleGlobal.ts';
-import type Viewport from './main/components/viewport.ts';
-import type { getExtRefHTML, locationVKText } from './main/versetext.ts';
-import type RenderPromise from './renderer/renderPromise.ts';
+} from './servers/common.ts';
+import type { publishSubscription } from './servers/app/components/window.ts';
+import type DiskCache from './servers/components/diskcache.ts';
+import type Commands from './servers/app/components/commands.ts';
+import type Data from './servers/components/data.ts';
+import type Module from './servers/app/components/module.ts';
+import type Window from './servers/app/components/window.ts';
+import type { DirsRendererType } from './servers/components/dirs.ts';
+import type LibSword from './servers/components/libsword.ts';
+import type { canRedo, canUndo } from './servers/components/bookmarks.ts';
+import type { CallBatch } from './servers/handleGlobal.ts';
+import type Viewport from './servers/components/viewport.ts';
+import type { getExtRefHTML, locationVKText } from './servers/versetext.ts';
+import type RenderPromise from './clients/renderPromise.ts';
 
 declare global {
   // These are available anywhere 'window' is defined (ie. browser, renderers):

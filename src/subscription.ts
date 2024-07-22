@@ -1,7 +1,7 @@
-import type { ContextMenuType } from './main/contextMenu.ts';
+import type { ContextMenuType } from './servers/app/contextMenu.ts';
 import type { PrefCallbackType } from './prefs.ts';
 import type { NewModulesType } from './type.ts';
-import type { WindowRootState } from './renderer/renderer.tsx';
+import type { WindowRootState } from './clients/app/renderer.tsx';
 import type { Socket } from 'socket.io-client';
 
 // Publish callback opportunities to subscribers. To publish for subscribers

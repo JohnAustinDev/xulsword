@@ -4,13 +4,14 @@
   "description": "Электронная Библия",
   "type": "module",
   "scripts": {
-    "start:app": "node ./scripts/check-port-in-use.mjs && webpack serve --env development --env renderer",
-    "start:webapp": "node ./scripts/check-port-in-use.mjs && webpack serve --env development --env browser --env",
-    "start:main": "yarn webpack --env development --env main  --env preload && electron ./build/app/dist/main/main.cjs",
-    "start:server": "yarn webpack --env development --env server && node ./build/webapp",
-    "build:app": "yarn webpack --env packaged --env production --env main --env preload --env renderer",
-    "build:webapp": "yarn webpack --env production --env server --env browser",
+    "start:app": "node ./scripts/check-port-in-use.mjs && webpack serve --env development --env appClients",
+    "start:appSrv": "yarn webpack --env development --env appSrv  --env preload && electron ./build/app/dist/servers/app/server.cjs",
+    "start:webapp": "node ./scripts/check-port-in-use.mjs && webpack serve --env development --env webappClients --env",
+    "start:webappSrv": "yarn webpack --env development --env webappSrv && node ./build/webapp",
+    "build:app": "yarn webpack --env packaged --env production --env appSrv --env preload --env appClients",
+    "build:webapp": "yarn webpack --env production --env webappSrv --env webappClients",
     "build:dll": "yarn webpack --env dll",
+    "install-libxulsword": "node ./nodemodules/libxulsword/install.mjs",
     "lint": "eslint . --cache",
     "package": "node ./scripts/clean.mjs dist release && yarn build && electron-builder build --publish never",
     "package-linux": "cross-env PKLIB=linux yarn install-libxulsword && yarn package --linux",
@@ -20,7 +21,7 @@
     "release-linux": "yarn && cross-env PKLIB=linux yarn install-libxulsword && yarn build && electron-builder build --publish always --linux",
     "release-32win": "yarn && cross-env PKLIB=32win yarn install-libxulsword && yarn build && electron-builder build --publish always --win --ia32 && cross-env PKLIB=linux yarn install-libxulsword",
     "release-64win": "yarn && cross-env PKLIB=64win yarn install-libxulsword && yarn build && electron-builder build --publish always --win --x64 && cross-env PKLIB=linux yarn install-libxulsword",
-    "postinstall": "electron-builder install-app-deps && yarn build:dll"
+    "postinstall": "electron-builder install-app-deps && yarn install-libxulsword && yarn ./build/app && yarn ./build/webapp"
   },
   "build": {
     "npmRebuild": false,

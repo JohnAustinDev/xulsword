@@ -1,12 +1,12 @@
 import C from './constant.ts';
 
-import type { paperSizes } from './renderer/libxul/printSettings.tsx';
-import type { SelectVKType } from './renderer/libxul/selectVK.tsx';
-import type { StyleType } from './renderer/style.ts';
+import type { paperSizes } from './clients/components/libxul/printSettings.tsx';
+import type { SelectVKType } from './clients/components/libxul/selectVK.tsx';
+import type { StyleType } from './clients/style.ts';
 import type {
   TablePropColumn,
   TinitialRowSort,
-} from './renderer/libxul/table.tsx';
+} from './clients/components/libxul/table.tsx';
 import type {
   AudioPrefType,
   BookmarkFolderType,

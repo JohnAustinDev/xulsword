@@ -5,7 +5,7 @@ import Subscription from './subscription.ts';
 
 import type { BrowserWindow } from 'electron';
 import type ElectronLog from 'electron-log';
-import type LocalFile from './main/components/localFile.ts';
+import type LocalFile from './servers/components/localFile.ts';
 import type { PrefObject, PrefStoreType, PrefValue } from './type.ts';
 
 export type PrefCallbackType = (
@@ -38,7 +38,7 @@ export type PrefsGType = Omit<
 >;
 
 export default class Prefs {
-  // True means write sources to disk after every change
+  // True writes sources to permanent storage after every change
   writeOnChange = false as boolean;
 
   browserWindow = null as typeof BrowserWindow | null;

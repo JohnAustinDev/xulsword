@@ -13,53 +13,54 @@ import ReactRefreshWebpackPlugin from '@pmmmwh/react-refresh-webpack-plugin';
 // Webpack entry points to build, grouped by target.
 // prettier-ignore
 const builds = {
-  main: [
+  appSrv: [
     'electron-main',
     [
-      './src/main/main.ts',
-      './src/main/indexWorker.ts'
+      './src/servers/app/server.ts',
+      './src/servers/indexWorker.ts'
     ]
   ],
 
   preload: [
     'electron-preload',
     [
-      './src/main/preload.ts'
+      './src/servers/app/preload.ts'
     ]
   ],
 
-  server: [
+  webappSrv: [
     'node',
     [
-      './src/server/server.ts'
+      './src/servers/webapp/server.ts',
+      './src/servers/indexWorker.ts'
     ]
   ],
 
-  renderer: [
+  appClients: [
     'web',
     [
-      './src/renderer/splash/splash.tsx',
-      './src/renderer/xulswordWin/xulswordWin.tsx',
-      './src/renderer/viewportWin/viewportWin.tsx',
-      './src/renderer/popupWin/popupWin.tsx',
-      './src/renderer/chooseFont/chooseFont.tsx',
-      './src/renderer/moduleManager/moduleManager.tsx',
-      './src/renderer/removeModule/removeModule.tsx',
-      './src/renderer/search/search.tsx',
-      './src/renderer/searchHelp/searchHelp.tsx',
-      './src/renderer/about/about.tsx',
-      './src/renderer/printPassage/printPassage.tsx',
-      './src/renderer/copyPassage/copyPassage.tsx',
-      './src/renderer/bmProperties/bmProperties.tsx',
-      './src/renderer/bmManager/bmManager.tsx',
+      './src/clients/app/splash/splash.tsx',
+      './src/clients/app/xulswordWin/xulswordWin.tsx',
+      './src/clients/app/viewportWin/viewportWin.tsx',
+      './src/clients/app/popupWin/popupWin.tsx',
+      './src/clients/app/chooseFont/chooseFont.tsx',
+      './src/clients/app/moduleManager/moduleManager.tsx',
+      './src/clients/app/removeModule/removeModule.tsx',
+      './src/clients/app/search/search.tsx',
+      './src/clients/app/searchHelp/searchHelp.tsx',
+      './src/clients/app/about/about.tsx',
+      './src/clients/app/printPassage/printPassage.tsx',
+      './src/clients/app/copyPassage/copyPassage.tsx',
+      './src/clients/app/bmProperties/bmProperties.tsx',
+      './src/clients/app/bmManager/bmManager.tsx',
     ],
   ],
 
-  browser: [
+  webappClients: [
     'web',
     [
-      './src/browser/widgets/widgets.tsx',
-      './src/browser/bibleBrowser/bibleBrowser.tsx'
+      './src/clients/webapp/widgets/widgets.tsx',
+      './src/clients/webapp/bibleBrowser/bibleBrowser.tsx'
     ],
   ],
 };
@@ -131,24 +132,23 @@ export default function (opts) {
 
   const { rootPath, srcPath, appDistPath, webappDistPath } = projectPaths;
 
-  const { all } = opts;
-  const dll = false; // TODO!: Fix dll?
+  const { all, dll } = opts;
   let { development, production, packaged } = opts;
   if (dll) {
     development = true;
     production = false;
     packaged = false;
-    opts.main = true;
-    opts.server = true;
+    opts.appSrv = true;
+    opts.webappSrv = true;
     // Only about 250ms are saved on web targets.
-    opts.renderer = true;
-    opts.browser = true;
+    opts.appClients = true;
+    opts.webappClients = true;
   } else if (all) {
-    opts.main = true;
+    opts.appSrv = true;
     opts.preload = true;
-    opts.server = true;
-    opts.renderer = true;
-    opts.browser = true;
+    opts.webappSrv = true;
+    opts.appClients = true;
+    opts.webappClients = true;
   }
 
   // Validate webpack arguments...
@@ -261,16 +261,16 @@ export default function (opts) {
       output: !dll
         ? {
             clean: true,
-            filename: `[name].${['main', 'server'].includes(build) ? 'cjs' : 'js'}`,
+            filename: `[name].${['appSrv', 'webappSrv'].includes(build) ? 'cjs' : 'js'}`,
             path: {
-              main: path.join(appDistPath, 'main'),
+              appSrv: path.join(appDistPath, 'appSrv'),
               preload: path.join(appDistPath, 'preload'),
-              renderer: path.join(appDistPath, 'renderer'),
-              server: path.join(webappDistPath, 'server'),
-              browser: path.join(webappDistPath, 'browser'),
+              appClients: path.join(appDistPath, 'appClients'),
+              webappSrv: path.join(webappDistPath, 'webappSrv'),
+              webappClients: path.join(webappDistPath, 'webappClients'),
             }[build],
             publicPath:
-              build === 'browser'
+              build === 'webappClients'
                 ? process.env.WEBAPP_PUBLIC_DIST ||
                   defaultEnvironment.WEBAPP_PUBLIC_DIST
                 : './',
@@ -300,18 +300,19 @@ export default function (opts) {
                   [
                     '@babel/preset-env',
                     {
-                      targets: ['main', 'server'].includes(build)
+                      targets: ['appSrv', 'webappSrv'].includes(build)
                         ? { node: '22' }
                         : '> 0.25%, not dead',
                     },
                   ],
-                  ['renderer', 'browser'].includes(build)
+                  ['appClients', 'webappClients'].includes(build)
                     ? ['@babel/preset-react', { development }]
                     : null,
                 ].filter(Boolean),
 
                 // React refresh webpack plugin
-                ...(development && ['browser', 'renderer'].includes(build)
+                ...(development &&
+                ['webappClients', 'appClients'].includes(build)
                   ? {
                       plugins: ['react-refresh/babel'],
                     }
@@ -357,12 +358,12 @@ export default function (opts) {
           Object.entries({
             'Build.isProduction': !!production,
             'Build.isDevelopment': !!development,
-            'Build.isElectronApp': ['main', 'preload', 'renderer'].includes(
+            'Build.isElectronApp': ['appSrv', 'preload', 'appClients'].includes(
               build,
             ),
-            'Build.isWebApp': ['server', 'browser'].includes(build),
-            'Build.isClient': ['renderer', 'browser'].includes(build),
-            'Build.isServer': ['main', 'server'].includes(build),
+            'Build.isWebApp': ['webappSrv', 'webappClients'].includes(build),
+            'Build.isClient': ['appClients', 'webappClients'].includes(build),
+            'Build.isServer': ['appSrv', 'webappSrv'].includes(build),
             'Build.isPackaged': !!packaged,
             ...Object.entries(defaultEnvironment).reduce((entries, entry) => {
               const [name, value] = entry;
@@ -375,7 +376,7 @@ export default function (opts) {
             return entries;
           }, {}),
         ),
-        build !== 'browser'
+        build !== 'webappClients'
           ? new webpack.IgnorePlugin({
               resourceRegExp: /original-fs/,
               contextRegExp: /adm-zip/,
@@ -394,19 +395,33 @@ export default function (opts) {
                     })
                   : null,
 
-                development && ['browser', 'renderer'].includes(build)
+                development && ['webappClients', 'appClients'].includes(build)
                   ? new ReactRefreshWebpackPlugin()
                   : null,
               ]
                 .concat(
                   builds[build][1].map((entry) => {
-                    if (['browser', 'renderer'].includes(build)) {
+                    if (['webappClients', 'appClients'].includes(build)) {
                       const name = path.basename(entry).replace(/\.[^.]+$/, '');
-                      let template = `${name}.html`;
-                      if (build === 'renderer') template = 'root.html';
                       return new HtmlWebpackPlugin({
                         filename: `${name}.html`,
-                        template: path.join(srcPath, build, template),
+                        template: path.join(
+                          {
+                            appClients: path.join(
+                              srcPath,
+                              'clients',
+                              'app',
+                              'root.html',
+                            ),
+                            webappClients: path.join(
+                              srcPath,
+                              'clients',
+                              'webapp',
+                              name,
+                              `${name}.html`,
+                            ),
+                          }[build],
+                        ),
                         chunks: [name],
                       });
                     }
@@ -436,7 +451,7 @@ export default function (opts) {
         )
         .filter(Boolean),
 
-      ...(['renderer', 'browser'].includes(build)
+      ...(['appClients', 'webappClients'].includes(build)
         ? {
             devServer: {
               port: devServerPort,
@@ -459,13 +474,13 @@ export default function (opts) {
               },
               before() {
                 const start =
-                  build === 'renderer' ? 'start:main' : 'start:server';
+                  build === 'appClients' ? 'start:appSrv' : 'start:webappSrv';
                 console.log(
                   chalk.bgGreen.bold(
                     `Starting devServer with 'yarn ${start}':`,
                   ),
                 );
-                if (build === 'browser') {
+                if (build === 'webappClients') {
                   console.log(
                     builds[build][1]
                       .map((html) =>

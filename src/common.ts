@@ -5,7 +5,7 @@ import Cache from './cache.ts';
 
 import type { ElectronLog } from 'electron-log';
 import type { Region } from '@blueprintjs/table';
-import type { getLocaleDigits } from './main/minit.ts';
+import type { getLocaleDigits } from './servers/common.ts';
 import type {
   GBuilder,
   Download,
@@ -44,12 +44,12 @@ import type {
   PrefRoot,
 } from './type.ts';
 import type { TreeNodeInfo } from '@blueprintjs/core';
-import type { SelectVKType } from './renderer/libxul/selectVK.tsx';
-import type { SelectORMType } from './renderer/libxul/selectOR.tsx';
-import type { getSampleText } from './renderer/bookmarks.ts';
-import type { verseKey } from './renderer/htmlData.ts';
-import type { XulswordState } from './renderer/components/xulsword/xulsword.tsx';
-import { BibleBrowserControllerGlobal } from './browser/bibleBrowser/controller.tsx';
+import type { SelectVKType } from './clients/components/libxul/selectVK.tsx';
+import type { SelectORMType } from './clients/components/libxul/selectOR.tsx';
+import type { getSampleText } from './clients/bookmarks.ts';
+import type { verseKey } from './clients/htmlData.ts';
+import type { XulswordState } from './clients/components/xulsword/xulsword.tsx';
+import { BibleBrowserControllerGlobal } from './clients/webapp/bibleBrowser/controller.tsx';
 
 export function isCallCacheable(
   gBuilder: typeof GBuilder,

@@ -1,0 +1,558 @@
+.atext {
+  position: relative;
+  vertical-align: top;
+  background: rgb(255, 243, 255);
+  border: 2px solid rgb(200, 170, 205);
+  border-radius: 8px;
+  height: 100%;
+  flex-basis: 100%;
+}
+.atext:not(:last-child) {
+  margin-inline-end: 10px;
+}
+.atext.pinned {
+  background: white; /*rgb(248,248,241);*/
+}
+
+.atext .hd {
+  text-align: center;
+  height: 30px;
+}
+.atext .text-pin {
+  transform: scaleX(-1);
+  float: left;
+  width: 28px;
+  height: 37px;
+  position: relative;
+  top: -15px;
+  left: -8px;
+  margin-inline-end: -8px;
+  background: url(../images/pushpin0.png);
+  z-index: 5;
+}
+html[dir='rtl'] .atext .text-pin {
+  transform: none;
+  float: right;
+  left: auto;
+  right: -8px;
+}
+.atext.pinned .text-pin {
+  background: url(../images/pushpin1.png);
+}
+.atext .text-pin:hover {
+  background: url(../images/pushpin2.png);
+}
+.atext.Dicts .text-pin,
+.atext.Genbks .text-pin {
+  display: none;
+}
+
+.atext .text-win {
+  float: left;
+  width: 20px;
+  height: 20px;
+  margin: 5px;
+  background: url(../images/towindow.png);
+  z-index: 5;
+}
+html[dir='rtl'] .atext .text-win {
+  float: right;
+}
+.atext .text-win:hover {
+  background-position: 20px;
+}
+
+.atext .origselect {
+  position: absolute;
+  top: 5px;
+  right: 12px;
+}
+
+html[dir='rtl'] .atext .origselect {
+  right: unset;
+  left: 12px;
+}
+
+.atext .audio-icon {
+  margin-inline-start: 5px;
+  margin-bottom: 5px;
+}
+.atext .audio-icon svg {
+  width: 20px;
+  height: 20px;
+}
+.atext.headings .audio-icon {
+  margin-inline-start: 30px;
+  margin-top: 10px;
+}
+.atext .audio-icon + .sb > .chapterhead:first-child {
+  padding-top: 5px;
+}
+
+.atext .sb {
+  flex-basis: 0px;
+  padding: 0px 30px;
+  display: flow-root;
+  overflow-wrap: anywhere;
+}
+.atext.columns1 .sb {
+  overflow: auto;
+}
+.atext:not(.columns1) .sb {
+  overflow: hidden;
+  column-gap: 80px;
+  column-rule: 14px solid rgb(240, 215, 240);
+  column-fill: auto;
+}
+.atext.Genbks:not(.columns1) .sb {
+  overflow: auto;
+}
+.atext .sbcontrols {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  right: auto;
+  padding-inline-start: 12px;
+}
+html[dir='rtl'] .sbcontrols {
+  left: auto;
+  right: 0px;
+}
+
+.atext .nbc {
+  background-color: inherit;
+  margin: 0px 8px 0 8px;
+  /* fixed width is required for multi-column panels */
+  width: calc(100% - 16px);
+}
+.atext:not(.columns1) .nbc {
+  position: absolute;
+  bottom: 0px;
+  right: 0px;
+}
+.atext[dir='rtl']:not(.columns1) .nbc {
+  right: auto;
+  left: 0px;
+}
+.atext .nbc.noteboxEmpty {
+  display: none;
+}
+
+.atext .dragsizer {
+  width: 75%;
+}
+.atext .notebox-maximizer {
+  position: absolute;
+  background: url(../images/max.png);
+  width: 15px;
+  height: 14px;
+  top: 0px;
+  right: 5px;
+}
+html[dir='rtl'] .notebox-maximizer {
+  right: auto;
+  left: 42px;
+}
+.atext.noteboxMaximized .notebox-maximizer {
+  background: url(../images/norm.png);
+}
+.atext.columns1 .notebox-maximizer {
+  display: none;
+}
+
+.atext .nb {
+  height: 100%;
+  overflow: auto;
+  background: rgb(240, 235, 240);
+  border: 2px solid rgb(150, 150, 150);
+  border-radius: 8px;
+  padding: 0px 5px 0px 5px;
+}
+
+/* Header Links */
+.navlink {
+  color: blue;
+  margin: 10px;
+  cursor: default;
+}
+.prevchaplink,
+.nextchaplink {
+  text-decoration: underline;
+  cursor: pointer;
+}
+.atext.prev-disabled .prevchaplink,
+.atext.next-disabled .nextchaplink {
+  color: grey;
+  text-decoration: none;
+  cursor: default;
+}
+.atext.prev-disabled .prevchaplink:hover,
+.atext.next-disabled .nextchaplink:hover {
+  text-decoration: none;
+}
+
+/* Bible & Commentary chapter/page header */
+.chapterhead {
+  display: inline-block;
+  width: 100%;
+  padding-top: 26px;
+}
+.chaptitle {
+  float: left;
+  font-size: 1.6rem;
+  font-weight: bold;
+  color: rgb(110, 85, 110);
+}
+.sb[dir='rtl'] .chaptitle {
+  float: right;
+}
+.chapbk,
+.chapch {
+  white-space: nowrap;
+}
+.chapbk {
+  display: none;
+  margin-bottom: 0.5em;
+}
+.chapterhead.chapterfirst .chapbk {
+  display: block;
+}
+.atext.pinned .chapbk {
+  display: block;
+}
+.chapinfo {
+  float: right;
+  min-width: 40px;
+  color: rgb(110, 85, 110);
+}
+.sb[dir='rtl'] .chapinfo {
+  float: left;
+}
+.introlink {
+  font-size: 1.1rem;
+  text-decoration: underline;
+  color: blue;
+  cursor: pointer;
+}
+.introlink.empty {
+  display: none;
+}
+.head-line-break {
+  display: inline-block;
+  clear: both;
+  margin-bottom: 30px;
+}
+.introtext {
+  display: none;
+}
+
+/* Interlinear display */
+.interB {
+  margin-top: 16px;
+  margin-bottom: 16px;
+}
+.interS {
+  width: 50px;
+  border-top: 1px solid blue;
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+.matchingStrongs2 {
+  background: hsla(298, 100%, 50%, 0.562);
+}
+.matchingStrongs1 {
+  background: hsla(123, 100%, 50%, 0.507);
+}
+.matchingStrongs0 {
+  background: yellow;
+}
+
+.atext.Texts .bmnote {
+  background: yellow;
+}
+
+/* Verse-per-line button */
+.versePerLineButton {
+  display: block;
+  position: relative;
+}
+
+.versePerLineButton > div {
+  position: absolute;
+  display: inline-block;
+  left: -25px;
+  background: url('../images/versePerLine.png');
+  background-position: 0px 0px;
+  width: 17px;
+  height: 20px;
+}
+.sb[dir='rtl'] .versePerLineButton > div {
+  left: auto;
+  right: -25px;
+  transform: scaleX(-1);
+}
+.verse-per-line .versePerLineButton > div {
+  background-position: -34px 0px;
+  top: 0px;
+}
+.versePerLineButton > div:hover {
+  background-position: -17px 0px;
+}
+.verse-per-line .versePerLineButton > div:hover {
+  background-position: -51px 0px;
+}
+.verse-per-line .vs {
+  display: block;
+}
+.always-vpl .versePerLineButton {
+  display: none;
+}
+
+/* Bible footnotes */
+.fntable {
+  display: table;
+  border-collapse: separate;
+  border-spacing: 0px 1px;
+  margin-inline-start: 10px;
+}
+.fnrow {
+  display: table-row;
+  padding-inline-end: 16px;
+}
+.fnrow > div {
+  padding: 2px 0;
+}
+.fncol1 {
+  display: table-cell;
+  width: 6px;
+  padding-top: 8px;
+}
+.crtwisty {
+  width: 9px;
+  height: 9px;
+  background: url(../images/twisty-open.png);
+}
+.cropened .crtwisty {
+  background: url(../images/twisty-close.png);
+}
+.fncol2 {
+  display: table-cell;
+  visibility: hidden;
+  padding-top: 12px;
+}
+.fndash {
+  width: 6px;
+  height: 0.3rem;
+  border-top: 1px solid rgb(150, 150, 150);
+}
+.fncol3 {
+  display: table-cell;
+  visibility: hidden;
+  width: 6px;
+  border-top: 1px solid rgb(150, 150, 150);
+  border-left: 1px solid rgb(150, 150, 150);
+  border-bottom: 1px solid rgb(150, 150, 150);
+}
+.cropened .fncol2,
+.cropened .fncol3 {
+  visibility: visible;
+}
+html[dir='rtl'] .fncol3 {
+  border-left: none;
+  border-right: 1px solid rgb(150, 150, 150);
+}
+.fncol4 {
+  display: table-cell;
+  text-align: end;
+  white-space: nowrap;
+  padding-top: 2px;
+}
+.fnlink {
+  text-decoration: underline;
+  cursor: pointer;
+  color: blue;
+}
+.fncol5 {
+  display: table-cell;
+  padding: 0px 4px 0px 4px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+}
+.fnselected .fncol5 {
+  border: 1px outset yellow;
+  background: rgb(255, 243, 255);
+}
+.pinned .fnselected .fncol5 {
+  background: white;
+}
+.crref {
+  text-decoration: underline;
+  cursor: pointer;
+  color: blue;
+}
+.cropened span.possibleV11nMismatch {
+  font-size: xx-small;
+  vertical-align: super;
+}
+.crref-miss {
+  color: blue;
+}
+.crtext .alternate {
+  font-style: italic;
+}
+.crtext .anytab {
+  font-style: italic;
+  font-weight: bold;
+}
+.crtext {
+  display: none;
+}
+.cropened .crtext {
+  display: inline;
+}
+.cropened .crtext.opposing-program-direction {
+  display: inline-block;
+}
+.cr-sep {
+  display: inline;
+}
+.cr-sep:after {
+  content: ';';
+}
+.cropened .cr-sep {
+  display: block;
+  border-top: 1px solid grey;
+  margin: 10px;
+}
+.cropened .cr-sep:after {
+  content: '';
+  padding-inline-end: 0;
+}
+.fntext.opposing-program-direction {
+  display: inline-block;
+}
+.noteBoxUserNote {
+  font-style: italic;
+}
+
+/* Other footnotes */
+.nlist {
+  clear: both;
+  border-top: 1px solid grey;
+  margin: 24px 0px 0px 0px;
+  padding: 10px 0px 10px 0px;
+}
+.nlist:first-of-type {
+  margin-top: 50px;
+}
+
+/* Dictionary styles */
+.dictentry {
+  display: table;
+  height: 100%;
+  width: 100%;
+}
+.dictentry > div {
+  display: table-cell;
+  vertical-align: middle;
+}
+.Dicts .nb {
+  color: rgb(80, 80, 80);
+}
+.dictlist {
+  padding: 0 16px 16px 16px;
+}
+.dictlist .headerbox {
+  position: sticky;
+  top: 0px;
+  padding: 16px 0px 5px 0px;
+  background-color: rgb(240, 235, 240);
+}
+.dictlist input {
+  width: calc(100% - 8px);
+}
+.dictlist .keylist {
+  margin-top: 10px;
+  max-height: calc(100% - 13px);
+}
+.dictlist .dictkey {
+  cursor: pointer;
+}
+.dictselectkey {
+  background: #1e90ff;
+  color: white;
+}
+.dict-description {
+  font-weight: bold;
+}
+.dict-sep {
+  border-top: 3px solid grey;
+  margin: 10px;
+}
+.dict-entry-heading {
+  font-weight: bold;
+}
+
+/* HTML TABLES */
+.sb table tr td {
+  border: 1px outset grey;
+  padding: 10px;
+}
+.sb td .head1 {
+  font-size: 1rem !important;
+}
+.sb td .head2 {
+  font-size: 1rem !important;
+}
+
+/* PRINTING STYLES */
+/*
+#reset.printp .pagebreak {
+  page-break-after: always;
+  margin: 40px;
+}
+#reset.printp .navlink,
+#reset.printp .chapinfo {
+  display: none !important;
+}
+#reset.printp .chapterhead .chapbk {
+  display: block;
+}
+#reset.printp .interS {
+  border-top: 1px solid black;
+}
+#reset.printp * {
+  text-decoration: none !important;
+}
+#reset.printp .dtl,
+#reset.printp .sr {
+  color: inherit;
+}
+#reset.printp .atext.Texts .un-hilight {
+  background: transparent;
+}
+#reset.printp .fnlink {
+  color: inherit;
+}
+#reset.printp .crref {
+  color: inherit;
+}
+#reset.printp .crref:after {
+  content: ': ';
+}
+#reset.printp .crtext {
+  display: inline;
+}
+#reset.printp .crtext.opposing-program-direction {
+  display: inline-block;
+}
+#reset.printp .cr-sep {
+  display: block;
+  border-top: none;
+  margin: 10px;
+}
+#reset.printp .cr-sep:after {
+  content: '';
+  padding-inline-end: 0em;
+}
+*/

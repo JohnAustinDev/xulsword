@@ -1,0 +1,29 @@
+html.splash,
+.splash body,
+.splash #root {
+  overflow: hidden;
+  margin: 0;
+  padding: 0 !important;
+}
+
+#layer1 {
+  background-image: url(../../../../assets/splash.png);
+  background-repeat: no-repeat;
+  width: 500px;
+  height: 375px;
+}
+
+#layer2 {
+  background-image: url('../../../../assets/splash-overlay.png');
+  background-repeat: no-repeat;
+  width: 100%;
+  height: 100%;
+}
+
+.splash-text .label {
+  font-size: 14px;
+  color: rgb(77, 37, 143);
+}
+.splash-text {
+  padding-bottom: 3px;
+}
