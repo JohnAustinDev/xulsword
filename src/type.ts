@@ -47,8 +47,9 @@ import type { DirsRendererType } from './servers/components/dirs.ts';
 import type LibSword from './servers/components/libsword.ts';
 import type { canRedo, canUndo } from './servers/components/bookmarks.ts';
 import type { CallBatch } from './servers/handleGlobal.ts';
-import type Viewport from './servers/components/viewport.ts';
-import type { getExtRefHTML, locationVKText } from './servers/versetext.ts';
+import type ViewportElectron from './servers/app/viewport.ts';
+import type ViewportBrowser from './clients/webapp/viewport.ts';
+import type { GetExtRefHTML, LocationVKText } from './servers/versetext.ts';
 import type RenderPromise from './clients/renderPromise.ts';
 
 declare global {
@@ -71,11 +72,6 @@ declare global {
   };
 }
 
-/*
-type Shift<T extends any[]> = T extends [infer _, ...infer Elements]
-  ? Elements
-  : [];
-*/
 export type QuerablePromise<T> = Promise<T> & {
   isFulfilled: boolean;
   isPending: boolean;
@@ -654,12 +650,7 @@ export type ResetType =
   | 'component-reset'
   | 'dynamic-stylesheet-reset';
 
-export type PrefStoreType =
-  | 'prefs'
-  | 'bookmarks'
-  | 'fonts'
-  | 'style'
-  | 'windows';
+export type PrefStoreType = 'prefs' | 'bookmarks' | 'style' | 'windows';
 
 export type PrefPrimative = number | string | boolean | null | undefined;
 export type PrefObject = Record<string, PrefValue>;
@@ -734,6 +725,10 @@ export type TransactionType = {
   store?: PrefStoreType;
 };
 
+export type ParamShift<T extends unknown[]> = T extends [any, ...infer U]
+  ? U
+  : never;
+
 export type MethodAddCaller<M extends (...args: any[]) => any> = (
   ...args2: [...Parameters<M>, number]
 ) => ReturnType<M>;
@@ -785,8 +780,8 @@ export type GType = {
   callBatchSync: CallBatch;
   getAllDictionaryKeyList: typeof getAllDictionaryKeyList;
   genBookTreeNodes: typeof genBookTreeNodes;
-  getExtRefHTML: typeof getExtRefHTML;
-  locationVKText: typeof locationVKText;
+  getExtRefHTML: GetExtRefHTML;
+  locationVKText: LocationVKText;
 
   // Objects
   i18n: {
@@ -803,7 +798,7 @@ export type GType = {
   Shell: Pick<Shell, 'beep'>;
   Data: typeof Data;
   Module: typeof Module;
-  Viewport: typeof Viewport;
+  Viewport: Omit<typeof ViewportElectron | typeof ViewportBrowser, '#prefs'>;
   Window: typeof Window;
 };
 
@@ -813,11 +808,11 @@ type RenderPromiseArgs<FUNC extends (...args: any[]) => any> = [
   ...Parameters<FUNC>,
 ];
 
-// Internet safe GType main (server):
-export type GITypeMain = { [name in keyof GIRendererType]: GType[name] };
+// Internet safe GI on server...
+export type GITypeMain = { [name in keyof GIType]: GType[name] };
 
-// Internet safe GType renderer (browser) require render-promise arguments:
-export type GIRendererType = {
+// Internet safe GI on clients require render-promise arguments:
+export type GIType = {
   [name in keyof Pick<
     GType,
     | 'Tabs'
@@ -862,25 +857,17 @@ export type GIRendererType = {
       ...args: RenderPromiseArgs<GType['LibSword'][m]>
     ) => ReturnType<GType['LibSword'][m]>;
   };
-} & {
-  Viewport: {
-    [m in keyof GType['Viewport']]: (
-      ...args: RenderPromiseArgs<GType['Viewport'][m]>
-    ) => ReturnType<GType['Viewport'][m]>;
-  };
 };
 
-// This GBuilder object will be used in the main/mg and renderer/rg
-// modules at runtime to create different types of G objects sharing
-// the same GType interface: one will be available in the main process
-// and another in renderer processes. The main process G object accesses
-// everything directly. But the renderer process G object requests
-// everything through IPC from the main process G object. All getter and
-// 'CACHEfunc' data of the renderer G object is cached in the renderer.
-// GBuilder includeCallingWindow object methods will have an extra
-// argument appended before they are executed in the main process which
-// contains the calling window's id. IMPORTANT: async functions must be
-// listed in asyncFuncs or runtime errors will result!
+// This GBuilder object will be used to create the server and client G objects.
+// Each is created at runtime resulting in different types of G objects sharing
+// the same interface: The server process G object accesses data directly. But
+// the client process G objects request everything through IPC from the server
+// process G object. All getter and 'CACHEfunc' data of the client G object
+// is cached in the client process. GBuilder includeCallingWindow object
+// methods will have an extra argument appended before they are executed in the
+// server process which contains the calling window's id. IMPORTANT: async
+// functions must be listed in asyncFuncs or runtime errors will result!
 const func = () => false;
 const CACHEfunc = () => true;
 if (typeof window !== 'undefined') window.renderPromises = [];
@@ -888,11 +875,11 @@ export const GBuilder: GType & {
   // IMPORTANT: Methods of includeCallingWindow classes must not use rest
   // parameters or default values in their function definition's argument
   // lists, nor may they be getter functions. This is because Function.length
-  // is used to append the calling window by mg.ts, and Function.length does
+  // is used to append the calling window in server G, and Function.length does
   // not include rest parameters or default arguments. Additionally getter
   // functions have zero arguments or Function.length. Using rest parameters
-  // or default arguments would result in overwriting the last argument by
-  // the calling window id!
+  // or default arguments will thus result in overwriting the last argument
+  // with the calling window id!
   includeCallingWindow: ['Prefs', 'Window', 'Commands', 'Module'];
 
   // async functions must be listed in asyncFuncs or runtime
@@ -1195,6 +1182,5 @@ export const GBuilder: GType & {
     getPanelChange: func as any,
     getModuleChange: func as any,
     setXulswordTabs: func as any,
-    setXulswordPanels: func as any,
   },
 };

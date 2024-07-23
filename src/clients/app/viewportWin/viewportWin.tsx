@@ -7,7 +7,7 @@ import {
   drop,
   validateViewportModulePrefs,
 } from '../../../common.ts';
-import G from '../../rg.ts';
+import { G } from '../../G.ts';
 import renderToRoot from '../renderer.tsx';
 import RenderPromise from '../../renderPromise.ts';
 import log from '../../log.ts';

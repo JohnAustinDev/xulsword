@@ -3,16 +3,16 @@ import log from 'electron-log';
 import i18n from 'i18next';
 import { findBookmarkItem, xulswordLocation } from '../../common.ts';
 import S from '../../defaultPrefs.ts';
-import G from './mg.ts';
+import { G } from './G.ts';
 import CommandsX from './components/commands.ts';
-import Viewport from '../components/viewport.ts';
+import Viewport from './viewport.ts';
 import Data from '../components/data.ts';
 
 import type { BrowserWindow } from 'electron';
 import type { GAddCaller, ContextDataType } from '../../type.ts';
 import type { AboutWinState } from '../../clients/app/about/about.tsx';
 
-// Require the calling window argument, since rg will not add it when
+// Require the calling window argument, since G will not add it when
 // Commands are called from the main process.
 const Commands = CommandsX as GAddCaller['Commands'];
 

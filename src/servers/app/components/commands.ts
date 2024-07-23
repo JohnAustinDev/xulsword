@@ -16,6 +16,7 @@ import {
   moveBookmarkItems,
   gbPaths,
   randomID,
+  keep,
 } from '../../../common.ts';
 import Subscription from '../../../subscription.ts';
 import C from '../../../constant.ts';
@@ -33,8 +34,8 @@ import {
   getAudioConfs,
   genBookTreeNodes,
 } from '../../common.ts';
-import Viewport from '../../components/viewport.ts';
-import PrefsX from './prefs.ts';
+import Viewport from '../viewport.ts';
+import PrefsX from '../prefs.ts';
 import LocalFile from '../../components/localFile.ts';
 import { modalInstall, scanAudio } from './module.ts';
 import Window, { getBrowserWindows, publishSubscription } from './window.ts';
@@ -57,6 +58,7 @@ import type {
   VerseKeyAudioFile,
   LocationVKCommType,
 } from '../../../type.ts';
+import { PanelChangeOptions } from '../../../viewport.ts';
 import type { WindowRootState } from '../../../clients/app/renderer.tsx';
 import type { AboutWinState } from '../../../clients/app/about/about.tsx';
 import type { PrintPassageState } from '../../../clients/app/printPassage/printPassage.tsx';
@@ -951,12 +953,11 @@ const Commands = {
   ): void {
     const tab = getTab();
     if (location.otherMod in tab) {
-      const xulsword: Partial<typeof S.prefs.xulsword> =
-        Viewport.setXulswordPanels({
-          whichModuleOrLocGB: location,
-          skipCallbacks: true,
-          clearRendererCaches: false,
-        });
+      const xulsword: Partial<typeof S.prefs.xulsword> = setXulswordPanels({
+        whichModuleOrLocGB: location,
+        skipCallbacks: true,
+        clearRendererCaches: false,
+      });
       xulsword.scroll = scroll || { verseAt: 'center' };
       Prefs.mergeValue('xulsword', xulsword, 'prefs', false, false, -2);
     } else shell.beep();
@@ -976,7 +977,7 @@ const Commands = {
     if (!vkMod || vkMod in tab) {
       let xulsword: Partial<typeof S.prefs.xulsword> = {};
       if (vkMod) {
-        xulsword = Viewport.setXulswordPanels({
+        xulsword = setXulswordPanels({
           whichModuleOrLocGB: vkMod,
           skipCallbacks: true,
           clearRendererCaches: false,
@@ -991,3 +992,46 @@ const Commands = {
 };
 
 export default Commands;
+
+// Update xulsword state prefs to modify viewport panels. The only state
+// props returned are those potentially, but not necessarily, modified
+// in the process.
+function setXulswordPanels(
+  options: Partial<PanelChangeOptions> & {
+    skipCallbacks?: boolean;
+    clearRendererCaches?: boolean;
+  },
+): Pick<
+  typeof S.prefs.xulsword,
+  'panels' | 'mtModules' | 'tabs' | 'keys' | 'isPinned' | 'location'
+> {
+  const { skipCallbacks, clearRendererCaches } = {
+    skipCallbacks: false, // default: run callbacks
+    clearRendererCaches: true, // default: reset renderer caches
+    ...options,
+  };
+
+  const xulsword = PrefsX.getComplexValue(
+    'xulsword',
+  ) as typeof S.prefs.xulsword;
+  Viewport.getPanelChange(options, xulsword);
+  const result = keep(xulsword, [
+    'panels',
+    'mtModules',
+    'tabs',
+    'keys',
+    'isPinned',
+    'location',
+  ]);
+
+  // Save the results to Prefs.
+  PrefsX.mergeValue(
+    'xulsword',
+    result,
+    'prefs',
+    skipCallbacks,
+    clearRendererCaches,
+  );
+
+  return result;
+}

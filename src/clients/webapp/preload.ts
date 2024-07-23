@@ -70,7 +70,7 @@ window.ProcessInfo = getProcessInfo({
 });
 
 let socket: Socket | null = null;
-const socketConnect = (port: number, origin?: string): Socket => {
+export const socketConnect = (port: number, origin?: string): Socket => {
   const ro = origin ?? window.location.origin;
   const hosturl = ro.replace(/^http/, 'ws').replace(/(:\d+)?$/, `:${port}`);
   socket = io(hosturl);

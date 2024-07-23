@@ -7,7 +7,7 @@
 import React from 'react';
 import { clone } from '../../../common.ts';
 import C from '../../../constant.ts';
-import G from '../../rg.ts';
+import { G } from '../../G.ts';
 import { verseKey } from '../../htmlData.ts';
 import Menupopup from '../libxul/menupopup.tsx';
 

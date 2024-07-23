@@ -496,8 +496,13 @@ export default function (opts) {
                   env: process.env,
                   stdio: 'inherit',
                 })
-                  .on('close', (code) => process.exit(code))
-                  .on('error', (spawnError) => console.error(spawnError));
+                  .on('close', (code) => {
+                    console.log(`devServer done: ${code}`);
+                    process.exit(code);
+                  })
+                  .on('error', (spawnError) =>
+                    console.error(`devServer error: ${spawnError}`),
+                  );
               },
             },
           }

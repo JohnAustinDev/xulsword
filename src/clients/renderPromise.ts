@@ -2,7 +2,7 @@ import { GCacheKey, JSON_stringify, isCallCacheable } from '../common.ts';
 import Cache from '../cache.ts';
 import { GBuilder } from '../type.ts';
 import C from '../constant.ts';
-import G from './rg.ts';
+import { G } from './G.ts';
 import log from './log.ts';
 import { getWaitRetry } from './common.ts';
 

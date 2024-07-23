@@ -11,7 +11,7 @@ import S from '../../../defaultPrefs.ts';
 import Subscription from '../../../subscription.ts';
 import Dirs from '../../components/dirs.ts';
 import Data from '../../components/data.ts';
-import Prefs from './prefs.ts';
+import Prefs from '../prefs.ts';
 import LocalFile from '../../components/localFile.ts';
 
 import type {

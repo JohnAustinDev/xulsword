@@ -1,5 +1,5 @@
 import React from 'react';
-import G from '../../rg.ts';
+import { G } from '../../G.ts';
 import renderToRoot from '../renderer.tsx';
 import log from '../../log.ts';
 import { Hbox, Vbox } from '../../components/libxul/boxes.tsx';

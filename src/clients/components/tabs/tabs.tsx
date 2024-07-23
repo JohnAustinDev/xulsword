@@ -5,7 +5,7 @@ import { ofClass } from '../../../common.ts';
 import { xulPropTypes, htmlAttribs } from '../libxul/xul.tsx';
 import { AnchorButton } from '../libxul/button.tsx';
 import Menupopup from '../libxul/menupopup.tsx';
-import G, { GI } from '../../rg.ts';
+import { G, GI } from '../../G.ts';
 import RenderPromise from '../../renderPromise.ts';
 import './tabs.css';
 

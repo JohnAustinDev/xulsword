@@ -5,7 +5,7 @@ import { Icon, Intent, Position, OverlayToaster } from '@blueprintjs/core';
 import Subscription from '../../../subscription.ts';
 import { clone, diff, keep, randomID } from '../../../common.ts';
 import C from '../../../constant.ts';
-import G from '../../rg.ts';
+import { G } from '../../G.ts';
 import { getStatePref, setStatePref } from '../..//common.ts';
 import { Hbox, Vbox } from './boxes.tsx';
 import Button from './button.tsx';

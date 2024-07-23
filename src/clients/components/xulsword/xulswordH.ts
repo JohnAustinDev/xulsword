@@ -1,7 +1,7 @@
 import C from '../../../constant.ts';
 import RefParser from '../../../refParser.ts';
 import { clone, ofClass, randomID, setGlobalPanels } from '../../../common.ts';
-import G from '../../rg.ts';
+import { G } from '../../G.ts';
 import { genBookAudioFile, verseKeyAudioFile } from '../../common.ts';
 import { verseKey } from '../../htmlData.ts';
 import log from '../../log.ts';

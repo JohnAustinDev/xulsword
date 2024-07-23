@@ -1,13 +1,15 @@
 /* eslint-disable @typescript-eslint/naming-convention */
+import { G } from '../../G.ts';
+
 import type C from '../../../constant.ts';
 import type S from '../../../defaultPrefs.ts';
 import type { AllComponentsSettings } from '../common.ts';
 
 // Note: langcode won't set the user interface language of the Bible browser
-// widget; settings.prefs.global.locale sets it.
+// widget; settings.prefs.global.locale will set it.
 export type BibleBrowserSettings = {
   component: 'bibleBrowser';
-  langcode?: string;
+  langcode?: string; // currently unused by this widget.
   settings: {
     prefs: {
       xulsword: Partial<(typeof S)['prefs']['xulsword']>;
@@ -17,6 +19,23 @@ export type BibleBrowserSettings = {
     };
   };
 };
+
+// The 'tabs' and 'panels' default settings may be left empty, to be filled with
+// available modules at run-time.
+export function setEmptySettings(settings: BibleBrowserSettings['settings']) {
+  const { tabs, panels } = settings.prefs.xulsword;
+  if (!tabs || tabs.every((t) => !t || !t.length)) {
+    const ntabs = tabs ?? [[], []];
+    ntabs.forEach((tabBank) => {
+      if (Array.isArray(tabBank)) tabBank.push(...G.Tabs.map((t) => t.module));
+    });
+    settings.prefs.xulsword.tabs = ntabs;
+  }
+  if (!panels || panels.every((p) => !p)) {
+    const npanels = (panels ?? ['', '']).map((p) => p || G.Tabs[0].module);
+    settings.prefs.xulsword.panels = npanels;
+  }
+}
 
 const defaultSettings: AllComponentsSettings = {
   react: {
@@ -60,8 +79,8 @@ const defaultSettings: AllComponentsSettings = {
             },
 
             showChooser: true,
-            tabs: [['KJV'], ['KJV']],
-            panels: ['KJV', 'KJV'],
+            tabs: [[], []], // leave tab-bank arrays empty to show all tabs in each bank.
+            panels: ['', ''], // leave panels empty to show the first installed module
             ilModules: [null, null],
             mtModules: [null, null],
 

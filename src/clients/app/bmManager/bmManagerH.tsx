@@ -14,7 +14,7 @@ import {
 } from '../../../common.ts';
 import S from '../../../defaultPrefs.ts';
 import C from '../../../constant.ts';
-import G from '../../rg.ts';
+import { G } from '../../G.ts';
 import { verseKey } from '../../htmlData.ts';
 import bookmarkItemIcon from './bookmarkItemIcon.tsx';
 import log from '../../log.ts';

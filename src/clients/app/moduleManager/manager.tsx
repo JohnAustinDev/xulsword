@@ -20,7 +20,7 @@ import {
   localizeString,
 } from '../../../common.ts';
 import C from '../../../constant.ts';
-import G from '../../rg.ts';
+import { G } from '../../G.ts';
 import log from '../../log.ts';
 import {
   getStatePref,

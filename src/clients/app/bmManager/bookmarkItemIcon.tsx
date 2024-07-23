@@ -1,6 +1,6 @@
 import React from 'react';
 import { bookmarkItemIconPath } from '../../../common.ts';
-import G from '../../rg.ts';
+import { G } from '../../G.ts';
 
 import type { BookmarkItemType, BookmarkTreeNode } from '../../../type.ts';
 

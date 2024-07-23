@@ -5,7 +5,7 @@ import { ProgressBar } from '@blueprintjs/core';
 import Subscription from '../../../subscription.ts';
 import { diff, sanitizeHTML, stringHash } from '../../../common.ts';
 import C from '../../../constant.ts';
-import G from '../../rg.ts';
+import { G } from '../../G.ts';
 import renderToRoot from '../renderer.tsx';
 import {
   windowArguments,

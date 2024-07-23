@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import C from '../../../constant.ts';
-import G from '../../rg.ts';
+import { G } from '../../G.ts';
 import { addClass, xulPropTypes, type XulProps } from './xul.tsx';
 import Menulist from './menulist.tsx';
 

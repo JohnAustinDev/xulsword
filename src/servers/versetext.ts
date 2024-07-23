@@ -1,13 +1,15 @@
 import { JSON_attrib_stringify, clone, getSwordOptions } from '../common.ts';
 import parseExtendedVKRef from '../extrefParser.ts';
 import C from '../constant.ts';
-import GE from './mg.ts';
 import { verseKey } from './common.ts';
 
 import type S from '../defaultPrefs.ts';
 import type {
+  GITypeMain,
+  GType,
   LocationVKType,
   LookupInfo,
+  ParamShift,
   TabTypes,
   TextVKType,
 } from '../type.ts';
@@ -18,7 +20,11 @@ import type { HTMLData } from '../clients/htmlData.ts';
 // references separated by semicolons and/or commas. If showText is false, only
 // a list of reference links will be returned, without the contents of each
 // reference.
+export type GetExtRefHTML = (
+  ...args: ParamShift<Parameters<typeof getExtRefHTML>>
+) => ReturnType<typeof getExtRefHTML>;
 export function getExtRefHTML(
+  G: GType | GITypeMain,
   extref: string,
   targetmod: string,
   locale: string,
@@ -28,7 +34,7 @@ export function getExtRefHTML(
   info?: Partial<LookupInfo>,
 ): string {
   const list = parseExtendedVKRef(verseKey, extref, context, [locale]);
-  const alternates = workingModules(locale);
+  const alternates = workingModules(G, locale);
   const mod = targetmod || alternates[0] || '';
   const html: string[] = [];
   list.forEach((locOrStr) => {
@@ -48,6 +54,7 @@ export function getExtRefHTML(
       if (showText || locOrStr.subid) {
         resolve =
           locationVKText(
+            G,
             locOrStr,
             mod,
             alternates,
@@ -58,15 +65,15 @@ export function getExtRefHTML(
           ) || resolve;
       }
       const { location, vkMod: module, text } = resolve;
-      if (module && module in GE.Tab && location.book) {
-        const { direction, label, labelClass } = GE.Tab[module];
+      if (module && module in G.Tab && location.book) {
+        const { direction, label, labelClass } = G.Tab[module];
         const crref = ['crref'];
         const crtext = ['crtext'];
-        if (direction !== GE.ProgramConfig.direction) {
+        if (direction !== G.ProgramConfig.direction) {
           crtext.push('opposing-program-direction');
         }
         const fntext = ['fntext'];
-        if (direction !== GE.ProgramConfig.direction) {
+        if (direction !== G.ProgramConfig.direction) {
           fntext.push('opposing-program-direction');
         }
         const altlabel = ['altlabel', labelClass];
@@ -112,7 +119,11 @@ export function getExtRefHTML(
 // modules may use various empty verse place-holders) then null is returned.
 
 // LookupInfo data is also returned via an info object if supplied.
+export type LocationVKText = (
+  ...args: ParamShift<Parameters<typeof locationVKText>>
+) => ReturnType<typeof locationVKText>;
 export function locationVKText(
+  G: GType | GITypeMain,
   locationx: LocationVKType,
   targetmodx: string | null,
   altModules?: string[] | null | false,
@@ -128,7 +139,7 @@ export function locationVKText(
   i.alternate = false;
   i.anytab = false;
   i.possibleV11nMismatch = false;
-  const tab = GE.Tab;
+  const tab = G.Tab;
   // Is module acceptable, or if not, is there a companion which is?
   let targetmod = targetmodx;
   if (targetmod && !(targetmod in tab)) {
@@ -144,7 +155,7 @@ export function locationVKText(
     (mtype === C.COMMENTARY && commentaries);
   if (!location.subid && targetmod && !modOK && altModules !== false) {
     const companions: string[] = [];
-    const companion = GE.LibSword.getModuleInformation(targetmod, 'Companion');
+    const companion = G.LibSword.getModuleInformation(targetmod, 'Companion');
     if (companion !== C.NOTFOUND)
       companions.push(...companion.split(/\s*,\s*/));
     const compOK = companions.find((compx) => {
@@ -174,14 +185,17 @@ export function locationVKText(
     const isOK =
       (type === C.BIBLE && commentaries !== 'only') ||
       (type === C.COMMENTARY && commentaries);
-    if (isOK && v11n && book && GE.getBooksInVKModule(module).includes(book)) {
+    if (isOK && v11n && book && G.getBooksInVKModule(module).includes(book)) {
       let text;
       const modloc = verseKey(loc);
       if (loc.subid) {
-        text = getFootnoteText(loc, mod);
+        text = getFootnoteText(G, loc, mod);
       } else {
-        const options = getSwordOptions(GE, GE.Tab[module].type);
-        text = GE.LibSword.getVerseText(
+        const options = getSwordOptions(
+          'Prefs' in G ? G : false,
+          G.Tab[module].type,
+        );
+        text = G.LibSword.getVerseText(
           module,
           modloc.osisRef(v11n),
           keepNotes,
@@ -214,7 +228,7 @@ export function locationVKText(
       }
     });
     if (!result && findAny) {
-      GE.Tabs.forEach((t) => {
+      G.Tabs.forEach((t) => {
         if (!result) {
           result = tryText(location, t.module);
           if (result) {
@@ -228,13 +242,17 @@ export function locationVKText(
   return result || null;
 }
 
-function getFootnoteText(location: LocationVKType, module: string): string {
+function getFootnoteText(
+  G: GType | GITypeMain,
+  location: LocationVKType,
+  module: string,
+): string {
   const { book, chapter, verse, subid } = location;
   if (subid) {
-    const { notes: n } = GE.LibSword.getChapterText(
+    const { notes: n } = G.LibSword.getChapterText(
       module,
       `${book} ${chapter}`,
-      getSwordOptions(GE, GE.Tab[module].type),
+      getSwordOptions('Prefs' in G ? G : false, G.Tab[module].type),
     );
     const notes = n.split(/(?=<div[^>]+class="nlist")/);
     for (let x = 0; x < notes.length; x += 1) {
@@ -249,16 +267,22 @@ function getFootnoteText(location: LocationVKType, module: string): string {
 
 // Return modules (optionally of a particular type) that are associated with
 // the current locale and tab settings.
-function workingModules(locale: string, type?: TabTypes) {
-  const am = GE.LocaleConfigs[locale].AssociatedModules;
+function workingModules(
+  G: GType | GITypeMain,
+  locale: string,
+  type?: TabTypes,
+) {
+  const am = G.LocaleConfigs[locale].AssociatedModules;
   const alternates = new Set(am ? am.split(',') : undefined);
-  const tabs = GE.Prefs.getComplexValue(
-    'xulsword.tabs',
-  ) as typeof S.prefs.xulsword.tabs;
-  tabs.forEach((tbk) => {
-    if (tbk) tbk.forEach((t) => alternates.add(t));
-  });
+  if ('Prefs' in G) {
+    const tabs = G.Prefs.getComplexValue(
+      'xulsword.tabs',
+    ) as typeof S.prefs.xulsword.tabs;
+    tabs.forEach((tbk) => {
+      if (tbk) tbk.forEach((t) => alternates.add(t));
+    });
+  }
   return Array.from(alternates).filter(
-    (m) => !type || (m in GE.Tab && GE.Tab[m].tabType === type),
+    (m) => !type || (m in G.Tab && G.Tab[m].tabType === type),
   );
 }

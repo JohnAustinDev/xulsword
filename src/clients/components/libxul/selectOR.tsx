@@ -10,7 +10,7 @@ import {
   gbAncestorIDs,
 } from '../../../common.ts';
 import C from '../../../constant.ts';
-import G, { GI } from '../../rg.ts';
+import { G, GI } from '../../G.ts';
 import RenderPromise from '../../renderPromise.ts';
 import { addClass, xulPropTypes } from './xul.tsx';
 import { Vbox } from './boxes.tsx';

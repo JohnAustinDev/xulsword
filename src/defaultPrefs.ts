@@ -21,17 +21,17 @@ import type {
   WindowPrefsType,
 } from './type.ts';
 
-// The S object's properties are pref stores whose values are default PrefObjects.
-// S PrefObject types determine the expected type throughout xulsword. After they
-// are referenced, these default PrefObjects will be overridden in Prefs by
-// current user values and stored there. A pref store is not required to be
-// included in S. But if it is, defaults for all of its PrefObjects must be
-// included. Otherwise, S store PrefObjects which aren't will be deleted from
-// Prefs during write to the store. This provides an easy way to clean up outdated
-// PrefObjects after a program update. If a store is not included in S, default
-// values for its PrefObjects should appear in assets/default/preferences/<store>.json
-// or exceptions will be thrown if those PrefObjects aren't accessed by
-// Prefs.getPrefOrCreate.
+// This S object's properties define user preference stores whose values are
+// default PrefObject values. These S PrefObject types determine the expected
+// TypeScript types throughout xulsword source code. These default PrefObject
+// values will be overridden in Prefs by default pref files (Electron only) and
+// by user or build selected values, and then stored by Prefs. A Prefs store is
+// not required to be included in S. But if it is, defaults for all of its
+// PrefObjects must be included in S. Otherwise, those without defaults will be
+// deleted from Prefs during write to the store. This provides an easy way to
+// clean up outdated PrefObjects after a program update. If a store is not
+// included in S, then default values for its PrefObjects must appear in
+// assets/default/preferences/<store>.json or an exception will be thrown.
 //
 // Usage NOTE: PrefObjects are cloned before writing and after reading.
 //
@@ -51,9 +51,6 @@ import type {
 //
 // TODO: Write an installer script to delete arbitrary PrefValues during an update.
 const S = {
-  fonts: {
-    fonts: {} as Record<string, { fontFamily: string; path: string }>,
-  },
   style: {
     style: {
       locale: {},

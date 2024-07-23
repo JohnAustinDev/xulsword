@@ -5,13 +5,12 @@
   "type": "module",
   "scripts": {
     "start:app": "node ./scripts/check-port-in-use.mjs && webpack serve --env development --env appClients",
-    "start:appSrv": "yarn webpack --env development --env appSrv  --env preload && electron ./build/app/dist/servers/app/server.cjs",
-    "start:webapp": "node ./scripts/check-port-in-use.mjs && webpack serve --env development --env webappClients --env",
-    "start:webappSrv": "yarn webpack --env development --env webappSrv && node ./build/webapp",
-    "build:app": "yarn webpack --env packaged --env production --env appSrv --env preload --env appClients",
+    "start:appSrv": "yarn webpack --env development --env appSrv --env preload && cross-env LD_LIBRARY_PATH='./Cpp/lib' electron ./build/app/dist/appSrv/server.cjs",
+    "start:webapp": "node ./scripts/check-port-in-use.mjs && webpack serve --env development --env webappClients",
+    "start:webappSrv": "yarn webpack --env development --env webappSrv && cross-env LD_LIBRARY_PATH='./Cpp/lib' node ./build/webapp",
+    "build:app": "yarn webpack --env packaged --env production --env preload --env appSrv --env appClients",
     "build:webapp": "yarn webpack --env production --env webappSrv --env webappClients",
     "build:dll": "yarn webpack --env dll",
-    "install-libxulsword": "node ./nodemodules/libxulsword/install.mjs",
     "lint": "eslint . --cache",
     "package": "node ./scripts/clean.mjs dist release && yarn build && electron-builder build --publish never",
     "package-linux": "cross-env PKLIB=linux yarn install-libxulsword && yarn package --linux",
@@ -21,7 +20,7 @@
     "release-linux": "yarn && cross-env PKLIB=linux yarn install-libxulsword && yarn build && electron-builder build --publish always --linux",
     "release-32win": "yarn && cross-env PKLIB=32win yarn install-libxulsword && yarn build && electron-builder build --publish always --win --ia32 && cross-env PKLIB=linux yarn install-libxulsword",
     "release-64win": "yarn && cross-env PKLIB=64win yarn install-libxulsword && yarn build && electron-builder build --publish always --win --x64 && cross-env PKLIB=linux yarn install-libxulsword",
-    "postinstall": "electron-builder install-app-deps && yarn install-libxulsword && yarn ./build/app && yarn ./build/webapp"
+    "postinstallNOT": "electron-builder install-app-deps && yarn ./node_modules/libxulsword && yarn ./build/app && yarn ./build/webapp"
   },
   "build": {
     "npmRebuild": false,
@@ -220,7 +219,6 @@
     "eslint": "^9.6.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-config-standard-with-typescript": "^43.0.1",
-    "eslint-plugin-import": "^2.25.2",
     "eslint-plugin-n": "^15.0.0 || ^16.0.0 ",
     "eslint-plugin-promise": "^6.0.0",
     "eslint-plugin-react": "^7.34.3",
@@ -236,6 +234,7 @@
     "i18next-fs-backend": "^2.3.1",
     "identity-obj-proxy": "^3.0.0",
     "instead": "^1.0.3",
+    "libxulsword": "file:./libxulsword",
     "memorystore": "^1.6.7",
     "mini-css-extract-plugin": "^1.6.0",
     "prettier": "^3.3.2",

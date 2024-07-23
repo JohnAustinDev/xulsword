@@ -5,7 +5,7 @@ import {
   getSwordOptions,
 } from '../../../common.ts';
 import C from '../../../constant.ts';
-import G from '../../rg.ts';
+import { G } from '../../G.ts';
 import addBookmarks from '../../bookmarks.ts';
 import { isValidVKM, getLocalizedChapterTerm } from '../../common.ts';
 import { getDictEntryHTML } from '../../components/atext/zdictionary.ts';

@@ -8,7 +8,7 @@ import {
 } from '../common.ts';
 import RefParser from '../refParser.ts';
 import VerseKey from '../verseKey.ts';
-import G, { GI } from './rg.ts';
+import { G, GI } from './G.ts'; // web app G calls must be preloaded!
 
 import type {
   LocationORType,

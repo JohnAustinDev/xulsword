@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { dString } from '../../../common.ts';
 import C from '../../../constant.ts';
-import G, { GI } from '../../rg.ts';
+import { G, GI } from '../../G.ts';
 import RenderPromise from '../../renderPromise.ts';
 import { audioConfig, clearPending, getMaxChapter } from '../../common.ts';
 import { Hbox, Vbox } from '../libxul/boxes.tsx';

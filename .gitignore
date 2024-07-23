@@ -13,13 +13,13 @@ Cpp/clucene*
 Cpp/sword*
 Cpp/build*
 Cpp/phpsword
-*/libxulsword/build
 
 # webapp
 profile_webapp
 
 node_modules
-!node_modules/libxulsword
+# Note: it's not possible to re-include a directory or any file whose parent directory is excluded!
+#won't work: !node_modules/libxulsword
 
 build/release
 .dll

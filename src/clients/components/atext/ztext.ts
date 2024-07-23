@@ -10,7 +10,7 @@ import {
   stringHash,
 } from '../../../common.ts';
 import { getElementData } from '../../htmlData.ts';
-import G, { GI } from '../../rg.ts';
+import { G, GI } from '../../G.ts';
 import addBookmarks from '../../bookmarks.ts';
 import {
   getNoteHTML,

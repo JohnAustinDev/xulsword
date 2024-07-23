@@ -13,7 +13,7 @@ import {
 } from '../common.ts';
 import C from '../constant.ts';
 import S from '../defaultPrefs.ts';
-import G, { GI } from './rg.ts';
+import { G, GI } from './G.ts';
 import { getElementData, verseKey } from './htmlData.ts';
 import log from './log.ts';
 

@@ -1,7 +1,7 @@
 import React, { useLayoutEffect } from 'react';
 import { dString, sanitizeHTML } from '../../../common.ts';
 import C from '../../../constant.ts';
-import G from '../../rg.ts';
+import { G } from '../../G.ts';
 import log from '../../log.ts';
 import renderToRoot from '../renderer.tsx';
 import { xulPropTypes } from '../../components/libxul/xul.tsx';

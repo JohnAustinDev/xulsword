@@ -13,7 +13,7 @@ import {
   keep,
 } from '../../../common.ts';
 import S from '../../../defaultPrefs.ts';
-import G from '../../rg.ts';
+import { G } from '../../G.ts';
 import renderToRoot from '../renderer.tsx';
 import { verseKey } from '../../htmlData.ts';
 import log from '../../log.ts';

@@ -14,19 +14,16 @@ import Cache from '../../cache.ts';
 import { clone, JSON_parse, keep, localizeString } from '../../common.ts';
 import C from '../../constant.ts';
 import S, { completePanelPrefDefaultArrays } from '../../defaultPrefs.ts';
-import G from './mg.ts';
+import { G } from './G.ts';
 import handleGlobal from '../handleGlobal.ts';
 import path from 'path';
 import LocalFile from '../components/localFile.ts';
 import Window from './components/window.ts';
-import {
-  getCipherFailConfs,
-  validateGlobalModulePrefs,
-  CipherKeyModules,
-} from '../common.ts';
+import { validateGlobalModulePrefs } from './components/module.ts';
+import { getCipherFailConfs, CipherKeyModules } from '../common.ts';
 import MainMenuBuilder, { pushPrefsToMenu } from './mainMenu.ts';
 import contextMenu from './contextMenu.ts';
-import Viewport from '../components/viewport.ts';
+import Viewport from './viewport.ts';
 import {
   WindowRegistry,
   pushPrefsToWindows,
@@ -77,6 +74,7 @@ addBookmarkTransaction(
   ) as typeof S.bookmarks.rootfolder,
 );
 
+Cache.write(G.Prefs, 'PrefsElectron'); // for buried fontURL()
 if (G.Prefs.getBoolPref('global.InternetPermission')) {
   const url = G.Prefs.getCharPref('global.crashReporterURL');
   if (url) {
@@ -84,7 +82,11 @@ if (G.Prefs.getBoolPref('global.InternetPermission')) {
   }
 }
 
-G.LibSword.init();
+G.LibSword.init(
+  G.Prefs.getComplexValue(
+    'moduleManager.repositories',
+  ) as ManagerStatePref['repositories'],
+);
 
 let ProgramTitle = '';
 
@@ -241,7 +243,11 @@ const openXulswordWindow = () => {
     Subscription.subscribe.resetMain(() => {
       G.LibSword.quit();
       Cache.clear();
-      G.LibSword.init();
+      G.LibSword.init(
+        G.Prefs.getComplexValue(
+          'moduleManager.repositories',
+        ) as ManagerStatePref['repositories'],
+      );
       validateGlobalModulePrefs(Window);
       menuBuilder.buildMenu(true);
     }),
@@ -330,7 +336,7 @@ const openXulswordWindow = () => {
         });
         G.Prefs.setComplexValue('global.noAutoSearchIndex', nasi);
         setTimeout(() => {
-          G.LibSword.startBackgroundSearchIndexer().catch((er) => {
+          G.LibSword.startBackgroundSearchIndexer(G.Prefs).catch((er) => {
             log.error(er);
           });
         }, C.UI.Search.backgroundIndexerStartupWait);
@@ -362,7 +368,7 @@ const openXulswordWindow = () => {
 
   xulswordWindow.on('ready-to-show', () =>
     setTimeout(() => {
-      G.LibSword.startBackgroundSearchIndexer().catch((er) => {
+      G.LibSword.startBackgroundSearchIndexer(G.Prefs).catch((er) => {
         log.error(er);
       });
     }, C.UI.Search.backgroundIndexerStartupWait),

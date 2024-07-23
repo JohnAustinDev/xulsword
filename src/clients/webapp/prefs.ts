@@ -1,5 +1,5 @@
-import Rprefs, { type PrefsGType } from '../prefs.ts';
-import log from './log.ts';
+import Rprefs, { type PrefsGType } from '../../prefs.ts';
+import log from '../log.ts';
 
 function setCookie(cname: string, cvalue: string, exdays: number) {
   const d = new Date();

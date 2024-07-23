@@ -2,7 +2,7 @@ import type React from 'react';
 import { clone, ofClass } from '../../../common.ts';
 import C from '../../../constant.ts';
 import type S from '../../../defaultPrefs.ts';
-import G from '../../rg.ts';
+import { G } from '../../G.ts';
 import { findElementData, updateDataAttribute } from '../../htmlData.ts';
 import log from '../../log.ts';
 import { scrollIntoView, windowArguments } from '../../common.ts';

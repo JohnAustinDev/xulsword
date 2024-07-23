@@ -2,7 +2,7 @@ import Cache from '../cache.ts';
 import { clone, getSwordOptions, localizeBookmark } from '../common.ts';
 import C from '../constant.ts';
 import type S from '../defaultPrefs.ts';
-import G, { GI } from './rg.ts';
+import { G, GI } from './G.ts';
 import { updateDataAttribute, verseKey } from './htmlData.ts';
 import { getMaxVerse } from './common.ts';
 import bookmarkItemIcon from './app/bmManager/bookmarkItemIcon.tsx';

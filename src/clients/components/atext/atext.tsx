@@ -10,7 +10,7 @@ import {
   sanitizeHTML,
   stringHash,
 } from '../../../common.ts';
-import G, { GI } from '../../rg.ts';
+import { G, GI } from '../../G.ts';
 import log from '../../log.ts';
 import {
   clearPending,

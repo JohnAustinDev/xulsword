@@ -1,6 +1,6 @@
 import React from 'react';
 import C from '../../../constant.ts';
-import G from '../../rg.ts';
+import { G } from '../../G.ts';
 import renderToRoot from '../renderer.tsx';
 import { windowArguments } from '../../common.ts';
 import log from '../../log.ts';

@@ -1,9 +1,10 @@
 import C from '../../constant.ts';
 import S from '../../defaultPrefs.ts';
-import { hierarchy, mergePrefRoot } from '../../common.ts';
+import { hierarchy, mergePrefsRoots } from '../../common.ts';
+import Prefs from './prefs.ts';
 
 import type { TreeNodeInfo } from '@blueprintjs/core';
-import type { GType, PrefRoot, TreeNodeInfoPref } from '../../type.ts';
+import type { PrefObject, PrefRoot, TreeNodeInfoPref } from '../../type.ts';
 import type { SelectORProps } from '../components/libxul/selectOR.tsx';
 import type { BibleBrowserSettings } from './bibleBrowser/defaultSettings.ts';
 import type {
@@ -99,18 +100,12 @@ export function getProps<T extends Record<string, any>>(
   return newProps as T;
 }
 
-export function writePrefsStores(G: GType, prefs: Partial<PrefRoot>): void {
-  const defs = mergePrefRoot(prefs, S);
-  Object.entries(prefs).forEach((entry) => {
-    const [store, prefobj] = entry;
-    Object.keys(prefobj).forEach((rootkey) => {
-      G.Prefs.setComplexValue(
-        rootkey,
-        defs[store as keyof PrefRoot][rootkey],
-        `${store}_default` as 'prefs',
-      );
-      // Read the store to initialize it.
-      G.Prefs.getComplexValue(rootkey, store as 'prefs');
+export function writeSettingsToPrefsStores(settings: Partial<PrefRoot>): void {
+  const s = mergePrefsRoots(settings, S);
+  Object.entries(s).forEach((entry) => {
+    const [store, prefobj] = entry as [keyof PrefRoot, PrefObject];
+    Object.keys(prefobj).forEach((key) => {
+      Prefs.setComplexValue(key, s[store][key], store);
     });
   });
 }

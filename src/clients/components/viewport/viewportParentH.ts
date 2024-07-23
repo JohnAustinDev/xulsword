@@ -4,7 +4,7 @@ import type S from '../../../defaultPrefs.ts';
 import Cache from '../../../cache.ts';
 import { clone, escapeRE, ofClass } from '../../../common.ts';
 import { getElementData, verseKey } from '../../htmlData.ts';
-import G from '../../rg.ts';
+import { G } from '../../G.ts';
 import { scrollIntoView, windowArguments } from '../../common.ts';
 import { delayHandler } from '../libxul/xul.tsx';
 import { textChange } from '../atext/ztext.ts';

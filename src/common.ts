@@ -51,6 +51,9 @@ import type { verseKey } from './clients/htmlData.ts';
 import type { XulswordState } from './clients/components/xulsword/xulsword.tsx';
 import { BibleBrowserControllerGlobal } from './clients/webapp/bibleBrowser/controller.tsx';
 
+// This file contains functions that are used in common with both xulsword
+// clients and servers.
+
 export function isCallCacheable(
   gBuilder: typeof GBuilder,
   call: GCallType,
@@ -452,26 +455,32 @@ export function prefType(
 }
 
 // Shallow merge rootkey object properties (ie. merge complete.prefs.global properties).
-export function mergePrefRoot(
+export function mergePrefsRoots(
   sparse: Partial<PrefRoot>,
   complete: PrefRoot,
 ): PrefRoot {
-  const merged: PrefRoot = clone(complete);
-  Object.entries(merged).forEach((entry) => {
-    const [store, prefobj] = entry;
-    if (store in sparse) {
-      Object.entries(prefobj).forEach((entry2) => {
-        const [rootkey, prefobj2] = entry2;
-        if (typeof prefobj2 === 'object' && rootkey in (sparse as any)[store]) {
-          merged[store as keyof PrefRoot][rootkey] = {
-            ...prefobj2,
-            ...(sparse as any)[store][rootkey],
-          };
-        }
-      });
-    }
+  const complete2: PrefRoot = clone(complete);
+  Object.entries(complete2).forEach((entry) => {
+    // ex: prefs, xulsword
+    const [store, prefobj] = entry as [keyof PrefRoot, PrefObject];
+    Object.entries(prefobj).forEach((entry2) => {
+      // ex: location, { book: Gen... }
+      const [key, defValue] = entry2;
+      const sparseStore = sparse[store];
+      const value =
+        sparseStore && key in sparseStore ? sparseStore[key] : undefined;
+      // If defValue is prefObject, merge its keys so pref is always complete.
+      if (defValue && typeof defValue === 'object') {
+        complete2[store][key] = {
+          ...defValue,
+          ...(value && typeof value === 'object' ? value : {}),
+        };
+      } else {
+        complete2[store][key] = value ?? defValue;
+      }
+    });
   });
-  return merged;
+  return complete2;
 }
 
 // Return values of key/value pairs of component state Prefs. Component

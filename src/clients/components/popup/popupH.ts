@@ -7,7 +7,7 @@ import {
 } from '../../../common.ts';
 import parseExtendedVKRef from '../../../extrefParser.ts';
 import type S from '../../../defaultPrefs.ts';
-import G, { GI } from '../../rg.ts';
+import { G, GI } from '../../G.ts';
 import { addBookmarksToNotes, getBookmarkInfo } from '../../bookmarks.ts';
 import { getElementData, verseKey } from '../../htmlData.ts';
 import log from '../../log.ts';

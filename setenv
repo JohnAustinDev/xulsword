@@ -39,7 +39,7 @@ export XSModsCommon=/home/dale/ibt/server/home/ibt/IBTSite/htdocs/ftpmirror/priv
 # libxulsword Cpp build environment variables:
 ###############################################################################
 
-export LD_LIBRARY_PATH="./Cpp/lib"
+#export LD_LIBRARY_PATH="./Cpp/lib"
 
 export LIBXULSWORD_MAJOR=1
 export LIBXULSWORD_MINOR=5

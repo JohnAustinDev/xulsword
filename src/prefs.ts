@@ -8,6 +8,10 @@ import type ElectronLog from 'electron-log';
 import type LocalFile from './servers/components/localFile.ts';
 import type { PrefObject, PrefStoreType, PrefValue } from './type.ts';
 
+// Permanent storage of user preferences and settings. In Electron apps, the
+// local file system is used as storage. In web apps, browser cookies are used
+// as storage.
+
 export type PrefCallbackType = (
   callingWinID: number,
   store: PrefStoreType,
@@ -72,7 +76,7 @@ export default class Prefs {
     type: 'string' | 'number' | 'boolean' | 'complex' | 'any',
     aStore?: PrefStoreType,
   ): boolean {
-    const value = this.getKeyValueFromStore(key, true, aStore || 'prefs');
+    const value = this.getKeyValueFromStore(key, aStore || 'prefs', true);
     if (value === undefined) return false;
     if (!this.isType(type, value)) return false;
     return true;
@@ -193,12 +197,12 @@ export default class Prefs {
     return undefined;
   }
 
-  // Return the default value for a key. If store is in S and no default is found,
-  // an error is thrown. Otherwise undefined is returned. The default value will
-  // be the first found of:
-  // 1) defval argument (unless undefined)
+  // Return the default value for a key. If store is in S and no default is
+  // found, an error is thrown. If store is not in S and no default is found,
+  // undefined is returned. The default value will be the first found of:
+  // 1) defaultValue argument (unless undefined)
   // 2) current store value (if is exists)
-  // 3) current store_default value (if it exists)
+  // 3) current store_default value (if it exists and isElectronApp)
   // 4) value from S global variable.
   // 5) undefined, or throw if key is in S
   findDefaultValue(
@@ -209,7 +213,7 @@ export default class Prefs {
     if (defaultValue === undefined) {
       const s = this.findDefaultValueInS(key, store);
       const throwOnFail = store in S && s === undefined;
-      const value = this.getKeyValueFromStore(key, !throwOnFail, store);
+      const value = this.getKeyValueFromStore(key, store, !throwOnFail);
       if (value === undefined) return s;
       return value;
     }
@@ -229,14 +233,15 @@ export default class Prefs {
     return true;
   }
 
-  // Return the pref value of the given type and create it if it doesn't exist.
-  // Exceptions are thrown if:
-  // - defval is provided but has the wrong type
-  // - store is in S, but the requested key is not
-  // - store is in S and the default is required, but it cannot be found
-  // - pref creation fails
-  // If the key is not found in the store, or else its value is of the wrong type,
-  // then it, along with all of its unset ancestors, will be reset to a default value.
+  // Return a pref key's value, checking its type. Or if the key has not been
+  // set yet, create it and set it to defval. Exceptions are thrown if:
+  // - defval is provided but has the wrong type.
+  // - store is in S, but the requested key is not.
+  // - store is in S and the default is needed, but a default cannot be found.
+  // - pref creation fails.
+  // Important: If the key is not found in a store which is in S, or if its
+  // value is of the wrong type, then it, along with all of its unset
+  // ancestors, will be reset to a default value.
   getPrefOrCreate(
     key: string,
     type: 'string' | 'number' | 'boolean' | 'complex',
@@ -258,20 +263,22 @@ export default class Prefs {
         `Pref root key '${rootkey}' is unrecognized in '${store}'.`,
       );
     }
-    // Read the store to get the key value (without throwing if the key is missing).
-    let storeValue = this.getKeyValueFromStore(key, true, store, null);
+    // Read the store to get the key value (without throwing if the key is
+    // missing).
+    let storeValue = this.getKeyValueFromStore(key, store, true, null);
     if (store in S && storeValue === undefined) {
-      // Look for a missing ancestor key in the store.
+      // This key has never been set, so look for the left-most unset
+      // ancestor key in the store.
       const ks = key.split('.');
       let i;
       for (i = ks.length - 1; i > 0; i -= 1) {
         if (
-          this.getKeyValueFromStore(ks.slice(0, i).join('.'), true, store, null)
+          this.getKeyValueFromStore(ks.slice(0, i).join('.'), store, true, null)
         ) {
           break;
         }
       }
-      // If found, save the default ancestor value
+      // If found, get the ancestor key's S value.
       if (ks.length === 1 || i !== ks.length - 1) {
         const ancestorKey = ks.slice(0, i + 1).join('.');
         const ancestorSVal = this.findDefaultValueInS(
@@ -304,7 +311,7 @@ export default class Prefs {
       }
     }
     if (storeValue === undefined) {
-      storeValue = this.getKeyValueFromStore(key, true, store);
+      storeValue = this.getKeyValueFromStore(key, store, true);
     }
     let value = storeValue;
     // Use the default if store value is undefined
@@ -319,8 +326,7 @@ export default class Prefs {
     }
     if (value === undefined || !this.isType(type, value)) {
       // A program update may have caused a pref type change, so delete
-      // the existing value and replace it with a default value. Reading
-      // after delete causes the store_default to be read.
+      // the existing value and replace it with a default value.
       this.deleteUserPref(key, store);
       value = this.findDefaultValue(key, defval, store);
       if (!this.setPref(key, type, value, store, callingWinID, true)) {
@@ -333,10 +339,12 @@ export default class Prefs {
     return value;
   }
 
-  // Get persistent data from source json files
-  getStore(aStorex: string, getDefaultStore = false): PrefObject {
+  // Get persistent data from storage json data. Note, only the Electron app
+  // supports default stores.
+  getStore(aStorex: string, useDefaultStore = false): PrefObject {
     // Create a new store if needed
-    const aStore = getDefaultStore ? `${aStorex}_default` : aStorex;
+    let aStore = aStorex;
+    if (Build.isElectronApp && useDefaultStore) aStore = `${aStorex}_default`;
     if (this.stores === null || !(aStore in this.stores)) {
       if (this.storage) {
         this.stores = {
@@ -375,16 +383,22 @@ export default class Prefs {
     return data ?? {};
   }
 
-  // If getDefaultStore is null, only the store will be searched, if it is
-  // false, the store will be searched followed by the default store. If it
-  // is true, only the default store will be searched.
+  // Return the key value of a given store. Note: useDefaultStore is only
+  // supported within an Electron app and if set to true with a non-Electron
+  // app, an error with be thrown. If getDefaultStore is null, only the
+  // store will be searched, if it is false, the store will be searched
+  // followed by the default store. If it is true, only the default store
+  // will be searched or an error will be thrown if not an Electron app.
   getKeyValueFromStore(
     key: string,
-    noErrorOnMissingKey: boolean,
     aStore: string,
-    getDefaultStore = false as boolean | null,
+    noErrorOnMissingKey: boolean,
+    useDefaultStore = false as boolean | null,
   ): PrefValue {
-    const stobj = this.getStore(aStore, !!getDefaultStore);
+    if (useDefaultStore && !Build.isElectronApp) {
+      throw new Error(`Can only set useDefaultStore in Electron app.`);
+    }
+    const stobj = this.getStore(aStore, !!useDefaultStore);
     let keyExists = true;
     let keyvalue = stobj as PrefObject | PrefValue;
     key.split('.').forEach((d) => {
@@ -400,12 +414,12 @@ export default class Prefs {
         keyvalue = keyvalue[d] as PrefValue;
       }
     });
-    if (!keyExists) {
-      if (getDefaultStore === false) {
+    if (!keyExists && Build.isElectronApp) {
+      if (useDefaultStore === false) {
         return this.getKeyValueFromStore(
           key,
-          noErrorOnMissingKey,
           aStore,
+          noErrorOnMissingKey,
           true,
         );
       }
@@ -499,11 +513,11 @@ export default class Prefs {
         valueobj = value;
       } else {
         throw new Error(
-          `Prefs merge failed because value is not a PrefObject (value='${value?.toString()}', key='${key}', store='${store}').`,
+          `Prefs merge failed because value is not a PrefObject (${store}.${key}='${JSON_stringify(value)}').`,
         );
       }
     } else if (!this.isType(type, value)) {
-      const msg = `Prefs was given the wrong type (expected='${type}', given='${value?.toString()}', key='${key}', store='${store}').`;
+      const msg = `Prefs was given the wrong type: ${store}.${key}=${JSON_stringify(value)}, expected='${type}'`;
       if (type === 'complex') this.log?.warn(msg);
       else throw new Error(msg);
     }

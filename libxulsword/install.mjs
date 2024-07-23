@@ -1,8 +1,11 @@
 #! /usr/bin/env node
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 // Copy appropriate Node-API binary and DLLs to the Release folder.
+
+const dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const xulsword = process.env.XULSWORD;
 if (
@@ -15,16 +18,16 @@ if (
 const os = process.platform == 'win32' ? process.env.XCWD : 'linux';
 const machine = process.env.PKLIB || os;
 
-const build = path.join(__dirname, 'build');
+const build = path.join(dirname, 'build');
 if (fs.existsSync(build)) fs.rmSync(build, { recursive: true });
-const release = path.join(__dirname, 'build', 'Release');
+const release = path.join(dirname, 'build', 'Release');
 fs.mkdirSync(release, { recursive: true });
 console.log(`Installing ${machine} xulsword.node binary.`);
 
 let bindir = 'linux-x64-89';
 if (machine === '32win') bindir = 'win32-ia32-89';
 else if (machine === '64win') bindir = 'win32-x64-89';
-const binfile = path.join(__dirname, 'bin', bindir, 'libxulsword.node');
+const binfile = path.join(dirname, 'bin', bindir, 'libxulsword.node');
 console.log(`Copying Node-API binary xulsword.node to ${release}`);
 if (!fs.existsSync(binfile))
   throw new Error(`Library does not exist! ${binfile}`);

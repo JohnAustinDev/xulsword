@@ -13,7 +13,7 @@ import {
   getMaxVerse,
   getLocalizedChapterTerm,
 } from '../../common.ts';
-import G, { GI } from '../../rg.ts';
+import { G, GI } from '../../G.ts';
 import { delayHandler } from '../libxul/xul.tsx';
 
 import type {

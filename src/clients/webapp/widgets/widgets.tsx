@@ -1,14 +1,13 @@
 import React, { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import SocketConnect from '../../../preload.ts';
+import socketConnect from '../preload.ts';
 import {
   setGlobalLocale,
-  writePrefsStores,
+  writeSettingsToPrefsStores,
   getComponentSettings,
   getReactComponents,
 } from '../common.ts';
 import C from '../../../constant.ts';
-import G from '../../rg.ts';
 import log from '../../log.ts';
 import { callBatchThenCache } from '../../renderPromise.ts';
 import WidgetVK from './widgetVK.tsx';
@@ -19,7 +18,7 @@ import defaultSettings from './defaultSettings.ts';
 import type { PrefRoot } from '../../../type.ts';
 import type { ComponentSettings } from '../common.ts';
 
-const socket = SocketConnect(
+const socket = socketConnect(
   Number(process.env.WEBAPP_PORT),
   window.location.origin,
 );
@@ -38,10 +37,10 @@ if (widgets.length) {
 
       let langcode = 'en';
       const settings = getComponentSettings(widgets[0], defaultSettings);
-      if (settings && langcode in settings) ({ langcode } = settings);
+      if (settings?.langcode) ({ langcode } = settings);
       const prefs: Partial<PrefRoot> = {};
       const locale = setGlobalLocale(prefs, langcode);
-      writePrefsStores(G, prefs);
+      writeSettingsToPrefsStores(prefs);
 
       callBatchThenCache([
         ['Tab', null, undefined],

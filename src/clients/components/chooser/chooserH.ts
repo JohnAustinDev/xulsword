@@ -1,7 +1,7 @@
 import type React from 'react';
 import { getSwordOptions, ofClass, sanitizeHTML } from '../../../common.ts';
 import C from '../../../constant.ts';
-import G from '../../rg.ts';
+import { G } from '../../G.ts';
 import { delayHandler } from '../libxul/xul.tsx';
 import log from '../../log.ts';
 

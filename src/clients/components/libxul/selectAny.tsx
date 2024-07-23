@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { clone, getModuleOfObject, randomID } from '../../../common.ts';
-import G, { GI } from '../../rg.ts';
+import { G, GI } from '../../G.ts';
 import RenderPromise from '../../renderPromise.ts';
 import { htmlAttribs, type XulProps, xulPropTypes } from './xul.tsx';
 import SelectVK from './selectVK.tsx';

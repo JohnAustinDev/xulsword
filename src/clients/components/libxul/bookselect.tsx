@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import RefParser from '../../../refParser.ts';
-import G from '../../rg.ts';
+import { G } from '../../G.ts';
 import { addClass, xulPropTypes, type XulProps, xulStyle } from './xul.tsx';
 import { Box } from './boxes.tsx';
 import Spacer from './spacer.tsx';

@@ -1,16 +1,17 @@
 import i18n from 'i18next';
-import { getPanelWidths, keep } from '../../common.ts';
-import C from '../../constant.ts';
-import Prefs from '../app/components/prefs.ts';
-import { getBooksInVKModule, getTab, getTabs } from '../common.ts';
+import { getPanelWidths, keep } from './common.ts';
+import C from './constant.ts';
 
-import type S from '../../defaultPrefs.ts';
+import type S from './defaultPrefs.ts';
+import type PrefsElectron from './servers/app/prefs.ts';
+import type PrefsBrowser from './clients/webapp/prefs.ts';
 import type {
+  GType,
   LocationORType,
   SwordFeatures,
   TabType,
   TabTypes,
-} from '../../type.ts';
+} from './type.ts';
 
 type TabChangeOptions = {
   panelIndex: number; // which panel(s) (-1 is all)
@@ -18,7 +19,7 @@ type TabChangeOptions = {
   doWhat: 'show' | 'hide' | 'toggle';
 };
 
-type PanelChangeOptions = {
+export type PanelChangeOptions = {
   whichPanel: number | number[] | null;
   whichModuleOrLocGB: string | LocationORType | Array<string | LocationORType>;
   maintainWidePanels: boolean;
@@ -41,7 +42,20 @@ type PanelChangeState = Pick<
   | 'keys'
 >;
 
-const Viewport = {
+export class Viewport {
+  #Prefs;
+
+  #G;
+
+  constructor(
+    // These web app G calls must be cache preloaded.
+    G: Pick<GType, 'Tab' | 'Tabs' | 'GetBooksInVKModules'>,
+    prefs: typeof PrefsElectron | typeof PrefsBrowser,
+  ) {
+    this.#G = G;
+    this.#Prefs = prefs;
+  }
+
   // Sort tabslist in place by type and then by language relevance to a locale.
   sortTabsByLocale<T extends TabType[] | string[]>(
     tablist: T,
@@ -49,7 +63,7 @@ const Viewport = {
   ): T {
     const locale = (alocale || i18n.language).replace(/-.*$/, '');
     const locale2 = C.FallbackLanguage[i18n.language].replace(/-.*$/, '');
-    const Tab = getTab();
+    const { Tab } = this.#G;
     const order: TabTypes[] = ['Texts', 'Comms', 'Genbks', 'Dicts'];
     const locales = C.Locales.map((l) => l[0].replace(/-.*$/, ''));
     const localeRelevance = (t: TabType): number => {
@@ -90,7 +104,7 @@ const Viewport = {
       return ar - br;
     });
     return tablist;
-  },
+  }
 
   // Modify xulsword state changing the tab banks of one, or all, panels. The
   // tab(s) for a module, a list of modules, a type of module, or all modules,
@@ -112,8 +126,7 @@ const Viewport = {
       ...options,
     };
 
-    const Tabs = getTabs();
-    const Tab = getTab();
+    const { Tabs, Tab } = this.#G;
     const panelIndexes =
       panelIndex === -1 ? panels.map((_p: any, i: number) => i) : [panelIndex];
 
@@ -201,7 +214,7 @@ const Viewport = {
           panels[i] = nextmod;
           used[nextmod] = true;
           if (!state.location?.book && nextmod && Tab[nextmod].isVerseKey) {
-            const [book] = getBooksInVKModule(nextmod);
+            const [book] = this.#G.GetBooksInVKModules[nextmod];
             const v11n = Tab[nextmod].v11n || null;
             if (book && v11n) {
               state.location = {
@@ -216,7 +229,7 @@ const Viewport = {
       }
     });
     return state;
-  },
+  }
 
   // Modify xulsword state making one or more modules visible in one or more viewport
   // panels, if possible. If maintainWidePanels is true, existing wide panels will
@@ -249,7 +262,7 @@ const Viewport = {
     )
       ? whichModuleOrLocGB
       : [whichModuleOrLocGB];
-    const Tab = getTab();
+    const { Tab } = this.#G;
     let allowedPanels: number[];
     if (whichPanel === null) allowedPanels = panels.map((_a, i) => i);
     else if (Array.isArray(whichPanel)) allowedPanels = whichPanel;
@@ -354,13 +367,13 @@ const Viewport = {
               m &&
               m in Tab &&
               Tab[m].isVerseKey &&
-              getBooksInVKModule(m).includes(book),
+              this.#G.GetBooksInVKModules[m].includes(book),
           ))
       ) {
         const mfirst = panels.find((m) => m && m in Tab && Tab[m].isVerseKey);
         if (mfirst) {
           state.location = {
-            book: getBooksInVKModule(mfirst)[0],
+            book: this.#G.GetBooksInVKModules[mfirst][0],
             chapter: 1,
             verse: 1,
             v11n: Tab[mfirst].v11n || null,
@@ -369,7 +382,7 @@ const Viewport = {
       }
     }
     return state;
-  },
+  }
 
   // Modify the xulsword state object adding new modules to tabs and panels.
   // NOTE: The passed state is modified in place as well as returned, unless
@@ -379,7 +392,7 @@ const Viewport = {
     state: T,
     options?: Partial<TabChangeOptions & PanelChangeOptions>,
   ): T {
-    const Tab = getTab();
+    const { Tab } = this.#G;
     const whichTab = modules.filter(
       (m) => m && m in Tab && Tab[m] && Tab[m].conf.xsmType !== 'XSM_audio',
     );
@@ -402,7 +415,7 @@ const Viewport = {
       );
     }
     return state;
-  },
+  }
 
   // Update xulsword state prefs to modify tabs. The only state props
   // returned are those potentially, but not necessarily, modified.
@@ -420,14 +433,15 @@ const Viewport = {
       clearRendererCaches: true,
       ...options,
     };
-    const xulsword = Prefs.getComplexValue(
+
+    const xulsword = this.#Prefs.getComplexValue(
       'xulsword',
     ) as typeof S.prefs.xulsword;
 
     this.getTabChange(options, xulsword);
     const result = keep(xulsword, ['panels', 'mtModules', 'tabs', 'location']);
 
-    Prefs.mergeValue(
+    this.#Prefs.mergeValue(
       'xulsword',
       result,
       'prefs',
@@ -436,50 +450,7 @@ const Viewport = {
     );
 
     return result;
-  },
-
-  // Update xulsword state prefs to modify viewport panels. The only state
-  // props returned are those potentially, but not necessarily, modified
-  // in the process.
-  setXulswordPanels(
-    options: Partial<PanelChangeOptions> & {
-      skipCallbacks?: boolean;
-      clearRendererCaches?: boolean;
-    },
-  ): Pick<
-    typeof S.prefs.xulsword,
-    'panels' | 'mtModules' | 'tabs' | 'keys' | 'isPinned' | 'location'
-  > {
-    const { skipCallbacks, clearRendererCaches } = {
-      skipCallbacks: false, // default: run callbacks
-      clearRendererCaches: true, // default: reset renderer caches
-      ...options,
-    };
-
-    const xulsword = Prefs.getComplexValue(
-      'xulsword',
-    ) as typeof S.prefs.xulsword;
-    this.getPanelChange(options, xulsword);
-    const result = keep(xulsword, [
-      'panels',
-      'mtModules',
-      'tabs',
-      'keys',
-      'isPinned',
-      'location',
-    ]);
-
-    // Save the results to Prefs.
-    Prefs.mergeValue(
-      'xulsword',
-      result,
-      'prefs',
-      skipCallbacks,
-      clearRendererCaches,
-    );
-
-    return result;
-  },
-};
+  }
+}
 
 export default Viewport;

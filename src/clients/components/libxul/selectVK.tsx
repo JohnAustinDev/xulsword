@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { clone, diff, getModuleOfObject, ofClass } from '../../../common.ts';
 import C from '../../../constant.ts';
-import G from '../../rg.ts';
+import { G } from '../../G.ts';
 import { getMaxChapter, getMaxVerse } from '../../common.ts';
 import RenderPromise from '../../renderPromise.ts';
 import { addClass, xulPropTypes } from './xul.tsx';

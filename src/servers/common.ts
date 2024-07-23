@@ -9,17 +9,15 @@ import RefParser from '../refParser.ts';
 import {
   isASCII,
   JSON_parse,
-  validateViewportModulePrefs,
-  keep,
   normalizeFontFamily,
   pad,
   hierarchy,
   getSwordOptions,
+  JSON_stringify,
 } from '../common.ts';
 import Cache from '../cache.ts';
 import Subscription from '../subscription.ts';
 import Dirs from './components/dirs.ts';
-import Prefs from './app/components/prefs.ts';
 import DiskCache from './components/diskcache.ts';
 import LibSword, { moduleUnsupported } from './components/libsword.ts';
 import LocalFile from './components/localFile.ts';
@@ -31,7 +29,6 @@ import parseSwordConf, {
 } from './parseSwordConf.ts';
 
 import type { TreeNodeInfo } from '@blueprintjs/core';
-import type S from '../defaultPrefs.ts';
 import type {
   TabType,
   BookType,
@@ -52,8 +49,8 @@ import type {
   ModulesCache,
   TreeNodeInfoPref,
 } from '../type.ts';
+import PrefsElectron from './app/prefs.ts';
 import type { RefParserOptionsType } from '../refParser.ts';
-import type Window from './app/components/window.ts';
 import type RenderPromise from '../clients/renderPromise.ts';
 
 // Get all supported books in locale order. NOTE: xulsword ignores individual
@@ -487,34 +484,46 @@ export function verseKey(
 // If a module config fontFamily specifies a URL to a font, rather
 // than a fontFamily, then parse the URL. Otherwise return null.
 function fontURL(mod: string) {
-  const url = LibSword.getModuleInformation(mod, 'Font').match(
-    /(\w+:\/\/[^"')]+)\s*$/,
-  );
-  return url
-    ? { fontFamily: `_${url[1].replace(/[^\w\d]/g, '_')}`, url: url[1] }
+  const prefs = Cache.has('PrefsElectron')
+    ? (Cache.read('PrefsElectron') as typeof PrefsElectron)
     : null;
+  if (!Build.isElectronApp || prefs?.getBoolPref('global.InternetPermission')) {
+    const url = LibSword.getModuleInformation(mod, 'Font').match(
+      /(\w+:\/\/[^"')]+)\s*$/,
+    );
+    if (url)
+      return { fontFamily: `_${url[1].replace(/[^\w\d]/g, '_')}`, url: url[1] };
+  }
+  return null;
 }
 
 // Link to fonts which are in xulsword's xsFonts directory. Fonts
 // listed will appear in font option menus and will be available to
-// all modules. The fonts pref is used to cache costly font data.
+// all modules. Costly font data is cached in a local file.
+type FontsType = Record<string, { fontFamily: string; path: string }>;
 export function getModuleFonts(): FontFaceType[] {
   if (!Cache.has('ModuleFonts')) {
     // Look for xulsword local fonts, which may be included with some
     // XSM modules.
     const ret = [] as FontFaceType[];
-    let fonts = Prefs.getComplexValue('fonts', 'fonts') as typeof S.fonts.fonts;
+    let writeFileFonts = true;
+    let fileFonts: FontsType | undefined = undefined;
+    const dataFile = Dirs.xsFonts.append('font-data.json');
+    if (dataFile.exists()) {
+      fileFonts = JSON_parse(dataFile.readFile()) as FontsType;
+    }
     const fontfiles = Dirs.xsFonts.directoryEntries;
-    let reread = true;
     if (
-      fontfiles.length === Object.keys(fonts).length &&
+      fileFonts &&
+      fontfiles.length === Object.keys(fileFonts).length &&
       fontfiles?.every((f) => {
-        return Object.keys(fonts).includes(f);
+        return fileFonts && Object.keys(fileFonts).includes(f);
       })
     ) {
-      reread = false;
+      writeFileFonts = false;
     }
-    if (reread) {
+    let fonts: FontsType = fileFonts ?? {};
+    if (writeFileFonts) {
       fonts = {};
       fontfiles?.forEach((file) => {
         const font = new LocalFile(path.join(Dirs.path.xsFonts, file));
@@ -528,7 +537,7 @@ export function getModuleFonts(): FontFaceType[] {
         }
         fonts[file] = { fontFamily, path: font.path };
       });
-      Prefs.setComplexValue('fonts', fonts, 'fonts');
+      dataFile.writeFile(JSON_stringify(fonts));
     }
 
     Object.values(fonts).forEach((info) => {
@@ -543,12 +552,10 @@ export function getModuleFonts(): FontFaceType[] {
     // fontFamily or font file name. All available font files were added above.
     // But URLs should also be added if any module requests them.
     const tabs = getTabs();
-    if (Prefs.getBoolPref('global.InternetPermission')) {
-      tabs.forEach((t) => {
-        const url = fontURL(t.module);
-        if (url) ret.push({ fontFamily: url.fontFamily, url: url.url });
-      });
-    }
+    tabs.forEach((t) => {
+      const url = fontURL(t.module);
+      if (url) ret.push({ fontFamily: url.fontFamily, url: url.url });
+    });
     Cache.write(ret, 'ModuleFonts');
   }
   return Cache.read('ModuleFonts');
@@ -639,76 +646,6 @@ export function getFeatureModules(): FeatureMods {
   }
 
   return Cache.read('swordFeatureMods');
-}
-
-// Xulsword state prefs and certain global prefs should only reference
-// installed modules or be empty string. This function insures that is
-// the case.
-export function validateGlobalModulePrefs(windowComp: typeof Window) {
-  const Tabs = getTabs();
-
-  const xsprops: Array<keyof typeof S.prefs.xulsword> = [
-    'panels',
-    'ilModules',
-    'mtModules',
-    'tabs',
-  ];
-  const xulsword = keep(
-    Prefs.getComplexValue('xulsword') as typeof S.prefs.xulsword,
-    xsprops,
-  );
-
-  validateViewportModulePrefs(Tabs, xulsword);
-
-  const globalPopup: Partial<typeof S.prefs.global.popup> = {};
-
-  const vklookup = Prefs.getComplexValue(
-    'global.popup.vklookup',
-  ) as typeof S.prefs.global.popup.vklookup;
-  Object.entries(vklookup).forEach((entry) => {
-    const m = entry[0] as keyof typeof S.prefs.global.popup.feature;
-    const [, lumod] = entry;
-    if (!lumod || !Tabs.find((t) => t.module === lumod)) {
-      delete vklookup[m];
-    }
-  });
-  globalPopup.vklookup = vklookup;
-
-  const feature = Prefs.getComplexValue(
-    'global.popup.feature',
-  ) as typeof S.prefs.global.popup.feature;
-  Object.entries(feature).forEach((entry) => {
-    const [f, m] = entry as [keyof typeof S.prefs.global.popup.feature, string];
-    if (!m || !Tabs.find((t) => t.module === m)) {
-      delete feature[f];
-    }
-  });
-  // If no pref has been set for popup.selection[feature] then choose a
-  // module from the available modules, if there are any.
-  const featureModules = getFeatureModules();
-  Object.entries(featureModules).forEach((entry) => {
-    const [f, fmods] = entry as [
-      keyof typeof S.prefs.global.popup.feature,
-      string[],
-    ];
-    if (!(f in feature) && Array.isArray(fmods) && fmods.length) {
-      const pref =
-        C.LocalePreferredFeature[i18n.language === 'en' ? 'en' : 'ru'][f];
-      feature[f] = pref?.find((m) => fmods.includes(m)) || fmods[0];
-    }
-  });
-  globalPopup.feature = feature;
-
-  // IMPORTANT: Use the skipCallbacks and clearRendererCaches arguments of
-  // Prefs.mergeValue() to force renderer processes to update once, after
-  // module prefs are valid. Otherwise renderer exceptions may be thrown as they
-  // they would re-render with invalid module prefs.
-  Prefs.mergeValue('global.popup', globalPopup, 'prefs', true, false);
-  Prefs.mergeValue('xulsword', xulsword, 'prefs', false, true);
-
-  // Any viewportWin windows also need modules to be checked,
-  // which happens in viewportWin component contsructor.
-  windowComp.reset('component-reset', { type: 'viewportWin' });
 }
 
 export function resetMain() {

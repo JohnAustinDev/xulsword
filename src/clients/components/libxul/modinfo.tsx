@@ -7,7 +7,7 @@ import {
   stringHash,
 } from '../../../common.ts';
 import C from '../../../constant.ts';
-import G from '../../rg.ts';
+import { G } from '../../G.ts';
 import { moduleInfoHTML } from '../../common.ts';
 import { xulPropTypes, type XulProps, htmlAttribs } from './xul.tsx';
 import Button from './button.tsx';

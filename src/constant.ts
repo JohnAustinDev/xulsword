@@ -15,18 +15,6 @@ import type {
   V11nType,
 } from './type.ts';
 
-// TODO: Add sword protocol support.
-
-function env(v: 'LOGLEVEL' | 'WEBAPP_PORT') {
-  if ('process' in globalThis) return globalThis.process.env[v];
-  if ('Process' in window) return window.ProcessInfo[v];
-}
-
-function platform() {
-  if ('process' in globalThis) return globalThis.process.platform;
-  if ('Process' in window) return window.ProcessInfo.platform;
-}
-
 // COMMON GLOBAL CONSTANTS FOR MAIN AND RENDERER PROCESSES
 const C = {
   DevToolsopen: Build.isDevelopment,
@@ -557,3 +545,13 @@ const C = {
   ] as const,
 };
 export default C;
+
+function env(v: 'LOGLEVEL' | 'WEBAPP_PORT') {
+  if ('process' in globalThis) return globalThis.process.env[v];
+  if ('Process' in window) return window.ProcessInfo[v];
+}
+
+function platform() {
+  if ('process' in globalThis) return globalThis.process.platform;
+  if ('Process' in window) return window.ProcessInfo.platform;
+}

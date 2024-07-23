@@ -6,7 +6,7 @@ import Subscription from '../../subscription.ts';
 import { randomID, sanitizeHTML, stringHash } from '../../common.ts';
 import Cache from '../../cache.ts';
 import C from '../../constant.ts';
-import G from '../rg.ts';
+import { G } from '../G.ts';
 import DynamicStyleSheet from '../style.ts';
 import ContextData from '../contextData.ts';
 import { windowArguments } from '../common.ts';

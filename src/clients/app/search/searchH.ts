@@ -6,7 +6,7 @@ import {
   sanitizeHTML,
 } from '../../../common.ts';
 import C from '../../../constant.ts';
-import G from '../../rg.ts';
+import { G } from '../../G.ts';
 import log from '../../log.ts';
 import { getElementData, verseKey } from '../../htmlData.ts';
 import { windowArguments } from '../../common.ts';
@@ -412,7 +412,7 @@ export async function createSearchIndex(
       const winid = descriptor.id;
       // Add a delay before and after index creation to insure UI is responsive.
       setTimeout(() => {
-        log.debug(`BUILDING searchIndexBuild...`);
+        log.debug(`BUILDING createSearchIndex...`);
         G.LibSword.searchIndexBuild(module, winid)
           .then((result) => {
             // For some reason, indexing sometimes seems to corrupt the order of

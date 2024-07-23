@@ -2,7 +2,7 @@ import React from 'react';
 import { Icon } from '@blueprintjs/core';
 import { dString, clone } from '../../../common.ts';
 import C from '../../../constant.ts';
-import G, { GI } from '../../rg.ts';
+import { G, GI } from '../../G.ts';
 import RenderPromise from '../../renderPromise.ts';
 import {
   registerUpdateStateFromPref,

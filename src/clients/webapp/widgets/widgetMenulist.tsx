@@ -1,7 +1,6 @@
-/* eslint-disable react/prop-types */
 import React, { useEffect, useState } from 'react';
 import log from '../../log.ts';
-import G from '../../rg.ts';
+import { G } from '../../G.ts';
 import { clone, randomID } from '../../../common.ts';
 import Menulist from '../../components/libxul/menulist.tsx';
 import { getProps } from '../common.ts';

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Icon } from '@blueprintjs/core';
-import G from '../../rg.ts';
+import { G } from '../../G.ts';
 import { genBookAudioFile, verseKeyAudioFile } from '../../common.ts';
 
 import type {

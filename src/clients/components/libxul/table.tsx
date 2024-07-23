@@ -11,7 +11,7 @@ import {
   SelectionModes,
 } from '@blueprintjs/table';
 import { clone, localizeString, ofClass, randomID } from '../../../common.ts';
-import G from '../../rg.ts';
+import { G } from '../../G.ts';
 import { addClass, xulPropTypes, topHandle } from './xul.tsx';
 import { Box } from './boxes.tsx';
 import '@blueprintjs/table/lib/css/table.css';

@@ -1,6 +1,6 @@
 import React from 'react';
 import { sanitizeHTML } from '../../../common.ts';
-import G from '../../rg.ts';
+import { G } from '../../G.ts';
 import renderToRoot from '../renderer.tsx';
 import { verseKey } from '../../htmlData.ts';
 import {

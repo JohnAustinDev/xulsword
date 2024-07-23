@@ -1,11 +1,7 @@
+import { app } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import LocalFile from './localFile.ts';
-
-import type { app as App } from 'electron';
-
-// Note: app will be undefined when running as a web app
-const { app } = (await import('electron')) as { app: typeof App | undefined };
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 

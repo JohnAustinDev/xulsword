@@ -2,7 +2,7 @@ import { JSON_attrib_stringify, getSwordOptions } from '../../../common.ts';
 import Cache from '../../../cache.ts';
 import type S from '../../../defaultPrefs.ts';
 import C from '../../../constant.ts';
-import G, { GI } from '../../rg.ts';
+import { G, GI } from '../../G.ts';
 import log from '../../log.ts';
 import type RenderPromise from '../../renderPromise.ts';
 

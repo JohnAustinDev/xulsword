@@ -3,6 +3,7 @@ import fpath from 'path';
 import { BrowserWindow } from 'electron';
 import ZIP from 'adm-zip';
 import log from 'electron-log';
+import i18n from 'i18next';
 import Cache from '../../../cache.ts';
 import {
   clone,
@@ -15,15 +16,13 @@ import {
   pad,
   mergeNewModules,
   unknown2String,
+  validateViewportModulePrefs,
+  keep,
 } from '../../../common.ts';
 import Subscription from '../../../subscription.ts';
 import C from '../../../constant.ts';
-import { CipherKeyModules } from '../../common.ts';
+import { CipherKeyModules, getFeatureModules, getTabs } from '../../common.ts';
 import parseSwordConf from '../../parseSwordConf.ts';
-import Window, { getBrowserWindows } from './window.ts';
-import LocalFile from '../../components/localFile.ts';
-import Dirs from '../../components/dirs.ts';
-import LibSword, { moduleUnsupported } from '../../components/libsword.ts';
 import {
   getFile,
   getDir,
@@ -38,6 +37,12 @@ import {
   logid,
   destroyFTPconnections,
 } from '../../ftphttp.ts';
+import DiskCache from '../../components/diskcache.ts';
+import LocalFile from '../../components/localFile.ts';
+import Dirs from '../../components/dirs.ts';
+import LibSword, { moduleUnsupported } from '../../components/libsword.ts';
+import Prefs from '../prefs.ts';
+import Window, { getBrowserWindows } from './window.ts';
 
 import type {
   CipherKey,
@@ -53,7 +58,7 @@ import type {
   VerseKeyAudioFile,
   OSISBookType,
 } from '../../../type.ts';
-import DiskCache from '../../components/diskcache.ts';
+import type S from '../../../defaultPrefs.ts';
 import type { ListingElementR } from '../../ftphttp.ts';
 
 // CrossWire SWORD Standard TODOS:
@@ -1363,3 +1368,73 @@ const Module = {
 };
 
 export default Module as Omit<typeof Module, 'download2'>;
+
+// Xulsword state prefs and certain global prefs should only reference
+// installed modules or be empty string. This function insures that is
+// the case.
+export function validateGlobalModulePrefs(windowComp: typeof Window) {
+  const Tabs = getTabs();
+
+  const xsprops: Array<keyof typeof S.prefs.xulsword> = [
+    'panels',
+    'ilModules',
+    'mtModules',
+    'tabs',
+  ];
+  const xulsword = keep(
+    Prefs.getComplexValue('xulsword') as typeof S.prefs.xulsword,
+    xsprops,
+  );
+
+  validateViewportModulePrefs(Tabs, xulsword);
+
+  const globalPopup: Partial<typeof S.prefs.global.popup> = {};
+
+  const vklookup = Prefs.getComplexValue(
+    'global.popup.vklookup',
+  ) as typeof S.prefs.global.popup.vklookup;
+  Object.entries(vklookup).forEach((entry) => {
+    const m = entry[0] as keyof typeof S.prefs.global.popup.feature;
+    const [, lumod] = entry;
+    if (!lumod || !Tabs.find((t) => t.module === lumod)) {
+      delete vklookup[m];
+    }
+  });
+  globalPopup.vklookup = vklookup;
+
+  const feature = Prefs.getComplexValue(
+    'global.popup.feature',
+  ) as typeof S.prefs.global.popup.feature;
+  Object.entries(feature).forEach((entry) => {
+    const [f, m] = entry as [keyof typeof S.prefs.global.popup.feature, string];
+    if (!m || !Tabs.find((t) => t.module === m)) {
+      delete feature[f];
+    }
+  });
+  // If no pref has been set for popup.selection[feature] then choose a
+  // module from the available modules, if there are any.
+  const featureModules = getFeatureModules();
+  Object.entries(featureModules).forEach((entry) => {
+    const [f, fmods] = entry as [
+      keyof typeof S.prefs.global.popup.feature,
+      string[],
+    ];
+    if (!(f in feature) && Array.isArray(fmods) && fmods.length) {
+      const pref =
+        C.LocalePreferredFeature[i18n.language === 'en' ? 'en' : 'ru'][f];
+      feature[f] = pref?.find((m) => fmods.includes(m)) || fmods[0];
+    }
+  });
+  globalPopup.feature = feature;
+
+  // IMPORTANT: Use the skipCallbacks and clearRendererCaches arguments of
+  // Prefs.mergeValue() to force renderer processes to update once, after
+  // module prefs are valid. Otherwise renderer exceptions may be thrown as they
+  // they would re-render with invalid module prefs.
+  Prefs.mergeValue('global.popup', globalPopup, 'prefs', true, false);
+  Prefs.mergeValue('xulsword', xulsword, 'prefs', false, true);
+
+  // Any viewportWin windows also need modules to be checked,
+  // which happens in viewportWin component contsructor.
+  windowComp.reset('component-reset', { type: 'viewportWin' });
+}

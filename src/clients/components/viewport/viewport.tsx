@@ -9,7 +9,7 @@ import {
   popupHandler as popupHandlerH,
   PopupParentInitState,
 } from '../popup/popupParentH.ts';
-import G from '../../rg.ts';
+import { G } from '../../G.ts';
 import RenderPromise from '../../renderPromise.ts';
 import log from '../../log.ts';
 import { verseKey } from '../../htmlData.ts';

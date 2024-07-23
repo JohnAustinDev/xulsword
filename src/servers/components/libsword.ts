@@ -18,7 +18,6 @@ import { publicFiles } from '../parseSwordConf.ts';
 import LocalFile from './localFile.ts';
 import Dirs from './dirs.ts';
 import Data from './data.ts';
-import Prefs from '../app/components/prefs.ts';
 import DiskCache from './diskcache.ts';
 
 import type { ChildProcess } from 'child_process';
@@ -35,6 +34,7 @@ import type {
   NewModuleReportType,
   SwordConfType,
   ModTypes,
+  GType,
 } from '../../type.ts';
 import type S from '../../defaultPrefs.ts';
 import type { ManagerStatePref } from '../../clients/app/moduleManager/manager.tsx';
@@ -133,7 +133,7 @@ const LibSword = {
 
   backgroundIndexerTO: null as NodeJS.Timeout | null,
 
-  init(): boolean {
+  init(extraSwordRepos?: ManagerStatePref['repositories']): boolean {
     if (this.initialized) return false;
 
     this.libxulsword = libxulsword;
@@ -144,11 +144,8 @@ const LibSword = {
       Dirs.path.xsModsCommon,
       Dirs.path.xsModsUser,
     ].filter(Boolean);
-    const repos = Prefs.getComplexValue(
-      'moduleManager.repositories',
-    ) as ManagerStatePref['repositories'];
-    if (repos) {
-      const { custom, disabled } = repos;
+    if (extraSwordRepos) {
+      const { custom, disabled } = extraSwordRepos;
       custom.forEach((repo: Repository) => {
         if (
           !disabled?.includes(repositoryKey(repo)) &&
@@ -613,7 +610,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // already being indexed. If an index fails, or takes too long and is canceled, it
   // will not be attempted again unless the module is re-installed. However the user
   // can always click the create index button.
-  async startBackgroundSearchIndexer() {
+  async startBackgroundSearchIndexer(Prefs: GType['Prefs']) {
     if (Object.keys(this.indexingID).length !== 0 || !this.isReady()) return;
     const start = new Date().valueOf();
     const timeout = C.UI.Search.backgroundIndexerTimeout; // milliseconds

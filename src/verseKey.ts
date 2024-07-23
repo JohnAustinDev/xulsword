@@ -6,8 +6,8 @@ import type RefParser from './refParser.ts';
 
 type VerseKeyGtype = {
   convertLocation?: GType['LibSword']['convertLocation'];
-  Book: GType['Book'];
-  Tab: () => GType['Tab'];
+  Book: GType['Book']; // These web app G calls must be cache preloaded.
+  Tab: () => GType['Tab']; // These web app G calls must be cache preloaded.
 };
 
 // Keep a reference to a particular range of Bible verses up to a whole

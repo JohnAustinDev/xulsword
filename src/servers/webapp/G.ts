@@ -1,15 +1,5 @@
-import { clipboard, shell } from 'electron';
 import i18next from 'i18next';
-import { canRedo, canUndo } from '../components/bookmarks.ts';
-import Viewport from '../components/viewport.ts';
-import Dirs from '../components/dirs.ts';
-import DiskCache from '../components/diskcache.ts';
-import Prefs from './components/prefs.ts';
 import LibSword from '../components/libsword.ts';
-import Data from '../components/data.ts';
-import Window, { publishSubscription } from './components/window.ts';
-import Module from './components/module.ts';
-import Commands from './components/commands.ts';
 import { getExtRefHTML, locationVKText } from '../versetext.ts';
 import {
   getBooks,
@@ -19,7 +9,6 @@ import {
   getBooksInVKModule,
   getBkChsInV11n,
   getSystemFonts,
-  resetMain,
   getAudioConfs,
   getLocaleConfigs,
   getModuleConfigDefault,
@@ -30,62 +19,33 @@ import {
   GetBooksInVKModules,
   getLocalizedBooks,
   getLocaleDigits,
-  inlineAudioFile,
-  inlineFile,
   getAllDictionaryKeyList,
   genBookTreeNodes,
+  inlineFile,
+  inlineAudioFile,
 } from '../common.ts';
 import { callBatch } from '../handleGlobal.ts';
 
-import type { GType, WindowDescriptorType } from '../../type.ts';
-import type { SubscriptionType } from '../../subscription.ts';
+import type { GITypeMain, GType } from '../../type.ts';
 
-if (Build.isServer)
-  throw new Error(
-    `This module should not be used with a NodeJS server; use mgServer.ts instead.`,
-  );
+if (Build.isElectronApp)
+  throw new Error(`This module should not be used with Electron.`);
 
-// This G object is for use in the main electron process, and it shares
-// the same interface as the renderer's G object. Properties of this
-// object directly access main process data and modules.
-class GClass implements GType {
+// Methods of GI are the same as G but without those that are Electron
+// only or are not allowed by the web app server (such as Prefs). Properties
+// of this object directly access server data and modules.
+
+// FOR MORE EXPLANATION SEE: ./src/clients/G.ts
+class GIClass implements GITypeMain {
+  // IMPORTANT: Care must be taken to insure public usage of these
+  // functions is safe and secure!
   i18n;
-
-  clipboard;
 
   LibSword;
 
-  Prefs;
-
-  DiskCache;
-
-  Dirs;
-
-  Commands;
-
-  Shell;
-
-  Data;
-
-  Window;
-
-  Module;
-
-  Viewport;
-
   constructor() {
     this.i18n = i18next;
-    this.clipboard = clipboard;
     this.LibSword = LibSword;
-    this.Prefs = Prefs;
-    this.DiskCache = DiskCache;
-    this.Dirs = Dirs;
-    this.Commands = Commands;
-    this.Shell = shell;
-    this.Data = Data;
-    this.Window = Window;
-    this.Module = Module;
-    this.Viewport = Viewport;
   }
 
   get Tabs() {
@@ -128,10 +88,6 @@ class GClass implements GType {
     return getBkChsInV11n();
   }
 
-  get OPSYS() {
-    return process.platform;
-  }
-
   get GetBooksInVKModules() {
     return GetBooksInVKModules();
   }
@@ -154,12 +110,6 @@ class GClass implements GType {
     ...args: Parameters<GType['inlineAudioFile']>
   ): ReturnType<GType['inlineAudioFile']> {
     return inlineAudioFile(...args);
-  }
-
-  resetMain(
-    ...args: Parameters<GType['resetMain']>
-  ): ReturnType<GType['resetMain']> {
-    resetMain(...args);
   }
 
   async getSystemFonts(
@@ -186,37 +136,16 @@ class GClass implements GType {
     return getLocaleDigits(...args);
   }
 
-  publishSubscription<S extends keyof SubscriptionType['publish']>(
-    s: S,
-    ops: {
-      renderers?:
-        | Partial<WindowDescriptorType>
-        | Array<Partial<WindowDescriptorType>>;
-      main?: boolean;
-    },
-    ...args: Parameters<SubscriptionType['publish'][S]>
-  ) {
-    publishSubscription(s, ops, ...args);
-  }
-
-  canUndo(...args: Parameters<GType['canUndo']>): ReturnType<GType['canUndo']> {
-    return canUndo(...args);
-  }
-
-  canRedo(...args: Parameters<GType['canRedo']>): ReturnType<GType['canRedo']> {
-    return canRedo(...args);
-  }
-
   async callBatch(
     ...args: Parameters<GType['callBatch']>
   ): ReturnType<GType['callBatch']> {
-    return callBatch(G, ...args);
+    return callBatch(GI, ...args);
   }
 
   callBatchSync(
     ...args: Parameters<GType['callBatchSync']>
   ): ReturnType<GType['callBatchSync']> {
-    return callBatch(G, ...args);
+    return callBatch(GI, ...args);
   }
 
   getAllDictionaryKeyList(
@@ -234,16 +163,14 @@ class GClass implements GType {
   getExtRefHTML(
     ...args: Parameters<GType['getExtRefHTML']>
   ): ReturnType<GType['getExtRefHTML']> {
-    return getExtRefHTML(...args);
+    return getExtRefHTML(GI, ...args);
   }
 
   locationVKText(
     ...args: Parameters<GType['locationVKText']>
   ): ReturnType<GType['locationVKText']> {
-    return locationVKText(...args);
+    return locationVKText(GI, ...args);
   }
 }
 
-const G = new GClass();
-
-export default G;
+export const GI = new GIClass();

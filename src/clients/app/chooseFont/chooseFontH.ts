@@ -1,7 +1,7 @@
 import C from '../../../constant.ts';
 import { clone, diff, ofClass } from '../../../common.ts';
 import log from '../../log.ts';
-import G from '../../rg.ts';
+import { G } from '../../G.ts';
 
 import type { ConfigType } from '../../../type.ts';
 import type { StyleType } from '../../style.ts';

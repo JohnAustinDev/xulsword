@@ -9,7 +9,7 @@ import {
 } from '../../../common.ts';
 import C from '../../../constant.ts';
 import type S from '../../../defaultPrefs.ts';
-import G from '../../rg.ts';
+import { G } from '../../G.ts';
 import { getElementData } from '../../htmlData.ts';
 import log from '../../log.ts';
 import { aTextWheelScroll } from './zversekey.ts';

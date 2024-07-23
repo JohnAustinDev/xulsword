@@ -14,10 +14,10 @@ __metadata:
 
 "libxulsword@file:../../node_modules/libxulsword::locator=xulsword%40workspace%3A.":
   version: 1.5.6
-  resolution: "libxulsword@file:../../node_modules/libxulsword#../../node_modules/libxulsword::hash=ded748&locator=xulsword%40workspace%3A."
+  resolution: "libxulsword@file:../../node_modules/libxulsword#../../node_modules/libxulsword::hash=199b49&locator=xulsword%40workspace%3A."
   dependencies:
     bindings: "npm:~1.2.1"
-  checksum: 10c0/62dae82a0f3d502544f66a50109fbacdc60e96631850a948023f551f46219975d4387b1f1c3957ee33f96f8c875576e429e63dcc5d9eda488d013b7483ca45ed
+  checksum: 10c0/6c2ad3936bd3a7ca63d5ff71bdb70ae8673d4c6e3d6f40a41e8a80d832a313daa36ac434912cedef8b13b967e0428d8288264e6f08e0cd163a141afcf9d46d7a
   languageName: node
   linkType: hard
 

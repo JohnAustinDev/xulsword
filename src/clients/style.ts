@@ -1,7 +1,7 @@
 import { normalizeFontFamily } from '../common.ts';
 import C from '../constant.ts';
 import type S from '../defaultPrefs.ts';
-import G, { GI } from './rg.ts';
+import { G, GI } from './G.ts';
 import RenderPromise from './renderPromise.ts';
 import log from './log.ts';
 

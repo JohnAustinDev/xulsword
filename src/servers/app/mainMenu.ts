@@ -8,11 +8,11 @@ import {
   xulswordLocation,
 } from '../../common.ts';
 import C from '../../constant.ts';
-import G from './mg.ts';
+import { G } from './G.ts';
 import Window, { getBrowserWindows } from './components/window.ts';
 import Commands from './components/commands.ts';
 import { verseKey } from '../common.ts';
-import Viewport from '../components/viewport.ts';
+import Viewport from './viewport.ts';
 
 import type S from '../../defaultPrefs.ts';
 import type { BrowserWindow, MenuItemConstructorOptions } from 'electron';

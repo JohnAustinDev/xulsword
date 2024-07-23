@@ -14,7 +14,7 @@ import {
   isInvalidWebAppData,
 } from '../../common.ts';
 import C from '../../constant.ts';
-import GServer from './mg.ts';
+import { GI } from './G.ts';
 import handleGlobal from '../handleGlobal.ts';
 import Dirs from '../components/dirs.ts';
 import LibSword from '../components/libsword.ts';
@@ -165,7 +165,7 @@ io.on('connection', (socket) => {
         if (Array.isArray(acall) && acall.length && acall.length <= 3) {
           let r;
           try {
-            r = handleGlobal(GServer, -1, acall, false);
+            r = handleGlobal(GI, -1, acall, false);
           } catch (er: any) {
             log.error(`${socket.handshake.address} › ${er}`);
           }

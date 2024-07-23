@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import Subscription from '../../../subscription.ts';
 import { b64toBlob } from '../../../common.ts';
 import C from '../../../constant.ts';
-import G from '../../rg.ts';
+import { G } from '../../G.ts';
 import { Hbox, Vbox } from './boxes.tsx';
 import Button from './button.tsx';
 import Spacer from './spacer.tsx';
