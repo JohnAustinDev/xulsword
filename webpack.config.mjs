@@ -113,8 +113,8 @@ export const devServerPort = 1212;
 const defaultEnvironment = {
   WEBAPP_DOMAIN_AND_PORT: `http://localhost:${devServerPort}`,
   WEBAPP_PROFILE: path.join(projectPaths.rootPath, 'profile_webapp'),
-  WEBAPP_SERVERROOT: path.join(projectPaths.rootPath, 'webapp', 'web'),
-  RESOURCEDIR: path.join(projectPaths.rootPath, 'webapp', 'web', 'resources'),
+  WEBAPP_SERVERROOT: path.join(projectPaths.rootPath, 'profile_webapp', 'web'),
+  RESOURCEDIR: path.join(projectPaths.rootPath, 'profile_webapp', 'web', 'resources'),
   WEBAPP_PUBPATHS: '/',
   WEBAPP_PORT: 3576,
   WEBAPP_PUBLIC_DIST: '/',

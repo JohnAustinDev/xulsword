@@ -20,7 +20,7 @@
     "release-linux": "yarn && cross-env PKLIB=linux yarn install-libxulsword && yarn build && electron-builder build --publish always --linux",
     "release-32win": "yarn && cross-env PKLIB=32win yarn install-libxulsword && yarn build && electron-builder build --publish always --win --ia32 && cross-env PKLIB=linux yarn install-libxulsword",
     "release-64win": "yarn && cross-env PKLIB=64win yarn install-libxulsword && yarn build && electron-builder build --publish always --win --x64 && cross-env PKLIB=linux yarn install-libxulsword",
-    "postinstallNOT": "electron-builder install-app-deps && yarn ./node_modules/libxulsword && yarn ./build/app && yarn ./build/webapp"
+    "postinstall": "electron-builder install-app-deps && yarn ./build/app && yarn ./build/webapp"
   },
   "build": {
     "npmRebuild": false,
@@ -126,8 +126,8 @@
   ],
   "homepage": "https://github.com/JohnAustinDev/xulsword#readme",
   "devEngines": {
-    "node": ">=20.x",
-    "yarn": ">=1.22.0"
+    "node": ">=22.x",
+    "yarn": ">=4.3.1"
   },
   "browserslist": [],
   "browser": {

@@ -5,19 +5,10 @@ __metadata:
   version: 8
   cacheKey: 10c0
 
-"bindings@npm:~1.2.1":
-  version: 1.2.1
-  resolution: "bindings@npm:1.2.1"
-  checksum: 10c0/361a7a2be8f5be3650f9e7e9bc577e2b20a22c1906f220f2b4ec0801f15d18c6cde7d5d084d90bc7252d18e381593729470c84591618b29209a3299fc1845a47
-  languageName: node
-  linkType: hard
-
-"libxulsword@file:../../node_modules/libxulsword::locator=xulsword%40workspace%3A.":
+"libxulsword@file:../../libxulsword::locator=xulsword%40workspace%3A.":
   version: 1.5.6
-  resolution: "libxulsword@file:../../node_modules/libxulsword#../../node_modules/libxulsword::hash=199b49&locator=xulsword%40workspace%3A."
-  dependencies:
-    bindings: "npm:~1.2.1"
-  checksum: 10c0/6c2ad3936bd3a7ca63d5ff71bdb70ae8673d4c6e3d6f40a41e8a80d832a313daa36ac434912cedef8b13b967e0428d8288264e6f08e0cd163a141afcf9d46d7a
+  resolution: "libxulsword@file:../../libxulsword#../../libxulsword::hash=d5effd&locator=xulsword%40workspace%3A."
+  checksum: 10c0/f7efc865d7529ba1cca8552abf3bf0cffa8009ca5410e49d20da6eb8e2749aece56ba104c0db189b055237f22af98488ccdc0b8d7c35f864e79bb1d4ba48b4c5
   languageName: node
   linkType: hard
 
@@ -25,7 +16,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "xulsword@workspace:."
   dependencies:
-    bindings: "npm:~1.2.1"
-    libxulsword: "file:../../node_modules/libxulsword"
+    libxulsword: "file:../../libxulsword"
   languageName: unknown
   linkType: soft

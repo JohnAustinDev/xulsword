@@ -5,7 +5,7 @@
 
 # export WEBAPP_DOMAIN_AND_PORT='http://localhost:1212'
 
-# export WEBAPP_SERVERROOT=[xulsword]/webapp/web
+# export WEBAPP_SERVERROOT=[xulsword]/profile_webapp/web
 
 # export WEBAPP_PORT=3576
 
@@ -18,19 +18,17 @@
 # The public URL on the web app server where webpacked files are served from.
 # export WEBAPP_PUBLIC_DIST=/
 
-# export RESOURCEDIR=[xulsword]/webapp/web/resources
+# export RESOURCEDIR=[xulsword]/profile_webapp/web/resources
 
-# export XSFonts=[xulsword]/webapp/web/resources/fonts
+# export XSFonts=[xulsword]/profile_webapp/web/resources/fonts
 
-# export XSAudio=[xulsword]/webapp/web/resources/audio
+# export XSAudio=[xulsword]/profile_webapp/web/resources/audio
 
 # XSModsUser=[xulsword]/webapp/web/resources
-export XSModsUser=/home/dale/ibt/server/home/ibt/IBTSite/htdocs/ftpmirror/pub/modsword/raw
-export XSModsCommon=/home/dale/ibt/server/home/ibt/IBTSite/htdocs/ftpmirror/private/modsword/raw
 
 # export XSModsCommon=$HOME/.sword
 
-# export LogDir=[xulsword]/webapp/logs
+# export LogDir=[xulsword]/profile_webapp/logs
 
 # Possible values are 'error', 'warn', 'info', 'verbose', 'debug', 'silly'
 # export LOGLEVEL='debug'
@@ -38,8 +36,6 @@ export XSModsCommon=/home/dale/ibt/server/home/ibt/IBTSite/htdocs/ftpmirror/priv
 ###############################################################################
 # libxulsword Cpp build environment variables:
 ###############################################################################
-
-#export LD_LIBRARY_PATH="./Cpp/lib"
 
 export LIBXULSWORD_MAJOR=1
 export LIBXULSWORD_MINOR=5
