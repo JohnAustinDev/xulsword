@@ -44,7 +44,10 @@ import type Commands from './servers/app/components/commands.ts';
 import type Data from './servers/components/data.ts';
 import type Module from './servers/app/components/module.ts';
 import type Window from './servers/app/components/window.ts';
-import type { DirsMainType, DirsRendererType } from './servers/components/dirs.ts';
+import type {
+  DirsMainType,
+  DirsRendererType,
+} from './servers/components/dirs.ts';
 import type LibSword from './servers/components/libsword.ts';
 import type { canRedo, canUndo } from './servers/components/bookmarks.ts';
 import type { CallBatch } from './servers/handleGlobal.ts';
@@ -747,7 +750,7 @@ export type GAddCaller = {
 
 export type GCallType = [keyof GType, string | null, any[] | undefined];
 
-export type GTypeMain = GType & { Dirs: DirsMainType; i18n: typeof i18next; }
+export type GTypeMain = GType & { Dirs: DirsMainType; i18n: typeof i18next };
 
 export type GType = {
   // Getters

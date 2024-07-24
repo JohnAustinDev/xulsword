@@ -14,7 +14,7 @@ import {
 } from '../../../common.ts';
 import S from '../../../defaultPrefs.ts';
 import { G } from '../../G.ts';
-import renderToRoot from '../renderer.tsx';
+import renderToRoot from '../../controller.tsx';
 import { verseKey } from '../../htmlData.ts';
 import log from '../../log.ts';
 import { windowArguments } from '../../common.ts';

@@ -1,6 +1,6 @@
 import React from 'react';
 import { G } from '../../G.ts';
-import renderToRoot from '../renderer.tsx';
+import renderToRoot from '../../controller.tsx';
 import log from '../../log.ts';
 import { Hbox, Vbox } from '../../components/libxul/boxes.tsx';
 import Label from '../../components/libxul/label.tsx';

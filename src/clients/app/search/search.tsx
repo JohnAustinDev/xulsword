@@ -12,7 +12,7 @@ import {
 } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G } from '../../G.ts';
-import renderToRoot from '../renderer.tsx';
+import renderToRoot from '../../controller.tsx';
 import RenderPromise from '../../renderPromise.ts';
 import log from '../../log.ts';
 import { windowArguments } from '../../common.ts';

@@ -78,7 +78,7 @@ import type {
 import type { ModinfoParent } from '../../components/libxul/modinfo.tsx';
 import type { XulProps } from '../../components/libxul/xul.tsx';
 import type { DragSizerVal } from '../../components/libxul/dragsizer.tsx';
-import type { WindowRootState } from '../renderer.tsx';
+import type { ControllerState } from '../../controller.tsx';
 
 G.Module.cancel().catch((er) => {
   log.error(er);
@@ -784,7 +784,7 @@ export default class ModuleManager
         resetOnResize = true;
         G.publishSubscription('setRendererRootState', { renderers: { id } }, {
           resetOnResize,
-        } as Partial<WindowRootState>);
+        } as Partial<ControllerState>);
       }
       return (
         <Vbox {...addClass('modulemanager', props)} flex="1" height="100%">

@@ -12,7 +12,7 @@ import {
 } from '../../../common.ts';
 import S from '../../../defaultPrefs.ts';
 import { G } from '../../G.ts';
-import renderToRoot from '../renderer.tsx';
+import renderToRoot from '../../controller.tsx';
 import {
   registerUpdateStateFromPref,
   setStatePref,
@@ -43,7 +43,7 @@ import type {
   BookmarkItemType,
   BookmarkTreeNode,
 } from '../../../type.ts';
-import type { RootPrintType } from '../renderer.tsx';
+import type { RootPrintType } from '../../controller.tsx';
 import type { DragSizerVal } from '../../components/libxul/dragsizer.tsx';
 import type { XulProps } from '../../components/libxul/xul.tsx';
 

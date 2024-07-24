@@ -59,7 +59,7 @@ import type {
   LocationVKCommType,
 } from '../../../type.ts';
 import { PanelChangeOptions } from '../../../viewport.ts';
-import type { WindowRootState } from '../../../clients/app/renderer.tsx';
+import type { ControllerState } from '../../../clients/controller.tsx';
 import type { AboutWinState } from '../../../clients/app/about/about.tsx';
 import type { PrintPassageState } from '../../../clients/app/printPassage/printPassage.tsx';
 import type { CopyPassageState } from '../../../clients/app/copyPassage/copyPassage.tsx';
@@ -566,13 +566,13 @@ const Commands = {
     }
   },
 
-  async print(winRootState?: Partial<WindowRootState>): Promise<void> {
+  async print(winRootState?: Partial<ControllerState>): Promise<void> {
     await new Promise<void>((resolve) => {
       const callingWinID: number =
         arguments[1] ?? getBrowserWindows({ type: 'xulswordWin' })[0].id;
       const windowToPrint = BrowserWindow.fromId(callingWinID);
       if (windowToPrint) {
-        const rootState: Partial<WindowRootState> = {
+        const rootState: Partial<ControllerState> = {
           reset: randomID(),
           ...winRootState,
           showPrintOverlay: true,

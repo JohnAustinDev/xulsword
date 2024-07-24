@@ -1,7 +1,7 @@
 import React from 'react';
 import C from '../../../constant.ts';
 import { G } from '../../G.ts';
-import renderToRoot from '../renderer.tsx';
+import renderToRoot from '../../controller.tsx';
 import { windowArguments } from '../../common.ts';
 import log from '../../log.ts';
 import { Hbox, Vbox } from '../../components/libxul/boxes.tsx';

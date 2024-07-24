@@ -1,5 +1,6 @@
 import C from '../../../constant.ts';
 import RefParser from '../../../refParser.ts';
+import Subscription from '../../../subscription.ts';
 import { clone, ofClass, randomID, setGlobalPanels } from '../../../common.ts';
 import { G } from '../../G.ts';
 import { genBookAudioFile, verseKeyAudioFile } from '../../common.ts';
@@ -15,10 +16,6 @@ import type {
   ShowType,
   VerseKeyAudioFile,
 } from '../../../type.ts';
-import type {
-  BibleBrowserControllerGlobal,
-  BibleBrowserControllerState,
-} from '../../webapp/bibleBrowser/controller.tsx';
 import type Xulsword from './xulsword.tsx';
 import type { XulswordState } from './xulsword.tsx';
 
@@ -157,15 +154,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
         case 'addcolumn':
         case 'removecolumn': {
           setGlobalPanels(G.Prefs, 0, currentId === 'addcolumn' ? 1 : -1);
-          const { setBibleBrowserState } =
-            window as BibleBrowserControllerGlobal;
-          if (setBibleBrowserState) {
-            setBibleBrowserState((prevState: BibleBrowserControllerState) => {
-              const s = clone(prevState);
-              s.renderKey = randomID();
-              return s;
-            });
-          }
+          Subscription.doPublish('setRendererRootState', { reset: randomID() });
           break;
         }
         default:

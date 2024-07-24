@@ -513,7 +513,9 @@ export function getModuleFonts(): FontFaceType[] {
     if (dataFile.exists()) {
       fileFonts = JSON_parse(dataFile.readFile()) as FontsType;
     }
-    const fontfiles = Dirs.xsFonts.directoryEntries.filter((d) => d !== fontDataFilename);
+    const fontfiles = Dirs.xsFonts.directoryEntries.filter(
+      (d) => d !== fontDataFilename,
+    );
     if (
       fileFonts &&
       fontfiles.length === Object.keys(fileFonts).length &&

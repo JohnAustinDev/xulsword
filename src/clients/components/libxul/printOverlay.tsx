@@ -11,7 +11,7 @@ import PrintSettings from './printSettings.tsx';
 import { type XulProps, xulPropTypes } from './xul.tsx';
 import './printOverlay.css';
 
-import type { RootPrintType } from '../../app/renderer.tsx';
+import type { RootPrintType } from '../../controller.tsx';
 
 const propTypes = {
   ...xulPropTypes,

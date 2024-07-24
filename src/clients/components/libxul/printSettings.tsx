@@ -19,7 +19,7 @@ import './printSettings.css';
 
 import type { Toaster, ToastProps } from '@blueprintjs/core';
 import type S from '../../../defaultPrefs.ts';
-import type { RootPrintType, WindowRootState } from '../../app/renderer.tsx';
+import type { RootPrintType, ControllerState } from '../../controller.tsx';
 import type { XulProps } from './xul.tsx';
 
 export const paperSizes = [
@@ -35,12 +35,12 @@ const convertToPx = { in: 96, mm: 96 / 25.4 };
 
 const scaleLimit = { min: 25, max: 150 };
 
-const dark: Partial<WindowRootState> = {
+const dark: Partial<ControllerState> = {
   modal: 'darkened',
   progress: 'indefinite',
 };
 
-const normal: Partial<WindowRootState> = {
+const normal: Partial<ControllerState> = {
   modal: 'dropshadow',
   iframeFilePath: '',
   progress: -1,

@@ -6,7 +6,7 @@ import Subscription from '../../../subscription.ts';
 import { diff, sanitizeHTML, stringHash } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G } from '../../G.ts';
-import renderToRoot from '../renderer.tsx';
+import renderToRoot from '../../controller.tsx';
 import {
   windowArguments,
   getStatePref,
@@ -37,7 +37,7 @@ import './printPassage.css';
 import type { ReactElement } from 'react';
 import type { OSISBookType } from '../../../type.ts';
 import type S from '../../../defaultPrefs.ts';
-import type { RootPrintType } from '../renderer.tsx';
+import type { RootPrintType } from '../../controller.tsx';
 import type { XulProps } from '../../components/libxul/xul.tsx';
 
 // TODO: As of 11/22 @page {@bottom-center {content: counter(page);}} does not work

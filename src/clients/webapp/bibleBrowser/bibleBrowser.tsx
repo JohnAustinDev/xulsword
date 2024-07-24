@@ -1,24 +1,25 @@
-import React, { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
-import socketConnect from '../preload.ts';
-import { randomID, setGlobalPanels } from '../../../common.ts';
+import React from 'react';
+import { setGlobalPanels } from '../../../common.ts';
 import { G } from '../../G.ts';
 import log from '../../log.ts';
 import { callBatchThenCache } from '../../renderPromise.ts';
-import DynamicStyleSheet from '../../style.ts';
+import renderToRoot from '../../controller.tsx';
+import Xulsword from '../../components/xulsword/xulsword.tsx';
+import socketConnect from '../preload.ts';
 import {
   writeSettingsToPrefsStores,
   setGlobalLocale,
   getComponentSettings,
   getReactComponents,
 } from '../common.ts';
-import BibleBrowserController, {
-  BibleBrowserControllerGlobal,
-} from './controller.tsx';
 import defaultSettings, {
   BibleBrowserSettings,
   setEmptySettings,
 } from './defaultSettings.ts';
+
+export type BibleBrowserControllerGlobal = {
+  browserMaxPanels?: number;
+} & typeof window;
 
 const socket = socketConnect(
   Number(process.env.WEBAPP_PORT),
@@ -77,17 +78,24 @@ socket.on('connect', () => {
       if (window.innerWidth < 500)
         G.Prefs.setBoolPref('xulsword.showChooser', false);
 
-      const dynamicStyleSheet = new DynamicStyleSheet(document);
+      // Wheel scroll is wonky in the Browser, so disable it for now.
+      const wheelCapture = (e: React.SyntheticEvent<any>): boolean => {
+        e.stopPropagation();
+        return true;
+      };
 
-      createRoot(bibleBrowserComp).render(
-        <StrictMode>
-          <BibleBrowserController
-            locale={locale}
-            renderKey={randomID()}
-            dynamicStyleSheet={dynamicStyleSheet}
-          />
-        </StrictMode>,
-      );
+      // Cancel Tarapro page loader overlay.
+      setTimeout(() => {
+        const win = frameElement?.ownerDocument.defaultView;
+        if (win && 'jQuery' in win) {
+          (win as any).bibleBrowserIsLoading = false;
+          (win as any).jQuery('.loader').fadeOut('slow');
+        }
+      }, 1);
+
+      renderToRoot(<Xulsword onWheelCapture={wheelCapture} />).catch((er) => {
+        log.error(er);
+      });
     }
   })().catch((er) => {
     log.error(er);

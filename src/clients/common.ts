@@ -70,7 +70,7 @@ export function windowArguments(
       }
     } else return data;
   }
-  return prop ? undefined : { type: 'xulsword' };
+  return prop ? undefined : { type: 'xulsword', id: 1 };
 }
 
 // Read libsword data-src attribute file URLs and convert them into src inline data.

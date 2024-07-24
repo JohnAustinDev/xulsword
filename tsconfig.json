@@ -27,10 +27,5 @@
     "emitDeclarationOnly": true,
     "skipLibCheck": true
   },
-  "include": [
-    "./src/**/*",
-    "./scripts/**/*",
-    "./libxulsword/**/*",
-    "./*.mjs"
-  ]
+  "include": ["./src/**/*", "./scripts/**/*", "./libxulsword/**/*", "./*.mjs"]
 }

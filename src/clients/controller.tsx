@@ -2,29 +2,29 @@ import React, { StrictMode, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import PropTypes from 'prop-types';
 import { Intent, ProgressBar, Spinner, Tag } from '@blueprintjs/core';
-import Subscription from '../../subscription.ts';
-import { randomID, sanitizeHTML, stringHash } from '../../common.ts';
-import Cache from '../../cache.ts';
-import C from '../../constant.ts';
-import { G } from '../G.ts';
-import DynamicStyleSheet from '../style.ts';
-import ContextData from '../contextData.ts';
-import { windowArguments } from '../common.ts';
-import log from '../log.ts';
-import { delayHandler, xulCaptureEvents } from '../components/libxul/xul.tsx';
-import { Hbox } from '../components/libxul/boxes.tsx';
-import Dialog from '../components/libxul/dialog.tsx';
-import Spacer from '../components/libxul/spacer.tsx';
-import Button from '../components/libxul/button.tsx';
-import Label from '../components/libxul/label.tsx';
-import Textbox from '../components/libxul/textbox.tsx';
-import PrintOverlay from '../components/libxul/printOverlay.tsx';
+import Subscription from '../subscription.ts';
+import { randomID, sanitizeHTML, stringHash } from '../common.ts';
+import Cache from '../cache.ts';
+import C from '../constant.ts';
+import { G } from './G.ts';
+import DynamicStyleSheet from './style.ts';
+import ContextData from './contextData.ts';
+import { windowArguments } from './common.ts';
+import log from './log.ts';
+import { delayHandler, xulCaptureEvents } from './components/libxul/xul.tsx';
+import { Hbox } from './components/libxul/boxes.tsx';
+import Dialog from './components/libxul/dialog.tsx';
+import Spacer from './components/libxul/spacer.tsx';
+import Button from './components/libxul/button.tsx';
+import Label from './components/libxul/label.tsx';
+import Textbox from './components/libxul/textbox.tsx';
+import PrintOverlay from './components/libxul/printOverlay.tsx';
 
 // Global CSS imports
 import 'normalize.css/normalize.css';
 import '@blueprintjs/icons/lib/css/blueprint-icons.css';
 import '@blueprintjs/core/lib/css/blueprint.css';
-import '../global-htm.css';
+import './global-htm.css';
 
 import type { ReactElement, SyntheticEvent } from 'react';
 import type {
@@ -32,70 +32,14 @@ import type {
   ModalType,
   NewModulesType,
   WindowDescriptorPrefType,
-} from '../../type.ts';
-import type { SubscriptionType } from '../../subscription.ts';
-import type { StyleType } from '../style.ts';
+} from '../type.ts';
+import type { SubscriptionType } from '../subscription.ts';
+import type { StyleType } from './style.ts';
 
-const descriptor = windowArguments();
-Cache.write(`${descriptor.type}:${descriptor.id}`, 'windowID');
-log.debug(`Initializing new window:`, descriptor);
+// This top level controller takes one or more components as children and
+// provides window level services and communication for those components.
 
-window.onerror = (er, url, line) => {
-  const er2 = typeof er === 'object' ? er.type : er;
-  const msg = `${er2} at: ${url} line: ${line}`;
-  window.IPC.send('error-report', msg);
-  return false;
-};
-
-window.addEventListener('unhandledrejection', (event) => {
-  const reason =
-    typeof event.reason === 'string' ? event.reason : event.reason.stack;
-  const msg = `Unhandled renderer rejection: ${reason}`;
-  window.IPC.send('error-report', msg);
-});
-
-window.IPC.on('cache-reset', () => {
-  Cache.clear();
-  log.debug(`CLEARED ALL CACHES`);
-  Cache.write(`${descriptor.type}:${descriptor.id}`, 'windowID');
-});
-
-const dynamicStyleSheet = new DynamicStyleSheet(document);
-
-dynamicStyleSheet.update(G.Data.read('stylesheetData') as StyleType);
-window.IPC.on('dynamic-stylesheet-reset', () => {
-  dynamicStyleSheet.update(G.Data.read('stylesheetData') as StyleType);
-});
-
-// Set window type and language classes on the root html element.
-const classes: string[] = [];
-const classArgs = [
-  'className',
-  'type',
-  'fitToContent',
-  'notResizable',
-] as const;
-classArgs.forEach((p: keyof WindowDescriptorPrefType) => {
-  const s = p in descriptor ? descriptor[p] : undefined;
-  if (s !== undefined && typeof s === 'boolean' && s) classes.push(p);
-  else if (s !== undefined && typeof s === 'string') classes.push(s);
-});
-classes.push('cs-locale');
-classes.push(G.i18n.language);
-const html = document?.getElementsByTagName('html')[0];
-if (html) {
-  html.className = classes.join(' ');
-  const dir = G.i18n.t('locale_direction');
-  html.dir = dir;
-}
-
-const propTypes = {
-  print: PropTypes.object.isRequired,
-  initialState: PropTypes.object.isRequired,
-  children: PropTypes.element.isRequired,
-};
-
-const InitialState = {
+const defaultInitialState = {
   reset: '' as string,
   dialogs: [] as ReactElement[],
   showPrintOverlay: false as boolean,
@@ -106,27 +50,31 @@ const InitialState = {
   progress: -1 as number | 'indefinite',
 };
 
-export type WindowRootState = typeof InitialState;
+export type ControllerState = typeof defaultInitialState;
 
-type WindowRootProps = WindowRootOptions & {
+type ControllerProps = ControllerOptions & {
   isPrintContainer: boolean;
   children: ReactElement;
 };
 
-// Key order must never change for React hooks to work!
-const stateme = Object.keys(InitialState) as Array<keyof typeof InitialState>;
-
-type StateArray<M extends keyof WindowRootState> = [
-  WindowRootState[M],
-  (a: WindowRootState[M]) => void,
+type StateArray<M extends keyof ControllerState> = [
+  ControllerState[M],
+  (a: ControllerState[M]) => void,
 ];
 
+// Key order must never change for React hooks to work!
+const stateme = Object.keys(defaultInitialState) as Array<
+  keyof typeof defaultInitialState
+>;
+const descriptor = windowArguments();
+Cache.write(`${descriptor.type}:${descriptor.id}`, 'windowID');
+let dynamicStyleSheet: DynamicStyleSheet | null = null;
 const delayHandlerThis = {};
 
-function WindowRoot(props: WindowRootProps) {
+function Controller(props: ControllerProps) {
   const { children, print, isPrintContainer, initialState: istate } = props;
 
-  const s = {} as { [k in keyof typeof InitialState]: StateArray<k> };
+  const s = {} as { [k in keyof typeof defaultInitialState]: StateArray<k> };
   stateme.forEach((me) => {
     s[me] = useState(istate[me]) as any;
   });
@@ -136,12 +84,14 @@ function WindowRoot(props: WindowRootProps) {
   // IPC component-reset setup:
   useEffect(() => {
     return window.IPC.on('component-reset', () => {
-      log.debug(
-        `Renderer reset (stylesheet, cache, component): ${descriptor.id}`,
-      );
-      dynamicStyleSheet.update(G.Data.read('stylesheetData') as StyleType);
-      Cache.clear();
-      s.reset[1](randomID());
+      if (dynamicStyleSheet) {
+        log.debug(
+          `Renderer reset (stylesheet, cache, component): ${descriptor.id}`,
+        );
+        dynamicStyleSheet.update(G.Data.read('stylesheetData') as StyleType);
+        Cache.clear();
+        s.reset[1](randomID());
+      }
     });
   });
 
@@ -157,7 +107,7 @@ function WindowRoot(props: WindowRootProps) {
     return Subscription.subscribe.setRendererRootState((state) => {
       Object.entries(state).forEach((entry) => {
         const [sp, v] = entry;
-        const S = sp as keyof typeof InitialState;
+        const S = sp as keyof typeof defaultInitialState;
         const val = v as any;
         if (val !== undefined) {
           const setMe = s[S][1] as (a: any) => any;
@@ -251,7 +201,7 @@ function WindowRoot(props: WindowRootProps) {
         log.debug(
           `Renderer reset (cache, stylesheet, component): ${descriptor.id}`,
         );
-        dynamicStyleSheet.update(G.Data.read('stylesheetData') as StyleType);
+        dynamicStyleSheet?.update(G.Data.read('stylesheetData') as StyleType);
         Cache.clear();
         s.reset[1](randomID());
         const dialog: ReactElement[] = [];
@@ -426,7 +376,6 @@ function WindowRoot(props: WindowRootProps) {
 
   return content;
 }
-WindowRoot.propTypes = propTypes;
 
 export type RootPrintType = {
   pageable: boolean;
@@ -437,16 +386,16 @@ export type RootPrintType = {
   settings: React.RefObject<HTMLDivElement>;
 };
 
-export type WindowRootOptions = {
+export type ControllerOptions = {
   print: RootPrintType;
-  initialState: Partial<WindowRootState>;
+  initialState: Partial<ControllerState>;
   onload?: (() => void) | null;
   onunload?: (() => void) | null;
 };
 
 export default async function renderToRoot(
   component: ReactElement,
-  options?: Partial<Omit<WindowRootOptions, 'print'>> & {
+  options?: Partial<Omit<ControllerOptions, 'print'>> & {
     print?: Partial<RootPrintType>;
   },
 ) {
@@ -462,21 +411,70 @@ export default async function renderToRoot(
     ...printArg,
   };
   const initialState = {
-    ...InitialState,
+    ...defaultInitialState,
     ...initialStateArg,
   };
+
+  log.debug(`Initializing new window:`, descriptor);
+
+  // On web clients, IPC is not available until the socket is connected.
+  window.onerror = (er, url, line) => {
+    const er2 = typeof er === 'object' ? er.type : er;
+    const msg = `${er2} at: ${url} line: ${line}`;
+    window.IPC.send('error-report', msg);
+    return false;
+  };
+  window.addEventListener('unhandledrejection', (event) => {
+    const reason =
+      typeof event.reason === 'string' ? event.reason : event.reason.stack;
+    const msg = `Unhandled renderer rejection: ${reason}`;
+    window.IPC.send('error-report', msg);
+  });
+  window.IPC.on('cache-reset', () => {
+    Cache.clear();
+    log.debug(`CLEARED ALL CACHES`);
+    Cache.write(`${descriptor.type}:${descriptor.id}`, 'windowID');
+  });
+  window.IPC.on('dynamic-stylesheet-reset', () => {
+    dynamicStyleSheet?.update(G.Data.read('stylesheetData') as StyleType);
+  });
+
+  dynamicStyleSheet = new DynamicStyleSheet(document);
+  dynamicStyleSheet.update(G.Data.read('stylesheetData') as StyleType);
+
+  // Set window type and language classes on the root html element.
+  const classes: string[] = [];
+  const classArgs = [
+    'className',
+    'type',
+    'fitToContent',
+    'notResizable',
+  ] as const;
+  classArgs.forEach((p: keyof WindowDescriptorPrefType) => {
+    const s = p in descriptor ? descriptor[p] : undefined;
+    if (s !== undefined && typeof s === 'boolean' && s) classes.push(p);
+    else if (s !== undefined && typeof s === 'string') classes.push(s);
+  });
+  classes.push('cs-locale');
+  classes.push(G.i18n.language);
+  const html = document?.getElementsByTagName('html')[0];
+  if (html) {
+    html.className = classes.join(' ');
+    const dir = G.i18n.t('locale_direction');
+    html.dir = dir;
+  }
 
   const root = createRoot(document.getElementById('root') as HTMLElement);
 
   root.render(
     <StrictMode>
-      <WindowRoot
+      <Controller
         print={print}
         isPrintContainer={!options?.print?.printContainer}
         initialState={initialState}
       >
         {component}
-      </WindowRoot>
+      </Controller>
     </StrictMode>,
   );
 

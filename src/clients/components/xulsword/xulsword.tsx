@@ -34,7 +34,7 @@ import {
 } from './history.tsx';
 import './xulsword.css';
 
-import type { BibleBrowserControllerGlobal } from '../../webapp/bibleBrowser/controller.tsx';
+import type { BibleBrowserControllerGlobal } from '../../webapp/bibleBrowser/bibleBrowser.tsx';
 import type { XulswordStateArgType } from '../../../type.ts';
 import type {
   RenderPromiseComponent,
@@ -336,85 +336,83 @@ export default class Xulsword
               </Hbox>
             )}
 
-            {!Build.isWebApp && (
-              <Hbox id="textnav" align="center">
-                <Bookselect
-                  id="book"
-                  sizetopopup="none"
-                  flex="1"
-                  selection={location?.book}
-                  options={booklist}
+            <Hbox id="textnav" align="center">
+              <Bookselect
+                id="book"
+                sizetopopup="none"
+                flex="1"
+                selection={location?.book}
+                options={booklist}
+                disabled={navdisabled}
+                key={[location?.book, bsreset].join('.')}
+                onChange={handler}
+              />
+              <Textbox
+                id="chapter"
+                width="50px"
+                maxLength="3"
+                pattern={/^[0-9]+$/}
+                value={
+                  location?.chapter
+                    ? dString(
+                        G.getLocaleDigits(),
+                        location.chapter,
+                        G.i18n.language,
+                      )
+                    : ''
+                }
+                timeout="600"
+                disabled={navdisabled}
+                key={`c${location?.chapter}`}
+                onChange={handler}
+                onClick={handler}
+              />
+              <Vbox>
+                <AnchorButton
+                  id="nextchap"
                   disabled={navdisabled}
-                  key={[location?.book, bsreset].join('.')}
-                  onChange={handler}
-                />
-                <Textbox
-                  id="chapter"
-                  width="50px"
-                  maxLength="3"
-                  pattern={/^[0-9]+$/}
-                  value={
-                    location?.chapter
-                      ? dString(
-                          G.getLocaleDigits(),
-                          location.chapter,
-                          G.i18n.language,
-                        )
-                      : ''
-                  }
-                  timeout="600"
-                  disabled={navdisabled}
-                  key={`c${location?.chapter}`}
-                  onChange={handler}
                   onClick={handler}
                 />
-                <Vbox>
-                  <AnchorButton
-                    id="nextchap"
-                    disabled={navdisabled}
-                    onClick={handler}
-                  />
-                  <AnchorButton
-                    id="prevchap"
-                    disabled={navdisabled}
-                    onClick={handler}
-                  />
-                </Vbox>
-                <span>:</span>
-                <Textbox
-                  id="verse"
-                  key={`v${location?.verse}`}
-                  width="50px"
-                  maxLength="3"
-                  pattern={/^[0-9]+$/}
-                  value={
-                    location?.verse
-                      ? dString(
-                          G.getLocaleDigits(),
-                          location.verse,
-                          G.i18n.language,
-                        )
-                      : ''
-                  }
-                  timeout="600"
+                <AnchorButton
+                  id="prevchap"
                   disabled={navdisabled}
-                  onChange={handler}
                   onClick={handler}
                 />
-                <Vbox>
-                  <AnchorButton
-                    id="nextverse"
-                    disabled={navdisabled}
-                    onClick={handler}
-                  />
-                  <AnchorButton
-                    id="prevverse"
-                    disabled={navdisabled}
-                    onClick={handler}
-                  />
-                </Vbox>
-              </Hbox>
-            )}
+              </Vbox>
+              <span>:</span>
+              <Textbox
+                id="verse"
+                key={`v${location?.verse}`}
+                width="50px"
+                maxLength="3"
+                pattern={/^[0-9]+$/}
+                value={
+                  location?.verse
+                    ? dString(
+                        G.getLocaleDigits(),
+                        location.verse,
+                        G.i18n.language,
+                      )
+                    : ''
+                }
+                timeout="600"
+                disabled={navdisabled}
+                onChange={handler}
+                onClick={handler}
+              />
+              <Vbox>
+                <AnchorButton
+                  id="nextverse"
+                  disabled={navdisabled}
+                  onClick={handler}
+                />
+                <AnchorButton
+                  id="prevverse"
+                  disabled={navdisabled}
+                  onClick={handler}
+                />
+              </Vbox>
+            </Hbox>
           </Vbox>
 
           <Spacer flex="1" style={{ minWidth: '15px' }} />

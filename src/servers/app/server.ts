@@ -26,7 +26,12 @@ import Prefs from './prefs.ts';
 import Viewport from './viewport.ts';
 import Window from './components/window.ts';
 import { validateGlobalModulePrefs } from './components/module.ts';
-import { getCipherFailConfs, CipherKeyModules, getTabs, getSystemFonts } from '../common.ts';
+import {
+  getCipherFailConfs,
+  CipherKeyModules,
+  getTabs,
+  getSystemFonts,
+} from '../common.ts';
 import MainMenuBuilder, { pushPrefsToMenu } from './mainMenu.ts';
 import contextMenu from './contextMenu.ts';
 import {
@@ -240,7 +245,9 @@ const openXulswordWindow = () => {
   Data.write(BuildInfo, 'buildInfo');
 
   const xswinSubscriptions: Array<() => void> = [];
-  xswinSubscriptions.push(Subscription.doSubscribe('getG', () => Cache.read('G')));
+  xswinSubscriptions.push(
+    Subscription.doSubscribe('getG', () => Cache.read('G')),
+  );
   // addBookmarkTransaction must be before pushPrefsToMenu for undo/redo enable to work.
   xswinSubscriptions.push(
     Subscription.subscribe.prefsChanged(addBookmarkTransaction),
@@ -503,9 +510,7 @@ const init = async () => {
 
   // If there are no tabs, choose a Bible and a location from the installed modules,
   // (preferring the locale language), and show that tab.
-  const xulsword = Prefs.getComplexValue(
-    'xulsword',
-  ) as typeof S.prefs.xulsword;
+  const xulsword = Prefs.getComplexValue('xulsword') as typeof S.prefs.xulsword;
   const { tabs } = xulsword;
   if (tabs.every((tb) => !tb?.length)) {
     const modules = Viewport.sortTabsByLocale(getTabs().map((t) => t.module));

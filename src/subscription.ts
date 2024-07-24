@@ -1,7 +1,7 @@
 import type { ContextMenuType } from './servers/app/contextMenu.ts';
 import type { PrefCallbackType } from './prefs.ts';
 import type { NewModulesType } from './type.ts';
-import type { WindowRootState } from './clients/app/renderer.tsx';
+import type { ControllerState } from './clients/controller.tsx';
 import type { Socket } from 'socket.io-client';
 
 // Publish callback opportunities to subscribers. To publish for subscribers
@@ -25,7 +25,7 @@ type SubscriptionTypes = {
   modulesInstalled: (newmods: NewModulesType, callingWinID?: number) => void;
   asyncTaskComplete: () => unknown;
   resetMain: () => void;
-  setRendererRootState: (state: Partial<WindowRootState>) => void;
+  setRendererRootState: (state: Partial<ControllerState>) => void;
 };
 
 export type SubscriptionType = {

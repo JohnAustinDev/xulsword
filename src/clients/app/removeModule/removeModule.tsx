@@ -1,5 +1,5 @@
 import React from 'react';
-import renderToRoot from '../renderer.tsx';
+import renderToRoot from '../../controller.tsx';
 import log from '../../log.ts';
 import ModuleManager, { onunload } from '../moduleManager/manager.tsx';
 
