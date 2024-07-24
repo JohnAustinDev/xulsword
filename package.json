@@ -10,7 +10,6 @@
     "start:webappSrv": "yarn webpack --env development --env webappSrv && cross-env LD_LIBRARY_PATH='./Cpp/lib' node ./build/webapp",
     "build:app": "yarn webpack --env packaged --env production --env preload --env appSrv --env appClients",
     "build:webapp": "yarn webpack --env production --env webappSrv --env webappClients",
-    "build:dll": "yarn webpack --env dll",
     "lint": "eslint . --cache",
     "install-libxulsword": "node ./build/app/node_modules/libxulsword/install.mjs",
     "package": "node ./scripts/clean.mjs dist release && yarn build:app && electron-builder build --publish never",

@@ -1,5 +1,4 @@
 /*global process */
-import fs from 'fs';
 import path from 'path';
 import { spawn } from 'child_process';
 import webpack from 'webpack';
@@ -65,56 +64,18 @@ const builds = {
   ],
 };
 
-// Vender modules don't change often, so are only compiled when 'yarn'
-// (ie 'yarn install') is run, and are then reused by webpack's
-// DllReferencePlugin.
-const dllModules = {
-  common: ['dompurify'],
-  node: [
-    'adm-zip',
-    'express-session',
-    'font-list',
-    'gunzip-maybe',
-    'helmet',
-    'i18next',
-    'i18next-fs-backend',
-    'memorystore',
-    'rate-limiter-flexible',
-    'socket.io',
-    'socket.io-client',
-    'source-map-support',
-    'tar-stream',
-    'toobusy-js',
-  ],
-  'electron-main': [
-    'electron',
-    'electron-context-menu',
-    'electron-debug',
-    'electron-devtools-installer',
-    'electron-log',
-    'electron-updater',
-    'ftp',
-  ],
-  'electron-preload': [],
-  web: [
-    '@blueprintjs/core',
-    '@blueprintjs/select',
-    '@blueprintjs/table',
-    'prop-types',
-    'react',
-    'react-color',
-    'react-dom',
-    'react-dom/client',
-  ],
-};
-
 export const devServerPort = 1212;
 
 const defaultEnvironment = {
   WEBAPP_DOMAIN_AND_PORT: `http://localhost:${devServerPort}`,
   WEBAPP_PROFILE: path.join(projectPaths.rootPath, 'profile_webapp'),
   WEBAPP_SERVERROOT: path.join(projectPaths.rootPath, 'profile_webapp', 'web'),
-  RESOURCEDIR: path.join(projectPaths.rootPath, 'profile_webapp', 'web', 'resources'),
+  RESOURCEDIR: path.join(
+    projectPaths.rootPath,
+    'profile_webapp',
+    'web',
+    'resources',
+  ),
   WEBAPP_PUBPATHS: '/',
   WEBAPP_PORT: 3576,
   WEBAPP_PUBLIC_DIST: '/',
@@ -128,22 +89,12 @@ const defaultEnvironment = {
 export const parallelism = 10;
 
 export default function (opts) {
-  const envFlags = ['all', 'dll', 'packaged', 'development', 'production'];
+  const envFlags = ['all', 'packaged', 'development', 'production'];
 
   const { rootPath, srcPath, appDistPath, webappDistPath } = projectPaths;
 
-  const { all, dll } = opts;
-  let { development, production, packaged } = opts;
-  if (dll) {
-    development = true;
-    production = false;
-    packaged = false;
-    opts.appSrv = true;
-    opts.webappSrv = true;
-    // Only about 250ms are saved on web targets.
-    opts.appClients = true;
-    opts.webappClients = true;
-  } else if (all) {
+  const { all, development, production, packaged } = opts;
+  if (all) {
     opts.appSrv = true;
     opts.preload = true;
     opts.webappSrv = true;
@@ -174,7 +125,6 @@ export default function (opts) {
   }
 
   console.log('Webpack configuration options: ', opts);
-  if (dll) console.log('Building webpack dll...');
 
   // Return a config object for a build. Each --env build in the command line
   // will use this function to generate a config object to pass to Webpack.
@@ -206,17 +156,8 @@ export default function (opts) {
 
     const useUrlLoader = ['png'];
 
-    const mydll = {
-      manifest: path.join(rootPath, '.dll', build, `manifest.json`),
-      path: path.join(rootPath, '.dll', build, 'dll.cjs'),
-      libname: `xs_${build}_lib`,
-      libtype: 'global',
-    };
-    mydll.use = development && fs.existsSync(mydll.manifest);
-    if (mydll.use) console.log(`NOTE: Utilizing DLL: ${mydll.path}`);
-
     return {
-      ...(development && !dll ? { devtool: 'source-map' } : {}),
+      ...(development ? { devtool: 'source-map' } : {}),
 
       mode: development ? 'development' : 'production',
 
@@ -240,47 +181,28 @@ export default function (opts) {
       },
       externalsType: 'node-commonjs',
 
-      entry: !dll
-        ? builds[build][1].reduce(
-            (entries, entry) => {
-              const name = path.basename(entry).replace(/\.[^.]+$/, '');
-              entries[name] = { import: entry };
-              if (mydll.use) entries[name].dependOn = `${build}_dll`;
-              return entries;
-            },
-            mydll.use ? { [`${build}_dll`]: mydll.path } : {},
-          )
-        : {
-            [build]: dllModules.common
-              .concat(dllModules[builds[build][0]])
-              .concat(
-                builds[build][0] === 'electron-main' ? dllModules.node : [],
-              ),
-          },
+      entry: builds[build][1].reduce((entries, entry) => {
+        const name = path.basename(entry).replace(/\.[^.]+$/, '');
+        entries[name] = { import: entry };
+        return entries;
+      }, {}),
 
-      output: !dll
-        ? {
-            clean: true,
-            filename: `[name].${['appSrv', 'webappSrv'].includes(build) ? 'cjs' : 'js'}`,
-            path: {
-              appSrv: path.join(appDistPath, 'appSrv'),
-              preload: path.join(appDistPath, 'preload'),
-              appClients: path.join(appDistPath, 'appClients'),
-              webappSrv: path.join(webappDistPath, 'webappSrv'),
-              webappClients: path.join(webappDistPath, 'webappClients'),
-            }[build],
-            publicPath:
-              build === 'webappClients'
-                ? process.env.WEBAPP_PUBLIC_DIST ||
-                  defaultEnvironment.WEBAPP_PUBLIC_DIST
-                : './',
-          }
-        : {
-            clean: true,
-            path: path.dirname(mydll.path),
-            filename: path.basename(mydll.path),
-            library: { name: mydll.libname, type: mydll.libtype },
-          },
+      output: {
+        clean: true,
+        filename: `[name].${['appSrv', 'webappSrv'].includes(build) ? 'cjs' : 'js'}`,
+        path: {
+          appSrv: path.join(appDistPath, 'appSrv'),
+          preload: path.join(appDistPath, 'preload'),
+          appClients: path.join(appDistPath, 'appClients'),
+          webappSrv: path.join(webappDistPath, 'webappSrv'),
+          webappClients: path.join(webappDistPath, 'webappClients'),
+        }[build],
+        publicPath:
+          build === 'webappClients'
+            ? process.env.WEBAPP_PUBLIC_DIST ||
+              defaultEnvironment.WEBAPP_PUBLIC_DIST
+            : './',
+      },
 
       module: {
         rules: [
@@ -382,73 +304,49 @@ export default function (opts) {
               contextRegExp: /adm-zip/,
             })
           : null,
+
+        // Note: you can't analyze a preload file.
+        build !== 'preload'
+          ? new BundleAnalyzerPlugin({
+              analyzerMode: 'static',
+              openAnalyzer: false,
+            })
+          : null,
+
+        development && ['webappClients', 'appClients'].includes(build)
+          ? new ReactRefreshWebpackPlugin()
+          : null,
       ]
         .concat(
-          !dll
-            ? // Use these plugins when NOT building the dll:
-              [
-                // Note: you can't analyze a preload file.
-                build !== 'preload'
-                  ? new BundleAnalyzerPlugin({
-                      analyzerMode: 'static',
-                      openAnalyzer: false,
-                    })
-                  : null,
-
-                development && ['webappClients', 'appClients'].includes(build)
-                  ? new ReactRefreshWebpackPlugin()
-                  : null,
-              ]
-                .concat(
-                  builds[build][1].map((entry) => {
-                    if (['webappClients', 'appClients'].includes(build)) {
-                      const name = path.basename(entry).replace(/\.[^.]+$/, '');
-                      return new HtmlWebpackPlugin({
-                        filename: `${name}.html`,
-                        template: path.join(
-                          {
-                            appClients: path.join(
-                              srcPath,
-                              'clients',
-                              'app',
-                              'root.html',
-                            ),
-                            webappClients: path.join(
-                              srcPath,
-                              'clients',
-                              'webapp',
-                              name,
-                              `${name}.html`,
-                            ),
-                          }[build],
-                        ),
-                        chunks: [name],
-                      });
-                    }
-                    return null;
-                  }),
-                )
-                .concat(
-                  mydll.use
-                    ? [
-                        new webpack.DllReferencePlugin({
-                          context: rootPath,
-                          manifest: mydll.manifest,
-                          name: mydll.libname,
-                        }),
-                      ]
-                    : [],
-                )
-            : // Use this plugin only when building a dll:
-              [
-                new webpack.DllPlugin({
-                  path: mydll.manifest,
-                  name: mydll.libname,
-                  type: mydll.libtype,
-                  format: true,
-                }),
-              ],
+          builds[build][1].map((entry) => {
+            if (['webappClients', 'appClients'].includes(build)) {
+              const name = path.basename(entry).replace(/\.[^.]+$/, '');
+              return new HtmlWebpackPlugin({
+                filename: `${name}.html`,
+                template: path.join(
+                  {
+                    appClients: path.join(
+                      srcPath,
+                      'clients',
+                      'app',
+                      'root.html',
+                    ),
+                    webappClients: path.join(
+                      srcPath,
+                      'clients',
+                      'webapp',
+                      name,
+                      `${name}.html`,
+                    ),
+                  }[build],
+                ),
+                chunks: [name],
+              });
+            }
+            return null;
+          }),
         )
+
         .filter(Boolean),
 
       ...(['appClients', 'webappClients'].includes(build)
@@ -511,7 +409,7 @@ export default function (opts) {
   }
 
   const config = Object.keys(builds)
-    .filter((x) => x in opts)
+    .filter((x) => x in opts && opts[x])
     .map((x) => getConfig(x));
 
   // console.log(JSON.stringify(config, null, 2));
