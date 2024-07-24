@@ -59,7 +59,7 @@ const Dirs = {
       // Packaged filename should be 'app.asar' if package.json has build.asar
       // set to true. Or it should be 'app' otherwise.
       Dirs.path.xsAsar = Build.isPackaged
-        ? path.join(process.resourcesPath, 'app.asar')
+        ? path.join(process.resourcesPath, 'app')
         : path.join(dirname, '..', '..', '..', 'build', 'app');
 
       Dirs.path.TmpD = app?.getPath('temp') || '/tmp';

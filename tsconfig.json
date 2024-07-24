@@ -30,7 +30,7 @@
   "include": [
     "./src/**/*",
     "./scripts/**/*",
-    "./node_modules/libxulsword/**/*",
+    "./libxulsword/**/*",
     "./*.mjs"
   ]
 }

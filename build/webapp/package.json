@@ -10,10 +10,6 @@
     "email": "gpl.programs.info@gmail.com",
     "url": "https://github.com/JohnAustinDev/xulsword"
   },
-  "scripts": {
-    "link-modules": "node ../../scripts/link-modules.mjs",
-    "postinstall": "yarn link-modules"
-  },
   "license": "MIT",
   "dependencies": {
     "libxulsword": "file:../../libxulsword"

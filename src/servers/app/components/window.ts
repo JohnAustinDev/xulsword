@@ -32,15 +32,13 @@ import type { PrefCallbackType } from '../../../prefs.ts';
 import type { SubscriptionType } from '../../../subscription.ts';
 import type contextMenu from '../contextMenu.ts';
 
-const dirname = path.dirname(fileURLToPath(import.meta.url));
-
 const printPreviewTmps: LocalFile[] = [];
 
 let resolveHtmlPath: (htmlFileName: string) => string;
 if (Build.isPackaged) {
   resolveHtmlPath = (htmlFileName: string) => {
-    return `file://${path.resolve(dirname, '../renderer/', htmlFileName)}`;
-  };
+    return `file://${path.join(Dirs.path.xsAsar, 'dist', 'appClients', htmlFileName)}`;
+  }
 } else {
   resolveHtmlPath = (htmlFileName: string) => {
     const url = new URL(`http://localhost:1212`);
@@ -240,18 +238,7 @@ function updateOptions(descriptor: Omit<WindowDescriptorType, 'id'>): void {
   options.useContentSize = true;
   options.icon = path.join(Dirs.path.xsAsset, 'icon.png');
   if (!options.webPreferences) options.webPreferences = {};
-  options.webPreferences.preload = path.join(
-    dirname,
-    '..',
-    '..',
-    '..',
-    '..',
-    'build',
-    'app',
-    'dist',
-    'preload',
-    'preload.js',
-  );
+  options.webPreferences.preload = path.join(Dirs.path.xsAsar, 'dist', 'preload', 'preload.js');
   options.webPreferences.contextIsolation = true;
   options.webPreferences.nodeIntegration = false;
   options.webPreferences.webSecurity = true;

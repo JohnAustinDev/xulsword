@@ -1,4 +1,5 @@
 #! /usr/bin/env node
+/*global process */
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -38,7 +39,7 @@ fs.copyFileSync(binfile, tofile);
 // and so need to be installed by electron-builder according to the package.json build section,
 // Windows dynamic libraries are installed to the libxulsword addon alongside xulsword.node.
 if (machine.includes('win')) {
-  shared = path.join(xulsword, 'Cpp', `lib.${machine}`);
+  const shared = path.join(xulsword, 'Cpp', `lib.${machine}`);
   if (shared && fs.existsSync(shared) && fs.statSync(shared).isDirectory()) {
     fs.readdirSync(shared).forEach((name) => {
       console.log(
