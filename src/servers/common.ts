@@ -505,14 +505,15 @@ export function getModuleFonts(): FontFaceType[] {
   if (!Cache.has('ModuleFonts')) {
     // Look for xulsword local fonts, which may be included with some
     // XSM modules.
+    const fontDataFilename = 'font-data.json';
     const ret = [] as FontFaceType[];
     let writeFileFonts = true;
     let fileFonts: FontsType | undefined = undefined;
-    const dataFile = Dirs.xsFonts.append('font-data.json');
+    const dataFile = Dirs.xsFonts.append(fontDataFilename);
     if (dataFile.exists()) {
       fileFonts = JSON_parse(dataFile.readFile()) as FontsType;
     }
-    const fontfiles = Dirs.xsFonts.directoryEntries;
+    const fontfiles = Dirs.xsFonts.directoryEntries.filter((d) => d !== fontDataFilename);
     if (
       fileFonts &&
       fontfiles.length === Object.keys(fileFonts).length &&
