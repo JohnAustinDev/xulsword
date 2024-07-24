@@ -41,7 +41,7 @@ if (Build.isPackaged) {
   };
 } else {
   resolveHtmlPath = (htmlFileName: string) => {
-    const url = new URL(`http://localhost:1212`);
+    const url = new URL(`http://localhost:${process.env.WEBPACK_DEV_APP_PORT}`);
     url.pathname = htmlFileName;
     return url.href;
   };

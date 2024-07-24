@@ -64,13 +64,15 @@ const builds = {
   ],
 };
 
-export const devServerPort = 1212;
-
 const defaultEnvironment = {
-  WEBAPP_DOMAIN_AND_PORT: `http://localhost:${devServerPort}`,
-  WEBAPP_PROFILE: path.join(projectPaths.rootPath, 'profile_webapp'),
-  WEBAPP_SERVERROOT: path.join(projectPaths.rootPath, 'profile_webapp', 'web'),
-  RESOURCEDIR: path.join(
+  WEBAPP_CORS_ORIGIN: 'http://localhost:1212',
+  WEBAPP_PROFILE_DIR: path.join(projectPaths.rootPath, 'profile_webapp'),
+  WEBAPP_SERVERROOT_DIR: path.join(
+    projectPaths.rootPath,
+    'profile_webapp',
+    'web',
+  ),
+  WEBAPP_RESOURCE_DIR: path.join(
     projectPaths.rootPath,
     'profile_webapp',
     'web',
@@ -79,12 +81,13 @@ const defaultEnvironment = {
   WEBAPP_PUBPATHS: '/',
   WEBAPP_PORT: 3576,
   WEBAPP_PUBLIC_DIST: '/',
-  XSModsCommon: '',
-  XSModsUser: '',
-  XSAudio: '',
-  XSFonts: '',
-  LogDir: '',
+  WEBPACK_DEV_WEBAPP_PORT: 1212,
+  WEBPACK_DEV_APP_PORT: 1213,
+  XSModsCommon_DIR: '',
+  XSFonts_DIR: '',
+  LOG_DIR: '',
 };
+const env = (v) => process.env[v] || defaultEnvironment[v];
 
 export const parallelism = 10;
 
@@ -156,6 +159,12 @@ export default function (opts) {
 
     const useUrlLoader = ['png'];
 
+    const devServerPort = env(
+      build === 'appClients'
+        ? 'WEBPACK_DEV_APP_PORT'
+        : 'WEBPACK_DEV_WEBAPP_PORT',
+    );
+
     return {
       ...(development ? { devtool: 'source-map' } : {}),
 
@@ -198,10 +207,7 @@ export default function (opts) {
           webappClients: path.join(webappDistPath, 'webappClients'),
         }[build],
         publicPath:
-          build === 'webappClients'
-            ? process.env.WEBAPP_PUBLIC_DIST ||
-              defaultEnvironment.WEBAPP_PUBLIC_DIST
-            : './',
+          build === 'webappClients' ? env('WEBAPP_PUBLIC_DIST') : './',
       },
 
       module: {

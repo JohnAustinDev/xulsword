@@ -67,7 +67,7 @@ const server = http.createServer();
 const io = new Server(server, {
   serveClient: false,
   cors: {
-    origin: process.env.WEBAPP_DOMAIN_AND_PORT,
+    origin: process.env.WEBAPP_CORS_ORIGIN,
     methods: ['GET'],
   },
 });

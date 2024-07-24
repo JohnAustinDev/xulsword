@@ -1,34 +1,34 @@
 #!/bin/bash
 # Source this script from the current directory with 'source ./setenv' to
-# properly set environment variables. Comments indicate each variable
-# and their default value.
+# properly set environment variables. Comments indicate each setting
+# and the default value.
 
-# export WEBAPP_DOMAIN_AND_PORT='http://localhost:1212'
-
-# export WEBAPP_SERVERROOT=[xulsword]/profile_webapp/web
+# export WEBAPP_CORS_ORIGIN='http://localhost:1212'
 
 # export WEBAPP_PORT=3576
 
-# The full path to private directory where web app files are written and read.
-# export WEBAPP_PROFILE=[xulsword]/profile_webapp
-
-# Semicolon delimited list of public URLs relative to WEBAPP_SERVERROOT; each starting with slash.
+# Semicolon delimited list of public URLs relative to WEBAPP_SERVERROOT_DIR; each starting with slash.
 # export WEBAPP_PUBPATHS=/
+
+# export WEBAPP_SERVERROOT_DIR=[xulsword]/profile_webapp/web
 
 # The public URL on the web app server where webpacked files are served from.
 # export WEBAPP_PUBLIC_DIST=/
 
-# export RESOURCEDIR=[xulsword]/profile_webapp/web/resources
+# The full path to the private directory where web app files are written and read.
+# export WEBAPP_PROFILE_DIR=[xulsword]/profile_webapp
 
-# export XSFonts=[xulsword]/profile_webapp/web/resources/fonts
+# export WEBAPP_RESOURCE_DIR=[xulsword]/profile_webapp/web/resources
 
-# export XSAudio=[xulsword]/profile_webapp/web/resources/audio
+# export XSFonts_DIR=[xulsword]/profile_webapp/web/resources/fonts
 
-# XSModsUser=[xulsword]/webapp/web/resources
+# export XSModsCommon_DIR=$HOME/.sword
 
-# export XSModsCommon=$HOME/.sword
+# export WEBPACK_DEV_WEBAPP_PORT=1212
 
-# export LogDir=[xulsword]/profile_webapp/logs
+# export WEBPACK_DEV_APP_PORT=1213
+
+# export LOG_DIR=[xulsword]/profile_webapp/logs
 
 # Possible values are 'error', 'warn', 'info', 'verbose', 'debug', 'silly'
 # export LOGLEVEL='debug'

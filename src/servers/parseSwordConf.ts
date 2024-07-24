@@ -231,7 +231,7 @@ export default function parseSwordConf(
   if (Build.isWebApp) {
     r.DataPath = serverPublicPath(r.DataPath);
     if (/^file:\/\//i.test(r.sourceRepository.domain)) {
-      r.sourceRepository.domain = process.env.WEBAPP_DOMAIN_AND_PORT || '';
+      r.sourceRepository.domain = process.env.WEBAPP_CORS_ORIGIN || '';
       r.sourceRepository.path = serverPublicPath(r.sourceRepository.path);
     }
   }
@@ -245,7 +245,7 @@ export default function parseSwordConf(
 export function fileFullPath(serverPublicPath: string): string | null {
   // Electron public paths are already full paths and are all allowed.
   if (Build.isElectronApp) return serverPublicPath;
-  const root = process.env.WEBAPP_SERVERROOT;
+  const root = process.env.WEBAPP_SERVERROOT_DIR;
   const publics = process.env.WEBAPP_PUBPATHS;
   if (root && publics) {
     const pubs = publics.split(';');
@@ -265,7 +265,7 @@ export function fileFullPath(serverPublicPath: string): string | null {
 export function serverPublicPath(fileFullPath: string): string {
   // Electron public paths are always full paths and are all allowed.
   if (Build.isElectronApp) return fileFullPath;
-  const root = process.env.WEBAPP_SERVERROOT;
+  const root = process.env.WEBAPP_SERVERROOT_DIR;
   const publics = process.env.WEBAPP_PUBPATHS;
   if (root && publics) {
     const pubs = publics.split(';');

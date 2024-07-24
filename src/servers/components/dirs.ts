@@ -45,9 +45,9 @@ const Dirs = {
     if (!Dirs.initialized) {
       const profD =
         (Build.isElectronApp && app?.getPath('userData')) ||
-        (process.env.WEBAPP_PROFILE as string);
+        (process.env.WEBAPP_PROFILE_DIR as string);
 
-      Dirs.path.LogDir = path.join(process.env.LogDir || profD, 'logs');
+      Dirs.path.LogDir = path.join(process.env.LOG_DIR || profD, 'logs');
 
       // NOTE: The app directory is not exposed in the production app. Also
       // don't try to read package.json in production by bundling it, as this
@@ -79,24 +79,25 @@ const Dirs = {
       Dirs.path.xsPrefD = path.join(profD, 'preferences');
 
       Dirs.path.xsResD =
-        process.env.RESOURCEDIR || path.join(profD, 'resources');
+        (Build.isWebApp && process.env.WEBAPP_RESOURCE_DIR) ||
+        path.join(profD, 'resources');
 
       Dirs.path.xsCache = path.join(profD, 'cache');
 
-      Dirs.path.xsModsUser = process.env.XSModsUser || Dirs.path.xsResD;
+      Dirs.path.xsModsUser = Dirs.path.xsResD;
 
       Dirs.path.xsFonts =
-        process.env.XSFonts || path.join(Dirs.path.xsResD, 'fonts');
+        (Build.isWebApp && process.env.XSFonts_DIR) ||
+        path.join(Dirs.path.xsResD, 'fonts');
 
-      Dirs.path.xsAudio =
-        process.env.XSAudio || path.join(Dirs.path.xsResD, 'audio');
+      Dirs.path.xsAudio = path.join(Dirs.path.xsResD, 'audio');
 
       Dirs.path.xsBookmarks = path.join(Dirs.path.xsResD, 'bookmarks');
 
       Dirs.path.xsVideo = path.join(Dirs.path.xsResD, 'video');
 
       Dirs.path.xsModsCommon =
-        process.env.XSModsCommon ||
+        (Build.isWebApp && process.env.XSModsCommon_DIR) ||
         (app
           ? /^win32|darwin$/.test(process.platform)
             ? path.join(app.getPath('appData'), 'Sword')
