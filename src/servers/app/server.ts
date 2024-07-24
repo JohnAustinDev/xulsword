@@ -1,8 +1,10 @@
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
+import path from 'path';
 import { app, crashReporter, dialog, BrowserWindow, ipcMain } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
+import i18n from 'i18next';
 import i18nBackendMain from 'i18next-fs-backend';
 import devToolsInstaller, {
   REACT_DEVELOPER_TOOLS,
@@ -14,16 +16,19 @@ import Cache from '../../cache.ts';
 import { clone, JSON_parse, keep, localizeString } from '../../common.ts';
 import C from '../../constant.ts';
 import S, { completePanelPrefDefaultArrays } from '../../defaultPrefs.ts';
-import { G } from './G.ts';
 import handleGlobal from '../handleGlobal.ts';
-import path from 'path';
+import Dirs from '../components/dirs.ts';
+import Data from '../components/data.ts';
+import LibSword from '../components/libsword.ts';
+import DiskCache from '../components/diskcache.ts';
 import LocalFile from '../components/localFile.ts';
+import Prefs from './prefs.ts';
+import Viewport from './viewport.ts';
 import Window from './components/window.ts';
 import { validateGlobalModulePrefs } from './components/module.ts';
-import { getCipherFailConfs, CipherKeyModules } from '../common.ts';
+import { getCipherFailConfs, CipherKeyModules, getTabs, getSystemFonts } from '../common.ts';
 import MainMenuBuilder, { pushPrefsToMenu } from './mainMenu.ts';
 import contextMenu from './contextMenu.ts';
-import Viewport from './viewport.ts';
 import {
   WindowRegistry,
   pushPrefsToWindows,
@@ -41,51 +46,56 @@ import type {
 } from '../../type.ts';
 import type { ManagerStatePref } from '../../clients/app/moduleManager/manager.tsx';
 
-G.Dirs.init();
+Dirs.init();
 
 completePanelPrefDefaultArrays(
-  (G.Prefs.getComplexValue('xulsword.panels') as typeof S.prefs.xulsword.panels)
+  (Prefs.getComplexValue('xulsword.panels') as typeof S.prefs.xulsword.panels)
     .length,
 );
 
-{
-  const logfile = new LocalFile(
-    path.join(G.Dirs.path.LogDir, `xulsword.${Date.now()}.log`),
-  );
-  if (logfile.exists()) logfile.remove();
-  G.Data.write(logfile.path, 'logfile');
-  // The renderer log contains any renderer window entries that occur before
-  // renderer.tsx, where their file is changed to the main/renderer log file.
-  const logfile2 = new LocalFile(path.join(G.Dirs.path.LogDir, 'renderer.log'));
-  if (logfile2.exists()) logfile2.remove();
-  log.transports.console.level = C.LogLevel;
-  log.transports.file.level = C.LogLevel;
-  log.transports.file.resolvePath = () => logfile.path;
-}
+const logfile = new LocalFile(
+  path.join(Dirs.path.LogDir, `xulsword.${Date.now()}.log`),
+);
+if (logfile.exists()) logfile.remove();
+Data.write(logfile.path, 'logfile');
+// The renderer log contains any renderer window entries that occur before
+// renderer.tsx, where their file is changed to the main/renderer log file.
+const logfile2 = new LocalFile(path.join(Dirs.path.LogDir, 'renderer.log'));
+if (logfile2.exists()) logfile2.remove();
+log.transports.console.level = C.LogLevel;
+log.transports.file.level = C.LogLevel;
+log.transports.file.resolvePath = () => logfile.path;
 log.info(`Starting ${app.getName()} isDevelopment='${Build.isDevelopment}'`);
 
 addBookmarkTransaction(
   -1,
   'bookmarks',
   'rootfolder',
-  G.Prefs.getComplexValue(
+  Prefs.getComplexValue(
     'rootfolder',
     'bookmarks',
   ) as typeof S.bookmarks.rootfolder,
 );
 
-Cache.write(G.Prefs, 'PrefsElectron'); // for buried fontURL()
-if (G.Prefs.getBoolPref('global.InternetPermission')) {
-  const url = G.Prefs.getCharPref('global.crashReporterURL');
+Cache.write(Prefs, 'PrefsElectron'); // for buried fontURL()
+if (Prefs.getBoolPref('global.InternetPermission')) {
+  const url = Prefs.getCharPref('global.crashReporterURL');
   if (url) {
     crashReporter.start({ submitURL: url });
   }
 }
 
-G.LibSword.init(
-  G.Prefs.getComplexValue(
+LibSword.init(
+  Prefs.getComplexValue(
     'moduleManager.repositories',
   ) as ManagerStatePref['repositories'],
+);
+
+log.info(
+  `Loaded ${LibSword.getModuleList().split('<nx>').length} SWORD modules.`,
+);
+log.info(
+  `LogLevel: ${C.LogLevel}, Logfile: ${logfile.path}, Port: ${process.env.WEBAPP_PORT}`,
 );
 
 let ProgramTitle = '';
@@ -107,7 +117,7 @@ const AvailableLanguages = [
 // i18next or configs are initialized. Direction need not be forced
 // for locales in Chromium's list, like fa, but must be for ky-Arab.
 {
-  const lang = G.Prefs.getCharPref('global.locale');
+  const lang = Prefs.getCharPref('global.locale');
   if (lang) {
     if ((C.Locales.find((l) => l[0] === lang) || [])[2] === 'rtl') {
       app.commandLine.appendSwitch('force-ui-direction', 'rtl');
@@ -135,19 +145,19 @@ function showApp() {
   SyncShow = [];
   if (!(Build.isDevelopment && C.DevSplash === 2)) {
     setTimeout(() => {
-      G.Window.close({ type: 'splash' });
+      Window.close({ type: 'splash' });
     }, 1000);
   }
 }
 
 ipcMain.on('global', (event: IpcMainEvent, acall: GCallType) => {
   const win = BrowserWindow.fromWebContents(event.sender)?.id ?? -1;
-  event.returnValue = handleGlobal(G, win, acall, true);
+  event.returnValue = handleGlobal(Cache.read('G'), win, acall, true);
 });
 
 ipcMain.handle('global', (event: IpcMainInvokeEvent, acall: GCallType) => {
   const win = BrowserWindow.fromWebContents(event.sender)?.id ?? -1;
-  return handleGlobal(G, win, acall, true);
+  return handleGlobal(Cache.read('G'), win, acall, true);
 });
 
 ipcMain.on('error-report', (_e: IpcMainEvent, message: string) => {
@@ -187,17 +197,17 @@ ipcMain.on(
 );
 
 const openXulswordWindow = () => {
-  const windowsDidClose = G.Prefs.getBoolPref(`global.WindowsDidClose`);
-  const openOnStartup = G.Prefs.getComplexValue(
+  const windowsDidClose = Prefs.getBoolPref(`global.WindowsDidClose`);
+  const openOnStartup = Prefs.getComplexValue(
     'OpenOnStartup',
     'windows',
   ) as typeof S.windows.OpenOnStartup;
-  G.Prefs.setBoolPref(`global.WindowsDidClose`, false);
-  G.Prefs.deleteUserPref(`OpenOnStartup`, 'windows');
-  G.Prefs.setComplexValue(`OpenWindows`, {}, 'windows');
+  Prefs.setBoolPref(`global.WindowsDidClose`, false);
+  Prefs.deleteUserPref(`OpenOnStartup`, 'windows');
+  Prefs.setComplexValue(`OpenWindows`, {}, 'windows');
 
   const xulswordWindow = BrowserWindow.fromId(
-    G.Window.open({
+    Window.open({
       type: 'xulswordWin',
       className: 'skin',
       typePersistBounds: true,
@@ -222,15 +232,15 @@ const openXulswordWindow = () => {
   validateGlobalModulePrefs(Window);
 
   const BuildInfo = `${app.getName()} ${app.getVersion()} (${
-    G.i18n.language
+    i18n.language
   }) ${process.platform}-${process.arch}, el:${process.versions.electron}, ch:${
     process.versions.chrome
   }`;
   log.info(BuildInfo);
-  G.Data.write(BuildInfo, 'buildInfo');
+  Data.write(BuildInfo, 'buildInfo');
 
   const xswinSubscriptions: Array<() => void> = [];
-  xswinSubscriptions.push(Subscription.doSubscribe('getG', () => G));
+  xswinSubscriptions.push(Subscription.doSubscribe('getG', () => Cache.read('G')));
   // addBookmarkTransaction must be before pushPrefsToMenu for undo/redo enable to work.
   xswinSubscriptions.push(
     Subscription.subscribe.prefsChanged(addBookmarkTransaction),
@@ -241,10 +251,10 @@ const openXulswordWindow = () => {
   xswinSubscriptions.push(Subscription.subscribe.prefsChanged(pushPrefsToMenu));
   xswinSubscriptions.push(
     Subscription.subscribe.resetMain(() => {
-      G.LibSword.quit();
+      LibSword.quit();
       Cache.clear();
-      G.LibSword.init(
-        G.Prefs.getComplexValue(
+      LibSword.init(
+        Prefs.getComplexValue(
           'moduleManager.repositories',
         ) as ManagerStatePref['repositories'],
       );
@@ -256,7 +266,7 @@ const openXulswordWindow = () => {
     Subscription.subscribe.modulesInstalled(
       (newmods: NewModulesType, callingWinID?: number) => {
         if (callingWinID) {
-          G.publishSubscription(
+          publishSubscription(
             'setRendererRootState',
             { renderers: { id: callingWinID } },
             { progress: 'indefinite' },
@@ -284,7 +294,7 @@ const openXulswordWindow = () => {
           );
         }
         newmods.modules.forEach((m) => {
-          G.DiskCache.delete(null, m.module);
+          DiskCache.delete(null, m.module);
         });
         Subscription.publish.resetMain();
         newmods.nokeymods = getCipherFailConfs();
@@ -299,11 +309,11 @@ const openXulswordWindow = () => {
           // reference only installed modules. We just need to add new tabs and
           // new modules to panels.
           if (callingWinID === xulswordWindow.id) {
-            G.Prefs.mergeValue(
+            Prefs.mergeValue(
               'xulsword',
               Viewport.getModuleChange(
                 newmods.modules.map((c) => c.module),
-                G.Prefs.getComplexValue('xulsword') as typeof S.prefs.xulsword,
+                Prefs.getComplexValue('xulsword') as typeof S.prefs.xulsword,
               ),
               'prefs',
               false,
@@ -318,15 +328,15 @@ const openXulswordWindow = () => {
               );
             }, 1);
           }
-          G.publishSubscription(
+          publishSubscription(
             'setRendererRootState',
             { renderers: { id: callingWinID } },
             { progress: -1 },
           );
         }
-        G.Window.modal([{ modal: 'off', window: 'all' }]);
+        Window.modal([{ modal: 'off', window: 'all' }]);
         // Wait until after reset before using Prefs, or renderers will throw.
-        const nasi = G.Prefs.getComplexValue(
+        const nasi = Prefs.getComplexValue(
           'global.noAutoSearchIndex',
         ) as typeof S.prefs.global.noAutoSearchIndex;
         newmods.modules.forEach((m) => {
@@ -334,9 +344,9 @@ const openXulswordWindow = () => {
             nasi.splice(nasi.indexOf(m.module), 1);
           }
         });
-        G.Prefs.setComplexValue('global.noAutoSearchIndex', nasi);
+        Prefs.setComplexValue('global.noAutoSearchIndex', nasi);
         setTimeout(() => {
-          G.LibSword.startBackgroundSearchIndexer(G.Prefs).catch((er) => {
+          LibSword.startBackgroundSearchIndexer(Prefs).catch((er) => {
             log.error(er);
           });
         }, C.UI.Search.backgroundIndexerStartupWait);
@@ -368,7 +378,7 @@ const openXulswordWindow = () => {
 
   xulswordWindow.on('ready-to-show', () =>
     setTimeout(() => {
-      G.LibSword.startBackgroundSearchIndexer(G.Prefs).catch((er) => {
+      LibSword.startBackgroundSearchIndexer(Prefs).catch((er) => {
         log.error(er);
       });
     }, C.UI.Search.backgroundIndexerStartupWait),
@@ -376,11 +386,11 @@ const openXulswordWindow = () => {
 
   xulswordWindow.on('close', () => {
     // Persist open windows for the next restart
-    const openWindows = G.Prefs.getComplexValue(
+    const openWindows = Prefs.getComplexValue(
       'OpenWindows',
       'windows',
     ) as Record<string, WindowDescriptorPrefType>;
-    G.Prefs.setComplexValue(
+    Prefs.setComplexValue(
       `OpenOnStartup`,
       keep(
         openWindows,
@@ -395,9 +405,9 @@ const openXulswordWindow = () => {
     xswinSubscriptions.forEach((dispose) => {
       dispose();
     });
-    G.LibSword.quit();
+    LibSword.quit();
 
-    G.Prefs.setBoolPref(`global.WindowsDidClose`, true);
+    Prefs.setBoolPref(`global.WindowsDidClose`, true);
 
     Cache.clear();
   });
@@ -409,7 +419,7 @@ const openXulswordWindow = () => {
   if (windowsDidClose) {
     Object.values(openOnStartup).forEach((w) => {
       if ('type' in w) {
-        const id = G.Window.open(w as WindowDescriptorType);
+        const id = Window.open(w as WindowDescriptorType);
         SyncShow.push({ id, readyToShow: false });
       }
     });
@@ -429,7 +439,7 @@ const init = async () => {
       .catch((er: any) => log.error(er));
   }
 
-  let lng = G.Prefs.getCharPref('global.locale');
+  let lng = Prefs.getCharPref('global.locale');
   if (!lng) {
     // Choose a starting locale based on the host machine's system language.
     const langs = C.Locales.map((x) => x[0].replace(/-.*$/, ''));
@@ -441,19 +451,19 @@ const init = async () => {
     });
     lng = lng || 'ru';
     log.info(`Choosing language: ${lng}`);
-    G.Prefs.setCharPref('global.locale', lng);
+    Prefs.setCharPref('global.locale', lng);
     // Set the starting moduleManager language selection
-    const codes = G.Prefs.getComplexValue(
+    const codes = Prefs.getComplexValue(
       'moduleManager.language.selection',
     ) as ManagerStatePref['language']['selection'];
     if (!codes.length) {
-      G.Prefs.setComplexValue('moduleManager.language.selection', [
+      Prefs.setComplexValue('moduleManager.language.selection', [
         lng.replace(/-.*$/, ''),
       ]);
     }
   }
 
-  await G.i18n
+  await i18n
     .use(i18nBackendMain)
     .init({
       lng,
@@ -468,9 +478,9 @@ const init = async () => {
 
       backend: {
         // path where resources get loaded from
-        loadPath: `${G.Dirs.path.xsAsset}/locales/{{lng}}/{{ns}}.json`,
+        loadPath: `${Dirs.path.xsAsset}/locales/{{lng}}/{{ns}}.json`,
         // path to post missing resources
-        addPath: `${G.Dirs.path.xsAsset}/locales/{{lng}}/{{ns}}.missing.json`,
+        addPath: `${Dirs.path.xsAsset}/locales/{{lng}}/{{ns}}.missing.json`,
         // jsonIndent to use when storing json files
         jsonIndent: 2,
       },
@@ -493,14 +503,14 @@ const init = async () => {
 
   // If there are no tabs, choose a Bible and a location from the installed modules,
   // (preferring the locale language), and show that tab.
-  const xulsword = G.Prefs.getComplexValue(
+  const xulsword = Prefs.getComplexValue(
     'xulsword',
   ) as typeof S.prefs.xulsword;
   const { tabs } = xulsword;
   if (tabs.every((tb) => !tb?.length)) {
-    const modules = Viewport.sortTabsByLocale(G.Tabs.map((t) => t.module));
+    const modules = Viewport.sortTabsByLocale(getTabs().map((t) => t.module));
     if (modules[0]) {
-      G.Viewport.getPanelChange(
+      Viewport.getPanelChange(
         {
           whichModuleOrLocGB: modules,
           maintainWidePanels: true,
@@ -508,18 +518,18 @@ const init = async () => {
         },
         xulsword,
       );
-      G.Prefs.mergeValue('xulsword', xulsword);
+      Prefs.mergeValue('xulsword', xulsword);
     }
   }
 
-  ProgramTitle = localizeString(G.i18n, 'i18n:program.title');
+  ProgramTitle = localizeString(i18n, 'i18n:program.title');
 
-  if (G.Prefs.getBoolPref('global.InternetPermission')) {
+  if (Prefs.getBoolPref('global.InternetPermission')) {
     autoUpdater.logger = log;
     autoUpdater
       .checkForUpdatesAndNotify({
         title: ProgramTitle,
-        body: G.i18n.t('updater.message.body', { v1: '' }),
+        body: i18n.t('updater.message.body', { v1: '' }),
       })
       .catch((er) => {
         log.error(er);
@@ -527,7 +537,7 @@ const init = async () => {
   }
 
   // Do this in the background...
-  G.getSystemFonts().catch((er) => {
+  getSystemFonts().catch((er) => {
     log.error(er);
   });
 
@@ -537,7 +547,7 @@ const init = async () => {
       if (!Build.isDevelopment && !error.message.includes('net::ERR')) {
         dialog
           .showMessageBox({
-            title: G.i18n.t('error-detected'),
+            title: i18n.t('error-detected'),
             message: error.message,
             detail: error.stack,
             type: 'error',
@@ -574,33 +584,33 @@ const init = async () => {
   //   in 4.0.10-alpha.5
   if (
     (
-      G.Prefs.getComplexValue(
+      Prefs.getComplexValue(
         'moduleManager.repositories.xulsword',
       ) as typeof S.prefs.moduleManager.repositories.xulsword
     ).length === 0
   ) {
     log.info(`Applying pref update to: moduleManager.repositories.xulsword`);
-    G.Prefs.setComplexValue(
+    Prefs.setComplexValue(
       'moduleManager.repositories.xulsword',
       S.prefs.moduleManager.repositories.xulsword,
     );
   }
   // - moduleManager.module.columns[13] heading changed in 4.0.10-alpha.5
-  const columns = G.Prefs.getComplexValue(
+  const columns = Prefs.getComplexValue(
     'moduleManager.module.columns',
   ) as typeof S.prefs.moduleManager.module.columns;
   if (columns[13].heading.startsWith('icon:')) {
     log.info(`Applying pref update to: moduleManager.module.columns[13]`);
     // eslint-disable-next-line prefer-destructuring
     columns[13] = S.prefs.moduleManager.module.columns[13];
-    G.Prefs.setComplexValue('moduleManager.module.columns', columns);
+    Prefs.setComplexValue('moduleManager.module.columns', columns);
   }
 };
 
 app.on('will-quit', () => {
   // Write all prefs to disk when app closes
-  G.Prefs.writeAllStores();
-  G.DiskCache.writeAllStores();
+  Prefs.writeAllStores();
+  DiskCache.writeAllStores();
   // Respect the OSX convention of having the application in memory even
   // after all windows have been closed
   if (process.platform !== 'darwin') {
@@ -626,7 +636,7 @@ app
   })
   .then(() => {
     if (!(Build.isDevelopment && C.DevSplash === 1)) {
-      G.Window.open({
+      Window.open({
         type: 'splash',
         notResizable: true,
         options:

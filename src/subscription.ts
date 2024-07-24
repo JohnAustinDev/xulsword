@@ -15,7 +15,6 @@ const subscriptionsNames: Record<keyof SubscriptionTypes, null> = {
   windowCreated: null,
   modulesInstalled: null,
   asyncTaskComplete: null,
-  socketConnected: null,
   resetMain: null,
   setRendererRootState: null,
 };
@@ -25,7 +24,6 @@ type SubscriptionTypes = {
   windowCreated: ContextMenuType;
   modulesInstalled: (newmods: NewModulesType, callingWinID?: number) => void;
   asyncTaskComplete: () => unknown;
-  socketConnected: (s: Socket) => unknown;
   resetMain: () => void;
   setRendererRootState: (state: Partial<WindowRootState>) => void;
 };
@@ -40,7 +38,6 @@ export type SubscriptionType = {
       func: SubscriptionTypes['asyncTaskComplete'],
     ) => () => void;
     windowCreated: (func: SubscriptionTypes['windowCreated']) => () => void;
-    socketConnected: (func: SubscriptionTypes['socketConnected']) => () => void;
     resetMain: (func: SubscriptionTypes['resetMain']) => () => void;
     setRendererRootState: (
       func: SubscriptionTypes['setRendererRootState'],
@@ -60,9 +57,6 @@ export type SubscriptionType = {
     windowCreated: (
       ...args: Parameters<SubscriptionTypes['windowCreated']>
     ) => Array<ReturnType<SubscriptionTypes['windowCreated']>>;
-    socketConnected: (
-      ...args: Parameters<SubscriptionTypes['socketConnected']>
-    ) => Array<ReturnType<SubscriptionTypes['socketConnected']>>;
     resetMain: (
       ...args: Parameters<SubscriptionTypes['resetMain']>
     ) => Array<ReturnType<SubscriptionTypes['resetMain']>>;

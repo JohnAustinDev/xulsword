@@ -63,7 +63,7 @@ must be set by running `source ./setenv`.
 6. Start xulsword with `yarn start`.
 
 **NOTE:** In the very rare occasion that the libxulsword interface changes, the Node.js libxulsword.node addon will need to be
-recompiled on each operating system, and the addon committed to git. See [libxulsword ReadMe](build/app/node_modules/libxulsword/Readme.md).
+recompiled on each operating system, and the addon committed to git. See [libxulsword ReadMe](libxulsword/Readme.md).
 
 ---
 

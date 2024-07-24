@@ -4,5 +4,6 @@ import Prefs from './prefs.ts';
 import { G } from '../G.ts';
 
 const vp = new Viewport(G, Prefs);
-Cache.write(vp, 'WebappViewport'); // remove cycle with rg.ts
+Cache.write(vp, 'ClientsViewport'); // remove dependency cycle with G.ts
+Cache.noclear('ClientsViewport');
 export default vp;

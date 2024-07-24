@@ -245,6 +245,7 @@ function updateOptions(descriptor: Omit<WindowDescriptorType, 'id'>): void {
     '..',
     '..',
     '..',
+    '..',
     'build',
     'app',
     'dist',
