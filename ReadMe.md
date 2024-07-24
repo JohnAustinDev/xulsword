@@ -51,7 +51,7 @@ The build has two parts: a Node.js project and a native libxulsword C++ library.
 must be set by running `source ./setenv`.
 
 1. Install nvm on Linux, Windows or Mac. On Windows [nvm for Windows](https://github.com/coreybutler/nvm-windows) is recommended.
-2. Use nvm to select Node version 20.12.2. On Windows, select the x86 architecture with: `nvm install 20.12.2` followed by `nvm use 20.12.2 32` to select it. Install yarn globally with: `nvm -i global yarn`. On Windows, administrator priviledge is required for these steps (subsequent steps do not require admin priviledge).
+2. Use nvm to select Node version 22. On Windows, select the x86 architecture with: `nvm install 22` followed by `nvm use 22` to select it. On Windows, administrator priviledge is required for these steps (subsequent steps do not require admin priviledge).
 3. Run `source ./setenv` to set environment variables. On Windows, the Git Bash shell that comes with [Git for Windows](https://gitforwindows.org/) can be used to run this, and subsequent command line steps.
 4. Build the native libxulsword C++ dynamic library for your system (this step only needs to be done once and won't be needed again until the rare occasion that xulsword/Cpp C++ source changes):
 
@@ -60,7 +60,7 @@ must be set by running `source ./setenv`.
 - Install the shared library for your particular operating system by running `yarn install-libxulsword`. The apporpriate binaries will be installed to the libxulsword nodejs module.
 
 5. Run `yarn` to install Node.js dependencies.
-6. Start xulsword with `yarn start`.
+6. Start xulsword with `yarn start:app`.
 
 **NOTE:** In the very rare occasion that the libxulsword interface changes, the Node.js libxulsword.node addon will need to be
 recompiled on each operating system, and the addon committed to git. See [libxulsword ReadMe](libxulsword/Readme.md).
