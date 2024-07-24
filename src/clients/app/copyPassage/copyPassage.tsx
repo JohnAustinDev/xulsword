@@ -42,22 +42,22 @@ const notStatePrefDefault = {
 export type CopyPassageState = typeof notStatePrefDefault &
   typeof S.prefs.copyPassage;
 
-const openedWinState = windowArguments(
-  'copyPassageState',
-) as Partial<CopyPassageState> | null;
-if (openedWinState) {
-  Object.entries(openedWinState).forEach((entry) => {
-    const [k, val] = entry;
-    const key = k as keyof typeof openedWinState;
-    if (val === undefined) delete openedWinState[key];
-  });
-}
-
 export default class CopyPassageWin extends React.Component {
   static propTypes: typeof propTypes;
 
   constructor(props: CopyPassageProps) {
     super(props);
+
+    const openedWinState = windowArguments(
+      'copyPassageState',
+    ) as Partial<CopyPassageState> | null;
+    if (openedWinState) {
+      Object.entries(openedWinState).forEach((entry) => {
+        const [k, val] = entry;
+        const key = k as keyof typeof openedWinState;
+        if (val === undefined) delete openedWinState[key];
+      });
+    }
 
     const s: CopyPassageState = {
       ...notStatePrefDefault,

@@ -5129,7 +5129,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"debug@npm:4, debug@npm:^4.0.1, debug@npm:^4.1.0, debug@npm:^4.1.1, debug@npm:^4.3.0, debug@npm:^4.3.1, debug@npm:^4.3.2, debug@npm:^4.3.4, debug@npm:~4.3.1, debug@npm:~4.3.2, debug@npm:~4.3.4":
+"debug@npm:4, debug@npm:^4.1.0, debug@npm:^4.1.1, debug@npm:^4.3.0, debug@npm:^4.3.1, debug@npm:^4.3.2, debug@npm:^4.3.4, debug@npm:~4.3.1, debug@npm:~4.3.2, debug@npm:~4.3.4":
   version: 4.3.5
   resolution: "debug@npm:4.3.5"
   dependencies:
@@ -5624,16 +5624,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"electron-debug@npm:^4.0.0":
-  version: 4.0.0
-  resolution: "electron-debug@npm:4.0.0"
-  dependencies:
-    electron-is-dev: "npm:^3.0.1"
-    electron-localshortcut: "npm:^3.2.1"
-  checksum: 10c0/16265cf81e0f73205e7a480222971be4e070c56c425b295710d165e2e9ae4322f1601d5bbc6be2936183d44183d259e8a27f300f7752bb5fc93f33500ac24170
-  languageName: node
-  linkType: hard
-
 "electron-devtools-installer@npm:^3.2.0":
   version: 3.2.0
   resolution: "electron-devtools-installer@npm:3.2.0"
@@ -5657,36 +5647,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"electron-is-accelerator@npm:^0.1.0":
-  version: 0.1.2
-  resolution: "electron-is-accelerator@npm:0.1.2"
-  checksum: 10c0/120da55c3b581cbca5eccdd80c9099574a7aa0a8ea8b9fd4e5dcd906dcf83308c94587ad771b066cdd073e45e68dbe4c06256602998f16ccafbcfe1cab968718
-  languageName: node
-  linkType: hard
-
 "electron-is-dev@npm:^2.0.0":
   version: 2.0.0
   resolution: "electron-is-dev@npm:2.0.0"
   checksum: 10c0/aa540115f144f9c8c788e13fc581be7b0f9f83422eecb940af6367c67d63c3a656e03ad9c1138f17bcfbafc9edca8b83f655feff24dead2cc4866169c6e565f9
-  languageName: node
-  linkType: hard
-
-"electron-is-dev@npm:^3.0.1":
-  version: 3.0.1
-  resolution: "electron-is-dev@npm:3.0.1"
-  checksum: 10c0/80d37d61d44b8b7af0af90eab622b09e0f165afbc2560297c760356efa93fcb54dbbd13d4d6522da6474e261d630b76b804c86385564a1f3062d28fc59c340bd
-  languageName: node
-  linkType: hard
-
-"electron-localshortcut@npm:^3.2.1":
-  version: 3.2.1
-  resolution: "electron-localshortcut@npm:3.2.1"
-  dependencies:
-    debug: "npm:^4.0.1"
-    electron-is-accelerator: "npm:^0.1.0"
-    keyboardevent-from-electron-accelerator: "npm:^2.0.0"
-    keyboardevents-areequal: "npm:^0.2.1"
-  checksum: 10c0/6490a1dd0155926d5664500d45a5acb4771ba96e3ad4a878367e24ab96096c8824197cf3e2890a4f51b0307665afe680fe5f22dae2e4ba781cf32ddab9dcc335
   languageName: node
   linkType: hard
 
@@ -8674,20 +8638,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"keyboardevent-from-electron-accelerator@npm:^2.0.0":
-  version: 2.0.0
-  resolution: "keyboardevent-from-electron-accelerator@npm:2.0.0"
-  checksum: 10c0/94bd9da6eb80145b36f336adb3f0a55cc8fdf0138f0df3028feb30d790d0727f8de27f040278805a499cc61dba816c8fab012e7f76c2495033d2fd7c2762f309
-  languageName: node
-  linkType: hard
-
-"keyboardevents-areequal@npm:^0.2.1":
-  version: 0.2.2
-  resolution: "keyboardevents-areequal@npm:0.2.2"
-  checksum: 10c0/1612c2aa52001163b2517ef6c0ea9abf20117e206e6796ba15eb99c0ae331a8826ab60a18e7ddb8ed0e15272af64d3b14383d2ae832beaa2f68548c1c53e4fa6
-  languageName: node
-  linkType: hard
-
 "keyv@npm:^4.0.0, keyv@npm:^4.5.4":
   version: 4.5.4
   resolution: "keyv@npm:4.5.4"
@@ -8755,8 +8705,8 @@ __metadata:
 
 "libxulsword@file:./libxulsword::locator=xulsword%40workspace%3A.":
   version: 1.5.6
-  resolution: "libxulsword@file:./libxulsword#./libxulsword::hash=d5effd&locator=xulsword%40workspace%3A."
-  checksum: 10c0/f7efc865d7529ba1cca8552abf3bf0cffa8009ca5410e49d20da6eb8e2749aece56ba104c0db189b055237f22af98488ccdc0b8d7c35f864e79bb1d4ba48b4c5
+  resolution: "libxulsword@file:./libxulsword#./libxulsword::hash=cbd662&locator=xulsword%40workspace%3A."
+  checksum: 10c0/da543f18cd1745da2fcd321d73f216c78b9e168b710b1d61be27fe583948c68dc1545c76a476ac74d6aed3fc0b7352de820525c04503cc8fecff8428fa8a6b11
   languageName: node
   linkType: hard
 
@@ -13734,7 +13684,6 @@ __metadata:
     electron: "npm:^22.0.0"
     electron-builder: "npm:^24.13.3"
     electron-context-menu: "npm:^3.1.1"
-    electron-debug: "npm:^4.0.0"
     electron-devtools-installer: "npm:^3.2.0"
     electron-log: "npm:^4.3.5"
     electron-notarize: "npm:^1.2.2"

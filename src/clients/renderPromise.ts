@@ -29,7 +29,7 @@ export function GCallsOrPromise(
   defaultValues?: PrefValue[],
   promise?: RenderPromise | null,
 ): PrefValue[] {
-  if (!Build.isWebApp) {
+  if (Build.isElectronApp) {
     const results = calls.map((call) => getCallFromCache(call));
     callBatchThenCacheSync(calls.filter((_gc, i) => results[i] === undefined));
     return getCallsFromCacheAndClear(calls);

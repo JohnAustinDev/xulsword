@@ -51,10 +51,9 @@ const statePrefDefault = drop(S.prefs.xulsword, vpWindowState) as Omit<
 // Window arguments that are used to set initial state must be updated locally
 // and in Prefs, so that component reset or program restart won't cause
 // reversion to initial state.
-let windowState = windowArguments('xulswordState') as Pick<
-  typeof S.prefs.xulsword,
-  (typeof vpWindowState)[number]
->;
+let windowState:
+  | Pick<typeof S.prefs.xulsword, (typeof vpWindowState)[number]>
+  | undefined;
 
 let WindowTitle = '';
 
@@ -85,6 +84,13 @@ export default class ViewportWin
 
   constructor(props: ViewportWinProps) {
     super(props);
+
+    if (typeof windowState === 'undefined') {
+      windowState = windowArguments('xulswordState') as Pick<
+        typeof S.prefs.xulsword,
+        (typeof vpWindowState)[number]
+      >;
+    }
 
     const s: ViewportWinState = {
       ...getStatePref('prefs', 'xulsword', statePrefDefault),

@@ -15,8 +15,6 @@ import type {
 } from '../type.ts';
 import type { HTMLData } from './htmlData.ts';
 
-const windowDescriptor = windowArguments();
-
 // Return target data usable by context menus.
 export default function ContextData(elem: HTMLElement): ContextDataType {
   const atextx = ofClass(['atext'], elem);
@@ -178,6 +176,6 @@ export default function ContextData(elem: HTMLElement): ContextDataType {
     selection,
     selectionParsedVK,
     search,
-    windowDescriptor,
+    windowDescriptor: windowArguments(),
   };
 }

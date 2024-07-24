@@ -487,7 +487,7 @@ function fontURL(mod: string) {
   const prefs = Cache.has('PrefsElectron')
     ? (Cache.read('PrefsElectron') as typeof PrefsElectron)
     : null;
-  if (!Build.isElectronApp || prefs?.getBoolPref('global.InternetPermission')) {
+  if (Build.isWebApp || prefs?.getBoolPref('global.InternetPermission')) {
     const url = LibSword.getModuleInformation(mod, 'Font').match(
       /(\w+:\/\/[^"')]+)\s*$/,
     );
@@ -546,7 +546,7 @@ export function getModuleFonts(): FontFaceType[] {
     Object.values(fonts).forEach((info) => {
       if (info.fontFamily !== 'unknown' && info.fontFamily !== 'dir') {
         let { path } = info;
-        if (Build.isServer) path = serverPublicPath(path);
+        if (Build.isWebApp) path = serverPublicPath(path);
         ret.push({ fontFamily: info.fontFamily, path });
       }
     });
@@ -693,7 +693,7 @@ export function getModuleConfig(mod: string): ConfigType {
       ).replaceAll('\\', '/');
       const p2 = `${p}${p.slice(-1) === '/' ? '' : '/'}`;
       let pcx = `${p2}${moduleConfig.PreferredCSSXHTML}`;
-      if (Build.isServer) pcx = serverPublicPath(pcx);
+      if (Build.isWebApp) pcx = serverPublicPath(pcx);
       moduleConfig.PreferredCSSXHTML = pcx;
     }
 
@@ -894,7 +894,7 @@ export function inlineFile(
   noHeader = false,
 ): string {
   let fpath = filepath;
-  if (Build.isServer) {
+  if (Build.isWebApp) {
     const spath = fileFullPath(filepath);
     if (!spath) return '';
     fpath = spath;
@@ -948,7 +948,7 @@ export function inlineAudioFile(
         const afile = file.clone().append(`${leaf}.${ext}`);
         if (afile.exists()) {
           let apath = afile.path;
-          if (Build.isServer) {
+          if (Build.isWebApp) {
             apath = serverPublicPath(apath);
           }
           if (apath) return inlineFile(apath);

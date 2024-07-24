@@ -14,7 +14,6 @@ import type { RenderPromiseComponent } from '../../renderPromise.ts';
 import type { HTMLData } from '../../htmlData.ts';
 import type Atext from '../atext/atext.tsx';
 
-const WindowDescriptor = windowArguments();
 let WheelScrolling = false;
 
 export type PopupParent = RenderPromiseComponent & {
@@ -292,7 +291,7 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
         }
         case 'popupCloseLink': {
           if (parent !== popupParent) {
-            if (!Build.isWebApp) {
+            if (Build.isElectronApp) {
               G.Window.close();
             }
           } else {
@@ -322,7 +321,7 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
           const { elemdata } = state;
           const boxes = parent.getElementsByClassName('npopupTX');
           const box = boxes ? boxes[0] : (null as HTMLElement | null);
-          if (!Build.isWebApp && box) {
+          if (Build.isElectronApp && box) {
             const b = box.getBoundingClientRect();
             const popupState: Pick<PopupParentState, 'elemdata'> = { elemdata };
             G.Window.open({
@@ -330,7 +329,7 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
               allowMultiple: true,
               saveIfAppClosed: true,
               openWithBounds: {
-                withinWindowID: WindowDescriptor.id,
+                withinWindowID: windowArguments().id,
                 x: Math.round(b.x),
                 y: Math.round(b.y),
                 width: Math.round(b.width),

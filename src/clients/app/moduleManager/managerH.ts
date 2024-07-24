@@ -59,8 +59,6 @@ import type {
   TCellLocation,
 } from '../../components/libxul/table.tsx';
 
-const windowDescriptor = windowArguments();
-
 export const Tables = ['language', 'module', 'repository'] as const;
 
 // Data that is saved between window resets, but isn't saved to prefs:
@@ -450,7 +448,7 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
                 {
                   renderers: [
                     { type: 'xulswordWin' },
-                    { id: windowDescriptor.id },
+                    { id: windowArguments().id },
                   ],
                 },
                 { progress: 'indefinite' },
@@ -593,7 +591,7 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
                 {
                   renderers: [
                     { type: 'xulswordWin' },
-                    { id: windowDescriptor.id },
+                    { id: windowArguments().id },
                   ],
                 },
                 { progress: -1 },

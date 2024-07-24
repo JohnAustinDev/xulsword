@@ -75,9 +75,7 @@ const notStatePrefDefault = {
   progress: -1 as number,
 };
 
-let openedWinState = windowArguments(
-  'passageWinState',
-) as Partial<PrintPassageState> | null;
+let openedWinState: Partial<PrintPassageState> | null | undefined;
 
 export type PrintPassageState = typeof S.prefs.printPassage &
   typeof notStatePrefDefault;
@@ -93,6 +91,12 @@ export default class PrintPassageWin extends React.Component {
 
   constructor(props: PrintPassageProps) {
     super(props);
+
+    if (typeof openedWinState === 'undefined') {
+      openedWinState = windowArguments(
+        'passageWinState',
+      ) as Partial<PrintPassageState> | null;
+    }
 
     const s: PrintPassageState = {
       ...notStatePrefDefault,

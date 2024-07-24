@@ -67,7 +67,7 @@ export default class Prefs {
   ) {
     this.storage = storage;
     this.log = log;
-    this.writeOnChange = writeOnChange ?? Build.isClient;
+    this.writeOnChange = writeOnChange ?? Build.isWebApp;
     this.browserWindow = browserWindow ?? null;
   }
 

@@ -23,8 +23,6 @@ import type { AtextStateType } from '../atext/atext.tsx';
 import type ViewportWin from '../../app/viewportWin/viewportWin.tsx';
 import type { ViewportWinState } from '../../app/viewportWin/viewportWin.tsx';
 
-const WindowDescriptor = windowArguments();
-
 // Important: These SP.xulsword properties become independent
 // window properties for windows other than the xulsword window.
 // So they are xulsword state prefs, but become just local state
@@ -233,7 +231,7 @@ export default function handler(
       switch (targ.type) {
         case 'text-win': {
           const cols = atext?.dataset.columns;
-          if (!Build.isWebApp && atext && cols !== undefined) {
+          if (Build.isElectronApp && atext && cols !== undefined) {
             // Save new window's XulswordState
             const xulswordState: Partial<XulswordState> = {};
             vpWindowState.forEach((name) => {
@@ -281,7 +279,7 @@ export default function handler(
               allowMultiple: true,
               saveIfAppClosed: true,
               openWithBounds: {
-                withinWindowID: WindowDescriptor.id,
+                withinWindowID: windowArguments().id,
                 x: Math.round(atextb.x - vpPadding),
                 y: Math.round(textareab.y - vpPaddingTop),
                 width: Math.round(atextb.width + 2 * vpPadding),

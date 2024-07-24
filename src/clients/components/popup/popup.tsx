@@ -120,7 +120,7 @@ class Popup extends React.Component implements RenderPromiseComponent {
     const { npopup } = this;
     const { isWindow } = this.props as PopupProps;
     const popup = npopup?.current;
-    if (!Build.isWebApp && isWindow && popup) {
+    if (isWindow && popup) {
       const maxlen = Math.floor((popup.clientWidth - 50) / 10);
       const search = ['crref', 'lemma-header', 'popup-text'];
       let title;
@@ -322,7 +322,7 @@ class Popup extends React.Component implements RenderPromiseComponent {
           data-data={JSON_attrib_stringify(data)}
         >
           <Hbox pack="start" align="center" className="popupheader">
-            {!isWindow && !Build.isWebApp && <div className="towindow" />}
+            {!isWindow && Build.isElectronApp && <div className="towindow" />}
             {elemdata && elemdata.length > 1 && (
               <div>
                 <a className="popupBackLink">

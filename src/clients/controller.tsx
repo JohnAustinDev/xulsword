@@ -1,6 +1,5 @@
 import React, { StrictMode, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import PropTypes from 'prop-types';
 import { Intent, ProgressBar, Spinner, Tag } from '@blueprintjs/core';
 import Subscription from '../subscription.ts';
 import { randomID, sanitizeHTML, stringHash } from '../common.ts';
@@ -66,8 +65,7 @@ type StateArray<M extends keyof ControllerState> = [
 const stateme = Object.keys(defaultInitialState) as Array<
   keyof typeof defaultInitialState
 >;
-const descriptor = windowArguments();
-Cache.write(`${descriptor.type}:${descriptor.id}`, 'windowID');
+let descriptor: WindowDescriptorPrefType | null = null;
 let dynamicStyleSheet: DynamicStyleSheet | null = null;
 const delayHandlerThis = {};
 
@@ -86,7 +84,7 @@ function Controller(props: ControllerProps) {
     return window.IPC.on('component-reset', () => {
       if (dynamicStyleSheet) {
         log.debug(
-          `Renderer reset (stylesheet, cache, component): ${descriptor.id}`,
+          `Renderer reset (stylesheet, cache, component): ${descriptor?.id || 'unknown'}`,
         );
         dynamicStyleSheet.update(G.Data.read('stylesheetData') as StyleType);
         Cache.clear();
@@ -136,7 +134,9 @@ function Controller(props: ControllerProps) {
         'resize',
         delayHandler.bind(delayHandlerThis)(
           () => {
-            log.debug(`Renderer reset (component): ${descriptor.id}`);
+            log.debug(
+              `Renderer reset (component): ${descriptor?.id || 'unknown'}`,
+            );
             s.reset[1](randomID());
           },
           C.UI.Window.resizeDelay,
@@ -162,7 +162,7 @@ function Controller(props: ControllerProps) {
     const root = document.getElementById('root');
     if (
       root &&
-      ['xulswordWin', 'viewportWin'].includes(descriptor.type ?? '')
+      ['xulswordWin', 'viewportWin'].includes(descriptor?.type ?? '')
     ) {
       root.ondragover = (e) => {
         e.preventDefault();
@@ -199,7 +199,7 @@ function Controller(props: ControllerProps) {
     return Subscription.subscribe.modulesInstalled(
       (newmods: NewModulesType) => {
         log.debug(
-          `Renderer reset (cache, stylesheet, component): ${descriptor.id}`,
+          `Renderer reset (cache, stylesheet, component): ${descriptor?.id || 'unknown'}`,
         );
         dynamicStyleSheet?.update(G.Data.read('stylesheetData') as StyleType);
         Cache.clear();
@@ -209,7 +209,7 @@ function Controller(props: ControllerProps) {
         const setCipherKey = () => {
           const k = cipherKeys.filter((ck) => ck.conf.module && ck.cipherKey);
           if (k.length && !s.dialogs[0].length) {
-            G.Module.setCipherKeys(k, descriptor.id);
+            G.Module.setCipherKeys(k, descriptor?.id);
             s.modal[1]('darkened'); // so there's no flash
           }
         };
@@ -433,11 +433,17 @@ export default async function renderToRoot(
   window.IPC.on('cache-reset', () => {
     Cache.clear();
     log.debug(`CLEARED ALL CACHES`);
-    Cache.write(`${descriptor.type}:${descriptor.id}`, 'windowID');
+    Cache.write(
+      `${descriptor?.type || 'unknown'}:${descriptor?.id || 'unknown'}`,
+      'windowID',
+    );
   });
   window.IPC.on('dynamic-stylesheet-reset', () => {
     dynamicStyleSheet?.update(G.Data.read('stylesheetData') as StyleType);
   });
+
+  descriptor = windowArguments();
+  Cache.write(`${descriptor.type}:${descriptor.id}`, 'windowID');
 
   dynamicStyleSheet = new DynamicStyleSheet(document);
   dynamicStyleSheet.update(G.Data.read('stylesheetData') as StyleType);
@@ -451,7 +457,7 @@ export default async function renderToRoot(
     'notResizable',
   ] as const;
   classArgs.forEach((p: keyof WindowDescriptorPrefType) => {
-    const s = p in descriptor ? descriptor[p] : undefined;
+    const s = descriptor && p in descriptor ? descriptor[p] : undefined;
     if (s !== undefined && typeof s === 'boolean' && s) classes.push(p);
     else if (s !== undefined && typeof s === 'string') classes.push(s);
   });

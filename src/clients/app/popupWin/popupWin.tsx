@@ -30,7 +30,7 @@ type PopupWinProps = ViewportPopupProps & XulProps;
 
 type PopupWinState = PopupParentState & RenderPromiseState;
 
-let windowState = windowArguments('popupState') as Partial<PopupWinState>;
+let windowState: Partial<PopupWinState> | undefined;
 
 export default class PopupWin extends React.Component implements PopupParent {
   static propTypes: typeof propTypes;
@@ -42,9 +42,13 @@ export default class PopupWin extends React.Component implements PopupParent {
   constructor(props: PopupWinProps) {
     super(props);
 
+    if (typeof windowState === 'undefined') {
+      windowState = windowArguments('popupState') as Partial<PopupWinState>;
+    }
+
     this.state = {
       ...PopupParentInitState,
-      ...windowState,
+      ...(windowArguments('popupState') as Partial<PopupWinState>),
       renderPromiseID: 0,
     } as PopupWinState;
 

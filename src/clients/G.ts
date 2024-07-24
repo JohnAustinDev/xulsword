@@ -307,7 +307,7 @@ function request(thecall: GCallType) {
 }
 
 function allowed(thecall: GCallType): boolean {
-  if (!Build.isWebApp) return true;
+  if (Build.isElectronApp) return true;
   const [name, method, args] = thecall;
   if (name === 'callBatch') {
     if (args) {

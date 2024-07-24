@@ -113,13 +113,10 @@ const defaultState: BMPropertiesState = {
 //                              Otherwise it's the default folder (or bookmark loc-
 //                              ation if anyChildSelectable is set) for the new item.
 // hide                    []  -hide the input selector(s) having the given id(s)
-const windowArgState = windowArguments('bmPropertiesState') as Parameters<
+type WinArgBmPropState = Parameters<
   GType['Commands']['openBookmarkProperties']
 >[1];
-
-const newitem = windowArguments('newitem') as Parameters<
-  GType['Commands']['openBookmarkProperties']
->[2];
+type WinArgNewItem = Parameters<GType['Commands']['openBookmarkProperties']>[2];
 
 const propTypes = xulPropTypes;
 
@@ -133,7 +130,7 @@ export default class BMPropertiesWin extends React.Component {
 
     const state: BMPropertiesState = {
       ...defaultState,
-      ...windowArgState,
+      ...(windowArguments('bmPropertiesState') as WinArgBmPropState),
       bookmark: initialBookmark() || bmdefault,
     };
 
@@ -440,6 +437,10 @@ renderToRoot(<BMPropertiesWin />, {
 });
 
 function initialBookmark(): BookmarkItemType | undefined {
+  const windowArgState = windowArguments(
+    'bmPropertiesState',
+  ) as WinArgBmPropState;
+  const newitem = windowArguments('newitem') as WinArgNewItem;
   let bookmark: BookmarkItemType | undefined;
   if (newitem || !windowArgState?.bookmark) {
     let location:

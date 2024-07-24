@@ -228,7 +228,7 @@ export default function parseSwordConf(
   });
 
   // In server mode, filter entries that contain file references.
-  if (Build.isServer) {
+  if (Build.isWebApp) {
     r.DataPath = serverPublicPath(r.DataPath);
     if (/^file:\/\//i.test(r.sourceRepository.domain)) {
       r.sourceRepository.domain = process.env.WEBAPP_DOMAIN_AND_PORT || '';
@@ -243,6 +243,8 @@ export default function parseSwordConf(
 // null if it is not public. IMPORTANT: never return a fileFullPath string in
 // any response from a public server, as full server paths should be kept secret.
 export function fileFullPath(serverPublicPath: string): string | null {
+  // Electron public paths are already full paths and are all allowed.
+  if (Build.isElectronApp) return serverPublicPath;
   const root = process.env.WEBAPP_SERVERROOT;
   const publics = process.env.WEBAPP_PUBPATHS;
   if (root && publics) {
@@ -261,6 +263,8 @@ export function fileFullPath(serverPublicPath: string): string | null {
 // Returns a server public path or an empty string. If filePath is publicly
 // accessible, the public portion of the file path is returned.
 export function serverPublicPath(fileFullPath: string): string {
+  // Electron public paths are always full paths and are all allowed.
+  if (Build.isElectronApp) return fileFullPath;
   const root = process.env.WEBAPP_SERVERROOT;
   const publics = process.env.WEBAPP_PUBPATHS;
   if (root && publics) {
@@ -279,7 +283,7 @@ export function serverPublicPath(fileFullPath: string): string {
 // file paths remain unchanged, but in server mode, file paths are converted
 // into server URLs, or are filtered out if they are not in a public directory.
 export function publicFiles(aString: string): string {
-  if (Build.isServer) {
+  if (Build.isWebApp) {
     // If running as a public server on the Internet
     return aString.replace(/(file:\/\/)(\S+)/gi, (_m, _m1, m2: string) =>
       serverPublicPath(m2),

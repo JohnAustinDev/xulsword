@@ -86,7 +86,6 @@ G.Module.cancel().catch((er) => {
 
 let MasterRepoListDownloaded = false;
 let resetOnResize = false;
-const windowDescriptor = windowArguments();
 
 const propTypes = {
   ...xulPropTypes,
@@ -780,7 +779,7 @@ export default class ModuleManager
     // If we are managing external repositories, Internet permission is required.
     if (!repositories || internetPermission) {
       if (!resetOnResize) {
-        const { id } = windowDescriptor;
+        const { id } = windowArguments();
         resetOnResize = true;
         G.publishSubscription('setRendererRootState', { renderers: { id } }, {
           resetOnResize,

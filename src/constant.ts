@@ -17,7 +17,9 @@ import type {
 
 // COMMON GLOBAL CONSTANTS FOR SERVER AND CLIENT PROCESSES
 const C = {
-  DevToolsopen: Build.isDevelopment,
+  // Set DevToolsopen to true to open DevTools immediately- can be helpful for
+  // debugging window initialization problems.
+  DevToolsopen: false,
 
   LogLevel: (env('LOGLEVEL') ||
     (Build.isDevelopment ? 'debug' : 'info')) as LogLevel,

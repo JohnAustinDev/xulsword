@@ -10,7 +10,6 @@ import devToolsInstaller, {
   REACT_DEVELOPER_TOOLS,
 } from 'electron-devtools-installer';
 import { install as SourceMapInstall } from 'source-map-support';
-import electronDebug from 'electron-debug';
 import Subscription from '../../subscription.ts';
 import Cache from '../../cache.ts';
 import { clone, JSON_parse, keep, localizeString } from '../../common.ts';
@@ -134,9 +133,7 @@ const AvailableLanguages = [
 const appSubscriptions: Array<() => void> = [];
 appSubscriptions.push(Subscription.subscribe.windowCreated(contextMenu));
 
-if (Build.isDevelopment) {
-  SourceMapInstall();
-}
+if (Build.isDevelopment) SourceMapInstall();
 
 // Make all windows appear at the same time, rather than each flashing
 // up separately and reordering themselves visibly.
@@ -371,15 +368,6 @@ const openXulswordWindow = () => {
         ...clone(C.NEWMODS),
         nokeymods: getCipherFailConfs(),
       },
-    );
-  }
-
-  if (Build.isDevelopment) {
-    xulswordWindow.on('ready-to-show', () =>
-      electronDebug({
-        showDevTools: C.DevToolsopen,
-        devToolsMode: 'undocked',
-      }),
     );
   }
 

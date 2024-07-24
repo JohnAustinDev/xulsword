@@ -961,7 +961,8 @@ export default class MainMenuBuilder {
           label: 'Toggle &Developer Tools',
           accelerator: 'Alt+Ctrl+I',
           click: d(() => {
-            this.window.webContents.toggleDevTools();
+            const { webContents: contents } = this.window;
+            contents.toggleDevTools();
           }),
         },
       ],
@@ -1053,7 +1054,8 @@ export default class MainMenuBuilder {
           label: 'Toggle Developer Tools',
           accelerator: 'Alt+Command+I',
           click: () => {
-            this.window.webContents.toggleDevTools();
+            const { webContents: contents } = this.window;
+            contents.toggleDevTools();
           },
         },
       ],

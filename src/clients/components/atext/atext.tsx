@@ -136,7 +136,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
       Object.keys(stateWinPrefs) as Array<keyof typeof stateWinPrefs>,
     );
     const changedState = diff(prevState, windowState[panelIndex]);
-    if (!Build.isWebApp && changedState) {
+    if (Build.isElectronApp && changedState) {
       G.Window.mergeValue(`atext${panelIndex}State`, changedState);
     }
     renderPromise.dispatch();
@@ -668,7 +668,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
       >
         <div className="sbcontrols">
           {isVerseKey && <div className="text-pin" />}
-          {!ownWindow && !Build.isWebApp && <div className="text-win" />}
+          {!ownWindow && Build.isElectronApp && <div className="text-win" />}
         </div>
 
         <Box className="hd">

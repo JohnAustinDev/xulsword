@@ -7,8 +7,8 @@ __metadata:
 
 "libxulsword@file:../../libxulsword::locator=xulsword-web-app%40workspace%3A.":
   version: 1.5.6
-  resolution: "libxulsword@file:../../libxulsword#../../libxulsword::hash=d5effd&locator=xulsword-web-app%40workspace%3A."
-  checksum: 10c0/f7efc865d7529ba1cca8552abf3bf0cffa8009ca5410e49d20da6eb8e2749aece56ba104c0db189b055237f22af98488ccdc0b8d7c35f864e79bb1d4ba48b4c5
+  resolution: "libxulsword@file:../../libxulsword#../../libxulsword::hash=cbd662&locator=xulsword-web-app%40workspace%3A."
+  checksum: 10c0/da543f18cd1745da2fcd321d73f216c78b9e168b710b1d61be27fe583948c68dc1545c76a476ac74d6aed3fc0b7352de820525c04503cc8fecff8428fa8a6b11
   languageName: node
   linkType: hard
 

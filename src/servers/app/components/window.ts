@@ -449,11 +449,15 @@ const Window = {
     d.id = win.id; // descriptor is now complete
     Data.write(descriptorToPref(d), d.dataID);
 
-    if (C.DevToolsopen) win.webContents.openDevTools({ mode: 'detach' });
-
     win.loadURL(resolveHtmlPath(`${d.type}.html`)).catch((er) => {
       log.error(er);
     });
+
+    if (C.DevToolsopen) {
+      const devtools = new BrowserWindow();
+      win.webContents.setDevToolsWebContents(devtools.webContents);
+      win.webContents.openDevTools({ mode: 'detach', activate: true });
+    }
 
     if (d.type !== 'xulswordWin') win.removeMenu();
 
