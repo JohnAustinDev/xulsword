@@ -9,6 +9,9 @@ import type {
   OSISBookType,
 } from './type.ts';
 
+// Parse a Bible verse system location from a readable Bible reference written
+// in any of xulsword's installed user interface languages.
+
 type IdentifyBookType = {
   code: OSISBookType | '';
   locale: string | null;

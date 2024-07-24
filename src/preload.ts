@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import type { LogLevel } from 'electron-log';
 
-// This has nothing to do with G cache preload. It is Electron's way of
-// injecting Inter Process Communication and process objects into clients.
+// This has nothing to do with G cache preload. This preload is Electron's way
+// of injecting Inter Process Communication and process objects into clients.
 
 const validChannels = [
   'global', // to+from main for use by the G object

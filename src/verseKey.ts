@@ -10,8 +10,9 @@ type VerseKeyGtype = {
   Tab: () => GType['Tab']; // These web app G calls must be cache preloaded.
 };
 
-// Keep a reference to a particular range of Bible verses up to a whole
-// chapter. Supports conversion between different verse systems.
+// VerseKey is an object representing a Bible reference of a verse up to a
+// whole chapter. It converts between verse systems as needed. Methods include
+// extracting book, chapter, verse-system, readable reference text, etc.
 // IMPORTANT: This class depends on data from the calling process, requiring
 // access functions be supplied from the calling process during instantiation.
 export default class VerseKey {

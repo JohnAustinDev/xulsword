@@ -15,7 +15,7 @@ import type {
   V11nType,
 } from './type.ts';
 
-// COMMON GLOBAL CONSTANTS FOR MAIN AND RENDERER PROCESSES
+// COMMON GLOBAL CONSTANTS FOR SERVER AND CLIENT PROCESSES
 const C = {
   DevToolsopen: Build.isDevelopment,
 
