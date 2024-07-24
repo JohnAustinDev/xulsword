@@ -83,9 +83,11 @@ const defaultEnvironment = {
   WEBAPP_PUBLIC_DIST: '/',
   WEBPACK_DEV_WEBAPP_PORT: 1212,
   WEBPACK_DEV_APP_PORT: 1213,
+  XSModsUser_DIR: '',
   XSModsCommon_DIR: '',
   XSFonts_DIR: '',
   LOG_DIR: '',
+  NODE_ENV: 'development',
 };
 const env = (v) => process.env[v] || defaultEnvironment[v];
 
@@ -164,6 +166,8 @@ export default function (opts) {
         ? 'WEBPACK_DEV_APP_PORT'
         : 'WEBPACK_DEV_WEBAPP_PORT',
     );
+
+    defaultEnvironment.NODE_ENV = development ? 'development' : 'production';
 
     return {
       ...(development ? { devtool: 'source-map' } : {}),

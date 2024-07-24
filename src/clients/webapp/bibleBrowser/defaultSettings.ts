@@ -24,14 +24,14 @@ export type BibleBrowserSettings = {
 // available modules at run-time.
 export function setEmptySettings(settings: BibleBrowserSettings['settings']) {
   const { tabs, panels } = settings.prefs.xulsword;
-  if (!tabs || tabs.every((t) => !t || !t.length)) {
+  if (G.Tabs.length && (!tabs || tabs.every((t) => !t || !t.length))) {
     const ntabs = tabs ?? [[], []];
     ntabs.forEach((tabBank) => {
       if (Array.isArray(tabBank)) tabBank.push(...G.Tabs.map((t) => t.module));
     });
     settings.prefs.xulsword.tabs = ntabs;
   }
-  if (!panels || panels.every((p) => !p)) {
+  if (G.Tabs.length && (!panels || panels.every((p) => !p))) {
     const npanels = (panels ?? ['', '']).map((p) => p || G.Tabs[0].module);
     settings.prefs.xulsword.panels = npanels;
   }

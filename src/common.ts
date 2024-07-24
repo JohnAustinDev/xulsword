@@ -49,7 +49,7 @@ import type { SelectORMType } from './clients/components/libxul/selectOR.tsx';
 import type { getSampleText } from './clients/bookmarks.ts';
 import type { verseKey } from './clients/htmlData.ts';
 import type { XulswordState } from './clients/components/xulsword/xulsword.tsx';
-import { BibleBrowserControllerGlobal } from './clients/webapp/bibleBrowser/controller.tsx';
+import type { BibleBrowserControllerGlobal } from './clients/webapp/bibleBrowser/bibleBrowser.tsx';
 
 // This file contains functions that are used in common with both xulsword
 // clients and servers.

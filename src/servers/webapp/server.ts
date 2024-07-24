@@ -36,9 +36,9 @@ log.transports.file.resolvePath = () => logfile.path;
 
 LibSword.init();
 
-log.info(
-  `Loaded ${LibSword.getModuleList().split('<nx>').length} SWORD modules.`,
-);
+const modlist = LibSword.getModuleList();
+const mods = modlist === C.NOMODULES ? [] : modlist.split('<nx>');
+log.info(`Loaded ${mods.length} SWORD modules.`);
 log.info(
   `LogLevel: ${C.LogLevel}, Logfile: ${logfile.path}, Port: ${process.env.WEBAPP_PORT}`,
 );

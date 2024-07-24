@@ -86,7 +86,10 @@ function Controller(props: ControllerProps) {
         log.debug(
           `Renderer reset (stylesheet, cache, component): ${descriptor?.id || 'unknown'}`,
         );
-        dynamicStyleSheet.update(G.Data.read('stylesheetData') as StyleType);
+        const style: StyleType | undefined = Build.isElectronApp
+          ? (G.Data.read('stylesheetData') as StyleType)
+          : undefined;
+        dynamicStyleSheet.update(style);
         Cache.clear();
         s.reset[1](randomID());
       }
@@ -159,6 +162,7 @@ function Controller(props: ControllerProps) {
 
   // Installer drag-and-drop setup:
   useEffect(() => {
+    if (!Build.isElectronApp) return;
     const root = document.getElementById('root');
     if (
       root &&
@@ -198,6 +202,7 @@ function Controller(props: ControllerProps) {
   useEffect(() => {
     return Subscription.subscribe.modulesInstalled(
       (newmods: NewModulesType) => {
+        if (!Build.isElectronApp) return;
         log.debug(
           `Renderer reset (cache, stylesheet, component): ${descriptor?.id || 'unknown'}`,
         );
@@ -352,6 +357,7 @@ function Controller(props: ControllerProps) {
         id="reset"
         className={s.showPrintOverlay[0] ? 'printp' : undefined}
         onContextMenu={(e: React.SyntheticEvent) => {
+          if (!Build.isElectronApp) return;
           if (!G.Data.has('contextData')) {
             G.Data.write(ContextData(e.target as HTMLElement), 'contextData');
           }
@@ -439,14 +445,18 @@ export default async function renderToRoot(
     );
   });
   window.IPC.on('dynamic-stylesheet-reset', () => {
-    dynamicStyleSheet?.update(G.Data.read('stylesheetData') as StyleType);
+    if (Build.isElectronApp) {
+      dynamicStyleSheet?.update(G.Data.read('stylesheetData') as StyleType);
+    }
   });
 
   descriptor = windowArguments();
   Cache.write(`${descriptor.type}:${descriptor.id}`, 'windowID');
 
   dynamicStyleSheet = new DynamicStyleSheet(document);
-  dynamicStyleSheet.update(G.Data.read('stylesheetData') as StyleType);
+  if (Build.isElectronApp) {
+    dynamicStyleSheet.update(G.Data.read('stylesheetData') as StyleType);
+  }
 
   // Set window type and language classes on the root html element.
   const classes: string[] = [];
@@ -497,7 +507,8 @@ export default async function renderToRoot(
       const [bodyElem] = Array.from(document.getElementsByTagName('body'));
       if (htmlElem && bodyElem) {
         const b = bodyElem.getBoundingClientRect();
-        if (b) G.Window.setContentSize(b.width, b.height);
+        if (b && Build.isElectronApp)
+          G.Window.setContentSize(b.width, b.height);
         // Now that the window has been resized, remove the fitToContent
         // class so content will fill the window even if it shrinks.
         htmlElem.classList.remove('fitToContent');

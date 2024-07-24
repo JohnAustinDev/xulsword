@@ -22,6 +22,8 @@
 
 # export XSFonts_DIR=[xulsword]/profile_webapp/web/resources/fonts
 
+# export XSModsUser_DIR=$WEBAPP_RESOURCE_DIR
+
 # export XSModsCommon_DIR=$HOME/.sword
 
 # export WEBPACK_DEV_WEBAPP_PORT=1212

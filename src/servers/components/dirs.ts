@@ -84,7 +84,8 @@ const Dirs = {
 
       Dirs.path.xsCache = path.join(profD, 'cache');
 
-      Dirs.path.xsModsUser = Dirs.path.xsResD;
+      Dirs.path.xsModsUser =
+        (Build.isWebApp && process.env.XSModsUser_DIR) || Dirs.path.xsResD;
 
       Dirs.path.xsFonts =
         (Build.isWebApp && process.env.XSFonts_DIR) ||

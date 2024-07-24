@@ -52,6 +52,8 @@ socket.on('connect', () => {
         (window as BibleBrowserControllerGlobal).browserMaxPanels;
       if (window.innerWidth < 800) numPanels = 1;
       const locale = setGlobalLocale(settings, langcode);
+      // Must set global.locale before callBatch.
+      writeSettingsToPrefsStores(settings);
       await callBatchThenCache([
         ['Tabs', null, undefined],
         ['Tab', null, undefined],
@@ -70,10 +72,12 @@ socket.on('connect', () => {
         ['AudioConfs', null, undefined],
         ['Books', null, [locale]],
         ['Book', null, [locale]],
+        ['i18n', 't', ['locale_direction']],
       ]);
       setEmptySettings(settings);
       setGlobalPanels(settings, numPanels);
 
+      // Update Prefs with final settings.
       writeSettingsToPrefsStores(settings);
       if (window.innerWidth < 500)
         G.Prefs.setBoolPref('xulsword.showChooser', false);
