@@ -1,5 +1,4 @@
 # xulsword
-setenv
 .vagrant
 archive
 archive.tgz
@@ -14,6 +13,7 @@ Cpp/clucene*
 Cpp/sword*
 Cpp/build*
 Cpp/phpsword
+./setenv
 
 # webapp
 profile_webapp

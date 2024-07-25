@@ -19,10 +19,11 @@ fi
 if [ -e /vagrant ]; then VAGRANT="guest"; else VAGRANT="host"; fi
 
 if [ "$VAGRANT" = "guest" ]; then
-  if [[ -e "/vagrant/setenv" ]]; then
+  if [[ -e "/vagrant/scripts/setenv" ]]; then
     XULSWORD=/vagrant
   fi
 fi
+if [[ ! -e "$XULSWORD/setenv" ]]; then cp "$XULSWORD/scripts/setenv" "$XULSWORD"; fi
 source "$XULSWORD/setenv"
 
 DBG=
