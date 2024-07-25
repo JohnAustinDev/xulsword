@@ -38,6 +38,8 @@ src/**/*.js.map
 !**/.yarn/sdks
 !**/.yarn/versions
 
+.eslintcache
+
 .vscode/perl-lang/
 .vstags
 
