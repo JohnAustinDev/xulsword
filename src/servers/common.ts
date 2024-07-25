@@ -509,13 +509,11 @@ export function getModuleFonts(): FontFaceType[] {
     const ret = [] as FontFaceType[];
     let writeFileFonts = true;
     let fileFonts: FontsType | undefined = undefined;
-    const dataFile = Dirs.xsFonts.append(fontDataFilename);
+    const dataFile = Dirs.xsResD.append(fontDataFilename);
     if (dataFile.exists()) {
       fileFonts = JSON_parse(dataFile.readFile()) as FontsType;
     }
-    const fontfiles = Dirs.xsFonts.directoryEntries.filter(
-      (d) => d !== fontDataFilename,
-    );
+    const fontfiles = Dirs.xsFonts.directoryEntries;
     if (
       fileFonts &&
       fontfiles.length === Object.keys(fileFonts).length &&
