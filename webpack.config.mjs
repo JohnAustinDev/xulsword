@@ -205,7 +205,7 @@ export default function (opts) {
         filename: `[name]${
           ['appSrv', 'webappSrv'].includes(build)
             ? '.cjs'
-            : production && build === 'webappClients'
+            : build === 'webappClients'
               ? '_[fullhash].js'
               : '.js'
           }`,
