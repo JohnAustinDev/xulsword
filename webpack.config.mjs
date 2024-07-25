@@ -202,7 +202,13 @@ export default function (opts) {
 
       output: {
         clean: true,
-        filename: `[name].${['appSrv', 'webappSrv'].includes(build) ? 'cjs' : 'js'}`,
+        filename: `[name]${
+          ['appSrv', 'webappSrv'].includes(build)
+            ? '.cjs'
+            : production && build === 'webappClients'
+              ? '_[fullhash].js'
+              : '.js'
+          }`,
         path: {
           appSrv: path.join(appDistPath, 'appSrv'),
           preload: path.join(appDistPath, 'preload'),
