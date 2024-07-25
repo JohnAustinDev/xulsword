@@ -13,8 +13,6 @@ type VerseKeyGtype = {
 // VerseKey is an object representing a Bible reference of a verse up to a
 // whole chapter. It converts between verse systems as needed. Methods include
 // extracting book, chapter, verse-system, readable reference text, etc.
-// IMPORTANT: This class depends on data from the calling process, requiring
-// access functions be supplied from the calling process during instantiation.
 export default class VerseKey {
   readonly #parser: RefParser;
 

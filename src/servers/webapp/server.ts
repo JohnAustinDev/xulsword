@@ -15,13 +15,15 @@ import {
 } from '../../common.ts';
 import C from '../../constant.ts';
 import { GI } from './G.ts';
-import handleGlobal from '../handleGlobal.ts';
+import handleGlobal from '../handleG.ts';
 import Dirs from '../components/dirs.ts';
 import LibSword from '../components/libsword.ts';
 
 import type { Socket } from 'socket.io';
 import type { LogLevel } from 'electron-log';
 import type { GCallType } from '../../type.ts';
+
+// A NodeJS server that provides responses for xulsword web apps.
 
 Dirs.init();
 

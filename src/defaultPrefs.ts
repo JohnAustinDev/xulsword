@@ -33,7 +33,7 @@ import type {
 // included in S, then default values for its PrefObjects must appear in
 // assets/default/preferences/<store>.json or an exception will be thrown.
 //
-// Usage NOTE: PrefObjects are cloned before writing and after reading.
+// Usage NOTE: PrefObjects are already cloned before writing and after reading.
 //
 // PrefValues that are stored in S can also be kept in sync with corresponding
 // state keys of React components (optionally both directions) using the following

@@ -3,7 +3,7 @@ import { JSON_stringify } from '../common.ts';
 
 import type { GCallType, GITypeMain as GIMainType, GType } from '../type.ts';
 
-// Handle global variable calls from renderer processes
+// Handle all G object calls from client processes using a server G object.
 export default function handleGlobal(
   GX: GType | GIMainType,
   win: number,
@@ -14,10 +14,10 @@ export default function handleGlobal(
   const [name, m, args] = acall;
   const { includeCallingWindow } = GBuilder;
   let allow = false;
-  const is = name && GBuilder.internetSafe.find((x) => x[0] === name);
+  const intSafe = name && GBuilder.internetSafe.find((x) => x[0] === name);
   if (trusted) allow = true;
-  else if (is && !m && is[1].length === 0) allow = true;
-  else if (is && (is[1] as any).includes(m)) allow = true;
+  else if (intSafe && !m && intSafe[1].length === 0) allow = true;
+  else if (intSafe && (intSafe[1] as any).includes(m)) allow = true;
   if (!trusted && name === 'LibSword' && m === 'AbsoluteDataPath') {
     allow = false;
   }

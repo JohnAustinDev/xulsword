@@ -15,7 +15,7 @@ import Cache from '../../cache.ts';
 import { clone, JSON_parse, keep, localizeString } from '../../common.ts';
 import C from '../../constant.ts';
 import S, { completePanelPrefDefaultArrays } from '../../defaultPrefs.ts';
-import handleGlobal from '../handleGlobal.ts';
+import handleGlobal from '../handleG.ts';
 import Dirs from '../components/dirs.ts';
 import Data from '../components/data.ts';
 import LibSword from '../components/libsword.ts';

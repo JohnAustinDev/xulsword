@@ -9,6 +9,10 @@ import type {
   MessagesToIndexWorker,
 } from './components/libsword.ts';
 
+// This runs in a separate thread from the server process and communicates with
+// the server process via NodeJS subprocess. It build a search index for a
+// requested module, reports the result, and exits.
+
 // Libxulsword requires both these callbacks to be defined.
 (globalThis as CppGlobalMethods).ToUpperCase = (aString) => {
   if (aString) {

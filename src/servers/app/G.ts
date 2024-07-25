@@ -26,7 +26,7 @@ import {
   getAllDictionaryKeyList,
   genBookTreeNodes,
 } from '../common.ts';
-import { callBatch } from '../handleGlobal.ts';
+import { callBatch } from '../handleG.ts';
 import { getExtRefHTML, locationVKText } from '../versetext.ts';
 import Prefs from './prefs.ts';
 import { canRedo, canUndo } from '../components/bookmarks.ts';

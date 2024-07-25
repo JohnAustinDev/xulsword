@@ -1,7 +1,7 @@
 import log from 'electron-log';
 import LocalFile from './components/localFile.ts';
 
-// return a font file's fontFamily value
+// Extract and return a font file's internal fontFamily name.
 export default function getFontFamily(fontpath: string) {
   const fontfile = new LocalFile(fontpath);
   const buff = fontfile.readBuf();

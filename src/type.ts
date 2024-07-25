@@ -50,11 +50,13 @@ import type {
 } from './servers/components/dirs.ts';
 import type LibSword from './servers/components/libsword.ts';
 import type { canRedo, canUndo } from './servers/components/bookmarks.ts';
-import type { CallBatch } from './servers/handleGlobal.ts';
+import type { CallBatch } from './servers/handleG.ts';
 import type ViewportElectron from './servers/app/viewport.ts';
 import type ViewportBrowser from './clients/webapp/viewport.ts';
 import type { GetExtRefHTML, LocationVKText } from './servers/versetext.ts';
 import type RenderPromise from './clients/renderPromise.ts';
+
+// This file contains global TypeScript types used throughout xulsword.
 
 declare global {
   // These are available anywhere 'window' is defined (ie. browser, renderers):

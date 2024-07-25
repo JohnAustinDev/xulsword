@@ -1,10 +1,16 @@
 #!/usr/bin/bash
 
-cd "$( dirname "${BASH_SOURCE[0]}" )/../../"
+cd "$( dirname "${BASH_SOURCE[0]}" )/../../../"
 
 source ./setenv
 
-export LD_LIBRARY_PATH=./Cpp/lib
-NVMBIN=../.nvm/versions/node/v22.2.0/bin
+export LD_LIBRARY_PATH='./Cpp/lib'
 
-"$NVMBIN/node" -r ./scripts/babel-register.mjs ./src/server/server.ts
+NVMDIR=../../.nvm
+
+if [[ -e "$NVMDIR" ]];
+then
+  $NVMDIR/versions/node/v22.2.0/bin/node ./build/webapp
+else
+  echo "Wrong path to .nvm directory."
+fi

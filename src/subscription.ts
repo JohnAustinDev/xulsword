@@ -9,7 +9,7 @@ import type { Socket } from 'socket.io-client';
 // Subscribe may also be used to avoid dependency cycles.
 
 // To add a new subscription option, add another key to subscriptionsNames and
-// fixing the resulting TypeScript ESLint errors.
+// fix the resulting TypeScript ESLint errors.
 const subscriptionsNames: Record<keyof SubscriptionTypes, null> = {
   prefsChanged: null,
   windowCreated: null,

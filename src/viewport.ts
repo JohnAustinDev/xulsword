@@ -13,6 +13,10 @@ import type {
   TabTypes,
 } from './type.ts';
 
+// This file contains functions for manipulating the panels and tab-banks of
+// a viewport. A viewport consists of one or more text panels plus a 'chooser'
+// widget.
+
 type TabChangeOptions = {
   panelIndex: number; // which panel(s) (-1 is all)
   whichTab: string | string[] | TabTypes | 'all'; // which tabs in the panel(s)

@@ -24,7 +24,7 @@ import {
   inlineFile,
   inlineAudioFile,
 } from '../common.ts';
-import { callBatch } from '../handleGlobal.ts';
+import { callBatch } from '../handleG.ts';
 
 import type { GITypeMain, GType } from '../../type.ts';
 
