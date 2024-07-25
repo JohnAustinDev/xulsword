@@ -5,7 +5,7 @@ export CPP
 export NVM_DIR
 export VAGRANT
 
-cd "$( dirname "${BASH_SOURCE[0]}" )"
+cd "$( dirname "${BASH_SOURCE[0]}" )" || exit 5
 XULSWORD=$( pwd )
 
 # This script installs dependencies and builds the libxulsword
@@ -45,15 +45,15 @@ fi
 # BUILD DEPENDENCIES (for cross compiling libxulsword as MacOS dylib)
 # PKG_DEPS="$PKG_DEPS llvm-12 llvm-12-linker-tools llvm-12-tools clang-12 lldb-12 lld-12"
 
-if [ $(dpkg -s $PKG_DEPS 2>&1 | grep "not installed" | wc -m) -ne 0 ]; then
+if [ "$(dpkg -s "$PKG_DEPS" 2>&1 | grep "not installed" | wc -m)" -ne 0 ]; then
   if [ "$VAGRANT" = "guest" ]; then
     sudo dpkg --add-architecture i386
     sudo apt-get update
-    sudo apt-get install -y $PKG_DEPS
+    sudo apt-get install -y "$PKG_DEPS"
   else
     echo First, you need to install missing packages with:
     echo .
-    echo sudo apt-get install ${PKG_DEPS}
+    echo sudo apt-get install "${PKG_DEPS}"
     echo .
     echo Then run this script again.
     exit;
@@ -70,16 +70,16 @@ if [ "$XULSWORD" = "/vagrant" ]; then
   COPY_TO_HOST=1
   if [ ! -e "$HOME/src" ]; then
     mkdir "$HOME/src";
-    cd "$HOME/src"
+    cd "$HOME/src" || exit 5
     git clone https://github.com/JohnAustinDev/xulsword
   else
-    cd "$HOME/src/xulsword"
+    cd "$HOME/src/xulsword" ||exit 5
     git pull
   fi
   XULSWORD="$HOME/src/xulsword"
 fi
 
-cd "$XULSWORD"
+cd "$XULSWORD" || exit 5
 CPP="$XULSWORD/Cpp"
 
 if [ "$LIBXULSWORD_ONLY" = "no" ]; then
@@ -117,19 +117,19 @@ if [ -e "/vagrant/archive" ]; then ARCHHOST="/vagrant/archive"; else ARCHHOST=$A
 
 function getSource() {
   echo "Getting source code:"
-  echo url=$url
-  echo gzfile=$gzfile
-  echo dirin=$dirin
-  echo dirout=$dirout
-  echo ARCHIVEDIR=$ARCHIVEDIR
-  echo ARCHHOST=$ARCHHOST
-  echo swordRev=$swordRev
-  
+  echo url="$url"
+  echo gzfile="$gzfile"
+  echo dirin="$dirin"
+  echo dirout="$dirout"
+  echo ARCHIVEDIR="$ARCHIVEDIR"
+  echo ARCHHOST="$ARCHHOST"
+  echo swordRev="$swordRev"
+
   if [ -e "$XULSWORD/Cpp/$dirout" ]; then
     echo "ERROR: source already exists at $dirout"
     exit 1;
   fi
-  
+
   if [ ! -e "$ARCHIVEDIR/$gzfile" ]; then
     # If file is already on host, copy it.
     if [ -e "$ARCHHOST/$gzfile" ]; then
@@ -137,8 +137,8 @@ function getSource() {
       cp "$ARCHHOST/$gzfile" "$ARCHIVEDIR/$gzfile"
     # Otherwise if it's sword, use subversion to get the rev needed.
     elif [ "$url" = "http://crosswire.org/svn/sword/trunk" ]; then
-      cd "$ARCHIVEDIR"
-      svn checkout -r $swordRev $url "$dirin"
+      cd "$ARCHIVEDIR" || exit 5
+      svn checkout -r "$swordRev" "$url" "$dirin"
       rm -rf "$dirin/.svn"
       tar -czvf "$gzfile" "$dirin"
       rm -rf "$dirin"
@@ -150,20 +150,20 @@ function getSource() {
       exit 1;
     # Download from the url
     else
-      cd "$ARCHIVEDIR"
+      cd "$ARCHIVEDIR" || exit 5
       curl -o "$gzfile" "$url"
       if [ -e "/vagrant/archive" ]; then
         cp "$gzfile" "/vagrant/archive"
       fi
     fi
   fi
-  
+
   if [ -e "$ARCHIVEDIR/$gzfile" ]; then
-    cd "$XULSWORD/Cpp"
+    cd "$XULSWORD/Cpp" || exit 5
     tar -xf "$ARCHIVEDIR/$gzfile"
-    mv $dirin $dirout
+    mv "$dirin" "$dirout"
     mkdir "./$dirout/build"
-    cd "./$dirout/build"
+    cd "./$dirout/build" || exit 5
   else
     echo "Archive does not exist: $ARCHIVEDIR/$gzfile"
     exit;
@@ -179,7 +179,7 @@ dirin="zlib-1.2.8"
 dirout="zlib"
 if [ ! -e "$CPP/$dirout" ]; then
   getSource
-  cmake $DBG -G "Unix Makefiles" -D CMAKE_C_FLAGS="-fPIC" ..
+  cmake "$DBG" -G "Unix Makefiles" -D CMAKE_C_FLAGS="-fPIC" ..
   make DESTDIR="$XULSWORD/Cpp/install" install
   # create a symlink to zconf.h (which was just renamed by cmake) so CLucene will compile
   ln -s ./build/zconf.h ../zconf.h
@@ -189,7 +189,7 @@ if [ "$WINMACHINE" != "no" ]; then
   dirout="zlib.$XCWD"
   if [ ! -e "$CPP/$dirout" ]; then
     getSource
-    cmake $DBG -G "Unix Makefiles" -D CMAKE_TOOLCHAIN_FILE="$CPP/windows/toolchain.cmake" ..
+    cmake "$DBG" -G "Unix Makefiles" -D CMAKE_TOOLCHAIN_FILE="$CPP/windows/toolchain.cmake" ..
     make DESTDIR="$CPP/install.$XCWD" install
   fi
 fi
@@ -207,7 +207,7 @@ if [ "$WINMACHINE" != "no" ]; then
   if [ ! -e "$BOOSTDIR" ]; then
     getSource
     # CROSS COMPILE TO WINDOWS 64 BIT:
-    cd ..
+    cd .. || exit 5
     echo "using gcc :  : ${TOOLCHAIN_PREFIX}-g++ ;" > user-config.jam
     ./bootstrap.sh
     ./b2 --user-config=./user-config.jam --prefix=./$XCWD target-os=windows address-model=$ADDRESS_MODEL variant=release install
@@ -227,7 +227,7 @@ if [ ! -e "$CPP/$dirout" ]; then
    # Stop this dumb clucene error for searches beginning with a wildcard, which results in a core dump.
   sed -i 's/!allowLeadingWildcard/!true/g' "$CPP/$dirout/src/core/CLucene/queryParser/QueryParser.cpp"
   # -D DISABLE_MULTITHREADING=ON causes compilation to fail
-  cmake $DBG -G "Unix Makefiles" -D BUILD_STATIC_LIBRARIES=ON -D CMAKE_INCLUDE_PATH="$CPP/install/usr/local/include" -D CMAKE_LIBRARY_PATH="$CPP/install/usr/local/lib" ..
+  cmake "$DBG" -G "Unix Makefiles" -D BUILD_STATIC_LIBRARIES=ON -D CMAKE_INCLUDE_PATH="$CPP/install/usr/local/include" -D CMAKE_LIBRARY_PATH="$CPP/install/usr/local/lib" ..
   make DESTDIR="$CPP/install" install
 fi
 # CROSS COMPILE LIBCLUCENE TO WINDOWS
@@ -237,10 +237,10 @@ if [ "$WINMACHINE" != "no" ]; then
     getSource
     # Stop this dumb clucene error for searches beginning with a wildcard, which results in a core dump.
     sed -i 's/!allowLeadingWildcard/!true/g' "$CPP/$dirout/src/core/CLucene/queryParser/QueryParser.cpp"
-    cd "$CPP"
+    cd "$CPP" || exit 5
     patch -s -p0 -d "$CPP/$dirout" < "$CPP/windows/clucene-src.patch"
-    cd "$CPP/$dirout/build"
-    cmake $DBG -DCMAKE_TOOLCHAIN_FILE="$CPP/windows/toolchain.cmake" -C "$CPP/windows/clucene-TryRunResult-${GCCSTD}.cmake" -D CMAKE_USE_PTHREADS_INIT=OFF -D BUILD_STATIC_LIBRARIES=ON -D ZLIB_INCLUDE_DIR="$CPP/install.$XCWD/usr/local/include" -D Boost_INCLUDE_DIR="$BOOSTDIR/$XCWD/include" -D ZLIB_LIBRARY="$CPP/install.$XCWD/usr/local/lib/libzlibstatic.a" ..
+    cd "$CPP/$dirout/build" || exit 5
+    cmake "$DBG" -DCMAKE_TOOLCHAIN_FILE="$CPP/windows/toolchain.cmake" -C "$CPP/windows/clucene-TryRunResult-${GCCSTD}.cmake" -D CMAKE_USE_PTHREADS_INIT=OFF -D BUILD_STATIC_LIBRARIES=ON -D ZLIB_INCLUDE_DIR="$CPP/install.$XCWD/usr/local/include" -D Boost_INCLUDE_DIR="$BOOSTDIR/$XCWD/include" -D ZLIB_LIBRARY="$CPP/install.$XCWD/usr/local/lib/libzlibstatic.a" ..
     patch -s -p0 -d "$CPP/$dirout" < "$CPP/windows/clucene-build.patch"
     make DESTDIR="$CPP/install.$XCWD" install
   fi
@@ -260,7 +260,7 @@ if [ ! -e "$CPP/$dirout" ]; then
   getSource
   # SWORD's CMakeLists.txt requires clucene-config.h be located in a weird directory:
   cp -r "$CPP/install/usr/local/include/CLucene" "$CPP/install/usr/local/lib"
-  cmake $DBG -D SWORD_NO_ICU="No" -D LIBSWORD_LIBRARY_TYPE="Static" -D CLUCENE_LIBRARY="$CPP/install/usr/local/lib/libclucene-core.so" -D ZLIB_LIBRARY="$CPP/install/usr/local/lib/libz.so" -D CLUCENE_LIBRARY_DIR="$CPP/install/usr/local/include" -D CLUCENE_INCLUDE_DIR="$CPP/install/usr/local/include" -D ZLIB_INCLUDE_DIR="$CPP/install/usr/local/include" -DSWORD_BUILD_UTILS="No" ..
+  cmake "$DBG" -D SWORD_NO_ICU="No" -D LIBSWORD_LIBRARY_TYPE="Static" -D CLUCENE_LIBRARY="$CPP/install/usr/local/lib/libclucene-core.so" -D ZLIB_LIBRARY="$CPP/install/usr/local/lib/libz.so" -D CLUCENE_LIBRARY_DIR="$CPP/install/usr/local/include" -D CLUCENE_INCLUDE_DIR="$CPP/install/usr/local/include" -D ZLIB_INCLUDE_DIR="$CPP/install/usr/local/include" -DSWORD_BUILD_UTILS="No" ..
   make DESTDIR="$CPP/install" install
 fi
 # CROSS COMPILE LIBSWORD TO WINDOWS
@@ -270,10 +270,10 @@ if [ "$WINMACHINE" != "no" ]; then
     getSource
     # SWORD's CMakeLists.txt requires clucene-config.h be located in a weird directory:
     cp -r "$CPP/install.$XCWD/usr/local/include/CLucene" "$CPP/install.$XCWD/usr/local/lib"
-    cd "$CPP"
+    cd "$CPP" || exit 5
     patch -s -p0 -d "$CPP/$dirout" < "$CPP/windows/libsword-src.patch"
-    cd "$CPP/$dirout/build"
-    cmake $DBG -DCMAKE_TOOLCHAIN_FILE="$CPP/windows/toolchain.cmake" -D SWORD_NO_ICU="No" -D LIBSWORD_LIBRARY_TYPE="Static" -D CLUCENE_LIBRARY="$CPP/install.$XCWD/usr/local/lib/libclucene-core.dll.a" -D ZLIB_LIBRARY="$CPP/install.$XCWD/usr/local/lib/libzlibstatic.a" -D CLUCENE_LIBRARY_DIR="$CPP/install.$XCWD/usr/local/include" -D CLUCENE_INCLUDE_DIR="$CPP/install.$XCWD/usr/local/include" -D ZLIB_INCLUDE_DIR="$CPP/install.$XCWD/usr/local/include" -DSWORD_BUILD_UTILS="No" ..
+    cd "$CPP/$dirout/build" || exit 5
+    cmake "$DBG" -DCMAKE_TOOLCHAIN_FILE="$CPP/windows/toolchain.cmake" -D SWORD_NO_ICU="No" -D LIBSWORD_LIBRARY_TYPE="Static" -D CLUCENE_LIBRARY="$CPP/install.$XCWD/usr/local/lib/libclucene-core.dll.a" -D ZLIB_LIBRARY="$CPP/install.$XCWD/usr/local/lib/libzlibstatic.a" -D CLUCENE_LIBRARY_DIR="$CPP/install.$XCWD/usr/local/include" -D CLUCENE_INCLUDE_DIR="$CPP/install.$XCWD/usr/local/include" -D ZLIB_INCLUDE_DIR="$CPP/install.$XCWD/usr/local/include" -DSWORD_BUILD_UTILS="No" ..
     make DESTDIR="$CPP/install.$XCWD" install
   fi
 fi
@@ -284,8 +284,8 @@ fi
 # COMPILE AND INSTALL LIBXULSWORD
 if [ ! -e "$CPP/build" ]; then
   mkdir "$CPP/build"
-  cd "$CPP/build"
-  cmake $DBG -D SWORD_NO_ICU="No" -D CMAKE_INCLUDE_PATH="$CPP/install/usr/local/include" -D CMAKE_LIBRARY_PATH="$CPP/install/usr/local/lib" -D LIB_INSTALL_DIR="$CPP/install/usr/local/lib" ..
+  cd "$CPP/build" || exit 5
+  cmake "$DBG" -D SWORD_NO_ICU="No" -D CMAKE_INCLUDE_PATH="$CPP/install/usr/local/include" -D CMAKE_LIBRARY_PATH="$CPP/install/usr/local/lib" -D LIB_INSTALL_DIR="$CPP/install/usr/local/lib" ..
   make install
 
   # Install the lib and all dependencies and strip them
@@ -300,7 +300,7 @@ if [ ! -e "$CPP/build" ]; then
   chmod ugo+x "$LIBDIR/"*
 
   # If COPY_TO_HOST then copy the finished library to the host machine
-  if [ ! -z $COPY_TO_HOST ]; then
+  if [ -n "$COPY_TO_HOST" ]; then
     HLIBDIR="/vagrant/Cpp/lib"
     if [ -e "$HLIBDIR" ]; then rm -rf "$HLIBDIR"; fi
     cp -r "$LIBDIR" "$HLIBDIR"
@@ -310,8 +310,8 @@ fi
 if [ "$WINMACHINE" != "no" ]; then
   if [ ! -e "$CPP/build.$XCWD" ]; then
     mkdir "$CPP/build.$XCWD"
-    cd "$CPP/build.$XCWD"
-    cmake $DBG -DCMAKE_TOOLCHAIN_FILE="$CPP/windows/toolchain.cmake" -D SWORD_NO_ICU="No" -D CMAKE_INCLUDE_PATH="$CPP/install.$XCWD/usr/local/include" -D CMAKE_LIBRARY_PATH="$CPP/install.$XCWD/usr/local/lib" -D LIB_INSTALL_DIR="$CPP/install.$XCWD/usr/local/lib" ..
+    cd "$CPP/build.$XCWD" || exit 5
+    cmake "$DBG" -DCMAKE_TOOLCHAIN_FILE="$CPP/windows/toolchain.cmake" -D SWORD_NO_ICU="No" -D CMAKE_INCLUDE_PATH="$CPP/install.$XCWD/usr/local/include" -D CMAKE_LIBRARY_PATH="$CPP/install.$XCWD/usr/local/lib" -D LIB_INSTALL_DIR="$CPP/install.$XCWD/usr/local/lib" ..
     make install
 
     # Install the DLL and all ming dependencies beyond the node executable and strip them
@@ -333,7 +333,7 @@ if [ "$WINMACHINE" != "no" ]; then
     chmod ugo+x "$LIBDIR/"*
 
     # If COPY_TO_HOST then copy the finished library to the host machine
-    if [ ! -z $COPY_TO_HOST ]; then
+    if [ -n "$COPY_TO_HOST" ]; then
       HLIBDIR="/vagrant/Cpp/lib.$XCWD"
       if [ -e "$HLIBDIR" ]; then rm -rf "$HLIBDIR"; fi
       cp -r "$LIBDIR" "$HLIBDIR"
@@ -347,11 +347,11 @@ if [ "$LIBXULSWORD_ONLY" = "yes" ]; then exit 0; fi
 # WRAP UP
 
 # Now initialize node.js
-cd "$XULSWORD"
+cd "$XULSWORD" || exit 5
 yarn
 
 # If COPY_TO_HOST then copy node_modules to host to save download time
-if [ ! -z $COPY_TO_HOST ]; then
+if [ -n "$COPY_TO_HOST" ]; then
   if [ ! -e "/vagrant/node_modules" ]; then
     cp -r "$XULSWORD/node_modules" "/vagrant"
   fi
