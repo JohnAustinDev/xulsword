@@ -23,6 +23,7 @@
 # export XSFonts_DIR=[xulsword]/profile_webapp/web/resources/fonts
 
 # export XSModsUser_DIR=$WEBAPP_RESOURCE_DIR
+export XSModsUser_DIR=~/.config/Electron/resources
 
 # export XSModsCommon_DIR=$HOME/.sword
 
