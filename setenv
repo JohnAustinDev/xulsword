@@ -12,7 +12,7 @@
 
 # export WEBAPP_SERVERROOT_DIR=[xulsword]/profile_webapp/web
 
-# The public URL on the web app server where webpacked files are served from.
+# The public URL on the web app server where webpacked files are served from (beginning and ending with slash).
 # export WEBAPP_PUBLIC_DIST=/
 
 # The full path to the private directory where web app files are written and read.
@@ -55,9 +55,7 @@ export LIBXULSWORD="$XULSWORD/build/app/node_modules/libxulsword"
 
 # Set WINMACHINE to x86 or x64 to compile Windows 32 bit or 64 bit, respectively.
 # Or set to 'no' to skip compile for windows.
-if [[ -z "$WINMACHINE" ]]; then
-  export WINMACHINE=x86
-fi
+export WINMACHINE=no
 export TOOLCHAIN_PREFIX=i686-w64-mingw32
 export ADDRESS_MODEL=32
 if [ "$WINMACHINE" = "x64" ]; then
