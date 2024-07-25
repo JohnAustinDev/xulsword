@@ -13,7 +13,7 @@ Cpp/clucene*
 Cpp/sword*
 Cpp/build*
 Cpp/phpsword
-./setenv
+setenv
 
 # webapp
 profile_webapp
