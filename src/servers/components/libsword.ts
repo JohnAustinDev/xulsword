@@ -696,7 +696,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
     return await new Promise((resolve, reject) => {
       if (this.isReady(true) && !(modcode in this.indexingID)) {
         const workerjs = Dirs.xsAsar.append(
-          `dist/servers/indexWorker.cjs`,
+          `dist/appSrv/indexWorker.cjs`,
         ).path;
         const indexer = fork(workerjs);
         this.indexingID[modcode] = indexer;
