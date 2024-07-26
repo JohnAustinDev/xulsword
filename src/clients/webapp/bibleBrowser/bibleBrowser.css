@@ -1,23 +1,25 @@
-div[data-react-component='bible-browser'] {
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  overflow: hidden;
-}
-
 #main-controlbar {
+  padding-top: 10px;
   flex-wrap: wrap;
   align-items: center;
 }
 #main-controlbar > .spacer:first-child {
   display: none;
 }
-#search-tool {
-  margin-bottom: 5px;
-}
 @media (max-width: 768px) {
+  #choosermenu,
+  .chooser,
+  #textnav > span:nth-child(4),
+  #textnav > div:nth-child(5),
+  #textnav > div:nth-child(6) {
+    display: none;
+  }
   #search-tool {
     width: 100%;
+    justify-content: space-around;
+  }
+  #search-tool, #optionButtons {
+    margin-top: 10px;
   }
 }
 #search-tool > div {
@@ -26,24 +28,15 @@ div[data-react-component='bible-browser'] {
 #navigator-tool {
   min-width: unset;
 }
-#historyButtons {
-  margin-left: -44px;
-}
-#historyButtons > div:not(:nth-child(2)) {
-  display: none;
+#historyButtons .button,
+#historyButtons .button-box,
+#historyButtons button {
+  width: 100%;
 }
 #searchText {
-  margin: 0;
+  display: none;
 }
 
-@media (max-width: 500px) {
-  .chooser {
-    position: absolute;
-    top: 0;
-    left: 0;
-    z-index: 10;
-  }
-}
 .open-chooser {
   display: none;
 }

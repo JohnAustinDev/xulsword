@@ -16,6 +16,7 @@ import defaultSettings, {
   BibleBrowserSettings,
   setEmptySettings,
 } from './defaultSettings.ts';
+import './bibleBrowser.css';
 
 export type BibleBrowserControllerGlobal = {
   browserMaxPanels?: number;

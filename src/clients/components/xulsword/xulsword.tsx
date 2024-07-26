@@ -247,19 +247,17 @@ export default class Xulsword
 
           {Build.isWebApp && (
             <>
-              <Hbox pack="start">
-                <Button
-                  id="choosermenu"
-                  checked={showChooser}
-                  icon={
-                    <Icon
-                      icon={showChooser ? 'menu-closed' : 'menu-open'}
-                      size={28}
-                    />
-                  }
-                  onClick={handler}
-                />
-              </Hbox>
+              <Button
+                id="choosermenu"
+                checked={showChooser}
+                icon={
+                  <Icon
+                    icon={showChooser ? 'menu-closed' : 'menu-open'}
+                    size={28}
+                  />
+                }
+                onClick={handler}
+              />
               <Box flex="1" />
             </>
           )}
