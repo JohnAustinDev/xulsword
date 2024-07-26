@@ -20,6 +20,7 @@ import Checkbox from '../../components/libxul/checkbox.tsx';
 import { Hbox, Vbox } from '../../components/libxul/boxes.tsx';
 import Button from '../../components/libxul/button.tsx';
 import SelectVK from '../../components/libxul/selectVK.tsx';
+import Spacer from '../../components/libxul/spacer.tsx';
 import '../../libsword.css';
 import '../../components/atext/atext.css';
 import './copyPassage.css';
@@ -219,6 +220,7 @@ export default class CopyPassageWin extends React.Component {
               })}
             </Vbox>
           </Groupbox>
+          <Spacer flex="1"/>
           <Hbox className="dialog-buttons" pack="end" align="end">
             <Button onClick={passageToClipboard}>
               {G.i18n.t('menu.edit.copy')}

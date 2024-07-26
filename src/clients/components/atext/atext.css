@@ -16,6 +16,7 @@
 
 .atext .hd {
   text-align: center;
+  justify-content: space-around;
   height: 30px;
 }
 .atext .text-pin {
