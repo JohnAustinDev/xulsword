@@ -957,6 +957,9 @@ export function setGlobalPanels(
   if (newN < 1) newN = 1;
   if (newN > maxN) newN = maxN;
   C.PanelPrefArrays.forEach((pref) => {
+    if (!(pref in xs)) {
+      xs[pref] = S.prefs.xulsword[pref] as any[];
+    }
     const a = xs[pref];
     while (a.length !== newN) {
       if (newN > a.length) {
