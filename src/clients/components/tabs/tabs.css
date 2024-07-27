@@ -1,7 +1,7 @@
 .tabs {
   position: relative;
   top: 2px;
-  height: 23px;
+  height: 25px;
   overflow: hidden;
   display: inline-block;
   text-align: end;
@@ -18,7 +18,7 @@
   display: inline-block;
   cursor: default;
   font-size: 0.86em;
-  height: 23px;
+  height: 25px;
   margin: 0px 3px 0px 3px;
   color: grey;
   background: rgb(255, 250, 255);
