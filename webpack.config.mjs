@@ -89,7 +89,15 @@ const defaultEnvironment = {
   LOG_DIR: '',
   NODE_ENV: 'development',
 };
-const env = (v) => process.env[v] || defaultEnvironment[v];
+const env = (k) =>
+  (k in process.env && process.env[k]) || defaultEnvironment[k];
+
+console.log(
+  Object.keys(defaultEnvironment).reduce((p, k) => {
+    p[k] = env(k);
+    return p;
+  }, {}),
+);
 
 export const parallelism = 10;
 
@@ -208,7 +216,7 @@ export default function (opts) {
             : build === 'webappClients'
               ? '_[fullhash].js'
               : '.js'
-          }`,
+        }`,
         path: {
           appSrv: path.join(appDistPath, 'appSrv'),
           preload: path.join(appDistPath, 'preload'),

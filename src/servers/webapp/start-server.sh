@@ -5,7 +5,8 @@ NVM_DIR=../.nvm
 
 cd "$( dirname "${BASH_SOURCE[0]}" )/../../../"
 
-source ./setenv
+# NOTE: setenv is NOT sourced because this script only runs a previously built
+# server which already has its env baked in.
 
 export LD_LIBRARY_PATH='./Cpp/lib'
 
