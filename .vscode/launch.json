@@ -28,11 +28,11 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Run node/electron on something",
-      "runtimeExecutable": "electron",
-      "runtimeArgs": [
-        "/home/dale/src/xulsword/build/app/dist/appSrv/server.cjs"
-      ],
+      "name": "Web App Server",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["./build/webapp"],
+      "preLaunchTask": "Build webapp server",
+      "env": { "LD_LIBRARY_PATH": "./Cpp/lib" },
       "skipFiles": ["<node_internals>/**"],
       "outFiles": ["${workspaceFolder}/build/webapp/dist/**/*"]
     },
