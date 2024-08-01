@@ -20,7 +20,9 @@ if ("$DIST_PARENT_DIR" =~ /^\./) {
 `rm "$DIST_PARENT_DIR/dist/"*`;
 `rm -rf "./build/app/dist/"*`;
 
-`source ./setenv`;
+# Sourcing for environment variables does not work in Perl, so a wrapper
+# build.sh must be used to set the environment.
+# doesn't work -> `source ./setenv`;
 
 if ("$IS_DEVELOPMENT" eq "1") {
   open(YARN, "yarn webpack --env development --env webappClients |");
