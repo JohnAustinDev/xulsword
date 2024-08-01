@@ -132,5 +132,7 @@ function getEBookTitle(
         : Book[osisbook].name;
     }
   }
-  return longTitle && name !== pubTitle ? `${name}: ${pubTitle}` : name;
+  return longTitle && name.toLocaleLowerCase() !== pubTitle.toLocaleLowerCase()
+    ? `${name}: ${pubTitle}`
+    : name;
 }

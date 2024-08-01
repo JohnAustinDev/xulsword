@@ -12,7 +12,7 @@ import log from '../../log.ts';
 import { callBatchThenCache } from '../../renderPromise.ts';
 import WidgetVK from './widgetVK.tsx';
 import WidgetOR from './widgetOR.tsx';
-import ControllerOptions from './widgetMenulist.tsx';
+import WidgetMenulist from './widgetMenulist.tsx';
 import defaultSettings from './defaultSettings.ts';
 
 import type { PrefRoot } from '../../../type.ts';
@@ -86,7 +86,7 @@ if (widgets.length) {
               case 'selectMenulist': {
                 createRoot(widget).render(
                   <StrictMode>
-                    <ControllerOptions compid={compid} settings={settings} />
+                    <WidgetMenulist compid={compid} settings={settings} />
                   </StrictMode>,
                 );
                 break;
