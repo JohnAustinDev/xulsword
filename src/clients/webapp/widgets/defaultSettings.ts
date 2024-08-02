@@ -38,6 +38,7 @@ export type FileItem = {
   name: string;
   size?: string;
   relurl?: string;
+  full?: boolean;
   types?: string[];
   osisbooks?: OSISBookType[];
 };

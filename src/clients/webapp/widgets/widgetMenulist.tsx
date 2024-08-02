@@ -47,7 +47,7 @@ export default function WidgetMenulist(
             const a = elem.querySelector('a');
             if (a && relurl) {
               a.setAttribute('href', `${urlroot}/${relurl}`);
-              a.textContent = optionText(title, item, true);
+              a.textContent = optionText(title, item, false);
               if (size && a.parentElement?.tagName === 'SPAN') {
                 const sizeSpan = a.parentElement.nextElementSibling;
                 if (sizeSpan && sizeSpan.tagName === 'SPAN') {
@@ -77,12 +77,10 @@ export default function WidgetMenulist(
     jQuery(`#${compid}`).prev().fadeTo(1, 0).fadeTo(1000, 1);
   }
 
-  const fp = G.i18n.t('Full publication');
   const options = data
     ? data.items.map((d, i) => (
         <option key={optionKey(d)} value={i.toString()}>
-          {i === 0 && optionText(fp, { name: fp }, false)}
-          {i !== 0 && optionText(data.title, d, false)}
+          {optionText(data.title, d, true)}
         </option>
       ))
     : [];
@@ -103,28 +101,30 @@ function optionKey(data: string | FileItem): string {
 function optionText(
   pubTitle: string,
   data: string | FileItem,
-  long: boolean,
+  isMenulistText: boolean,
 ): string {
   if (typeof data === 'string') return data;
-  return getEBookTitle(pubTitle, data, long);
+  return getEBookTitle(pubTitle, data, isMenulistText);
 }
 
-// EBook long titles are used for link texts, and short titles are used for
-// menu options.
+// Return eBook link text, or menulist text.
 function getEBookTitle(
   pubTitle: string,
   data: FileItem,
-  long: boolean,
+  menu: boolean,
 ): string {
-  const { types, osisbooks } = data;
+  const { types, osisbooks, full } = data;
   const Book = G.Book(G.i18n.language);
+  if (full) {
+    return !menu ? pubTitle : G.i18n.t('Full publication');
+  }
   if (osisbooks?.length) {
     const books = osisbooks.map((osis) => Book[osis].name).join(', ');
-    return long ? `${books}: ${pubTitle}` : books;
+    return !menu ? `${books}: ${pubTitle}` : books;
   }
   if (types?.length) {
     const ptypes = types.join(', ');
-    return long ? `${ptypes}: ${pubTitle}` : ptypes;
+    return !menu ? `${ptypes}: ${pubTitle}` : ptypes;
   }
   return pubTitle;
 }
