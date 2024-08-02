@@ -40,7 +40,7 @@ export type FileItem = {
   relurl?: string;
   full?: boolean;
   types?: string[];
-  osisbooks?: OSISBookType[];
+  scope?: string;
 };
 
 export type ChaplistVKType = {

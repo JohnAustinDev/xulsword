@@ -113,13 +113,13 @@ function getEBookTitle(
   data: FileItem,
   menu: boolean,
 ): string {
-  const { types, osisbooks, full } = data;
+  const { types, scope, full } = data;
   const Book = G.Book(G.i18n.language);
   if (full) {
     return !menu ? pubTitle : G.i18n.t('Full publication');
   }
-  if (osisbooks?.length) {
-    const books = osisbooks.map((osis) => Book[osis].name).join(', ');
+  if (scope) {
+    const books = scope.replace(/[^-\s_]+/g, (m) => m in Book ? Book[m].name : m);
     return !menu ? `${books}: ${pubTitle}` : books;
   }
   if (types?.length) {
