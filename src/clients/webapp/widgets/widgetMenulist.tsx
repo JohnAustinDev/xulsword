@@ -47,7 +47,7 @@ export default function WidgetMenulist(
             const a = elem.querySelector('a');
             if (a && relurl) {
               a.setAttribute('href', `${urlroot}/${relurl}`);
-              a.textContent = optionText(item, true, title, items.length === 1);
+              a.textContent = optionText(title, item, true);
               if (size && a.parentElement?.tagName === 'SPAN') {
                 const sizeSpan = a.parentElement.nextElementSibling;
                 if (sizeSpan && sizeSpan.tagName === 'SPAN') {
@@ -80,7 +80,7 @@ export default function WidgetMenulist(
   const options = data
     ? data.items.map((d, i) => (
         <option key={optionKey(d)} value={i.toString()}>
-          {optionText(d, false, data.title)}
+          {optionText(data.title, d, false)}
         </option>
       ))
     : [];
@@ -99,38 +99,30 @@ function optionKey(data: string | FileItem): string {
 }
 
 function optionText(
+  pubTitle: string,
   data: string | FileItem,
-  long = false,
-  title = '',
-  onlyOption = false,
+  long: boolean,
 ): string {
   if (typeof data === 'string') return data;
-  return getEBookTitle(data, long, title, onlyOption);
+  return getEBookTitle(pubTitle, data, long);
 }
 
-// Generate either a short or long title for an eBook file. The forms of the title are dependent on type:
-//        |        full, compilation            |             part                    |        other
-// short: | 'Full publication' or 'Compilation' | books (for bible)                   | title (for all others).
-// long:  | publication-name,                   | books: publication-name (for bible) | title: publication-name (others)
+// EBook long titles are used for link texts, and short titles are used for
+// menu options.
 function getEBookTitle(
+  pubTitle: string,
   data: FileItem,
-  longTitle = false,
-  pubTitle = '',
-  isOnlyOption = false,
+  long: boolean,
 ): string {
-  const { types, osisbook, name } = data;
+  const { types, osisbooks } = data;
   const Book = G.Book(G.i18n.language);
-  if (types) {
-    if (
-      !isOnlyOption &&
-      ['full', 'compilation'].some((x) => types.includes(x))
-    ) {
-      return longTitle ? pubTitle : G.i18n.t('Full publication');
-    } else if (osisbook && types.includes('part')) {
-      return longTitle
-        ? `${Book[osisbook].name}: ${pubTitle}`
-        : Book[osisbook].name;
-    }
+  if (osisbooks?.length) {
+    const books = osisbooks.map((osis) => Book[osis].name).join(', ');
+    return long ? `${books}: ${pubTitle}` : books;
   }
-  return pubTitle || name;
+  if (types?.length) {
+    const ptypes = types.join(', ');
+    return long ? `${ptypes}: ${pubTitle}` : ptypes;
+  }
+  return pubTitle;
 }

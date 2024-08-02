@@ -39,7 +39,7 @@ export type FileItem = {
   size?: string;
   relurl?: string;
   types?: string[];
-  osisbook?: OSISBookType;
+  osisbooks?: OSISBookType[];
 };
 
 export type ChaplistVKType = {
