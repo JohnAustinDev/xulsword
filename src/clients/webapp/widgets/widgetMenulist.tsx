@@ -37,7 +37,7 @@ export default function WidgetMenulist(
     const { value } = state;
     const index = value && typeof value === 'string' ? Number(value) || 0 : 0;
     if (action && data) {
-      const { title, urlroot, items } = data;
+      const { urlroot, items } = data;
       switch (action) {
         case 'update_url': {
           const elem = document.getElementById(compid)?.previousElementSibling;
@@ -47,7 +47,7 @@ export default function WidgetMenulist(
             const a = elem.querySelector('a');
             if (a && relurl) {
               a.setAttribute('href', `${urlroot}/${relurl}`);
-              a.textContent = optionText(title, item, false);
+              a.textContent = optionText(item, false);
               if (size && a.parentElement?.tagName === 'SPAN') {
                 const sizeSpan = a.parentElement.nextElementSibling;
                 if (sizeSpan && sizeSpan.tagName === 'SPAN') {
@@ -80,7 +80,7 @@ export default function WidgetMenulist(
   const options = data
     ? data.items.map((d, i) => (
         <option key={optionKey(d)} value={i.toString()}>
-          {optionText(data.title, d, true)}
+          {optionText(d, true)}
         </option>
       ))
     : [];
@@ -99,32 +99,28 @@ function optionKey(data: string | FileItem): string {
 }
 
 function optionText(
-  pubTitle: string,
   data: string | FileItem,
   isMenulistText: boolean,
 ): string {
   if (typeof data === 'string') return data;
-  return getEBookTitle(pubTitle, data, isMenulistText);
+  return getEBookTitle(data, isMenulistText);
 }
 
-// Return eBook link text, or menulist text.
+// Return eBook link text and menulist text.
 function getEBookTitle(
-  pubTitle: string,
   data: FileItem,
   menu: boolean,
 ): string {
-  const { types, scope, full } = data;
+  const { name, types, scope, full } = data;
   const Book = G.Book(G.i18n.language);
-  if (full) {
-    return !menu ? pubTitle : G.i18n.t('Full publication');
-  }
-  if (scope) {
-    const books = scope.replace(/[^-\s_]+/g, (m) => m in Book ? Book[m].name : m);
-    return !menu ? `${books}: ${pubTitle}` : books;
-  }
-  if (types?.length) {
-    const ptypes = types.join(', ');
-    return !menu ? `${ptypes}: ${pubTitle}` : ptypes;
-  }
-  return pubTitle;
+
+  if (full) return menu ? G.i18n.t('Full publication') : name;
+
+  const books = scope?.replace(/[^-\s_]+/g, (m) => m in Book ? Book[m].name : m) ?? '';
+  const prefixes = [books, ...(types ? types : [])].filter(Boolean);
+  const prefix = prefixes?.length ? prefixes.join(', ') : '';
+
+  if (!prefix) return name;
+
+  return menu ? prefix : `${prefix}: ${name}`;
 }

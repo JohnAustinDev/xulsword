@@ -28,7 +28,6 @@ export type WidgetMenulistSettings = {
   langcode: (typeof C.Locales)[number][0];
   props: Omit<MenulistProps, 'onChange'>;
   data: {
-    title: string;
     urlroot: string;
     items: FileItem[] | string[];
   };
@@ -87,7 +86,6 @@ const defaultSettings: AllComponentsSettings = {
         value: 'Item 1',
       },
       data: {
-        title: 'A Title',
         urlroot: '/some-url',
         items: ['Item 1', 'Item 2'],
       },
