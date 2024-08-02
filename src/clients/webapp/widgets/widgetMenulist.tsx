@@ -77,10 +77,12 @@ export default function WidgetMenulist(
     jQuery(`#${compid}`).prev().fadeTo(1, 0).fadeTo(1000, 1);
   }
 
+  const fp = G.i18n.t('Full publication');
   const options = data
     ? data.items.map((d, i) => (
         <option key={optionKey(d)} value={i.toString()}>
-          {optionText(data.title, d, false)}
+          {i === 0 && optionText(fp, { name: fp }, false)}
+          {i !== 0 && optionText(data.title, d, false)}
         </option>
       ))
     : [];
