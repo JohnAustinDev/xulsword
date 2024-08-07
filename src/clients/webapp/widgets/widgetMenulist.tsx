@@ -42,18 +42,24 @@ export default function WidgetMenulist(
         case 'update_url': {
           const elem = document.getElementById(compid)?.previousElementSibling;
           const item = items[index];
-          if (elem && item && typeof item === 'object') {
-            const { relurl, size } = item;
-            const a = elem.querySelector('a');
-            if (a && relurl) {
-              a.setAttribute('href', `${urlroot}/${relurl}`);
-              a.textContent = optionText(item, false);
-              if (size && a.parentElement?.tagName === 'SPAN') {
-                const sizeSpan = a.parentElement.nextElementSibling;
-                if (sizeSpan && sizeSpan.tagName === 'SPAN') {
-                  sizeSpan.textContent = ` (${size})`;
+          if (elem && typeof item !== 'string') {
+            const links = Array.isArray(item) ? item : [item];
+            const a = Array.from(elem.querySelectorAll('.field a'));
+            if (a.length && a.length === links.length) {
+              links.forEach((link, x) => {
+                const { relurl, size } = link;
+                const anchor = a[x];
+                if (anchor && relurl) {
+                  anchor.setAttribute('href', `${urlroot}/${relurl}`);
+                  anchor.textContent = optionText(link, false);
+                  if (typeof size !== 'undefined' && anchor.parentElement?.tagName === 'SPAN') {
+                    const sizeSpan = anchor.parentElement.nextElementSibling;
+                    if (sizeSpan && sizeSpan.tagName === 'SPAN') {
+                      sizeSpan.textContent = size ? ` (${size})` : '';
+                    }
+                  }
                 }
-              }
+              });
             }
           }
           break;
@@ -80,7 +86,7 @@ export default function WidgetMenulist(
   const options = data
     ? data.items.map((d, i) => (
         <option key={optionKey(d)} value={i.toString()}>
-          {optionText(d, true)}
+          {optionText(Array.isArray(d) ? d[0] : d, true)}
         </option>
       ))
     : [];
@@ -92,10 +98,11 @@ export default function WidgetMenulist(
   );
 }
 
-function optionKey(data: string | FileItem): string {
+function optionKey(data: string | FileItem | FileItem[]): string {
   if (data && typeof data === 'string') return randomID();
-  const { relurl } = data as FileItem;
-  return relurl || randomID();
+  const d = (Array.isArray(data) ? data : [data]) as FileItem[];
+  const id = d.map((x) => x.relurl).filter(Boolean).join(', ');
+  return id || randomID();
 }
 
 function optionText(

@@ -29,7 +29,7 @@ export type WidgetMenulistSettings = {
   props: Omit<MenulistProps, 'onChange'>;
   data: {
     urlroot: string;
-    items: FileItem[] | string[];
+    items: FileItem[] | FileItem[][] | string[];
   };
 };
 
