@@ -1,5 +1,6 @@
 import React from 'react';
 import { setGlobalPanels } from '../../../common.ts';
+import C from '../../../constant.ts';
 import { G } from '../../G.ts';
 import log from '../../log.ts';
 import { callBatchThenCache } from '../../renderPromise.ts';
@@ -73,7 +74,10 @@ socket.on('connect', () => {
         ['AudioConfs', null, undefined],
         ['Books', null, [locale]],
         ['Book', null, [locale]],
-        ['i18n', 't', ['locale_direction']],
+        ['i18n', 't', ['locale_direction', { lng: locale }]],
+        ...Object.values(C.SupportedTabTypes).map(
+          (type) => ['i18n', 't', [type, { lng: locale }]] as any,
+        ),
       ]);
       setEmptySettings(settings);
       setGlobalPanels(settings, numPanels);

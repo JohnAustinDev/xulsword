@@ -248,14 +248,14 @@ async function asyncRequest(thecall: GCallType) {
       `Async G call unsupported in browser environment: ${JSON_stringify(thecall)}`,
     );
   }
-  const cacheable = isCallCacheable(GBuilder, thecall);
-  const ckey = GCacheKey(thecall);
+  const call = Build.isWebApp ? publicCall(thecall) : thecall;
+  const cacheable = isCallCacheable(GBuilder, call);
+  const ckey = GCacheKey(call);
   if (cacheable && Cache.has(ckey))
     return await Promise.resolve(Cache.read(ckey));
   log.silly(
-    `${ckey} ${JSON_stringify(thecall)} async ${cacheable ? 'miss' : 'uncacheable'}`,
+    `${ckey} ${JSON_stringify(call)} async ${cacheable ? 'miss' : 'uncacheable'}`,
   );
-  const call = Build.isWebApp ? publicCall(thecall) : thecall;
   let result;
   try {
     result = await window.IPC.invoke('global', call);
@@ -267,7 +267,7 @@ async function asyncRequest(thecall: GCallType) {
     if (cacheable && !getWaitRetry(result)) Cache.write(result, ckey);
   } catch (er: any) {
     throw new Error(
-      `Promise rejection in ${JSON_stringify(thecall)}:\n${er.toString()}`,
+      `Promise rejection in ${JSON_stringify(call)}:\n${er.toString()}`,
     );
   }
   return result;
@@ -279,23 +279,24 @@ function request(thecall: GCallType) {
       `Sync G call unsupported in browser environment: ${JSON_stringify(thecall)}`,
     );
   }
-  const ckey = GCacheKey(thecall);
-  const cacheable = isCallCacheable(GBuilder, thecall);
+  const call = Build.isWebApp ? publicCall(thecall) : thecall;
+  const ckey = GCacheKey(call);
+  const cacheable = isCallCacheable(GBuilder, call);
   if (cacheable && Cache.has(ckey)) return Cache.read(ckey);
   if (Build.isWebApp) {
     if (cacheable)
       throw new Error(
-        `Cache must be preloaded in browser context: ${JSON_stringify(thecall)}`,
+        `Cache must be preloaded in browser context: ${JSON_stringify(call)}`,
       );
     else
       throw new Error(
-        `This uncacheable call requires G.callBatch in browser context: ${JSON_stringify(thecall)}`,
+        `This uncacheable call requires G.callBatch in browser context: ${JSON_stringify(call)}`,
       );
   }
   log.silly(
-    `${ckey} ${JSON_stringify(thecall)} sync ${cacheable ? 'miss' : 'uncacheable'}`,
+    `${ckey} ${JSON_stringify(call)} sync ${cacheable ? 'miss' : 'uncacheable'}`,
   );
-  const result = window.IPC.sendSync('global', thecall);
+  const result = window.IPC.sendSync('global', call);
   const invalid = Build.isWebApp && isInvalidWebAppData(result);
   if (invalid) {
     error(`Invalid data response: ${invalid}`);
