@@ -6,7 +6,20 @@
 #main-controlbar > .spacer:first-child {
   display: none;
 }
+#genbknav {
+  display: none;
+}
+#genbknav .menulist,
+#genbknav .menulist select {
+  width: 100%;
+}
+#genbknav .menulist:not(:has(:nth-child(2))) {
+  display: none;
+}
 @media (max-width: 768px) {
+  #genbknav {
+    display: flex;
+  }
   #choosermenu,
   .chooser,
   #textnav > span:nth-child(4),

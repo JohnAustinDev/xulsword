@@ -43,6 +43,7 @@ import type {
 import type S from '../../../defaultPrefs.ts';
 import type Atext from '../atext/atext.tsx';
 import type { XulProps } from '../libxul/xul.tsx';
+import SelectOR, { SelectORMType } from '../libxul/selectOR.tsx';
 
 const propTypes = xulPropTypes;
 
@@ -104,6 +105,7 @@ export default class Xulsword
     this.handler = handlerH.bind(this);
     this.viewportParentHandler = viewportParentH.bind(this);
     this.bbDragEnd = bbDragEndH.bind(this);
+    this.selectionGenbk = this.selectionGenbk.bind(this);
     this.xulswordStateHandler = this.xulswordStateHandler.bind(this);
     this.addHistory = addHistoryH.bind(this);
     this.setHistory = setHistoryH.bind(this);
@@ -155,6 +157,21 @@ export default class Xulsword
     this.destroy = [];
   }
 
+  selectionGenbk(selection: SelectORMType | undefined, _id?: string): void {
+    if (selection) {
+      this.setState((prevState: XulswordState) => {
+        const { keys } = prevState;
+        const { keys: nkeys } = selection;
+        if (keys.toString() !== nkeys.toString()) {
+          const s = clone(prevState);
+          s.keys = nkeys;
+          return s;
+        }
+        return null;
+      });
+    }
+  }
+
   xulswordStateHandler(s: XulswordStateArgType): void {
     this.setState(s);
   }
@@ -168,6 +185,7 @@ export default class Xulsword
       viewportParentHandler,
       renderPromise,
       bbDragEnd,
+      selectionGenbk,
       xulswordStateHandler,
     } = this;
     const {
@@ -218,6 +236,17 @@ export default class Xulsword
       if (m === null) viewportReset.push('null');
       else if (!m) viewportReset.push('und');
       else viewportReset.push(m);
+    });
+
+    const showingGenbkKeys: (string | null)[] = [];
+    const seen: string[] = [];
+    const showingGenbks = panels.filter((m, i) => {
+      if (m && G.Tab[m].type === 'Generic Books' && !seen.includes(m)) {
+        seen.push(m);
+        showingGenbkKeys.push(keys[i]);
+        return true;
+      }
+      return false;
     });
 
     const left =
@@ -334,83 +363,100 @@ export default class Xulsword
               </Hbox>
             )}
 
-            <Hbox id="textnav" align="center">
-              <Bookselect
-                id="book"
-                sizetopopup="none"
-                flex="1"
-                selection={location?.book}
-                options={booklist}
-                disabled={navdisabled}
-                key={[location?.book, bsreset].join('.')}
-                onChange={handler}
-              />
-              <Textbox
-                id="chapter"
-                width="50px"
-                maxLength="3"
-                pattern={/^[0-9]+$/}
-                value={
-                  location?.chapter
-                    ? dString(
-                        G.getLocaleDigits(),
-                        location.chapter,
-                        G.i18n.language,
-                      )
-                    : ''
-                }
-                timeout="600"
-                disabled={navdisabled}
-                key={`c${location?.chapter}`}
-                onChange={handler}
-                onClick={handler}
-              />
-              <Vbox>
-                <AnchorButton
-                  id="nextchap"
+            {Build.isWebApp && showingGenbks.length > 0 && (
+              <Hbox id="genbknav" align="center">
+                <SelectOR
+                  flex="1"
+                  otherMods={showingGenbks}
+                  key={panels.concat(keys).toString()}
+                  initialORM={{
+                    otherMod: showingGenbks[0],
+                    keys: [showingGenbkKeys[0]],
+                  }}
+                  onSelection={selectionGenbk}
+                />
+              </Hbox>
+            )}
+
+            {!Build.isWebApp || panels.find((m) => m && G.Tab[m].isVerseKey) &&
+              <Hbox id="textnav" align="center">
+                <Bookselect
+                  id="book"
+                  sizetopopup="none"
+                  flex="1"
+                  selection={location?.book}
+                  options={booklist}
                   disabled={navdisabled}
+                  key={[location?.book, bsreset].join('.')}
+                  onChange={handler}
+                />
+                <Textbox
+                  id="chapter"
+                  width="50px"
+                  maxLength="3"
+                  pattern={/^[0-9]+$/}
+                  value={
+                    location?.chapter
+                      ? dString(
+                          G.getLocaleDigits(),
+                          location.chapter,
+                          G.i18n.language,
+                        )
+                      : ''
+                  }
+                  timeout="600"
+                  disabled={navdisabled}
+                  key={`c${location?.chapter}`}
+                  onChange={handler}
                   onClick={handler}
                 />
-                <AnchorButton
-                  id="prevchap"
+                <Vbox>
+                  <AnchorButton
+                    id="nextchap"
+                    disabled={navdisabled}
+                    onClick={handler}
+                  />
+                  <AnchorButton
+                    id="prevchap"
+                    disabled={navdisabled}
+                    onClick={handler}
+                  />
+                </Vbox>
+                <span>:</span>
+                <Textbox
+                  id="verse"
+                  key={`v${location?.verse}`}
+                  width="50px"
+                  maxLength="3"
+                  pattern={/^[0-9]+$/}
+                  value={
+                    location?.verse
+                      ? dString(
+                          G.getLocaleDigits(),
+                          location.verse,
+                          G.i18n.language,
+                        )
+                      : ''
+                  }
+                  timeout="600"
                   disabled={navdisabled}
+                  onChange={handler}
                   onClick={handler}
                 />
-              </Vbox>
-              <span>:</span>
-              <Textbox
-                id="verse"
-                key={`v${location?.verse}`}
-                width="50px"
-                maxLength="3"
-                pattern={/^[0-9]+$/}
-                value={
-                  location?.verse
-                    ? dString(
-                        G.getLocaleDigits(),
-                        location.verse,
-                        G.i18n.language,
-                      )
-                    : ''
-                }
-                timeout="600"
-                disabled={navdisabled}
-                onChange={handler}
-                onClick={handler}
-              />
-              <Vbox>
-                <AnchorButton
-                  id="nextverse"
-                  disabled={navdisabled}
-                  onClick={handler}
-                />
-                <AnchorButton
-                  id="prevverse"
-                  disabled={navdisabled}
-                  onClick={handler}
-                />
-              </Vbox>
-            </Hbox>
+                <Vbox>
+                  <AnchorButton
+                    id="nextverse"
+                    disabled={navdisabled}
+                    onClick={handler}
+                  />
+                  <AnchorButton
+                    id="prevverse"
+                    disabled={navdisabled}
+                    onClick={handler}
+                  />
+                </Vbox>
+              </Hbox>
+            }
           </Vbox>
 
           <Spacer flex="1" style={{ minWidth: '15px' }} />
