@@ -205,8 +205,10 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
     const propNodeLists: NodeListOR[] = propNodeListsMods.map((m) => {
       let nodes: TreeNodeInfo[] = [];
       if (G.Tab[m].tabType === 'Genbks') {
-        const n = GI.genBookTreeNodes([], renderPromise, m);
-        if (!renderPromise.waiting()) nodes = n;
+        nodes = GI.genBookTreeNodes([{
+          id: m,
+          label: m
+        }], renderPromise, m);
       } else if (G.Tab[m].tabType === 'Dicts') {
         const keylist = GI.getAllDictionaryKeyList([], renderPromise, m);
         if (!renderPromise.waiting()) nodes = dictTreeNodes(keylist, m);
@@ -226,7 +228,7 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
     let selectedModuleIsInstalled: boolean;
     if (!nodes || nodes.length === 0) {
       selectedModuleIsInstalled = false;
-      // If there is no no list available (ie. the module is no longer
+      // If there is no list available (ie. the module is no longer
       // installed) then create a dummy node list with no options.
       // Note: it's ok to treat Dict as GBmod here since this dummy
       // cannot be edited.
@@ -334,7 +336,7 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
           className="select-child"
           key={['ch', parentNode ? parentNode.id : module].join('.')}
           multiple={!!enableMultipleSelection}
-          value={value}
+          value={value ?? ''}
           disabled={disabled || !selectedModuleIsInstalled}
           onChange={onChange}
         >
@@ -359,7 +361,7 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
                 value={n.id}
                 {...clickHandler}
               >
-                {n.childNodes?.length ? `${'❭ '}` : n.label}
+                {n.label}
               </option>
             );
           })}

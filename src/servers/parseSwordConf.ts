@@ -279,14 +279,14 @@ export function serverPublicPath(fileFullPath: string): string {
   return '';
 }
 
-// Check and convert all file references according in our context. In Electron,
+// Check and convert all file references according to our context. In Electron,
 // file paths remain unchanged, but in server mode, file paths are converted
 // into server URLs, or are filtered out if they are not in a public directory.
 export function publicFiles(aString: string): string {
   if (Build.isWebApp) {
     // If running as a public server on the Internet
-    return aString.replace(/(file:\/\/)(\S+)/gi, (_m, _m1, m2: string) =>
-      serverPublicPath(m2),
+    return aString.replace(/(['"])file:\/\/(.*?)\1/gi, (_m, m1, m2: string) =>
+      `${m1}${serverPublicPath(m2)}${m1}`,
     );
   }
   return aString;

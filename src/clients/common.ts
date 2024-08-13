@@ -95,10 +95,12 @@ export function libswordImgSrc(container: HTMLElement) {
       if (src) {
         img.src = src;
       } else {
-        img.src = G.inlineFile(
-          [G.Dirs.path.xsAsset, 'icons', '20x20', 'media.svg'].join(C.FSSEP),
-          'base64',
-        );
+        if (Build.isElectronApp) {
+          img.src = G.inlineFile(
+            [G.Dirs.path.xsAsset, 'icons', '20x20', 'media.svg'].join(C.FSSEP),
+            'base64',
+          );
+        } else img.removeAttribute('src');
         img.classList.add('image-not-found');
       }
       img.removeAttribute('data-src');
@@ -482,7 +484,7 @@ let languageNames: {
 export function getLangReadable(code: string): string {
   if (/^en(-*|_*)$/.test(code)) return 'English';
   if (!code || code === '?' || /^\s*$/.test(code)) return '?';
-  if (!languageNames) {
+  if (!languageNames && Build.isElectronApp) {
     const path = `${G.Dirs.path.xsAsset}/locales/languageNames.json`;
     const json = G.inlineFile(path, 'utf8', true);
     languageNames = JSON_parse(json) as typeof languageNames;

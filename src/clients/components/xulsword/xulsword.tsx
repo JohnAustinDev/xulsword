@@ -292,57 +292,59 @@ export default class Xulsword
           )}
 
           <Vbox id="navigator-tool" pack="start">
-            {!audio.open && (
-              <Hbox id="historyButtons" align="center">
-                <Box
-                  flex="40%"
-                  title={GI.i18n.t('', renderPromise, 'history.back.tooltip')}
-                >
-                  <Button
-                    id="back"
-                    icon={`chevron-${left}`}
-                    onClick={handler}
-                    disabled={
-                      navdisabled ||
-                      !history.length ||
-                      historyIndex === history.length - 1
-                    }
+            {!audio.open &&
+              (Build.isElectronApp ||
+                panels.find((m) => m && G.Tab[m].isVerseKey)) && (
+                <Hbox id="historyButtons" align="center">
+                  <Box
+                    flex="40%"
+                    title={GI.i18n.t('', renderPromise, 'history.back.tooltip')}
                   >
-                    {GI.i18n.t('', renderPromise, 'back.label')}
-                  </Button>
-                </Box>
-                <Box
-                  title={GI.i18n.t('', renderPromise, 'history.all.tooltip')}
-                >
-                  <Button
-                    id="historymenu"
-                    icon={`double-chevron-${left}`}
-                    rightIcon={`double-chevron-${right}`}
-                    onClick={handler}
-                    disabled={navdisabled || history.length <= 1}
+                    <Button
+                      id="back"
+                      icon={`chevron-${left}`}
+                      onClick={handler}
+                      disabled={
+                        navdisabled ||
+                        !history.length ||
+                        historyIndex === history.length - 1
+                      }
+                    >
+                      {GI.i18n.t('', renderPromise, 'back.label')}
+                    </Button>
+                  </Box>
+                  <Box
+                    title={GI.i18n.t('', renderPromise, 'history.all.tooltip')}
                   >
-                    {historyMenupopup || <span />}
-                  </Button>
-                </Box>
-                <Box
-                  flex="40%"
-                  title={GI.i18n.t(
-                    '',
-                    renderPromise,
-                    'history.forward.tooltip',
-                  )}
-                >
-                  <Button
-                    id="forward"
-                    rightIcon={`chevron-${right}`}
-                    onClick={handler}
-                    disabled={navdisabled || historyIndex === 0}
+                    <Button
+                      id="historymenu"
+                      icon={`double-chevron-${left}`}
+                      rightIcon={`double-chevron-${right}`}
+                      onClick={handler}
+                      disabled={navdisabled || history.length <= 1}
+                    >
+                      {historyMenupopup || <span />}
+                    </Button>
+                  </Box>
+                  <Box
+                    flex="40%"
+                    title={GI.i18n.t(
+                      '',
+                      renderPromise,
+                      'history.forward.tooltip',
+                    )}
                   >
-                    {GI.i18n.t('', renderPromise, 'history.forward.label')}
-                  </Button>
-                </Box>
-              </Hbox>
-            )}
+                    <Button
+                      id="forward"
+                      rightIcon={`chevron-${right}`}
+                      onClick={handler}
+                      disabled={navdisabled || historyIndex === 0}
+                    >
+                      {GI.i18n.t('', renderPromise, 'history.forward.label')}
+                    </Button>
+                  </Box>
+                </Hbox>
+              )}
             {audio.open && (
               <Hbox id="player" pack="start" align="center">
                 <Vbox flex="3">
@@ -378,85 +380,86 @@ export default class Xulsword
               </Hbox>
             )}
 
-            {!Build.isWebApp || panels.find((m) => m && G.Tab[m].isVerseKey) &&
-              <Hbox id="textnav" align="center">
-                <Bookselect
-                  id="book"
-                  sizetopopup="none"
-                  flex="1"
-                  selection={location?.book}
-                  options={booklist}
-                  disabled={navdisabled}
-                  key={[location?.book, bsreset].join('.')}
-                  onChange={handler}
-                />
-                <Textbox
-                  id="chapter"
-                  width="50px"
-                  maxLength="3"
-                  pattern={/^[0-9]+$/}
-                  value={
-                    location?.chapter
-                      ? dString(
-                          G.getLocaleDigits(),
-                          location.chapter,
-                          G.i18n.language,
-                        )
-                      : ''
-                  }
-                  timeout="600"
-                  disabled={navdisabled}
-                  key={`c${location?.chapter}`}
-                  onChange={handler}
-                  onClick={handler}
-                />
-                <Vbox>
-                  <AnchorButton
-                    id="nextchap"
+            {!Build.isWebApp ||
+              (panels.find((m) => m && G.Tab[m].isVerseKey) && (
+                <Hbox id="textnav" align="center">
+                  <Bookselect
+                    id="book"
+                    sizetopopup="none"
+                    flex="1"
+                    selection={location?.book}
+                    options={booklist}
                     disabled={navdisabled}
+                    key={[location?.book, bsreset].join('.')}
+                    onChange={handler}
+                  />
+                  <Textbox
+                    id="chapter"
+                    width="50px"
+                    maxLength="3"
+                    pattern={/^[0-9]+$/}
+                    value={
+                      location?.chapter
+                        ? dString(
+                            G.getLocaleDigits(),
+                            location.chapter,
+                            G.i18n.language,
+                          )
+                        : ''
+                    }
+                    timeout="600"
+                    disabled={navdisabled}
+                    key={`c${location?.chapter}`}
+                    onChange={handler}
                     onClick={handler}
                   />
-                  <AnchorButton
-                    id="prevchap"
+                  <Vbox>
+                    <AnchorButton
+                      id="nextchap"
+                      disabled={navdisabled}
+                      onClick={handler}
+                    />
+                    <AnchorButton
+                      id="prevchap"
+                      disabled={navdisabled}
+                      onClick={handler}
+                    />
+                  </Vbox>
+                  <span>:</span>
+                  <Textbox
+                    id="verse"
+                    key={`v${location?.verse}`}
+                    width="50px"
+                    maxLength="3"
+                    pattern={/^[0-9]+$/}
+                    value={
+                      location?.verse
+                        ? dString(
+                            G.getLocaleDigits(),
+                            location.verse,
+                            G.i18n.language,
+                          )
+                        : ''
+                    }
+                    timeout="600"
                     disabled={navdisabled}
+                    onChange={handler}
                     onClick={handler}
                   />
-                </Vbox>
-                <span>:</span>
-                <Textbox
-                  id="verse"
-                  key={`v${location?.verse}`}
-                  width="50px"
-                  maxLength="3"
-                  pattern={/^[0-9]+$/}
-                  value={
-                    location?.verse
-                      ? dString(
-                          G.getLocaleDigits(),
-                          location.verse,
-                          G.i18n.language,
-                        )
-                      : ''
-                  }
-                  timeout="600"
-                  disabled={navdisabled}
-                  onChange={handler}
-                  onClick={handler}
-                />
-                <Vbox>
-                  <AnchorButton
-                    id="nextverse"
-                    disabled={navdisabled}
-                    onClick={handler}
-                  />
-                  <AnchorButton
-                    id="prevverse"
-                    disabled={navdisabled}
-                    onClick={handler}
-                  />
-                </Vbox>
-              </Hbox>
-            }
+                  <Vbox>
+                    <AnchorButton
+                      id="nextverse"
+                      disabled={navdisabled}
+                      onClick={handler}
+                    />
+                    <AnchorButton
+                      id="prevverse"
+                      disabled={navdisabled}
+                      onClick={handler}
+                    />
+                  </Vbox>
+                </Hbox>
+              ))}
           </Vbox>
 
           <Spacer flex="1" style={{ minWidth: '15px' }} />
