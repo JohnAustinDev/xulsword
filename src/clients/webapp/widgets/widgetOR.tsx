@@ -34,10 +34,9 @@ export default function WidgetOR(wprops: WidgetORProps): React.JSX.Element {
     if (action && selection) {
       switch (action) {
         case 'genbk_audio_Play': {
-          // A Drupal selectOR item follows its associated audio player item.
           const player = document
             .getElementById(compid)
-            ?.parentElement?.previousElementSibling?.querySelector('audio') as
+            ?.parentElement?.querySelector('audio') as
             | HTMLAudioElement
             | undefined;
           if (player) {

@@ -40,7 +40,7 @@ export default function WidgetMenulist(
       const { urlroot, items } = data;
       switch (action) {
         case 'update_url': {
-          const elem = document.getElementById(compid)?.previousElementSibling;
+          const elem = document.getElementById(compid)?.parentElement;
           const item = items[index];
           if (elem && typeof item !== 'string') {
             const links = Array.isArray(item) ? item : [item];
@@ -80,7 +80,9 @@ export default function WidgetMenulist(
       newState.value = select.value;
       return newState;
     });
-    jQuery(`#${compid}`).prev().fadeTo(1, 0).fadeTo(1000, 1);
+    const elem = document.getElementById(compid)?.parentElement;
+    if (elem)
+      jQuery(elem.querySelectorAll('.field a')).fadeTo(1, 0).fadeTo(1000, 1);
   }
 
   const options = data

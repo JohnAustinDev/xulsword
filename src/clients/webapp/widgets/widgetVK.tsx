@@ -50,12 +50,11 @@ export default function WidgetVK(wprops: WidgetVKProps): React.JSX.Element {
         if (action && newState !== prevState) {
           switch (action) {
             case 'bible_audio_Play': {
-              // A Drupal selectVK item follows its associated audio player item.
               const player = document
                 .getElementById(compid)
-                ?.parentElement?.previousElementSibling?.querySelector(
-                  'audio',
-                ) as HTMLAudioElement | undefined;
+                ?.parentElement?.querySelector('audio') as
+                | HTMLAudioElement
+                | undefined;
               if (player) {
                 const { book, chapter } = selection;
                 const chaparray =
