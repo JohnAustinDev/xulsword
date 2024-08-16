@@ -27,6 +27,8 @@ export XSModsUser_DIR=~/.config/Electron/resources
 
 # export XSModsCommon_DIR=$HOME/.sword
 
+# export XSAudio_DIR=$WEBAPP_RESOURCE_DIR/audio
+
 # export WEBPACK_DEV_WEBAPP_PORT=1212
 
 # export WEBPACK_DEV_APP_PORT=1213

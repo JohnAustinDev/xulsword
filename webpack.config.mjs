@@ -85,6 +85,7 @@ const defaultEnvironment = {
   WEBPACK_DEV_APP_PORT: 1213,
   XSModsUser_DIR: '',
   XSModsCommon_DIR: '',
+  XSAudio_DIR: '',
   XSFonts_DIR: '',
   LOG_DIR: '',
   NODE_ENV: 'development',

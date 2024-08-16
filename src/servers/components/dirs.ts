@@ -91,7 +91,9 @@ const Dirs = {
         (Build.isWebApp && process.env.XSFonts_DIR) ||
         path.join(Dirs.path.xsResD, 'fonts');
 
-      Dirs.path.xsAudio = path.join(Dirs.path.xsResD, 'audio');
+      Dirs.path.xsAudio =
+        (Build.isWebApp && process.env.XSAudio_DIR) ||
+        path.join(Dirs.path.xsResD, 'audio');
 
       Dirs.path.xsBookmarks = path.join(Dirs.path.xsResD, 'bookmarks');
 
