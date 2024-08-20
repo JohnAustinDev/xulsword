@@ -380,6 +380,7 @@ export default function (opts) {
               port: devServerPort,
               serveIndex: true,
               hot: true,
+              publicPath: '/', // required for app development server
               headers: { 'Access-Control-Allow-Origin': '*' },
               before() {
                 const start =
