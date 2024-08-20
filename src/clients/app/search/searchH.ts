@@ -7,6 +7,7 @@ import {
 } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G } from '../../G.ts';
+import Commands from '../../commands.ts';
 import log from '../../log.ts';
 import { getElementData, verseKey } from '../../htmlData.ts';
 import { windowArguments } from '../../common.ts';
@@ -880,13 +881,13 @@ export default async function handler(
                 chapter: Number(p.shift()),
                 verse: Number(p.shift()),
               };
-              G.Commands.goToLocationVK(l, l);
+              Commands.goToLocationVK(l, l);
               break;
             }
             case 'keylink': {
               const module = p.shift();
               if (module && module in G.Tab) {
-                G.Commands.goToLocationGB({
+                Commands.goToLocationGB({
                   otherMod: module,
                   key: decodeURIComponent(p.shift() || ''),
                 });

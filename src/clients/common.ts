@@ -1,4 +1,5 @@
 import Cache from '../cache.ts';
+import Subscription from '../subscription.ts';
 import {
   diff,
   isAudioVerseKey,
@@ -474,7 +475,12 @@ export function registerUpdateStateFromPref(
       }
     }
   };
-  return window.IPC.on('update-state-from-pref', updateStateFromPref);
+  if (Build.isElectronApp)
+    return window.IPC.on('update-state-from-pref', updateStateFromPref);
+
+  return Subscription.subscribe.prefsChanged((_wid, store, key, _value) =>
+    updateStateFromPref(key, store),
+  );
 }
 
 let languageNames: {

@@ -3,6 +3,7 @@ import { clone, ofClass } from '../../../common.ts';
 import C from '../../../constant.ts';
 import type S from '../../../defaultPrefs.ts';
 import { G } from '../../G.ts';
+import Commands from '../../commands.ts';
 import { findElementData, updateDataAttribute } from '../../htmlData.ts';
 import log from '../../log.ts';
 import { scrollIntoView, windowArguments } from '../../common.ts';
@@ -272,7 +273,7 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
                 lastverse: lastverse || 1,
                 v11n,
               };
-              G.Commands.goToLocationVK(loc, loc);
+              Commands.goToLocationVK(loc, loc);
             }
           }
           break;

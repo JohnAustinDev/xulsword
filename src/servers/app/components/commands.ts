@@ -1,5 +1,5 @@
 /* eslint-disable prefer-rest-params */
-import { BrowserWindow, dialog, shell } from 'electron';
+import { BrowserWindow, dialog } from 'electron';
 import fpath from 'path';
 import log from 'electron-log';
 import i18n from 'i18next';
@@ -16,7 +16,6 @@ import {
   moveBookmarkItems,
   gbPaths,
   randomID,
-  keep,
 } from '../../../common.ts';
 import Subscription from '../../../subscription.ts';
 import C from '../../../constant.ts';
@@ -34,8 +33,7 @@ import {
   getAudioConfs,
   genBookTreeNodes,
 } from '../../common.ts';
-import Viewport from '../viewport.ts';
-import PrefsX from '../prefs.ts';
+import Prefs from '../prefs.ts';
 import LocalFile from '../../components/localFile.ts';
 import { modalInstall, scanAudio } from './module.ts';
 import Window, { getBrowserWindows, publishSubscription } from './window.ts';
@@ -53,12 +51,10 @@ import type {
   LocationVKType,
   NewModulesType,
   OSISBookType,
-  ScrollType,
   SearchType,
   VerseKeyAudioFile,
   LocationVKCommType,
 } from '../../../type.ts';
-import { PanelChangeOptions } from '../../../viewport.ts';
 import type { ControllerState } from '../../../clients/controller.tsx';
 import type { AboutWinState } from '../../../clients/app/about/about.tsx';
 import type { PrintPassageState } from '../../../clients/app/printPassage/printPassage.tsx';
@@ -66,10 +62,10 @@ import type { CopyPassageState } from '../../../clients/app/copyPassage/copyPass
 import type { SelectVKType } from '../../../clients/components/libxul/selectVK.tsx';
 import type { BMPropertiesStateWinArg } from '../../../clients/app/bmProperties/bmProperties.tsx';
 
-// Require the calling window argument for Prefs.set calls, so window -2 (to all
-// follow Pref changes with update to all windows and main process) can be passed
-// to Prefs.
-const Prefs = PrefsX as GAddCaller['Prefs'];
+// Prefs2 requires the calling window argument so that window -2 may be
+// passed. The value -2 means the Pref changes should be pushed to all
+// windows and the main process.
+const Prefs2 = Prefs as GAddCaller['Prefs'];
 
 const Commands = {
   openModuleManager(): void {
@@ -177,46 +173,6 @@ const Commands = {
         title: i18n.t('menu.removeModule'),
       },
     });
-  },
-
-  playAudio(audio: VerseKeyAudioFile | GenBookAudioFile | null) {
-    let xulsword: Partial<typeof S.prefs.xulsword> | undefined;
-    if (audio) {
-      if (
-        'book' in audio &&
-        Object.values(C.SupportedBooks).some((bg: any) =>
-          bg.includes(audio.book),
-        )
-      ) {
-        const { book, chapter, swordModule } = audio;
-        const tab = getTab();
-        this.goToLocationVK({
-          book,
-          chapter: chapter || 1,
-          verse: 1,
-          v11n: (swordModule && tab[swordModule].v11n) || null,
-        });
-      } else if ('key' in audio) {
-        const { key, swordModule } = audio;
-        if (swordModule) {
-          this.goToLocationGB({
-            otherMod: swordModule,
-            key,
-          });
-        }
-      }
-      xulsword = {
-        audio: {
-          open: true,
-          file: audio,
-        },
-      };
-    } else {
-      xulsword = {
-        audio: { open: false, file: null },
-      };
-    }
-    Prefs.mergeValue('xulsword', xulsword, 'prefs', undefined, false, -2);
   },
 
   async exportAudio() {
@@ -621,7 +577,7 @@ const Commands = {
       Transaction.index = index - 1;
       const { prefkey, value, store } = list[Transaction.index];
       Transaction.pause = true;
-      Prefs.setComplexValue(prefkey, value, store, -2);
+      Prefs2.setComplexValue(prefkey, value, store, -2);
       Transaction.pause = false;
       Window.reset('all', 'all');
       return true;
@@ -635,7 +591,7 @@ const Commands = {
       Transaction.index = index + 1;
       const { prefkey, value, store } = list[Transaction.index];
       Transaction.pause = true;
-      Prefs.setComplexValue(prefkey, value, store, -2);
+      Prefs2.setComplexValue(prefkey, value, store, -2);
       Transaction.pause = false;
       Window.reset('all', 'all');
       return true;
@@ -673,10 +629,10 @@ const Commands = {
 
   copyPassage(state?: Partial<CopyPassageState>) {
     const tab = getTab();
-    const panels = PrefsX.getComplexValue(
+    const panels = Prefs.getComplexValue(
       'xulsword.panels',
     ) as typeof S.prefs.xulsword.panels;
-    const location = PrefsX.getComplexValue(
+    const location = Prefs.getComplexValue(
       'xulsword.location',
     ) as typeof S.prefs.xulsword.location;
     if (panels && location) {
@@ -761,7 +717,7 @@ const Commands = {
           parentFolder = toFolder;
         }
       }
-      const bookmarks = PrefsX.getComplexValue(
+      const bookmarks = Prefs.getComplexValue(
         'rootfolder',
         'bookmarks',
       ) as typeof S.bookmarks.rootfolder;
@@ -783,7 +739,7 @@ const Commands = {
           }
         }
       });
-      Prefs.setComplexValue('rootfolder', bookmarks, 'bookmarks', -2);
+      Prefs2.setComplexValue('rootfolder', bookmarks, 'bookmarks', -2);
       if (!result) Subscription.publish.modulesInstalled(r, callingWin.id);
     }
     callingWin = undefined;
@@ -808,7 +764,7 @@ const Commands = {
     });
     xswindow = null;
     if (obj && !obj.canceled && obj.filePath) {
-      const bookmarks = PrefsX.getComplexValue(
+      const bookmarks = Prefs.getComplexValue(
         'rootfolder',
         'bookmarks',
       ) as typeof S.bookmarks.rootfolder;
@@ -878,13 +834,13 @@ const Commands = {
   },
 
   deleteBookmarkItems(itemIDs: string[]): boolean {
-    const bookmarks = PrefsX.getComplexValue(
+    const bookmarks = Prefs.getComplexValue(
       'rootfolder',
       'bookmarks',
     ) as typeof S.bookmarks.rootfolder;
     const items = itemIDs.map((id) => DeleteBookmarkItem(bookmarks, id));
     if (items.length && !items.some((i) => i === null)) {
-      Prefs.setComplexValue('rootfolder', bookmarks, 'bookmarks', -2);
+      Prefs2.setComplexValue('rootfolder', bookmarks, 'bookmarks', -2);
       Window.reset('all', 'all');
       return true;
     }
@@ -898,13 +854,13 @@ const Commands = {
     itemsOrIDs: string[] | BookmarkItemType[],
     targetID: string,
   ): boolean {
-    const bookmarks = PrefsX.getComplexValue(
+    const bookmarks = Prefs.getComplexValue(
       'rootfolder',
       'bookmarks',
     ) as typeof S.bookmarks.rootfolder;
     const moved = moveBookmarkItems(bookmarks, itemsOrIDs, targetID);
     if (moved.length && !moved.includes(null)) {
-      Prefs.setComplexValue('rootfolder', bookmarks, 'bookmarks', -2);
+      Prefs2.setComplexValue('rootfolder', bookmarks, 'bookmarks', -2);
       return true;
     }
     return false;
@@ -915,13 +871,13 @@ const Commands = {
     copy: string[] | null,
     targetID: string,
   ): boolean {
-    const bookmarks = PrefsX.getComplexValue(
+    const bookmarks = Prefs.getComplexValue(
       'rootfolder',
       'bookmarks',
     ) as typeof S.bookmarks.rootfolder;
     const pasted = PasteBookmarkItems(bookmarks, cut, copy, targetID);
     if (pasted.length && !pasted.includes(null)) {
-      Prefs.setComplexValue('rootfolder', bookmarks, 'bookmarks', -2);
+      Prefs2.setComplexValue('rootfolder', bookmarks, 'bookmarks', -2);
       return true;
     }
     return false;
@@ -947,91 +903,6 @@ const Commands = {
     });
   },
 
-  goToLocationGB(
-    location: LocationORType,
-    scroll?: ScrollType | undefined,
-  ): void {
-    const tab = getTab();
-    if (location.otherMod in tab) {
-      const xulsword: Partial<typeof S.prefs.xulsword> = setXulswordPanels({
-        whichModuleOrLocGB: location,
-        skipCallbacks: true,
-        clearRendererCaches: false,
-      });
-      xulsword.scroll = scroll || { verseAt: 'center' };
-      Prefs.mergeValue('xulsword', xulsword, 'prefs', false, false, -2);
-    } else shell.beep();
-  },
-
-  // If SelectVKMType (which includes vkMod) is passed, and vkMod is not a Bible (is
-  // a commentary) then the main viewport will be updated to show that module in a
-  // panel, unless it is already showing.
-  goToLocationVK(
-    newlocation: LocationVKType | LocationVKCommType,
-    newselection?: LocationVKType | LocationVKCommType,
-    newscroll?: ScrollType,
-  ): void {
-    const tab = getTab();
-    const vkMod =
-      ('commMod' in newlocation && newlocation.commMod) || newlocation.vkMod;
-    if (!vkMod || vkMod in tab) {
-      let xulsword: Partial<typeof S.prefs.xulsword> = {};
-      if (vkMod) {
-        xulsword = setXulswordPanels({
-          whichModuleOrLocGB: vkMod,
-          skipCallbacks: true,
-          clearRendererCaches: false,
-        });
-      }
-      xulsword.location = newlocation;
-      xulsword.selection = newselection || null;
-      xulsword.scroll = newscroll || { verseAt: 'center' };
-      Prefs.mergeValue('xulsword', xulsword, 'prefs', false, false, -2);
-    } else shell.beep();
-  },
 };
 
 export default Commands;
-
-// Update xulsword state prefs to modify viewport panels. The only state
-// props returned are those potentially, but not necessarily, modified
-// in the process.
-function setXulswordPanels(
-  options: Partial<PanelChangeOptions> & {
-    skipCallbacks?: boolean;
-    clearRendererCaches?: boolean;
-  },
-): Pick<
-  typeof S.prefs.xulsword,
-  'panels' | 'mtModules' | 'tabs' | 'keys' | 'isPinned' | 'location'
-> {
-  const { skipCallbacks, clearRendererCaches } = {
-    skipCallbacks: false, // default: run callbacks
-    clearRendererCaches: true, // default: reset renderer caches
-    ...options,
-  };
-
-  const xulsword = PrefsX.getComplexValue(
-    'xulsword',
-  ) as typeof S.prefs.xulsword;
-  Viewport.getPanelChange(options, xulsword);
-  const result = keep(xulsword, [
-    'panels',
-    'mtModules',
-    'tabs',
-    'keys',
-    'isPinned',
-    'location',
-  ]);
-
-  // Save the results to Prefs.
-  PrefsX.mergeValue(
-    'xulsword',
-    result,
-    'prefs',
-    skipCallbacks,
-    clearRendererCaches,
-  );
-
-  return result;
-}

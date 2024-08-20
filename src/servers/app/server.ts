@@ -242,9 +242,6 @@ const openXulswordWindow = () => {
   Data.write(BuildInfo, 'buildInfo');
 
   const xswinSubscriptions: Array<() => void> = [];
-  xswinSubscriptions.push(
-    Subscription.doSubscribe('getG', () => Cache.read('G')),
-  );
   // addBookmarkTransaction must be before pushPrefsToMenu for undo/redo enable to work.
   xswinSubscriptions.push(
     Subscription.subscribe.prefsChanged(addBookmarkTransaction),

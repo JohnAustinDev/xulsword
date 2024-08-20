@@ -921,7 +921,8 @@ export function inlineFile(
     : `data:${contentType};${encoding},${rawbuf.toString(encoding)}`;
 }
 
-// Return the contents of an audio file. In Electron mode, filepath is an absolute
+// Return the audio src attribute value for an audio file. The audio argument
+// provides the audio module and path that will be used. The module's In Electron mode, filepath is an absolute
 // path. In public server mode, it is a server path and must be public or else
 // empty string will be returned.
 export function inlineAudioFile(
@@ -929,9 +930,8 @@ export function inlineAudioFile(
 ): string {
   if (audio) {
     const { path: apath, audioModule } = audio;
-    const G = Subscription.doPublish('getG') as GType[];
-    if (audioModule && G) {
-      const file = new LocalFile(G[0].Dirs.path.xsAudio);
+    if (audioModule) {
+      const file = new LocalFile(Dirs.path.xsAudio);
       file.append('modules');
       file.append(audioModule);
       const leaf = pad(apath.pop() || 0, 3, 0);

@@ -1117,7 +1117,6 @@ export const GBuilder: GType & {
     removeModule: func as any,
     exportAudio: func as any,
     importAudio: func as any,
-    playAudio: func as any,
     print: func as any,
     printPassage: func as any,
     edit: func as any,
@@ -1135,8 +1134,6 @@ export const GBuilder: GType & {
     exportBookmarks: func as any,
     openBookmarkProperties: func as any,
     openAbout: func as any,
-    goToLocationVK: func as any,
-    goToLocationGB: func as any,
   },
 
   Shell: {

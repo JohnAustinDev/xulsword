@@ -10,6 +10,7 @@ import {
   PopupParentInitState,
 } from '../popup/popupParentH.ts';
 import { G } from '../../G.ts';
+import Commands from '../../commands.ts';
 import RenderPromise from '../../renderPromise.ts';
 import log from '../../log.ts';
 import { verseKey } from '../../htmlData.ts';
@@ -346,7 +347,7 @@ class Viewport extends React.Component implements PopupParent {
 
     return (
       <Hbox
-        {...addClass(`viewport skin ${cls}`, props)}
+        {...addClass(`viewport skin ${cls} bp5-focus-disabled`, props)}
         style={{ minWidth: `${minWidth}px` }}
         {...topHandle('onClick', eHandler)}
       >
@@ -491,5 +492,5 @@ Viewport.propTypes = propTypes;
 export default Viewport;
 
 export function audioHandler(audio?: VerseKeyAudioFile | GenBookAudioFile) {
-  if (audio) G.Commands.playAudio(audio);
+  if (audio) Commands.playAudio(audio);
 }

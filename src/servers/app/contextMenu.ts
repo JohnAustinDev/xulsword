@@ -4,6 +4,7 @@ import i18n from 'i18next';
 import { findBookmarkItem, xulswordLocation } from '../../common.ts';
 import S from '../../defaultPrefs.ts';
 import { G } from './G.ts';
+import ComCommands from './commands.ts';
 import CommandsX from './components/commands.ts';
 import Viewport from './viewport.ts';
 import Data from '../components/data.ts';
@@ -140,14 +141,13 @@ export default function contextMenu(
               if (bookmarkItem?.type === 'bookmark') {
                 const { location } = bookmarkItem;
                 if ('v11n' in location) {
-                  Commands.goToLocationVK(
+                  ComCommands.goToLocationVK(
                     location,
                     location,
-                    undefined,
-                    window.id,
+                    undefined
                   );
                 } else {
-                  Commands.goToLocationGB(location, undefined, window.id);
+                  ComCommands.goToLocationGB(location, undefined);
                 }
               }
             },
@@ -184,7 +184,7 @@ export default function contextMenu(
             click: () => {
               const loc = d.selectionParsedVK;
               if (typeof loc === 'object') {
-                Commands.goToLocationVK(loc, loc, undefined, window.id);
+                ComCommands.goToLocationVK(loc, loc, undefined);
               }
             },
           },
@@ -195,11 +195,10 @@ export default function contextMenu(
             click: () => {
               const { location: locationVK } = d;
               if (locationVK && typeof locationVK === 'object') {
-                Commands.goToLocationVK(
+                ComCommands.goToLocationVK(
                   locationVK,
                   locationVK,
-                  undefined,
-                  window.id,
+                  undefined
                 );
               }
             },

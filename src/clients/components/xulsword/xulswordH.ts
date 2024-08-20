@@ -3,6 +3,7 @@ import RefParser from '../../../refParser.ts';
 import Subscription from '../../../subscription.ts';
 import { clone, ofClass, randomID, setGlobalPanels } from '../../../common.ts';
 import { G } from '../../G.ts';
+import Commands from '../../commands.ts';
 import { genBookAudioFile, verseKeyAudioFile } from '../../common.ts';
 import { verseKey } from '../../htmlData.ts';
 import log from '../../log.ts';
@@ -325,7 +326,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
           }
         }
       }
-      G.Commands.playAudio(afile); // null closes the player
+      Commands.playAudio(afile); // null closes the player
       break;
     }
 

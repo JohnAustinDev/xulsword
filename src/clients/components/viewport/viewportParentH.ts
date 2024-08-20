@@ -5,6 +5,7 @@ import Cache from '../../../cache.ts';
 import { clone, escapeRE, ofClass } from '../../../common.ts';
 import { getElementData, verseKey } from '../../htmlData.ts';
 import { G } from '../../G.ts';
+import Commands from '../../commands.ts';
 import { scrollIntoView, windowArguments } from '../../common.ts';
 import { delayHandler } from '../libxul/xul.tsx';
 import { textChange } from '../atext/ztext.ts';
@@ -518,7 +519,7 @@ export default function handler(
                 lastverse: lastverse || 1,
                 v11n,
               };
-              G.Commands.goToLocationVK(loc, loc);
+              Commands.goToLocationVK(loc, loc);
             }
           }
           break;

@@ -9,6 +9,7 @@ import {
 } from '../../common.ts';
 import C from '../../constant.ts';
 import { G } from './G.ts';
+import ComCommands from './commands.ts';
 import Window, { getBrowserWindows } from './components/window.ts';
 import Commands from './components/commands.ts';
 import { verseKey } from '../common.ts';
@@ -251,8 +252,8 @@ function bookmarkProgramMenu(
             if ('v11n' in bm.location) {
               // Don't change panels, just the location, by removing vkMod.
               if (bm.tabType === 'Texts') delete bm.location.vkMod;
-              Commands.goToLocationVK(bm.location, bm.location);
-            } else Commands.goToLocationGB(bm.location);
+              ComCommands.goToLocationVK(bm.location, bm.location);
+            } else ComCommands.goToLocationGB(bm.location);
           }
         }
       }),

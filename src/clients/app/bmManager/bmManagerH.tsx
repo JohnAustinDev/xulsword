@@ -15,6 +15,7 @@ import {
 import S from '../../../defaultPrefs.ts';
 import C from '../../../constant.ts';
 import { G } from '../../G.ts';
+import Commands from '../../commands.ts';
 import { verseKey } from '../../htmlData.ts';
 import bookmarkItemIcon from './bookmarkItemIcon.tsx';
 import log from '../../log.ts';
@@ -118,9 +119,9 @@ export function onDoubleClick(this: BMManagerWin, ex: React.SyntheticEvent) {
       const { location } = clone(bookmarkItem);
       if ('v11n' in location) {
         delete location.vkMod;
-        G.Commands.goToLocationVK(location, location);
+        Commands.goToLocationVK(location, location);
       } else {
-        G.Commands.goToLocationGB(location);
+        Commands.goToLocationGB(location);
       }
     }
   }
