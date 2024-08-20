@@ -545,14 +545,18 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
                   value.forEach((v) => {
                     if (v) {
                       Object.entries(v).forEach((entry) => {
-                        const [downloadkey, result] = entry;
+                        let [downloadkey] = entry;
+                        const [, result] = entry;
                         if (typeof result === 'number' && result > 0) {
                           // Find the moduleData row associated with this download. The moduleData
                           // audio download URLs do not include the chapter range, so it must be
                           // removed from the download URL (and don't change original download object!).
                           const dl = keyToDownload(downloadkey);
-                          if ('http' in dl)
-                            dl.http = dl.http.replace(/&bk=.*$/, '');
+                          if ('http' in dl) {
+                            const adl = clone(dl);
+                            adl.http = adl.http.replace(/&bk=.*$/, '');
+                            downloadkey = downloadKey(adl);
+                          }
                           const key = Object.keys(moduleData).find(
                             (k) =>
                               downloadKey(getModuleDownload(k)) === downloadkey,
