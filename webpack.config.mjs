@@ -88,17 +88,10 @@ const defaultEnvironment = {
   XSAudio_DIR: '',
   XSFonts_DIR: '',
   LOG_DIR: '',
-  NODE_ENV: 'development',
+  NODE_ENV: '',
 };
 const env = (k) =>
   (k in process.env && process.env[k]) || defaultEnvironment[k];
-
-console.log(
-  Object.keys(defaultEnvironment).reduce((p, k) => {
-    p[k] = env(k);
-    return p;
-  }, {}),
-);
 
 export const parallelism = 10;
 
@@ -138,6 +131,15 @@ export default function (opts) {
     throw new Error(`Unrecognized --env value: '${unrecognized}'`);
   }
 
+  defaultEnvironment.NODE_ENV = development ? 'development' : 'production';
+
+  console.log(
+    Object.keys(defaultEnvironment).reduce((p, k) => {
+      p[k] = env(k);
+      return p;
+    }, {}),
+  );
+
   console.log('Webpack configuration options: ', opts);
 
   // Return a config object for a build. Each --env build in the command line
@@ -175,8 +177,6 @@ export default function (opts) {
         ? 'WEBPACK_DEV_APP_PORT'
         : 'WEBPACK_DEV_WEBAPP_PORT',
     );
-
-    defaultEnvironment.NODE_ENV = development ? 'development' : 'production';
 
     return {
       ...(development ? { devtool: 'source-map' } : {}),

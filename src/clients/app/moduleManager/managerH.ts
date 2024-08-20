@@ -640,7 +640,7 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
               const newCustomRepos = clone(repositories.custom);
               const { repository: repotable } = state.tables;
               const { selection } = repository;
-              const repotableData = clone(repotable.data);
+              const repotableData = repotable.data.slice();
               const { repositoryListings } = Saved;
               const rows =
                 (repository && selectionToDataRows('repository', selection)) ||
@@ -840,12 +840,12 @@ export async function switchRepo(
   const { repositories } = state;
   if (repositories) {
     const { repository: repotable } = state.tables;
-    const repoTableData = clone(repotable.data);
+    const repoTableData = repotable.data.slice();
     const disabled = getDisabledRepos(xthis);
     const cancel: Parameters<GType['Module']['cancel']>[0] = [];
     rows.forEach((r) => {
       const drowWas = repotable.data[r];
-      const drow = repoTableData[r];
+      const drow = repoTableData[r].slice() as TRepositoryTableRow;
       const unswitchable = !drowWas || drowWas[RepCol.iInfo].repo.builtin;
       if (drow && !unswitchable) {
         if (

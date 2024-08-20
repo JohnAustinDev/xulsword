@@ -160,10 +160,10 @@ export function deepClone<T>(obj: T): T {
 
 // Copy a data object. Data objects have string keys with values that are
 // either primitives, arrays or other data objects.
-export function clone<T>(obj: T, ancestors: unknown[] = []): T {
+export function clone<T extends PrefValue>(obj: T, ancestors: unknown[] = []): T {
   const anc = ancestors.slice();
   let copy: any;
-  if (!['function', 'symbol'].includes(typeof obj)) {
+  if (typeof obj !== 'function' && typeof obj !== 'symbol') {
     if (obj === null || typeof obj !== 'object') copy = obj;
     else if (Array.isArray(obj)) {
       copy = [];
@@ -182,10 +182,15 @@ export function clone<T>(obj: T, ancestors: unknown[] = []): T {
       }
       anc.push(o);
       Object.entries(o).forEach((entry) => {
-        copy[entry[0]] = clone(entry[1], anc);
+        const [k, v] = entry;
+        if (typeof v !== 'function' && typeof v !== 'symbol') {
+          copy[k] = clone(v as PrefValue, anc);
+        } else {
+          throw new Error(`clone(): property ${k} is not a PrefValue ${typeof v} `);
+        }
       });
     }
-  }
+  } else throw new Error(`clone(): not a PrefValue ${typeof obj} `);
   return copy as T;
 }
 

@@ -683,14 +683,14 @@ export default class ModuleManager
 
   audioDialogAccept() {
     this.sState((prevState) => {
-      const { showAudioDialog } = clone(prevState);
+      const { showAudioDialog } = prevState;
       if (showAudioDialog.length) {
         const done = showAudioDialog.shift();
         if (done) {
           const { selection } = done;
           done.callback(selection);
         }
-        return { showAudioDialog };
+        return { showAudioDialog: showAudioDialog.slice() };
       }
       return null;
     });
@@ -1139,7 +1139,7 @@ function audioDialogOnChange(
 ) {
   this.sState((prevState) => {
     const { showAudioDialog: sad } = prevState;
-    const showAudioDialog = clone(sad);
+    const showAudioDialog = sad.slice();
     if (showAudioDialog.length) {
       showAudioDialog[0] = {
         ...showAudioDialog[0],
