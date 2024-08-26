@@ -562,28 +562,25 @@ export async function installZIPs(
                 // audio/<lang-code>/<audio-code>/<book>/001.mp3
                 // audio/<lang-code>/<audio-code>/001 Title/001.mp3
                 //
-                // New paths:
+                // Current paths:
                 // audio/<audio-code>/<book>/001.mp3 (000.mp3 is book introduction)
                 // audio/<audio-code>/000/.../000.mp3
                 //
                 // NOTES:
-                // - Deprecated file indexes start at 1, but new indexes start at 0, with
-                // the single exception of verse-key chapters which start at 1 to match
-                // actual chapter numbers.
+                // - Deprecated file indexes start at 1, but new indexes start at 0. For
+                // verse-key modules, 0 is the book introduction.
                 // - Deprecated system is detected if <lang-code> is present in the path.
-                // - New parent node audio files are different between verse-key and general-
-                // book systems: the verse-key parent (book introduction) audio file is a
-                // 000.mp3 child, but general-book parent audio is the nnn.mp3 sibling to
-                // the nnn parent directory.
+                // - Introduction audio files are now different between verse-key and
+                // general-book systems: a verse-key book introduction audio file is
+                // 000.mp3 as a child of the book directory, but general-book introduction
+                // audio is the nnn.mp3 sibling of the nnn parent directory.
                 //
-                // Convert from deprecated to new:
+                // Converting from deprecated to new:
                 // - Verse-key systems are the same, just remove the lang-code.
-                // - General-book also needs lang-code removed from path.
-                // - General-book needs a 000 root directory inserted, to match what is
-                // actually in Children's Bible SWORD modules (the only GenBook audio
-                // published so far).
-                // - General-book needs 1 to be subtracted from file indexes, and any title
-                // to be removed.
+                // - General-book also needs lang-code removed from path, plus it needs a
+                // 000 root directory inserted, to match what is actually in Children's
+                // Bible SWORD modules (the only SWORD GenBook audio published so far).
+                // Finally, general-book indexes need 1 to be subtracted from each index.
                 const audio = Dirs.xsAudio;
                 const pobj = fpath.posix.parse(entry.entryName);
                 let dirs = pobj.dir.split(fpath.posix.sep);

@@ -117,23 +117,30 @@ export function createNodeList(
 ): void {
   // chaplist members are like: ['2/4/5', The/chapter/titles', 'url']
   // The Drupal chaplist is file data, and so does not include any parent
-  // entries required by hierarchy(). So parents must be added before sorting.
+  // entries (as required by hierarchy()). So parents must be added before
+  // sorting.
   const parent = (
     ch: ChaplistORType[number],
   ): ChaplistORType[number] | null => {
+    const n = ch[1].split('/');
     const o = ch[0].split('/');
-    const p = ch[1].split('/');
+    const fdn = n.pop();
     o.pop();
-    p.pop();
-    if (o.length) {
-      return [o.concat('').join('/'), p.concat('').join('/'), ''];
+    if (!fdn) {n.pop(); o.pop();}
+    if (n.length) {
+      return [o.concat('').join('/'), n.concat('').join('/'), ''];
     }
     return null;
   };
-  chaplist.forEach((x) => {
-    const p = parent(x);
-    if (p && !chaplist.find((c) => c[1] === p[1])) {
-      chaplist.push(p);
+  chaplist.forEach((xx) => {
+    let x = xx;
+    for (;;) {
+      const p = parent(x);
+      if (p === null) break;
+      if (!chaplist.find((c) => c[1] === p[1])) {
+        chaplist.push(p);
+      }
+      x = p;
     }
   });
   const treenodes: Array<TreeNodeInfo<Record<string, unknown>>> = chaplist
