@@ -42,6 +42,8 @@ import type {
   ModTypes,
   ShowType,
   PrefRoot,
+  VerseKeyAudioFile,
+  GenBookAudioFile,
 } from './type.ts';
 import type { TreeNodeInfo } from '@blueprintjs/core';
 import type { SelectVKType } from './clients/components/libxul/selectVK.tsx';
@@ -160,7 +162,10 @@ export function deepClone<T>(obj: T): T {
 
 // Copy a data object. Data objects have string keys with values that are
 // either primitives, arrays or other data objects.
-export function clone<T extends PrefValue>(obj: T, ancestors: unknown[] = []): T {
+export function clone<T extends PrefValue>(
+  obj: T,
+  ancestors: unknown[] = [],
+): T {
   const anc = ancestors.slice();
   let copy: any;
   if (typeof obj !== 'function' && typeof obj !== 'symbol') {
@@ -186,7 +191,9 @@ export function clone<T extends PrefValue>(obj: T, ancestors: unknown[] = []): T
         if (typeof v !== 'function' && typeof v !== 'symbol') {
           copy[k] = clone(v as PrefValue, anc);
         } else {
-          throw new Error(`clone(): property ${k} is not a PrefValue ${typeof v} `);
+          throw new Error(
+            `clone(): property ${k} is not a PrefValue ${typeof v} `,
+          );
         }
       });
     }
@@ -1133,6 +1140,28 @@ export function audioConfStrings(chapters: number[] | boolean[]): string[] {
     if (r[0] === r[1]) return `${r[0]}`;
     return `${r[0]}-${r[1]}`;
   });
+}
+
+// Audio conf DataPath may be an http(s) URL containing placeholder strings.
+// This function returns the completed URL by replacing the placeholders,
+// or else empty string is returned if they could not be replaced.
+export function resolveAudioDataPathURL(
+  url: string,
+  audio: VerseKeyAudioFile | GenBookAudioFile,
+): string {
+  const phs = { XSBOOK: '', XSCHAPTER: -1, XSKEY: '' };
+  if ('key' in audio) phs.XSKEY = audio.key;
+  if ('book' in audio) phs.XSBOOK = audio.book;
+  if ('chapter' in audio) phs.XSCHAPTER = audio.chapter;
+  let r = url;
+  Object.entries(phs).forEach((entry) => {
+    const [ph, value] = entry;
+    if (r.includes(ph)) {
+      if (!value || (ph === 'XSCHAPTER' && value === -1)) return '';
+      r = r.replaceAll(ph, value.toString());
+    }
+  });
+  return r;
 }
 
 // Find the module associated with any location or bookmark item,

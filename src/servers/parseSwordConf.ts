@@ -229,7 +229,9 @@ export default function parseSwordConf(
 
   // In server mode, filter entries that contain file references.
   if (Build.isWebApp) {
-    r.DataPath = serverPublicPath(r.DataPath);
+    if (!r.DataPath.startsWith('http')) {
+      r.DataPath = serverPublicPath(r.DataPath);
+    }
     if (/^file:\/\//i.test(r.sourceRepository.domain)) {
       r.sourceRepository.domain = process.env.WEBAPP_CORS_ORIGIN || '';
       r.sourceRepository.path = serverPublicPath(r.sourceRepository.path);

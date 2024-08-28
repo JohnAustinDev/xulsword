@@ -14,6 +14,7 @@ import {
   hierarchy,
   getSwordOptions,
   JSON_stringify,
+  resolveAudioDataPathURL,
 } from '../common.ts';
 import Cache from '../cache.ts';
 import Subscription from '../subscription.ts';
@@ -932,24 +933,29 @@ export function inlineAudioFile(
     const { path: apath, audioModule } = audio;
     if (audioModule) {
       const file = new LocalFile(Dirs.path.xsAudio);
-      file.append('modules');
-      file.append(audioModule);
-      const leaf = pad(apath.pop() || 0, 3, 0);
-      while (apath.length) {
-        const p = apath.shift() as string | number;
-        if (!Number.isNaN(Number(p))) {
-          file.append(pad(p, 3, 0));
-        } else file.append(p.toString());
-      }
-      for (let x = 0; x < C.SupportedAudio.length; x += 1) {
-        const ext = C.SupportedAudio[x];
-        const afile = file.clone().append(`${leaf}.${ext}`);
-        if (afile.exists()) {
-          let apath = afile.path;
-          if (Build.isWebApp) {
-            apath = serverPublicPath(apath);
+      const confe = Object.entries(getAudioConfs()).find((e) => e[0] === audioModule);
+      if (confe) {
+        const [, conf] = confe;
+        const { DataPath } = conf;
+        if (DataPath.startsWith('http')) {
+          return resolveAudioDataPathURL(DataPath, audio);
+        } else if (DataPath.startsWith('.')) {
+          file.append(DataPath);
+          const leaf = pad(apath.pop() || 0, 3, 0);
+          while (apath.length) {
+            const p = apath.shift() as string | number;
+            if (!Number.isNaN(Number(p))) {
+              file.append(pad(p, 3, 0));
+            } else file.append(p.toString());
           }
-          if (apath) return inlineFile(apath);
+          for (let x = 0; x < C.SupportedAudio.length; x += 1) {
+            const ext = C.SupportedAudio[x];
+            const afile = file.clone().append(`${leaf}.${ext}`);
+            if (afile.exists()) {
+              const { path } = afile;
+              if (path) return inlineFile(path);
+            }
+          }
         }
       }
     }
