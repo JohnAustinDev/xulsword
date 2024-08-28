@@ -31,7 +31,8 @@
     width: 100%;
     justify-content: space-around;
   }
-  #search-tool, #optionButtons {
+  #search-tool,
+  #optionButtons {
     margin-top: 10px;
   }
 }

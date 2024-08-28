@@ -205,10 +205,16 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
     const propNodeLists: NodeListOR[] = propNodeListsMods.map((m) => {
       let nodes: TreeNodeInfo[] = [];
       if (G.Tab[m].tabType === 'Genbks') {
-        nodes = GI.genBookTreeNodes([{
-          id: m,
-          label: m
-        }], renderPromise, m);
+        nodes = GI.genBookTreeNodes(
+          [
+            {
+              id: m,
+              label: m,
+            },
+          ],
+          renderPromise,
+          m,
+        );
       } else if (G.Tab[m].tabType === 'Dicts') {
         const keylist = GI.getAllDictionaryKeyList([], renderPromise, m);
         if (!renderPromise.waiting()) nodes = dictTreeNodes(keylist, m);

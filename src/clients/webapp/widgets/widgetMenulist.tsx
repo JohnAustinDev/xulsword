@@ -52,7 +52,10 @@ export default function WidgetMenulist(
                 if (anchor && relurl) {
                   anchor.setAttribute('href', `${urlroot}/${relurl}`);
                   anchor.textContent = optionText(link, false);
-                  if (typeof size !== 'undefined' && anchor.parentElement?.tagName === 'SPAN') {
+                  if (
+                    typeof size !== 'undefined' &&
+                    anchor.parentElement?.tagName === 'SPAN'
+                  ) {
                     const sizeSpan = anchor.parentElement.nextElementSibling;
                     if (sizeSpan && sizeSpan.tagName === 'SPAN') {
                       sizeSpan.textContent = size ? ` (${size})` : '';
@@ -103,29 +106,27 @@ export default function WidgetMenulist(
 function optionKey(data: string | FileItem | FileItem[]): string {
   if (data && typeof data === 'string') return randomID();
   const d = (Array.isArray(data) ? data : [data]) as FileItem[];
-  const id = d.map((x) => x.relurl).filter(Boolean).join(', ');
+  const id = d
+    .map((x) => x.relurl)
+    .filter(Boolean)
+    .join(', ');
   return id || randomID();
 }
 
-function optionText(
-  data: string | FileItem,
-  isMenulistText: boolean,
-): string {
+function optionText(data: string | FileItem, isMenulistText: boolean): string {
   if (typeof data === 'string') return data;
   return getEBookTitle(data, isMenulistText);
 }
 
 // Return eBook link text and menulist text.
-function getEBookTitle(
-  data: FileItem,
-  menu: boolean,
-): string {
+function getEBookTitle(data: FileItem, menu: boolean): string {
   const { name, types, scope, full } = data;
   const Book = G.Book(G.i18n.language);
 
   if (full) return menu ? G.i18n.t('Full publication') : name;
 
-  const books = scope?.replace(/[^-\s_]+/g, (m) => m in Book ? Book[m].name : m) ?? '';
+  const books =
+    scope?.replace(/[^-\s_]+/g, (m) => (m in Book ? Book[m].name : m)) ?? '';
   const prefixes = [books, ...(types ? types : [])].filter(Boolean);
   const prefix = prefixes?.length ? prefixes.join(', ') : '';
 

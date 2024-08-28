@@ -354,7 +354,9 @@ export default class Xulsword
                       onEnded={handler}
                       onCanPlay={handler}
                       src={
-                        audio.file ? GI.inlineAudioFile('', renderPromise, audio.file) : undefined
+                        audio.file
+                          ? GI.inlineAudioFile('', renderPromise, audio.file)
+                          : undefined
                       }
                     />
                   </div>

@@ -933,7 +933,9 @@ export function inlineAudioFile(
     const { path: apath, audioModule } = audio;
     if (audioModule) {
       const file = new LocalFile(Dirs.path.xsAudio);
-      const confe = Object.entries(getAudioConfs()).find((e) => e[0] === audioModule);
+      const confe = Object.entries(getAudioConfs()).find(
+        (e) => e[0] === audioModule,
+      );
       if (confe) {
         const [, conf] = confe;
         const { DataPath } = conf;

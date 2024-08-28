@@ -287,8 +287,9 @@ export function serverPublicPath(fileFullPath: string): string {
 export function publicFiles(aString: string): string {
   if (Build.isWebApp) {
     // If running as a public server on the Internet
-    return aString.replace(/(['"])file:\/\/(.*?)\1/gi, (_m, m1, m2: string) =>
-      `${m1}${serverPublicPath(m2)}${m1}`,
+    return aString.replace(
+      /(['"])file:\/\/(.*?)\1/gi,
+      (_m, m1, m2: string) => `${m1}${serverPublicPath(m2)}${m1}`,
     );
   }
   return aString;

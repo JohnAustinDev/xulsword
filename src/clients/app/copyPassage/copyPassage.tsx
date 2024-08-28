@@ -220,7 +220,7 @@ export default class CopyPassageWin extends React.Component {
               })}
             </Vbox>
           </Groupbox>
-          <Spacer flex="1"/>
+          <Spacer flex="1" />
           <Hbox className="dialog-buttons" pack="end" align="end">
             <Button onClick={passageToClipboard}>
               {G.i18n.t('menu.edit.copy')}

@@ -86,7 +86,9 @@ function Controller(props: ControllerProps) {
         log.debug(
           `Renderer reset (stylesheet, cache, component): ${descriptor?.id || 'unknown'}`,
         );
-        const st = Build.isElectronApp ? G.Data.read('stylesheetData') as StyleType : undefined
+        const st = Build.isElectronApp
+          ? (G.Data.read('stylesheetData') as StyleType)
+          : undefined;
         dynamicStyleSheet.update(st);
         Cache.clear();
         s.reset[1](randomID());
@@ -204,7 +206,9 @@ function Controller(props: ControllerProps) {
         log.debug(
           `Renderer reset (cache, stylesheet, component): ${descriptor?.id || 'unknown'}`,
         );
-        const st = Build.isElectronApp ? G.Data.read('stylesheetData') as StyleType : undefined
+        const st = Build.isElectronApp
+          ? (G.Data.read('stylesheetData') as StyleType)
+          : undefined;
         dynamicStyleSheet?.update(st);
         Cache.clear();
         s.reset[1](randomID());
@@ -444,7 +448,9 @@ export default async function renderToRoot(
     );
   });
   window.IPC.on('dynamic-stylesheet-reset', () => {
-    const st = Build.isElectronApp ? G.Data.read('stylesheetData') as StyleType : undefined;
+    const st = Build.isElectronApp
+      ? (G.Data.read('stylesheetData') as StyleType)
+      : undefined;
     dynamicStyleSheet?.update(st);
   });
 
@@ -452,7 +458,9 @@ export default async function renderToRoot(
   Cache.write(`${descriptor.type}:${descriptor.id}`, 'windowID');
 
   dynamicStyleSheet = new DynamicStyleSheet(document);
-  const st = Build.isElectronApp ? G.Data.read('stylesheetData') as StyleType : undefined;
+  const st = Build.isElectronApp
+    ? (G.Data.read('stylesheetData') as StyleType)
+    : undefined;
   dynamicStyleSheet.update(st);
 
   // Set window type and language classes on the root html element.

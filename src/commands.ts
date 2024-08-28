@@ -25,7 +25,7 @@ export default class Commands {
   // Prefs2 requires the calling window argument so that window -2 may be
   // passed. The value -2 means the Pref changes should be pushed to all
   // windows and the main process (in Electron apps).
-  #Prefs2
+  #Prefs2;
 
   #G;
 
@@ -47,11 +47,13 @@ export default class Commands {
     scroll?: ScrollType | undefined,
   ): void {
     if (location.otherMod in this.#G.Tab) {
-      const xulsword: Partial<typeof S.prefs.xulsword> = this.setXulswordPanels({
-        whichModuleOrLocGB: location,
-        skipCallbacks: true,
-        clearRendererCaches: false,
-      });
+      const xulsword: Partial<typeof S.prefs.xulsword> = this.setXulswordPanels(
+        {
+          whichModuleOrLocGB: location,
+          skipCallbacks: true,
+          clearRendererCaches: false,
+        },
+      );
       xulsword.scroll = scroll || { verseAt: 'center' };
       this.#Prefs2.mergeValue('xulsword', xulsword, 'prefs', false, false, -2);
     } // else shell.beep();
@@ -162,7 +164,13 @@ export default class Commands {
         audio: { open: false, file: null },
       };
     }
-    this.#Prefs2.mergeValue('xulsword', xulsword, 'prefs', undefined, false, -2);
+    this.#Prefs2.mergeValue(
+      'xulsword',
+      xulsword,
+      'prefs',
+      undefined,
+      false,
+      -2,
+    );
   }
-};
-
+}

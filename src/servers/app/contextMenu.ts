@@ -141,11 +141,7 @@ export default function contextMenu(
               if (bookmarkItem?.type === 'bookmark') {
                 const { location } = bookmarkItem;
                 if ('v11n' in location) {
-                  ComCommands.goToLocationVK(
-                    location,
-                    location,
-                    undefined
-                  );
+                  ComCommands.goToLocationVK(location, location, undefined);
                 } else {
                   ComCommands.goToLocationGB(location, undefined);
                 }
@@ -195,11 +191,7 @@ export default function contextMenu(
             click: () => {
               const { location: locationVK } = d;
               if (locationVK && typeof locationVK === 'object') {
-                ComCommands.goToLocationVK(
-                  locationVK,
-                  locationVK,
-                  undefined
-                );
+                ComCommands.goToLocationVK(locationVK, locationVK, undefined);
               }
             },
           },

@@ -126,7 +126,10 @@ export function createNodeList(
     const o = ch[0].split('/');
     const fdn = n.pop();
     o.pop();
-    if (!fdn) {n.pop(); o.pop();}
+    if (!fdn) {
+      n.pop();
+      o.pop();
+    }
     if (n.length) {
       return [o.concat('').join('/'), n.concat('').join('/'), ''];
     }
