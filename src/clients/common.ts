@@ -227,7 +227,7 @@ export function genBookAudioFile(
     const { AudioChapters } = audioConf;
     if (AudioChapters && !isAudioVerseKey(AudioChapters)) {
       const ac = AudioChapters as GenBookAudioConf;
-      const gbaudio = readGenBookAudioConf(ac, swordModule, renderPromise);
+      const gbaudio = getGenBookAudio(ac, swordModule, renderPromise);
       if (key in gbaudio) {
         return {
           audioModule: audioConf.module,
@@ -262,29 +262,37 @@ export function audioGenBookNode(
   return false;
 }
 
-// Returns the audio files listed in a config file as GenBookAudio.
-export function readGenBookAudioConf(
+// Returns the GenBookAudio object for a genbk module. It resolves a gbmod
+// AudioChapters config value to the full genbk key and AudioPath.
+export function getGenBookAudio(
   audio: GenBookAudioConf,
   gbmod: string,
   renderPromise?: RenderPromise,
 ): GenBookAudio {
-  const r: GenBookAudio = {};
-  const allGbKeys = gbPaths(GI.genBookTreeNodes([], renderPromise, gbmod));
-  Object.entries(audio).forEach((entry) => {
-    const [pathx, str] = entry;
-    const px = pathx.split('/').filter(Boolean);
-    const parentPath: AudioPath = [];
-    px.forEach((p, i) => {
-      parentPath[i] = Number(p.replace(/^(\d+).*?$/, '$1'));
-    });
-    audioConfNumbers(str).forEach((n) => {
-      const pp = parentPath.slice() as AudioPath;
-      pp.push(n);
-      const kx = Object.entries(allGbKeys).find((e) => !diff(pp, e[1]));
-      if (kx) r[kx[0]] = pp;
-    });
-  });
-  return r;
+  const treeNodes = GI.genBookTreeNodes([], renderPromise, gbmod);
+  if (treeNodes.length) {
+    if (!Cache.has('readGenBookAudioConf', gbmod)) {
+      const allGbKeys = gbPaths(treeNodes);
+      const r: GenBookAudio = {};
+      Object.entries(audio).forEach((entry) => {
+        const [pathx, str] = entry;
+        const px = pathx.split('/').filter(Boolean);
+        const parentPath: AudioPath = [];
+        px.forEach((p, i) => {
+          parentPath[i] = Number(p.replace(/^(\d+).*?$/, '$1'));
+        });
+        audioConfNumbers(str).forEach((n) => {
+          const pp = parentPath.slice() as AudioPath;
+          pp.push(n);
+          const kx = Object.entries(allGbKeys).find((e) => !diff(pp, e[1]));
+          if (kx) r[kx[0]] = pp;
+        });
+      });
+      Cache.write(r, 'readGenBookAudioConf', gbmod);
+    }
+    return Cache.read('readGenBookAudioConf', gbmod);
+  }
+  return {};
 }
 
 export function getLocalizedChapterTerm(
