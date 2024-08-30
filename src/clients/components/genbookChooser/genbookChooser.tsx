@@ -184,9 +184,12 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
           const childNodes = GI.genBookTreeNodes([], renderPromise, m);
           if (childNodes.length) {
             forEachNode(childNodes, (node) =>
+              // render Promise is not passed here, because audioGenBookNode()
+              // only results in GI calls to GI.genBookTreeNodes, which must
+              // already be cached in order to reach this point.
               audioGenBookNode(node, m, node.id.toString()),
             );
-            if (!renderPromise.waiting()) treeNodes[treekey] = childNodes;
+            treeNodes[treekey] = childNodes;
           }
           treeRef[treekey] = React.createRef();
         }
@@ -283,3 +286,4 @@ function newState(
     return { keys };
   };
 }
+

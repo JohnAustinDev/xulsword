@@ -708,6 +708,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
             isVerseKey ? location?.book || '' : modkey,
             location?.chapter,
             onAudioClick,
+            renderPromise
           )}
 
         <Vbox

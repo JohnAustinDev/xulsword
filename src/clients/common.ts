@@ -220,29 +220,20 @@ export function verseKeyAudioFile(
 export function genBookAudioFile(
   swordModule: string,
   key: string,
+  renderPromise?: RenderPromise,
 ): GenBookAudioFile | null {
   const audioConf = audioConfig(swordModule);
   if (audioConf) {
     const { AudioChapters } = audioConf;
     if (AudioChapters && !isAudioVerseKey(AudioChapters)) {
       const ac = AudioChapters as GenBookAudioConf;
-      if (!Cache.has('readGenBookAudioConf', swordModule)) {
-        Cache.write(
-          readGenBookAudioConf(ac, swordModule),
-          'readGenBookAudioConf',
-          swordModule,
-        );
-      }
-      const ac2 = Cache.read(
-        'readGenBookAudioConf',
-        swordModule,
-      ) as GenBookAudio;
-      if (key in ac2) {
+      const gbaudio = readGenBookAudioConf(ac, swordModule, renderPromise);
+      if (key in gbaudio) {
         return {
           audioModule: audioConf.module,
           swordModule,
           key,
-          path: ac2[key],
+          path: gbaudio[key],
         };
       }
     }
@@ -256,10 +247,11 @@ export function audioGenBookNode(
   node: TreeNodeInfo,
   module: string,
   key: string,
+  renderPromise?: RenderPromise,
 ): boolean {
   let afile: GenBookAudioFile | null = null;
   if (!G.Tab[module].isVerseKey && G.Tab[module].tabType === 'Genbks' && key) {
-    afile = genBookAudioFile(module, key);
+    afile = genBookAudioFile(module, key, renderPromise);
   }
   if (afile) {
     node.nodeData = afile;
@@ -274,15 +266,16 @@ export function audioGenBookNode(
 export function readGenBookAudioConf(
   audio: GenBookAudioConf,
   gbmod: string,
+  renderPromise?: RenderPromise,
 ): GenBookAudio {
   const r: GenBookAudio = {};
-  const allGbKeys = gbPaths(G.genBookTreeNodes(gbmod));
+  const allGbKeys = gbPaths(GI.genBookTreeNodes([], renderPromise, gbmod));
   Object.entries(audio).forEach((entry) => {
     const [pathx, str] = entry;
     const px = pathx.split('/').filter(Boolean);
     const parentPath: AudioPath = [];
     px.forEach((p, i) => {
-      parentPath[i] = Number(p);
+      parentPath[i] = Number(p.replace(/^(\d+).*?$/, '$1'));
     });
     audioConfNumbers(str).forEach((n) => {
       const pp = parentPath.slice() as AudioPath;

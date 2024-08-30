@@ -2,6 +2,7 @@ import React from 'react';
 import { Icon } from '@blueprintjs/core';
 import { G } from '../../G.ts';
 import { genBookAudioFile, verseKeyAudioFile } from '../../common.ts';
+import RenderPromise from '../../renderPromise.ts';
 
 import type {
   GenBookAudioFile,
@@ -14,13 +15,14 @@ export default function audioIcon(
   bookOrKey: OSISBookType | string,
   chapter: number | undefined,
   audioHandler: (audio: VerseKeyAudioFile | GenBookAudioFile) => void,
+  renderPromise: RenderPromise,
 ): JSX.Element | null {
   let afile: VerseKeyAudioFile | GenBookAudioFile | null = null;
   if (G.Tab[module].isVerseKey) {
     const book = bookOrKey as OSISBookType;
     afile = verseKeyAudioFile(module, book, chapter);
   } else if (G.Tab[module].tabType === 'Genbks' && bookOrKey) {
-    afile = genBookAudioFile(module, bookOrKey);
+    afile = genBookAudioFile(module, bookOrKey, renderPromise);
   }
   if (afile) {
     const handler = ((ax: VerseKeyAudioFile | GenBookAudioFile) => {

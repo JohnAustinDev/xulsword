@@ -341,6 +341,7 @@ class Chooser extends React.Component implements RenderPromiseComponent {
               domref={rowRef}
               style={{ visibility: 'hidden' }}
               chooserRef={this}
+              renderPromise={renderPromise}
             />
             {
               // This is the real BookGroupList...
@@ -360,6 +361,7 @@ class Chooser extends React.Component implements RenderPromiseComponent {
               handler={handler}
               onAudioClick={onAudioClick}
               chooserRef={this}
+              renderPromise={renderPromise}
             />
           </Vbox>
         </Hbox>
@@ -384,6 +386,7 @@ function BookGroupList(
     handler?: (e: React.SyntheticEvent) => void;
     onAudioClick?: (audio?: VerseKeyAudioFile | GenBookAudioFile) => void;
     chooserRef: React.Component;
+    renderPromise: RenderPromise;
   } & XulProps,
 ) {
   const {
@@ -396,6 +399,7 @@ function BookGroupList(
     handler,
     onAudioClick,
     chooserRef,
+    renderPromise,
   } = props;
   const Book = G.Book(G.i18n.language);
   const Books = G.Books(G.i18n.language);
@@ -426,6 +430,7 @@ function BookGroupList(
             handler={handler}
             onAudioClick={onAudioClick}
             chooserRef={chooserRef}
+            renderPromise={renderPromise}
           />
         );
       })}
@@ -442,6 +447,7 @@ function BookGroupItem(
     handler?: (e: React.SyntheticEvent) => void;
     onAudioClick?: (audio?: VerseKeyAudioFile | GenBookAudioFile) => void;
     chooserRef: React.Component;
+    renderPromise: RenderPromise;
   } & XulProps,
 ) {
   const {
@@ -452,6 +458,7 @@ function BookGroupItem(
     onAudioClick,
     v11n,
     chooserRef,
+    renderPromise,
   } = props;
   const c = classes || [];
   const Book = G.Book(G.i18n.language);
@@ -466,7 +473,7 @@ function BookGroupItem(
 
       {headingsModule &&
         onAudioClick &&
-        audioIcon(headingsModule, sName, undefined, onAudioClick)}
+        audioIcon(headingsModule, sName, undefined, onAudioClick, renderPromise)}
 
       <div key="charrow" className="charrow" />
       {!classes?.includes('disabled') && (
@@ -477,6 +484,7 @@ function BookGroupItem(
           handler={handler}
           onAudioClick={onAudioClick}
           chooserRef={chooserRef}
+          renderPromise={renderPromise}
         />
       )}
     </Hbox>
@@ -490,8 +498,9 @@ function ChapterMenu(props: {
   handler?: (e: React.SyntheticEvent) => void;
   onAudioClick?: (audio?: VerseKeyAudioFile | GenBookAudioFile) => void;
   chooserRef: React.Component;
+  renderPromise: RenderPromise;
 }) {
-  const { headingsModule, bkcode, v11n, handler, onAudioClick, chooserRef } =
+  const { headingsModule, bkcode, v11n, handler, onAudioClick, chooserRef, renderPromise } =
     props;
   const dlyhandler =
     handler && chooserRef
@@ -521,7 +530,7 @@ function ChapterMenu(props: {
             {dString(G.getLocaleDigits(), ch, G.i18n.language)}
             {headingsModule &&
               onAudioClick &&
-              audioIcon(headingsModule, bkcode, ch, onAudioClick)}
+              audioIcon(headingsModule, bkcode, ch, onAudioClick, renderPromise)}
           </div>,
         );
       } else {

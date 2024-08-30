@@ -29,11 +29,14 @@ export function GCallsOrPromise(
   defaultValues?: PrefValue[],
   promise?: RenderPromise | null,
 ): PrefValue[] {
-  if (Build.isElectronApp) {
-    const results = calls.map((call) => getCallFromCache(call));
-    callBatchThenCacheSync(calls.filter((_gc, i) => results[i] === undefined));
+  const cached = calls.map((call) => getCallFromCache(call));
+  const notCached = calls.filter((_gc, i) => cached[i] === undefined);
+  if (notCached.length === 0) return getCallsFromCacheAndClear(calls);
+  else if (Build.isElectronApp) {
+    callBatchThenCacheSync(notCached);
     return getCallsFromCacheAndClear(calls);
-  } else if (promise) {
+  }
+  if (promise) {
     const presults = getCallsFromCacheAndClear(calls);
     if (presults.some((r) => r === undefined)) {
       const pcalls = calls.filter((_call, i) => presults[i] === undefined);
