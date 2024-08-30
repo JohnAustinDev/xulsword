@@ -164,72 +164,83 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
     const { expandedIDs } = state;
     const { treeRef, treeNodes, renderPromise, onNodeClick } = this;
 
+    const chooserGroups = genbks(panels);
+    const treekeys = (groupIndex: number): [string | null, number] => {
+      const [group] = chooserGroups[groupIndex];
+      const m = panels[group]
+      return [m, group];
+    };
+
+    // Build any treeNodes that have not been built yet. Each treekey has a
+    // treeNode list, and is only built once and reused.
+    chooserGroups.forEach((_group, i) => {
+      const tks = treekeys(i);
+      const treekey = tks.join('.');
+      if (!treeNodes[treekey] || !treeNodes[treekey].length) {
+        treeNodes[treekey] = [];
+        const [m] = tks;
+        const t = (m && m in G.Tab && G.Tab[m]) || null;
+        if (m && t && t.type === C.GENBOOK) {
+          const childNodes = GI.genBookTreeNodes([], renderPromise, m);
+          if (childNodes.length) {
+            forEachNode(childNodes, (node) =>
+              audioGenBookNode(node, m, node.id.toString()),
+            );
+            if (!renderPromise.waiting()) treeNodes[treekey] = childNodes;
+          }
+          treeRef[treekey] = React.createRef();
+        }
+      }
+    });
+
     return (
       <Vbox {...addClass(`chooser genbook-chooser`, props)}>
         <Hbox className="fadetop" />
 
         <Hbox className="chooser-container" flex="20">
           <div className="scroll-parent">
-            {genbks(panels).map((x, _i, a) => {
-              const [i] = x;
-              const m = panels[i];
+            {chooserGroups.map((group, i) => {
+              const tks = treekeys(i);
+              const treekey = tks.join('.');
+              const [m] = tks;
               if (m) {
-                const treekey = [m, i].join('.');
                 const t = (m in G.Tab && G.Tab[m]) || null;
-                if (t && t.type === C.GENBOOK) {
-                  if (!(treekey in treeRef)) {
-                    treeRef[treekey] = React.createRef();
-                  }
-                  const childNodes = GI.genBookTreeNodes([], renderPromise, m);
-                  const toc = GI.LibSword.getGenBookTableOfContents(
-                    [],
-                    renderPromise,
-                    m,
-                  );
-                  treeNodes[treekey] = [];
-                  if (
-                    a.length > 1 &&
-                    !(
-                      toc.length === 1 &&
-                      t?.label.toLocaleLowerCase() ===
-                        toc[0].toLocaleLowerCase()
-                    )
-                  ) {
-                    treeNodes[treekey].push({
-                      id: m,
-                      label: t?.label || m,
-                      className: t?.labelClass || 'cs-LTR_DEFAULT',
-                      hasCaret: true,
-                      childNodes,
-                    });
-                  } else {
-                    treeNodes[treekey].push(...childNodes);
-                  }
-                  forEachNode(treeNodes[treekey], (node) =>
-                    audioGenBookNode(node, m, node.id.toString()),
-                  );
-                  const key = keys[i] || toc[0];
-                  return (
-                    <TreeView
-                      key={stringHash(treekey, treeNodes[treekey])}
-                      initialState={treeNodes[treekey]}
-                      selectedIDs={key ? [key] : []}
-                      expandedIDs={expandedIDs[i]}
-                      onSelection={(sel) => {
-                        xulswordStateHandler(newState(i, sel));
-                      }}
-                      onExpansion={(exids) => {
-                        this.setState((prevState: GenbookChooserState) => {
-                          const { expandedIDs: expIDs } = clone(prevState);
-                          expIDs[i] = exids.map((d) => d.toString());
-                          return { expandedIDs: expIDs };
-                        });
-                      }}
-                      onNodeClick={onNodeClick}
-                      treeRef={treeRef[treekey]}
-                    />
-                  );
+                let childNodes: TreeNodeInfo[] = treeNodes[treekey];
+                // If there are multiple genbks in the chooser, each genbk root
+                // node must have a single child.
+                if (
+                  chooserGroups.length > 1 &&
+                  childNodes.length > 1
+                ) {
+                  childNodes = [{
+                    id: m,
+                    label: t?.label || m,
+                    className: t?.labelClass || 'cs-LTR_DEFAULT',
+                    hasCaret: true,
+                    childNodes,
+                  }];
                 }
+                const key = keys[group[0]] || m;
+                return (
+                  <TreeView
+                    key={stringHash(childNodes)}
+                    initialState={childNodes}
+                    selectedIDs={key ? [key] : []}
+                    expandedIDs={expandedIDs[i]}
+                    onSelection={(sel) => {
+                      xulswordStateHandler(newState(i, sel));
+                    }}
+                    onExpansion={(exids) => {
+                      this.setState((prevState: GenbookChooserState) => {
+                        const { expandedIDs: expIDs } = clone(prevState);
+                        expIDs[i] = exids.map((d) => d.toString());
+                        return { expandedIDs: expIDs };
+                      });
+                    }}
+                    onNodeClick={onNodeClick}
+                    treeRef={treeRef[treekey]}
+                  />
+                );
               }
               return null;
             })}

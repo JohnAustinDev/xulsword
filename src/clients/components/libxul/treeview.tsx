@@ -9,9 +9,9 @@ import type { TreeEventHandler, TreeNodeInfo } from '@blueprintjs/core';
 import type { XulProps } from './xul.tsx';
 
 // The initialState of all nodes in the tree is required. If selectedIDs is defined
-// then onSelection must also be defined so that selection can be controlled by the
-// parent. If expandedIDs is defined then onExpansion must also be defined so that
-// expansion can be controlled by the parent. If enableMultipleSelection is false,
+// then onSelection must also be defined and the selection will be controlled by the
+// parent. If expandedIDs is defined then onExpansion must also be defined and the
+// expansion will be controlled by the parent. If enableMultipleSelection is false,
 // then only one node will be selected at a time.
 export type TreeViewProps = XulProps & {
   initialState: TreeNodeInfo[];
