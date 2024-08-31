@@ -274,6 +274,11 @@ export default function handler(
               ?.getBoundingClientRect();
             const vpPadding = 15; // left padding of ViewportWin (assumes same as right and bottom)
             const vpPaddingTop = 10; // top padding of ViewportWin
+            xulswordState.historyMenupopup = undefined;
+            const xst = xulswordState as Omit<
+              typeof xulswordState,
+              'historyMenupopup'
+            >;
             G.Window.open({
               type: 'viewportWin',
               className: 'skin',
@@ -287,7 +292,7 @@ export default function handler(
                 height: Math.round(textareab.height + vpPaddingTop + vpPadding),
               },
               additionalArguments: {
-                xulswordState,
+                xulswordState: xst,
                 ...atextStates,
               },
               options: { title: 'viewport' },

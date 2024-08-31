@@ -52,7 +52,7 @@ export type XulswordProps = XulProps;
 // The following state keys are never read from Prefs. Neither are
 // they written to Prefs.
 const notStatePrefDefault = {
-  historyMenupopup: undefined,
+  historyMenupopup: undefined as React.JSX.Element | undefined,
   bsreset: 0,
   vpreset: 0,
   searchDisabled: true,
@@ -132,7 +132,7 @@ export default class Xulsword
     const state = this.state as XulswordState;
     const { scroll } = state;
     if (!scroll?.skipWindowUpdate) {
-      const statex = clone(state);
+      const statex = clone({ ...state, historyMenupopup: undefined });
       setStatePref('prefs', 'xulsword', prevState, statex);
       // Add page to history after a short delay
       const { location } = state;
@@ -163,7 +163,7 @@ export default class Xulsword
         const { keys } = prevState;
         const { keys: nkeys } = selection;
         if (keys.toString() !== nkeys.toString()) {
-          const s = clone(prevState);
+          const s = { ...prevState };
           s.keys = nkeys;
           return s;
         }

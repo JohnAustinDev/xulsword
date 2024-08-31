@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { diff } from '../../../common.ts';
 import log from '../../log.ts';
-import { getProps } from '../common.ts';
+import { getProps, updateHrefParams } from '../common.ts';
 import SelectVK from '../../components/libxul/selectVK.tsx';
 
 import type {
@@ -48,15 +48,14 @@ export default function WidgetVK(wprops: WidgetVKProps): React.JSX.Element {
           if (typeof diff(s, prevState) !== 'undefined') newState = s;
         }
         if (action && newState !== prevState) {
+          const { book, chapter } = selection;
           switch (action) {
             case 'bible_audio_Play': {
-              const player = document
-                .getElementById(compid)
-                ?.parentElement?.querySelector('audio') as
+              const comParent = document.getElementById(compid)?.parentElement;
+              const player = comParent?.querySelector('audio') as
                 | HTMLAudioElement
                 | undefined;
               if (player) {
-                const { book, chapter } = selection;
                 const chaparray =
                   data && data[book]?.find((ca) => ca[0] === chapter);
                 if (chaparray) {
@@ -67,6 +66,10 @@ export default function WidgetVK(wprops: WidgetVKProps): React.JSX.Element {
                   player.play().catch(() => {});
                 }
               }
+              const link = comParent?.querySelector(
+                `a[href*=${CSS.escape('/passage?')}]`,
+              ) as HTMLAnchorElement | undefined;
+              if (link) updateHrefParams(link, { l: `${book}.${chapter}` });
               break;
             }
             default: {

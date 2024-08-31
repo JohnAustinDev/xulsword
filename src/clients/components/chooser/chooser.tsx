@@ -473,7 +473,13 @@ function BookGroupItem(
 
       {headingsModule &&
         onAudioClick &&
-        audioIcon(headingsModule, sName, undefined, onAudioClick, renderPromise)}
+        audioIcon(
+          headingsModule,
+          sName,
+          undefined,
+          onAudioClick,
+          renderPromise,
+        )}
 
       <div key="charrow" className="charrow" />
       {!classes?.includes('disabled') && (
@@ -500,8 +506,15 @@ function ChapterMenu(props: {
   chooserRef: React.Component;
   renderPromise: RenderPromise;
 }) {
-  const { headingsModule, bkcode, v11n, handler, onAudioClick, chooserRef, renderPromise } =
-    props;
+  const {
+    headingsModule,
+    bkcode,
+    v11n,
+    handler,
+    onAudioClick,
+    chooserRef,
+    renderPromise,
+  } = props;
   const dlyhandler =
     handler && chooserRef
       ? delayHandler.bind(chooserRef)(
@@ -530,7 +543,13 @@ function ChapterMenu(props: {
             {dString(G.getLocaleDigits(), ch, G.i18n.language)}
             {headingsModule &&
               onAudioClick &&
-              audioIcon(headingsModule, bkcode, ch, onAudioClick, renderPromise)}
+              audioIcon(
+                headingsModule,
+                bkcode,
+                ch,
+                onAudioClick,
+                renderPromise,
+              )}
           </div>,
         );
       } else {

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import log from '../../log.ts';
-import { createNodeList, getProps } from '../common.ts';
+import { createNodeList, getProps, updateHrefParams } from '../common.ts';
 import SelectOR from '../../components/libxul/selectOR.tsx';
 
 import type {
@@ -32,22 +32,25 @@ export default function WidgetOR(wprops: WidgetORProps): React.JSX.Element {
 
   const onSelectOR = (selection?: SelectORMType): void => {
     if (action && selection) {
+      const { keys } = selection;
+      const [key] = keys;
       switch (action) {
         case 'genbk_audio_Play': {
-          const player = document
-            .getElementById(compid)
-            ?.parentElement?.querySelector('audio') as
+          const comParent = document.getElementById(compid)?.parentElement;
+          const player = comParent?.querySelector('audio') as
             | HTMLAudioElement
             | undefined;
           if (player) {
-            const { keys } = selection;
-            const [key] = keys;
             const da = data.find((x) => x[1] === key);
             if (da) {
               player.setAttribute('src', da[2].replace(/^base:/, ''));
               player.play().catch(() => {});
             }
           }
+          const link = comParent?.querySelector(
+            `a[href*=${CSS.escape('/passage?')}]`,
+          ) as HTMLAnchorElement | undefined;
+          if (link) updateHrefParams(link, { l: `${key}` });
           break;
         }
         default: {

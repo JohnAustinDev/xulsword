@@ -167,7 +167,7 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
     const chooserGroups = genbks(panels);
     const treekeys = (groupIndex: number): [string | null, number] => {
       const [group] = chooserGroups[groupIndex];
-      const m = panels[group]
+      const m = panels[group];
       return [m, group];
     };
 
@@ -211,17 +211,16 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
                 let childNodes: TreeNodeInfo[] = treeNodes[treekey];
                 // If there are multiple genbks in the chooser, each genbk root
                 // node must have a single child.
-                if (
-                  chooserGroups.length > 1 &&
-                  childNodes.length > 1
-                ) {
-                  childNodes = [{
-                    id: m,
-                    label: t?.label || m,
-                    className: t?.labelClass || 'cs-LTR_DEFAULT',
-                    hasCaret: true,
-                    childNodes,
-                  }];
+                if (chooserGroups.length > 1 && childNodes.length > 1) {
+                  childNodes = [
+                    {
+                      id: m,
+                      label: t?.label || m,
+                      className: t?.labelClass || 'cs-LTR_DEFAULT',
+                      hasCaret: true,
+                      childNodes,
+                    },
+                  ];
                 }
                 const key = keys[group[0]] || m;
                 return (
@@ -286,4 +285,3 @@ function newState(
     return { keys };
   };
 }
-

@@ -8,6 +8,7 @@ import {
   findTreeAncestors,
   findTreeSiblings,
   gbAncestorIDs,
+  clone,
 } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
@@ -89,6 +90,10 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
 
   renderPromise: RenderPromise;
 
+  // This is only set if enableMultipleSelection is false and keys[0] does not
+  // include a 'Child selector' selection.
+  defaultedChildSelection: string | undefined;
+
   constructor(props: SelectORProps) {
     super(props);
     const { initialORM, otherMods, nodeLists } = props;
@@ -121,8 +126,17 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
   }
 
   componentDidUpdate() {
-    const { renderPromise } = this;
+    const { id, onSelection } = this.props as SelectORProps;
+    const { renderPromise, defaultedChildSelection } = this;
     renderPromise.dispatch();
+    if (defaultedChildSelection) {
+      this.setState((prevState: SelectORState) => {
+        const { selection } = clone(prevState);
+        selection.keys = [defaultedChildSelection];
+        if (onSelection) onSelection(selection, id);
+        return { selection } as SelectORState;
+      });
+    }
   }
 
   onChange(ev: React.SyntheticEvent) {
@@ -334,15 +348,19 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
     );
 
     // Child selector
-    const value = enableMultipleSelection ? keys : keys[0];
-    const parentNode = ancestorNodes.at(-1);
     if (childNodes.length) {
+      let value = enableMultipleSelection ? keys : keys[0];
+      if (typeof value === 'string' && (!value || value.endsWith('/'))) {
+        value = childNodes[0].id.toString();
+        this.defaultedChildSelection = value;
+      } else this.defaultedChildSelection = undefined;
+      const parentNode = ancestorNodes.at(-1);
       selects.push(
         <Menulist
           className="select-child"
           key={['ch', parentNode ? parentNode.id : module].join('.')}
           multiple={!!enableMultipleSelection}
-          value={value ?? ''}
+          value={value}
           disabled={disabled || !selectedModuleIsInstalled}
           onChange={onChange}
         >

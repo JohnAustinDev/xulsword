@@ -189,3 +189,35 @@ export function createNodeList(
     props.initialORM.keys = [nodes[0].id.toString()];
   }
 }
+
+export function updateHrefParams(
+  anchor: HTMLAnchorElement,
+  params: Record<string, string | number>,
+) {
+  const href = anchor.getAttribute('href');
+  if (href) {
+    const hrefMatched = href.match(/^([^?]+)\?(.*?)$/);
+    if (hrefMatched) {
+      const [, url, qps] = hrefMatched;
+      const updated: Record<string, string> = {};
+      const inputQueryParams = qps.split('&');
+      for (;;) {
+        const next = inputQueryParams.shift();
+        if (!next) break;
+        const [param, value] = next.split('=') as [string, string];
+        updated[param] = value;
+      }
+      Object.entries(params).forEach((entry) => {
+        const [param, value] = entry;
+        updated[param] = value.toString();
+      });
+      if (Object.keys(updated).length) {
+        const query = Object.entries(updated).reduce(
+          (p, c) => `${p}${p ? '&' : ''}${c[0]}=${c[1]}`,
+          '',
+        );
+        anchor.setAttribute('href', `${url}?${query}`);
+      }
+    }
+  }
+}

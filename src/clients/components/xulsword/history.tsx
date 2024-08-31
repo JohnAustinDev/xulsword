@@ -65,7 +65,9 @@ export function setHistory(
     return;
   this.setState((prevState: XulswordState) => {
     let ret: Partial<XulswordState> | null = null;
-    const { history, location } = clone(prevState);
+    const { history: h, location: l } = prevState;
+    const history = clone(h);
+    const location = clone(l);
     if (location) {
       // To update state to a history index without changing the selected
       // modules, history needs to be converted to the current v11n.
