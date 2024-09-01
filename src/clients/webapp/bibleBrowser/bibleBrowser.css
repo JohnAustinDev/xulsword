@@ -6,12 +6,16 @@
 #main-controlbar > .spacer:first-child {
   display: none;
 }
+#navigator-tool > div > div:has(audio) {
+  margin: 5px 7px 5px 0;
+}
 #genbknav {
   display: none;
 }
 #genbknav .menulist,
 #genbknav .menulist select {
   width: 100%;
+  margin: 7px 0;
 }
 #genbknav .menulist:not(:has(:nth-child(2))) {
   display: none;

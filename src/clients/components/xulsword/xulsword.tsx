@@ -361,7 +361,7 @@ export default class Xulsword
                     />
                   </div>
                 </Vbox>
-                <Button id="closeplayer" flex="1" onClick={handler}>
+                <Button id="closeplayer" onClick={handler}>
                   {GI.i18n.t('', renderPromise, 'close.label')}
                 </Button>
               </Hbox>

@@ -35,6 +35,9 @@ close(YARN);
 if ("$?" eq "0") {
   my $dist = "$DIST_PARENT_DIR/dist";
   `cp "./build/webapp/dist/webappClients/"* "$dist"`;
+  my $cmd = "sed -i 's/<\\/head>/<link href=\"\\/modules\\/custom\\/ibt\\/css\\/bibleBrowser.css\" rel=\"stylesheet\"><\\/head>/' \"$dist/bibleBrowser.html\"";
+  print $cmd . "\n";
+  `$cmd`;
   my $libs = "ibt.libraries.yml";
   chdir "$DIST_PARENT_DIR" || die;
   if (-e "$libs") {
