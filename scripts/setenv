@@ -3,14 +3,18 @@
 # properly set environment variables. Comments indicate each setting
 # and the default value.
 
+# Set the following variables to enable an SSL webapp server
+# export SERVER_KEY_PEM=full-path-to-key-pem-file
+# export SERVER_CRT_PEM=full-path-to-certificate-pem-file
+
 # export WEBAPP_CORS_ORIGIN='http://localhost:1212'
 
 # export WEBAPP_PORT=3576
 
+# export WEBAPP_SERVERROOT_DIR=[xulsword]/profile_webapp/web
+
 # Semicolon delimited list of public URLs relative to WEBAPP_SERVERROOT_DIR; each starting with slash.
 # export WEBAPP_PUBPATHS=/
-
-# export WEBAPP_SERVERROOT_DIR=[xulsword]/profile_webapp/web
 
 # The public URL on the web app server where webpacked files are served from (beginning and ending with slash).
 # export WEBAPP_PUBLIC_DIST=/

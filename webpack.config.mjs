@@ -89,6 +89,8 @@ const defaultEnvironment = {
   XSFonts_DIR: '',
   LOG_DIR: '',
   NODE_ENV: '',
+  SERVER_KEY_PEM: '',
+  SERVER_CRT_PEM: '',
 };
 const env = (k) =>
   (k in process.env && process.env[k]) || defaultEnvironment[k];

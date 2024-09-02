@@ -7,7 +7,9 @@ import toobusy from 'toobusy-js';
 import memorystore from 'memorystore';
 import log from 'electron-log';
 import i18nBackendMain from 'i18next-fs-backend';
+import https from 'https';
 import http from 'http';
+import fs from 'fs';
 import {
   JSON_parse,
   JSON_stringify,
@@ -64,7 +66,17 @@ i18nInit('en').catch((er) => {
 // Do this in the background...
 // G.getSystemFonts();
 
-const server = http.createServer();
+const sslkey = process.env.SERVER_KEY_PEM;
+const sslcrt = process.env.SERVER_CRT_PEM;
+let server;
+if (sslkey && sslcrt) {
+  server = https.createServer({
+    key: fs.readFileSync(sslkey),
+    cert: fs.readFileSync(sslcrt),
+  });
+} else {
+  server = http.createServer();
+}
 
 const io = new Server(server, {
   serveClient: false,
