@@ -37,7 +37,7 @@ export XSModsUser_DIR=~/.config/Electron/resources
 
 # export WEBPACK_DEV_APP_PORT=1213
 
-# export LOG_DIR=[xulsword]/profile_webapp/logs
+# export LOG_DIR=[xulsword]/profile_webapp
 
 # Possible values are 'error', 'warn', 'info', 'verbose', 'debug', 'silly'
 # export LOGLEVEL='debug'
