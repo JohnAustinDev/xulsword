@@ -73,6 +73,7 @@ if (sslkey && sslcrt) {
   server = https.createServer({
     key: fs.readFileSync(sslkey),
     cert: fs.readFileSync(sslcrt),
+    enableTrace: process.env.LOGLEVEL === 'debug',
   });
 } else {
   server = http.createServer();
@@ -208,7 +209,7 @@ io.on('connection', (socket) => {
   });
 });
 
-io.listen(Number(process.env.WEBAPP_PORT));
+server.listen(Number(process.env.WEBAPP_PORT));
 
 // Return a reason message if arguments are invalid or null if they are valid.
 function invalidArgs<T>(args: T[]): string | null {
