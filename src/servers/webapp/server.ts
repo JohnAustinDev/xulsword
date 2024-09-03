@@ -73,7 +73,7 @@ if (sslkey && sslcrt) {
   server = https.createServer({
     key: fs.readFileSync(sslkey),
     cert: fs.readFileSync(sslcrt),
-    enableTrace: process.env.LOGLEVEL === 'debug',
+    enableTrace: process.env.LOGLEVEL === 'silly',
   });
 } else {
   server = http.createServer();
