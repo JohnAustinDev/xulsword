@@ -110,6 +110,7 @@ io.on('connection', (socket) => {
   socket.on(
     'error-report',
     async (args: any[], _callback: (r: any) => void) => {
+      log.silly(`on error-report: ${JSON_stringify(args)}`);
       const limited = await isLimited(socket, args);
       if (!limited) {
         const invalid = invalidArgs(args);
@@ -132,6 +133,7 @@ io.on('connection', (socket) => {
   );
 
   socket.on('log', async (args: any[], _callback: (r: any) => void) => {
+    log.silly(`on log: ${JSON_stringify(args)}`);
     const limited = await isLimited(socket, args);
     if (!limited) {
       const invalid = invalidArgs(args);
@@ -169,6 +171,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('global', async (args: any[], callback: (r: any) => void) => {
+    log.silly(`on global: ${JSON_stringify(args)}`);
     const limited = await isLimited(socket, args, true);
     if (!limited) {
       const invalid = invalidArgs(args);
