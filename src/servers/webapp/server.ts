@@ -60,7 +60,7 @@ const AvailableLanguages = [
 ];
 
 i18nInit('en').catch((er) => {
-  log.error(er);
+  log.error(`Server i18nInit('en') error: ${er}`);
 });
 
 // Do this in the background...
@@ -116,12 +116,14 @@ io.on('connection', (socket) => {
         if (!invalid && args.length === 1) {
           const [message] = args;
           if (typeof message === 'string') {
-            log.error(`${socket.handshake.address} › error-report: ${message}`);
+            log.error(
+              `${socket.handshake.address} › client error-report: ${message}`,
+            );
             return;
           }
         }
         log.error(
-          `${socket.handshake.address} › Ignoring 'error-report' call made with improper arguments. (${invalid})`,
+          `${socket.handshake.address} › Client 'error-report' made with improper arguments: ${JSON_stringify(args)}. (${invalid})`,
         );
       } else {
         // ignore
@@ -151,7 +153,9 @@ io.on('connection', (socket) => {
               ...(logargs as unknown[]),
             );
           } catch (er: any) {
-            log.error(`${socket.handshake.address} › ${er.toString()}`);
+            log.error(
+              `${socket.handshake.address} › in log of ${JSON_stringify(args)}: ${er.toString()}`,
+            );
           }
           return;
         }
@@ -182,20 +186,30 @@ io.on('connection', (socket) => {
           try {
             r = handleGlobal(GI, -1, acall, false);
           } catch (er: any) {
-            log.error(`${socket.handshake.address} › ${er}`);
+            log.error(
+              `${socket.handshake.address} › in handleGlobal(GIm -1, ${JSON_stringify(acall)}, false): ${er}`,
+            );
           }
           if (r instanceof Promise) {
             r.then((result) => {
               const invalid = isInvalidWebAppDataLogged(result);
               if (!invalid) callback(result);
-              else log.error(`${socket.handshake.address} › ${invalid}`);
+              else
+                log.error(
+                  `${socket.handshake.address} › invalid promise request: ${invalid}`,
+                );
             }).catch((er) => {
-              log.error(`${socket.handshake.address} › ${er}`);
+              log.error(
+                `${socket.handshake.address} › in isInvalidWebAppDataLogged(): ${er}`,
+              );
             });
           } else {
             const invalid = isInvalidWebAppDataLogged(r);
             if (!invalid) callback(r);
-            else log.error(`${socket.handshake.address} › ${invalid}`);
+            else
+              log.error(
+                `${socket.handshake.address} › invalid sync request: ${invalid}`,
+              );
           }
           return;
         }
@@ -276,6 +290,6 @@ async function i18nInit(lng: string) {
       keySeparator: false,
     })
     .catch((e) => {
-      log.error(`ERROR: ${e}`);
+      log.error(`ERROR: in i18n init(): ${e}`);
     });
 }
