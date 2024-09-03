@@ -406,9 +406,11 @@ export default async function renderToRoot(
   component: ReactElement,
   options?: Partial<Omit<ControllerOptions, 'print'>> & {
     print?: Partial<RootPrintType>;
+  } & {
+    className?: string
   },
 ) {
-  const { onload, onunload } = options || {};
+  const { className, onload, onunload } = options || {};
   const { print: printArg, initialState: initialStateArg } = options || {};
   const print: RootPrintType = {
     pageable: false,
@@ -464,7 +466,7 @@ export default async function renderToRoot(
   dynamicStyleSheet.update(st);
 
   // Set window type and language classes on the root html element.
-  const classes: string[] = [];
+  const classes: string[] = className ? [className] : [];
   const classArgs = [
     'className',
     'type',

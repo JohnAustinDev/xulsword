@@ -1,6 +1,6 @@
 import React from 'react';
 import { Icon } from '@blueprintjs/core';
-import { dString, clone } from '../../../common.ts';
+import { dString, clone, stringHash } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
 import RenderPromise from '../../renderPromise.ts';
@@ -35,7 +35,7 @@ import {
 import './xulsword.css';
 
 import type { BibleBrowserControllerGlobal } from '../../webapp/bibleBrowser/bibleBrowser.tsx';
-import type { XulswordStateArgType } from '../../../type.ts';
+import type { LocationVKType, XulswordStateArgType } from '../../../type.ts';
 import type {
   RenderPromiseComponent,
   RenderPromiseState,
@@ -44,6 +44,7 @@ import type S from '../../../defaultPrefs.ts';
 import type Atext from '../atext/atext.tsx';
 import type { XulProps } from '../libxul/xul.tsx';
 import SelectOR, { SelectORMType } from '../libxul/selectOR.tsx';
+import SelectVK, { SelectVKType } from '../libxul/selectVK.tsx';
 
 const propTypes = xulPropTypes;
 
@@ -106,6 +107,7 @@ export default class Xulsword
     this.viewportParentHandler = viewportParentH.bind(this);
     this.bbDragEnd = bbDragEndH.bind(this);
     this.selectionGenbk = this.selectionGenbk.bind(this);
+    this.selectionVK = this.selectionVK.bind(this);
     this.xulswordStateHandler = this.xulswordStateHandler.bind(this);
     this.addHistory = addHistoryH.bind(this);
     this.setHistory = setHistoryH.bind(this);
@@ -172,6 +174,21 @@ export default class Xulsword
     }
   }
 
+  selectionVK(selection: SelectVKType | undefined): void {
+    if (selection) {
+      this.setState((prevState: XulswordState) => {
+        const { location: l } = prevState;
+        let location = clone(l);
+        if (location === null) location = {} as LocationVKType;
+        location.book = selection.book;
+        location.chapter = selection.chapter;
+        location.verse = 1;
+        location.v11n = selection.v11n;
+        return { location };
+      });
+    }
+  }
+
   xulswordStateHandler(s: XulswordStateArgType): void {
     this.setState(s);
   }
@@ -186,6 +203,7 @@ export default class Xulsword
       renderPromise,
       bbDragEnd,
       selectionGenbk,
+      selectionVK,
       xulswordStateHandler,
     } = this;
     const {
@@ -238,12 +256,12 @@ export default class Xulsword
       else viewportReset.push(m);
     });
 
-    const showingGenbkKeys: (string | null)[] = [];
+    const panelGenbkKeys: (string | null)[] = [];
     const seen: string[] = [];
-    const showingGenbks = panels.filter((m, i) => {
-      if (m && G.Tab[m].type === 'Generic Books' && !seen.includes(m)) {
+    const panelGenbks = panels.filter((m, i) => {
+      if (m && G.Tab[m].type === C.GENBOOK && !seen.includes(m)) {
         seen.push(m);
-        showingGenbkKeys.push(keys[i]);
+        panelGenbkKeys.push(keys[i]);
         return true;
       }
       return false;
@@ -258,6 +276,77 @@ export default class Xulsword
         ? 'left'
         : 'right';
 
+    const historyComponent = (
+      <Hbox id="historyButtons" align="center" pack="center">
+        <Spacer flex="1" />
+        <Box
+          flex="1"
+          title={GI.i18n.t('', renderPromise, 'history.back.tooltip')}
+        >
+          <Button
+            id="back"
+            icon={`chevron-${left}`}
+            onClick={handler}
+            disabled={
+              navdisabled ||
+              !history.length ||
+              historyIndex === history.length - 1
+            }
+          >
+            {GI.i18n.t('', renderPromise, 'back.label')}
+          </Button>
+        </Box>
+        <Box title={GI.i18n.t('', renderPromise, 'history.all.tooltip')}>
+          <Button
+            id="historymenu"
+            icon={`double-chevron-${left}`}
+            rightIcon={`double-chevron-${right}`}
+            onClick={handler}
+            disabled={navdisabled || history.length <= 1}
+          >
+            {historyMenupopup || <span />}
+          </Button>
+        </Box>
+        <Box
+          flex="1"
+          title={GI.i18n.t('', renderPromise, 'history.forward.tooltip')}
+        >
+          <Button
+            id="forward"
+            rightIcon={`chevron-${right}`}
+            onClick={handler}
+            disabled={navdisabled || historyIndex === 0}
+          >
+            {GI.i18n.t('', renderPromise, 'history.forward.label')}
+          </Button>
+        </Box>
+        <Spacer flex="1" />
+      </Hbox>
+    );
+
+    const audioComponent = (
+      <Hbox id="player" pack="center" align="center">
+        <Vbox flex="3">
+          <div>
+            <audio
+              controls
+              onEnded={handler}
+              onCanPlay={handler}
+              autoPlay={!!Build.isWebApp}
+              src={
+                audio.file
+                  ? GI.inlineAudioFile('', renderPromise, audio.file)
+                  : undefined
+              }
+            />
+          </div>
+        </Vbox>
+        <Button id="closeplayer" onClick={handler}>
+          {GI.i18n.t('', renderPromise, 'close.label')}
+        </Button>
+      </Hbox>
+    );
+
     return (
       <Vbox
         {...addClass('xulsword', props)}
@@ -271,8 +360,95 @@ export default class Xulsword
           props,
         )}
       >
+        {Build.isWebApp && historyComponent}
+
         <Hbox id="main-controlbar" pack="start" className="controlbar skin">
           <Spacer className="start-spacer" />
+
+          {!Build.isWebApp && (
+            <Vbox id="navigator-tool" pack="start">
+              {!audio.open && historyComponent}
+              {audio.open && audioComponent}
+
+              <Hbox id="textnav" align="center">
+                <Bookselect
+                  id="book"
+                  sizetopopup="none"
+                  flex="1"
+                  selection={location?.book}
+                  options={booklist}
+                  disabled={navdisabled}
+                  key={[location?.book, bsreset].join('.')}
+                  onChange={handler}
+                />
+                <Textbox
+                  id="chapter"
+                  width="50px"
+                  maxLength="3"
+                  pattern={/^[0-9]+$/}
+                  value={
+                    location?.chapter
+                      ? dString(
+                          G.getLocaleDigits(),
+                          location.chapter,
+                          G.i18n.language,
+                        )
+                      : ''
+                  }
+                  timeout="600"
+                  disabled={navdisabled}
+                  key={`c${location?.chapter}`}
+                  onChange={handler}
+                  onClick={handler}
+                />
+                <Vbox>
+                  <AnchorButton
+                    id="nextchap"
+                    disabled={navdisabled}
+                    onClick={handler}
+                  />
+                  <AnchorButton
+                    id="prevchap"
+                    disabled={navdisabled}
+                    onClick={handler}
+                  />
+                </Vbox>
+                <span>:</span>
+                <Textbox
+                  id="verse"
+                  key={`v${location?.verse}`}
+                  width="50px"
+                  maxLength="3"
+                  pattern={/^[0-9]+$/}
+                  value={
+                    location?.verse
+                      ? dString(
+                          G.getLocaleDigits(),
+                          location.verse,
+                          G.i18n.language,
+                        )
+                      : ''
+                  }
+                  timeout="600"
+                  disabled={navdisabled}
+                  onChange={handler}
+                  onClick={handler}
+                />
+                <Vbox>
+                  <AnchorButton
+                    id="nextverse"
+                    disabled={navdisabled}
+                    onClick={handler}
+                  />
+                  <AnchorButton
+                    id="prevverse"
+                    disabled={navdisabled}
+                    onClick={handler}
+                  />
+                </Vbox>
+              </Hbox>
+            </Vbox>
+          )}
 
           {Build.isWebApp && (
             <>
@@ -287,182 +463,45 @@ export default class Xulsword
                 }
                 onClick={handler}
               />
-              <Box flex="1" />
-            </>
-          )}
-
-          <Vbox id="navigator-tool" pack="start">
-            {!audio.open &&
-              (Build.isElectronApp ||
-                panels.find((m) => m && G.Tab[m].isVerseKey)) && (
-                <Hbox id="historyButtons" align="center">
-                  <Box
-                    flex="40%"
-                    title={GI.i18n.t('', renderPromise, 'history.back.tooltip')}
-                  >
-                    <Button
-                      id="back"
-                      icon={`chevron-${left}`}
-                      onClick={handler}
-                      disabled={
-                        navdisabled ||
-                        !history.length ||
-                        historyIndex === history.length - 1
-                      }
-                    >
-                      {GI.i18n.t('', renderPromise, 'back.label')}
-                    </Button>
-                  </Box>
-                  <Box
-                    title={GI.i18n.t('', renderPromise, 'history.all.tooltip')}
-                  >
-                    <Button
-                      id="historymenu"
-                      icon={`double-chevron-${left}`}
-                      rightIcon={`double-chevron-${right}`}
-                      onClick={handler}
-                      disabled={navdisabled || history.length <= 1}
-                    >
-                      {historyMenupopup || <span />}
-                    </Button>
-                  </Box>
-                  <Box
-                    flex="40%"
-                    title={GI.i18n.t(
-                      '',
-                      renderPromise,
-                      'history.forward.tooltip',
-                    )}
-                  >
-                    <Button
-                      id="forward"
-                      rightIcon={`chevron-${right}`}
-                      onClick={handler}
-                      disabled={navdisabled || historyIndex === 0}
-                    >
-                      {GI.i18n.t('', renderPromise, 'history.forward.label')}
-                    </Button>
-                  </Box>
+              {panelGenbks.length > 0 && (
+                <Hbox pack="center">
+                  <Hbox id="genbknav" align="center">
+                    <SelectOR
+                      flex="1"
+                      otherMods={panelGenbks}
+                      key={panels.concat(keys).toString()}
+                      initialORM={{
+                        otherMod: panelGenbks[0],
+                        keys: [panelGenbkKeys[0]],
+                      }}
+                      onSelection={selectionGenbk}
+                    />
+                  </Hbox>
                 </Hbox>
               )}
-            {audio.open && (
-              <Hbox id="player" pack="start" align="center">
-                <Vbox flex="3">
-                  <div>
-                    <audio
-                      controls
-                      onEnded={handler}
-                      onCanPlay={handler}
-                      src={
-                        audio.file
-                          ? GI.inlineAudioFile('', renderPromise, audio.file)
-                          : undefined
-                      }
+              {panels.find((m) => m && G.Tab[m].isVerseKey) && (
+                <Hbox pack="center">
+                  <Hbox id="textnav" align="center">
+                    <SelectVK
+                      id="book"
+                      flex="1"
+                      options={{
+                        verses: [],
+                        lastchapters: [],
+                        lastverses: [],
+                        vkMods: [],
+                      }}
+                      initialVK={location as LocationVKType}
+                      disabled={location === null}
+                      onSelection={selectionVK}
+                      allowNotInstalled={true}
+                      key={[stringHash(location), bsreset].join('.')}
                     />
-                  </div>
-                </Vbox>
-                <Button id="closeplayer" onClick={handler}>
-                  {GI.i18n.t('', renderPromise, 'close.label')}
-                </Button>
-              </Hbox>
-            )}
-
-            {Build.isWebApp && showingGenbks.length > 0 && (
-              <Hbox id="genbknav" align="center">
-                <SelectOR
-                  flex="1"
-                  otherMods={showingGenbks}
-                  key={panels.concat(keys).toString()}
-                  initialORM={{
-                    otherMod: showingGenbks[0],
-                    keys: [showingGenbkKeys[0]],
-                  }}
-                  onSelection={selectionGenbk}
-                />
-              </Hbox>
-            )}
-
-            {!Build.isWebApp ||
-              (panels.find((m) => m && G.Tab[m].isVerseKey) && (
-                <Hbox id="textnav" align="center">
-                  <Bookselect
-                    id="book"
-                    sizetopopup="none"
-                    flex="1"
-                    selection={location?.book}
-                    options={booklist}
-                    disabled={navdisabled}
-                    key={[location?.book, bsreset].join('.')}
-                    onChange={handler}
-                  />
-                  <Textbox
-                    id="chapter"
-                    width="50px"
-                    maxLength="3"
-                    pattern={/^[0-9]+$/}
-                    value={
-                      location?.chapter
-                        ? dString(
-                            G.getLocaleDigits(),
-                            location.chapter,
-                            G.i18n.language,
-                          )
-                        : ''
-                    }
-                    timeout="600"
-                    disabled={navdisabled}
-                    key={`c${location?.chapter}`}
-                    onChange={handler}
-                    onClick={handler}
-                  />
-                  <Vbox>
-                    <AnchorButton
-                      id="nextchap"
-                      disabled={navdisabled}
-                      onClick={handler}
-                    />
-                    <AnchorButton
-                      id="prevchap"
-                      disabled={navdisabled}
-                      onClick={handler}
-                    />
-                  </Vbox>
-                  <span>:</span>
-                  <Textbox
-                    id="verse"
-                    key={`v${location?.verse}`}
-                    width="50px"
-                    maxLength="3"
-                    pattern={/^[0-9]+$/}
-                    value={
-                      location?.verse
-                        ? dString(
-                            G.getLocaleDigits(),
-                            location.verse,
-                            G.i18n.language,
-                          )
-                        : ''
-                    }
-                    timeout="600"
-                    disabled={navdisabled}
-                    onChange={handler}
-                    onClick={handler}
-                  />
-                  <Vbox>
-                    <AnchorButton
-                      id="nextverse"
-                      disabled={navdisabled}
-                      onClick={handler}
-                    />
-                    <AnchorButton
-                      id="prevverse"
-                      disabled={navdisabled}
-                      onClick={handler}
-                    />
-                  </Vbox>
+                  </Hbox>
                 </Hbox>
-              ))}
-          </Vbox>
+              )}
+            </>
+          )}
 
           <Spacer flex="1" style={{ minWidth: '15px' }} />
 
@@ -496,55 +535,72 @@ export default class Xulsword
 
           <Spacer flex="1" style={{ minWidth: '10px' }} />
 
-          <Hbox id="optionButtons" align="start">
-            {(window as BibleBrowserControllerGlobal).browserMaxPanels && (
-              <>
-                <Button
-                  id="addcolumn"
-                  checked={panels.length < (window as any).browserMaxPanels}
-                  icon={<Icon icon="add-column-right" size={28} />}
-                  onClick={handler}
-                />
-                <Button
-                  id="removecolumn"
-                  checked={panels.length > 1}
-                  icon={<Icon icon="remove-column-right" size={28} />}
-                  onClick={handler}
-                />
-              </>
-            )}
-            <Button
-              id="headings"
-              checked={show.headings}
-              icon={<Icon icon="widget-header" size={28} />}
-              onClick={handler}
-              title={GI.i18n.t('', renderPromise, 'headingsButton.tooltip')}
-            />
-            <Button
-              id="dictlinks"
-              checked={show.dictlinks}
-              icon={<Icon icon="search-template" size={28} />}
-              onClick={handler}
-              title={GI.i18n.t('', renderPromise, 'dictButton.tooltip')}
-            />
-            <Button
-              id="footnotes"
-              checked={show.footnotes}
-              icon={<Icon icon="manually-entered-data" size={28} />}
-              onClick={handler}
-              title={GI.i18n.t('', renderPromise, 'notesButton.tooltip')}
-            />
-            <Button
-              id="crossrefs"
-              checked={show.crossrefs}
-              icon={<Icon icon="link" size={28} />}
-              onClick={handler}
-              title={GI.i18n.t('', renderPromise, 'crossrefsButton.tooltip')}
-            />
+          <Hbox pack="center">
+            <Hbox id="optionButtons" align="start">
+              {(window as BibleBrowserControllerGlobal).browserMaxPanels && (
+                <>
+                  <Button
+                    id="addcolumn"
+                    checked={panels.length < (window as any).browserMaxPanels}
+                    icon={<Icon icon="add-column-right" size={28} />}
+                    onClick={handler}
+                  />
+                  <Button
+                    id="removecolumn"
+                    checked={panels.length > 1}
+                    icon={<Icon icon="remove-column-right" size={28} />}
+                    onClick={handler}
+                  />
+                </>
+              )}
+              {(Build.isElectronApp ||
+                panels.find((m) => m && G.Tab[m].type == C.BIBLE)) && (
+                <>
+                  <Button
+                    id="headings"
+                    checked={show.headings}
+                    icon={<Icon icon="widget-header" size={28} />}
+                    onClick={handler}
+                    title={GI.i18n.t(
+                      '',
+                      renderPromise,
+                      'headingsButton.tooltip',
+                    )}
+                  />
+                  <Button
+                    id="dictlinks"
+                    checked={show.dictlinks}
+                    icon={<Icon icon="search-template" size={28} />}
+                    onClick={handler}
+                    title={GI.i18n.t('', renderPromise, 'dictButton.tooltip')}
+                  />
+                  <Button
+                    id="footnotes"
+                    checked={show.footnotes}
+                    icon={<Icon icon="manually-entered-data" size={28} />}
+                    onClick={handler}
+                    title={GI.i18n.t('', renderPromise, 'notesButton.tooltip')}
+                  />
+                  <Button
+                    id="crossrefs"
+                    checked={show.crossrefs}
+                    icon={<Icon icon="link" size={28} />}
+                    onClick={handler}
+                    title={GI.i18n.t(
+                      '',
+                      renderPromise,
+                      'crossrefsButton.tooltip',
+                    )}
+                  />
+                </>
+              )}
+            </Hbox>
           </Hbox>
 
           <Spacer flex="1" style={{ minWidth: '10px' }} />
         </Hbox>
+
+        {Build.isWebApp && audio.open && audioComponent}
 
         <Hbox pack="start" flex="1">
           <Viewport

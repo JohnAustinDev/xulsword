@@ -1,88 +1,56 @@
-@media (max-width: 767px) {
-  #main-viewport {
-    padding: 10px 0 0 0;
-  }
-  #main-controlbar {
-    padding: 0 10px;
-  }
-  #navigator-tool {
-    max-width: 100vw;
-  }
-  #navigator-tool .xsinput,
-  #navigator-tool input {
-    margin: 5px 0;
-  }
-  audio {
-    max-width: calc(100vw - 2px);
-  }
-  #closeplayer,
-  #addcolumn,
-  #removecolumn {
-    display: none;
-  }
-  .atext.columns1 .sb {
-    overflow: visible;
-  }
-}
 #main-controlbar {
   padding: 10px;
   flex-wrap: wrap;
   align-items: center;
 }
-#main-controlbar > .spacer:first-child,
-#main-controlbar > .spacer:last-child {
-  display: none;
+#historyButtons .button-box,
+#historyButtons .button,
+#historyButtons button {
+  width: 100%;
+  height: 38px;
 }
-#navigator-tool > div > div:has(audio) {
-  margin: 5px 0 5px 0;
+#historyButtons > .box {
+  max-width: 150px;
 }
-#genbknav {
-  display: none;
+#main-controlbar .xsinput,
+#main-controlbar button {
+  height: 38px;
 }
 #genbknav .menulist,
 #genbknav .menulist select {
   width: 100%;
   margin: 7px 0;
 }
-#genbknav .menulist:not(:has(:nth-child(2))) {
-  display: none;
-}
-@media (max-width: 768px) {
-  #genbknav {
-    display: flex;
-  }
-  #choosermenu,
-  .chooser,
-  #textnav > span:nth-child(4),
-  #textnav > div:nth-child(5),
-  #textnav > div:nth-child(6) {
-    display: none;
-  }
-  #search-tool {
-    width: 100%;
-    justify-content: space-around;
-  }
-  #search-tool,
-  #optionButtons {
-    margin-top: 10px;
-  }
+
+#search-tool {
+  margin: 0 5px;
 }
 #search-tool > div {
   max-width: 150px;
 }
-#navigator-tool {
-  min-width: unset;
+
+#player {
+  margin-top: 5px;
 }
-#historyButtons .button,
-#historyButtons .button-box,
-#historyButtons button {
-  width: 100%;
+#player > div {
+  max-width: 302px;
 }
-#searchText {
-  display: none;
+#player button,
+#player audio {
+  height: 38px;
 }
 
-.open-chooser {
+#genbknav,
+#searchText,
+.open-chooser,
+.close-chooser,
+#closeplayer,
+/* don't show text pin without multiple texts */
+.textrow:not(:has(.atext:nth-child(2))) .text-pin,
+/* show only the spacer before the search button */
+#main-controlbar > .spacer:not(.spacer:nth-child(4)),
+/* genbknav shouldn't show single-option selects */
+#genbknav .menulist:not(:has(:nth-child(2))) {
   display: none;
 }
 
@@ -92,4 +60,37 @@
 
 .cs-OSMHB .sn {
   text-decoration: none;
+}
+
+@media (max-width: 767px) {
+  #main-viewport {
+    padding: 10px 5px;
+  }
+  #main-controlbar {
+    padding: 0 10px;
+  }
+  #main-controlbar > div {
+    width: 100%;
+    justify-content: space-around;
+  }
+  audio {
+    max-width: calc(100vw - 2px);
+  }
+  .atext.columns1 .sb {
+    height: fit-content;
+  }
+  #genbknav {
+    display: flex;
+  }
+  #search-tool,
+  #optionButtons {
+    margin-top: 10px;
+  }
+  .chooser,
+  #choosermenu,
+  #closeplayer,
+  #addcolumn,
+  #removecolumn {
+    display: none;
+  }
 }

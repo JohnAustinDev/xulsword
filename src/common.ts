@@ -334,7 +334,7 @@ export function testData(
     maxDataStringLength: 0,
     maxDataArrayLength: 0,
     maxDataObjectKeys: 0,
-    serialized: 0,
+    serializedLength: 0,
   },
 ) {
   const {
@@ -355,8 +355,8 @@ export function testData(
     }
     Object.values(data).forEach((v) => testData(v, log, depth + 1, info));
   }
-  if (depth === 0) log.debug(`Data: ${JSON_stringify(info)}`);
-  info.serialized = JSON_stringify(data).length;
+  info.serializedLength += JSON_stringify(data).length;
+  if (depth === 0) log.debug(`Packet info: ${JSON_stringify(info)}`);
   return info;
 }
 

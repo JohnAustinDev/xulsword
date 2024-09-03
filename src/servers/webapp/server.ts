@@ -133,7 +133,7 @@ io.on('connection', (socket) => {
   );
 
   socket.on('log', async (args: any[], _callback: (r: any) => void) => {
-    log.silly(`on log: ${JSON_stringify(args)}`);
+    log.silly(`${socket.handshake.address} › on log: ${JSON_stringify(args)}`);
     const limited = await isLimited(socket, args);
     if (!limited) {
       const invalid = invalidArgs(args);
@@ -163,10 +163,10 @@ io.on('connection', (socket) => {
         }
       }
       log.error(
-        `${socket.handshake.address} › Ignoring 'log' call made with improper arguments. (${invalid})`,
+        `${socket.handshake.address} › 'log' call made with improper arguments. (${invalid})`,
       );
     } else {
-      // ignore
+      log.silly(`${socket.handshake.address} › rate limited! dropping log request.`);
     }
   });
 

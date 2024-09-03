@@ -102,7 +102,10 @@ socket.on('connect', () => {
         }
       }, 1);
 
-      renderToRoot(<Xulsword onWheelCapture={wheelCapture} />).catch((er) => {
+      renderToRoot(
+        <Xulsword onWheelCapture={wheelCapture} />,
+        { className: 'bibleBrowser' }
+      ).catch((er) => {
         log.error(er);
       });
     }
