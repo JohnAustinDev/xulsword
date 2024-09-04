@@ -429,12 +429,20 @@ export default async function renderToRoot(
   log.debug(`Initializing new window:`, descriptor);
 
   // On web clients, IPC is not available until the socket is connected.
-  window.onerror = (er, url, line) => {
-    const er2 = typeof er === 'object' ? er.type : er;
-    const msg = `${er2} at: ${url} line: ${line}`;
+  window.addEventListener('error', (e: ErrorEvent | Event) => {
+    let msg = 'unknown error type';
+    if ('message' in e) {
+      if ('trace' in e.error) {
+        msg = e.error.trace;
+      } else if ('message' in e.error) {
+        msg = e.error.message;
+      } else msg = e.message;
+    } else if ('type' in e) {
+      msg = `event type=${e.type}, target=${e.target}`;
+    }
     window.IPC.send('error-report', msg);
     return false;
-  };
+  });
   window.addEventListener('unhandledrejection', (event) => {
     const reason =
       typeof event.reason === 'string' ? event.reason : event.reason.stack;
