@@ -144,6 +144,8 @@ export default function (opts) {
 
   console.log('Webpack configuration options: ', opts);
 
+  console.log('Shell LOGLEVEL: ', env('LOGLEVEL'));
+
   // Return a config object for a build. Each --env build in the command line
   // will use this function to generate a config object to pass to Webpack.
   function getConfig(build) {

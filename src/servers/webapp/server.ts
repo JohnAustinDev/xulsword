@@ -35,17 +35,20 @@ const isInvalidWebAppDataLogged = (data: unknown, depth = 0) => {
 
 const logfile = Dirs.LogDir.append(`server.${Date.now()}.log`);
 log.transports.console.level = C.LogLevel;
-log.transports.file.level = 'info';
+log.transports.file.level = C.LogLevel;
 log.transports.file.resolvePath = () => logfile.path;
 
 LibSword.init();
 
 const modlist = LibSword.getModuleList();
 const mods = modlist === C.NOMODULES ? [] : modlist.split('<nx>');
-log.info(`Loaded ${mods.length} SWORD modules.`);
+log.transports.console.level = 'info';
+log.transports.file.level = 'info';
 log.info(
-  `LogLevel: ${C.LogLevel}, Logfile: ${logfile.path}, Port: ${process.env.WEBAPP_PORT}`,
+  `SWORD modules: ${mods.length}, LogLevel: ${C.LogLevel}, Logfile: ${logfile.path}, Port: ${process.env.WEBAPP_PORT}`,
 );
+log.transports.console.level = C.LogLevel;
+log.transports.file.level = C.LogLevel;
 
 const AvailableLanguages = [
   ...new Set(
