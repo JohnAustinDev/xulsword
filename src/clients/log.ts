@@ -33,6 +33,9 @@ function errorString(e: Error | ErrorEvent | Event | string) {
   } else if ('type' in e) {
     msg = `event type=${e.type}, target=${e.target}`;
   }
+  if (Build.isWebApp) {
+    msg = `[${navigator.userAgent}]: ${msg}`;
+  }
   return msg;
 }
 
