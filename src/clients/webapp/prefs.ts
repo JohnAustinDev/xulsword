@@ -24,15 +24,16 @@ function getCookie(cname: string): string | null {
 }
 
 const cookieStorage = (aStore: string) => {
+  const cookname = `xswebapp-${aStore}`;
   return {
     exists: () => {
-      return getCookie(aStore) !== null;
+      return getCookie(cookname) !== null;
     },
     readFile: () => {
-      return getCookie(aStore) || '';
+      return getCookie(cookname) || '';
     },
     writeFile: (data: string) => {
-      setCookie(aStore, data, 30);
+      setCookie(cookname, data, 30);
     },
   };
 };
