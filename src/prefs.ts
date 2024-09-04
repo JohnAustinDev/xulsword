@@ -354,6 +354,9 @@ export default class Prefs {
             data: null,
           },
         };
+        if (!this.stores[aStore].store.exists()) {
+          this.stores[aStore].store.writeFile(JSON_stringify({}));
+        }
       } else throw new Error('Prefs has not been initialized!');
     }
 
