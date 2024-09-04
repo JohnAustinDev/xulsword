@@ -187,8 +187,10 @@ const LibSword = {
   isReady(err?: boolean): boolean {
     if (this.initialized) return true;
     if (err) {
+      const erobj = new Error();
+      const stack = 'stack' in erobj ? erobj.stack : '';
       log.error(
-        `libsword was called while uninitialized: ${new Error().stack}`,
+        `libsword was called while uninitialized: ${stack}`,
       );
     }
     return false;

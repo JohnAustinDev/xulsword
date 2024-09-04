@@ -1087,7 +1087,9 @@ const Module = {
     const progress = (prog: number) => {
       if (!done && (Math.abs(prog) === 1 || prog >= threshProgress)) {
         let w = BrowserWindow.fromId(callingWinID);
-        w?.webContents.send('progress', prog, downloadkey, new Error().stack);
+        const erobj = new Error();
+        const trace = 'trace' in erobj ? erobj.trace : '';
+        w?.webContents.send('progress', prog, downloadkey, trace);
         w = null;
         threshProgress = prog + 2;
         done = prog === -1;

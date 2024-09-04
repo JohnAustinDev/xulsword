@@ -407,7 +407,7 @@ export default async function renderToRoot(
   options?: Partial<Omit<ControllerOptions, 'print'>> & {
     print?: Partial<RootPrintType>;
   } & {
-    className?: string
+    className?: string;
   },
 ) {
   const { className, onload, onunload } = options || {};
@@ -429,26 +429,8 @@ export default async function renderToRoot(
   log.debug(`Initializing new window:`, descriptor);
 
   // On web clients, IPC is not available until the socket is connected.
-  window.addEventListener('error', (e: ErrorEvent | Event) => {
-    let msg = 'unknown error type';
-    if ('message' in e) {
-      if ('trace' in e.error) {
-        msg = e.error.trace;
-      } else if ('message' in e.error) {
-        msg = e.error.message;
-      } else msg = e.message;
-    } else if ('type' in e) {
-      msg = `event type=${e.type}, target=${e.target}`;
-    }
-    window.IPC.send('error-report', msg);
-    return false;
-  });
-  window.addEventListener('unhandledrejection', (event) => {
-    const reason =
-      typeof event.reason === 'string' ? event.reason : event.reason.stack;
-    const msg = `Unhandled renderer rejection: ${reason}`;
-    window.IPC.send('error-report', msg);
-  });
+  window.addEventListener('error', (e) => log.error(e));
+  window.addEventListener('unhandledrejection', (e) => log.error(e));
   window.IPC.on('cache-reset', () => {
     Cache.clear();
     log.debug(`CLEARED ALL CACHES`);

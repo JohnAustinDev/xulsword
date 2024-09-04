@@ -20,14 +20,28 @@ function rlog(level: LogLevel, ...args: unknown[]) {
   }
 }
 
+function errorString(e: Error | ErrorEvent | Event | string) {
+  let msg = 'unknown error type';
+  if (typeof e === 'string') msg = e;
+  else if ('message' in e) {
+    const erobj: Error = 'error' in e ? e.error : e;
+    if ('trace' in erobj) {
+      msg = erobj.trace as string;
+    } else if ('message' in erobj) {
+      msg = erobj.message;
+    } else msg = e.message;
+  } else if ('type' in e) {
+    msg = `event type=${e.type}, target=${e.target}`;
+  }
+  return msg;
+}
+
 const log = {
-  error: (...args: unknown[]) => {
+  error: (...args: [Error | ErrorEvent | Event | string, ...any[]]) => {
     // convert Error object to string, so the object won't be lost during
     // transport to the server.
-    const [er] = args;
-    if (er && typeof er === 'object' && args.length === 1 && 'message' in er) {
-      rlog('error', 'stack' in er ? er.stack : er.message);
-    } else rlog('error', ...args);
+    if (args[0]) args[0] = errorString(args[0]);
+    rlog('error', ...args);
   },
   warn: (...args: unknown[]) => {
     rlog('warn', ...args);

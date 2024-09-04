@@ -87,7 +87,7 @@ Object.entries(GBuilder).forEach((entry) => {
           try {
             req = request(acall);
           } catch (er: any) {
-            error(er);
+            log.error(er);
           }
           return req;
         },
@@ -97,7 +97,7 @@ Object.entries(GBuilder).forEach((entry) => {
         try {
           [req] = GCallsOrPromise([acall], [def], rp);
         } catch (er: any) {
-          error(er);
+          log.error(er);
         }
         return req;
       };
@@ -110,7 +110,7 @@ Object.entries(GBuilder).forEach((entry) => {
           if (isAsync) req = asyncRequest(acall);
           else req = request(acall);
         } catch (er: any) {
-          error(er);
+          log.error(er);
         }
         return req;
       };
@@ -121,7 +121,7 @@ Object.entries(GBuilder).forEach((entry) => {
           try {
             [req] = GCallsOrPromise([acall], [def], rp);
           } catch (er: any) {
-            error(er);
+            log.error(er);
           }
           return req;
         };
@@ -145,7 +145,7 @@ Object.entries(GBuilder).forEach((entry) => {
                   req = request(acall);
                 }
               } catch (er: any) {
-                error(er);
+                log.error(er);
               }
               return req;
             },
@@ -155,7 +155,7 @@ Object.entries(GBuilder).forEach((entry) => {
             try {
               [req] = GCallsOrPromise([acall], [def], rp);
             } catch (er: any) {
-              error(er);
+              log.error(er);
             }
             return req;
           };
@@ -171,12 +171,12 @@ Object.entries(GBuilder).forEach((entry) => {
               g.Prefs[m] = (...args: unknown[]) => {
                 let req;
                 if (isAsync) {
-                  error(`G async web app Prefs methods not implemented: ${m}`);
+                  log.error(`G async web app Prefs methods not implemented: ${m}`);
                 } else {
                   try {
                     req = (CookiePrefs as any)[m](...args);
                   } catch (er: any) {
-                    error(er);
+                    log.error(er);
                   }
                 }
                 return req;
@@ -185,7 +185,7 @@ Object.entries(GBuilder).forEach((entry) => {
               g.Viewport[m] = (...args: unknown[]) => {
                 let req;
                 if (isAsync) {
-                  error(
+                  log.error(
                     `G async web app Viewport methods not implemented: ${m}`,
                   );
                 } else {
@@ -195,7 +195,7 @@ Object.entries(GBuilder).forEach((entry) => {
                     ) as typeof Viewport;
                     req = (viewport as any)[m](...args);
                   } catch (er: any) {
-                    error(er);
+                    log.error(er);
                   }
                 }
                 return req;
@@ -209,7 +209,7 @@ Object.entries(GBuilder).forEach((entry) => {
                 if (isAsync) req = asyncRequest(acall);
                 else req = request(acall);
               } catch (er: any) {
-                error(er);
+                log.error(er);
               }
               return req;
             };
@@ -224,20 +224,20 @@ Object.entries(GBuilder).forEach((entry) => {
                 try {
                   [req] = GCallsOrPromise([acall], [def], rp);
                 } catch (er: any) {
-                  error(er);
+                  log.error(er);
                 }
                 return req;
               };
             }
           }
         } else {
-          error(
+          log.error(
             `Unhandled GBuilder ${name}.${m} type ${typeof gBuilder[name][m]}`,
           );
         }
       });
     } else {
-      error(`Unhandled GBuilder ${name} value ${value}`);
+      log.error(`Unhandled GBuilder ${name} value ${value}`);
     }
   }
 });
@@ -261,7 +261,7 @@ async function asyncRequest(thecall: GCallType) {
     result = await window.IPC.invoke('global', call);
     const invalid = Build.isWebApp && isInvalidWebAppData(result);
     if (invalid) {
-      error(`Invalid async data response: ${invalid}`);
+      log.error(`Invalid async data response: ${invalid}`);
       return undefined;
     }
     if (cacheable && !getWaitRetry(result)) Cache.write(result, ckey);
@@ -299,7 +299,7 @@ function request(thecall: GCallType) {
   const result = window.IPC.sendSync('global', call);
   const invalid = Build.isWebApp && isInvalidWebAppData(result);
   if (invalid) {
-    error(`Invalid data response: ${invalid}`);
+    log.error(`Invalid data response: ${invalid}`);
     return undefined;
   }
   if (cacheable) Cache.write(result, ckey);
@@ -349,8 +349,4 @@ function publicCall(thecall: GCallType): GCallType {
     }
   }
   return [name, method, args];
-}
-
-function error(er: any) {
-  log.error(`${er.toString()}${'stack' in er ? ' ' + er.stack : ''}`);
 }
