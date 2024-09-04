@@ -277,8 +277,7 @@ export default class Xulsword
         : 'right';
 
     const historyComponent = (
-      <Hbox id="historyButtons" align="center" pack="center">
-        <Spacer flex="1" />
+      <Hbox id="historyButtons" pack="start" align="center">
         <Box
           flex="1"
           title={GI.i18n.t('', renderPromise, 'history.back.tooltip')}
@@ -320,12 +319,11 @@ export default class Xulsword
             {GI.i18n.t('', renderPromise, 'history.forward.label')}
           </Button>
         </Box>
-        <Spacer flex="1" />
       </Hbox>
     );
 
     const audioComponent = (
-      <Hbox id="player" pack="center" align="center">
+      <Hbox id="player" pack="start" align="center">
         <Vbox flex="3">
           <div>
             <audio
@@ -341,9 +339,238 @@ export default class Xulsword
             />
           </div>
         </Vbox>
-        <Button id="closeplayer" onClick={handler}>
+        <Button
+          id="closeplayer"
+          className="narrow-screen-hide"
+          onClick={handler}
+        >
           {GI.i18n.t('', renderPromise, 'close.label')}
         </Button>
+      </Hbox>
+    );
+
+    const searchTextboxComponent = (
+      <Textbox
+        id="searchText"
+        type="search"
+        maxLength="24"
+        onChange={handler}
+        onKeyUp={(e: React.KeyboardEvent) => {
+          if (e.key === 'Enter') {
+            const b = document.getElementById('searchButton');
+            if (b) b.click();
+          }
+        }}
+        title={GI.i18n.t('', renderPromise, 'searchbox.tooltip')}
+      />
+    );
+
+    const searchButtonComponent = (
+      <Box title={GI.i18n.t('', renderPromise, 'search.tooltip')}>
+        <Button
+          id="searchButton"
+          icon="search"
+          disabled={searchDisabled}
+          onClick={handler}
+        >
+          {GI.i18n.t('', renderPromise, 'menu.search')}
+        </Button>
+      </Box>
+    );
+
+    const chooserMenuButton = (
+      <Button
+        id="choosermenu"
+        checked={showChooser}
+        icon={
+          <Icon icon={showChooser ? 'menu-closed' : 'menu-open'} size={28} />
+        }
+        onClick={handler}
+      />
+    );
+
+    const optionButtons = (
+      <Hbox id="optionButtons" align="start">
+        {(window as BibleBrowserControllerGlobal).browserMaxPanels && (
+          <>
+            <Button
+              id="addcolumn"
+              className="narrow-screen-hide"
+              checked={panels.length < (window as any).browserMaxPanels}
+              icon={<Icon icon="add-column-right" size={28} />}
+              onClick={handler}
+            />
+            <Button
+              id="removecolumn"
+              className="narrow-screen-hide"
+              checked={panels.length > 1}
+              icon={<Icon icon="remove-column-right" size={28} />}
+              onClick={handler}
+            />
+          </>
+        )}
+        {(Build.isElectronApp ||
+          panels.find((m) => m && G.Tab[m].type == C.BIBLE)) && (
+          <>
+            <Button
+              id="headings"
+              checked={show.headings}
+              icon={<Icon icon="widget-header" size={28} />}
+              onClick={handler}
+              title={GI.i18n.t('', renderPromise, 'headingsButton.tooltip')}
+            />
+            <Button
+              id="dictlinks"
+              checked={show.dictlinks}
+              icon={<Icon icon="search-template" size={28} />}
+              onClick={handler}
+              title={GI.i18n.t('', renderPromise, 'dictButton.tooltip')}
+            />
+            <Button
+              id="footnotes"
+              checked={show.footnotes}
+              icon={<Icon icon="manually-entered-data" size={28} />}
+              onClick={handler}
+              title={GI.i18n.t('', renderPromise, 'notesButton.tooltip')}
+            />
+            <Button
+              id="crossrefs"
+              checked={show.crossrefs}
+              icon={<Icon icon="link" size={28} />}
+              onClick={handler}
+              title={GI.i18n.t('', renderPromise, 'crossrefsButton.tooltip')}
+            />
+          </>
+        )}
+      </Hbox>
+    );
+
+    const webappGenbkSelectorComponent = (
+      <Hbox pack="center">
+        <Hbox id="genbknav" align="center">
+          <SelectOR
+            flex="1"
+            otherMods={panelGenbks}
+            key={panels.concat(keys).toString()}
+            initialORM={{
+              otherMod: panelGenbks[0],
+              keys: [panelGenbkKeys[0]],
+            }}
+            onSelection={selectionGenbk}
+          />
+        </Hbox>
+      </Hbox>
+    );
+
+    const webappVKSelectorComponent = (
+      <Hbox pack="center">
+        <Hbox id="textnav" align="center">
+          <SelectVK
+            id="book"
+            flex="1"
+            options={{
+              verses: [],
+              lastchapters: [],
+              lastverses: [],
+              vkMods: [],
+            }}
+            initialVK={location as LocationVKType}
+            disabled={location === null}
+            onSelection={selectionVK}
+            allowNotInstalled={true}
+            key={[stringHash(location), bsreset].join('.')}
+          />
+        </Hbox>
+      </Hbox>
+    );
+
+    const appNavigatorToolComponent = (
+      <Vbox id="navigator-tool" pack="start">
+        {!audio.open && historyComponent}
+        {audio.open && audioComponent}
+
+        <Hbox id="textnav" align="center">
+          <Bookselect
+            id="book"
+            sizetopopup="none"
+            flex="1"
+            selection={location?.book}
+            options={booklist}
+            disabled={navdisabled}
+            key={[location?.book, bsreset].join('.')}
+            onChange={handler}
+          />
+          <Textbox
+            id="chapter"
+            width="50px"
+            maxLength="3"
+            pattern={/^[0-9]+$/}
+            value={
+              location?.chapter
+                ? dString(
+                    G.getLocaleDigits(),
+                    location.chapter,
+                    G.i18n.language,
+                  )
+                : ''
+            }
+            timeout="600"
+            disabled={navdisabled}
+            key={`c${location?.chapter}`}
+            onChange={handler}
+            onClick={handler}
+          />
+          <Vbox>
+            <AnchorButton
+              id="nextchap"
+              disabled={navdisabled}
+              onClick={handler}
+            />
+            <AnchorButton
+              id="prevchap"
+              disabled={navdisabled}
+              onClick={handler}
+            />
+          </Vbox>
+          <span>:</span>
+          <Textbox
+            id="verse"
+            key={`v${location?.verse}`}
+            width="50px"
+            maxLength="3"
+            pattern={/^[0-9]+$/}
+            value={
+              location?.verse
+                ? dString(G.getLocaleDigits(), location.verse, G.i18n.language)
+                : ''
+            }
+            timeout="600"
+            disabled={navdisabled}
+            onChange={handler}
+            onClick={handler}
+          />
+          <Vbox>
+            <AnchorButton
+              id="nextverse"
+              disabled={navdisabled}
+              onClick={handler}
+            />
+            <AnchorButton
+              id="prevverse"
+              disabled={navdisabled}
+              onClick={handler}
+            />
+          </Vbox>
+        </Hbox>
+      </Vbox>
+    );
+
+    const appSearchTool = (
+      <Hbox id="search-tool">
+        <Vbox pack="start" align="center">
+          {searchTextboxComponent}
+          {searchButtonComponent}
+        </Vbox>
       </Hbox>
     );
 
@@ -360,247 +587,58 @@ export default class Xulsword
           props,
         )}
       >
-        {Build.isWebApp && historyComponent}
-
-        <Hbox id="main-controlbar" pack="start" className="controlbar skin">
-          <Spacer className="start-spacer" />
-
-          {!Build.isWebApp && (
-            <Vbox id="navigator-tool" pack="start">
-              {!audio.open && historyComponent}
-              {audio.open && audioComponent}
-
-              <Hbox id="textnav" align="center">
-                <Bookselect
-                  id="book"
-                  sizetopopup="none"
-                  flex="1"
-                  selection={location?.book}
-                  options={booklist}
-                  disabled={navdisabled}
-                  key={[location?.book, bsreset].join('.')}
-                  onChange={handler}
-                />
-                <Textbox
-                  id="chapter"
-                  width="50px"
-                  maxLength="3"
-                  pattern={/^[0-9]+$/}
-                  value={
-                    location?.chapter
-                      ? dString(
-                          G.getLocaleDigits(),
-                          location.chapter,
-                          G.i18n.language,
-                        )
-                      : ''
-                  }
-                  timeout="600"
-                  disabled={navdisabled}
-                  key={`c${location?.chapter}`}
-                  onChange={handler}
-                  onClick={handler}
-                />
-                <Vbox>
-                  <AnchorButton
-                    id="nextchap"
-                    disabled={navdisabled}
-                    onClick={handler}
-                  />
-                  <AnchorButton
-                    id="prevchap"
-                    disabled={navdisabled}
-                    onClick={handler}
-                  />
-                </Vbox>
-                <span>:</span>
-                <Textbox
-                  id="verse"
-                  key={`v${location?.verse}`}
-                  width="50px"
-                  maxLength="3"
-                  pattern={/^[0-9]+$/}
-                  value={
-                    location?.verse
-                      ? dString(
-                          G.getLocaleDigits(),
-                          location.verse,
-                          G.i18n.language,
-                        )
-                      : ''
-                  }
-                  timeout="600"
-                  disabled={navdisabled}
-                  onChange={handler}
-                  onClick={handler}
-                />
-                <Vbox>
-                  <AnchorButton
-                    id="nextverse"
-                    disabled={navdisabled}
-                    onClick={handler}
-                  />
-                  <AnchorButton
-                    id="prevverse"
-                    disabled={navdisabled}
-                    onClick={handler}
-                  />
-                </Vbox>
+        {Build.isWebApp && (
+          <Hbox id="controls" pack="center">
+            <Spacer flex="1" />
+            <Vbox id="control-rows">
+              <Hbox pack="center">
+                {historyComponent}
+                <Spacer flex="1" className="narrow-screen-hide" />
               </Hbox>
-            </Vbox>
-          )}
 
-          {Build.isWebApp && (
-            <>
-              <Button
-                id="choosermenu"
-                checked={showChooser}
-                icon={
-                  <Icon
-                    icon={showChooser ? 'menu-closed' : 'menu-open'}
-                    size={28}
-                  />
-                }
-                onClick={handler}
-              />
-              {panelGenbks.length > 0 && (
+              <Hbox id="main-controlbar" pack="center">
+                {chooserMenuButton}
+
+                {panelGenbks.length > 0 && webappGenbkSelectorComponent}
+
+                {panels.find((m) => m && G.Tab[m].isVerseKey) &&
+                  webappVKSelectorComponent}
+
+                <Spacer flex="1" />
+
+                {searchButtonComponent}
+
+                <Hbox pack="center">{optionButtons}</Hbox>
+              </Hbox>
+
+              {audio.open && (
                 <Hbox pack="center">
-                  <Hbox id="genbknav" align="center">
-                    <SelectOR
-                      flex="1"
-                      otherMods={panelGenbks}
-                      key={panels.concat(keys).toString()}
-                      initialORM={{
-                        otherMod: panelGenbks[0],
-                        keys: [panelGenbkKeys[0]],
-                      }}
-                      onSelection={selectionGenbk}
-                    />
-                  </Hbox>
+                  {audioComponent}
+                  <Spacer flex="1" className="narrow-screen-hide" />
                 </Hbox>
               )}
-              {panels.find((m) => m && G.Tab[m].isVerseKey) && (
-                <Hbox pack="center">
-                  <Hbox id="textnav" align="center">
-                    <SelectVK
-                      id="book"
-                      flex="1"
-                      options={{
-                        verses: [],
-                        lastchapters: [],
-                        lastverses: [],
-                        vkMods: [],
-                      }}
-                      initialVK={location as LocationVKType}
-                      disabled={location === null}
-                      onSelection={selectionVK}
-                      allowNotInstalled={true}
-                      key={[stringHash(location), bsreset].join('.')}
-                    />
-                  </Hbox>
-                </Hbox>
-              )}
-            </>
-          )}
-
-          <Spacer flex="1" style={{ minWidth: '15px' }} />
-
-          <Hbox id="search-tool">
-            <Vbox pack="start" align="center">
-              <Textbox
-                id="searchText"
-                type="search"
-                maxLength="24"
-                onChange={handler}
-                onKeyUp={(e: React.KeyboardEvent) => {
-                  if (e.key === 'Enter') {
-                    const b = document.getElementById('searchButton');
-                    if (b) b.click();
-                  }
-                }}
-                title={GI.i18n.t('', renderPromise, 'searchbox.tooltip')}
-              />
-              <Box title={GI.i18n.t('', renderPromise, 'search.tooltip')}>
-                <Button
-                  id="searchButton"
-                  icon="search"
-                  disabled={searchDisabled}
-                  onClick={handler}
-                >
-                  {GI.i18n.t('', renderPromise, 'menu.search')}
-                </Button>
-              </Box>
             </Vbox>
+            <Spacer flex="1" />
           </Hbox>
+        )}
 
-          <Spacer flex="1" style={{ minWidth: '10px' }} />
+        {Build.isElectronApp && (
+          <Hbox id="main-controlbar" pack="start" className="controlbar skin">
+            <Spacer className="start-spacer" />
 
-          <Hbox pack="center">
-            <Hbox id="optionButtons" align="start">
-              {(window as BibleBrowserControllerGlobal).browserMaxPanels && (
-                <>
-                  <Button
-                    id="addcolumn"
-                    checked={panels.length < (window as any).browserMaxPanels}
-                    icon={<Icon icon="add-column-right" size={28} />}
-                    onClick={handler}
-                  />
-                  <Button
-                    id="removecolumn"
-                    checked={panels.length > 1}
-                    icon={<Icon icon="remove-column-right" size={28} />}
-                    onClick={handler}
-                  />
-                </>
-              )}
-              {(Build.isElectronApp ||
-                panels.find((m) => m && G.Tab[m].type == C.BIBLE)) && (
-                <>
-                  <Button
-                    id="headings"
-                    checked={show.headings}
-                    icon={<Icon icon="widget-header" size={28} />}
-                    onClick={handler}
-                    title={GI.i18n.t(
-                      '',
-                      renderPromise,
-                      'headingsButton.tooltip',
-                    )}
-                  />
-                  <Button
-                    id="dictlinks"
-                    checked={show.dictlinks}
-                    icon={<Icon icon="search-template" size={28} />}
-                    onClick={handler}
-                    title={GI.i18n.t('', renderPromise, 'dictButton.tooltip')}
-                  />
-                  <Button
-                    id="footnotes"
-                    checked={show.footnotes}
-                    icon={<Icon icon="manually-entered-data" size={28} />}
-                    onClick={handler}
-                    title={GI.i18n.t('', renderPromise, 'notesButton.tooltip')}
-                  />
-                  <Button
-                    id="crossrefs"
-                    checked={show.crossrefs}
-                    icon={<Icon icon="link" size={28} />}
-                    onClick={handler}
-                    title={GI.i18n.t(
-                      '',
-                      renderPromise,
-                      'crossrefsButton.tooltip',
-                    )}
-                  />
-                </>
-              )}
-            </Hbox>
+            {appNavigatorToolComponent}
+
+            <Spacer flex="1" style={{ minWidth: '15px' }} />
+
+            {appSearchTool}
+
+            <Spacer flex="1" style={{ minWidth: '10px' }} />
+
+            <Hbox pack="center">{optionButtons}</Hbox>
+
+            <Spacer flex="1" style={{ minWidth: '10px' }} />
           </Hbox>
-
-          <Spacer flex="1" style={{ minWidth: '10px' }} />
-        </Hbox>
-
-        {Build.isWebApp && audio.open && audioComponent}
+        )}
 
         <Hbox pack="start" flex="1">
           <Viewport

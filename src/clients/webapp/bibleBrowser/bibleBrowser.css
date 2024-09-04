@@ -1,7 +1,20 @@
+#controls {
+  display: block;
+}
+#control-rows {
+  padding: 0 10px;
+  flex-basis: 0;
+}
 #main-controlbar {
-  padding: 10px;
+  padding: 10px 0;
   flex-wrap: wrap;
   align-items: center;
+}
+#choosermenu {
+  margin-right: 10px;
+}
+#historyButtons {
+  width: 100%;
 }
 #historyButtons .button-box,
 #historyButtons .button,
@@ -12,9 +25,24 @@
 #historyButtons > .box {
   max-width: 150px;
 }
+#textnav {
+  width: 100%;
+}
+#textnav .vk-book {
+  margin: 0;
+  flex-basis: 100%;
+}
+#textnav .vk-book select {
+  width: 100%;
+}
+#textnav .vk-chapter {
+  margin-left: 10px;
+  margin-right: 0;
+}
 #main-controlbar .xsinput,
 #main-controlbar button {
   height: 38px;
+  border-radius: 0;
 }
 #genbknav .menulist,
 #genbknav .menulist select {
@@ -22,18 +50,17 @@
   margin: 7px 0;
 }
 
-#search-tool {
-  margin: 0 5px;
+#player,
+#player audio {
+  width: 100%;
 }
-#search-tool > div {
-  max-width: 150px;
-}
-
-#player {
-  margin-top: 5px;
+#player,
+#searchButton {
+  margin: 5px;
 }
 #player > div {
   max-width: 302px;
+  border: 1px solid lightgray;
 }
 #player button,
 #player audio {
@@ -41,14 +68,11 @@
 }
 
 #genbknav,
-#searchText,
 .open-chooser,
 .close-chooser,
 #closeplayer,
 /* don't show text pin without multiple texts */
 .textrow:not(:has(.atext:nth-child(2))) .text-pin,
-/* show only the spacer before the search button */
-#main-controlbar > .spacer:not(.spacer:nth-child(4)),
 /* genbknav shouldn't show single-option selects */
 #genbknav .menulist:not(:has(:nth-child(2))) {
   display: none;
@@ -63,11 +87,14 @@
 }
 
 @media (max-width: 767px) {
+  #controls {
+    display: flex;
+  }
   #main-viewport {
     padding: 10px 5px;
   }
   #main-controlbar {
-    padding: 0 10px;
+    padding: 0 5px;
   }
   #main-controlbar > div {
     width: 100%;
@@ -82,15 +109,12 @@
   #genbknav {
     display: flex;
   }
-  #search-tool,
   #optionButtons {
     margin-top: 10px;
   }
   .chooser,
   #choosermenu,
-  #closeplayer,
-  #addcolumn,
-  #removecolumn {
+  .narrow-screen-hide {
     display: none;
   }
 }
