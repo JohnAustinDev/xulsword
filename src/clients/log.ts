@@ -22,7 +22,12 @@ function rlog(level: LogLevel, ...args: unknown[]) {
 
 const log = {
   error: (...args: unknown[]) => {
-    rlog('error', ...args);
+    // convert Error object to string, so the object won't be lost during
+    // transport to the server.
+    const [er] = args;
+    if (er && typeof er === 'object' && args.length === 1 && 'message' in er) {
+      rlog('error', 'stack' in er ? er.stack : er.message);
+    } else rlog('error', ...args);
   },
   warn: (...args: unknown[]) => {
     rlog('warn', ...args);
