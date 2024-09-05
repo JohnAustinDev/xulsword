@@ -472,7 +472,7 @@ export default class Xulsword
               verses: [],
               lastchapters: [],
               lastverses: [],
-              vkMods: [],
+              vkMods: [panels.find((p) => p && G.Tab[p].isVerseKey)],
             }}
             initialVK={location as LocationVKType}
             disabled={location === null}

@@ -71,6 +71,7 @@
 .open-chooser,
 .close-chooser,
 #closeplayer,
+#textnav .vk-vkmod,
 /* don't show text pin without multiple texts */
 .textrow:not(:has(.atext:nth-child(2))) .text-pin,
 /* genbknav shouldn't show single-option selects */

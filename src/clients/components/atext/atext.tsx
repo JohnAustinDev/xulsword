@@ -35,6 +35,7 @@ import audioIcon from '../audioIcon/audioIcon.tsx';
 import '../../libsword.css';
 import './atext.css';
 
+import type S from '../../../defaultPrefs.ts';
 import type { AtextPropsType, PinPropsType } from '../../../type.ts';
 import type {
   RenderPromiseComponent,
@@ -427,7 +428,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
             }
             const dictlist = keyelem.parentNode
               ?.parentNode as HTMLElement | null;
-            if (dictlist) {
+            if (!Build.isWebApp && dictlist) {
               const dki = dictlist.getElementsByClassName(
                 'dictkeyinput',
               ) as unknown as HTMLInputElement[] | null;
@@ -577,6 +578,25 @@ class Atext extends React.Component implements RenderPromiseComponent {
         fntable = nbe.firstChild as HTMLElement | null;
         if (!fntable?.innerText && !isDict) nbc.classList.add('noteboxEmpty');
         else nbc.classList.remove('noteboxEmpty');
+        // Web-app single panel needs to resize any outer iframe
+        if (
+          Build.isWebApp &&
+          frameElement &&
+          sbe?.parentElement &&
+          (G.Prefs.getComplexValue('xulsword') as typeof S.prefs.xulsword)
+            .panels.length === 1
+        ) {
+          const xsh = document.querySelector('html')?.clientHeight;
+          if (xsh) {
+            // Note: sbe.scrollHeight can be much greater than its content height.
+            const bottom = sbe.lastElementChild?.getBoundingClientRect().bottom || 0;
+            const top = sbe.firstElementChild?.getBoundingClientRect().top || 0;
+            const scrollHeight = bottom - top
+            let h = xsh - sbe.clientHeight + scrollHeight + 20;
+            if (h < 800) h = 800;
+            (frameElement as HTMLIFrameElement).height = `${h}px`;
+          }
+        }
       }
     }
   }
