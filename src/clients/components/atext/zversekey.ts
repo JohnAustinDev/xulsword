@@ -88,11 +88,11 @@ export function getRefBible(
 }
 
 // Returns the HTML needed to fill a note-box.
-// The 'notes' argument is an HTML string of one chapter's worth of notes.
+// The 'notes' argument is an HTML string of (typically) multiple notes.
 // Each note is an 'nlist' div. A single note may be an extended cross-
 // reference containing many individual cross-references. All cross-
 // references are displayed in one of these possible ways:
-// - Text only, for quick display, as required in browser mode.
+// - Reference text only, for quick display, as required in browser mode.
 // - Links only, requires server processing to parse and determine link
 //   targets.
 // - Links plus reference texts, requires even more server processing to
@@ -105,6 +105,7 @@ export function getNoteHTML(
   panelIndex = 0, // used for IDs
   openCRs = false, // show scripture reference texts or not
   keepOnlyThisNote = '', // type.title of a single note to keep
+  userTarget = false,
   renderPromise?: RenderPromise,
 ) {
   if (!notes) return '';
@@ -231,9 +232,16 @@ export function getNoteHTML(
                 } else {
                   const info = {} as Partial<LookupInfo>;
                   const keepNotes = false;
-                  const tmod = /^[\w\d]+:/.test(innerHtmlValue)
+                  let tmod = /^[\w\d]+:/.test(innerHtmlValue)
                     ? innerHtmlValue.split(':')[0]
                     : context;
+                  if (userTarget && context) {
+                    const vklookup = G.Prefs.getComplexValue('global.popup.vklookup');
+                    if (vklookup && typeof vklookup === 'object' && context in vklookup) {
+                      const usermod = (vklookup as any)[context];
+                      if (usermod) tmod = usermod;
+                    }
+                  }
                   const locale =
                     (tmod &&
                       tmod in G.Config &&

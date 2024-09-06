@@ -236,8 +236,9 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
         case 'dtl': {
           if (data && !targ.element.classList.contains('empty')) {
             this.setState((prevState: PopupParentState) => {
-              let { elemdata } = clone(prevState);
+              let { elemdata } = prevState;
               if (elemdata === null) elemdata = [];
+              else elemdata = clone(elemdata);
               elemdata.push(data);
               // set the gap so as to position popup under the mouse
               const gap = Math.round(e.clientY - popupY - 40);
@@ -303,8 +304,9 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
         }
         case 'popupBackLink': {
           this.setState((prevState: PopupParentState) => {
-            const { elemdata } = clone(prevState);
+            let { elemdata } = prevState;
             if (elemdata) {
+              elemdata = clone(elemdata);
               elemdata.pop();
               // set the gap so as to position popup under the mouse
               const gap = Math.round(e.clientY - popupY - 40);
@@ -381,7 +383,8 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
         const t = select.element as HTMLSelectElement;
         const { value } = t;
         this.setState((prevState: PopupParentState) => {
-          const { elemdata } = clone(prevState);
+          let { elemdata } = prevState;
+          elemdata = clone(elemdata);
           if (t.dataset.module && elemdata?.length) {
             const orig = elemdata[elemdata.length - 1];
             if (orig.context && value) {

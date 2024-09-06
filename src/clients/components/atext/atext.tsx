@@ -578,24 +578,30 @@ class Atext extends React.Component implements RenderPromiseComponent {
         fntable = nbe.firstChild as HTMLElement | null;
         if (!fntable?.innerText && !isDict) nbc.classList.add('noteboxEmpty');
         else nbc.classList.remove('noteboxEmpty');
-        // Web-app single panel needs to resize any outer iframe
+        // Web-app single panel will resize any parent iframe.
         if (
           Build.isWebApp &&
           frameElement &&
-          sbe?.parentElement &&
+          sbe &&
           (G.Prefs.getComplexValue('xulsword') as typeof S.prefs.xulsword)
             .panels.length === 1
         ) {
-          const xsh = document.querySelector('html')?.clientHeight;
-          if (xsh) {
-            // Note: sbe.scrollHeight can be much greater than its content height.
-            const bottom = sbe.lastElementChild?.getBoundingClientRect().bottom || 0;
-            const top = sbe.firstElementChild?.getBoundingClientRect().top || 0;
-            const scrollHeight = bottom - top
-            let h = xsh - sbe.clientHeight + scrollHeight + 20;
-            if (h < 800) h = 800;
-            (frameElement as HTMLIFrameElement).height = `${h}px`;
+          const resize = () => {
+            const xsh = document.querySelector('html')?.clientHeight;
+            if (xsh) {
+              // Note: sbe.scrollHeight can be much greater than its content height.
+              const bottom =
+                sbe.lastElementChild?.getBoundingClientRect().bottom || 0;
+              const top = sbe.firstElementChild?.getBoundingClientRect().top || 0;
+              const scrollHeight = bottom - top;
+              let h = xsh - sbe.clientHeight + scrollHeight + 100;
+              if (h < 800) h = 800;
+              (frameElement as HTMLIFrameElement).height = `${h}px`;
+            }
           }
+          const imgs = sbe.querySelectorAll('img');
+          if (imgs.length) imgs.forEach((img) => img.onload = resize);
+          else resize();
         }
       }
     }
@@ -669,7 +675,12 @@ class Atext extends React.Component implements RenderPromiseComponent {
       if (module && modkey) data.locationGB = { otherMod: module, key: modkey };
     } else if (location) data.location = location;
 
-    const showSelect = ilModule && ilModuleOption && ilModuleOption.length > 1;
+    const showSelect =
+      module &&
+      G.Tab[module].type === C.BIBLE &&
+      ilModule &&
+      ilModuleOption &&
+      ilModuleOption.length > 1;
 
     return (
       <Vbox

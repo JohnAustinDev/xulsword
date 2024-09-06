@@ -29,6 +29,7 @@ html[dir='rtl'] .npopup {
   border-radius: 5px;
   box-shadow: 3px 3px 5px 6px #ccc;
   cursor: default;
+  resize: both;
 }
 .npopup.hide .npopupTX {
   opacity: 0;
@@ -77,6 +78,9 @@ html[dir='rtl'] .npopup {
 }
 .towindow:hover {
   background-position: 20px;
+}
+.popupCloseLink.backable {
+  display: none;
 }
 .popupBackLink,
 .popupCloseLink {

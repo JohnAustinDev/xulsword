@@ -96,6 +96,7 @@ export function getPopupHTML(
             0,
             !testonly,
             `${type}.${title}`,
+            true,
             renderPromise,
           );
         } else failReason.requires.push(context);
@@ -121,6 +122,7 @@ export function getPopupHTML(
               0,
               !testonly,
               undefined,
+              false,
               renderPromise,
             );
           }
@@ -158,6 +160,7 @@ export function getPopupHTML(
               0,
               !testonly,
               undefined,
+              false,
               renderPromise,
             );
           } else if (reflist?.[0]) {

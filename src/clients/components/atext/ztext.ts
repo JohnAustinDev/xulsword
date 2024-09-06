@@ -216,6 +216,7 @@ export function libswordText(
         n,
         undefined,
         undefined,
+        false,
         renderPromise,
       );
   }

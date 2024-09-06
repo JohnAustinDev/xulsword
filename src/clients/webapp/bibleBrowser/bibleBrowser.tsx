@@ -52,7 +52,9 @@ socket.on('connect', () => {
       let numPanels: number =
         (settings.prefs?.xulsword as any)?.panels?.length ||
         (window as BibleBrowserControllerGlobal).browserMaxPanels;
-      if (window.innerWidth < 800) numPanels = 1;
+      if (window.innerWidth < 768) {
+        numPanels = 1;
+      }
       const locale = setGlobalLocale(settings, langcode);
       // Must set global.locale before callBatch.
       writeSettingsToPrefsStores(settings);
@@ -83,6 +85,14 @@ socket.on('connect', () => {
       setGlobalPanels(settings, numPanels);
 
       // Update Prefs with final settings.
+      if (window.innerWidth < 768) {
+        settings.prefs.xulsword.noteBoxHeight = [300];
+        settings.prefs.xulsword.place = {
+          footnotes: 'popup',
+          crossrefs: 'popup',
+          usernotes: 'popup',
+        }
+      }
       writeSettingsToPrefsStores(settings);
       if (window.innerWidth < 500)
         G.Prefs.setBoolPref('xulsword.showChooser', false);

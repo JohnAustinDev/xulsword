@@ -323,17 +323,17 @@ class Popup extends React.Component implements RenderPromiseComponent {
         >
           <Hbox pack="start" align="center" className="popupheader">
             {!isWindow && Build.isElectronApp && <div className="towindow" />}
+            <div>
+              <a className={
+                `popupCloseLink${elemdata && elemdata.length > 1 ? ' backable' : ''}`
+              }>
+                {GI.i18n.t('', this.renderPromise, 'close')}
+              </a>
+            </div>
             {elemdata && elemdata.length > 1 && (
               <div>
                 <a className="popupBackLink">
                   {GI.i18n.t('', this.renderPromise, 'back.label')}
-                </a>
-              </div>
-            )}
-            {elemdata && elemdata.length === 1 && (
-              <div>
-                <a className="popupCloseLink">
-                  {GI.i18n.t('', this.renderPromise, 'close')}
                 </a>
               </div>
             )}

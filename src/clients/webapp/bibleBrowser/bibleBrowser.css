@@ -113,9 +113,23 @@
   #optionButtons {
     margin-top: 10px;
   }
+  .npopup .popupCloseLink.backable {
+    display: block;
+  }
   .chooser,
   #choosermenu,
+  .npopup .draghandle,
   .narrow-screen-hide {
     display: none;
+  }
+  .x-navmenu {
+    font-size: 1rem;
+  }
+  .x-navmenu span,
+  .x-navmenu div {
+    margin: 5px;
+  }
+  .dictkey {
+    margin-bottom: 0.5em;
   }
 }
