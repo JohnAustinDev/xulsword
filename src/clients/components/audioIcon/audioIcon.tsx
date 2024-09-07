@@ -20,7 +20,7 @@ export default function audioIcon(
   let afile: VerseKeyAudioFile | GenBookAudioFile | null = null;
   if (G.Tab[module].isVerseKey) {
     const book = bookOrKey as OSISBookType;
-    afile = verseKeyAudioFile(module, book, chapter);
+    afile = verseKeyAudioFile(module, book, chapter ?? 1);
   } else if (G.Tab[module].tabType === 'Genbks' && bookOrKey) {
     afile = genBookAudioFile(module, bookOrKey, renderPromise);
   }

@@ -176,8 +176,8 @@ export function audioConfig(module?: string): SwordConfType | undefined {
 // or null if there isn't one.
 export function verseKeyAudioFile(
   swordModule: string,
-  book?: OSISBookType,
-  chapter?: number,
+  book: OSISBookType,
+  chapter: number,
 ): VerseKeyAudioFile | null {
   const audioConf = audioConfig(swordModule);
   if (audioConf) {

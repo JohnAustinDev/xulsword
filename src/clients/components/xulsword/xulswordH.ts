@@ -314,7 +314,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
             if (nk)
               afile = verseKeyAudioFile(
                 swordModule,
-                nk.book || undefined,
+                nk.book,
                 nk.chapter,
               );
           } else if ('key' in file) {
