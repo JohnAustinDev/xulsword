@@ -53,7 +53,7 @@ export class Viewport {
 
   constructor(
     // These web app G calls must be cache preloaded.
-    G: Pick<GType, 'Tab' | 'Tabs' | 'GetBooksInVKModules'>,
+    G: Pick<GType, 'Tab' | 'Tabs' | 'GetBooksInVKModules' | 'i18n'>,
     prefs: typeof PrefsElectron | typeof PrefsBrowser,
   ) {
     this.#G = G;
@@ -65,8 +65,9 @@ export class Viewport {
     tablist: T,
     alocale?: string,
   ): T {
-    const locale = (alocale || i18n.language).replace(/-.*$/, '');
-    const locale2 = C.FallbackLanguage[i18n.language].replace(/-.*$/, '');
+    const defloc = this.#G.i18n.language;
+    const locale = (alocale || defloc).replace(/-.*$/, '');
+    const locale2 = C.FallbackLanguage[defloc].replace(/-.*$/, '');
     const { Tab } = this.#G;
     const order: TabTypes[] = ['Texts', 'Comms', 'Genbks', 'Dicts'];
     const locales = C.Locales.map((l) => l[0].replace(/-.*$/, ''));

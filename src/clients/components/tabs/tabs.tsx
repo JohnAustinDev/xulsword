@@ -1,14 +1,18 @@
-import React from 'react';
+import React, { ChangeEvent } from 'react';
 import PropTypes from 'prop-types';
 import C from '../../../constant.ts';
+import WebAppViewport from '../../webapp/viewport.ts';
 import { ofClass } from '../../../common.ts';
 import { xulPropTypes, htmlAttribs } from '../libxul/xul.tsx';
 import { AnchorButton } from '../libxul/button.tsx';
 import Menupopup from '../libxul/menupopup.tsx';
+import ModuleMenu from '../libxul/modulemenu.tsx';
 import { G, GI } from '../../G.ts';
 import RenderPromise from '../../renderPromise.ts';
 import './tabs.css';
 
+import type { XulswordStateArgType } from '../../../type.ts';
+import type S from '../../../defaultPrefs.ts';
 import type {
   RenderPromiseComponent,
   RenderPromiseState,
@@ -25,6 +29,7 @@ const propTypes = {
   ilModule: PropTypes.string,
   ilModuleOption: PropTypes.arrayOf(PropTypes.string).isRequired,
   mtModule: PropTypes.string,
+  xulswordState: PropTypes.func,
 };
 
 type TabsProps = {
@@ -35,6 +40,7 @@ type TabsProps = {
   ilModule: string | undefined;
   ilModuleOption: Array<string | undefined>;
   mtModule: string | undefined;
+  xulswordState: (s: XulswordStateArgType) => void;
 } & XulProps;
 
 type TabsState = RenderPromiseState & {
@@ -63,6 +69,7 @@ class Tabs extends React.Component implements RenderPromiseComponent {
     this.multiTabButtonClick = this.multiTabButtonClick.bind(this);
     this.getTab = this.getTab.bind(this);
     this.getMultiTabSelection = this.getMultiTabSelection.bind(this);
+    this.toggleTab = this.toggleTab.bind(this);
 
     this.renderPromise = new RenderPromise(this);
   }
@@ -78,6 +85,28 @@ class Tabs extends React.Component implements RenderPromiseComponent {
   componentDidUpdate() {
     const { renderPromise } = this;
     renderPromise.dispatch();
+  }
+
+  toggleTab(e: React.SyntheticEvent<ChangeEvent>) {
+    const { target } = e;
+    if (target) {
+      const { value } = target as HTMLSelectElement;
+      const { panelIndex, xulswordState } = this.props as TabsProps;
+      const vp = Build.isWebApp ? WebAppViewport : G.Viewport;
+      const xs = vp.setXulswordTabs({ panelIndex, whichTab: value, doWhat: 'toggle' });
+      const newtabs = xs.tabs[panelIndex];
+      if (newtabs && newtabs.includes(value)) {
+        xulswordState((prevState) => {
+          const { panels: pans, mtModules } = prevState;
+          const s: Partial<typeof S.prefs.xulsword> = {
+            panels: pans.slice(),
+          };
+          if (!s.panels) s.panels = [];
+          s.panels[panelIndex] = value;
+          return s;
+        });
+      }
+    }
   }
 
   getTab(
@@ -145,6 +174,7 @@ class Tabs extends React.Component implements RenderPromiseComponent {
       const mtsel = this.getMultiTabSelection(newMultiTabs);
       const mtindex = mtsel !== null ? tabs.indexOf(mtsel) : -1;
       const mtwidth = mtindex > -1 ? twids[mtindex] : 0;
+      const ptwidth = 34; // tabPlus width
       // Get the index of the ntext tab to be moved.
       const nextTabIndex = newMultiTabs.length
         ? tabs.indexOf(newMultiTabs[0]) - 1
@@ -154,6 +184,7 @@ class Tabs extends React.Component implements RenderPromiseComponent {
         C.UI.Viewport.TabRowMargin +
         2 * C.UI.Viewport.TabMarginFirstLast +
         twids.slice(0, nextTabIndex + 1).reduce((p, c) => p + c, 0) +
+        ptwidth +
         mtwidth +
         iltwidth;
       if (
@@ -207,7 +238,7 @@ class Tabs extends React.Component implements RenderPromiseComponent {
     const { multiTabs, multiTabMenupopup } = this.state as TabsState;
     const { module, isPinned, panelIndex, tabs, ilModule, ilModuleOption } =
       this.props as TabsProps;
-    const { renderPromise } = this;
+    const { renderPromise, toggleTab } = this;
 
     let ilTabLabel = GI.i18n.t('', renderPromise, 'ORIGLabelTab');
     if (!ilTabLabel) ilTabLabel = 'ilt';
@@ -232,6 +263,13 @@ class Tabs extends React.Component implements RenderPromiseComponent {
         {module &&
           isPinned &&
           this.getTab(module, 'reg-tab', 'active', null, renderPromise)}
+        {!isPinned &&
+          <div className={`tabPlus tab`}>
+            <div className="border">
+              <ModuleMenu value={module || ''} onChange={toggleTab} />
+            </div>
+          </div>
+        }
         {tabs.map((m: string) => {
           if (isPinned || !m || multiTabs.includes(m)) return null;
           const selected = m === module ? 'active' : '';

@@ -34,6 +34,22 @@
   border-top: 2px solid transparent;
   padding: 0px 5px;
 }
+.tabs .tabPlus {
+  height: 24px;
+}
+.tabs .tabPlus > .border {
+  border-top-color: rgb(200, 170, 205);
+}
+.tabs .tabPlus .xsinput {
+  margin: 0;
+  background-color: unset;
+  box-shadow: unset;
+  border-radius: unset;
+  padding: 2px 0 3px;
+}
+.tabs .tabPlus select {
+  width: 15px;
+}
 .tabs .mts-tab {
   padding-inline-end: 0px;
 }

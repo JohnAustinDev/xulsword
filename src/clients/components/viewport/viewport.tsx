@@ -408,6 +408,7 @@ class Viewport extends React.Component implements PopupParent {
                     ilModule={ilModules[i]}
                     ilModuleOption={ilModuleOptions[i]}
                     mtModule={mtModules[i]}
+                    xulswordState={xulswordStateHandler}
                   />
                 );
               }
