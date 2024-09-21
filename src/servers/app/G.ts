@@ -25,6 +25,7 @@ import {
   inlineFile,
   getAllDictionaryKeyList,
   genBookTreeNodes,
+  getLanguageName,
 } from '../common.ts';
 import { callBatch } from '../handleG.ts';
 import { getExtRefHTML, locationVKText } from '../versetext.ts';
@@ -229,6 +230,12 @@ export const G: GTypeMain = {
     ...args: Parameters<GType['locationVKText']>
   ): ReturnType<GType['locationVKText']> {
     return locationVKText(G, ...args);
+  },
+
+  getLanguageName(
+    ...args: Parameters<GType['getLanguageName']>
+  ): ReturnType<GType['getLanguageName']> {
+    return getLanguageName(...args);
   },
 };
 

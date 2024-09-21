@@ -484,30 +484,15 @@ export function registerUpdateStateFromPref(
   );
 }
 
-let languageNames: {
-  en: Record<string, string>;
-  self: Record<string, string>;
-};
-export function getLangReadable(code: string): string {
+export function getLangReadable(code: string, renderPromise?: RenderPromise): string {
   if (/^en(-*|_*)$/.test(code)) return 'English';
   if (!code || code === '?' || /^\s*$/.test(code)) return '?';
-  if (!languageNames && Build.isElectronApp) {
-    const path = `${G.Dirs.path.xsAsset}/locales/languageNames.json`;
-    const json = G.inlineFile(path, 'utf8', true);
-    languageNames = JSON_parse(json) as typeof languageNames;
-  }
-  let name = code;
-  const code2 = code.replace(/-.*$/, '');
+  const langName = GI.getLanguageName({ en: '', local: ''}, renderPromise, code);
+  let name = '';
   if (G.i18n.language.split('-').shift() === 'en') {
-    name =
-      code2 in languageNames.en
-        ? languageNames.en[code2]
-        : languageNames.self[code2];
+    name = langName.en || langName.local;
   } else {
-    name =
-      code2 in languageNames.self
-        ? languageNames.self[code2]
-        : languageNames.en[code2];
+    name = langName.local || langName.en;
   }
   return name || code;
 }

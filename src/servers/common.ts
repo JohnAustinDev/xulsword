@@ -965,6 +965,30 @@ export function inlineAudioFile(
   return '';
 }
 
+export function getLanguageName(code: string): { en: string; local: string } {
+  const result = { en: '', local: '' };
+  if (!Cache.has('languageNames')) {
+    let languageNames = {} as {
+      en: Record<string, string>;
+      self: Record<string, string>;
+    };
+    const path = Dirs.xsAsset.clone();
+    path.append('locales');
+    path.append('languageNames.json');
+    if (path.exists()) {
+      const fc = path.readFile();
+      if (fc) languageNames = JSON_parse(fc) as typeof languageNames;
+    }
+    Cache.write(languageNames, 'languageNames');
+  }
+  const names = Cache.read('languageNames');
+  const code2 = code.split('-').shift();
+  if (code2 && code2 in names.en) result.en = names.en[code2];
+  if (code2 && code2 in names.self) result.local = names.self[code2];
+
+  return result;
+}
+
 export function getAllDictionaryKeyList(module: string): string[] {
   const pkey = 'keylist';
   if (!DiskCache.has(pkey, module)) {

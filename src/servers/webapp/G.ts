@@ -23,6 +23,7 @@ import {
   genBookTreeNodes,
   inlineFile,
   inlineAudioFile,
+  getLanguageName,
 } from '../common.ts';
 import { callBatch } from '../handleG.ts';
 
@@ -165,5 +166,11 @@ export const GI: GITypeMain = {
     ...args: Parameters<GType['locationVKText']>
   ): ReturnType<GType['locationVKText']> {
     return locationVKText(GI, ...args);
+  },
+
+  getLanguageName(
+    ...args: Parameters<GType['getLanguageName']>
+  ): ReturnType<GType['getLanguageName']> {
+    return getLanguageName(...args);
   },
 };

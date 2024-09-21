@@ -34,9 +34,6 @@
   border-top: 2px solid transparent;
   padding: 0px 5px;
 }
-.tabs .tabPlus {
-  height: 24px;
-}
 .tabs .tabPlus > .border {
   border-top-color: rgb(200, 170, 205);
 }
@@ -45,10 +42,17 @@
   background-color: unset;
   box-shadow: unset;
   border-radius: unset;
-  padding: 2px 0 3px;
+  padding: 3px 0 3px;
 }
 .tabs .tabPlus select {
+  appearance: none;
   width: 15px;
+  height: 15px;
+  color: transparent;
+  background-image: url('../../../../assets/plus.svg');
+}
+.tabs .tabPlus select * {
+  color: #1c2127;
 }
 .tabs .mts-tab {
   padding-inline-end: 0px;

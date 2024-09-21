@@ -386,6 +386,11 @@ export default class Xulsword
           <Icon icon={showChooser ? 'menu-closed' : 'menu-open'} size={28} />
         }
         onClick={handler}
+        title={GI.i18n.t(
+          '',
+          renderPromise,
+          'Show or hide the verse chooser tool.',
+        )}
       />
     );
 
@@ -399,6 +404,11 @@ export default class Xulsword
               checked={panels.length < (window as any).browserMaxPanels}
               icon={<Icon icon="add-column-right" size={28} />}
               onClick={handler}
+              title={GI.i18n.t(
+                '',
+                renderPromise,
+                'Add another column of text.',
+              )}
             />
             <Button
               id="removecolumn"
@@ -406,6 +416,7 @@ export default class Xulsword
               checked={panels.length > 1}
               icon={<Icon icon="remove-column-right" size={28} />}
               onClick={handler}
+              title={GI.i18n.t('', renderPromise, 'Remove a column of text.')}
             />
           </>
         )}

@@ -1,11 +1,16 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import C from '../../../constant.ts';
-import { G } from '../../G.ts';
+import { G, GI } from '../../G.ts';
+import { getLangReadable } from '../../common.ts';
+import RenderPromise from '../../renderPromise.ts';
 import { addClass, xulPropTypes, type XulProps } from './xul.tsx';
 import Menulist from './menulist.tsx';
 
 import type { ModTypes } from '../../../type.ts';
+
+// This ModuleMenu component does not keep its own selection state so it
+// requires that an onChange handler function prop is provided.
 
 const propTypes = {
   ...xulPropTypes,
@@ -19,7 +24,8 @@ const propTypes = {
 
 type ModuleMenuProps = {
   value: string;
-  description?: boolean; // show description or not
+  language?: boolean; // show language or not
+  description?: boolean; // show description as tooltip or not
   disabled?: boolean;
   allowNotInstalled?: boolean;
   modules?: string[]; // show only these modules or all if []
@@ -28,6 +34,7 @@ type ModuleMenuProps = {
 } & XulProps;
 
 export default function ModuleMenu({
+  language = false,
   description = false,
   disabled = false,
   allowNotInstalled = false,
@@ -35,6 +42,11 @@ export default function ModuleMenu({
   types = [],
   ...props
 }: ModuleMenuProps) {
+  const [, setStateRP] = useState(0);
+  const [renderPromise] = useState(
+    () => new RenderPromise(() => setStateRP((prevState) => prevState + 1)),
+  );
+  useEffect(() => renderPromise.dispatch());
   const mtabs = modules.length
     ? modules.filter((m) => m in G.Tab).map((m) => G.Tab[m])
     : G.Tabs;
@@ -64,13 +76,19 @@ export default function ModuleMenu({
                 .map((tab) => {
                   if (tab.type === type) {
                     let { label } = tab;
-                    if (description && tab.conf.Description)
-                      label += ` ${tab.conf.Description.locale}`;
+                    if (language && tab.conf.Lang) {
+                      label = `${getLangReadable(tab.conf.Lang, renderPromise)}: ${label}`;
+                    }
                     return (
                       <option
                         className={tab.labelClass}
                         key={[tab.module].join('.')}
                         value={tab.module}
+                        title={
+                          description && tab.conf.Description
+                            ? tab.conf.Description.locale
+                            : ''
+                        }
                       >
                         {label}
                       </option>

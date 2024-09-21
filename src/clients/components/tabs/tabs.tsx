@@ -93,7 +93,11 @@ class Tabs extends React.Component implements RenderPromiseComponent {
       const { value } = target as HTMLSelectElement;
       const { panelIndex, xulswordState } = this.props as TabsProps;
       const vp = Build.isWebApp ? WebAppViewport : G.Viewport;
-      const xs = vp.setXulswordTabs({ panelIndex, whichTab: value, doWhat: 'toggle' });
+      const xs = vp.setXulswordTabs({
+        panelIndex,
+        whichTab: value,
+        doWhat: 'toggle',
+      });
       const newtabs = xs.tabs[panelIndex];
       if (newtabs && newtabs.includes(value)) {
         xulswordState((prevState) => {
@@ -263,13 +267,21 @@ class Tabs extends React.Component implements RenderPromiseComponent {
         {module &&
           isPinned &&
           this.getTab(module, 'reg-tab', 'active', null, renderPromise)}
-        {!isPinned &&
-          <div className={`tabPlus tab`}>
+        {!isPinned && (
+          <div
+            className={`tabPlus tab active`}
+            title={GI.i18n.t('', renderPromise, 'Add a tab, or remove a tab.')}
+          >
             <div className="border">
-              <ModuleMenu value={module || ''} onChange={toggleTab} />
+              <ModuleMenu
+                value={module || ''}
+                language
+                description
+                onChange={toggleTab}
+              />
             </div>
           </div>
-        }
+        )}
         {tabs.map((m: string) => {
           if (isPinned || !m || multiTabs.includes(m)) return null;
           const selected = m === module ? 'active' : '';

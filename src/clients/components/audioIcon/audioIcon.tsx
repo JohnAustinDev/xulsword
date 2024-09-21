@@ -3,6 +3,7 @@ import { Icon } from '@blueprintjs/core';
 import { G } from '../../G.ts';
 import { genBookAudioFile, verseKeyAudioFile } from '../../common.ts';
 import RenderPromise from '../../renderPromise.ts';
+import './audioIcon.css';
 
 import type {
   GenBookAudioFile,

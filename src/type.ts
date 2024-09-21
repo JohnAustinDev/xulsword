@@ -37,6 +37,7 @@ import type {
   inlineAudioFile,
   getAllDictionaryKeyList,
   genBookTreeNodes,
+  getLanguageName,
 } from './servers/common.ts';
 import type { publishSubscription } from './servers/app/components/window.ts';
 import type DiskCache from './servers/components/diskcache.ts';
@@ -790,6 +791,7 @@ export type GType = {
   genBookTreeNodes: typeof genBookTreeNodes;
   getExtRefHTML: GetExtRefHTML;
   locationVKText: LocationVKText;
+  getLanguageName: typeof getLanguageName;
 
   // Objects
   i18n: {
@@ -852,6 +854,7 @@ export type GIType = {
     | 'genBookTreeNodes'
     | 'getExtRefHTML'
     | 'locationVKText'
+    | 'getLanguageName'
   >]: (...args: RenderPromiseArgs<GType[name]>) => ReturnType<GType[name]>;
 } & {
   i18n: {
@@ -926,6 +929,7 @@ export const GBuilder: GType & {
     [keyof GType, Array<keyof GType['genBookTreeNodes']>],
     [keyof GType, Array<keyof GType['getExtRefHTML']>],
     [keyof GType, Array<keyof GType['locationVKText']>],
+    [keyof GType, Array<keyof GType['getLanguageName']>],
     [keyof GType, Array<keyof GType['i18n']>],
     [keyof GType, Array<keyof GType['LibSword']>],
   ];
@@ -986,6 +990,7 @@ export const GBuilder: GType & {
     ['genBookTreeNodes', []],
     ['getExtRefHTML', []],
     ['locationVKText', []],
+    ['getLanguageName', []],
     ['i18n', ['t', 'exists', 'language']],
     [
       'LibSword',
@@ -1036,6 +1041,7 @@ export const GBuilder: GType & {
   genBookTreeNodes: CACHEfunc as any,
   getExtRefHTML: CACHEfunc as any,
   locationVKText: CACHEfunc as any,
+  getLanguageName: CACHEfunc as any,
   resetMain: func as any,
   publishSubscription: func as any,
   canUndo: func as any,
