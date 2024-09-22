@@ -274,7 +274,7 @@ class Tabs extends React.Component implements RenderPromiseComponent {
           >
             <div className="border">
               <ModuleMenu
-                value={module || ''}
+                value={''}
                 language
                 description
                 onChange={toggleTab}

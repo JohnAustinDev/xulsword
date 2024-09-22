@@ -580,9 +580,9 @@ class Atext extends React.Component implements RenderPromiseComponent {
         else nbc.classList.remove('noteboxEmpty');
         // Web-app single panel will resize any parent iframe.
         if (
+          sbe &&
           Build.isWebApp &&
           frameElement &&
-          sbe &&
           (G.Prefs.getComplexValue('xulsword') as typeof S.prefs.xulsword)
             .panels.length === 1
         ) {
@@ -595,7 +595,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
               const top = sbe.firstElementChild?.getBoundingClientRect().top || 0;
               const scrollHeight = bottom - top;
               let h = xsh - sbe.clientHeight + scrollHeight + 100;
-              if (h < 800) h = 800;
+              if (isDict || h < 800) h = 800;
               (frameElement as HTMLIFrameElement).height = `${h}px`;
             }
           }

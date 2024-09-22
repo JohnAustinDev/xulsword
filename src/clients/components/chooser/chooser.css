@@ -37,6 +37,7 @@
   background: white;
   cursor: pointer;
   flex-shrink: 1;
+  max-height: 760px; /* NT height */
 }
 .chooser .bookgroup {
   position: relative;
