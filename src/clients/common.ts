@@ -1,9 +1,9 @@
+import { useEffect, useState } from 'react';
 import Cache from '../cache.ts';
 import Subscription from '../subscription.ts';
 import {
   diff,
   isAudioVerseKey,
-  JSON_parse,
   keep,
   versionCompare,
   getStatePref as getStatePref2,
@@ -15,6 +15,7 @@ import {
 import C from '../constant.ts';
 import S from '../defaultPrefs.ts';
 import { G, GI } from './G.ts';
+import RenderPromise from './renderPromise.ts';
 import { getElementData, verseKey } from './htmlData.ts';
 import log from './log.ts';
 
@@ -38,7 +39,18 @@ import type {
   VerseKeyAudioFile,
   WindowDescriptorPrefType,
 } from '../type.ts';
-import type RenderPromise from './renderPromise.ts';
+
+// Return a renderPromise for a React functional component. For React class
+// components, instead implement RenderPromiseComponent and RenderPromiseState.
+export function functionalComponentRenderPromise() {
+  const [, setState] = useState(0);
+  const [renderPromise] = useState(
+    () => new RenderPromise(() => setState((prevState) => prevState + 1)),
+  );
+  useEffect(() => renderPromise.dispatch());
+
+  return renderPromise;
+}
 
 export function component(
   comp: any,

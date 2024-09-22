@@ -1,21 +1,22 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import C from '../../../constant.ts';
-import { G, GI } from '../../G.ts';
-import { getLangReadable } from '../../common.ts';
-import RenderPromise from '../../renderPromise.ts';
+import { G } from '../../G.ts';
+import { functionalComponentRenderPromise, getLangReadable } from '../../common.ts';
 import { addClass, xulPropTypes, type XulProps } from './xul.tsx';
 import Menulist from './menulist.tsx';
 
-import type { ModTypes } from '../../../type.ts';
+import type { ModTypes, TabType } from '../../../type.ts';
 
-// This ModuleMenu component does not keep its own selection state so it
-// requires that an onChange handler function prop is provided.
+// The ModuleMenu component does not keep its own selection state so it
+// requires that an onChange handler function prop be provided.
 
 const propTypes = {
   ...xulPropTypes,
   value: PropTypes.string,
+  language: PropTypes.bool,
   description: PropTypes.bool,
+  sortByLabel: PropTypes.bool,
   disabled: PropTypes.bool,
   allowNotInstalled: PropTypes.bool,
   modules: PropTypes.arrayOf(PropTypes.string),
@@ -26,6 +27,7 @@ type ModuleMenuProps = {
   value: string;
   language?: boolean; // show language or not
   description?: boolean; // show description as tooltip or not
+  sortByLabel?: boolean; // sort options alphabetically by label
   disabled?: boolean;
   allowNotInstalled?: boolean;
   modules?: string[]; // show only these modules or all if []
@@ -36,22 +38,37 @@ type ModuleMenuProps = {
 export default function ModuleMenu({
   language = false,
   description = false,
+  sortByLabel = true,
   disabled = false,
   allowNotInstalled = false,
   modules = [],
   types = [],
   ...props
 }: ModuleMenuProps) {
-  const [, setStateRP] = useState(0);
-  const [renderPromise] = useState(
-    () => new RenderPromise(() => setStateRP((prevState) => prevState + 1)),
-  );
-  useEffect(() => renderPromise.dispatch());
-  const mtabs = modules.length
-    ? modules.filter((m) => m in G.Tab).map((m) => G.Tab[m])
-    : G.Tabs;
+  const renderPromise = functionalComponentRenderPromise();
 
-  const notInstalled = modules.filter((m) => !(m in G.Tab));
+  let mtabs: TabType[];
+  let notInstalled: string[] = [];
+  if (modules.length) {
+    mtabs = modules.filter((m) => m in G.Tab).map((m) => G.Tab[m]);
+    notInstalled = modules.filter((m) => !(m in G.Tab));
+  } else {
+    mtabs = [...G.Tabs];
+  }
+
+  const labels: Record<string, string> = {};
+  mtabs.forEach((t) => {
+    labels[t.module] = t.label;
+    if (language && t.conf.Lang) {
+      labels[t.module] =
+        `${getLangReadable(t.conf.Lang, renderPromise)}: ${labels[t.module]}`;
+    }
+  });
+
+  if (sortByLabel) {
+    mtabs.sort((a, b) => labels[a.module].localeCompare(labels[b.module]));
+    notInstalled.sort();
+  }
 
   return (
     <Menulist {...addClass('modulemenu', { disabled, ...props })}>
@@ -75,13 +92,8 @@ export default function ModuleMenu({
               {mtabs
                 .map((tab) => {
                   if (tab.type === type) {
-                    let { label } = tab;
-                    if (language && tab.conf.Lang) {
-                      label = `${getLangReadable(tab.conf.Lang, renderPromise)}: ${label}`;
-                    }
                     return (
                       <option
-                        className={tab.labelClass}
                         key={[tab.module].join('.')}
                         value={tab.module}
                         title={
@@ -90,7 +102,7 @@ export default function ModuleMenu({
                             : ''
                         }
                       >
-                        {label}
+                        {labels[tab.module]}
                       </option>
                     );
                   }
