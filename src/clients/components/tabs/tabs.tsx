@@ -193,7 +193,7 @@ class Tabs extends React.Component implements RenderPromiseComponent {
         iltwidth;
       if (
         !tabsdiv ||
-        tabs.length <= 2 ||
+        tabs.length < 2 ||
         (newMultiTabs.length !== 1 && contentWidth <= tabsdiv.clientWidth)
       ) {
         break;
