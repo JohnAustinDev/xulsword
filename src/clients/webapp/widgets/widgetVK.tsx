@@ -69,7 +69,7 @@ export default function WidgetVK(wprops: WidgetVKProps): React.JSX.Element {
               const link = comParent?.querySelector(
                 `a[href*=${CSS.escape('/passage?')}]`,
               ) as HTMLAnchorElement | undefined;
-              if (link) updateHrefParams(link, { l: `${book}.${chapter}` });
+              if (link) updateHrefParams(link, { verse: `${book}.${chapter}` });
               break;
             }
             default: {
