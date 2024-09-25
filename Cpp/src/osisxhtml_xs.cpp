@@ -978,14 +978,20 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
         outHtmlTag("<td", buf, u);
         SWBuf type = tag.getAttribute("type");
         SWBuf subType = tag.getAttribute("subType");
-        if (type.length() || subType.length()) {
+        SWBuf role = tag.getAttribute("role");
+        if (type.length() || subType.length() || role.length()) {
           outText(" class=\"", buf, u);
           outText(type, buf, u);
           outText(" ", buf, u);
           outText(subType, buf, u);
+          outText(" ", buf, u);
+          outText(role, buf, u);
           outText("\"", buf, u);
         }
         outText(">", buf, u);
+      }
+      else if (tag.isEmpty()) {
+        outText("<td>&nbsp;</td>", buf, u);
       }
       else if (tag.isEndTag()) {
         outHtmlTag("</td>", buf, u);
