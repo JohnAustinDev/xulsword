@@ -11,6 +11,7 @@ export type BibleBrowserSettings = {
   component: 'bibleBrowser';
   langcode?: string; // currently unused by this widget.
   settings: {
+    frame: string;
     prefs: {
       xulsword: Partial<(typeof S)['prefs']['xulsword']>;
       global: {
@@ -43,6 +44,7 @@ const defaultSettings: AllComponentsSettings = {
       component: 'bibleBrowser',
       langcode: 'en',
       settings: {
+        frame: '0',
         prefs: {
           xulsword: {
             location: {

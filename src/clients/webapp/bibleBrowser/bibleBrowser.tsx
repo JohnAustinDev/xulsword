@@ -1,5 +1,5 @@
 import React from 'react';
-import { setGlobalPanels } from '../../../common.ts';
+import { sanitizeHTML, setGlobalPanels } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G } from '../../G.ts';
 import log from '../../log.ts';
@@ -46,6 +46,17 @@ socket.on('connect', () => {
         bibleBrowserComp,
         defaultSettings,
       ) as BibleBrowserSettings;
+      const { frame } = settings;
+      if (frame && !/^(0|1)$/.test(frame)) {
+        const style = document.createElement('div');
+        // style must be a child of div to pass through the sanitizer.
+        sanitizeHTML(style, `<div><style>${frame}</style></div>`);
+        if (style.firstElementChild?.firstElementChild) {
+          document
+            .querySelector('body')
+            ?.insertBefore(style.firstElementChild.firstElementChild, null);
+        }
+      }
       (window as BibleBrowserControllerGlobal).browserMaxPanels = Math.ceil(
         window.innerWidth / 300,
       );
@@ -91,7 +102,7 @@ socket.on('connect', () => {
           footnotes: 'popup',
           crossrefs: 'popup',
           usernotes: 'popup',
-        }
+        };
       }
       writeSettingsToPrefsStores(settings);
       if (window.innerWidth < 500)
@@ -112,10 +123,9 @@ socket.on('connect', () => {
         }
       }, 1);
 
-      renderToRoot(
-        <Xulsword onWheelCapture={wheelCapture} />,
-        { className: 'bibleBrowser' }
-      ).catch((er) => {
+      renderToRoot(<Xulsword onWheelCapture={wheelCapture} />, {
+        className: 'bibleBrowser',
+      }).catch((er) => {
         log.error(er);
       });
     }
