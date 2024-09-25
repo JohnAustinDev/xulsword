@@ -54,6 +54,14 @@
 #player audio {
   width: 100%;
 }
+#player {
+  height: 44px;
+}
+#player div,
+#player button,
+#player audio {
+  height: 100%;
+}
 #player,
 #searchButton {
   margin: 5px;
@@ -62,15 +70,10 @@
   max-width: 302px;
   border: 1px solid lightgray;
 }
-#player button,
-#player audio {
-  height: 38px;
-}
 
 #genbknav,
 .open-chooser,
 .close-chooser,
-#closeplayer,
 #textnav .vk-vkmod,
 /* don't show text pin without multiple texts */
 .textrow:not(:has(.atext:nth-child(2))) .text-pin,
