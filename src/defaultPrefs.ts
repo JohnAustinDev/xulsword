@@ -145,6 +145,7 @@ const S = {
       isPinned: [false] as boolean[],
       noteBoxHeight: [200] as number[],
       maximizeNoteBox: [false] as boolean[],
+      tabcntl: true as boolean,
     },
 
     moduleManager: {

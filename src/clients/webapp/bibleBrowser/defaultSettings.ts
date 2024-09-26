@@ -89,6 +89,7 @@ const defaultSettings: AllComponentsSettings = {
             isPinned: [false, false],
             noteBoxHeight: [200, 200],
             maximizeNoteBox: [false, false],
+            tabcntl: true,
           },
           global: {
             locale: 'en',

@@ -178,7 +178,7 @@ class Tabs extends React.Component implements RenderPromiseComponent {
       const mtsel = this.getMultiTabSelection(newMultiTabs);
       const mtindex = mtsel !== null ? tabs.indexOf(mtsel) : -1;
       const mtwidth = mtindex > -1 ? twids[mtindex] : 0;
-      const ptwidth = 34; // tabPlus width
+      const ptwidth = G.Prefs.getBoolPref('xulsword.tabcntl') ? 34 : 0;
       // Get the index of the ntext tab to be moved.
       const nextTabIndex = newMultiTabs.length
         ? tabs.indexOf(newMultiTabs[0]) - 1
@@ -267,7 +267,7 @@ class Tabs extends React.Component implements RenderPromiseComponent {
         {module &&
           isPinned &&
           this.getTab(module, 'reg-tab', 'active', null, renderPromise)}
-        {!isPinned && (
+        {!isPinned && G.Prefs.getBoolPref('xulsword.tabcntl') && (
           <div
             className={`tabPlus tab active`}
             title={GI.i18n.t('', renderPromise, 'Add a tab, or remove a tab.')}
