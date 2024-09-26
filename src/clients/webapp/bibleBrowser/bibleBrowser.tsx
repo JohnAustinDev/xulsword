@@ -19,6 +19,9 @@ import defaultSettings, {
 } from './defaultSettings.ts';
 import './bibleBrowser.css';
 
+// For narrow screens, only one panel is shown and all notes appear in popups,
+// regardless of initial settings.
+
 export type BibleBrowserControllerGlobal = {
   browserMaxPanels?: number;
 } & typeof window;
@@ -97,7 +100,7 @@ socket.on('connect', () => {
 
       // Update Prefs with final settings.
       if (window.innerWidth < 768) {
-        settings.prefs.xulsword.noteBoxHeight = [300];
+        settings.prefs.xulsword.noteBoxHeight = [300]; // for dict modules
         settings.prefs.xulsword.place = {
           footnotes: 'popup',
           crossrefs: 'popup',

@@ -678,6 +678,16 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
       }
     }
 
+    // <foreign>
+    else if (!strcmp(tag.getName(), "foreign")) {
+      if ((!tag.isEndTag()) && (!tag.isEmpty())) {
+        outHtmlTag("<span class=\"foreign\">", buf, u);
+      }
+      else if (tag.isEndTag()) {
+        outHtmlTag("</span>", buf, u);
+      }
+    }
+
     // divineName
     else if (!strcmp(tag.getName(), "divineName")) {
       if ((!tag.isEndTag()) && (!tag.isEmpty())) {

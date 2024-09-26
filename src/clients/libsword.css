@@ -246,7 +246,9 @@ span.sense-level-2 {
 .head4.main {
   font-size: 1.1em;
 }
-
+span.foreign {
+  font-style: italic;
+}
 .text *[class^='head'] h1,
 .text *[class^='head'] h2 {
   font-size: inherit;
