@@ -586,7 +586,7 @@ export function moduleInfoHTML(
           } else if (sf === 'Lang') {
             const v = c[f] as string;
             const [l, s] = v.split('-');
-            value = getLangReadable(l);
+            value = getLangReadable(l, renderPromise);
             if (s) value += ` (${s})`;
           } else if (sf === 'History') {
             const v = c[f] as Array<[string, SwordConfLocalized]>;

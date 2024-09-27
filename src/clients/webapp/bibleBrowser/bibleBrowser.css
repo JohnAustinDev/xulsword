@@ -78,7 +78,8 @@
 /* don't show text pin without multiple texts */
 .textrow:not(:has(.atext:nth-child(2))) .text-pin,
 /* genbknav shouldn't show single-option selects */
-#genbknav .menulist:not(:has(:nth-child(2))) {
+#genbknav .menulist:not(:has(:nth-child(2))),
+.module-info .sourceRepository {
   display: none;
 }
 

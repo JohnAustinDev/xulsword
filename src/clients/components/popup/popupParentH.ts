@@ -56,7 +56,18 @@ export function popupParentHandler(
       // Only mouseovers outside of a popup which are not 'x-target_self' are handled here.
       if (parent) return;
       let targ = ofClass(
-        ['cr', 'fn', 'un', 'sn', 'sr', 'dt', 'dtl', 'introlink', 'searchterm'],
+        [
+          'cr',
+          'fn',
+          'un',
+          'sn',
+          'sr',
+          'dt',
+          'dtl',
+          'aboutlink',
+          'introlink',
+          'searchterm',
+        ],
         es.target,
         'self',
       );
@@ -116,6 +127,7 @@ export function popupParentHandler(
         case 'sr':
         case 'dt':
         case 'dtl':
+        case 'aboutlink':
         case 'introlink':
           openPopup = true;
           break;

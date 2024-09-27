@@ -322,7 +322,7 @@ export function getIntroductions(
   return { textHTML: intro, intronotes: notes };
 }
 
-export function getChapterHeading(
+export function getChapterHeader(
   location: AtextPropsType['location'],
   module: AtextPropsType['module'],
   renderPromise?: RenderPromise,

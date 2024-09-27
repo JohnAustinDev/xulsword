@@ -176,8 +176,7 @@ html[dir='rtl'] .notebox-maximizer {
   margin: 10px;
   cursor: default;
 }
-.prevchaplink,
-.nextchaplink {
+.navlink a {
   text-decoration: underline;
   cursor: pointer;
 }

@@ -578,7 +578,8 @@ class Atext extends React.Component implements RenderPromiseComponent {
         fntable = nbe.firstChild as HTMLElement | null;
         if (!fntable?.innerText && !isDict) nbc.classList.add('noteboxEmpty');
         else nbc.classList.remove('noteboxEmpty');
-        // Web-app single panel will resize any parent iframe.
+
+        // Resize web-app single panel iframes to fit this text.
         if (
           sbe &&
           Build.isWebApp &&
@@ -592,15 +593,16 @@ class Atext extends React.Component implements RenderPromiseComponent {
               // Note: sbe.scrollHeight can be much greater than its content height.
               const bottom =
                 sbe.lastElementChild?.getBoundingClientRect().bottom || 0;
-              const top = sbe.firstElementChild?.getBoundingClientRect().top || 0;
+              const top =
+                sbe.firstElementChild?.getBoundingClientRect().top || 0;
               const scrollHeight = bottom - top;
               let h = xsh - sbe.clientHeight + scrollHeight + 100;
               if (isDict || h < 800) h = 800;
               (frameElement as HTMLIFrameElement).height = `${h}px`;
             }
-          }
+          };
           const imgs = sbe.querySelectorAll('img');
-          if (imgs.length) imgs.forEach((img) => img.onload = resize);
+          if (imgs.length) imgs.forEach((img) => (img.onload = resize));
           else resize();
         }
       }
@@ -707,7 +709,18 @@ class Atext extends React.Component implements RenderPromiseComponent {
             <span className="navlink-span">{prevArrow}</span>
             <a className="prevchaplink">
               {GI.i18n.t('', renderPromise, 'PrevChaptext')}
-            </a>{' '}
+            </a>
+            {' | '}
+            <a
+              className="aboutlink"
+              data-data={JSON_attrib_stringify({
+                type: 'aboutlink',
+                context: module,
+              })}
+            >
+              {GI.i18n.t('', renderPromise, 'About this text')}
+            </a>
+            {' | '}
             <a className="nextchaplink">
               {GI.i18n.t('', renderPromise, 'NextChaptext')}
             </a>{' '}

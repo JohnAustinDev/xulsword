@@ -44,6 +44,7 @@ const otherElemClasses = [
   'fnrow', // notebox note-list row
   'fnlink', // notebox note-list row source link
   'introlink', // versekey chapter introduction link
+  'aboutlink', // module about link
   'dictkey', // dictionary key in a key list
   'requiremod', // button to install required modules
 ] as const;

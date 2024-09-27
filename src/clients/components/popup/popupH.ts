@@ -8,6 +8,7 @@ import {
 import parseExtendedVKRef from '../../../extrefParser.ts';
 import type S from '../../../defaultPrefs.ts';
 import { G, GI } from '../../G.ts';
+import { moduleInfoHTML } from '../../common.ts';
 import { addBookmarksToNotes, getBookmarkInfo } from '../../bookmarks.ts';
 import { getElementData, verseKey } from '../../htmlData.ts';
 import log from '../../log.ts';
@@ -217,6 +218,13 @@ export function getPopupHTML(
       break;
     }
 
+    case 'aboutlink': {
+      if (context) {
+        html = moduleInfoHTML([G.Tab[context].conf], renderPromise);
+      }
+      break;
+    }
+
     case 'introlink': {
       if (context && location) {
         if (context in G.Tab) {
@@ -246,7 +254,18 @@ export default function handler(this: Popup, e: React.MouseEvent) {
   switch (e.type) {
     case 'mouseover': {
       const targ = ofClass(
-        ['npopup', 'cr', 'fn', 'un', 'sn', 'sr', 'dt', 'dtl', 'introlink'],
+        [
+          'npopup',
+          'cr',
+          'fn',
+          'un',
+          'sn',
+          'sr',
+          'dt',
+          'dtl',
+          'aboutlink',
+          'introlink',
+        ],
         target,
       );
       if (!targ || targ.type === 'npopup') return;

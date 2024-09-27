@@ -14,7 +14,7 @@ import { G, GI } from '../../G.ts';
 import addBookmarks from '../../bookmarks.ts';
 import {
   getNoteHTML,
-  getChapterHeading,
+  getChapterHeader,
   chapterChange,
   pageChange,
 } from './zversekey.ts';
@@ -245,7 +245,7 @@ export function libswordText(
     location &&
     ilModuleOption
   ) {
-    const headInfo = getChapterHeading(location, module, renderPromise);
+    const headInfo = getChapterHeader(location, module, renderPromise);
     r.textHTML = headInfo.textHTML + r.textHTML;
     r.intronotes = headInfo.intronotes;
   }
