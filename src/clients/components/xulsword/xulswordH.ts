@@ -14,6 +14,7 @@ import type React from 'react';
 import type {
   GenBookAudioFile,
   OSISBookType,
+  SearchType,
   ShowType,
   VerseKeyAudioFile,
 } from '../../../type.ts';
@@ -123,11 +124,13 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
           const tb = tbp?.getElementsByTagName('input');
           const searchtext = tb?.[0].value;
           if (searchtext && module && module in G.Tab) {
-            G.Commands.search({
+            const search: SearchType = {
               module,
               searchtext,
               type: 'SearchAnyWord',
-            });
+            };
+            if (Build.isElectronApp) G.Commands.search(search);
+            else Commands.setSearchOverlay(search);
           }
           break;
         }

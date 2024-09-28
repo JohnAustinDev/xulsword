@@ -1,6 +1,7 @@
-import { keep } from './common.ts';
+import { keep, randomID } from './common.ts';
 import C from './constant.ts';
 import Viewport from './viewport.ts';
+import Subscription from './subscription.ts';
 
 import type S from './defaultPrefs.ts';
 import type PrefsElectron from './servers/app/prefs.ts';
@@ -13,6 +14,7 @@ import type {
   LocationVKCommType,
   LocationVKType,
   ScrollType,
+  SearchType,
   VerseKeyAudioFile,
 } from './type.ts';
 import { PanelChangeOptions } from './viewport.ts';
@@ -33,7 +35,7 @@ export default class Commands {
 
   constructor(
     // These web app G calls must be cache preloaded.
-    G: Pick<GType, 'Tab' | 'Tabs' | 'GetBooksInVKModules'>,
+    G: Pick<GType, 'Tab' | 'Tabs' | 'GetBooksInVKModules' | 'i18n'>,
     prefs: typeof PrefsElectron | typeof PrefsBrowser,
   ) {
     this.#G = G;
@@ -126,6 +128,13 @@ export default class Commands {
     );
 
     return result;
+  }
+
+  setSearchOverlay(showSearchOverlay: SearchType| null): void {
+    Subscription.publish.setRendererRootState({
+      reset: randomID(),
+      showSearchOverlay
+    });
   }
 
   playAudio(audio: VerseKeyAudioFile | GenBookAudioFile | null) {

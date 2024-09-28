@@ -349,33 +349,32 @@ export default class Xulsword
       </Hbox>
     );
 
-    const searchTextboxComponent = (
-      <Textbox
-        id="searchText"
-        type="search"
-        maxLength="24"
-        onChange={handler}
-        onKeyUp={(e: React.KeyboardEvent) => {
-          if (e.key === 'Enter') {
-            const b = document.getElementById('searchButton');
-            if (b) b.click();
-          }
-        }}
-        title={GI.i18n.t('', renderPromise, 'searchbox.tooltip')}
-      />
-    );
-
-    const searchButtonComponent = (
-      <Box title={GI.i18n.t('', renderPromise, 'search.tooltip')}>
-        <Button
-          id="searchButton"
-          icon="search"
-          disabled={searchDisabled}
-          onClick={handler}
-        >
-          {GI.i18n.t('', renderPromise, 'menu.search')}
-        </Button>
-      </Box>
+    const searchComponent = (
+      <>
+        <Textbox
+          id="searchText"
+          type="search"
+          maxLength="24"
+          onChange={handler}
+          onKeyUp={(e: React.KeyboardEvent) => {
+            if (e.key === 'Enter') {
+              const b = document.getElementById('searchButton');
+              if (b) b.click();
+            }
+          }}
+          title={GI.i18n.t('', renderPromise, 'searchbox.tooltip')}
+        />
+        <Box title={GI.i18n.t('', renderPromise, 'search.tooltip')}>
+          <Button
+            id="searchButton"
+            icon="search"
+            disabled={searchDisabled}
+            onClick={handler}
+          >
+            {GI.i18n.t('', renderPromise, 'menu.search')}
+          </Button>
+        </Box>
+      </>
     );
 
     const chooserMenuButton = (
@@ -579,8 +578,7 @@ export default class Xulsword
     const appSearchTool = (
       <Hbox id="search-tool">
         <Vbox pack="start" align="center">
-          {searchTextboxComponent}
-          {searchButtonComponent}
+          {searchComponent}
         </Vbox>
       </Hbox>
     );
@@ -617,7 +615,7 @@ export default class Xulsword
 
                 <Spacer flex="1" />
 
-                {searchButtonComponent}
+                {searchComponent}
 
                 <Hbox pack="center">{optionButtons}</Hbox>
               </Hbox>

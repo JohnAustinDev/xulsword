@@ -10,6 +10,7 @@ import DynamicStyleSheet from './style.ts';
 import ContextData from './contextData.ts';
 import { windowArguments } from './common.ts';
 import log from './log.ts';
+import Search from './components/search/search.tsx';
 import { delayHandler, xulCaptureEvents } from './components/libxul/xul.tsx';
 import { Hbox } from './components/libxul/boxes.tsx';
 import Dialog from './components/libxul/dialog.tsx';
@@ -30,6 +31,7 @@ import type {
   CipherKey,
   ModalType,
   NewModulesType,
+  SearchType,
   WindowDescriptorPrefType,
 } from '../type.ts';
 import type { SubscriptionType } from '../subscription.ts';
@@ -42,6 +44,7 @@ const defaultInitialState = {
   reset: '' as string,
   dialogs: [] as ReactElement[],
   showPrintOverlay: false as boolean,
+  showSearchOverlay: null as SearchType | null,
   printDisabled: false,
   modal: 'off' as ModalType,
   iframeFilePath: '' as string,
@@ -379,6 +382,15 @@ function Controller(props: ControllerProps) {
         isPrintContainer={isPrintContainer}
         printDisabled={s.printDisabled[0]}
         iframeFilePath={s.iframeFilePath[0]}
+      />
+    );
+  } else if (s.showSearchOverlay[0]) {
+    return (
+      <Search
+        initialState={s.showSearchOverlay[0]}
+        onlyLucene={Build.isWebApp}
+        width="100%"
+        height="100%"
       />
     );
   }

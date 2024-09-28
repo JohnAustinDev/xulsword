@@ -101,8 +101,8 @@ export type WindowTypes =
   | 'chooseFont'
   | 'moduleManager'
   | 'removeModule'
-  | 'search'
-  | 'searchHelp'
+  | 'searchWin'
+  | 'searchHelpWin'
   | 'about'
   | 'printPassage'
   | 'copyPassage'
@@ -1008,7 +1008,7 @@ export const GBuilder: GType & {
         'getGenBookChapterText',
         'getGenBookTableOfContents',
         'search',
-        'getSearchResults',
+        'luceneEnabled',
         'getModuleInformation',
       ],
     ],
@@ -1101,10 +1101,9 @@ export const GBuilder: GType & {
     getAllDictionaryKeys: CACHEfunc as any,
     getGenBookChapterText: CACHEfunc as any,
     getGenBookTableOfContents: CACHEfunc as any,
+    search: CACHEfunc as any,
     luceneEnabled: func as any,
     startBackgroundSearchIndexer: func as any,
-    search: func as any,
-    getSearchResults: func as any,
     searchIndexDelete: func as any,
     searchIndexCancel: func as any,
     searchIndexBuild: func as any,

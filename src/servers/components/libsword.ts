@@ -11,6 +11,7 @@ import {
   unknown2String,
   JSON_stringify,
   versionCompare,
+  stringHash,
 } from '../../common.ts';
 import Cache from '../../cache.ts';
 import C from '../../constant.ts';
@@ -64,6 +65,8 @@ export type MessagesFromIndexWorker =
       msg: 'working';
       percent: number;
     };
+
+export type SearchResult = { html: string; count: number };
 
 // Convert the raw GenBookTOC (output of LibSword.getGenBookTableOfContents())
 // into an array of C.GBKSEP delimited keys.
@@ -127,7 +130,13 @@ const LibSword = {
 
   searchedID: '' as string,
 
-  searchingID: '' as string,
+  maxSearchResults: 500,
+
+  searchSetDone: [] as string[],
+
+  newSearchCount: 0,
+
+  busy: false,
 
   indexingID: {} as Record<string, ChildProcess>,
 
@@ -472,20 +481,19 @@ DEFINITION OF A 'XULSWORD REFERENCE':
     return [];
   },
 
-  /* *****************************************************************************
-   * SEARCHING: USE THESE TO SEARCH MODULES:
-   ***************************************************************************** */
+  /* **************************************************************************
+   * SEARCHING: USE TO SEARCH MODULES:
+   ***************************************************************************/
   // search
-  // NOTE: LibSword runs in the main process, while multiple renderer processes
-  // handle events asynchronously. To prevent search corruption, a search must
-  // be followed by a corresponding read passing the same hash value. Until
-  // then, any further search calls will immediately return null, until the
-  // expected read is performed.
+  // NOTE: LibSword search returns a range of search results. If LibSword's
+  // searchID corresponds to the current search call, then existing search
+  // results are recycled. Otherwise a new search is initiated before returning
+  // any results. If LibSword is busy null is returned.
   //
-  // Returns the number of matches found
   // modname is the module to search
   // srchstr is the string search query
   // scope is the scope of the search. For example: 'Gen', or 'Matt-Rev'.
+  // fullScope is an array of scopes being the entirety of a set of searches.
   // type is the type of search which can take one of the following values:
   // >=0 - regex (use C++ regex matching)
   //  -1 - phrase (only matches EXACTLY the text- including punctuation etc!)
@@ -494,74 +502,73 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   //  -4 - Lucene fast indexed search (if index is available)
   //  -5 - a compound search
   // flags are many useful flags as defined in regex.h
-  // newsearch is set to add new search results to the previous results
+  // newsearch is false to add current search results to the previous results
+  // iStart is the index of the first result to return.
+  // iLength is the number of results to return.
+  // keepStrongs is true to retain Strongs tags in search results.
   async search(
     modname: string,
     srchstr: string,
     scope: string,
+    scopes: string[],
     type: number,
     flags: number,
-    newsearch: boolean,
-    searchID: string,
-  ): Promise<number | null> {
-    return await new Promise((resolve) => {
-      if (
-        this.isReady(true) &&
-        ((newsearch && !this.searchingID) ||
-          (!newsearch && searchID === this.searchedID))
-      ) {
-        this.searchingID = searchID;
-        // IMPORTANT:
-        // VerseKey module searches require a non-empty book-scope, which may
-        // contain a single range. If the book(s) given in the scope value do
-        // not exist in the module, SWORD may crash!
-        // NOTE: This libxulsword function is not a Node-API async function, so
-        // it will block Node's event loop until it finishes.
-        const intgr: number = this.libxulsword.Search(
-          modname,
-          srchstr,
-          scope,
-          type,
-          flags,
-          newsearch,
-        );
-        this.searchedID = searchID;
-        log.debug(
-          `search: modname=${modname} srchstr=${srchstr} scope=${scope} type=${type} flags=${flags} newsearch=${newsearch} searchID=${searchID} intgr=${intgr}`,
-        );
-        resolve(intgr);
-      } else resolve(null);
-    });
-  },
-
-  // getSearchResults
-  // Will return a range of verse texts from the searchID search, or null if
-  // searchID results are unavailable or the engine is not ready. The search()
-  // function must be called with the matching searchID before results can be
-  // returned.
-  getSearchResults(
-    modname: string,
-    first: number,
-    num: number,
+    startNewSearchSet: boolean,
+    iStart: number,
+    iLength: number,
     keepStrongs: boolean,
-    searchID: string,
-  ): string | null {
-    if (this.isReady(true) && searchID === this.searchedID) {
-      this.searchingID = '';
+  ): Promise<SearchResult | null> {
+    return await new Promise((resolve) => {
+      const { busy, searchedID, maxSearchResults, searchSetDone } = this;
 
-      log.debug(
-        `getSearchResults: modname=${modname} first=${first} num=${num} keepStrongs=${keepStrongs} searchID=${searchID}`,
-      );
+      if (busy) resolve(null);
+      this.busy = true;
 
-      if (!num) return ''; // no reason to call libxulsword
-      return this.libxulsword.GetSearchResults(
-        modname,
-        first,
-        num,
-        keepStrongs,
-      );
-    }
-    return null;
+      const result = { html: '', count: 0 };
+
+      if (this.isReady(true) && !(type === -4 && !this.luceneEnabled(modname))) {
+        const mySearchID = stringHash(modname, srchstr, scopes, type, flags);
+        if (startNewSearchSet || searchedID !== mySearchID) {
+          this.newSearchCount = 0;
+          this.searchSetDone = [];
+        }
+
+        if ((!startNewSearchSet && !searchSetDone.includes(scope)) || searchedID !== mySearchID) {
+          // IMPORTANT:
+          // VerseKey module searches require a non-empty book-scope, which may
+          // contain a single range. If the book(s) given in the scope value do
+          // not exist in the module, SWORD may crash!
+          // NOTE: This libxulsword function is not a Node-API async function, so
+          // it will block Node's event loop until it finishes.
+          this.newSearchCount= this.libxulsword.Search(
+            modname,
+            srchstr,
+            scope,
+            type,
+            flags,
+            startNewSearchSet || searchedID !== mySearchID,
+          );
+          this.searchedID = mySearchID;
+          this.searchSetDone.push(scope);
+        }
+
+        result.count = this.newSearchCount || 0;
+
+        const iLen = iLength <= maxSearchResults ? iLength : maxSearchResults;
+        if (iLen) {
+          result.html = this.libxulsword.GetSearchResults(
+            modname,
+            iStart,
+            iLen,
+            keepStrongs,
+          );
+        }
+
+      }
+
+      this.busy = false;
+      resolve(result);
+    });
   },
 
   // luceneEnabled
@@ -914,8 +921,11 @@ export type LibSwordType = Omit<
   | 'unlock'
   | 'checkerror'
   | 'timedIndexer'
-  | 'searchingID'
   | 'searchedID'
+  | 'maxSearchResults'
+  | 'searchSetDone'
+  | 'newSearchCount'
+  | 'busy'
   | 'indexingID'
   | 'backgroundIndexerTO'
 >;

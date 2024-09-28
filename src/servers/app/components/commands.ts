@@ -601,7 +601,7 @@ const Commands = {
 
   search(search: SearchType): void {
     Window.open({
-      type: 'search',
+      type: 'searchWin',
       className: 'skin',
       allowMultiple: true,
       saveIfAppClosed: true,
@@ -616,7 +616,7 @@ const Commands = {
 
   searchHelp() {
     Window.open({
-      type: 'searchHelp',
+      type: 'searchHelpWin',
       className: 'skin',
       fitToContent: true,
       typePersistBounds: true,

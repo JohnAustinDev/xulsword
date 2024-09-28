@@ -1,0 +1,29 @@
+import React from 'react';
+import { noAutoSearchIndex } from '../../../common.ts';
+import renderToRoot from '../../controller.tsx';
+import { G } from '../../G.ts';
+import log from '../../log.ts';
+import Search from '../../components/search/search.tsx';
+import { Indexing } from '../../components/search/searchH.tsx';
+import { windowArguments } from '../../common.ts';
+
+import type { SearchType } from '../../../type.ts';
+
+export const searchArg = windowArguments('search') as SearchType;
+
+export const descriptor = windowArguments();
+
+renderToRoot(
+  <Search initialState={searchArg} descriptor={descriptor} height="100%" />,
+  {
+    initialState: { resetOnResize: false },
+    onunload: () => {
+      if (Indexing.current) {
+        G.LibSword.searchIndexCancel(Indexing.current, descriptor.id);
+        noAutoSearchIndex(G.Prefs, Indexing.current);
+      }
+    },
+  },
+).catch((er) => {
+  log.error(er);
+});

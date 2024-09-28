@@ -509,6 +509,16 @@ export function getLangReadable(code: string, renderPromise?: RenderPromise): st
   return name || code;
 }
 
+// This is useful for making i18n.t() calls having options cacheable!
+export function i18nApplyOpts(str: string, opts: Record<string, string>): string {
+  let r = str;
+  Object.entries(opts).forEach((entry) => {
+    const [k, v] = entry;
+    r = r.replace(new RegExp(`\\{\\{\\s*${k}\\s*\\}\\}`, 'g'), v);
+  });
+  return r;
+}
+
 export function moduleInfoHTML(
   configs: SwordConfType[],
   renderPromise?: RenderPromise,

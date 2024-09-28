@@ -55,7 +55,7 @@ const C = {
   FSSEP: platform() === 'win32' ? '\\' : '/',
 
   Server: {
-    maxDataStringLength: 200000, // bytes
+    maxDataStringLength: 1000000, // bytes (search results can be large)
     maxLogJson: 10000, // bytes
     maxDataRecursion: 10,
     maxDataArrayLength: 512,
