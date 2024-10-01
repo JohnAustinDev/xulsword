@@ -14,7 +14,9 @@ import RenderPromise from '../../renderPromise.ts';
 import { Box } from '../libxul/boxes.tsx';
 import { functionalComponentRenderPromise } from '../../common.ts';
 
-export type SearchHelpProps = XulProps;
+export type SearchHelpProps = {
+  onlyLucene?: boolean
+} & XulProps;
 
 function write(id: string, html: string) {
   const elem = document.getElementById(id);
@@ -70,8 +72,9 @@ export default function SearchHelp(props: SearchHelpProps) {
 
   // Write after render, to allow use of HTML formatting and entities.
   useLayoutEffect(() => {
+    const { onlyLucene } = props;
     write('searchTypes', GI.i18n.t('', renderPromise, 'searchTypes'));
-    type.forEach((t, i) => {
+    type.filter((st) => !(onlyLucene && st === 'SearchExactText')).forEach((t, i) => {
       write(
         ['name', t].join('.'),
         `${dString(G.getLocaleDigits(), i + 1, G.i18n.language)}) ${GI.i18n.t('', renderPromise, `${t}.label`)}: `,
@@ -87,7 +90,7 @@ export default function SearchHelp(props: SearchHelpProps) {
       });
     });
     write('caseMessage', GI.i18n.t('', renderPromise, 'searchCase'));
-  }, []);
+  });
 
   return (
     <Box {...addClass('searchHelp', props)}>

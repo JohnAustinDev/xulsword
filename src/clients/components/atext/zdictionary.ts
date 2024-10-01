@@ -121,7 +121,7 @@ function markup2html(entry: string, mod: string) {
 function replaceLinks(
   entry: string,
   mod: string,
-  renderPromise?: RenderPromise,
+  renderPromise: RenderPromise,
 ) {
   let html = entry;
   const link = html.match(/(@LINK\s+[^\s<]+)/g);
@@ -183,8 +183,8 @@ export function dictKeyToday(modkey: string, module: string): string {
 export function getDictEntryHTML(
   key: string,
   modules: string,
+  renderPromise: RenderPromise,
   reason?: FailReason,
-  renderPromise?: RenderPromise,
 ): string {
   const mods = modules.split(';');
 
@@ -254,7 +254,7 @@ export function getDictEntryHTML(
 
 export function getStrongsModAndKey(
   snclass: string,
-  renderPromise?: RenderPromise,
+  renderPromise: RenderPromise,
   reason?: FailReason,
 ): {
   mod: string | null;
@@ -329,20 +329,15 @@ export function getStrongsModAndKey(
       // try out key possibilities until we find a correct key for this mod
       const options = getSwordOptions(G, C.DICTIONARY);
       if (mod && mod in G.Tab) {
-        let k;
-        let text;
-        for (k = 0; k < keys.length; k += 1) {
-          ({ text } = GI.LibSword.getDictionaryEntry(
-            { text: C.NOTFOUND, notes: '' },
-            renderPromise,
-            mod,
-            keys[k],
-            options,
-          ));
-          if (text !== C.NOTFOUND) break;
-        }
-        if (text === C.NOTFOUND) mod = null;
-        if (mod && k < keys.length) key = keys[k];
+        const r = GI.LibSword.getFirstDictionaryEntry(
+          { mod: '', key: '', text: C.NOTFOUND, notes: '' },
+          renderPromise,
+          [mod],
+          keys,
+          options,
+        );
+        if (r.text === C.NOTFOUND) mod = null;
+        if (mod && r.key) ({ key } = r);
         if ((!mod || !key) && reason) {
           reason.reason = `${snclass}? (${snum})`;
         }
@@ -391,7 +386,7 @@ export function getLemmaHTML(
   strongsClassArray: string[],
   matchingPhrase: string,
   sourcemod: string,
-  renderPromise?: RenderPromise,
+  renderPromise: RenderPromise,
   reason?: FailReason,
 ) {
   // Start building html

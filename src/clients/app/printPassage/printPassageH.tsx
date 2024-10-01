@@ -6,6 +6,7 @@ import {
 } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G } from '../../G.ts';
+import RenderPromise from '../../renderPromise.ts';
 import addBookmarks from '../../bookmarks.ts';
 import { isValidVKM, getLocalizedChapterTerm } from '../../common.ts';
 import { getDictEntryHTML } from '../../components/atext/zdictionary.ts';
@@ -73,7 +74,7 @@ function getDictionaryLinks(textHTML: string): string {
         undefined,
         undefined,
       ];
-      return key && mod ? getDictEntryHTML(key, mod) : '';
+      return key && mod ? getDictEntryHTML(key, mod, new RenderPromise(null)) : '';
     })
     .join('');
 }

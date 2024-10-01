@@ -3,12 +3,23 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import { ProgressBar } from '@blueprintjs/core';
-import { clone, diff, drop, dString, sanitizeHTML } from '../../../common.ts';
+import {
+  clone,
+  diff,
+  drop,
+  dString,
+  sanitizeHTML,
+  stringHash,
+} from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
 import RenderPromise from '../../renderPromise.ts';
 import log from '../../log.ts';
-import { i18nApplyOpts, windowArguments } from '../../common.ts';
+import {
+  i18nApplyOpts,
+  moduleIncludesStrongs,
+  windowArguments,
+} from '../../common.ts';
 import Popup from '../../components/popup/popup.tsx';
 import {
   popupParentHandler as popupParentHandlerH,
@@ -16,7 +27,11 @@ import {
   PopupParentInitState,
 } from '../../components/popup/popupParentH.ts';
 import Button from '../../components/libxul/button.tsx';
-import { xulPropTypes } from '../../components/libxul/xul.tsx';
+import {
+  delayHandler,
+  xulPropTypes,
+  addClass,
+} from '../../components/libxul/xul.tsx';
 import { Box, Hbox, Vbox } from '../../components/libxul/boxes.tsx';
 import Groupbox from '../../components/libxul/groupbox.tsx';
 import Label from '../../components/libxul/label.tsx';
@@ -39,8 +54,6 @@ import handlerH, {
   formatResult,
   lexicon,
   strongsCSS,
-  libSwordSearch,
-  CurrentSearch,
 } from './searchH.tsx';
 import './search.css';
 
@@ -84,12 +97,19 @@ const defaultState = {
     | (typeof ScopeSelectOptions)[number]
     | string, // scope select value
   moreLess: true as boolean, // more / less state
-  displayBible: '' as string, // current module for Bible search results
+  displayModule: '' as string, // current module for displaying search results
   results: null as SearchResult | null, // count and page-result are returned at different times
   pageindex: 0 as number, // first results index to show
   progress: -1 as number,
   progressLabel: '' as string, // changing progress label
   indexing: false as boolean, // indexer is running
+  searching: {
+    module: '',
+    search: '',
+    scopes: [] as string[],
+    type: 0,
+    flags: 0,
+  },
   showHelp: null as React.JSX.Element | null, // for web app to show help in div rather than window
 };
 
@@ -125,7 +145,6 @@ const noPersist = ['results', 'pageindex', 'progress', 'progressLabel'].concat(
 >;
 
 let reMountState = null as null | SearchState;
-let windowLoaded = false;
 
 export type SearchState = PopupParentState &
   RenderPromiseState &
@@ -170,12 +189,7 @@ export default class Search
       module: initialState.module,
       searchtext: initialState.searchtext,
       searchtype: initialState.type,
-      displayBible:
-        initialState.module &&
-        initialState.module in G.Tab &&
-        G.Tab[initialState.module].type === C.BIBLE
-          ? initialState.module
-          : (abible?.module ?? ''),
+      displayModule: initialState.module,
       renderPromiseID: 0,
     };
     // Adjustments for special startup situations
@@ -183,8 +197,11 @@ export default class Search
     if (initialState?.scope) {
       s.scoperadio = 'other';
       s.scopeselect = initialState.scope as any;
+    } else {
+      s.scopeselect = Scopemap[ScopeSelectOptions[0]];
     }
     if (
+      Build.isElectronApp &&
       !s.moreLess &&
       s.module &&
       !GI.LibSword.luceneEnabled(true, this.renderPromise, s.module)
@@ -193,7 +210,7 @@ export default class Search
     }
 
     const pstate = windowArguments('pstate') as SearchState;
-    this.state = reMountState || pstate || s;
+    this.state = Build.isElectronApp ? reMountState || pstate || s : s;
 
     this.updateResults = this.updateResults.bind(this);
     this.handler = handlerH.bind(this);
@@ -206,6 +223,7 @@ export default class Search
   }
 
   componentDidMount() {
+    const { renderPromise } = this;
     const state = this.state as SearchState;
     const { module } = state;
     this.destroy.push(
@@ -215,19 +233,28 @@ export default class Search
         }
       }),
     );
-    if (!windowLoaded && module)
-      search(this).catch((er) => {
-        log.error(er);
-      });
-    else this.updateResults();
-    windowLoaded = true;
+    // React StrictMode causes components to be mounted twice, but we don't
+    // want the search chain running twice.
+    if (module)
+      delayHandler.bind(this)(
+        () => search(this).catch((er) => log.error(er)),
+        50,
+        'afterMountSearch',
+      )();
   }
 
   componentDidUpdate(_prevProps: any, prevState: SearchState) {
     const { renderPromise } = this;
     const state = this.state as SearchState;
     const { descriptor } = this.props as SearchProps;
-    reMountState = clone({ ...state, elemdata: null, popupParent: null, showHelp: null });
+    if (Build.isElectronApp) {
+      reMountState = clone({
+        ...state,
+        elemdata: null,
+        popupParent: null,
+        showHelp: null,
+      });
+    }
     // Save changed window prefs (plus initials to obtain complete state).
     const persistState = drop(state, noPersist) as Omit<
       SearchState,
@@ -266,100 +293,57 @@ export default class Search
 
   updateResults() {
     const state = this.state as SearchState;
-    const { displayBible, module, pageindex, results, searchtext } = state;
+    const { displayModule, module, results, searchtext, searching, progress } =
+      state;
     const { resref, lexref, renderPromise } = this;
     const res = resref !== null ? resref.current : null;
-    const lex = lexref !== null ? lexref.current : null;
     if (res === null || !module) return;
-    const count = results?.count || 0;
 
-    function lexupdate(
-      xthis: Search,
-      dModule: string,
-      dModuleIsStrongs: boolean,
-    ) {
-      if (lex === null || res === null) return;
-      if (
-        res.dataset.count !== count.toString() ||
-        res.dataset.module !== dModule
-      ) {
-        // build a lexicon for the search
-        if (!dModule || !results || !dModuleIsStrongs) {
-          sanitizeHTML(lex, '');
-        } else {
-          lexicon(lex, xthis, renderPromise).catch((er) => {
-            log.error(er);
-          });
-        }
+    const isStrongsModule = moduleIncludesStrongs(displayModule, renderPromise);
+    const resultsHtml = results ? stringHash(results.html) : '';
+    if (!displayModule || !results) {
+      sanitizeHTML(res, '');
+    } else if (res.dataset.resultsHtml !== resultsHtml) {
+      if (!renderPromise.waiting()) res.dataset.resultsHtml = resultsHtml;
+      // build a page from results, module and pageindex
+      if (isStrongsModule && searchtext.includes('lemma:')) {
+        hilightStrongs(searchtext.match(/lemma:\s*\S+/g));
       }
-      res.dataset.count = count.toString();
-      res.dataset.module = dModule;
-      res.dataset.pageindex = pageindex.toString();
+      sanitizeHTML(res, results.html);
+      formatResult(res, state, renderPromise);
     }
 
-    if (res.dataset.count !== count.toString()) {
+    const lex = lexref !== null ? lexref.current : null;
+    const lexiconHtml = stringHash(searching);
+    if (progress === -1 && res.dataset.lexiconHtml !== lexiconHtml) {
+      if (!renderPromise.waiting()) res.dataset.lexiconHtml = lexiconHtml;
+
+      // clear dynamic CSS
       strongsCSS.added.forEach((r) => {
         if (r < strongsCSS.sheet.cssRules.length) {
           strongsCSS.sheet.deleteRule(r);
         }
       });
       strongsCSS.added = [];
-    }
 
-    const dModule = G.Tab[module].type === C.BIBLE ? displayBible : module;
-    let dModuleIsStrongs = false;
-    if (
-      res.dataset.count !== count.toString() ||
-      res.dataset.module !== dModule ||
-      res.dataset.pageindex !== pageindex.toString()
-    ) {
-      if (!dModule || !results) {
-        sanitizeHTML(res, '');
-      } else {
-        // build a page from results, module and pageindex
-        if (G.Tab[dModule].isVerseKey) {
-          dModuleIsStrongs = /Strongs/i.test(
-            GI.LibSword.getModuleInformation(
-              '',
-              renderPromise,
-              dModule,
-              'Feature',
-            ) +
-              GI.LibSword.getModuleInformation(
-                '',
-                renderPromise,
-                dModule,
-                'GlobalOptionFilter',
-              ),
-          );
-        }
-        if (dModuleIsStrongs && searchtext.includes('lemma:')) {
-          hilightStrongs(searchtext.match(/lemma:\s*\S+/g));
-        }
-        const searchParams = { ...CurrentSearch, module: dModule };
-        libSwordSearch(this, searchParams, pageindex)
-          .then((result) => {
-            if (result) {
-              sanitizeHTML(res, result.html);
-              formatResult(res, state, renderPromise);
-              lexupdate(this, dModule, dModuleIsStrongs);
-            }
-          })
-          .catch((er) => {
-            log.warn(er);
-            sanitizeHTML(res, '');
+      // build a lexicon for the last search
+      if (lex) {
+        if (!displayModule || !results || !isStrongsModule) {
+          sanitizeHTML(lex, '');
+        } else {
+          lexicon(lex, this, renderPromise).catch((er) => {
+            log.error(er);
           });
-        return;
+        }
       }
     }
-
-    lexupdate(this, dModule, dModuleIsStrongs);
   }
 
   render() {
     const state = this.state as SearchState;
+    const props = this.props as SearchProps;
     const { renderPromise, handler, popupHandler, popupParentHandler } = this;
-    const { initialState, onlyLucene } = this.props as SearchProps;
+    const { initialState, onlyLucene } = props;
     const {
       module,
       searchtext,
@@ -371,7 +355,7 @@ export default class Search
       pageindex,
       progress,
       progressLabel,
-      displayBible,
+      displayModule,
       popupParent,
       popupReset,
       gap,
@@ -453,7 +437,7 @@ export default class Search
     }
 
     return (
-      <Vbox className="searchwin">
+      <Vbox {...addClass('search', props)}>
         {indexing && (
           <Dialog
             className="indexing-dialog"
@@ -532,12 +516,19 @@ export default class Search
                     {GI.i18n.t('', renderPromise, 'menu.search')}
                   </Button>
                   <Spacer flex="1" orient="horizontal" />
-                  <Button id="helpButton" icon="help" onClick={handler}>{showHelp}</Button>
+                  <Button
+                    id="helpButton"
+                    className={showHelp ? 'open' : 'closed'}
+                    icon={showHelp ? 'cross' : 'help'}
+                    onClick={handler}
+                  >
+                    {showHelp}
+                  </Button>
                 </Groupbox>
               </Row>
               <Row>
                 <Stack
-                  className="searchType"
+                  className="search-type"
                   orient="horizontal"
                   align="stretch"
                 >
@@ -655,7 +646,7 @@ export default class Search
             <Vbox
               className="resultBox"
               flex="1"
-              data-context={displayBible}
+              data-context={displayModule}
               onMouseOut={popupParentHandler}
               onMouseOver={popupParentHandler}
               onMouseMove={popupParentHandler}
@@ -663,8 +654,8 @@ export default class Search
               {module && G.Tab[module].type === C.BIBLE && (
                 <div>
                   <ModuleMenu
-                    id="displayBible"
-                    value={displayBible}
+                    id="displayModule"
+                    value={displayModule}
                     types={[C.BIBLE]}
                     disabled={!module || G.Tab[module].type !== C.BIBLE}
                     onChange={handler}

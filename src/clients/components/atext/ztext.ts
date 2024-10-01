@@ -44,7 +44,7 @@ export function libswordText(
     | 'show'
   >,
   n: number,
-  renderPromise?: RenderPromise,
+  renderPromise: RenderPromise,
   xulswordState?: AtextPropsType['xulswordState'],
 ): LibSwordResponse {
   const r: LibSwordResponse = {
@@ -165,7 +165,7 @@ export function libswordText(
           }
 
           // Set the final results.
-          const de = getDictEntryHTML(key, module, undefined, renderPromise);
+          const de = getDictEntryHTML(key, module, renderPromise, undefined);
           r.textHTML += `<div class="dictentry">${de}</div>`;
           const sel = new RegExp(`(dictkey)([^>]*">${escapeRE(key)}<)`);
           const list = Cache.read('keyHTML', module)

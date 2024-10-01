@@ -1,5 +1,10 @@
 import React from 'react';
-import { sanitizeHTML, setGlobalPanels } from '../../../common.ts';
+import {
+  sanitizeHTML,
+  setGlobalPanels,
+  validateGlobalModulePrefs,
+} from '../../../common.ts';
+import S from '../../../defaultPrefs.ts';
 import C from '../../../constant.ts';
 import { G } from '../../G.ts';
 import log from '../../log.ts';
@@ -49,6 +54,8 @@ socket.on('connect', () => {
         bibleBrowserComp,
         defaultSettings,
       ) as BibleBrowserSettings;
+
+      // Add any custom iframe CSS
       const { frame } = settings;
       if (frame && !/^(0|1)$/.test(frame)) {
         const style = document.createElement('div');
@@ -60,6 +67,7 @@ socket.on('connect', () => {
             ?.insertBefore(style.firstElementChild.firstElementChild, null);
         }
       }
+
       (window as BibleBrowserControllerGlobal).browserMaxPanels = Math.ceil(
         window.innerWidth / 300,
       );
@@ -72,6 +80,7 @@ socket.on('connect', () => {
       const locale = setGlobalLocale(settings, langcode);
       // Must set global.locale before callBatch.
       writeSettingsToPrefsStores(settings);
+
       await callBatchThenCache([
         ['Tabs', null, undefined],
         ['Tab', null, undefined],
@@ -90,6 +99,8 @@ socket.on('connect', () => {
         ['AudioConfs', null, undefined],
         ['Books', null, [locale]],
         ['Book', null, [locale]],
+        ['i18n', 't', ['ORIGLabelOT', { lng: locale }]],
+        ['i18n', 't', ['ORIGLabelNT', { lng: locale }]],
         ['i18n', 't', ['locale_direction', { lng: locale }]],
         ...Object.values(C.SupportedTabTypes).map(
           (type) => ['i18n', 't', [type, { lng: locale }]] as any,
@@ -107,7 +118,19 @@ socket.on('connect', () => {
           usernotes: 'popup',
         };
       }
+
       writeSettingsToPrefsStores(settings);
+
+      const globalPopup = {} as typeof S.prefs.global.popup;
+      validateGlobalModulePrefs(
+        G.Tabs,
+        G.Prefs,
+        G.i18n.language,
+        G.FeatureModules,
+        globalPopup,
+      );
+      G.Prefs.mergeValue('global.popup', globalPopup);
+
       if (window.innerWidth < 500)
         G.Prefs.setBoolPref('xulsword.showChooser', false);
 

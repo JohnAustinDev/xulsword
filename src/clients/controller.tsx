@@ -9,6 +9,7 @@ import { G } from './G.ts';
 import DynamicStyleSheet from './style.ts';
 import ContextData from './contextData.ts';
 import { windowArguments } from './common.ts';
+import Commands from './commands.ts';
 import log from './log.ts';
 import Search from './components/search/search.tsx';
 import { delayHandler, xulCaptureEvents } from './components/libxul/xul.tsx';
@@ -386,12 +387,20 @@ function Controller(props: ControllerProps) {
     );
   } else if (s.showSearchOverlay[0]) {
     return (
-      <Search
-        initialState={s.showSearchOverlay[0]}
-        onlyLucene={Build.isWebApp}
-        width="100%"
-        height="100%"
-      />
+      <>
+        <Button
+          icon="cross"
+          onClick={() => Commands.setSearchOverlay(null)}
+        />
+        <Search
+          className="searchOverlay"
+          key={s.reset[0]}
+          initialState={s.showSearchOverlay[0]}
+          onlyLucene
+          width="100%"
+          height="100%"
+        />
+      </>
     );
   }
 
@@ -469,6 +478,8 @@ export default async function renderToRoot(
 
   // Set window type and language classes on the root html element.
   const classes: string[] = className ? [className] : [];
+  if (Build.isElectronApp) classes.push('isElectron');
+  if (Build.isWebApp) classes.push('isWebApp');
   const classArgs = [
     'className',
     'type',

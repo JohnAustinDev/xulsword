@@ -12,6 +12,7 @@ import {
   getStatePref,
   setStatePref,
 } from '../../common.ts';
+import RenderPromise from '../../renderPromise.ts';
 import log from '../../log.ts';
 import { libswordText } from '../../components/atext/ztext.ts';
 import { xulPropTypes } from '../../components/libxul/xul.tsx';
@@ -131,6 +132,7 @@ export default class CopyPassageWin extends React.Component {
             modkey: '',
           },
           0,
+          new RenderPromise(null),
         );
         const div = testdiv.appendChild(document.createElement('div'));
         div.classList.add('text');

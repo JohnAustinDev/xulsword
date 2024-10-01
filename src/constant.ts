@@ -62,8 +62,8 @@ const C = {
     maxDataObjectKeys: 512,
     ipLimit: Build.isDevelopment
       ? {
-          points: 5, // x ip hits
-          duration: 1, // per y second
+          points: 10, // x ip hits
+          duration: 2, // per y second
         }
       : {
           points: 25, // x ip hits

@@ -10,7 +10,7 @@ import { scrollIntoView, windowArguments } from '../../common.ts';
 import { delayHandler } from '../libxul/xul.tsx';
 import { getPopupHTML } from './popupH.ts';
 
-import type { PlaceType, ShowType } from '../../../type.ts';
+import type { PlaceType, SearchType, ShowType } from '../../../type.ts';
 import type { RenderPromiseComponent } from '../../renderPromise.ts';
 import type { HTMLData } from '../../htmlData.ts';
 import type Atext from '../atext/atext.tsx';
@@ -294,12 +294,15 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
         case 'snbut': {
           if (data) {
             const { context, reflist } = data;
-            if (context && reflist)
-              G.Commands.search({
+            if (context && reflist) {
+              const search: SearchType = {
                 module: context,
                 searchtext: `lemma: ${reflist[0]}`,
                 type: 'SearchAdvanced',
-              });
+              };
+              if (Build.isElectronApp) G.Commands.search(search);
+              else Commands.setSearchOverlay(search);
+            }
           }
           break;
         }

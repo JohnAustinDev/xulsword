@@ -52,6 +52,7 @@ import type { getSampleText } from './clients/bookmarks.ts';
 import type { verseKey } from './clients/htmlData.ts';
 import type { XulswordState } from './clients/components/xulsword/xulsword.tsx';
 import type { BibleBrowserControllerGlobal } from './clients/webapp/bibleBrowser/bibleBrowser.tsx';
+import Prefs, { PrefsGType } from './prefs.ts';
 
 // This file contains functions that are used in common with both xulsword
 // clients and servers.
@@ -882,7 +883,7 @@ export function pad(
 // Modify the given state in place removing any references to viewport
 // modules that are not currently installed.
 export function validateViewportModulePrefs(
-  Tabs: TabType[],
+  tabs: TabType[],
   state: Pick<
     typeof S.prefs.xulsword,
     'panels' | 'ilModules' | 'mtModules' | 'tabs'
@@ -892,17 +893,60 @@ export function validateViewportModulePrefs(
     const prop = state[p] as any[];
     state[p] = prop.map((m) => {
       const n = p === 'panels' ? '' : null;
-      if (m && !Tabs.find((t) => t.module === m)) return n;
+      if (m && !tabs.find((t) => t.module === m)) return n;
       return m;
     });
   });
 
-  const { tabs } = state;
-  tabs.forEach((p, i) => {
+  const { tabs: tbs } = state;
+  tbs.forEach((p, i) => {
     if (p) {
-      tabs[i] = p.filter((m) => Tabs.find((t) => t.module === m));
+      tbs[i] = p.filter((m) => tabs.find((t) => t.module === m));
     }
   });
+}
+
+export function validateGlobalModulePrefs(
+  tabs: TabType[],
+  prefs: PrefsGType,
+  locale: string,
+  featureModules: GType['FeatureModules'],
+  globalPopup: typeof S.prefs.global.popup,
+) {
+  const vklookup = prefs.getComplexValue(
+    'global.popup.vklookup',
+  ) as typeof S.prefs.global.popup.vklookup;
+  Object.entries(vklookup).forEach((entry) => {
+    const m = entry[0] as keyof typeof S.prefs.global.popup.feature;
+    const [, lumod] = entry;
+    if (!lumod || !tabs.find((t) => t.module === lumod)) {
+      delete vklookup[m];
+    }
+  });
+  globalPopup.vklookup = vklookup;
+
+  const feature = prefs.getComplexValue(
+    'global.popup.feature',
+  ) as typeof S.prefs.global.popup.feature;
+  Object.entries(feature).forEach((entry) => {
+    const [f, m] = entry as [keyof typeof S.prefs.global.popup.feature, string];
+    if (!m || !tabs.find((t) => t.module === m)) {
+      delete feature[f];
+    }
+  });
+  // If no pref has been set for popup.selection[feature] then choose a
+  // module from the available modules, if there are any.
+  Object.entries(featureModules).forEach((entry) => {
+    const [f, fmods] = entry as [
+      keyof typeof S.prefs.global.popup.feature,
+      string[],
+    ];
+    if (!(f in feature) && Array.isArray(fmods) && fmods.length) {
+      const pref = C.LocalePreferredFeature[locale === 'en' ? 'en' : 'ru'][f];
+      feature[f] = pref?.find((m) => fmods.includes(m)) || fmods[0];
+    }
+  });
+  globalPopup.feature = feature;
 }
 
 export function noAutoSearchIndex(Prefs: GType['Prefs'], module: string) {

@@ -17,6 +17,7 @@ import {
   mergeNewModules,
   unknown2String,
   validateViewportModulePrefs,
+  validateGlobalModulePrefs,
   keep,
 } from '../../../common.ts';
 import Subscription from '../../../subscription.ts';
@@ -1371,7 +1372,7 @@ export default Module as Omit<typeof Module, 'download2'>;
 // Xulsword state prefs and certain global prefs should only reference
 // installed modules or be empty string. This function insures that is
 // the case.
-export function validateGlobalModulePrefs(windowComp: typeof Window) {
+export function validateModulePrefs(windowComp: typeof Window) {
   const Tabs = getTabs();
 
   const xsprops: Array<keyof typeof S.prefs.xulsword> = [
@@ -1387,44 +1388,9 @@ export function validateGlobalModulePrefs(windowComp: typeof Window) {
 
   validateViewportModulePrefs(Tabs, xulsword);
 
-  const globalPopup: Partial<typeof S.prefs.global.popup> = {};
+  const globalPopup = {} as typeof S.prefs.global.popup;
 
-  const vklookup = Prefs.getComplexValue(
-    'global.popup.vklookup',
-  ) as typeof S.prefs.global.popup.vklookup;
-  Object.entries(vklookup).forEach((entry) => {
-    const m = entry[0] as keyof typeof S.prefs.global.popup.feature;
-    const [, lumod] = entry;
-    if (!lumod || !Tabs.find((t) => t.module === lumod)) {
-      delete vklookup[m];
-    }
-  });
-  globalPopup.vklookup = vklookup;
-
-  const feature = Prefs.getComplexValue(
-    'global.popup.feature',
-  ) as typeof S.prefs.global.popup.feature;
-  Object.entries(feature).forEach((entry) => {
-    const [f, m] = entry as [keyof typeof S.prefs.global.popup.feature, string];
-    if (!m || !Tabs.find((t) => t.module === m)) {
-      delete feature[f];
-    }
-  });
-  // If no pref has been set for popup.selection[feature] then choose a
-  // module from the available modules, if there are any.
-  const featureModules = getFeatureModules();
-  Object.entries(featureModules).forEach((entry) => {
-    const [f, fmods] = entry as [
-      keyof typeof S.prefs.global.popup.feature,
-      string[],
-    ];
-    if (!(f in feature) && Array.isArray(fmods) && fmods.length) {
-      const pref =
-        C.LocalePreferredFeature[i18n.language === 'en' ? 'en' : 'ru'][f];
-      feature[f] = pref?.find((m) => fmods.includes(m)) || fmods[0];
-    }
-  });
-  globalPopup.feature = feature;
+  validateGlobalModulePrefs(Tabs, Prefs, i18n.language, getFeatureModules(), globalPopup);
 
   // IMPORTANT: Use the skipCallbacks and clearRendererCaches arguments of
   // Prefs.mergeValue() to force renderer processes to update once, after

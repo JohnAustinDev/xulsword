@@ -37,17 +37,23 @@ export function GCallsOrPromise(
     return getCallsFromCacheAndClear(calls);
   }
   if (promise) {
-    const presults = getCallsFromCacheAndClear(calls);
-    if (presults.some((r) => r === undefined)) {
-      const pcalls = calls.filter((_call, i) => presults[i] === undefined);
-      promise.calls.push(...pcalls);
+    const { component, callback } = promise;
+    if (component !== null || callback !== null) {
+      const presults = getCallsFromCacheAndClear(calls);
+      if (presults.some((r) => r === undefined)) {
+        const pcalls = calls.filter((_call, i) => presults[i] === undefined);
+        promise.calls.push(...pcalls);
+      }
+      return presults.map((r, i) =>
+        defaultValues && r === undefined ? defaultValues[i] : r,
+      );
     }
-    return presults.map((r, i) =>
-      defaultValues && r === undefined ? defaultValues[i] : r,
+    throw new Error(
+      `A null renderPromise was passed in a context that requires a non-null render promise:  ${JSON_stringify(calls)}`
     );
   }
   throw new Error(
-    `In this context trySyncOrPromise requires the promise argument: ${JSON_stringify(calls)}`,
+    `In this context trySyncOrPromise requires the promise argument: ${JSON_stringify(calls)}`
   );
 }
 
@@ -135,7 +141,7 @@ export default class RenderPromise {
     Cache.write(rps, 'renderPromises');
   }
 
-  constructor(componentOrCallback: React.Component | (() => void)) {
+  constructor(componentOrCallback: React.Component | (() => void) | null) {
     this.component = null;
     this.callback = null;
     this.calls = [];
@@ -270,6 +276,12 @@ function writeCallToCache(call: GCallType | null, result: any) {
           if (!Cache.has(k)) Cache.write(bookArray, k);
         },
       );
+    } else if (call[0] === 'LibSword' && call[1] === 'getFirstDictionaryEntry') {
+      const args = call[2] as Parameters<typeof G.LibSword.getFirstDictionaryEntry>;
+      const [,, options] = args;
+      const { mod, key } = result as ReturnType<typeof G.LibSword.getFirstDictionaryEntry>;
+      const nckey = GCacheKey(['LibSword', 'getDictionaryEntry', [mod, key, options]]);
+      if (!Cache.has(nckey)) Cache.write(result, nckey);
     }
   }
 }

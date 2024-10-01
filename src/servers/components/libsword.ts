@@ -66,7 +66,7 @@ export type MessagesFromIndexWorker =
       percent: number;
     };
 
-export type SearchResult = { html: string; count: number };
+export type SearchResult = { html: string; count: number; lexhtml: string };
 
 // Convert the raw GenBookTOC (output of LibSword.getGenBookTableOfContents())
 // into an array of C.GBKSEP delimited keys.
@@ -419,6 +419,42 @@ DEFINITION OF A 'XULSWORD REFERENCE':
     return { text: C.NOTFOUND, notes: '' };
   },
 
+  getFirstDictionaryEntry(
+    lexdictmods: string[],
+    keys: string[],
+    options: { [key in SwordFilterType]: SwordFilterValueType }
+  ): { mod: string; key: string; text: string; notes: string } {
+    const r = { mod: '', key: '', text: '', notes: '' };
+    if (this.isReady(true)) {
+      Object.entries(options).forEach((entry) => {
+        this.libxulsword.SetGlobalOption(entry[0], entry[1]);
+      });
+      lexdictmods.forEach((m) => {
+        if (!r.mod) {
+          keys.forEach((k) => {
+            if (!r.mod) {
+              let text = C.NOTFOUND;
+              try {
+                text = this.libxulsword.GetDictionaryEntry(m, k);
+              } catch (er) {text = C.NOTFOUND;}
+              if (text) {
+                r.mod = m;
+                r.key = k;
+                r.text = publicFiles(text);
+                let notes = '';
+                try {
+                  notes = this.libxulsword.GetNotes();
+                } catch (er) {notes = '';}
+                r.notes = publicFiles(notes);
+              }
+            }
+          });
+        }
+      });
+    }
+    return r;
+  },
+
   // getAllDictionaryKeys
   // Returns all keys in form key1<nx>key2<nx>key3<nx>
   // Returns an error is module Lexdictmod is not of type StrKey
@@ -502,10 +538,12 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   //  -4 - Lucene fast indexed search (if index is available)
   //  -5 - a compound search
   // flags are many useful flags as defined in regex.h
-  // newsearch is false to add current search results to the previous results
-  // iStart is the index of the first result to return.
-  // iLength is the number of results to return.
+  // startNewSearchSet is false to add current search results to the previous results
+  // rMod is the display module
+  // rStart is the index of the first result to return.
+  // rLength is the number of results to return.
   // keepStrongs is true to retain Strongs tags in search results.
+  // lexicon is true to return a large number of results for building a lexicon.
   async search(
     modname: string,
     srchstr: string,
@@ -514,9 +552,11 @@ DEFINITION OF A 'XULSWORD REFERENCE':
     type: number,
     flags: number,
     startNewSearchSet: boolean,
-    iStart: number,
-    iLength: number,
+    rMod: string,
+    rStart: number,
+    rLength: number,
     keepStrongs: boolean,
+    lexicon: boolean,
   ): Promise<SearchResult | null> {
     return await new Promise((resolve) => {
       const { busy, searchedID, maxSearchResults, searchSetDone } = this;
@@ -524,7 +564,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
       if (busy) resolve(null);
       this.busy = true;
 
-      const result = { html: '', count: 0 };
+      const result: SearchResult = { html: '', count: 0, lexhtml: '' };
 
       if (this.isReady(true) && !(type === -4 && !this.luceneEnabled(modname))) {
         const mySearchID = stringHash(modname, srchstr, scopes, type, flags);
@@ -551,16 +591,24 @@ DEFINITION OF A 'XULSWORD REFERENCE':
           this.searchedID = mySearchID;
           this.searchSetDone.push(scope);
         }
-
         result.count = this.newSearchCount || 0;
 
-        const iLen = iLength <= maxSearchResults ? iLength : maxSearchResults;
+        const iLen = rLength <= maxSearchResults ? rLength : maxSearchResults;
         if (iLen) {
           result.html = this.libxulsword.GetSearchResults(
-            modname,
-            iStart,
+            rMod,
+            rStart,
             iLen,
             keepStrongs,
+          );
+        }
+
+        if (lexicon) {
+          result.lexhtml = this.libxulsword.GetSearchResults(
+            rMod,
+            0,
+            C.UI.Search.maxLexiconSearchResults,
+            true,
           );
         }
 

@@ -24,7 +24,7 @@ import LocalFile from '../components/localFile.ts';
 import Prefs from './prefs.ts';
 import Viewport from './viewport.ts';
 import Window from './components/window.ts';
-import { validateGlobalModulePrefs } from './components/module.ts';
+import { validateModulePrefs } from './components/module.ts';
 import {
   getCipherFailConfs,
   CipherKeyModules,
@@ -231,7 +231,7 @@ const openXulswordWindow = () => {
   const menuBuilder = new MainMenuBuilder(xulswordWindow);
   menuBuilder.buildMenu();
 
-  validateGlobalModulePrefs(Window);
+  validateModulePrefs(Window);
 
   const BuildInfo = `${app.getName()} ${app.getVersion()} (${
     i18n.language
@@ -259,7 +259,7 @@ const openXulswordWindow = () => {
           'moduleManager.repositories',
         ) as ManagerStatePref['repositories'],
       );
-      validateGlobalModulePrefs(Window);
+      validateModulePrefs(Window);
       menuBuilder.buildMenu(true);
     }),
   );

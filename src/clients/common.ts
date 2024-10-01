@@ -359,6 +359,24 @@ export function isValidVK(location: LocationVKType): boolean {
   return true;
 }
 
+export function moduleIncludesStrongs(
+  module: string,
+  renderPromise: RenderPromise,
+): boolean {
+  if (G.Tab[module].isVerseKey) {
+    return /Strongs/i.test(
+      GI.LibSword.getModuleInformation('', renderPromise, module, 'Feature') +
+        GI.LibSword.getModuleInformation(
+          '',
+          renderPromise,
+          module,
+          'GlobalOptionFilter',
+        ),
+    );
+  }
+  return false;
+}
+
 // LibSword.getMaxChapter returns an erroneous number if vkeytext's
 // book is not part of v11n, so it would be necessary to check here
 // first. But a LibSword call is unnecessary with G.BooksInV11n.
@@ -496,10 +514,17 @@ export function registerUpdateStateFromPref(
   );
 }
 
-export function getLangReadable(code: string, renderPromise?: RenderPromise): string {
+export function getLangReadable(
+  code: string,
+  renderPromise?: RenderPromise,
+): string {
   if (/^en(-*|_*)$/.test(code)) return 'English';
   if (!code || code === '?' || /^\s*$/.test(code)) return '?';
-  const langName = GI.getLanguageName({ en: '', local: ''}, renderPromise, code);
+  const langName = GI.getLanguageName(
+    { en: '', local: '' },
+    renderPromise,
+    code,
+  );
   let name = '';
   if (G.i18n.language.split('-').shift() === 'en') {
     name = langName.en || langName.local;
@@ -510,7 +535,10 @@ export function getLangReadable(code: string, renderPromise?: RenderPromise): st
 }
 
 // This is useful for making i18n.t() calls having options cacheable!
-export function i18nApplyOpts(str: string, opts: Record<string, string>): string {
+export function i18nApplyOpts(
+  str: string,
+  opts: Record<string, string>,
+): string {
   let r = str;
   Object.entries(opts).forEach((entry) => {
     const [k, v] = entry;

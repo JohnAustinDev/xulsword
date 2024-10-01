@@ -42,29 +42,16 @@ const libSwordSearchTypes = {
   COMPOUND: -5,
 };
 
-export const CurrentSearch = {
-  module: '',
-  search: '',
-  scopes: [] as string[],
-  type: 0,
-  flags: 0,
-};
-
-const LastSearch = {
-  module: '',
-  search: '',
-  scopes: [] as string[],
-  type: 0,
-  flags: -1,
-};
-
 export const strongsCSS = {
   css: null as { sheet: CSSStyleSheet; rule: CSSRule; index: number } | null,
   sheet: document.styleSheets[document.styleSheets.length - 1],
   added: [] as number[],
 };
 
-export function getLuceneSearchText(searchtext0: string, renderPromise: RenderPromise) {
+export function getLuceneSearchText(
+  searchtext0: string,
+  renderPromise: RenderPromise,
+) {
   let searchtext = searchtext0;
   Object.entries(C.UI.Search.symbol).forEach((entry) => {
     const [k, [uiVal, luceneVal]] = entry;
@@ -156,26 +143,24 @@ export async function search(xthis: Search): Promise<boolean> {
   const state = xthis.state as SearchState;
   const { renderPromise } = xthis;
   const { descriptor } = xthis.props as SearchProps;
-  const { module, displayBible: db, searchtext } = state;
+  const { module, searchtext } = state;
   let { searchtype } = state;
   if (state.progress !== -1) return false;
   if (!/\S\S/.test(state.searchtext)) return false;
   if (!module || !(module in G.Tab)) return false;
 
   let hasIndex = GI.LibSword.luceneEnabled(true, renderPromise, module);
-  const isBible = G.Tab[module].type === C.BIBLE;
-  const displayBible = isBible ? module : db;
 
   if (!hasIndex) {
     hasIndex = await autoCreateSearchIndex(xthis, module);
   }
 
-  const s: Partial<SearchState> = {
-    results: { html: '', count: 0 },
+  const s: SearchState = {
+    ...state,
+    results: { html: '', count: 0, lexhtml: '' },
     pageindex: 0,
     progress: -1,
     progressLabel: '',
-    displayBible,
   };
 
   if (descriptor)
@@ -259,28 +244,37 @@ export async function search(xthis: Search): Promise<boolean> {
     flags |= 2048; // Turn on Sort By Relevance flag
   }
 
-  CurrentSearch.module = module;
-  CurrentSearch.search = searchtextLS;
-  CurrentSearch.scopes = scopes;
-  CurrentSearch.type = libSwordSearchType;
-  CurrentSearch.flags = flags;
+  s.searching = {
+    module,
+    search: searchtextLS,
+    scopes,
+    type: libSwordSearchType,
+    flags,
+  };
 
-  s.results = await libSwordSearch(xthis, CurrentSearch);
+  s.displayModule = module;
 
-  xthis.setState(s);
+  // Setting progress is important here as it signals to libswordSearch that
+  // this should always be a new search set.
+  s.progress = 0;
 
+  await updateStateResults(xthis, s);
+
+  log.debug(`FINISHED SEARCHING!`);
   return true;
 }
 
 export async function libSwordSearch(
   xthis: Search,
-  currentSearch: typeof CurrentSearch,
-  iStart: number = 0,
-  iEnd: number = 0,
+  state: SearchState,
 ): Promise<SearchResult | null> {
   let finalResult: SearchResult | null = null;
 
-  const { module, search, scopes, type, flags } = currentSearch;
+  // When these change, a whole new search set is initiated.
+  const { module, search, scopes, type, flags } = state.searching;
+
+  // When these change, previous search results are just re-processed.
+  const { displayModule, pageindex } = state;
 
   if (module && module in G.Tab) {
     // Only one active search is allowed at a time, so make other windows
@@ -288,36 +282,40 @@ export async function libSwordSearch(
     if (Build.isElectronApp && scopes.length > 1)
       G.Window.modal([{ modal: 'transparent', window: 'not-self' }]);
 
-    // Exact search (multi-scope search) would request every scope search on
-    // every page request unless we compare CurrentSearch to LastSearch and
-    // request just one search when they are identical.
-    const sameAsLast = !diff(CurrentSearch, LastSearch);
-    const funcs = scopes.map((scope, i) => {
-      if (!sameAsLast || i === scopes.length - 1) {
-        return async () => {
-          const result = await G.LibSword.search(
-            module,
-            search,
-            scope,
-            scopes,
-            type,
-            flags,
-            i === 0 && !sameAsLast,
-            i === scopes.length - 1 ? iStart : 0,
-            i === scopes.length - 1 ? (iEnd || C.UI.Search.resultsPerPage) : 0,
-            true
-          );
-          if (scopes.length > 1 && xthis) {
-            const Book = G.Book(G.i18n.language);
-            xthis.setState({
-              progress: (i + 1) / scopes.length,
-              progressLabel: scope in Book ? Book[scope].name : scope,
-            } as Partial<SearchState>);
-          }
-          return result;
+    const { progress } = state;
+
+    // scopes.length > 1 searches would initiate a new search on
+    // every page request if we didn't use progress state.
+    const funcs = scopes
+      .map((scope, i) => {
+        if (progress !== -1 || i === scopes.length - 1) {
+          return async () => {
+            const result = await G.LibSword.search(
+              module,
+              search,
+              scope,
+              scopes,
+              type,
+              flags,
+              i === 0 && progress !== -1,
+              displayModule,
+              i === scopes.length - 1 ? pageindex : 0,
+              i === scopes.length - 1 ? C.UI.Search.resultsPerPage : 0,
+              true,
+              i === scopes.length - 1,
+            );
+            if (scopes.length > 1 && xthis) {
+              const Book = G.Book(G.i18n.language);
+              xthis.setState({
+                progress: (i + 1) / scopes.length,
+                progressLabel: scope in Book ? Book[scope].name : scope,
+              } as Partial<SearchState>);
+            }
+            return result;
+          };
         }
-      }
-    }).filter(Boolean) as (() => Promise<SearchResult | null>)[];
+      })
+      .filter(Boolean) as (() => Promise<SearchResult | null>)[];
 
     let result: SearchResult | null = null;
     for (const func of funcs) {
@@ -326,21 +324,11 @@ export async function libSwordSearch(
       if (result === null) break;
     }
     finalResult = result;
-    LastSearch.module = CurrentSearch.module;
-    LastSearch.search = CurrentSearch.search;
-    LastSearch.scopes = CurrentSearch.scopes;
-    LastSearch.type = CurrentSearch.type;
-    LastSearch.flags = CurrentSearch.flags;
 
-    // Now reset modal and progress.
+    // Now reset modal off (progress must be reset along with the results).
     if (scopes.length > 1) {
-      if (Build.isElectronApp) G.Window.modal([{ modal: 'off', window: 'not-self' }]);
-      if (xthis) {
-        xthis.setState({
-          progress: -1,
-          progressLabel: '',
-        } as Partial<SearchState>);
-      }
+      if (Build.isElectronApp)
+        G.Window.modal([{ modal: 'off', window: 'not-self' }]);
     }
   }
 
@@ -348,10 +336,13 @@ export async function libSwordSearch(
   // second for it to free up and try again.
   if (finalResult === null) {
     return await new Promise((resolve) => {
-      setTimeout(() => {
-        const r = libSwordSearch(xthis, currentSearch, iStart);
-        resolve(r);
-      }, Build.isWebApp ? 5000 : 1000);
+      setTimeout(
+        () => {
+          const r = libSwordSearch(xthis, state);
+          resolve(r);
+        },
+        Build.isWebApp ? 5000 : 1000,
+      );
     });
   }
 
@@ -382,7 +373,7 @@ export async function createSearchIndex(
   if (Build.isElectronApp && module && module in G.Tab) {
     return await new Promise((resolve) => {
       const s: Partial<SearchState> = {
-        results: { html: '', count: 0 },
+        results: { html: '', count: 0, lexhtml: '' },
         pageindex: 0,
         progress: 0,
         progressLabel: G.i18n.t('BuildingIndex'),
@@ -425,13 +416,14 @@ export async function createSearchIndex(
   return false;
 }
 
-export function formatResult(div: HTMLDivElement, state: SearchState, renderPromise: RenderPromise) {
-  const { module, displayBible, searchtext, searchtype } = state;
-  const dModule =
-    !module || !(module in G.Tab) || G.Tab[module].type === C.BIBLE
-      ? displayBible
-      : module;
-  if (module && module in G.Tab && dModule && dModule in G.Tab) {
+export function formatResult(
+  div: HTMLDivElement,
+  state: SearchState,
+  renderPromise: RenderPromise,
+) {
+  const { module, displayModule, searchtext, searchtype } = state;
+
+  if (module && module in G.Tab) {
     Array.from(div.getElementsByClassName('slist')).forEach((slist) => {
       const p = getElementData(slist as HTMLElement);
       const { context } = p;
@@ -448,12 +440,12 @@ export function formatResult(div: HTMLDivElement, state: SearchState, renderProm
           case C.BIBLE:
           case C.COMMENTARY: {
             if (a && location) {
-              // Translate from module to DisplayBible
+              // Translate links from module to displayModule
               const vsys = G.Tab[module].v11n || null;
-              const v = verseKey(location, vsys);
+              const v = verseKey(location, vsys, undefined, renderPromise);
               sanitizeHTML(
                 a,
-                v.readable(G.i18n.language, G.Tab[dModule].v11n || null),
+                v.readable(G.i18n.language, G.Tab[displayModule].v11n || null),
               );
               a.className = 'cs-locale';
               a.id = ['verselink', vsys, v.osisRef()].join('.');
@@ -599,7 +591,7 @@ export function hilightStrongs(strongs: RegExpMatchArray | null) {
     log.debug(`Adding sn class: ${c}`);
     const index = strongsCSS.sheet.cssRules.length;
     if (!strongsCSS.css) {
-      strongsCSS.css = getCSS('.matchingStrongs {');
+      strongsCSS.css = getCSS('.resultBox .matchingStrongs {');
     }
     if (strongsCSS.css) {
       strongsCSS.sheet.insertRule(
@@ -611,16 +603,20 @@ export function hilightStrongs(strongs: RegExpMatchArray | null) {
   });
 }
 
-export async function lexicon(lexdiv: HTMLDivElement, xthis: Search, renderPromise: RenderPromise) {
+export async function lexicon(
+  lexdiv: HTMLDivElement,
+  xthis: Search,
+  renderPromise: RenderPromise,
+) {
   const state = xthis.state as SearchState;
-  const { searchtext, searchtype, module, displayBible, results } = state;
-  const dModule =
-    !module || !(module in G.Tab) || G.Tab[module].type === C.BIBLE
-      ? displayBible
-      : module;
-  if (!dModule || !(dModule in G.Tab)) return;
+  const { searchtext, searchtype, displayModule, results } = state;
 
-  if (results === null) {
+  if (
+    !displayModule ||
+    !(displayModule in G.Tab) ||
+    !G.Tab[displayModule].isVerseKey ||
+    results === null
+  ) {
     sanitizeHTML(lexdiv, '');
     return;
   }
@@ -631,17 +627,13 @@ export async function lexicon(lexdiv: HTMLDivElement, xthis: Search, renderPromi
       ? C.UI.Search.maxLexiconSearchResults
       : results.count;
   const list: HTMLSpanElement[] = [];
-  const searchParams = { ...CurrentSearch, module: dModule };
-  const result = await libSwordSearch(xthis, searchParams, 0, total);
-  if (result) {
-    sanitizeHTML(
-      lexdiv,
-      markSearchMatches(
-        result.html,
-        getSearchMatches(searchtext, searchtype, renderPromise),
-      ),
-    );
-  }
+  sanitizeHTML(
+    lexdiv,
+    markSearchMatches(
+      results.lexhtml,
+      getSearchMatches(searchtext, searchtype, renderPromise),
+    ),
+  );
 
   // If searching for a Strong's number, collect all its translations.
   const strongs: RegExpMatchArray | null = searchtext.match(/lemma:\s*\S+/g);
@@ -672,14 +664,14 @@ export async function lexicon(lexdiv: HTMLDivElement, xthis: Search, renderPromi
       list.push(lexlist);
       lexlist.className = 'lexlist';
 
-      const dictinfo = getStrongsModAndKey(c);
+      const dictinfo = getStrongsModAndKey(c, renderPromise);
       const strongNum = c.replace('S_', '');
 
       const a = lexlist.appendChild(document.createElement('span'));
       if (dictinfo.mod && dictinfo.key) {
         a.className = `sn ${c}`;
       }
-      a.dataset.title = [dModule, c].join('.');
+      a.dataset.title = [displayModule, c].join('.');
       a.textContent = strongNum;
 
       const span1 = lexlist.appendChild(document.createElement('span'));
@@ -690,7 +682,7 @@ export async function lexicon(lexdiv: HTMLDivElement, xthis: Search, renderPromi
       )}-${dString(G.getLocaleDigits(), total, G.i18n.language)}]: `;
 
       const span2 = lexlist.appendChild(document.createElement('span'));
-      span2.className = `cs-${dModule}`;
+      span2.className = `cs-${displayModule}`;
       span2.textContent = snlex
         .map((snl) => `${snl.text}(${snl.count.toString()})`)
         .join(', ');
@@ -737,17 +729,17 @@ export async function lexicon(lexdiv: HTMLDivElement, xthis: Search, renderPromi
         lexlist.className = 'lexlist';
 
         let mtype = '';
-        if (hg === 'H') mtype = GI.i18n.t('', renderPromise, 'ORIGLabelOT');
-        if (hg === 'G') mtype = GI.i18n.t('', renderPromise, 'ORIGLabelNT');
+        if (hg === 'H') mtype = G.i18n.t('ORIGLabelOT');
+        if (hg === 'G') mtype = G.i18n.t('ORIGLabelNT');
 
         const sns: string[] = [];
         stsa.forEach((sts: Sts) => {
           const strongNum = sts.strongs.replace('S_', '');
-          const sti = getStrongsModAndKey(sts.strongs);
+          const sti = getStrongsModAndKey(sts.strongs, renderPromise);
           const cls = sti.mod && sti.key ? ` class="sn ${sts.strongs}"` : '';
           sns.push(
             `<span${cls} data-title="${[
-              dModule,
+              displayModule,
               ...sts.strongs.split(' '),
             ].join('.')}">${strongNum}</span>(${sts.count.toString()})`,
           );
@@ -785,10 +777,7 @@ export async function lexicon(lexdiv: HTMLDivElement, xthis: Search, renderPromi
   lexdiv.style.display = ''; // was set to 'none' earlier
 }
 
-export default async function handler(
-  this: Search,
-  e: React.SyntheticEvent,
-) {
+export default async function handler(this: Search, e: React.SyntheticEvent) {
   const state = this.state as SearchState;
   const target = e.target as HTMLElement;
   const currentTarget = e.currentTarget as HTMLElement;
@@ -816,8 +805,11 @@ export default async function handler(
           if (Build.isElectronApp) G.Commands.searchHelp();
           else {
             this.setState((prevState: SearchState) => {
-              const showHelp = prevState.showHelp ? null : <SearchHelp />;
-              return {showHelp};
+              const { onlyLucene } = this.props as SearchProps;
+              const showHelp = prevState.showHelp ? null : (
+                <SearchHelp onlyLucene={onlyLucene} />
+              );
+              return { showHelp };
             });
           }
           break;
@@ -839,19 +831,19 @@ export default async function handler(
           break;
         }
         case 'pagefirst': {
-          this.setState({ pageindex: 0 });
+          await updateStateResults(this, { ...state, pageindex: 0 });
           break;
         }
         case 'pagelast': {
           let pageindex = count - C.UI.Search.resultsPerPage;
           if (pageindex < 0) pageindex = 0;
-          this.setState({ pageindex });
+          await updateStateResults(this, { ...state, pageindex });
           break;
         }
         case 'pageprev': {
           let pageindex = state.pageindex - C.UI.Search.resultsPerPage;
           if (pageindex < 0) pageindex = 0;
-          this.setState({ pageindex });
+          await updateStateResults(this, { ...state, pageindex });
           break;
         }
         case 'pagenext': {
@@ -859,7 +851,7 @@ export default async function handler(
           if (pageindex >= count)
             pageindex = count - C.UI.Search.resultsPerPage;
           if (pageindex < 0) pageindex = 0;
-          this.setState({ pageindex });
+          await updateStateResults(this, { ...state, pageindex });
           break;
         }
         case 'searchResults':
@@ -901,22 +893,26 @@ export default async function handler(
       const targid = currentTarget.id as keyof SearchState;
       const se = target as any;
       switch (targid) {
+        case 'displayModule': {
+          if (se.value && se.value in G.Tab)
+            await updateStateResults(this, { ...state, 'displayModule': se.value });
+          break;
+        }
         case 'module':
-        case 'displayBible':
         case 'searchtext':
         case 'searchtype':
         case 'scoperadio':
         case 'scopeselect': {
+          e.stopPropagation();
           if (
-            !['module', 'displayBible'].includes(targid) ||
+            !['module', 'displayModule'].includes(targid) ||
             (se.value && se.value in G.Tab)
           ) {
             this.setState({ [targid]: se.value });
           }
-          e.stopPropagation();
+
           break;
         }
-
         default:
           throw Error(`Unhandled searchH change on id '${target.id}'`);
       }
@@ -925,4 +921,19 @@ export default async function handler(
     default:
       throw Error(`Unhandled searchH event type ${e.type}`);
   }
+}
+
+async function updateStateResults(xthis: Search, state: SearchState) {
+  let results: SearchState['results'] | null = null;
+
+  try {
+    results = await libSwordSearch(xthis, state);
+  } catch (er) {
+    log.error(er);
+  }
+
+  const progress = -1;
+  const progressLabel = '';
+
+  xthis.setState({ ...state, results, progress, progressLabel });
 }

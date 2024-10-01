@@ -11,9 +11,11 @@ import C from '../../../constant.ts';
 import type S from '../../../defaultPrefs.ts';
 import { G } from '../../G.ts';
 import { getElementData } from '../../htmlData.ts';
+import Commands from '../../commands.ts';
 import log from '../../log.ts';
 import { aTextWheelScroll } from './zversekey.ts';
 
+import type { SearchType } from '../../../type.ts';
 import type Atext from './atext.tsx';
 import type { AtextProps, AtextStateType } from './atext.tsx';
 
@@ -194,7 +196,13 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
           searchtext = cleanDoubleClickSelection(searchtext);
           const { module } = this.props as AtextProps;
           if (module && searchtext && !/^\s*$/.test(searchtext)) {
-            G.Commands.search({ module, searchtext, type: 'SearchAnyWord' });
+            const search: SearchType = {
+              module,
+              searchtext,
+              type: 'SearchAnyWord',
+            };
+            if (Build.isElectronApp) G.Commands.search(search);
+            else Commands.setSearchOverlay(search);
           }
         }
       }
