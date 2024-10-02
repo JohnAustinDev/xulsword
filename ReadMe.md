@@ -47,8 +47,8 @@ Modules may be installed from the Internet however.
 
 The build has two parts: a Node.js project and a native libxulsword C++ library.
 
-**Important**: Each time you open a shell to build xulsword, environment variables
-must be set by running `source ./setenv`.
+**Important**: First copy the environment script `cp ./scripts/setenv .`. This script can then be updated with any custom settings.
+Each time you open a shell to build xulsword, environment variables must be set by running `source ./setenv`.
 
 1. Install nvm on Linux, Windows or Mac. On Windows [nvm for Windows](https://github.com/coreybutler/nvm-windows) is recommended.
 2. Use nvm to select Node version 22. On Windows, select the x86 architecture with: `nvm install 22` followed by `nvm use 22` to select it. On Windows, administrator priviledge is required for these steps (subsequent steps do not require admin priviledge).
