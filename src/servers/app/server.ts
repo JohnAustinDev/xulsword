@@ -52,10 +52,7 @@ import type { ManagerStatePref } from '../../clients/app/moduleManager/manager.t
 
 Dirs.init();
 
-completePanelPrefDefaultArrays(
-  (Prefs.getComplexValue('xulsword.panels') as typeof S.prefs.xulsword.panels)
-    .length,
-);
+completePanelPrefDefaultArrays(3);
 
 const logfile = new LocalFile(
   path.join(Dirs.path.LogDir, `xulsword.${Date.now()}.log`),

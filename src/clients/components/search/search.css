@@ -233,7 +233,7 @@ html[dir='rtl'] .resultBox #displayModule {
     align-items: center;
   }
   .bibleBrowser .searchtext {
-    top: -0;
+    top: 0;
   }
   .bibleBrowser  #searchButtonWideScreen {
     display: none;

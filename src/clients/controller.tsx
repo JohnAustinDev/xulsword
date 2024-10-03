@@ -492,6 +492,8 @@ export default async function renderToRoot(
   });
   classes.push('cs-locale');
   classes.push(G.i18n.language);
+  if (frameElement) classes.push('iframe');
+  if (frameElement?.classList.contains('auto-height')) classes.push('auto-height');
   const html = document?.getElementsByTagName('html')[0];
   if (html) {
     html.className = classes.join(' ');

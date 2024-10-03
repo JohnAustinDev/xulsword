@@ -1,0 +1,30 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Bible Browser Parent Site</title>
+    <meta charset="utf-8" />
+    <meta name="MobileOptimized" content="width" />
+    <meta name="HandheldFriendly" content="true" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>window.bibleBrowserIsLoading = true;</script>
+    <style>
+      iframe {
+        width: 100vw;
+        height: 400px;
+      }
+    </style>
+  </head>
+  <body style="margin: 0;">
+
+    <div>
+      <iframe src="http://localhost:1212/bibleBrowser.html"></iframe>
+    </div>
+
+    <div style="background-color: lightgray; height: 50px; width: 100%;"></div>
+
+    <div>
+      <iframe class="auto-height" src="http://localhost:1212/bibleBrowser.html"></iframe>
+    </div>
+
+  </body>
+</html>

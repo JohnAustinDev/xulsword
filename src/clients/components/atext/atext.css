@@ -96,6 +96,11 @@ html[dir='rtl'] .atext .origselect {
   display: flow-root;
   overflow-wrap: anywhere;
 }
+/* for iframes without auto-height, this height must not collapse
+   and also root will become scrollable */
+.iframe:not(.auto-height) .atext.columns1 .sb {
+  flex-basis: 100%;
+}
 .atext.columns1 .sb {
   overflow: auto;
 }

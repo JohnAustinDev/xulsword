@@ -4,16 +4,15 @@
   height: 38px;
 }
 
-.searchOverlay {
-  height: 100%;
+/* The following two rules allow y scrolling of the iframe top div. This
+is neccessary for iframe contents that do not auto-adjust to iframe height. */
+#root:has(.searchOverlay),
+.iframe:not(.auto-height) #reset:has(.atext.columns1) {
+  overflow-y: auto;
 }
-@media (max-width: 767px) {
-  #root:has(.searchOverlay) {
-    overflow-y: auto;
-  }
-  .searchOverlay {
-    height: unset;
-  }
+.searchOverlay,
+.iframe:not(.auto-height) .xulsword:has(.atext.columns1) {
+  height: unset;
 }
 
 #controls {

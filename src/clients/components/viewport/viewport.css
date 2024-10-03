@@ -1,7 +1,7 @@
 .viewport {
   padding: 10px 15px 15px 15px;
   margin: 0px;
-  overflow: hidden;
+  overflow: visible; /* to allow popup to show above viewport */
   background-position: 0px 40px;
   width: 100%;
   position: relative;

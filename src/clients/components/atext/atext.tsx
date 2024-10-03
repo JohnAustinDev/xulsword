@@ -86,6 +86,9 @@ export type AtextStateType = typeof stateWinPrefs &
 // reversion to initial state.
 const windowState: Array<Partial<AtextStateType>> = [];
 
+// iframe's auto-height feature needs to remember original height
+let OriginalHeight: string | null | undefined = null;
+
 // XUL Atext
 class Atext extends React.Component implements RenderPromiseComponent {
   static propTypes: typeof propTypes;
@@ -477,6 +480,45 @@ class Atext extends React.Component implements RenderPromiseComponent {
             }
           }, 1);
         }
+        // ADJUST WEB-APP PARENT IFRAME HEIGHT
+        if (
+          update &&
+          Build.isWebApp &&
+          frameElement &&
+          frameElement.classList.contains('auto-height')
+        ) {
+          if (OriginalHeight === null) {
+            OriginalHeight = (frameElement as HTMLIFrameElement).style.height;
+          }
+          if (
+            sbe &&
+            (G.Prefs.getComplexValue('xulsword') as typeof S.prefs.xulsword)
+              .panels.length === 1
+          ) {
+            const resize = () => {
+              const xsh = document.querySelector('html')?.clientHeight;
+              if (xsh) {
+                // Note: sbe.scrollHeight can be much greater than its content height.
+                const bottom =
+                  sbe.lastElementChild?.getBoundingClientRect().bottom || 0;
+                const top =
+                  sbe.firstElementChild?.getBoundingClientRect().top || 0;
+                const scrollHeight = bottom - top;
+                let h = xsh - sbe.clientHeight + scrollHeight + 100;
+                const isDict =
+                  libswordProps.module &&
+                  G.Tab[libswordProps.module].type === C.DICTIONARY;
+                if (isDict || h < 800) h = 800;
+                (frameElement as HTMLIFrameElement).style.height = `${h}px`;
+              }
+            };
+            const imgs = sbe.querySelectorAll('img');
+            if (imgs.length) imgs.forEach((img) => (img.onload = resize));
+            else resize();
+          } else {
+            (frameElement as HTMLIFrameElement).style.height = OriginalHeight || '';
+          }
+        }
       }
     }
     const d = diff(state, newState);
@@ -578,33 +620,6 @@ class Atext extends React.Component implements RenderPromiseComponent {
         fntable = nbe.firstChild as HTMLElement | null;
         if (!fntable?.innerText && !isDict) nbc.classList.add('noteboxEmpty');
         else nbc.classList.remove('noteboxEmpty');
-
-        // Resize web-app single panel iframes to fit this text.
-        if (
-          sbe &&
-          Build.isWebApp &&
-          frameElement &&
-          (G.Prefs.getComplexValue('xulsword') as typeof S.prefs.xulsword)
-            .panels.length === 1
-        ) {
-          const resize = () => {
-            const xsh = document.querySelector('html')?.clientHeight;
-            if (xsh) {
-              // Note: sbe.scrollHeight can be much greater than its content height.
-              const bottom =
-                sbe.lastElementChild?.getBoundingClientRect().bottom || 0;
-              const top =
-                sbe.firstElementChild?.getBoundingClientRect().top || 0;
-              const scrollHeight = bottom - top;
-              let h = xsh - sbe.clientHeight + scrollHeight + 100;
-              if (isDict || h < 800) h = 800;
-              (frameElement as HTMLIFrameElement).height = `${h}px`;
-            }
-          };
-          const imgs = sbe.querySelectorAll('img');
-          if (imgs.length) imgs.forEach((img) => (img.onload = resize));
-          else resize();
-        }
       }
     }
   }

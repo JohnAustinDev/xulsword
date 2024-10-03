@@ -12,6 +12,7 @@ import { libswordImgSrc, windowArguments } from '../../common.ts';
 import RenderPromise from '../../renderPromise.ts';
 import { topHandle, htmlAttribs, xulPropTypes } from '../libxul/xul.tsx';
 import { Box, Hbox } from '../libxul/boxes.tsx';
+import Button from '../libxul/button.tsx';
 import { getRefBible } from '../atext/zversekey.ts';
 import popupH, { getPopupHTML } from './popupH.ts';
 import '../../libsword.css';
@@ -155,16 +156,13 @@ class Popup extends React.Component implements RenderPromiseComponent {
           y: [],
           x: [],
         };
+
         // Set top border of npopup to the parent element's y location
-        let scrolltop = 0;
-        let test = parent as any;
-        while (test) {
-          if (test.scrollTop) {
-            scrolltop += test.scrollTop;
-            test = null;
-          } else test = test.parentNode;
-        }
-        popup.style.top = `${parent.offsetTop - scrolltop}px`;
+        popup.style.top = '0px';
+        const popupStart = popup.getBoundingClientRect().top;
+        const parentStart = parent.getBoundingClientRect().top;
+        popup.style.top = `${parentStart - popupStart}px`;
+
         // Adjust the popup upward if it would extend beyond the bottom of the text area.
         const margin = 10;
         const box = popup.firstChild as HTMLElement | null;
@@ -209,19 +207,23 @@ class Popup extends React.Component implements RenderPromiseComponent {
         if (!pt.dataset.infokey || pt.dataset.infokey !== infokey) {
           const html = getPopupHTML(data, renderPromise, false);
           if (!renderPromise.waiting()) {
-            pt.dataset.infokey = infokey;
             sanitizeHTML(pt, html);
             libswordImgSrc(pt);
             this.positionPopup(true);
           }
-          const parent = npopup.current.parentNode as HTMLElement | null;
-          if (!isWindow && parent) {
-            if (html || renderPromise.waiting()) {
-              parent.classList.remove('empty');
-            } else parent.classList.add('empty');
-          }
           if (isWindow) this.setTitle();
-          this.positionPopup();
+          else {
+            const parent = npopup.current.parentNode as HTMLElement | null;
+            if (parent) {
+              if (html || renderPromise.waiting()) {
+                parent.classList.remove('empty');
+              } else parent.classList.add('empty');
+            }
+          }
+          if (!renderPromise.waiting()) {
+            this.positionPopup();
+            pt.dataset.infokey = infokey;
+          }
         }
       }
     }
@@ -277,7 +279,6 @@ class Popup extends React.Component implements RenderPromiseComponent {
 
     let boxlocation;
     if (!isWindow) {
-      const maxHeight = window.innerHeight / 2;
       const leftd = drag?.x[0] ? drag.x[1] - drag.x[0] : 0;
       const left = windowArguments('type') === 'search' ? leftd : 'auto';
       let top = gap || 0;
@@ -285,7 +286,6 @@ class Popup extends React.Component implements RenderPromiseComponent {
       boxlocation = {
         marginTop: `${top}px`,
         marginLeft: `${left}px`,
-        maxHeight: `${maxHeight}px`,
       };
     }
 
@@ -324,10 +324,10 @@ class Popup extends React.Component implements RenderPromiseComponent {
           <Hbox pack="start" align="center" className="popupheader">
             {!isWindow && Build.isElectronApp && <div className="towindow" />}
             <div>
-              <a className={
-                `popupCloseLink${elemdata && elemdata.length > 1 ? ' backable' : ''}`
-              }>
-                {GI.i18n.t('', this.renderPromise, 'close')}
+              <a
+                className={`popupCloseLink${elemdata && elemdata.length > 1 ? ' backable' : ''}`}
+              >
+                <Button icon="cross"/>
               </a>
             </div>
             {elemdata && elemdata.length > 1 && (

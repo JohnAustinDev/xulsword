@@ -31,6 +31,9 @@ html[dir='rtl'] .npopup {
   cursor: default;
   resize: both;
 }
+html:not(.popupWin) .npopupTX {
+  max-height: 50vh;
+}
 .npopup.hide .npopupTX {
   opacity: 0;
 }
