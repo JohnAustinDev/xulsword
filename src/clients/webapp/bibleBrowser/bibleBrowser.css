@@ -17,6 +17,8 @@ is neccessary for iframe contents that do not auto-adjust to iframe height. */
 
 #controls {
   display: block;
+  background: white;
+  z-index: 2; /* hide chooser slider */
 }
 #control-rows {
   padding: 0 10px;
