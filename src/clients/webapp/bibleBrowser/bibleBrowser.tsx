@@ -105,6 +105,14 @@ socket.on('connect', () => {
         ...Object.values(C.SupportedTabTypes).map(
           (type) => ['i18n', 't', [type, { lng: locale }]] as any,
         ),
+        ...Object.entries(C.UI.Search.symbol).map((entry) => {
+          const [k] = entry;
+          return ['i18n', 'exists', [k, { lng: locale }]];
+        }),
+        ...Object.entries(C.UI.Search.symbol).map((entry) => {
+          const [k] = entry;
+          return ['i18n', 't', [k, { lng: locale }]];
+        }),
       ]);
       setEmptySettings(settings);
       setGlobalPanels(settings, numPanels);

@@ -48,16 +48,13 @@ export const strongsCSS = {
   added: [] as number[],
 };
 
-export function getLuceneSearchText(
-  searchtext0: string,
-  renderPromise: RenderPromise,
-) {
+export function getLuceneSearchText(searchtext0: string) {
   let searchtext = searchtext0;
   Object.entries(C.UI.Search.symbol).forEach((entry) => {
     const [k, [uiVal, luceneVal]] = entry;
     let uiVal2 = uiVal;
-    if (GI.i18n.exists(false, renderPromise, k)) {
-      const kv = GI.i18n.t('', renderPromise, k);
+    if (G.i18n.exists(k)) {
+      const kv = G.i18n.t(k);
       if (!/^\s*$/.test(kv)) uiVal2 = kv;
     }
     searchtext = searchtext.replace(
@@ -168,7 +165,7 @@ export async function search(xthis: Search): Promise<boolean> {
 
   // Replace UI search symbols with Clucene recognized search symbols,
   // and prepare the query string according to search type.
-  let searchtextLS = getLuceneSearchText(state.searchtext, renderPromise);
+  let searchtextLS = getLuceneSearchText(state.searchtext);
 
   let libSwordSearchType = libSwordSearchTypes.REGEX;
   if (GI.LibSword.luceneEnabled(true, renderPromise, module)) {
@@ -474,7 +471,7 @@ export function formatResult(
           lastChild,
           markSearchMatches(
             lastChild.innerHTML,
-            getSearchMatches(searchtext, searchtype, renderPromise),
+            getSearchMatches(searchtext, searchtype),
           ),
         );
       }
@@ -517,10 +514,9 @@ function markSearchMatches(
 function getSearchMatches(
   searchtext: string,
   searchtype: SearchState['searchtype'],
-  renderPromise: RenderPromise,
 ) {
   let matches: SearchMatchType[] = [];
-  let t = getLuceneSearchText(searchtext, renderPromise);
+  let t = getLuceneSearchText(searchtext);
   switch (searchtype) {
     case 'SearchAnyWord':
     case 'SearchSimilar':
@@ -631,7 +627,7 @@ export async function lexicon(
     lexdiv,
     markSearchMatches(
       results.lexhtml,
-      getSearchMatches(searchtext, searchtype, renderPromise),
+      getSearchMatches(searchtext, searchtype),
     ),
   );
 
@@ -795,7 +791,8 @@ export default async function handler(this: Search, e: React.SyntheticEvent) {
           });
           break;
         }
-        case 'searchButton': {
+        case 'searchButtonWideScreen':
+        case 'searchButtonNarrowScreen': {
           search(this).catch((er) => {
             log.error(er);
           });

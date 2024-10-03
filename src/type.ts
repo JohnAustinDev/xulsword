@@ -1104,7 +1104,7 @@ export const GBuilder: GType & {
     getGenBookChapterText: CACHEfunc as any,
     getGenBookTableOfContents: CACHEfunc as any,
     search: CACHEfunc as any,
-    luceneEnabled: func as any,
+    luceneEnabled: (Build.isElectronApp ? func : CACHEfunc) as any,
     startBackgroundSearchIndexer: func as any,
     searchIndexDelete: func as any,
     searchIndexCancel: func as any,

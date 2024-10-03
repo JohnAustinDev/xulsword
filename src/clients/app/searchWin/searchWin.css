@@ -1,33 +1,3 @@
 .searchWin {
   height: 100%;
 }
-
-.search-type,
-#searchtype,
-#scoperadio {
-  height: 100%;
-}
-
-.searchType > div:nth-child(2) {
-  height: calc(100% + 10px);
-}
-
-.searchType > div:nth-child(3) {
-  height: 100%;
-}
-
-.result-container,
-.result-container > div,
-.result-container > div > div {
-  overflow: hidden;
-}
-
-#lexiconResults {
-  overflow-x: auto;
-  overflow-y: hidden;
-}
-
-#searchResults {
-  overflow-x: auto;
-  overflow-y: auto;
-}

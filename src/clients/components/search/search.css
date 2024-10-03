@@ -1,13 +1,12 @@
-.searchwin {
-  height: 100%;
+.search {
   padding: 10px;
 }
-
+.search-grid {
+  position:relative;
+  gap: 10px 10px;
+}
 .search-grid .groupbox {
   margin: 0 0 0 0;
-}
-.search-grid {
-  gap: 10px 10px;
 }
 .search-grid.less .grid-row-cell:not(:first-of-type) {
   height: 0px;
@@ -22,36 +21,62 @@
 #scopeselect select {
   width: 100%;
 }
-.searchType,
-#searchtype,
-#scoperadio {
-  height: 100%;
+.bibleBrowser #searchTextGroup {
+  padding: 25px;
 }
-
 .searchtext {
   position: relative;
   top: -15px;
+}
+.bibleBrowser .searchtext {
+  top: -22px;
 }
 .searchtext > div {
   width: 100%;
   margin: 0;
 }
 .searchtextLabel {
-  margin-inline-end: 10px;
+  margin-inline-end: 5px;
+  margin-inline-start: 10px;
 }
 .searchtext > .modulemenu {
   position: absolute;
   top: 37px;
 }
+.bibleBrowser .searchtext > .modulemenu {
+  top: 50px;
+}
 .searchtext > .modulemenu select {
   width: 100%;
 }
 
-#searchButton {
+#searchButtonWideScreen {
   margin-inline-start: 10px;
 }
+#searchButtonNarrowScreen {
+  display: none;
+}
 
-.searchType > div:nth-child(2) {
+#helpButton.open {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 9;
+}
+#helpButton.open .bp5-button {
+  align-items: start;
+  height: fit-content;
+}
+#helpButton.open .bp5-button-text {
+  margin: 25px -9px -4px -33px;
+}
+
+.search-type,
+#searchtype,
+#scoperadio {
+  height: 100%;
+}
+.search-type > div:nth-child(2) {
   top: -5px;
   left: -5px;
   width: calc(100% + 10px);
@@ -62,7 +87,7 @@
   box-shadow: 6px 7px 5px 0px #6c5172;
   opacity: 0.8;
 }
-.searchType > div:nth-child(3) {
+.search-type > div:nth-child(3) {
   width: 100%;
   height: 100%;
 }
@@ -80,6 +105,7 @@
   margin: 5px;
 }
 .resultBox {
+  flex-basis: 0;
   border: 2px solid rgb(200, 170, 205);
   border-radius: 4px;
   background: white;
@@ -88,53 +114,23 @@
 .resultBox > div {
   padding: 5px;
 }
-.resultBox .modulemenu {
+.resultBox #displayModule {
   float: right;
   margin: 0 5px 5px 5px;
 }
-html[dir='rtl'] .resultBox .modulemenu {
+html[dir='rtl'] .resultBox #displayModule {
   float: left;
 }
-
-#searchResults {
-  overflow-x: auto;
-  overflow-y: auto;
-}
-
-.searchStatus {
-  flex-basis: 2em;
-}
-.searchStatus span {
-  white-space: nowrap;
-}
-.searchStatus > div {
-  margin: 0 10px;
-}
-.searchStatus .bp5-progress-bar {
-  margin-inline-start: 5px;
-  width: 200px;
-}
-
 .resultBox .npopup {
   padding-inline-start: 50px;
   padding-inline-end: 100px;
 }
-.searchwin .npopupTX {
+.resultBox .npopupTX {
   background: rgb(248, 232, 255);
-}
-
-/* Lexicon Results */
-#lexiconResults {
-  overflow-x: auto;
-  overflow-y: hidden;
-}
-#lexiconResults .sn {
-  color: blue;
-  text-decoration: underline;
 }
 .resultBox > div:first-child {
   padding-inline-start: calc(5em + 5px);
-  overflow-y: auto;
+  /* overflow-y: auto; */
   max-height: 25%;
 }
 .resultBox .spacer {
@@ -143,28 +139,33 @@ html[dir='rtl'] .resultBox .modulemenu {
   margin: 0 10px 10px 10px;
   padding: 0;
 }
-.resultBox .lexlist {
+#lexiconResults {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+#lexiconResults .lexlist {
   text-indent: -5em;
   margin: 2px 2px 5px 2px;
 }
-.resultBox .lexlist a {
+#lexiconResults .lexlist a {
   color: blue;
   font-size: inherit;
   position: relative;
   text-decoration: underline;
   cursor: pointer;
 }
-
-/* Search Results */
-.resultBox #searchResults {
-  flex-basis: 0;
-  flex-grow: 1;
+#lexiconResults .sn {
+  color: blue;
+  text-decoration: underline;
 }
-.resultBox .searchterm {
+#searchResults {
+  overflow-y: auto;
+}
+#searchResults .searchterm {
   color: red;
 }
 /* This rule is dynamically copied by Javascript */
-.matchingStrongs {
+.resultBox .matchingStrongs {
   color: red;
 }
 .resultBox .slist {
@@ -190,12 +191,94 @@ html[dir='rtl'] .resultBox .modulemenu {
   padding-left: 4px;
   padding-right: 4px;
 }
-
 .resultBox a.sn span {
   text-decoration: underline;
+}
+
+.searchStatus {
+  flex-basis: 2em;
+}
+.searchStatus span {
+  white-space: nowrap;
+}
+.searchStatus > div {
+  margin: 0 10px;
+}
+.searchStatus .bp5-progress-bar {
+  margin-inline-start: 5px;
+  width: 200px;
 }
 
 /* PRINTING STYLES */
 .printContainer * {
   text-decoration: unset !important;
+}
+
+@media (max-width: 767px) {
+  .bibleBrowser .xsinput {
+    margin-right: 0px;
+    margin-left: 0px;
+  }
+  .bibleBrowser .search-grid {
+    width: 100vw;
+    grid-template-columns: unset !important;
+  }
+  .bibleBrowser .search-grid > div {
+    grid-area: auto / 1 / auto / 3 !important;
+  }
+  .bibleBrowser #searchTextGroup {
+    padding: 10px;
+  }
+  .bibleBrowser #searchTextGroup > .box {
+    align-items: center;
+  }
+  .bibleBrowser .searchtext {
+    top: -0;
+  }
+  .bibleBrowser  #searchButtonWideScreen {
+    display: none;
+  }
+  .bibleBrowser  #searchButtonNarrowScreen {
+    display: flex;
+  }
+  .bibleBrowser  #searchButtonNarrowScreen .button-box,
+  .bibleBrowser  #searchButtonNarrowScreen button {
+    width: 100%;
+  }
+  .bibleBrowser .searchtext {
+    margin: 0px 10px;
+  }
+  .bibleBrowser .searchtext > .modulemenu {
+    position: unset;
+    top: unset;
+  }
+  .bibleBrowser .searchtext > div:not(:first-child) {
+    margin-top: 10px;
+  }
+  .bibleBrowser .searchtextLabel {
+    display: none;
+  }
+  .bibleBrowser  .search-grid > .grid-row-cell:nth-of-type(2) .groupbox {
+    min-width: unset;
+    width: 100%;
+  }
+  .bibleBrowser #scoperadio .grid {
+    grid-template-columns: unset !important;
+  }
+  .bibleBrowser #scoperadio .grid > div:last-child {
+    width: 40%;
+  }
+  .bibleBrowser #scoperadio .label {
+    white-space: unset;
+  }
+  .bibleBrowser .resultBox .npopup {
+    padding-inline-start: unset;
+    padding-inline-end: unset;
+  }
+}
+
+@media (max-width: 300px) {
+  .bibleBrowser #moreLess {
+    display: none;
+  }
 }

@@ -587,7 +587,6 @@ export default class Xulsword
       <Vbox
         {...addClass('xulsword', props)}
         pack="start"
-        height="100%"
         {...topHandle(
           'onClick',
           () => {

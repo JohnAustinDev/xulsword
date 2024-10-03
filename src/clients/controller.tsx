@@ -389,6 +389,7 @@ function Controller(props: ControllerProps) {
     return (
       <>
         <Button
+          id="closeSearchButton"
           icon="cross"
           onClick={() => Commands.setSearchOverlay(null)}
         />
@@ -397,8 +398,6 @@ function Controller(props: ControllerProps) {
           key={s.reset[0]}
           initialState={s.showSearchOverlay[0]}
           onlyLucene
-          width="100%"
-          height="100%"
         />
       </>
     );

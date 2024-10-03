@@ -1,0 +1,35 @@
+.xulswordWin {
+  overflow: hidden;
+}
+.xulswordWin .bp5-portal .dialog-body {
+  padding: 0 20px;
+}
+.xulswordWin .controlbar .start-spacer {
+  width: 15px;
+}
+.xulswordWin .bp5-button {
+  min-height: unset;
+}
+.xulswordWin #closeplayer {
+  margin-inline-start: 10px !important;
+}
+.xulswordWin .controlbar .button,
+.xulswordWin .controlbar .button > div,
+.xulswordWin .controlbar button {
+  width: 100%;
+}
+.xulswordWin .controlbar .textbox {
+  font-size: 15px;
+}
+.xulswordWin .controlbar #search-tool .vbox > div {
+  width: 100%;
+}
+.xulswordWin .controlbar #historymenu {
+  position: relative;
+}
+.xulswordWin .controlbar #book,
+.xulswordWin .controlbar #chapter,
+.xulswordWin .controlbar #verse {
+  margin-top: 0;
+  margin-bottom: 2px;
+}

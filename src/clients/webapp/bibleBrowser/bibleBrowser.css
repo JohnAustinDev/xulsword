@@ -1,3 +1,21 @@
+.bibleBrowser .xsinput,
+.bibleBrowser .button-box,
+.bibleBrowser button {
+  height: 38px;
+}
+
+.searchOverlay {
+  height: 100%;
+}
+@media (max-width: 767px) {
+  #root:has(.searchOverlay) {
+    overflow-y: auto;
+  }
+  .searchOverlay {
+    height: unset;
+  }
+}
+
 #controls {
   display: block;
 }
@@ -20,7 +38,6 @@
 #historyButtons .button,
 #historyButtons button {
   width: 100%;
-  height: 38px;
 }
 #historyButtons > .box {
   max-width: 150px;
@@ -41,7 +58,6 @@
 }
 #main-controlbar .xsinput,
 #main-controlbar button {
-  height: 38px;
   border-radius: 0;
 }
 #genbknav .menulist,
@@ -74,7 +90,7 @@
 #genbknav,
 .open-chooser,
 .close-chooser,
-#textnav .vk-vkmod,
+#textnav .mod-select,
 /* don't show text pin without multiple texts */
 .textrow:not(:has(.atext:nth-child(2))) .text-pin,
 /* genbknav shouldn't show single-option selects */
@@ -89,6 +105,15 @@
 
 .cs-OSMHB .sn {
   text-decoration: none;
+}
+
+#closeSearchButton {
+  position: absolute;
+  z-index: 8;
+  margin: 0;
+  padding: 10px;
+  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 0.5);
 }
 
 @media (max-width: 767px) {

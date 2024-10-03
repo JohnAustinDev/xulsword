@@ -66,8 +66,8 @@ export function component(
   return null;
 }
 
-// Read the window's given argument ID and use it to retrieve a property
-// value from the window's Data.
+// Get this window's descriptor object and either retrieve the value of one of
+// its additionalArguments, or return the entire descriptor object.
 export function windowArguments(prop?: undefined): WindowDescriptorPrefType;
 export function windowArguments(prop: string): PrefValue;
 export function windowArguments(
@@ -83,7 +83,11 @@ export function windowArguments(
       }
     } else return data;
   }
-  return prop ? undefined : { type: 'xulsword', id: 1 };
+  const defval = Build.isElectronApp
+    ? { type: 'xulswordWin', id: 1 }
+    : { type: '', id: 0 };
+
+  return prop ? undefined : defval;
 }
 
 // Read libsword data-src attribute file URLs and convert them into src inline data.

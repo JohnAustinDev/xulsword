@@ -57,12 +57,15 @@ export function GCallsOrPromise(
   );
 }
 
-// A render promise is associated with a React component. When rendering of that
-// component requires data that is not available in the cache, a call for that data
-// is added to the component's render promise. Render promises from all components
-// are periodically processed, all at the same time. A batch of required data is
-// requested from the server and each component is guaranteed to be re-rendered at
-// least once after all its required data is available.
+// A RenderPromise is associated with a React component or a callback function.
+// A RenderPromise promises to re-render the component, or call the callback,
+// each time the RenderPromise's calls are resolved. When data is required that
+// is not available in the cache, a call for that data is then added to the
+// RenderPromise, which must be, at some point, dispatched. At scheduled times,
+// all dispatched RenderPromises are periodically processed at the same time.
+// A batch of required data is requested from the server and each component is
+// guaranteed to be re-rendered, or each callback called, at least once, after
+// its RenderPromise data becomes available.
 export default class RenderPromise {
   component: React.Component | null;
 
@@ -70,16 +73,16 @@ export default class RenderPromise {
 
   calls: GCallType[];
 
+  dispatchedUnresolvedCalls: GCallType[];
+
   static batchDispatch() {
     const renderPromises = RenderPromise.getGlobalRenderPromises();
     if (renderPromises.length) {
       const rpdispatch = renderPromises.map((rp) => {
-        const resolve = rp.component || rp.callback || (() => {});
-        const nrp = new RenderPromise(resolve);
+        const nrp = new RenderPromise(rp.component || rp.callback || (() => {}));
+        rp.dispatchedUnresolvedCalls.push(...rp.calls);
         nrp.calls = rp.calls;
         rp.calls = [];
-        nrp.callback = rp.callback;
-        rp.callback = null;
         return nrp;
       });
       RenderPromise.setGlobalRenderPromises([]);
@@ -98,18 +101,28 @@ export default class RenderPromise {
       callBatchThenCache(flatPrune(nextBatch))
         .then((doWait) => {
           if (!doWait) {
+            const resolveRP = (originalRP: RenderPromise, resolvedRP: RenderPromise) => {
+              resolvedRP.calls.forEach((call: GCallType) => {
+                const { dispatchedUnresolvedCalls } = originalRP;
+                const index = dispatchedUnresolvedCalls.indexOf(call);
+                if (index !== -1) dispatchedUnresolvedCalls.splice(index, 1);
+                else log.error(`Failed to remove dispatched call: ${JSON_stringify(call)}`);
+              });
+            }
             const done: Array<React.Component | (() => void)> = [];
-            rpdispatch.forEach((rp) => {
+            rpdispatch.forEach((rp, i) => {
               const { component, callback } = rp;
               if (component && !done.includes(component)) {
                 done.push(component);
                 component.setState({
                   renderPromiseID: Math.random(),
                 } as RenderPromiseState);
+                resolveRP(renderPromises[i], rp);
               }
               if (callback && !done.includes(callback)) {
                 done.push(callback);
                 callback();
+                resolveRP(renderPromises[i], rp);
               }
             });
           } else {
@@ -145,6 +158,7 @@ export default class RenderPromise {
     this.component = null;
     this.callback = null;
     this.calls = [];
+    this.dispatchedUnresolvedCalls = [];
 
     if (typeof componentOrCallback === 'function') {
       this.callback = componentOrCallback;
@@ -153,8 +167,8 @@ export default class RenderPromise {
     }
   }
 
-  waiting(): boolean {
-    return !!this.calls.length;
+  waiting(): number {
+    return this.calls.length + this.dispatchedUnresolvedCalls.length;
   }
 
   dispatch() {

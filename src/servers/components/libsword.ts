@@ -580,7 +580,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
           // not exist in the module, SWORD may crash!
           // NOTE: This libxulsword function is not a Node-API async function, so
           // it will block Node's event loop until it finishes.
-          this.newSearchCount= this.libxulsword.Search(
+          this.newSearchCount = this.libxulsword.Search(
             modname,
             srchstr,
             scope,

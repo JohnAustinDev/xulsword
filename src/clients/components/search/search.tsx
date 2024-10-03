@@ -235,12 +235,14 @@ export default class Search
     );
     // React StrictMode causes components to be mounted twice, but we don't
     // want the search chain running twice.
-    if (module)
+    if (module) {
       delayHandler.bind(this)(
         () => search(this).catch((er) => log.error(er)),
         50,
         'afterMountSearch',
       )();
+    }
+    renderPromise.dispatch();
   }
 
   componentDidUpdate(_prevProps: any, prevState: SearchState) {
@@ -304,20 +306,19 @@ export default class Search
     if (!displayModule || !results) {
       sanitizeHTML(res, '');
     } else if (res.dataset.resultsHtml !== resultsHtml) {
-      if (!renderPromise.waiting()) res.dataset.resultsHtml = resultsHtml;
       // build a page from results, module and pageindex
       if (isStrongsModule && searchtext.includes('lemma:')) {
         hilightStrongs(searchtext.match(/lemma:\s*\S+/g));
       }
       sanitizeHTML(res, results.html);
       formatResult(res, state, renderPromise);
+      if (!renderPromise.waiting()) res.dataset.resultsHtml = resultsHtml;
     }
 
     const lex = lexref !== null ? lexref.current : null;
     const lexiconHtml = stringHash(searching);
-    if (progress === -1 && res.dataset.lexiconHtml !== lexiconHtml) {
-      if (!renderPromise.waiting()) res.dataset.lexiconHtml = lexiconHtml;
 
+    if (progress === -1 && res.dataset.lexiconHtml !== lexiconHtml) {
       // clear dynamic CSS
       strongsCSS.added.forEach((r) => {
         if (r < strongsCSS.sheet.cssRules.length) {
@@ -336,6 +337,7 @@ export default class Search
           });
         }
       }
+      if (!renderPromise.waiting()) res.dataset.lexiconHtml = lexiconHtml;
     }
   }
 
@@ -477,7 +479,7 @@ export default class Search
             </Columns>
             <Rows>
               <Row>
-                <Groupbox orient="horizontal" align="stretch">
+                <Groupbox id="searchTextGroup" orient="horizontal" align="stretch">
                   <Button id="moreLess" onClick={handler}>
                     {!moreLess && (
                       <Label
@@ -506,9 +508,17 @@ export default class Search
                       onChange={handler}
                     />
                     <ModuleMenu id="module" value={module} onChange={handler} />
+                    <Button
+                      id="searchButtonNarrowScreen"
+                      icon="search"
+                      disabled={progress !== -1 || !module}
+                      onClick={handler}
+                    >
+                      {GI.i18n.t('', renderPromise, 'menu.search')}
+                    </Button>
                   </Vbox>
                   <Button
-                    id="searchButton"
+                    id="searchButtonWideScreen"
                     icon="search"
                     disabled={progress !== -1 || !module}
                     onClick={handler}

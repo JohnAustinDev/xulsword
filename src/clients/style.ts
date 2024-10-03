@@ -242,5 +242,6 @@ export default class DynamicStyleSheet {
 
       log.silly('Stylesheet: ', sheet);
     }
+    renderPromise.dispatch();
   }
 }
