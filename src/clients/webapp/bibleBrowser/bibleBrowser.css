@@ -20,7 +20,6 @@
 
 #controls {
   display: block;
-  background: white;
   z-index: 2; /* hide chooser slider */
 }
 #control-rows {
