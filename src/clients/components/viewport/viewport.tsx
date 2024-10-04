@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import C from '../../../constant.ts';
-import { getPanelWidths, stringHash } from '../../../common.ts';
+import { getPanelWidths, ofClass, stringHash } from '../../../common.ts';
 import Popup from '../popup/popup.tsx';
 import {
   popupParentHandler as popupParentHandlerH,
@@ -356,9 +356,7 @@ class Viewport extends React.Component implements PopupParent {
           tabsi ? [...tabsi] : 'none',
           ilModules[i],
           mtModules[i],
-          Math.round(
-            atextRefs[i].current?.sbref.current?.offsetWidth || 0,
-          ),
+          Math.round(atextRefs[i].current?.sbref.current?.offsetWidth || 0),
         );
         if (!tabsi) return <Hbox key={key} style={{ width }} />;
         return (
@@ -462,15 +460,17 @@ class Viewport extends React.Component implements PopupParent {
           />
         )}
 
-        <Vbox className={[
-              'textarea',
-              tabrowElements.filter(Boolean).length > 1
-                ? 'multi-panel'
-                : 'single-panel',
-            ].join(' ')} flex="1" onKeyDown={eHandler}>
-          <div className="tabrow">
-            {tabrowElements}
-          </div>
+        <Vbox
+          className={[
+            'textarea',
+            tabrowElements.filter(Boolean).length > 1
+              ? 'multi-panel'
+              : 'single-panel',
+          ].join(' ')}
+          flex="1"
+          onKeyDown={eHandler}
+        >
+          <div className="tabrow">{tabrowElements}</div>
 
           <Hbox className="textrow userFontBase" flex="1">
             {popupParent &&
@@ -501,6 +501,19 @@ Viewport.propTypes = propTypes;
 
 export default Viewport;
 
-export function audioHandler(audio?: VerseKeyAudioFile | GenBookAudioFile) {
-  if (audio) Commands.playAudio(audio);
+export function audioHandler(
+  audioFile: VerseKeyAudioFile | GenBookAudioFile,
+  e: React.SyntheticEvent,
+) {
+  const atextClick = !!ofClass(['textarea'], e.target)?.element;
+  const prevAudio = G.Prefs.getComplexValue(
+    'xulsword.audio',
+  ) as typeof S.prefs.xulsword.audio;
+  if (audioFile && (!atextClick || !prevAudio.open)) Commands.playAudio(audioFile);
+  if (!audioFile || (atextClick && prevAudio.open)) {
+    G.Prefs.setBoolPref(
+      'xulsword.audio.open',
+      false,
+    ) as typeof S.prefs.xulsword.audio.open;
+  }
 }

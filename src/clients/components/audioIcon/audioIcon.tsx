@@ -15,7 +15,10 @@ export default function audioIcon(
   module: string,
   bookOrKey: OSISBookType | string,
   chapter: number | undefined,
-  audioHandler: (audio: VerseKeyAudioFile | GenBookAudioFile) => void,
+  audioHandler: (
+    audio: VerseKeyAudioFile | GenBookAudioFile,
+    e: React.SyntheticEvent,
+  ) => void,
   renderPromise: RenderPromise,
 ): JSX.Element | null {
   let afile: VerseKeyAudioFile | GenBookAudioFile | null = null;
@@ -29,7 +32,7 @@ export default function audioIcon(
     const handler = ((ax: VerseKeyAudioFile | GenBookAudioFile) => {
       return (e: React.SyntheticEvent) => {
         e.stopPropagation();
-        audioHandler(ax);
+        audioHandler(ax, e);
       };
     })(afile);
     return (
