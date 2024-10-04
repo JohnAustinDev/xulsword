@@ -46,10 +46,22 @@ export default function handler(this: Chooser, es: React.SyntheticEvent): void {
         }
 
         case 'bookgroupitem': {
-          const { mouseScroll } = this;
-          if (e.clientY < mouseScroll.top) this.startSlidingDown(e, 65);
-          else if (e.clientY > mouseScroll.bottom) this.startSlidingUp(e, 65);
-          else this.stopSliding();
+          const bookList = document.querySelector('.book-list');
+          if (bookList) {
+            if (
+              e.clientY <
+              bookList.getBoundingClientRect().top +
+                C.UI.Chooser.mouseScrollMargin
+            )
+              this.startSlidingDown(e, 65);
+            else if (
+              e.clientY >
+              bookList.getBoundingClientRect().bottom -
+                C.UI.Chooser.mouseScrollMargin
+            )
+              this.startSlidingUp(e, 65);
+            else this.stopSliding();
+          }
           break;
         }
 

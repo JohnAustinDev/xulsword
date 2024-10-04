@@ -79,8 +79,6 @@ class Chooser extends React.Component implements RenderPromiseComponent {
 
   rowRef: React.RefObject<HTMLDivElement>;
 
-  mouseScroll: { top: number; bottom: number };
-
   rowHeight: number;
 
   handler: (e: React.SyntheticEvent) => void;
@@ -119,7 +117,6 @@ class Chooser extends React.Component implements RenderPromiseComponent {
     });
 
     this.rowHeight = 0;
-    this.mouseScroll = { top: 0, bottom: 0 };
     this.containerRef = React.createRef();
     this.sliderRef = React.createRef();
     this.rowRef = React.createRef();
@@ -138,15 +135,9 @@ class Chooser extends React.Component implements RenderPromiseComponent {
   }
 
   componentDidMount() {
-    const { containerRef, rowRef, renderPromise } = this;
-    const container = containerRef?.current;
+    const { rowRef, renderPromise } = this;
     const row = rowRef?.current;
-    if (container && row) {
-      const b = container.getBoundingClientRect();
-      this.mouseScroll = {
-        top: b.top + C.UI.Chooser.mouseScrollMargin,
-        bottom: b.bottom - C.UI.Chooser.mouseScrollMargin,
-      };
+    if (row) {
       this.rowHeight = row.clientHeight - 2;
     }
     renderPromise.dispatch();

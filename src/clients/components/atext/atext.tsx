@@ -15,6 +15,7 @@ import log from '../../log.ts';
 import {
   clearPending,
   getMaxChapter,
+  iframeAutoHeight,
   libswordImgSrc,
   scrollIntoView,
 } from '../../common.ts';
@@ -85,9 +86,6 @@ export type AtextStateType = typeof stateWinPrefs &
 // and in Prefs, so that a component reset or program restart won't cause
 // reversion to initial state.
 const windowState: Array<Partial<AtextStateType>> = [];
-
-// iframe's auto-height feature needs to remember original height
-let OriginalHeight: string | null | undefined = null;
 
 // XUL Atext
 class Atext extends React.Component implements RenderPromiseComponent {
@@ -481,43 +479,15 @@ class Atext extends React.Component implements RenderPromiseComponent {
           }, 1);
         }
         // ADJUST WEB-APP PARENT IFRAME HEIGHT
-        if (
-          update &&
-          Build.isWebApp &&
-          frameElement &&
-          frameElement.classList.contains('auto-height')
-        ) {
-          if (OriginalHeight === null) {
-            OriginalHeight = (frameElement as HTMLIFrameElement).style.height;
-          }
-          if (
-            sbe &&
+        if (update && sbe) {
+          const isDict =
+            libswordProps.module &&
+            G.Tab[libswordProps.module].type === C.DICTIONARY;
+          const clear =
+            isDict ||
             (G.Prefs.getComplexValue('xulsword') as typeof S.prefs.xulsword)
-              .panels.length === 1
-          ) {
-            const resize = () => {
-              const xsh = document.querySelector('html')?.clientHeight;
-              if (xsh) {
-                // Note: sbe.scrollHeight can be much greater than its content height.
-                const bottom =
-                  sbe.lastElementChild?.getBoundingClientRect().bottom || 0;
-                const top =
-                  sbe.firstElementChild?.getBoundingClientRect().top || 0;
-                const scrollHeight = bottom - top;
-                let h = xsh - sbe.clientHeight + scrollHeight + 100;
-                const isDict =
-                  libswordProps.module &&
-                  G.Tab[libswordProps.module].type === C.DICTIONARY;
-                if (isDict || h < 800) h = 800;
-                (frameElement as HTMLIFrameElement).style.height = `${h}px`;
-              }
-            };
-            const imgs = sbe.querySelectorAll('img');
-            if (imgs.length) imgs.forEach((img) => (img.onload = resize));
-            else resize();
-          } else {
-            (frameElement as HTMLIFrameElement).style.height = OriginalHeight || '';
-          }
+              .panels.length !== 1;
+          iframeAutoHeight('.xulsword', clear, sbe);
         }
       }
     }

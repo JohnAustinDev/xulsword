@@ -324,11 +324,11 @@ class Popup extends React.Component implements RenderPromiseComponent {
           <Hbox pack="start" align="center" className="popupheader">
             {!isWindow && Build.isElectronApp && <div className="towindow" />}
             <div>
-              <a
+              <div
                 className={`popupCloseLink${elemdata && elemdata.length > 1 ? ' backable' : ''}`}
               >
                 <Button icon="cross"/>
-              </a>
+              </div>
             </div>
             {elemdata && elemdata.length > 1 && (
               <div>

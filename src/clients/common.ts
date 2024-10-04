@@ -188,6 +188,38 @@ export function audioConfig(module?: string): SwordConfType | undefined {
   return audioConf;
 }
 
+// Change an auto-height iframe's height to match the height of a selected
+// div. If elem is provided, any images it contains will be loaded before
+// the height is changed. If clear is set then any height value previously
+// placed set on the iframe is removed.
+let OriginalHeight: string | null | undefined = null;
+export function iframeAutoHeight(selector: string, clear?: boolean, elem?: HTMLElement) {
+  if (
+    Build.isWebApp &&
+    frameElement &&
+    frameElement.classList.contains('auto-height')
+  ) {
+    if (OriginalHeight === null) {
+      OriginalHeight = (frameElement as HTMLIFrameElement).style.height;
+    }
+    if (!clear) {
+      const so = document.querySelector(selector);
+      const resize = () => {
+        if (so) {
+          (frameElement as HTMLIFrameElement).style.height = `${so.clientHeight}px`;
+        }
+      };
+      if (elem) {
+        const imgs = elem.querySelectorAll('img');
+        if (imgs.length) imgs.forEach((img) => (img.onload = resize));
+      }
+      resize();
+    } else {
+      (frameElement as HTMLIFrameElement).style.height = OriginalHeight || '';
+    }
+  }
+}
+
 // Return an audio file for the given VerseKey module, book and chapter,
 // or null if there isn't one.
 export function verseKeyAudioFile(

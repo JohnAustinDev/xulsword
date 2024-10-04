@@ -17,6 +17,7 @@ import RenderPromise from '../../renderPromise.ts';
 import log from '../../log.ts';
 import {
   i18nApplyOpts,
+  iframeAutoHeight,
   moduleIncludesStrongs,
   windowArguments,
 } from '../../common.ts';
@@ -284,6 +285,7 @@ export default class Search
     }
 
     this.updateResults();
+    iframeAutoHeight('.searchOverlay'); // searchOverlay height is not constrained
     renderPromise.dispatch();
   }
 
@@ -655,6 +657,7 @@ export default class Search
           <Hbox flex="1">
             <Vbox
               className="resultBox"
+              pack="start"
               flex="1"
               data-context={displayModule}
               onMouseOut={popupParentHandler}

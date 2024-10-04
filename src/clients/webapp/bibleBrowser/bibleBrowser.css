@@ -4,14 +4,17 @@
   height: 38px;
 }
 
-/* The following two rules allow y scrolling of the iframe top div. This
-is neccessary for iframe contents that do not auto-adjust to iframe height. */
-#root:has(.searchOverlay),
-.iframe:not(.auto-height) #reset:has(.atext.columns1) {
+/* The following rules control y scrolling of an iframe's top div. */
+.iframe #root:has(.searchOverlay),
+.iframe #reset:has(.atext.columns1) {
   overflow-y: auto;
 }
-.searchOverlay,
-.iframe:not(.auto-height) .xulsword:has(.atext.columns1) {
+.auto-height.iframe #root:has(.searchOverlay),
+.auto-height.iframe #reset:has(.atext.columns1) {
+  overflow-y: hidden;
+}
+.iframe .searchOverlay,
+.iframe .xulsword:has(.atext.columns1) {
   height: unset;
 }
 
@@ -113,8 +116,6 @@ is neccessary for iframe contents that do not auto-adjust to iframe height. */
   z-index: 8;
   margin: 0;
   padding: 10px;
-  border-radius: 8px;
-  background-color: rgba(255, 255, 255, 0.5);
 }
 
 @media (max-width: 767px) {

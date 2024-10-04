@@ -130,7 +130,9 @@ html[dir='rtl'] .resultBox #displayModule {
 }
 .resultBox > div:first-child {
   padding-inline-start: calc(5em + 5px);
-  /* overflow-y: auto; */
+}
+html:not(.iframe) .resultBox > div:first-child {
+  overflow-y: auto;
   max-height: 25%;
 }
 .resultBox .spacer {

@@ -3,7 +3,6 @@
 }
 .button .button-box {
   position: relative; /* For Menulist */
-  background-color: white;
   width: fit-content;
   height: fit-content;
 }
