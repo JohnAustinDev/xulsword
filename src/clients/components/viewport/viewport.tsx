@@ -343,6 +343,91 @@ class Viewport extends React.Component implements PopupParent {
     let cls = '';
     if (ownWindow) cls += ' ownWindow';
 
+    const tabrowElements = panels.map((_p: string | null, i: number) => {
+      const tabWidth = tabWidths[i];
+      if (tabWidth) {
+        const width = `${100 * (tabWidth / numPanels)}%`;
+        const tabsi = tabs[i];
+        const key = stringHash(
+          i,
+          reset,
+          isPinned[i],
+          tabWidth,
+          tabsi ? [...tabsi] : 'none',
+          ilModules[i],
+          mtModules[i],
+          Math.round(
+            atextRefs[i].current?.sbref.current?.offsetWidth || 0,
+          ),
+        );
+        if (!tabsi) return <Hbox key={key} style={{ width }} />;
+        return (
+          <Tabs
+            key={key}
+            style={{ width }}
+            panelIndex={i}
+            isPinned={isPinned[i]}
+            module={panels[i]}
+            tabs={tabsi}
+            ilModule={ilModules[i]}
+            ilModuleOption={ilModuleOptions[i]}
+            mtModule={mtModules[i]}
+            xulswordState={xulswordStateHandler}
+          />
+        );
+      }
+      return null;
+    });
+
+    const panelElements = panels.map((panel: string | null, i: number) => {
+      const panelWidth = panelWidths[i];
+      const column = columns[i];
+      if (panelWidth && column && (panel || panel === '')) {
+        return (
+          <Atext
+            key={[i, reset].join('.')}
+            style={{
+              flexGrow: `${panelWidths[i]}`,
+              flexShrink: `${numPanels - panelWidth}`,
+            }}
+            panelIndex={i}
+            location={locs[i]}
+            selection={selection}
+            module={panels[i]}
+            modkey={keys[i]}
+            ilModule={ilModules[i]}
+            ilModuleOption={ilModuleOptions[i]}
+            columns={column}
+            show={show}
+            place={place}
+            scroll={scroll}
+            isPinned={isPinned[i]}
+            noteBoxHeight={noteBoxHeight[i]}
+            maximizeNoteBox={maximizeNoteBox[i]}
+            ownWindow={ownWindow}
+            onAudioClick={audioHandler}
+            bbDragEnd={bbDragEnd}
+            xulswordState={xulswordStateHandler}
+            onWheel={(e: SyntheticEvent) => {
+              eHandler(e);
+              this.popupParentHandler(e, panel);
+            }}
+            onMouseOut={(e: SyntheticEvent) => {
+              this.popupParentHandler(e, panel);
+            }}
+            onMouseOver={(e: SyntheticEvent) => {
+              this.popupParentHandler(e, panel);
+            }}
+            onMouseMove={(e: SyntheticEvent) => {
+              this.popupParentHandler(e, panel);
+            }}
+            ref={atextRefs[i]}
+          />
+        );
+      }
+      return null;
+    });
+
     log.silly('viewport state: ', state);
 
     return (
@@ -377,43 +462,14 @@ class Viewport extends React.Component implements PopupParent {
           />
         )}
 
-        <Vbox className="textarea" flex="1" onKeyDown={eHandler}>
+        <Vbox className={[
+              'textarea',
+              tabrowElements.filter(Boolean).length > 1
+                ? 'multi-panel'
+                : 'single-panel',
+            ].join(' ')} flex="1" onKeyDown={eHandler}>
           <div className="tabrow">
-            {panels.map((_p: string | null, i: number) => {
-              const tabWidth = tabWidths[i];
-              if (tabWidth) {
-                const width = `${100 * (tabWidth / numPanels)}%`;
-                const tabsi = tabs[i];
-                const key = stringHash(
-                  i,
-                  reset,
-                  isPinned[i],
-                  tabWidth,
-                  tabsi ? [...tabsi] : 'none',
-                  ilModules[i],
-                  mtModules[i],
-                  Math.round(
-                    atextRefs[i].current?.sbref.current?.offsetWidth || 0,
-                  ),
-                );
-                if (!tabsi) return <Hbox key={key} style={{ width }} />;
-                return (
-                  <Tabs
-                    key={key}
-                    style={{ width }}
-                    panelIndex={i}
-                    isPinned={isPinned[i]}
-                    module={panels[i]}
-                    tabs={tabsi}
-                    ilModule={ilModules[i]}
-                    ilModuleOption={ilModuleOptions[i]}
-                    mtModule={mtModules[i]}
-                    xulswordState={xulswordStateHandler}
-                  />
-                );
-              }
-              return null;
-            })}
+            {tabrowElements}
           </div>
 
           <Hbox className="textrow userFontBase" flex="1">
@@ -434,54 +490,7 @@ class Viewport extends React.Component implements PopupParent {
                 popupParent,
               )}
 
-            {panels.map((panel: string | null, i: number) => {
-              const panelWidth = panelWidths[i];
-              const column = columns[i];
-              if (panelWidth && column && (panel || panel === '')) {
-                return (
-                  <Atext
-                    key={[i, reset].join('.')}
-                    style={{
-                      flexGrow: `${panelWidths[i]}`,
-                      flexShrink: `${numPanels - panelWidth}`,
-                    }}
-                    panelIndex={i}
-                    location={locs[i]}
-                    selection={selection}
-                    module={panels[i]}
-                    modkey={keys[i]}
-                    ilModule={ilModules[i]}
-                    ilModuleOption={ilModuleOptions[i]}
-                    columns={column}
-                    show={show}
-                    place={place}
-                    scroll={scroll}
-                    isPinned={isPinned[i]}
-                    noteBoxHeight={noteBoxHeight[i]}
-                    maximizeNoteBox={maximizeNoteBox[i]}
-                    ownWindow={ownWindow}
-                    onAudioClick={audioHandler}
-                    bbDragEnd={bbDragEnd}
-                    xulswordState={xulswordStateHandler}
-                    onWheel={(e: SyntheticEvent) => {
-                      eHandler(e);
-                      this.popupParentHandler(e, panel);
-                    }}
-                    onMouseOut={(e: SyntheticEvent) => {
-                      this.popupParentHandler(e, panel);
-                    }}
-                    onMouseOver={(e: SyntheticEvent) => {
-                      this.popupParentHandler(e, panel);
-                    }}
-                    onMouseMove={(e: SyntheticEvent) => {
-                      this.popupParentHandler(e, panel);
-                    }}
-                    ref={atextRefs[i]}
-                  />
-                );
-              }
-              return null;
-            })}
+            {panelElements}
           </Hbox>
         </Vbox>
       </Hbox>

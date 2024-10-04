@@ -98,7 +98,7 @@ html[dir='rtl'] .atext .origselect {
 }
 /* for iframes this height must not collapse while also root becomes
  scrollable */
-.iframe .atext.columns1 .sb {
+.iframe .textarea.single-panel .sb {
   flex-basis: 100%;
 }
 .atext.columns1 .sb {

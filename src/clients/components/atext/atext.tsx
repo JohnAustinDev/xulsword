@@ -480,9 +480,9 @@ class Atext extends React.Component implements RenderPromiseComponent {
         }
         // ADJUST WEB-APP PARENT IFRAME HEIGHT
         if (update && sbe) {
-          const fixedHeight =
-            !document.querySelector('.atext.Dict') && !document.querySelector('.atext.columns1');
-          iframeAutoHeight('.xulsword', fixedHeight, sbe);
+          const clearIframeAuto =
+            !!document.querySelector('.textarea.multi-panel');
+          iframeAutoHeight('.xulsword', clearIframeAuto, sbe);
         }
       }
     }

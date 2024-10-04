@@ -4,17 +4,25 @@
   height: 38px;
 }
 
-/* The following rules control y scrolling of an iframe's top div. */
+/* The following rules allow y scrolling of an iframe's top div, which although
+never desireable in Electron window mode, is desireable in single panel browser
+mode. This CSS results in the following iframe scrolling behaviour:
+BrowserBible multi panel -  fit to iframe by making each text scrollable
+                            (original behaviour).
+BrowserBible single panel - scroll iframe (or set iframe height if auto-height)
+Search window -             scroll iframe (or set iframe height if auto-height)
+*/
+
 .iframe #root:has(.searchOverlay),
-.iframe #reset:has(.atext.columns1) {
+.iframe #reset:has(.textarea.single-panel) {
   overflow-y: auto;
 }
 .auto-height.iframe #root:has(.searchOverlay),
-.auto-height.iframe #reset:has(.atext.columns1) {
+.auto-height.iframe #reset:has(.textarea.single-panel) {
   overflow-y: hidden;
 }
 .iframe .searchOverlay,
-.iframe .xulsword:has(.atext.columns1) {
+.iframe .xulsword:has(.textarea.single-panel) {
   height: unset;
 }
 
@@ -134,7 +142,7 @@
   audio {
     max-width: calc(100vw - 2px);
   }
-  .atext.columns1 .sb {
+  .textarea.single-panel .sb {
     height: fit-content;
   }
   #genbknav {
