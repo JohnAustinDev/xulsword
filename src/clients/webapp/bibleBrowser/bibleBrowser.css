@@ -122,7 +122,7 @@ Search window -             scroll iframe (or set iframe height if auto-height)
   position: absolute;
   z-index: 8;
   margin: 0;
-  padding: 10px;
+  padding: 20px;
 }
 
 @media (max-width: 767px) {

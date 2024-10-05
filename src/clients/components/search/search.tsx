@@ -455,6 +455,7 @@ export default class Search
             }
           />
         )}
+
         {popupParent &&
           elemdata?.length &&
           ReactDOM.createPortal(
@@ -471,6 +472,7 @@ export default class Search
             />,
             popupParent,
           )}
+
         <Hbox pack="center">
           <Grid
             className={['search-grid', moreLess ? 'more' : 'less'].join(' ')}
@@ -481,8 +483,54 @@ export default class Search
             </Columns>
             <Rows>
               <Row>
-                <Groupbox id="searchTextGroup" orient="horizontal" align="stretch">
-                  <Button id="moreLess" onClick={handler}>
+                <Groupbox
+                  id="searchTextGroup"
+                  orient="horizontal"
+                  align="stretch"
+                >
+                  <Hbox className="searchtextLabel" align="center">
+                    <Label
+                      control="searchtext"
+                      value={`${GI.i18n.t('', renderPromise, 'searchtext.label')}:`}
+                    />
+                  </Hbox>
+
+                  <Vbox className="searchtext">
+                    <Textbox
+                      id="searchtext"
+                      value={searchtext}
+                      title={GI.i18n.t('', renderPromise, 'searchbox.tooltip')}
+                      maxLength="60"
+                      onChange={handler}
+                    />
+                    <ModuleMenu
+                      id="module"
+                      value={module}
+                      language
+                      description
+                      sortByLabel
+                      onChange={handler}
+                    />
+                  </Vbox>
+                  <Hbox>
+                    <Button
+                      id="searchButton"
+                      icon="search"
+                      flex="1"
+                      disabled={progress !== -1 || !module}
+                      onClick={handler}
+                    >
+                      {GI.i18n.t('', renderPromise, 'menu.search')}
+                    </Button>
+                    <Button
+                      id="helpButton"
+                      className={showHelp ? 'open' : 'closed'}
+                      icon={showHelp ? 'cross' : 'help'}
+                      onClick={handler}
+                    >
+                      {showHelp}
+                    </Button>
+                    <Button id="moreLess" onClick={handler}>
                     {!moreLess && (
                       <Label
                         value={GI.i18n.t('', renderPromise, 'more.label')}
@@ -494,48 +542,7 @@ export default class Search
                       />
                     )}
                   </Button>
-                  <Spacer flex="1" orient="horizontal" />
-                  <Hbox className="searchtextLabel" align="center">
-                    <Label
-                      control="searchtext"
-                      value={`${GI.i18n.t('', renderPromise, 'searchtext.label')}:`}
-                    />
                   </Hbox>
-                  <Vbox className="searchtext">
-                    <Textbox
-                      id="searchtext"
-                      value={searchtext}
-                      title={GI.i18n.t('', renderPromise, 'searchbox.tooltip')}
-                      maxLength="60"
-                      onChange={handler}
-                    />
-                    <ModuleMenu id="module" value={module} onChange={handler} />
-                    <Button
-                      id="searchButtonNarrowScreen"
-                      icon="search"
-                      disabled={progress !== -1 || !module}
-                      onClick={handler}
-                    >
-                      {GI.i18n.t('', renderPromise, 'menu.search')}
-                    </Button>
-                  </Vbox>
-                  <Button
-                    id="searchButtonWideScreen"
-                    icon="search"
-                    disabled={progress !== -1 || !module}
-                    onClick={handler}
-                  >
-                    {GI.i18n.t('', renderPromise, 'menu.search')}
-                  </Button>
-                  <Spacer flex="1" orient="horizontal" />
-                  <Button
-                    id="helpButton"
-                    className={showHelp ? 'open' : 'closed'}
-                    icon={showHelp ? 'cross' : 'help'}
-                    onClick={handler}
-                  >
-                    {showHelp}
-                  </Button>
                 </Groupbox>
               </Row>
               <Row>
@@ -651,10 +658,20 @@ export default class Search
           </Grid>
         </Hbox>
 
-        <Spacer height={moreLess ? '20' : '10'} />
-
+        <Hbox className="searchStatus" pack="start" align="center">
+          <Box>
+            <span>{searchStatus}</span>
+          </Box>
+          <Spacer flex="1" />
+          {progress !== -1 && (
+            <Hbox align="center">
+              {progressLabel && <Label value={`${progressLabel}:`} />}
+              <ProgressBar value={progress} />
+            </Hbox>
+          )}
+        </Hbox>
         <Vbox className="result-container" flex="1">
-          <Hbox flex="1">
+          <Hbox className="result-parent" flex="1">
             <Vbox
               className="resultBox"
               pack="start"
@@ -665,11 +682,14 @@ export default class Search
               onMouseMove={popupParentHandler}
             >
               {module && G.Tab[module].type === C.BIBLE && (
-                <div>
+                <div className="lexiconParent">
                   <ModuleMenu
                     id="displayModule"
                     value={displayModule}
                     types={[C.BIBLE]}
+                    language
+                    description
+                    sortByLabel
                     disabled={!module || G.Tab[module].type !== C.BIBLE}
                     onChange={handler}
                   />
@@ -681,10 +701,16 @@ export default class Search
                 </div>
               )}
               <Spacer orient="horizontal" />
-              <div id="searchResults" ref={this.resref} onClick={handler} />
+              <Vbox
+                id="searchResults"
+                pack="start"
+                flex="8"
+                domref={this.resref}
+                onClick={handler}
+              />
             </Vbox>
             {count > C.UI.Search.resultsPerPage && (
-              <Vbox>
+              <Vbox className="buttonBox">
                 <Button
                   id="pagefirst"
                   icon="double-chevron-up"
@@ -712,18 +738,6 @@ export default class Search
                   onClick={handler}
                 />
               </Vbox>
-            )}
-          </Hbox>
-          <Hbox className="searchStatus" pack="start" align="center">
-            <Box>
-              <span>{searchStatus}</span>
-            </Box>
-            <Spacer flex="1" />
-            {progress !== -1 && (
-              <Hbox align="center">
-                {progressLabel && <Label value={`${progressLabel}:`} />}
-                <ProgressBar value={progress} />
-              </Hbox>
             )}
           </Hbox>
         </Vbox>

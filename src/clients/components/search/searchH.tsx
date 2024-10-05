@@ -791,8 +791,7 @@ export default async function handler(this: Search, e: React.SyntheticEvent) {
           });
           break;
         }
-        case 'searchButtonWideScreen':
-        case 'searchButtonNarrowScreen': {
+        case 'searchButton': {
           search(this).catch((er) => {
             log.error(er);
           });
@@ -863,12 +862,14 @@ export default async function handler(this: Search, e: React.SyntheticEvent) {
                 chapter: Number(p.shift()),
                 verse: Number(p.shift()),
               };
+              if (Build.isWebApp) Commands.setSearchOverlay(null)
               Commands.goToLocationVK(l, l);
               break;
             }
             case 'keylink': {
               const module = p.shift();
               if (module && module in G.Tab) {
+                if (Build.isWebApp) Commands.setSearchOverlay(null)
                 Commands.goToLocationGB({
                   otherMod: module,
                   key: decodeURIComponent(p.shift() || ''),
