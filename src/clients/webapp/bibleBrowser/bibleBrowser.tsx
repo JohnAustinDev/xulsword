@@ -68,15 +68,12 @@ socket.on('connect', () => {
         }
       }
 
-      (window as BibleBrowserControllerGlobal).browserMaxPanels = Math.ceil(
-        window.innerWidth / 300,
-      );
+      const maxPanels = Math.ceil(window.innerWidth / 150);
+      (window as BibleBrowserControllerGlobal).browserMaxPanels = maxPanels;
       let numPanels: number =
         (settings.prefs?.xulsword as any)?.panels?.length ||
-        (window as BibleBrowserControllerGlobal).browserMaxPanels;
-      if (window.innerWidth < 768) {
-        numPanels = 1;
-      }
+        maxPanels;
+      if (numPanels > maxPanels) numPanels = maxPanels;
       const locale = setGlobalLocale(settings, langcode);
       // Must set global.locale before callBatch.
       writeSettingsToPrefsStores(settings);

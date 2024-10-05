@@ -53,7 +53,7 @@ const defaultSettings: AllComponentsSettings = {
               v11n: 'KJV',
             },
             selection: null,
-            scroll: null,
+            scroll: { verseAt: 'top' },
 
             keys: [null, null],
 

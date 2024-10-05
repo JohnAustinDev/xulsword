@@ -134,8 +134,8 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
     renderPromise.dispatch();
   }
 
-  // Get an updated selection based on last user input, and call onSelection.
-  // If the component is keeping its own state, also update that state.
+  // Record the updated selection caused by an input event by updating state and
+  // calling onSelection.
   handleChange(es: React.SyntheticEvent) {
     const state = this.state as SelectVKState;
     const props = this.props as SelectVKProps;
@@ -199,6 +199,28 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
     }
   }
 
+  // After a selectVK render caused by a handleChange() event, the resulting
+  // select values are compared to the state values from before the render. They
+  // will not be the same if the render resulted in an invalid selection that
+  // was corrected. In such case, state must be updated and onSelection called,
+  // with the resulting valid selection.
+  checkSelection(prevState?: SelectVKState) {
+    const props = this.props as SelectVKProps;
+    const { id, onSelection } = props;
+    const { selection } = prevState || {};
+    const { selectValues } = this;
+    if (!prevState || selectValues) {
+      const d = diff(selection, selectValues);
+      if (d) {
+        const s: Partial<SelectVKState> = {
+          selection: selectValues,
+        };
+        if (onSelection) onSelection(selectValues, id?.toString());
+        this.setState(s);
+      }
+    }
+  }
+
   getNumberOptions(
     selector: 'chapter' | 'verse' | 'lastchapter' | 'lastverse',
     selected: number | null | undefined,
@@ -237,23 +259,6 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
       ));
   }
 
-  checkSelection(prevState?: SelectVKState) {
-    const props = this.props as SelectVKProps;
-    const { id, onSelection } = props;
-    const { selection } = prevState || {};
-    const { selectValues } = this;
-    if (!prevState || selectValues) {
-      const d = diff(selection, selectValues);
-      if (d) {
-        const s: Partial<SelectVKState> = {
-          selection: selectValues,
-        };
-        if (onSelection) onSelection(selectValues, id?.toString());
-        this.setState(s);
-      }
-    }
-  }
-
   render() {
     const props = this.props as SelectVKProps;
     const state = this.state as SelectVKState;
@@ -280,13 +285,17 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
       modules = G.Tabs.filter((t) => t.isVerseKey).map((t) => t.module);
     }
 
-    // Get the appropriate options for each selector, adjusting selection
-    // only if the current selection is not an option.
+    // Arrive at the appropriate options for each selector, adjusting selection
+    // to insure all selectors show valid options. Important: if a selector
+    // is excluded (hidden by an empty prop) any value is considered valid for
+    // that selector. Note: the books selector cannot be hidden by empty prop.
 
     // Bible book options are either those passed in the books prop or are
-    // all books in the verse system. When the module selector is visible
-    // and an installed module is selected, books not present in the module
-    // are removed from the list. All books are sorted in v11n order.
+    // all books in the verse system. Either way, when the module selector is
+    // visible and an installed module is selected, books not present in the
+    // module are removed from the list. All books are sorted in v11n order.
+    // Similarly, when the books prop lists particular books, only modules
+    // containing those books will be included in the module selector.
     const bkbgs = (books ||
       G.BkChsInV11n[v11n].map((r) => r[0])) as OSISBookType[];
     const bookset = new Set<OSISBookType>();

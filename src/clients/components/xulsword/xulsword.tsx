@@ -160,33 +160,11 @@ export default class Xulsword
   }
 
   selectionGenbk(selection: SelectORMType | undefined, _id?: string): void {
-    if (selection) {
-      this.setState((prevState: XulswordState) => {
-        const { keys } = prevState;
-        const { keys: nkeys } = selection;
-        if (keys.toString() !== nkeys.toString()) {
-          const s = { ...prevState };
-          s.keys = nkeys;
-          return s;
-        }
-        return null;
-      });
-    }
+    if (selection) this.setState({ keys: selection.keys });
   }
 
   selectionVK(selection: SelectVKType | undefined): void {
-    if (selection) {
-      this.setState((prevState: XulswordState) => {
-        const { location: l } = prevState;
-        let location = clone(l);
-        if (location === null) location = {} as LocationVKType;
-        location.book = selection.book;
-        location.chapter = selection.chapter;
-        location.verse = 1;
-        location.v11n = selection.v11n;
-        return { location };
-      });
-    }
+    if (selection)  this.setState( { location: selection });
   }
 
   xulswordStateHandler(s: XulswordStateArgType): void {
@@ -399,7 +377,6 @@ export default class Xulsword
           <>
             <Button
               id="addcolumn"
-              className="narrow-screen-hide"
               checked={panels.length < (window as any).browserMaxPanels}
               icon={<Icon icon="add-column-right" size={28} />}
               onClick={handler}
@@ -411,7 +388,6 @@ export default class Xulsword
             />
             <Button
               id="removecolumn"
-              className="narrow-screen-hide"
               checked={panels.length > 1}
               icon={<Icon icon="remove-column-right" size={28} />}
               onClick={handler}
