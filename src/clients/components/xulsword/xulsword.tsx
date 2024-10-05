@@ -336,7 +336,7 @@ export default class Xulsword
           onChange={handler}
           onKeyUp={(e: React.KeyboardEvent) => {
             if (e.key === 'Enter') {
-              const b = document.getElementById('searchButton');
+              const b = document.getElementById('xsSearchButton');
               if (b) b.click();
             }
           }}
@@ -344,7 +344,7 @@ export default class Xulsword
         />
         <Box title={GI.i18n.t('', renderPromise, 'search.tooltip')}>
           <Button
-            id="searchButton"
+            id="xsSearchButton"
             icon="search"
             disabled={searchDisabled}
             onClick={handler}
@@ -590,7 +590,7 @@ export default class Xulsword
 
                 <Spacer flex="1" />
 
-                {searchComponent}
+                <Hbox>{searchComponent}</Hbox>
 
                 <Hbox pack="center">{optionButtons}</Hbox>
               </Hbox>

@@ -89,13 +89,16 @@ Search window -             scroll iframe (or set iframe height if auto-height)
 #player audio {
   height: 100%;
 }
-#player,
-#searchButton {
+#player {
   margin: 5px;
 }
 #player > div {
   max-width: 302px;
   border: 1px solid lightgray;
+}
+
+#xsSearchButton {
+  margin: 7px 5px;
 }
 
 #genbknav,

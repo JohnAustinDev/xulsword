@@ -117,8 +117,11 @@
 html[dir='rtl'] .resultBox #displayModule {
   float: left;
 }
+.resultBox #displayModule {
+  max-width: calc(min(200px, 50vw) + 5px);
+}
 .resultBox #displayModule select {
-  max-width: 200px;
+  max-width: min(200px, 50vw);
 }
 .resultBox .npopup {
   padding-inline-start: 50px;
@@ -210,6 +213,9 @@ html[dir='rtl'] .resultBox #displayModule {
 }
 
 @media (max-width: 767px) {
+  .search {
+    padding: 5px;
+  }
   .bibleBrowser .xsinput {
     margin-right: 0px;
     margin-left: 0px;
@@ -299,8 +305,5 @@ html[dir='rtl'] .resultBox #displayModule {
 @media (max-width: 300px) {
   .bibleBrowser #closeSearchButton {
     padding: 0;
-  }
-  .bibleBrowser #moreLess {
-    display: none;
   }
 }

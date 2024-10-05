@@ -74,6 +74,9 @@ socket.on('connect', () => {
         (settings.prefs?.xulsword as any)?.panels?.length ||
         maxPanels;
       if (numPanels > maxPanels) numPanels = maxPanels;
+      if (!frame || frame === '0' && window.innerWidth < 768) {
+        numPanels = 1;
+      }
       const locale = setGlobalLocale(settings, langcode);
       // Must set global.locale before callBatch.
       writeSettingsToPrefsStores(settings);

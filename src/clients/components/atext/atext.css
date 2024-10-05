@@ -110,6 +110,15 @@ html[dir='rtl'] .atext .origselect {
   column-rule: 14px solid rgb(240, 215, 240);
   column-fill: auto;
 }
+@media (max-width: 300px) {
+  .atext:not(.columns1) .sb {
+    column-gap: 14px;
+    column-rule-width: 4px;
+  }
+  .atext .sb {
+    padding: 0 5px;
+  }
+}
 .atext.Genbks:not(.columns1) .sb {
   overflow: auto;
 }
@@ -207,6 +216,20 @@ html[dir='rtl'] .notebox-maximizer {
   font-size: 1.6rem;
   font-weight: bold;
   color: rgb(110, 85, 110);
+}
+@media (max-width: 768px) {
+  .bibleBrowser .chaptitle {
+    font-size: 1.3rem;
+  }
+}
+@media (max-width: 300px) {
+  .bibleBrowser .chaptitle {
+    font-size: 1rem;
+  }
+  .bibleBrowser .introlink,
+  .bibleBrowser .navlink {
+    font-size: 0.8rem;
+  }
 }
 .sb[dir='rtl'] .chaptitle {
   float: right;

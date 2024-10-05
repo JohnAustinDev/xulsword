@@ -323,13 +323,13 @@ class Viewport extends React.Component implements PopupParent {
 
     const showingChooser =
       showChooser || (Build.isElectronApp && chooser === 'genbook');
+
     const chooserV11n =
       panels.reduce(
         (p, c) => p || (c && c in G.Tab && G.Tab[c].v11n) || null,
         null,
       ) || 'KJV';
-    const minWidth =
-      (showingChooser ? 300 : 0) + C.UI.Viewport.minPanelWidth * numPanels;
+
     const bookGroups = C.SupportedBookGroups.filter(
       (bg) =>
         ['ot', 'nt'].includes(bg) ||
@@ -339,6 +339,14 @@ class Viewport extends React.Component implements PopupParent {
             G.getBooksInVKModule(p).some((bk) => Book[bk].bookGroup === bg),
         ),
     );
+
+    const style = Build.isElectronApp
+      ? {
+          style: {
+            minWidth: `${(showingChooser ? 300 : 0) + C.UI.Viewport.minPanelWidth * numPanels}px`,
+          },
+        }
+      : {};
 
     let cls = '';
     if (ownWindow) cls += ' ownWindow';
@@ -431,7 +439,7 @@ class Viewport extends React.Component implements PopupParent {
     return (
       <Hbox
         {...addClass(`viewport skin ${cls} bp5-focus-disabled`, props)}
-        style={{ minWidth: `${minWidth}px` }}
+        {...style}
         {...topHandle('onClick', eHandler)}
       >
         {!ownWindow && !showChooser && chooser !== 'genbook' && (
@@ -509,7 +517,8 @@ export function audioHandler(
   const prevAudio = G.Prefs.getComplexValue(
     'xulsword.audio',
   ) as typeof S.prefs.xulsword.audio;
-  if (audioFile && (!atextClick || !prevAudio.open)) Commands.playAudio(audioFile);
+  if (audioFile && (!atextClick || !prevAudio.open))
+    Commands.playAudio(audioFile);
   if (!audioFile || (atextClick && prevAudio.open)) {
     G.Prefs.setBoolPref(
       'xulsword.audio.open',

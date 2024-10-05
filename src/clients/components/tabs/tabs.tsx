@@ -173,6 +173,7 @@ class Tabs extends React.Component implements RenderPromiseComponent {
     )[0] as HTMLElement | null;
     const iltwidth =
       (iltab && iltab.offsetWidth + 2 * C.UI.Viewport.TabMargin) || 0;
+    let contentWidth = 0;
     for (;;) {
       // The future mts-tab width must be recalculated for each width check.
       const mtsel = this.getMultiTabSelection(newMultiTabs);
@@ -184,7 +185,7 @@ class Tabs extends React.Component implements RenderPromiseComponent {
         ? tabs.indexOf(newMultiTabs[0]) - 1
         : tabs.length - 1;
       if (nextTabIndex < 0) break;
-      const contentWidth =
+      contentWidth =
         C.UI.Viewport.TabRowMargin +
         2 * C.UI.Viewport.TabMarginFirstLast +
         twids.slice(0, nextTabIndex + 1).reduce((p, c) => p + c, 0) +
@@ -200,6 +201,9 @@ class Tabs extends React.Component implements RenderPromiseComponent {
       }
       // Move next tab to the multi-tab.
       newMultiTabs.unshift(tabs[nextTabIndex]);
+    }
+    if (iltab && tabsdiv && contentWidth > tabsdiv.clientWidth) {
+      iltab.style.display = 'none';
     }
     if (multiTabs.length !== newMultiTabs.length) {
       this.setState({ multiTabs: newMultiTabs });

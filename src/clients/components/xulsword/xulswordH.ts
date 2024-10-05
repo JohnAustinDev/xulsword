@@ -117,7 +117,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
           });
           break;
         }
-        case 'searchButton': {
+        case 'xsSearchButton': {
           let module = state.panels.find((m) => m);
           if (!module && G.Tabs.length) [{ module }] = G.Tabs;
           const tbp = document.getElementById('searchText');
