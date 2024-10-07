@@ -367,7 +367,7 @@ export default function (opts) {
       ]
         .concat(
           builds[build][1].map(() => {
-            return build === 'webappClients'
+            return production && build === 'webappClients'
               ? new CompressionPlugin({
                   deleteOriginalAssets: true,
                   threshold: 30000,
@@ -398,7 +398,7 @@ export default function (opts) {
                     ),
                   }[build],
                 ),
-                chunks: [name],
+                chunks: 'all',
               });
             }
             return null;

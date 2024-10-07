@@ -105,7 +105,7 @@
   border: 2px solid rgb(200, 170, 205);
   border-radius: 4px;
   background: white;
-  width: 100%;
+  width: calc(100% - 50px);
 }
 .resultBox > div {
   padding: 5px;
@@ -279,6 +279,9 @@ html[dir='rtl'] .resultBox #displayModule {
   }
   .bibleBrowser #scoperadio .label {
     white-space: unset;
+  }
+  .bibleBrowser .resultBox {
+    width: calc(100%);
   }
   .bibleBrowser .resultBox .npopup {
     padding-inline-start: unset;
