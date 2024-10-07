@@ -199,6 +199,7 @@
     "bufferutil": "^4.0.8",
     "chalk": "^4.1.1",
     "child_process": "^1.0.2",
+    "compression-webpack-plugin": "^11.1.0",
     "core-js": "^3.11.3",
     "cross-env": "^7.0.3",
     "css-loader": "^5.2.4",

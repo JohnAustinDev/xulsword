@@ -44,11 +44,18 @@ if ("$?" eq "0") {
     opendir(JSF, "$dist") || die;
     my @files = readdir(JSF);
     closedir(JSF);
-    my $file; foreach my $f (@files) {if ($f =~ /^widgets_.*\.js$/) {$file = $f; last;}}
-    open(INF, "<:encoding(UTF-8)", "$libs") || die;
-    open(OUTF, ">:encoding(UTF-8)", "$libs.tmp") || die;
-    while(<INF>) {s/(?<=\bdist\/)widgets_.*\.js(?=:)/$file/; print OUTF $_;}
-    close(INF); close(OUTF); `mv "$libs.tmp" "$libs"`;
+    my $file;
+    foreach my $bundle ('widgets', 'runtime', 'vendors') {
+      foreach my $f (@files) {
+        if ($f =~ /^${bundle}_.*\.js(\.(gz|br))?$/) {
+          $file = $f;
+          open(INF, "<:encoding(UTF-8)", "$libs") || die;
+          open(OUTF, ">:encoding(UTF-8)", "$libs.tmp") || die;
+          while(<INF>) {s/(?<=\bdist\/)${bundle}_.*\.js(\.(gz|br))?(?=:)/$file/; print OUTF $_;}
+          close(INF); close(OUTF); `mv "$libs.tmp" "$libs"`;
+        }
+      }
+    }
   }
 } else {
   `echo "ERROR: react build failed."`;

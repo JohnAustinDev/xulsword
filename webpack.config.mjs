@@ -6,6 +6,7 @@ import chalk from 'chalk';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
+import CompressionPlugin from 'compression-webpack-plugin';
 import projectPaths from './scripts/projectPaths.mjs';
 import ReactRefreshWebpackPlugin from '@pmmmwh/react-refresh-webpack-plugin';
 
@@ -199,18 +200,35 @@ export default function (opts) {
 
       optimization: {
         minimize: production ? true : false,
+        moduleIds: 'deterministic',
+        runtimeChunk: 'single',
+        splitChunks: {
+          cacheGroups: {
+            vendor: {
+              test: (m) =>
+                /[\\/]node_modules[\\/]/.test(m.resource) &&
+                !/blueprint/i.test(m.resource),
+              name: 'vendors',
+              chunks: 'all',
+            },
+          },
+        },
       },
 
       // libxulsword is packaged by electron-builder not Webpack.
       externals: {
-        './build/Release/xulsword.node': `../../node_modules/libxulsword/build/Release/xulsword.node`,
+        './build/Release/xulsword.node': `node-commonjs ../../node_modules/libxulsword/build/Release/xulsword.node`,
       },
-      externalsType: 'node-commonjs',
 
       entry: builds[build][1].reduce((entries, entry) => {
-        const name = path.basename(entry).replace(/\.[^.]+$/, '');
-        entries[name] = { import: entry };
-        return entries;
+        if (typeof entry === 'object') {
+          entries[Object.keys(entry)[0]] = entry[Object.keys(entry)[0]];
+          return entries;
+        } else {
+          const name = path.basename(entry).replace(/\.[^.]+$/, '');
+          entries[name] = { import: entry };
+          return entries;
+        }
       }, {}),
 
       output: {
@@ -270,6 +288,7 @@ export default function (opts) {
                   : {}),
               },
             },
+            sideEffects: false,
           },
           {
             test: /\.css$/,
@@ -346,6 +365,16 @@ export default function (opts) {
           ? new ReactRefreshWebpackPlugin()
           : null,
       ]
+        .concat(
+          builds[build][1].map(() => {
+            return build === 'webappClients'
+              ? new CompressionPlugin({
+                  deleteOriginalAssets: true,
+                  threshold: 30000,
+                })
+              : null;
+          }),
+        )
         .concat(
           builds[build][1].map((entry) => {
             if (['webappClients', 'appClients'].includes(build)) {
