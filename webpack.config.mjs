@@ -399,7 +399,7 @@ export default function (opts) {
                     ),
                   }[build],
                 ),
-                chunks: 'all',
+                chunks: [name],
               });
             }
             return null;
