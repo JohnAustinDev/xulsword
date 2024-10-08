@@ -590,7 +590,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
 
       const bannedSearchKey = `${modname}:${scope}:${srchstr}`;
       const banned = bannedSearches.includes(bannedSearchKey);
-      if (banned) log.warn(`Banned search was attempted: ${bannedSearchKey}`);
+      if (banned) log.warn(`Banned search attempted: ${bannedSearchKey}`);
 
       if (
         !banned &&
@@ -650,7 +650,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
           }
         } else {
           log.warn(
-            `Search has been banned (${result.count} > ${banAbove}): ${bannedSearchKey}`,
+            `Banning search (${result.count} > ${banAbove}): ${bannedSearchKey}`,
           );
           bannedSearches.push(bannedSearchKey);
           this.bannedSearchesFile?.writeFile(JSON_stringify(bannedSearches));

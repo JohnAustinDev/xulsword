@@ -1,3 +1,4 @@
+import log from 'electron-log';
 import { GBuilder } from '../type.ts';
 import { GCacheKey, isCallCacheable, JSON_stringify } from '../common.ts';
 import Cache from '../cache.ts';
@@ -29,7 +30,16 @@ export default function handleGlobal(
     const ckey = GCacheKey(acall);
     const ckeyA = ckey.split('.');
     const cacheable = isCallCacheable(GBuilder, acall);
-    if (cacheable && Cache.has(...ckeyA)) return Cache.read(...ckeyA);
+    if (cacheable) {
+      if (Cache.has(...ckeyA)) {
+        log.silly(`Cache hit: ${ckey}`);
+        return Cache.read(...ckeyA);
+      } else {
+        log.silly(`Cache miss: ${ckey}`);
+      }
+    } else if (name !== 'callBatch') {
+      log.silly(`Cache miss: ${ckey} (uncacheable)`);
+    }
 
     if (!Array.isArray(args) && gBuilder[name] === 'getter') {
       ret = gx[name];

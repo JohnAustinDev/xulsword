@@ -3,7 +3,7 @@ import i18n from 'i18next';
 import helmet from 'helmet';
 import session from 'express-session';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
-import toobusy from 'toobusy-js';
+// import toobusy from 'toobusy-js';
 import memorystore from 'memorystore';
 import log from 'electron-log';
 import i18nBackendMain from 'i18next-fs-backend';
@@ -20,6 +20,7 @@ import Cache from '../../cache.ts';
 import C from '../../constant.ts';
 import { GI } from './G.ts';
 import handleGlobal from '../handleG.ts';
+import { getSystemFonts } from '../common.ts';
 import Dirs from '../components/dirs.ts';
 import LibSword from '../components/libsword.ts';
 
@@ -88,8 +89,7 @@ i18nInit('en').catch((er) => {
   log.error(`Server i18nInit('en') error: ${er}`);
 });
 
-// Do this in the background...
-// G.getSystemFonts();
+getSystemFonts().catch((er) => log.error(er));
 
 const sslkey = process.env.SERVER_KEY_PEM;
 const sslcrt = process.env.SERVER_CRT_PEM;
@@ -122,14 +122,14 @@ io.engine.use(
     saveUninitialized: false,
     cookie: { secure: true, sameSite: true },
     store: new MemoryStore({
-      checkPeriod: 86400000, // prune expires every 24h
-      max: 20000000,
+      checkPeriod: 86400000, // prune expired entries every 24h
+      max: 1000000,
     }),
   }),
 );
 
 const rateLimiter = new RateLimiterMemory(C.Server.ipLimit);
-toobusy.maxLag(300); // in ms: default is 70
+// toobusy.maxLag(300); // in ms: default is 70
 
 io.on('connection', (socket) => {
 
@@ -148,7 +148,7 @@ io.on('connection', (socket) => {
     'error-report',
     async (args: any[], _callback: (r: any) => void) => {
       log.silly(`on error-report: ${JSON_stringify(args)}`);
-      const limited = await isLimited(socket, args);
+      const limited = await isLimited(socket);
       if (!limited) {
         const invalid = invalidArgs(args);
         if (!invalid && args.length === 1) {
@@ -164,14 +164,15 @@ io.on('connection', (socket) => {
           `${socket.handshake.address} › Client 'error-report' made with improper arguments: ${JSON_stringify(args)}. (${invalid})`,
         );
       } else {
-        // ignore
+        // eslint-disable-next-line no-console
+        console.log(`${socket.handshake.address} › rate limited! dropping error-report.`);
       }
     },
   );
 
   socket.on('log', async (args: any[], _callback: (r: any) => void) => {
     log.silly(`${socket.handshake.address} › on log: ${JSON_stringify(args)}`);
-    const limited = await isLimited(socket, args);
+    const limited = await isLimited(socket);
     if (!limited) {
       const invalid = invalidArgs(args);
       if (!invalid && args.length === 3) {
@@ -203,13 +204,13 @@ io.on('connection', (socket) => {
         `${socket.handshake.address} › 'log' call made with improper arguments. (${invalid})`,
       );
     } else {
-      log.silly(`${socket.handshake.address} › rate limited! dropping log request.`);
+      log.warn(`${socket.handshake.address} › rate limited! dropping log request.`);
     }
   });
 
   socket.on('global', async (args: any[], callback: (r: any) => void) => {
     log.silly(`on global: ${JSON_stringify(args)}`);
-    const limited = await isLimited(socket, args, true);
+    const limited = await isLimited(socket, true);
     if (!limited) {
       const invalid = invalidArgs(args);
       if (!invalid && args.length === 1 && typeof callback === 'function') {
@@ -258,7 +259,12 @@ io.on('connection', (socket) => {
         `${socket.handshake.address} › Ignoring 'global' call made with improper arguments. (${invalid})`,
       );
     } else if (typeof callback === 'function') {
+      const msg = Build.isDevelopment ? JSON_stringify(args) : args.length;
+      log.warn(`${socket.handshake.address} › rate limiting callback. [${msg}]`);
       callback({ limitedDoWait: C.Server.limitedMustWait });
+    } else {
+      const msg = Build.isDevelopment ? JSON_stringify(args) : args.length;
+      log.warn(`${socket.handshake.address} › rate limiting. [${msg}]`);
     }
   });
 });
@@ -274,7 +280,6 @@ function invalidArgs<T>(args: T[]): string | null {
 
 async function isLimited(
   socket: Socket,
-  args: any[],
   _checkbusy = false,
 ): Promise<boolean> {
   // Check-busy is disabled for now...
@@ -288,8 +293,6 @@ async function isLimited(
     await rateLimiter.consume(socket.handshake.address);
     return false;
   } catch (er) {
-    const msg = Build.isDevelopment ? JSON_stringify(args) : args.length;
-    log.warn(`${socket.handshake.address} › rate limiting. [${msg}]`);
     return true;
   }
 }
