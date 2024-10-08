@@ -89,8 +89,6 @@ i18nInit('en').catch((er) => {
   log.error(`Server i18nInit('en') error: ${er}`);
 });
 
-getSystemFonts().catch((er) => log.error(er));
-
 const sslkey = process.env.SERVER_KEY_PEM;
 const sslcrt = process.env.SERVER_CRT_PEM;
 let server;
