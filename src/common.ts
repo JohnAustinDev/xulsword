@@ -637,16 +637,22 @@ export function stringHash(...args: unknown[]): string {
 
 export function GCacheKey(acall: GCallType): string {
   const [name, m, args] = acall;
-  if (m === null && typeof args === 'undefined') {
+  if (
+    m === null &&
+    (typeof args === 'undefined' || (Build.isServer && args === null))
+  ) {
     return `G.${name}`;
   } else if (m === null && Array.isArray(args)) {
     return `G.${name}(${stringHash(...(args as unknown[]))})`;
-  } else if (typeof m === 'string' && typeof args === 'undefined') {
+  } else if (
+    typeof m === 'string' &&
+    (typeof args === 'undefined' || (Build.isServer && args === null))
+  ) {
     return `G.${name}.${m}`;
   } else if (typeof m === 'string' && Array.isArray(args)) {
     return `G.${name}.${m}(${stringHash(...(args as unknown[]))})`;
   } else {
-    throw new Error(`GCacheKey bad call: '${acall.toString()}'`);
+    throw new Error(`GCacheKey bad call: '${JSON_stringify(acall)}'`);
   }
 }
 

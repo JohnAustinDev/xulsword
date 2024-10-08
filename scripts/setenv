@@ -39,6 +39,14 @@ export XSModsUser_DIR=~/.config/Electron/resources
 
 # export LOG_DIR=[xulsword]/profile_webapp
 
+# export WEBAPP_MAX_CACHE_RAMMB=250
+
+# export WEBAPP_SEARCH_BAN=2000
+
+# export WEBAPP_MAX_LOG_SIZE=5000000
+
+# NOTE: LOGLEVEL is the only 'live' environment variable. All others are
+# permanently fixed to whatever values they had when bundled by webpack.
 # Possible values are 'error', 'warn', 'info', 'verbose', 'debug', 'silly'
 # export LOGLEVEL='debug'
 

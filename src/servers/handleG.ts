@@ -1,5 +1,6 @@
 import { GBuilder } from '../type.ts';
-import { JSON_stringify } from '../common.ts';
+import { GCacheKey, isCallCacheable, JSON_stringify } from '../common.ts';
+import Cache from '../cache.ts';
 
 import type { GCallType, GITypeMain as GIMainType, GType } from '../type.ts';
 
@@ -24,6 +25,12 @@ export default function handleGlobal(
   if (name && name in GBuilder && allow) {
     const gBuilder = GBuilder as any;
     const gx = GX as any;
+
+    const ckey = GCacheKey(acall);
+    const ckeyA = ckey.split('.');
+    const cacheable = isCallCacheable(GBuilder, acall);
+    if (cacheable && Cache.has(...ckeyA)) return Cache.read(...ckeyA);
+
     if (!Array.isArray(args) && gBuilder[name] === 'getter') {
       ret = gx[name];
     } else if (Array.isArray(args) && typeof gBuilder[name] === 'function') {
@@ -51,6 +58,9 @@ export default function handleGlobal(
         `Unhandled global ipc type ${gBuilder[name]}: ${JSON_stringify(acall)}`,
       );
     }
+
+    if (cacheable) Cache.write(ret, ...ckeyA);
+
   } else {
     throw Error(`Disallowed global ipc request: ${JSON_stringify(acall)}`);
   }

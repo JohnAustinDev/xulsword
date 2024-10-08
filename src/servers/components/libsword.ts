@@ -136,6 +136,10 @@ const LibSword = {
 
   newSearchCount: 0,
 
+  bannedSearches: [] as string[],
+
+  bannedSearchesFile: null as null | LocalFile,
+
   busy: false,
 
   indexingID: {} as Record<string, ChildProcess>,
@@ -179,6 +183,16 @@ const LibSword = {
     log.verbose(`CREATED libxulsword object`);
     this.initialized = true;
 
+    const bannedSearchesFile = Dirs.xsPrefD
+      .clone()
+      .append('bannedSearches.json');
+    if (!bannedSearchesFile.exists()) {
+      bannedSearchesFile.create(LocalFile.NORMAL_FILE_TYPE);
+      bannedSearchesFile.writeFile(JSON_stringify([]));
+    }
+    this.bannedSearches = JSON_parse(bannedSearchesFile.readFile()) as string[];
+    this.bannedSearchesFile = bannedSearchesFile;
+
     return true;
   },
 
@@ -198,9 +212,7 @@ const LibSword = {
     if (err) {
       const erobj = new Error();
       const stack = 'stack' in erobj ? erobj.stack : '';
-      log.error(
-        `libsword was called while uninitialized: ${stack}`,
-      );
+      log.error(`libsword was called while uninitialized: ${stack}`);
     }
     return false;
   },
@@ -422,7 +434,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   getFirstDictionaryEntry(
     lexdictmods: string[],
     keys: string[],
-    options: { [key in SwordFilterType]: SwordFilterValueType }
+    options: { [key in SwordFilterType]: SwordFilterValueType },
   ): { mod: string; key: string; text: string; notes: string } {
     const r = { mod: '', key: '', text: '', notes: '' };
     if (this.isReady(true)) {
@@ -436,7 +448,9 @@ DEFINITION OF A 'XULSWORD REFERENCE':
               let text = C.NOTFOUND;
               try {
                 text = this.libxulsword.GetDictionaryEntry(m, k);
-              } catch (er) {text = C.NOTFOUND;}
+              } catch (er) {
+                text = C.NOTFOUND;
+              }
               if (text) {
                 r.mod = m;
                 r.key = k;
@@ -444,7 +458,9 @@ DEFINITION OF A 'XULSWORD REFERENCE':
                 let notes = '';
                 try {
                   notes = this.libxulsword.GetNotes();
-                } catch (er) {notes = '';}
+                } catch (er) {
+                  notes = '';
+                }
                 r.notes = publicFiles(notes);
               }
             }
@@ -559,21 +575,38 @@ DEFINITION OF A 'XULSWORD REFERENCE':
     lexicon: boolean,
   ): Promise<SearchResult | null> {
     return await new Promise((resolve) => {
-      const { busy, searchedID, maxSearchResults, searchSetDone } = this;
+      const {
+        busy,
+        searchedID,
+        maxSearchResults,
+        searchSetDone,
+        bannedSearches,
+      } = this;
 
       if (busy) resolve(null);
       this.busy = true;
 
       const result: SearchResult = { html: '', count: 0, lexhtml: '' };
 
-      if (this.isReady(true) && !(type === -4 && !this.luceneEnabled(modname))) {
+      const bannedSearchKey = `${modname}:${scope}:${srchstr}`;
+      const banned = bannedSearches.includes(bannedSearchKey);
+      if (banned) log.warn(`Banned search was attempted: ${bannedSearchKey}`);
+
+      if (
+        !banned &&
+        this.isReady(true) &&
+        !(type === -4 && !this.luceneEnabled(modname))
+      ) {
         const mySearchID = stringHash(modname, srchstr, scopes, type, flags);
         if (startNewSearchSet || searchedID !== mySearchID) {
           this.newSearchCount = 0;
           this.searchSetDone = [];
         }
 
-        if ((!startNewSearchSet && !searchSetDone.includes(scope)) || searchedID !== mySearchID) {
+        if (
+          (!startNewSearchSet && !searchSetDone.includes(scope)) ||
+          searchedID !== mySearchID
+        ) {
           // IMPORTANT:
           // VerseKey module searches require a non-empty book-scope, which may
           // contain a single range. If the book(s) given in the scope value do
@@ -593,25 +626,35 @@ DEFINITION OF A 'XULSWORD REFERENCE':
         }
         result.count = this.newSearchCount || 0;
 
-        const iLen = rLength <= maxSearchResults ? rLength : maxSearchResults;
-        if (iLen) {
-          result.html = this.libxulsword.GetSearchResults(
-            rMod,
-            rStart,
-            iLen,
-            keepStrongs,
-          );
-        }
+        // Ban a web app search if result count is greater than this number.
+        const banAbove = Number(process.env.WEBAPP_SEARCH_BAN) || 2000;
+        const ban = Build.isWebApp && result.count > banAbove;
+        if (!ban) {
+          const iLen = rLength <= maxSearchResults ? rLength : maxSearchResults;
+          if (iLen) {
+            result.html = this.libxulsword.GetSearchResults(
+              rMod,
+              rStart,
+              iLen,
+              keepStrongs,
+            );
+          }
 
-        if (lexicon) {
-          result.lexhtml = this.libxulsword.GetSearchResults(
-            rMod,
-            0,
-            C.UI.Search.maxLexiconSearchResults,
-            true,
+          if (lexicon) {
+            result.lexhtml = this.libxulsword.GetSearchResults(
+              rMod,
+              0,
+              C.UI.Search.maxLexiconSearchResults,
+              true,
+            );
+          }
+        } else {
+          log.warn(
+            `Search has been banned (${result.count} > ${banAbove}): ${bannedSearchKey}`,
           );
+          bannedSearches.push(bannedSearchKey);
+          this.bannedSearchesFile?.writeFile(JSON_stringify(bannedSearches));
         }
-
       }
 
       this.busy = false;
@@ -973,6 +1016,8 @@ export type LibSwordType = Omit<
   | 'maxSearchResults'
   | 'searchSetDone'
   | 'newSearchCount'
+  | 'bannedSearches'
+  | 'bannedSearchesFile'
   | 'busy'
   | 'indexingID'
   | 'backgroundIndexerTO'

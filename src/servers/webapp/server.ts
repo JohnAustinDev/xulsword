@@ -10,11 +10,13 @@ import i18nBackendMain from 'i18next-fs-backend';
 import https from 'https';
 import http from 'http';
 import fs from 'fs';
+import path from 'path';
 import {
   JSON_parse,
   JSON_stringify,
   isInvalidWebAppData,
 } from '../../common.ts';
+import Cache from '../../cache.ts';
 import C from '../../constant.ts';
 import { GI } from './G.ts';
 import handleGlobal from '../handleG.ts';
@@ -33,9 +35,29 @@ const isInvalidWebAppDataLogged = (data: unknown, depth = 0) => {
   return isInvalidWebAppData(data, depth, log);
 };
 
-const logfile = Dirs.LogDir.append(`server.${Date.now()}.log`);
+const logfile = Dirs.LogDir.append(`access.log`);
 log.transports.console.level = C.LogLevel;
 log.transports.file.level = C.LogLevel;
+log.transports.file.sync = false;
+log.transports.file.maxSize = Number(process.env.WEBAPP_MAX_LOG_SIZE) || 5000000;
+log.transports.file.archiveLog = (file) => {
+  const filename = file.toString();
+  const info = path.parse(filename);
+  let num = 0;
+  const files = fs.readdirSync(info.dir, { encoding: 'utf-8' });
+  const re = new RegExp(`${info.name}${info.ext}\\.(\\d+)$`);
+  files.forEach((f) => {
+    const m = f.match(re);
+    if (m && Number(m[1]) > num) num = Number(m[1]);
+  });
+  num += 1;
+  try {
+    fs.renameSync(filename, path.join(info.dir, info.name + info.ext + `.${num}`));
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.warn('Error rotating log: ', e);
+  }
+}
 log.transports.file.resolvePath = () => logfile.path;
 
 LibSword.init();
@@ -110,6 +132,18 @@ const rateLimiter = new RateLimiterMemory(C.Server.ipLimit);
 toobusy.maxLag(300); // in ms: default is 70
 
 io.on('connection', (socket) => {
+
+  // Check Node.JS RAM usage and clear LibSword cache as needed.
+  let ramMB = Math.ceil(process.memoryUsage().rss / 1000000);
+  const maxRamMB = (Number(process.env.WEBAPP_MAX_CACHE_RAMMB) || 250);
+  if (ramMB > maxRamMB) {
+    Cache.clear('G', 'LibSword');
+    const ramMB2 = Math.ceil(process.memoryUsage().rss / 1000000);
+    log.info(`${socket.handshake.address} › Cleared G.LibSword cache (limit ${maxRamMB}, was ${ramMB}, is ${ramMB2})`);
+    ramMB = ramMB2;
+  }
+  log.info(`${socket.handshake.address} › Connected (${ramMB} MB RAM usage).`);
+
   socket.on(
     'error-report',
     async (args: any[], _callback: (r: any) => void) => {
