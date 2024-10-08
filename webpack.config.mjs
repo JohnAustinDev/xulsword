@@ -381,6 +381,7 @@ export default function (opts) {
               const name = path.basename(entry).replace(/\.[^.]+$/, '');
               return new HtmlWebpackPlugin({
                 filename: `${name}.html`,
+                scriptLoading: 'defer',
                 template: path.join(
                   {
                     appClients: path.join(
