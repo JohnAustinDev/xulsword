@@ -220,7 +220,8 @@ export function getPopupHTML(
 
     case 'aboutlink': {
       if (context) {
-        html = moduleInfoHTML([G.Tab[context].conf], renderPromise);
+        const conf = GI.getModuleConf(null, renderPromise, context);
+        if (conf) html = moduleInfoHTML([conf], renderPromise);
       }
       break;
     }

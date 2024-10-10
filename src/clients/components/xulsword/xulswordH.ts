@@ -1,3 +1,4 @@
+import RenderPromise from '../../renderPromise.ts';
 import C from '../../../constant.ts';
 import RefParser from '../../../refParser.ts';
 import Subscription from '../../../subscription.ts';
@@ -80,6 +81,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
               const newloc = chapterChange(
                 l.location(),
                 currentId === 'prevchap' ? -1 : 1,
+                renderPromise,
               );
               if (newloc) {
                 const s: Partial<XulswordState> = {
@@ -207,8 +209,18 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
           this.setState((prevState: XulswordState) => {
             const { location } = prevState;
             const newloc = new RefParser(
-              G.getLocaleDigits(true),
-              G.getLocalizedBooks(true),
+              Build.isElectronApp
+                ? C.Locales.reduce(
+                    (p, c) => {
+                      p[c[0]] = G.getLocaleDigits(c[0]);
+                      return p;
+                    },
+                    {} as Record<string, string[] | null>,
+                  )
+                : { [G.i18n.language]: G.getLocaleDigits() },
+              G.getLocalizedBooks(
+                Build.isElectronApp ? true : [G.i18n.language],
+              ),
               {
                 locales: C.Locales.map((l) => l[0]),
               },
@@ -248,7 +260,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
               if (id === 'chapter__input') {
                 pvk.chapter = Number(value);
                 pvk.verse = 1;
-                newloc = chapterChange(pvk.location(), 0);
+                newloc = chapterChange(pvk.location(), 0, renderPromise);
               } else {
                 pvk.verse = Number(value);
                 newloc = verseChange(pvk.location(), 0, renderPromise);
@@ -313,12 +325,14 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
                 renderPromise,
               ),
               1,
+              renderPromise,
             );
             if (nk)
               afile = verseKeyAudioFile(
                 swordModule,
                 nk.book,
                 nk.chapter,
+                renderPromise,
               );
           } else if ('key' in file) {
             const { key: k } = file;
@@ -329,7 +343,14 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
           }
         }
       }
-      Commands.playAudio(afile); // null closes the player
+      Commands.playAudio(
+        afile,
+        new RenderPromise(() =>
+          Subscription.publish.setRendererRootState({
+            reset: randomID(),
+          }),
+        ),
+      ); // null closes the player
       break;
     }
 

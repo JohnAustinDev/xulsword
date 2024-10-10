@@ -1,10 +1,14 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { dString } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
 import RenderPromise from '../../renderPromise.ts';
-import { audioConfig, clearPending, getMaxChapter } from '../../common.ts';
+import {
+  dString,
+  audioConfig,
+  clearPending,
+  getMaxChapter,
+} from '../../common.ts';
 import { Hbox, Vbox } from '../libxul/boxes.tsx';
 import Spacer from '../libxul/spacer.tsx';
 import {
@@ -323,7 +327,7 @@ class Chooser extends React.Component implements RenderPromiseComponent {
             }
             <BookGroupList
               className={`sizer${
-                (audioConfig(headingsModule) && ' audio') || ''
+                (audioConfig(headingsModule, renderPromise) && ' audio') || ''
               }`}
               availableBooks={new Set([longestBook])}
               headingsModule={headingsModule}
@@ -516,7 +520,7 @@ function ChapterMenu(props: {
       : undefined;
   const chmenuCells = [];
   let ch = 1;
-  const lastch = getMaxChapter(v11n, bkcode);
+  const lastch = getMaxChapter(v11n, bkcode, renderPromise);
   for (let row = 1; row <= 1 + lastch / 10; row += 1) {
     const cells = [];
     for (let col = 1; col <= 10; col += 1) {
@@ -531,7 +535,7 @@ function ChapterMenu(props: {
             onMouseEnter={dlyhandler}
             onMouseLeave={handler}
           >
-            {dString(G.getLocaleDigits(), ch, G.i18n.language)}
+            {dString(ch)}
             {headingsModule &&
               onAudioClick &&
               audioIcon(

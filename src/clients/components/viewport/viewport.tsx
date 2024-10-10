@@ -1,15 +1,21 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
+import Subscription from '../../../subscription.ts';
 import C from '../../../constant.ts';
-import { getPanelWidths, ofClass, stringHash } from '../../../common.ts';
+import {
+  getPanelWidths,
+  ofClass,
+  randomID,
+  stringHash,
+} from '../../../common.ts';
 import Popup from '../popup/popup.tsx';
 import {
   popupParentHandler as popupParentHandlerH,
   popupHandler as popupHandlerH,
   PopupParentInitState,
 } from '../popup/popupParentH.ts';
-import { G } from '../../G.ts';
+import { G, GI } from '../../G.ts';
 import Commands from '../../commands.ts';
 import RenderPromise from '../../renderPromise.ts';
 import log from '../../log.ts';
@@ -117,6 +123,7 @@ class Viewport extends React.Component implements PopupParent {
 
     this.popupParentHandler = popupParentHandlerH.bind(this);
     this.popupHandler = popupHandlerH.bind(this);
+    this.audioHandler = this.audioHandler.bind(this);
 
     this.renderPromise = new RenderPromise(this);
   }
@@ -138,8 +145,33 @@ class Viewport extends React.Component implements PopupParent {
     clearPending(this, ['popupDelayTO', 'popupUnblockTO']);
   }
 
+  audioHandler(
+    audioFile: VerseKeyAudioFile | GenBookAudioFile,
+    e: React.SyntheticEvent,
+  ) {
+    const atextClick = !!ofClass(['textarea'], e.target)?.element;
+    const prevAudio = G.Prefs.getComplexValue(
+      'xulsword.audio',
+    ) as typeof S.prefs.xulsword.audio;
+    if (audioFile && (!atextClick || !prevAudio.open))
+      Commands.playAudio(
+        audioFile,
+        new RenderPromise(() =>
+          Subscription.publish.setRendererRootState({
+            reset: randomID(),
+          }),
+        ),
+      );
+    if (!audioFile || (atextClick && prevAudio.open)) {
+      G.Prefs.setBoolPref(
+        'xulsword.audio.open',
+        false,
+      ) as typeof S.prefs.xulsword.audio.open;
+    }
+  }
+
   render() {
-    const { renderPromise, popupHandler } = this;
+    const { renderPromise, popupHandler, audioHandler } = this;
     const props = this.props as ViewportProps;
     const state = this.state as ViewportState;
     const {
@@ -179,7 +211,7 @@ class Viewport extends React.Component implements PopupParent {
     const availableBooks = new Set();
     panels.forEach((m, i) => {
       if (m && !isPinned[i] && G.Tab[m].isVerseKey) {
-        G.getBooksInVKModule(m).forEach((bk) => availableBooks.add(bk));
+        GI.getBooksInVKModule(['Gen'], renderPromise, m).forEach((bk) => availableBooks.add(bk));
       }
     });
 
@@ -201,7 +233,11 @@ class Viewport extends React.Component implements PopupParent {
         if (bk) {
           const ml = G.FeatureModules.hebrew
             .concat(G.FeatureModules.greek)
-            .filter((m) => G.getBooksInVKModule(m).includes(bk.code));
+            .filter((m) =>
+              GI.getBooksInVKModule(['Gen'], renderPromise, m).includes(
+                bk.code,
+              ),
+            );
           if (ml.length) ilModuleOptions[i] = ml;
         }
       }
@@ -336,7 +372,9 @@ class Viewport extends React.Component implements PopupParent {
         panels.some(
           (p) =>
             p &&
-            G.getBooksInVKModule(p).some((bk) => Book[bk].bookGroup === bg),
+            GI.getBooksInVKModule(['Gen'], renderPromise, p).some(
+              (bk) => Book[bk].bookGroup === bg,
+            ),
         ),
     );
 
@@ -508,21 +546,3 @@ class Viewport extends React.Component implements PopupParent {
 Viewport.propTypes = propTypes;
 
 export default Viewport;
-
-export function audioHandler(
-  audioFile: VerseKeyAudioFile | GenBookAudioFile,
-  e: React.SyntheticEvent,
-) {
-  const atextClick = !!ofClass(['textarea'], e.target)?.element;
-  const prevAudio = G.Prefs.getComplexValue(
-    'xulsword.audio',
-  ) as typeof S.prefs.xulsword.audio;
-  if (audioFile && (!atextClick || !prevAudio.open))
-    Commands.playAudio(audioFile);
-  if (!audioFile || (atextClick && prevAudio.open)) {
-    G.Prefs.setBoolPref(
-      'xulsword.audio.open',
-      false,
-    ) as typeof S.prefs.xulsword.audio.open;
-  }
-}

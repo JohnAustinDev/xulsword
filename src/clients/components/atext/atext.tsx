@@ -20,7 +20,12 @@ import {
   scrollIntoView,
 } from '../../common.ts';
 import RenderPromise from '../../renderPromise.ts';
-import { xulPropTypes, addClass, topHandle, delayHandler } from '../libxul/xul.tsx';
+import {
+  xulPropTypes,
+  addClass,
+  topHandle,
+  delayHandler,
+} from '../libxul/xul.tsx';
 import DragSizer from '../libxul/dragsizer.tsx';
 import { Vbox, Hbox, Box } from '../libxul/boxes.tsx';
 import Spacer from '../libxul/spacer.tsx';
@@ -296,7 +301,8 @@ class Atext extends React.Component implements RenderPromiseComponent {
                         (!rtl && v.offsetLeft > sbe.offsetWidth) ||
                         (rtl && v.offsetLeft <= 0);
                       const undernb =
-                        v.offsetLeft > sbe.offsetWidth - 1.1 * nbe.offsetWidth &&
+                        v.offsetLeft >
+                          sbe.offsetWidth - 1.1 * nbe.offsetWidth &&
                         v.offsetTop > atext.offsetHeight - nbc.offsetHeight;
                       if (!offpage && !undernb) break;
                       let finished;
@@ -350,10 +356,18 @@ class Atext extends React.Component implements RenderPromiseComponent {
                   // MULTI-COLUMN SCROLL TO VERSE
                   // verseAt determines which sibling is placed at the top.
                   if (verse === 1 && scrollProps.scroll?.verseAt === 'top') {
-                    for(;;) {
-                      const prevSib = (v?.previousElementSibling || null) as HTMLElement | null;
-                      const prevChap = prevSib && getElementData(prevSib)?.location?.chapter || 0;
-                      if (prevSib && (prevChap === 0 || prevChap === libswordProps.location.chapter)) {
+                    for (;;) {
+                      const prevSib = (v?.previousElementSibling ||
+                        null) as HTMLElement | null;
+                      const prevChap =
+                        (prevSib &&
+                          getElementData(prevSib)?.location?.chapter) ||
+                        0;
+                      if (
+                        prevSib &&
+                        (prevChap === 0 ||
+                          prevChap === libswordProps.location.chapter)
+                      ) {
                         v = prevSib;
                       } else break;
                     }
@@ -387,7 +401,11 @@ class Atext extends React.Component implements RenderPromiseComponent {
                   }
                   const v11n = G.Tab[module].v11n || null;
                   const max = v11n
-                    ? getMaxChapter(v11n, libswordProps.location.book)
+                    ? getMaxChapter(
+                        v11n,
+                        libswordProps.location.book,
+                        renderPromise,
+                      )
                     : 0;
                   while (
                     !renderPromise.waiting() &&
@@ -447,7 +465,8 @@ class Atext extends React.Component implements RenderPromiseComponent {
             type === C.BIBLE
           ) {
             highlight(sbe, selection, module, renderPromise);
-            if (!renderPromise.waiting()) sbe.dataset.highlightkey = highlightkey;
+            if (!renderPromise.waiting())
+              sbe.dataset.highlightkey = highlightkey;
           }
           // TRIM NOTES
           if (columns > 1 && (update || doScrollVerseKey)) {
@@ -463,8 +482,8 @@ class Atext extends React.Component implements RenderPromiseComponent {
           // PREV / NEXT LINKS
           delayHandler.bind(this)(
             () => {
-              const prev = textChange(atext, false, undefined, renderPromise);
-              const next = textChange(atext, true, undefined, renderPromise);
+              const prev = textChange(atext, false, renderPromise);
+              const next = textChange(atext, true, renderPromise);
               const prevdis = atext.classList.contains('prev-disabled');
               const nextdis = atext.classList.contains('next-disabled');
               if ((!prev && !prevdis) || (prev && prevdis)) {
@@ -481,8 +500,9 @@ class Atext extends React.Component implements RenderPromiseComponent {
       }
       // ADJUST WEB-APP PARENT IFRAME HEIGHT
       if (sbe) {
-        const clearIframeAuto =
-          !!document.querySelector('.textarea.multi-panel');
+        const clearIframeAuto = !!document.querySelector(
+          '.textarea.multi-panel',
+        );
         iframeAutoHeight('.xulsword', clearIframeAuto, sbe);
       }
     }
@@ -594,7 +614,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
         location: { ...libswordProps.location, verse: 0 },
       },
       panelIndex,
-    )
+    );
   }
 
   render() {

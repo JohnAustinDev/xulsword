@@ -228,7 +228,7 @@ async function newLocation(
   if (tabType === 'Texts') {
     r = {
       vkMod: module,
-      book: G.getBooksInVKModule(module)[0],
+      book: GI.getBooksInVKModule(['Gen'], renderPromise, module)[0],
       chapter: 1,
       verse: 1,
       lastverse: 1,
@@ -237,7 +237,7 @@ async function newLocation(
   } else if (tabType === 'Comms') {
     r = {
       commMod: module,
-      book: G.getBooksInVKModule(module)[0],
+      book: GI.getBooksInVKModule(['Gen'], renderPromise, module)[0],
       chapter: 1,
       verse: 1,
       lastverse: 1,

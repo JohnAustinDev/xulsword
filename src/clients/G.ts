@@ -4,10 +4,11 @@ import {
   isCallCacheable,
   clone,
   isInvalidWebAppData,
+  gcallResultCompression,
 } from '../common.ts';
 import Cache from '../cache.ts';
 import { GBuilder } from '../type.ts';
-import { getWaitRetry } from './common.ts';
+import { callResultDecompress, getWaitRetry } from './common.ts';
 import { GCallsOrPromise } from './renderPromise.ts';
 import log from './log.ts';
 import CookiePrefs from './webapp/prefs.ts';
@@ -171,7 +172,9 @@ Object.entries(GBuilder).forEach((entry) => {
               g.Prefs[m] = (...args: unknown[]) => {
                 let req;
                 if (isAsync) {
-                  log.error(`G async web app Prefs methods not implemented: ${m}`);
+                  log.error(
+                    `G async web app Prefs methods not implemented: ${m}`,
+                  );
                 } else {
                   try {
                     req = (CookiePrefs as any)[m](...args);
@@ -264,6 +267,8 @@ async function asyncRequest(thecall: GCallType) {
       log.error(`Invalid async data response: ${invalid}`);
       return undefined;
     }
+    if (Build.isWebApp)
+      result = gcallResultCompression(thecall, result, callResultDecompress);
     if (cacheable && !getWaitRetry(result)) Cache.write(result, ckey);
   } catch (er: any) {
     throw new Error(
@@ -286,22 +291,24 @@ function request(thecall: GCallType) {
   if (Build.isWebApp) {
     if (cacheable)
       throw new Error(
-        `Cache must be preloaded in browser context: ${JSON_stringify(call)}`,
+        `Cache must be preloaded in browser context: ${JSON_stringify(call)} at ${new Error().stack}`,
       );
     else
       throw new Error(
-        `This uncacheable call requires G.callBatch in browser context: ${JSON_stringify(call)}`,
+        `This uncacheable call requires G.callBatch in browser context: ${JSON_stringify(call)} at ${new Error().stack}`,
       );
   }
   log.silly(
     `${ckey} ${JSON_stringify(call)} sync ${cacheable ? 'miss' : 'uncacheable'}`,
   );
-  const result = window.IPC.sendSync('global', call);
+  let result = window.IPC.sendSync('global', call);
   const invalid = Build.isWebApp && isInvalidWebAppData(result);
   if (invalid) {
     log.error(`Invalid data response: ${invalid}`);
     return undefined;
   }
+  if (Build.isWebApp)
+    result = gcallResultCompression(thecall, result, callResultDecompress);
   if (cacheable) Cache.write(result, ckey);
 
   return result;

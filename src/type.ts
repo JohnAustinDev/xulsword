@@ -23,7 +23,7 @@ import type {
   getTabs,
   getTab,
   getConfig,
-  getAudioConfs,
+  getAudioConf,
   getLocaleConfigs,
   localeConfig,
   getModuleConfigDefault,
@@ -38,6 +38,9 @@ import type {
   getAllDictionaryKeyList,
   genBookTreeNodes,
   getLanguageName,
+  getAudioConfs,
+  getModuleConfs,
+  getModuleConf,
 } from './servers/common.ts';
 import type { publishSubscription } from './servers/app/components/window.ts';
 import type DiskCache from './servers/components/diskcache.ts';
@@ -394,11 +397,15 @@ export type TabTypes = 'Texts' | 'Comms' | 'Dicts' | 'Genbks';
 
 export type TabType = {
   module: string;
-  conf: SwordConfType;
+  lang: string;
+  description: SwordConfLocalized;
+  audioCodes: string[];
   tabType: TabTypes;
   type: ModTypes;
+  xsmType: XSModTypes;
   isVerseKey: boolean;
   direction: 'ltr' | 'rtl';
+  features: SwordFeatures[];
   v11n: V11nType | '';
   label: string;
   labelClass: string;
@@ -506,7 +513,11 @@ export type SwordConfType = SwordConfigEntries &
     filename: string;
   };
 
-export type SwordConfLocalized = Record<string | 'locale' | 'en', string>;
+export type SwordConfLocalized = {
+  locale: string;
+  en: string;
+  [alocale: string]: string;
+};
 
 export type SwordFeatures =
   | 'StrongsNumbers'
@@ -760,13 +771,13 @@ export type GType = {
   Tabs: ReturnType<typeof getTabs>;
   Tab: ReturnType<typeof getTab>;
   Config: ReturnType<typeof getConfig>;
+  ModuleConfs: ReturnType<typeof getModuleConfs>;
   AudioConfs: ReturnType<typeof getAudioConfs>;
   ProgramConfig: ReturnType<typeof localeConfig>;
   LocaleConfigs: ReturnType<typeof getLocaleConfigs>;
   ModuleConfigDefault: ReturnType<typeof getModuleConfigDefault>;
   ModuleFonts: ReturnType<typeof getModuleFonts>;
   FeatureModules: ReturnType<typeof getFeatureModules>;
-  BkChsInV11n: ReturnType<typeof getBkChsInV11n>;
   OPSYS: NodeJS.Platform;
   GetBooksInVKModules: ReturnType<typeof GetBooksInVKModules>;
 
@@ -775,9 +786,12 @@ export type GType = {
   Book: typeof getBook;
   inlineFile: typeof inlineFile;
   inlineAudioFile: typeof inlineAudioFile;
+  getModuleConf: typeof getModuleConf;
+  getAudioConf: typeof getAudioConf;
   resetMain: typeof resetMain;
   getSystemFonts: typeof getSystemFonts;
   getBooksInVKModule: typeof getBooksInVKModule;
+  getBkChsInV11n: typeof getBkChsInV11n;
   getLocalizedBooks: typeof getLocalizedBooks;
   getLocaleDigits: typeof getLocaleDigits;
   publishSubscription: typeof publishSubscription;
@@ -828,13 +842,13 @@ export type GIType = {
     | 'Tabs'
     | 'Tab'
     | 'Config'
+    | 'ModuleConfs'
     | 'AudioConfs'
     | 'ProgramConfig'
     | 'LocaleConfigs'
     | 'ModuleConfigDefault'
     | 'ModuleFonts'
     | 'FeatureModules'
-    | 'BkChsInV11n'
     | 'GetBooksInVKModules'
   >]: (a: GType[name], b: RenderPromise) => GType[name];
 } & {
@@ -844,8 +858,11 @@ export type GIType = {
     | 'Book'
     | 'inlineFile'
     | 'inlineAudioFile'
+    | 'getModuleConf'
+    | 'getAudioConf'
     | 'getSystemFonts'
     | 'getBooksInVKModule'
+    | 'getBkChsInV11n'
     | 'getLocalizedBooks'
     | 'getLocaleDigits'
     | 'callBatch'
@@ -909,18 +926,21 @@ export const GBuilder: GType & {
     [keyof GType, Array<keyof GType['Tabs']>],
     [keyof GType, Array<keyof GType['Tab']>],
     [keyof GType, Array<keyof GType['Config']>],
+    [keyof GType, Array<keyof GType['ModuleConfs']>],
     [keyof GType, Array<keyof GType['AudioConfs']>],
     [keyof GType, Array<keyof GType['ProgramConfig']>],
     [keyof GType, Array<keyof GType['LocaleConfigs']>],
     [keyof GType, Array<keyof GType['ModuleConfigDefault']>],
     [keyof GType, Array<keyof GType['ModuleFonts']>],
     [keyof GType, Array<keyof GType['FeatureModules']>],
-    [keyof GType, Array<keyof GType['BkChsInV11n']>],
     [keyof GType, Array<keyof GType['Books']>],
     [keyof GType, Array<keyof GType['Book']>],
     [keyof GType, Array<keyof GType['inlineFile']>],
     [keyof GType, Array<keyof GType['inlineAudioFile']>],
+    [keyof GType, Array<keyof GType['getModuleConf']>],
+    [keyof GType, Array<keyof GType['getAudioConf']>],
     [keyof GType, Array<keyof GType['getBooksInVKModule']>],
+    [keyof GType, Array<keyof GType['getBkChsInV11n']>],
     [keyof GType, Array<keyof GType['getLocalizedBooks']>],
     [keyof GType, Array<keyof GType['getLocaleDigits']>],
     [keyof GType, Array<keyof GType['GetBooksInVKModules']>],
@@ -970,18 +990,21 @@ export const GBuilder: GType & {
     ['Tabs', []],
     ['Tab', []],
     ['Config', []],
+    ['ModuleConfs', []],
     ['AudioConfs', []],
     ['ProgramConfig', []],
     ['LocaleConfigs', []],
     ['ModuleConfigDefault', []],
     ['ModuleFonts', []],
     ['FeatureModules', []],
-    ['BkChsInV11n', []],
     ['Books', []],
     ['Book', []],
     ['inlineFile', []],
     ['inlineAudioFile', []],
+    ['getModuleConf', []],
+    ['getAudioConf', []],
     ['getBooksInVKModule', []],
+    ['getBkChsInV11n', []],
     ['getLocalizedBooks', []],
     ['getLocaleDigits', []],
     ['GetBooksInVKModules', []],
@@ -1019,13 +1042,13 @@ export const GBuilder: GType & {
   Tabs: 'getter' as any,
   Tab: 'getter' as any,
   Config: 'getter' as any,
+  ModuleConfs: 'getter' as any,
   AudioConfs: 'getter' as any,
   ProgramConfig: 'getter' as any,
   LocaleConfigs: 'getter' as any,
   ModuleConfigDefault: 'getter' as any,
   ModuleFonts: 'getter' as any,
   FeatureModules: 'getter' as any,
-  BkChsInV11n: 'getter' as any,
   OPSYS: 'getter' as any,
   GetBooksInVKModules: 'getter' as any,
 
@@ -1034,8 +1057,11 @@ export const GBuilder: GType & {
   Book: CACHEfunc as any,
   inlineFile: CACHEfunc as any,
   inlineAudioFile: CACHEfunc as any,
+  getModuleConf: CACHEfunc as any,
+  getAudioConf: CACHEfunc as any,
   getSystemFonts: CACHEfunc as any,
   getBooksInVKModule: CACHEfunc as any,
+  getBkChsInV11n: CACHEfunc as any,
   getLocalizedBooks: CACHEfunc as any,
   getLocaleDigits: CACHEfunc as any,
   getAllDictionaryKeyList: CACHEfunc as any,

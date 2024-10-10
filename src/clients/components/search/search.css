@@ -2,7 +2,7 @@
   padding: 10px;
 }
 .search-grid {
-  position:relative;
+  position: relative;
   gap: 10px 10px;
 }
 .search-grid .groupbox {
@@ -256,18 +256,18 @@ html[dir='rtl'] .resultBox #displayModule {
   .bibleBrowser #moreLess {
     margin: 10px 0;
   }
-  .bibleBrowser  #searchButton {
+  .bibleBrowser #searchButton {
     margin-inline-start: unset;
     margin-inline-end: 5px;
   }
   .bibleBrowser #moreLess {
     margin-inline-start: 5px;
   }
-  .bibleBrowser  #searchButton .button-box,
-  .bibleBrowser  #searchButton  button {
+  .bibleBrowser #searchButton .button-box,
+  .bibleBrowser #searchButton button {
     width: 100%;
   }
-  .bibleBrowser  .search-grid > .grid-row-cell:nth-of-type(2) .groupbox {
+  .bibleBrowser .search-grid > .grid-row-cell:nth-of-type(2) .groupbox {
     min-width: unset;
     width: 100%;
   }

@@ -203,19 +203,23 @@ export default function (opts) {
 
       optimization: {
         minimize: production ? true : false,
-        moduleIds: 'deterministic',
-        runtimeChunk: 'single',
-        splitChunks: {
-          cacheGroups: {
-            vendor: {
-              test: (m) =>
-                /[\\/]node_modules[\\/]/.test(m.resource) &&
-                !/blueprint/i.test(m.resource),
-              name: 'vendors',
-              chunks: 'all',
-            },
-          },
-        },
+        ...(build === 'webappClients'
+          ? {
+              moduleIds: 'deterministic',
+              runtimeChunk: 'single',
+              splitChunks: {
+                cacheGroups: {
+                  vendor: {
+                    test: (m) =>
+                      /[\\/]node_modules[\\/]/.test(m.resource) &&
+                      !/blueprint/i.test(m.resource),
+                    name: 'vendors',
+                    chunks: 'all',
+                  },
+                },
+              },
+            }
+          : {}),
       },
 
       // libxulsword is packaged by electron-builder not Webpack.

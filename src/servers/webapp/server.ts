@@ -40,7 +40,8 @@ const logfile = Dirs.LogDir.append(`access.log`);
 log.transports.console.level = C.LogLevel;
 log.transports.file.level = C.LogLevel;
 log.transports.file.sync = false;
-log.transports.file.maxSize = Number(process.env.WEBAPP_MAX_LOG_SIZE) || 5000000;
+log.transports.file.maxSize =
+  Number(process.env.WEBAPP_MAX_LOG_SIZE) || 5000000;
 log.transports.file.archiveLog = (file) => {
   const filename = file.toString();
   const info = path.parse(filename);
@@ -53,12 +54,15 @@ log.transports.file.archiveLog = (file) => {
   });
   num += 1;
   try {
-    fs.renameSync(filename, path.join(info.dir, info.name + info.ext + `.${num}`));
+    fs.renameSync(
+      filename,
+      path.join(info.dir, info.name + info.ext + `.${num}`),
+    );
   } catch (e) {
     // eslint-disable-next-line no-console
     console.warn('Error rotating log: ', e);
   }
-}
+};
 log.transports.file.resolvePath = () => logfile.path;
 
 LibSword.init();
@@ -130,14 +134,15 @@ const rateLimiter = new RateLimiterMemory(C.Server.ipLimit);
 // toobusy.maxLag(300); // in ms: default is 70
 
 io.on('connection', (socket) => {
-
   // Check Node.JS RAM usage and clear LibSword cache as needed.
   let ramMB = Math.ceil(process.memoryUsage().rss / 1000000);
-  const maxRamMB = (Number(process.env.WEBAPP_MAX_CACHE_RAMMB) || 250);
+  const maxRamMB = Number(process.env.WEBAPP_MAX_CACHE_RAMMB) || 250;
   if (ramMB > maxRamMB) {
     Cache.clear('G', 'LibSword');
     const ramMB2 = Math.ceil(process.memoryUsage().rss / 1000000);
-    log.info(`${socket.handshake.address} › Cleared G.LibSword cache (limit ${maxRamMB}, was ${ramMB}, is ${ramMB2})`);
+    log.info(
+      `${socket.handshake.address} › Cleared G.LibSword cache (limit ${maxRamMB}, was ${ramMB}, is ${ramMB2})`,
+    );
     ramMB = ramMB2;
   }
   log.info(`${socket.handshake.address} › Connected (${ramMB} MB RAM usage).`);
@@ -163,7 +168,9 @@ io.on('connection', (socket) => {
         );
       } else {
         // eslint-disable-next-line no-console
-        console.log(`${socket.handshake.address} › rate limited! dropping error-report.`);
+        console.log(
+          `${socket.handshake.address} › rate limited! dropping error-report.`,
+        );
       }
     },
   );
@@ -202,7 +209,9 @@ io.on('connection', (socket) => {
         `${socket.handshake.address} › 'log' call made with improper arguments. (${invalid})`,
       );
     } else {
-      log.warn(`${socket.handshake.address} › rate limited! dropping log request.`);
+      log.warn(
+        `${socket.handshake.address} › rate limited! dropping log request.`,
+      );
     }
   });
 
@@ -232,8 +241,10 @@ io.on('connection', (socket) => {
           if (r instanceof Promise) {
             r.then((result) => {
               const invalid = isInvalidWebAppDataLogged(result);
-              if (!invalid) callback(result);
-              else
+              if (!invalid) {
+                callback(result);
+                log.silly(`FINISHED async on global: ${JSON_stringify(args)}`);
+              } else
                 log.error(
                   `${socket.handshake.address} › invalid promise request: ${invalid}`,
                 );
@@ -244,8 +255,10 @@ io.on('connection', (socket) => {
             });
           } else {
             const invalid = isInvalidWebAppDataLogged(r);
-            if (!invalid) callback(r);
-            else
+            if (!invalid) {
+              callback(r);
+              log.silly(`FINISHED on global: ${JSON_stringify(args)}`);
+            } else
               log.error(
                 `${socket.handshake.address} › invalid sync request: ${invalid}`,
               );
@@ -258,7 +271,9 @@ io.on('connection', (socket) => {
       );
     } else if (typeof callback === 'function') {
       const msg = Build.isDevelopment ? JSON_stringify(args) : args.length;
-      log.warn(`${socket.handshake.address} › rate limiting callback. [${msg}]`);
+      log.warn(
+        `${socket.handshake.address} › rate limiting callback. [${msg}]`,
+      );
       callback({ limitedDoWait: C.Server.limitedMustWait });
     } else {
       const msg = Build.isDevelopment ? JSON_stringify(args) : args.length;
@@ -276,10 +291,7 @@ function invalidArgs<T>(args: T[]): string | null {
     : `Arguments must be an array. (was ${typeof args})`;
 }
 
-async function isLimited(
-  socket: Socket,
-  _checkbusy = false,
-): Promise<boolean> {
+async function isLimited(socket: Socket, _checkbusy = false): Promise<boolean> {
   // Check-busy is disabled for now...
   /*
   if (checkbusy && toobusy()) {

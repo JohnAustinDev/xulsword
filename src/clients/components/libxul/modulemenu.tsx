@@ -2,7 +2,10 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import C from '../../../constant.ts';
 import { G } from '../../G.ts';
-import { functionalComponentRenderPromise, getLangReadable } from '../../common.ts';
+import {
+  functionalComponentRenderPromise,
+  getLangReadable,
+} from '../../common.ts';
 import { addClass, xulPropTypes, type XulProps } from './xul.tsx';
 import Menulist from './menulist.tsx';
 
@@ -59,9 +62,9 @@ export default function ModuleMenu({
   const labels: Record<string, string> = {};
   mtabs.forEach((t) => {
     labels[t.module] = t.label;
-    if (language && t.conf.Lang) {
+    if (language && t.lang) {
       labels[t.module] =
-        `${getLangReadable(t.conf.Lang, renderPromise)}: ${labels[t.module]}`;
+        `${getLangReadable(t.lang, renderPromise)}: ${labels[t.module]}`;
     }
   });
 
@@ -97,8 +100,8 @@ export default function ModuleMenu({
                         key={[tab.module].join('.')}
                         value={tab.module}
                         title={
-                          description && tab.conf.Description
-                            ? tab.conf.Description.locale
+                          description && tab.description
+                            ? tab.description.locale
                             : ''
                         }
                       >

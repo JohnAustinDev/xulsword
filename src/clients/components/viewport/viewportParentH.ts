@@ -1,11 +1,13 @@
 import type React from 'react';
+import Subscription from '../../../subscription.ts';
 import C from '../../../constant.ts';
 import type S from '../../../defaultPrefs.ts';
 import Cache from '../../../cache.ts';
-import { clone, escapeRE, ofClass } from '../../../common.ts';
+import { clone, escapeRE, ofClass, randomID } from '../../../common.ts';
 import { getElementData, verseKey } from '../../htmlData.ts';
 import { G } from '../../G.ts';
 import Commands from '../../commands.ts';
+import RenderPromise from '../../renderPromise.ts';
 import { scrollIntoView, windowArguments } from '../../common.ts';
 import { delayHandler } from '../libxul/xul.tsx';
 import { textChange } from '../atext/ztext.ts';
@@ -358,6 +360,7 @@ export default function handler(
                 v11n: v11n as V11nType,
               },
               0,
+              renderPromise,
             );
             if (newloc) {
               this.setState({
@@ -467,8 +470,8 @@ export default function handler(
               return textChange(
                 atext,
                 targ.type === 'nextchaplink',
-                prevState,
                 renderPromise,
+                prevState,
               );
             });
           }
@@ -524,7 +527,16 @@ export default function handler(
                 lastverse: lastverse || 1,
                 v11n,
               };
-              Commands.goToLocationVK(loc, loc);
+              Commands.goToLocationVK(
+                loc,
+                loc,
+                undefined,
+                new RenderPromise(() =>
+                  Subscription.publish.setRendererRootState({
+                    reset: randomID(),
+                  }),
+                ),
+              );
             }
           }
           break;

@@ -1,5 +1,5 @@
 import C from './constant.ts';
-import { clone, dString } from './common.ts';
+import { clone } from './common.ts';
 
 import type { GType, LocationVKType, OSISBookType, V11nType } from './type.ts';
 import type RefParser from './refParser.ts';
@@ -8,6 +8,7 @@ type VerseKeyGtype = {
   convertLocation?: GType['LibSword']['convertLocation'];
   Book: GType['Book']; // These web app G calls must be cache preloaded.
   Tab: () => GType['Tab']; // These web app G calls must be cache preloaded.
+  getBkChsInV11n: GType['getBkChsInV11n'];
 };
 
 // VerseKey is an object representing a Bible reference of a verse up to a
@@ -16,9 +17,9 @@ type VerseKeyGtype = {
 export default class VerseKey {
   readonly #parser: RefParser;
 
-  readonly #bkChsInV11n: GType['BkChsInV11n'];
-
   readonly #gfunctions: VerseKeyGtype;
+
+  readonly #dString: (str: string | number, locale?: string) => string;
 
   readonly #loc: LocationVKType;
 
@@ -26,14 +27,14 @@ export default class VerseKey {
 
   constructor(
     parser: RefParser,
-    bkChsInV11n: GType['BkChsInV11n'],
     gfunction: VerseKeyGtype,
+    dString: (str: string | number, locale?: string) => string,
     location: LocationVKType | string,
     v11n?: V11nType | null,
   ) {
     this.#parser = parser;
-    this.#bkChsInV11n = bkChsInV11n;
     this.#gfunctions = gfunction;
+    this.#dString = dString;
     if (typeof location === 'string') {
       const parsed = this.parseLocation(location, v11n);
       if (parsed.book) {
@@ -121,11 +122,12 @@ export default class VerseKey {
     if (!(fromv11n in C.SupportedV11nMaps)) return false;
     if (!C.SupportedV11nMaps[fromv11n].includes(tov11n)) return false;
     const { book, chapter, verse, lastverse } = this.#loc;
-    if (!(tov11n in this.#bkChsInV11n)) return false;
-    if (!this.#bkChsInV11n[tov11n].some((x) => x[0] === book)) return false;
+    const toBks = this.#gfunctions.getBkChsInV11n(tov11n);
+    const fromBks = this.#gfunctions.getBkChsInV11n(fromv11n);
+    if (toBks && !(tov11n in toBks)) return false;
+    if (toBks && !toBks.some((x) => x[0] === book)) return false;
     const bkfo =
-      fromv11n in this.#bkChsInV11n &&
-      this.#bkChsInV11n[fromv11n].find((x) => x[0] === book);
+      fromBks && fromv11n in fromBks && fromBks.find((x) => x[0] === book);
     const maxch: number = bkfo ? bkfo[1] : 0;
     if (chapter < 1 || chapter > maxch) return false;
     if (verse) {
@@ -268,6 +270,6 @@ export default class VerseKey {
     }
     parts.push('');
     const res = parts.join(d);
-    return dString(localeDigits, res, locale);
+    return this.#dString(res, locale);
   }
 }

@@ -26,6 +26,9 @@ import {
   getAllDictionaryKeyList,
   genBookTreeNodes,
   getLanguageName,
+  getAudioConf,
+  getModuleConfs,
+  getModuleConf,
 } from '../common.ts';
 import { callBatch } from '../handleG.ts';
 import { getExtRefHTML, locationVKText } from '../versetext.ts';
@@ -39,7 +42,12 @@ import Window, { publishSubscription } from './components/window.ts';
 import Module from './components/module.ts';
 import Commands from './components/commands.ts';
 
-import type { GType, GTypeMain, WindowDescriptorType } from '../../type.ts';
+import type {
+  GIType,
+  GType,
+  GTypeMain,
+  WindowDescriptorType,
+} from '../../type.ts';
 import type { SubscriptionType } from '../../subscription.ts';
 import type AppViewport from './viewport.ts';
 
@@ -89,6 +97,10 @@ export const G: GTypeMain = {
     return getConfig();
   },
 
+  get ModuleConfs() {
+    return getModuleConfs();
+  },
+
   get AudioConfs() {
     return getAudioConfs();
   },
@@ -111,10 +123,6 @@ export const G: GTypeMain = {
 
   get FeatureModules() {
     return getFeatureModules();
-  },
-
-  get BkChsInV11n() {
-    return getBkChsInV11n();
   },
 
   get OPSYS() {
@@ -145,6 +153,18 @@ export const G: GTypeMain = {
     return inlineAudioFile(...args);
   },
 
+  getModuleConf(
+    ...args: Parameters<GType['getModuleConf']>
+  ): ReturnType<GType['getModuleConf']> {
+    return getModuleConf(...args);
+  },
+
+  getAudioConf(
+    ...args: Parameters<GType['getAudioConf']>
+  ): ReturnType<GType['getAudioConf']> {
+    return getAudioConf(...args);
+  },
+
   resetMain(
     ...args: Parameters<GType['resetMain']>
   ): ReturnType<GType['resetMain']> {
@@ -161,6 +181,12 @@ export const G: GTypeMain = {
     ...args: Parameters<GType['getBooksInVKModule']>
   ): ReturnType<GType['getBooksInVKModule']> {
     return getBooksInVKModule(...args);
+  },
+
+  getBkChsInV11n(
+    ...args: Parameters<GType['getBkChsInV11n']>
+  ): ReturnType<GType['getBkChsInV11n']> {
+    return getBkChsInV11n(...args);
   },
 
   getLocalizedBooks(
@@ -239,7 +265,13 @@ export const G: GTypeMain = {
   },
 };
 
-G.Viewport = new Viewport(G, Prefs);
+const GI: Pick<GIType, 'getBooksInVKModule'> = {
+  getBooksInVKModule: (_default, _renderPromise, module) => {
+    return G.getBooksInVKModule(module);
+  },
+};
+
+G.Viewport = new Viewport(G, GI, Prefs);
 
 Cache.write(G, 'G');
 Cache.noclear('G');

@@ -24,6 +24,9 @@ import {
   inlineFile,
   inlineAudioFile,
   getLanguageName,
+  getAudioConf,
+  getModuleConf,
+  getModuleConfs,
 } from '../common.ts';
 import { callBatch } from '../handleG.ts';
 
@@ -56,6 +59,10 @@ export const GI: GITypeMain = {
     return getConfig();
   },
 
+  get ModuleConfs() {
+    return getModuleConfs();
+  },
+
   get AudioConfs() {
     return getAudioConfs();
   },
@@ -78,10 +85,6 @@ export const GI: GITypeMain = {
 
   get FeatureModules() {
     return getFeatureModules();
-  },
-
-  get BkChsInV11n() {
-    return getBkChsInV11n();
   },
 
   get GetBooksInVKModules() {
@@ -108,6 +111,18 @@ export const GI: GITypeMain = {
     return inlineAudioFile(...args);
   },
 
+  getModuleConf(
+    ...args: Parameters<GType['getModuleConf']>
+  ): ReturnType<GType['getModuleConf']> {
+    return getModuleConf(...args);
+  },
+
+  getAudioConf(
+    ...args: Parameters<GType['getAudioConf']>
+  ): ReturnType<GType['getAudioConf']> {
+    return getAudioConf(...args);
+  },
+
   async getSystemFonts(
     ...args: Parameters<GType['getSystemFonts']>
   ): ReturnType<GType['getSystemFonts']> {
@@ -118,6 +133,12 @@ export const GI: GITypeMain = {
     ...args: Parameters<GType['getBooksInVKModule']>
   ): ReturnType<GType['getBooksInVKModule']> {
     return getBooksInVKModule(...args);
+  },
+
+  getBkChsInV11n(
+    ...args: Parameters<GType['getBkChsInV11n']>
+  ): ReturnType<GType['getBkChsInV11n']> {
+    return getBkChsInV11n(...args);
   },
 
   getLocalizedBooks(

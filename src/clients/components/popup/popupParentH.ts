@@ -1,9 +1,11 @@
 import type React from 'react';
-import { clone, ofClass } from '../../../common.ts';
+import Subscription from '../../../subscription.ts';
+import { clone, ofClass, randomID } from '../../../common.ts';
 import C from '../../../constant.ts';
 import type S from '../../../defaultPrefs.ts';
 import { G } from '../../G.ts';
 import Commands from '../../commands.ts';
+import RenderPromise from '../../renderPromise.ts';
 import { findElementData, updateDataAttribute } from '../../htmlData.ts';
 import log from '../../log.ts';
 import { scrollIntoView, windowArguments } from '../../common.ts';
@@ -286,7 +288,16 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
                 lastverse: lastverse || 1,
                 v11n,
               };
-              Commands.goToLocationVK(loc, loc);
+              Commands.goToLocationVK(
+                loc,
+                loc,
+                undefined,
+                new RenderPromise(() =>
+                  Subscription.publish.setRendererRootState({
+                    reset: randomID(),
+                  }),
+                ),
+              );
             }
           }
           break;

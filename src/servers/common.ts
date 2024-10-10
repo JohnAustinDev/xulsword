@@ -15,6 +15,7 @@ import {
   getSwordOptions,
   JSON_stringify,
   resolveAudioDataPathURL,
+  stringHash,
 } from '../common.ts';
 import Cache from '../cache.ts';
 import Subscription from '../subscription.ts';
@@ -23,7 +24,7 @@ import DiskCache from './components/diskcache.ts';
 import LibSword, { moduleUnsupported } from './components/libsword.ts';
 import LocalFile from './components/localFile.ts';
 import getFontFamily from './fontfamily.ts';
-import { bkChsInV11n } from './bkChsInV11n.ts';
+import { allBkChsInV11n } from './allBkChsInV11n.ts';
 import parseSwordConf, {
   fileFullPath,
   serverPublicPath,
@@ -35,7 +36,6 @@ import type {
   BookType,
   ModTypes,
   V11nType,
-  GType,
   LocationVKType,
   FeatureMods,
   SwordConfType,
@@ -49,6 +49,7 @@ import type {
   GenBookAudioFile,
   ModulesCache,
   TreeNodeInfoPref,
+  GCallType,
 } from '../type.ts';
 import PrefsElectron from './app/prefs.ts';
 import type { RefParserOptionsType } from '../refParser.ts';
@@ -135,10 +136,10 @@ export function getBook(locale?: string): Record<string, BookType> {
   return book;
 }
 
-export function getBkChsInV11n(): {
+export function getAllBkChsInV11n(): {
   [key in V11nType]: Array<[OSISBookType, number]>;
 } {
-  if (!Cache.has('bkChsInV11n')) {
+  if (!Cache.has('getAllBkChsInV11n')) {
     // Data was parsed from sword/include/*.h files using /util/readCanons.pl
     const sameAsKJV = {
       KJV: { ot: 0, nt: 0 },
@@ -161,21 +162,29 @@ export function getBkChsInV11n(): {
       Vulg: { ot: 0, nt: 0 },
     };
 
-    const kjvot = bkChsInV11n.KJV.slice(0, 39);
-    const kjvnt = bkChsInV11n.KJV.slice(39);
-    Object.keys(bkChsInV11n).forEach((k) => {
-      const v11n = k as keyof typeof bkChsInV11n;
+    const kjvot = allBkChsInV11n.KJV.slice(0, 39);
+    const kjvnt = allBkChsInV11n.KJV.slice(39);
+    Object.keys(allBkChsInV11n).forEach((k) => {
+      const v11n = k as keyof typeof allBkChsInV11n;
       if (sameAsKJV[v11n].ot) {
-        bkChsInV11n[v11n].splice(0, 0, ...kjvot);
+        allBkChsInV11n[v11n].splice(0, 0, ...kjvot);
       }
       if (sameAsKJV[v11n].nt) {
-        bkChsInV11n[v11n].push(...kjvnt);
+        allBkChsInV11n[v11n].push(...kjvnt);
       }
     });
-    Cache.write(bkChsInV11n, 'bkChsInV11n');
+    Cache.write(allBkChsInV11n, 'getAllBkChsInV11n');
   }
 
-  return Cache.read('bkChsInV11n');
+  return Cache.read('getAllBkChsInV11n');
+}
+
+export function getBkChsInV11n(
+  v11n: V11nType,
+): Array<[OSISBookType, number]> | null {
+  const all = getAllBkChsInV11n();
+  if (v11n in all) return all[v11n];
+  return null;
 }
 
 export function GetBooksInVKModules(): Record<string, OSISBookType[]> {
@@ -188,7 +197,7 @@ export function GetBooksInVKModules(): Record<string, OSISBookType[]> {
 
 export function getBooksInVKModule(module: string): OSISBookType[] {
   if (!Cache.has('booksInModule', module)) {
-    const bkChsInV11n = getBkChsInV11n();
+    const allBkChsInV11n = getAllBkChsInV11n();
     const book = getBook();
     let v11n = LibSword.getModuleInformation(
       module,
@@ -201,7 +210,7 @@ export function getBooksInVKModule(module: string): OSISBookType[] {
     const options = getSwordOptions(false, C.BIBLE);
     const osis: string[] = [];
     if (isVerseKey) {
-      const v11nbooks = bkChsInV11n[v11n].map((x: any) => x[0]);
+      const v11nbooks = allBkChsInV11n[v11n].map((x: any) => x[0]);
       // When references to missing books are requested from SWORD,
       // the previous (or last?) book in the module is usually quietly
       // used and read from instead! The exception seems to be when a
@@ -287,6 +296,7 @@ function getLocaleOfModule(module: string) {
   return Cache.read(cacheName);
 }
 
+const ParsedConfigFiles: Record<string, SwordConfType> = {};
 export function getTabs(): TabType[] {
   if (!Cache.has('tabs')) {
     Object.keys(CipherKeyModules).forEach((k) => delete CipherKeyModules[k]);
@@ -308,58 +318,32 @@ export function getTabs(): TabType[] {
         });
         if (!tabType) return;
 
-        // Find conf file. First look for typical file name (lowercase of module code),
-        // then search contents when necessary.
-        let p = LibSword.getModuleInformation(
-          module,
-          'AbsoluteDataPath',
-        ).replace(/[\\/]/g, path.sep);
-        if (p.slice(-1) !== path.sep) p += path.sep;
-        const modsd = p.replace(/[\\/]modules[\\/].*?$/, `${path.sep}mods.d`);
-        let confFile: LocalFile | null = new LocalFile(
-          `${modsd + path.sep + module.toLowerCase()}.conf`,
-        );
-        if (!confFile.exists()) {
-          // Try another possibility (unchanged case module code).
-          confFile = new LocalFile(`${modsd + path.sep + module}.conf`);
-          if (!confFile.exists()) {
-            confFile = null;
-            // Otherwise parse the module code from every conf file looking for a match.
-            const modsdDir = new LocalFile(modsd);
-            const modRE = new RegExp(`^\\[${module}\\]`);
-            if (modsdDir.exists() && modsdDir.isDirectory()) {
-              const files = modsdDir.directoryEntries;
-              files?.forEach((file) => {
-                if (confFile) return;
-                const f = modsdDir.clone().append(file);
-                if (!f.isDirectory() && /\.conf$/.test(f.leafName)) {
-                  const cdata = f.readFile();
-                  if (modRE.test(cdata)) confFile = f;
-                }
-              });
-            }
-          }
-        }
-        if (!confFile || !confFile.exists()) {
-          log.warn(`A config file for '${module}' was not found in '${modsd}'`);
-          return;
-        }
-        const confPath = confFile.path;
-        const conf = parseSwordConf(confFile);
+        const isVerseKey = type === C.BIBLE || type === C.COMMENTARY;
+
+        const confFile = moduleConfFile(module);
+        if (!confFile) return;
+        ParsedConfigFiles[module] = parseSwordConf(confFile);
         const cipherKey = LibSword.getModuleInformation(module, 'CipherKey');
-        if (cipherKey !== C.NOTFOUND) {
+        if (confFile && cipherKey !== C.NOTFOUND) {
           CipherKeyModules[module] = {
-            confPath,
+            confPath: confFile.path,
             cipherKey,
             numBooks: cipherKey === '' ? 0 : getBooksInVKModule(module).length,
           };
           if (cipherKey === '') return;
         }
-        const isVerseKey = type === C.BIBLE || type === C.COMMENTARY;
 
         const tab: TabType = {
           module,
+          lang: LibSword.getModuleInformation(module, 'Lang'),
+          description: ParsedConfigFiles[module].Description || {
+            locale: '',
+            en: '',
+          },
+          audioCodes: ParsedConfigFiles[module].AudioCode || [],
           type,
+          xsmType: ParsedConfigFiles[module].xsmType,
+          features: ParsedConfigFiles[module].Feature || [],
           v11n: isVerseKey ? LibSword.getVerseSystem(module) : '',
           label,
           labelClass: isASCII(label) ? 'cs-LTR_DEFAULT' : `cs-${module}`,
@@ -370,7 +354,6 @@ export function getTabs(): TabType[] {
           )
             ? 'rtl'
             : 'ltr',
-          conf,
         };
 
         tabs.push(tab);
@@ -412,6 +395,84 @@ export function getTab(): Record<string, TabType> {
   return Cache.read('tab');
 }
 
+export function moduleConfFile(module: string): LocalFile | null {
+  // Find conf file. First look for typical file name (lowercase of module code),
+  // then search contents when necessary.
+  let p = LibSword.getModuleInformation(module, 'AbsoluteDataPath').replace(
+    /[\\/]/g,
+    path.sep,
+  );
+  if (p.slice(-1) !== path.sep) p += path.sep;
+  const modsd = p.replace(/[\\/]modules[\\/].*?$/, `${path.sep}mods.d`);
+  let confFile: LocalFile | null = new LocalFile(
+    `${modsd + path.sep + module.toLowerCase()}.conf`,
+  );
+  if (!confFile.exists()) {
+    // Try another possibility (unchanged case module code).
+    confFile = new LocalFile(`${modsd + path.sep + module}.conf`);
+    if (!confFile.exists()) {
+      confFile = null;
+      // Otherwise parse the module code from every conf file looking for a match.
+      const modsdDir = new LocalFile(modsd);
+      const modRE = new RegExp(`^\\[${module}\\]`);
+      if (modsdDir.exists() && modsdDir.isDirectory()) {
+        const files = modsdDir.directoryEntries;
+        files?.forEach((file) => {
+          if (confFile) return;
+          const f = modsdDir.clone().append(file);
+          if (!f.isDirectory() && /\.conf$/.test(f.leafName)) {
+            const cdata = f.readFile();
+            if (modRE.test(cdata)) confFile = f;
+          }
+        });
+      }
+    }
+  }
+  if (!confFile || !confFile.exists()) {
+    log.warn(`A config file for '${module}' was not found in '${modsd}'`);
+    return null;
+  }
+
+  return confFile;
+}
+
+export function getModuleConfs(): Record<string, SwordConfType> {
+  if (!Cache.has('getModuleConfs')) {
+    const confs: Record<string, SwordConfType> = {};
+    getTabs().forEach((t) => {
+      confs[t.module] = ParsedConfigFiles[t.module];
+    });
+    Cache.write(confs, 'getModuleConfs');
+  }
+  return Cache.read('getModuleConfs');
+}
+
+export function getModuleConf(module: string): SwordConfType | null {
+  const moduleConfs = getModuleConfs();
+  return module in moduleConfs ? moduleConfs[module] : null;
+}
+
+export function getAudioConfs(): Record<string, SwordConfType> {
+  if (!Cache.has('getAudioConfs')) {
+    const confs: Record<string, SwordConfType> = {};
+    const audio = Dirs.xsAudio.clone().append('mods.d');
+    audio.directoryEntries.forEach((d) => {
+      const f = audio.clone().append(d);
+      if (!f.isDirectory() && f.leafName.endsWith('.conf')) {
+        const c = parseSwordConf(f);
+        confs[c.module] = c;
+      }
+    });
+    Cache.write(confs, 'getAudioConfs');
+  }
+  return Cache.read('getAudioConfs');
+}
+
+export function getAudioConf(module: string): SwordConfType | null {
+  const audioConfs = getAudioConfs();
+  return module in audioConfs ? audioConfs[module] : null;
+}
+
 export function getCipherFailConfs(): SwordConfType[] {
   getTabs(); // to insure CipherKeyModules is set
   return Object.values(CipherKeyModules)
@@ -423,27 +484,14 @@ export function getCipherFailConfs(): SwordConfType[] {
     .filter(Boolean) as SwordConfType[];
 }
 
-export function getAudioConfs(): Record<string, SwordConfType> {
-  const confs: Record<string, SwordConfType> = {};
-  const audio = Dirs.xsAudio.clone().append('mods.d');
-  audio.directoryEntries.forEach((d) => {
-    const f = audio.clone().append(d);
-    if (!f.isDirectory() && f.leafName.endsWith('.conf')) {
-      const c = parseSwordConf(f);
-      confs[c.module] = c;
-    }
-  });
-  return confs;
-}
-
 // LibSword.getMaxChapter returns an unpredictable wrong number if
 // vkeytext's book is not part of v11n, but a LibSword call is
 // unnecessary with G.BooksInV11n. NOTE: rutil has this same function.
 export function getMaxChapter(v11n: V11nType, vkeytext: string) {
   const [book] = vkeytext.split(/[\s.:]/);
-  const bkChsInV11n = getBkChsInV11n();
-  if (!(v11n in bkChsInV11n)) return 0;
-  const v = bkChsInV11n[v11n].find((x: any) => x[0] === book);
+  const allBkChsInV11n = getAllBkChsInV11n();
+  if (!(v11n in allBkChsInV11n)) return 0;
+  const v = allBkChsInV11n[v11n].find((x: any) => x[0] === book);
   return v ? v[1] : 0;
 }
 
@@ -459,9 +507,15 @@ export function verseKey(
   options?: RefParserOptionsType,
   _renderPromise?: RenderPromise | null, // only used in renderer implementation
 ): VerseKey {
+  const digits = C.Locales.reduce(
+    (p, c) => {
+      p[c[0]] = getLocaleDigits(c[0]);
+      return p;
+    },
+    {} as Record<string, string[] | null>,
+  );
   return new VerseKey(
-    new RefParser(getLocaleDigits(true), getLocalizedBooks(true), options),
-    getBkChsInV11n(),
+    new RefParser(digits, getLocalizedBooks(true), options),
     {
       convertLocation: (
         fromv11n: V11nType,
@@ -476,6 +530,17 @@ export function verseKey(
       Tab: () => {
         return getTab();
       },
+      getBkChsInV11n,
+    },
+    (str: string | number, locale?: string) => {
+      let s = str.toString();
+      const digits = getLocaleDigits(locale ?? i18n.language);
+      if (digits) {
+        for (let i = 0; i <= 9; i += 1) {
+          s = s.replaceAll(i.toString(), digits[i]);
+        }
+      }
+      return s;
     },
     versekey,
     v11n,
@@ -828,60 +893,60 @@ export function getLocaleConfigs(): Record<string, ConfigType> {
   return Cache.read('localeConfigs');
 }
 
-export function getLocaleDigits(
-  getAll = false,
-): Record<string, string[] | null> {
-  const locs = getAll ? C.Locales.map((l) => l[0]) : [i18n.language];
-  const r: Record<string, string[] | null> = {};
-  locs.forEach((lng: any) => {
-    let l = null;
-    const toptions = { lng, ns: 'numbers' };
-    for (let i = 0; i <= 9; i += 1) {
-      const key = `n${i}`;
-      if (i18n.exists(key, toptions) && !/^\s*$/.test(i18n.t(key, toptions))) {
-        if (l === null) {
-          l = [];
-          for (let x = 0; x <= 9; x += 1) {
-            l.push(x.toString());
-          }
+export function getLocaleDigits(locale?: string): string[] | null {
+  const lng = locale || i18n.language;
+  let r: string[] | null = null;
+  const toptions = { lng, ns: 'numbers' };
+  for (let i = 0; i <= 9; i += 1) {
+    const key = `n${i}`;
+    if (i18n.exists(key, toptions) && !/^\s*$/.test(i18n.t(key, toptions))) {
+      if (r === null) {
+        r = [];
+        for (let x = 0; x <= 9; x += 1) {
+          r.push(x.toString());
         }
-        l[i] = i18n.t(key, toptions);
       }
+      r[i] = i18n.t(key, toptions);
     }
-    r[lng] = l;
-  });
+  }
+
   return r;
 }
 
 export function getLocalizedBooks(
   getAll = false as boolean | string[],
 ): Record<string, Record<string, [string[], string[], string[]]>> {
-  const locs: string[] = [];
-  if (Array.isArray(getAll)) locs.push(...getAll);
-  else if (getAll) locs.push(...C.Locales.map((l) => l[0]));
-  else locs.push(i18n.language);
-  // Currently xulsword locales only include ot and nt books.
-  const r: ReturnType<typeof getLocalizedBooks> = {};
-  locs.forEach((locale) => {
-    r[locale] = {};
-    const toptions = { lng: locale, ns: 'books' };
-    ['ot', 'nt'].forEach((bgs) => {
-      const bg = bgs as BookGroupType;
-      C.SupportedBooks[bg].forEach((code) => {
-        const keys = [code, `Long${code}`, `${code}Variations`];
-        r[locale][code] = keys.map((key) => {
-          let str = '';
-          // Must test for key's existence. Using return === key as the
-          // existence check gives false fails: ex. Job === Job.
-          if (i18n && i18n.exists(key, toptions)) {
-            str = i18n.t(key, toptions);
-          }
-          return str ? str.split(/\s*,\s*/) : [];
-        }) as any;
+  const ckey = `getLocalizedBooks(${stringHash(getAll)})`;
+  if (!Cache.has(ckey)) {
+    const locs: string[] = [];
+    if (Array.isArray(getAll)) locs.push(...getAll);
+    else if (getAll) locs.push(...C.Locales.map((l) => l[0]));
+    else locs.push(i18n.language);
+    // Currently xulsword locales only include ot and nt books.
+    const r: ReturnType<typeof getLocalizedBooks> = {};
+    locs.forEach((locale) => {
+      r[locale] = {};
+      const toptions = { lng: locale, ns: 'books' };
+      ['ot', 'nt'].forEach((bgs) => {
+        const bg = bgs as BookGroupType;
+        C.SupportedBooks[bg].forEach((code) => {
+          const keys = [code, `Long${code}`, `${code}Variations`];
+          r[locale][code] = keys.map((key) => {
+            let str = '';
+            // Must test for key's existence. Using return === key as the
+            // existence check gives false fails: ex. Job === Job.
+            if (i18n && i18n.exists(key, toptions)) {
+              str = i18n.t(key, toptions);
+            }
+            return str ? str.split(/\s*,\s*/) : [];
+          }) as any;
+        });
       });
     });
-  });
-  return r;
+    Cache.write(r, ckey);
+  }
+
+  return Cache.read(ckey);
 }
 
 // Return the contents of a file. In Electron mode, filepath is an absolute
@@ -1117,3 +1182,19 @@ export const CipherKeyModules: Record<
     numBooks: number | null; // null means unknown
   }
 > = {};
+
+// Use in conjunction with callResultDecompress to compress G request results
+// for transmission over the Internet.
+export function callResultCompress<V extends Record<string, any>>(
+  val: V,
+  valType: keyof typeof C.CompressibleCalls.common,
+): V {
+  const common = C.CompressibleCalls.common[valType];
+  return Object.entries(val).reduce((p, entry) => {
+    const [k, v] = entry;
+    if (!(k in common) || stringHash(v) !== stringHash((common as any)[k])) {
+      (p as any)[k] = v;
+    }
+    return p;
+  }, {} as V);
+}

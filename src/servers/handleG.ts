@@ -1,7 +1,13 @@
 import log from 'electron-log';
 import { GBuilder } from '../type.ts';
-import { GCacheKey, isCallCacheable, JSON_stringify } from '../common.ts';
+import {
+  GCacheKey,
+  gcallResultCompression,
+  isCallCacheable,
+  JSON_stringify,
+} from '../common.ts';
 import Cache from '../cache.ts';
+import { callResultCompress } from './common.ts';
 
 import type { GCallType, GITypeMain as GIMainType, GType } from '../type.ts';
 
@@ -69,8 +75,11 @@ export default function handleGlobal(
       );
     }
 
-    if (cacheable) Cache.write(ret, ...ckeyA);
+    if (Build.isWebApp && cacheable) {
+      ret = gcallResultCompression(acall, ret, callResultCompress);
+    }
 
+    if (cacheable) Cache.write(ret, ...ckeyA);
   } else {
     throw Error(`Disallowed global ipc request: ${JSON_stringify(acall)}`);
   }

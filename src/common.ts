@@ -4,8 +4,8 @@ import S, { completePanelPrefDefaultArrays } from './defaultPrefs.ts';
 import Cache from './cache.ts';
 
 import type { ElectronLog } from 'electron-log';
+import type { TreeNodeInfo } from '@blueprintjs/core';
 import type { Region } from '@blueprintjs/table';
-import type { getLocaleDigits } from './servers/common.ts';
 import type {
   GBuilder,
   Download,
@@ -45,14 +45,13 @@ import type {
   VerseKeyAudioFile,
   GenBookAudioFile,
 } from './type.ts';
-import type { TreeNodeInfo } from '@blueprintjs/core';
+import type { PrefsGType } from './prefs.ts';
 import type { SelectVKType } from './clients/components/libxul/selectVK.tsx';
 import type { SelectORMType } from './clients/components/libxul/selectOR.tsx';
 import type { getSampleText } from './clients/bookmarks.ts';
 import type { verseKey } from './clients/htmlData.ts';
 import type { XulswordState } from './clients/components/xulsword/xulsword.tsx';
 import type { BibleBrowserControllerGlobal } from './clients/webapp/bibleBrowser/bibleBrowser.tsx';
-import Prefs, { PrefsGType } from './prefs.ts';
 
 // This file contains functions that are used in common with both xulsword
 // clients and servers.
@@ -166,6 +165,7 @@ export function deepClone<T>(obj: T): T {
 export function clone<T extends PrefValue>(
   obj: T,
   ancestors: unknown[] = [],
+  includeAny = false,
 ): T {
   const anc = ancestors.slice();
   let copy: any;
@@ -191,6 +191,8 @@ export function clone<T extends PrefValue>(
         const [k, v] = entry;
         if (typeof v !== 'function' && typeof v !== 'symbol') {
           copy[k] = clone(v as PrefValue, anc);
+        } else if (includeAny) {
+          copy[k] = v;
         } else {
           throw new Error(
             `clone(): property ${k} is not a PrefValue ${typeof v} `,
@@ -198,8 +200,14 @@ export function clone<T extends PrefValue>(
         }
       });
     }
+  } else if (includeAny) {
+    return obj;
   } else throw new Error(`clone(): not a PrefValue ${typeof obj} `);
   return copy as T;
+}
+
+export function cloneAny<T>(obj: T): T {
+  return clone(obj as any, [], true) as T;
 }
 
 // Return a new source object keeping only certain keys from the original.
@@ -803,22 +811,6 @@ export function isASCII(text: string) {
     }
   }
   return !notASCII;
-}
-
-// converts any ASCII digits in a string into localized digits.
-export function dString(
-  localeDigits: ReturnType<typeof getLocaleDigits>,
-  string: string | number,
-  locale: string,
-) {
-  let s = string.toString();
-  const l = localeDigits[locale];
-  if (l) {
-    for (let i = 0; i <= 9; i += 1) {
-      s = s.replaceAll(i.toString(), l[i]);
-    }
-  }
-  return s;
 }
 
 // Removes white-space, trailing or leading punctuation, "x" (note symbol),
@@ -1466,7 +1458,7 @@ export function bookmarkLabel(
   }
   const ks = l.key.split(C.GBKSEP);
   const tab = (l.otherMod && l.otherMod in G.Tab && G.Tab[l.otherMod]) || null;
-  ks.unshift(tab?.conf.Description ? tab.conf.Description.locale : l.otherMod);
+  ks.unshift(tab?.description.locale || l.otherMod);
   while (ks[2] && ks[0] === ks[1]) {
     ks.shift();
   }
@@ -2065,4 +2057,29 @@ export function mergeNewModules(a: NewModulesType, b: NewModulesType) {
     const v = vx as any;
     a[k].push(...v);
   });
+}
+
+export function gcallResultCompression<R extends any[] | Record<string, any>>(
+  call: GCallType,
+  result: R,
+  compressionFunc: <V extends Record<string, any>>(
+    val: V,
+    valType: keyof typeof C.CompressibleCalls.common,
+  ) => V,
+): R {
+  const compress = Object.entries(C.CompressibleCalls.map).find(
+    (e) => e[0] === call[0],
+  );
+  if (compress) {
+    const [, [resType, valType]] = compress;
+    if (Array.isArray(resType))
+      return result.map((r: any) => compressionFunc(r, valType));
+    return Object.entries(result).reduce((p, entry) => {
+      const [k, v] = entry;
+      p[k] = compressionFunc(v, valType);
+      return p;
+    }, {} as any);
+  }
+
+  return result;
 }

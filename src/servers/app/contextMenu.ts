@@ -10,7 +10,7 @@ import Viewport from './viewport.ts';
 import Data from '../components/data.ts';
 
 import type { BrowserWindow } from 'electron';
-import type { GAddCaller, ContextDataType } from '../../type.ts';
+import type { GAddCaller, ContextDataType, SwordConfType } from '../../type.ts';
 import type { AboutWinState } from '../../clients/app/about/about.tsx';
 
 // Require the calling window argument, since G will not add it when
@@ -88,7 +88,9 @@ export default function contextMenu(
                 }
                 const s: Partial<AboutWinState> = {
                   showModules: true,
-                  configs: modules.map((m) => G.Tab[m].conf),
+                  configs: modules
+                    .map((m) => G.getModuleConf(m))
+                    .filter(Boolean) as SwordConfType[],
                   showConf: '',
                   editConf: false,
                 };

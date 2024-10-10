@@ -11,6 +11,7 @@ import type {
   SwordConfigEntries,
   SwordFilterType,
   SwordFilterValueType,
+  TabType,
   TabTypes,
   V11nType,
 } from './type.ts';
@@ -162,6 +163,56 @@ const C = {
     },
     TreeScrollDelay: 100,
   },
+
+  CompressibleCalls: {
+    map: {
+      Tabs: [[], 'TabType'],
+      Tab: [{}, 'TabType'],
+      Config: [{}, 'MConfigType'],
+      LocaleConfigs: [{}, 'LConfigType'],
+    },
+    common: {
+      TabType: {
+        module: 'none',
+        lang: 'none',
+        description: { locale: 'none', en: 'none' },
+        audioCodes: [],
+        tabType: 'Texts',
+        type: 'Biblical Texts',
+        xsmType: 'none',
+        isVerseKey: true,
+        direction: 'ltr',
+        features: [],
+        v11n: 'KJV',
+        label: 'none',
+        labelClass: 'none',
+      } as TabType,
+      MConfigType: {
+        direction: 'ltr',
+        fontFamily: 'GentiumPlusCyrE',
+        fontSizeAdjust: null,
+        lineHeight: null,
+        fontSize: null,
+        color: null,
+        background: null,
+        AssociatedModules: null,
+        AssociatedLocale: null,
+        PreferredCSSXHTML: null,
+      } as ConfigType,
+      LConfigType: {
+        direction: '',
+        fontFamily: 'GentiumPlusCyrE',
+        fontSizeAdjust: '',
+        lineHeight: '',
+        fontSize: '',
+        color: '',
+        background: '',
+        AssociatedModules: null,
+        AssociatedLocale: null,
+        PreferredCSSXHTML: null,
+      } as ConfigType,
+    },
+  } as const,
 
   // These are all the properties which Config type objects will have.
   // The Config object specifies keys into the following data sources:

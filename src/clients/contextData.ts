@@ -1,3 +1,4 @@
+import RenderPromise from './renderPromise.ts';
 import { JSON_attrib_parse, ofClass } from '../common.ts';
 import RefParser from '../refParser.ts';
 import C from '../constant.ts';
@@ -87,6 +88,7 @@ export default function ContextData(elem: HTMLElement): ContextDataType {
   if (!bookmark && (locationGB || location)) {
     const bm = findBookmarks(
       (locationGB || location) as LocationVKType | LocationORType,
+      new RenderPromise(null),
     );
     if (bm[0]) bookmark = bm[0].id;
   }
@@ -105,8 +107,18 @@ export default function ContextData(elem: HTMLElement): ContextDataType {
   let selectionParsedVK: LocationVKType | undefined;
   if (selection) {
     const parsed = new RefParser(
-      G.getLocaleDigits(true),
-      G.getLocalizedBooks(true),
+      Build.isElectronApp
+        ? C.Locales.reduce(
+            (p, c) => {
+              p[c[0]] = G.getLocaleDigits(c[0]);
+              return p;
+            },
+            {} as Record<string, string[] | null>,
+          )
+        : { [G.i18n.language]: G.getLocaleDigits() },
+      G.getLocalizedBooks(
+        Build.isElectronApp ? true : [G.i18n.language],
+      ),
       {
         locales: C.Locales.map((l) => l[0]),
         uncertain: true,

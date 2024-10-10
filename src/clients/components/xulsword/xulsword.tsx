@@ -1,10 +1,11 @@
 import React from 'react';
 import { Icon } from '@blueprintjs/core';
-import { dString, clone, stringHash } from '../../../common.ts';
+import { clone, stringHash } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
 import RenderPromise from '../../renderPromise.ts';
 import {
+  dString,
   registerUpdateStateFromPref,
   getStatePref,
   clearPending,
@@ -164,7 +165,7 @@ export default class Xulsword
   }
 
   selectionVK(selection: SelectVKType | undefined): void {
-    if (selection)  this.setState( { location: selection });
+    if (selection) this.setState({ location: selection });
   }
 
   xulswordStateHandler(s: XulswordStateArgType): void {
@@ -212,7 +213,9 @@ export default class Xulsword
     const bookset = new Set<string>();
     panels.forEach((m, i) => {
       if (m && !isPinned[i] && G.Tab[m].isVerseKey) {
-        G.getBooksInVKModule(m).forEach((bk) => bookset.add(bk));
+        GI.getBooksInVKModule(['Gen'], renderPromise, m).forEach((bk) =>
+          bookset.add(bk),
+        );
       }
     });
     const Book = G.Book(G.i18n.language);
@@ -491,15 +494,7 @@ export default class Xulsword
             width="50px"
             maxLength="3"
             pattern={/^[0-9]+$/}
-            value={
-              location?.chapter
-                ? dString(
-                    G.getLocaleDigits(),
-                    location.chapter,
-                    G.i18n.language,
-                  )
-                : ''
-            }
+            value={location?.chapter ? dString(location.chapter) : ''}
             timeout="600"
             disabled={navdisabled}
             key={`c${location?.chapter}`}
@@ -525,11 +520,7 @@ export default class Xulsword
             width="50px"
             maxLength="3"
             pattern={/^[0-9]+$/}
-            value={
-              location?.verse
-                ? dString(G.getLocaleDigits(), location.verse, G.i18n.language)
-                : ''
-            }
+            value={location?.verse ? dString(location.verse) : ''}
             timeout="600"
             disabled={navdisabled}
             onChange={handler}

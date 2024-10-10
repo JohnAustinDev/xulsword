@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import RefParser from '../../../refParser.ts';
+import C from '../../../constant.ts';
 import { G } from '../../G.ts';
 import { addClass, xulPropTypes, type XulProps, xulStyle } from './xul.tsx';
 import { Box } from './boxes.tsx';
@@ -66,8 +67,18 @@ class Bookselect extends React.Component {
     // noVariations is important for autocomplete because some
     // variations are short abbreviations.
     this.parser = new RefParser(
-      G.getLocaleDigits(true),
-      G.getLocalizedBooks(true),
+      Build.isElectronApp
+        ? C.Locales.reduce(
+            (p, c) => {
+              p[c[0]] = G.getLocaleDigits(c[0]);
+              return p;
+            },
+            {} as Record<string, string[] | null>,
+          )
+        : { [G.i18n.language]: G.getLocaleDigits() },
+      G.getLocalizedBooks(
+        Build.isElectronApp ? true : [G.i18n.language],
+      ),
       { noVariations: true },
     );
 

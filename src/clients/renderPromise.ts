@@ -1,12 +1,18 @@
-import { GCacheKey, JSON_stringify, isCallCacheable } from '../common.ts';
+import { GCacheKey, JSON_stringify, gcallResultCompression, isCallCacheable } from '../common.ts';
 import Cache from '../cache.ts';
 import { GBuilder } from '../type.ts';
 import C from '../constant.ts';
 import { G } from './G.ts';
 import log from './log.ts';
-import { getWaitRetry } from './common.ts';
+import { callResultDecompress, getWaitRetry } from './common.ts';
 
-import type { GCallType, PrefValue } from '../type.ts';
+import type {
+  BookType,
+  GCallType,
+  GType,
+  PrefValue,
+  TabType,
+} from '../type.ts';
 import type { GetBooksInVKModules } from '../servers/common.ts';
 
 export type RenderPromiseComponent = {
@@ -49,11 +55,11 @@ export function GCallsOrPromise(
       );
     }
     throw new Error(
-      `A null renderPromise was passed in a context that requires a non-null render promise:  ${JSON_stringify(calls)}`
+      `A null renderPromise was passed in a context that requires a non-null render promise:  ${JSON_stringify(calls)}`,
     );
   }
   throw new Error(
-    `In this context trySyncOrPromise requires the promise argument: ${JSON_stringify(calls)}`
+    `In this context trySyncOrPromise requires the promise argument: ${JSON_stringify(calls)}`,
   );
 }
 
@@ -79,7 +85,9 @@ export default class RenderPromise {
     const renderPromises = RenderPromise.getGlobalRenderPromises();
     if (renderPromises.length) {
       const rpdispatch = renderPromises.map((rp) => {
-        const nrp = new RenderPromise(rp.component || rp.callback || (() => {}));
+        const nrp = new RenderPromise(
+          rp.component || rp.callback || (() => {}),
+        );
         rp.dispatchedUnresolvedCalls.push(...rp.calls);
         nrp.calls = rp.calls;
         rp.calls = [];
@@ -101,14 +109,20 @@ export default class RenderPromise {
       callBatchThenCache(flatPrune(nextBatch))
         .then((doWait) => {
           if (!doWait) {
-            const resolveRP = (originalRP: RenderPromise, resolvedRP: RenderPromise) => {
+            const resolveRP = (
+              originalRP: RenderPromise,
+              resolvedRP: RenderPromise,
+            ) => {
               resolvedRP.calls.forEach((call: GCallType) => {
                 const { dispatchedUnresolvedCalls } = originalRP;
                 const index = dispatchedUnresolvedCalls.indexOf(call);
                 if (index !== -1) dispatchedUnresolvedCalls.splice(index, 1);
-                else log.error(`Failed to remove dispatched call: ${JSON_stringify(call)}`);
+                else
+                  log.error(
+                    `Failed to remove dispatched call: ${JSON_stringify(call)}`,
+                  );
               });
-            }
+            };
             const done: Array<React.Component | (() => void)> = [];
             rpdispatch.forEach((rp, i) => {
               const { component, callback } = rp;
@@ -278,24 +292,105 @@ function getCallFromCache(call: GCallType | null): PrefValue | undefined {
 function writeCallToCache(call: GCallType | null, result: any) {
   if (call && result !== undefined) {
     const cacheKey = promiseCacheKey(call);
-    if (!Cache.has(cacheKey)) Cache.write(result, cacheKey);
+    if (!Cache.has(cacheKey)) {
+      if (Build.isWebApp)
+        result = gcallResultCompression(call, result, callResultDecompress);
 
-    // Some calls will return data that is identical to other calls, so preload the cache
-    // for those others as well.
-    if (call[0] === 'GetBooksInVKModules') {
-      Object.entries(result as ReturnType<typeof GetBooksInVKModules>).forEach(
-        (entry) => {
+      Cache.write(result, cacheKey);
+
+      // Some calls will return data that is identical to other calls, so preload the cache
+      // for those others as well.
+
+      // GetBooksInVKModules
+      if (call[0] === 'GetBooksInVKModules') {
+        Object.entries(
+          result as ReturnType<typeof GetBooksInVKModules>,
+        ).forEach((entry) => {
           const [module, bookArray] = entry;
           const k = GCacheKey(['getBooksInVKModule', null, [module]]);
           if (!Cache.has(k)) Cache.write(bookArray, k);
-        },
-      );
-    } else if (call[0] === 'LibSword' && call[1] === 'getFirstDictionaryEntry') {
-      const args = call[2] as Parameters<typeof G.LibSword.getFirstDictionaryEntry>;
-      const [,, options] = args;
-      const { mod, key } = result as ReturnType<typeof G.LibSword.getFirstDictionaryEntry>;
-      const nckey = GCacheKey(['LibSword', 'getDictionaryEntry', [mod, key, options]]);
-      if (!Cache.has(nckey)) Cache.write(result, nckey);
+        });
+
+        // LibSword.getFirstDictionaryEntry
+      } else if (
+        call[0] === 'LibSword' &&
+        call[1] === 'getFirstDictionaryEntry'
+      ) {
+        const args = call[2] as Parameters<
+          typeof G.LibSword.getFirstDictionaryEntry
+        >;
+        const [, , options] = args;
+        const { mod, key } = result as ReturnType<
+          typeof G.LibSword.getFirstDictionaryEntry
+        >;
+        const nckey = GCacheKey([
+          'LibSword',
+          'getDictionaryEntry',
+          [mod, key, options],
+        ]);
+        if (!Cache.has(nckey)) Cache.write(result, nckey);
+
+        // Tabs
+      } else if (call[0] === 'Tabs') {
+        const nckey = GCacheKey(['Tab', null, undefined]);
+        if (!Cache.has(nckey)) {
+          Cache.write(
+            (result as typeof G.Tabs).reduce(
+              (p, c) => {
+                p[c.module] = c;
+                return p;
+              },
+              {} as Record<string, TabType>,
+            ),
+            nckey,
+          );
+        }
+
+        // Books
+      } else if (call[0] === 'Books') {
+        const args = call[2] as Parameters<typeof G.Books>;
+        const nckey = GCacheKey(['Book', null, [args[0]]]);
+        if (!Cache.has(nckey)) {
+          Cache.write(
+            (result as ReturnType<typeof G.Books>).reduce(
+              (p, c) => {
+                p[c.code] = c;
+                return p;
+              },
+              {} as Record<string, BookType>,
+            ),
+            nckey,
+          );
+        }
+
+        // ModuleConfs
+      } else if (call[0] === 'ModuleConfs') {
+        Object.entries(result as GType['ModuleConfs']).forEach((entry) => {
+          const [m, c] = entry;
+          const nckey = GCacheKey(['getModuleConf', null, [m]]);
+          if (!Cache.has(nckey)) Cache.write(c, nckey);
+        });
+
+        // AudioConfs
+      } else if (call[0] === 'AudioConfs') {
+        Object.entries(result as GType['AudioConfs']).forEach((entry) => {
+          const [m, c] = entry;
+          const nckey = GCacheKey(['getAudioConf', null, [m]]);
+          if (!Cache.has(nckey)) Cache.write(c, nckey);
+        });
+
+        // getLocaleDigits
+      } else if (call[0] === 'getLocaleDigits') {
+        const args = call[2] as Parameters<typeof G.getLocaleDigits>;
+        let nckey = '';
+        if (args.length && args[0] === G.i18n.language)
+          nckey = GCacheKey(['getLocaleDigits', null, []]);
+        else if (!args.length)
+          nckey = GCacheKey(['getLocaleDigits', null, [G.i18n.language]]);
+        if (nckey) {
+          if (!Cache.has(nckey)) Cache.write(result, nckey);
+        }
+      }
     }
   }
 }

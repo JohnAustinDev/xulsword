@@ -43,13 +43,10 @@ if (widgets.length) {
       writeSettingsToPrefsStores(prefs);
 
       callBatchThenCache([
-        ['Tab', null, undefined],
+        ['getLocalizedBooks', null, [[locale]]],
         ['Tabs', null, undefined],
-        ['BkChsInV11n', null, undefined],
-        ['GetBooksInVKModules', null, undefined],
-        ['getLocaleDigits', null, [true]],
-        ['getLocalizedBooks', null, [true]],
-        ['Book', null, [locale]],
+        ['Books', null, [locale]],
+        ['getLocaleDigits', null, [locale]],
         ['i18n', 't', ['locale_direction', { lng: locale }]],
         ['i18n', 't', ['Full publication', { lng: locale }]],
         ...Object.values(C.SupportedTabTypes).map(

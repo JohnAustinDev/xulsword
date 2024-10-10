@@ -1,14 +1,9 @@
-import {
-  clone,
-  decodeOSISRef,
-  dString,
-  getSwordOptions,
-} from '../../../common.ts';
+import { clone, decodeOSISRef, getSwordOptions } from '../../../common.ts';
 import C from '../../../constant.ts';
-import { G } from '../../G.ts';
+import { G, GI } from '../../G.ts';
 import RenderPromise from '../../renderPromise.ts';
 import addBookmarks from '../../bookmarks.ts';
-import { isValidVKM, getLocalizedChapterTerm } from '../../common.ts';
+import { isValidVKM, getLocalizedChapterTerm, dString } from '../../common.ts';
 import { getDictEntryHTML } from '../../components/atext/zdictionary.ts';
 import {
   getNoteHTML,
@@ -74,7 +69,9 @@ function getDictionaryLinks(textHTML: string): string {
         undefined,
         undefined,
       ];
-      return key && mod ? getDictEntryHTML(key, mod, new RenderPromise(null)) : '';
+      return key && mod
+        ? getDictEntryHTML(key, mod, new RenderPromise(null))
+        : '';
     })
     .join('');
 }
@@ -86,6 +83,7 @@ export function bibleChapterText(
       crossrefsText: boolean;
     };
   },
+  renderPromise: RenderPromise,
 ): string {
   const { module, location, show } = props;
   if (module && location && show) {
@@ -107,7 +105,12 @@ export function bibleChapterText(
       notes: '',
       intronotes: '',
     };
-    if (location.book && G.getBooksInVKModule(module).includes(location.book)) {
+    if (
+      location.book &&
+      GI.getBooksInVKModule(['Gen'], renderPromise, module).includes(
+        location.book,
+      )
+    ) {
       const { text, notes } = G.LibSword.getChapterText(
         module,
         `${book}.${chapter}`,
@@ -115,7 +118,8 @@ export function bibleChapterText(
       );
       response.textHTML = text;
       response.notes = notes;
-      if (show.usernotes) addBookmarks(response, { ...props, modkey: '' });
+      if (show.usernotes)
+        addBookmarks(response, { ...props, modkey: '' }, renderPromise);
       response.noteHTML = getNoteHTML(response.notes, show, 0, crossrefsText);
     }
     const { noteHTML } = response;
@@ -126,24 +130,15 @@ export function bibleChapterText(
     const toptions = { lng: moduleLocale, ns: 'books' };
 
     // Localize verse numbers to match the module
-    if (
-      moduleLocale &&
-      dString(G.getLocaleDigits(true), 1, moduleLocale) !==
-        dString(G.getLocaleDigits(true), 1, 'en')
-    ) {
+    const digits =
+      (moduleLocale && GI.getLocaleDigits(null, renderPromise, moduleLocale)) ||
+      null;
+    if (digits) {
       const verseNm = /(<sup class="versenum">)(\d+)(<\/sup>)/g;
       textHTML = textHTML.replace(
         verseNm,
         (_str, p1: string, p2: string, p3: string) => {
-          return (
-            p1 +
-            dString(
-              G.getLocaleDigits(true),
-              p2,
-              moduleLocale || G.i18n.language,
-            ) +
-            p3
-          );
+          return p1 + dString(p2, moduleLocale) + p3;
         },
       );
     }
@@ -166,6 +161,7 @@ export function bibleChapterText(
             book,
             chapter,
             moduleLocale,
+            renderPromise,
           )}</div>
         </div>
       </div>`;
@@ -182,13 +178,22 @@ export function bibleChapterText(
   return '';
 }
 
-export function validPassage(passage: SelectVKType | null): SelectVKType {
+export function validPassage(
+  passage: SelectVKType | null,
+  renderPromise: RenderPromise,
+): SelectVKType {
   let chapters = clone(passage);
-  if (!chapters || !chapters.vkMod || !isValidVKM(chapters, chapters.vkMod)) {
+  if (
+    !chapters ||
+    !chapters.vkMod ||
+    !isValidVKM(chapters, chapters.vkMod, renderPromise)
+  ) {
     const vkMod = G.Tabs.find((t) => t.type === C.BIBLE)?.module || '';
     chapters = {
       vkMod,
-      book: (vkMod && G.getBooksInVKModule(vkMod)[0]) || 'Gen',
+      book:
+        (vkMod && GI.getBooksInVKModule(['Gen'], renderPromise, vkMod)[0]) ||
+        'Gen',
       chapter: 1,
       lastchapter: 1,
       v11n: (vkMod && vkMod in G.Tab && G.Tab[vkMod].v11n) || 'KJV',

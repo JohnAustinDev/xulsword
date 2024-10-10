@@ -1,21 +1,21 @@
 import React, { useLayoutEffect } from 'react';
-import { dString, sanitizeHTML } from '../../../common.ts';
+import { sanitizeHTML } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
+import { dString, functionalComponentRenderPromise } from '../../common.ts';
+import RenderPromise from '../../renderPromise.ts';
 import {
   addClass,
   XulProps,
   xulPropTypes,
 } from '../../components/libxul/xul.tsx';
+import { Box } from '../libxul/boxes.tsx';
 import './searchHelp.css';
 
 import type { SearchType } from '../../../type.ts';
-import RenderPromise from '../../renderPromise.ts';
-import { Box } from '../libxul/boxes.tsx';
-import { functionalComponentRenderPromise } from '../../common.ts';
 
 export type SearchHelpProps = {
-  onlyLucene?: boolean
+  onlyLucene?: boolean;
 } & XulProps;
 
 function write(id: string, html: string) {
@@ -74,16 +74,18 @@ export default function SearchHelp(props: SearchHelpProps) {
   useLayoutEffect(() => {
     const { onlyLucene } = props;
     write('searchTypes', GI.i18n.t('', renderPromise, 'searchTypes'));
-    type.filter((st) => !(onlyLucene && st === 'SearchExactText')).forEach((t, i) => {
-      write(
-        ['name', t].join('.'),
-        `${dString(G.getLocaleDigits(), i + 1, G.i18n.language)}) ${GI.i18n.t('', renderPromise, `${t}.label`)}: `,
-      );
-      write(
-        ['desc', t].join('.'),
-        `${GI.i18n.t('', renderPromise, `${t}.description`)}`,
-      );
-    });
+    type
+      .filter((st) => !(onlyLucene && st === 'SearchExactText'))
+      .forEach((t, i) => {
+        write(
+          ['name', t].join('.'),
+          `${dString(i + 1)}) ${GI.i18n.t('', renderPromise, `${t}.label`)}: `,
+        );
+        write(
+          ['desc', t].join('.'),
+          `${GI.i18n.t('', renderPromise, `${t}.description`)}`,
+        );
+      });
     [...Array(4).keys()].forEach((c) => {
       [...Array(9).keys()].forEach((r) => {
         write(`row${r} col${c}`, getCellText(r, c, rows, renderPromise));

@@ -147,7 +147,7 @@ export function setStateValue<K extends keyof ChooseFontWinState>(
   value?: ChooseFontWinState[K],
 ): void {
   this.setState((prevState: ChooseFontWinState) => {
-    const newState = clone(prevState);
+    const newState = { ...prevState };
     if (typeof value === 'undefined')
       newState[key as 'coloropen' | 'backgroundopen'] = !newState[key];
     else newState[key] = value;
@@ -249,7 +249,7 @@ export default function handler(this: ChooseFontWin, e: React.SyntheticEvent) {
             (
               prevState0: ChooseFontWinState,
             ): Partial<ChooseFontWinState> | null => {
-              const prevState = clone(prevState0);
+              const prevState = { ...prevState0 };
               if (prevState.module) {
                 let style;
                 if (!prevState[targid]) {

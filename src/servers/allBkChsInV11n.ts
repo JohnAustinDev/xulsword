@@ -1,6 +1,6 @@
 import type { OSISBookType, V11nType } from '../type.ts';
 
-export const bkChsInV11n: {
+export const allBkChsInV11n: {
   [key in V11nType]: Array<[OSISBookType, number]>;
 } = {
   KJV: [

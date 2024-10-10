@@ -10,7 +10,6 @@ import {
   audioConfNumbers,
   gbPaths,
   localizeString,
-  dString,
 } from '../common.ts';
 import C from '../constant.ts';
 import S from '../defaultPrefs.ts';
@@ -175,17 +174,22 @@ export function scrollIntoView(
   }
 }
 
-export function audioConfig(module?: string): SwordConfType | undefined {
+export function audioConfig(
+  module?: string,
+  renderPromise?: RenderPromise,
+): SwordConfType | undefined {
   let audioConf;
   if (module) {
-    audioConf = G.AudioConfs[module];
+    audioConf = GI.getAudioConf(null, renderPromise, module);
     if (!audioConf && module in G.Tab) {
-      const codes = G.Tab[module].conf.AudioCode || [];
-      const i = codes.findIndex((code) => code in G.AudioConfs);
-      if (i !== -1) audioConf = G.AudioConfs[codes[i]];
+      const codes = G.Tab[module].audioCodes || [];
+      for (let i = 0; i < codes.length; i++) {
+        audioConf = GI.getAudioConf(null, renderPromise, codes[i]);
+        if (audioConf) break;
+      }
     }
   }
-  return audioConf;
+  return audioConf ?? undefined;
 }
 
 // Change an auto-height iframe's height to match the height of a selected
@@ -193,7 +197,11 @@ export function audioConfig(module?: string): SwordConfType | undefined {
 // the height is changed. If clear is set then any height value previously
 // placed set on the iframe is removed.
 let OriginalHeight: string | null | undefined = null;
-export function iframeAutoHeight(selector: string, clear?: boolean, elem?: HTMLElement) {
+export function iframeAutoHeight(
+  selector: string,
+  clear?: boolean,
+  elem?: HTMLElement,
+) {
   if (
     Build.isWebApp &&
     frameElement &&
@@ -206,7 +214,8 @@ export function iframeAutoHeight(selector: string, clear?: boolean, elem?: HTMLE
       const so = document.querySelector(selector);
       const resize = () => {
         if (so) {
-          (frameElement as HTMLIFrameElement).style.height = `${so.clientHeight}px`;
+          (frameElement as HTMLIFrameElement).style.height =
+            `${so.clientHeight}px`;
         }
       };
       if (elem) {
@@ -226,8 +235,9 @@ export function verseKeyAudioFile(
   swordModule: string,
   book: OSISBookType,
   chapter: number,
+  renderPromise: RenderPromise,
 ): VerseKeyAudioFile | null {
-  const audioConf = audioConfig(swordModule);
+  const audioConf = audioConfig(swordModule, renderPromise);
   if (audioConf) {
     const { AudioChapters } = audioConf;
     let boolarray: boolean[] = [];
@@ -270,7 +280,7 @@ export function genBookAudioFile(
   key: string,
   renderPromise?: RenderPromise,
 ): GenBookAudioFile | null {
-  const audioConf = audioConfig(swordModule);
+  const audioConf = audioConfig(swordModule, renderPromise);
   if (audioConf) {
     const { AudioChapters } = audioConf;
     if (AudioChapters && !isAudioVerseKey(AudioChapters)) {
@@ -347,41 +357,72 @@ export function getLocalizedChapterTerm(
   book: string,
   chapter: number,
   locale: string,
-  rp?: RenderPromise,
+  renderPromise: RenderPromise,
 ) {
   const k1 = `${book}_Chaptext`;
   const k2 = 'Chaptext';
   const toptions = {
-    v1: dString(G.getLocaleDigits(true), chapter, locale),
+    v1: dString(chapter, locale, renderPromise),
     lng: locale,
     ns: 'books',
   };
-  const tkExists = GI.i18n.exists(false, rp, k1, toptions);
-  const tk = tkExists ? GI.i18n.t(k1, rp, k1, toptions) : '';
-  const r2 = GI.i18n.t(k2, rp, k2, toptions);
+  const tkExists = GI.i18n.exists(false, renderPromise, k1, toptions);
+  const tk = tkExists ? GI.i18n.t(k1, renderPromise, k1, toptions) : '';
+  const r2 = GI.i18n.t(k2, renderPromise, k2, toptions);
   const r1 = tkExists && !/^\s*$/.test(tk) && tk;
   return r1 || r2;
 }
 
+// converts any ASCII digits in a string into localized digits.
+export function dString(
+  string: string | number,
+  locale?: string | null,
+  renderPromise?: RenderPromise,
+) {
+  let s = string.toString();
+  const digits = GI.getLocaleDigits(
+    null,
+    renderPromise,
+    locale ?? G.i18n.language,
+  );
+  if (digits) {
+    for (let i = 0; i <= 9; i += 1) {
+      s = s.replaceAll(i.toString(), digits[i]);
+    }
+  }
+  return s;
+}
+
 // Does location surely exist in the module? It's assumed if a book is included,
 // then so are all of its chapters and verses.
-export function isValidVKM(location: LocationVKType, module: string): boolean {
-  if (!isValidVK(location)) return false;
+export function isValidVKM(
+  location: LocationVKType,
+  module: string,
+  renderPromise: RenderPromise,
+): boolean {
+  if (!isValidVK(location, renderPromise)) return false;
   if (!module || !(module in G.Tab)) return false;
-  if (!G.getBooksInVKModule(module).includes(location.book as never)) {
+  if (
+    !GI.getBooksInVKModule(['Gen'], renderPromise, module).includes(
+      location.book as never,
+    )
+  ) {
     return false;
   }
   return true;
 }
 
 // Does location actually exist in v11n?
-export function isValidVK(location: LocationVKType): boolean {
+export function isValidVK(
+  location: LocationVKType,
+  renderPromise: RenderPromise,
+): boolean {
   const { book, chapter, v11n, verse, lastverse } = location;
   if (!book || !v11n) return false;
-  if (chapter < 1 || chapter > getMaxChapter(v11n, book)) {
+  if (chapter < 1 || chapter > getMaxChapter(v11n, book, renderPromise)) {
     return false;
   }
-  const maxv = getMaxVerse(v11n, `${book} ${chapter}`);
+  const maxv = getMaxVerse(v11n, `${book} ${chapter}`, renderPromise);
   if (verse !== undefined && verse !== null) {
     if (verse < 1 || verse > maxv) {
       return false;
@@ -417,10 +458,15 @@ export function moduleIncludesStrongs(
 // book is not part of v11n, so it would be necessary to check here
 // first. But a LibSword call is unnecessary with G.BooksInV11n.
 // NOTE: main process has this same function.
-export function getMaxChapter(v11n: V11nType, vkeytext: string) {
+export function getMaxChapter(
+  v11n: V11nType,
+  vkeytext: string,
+  renderPromise: RenderPromise,
+) {
   const [book] = vkeytext.split(/[\s.:]/);
-  if (!(v11n in G.BkChsInV11n)) return 0;
-  const b = G.BkChsInV11n[v11n].find((x) => x[0] === book);
+  const bkChsInV11n = GI.getBkChsInV11n([['Gen', 50]], renderPromise, v11n);
+  if (!bkChsInV11n) return 0;
+  const b = bkChsInV11n.find((x) => x[0] === book);
   return b ? b[1] : 0;
 }
 
@@ -430,17 +476,12 @@ export function getMaxChapter(v11n: V11nType, vkeytext: string) {
 export function getMaxVerse(
   v11n: V11nType,
   vkeytext: string,
-  renderPromise?: RenderPromise,
+  renderPromise: RenderPromise,
 ): number {
-  const { chapter } = verseKey(
-    vkeytext,
-    v11n,
-    undefined,
-    renderPromise || null,
-  );
-  const maxch = getMaxChapter(v11n, vkeytext);
+  const { chapter } = verseKey(vkeytext, v11n, undefined, renderPromise);
+  const maxch = getMaxChapter(v11n, vkeytext, renderPromise);
   if (chapter <= maxch && chapter > 0) {
-    return GI.LibSword.getMaxChapter(0, renderPromise, v11n, vkeytext);
+    return GI.LibSword.getMaxVerse(0, renderPromise, v11n, vkeytext);
   }
   return 0;
 }
@@ -785,4 +826,18 @@ export function elem2text(div: HTMLElement): string {
   html = html.replace(/(&rlm;|&lrm;)/g, '');
   html = html.replace(/([\n\r]+ *){3,}/g, C.SYSTEMNEWLINE + C.SYSTEMNEWLINE);
   return html;
+}
+
+// Use in conjunction with callResultCompress to decompress G request results
+// transmitted over the Internet.
+export function callResultDecompress<V extends Record<string, any>>(
+  val: V,
+  valType: keyof typeof C.CompressibleCalls.common,
+): V {
+  const common = C.CompressibleCalls.common[valType];
+  return Object.entries(common).reduce((p, entry) => {
+    const [k, v] = entry;
+    if (!(k in p)) (p as any)[k] = v;
+    return p;
+  }, val as V);
 }

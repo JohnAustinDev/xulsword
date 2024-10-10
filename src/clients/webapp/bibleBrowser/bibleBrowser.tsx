@@ -68,13 +68,14 @@ socket.on('connect', () => {
         }
       }
 
-      const maxPanels = Math.ceil(window.innerWidth / 150);
+      let maxPanels = Math.ceil(window.innerWidth / 300);
+      if (maxPanels < 2) maxPanels = 2;
+      else if (maxPanels > 6) maxPanels = 6;
       (window as BibleBrowserControllerGlobal).browserMaxPanels = maxPanels;
       let numPanels: number =
-        (settings.prefs?.xulsword as any)?.panels?.length ||
-        maxPanels;
+        (settings.prefs?.xulsword as any)?.panels?.length || maxPanels;
       if (numPanels > maxPanels) numPanels = maxPanels;
-      if (!frame || frame === '0' && window.innerWidth < 768) {
+      if (!frame || (frame === '0' && window.innerWidth < 768)) {
         numPanels = 1;
       }
       const locale = setGlobalLocale(settings, langcode);
@@ -82,23 +83,16 @@ socket.on('connect', () => {
       writeSettingsToPrefsStores(settings);
 
       await callBatchThenCache([
+        ['getLocalizedBooks', null, [[locale]]],
         ['Tabs', null, undefined],
-        ['Tab', null, undefined],
-        ['BkChsInV11n', null, undefined],
-        ['GetBooksInVKModules', null, undefined],
-        ['getLocaleDigits', null, [false]],
-        ['getLocaleDigits', null, [true]],
-        ['getLocaleDigits', null, []],
-        ['getLocalizedBooks', null, [true]],
-        ['ModuleConfigDefault', null, undefined],
-        ['ModuleFonts', null, undefined],
-        ['ProgramConfig', null, undefined],
-        ['LocaleConfigs', null, undefined],
-        ['Config', null, undefined],
-        ['FeatureModules', null, undefined],
-        ['AudioConfs', null, undefined],
         ['Books', null, [locale]],
-        ['Book', null, [locale]],
+        ['Config', null, undefined], // can reduce, except style is tricky
+        ['ModuleFonts', null, undefined], // can remove, except style is tricky
+        ['FeatureModules', null, undefined],
+        ['LocaleConfigs', null, undefined],
+        ['getLocaleDigits', null, [locale]],
+        ['ModuleConfigDefault', null, undefined],
+        ['ProgramConfig', null, undefined],
         ['i18n', 't', ['ORIGLabelOT', { lng: locale }]],
         ['i18n', 't', ['ORIGLabelNT', { lng: locale }]],
         ['i18n', 't', ['locale_direction', { lng: locale }]],

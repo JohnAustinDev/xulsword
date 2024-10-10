@@ -1,14 +1,15 @@
 import React from 'react';
+import Subscription from '../../../subscription.ts';
 import {
   noAutoSearchIndex,
-  dString,
   escapeRE,
   getCSS,
   sanitizeHTML,
-  diff,
+  randomID,
 } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
+import { dString } from '../../common.ts';
 import Commands from '../../commands.ts';
 import log from '../../log.ts';
 import RenderPromise from '../../renderPromise.ts';
@@ -94,7 +95,8 @@ function kjvScopeBooks(scope: string): string[] {
 function getScopes(
   input: 'all' | BookGroupType | string,
   module: string,
-  single = false,
+  single: boolean,
+  renderPromise: RenderPromise,
 ): string[] {
   const scopes: string[] = [];
   function continuation(start: string, end: string, skip: boolean) {
@@ -115,7 +117,7 @@ function getScopes(
       if (books) kjvscope = `${books[0]}-${books.at(-1)}`;
     }
     const scopebooks = kjvScopeBooks(kjvscope);
-    const modbooks = G.getBooksInVKModule(module); // are in v11n order
+    const modbooks = GI.getBooksInVKModule(['Gen'], renderPromise, module); // are in v11n order
 
     let contStart: OSISBookType | '' = '';
     let contEnd: OSISBookType | '' = '';
@@ -214,7 +216,7 @@ export async function search(xthis: Search): Promise<boolean> {
       case 'all':
       case 'ot':
       case 'nt': {
-        scopes = getScopes(scoperadio, module, bookByBook);
+        scopes = getScopes(scoperadio, module, bookByBook, renderPromise);
         break;
       }
       case 'book': {
@@ -222,12 +224,12 @@ export async function search(xthis: Search): Promise<boolean> {
           'xulsword.location',
         ) as typeof S.prefs.xulsword.location;
         if (location?.book) {
-          scopes = getScopes(location.book, module, bookByBook);
+          scopes = getScopes(location.book, module, bookByBook, renderPromise);
         }
         break;
       }
       case 'other': {
-        scopes = getScopes(scopeselect, module, bookByBook);
+        scopes = getScopes(scopeselect, module, bookByBook, renderPromise);
         break;
       }
       default:
@@ -671,11 +673,7 @@ export async function lexicon(
       a.textContent = strongNum;
 
       const span1 = lexlist.appendChild(document.createElement('span'));
-      span1.textContent = ` - [${dString(
-        G.getLocaleDigits(),
-        1,
-        G.i18n.language,
-      )}-${dString(G.getLocaleDigits(), total, G.i18n.language)}]: `;
+      span1.textContent = ` - [${dString(1)}-${dString(total)}]: `;
 
       const span2 = lexlist.appendChild(document.createElement('span'));
       span2.className = `cs-${displayModule}`;
@@ -742,15 +740,7 @@ export async function lexicon(
         });
         sanitizeHTML(
           lexlist,
-          `${mtype} - [${dString(
-            G.getLocaleDigits(),
-            1,
-            G.i18n.language,
-          )}-${dString(
-            G.getLocaleDigits(),
-            total,
-            G.i18n.language,
-          )}]: ${sns.join(', ')}`,
+          `${mtype} - [${dString(1)}-${dString(total)}]: ${sns.join(', ')}`,
         );
       }
     });
@@ -862,18 +852,35 @@ export default async function handler(this: Search, e: React.SyntheticEvent) {
                 chapter: Number(p.shift()),
                 verse: Number(p.shift()),
               };
-              if (Build.isWebApp) Commands.setSearchOverlay(null)
-              Commands.goToLocationVK(l, l);
+              if (Build.isWebApp) Commands.setSearchOverlay(null);
+              Commands.goToLocationVK(
+                l,
+                l,
+                undefined,
+                new RenderPromise(() =>
+                  Subscription.publish.setRendererRootState({
+                    reset: randomID(),
+                  }),
+                ),
+              );
               break;
             }
             case 'keylink': {
               const module = p.shift();
               if (module && module in G.Tab) {
-                if (Build.isWebApp) Commands.setSearchOverlay(null)
-                Commands.goToLocationGB({
-                  otherMod: module,
-                  key: decodeURIComponent(p.shift() || ''),
-                });
+                if (Build.isWebApp) Commands.setSearchOverlay(null);
+                Commands.goToLocationGB(
+                  {
+                    otherMod: module,
+                    key: decodeURIComponent(p.shift() || ''),
+                  },
+                  undefined,
+                  new RenderPromise(() =>
+                    Subscription.publish.setRendererRootState({
+                      reset: randomID(),
+                    }),
+                  ),
+                );
               }
               break;
             }
@@ -893,7 +900,10 @@ export default async function handler(this: Search, e: React.SyntheticEvent) {
       switch (targid) {
         case 'displayModule': {
           if (se.value && se.value in G.Tab)
-            await updateStateResults(this, { ...state, 'displayModule': se.value });
+            await updateStateResults(this, {
+              ...state,
+              displayModule: se.value,
+            });
           break;
         }
         case 'module':

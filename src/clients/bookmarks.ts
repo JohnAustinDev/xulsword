@@ -1,5 +1,5 @@
 import Cache from '../cache.ts';
-import { clone, getSwordOptions, localizeBookmark } from '../common.ts';
+import { cloneAny, getSwordOptions, localizeBookmark } from '../common.ts';
 import C from '../constant.ts';
 import type S from '../defaultPrefs.ts';
 import { G, GI } from './G.ts';
@@ -145,6 +145,7 @@ export function getBookmarkMap(): BookmarkMapType {
 // pair.
 export function findBookmarks(
   location: LocationVKType | LocationORType | SelectVKType,
+  renderPromise: RenderPromise,
 ): BookmarkInfoHTML[] {
   const bookmarkMap = getBookmarkMap();
   if (Object.keys(bookmarkMap).length) {
@@ -152,7 +153,11 @@ export function findBookmarks(
       const kjvl = verseKey(location).location('KJV');
       const { book, chapter } = kjvl;
       const chBookmarks: BookmarkInfoHTML[] = [];
-      for (let x = 0; x <= getMaxVerse('KJV', `${book} ${chapter}`); x += 1) {
+      for (
+        let x = 0;
+        x <= getMaxVerse('KJV', `${book} ${chapter}`, renderPromise);
+        x += 1
+      ) {
         let k = [book, chapter, x, 'KJV'].join('.');
         if ('vkMod' in location) {
           const { vkMod } = location;
@@ -282,6 +287,7 @@ export function addBookmarksToTextGB(
 export default function addBookmarks(
   response: Pick<LibSwordResponse, 'textHTML' | 'notes'>,
   props: Pick<AtextProps, 'module' | 'location' | 'modkey'>,
+  renderPromise: RenderPromise,
 ) {
   const { textHTML, notes } = response;
   const { module, location, modkey } = props;
@@ -297,7 +303,7 @@ export default function addBookmarks(
       bmlocation = { otherMod: module, key: modkey };
     }
     if (bmlocation) {
-      const bookmarks = findBookmarks(bmlocation);
+      const bookmarks = findBookmarks(bmlocation, renderPromise);
       if (bookmarks.length) {
         response.notes = addBookmarksToNotes(bookmarks, notes, module);
         if (isVerseKey) {
@@ -406,7 +412,7 @@ export function bookmarkTreeNode(
       ? [expandedIDs]
       : expandedIDs;
   if (item) {
-    const node = (cloned ? item : clone(item)) as BookmarkTreeNode;
+    const node = (cloned ? item : cloneAny(item)) as BookmarkTreeNode;
     if (
       !only ||
       (only === 'folder' && 'type' in node && node.type === 'folder') ||

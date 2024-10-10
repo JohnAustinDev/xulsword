@@ -60,12 +60,12 @@ export default class RefParser {
 
   osisStringLC: string;
 
-  localeDigits: ReturnType<typeof getLocaleDigits>;
+  localeDigits: Record<string, ReturnType<typeof getLocaleDigits>>;
 
   localizedBooks: ReturnType<typeof getLocalizedBooks>;
 
   constructor(
-    localeDigits: ReturnType<typeof getLocaleDigits>,
+    localeDigits: Record<string, ReturnType<typeof getLocaleDigits>>,
     localizedBooks: ReturnType<typeof getLocalizedBooks>,
     options?: RefParserOptionsType,
   ) {

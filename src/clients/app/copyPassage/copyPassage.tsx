@@ -12,7 +12,10 @@ import {
   getStatePref,
   setStatePref,
 } from '../../common.ts';
-import RenderPromise from '../../renderPromise.ts';
+import RenderPromise, {
+  RenderPromiseComponent,
+  RenderPromiseState,
+} from '../../renderPromise.ts';
 import log from '../../log.ts';
 import { libswordText } from '../../components/atext/ztext.ts';
 import { xulPropTypes } from '../../components/libxul/xul.tsx';
@@ -42,13 +45,21 @@ const notStatePrefDefault = {
 };
 
 export type CopyPassageState = typeof notStatePrefDefault &
-  typeof S.prefs.copyPassage;
+  typeof S.prefs.copyPassage &
+  RenderPromiseState;
 
-export default class CopyPassageWin extends React.Component {
+export default class CopyPassageWin
+  extends React.Component
+  implements RenderPromiseComponent
+{
   static propTypes: typeof propTypes;
+
+  renderPromise: RenderPromise;
 
   constructor(props: CopyPassageProps) {
     super(props);
+
+    this.renderPromise = new RenderPromise(this);
 
     const openedWinState = windowArguments(
       'copyPassageState',
@@ -62,6 +73,7 @@ export default class CopyPassageWin extends React.Component {
     }
 
     const s: CopyPassageState = {
+      renderPromiseID: 0,
       ...notStatePrefDefault,
       ...(getStatePref('prefs', 'copyPassage') as typeof S.prefs.copyPassage),
       ...openedWinState,
@@ -75,6 +87,7 @@ export default class CopyPassageWin extends React.Component {
         s.passage.lastverse = getMaxVerse(
           v11n || s.passage.v11n || 'KJV',
           `${s.passage.book}.${s.passage.lastchapter}`,
+          this.renderPromise,
         );
       }
     }
@@ -91,6 +104,7 @@ export default class CopyPassageWin extends React.Component {
   }
 
   passageToClipboard() {
+    const { renderPromise } = this;
     const state = this.state as CopyPassageState;
     const { passage, checkboxes } = state;
     const testdiv = document.getElementById('testdiv');
@@ -147,21 +161,31 @@ export default class CopyPassageWin extends React.Component {
       const refdiv = testdiv.appendChild(document.createElement('div'));
       const vks: VerseKey[] = [];
       if (!passage.lastchapter || passage.chapter === passage.lastchapter) {
-        vks.push(verseKey(passage));
+        vks.push(verseKey(passage, null, undefined, renderPromise));
       } else {
         vks.push(
-          verseKey({
-            ...passage,
-            lastverse: undefined,
-          }),
+          verseKey(
+            {
+              ...passage,
+              lastverse: undefined,
+            },
+            null,
+            undefined,
+            renderPromise,
+          ),
         );
         vks.push(
-          verseKey({
-            ...passage,
-            chapter: passage.lastchapter || passage.chapter,
-            verse: passage.lastverse,
-            lastverse: undefined,
-          }),
+          verseKey(
+            {
+              ...passage,
+              chapter: passage.lastchapter || passage.chapter,
+              verse: passage.lastverse,
+              lastverse: undefined,
+            },
+            null,
+            undefined,
+            renderPromise,
+          ),
         );
       }
       sanitizeHTML(

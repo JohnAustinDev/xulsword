@@ -1,4 +1,5 @@
 import i18n from 'i18next';
+import RenderPromise from './clients/renderPromise.ts';
 import { getPanelWidths, keep } from './common.ts';
 import C from './constant.ts';
 
@@ -6,6 +7,7 @@ import type S from './defaultPrefs.ts';
 import type PrefsElectron from './servers/app/prefs.ts';
 import type PrefsBrowser from './clients/webapp/prefs.ts';
 import type {
+  GIType,
   GType,
   LocationORType,
   SwordFeatures,
@@ -51,12 +53,16 @@ export class Viewport {
 
   #G;
 
+  #GI;
+
   constructor(
     // These web app G calls must be cache preloaded.
-    G: Pick<GType, 'Tab' | 'Tabs' | 'GetBooksInVKModules' | 'i18n'>,
+    G: Pick<GType, 'Tab' | 'Tabs' | 'i18n'>,
+    GI: Pick<GIType, 'getBooksInVKModule'>,
     prefs: typeof PrefsElectron | typeof PrefsBrowser,
   ) {
     this.#G = G;
+    this.#GI = GI;
     this.#Prefs = prefs;
   }
 
@@ -73,7 +79,7 @@ export class Viewport {
     const locales = C.Locales.map((l) => l[0].replace(/-.*$/, ''));
     const localeRelevance = (t: TabType): number => {
       let r = 0;
-      const lang = t.conf.Lang?.replace(/-.*$/, '') ?? '';
+      const lang = t.lang?.replace(/-.*$/, '') ?? '';
       if (lang && lang === locale) {
         r -= 3;
       } else if (lang && lang === locale2) {
@@ -89,7 +95,7 @@ export class Viewport {
             'HebrewParse',
             'Glossary',
           ] as SwordFeatures[]
-        ).some((f) => t.conf.Feature?.includes(f))
+        ).some((f) => t.features?.includes(f))
       ) {
         r += 1;
       }
@@ -119,6 +125,7 @@ export class Viewport {
   getTabChange<T extends TabChangeState>(
     options: Partial<TabChangeOptions>,
     state: T,
+    renderPromise?: RenderPromise,
   ): T {
     const { panels, mtModules, tabs } = state;
     const defaults: TabChangeOptions = {
@@ -219,7 +226,11 @@ export class Viewport {
           panels[i] = nextmod;
           used[nextmod] = true;
           if (!state.location?.book && nextmod && Tab[nextmod].isVerseKey) {
-            const [book] = this.#G.GetBooksInVKModules[nextmod];
+            const [book] = this.#GI.getBooksInVKModule(
+              ['Gen'],
+              renderPromise,
+              nextmod,
+            );
             const v11n = Tab[nextmod].v11n || null;
             if (book && v11n) {
               state.location = {
@@ -248,6 +259,7 @@ export class Viewport {
   getPanelChange<T extends PanelChangeState>(
     options: Partial<PanelChangeOptions>,
     state: T,
+    renderPromise?: RenderPromise,
   ): T {
     const { ilModules, isPinned, keys } = state;
     let { panels, tabs, location } = state;
@@ -329,6 +341,7 @@ export class Viewport {
               this.getTabChange(
                 { panelIndex, whichTab: [module], doWhat: 'show' },
                 state,
+                renderPromise,
               );
               ({ panels, tabs, location } = state);
             }
@@ -348,6 +361,7 @@ export class Viewport {
                     doWhat: 'show',
                   },
                   state,
+                  renderPromise,
                 );
                 ({ panels, tabs, location } = state);
               }
@@ -372,13 +386,19 @@ export class Viewport {
               m &&
               m in Tab &&
               Tab[m].isVerseKey &&
-              this.#G.GetBooksInVKModules[m].includes(book),
+              this.#GI
+                .getBooksInVKModule(['Gen'], renderPromise, m)
+                .includes(book),
           ))
       ) {
         const mfirst = panels.find((m) => m && m in Tab && Tab[m].isVerseKey);
         if (mfirst) {
           state.location = {
-            book: this.#G.GetBooksInVKModules[mfirst][0],
+            book: this.#GI.getBooksInVKModule(
+              ['Gen'],
+              renderPromise,
+              mfirst,
+            )[0],
             chapter: 1,
             verse: 1,
             v11n: Tab[mfirst].v11n || null,
@@ -396,10 +416,11 @@ export class Viewport {
     modules: string[],
     state: T,
     options?: Partial<TabChangeOptions & PanelChangeOptions>,
+    renderPromise?: RenderPromise,
   ): T {
     const { Tab } = this.#G;
     const whichTab = modules.filter(
-      (m) => m && m in Tab && Tab[m] && Tab[m].conf.xsmType !== 'XSM_audio',
+      (m) => m && m in Tab && Tab[m] && Tab[m].xsmType !== 'XSM_audio',
     );
     if (whichTab.length) {
       this.getTabChange(
@@ -410,6 +431,7 @@ export class Viewport {
           whichTab: modules,
         },
         state,
+        renderPromise,
       );
       this.getPanelChange(
         {
@@ -417,6 +439,7 @@ export class Viewport {
           whichModuleOrLocGB: modules,
         },
         state,
+        renderPromise,
       );
     }
     return state;
@@ -429,6 +452,7 @@ export class Viewport {
       skipCallbacks?: boolean;
       clearRendererCaches?: boolean;
     },
+    renderPromise?: RenderPromise,
   ): Pick<
     typeof S.prefs.xulsword,
     'panels' | 'mtModules' | 'tabs' | 'location'
@@ -443,7 +467,7 @@ export class Viewport {
       'xulsword',
     ) as typeof S.prefs.xulsword;
 
-    this.getTabChange(options, xulsword);
+    this.getTabChange(options, xulsword, renderPromise);
     const result = keep(xulsword, ['panels', 'mtModules', 'tabs', 'location']);
 
     this.#Prefs.mergeValue(

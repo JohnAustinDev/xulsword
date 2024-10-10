@@ -1390,7 +1390,13 @@ export function validateModulePrefs(windowComp: typeof Window) {
 
   const globalPopup = {} as typeof S.prefs.global.popup;
 
-  validateGlobalModulePrefs(Tabs, Prefs, i18n.language, getFeatureModules(), globalPopup);
+  validateGlobalModulePrefs(
+    Tabs,
+    Prefs,
+    i18n.language,
+    getFeatureModules(),
+    globalPopup,
+  );
 
   // IMPORTANT: Use the skipCallbacks and clearRendererCaches arguments of
   // Prefs.mergeValue() to force renderer processes to update once, after

@@ -14,6 +14,10 @@ import {
   libswordImgSrc,
 } from '../../common.ts';
 import log from '../../log.ts';
+import RenderPromise, {
+  RenderPromiseComponent,
+  RenderPromiseState,
+} from '../../renderPromise.ts';
 import { xulPropTypes } from '../../components/libxul/xul.tsx';
 import Grid, {
   Column,
@@ -78,9 +82,13 @@ const notStatePrefDefault = {
 let openedWinState: Partial<PrintPassageState> | null | undefined;
 
 export type PrintPassageState = typeof S.prefs.printPassage &
-  typeof notStatePrefDefault;
+  typeof notStatePrefDefault &
+  RenderPromiseState;
 
-export default class PrintPassageWin extends React.Component {
+export default class PrintPassageWin
+  extends React.Component
+  implements RenderPromiseComponent
+{
   static propTypes: typeof propTypes;
 
   pagebuttons: React.RefObject<HTMLDivElement>;
@@ -89,8 +97,12 @@ export default class PrintPassageWin extends React.Component {
 
   vkSelectHandler: typeof vkSelectHandlerH;
 
+  renderPromise: RenderPromise;
+
   constructor(props: PrintPassageProps) {
     super(props);
+
+    this.renderPromise = new RenderPromise(this);
 
     if (typeof openedWinState === 'undefined') {
       openedWinState = windowArguments(
@@ -99,12 +111,13 @@ export default class PrintPassageWin extends React.Component {
     }
 
     const s: PrintPassageState = {
+      renderPromiseID: 0,
       ...notStatePrefDefault,
       ...(getStatePref('prefs', 'printPassage') as typeof S.prefs.printPassage),
       ...(openedWinState || {}),
     };
     openedWinState = {};
-    s.chapters = validPassage(s.chapters);
+    s.chapters = validPassage(s.chapters, this.renderPromise);
     this.state = s;
 
     // Without the next save, prefs would somehow overwrite state
@@ -128,11 +141,12 @@ export default class PrintPassageWin extends React.Component {
     _prevProps: PrintPassageProps,
     prevState: PrintPassageState,
   ) {
+    const { renderPromise } = this;
     const state = this.state as PrintPassageState;
     const { print } = this.props as PrintPassageProps;
     const tdiv = print.printContainer.current;
     const { chapters, progress } = state;
-    const valid = validPassage(chapters);
+    const valid = validPassage(chapters, renderPromise);
     if (prevState.progress !== -1 && progress === -1) {
       Subscription.publish.setRendererRootState({
         printDisabled: false,
@@ -146,6 +160,7 @@ export default class PrintPassageWin extends React.Component {
   }
 
   renderChapters() {
+    const { renderPromise } = this;
     const state = this.state as PrintPassageState;
     const { chapters } = state;
     const { print } = this.props as PrintPassageProps;
@@ -182,10 +197,13 @@ export default class PrintPassageWin extends React.Component {
         if (!pageIsFull && tdiv) {
           log.silly(`Showing chapter ${c[0]} ${c[1]}`);
           renderHTML.push(
-            bibleChapterText({
-              ...settings,
-              location: { book: c[0], chapter: c[1], v11n },
-            }),
+            bibleChapterText(
+              {
+                ...settings,
+                location: { book: c[0], chapter: c[1], v11n },
+              },
+              renderPromise,
+            ),
           );
           sanitizeHTML(tdiv, renderHTML.join());
           if (tdiv.scrollWidth > tdiv.offsetWidth) {
@@ -219,14 +237,17 @@ export default class PrintPassageWin extends React.Component {
                       progress: pages / C.UI.Print.maxPages,
                     });
                     resolve(
-                      bibleChapterText({
-                        ...settings,
-                        location: {
-                          book: c[0],
-                          chapter: c[1],
-                          v11n,
+                      bibleChapterText(
+                        {
+                          ...settings,
+                          location: {
+                            book: c[0],
+                            chapter: c[1],
+                            v11n,
+                          },
                         },
-                      }),
+                        renderPromise,
+                      ),
                     );
                   } else reject(new Error(`Canceled`));
                 }
@@ -289,7 +310,7 @@ export default class PrintPassageWin extends React.Component {
     const vkMod = chapters?.vkMod;
     if (!vkMod || !chapters) return null;
 
-    const lang = G.Tab[vkMod].conf.Lang;
+    const { lang } = G.Tab[vkMod];
     const isHebrew = lang && /^heb?$/i.test(lang);
     const tr = isHebrew ? 1 : 0;
 

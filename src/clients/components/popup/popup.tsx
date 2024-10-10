@@ -327,7 +327,7 @@ class Popup extends React.Component implements RenderPromiseComponent {
               <div
                 className={`popupCloseLink${elemdata && elemdata.length > 1 ? ' backable' : ''}`}
               >
-                <Button icon="cross"/>
+                <Button icon="cross" />
               </div>
             </div>
             {elemdata && elemdata.length > 1 && (

@@ -2,7 +2,6 @@ import C from '../../../constant.ts';
 import Cache from '../../../cache.ts';
 import {
   clone,
-  dString,
   escapeRE,
   getSwordOptions,
   JSON_attrib_parse,
@@ -11,6 +10,7 @@ import {
 } from '../../../common.ts';
 import { getElementData } from '../../htmlData.ts';
 import { G, GI } from '../../G.ts';
+import { dString } from '../../common.ts';
 import addBookmarks from '../../bookmarks.ts';
 import {
   getNoteHTML,
@@ -85,7 +85,9 @@ export function libswordText(
           if (!renderPromise?.waiting()) {
             r.textHTML += text.replace(/interV2/gm, `cs-${ilModule}`);
           }
-        } else if (G.getBooksInVKModule(module).includes(book)) {
+        } else if (
+          GI.getBooksInVKModule(['Gen'], renderPromise, module).includes(book)
+        ) {
           // We needed to check that the module contains the book, because
           // LibSword will silently return text from elsewhere in a module
           // if the module does not include the requested book!
@@ -192,7 +194,7 @@ export function libswordText(
   }
 
   // Add bookmarks to text and notes
-  if (show.usernotes) addBookmarks(r, props);
+  if (show.usernotes) addBookmarks(r, props, renderPromise);
 
   // handle footnotes.
   if (G.Tab[module].isVerseKey) {
@@ -222,17 +224,15 @@ export function libswordText(
   }
 
   // Localize verse numbers to match the module
-  if (
-    G.Tab[module].isVerseKey &&
-    moduleLocale &&
-    dString(G.getLocaleDigits(true), 1, moduleLocale) !==
-      dString(G.getLocaleDigits(true), 1, 'en')
-  ) {
+  const digits =
+    (moduleLocale && GI.getLocaleDigits(null, renderPromise, moduleLocale)) ||
+    null;
+  if (G.Tab[module].isVerseKey && digits) {
     const verseNm = /(<sup class="versenum">)(\d+)(<\/sup>)/g;
     r.textHTML = r.textHTML.replace(
       verseNm,
       (_str, p1: string, p2: string, p3: string) => {
-        return p1 + dString(G.getLocaleDigits(true), p2, moduleLocale) + p3;
+        return p1 + dString(p2, moduleLocale) + p3;
       },
     );
   }
@@ -305,8 +305,8 @@ export function genbookChange(
 export function textChange(
   atext: HTMLElement,
   next: boolean,
+  renderPromise: RenderPromise,
   prevState?: PinPropsType,
-  renderPromise?: RenderPromise,
 ): PinPropsType | Partial<PinPropsType> | null {
   const { columns: cx, module } = atext.dataset;
   const columns = Number(cx);
@@ -329,9 +329,9 @@ export function textChange(
           const { location: l } = p;
           if (l) {
             if (next) {
-              location = chapterChange(l, 1);
+              location = chapterChange(l, 1, renderPromise);
             } else {
-              location = chapterChange(l, -1);
+              location = chapterChange(l, -1, renderPromise);
             }
           }
         }

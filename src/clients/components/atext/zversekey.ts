@@ -1,13 +1,10 @@
 import C from '../../../constant.ts';
 import type S from '../../../defaultPrefs.ts';
-import {
-  dString,
-  getSwordOptions,
-  JSON_attrib_stringify,
-} from '../../../common.ts';
+import { getSwordOptions, JSON_attrib_stringify } from '../../../common.ts';
 import parseExtendedVKRef from '../../../extrefParser.ts';
 import { getElementData, verseKey } from '../../htmlData.ts';
 import {
+  dString,
   getCompanionModules,
   getMaxChapter,
   getMaxVerse,
@@ -197,8 +194,8 @@ export function getNoteHTML(
           // Write cell #4: chapter and verse
           html += '<div class="fncol4">';
           if (chapter && verse) {
-            const ch = dString(G.getLocaleDigits(), chapter, G.i18n.language);
-            const vs = dString(G.getLocaleDigits(), verse, G.i18n.language);
+            const ch = dString(chapter);
+            const vs = dString(verse);
             const fnldata = JSON_attrib_stringify({
               type: 'fnlink',
               location,
@@ -226,7 +223,12 @@ export function getNoteHTML(
                     .map((vk) =>
                       typeof vk === 'string'
                         ? vk
-                        : verseKey(vk, location.v11n).readable(G.i18n.language),
+                        : verseKey(
+                            vk,
+                            location.v11n,
+                            undefined,
+                            renderPromise,
+                          ).readable(G.i18n.language),
                     )
                     .join('; ');
                 } else {
@@ -236,8 +238,14 @@ export function getNoteHTML(
                     ? innerHtmlValue.split(':')[0]
                     : context;
                   if (userTarget && context) {
-                    const vklookup = G.Prefs.getComplexValue('global.popup.vklookup');
-                    if (vklookup && typeof vklookup === 'object' && context in vklookup) {
+                    const vklookup = G.Prefs.getComplexValue(
+                      'global.popup.vklookup',
+                    );
+                    if (
+                      vklookup &&
+                      typeof vklookup === 'object' &&
+                      context in vklookup
+                    ) {
                       const usermod = (vklookup as any)[context];
                       if (usermod) tmod = usermod;
                     }
@@ -325,13 +333,12 @@ export function getIntroductions(
 export function getChapterHeader(
   location: AtextPropsType['location'],
   module: AtextPropsType['module'],
-  renderPromise?: RenderPromise,
+  renderPromise: RenderPromise,
 ) {
   if (!location || !module) return { textHTML: '', intronotes: '' };
   const { book, chapter } = location;
-  const config = G.Config;
   let l;
-  if (module in config) l = config[module].AssociatedLocale;
+  if (module in G.Config) l = G.Config[module].AssociatedLocale;
   if (!l) l = G.i18n.language;
   const toptions = { lng: l, ns: 'books' };
 
@@ -545,7 +552,7 @@ function aTextWheelScroll2(
   count: number,
   atext: HTMLElement,
   prevState: XulswordState | ViewportWinState | AtextStateType,
-  renderPromise?: RenderPromise,
+  renderPromise: RenderPromise,
 ) {
   let ret:
     | Partial<XulswordState>
@@ -590,7 +597,7 @@ function aTextWheelScroll2(
             },
             undefined,
             undefined,
-            renderPromise || null,
+            renderPromise,
           ).location(location.v11n);
         }
       }
@@ -665,7 +672,7 @@ export function highlight(
     selection,
     G.Tab[module].v11n || undefined,
     undefined,
-    renderPromise || null,
+    renderPromise,
   ).location();
   if (verse) {
     const lv = lastverse || verse;
@@ -776,13 +783,14 @@ export function findVerseElement(
 export function chapterChange(
   location: LocationVKType | null,
   chDelta: number,
+  renderPromise: RenderPromise,
 ): LocationVKType | null {
   if (!location?.v11n) return null;
   const { book } = location;
   let { chapter } = location;
   if (chDelta) chapter += chDelta;
   if (chapter < 1) return null;
-  const maxchapter = getMaxChapter(location.v11n, location.book);
+  const maxchapter = getMaxChapter(location.v11n, location.book, renderPromise);
   if (!maxchapter || chapter > maxchapter) return null;
   location.book = book;
   location.chapter = chapter;
@@ -796,7 +804,7 @@ export function chapterChange(
 export function verseChange(
   location: LocationVKType | null,
   vsDelta: number,
-  renderPromise?: RenderPromise,
+  renderPromise: RenderPromise,
 ): LocationVKType | null {
   if (!location) return null;
   let { book, chapter, verse } = location;
@@ -807,14 +815,14 @@ export function verseChange(
   let ps;
   if (verse < 1) {
     if (!vsDelta) return null;
-    ps = chapterChange(location, -1);
+    ps = chapterChange(location, -1, renderPromise);
     if (!ps) return null;
     verse = getMaxVerse(v11n, `${ps.book}.${ps.chapter}`, renderPromise);
     ({ book } = ps);
     ({ chapter } = ps);
   } else if (verse > maxvs) {
     if (!vsDelta) return null;
-    ps = chapterChange(location, 1);
+    ps = chapterChange(location, 1, renderPromise);
     if (!ps) return null;
     verse = 1;
     ({ book } = ps);
@@ -836,7 +844,7 @@ export function verseChange(
 export function pageChange(
   atext: HTMLElement,
   next: boolean,
-  renderPromise?: RenderPromise,
+  renderPromise: RenderPromise,
 ): LocationVKType | null {
   if (!next) {
     let firstVerse: HTMLElement | undefined;
@@ -885,7 +893,7 @@ export function pageChange(
             undefined,
             renderPromise || null,
           );
-          if (vk.chapter <= getMaxChapter(v11n, vk.osisRef())) {
+          if (vk.chapter <= getMaxChapter(v11n, vk.osisRef(), renderPromise)) {
             return vk.location();
           }
         }

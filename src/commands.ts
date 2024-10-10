@@ -1,3 +1,5 @@
+import RenderPromise from './clients/renderPromise.ts';
+import { PanelChangeOptions } from './viewport.ts';
 import { keep, randomID } from './common.ts';
 import C from './constant.ts';
 import Viewport from './viewport.ts';
@@ -9,6 +11,7 @@ import type PrefsBrowser from './clients/webapp/prefs.ts';
 import type {
   GAddCaller,
   GenBookAudioFile,
+  GIType,
   GType,
   LocationORType,
   LocationVKCommType,
@@ -17,7 +20,6 @@ import type {
   SearchType,
   VerseKeyAudioFile,
 } from './type.ts';
-import { PanelChangeOptions } from './viewport.ts';
 
 // This file contains global commands that are implemented for all clients and servers.
 
@@ -35,18 +37,20 @@ export default class Commands {
 
   constructor(
     // These web app G calls must be cache preloaded.
-    G: Pick<GType, 'Tab' | 'Tabs' | 'GetBooksInVKModules' | 'i18n'>,
+    G: Pick<GType, 'Tab' | 'Tabs' | 'i18n'>,
+    GI: Pick<GIType, 'getBooksInVKModule'>,
     prefs: typeof PrefsElectron | typeof PrefsBrowser,
   ) {
     this.#G = G;
     this.#Prefs = prefs;
     this.#Prefs2 = prefs as GAddCaller['Prefs'];
-    this.#Viewport = new Viewport(G, prefs);
+    this.#Viewport = new Viewport(G, GI, prefs);
   }
 
   goToLocationGB(
     location: LocationORType,
     scroll?: ScrollType | undefined,
+    renderPromise?: RenderPromise,
   ): void {
     if (location.otherMod in this.#G.Tab) {
       const xulsword: Partial<typeof S.prefs.xulsword> = this.setXulswordPanels(
@@ -55,6 +59,7 @@ export default class Commands {
           skipCallbacks: true,
           clearRendererCaches: false,
         },
+        renderPromise,
       );
       xulsword.scroll = scroll || { verseAt: 'center' };
       this.#Prefs2.mergeValue('xulsword', xulsword, 'prefs', false, false, -2);
@@ -68,17 +73,21 @@ export default class Commands {
     newlocation: LocationVKType | LocationVKCommType,
     newselection?: LocationVKType | LocationVKCommType,
     newscroll?: ScrollType,
+    renderPromise?: RenderPromise,
   ): void {
     const vkMod =
       ('commMod' in newlocation && newlocation.commMod) || newlocation.vkMod;
     if (!vkMod || vkMod in this.#G.Tab) {
       let xulsword: Partial<typeof S.prefs.xulsword> = {};
       if (vkMod) {
-        xulsword = this.setXulswordPanels({
-          whichModuleOrLocGB: vkMod,
-          skipCallbacks: true,
-          clearRendererCaches: false,
-        });
+        xulsword = this.setXulswordPanels(
+          {
+            whichModuleOrLocGB: vkMod,
+            skipCallbacks: true,
+            clearRendererCaches: false,
+          },
+          renderPromise,
+        );
       }
       xulsword.location = newlocation;
       xulsword.selection = newselection || null;
@@ -95,6 +104,7 @@ export default class Commands {
       skipCallbacks?: boolean;
       clearRendererCaches?: boolean;
     },
+    renderPromise?: RenderPromise,
   ): Pick<
     typeof S.prefs.xulsword,
     'panels' | 'mtModules' | 'tabs' | 'keys' | 'isPinned' | 'location'
@@ -108,7 +118,7 @@ export default class Commands {
     const xulsword = this.#Prefs.getComplexValue(
       'xulsword',
     ) as typeof S.prefs.xulsword;
-    this.#Viewport.getPanelChange(options, xulsword);
+    this.#Viewport.getPanelChange(options, xulsword, renderPromise);
     const result = keep(xulsword, [
       'panels',
       'mtModules',
@@ -130,14 +140,17 @@ export default class Commands {
     return result;
   }
 
-  setSearchOverlay(showSearchOverlay: SearchType| null): void {
+  setSearchOverlay(showSearchOverlay: SearchType | null): void {
     Subscription.publish.setRendererRootState({
       reset: randomID(),
-      showSearchOverlay
+      showSearchOverlay,
     });
   }
 
-  playAudio(audio: VerseKeyAudioFile | GenBookAudioFile | null) {
+  playAudio(
+    audio: VerseKeyAudioFile | GenBookAudioFile | null,
+    renderPromise: RenderPromise,
+  ) {
     let xulsword: Partial<typeof S.prefs.xulsword> | undefined;
     if (audio) {
       if (
@@ -147,19 +160,28 @@ export default class Commands {
         )
       ) {
         const { book, chapter, swordModule } = audio;
-        this.goToLocationVK({
-          book,
-          chapter: chapter || 1,
-          verse: 1,
-          v11n: (swordModule && this.#G.Tab[swordModule].v11n) || null,
-        });
+        this.goToLocationVK(
+          {
+            book,
+            chapter: chapter || 1,
+            verse: 1,
+            v11n: (swordModule && this.#G.Tab[swordModule].v11n) || null,
+          },
+          undefined,
+          undefined,
+          renderPromise,
+        );
       } else if ('key' in audio) {
         const { key, swordModule } = audio;
         if (swordModule) {
-          this.goToLocationGB({
-            otherMod: swordModule,
-            key,
-          });
+          this.goToLocationGB(
+            {
+              otherMod: swordModule,
+              key,
+            },
+            undefined,
+            renderPromise,
+          );
         }
       }
       xulsword = {

@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { clone, diff, getModuleOfObject, ofClass } from '../../../common.ts';
 import C from '../../../constant.ts';
-import { G } from '../../G.ts';
+import { G, GI } from '../../G.ts';
 import { getMaxChapter, getMaxVerse } from '../../common.ts';
 import RenderPromise from '../../renderPromise.ts';
 import { addClass, xulPropTypes } from './xul.tsx';
@@ -297,7 +297,9 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
     // Similarly, when the books prop lists particular books, only modules
     // containing those books will be included in the module selector.
     const bkbgs = (books ||
-      G.BkChsInV11n[v11n].map((r) => r[0])) as OSISBookType[];
+      GI.getBkChsInV11n([['Gen', 50]], renderPromise, v11n)?.map(
+        (r) => r[0],
+      )) as OSISBookType[];
     const bookset = new Set<OSISBookType>();
     bkbgs.forEach((bkbg: OSISBookType | BookGroupType) => {
       if (C.SupportedBookGroups.includes(bkbg as never)) {
@@ -310,7 +312,9 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
     const filteredbooks =
       tab && modules?.length !== 0
         ? Array.from(bookset).filter((b) =>
-            G.getBooksInVKModule(tab.module).includes(b),
+            GI.getBooksInVKModule(['Gen'], renderPromise, tab.module).includes(
+              b,
+            ),
           )
         : Array.from(bookset);
     let sel = book;
@@ -340,7 +344,7 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
       chapter,
       chapters,
       1,
-      v11n && book ? getMaxChapter(v11n, book) : 0,
+      v11n && book ? getMaxChapter(v11n, book, renderPromise) : 0,
     );
 
     const newlastchapters = this.getNumberOptions(
@@ -348,7 +352,7 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
       lastchapter,
       lastchapters,
       chapter || 1,
-      v11n && book ? getMaxChapter(v11n, book) : 0,
+      v11n && book ? getMaxChapter(v11n, book, renderPromise) : 0,
     );
 
     const newverses = this.getNumberOptions(
@@ -377,7 +381,9 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
     // modules. If the books prop is controlling book options, modules not containing
     // the selected book are removed.
     if ((books?.length || 0) > 0) {
-      modules = modules.filter((m) => G.getBooksInVKModule(m).includes(book));
+      modules = modules.filter((m) =>
+        GI.getBooksInVKModule(['Gen'], renderPromise, m).includes(book),
+      );
     }
     let vkSel = vkMod;
     if (!vkSel || !modules.includes(vkSel)) {

@@ -78,11 +78,7 @@ export default function WidgetMenulist(
     e: React.SyntheticEvent<HTMLSelectElement, ChangeEvent>,
   ): void {
     const select = e.target as HTMLSelectElement;
-    setState((prevState) => {
-      const newState = clone(prevState);
-      newState.value = select.value;
-      return newState;
-    });
+    setState({ value: select.value });
     const elem = document.getElementById(compid)?.parentElement;
     if (elem)
       jQuery(elem.querySelectorAll('.field a')).fadeTo(1, 0).fadeTo(1000, 1);

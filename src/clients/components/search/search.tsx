@@ -7,7 +7,6 @@ import {
   clone,
   diff,
   drop,
-  dString,
   sanitizeHTML,
   stringHash,
 } from '../../../common.ts';
@@ -17,6 +16,7 @@ import RenderPromise from '../../renderPromise.ts';
 import log from '../../log.ts';
 import {
   i18nApplyOpts,
+  dString,
   iframeAutoHeight,
   moduleIncludesStrongs,
   windowArguments,
@@ -382,7 +382,7 @@ export default class Search
       if (
         module &&
         !['ot', 'nt'].includes(bg) &&
-        G.getBooksInVKModule(module).some((bk) => {
+        GI.getBooksInVKModule(['Gen'], renderPromise, module).some((bk) => {
           const x = C.SupportedBooks[bg] as any;
           return x.includes(bk);
         })
@@ -421,21 +421,20 @@ export default class Search
         ? count
         : pageindex + C.UI.Search.resultsPerPage;
     let searchStatus = '';
-    const digits = G.getLocaleDigits();
     if (count > C.UI.Search.resultsPerPage) {
       searchStatus = i18nApplyOpts(
         GI.i18n.t('', renderPromise, 'searchStatusPage'),
         {
-          v1: dString(digits, pageindex + 1, G.i18n.language),
-          v2: dString(digits, lasti, G.i18n.language),
-          v3: dString(digits, count, G.i18n.language),
+          v1: dString(pageindex + 1),
+          v2: dString(lasti),
+          v3: dString(count),
         },
       );
     } else {
       searchStatus = i18nApplyOpts(
         GI.i18n.t('', renderPromise, 'searchStatusAll'),
         {
-          v1: dString(digits, count, G.i18n.language),
+          v1: dString(count),
         },
       );
     }
@@ -531,17 +530,17 @@ export default class Search
                       {showHelp}
                     </Button>
                     <Button id="moreLess" onClick={handler}>
-                    {!moreLess && (
-                      <Label
-                        value={GI.i18n.t('', renderPromise, 'more.label')}
-                      />
-                    )}
-                    {moreLess && (
-                      <Label
-                        value={GI.i18n.t('', renderPromise, 'less.label')}
-                      />
-                    )}
-                  </Button>
+                      {!moreLess && (
+                        <Label
+                          value={GI.i18n.t('', renderPromise, 'more.label')}
+                        />
+                      )}
+                      {moreLess && (
+                        <Label
+                          value={GI.i18n.t('', renderPromise, 'less.label')}
+                        />
+                      )}
+                    </Button>
                   </Hbox>
                 </Groupbox>
               </Row>

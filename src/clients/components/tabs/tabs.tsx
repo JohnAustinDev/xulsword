@@ -88,16 +88,20 @@ class Tabs extends React.Component implements RenderPromiseComponent {
   }
 
   toggleTab(e: React.SyntheticEvent<ChangeEvent>) {
+    const { renderPromise } = this;
     const { target } = e;
     if (target) {
       const { value } = target as HTMLSelectElement;
       const { panelIndex, xulswordState } = this.props as TabsProps;
       const vp = Build.isWebApp ? WebAppViewport : G.Viewport;
-      const xs = vp.setXulswordTabs({
-        panelIndex,
-        whichTab: value,
-        doWhat: 'toggle',
-      });
+      const xs = vp.setXulswordTabs(
+        {
+          panelIndex,
+          whichTab: value,
+          doWhat: 'toggle',
+        },
+        renderPromise,
+      );
       const newtabs = xs.tabs[panelIndex];
       if (newtabs && newtabs.includes(value)) {
         xulswordState((prevState) => {
@@ -132,9 +136,7 @@ class Tabs extends React.Component implements RenderPromiseComponent {
         className={`${type} tab tab${tabType} ${classes}`}
         data-module={m}
         data-index={i}
-        title={
-          (m && m in G.Tab && G.Tab[m].conf.Description?.locale) || undefined
-        }
+        title={(m && m in G.Tab && G.Tab[m].description.locale) || undefined}
       >
         <div className="border">
           <div className="tab-label">{label}</div>
