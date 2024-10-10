@@ -189,7 +189,7 @@ const C = {
       } as TabType,
       MConfigType: {
         direction: 'ltr',
-        fontFamily: 'GentiumPlusCyrE',
+        fontFamily: '\'GentiumPlusCyrE\'',
         fontSizeAdjust: null,
         lineHeight: null,
         fontSize: null,
@@ -200,8 +200,8 @@ const C = {
         PreferredCSSXHTML: null,
       } as ConfigType,
       LConfigType: {
-        direction: '',
-        fontFamily: 'GentiumPlusCyrE',
+        direction: 'ltr',
+        fontFamily: '',
         fontSizeAdjust: '',
         lineHeight: '',
         fontSize: '',

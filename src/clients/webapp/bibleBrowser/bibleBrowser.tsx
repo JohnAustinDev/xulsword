@@ -93,20 +93,10 @@ socket.on('connect', () => {
         ['getLocaleDigits', null, [locale]],
         ['ModuleConfigDefault', null, undefined],
         ['ProgramConfig', null, undefined],
-        ['i18n', 't', ['ORIGLabelOT', { lng: locale }]],
-        ['i18n', 't', ['ORIGLabelNT', { lng: locale }]],
         ['i18n', 't', ['locale_direction', { lng: locale }]],
         ...Object.values(C.SupportedTabTypes).map(
           (type) => ['i18n', 't', [type, { lng: locale }]] as any,
         ),
-        ...Object.entries(C.UI.Search.symbol).map((entry) => {
-          const [k] = entry;
-          return ['i18n', 'exists', [k, { lng: locale }]];
-        }),
-        ...Object.entries(C.UI.Search.symbol).map((entry) => {
-          const [k] = entry;
-          return ['i18n', 't', [k, { lng: locale }]];
-        }),
       ]);
       setEmptySettings(settings);
       setGlobalPanels(settings, numPanels);

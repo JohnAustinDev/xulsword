@@ -49,13 +49,16 @@ export const strongsCSS = {
   added: [] as number[],
 };
 
-export function getLuceneSearchText(searchtext0: string) {
+export function getLuceneSearchText(
+  searchtext0: string,
+  renderPromise: RenderPromise,
+) {
   let searchtext = searchtext0;
   Object.entries(C.UI.Search.symbol).forEach((entry) => {
     const [k, [uiVal, luceneVal]] = entry;
     let uiVal2 = uiVal;
-    if (G.i18n.exists(k)) {
-      const kv = G.i18n.t(k);
+    if (GI.i18n.exists(false, renderPromise, k)) {
+      const kv = GI.i18n.t('', renderPromise, k);
       if (!/^\s*$/.test(kv)) uiVal2 = kv;
     }
     searchtext = searchtext.replace(
@@ -151,7 +154,7 @@ export async function search(xthis: Search): Promise<boolean> {
   let hasIndex = GI.LibSword.luceneEnabled(true, renderPromise, module);
 
   if (!hasIndex) {
-    hasIndex = await autoCreateSearchIndex(xthis, module);
+    hasIndex = await autoCreateSearchIndex(xthis, module, renderPromise);
   }
 
   const s: SearchState = {
@@ -163,11 +166,13 @@ export async function search(xthis: Search): Promise<boolean> {
   };
 
   if (descriptor)
-    G.Window.setTitle(`${G.i18n.t('menu.search')} "${searchtext}"`);
+    G.Window.setTitle(
+      `${GI.i18n.t('', renderPromise, 'menu.search')} "${searchtext}"`,
+    );
 
   // Replace UI search symbols with Clucene recognized search symbols,
   // and prepare the query string according to search type.
-  let searchtextLS = getLuceneSearchText(state.searchtext);
+  let searchtextLS = getLuceneSearchText(state.searchtext, renderPromise);
 
   let libSwordSearchType = libSwordSearchTypes.REGEX;
   if (GI.LibSword.luceneEnabled(true, renderPromise, module)) {
@@ -351,6 +356,7 @@ export async function libSwordSearch(
 export async function autoCreateSearchIndex(
   xthis: Search,
   module: string,
+  renderPromise: RenderPromise,
 ): Promise<boolean> {
   let result = false;
   const csai = G.Prefs.getComplexValue(
@@ -358,7 +364,7 @@ export async function autoCreateSearchIndex(
   ) as typeof S.prefs.global.noAutoSearchIndex;
   const { descriptor } = xthis.props as SearchProps;
   if (descriptor && !csai.includes(module)) {
-    result = await createSearchIndex(xthis, module, descriptor);
+    result = await createSearchIndex(xthis, module, descriptor, renderPromise);
   }
   return result;
 }
@@ -368,6 +374,7 @@ export async function createSearchIndex(
   xthis: Search,
   module: string,
   descriptor: WindowDescriptorType,
+  renderPromise: RenderPromise,
 ): Promise<boolean> {
   if (Build.isElectronApp && module && module in G.Tab) {
     return await new Promise((resolve) => {
@@ -375,7 +382,7 @@ export async function createSearchIndex(
         results: { html: '', count: 0, lexhtml: '' },
         pageindex: 0,
         progress: 0,
-        progressLabel: G.i18n.t('BuildingIndex'),
+        progressLabel: GI.i18n.t('', renderPromise, 'BuildingIndex'),
         indexing: true,
       };
       xthis.setState(s);
@@ -473,7 +480,7 @@ export function formatResult(
           lastChild,
           markSearchMatches(
             lastChild.innerHTML,
-            getSearchMatches(searchtext, searchtype),
+            getSearchMatches(searchtext, searchtype, renderPromise),
           ),
         );
       }
@@ -516,9 +523,10 @@ function markSearchMatches(
 function getSearchMatches(
   searchtext: string,
   searchtype: SearchState['searchtype'],
+  renderPromise: RenderPromise,
 ) {
   let matches: SearchMatchType[] = [];
-  let t = getLuceneSearchText(searchtext);
+  let t = getLuceneSearchText(searchtext, renderPromise);
   switch (searchtype) {
     case 'SearchAnyWord':
     case 'SearchSimilar':
@@ -629,7 +637,7 @@ export async function lexicon(
     lexdiv,
     markSearchMatches(
       results.lexhtml,
-      getSearchMatches(searchtext, searchtype),
+      getSearchMatches(searchtext, searchtype, renderPromise),
     ),
   );
 
@@ -723,8 +731,8 @@ export async function lexicon(
         lexlist.className = 'lexlist';
 
         let mtype = '';
-        if (hg === 'H') mtype = G.i18n.t('ORIGLabelOT');
-        if (hg === 'G') mtype = G.i18n.t('ORIGLabelNT');
+        if (hg === 'H') mtype = GI.i18n.t('', renderPromise, 'ORIGLabelOT');
+        if (hg === 'G') mtype = GI.i18n.t('', renderPromise, 'ORIGLabelNT');
 
         const sns: string[] = [];
         stsa.forEach((sts: Sts) => {
@@ -764,6 +772,7 @@ export async function lexicon(
 }
 
 export default async function handler(this: Search, e: React.SyntheticEvent) {
+  const { renderPromise } = this;
   const state = this.state as SearchState;
   const target = e.target as HTMLElement;
   const currentTarget = e.currentTarget as HTMLElement;
@@ -808,7 +817,12 @@ export default async function handler(this: Search, e: React.SyntheticEvent) {
               searchtype: 'SearchAnyWord',
             };
             this.setState(s);
-            const result = await createSearchIndex(this, module, descriptor);
+            const result = await createSearchIndex(
+              this,
+              module,
+              descriptor,
+              renderPromise,
+            );
             if (result)
               search(this).catch((er) => {
                 log.error(er);
