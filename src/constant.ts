@@ -189,7 +189,7 @@ const C = {
       } as TabType,
       MConfigType: {
         direction: 'ltr',
-        fontFamily: '\'GentiumPlusCyrE\'',
+        fontFamily: "'GentiumPlusCyrE'",
         fontSizeAdjust: null,
         lineHeight: null,
         fontSize: null,

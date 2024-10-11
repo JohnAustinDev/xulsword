@@ -1,4 +1,9 @@
-import { GCacheKey, JSON_stringify, gcallResultCompression, isCallCacheable } from '../common.ts';
+import {
+  GCacheKey,
+  JSON_stringify,
+  gcallResultCompression,
+  isCallCacheable,
+} from '../common.ts';
 import Cache from '../cache.ts';
 import { GBuilder } from '../type.ts';
 import C from '../constant.ts';
@@ -349,19 +354,24 @@ function writeCallToCache(call: GCallType | null, result: any) {
         // Books
       } else if (call[0] === 'Books') {
         const args = call[2] as Parameters<typeof G.Books>;
-        const nckey = GCacheKey(['Book', null, [args[0]]]);
-        if (!Cache.has(nckey)) {
-          Cache.write(
-            (result as ReturnType<typeof G.Books>).reduce(
-              (p, c) => {
-                p[c.code] = c;
-                return p;
-              },
-              {} as Record<string, BookType>,
-            ),
-            nckey,
-          );
+        const nckey = [GCacheKey(['Book', null, [args[0]]])];
+        if (args[0] === G.i18n.language) {
+          nckey.push(GCacheKey(['Book', null, []]));
         }
+        nckey.forEach((key) => {
+          if (!Cache.has(key)) {
+            Cache.write(
+              (result as ReturnType<typeof G.Books>).reduce(
+                (p, c) => {
+                  p[c.code] = c;
+                  return p;
+                },
+                {} as Record<string, BookType>,
+              ),
+              key,
+            );
+          }
+        });
 
         // ModuleConfs
       } else if (call[0] === 'ModuleConfs') {

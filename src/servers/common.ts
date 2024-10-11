@@ -126,10 +126,10 @@ export function getBooks(locale?: string): BookType[] {
   return Cache.read('books', loc);
 }
 
-export function getBook(locale?: string): Record<string, BookType> {
+export function getBook(locale?: string): Record<OSISBookType, BookType> {
   const loc: string =
     (C.Locales.find((l) => l[0] === locale) && locale) || i18n.language;
-  const book: ReturnType<typeof getBook> = {};
+  const book = {} as ReturnType<typeof getBook>;
   getBooks(loc).forEach((bk: BookType) => {
     book[bk.code] = bk;
   });
@@ -221,7 +221,7 @@ export function getBooksInVKModule(module: string): OSISBookType[] {
       // different and are not the empty string, to determine whether
       // the book is missing from the module.
       const fake = LibSword.getVerseText(module, 'FAKE 1:1', false, options);
-      v11nbooks.forEach((code: string) => {
+      v11nbooks.forEach((code: OSISBookType) => {
         const bk = book[code];
         const verse1 = LibSword.getVerseText(
           module,

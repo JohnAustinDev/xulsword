@@ -76,9 +76,7 @@ class Bookselect extends React.Component {
             {} as Record<string, string[] | null>,
           )
         : { [G.i18n.language]: G.getLocaleDigits() },
-      G.getLocalizedBooks(
-        Build.isElectronApp ? true : [G.i18n.language],
-      ),
+      G.getLocalizedBooks(Build.isElectronApp ? true : [G.i18n.language]),
       { noVariations: true },
     );
 

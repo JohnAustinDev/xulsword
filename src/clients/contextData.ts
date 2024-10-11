@@ -116,9 +116,7 @@ export default function ContextData(elem: HTMLElement): ContextDataType {
             {} as Record<string, string[] | null>,
           )
         : { [G.i18n.language]: G.getLocaleDigits() },
-      G.getLocalizedBooks(
-        Build.isElectronApp ? true : [G.i18n.language],
-      ),
+      G.getLocalizedBooks(Build.isElectronApp ? true : [G.i18n.language]),
       {
         locales: C.Locales.map((l) => l[0]),
         uncertain: true,

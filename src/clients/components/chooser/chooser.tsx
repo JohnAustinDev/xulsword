@@ -24,7 +24,6 @@ import './chooser.css';
 
 import type {
   BookGroupType,
-  BookType,
   GenBookAudioFile,
   OSISBookType,
   V11nType,
@@ -77,13 +76,9 @@ class Chooser extends React.Component implements RenderPromiseComponent {
 
   longestBook: string; // to determine chooser width
 
-  containerRef: React.RefObject<HTMLDivElement>;
-
-  sliderRef: React.RefObject<HTMLDivElement>;
-
-  rowRef: React.RefObject<HTMLDivElement>;
-
   rowHeight: number;
+
+  listAreaHeight: number;
 
   handler: (e: React.SyntheticEvent) => void;
 
@@ -120,30 +115,43 @@ class Chooser extends React.Component implements RenderPromiseComponent {
       }
     });
 
+    this.startSlidingUp = this.startSlidingUp.bind(this);
+    this.startSlidingDown = this.startSlidingDown.bind(this);
+    this.stopSliding = this.stopSliding.bind(this);
+    this.slideUp = this.slideUp.bind(this);
+    this.slideDown = this.slideDown.bind(this);
+    this.centerBook = this.centerBook.bind(this);
+
     this.rowHeight = 0;
-    this.containerRef = React.createRef();
-    this.sliderRef = React.createRef();
-    this.rowRef = React.createRef();
+    this.listAreaHeight = 0;
 
     this.handler = handlerH.bind(this);
 
     this.renderPromise = new RenderPromise(this);
-
-    if (
-      !hideUnavailableBooks &&
-      selection &&
-      (C.SupportedBooks[bookGroup] as any).includes(selection)
-    ) {
-      this.startSlidingUp(null, 0, selection);
-    }
   }
 
   componentDidMount() {
-    const { rowRef, renderPromise } = this;
-    const row = rowRef?.current;
-    if (row) {
-      this.rowHeight = row.clientHeight - 2;
+    const { rowHeight, renderPromise, centerBook } = this;
+    const { selection } = this.props as ChooserProps;
+
+    const bookList = document.querySelector('.book-list');
+    if (!rowHeight && bookList) {
+      const smallbox = bookList.getBoundingClientRect();
+      this.listAreaHeight = smallbox.bottom - smallbox.top;
+      const bookItemList = bookList.querySelector('.bookgrouplist:not(.sizer)');
+      if (bookItemList) {
+        const bigbox = bookItemList.getBoundingClientRect();
+        const bbh = bigbox.bottom - bigbox.top;
+        const bookElem = bookItemList.querySelectorAll(`.bookgroupitem`);
+        if (bookElem.length > 1) {
+          const ith = bbh / bookElem.length;
+          if (ith && !this.rowHeight) this.rowHeight = ith;
+        }
+      }
     }
+
+    if (selection) centerBook(selection);
+
     renderPromise.dispatch();
   }
 
@@ -157,40 +165,19 @@ class Chooser extends React.Component implements RenderPromiseComponent {
     renderPromise.dispatch();
   }
 
-  maxScrollIndex(): number {
-    const { containerRef, sliderRef, rowHeight } = this;
-    const container = containerRef?.current;
-    const slider = sliderRef?.current;
-    let max = 0;
-    if (container && slider) {
-      const sliderRows = slider.clientHeight / rowHeight;
-      max = sliderRows - container.clientHeight / rowHeight;
-      if (max < 0) max = 0;
-    }
-    return max;
-  }
-
-  numChooserRows(): number {
-    const { containerRef, rowHeight } = this;
-    const container = containerRef?.current;
-    let num = 0;
-    if (container) {
-      num = Math.round(container.clientHeight / rowHeight);
-    }
-    return num;
-  }
-
-  startSlidingUp(_e: any, ms: number, showBook?: string) {
+  startSlidingUp(_e: any, ms: number) {
+    const { slideUp } = this;
     if (this.slideInterval) return;
     this.slideInterval = setInterval(() => {
-      this.slideUp(1, showBook);
+      slideUp(1);
     }, ms);
   }
 
   startSlidingDown(_e: any, ms: number) {
+    const { slideDown } = this;
     if (this.slideInterval) return;
     this.slideInterval = setInterval(() => {
-      this.slideDown(1);
+      slideDown(1);
     }, ms);
   }
 
@@ -199,32 +186,22 @@ class Chooser extends React.Component implements RenderPromiseComponent {
     this.slideInterval = undefined;
   }
 
-  slideUp(rows = 1, showBook?: string) {
+  slideUp(rows = 1) {
+    const { rowHeight, listAreaHeight, stopSliding } = this;
     const { bookGroup, slideIndex } = this.state as ChooserState;
-    const { hideUnavailableBooks } = this.props as ChooserProps;
-    const Book = G.Book(G.i18n.language);
 
-    // If showBook is set and the book is visible, then stop.
-    const shbk: BookType | null =
-      !hideUnavailableBooks && showBook && showBook in Book
-        ? Book[showBook]
-        : null;
-    if (shbk && shbk.bookGroup === bookGroup) {
-      if (slideIndex[bookGroup] === 0) {
-        this.stopSliding();
-        return;
-      }
-    }
-    const maxindex = this.maxScrollIndex();
-    if (slideIndex[bookGroup] === maxindex) {
-      this.stopSliding();
+    const maxScrollIndex =
+      C.SupportedBooks[bookGroup].length - listAreaHeight / rowHeight;
+
+    if (slideIndex[bookGroup] >= maxScrollIndex) {
+      stopSliding();
       return;
     }
-    const mounted = this.rowHeight > 0;
-    if (mounted) {
+
+    if (rowHeight) {
       this.setState((prevState: ChooserState) => {
         let next = prevState.slideIndex[bookGroup] + rows;
-        if (next > maxindex) next = maxindex;
+        if (next > maxScrollIndex) next = maxScrollIndex;
         prevState.slideIndex[bookGroup] = next;
         return prevState;
       });
@@ -232,15 +209,15 @@ class Chooser extends React.Component implements RenderPromiseComponent {
   }
 
   slideDown(rows = 1) {
+    const { rowHeight, stopSliding } = this;
     const { bookGroup, slideIndex } = this.state as ChooserState;
 
     if (slideIndex[bookGroup] === 0) {
-      this.stopSliding();
+      stopSliding();
       return;
     }
 
-    const mounted = this.rowHeight > 0;
-    if (mounted) {
+    if (rowHeight) {
       this.setState((prevState: ChooserState) => {
         let next = prevState.slideIndex[bookGroup] - rows;
         if (next < 0) next = 0;
@@ -250,18 +227,29 @@ class Chooser extends React.Component implements RenderPromiseComponent {
     }
   }
 
+  centerBook(book: OSISBookType) {
+    const { rowHeight, listAreaHeight } = this;
+    const { hideUnavailableBooks } = this.props as ChooserProps;
+    if (!hideUnavailableBooks) {
+      const Book = G.Book(G.i18n.language);
+      const { bookGroup, indexInBookGroup } = Book[book];
+      this.setState((prevState: ChooserState) => {
+        const { slideIndex } = prevState;
+        const maxScrollIndex =
+          C.SupportedBooks[bookGroup].length - listAreaHeight / rowHeight;
+        let i = 3 + indexInBookGroup - 0.5 * (listAreaHeight / rowHeight);
+        if (i > maxScrollIndex) i = maxScrollIndex;
+        if (i < 0) i = 0;
+        slideIndex[bookGroup] = i;
+        return { bookGroup, slideIndex } as ChooserState;
+      });
+    }
+  }
+
   render() {
     const props = this.props as ChooserProps;
     const state = this.state as ChooserState;
-    const {
-      handler,
-      rowHeight,
-      longestBook,
-      containerRef,
-      sliderRef,
-      rowRef,
-      renderPromise,
-    } = this;
+    const { handler, rowHeight, longestBook, renderPromise } = this;
     const {
       availableBooks,
       headingsModule,
@@ -320,7 +308,7 @@ class Chooser extends React.Component implements RenderPromiseComponent {
             })}
           </Vbox>
 
-          <Vbox className="book-list" onWheel={handler} domref={containerRef}>
+          <Vbox className="book-list" onWheel={handler}>
             {
               // This 'sizer' BookGroupList has one row and is only needed to set
               // chooser width according to the longest book name of all bookGroups.
@@ -333,7 +321,6 @@ class Chooser extends React.Component implements RenderPromiseComponent {
               headingsModule={headingsModule}
               hideUnavailableBooks
               v11n={v11n}
-              domref={rowRef}
               style={{ visibility: 'hidden' }}
               chooserRef={this}
               renderPromise={renderPromise}
@@ -348,7 +335,6 @@ class Chooser extends React.Component implements RenderPromiseComponent {
               availableBooks={availableBooks}
               headingsModule={headingsModule}
               v11n={v11n}
-              domref={sliderRef}
               style={{
                 position: 'absolute',
                 top: `${-1 * slideIndex[bookGroup] * rowHeight}px`,
@@ -435,7 +421,7 @@ function BookGroupList(
 
 function BookGroupItem(
   props: {
-    sName: string;
+    sName: OSISBookType;
     classes?: string[];
     headingsModule?: string;
     v11n: V11nType;

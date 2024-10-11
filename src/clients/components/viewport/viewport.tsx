@@ -211,7 +211,9 @@ class Viewport extends React.Component implements PopupParent {
     const availableBooks = new Set();
     panels.forEach((m, i) => {
       if (m && !isPinned[i] && G.Tab[m].isVerseKey) {
-        GI.getBooksInVKModule(['Gen'], renderPromise, m).forEach((bk) => availableBooks.add(bk));
+        GI.getBooksInVKModule(['Gen'], renderPromise, m).forEach((bk) =>
+          availableBooks.add(bk),
+        );
       }
     });
 
