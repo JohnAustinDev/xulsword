@@ -222,7 +222,9 @@ export default class DynamicStyleSheet {
         const { fontFamily, path, url } = font;
         let url2 = url;
         if (path) {
-          url2 = GI.inlineFile('', renderPromise, path, 'base64');
+          url2 = Build.isWebApp
+            ? path
+            : GI.inlineFile('', renderPromise, path, 'base64');
         }
         if (url2) {
           const rule = `@font-face {font-family:${normalizeFontFamily(
