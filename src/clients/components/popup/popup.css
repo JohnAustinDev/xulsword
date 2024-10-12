@@ -11,6 +11,7 @@
   font-style: normal;
   font-size: 0.8rem;
   text-indent: 0px;
+  white-space: wrap;
   color: initial;
 }
 
@@ -235,4 +236,7 @@ html[dir='rtl'] .snbut {
 }
 .popup-fail > div > * {
   display: inline-block;
+}
+.bibleBrowser .popup-fail.requires .button-box {
+  display: none;
 }

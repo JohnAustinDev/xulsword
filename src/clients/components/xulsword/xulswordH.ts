@@ -145,6 +145,15 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
             show = clone(show);
             const id = currentId as keyof ShowType;
             show[id] = !show[id];
+            // Web app uses fewer buttons but that control multiple options.
+            if (Build.isWebApp) {
+              if (currentId === 'footnotes') {
+                show['crossrefs'] = show[id];
+              } else if (currentId === 'dictlinks') {
+                show['strongs'] = show[id];
+                show['morph'] = show[id];
+              }
+            }
             return { show };
           });
           break;

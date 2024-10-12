@@ -189,10 +189,11 @@ class Atext extends React.Component implements RenderPromiseComponent {
     // Adjust maxNoteBoxHeight height if needed
     const atext = sbe?.parentNode as HTMLElement | null | undefined;
     if (atext) {
-      const hd = atext.firstChild as HTMLElement;
-      let maxHeight = atext.offsetHeight - hd.offsetHeight;
+      const sb = atext.querySelector('.sb') as HTMLElement;
+      let maxHeight = sb.offsetHeight;
       if (columns === 1) maxHeight -= C.UI.Atext.bbSingleColTopMargin;
-      if (maxHeight !== maxNoteBoxHeight) newState.maxNoteBoxHeight = maxHeight;
+      else if (maxHeight !== maxNoteBoxHeight)
+        newState.maxNoteBoxHeight = maxHeight;
     }
 
     const { selection, module } = pinProps;
@@ -714,8 +715,8 @@ class Atext extends React.Component implements RenderPromiseComponent {
 
         <Box className="hd">
           <div className="navlink">
-            <span className="navlink-span">{prevArrow}</span>
             <a className="prevchaplink">
+              <span className="navlink-span">{prevArrow}</span>
               {GI.i18n.t('', renderPromise, 'PrevChaptext')}
             </a>
             {' | '}
@@ -731,8 +732,8 @@ class Atext extends React.Component implements RenderPromiseComponent {
             {' | '}
             <a className="nextchaplink">
               {GI.i18n.t('', renderPromise, 'NextChaptext')}
-            </a>{' '}
-            <span className="navlink-span">{nextArrow}</span>
+              <span className="navlink-span">{nextArrow}</span>
+            </a>
           </div>
         </Box>
 

@@ -126,12 +126,6 @@ socket.on('connect', () => {
       if (window.innerWidth < 500)
         G.Prefs.setBoolPref('xulsword.showChooser', false);
 
-      // Wheel scroll is wonky in the Browser, so disable it for now.
-      const wheelCapture = (e: React.SyntheticEvent<any>): boolean => {
-        e.stopPropagation();
-        return true;
-      };
-
       // Cancel Tarapro page loader overlay.
       setTimeout(() => {
         const win = frameElement?.ownerDocument.defaultView;
@@ -141,7 +135,7 @@ socket.on('connect', () => {
         }
       }, 1);
 
-      renderToRoot(<Xulsword onWheelCapture={wheelCapture} />, {
+      renderToRoot(<Xulsword />, {
         className: 'bibleBrowser',
       }).catch((er) => {
         log.error(er);

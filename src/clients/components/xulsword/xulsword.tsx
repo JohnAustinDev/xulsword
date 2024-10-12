@@ -36,7 +36,11 @@ import {
 import './xulsword.css';
 
 import type { BibleBrowserControllerGlobal } from '../../webapp/bibleBrowser/bibleBrowser.tsx';
-import type { LocationVKType, XulswordStateArgType } from '../../../type.ts';
+import type {
+  LocationVKType,
+  OSISBookType,
+  XulswordStateArgType,
+} from '../../../type.ts';
 import type {
   RenderPromiseComponent,
   RenderPromiseState,
@@ -210,7 +214,7 @@ export default class Xulsword
     } = state;
 
     // Book options for Bookselect dropdown
-    const bookset = new Set<string>();
+    const bookset = new Set<OSISBookType>();
     panels.forEach((m, i) => {
       if (m && !isPinned[i] && G.Tab[m].isVerseKey) {
         GI.getBooksInVKModule(['Gen'], renderPromise, m).forEach((bk) =>
@@ -219,7 +223,7 @@ export default class Xulsword
       }
     });
     const Book = G.Book(G.i18n.language);
-    const booklist = [...bookset].sort((a: string, b: string) => {
+    const booklist = [...bookset].sort((a: OSISBookType, b: OSISBookType) => {
       if (Book[a].index < Book[b].index) return -1;
       if (Book[a].index > Book[b].index) return 1;
       return 0;
@@ -376,6 +380,15 @@ export default class Xulsword
 
     const optionButtons = (
       <Hbox id="optionButtons" align="start">
+        {Build.isWebApp && (
+          <Button
+            id="printPassage"
+            checked={!!panels.find((m) => m && G.Tab[m].type == C.BIBLE)}
+            icon={<Icon icon="print" size={28} />}
+            onClick={undefined}
+            title={GI.i18n.t('', renderPromise, 'menu.printPassage')}
+          />
+        )}
         {(window as BibleBrowserControllerGlobal).browserMaxPanels && (
           <>
             <Button
@@ -422,13 +435,15 @@ export default class Xulsword
               onClick={handler}
               title={GI.i18n.t('', renderPromise, 'notesButton.tooltip')}
             />
-            <Button
-              id="crossrefs"
-              checked={show.crossrefs}
-              icon={<Icon icon="link" size={28} />}
-              onClick={handler}
-              title={GI.i18n.t('', renderPromise, 'crossrefsButton.tooltip')}
-            />
+            {!Build.isWebApp && (
+              <Button
+                id="crossrefs"
+                checked={show.crossrefs}
+                icon={<Icon icon="link" size={28} />}
+                onClick={handler}
+                title={GI.i18n.t('', renderPromise, 'crossrefsButton.tooltip')}
+              />
+            )}
           </>
         )}
       </Hbox>

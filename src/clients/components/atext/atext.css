@@ -17,7 +17,6 @@
 .atext .hd {
   text-align: center;
   justify-content: space-around;
-  height: 30px;
 }
 .atext .text-pin {
   transform: scaleX(-1);
@@ -110,7 +109,7 @@ html[dir='rtl'] .atext .origselect {
   column-rule: 14px solid rgb(240, 215, 240);
   column-fill: auto;
 }
-@media (max-width: 300px) {
+@media (max-width: 767px) {
   .atext:not(.columns1) .sb {
     column-gap: 14px;
     column-rule-width: 4px;
@@ -190,9 +189,10 @@ html[dir='rtl'] .notebox-maximizer {
   margin: 10px;
   cursor: default;
 }
-.navlink a {
+.navlink > a {
   text-decoration: underline;
   cursor: pointer;
+  white-space: nowrap;
 }
 .atext.prev-disabled .prevchaplink,
 .atext.next-disabled .nextchaplink {
@@ -210,6 +210,7 @@ html[dir='rtl'] .notebox-maximizer {
   display: inline-block;
   width: 100%;
   padding-top: 26px;
+  margin-bottom: 1em;
 }
 .chaptitle {
   float: left;
@@ -217,7 +218,7 @@ html[dir='rtl'] .notebox-maximizer {
   font-weight: bold;
   color: rgb(110, 85, 110);
 }
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   .bibleBrowser .chaptitle {
     font-size: 1.3rem;
   }
@@ -240,7 +241,6 @@ html[dir='rtl'] .notebox-maximizer {
 }
 .chapbk {
   display: none;
-  margin-bottom: 0.5em;
 }
 .chapterhead.chapterfirst .chapbk {
   display: block;
@@ -252,6 +252,7 @@ html[dir='rtl'] .notebox-maximizer {
   float: right;
   min-width: 40px;
   color: rgb(110, 85, 110);
+  margin-top: 1em;
 }
 .sb[dir='rtl'] .chapinfo {
   float: left;
