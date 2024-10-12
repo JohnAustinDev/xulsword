@@ -22,6 +22,7 @@ import type { GetBooksInVKModules } from '../servers/common.ts';
 
 export type RenderPromiseComponent = {
   renderPromise: RenderPromise;
+  loadingRef: React.RefObject<HTMLElement>;
 };
 
 export type RenderPromiseState = {
@@ -78,20 +79,23 @@ export function GCallsOrPromise(
 // guaranteed to be re-rendered, or each callback called, at least once, after
 // its RenderPromise data becomes available.
 export default class RenderPromise {
-  component: React.Component | null;
+  component: (React.Component & RenderPromiseComponent) | null;
 
-  callback: (() => void) | null;
+  callback: { (): void; loadingRef: React.RefObject<HTMLElement> } | null;
 
   calls: GCallType[];
 
   dispatchedUnresolvedCalls: GCallType[];
+
+  loadingSelector: string;
 
   static batchDispatch() {
     const renderPromises = RenderPromise.getGlobalRenderPromises();
     if (renderPromises.length) {
       const rpdispatch = renderPromises.map((rp) => {
         const nrp = new RenderPromise(
-          rp.component || rp.callback || (() => {}),
+          rp.component || rp.callback || null,
+          rp.loadingSelector,
         );
         rp.dispatchedUnresolvedCalls.push(...rp.calls);
         nrp.calls = rp.calls;
@@ -137,11 +141,13 @@ export default class RenderPromise {
                   renderPromiseID: Math.random(),
                 } as RenderPromiseState);
                 resolveRP(renderPromises[i], rp);
+                setLoadingClass(rp, false);
               }
               if (callback && !done.includes(callback)) {
                 done.push(callback);
                 callback();
                 resolveRP(renderPromises[i], rp);
+                setLoadingClass(rp, false);
               }
             });
           } else {
@@ -173,11 +179,18 @@ export default class RenderPromise {
     Cache.write(rps, 'renderPromises');
   }
 
-  constructor(componentOrCallback: React.Component | (() => void) | null) {
+  constructor(
+    componentOrCallback:
+      | (React.Component & RenderPromiseComponent)
+      | { (): void; loadingRef: React.RefObject<HTMLElement> }
+      | null,
+    loadingSelector?: string,
+  ) {
     this.component = null;
     this.callback = null;
     this.calls = [];
     this.dispatchedUnresolvedCalls = [];
+    this.loadingSelector = loadingSelector || '';
 
     if (typeof componentOrCallback === 'function') {
       this.callback = componentOrCallback;
@@ -196,6 +209,7 @@ export default class RenderPromise {
     // components.
     const { calls } = this;
     if (calls.length) {
+      setLoadingClass(this, true);
       const rps = RenderPromise.getGlobalRenderPromises();
       rps.push(this);
       RenderPromise.setGlobalRenderPromises(rps);
@@ -440,4 +454,29 @@ function flatPrune(calls: GCallType[]): GCallType[] {
     }
   }
   return flat;
+}
+
+function setLoadingClass(
+  renderPromise: RenderPromise,
+  setUnset: boolean,
+): void {
+  const { component, callback, loadingSelector } = renderPromise;
+  const loadingRef = component?.loadingRef ?? callback?.loadingRef;
+  if (loadingRef) {
+    let targelem: HTMLElement | null = null;
+    const { current } = loadingRef;
+    if (current) {
+      targelem = loadingSelector
+        ? current.querySelector(loadingSelector)
+        : current;
+    }
+    if (targelem) {
+      if (setUnset) targelem.classList.add('rp-loading');
+      else targelem.classList.remove('rp-loading');
+    } else {
+      log[setUnset ? 'debug' : 'error'](
+        `Failed to ${setUnset ? 'set' : 'unset'} ${component ? 'component' : 'function'} waiting selector: ${loadingSelector}`,
+      );
+    }
+  }
 }

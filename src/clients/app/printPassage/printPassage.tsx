@@ -99,10 +99,13 @@ export default class PrintPassageWin
 
   renderPromise: RenderPromise;
 
+  loadingRef: React.RefObject<HTMLDivElement>;
+
   constructor(props: PrintPassageProps) {
     super(props);
 
     this.renderPromise = new RenderPromise(this);
+    this.loadingRef = React.createRef();
 
     if (typeof openedWinState === 'undefined') {
       openedWinState = windowArguments(
@@ -306,7 +309,7 @@ export default class PrintPassageWin
     const state = this.state as PrintPassageState;
     const { checkbox, chapters, progress } = state;
     const { print } = this.props as PrintPassageProps;
-    const { handler, vkSelectHandler } = this;
+    const { loadingRef, handler, vkSelectHandler } = this;
     const vkMod = chapters?.vkMod;
     if (!vkMod || !chapters) return null;
 
@@ -329,6 +332,7 @@ export default class PrintPassageWin
           ReactDOM.createPortal(
             <>
               <Groupbox
+                domref={loadingRef}
                 className="passage-selector"
                 caption={G.i18n.t('menu.printPassage')}
               >

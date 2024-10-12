@@ -65,6 +65,8 @@ class SelectAny extends React.Component implements RenderPromiseComponent {
 
   renderPromise: RenderPromise;
 
+  loadingRef: React.RefObject<HTMLDivElement>;
+
   constructor(props: SelectAnyProps) {
     super(props);
     let { initial } = props;
@@ -83,6 +85,7 @@ class SelectAny extends React.Component implements RenderPromiseComponent {
     this.onModuleChange = this.onModuleChange.bind(this);
 
     this.renderPromise = new RenderPromise(this);
+    this.loadingRef = React.createRef();
   }
 
   componentDidMount() {
@@ -165,7 +168,7 @@ class SelectAny extends React.Component implements RenderPromiseComponent {
     const props = this.props as SelectAnyProps;
     const { location, reset } = this.state as SelectAnyState;
     const { modules, disabled } = props;
-    const { onChange, onModuleChange } = this;
+    const { onChange, onModuleChange, loadingRef } = this;
 
     if (!location) return null;
     const module = getModuleOfObject(location) || '';
@@ -200,7 +203,12 @@ class SelectAny extends React.Component implements RenderPromiseComponent {
     }
 
     return (
-      <Hbox pack="end" align="start" {...htmlAttribs('selectany', props)}>
+      <Hbox
+        domref={loadingRef}
+        pack="end"
+        align="start"
+        {...htmlAttribs('selectany', props)}
+      >
         <ModuleMenu
           className={`any-module ${'v11n' in location ? 'vksel' : 'orsel'}`}
           value={module}

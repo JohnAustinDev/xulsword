@@ -80,11 +80,11 @@ export type PopupState = RenderPromiseState & {
 class Popup extends React.Component implements RenderPromiseComponent {
   static propTypes: typeof propTypes;
 
-  npopup: React.RefObject<HTMLDivElement>;
-
   handler: (e: React.MouseEvent) => void;
 
   renderPromise: RenderPromise;
+
+  loadingRef: React.RefObject<HTMLDivElement>;
 
   constructor(props: PopupProps) {
     super(props);
@@ -94,15 +94,14 @@ class Popup extends React.Component implements RenderPromiseComponent {
       renderPromiseID: 0,
     } as PopupState;
 
-    this.npopup = React.createRef();
-
     this.handler = popupH.bind(this);
     this.update = this.update.bind(this);
     this.setTitle = this.setTitle.bind(this);
     this.selector = this.selector.bind(this);
     this.positionPopup = this.positionPopup.bind(this);
 
-    this.renderPromise = new RenderPromise(this);
+    this.renderPromise = new RenderPromise(this, '.npopupTX');
+    this.loadingRef = React.createRef();
   }
 
   componentDidMount() {
@@ -118,9 +117,9 @@ class Popup extends React.Component implements RenderPromiseComponent {
   }
 
   setTitle() {
-    const { npopup } = this;
+    const { loadingRef } = this;
     const { isWindow } = this.props as PopupProps;
-    const popup = npopup?.current;
+    const popup = loadingRef?.current;
     if (isWindow && popup) {
       const maxlen = Math.floor((popup.clientWidth - 50) / 10);
       const search = ['crref', 'lemma-header', 'popup-text'];
@@ -143,11 +142,11 @@ class Popup extends React.Component implements RenderPromiseComponent {
   // Set root location of popup, and if it is overflowing the bottom of
   // the text area, then drag it up.
   positionPopup(force = false as boolean) {
-    const { npopup } = this;
+    const { loadingRef } = this;
     const { isWindow, gap } = this.props as PopupProps;
     const state = this.state as PopupState;
     if ((force || !state.drag) && !isWindow) {
-      const popup = npopup?.current;
+      const popup = loadingRef?.current;
       const parent = popup?.parentNode as HTMLElement | null;
       if (popup && parent) {
         const drag = {
@@ -184,11 +183,12 @@ class Popup extends React.Component implements RenderPromiseComponent {
   // Write popup contents from LibSword, and update state if popup
   // was repositioned.
   update() {
-    const { npopup, renderPromise } = this;
+    const { loadingRef, renderPromise } = this;
     const props = this.props as PopupProps;
     const { elemdata, isWindow } = props;
-    const pts = npopup?.current?.getElementsByClassName('popup-text');
-    if (!npopup.current || !pts) throw Error(`Popup.updateContent no npopup.`);
+    const pts = loadingRef?.current?.getElementsByClassName('popup-text');
+    if (!loadingRef.current || !pts)
+      throw Error(`Popup.updateContent no npopup.`);
     const pt = pts[0] as HTMLElement;
     const data = elemdata?.[elemdata.length - 1];
     if (data) {
@@ -213,7 +213,7 @@ class Popup extends React.Component implements RenderPromiseComponent {
           }
           if (isWindow) this.setTitle();
           else {
-            const parent = npopup.current.parentNode as HTMLElement | null;
+            const parent = loadingRef.current.parentNode as HTMLElement | null;
             if (parent) {
               if (html || renderPromise.waiting()) {
                 parent.classList.remove('empty');
@@ -264,7 +264,7 @@ class Popup extends React.Component implements RenderPromiseComponent {
   render() {
     const props = this.props as PopupProps;
     const state = this.state as PopupState;
-    const { handler, npopup } = this;
+    const { handler, loadingRef } = this;
     const { drag } = state;
     const { elemdata, gap, isWindow } = props;
     const data = elemdata?.[elemdata.length - 1] || null;
@@ -302,13 +302,13 @@ class Popup extends React.Component implements RenderPromiseComponent {
 
     return (
       <div
+        ref={loadingRef}
         {...htmlAttribs(`npopup ${cls}`, props)}
         {...topHandle('onMouseLeave', props.onMouseLeftPopup, props)}
         {...topHandle('onContextMenu', props.onPopupContextMenu, props)}
         onWheel={(e) => {
           e.stopPropagation();
         }}
-        ref={npopup}
       >
         <div
           className="npopupTX userFontBase text"

@@ -84,6 +84,8 @@ class Chooser extends React.Component implements RenderPromiseComponent {
 
   renderPromise: RenderPromise;
 
+  loadingRef: React.RefObject<HTMLDivElement>;
+
   constructor(props: ChooserProps) {
     super(props);
     const { selection, hideUnavailableBooks } = props;
@@ -128,6 +130,7 @@ class Chooser extends React.Component implements RenderPromiseComponent {
     this.handler = handlerH.bind(this);
 
     this.renderPromise = new RenderPromise(this);
+    this.loadingRef = React.createRef();
   }
 
   componentDidMount() {
@@ -249,7 +252,7 @@ class Chooser extends React.Component implements RenderPromiseComponent {
   render() {
     const props = this.props as ChooserProps;
     const state = this.state as ChooserState;
-    const { handler, rowHeight, longestBook, renderPromise } = this;
+    const { handler, rowHeight, longestBook, renderPromise, loadingRef } = this;
     const {
       availableBooks,
       headingsModule,
@@ -273,7 +276,11 @@ class Chooser extends React.Component implements RenderPromiseComponent {
     });
 
     return (
-      <Vbox {...addClass(`chooser verse-chooser`, props)} onMouseOut={handler}>
+      <Vbox
+        domref={loadingRef}
+        {...addClass(`chooser verse-chooser`, props)}
+        onMouseOut={handler}
+      >
         <Hbox className="fadetop skin" />
 
         <Hbox className="chooser-container" flex="20">

@@ -49,7 +49,7 @@ function getCellText(
 }
 
 export default function SearchHelp(props: SearchHelpProps) {
-  const renderPromise = functionalComponentRenderPromise();
+  const { renderPromise, loadingRef } = functionalComponentRenderPromise();
 
   const type: Array<SearchType['type']> = [
     'SearchAnyWord',
@@ -95,7 +95,7 @@ export default function SearchHelp(props: SearchHelpProps) {
   });
 
   return (
-    <Box {...addClass('searchHelp', props)}>
+    <Box domref={loadingRef} {...addClass('searchHelp', props)}>
       <div className="helpPane">
         <div id="searchTypes" />
         <div>

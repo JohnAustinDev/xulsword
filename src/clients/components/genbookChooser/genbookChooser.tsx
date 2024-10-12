@@ -51,6 +51,8 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
 
   renderPromise: RenderPromise;
 
+  loadingRef: React.RefObject<HTMLDivElement>;
+
   constructor(props: GenbookChooserProps) {
     super(props);
     const { panels } = props;
@@ -69,6 +71,7 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
     this.scrollTo = this.scrollTo.bind(this);
 
     this.renderPromise = new RenderPromise(this);
+    this.loadingRef = React.createRef();
   }
 
   componentDidMount() {
@@ -162,7 +165,7 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
     const state = this.state as GenbookChooserState;
     const { panels, keys, xulswordStateHandler } = props;
     const { expandedIDs } = state;
-    const { treeRef, treeNodes, renderPromise, onNodeClick } = this;
+    const { treeRef, treeNodes, renderPromise, loadingRef, onNodeClick } = this;
 
     const chooserGroups = genbks(panels);
     const treekeys = (groupIndex: number): [string | null, number] => {
@@ -197,7 +200,7 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
     });
 
     return (
-      <Vbox {...addClass(`chooser genbook-chooser`, props)}>
+      <Vbox domref={loadingRef} {...addClass(`chooser genbook-chooser`, props)}>
         <Hbox className="fadetop" />
 
         <Hbox className="chooser-container" flex="20">

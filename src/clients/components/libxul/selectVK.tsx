@@ -105,6 +105,8 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
 
   renderPromise: RenderPromise;
 
+  loadingRef: React.RefObject<HTMLDivElement>;
+
   constructor(props: SelectVKProps) {
     super(props);
 
@@ -116,6 +118,7 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
 
     this.selectValues = props.initialVK;
     this.renderPromise = new RenderPromise(this);
+    this.loadingRef = React.createRef();
 
     this.checkSelection = this.checkSelection.bind(this);
     this.handleChange = this.handleChange.bind(this);
@@ -270,7 +273,7 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
     const { options, disabled, allowNotInstalled } = props;
     const { books, chapters, lastchapters, verses, lastverses, vkMods } =
       options || {};
-    const { handleChange, renderPromise } = this;
+    const { handleChange, renderPromise, loadingRef } = this;
     const Book = G.Book(G.i18n.language);
 
     const tab = (vkMod && G.Tab[vkMod]) || null;
@@ -305,7 +308,7 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
       if (C.SupportedBookGroups.includes(bkbg as never)) {
         const bg = bkbg as BookGroupType;
         C.SupportedBooks[bg].forEach((b) => bookset.add(b));
-      } else if (Book[bkbg]) {
+      } else if (bkbg in Book && (Book as any)[bkbg]) {
         bookset.add(bkbg as OSISBookType);
       }
     });
@@ -410,7 +413,12 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
       allowNotInstalled || (vkmod && vkmod in G.Tab);
 
     return (
-      <Hbox pack="start" align="center" {...addClass('selectvk', this.props)}>
+      <Hbox
+        domref={loadingRef}
+        pack="start"
+        align="center"
+        {...addClass('selectvk', this.props)}
+      >
         {newbooks.length > 0 && (
           <Menulist
             className="vk-book"

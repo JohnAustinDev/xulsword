@@ -52,9 +52,9 @@ type TabsState = RenderPromiseState & {
 class Tabs extends React.Component implements RenderPromiseComponent {
   static propTypes: typeof propTypes;
 
-  tabsref: React.RefObject<HTMLDivElement>;
-
   renderPromise: RenderPromise;
+
+  loadingRef: React.RefObject<HTMLDivElement>;
 
   constructor(props: TabsProps) {
     super(props);
@@ -64,7 +64,7 @@ class Tabs extends React.Component implements RenderPromiseComponent {
       multiTabs: [],
       renderPromiseID: 0,
     } as TabsState;
-    this.tabsref = React.createRef();
+
     this.checkTabWidth = this.checkTabWidth.bind(this);
     this.multiTabButtonClick = this.multiTabButtonClick.bind(this);
     this.getTab = this.getTab.bind(this);
@@ -72,6 +72,7 @@ class Tabs extends React.Component implements RenderPromiseComponent {
     this.toggleTab = this.toggleTab.bind(this);
 
     this.renderPromise = new RenderPromise(this);
+    this.loadingRef = React.createRef();
   }
 
   // Only when the tabs key prop changes will React instantiate a new tabs
@@ -156,11 +157,11 @@ class Tabs extends React.Component implements RenderPromiseComponent {
 
   // Move tabs to the multi-tab until there is no overflow.
   checkTabWidth() {
-    const { tabsref } = this;
+    const { loadingRef } = this;
     const { tabs } = this.props as TabsProps;
     const { multiTabs } = this.state as TabsState;
     const newMultiTabs = multiTabs.slice();
-    const tabsdiv = tabsref.current;
+    const tabsdiv = loadingRef.current;
     const tdivs = tabsdiv?.getElementsByClassName(
       'reg-tab',
     ) as HTMLCollectionOf<HTMLElement>;
@@ -248,7 +249,7 @@ class Tabs extends React.Component implements RenderPromiseComponent {
     const { multiTabs, multiTabMenupopup } = this.state as TabsState;
     const { module, isPinned, panelIndex, tabs, ilModule, ilModuleOption } =
       this.props as TabsProps;
-    const { renderPromise, toggleTab } = this;
+    const { loadingRef, renderPromise, toggleTab } = this;
 
     let ilTabLabel = GI.i18n.t('', renderPromise, 'ORIGLabelTab');
     if (!ilTabLabel) ilTabLabel = 'ilt';
@@ -265,8 +266,8 @@ class Tabs extends React.Component implements RenderPromiseComponent {
 
     return (
       <div
+        ref={loadingRef}
         {...htmlAttribs(`tabs ${cls}`, this.props)}
-        ref={this.tabsref}
         data-index={panelIndex}
         data-ispinned={isPinned}
       >

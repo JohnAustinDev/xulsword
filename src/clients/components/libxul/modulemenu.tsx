@@ -48,7 +48,7 @@ export default function ModuleMenu({
   types = [],
   ...props
 }: ModuleMenuProps) {
-  const renderPromise = functionalComponentRenderPromise();
+  const { renderPromise, loadingRef } = functionalComponentRenderPromise();
 
   let mtabs: TabType[];
   let notInstalled: string[] = [];
@@ -74,7 +74,10 @@ export default function ModuleMenu({
   }
 
   return (
-    <Menulist {...addClass('modulemenu', { disabled, ...props })}>
+    <Menulist
+      domref={loadingRef}
+      {...addClass('modulemenu', { disabled, ...props })}
+    >
       {allowNotInstalled &&
         notInstalled.map((m) => (
           <option className={`cs-${m}`} key={[m].join('.')} value={m}>

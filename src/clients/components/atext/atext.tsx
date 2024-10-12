@@ -105,6 +105,8 @@ class Atext extends React.Component implements RenderPromiseComponent {
 
   renderPromise: RenderPromiseComponent['renderPromise'];
 
+  loadingRef: React.RefObject<HTMLDivElement>;
+
   constructor(props: AtextProps) {
     super(props);
 
@@ -124,6 +126,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
     this.handler = handlerH.bind(this);
 
     this.renderPromise = new RenderPromise(this);
+    this.loadingRef = React.createRef();
   }
 
   componentDidMount() {
@@ -621,7 +624,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
   render() {
     const state = this.state as AtextStateType;
     const props = this.props as AtextProps;
-    const { renderPromise, handler } = this;
+    const { renderPromise, loadingRef, handler } = this;
     const { maxNoteBoxHeight, versePerLine } = state;
     const {
       columns,
@@ -695,6 +698,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
 
     return (
       <Vbox
+        domref={loadingRef}
         {...addClass(classes, props)}
         {...topHandle('onDoubleClick', handler, props)}
         {...topHandle('onClick', handler, props)}

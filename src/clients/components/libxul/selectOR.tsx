@@ -90,6 +90,8 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
 
   renderPromise: RenderPromise;
 
+  loadingRef: React.RefObject<HTMLDivElement>;
+
   // This is only set if enableMultipleSelection is false and keys[0] does not
   // include a 'Child selector' selection.
   defaultedChildSelection: string | undefined;
@@ -118,6 +120,7 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
     this.openParent = this.openParent.bind(this);
 
     this.renderPromise = new RenderPromise(this);
+    this.loadingRef = React.createRef();
   }
 
   componentDidMount() {
@@ -205,7 +208,7 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
       enableMultipleSelection,
       enableParentSelection,
     } = props;
-    const { openParent, onChange, renderPromise } = this;
+    const { openParent, onChange, renderPromise, loadingRef } = this;
     const { otherMod, keys } = selection;
 
     // Get modules to be made available for selection, and their node lists:
@@ -394,7 +397,12 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
     }
 
     return (
-      <Vbox {...addClass('selector', this.props)} pack="start" align="start">
+      <Vbox
+        domref={loadingRef}
+        {...addClass('selector', this.props)}
+        pack="start"
+        align="start"
+      >
         {selects}
       </Vbox>
     );

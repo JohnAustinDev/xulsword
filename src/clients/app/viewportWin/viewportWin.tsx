@@ -82,6 +82,8 @@ export default class ViewportWin
 
   renderPromise: RenderPromise;
 
+  loadingRef: React.RefObject<HTMLDivElement>;
+
   constructor(props: ViewportWinProps) {
     super(props);
 
@@ -115,6 +117,7 @@ export default class ViewportWin
     });
 
     this.renderPromise = new RenderPromise(this);
+    this.loadingRef = React.createRef();
   }
 
   componentDidMount() {
@@ -232,6 +235,7 @@ export default class ViewportWin
     const {
       atextRefs,
       viewportParentHandler,
+      loadingRef,
       bbDragEnd,
       xulswordStateHandler,
     } = this;
@@ -240,6 +244,7 @@ export default class ViewportWin
 
     return (
       <Vbox
+        domref={loadingRef}
         {...this.props}
         {...topHandle(
           'onClick',

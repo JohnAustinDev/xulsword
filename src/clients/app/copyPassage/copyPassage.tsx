@@ -56,10 +56,13 @@ export default class CopyPassageWin
 
   renderPromise: RenderPromise;
 
+  loadingRef: React.RefObject<HTMLDivElement>;
+
   constructor(props: CopyPassageProps) {
     super(props);
 
     this.renderPromise = new RenderPromise(this);
+    this.loadingRef = React.createRef();
 
     const openedWinState = windowArguments(
       'copyPassageState',
@@ -205,9 +208,9 @@ export default class CopyPassageWin
   render() {
     const state = this.state as CopyPassageState;
     const { passage, checkboxes } = state;
-    const { passageToClipboard } = this;
+    const { loadingRef, passageToClipboard } = this;
     return (
-      <Vbox>
+      <Vbox domref={loadingRef}>
         <div id="testdiv" />
         <Groupbox caption={G.i18n.t('passage.label')}>
           <SelectVK

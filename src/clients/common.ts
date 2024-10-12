@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, createRef } from 'react';
 import Cache from '../cache.ts';
 import Subscription from '../subscription.ts';
 import {
@@ -41,14 +41,18 @@ import type {
 
 // Return a renderPromise for a React functional component. For React class
 // components, instead implement RenderPromiseComponent and RenderPromiseState.
-export function functionalComponentRenderPromise() {
+export function functionalComponentRenderPromise(loadingSelector?: string) {
   const [, setState] = useState(0);
+  const loadingRef = createRef() as React.RefObject<HTMLElement>;
+  const callback = Object.assign(() => setState((prevState) => prevState + 1), {
+    loadingRef,
+  });
   const [renderPromise] = useState(
-    () => new RenderPromise(() => setState((prevState) => prevState + 1)),
+    () => new RenderPromise(callback, loadingSelector),
   );
   useEffect(() => renderPromise.dispatch());
 
-  return renderPromise;
+  return { renderPromise, loadingRef };
 }
 
 export function component(

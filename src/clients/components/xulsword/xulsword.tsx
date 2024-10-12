@@ -98,6 +98,8 @@ export default class Xulsword
 
   renderPromise: RenderPromise;
 
+  loadingRef: React.RefObject<HTMLElement>;
+
   constructor(props: XulswordProps) {
     super(props);
 
@@ -126,6 +128,7 @@ export default class Xulsword
     });
 
     this.renderPromise = new RenderPromise(this);
+    this.loadingRef = React.createRef();
   }
 
   componentDidMount() {
@@ -181,6 +184,7 @@ export default class Xulsword
     const props = this.props as XulswordProps;
     const {
       atextRefs,
+      loadingRef,
       handler,
       viewportParentHandler,
       renderPromise,
@@ -567,6 +571,7 @@ export default class Xulsword
 
     return (
       <Vbox
+        domref={loadingRef}
         {...addClass('xulsword', props)}
         pack="start"
         {...topHandle(

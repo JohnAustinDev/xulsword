@@ -175,12 +175,15 @@ export default class Search
 
   renderPromise: RenderPromise;
 
+  loadingRef: React.RefObject<HTMLDivElement>;
+
   constructor(props: SearchProps) {
     super(props);
 
     const { initialState } = props;
 
     this.renderPromise = new RenderPromise(this);
+    this.loadingRef = React.createRef();
 
     const abible = G.Tabs.find((t) => t.type === C.BIBLE);
 
@@ -346,7 +349,13 @@ export default class Search
   render() {
     const state = this.state as SearchState;
     const props = this.props as SearchProps;
-    const { renderPromise, handler, popupHandler, popupParentHandler } = this;
+    const {
+      renderPromise,
+      loadingRef,
+      handler,
+      popupHandler,
+      popupParentHandler,
+    } = this;
     const { initialState, onlyLucene } = props;
     const {
       module,
@@ -440,7 +449,7 @@ export default class Search
     }
 
     return (
-      <Vbox {...addClass('search', props)}>
+      <Vbox domref={loadingRef} {...addClass('search', props)}>
         {indexing && (
           <Dialog
             className="indexing-dialog"
