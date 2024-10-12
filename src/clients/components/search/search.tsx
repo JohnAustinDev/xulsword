@@ -182,8 +182,8 @@ export default class Search
 
     const { initialState } = props;
 
-    this.renderPromise = new RenderPromise(this);
     this.loadingRef = React.createRef();
+    this.renderPromise = new RenderPromise(this, this.loadingRef);
 
     const abible = G.Tabs.find((t) => t.type === C.BIBLE);
 

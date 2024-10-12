@@ -125,8 +125,8 @@ class Atext extends React.Component implements RenderPromiseComponent {
     this.writeLibSword2DOM = this.writeLibSword2DOM.bind(this);
     this.handler = handlerH.bind(this);
 
-    this.renderPromise = new RenderPromise(this);
     this.loadingRef = React.createRef();
+    this.renderPromise = new RenderPromise(this, this.loadingRef);
   }
 
   componentDidMount() {

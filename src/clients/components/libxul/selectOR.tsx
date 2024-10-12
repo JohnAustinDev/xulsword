@@ -119,8 +119,8 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
     this.onChange = this.onChange.bind(this);
     this.openParent = this.openParent.bind(this);
 
-    this.renderPromise = new RenderPromise(this);
     this.loadingRef = React.createRef();
+    this.renderPromise = new RenderPromise(this, this.loadingRef);
   }
 
   componentDidMount() {

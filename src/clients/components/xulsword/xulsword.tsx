@@ -127,8 +127,8 @@ export default class Xulsword
       this.atextRefs.push(React.createRef());
     });
 
-    this.renderPromise = new RenderPromise(this);
     this.loadingRef = React.createRef();
+    this.renderPromise = new RenderPromise(this, this.loadingRef);
   }
 
   componentDidMount() {

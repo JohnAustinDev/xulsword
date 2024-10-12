@@ -79,8 +79,9 @@ function kjvScopeBooks(scope: string): string[] {
   const Books = G.Books(G.i18n.language);
   scope.split(/\s+/).forEach((seg) => {
     const bk = seg.split('-');
-    let beg = bk[0] in Book ? Book[bk[0]].index : -1;
-    const end = bk.length === 2 && bk[1] in Book ? Book[bk[1]].index : beg;
+    let beg = bk[0] in Book ? (Book as any)[bk[0]].index : -1;
+    const end =
+      bk.length === 2 && bk[1] in Book ? (Book as any)[bk[1]].index : beg;
     if (beg === -1) beg = end;
     if (beg !== -1) {
       for (let i = beg; i <= end; i += 1) {
@@ -312,7 +313,8 @@ export async function libSwordSearch(
               const Book = G.Book(G.i18n.language);
               xthis.setState({
                 progress: (i + 1) / scopes.length,
-                progressLabel: scope in Book ? Book[scope].name : scope,
+                progressLabel:
+                  scope in Book ? (Book as any)[scope].name : scope,
               } as Partial<SearchState>);
             }
             return result;

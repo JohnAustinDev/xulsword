@@ -61,8 +61,8 @@ export default class CopyPassageWin
   constructor(props: CopyPassageProps) {
     super(props);
 
-    this.renderPromise = new RenderPromise(this);
     this.loadingRef = React.createRef();
+    this.renderPromise = new RenderPromise(this, this.loadingRef);
 
     const openedWinState = windowArguments(
       'copyPassageState',

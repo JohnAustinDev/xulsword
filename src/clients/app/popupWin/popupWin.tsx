@@ -39,6 +39,8 @@ export default class PopupWin extends React.Component implements PopupParent {
 
   renderPromise: RenderPromise;
 
+  loadingRef: React.RefObject<HTMLDivElement>;
+
   constructor(props: PopupWinProps) {
     super(props);
 
@@ -54,7 +56,8 @@ export default class PopupWin extends React.Component implements PopupParent {
 
     this.popupHandler = popupHandlerH.bind(this);
 
-    this.renderPromise = new RenderPromise(this);
+    this.loadingRef = React.createRef();
+    this.renderPromise = new RenderPromise(this, this.loadingRef);
   }
 
   componentDidUpdate(_prevProps: PopupWinProps, prevState: PopupWinState) {
@@ -70,11 +73,11 @@ export default class PopupWin extends React.Component implements PopupParent {
   }
 
   render() {
-    const { popupHandler } = this;
+    const { loadingRef, popupHandler } = this;
     const { elemdata, popupReset } = this.state as PopupWinState;
 
     return (
-      <Vbox {...addClass('popupWin', this.props)}>
+      <Vbox domref={loadingRef} {...addClass('popupWin', this.props)}>
         <Popup
           key={[elemdata?.length, popupReset].join('.')}
           elemdata={elemdata}

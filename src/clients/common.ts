@@ -43,15 +43,12 @@ import type {
 // components, instead implement RenderPromiseComponent and RenderPromiseState.
 export function functionalComponentRenderPromise(loadingSelector?: string) {
   const [, setState] = useState(0);
-  const loadingRef = createRef() as React.RefObject<HTMLElement>;
-  const callback = Object.assign(() => setState((prevState) => prevState + 1), {
-    loadingRef,
-  });
+  const callback = () => setState((prevState) => prevState + 1);
+  const [loadingRef] = useState(createRef() as React.RefObject<HTMLElement>);
   const [renderPromise] = useState(
-    () => new RenderPromise(callback, loadingSelector),
+    () => new RenderPromise(callback, loadingRef, loadingSelector),
   );
   useEffect(() => renderPromise.dispatch());
-
   return { renderPromise, loadingRef };
 }
 

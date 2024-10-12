@@ -129,8 +129,8 @@ class Chooser extends React.Component implements RenderPromiseComponent {
 
     this.handler = handlerH.bind(this);
 
-    this.renderPromise = new RenderPromise(this);
     this.loadingRef = React.createRef();
+    this.renderPromise = new RenderPromise(this, this.loadingRef);
   }
 
   componentDidMount() {

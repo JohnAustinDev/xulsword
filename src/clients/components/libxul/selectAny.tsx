@@ -84,8 +84,8 @@ class SelectAny extends React.Component implements RenderPromiseComponent {
     this.onChange = this.onChange.bind(this);
     this.onModuleChange = this.onModuleChange.bind(this);
 
-    this.renderPromise = new RenderPromise(this);
     this.loadingRef = React.createRef();
+    this.renderPromise = new RenderPromise(this, this.loadingRef);
   }
 
   componentDidMount() {

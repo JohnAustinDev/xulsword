@@ -49,8 +49,8 @@ export function GCallsOrPromise(
     return getCallsFromCacheAndClear(calls);
   }
   if (promise) {
-    const { component, callback } = promise;
-    if (component !== null || callback !== null) {
+    const { callback } = promise;
+    if (callback !== null) {
       const presults = getCallsFromCacheAndClear(calls);
       if (presults.some((r) => r === undefined)) {
         const pcalls = calls.filter((_call, i) => presults[i] === undefined);
@@ -79,24 +79,37 @@ export function GCallsOrPromise(
 // guaranteed to be re-rendered, or each callback called, at least once, after
 // its RenderPromise data becomes available.
 export default class RenderPromise {
-  component: (React.Component & RenderPromiseComponent) | null;
-
-  callback: { (): void; loadingRef: React.RefObject<HTMLElement> } | null;
-
   calls: GCallType[];
+
+  callback: (() => void) | null;
+
+  loadingRef: React.RefObject<HTMLElement>;
 
   dispatchedUnresolvedCalls: GCallType[];
 
   loadingSelector: string;
 
+  type: 'classComponent' | 'functionComponent' | 'callback';
+
+  static globalRenderPromisesTO: NodeJS.Timeout | null;
+
   static batchDispatch() {
+    if (RenderPromise.globalRenderPromisesTO) {
+      clearTimeout(RenderPromise.globalRenderPromisesTO);
+    }
+    RenderPromise.globalRenderPromisesTO = setTimeout(
+      () => RenderPromise.doBatchDispatch(),
+      C.Server.networkRequestBatchDelay,
+    );
+  }
+
+  static doBatchDispatch() {
+    RenderPromise.globalRenderPromisesTO = null;
     const renderPromises = RenderPromise.getGlobalRenderPromises();
     if (renderPromises.length) {
       const rpdispatch = renderPromises.map((rp) => {
-        const nrp = new RenderPromise(
-          rp.component || rp.callback || null,
-          rp.loadingSelector,
-        );
+        const { callback, loadingRef, loadingSelector } = rp;
+        const nrp = new RenderPromise(callback, loadingRef, loadingSelector);
         rp.dispatchedUnresolvedCalls.push(...rp.calls);
         nrp.calls = rp.calls;
         rp.calls = [];
@@ -134,15 +147,7 @@ export default class RenderPromise {
             };
             const done: Array<React.Component | (() => void)> = [];
             rpdispatch.forEach((rp, i) => {
-              const { component, callback } = rp;
-              if (component && !done.includes(component)) {
-                done.push(component);
-                component.setState({
-                  renderPromiseID: Math.random(),
-                } as RenderPromiseState);
-                resolveRP(renderPromises[i], rp);
-                setLoadingClass(rp, false);
-              }
+              const { callback } = rp;
               if (callback && !done.includes(callback)) {
                 done.push(callback);
                 callback();
@@ -157,9 +162,7 @@ export default class RenderPromise {
               ...RenderPromise.getGlobalRenderPromises(),
               ...rpdispatch,
             ]);
-            setTimeout(() => {
-              RenderPromise.batchDispatch();
-            }, doWait);
+            RenderPromise.batchDispatch();
           }
         })
         .catch((er) => {
@@ -179,23 +182,34 @@ export default class RenderPromise {
     Cache.write(rps, 'renderPromises');
   }
 
+  // If componentOrCallback is null, then an error will be thrown if the
+  // runtime context requires a promise.
   constructor(
     componentOrCallback:
       | (React.Component & RenderPromiseComponent)
-      | { (): void; loadingRef: React.RefObject<HTMLElement> }
+      | (() => void)
       | null,
+    loadingRef?: React.RefObject<HTMLElement> | null,
     loadingSelector?: string,
   ) {
-    this.component = null;
-    this.callback = null;
+    this.loadingRef = loadingRef || { current: null };
     this.calls = [];
     this.dispatchedUnresolvedCalls = [];
     this.loadingSelector = loadingSelector || '';
 
-    if (typeof componentOrCallback === 'function') {
+    if (componentOrCallback && 'setState' in componentOrCallback) {
+      this.type = 'classComponent';
+      this.callback = () => {
+        componentOrCallback.setState({
+          renderPromiseID: Math.random(),
+        } as RenderPromiseState);
+      };
+    } else if (typeof componentOrCallback === 'function') {
+      this.type = 'callback';
       this.callback = componentOrCallback;
     } else {
-      this.component = componentOrCallback;
+      this.type = 'functionComponent';
+      this.callback = null;
     }
   }
 
@@ -207,15 +221,18 @@ export default class RenderPromise {
     // Add calls to the global list, then wait a bit, request list results
     // from the server, cache the results, then re-render the requesting
     // components.
-    const { calls } = this;
+    const { calls, callback } = this;
     if (calls.length) {
+      if (callback === null) {
+        throw new Error(
+          `A null callback was passed in a context that requires a non-null callback:  ${JSON_stringify(calls)}`,
+        );
+      }
       setLoadingClass(this, true);
       const rps = RenderPromise.getGlobalRenderPromises();
       rps.push(this);
       RenderPromise.setGlobalRenderPromises(rps);
-      setTimeout(() => {
-        RenderPromise.batchDispatch();
-      }, C.Server.networkRequestBatchDelay);
+      RenderPromise.batchDispatch();
     }
   }
 }
@@ -460,8 +477,7 @@ function setLoadingClass(
   renderPromise: RenderPromise,
   setUnset: boolean,
 ): void {
-  const { component, callback, loadingSelector } = renderPromise;
-  const loadingRef = component?.loadingRef ?? callback?.loadingRef;
+  const { callback, loadingRef, loadingSelector, type } = renderPromise;
   if (loadingRef) {
     let targelem: HTMLElement | null = null;
     const { current } = loadingRef;
@@ -471,11 +487,21 @@ function setLoadingClass(
         : current;
     }
     if (targelem) {
-      if (setUnset) targelem.classList.add('rp-loading');
-      else targelem.classList.remove('rp-loading');
-    } else {
+      if (setUnset) {
+        targelem.classList.add('rp-loading');
+        (callback as any).debug = targelem.classList;
+      } else targelem.classList.remove('rp-loading');
+      log.debug(
+        `${setUnset ? 'set' : 'unset'} loading selector: ${targelem.classList}`,
+      );
+    } else if (type === 'functionComponent') {
+      // classComponents may be replaced with new instances thereby creating false errors
+      // here. So only report functionalComponents, which would be real errors.
+      const debug =
+        (callback && 'debug' in callback && (callback as any).debug) ||
+        'unknown';
       log[setUnset ? 'debug' : 'error'](
-        `Failed to ${setUnset ? 'set' : 'unset'} ${component ? 'component' : 'function'} waiting selector: ${loadingSelector}`,
+        `FAILED to ${setUnset ? 'set' : 'unset'} a loading selector: ${debug}`,
       );
     }
   }

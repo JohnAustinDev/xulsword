@@ -71,8 +71,8 @@ class Tabs extends React.Component implements RenderPromiseComponent {
     this.getMultiTabSelection = this.getMultiTabSelection.bind(this);
     this.toggleTab = this.toggleTab.bind(this);
 
-    this.renderPromise = new RenderPromise(this);
     this.loadingRef = React.createRef();
+    this.renderPromise = new RenderPromise(this, this.loadingRef);
   }
 
   // Only when the tabs key prop changes will React instantiate a new tabs

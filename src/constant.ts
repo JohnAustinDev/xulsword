@@ -72,11 +72,14 @@ const C = {
         },
     limitedMustWait: Build.isDevelopment ? 1000 : 5000, // ms
     networkRequestMinCache: 60000, // ms
-    networkRequestBatchDelay: 50, // ms
+    networkRequestBatchDelay: 1, // ms
   },
 
   // xulsword UI constants
   UI: {
+    WebApp: {
+      mobileW: 767, // px up to which is considered mobile
+    },
     AcceleratorKey: {
       openModuleManager: 'F2',
       toggleFullScreen: 'F11',

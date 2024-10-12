@@ -104,8 +104,8 @@ export default class PrintPassageWin
   constructor(props: PrintPassageProps) {
     super(props);
 
-    this.renderPromise = new RenderPromise(this);
     this.loadingRef = React.createRef();
+    this.renderPromise = new RenderPromise(this, this.loadingRef);
 
     if (typeof openedWinState === 'undefined') {
       openedWinState = windowArguments(

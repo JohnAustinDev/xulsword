@@ -100,8 +100,8 @@ class Popup extends React.Component implements RenderPromiseComponent {
     this.selector = this.selector.bind(this);
     this.positionPopup = this.positionPopup.bind(this);
 
-    this.renderPromise = new RenderPromise(this, '.npopupTX');
     this.loadingRef = React.createRef();
+    this.renderPromise = new RenderPromise(this, this.loadingRef, '.npopupTX');
   }
 
   componentDidMount() {

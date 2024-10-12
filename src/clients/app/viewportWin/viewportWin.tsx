@@ -116,8 +116,8 @@ export default class ViewportWin
       this.atextRefs.push(React.createRef());
     });
 
-    this.renderPromise = new RenderPromise(this);
     this.loadingRef = React.createRef();
+    this.renderPromise = new RenderPromise(this, this.loadingRef);
   }
 
   componentDidMount() {

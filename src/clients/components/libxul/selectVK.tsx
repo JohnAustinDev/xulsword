@@ -117,8 +117,8 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
     this.state = s;
 
     this.selectValues = props.initialVK;
-    this.renderPromise = new RenderPromise(this);
     this.loadingRef = React.createRef();
+    this.renderPromise = new RenderPromise(this, this.loadingRef);
 
     this.checkSelection = this.checkSelection.bind(this);
     this.handleChange = this.handleChange.bind(this);

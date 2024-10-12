@@ -111,6 +111,8 @@ class Viewport extends React.Component implements PopupParent {
 
   renderPromise: RenderPromise;
 
+  loadingRef: React.RefObject<HTMLDivElement>;
+
   constructor(props: ViewportProps) {
     super(props);
 
@@ -125,7 +127,8 @@ class Viewport extends React.Component implements PopupParent {
     this.popupHandler = popupHandlerH.bind(this);
     this.audioHandler = this.audioHandler.bind(this);
 
-    this.renderPromise = new RenderPromise(this);
+    this.loadingRef = React.createRef();
+    this.renderPromise = new RenderPromise(this, this.loadingRef);
   }
 
   componentDidUpdate() {
@@ -171,7 +174,7 @@ class Viewport extends React.Component implements PopupParent {
   }
 
   render() {
-    const { renderPromise, popupHandler, audioHandler } = this;
+    const { renderPromise, loadingRef, popupHandler, audioHandler } = this;
     const props = this.props as ViewportProps;
     const state = this.state as ViewportState;
     const {
@@ -478,6 +481,7 @@ class Viewport extends React.Component implements PopupParent {
 
     return (
       <Hbox
+        domref={loadingRef}
         {...addClass(`viewport skin ${cls} bp5-focus-disabled`, props)}
         {...style}
         {...topHandle('onClick', eHandler)}

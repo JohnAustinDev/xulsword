@@ -70,8 +70,8 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
     this.onNodeClick = this.onNodeClick.bind(this);
     this.scrollTo = this.scrollTo.bind(this);
 
-    this.renderPromise = new RenderPromise(this);
     this.loadingRef = React.createRef();
+    this.renderPromise = new RenderPromise(this, this.loadingRef);
   }
 
   componentDidMount() {
