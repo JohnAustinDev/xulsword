@@ -64,8 +64,8 @@ html[dir='rtl'] .atext .text-win {
 
 .atext .origselect {
   position: absolute;
-  top: 5px;
-  right: 12px;
+  top: 32px;
+  right: 20px;
 }
 
 html[dir='rtl'] .atext .origselect {
@@ -113,6 +113,9 @@ html[dir='rtl'] .atext .origselect {
   .atext:not(.columns1) .sb {
     column-gap: 14px;
     column-rule-width: 4px;
+  }
+  .atext:not(:last-child) {
+    margin-inline-end: 5px;
   }
   .atext .sb {
     padding: 0 5px;

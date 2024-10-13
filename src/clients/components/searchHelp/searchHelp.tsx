@@ -106,24 +106,26 @@ export default function SearchHelp(props: SearchHelpProps) {
             </div>
           ))}
         </div>
-        <table>
-          <tbody>
-            {[...Array(9).keys()].map((row) => (
-              <tr
-                key={`row${row}`}
-                className={row % 2 === 1 ? 'odd-row' : 'even-row'}
-              >
-                {[...Array(4).keys()].map((col) => (
-                  <td
-                    key={`row${row} col${col}`}
-                    id={`row${row} col${col}`}
-                    className={`row${row} col${col}`}
-                  />
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="helpTable">
+          <table>
+            <tbody>
+              {[...Array(9).keys()].map((row) => (
+                <tr
+                  key={`row${row}`}
+                  className={row % 2 === 1 ? 'odd-row' : 'even-row'}
+                >
+                  {[...Array(4).keys()].map((col) => (
+                    <td
+                      key={`row${row} col${col}`}
+                      id={`row${row} col${col}`}
+                      className={`row${row} col${col}`}
+                    />
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
         <div id="caseMessage" />
       </div>
     </Box>

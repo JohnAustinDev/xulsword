@@ -11,6 +11,9 @@
   margin-bottom: 10px;
 }
 @media (max-width: 767px) {
+  .searchHelp {
+    width: calc(100vw - 10px);
+  }
   .helpPane > div {
     min-width: unset;
     width: 100%;
@@ -26,7 +29,10 @@
 .typeName {
   font-weight: bold;
 }
-table {
+.helpTable {
+  overflow-x: auto;
+}
+.helpTable table {
   border-collapse: collapse;
   border: 2px solid rgb(200, 170, 205);
   border-radius: 4px;
