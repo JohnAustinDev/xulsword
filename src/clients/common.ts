@@ -176,8 +176,8 @@ export function scrollIntoView(
 }
 
 export function audioConfig(
-  module?: string,
-  renderPromise?: RenderPromise,
+  module: string,
+  renderPromise: RenderPromise,
 ): SwordConfType | undefined {
   let audioConf;
   if (module) {
@@ -279,7 +279,7 @@ export function verseKeyAudioFile(
 export function genBookAudioFile(
   swordModule: string,
   key: string,
-  renderPromise?: RenderPromise,
+  renderPromise: RenderPromise,
 ): GenBookAudioFile | null {
   const audioConf = audioConfig(swordModule, renderPromise);
   if (audioConf) {
@@ -306,7 +306,7 @@ export function audioGenBookNode(
   node: TreeNodeInfo,
   module: string,
   key: string,
-  renderPromise?: RenderPromise,
+  renderPromise: RenderPromise,
 ): boolean {
   let afile: GenBookAudioFile | null = null;
   if (!G.Tab[module].isVerseKey && G.Tab[module].tabType === 'Genbks' && key) {

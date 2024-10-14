@@ -491,7 +491,7 @@ function setLoadingClass(
         targelem.classList.add('rp-loading');
         (callback as any).debug = targelem.classList;
       } else targelem.classList.remove('rp-loading');
-      log.debug(
+      log.silly(
         `${setUnset ? 'set' : 'unset'} loading selector: ${targelem.classList}`,
       );
     } else if (type === 'functionComponent') {

@@ -9,6 +9,7 @@ import {
   findTreeSiblings,
   gbAncestorIDs,
   clone,
+  stringHash,
 } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
@@ -49,6 +50,13 @@ type FamilyNodes = {
 // The SelectOR maintains its own state starting at initialORM. So
 // onSelection must be used to read component selection. The key
 // prop may be used to reset state to latest initialORM at any time.
+//
+// When enableParentSelection prop is set, an 'introduction' child option is
+// prepended which allows selection of the parent key. When enableParentSelection
+// is false, there will be no 'introduction' child option and selecting the
+// parent will automatically resolve to the first child. Note: TreeNodes where
+// childNodes is either undefined or [] are both considered to be leaf nodes,
+// NOT parent nodes.
 //
 // The otherMods prop is an array of INSTALLED non-versekey modules to
 // select from. If left undefined, all installed non-versekey modules will
@@ -92,9 +100,7 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
 
   loadingRef: React.RefObject<HTMLDivElement>;
 
-  // This is only set if enableMultipleSelection is false and keys[0] does not
-  // include a 'Child selector' selection.
-  defaultedChildSelection: string | undefined;
+  selectorValue: string[];
 
   constructor(props: SelectORProps) {
     super(props);
@@ -119,6 +125,8 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
     this.onChange = this.onChange.bind(this);
     this.openParent = this.openParent.bind(this);
 
+    this.selectorValue = s.selection.keys;
+
     this.loadingRef = React.createRef();
     this.renderPromise = new RenderPromise(this, this.loadingRef);
   }
@@ -130,15 +138,16 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
 
   componentDidUpdate() {
     const { id, onSelection } = this.props as SelectORProps;
-    const { renderPromise, defaultedChildSelection } = this;
+    const { selection } = this.state as SelectORState;
+    const { renderPromise, selectorValue } = this;
     renderPromise.dispatch();
-    if (defaultedChildSelection) {
-      this.setState((prevState: SelectORState) => {
-        const { selection } = clone(prevState);
-        selection.keys = [defaultedChildSelection];
-        if (onSelection) onSelection(selection, id);
-        return { selection } as SelectORState;
-      });
+    if (stringHash(selectorValue) !== stringHash(selection.keys)) {
+      const newsel = {
+        ...selection,
+        keys: selectorValue,
+      };
+      if (onSelection) onSelection(newsel, id);
+      this.setState({selection: newsel} as Partial<SelectORState>);
     }
   }
 
@@ -352,21 +361,37 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
 
     // Child selector
     if (childNodes.length) {
-      let value = enableMultipleSelection ? keys : keys[0];
-      if (typeof value === 'string' && (!value || value.endsWith('/'))) {
-        value = childNodes[0].id.toString();
-        this.defaultedChildSelection = value;
-      } else this.defaultedChildSelection = undefined;
+      let selectedValue = enableMultipleSelection ? keys : keys[0];
+      if (
+        typeof selectedValue === 'string' &&
+        (!selectedValue || selectedValue.endsWith('/'))
+      ) {
+        selectedValue =
+          enableParentSelection && ancestorNodes.length
+            ? ancestorNodes[ancestorNodes.length - 1].id.toString()
+            : childNodes[0].id.toString();
+      }
+      this.selectorValue =
+        typeof selectedValue === 'string' ? [selectedValue] : selectedValue;
       const parentNode = ancestorNodes.at(-1);
       selects.push(
         <Menulist
           className="select-child"
           key={['ch', parentNode ? parentNode.id : module].join('.')}
           multiple={!!enableMultipleSelection}
-          value={value}
+          value={selectedValue}
           disabled={disabled || !selectedModuleIsInstalled}
           onChange={onChange}
         >
+          {enableParentSelection && ancestorNodes.length && (
+            <option
+              key={'chop.introduction'}
+              className={'cs-locale'}
+              value={ancestorNodes[ancestorNodes.length - 1].id}
+            >
+              {GI.i18n.t('', renderPromise, 'introduction.label')}
+            </option>
+          )}
           {childNodes.map((n) => {
             const className = !Number.isNaN(Number(n.label))
               ? undefined

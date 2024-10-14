@@ -462,8 +462,10 @@ export default class Xulsword
             key={panels.concat(keys).toString()}
             initialORM={{
               otherMod: panelGenbks[0],
-              keys: [panelGenbkKeys[0]],
+              keys: [panelGenbkKeys[0] || ''],
             }}
+            enableMultipleSelection={false}
+            enableParentSelection={false}
             onSelection={selectionGenbk}
           />
         </Hbox>
