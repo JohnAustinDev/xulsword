@@ -6,7 +6,7 @@ import { diff, normalizeFontFamily } from '../../../common.ts';
 import { G } from '../../G.ts';
 import renderToRoot from '../../controller.tsx';
 import log from '../../log.ts';
-import { windowArguments } from '../../common.ts';
+import { windowArguments } from '../../common.tsx';
 import { xulPropTypes } from '../../components/libxul/xul.tsx';
 import { Hbox, Vbox } from '../../components/libxul/boxes.tsx';
 import Groupbox from '../../components/libxul/groupbox.tsx';

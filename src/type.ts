@@ -107,7 +107,7 @@ export type WindowTypes =
   | 'searchWin'
   | 'searchHelpWin'
   | 'about'
-  | 'printPassage'
+  | 'printPassageWin'
   | 'copyPassage'
   | 'bmProperties'
   | 'bmManager';

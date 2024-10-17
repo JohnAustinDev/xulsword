@@ -8,7 +8,7 @@ import Commands from '../../commands.ts';
 import RenderPromise from '../../renderPromise.ts';
 import { findElementData, updateDataAttribute } from '../../htmlData.ts';
 import log from '../../log.ts';
-import { scrollIntoView, windowArguments } from '../../common.ts';
+import { scrollIntoView, windowArguments } from '../../common.tsx';
 import { delayHandler } from '../libxul/xul.tsx';
 import { getPopupHTML } from './popupH.ts';
 
@@ -293,7 +293,7 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
                 loc,
                 undefined,
                 new RenderPromise(() =>
-                  Subscription.publish.setRendererRootState({
+                  Subscription.publish.setControllerState({
                     reset: randomID(),
                   }),
                 ),
@@ -312,7 +312,14 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
                 type: 'SearchAdvanced',
               };
               if (Build.isElectronApp) G.Commands.search(search);
-              else Commands.setSearchOverlay(search);
+              else
+                Subscription.publish.setControllerState({
+                  reset: randomID(),
+                  card: {
+                    name: 'search',
+                    props: { initialState: search, onlyLucene: true },
+                  },
+                });
             }
           }
           break;

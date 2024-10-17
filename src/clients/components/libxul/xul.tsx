@@ -130,10 +130,10 @@ const bools = ['checked', 'disabled', 'hidden', 'readonly'] as const;
 // const cssAttribs = styles.concat(enums).concat(bools);
 
 // Returns props unchanged except having additional class name(s).
-export const addClass = <P extends XulProps>(
+export function addClass<P extends XulProps>(
   classes: string | string[],
   props: P,
-): P => {
+): P {
   const c = typeof classes === 'string' ? classes.split(' ') : classes;
   const cp = props.className ? props.className.split(' ') : [];
   const r: P = { ...props };
@@ -144,9 +144,9 @@ export const addClass = <P extends XulProps>(
 // Convert certain XUL props to a corresponding CSS style attribute.
 // These props take number values with or without qualifiers
 // for XUL backward compatibility.
-export const xulStyle = (
+export function xulStyle(
   props: Record<string, unknown>,
-): React.CSSProperties | undefined => {
+): React.CSSProperties | undefined {
   const s = {} as React.CSSProperties;
   const { width, height, flex } = props;
   // width
@@ -168,10 +168,10 @@ export const xulStyle = (
 
 // Convert certain XUL props to corresponding CSS classes, adding any
 // requested additional classes in the processes.
-export const xulClass = (
+export function xulClass(
   classes: string | string[],
   props: Record<string, unknown>,
-) => {
+) {
   const c1 = Array.isArray(classes) ? classes : classes.split(/\s+/);
   const c2 = props.className ? (props.className as string).split(/\s+/) : [];
   const c3 = enums.map((c) =>
@@ -188,10 +188,10 @@ export const xulClass = (
 // Convert all props to corresponding HTML element attribtues.
 // This must be used to pass props to all HTML elements but
 // should only be used on HTML elements (not on React components).
-export const htmlAttribs = (
+export function htmlAttribs(
   className: string | string[],
   props: Record<string, unknown>,
-): Record<string, unknown> => {
+): Record<string, unknown> {
   if (props === null) return {};
   const r = {
     ...xulClass(className, props),
@@ -228,11 +228,11 @@ export const htmlAttribs = (
 // Use topHandle() when there is a xulEvent prop on a React component's top-
 // level element. Otherwise any event prop of that same type on an instance
 // of that component would never be called.
-export const topHandle = (
+export function topHandle(
   name: (typeof xulEvents)[number] | (typeof xulCaptureEvents)[number],
   func?: (e: React.SyntheticEvent) => any,
   props?: any,
-) => {
+) {
   return {
     [name]: (e: React.SyntheticEvent) => {
       if (typeof func === 'function') func(e);

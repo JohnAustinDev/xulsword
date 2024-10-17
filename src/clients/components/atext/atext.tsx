@@ -18,7 +18,7 @@ import {
   iframeAutoHeight,
   libswordImgSrc,
   scrollIntoView,
-} from '../../common.ts';
+} from '../../common.tsx';
 import RenderPromise from '../../renderPromise.ts';
 import {
   xulPropTypes,

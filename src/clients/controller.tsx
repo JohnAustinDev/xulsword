@@ -8,18 +8,18 @@ import C from '../constant.ts';
 import { G } from './G.ts';
 import DynamicStyleSheet from './style.ts';
 import ContextData from './contextData.ts';
-import { windowArguments } from './common.ts';
-import Commands from './commands.ts';
+import { windowArguments } from './common.tsx';
 import log from './log.ts';
-import Search from './components/search/search.tsx';
-import { delayHandler, xulCaptureEvents } from './components/libxul/xul.tsx';
+import { delayHandler, xulCaptureEvents, addClass } from './components/libxul/xul.tsx';
+import Print from './components/libxul/print.tsx';
 import { Hbox } from './components/libxul/boxes.tsx';
+import Search, { SearchProps } from './components/search/search.tsx';
+import PrintPassage from './components/printPassage/printPassage.tsx';
 import Dialog from './components/libxul/dialog.tsx';
 import Spacer from './components/libxul/spacer.tsx';
 import Button from './components/libxul/button.tsx';
 import Label from './components/libxul/label.tsx';
 import Textbox from './components/libxul/textbox.tsx';
-import PrintOverlay from './components/libxul/printOverlay.tsx';
 
 // Global CSS imports
 import 'normalize.css/normalize.css';
@@ -32,53 +32,61 @@ import type {
   CipherKey,
   ModalType,
   NewModulesType,
-  SearchType,
   WindowDescriptorPrefType,
 } from '../type.ts';
 import type { SubscriptionType } from '../subscription.ts';
 import type { StyleType } from './style.ts';
+import type { PrintPassageProps } from './components/printPassage/printPassage.tsx';
 
 // This top level controller takes one or more components as children and
 // provides window level services and communication for those components.
+// Those children, along with props and defaultControllerState, all become
+// state variables to be updated by Subscription.publish.setControllerState().
 
-const defaultInitialState = {
-  reset: '' as string,
-  dialogs: [] as ReactElement[],
-  showPrintOverlay: false as boolean,
-  showSearchOverlay: null as SearchType | null,
-  printDisabled: false,
-  modal: 'off' as ModalType,
-  iframeFilePath: '' as string,
-  resetOnResize: true as boolean,
-  progress: -1 as number | 'indefinite',
-};
-
-export type ControllerState = typeof defaultInitialState;
-
-type ControllerProps = ControllerOptions & {
-  isPrintContainer: boolean;
+type ControllerProps = {
+  resetOnResize: boolean;
+  print: PrintOptionsType | null;
   children: ReactElement;
 };
 
-type StateArray<M extends keyof ControllerState> = [
+type CardTypes =
+  | { name: 'search'; props: SearchProps }
+  | { name: 'printPassage'; props: PrintPassageProps };
+
+const defaultControllerState = {
+  reset: '' as string,
+  dialogs: [] as ReactElement[],
+  card: null as CardTypes | null,
+  modal: 'off' as ModalType,
+  progress: -1 as number | 'indefinite',
+  resetCssClass: '',
+};
+
+export type ControllerState = Omit<ControllerProps, 'children'> &
+  typeof defaultControllerState;
+
+// Key order must never change for React hooks to work!
+const stateK = Object.keys(defaultControllerState) as Array<
+  keyof typeof defaultControllerState
+>;
+const propsK: Array<keyof ControllerState> = ['resetOnResize', 'print'];
+const stateKeys = propsK.concat(stateK) as Array<keyof ControllerState>;
+
+type StateArray<M extends (typeof stateKeys)[number]> = [
   ControllerState[M],
   (a: ControllerState[M]) => void,
 ];
 
-// Key order must never change for React hooks to work!
-const stateme = Object.keys(defaultInitialState) as Array<
-  keyof typeof defaultInitialState
->;
 let descriptor: WindowDescriptorPrefType | null = null;
 let dynamicStyleSheet: DynamicStyleSheet | null = null;
 const delayHandlerThis = {};
 
 function Controller(props: ControllerProps) {
-  const { children, print, isPrintContainer, initialState: istate } = props;
-
-  const s = {} as { [k in keyof typeof defaultInitialState]: StateArray<k> };
-  stateme.forEach((me) => {
-    s[me] = useState(istate[me]) as any;
+  const { children } = props;
+  const s0 = { ...defaultControllerState, ...props };
+  const s = {} as { [k in keyof ControllerState]: StateArray<k> };
+  stateKeys.forEach((me) => {
+    s[me] = useState(s0[me]) as any;
   });
 
   const textbox: React.RefObject<HTMLInputElement> = React.createRef();
@@ -109,19 +117,34 @@ function Controller(props: ControllerProps) {
 
   // Set Window State:
   useEffect(() => {
-    return Subscription.subscribe.setRendererRootState((state) => {
-      Object.entries(state).forEach((entry) => {
-        const [sp, v] = entry;
-        const S = sp as keyof typeof defaultInitialState;
-        const val = v as any;
-        if (val !== undefined) {
-          const setMe = s[S][1] as (a: any) => any;
-          if (state.showPrintOverlay === true && S === 'reset') {
-            setTimeout(() => setMe(val), 1);
-          } else setMe(val);
-        }
-      });
-    });
+    return Subscription.subscribe.setControllerState(
+      (state, mergeValue = false) => {
+        Object.entries(state).forEach((entry) => {
+          const [sp, v] = entry;
+          const S = sp as keyof ControllerState;
+          let val = v as any;
+          const [v0] = s[S];
+          // If mergeValue is set, and both old and new values are objects,
+          // then merge their keys to form the new value (useful for print).
+          if (
+            mergeValue &&
+            val &&
+            typeof val === 'object' &&
+            v0 &&
+            typeof v0 === 'object'
+          ) {
+            val = { ...v0, ...val };
+          }
+          // Only if value is defined and changing will set state be called.
+          else if (val !== undefined && stringHash(val) !== stringHash(v0)) {
+            const setMe = s[S][1] as (a: any) => void;
+            if (state.print !== null && S === 'reset') {
+              setTimeout(() => setMe(val), 1);
+            } else setMe(val);
+          }
+        });
+      },
+    );
   });
 
   // Progress meter:
@@ -133,10 +156,7 @@ function Controller(props: ControllerProps) {
 
   // IPC resize setup:
   useEffect(() => {
-    if (
-      (s.resetOnResize[0] || s.showPrintOverlay[0]) &&
-      s.dialogs[0].length === 0
-    ) {
+    if ((s.resetOnResize[0] || s.print[0]) && s.dialogs[0].length === 0) {
       return window.IPC.on(
         'resize',
         delayHandler.bind(delayHandlerThis)(
@@ -322,7 +342,7 @@ function Controller(props: ControllerProps) {
     );
   });
 
-  const overlay =
+  const progressAndModalOverlay =
     s.progress[0] !== -1 || s.modal[0] !== 'off' ? (
       <Hbox
         id="overlay"
@@ -355,96 +375,91 @@ function Controller(props: ControllerProps) {
       </Hbox>
     ) : null;
 
-  const content = (
+  let content = children;
+  if (s.card[0]) {
+    const closeButton = (
+      <Button
+        className="close-card-button"
+        icon="cross"
+        onClick={() =>
+          Subscription.publish.setControllerState({
+            reset: randomID(),
+            card: null,
+          })
+        }
+      />
+    );
+    switch (s.card[0].name) {
+      case 'search': {
+        content = (
+          <>
+            {closeButton}
+            <Search {...addClass('searchCard', s.card[0].props)} />
+          </>
+        );
+        break;
+      }
+      case 'printPassage': {
+        content = (
+          <>
+            {closeButton}
+            <PrintPassage {...addClass('printPassageCard', s.card[0].props)} />
+          </>
+        );
+        break;
+      }
+    }
+  } else if (s.print[0]?.content) {
+    content = s.print[0]?.content
+  }
+
+  const root = (
     <>
-      {overlay}
+      {progressAndModalOverlay}
       {s.dialogs[0].length > 0 && s.dialogs[0][0]}
       <div
         key={s.reset[0]}
         id="reset"
-        className={s.showPrintOverlay[0] ? 'printp' : undefined}
+        className={s.resetCssClass[0]}
         onContextMenu={(e: React.SyntheticEvent) => {
-          if (!Build.isElectronApp) return;
-          if (!G.Data.has('contextData')) {
-            G.Data.write(ContextData(e.target as HTMLElement), 'contextData');
+          if (Build.isElectronApp) {
+            if (!G.Data.has('contextData')) {
+              G.Data.write(ContextData(e.target as HTMLElement), 'contextData');
+            }
           }
         }}
       >
-        {children}
+        {content}
       </div>
     </>
   );
 
-  if (s.showPrintOverlay[0]) {
-    return (
-      <PrintOverlay
-        content={content}
-        print={print}
-        isPrintContainer={isPrintContainer}
-        printDisabled={s.printDisabled[0]}
-        iframeFilePath={s.iframeFilePath[0]}
-      />
-    );
-  } else if (s.showSearchOverlay[0]) {
-    return (
-      <>
-        <Button
-          id="closeSearchButton"
-          icon="cross"
-          onClick={() => Commands.setSearchOverlay(null)}
-        />
-        <Search
-          className="searchOverlay"
-          key={s.reset[0]}
-          initialState={s.showSearchOverlay[0]}
-          onlyLucene
-        />
-      </>
-    );
-  }
-
-  return content;
+  return s.print[0] ? <Print print={s.print[0]}>{root}</Print> : root;
 }
 
-export type RootPrintType = {
-  pageable: boolean;
+export type PrintOptionsType = {
   dialogEnd: 'cancel' | 'close';
-  pageView: React.RefObject<HTMLDivElement>;
-  printContainer: React.RefObject<HTMLDivElement>;
-  controls: React.RefObject<HTMLDivElement>;
-  settings: React.RefObject<HTMLDivElement>;
+  content?: ReactElement | null;
+  pageable?: boolean;
+  printDisabled?: boolean;
+  iframeFilePath?: string;
+  direction?: 'ltr' | 'rtl' | 'auto';
 };
 
-export type ControllerOptions = {
-  print: RootPrintType;
-  initialState: Partial<ControllerState>;
-  onload?: (() => void) | null;
-  onunload?: (() => void) | null;
+export type RootOptionsType = {
+  htmlCssClass: string;
+  resetOnResize: boolean;
+  print: PrintOptionsType | null;
+  onload: (() => void) | null;
+  onunload: (() => void) | null;
 };
 
 export default async function renderToRoot(
   component: ReactElement,
-  options?: Partial<Omit<ControllerOptions, 'print'>> & {
-    print?: Partial<RootPrintType>;
-  } & {
-    className?: string;
-  },
+  options?: Partial<RootOptionsType>,
 ) {
-  const { className, onload, onunload } = options || {};
-  const { print: printArg, initialState: initialStateArg } = options || {};
-  const print: RootPrintType = {
-    pageable: false,
-    dialogEnd: 'cancel' as const,
-    pageView: React.createRef(),
-    printContainer: React.createRef(),
-    controls: React.createRef(),
-    settings: React.createRef(),
-    ...printArg,
-  };
-  const initialState = {
-    ...defaultInitialState,
-    ...initialStateArg,
-  };
+  const { print, resetOnResize, htmlCssClass, onload, onunload } =
+    options || {};
 
   log.debug(`Initializing new window:`, descriptor);
 
@@ -476,7 +491,7 @@ export default async function renderToRoot(
   dynamicStyleSheet.update(st);
 
   // Set window type and language classes on the root html element.
-  const classes: string[] = className ? [className] : [];
+  const classes: string[] = htmlCssClass ? [htmlCssClass] : [];
   if (Build.isElectronApp) classes.push('isElectron');
   if (Build.isWebApp) classes.push('isWebApp');
   const classArgs = [
@@ -506,11 +521,7 @@ export default async function renderToRoot(
 
   root.render(
     <StrictMode>
-      <Controller
-        print={print}
-        isPrintContainer={!options?.print?.printContainer}
-        initialState={initialState}
-      >
+      <Controller print={print ?? null} resetOnResize={resetOnResize ?? true}>
         {component}
       </Controller>
     </StrictMode>,

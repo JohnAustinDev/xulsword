@@ -5,7 +5,7 @@ import C from '../constant.ts';
 import { G } from './G.ts';
 import { findElementData, mergeElementData } from './htmlData.ts';
 import { findBookmarks } from './bookmarks.ts';
-import { windowArguments } from './common.ts';
+import { windowArguments } from './common.tsx';
 
 import type {
   ContextDataType,

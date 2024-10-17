@@ -11,7 +11,7 @@ import {
   getMaxVerse,
   getStatePref,
   setStatePref,
-} from '../../common.ts';
+} from '../../common.tsx';
 import RenderPromise, {
   RenderPromiseComponent,
   RenderPromiseState,

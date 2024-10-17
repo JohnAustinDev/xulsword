@@ -1,4 +1,4 @@
-import { useEffect, useState, createRef } from 'react';
+import React, { useEffect, useState, createRef } from 'react';
 import Cache from '../cache.ts';
 import Subscription from '../subscription.ts';
 import {
@@ -31,6 +31,7 @@ import type {
   PrefStoreType,
   PrefValue,
   Repository,
+  SearchType,
   SwordConfLocalized,
   SwordConfType,
   V11nType,
@@ -89,6 +90,18 @@ export function windowArguments(
 
   return prop ? undefined : defval;
 }
+
+export const printRefs: {
+  pageViewRef: React.RefObject<HTMLDivElement>;
+  printContainerRef: React.RefObject<HTMLDivElement>;
+  customSettingsRef: React.RefObject<HTMLDivElement>;
+  settingsRef: React.RefObject<HTMLDivElement>;
+} = {
+  pageViewRef: React.createRef(),
+  printContainerRef: React.createRef(),
+  customSettingsRef: React.createRef(),
+  settingsRef: React.createRef(),
+};
 
 // Read libsword data-src attribute file URLs and convert them into src inline data.
 export function libswordImgSrc(container: HTMLElement) {

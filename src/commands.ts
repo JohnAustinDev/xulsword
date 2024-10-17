@@ -1,9 +1,8 @@
 import RenderPromise from './clients/renderPromise.ts';
 import { PanelChangeOptions } from './viewport.ts';
-import { keep, randomID } from './common.ts';
+import { keep } from './common.ts';
 import C from './constant.ts';
 import Viewport from './viewport.ts';
-import Subscription from './subscription.ts';
 
 import type S from './defaultPrefs.ts';
 import type PrefsElectron from './servers/app/prefs.ts';
@@ -17,7 +16,6 @@ import type {
   LocationVKCommType,
   LocationVKType,
   ScrollType,
-  SearchType,
   VerseKeyAudioFile,
 } from './type.ts';
 
@@ -138,13 +136,6 @@ export default class Commands {
     );
 
     return result;
-  }
-
-  setSearchOverlay(showSearchOverlay: SearchType | null): void {
-    Subscription.publish.setRendererRootState({
-      reset: randomID(),
-      showSearchOverlay,
-    });
   }
 
   playAudio(

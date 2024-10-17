@@ -9,7 +9,7 @@ import {
 } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
-import { dString } from '../../common.ts';
+import { dString } from '../../common.tsx';
 import Commands from '../../commands.ts';
 import log from '../../log.ts';
 import RenderPromise from '../../renderPromise.ts';
@@ -868,13 +868,17 @@ export default async function handler(this: Search, e: React.SyntheticEvent) {
                 chapter: Number(p.shift()),
                 verse: Number(p.shift()),
               };
-              if (Build.isWebApp) Commands.setSearchOverlay(null);
+              if (Build.isWebApp)
+                Subscription.publish.setControllerState({
+                  reset: randomID(),
+                  card: null,
+                });
               Commands.goToLocationVK(
                 l,
                 l,
                 undefined,
                 new RenderPromise(() =>
-                  Subscription.publish.setRendererRootState({
+                  Subscription.publish.setControllerState({
                     reset: randomID(),
                   }),
                 ),
@@ -884,7 +888,11 @@ export default async function handler(this: Search, e: React.SyntheticEvent) {
             case 'keylink': {
               const module = p.shift();
               if (module && module in G.Tab) {
-                if (Build.isWebApp) Commands.setSearchOverlay(null);
+                if (Build.isWebApp)
+                  Subscription.publish.setControllerState({
+                    reset: randomID(),
+                    card: null,
+                  });
                 Commands.goToLocationGB(
                   {
                     otherMod: module,
@@ -892,7 +900,7 @@ export default async function handler(this: Search, e: React.SyntheticEvent) {
                   },
                   undefined,
                   new RenderPromise(() =>
-                    Subscription.publish.setRendererRootState({
+                    Subscription.publish.setControllerState({
                       reset: randomID(),
                     }),
                   ),

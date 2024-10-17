@@ -49,7 +49,7 @@ const builds = {
       './src/clients/app/searchWin/searchWin.tsx',
       './src/clients/app/searchHelpWin/searchHelpWin.tsx',
       './src/clients/app/about/about.tsx',
-      './src/clients/app/printPassage/printPassage.tsx',
+      './src/clients/app/printPassageWin/printPassageWin.tsx',
       './src/clients/app/copyPassage/copyPassage.tsx',
       './src/clients/app/bmProperties/bmProperties.tsx',
       './src/clients/app/bmManager/bmManager.tsx',

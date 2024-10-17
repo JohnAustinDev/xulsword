@@ -2,7 +2,7 @@ import React, { useLayoutEffect } from 'react';
 import { sanitizeHTML } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { GI } from '../../G.ts';
-import { dString, functionalComponentRenderPromise } from '../../common.ts';
+import { dString, functionalComponentRenderPromise } from '../../common.tsx';
 import RenderPromise from '../../renderPromise.ts';
 import {
   addClass,

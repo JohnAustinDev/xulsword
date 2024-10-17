@@ -27,7 +27,7 @@ import {
   getLangReadable,
   setStatePref,
   windowArguments,
-} from '../../common.ts';
+} from '../../common.tsx';
 import { addClass, xulPropTypes } from '../../components/libxul/xul.tsx';
 import Button from '../../components/libxul/button.tsx';
 import { Hbox, Vbox, Box } from '../../components/libxul/boxes.tsx';
@@ -781,7 +781,7 @@ export default class ModuleManager
       if (!resetOnResize) {
         const { id } = windowArguments();
         resetOnResize = true;
-        G.publishSubscription('setRendererRootState', { renderers: { id } }, {
+        G.publishSubscription('setControllerState', { renderers: { id } }, {
           resetOnResize,
         } as Partial<ControllerState>);
       }

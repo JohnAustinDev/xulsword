@@ -1,5 +1,5 @@
 import RenderPromise from './renderPromise.ts';
-import { dString } from './common.ts';
+import { dString } from './common.tsx';
 import Subscription from '../subscription.ts';
 import {
   clone,
@@ -165,7 +165,7 @@ export function libSwordData2XulswordData(dataIn: LibSwordHTMLData): HTMLData {
           undefined,
           Build.isWebApp
             ? new RenderPromise(() =>
-                Subscription.publish.setRendererRootState({
+                Subscription.publish.setControllerState({
                   reset: randomID(),
                 }),
               )

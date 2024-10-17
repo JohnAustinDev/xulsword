@@ -25,7 +25,7 @@ import {
 } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G } from '../../G.ts';
-import { windowArguments } from '../../common.ts';
+import { windowArguments } from '../../common.tsx';
 import log from '../../log.ts';
 import { forEachNode } from '../../components/libxul/treeview.tsx';
 
@@ -444,7 +444,7 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
               const downloadResults = await Promise.allSettled(Downloads);
               G.Window.modal([{ modal: 'transparent', window: 'all' }]);
               G.publishSubscription(
-                'setRendererRootState',
+                'setControllerState',
                 {
                   renderers: [
                     { type: 'xulswordWin' },
@@ -591,7 +591,7 @@ export function eventHandler(this: ModuleManager, ev: React.SyntheticEvent) {
             } finally {
               G.Window.modal([{ modal: 'off', window: 'all' }]);
               G.publishSubscription(
-                'setRendererRootState',
+                'setControllerState',
                 {
                   renderers: [
                     { type: 'xulswordWin' },

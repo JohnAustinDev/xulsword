@@ -1,7 +1,7 @@
 import React from 'react';
 import { Icon } from '@blueprintjs/core';
 import { G } from '../../G.ts';
-import { genBookAudioFile, verseKeyAudioFile } from '../../common.ts';
+import { genBookAudioFile, verseKeyAudioFile } from '../../common.tsx';
 import RenderPromise from '../../renderPromise.ts';
 import './audioIcon.css';
 

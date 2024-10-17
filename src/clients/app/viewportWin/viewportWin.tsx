@@ -17,7 +17,7 @@ import {
   registerUpdateStateFromPref,
   setStatePref,
   windowArguments,
-} from '../../common.ts';
+} from '../../common.tsx';
 import { topHandle, xulPropTypes } from '../../components/libxul/xul.tsx';
 import { Hbox, Vbox } from '../../components/libxul/boxes.tsx';
 import Viewport from '../../components/viewport/viewport.tsx';

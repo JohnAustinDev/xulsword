@@ -5,8 +5,9 @@ import { Icon, Intent, Position, OverlayToaster } from '@blueprintjs/core';
 import Subscription from '../../../subscription.ts';
 import { clone, diff, keep, randomID } from '../../../common.ts';
 import C from '../../../constant.ts';
-import { G } from '../../G.ts';
-import { getStatePref, setStatePref } from '../..//common.ts';
+import { G, GI } from '../../G.ts';
+import { getStatePref, printRefs, setStatePref } from '../../common.tsx';
+import RenderPromise from '../../renderPromise.ts';
 import { Hbox, Vbox } from './boxes.tsx';
 import Button from './button.tsx';
 import Spacer from './spacer.tsx';
@@ -19,8 +20,20 @@ import './printSettings.css';
 
 import type { Toaster, ToastProps } from '@blueprintjs/core';
 import type S from '../../../defaultPrefs.ts';
-import type { RootPrintType, ControllerState } from '../../controller.tsx';
+import type {
+  ControllerState,
+  PrintOptionsType,
+} from '../../controller.tsx';
 import type { XulProps } from './xul.tsx';
+
+// This PrintSettings component is composed of the following parts:
+// - Optional custom settings may be rendered elsewhere and provided via the
+//   React customSettingsRef ref.
+// - Paging buttons are rendered if pageable is true, and they will appear via
+//   React portal within the pageViewRef element.
+// - Electron only: Printed page format option selectors, like page size,
+//   orientation, and margins.
+// - Dialog buttons, to close or cancel the current print operation.
 
 export const paperSizes = [
   { type: 'A3', w: 297, h: 420, u: 'mm' },
@@ -42,7 +55,6 @@ const dark: Partial<ControllerState> = {
 
 const normal: Partial<ControllerState> = {
   modal: 'dropshadow',
-  iframeFilePath: '',
   progress: -1,
 };
 
@@ -55,13 +67,10 @@ const footerTemplate = `
 const propTypes = {
   ...xulPropTypes,
   print: PropTypes.object.isRequired,
-  printDisabled: PropTypes.bool,
-  dialogEnd: PropTypes.string,
 };
 
 type PrintSettingsProps = XulProps & {
-  print: RootPrintType;
-  printDisabled?: boolean;
+  print: PrintOptionsType;
 };
 
 const notStatePref = {
@@ -70,6 +79,12 @@ const notStatePref = {
 };
 
 export type PrintSettingsState = typeof S.prefs.print & typeof notStatePref;
+
+const renderPromise = new RenderPromise(() =>
+  Subscription.publish.setControllerState({
+    reset: randomID(),
+  }),
+);
 
 export default class PrintSettings extends React.Component {
   static propTypes: typeof propTypes;
@@ -135,8 +150,8 @@ export default class PrintSettings extends React.Component {
     prevState: PrintSettingsState,
   ) {
     const { pages } = this.state as PrintSettingsState;
-    const { printDisabled, print } = this.props as PrintSettingsProps;
-    const { pageable } = print;
+    const { print } = this.props as PrintSettingsProps;
+    const { pageable, printDisabled } = print;
     setStatePref('prefs', 'print', prevState, this.state);
     // If we're multi-page and certain state prefs were changed, reset root now,
     // so content can be redrawn, because the page limit means content will change.
@@ -153,8 +168,8 @@ export default class PrintSettings extends React.Component {
         ]),
       )
     ) {
-      Subscription.publish.setRendererRootState({ reset: randomID() });
-    } else if (!pages || (prevProps.printDisabled && !printDisabled)) {
+      Subscription.publish.setControllerState({ reset: randomID() });
+    } else if (!pages || (prevProps.print.printDisabled && !printDisabled)) {
       // Update number of pages if printDisabled was just set to false.
       this.setPages();
     }
@@ -162,6 +177,7 @@ export default class PrintSettings extends React.Component {
 
   handler(e: React.SyntheticEvent<any, any>) {
     const state = this.state as PrintSettingsState;
+    const { print } = this.props as PrintSettingsProps;
     const { selectRefs, scrollToPage } = this;
     const target = e.currentTarget as HTMLElement;
     const [id, id2] = target.id.split('.');
@@ -251,49 +267,67 @@ export default class PrintSettings extends React.Component {
             break;
           }
           case 'print': {
-            const options: Electron.WebContentsPrintOptions = {
-              ...electronOptions,
-              silent: false,
-              color: false,
-              margins: {
-                marginType: 'custom',
-                top: round(margins.top * convertToPx.mm),
-                right: round(margins.right * convertToPx.mm),
-                bottom: round(margins.bottom * convertToPx.mm),
-                left: round(margins.left * convertToPx.mm),
-              },
-              scaleFactor: 1,
-              pagesPerSheet: 1,
-              collate: false,
-              copies: 1,
-              pageRanges: [{ from: 1, to: pages }],
-              dpi: { horizontal: convertToPx.in, vertical: convertToPx.in },
-              header: '',
-              footer: '',
-            };
-            Subscription.publish.setRendererRootState(dark);
-            G.Window.print(options)
-              .finally(() => {
-                Subscription.publish.setRendererRootState(normal);
-              })
-              .catch((er) => {
-                if (this.toaster) {
-                  this.toaster.show({
-                    message: er,
-                    intent: Intent.WARNING,
+            if (Build.isElectronApp) {
+              const options: Electron.WebContentsPrintOptions = {
+                ...electronOptions,
+                silent: false,
+                color: false,
+                margins: {
+                  marginType: 'custom',
+                  top: round(margins.top * convertToPx.mm),
+                  right: round(margins.right * convertToPx.mm),
+                  bottom: round(margins.bottom * convertToPx.mm),
+                  left: round(margins.left * convertToPx.mm),
+                },
+                scaleFactor: 1,
+                pagesPerSheet: 1,
+                collate: false,
+                copies: 1,
+                pageRanges: [{ from: 1, to: pages }],
+                dpi: { horizontal: convertToPx.in, vertical: convertToPx.in },
+                header: '',
+                footer: '',
+              };
+              Subscription.publish.setControllerState(dark);
+              G.Window.print(options)
+                .finally(() => {
+                  Subscription.publish.setControllerState({
+                    reset: randomID(),
+                    ...normal,
+                    print: {
+                      ...print,
+                      iframeFilePath: '',
+                    }
                   });
-                }
-              });
+                })
+                .catch((er) => {
+                  if (this.toaster) {
+                    this.toaster.show({
+                      message: er,
+                      intent: Intent.WARNING,
+                    });
+                  }
+                });
+            } else {
+              window.print();
+            }
             break;
           }
           case 'printToPDF': {
-            Subscription.publish.setRendererRootState(dark);
+            Subscription.publish.setControllerState(dark);
             G.Window.printToPDF({
               destination: 'prompt-for-file',
               ...electronOptions,
             })
               .then(() => {
-                return Subscription.publish.setRendererRootState(normal);
+                return Subscription.publish.setControllerState({
+                  reset: randomID(),
+                  ...normal,
+                  print: {
+                    ...print,
+                    iframeFilePath: '',
+                  }
+                });
               })
               .catch((er) => {
                 this.toaster?.show({
@@ -304,16 +338,20 @@ export default class PrintSettings extends React.Component {
             break;
           }
           case 'printPreview': {
-            Subscription.publish.setRendererRootState(dark);
+            Subscription.publish.setControllerState(dark);
             G.Window.printToPDF({
               destination: 'iframe',
               ...electronOptions,
             })
               .then((iframeFilePath: string) => {
-                return Subscription.publish.setRendererRootState({
-                  iframeFilePath,
+                return Subscription.publish.setControllerState({
+                  reset: randomID(),
+                  print: {
+                    ...print,
+                    iframeFilePath,
+                    printDisabled: false
+                  },
                   modal: 'off',
-                  printDisabled: false,
                   progress: -1,
                 });
               })
@@ -331,11 +369,11 @@ export default class PrintSettings extends React.Component {
           }
           case 'ok':
           case 'cancel': {
-            Subscription.publish.setRendererRootState({
-              showPrintOverlay: false,
+            Subscription.publish.setControllerState({
+              reset: randomID(),
+              print: null,
+              resetCssClass: '',
               modal: 'off',
-              iframeFilePath: '',
-              printDisabled: false,
               progress: -1,
             });
             G.publishSubscription('asyncTaskComplete', {
@@ -425,10 +463,11 @@ export default class PrintSettings extends React.Component {
   } {
     const { landscape, pageSize, margins } = this.state as PrintSettingsState;
     const { print } = this.props as PrintSettingsProps;
-    const { pageable, settings, printContainer } = print;
+    const { settingsRef, printContainerRef } = printRefs;
+    const { pageable } = print;
     const { pagebuttons } = this;
-    if (settings.current && printContainer.current) {
-      const settingsW = (settings.current.parentElement as HTMLDivElement)
+    if (settingsRef.current && printContainerRef.current) {
+      const settingsW = (settingsRef.current.parentElement as HTMLDivElement)
         .clientWidth;
       // initialPageViewW can be anything, but it must have a known value.
       let initialPageViewW =
@@ -507,8 +546,7 @@ export default class PrintSettings extends React.Component {
 
   setPages() {
     const { twoColumns } = this.state as PrintSettingsState;
-    const { print } = this.props as PrintSettingsProps;
-    const { current } = print.printContainer;
+    const { current } = printRefs.printContainerRef;
     if (!current) return;
     const { offsetWidth } = current;
     const lastColumn = document.getElementById('adjustLastColumn');
@@ -536,7 +574,7 @@ export default class PrintSettings extends React.Component {
     this.setState({ page: 1, pages });
     if (pages > C.UI.Print.maxPages) {
       this.addToast({
-        message: `${G.i18n.t('printPages.label')}: 1-${pages}`,
+        message: `${GI.i18n.t('', renderPromise, 'printPages.label')}: 1-${pages}`,
         timeout: 5000,
         intent: Intent.WARNING,
       });
@@ -548,8 +586,7 @@ export default class PrintSettings extends React.Component {
   }
 
   scrollToPage(page?: number) {
-    const { print } = this.props as PrintSettingsProps;
-    const { current } = print.printContainer;
+    const { current } = printRefs.printContainerRef;
     const { pageScrollW } = this;
     if (current) {
       let scrollLeft = 0;
@@ -564,15 +601,10 @@ export default class PrintSettings extends React.Component {
   render() {
     const { landscape, pageSize, twoColumns, scale, margins, page, pages } =
       this.state as PrintSettingsState;
-    const { print, printDisabled } = this.props as PrintSettingsProps;
-    const {
-      pageable,
-      pageView,
-      controls,
-      printContainer,
-      settings,
-      dialogEnd,
-    } = print;
+    const { print } = this.props as PrintSettingsProps;
+    const { pageable, printDisabled, dialogEnd } = print;
+    const { pageViewRef, customSettingsRef, printContainerRef, settingsRef } =
+      printRefs;
     const { selectRefs, pagebuttons, getPageInfo, handler } = this;
 
     let style = '';
@@ -654,8 +686,8 @@ export default class PrintSettings extends React.Component {
     const showpaging =
       !printDisabled &&
       pageable &&
-      (printContainer.current?.scrollWidth ?? 0) >
-        (printContainer.current?.clientWidth ?? 0);
+      (printContainerRef.current?.scrollWidth ?? 0) >
+        (printContainerRef.current?.clientWidth ?? 0);
 
     return (
       <Vbox {...addClass('printsettings', this.props)}>
@@ -667,7 +699,8 @@ export default class PrintSettings extends React.Component {
             if (ref) this.toaster = ref;
           }}
         />
-        {pageView?.current &&
+
+        {pageViewRef?.current &&
           showpaging &&
           ReactDOM.createPortal(
             <Hbox className="page-buttons" align="center" domref={pagebuttons}>
@@ -691,171 +724,181 @@ export default class PrintSettings extends React.Component {
                 </div>
               )}
             </Hbox>,
-            pageView.current,
+            pageViewRef.current,
           )}
         <style>{style}</style>
-        <div className="printControls" ref={controls} />
-        <Groupbox
-          className="printSettings"
-          caption={G.i18n.t('menu.print')}
-          domref={settings}
-        >
-          <Vbox pack="center" align="center">
-            <Hbox align="center">
-              <Menulist
-                id="pageSize"
-                value={pageSize}
-                options={paperSizes.map((p) => (
-                  <option key={p.type} value={p.type}>
-                    {p.type}
-                  </option>
-                ))}
-                onChange={handler}
-              />
-              <Spacer width="15" />
-              <Button
-                id="portrait"
-                checked={!landscape}
-                icon="document"
-                onClick={handler}
-              />
-              <Button
-                id="landscape"
-                checked={landscape}
-                icon="document"
-                onClick={handler}
-              />
-              {pageable && (
-                <>
-                  <Spacer width="10" />
-                  <Button
-                    id="columns.1"
-                    checked={!twoColumns}
-                    icon="one-column"
-                    onClick={handler}
-                  />
-                  <Button
-                    id="columns.2"
-                    checked={twoColumns}
-                    icon="two-columns"
-                    onClick={handler}
-                  />
-                </>
-              )}
-            </Hbox>
-            <Vbox className="margins" pack="center" align="center">
-              <Hbox align="center" pack="start">
-                <Icon icon="bring-data" />
-                <Textbox
-                  id="margins.top"
-                  value={margins.top.toString()}
-                  maxLength="3"
-                  pattern={/^\d*$/}
-                  onBlur={handler}
-                  onKeyDown={handler}
-                  inputRef={selectRefs.margins.top}
+
+        <div className="printControls" ref={customSettingsRef} />
+
+        {Build.isElectronApp && (
+          <Groupbox
+            className="printSettings"
+            caption={GI.i18n.t('', renderPromise, 'menu.print')}
+            domref={settingsRef}
+          >
+            <Vbox pack="center" align="center">
+              <Hbox align="center">
+                <Menulist
+                  id="pageSize"
+                  value={pageSize}
+                  options={paperSizes.map((p) => (
+                    <option key={p.type} value={p.type}>
+                      {p.type}
+                    </option>
+                  ))}
+                  onChange={handler}
                 />
-                <Label value="mm" />
+                <Spacer width="15" />
+                <Button
+                  id="portrait"
+                  checked={!landscape}
+                  icon="document"
+                  onClick={handler}
+                />
+                <Button
+                  id="landscape"
+                  checked={landscape}
+                  icon="document"
+                  onClick={handler}
+                />
+                {pageable && (
+                  <>
+                    <Spacer width="10" />
+                    <Button
+                      id="columns.1"
+                      checked={!twoColumns}
+                      icon="one-column"
+                      onClick={handler}
+                    />
+                    <Button
+                      id="columns.2"
+                      checked={twoColumns}
+                      icon="two-columns"
+                      onClick={handler}
+                    />
+                  </>
+                )}
               </Hbox>
-              <Hbox>
+              <Vbox className="margins" pack="center" align="center">
                 <Hbox align="center" pack="start">
                   <Icon icon="bring-data" />
                   <Textbox
-                    id="margins.left"
-                    value={margins.left.toString()}
+                    id="margins.top"
+                    value={margins.top.toString()}
                     maxLength="3"
                     pattern={/^\d*$/}
                     onBlur={handler}
                     onKeyDown={handler}
-                    inputRef={selectRefs.margins.left}
+                    inputRef={selectRefs.margins.top}
                   />
                   <Label value="mm" />
                 </Hbox>
-                <Spacer />
+                <Hbox>
+                  <Hbox align="center" pack="start">
+                    <Icon icon="bring-data" />
+                    <Textbox
+                      id="margins.left"
+                      value={margins.left.toString()}
+                      maxLength="3"
+                      pattern={/^\d*$/}
+                      onBlur={handler}
+                      onKeyDown={handler}
+                      inputRef={selectRefs.margins.left}
+                    />
+                    <Label value="mm" />
+                  </Hbox>
+                  <Spacer />
+                  <Hbox align="center" pack="start">
+                    <Icon icon="bring-data" />
+                    <Textbox
+                      id="margins.right"
+                      value={margins.right.toString()}
+                      maxLength="3"
+                      pattern={/^\d*$/}
+                      onBlur={handler}
+                      onKeyDown={handler}
+                      inputRef={selectRefs.margins.right}
+                    />
+                    <Label value="mm" />
+                  </Hbox>
+                </Hbox>
                 <Hbox align="center" pack="start">
                   <Icon icon="bring-data" />
                   <Textbox
-                    id="margins.right"
-                    value={margins.right.toString()}
+                    id="margins.bottom"
+                    value={margins.bottom.toString()}
                     maxLength="3"
                     pattern={/^\d*$/}
                     onBlur={handler}
                     onKeyDown={handler}
-                    inputRef={selectRefs.margins.right}
+                    inputRef={selectRefs.margins.bottom}
                   />
                   <Label value="mm" />
                 </Hbox>
-              </Hbox>
+              </Vbox>
               <Hbox align="center" pack="start">
-                <Icon icon="bring-data" />
+                <Icon icon="font" />
                 <Textbox
-                  id="margins.bottom"
-                  value={margins.bottom.toString()}
+                  id="font.size"
+                  value={scale.toString()}
                   maxLength="3"
+                  timeout="500"
                   pattern={/^\d*$/}
                   onBlur={handler}
                   onKeyDown={handler}
-                  inputRef={selectRefs.margins.bottom}
+                  inputRef={selectRefs.scale}
                 />
-                <Label value="mm" />
+                <Label value="%" />
               </Hbox>
             </Vbox>
-            <Hbox align="center" pack="start">
-              <Icon icon="font" />
-              <Textbox
-                id="font.size"
-                value={scale.toString()}
-                maxLength="3"
-                timeout="500"
-                pattern={/^\d*$/}
-                onBlur={handler}
-                onKeyDown={handler}
-                inputRef={selectRefs.scale}
-              />
-              <Label value="%" />
-            </Hbox>
-          </Vbox>
-        </Groupbox>
+          </Groupbox>
+        )}
+
         <Hbox className="dialog-buttons" pack="end" align="end">
           {
             // Printing in at least Ubuntu 20 core dumps! So Disallow
             // in linux for now (the PDF can be created and then printed
             // separately)
           }
-          {window.ProcessInfo.platform !== 'linux' && (
-            <Button
-              id="print"
-              icon="print"
-              flex="1"
-              fill="x"
-              disabled={printDisabled}
-              onClick={handler}
-            >
-              {G.i18n.t('menu.print')}
-            </Button>
+          {!Build.isElectronApp ||
+            (window.ProcessInfo.platform !== 'linux' && (
+              <Button
+                id="print"
+                icon="print"
+                flex="1"
+                fill="x"
+                disabled={printDisabled}
+                onClick={handler}
+              >
+                {GI.i18n.t('', renderPromise, 'menu.print')}
+              </Button>
+            ))}
+          {Build.isElectronApp && (
+            <>
+              <Button
+                id="printToPDF"
+                icon="document"
+                flex="1"
+                fill="x"
+                disabled={printDisabled}
+                onClick={handler}
+              >
+                PDF
+              </Button>
+              <Button
+                id="printPreview"
+                flex="1"
+                fill="x"
+                disabled={printDisabled}
+                onClick={handler}
+              >
+                {GI.i18n.t('', renderPromise, 'printPreviewCmd.label')}
+              </Button>
+            </>
           )}
-          <Button
-            id="printToPDF"
-            icon="document"
-            flex="1"
-            fill="x"
-            disabled={printDisabled}
-            onClick={handler}
-          >
-            PDF
-          </Button>
-          <Button
-            id="printPreview"
-            flex="1"
-            fill="x"
-            disabled={printDisabled}
-            onClick={handler}
-          >
-            {G.i18n.t('printPreviewCmd.label')}
-          </Button>
           <Spacer flex="10" />
           <Button id={dialogEnd} flex="1" fill="x" onClick={handler}>
-            {G.i18n.t(`${dialogEnd}.label`)}
+            {GI.i18n.t('', renderPromise, `${dialogEnd}.label`)}
           </Button>
         </Hbox>
       </Vbox>

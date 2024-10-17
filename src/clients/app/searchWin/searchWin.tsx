@@ -5,7 +5,7 @@ import { G } from '../../G.ts';
 import log from '../../log.ts';
 import Search from '../../components/search/search.tsx';
 import { Indexing } from '../../components/search/searchH.tsx';
-import { windowArguments } from '../../common.ts';
+import { windowArguments } from '../../common.tsx';
 import './searchWin.css';
 
 import type { SearchType } from '../../../type.ts';
@@ -17,7 +17,7 @@ export const descriptor = windowArguments();
 renderToRoot(
   <Search initialState={searchArg} descriptor={descriptor} height="100%" />,
   {
-    initialState: { resetOnResize: false },
+    resetOnResize: false,
     onunload: () => {
       if (Indexing.current) {
         G.LibSword.searchIndexCancel(Indexing.current, descriptor.id);

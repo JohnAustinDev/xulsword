@@ -57,7 +57,7 @@ import type {
 } from '../../../type.ts';
 import type { ControllerState } from '../../../clients/controller.tsx';
 import type { AboutWinState } from '../../../clients/app/about/about.tsx';
-import type { PrintPassageState } from '../../../clients/app/printPassage/printPassage.tsx';
+import type { PrintPassageState } from '../../../clients/components/printPassage/printPassage.tsx';
 import type { CopyPassageState } from '../../../clients/app/copyPassage/copyPassage.tsx';
 import type { SelectVKType } from '../../../clients/components/libxul/selectVK.tsx';
 import type { BMPropertiesStateWinArg } from '../../../clients/app/bmProperties/bmProperties.tsx';
@@ -528,16 +528,16 @@ const Commands = {
         arguments[1] ?? getBrowserWindows({ type: 'xulswordWin' })[0].id;
       const windowToPrint = BrowserWindow.fromId(callingWinID);
       if (windowToPrint) {
-        const rootState: Partial<ControllerState> = {
-          reset: randomID(),
-          ...winRootState,
-          showPrintOverlay: true,
-          modal: 'dropshadow',
-        };
-        publishSubscription<'setRendererRootState'>(
-          'setRendererRootState',
+        publishSubscription<'setControllerState'>(
+          'setControllerState',
           { renderers: { id: windowToPrint.id } },
-          rootState,
+          {
+            reset: randomID(),
+            ...winRootState,
+            print: { pageable: false, dialogEnd: 'cancel' },
+            resetCssClass: 'printp',
+            modal: 'dropshadow',
+          },
         );
         const destroy = Subscription.subscribe.asyncTaskComplete(() => {
           destroy();
@@ -552,7 +552,7 @@ const Commands = {
       chapters: null,
     };
     Window.open({
-      type: 'printPassage',
+      type: 'printPassageWin',
       className: 'skin',
       typePersistBounds: true,
       additionalArguments: { passageWinState },

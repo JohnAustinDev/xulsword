@@ -1,17 +1,18 @@
 import type React from 'react';
+import Subscription from '../../../subscription.ts';
 import {
   cleanDoubleClickSelection,
   clone,
   getCSS,
   JSON_stringify,
   ofClass,
+  randomID,
   sanitizeHTML,
 } from '../../../common.ts';
 import C from '../../../constant.ts';
 import type S from '../../../defaultPrefs.ts';
 import { G } from '../../G.ts';
 import { getElementData } from '../../htmlData.ts';
-import Commands from '../../commands.ts';
 import log from '../../log.ts';
 import { aTextWheelScroll } from './zversekey.ts';
 
@@ -202,7 +203,14 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
               type: 'SearchAnyWord',
             };
             if (Build.isElectronApp) G.Commands.search(search);
-            else Commands.setSearchOverlay(search);
+            else
+              Subscription.publish.setControllerState({
+                reset: randomID(),
+                card: {
+                  name: 'search',
+                  props: { initialState: search, onlyLucene: true },
+                },
+              });
           }
         }
       }

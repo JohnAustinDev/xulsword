@@ -304,9 +304,3 @@ html[dir='rtl'] .resultBox #displayModule {
     transform: rotate(-90deg);
   }
 }
-
-@media (max-width: 300px) {
-  .bibleBrowser #closeSearchButton {
-    padding: 0;
-  }
-}

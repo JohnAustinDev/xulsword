@@ -265,7 +265,7 @@ const openXulswordWindow = () => {
       (newmods: NewModulesType, callingWinID?: number) => {
         if (callingWinID) {
           publishSubscription(
-            'setRendererRootState',
+            'setControllerState',
             { renderers: { id: callingWinID } },
             { progress: 'indefinite' },
           );
@@ -327,7 +327,7 @@ const openXulswordWindow = () => {
             }, 1);
           }
           publishSubscription(
-            'setRendererRootState',
+            'setControllerState',
             { renderers: { id: callingWinID } },
             { progress: -1 },
           );

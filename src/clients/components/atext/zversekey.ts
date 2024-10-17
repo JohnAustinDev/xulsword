@@ -9,7 +9,7 @@ import {
   getMaxChapter,
   getMaxVerse,
   getLocalizedChapterTerm,
-} from '../../common.ts';
+} from '../../common.tsx';
 import { G, GI } from '../../G.ts';
 import { delayHandler } from '../libxul/xul.tsx';
 

@@ -24,6 +24,8 @@ import defaultSettings, {
 } from './defaultSettings.ts';
 import './bibleBrowser.css';
 
+import type { PrintPassageProps } from '../../components/printPassage/printPassage.tsx';
+
 // For narrow screens, only one panel is shown and all notes appear in popups,
 // regardless of initial settings.
 
@@ -145,7 +147,7 @@ socket.on('connect', () => {
       }, 1);
 
       renderToRoot(<Xulsword onWheelCapture={wheelCapture} />, {
-        className: 'bibleBrowser',
+        htmlCssClass: 'bibleBrowser'
       }).catch((er) => {
         log.error(er);
       });

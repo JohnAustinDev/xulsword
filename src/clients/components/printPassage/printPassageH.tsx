@@ -3,7 +3,7 @@ import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
 import RenderPromise from '../../renderPromise.ts';
 import addBookmarks from '../../bookmarks.ts';
-import { isValidVKM, getLocalizedChapterTerm, dString } from '../../common.ts';
+import { isValidVKM, getLocalizedChapterTerm, dString } from '../../common.tsx';
 import { getDictEntryHTML } from '../../components/atext/zdictionary.ts';
 import {
   getNoteHTML,
@@ -111,7 +111,9 @@ export function bibleChapterText(
         location.book,
       )
     ) {
-      const { text, notes } = G.LibSword.getChapterText(
+      const { text, notes } = GI.LibSword.getChapterText(
+        { text: '', notes: '' },
+        renderPromise,
         module,
         `${book}.${chapter}`,
         options,
@@ -156,7 +158,7 @@ export function bibleChapterText(
       headHTML = `
       <div class="${headclass.join(' ')}">
         <div class="chaptitle" >
-          <div class="chapbk">${G.i18n.t(book, toptions)}</div>
+          <div class="chapbk">${GI.i18n.t('', renderPromise, book, toptions)}</div>
           <div class="chapch">${getLocalizedChapterTerm(
             book,
             chapter,

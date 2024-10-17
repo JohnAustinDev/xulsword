@@ -4,7 +4,7 @@ import { clone, gbAncestorIDs, stringHash } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
 import RenderPromise from '../../renderPromise.ts';
-import { audioGenBookNode } from '../../common.ts';
+import { audioGenBookNode } from '../../common.tsx';
 import { Hbox, Vbox } from '../libxul/boxes.tsx';
 import { xulPropTypes, addClass } from '../libxul/xul.tsx';
 import TreeView, { forEachNode } from '../libxul/treeview.tsx';

@@ -5,7 +5,7 @@ import { G } from '../../G.ts';
 import {
   functionalComponentRenderPromise,
   getLangReadable,
-} from '../../common.ts';
+} from '../../common.tsx';
 import { addClass, xulPropTypes, type XulProps } from './xul.tsx';
 import Menulist from './menulist.tsx';
 

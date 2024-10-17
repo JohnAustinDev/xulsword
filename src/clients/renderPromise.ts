@@ -9,7 +9,7 @@ import { GBuilder } from '../type.ts';
 import C from '../constant.ts';
 import { G } from './G.ts';
 import log from './log.ts';
-import { callResultDecompress, getWaitRetry } from './common.ts';
+import { callResultDecompress, getWaitRetry } from './common.tsx';
 
 import type {
   BookType,

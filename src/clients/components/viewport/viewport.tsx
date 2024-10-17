@@ -20,7 +20,7 @@ import Commands from '../../commands.ts';
 import RenderPromise from '../../renderPromise.ts';
 import log from '../../log.ts';
 import { verseKey } from '../../htmlData.ts';
-import { clearPending } from '../../common.ts';
+import { clearPending } from '../../common.tsx';
 import { addClass, xulPropTypes, topHandle } from '../libxul/xul.tsx';
 import { Hbox, Vbox } from '../libxul/boxes.tsx';
 import Chooser from '../chooser/chooser.tsx';
@@ -160,7 +160,7 @@ class Viewport extends React.Component implements PopupParent {
       Commands.playAudio(
         audioFile,
         new RenderPromise(() =>
-          Subscription.publish.setRendererRootState({
+          Subscription.publish.setControllerState({
             reset: randomID(),
           }),
         ),

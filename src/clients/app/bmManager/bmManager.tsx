@@ -17,7 +17,7 @@ import {
   registerUpdateStateFromPref,
   setStatePref,
   getStatePref,
-} from '../../common.ts';
+} from '../../common.tsx';
 import log from '../../log.ts';
 import { bookmarkTreeNodes, getSampleText } from '../../bookmarks.ts';
 import { verseKey } from '../../htmlData.ts';
@@ -31,7 +31,6 @@ import Button from '../../components/libxul/button.tsx';
 import {
   xulPropTypes,
   addClass,
-  htmlAttribs,
 } from '../../components/libxul/xul.tsx';
 import * as H from './bmManagerH.tsx';
 import './bmManager.css';
@@ -43,18 +42,15 @@ import type {
   BookmarkItemType,
   BookmarkTreeNode,
 } from '../../../type.ts';
-import type { RootPrintType } from '../../controller.tsx';
 import type { DragSizerVal } from '../../components/libxul/dragsizer.tsx';
 import type { XulProps } from '../../components/libxul/xul.tsx';
+import Subscription from '../../../subscription.ts';
 
 const propTypes = {
   ...xulPropTypes,
-  print: PropTypes.object.isRequired,
 };
 
-type BMManagerProps = XulProps & {
-  print: Pick<RootPrintType, 'printContainer'>;
-};
+type BMManagerProps = XulProps;
 
 const defaultNotStatePref = {
   selectedItems: [] as string[],
@@ -169,7 +165,6 @@ export default class BMManagerWin extends React.Component {
       reset,
       printItems,
     } = state;
-    const { print } = props;
     const {
       tableCompRef,
       buttonHandler,
@@ -214,14 +209,16 @@ export default class BMManagerWin extends React.Component {
     );
 
     if (printItems) {
-      return (
-        <div
-          {...htmlAttribs(['printContainer userFontBase'], props)}
-          ref={print.printContainer}
-        >
-          {printItems.map((itemID) => this.printableItem(itemID))}
-        </div>
-      );
+      Subscription.publish.setControllerState({
+        print: {
+          dialogEnd: 'close',
+          pageable: false,
+          content: (
+            <>{printItems.map((itemID) => this.printableItem(itemID))}</>
+          ),
+        },
+      });
+      return <></>;
     }
 
     return (
@@ -427,12 +424,7 @@ export default class BMManagerWin extends React.Component {
 }
 BMManagerWin.propTypes = propTypes;
 
-const print: BMManagerProps['print'] = {
-  printContainer: React.createRef(),
-};
-
-renderToRoot(<BMManagerWin id="bookmarkManager" print={print} />, {
-  print: { ...print, pageable: true },
+renderToRoot(<BMManagerWin id="bookmarkManager" />, {
   onunload: () => {
     G.Prefs.setComplexValue(
       'bookmarkManager.cut',

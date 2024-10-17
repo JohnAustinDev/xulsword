@@ -8,7 +8,7 @@ import {
   audioConfig,
   clearPending,
   getMaxChapter,
-} from '../../common.ts';
+} from '../../common.tsx';
 import { Hbox, Vbox } from '../libxul/boxes.tsx';
 import Spacer from '../libxul/spacer.tsx';
 import {
@@ -322,7 +322,7 @@ class Chooser extends React.Component implements RenderPromiseComponent {
             }
             <BookGroupList
               className={`sizer${
-                (audioConfig(headingsModule, renderPromise) && ' audio') || ''
+                (audioConfig(headingsModule || '', renderPromise) && ' audio') || ''
               }`}
               availableBooks={new Set([longestBook])}
               headingsModule={headingsModule}

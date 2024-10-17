@@ -8,7 +8,7 @@ import {
 } from '../common.ts';
 import Cache from '../cache.ts';
 import { GBuilder } from '../type.ts';
-import { callResultDecompress, getWaitRetry } from './common.ts';
+import { callResultDecompress, getWaitRetry } from './common.tsx';
 import { GCallsOrPromise } from './renderPromise.ts';
 import log from './log.ts';
 import CookiePrefs from './webapp/prefs.ts';

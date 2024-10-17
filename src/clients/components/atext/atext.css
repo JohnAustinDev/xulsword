@@ -110,14 +110,14 @@ html[dir='rtl'] .atext .origselect {
   column-fill: auto;
 }
 @media (max-width: 767px) {
-  .atext:not(.columns1) .sb {
+  .bibleBrowser .atext:not(.columns1) .sb {
     column-gap: 14px;
     column-rule-width: 4px;
   }
-  .atext:not(:last-child) {
+  .bibleBrowser .atext:not(:last-child) {
     margin-inline-end: 5px;
   }
-  .atext .sb {
+  .bibleBrowser .atext .sb {
     padding: 0 5px;
   }
 }

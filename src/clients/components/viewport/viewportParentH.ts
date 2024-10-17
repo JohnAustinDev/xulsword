@@ -8,7 +8,7 @@ import { getElementData, verseKey } from '../../htmlData.ts';
 import { G } from '../../G.ts';
 import Commands from '../../commands.ts';
 import RenderPromise from '../../renderPromise.ts';
-import { scrollIntoView, windowArguments } from '../../common.ts';
+import { scrollIntoView, windowArguments } from '../../common.tsx';
 import { delayHandler } from '../libxul/xul.tsx';
 import { textChange } from '../atext/ztext.ts';
 import { aTextWheelScroll, chapterChange } from '../atext/zversekey.ts';
@@ -532,7 +532,7 @@ export default function handler(
                 loc,
                 undefined,
                 new RenderPromise(() =>
-                  Subscription.publish.setRendererRootState({
+                  Subscription.publish.setControllerState({
                     reset: randomID(),
                   }),
                 ),

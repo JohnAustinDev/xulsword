@@ -1,4 +1,3 @@
-import i18n from 'i18next';
 import RenderPromise from './clients/renderPromise.ts';
 import { getPanelWidths, keep } from './common.ts';
 import C from './constant.ts';

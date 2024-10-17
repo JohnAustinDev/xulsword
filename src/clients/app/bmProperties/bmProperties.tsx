@@ -17,7 +17,7 @@ import { G } from '../../G.ts';
 import renderToRoot from '../../controller.tsx';
 import { verseKey } from '../../htmlData.ts';
 import log from '../../log.ts';
-import { windowArguments } from '../../common.ts';
+import { windowArguments } from '../../common.tsx';
 import { bookmarkTreeNode, getSampleText } from '../../bookmarks.ts';
 import Grid, {
   Column,
@@ -431,7 +431,7 @@ export default class BMPropertiesWin extends React.Component {
 BMPropertiesWin.propTypes = propTypes;
 
 renderToRoot(<BMPropertiesWin />, {
-  initialState: { resetOnResize: false },
+  resetOnResize: false,
 }).catch((er) => {
   log.error(er);
 });

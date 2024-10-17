@@ -20,7 +20,7 @@ import {
   iframeAutoHeight,
   moduleIncludesStrongs,
   windowArguments,
-} from '../../common.ts';
+} from '../../common.tsx';
 import Popup from '../../components/popup/popup.tsx';
 import {
   popupParentHandler as popupParentHandlerH,
@@ -288,7 +288,7 @@ export default class Search
     }
 
     this.updateResults();
-    iframeAutoHeight('.searchOverlay'); // searchOverlay height is not constrained
+    iframeAutoHeight('.searchCard'); // searchCard height is not constrained
     renderPromise.dispatch();
   }
 

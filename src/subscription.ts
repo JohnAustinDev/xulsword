@@ -16,7 +16,7 @@ const subscriptionsNames: Record<keyof SubscriptionTypes, null> = {
   modulesInstalled: null,
   asyncTaskComplete: null,
   resetMain: null,
-  setRendererRootState: null,
+  setControllerState: null,
 };
 
 type SubscriptionTypes = {
@@ -25,7 +25,7 @@ type SubscriptionTypes = {
   modulesInstalled: (newmods: NewModulesType, callingWinID?: number) => void;
   asyncTaskComplete: () => unknown;
   resetMain: () => void;
-  setRendererRootState: (state: Partial<ControllerState>) => void;
+  setControllerState: (state: Partial<ControllerState>, mergeValue?: boolean) => void;
 };
 
 export type SubscriptionType = {
@@ -39,8 +39,8 @@ export type SubscriptionType = {
     ) => () => void;
     windowCreated: (func: SubscriptionTypes['windowCreated']) => () => void;
     resetMain: (func: SubscriptionTypes['resetMain']) => () => void;
-    setRendererRootState: (
-      func: SubscriptionTypes['setRendererRootState'],
+    setControllerState: (
+      func: SubscriptionTypes['setControllerState'],
     ) => () => void;
   };
 
@@ -60,9 +60,9 @@ export type SubscriptionType = {
     resetMain: (
       ...args: Parameters<SubscriptionTypes['resetMain']>
     ) => Array<ReturnType<SubscriptionTypes['resetMain']>>;
-    setRendererRootState: (
-      ...args: Parameters<SubscriptionTypes['setRendererRootState']>
-    ) => Array<ReturnType<SubscriptionTypes['setRendererRootState']>>;
+    setControllerState: (
+      ...args: Parameters<SubscriptionTypes['setControllerState']>
+    ) => Array<ReturnType<SubscriptionTypes['setControllerState']>>;
   };
 
   doSubscribe: (

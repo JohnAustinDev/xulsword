@@ -8,7 +8,7 @@ import {
 } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G } from '../../G.ts';
-import { moduleInfoHTML } from '../../common.ts';
+import { moduleInfoHTML } from '../../common.tsx';
 import { xulPropTypes, type XulProps, htmlAttribs } from './xul.tsx';
 import Button from './button.tsx';
 import Label from './label.tsx';

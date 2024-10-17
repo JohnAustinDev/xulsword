@@ -24,7 +24,7 @@ type ButtonProps = Omit<XulProps, 'align' | 'orient' | 'pack'> &
 
 function Button(props: ButtonProps) {
   const { checked, children, disabled, dlgType, fill } = props;
-  const cls: string[] = ['button', checked ? 'on' : 'off'];
+  const cls: string[] = ['button', checked !== false ? 'on' : 'off'];
   if (dlgType) cls.push(dlgType);
   if (fill) cls.push(`fill-${fill}`);
   const bpprops = [

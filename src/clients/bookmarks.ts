@@ -4,7 +4,7 @@ import C from '../constant.ts';
 import type S from '../defaultPrefs.ts';
 import { G, GI } from './G.ts';
 import { updateDataAttribute, verseKey } from './htmlData.ts';
-import { getMaxVerse } from './common.ts';
+import { getMaxVerse } from './common.tsx';
 import bookmarkItemIcon from './app/bmManager/bookmarkItemIcon.tsx';
 
 import type {

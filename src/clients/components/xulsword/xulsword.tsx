@@ -1,6 +1,6 @@
 import React from 'react';
 import { Icon } from '@blueprintjs/core';
-import { clone, stringHash } from '../../../common.ts';
+import { clone, randomID, stringHash } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
 import RenderPromise from '../../renderPromise.ts';
@@ -10,7 +10,7 @@ import {
   getStatePref,
   clearPending,
   setStatePref,
-} from '../../common.ts';
+} from '../../common.tsx';
 import {
   addClass,
   delayHandler,
@@ -22,6 +22,8 @@ import { Box, Hbox, Vbox } from '../libxul/boxes.tsx';
 import Bookselect from '../libxul/bookselect.tsx';
 import Spacer from '../libxul/spacer.tsx';
 import Textbox from '../libxul/textbox.tsx';
+import SelectOR from '../libxul/selectOR.tsx';
+import SelectVK from '../libxul/selectVK.tsx';
 import Viewport from '../viewport/viewport.tsx';
 import viewportParentH, {
   closeMenupopups,
@@ -48,10 +50,17 @@ import type {
 import type S from '../../../defaultPrefs.ts';
 import type Atext from '../atext/atext.tsx';
 import type { XulProps } from '../libxul/xul.tsx';
-import SelectOR, { SelectORMType } from '../libxul/selectOR.tsx';
-import SelectVK, { SelectVKType } from '../libxul/selectVK.tsx';
+import type { SelectORMType } from '../libxul/selectOR.tsx';
+import type { SelectVKType } from '../libxul/selectVK.tsx';
+import PrintPassage, {
+  PrintPassageState,
+} from '../printPassage/printPassage.tsx';
+import { PrintOptionsType } from '../../controller.tsx';
+import Subscription from '../../../subscription.ts';
 
-const propTypes = xulPropTypes;
+const propTypes = {
+  ...xulPropTypes,
+};
 
 export type XulswordProps = XulProps;
 
@@ -387,9 +396,20 @@ export default class Xulsword
         {Build.isWebApp && (
           <Button
             id="printPassage"
-            checked={!!panels.find((m) => m && G.Tab[m].type == C.BIBLE)}
+            disabled={!panels.find((m) => m && G.Tab[m].type == C.BIBLE)}
             icon={<Icon icon="print" size={28} />}
-            onClick={undefined}
+            onClick={() => {
+              setStatePref('prefs', 'printPassage', null, {
+                chapters: G.Prefs.getComplexValue(
+                  'xulsword.location',
+                ) as typeof S.prefs.xulsword.location,
+              });
+              Subscription.publish.setControllerState({
+                reset: randomID(),
+                card: { name: 'printPassage', props: {}},
+                print: { dialogEnd: 'close', pageable: true },
+              });
+            }}
             title={GI.i18n.t('', renderPromise, 'menu.printPassage')}
           />
         )}
@@ -397,7 +417,7 @@ export default class Xulsword
           <>
             <Button
               id="addcolumn"
-              checked={panels.length < (window as any).browserMaxPanels}
+              disabled={panels.length >= (window as any).browserMaxPanels}
               icon={<Icon icon="add-column-right" size={28} />}
               onClick={handler}
               title={GI.i18n.t(
@@ -408,47 +428,49 @@ export default class Xulsword
             />
             <Button
               id="removecolumn"
-              checked={panels.length > 1}
+              disabled={panels.length <= 1}
               icon={<Icon icon="remove-column-right" size={28} />}
               onClick={handler}
               title={GI.i18n.t('', renderPromise, 'Remove a column of text.')}
             />
           </>
         )}
-        {(Build.isElectronApp ||
-          panels.find((m) => m && G.Tab[m].type == C.BIBLE)) && (
-          <>
-            <Button
-              id="headings"
-              checked={show.headings}
-              icon={<Icon icon="widget-header" size={28} />}
-              onClick={handler}
-              title={GI.i18n.t('', renderPromise, 'headingsButton.tooltip')}
-            />
-            <Button
-              id="dictlinks"
-              checked={show.dictlinks}
-              icon={<Icon icon="search-template" size={28} />}
-              onClick={handler}
-              title={GI.i18n.t('', renderPromise, 'dictButton.tooltip')}
-            />
-            <Button
-              id="footnotes"
-              checked={show.footnotes}
-              icon={<Icon icon="manually-entered-data" size={28} />}
-              onClick={handler}
-              title={GI.i18n.t('', renderPromise, 'notesButton.tooltip')}
-            />
-            {!Build.isWebApp && (
-              <Button
-                id="crossrefs"
-                checked={show.crossrefs}
-                icon={<Icon icon="link" size={28} />}
-                onClick={handler}
-                title={GI.i18n.t('', renderPromise, 'crossrefsButton.tooltip')}
-              />
-            )}
-          </>
+        <Button
+          id="headings"
+          checked={show.headings}
+          icon={<Icon icon="widget-header" size={28} />}
+          onClick={handler}
+          title={GI.i18n.t('', renderPromise, 'headingsButton.tooltip')}
+          disabled={!panels.find((m) => m && G.Tab[m].type == C.BIBLE)}
+        />
+        <Button
+          id="dictlinks"
+          checked={show.dictlinks}
+          icon={<Icon icon="search-template" size={28} />}
+          onClick={handler}
+          title={GI.i18n.t('', renderPromise, 'dictButton.tooltip')}
+          disabled={
+            !panels.find(
+              (m) => m && [C.BIBLE, C.DICTIONARY].includes(G.Tab[m].type),
+            )
+          }
+        />
+        <Button
+          id="footnotes"
+          checked={show.footnotes}
+          icon={<Icon icon="manually-entered-data" size={28} />}
+          onClick={handler}
+          title={GI.i18n.t('', renderPromise, 'notesButton.tooltip')}
+        />
+        {!Build.isWebApp && (
+          <Button
+            id="crossrefs"
+            checked={show.crossrefs}
+            icon={<Icon icon="link" size={28} />}
+            onClick={handler}
+            title={GI.i18n.t('', renderPromise, 'crossrefsButton.tooltip')}
+            disabled={!panels.find((m) => m && G.Tab[m].type == C.BIBLE)}
+          />
         )}
       </Hbox>
     );

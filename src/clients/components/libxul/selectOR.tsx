@@ -147,7 +147,7 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
         keys: selectorValue,
       };
       if (onSelection) onSelection(newsel, id);
-      this.setState({selection: newsel} as Partial<SelectORState>);
+      this.setState({ selection: newsel } as Partial<SelectORState>);
     }
   }
 

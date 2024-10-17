@@ -13,15 +13,15 @@ BrowserBible single panel - scroll iframe (or set iframe height if auto-height)
 Search window -             scroll iframe (or set iframe height if auto-height)
 */
 
-.iframe #root:has(.searchOverlay),
+.iframe #root:has(.searchCard),
 .iframe #reset:has(.textarea.single-panel) {
   overflow-y: auto;
 }
-.auto-height.iframe #root:has(.searchOverlay),
+.auto-height.iframe #root:has(.searchCard),
 .auto-height.iframe #reset:has(.textarea.single-panel) {
   overflow-y: hidden;
 }
-.iframe .searchOverlay,
+.iframe .searchCard,
 .iframe .xulsword:has(.textarea.single-panel) {
   height: unset;
 }
@@ -121,11 +121,16 @@ Search window -             scroll iframe (or set iframe height if auto-height)
   text-decoration: none;
 }
 
-#closeSearchButton {
+.close-card-button {
   position: absolute;
   z-index: 8;
   margin: 0;
   padding: 20px;
+}
+@media (max-width: 300px) {
+  .close-card-button {
+    padding: 0;
+  }
 }
 
 @media (max-width: 767px) {

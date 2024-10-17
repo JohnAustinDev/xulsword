@@ -2,7 +2,7 @@ import React from 'react';
 import C from '../../../constant.ts';
 import { G } from '../../G.ts';
 import renderToRoot from '../../controller.tsx';
-import { windowArguments } from '../../common.ts';
+import { windowArguments } from '../../common.tsx';
 import log from '../../log.ts';
 import { Hbox, Vbox } from '../../components/libxul/boxes.tsx';
 import Label from '../../components/libxul/label.tsx';
@@ -222,8 +222,6 @@ export default class AboutWin extends React.Component implements ModinfoParent {
 }
 AboutWin.propTypes = propTypes;
 
-renderToRoot(<AboutWin />, { initialState: { resetOnResize: false } }).catch(
-  (er) => {
-    log.error(er);
-  },
-);
+renderToRoot(<AboutWin />, { resetOnResize: false }).catch((er) => {
+  log.error(er);
+});

@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import DOMPurify from 'dompurify';
-import { clearPending } from '../../common.ts';
+import { clearPending } from '../../common.tsx';
 import { delayHandler, addClass, xulPropTypes } from './xul.tsx';
 import { Box } from './boxes.tsx';
 import './textbox.css';

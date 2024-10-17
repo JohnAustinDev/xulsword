@@ -5,7 +5,7 @@ import Subscription from '../../../subscription.ts';
 import { clone, ofClass, randomID, setGlobalPanels } from '../../../common.ts';
 import { G } from '../../G.ts';
 import Commands from '../../commands.ts';
-import { genBookAudioFile, verseKeyAudioFile } from '../../common.ts';
+import { genBookAudioFile, verseKeyAudioFile } from '../../common.tsx';
 import { verseKey } from '../../htmlData.ts';
 import log from '../../log.ts';
 import { chapterChange, verseChange } from '../atext/zversekey.ts';
@@ -132,7 +132,14 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
               type: 'SearchAnyWord',
             };
             if (Build.isElectronApp) G.Commands.search(search);
-            else Commands.setSearchOverlay(search);
+            else
+              Subscription.publish.setControllerState({
+                reset: randomID(),
+                card: {
+                  name: 'search',
+                  props: { initialState: search, onlyLucene: true },
+                },
+              });
           }
           break;
         }
@@ -169,7 +176,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
         case 'addcolumn':
         case 'removecolumn': {
           setGlobalPanels(G.Prefs, 0, currentId === 'addcolumn' ? 1 : -1);
-          Subscription.doPublish('setRendererRootState', { reset: randomID() });
+          Subscription.doPublish('setControllerState', { reset: randomID() });
           break;
         }
         default:
@@ -355,7 +362,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
       Commands.playAudio(
         afile,
         new RenderPromise(() =>
-          Subscription.publish.setRendererRootState({
+          Subscription.publish.setControllerState({
             reset: randomID(),
           }),
         ),

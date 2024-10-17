@@ -1,18 +1,16 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import ReactDOM from 'react-dom';
 import { ProgressBar } from '@blueprintjs/core';
 import Subscription from '../../../subscription.ts';
 import { diff, sanitizeHTML, stringHash } from '../../../common.ts';
 import C from '../../../constant.ts';
-import { G } from '../../G.ts';
-import renderToRoot from '../../controller.tsx';
+import { G, GI } from '../../G.ts';
 import {
-  windowArguments,
   getStatePref,
   setStatePref,
   libswordImgSrc,
-} from '../../common.ts';
+  printRefs,
+} from '../../common.tsx';
 import log from '../../log.ts';
 import RenderPromise, {
   RenderPromiseComponent,
@@ -41,8 +39,12 @@ import './printPassage.css';
 import type { ReactElement } from 'react';
 import type { OSISBookType } from '../../../type.ts';
 import type S from '../../../defaultPrefs.ts';
-import type { RootPrintType } from '../../controller.tsx';
+import type { PrintOptionsType } from '../../controller.tsx';
 import type { XulProps } from '../../components/libxul/xul.tsx';
+
+// The PrintPassage component utilizes state prefs to render a series of Bible
+// chapters into the printContainerRef (provided via a prop). Custom settings
+// provided to customSettingsRef allow users to select text options for print.
 
 // TODO: As of 11/22 @page {@bottom-center {content: counter(page);}} does not work
 
@@ -68,24 +70,19 @@ const switches = [
 
 const propTypes = {
   ...xulPropTypes,
-  print: PropTypes.object.isRequired,
 };
 
-type PrintPassageProps = XulProps & {
-  print: Pick<RootPrintType, 'printContainer' | 'controls'>;
-};
+export type PrintPassageProps = XulProps;
 
 const notStatePrefDefault = {
   progress: -1 as number,
 };
 
-let openedWinState: Partial<PrintPassageState> | null | undefined;
-
 export type PrintPassageState = typeof S.prefs.printPassage &
   typeof notStatePrefDefault &
   RenderPromiseState;
 
-export default class PrintPassageWin
+export default class PrintPassage
   extends React.Component
   implements RenderPromiseComponent
 {
@@ -107,25 +104,13 @@ export default class PrintPassageWin
     this.loadingRef = React.createRef();
     this.renderPromise = new RenderPromise(this, this.loadingRef);
 
-    if (typeof openedWinState === 'undefined') {
-      openedWinState = windowArguments(
-        'passageWinState',
-      ) as Partial<PrintPassageState> | null;
-    }
-
     const s: PrintPassageState = {
       renderPromiseID: 0,
       ...notStatePrefDefault,
       ...(getStatePref('prefs', 'printPassage') as typeof S.prefs.printPassage),
-      ...(openedWinState || {}),
     };
-    openedWinState = {};
     s.chapters = validPassage(s.chapters, this.renderPromise);
     this.state = s;
-
-    // Without the next save, prefs would somehow overwrite state
-    // before first render!
-    setStatePref('prefs', 'printPassage', null, s);
 
     this.pagebuttons = React.createRef();
 
@@ -146,14 +131,28 @@ export default class PrintPassageWin
   ) {
     const { renderPromise } = this;
     const state = this.state as PrintPassageState;
-    const { print } = this.props as PrintPassageProps;
-    const tdiv = print.printContainer.current;
+    const tdiv = printRefs.printContainerRef.current;
     const { chapters, progress } = state;
+
+    if (chapters) {
+      const { vkMod } = chapters;
+      if (vkMod) {
+        Subscription.publish.setControllerState({
+          print: {
+            direction: G.Tab[vkMod].direction || 'auto',
+          } as PrintOptionsType,
+        });
+      }
+    }
+
     const valid = validPassage(chapters, renderPromise);
     if (prevState.progress !== -1 && progress === -1) {
-      Subscription.publish.setRendererRootState({
-        printDisabled: false,
-      });
+      Subscription.publish.setControllerState(
+        {
+          print: { printDisabled: false } as PrintOptionsType,
+        },
+        true, // merge above into existing PrintOptionsType
+      );
     } else if (diff(chapters, valid)) {
       this.setState({ chapters: valid });
     } else if (tdiv) {
@@ -166,8 +165,7 @@ export default class PrintPassageWin
     const { renderPromise } = this;
     const state = this.state as PrintPassageState;
     const { chapters } = state;
-    const { print } = this.props as PrintPassageProps;
-    const tdiv = print.printContainer.current;
+    const tdiv = printRefs.printContainerRef.current;
     if (!tdiv || !chapters) return;
     const { checkbox } = state;
     const { vkMod, book, chapter, lastchapter, v11n } = chapters;
@@ -217,9 +215,12 @@ export default class PrintPassageWin
       log.debug(`Finished previewing ${renderHTML.length} chapters to DOM`);
 
       // Then asynchronously generate all other chapters with a progress bar
-      Subscription.publish.setRendererRootState({
-        printDisabled: true,
-      });
+      Subscription.publish.setControllerState(
+        {
+          print: { printDisabled: true } as PrintOptionsType,
+        },
+        true, // merge above into existing PrintOptionsType
+      );
       this.setState({ progress: 0 });
 
       // Pause here so first page will appear to user.
@@ -231,8 +232,7 @@ export default class PrintPassageWin
               setTimeout(() => {
                 if (renderHTML[i]) resolve(renderHTML[i]);
                 else {
-                  const tdivx = (this.props as PrintPassageProps).print
-                    .printContainer.current;
+                  const tdivx = printRefs.printContainerRef.current;
                   if (tdivx && tdivx.dataset.renderkey === renderkey) {
                     // log.debug(`Building chapter ${c[0]} ${c[1]}`);
                     pages += 1;
@@ -258,7 +258,7 @@ export default class PrintPassageWin
             );
           };
         });
-        let div = print.printContainer.current;
+        let div = printRefs.printContainerRef.current;
         if (div && div.dataset.renderkey === renderkey) {
           div.innerHTML = '';
           try {
@@ -269,7 +269,7 @@ export default class PrintPassageWin
               );
               const f = await func;
               const h = await f();
-              div = print.printContainer.current;
+              div = printRefs.printContainerRef.current;
               if (!div || div.dataset.renderkey !== renderkey) break;
               div.innerHTML += sanitizeHTML(h);
               libswordImgSrc(div);
@@ -308,8 +308,7 @@ export default class PrintPassageWin
   render() {
     const state = this.state as PrintPassageState;
     const { checkbox, chapters, progress } = state;
-    const { print } = this.props as PrintPassageProps;
-    const { loadingRef, handler, vkSelectHandler } = this;
+    const { loadingRef, renderPromise, handler, vkSelectHandler } = this;
     const vkMod = chapters?.vkMod;
     if (!vkMod || !chapters) return null;
 
@@ -322,19 +321,13 @@ export default class PrintPassageWin
 
     return (
       <>
-        <div
-          ref={print.printContainer}
-          className="printContainer userFontBase"
-          dir={G.Tab[vkMod].direction || 'auto'}
-        />
-
-        {print.controls.current &&
+        {printRefs.customSettingsRef.current &&
           ReactDOM.createPortal(
             <>
               <Groupbox
                 domref={loadingRef}
                 className="passage-selector"
-                caption={G.i18n.t('menu.printPassage')}
+                caption={GI.i18n.t('', renderPromise, 'menu.printPassage')}
               >
                 <SelectVK
                   id="chapters"
@@ -343,6 +336,7 @@ export default class PrintPassageWin
                   options={{
                     verses: [],
                     lastverses: [],
+                    vkMods: 'Texts',
                   }}
                   onSelection={vkSelectHandler}
                 />
@@ -357,7 +351,7 @@ export default class PrintPassageWin
               </Groupbox>
               <Groupbox
                 className="text-options"
-                caption={G.i18n.t('include.label')}
+                caption={GI.i18n.t('', renderPromise, 'include.label')}
               >
                 <Grid>
                   <Rows>
@@ -378,7 +372,7 @@ export default class PrintPassageWin
                               <Checkbox
                                 key={key}
                                 id={c[2]}
-                                label={G.i18n.t(c[3])}
+                                label={GI.i18n.t('', renderPromise, c[3])}
                                 checked={checkbox[c[2]]}
                                 disabled={
                                   c[2] === 'crossrefsText' &&
@@ -398,27 +392,10 @@ export default class PrintPassageWin
                 </Grid>
               </Groupbox>
             </>,
-            print.controls.current,
+            printRefs.customSettingsRef.current,
           )}
       </>
     );
   }
 }
-PrintPassageWin.propTypes = propTypes;
-
-const print: PrintPassageProps['print'] = {
-  printContainer: React.createRef(),
-  controls: React.createRef(),
-};
-
-renderToRoot(<PrintPassageWin print={print} />, {
-  print: { ...print, pageable: true, dialogEnd: 'close' },
-  initialState: {
-    showPrintOverlay: true,
-    modal: 'dropshadow',
-    iframeFilePath: '',
-    progress: -1,
-  },
-}).catch((er) => {
-  log.error(er);
-});
+PrintPassage.propTypes = propTypes;
