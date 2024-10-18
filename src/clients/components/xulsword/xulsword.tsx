@@ -401,9 +401,7 @@ export default class Xulsword
                 ) as typeof S.prefs.xulsword.location,
               });
               Subscription.publish.setControllerState({
-                reset: randomID(),
                 card: { name: 'printPassage', props: {} },
-                print: { dialogEnd: 'close', pageable: true },
               });
             }}
             title={GI.i18n.t('', renderPromise, 'menu.printPassage')}

@@ -92,6 +92,12 @@ function Controller(props: ControllerProps) {
     s[me] = useState(s0[me]) as any;
   });
 
+  // Print must be activated when printPassage card is shown.
+  if (s.card[0] && s.card[0].name === 'printPassage' && !s.print[0]) {
+    s.print[1]({ dialogEnd: 'close', pageable: true });
+    return null;
+  }
+
   const textbox: React.RefObject<HTMLInputElement> = React.createRef();
 
   // IPC component-reset setup:
@@ -138,10 +144,12 @@ function Controller(props: ControllerProps) {
           ) {
             val = { ...v0, ...val };
           }
-          const setMe = s[S][1] as (a: any) => void;
-          if (state.print !== null && S === 'reset') {
-            setTimeout(() => setMe(val), 1);
-          } else setMe(val);
+          if (S === 'dialogs' || stringHash(v0) !== stringHash(val)) {
+            const setMe = s[S][1] as (a: any) => void;
+            if (state.print !== null && S === 'reset') {
+              setTimeout(() => setMe(val), 1);
+            } else setMe(val);
+          }
         });
       },
     );

@@ -25,12 +25,15 @@ import type { XulProps } from './xul.tsx';
 
 // This PrintSettings component is composed of the following parts:
 // - Optional CUSTOM SETTINGS may be rendered elsewhere and provided via the
-//   React customSettingsRef ref.
-// - PAGING BUTTONS are rendered if pageable is true, and they will appear via
+//   React customSettingsRef. These settings would be applied to the content
+//   being printed (such as including footnotes in the printout, or not).
+// - If pageable is true, PAGING BUTTONS are rendered, and will appear via
 //   React portal within the pageViewRef element.
-// - Electron only: Printed page format OPTION SELECTORS, like page size,
-//   orientation, and margins.
-// - DIALOG BUTTONS, to close or cancel the current print operation.
+// - If used in an Electron app, print format OPTION SELECTORS are rendered,
+//   such as page size, orientation, and margin selectors.
+// - DIALOG BUTTONS are rendered to print, close or cancel the print
+//   operation. If used in an Electron app, then PDF and print preview buttons
+//   are also provided.
 
 export const paperSizes = [
   { type: 'A3', w: 297, h: 420, u: 'mm' },
@@ -351,22 +354,25 @@ export default class PrintSettings extends React.Component {
               });
             break;
           }
-          case 'close': {
-            G.Window.close();
-            break;
-          }
+          case 'close':
           case 'ok':
           case 'cancel': {
-            Subscription.publish.setControllerState({
-              reset: randomID(),
-              print: null,
-              modal: 'off',
-              progress: -1,
-            });
-            G.publishSubscription('asyncTaskComplete', {
-              renderers: { type: 'all' },
-              main: true,
-            });
+            if (Build.isElectronApp && id === 'close') {
+              G.Window.close();
+            } else {
+              Subscription.publish.setControllerState({
+                reset: randomID(),
+                print: null,
+                modal: 'off',
+                progress: -1,
+              });
+              if (Build.isElectronApp) {
+                G.publishSubscription('asyncTaskComplete', {
+                  renderers: { type: 'all' },
+                  main: true,
+                });
+              }
+            }
             break;
           }
           default:
@@ -859,8 +865,8 @@ export default class PrintSettings extends React.Component {
             // in linux for now (the PDF can be created and then printed
             // separately)
           }
-          {!Build.isElectronApp ||
-            (window.ProcessInfo.platform !== 'linux' && (
+          {(!Build.isElectronApp ||
+            window.ProcessInfo.platform !== 'linux') && (
               <Button
                 id="print"
                 icon="print"
@@ -871,7 +877,7 @@ export default class PrintSettings extends React.Component {
               >
                 {GI.i18n.t('', renderPromise, 'menu.print')}
               </Button>
-            ))}
+            )}
           {Build.isElectronApp && (
             <>
               <Button

@@ -16,11 +16,16 @@ import './print.css';
 import type { PrintOptionsType } from '../../controller.tsx';
 
 // The Print component is the foundation for all print related features.
-// It must be rendered to the root of a window and its children will become
-// available for printing. Print settings are provided alongside a scaleable
-// print container. If iframeFilePath is set to the path of a local PDF file,
-// then instead of the print controller and controls, the contents of the PDF
-// will be shown, for print preview capability.
+// It must be rendered to the root of a window and its children (the root
+// content) will become available for printing. PrintSettings is rendered
+// along with a scaleable PrintContainer (although for pageable content,
+// the PrintContainer must instead have been wrapped arround a root content
+// pageable descendent BEFORE the root content was passed to Print). For
+// Electron apps, iframeFilePath may be set to the path of a local PDF file
+// which was created by Electron as a print preview. Then instead of the
+// usual Print components, the content of the PDF will be shown in an iframe.
+// This provides a print preview which will be completed when the backHandler
+// is called by a back button click.
 
 const propTypes = {
   ...xulPropTypes,
