@@ -1,6 +1,6 @@
 import Viewport from '../../viewport.ts';
 import Prefs from './prefs.ts';
-import { G  } from './G.ts';
+import { G } from './G.ts';
 
 import type { GIType } from '../../type.ts';
 

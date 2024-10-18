@@ -56,7 +56,7 @@
 }
 
 /* Print styles */
-#reset:not(.printp) .printContainer > * {
+#root > div:not(.print) .printableItem {
   /* prevent bookmark text from flashing during print transition */
   display: none;
 }

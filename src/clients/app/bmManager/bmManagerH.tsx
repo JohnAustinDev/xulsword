@@ -289,7 +289,7 @@ export function buttonHandler(this: BMManagerWin, e: React.SyntheticEvent) {
           this.setState({
             printItems: selectedItems,
           } as Partial<BMManagerState>);
-          G.Commands.print()
+          G.Commands.print({ pageable: true, dialogEnd: 'cancel' })
             .then(() => {
               (
                 G.Prefs.setComplexValue as MethodAddCaller<
@@ -554,7 +554,10 @@ export function printableItem(
         }
       }
       return (
-        <span key={item.id} className={`item ${item.type} level-${level}`}>
+        <span
+          key={item.id}
+          className={`printableItem item ${item.type} level-${level}`}
+        >
           {item.id !== S.bookmarks.rootfolder.id && (
             <Label className={`cs-${item.labelLocale}`} value={item.label} />
           )}

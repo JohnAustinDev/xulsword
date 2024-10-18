@@ -96,11 +96,13 @@ export const printRefs: {
   printContainerRef: React.RefObject<HTMLDivElement>;
   customSettingsRef: React.RefObject<HTMLDivElement>;
   settingsRef: React.RefObject<HTMLDivElement>;
+  setPages: () => void;
 } = {
   pageViewRef: React.createRef(),
   printContainerRef: React.createRef(),
   customSettingsRef: React.createRef(),
   settingsRef: React.createRef(),
+  setPages: () => {},
 };
 
 // Read libsword data-src attribute file URLs and convert them into src inline data.

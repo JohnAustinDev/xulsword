@@ -20,20 +20,17 @@ import './printSettings.css';
 
 import type { Toaster, ToastProps } from '@blueprintjs/core';
 import type S from '../../../defaultPrefs.ts';
-import type {
-  ControllerState,
-  PrintOptionsType,
-} from '../../controller.tsx';
+import type { ControllerState, PrintOptionsType } from '../../controller.tsx';
 import type { XulProps } from './xul.tsx';
 
 // This PrintSettings component is composed of the following parts:
-// - Optional custom settings may be rendered elsewhere and provided via the
+// - Optional CUSTOM SETTINGS may be rendered elsewhere and provided via the
 //   React customSettingsRef ref.
-// - Paging buttons are rendered if pageable is true, and they will appear via
+// - PAGING BUTTONS are rendered if pageable is true, and they will appear via
 //   React portal within the pageViewRef element.
-// - Electron only: Printed page format option selectors, like page size,
+// - Electron only: Printed page format OPTION SELECTORS, like page size,
 //   orientation, and margins.
-// - Dialog buttons, to close or cancel the current print operation.
+// - DIALOG BUTTONS, to close or cancel the current print operation.
 
 export const paperSizes = [
   { type: 'A3', w: 297, h: 420, u: 'mm' },
@@ -133,6 +130,10 @@ export default class PrintSettings extends React.Component {
     this.addToast = this.addToast.bind(this);
     this.getPageInfo = this.getPageInfo.bind(this);
     this.scrollToPage = this.scrollToPage.bind(this);
+    this.setPages = this.setPages.bind(this);
+    this.setPages2 = this.setPages2.bind(this);
+
+    printRefs.setPages = this.setPages;
 
     this.pageScrollW = 0;
     this.pagebuttons = React.createRef();
@@ -143,36 +144,14 @@ export default class PrintSettings extends React.Component {
 
   componentDidMount() {
     this.forceUpdate(); // to re-render now with print.settings
+    setTimeout(() => this.setPages(), 1);
   }
 
   componentDidUpdate(
-    prevProps: PrintSettingsProps,
+    _prevProps: PrintSettingsProps,
     prevState: PrintSettingsState,
   ) {
-    const { pages } = this.state as PrintSettingsState;
-    const { print } = this.props as PrintSettingsProps;
-    const { pageable, printDisabled } = print;
     setStatePref('prefs', 'print', prevState, this.state);
-    // If we're multi-page and certain state prefs were changed, reset root now,
-    // so content can be redrawn, because the page limit means content will change.
-    if (
-      pageable &&
-      diff(
-        prevState,
-        keep(this.state as PrintSettingsState, [
-          'landscape',
-          'margins',
-          'pageSize',
-          'scale',
-          'twoColumns',
-        ]),
-      )
-    ) {
-      Subscription.publish.setControllerState({ reset: randomID() });
-    } else if (!pages || (prevProps.print.printDisabled && !printDisabled)) {
-      // Update number of pages if printDisabled was just set to false.
-      this.setPages();
-    }
   }
 
   handler(e: React.SyntheticEvent<any, any>) {
@@ -199,7 +178,7 @@ export default class PrintSettings extends React.Component {
             bottom: round((margins.bottom * convertToPx.mm) / convertToPx.in),
             left: round((margins.left * convertToPx.mm) / convertToPx.in),
           },
-          pageRanges: `1-${pages}`,
+          pageRanges: `1-${pages || 1}`,
           headerTemplate,
           footerTemplate,
           preferCSSPageSize: false,
@@ -242,6 +221,7 @@ export default class PrintSettings extends React.Component {
               pages: 0,
             };
             this.setState(s);
+            this.setPages2();
             break;
           }
           case 'columns': {
@@ -250,6 +230,7 @@ export default class PrintSettings extends React.Component {
               pages: 0,
             };
             this.setState(s);
+            this.setPages2();
             break;
           }
           case 'margin': {
@@ -264,6 +245,7 @@ export default class PrintSettings extends React.Component {
               );
               return s;
             });
+            this.setPages2();
             break;
           }
           case 'print': {
@@ -291,14 +273,16 @@ export default class PrintSettings extends React.Component {
               Subscription.publish.setControllerState(dark);
               G.Window.print(options)
                 .finally(() => {
-                  Subscription.publish.setControllerState({
-                    reset: randomID(),
-                    ...normal,
-                    print: {
-                      ...print,
-                      iframeFilePath: '',
-                    }
-                  });
+                  Subscription.publish.setControllerState(
+                    {
+                      reset: randomID(),
+                      ...normal,
+                      print: {
+                        iframeFilePath: '',
+                      } as PrintOptionsType,
+                    },
+                    true,
+                  );
                 })
                 .catch((er) => {
                   if (this.toaster) {
@@ -320,14 +304,16 @@ export default class PrintSettings extends React.Component {
               ...electronOptions,
             })
               .then(() => {
-                return Subscription.publish.setControllerState({
-                  reset: randomID(),
-                  ...normal,
-                  print: {
-                    ...print,
-                    iframeFilePath: '',
-                  }
-                });
+                return Subscription.publish.setControllerState(
+                  {
+                    reset: randomID(),
+                    ...normal,
+                    print: {
+                      iframeFilePath: '',
+                    } as PrintOptionsType,
+                  },
+                  true,
+                );
               })
               .catch((er) => {
                 this.toaster?.show({
@@ -344,16 +330,18 @@ export default class PrintSettings extends React.Component {
               ...electronOptions,
             })
               .then((iframeFilePath: string) => {
-                return Subscription.publish.setControllerState({
-                  reset: randomID(),
-                  print: {
-                    ...print,
-                    iframeFilePath,
-                    printDisabled: false
+                return Subscription.publish.setControllerState(
+                  {
+                    reset: randomID(),
+                    print: {
+                      iframeFilePath,
+                      printDisabled: false,
+                    } as PrintOptionsType,
+                    modal: 'off',
+                    progress: -1,
                   },
-                  modal: 'off',
-                  progress: -1,
-                });
+                  true,
+                );
               })
               .catch((er) => {
                 this.toaster?.show({
@@ -372,7 +360,6 @@ export default class PrintSettings extends React.Component {
             Subscription.publish.setControllerState({
               reset: randomID(),
               print: null,
-              resetCssClass: '',
               modal: 'off',
               progress: -1,
             });
@@ -397,6 +384,7 @@ export default class PrintSettings extends React.Component {
               pages: 0,
             };
             this.setState(s);
+            this.setPages2();
             break;
           }
 
@@ -420,6 +408,7 @@ export default class PrintSettings extends React.Component {
                   pages: 0,
                 };
                 this.setState(s);
+                this.setPages2();
               }
               break;
             }
@@ -431,6 +420,7 @@ export default class PrintSettings extends React.Component {
                 if (scale < scaleLimit.min) scale = scaleLimit.min;
                 const s: Partial<PrintSettingsState> = { scale, pages: 0 };
                 this.setState(s);
+                this.setPages2();
               }
               break;
             }
@@ -581,6 +571,14 @@ export default class PrintSettings extends React.Component {
     }
   }
 
+  setPages2() {
+    const { print } = this.props as PrintSettingsProps;
+    if (print.pageable)
+      setTimeout(() => this.setPages(), 1);
+    else
+      Subscription.publish.setControllerState({ reset: randomID() });
+  }
+
   addToast(toast: ToastProps) {
     if (this.toaster) this.toaster.show(toast);
   }
@@ -726,6 +724,7 @@ export default class PrintSettings extends React.Component {
             </Hbox>,
             pageViewRef.current,
           )}
+
         <style>{style}</style>
 
         <div className="printControls" ref={customSettingsRef} />

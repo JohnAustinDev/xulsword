@@ -506,9 +506,11 @@ export default class MainMenuBuilder {
           label: ts('menu.print'),
           accelerator: tx('menu.print.ac', ['CommandOrControl', 'Shift']),
           click: d(() => {
-            Commands.print().catch((er) => {
-              log.error(er);
-            });
+            Commands.print({ pageable: false, dialogEnd: 'cancel' }).catch(
+              (er) => {
+                log.error(er);
+              },
+            );
           }),
         },
         { type: 'separator' },

@@ -1,5 +1,4 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { Suggest } from '@blueprintjs/select';
 import {
   clone,
@@ -17,6 +16,7 @@ import {
   registerUpdateStateFromPref,
   setStatePref,
   getStatePref,
+  printRefs,
 } from '../../common.tsx';
 import log from '../../log.ts';
 import { bookmarkTreeNodes, getSampleText } from '../../bookmarks.ts';
@@ -28,10 +28,7 @@ import { Hbox, Vbox } from '../../components/libxul/boxes.tsx';
 import Label from '../../components/libxul/label.tsx';
 import TreeView from '../../components/libxul/treeview.tsx';
 import Button from '../../components/libxul/button.tsx';
-import {
-  xulPropTypes,
-  addClass,
-} from '../../components/libxul/xul.tsx';
+import { xulPropTypes, addClass } from '../../components/libxul/xul.tsx';
 import * as H from './bmManagerH.tsx';
 import './bmManager.css';
 import '@blueprintjs/select/lib/css/blueprint-select.css';
@@ -44,7 +41,6 @@ import type {
 } from '../../../type.ts';
 import type { DragSizerVal } from '../../components/libxul/dragsizer.tsx';
 import type { XulProps } from '../../components/libxul/xul.tsx';
-import Subscription from '../../../subscription.ts';
 
 const propTypes = {
   ...xulPropTypes,
@@ -102,6 +98,8 @@ export default class BMManagerWin extends React.Component {
 
   tableCompRef: React.RefObject<BPTable>;
 
+  destroy: (() => void)[];
+
   constructor(props: BMManagerProps) {
     super(props);
 
@@ -134,20 +132,28 @@ export default class BMManagerWin extends React.Component {
     this.printableItem = H.printableItem.bind(this);
 
     this.tableCompRef = React.createRef();
+
+    this.destroy = [];
   }
 
   componentDidMount() {
-    registerUpdateStateFromPref('prefs', 'bookmarkManager', this);
-    registerUpdateStateFromPref('bookmarks', null, this);
+    this.destroy.push(registerUpdateStateFromPref('prefs', 'bookmarkManager', this));
+    this.destroy.push(registerUpdateStateFromPref('bookmarks', null, this));
   }
 
   componentDidUpdate(_prevProps: BMManagerProps, prevState: BMManagerState) {
     const state = this.state as BMManagerState;
+    const { printItems } = state;
     setStatePref('prefs', 'bookmarkManager', prevState, state);
     setStatePref('bookmarks', null, prevState, state);
     if (diff(prevState, keep(state, ['rootfolder', 'cut', 'copy']))) {
       this.setState({ reset: randomID() } as Partial<BMManagerState>);
     }
+  }
+
+  componentWillUnmount() {
+    this.destroy.forEach((func) => func());
+    this.destroy = [];
   }
 
   render() {
@@ -208,18 +214,8 @@ export default class BMManagerWin extends React.Component {
         .filter((i) => i !== -1),
     );
 
-    if (printItems) {
-      Subscription.publish.setControllerState({
-        print: {
-          dialogEnd: 'close',
-          pageable: false,
-          content: (
-            <>{printItems.map((itemID) => this.printableItem(itemID))}</>
-          ),
-        },
-      });
-      return <></>;
-    }
+    if (printItems)
+      return printItems.map((itemID) => this.printableItem(itemID));
 
     return (
       <Vbox

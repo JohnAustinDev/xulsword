@@ -322,7 +322,9 @@ class Chooser extends React.Component implements RenderPromiseComponent {
             }
             <BookGroupList
               className={`sizer${
-                (audioConfig(headingsModule || '', renderPromise) && ' audio') || ''
+                (audioConfig(headingsModule || '', renderPromise) &&
+                  ' audio') ||
+                ''
               }`}
               availableBooks={new Set([longestBook])}
               headingsModule={headingsModule}

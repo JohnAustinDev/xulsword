@@ -52,10 +52,6 @@ import type Atext from '../atext/atext.tsx';
 import type { XulProps } from '../libxul/xul.tsx';
 import type { SelectORMType } from '../libxul/selectOR.tsx';
 import type { SelectVKType } from '../libxul/selectVK.tsx';
-import PrintPassage, {
-  PrintPassageState,
-} from '../printPassage/printPassage.tsx';
-import { PrintOptionsType } from '../../controller.tsx';
 import Subscription from '../../../subscription.ts';
 
 const propTypes = {
@@ -406,7 +402,7 @@ export default class Xulsword
               });
               Subscription.publish.setControllerState({
                 reset: randomID(),
-                card: { name: 'printPassage', props: {}},
+                card: { name: 'printPassage', props: {} },
                 print: { dialogEnd: 'close', pageable: true },
               });
             }}

@@ -147,7 +147,7 @@ socket.on('connect', () => {
       }, 1);
 
       renderToRoot(<Xulsword onWheelCapture={wheelCapture} />, {
-        htmlCssClass: 'bibleBrowser'
+        htmlCssClass: 'bibleBrowser',
       }).catch((er) => {
         log.error(er);
       });

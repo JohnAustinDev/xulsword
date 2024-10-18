@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { ProgressBar } from '@blueprintjs/core';
 import Subscription from '../../../subscription.ts';
-import { diff, sanitizeHTML, stringHash } from '../../../common.ts';
+import { diff, randomID, sanitizeHTML, stringHash } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
 import {
@@ -137,11 +137,15 @@ export default class PrintPassage
     if (chapters) {
       const { vkMod } = chapters;
       if (vkMod) {
-        Subscription.publish.setControllerState({
-          print: {
-            direction: G.Tab[vkMod].direction || 'auto',
-          } as PrintOptionsType,
-        });
+        Subscription.publish.setControllerState(
+          {
+            print: {
+              printDisabled: progress !== -1,
+              direction: G.Tab[vkMod].direction || 'auto',
+            } as PrintOptionsType,
+          },
+          true,
+        );
       }
     }
 
@@ -153,6 +157,7 @@ export default class PrintPassage
         },
         true, // merge above into existing PrintOptionsType
       );
+      printRefs.setPages();
     } else if (diff(chapters, valid)) {
       this.setState({ chapters: valid });
     } else if (tdiv) {
@@ -221,7 +226,7 @@ export default class PrintPassage
         },
         true, // merge above into existing PrintOptionsType
       );
-      this.setState({ progress: 0 });
+      this.setState({ progress: 0 } as PrintPassageState);
 
       // Pause here so first page will appear to user.
       const defer = async () => {
@@ -293,7 +298,7 @@ export default class PrintPassage
           }
         }
         if (div && div.dataset.renderkey === renderkey) {
-          this.setState({ progress: -1 });
+          this.setState({ progress: -1 } as PrintPassageState);
         }
       };
 

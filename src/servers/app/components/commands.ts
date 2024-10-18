@@ -55,7 +55,10 @@ import type {
   VerseKeyAudioFile,
   LocationVKCommType,
 } from '../../../type.ts';
-import type { ControllerState } from '../../../clients/controller.tsx';
+import type {
+  ControllerState,
+  PrintOptionsType,
+} from '../../../clients/controller.tsx';
 import type { AboutWinState } from '../../../clients/app/about/about.tsx';
 import type { PrintPassageState } from '../../../clients/components/printPassage/printPassage.tsx';
 import type { CopyPassageState } from '../../../clients/app/copyPassage/copyPassage.tsx';
@@ -522,7 +525,7 @@ const Commands = {
     }
   },
 
-  async print(winRootState?: Partial<ControllerState>): Promise<void> {
+  async print(print: PrintOptionsType): Promise<void> {
     await new Promise<void>((resolve) => {
       const callingWinID: number =
         arguments[1] ?? getBrowserWindows({ type: 'xulswordWin' })[0].id;
@@ -533,10 +536,7 @@ const Commands = {
           { renderers: { id: windowToPrint.id } },
           {
             reset: randomID(),
-            ...winRootState,
-            print: { pageable: false, dialogEnd: 'cancel' },
-            resetCssClass: 'printp',
-            modal: 'dropshadow',
+            print,
           },
         );
         const destroy = Subscription.subscribe.asyncTaskComplete(() => {

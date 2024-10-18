@@ -1,4 +1,4 @@
-import React, { type ReactElement } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import Subscription from '../../../subscription.ts';
 import { b64toBlob, randomID } from '../../../common.ts';
@@ -37,18 +37,15 @@ export default function Print(props: PrintProps) {
   const { pageable, direction, iframeFilePath } = print;
 
   const backHandler = () => {
-    Subscription.publish.setControllerState({
-      reset: randomID(),
-      print: {
-        dialogEnd: 'cancel',
-        content: null,
-        iframeFilePath: '',
-        printDisabled: false,
+    Subscription.publish.setControllerState(
+      {
+        print: {
+          iframeFilePath: '',
+        } as PrintOptionsType,
+        progress: -1,
       },
-      resetCssClass: 'printp',
-      modal: 'dropshadow',
-      progress: -1,
-    });
+      true,
+    );
   };
 
   const renderPromise = new RenderPromise(() =>
@@ -88,19 +85,20 @@ export default function Print(props: PrintProps) {
       )}
       {!iframeFilePath && (
         <Hbox
-          className={`printoverlay ${pageable ? 'pageable' : 'not-pageable'}`}
+          className={`print ${pageable ? 'pageable' : 'not-pageable'}`}
           pack="center"
           align="stretch"
         >
           <Vbox className="pageView-container" pack="center" align="center">
             <div className="pageView" ref={pageViewRef}>
               <div className="scale">
-                <PrintContainer
-                  dir={direction || 'auto'}
-                  domref={printContainerRef}
-                >
-                  {children}
-                </PrintContainer>
+                {pageable && <div className="content">{children}</div>}
+
+                {!pageable && (
+                  <PrintContainer className="content" dir={direction || 'auto'}>
+                    {children}
+                  </PrintContainer>
+                )}
               </div>
             </div>
           </Vbox>
@@ -117,13 +115,14 @@ export default function Print(props: PrintProps) {
 }
 Print.propTypes = propTypes;
 
-export type PrintContainerProps = {
-  domref: React.RefObject<HTMLElement>;
-} & XulProps;
+export type PrintContainerProps = XulProps;
 
 export function PrintContainer(props: PrintContainerProps) {
   return (
-    <div {...htmlAttribs('printContainer content userFontBase', props)}>
+    <div
+      {...htmlAttribs('printContainer userFontBase', props)}
+      ref={printRefs.printContainerRef}
+    >
       {props.children}
     </div>
   );

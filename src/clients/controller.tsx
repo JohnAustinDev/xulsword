@@ -10,8 +10,12 @@ import DynamicStyleSheet from './style.ts';
 import ContextData from './contextData.ts';
 import { windowArguments } from './common.tsx';
 import log from './log.ts';
-import { delayHandler, xulCaptureEvents, addClass } from './components/libxul/xul.tsx';
-import Print from './components/libxul/print.tsx';
+import {
+  delayHandler,
+  xulCaptureEvents,
+  addClass,
+} from './components/libxul/xul.tsx';
+import Print, { PrintContainer } from './components/libxul/print.tsx';
 import { Hbox } from './components/libxul/boxes.tsx';
 import Search, { SearchProps } from './components/search/search.tsx';
 import PrintPassage from './components/printPassage/printPassage.tsx';
@@ -40,8 +44,12 @@ import type { PrintPassageProps } from './components/printPassage/printPassage.t
 
 // This top level controller takes one or more components as children and
 // provides window level services and communication for those components.
-// Those children, along with props and defaultControllerState, all become
-// state variables to be updated by Subscription.publish.setControllerState().
+// Both controller props and defaultControllerState become state variables
+// and so may be updated using Subscription.publish.setControllerState().
+
+type CardTypes =
+  | { name: 'search'; props: SearchProps }
+  | { name: 'printPassage'; props: PrintPassageProps };
 
 type ControllerProps = {
   resetOnResize: boolean;
@@ -49,17 +57,12 @@ type ControllerProps = {
   children: ReactElement;
 };
 
-type CardTypes =
-  | { name: 'search'; props: SearchProps }
-  | { name: 'printPassage'; props: PrintPassageProps };
-
 const defaultControllerState = {
   reset: '' as string,
   dialogs: [] as ReactElement[],
   card: null as CardTypes | null,
   modal: 'off' as ModalType,
   progress: -1 as number | 'indefinite',
-  resetCssClass: '',
 };
 
 export type ControllerState = Omit<ControllerProps, 'children'> &
@@ -135,13 +138,10 @@ function Controller(props: ControllerProps) {
           ) {
             val = { ...v0, ...val };
           }
-          // Only if value is defined and changing will set state be called.
-          else if (val !== undefined && stringHash(val) !== stringHash(v0)) {
-            const setMe = s[S][1] as (a: any) => void;
-            if (state.print !== null && S === 'reset') {
-              setTimeout(() => setMe(val), 1);
-            } else setMe(val);
-          }
+          const setMe = s[S][1] as (a: any) => void;
+          if (state.print !== null && S === 'reset') {
+            setTimeout(() => setMe(val), 1);
+          } else setMe(val);
         });
       },
     );
@@ -342,11 +342,12 @@ function Controller(props: ControllerProps) {
     );
   });
 
+  const modal = s.print[0] ? 'dropshadow' : s.modal[0];
   const progressAndModalOverlay =
-    s.progress[0] !== -1 || s.modal[0] !== 'off' ? (
+    s.progress[0] !== -1 || modal !== 'off' ? (
       <Hbox
         id="overlay"
-        className={s.progress[0] !== -1 ? 'darkened' : s.modal[0]}
+        className={s.progress[0] !== -1 ? 'darkened' : modal}
         pack="center"
         align="center"
         {...xulCaptureEvents.reduce((p: any, c) => {
@@ -409,9 +410,9 @@ function Controller(props: ControllerProps) {
         break;
       }
     }
-  } else if (s.print[0]?.content) {
-    content = s.print[0]?.content
   }
+  if (s.print[0]?.pageable)
+    content = <PrintContainer>{content}</PrintContainer>;
 
   const root = (
     <>
@@ -420,7 +421,6 @@ function Controller(props: ControllerProps) {
       <div
         key={s.reset[0]}
         id="reset"
-        className={s.resetCssClass[0]}
         onContextMenu={(e: React.SyntheticEvent) => {
           if (Build.isElectronApp) {
             if (!G.Data.has('contextData')) {
@@ -439,7 +439,6 @@ function Controller(props: ControllerProps) {
 
 export type PrintOptionsType = {
   dialogEnd: 'cancel' | 'close';
-  content?: ReactElement | null;
   pageable?: boolean;
   printDisabled?: boolean;
   iframeFilePath?: string;

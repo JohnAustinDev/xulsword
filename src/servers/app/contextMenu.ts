@@ -203,7 +203,10 @@ export default function contextMenu(
             visible: true,
             enabled: d.windowDescriptor && !d.windowDescriptor.notResizable,
             click: () => {
-              Commands.print(undefined, window.id).catch((er) => {
+              Commands.print(
+                { pageable: false, dialogEnd: 'cancel' },
+                window.id,
+              ).catch((er) => {
                 log.error(er);
               });
             },
@@ -282,7 +285,7 @@ export default function contextMenu(
                 'bookmarkManager.printItems',
                 d.bookmarks as typeof S.prefs.bookmarkManager.printItems,
               );
-              Commands.print(undefined, window.id)
+              Commands.print({ pageable: true, dialogEnd: 'cancel' }, window.id)
                 .then(() => {
                   G.Prefs.setComplexValue(
                     'bookmarkManager.printItems',

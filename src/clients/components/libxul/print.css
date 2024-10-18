@@ -1,5 +1,5 @@
 .pdf-preview,
-.printoverlay,
+.print,
 .pageView {
   height: 100%;
   margin: 0;
@@ -24,13 +24,13 @@
 }
 
 @media print {
-  .printoverlay > *:not(.pageView-container),
+  .print > *:not(.pageView-container),
   #overlay {
     display: none !important;
   }
 
   /* IMPORTANT: flex display breaks print paging! */
-  .printoverlay,
+  .print,
   .pageView-container,
   .pageView,
   .scale,
@@ -42,7 +42,7 @@
   html,
   body,
   #root,
-  .pageable.printoverlay,
+  .pageable.print,
   .pageable .pageView-container,
   .pageable .pageView,
   .pageable .scale,

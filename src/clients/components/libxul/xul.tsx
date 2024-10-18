@@ -139,7 +139,7 @@ export function addClass<P extends XulProps>(
   const r: P = { ...props };
   r.className = c.concat(cp).filter(Boolean).join(' ');
   return r;
-};
+}
 
 // Convert certain XUL props to a corresponding CSS style attribute.
 // These props take number values with or without qualifiers
@@ -164,7 +164,7 @@ export function xulStyle(
   }
 
   return Object.keys(s).length ? s : undefined;
-};
+}
 
 // Convert certain XUL props to corresponding CSS classes, adding any
 // requested additional classes in the processes.
@@ -183,7 +183,7 @@ export function xulClass(
   });
   const set = [...new Set(c1.concat(c1, c2, c3, c4).filter(Boolean))];
   return { className: set.join(' ') };
-};
+}
 
 // Convert all props to corresponding HTML element attribtues.
 // This must be used to pass props to all HTML elements but
@@ -223,7 +223,7 @@ export function htmlAttribs(
   });
 
   return r;
-};
+}
 
 // Use topHandle() when there is a xulEvent prop on a React component's top-
 // level element. Otherwise any event prop of that same type on an instance
@@ -244,7 +244,7 @@ export function topHandle(
         props[name](e);
     },
   };
-};
+}
 
 // Delay any function by ms milliseconds with only a
 // single (most recent) instance called after the delay.
