@@ -6,7 +6,12 @@ import Subscription from '../../../subscription.ts';
 import { clone, diff, keep, randomID } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
-import { getStatePref, printRefs, setStatePref } from '../../common.tsx';
+import {
+  getStatePref,
+  printRefs,
+  rootRenderPromise,
+  setStatePref,
+} from '../../common.tsx';
 import RenderPromise from '../../renderPromise.ts';
 import { Hbox, Vbox } from './boxes.tsx';
 import Button from './button.tsx';
@@ -80,11 +85,7 @@ const notStatePref = {
 
 export type PrintSettingsState = typeof S.prefs.print & typeof notStatePref;
 
-const renderPromise = new RenderPromise(() =>
-  Subscription.publish.setControllerState({
-    reset: randomID(),
-  }),
-);
+const renderPromise = rootRenderPromise;
 
 export default class PrintSettings extends React.Component {
   static propTypes: typeof propTypes;
@@ -362,6 +363,7 @@ export default class PrintSettings extends React.Component {
             } else {
               Subscription.publish.setControllerState({
                 reset: randomID(),
+                card: null,
                 print: null,
                 modal: 'off',
                 progress: -1,
@@ -459,15 +461,20 @@ export default class PrintSettings extends React.Component {
   } {
     const { landscape, pageSize, margins } = this.state as PrintSettingsState;
     const { print } = this.props as PrintSettingsProps;
-    const { settingsRef, printContainerRef } = printRefs;
+    const { printContainerRef } = printRefs;
     const { pageable } = print;
     const { pagebuttons } = this;
-    if (settingsRef.current && printContainerRef.current) {
-      const settingsW = (settingsRef.current.parentElement as HTMLDivElement)
-        .clientWidth;
+    const settingsRef = document.querySelector(
+      '#root .printsettings-container',
+    );
+    if (settingsRef && printContainerRef.current) {
+      const settingsW = settingsRef.clientWidth;
       // initialPageViewW can be anything, but it must have a known value.
       let initialPageViewW =
         window.innerWidth - settingsW - 3 * C.UI.Print.viewMargin;
+      if (Build.isWebApp && window.innerWidth <= C.UI.WebApp.mobileW) {
+        initialPageViewW = settingsW - 20;
+      }
       if (initialPageViewW < 100) initialPageViewW = 100;
 
       const paperSize = paperSizes.find(
@@ -579,10 +586,8 @@ export default class PrintSettings extends React.Component {
 
   setPages2() {
     const { print } = this.props as PrintSettingsProps;
-    if (print.pageable)
-      setTimeout(() => this.setPages(), 1);
-    else
-      Subscription.publish.setControllerState({ reset: randomID() });
+    if (print.pageable) setTimeout(() => this.setPages(), 1);
+    else Subscription.publish.setControllerState({ reset: randomID() });
   }
 
   addToast(toast: ToastProps) {
@@ -867,17 +872,17 @@ export default class PrintSettings extends React.Component {
           }
           {(!Build.isElectronApp ||
             window.ProcessInfo.platform !== 'linux') && (
-              <Button
-                id="print"
-                icon="print"
-                flex="1"
-                fill="x"
-                disabled={printDisabled}
-                onClick={handler}
-              >
-                {GI.i18n.t('', renderPromise, 'menu.print')}
-              </Button>
-            )}
+            <Button
+              id="print"
+              icon="print"
+              flex="1"
+              fill="x"
+              disabled={printDisabled}
+              onClick={handler}
+            >
+              {GI.i18n.t('', renderPromise, 'menu.print')}
+            </Button>
+          )}
           {Build.isElectronApp && (
             <>
               <Button

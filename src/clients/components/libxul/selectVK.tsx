@@ -290,11 +290,11 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
 
     // Arrive at the appropriate options for each selector, adjusting selection
     // to insure all selectors show valid options. Important: if a selector
-    // is excluded (hidden by an empty prop) any value is considered valid for
-    // that selector. Note: the books selector cannot be hidden by empty prop.
+    // is excluded (hidden by a [] prop) any value is considered valid for
+    // that selector. Note: the books selector cannot be hidden.
 
-    // Bible book options are either those passed in the books prop or are
-    // all books in the verse system. Either way, when the module selector is
+    // Bible book options start as either those passed in the books prop or all
+    // books in the verse system. Either way, when the module selector is
     // visible and an installed module is selected, books not present in the
     // module are removed from the list. All books are sorted in v11n order.
     // Similarly, when the books prop lists particular books, only modules

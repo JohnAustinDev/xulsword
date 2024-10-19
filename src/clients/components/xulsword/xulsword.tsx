@@ -128,9 +128,6 @@ export default class Xulsword
     this.destroy = [];
 
     this.atextRefs = [];
-    s.panels.forEach(() => {
-      this.atextRefs.push(React.createRef());
-    });
 
     this.loadingRef = React.createRef();
     this.renderPromise = new RenderPromise(this, this.loadingRef);
@@ -188,7 +185,6 @@ export default class Xulsword
     const state = this.state as XulswordState;
     const props = this.props as XulswordProps;
     const {
-      atextRefs,
       loadingRef,
       handler,
       viewportParentHandler,
@@ -249,6 +245,8 @@ export default class Xulsword
       else if (!m) viewportReset.push('und');
       else viewportReset.push(m);
     });
+
+    const vkMod = panels.find((p) => p && G.Tab[p].isVerseKey) ?? undefined;
 
     const panelGenbkKeys: (string | null)[] = [];
     const seen: string[] = [];
@@ -396,9 +394,7 @@ export default class Xulsword
             icon={<Icon icon="print" size={28} />}
             onClick={() => {
               setStatePref('prefs', 'printPassage', null, {
-                chapters: G.Prefs.getComplexValue(
-                  'xulsword.location',
-                ) as typeof S.prefs.xulsword.location,
+                chapters: { ...location, vkMod },
               });
               Subscription.publish.setControllerState({
                 card: { name: 'printPassage', props: {} },
@@ -498,13 +494,12 @@ export default class Xulsword
               verses: [],
               lastchapters: [],
               lastverses: [],
-              vkMods: [panels.find((p) => p && G.Tab[p].isVerseKey)],
+              vkMods: [vkMod],
             }}
-            initialVK={location as LocationVKType}
+            initialVK={{ ...location, vkMod }}
             disabled={location === null}
             onSelection={selectionVK}
-            allowNotInstalled={true}
-            key={[stringHash(location), bsreset].join('.')}
+            key={[stringHash(location), vkMod, bsreset].join('.')}
           />
         </Hbox>
       </Hbox>
@@ -587,6 +582,11 @@ export default class Xulsword
       </Hbox>
     );
 
+    this.atextRefs = [];
+    panels.forEach(() => {
+      this.atextRefs.push(React.createRef());
+    });
+
     return (
       <Vbox
         domref={loadingRef}
@@ -614,8 +614,7 @@ export default class Xulsword
 
                 {panelGenbks.length > 0 && webappGenbkSelectorComponent}
 
-                {panels.find((m) => m && G.Tab[m].isVerseKey) &&
-                  webappVKSelectorComponent}
+                {vkMod && webappVKSelectorComponent}
 
                 <Spacer flex="1" />
 
@@ -672,7 +671,7 @@ export default class Xulsword
             maximizeNoteBox={maximizeNoteBox}
             showChooser={showChooser}
             ownWindow={false}
-            atextRefs={atextRefs}
+            atextRefs={this.atextRefs}
             eHandler={viewportParentHandler}
             bbDragEnd={bbDragEnd}
             xulswordStateHandler={xulswordStateHandler}

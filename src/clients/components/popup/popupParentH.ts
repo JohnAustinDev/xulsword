@@ -8,7 +8,11 @@ import Commands from '../../commands.ts';
 import RenderPromise from '../../renderPromise.ts';
 import { findElementData, updateDataAttribute } from '../../htmlData.ts';
 import log from '../../log.ts';
-import { scrollIntoView, windowArguments } from '../../common.tsx';
+import {
+  rootRenderPromise,
+  scrollIntoView,
+  windowArguments,
+} from '../../common.tsx';
 import { delayHandler } from '../libxul/xul.tsx';
 import { getPopupHTML } from './popupH.ts';
 
@@ -288,16 +292,7 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
                 lastverse: lastverse || 1,
                 v11n,
               };
-              Commands.goToLocationVK(
-                loc,
-                loc,
-                undefined,
-                new RenderPromise(() =>
-                  Subscription.publish.setControllerState({
-                    reset: randomID(),
-                  }),
-                ),
-              );
+              Commands.goToLocationVK(loc, loc, undefined, rootRenderPromise);
             }
           }
           break;

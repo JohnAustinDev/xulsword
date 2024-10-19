@@ -137,7 +137,9 @@ export default class BMManagerWin extends React.Component {
   }
 
   componentDidMount() {
-    this.destroy.push(registerUpdateStateFromPref('prefs', 'bookmarkManager', this));
+    this.destroy.push(
+      registerUpdateStateFromPref('prefs', 'bookmarkManager', this),
+    );
     this.destroy.push(registerUpdateStateFromPref('bookmarks', null, this));
   }
 

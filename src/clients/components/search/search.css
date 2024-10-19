@@ -297,10 +297,10 @@ html[dir='rtl'] .resultBox #displayModule {
   .bibleBrowser .buttonBox .spacer {
     display: none;
   }
-  .bibleBrowser #pagefirst svg,
-  .bibleBrowser #pageprev svg,
-  .bibleBrowser #pagenext svg,
-  .bibleBrowser #pagelast svg {
+  .bibleBrowser .search #pagefirst svg,
+  .bibleBrowser .search #pageprev svg,
+  .bibleBrowser .search #pagenext svg,
+  .bibleBrowser .search #pagelast svg {
     transform: rotate(-90deg);
   }
 }

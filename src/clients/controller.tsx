@@ -385,8 +385,9 @@ function Controller(props: ControllerProps) {
     ) : null;
 
   let content = children;
+  let closeButton = <></>;
   if (s.card[0]) {
-    const closeButton = (
+    closeButton = (
       <Button
         className="close-card-button"
         icon="cross"
@@ -394,26 +395,19 @@ function Controller(props: ControllerProps) {
           Subscription.publish.setControllerState({
             reset: randomID(),
             card: null,
+            print: null,
           })
         }
       />
     );
     switch (s.card[0].name) {
       case 'search': {
-        content = (
-          <>
-            {closeButton}
-            <Search {...addClass('searchCard', s.card[0].props)} />
-          </>
-        );
+        content = <Search {...addClass('searchCard', s.card[0].props)} />;
         break;
       }
       case 'printPassage': {
         content = (
-          <>
-            {closeButton}
-            <PrintPassage {...addClass('printPassageCard', s.card[0].props)} />
-          </>
+          <PrintPassage {...addClass('printPassageCard', s.card[0].props)} />
         );
         break;
       }
@@ -442,7 +436,12 @@ function Controller(props: ControllerProps) {
     </>
   );
 
-  return s.print[0] ? <Print print={s.print[0]}>{root}</Print> : root;
+  return (
+    <>
+      {closeButton}
+      {s.print[0] ? <Print print={s.print[0]}>{root}</Print> : root}
+    </>
+  );
 }
 
 export type PrintOptionsType = {

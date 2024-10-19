@@ -10,6 +10,7 @@ import {
   audioConfNumbers,
   gbPaths,
   localizeString,
+  randomID,
 } from '../common.ts';
 import C from '../constant.ts';
 import S from '../defaultPrefs.ts';
@@ -52,6 +53,11 @@ export function functionalComponentRenderPromise(loadingSelector?: string) {
   useEffect(() => renderPromise.dispatch());
   return { renderPromise, loadingRef };
 }
+
+export const rootRenderPromise = new RenderPromise(() =>
+  Subscription.publish.setControllerState({ reset: randomID() }),
+);
+setInterval(() => rootRenderPromise.dispatch(), 100);
 
 export function component(
   comp: any,

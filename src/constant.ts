@@ -79,6 +79,7 @@ const C = {
   UI: {
     WebApp: {
       mobileW: 767, // px up to which is considered mobile
+      tabletW: 1027, // px up to which is tablet
     },
     AcceleratorKey: {
       openModuleManager: 'F2',

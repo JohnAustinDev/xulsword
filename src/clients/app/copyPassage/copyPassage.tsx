@@ -99,11 +99,18 @@ export default class CopyPassageWin
     this.passageToClipboard = this.passageToClipboard.bind(this);
   }
 
+  componentDidMount() {
+    const { renderPromise } = this;
+    renderPromise.dispatch();
+  }
+
   componentDidUpdate(
     _prevProps: CopyPassageProps,
     prevState: CopyPassageState,
   ) {
+    const { renderPromise } = this;
     setStatePref('prefs', 'copyPassage', prevState, this.state);
+    renderPromise.dispatch();
   }
 
   passageToClipboard() {
@@ -149,7 +156,7 @@ export default class CopyPassageWin
             modkey: '',
           },
           0,
-          new RenderPromise(null),
+          renderPromise,
         );
         const div = testdiv.appendChild(document.createElement('div'));
         div.classList.add('text');

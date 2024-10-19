@@ -25,7 +25,7 @@ import Grid, {
 } from '../../components/libxul/grid.tsx';
 import Groupbox from '../../components/libxul/groupbox.tsx';
 import Checkbox from '../../components/libxul/checkbox.tsx';
-import SelectVK  from '../../components/libxul/selectVK.tsx';
+import SelectVK from '../../components/libxul/selectVK.tsx';
 import {
   handler as handlerH,
   vkSelectHandler as vkSelectHandlerH,
@@ -68,6 +68,9 @@ const switches = [
     [0, 1, 'hebvowelpoints', 'menu.options.hebVowel'],
   ],
 ] as const;
+if (Build.isWebApp) {
+  (switches[0] as any)[2] = [0, 0, 'usernotes', 'menu.view.usernotes'];
+}
 
 const propTypes = {
   ...xulPropTypes,
@@ -110,7 +113,8 @@ export default class PrintPassage
       ...notStatePrefDefault,
       ...(getStatePref('prefs', 'printPassage') as typeof S.prefs.printPassage),
     };
-    s.chapters = validPassage(s.chapters, this.renderPromise);
+    const vc = validPassage(s.chapters, this.renderPromise);
+    if (!this.renderPromise.waiting()) s.chapters = vc;
     this.state = s;
 
     this.pagebuttons = React.createRef();
@@ -120,8 +124,10 @@ export default class PrintPassage
   }
 
   componentDidMount() {
+    const { renderPromise } = this;
     const state = this.state as PrintPassageState;
     setStatePref('prefs', 'printPassage', null, state);
+    renderPromise.dispatch();
     this.forceUpdate(); // for portal DOM target
   }
 
@@ -135,25 +141,13 @@ export default class PrintPassage
     const { checkbox, chapters, progress } = state;
 
     const valid = validPassage(chapters, renderPromise);
-    if (diff(chapters, valid)) {
-      // An invalid passage must be updated to a valid one.
+    // An invalid passage must be updated to a valid one.
+    if (!renderPromise.waiting() && diff(chapters, valid)) {
       this.setState({ chapters: valid });
     } else if (chapters) {
+      setStatePref('prefs', 'printPassage', prevState, state);
       const { vkMod, book, chapter, lastchapter, v11n } = chapters;
-      if (vkMod && prevState.progress !== -1 && progress === -1) {
-        // A multi-page renderchapters() result is finished.
-        Subscription.publish.setControllerState(
-          {
-            print: {
-              printDisabled: false,
-              direction: G.Tab[vkMod].direction || 'auto',
-            } as PrintOptionsType,
-          },
-          true, // merge above into existing PrintOptionsType
-        );
-        printRefs.setPages();
-      } else if (vkMod && lastchapter && tdiv) {
-        // Finish a typical render...
+      if (vkMod && lastchapter && tdiv) {
         // Insure controller has current direction and printDisabled settings.
         Subscription.publish.setControllerState(
           {
@@ -165,21 +159,41 @@ export default class PrintPassage
           true, // merge above into existing PrintOptionsType
         );
 
-        // Insure current selection will be rendered.
+        // Insure current selection will be rendered to tdiv.
         const show: AtextPropsType['show'] & {
           introduction: boolean;
           crossrefsText: boolean;
         } = { ...checkbox, strongs: false, morph: false };
-        const renderkey = stringHash(vkMod, book, chapter, lastchapter, v11n, show);
+        if (Build.isWebApp) show.usernotes = false;
+        const renderkey = stringHash(
+          vkMod,
+          book,
+          chapter,
+          lastchapter,
+          v11n,
+          show,
+        );
         if (tdiv.dataset.renderkey !== renderkey) {
-          this.renderChapters(tdiv, renderkey, vkMod, book, chapter, lastchapter, v11n, show);
+          // Set renderkey now because soon the soon-to-be scheduled operations will
+          // self terminate when tdiv renderkey does not match.
+          tdiv.dataset.renderkey = renderkey;
+          this.renderChapters(
+            tdiv,
+            renderkey,
+            vkMod,
+            book,
+            chapter,
+            lastchapter,
+            v11n,
+            show,
+          ).catch((er) => log.error(er));
         }
-        setStatePref('prefs', 'printPassage', prevState, state);
       }
     }
+    renderPromise.dispatch();
   }
 
-  renderChapters(
+  async renderChapters(
     tdiv: HTMLDivElement,
     renderkey: string,
     vkMod: string,
@@ -193,11 +207,6 @@ export default class PrintPassage
     },
   ) {
     sanitizeHTML(tdiv, '');
-
-    // Set renderkey now because soon the soon-to-be scheduled operations will
-    // self terminate when tdiv renderkey does not match.
-    tdiv.dataset.renderkey = renderkey;
-
     const settings = {
       module: vkMod,
       show,
@@ -216,6 +225,7 @@ export default class PrintPassage
     for (let ch = chapter; ch <= lastchapter; ch += 1) {
       renderChaps.push([book, ch]);
     }
+    const numChapters = renderChaps.length;
 
     // Electron app can write first page to DOM for user to see right away.
     if (Build.isElectronApp) {
@@ -225,13 +235,15 @@ export default class PrintPassage
         if (!renderChap) break;
         const [book, chapter] = renderChap;
         log.debug(`Showing chapter ${book} ${chapter}`);
-        tdiv.innerHTML += sanitizeHTML(bibleChapterText(
-          {
-            ...settings,
-            location: { book, chapter, v11n },
-          },
-          dummyPromise,
-        ));
+        tdiv.innerHTML += sanitizeHTML(
+          bibleChapterText(
+            {
+              ...settings,
+              location: { book, chapter, v11n },
+            },
+            dummyPromise,
+          ),
+        );
         if (tdiv.scrollWidth > tdiv.offsetWidth) {
           break;
         }
@@ -241,63 +253,74 @@ export default class PrintPassage
 
     if (!renderChaps.length) {
       printRefs.setPages();
-      return;
+      return numChapters;
     }
 
     // Render the remaining chapters asynchronously with a progress bar
-    Subscription.publish.setControllerState(
-      {
-        print: { printDisabled: true } as PrintOptionsType,
-      },
-      true, // merge above into existing PrintOptionsType
-    );
-    this.setState({ progress: 0 } as PrintPassageState);
+    return new Promise((resolve) => {
+      Subscription.publish.setControllerState(
+        {
+          print: { printDisabled: true } as PrintOptionsType,
+        },
+        true, // merge above into existing PrintOptionsType
+      );
+      this.setState({ progress: 0 } as PrintPassageState);
 
-    let pages = 0;
-    // Chapter render occurs after a timeout so that main UI progress can update.
-    const funcs = renderChaps.map((c) => {
-      const [book, chapter] = c;
-      return async (): Promise<string | null> => {
-        return await new Promise((resolve, reject) =>
-          setTimeout(() => {
-            const tdivx = printRefs.printContainerRef.current;
-            if (tdivx && tdivx.dataset.renderkey === renderkey) {
-              const chapterText = bibleChapterText(
-                {
-                  ...settings,
-                  location: { book, chapter, v11n },
-                },
-                renderPromise2,
-              );
-              if (renderPromise2.waiting()) resolve(null);
-              else {
-                pages += 1;
-                this.setState({
-                  progress: pages / C.UI.Print.maxPages,
-                });
-                resolve(chapterText);
-              }
-            } else reject(new Error(`Canceled`));
-          }, 1),
-        );
-      };
-    });
+      let pages = 0;
 
-    // Render chapters into tdiv until finished, the page limit is reached, or
-    // renderPromise2 is waiting, or tdiv renderkey has changed.
-    const renderChapters = async () => {
-      let div = printRefs.printContainerRef.current;
-      if (div && div.dataset.renderkey === renderkey) {
-        try {
+      const funcs = renderChaps.map((c) => {
+        const [book, chapter] = c;
+        return () => {
+          const tdivx = printRefs.printContainerRef.current;
+          if (tdivx && tdivx.dataset.renderkey === renderkey) {
+            const chapterText = bibleChapterText(
+              {
+                ...settings,
+                location: { book, chapter, v11n },
+              },
+              renderPromise2,
+            );
+            if (renderPromise2.waiting()) return null;
+            else {
+              pages += 1;
+              this.setState({
+                progress: pages / C.UI.Print.maxPages,
+              });
+              return chapterText;
+            }
+          } else throw new Error(`Canceled`);
+        };
+      });
+
+      // renderers() resolves if all chapters rendered or if the renderkey
+      // changed, otherwise dispatching renderPromise2 will run it again.
+      // This function renders each chapter successively into tdiv until:
+      // - All chapters are rendered (return true)
+      // - The page limit is reached (return true)
+      // - renderPromise2 is waiting (return null)
+      // - tdiv renderkey changes    (return false)
+      const renderers = async () => {
+        let div = printRefs.printContainerRef.current;
+        if (div && div.dataset.renderkey === renderkey) {
           for (;;) {
             const func = funcs.shift();
             if (!func) break;
-            const h = await func();
+            const h: string | null = await new Promise((resolve2) => {
+              setTimeout(() => {
+                let r: string | null = '';
+                try {
+                  r = func();
+                } catch (er) {
+                  log.warn(er);
+                }
+                resolve2(r);
+              }, 1);
+            });
             if (h === null) {
               // renderPromise2 is waiting and will re-start renderChapters
-              div = null;
               funcs.unshift(func);
-              break;
+              renderPromise2.dispatch();
+              return null;
             }
             div = printRefs.printContainerRef.current;
             if (!div || div.dataset.renderkey !== renderkey) break;
@@ -322,24 +345,29 @@ export default class PrintPassage
               )} pages to DOM`,
             );
           }
-        } catch (er) {
-          log.debug(er);
         }
-      }
 
-      if (div && div.dataset.renderkey === renderkey) {
+        const finished = !!(div && div.dataset.renderkey === renderkey);
         this.setState({ progress: -1 } as PrintPassageState);
-      }
-    };
+        Subscription.publish.setControllerState(
+          {
+            print: {
+              printDisabled: false,
+            } as PrintOptionsType,
+          },
+          true, // merge above into existing PrintOptionsType
+        );
+        printRefs.setPages();
+        resolve(finished ? numChapters : 0);
+      };
 
-    const renderPromise2 = new RenderPromise(() => {
-      renderChapters().catch((er) => {log.error(er)});
+      const renderPromise2 = new RenderPromise(() => {
+        renderers().catch((er) => log.error(er));
+        return;
+      }, printRefs.printContainerRef);
+
+      renderers().catch((er) => log.error(er));
     });
-
-    // Pause here so first page will appear to user.
-    setTimeout(() => {
-      renderChapters().catch((er) => {log.error(er)});
-    }, 1);
   }
 
   render() {

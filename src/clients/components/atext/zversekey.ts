@@ -103,7 +103,7 @@ export function getNoteHTML(
   openCRs = false, // show scripture reference texts or not
   keepOnlyThisNote = '', // type.title of a single note to keep
   userTarget = false,
-  renderPromise?: RenderPromise,
+  renderPromise: RenderPromise,
 ) {
   if (!notes) return '';
 

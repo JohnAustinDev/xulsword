@@ -1,11 +1,14 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import Subscription from '../../../subscription.ts';
-import { b64toBlob, randomID } from '../../../common.ts';
+import { b64toBlob } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { GI } from '../../G.ts';
-import { printRefs } from '../../common.tsx';
-import RenderPromise from '../../renderPromise.ts';
+import {
+  iframeAutoHeight,
+  printRefs,
+  rootRenderPromise,
+} from '../../common.tsx';
 import { Hbox, Vbox } from './boxes.tsx';
 import Button from './button.tsx';
 import Spacer from './spacer.tsx';
@@ -38,8 +41,12 @@ type PrintProps = XulProps & {
 
 export default function Print(props: PrintProps) {
   const { children, print } = props;
-  const { pageViewRef, printContainerRef } = printRefs;
+  const { pageViewRef } = printRefs;
   const { pageable, direction, iframeFilePath } = print;
+
+  useEffect(() => {
+    iframeAutoHeight('.print', true); // print height is not constrained
+  });
 
   const backHandler = () => {
     Subscription.publish.setControllerState(
@@ -53,11 +60,7 @@ export default function Print(props: PrintProps) {
     );
   };
 
-  const renderPromise = new RenderPromise(() =>
-    Subscription.publish.setControllerState({
-      reset: randomID(),
-    }),
-  );
+  const renderPromise = rootRenderPromise;
 
   return (
     <>

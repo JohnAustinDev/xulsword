@@ -6,6 +6,10 @@
   overflow: hidden;
 }
 
+.bibleBrowser .print {
+  min-height: fit-content;
+}
+
 .pageView {
   overflow: visible; /* make overlay shadow visible */
 }
@@ -21,6 +25,15 @@
 .content {
   position: relative; /* for overlay */
   background: white;
+}
+
+/* This width is C.UI.WebApp.tabletW */
+@media (max-width: 1027px) {
+  .bibleBrowser .print {
+    flex-direction: column;
+    align-items: center;
+    justify-content: start;
+  }
 }
 
 @media print {

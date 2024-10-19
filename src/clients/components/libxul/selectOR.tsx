@@ -140,7 +140,6 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
     const { id, onSelection } = this.props as SelectORProps;
     const { selection } = this.state as SelectORState;
     const { renderPromise, selectorValue } = this;
-    renderPromise.dispatch();
     if (stringHash(selectorValue) !== stringHash(selection.keys)) {
       const newsel = {
         ...selection,
@@ -149,6 +148,7 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
       if (onSelection) onSelection(newsel, id);
       this.setState({ selection: newsel } as Partial<SelectORState>);
     }
+    renderPromise.dispatch();
   }
 
   onChange(ev: React.SyntheticEvent) {

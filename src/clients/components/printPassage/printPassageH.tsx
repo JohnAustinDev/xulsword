@@ -55,7 +55,10 @@ export function vkSelectHandler(
   } else this.setState({ chapters: null });
 }
 
-function getDictionaryLinks(textHTML: string): string {
+function getDictionaryLinks(
+  textHTML: string,
+  renderPromise: RenderPromise,
+): string {
   const m = textHTML.matchAll(/<span class="dt" data-title="([^"]*)\.[^."]*"/g);
   const decoded = [...new Set(Array.from(m).map((x) => decodeOSISRef(x[1])))];
   const sorted = decoded.sort((a, b) => {
@@ -69,9 +72,7 @@ function getDictionaryLinks(textHTML: string): string {
         undefined,
         undefined,
       ];
-      return key && mod
-        ? getDictEntryHTML(key, mod, new RenderPromise(null))
-        : '';
+      return key && mod ? getDictEntryHTML(key, mod, renderPromise) : '';
     })
     .join('');
 }
@@ -122,7 +123,15 @@ export function bibleChapterText(
       response.notes = notes;
       if (show.usernotes)
         addBookmarks(response, { ...props, modkey: '' }, renderPromise);
-      response.noteHTML = getNoteHTML(response.notes, show, 0, crossrefsText);
+      response.noteHTML = getNoteHTML(
+        response.notes,
+        show,
+        0,
+        crossrefsText,
+        undefined,
+        undefined,
+        renderPromise,
+      );
     }
     const { noteHTML } = response;
     let { textHTML } = response;
@@ -147,7 +156,11 @@ export function bibleChapterText(
 
     // Get introduction
     if (introduction) {
-      const intro = getIntroductions(module, `${book} ${chapter}`);
+      const intro = getIntroductions(
+        module,
+        `${book} ${chapter}`,
+        renderPromise,
+      );
       if (intro.textHTML) introHTML = intro.textHTML;
     }
 
@@ -171,11 +184,11 @@ export function bibleChapterText(
 
     return `
       <div class="introduction"></div>${introHTML}
-      <div class="dictionary-links"></div>${getDictionaryLinks(introHTML)}
+      <div class="dictionary-links"></div>${getDictionaryLinks(introHTML, renderPromise)}
       <div class="chapter-start${chapter === 1 ? ' chapterfirst' : ''}"></div>${headHTML}
       ${textHTML}
       <div class="footnotes"></div>${noteHTML}
-      <div class="dictionary-links"></div>${getDictionaryLinks(textHTML)}`;
+      <div class="dictionary-links"></div>${getDictionaryLinks(textHTML, renderPromise)}`;
   }
   return '';
 }

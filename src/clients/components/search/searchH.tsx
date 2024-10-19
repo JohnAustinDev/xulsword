@@ -9,7 +9,7 @@ import {
 } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
-import { dString } from '../../common.tsx';
+import { dString, rootRenderPromise } from '../../common.tsx';
 import Commands from '../../commands.ts';
 import log from '../../log.ts';
 import RenderPromise from '../../renderPromise.ts';
@@ -873,16 +873,7 @@ export default async function handler(this: Search, e: React.SyntheticEvent) {
                   reset: randomID(),
                   card: null,
                 });
-              Commands.goToLocationVK(
-                l,
-                l,
-                undefined,
-                new RenderPromise(() =>
-                  Subscription.publish.setControllerState({
-                    reset: randomID(),
-                  }),
-                ),
-              );
+              Commands.goToLocationVK(l, l, undefined, rootRenderPromise);
               break;
             }
             case 'keylink': {
@@ -899,11 +890,7 @@ export default async function handler(this: Search, e: React.SyntheticEvent) {
                     key: decodeURIComponent(p.shift() || ''),
                   },
                   undefined,
-                  new RenderPromise(() =>
-                    Subscription.publish.setControllerState({
-                      reset: randomID(),
-                    }),
-                  ),
+                  rootRenderPromise,
                 );
               }
               break;

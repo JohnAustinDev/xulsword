@@ -1,11 +1,14 @@
-import RenderPromise from '../../renderPromise.ts';
 import C from '../../../constant.ts';
 import RefParser from '../../../refParser.ts';
 import Subscription from '../../../subscription.ts';
 import { clone, ofClass, randomID, setGlobalPanels } from '../../../common.ts';
 import { G } from '../../G.ts';
 import Commands from '../../commands.ts';
-import { genBookAudioFile, verseKeyAudioFile } from '../../common.tsx';
+import {
+  genBookAudioFile,
+  rootRenderPromise,
+  verseKeyAudioFile,
+} from '../../common.tsx';
 import { verseKey } from '../../htmlData.ts';
 import log from '../../log.ts';
 import { chapterChange, verseChange } from '../atext/zversekey.ts';
@@ -176,7 +179,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
         case 'addcolumn':
         case 'removecolumn': {
           setGlobalPanels(G.Prefs, 0, currentId === 'addcolumn' ? 1 : -1);
-          Subscription.doPublish('setControllerState', { reset: randomID() });
+          Subscription.publish.setControllerState({ reset: randomID() });
           break;
         }
         default:
@@ -359,14 +362,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
           }
         }
       }
-      Commands.playAudio(
-        afile,
-        new RenderPromise(() =>
-          Subscription.publish.setControllerState({
-            reset: randomID(),
-          }),
-        ),
-      ); // null closes the player
+      Commands.playAudio(afile, rootRenderPromise); // null closes the player
       break;
     }
 
