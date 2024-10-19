@@ -41,7 +41,6 @@ import type { AtextPropsType, OSISBookType, V11nType } from '../../../type.ts';
 import type S from '../../../defaultPrefs.ts';
 import type { PrintOptionsType } from '../../controller.tsx';
 import type { XulProps } from '../../components/libxul/xul.tsx';
-import type { SelectVKType } from '../../components/libxul/selectVK.tsx';
 
 // The PrintPassage component utilizes state prefs to render a series of Bible
 // chapters into the printContainerRef (provided via a prop). Custom settings
@@ -403,6 +402,8 @@ export default class PrintPassage
                     lastverses: [],
                     vkMods: 'Texts',
                   }}
+                  language
+                  description
                   onSelection={vkSelectHandler}
                 />
                 {progress !== -1 && (

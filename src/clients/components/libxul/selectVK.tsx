@@ -57,6 +57,8 @@ export type SelectVKProps = {
     lastverses?: number[];
     vkMods?: string[] | 'Texts' | 'Comms';
   };
+  language?: boolean;
+  description?: boolean;
   disabled?: boolean;
   allowNotInstalled?: boolean;
   onSelection: (selection: SelectVKType | undefined, id?: string) => void;
@@ -84,6 +86,8 @@ const propTypes = {
       PropTypes.string,
     ]),
   }),
+  language: PropTypes.bool,
+  description: PropTypes.bool,
   disabled: PropTypes.bool,
   allowNotInstalled: PropTypes.bool,
   onSelection: PropTypes.func.isRequired,
@@ -270,7 +274,8 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
 
     const { book, chapter, verse, lastverse, lastchapter } = selection;
     const vkMod = getModuleOfObject(selection);
-    const { options, disabled, allowNotInstalled } = props;
+    const { options, disabled, allowNotInstalled, language, description } =
+      props;
     const { books, chapters, lastchapters, verses, lastverses, vkMods } =
       options || {};
     const { handleChange, renderPromise, loadingRef } = this;
@@ -482,6 +487,8 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
                 className="vk-vkmod"
                 value={vkmod || modules[0]}
                 modules={modules}
+                language={language}
+                description={description}
                 disabled={disabled}
                 allowNotInstalled={allowNotInstalled}
                 onChange={handleChange}
