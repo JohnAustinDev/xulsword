@@ -38,7 +38,8 @@
 
 @media print {
   .print > *:not(.pageView-container),
-  #overlay {
+  #overlay,
+  .close-card-button {
     display: none !important;
   }
 

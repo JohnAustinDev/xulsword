@@ -269,7 +269,9 @@ async function asyncRequest(thecall: GCallType) {
     }
     if (Build.isWebApp)
       result = gcallResultCompression(thecall, result, callResultDecompress);
-    if (cacheable && !getWaitRetry(result)) Cache.write(result, ckey);
+    if (cacheable && !getWaitRetry(result) && !Cache.has(ckey)) {
+      Cache.write(result, ckey);
+    }
   } catch (er: any) {
     throw new Error(
       `Promise rejection in ${JSON_stringify(call)}:\n${er.toString()}`,
