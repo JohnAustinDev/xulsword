@@ -873,7 +873,7 @@ export default async function handler(this: Search, e: React.SyntheticEvent) {
                   reset: randomID(),
                   card: null,
                 });
-              Commands.goToLocationVK(l, l, undefined, rootRenderPromise);
+              Commands.goToLocationVK(l, l, undefined, rootRenderPromise());
               break;
             }
             case 'keylink': {
@@ -890,7 +890,7 @@ export default async function handler(this: Search, e: React.SyntheticEvent) {
                     key: decodeURIComponent(p.shift() || ''),
                   },
                   undefined,
-                  rootRenderPromise,
+                  rootRenderPromise(),
                 );
               }
               break;

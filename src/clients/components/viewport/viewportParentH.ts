@@ -1,13 +1,11 @@
 import type React from 'react';
-import Subscription from '../../../subscription.ts';
 import C from '../../../constant.ts';
 import type S from '../../../defaultPrefs.ts';
 import Cache from '../../../cache.ts';
-import { clone, escapeRE, ofClass, randomID } from '../../../common.ts';
+import { clone, escapeRE, ofClass } from '../../../common.ts';
 import { getElementData, verseKey } from '../../htmlData.ts';
 import { G } from '../../G.ts';
 import Commands from '../../commands.ts';
-import RenderPromise from '../../renderPromise.ts';
 import {
   rootRenderPromise,
   scrollIntoView,
@@ -531,7 +529,7 @@ export default function handler(
                 lastverse: lastverse || 1,
                 v11n,
               };
-              Commands.goToLocationVK(loc, loc, undefined, rootRenderPromise);
+              Commands.goToLocationVK(loc, loc, undefined, rootRenderPromise());
             }
           }
           break;

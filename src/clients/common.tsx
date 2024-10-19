@@ -32,7 +32,6 @@ import type {
   PrefStoreType,
   PrefValue,
   Repository,
-  SearchType,
   SwordConfLocalized,
   SwordConfType,
   V11nType,
@@ -54,10 +53,16 @@ export function functionalComponentRenderPromise(loadingSelector?: string) {
   return { renderPromise, loadingRef };
 }
 
-export const rootRenderPromise = new RenderPromise(() =>
-  Subscription.publish.setControllerState({ reset: randomID() }),
-);
-setInterval(() => rootRenderPromise.dispatch(), 100);
+let rootRenderPromiseInst: RenderPromise | null = null;
+export function rootRenderPromise() {
+  if (!rootRenderPromiseInst) {
+    rootRenderPromiseInst = new RenderPromise(() =>
+      Subscription.publish.setControllerState({ reset: randomID() }),
+    );
+    setInterval(() => rootRenderPromiseInst?.dispatch(), 200);
+  }
+  return rootRenderPromiseInst;
+}
 
 export function component(
   comp: any,

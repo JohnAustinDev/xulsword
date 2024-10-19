@@ -60,7 +60,7 @@ export default function Print(props: PrintProps) {
     );
   };
 
-  const renderPromise = rootRenderPromise;
+  const renderPromise = rootRenderPromise();
 
   return (
     <>

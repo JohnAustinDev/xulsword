@@ -1,6 +1,5 @@
 import RenderPromise from './renderPromise.ts';
 import { dString, rootRenderPromise } from './common.tsx';
-import Subscription from '../subscription.ts';
 import {
   clone,
   decodeOSISRef,
@@ -8,7 +7,6 @@ import {
   JSON_attrib_parse,
   JSON_attrib_stringify,
   ofClass,
-  randomID,
 } from '../common.ts';
 import RefParser from '../refParser.ts';
 import VerseKey from '../verseKey.ts';
@@ -163,7 +161,7 @@ export function libSwordData2XulswordData(dataIn: LibSwordHTMLData): HTMLData {
           r,
           G.Tab[b].v11n || null,
           undefined,
-          Build.isWebApp ? rootRenderPromise : undefined,
+          Build.isWebApp ? rootRenderPromise() : undefined,
         ).location();
       } else {
         locationGB = {

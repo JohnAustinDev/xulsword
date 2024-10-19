@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import { Icon, Intent, Position, OverlayToaster } from '@blueprintjs/core';
 import Subscription from '../../../subscription.ts';
-import { clone, diff, keep, randomID } from '../../../common.ts';
+import { clone, randomID } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
 import {
@@ -12,7 +12,6 @@ import {
   rootRenderPromise,
   setStatePref,
 } from '../../common.tsx';
-import RenderPromise from '../../renderPromise.ts';
 import { Hbox, Vbox } from './boxes.tsx';
 import Button from './button.tsx';
 import Spacer from './spacer.tsx';
@@ -85,7 +84,7 @@ const notStatePref = {
 
 export type PrintSettingsState = typeof S.prefs.print & typeof notStatePref;
 
-const renderPromise = rootRenderPromise;
+const renderPromise = rootRenderPromise();
 
 export default class PrintSettings extends React.Component {
   static propTypes: typeof propTypes;
