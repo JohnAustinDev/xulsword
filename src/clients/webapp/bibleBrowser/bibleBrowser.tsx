@@ -12,6 +12,7 @@ import { callBatchThenCache } from '../../renderPromise.ts';
 import renderToRoot from '../../controller.tsx';
 import Xulsword from '../../components/xulsword/xulsword.tsx';
 import socketConnect from '../preload.ts';
+import Prefs from '../prefs.ts';
 import {
   writeSettingsToPrefsStores,
   setGlobalLocale,
@@ -20,11 +21,9 @@ import {
 } from '../common.ts';
 import defaultSettings, {
   BibleBrowserSettings,
-  setEmptySettings,
+  setEmptyPrefs,
 } from './defaultSettings.ts';
 import './bibleBrowser.css';
-
-import type { PrintPassageProps } from '../../components/printPassage/printPassage.tsx';
 
 // For narrow screens, only one panel is shown and all notes appear in popups,
 // regardless of initial settings.
@@ -57,6 +56,8 @@ socket.on('connect', () => {
         defaultSettings,
       ) as BibleBrowserSettings;
 
+      if (settings.storageID) (Prefs as any).storageID = settings.storageID;
+
       // Add any custom iframe CSS
       const { frame } = settings;
       if (frame && !/^(0|1)$/.test(frame)) {
@@ -82,7 +83,8 @@ socket.on('connect', () => {
       }
       const locale = setGlobalLocale(settings, langcode);
       // Must set global.locale before callBatch.
-      writeSettingsToPrefsStores(settings);
+      // Iframe API prioritizes API settings over user settings.
+      writeSettingsToPrefsStores(settings, !frame || frame === '0');
 
       await callBatchThenCache([
         ['getLocalizedBooks', null, [[locale]]],
@@ -100,20 +102,9 @@ socket.on('connect', () => {
           (type) => ['i18n', 't', [type, { lng: locale }]] as any,
         ),
       ]);
-      setEmptySettings(settings);
-      setGlobalPanels(settings, numPanels);
 
-      // Update Prefs with final settings.
-      if (window.innerWidth < 768) {
-        settings.prefs.xulsword.noteBoxHeight = [300]; // for dict modules
-        settings.prefs.xulsword.place = {
-          footnotes: 'popup',
-          crossrefs: 'popup',
-          usernotes: 'popup',
-        };
-      }
-
-      writeSettingsToPrefsStores(settings);
+      setEmptyPrefs(Prefs);
+      setGlobalPanels(Prefs, numPanels);
 
       const globalPopup = {} as typeof S.prefs.global.popup;
       validateGlobalModulePrefs(
@@ -124,9 +115,6 @@ socket.on('connect', () => {
         globalPopup,
       );
       G.Prefs.mergeValue('global.popup', globalPopup);
-
-      if (window.innerWidth < 500)
-        G.Prefs.setBoolPref('xulsword.showChooser', false);
 
       // Wheel scroll is confusing in desktop Browser, so disable it.
       const wheelCapture = (e: React.SyntheticEvent<any>): boolean => {

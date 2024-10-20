@@ -1,9 +1,12 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import { G } from '../../G.ts';
 
-import type C from '../../../constant.ts';
+import Cache from '../../../cache.ts';
+import C from '../../../constant.ts';
+import { G } from '../../G.ts';
+import { GCacheKey } from '../../../common.ts';
 import type S from '../../../defaultPrefs.ts';
-import type { AllComponentsSettings } from '../common.ts';
+import type { AllComponentsData } from '../common.ts';
+import type { PrefsGType } from '../../../prefs.ts';
 
 // Note: langcode won't set the user interface language of the Bible browser
 // widget; settings.prefs.global.locale will set it.
@@ -11,6 +14,7 @@ export type BibleBrowserSettings = {
   component: 'bibleBrowser';
   langcode?: string; // currently unused by this widget.
   settings: {
+    storageID: string;
     frame: string;
     prefs: {
       xulsword: Partial<(typeof S)['prefs']['xulsword']>;
@@ -21,30 +25,93 @@ export type BibleBrowserSettings = {
   };
 };
 
-// The 'tabs' and 'panels' default settings may be left empty, to be filled with
-// available modules at run-time.
-export function setEmptySettings(settings: BibleBrowserSettings['settings']) {
-  const { tabs, panels } = settings.prefs.xulsword;
-  if (G.Tabs.length && (!tabs || tabs.every((t) => !t || !t.length))) {
-    const ntabs = tabs ?? [[], []];
-    ntabs.forEach((tabBank) => {
-      if (Array.isArray(tabBank)) tabBank.push(...G.Tabs.map((t) => t.module));
-    });
-    settings.prefs.xulsword.tabs = ntabs;
+// Certain default settings were left empty, to be filled at runtime. If prefs
+// is a G.Prefs object, the prefs will be updated directly.
+export function setEmptyPrefs(
+  prefs: BibleBrowserSettings['settings']['prefs'] | PrefsGType,
+) {
+  const xulsword =
+    'getComplexValue' in prefs
+      ? (prefs.getComplexValue('xulsword') as typeof S.prefs.xulsword)
+      : prefs.xulsword;
+  const { tabs, panels } = xulsword;
+
+  if (Cache.has(GCacheKey(['Tabs', null, undefined]))) {
+    if (G.Tabs.length && (!tabs || tabs.every((t) => !t || !t.length))) {
+      const ntabs = tabs ?? [[], []];
+      ntabs.forEach((tabBank) => {
+        if (Array.isArray(tabBank))
+          tabBank.push(...G.Tabs.map((t) => t.module));
+      });
+      xulsword.tabs = ntabs;
+    }
+    if (G.Tabs.length && (!panels || panels.every((p) => !p))) {
+      const npanels = (panels ?? ['', '']).map((p) => p || G.Tabs[0].module);
+      xulsword.panels = npanels;
+    }
   }
-  if (G.Tabs.length && (!panels || panels.every((p) => !p))) {
-    const npanels = (panels ?? ['', '']).map((p) => p || G.Tabs[0].module);
-    settings.prefs.xulsword.panels = npanels;
+
+  if (!xulsword.place || !Object.keys(xulsword.place)) {
+    xulsword.place =
+      window.innerWidth <= C.UI.WebApp.mobileW
+        ? {
+            footnotes: 'popup',
+            crossrefs: 'popup',
+            usernotes: 'popup',
+          }
+        : {
+            footnotes: 'notebox',
+            crossrefs: 'notebox',
+            usernotes: 'popup',
+          };
+  }
+
+  if (!xulsword.noteBoxHeight || xulsword.noteBoxHeight[0] === -1) {
+    const h = window.innerWidth <= C.UI.WebApp.mobileW ? 200 : 300;
+    xulsword.noteBoxHeight = [h];
+    if (xulsword.panels?.length) {
+      xulsword.noteBoxHeight = xulsword.panels.map(() => h);
+    }
+  }
+
+  if (xulsword.showChooser === null) {
+    xulsword.showChooser = window.innerWidth > C.UI.WebApp.mobileW;
+  }
+
+  if ('setComplexValue' in prefs) {
+    prefs.setComplexValue('xulsword', xulsword);
+  } else {
+    prefs.xulsword = xulsword;
   }
 }
 
-const defaultSettings: AllComponentsSettings = {
+/*
+      // Update Prefs with final settings.
+      if (window.innerWidth < 768) {
+      200
+        settings.prefs.xulsword.noteBoxHeight = [300]; // for dict modules
+        {
+              footnotes: 'notebox',
+              crossrefs: 'notebox',
+              usernotes: 'popup',
+            }
+
+        settings.prefs.xulsword.place = {
+          footnotes: 'popup',
+          crossrefs: 'popup',
+          usernotes: 'popup',
+        };
+      }
+*/
+
+const defaultSettings: AllComponentsData = {
   react: {
     bibleBrowser_1: {
       component: 'bibleBrowser',
       langcode: 'en',
       settings: {
-        frame: '0',
+        storageID: 'x',
+        frame: '0', // is iframe API being used?
         prefs: {
           xulsword: {
             location: {
@@ -74,20 +141,16 @@ const defaultSettings: AllComponentsSettings = {
               hebvowelpoints: true,
               redwords: true,
             },
-            place: {
-              footnotes: 'notebox',
-              crossrefs: 'notebox',
-              usernotes: 'popup',
-            },
+            place: {} as any, // leave as {} to update at runtime
 
-            showChooser: true,
+            showChooser: null as unknown as boolean, // leave as null to set at runtime
             tabs: [[], []], // leave tab-bank arrays empty to show all tabs in each bank.
             panels: ['', ''], // leave panels empty to show the first installed module
             ilModules: [null, null],
             mtModules: [null, null],
 
             isPinned: [false, false],
-            noteBoxHeight: [200, 200],
+            noteBoxHeight: [-1, -1], // leave at -1 to update at runtime
             maximizeNoteBox: [false, false],
             tabcntl: true,
           },

@@ -108,9 +108,7 @@ export function bibleChapterText(
     };
     if (
       location.book &&
-      GI.getBooksInVKModule(['Gen'], renderPromise, module).includes(
-        location.book,
-      )
+      GI.getBooksInVKModule([], renderPromise, module).includes(location.book)
     ) {
       const { text, notes } = GI.LibSword.getChapterText(
         { text: '', notes: '' },

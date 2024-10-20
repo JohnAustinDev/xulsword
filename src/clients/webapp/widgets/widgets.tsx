@@ -16,7 +16,7 @@ import WidgetMenulist from './widgetMenulist.tsx';
 import defaultSettings from './defaultSettings.ts';
 
 import type { PrefRoot } from '../../../type.ts';
-import type { ComponentSettings } from '../common.ts';
+import type { ComponentData } from '../common.ts';
 
 const socket = socketConnect(
   Number(process.env.WEBAPP_PORT),
@@ -59,7 +59,7 @@ if (widgets.length) {
             const settings = getComponentSettings(
               widget,
               defaultSettings,
-            ) as ComponentSettings;
+            ) as ComponentData;
             const { component } = settings;
             switch (component) {
               case 'selectVK': {

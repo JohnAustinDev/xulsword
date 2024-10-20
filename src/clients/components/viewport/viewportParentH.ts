@@ -6,6 +6,7 @@ import { clone, escapeRE, ofClass } from '../../../common.ts';
 import { getElementData, verseKey } from '../../htmlData.ts';
 import { G } from '../../G.ts';
 import Commands from '../../commands.ts';
+import RenderPromise from '../../renderPromise.ts';
 import {
   rootRenderPromise,
   scrollIntoView,
@@ -186,7 +187,6 @@ export default function handler(
   this: Xulsword | ViewportWin,
   es: React.SyntheticEvent<any>,
 ) {
-  const { renderPromise } = this;
   const state = this.state as XulswordState | ViewportWinState;
   const { location } = state;
   const { panels } = state;
@@ -354,23 +354,27 @@ export default function handler(
         }
         case 'chaptermenucell': {
           const { book, chapter, v11n } = targ.element.dataset;
-          if (book && chapter) {
-            const newloc = chapterChange(
-              {
-                book: book as OSISBookType,
-                chapter: Number(chapter),
-                v11n: v11n as V11nType,
-              },
-              0,
-              renderPromise,
-            );
-            if (newloc) {
-              this.setState({
-                location: newloc,
-                selection: null,
-              });
+          const rpDO = () => {
+            if (book && chapter) {
+              const newloc = chapterChange(
+                {
+                  book: book as OSISBookType,
+                  chapter: Number(chapter),
+                  v11n: v11n as V11nType,
+                },
+                0,
+                renderPromise2,
+              );
+              if (newloc && !renderPromise2.waiting()) {
+                this.setState({
+                  location: newloc,
+                  selection: null,
+                });
+              }
             }
-          }
+          };
+          const renderPromise2 = new RenderPromise(rpDO);
+          rpDO();
           break;
         }
         case 'heading-link': {
@@ -381,23 +385,28 @@ export default function handler(
             verse: v,
           } = targ.element.dataset;
           const v11n = (m && G.Tab[m].v11n) || null;
-          if (location && m && b && v && v11n) {
-            const newloc = verseKey(
-              {
-                book: b as OSISBookType,
-                chapter: Number(c),
-                verse: Number(v),
-                v11n,
-              },
-              location.v11n,
-              undefined,
-              renderPromise,
-            ).location();
-            this.setState({
-              location: newloc,
-              selection: null,
-            });
-          }
+          const rpDO = () => {
+            if (location && m && b && v && v11n) {
+              const newloc = verseKey(
+                {
+                  book: b as OSISBookType,
+                  chapter: Number(c),
+                  verse: Number(v),
+                  v11n,
+                },
+                location.v11n,
+                undefined,
+                renderPromise2,
+              ).location();
+              if (!this.renderPromise.waiting())
+                this.setState({
+                  location: newloc,
+                  selection: null,
+                });
+            }
+          };
+          const renderPromise2 = new RenderPromise(rpDO);
+          rpDO();
           break;
         }
         case 'open-chooser': {
@@ -467,16 +476,20 @@ export default function handler(
         }
         case 'prevchaplink':
         case 'nextchaplink': {
-          if (atext) {
-            setState(this, atext, (prevState: PinPropsType) => {
-              return textChange(
-                atext,
-                targ.type === 'nextchaplink',
-                renderPromise,
-                prevState,
-              );
-            });
-          }
+          const rpDO = () => {
+            if (atext && !renderPromise2.waiting()) {
+              setState(this, atext, (prevState: PinPropsType) => {
+                return textChange(
+                  atext,
+                  targ.type === 'nextchaplink',
+                  renderPromise2,
+                  prevState,
+                );
+              });
+            }
+          };
+          const renderPromise2 = new RenderPromise(rpDO);
+          rpDO();
           break;
         }
         case 'dt':

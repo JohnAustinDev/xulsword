@@ -526,7 +526,7 @@ export function verseKey(
       Book: () => G.Book(G.i18n.language),
       Tab: () => G.Tab,
       getBkChsInV11n: (v11n: V11nType) => {
-        return GI.getBkChsInV11n([['Gen', 50]], renderPromise, v11n);
+        return GI.getBkChsInV11n([], renderPromise, v11n);
       },
     },
     (str: string | number, locale?: string) => {

@@ -56,7 +56,7 @@ export class Viewport {
 
   constructor(
     // These web app G calls must be cache preloaded.
-    G: Pick<GType, 'Tab' | 'Tabs' | 'i18n'>,
+    G: Pick<GType, 'Tab' | 'Tabs' | 'Books' | 'i18n'>,
     GI: Pick<GIType, 'getBooksInVKModule'>,
     prefs: typeof PrefsElectron | typeof PrefsBrowser,
   ) {
@@ -226,7 +226,7 @@ export class Viewport {
           used[nextmod] = true;
           if (!state.location?.book && nextmod && Tab[nextmod].isVerseKey) {
             const [book] = this.#GI.getBooksInVKModule(
-              ['Gen'],
+              [],
               renderPromise,
               nextmod,
             );
@@ -386,7 +386,7 @@ export class Viewport {
               m in Tab &&
               Tab[m].isVerseKey &&
               this.#GI
-                .getBooksInVKModule(['Gen'], renderPromise, m)
+                .getBooksInVKModule([], renderPromise, m)
                 .includes(book),
           ))
       ) {

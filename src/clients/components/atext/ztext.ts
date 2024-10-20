@@ -86,7 +86,7 @@ export function libswordText(
             r.textHTML += text.replace(/interV2/gm, `cs-${ilModule}`);
           }
         } else if (
-          GI.getBooksInVKModule(['Gen'], renderPromise, module).includes(book)
+          GI.getBooksInVKModule([], renderPromise, module).includes(book)
         ) {
           // We needed to check that the module contains the book, because
           // LibSword will silently return text from elsewhere in a module

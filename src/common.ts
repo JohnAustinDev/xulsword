@@ -475,35 +475,6 @@ export function prefType(
     : 'complex';
 }
 
-// Shallow merge rootkey object properties (ie. merge complete.prefs.global properties).
-export function mergePrefsRoots(
-  sparse: Partial<PrefRoot>,
-  complete: PrefRoot,
-): PrefRoot {
-  const complete2: PrefRoot = clone(complete);
-  Object.entries(complete2).forEach((entry) => {
-    // ex: prefs, xulsword
-    const [store, prefobj] = entry as [keyof PrefRoot, PrefObject];
-    Object.entries(prefobj).forEach((entry2) => {
-      // ex: location, { book: Gen... }
-      const [key, defValue] = entry2;
-      const sparseStore = sparse[store];
-      const value =
-        sparseStore && key in sparseStore ? sparseStore[key] : undefined;
-      // If defValue is prefObject, merge its keys so pref is always complete.
-      if (defValue && typeof defValue === 'object') {
-        complete2[store][key] = {
-          ...defValue,
-          ...(value && typeof value === 'object' ? value : {}),
-        };
-      } else {
-        complete2[store][key] = value ?? defValue;
-      }
-    });
-  });
-  return complete2;
-}
-
 // Return values of key/value pairs of component state Prefs. Component
 // state Prefs are permanently persisted component state values recorded in
 // a json preference file.

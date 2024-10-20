@@ -35,7 +35,7 @@ export default class Commands {
 
   constructor(
     // These web app G calls must be cache preloaded.
-    G: Pick<GType, 'Tab' | 'Tabs' | 'i18n'>,
+    G: Pick<GType, 'Tab' | 'Tabs' | 'Books' | 'i18n'>,
     GI: Pick<GIType, 'getBooksInVKModule'>,
     prefs: typeof PrefsElectron | typeof PrefsBrowser,
   ) {

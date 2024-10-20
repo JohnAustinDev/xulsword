@@ -131,13 +131,13 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
 
   componentDidMount() {
     const { renderPromise, checkSelection } = this;
-    checkSelection();
+    if (!renderPromise.waiting()) checkSelection();
     renderPromise.dispatch();
   }
 
   componentDidUpdate(_prevProps: SelectVKProps, prevState: SelectVKState) {
     const { checkSelection, renderPromise } = this;
-    checkSelection(prevState);
+    if (!renderPromise.waiting()) checkSelection(prevState);
     renderPromise.dispatch();
   }
 
@@ -304,10 +304,11 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
     // module are removed from the list. All books are sorted in v11n order.
     // Similarly, when the books prop lists particular books, only modules
     // containing those books will be included in the module selector.
-    const bkbgs = (books ||
-      GI.getBkChsInV11n([['Gen', 50]], renderPromise, v11n)?.map(
-        (r) => r[0],
-      )) as OSISBookType[];
+    const rp = GI.getBkChsInV11n([], renderPromise, v11n);
+    const bkChsInV11n = renderPromise.waiting()
+      ? G.Books().map((b) => b.code)
+      : rp;
+    const bkbgs = (books || bkChsInV11n?.map((r) => r[0])) as OSISBookType[];
     const bookset = new Set<OSISBookType>();
     bkbgs.forEach((bkbg: OSISBookType | BookGroupType) => {
       if (C.SupportedBookGroups.includes(bkbg as never)) {
@@ -320,9 +321,11 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
     const filteredbooks =
       tab && modules?.length !== 0
         ? Array.from(bookset).filter((b) =>
-            GI.getBooksInVKModule(['Gen'], renderPromise, tab.module).includes(
-              b,
-            ),
+            GI.getBooksInVKModule(
+              G.Books().map((b) => b.code),
+              renderPromise,
+              tab.module,
+            ).includes(b),
           )
         : Array.from(bookset);
     let sel = book;
@@ -390,7 +393,11 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
     // the selected book are removed.
     if ((books?.length || 0) > 0) {
       modules = modules.filter((m) =>
-        GI.getBooksInVKModule(['Gen'], renderPromise, m).includes(book),
+        GI.getBooksInVKModule(
+          G.Books().map((b) => b.code),
+          renderPromise,
+          m,
+        ).includes(book),
       );
     }
     let vkSel = vkMod;

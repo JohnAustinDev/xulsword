@@ -104,6 +104,7 @@ const S = {
         },
       },
       noAutoSearchIndex: [] as string[],
+      PREFSVersion: C.PREFSVersion,
     },
 
     xulsword: {

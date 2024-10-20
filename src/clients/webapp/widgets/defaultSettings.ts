@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import type { OSISBookType } from '../../../type.ts';
-import type { AllComponentsSettings } from '../common.ts';
+import type { AllComponentsData } from '../common.ts';
 import type C from '../../../constant.ts';
 import type { MenulistProps } from '../../components/libxul/menulist.tsx';
 import type { SelectORProps } from '../../components/libxul/selectOR.tsx';
@@ -50,7 +50,7 @@ export type ChaplistORType = Array<
   [orderSlashDelimited: string, chapterSlashDelimited: string, url: string]
 >;
 
-const defaultSettings: AllComponentsSettings = {
+const defaultSettings: AllComponentsData = {
   react: {
     selectVK_1: {
       component: 'selectVK',

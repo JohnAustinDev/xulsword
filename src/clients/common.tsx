@@ -430,9 +430,11 @@ export function isValidVKM(
   if (!isValidVK(location, renderPromise)) return false;
   if (!module || !(module in G.Tab)) return false;
   if (
-    !GI.getBooksInVKModule(['Gen'], renderPromise, module).includes(
-      location.book as never,
-    )
+    !GI.getBooksInVKModule(
+      G.Books().map((b) => b.code),
+      renderPromise,
+      module,
+    ).includes(location.book as never)
   ) {
     return false;
   }
@@ -491,7 +493,7 @@ export function getMaxChapter(
   renderPromise: RenderPromise,
 ) {
   const [book] = vkeytext.split(/[\s.:]/);
-  const bkChsInV11n = GI.getBkChsInV11n([['Gen', 50]], renderPromise, v11n);
+  const bkChsInV11n = GI.getBkChsInV11n([], renderPromise, v11n);
   if (!bkChsInV11n) return 0;
   const b = bkChsInV11n.find((x) => x[0] === book);
   return b ? b[1] : 0;

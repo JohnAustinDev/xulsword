@@ -222,9 +222,11 @@ export default class Xulsword
     const bookset = new Set<OSISBookType>();
     panels.forEach((m, i) => {
       if (m && !isPinned[i] && G.Tab[m].isVerseKey) {
-        GI.getBooksInVKModule(['Gen'], renderPromise, m).forEach((bk) =>
-          bookset.add(bk),
-        );
+        GI.getBooksInVKModule(
+          G.Books().map((b) => b.code),
+          renderPromise,
+          m,
+        ).forEach((bk) => bookset.add(bk));
       }
     });
     const Book = G.Book(G.i18n.language);

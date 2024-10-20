@@ -214,9 +214,11 @@ class Viewport extends React.Component implements PopupParent {
     const availableBooks = new Set();
     panels.forEach((m, i) => {
       if (m && !isPinned[i] && G.Tab[m].isVerseKey) {
-        GI.getBooksInVKModule(['Gen'], renderPromise, m).forEach((bk) =>
-          availableBooks.add(bk),
-        );
+        GI.getBooksInVKModule(
+          G.Books().map((b) => b.code),
+          renderPromise,
+          m,
+        ).forEach((bk) => availableBooks.add(bk));
       }
     });
 
@@ -239,7 +241,7 @@ class Viewport extends React.Component implements PopupParent {
           const ml = G.FeatureModules.hebrew
             .concat(G.FeatureModules.greek)
             .filter((m) =>
-              GI.getBooksInVKModule(['Gen'], renderPromise, m).includes(
+              GI.getBooksInVKModule([], renderPromise, m).includes(
                 bk.code,
               ),
             );
@@ -377,7 +379,7 @@ class Viewport extends React.Component implements PopupParent {
         panels.some(
           (p) =>
             p &&
-            GI.getBooksInVKModule(['Gen'], renderPromise, p).some(
+            GI.getBooksInVKModule([], renderPromise, p).some(
               (bk) => Book[bk].bookGroup === bg,
             ),
         ),

@@ -31,6 +31,8 @@ const C = {
 
   SWORDEngineVersion: '1.8.1',
 
+  PREFSVersion: '1.1', // Changing this will invalidate all users' prefs!
+
   MAXVERSE: 176,
   MAXCHAPTER: 150,
 

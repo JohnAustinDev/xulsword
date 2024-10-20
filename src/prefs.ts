@@ -1,6 +1,13 @@
 /* eslint-disable prefer-rest-params */
 import S from './defaultPrefs.ts';
-import { clone, diff, JSON_parse, JSON_stringify, mapp } from './common.ts';
+import {
+  clone,
+  diff,
+  JSON_parse,
+  JSON_stringify,
+  mapp,
+  stringHash,
+} from './common.ts';
 import Subscription from './subscription.ts';
 
 import type { BrowserWindow } from 'electron';
@@ -23,6 +30,7 @@ export type PrefStorage = {
   exists: LocalFile['exists'];
   writeFile: LocalFile['writeFile'];
   readFile: LocalFile['readFile'];
+  supported: () => boolean;
 };
 
 export type PrefsGType = Omit<
@@ -30,6 +38,7 @@ export type PrefsGType = Omit<
   | 'writeOnChange'
   | 'browserWindow'
   | 'storage'
+  | 'storageID'
   | 'log'
   | 'stores'
   | 'getStore'
@@ -49,12 +58,14 @@ export default class Prefs {
 
   storage = null as ((aStore: string) => PrefStorage) | null;
 
+  public storageID = '';
+
   log = null as ElectronLog.LogFunctions | null;
 
   // Cache all persistent data
   stores = {} as {
     [i in string | PrefStoreType]: {
-      store: PrefStorage;
+      store: PrefStorage | null;
       data: PrefObject | null;
     };
   };
@@ -67,7 +78,7 @@ export default class Prefs {
   ) {
     this.storage = storage;
     this.log = log;
-    this.writeOnChange = writeOnChange ?? Build.isWebApp;
+    this.writeOnChange = writeOnChange ?? true;
     this.browserWindow = browserWindow ?? null;
   }
 
@@ -347,16 +358,22 @@ export default class Prefs {
     if (Build.isElectronApp && useDefaultStore) aStore = `${aStorex}_default`;
     if (this.stores === null || !(aStore in this.stores)) {
       if (this.storage) {
+        const { storageID } = this;
+        let store: PrefStorage | null = this.storage(
+          Build.isWebApp && storageID
+            ? `${aStore}${stringHash(storageID)}`
+            : aStore,
+        );
+        if (!store.supported()) {
+          store = null;
+          this.log?.debug(`Prefs store is unsupported: ${aStorex}`);
+        } else if (!useDefaultStore && !store.exists()) {
+          store.writeFile(JSON_stringify({}));
+        }
         this.stores = {
           ...this.stores,
-          [aStore]: {
-            store: this.storage(aStore),
-            data: null,
-          },
+          [aStore]: { store, data: null },
         };
-        if (!useDefaultStore && !this.stores[aStore].store.exists()) {
-          this.stores[aStore].store.writeFile(JSON_stringify({}));
-        }
       } else throw new Error('Prefs has not been initialized!');
     }
 
@@ -366,7 +383,7 @@ export default class Prefs {
     const { store } = s;
     let { data } = s;
     if (!data) {
-      if (store.exists()) {
+      if (store?.exists()) {
         const readData = store.readFile();
         if (readData?.length) {
           const json = JSON_parse(readData.toString());
@@ -432,21 +449,29 @@ export default class Prefs {
     return clone(keyvalue);
   }
 
-  // Write persistent data to source json files. If there is no data object
-  // for the store, then there have been no set/gets on the store, and nothing
-  // will be written. True is returned on success.
+  // Write persistent data to source json files. True is returned on success.
   writeStore(aStore: PrefStoreType = 'prefs') {
     if (!this.stores) {
-      this.log?.warn(`Failed to write to non-existent store: '${aStore}.`);
+      this.log?.warn(`Failed to write to non-existent this.stores`);
       return false;
     }
 
     const s = this.stores[aStore];
+
+    if (!s) {
+      this.log?.warn(`Failed to write to non-existent store: '${aStore}'`);
+      return false;
+    }
+
     const { data } = s;
     if (!data || typeof data !== 'object') {
-      this.log?.warn(
-        `No data written to store: store='${aStore}', PrefValue='${data}'`,
-      );
+      this.log?.warn(`No data to save: store='${aStore}'`);
+      return false;
+    }
+
+    const { store } = s;
+    if (!store || !store.supported()) {
+      this.log?.warn(`No store to save to: store='${aStore}'`);
       return false;
     }
 
@@ -463,7 +488,7 @@ export default class Prefs {
 
     const json = JSON_stringify(s.data, 2);
     if (json) {
-      s.store.writeFile(json);
+      store.writeFile(json);
       this.log?.verbose(`Persisted store: ${aStore}`);
     } else {
       this.log?.warn(
@@ -477,11 +502,20 @@ export default class Prefs {
 
   writeAllStores(): void {
     if (!this.writeOnChange && this.stores !== null) {
+      const unsupported: string[] = [];
       Object.keys(this.stores).forEach((store: PrefStoreType | string) => {
-        if (!store.endsWith('_default')) {
+        const s = this.stores[store];
+        if (!s || !s.store?.supported()) {
+          unsupported.push(store);
+        } else if (!store.endsWith('_default')) {
           this.writeStore(store as PrefStoreType);
         }
       });
+      if (unsupported.length) {
+        this.log?.debug(
+          `Skipping unsupported pref store(s) write: ${JSON_stringify(unsupported)}`,
+        );
+      }
     }
   }
 
@@ -569,7 +603,16 @@ export default class Prefs {
     } else p[k] = clone(value);
     // If not writeOnChange, then data is persisted only when app is closed.
     let success = true;
-    if (valueChanged && this.writeOnChange) success = this.writeStore(store);
+    if (valueChanged && this.writeOnChange) {
+      const s = this.stores[store];
+      if (s && s.store?.supported()) {
+        success = this.writeStore(store);
+      } else {
+        this.log?.debug(
+          `Skipping unsupported pref store write: ${JSON_stringify(store)}`,
+        );
+      }
+    }
     if (success) {
       // Reset renderer caches if requested. When pref values are being pushed
       // to renderer windows that are incompatible with currently cached data,

@@ -140,13 +140,15 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
     const { id, onSelection } = this.props as SelectORProps;
     const { selection } = this.state as SelectORState;
     const { renderPromise, selectorValue } = this;
-    if (stringHash(selectorValue) !== stringHash(selection.keys)) {
-      const newsel = {
-        ...selection,
-        keys: selectorValue,
-      };
-      if (onSelection) onSelection(newsel, id);
-      this.setState({ selection: newsel } as Partial<SelectORState>);
+    if (!renderPromise.waiting()) {
+      if (stringHash(selectorValue) !== stringHash(selection.keys)) {
+        const newsel = {
+          ...selection,
+          keys: selectorValue,
+        };
+        if (onSelection) onSelection(newsel, id);
+        this.setState({ selection: newsel } as Partial<SelectORState>);
+      }
     }
     renderPromise.dispatch();
   }
@@ -154,7 +156,6 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
   onChange(ev: React.SyntheticEvent) {
     const props = this.props as SelectORProps;
     const { onSelection } = props;
-    const { renderPromise } = this;
     const e = ev as React.ChangeEvent<HTMLSelectElement>;
     const targ = ofClass(
       ['select-module', 'select-parent', 'select-child'],
@@ -163,35 +164,41 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
     if (targ) {
       const { value } = e.target;
       const tabType = (value && value in G.Tab && G.Tab[value].tabType) || '';
-      this.setState(async (prevState: SelectORState) => {
-        let { selection } = prevState;
-        if (targ.type === 'select-module') {
-          let nodes: TreeNodeInfo[] = [];
-          if (tabType === 'Genbks') {
-            nodes = GI.genBookTreeNodes([], renderPromise, value);
-          } else if (tabType === 'Dicts') {
-            const keylist = GI.getAllDictionaryKeyList(
-              [],
-              renderPromise,
-              value,
+      const rpDO = () => {
+        this.setState(async (prevState: SelectORState) => {
+          let { selection } = prevState;
+          if (targ.type === 'select-module') {
+            let nodes: TreeNodeInfo[] = [];
+            if (tabType === 'Genbks') {
+              nodes = GI.genBookTreeNodes([], renderPromise2, value);
+            } else if (tabType === 'Dicts') {
+              const keylist = GI.getAllDictionaryKeyList(
+                [],
+                renderPromise2,
+                value,
+              );
+              nodes = dictTreeNodes(keylist, value);
+            }
+            const leafNode = findFirstLeafNode(nodes, nodes);
+            const keys = leafNode ? [leafNode.id.toString()] : [];
+            selection = { otherMod: value, keys };
+          } else if (selection && targ.type === 'select-parent') {
+            selection.keys = [e.target.value];
+          } else if (selection && targ.type === 'select-child') {
+            selection.keys = Array.from(e.target.selectedOptions).map(
+              (o) => o.value,
             );
-            nodes = dictTreeNodes(keylist, value);
+          } else {
+            throw new Error(`Unrecognized select: '${targ.type}'`);
           }
-          const leafNode = findFirstLeafNode(nodes, nodes);
-          const keys = leafNode ? [leafNode.id.toString()] : [];
-          selection = { otherMod: value, keys };
-        } else if (selection && targ.type === 'select-parent') {
-          selection.keys = [e.target.value];
-        } else if (selection && targ.type === 'select-child') {
-          selection.keys = Array.from(e.target.selectedOptions).map(
-            (o) => o.value,
-          );
-        } else {
-          throw new Error(`Unrecognized select: '${targ.type}'`);
-        }
-        onSelection(selection, props.id);
-        return { selection } as Partial<SelectORState>;
-      });
+          if (!renderPromise2.waiting()) onSelection(selection, props.id);
+          return renderPromise2.waiting()
+            ? null
+            : ({ selection } as Partial<SelectORState>);
+        });
+      };
+      const renderPromise2 = new RenderPromise(rpDO);
+      rpDO();
     }
   }
 

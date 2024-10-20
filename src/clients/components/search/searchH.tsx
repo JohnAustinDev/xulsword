@@ -121,7 +121,7 @@ function getScopes(
       if (books) kjvscope = `${books[0]}-${books.at(-1)}`;
     }
     const scopebooks = kjvScopeBooks(kjvscope);
-    const modbooks = GI.getBooksInVKModule(['Gen'], renderPromise, module); // are in v11n order
+    const modbooks = GI.getBooksInVKModule([], renderPromise, module); // are in v11n order
 
     let contStart: OSISBookType | '' = '';
     let contEnd: OSISBookType | '' = '';
@@ -774,7 +774,6 @@ export async function lexicon(
 }
 
 export default async function handler(this: Search, e: React.SyntheticEvent) {
-  const { renderPromise } = this;
   const state = this.state as SearchState;
   const target = e.target as HTMLElement;
   const currentTarget = e.currentTarget as HTMLElement;
@@ -823,7 +822,7 @@ export default async function handler(this: Search, e: React.SyntheticEvent) {
               this,
               module,
               descriptor,
-              renderPromise,
+              new RenderPromise(null),
             );
             if (result)
               search(this).catch((er) => {

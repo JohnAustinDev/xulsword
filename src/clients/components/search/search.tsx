@@ -391,7 +391,7 @@ export default class Search
       if (
         module &&
         !['ot', 'nt'].includes(bg) &&
-        GI.getBooksInVKModule(['Gen'], renderPromise, module).some((bk) => {
+        GI.getBooksInVKModule([], renderPromise, module).some((bk) => {
           const x = C.SupportedBooks[bg] as any;
           return x.includes(bk);
         })
