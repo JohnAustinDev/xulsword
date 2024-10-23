@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import log from '../../log.ts';
 import { G } from '../../G.ts';
-import { clone, randomID } from '../../../common.ts';
+import { randomID } from '../../../common.ts';
 import Menulist from '../../components/libxul/menulist.tsx';
 import { getProps } from '../common.ts';
 
@@ -122,7 +122,9 @@ function getEBookTitle(data: FileItem, menu: boolean): string {
   if (full) return menu ? G.i18n.t('Full publication') : name;
 
   const books =
-    scope?.replace(/[^-\s_]+/g, (m) => (m in Book ? Book[m].name : m)) ?? '';
+    scope?.replace(/[^-\s_]+/g, (m) =>
+      m in Book ? (Book as any)[m].name : m,
+    ) ?? '';
   const prefixes = [books, ...(types ? types : [])].filter(Boolean);
   const prefix = prefixes?.length ? prefixes.join(', ') : '';
 

@@ -35,13 +35,13 @@ export default function handler(this: Chooser, es: React.SyntheticEvent): void {
             state.bookGroup !== bookgroup &&
             bookGroups?.includes(bookgroup)
           )
-            delayHandler.bind(this)(
-              () => {
-                this.setState({ bookGroup: bookgroup });
-              },
+            delayHandler(
+              this,
+              () => this.setState({ bookGroup: bookgroup }),
+              [],
               C.UI.Chooser.bookgroupHoverDelay,
-              'bookgroupTO',
-            )(es);
+              'bookgroupTO'
+            );
           break;
         }
 

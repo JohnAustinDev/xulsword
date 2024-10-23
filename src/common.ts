@@ -1518,6 +1518,27 @@ export function findTreeNode(
   return undefined;
 }
 
+export function findTreeNodeOrder(
+  searchIn: TreeNodeInfo[],
+  idOrOrder: { id?: string | number; order?: number },
+  order = -1,
+): { id: string | number; order: number } | null {
+  if (searchIn) {
+    for (let x = 0; x < searchIn.length; x += 1) {
+      order += 1;
+      const { id, childNodes } = searchIn[x];
+      if (id === idOrOrder?.id || order === idOrOrder?.order) {
+        return { id, order };
+      }
+      if (childNodes) {
+        const rc = findTreeNodeOrder(childNodes, idOrOrder, order);
+        if (rc) return rc;
+      }
+    }
+  }
+  return null;
+}
+
 // Return ancestor nodes of a non-versekey module key. The returned array is
 // ordered from greatest ancestor down to parent. If there is no parent, an
 // empty array is returned.

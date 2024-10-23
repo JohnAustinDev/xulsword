@@ -5,6 +5,7 @@ import { clone, ofClass, randomID, setGlobalPanels } from '../../../common.ts';
 import { G } from '../../G.ts';
 import Commands from '../../commands.ts';
 import {
+  doUntilDone,
   genBookAudioFile,
   rootRenderPromise,
   verseKeyAudioFile,
@@ -23,6 +24,7 @@ import type {
   ShowType,
   VerseKeyAudioFile,
 } from '../../../type.ts';
+import type S from '../../../defaultPrefs.ts';
 import type Xulsword from './xulsword.tsx';
 import type { XulswordState } from './xulsword.tsx';
 
@@ -74,7 +76,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
         }
         case 'prevchap':
         case 'nextchap': {
-          const rpDO = () => {
+          doUntilDone((renderPromise2) => {
             this.setState((prevState: XulswordState) => {
               const { location } = prevState;
               if (location) {
@@ -101,14 +103,12 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
               }
               return null;
             });
-          };
-          const renderPromise2 = new RenderPromise(rpDO);
-          rpDO();
+          });
           break;
         }
         case 'prevverse':
         case 'nextverse': {
-          const rpDO = () => {
+          doUntilDone((renderPromise2) => {
             this.setState((prevState: XulswordState) => {
               const { location } = prevState;
               if (location) {
@@ -128,9 +128,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
               }
               return null;
             });
-          };
-          const renderPromise2 = new RenderPromise(rpDO);
-          rpDO();
+          });
           break;
         }
         case 'xsSearchButton': {
@@ -207,7 +205,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
       if (!('value' in es.target)) return;
       if (!('id' in es.target)) return;
       const { id, value } = es.target as { id: string; value: string };
-      const rpDO = () => {
+      doUntilDone((renderPromise2) => {
         switch (id) {
           case 'book__menulist__select': {
             this.setState((prevState: XulswordState) => {
@@ -323,9 +321,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
               `Unhandled xulswordHandler onChange event on '${currentId}'`,
             );
         }
-      };
-      const renderPromise2 = new RenderPromise(rpDO);
-      rpDO();
+      });
       break;
     }
 
@@ -343,7 +339,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
     case 'ended': {
       const { audio } = state;
       const { file } = audio;
-      const rpDO = () => {
+      doUntilDone((renderPromise2) => {
         let afile: VerseKeyAudioFile | GenBookAudioFile | null = null;
         if (file) {
           const { swordModule } = file;
@@ -382,9 +378,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
         }
         if (!renderPromise2.waiting())
           Commands.playAudio(afile, rootRenderPromise()); // null closes the player
-      };
-      const renderPromise2 = new RenderPromise(rpDO);
-      rpDO();
+      });
       break;
     }
 

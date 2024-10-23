@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { ProgressBar } from '@blueprintjs/core';
 import Subscription from '../../../subscription.ts';
-import { diff, sanitizeHTML, stringHash } from '../../../common.ts';
+import { diff, randomID, sanitizeHTML, stringHash } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
 import {
@@ -101,6 +101,8 @@ export default class PrintPassage
 
   loadingRef: React.RefObject<HTMLDivElement>;
 
+  componentInstanceID: string;
+
   constructor(props: PrintPassageProps) {
     super(props);
 
@@ -112,11 +114,16 @@ export default class PrintPassage
       ...notStatePrefDefault,
       ...(getStatePref('prefs', 'printPassage') as typeof S.prefs.printPassage),
     };
+    if (s.chapters) {
+      const { chapter, lastchapter } = s.chapters;
+      if (chapter && !lastchapter) s.chapters.lastchapter = chapter;
+    }
     const vc = validPassage(s.chapters, this.renderPromise);
     if (!this.renderPromise.waiting()) s.chapters = vc;
     this.state = s;
 
     this.pagebuttons = React.createRef();
+    this.componentInstanceID = randomID();
 
     this.handler = handlerH.bind(this);
     this.vkSelectHandler = vkSelectHandlerH.bind(this);
@@ -134,7 +141,7 @@ export default class PrintPassage
     _prevProps: PrintPassageProps,
     prevState: PrintPassageState,
   ) {
-    const { renderPromise } = this;
+    const { componentInstanceID, renderPromise } = this;
     const state = this.state as PrintPassageState;
     const tdiv = printRefs.printContainerRef.current;
     const { checkbox, chapters, progress } = state;
@@ -171,10 +178,11 @@ export default class PrintPassage
           lastchapter,
           v11n,
           show,
+          componentInstanceID,
         );
         if (tdiv.dataset.renderkey !== renderkey) {
           // Set renderkey now because soon the soon-to-be scheduled operations will
-          // self terminate when tdiv renderkey does not match.
+          // self terminate if tdiv renderkey changes.
           tdiv.dataset.renderkey = renderkey;
           this.renderChapters(
             tdiv,
@@ -185,7 +193,7 @@ export default class PrintPassage
             lastchapter,
             v11n,
             show,
-          ).catch((er) => log.error(er));
+          ).catch((er) => log.error(er))
         }
       }
     }

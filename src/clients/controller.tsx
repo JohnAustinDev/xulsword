@@ -2,7 +2,7 @@ import React, { StrictMode, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Intent, ProgressBar, Spinner, Tag } from '@blueprintjs/core';
 import Subscription from '../subscription.ts';
-import { randomID, sanitizeHTML, stringHash } from '../common.ts';
+import { JSON_stringify, randomID, sanitizeHTML, stringHash } from '../common.ts';
 import Cache from '../cache.ts';
 import C from '../constant.ts';
 import { G } from './G.ts';
@@ -145,6 +145,7 @@ function Controller(props: ControllerProps) {
             val = { ...v0, ...val };
           }
           if (S === 'dialogs' || stringHash(v0) !== stringHash(val)) {
+            if (S === 'reset') log.debug(`Controller reset: ${JSON_stringify(state)}`);
             const setMe = s[S][1] as (a: any) => void;
             if (state.print !== null && S === 'reset') {
               setTimeout(() => setMe(val), 1);
@@ -167,16 +168,20 @@ function Controller(props: ControllerProps) {
     if ((s.resetOnResize[0] || s.print[0]) && s.dialogs[0].length === 0) {
       return window.IPC.on(
         'resize',
-        delayHandler.bind(delayHandlerThis)(
-          () => {
-            log.debug(
-              `Renderer reset (component): ${descriptor?.id || 'unknown'}`,
-            );
-            s.reset[1](randomID());
-          },
-          C.UI.Window.resizeDelay,
-          'resizeTO',
-        ),
+        () => {
+          delayHandler(
+            delayHandlerThis,
+            () => {
+              log.debug(
+                `Renderer reset (component): ${descriptor?.id || 'unknown'}`,
+              );
+              s.reset[1](randomID());
+            },
+            [],
+            C.UI.Window.resizeDelay,
+            'resizeTO',
+          );
+        },
       );
     }
     return () => {};
@@ -402,12 +407,12 @@ function Controller(props: ControllerProps) {
     );
     switch (s.card[0].name) {
       case 'search': {
-        content = <Search {...addClass('searchCard', s.card[0].props)} />;
+        content = <Search {...addClass('searchCard card', s.card[0].props)} />;
         break;
       }
       case 'printPassage': {
         content = (
-          <PrintPassage {...addClass('printPassageCard', s.card[0].props)} />
+          <PrintPassage {...addClass('printPassageCard card', s.card[0].props)} />
         );
         break;
       }
@@ -530,7 +535,7 @@ export default async function renderToRoot(
       <Controller print={print ?? null} resetOnResize={resetOnResize ?? true}>
         {component}
       </Controller>
-    </StrictMode>,
+    </StrictMode>
   );
 
   window.onbeforeunload = () => {

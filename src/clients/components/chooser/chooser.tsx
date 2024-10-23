@@ -507,11 +507,14 @@ function ChapterMenu(props: {
   } = props;
   const dlyhandler =
     handler && chooserRef
-      ? delayHandler.bind(chooserRef)(
-          handler,
-          C.UI.Chooser.headingMenuOpenDelay,
-          'headingmenuTO',
-        )
+      ? (e: React.SyntheticEvent) =>
+          delayHandler(
+            chooserRef,
+            handler,
+            [e],
+            C.UI.Chooser.headingMenuOpenDelay,
+            'headingmenuTO',
+          )
       : undefined;
   const chmenuCells = [];
   let ch = 1;

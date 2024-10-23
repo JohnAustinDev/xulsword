@@ -1102,6 +1102,8 @@ export const GBuilder: GType & {
     mergeValue: func as any,
     deleteUserPref: func as any,
     writeAllStores: func as any,
+    getStorageType: func as any,
+    setStorageId: func as any,
   },
 
   DiskCache: {

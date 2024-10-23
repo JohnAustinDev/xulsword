@@ -132,13 +132,6 @@ export function mergePrefsRoots(
   sparse: Partial<PrefRoot>,
   preferUserSettings: boolean,
 ): PrefRoot {
-  let prefsAreValid = false;
-  try {
-    const PREFSVersion = Prefs.getCharPref('global.PREFSVersion');
-    prefsAreValid = PREFSVersion === S.prefs.global.PREFSVersion;
-  } catch (er) {
-    prefsAreValid = false;
-  }
   const complete: PrefRoot = clone(S);
   Object.entries(complete).forEach((entry) => {
     // ex: prefs, xulsword
@@ -150,7 +143,7 @@ export function mergePrefsRoots(
       const value =
         sparseStore && key in sparseStore ? sparseStore[key] : undefined;
       let pvalue = null;
-      if (prefsAreValid) {
+      if (Prefs.getStorageType() !== 'none') {
         try {
           const v = Prefs.getComplexValue(key, store);
           if (typeof v === typeof defValue) {

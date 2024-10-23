@@ -249,21 +249,18 @@ export function topHandle(
 // Delay any function by ms milliseconds with only a
 // single (most recent) instance called after the delay.
 export function delayHandler(
-  this: unknown,
+  stableParent: object,
   handler: (...args: any) => void,
+  args: any[],
   ms: number | string,
   nameTO: string,
 ) {
-  return (...args: unknown[]) => {
-    if (this && typeof this === 'object') {
-      if (nameTO in this)
-        clearTimeout((this as any)[nameTO] as ReturnType<typeof setTimeout>);
-      (this as any)[nameTO] = setTimeout(
-        () => {
-          handler.call(this, ...args);
-        },
-        Number(ms) || 0,
-      );
-    }
-  };
+  if (stableParent && typeof stableParent === 'object') {
+    if (nameTO in stableParent)
+      clearTimeout((stableParent as any)[nameTO] as ReturnType<typeof setTimeout>);
+    (stableParent as any)[nameTO] = setTimeout(
+      () => handler.call(stableParent, ...args),
+      Number(ms) || 0,
+    );
+  }
 }

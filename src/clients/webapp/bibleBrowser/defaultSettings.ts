@@ -51,7 +51,7 @@ export function setEmptyPrefs(
     }
   }
 
-  if (!xulsword.place || !Object.keys(xulsword.place)) {
+  if (!xulsword.place || !Object.keys(xulsword.place).length) {
     xulsword.place =
       window.innerWidth <= C.UI.WebApp.mobileW
         ? {
@@ -84,25 +84,6 @@ export function setEmptyPrefs(
     prefs.xulsword = xulsword;
   }
 }
-
-/*
-      // Update Prefs with final settings.
-      if (window.innerWidth < 768) {
-      200
-        settings.prefs.xulsword.noteBoxHeight = [300]; // for dict modules
-        {
-              footnotes: 'notebox',
-              crossrefs: 'notebox',
-              usernotes: 'popup',
-            }
-
-        settings.prefs.xulsword.place = {
-          footnotes: 'popup',
-          crossrefs: 'popup',
-          usernotes: 'popup',
-        };
-      }
-*/
 
 const defaultSettings: AllComponentsData = {
   react: {

@@ -11,6 +11,9 @@ import {
   gbPaths,
   localizeString,
   randomID,
+  findTreeNode,
+  findFirstLeafNode,
+  findTreeNodeOrder,
 } from '../common.ts';
 import C from '../constant.ts';
 import S from '../defaultPrefs.ts';
@@ -39,6 +42,7 @@ import type {
   VerseKeyAudioFile,
   WindowDescriptorPrefType,
 } from '../type.ts';
+import type { XulswordState } from './components/xulsword/xulsword.tsx';
 
 // Return a renderPromise for a React functional component. For React class
 // components, instead implement RenderPromiseComponent and RenderPromiseState.
@@ -51,6 +55,21 @@ export function functionalComponentRenderPromise(loadingSelector?: string) {
   );
   useEffect(() => renderPromise.dispatch());
   return { renderPromise, loadingRef };
+}
+
+// Run a function with a render promise until the function completes with the
+// render promise still empty. The function may run any number of times but is
+// guaranteed to run once from beginning to end with renderPromise.waiting()
+// as zero. So waiting() may be checked before code that should run only once.
+export function doUntilDone(
+  func: (renderPromise: RenderPromise) => void,
+): void {
+  const renderPromise = new RenderPromise(() => {
+    func(renderPromise);
+    renderPromise.dispatch();
+  });
+  func(renderPromise);
+  renderPromise.dispatch();
 }
 
 let rootRenderPromiseInst: RenderPromise | null = null;
@@ -254,6 +273,62 @@ export function iframeAutoHeight(
       (frameElement as HTMLIFrameElement).style.height = OriginalHeight || '';
     }
   }
+}
+
+export function isIBTChildrensBible(toc: TreeNodeInfo[]): boolean {
+  if (toc.length === 1) {
+    const [top] = toc;
+    if (top && top.childNodes) {
+      const [, ot, nt] = top.childNodes;
+      if (Array.isArray(ot?.childNodes) && Array.isArray(nt?.childNodes)) {
+        return ot.childNodes.length === 133 && nt.childNodes.length === 113;
+      }
+    }
+  }
+  return false;
+}
+
+// Web app Children's Bibles should always have a valid leaf-node key and
+// should sync across panels. When there are multiple CB panels, the last
+// panel to change should update all the others.
+export function syncChildrensBibles(
+  panels: XulswordState['panels'],
+  prevKeys: XulswordState['keys'],
+  keys: XulswordState['keys'],
+  renderPromise: RenderPromise,
+): (string | null)[] {
+  const cbTocs: Array<TreeNodeInfo[] | null> = panels.map(() => null);
+  panels.forEach((m, i) => {
+    if (m && m in G.Tab && G.Tab[m].tabType === 'Genbks') {
+      const toc = GI.genBookTreeNodes([], renderPromise, m);
+      if (toc.length && isIBTChildrensBible(toc)) cbTocs[i] = toc;
+    }
+  });
+
+  const ks = keys.slice();
+  if (!renderPromise.waiting()) {
+    // Find the index order of a CB key, prefering any that changed compared
+    // to previous state.
+    let order = -1;
+    panels.forEach((m, i) => {
+      if (cbTocs[i] && m && keys[i]) {
+        if (order === -1 || (prevKeys[i] && keys[i] !== prevKeys[i])) {
+          const r = findTreeNodeOrder(cbTocs[i], { id: keys[i] });
+          if (r) ({ order } = r);
+        }
+      }
+    });
+    // If no CB has a valid key, set all to the first CB chapter.
+    if (order === -1) order = 3;
+    panels.forEach((_m, i) => {
+      if (cbTocs[i]) {
+        const r = findTreeNodeOrder(cbTocs[i], { order });
+        if (r) ks[i] = r.id.toString();
+      }
+    });
+  }
+
+  return ks;
 }
 
 // Return an audio file for the given VerseKey module, book and chapter,

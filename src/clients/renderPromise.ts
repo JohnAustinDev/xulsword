@@ -149,9 +149,11 @@ export default class RenderPromise {
             rpdispatch.forEach((rp, i) => {
               const { callback } = rp;
               if (callback && !done.includes(callback)) {
-                done.push(callback);
-                callback();
+                // Resolve dispatchedUnresolvedCalls before callback so that
+                // the callback can read correct renderPromise.waiting() value.
                 resolveRP(renderPromises[i], rp);
+                callback();
+                done.push(callback);
                 setLoadingClass(rp, false);
               }
             });

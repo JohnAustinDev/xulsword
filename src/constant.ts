@@ -31,8 +31,6 @@ const C = {
 
   SWORDEngineVersion: '1.8.1',
 
-  PREFSVersion: '1.1', // Changing this will invalidate all users' prefs!
-
   MAXVERSE: 176,
   MAXCHAPTER: 150,
 
@@ -60,7 +58,7 @@ const C = {
   Server: {
     maxDataStringLength: 1000000, // bytes (search results can be large)
     maxLogJson: 10000, // bytes
-    maxDataRecursion: 10,
+    maxDataRecursion: 20, // Some Genbk TOC nodes have at least > 11
     maxDataArrayLength: 512,
     maxDataObjectKeys: 512,
     ipLimit: Build.isDevelopment
@@ -131,6 +129,7 @@ const C = {
       dictKeyInputDelay: 1000, // ms between keydown and update
       wheelScrollDelay: 300, // ms between UI updates while scrolling
       multiColWheelScrollDelay: 100,
+      prevNextDelay: 500, // ms before prev/next chapter links are rendered
       initialNoteboxHeight: 200, // px
       bbSingleColTopMargin: 100, // px an arbitrary extra margin value
       bbBottomMargin: 20, // px

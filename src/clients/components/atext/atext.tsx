@@ -6,6 +6,7 @@ import C from '../../../constant.ts';
 import {
   diff,
   JSON_attrib_stringify,
+  JSON_stringify,
   keep,
   sanitizeHTML,
   stringHash,
@@ -14,6 +15,7 @@ import { G, GI } from '../../G.ts';
 import log from '../../log.ts';
 import {
   clearPending,
+  doUntilDone,
   getMaxChapter,
   iframeAutoHeight,
   libswordImgSrc,
@@ -484,22 +486,24 @@ class Atext extends React.Component implements RenderPromiseComponent {
             } else nbc.classList.remove('noteboxEmpty');
           }
           // PREV / NEXT LINKS
-          delayHandler.bind(this)(
+          delayHandler(
+            this,
             () => {
-              const prev = textChange(atext, false, renderPromise);
-              const next = textChange(atext, true, renderPromise);
-              const prevdis = atext.classList.contains('prev-disabled');
-              const nextdis = atext.classList.contains('next-disabled');
-              if ((!prev && !prevdis) || (prev && prevdis)) {
-                atext.classList.toggle('prev-disabled');
-              }
-              if ((!next && !nextdis) || (next && nextdis)) {
-                atext.classList.toggle('next-disabled');
-              }
+              doUntilDone((renderPromise2) => {
+                const prev = textChange(atext, false, renderPromise2);
+                const next = textChange(atext, true, renderPromise2);
+                if (!renderPromise2.waiting()) {
+                  if (prev) atext.classList.remove('prev-disabled');
+                  else atext.classList.add('prev-disabled');
+                  if (next) atext.classList.remove('next-disabled');
+                  else atext.classList.add('next-disabled');
+                }
+              });
             },
-            1000,
+            [],
+            C.UI.Atext.prevNextDelay,
             'prevNextLinkUpdate',
-          )();
+          );
         }
       }
       // ADJUST WEB-APP PARENT IFRAME HEIGHT

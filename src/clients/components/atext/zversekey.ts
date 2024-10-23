@@ -632,7 +632,8 @@ export function aTextWheelScroll(
   WheelSteps += Math.round(e.deltaY / 80);
   if (WheelSteps) {
     const { columns } = atext.dataset;
-    delayHandler.bind(caller)(
+    delayHandler(
+      caller,
       () => {
         const { renderPromise } = caller;
         caller.setState(
@@ -648,11 +649,12 @@ export function aTextWheelScroll(
           },
         );
       },
+      [],
       columns === '1'
         ? C.UI.Atext.wheelScrollDelay
         : C.UI.Atext.multiColWheelScrollDelay,
-      'wheelScrollTO',
-    )();
+      'wheelScrollTO'
+    );
   }
 }
 

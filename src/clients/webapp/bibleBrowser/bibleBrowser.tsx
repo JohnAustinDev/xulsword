@@ -43,7 +43,7 @@ let initialized = false;
 socket.on('connect', () => {
   (async () => {
     const bibleBrowserComps = getReactComponents(document).filter(
-      (x) => x.dataset.reactComponent === 'bible-browser',
+      (x) => x.dataset.reactComponent === 'bibleBrowser',
     );
     if (bibleBrowserComps.length > 1)
       log.error('Only one Browser Bible component per document is supported.');
@@ -56,7 +56,9 @@ socket.on('connect', () => {
         defaultSettings,
       ) as BibleBrowserSettings;
 
-      if (settings.storageID) (Prefs as any).storageID = settings.storageID;
+      if (Build.isProduction && settings.storageID) {
+        Prefs.setStorageId(settings.storageID);
+      }
 
       // Add any custom iframe CSS
       const { frame } = settings;

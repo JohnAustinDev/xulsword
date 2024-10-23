@@ -67,7 +67,7 @@ function getStorage(cname: string): string | null {
   return result;
 }
 
-const localStorage = (aStore: string) => {
+function getStore(aStore: string) {
   return {
     exists: () => {
       return getStorage(aStore) !== null;
@@ -79,11 +79,19 @@ const localStorage = (aStore: string) => {
       setStorage(aStore, data);
     },
     supported: () => {
-      return storageType() !== 'none';
+      return localStorageType() !== 'none';
     },
   };
-};
+}
 
-const Prefs = new Rprefs(localStorage, log, true);
+export function localStorageType(): 'none' | 'localStorage' | 'sessionStorage' {
+  return Build.isDevelopment ? 'none' : storageType();
+}
+
+const Prefs = new Rprefs(
+  { type: localStorageType(), getStore, id: '' },
+  log,
+  true,
+);
 
 export default Prefs as PrefsGType;

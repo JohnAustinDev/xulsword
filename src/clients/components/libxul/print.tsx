@@ -45,7 +45,7 @@ export default function Print(props: PrintProps) {
   const { pageable, direction, iframeFilePath } = print;
 
   useEffect(() => {
-    iframeAutoHeight('.print', true); // print height is not constrained
+    iframeAutoHeight('.print'); // print height is not constrained
   });
 
   const backHandler = () => {

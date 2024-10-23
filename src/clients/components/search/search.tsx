@@ -240,11 +240,13 @@ export default class Search
     // React StrictMode causes components to be mounted twice, but we don't
     // want the search chain running twice.
     if (module) {
-      delayHandler.bind(this)(
+      delayHandler(
+        this,
         () => search(this).catch((er) => log.error(er)),
+        [],
         50,
-        'afterMountSearch',
-      )();
+        'afterMountSearch'
+      );
     }
     renderPromise.dispatch();
   }
@@ -288,7 +290,7 @@ export default class Search
     }
 
     this.updateResults();
-    iframeAutoHeight('.searchCard'); // searchCard height is not constrained
+    iframeAutoHeight('.card'); // card height is not constrained
     renderPromise.dispatch();
   }
 

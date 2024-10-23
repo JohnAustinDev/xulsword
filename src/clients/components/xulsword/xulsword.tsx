@@ -1,6 +1,6 @@
 import React from 'react';
 import { Icon } from '@blueprintjs/core';
-import { clone, randomID, stringHash } from '../../../common.ts';
+import {clone, stringHash} from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
 import RenderPromise from '../../renderPromise.ts';
@@ -10,6 +10,8 @@ import {
   getStatePref,
   clearPending,
   setStatePref,
+  syncChildrensBibles,
+  doUntilDone,
 } from '../../common.tsx';
 import {
   addClass,
@@ -39,7 +41,6 @@ import './xulsword.css';
 
 import type { BibleBrowserControllerGlobal } from '../../webapp/bibleBrowser/bibleBrowser.tsx';
 import type {
-  LocationVKType,
   OSISBookType,
   XulswordStateArgType,
 } from '../../../type.ts';
@@ -143,19 +144,31 @@ export default class Xulsword
     const { renderPromise } = this;
     const state = this.state as XulswordState;
     const { scroll } = state;
+
+    if (Build.isWebApp) {
+      doUntilDone((renderPromise2) => {
+        const { keys: prevkeys } = prevState;
+        const { panels, keys } = this.state as XulswordState;
+        const keys2 = syncChildrensBibles(panels, prevkeys, keys, renderPromise2);
+        if (!renderPromise2.waiting() && stringHash(keys) !== stringHash(keys2)) {
+          this.setState({ keys: keys2 } as XulswordState);
+        }
+      });
+    }
+
     if (!scroll?.skipWindowUpdate) {
       const statex = clone({ ...state, historyMenupopup: undefined });
       setStatePref('prefs', 'xulsword', prevState, statex);
       // Add page to history after a short delay
       const { location } = state;
       if (location) {
-        delayHandler.bind(this)(
-          () => {
-            this.addHistory();
-          },
+        delayHandler(
+          this,
+          () => this.addHistory(),
+          [],
           C.UI.Xulsword.historyDelay,
           'historyTO',
-        )();
+        );
       }
     }
     renderPromise.dispatch();
@@ -453,6 +466,7 @@ export default class Xulsword
           icon={<Icon icon="manually-entered-data" size={28} />}
           onClick={handler}
           title={GI.i18n.t('', renderPromise, 'notesButton.tooltip')}
+          disabled={!panels.find((m) => m && G.Tab[m].type == C.BIBLE)}
         />
         {!Build.isWebApp && (
           <Button

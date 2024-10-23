@@ -8,6 +8,13 @@ import './textbox.css';
 
 import type { XulProps } from './xul.tsx';
 
+// The Textbox component always keeps its own state and so is not a fully
+// controlled component (unless disabled, in which case it always shows the
+// props value) but Textbox is like a controlled component in that whenever
+// the value prop changes then state will be reset to the prop value. The
+// usual key prop cannot always be used to reset state (see note below).
+// The onChange prop must be provided to retrieve or respond to user input.
+
 const propTypes = {
   ...xulPropTypes,
   maxLength: PropTypes.string,
@@ -47,8 +54,8 @@ type TBevent =
 class Textbox extends React.Component {
   static propTypes: typeof propTypes;
 
-  // The key method of resetting a React text input to its props value does
-  // not work in all Textbox use cases. This is because key causes a new
+  // NOTE: The key method of resetting a React text input to its props value
+  // does not work in all Textbox use cases. This is because key causes a new
   // component to be rendered, causing loss of focus and cursor position.
   // This getDerivedStateFromProps method however does allow higher level
   // components to implement auto-complete etc. without losing the cursor.
@@ -93,15 +100,17 @@ class Textbox extends React.Component {
       const value = DOMPurify.sanitize(target.value);
       this.setState({ value });
       if (typeof onChange === 'function') {
-        delayHandler.bind(this)(
+        delayHandler(
+          this,
           (evt, currentTarget) => {
             // currentTarget becomes null during the delay, so it must be reset
             evt.currentTarget = currentTarget;
             void onChange(evt);
           },
+          [e, e.currentTarget],
           timeout || 0,
-          'changeTO',
-        )(e, e.currentTarget);
+          'changeTO'
+        );
         e.stopPropagation();
       }
     } else {

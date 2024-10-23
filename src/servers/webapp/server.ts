@@ -20,7 +20,6 @@ import Cache from '../../cache.ts';
 import C from '../../constant.ts';
 import { GI } from './G.ts';
 import handleGlobal from '../handleG.ts';
-import { getSystemFonts } from '../common.ts';
 import Dirs from '../components/dirs.ts';
 import LibSword from '../components/libsword.ts';
 

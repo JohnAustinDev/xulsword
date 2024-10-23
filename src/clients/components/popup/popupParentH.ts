@@ -143,7 +143,8 @@ export function popupParentHandler(
           getPopupHTML(data, renderPromise, true) ||
           renderPromise.waiting()
         ) {
-          delayHandler.bind(this)(
+          delayHandler(
+            this,
             (el: HTMLElement, dt: HTMLData, gp: number) => {
               updateDataAttribute(el, dt);
               const s: Partial<PopupParentState> = {
@@ -153,11 +154,12 @@ export function popupParentHandler(
               };
               this.setState(s);
             },
+            [elem, data, gap],
             targ.type === 'sn'
               ? C.UI.Popup.strongsOpenDelay
               : C.UI.Popup.openDelay,
-            'popupDelayTO',
-          )(elem, data, gap);
+            'popupDelayTO'
+          );
         } else {
           elem.classList.add('empty');
           log.debug(
@@ -182,13 +184,13 @@ export function popupParentHandler(
         if (this.popupDelayTO) clearTimeout(this.popupDelayTO);
         this.popupDelayTO = null; // blocks the popup
         WheelScrolling = true;
-        delayHandler.bind(this)(
-          () => {
-            WheelScrolling = false;
-          },
+        delayHandler(
+          this,
+          () => WheelScrolling = false,
+          [],
           C.UI.Popup.wheelDeadTime,
-          'popupUnblockTO',
-        )(this);
+          'popupUnblockTO'
+        );
       }
       break;
     }

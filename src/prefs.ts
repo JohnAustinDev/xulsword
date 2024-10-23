@@ -15,9 +15,9 @@ import type ElectronLog from 'electron-log';
 import type LocalFile from './servers/components/localFile.ts';
 import type { PrefObject, PrefStoreType, PrefValue } from './type.ts';
 
-// Permanent storage of user preferences and settings. In Electron apps, the
-// local file system is used as storage. In web apps, browser cookies are used
-// as storage.
+// Read and write user preferences and settings. Various long term storage
+// types can be used, or none at all. If no long term storage is used, all
+// user prefs start at defaults when the Pref object is created.
 
 export type PrefCallbackType = (
   callingWinID: number,
@@ -30,18 +30,22 @@ export type PrefStorage = {
   exists: LocalFile['exists'];
   writeFile: LocalFile['writeFile'];
   readFile: LocalFile['readFile'];
-  supported: () => boolean;
+};
+
+export type PrefStorageType = {
+  type: 'localStorage' | 'sessionStorage' | 'fileStorage' | 'none';
+  id: string;
+  getStore: (aStore: string) => PrefStorage;
 };
 
 export type PrefsGType = Omit<
   Prefs,
   | 'writeOnChange'
   | 'browserWindow'
-  | 'storage'
-  | 'storageID'
   | 'log'
   | 'stores'
-  | 'getStore'
+  | 'storage'
+  | 'getStorePrefObj'
   | 'getKeyValueFromStore'
   | 'isType'
   | 'writeStore'
@@ -56,13 +60,11 @@ export default class Prefs {
 
   browserWindow = null as typeof BrowserWindow | null;
 
-  storage = null as ((aStore: string) => PrefStorage) | null;
-
-  public storageID = '';
+  storage = {} as PrefStorageType;
 
   log = null as ElectronLog.LogFunctions | null;
 
-  // Cache all persistent data
+  // Storage stores for all user pref data
   stores = {} as {
     [i in string | PrefStoreType]: {
       store: PrefStorage | null;
@@ -87,7 +89,7 @@ export default class Prefs {
     type: 'string' | 'number' | 'boolean' | 'complex' | 'any',
     aStore?: PrefStoreType,
   ): boolean {
-    const value = this.getKeyValueFromStore(key, aStore || 'prefs', true);
+    const value = this.getKeyValue(key, aStore || 'prefs', true);
     if (value === undefined) return false;
     if (!this.isType(type, value)) return false;
     return true;
@@ -224,7 +226,7 @@ export default class Prefs {
     if (defaultValue === undefined) {
       const s = this.findDefaultValueInS(key, store);
       const throwOnFail = store in S && s === undefined;
-      const value = this.getKeyValueFromStore(key, store, !throwOnFail);
+      const value = this.getKeyValue(key, store, !throwOnFail);
       if (value === undefined) return s;
       return value;
     }
@@ -276,7 +278,7 @@ export default class Prefs {
     }
     // Read the store to get the key value (without throwing if the key is
     // missing).
-    let storeValue = this.getKeyValueFromStore(key, store, true, null);
+    let storeValue = this.getKeyValue(key, store, true, null);
     if (store in S && storeValue === undefined) {
       // This key has never been set, so look for the left-most unset
       // ancestor key in the store.
@@ -284,7 +286,7 @@ export default class Prefs {
       let i;
       for (i = ks.length - 1; i > 0; i -= 1) {
         if (
-          this.getKeyValueFromStore(ks.slice(0, i).join('.'), store, true, null)
+          this.getKeyValue(ks.slice(0, i).join('.'), store, true, null)
         ) {
           break;
         }
@@ -322,7 +324,7 @@ export default class Prefs {
       }
     }
     if (storeValue === undefined) {
-      storeValue = this.getKeyValueFromStore(key, store, true);
+      storeValue = this.getKeyValue(key, store, true);
     }
     let value = storeValue;
     // Use the default if store value is undefined
@@ -350,24 +352,34 @@ export default class Prefs {
     return value;
   }
 
+  setStorageId(id: string) {
+    this.storage.id = id;
+    // Reset prefs to use the new id
+    this.stores = {};
+  }
+
+  getStorageType() {
+    return this.storage.type;
+  }
+
   // Get persistent data from storage json data. Note, only the Electron app
   // supports default stores.
-  getStore(aStorex: string, useDefaultStore = false): PrefObject {
+  getStorePrefObj(aStorex: string, useDefaultStore = false): PrefObject {
     // Create a new store if needed
     let aStore = aStorex;
     if (Build.isElectronApp && useDefaultStore) aStore = `${aStorex}_default`;
     if (this.stores === null || !(aStore in this.stores)) {
       if (this.storage) {
-        const { storageID } = this;
-        let store: PrefStorage | null = this.storage(
-          Build.isWebApp && storageID
-            ? `${aStore}${stringHash(storageID)}`
-            : aStore,
-        );
-        if (!store.supported()) {
-          store = null;
-          this.log?.debug(`Prefs store is unsupported: ${aStorex}`);
-        } else if (!useDefaultStore && !store.exists()) {
+        const { id } = this.storage;
+        let store: PrefStorage | null = null;
+        if (this.storage.type === 'none') {
+          this.log?.debug(`Prefs store is none: ${aStorex}`);
+        } else {
+          store = this.storage.getStore(
+            Build.isWebApp && id ? `${aStore}${stringHash(id)}` : aStore,
+          );
+        }
+        if (!useDefaultStore && store && !store.exists()) {
           store.writeFile(JSON_stringify({}));
         }
         this.stores = {
@@ -379,37 +391,35 @@ export default class Prefs {
 
     const s = this.stores[aStore];
 
-    // Read the data unless it has already been read
+    // Read the data from the store unless it has already been read
     const { store } = s;
-    let { data } = s;
-    if (!data) {
+    if (s.data === null) {
       if (store?.exists()) {
         const readData = store.readFile();
         if (readData?.length) {
           const json = JSON_parse(readData.toString());
           if (json && typeof json === 'object') {
-            data = json as PrefObject;
-            s.data = data;
+            s.data = json as PrefObject;
           }
         }
-        if (!data || typeof data !== 'object' || Array.isArray(data)) {
+        if (!s.data || typeof s.data !== 'object' || Array.isArray(s.data)) {
           throw Error(
-            `Read of JSON Prefs store did not return a PrefObject (store='${aStore}', contents='${JSON_stringify(data)}').`,
+            `Read of JSON Prefs store did not return a PrefObject (store='${aStore}', contents='${JSON_stringify(s.data)}').`,
           );
         }
       } else s.data = {};
     }
 
-    return data ?? {};
+    return s.data as PrefObject;
   }
 
-  // Return the key value of a given store. Note: useDefaultStore is only
+  // Return the key value from a given store. Note: useDefaultStore is only
   // supported within an Electron app and if set to true with a non-Electron
-  // app, an error with be thrown. If getDefaultStore is null, only the
+  // app, an error with be thrown. If useDefaultStore is null, only the
   // store will be searched, if it is false, the store will be searched
-  // followed by the default store. If it is true, only the default store
-  // will be searched or an error will be thrown if not an Electron app.
-  getKeyValueFromStore(
+  // followed by the default store if in an Electron app. If it is true, only
+  // the default store will be searched (Electron only).
+  getKeyValue(
     key: string,
     aStore: string,
     noErrorOnMissingKey: boolean,
@@ -418,7 +428,7 @@ export default class Prefs {
     if (useDefaultStore && !Build.isElectronApp) {
       throw new Error(`Can only set useDefaultStore in Electron app.`);
     }
-    const stobj = this.getStore(aStore, !!useDefaultStore);
+    const stobj = this.getStorePrefObj(aStore, !!useDefaultStore);
     let keyExists = true;
     let keyvalue = stobj as PrefObject | PrefValue;
     key.split('.').forEach((d) => {
@@ -436,7 +446,7 @@ export default class Prefs {
     });
     if (!keyExists && Build.isElectronApp) {
       if (useDefaultStore === false) {
-        return this.getKeyValueFromStore(
+        return this.getKeyValue(
           key,
           aStore,
           noErrorOnMissingKey,
@@ -446,7 +456,7 @@ export default class Prefs {
       if (noErrorOnMissingKey) return undefined;
       throw Error(`Missing Prefs key: '${key}' of '${aStore}' store`);
     }
-    return clone(keyvalue);
+    return keyExists ? clone(keyvalue) : undefined;
   }
 
   // Write persistent data to source json files. True is returned on success.
@@ -470,7 +480,7 @@ export default class Prefs {
     }
 
     const { store } = s;
-    if (!store || !store.supported()) {
+    if (!store) {
       this.log?.warn(`No store to save to: store='${aStore}'`);
       return false;
     }
@@ -502,18 +512,14 @@ export default class Prefs {
 
   writeAllStores(): void {
     if (!this.writeOnChange && this.stores !== null) {
-      const unsupported: string[] = [];
-      Object.keys(this.stores).forEach((store: PrefStoreType | string) => {
-        const s = this.stores[store];
-        if (!s || !s.store?.supported()) {
-          unsupported.push(store);
-        } else if (!store.endsWith('_default')) {
-          this.writeStore(store as PrefStoreType);
-        }
-      });
-      if (unsupported.length) {
+      if (this.storage.type !== 'none') {
+        Object.keys(this.stores).forEach((store: PrefStoreType | string) => {
+          if (!store.endsWith('_default'))
+            this.writeStore(store as PrefStoreType);
+        });
+      } else {
         this.log?.debug(
-          `Skipping unsupported pref store(s) write: ${JSON_stringify(unsupported)}`,
+          `Skipping pref stores write: type=${this.getStorageType()}`,
         );
       }
     }
@@ -538,7 +544,7 @@ export default class Prefs {
       throw new Error(`Pref key is null. Must use merge.`);
     // Get the store.
     const store = storex || 'prefs';
-    let p = this.getStore(store);
+    let p = this.getStorePrefObj(store);
     // Test the value.
     let valueobj: PrefObject | undefined;
     if (type === 'merge') {
@@ -605,11 +611,11 @@ export default class Prefs {
     let success = true;
     if (valueChanged && this.writeOnChange) {
       const s = this.stores[store];
-      if (s && s.store?.supported()) {
+      if (s.store) {
         success = this.writeStore(store);
       } else {
         this.log?.debug(
-          `Skipping unsupported pref store write: ${JSON_stringify(store)}`,
+          `Skipping pref store write: store=${store} type=${this.getStorageType()}`,
         );
       }
     }

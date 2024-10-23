@@ -851,7 +851,6 @@ export default class PrintSettings extends React.Component {
                   id="font.size"
                   value={scale.toString()}
                   maxLength="3"
-                  timeout="500"
                   pattern={/^\d*$/}
                   onBlur={handler}
                   onKeyDown={handler}

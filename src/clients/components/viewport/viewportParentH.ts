@@ -8,6 +8,7 @@ import { G } from '../../G.ts';
 import Commands from '../../commands.ts';
 import RenderPromise from '../../renderPromise.ts';
 import {
+  doUntilDone,
   rootRenderPromise,
   scrollIntoView,
   windowArguments,
@@ -354,7 +355,7 @@ export default function handler(
         }
         case 'chaptermenucell': {
           const { book, chapter, v11n } = targ.element.dataset;
-          const rpDO = () => {
+          doUntilDone((renderPromise2) => {
             if (book && chapter) {
               const newloc = chapterChange(
                 {
@@ -372,9 +373,7 @@ export default function handler(
                 });
               }
             }
-          };
-          const renderPromise2 = new RenderPromise(rpDO);
-          rpDO();
+          });
           break;
         }
         case 'heading-link': {
@@ -385,7 +384,7 @@ export default function handler(
             verse: v,
           } = targ.element.dataset;
           const v11n = (m && G.Tab[m].v11n) || null;
-          const rpDO = () => {
+          doUntilDone((renderPromise2) => {
             if (location && m && b && v && v11n) {
               const newloc = verseKey(
                 {
@@ -404,9 +403,7 @@ export default function handler(
                   selection: null,
                 });
             }
-          };
-          const renderPromise2 = new RenderPromise(rpDO);
-          rpDO();
+          });
           break;
         }
         case 'open-chooser': {
@@ -476,7 +473,7 @@ export default function handler(
         }
         case 'prevchaplink':
         case 'nextchaplink': {
-          const rpDO = () => {
+          doUntilDone((renderPromise2) => {
             if (atext && !renderPromise2.waiting()) {
               setState(this, atext, (prevState: PinPropsType) => {
                 return textChange(
@@ -487,9 +484,7 @@ export default function handler(
                 );
               });
             }
-          };
-          const renderPromise2 = new RenderPromise(rpDO);
-          rpDO();
+          });
           break;
         }
         case 'dt':
@@ -570,7 +565,8 @@ export default function handler(
       const targ = ofClass(['dictkeyinput'], target);
       if (targ && panel && atext) {
         e.stopPropagation();
-        delayHandler.bind(this)(
+        delayHandler(
+          this,
           (select: HTMLSelectElement, mod: string) => {
             const { value } = select;
             select.style.color = '';
@@ -592,9 +588,10 @@ export default function handler(
               }
             }
           },
+          [targ.element, panel],
           C.UI.Atext.dictKeyInputDelay,
           'dictkeydownTO',
-        )(targ.element, panel);
+        );
       }
       break;
     }

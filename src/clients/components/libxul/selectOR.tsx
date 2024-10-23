@@ -8,11 +8,11 @@ import {
   findTreeAncestors,
   findTreeSiblings,
   gbAncestorIDs,
-  clone,
   stringHash,
 } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
+import { doUntilDone } from '../../common.tsx';
 import RenderPromise from '../../renderPromise.ts';
 import { addClass, xulPropTypes } from './xul.tsx';
 import { Vbox } from './boxes.tsx';
@@ -164,7 +164,7 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
     if (targ) {
       const { value } = e.target;
       const tabType = (value && value in G.Tab && G.Tab[value].tabType) || '';
-      const rpDO = () => {
+      doUntilDone((renderPromise2) => {
         this.setState(async (prevState: SelectORState) => {
           let { selection } = prevState;
           if (targ.type === 'select-module') {
@@ -191,14 +191,12 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
           } else {
             throw new Error(`Unrecognized select: '${targ.type}'`);
           }
-          if (!renderPromise2.waiting()) onSelection(selection, props.id);
-          return renderPromise2.waiting()
-            ? null
-            : ({ selection } as Partial<SelectORState>);
+          if (renderPromise2.waiting()) return null;
+
+          onSelection(selection, props.id);
+          return ({ selection } as Partial<SelectORState>);
         });
-      };
-      const renderPromise2 = new RenderPromise(rpDO);
-      rpDO();
+      });
     }
   }
 
