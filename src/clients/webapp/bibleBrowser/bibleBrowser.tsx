@@ -56,10 +56,6 @@ socket.on('connect', () => {
         defaultSettings,
       ) as BibleBrowserSettings;
 
-      if (Build.isProduction && settings.storageID) {
-        Prefs.setStorageId(settings.storageID);
-      }
-
       // Add any custom iframe CSS
       const { frame } = settings;
       if (frame && !/^(0|1)$/.test(frame)) {
@@ -72,6 +68,22 @@ socket.on('connect', () => {
             ?.insertBefore(style.firstElementChild.firstElementChild, null);
         }
       }
+
+      // Third party iframes don't have persistent user prefs unless the attribute
+      // 'data-storage-id' is set to a value on the iframe.
+      let storageId = 'none';
+      if (frame && frame !== '0') {
+        const frameStorageId = (frameElement as HTMLIFrameElement)?.dataset.storageId;
+        if (frameStorageId) storageId = frameStorageId;
+      } else if (Build.isProduction) {
+        ({ storageId } = settings);
+      }
+      let preferUserSettings = true;
+      if (storageId.startsWith('defer:')) {
+        preferUserSettings = false;
+        storageId = storageId.replace('defer:', '');
+      }
+      Prefs.setStorageId(storageId);
 
       let maxPanels = Math.ceil(window.innerWidth / 300);
       if (maxPanels < 2) maxPanels = 2;
@@ -86,7 +98,7 @@ socket.on('connect', () => {
       const locale = setGlobalLocale(settings, langcode);
       // Must set global.locale before callBatch.
       // Iframe API prioritizes API settings over user settings.
-      writeSettingsToPrefsStores(settings, !frame || frame === '0');
+      writeSettingsToPrefsStores(settings, preferUserSettings);
 
       await callBatchThenCache([
         ['getLocalizedBooks', null, [[locale]]],

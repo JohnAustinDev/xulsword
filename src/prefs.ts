@@ -46,7 +46,7 @@ export type PrefsGType = Omit<
   | 'stores'
   | 'storage'
   | 'getStorePrefObj'
-  | 'getKeyValueFromStore'
+  | 'getKeyValue'
   | 'isType'
   | 'writeStore'
   | 'setPref'
@@ -356,6 +356,10 @@ export default class Prefs {
     this.storage.id = id;
     // Reset prefs to use the new id
     this.stores = {};
+  }
+
+  getStorageId(): string {
+    return this.storage.id;
   }
 
   getStorageType() {

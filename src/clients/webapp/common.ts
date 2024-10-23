@@ -143,7 +143,10 @@ export function mergePrefsRoots(
       const value =
         sparseStore && key in sparseStore ? sparseStore[key] : undefined;
       let pvalue = null;
-      if (Prefs.getStorageType() !== 'none') {
+      if (
+        Prefs.getStorageType() !== 'none' &&
+        Prefs.getStorageId() !== 'none'
+      ) {
         try {
           const v = Prefs.getComplexValue(key, store);
           if (typeof v === typeof defValue) {

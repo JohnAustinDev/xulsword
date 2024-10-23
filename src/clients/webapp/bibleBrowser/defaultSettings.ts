@@ -14,7 +14,7 @@ export type BibleBrowserSettings = {
   component: 'bibleBrowser';
   langcode?: string; // currently unused by this widget.
   settings: {
-    storageID: string;
+    storageId: string;
     frame: string;
     prefs: {
       xulsword: Partial<(typeof S)['prefs']['xulsword']>;
@@ -91,7 +91,7 @@ const defaultSettings: AllComponentsData = {
       component: 'bibleBrowser',
       langcode: 'en',
       settings: {
-        storageID: 'x',
+        storageId: 'x',
         frame: '0', // is iframe API being used?
         prefs: {
           xulsword: {
