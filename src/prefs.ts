@@ -15,9 +15,14 @@ import type ElectronLog from 'electron-log';
 import type LocalFile from './servers/components/localFile.ts';
 import type { PrefObject, PrefStoreType, PrefValue } from './type.ts';
 
-// Read and write user preferences and settings. Various long term storage
-// types can be used, or none at all. If no long term storage is used, all
-// user prefs start at defaults when the Pref object is created.
+// Read and write user preferences and settings. Various persistent storage
+// types can be used, or none at all. If no persistent storage is used, all
+// user prefs will start at defaults when the Pref object is created.
+//
+// User prefs may be persisted according to an id set by setStorageId(). When
+// set, all sessions from a particular client, which share the same id, will
+// maintain the same user pref settings (if that client supports persistent
+// data).
 
 export type PrefCallbackType = (
   callingWinID: number,

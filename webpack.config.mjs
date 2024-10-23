@@ -415,7 +415,9 @@ export default function (opts) {
 
         .filter(Boolean),
 
-      ...(['appClients', 'webappClients'].includes(build)
+      // Dev Server can't work in development mode unless CompressionPlugin
+      // deleteOriginalAssets is false.
+      ...(development && ['appClients', 'webappClients'].includes(build)
         ? {
             devServer: {
               port: devServerPort,
@@ -429,6 +431,11 @@ export default function (opts) {
                 console.log(
                   chalk.bgGreen.bold(
                     `Starting devServer with 'yarn ${start}':`,
+                  ),
+                );
+                console.log(
+                  chalk.bgGreen.bold(
+                    `localhost:${devServerPort}/webpack-dev-server`,
                   ),
                 );
                 if (build === 'webappClients') {

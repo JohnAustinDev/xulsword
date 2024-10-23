@@ -2,7 +2,6 @@ import React, { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import socketConnect from '../preload.ts';
 import {
-  setGlobalLocale,
   writeSettingsToPrefsStores,
   getComponentSettings,
   getReactComponents,
@@ -10,12 +9,12 @@ import {
 import C from '../../../constant.ts';
 import log from '../../log.ts';
 import { callBatchThenCache } from '../../renderPromise.ts';
+import Prefs from '../prefs.ts';
 import WidgetVK from './widgetVK.tsx';
 import WidgetOR from './widgetOR.tsx';
 import WidgetMenulist from './widgetMenulist.tsx';
 import defaultSettings from './defaultSettings.ts';
 
-import type { PrefRoot } from '../../../type.ts';
 import type { ComponentData } from '../common.ts';
 
 const socket = socketConnect(
@@ -35,12 +34,12 @@ if (widgets.length) {
     if (!initialized) {
       initialized = true;
 
-      let langcode = 'en';
+      let locale = '';
       const settings = getComponentSettings(widgets[0], defaultSettings);
-      if (settings?.langcode) ({ langcode } = settings);
-      const prefs: Partial<PrefRoot> = {};
-      const locale = setGlobalLocale(prefs, langcode);
-      writeSettingsToPrefsStores(prefs);
+      if (settings?.langcode) ({ langcode: locale } = settings);
+      writeSettingsToPrefsStores({}, 'none'); // sets default prefs
+      if (!locale || !C.Locales.some((x) => x[0] === locale)) locale = 'en';
+      Prefs.setCharPref('global.locale', locale);
 
       callBatchThenCache([
         ['getLocalizedBooks', null, [[locale]]],

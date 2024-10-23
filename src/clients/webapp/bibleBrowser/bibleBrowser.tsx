@@ -15,7 +15,6 @@ import socketConnect from '../preload.ts';
 import Prefs from '../prefs.ts';
 import {
   writeSettingsToPrefsStores,
-  setGlobalLocale,
   getComponentSettings,
   getReactComponents,
 } from '../common.ts';
@@ -69,21 +68,22 @@ socket.on('connect', () => {
         }
       }
 
-      // Third party iframes don't have persistent user prefs unless the attribute
-      // 'data-storage-id' is set to a value on the iframe.
-      let storageId = 'none';
-      if (frame && frame !== '0') {
-        const frameStorageId = (frameElement as HTMLIFrameElement)?.dataset.storageId;
-        if (frameStorageId) storageId = frameStorageId;
-      } else if (Build.isProduction) {
-        ({ storageId } = settings);
+      // If storageId is 'none', then user settings are not persistent between
+      // page reloads. If the id is un-prefixed or prefixed with 'before:' then
+      // user prefs will defer to any pref values in settings. Or if prefixed
+      // with 'after:' then even settings will be overwritten by any previously
+      // set user pref values (ie. settings will have no effect).
+      let storageId: string = 'none';
+      if (!Build.isDevelopment) ({ storageId } = settings);
+      let userPrefs: 'before' | 'after' | 'none' =
+        storageId === 'none' ? 'none' : 'before';
+      const match = storageId.match(/^(before|after|none):/);
+      if (match) {
+        userPrefs = match[1] as 'before' | 'after' | 'none';
+        storageId = storageId.substring(userPrefs.length + 1);
+        if (userPrefs === 'none') storageId = 'none';
       }
-      let preferUserSettings = true;
-      if (storageId.startsWith('defer:')) {
-        preferUserSettings = false;
-        storageId = storageId.replace('defer:', '');
-      }
-      Prefs.setStorageId(storageId);
+      if (storageId !== 'none') Prefs.setStorageId(storageId);
 
       let maxPanels = Math.ceil(window.innerWidth / 300);
       if (maxPanels < 2) maxPanels = 2;
@@ -95,10 +95,12 @@ socket.on('connect', () => {
       if (!frame || (frame === '0' && window.innerWidth < 768)) {
         numPanels = 1;
       }
-      const locale = setGlobalLocale(settings, langcode);
-      // Must set global.locale before callBatch.
-      // Iframe API prioritizes API settings over user settings.
-      writeSettingsToPrefsStores(settings, preferUserSettings);
+
+      // Must set global.locale before callBatchThenCache.
+      writeSettingsToPrefsStores(settings, userPrefs);
+      let locale = langcode;
+      if (!locale || !C.Locales.some((x) => x[0] === locale)) locale = 'en';
+      Prefs.setCharPref('global.locale', locale);
 
       await callBatchThenCache([
         ['getLocalizedBooks', null, [[locale]]],

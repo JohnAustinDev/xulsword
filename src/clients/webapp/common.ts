@@ -80,25 +80,6 @@ export function getComponentSettings(
   return null;
 }
 
-// Insure a partial prefs root object has a valid locale set in it.
-export function setGlobalLocale(
-  prefs: Partial<PrefRoot>,
-  langcode?: string,
-): string {
-  let global: Partial<typeof S.prefs.global> = { locale: langcode };
-  const { prefs: p } = prefs;
-  if (!p) prefs.prefs = { global };
-  else {
-    const { global: g } = p;
-    if (!g || typeof g !== 'object') p.global = global;
-    else global = g as Partial<typeof S.prefs.global>;
-  }
-  let { locale: l } = global;
-  if (!l || !C.Locales.some((x) => x[0] === l)) l = langcode ?? 'en';
-  global.locale = l;
-  return l;
-}
-
 export function getProps<T extends Record<string, any>>(
   props: T,
   defaultProps: T,
@@ -114,9 +95,9 @@ export function getProps<T extends Record<string, any>>(
 
 export function writeSettingsToPrefsStores(
   settings: Partial<PrefRoot>,
-  preferUserSettings = false,
+  userPrefs: 'before' | 'after' | 'none',
 ): void {
-  const s = mergePrefsRoots(settings, preferUserSettings);
+  const s = mergePrefsRoots(settings, userPrefs);
   Object.entries(s).forEach((entry) => {
     const [store, prefobj] = entry as [keyof PrefRoot, PrefObject];
     Object.keys(prefobj).forEach((key) => {
@@ -125,12 +106,13 @@ export function writeSettingsToPrefsStores(
   });
 }
 
-// Return a complete Prefs root object by merging either current user prefs or
-// default prefs into sparse. Note: rootkey object property values are merged
-//(ie. root.prefs.global properties).
+// Return a complete Prefs root object by merging sparse into default prefs,
+// with the option to merge user prefs before or after sparse. If userPrefs is
+// 'none' then user prefs are ignored. Note: rootkey object property values are
+// merged (ie. root.prefs.global properties).
 export function mergePrefsRoots(
   sparse: Partial<PrefRoot>,
-  preferUserSettings: boolean,
+  userPrefs: 'before' | 'after' | 'none',
 ): PrefRoot {
   const complete: PrefRoot = clone(S);
   Object.entries(complete).forEach((entry) => {
@@ -142,44 +124,41 @@ export function mergePrefsRoots(
       const sparseStore = sparse[store];
       const value =
         sparseStore && key in sparseStore ? sparseStore[key] : undefined;
-      let pvalue = null;
-      if (
-        Prefs.getStorageType() !== 'none' &&
-        Prefs.getStorageId() !== 'none'
-      ) {
+      let uvalue = null;
+      if (userPrefs !== 'none' && Prefs.getStorageType() !== 'none') {
         try {
           const v = Prefs.getComplexValue(key, store);
           if (typeof v === typeof defValue) {
-            pvalue = v as any;
+            uvalue = v as any;
           }
         } catch (er) {
-          pvalue = null;
+          uvalue = null;
         }
       }
       // If defValue is itself a prefObject, merge its keys so it is always complete.
       if (defValue && typeof defValue === 'object') {
-        const prevValue: Record<string, PrefValue> =
-          pvalue !== null ? pvalue : {};
-        if (preferUserSettings) {
+        const userValue: Record<string, PrefValue> =
+          uvalue !== null ? uvalue : {};
+        if (userPrefs === 'after') {
           complete[store][key] = {
             ...defValue,
             ...(value && typeof value === 'object' ? value : {}),
-            ...prevValue,
+            ...userValue,
           };
         } else {
           complete[store][key] = {
             ...defValue,
-            ...prevValue,
+            ...userValue,
             ...(value && typeof value === 'object' ? value : {}),
           };
         }
       } else {
-        // Not sure this ever happens (a store key value that is not an object?)
-        const prevValue = pvalue !== null ? pvalue : defValue;
-        if (preferUserSettings) {
-          complete[store][key] = prevValue ?? value;
+        // Don't think this ever happens (a store key value that is not an object?)
+        const userValue = uvalue !== null ? uvalue : defValue;
+        if (userPrefs === 'after') {
+          complete[store][key] = userValue ?? value;
         } else {
-          complete[store][key] = value ?? prevValue;
+          complete[store][key] = value ?? userValue;
         }
       }
     });
