@@ -82,7 +82,10 @@ socket.on('connect', () => {
         storageId = storageId.substring(userPrefs.length + 1);
         if (userPrefs === 'none') storageId = 'none';
       }
-      if (storageId !== 'none') Prefs.setStorageId(storageId);
+      if (storageId !== 'none') {
+        Prefs.setStorageId(storageId);
+        if (!Prefs.storeExists('prefs', storageId)) userPrefs = 'before';
+      }
 
       let maxPanels = Math.ceil(window.innerWidth / 300);
       if (maxPanels < 2) maxPanels = 2;

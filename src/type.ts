@@ -1105,6 +1105,7 @@ export const GBuilder: GType & {
     getStorageType: func as any,
     setStorageId: func as any,
     getStorageId: func as any,
+    storeExists: func as any,
   },
 
   DiskCache: {

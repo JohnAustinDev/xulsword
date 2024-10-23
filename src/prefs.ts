@@ -50,6 +50,7 @@ export type PrefsGType = Omit<
   | 'log'
   | 'stores'
   | 'storage'
+  | 'getStore'
   | 'getStorePrefObj'
   | 'getKeyValue'
   | 'isType'
@@ -367,6 +368,17 @@ export default class Prefs {
     return this.storage.id;
   }
 
+  getStore(aStore: string, storageId: string): PrefStorage | null {
+    return this.storage.getStore(
+      Build.isWebApp && storageId ? `${aStore}${stringHash(storageId)}` : aStore,
+    );
+  }
+
+  storeExists(aStore: string, storageId: string): boolean {
+    const store = this.getStore(aStore, storageId);
+    return store?.exists() ?? false;
+  }
+
   getStorageType() {
     return this.storage.type;
   }
@@ -384,9 +396,7 @@ export default class Prefs {
         if (this.storage.type === 'none') {
           this.log?.debug(`Prefs store is none: ${aStorex}`);
         } else {
-          store = this.storage.getStore(
-            Build.isWebApp && id ? `${aStore}${stringHash(id)}` : aStore,
-          );
+          store = this.getStore(aStore, id);
         }
         if (!useDefaultStore && store && !store.exists()) {
           store.writeFile(JSON_stringify({}));
