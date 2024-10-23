@@ -573,7 +573,7 @@ function getSearchMatches(
   function getMatchTermsArray(terms: string): SearchMatchType[] {
     const tr: SearchMatchType[] = [];
     terms.split(';').forEach((term) => {
-      if (!term.includes('lemma:')) {
+      if (!term.includes('lemma')) {
         const aTerm: SearchMatchType = { term: '', type: null };
         // Begin and End cannot be \W because non-English letters ARE \W!
         aTerm.term = `(^|\\s|–|\\(|>)(${term})(<|\\s|\\.|\\?|,|;|:|"|!|\\)|$)`;

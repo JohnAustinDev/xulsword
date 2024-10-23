@@ -20,7 +20,8 @@ Search/Print cards - scroll iframe (or set iframe height if auto-height)
 }
 .auto-height.iframe #root:has(.card),
 .auto-height.iframe #root:has(.print),
-.auto-height.iframe #reset:has(.textarea.single-panel) {
+.auto-height.iframe #reset:has(.textarea.single-panel),
+.auto-height.iframe #reset .textarea.single-panel .sb {
   overflow-y: hidden;
 }
 .iframe #reset:has(.card),
@@ -103,7 +104,7 @@ Search/Print cards - scroll iframe (or set iframe height if auto-height)
 }
 
 #xsSearchButton {
-  margin: 7px 5px;
+  margin: 7px 0;
 }
 
 #genbknav,
@@ -132,9 +133,36 @@ Search/Print cards - scroll iframe (or set iframe height if auto-height)
   margin: 0;
   padding: 20px;
 }
+
 @media (max-width: 300px) {
   .close-card-button {
     padding: 0;
+  }
+
+  /* Limit tabs from overflowing tab bank */
+  .tabs:not(:has(.tab:nth-child(4))) .tab-label {
+    max-width: 12px;
+  }
+
+  /* Make sure mts-tab drop down menu remains on-screen */
+  .tabs .mts-tab .anchorbutton {
+    position: static;
+  }
+  .tabrow .tabs:first-child .mts-tab .anchorbutton .menupopup {
+    left: 0px;
+    right: unset;
+  }
+  .tabrow .tabs:not(:first-child) .mts-tab .anchorbutton .menupopup {
+    left: unset;
+    right: 0px;
+  }
+  html[dir='rtl'] .tabrow .tabs:first-child .mts-tab .anchorbutton .menupopup {
+    left: unset;
+    right: 0px;
+  }
+  html[dir='rtl'] .tabrow .tabs:not(:first-child) .mts-tab .anchorbutton .menupopup {
+    left: 0px;
+    right: unset;
   }
 }
 

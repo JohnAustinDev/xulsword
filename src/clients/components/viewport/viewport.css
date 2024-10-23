@@ -37,6 +37,7 @@ html[dir='rtl'] .viewport .open-chooser {
 .viewport .tabrow {
   width: 100%;
   white-space: nowrap;
+  z-index: 6; /* so mts-tab drop down covers text-pin */
 }
 .viewport .textarea {
   min-width: 1px; /* allows textarea to shrink below minimum content size */

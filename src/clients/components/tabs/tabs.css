@@ -63,9 +63,9 @@
   top: 17px;
   right: 0px;
   overflow: auto;
+  transform: unset;
 }
-html[dir='rtl'] .tabs .mts-tab .anchorbutton,
-menupopup {
+html[dir='rtl'] .tabs .mts-tab .anchorbutton .menupopup {
   right: unset;
   left: 0px;
 }
@@ -73,6 +73,7 @@ menupopup {
   width: 12px;
   height: 12px;
   background-image: url(../images/dropdown-menu.png);
+  position: relative;
 }
 .tabs .mto-tab {
   display: block;

@@ -313,6 +313,13 @@ export default class Search
     if (!displayModule || !results) {
       sanitizeHTML(res, '');
     } else if (res.dataset.resultsHtml !== resultsHtml) {
+      // clear dynamic CSS
+      strongsCSS.added.forEach((r) => {
+        if (r < strongsCSS.sheet.cssRules.length) {
+          strongsCSS.sheet.deleteRule(r);
+        }
+      });
+      strongsCSS.added = [];
       // build a page from results, module and pageindex
       if (isStrongsModule && searchtext.includes('lemma:')) {
         hilightStrongs(searchtext.match(/lemma:\s*\S+/g));
@@ -326,14 +333,6 @@ export default class Search
     const lexiconHtml = stringHash(searching);
 
     if (progress === -1 && res.dataset.lexiconHtml !== lexiconHtml) {
-      // clear dynamic CSS
-      strongsCSS.added.forEach((r) => {
-        if (r < strongsCSS.sheet.cssRules.length) {
-          strongsCSS.sheet.deleteRule(r);
-        }
-      });
-      strongsCSS.added = [];
-
       // build a lexicon for the last search
       if (lex) {
         if (!displayModule || !results || !isStrongsModule) {
