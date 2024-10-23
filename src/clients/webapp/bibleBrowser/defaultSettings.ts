@@ -91,7 +91,7 @@ const defaultSettings: AllComponentsData = {
       component: 'bibleBrowser',
       langcode: 'en',
       settings: {
-        storageId: 'x',
+        storageId: 'none',
         frame: '0', // is iframe API being used?
         prefs: {
           xulsword: {

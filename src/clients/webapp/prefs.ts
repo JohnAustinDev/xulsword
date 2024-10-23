@@ -85,7 +85,7 @@ function getStore(aStore: string) {
 }
 
 export function localStorageType(): 'none' | 'localStorage' | 'sessionStorage' {
-  return Build.isDevelopment ? 'none' : storageType();
+  return storageType();
 }
 
 const Prefs = new Rprefs(

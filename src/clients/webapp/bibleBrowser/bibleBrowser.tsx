@@ -73,8 +73,7 @@ socket.on('connect', () => {
       // user prefs will defer to any pref values in settings. Or if prefixed
       // with 'after:' then even settings will be overwritten by any previously
       // set user pref values (ie. settings will have no effect).
-      let storageId: string = 'none';
-      if (!Build.isDevelopment) ({ storageId } = settings);
+      let { storageId } = settings;
       let userPrefs: 'before' | 'after' | 'none' =
         storageId === 'none' ? 'none' : 'before';
       const match = storageId.match(/^(before|after|none):/);

@@ -378,6 +378,7 @@ export default function (opts) {
               ? new CompressionPlugin({
                   deleteOriginalAssets: true,
                   threshold: 30000,
+                  exclude: /\.ttf\b/
                 })
               : null;
           }),
