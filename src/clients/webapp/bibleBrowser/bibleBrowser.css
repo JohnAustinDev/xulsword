@@ -139,28 +139,15 @@ Search/Print cards - scroll iframe (or set iframe height if auto-height)
     padding: 0;
   }
 
-  /* Limit tabs from overflowing tab bank */
-  .tabs:not(:has(.tab:nth-child(4))) .tab-label {
-    max-width: 12px;
-  }
-
   /* Make sure mts-tab drop down menu remains on-screen */
   .tabs .mts-tab .anchorbutton {
     position: static;
   }
-  .tabrow .tabs:first-child .mts-tab .anchorbutton .menupopup {
-    left: 0px;
-    right: unset;
-  }
-  .tabrow .tabs:not(:first-child) .mts-tab .anchorbutton .menupopup {
+  .tabs .mts-tab .anchorbutton .menupopup {
     left: unset;
     right: 0px;
   }
-  html[dir='rtl'] .tabrow .tabs:first-child .mts-tab .anchorbutton .menupopup {
-    left: unset;
-    right: 0px;
-  }
-  html[dir='rtl'] .tabrow .tabs:not(:first-child) .mts-tab .anchorbutton .menupopup {
+  html[dir='rtl'] .tabs .mts-tab .anchorbutton .menupopup {
     left: 0px;
     right: unset;
   }

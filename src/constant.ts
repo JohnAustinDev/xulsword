@@ -107,9 +107,6 @@ const C = {
         Genbks: 3,
         Dicts: 4,
       },
-      TabMarginFirstLast: Build.isWebApp ? 10 : 20, // px CSS first left and last right child tab margin
-      TabMargin: 3, // px CSS tab left/right margin
-      TabRowMargin: Build.isWebApp ? 20 : 30, // px room to leave free when moving tabs to mts-tab
     },
     Chooser: {
       bookgroupHoverDelay: 300, // ms until bookGroup is changed

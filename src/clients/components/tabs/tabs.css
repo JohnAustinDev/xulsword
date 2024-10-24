@@ -9,6 +9,9 @@
   white-space: nowrap;
   z-index: 4;
   font-size: 0.95em;
+  /* Following values are used in tabs.tsx */
+  padding-inline-start: 20px;
+  padding-inline-end: 10px;
 }
 .tabs.open {
   overflow: visible;
@@ -19,6 +22,7 @@
   cursor: default;
   font-size: 0.86em;
   height: 25px;
+  /* Following value is used in tabs.tsx */
   margin: 0px 3px 0px 3px;
   color: grey;
   background: rgb(255, 250, 255);
@@ -58,6 +62,8 @@
 }
 .tabs .mts-tab {
   padding-inline-end: 0px;
+  /* Following value is used in tabs.tsx */
+  max-width: 50%;
 }
 .tabs .mts-tab .anchorbutton .menupopup {
   top: 17px;
@@ -69,11 +75,17 @@ html[dir='rtl'] .tabs .mts-tab .anchorbutton .menupopup {
   right: unset;
   left: 0px;
 }
+.tabs .mts-tab > div > .tab-label {
+  max-width: calc(100% - 12px);
+}
 .tabs .mts-tab .anchorbutton {
   width: 12px;
   height: 12px;
   background-image: url(../images/dropdown-menu.png);
   position: relative;
+}
+.tabs .mts-tab .anchorbutton .menupopup .tab {
+  max-width: calc(50vw - 10px);
 }
 .tabs .mto-tab {
   display: block;
@@ -84,12 +96,6 @@ html[dir='rtl'] .tabs .mts-tab .anchorbutton .menupopup {
 }
 .tabs .mto-tab.selected {
   display: none;
-}
-.tabs > *:last-child {
-  margin-inline-end: 20px;
-}
-.tabs > *:first-child {
-  margin-inline-start: 20px;
 }
 .tabs .tab.active {
   color: rgb(40, 40, 255);

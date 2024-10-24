@@ -161,51 +161,53 @@ class Tabs extends React.Component implements RenderPromiseComponent {
     const { tabs } = this.props as TabsProps;
     const { multiTabs } = this.state as TabsState;
     const newMultiTabs = multiTabs.slice();
-    const tabsdiv = loadingRef.current;
-    const tdivs = tabsdiv?.getElementsByClassName(
+    const tabsrow = loadingRef.current;
+    const pttab = tabsrow?.getElementsByClassName(
+      'tabPlus',
+    )[0] as HTMLElement | null
+    const tdivs = tabsrow?.getElementsByClassName(
       'reg-tab',
     ) as HTMLCollectionOf<HTMLElement>;
-    const twids =
-      (tdivs &&
-        Array.from(tdivs).map(
-          (d) => d.offsetWidth + 2 * C.UI.Viewport.TabMargin,
-        )) ||
-      [];
-    const iltab = tabsdiv?.getElementsByClassName(
+    const iltab = tabsrow?.getElementsByClassName(
       'ilt-tab',
     )[0] as HTMLElement | null;
-    const iltwidth =
-      (iltab && iltab.offsetWidth + 2 * C.UI.Viewport.TabMargin) || 0;
+
+    const padding = 30; // .tabs {padding-inline-start: 20px; padding-inline-end: 10px;}
+    const tm = 3; // .tabs .tab {margin: 0px 3px 0px 3px;}
+    const ptwidth = pttab ? pttab.offsetWidth + tm + tm : 0;
+    const towids = (tdivs && Array.from(tdivs).map((d) => d.offsetWidth)) || [];
+    const mtwidthMax = tabsrow ? tabsrow.clientWidth / 2 : 0; // .tabs .mts-tab {max-width: 50%;}
+    const iltwidth = iltab ? iltab.offsetWidth + tm + tm : 0;
+
     let contentWidth = 0;
     for (;;) {
       // The future mts-tab width must be recalculated for each width check.
       const mtsel = this.getMultiTabSelection(newMultiTabs);
       const mtindex = mtsel !== null ? tabs.indexOf(mtsel) : -1;
-      const mtwidth = mtindex > -1 ? twids[mtindex] : 0;
-      const ptwidth = G.Prefs.getBoolPref('xulsword.tabcntl') ? 34 : 0;
-      // Get the index of the ntext tab to be moved.
+      let mtwidth = mtindex > -1 ? towids[mtindex] + tm + tm : 0;
+      if (mtwidth > mtwidthMax) mtwidth = mtwidthMax; // done by css
+
+      // Get the index of the ntext tab to be moved if this tab bank is too wide.
       const nextTabIndex = newMultiTabs.length
         ? tabs.indexOf(newMultiTabs[0]) - 1
         : tabs.length - 1;
-      if (nextTabIndex < 0) break;
-      contentWidth =
-        C.UI.Viewport.TabRowMargin +
-        2 * C.UI.Viewport.TabMarginFirstLast +
-        twids.slice(0, nextTabIndex + 1).reduce((p, c) => p + c, 0) +
-        ptwidth +
-        mtwidth +
-        iltwidth;
-      if (
-        !tabsdiv ||
-        tabs.length < 2 ||
-        (newMultiTabs.length !== 1 && contentWidth <= tabsdiv.clientWidth)
-      ) {
+
+      // Calculate width of all regular tabs, including their margins.
+      const ntwidth = towids
+        .slice(0, nextTabIndex + 1)
+        .reduce((p, c) => p + c + tm + tm, 0);
+
+      contentWidth = padding + ptwidth + ntwidth + mtwidth + iltwidth;
+
+      if (!tabsrow || nextTabIndex === -1 || contentWidth <= tabsrow.clientWidth) {
         break;
       }
-      // Move next tab to the multi-tab.
+      // It's still too wide, so move the next tab into the multi-tab.
       newMultiTabs.unshift(tabs[nextTabIndex]);
     }
-    if (iltab && tabsdiv && contentWidth > tabsdiv.clientWidth) {
+
+    // If tab bank is too narrrow to display required tabs, remove the iltab.
+    if (iltab && tabsrow && contentWidth > tabsrow.clientWidth) {
       iltab.style.display = 'none';
     }
     if (multiTabs.length !== newMultiTabs.length) {
