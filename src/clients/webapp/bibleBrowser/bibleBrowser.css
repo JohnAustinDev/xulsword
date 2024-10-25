@@ -188,6 +188,9 @@ Search/Print cards - scroll iframe (or set iframe height if auto-height)
     left: 0px;
     right: unset;
   }
+  .chapterhead {
+    padding: 0 10px;
+  }
   .x-navmenu {
     font-size: 1rem;
   }
@@ -197,5 +200,11 @@ Search/Print cards - scroll iframe (or set iframe height if auto-height)
   }
   .dictkey {
     margin-bottom: 0.5em;
+  }
+
+  .cr:after,
+  .fn:after,
+  .un:after {
+    font-size: larger;
   }
 }
