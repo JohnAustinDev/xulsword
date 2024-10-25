@@ -86,7 +86,6 @@ class Tabs extends React.Component implements RenderPromiseComponent {
     if (loadingRef && loadingRef.current) {
       resizeObserver.observe(loadingRef.current);
     }
-    this.checkTabWidth();
     renderPromise.dispatch();
   }
 
@@ -98,8 +97,8 @@ class Tabs extends React.Component implements RenderPromiseComponent {
   }
 
   componentDidUpdate() {
-    const { renderPromise } = this;
-    this.checkTabWidth();
+    const { checkTabWidth, renderPromise } = this;
+    if (!renderPromise.waiting()) checkTabWidth();
     renderPromise.dispatch();
   }
 
@@ -173,7 +172,7 @@ class Tabs extends React.Component implements RenderPromiseComponent {
   // Move tabs to the multi-tab until there is no overflow.
   checkTabWidth() {
     const { loadingRef } = this;
-    const { tabs } = this.props as TabsProps;
+    const { tabs, panelIndex } = this.props as TabsProps;
     const tabsrow = loadingRef.current;
     const state = this.state as TabsState;
     if (tabsrow && !state.multiTabs.length) {
@@ -216,8 +215,19 @@ class Tabs extends React.Component implements RenderPromiseComponent {
           .reduce((p, c) => p + c + tm + tm, 0);
 
         contentWidth = fudge + padding + ptwidth + ntwidth + mtwidth + iltwidth;
+        /*
+        log.debug(`Tab row ${panelIndex}: ${JSON_stringify({
+          calcWidth: contentWidth,
+          realWidth: tabsrow.clientWidth,
+          fudge,
+          padding,
+          ptwidth,
+          ntwidth,
+          mtwidth,
+          iltwidth,
+        })}`);*/
 
-        if (nextTabIndex === -1 || contentWidth <= tabsrow.clientWidth) {
+        if (nextTabIndex === -1 || contentWidth < tabsrow.clientWidth) {
           break;
         }
         // It's still too wide, so move the next tab into the multi-tab.

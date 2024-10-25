@@ -248,7 +248,7 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
                 const key = keys[group[0]] || m;
                 return (
                   <TreeView
-                    key={stringHash(childNodes)}
+                    key={stringHash(group[0], i, childNodes)}
                     initialState={childNodes}
                     selectedIDs={key ? [key] : []}
                     expandedIDs={expandedIDs[i]}
