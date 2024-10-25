@@ -156,6 +156,23 @@ class Popup extends React.Component implements RenderPromiseComponent {
           x: [],
         };
 
+        // For mobile web app, the popup should always cover the width of the
+        // screen.
+        if (Build.isWebApp && window.innerWidth <= C.UI.WebApp.mobileW) {
+          const margin = 10;
+          const pwidth = `calc(100vw - ${margin + margin + 4}px)`;
+          popup.style.width = pwidth;
+          if (!document.querySelector(`html[dir='rtl']`)) {
+            popup.style.left = '0px';
+            const boxl = popup.getBoundingClientRect().left;
+            popup.style.left = `${margin - boxl}px`;
+          } else {
+            popup.style.right = '0px';
+            const boxl = popup.getBoundingClientRect().right;
+            popup.style.right = `${boxl - margin}px`;
+          }
+        }
+
         // Set top border of npopup to the parent element's y location
         popup.style.top = '0px';
         const popupStart = popup.getBoundingClientRect().top;

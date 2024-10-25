@@ -399,13 +399,16 @@ class Viewport extends React.Component implements PopupParent {
       if (tabWidth) {
         const width = `${100 * (tabWidth / numPanels)}%`;
         const tabsi = tabs[i];
-        // A new Tabs component must be created anytime tab bank width changes,
-        // so that tabs will be correctly fit into the mts-tab.
+        // Tabs key does not need to change due to external resizing (because
+        // that is handled by a resizeObserver). However, anything that changes
+        // the number or width of tabs must be in the key, so that Tabs will be
+        // redrawn correctly.
+        const key = stringHash({ i, tabsi, a: ilModules[i], b: ilModuleOptions[i], c: mtModules[i] });
         if (!tabsi)
-          return <Hbox key={[i, width].join('.')} style={{ width }} />;
+          return <Hbox key={key} style={{ width }} />;
         return (
           <Tabs
-            key={[i, width].join('.')}
+            key={key}
             style={{ width }}
             panelIndex={i}
             isPinned={isPinned[i]}
