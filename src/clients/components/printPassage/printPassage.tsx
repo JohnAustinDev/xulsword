@@ -193,7 +193,7 @@ export default class PrintPassage
             lastchapter,
             v11n,
             show,
-          ).catch((er) => log.error(er))
+          ).catch((er) => log.error(er));
         }
       }
     }

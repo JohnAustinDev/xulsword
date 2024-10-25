@@ -4,7 +4,7 @@ import { clone, gbAncestorIDs, stringHash } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
 import RenderPromise from '../../renderPromise.ts';
-import { audioGenBookNode } from '../../common.tsx';
+import { audioGenBookNode, chooserGenbks } from '../../common.tsx';
 import { Hbox, Vbox } from '../libxul/boxes.tsx';
 import { xulPropTypes, addClass } from '../libxul/xul.tsx';
 import TreeView, { forEachNode } from '../libxul/treeview.tsx';
@@ -144,7 +144,7 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
     const props = this.props as GenbookChooserProps;
     const { panels } = props;
     const treekey = [panels[panelIndex], panelIndex].join('.');
-    return genbks(panels).length > 1 && treeNodes[treekey].length > 1;
+    return chooserGenbks(panels).length > 1 && treeNodes[treekey].length > 1;
   }
 
   // Expand parents of key nodes if they are collapsed.
@@ -187,7 +187,7 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
       needsTreeParent,
     } = this;
 
-    const genbkPanels = genbks(panels);
+    const genbkPanels = chooserGenbks(panels);
     const treekeys = (groupIndex: number): [string | null, number] => {
       const [group] = genbkPanels[groupIndex];
       const m = panels[group];
@@ -280,22 +280,6 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
 GenbookChooser.propTypes = propTypes;
 
 export default GenbookChooser;
-
-// Return groups of same-genbook-panels, in chooser order.
-// Ex: [[0],[1,2]] or [[0,1,2]]
-function genbks(panels: Array<string | null>): number[][] {
-  const r: number[][] = [];
-  panels.forEach((m, i) => {
-    if (m && m in G.Tab && G.Tab[m].type === C.GENBOOK) {
-      if (i > 0 && m === panels[i - 1]) {
-        r[r.length - 1].push(i);
-      } else {
-        r.push([i]);
-      }
-    }
-  });
-  return r;
-}
 
 // Return a function to update the xulsword keys state according to a given selection.
 function newState(

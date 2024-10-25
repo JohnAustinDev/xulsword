@@ -194,7 +194,7 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
           if (renderPromise2.waiting()) return null;
 
           onSelection(selection, props.id);
-          return ({ selection } as Partial<SelectORState>);
+          return { selection } as Partial<SelectORState>;
         });
       });
     }
@@ -295,7 +295,7 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
       });
     } else selectedModuleIsInstalled = true;
     if (!nodes?.length) return null;
-    const selectedNodes = keys.map((k) => findTreeNode(nodes, k));
+    const selectedNodes = keys.map((k) => findTreeNode(k, nodes));
     const showNodes = (
       !selectedNodes.length || selectedNodes.some((kn) => !kn)
         ? nodes
@@ -340,7 +340,9 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
             ].join(' ')}
             key={['sp', n.id].join('.')}
             value={n.id.toString()}
-            disabled={disabled || !selectedModuleIsInstalled}
+            disabled={
+              disabled || !selectedModuleIsInstalled || children.length < 2
+            }
             data-index={i}
             onChange={onChange}
           >
@@ -379,13 +381,16 @@ class SelectOR extends React.Component implements RenderPromiseComponent {
       this.selectorValue =
         typeof selectedValue === 'string' ? [selectedValue] : selectedValue;
       const parentNode = ancestorNodes.at(-1);
+      const numChildren: number =
+        (enableParentSelection && ancestorNodes.length ? 1 : 0) +
+        childNodes.length;
       selects.push(
         <Menulist
           className="select-child"
           key={['ch', parentNode ? parentNode.id : module].join('.')}
           multiple={!!enableMultipleSelection}
           value={selectedValue}
-          disabled={disabled || !selectedModuleIsInstalled}
+          disabled={disabled || !selectedModuleIsInstalled || numChildren < 2}
           onChange={onChange}
         >
           {enableParentSelection && ancestorNodes.length && (

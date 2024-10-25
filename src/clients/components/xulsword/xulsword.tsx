@@ -1,6 +1,6 @@
 import React from 'react';
 import { Icon } from '@blueprintjs/core';
-import {clone, stringHash} from '../../../common.ts';
+import { clone, JSON_stringify, stringHash } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
 import RenderPromise from '../../renderPromise.ts';
@@ -12,6 +12,8 @@ import {
   setStatePref,
   syncChildrensBibles,
   doUntilDone,
+  isIBTChildrensBible,
+  chooserGenbks,
 } from '../../common.tsx';
 import {
   addClass,
@@ -40,10 +42,7 @@ import {
 import './xulsword.css';
 
 import type { BibleBrowserControllerGlobal } from '../../webapp/bibleBrowser/bibleBrowser.tsx';
-import type {
-  OSISBookType,
-  XulswordStateArgType,
-} from '../../../type.ts';
+import type { OSISBookType, XulswordStateArgType } from '../../../type.ts';
 import type {
   RenderPromiseComponent,
   RenderPromiseState,
@@ -149,8 +148,16 @@ export default class Xulsword
       doUntilDone((renderPromise2) => {
         const { keys: prevkeys } = prevState;
         const { panels, keys } = this.state as XulswordState;
-        const keys2 = syncChildrensBibles(panels, prevkeys, keys, renderPromise2);
-        if (!renderPromise2.waiting() && stringHash(keys) !== stringHash(keys2)) {
+        const keys2 = syncChildrensBibles(
+          panels,
+          prevkeys,
+          keys,
+          renderPromise2,
+        );
+        if (
+          !renderPromise2.waiting() &&
+          stringHash(keys) !== stringHash(keys2)
+        ) {
           this.setState({ keys: keys2 } as XulswordState);
         }
       });
@@ -183,7 +190,19 @@ export default class Xulsword
   }
 
   selectionGenbk(selection: SelectORMType | undefined, _id?: string): void {
-    if (selection) this.setState({ keys: selection.keys });
+    if (selection) {
+      const { panels } = this.state as XulswordState;
+      const { otherMod, keys: newkey } = selection;
+      const panelIndex = panels.indexOf(otherMod);
+      if (panelIndex !== -1) {
+        this.setState((prevState: XulswordState) => {
+          let { keys } = prevState;
+          keys = [...keys];
+          [keys[panelIndex]] = newkey;
+          return { keys } as XulswordState;
+        });
+      }
+    }
   }
 
   selectionVK(selection: SelectVKType | undefined): void {
@@ -262,17 +281,6 @@ export default class Xulsword
     });
 
     const vkMod = panels.find((p) => p && G.Tab[p].isVerseKey) ?? undefined;
-
-    const panelGenbkKeys: (string | null)[] = [];
-    const seen: string[] = [];
-    const panelGenbks = panels.filter((m, i) => {
-      if (m && G.Tab[m].type === C.GENBOOK && !seen.includes(m)) {
-        seen.push(m);
-        panelGenbkKeys.push(keys[i]);
-        return true;
-      }
-      return false;
-    });
 
     const left =
       GI.i18n.t('ltr', renderPromise, 'locale_direction') === 'ltr'
@@ -483,20 +491,39 @@ export default class Xulsword
 
     const webappGenbkSelectorComponent = (
       <Hbox pack="center">
-        <Hbox id="genbknav" align="center">
-          <SelectOR
-            flex="1"
-            otherMods={panelGenbks}
-            key={panels.concat(keys).toString()}
-            initialORM={{
-              otherMod: panelGenbks[0],
-              keys: [panelGenbkKeys[0] || ''],
-            }}
-            enableMultipleSelection={false}
-            enableParentSelection={false}
-            onSelection={selectionGenbk}
-          />
-        </Hbox>
+        <Vbox id="genbknav" pack="center">
+          {chooserGenbks(panels).map((ga) => {
+            const [i] = ga;
+            const m = panels[i];
+            if (m && m in G.Tab && G.Tab[m].tabType === 'Genbks') {
+              const isCB = isIBTChildrensBible(m, renderPromise);
+              // Since CBs sync together, only the first CB selector is ever shown.
+              let hasPrevCB = false;
+              for (let x = 0; x < i; x++) {
+                const px = panels[x];
+                if (px && isIBTChildrensBible(px, renderPromise))
+                  hasPrevCB = true;
+              }
+              if (i === 0 || !isCB || !hasPrevCB) {
+                return (
+                  <SelectOR
+                    flex="1"
+                    key={[m, keys[i]].join('.')}
+                    otherMods={[m]}
+                    initialORM={{
+                      otherMod: m,
+                      keys: [keys[i] || ''],
+                    }}
+                    enableMultipleSelection={false}
+                    enableParentSelection={!isCB} // CB's don't have introductions
+                    onSelection={selectionGenbk}
+                  />
+                );
+              }
+            }
+            return null;
+          })}
+        </Vbox>
       </Hbox>
     );
 
@@ -628,9 +655,11 @@ export default class Xulsword
               <Hbox id="main-controlbar" pack="center">
                 {chooserMenuButton}
 
-                {panelGenbks.length > 0 && webappGenbkSelectorComponent}
-
                 {vkMod && webappVKSelectorComponent}
+
+                {panels.find(
+                  (m) => m && m in G.Tab && G.Tab[m].tabType === 'Genbks',
+                ) && webappGenbkSelectorComponent}
 
                 <Spacer flex="1" />
 

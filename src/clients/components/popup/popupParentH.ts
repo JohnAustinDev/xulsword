@@ -158,7 +158,7 @@ export function popupParentHandler(
             targ.type === 'sn'
               ? C.UI.Popup.strongsOpenDelay
               : C.UI.Popup.openDelay,
-            'popupDelayTO'
+            'popupDelayTO',
           );
         } else {
           elem.classList.add('empty');
@@ -186,10 +186,10 @@ export function popupParentHandler(
         WheelScrolling = true;
         delayHandler(
           this,
-          () => WheelScrolling = false,
+          () => (WheelScrolling = false),
           [],
           C.UI.Popup.wheelDeadTime,
-          'popupUnblockTO'
+          'popupUnblockTO',
         );
       }
       break;

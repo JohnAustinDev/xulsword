@@ -257,7 +257,9 @@ export function delayHandler(
 ) {
   if (stableParent && typeof stableParent === 'object') {
     if (nameTO in stableParent)
-      clearTimeout((stableParent as any)[nameTO] as ReturnType<typeof setTimeout>);
+      clearTimeout(
+        (stableParent as any)[nameTO] as ReturnType<typeof setTimeout>,
+      );
     (stableParent as any)[nameTO] = setTimeout(
       () => handler.call(stableParent, ...args),
       Number(ms) || 0,

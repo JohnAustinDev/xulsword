@@ -369,7 +369,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
                 );
             } else if ('key' in file) {
               const { key: k } = file;
-              const key = genbookChange(swordModule, k, true);
+              const key = genbookChange(swordModule, k, true, renderPromise2);
               if (key) {
                 afile = genBookAudioFile(swordModule, key, renderPromise2);
               }

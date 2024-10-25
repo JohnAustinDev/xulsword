@@ -385,9 +385,7 @@ export class Viewport {
               m &&
               m in Tab &&
               Tab[m].isVerseKey &&
-              this.#GI
-                .getBooksInVKModule([], renderPromise, m)
-                .includes(book),
+              this.#GI.getBooksInVKModule([], renderPromise, m).includes(book),
           ))
       ) {
         const mfirst = panels.find((m) => m && m in Tab && Tab[m].isVerseKey);

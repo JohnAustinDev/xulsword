@@ -109,7 +109,7 @@ class Textbox extends React.Component {
           },
           [e, e.currentTarget],
           timeout || 0,
-          'changeTO'
+          'changeTO',
         );
         e.stopPropagation();
       }

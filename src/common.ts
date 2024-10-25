@@ -1502,16 +1502,17 @@ export function localizeBookmarks(
 
 // Find the node having the id, or return undefined.
 export function findTreeNode(
-  searchIn: TreeNodeInfo[],
   id: string | number,
+  searchIn: TreeNodeInfo[],
+  findParent = false,
 ): TreeNodeInfo | undefined {
   if (searchIn) {
     for (let x = 0; x < searchIn.length; x += 1) {
-      if (searchIn[x].id === id) return searchIn[x];
+      if (searchIn[x].id === id) return findParent ? undefined : searchIn[x];
       const { childNodes } = searchIn[x];
       if (childNodes) {
-        const rc = findTreeNode(childNodes, id);
-        if (rc) return rc;
+        const rc = findTreeNode(id, childNodes);
+        if (rc) return findParent ? searchIn[x] : rc;
       }
     }
   }
@@ -1571,9 +1572,9 @@ export function findTreeAncestors(
   isDictMod?: boolean, // don't split dict mod keys
 ): { ancestors: TreeNodeInfo[]; self: TreeNodeInfo } {
   const anc = gbAncestorIDs(id, isDictMod).map((ids) =>
-    findTreeNode(nodes, ids),
+    findTreeNode(ids, nodes),
   );
-  const slf = findTreeNode(nodes, id);
+  const slf = findTreeNode(id, nodes);
   if (anc.some((x) => x === undefined) || slf === undefined) {
     throw new Error(`Node not found: '${id}'`);
   }
@@ -1596,6 +1597,49 @@ export function findTreeSiblings(
   return nodes;
 }
 
+export function nextTreeSibling(
+  nodeOrId: TreeNodeInfo | string,
+  nodes: TreeNodeInfo[],
+): TreeNodeInfo | null {
+  return findTreeSibling(true, nodeOrId, nodes);
+}
+
+export function prevTreeSibling(
+  nodeOrId: TreeNodeInfo | string,
+  nodes: TreeNodeInfo[],
+): TreeNodeInfo | null {
+  return findTreeSibling(false, nodeOrId, nodes);
+}
+
+export function findTreeSibling(
+  nextPrev: boolean,
+  nodeOrId: TreeNodeInfo | string,
+  nodes: TreeNodeInfo[],
+): TreeNodeInfo | null {
+  let parentNode: TreeNodeInfo | undefined;
+  let myid: string;
+  if (typeof nodeOrId === 'string') {
+    myid = nodeOrId;
+    parentNode = findTreeNode(nodeOrId, nodes, true);
+  } else {
+    const anc = findTreeAncestors(nodeOrId.id.toString(), nodes);
+    parentNode = anc.ancestors.pop();
+    myid = anc.self.id.toString();
+  }
+  let childNodes: TreeNodeInfo[] | undefined;
+  if (parentNode) ({ childNodes } = parentNode);
+  else childNodes = nodes;
+  if (childNodes) {
+    for (let x = 0; x < childNodes.length; x++) {
+      if (childNodes[x].id.toString() === myid) {
+        if (nextPrev) return childNodes[x + 1] || null;
+        else return (x > 0 && childNodes[x - 1]) || null;
+      }
+    }
+  }
+  return null;
+}
+
 // A leaf node has no childNodes property, or else it is zero length.
 export function findFirstLeafNode(
   nodes: TreeNodeInfo[],
@@ -1607,7 +1651,7 @@ export function findFirstLeafNode(
         throw new Error(
           `'nodes' argument required when candidate is type 'string': '${c}'`,
         );
-      const n = findTreeNode(nodes, c);
+      const n = findTreeNode(c, nodes);
       if (!n) throw new Error(`node does not exist in nodes: '${c}'`);
       return n;
     }

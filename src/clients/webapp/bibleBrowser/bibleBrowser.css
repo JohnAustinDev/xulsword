@@ -114,7 +114,8 @@ Search/Print cards - scroll iframe (or set iframe height if auto-height)
 /* don't show text pin without multiple texts */
 .textrow:not(:has(.atext:nth-child(2))) .text-pin,
 /* genbknav shouldn't show single-option selects */
-#genbknav .menulist:not(:has(:nth-child(2))),
+#genbknav:not(:has(> div:nth-child(2))) .menulist:has(> select[disabled]),
+#genbknav:not(:has(> div:nth-child(2))) .menulist:not(:has(:nth-child(2))),
 .module-info .sourceRepository {
   display: none;
 }
@@ -137,19 +138,6 @@ Search/Print cards - scroll iframe (or set iframe height if auto-height)
 @media (max-width: 300px) {
   .close-card-button {
     padding: 0;
-  }
-
-  /* Make sure mts-tab drop down menu remains on-screen */
-  .tabs .mts-tab {
-    position: static;
-  }
-  .tabs .mts-tab .anchorbutton .menupopup {
-    left: unset;
-    right: 0px;
-  }
-  html[dir='rtl'] .tabs .mts-tab .anchorbutton .menupopup {
-    left: 0px;
-    right: unset;
   }
 }
 
@@ -187,6 +175,18 @@ Search/Print cards - scroll iframe (or set iframe height if auto-height)
   .npopup .draghandle,
   .narrow-screen-hide {
     display: none;
+  }
+  /* Make sure mts-tab drop down menu remains on-screen */
+  .tabs .mts-tab {
+    position: static;
+  }
+  .tabs .mts-tab .anchorbutton .menupopup {
+    left: unset;
+    right: 0px;
+  }
+  html[dir='rtl'] .tabs .mts-tab .anchorbutton .menupopup {
+    left: 0px;
+    right: unset;
   }
   .x-navmenu {
     font-size: 1rem;

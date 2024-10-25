@@ -291,9 +291,7 @@ export default class Prefs {
       const ks = key.split('.');
       let i;
       for (i = ks.length - 1; i > 0; i -= 1) {
-        if (
-          this.getKeyValue(ks.slice(0, i).join('.'), store, true, null)
-        ) {
+        if (this.getKeyValue(ks.slice(0, i).join('.'), store, true, null)) {
           break;
         }
       }
@@ -370,7 +368,9 @@ export default class Prefs {
 
   getStore(aStore: string, storageId: string): PrefStorage | null {
     return this.storage.getStore(
-      Build.isWebApp && storageId ? `${aStore}${stringHash(storageId)}` : aStore,
+      Build.isWebApp && storageId
+        ? `${aStore}${stringHash(storageId)}`
+        : aStore,
     );
   }
 
@@ -465,12 +465,7 @@ export default class Prefs {
     });
     if (!keyExists && Build.isElectronApp) {
       if (useDefaultStore === false) {
-        return this.getKeyValue(
-          key,
-          aStore,
-          noErrorOnMissingKey,
-          true,
-        );
+        return this.getKeyValue(key, aStore, noErrorOnMissingKey, true);
       }
       if (noErrorOnMissingKey) return undefined;
       throw Error(`Missing Prefs key: '${key}' of '${aStore}' store`);

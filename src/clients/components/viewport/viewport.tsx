@@ -241,9 +241,7 @@ class Viewport extends React.Component implements PopupParent {
           const ml = G.FeatureModules.hebrew
             .concat(G.FeatureModules.greek)
             .filter((m) =>
-              GI.getBooksInVKModule([], renderPromise, m).includes(
-                bk.code,
-              ),
+              GI.getBooksInVKModule([], renderPromise, m).includes(bk.code),
             );
           if (ml.length) ilModuleOptions[i] = ml;
         }
@@ -403,7 +401,8 @@ class Viewport extends React.Component implements PopupParent {
         const tabsi = tabs[i];
         // A new Tabs component must be created anytime tab bank width changes,
         // so that tabs will be correctly fit into the mts-tab.
-        if (!tabsi) return <Hbox key={[i, width].join('.')} style={{ width }} />;
+        if (!tabsi)
+          return <Hbox key={[i, width].join('.')} style={{ width }} />;
         return (
           <Tabs
             key={[i, width].join('.')}

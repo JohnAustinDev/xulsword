@@ -3,9 +3,14 @@ import Cache from '../../../cache.ts';
 import {
   clone,
   escapeRE,
+  findTreeNode,
+  findTreeSiblings,
+  gbAncestorIDs,
   getSwordOptions,
   JSON_attrib_parse,
   JSON_attrib_stringify,
+  nextTreeSibling,
+  prevTreeSibling,
   stringHash,
 } from '../../../common.ts';
 import { getElementData } from '../../htmlData.ts';
@@ -20,6 +25,7 @@ import {
 } from './zversekey.ts';
 import { dictKeyToday, getDictEntryHTML } from './zdictionary.ts';
 
+import type { TreeNodeInfo } from '@blueprintjs/core';
 import type { AtextPropsType, PinPropsType, PlaceType } from '../../../type.ts';
 import type S from '../../../defaultPrefs.ts';
 import type RenderPromise from '../../renderPromise.ts';
@@ -279,22 +285,31 @@ export function genbookChange(
   module: string,
   modkey: string,
   next: boolean,
-  renderPromise?: RenderPromise,
+  renderPromise: RenderPromise,
 ): string | null {
-  let tocs: string[] = [];
   if (module) {
-    tocs = GI.LibSword.getGenBookTableOfContents([], renderPromise, module);
-    if (modkey) {
-      const toc = tocs.indexOf(modkey);
-      if (toc !== -1) {
-        if (next && toc + 1 < tocs.length) return tocs[toc + 1];
-        if (!next && toc - 1 > -1) return tocs[toc - 1];
-        return null;
+    const toc = GI.genBookTreeNodes([], renderPromise, module);
+    if (modkey && toc.length) {
+      const node = findTreeNode(modkey, toc);
+      if (node) {
+        const { childNodes } = node;
+        if (next) {
+          const ns: TreeNodeInfo | null = nextTreeSibling(node, toc);
+          return (
+            ns?.id.toString() ||
+            (childNodes ? childNodes[0]?.id.toString() : null)
+          );
+        } else {
+          const ps: TreeNodeInfo | null = prevTreeSibling(node, toc);
+          const pn: string | undefined = gbAncestorIDs(modkey).pop();
+          return ps?.id.toString() || pn?.toString() || null;
+        }
       }
     }
+    // If atext key isn't in the module and next is requested, return the first good key.
+    if (next && toc.length) return toc[0].id.toString();
   }
-  // If atext key isn't in the module and next is requested, return the first good key.
-  if (next && tocs.length) return tocs[0];
+
   return null;
 }
 

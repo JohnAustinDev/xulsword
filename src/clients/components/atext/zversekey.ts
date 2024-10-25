@@ -653,7 +653,7 @@ export function aTextWheelScroll(
       columns === '1'
         ? C.UI.Atext.wheelScrollDelay
         : C.UI.Atext.multiColWheelScrollDelay,
-      'wheelScrollTO'
+      'wheelScrollTO',
     );
   }
 }

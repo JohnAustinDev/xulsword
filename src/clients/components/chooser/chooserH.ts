@@ -40,7 +40,7 @@ export default function handler(this: Chooser, es: React.SyntheticEvent): void {
               () => this.setState({ bookGroup: bookgroup }),
               [],
               C.UI.Chooser.bookgroupHoverDelay,
-              'bookgroupTO'
+              'bookgroupTO',
             );
           break;
         }

@@ -253,14 +253,10 @@ async function newLocation(
     };
   } else if (tabType === 'Dicts') {
     const keylist = GI.getAllDictionaryKeyList([], renderPromise, module);
-    r = { otherMod: module, key: keylist[0] };
+    r = { otherMod: module, key: keylist[0] || '' };
   } else {
-    const toc = GI.LibSword.getGenBookTableOfContents(
-      [],
-      renderPromise,
-      module,
-    );
-    r = { otherMod: module, key: toc[0] };
+    const toc = GI.genBookTreeNodes([], renderPromise, module);
+    r = { otherMod: module, key: toc[0]?.id.toString() || '' };
   }
   return r;
 }

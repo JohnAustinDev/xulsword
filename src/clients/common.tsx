@@ -11,8 +11,6 @@ import {
   gbPaths,
   localizeString,
   randomID,
-  findTreeNode,
-  findFirstLeafNode,
   findTreeNodeOrder,
 } from '../common.ts';
 import C from '../constant.ts';
@@ -275,13 +273,26 @@ export function iframeAutoHeight(
   }
 }
 
-export function isIBTChildrensBible(toc: TreeNodeInfo[]): boolean {
-  if (toc.length === 1) {
-    const [top] = toc;
-    if (top && top.childNodes) {
-      const [, ot, nt] = top.childNodes;
-      if (Array.isArray(ot?.childNodes) && Array.isArray(nt?.childNodes)) {
-        return ot.childNodes.length === 133 && nt.childNodes.length === 113;
+export function isIBTChildrensBible(
+  tocOrModule: TreeNodeInfo[] | string,
+  renderPromise: RenderPromise,
+): boolean {
+  if (tocOrModule) {
+    let toc: TreeNodeInfo[] = [];
+    if (typeof tocOrModule === 'string') {
+      if (tocOrModule in G.Tab && G.Tab[tocOrModule].tabType === 'Genbks') {
+        toc = GI.genBookTreeNodes([], renderPromise, tocOrModule);
+      }
+    } else {
+      toc = tocOrModule;
+    }
+    if (!renderPromise.waiting() && toc.length === 1) {
+      const [top] = toc;
+      if (top && top.childNodes) {
+        const [, ot, nt] = top.childNodes;
+        if (Array.isArray(ot?.childNodes) && Array.isArray(nt?.childNodes)) {
+          return ot.childNodes.length === 133 && nt.childNodes.length === 113;
+        }
       }
     }
   }
@@ -301,7 +312,8 @@ export function syncChildrensBibles(
   panels.forEach((m, i) => {
     if (m && m in G.Tab && G.Tab[m].tabType === 'Genbks') {
       const toc = GI.genBookTreeNodes([], renderPromise, m);
-      if (toc.length && isIBTChildrensBible(toc)) cbTocs[i] = toc;
+      if (toc.length && isIBTChildrensBible(toc, renderPromise))
+        cbTocs[i] = toc;
     }
   });
 
@@ -373,6 +385,22 @@ export function verseKeyAudioFile(
     }
   }
   return null;
+}
+
+// Return groups of same-genbook-panels, in chooser order.
+// Ex: [[0],[1,2]] or [[0,1,2]]
+export function chooserGenbks(panels: Array<string | null>): number[][] {
+  const r: number[][] = [];
+  panels.forEach((m, i) => {
+    if (m && m in G.Tab && G.Tab[m].type === C.GENBOOK) {
+      if (i > 0 && m === panels[i - 1]) {
+        r[r.length - 1].push(i);
+      } else {
+        r.push([i]);
+      }
+    }
+  });
+  return r;
 }
 
 // Return an audio file for the given GenBook module and key,

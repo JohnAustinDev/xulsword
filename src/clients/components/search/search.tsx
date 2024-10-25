@@ -245,7 +245,7 @@ export default class Search
         () => search(this).catch((er) => log.error(er)),
         [],
         50,
-        'afterMountSearch'
+        'afterMountSearch',
       );
     }
     renderPromise.dispatch();
