@@ -1,6 +1,5 @@
 import React, { ChangeEvent } from 'react';
 import PropTypes from 'prop-types';
-import C from '../../../constant.ts';
 import WebAppViewport from '../../webapp/viewport.ts';
 import { ofClass } from '../../../common.ts';
 import { xulPropTypes, htmlAttribs } from '../libxul/xul.tsx';
@@ -12,13 +11,13 @@ import RenderPromise from '../../renderPromise.ts';
 import './tabs.css';
 
 import type { XulswordStateArgType } from '../../../type.ts';
-import type S from '../../../defaultPrefs.ts';
 import type {
   RenderPromiseComponent,
   RenderPromiseState,
 } from '../../renderPromise.ts';
 import type { XulProps } from '../libxul/xul.tsx';
 import type { TonCellClick } from '../libxul/table.tsx';
+import { doUntilDone } from '../../common.tsx';
 
 const propTypes = {
   ...xulPropTypes,
@@ -56,6 +55,8 @@ class Tabs extends React.Component implements RenderPromiseComponent {
 
   loadingRef: React.RefObject<HTMLDivElement>;
 
+  resizeObserver: ResizeObserver;
+
   constructor(props: TabsProps) {
     super(props);
 
@@ -73,48 +74,62 @@ class Tabs extends React.Component implements RenderPromiseComponent {
 
     this.loadingRef = React.createRef();
     this.renderPromise = new RenderPromise(this, this.loadingRef);
+    this.resizeObserver = new ResizeObserver(() =>
+      this.setState({ multiTabs: [] }),
+    );
   }
 
   // Only when the tabs key prop changes will React instantiate a new tabs
   // component and thus resize the tabs to the current window.
   componentDidMount() {
+    const { renderPromise, resizeObserver, loadingRef } = this;
+    if (loadingRef && loadingRef.current) {
+      resizeObserver.observe(loadingRef.current);
+    }
+    this.checkTabWidth();
+    renderPromise.dispatch();
+  }
+
+  componentWillUnmount() {
+    const { resizeObserver, loadingRef } = this;
+    if (loadingRef && loadingRef.current) {
+      resizeObserver.unobserve(loadingRef.current);
+    }
+  }
+
+  componentDidUpdate() {
     const { renderPromise } = this;
     this.checkTabWidth();
     renderPromise.dispatch();
   }
 
-  componentDidUpdate() {
-    const { renderPromise } = this;
-    renderPromise.dispatch();
-  }
-
   toggleTab(e: React.SyntheticEvent<ChangeEvent>) {
-    const { renderPromise } = this;
     const { target } = e;
     if (target) {
       const { value } = target as HTMLSelectElement;
       const { panelIndex, xulswordState } = this.props as TabsProps;
       const vp = Build.isWebApp ? WebAppViewport : G.Viewport;
-      const xs = vp.setXulswordTabs(
-        {
-          panelIndex,
-          whichTab: value,
-          doWhat: 'toggle',
-        },
-        renderPromise,
-      );
-      const newtabs = xs.tabs[panelIndex];
-      if (newtabs && newtabs.includes(value)) {
-        xulswordState((prevState) => {
-          const { panels: pans, mtModules } = prevState;
-          const s: Partial<typeof S.prefs.xulsword> = {
-            panels: pans.slice(),
-          };
-          if (!s.panels) s.panels = [];
-          s.panels[panelIndex] = value;
-          return s;
-        });
-      }
+      doUntilDone((renderPromise2) => {
+        const xs = vp.setXulswordTabs(
+          {
+            panelIndex,
+            whichTab: value,
+            doWhat: 'toggle',
+          },
+          renderPromise2,
+        );
+        if (!renderPromise2.waiting()) {
+          const tabBank = xs.tabs[panelIndex];
+          if (tabBank && tabBank.includes(value)) {
+            xulswordState((prevState) => {
+              let { panels } = prevState;
+              panels = panels.slice();
+              panels[panelIndex] = value;
+              return { panels };
+            });
+          }
+        }
+      });
     }
   }
 
@@ -159,59 +174,62 @@ class Tabs extends React.Component implements RenderPromiseComponent {
   checkTabWidth() {
     const { loadingRef } = this;
     const { tabs } = this.props as TabsProps;
-    const { multiTabs } = this.state as TabsState;
-    const newMultiTabs = multiTabs.slice();
     const tabsrow = loadingRef.current;
-    const pttab = tabsrow?.getElementsByClassName(
-      'tabPlus',
-    )[0] as HTMLElement | null
-    const tdivs = tabsrow?.getElementsByClassName(
-      'reg-tab',
-    ) as HTMLCollectionOf<HTMLElement>;
-    const iltab = tabsrow?.getElementsByClassName(
-      'ilt-tab',
-    )[0] as HTMLElement | null;
+    const state = this.state as TabsState;
+    if (tabsrow && !state.multiTabs.length) {
+      const multiTabs: string[] = [];
+      const pttab = tabsrow.getElementsByClassName(
+        'tabPlus',
+      )[0] as HTMLElement | null;
+      const tdivs = tabsrow.getElementsByClassName(
+        'reg-tab',
+      ) as HTMLCollectionOf<HTMLElement>;
+      const iltab = tabsrow.getElementsByClassName(
+        'ilt-tab',
+      )[0] as HTMLElement | null;
 
-    const padding = 30; // .tabs {padding-inline-start: 20px; padding-inline-end: 10px;}
-    const tm = 3; // .tabs .tab {margin: 0px 3px 0px 3px;}
-    const ptwidth = pttab ? pttab.offsetWidth + tm + tm : 0;
-    const towids = (tdivs && Array.from(tdivs).map((d) => d.offsetWidth)) || [];
-    const mtwidthMax = tabsrow ? tabsrow.clientWidth / 2 : 0; // .tabs .mts-tab {max-width: 50%;}
-    const iltwidth = iltab ? iltab.offsetWidth + tm + tm : 0;
+      const fudge = 10;
+      const padding = 30; // .tabs {padding-inline-start: 20px; padding-inline-end: 10px;}
+      const tm = 3; // .tabs .tab {margin: 0px 3px 0px 3px;}
+      const mtwidthMax = tabsrow.clientWidth / 2; // .tabs .mts-tab {max-width: 50%;}
+      const ptwidth = pttab ? pttab.offsetWidth + tm + tm : 0;
+      const towids =
+        (tdivs && Array.from(tdivs).map((d) => d.offsetWidth)) || [];
+      const iltwidth = iltab ? iltab.offsetWidth + tm + tm : 0;
 
-    let contentWidth = 0;
-    for (;;) {
-      // The future mts-tab width must be recalculated for each width check.
-      const mtsel = this.getMultiTabSelection(newMultiTabs);
-      const mtindex = mtsel !== null ? tabs.indexOf(mtsel) : -1;
-      let mtwidth = mtindex > -1 ? towids[mtindex] + tm + tm : 0;
-      if (mtwidth > mtwidthMax) mtwidth = mtwidthMax; // done by css
+      let contentWidth = 0;
+      for (;;) {
+        // The future mts-tab width must be recalculated for each width check.
+        const mtselect = this.getMultiTabSelection(multiTabs);
+        const mtindex = mtselect !== null ? tabs.indexOf(mtselect) : -1;
+        let mtwidth = mtindex > -1 ? towids[mtindex] + tm + tm : 0;
+        if (mtwidth > mtwidthMax) mtwidth = mtwidthMax; // done by css
 
-      // Get the index of the ntext tab to be moved if this tab bank is too wide.
-      const nextTabIndex = newMultiTabs.length
-        ? tabs.indexOf(newMultiTabs[0]) - 1
-        : tabs.length - 1;
+        // Get the index of the ntext tab to be moved if this tab bank is too wide.
+        const nextTabIndex = multiTabs.length
+          ? tabs.indexOf(multiTabs[0]) - 1
+          : tabs.length - 1;
 
-      // Calculate width of all regular tabs, including their margins.
-      const ntwidth = towids
-        .slice(0, nextTabIndex + 1)
-        .reduce((p, c) => p + c + tm + tm, 0);
+        // Calculate width of all regular tabs, including their margins.
+        const ntwidth = towids
+          .slice(0, nextTabIndex + 1)
+          .reduce((p, c) => p + c + tm + tm, 0);
 
-      contentWidth = padding + ptwidth + ntwidth + mtwidth + iltwidth;
+        contentWidth = fudge + padding + ptwidth + ntwidth + mtwidth + iltwidth;
 
-      if (!tabsrow || nextTabIndex === -1 || contentWidth <= tabsrow.clientWidth) {
-        break;
+        if (nextTabIndex === -1 || contentWidth <= tabsrow.clientWidth) {
+          break;
+        }
+        // It's still too wide, so move the next tab into the multi-tab.
+        multiTabs.unshift(tabs[nextTabIndex]);
       }
-      // It's still too wide, so move the next tab into the multi-tab.
-      newMultiTabs.unshift(tabs[nextTabIndex]);
-    }
 
-    // If tab bank is too narrrow to display required tabs, remove the iltab.
-    if (iltab && tabsrow && contentWidth > tabsrow.clientWidth) {
-      iltab.style.display = 'none';
-    }
-    if (multiTabs.length !== newMultiTabs.length) {
-      this.setState({ multiTabs: newMultiTabs });
+      // If tab bank is too narrrow to display required tabs, remove the iltab.
+      if (iltab && contentWidth > tabsrow.clientWidth) {
+        iltab.style.display = 'none';
+      }
+
+      if (multiTabs.length) this.setState({ multiTabs });
     }
   }
 

@@ -140,7 +140,7 @@ Search/Print cards - scroll iframe (or set iframe height if auto-height)
   }
 
   /* Make sure mts-tab drop down menu remains on-screen */
-  .tabs .mts-tab .anchorbutton {
+  .tabs .mts-tab {
     position: static;
   }
   .tabs .mts-tab .anchorbutton .menupopup {

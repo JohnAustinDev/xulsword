@@ -396,25 +396,17 @@ class Viewport extends React.Component implements PopupParent {
     let cls = '';
     if (ownWindow) cls += ' ownWindow';
 
-    const tabrowElements = panels.map((_p: string | null, i: number) => {
+    const tabBankElements = panels.map((_p: string | null, i: number) => {
       const tabWidth = tabWidths[i];
       if (tabWidth) {
         const width = `${100 * (tabWidth / numPanels)}%`;
         const tabsi = tabs[i];
-        const key = stringHash(
-          i,
-          reset,
-          isPinned[i],
-          tabWidth,
-          tabsi ? [...tabsi] : 'none',
-          ilModules[i],
-          mtModules[i],
-          Math.round(atextRefs[i].current?.sbref.current?.offsetWidth || 0),
-        );
-        if (!tabsi) return <Hbox key={key} style={{ width }} />;
+        // A new Tabs component must be created anytime tab bank width changes,
+        // so that tabs will be correctly fit into the mts-tab.
+        if (!tabsi) return <Hbox key={[i, width].join('.')} style={{ width }} />;
         return (
           <Tabs
-            key={key}
+            key={[i, width].join('.')}
             style={{ width }}
             panelIndex={i}
             isPinned={isPinned[i]}
@@ -517,14 +509,14 @@ class Viewport extends React.Component implements PopupParent {
         <Vbox
           className={[
             'textarea',
-            tabrowElements.filter(Boolean).length > 1
+            tabBankElements.filter(Boolean).length > 1
               ? 'multi-panel'
               : 'single-panel',
           ].join(' ')}
           flex="1"
           onKeyDown={eHandler}
         >
-          <div className="tabrow">{tabrowElements}</div>
+          <div className="tabrow">{tabBankElements}</div>
 
           <Hbox className="textrow userFontBase" flex="1">
             {popupParent &&
