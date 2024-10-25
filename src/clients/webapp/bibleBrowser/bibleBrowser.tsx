@@ -91,12 +91,24 @@ socket.on('connect', () => {
       if (maxPanels < 2) maxPanels = 2;
       else if (maxPanels > 6) maxPanels = 6;
       (window as BibleBrowserControllerGlobal).browserMaxPanels = maxPanels;
+
       let numPanels: number =
         (settings.prefs?.xulsword as any)?.panels?.length || maxPanels;
-      if (numPanels > maxPanels) numPanels = maxPanels;
-      if (!frame || (frame === '0' && window.innerWidth < 768)) {
+      const { panels: settingsPanels } = settings.prefs?.xulsword || {};
+      if (
+        settingsPanels &&
+        window.innerWidth <= C.UI.WebApp.mobileW &&
+        [...new Set(settingsPanels)].filter(Boolean).length === 1
+      ) {
         numPanels = 1;
       }
+      if (userPrefs === 'after')
+        numPanels = (
+          Prefs.getComplexValue(
+            'xulsword.panels',
+          ) as typeof S.prefs.xulsword.panels
+        ).length;
+      if (numPanels > maxPanels) numPanels = maxPanels;
 
       // Must set global.locale before callBatchThenCache.
       writeSettingsToPrefsStores(settings, userPrefs);

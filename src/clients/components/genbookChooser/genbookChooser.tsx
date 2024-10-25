@@ -69,6 +69,7 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
     this.expandKeyParents = this.expandKeyParents.bind(this);
     this.onNodeClick = this.onNodeClick.bind(this);
     this.scrollTo = this.scrollTo.bind(this);
+    this.needsTreeParent = this.needsTreeParent.bind(this);
 
     this.loadingRef = React.createRef();
     this.renderPromise = new RenderPromise(this, this.loadingRef);
@@ -138,8 +139,17 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
     }
   }
 
+  needsTreeParent(panelIndex: number): boolean {
+    const { treeNodes } = this;
+    const props = this.props as GenbookChooserProps;
+    const { panels } = props;
+    const treekey = [panels[panelIndex], panelIndex].join('.');
+    return genbks(panels).length > 1 && treeNodes[treekey].length > 1;
+  }
+
   // Expand parents of key nodes if they are collapsed.
   expandKeyParents(panelIndex: number) {
+    const { needsTreeParent } = this;
     const state = this.state as GenbookChooserState;
     const { expandedIDs } = clone(state);
     const props = this.props as GenbookChooserProps;
@@ -151,6 +161,9 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
     const nodes = treeNodes[treekey];
     if (nodes && key) {
       const expanded: string[] = [];
+      if (module && needsTreeParent(panelIndex)) {
+        expanded.push(module);
+      }
       const ancestors = gbAncestorIDs(key);
       if (ancestors) {
         ancestors.forEach((id) => expanded.push(id));
@@ -165,18 +178,25 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
     const state = this.state as GenbookChooserState;
     const { panels, keys, xulswordStateHandler } = props;
     const { expandedIDs } = state;
-    const { treeRef, treeNodes, renderPromise, loadingRef, onNodeClick } = this;
+    const {
+      treeRef,
+      treeNodes,
+      renderPromise,
+      loadingRef,
+      onNodeClick,
+      needsTreeParent,
+    } = this;
 
-    const chooserGroups = genbks(panels);
+    const genbkPanels = genbks(panels);
     const treekeys = (groupIndex: number): [string | null, number] => {
-      const [group] = chooserGroups[groupIndex];
+      const [group] = genbkPanels[groupIndex];
       const m = panels[group];
       return [m, group];
     };
 
     // Build any treeNodes that have not been built yet. Each treekey has a
     // treeNode list, and is only built once and reused.
-    chooserGroups.forEach((_group, i) => {
+    genbkPanels.forEach((_group, i) => {
       const tks = treekeys(i);
       const treekey = tks.join('.');
       if (!treeNodes[treekey] || !treeNodes[treekey].length) {
@@ -205,7 +225,7 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
 
         <Hbox className="chooser-container" flex="20">
           <div className="scroll-parent">
-            {chooserGroups.map((group, i) => {
+            {genbkPanels.map((group, i) => {
               const tks = treekeys(i);
               const treekey = tks.join('.');
               const [m] = tks;
@@ -214,7 +234,7 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
                 let childNodes: TreeNodeInfo[] = treeNodes[treekey];
                 // If there are multiple genbks in the chooser, each genbk root
                 // node must have a single child.
-                if (chooserGroups.length > 1 && childNodes.length > 1) {
+                if (needsTreeParent(group[0])) {
                   childNodes = [
                     {
                       id: m,
