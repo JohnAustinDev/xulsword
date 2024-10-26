@@ -18,6 +18,7 @@ export const xulEvents = [
   'onMouseEnter',
   'onMouseLeave',
   'onWheel',
+  'onScroll',
   'onContextMenu',
 ] as const;
 
@@ -35,6 +36,7 @@ export const xulCaptureEvents = [
   'onMouseMoveCapture',
   'onMouseUpCapture',
   'onWheelCapture',
+  'onScrollCapture',
   'onContextMenuCapture',
 ] as const;
 
@@ -74,6 +76,7 @@ export const xulPropTypes = {
   onMouseEnter: PropTypes.func,
   onMouseLeave: PropTypes.func,
   onWheel: PropTypes.func,
+  onScroll: PropTypes.func,
   onContextMenu: PropTypes.func,
   onClickCapture: PropTypes.func,
   onDoubleClickCapture: PropTypes.func,
@@ -88,6 +91,7 @@ export const xulPropTypes = {
   onMouseMoveCapture: PropTypes.func,
   onMouseUpCapture: PropTypes.func,
   onWheelCapture: PropTypes.func,
+  onScrollCapture: PropTypes.func,
   onContextMenuCapture: PropTypes.func,
 };
 

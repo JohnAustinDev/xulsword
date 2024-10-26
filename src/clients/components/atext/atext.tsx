@@ -43,7 +43,13 @@ import audioIcon from '../audioIcon/audioIcon.tsx';
 import '../../libsword.css';
 import './atext.css';
 
-import type { AtextPropsType, PinPropsType } from '../../../type.ts';
+import type {
+  GenBookAudioFile,
+  PinPropsType,
+  VerseKeyAudioFile,
+  XulswordStateArgType,
+} from '../../../type.ts';
+import type S from '../../../defaultPrefs.ts';
 import type {
   RenderPromiseComponent,
   RenderPromiseState,
@@ -72,6 +78,30 @@ const propTypes = {
   place: PropTypes.object.isRequired,
   ownWindow: PropTypes.bool,
   onAudioClick: PropTypes.func.isRequired,
+};
+
+export type AtextPropsType = Pick<
+  typeof S.prefs.xulsword,
+  'location' | 'selection' | 'scroll' | 'show' | 'place'
+> & {
+  modkey: string;
+
+  module: string | undefined;
+  ilModule: string | undefined;
+  ilModuleOption: string[];
+
+  isPinned: boolean;
+  noteBoxHeight: number;
+  maximizeNoteBox: boolean;
+
+  panelIndex: number;
+  columns: number;
+  ownWindow: boolean;
+
+  xulswordState: (s: XulswordStateArgType) => void;
+
+  onAudioClick: (audio: VerseKeyAudioFile | GenBookAudioFile) => void;
+  bbDragEnd: (e: React.MouseEvent, value: any) => void;
 };
 
 export type AtextProps = XulProps & AtextPropsType;
@@ -135,6 +165,10 @@ class Atext extends React.Component implements RenderPromiseComponent {
     const { renderPromise } = this;
     if (!renderPromise.waiting()) this.onUpdate();
     renderPromise.dispatch();
+  }
+
+  shouldComponentUpdate(nextProps: AtextProps): boolean {
+    return window.webAppTextScroll !== nextProps.panelIndex;
   }
 
   componentDidUpdate(_prevProps: AtextProps, prevState: AtextStateType) {
@@ -507,12 +541,8 @@ class Atext extends React.Component implements RenderPromiseComponent {
         }
       }
       // ADJUST WEB-APP PARENT IFRAME HEIGHT
-      if (sbe) {
-        const clearIframeAuto = !!document.querySelector(
-          '.textarea.multi-panel',
-        );
-        iframeAutoHeight('.xulsword', clearIframeAuto, sbe);
-      }
+      const clearIframeAuto = !!document.querySelector('.textarea.multi-panel');
+      iframeAutoHeight('.xulsword', clearIframeAuto, sbe);
     }
     const d = diff(state, newState);
     if (Object.keys(newState).length && d) {
@@ -779,6 +809,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
           pack="start"
           flex="1"
           dir={(module && G.Tab[module].direction) || 'auto'}
+          onScroll={handler}
         />
 
         <Vbox

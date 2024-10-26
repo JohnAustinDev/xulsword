@@ -14,7 +14,6 @@ import { G, GI } from '../../G.ts';
 import { delayHandler } from '../libxul/xul.tsx';
 
 import type {
-  AtextPropsType,
   LocationVKType,
   LookupInfo,
   OSISBookType,
@@ -24,7 +23,7 @@ import type RenderPromise from '../../renderPromise.ts';
 import type Xulsword from '../xulsword/xulsword.tsx';
 import type { XulswordState } from '../xulsword/xulsword.tsx';
 import type Atext from './atext.tsx';
-import type { AtextStateType } from './atext.tsx';
+import type { AtextPropsType, AtextStateType } from './atext.tsx';
 import type ViewportWin from '../../app/viewportWin/viewportWin.tsx';
 import type { ViewportWinState } from '../../app/viewportWin/viewportWin.tsx';
 
@@ -576,31 +575,7 @@ function aTextWheelScroll2(
     // a certain period before updaing verse state to the new top verse.
     else {
       // get first verse which begins in window
-      const [sb] = Array.from(atext.getElementsByClassName('sb'));
-      let v = sb.firstElementChild;
-      while (v && !verseIsVisible(v)) {
-        v = v.nextElementSibling;
-      }
-      if (!v) return null;
-      const p = getElementData(v);
-      const t = (module && G.Tab[module]) || null;
-      const v11n = (t && t.v11n) || null;
-      if (p.location && v11n) {
-        const { book, chapter, verse } = p.location;
-        if (book && chapter && verse) {
-          newloc = verseKey(
-            {
-              book: book as OSISBookType,
-              chapter,
-              verse,
-              v11n,
-            },
-            undefined,
-            undefined,
-            renderPromise,
-          ).location(location.v11n);
-        }
-      }
+      newloc = getScrollVerse(module, location, atext, renderPromise);
     }
     if (newloc) {
       if (parentstate) {
@@ -656,6 +631,41 @@ export function aTextWheelScroll(
       'wheelScrollTO',
     );
   }
+}
+
+export function getScrollVerse(
+  module: string | undefined,
+  location: LocationVKType,
+  atext: HTMLElement,
+  renderPromise: RenderPromise,
+): LocationVKType | null {
+  // get first verse which begins in window
+  const [sb] = Array.from(atext.getElementsByClassName('sb'));
+  let v = sb.firstElementChild;
+  while (v && !verseIsVisible(v)) {
+    v = v.nextElementSibling;
+  }
+  if (!v) return null;
+  const p = getElementData(v);
+  const t = (module && G.Tab[module]) || null;
+  const v11n = (t && t.v11n) || null;
+  if (p.location && v11n) {
+    const { book, chapter, verse } = p.location;
+    if (book && chapter && verse) {
+      return verseKey(
+        {
+          book: book as OSISBookType,
+          chapter,
+          verse,
+          v11n,
+        },
+        undefined,
+        undefined,
+        renderPromise,
+      ).location(location.v11n);
+    }
+  }
+  return null;
 }
 
 export function highlight(

@@ -12,9 +12,11 @@ import {
 import C from '../../../constant.ts';
 import type S from '../../../defaultPrefs.ts';
 import { G } from '../../G.ts';
+import { doUntilDone } from '../../common.tsx';
 import { getElementData } from '../../htmlData.ts';
 import log from '../../log.ts';
-import { aTextWheelScroll } from './zversekey.ts';
+import { delayHandler } from '../libxul/xul.tsx';
+import { aTextWheelScroll, getScrollVerse } from './zversekey.ts';
 
 import type { SearchType } from '../../../type.ts';
 import type Atext from './atext.tsx';
@@ -357,6 +359,68 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
         const { type } = G.Tab[module];
         if (atext && type !== C.DICTIONARY && !ofClass(['nbc'], es.target)) {
           aTextWheelScroll(e, atext, this);
+        }
+      }
+      break;
+    }
+
+    // Note: scroll events don't bubble!
+    case 'scroll': {
+      if (Build.isWebApp && window.webAppTextScroll === -1) {
+        const { isPinned, module, location, panelIndex, xulswordState } = this
+          .props as AtextProps;
+        if (!isPinned && module && location) {
+          let atext: HTMLElement | null = null;
+          const singleColumnScrollSyncs: number[] = [];
+          (
+            Array.from(document.querySelectorAll('.atext')) as HTMLElement[]
+          ).forEach((txt) => {
+            const { index: i, module: mod, columns, ispinned } = txt.dataset;
+            if (
+              mod &&
+              mod in G.Tab &&
+              G.Tab[mod].isVerseKey &&
+              Number(columns) === 1 &&
+              ispinned === 'false'
+            ) {
+              singleColumnScrollSyncs.push(Number(i));
+              if (Number(i) === panelIndex) atext = txt;
+            }
+          });
+          if (atext && singleColumnScrollSyncs.length > 1) {
+            delayHandler(
+              this,
+              () => {
+                doUntilDone((renderPromise2) => {
+                  if (atext) {
+                    const newloc = getScrollVerse(
+                      module,
+                      location,
+                      atext,
+                      renderPromise2,
+                    );
+                    const { location: oldloc } = this.props as AtextProps;
+                    if (
+                      !renderPromise2.waiting() &&
+                      newloc &&
+                      oldloc &&
+                      oldloc.verse !== newloc.verse
+                    ) {
+                      window.webAppTextScroll = panelIndex;
+                      setTimeout(() => (window.webAppTextScroll = -1), 1000);
+                      xulswordState({
+                        location: newloc,
+                        scroll: { verseAt: 'top' },
+                      });
+                    }
+                  }
+                });
+              },
+              [],
+              C.UI.Atext.mobileScrollDelay,
+              'atextScrollTO',
+            );
+          }
         }
       }
       break;

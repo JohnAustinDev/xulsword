@@ -692,7 +692,7 @@ export function registerUpdateStateFromPref(
 ) {
   const updateStateFromPref = (prefs: string | string[], aStorex?: string) => {
     const aStore = aStorex || 'prefs';
-    log.debug(`Updating state from prefs:`, prefs, aStore);
+    log.silly(`Updating state from prefs:`, prefs, aStore);
     if (aStore === store && aStore in S) {
       const sp = defaultPrefs
         ? getStatePref(aStore as keyof typeof S, id, defaultPrefs)

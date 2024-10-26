@@ -215,7 +215,7 @@ class Tabs extends React.Component implements RenderPromiseComponent {
           .reduce((p, c) => p + c + tm + tm, 0);
 
         contentWidth = fudge + padding + ptwidth + ntwidth + mtwidth + iltwidth;
-/*
+        /*
         log.debug(`Tab row ${panelIndex}: ${JSON_stringify({
           calcWidth: contentWidth,
           realWidth: tabsrow.clientWidth,

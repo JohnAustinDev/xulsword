@@ -10,7 +10,7 @@ import {
   getIntroductions,
 } from '../../components/atext/zversekey.ts';
 
-import type { AtextPropsType } from '../../../type.ts';
+import type { AtextPropsType } from '../atext/atext.tsx';
 import type { LibSwordResponse } from '../../components/atext/ztext.ts';
 import type { SelectVKType } from '../../components/libxul/selectVK.tsx';
 import type PrintPassageWin from './printPassage.tsx';

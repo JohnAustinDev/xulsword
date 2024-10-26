@@ -16,6 +16,8 @@ import type {
   V11nType,
 } from './type.ts';
 
+window.webAppTextScroll = -1;
+
 // COMMON GLOBAL CONSTANTS FOR SERVER AND CLIENT PROCESSES
 const C = {
   // Set DevToolsopen to true to open DevTools immediately- can be helpful for
@@ -126,6 +128,7 @@ const C = {
       fontSizeOptionDelta: 1.3, // px step
       dictKeyInputDelay: 1000, // ms between keydown and update
       wheelScrollDelay: 300, // ms between UI updates while scrolling
+      mobileScrollDelay: 300, // ms between UI updates while mobile scrolling
       multiColWheelScrollDelay: 100,
       prevNextDelay: 500, // ms before prev/next chapter links are rendered
       initialNoteboxHeight: 200, // px

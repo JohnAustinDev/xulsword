@@ -7,7 +7,6 @@ import type {
   clipboard,
   Shell,
 } from 'electron';
-import type React from 'react';
 import type i18next from 'i18next';
 import type { getProcessInfo } from './preload.ts';
 import type getIPC from './preload.ts';
@@ -56,6 +55,7 @@ import type LibSword from './servers/components/libsword.ts';
 import type { canRedo, canUndo } from './servers/components/bookmarks.ts';
 import type { CallBatch } from './servers/handleG.ts';
 import type ViewportElectron from './servers/app/viewport.ts';
+import type { AtextPropsType } from './clients/components/atext/atext.tsx';
 import type ViewportBrowser from './clients/webapp/viewport.ts';
 import type { GetExtRefHTML, LocationVKText } from './servers/versetext.ts';
 import type RenderPromise from './clients/renderPromise.ts';
@@ -68,6 +68,7 @@ declare global {
     renderPromises: RenderPromise[];
     IPC: ReturnType<typeof getIPC>;
     ProcessInfo: ReturnType<typeof getProcessInfo>;
+    webAppTextScroll: number;
   }
 
   // These are available everywhere:
@@ -184,30 +185,6 @@ export type ScrollType = {
 export type AudioPrefType = {
   open: boolean;
   file: VerseKeyAudioFile | GenBookAudioFile | null;
-};
-
-export type AtextPropsType = Pick<
-  typeof S.prefs.xulsword,
-  'location' | 'selection' | 'scroll' | 'show' | 'place'
-> & {
-  modkey: string;
-
-  module: string | undefined;
-  ilModule: string | undefined;
-  ilModuleOption: string[];
-
-  isPinned: boolean;
-  noteBoxHeight: number;
-  maximizeNoteBox: boolean;
-
-  panelIndex: number;
-  columns: number;
-  ownWindow: boolean;
-
-  xulswordState: (s: XulswordStateArgType) => void;
-
-  onAudioClick: (audio: VerseKeyAudioFile | GenBookAudioFile) => void;
-  bbDragEnd: (e: React.MouseEvent, value: any) => void;
 };
 
 export type PinPropsType = Pick<AtextPropsType, (typeof C.PinProps)[number]>;

@@ -4,7 +4,6 @@ import {
   clone,
   escapeRE,
   findTreeNode,
-  findTreeSiblings,
   gbAncestorIDs,
   getSwordOptions,
   JSON_attrib_parse,
@@ -26,10 +25,11 @@ import {
 import { dictKeyToday, getDictEntryHTML } from './zdictionary.ts';
 
 import type { TreeNodeInfo } from '@blueprintjs/core';
-import type { AtextPropsType, PinPropsType, PlaceType } from '../../../type.ts';
+import type { PinPropsType, PlaceType } from '../../../type.ts';
 import type S from '../../../defaultPrefs.ts';
 import type RenderPromise from '../../renderPromise.ts';
 import type { HTMLData } from '../../htmlData.ts';
+import type { AtextPropsType } from './atext.tsx';
 
 export type LibSwordResponse = {
   textHTML: string;

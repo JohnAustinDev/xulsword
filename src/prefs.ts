@@ -513,7 +513,7 @@ export default class Prefs {
     const json = JSON_stringify(s.data, 2);
     if (json) {
       store.writeFile(json);
-      this.log?.verbose(`Persisted store: ${aStore}`);
+      this.log?.silly(`Persisted store: ${aStore}`);
     } else {
       this.log?.warn(
         `Failed to write to store: '${aStore}' PrefValue did not stringify.`,

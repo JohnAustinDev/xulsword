@@ -399,13 +399,20 @@ class Viewport extends React.Component implements PopupParent {
       if (tabWidth) {
         const width = `${100 * (tabWidth / numPanels)}%`;
         const tabsi = tabs[i];
-        // Tabs key does not need to change due to external resizing (because
+        // Tabs key does not need to change after external resizing (because
         // that is handled by a resizeObserver). However, anything that changes
-        // the number or width of tabs must be in the key, so that Tabs will be
+        // the number or width of tabs must be in this key, so that Tabs will be
         // redrawn correctly.
-        const key = stringHash({ i, tabsi, a: ilModules[i], b: ilModuleOptions[i], c: mtModules[i] });
-        if (!tabsi)
-          return <Hbox key={key} style={{ width }} />;
+        const key = stringHash([
+          i,
+          isPinned,
+          G.Prefs.getBoolPref('xulsword.tabcntl'),
+          tabsi,
+          mtModules[i],
+          ilModules[i],
+          ilModuleOptions[i],
+        ]);
+        if (!tabsi) return <Hbox key={key} style={{ width }} />;
         return (
           <Tabs
             key={key}

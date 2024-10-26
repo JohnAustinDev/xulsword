@@ -37,8 +37,9 @@ import '../../components/atext/atext.css';
 import './printPassage.css';
 
 import type { ReactElement } from 'react';
-import type { AtextPropsType, OSISBookType, V11nType } from '../../../type.ts';
+import type { OSISBookType, V11nType } from '../../../type.ts';
 import type S from '../../../defaultPrefs.ts';
+import type { AtextPropsType } from '../atext/atext.tsx';
 import type { PrintOptionsType } from '../../controller.tsx';
 import type { XulProps } from '../../components/libxul/xul.tsx';
 
