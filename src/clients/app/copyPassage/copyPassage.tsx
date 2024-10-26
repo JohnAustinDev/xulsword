@@ -171,7 +171,7 @@ export default class CopyPassageWin
       const refdiv = testdiv.appendChild(document.createElement('div'));
       const vks: VerseKey[] = [];
       if (!passage.lastchapter || passage.chapter === passage.lastchapter) {
-        vks.push(verseKey(passage, null, undefined, renderPromise));
+        vks.push(verseKey(passage, renderPromise));
       } else {
         vks.push(
           verseKey(
@@ -179,8 +179,6 @@ export default class CopyPassageWin
               ...passage,
               lastverse: undefined,
             },
-            null,
-            undefined,
             renderPromise,
           ),
         );
@@ -192,8 +190,6 @@ export default class CopyPassageWin
               verse: passage.lastverse,
               lastverse: undefined,
             },
-            null,
-            undefined,
             renderPromise,
           ),
         );

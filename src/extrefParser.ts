@@ -1,6 +1,7 @@
-import type { LocationVKType, OSISBookType } from './type.ts';
+import type { LocationVKType, OSISBookType, V11nType } from './type.ts';
 import type RenderPromise from './clients/renderPromise.ts';
-import type { verseKey } from './clients/htmlData.ts';
+import type { RefParserOptionsType } from './refParser.ts';
+import type VerseKey from './verseKey.ts';
 
 // This function tries to read a ";" separated list of Scripture
 // references and returns an array of LocationVKType objects, one for
@@ -12,7 +13,11 @@ import type { verseKey } from './clients/htmlData.ts';
 // context argument. Segments which fail to parse as Scripture
 // references are silently ignored.
 export default function parseExtendedVKRef(
-  verseKeyFunc: typeof verseKey,
+  verseKeyFunc: (
+    versekey: LocationVKType | { parse: string; v11n: V11nType },
+    renderPromise: RenderPromise | null,
+    optionsx?: RefParserOptionsType,
+  ) => VerseKey,
   extref: string,
   context?: LocationVKType,
   locales?: string[],
@@ -41,7 +46,11 @@ export default function parseExtendedVKRef(
       [, ref, noteID] = noteref;
     }
     const options = locales?.length ? { locales } : undefined;
-    const vk = verseKeyFunc(ref, v11n, options, renderPromise || null);
+    const vk = verseKeyFunc(
+      { parse: ref, v11n: v11n ?? 'KJV' },
+      renderPromise || null,
+      options,
+    );
     if (!vk.book && bk) {
       const match = ref
         .replace(/[^\s\p{L}\p{N}:-]/gu, ' ')

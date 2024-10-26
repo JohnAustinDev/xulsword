@@ -12,8 +12,11 @@ import type {
   ParamShift,
   TabTypes,
   TextVKType,
+  V11nType,
 } from '../type.ts';
+import type { RefParserOptionsType } from '../refParser.ts';
 import type { HTMLData } from '../clients/htmlData.ts';
+import type RenderPromise from '../clients/renderPromise.ts';
 
 // Return an HTML Scripture reference list representing an extended reference.
 // An extended reference is a textual reference comprising a list of Scripture
@@ -33,7 +36,12 @@ export function getExtRefHTML(
   keepNotes: boolean,
   info?: Partial<LookupInfo>,
 ): string {
-  const list = parseExtendedVKRef(verseKey, extref, context, [locale]);
+  const vkfunc = (
+    versekey: LocationVKType | { parse: string; v11n: V11nType },
+    _renderPromise: RenderPromise | null,
+    optionsx?: RefParserOptionsType,
+  ) => verseKey(versekey, optionsx);
+  const list = parseExtendedVKRef(vkfunc, extref, context, [locale]);
   const alternates = workingModules(G, locale);
   const mod = targetmod || alternates[0] || '';
   const html: string[] = [];

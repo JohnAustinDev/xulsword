@@ -393,10 +393,8 @@ export default function handler(
                   verse: Number(v),
                   v11n,
                 },
-                location.v11n,
-                undefined,
                 renderPromise2,
-              ).location();
+              ).location(location.v11n);
               if (!this.renderPromise.waiting())
                 this.setState({
                   location: newloc,

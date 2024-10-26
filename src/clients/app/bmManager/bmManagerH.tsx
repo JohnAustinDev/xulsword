@@ -533,7 +533,7 @@ export function printableItem(
           module = location.vkMod ?? '';
           ref = (
             <span className="ref versekey cs-locale">
-              {verseKey(location).readable(G.i18n.language, null, true)}
+              {verseKey(location, null).readable(G.i18n.language, null, true)}
             </span>
           );
         } else if (location) {

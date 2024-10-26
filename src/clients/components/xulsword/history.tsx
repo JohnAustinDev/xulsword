@@ -31,10 +31,8 @@ export function addHistory(this: Xulsword, add?: HistoryVKType): void {
   if (history[historyIndex]) {
     const locvk = verseKey(
       history[historyIndex].location,
-      location.v11n,
-      undefined,
       renderPromise,
-    );
+    ).location(location.v11n);
     if (location.book === locvk.book && location.chapter === locvk.chapter)
       return;
   }
@@ -72,14 +70,9 @@ export function setHistory(
       // To update state to a history index without changing the selected
       // modules, history needs to be converted to the current v11n.
       const { location: hloc, selection: hsel } = history[index];
-      const newloc = verseKey(
-        hloc,
-        location.v11n,
-        undefined,
-        renderPromise,
-      ).location();
+      const newloc = verseKey(hloc, renderPromise).location(location.v11n);
       const newsel = hsel
-        ? verseKey(hsel, location.v11n, undefined, renderPromise).location()
+        ? verseKey(hsel, renderPromise).location(location.v11n)
         : null;
       if (promote) {
         const targ = history.splice(index, 1);
@@ -116,21 +109,17 @@ export function historyMenu(
     <Menupopup>
       {items.map((histitem, i) => {
         const { location: hloc, selection: hsel } = histitem;
-        const versekey = verseKey(
-          hloc,
-          location.v11n,
-          undefined,
-          renderPromise,
-        );
-        if (versekey.verse === 1) {
-          versekey.verse = undefined;
-          versekey.lastverse = undefined;
+        const itemvk = verseKey(hloc, renderPromise);
+        const itemloc = itemvk.location(location.v11n);
+        if (itemloc.verse === 1) {
+          itemloc.verse = undefined;
+          itemloc.lastverse = undefined;
         }
         // Verse comes from verse or selection; lastverse comes from selection.
         if (hsel?.verse && hsel.verse > 1) {
-          versekey.verse = hsel.verse;
+          itemloc.verse = hsel.verse;
           if (hsel.lastverse && hsel.lastverse > hsel.verse)
-            versekey.lastverse = hsel.lastverse;
+            itemloc.lastverse = hsel.lastverse;
         }
         const index = i + is;
         const selected = index === historyIndex ? 'selected' : '';
@@ -142,7 +131,7 @@ export function historyMenu(
               onClick(e, index);
             }}
           >
-            {versekey.readable(G.i18n.language, null, true)}
+            {itemvk.readable(G.i18n.language, null, true)}
           </div>
         );
       })}

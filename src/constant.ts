@@ -16,8 +16,6 @@ import type {
   V11nType,
 } from './type.ts';
 
-window.webAppTextScroll = -1;
-
 // COMMON GLOBAL CONSTANTS FOR SERVER AND CLIENT PROCESSES
 const C = {
   // Set DevToolsopen to true to open DevTools immediately- can be helpful for

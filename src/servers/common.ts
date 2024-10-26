@@ -502,10 +502,8 @@ export function getMaxVerse(v11n: V11nType, vkeytext: string) {
 }
 
 export function verseKey(
-  versekey: LocationVKType | string,
-  v11n?: V11nType | null,
+  versekey: LocationVKType | { parse: string; v11n: V11nType },
   options?: RefParserOptionsType,
-  _renderPromise?: RenderPromise | null, // only used in renderer implementation
 ): VerseKey {
   const digits = C.Locales.reduce(
     (p, c) => {
@@ -543,7 +541,6 @@ export function verseKey(
       return s;
     },
     versekey,
-    v11n,
   );
 }
 

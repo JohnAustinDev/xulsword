@@ -12,7 +12,7 @@ import {
   prevTreeSibling,
   stringHash,
 } from '../../../common.ts';
-import { getElementData } from '../../htmlData.ts';
+import { getElementData, verseKey } from '../../htmlData.ts';
 import { G, GI } from '../../G.ts';
 import { dString } from '../../common.tsx';
 import addBookmarks from '../../bookmarks.ts';
@@ -78,7 +78,9 @@ export function libswordText(
   switch (type) {
     case C.BIBLE: {
       if (location?.book && module) {
-        const { book, chapter } = location;
+        const { book, chapter } = verseKey(location, renderPromise).location(
+          G.Tab[module].v11n || null,
+        );
         if (ilModule) {
           const { text } = GI.LibSword.getChapterTextMulti(
             { text: '', notes: '' },
@@ -114,7 +116,9 @@ export function libswordText(
     }
     case C.COMMENTARY: {
       if (location?.book && module) {
-        const { book, chapter } = location;
+        const { book, chapter } = verseKey(location, renderPromise).location(
+          G.Tab[module].v11n || null,
+        );
         const { text, notes } = GI.LibSword.getChapterText(
           { text: '', notes: '' },
           renderPromise,

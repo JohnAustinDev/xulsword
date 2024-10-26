@@ -1418,13 +1418,13 @@ export function bookmarkLabel(
 ): string {
   if ('commMod' in l) {
     const { commMod } = l;
-    const vk = verseKeyFunc(l);
+    const vk = verseKeyFunc(l, null);
     const readable = vk.readable(G.i18n.language, null, true);
     const t = (commMod in G.Tab && G.Tab[commMod]) || null;
     return `${t ? t.label : G.i18n.t('Comms')}: ${readable}`;
   }
   if ('v11n' in l) {
-    const vk = verseKeyFunc(l);
+    const vk = verseKeyFunc(l, null);
     return vk.readable(G.i18n.language, null, true);
   }
   const ks = l.key.split(C.GBKSEP);

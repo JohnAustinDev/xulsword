@@ -450,7 +450,7 @@ export function formatResult(
             if (a && location) {
               // Translate links from module to displayModule
               const vsys = G.Tab[module].v11n || null;
-              const v = verseKey(location, vsys, undefined, renderPromise);
+              const v = verseKey(location, renderPromise);
               sanitizeHTML(
                 a,
                 v.readable(G.i18n.language, G.Tab[displayModule].v11n || null),

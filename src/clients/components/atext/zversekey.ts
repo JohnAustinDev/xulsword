@@ -222,12 +222,10 @@ export function getNoteHTML(
                     .map((vk) =>
                       typeof vk === 'string'
                         ? vk
-                        : verseKey(
-                            vk,
+                        : verseKey(vk, renderPromise).readable(
+                            G.i18n.language,
                             location.v11n,
-                            undefined,
-                            renderPromise,
-                          ).readable(G.i18n.language),
+                          ),
                     )
                     .join('; ');
                 } else {
@@ -659,8 +657,6 @@ export function getScrollVerse(
           verse,
           v11n,
         },
-        undefined,
-        undefined,
         renderPromise,
       ).location(location.v11n);
     }
@@ -671,7 +667,6 @@ export function getScrollVerse(
 export function highlight(
   sbe: HTMLElement,
   selection: LocationVKType,
-  module: string,
   renderPromise: RenderPromise,
 ) {
   // First unhilight everything
@@ -682,8 +677,6 @@ export function highlight(
   if (!selection) return;
   const { book, chapter, verse, lastverse } = verseKey(
     selection,
-    G.Tab[module].v11n || undefined,
-    undefined,
     renderPromise,
   ).location();
   if (verse) {
@@ -901,8 +894,6 @@ export function pageChange(
               verse,
               v11n,
             },
-            undefined,
-            undefined,
             renderPromise || null,
           );
           if (vk.chapter <= getMaxChapter(v11n, vk.osisRef(), renderPromise)) {

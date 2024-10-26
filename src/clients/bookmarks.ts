@@ -39,7 +39,7 @@ type BookmarkInfoHTML = {
 export function bmOsisRef(location: LocationORType | LocationVKType): string {
   let osisref = 'unavailable';
   if ('v11n' in location) {
-    const { book, chapter, verse } = verseKey(location).location('KJV');
+    const { book, chapter, verse } = verseKey(location, null).location('KJV');
     osisref = [book, chapter, verse].join('.');
   }
   return osisref;
@@ -56,7 +56,7 @@ function bmInfoToData(
     context: module,
     reflist: [],
     location:
-      'v11n' in location ? verseKey(location).location('KJV') : undefined,
+      'v11n' in location ? verseKey(location, null).location('KJV') : undefined,
     locationGB: !('v11n' in location) ? location : undefined,
     bmitem: id,
     nid: n,
@@ -113,7 +113,7 @@ export function getBookmarkMap(): BookmarkMapType {
           let k = '';
           if (location && 'v11n' in location) {
             const { vkMod } = location;
-            const kjvl = verseKey(location).location('KJV');
+            const kjvl = verseKey(location, null).location('KJV');
             const { book, chapter, verse } = kjvl;
             k = [book, chapter, verse, 'KJV'].join('.');
             if (tabType === 'Comms') k += `.${vkMod}`;
@@ -150,7 +150,7 @@ export function findBookmarks(
   const bookmarkMap = getBookmarkMap();
   if (Object.keys(bookmarkMap).length) {
     if ('v11n' in location) {
-      const kjvl = verseKey(location).location('KJV');
+      const kjvl = verseKey(location, null).location('KJV');
       const { book, chapter } = kjvl;
       const chBookmarks: BookmarkInfoHTML[] = [];
       for (
@@ -233,9 +233,10 @@ export function addBookmarksToTextVK(
     /(<span data-title="([^."]*)\.(\d+)\.(\d+)\.(\d+)\.([^."]*)" class="vs )([^"]*?")([^>]*?>)/g,
     (tag, start, bk, ch, vs, lv, m, cls, end) => {
       const v11n: V11nType = (m && m in G.Tab && G.Tab[m].v11n) || 'KJV';
-      const kjvl = verseKey([bk, ch, vs, lv, m].join('.'), v11n).location(
-        'KJV',
-      );
+      const kjvl = verseKey(
+        { parse: [bk, ch, vs, lv, m].join('.'), v11n },
+        null,
+      ).location('KJV');
       const { verse, lastverse } = kjvl;
       for (let x = verse || 1; x <= (lastverse || verse || 1); x += 1) {
         const infos: BookmarkInfoHTML[] = bookmarkInfos.filter(

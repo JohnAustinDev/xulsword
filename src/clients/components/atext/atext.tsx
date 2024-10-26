@@ -370,9 +370,10 @@ class Atext extends React.Component implements RenderPromiseComponent {
                     if (info?.location) {
                       const { book, chapter, verse: vs } = info.location;
                       const location = verseKey(
-                        [book, chapter, vs].join('.'),
-                        libswordProps.location.v11n,
-                        undefined,
+                        {
+                          parse: [book, chapter, vs].join('.'),
+                          v11n: libswordProps.location.v11n ?? 'KJV',
+                        },
                         renderPromise,
                       ).location();
                       if (isPinned) {
@@ -504,7 +505,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
             selection &&
             type === C.BIBLE
           ) {
-            highlight(sbe, selection, module, renderPromise);
+            highlight(sbe, selection, renderPromise);
             if (!renderPromise.waiting())
               sbe.dataset.highlightkey = highlightkey;
           }
@@ -573,23 +574,14 @@ class Atext extends React.Component implements RenderPromiseComponent {
     const nbe = nbref !== null ? nbref.current : null;
     if (sbe && nbe) {
       const libswordKey = this.libswordKey(libswordProps as AtextProps, i);
+      let response;
       if (!Cache.has(libswordKey)) {
-        Cache.write(
-          libswordText(libswordProps, i, renderPromise, xulswordState),
-          libswordKey,
-        );
+        response = libswordText(libswordProps, i, renderPromise, xulswordState);
+        if (!renderPromise.waiting()) Cache.write(response, libswordKey);
+      } else {
+        response = Cache.read(libswordKey) as LibSwordResponse
       }
-      const response = Cache.read(libswordKey) as LibSwordResponse;
-      if (renderPromise.waiting()) Cache.clear(libswordKey);
-      else {
-        log.silly(
-          `${flag} panel ${i} ${verseKey(
-            libswordProps.location || '',
-            undefined,
-            undefined,
-            renderPromise,
-          ).osisRef()}:`,
-        );
+      if (!renderPromise.waiting()) {
         const isDict =
           libswordProps.module &&
           G.Tab[libswordProps.module].type === C.DICTIONARY;

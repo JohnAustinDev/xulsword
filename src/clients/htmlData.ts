@@ -158,10 +158,8 @@ export function libSwordData2XulswordData(dataIn: LibSwordHTMLData): HTMLData {
       if (b && b in G.Tab && G.Tab[b].isVerseKey) {
         context = b;
         location = verseKey(
-          r,
-          G.Tab[b].v11n || null,
-          undefined,
-          Build.isWebApp ? rootRenderPromise() : undefined,
+          { parse: r, v11n: G.Tab[b].v11n || 'KJV' },
+          Build.isWebApp ? rootRenderPromise() : null,
         ).location();
       } else {
         locationGB = {
@@ -476,10 +474,9 @@ export function findElementData(elem: HTMLElement | null): HTMLData | null {
 // If renderPromise is null, convertLocation will return the input
 // unchanged.
 export function verseKey(
-  versekey: LocationVKType | string,
-  v11n?: V11nType | null,
+  versekey: LocationVKType | { parse: string; v11n: V11nType },
+  renderPromise: RenderPromise | null,
   optionsx?: RefParserOptionsType,
-  renderPromise?: RenderPromise | null,
 ): VerseKey {
   // Minimal parser options are 'locales: [locale]'
   const options = optionsx || {};
@@ -533,6 +530,5 @@ export function verseKey(
       return dString(str, locale, renderPromise ?? undefined);
     },
     versekey,
-    v11n,
   );
 }

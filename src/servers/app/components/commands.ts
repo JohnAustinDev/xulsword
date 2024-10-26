@@ -403,8 +403,10 @@ const Commands = {
               if (sub) {
                 const subn = Number(sub.replace(/^(\d+).*?$/, '$1'));
                 const m2 = sub.match(/^(\d+)[-\s](.*?)$/); // legacy VerseKey markup
-                if (!book && m2) ({ book } = verseKey(m2[2]));
-                else if (!book) ({ book } = verseKey(sub));
+                if (!book && m2)
+                  ({ book } = verseKey({ parse: m2[2], v11n: 'KJV' }));
+                else if (!book)
+                  ({ book } = verseKey({ parse: sub, v11n: 'KJV' }));
                 if (book) {
                   sub = book;
                   path.push(book);

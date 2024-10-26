@@ -80,12 +80,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
             this.setState((prevState: XulswordState) => {
               const { location } = prevState;
               if (location) {
-                const l = verseKey(
-                  location,
-                  undefined,
-                  undefined,
-                  renderPromise2,
-                );
+                const l = verseKey(location, renderPromise2);
                 l.verse = 1;
                 const newloc = chapterChange(
                   l.location(),
@@ -218,8 +213,6 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
                     verse: 1,
                     v11n: location.v11n,
                   },
-                  undefined,
-                  undefined,
                   renderPromise2,
                 );
                 const s: Partial<XulswordState> = {
@@ -281,12 +274,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
               // reset Bookselect on Enter key even if chapter doesn't change
               const bsreset = prevState.bsreset + 1;
               if (location) {
-                const pvk = verseKey(
-                  location,
-                  undefined,
-                  undefined,
-                  renderPromise2,
-                );
+                const pvk = verseKey(location, renderPromise2);
                 let newloc;
                 if (id === 'chapter__input') {
                   pvk.chapter = Number(value);
@@ -353,8 +341,6 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
                     chapter,
                     v11n: G.Tab[swordModule].v11n || null,
                   },
-                  undefined,
-                  undefined,
                   renderPromise2,
                 ),
                 1,

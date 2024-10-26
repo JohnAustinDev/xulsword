@@ -42,6 +42,8 @@ import type {
 } from '../type.ts';
 import type { XulswordState } from './components/xulsword/xulsword.tsx';
 
+window.webAppTextScroll = -1;
+
 // Return a renderPromise for a React functional component. For React class
 // components, instead implement RenderPromiseComponent and RenderPromiseState.
 export function functionalComponentRenderPromise(loadingSelector?: string) {
@@ -610,7 +612,7 @@ export function getMaxVerse(
   vkeytext: string,
   renderPromise: RenderPromise,
 ): number {
-  const { chapter } = verseKey(vkeytext, v11n, undefined, renderPromise);
+  const { chapter } = verseKey({ parse: vkeytext, v11n }, renderPromise);
   const maxch = getMaxChapter(v11n, vkeytext, renderPromise);
   if (chapter <= maxch && chapter > 0) {
     return GI.LibSword.getMaxVerse(0, renderPromise, v11n, vkeytext);

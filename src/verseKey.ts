@@ -29,14 +29,13 @@ export default class VerseKey {
     parser: RefParser,
     gfunction: VerseKeyGtype,
     dString: (str: string | number, locale?: string) => string,
-    location: LocationVKType | string,
-    v11n?: V11nType | null,
+    location: LocationVKType | { parse: string; v11n: V11nType },
   ) {
     this.#parser = parser;
     this.#gfunctions = gfunction;
     this.#dString = dString;
-    if (typeof location === 'string') {
-      const parsed = this.parseLocation(location, v11n);
+    if ('parse' in location) {
+      const parsed = this.parseLocation(location.parse, location.v11n);
       if (parsed.book) {
         this.#loc = parsed as LocationVKType;
       } else {
@@ -49,7 +48,7 @@ export default class VerseKey {
     } else {
       this.#loc = clone(location);
     }
-    this.#v11nCurrent = v11n || this.#loc.v11n;
+    this.#v11nCurrent = this.#loc.v11n;
   }
 
   // Accept any osisRef work prefix and then look for an OSIS ref book code. If the

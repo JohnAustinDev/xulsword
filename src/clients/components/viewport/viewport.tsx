@@ -344,12 +344,9 @@ class Viewport extends React.Component implements PopupParent {
         // verse at 1 to prevent unnecessary Atext render cycles.
         const verse = (scroll && vs) || 1;
         locs.push(
-          verseKey(
-            { book, chapter, verse, v11n },
+          verseKey({ book, chapter, verse, v11n }, renderPromise).location(
             tov11n || undefined,
-            undefined,
-            renderPromise,
-          ).location(),
+          ),
         );
       });
     }
