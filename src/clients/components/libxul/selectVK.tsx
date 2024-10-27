@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { clone, diff, getModuleOfObject, ofClass } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
+import { verseKey } from '../../htmlData.ts';
 import { getMaxChapter, getMaxVerse } from '../../common.tsx';
 import RenderPromise from '../../renderPromise.ts';
 import { addClass, xulPropTypes } from './xul.tsx';
@@ -269,16 +270,28 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
   render() {
     const props = this.props as SelectVKProps;
     const state = this.state as SelectVKState;
-    const { selection } = state;
-    this.selectValues = clone(selection);
-
-    const { book, chapter, verse, lastverse, lastchapter } = selection;
+    const { handleChange, renderPromise, loadingRef } = this;
+    let { selection } = state;
     const vkMod = getModuleOfObject(selection);
+    // Selection must share the same v11n as vkMod.
+    if (
+      selection.v11n &&
+      vkMod &&
+      vkMod in G.Tab &&
+      G.Tab[vkMod].v11n &&
+      selection.v11n !== G.Tab[vkMod].v11n
+    ) {
+      selection = verseKey(selection, renderPromise).location(
+        G.Tab[vkMod].v11n,
+      );
+      if (renderPromise.waiting()) return null;
+    }
+    this.selectValues = clone(selection);
+    const { book, chapter, verse, lastverse, lastchapter } = selection;
     const { options, disabled, allowNotInstalled, language, description } =
       props;
     const { books, chapters, lastchapters, verses, lastverses, vkMods } =
       options || {};
-    const { handleChange, renderPromise, loadingRef } = this;
     const Book = G.Book(G.i18n.language);
 
     const tab = (vkMod && G.Tab[vkMod]) || null;

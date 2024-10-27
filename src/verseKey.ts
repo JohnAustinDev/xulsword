@@ -112,21 +112,19 @@ export default class VerseKey {
   // LibSword.convertLocation returns unpredictable locations if vkeytext's
   // book, chapter, verse and lastverse are not in the verse system or
   // if the book is not included in tov11n. Also LibSword only converts
-  // between systems in C.SupportedV11nMaps. So these things must be
+  // between systems in C.SupportedV11nMaps. So all these things must be
   // checked before ever calling LibSword.
   #allowConvertLocation(tov11n: V11nType) {
     const fromv11n = this.#loc.v11n;
-    if (fromv11n === tov11n) return false;
     if (!fromv11n || !tov11n) return false;
     if (!(fromv11n in C.SupportedV11nMaps)) return false;
     if (!C.SupportedV11nMaps[fromv11n].includes(tov11n)) return false;
     const { book, chapter, verse, lastverse } = this.#loc;
     const toBks = this.#gfunctions.getBkChsInV11n(tov11n);
     const fromBks = this.#gfunctions.getBkChsInV11n(fromv11n);
-    if (toBks && !(tov11n in toBks)) return false;
-    if (toBks && !toBks.some((x) => x[0] === book)) return false;
+    if (!toBks || !toBks.some((x) => x[0] === book)) return false;
     const bkfo =
-      fromBks && fromv11n in fromBks && fromBks.find((x) => x[0] === book);
+      fromBks && fromBks.find((x) => x[0] === book);
     const maxch: number = bkfo ? bkfo[1] : 0;
     if (chapter < 1 || chapter > maxch) return false;
     if (verse) {

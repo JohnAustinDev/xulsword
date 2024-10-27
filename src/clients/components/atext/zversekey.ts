@@ -573,7 +573,7 @@ function aTextWheelScroll2(
     // a certain period before updaing verse state to the new top verse.
     else {
       // get first verse which begins in window
-      newloc = getScrollVerse(module, location, atext, renderPromise);
+      newloc = getScrollVerse(atext);
     }
     if (newloc) {
       if (parentstate) {
@@ -632,33 +632,19 @@ export function aTextWheelScroll(
 }
 
 export function getScrollVerse(
-  module: string | undefined,
-  location: LocationVKType,
   atext: HTMLElement,
-  renderPromise: RenderPromise,
 ): LocationVKType | null {
-  // get first verse which begins in window
-  const [sb] = Array.from(atext.getElementsByClassName('sb'));
-  let v = sb.firstElementChild;
-  while (v && !verseIsVisible(v)) {
-    v = v.nextElementSibling;
-  }
-  if (!v) return null;
-  const p = getElementData(v);
-  const t = (module && G.Tab[module]) || null;
-  const v11n = (t && t.v11n) || null;
-  if (p.location && v11n) {
-    const { book, chapter, verse } = p.location;
-    if (book && chapter && verse) {
-      return verseKey(
-        {
-          book: book as OSISBookType,
-          chapter,
-          verse,
-          v11n,
-        },
-        renderPromise,
-      ).location(location.v11n);
+  const { module } = atext.dataset;
+  if (module) {
+    // get first verse which begins in window
+    const [sb] = Array.from(atext.getElementsByClassName('sb'));
+    let v = sb.firstElementChild;
+    while (v && !verseIsVisible(v)) {
+      v = v.nextElementSibling;
+    }
+    if (v) {
+      const p = getElementData(v);
+      if (p.location) return p.location;
     }
   }
   return null;

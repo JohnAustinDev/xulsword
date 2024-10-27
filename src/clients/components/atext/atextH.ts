@@ -393,12 +393,7 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
               () => {
                 doUntilDone((renderPromise2) => {
                   if (atext) {
-                    const newloc = getScrollVerse(
-                      module,
-                      location,
-                      atext,
-                      renderPromise2,
-                    );
+                    const newloc = getScrollVerse(atext);
                     const { location: oldloc } = this.props as AtextProps;
                     if (
                       !renderPromise2.waiting() &&

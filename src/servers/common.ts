@@ -16,6 +16,7 @@ import {
   JSON_stringify,
   resolveAudioDataPathURL,
   stringHash,
+  clone,
 } from '../common.ts';
 import Cache from '../cache.ts';
 import Subscription from '../subscription.ts';
@@ -140,6 +141,7 @@ export function getAllBkChsInV11n(): {
   [key in V11nType]: Array<[OSISBookType, number]>;
 } {
   if (!Cache.has('getAllBkChsInV11n')) {
+    const abcv = clone(allBkChsInV11n);
     // Data was parsed from sword/include/*.h files using /util/readCanons.pl
     const sameAsKJV = {
       KJV: { ot: 0, nt: 0 },
@@ -162,18 +164,18 @@ export function getAllBkChsInV11n(): {
       Vulg: { ot: 0, nt: 0 },
     };
 
-    const kjvot = allBkChsInV11n.KJV.slice(0, 39);
-    const kjvnt = allBkChsInV11n.KJV.slice(39);
-    Object.keys(allBkChsInV11n).forEach((k) => {
-      const v11n = k as keyof typeof allBkChsInV11n;
+    const kjvot = abcv.KJV.slice(0, 39);
+    const kjvnt = abcv.KJV.slice(39);
+    Object.keys(abcv).forEach((k) => {
+      const v11n = k as keyof typeof abcv;
       if (sameAsKJV[v11n].ot) {
-        allBkChsInV11n[v11n].splice(0, 0, ...kjvot);
+        abcv[v11n].splice(0, 0, ...kjvot);
       }
       if (sameAsKJV[v11n].nt) {
-        allBkChsInV11n[v11n].push(...kjvnt);
+        abcv[v11n].push(...kjvnt);
       }
     });
-    Cache.write(allBkChsInV11n, 'getAllBkChsInV11n');
+    Cache.write(abcv, 'getAllBkChsInV11n');
   }
 
   return Cache.read('getAllBkChsInV11n');
