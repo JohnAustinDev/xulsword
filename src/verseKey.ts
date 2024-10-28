@@ -123,8 +123,7 @@ export default class VerseKey {
     const toBks = this.#gfunctions.getBkChsInV11n(tov11n);
     const fromBks = this.#gfunctions.getBkChsInV11n(fromv11n);
     if (!toBks || !toBks.some((x) => x[0] === book)) return false;
-    const bkfo =
-      fromBks && fromBks.find((x) => x[0] === book);
+    const bkfo = fromBks && fromBks.find((x) => x[0] === book);
     const maxch: number = bkfo ? bkfo[1] : 0;
     if (chapter < 1 || chapter > maxch) return false;
     if (verse) {

@@ -393,20 +393,21 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
               () => {
                 doUntilDone((renderPromise2) => {
                   if (atext) {
-                    const newloc = getScrollVerse(atext);
                     const { location: oldloc } = this.props as AtextProps;
-                    if (
-                      !renderPromise2.waiting() &&
-                      newloc &&
-                      oldloc &&
-                      oldloc.verse !== newloc.verse
-                    ) {
-                      window.webAppTextScroll = panelIndex;
-                      setTimeout(() => (window.webAppTextScroll = -1), 1000);
-                      xulswordState({
-                        location: newloc,
-                        scroll: { verseAt: 'top' },
-                      });
+                    if (oldloc) {
+                      const newloc = getScrollVerse(atext, renderPromise2);
+                      if (
+                        !renderPromise2.waiting() &&
+                        newloc &&
+                        oldloc.verse !== newloc.verse
+                      ) {
+                        window.webAppTextScroll = panelIndex;
+                        setTimeout(() => (window.webAppTextScroll = -1), 1000);
+                        xulswordState({
+                          location: newloc,
+                          scroll: { verseAt: 'top' },
+                        });
+                      }
                     }
                   }
                 });

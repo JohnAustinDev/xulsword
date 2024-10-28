@@ -573,7 +573,7 @@ function aTextWheelScroll2(
     // a certain period before updaing verse state to the new top verse.
     else {
       // get first verse which begins in window
-      newloc = getScrollVerse(atext);
+      newloc = getScrollVerse(atext, renderPromise);
     }
     if (newloc) {
       if (parentstate) {
@@ -633,6 +633,7 @@ export function aTextWheelScroll(
 
 export function getScrollVerse(
   atext: HTMLElement,
+  renderPromise: RenderPromise,
 ): LocationVKType | null {
   const { module } = atext.dataset;
   if (module) {
@@ -644,7 +645,16 @@ export function getScrollVerse(
     }
     if (v) {
       const p = getElementData(v);
-      if (p.location) return p.location;
+      if (p.location) {
+        // To prevent an extra xulsword render, convert this location into the
+        // v11n of the xulsword location pref.
+        const { location } = G.Prefs.getComplexValue(
+          'xulsword',
+        ) as typeof S.prefs.xulsword;
+        return location
+          ? verseKey(p.location, renderPromise).location(location.v11n)
+          : p.location;
+      }
     }
   }
   return null;

@@ -579,7 +579,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
         response = libswordText(libswordProps, i, renderPromise, xulswordState);
         if (!renderPromise.waiting()) Cache.write(response, libswordKey);
       } else {
-        response = Cache.read(libswordKey) as LibSwordResponse
+        response = Cache.read(libswordKey) as LibSwordResponse;
       }
       if (!renderPromise.waiting()) {
         const isDict =
