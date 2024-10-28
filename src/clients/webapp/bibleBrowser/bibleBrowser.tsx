@@ -50,7 +50,7 @@ socket.on('connect', () => {
       initialized = true;
 
       const [bibleBrowserComp] = bibleBrowserComps;
-      const { settings, langcode } = getComponentSettings(
+      const { settings } = getComponentSettings(
         bibleBrowserComp,
         defaultSettings,
       ) as BibleBrowserSettings;
@@ -74,17 +74,17 @@ socket.on('connect', () => {
       // with 'after:' then even settings will be overwritten by any previously
       // set user pref values (ie. settings will have no effect).
       let { storageId } = settings;
-      let userPrefs: 'before' | 'after' | 'none' =
+      let applyUserPrefs: 'before' | 'after' | 'none' =
         storageId === 'none' ? 'none' : 'before';
       const match = storageId.match(/^(before|after|none):/);
       if (match) {
-        userPrefs = match[1] as 'before' | 'after' | 'none';
-        storageId = storageId.substring(userPrefs.length + 1);
-        if (userPrefs === 'none') storageId = 'none';
+        applyUserPrefs = match[1] as 'before' | 'after' | 'none';
+        storageId = storageId.substring(applyUserPrefs.length + 1);
+        if (applyUserPrefs === 'none') storageId = 'none';
       }
       if (storageId !== 'none') {
         Prefs.setStorageId(storageId);
-        if (!Prefs.storeExists('prefs', storageId)) userPrefs = 'before';
+        if (!Prefs.storeExists('prefs', storageId)) applyUserPrefs = 'before';
       }
 
       let maxPanels = Math.ceil(window.innerWidth / 300);
@@ -102,7 +102,10 @@ socket.on('connect', () => {
       ) {
         numPanels = 1;
       }
-      if (userPrefs === 'after')
+
+      // Always have numPanels of user pref xulsword.panels overwrite settings.
+      // This allows users to permanently select the number of panels wanted.
+      if (applyUserPrefs === 'after')
         numPanels = (
           Prefs.getComplexValue(
             'xulsword.panels',
@@ -110,11 +113,19 @@ socket.on('connect', () => {
         ).length;
       if (numPanels > maxPanels) numPanels = maxPanels;
 
+      // Never have locale of user pref global.locale overwrite settings. This
+      // allows locale to be set by the server, since the user can't change
+      // locale without changing the URL.
+      if (applyUserPrefs === 'after') {
+        Prefs.setCharPref('global.locale', settings.prefs.global.locale);
+      }
+
       // Must set global.locale before callBatchThenCache.
-      writeSettingsToPrefsStores(settings, userPrefs);
-      let locale = langcode;
-      if (!locale || !C.Locales.some((x) => x[0] === locale)) locale = 'en';
-      Prefs.setCharPref('global.locale', locale);
+      writeSettingsToPrefsStores(settings, applyUserPrefs);
+      const locale = Prefs.getCharPref('global.locale');
+      if (!locale || !C.Locales.some((x) => x[0] === locale)) {
+        Prefs.setCharPref('global.locale', 'ru');
+      }
 
       await callBatchThenCache([
         ['getLocalizedBooks', null, [[locale]]],

@@ -8,11 +8,9 @@ import type S from '../../../defaultPrefs.ts';
 import type { AllComponentsData } from '../common.ts';
 import type { PrefsGType } from '../../../prefs.ts';
 
-// Note: langcode won't set the user interface language of the Bible browser
-// widget; settings.prefs.global.locale will set it.
 export type BibleBrowserSettings = {
   component: 'bibleBrowser';
-  langcode?: string; // currently unused by this widget.
+  langcode?: string; // unused by bibleBrowser; uses prefs.global.local instead.
   settings: {
     storageId: string;
     frame: string;
