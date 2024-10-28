@@ -21,17 +21,11 @@ const validChannels = [
 ];
 
 export function getProcessInfo(
-  process: Pick<NodeJS.Process, 'argv' | 'env' | 'platform'>,
+  process: Pick<NodeJS.Process, 'argv' | 'platform'>,
 ) {
   return {
     argv: () => {
       return process.argv;
-    },
-    get LOGLEVEL() {
-      return process.env.LOGLEVEL as LogLevel;
-    },
-    get WEBAPP_PORT() {
-      return process.env.WEBAPP_PORT;
     },
     platform: process.platform,
   };

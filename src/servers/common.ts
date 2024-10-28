@@ -303,7 +303,12 @@ export function getTabs(): TabType[] {
     modlist.split('<nx>').forEach((mstring: string) => {
       const [module, mt] = mstring.split(';');
       const type = mt as ModTypes;
-      if (module && moduleUnsupported(module).length === 0) {
+      const skip0 = Build.isWebApp && process.env.WEBAPP_SKIP_MODULES;
+      const skip =
+        skip0 && typeof skip0 === 'string'
+          ? skip0.split(/,\s*/).includes(module)
+          : false;
+      if (module && moduleUnsupported(module).length === 0 && !skip) {
         let label = LibSword.getModuleInformation(module, 'TabLabel');
         if (label === C.NOTFOUND)
           label = LibSword.getModuleInformation(module, 'Abbreviation');

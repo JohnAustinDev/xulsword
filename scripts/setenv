@@ -43,12 +43,11 @@ export XSModsUser_DIR=~/.config/Electron/resources
 
 # export WEBAPP_SEARCH_BAN=2000
 
+# export WEBAPP_SKIP_MODULES=
+
 # export WEBAPP_MAX_LOG_SIZE=5000000
 
-# NOTE: LOGLEVEL is the only 'live' environment variable. All others are
-# permanently fixed to whatever values they had when bundled by webpack.
-# Possible values are 'error', 'warn', 'info', 'verbose', 'debug', 'silly'
-# export LOGLEVEL='debug'
+# export LOGLEVEL='error'
 
 ###############################################################################
 # libxulsword Cpp build environment variables:

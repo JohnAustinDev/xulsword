@@ -90,11 +90,6 @@ export type QuerablePromise<T> = Promise<T> & {
   reject: (er: any) => void;
 };
 
-export type EnvironmentVars = keyof Pick<
-  ReturnType<typeof getProcessInfo>,
-  'LOGLEVEL' | 'WEBAPP_PORT'
->;
-
 export type WindowRegistryType = Array<WindowDescriptorType | null>;
 
 export type WindowTypes =

@@ -95,6 +95,8 @@ const defaultEnvironment = {
   WEBAPP_MAX_CACHE_RAMMB: 250,
   WEBAPP_SEARCH_BAN: 2000,
   WEBAPP_MAX_LOG_SIZE: 5000000,
+  WEBAPP_SKIP_MODULES: [],
+  LOGLEVEL: 'error',
 };
 const env = (k) =>
   (k in process.env && process.env[k]) || defaultEnvironment[k];
@@ -147,8 +149,6 @@ export default function (opts) {
   );
 
   console.log('Webpack configuration options: ', opts);
-
-  console.log('Shell LOGLEVEL: ', env('LOGLEVEL'));
 
   // Return a config object for a build. Each --env build in the command line
   // will use this function to generate a config object to pass to Webpack.
@@ -327,10 +327,8 @@ export default function (opts) {
 
       plugins: [
         new MiniCssExtractPlugin(),
-        // While compiling the bundle, webpack will permanently set these build
-        // and environment variables to the following values. Note: LOGLEVEL is
-        // purposefully left out so it will remain 'live', taking on its value
-        // at time of execution rather than time of building.
+        // While compiling the bundle, DefinePlugin will permanently set all build
+        // and environment variables to these fixed values.
         new webpack.DefinePlugin(
           Object.entries({
             'Build.isProduction': !!production,

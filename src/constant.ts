@@ -22,8 +22,8 @@ const C = {
   // debugging window initialization problems.
   DevToolsopen: false,
 
-  LogLevel: (env('LOGLEVEL') ||
-    (Build.isDevelopment ? 'debug' : 'info')) as LogLevel,
+  LogLevel: process.env.LOGLEVEL ||
+    (Build.isDevelopment ? 'debug' : 'info') as LogLevel,
 
   DevSplash: 1 as 0 | 1 | 2, // 0 normal, 1 skip, 2 debug
 
@@ -603,12 +603,7 @@ const C = {
 };
 export default C;
 
-function env(v: 'LOGLEVEL' | 'WEBAPP_PORT') {
-  if ('process' in globalThis) return globalThis.process.env[v];
-  if ('Process' in window) return window.ProcessInfo[v];
-}
-
 function platform() {
   if ('process' in globalThis) return globalThis.process.platform;
-  if ('Process' in window) return window.ProcessInfo.platform;
+  if ('ProcessInfo' in window) return window.ProcessInfo.platform;
 }
