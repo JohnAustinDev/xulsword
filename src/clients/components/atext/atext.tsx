@@ -1,18 +1,17 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { getElementData, verseKey } from '../../htmlData.ts';
+import { getElementData } from '../../htmlData.ts';
+import verseKey from '../../verseKey.ts';
 import Cache from '../../../cache.ts';
 import C from '../../../constant.ts';
 import {
   diff,
   JSON_attrib_stringify,
-  JSON_stringify,
   keep,
   sanitizeHTML,
   stringHash,
 } from '../../../common.ts';
 import { G, GI } from '../../G.ts';
-import log from '../../log.ts';
 import {
   clearPending,
   doUntilDone,

@@ -17,7 +17,8 @@ import C from '../constant.ts';
 import S from '../defaultPrefs.ts';
 import { G, GI } from './G.ts';
 import RenderPromise from './renderPromise.ts';
-import { getElementData, verseKey } from './htmlData.ts';
+import { getElementData } from './htmlData.ts';
+import verseKey from './verseKey.ts';
 import log from './log.ts';
 
 import type { TreeNodeInfo } from '@blueprintjs/core';

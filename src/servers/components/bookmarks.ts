@@ -2,7 +2,7 @@ import log from 'electron-log';
 import C from '../../constant.ts';
 import S from '../../defaultPrefs.ts';
 import { clone, randomID, replaceASCIIcontrolChars } from '../../common.ts';
-import { verseKey } from '../common.ts';
+import verseKey from '../verseKey.ts';
 
 import type {
   BookmarkFolderType,

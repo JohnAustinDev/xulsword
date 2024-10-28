@@ -2,7 +2,7 @@ import React from 'react';
 import { sanitizeHTML } from '../../../common.ts';
 import { G } from '../../G.ts';
 import renderToRoot from '../../controller.tsx';
-import { verseKey } from '../../htmlData.ts';
+import verseKey from '../../verseKey.ts';
 import {
   windowArguments,
   computed2inlineStyle,

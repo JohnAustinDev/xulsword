@@ -10,8 +10,7 @@ import {
   rootRenderPromise,
   verseKeyAudioFile,
 } from '../../common.tsx';
-import RenderPromise from '../../renderPromise.ts';
-import { verseKey } from '../../htmlData.ts';
+import verseKey from '../../verseKey.ts';
 import log from '../../log.ts';
 import { chapterChange, verseChange } from '../atext/zversekey.ts';
 import { genbookChange } from '../atext/ztext.ts';

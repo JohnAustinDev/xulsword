@@ -1,7 +1,7 @@
 import { JSON_attrib_stringify, clone, getSwordOptions } from '../common.ts';
 import parseExtendedVKRef from '../extrefParser.ts';
 import C from '../constant.ts';
-import { verseKey } from './common.ts';
+import verseKey from './verseKey.ts';
 
 import type S from '../defaultPrefs.ts';
 import type {

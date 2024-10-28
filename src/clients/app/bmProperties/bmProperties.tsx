@@ -15,7 +15,7 @@ import {
 import S from '../../../defaultPrefs.ts';
 import { G } from '../../G.ts';
 import renderToRoot from '../../controller.tsx';
-import { verseKey } from '../../htmlData.ts';
+import verseKey from '../../verseKey.ts';
 import log from '../../log.ts';
 import { windowArguments } from '../../common.tsx';
 import { bookmarkTreeNode, getSampleText } from '../../bookmarks.ts';

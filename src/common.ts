@@ -49,7 +49,7 @@ import type { PrefsGType } from './prefs.ts';
 import type { SelectVKType } from './clients/components/libxul/selectVK.tsx';
 import type { SelectORMType } from './clients/components/libxul/selectOR.tsx';
 import type { getSampleText } from './clients/bookmarks.ts';
-import type { verseKey } from './clients/htmlData.ts';
+import type verseKey from './clients/verseKey.ts';
 import type { XulswordState } from './clients/components/xulsword/xulsword.tsx';
 import type { BibleBrowserControllerGlobal } from './clients/webapp/bibleBrowser/bibleBrowser.tsx';
 

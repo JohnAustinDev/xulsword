@@ -20,7 +20,7 @@ import {
 } from '../../common.tsx';
 import log from '../../log.ts';
 import { bookmarkTreeNodes, getSampleText } from '../../bookmarks.ts';
-import { verseKey } from '../../htmlData.ts';
+import verseKey from '../../verseKey.ts';
 import Table from '../../components/libxul/table.tsx';
 import DragSizer from '../../components/libxul/dragsizer.tsx';
 import Groupbox from '../../components/libxul/groupbox.tsx';

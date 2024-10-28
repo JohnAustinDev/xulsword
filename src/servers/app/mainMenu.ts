@@ -12,7 +12,7 @@ import { G } from './G.ts';
 import ComCommands from './commands.ts';
 import Window, { getBrowserWindows } from './components/window.ts';
 import Commands from './components/commands.ts';
-import { verseKey } from '../common.ts';
+import verseKey from '../verseKey.ts';
 import Viewport from './viewport.ts';
 
 import type S from '../../defaultPrefs.ts';

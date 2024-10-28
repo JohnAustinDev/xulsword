@@ -3,10 +3,10 @@ import C from '../../../constant.ts';
 import type S from '../../../defaultPrefs.ts';
 import Cache from '../../../cache.ts';
 import { clone, escapeRE, ofClass } from '../../../common.ts';
-import { getElementData, verseKey } from '../../htmlData.ts';
+import verseKey from '../../verseKey.ts';
+import { getElementData } from '../../htmlData.ts';
 import { G } from '../../G.ts';
 import Commands from '../../commands.ts';
-import RenderPromise from '../../renderPromise.ts';
 import {
   doUntilDone,
   rootRenderPromise,

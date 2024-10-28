@@ -27,12 +27,8 @@ import importBookmarkObject, {
   importDeprecatedBookmarks,
   Transaction,
 } from '../../components/bookmarks.ts';
-import {
-  verseKey,
-  getTab,
-  getAudioConfs,
-  genBookTreeNodes,
-} from '../../common.ts';
+import { getTab, getAudioConfs, genBookTreeNodes } from '../../common.ts';
+import verseKey from '../../verseKey.ts';
 import Prefs from '../prefs.ts';
 import LocalFile from '../../components/localFile.ts';
 import { modalInstall, scanAudio } from './module.ts';

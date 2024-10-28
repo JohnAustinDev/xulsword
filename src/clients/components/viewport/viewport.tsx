@@ -19,7 +19,7 @@ import { G, GI } from '../../G.ts';
 import Commands from '../../commands.ts';
 import RenderPromise from '../../renderPromise.ts';
 import log from '../../log.ts';
-import { verseKey } from '../../htmlData.ts';
+import verseKey from '../../verseKey.ts';
 import { clearPending } from '../../common.tsx';
 import { addClass, xulPropTypes, topHandle } from '../libxul/xul.tsx';
 import { Hbox, Vbox } from '../libxul/boxes.tsx';

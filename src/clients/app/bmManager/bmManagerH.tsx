@@ -16,7 +16,7 @@ import S from '../../../defaultPrefs.ts';
 import C from '../../../constant.ts';
 import { G } from '../../G.ts';
 import Commands from '../../commands.ts';
-import { verseKey } from '../../htmlData.ts';
+import verseKey from '../../verseKey.ts';
 import bookmarkItemIcon from './bookmarkItemIcon.tsx';
 import log from '../../log.ts';
 import Label from '../../components/libxul/label.tsx';

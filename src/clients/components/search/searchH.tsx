@@ -13,7 +13,8 @@ import { dString, rootRenderPromise } from '../../common.tsx';
 import Commands from '../../commands.ts';
 import log from '../../log.ts';
 import RenderPromise from '../../renderPromise.ts';
-import { getElementData, verseKey } from '../../htmlData.ts';
+import { getElementData } from '../../htmlData.ts';
+import verseKey from '../../verseKey.ts';
 import SearchHelp from '../searchHelp/searchHelp.tsx';
 import { getStrongsModAndKey } from '../atext/zdictionary.ts';
 

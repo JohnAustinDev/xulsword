@@ -3,7 +3,8 @@ import { cloneAny, getSwordOptions, localizeBookmark } from '../common.ts';
 import C from '../constant.ts';
 import type S from '../defaultPrefs.ts';
 import { G, GI } from './G.ts';
-import { updateDataAttribute, verseKey } from './htmlData.ts';
+import { updateDataAttribute } from './htmlData.ts';
+import verseKey from './verseKey.ts';
 import { getMaxVerse } from './common.tsx';
 import bookmarkItemIcon from './app/bmManager/bookmarkItemIcon.tsx';
 

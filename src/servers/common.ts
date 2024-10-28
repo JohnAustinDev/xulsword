@@ -4,8 +4,6 @@ import fs from 'fs';
 import i18n from 'i18next';
 import fontList from 'font-list';
 import C from '../constant.ts';
-import VerseKey from '../verseKey.ts';
-import RefParser from '../refParser.ts';
 import {
   isASCII,
   JSON_parse,
@@ -50,11 +48,8 @@ import type {
   GenBookAudioFile,
   ModulesCache,
   TreeNodeInfoPref,
-  GCallType,
 } from '../type.ts';
 import PrefsElectron from './app/prefs.ts';
-import type { RefParserOptionsType } from '../refParser.ts';
-import type RenderPromise from '../clients/renderPromise.ts';
 
 // Get all supported books in locale order. NOTE: xulsword ignores individual
 // module book order in lieu of locale book order or xulsword default order
@@ -501,49 +496,6 @@ export function getMaxChapter(v11n: V11nType, vkeytext: string) {
 export function getMaxVerse(v11n: V11nType, vkeytext: string) {
   const maxch = getMaxChapter(v11n, vkeytext);
   return maxch ? LibSword.getMaxVerse(v11n, vkeytext) : 0;
-}
-
-export function verseKey(
-  versekey: LocationVKType | { parse: string; v11n: V11nType },
-  options?: RefParserOptionsType,
-): VerseKey {
-  const digits = C.Locales.reduce(
-    (p, c) => {
-      p[c[0]] = getLocaleDigits(c[0]);
-      return p;
-    },
-    {} as Record<string, string[] | null>,
-  );
-  return new VerseKey(
-    new RefParser(digits, getLocalizedBooks(true), options),
-    {
-      convertLocation: (
-        fromv11n: V11nType,
-        vkeytext: string,
-        tov11n: V11nType,
-      ) => {
-        return LibSword.convertLocation(fromv11n, vkeytext, tov11n);
-      },
-      Book: (locale?: string) => {
-        return getBook(locale);
-      },
-      Tab: () => {
-        return getTab();
-      },
-      getBkChsInV11n,
-    },
-    (str: string | number, locale?: string) => {
-      let s = str.toString();
-      const digits = getLocaleDigits(locale ?? i18n.language);
-      if (digits) {
-        for (let i = 0; i <= 9; i += 1) {
-          s = s.replaceAll(i.toString(), digits[i]);
-        }
-      }
-      return s;
-    },
-    versekey,
-  );
 }
 
 // If a module config fontFamily specifies a URL to a font, rather

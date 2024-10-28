@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { clone, diff, getModuleOfObject, ofClass } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
-import { verseKey } from '../../htmlData.ts';
+import verseKey from '../../verseKey.ts';
 import { getMaxChapter, getMaxVerse } from '../../common.tsx';
 import RenderPromise from '../../renderPromise.ts';
 import { addClass, xulPropTypes } from './xul.tsx';

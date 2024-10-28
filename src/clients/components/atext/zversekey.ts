@@ -2,7 +2,8 @@ import C from '../../../constant.ts';
 import type S from '../../../defaultPrefs.ts';
 import { getSwordOptions, JSON_attrib_stringify } from '../../../common.ts';
 import parseExtendedVKRef from '../../../extrefParser.ts';
-import { getElementData, verseKey } from '../../htmlData.ts';
+import { getElementData } from '../../htmlData.ts';
+import verseKey from '../../verseKey.ts';
 import {
   dString,
   getCompanionModules,
