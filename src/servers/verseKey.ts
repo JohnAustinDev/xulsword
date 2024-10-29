@@ -12,6 +12,8 @@ import {
 } from './common.ts';
 import LibSword from './components/libsword.ts';
 
+import type verseKeyClient from '../clients/verseKey.ts';
+
 export default function verseKey(
   versekey: LocationVKType | { parse: string; v11n: V11nType },
   options?: RefParserOptionsType,
@@ -54,3 +56,13 @@ export default function verseKey(
     versekey,
   );
 }
+
+// A function having the call signature of src/common.ts verseKey(),
+// since a RenderPromise is never required on the server.
+export const verseKeyCommon: typeof verseKeyClient = (
+  versekey,
+  _renderPromise,
+  options?,
+) => {
+  return verseKey(versekey, options);
+};

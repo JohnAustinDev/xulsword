@@ -8,16 +8,20 @@ import {
   xulswordLocation,
 } from '../../common.ts';
 import C from '../../constant.ts';
+import { verseKeyCommon } from '../verseKey.ts';
 import { G } from './G.ts';
 import ComCommands from './commands.ts';
 import Window, { getBrowserWindows } from './components/window.ts';
 import Commands from './components/commands.ts';
-import verseKey from '../verseKey.ts';
 import Viewport from './viewport.ts';
 
 import type S from '../../defaultPrefs.ts';
 import type { BrowserWindow, MenuItemConstructorOptions } from 'electron';
-import type { BookmarkFolderType, SearchType, TabTypes } from '../../type.ts';
+import type {
+  BookmarkFolderType,
+  SearchType,
+  TabTypes,
+} from '../../type.ts';
 import type { PrefCallbackType } from '../../prefs.ts';
 
 type Modifiers =
@@ -239,7 +243,7 @@ function bookmarkProgramMenu(
   bookmarks: BookmarkFolderType,
 ): MenuItemConstructorOptions[] {
   return bookmarks.childNodes
-    .map((bm) => localizeBookmark(G, verseKey, bm))
+    .map((bm) => localizeBookmark(G, verseKeyCommon, bm))
     .map((bm) => ({
       label: bm.label,
       type: bm.type === 'folder' ? 'submenu' : 'normal',

@@ -12,7 +12,7 @@ import devToolsInstaller, {
 import { install as SourceMapInstall } from 'source-map-support';
 import Subscription from '../../subscription.ts';
 import Cache from '../../cache.ts';
-import { clone, JSON_parse, keep, localizeString } from '../../common.ts';
+import { clone, JSON_parse, keep, localizeString, validateModulePrefs } from '../../common.ts';
 import C from '../../constant.ts';
 import S, { completePanelPrefDefaultArrays } from '../../defaultPrefs.ts';
 import handleGlobal from '../handleG.ts';
@@ -24,12 +24,12 @@ import LocalFile from '../components/localFile.ts';
 import Prefs from './prefs.ts';
 import Viewport from './viewport.ts';
 import Window from './components/window.ts';
-import { validateModulePrefs } from './components/module.ts';
 import {
   getCipherFailConfs,
   CipherKeyModules,
   getTabs,
   getSystemFonts,
+  getFeatureModules,
 } from '../common.ts';
 import MainMenuBuilder, { pushPrefsToMenu } from './mainMenu.ts';
 import contextMenu from './contextMenu.ts';
@@ -228,7 +228,7 @@ const openXulswordWindow = () => {
   const menuBuilder = new MainMenuBuilder(xulswordWindow);
   menuBuilder.buildMenu();
 
-  validateModulePrefs(Window);
+  validateModulePrefs(getTabs(), Prefs, getFeatureModules(), Window);
 
   const BuildInfo = `${app.getName()} ${app.getVersion()} (${
     i18n.language
@@ -256,7 +256,7 @@ const openXulswordWindow = () => {
           'moduleManager.repositories',
         ) as ManagerStatePref['repositories'],
       );
-      validateModulePrefs(Window);
+      validateModulePrefs(getTabs(), Prefs, getFeatureModules(), Window);
       menuBuilder.buildMenu(true);
     }),
   );

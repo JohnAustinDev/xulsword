@@ -1,7 +1,6 @@
 import type { LocationVKType, OSISBookType, V11nType } from './type.ts';
 import type RenderPromise from './clients/renderPromise.ts';
-import type { RefParserOptionsType } from './refParser.ts';
-import type VerseKey from './verseKey.ts';
+import type { verseKeyCommon } from './servers/verseKey.ts';
 
 // This function tries to read a ";" separated list of Scripture
 // references and returns an array of LocationVKType objects, one for
@@ -13,11 +12,7 @@ import type VerseKey from './verseKey.ts';
 // context argument. Segments which fail to parse as Scripture
 // references are silently ignored.
 export default function parseExtendedVKRef(
-  verseKeyFunc: (
-    versekey: LocationVKType | { parse: string; v11n: V11nType },
-    renderPromise: RenderPromise | null,
-    optionsx?: RefParserOptionsType,
-  ) => VerseKey,
+  verseKeyFunc: typeof verseKeyCommon,
   extref: string,
   context?: LocationVKType,
   locales?: string[],

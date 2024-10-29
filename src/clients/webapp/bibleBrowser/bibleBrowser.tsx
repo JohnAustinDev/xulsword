@@ -2,7 +2,7 @@ import React from 'react';
 import {
   sanitizeHTML,
   setGlobalPanels,
-  validateGlobalModulePrefs,
+  validateModulePrefs,
 } from '../../../common.ts';
 import S from '../../../defaultPrefs.ts';
 import C from '../../../constant.ts';
@@ -146,16 +146,7 @@ socket.on('connect', () => {
 
       setEmptyPrefs(Prefs);
       setGlobalPanels(Prefs, numPanels);
-
-      const globalPopup = {} as typeof S.prefs.global.popup;
-      validateGlobalModulePrefs(
-        G.Tabs,
-        G.Prefs,
-        G.i18n.language,
-        G.FeatureModules,
-        globalPopup,
-      );
-      G.Prefs.mergeValue('global.popup', globalPopup);
+      validateModulePrefs(G.Tabs, Prefs, G.FeatureModules);
 
       // Wheel scroll is confusing in desktop Browser, so disable it.
       const wheelCapture = (e: React.SyntheticEvent<any>): boolean => {

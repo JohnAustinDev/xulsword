@@ -22,8 +22,8 @@ const C = {
   // debugging window initialization problems.
   DevToolsopen: false,
 
-  LogLevel: process.env.LOGLEVEL ||
-    (Build.isDevelopment ? 'debug' : 'info') as LogLevel,
+  LogLevel: (process.env.LOGLEVEL ||
+    (Build.isDevelopment ? 'debug' : 'info')) as LogLevel,
 
   DevSplash: 1 as 0 | 1 | 2, // 0 normal, 1 skip, 2 debug
 

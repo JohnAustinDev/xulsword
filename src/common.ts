@@ -52,6 +52,7 @@ import type { getSampleText } from './clients/bookmarks.ts';
 import type verseKey from './clients/verseKey.ts';
 import type { XulswordState } from './clients/components/xulsword/xulsword.tsx';
 import type { BibleBrowserControllerGlobal } from './clients/webapp/bibleBrowser/bibleBrowser.tsx';
+import type Window from './servers/app/components/window.ts';
 
 // This file contains functions that are used in common with both xulsword
 // clients and servers.
@@ -847,6 +848,52 @@ export function pad(
   const c = char.toString().substring(0, 1);
   while (r.length < len) r = `${c}${r}`;
   return r;
+}
+
+// Xulsword state prefs and certain global prefs should only reference
+// installed modules or be empty string. This function insures that is
+// the case.
+export function validateModulePrefs(
+  Tabs: GType['Tabs'],
+  Prefs: GType['Prefs'],
+  featureModules: GType['FeatureModules'],
+  windowComp?: typeof Window,
+) {
+  const xsprops: Array<keyof typeof S.prefs.xulsword> = [
+    'panels',
+    'ilModules',
+    'mtModules',
+    'tabs',
+  ];
+  const xulsword = keep(
+    Prefs.getComplexValue('xulsword') as typeof S.prefs.xulsword,
+    xsprops,
+  );
+
+  validateViewportModulePrefs(Tabs, xulsword);
+
+  const globalPopup = {} as typeof S.prefs.global.popup;
+
+  validateGlobalModulePrefs(
+    Tabs,
+    Prefs,
+    Prefs.getCharPref('global.locale'),
+    featureModules,
+    globalPopup,
+  );
+
+  // IMPORTANT: Use the skipCallbacks and clearRendererCaches arguments of
+  // Prefs.mergeValue() to force renderer processes to update once, after
+  // module prefs are valid. Otherwise renderer exceptions may be thrown as they
+  // they would re-render with invalid module prefs.
+  Prefs.mergeValue('global.popup', globalPopup, 'prefs', true, false);
+  Prefs.mergeValue('xulsword', xulsword, 'prefs', false, true);
+
+  // Any viewportWin windows also need modules to be checked,
+  // which happens in viewportWin component contsructor.
+  if (windowComp) {
+    windowComp.reset('component-reset', { type: 'viewportWin' });
+  }
 }
 
 // Modify the given state in place removing any references to viewport

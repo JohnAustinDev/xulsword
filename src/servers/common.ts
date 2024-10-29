@@ -300,15 +300,16 @@ export function getTabs(): TabType[] {
     const tabs: TabType[] = [];
     const modlist: any = LibSword.getModuleList();
     if (modlist === C.NOMODULES) return [];
+    const skip0 = Build.isWebApp && process.env.WEBAPP_SKIP_MODULES;
+    const skips = skip0 && typeof skip0 == 'string' ? skip0.split(/,\s*/) : [];
     modlist.split('<nx>').forEach((mstring: string) => {
       const [module, mt] = mstring.split(';');
       const type = mt as ModTypes;
-      const skip0 = Build.isWebApp && process.env.WEBAPP_SKIP_MODULES;
-      const skip =
-        skip0 && typeof skip0 === 'string'
-          ? skip0.split(/,\s*/).includes(module)
-          : false;
-      if (module && moduleUnsupported(module).length === 0 && !skip) {
+      if (
+        module &&
+        moduleUnsupported(module).length === 0 &&
+        !skips.includes(module)
+      ) {
         let label = LibSword.getModuleInformation(module, 'TabLabel');
         if (label === C.NOTFOUND)
           label = LibSword.getModuleInformation(module, 'Abbreviation');

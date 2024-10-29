@@ -1,7 +1,7 @@
 import { JSON_attrib_stringify, clone, getSwordOptions } from '../common.ts';
 import parseExtendedVKRef from '../extrefParser.ts';
 import C from '../constant.ts';
-import verseKey from './verseKey.ts';
+import verseKey, { verseKeyCommon } from './verseKey.ts';
 
 import type S from '../defaultPrefs.ts';
 import type {
@@ -36,12 +36,7 @@ export function getExtRefHTML(
   keepNotes: boolean,
   info?: Partial<LookupInfo>,
 ): string {
-  const vkfunc = (
-    versekey: LocationVKType | { parse: string; v11n: V11nType },
-    _renderPromise: RenderPromise | null,
-    optionsx?: RefParserOptionsType,
-  ) => verseKey(versekey, optionsx);
-  const list = parseExtendedVKRef(vkfunc, extref, context, [locale]);
+  const list = parseExtendedVKRef(verseKeyCommon, extref, context, [locale]);
   const alternates = workingModules(G, locale);
   const mod = targetmod || alternates[0] || '';
   const html: string[] = [];
