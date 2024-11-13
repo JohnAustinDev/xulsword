@@ -17,11 +17,7 @@ import Viewport from './viewport.ts';
 
 import type S from '../../defaultPrefs.ts';
 import type { BrowserWindow, MenuItemConstructorOptions } from 'electron';
-import type {
-  BookmarkFolderType,
-  SearchType,
-  TabTypes,
-} from '../../type.ts';
+import type { BookmarkFolderType, SearchType, TabTypes } from '../../type.ts';
 import type { PrefCallbackType } from '../../prefs.ts';
 
 type Modifiers =

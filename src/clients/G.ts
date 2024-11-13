@@ -81,7 +81,7 @@ Object.entries(GBuilder).forEach((entry) => {
     >;
     const value = entry[1] as any;
     if (value === 'getter') {
-      const acall: GCallType = [name, null, undefined];
+      const acall: GCallType = prepCall([name, null, undefined]);
       Object.defineProperty(G, name, {
         get() {
           let req;
@@ -105,7 +105,7 @@ Object.entries(GBuilder).forEach((entry) => {
     } else if (typeof value === 'function') {
       const isAsync = asyncFuncs.some((en) => name && en[0] === name);
       g[name] = (...args: unknown[]) => {
-        const acall: GCallType = [name, null, args];
+        const acall: GCallType = prepCall([name, null, args]);
         let req;
         try {
           if (isAsync) req = asyncRequest(acall);
@@ -117,7 +117,7 @@ Object.entries(GBuilder).forEach((entry) => {
       };
       if (!isAsync) {
         gi[name] = (def: PrefValue, rp: RenderPromise, ...args: unknown[]) => {
-          const acall: GCallType = [name, null, args];
+          const acall: GCallType = prepCall([name, null, args]);
           let req;
           try {
             [req] = GCallsOrPromise([acall], [def], rp);
@@ -133,7 +133,7 @@ Object.entries(GBuilder).forEach((entry) => {
         if (g[name] === undefined) g[name] = {};
         if (gi[name] === undefined) gi[name] = {};
         if (gBuilder[name][m] === 'getter') {
-          const acall: GCallType = [name, m, undefined];
+          const acall: GCallType = prepCall([name, m, undefined]);
           Object.defineProperty(g[name], m, {
             get() {
               // In Browsers, i18n.language is never used, rather global.locale pref
@@ -206,7 +206,7 @@ Object.entries(GBuilder).forEach((entry) => {
             }
           } else {
             g[name][m] = (...args: unknown[]) => {
-              const acall: GCallType = [name, m, args];
+              const acall: GCallType = prepCall([name, m, args]);
               let req;
               try {
                 if (isAsync) req = asyncRequest(acall);
@@ -222,7 +222,7 @@ Object.entries(GBuilder).forEach((entry) => {
                 rp: RenderPromise,
                 ...args: unknown[]
               ) => {
-                const acall: GCallType = [name, m, args];
+                const acall: GCallType = prepCall([name, m, args]);
                 let req;
                 try {
                   [req] = GCallsOrPromise([acall], [def], rp);
@@ -245,13 +245,12 @@ Object.entries(GBuilder).forEach((entry) => {
   }
 });
 
-async function asyncRequest(thecall: GCallType) {
-  if (!allowed(thecall)) {
+async function asyncRequest(call: GCallType) {
+  if (!allowed(call)) {
     throw new Error(
-      `Async G call unsupported in browser environment: ${JSON_stringify(thecall)}`,
+      `Async G call unsupported in browser environment: ${JSON_stringify(call)}`,
     );
   }
-  const call = Build.isWebApp ? publicCall(thecall) : thecall;
   const cacheable = isCallCacheable(GBuilder, call);
   const ckey = GCacheKey(call);
   if (cacheable && Cache.has(ckey))
@@ -268,7 +267,7 @@ async function asyncRequest(thecall: GCallType) {
       return undefined;
     }
     if (Build.isWebApp)
-      result = gcallResultCompression(thecall, result, callResultDecompress);
+      result = gcallResultCompression(call, result, callResultDecompress);
     if (cacheable && !getWaitRetry(result) && !Cache.has(ckey)) {
       Cache.write(result, ckey);
     }
@@ -280,13 +279,12 @@ async function asyncRequest(thecall: GCallType) {
   return result;
 }
 
-function request(thecall: GCallType) {
-  if (!allowed(thecall)) {
+function request(call: GCallType) {
+  if (!allowed(call)) {
     throw new Error(
-      `Sync G call unsupported in browser environment: ${JSON_stringify(thecall)}`,
+      `Sync G call unsupported in browser environment: ${JSON_stringify(call)}`,
     );
   }
-  const call = Build.isWebApp ? publicCall(thecall) : thecall;
   const ckey = GCacheKey(call);
   const cacheable = isCallCacheable(GBuilder, call);
   if (cacheable && Cache.has(ckey)) return Cache.read(ckey);
@@ -310,15 +308,15 @@ function request(thecall: GCallType) {
     return undefined;
   }
   if (Build.isWebApp)
-    result = gcallResultCompression(thecall, result, callResultDecompress);
+    result = gcallResultCompression(call, result, callResultDecompress);
   if (cacheable) Cache.write(result, ckey);
 
   return result;
 }
 
-function allowed(thecall: GCallType): boolean {
+function allowed(call: GCallType): boolean {
   if (Build.isElectronApp) return true;
-  const [name, method, args] = thecall;
+  const [name, method, args] = call;
   if (name === 'callBatch') {
     if (args) {
       const alls = args[0].map((c: GCallType) => allowed(c));
@@ -332,22 +330,22 @@ function allowed(thecall: GCallType): boolean {
   return false;
 }
 
-function publicCall(thecall: GCallType): GCallType {
+// Web App i18n always requires that the language option be specified.
+function prepCall(thecall: GCallType): GCallType {
+  if (!Build.isWebApp) return thecall;
   const [name, method] = thecall;
   const [, , args] = thecall;
   if (name === 'callBatch' && args) {
     const calls = args[0].map((call: GCallType) => {
-      return publicCall(call);
+      return prepCall(call);
     });
     return [name, method, [calls]];
   } else if (args) {
-    // Add lng option to G.i18n.t() and G.i18n.exists().
     if (
       name === 'i18n' &&
       typeof method === 'string' &&
       ['t', 'exists'].includes(method)
     ) {
-      // Add language to all i18n calls, unless already present.
       const options = args.length > 1 ? args[1] : {};
       if (typeof options.lng !== 'string') {
         options.lng = G.Prefs.getCharPref('global.locale');

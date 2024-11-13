@@ -307,7 +307,9 @@ class Tabs extends React.Component implements RenderPromiseComponent {
         {!isPinned && G.Prefs.getBoolPref('xulsword.tabcntl') && (
           <div
             className={`tabPlus tab active`}
-            title={GI.i18n.t('', renderPromise, 'Add a tab, or remove a tab.')}
+            title={GI.i18n.t('', renderPromise, 'Add a tab, or remove a tab.', {
+              ns: 'bibleBrowser',
+            })}
           >
             <div className="border">
               <ModuleMenu

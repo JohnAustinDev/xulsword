@@ -404,6 +404,7 @@ export default class Xulsword
           '',
           renderPromise,
           'Show or hide the verse chooser tool.',
+          { ns: 'bibleBrowser' },
         )}
       />
     );
@@ -437,6 +438,7 @@ export default class Xulsword
                 '',
                 renderPromise,
                 'Add another column of text.',
+                { ns: 'bibleBrowser' },
               )}
             />
             <Button
@@ -444,7 +446,9 @@ export default class Xulsword
               disabled={panels.length <= 1}
               icon={<Icon icon="remove-column-right" size={28} />}
               onClick={handler}
-              title={GI.i18n.t('', renderPromise, 'Remove a column of text.')}
+              title={GI.i18n.t('', renderPromise, 'Remove a column of text.', {
+                ns: 'bibleBrowser',
+              })}
             />
           </>
         )}

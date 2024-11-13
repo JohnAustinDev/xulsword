@@ -12,7 +12,13 @@ import devToolsInstaller, {
 import { install as SourceMapInstall } from 'source-map-support';
 import Subscription from '../../subscription.ts';
 import Cache from '../../cache.ts';
-import { clone, JSON_parse, keep, localizeString, validateModulePrefs } from '../../common.ts';
+import {
+  clone,
+  JSON_parse,
+  keep,
+  localizeString,
+  validateModulePrefs,
+} from '../../common.ts';
 import C from '../../constant.ts';
 import S, { completePanelPrefDefaultArrays } from '../../defaultPrefs.ts';
 import handleGlobal from '../handleG.ts';

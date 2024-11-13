@@ -756,7 +756,9 @@ class Atext extends React.Component implements RenderPromiseComponent {
                 context: module,
               })}
             >
-              {GI.i18n.t('', renderPromise, 'About this text')}
+              {GI.i18n.t('', renderPromise, 'About this text', {
+                ns: 'bibleBrowser',
+              })}
             </a>
             {' | '}
             <a className="nextchaplink">

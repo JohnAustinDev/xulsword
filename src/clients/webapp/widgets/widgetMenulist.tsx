@@ -119,7 +119,8 @@ function getEBookTitle(data: FileItem, menu: boolean): string {
   const { name, types, scope, full } = data;
   const Book = G.Book(G.i18n.language);
 
-  if (full) return menu ? G.i18n.t('Full publication') : name;
+  if (full)
+    return menu ? G.i18n.t('Full publication', { ns: 'widgets' }) : name;
 
   const books =
     scope?.replace(/[^-\s_]+/g, (m) =>

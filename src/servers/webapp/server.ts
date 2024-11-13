@@ -315,7 +315,15 @@ async function i18nInit(lng: string) {
       supportedLngs: AvailableLanguages,
       preload: AvailableLanguages,
 
-      ns: ['xulsword', 'branding', 'config', 'books', 'numbers'],
+      ns: [
+        'xulsword',
+        'widgets',
+        'bibleBrowser',
+        'branding',
+        'config',
+        'books',
+        'numbers',
+      ],
       defaultNS: 'xulsword',
 
       debug: false,

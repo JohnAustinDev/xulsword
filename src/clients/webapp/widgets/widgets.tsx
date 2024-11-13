@@ -47,7 +47,7 @@ if (widgets.length) {
         ['Books', null, [locale]],
         ['getLocaleDigits', null, [locale]],
         ['i18n', 't', ['locale_direction', { lng: locale }]],
-        ['i18n', 't', ['Full publication', { lng: locale }]],
+        ['i18n', 't', ['Full publication', { lng: locale, ns: 'widgets' }]],
         ...Object.values(C.SupportedTabTypes).map(
           (type) => ['i18n', 't', [type, { lng: locale }]] as any,
         ),
