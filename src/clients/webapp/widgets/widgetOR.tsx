@@ -48,7 +48,7 @@ export default function WidgetOR(wprops: WidgetORProps): React.JSX.Element {
             }
           }
           const link = comParent?.querySelector(
-            `a[href*=${CSS.escape('/passage?')}]`,
+          '.update_url a, a.update_url',
           ) as HTMLAnchorElement | undefined;
           if (link) updateHrefParams(link, { key: `${key}` });
           break;

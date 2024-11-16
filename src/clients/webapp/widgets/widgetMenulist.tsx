@@ -44,7 +44,7 @@ export default function WidgetMenulist(
           const item = items[index];
           if (elem && typeof item !== 'string') {
             const links = Array.isArray(item) ? item : [item];
-            const a = Array.from(elem.querySelectorAll('.field a'));
+            const a = Array.from(elem.querySelectorAll('.update_url a, a.update_url'));
             if (a.length && a.length === links.length) {
               links.forEach((link, x) => {
                 const { relurl, size } = link;
@@ -81,7 +81,7 @@ export default function WidgetMenulist(
     setState({ value: select.value });
     const elem = document.getElementById(compid)?.parentElement;
     if (elem)
-      jQuery(elem.querySelectorAll('.field a')).fadeTo(1, 0).fadeTo(1000, 1);
+      jQuery(elem.querySelectorAll('.update_url a, a.update_url')).fadeTo(1, 0).fadeTo(1000, 1);
   }
 
   const options = data
