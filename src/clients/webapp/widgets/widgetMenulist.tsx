@@ -50,7 +50,9 @@ export default function WidgetMenulist(
                 const { relurl, size } = link;
                 const anchor = a[x];
                 if (anchor && relurl) {
-                  anchor.setAttribute('href', `${urlroot}/${relurl}`);
+                  const root = urlroot.replace(/\/$/, '');
+                  const rel = relurl.replace(/^\//, '');
+                  anchor.setAttribute('href', `${root}/${rel}`);
                   anchor.textContent = optionText(link, false);
                   if (
                     typeof size !== 'undefined' &&
