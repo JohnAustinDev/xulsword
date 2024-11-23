@@ -179,9 +179,32 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
           });
           break;
         }
-        case 'addcolumn':
+        case 'addcolumn': {
+          setGlobalPanels(G.Prefs, 0, 1);
+          // Set newly added panel to a StrongsNumbers module if such a tab is
+          // available.
+          const xulsword = G.Prefs.getComplexValue(
+            'xulsword',
+          ) as typeof S.prefs.xulsword;
+          const { panels, tabs } = xulsword;
+          const i = panels.length - 1;
+          if (tabs[i]) {
+            const module = tabs[i].find(
+              (m) =>
+                m in G.Tab &&
+                G.Tab[m].tabType === 'Texts' &&
+                G.Tab[m].features.includes('StrongsNumbers'),
+            );
+            if (module) {
+              panels[i] = module;
+              G.Prefs.setComplexValue('xulsword.panels', panels);
+            }
+          }
+          Subscription.publish.setControllerState({ reset: randomID() });
+          break;
+        }
         case 'removecolumn': {
-          setGlobalPanels(G.Prefs, 0, currentId === 'addcolumn' ? 1 : -1);
+          setGlobalPanels(G.Prefs, 0, -1);
           Subscription.publish.setControllerState({ reset: randomID() });
           break;
         }

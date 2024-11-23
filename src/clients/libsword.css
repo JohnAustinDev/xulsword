@@ -405,9 +405,11 @@ span.foreign {
 .x-navmenu .item {
   margin-bottom: 0;
 }
+/*
 .x-list.x-navmenu > div {
   height: 1em;
 }
+*/
 .x-PM {
 }
 .verse-per-line .vs > .p-end,

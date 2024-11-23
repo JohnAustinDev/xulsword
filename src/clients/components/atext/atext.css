@@ -185,6 +185,14 @@ html[dir='rtl'] .notebox-maximizer {
   border-radius: 8px;
   padding: 0px 5px 0px 5px;
 }
+@media (max-width: 768px) {
+  .atext .nb {
+    max-width: calc(50vw - 22px);
+  }
+  .atext .dictlist {
+    padding: 0;
+  }
+}
 
 /* Header Links */
 .navlink {
