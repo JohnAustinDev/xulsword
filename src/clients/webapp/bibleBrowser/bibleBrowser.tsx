@@ -55,12 +55,12 @@ socket.on('connect', () => {
         defaultSettings,
       ) as BibleBrowserSettings;
 
-      // Add any custom iframe CSS
-      const { frame } = settings;
-      if (frame && !/^(0|1)$/.test(frame)) {
+      // Add CSS
+      const { css } = settings;
+      if (css) {
         const style = document.createElement('div');
         // style must be a child of div to pass through the sanitizer.
-        sanitizeHTML(style, `<div><style>${frame}</style></div>`);
+        sanitizeHTML(style, `<div><style>${css}</style></div>`);
         if (style.firstElementChild?.firstElementChild) {
           document
             .querySelector('body')

@@ -14,6 +14,7 @@ export type BibleBrowserSettings = {
   settings: {
     storageId: string;
     frame: string;
+    css: string;
     prefs: {
       xulsword: Partial<(typeof S)['prefs']['xulsword']>;
       global: {
@@ -90,7 +91,8 @@ const defaultSettings: AllComponentsData = {
       langcode: 'en',
       settings: {
         storageId: 'none',
-        frame: '0', // is iframe API being used?
+        frame: '0', // is this a third party iframe?
+        css: '',
         prefs: {
           xulsword: {
             location: {
