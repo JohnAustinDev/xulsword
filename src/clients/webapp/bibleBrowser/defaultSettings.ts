@@ -10,7 +10,7 @@ import type { PrefsGType } from '../../../prefs.ts';
 
 export type BibleBrowserSettings = {
   component: 'bibleBrowser';
-  langcode?: string; // unused by bibleBrowser; uses prefs.global.local instead.
+  langcode: string; // the fallback language if prefs.global.local is invalid.
   settings: {
     storageId: string;
     frame: string;

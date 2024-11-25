@@ -50,7 +50,7 @@ socket.on('connect', () => {
       initialized = true;
 
       const [bibleBrowserComp] = bibleBrowserComps;
-      const { settings } = getComponentSettings(
+      const { settings, langcode } = getComponentSettings(
         bibleBrowserComp,
         defaultSettings,
       ) as BibleBrowserSettings;
@@ -122,9 +122,13 @@ socket.on('connect', () => {
 
       // Must set global.locale before callBatchThenCache.
       writeSettingsToPrefsStores(settings, applyUserPrefs);
-      const locale = Prefs.getCharPref('global.locale');
+      let locale = Prefs.getCharPref('global.locale');
       if (!locale || !C.Locales.some((x) => x[0] === locale)) {
-        Prefs.setCharPref('global.locale', 'ru');
+        locale =
+          langcode && C.Locales.some((x) => x[0] === langcode)
+            ? langcode
+            : 'en';
+        Prefs.setCharPref('global.locale', locale);
       }
 
       await callBatchThenCache([
