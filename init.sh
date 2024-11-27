@@ -31,6 +31,8 @@ DBG=
 
 # BUILD DEPENDENCIES (Ubuntu Xenial & Bionic)
 PKG_DEPS="build-essential git subversion libtool-bin cmake autoconf make pkg-config zip curl"
+# for xulsword
+PKG_DEPS="debhelper binutils gcc-multilib dpkg-dev debhelper libboost-dev"
 # for ZLib build
 PKG_DEPS="$PKG_DEPS debhelper binutils gcc-multilib dpkg-dev"
 # for Clucene build
@@ -46,7 +48,7 @@ fi
 # BUILD DEPENDENCIES (for cross compiling libxulsword as MacOS dylib)
 # PKG_DEPS="$PKG_DEPS llvm-12 llvm-12-linker-tools llvm-12-tools clang-12 lldb-12 lld-12"
 
-if [ "$(dpkg -s "$PKG_DEPS" 2>&1 | grep "not installed" | wc -m)" -ne 0 ]; then
+if [ "$(dpkg -l $PKG_DEPS 2>&1 | grep "no packages" | wc -m)" -ne 0 ]; then
   if [ "$VAGRANT" = "guest" ]; then
     sudo dpkg --add-architecture i386
     sudo apt-get update
