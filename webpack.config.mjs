@@ -186,6 +186,8 @@ export default function (opts) {
         : 'WEBPACK_DEV_WEBAPP_PORT',
     );
 
+    const allowgzip = false;
+
     return {
       ...(development ? { devtool: 'source-map' } : {}),
 
@@ -372,7 +374,7 @@ export default function (opts) {
       ]
         .concat(
           builds[build][1].map(() => {
-            return production && build === 'webappClients'
+            return allowgzip && production && build === 'webappClients'
               ? new CompressionPlugin({
                   deleteOriginalAssets: true,
                   threshold: 30000,

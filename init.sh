@@ -26,6 +26,8 @@ fi
 if [[ ! -e "$XULSWORD/setenv" ]]; then cp "$XULSWORD/scripts/setenv" "$XULSWORD"; fi
 source "$XULSWORD/setenv"
 
+DEBVERS="$(lsb_release -cs 2>/dev/null)"
+
 DBG=
 # DBG='-D CMAKE_BUILD_TYPE=Debug'
 
@@ -230,6 +232,9 @@ if [ ! -e "$CPP/$dirout" ]; then
    # Stop this dumb clucene error for searches beginning with a wildcard, which results in a core dump.
   sed -i 's/!allowLeadingWildcard/!true/g' "$CPP/$dirout/src/core/CLucene/queryParser/QueryParser.cpp"
   # -D DISABLE_MULTITHREADING=ON causes compilation to fail
+  if [[ "$DEBVERS" == "bookworm" ]]; then
+    sed -i '11i #include <ctime>' "$CPP/$dirout/src/core/CLucene/document/DateTools.cpp"
+  fi
   cmake "$DBG" -G "Unix Makefiles" -D BUILD_STATIC_LIBRARIES=ON -D CMAKE_INCLUDE_PATH="$CPP/install/usr/local/include" -D CMAKE_LIBRARY_PATH="$CPP/install/usr/local/lib" ..
   make DESTDIR="$CPP/install" install
 fi
