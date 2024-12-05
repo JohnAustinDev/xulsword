@@ -47,7 +47,7 @@ const Dirs = {
         (Build.isElectronApp && app?.getPath('userData')) ||
         (process.env.WEBAPP_PROFILE_DIR as string);
 
-      Dirs.path.LogDir = path.join(process.env.LOG_DIR || profD, 'logs');
+      Dirs.path.LogDir = path.join(process.env.LOG_DIR || profD, 'xulsword');
 
       // NOTE: The app directory is not exposed in the production app. Also
       // don't try to read package.json in production by bundling it, as this
