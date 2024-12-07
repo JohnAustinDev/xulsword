@@ -7,6 +7,8 @@
 # export SERVER_KEY_PEM=full-path-to-key-pem-file
 # export SERVER_CRT_PEM=full-path-to-certificate-pem-file
 
+# export WEBAPP_DOMAIN='http://localhost:1212'
+
 # export WEBAPP_CORS_ORIGIN='http://localhost:1212'
 
 # export WEBAPP_PORT=3576

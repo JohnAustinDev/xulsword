@@ -33,7 +33,7 @@ export type BibleBrowserControllerGlobal = {
 
 const socket = socketConnect(
   Number(process.env.WEBAPP_PORT),
-  window.location.origin,
+  process.env.WEBAPP_DOMAIN,
 );
 
 // connect is called even on reconnect, so only initialize once.

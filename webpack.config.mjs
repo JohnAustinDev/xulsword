@@ -66,6 +66,7 @@ const builds = {
 };
 
 const defaultEnvironment = {
+  WEBAPP_DOMAIN: 'http://localhost:1212',
   WEBAPP_CORS_ORIGIN: 'http://localhost:1212',
   WEBAPP_PROFILE_DIR: path.join(projectPaths.rootPath, 'profile_webapp'),
   WEBAPP_SERVERROOT_DIR: path.join(
