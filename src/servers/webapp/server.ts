@@ -105,10 +105,12 @@ if (sslkey && sslcrt) {
   server = http.createServer();
 }
 
+let origin: string | string[] = process.env.WEBAPP_CORS_ORIGIN || '';
+if (typeof origin === 'string' && origin.includes(',')) origin = origin.split(/\s*,\s*/);
 const io = new Server(server, {
   serveClient: false,
   cors: {
-    origin: process.env.WEBAPP_CORS_ORIGIN,
+    origin,
     methods: ['GET'],
   },
 });
