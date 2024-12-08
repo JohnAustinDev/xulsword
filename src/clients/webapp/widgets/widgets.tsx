@@ -19,7 +19,7 @@ import type { ComponentData } from '../common.ts';
 
 const socket = socketConnect(
   Number(process.env.WEBAPP_PORT),
-  window.location.origin,
+  process.env.WEBAPP_DOMAIN,
 );
 
 const widgets = getReactComponents(document).filter((c) =>
