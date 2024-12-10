@@ -304,7 +304,9 @@ if [ ! -e "$CPP/build" ]; then
   if [ -e "$LIBDIR" ]; then rm -rf "$LIBDIR"; fi
   mkdir "$LIBDIR"
   cp "$CPP/install/usr/local/lib/libxulsword-static.so" "$LIBDIR"
-  cp "/lib/x86_64-linux-gnu/libstdc++.so.6" "$LIBDIR"
+  stdc="/lib/x86_64-linux-gnu/libstdc++.so.6"
+  if [[ ! -e $stdc ]]; then stdc="/usr/lib/i386-linux-gnu/libstdc++.so.6"; fi
+  cp "$stdc" "$LIBDIR"
   if [ -z "$DBG" ]; then
     strip "$LIBDIR/"*
   fi
