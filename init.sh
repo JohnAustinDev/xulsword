@@ -173,6 +173,7 @@ function getSource() {
     echo "Archive does not exist: $ARCHIVEDIR/$gzfile"
     exit;
   fi
+  echo "Finished getSource $dirin"
 }
 
 
