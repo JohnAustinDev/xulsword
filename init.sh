@@ -54,11 +54,11 @@ if [ "$(dpkg -l $PKG_DEPS 2>&1 | grep "no packages" | wc -m)" -ne 0 ]; then
   if [ "$VAGRANT" = "guest" ]; then
     sudo dpkg --add-architecture i386
     sudo apt-get update
-    sudo apt-get install -y "$PKG_DEPS"
+    sudo apt-get install -y $PKG_DEPS
   else
     echo First, you need to install missing packages with:
     echo .
-    echo sudo apt-get install "${PKG_DEPS}"
+    echo "sudo apt-get install ${PKG_DEPS}"
     echo .
     echo Then run this script again.
     exit;
@@ -173,6 +173,8 @@ function getSource() {
     echo "Archive does not exist: $ARCHIVEDIR/$gzfile"
     exit;
   fi
+  # Sleep is required for files to be immediately modifiable in vagrant bookworm.
+  sleep 1
   echo "Finished getSource $dirin"
 }
 
