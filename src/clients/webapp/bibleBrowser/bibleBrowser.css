@@ -100,7 +100,6 @@ Search/Print cards - scroll iframe (or set iframe height if auto-height)
 }
 #player > div {
   max-width: 302px;
-  border: 1px solid lightgray;
 }
 
 #xsSearchButton {
