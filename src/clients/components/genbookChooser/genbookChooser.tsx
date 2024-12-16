@@ -34,7 +34,7 @@ const propTypes = {
 export type GenbookChooserProps = {
   panels: Array<string | null>;
   keys: Array<string | undefined>;
-  onAudioClick: (audio: VerseKeyAudioFile | GenBookAudioFile) => void;
+  onAudioClick: (audio: VerseKeyAudioFile | GenBookAudioFile, e: React.SyntheticEvent) => void;
   xulswordStateHandler: (s: XulswordStateArgType) => void;
 } & XulProps;
 
@@ -111,7 +111,7 @@ class GenbookChooser extends React.Component implements RenderPromiseComponent {
     const props = this.props as GenbookChooserProps;
     const { onAudioClick } = props;
     if ('nodeData' in node) {
-      onAudioClick(node.nodeData as GenBookAudioFile);
+      onAudioClick(node.nodeData as GenBookAudioFile, e);
       e.stopPropagation();
     }
   }
