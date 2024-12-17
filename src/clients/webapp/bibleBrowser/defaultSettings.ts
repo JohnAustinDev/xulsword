@@ -136,7 +136,7 @@ const defaultSettings: AllComponentsData = {
             tabcntl: true,
           },
           global: {
-            locale: 'ru',
+            locale: 'en',
           },
         },
       },

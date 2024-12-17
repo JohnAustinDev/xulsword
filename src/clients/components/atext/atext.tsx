@@ -749,7 +749,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
               {GI.i18n.t('', renderPromise, 'PrevChaptext')}
             </a>
             {' | '}
-            <a
+            <span
               className="aboutlink"
               data-data={JSON_attrib_stringify({
                 type: 'aboutlink',
@@ -759,7 +759,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
               {GI.i18n.t('', renderPromise, 'About this text', {
                 ns: 'bibleBrowser',
               })}
-            </a>
+            </span>
             {' | '}
             <a className="nextchaplink">
               {GI.i18n.t('', renderPromise, 'NextChaptext')}

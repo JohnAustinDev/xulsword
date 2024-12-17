@@ -200,7 +200,8 @@ html[dir='rtl'] .notebox-maximizer {
   margin: 10px;
   cursor: default;
 }
-.navlink > a {
+.navlink > a,
+.aboutlink {
   text-decoration: underline;
   cursor: pointer;
   white-space: nowrap;
