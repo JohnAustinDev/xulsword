@@ -53,6 +53,7 @@ import type { XulProps } from '../libxul/xul.tsx';
 import type { SelectORMType } from '../libxul/selectOR.tsx';
 import type { SelectVKType } from '../libxul/selectVK.tsx';
 import Subscription from '../../../subscription.ts';
+import log from '../../log.ts';
 
 const propTypes = {
   ...xulPropTypes,
@@ -158,6 +159,9 @@ export default class Xulsword
           !renderPromise2.waiting() &&
           stringHash(keys) !== stringHash(keys2)
         ) {
+          if (Build.isDevelopment) {
+            log.debug(`xulsword componentDidUpdate setState:`, { keys: keys2 });
+          }
           this.setState({ keys: keys2 } as XulswordState);
         }
       });
@@ -210,6 +214,9 @@ export default class Xulsword
   }
 
   xulswordStateHandler(s: XulswordStateArgType): void {
+    if (Build.isDevelopment) {
+      log.debug(`xulswordStateHandler setState:`, s);
+    }
     this.setState(s);
   }
 

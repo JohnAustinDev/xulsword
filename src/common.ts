@@ -1569,14 +1569,16 @@ export function findTreeNode(
 export function findTreeNodeOrder(
   searchIn: TreeNodeInfo[],
   idOrOrder: { id?: string | number; order?: number },
-  order = -1,
+  order = null as null | { order: number },
 ): { id: string | number; order: number } | null {
+  // Make order an object so it will be passed by reference.
+  if (!order) order = { order: -1 };
   if (searchIn) {
     for (let x = 0; x < searchIn.length; x += 1) {
-      order += 1;
+      order.order += 1;
       const { id, childNodes } = searchIn[x];
-      if (id === idOrOrder?.id || order === idOrOrder?.order) {
-        return { id, order };
+      if (id === idOrOrder?.id || order.order === idOrOrder?.order) {
+        return { id, order: order.order };
       }
       if (childNodes) {
         const rc = findTreeNodeOrder(childNodes, idOrOrder, order);
