@@ -69,7 +69,7 @@ export default function WidgetVK(wprops: WidgetVKProps): React.JSX.Element {
               const link = comParent?.querySelector(
                 '.update_url a, a.update_url',
               ) as HTMLAnchorElement | undefined;
-              if (link) updateHrefParams(link, { verse: `${book}.${chapter}` });
+              if (link) updateHrefParams(link, { verse: `~${book}.${chapter}` });
               break;
             }
             default: {
