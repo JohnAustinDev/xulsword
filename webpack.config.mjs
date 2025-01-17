@@ -1,6 +1,6 @@
 /*global process */
 import path from 'path';
-import { spawn } from 'child_process';
+import { spawn, execSync } from 'child_process';
 import webpack from 'webpack';
 import chalk from 'chalk';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
@@ -189,6 +189,13 @@ export default function (opts) {
 
     const allowgzip = false;
 
+    const githash = (() => {
+      try {
+        const hash = execSync('git rev-parse HEAD').toString().trim();
+        return hash;
+      } catch {return 'unknown';}
+    })();
+
     return {
       ...(development ? { devtool: 'source-map' } : {}),
 
@@ -247,7 +254,7 @@ export default function (opts) {
           ['appSrv', 'webappSrv'].includes(build)
             ? '.cjs'
             : build === 'webappClients'
-              ? '_[fullhash].js'
+              ? `_${githash.substr(0, 12)}.js`
               : '.js'
         }`,
         path: {
