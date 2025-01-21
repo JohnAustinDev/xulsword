@@ -676,6 +676,12 @@ export function highlight(
     selection,
     renderPromise,
   ).location();
+  let sv = '';
+  if (Build.isWebApp) {
+    sv = 'sv';
+    const oldsv = document.getElementById('sv');
+    if (oldsv) oldsv.id = '';
+  }
   if (verse) {
     const lv = lastverse || verse;
     // Then find the verse element(s) to highlight
@@ -689,7 +695,17 @@ export function highlight(
         if (!v.lastverse || !v.verse || v.lastverse < verse || v.verse > lv) {
           hi = false;
         }
-        if (hi) av.classList.add('hl');
+        if (hi) {
+          av.classList.add('hl');
+          if (sv && !av.id) {
+            av.id = sv;
+            setTimeout(() => {
+              const elem = document.getElementById('sv');
+              elem?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 1);
+            sv = '';
+          }
+        }
       }
 
       av = av.nextElementSibling;

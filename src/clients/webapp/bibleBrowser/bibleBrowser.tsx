@@ -120,6 +120,15 @@ socket.on('connect', () => {
         Prefs.setCharPref('global.locale', settings.prefs.global.locale);
       }
 
+      // Since servers may not receive URL fragments from browsers, any URL
+      // fragment must be handled here.
+      if (
+        window.location.href.endsWith('#sv') ||
+        frameElement?.ownerDocument?.defaultView?.location.href.endsWith('#sv')
+      ) {
+        settings.prefs.xulsword.scroll = { verseAt: 'center' };
+      }
+
       // Must set global.locale before callBatchThenCache.
       writeSettingsToPrefsStores(settings, applyUserPrefs);
       let locale = Prefs.getCharPref('global.locale');

@@ -16,9 +16,9 @@ if ("$DIST_PARENT_DIR" =~ /^\./) {
 }
 
 { my $path = $0; $path =~ s/\/[^\/]+$//; chdir("$path/../../.."); }
-
+my $xulsword = `pwd`; chomp $xulsword;
 `rm "$DIST_PARENT_DIR/dist/"*`;
-`rm -rf "./build/app/dist/"*`;
+`rm -rf "$xulsword/build/app/dist/"*`;
 
 # Sourcing for environment variables does not work in Perl, so a wrapper
 # build.sh must be used to set the environment.
@@ -34,14 +34,16 @@ close(YARN);
 
 if ("$?" eq "0") {
   my $dist = "$DIST_PARENT_DIR/dist";
-  `cp "./build/webapp/dist/webappClients/"* "$dist"`;
-  my $cmd = "sed -i 's/<\\/head>/<link href=\"\\/modules\\/custom\\/ibt\\/css\\/bibleBrowser.css\" rel=\"stylesheet\"><\\/head>/' \"$dist/bibleBrowser.html\"";
+  my $cmd = "cp $xulsword/build/webapp/dist/webappClients/* '$dist'";
+  print $cmd . "\n";
+  `$cmd`;
+  $cmd = "sed -i 's/<\\/head>/<link href=\"\\/modules\\/custom\\/ibt\\/css\\/bibleBrowser.css\" rel=\"stylesheet\"><\\/head>/' \"$dist/bibleBrowser.html\"";
   print $cmd . "\n";
   `$cmd`;
   my $libs = "ibt.libraries.yml";
-  chdir "$DIST_PARENT_DIR" || die;
+  chdir "$DIST_PARENT_DIR" || die "ERROR: Could not cd to $DIST_PARENT_DIR.\n:";
   if (-e "$libs") {
-    opendir(JSF, "$dist") || die;
+    opendir(JSF, "$dist") || die "ERROR: Could not open directory $dist.\n";
     my @files = readdir(JSF);
     closedir(JSF);
     my $file;
@@ -51,13 +53,17 @@ if ("$?" eq "0") {
           $file = $f;
           open(INF, "<:encoding(UTF-8)", "$libs") || die;
           open(OUTF, ">:encoding(UTF-8)", "$libs.tmp") || die;
-          while(<INF>) {s/(?<=\bdist\/)${bundle}_.*\.js(\.(gz|br))?(?=:)/$file/; print OUTF $_;}
+          while(<INF>) {
+            s/(?<=\bdist\/)${bundle}_.*\.js(\.(gz|br))?(?=:)/$file/;
+            print OUTF $_;
+          }
           close(INF); close(OUTF); `mv "$libs.tmp" "$libs"`;
         }
       }
     }
+  } else {
+    die "ERROR: libraries.yml does not exist at $libs.\n";
   }
 } else {
-  `echo "ERROR: react build failed."`;
-  exit 1;
+  die "ERROR: react build failed.\n";
 }
