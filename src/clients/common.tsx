@@ -73,6 +73,19 @@ export function doUntilDone(
   renderPromise.dispatch();
 }
 
+// Run a function after all render promises have been fullfilled, and none are
+// left pending.
+export function doWhenRenderPromisesDone(
+  func: () => void,
+) {
+  const myTO = setInterval(() => {
+    if (!RenderPromise.getGlobalRenderPromises().length) {
+      clearInterval(myTO);
+      func();
+    }
+  }, 250);
+}
+
 let rootRenderPromiseInst: RenderPromise | null = null;
 export function rootRenderPromise() {
   if (!rootRenderPromiseInst) {

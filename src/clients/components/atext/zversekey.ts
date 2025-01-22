@@ -10,6 +10,7 @@ import {
   getMaxChapter,
   getMaxVerse,
   getLocalizedChapterTerm,
+  doWhenRenderPromisesDone,
 } from '../../common.tsx';
 import { G, GI } from '../../G.ts';
 import { delayHandler } from '../libxul/xul.tsx';
@@ -699,10 +700,10 @@ export function highlight(
           av.classList.add('hl');
           if (sv && !av.id) {
             av.id = sv;
-            setTimeout(() => {
+            doWhenRenderPromisesDone(() => {
               const elem = document.getElementById('sv');
               elem?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, 1);
+            });
             sv = '';
           }
         }
