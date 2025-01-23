@@ -46,7 +46,7 @@ import type { XulswordState } from './components/xulsword/xulsword.tsx';
 window.webAppTextScroll = -1;
 
 // Return a renderPromise for a React functional component. For React class
-// components, instead implement RenderPromiseComponent and RenderPromiseState.
+// components, implement RenderPromiseComponent and RenderPromiseState instead.
 export function functionalComponentRenderPromise(loadingSelector?: string) {
   const [, setState] = useState(0);
   const callback = () => setState((prevState) => prevState + 1);
@@ -58,10 +58,11 @@ export function functionalComponentRenderPromise(loadingSelector?: string) {
   return { renderPromise, loadingRef };
 }
 
-// Run a function with a render promise until the function completes with the
-// render promise still empty. The function may run any number of times but is
+// Run a function taking a render promise until the function completes without
+// the render promise waiting. The function may run any number of times but is
 // guaranteed to run once from beginning to end with renderPromise.waiting()
-// as zero. So waiting() may be checked before code that should run only once.
+// being zero. This means the function must check renderPromise.waiting()
+// before any code that should only be run once.
 export function doUntilDone(
   func: (renderPromise: RenderPromise) => void,
 ): void {
@@ -73,8 +74,8 @@ export function doUntilDone(
   renderPromise.dispatch();
 }
 
-// Run a function after all render promises have been fullfilled, and none are
-// left pending.
+// Run a function after all render promises globally have been fullfilled,
+// and none are left pending.
 export function doWhenRenderPromisesDone(
   func: () => void,
 ) {
@@ -86,6 +87,8 @@ export function doWhenRenderPromisesDone(
   }, 250);
 }
 
+// Return the renderPromise that resets the root controller whenever it is
+// fulfilled.
 let rootRenderPromiseInst: RenderPromise | null = null;
 export function rootRenderPromise() {
   if (!rootRenderPromiseInst) {

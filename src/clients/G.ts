@@ -1,3 +1,4 @@
+import C from '../constant.ts';
 import {
   JSON_stringify,
   GCacheKey,
@@ -330,7 +331,7 @@ function allowed(call: GCallType): boolean {
   return false;
 }
 
-// Web App i18n always requires that the language option be specified.
+// Web App i18n always requires that lng and fallbackLng options be specified.
 function prepCall(thecall: GCallType): GCallType {
   if (!Build.isWebApp) return thecall;
   const [name, method] = thecall;
@@ -350,6 +351,7 @@ function prepCall(thecall: GCallType): GCallType {
       if (typeof options.lng !== 'string') {
         options.lng = G.Prefs.getCharPref('global.locale');
       }
+      options.fallbackLng = C.FallbackLanguage[options.lng];
       const newargs = clone(args);
       if (newargs.length) newargs[1] = options;
       return [name, method, newargs];
