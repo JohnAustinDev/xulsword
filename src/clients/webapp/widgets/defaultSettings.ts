@@ -12,6 +12,7 @@ export type WidgetVKSettings = {
   langcode: (typeof C.Locales)[number][0];
   props: Omit<SelectVKProps, 'onSelection'>;
   data?: ChaplistVKType;
+  data2?: ZipAudioDataType;
 };
 
 export type WidgetORSettings = {
@@ -20,6 +21,7 @@ export type WidgetORSettings = {
   langcode: (typeof C.Locales)[number][0];
   props: Omit<SelectORProps, 'onSelection'>;
   data: ChaplistORType;
+  data2?: ZipAudioDataType;
 };
 
 export type WidgetMenulistSettings = {
@@ -43,12 +45,24 @@ export type FileItem = {
 };
 
 export type ChaplistVKType = {
-  [bk in OSISBookType]?: Array<[chapnum: number, url: string]>;
+  [bk in OSISBookType]?: Array<[chapnum: number, url: string, size: number]>;
 };
 
 export type ChaplistORType = Array<
-  [orderSlashDelimited: string, chapterSlashDelimited: string, url: string]
+  [
+    orderSlashDelimited: string,
+    chapterSlashDelimited: string,
+    url: string,
+    size: number,
+  ]
 >;
+
+export type ZipAudioDataType = {
+  link: string;
+  linkmulti: string;
+  downloadUrl: string;
+  zips: { [parent: string]: Array<[ch1: number, ch2: number, size: number]> };
+};
 
 const defaultSettings: AllComponentsData = {
   react: {
@@ -74,8 +88,8 @@ const defaultSettings: AllComponentsData = {
         },
       },
       data: [
-        ['0', 'First chapter', ''],
-        ['1', 'Second chapter', ''],
+        ['0', 'First chapter', '', 1000000],
+        ['1', 'Second chapter', '', 1000000],
       ],
     },
 

@@ -1,6 +1,11 @@
 import React, { useState } from 'react';
 import log from '../../log.ts';
-import { createNodeList, getProps, updateHrefParams } from '../common.ts';
+import {
+  createNodeList,
+  getProps,
+  updateDownloadLinks,
+  updateHrefParams,
+} from '../common.ts';
 import SelectOR from '../../components/libxul/selectOR.tsx';
 
 import type {
@@ -21,7 +26,7 @@ export type WidgetORState = Omit<SelectORProps, 'onSelection'>;
 
 export default function WidgetOR(wprops: WidgetORProps): React.JSX.Element {
   const { compid, settings } = wprops;
-  const { action, props, data } = settings;
+  const { action, props, data, data2 } = settings;
 
   data.forEach((x) => {
     x[0] = x[0].toString();
@@ -48,9 +53,11 @@ export default function WidgetOR(wprops: WidgetORProps): React.JSX.Element {
             }
           }
           const link = comParent?.querySelector(
-          '.update_url a, a.update_url',
+            '.update_url a, a.update_url',
           ) as HTMLAnchorElement | undefined;
           if (link) updateHrefParams(link, { key: `${key}` });
+          if (comParent && data2)
+            updateDownloadLinks(comParent, selection, data, data2);
           break;
         }
         default: {

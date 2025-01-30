@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { diff } from '../../../common.ts';
 import log from '../../log.ts';
-import { getProps, updateHrefParams } from '../common.ts';
+import { getProps, updateDownloadLinks, updateHrefParams } from '../common.ts';
 import SelectVK from '../../components/libxul/selectVK.tsx';
 
 import type {
@@ -26,11 +26,11 @@ export type WidgetVKState = Omit<SelectVKProps, 'onSelection'>;
 
 export default function WidgetVK(wprops: WidgetVKProps): React.JSX.Element {
   const { compid, settings } = wprops;
-  const { action, props, data } = settings;
+  const { action, props, data, data2 } = settings;
 
   const onSelectVK = (selection?: SelectVKType): void => {
     if (selection) {
-      const { book } = selection;
+      const { book, chapter } = selection;
       setState((ps) => {
         const prevState = ps as SelectVKProps;
         let newState = prevState;
@@ -48,7 +48,6 @@ export default function WidgetVK(wprops: WidgetVKProps): React.JSX.Element {
           if (typeof diff(s, prevState) !== 'undefined') newState = s;
         }
         if (action && newState !== prevState) {
-          const { book, chapter } = selection;
           switch (action) {
             case 'bible_audio_Play': {
               const comParent = document.getElementById(compid)?.parentElement;
@@ -66,10 +65,7 @@ export default function WidgetVK(wprops: WidgetVKProps): React.JSX.Element {
                   player.play().catch(() => {});
                 }
               }
-              const link = comParent?.querySelector(
-                '.update_url a, a.update_url',
-              ) as HTMLAnchorElement | undefined;
-              if (link) updateHrefParams(link, { verse: `~${book}.${chapter}` });
+              updateLinks(selection);
               break;
             }
             default: {
@@ -81,6 +77,18 @@ export default function WidgetVK(wprops: WidgetVKProps): React.JSX.Element {
       });
     }
   };
+
+  const updateLinks = (selection: SelectVKType) => {
+    const { book, chapter } = selection;
+    const comParent = document.getElementById(compid)?.parentElement;
+    const link = comParent?.querySelector(
+      '.update_url a, a.update_url',
+    ) as HTMLAnchorElement | undefined;
+    if (link)
+      updateHrefParams(link, { verse: `~${book}.${chapter}` });
+    if (comParent && data && data2)
+      updateDownloadLinks(comParent, selection, data, data2);
+  }
 
   const [state, setState] = useState(() => {
     const s = getProps(props, {
@@ -112,6 +120,9 @@ export default function WidgetVK(wprops: WidgetVKProps): React.JSX.Element {
           .sort((a, b) => a - b) ?? [vk.chapter];
       }
     }
+
+    updateLinks(s.initialVK);
+
     return s;
   });
 

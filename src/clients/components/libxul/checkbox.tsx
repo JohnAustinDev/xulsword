@@ -26,7 +26,7 @@ type CheckboxProps = {
 // totally controlled component: If the 'initial' prop is
 // undefined, the component will be a totally controlled component
 // (no acting state of its own). If the 'initial' prop is
-// defined, any checkbox prop value will be ignored.
+// defined, any checked prop value will be ignored.
 type CheckboxState = {
   checked: boolean;
 };

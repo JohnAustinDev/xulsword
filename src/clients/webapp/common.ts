@@ -1,6 +1,6 @@
 import C from '../../constant.ts';
 import S from '../../defaultPrefs.ts';
-import { clone, hierarchy } from '../../common.ts';
+import { clone, hierarchy, sanitizeHTML } from '../../common.ts';
 import Prefs from './prefs.ts';
 
 import type { TreeNodeInfo } from '@blueprintjs/core';
@@ -10,17 +10,23 @@ import type {
   PrefValue,
   TreeNodeInfoPref,
 } from '../../type.ts';
-import type { SelectORProps } from '../components/libxul/selectOR.tsx';
+import type {
+  SelectORMType,
+  SelectORProps,
+} from '../components/libxul/selectOR.tsx';
 import {
   setEmptyPrefs,
   type BibleBrowserSettings as BibleBrowserData,
 } from './bibleBrowser/defaultSettings.ts';
 import type {
   ChaplistORType,
+  ChaplistVKType,
   WidgetMenulistSettings,
   WidgetORSettings,
   WidgetVKSettings,
+  ZipAudioDataType,
 } from './widgets/defaultSettings.ts';
+import { SelectVKType } from '../components/libxul/selectVK.tsx';
 
 export type AllComponentsData = {
   react: {
@@ -171,7 +177,7 @@ export function createNodeList(
   chaplist: ChaplistORType,
   props: Omit<SelectORProps, 'onSelection'>,
 ): void {
-  // chaplist members are like: ['2/4/5', The/chapter/titles', 'url']
+  // chaplist members are like: ['2/4/5', The/chapter/titles', 'url', 1054765]
   // The Drupal chaplist is file data, and so does not include any parent
   // entries (as required by hierarchy()). So parents must be added before
   // sorting.
@@ -187,7 +193,7 @@ export function createNodeList(
       o.pop();
     }
     if (n.length) {
-      return [o.concat('').join('/'), n.concat('').join('/'), ''];
+      return [o.concat('').join('/'), n.concat('').join('/'), '', 1];
     }
     return null;
   };
@@ -246,6 +252,129 @@ export function createNodeList(
   }
 }
 
+export function updateDownloadLinks(
+  parentElement: HTMLElement,
+  selection: SelectVKType | SelectORMType,
+  data: ChaplistVKType | ChaplistORType,
+  data2: ZipAudioDataType,
+) {
+  const { downloadUrl, zips } = data2;
+  let parent: string | undefined;
+  let chapter: number | undefined;
+  let size: number | undefined;
+  let ch1: number | undefined;
+  let ch2: number | undefined;
+  let sizes: number | undefined;
+  if ('keys' in selection && Array.isArray(data)) {
+    const { keys } = selection;
+    const [key] = keys;
+    const da = data.find((x) => x[1] === key);
+    if (da) {
+      const [order, , , fsize] = da;
+      size = fsize;
+      const os = order.split('/');
+      chapter = Number(os.pop());
+      parent = os.join('/');
+      if (!parent.startsWith('/')) parent = `/${parent}`;
+    }
+  } else if ('book' in selection && !Array.isArray(data)) {
+    const { book, chapter: ch } = selection;
+    parent = book;
+    chapter = ch;
+    if (book in data && Array.isArray(data[book])) {
+      const c = data[book].find((x) => x[0] == chapter);
+      if (typeof c !== 'undefined') [, , size] = c;
+    }
+  }
+  if (!parent) return;
+
+  if (parent in zips && typeof chapter === 'number') {
+    const file = zips[parent].find(
+      (x) => typeof chapter === 'number' && x[0] <= chapter && chapter <= x[1],
+    );
+    if (file) [ch1, ch2, sizes] = file;
+  }
+
+  if (typeof chapter === 'number' && typeof size === 'number') {
+    const slinkp = parentElement?.querySelector('.update_url_dls') as
+      | HTMLElement
+      | undefined;
+    if (slinkp) {
+      const slink = (
+        slinkp.tagName === 'A' ? slinkp : slinkp.querySelector('a[type="audio/mpeg"]')
+      ) as HTMLAnchorElement | undefined;
+      if (slink) {
+        updateDownloadLink(
+          data2,
+          slink,
+          parent,
+          chapter,
+          chapter,
+          size,
+          'none',
+        );
+        slinkp.removeAttribute('style');
+      }
+    }
+  }
+
+  if (
+    typeof ch1 === 'number' &&
+    typeof ch2 === 'number' &&
+    typeof sizes === 'number'
+  ) {
+    const mlinkp = parentElement?.querySelector('.update_url_dlm') as
+      | HTMLElement
+      | undefined;
+    if (mlinkp) {
+      const mlink = (
+        mlinkp.tagName === 'A' ? mlinkp : mlinkp.querySelector('a[type="audio/mpeg"]')
+      ) as HTMLAnchorElement | undefined;
+      if (mlink) {
+        updateDownloadLink(data2, mlink, parent, ch1, ch2, sizes, 'zip');
+        if (ch1 === ch2) mlinkp.setAttribute('style', 'display:none');
+        else mlinkp.removeAttribute('style');
+      }
+    }
+  }
+}
+
+function updateDownloadLink(
+  data2: ZipAudioDataType,
+  anchor: HTMLAnchorElement,
+  parent: string,
+  chapter1: number,
+  chapter2: number,
+  bytes: number,
+  packType: 'zip' | 'none',
+) {
+  const { link, linkmulti, downloadUrl } = data2;
+
+  let href = downloadUrl;
+  href = href.replace('PARENT', parent);
+  href = href.replace('CHAPTER1', chapter1.toString());
+  href = href.replace('CHAPTER2', chapter2.toString());
+  href = href.replace('PACKAGE', packType);
+  anchor.href = href;
+
+  let textContent = chapter1 === chapter2 ? link : linkmulti;
+  textContent = textContent.replace('PARENT', parent);
+  textContent = textContent.replace('CHAPTER1', chapter1.toString());
+  textContent = textContent.replace('CHAPTER2', chapter2.toString());
+  anchor.textContent = textContent;
+
+  if (anchor.parentElement?.tagName === 'SPAN') {
+    const selem = anchor.parentElement.nextElementSibling;
+    if (selem && selem.tagName === 'SPAN') {
+      const fnum = bytes / 1000000;
+      const snum = fnum.toFixed(fnum > 10 ? 1 : 2);
+      selem.textContent = `(${snum} MB)`;
+    }
+  }
+}
+
+// Update the href of an anchor element by setting or changing the given
+// params to new values.
 export function updateHrefParams(
   anchor: HTMLAnchorElement,
   params: Record<string, string | number>,
