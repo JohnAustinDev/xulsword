@@ -59,6 +59,7 @@ export type ChaplistORType = Array<
 
 export type ZipAudioDataType = {
   link: string;
+  linkbook: string;
   linkmulti: string;
   downloadUrl: string;
   zips: { [parent: string]: Array<[ch1: number, ch2: number, size: number]> };

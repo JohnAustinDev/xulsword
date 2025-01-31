@@ -1,6 +1,6 @@
 import C from '../../constant.ts';
 import S from '../../defaultPrefs.ts';
-import { clone, hierarchy, sanitizeHTML } from '../../common.ts';
+import { clone, hierarchy } from '../../common.ts';
 import Prefs from './prefs.ts';
 
 import type { TreeNodeInfo } from '@blueprintjs/core';
@@ -275,7 +275,7 @@ export function updateDownloadLinks(
       const os = order.split('/');
       chapter = Number(os.pop());
       parent = os.join('/');
-      if (!parent.startsWith('/')) parent = `/${parent}`;
+      if (parent.startsWith('/')) parent = parent.substring(1);
     }
   } else if ('book' in selection && !Array.isArray(data)) {
     const { book, chapter: ch } = selection;
@@ -305,6 +305,7 @@ export function updateDownloadLinks(
       ) as HTMLAnchorElement | undefined;
       if (slink) {
         updateDownloadLink(
+          data,
           data2,
           slink,
           parent,
@@ -331,7 +332,7 @@ export function updateDownloadLinks(
         mlinkp.tagName === 'A' ? mlinkp : mlinkp.querySelector('a[type="audio/mpeg"]')
       ) as HTMLAnchorElement | undefined;
       if (mlink) {
-        updateDownloadLink(data2, mlink, parent, ch1, ch2, sizes, 'zip');
+        updateDownloadLink(data, data2, mlink, parent, ch1, ch2, sizes, 'zip');
         if (ch1 === ch2) mlinkp.setAttribute('style', 'display:none');
         else mlinkp.removeAttribute('style');
       }
@@ -340,6 +341,7 @@ export function updateDownloadLinks(
 }
 
 function updateDownloadLink(
+  data: ChaplistVKType | ChaplistORType,
   data2: ZipAudioDataType,
   anchor: HTMLAnchorElement,
   parent: string,
@@ -348,7 +350,7 @@ function updateDownloadLink(
   bytes: number,
   packType: 'zip' | 'none',
 ) {
-  const { link, linkmulti, downloadUrl } = data2;
+  const { link, linkmulti, linkbook, downloadUrl } = data2;
 
   let href = downloadUrl;
   href = href.replace('PARENT', parent);
@@ -357,10 +359,23 @@ function updateDownloadLink(
   href = href.replace('PACKAGE', packType);
   anchor.href = href;
 
+  const isBible = Object.values(C.SupportedBooks).some((bg: any) => bg.includes(parent));
   let textContent = chapter1 === chapter2 ? link : linkmulti;
+  if (isBible && chapter1 == 1 && !Array.isArray(data) && parent in data &&
+    chapter2 == (data as any)[parent].length
+  ) {
+    textContent = linkbook;
+  }
   textContent = textContent.replace('PARENT', parent);
-  textContent = textContent.replace('CHAPTER1', chapter1.toString());
-  textContent = textContent.replace('CHAPTER2', chapter2.toString());
+  if (isBible) {
+    textContent = textContent.replace('CHAPTER1', chapter1.toString());
+    textContent = textContent.replace('CHAPTER2', chapter2.toString());
+  } else {
+    // General book chapters begin at zero, but this text is for end users who
+    // expect the first chapter to be one.
+    textContent = textContent.replace('CHAPTER1', (chapter1 + 1).toString());
+    textContent = textContent.replace('CHAPTER2', (chapter2 + 1).toString());
+  }
   anchor.textContent = textContent;
 
   if (anchor.parentElement?.tagName === 'SPAN') {

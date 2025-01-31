@@ -52,12 +52,7 @@ export default function WidgetOR(wprops: WidgetORProps): React.JSX.Element {
               player.play().catch(() => {});
             }
           }
-          const link = comParent?.querySelector(
-            '.update_url a, a.update_url',
-          ) as HTMLAnchorElement | undefined;
-          if (link) updateHrefParams(link, { key: `${key}` });
-          if (comParent && data2)
-            updateDownloadLinks(comParent, selection, data, data2);
+          updateLinks(selection);
           break;
         }
         default: {
@@ -67,8 +62,20 @@ export default function WidgetOR(wprops: WidgetORProps): React.JSX.Element {
     }
   };
 
+  const updateLinks = (selection: SelectORMType) => {
+    const { keys } = selection;
+    const [key] = keys;
+    const comParent = document.getElementById(compid)?.parentElement;
+    const link = comParent?.querySelector(
+      '.update_url a, a.update_url',
+    ) as HTMLAnchorElement | undefined;
+    if (link) updateHrefParams(link, { key: `${key}` });
+    if (comParent && data2)
+      updateDownloadLinks(comParent, selection, data, data2);
+  }
+
   const [state] = useState(() => {
-    return getProps(props, {
+    const s = getProps(props, {
       initialORM: { otherMod: 'genbk', keys: [] },
       nodeLists: [],
       otherMods: [],
@@ -76,6 +83,10 @@ export default function WidgetOR(wprops: WidgetORProps): React.JSX.Element {
       enableMultipleSelection: false,
       enableParentSelection: false,
     }) as WidgetORState;
+
+    updateLinks(s.initialORM);
+
+    return s;
   });
 
   return <SelectOR onSelection={onSelectOR} {...(state as WidgetORState)} />;
