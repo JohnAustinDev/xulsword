@@ -81,14 +81,13 @@ export default function WidgetVK(wprops: WidgetVKProps): React.JSX.Element {
   const updateLinks = (selection: SelectVKType, isReset = false) => {
     const { book, chapter } = selection;
     const comParent = document.getElementById(compid)?.parentElement;
-    const link = comParent?.querySelector(
-      '.update_url a, a.update_url',
-    ) as HTMLAnchorElement | undefined;
-    if (link)
-      updateHrefParams(link, { verse: `~${book}.${chapter}` });
+    const link = comParent?.querySelector('.update_url a, a.update_url') as
+      | HTMLAnchorElement
+      | undefined;
+    if (link) updateHrefParams(link, { verse: `~${book}.${chapter}` });
     if (comParent && data && data2)
       updateDownloadLinks(comParent, selection, data, data2, isReset);
-  }
+  };
 
   const [state, setState] = useState(() => {
     const s = getProps(props, {

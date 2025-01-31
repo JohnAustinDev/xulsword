@@ -66,13 +66,13 @@ export default function WidgetOR(wprops: WidgetORProps): React.JSX.Element {
     const { keys } = selection;
     const [key] = keys;
     const comParent = document.getElementById(compid)?.parentElement;
-    const link = comParent?.querySelector(
-      '.update_url a, a.update_url',
-    ) as HTMLAnchorElement | undefined;
+    const link = comParent?.querySelector('.update_url a, a.update_url') as
+      | HTMLAnchorElement
+      | undefined;
     if (link) updateHrefParams(link, { key: `${key}` });
     if (comParent && data2)
       updateDownloadLinks(comParent, selection, data, data2, isReset);
-  }
+  };
 
   const [state] = useState(() => {
     const s = getProps(props, {

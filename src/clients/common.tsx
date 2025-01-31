@@ -76,9 +76,7 @@ export function doUntilDone(
 
 // Run a function after all render promises globally have been fullfilled,
 // and none are left pending.
-export function doWhenRenderPromisesDone(
-  func: () => void,
-) {
+export function doWhenRenderPromisesDone(func: () => void) {
   const myTO = setInterval(() => {
     if (!RenderPromise.getGlobalRenderPromises().length) {
       clearInterval(myTO);

@@ -34,7 +34,10 @@ const propTypes = {
 export type GenbookChooserProps = {
   panels: Array<string | null>;
   keys: Array<string | undefined>;
-  onAudioClick: (audio: VerseKeyAudioFile | GenBookAudioFile, e: React.SyntheticEvent) => void;
+  onAudioClick: (
+    audio: VerseKeyAudioFile | GenBookAudioFile,
+    e: React.SyntheticEvent,
+  ) => void;
   xulswordStateHandler: (s: XulswordStateArgType) => void;
 } & XulProps;
 

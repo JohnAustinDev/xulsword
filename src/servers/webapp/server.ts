@@ -106,7 +106,8 @@ if (sslkey && sslcrt) {
 }
 
 let origin: string | string[] = process.env.WEBAPP_CORS_ORIGIN || '';
-if (typeof origin === 'string' && origin.includes(',')) origin = origin.split(/\s*,\s*/);
+if (typeof origin === 'string' && origin.includes(','))
+  origin = origin.split(/\s*,\s*/);
 const io = new Server(server, {
   serveClient: false,
   cors: {

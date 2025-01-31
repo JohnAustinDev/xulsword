@@ -9,11 +9,7 @@ import {
 } from '../common.ts';
 import { G } from './G.ts'; // web app G calls must be preloaded!
 
-import type {
-  LocationORType,
-  LocationVKType,
-  OSISBookType,
-} from '../type.ts';
+import type { LocationORType, LocationVKType, OSISBookType } from '../type.ts';
 import type { HTMLElementSearchModes } from '../common.ts';
 import verseKey from './verseKey.ts';
 
