@@ -78,7 +78,7 @@ export default function WidgetVK(wprops: WidgetVKProps): React.JSX.Element {
     }
   };
 
-  const updateLinks = (selection: SelectVKType) => {
+  const updateLinks = (selection: SelectVKType, isReset = false) => {
     const { book, chapter } = selection;
     const comParent = document.getElementById(compid)?.parentElement;
     const link = comParent?.querySelector(
@@ -87,7 +87,7 @@ export default function WidgetVK(wprops: WidgetVKProps): React.JSX.Element {
     if (link)
       updateHrefParams(link, { verse: `~${book}.${chapter}` });
     if (comParent && data && data2)
-      updateDownloadLinks(comParent, selection, data, data2);
+      updateDownloadLinks(comParent, selection, data, data2, isReset);
   }
 
   const [state, setState] = useState(() => {
@@ -121,7 +121,7 @@ export default function WidgetVK(wprops: WidgetVKProps): React.JSX.Element {
       }
     }
 
-    updateLinks(s.initialVK);
+    updateLinks(s.initialVK, true);
 
     return s;
   });

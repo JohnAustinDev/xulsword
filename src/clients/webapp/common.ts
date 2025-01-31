@@ -257,8 +257,9 @@ export function updateDownloadLinks(
   selection: SelectVKType | SelectORMType,
   data: ChaplistVKType | ChaplistORType,
   data2: ZipAudioDataType,
+  isReset: boolean,
 ) {
-  const { downloadUrl, zips } = data2;
+  const { zips } = data2;
   let parent: string | undefined;
   let chapter: number | undefined;
   let size: number | undefined;
@@ -301,7 +302,9 @@ export function updateDownloadLinks(
       | undefined;
     if (slinkp) {
       const slink = (
-        slinkp.tagName === 'A' ? slinkp : slinkp.querySelector('a[type="audio/mpeg"]')
+        slinkp.tagName === 'A'
+          ? slinkp
+          : slinkp.querySelector('a[type="audio/mpeg"]')
       ) as HTMLAnchorElement | undefined;
       if (slink) {
         updateDownloadLink(
@@ -315,6 +318,10 @@ export function updateDownloadLinks(
           'none',
         );
         slinkp.removeAttribute('style');
+        if (!isReset)
+          jQuery(parentElement.querySelectorAll('.update_url_dls'))
+            .fadeTo(1, 0)
+            .fadeTo(1000, 1);
       }
     }
   }
@@ -329,12 +336,20 @@ export function updateDownloadLinks(
       | undefined;
     if (mlinkp) {
       const mlink = (
-        mlinkp.tagName === 'A' ? mlinkp : mlinkp.querySelector('a[type="audio/mpeg"]')
+        mlinkp.tagName === 'A'
+          ? mlinkp
+          : mlinkp.querySelector('a[type="audio/mpeg"]')
       ) as HTMLAnchorElement | undefined;
       if (mlink) {
         updateDownloadLink(data, data2, mlink, parent, ch1, ch2, sizes, 'zip');
         if (ch1 === ch2) mlinkp.setAttribute('style', 'display:none');
-        else mlinkp.removeAttribute('style');
+        else {
+          mlinkp.removeAttribute('style');
+          if (!isReset)
+            jQuery(parentElement.querySelectorAll('.update_url_dlm'))
+              .fadeTo(1, 0)
+              .fadeTo(1000, 1);
+        }
       }
     }
   }
@@ -359,9 +374,15 @@ function updateDownloadLink(
   href = href.replace('PACKAGE', packType);
   anchor.href = href;
 
-  const isBible = Object.values(C.SupportedBooks).some((bg: any) => bg.includes(parent));
+  const isBible = Object.values(C.SupportedBooks).some((bg: any) =>
+    bg.includes(parent),
+  );
   let textContent = chapter1 === chapter2 ? link : linkmulti;
-  if (isBible && chapter1 == 1 && !Array.isArray(data) && parent in data &&
+  if (
+    isBible &&
+    chapter1 == 1 &&
+    !Array.isArray(data) &&
+    parent in data &&
     chapter2 == (data as any)[parent].length
   ) {
     textContent = linkbook;

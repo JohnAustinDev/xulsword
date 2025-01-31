@@ -20,21 +20,11 @@
 .selectvk .vk-book {
   margin-inline-end: 10px;
 }
-.selectvk .vk-chapter select,
-.selectvk .vk-lastchapter select,
-.selectvk .vk-verse select,
-.selectvk .vk-lastverse select {
-  width: 3.1em;
-}
 .selectvk .spacer {
   width: 10px;
 }
 .selectvk .vk-vkmod {
   margin-inline-start: 10px;
-}
-.selectvk .vk-book select,
-.selectvk .vk-vkmod select {
-  width: 150px;
 }
 
 .selectvk span.name {

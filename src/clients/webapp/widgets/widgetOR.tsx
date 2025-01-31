@@ -62,7 +62,7 @@ export default function WidgetOR(wprops: WidgetORProps): React.JSX.Element {
     }
   };
 
-  const updateLinks = (selection: SelectORMType) => {
+  const updateLinks = (selection: SelectORMType, isReset = false) => {
     const { keys } = selection;
     const [key] = keys;
     const comParent = document.getElementById(compid)?.parentElement;
@@ -71,7 +71,7 @@ export default function WidgetOR(wprops: WidgetORProps): React.JSX.Element {
     ) as HTMLAnchorElement | undefined;
     if (link) updateHrefParams(link, { key: `${key}` });
     if (comParent && data2)
-      updateDownloadLinks(comParent, selection, data, data2);
+      updateDownloadLinks(comParent, selection, data, data2, isReset);
   }
 
   const [state] = useState(() => {
@@ -84,7 +84,7 @@ export default function WidgetOR(wprops: WidgetORProps): React.JSX.Element {
       enableParentSelection: false,
     }) as WidgetORState;
 
-    updateLinks(s.initialORM);
+    updateLinks(s.initialORM, true);
 
     return s;
   });

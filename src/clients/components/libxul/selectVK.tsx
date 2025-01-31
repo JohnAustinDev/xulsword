@@ -367,7 +367,7 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
       'chapter',
       chapter,
       chapters,
-      1,
+      chapters ? Math.min(...chapters) : 1,
       v11n && book ? getMaxChapter(v11n, book, renderPromise) : 0,
     );
 
@@ -375,7 +375,7 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
       'lastchapter',
       lastchapter,
       lastchapters,
-      chapter || 1,
+      chapter || (lastchapters ? Math.min(...lastchapters) : 1),
       v11n && book ? getMaxChapter(v11n, book, renderPromise) : 0,
     );
 
@@ -383,7 +383,7 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
       'verse',
       verse,
       verses,
-      1,
+      verses ? Math.min(...verses) : 1,
       v11n ? getMaxVerse(v11n, `${book}.${chapter}`, renderPromise) : 0,
     );
 
@@ -391,7 +391,8 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
       'lastverse',
       lastverse,
       lastverses,
-      (newlastchapters.length === 0 && verse) || 1,
+      (newlastchapters.length === 0 && verse) ||
+        (lastverses ? Math.min(...lastverses) : 1),
       v11n
         ? getMaxVerse(
             v11n,
@@ -456,7 +457,7 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
         {newchapters.length > 0 && (
           <Menulist
             className="vk-chapter"
-            value={(c || 1).toString()}
+            value={c.toString()}
             options={newchapters}
             disabled={disabled || !selectedModuleIsInstalled}
             onChange={handleChange}
@@ -467,7 +468,7 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
             <Label className="colon" value=":" />
             <Menulist
               className="vk-verse"
-              value={(v || 1).toString()}
+              value={(v ?? 1).toString()}
               options={newverses}
               disabled={disabled || !selectedModuleIsInstalled}
               onChange={handleChange}
@@ -481,7 +482,7 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
         {newlastchapters.length > 0 && (
           <Menulist
             className="vk-lastchapter"
-            value={(lc || chapter || 1).toString()}
+            value={(lc || chapter).toString()}
             options={newlastchapters}
             disabled={disabled || !selectedModuleIsInstalled}
             onChange={handleChange}
@@ -493,7 +494,7 @@ class SelectVK extends React.Component implements RenderPromiseComponent {
         {newlastverses.length > 0 && (
           <Menulist
             className="vk-lastverse"
-            value={(lv || verse || 1).toString()}
+            value={((lv || verse) ?? 1).toString()}
             options={newlastverses}
             disabled={disabled || !selectedModuleIsInstalled}
             onChange={handleChange}
