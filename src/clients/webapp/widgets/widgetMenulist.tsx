@@ -47,27 +47,25 @@ export default function WidgetMenulist(
             const a = Array.from(
               elem.querySelectorAll('.update_url a, a.update_url'),
             );
-            if (a.length && a.length === links.length) {
-              links.forEach((link, x) => {
-                const { relurl, size } = link;
-                const anchor = a[x];
-                if (anchor && relurl) {
-                  const root = urlroot.replace(/\/$/, '');
-                  const rel = relurl.replace(/^\//, '');
-                  anchor.setAttribute('href', `${root}/${rel}`);
-                  anchor.textContent = optionText(link, false);
-                  if (
-                    typeof size !== 'undefined' &&
-                    anchor.parentElement?.tagName === 'SPAN'
-                  ) {
-                    const sizeSpan = anchor.parentElement.nextElementSibling;
-                    if (sizeSpan && sizeSpan.tagName === 'SPAN') {
-                      sizeSpan.textContent = size ? ` (${size})` : '';
-                    }
+            links.forEach((link, x) => {
+              const { relurl, size } = link;
+              const anchor = a[x];
+              if (anchor && relurl) {
+                const root = urlroot.replace(/\/$/, '');
+                const rel = relurl.replace(/^\//, '');
+                anchor.setAttribute('href', `${root}/${rel}`);
+                anchor.textContent = optionText(link, false);
+                if (
+                  typeof size !== 'undefined' &&
+                  anchor.parentElement?.tagName === 'SPAN'
+                ) {
+                  const sizeSpan = anchor.parentElement.nextElementSibling;
+                  if (sizeSpan && sizeSpan.tagName === 'SPAN') {
+                    sizeSpan.textContent = size ? ` (${size})` : '';
                   }
                 }
-              });
-            }
+              }
+            });
           }
           break;
         }
