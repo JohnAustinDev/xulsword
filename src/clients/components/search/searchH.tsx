@@ -154,6 +154,7 @@ export async function search(xthis: Search): Promise<boolean> {
   if (!module || !(module in G.Tab)) return false;
 
   let hasIndex = GI.LibSword.luceneEnabled(true, renderPromise, module);
+  if (Build.isWebApp && !hasIndex) return false;
 
   if (!hasIndex) {
     hasIndex = await autoCreateSearchIndex(xthis, module, renderPromise);

@@ -16,10 +16,12 @@ import {
   JSON_stringify,
   isInvalidWebAppData,
 } from '../../common.ts';
+import Subscription from '../../subscription.ts';
 import Cache from '../../cache.ts';
 import C from '../../constant.ts';
 import { GI } from './G.ts';
 import handleGlobal from '../handleG.ts';
+import { resetMain } from '../common.ts';
 import Dirs from '../components/dirs.ts';
 import LibSword from '../components/libsword.ts';
 
@@ -91,6 +93,22 @@ const AvailableLanguages = [
 i18nInit('en').catch((er) => {
   log.error(`Server i18nInit('en') error: ${er}`);
 });
+
+Subscription.subscribe.resetMain(() => {
+  LibSword.quit();
+  Cache.clear();
+  LibSword.init();
+});
+setInterval(() => {
+  const reset = Dirs.xsModsCommon.append('reset');
+  if (reset.exists()) {
+    reset.remove();
+    if (!reset.exists()) {
+      log.warn(`Resetting server after reset file detection.`);
+      resetMain();
+    }
+  }
+}, 5000);
 
 const sslkey = process.env.SERVER_KEY_PEM;
 const sslcrt = process.env.SERVER_CRT_PEM;

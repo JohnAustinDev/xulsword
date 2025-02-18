@@ -589,7 +589,7 @@ export default class Search
                       <Vbox align="center">
                         <Button
                           id="createIndexButton"
-                          disabled={progress !== -1}
+                          disabled={Build.isWebApp || progress !== -1}
                           onClick={handler}
                         >
                           {GI.i18n.t('', renderPromise, 'createIndex.label')}
