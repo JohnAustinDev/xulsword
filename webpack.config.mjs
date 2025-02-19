@@ -77,7 +77,6 @@ const defaultEnvironment = {
   WEBAPP_RESOURCE_DIR: path.join(
     projectPaths.rootPath,
     'profile_webapp',
-    'web',
     'resources',
   ),
   WEBAPP_PUBPATHS: '/',
