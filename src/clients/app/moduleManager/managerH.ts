@@ -849,7 +849,7 @@ export async function switchRepo(
     const cancel: Parameters<GType['Module']['cancel']>[0] = [];
     rows.forEach((r) => {
       const drowWas = repotable.data[r];
-      const drow = repoTableData[r].slice() as TRepositoryTableRow;
+      const drow = repoTableData[r] as TRepositoryTableRow;
       const unswitchable = !drowWas || drowWas[RepCol.iInfo].repo.builtin;
       if (drow && !unswitchable) {
         if (
