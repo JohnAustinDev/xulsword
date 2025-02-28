@@ -100,7 +100,7 @@ Subscription.subscribe.resetMain(() => {
   LibSword.init();
 });
 setInterval(() => {
-  const reset = Dirs.xsAudio.append('reset');
+  const reset = Dirs.xsModsUser.append('reset');
   if (reset.exists()) {
     reset.remove();
     if (!reset.exists()) {
