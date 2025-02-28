@@ -9839,8 +9839,8 @@ __metadata:
 
 "libxulsword@file:./libxulsword::locator=xulsword%40workspace%3A.":
   version: 1.5.6
-  resolution: "libxulsword@file:./libxulsword#./libxulsword::hash=cbd662&locator=xulsword%40workspace%3A."
-  checksum: 10c0/da543f18cd1745da2fcd321d73f216c78b9e168b710b1d61be27fe583948c68dc1545c76a476ac74d6aed3fc0b7352de820525c04503cc8fecff8428fa8a6b11
+  resolution: "libxulsword@file:./libxulsword#./libxulsword::hash=ee2a6d&locator=xulsword%40workspace%3A."
+  checksum: 10c0/d67f12bd8e826376e3bd5ab56cac502d1808bef197d84c49e9e30e60ee643833a9ef29df77d7529bb5dd1d876190a246b1559a63122271ede53f6b241818e35a
   languageName: node
   linkType: hard
 
