@@ -1,3 +1,6 @@
+.audio-icon {
+  color: var(--color-primary);
+}
 .audio-icon span {
   cursor: pointer;
 }

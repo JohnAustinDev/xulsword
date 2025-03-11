@@ -1,3 +1,25 @@
+:root {
+  /* Theme Colors
+
+  (all currently unused except --dark)
+
+  */
+  --color-primary: #2d72d2;
+  --color-primary-light: #f2e8dd;
+  --color-secondary: #f0b12e;
+  --color-secondary2: #462476;
+  --color-secondary3: #a8a78f;
+  --bg-body: #f9f6f3;
+  --text-color: #4a4a4a;
+  --bold-color: #222222;
+  --light: #fffbf6;
+  --dark: #222222;
+  --border: #dbdbd3;
+  --shadow: 0 0 8px 1px #cccccc;
+  --font-text: "Open Sans", sans-serif;
+  --font-heading: "Roboto", sans-serif;
+}
+
 /* By default layouts should fill their windows without scrollbars */
 html,
 body,
