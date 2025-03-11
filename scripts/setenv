@@ -54,6 +54,7 @@ export XSModsUser_DIR=~/.config/Electron/resources
 ###############################################################################
 # libxulsword Cpp build environment variables:
 ###############################################################################
+export LD_LIBRARY_PATH='./Cpp/lib'
 
 export LIBXULSWORD_MAJOR=1
 export LIBXULSWORD_MINOR=5

@@ -562,13 +562,14 @@ class Atext extends React.Component implements RenderPromiseComponent {
       | 'modkey'
       | 'place'
       | 'show'
+      | 'columns'
     >,
     i: number,
     flag: 'overwrite' | 'prepend' | 'append',
     xulswordState: AtextPropsType['xulswordState'],
     renderPromise: RenderPromise,
   ) {
-    const { sbref, nbref } = this;
+    const { sbref, nbref, navlinks } = this;
     const sbe = sbref !== null ? sbref.current : null;
     const nbe = nbref !== null ? nbref.current : null;
     if (sbe && nbe) {
@@ -613,6 +614,14 @@ class Atext extends React.Component implements RenderPromiseComponent {
           nb = `<div class="fntable">${nb}</div>`;
         }
         if (sb !== undefined) {
+          const { previousElementSibling: pes } = sbe;
+          if (pes)
+            sanitizeHTML(
+              pes as HTMLElement,
+              `<div class="hd">${navlinks(renderPromise, true)}</div>`,
+            );
+          if (libswordProps.columns === 1)
+            sb += `<div class="hd">${navlinks(renderPromise)}</div>`;
           sanitizeHTML(sbe, sb);
           libswordImgSrc(sbe);
         }
@@ -646,6 +655,42 @@ class Atext extends React.Component implements RenderPromiseComponent {
     );
   }
 
+  navlinks(renderPromise: RenderPromise, showAboutLink = false) {
+    const appIsRTL = G.ProgramConfig?.direction === 'rtl';
+    const prevArrow = appIsRTL
+      ? String.fromCharCode(8594)
+      : String.fromCharCode(8592);
+    const nextArrow = appIsRTL
+      ? String.fromCharCode(8592)
+      : String.fromCharCode(8594);
+    return (
+      `
+    <div class="navlink">
+      <a class="prevchaplink">
+        <span class="navlink-span">${prevArrow}</span>
+        ${GI.i18n.t('', renderPromise, 'PrevChaptext')}
+      </a>` +
+      (showAboutLink
+        ? `
+      &nbsp;|&nbsp;
+      <span class="aboutlink" data-data=${JSON_attrib_stringify({
+        type: 'aboutlink',
+        context: module,
+      })}
+    >
+        ${GI.i18n.t('', renderPromise, 'About this text', { ns: 'bibleBrowser' })}
+      </span>`
+        : '') +
+      `
+      &nbsp;|&nbsp;
+      <a class="nextchaplink">
+        ${GI.i18n.t('', renderPromise, 'NextChaptext')}
+        <span class="navlink-span">${nextArrow}</span>
+      </a>
+    </div>`
+    );
+  }
+
   render() {
     const state = this.state as AtextStateType;
     const props = this.props as AtextProps;
@@ -669,13 +714,6 @@ class Atext extends React.Component implements RenderPromiseComponent {
     } = props;
 
     // Header logic etc.
-    const appIsRTL = G.ProgramConfig?.direction === 'rtl';
-    const prevArrow = appIsRTL
-      ? String.fromCharCode(8594)
-      : String.fromCharCode(8592);
-    const nextArrow = appIsRTL
-      ? String.fromCharCode(8592)
-      : String.fromCharCode(8594);
     const isVerseKey = module && G.Tab[module].isVerseKey;
 
     // Notebox height
@@ -742,31 +780,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
           {!ownWindow && Build.isElectronApp && <div className="text-win" />}
         </div>
 
-        <Box className="hd">
-          <div className="navlink">
-            <a className="prevchaplink">
-              <span className="navlink-span">{prevArrow}</span>
-              {GI.i18n.t('', renderPromise, 'PrevChaptext')}
-            </a>
-            {' | '}
-            <span
-              className="aboutlink"
-              data-data={JSON_attrib_stringify({
-                type: 'aboutlink',
-                context: module,
-              })}
-            >
-              {GI.i18n.t('', renderPromise, 'About this text', {
-                ns: 'bibleBrowser',
-              })}
-            </span>
-            {' | '}
-            <a className="nextchaplink">
-              {GI.i18n.t('', renderPromise, 'NextChaptext')}
-              <span className="navlink-span">{nextArrow}</span>
-            </a>
-          </div>
-        </Box>
+        <Box className="hd" />
 
         {showSelect && (
           <Hbox className="origselect" pack="end">

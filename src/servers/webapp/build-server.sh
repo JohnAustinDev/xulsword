@@ -3,7 +3,8 @@
 DEVEL=$1
 
 cd "$(dirname "${BASH_SOURCE[0]}" )/../../../"
-"$HOME/.nvm/nvm.sh" use 22
+source "$HOME/.nvm/nvm.sh"
+nvm use 22
 source ./setenv
 
 if [[ -z "$DEVEL" ]]; then

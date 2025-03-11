@@ -1,7 +1,6 @@
 /* eslint-disable prefer-rest-params */
 import log from 'electron-log';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import i18n from 'i18next';
 import { BrowserWindow, dialog, shell } from 'electron';
 import { drop, keep, randomID, unknown2String } from '../../../common.ts';
