@@ -1,4 +1,5 @@
 .audio-icon {
+  width: fit-content;
   color: var(--color-primary);
 }
 .audio-icon span {

@@ -90,7 +90,7 @@ const defaultSettings: AllComponentsData = {
       component: 'bibleBrowser',
       langcode: 'en',
       settings: {
-        storageId: 'none',
+        storageId: 'after:user.0', // load user settings after prefs
         frame: '0', // is this a third party iframe?
         css: '',
         prefs: {

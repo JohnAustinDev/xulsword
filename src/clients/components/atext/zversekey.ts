@@ -867,8 +867,16 @@ export function pageChange(
 ): LocationVKType | null {
   if (!next) {
     let firstVerse: HTMLElement | undefined;
+    // Usually the first visible verse is chosen, so it will become the last
+    // visible verse after the page change. However, if the first visible verse
+    // follows an image, then the preceeding visible verse (if there is one) must
+    // instead be chosen, or tall images will 'stick' and prevent page changes!
+    let pv: null | Element = null;
     Array.from(atext.getElementsByClassName('vs')).forEach((v) => {
-      if (!firstVerse && verseIsVisible(v)) firstVerse = v as HTMLElement;
+      if (!firstVerse && verseIsVisible(v)) {
+        firstVerse = (!pv || !pv.querySelector('img') ? v : pv) as HTMLElement;
+      }
+      pv = v;
     });
     if (firstVerse) {
       const ei = getElementData(firstVerse);
@@ -888,10 +896,18 @@ export function pageChange(
     }
   } else {
     let lastVerse: HTMLElement | undefined;
+    // Usually the last visible verse is chosen, so it will become the first
+    // visible verse after the page change. However, if the last visible verse
+    // includes an image, then the next visible verse (if there is one) must
+    // instead be chosen, or tall images will 'stick' and prevent page changes!
+    let pv: null | Element = null;
     Array.from(atext.getElementsByClassName('vs'))
       .reverse()
       .forEach((v) => {
-        if (!lastVerse && verseIsVisible(v)) lastVerse = v as HTMLElement;
+        if (!lastVerse && verseIsVisible(v)) {
+          lastVerse = (!v.querySelector('img') || !pv ? v : pv) as HTMLElement;
+        }
+        pv = v;
       });
     if (lastVerse) {
       const edata = getElementData(lastVerse);

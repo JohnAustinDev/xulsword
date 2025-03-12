@@ -570,6 +570,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
     renderPromise: RenderPromise,
   ) {
     const { sbref, nbref, navlinks } = this;
+    const { module } = libswordProps;
     const sbe = sbref !== null ? sbref.current : null;
     const nbe = nbref !== null ? nbref.current : null;
     if (sbe && nbe) {
@@ -614,14 +615,14 @@ class Atext extends React.Component implements RenderPromiseComponent {
           nb = `<div class="fntable">${nb}</div>`;
         }
         if (sb !== undefined) {
-          const { previousElementSibling: pes } = sbe;
-          if (pes)
+          const pes = sbe.parentElement?.querySelector('.hd');
+          if (module && pes)
             sanitizeHTML(
               pes as HTMLElement,
-              `<div class="hd">${navlinks(renderPromise, true)}</div>`,
+              `${navlinks(module, renderPromise, true)}`,
             );
-          if (libswordProps.columns === 1)
-            sb += `<div class="hd">${navlinks(renderPromise)}</div>`;
+          if (module && libswordProps.columns === 1)
+            sb += `<div class="ft">${navlinks(module, renderPromise)}</div>`;
           sanitizeHTML(sbe, sb);
           libswordImgSrc(sbe);
         }
@@ -655,7 +656,11 @@ class Atext extends React.Component implements RenderPromiseComponent {
     );
   }
 
-  navlinks(renderPromise: RenderPromise, showAboutLink = false) {
+  navlinks(
+    module: string,
+    renderPromise: RenderPromise,
+    showAboutLink = false,
+  ) {
     const appIsRTL = G.ProgramConfig?.direction === 'rtl';
     const prevArrow = appIsRTL
       ? String.fromCharCode(8594)
@@ -671,8 +676,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
         ${GI.i18n.t('', renderPromise, 'PrevChaptext')}
       </a>` +
       (showAboutLink
-        ? `
-      &nbsp;|&nbsp;
+        ? ` |
       <span class="aboutlink" data-data=${JSON_attrib_stringify({
         type: 'aboutlink',
         context: module,
@@ -681,8 +685,7 @@ class Atext extends React.Component implements RenderPromiseComponent {
         ${GI.i18n.t('', renderPromise, 'About this text', { ns: 'bibleBrowser' })}
       </span>`
         : '') +
-      `
-      &nbsp;|&nbsp;
+      ` |
       <a class="nextchaplink">
         ${GI.i18n.t('', renderPromise, 'NextChaptext')}
         <span class="navlink-span">${nextArrow}</span>

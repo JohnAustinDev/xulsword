@@ -14,7 +14,8 @@
   background: white; /*rgb(248,248,241);*/
 }
 
-.atext .hd {
+.atext .hd,
+.atext .ft {
   text-align: center;
   justify-content: space-around;
 }
