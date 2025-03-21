@@ -19,8 +19,8 @@ import {
   getReactComponents,
 } from '../common.ts';
 import defaultSettings, {
-  BibleBrowserSettings,
-  setEmptyPrefs,
+  BibleBrowserData,
+  setDefaultBibleBrowserPrefs,
 } from './defaultSettings.ts';
 import './bibleBrowser.css';
 
@@ -53,7 +53,7 @@ socket.on('connect', () => {
       const { settings, langcode } = getComponentSettings(
         bibleBrowserComp,
         defaultSettings,
-      ) as BibleBrowserSettings;
+      ) as BibleBrowserData;
 
       // Add CSS
       const { css } = settings;
@@ -157,7 +157,7 @@ socket.on('connect', () => {
         ),
       ]);
 
-      setEmptyPrefs(Prefs);
+      setDefaultBibleBrowserPrefs(Prefs);
       setGlobalPanels(Prefs, numPanels);
       validateModulePrefs(G.Tabs, Prefs, G.FeatureModules);
 

@@ -12,14 +12,14 @@ import type {
   SelectORMType,
   SelectORProps,
 } from '../../components/libxul/selectOR.tsx';
-import type { WidgetORSettings } from './defaultSettings.ts';
+import type { WidgetORData } from './defaultSettings.ts';
 
 // A React component widget for selecting from an arbitrary hierarchical
 // list of options, such as a SWORD General Book table of contents.
 
 export type WidgetORProps = {
   compid: string;
-  settings: WidgetORSettings;
+  settings: WidgetORData;
 };
 
 export type WidgetORState = Omit<SelectORProps, 'onSelection'>;

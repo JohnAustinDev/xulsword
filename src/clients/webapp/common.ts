@@ -15,15 +15,15 @@ import type {
   SelectORProps,
 } from '../components/libxul/selectOR.tsx';
 import {
-  setEmptyPrefs,
-  type BibleBrowserSettings as BibleBrowserData,
+  setDefaultBibleBrowserPrefs,
+  type BibleBrowserData,
 } from './bibleBrowser/defaultSettings.ts';
 import type {
   ChaplistORType,
   ChaplistVKType,
-  WidgetMenulistSettings,
-  WidgetORSettings,
-  WidgetVKSettings,
+  WidgetMenulistData,
+  WidgetORData,
+  WidgetVKData,
   ZipAudioDataType,
 } from './widgets/defaultSettings.ts';
 import { SelectVKType } from '../components/libxul/selectVK.tsx';
@@ -36,9 +36,9 @@ export type AllComponentsData = {
 
 export type ComponentData =
   | BibleBrowserData
-  | WidgetVKSettings
-  | WidgetORSettings
-  | WidgetMenulistSettings;
+  | WidgetVKData
+  | WidgetORData
+  | WidgetMenulistData;
 
 // React components HTML elements have a data-react-component attribute
 // specifying the type.
@@ -74,15 +74,17 @@ export function getComponentSettings(
       data = parentWin.drupalSettings.react[id];
     else if (defaultSettings?.react && id in defaultSettings.react)
       data = defaultSettings.react[id];
+
     if (typeof data !== 'undefined') {
       (data as any).component = reactComponent;
       if (data.component === 'bibleBrowser')
-        setEmptyPrefs(
+        setDefaultBibleBrowserPrefs(
           data.settings.prefs as BibleBrowserData['settings']['prefs'],
         );
       return data;
     }
   }
+
   return null;
 }
 

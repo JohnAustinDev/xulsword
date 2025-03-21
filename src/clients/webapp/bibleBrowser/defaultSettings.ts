@@ -8,7 +8,7 @@ import type S from '../../../defaultPrefs.ts';
 import type { AllComponentsData } from '../common.ts';
 import type { PrefsGType } from '../../../prefs.ts';
 
-export type BibleBrowserSettings = {
+export type BibleBrowserData = {
   component: 'bibleBrowser';
   langcode: string; // the fallback language if prefs.global.local is invalid.
   settings: {
@@ -24,10 +24,12 @@ export type BibleBrowserSettings = {
   };
 };
 
-// Certain default settings were left empty, to be filled at runtime. If prefs
-// is a G.Prefs object, the prefs will be updated directly.
-export function setEmptyPrefs(
-  prefs: BibleBrowserSettings['settings']['prefs'] | PrefsGType,
+// If certain settings were left empty, they are to be set at runtime so they
+// may depend on currently installed modules, window dimensions etc. If prefs
+// is a G.Prefs object, then prefs will be updated directly using the object,
+// otherwise default prefs will be applied to the prefs argument.
+export function setDefaultBibleBrowserPrefs(
+  prefs: BibleBrowserData['settings']['prefs'] | PrefsGType,
 ) {
   const xulsword =
     'getComplexValue' in prefs

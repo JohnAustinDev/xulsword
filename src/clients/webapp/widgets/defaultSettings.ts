@@ -6,7 +6,7 @@ import type { MenulistProps } from '../../components/libxul/menulist.tsx';
 import type { SelectORProps } from '../../components/libxul/selectOR.tsx';
 import type { SelectVKProps } from '../../components/libxul/selectVK.tsx';
 
-export type WidgetVKSettings = {
+export type WidgetVKData = {
   component: 'selectVK';
   action?: 'bible_audio_Play';
   langcode: (typeof C.Locales)[number][0];
@@ -15,7 +15,7 @@ export type WidgetVKSettings = {
   data2?: ZipAudioDataType;
 };
 
-export type WidgetORSettings = {
+export type WidgetORData = {
   component: 'selectOR';
   action?: 'genbk_audio_Play';
   langcode: (typeof C.Locales)[number][0];
@@ -24,7 +24,7 @@ export type WidgetORSettings = {
   data2?: ZipAudioDataType;
 };
 
-export type WidgetMenulistSettings = {
+export type WidgetMenulistData = {
   component: 'selectMenulist';
   action?: 'update_url';
   langcode: (typeof C.Locales)[number][0];

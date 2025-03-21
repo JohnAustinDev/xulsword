@@ -7,14 +7,14 @@ import { getProps } from '../common.ts';
 
 import type { ChangeEvent } from 'react';
 import type { MenulistProps } from '../../components/libxul/menulist.tsx';
-import type { FileItem, WidgetMenulistSettings } from './defaultSettings.ts';
+import type { FileItem, WidgetMenulistData } from './defaultSettings.ts';
 
 // A React component widget for selection from a set of options, such as a set
 // of eBook files.
 
 export type WidgetMenulistProps = {
   compid: string;
-  settings: WidgetMenulistSettings;
+  settings: WidgetMenulistData;
 };
 
 export type WidgetMenulistState = Omit<MenulistProps, 'onChange'>;

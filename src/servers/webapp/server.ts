@@ -94,7 +94,19 @@ i18nInit('en').catch((er) => {
   log.error(`Server i18nInit('en') error: ${er}`);
 });
 
+// Some modules in the xsModsUser or xsModsCommon repositories may be
+// made unavailable to the web app.
+const readWebAppSkipModules = () => {
+  const nowebapp = Dirs.xsModsUser.append('nowebapp');
+  const skipModules = (nowebapp.exists() && nowebapp.readFile()) || '';
+  return (
+    (skipModules.match(/^([A-Za-z0-9]+)(,\s*[A-Za-z0-9]+)*$/) && skipModules) ||
+    ''
+  );
+};
+global.WebAppSkipModules = readWebAppSkipModules();
 Subscription.subscribe.resetMain(() => {
+  global.WebAppSkipModules = readWebAppSkipModules();
   LibSword.quit();
   Cache.clear();
   LibSword.init();

@@ -81,6 +81,8 @@ declare global {
     isClient: boolean;
     isServer: boolean;
   };
+
+  var WebAppSkipModules: string;
 }
 
 export type QuerablePromise<T> = Promise<T> & {

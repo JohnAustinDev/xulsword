@@ -8,7 +8,7 @@ import type {
   SelectVKProps,
   SelectVKType,
 } from '../../components/libxul/selectVK.tsx';
-import type { WidgetVKSettings } from './defaultSettings.ts';
+import type { WidgetVKData } from './defaultSettings.ts';
 
 // A React component widget for selection of a Bible verse from any Bible verse
 // system or installed Bible module.
@@ -19,7 +19,7 @@ import type { WidgetVKSettings } from './defaultSettings.ts';
 
 export type WidgetVKProps = {
   compid: string;
-  settings: WidgetVKSettings;
+  settings: WidgetVKData;
 };
 
 export type WidgetVKState = Omit<SelectVKProps, 'onSelection'>;
