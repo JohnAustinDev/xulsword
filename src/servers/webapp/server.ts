@@ -100,7 +100,7 @@ const readWebAppSkipModules = () => {
   const nowebapp = Dirs.xsModsUser.append('nowebapp');
   const skipModules = (nowebapp.exists() && nowebapp.readFile()) || '';
   return (
-    (skipModules.match(/^([A-Za-z0-9_]+)(,\s*[A-Za-z0-9_]+)*$/) && skipModules) ||
+    (skipModules.match(/^[A-Za-z0-9_]+(,\s*[A-Za-z0-9_]+)*\s*$/) && skipModules) ||
     ''
   );
 };
