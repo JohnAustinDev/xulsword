@@ -12,7 +12,9 @@ import Menulist from './menulist.tsx';
 import type { ModTypes, TabType } from '../../../type.ts';
 
 // The ModuleMenu component does not keep its own selection state so it
-// requires that an onChange handler function prop be provided.
+// requires that an onChange handler function prop be provided. If the supplied
+// value is empty string, then an empty option will be appended to the module
+// list and it will be initially selected.
 
 const propTypes = {
   ...xulPropTypes,
@@ -48,6 +50,7 @@ export default function ModuleMenu({
   types = [],
   ...props
 }: ModuleMenuProps) {
+  const { value } = props;
   const { renderPromise, loadingRef } = functionalComponentRenderPromise();
 
   let mtabs: TabType[];
@@ -78,6 +81,7 @@ export default function ModuleMenu({
       domref={loadingRef}
       {...addClass('modulemenu', { disabled, ...props })}
     >
+      {!value && <option value=""></option>}
       {allowNotInstalled &&
         notInstalled.map((m) => (
           <option className={`cs-${m}`} key={[m].join('.')} value={m}>
