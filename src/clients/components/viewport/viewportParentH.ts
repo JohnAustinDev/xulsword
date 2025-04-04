@@ -5,7 +5,7 @@ import Cache from '../../../cache.ts';
 import { clone, escapeRE, ofClass } from '../../../common.ts';
 import verseKey from '../../verseKey.ts';
 import { getElementData } from '../../htmlData.ts';
-import { G } from '../../G.ts';
+import { G, GI } from '../../G.ts';
 import Commands from '../../commands.ts';
 import {
   doUntilDone,
@@ -561,34 +561,15 @@ export default function handler(
     case 'keydown': {
       const e = es as React.KeyboardEvent;
       const targ = ofClass(['dictkeyinput'], target);
-      if (targ && panel && atext) {
+      if (targ && targ.element && panel && atext) {
         e.stopPropagation();
-        delayHandler(
+        handleDictKeyInput(
           this,
-          (select: HTMLSelectElement, mod: string) => {
-            const { value } = select;
-            select.style.color = '';
-            if (value && Cache.has('keylist', mod)) {
-              const re = new RegExp(
-                `(^|<nx>)(${escapeRE(value)}[^<]*)<nx>`,
-                'i',
-              );
-              const firstMatch = `${Cache.read('keylist', mod).join(
-                '<nx>',
-              )}<nx>`.match(re);
-              if (firstMatch) {
-                setState(this, atext, () => {
-                  return { modkey: firstMatch[2] };
-                });
-              } else if (e.key !== 'backspace') {
-                G.Shell.beep();
-                select.style.color = 'red';
-              }
-            }
-          },
-          [targ.element, panel],
-          C.UI.Atext.dictKeyInputDelay,
-          'dictkeydownTO',
+          panel,
+          atext,
+          targ.element as HTMLInputElement,
+          e.key,
+          e.key === 'Enter' ? 0 : C.UI.Atext.dictKeyInputDelay,
         );
       }
       break;
@@ -612,4 +593,41 @@ export default function handler(
     default:
       throw Error(`Unhandled handleViewport event type '${es.type}'`);
   }
+}
+
+function handleDictKeyInput(
+  xthis: Xulsword | ViewportWin,
+  module: string,
+  atext: HTMLElement,
+  targelem: HTMLInputElement,
+  key: string,
+  delay = 0,
+) {
+  doUntilDone((renderPromise2) => {
+    const keylist = GI.getAllDictionaryKeyList([], renderPromise2, module);
+    delayHandler(
+      xthis,
+      (select: HTMLInputElement) => {
+        if (!renderPromise2.waiting()) {
+          const { value } = select;
+          select.style.color = '';
+          if (value) {
+            const re = new RegExp(`(^|<nx>)(${escapeRE(value)}[^<]*)<nx>`, 'i');
+            const firstMatch = `${keylist.join('<nx>')}<nx>`.match(re);
+            if (firstMatch) {
+              setState(xthis, atext, () => {
+                return { modkey: firstMatch[2] };
+              });
+            } else if (key !== 'backspace') {
+              G.Shell.beep();
+              select.style.color = 'red';
+            }
+          }
+        }
+      },
+      [targelem],
+      delay,
+      'dictkeydownTO',
+    );
+  });
 }
