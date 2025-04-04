@@ -588,3 +588,7 @@ span.foreign {
 .gfn:after {
   content: '] ';
 }
+
+.cs-StrongsHebrew .orth {
+  font-family: 'Ezra SIL';
+}

@@ -523,9 +523,19 @@ export default async function renderToRoot(
   });
   classes.push('cs-locale');
   classes.push(G.i18n.language);
-  if (frameElement) classes.push('iframe');
-  if (frameElement?.classList.contains('auto-height'))
-    classes.push('auto-height');
+  if (frameElement) {
+    classes.push('iframe');
+    if (frameElement.classList.contains('auto-height'))
+      classes.push('auto-height');
+    const parentHTML =
+      frameElement.ownerDocument?.getElementsByTagName('html')[0];
+    if (parentHTML)
+      classes.push(
+        ...Array.from(parentHTML.classList).filter((c) =>
+          ['is-vagrant'].includes(c),
+        ),
+      );
+  }
   const html = document?.getElementsByTagName('html')[0];
   if (html) {
     html.className = classes.join(' ');

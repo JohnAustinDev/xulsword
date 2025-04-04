@@ -258,6 +258,10 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
               let { elemdata } = prevState;
               if (elemdata === null) elemdata = [];
               else elemdata = clone(elemdata);
+              // sn links within sn popups should keep their original context
+              if (elemdata.at(-1)?.type === 'sn' && data.type === 'sn') {
+                data.context = elemdata.at(-1)?.context;
+              }
               elemdata.push(data);
               // set the gap so as to position popup under the mouse
               const gap = Math.round(e.clientY - popupY - 40);

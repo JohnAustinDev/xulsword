@@ -6,6 +6,7 @@ import {
   JSON_attrib_parse,
   JSON_attrib_stringify,
   ofClass,
+  pad,
 } from '../common.ts';
 import { G } from './G.ts'; // web app G calls must be preloaded!
 
@@ -215,6 +216,14 @@ export function getElementData(elemx: string | Element): HTMLData {
   } else if (elem.className) {
     title = elem.dataset.title || null;
     ({ className, innerHTML: innerHtmlValue } = elem);
+  }
+
+  // StrongsHebrew 3.0 in CrossWire Beta repo includes 'sr' links that are
+  // really sn links, so convert them so they will parse as such.
+  if (className?.split(' ').includes('sr') && title?.startsWith('StrongsHebrew:')) {
+    const sclass = `S_H${pad(title.substring(14, title.indexOf('.')), 5, '0')}`;
+    className = `sn ${sclass}`;
+    title = `StrongsHebrew.${sclass}`;
   }
 
   const r: LibSwordHTMLData = {
