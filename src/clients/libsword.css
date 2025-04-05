@@ -589,6 +589,10 @@ span.foreign {
   content: '] ';
 }
 
+/* Rules for special reference modules */
 .cs-StrongsHebrew .orth {
   font-family: 'Ezra SIL';
+}
+.cs-StrongsGreek .orth[data-type="writing"] {
+  display: none;
 }
