@@ -37,9 +37,6 @@ if ("$?" eq "0") {
   my $cmd = "cp $xulsword/build/webapp/dist/webappClients/* '$dist'";
   print $cmd . "\n";
   `$cmd`;
-  $cmd = "sed -i 's/<\\/head>/<link href=\"\\/modules\\/custom\\/ibt\\/css\\/bibleBrowser.css\" rel=\"stylesheet\"><\\/head>/' \"$dist/bibleBrowser.html\"";
-  print $cmd . "\n";
-  `$cmd`;
   my $libs = "ibt.libraries.yml";
   chdir "$DIST_PARENT_DIR" || die "ERROR: Could not cd to $DIST_PARENT_DIR.\n:";
   if (-e "$libs") {
@@ -47,7 +44,7 @@ if ("$?" eq "0") {
     my @files = readdir(JSF);
     closedir(JSF);
     my $file;
-    foreach my $bundle ('widgets', 'runtime', 'vendors') {
+    foreach my $bundle ('widgets', 'bibleBrowser', 'runtime', 'vendors') {
       foreach my $f (@files) {
         if ($f =~ /^${bundle}_.*\.js(\.(gz|br))?$/) {
           $file = $f;
