@@ -30,6 +30,7 @@ export type BibleBrowserData = {
 // otherwise default prefs will be applied to the prefs argument.
 export function setDefaultBibleBrowserPrefs(
   prefs: BibleBrowserData['settings']['prefs'] | PrefsGType,
+  numPanels: number,
 ) {
   const xulsword =
     'getComplexValue' in prefs
@@ -54,15 +55,17 @@ export function setDefaultBibleBrowserPrefs(
 
   if (!xulsword.place || !Object.keys(xulsword.place).length) {
     xulsword.place =
-      window.innerWidth <= C.UI.WebApp.mobileW
+      numPanels > 1 &&
+      window.innerWidth > C.UI.WebApp.mobileW &&
+      window.innerHeight >= 700
         ? {
-            footnotes: 'popup',
-            crossrefs: 'popup',
+            footnotes: 'notebox',
+            crossrefs: 'notebox',
             usernotes: 'popup',
           }
         : {
-            footnotes: 'notebox',
-            crossrefs: 'notebox',
+            footnotes: 'popup',
+            crossrefs: 'popup',
             usernotes: 'popup',
           };
   }
