@@ -55,9 +55,7 @@ export function setDefaultBibleBrowserPrefs(
 
   if (!xulsword.place || !Object.keys(xulsword.place).length) {
     xulsword.place =
-      numPanels > 1 &&
-      window.innerWidth > C.UI.WebApp.mobileW &&
-      window.innerHeight >= 700
+      window.innerWidth > C.UI.WebApp.mobileW
         ? {
             footnotes: 'notebox',
             crossrefs: 'notebox',
