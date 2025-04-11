@@ -187,7 +187,10 @@ html[dir='rtl'] .notebox-maximizer {
   padding: 0px 5px 0px 5px;
 }
 @media (max-width: 768px) {
-  .atext .nb {
+  /* Dictionary nb must have max-width for mobile multi-panel
+  or long dict entries will cause the entire display to skew. 
+  50vw works because multi-panel is always 2 on mobile. */
+  .multi-panel .atext .nb {
     max-width: calc(50vw - 22px);
   }
   .atext .dictlist {
