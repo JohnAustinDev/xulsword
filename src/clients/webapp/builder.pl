@@ -25,16 +25,19 @@ my $xulsword = `pwd`; chomp $xulsword;
 # doesn't work -> `source ./setenv`;
 
 if ("$IS_DEVELOPMENT" eq "1") {
-  open(YARN, "yarn webpack --env development --env webappClients |");
+  open(YARN, "yarn webpack --env development --env webappClients --env external |");
 } else {
-  open(YARN, "yarn webpack --env production --env webappClients |");
+  open(YARN, "yarn webpack --env production --env webappClients --env external |");
 }
 while (<YARN>) { print $_;}
 close(YARN);
 
 if ("$?" eq "0") {
   my $dist = "$DIST_PARENT_DIR/dist";
-  my $cmd = "cp $xulsword/build/webapp/dist/webappClients/* '$dist'";
+  my $cmd = "cp $xulsword/build/webapp/dist/external/* '$dist'";
+  print $cmd . "\n";
+  `$cmd`;
+  $cmd = "cp $xulsword/build/webapp/dist/webappClients/* '$dist'";
   print $cmd . "\n";
   `$cmd`;
   my $libs = "ibt.libraries.yml";
@@ -44,7 +47,7 @@ if ("$?" eq "0") {
     my @files = readdir(JSF);
     closedir(JSF);
     my $file;
-    foreach my $bundle ('widgets', 'bibleBrowser', 'runtime', 'vendors') {
+    foreach my $bundle ('widgets', 'bibleBrowser', 'runtime', 'vendors', 'external') {
       foreach my $f (@files) {
         if ($f =~ /^${bundle}_.*\.js(\.(gz|br))?$/) {
           $file = $f;

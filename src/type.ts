@@ -85,10 +85,6 @@ declare global {
   var WebAppSkipModules: string;
 }
 
-export type AnalyticsInfo = {
-  [k: string]: string | string[] | boolean | undefined;
-};
-
 export type QuerablePromise<T> = Promise<T> & {
   isFulfilled: boolean;
   isPending: boolean;

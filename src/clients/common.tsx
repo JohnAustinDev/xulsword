@@ -24,7 +24,6 @@ import log from './log.ts';
 
 import type { TreeNodeInfo } from '@blueprintjs/core';
 import type {
-  AnalyticsInfo,
   AudioPath,
   GenBookAudio,
   GenBookAudioConf,

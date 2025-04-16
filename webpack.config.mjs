@@ -63,6 +63,13 @@ const builds = {
       './src/clients/webapp/bibleBrowser/bibleBrowser.tsx'
     ],
   ],
+
+  external: [
+    'web',
+    [
+      './src/clients/analytics.ts',
+    ]
+  ]
 };
 
 const defaultEnvironment = {
@@ -114,6 +121,7 @@ export default function (opts) {
     opts.webappSrv = true;
     opts.appClients = true;
     opts.webappClients = true;
+    opts.external = true;
   }
 
   // Validate webpack arguments...
@@ -191,7 +199,9 @@ export default function (opts) {
       try {
         const hash = execSync('git rev-parse HEAD').toString().trim();
         return hash;
-      } catch {return 'unknown';}
+      } catch {
+        return 'unknown';
+      }
     })();
 
     return {
@@ -251,7 +261,7 @@ export default function (opts) {
         filename: `[name]${
           ['appSrv', 'webappSrv'].includes(build)
             ? '.cjs'
-            : build === 'webappClients'
+            : ['webappClients', 'external'].includes(build)
               ? `_${githash.substr(0, 12)}.js`
               : '.js'
         }`,
@@ -261,9 +271,15 @@ export default function (opts) {
           appClients: path.join(appDistPath, 'appClients'),
           webappSrv: path.join(webappDistPath, 'webappSrv'),
           webappClients: path.join(webappDistPath, 'webappClients'),
+          external: path.join(webappDistPath, 'external'),
         }[build],
-        publicPath:
-          build === 'webappClients' ? env('WEBAPP_PUBLIC_DIST') : './',
+        publicPath: ['webappClients', 'external'].includes(build)
+          ? env('WEBAPP_PUBLIC_DIST')
+          : './',
+        ...(build === 'external' ? {
+          library: { type: 'umd' },
+          globalObject: 'globalThis'
+        } : {}),
       },
 
       module: {
