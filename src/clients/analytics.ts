@@ -1,62 +1,10 @@
-/* eslint-disable @typescript-eslint/consistent-type-definitions */
+import Analytics from '../analytics.ts';
+import type { AnalyticsTag } from '../analytics.ts';
 
-declare global {
-  export interface Window {
-    Analytics: AnalyticsType;
-  }
-}
+let tagfunc = null;
+if (typeof (globalThis as any).gtag === 'function')
+  tagfunc = (globalThis as any).gtag as AnalyticsTag;
 
-export type AnalyticsTag = (
-  type: 'event',
-  name: string,
-  info: AnalyticsInfo,
-) => void;
+const analytics = new Analytics(tagfunc);
 
-export type AnalyticsType = {
-  recordDownload: (a: HTMLElement) => void;
-};
-
-export type AnalyticsInfo = {
-  [k: string]: string | string[] | boolean | undefined;
-};
-
-export default class Analytics implements AnalyticsType {
-  private tag: AnalyticsTag | null;
-
-  constructor(tag: AnalyticsTag | null) {
-    this.tag = tag;
-  }
-
-  recordEvent(name: string, info: AnalyticsInfo) {
-    Object.entries(info).forEach((entry) => {
-      const [k, v] = entry;
-      if (Array.isArray(v))
-        info[k] = v
-          .filter((x) => typeof x === 'string' && x !== '_undefined_')
-          .join(', ');
-      else if (typeof v === 'boolean') info[k] = v ? 'true' : 'false';
-      else if (typeof v === 'undefined') delete info[k];
-      else if (typeof v === 'string' && v === '_undefined_') delete info[k];
-    });
-    if (typeof this.tag === 'function') this.tag('event', name, info);
-    // eslint-disable-next-line no-console
-    else console.log('recordEvent: ', name, info);
-  }
-
-  // Record a download event triggered by any HTML element. The element may
-  // have a type attribute with the mime type of the download and/or a
-  // data-info attribute with analytics info. Any value of type will override
-  // the data-info mime value.
-  recordDownload(a: HTMLElement) {
-    let ai: HTMLElement | null = a;
-    let info: AnalyticsInfo = {};
-    while (ai && !ai.dataset.info) ai = ai.parentElement;
-    if (a.getAttribute('type') || (ai && ai.dataset.info)) {
-      info = ai?.dataset.info
-        ? JSON.parse(decodeURIComponent(ai.dataset.info))
-        : {};
-      if (a.getAttribute('type')) info.mime = a.getAttribute('type') as string;
-    }
-    this.recordEvent('download', info);
-  }
-}
+export default analytics;

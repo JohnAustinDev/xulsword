@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/naming-convention */
+import type { AnalyticsInfo } from '../../../analytics.ts';
 import type { OSISBookType } from '../../../type.ts';
 import type C from '../../../constant.ts';
-import type { AnalyticsInfo } from '../../analytics.ts';
 import type { MenulistProps } from '../../components/libxul/menulist.tsx';
 import type { SelectORProps } from '../../components/libxul/selectOR.tsx';
 import type { SelectVKProps } from '../../components/libxul/selectVK.tsx';

@@ -53,12 +53,12 @@ import type RenderPromise from './renderPromise.ts';
 // methods but only after callBatchThenCache() was made for any synchronous
 // calls. For common calls like G.Tabs etc. cache preloading should be used,
 // because it is simpler and faster than GI. When promises can be awaited (such
-// as in event handlers) then another approach is likely prefered, using
-// await G.callBatch([theCall]) which allows a web app client to make allowed G
-// synchronous calls asynchronously, without the GI and renderPromise overhead.
+// as in event handlers) then doUntilDone() may be used, or another approach is
+// using await G.callBatch([theCall]) which allows a web app client to make
+// allowed G synchronous calls asynchronously.
 // - Electron App Server must only use G, or an exception is thrown.
-// - Web App Server must only use GI, or an excetion is thrown. Note: the server
-// GI object is also used when responding to any allowed client G calls.
+// - Web App Server must only use GI, or an excetion is thrown. The Web App
+// server's GI object is used to respond to clients' G and GI calls.
 
 export const G = {} as GType;
 

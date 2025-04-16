@@ -25,17 +25,17 @@ my $xulsword = `pwd`; chomp $xulsword;
 # doesn't work -> `source ./setenv`;
 
 if ("$IS_DEVELOPMENT" eq "1") {
-  open(YARN, "yarn webpack --env development --env webappClients --env external |");
+  open(YARN, "yarn webpack --env development --env webappClients --env library |");
 } else {
-  open(YARN, "yarn webpack --env production --env webappClients --env external |");
+  open(YARN, "yarn webpack --env production --env webappClients --env library |");
 }
 while (<YARN>) { print $_;}
 close(YARN);
 
 if ("$?" eq "0") {
   my $dist = "$DIST_PARENT_DIR/dist";
-  # Copy external (analytics) js to dist
-  my $cmd = "cp $xulsword/build/webapp/dist/external/* '$dist'";
+  # Copy library (analytics) js to dist
+  my $cmd = "cp $xulsword/build/webapp/dist/library/* '$dist'";
   print $cmd . "\n";
   `$cmd`;
   # Copy webappClients js to dist
@@ -43,10 +43,10 @@ if ("$?" eq "0") {
   print $cmd . "\n";
   `$cmd`;
   # Copy analytics TypeScript to dist
-  $cmd = "yarn tsc --lib es2017,dom --declaration --emitDeclarationOnly $xulsword/src/clients/analytics.ts";
+  $cmd = "yarn tsc --lib es2017,dom --declaration --emitDeclarationOnly $xulsword/src/analytics.ts";
   print $cmd . "\n";
   `$cmd`;
-  $cmd = "mv $xulsword/src/clients/analytics.d.ts '$dist'";
+  $cmd = "mv $xulsword/src/analytics.d.ts '$dist'";
   print $cmd . "\n";
   `$cmd`;
   my $libs = "ibt.libraries.yml";
@@ -56,7 +56,7 @@ if ("$?" eq "0") {
     my @files = readdir(JSF);
     closedir(JSF);
     my $file;
-    foreach my $bundle ('widgets', 'bibleBrowser', 'runtime', 'vendors', 'external') {
+    foreach my $bundle ('widgets', 'bibleBrowser', 'runtime', 'vendors', 'analytics') {
       foreach my $f (@files) {
         if ($f =~ /^${bundle}_.*\.js(\.(gz|br))?$/) {
           $file = $f;

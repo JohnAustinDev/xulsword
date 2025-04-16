@@ -64,10 +64,10 @@ const builds = {
     ],
   ],
 
-  external: [
+  library: [
     'web',
     [
-      './src/clients/analytics.ts',
+      './src/analytics.ts',
     ]
   ]
 };
@@ -121,7 +121,7 @@ export default function (opts) {
     opts.webappSrv = true;
     opts.appClients = true;
     opts.webappClients = true;
-    opts.external = true;
+    opts.library = true;
   }
 
   // Validate webpack arguments...
@@ -261,7 +261,7 @@ export default function (opts) {
         filename: `[name]${
           ['appSrv', 'webappSrv'].includes(build)
             ? '.cjs'
-            : ['webappClients', 'external'].includes(build)
+            : ['webappClients', 'library'].includes(build)
               ? `_${githash.substr(0, 12)}.js`
               : '.js'
         }`,
@@ -271,12 +271,12 @@ export default function (opts) {
           appClients: path.join(appDistPath, 'appClients'),
           webappSrv: path.join(webappDistPath, 'webappSrv'),
           webappClients: path.join(webappDistPath, 'webappClients'),
-          external: path.join(webappDistPath, 'external'),
+          library: path.join(webappDistPath, 'library'),
         }[build],
-        publicPath: ['webappClients', 'external'].includes(build)
+        publicPath: ['webappClients', 'library'].includes(build)
           ? env('WEBAPP_PUBLIC_DIST')
           : './',
-        ...(build === 'external' ? {
+        ...(build === 'library' ? {
           library: 'xulsword',
           globalObject: 'globalThis'
         } : {}),
