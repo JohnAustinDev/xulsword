@@ -40,7 +40,12 @@ export type FileItem = {
   size?: string;
   relurl?: string;
   full?: boolean;
-  types?: string[];
+  pubTypes?: string[];
+  pubTypeLabels?: { [type: string]: string };
+  type?: string;
+  format?: string;
+  node?: string;
+  language?: string;
   scope?: string;
 };
 

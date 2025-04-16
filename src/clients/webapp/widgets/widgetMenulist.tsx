@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import log from '../../log.ts';
 import { G } from '../../G.ts';
 import { randomID } from '../../../common.ts';
+import { analyticsInfo } from '../../common.tsx';
 import Menulist from '../../components/libxul/menulist.tsx';
 import { getProps } from '../common.ts';
 
@@ -40,8 +41,8 @@ export default function WidgetMenulist(
       const { urlroot, items } = data;
       switch (action) {
         case 'update_url': {
-          const elem = document.getElementById(compid)?.parentElement;
           const item = items[index];
+          const elem = document.getElementById(compid)?.parentElement;
           if (elem && typeof item !== 'string') {
             const links = Array.isArray(item) ? item : [item];
             const a = Array.from(
@@ -49,12 +50,20 @@ export default function WidgetMenulist(
             );
             links.forEach((link, x) => {
               const { relurl, size } = link;
-              const anchor = a[x];
+              const anchor = a[x] as HTMLElement;
               if (anchor && relurl) {
                 const root = urlroot.replace(/\/$/, '');
                 const rel = relurl.replace(/^\//, '');
                 anchor.setAttribute('href', `${root}/${rel}`);
                 anchor.textContent = optionText(link, false);
+                anchor.dataset.info = analyticsInfo({
+                  ...link,
+                  name: anchor.textContent,
+                  pubTypeLabels: undefined,
+                  size: undefined,
+                  relurl: undefined,
+                  full: undefined,
+                });
                 if (
                   typeof size !== 'undefined' &&
                   anchor.parentElement?.tagName === 'SPAN'
@@ -120,18 +129,49 @@ function optionText(data: string | FileItem, isMenulistText: boolean): string {
 
 // Return eBook link text and menulist text.
 function getEBookTitle(data: FileItem, menu: boolean): string {
-  const { name, types, scope, full } = data;
+  const { name, pubTypes: ts, scope: s, full, pubTypeLabels } = data;
   const Book = G.Book(G.i18n.language);
 
   if (full)
     return menu ? G.i18n.t('Full publication', { ns: 'widgets' }) : name;
 
-  const books =
+  let pubTypes = ts;
+  let scope = s;
+
+  // For some types, scope should be ignored.
+  if (
+    ts?.filter((t) =>
+      [
+        'glossary',
+        'introduction',
+        'supplemental',
+        'dictionary',
+        'diglot',
+        'other',
+        'bible_koran',
+        'gospel_parables',
+        'stories_of_christ',
+        'lives_prophets',
+        'bible_stories',
+        'childrens_bible',
+      ].includes(t),
+    ).length
+  )
+    scope = '';
+
+  // If there is still a scope, all types other than 'preliminary' should be
+  // ignored.
+  if (scope) pubTypes = ts?.filter((t) => ['preliminary'].includes(t));
+
+  const book =
     scope?.replace(/[^-\s_]+/g, (m) =>
       m in Book ? (Book as any)[m].name : m,
     ) ?? '';
-  const prefixes = [books, ...(types ? types : [])].filter(Boolean);
-  const prefix = prefixes?.length ? prefixes.join(', ') : '';
+  const ptls =
+    pubTypes?.map((pt) =>
+      pubTypeLabels && pt in pubTypeLabels ? pubTypeLabels[pt] : '',
+    ) ?? [];
+  const prefix = [book, ...ptls].filter(Boolean).join(', ');
 
   if (!prefix) return name;
 
