@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import type { OSISBookType } from '../../../type.ts';
+import type { AnalyticsInfo, OSISBookType } from '../../../type.ts';
 import type { AllComponentsData } from '../common.ts';
 import type C from '../../../constant.ts';
 import type { MenulistProps } from '../../components/libxul/menulist.tsx';
@@ -42,12 +42,8 @@ export type FileItem = {
   full?: boolean;
   pubTypes?: string[];
   pubTypeLabels?: { [type: string]: string };
-  type?: string;
-  format?: string;
-  node?: string;
-  language?: string;
   scope?: string;
-};
+} & AnalyticsInfo;
 
 export type ChaplistVKType = {
   [bk in OSISBookType]?: Array<[chapnum: number, url: string, size: number]>;
