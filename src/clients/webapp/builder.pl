@@ -34,10 +34,19 @@ close(YARN);
 
 if ("$?" eq "0") {
   my $dist = "$DIST_PARENT_DIR/dist";
+  # Copy external (analytics) js to dist
   my $cmd = "cp $xulsword/build/webapp/dist/external/* '$dist'";
   print $cmd . "\n";
   `$cmd`;
+  # Copy webappClients js to dist
   $cmd = "cp $xulsword/build/webapp/dist/webappClients/* '$dist'";
+  print $cmd . "\n";
+  `$cmd`;
+  # Copy analytics TypeScript to dist
+  $cmd = "yarn tsc --lib es2017,dom --declaration --emitDeclarationOnly $xulsword/src/clients/analytics.ts";
+  print $cmd . "\n";
+  `$cmd`;
+  $cmd = "mv $xulsword/src/clients/analytics.d.ts '$dist'";
   print $cmd . "\n";
   `$cmd`;
   my $libs = "ibt.libraries.yml";

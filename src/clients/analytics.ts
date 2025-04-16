@@ -21,13 +21,13 @@ export type AnalyticsInfo = {
 };
 
 export default class Analytics implements AnalyticsType {
-  private tag: AnalyticsTag;
+  private tag: AnalyticsTag | null;
 
-  constructor(tag: AnalyticsTag) {
+  constructor(tag: AnalyticsTag | null) {
     this.tag = tag;
   }
 
-  #recordEvent(name: string, info: AnalyticsInfo) {
+  recordEvent(name: string, info: AnalyticsInfo) {
     Object.entries(info).forEach((entry) => {
       const [k, v] = entry;
       if (Array.isArray(v))
@@ -57,6 +57,6 @@ export default class Analytics implements AnalyticsType {
         : {};
       if (a.getAttribute('type')) info.mime = a.getAttribute('type') as string;
     }
-    this.#recordEvent('download', info);
+    this.recordEvent('download', info);
   }
 }

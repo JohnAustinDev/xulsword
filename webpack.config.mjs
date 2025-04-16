@@ -277,7 +277,7 @@ export default function (opts) {
           ? env('WEBAPP_PUBLIC_DIST')
           : './',
         ...(build === 'external' ? {
-          library: { type: 'umd' },
+          library: 'xulsword',
           globalObject: 'globalThis'
         } : {}),
       },
