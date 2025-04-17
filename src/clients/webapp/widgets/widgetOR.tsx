@@ -3,7 +3,7 @@ import log from '../../log.ts';
 import {
   createNodeList,
   getProps,
-  updateDownloadLinks,
+  updateAudioDownloadLinks,
   updateHrefParams,
 } from '../common.ts';
 import SelectOR from '../../components/libxul/selectOR.tsx';
@@ -71,7 +71,7 @@ export default function WidgetOR(wprops: WidgetORProps): React.JSX.Element {
       | undefined;
     if (link) updateHrefParams(link, { key: `${key}` });
     if (comParent && data2)
-      updateDownloadLinks(comParent, selection, data, data2, isReset);
+      updateAudioDownloadLinks(comParent, selection, data, data2, isReset);
   };
 
   const [state] = useState(() => {

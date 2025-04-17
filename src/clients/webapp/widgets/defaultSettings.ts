@@ -37,17 +37,17 @@ export type WidgetMenulistData = {
 };
 
 export type FileItem = {
-  name: string;
+  ntitle: string;
   size?: string;
   relurl?: string;
   full?: boolean;
-  pubTypes?: string[];
-  pubTypeLabels?: { [type: string]: string };
-  scope?: string;
+  typeLabels?: { [type: string]: string };
+  field_type?: string[];
+  field_bible_scope?: string;
 } & AnalyticsInfo;
 
 export type ChaplistVKType = {
-  [bk in OSISBookType]?: Array<[chapnum: number, url: string, size: number]>;
+  [bk in OSISBookType]?: Array<[chapnum: number, url: string, size: number, mid: string]>;
 };
 
 export type ChaplistORType = Array<
@@ -56,6 +56,7 @@ export type ChaplistORType = Array<
     chapterSlashDelimited: string,
     url: string,
     size: number,
+    mid: string,
   ]
 >;
 
@@ -91,8 +92,8 @@ const defaultSettings: AllComponentsData = {
         },
       },
       data: [
-        ['0', 'First chapter', '', 1000000],
-        ['1', 'Second chapter', '', 1000000],
+        ['0', 'First chapter', '', 1000000, '0'],
+        ['1', 'Second chapter', '', 1000000, '0'],
       ],
     },
 

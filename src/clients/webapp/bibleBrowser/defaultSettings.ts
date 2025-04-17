@@ -30,7 +30,6 @@ export type BibleBrowserData = {
 // otherwise default prefs will be applied to the prefs argument.
 export function setDefaultBibleBrowserPrefs(
   prefs: BibleBrowserData['settings']['prefs'] | PrefsGType,
-  numPanels: number,
 ) {
   const xulsword =
     'getComplexValue' in prefs

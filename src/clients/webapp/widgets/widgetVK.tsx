@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { diff } from '../../../common.ts';
 import log from '../../log.ts';
-import { getProps, updateDownloadLinks, updateHrefParams } from '../common.ts';
+import { getProps, updateAudioDownloadLinks, updateHrefParams } from '../common.ts';
 import SelectVK from '../../components/libxul/selectVK.tsx';
 
 import type {
@@ -86,7 +86,7 @@ export default function WidgetVK(wprops: WidgetVKProps): React.JSX.Element {
       | undefined;
     if (link) updateHrefParams(link, { verse: `~${book}.${chapter}` });
     if (comParent && data && data2)
-      updateDownloadLinks(comParent, selection, data, data2, isReset);
+      updateAudioDownloadLinks(comParent, selection, data, data2, isReset);
   };
 
   const [state, setState] = useState(() => {

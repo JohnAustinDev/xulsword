@@ -12,7 +12,6 @@ import {
   localizeString,
   randomID,
   findTreeNodeOrder,
-  JSON_stringify,
 } from '../common.ts';
 import C from '../constant.ts';
 import S from '../defaultPrefs.ts';
@@ -976,12 +975,6 @@ export function elem2text(div: HTMLElement): string {
   html = html.replace(/(&rlm;|&lrm;)/g, '');
   html = html.replace(/([\n\r]+ *){3,}/g, C.SYSTEMNEWLINE + C.SYSTEMNEWLINE);
   return html;
-}
-
-// Convert a data object into a string suitable for saving into the data-info
-// attribute of an HTML element, which is used to send analytics data.
-export function analyticsInfo(info: AnalyticsInfo): string {
-  return encodeURIComponent(JSON_stringify(info));
 }
 
 // Use in conjunction with callResultCompress to decompress G request results

@@ -157,7 +157,7 @@ socket.on('connect', () => {
         ),
       ]);
 
-      setDefaultBibleBrowserPrefs(Prefs, numPanels);
+      setDefaultBibleBrowserPrefs(Prefs);
       setGlobalPanels(Prefs, numPanels);
       validateModulePrefs(G.Tabs, Prefs, G.FeatureModules);
 

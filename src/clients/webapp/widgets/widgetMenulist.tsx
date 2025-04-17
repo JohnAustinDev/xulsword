@@ -1,10 +1,10 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import React, { useEffect, useState } from 'react';
 import log from '../../log.ts';
 import { G } from '../../G.ts';
 import { randomID } from '../../../common.ts';
-import { analyticsInfo } from '../../common.tsx';
 import Menulist from '../../components/libxul/menulist.tsx';
-import { getProps } from '../common.ts';
+import { analyticsInfo, getProps } from '../common.ts';
 
 import type { ChangeEvent } from 'react';
 import type { MenulistProps } from '../../components/libxul/menulist.tsx';
@@ -58,8 +58,7 @@ export default function WidgetMenulist(
                 anchor.textContent = optionText(link, false);
                 anchor.dataset.info = analyticsInfo({
                   ...link,
-                  name: anchor.textContent,
-                  pubTypeLabels: undefined,
+                  typeLabels: undefined,
                   size: undefined,
                   relurl: undefined,
                   full: undefined,
@@ -129,14 +128,20 @@ function optionText(data: string | FileItem, isMenulistText: boolean): string {
 
 // Return eBook link text and menulist text.
 function getEBookTitle(data: FileItem, menu: boolean): string {
-  const { name, pubTypes: ts, scope: s, full, pubTypeLabels } = data;
+  const {
+    ntitle,
+    field_type: ts,
+    field_bible_scope: s,
+    full,
+    typeLabels,
+  } = data;
   const Book = G.Book(G.i18n.language);
 
   if (full)
-    return menu ? G.i18n.t('Full publication', { ns: 'widgets' }) : name;
+    return menu ? G.i18n.t('Full publication', { ns: 'widgets' }) : ntitle;
 
-  let pubTypes = ts;
-  let scope = s;
+  let field_type = ts;
+  let field_bible_scope = s;
 
   // For some types, scope should be ignored.
   if (
@@ -157,23 +162,24 @@ function getEBookTitle(data: FileItem, menu: boolean): string {
       ].includes(t),
     ).length
   )
-    scope = '';
+    field_bible_scope = '';
 
   // If there is still a scope, all types other than 'preliminary' should be
   // ignored.
-  if (scope) pubTypes = ts?.filter((t) => ['preliminary'].includes(t));
+  if (field_bible_scope)
+    field_type = ts?.filter((t) => ['preliminary'].includes(t));
 
   const book =
-    scope?.replace(/[^-\s_]+/g, (m) =>
+    field_bible_scope?.replace(/[^-\s_]+/g, (m) =>
       m in Book ? (Book as any)[m].name : m,
     ) ?? '';
   const ptls =
-    pubTypes?.map((pt) =>
-      pubTypeLabels && pt in pubTypeLabels ? pubTypeLabels[pt] : '',
+    field_type?.map((pt) =>
+      typeLabels && pt in typeLabels ? typeLabels[pt] : '',
     ) ?? [];
   const prefix = [book, ...ptls].filter(Boolean).join(', ');
 
-  if (!prefix) return name;
+  if (!prefix) return ntitle;
 
-  return menu ? prefix : `${prefix}: ${name}`;
+  return menu ? prefix : `${prefix}: ${ntitle}`;
 }

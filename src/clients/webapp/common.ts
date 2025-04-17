@@ -1,15 +1,17 @@
 import C from '../../constant.ts';
 import S from '../../defaultPrefs.ts';
-import { clone, hierarchy } from '../../common.ts';
+import { clone, hierarchy, JSON_stringify } from '../../common.ts';
 import Prefs from './prefs.ts';
 
 import type { TreeNodeInfo } from '@blueprintjs/core';
 import type {
+  OSISBookType,
   PrefObject,
   PrefRoot,
   PrefValue,
   TreeNodeInfoPref,
 } from '../../type.ts';
+import type { AnalyticsInfo } from '../../analytics.ts';
 import type {
   SelectORMType,
   SelectORProps,
@@ -26,7 +28,7 @@ import type {
   WidgetVKData,
   ZipAudioDataType,
 } from './widgets/defaultSettings.ts';
-import { SelectVKType } from '../components/libxul/selectVK.tsx';
+import type { SelectVKType } from '../components/libxul/selectVK.tsx';
 
 export type AllComponentsData = {
   react: {
@@ -195,7 +197,7 @@ export function createNodeList(
       o.pop();
     }
     if (n.length) {
-      return [o.concat('').join('/'), n.concat('').join('/'), '', 1];
+      return [o.concat('').join('/'), n.concat('').join('/'), '', 1, '0'];
     }
     return null;
   };
@@ -254,7 +256,7 @@ export function createNodeList(
   }
 }
 
-export function updateDownloadLinks(
+export function updateAudioDownloadLinks(
   parentElement: HTMLElement,
   selection: SelectVKType | SelectORMType,
   data: ChaplistVKType | ChaplistORType,
@@ -268,13 +270,15 @@ export function updateDownloadLinks(
   let ch1: number | undefined;
   let ch2: number | undefined;
   let sizes: number | undefined;
+  let mid: string = '';
   if ('keys' in selection && Array.isArray(data)) {
     const { keys } = selection;
     const [key] = keys;
     const da = data.find((x) => x[1] === key);
     if (da) {
-      const [order, , , fsize] = da;
+      const [order, , , fsize, fmid] = da;
       size = fsize;
+      mid = fmid;
       const os = order.split('/');
       chapter = Number(os.pop());
       parent = os.join('/');
@@ -286,7 +290,7 @@ export function updateDownloadLinks(
     chapter = ch;
     if (book in data && Array.isArray(data[book])) {
       const c = data[book].find((x) => x[0] == chapter);
-      if (typeof c !== 'undefined') [, , size] = c;
+      if (typeof c !== 'undefined') [, , size, mid] = c;
     }
   }
   if (!parent) return;
@@ -309,7 +313,7 @@ export function updateDownloadLinks(
           : slinkp.querySelector('a[type="audio/mpeg"]')
       ) as HTMLAnchorElement | undefined;
       if (slink) {
-        updateDownloadLink(
+        updateAudioDownloadLink(
           data,
           data2,
           slink,
@@ -317,6 +321,7 @@ export function updateDownloadLinks(
           chapter,
           chapter,
           size,
+          mid,
           'none',
         );
         slinkp.removeAttribute('style');
@@ -343,7 +348,7 @@ export function updateDownloadLinks(
           : mlinkp.querySelector('a[type="audio/mpeg"]')
       ) as HTMLAnchorElement | undefined;
       if (mlink) {
-        updateDownloadLink(data, data2, mlink, parent, ch1, ch2, sizes, 'zip');
+        updateAudioDownloadLink(data, data2, mlink, parent, ch1, ch2, sizes, mid, 'zip');
         if (ch1 === ch2) mlinkp.setAttribute('style', 'display:none');
         else {
           mlinkp.removeAttribute('style');
@@ -357,7 +362,7 @@ export function updateDownloadLinks(
   }
 }
 
-function updateDownloadLink(
+function updateAudioDownloadLink(
   data: ChaplistVKType | ChaplistORType,
   data2: ZipAudioDataType,
   anchor: HTMLAnchorElement,
@@ -365,6 +370,7 @@ function updateDownloadLink(
   chapter1: number,
   chapter2: number,
   bytes: number,
+  mid: string,
   packType: 'zip' | 'none',
 ) {
   const { link, linkmulti, linkbook, downloadUrl } = data2;
@@ -376,9 +382,7 @@ function updateDownloadLink(
   href = href.replace('PACKAGE', packType);
   anchor.href = href;
 
-  const isBible = Object.values(C.SupportedBooks).some((bg: any) =>
-    bg.includes(parent),
-  );
+  const isBible = !Array.isArray(data);
   let textContent = chapter1 === chapter2 ? link : linkmulti;
   if (
     isBible &&
@@ -409,6 +413,14 @@ function updateDownloadLink(
       selem.textContent = `(${snum} MB)`;
     }
   }
+
+  anchor.dataset.info = analyticsInfo({
+    mtype: isBible ? 'bible_audio_file' : 'genbk_audio_file',
+    mid,
+    parent,
+    chapter: chapter1.toString(),
+    chapters: (1 + chapter2 - chapter1).toString(),
+  });
 }
 
 // Update the href of an anchor element by setting or changing the given
@@ -443,4 +455,10 @@ export function updateHrefParams(
       }
     }
   }
+}
+
+// Convert a data object into a string suitable for saving into the data-info
+// attribute of an HTML element, which is used to send analytics data.
+export function analyticsInfo(info: AnalyticsInfo): string {
+  return encodeURIComponent(JSON_stringify(info));
 }
