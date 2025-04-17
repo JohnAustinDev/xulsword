@@ -12,7 +12,11 @@ export type AnalyticsTag = (
 
 // Analytics functions available to event handlers.
 export type AnalyticsType = {
-  recordDownload: (a: HTMLElement) => void;
+  recordElementEvent: (
+    name: string,
+    elem: HTMLElement,
+    info: (elem: HTMLElement) => AnalyticsInfo,
+  ) => void;
 };
 
 // Analytics information to be supplied along with the event.
@@ -28,21 +32,13 @@ export default class Analytics implements AnalyticsType {
     this.tag = tag;
   }
 
-  // Record a download event triggered by any HTML element. The element may
-  // have a type attribute with the mime type of the download and/or a
-  // data-info attribute with analytics info. Any type attribute will override
-  // the data-info mime value.
-  recordDownload(a: HTMLElement) {
-    let ai: HTMLElement | null = a;
-    let info: AnalyticsInfo = {};
-    while (ai && !ai.dataset.info) ai = ai.parentElement;
-    if (a.getAttribute('type') || (ai && ai.dataset.info)) {
-      info = ai?.dataset.info
-        ? JSON.parse(decodeURIComponent(ai.dataset.info))
-        : {};
-      if (a.getAttribute('type')) info.mime = a.getAttribute('type') as string;
-    }
-    this.recordEvent('download', info);
+  // Record an event triggered by any HTML element.
+  recordElementEvent(
+    name: string,
+    elem: HTMLElement,
+    info: (elem: HTMLElement) => AnalyticsInfo,
+  ) {
+    this.recordEvent(name, info(elem));
   }
 
   recordEvent(name: string, info: AnalyticsInfo) {
@@ -60,5 +56,4 @@ export default class Analytics implements AnalyticsType {
     // eslint-disable-next-line no-console
     else console.log('recordEvent: ', name, info);
   }
-
 }
