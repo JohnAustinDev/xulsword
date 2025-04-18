@@ -1,7 +1,14 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import React, { useState } from 'react';
 import { diff } from '../../../common.ts';
 import log from '../../log.ts';
-import { getProps, updateAudioDownloadLinks, updateHrefParams } from '../common.ts';
+import {
+  analyticsElement,
+  analyticsInfo,
+  getProps,
+  updateAudioDownloadLinks,
+  updateHrefParams,
+} from '../common.ts';
 import SelectVK from '../../components/libxul/selectVK.tsx';
 
 import type {
@@ -50,6 +57,7 @@ export default function WidgetVK(wprops: WidgetVKProps): React.JSX.Element {
         if (action && newState !== prevState) {
           switch (action) {
             case 'bible_audio_Play': {
+              updateAnalytics(selection);
               const comParent = document.getElementById(compid)?.parentElement;
               const player = comParent?.querySelector('audio') as
                 | HTMLAudioElement
@@ -81,12 +89,28 @@ export default function WidgetVK(wprops: WidgetVKProps): React.JSX.Element {
   const updateLinks = (selection: SelectVKType, isReset = false) => {
     const { book, chapter } = selection;
     const comParent = document.getElementById(compid)?.parentElement;
-    const link = comParent?.querySelector('.update_url a, a.update_url') as
+    const anchor = comParent?.querySelector('.update_url a, a.update_url') as
       | HTMLAnchorElement
       | undefined;
-    if (link) updateHrefParams(link, { verse: `~${book}.${chapter}` });
+    if (anchor) updateHrefParams(anchor, { verse: `~${book}.${chapter}` });
     if (comParent && data && data2)
       updateAudioDownloadLinks(comParent, selection, data, data2, isReset);
+  };
+
+  const updateAnalytics = (selection: SelectVKType) => {
+    const { book, chapter } = selection;
+    const chaparray = data && data[book]?.find((ca) => ca[0] === chapter);
+    if (chaparray) {
+      const [field_chapter, , , mid] = chaparray;
+      analyticsInfo(
+        analyticsElement(document.getElementById(compid)?.parentElement),
+        {
+          field_osis_book: book,
+          field_chapter: field_chapter.toString(),
+          mid,
+        },
+      );
+    }
   };
 
   const [state, setState] = useState(() => {
@@ -121,6 +145,7 @@ export default function WidgetVK(wprops: WidgetVKProps): React.JSX.Element {
     }
 
     updateLinks(s.initialVK, true);
+    updateAnalytics(s.initialVK);
 
     return s;
   });

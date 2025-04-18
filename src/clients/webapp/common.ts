@@ -1,6 +1,6 @@
 import C from '../../constant.ts';
 import S from '../../defaultPrefs.ts';
-import { clone, hierarchy, JSON_stringify } from '../../common.ts';
+import { clone, hierarchy, JSON_parse, JSON_stringify } from '../../common.ts';
 import Prefs from './prefs.ts';
 
 import type { TreeNodeInfo } from '@blueprintjs/core';
@@ -11,7 +11,7 @@ import type {
   PrefValue,
   TreeNodeInfoPref,
 } from '../../type.ts';
-import type { AnalyticsInfo } from '../../analytics.ts';
+import type { AnalyticsInfo, AnalyticsType } from '../../analytics.ts';
 import type {
   SelectORMType,
   SelectORProps,
@@ -270,15 +270,13 @@ export function updateAudioDownloadLinks(
   let ch1: number | undefined;
   let ch2: number | undefined;
   let sizes: number | undefined;
-  let mid: string = '';
   if ('keys' in selection && Array.isArray(data)) {
     const { keys } = selection;
     const [key] = keys;
     const da = data.find((x) => x[1] === key);
     if (da) {
-      const [order, , , fsize, fmid] = da;
+      const [order, , , fsize] = da;
       size = fsize;
-      mid = fmid;
       const os = order.split('/');
       chapter = Number(os.pop());
       parent = os.join('/');
@@ -290,7 +288,7 @@ export function updateAudioDownloadLinks(
     chapter = ch;
     if (book in data && Array.isArray(data[book])) {
       const c = data[book].find((x) => x[0] == chapter);
-      if (typeof c !== 'undefined') [, , size, mid] = c;
+      if (typeof c !== 'undefined') [, , size] = c;
     }
   }
   if (!parent) return;
@@ -321,7 +319,6 @@ export function updateAudioDownloadLinks(
           chapter,
           chapter,
           size,
-          mid,
           'none',
         );
         slinkp.removeAttribute('style');
@@ -348,7 +345,16 @@ export function updateAudioDownloadLinks(
           : mlinkp.querySelector('a[type="audio/mpeg"]')
       ) as HTMLAnchorElement | undefined;
       if (mlink) {
-        updateAudioDownloadLink(data, data2, mlink, parent, ch1, ch2, sizes, mid, 'zip');
+        updateAudioDownloadLink(
+          data,
+          data2,
+          mlink,
+          parent,
+          ch1,
+          ch2,
+          sizes,
+          'zip',
+        );
         if (ch1 === ch2) mlinkp.setAttribute('style', 'display:none');
         else {
           mlinkp.removeAttribute('style');
@@ -370,7 +376,6 @@ function updateAudioDownloadLink(
   chapter1: number,
   chapter2: number,
   bytes: number,
-  mid: string,
   packType: 'zip' | 'none',
 ) {
   const { link, linkmulti, linkbook, downloadUrl } = data2;
@@ -414,12 +419,10 @@ function updateAudioDownloadLink(
     }
   }
 
-  anchor.dataset.info = analyticsInfo({
-    mtype: isBible ? 'bible_audio_file' : 'genbk_audio_file',
-    mid,
-    parent,
-    chapter: chapter1.toString(),
-    chapters: (1 + chapter2 - chapter1).toString(),
+  analyticsInfo(anchor, {
+    chapter1: chapter1 === chapter2 ? undefined : chapter1.toString(),
+    chapters:
+      chapter1 === chapter2 ? undefined : (1 + chapter2 - chapter1).toString(),
   });
 }
 
@@ -457,8 +460,33 @@ export function updateHrefParams(
   }
 }
 
-// Convert a data object into a string suitable for saving into the data-info
-// attribute of an HTML element, which is used to send analytics data.
-export function analyticsInfo(info: AnalyticsInfo): string {
-  return encodeURIComponent(JSON_stringify(info));
+// Convert a data object into a string suitable for merging into or replacing
+// the data-info attribute of an HTML element, which is used to send analytics
+// data.
+export function analyticsInfo(
+  element: HTMLElement | null,
+  info: AnalyticsInfo,
+  replace = false,
+) {
+  if (element) {
+    const init =
+      !replace && element.dataset.info
+        ? (JSON_parse(
+            decodeURIComponent(element.dataset.info),
+          ) as AnalyticsInfo)
+        : {};
+    element.dataset.info = encodeURIComponent(
+      JSON_stringify({ ...init, ...info }),
+    );
+  }
+}
+
+export function analyticsElement(
+  element: HTMLElement | null | undefined,
+): HTMLElement | null {
+  let el: HTMLElement | null | undefined = element;
+  if (element) {
+    while (el && !el.classList.contains('view-row')) el = el.parentElement;
+  }
+  return el || element || null;
 }

@@ -56,7 +56,7 @@ export default function WidgetMenulist(
                 const rel = relurl.replace(/^\//, '');
                 anchor.setAttribute('href', `${root}/${rel}`);
                 anchor.textContent = optionText(link, false);
-                anchor.dataset.info = analyticsInfo({
+                analyticsInfo(anchor, {
                   ...link,
                   typeLabels: undefined,
                   size: undefined,
