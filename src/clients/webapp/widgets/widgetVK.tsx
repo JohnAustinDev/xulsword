@@ -1,10 +1,9 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import React, { useState } from 'react';
 import { diff } from '../../../common.ts';
+import Analytics from '../../../analytics.ts';
 import log from '../../log.ts';
 import {
-  analyticsElement,
-  analyticsInfo,
   getProps,
   updateAudioDownloadLinks,
   updateHrefParams,
@@ -57,7 +56,7 @@ export default function WidgetVK(wprops: WidgetVKProps): React.JSX.Element {
         if (action && newState !== prevState) {
           switch (action) {
             case 'bible_audio_Play': {
-              updateAnalytics(selection);
+              updateAnalyticsInfo(selection);
               const comParent = document.getElementById(compid)?.parentElement;
               const player = comParent?.querySelector('audio') as
                 | HTMLAudioElement
@@ -97,19 +96,22 @@ export default function WidgetVK(wprops: WidgetVKProps): React.JSX.Element {
       updateAudioDownloadLinks(comParent, selection, data, data2, isReset);
   };
 
-  const updateAnalytics = (selection: SelectVKType) => {
+  const updateAnalyticsInfo = (selection: SelectVKType) => {
     const { book, chapter } = selection;
     const chaparray = data && data[book]?.find((ca) => ca[0] === chapter);
     if (chaparray) {
       const [field_chapter, , , mid] = chaparray;
-      analyticsInfo(
-        analyticsElement(document.getElementById(compid)?.parentElement),
-        {
-          field_osis_book: book,
-          field_chapter: field_chapter.toString(),
-          mid,
-        },
-      );
+      const elem = document.getElementById(compid)?.parentElement;
+      if (elem) {
+        Analytics.addInfo(
+          {
+            field_osis_book: book,
+            field_chapter: field_chapter.toString(),
+            mid,
+          },
+          Analytics.topInfoElement(elem),
+        );
+      }
     }
   };
 
@@ -145,7 +147,7 @@ export default function WidgetVK(wprops: WidgetVKProps): React.JSX.Element {
     }
 
     updateLinks(s.initialVK, true);
-    updateAnalytics(s.initialVK);
+    updateAnalyticsInfo(s.initialVK);
 
     return s;
   });

@@ -1,17 +1,16 @@
 import C from '../../constant.ts';
 import S from '../../defaultPrefs.ts';
-import { clone, hierarchy, JSON_parse, JSON_stringify } from '../../common.ts';
+import { clone, hierarchy } from '../../common.ts';
+import Analytics from '../../analytics.ts';
 import Prefs from './prefs.ts';
 
 import type { TreeNodeInfo } from '@blueprintjs/core';
 import type {
-  OSISBookType,
   PrefObject,
   PrefRoot,
   PrefValue,
   TreeNodeInfoPref,
 } from '../../type.ts';
-import type { AnalyticsInfo, AnalyticsType } from '../../analytics.ts';
 import type {
   SelectORMType,
   SelectORProps,
@@ -419,11 +418,16 @@ function updateAudioDownloadLink(
     }
   }
 
-  analyticsInfo(anchor, {
-    chapter1: chapter1 === chapter2 ? undefined : chapter1.toString(),
-    chapters:
-      chapter1 === chapter2 ? undefined : (1 + chapter2 - chapter1).toString(),
-  });
+  Analytics.addInfo(
+    {
+      chapter1: chapter1 === chapter2 ? undefined : chapter1.toString(),
+      chapters:
+        chapter1 === chapter2
+          ? undefined
+          : (1 + chapter2 - chapter1).toString(),
+    },
+    anchor,
+  );
 }
 
 // Update the href of an anchor element by setting or changing the given
@@ -458,35 +462,4 @@ export function updateHrefParams(
       }
     }
   }
-}
-
-// Convert a data object into a string suitable for merging into or replacing
-// the data-info attribute of an HTML element, which is used to send analytics
-// data.
-export function analyticsInfo(
-  element: HTMLElement | null,
-  info: AnalyticsInfo,
-  replace = false,
-) {
-  if (element) {
-    const init =
-      !replace && element.dataset.info
-        ? (JSON_parse(
-            decodeURIComponent(element.dataset.info),
-          ) as AnalyticsInfo)
-        : {};
-    element.dataset.info = encodeURIComponent(
-      JSON_stringify({ ...init, ...info }),
-    );
-  }
-}
-
-export function analyticsElement(
-  element: HTMLElement | null | undefined,
-): HTMLElement | null {
-  let el: HTMLElement | null | undefined = element;
-  if (element) {
-    while (el && !el.classList.contains('view-row')) el = el.parentElement;
-  }
-  return el || element || null;
 }

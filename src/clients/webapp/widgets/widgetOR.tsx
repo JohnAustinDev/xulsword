@@ -1,9 +1,8 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import React, { useState } from 'react';
+import Analytics from '../../../analytics.ts';
 import log from '../../log.ts';
 import {
-  analyticsElement,
-  analyticsInfo,
   createNodeList,
   getProps,
   updateAudioDownloadLinks,
@@ -44,7 +43,7 @@ export default function WidgetOR(wprops: WidgetORProps): React.JSX.Element {
       const [key] = keys;
       switch (action) {
         case 'genbk_audio_Play': {
-          updateAnalytics(selection);
+          updateAnalyticsInfo(selection);
           const comParent = document.getElementById(compid)?.parentElement;
           const player = comParent?.querySelector('audio') as
             | HTMLAudioElement
@@ -78,20 +77,23 @@ export default function WidgetOR(wprops: WidgetORProps): React.JSX.Element {
       updateAudioDownloadLinks(comParent, selection, data, data2, isReset);
   };
 
-  const updateAnalytics = (selection: SelectORMType) => {
+  const updateAnalyticsInfo = (selection: SelectORMType) => {
     const { keys } = selection;
     const [key] = keys;
     const da = data.find((x) => x[1] === key);
     if (da) {
       const [field_path_order, field_path_name, , , mid] = da;
-      analyticsInfo(
-        analyticsElement(document.getElementById(compid)?.parentElement),
-        {
-          field_path_order,
-          field_path_name,
-          mid,
-        },
-      );
+      const elem = document.getElementById(compid)?.parentElement;
+      if (elem) {
+        Analytics.addInfo(
+          {
+            field_path_order,
+            field_path_name,
+            mid,
+          },
+          Analytics.topInfoElement(elem)
+        );
+      }
     }
   };
 
@@ -106,7 +108,7 @@ export default function WidgetOR(wprops: WidgetORProps): React.JSX.Element {
     }) as WidgetORState;
 
     updateLinks(s.initialORM, true);
-    updateAnalytics(s.initialORM);
+    updateAnalyticsInfo(s.initialORM);
 
     return s;
   });

@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import React, { useEffect, useState } from 'react';
+import Analytics from '../../../analytics.ts';
+import { randomID } from '../../../common.ts';
 import log from '../../log.ts';
 import { G } from '../../G.ts';
-import { randomID } from '../../../common.ts';
 import Menulist from '../../components/libxul/menulist.tsx';
-import { analyticsInfo, getProps } from '../common.ts';
+import { getProps } from '../common.ts';
 
 import type { ChangeEvent } from 'react';
 import type { MenulistProps } from '../../components/libxul/menulist.tsx';
@@ -56,13 +57,16 @@ export default function WidgetMenulist(
                 const rel = relurl.replace(/^\//, '');
                 anchor.setAttribute('href', `${root}/${rel}`);
                 anchor.textContent = optionText(link, false);
-                analyticsInfo(anchor, {
-                  ...link,
-                  typeLabels: undefined,
-                  size: undefined,
-                  relurl: undefined,
-                  full: undefined,
-                });
+                Analytics.addInfo(
+                  {
+                    ...link,
+                    typeLabels: undefined,
+                    size: undefined,
+                    relurl: undefined,
+                    full: undefined,
+                  },
+                  anchor,
+                );
                 if (
                   typeof size !== 'undefined' &&
                   anchor.parentElement?.tagName === 'SPAN'
