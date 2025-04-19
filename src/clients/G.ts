@@ -1,4 +1,5 @@
 import C from '../constant.ts';
+import analytics from '../analytics.ts';
 import {
   JSON_stringify,
   GCacheKey,
@@ -14,8 +15,15 @@ import { GCallsOrPromise } from './renderPromise.ts';
 import log from './log.ts';
 import CookiePrefs from './webapp/prefs.ts';
 
+import type { AnalyticsEvents, AnalyticsInfo } from '../analytics.ts';
 import type Viewport from './webapp/viewport.ts';
-import type { GCallType, GIType, GType, PrefValue } from '../type.ts';
+import type {
+  GCallType,
+  GIType,
+  GType,
+  LocationVKType,
+  PrefValue,
+} from '../type.ts';
 import type RenderPromise from './renderPromise.ts';
 
 // G and GI objects are used to seamlessly share complex data and functionality
@@ -256,6 +264,7 @@ async function asyncRequest(call: GCallType) {
   const ckey = GCacheKey(call);
   if (cacheable && Cache.has(ckey))
     return await Promise.resolve(Cache.read(ckey));
+  reportAnalytics(call);
   log.silly(
     `${ckey} ${JSON_stringify(call)} async ${cacheable ? 'miss' : 'uncacheable'}`,
   );
@@ -289,6 +298,7 @@ function request(call: GCallType) {
   const ckey = GCacheKey(call);
   const cacheable = isCallCacheable(GBuilder, call);
   if (cacheable && Cache.has(ckey)) return Cache.read(ckey);
+  reportAnalytics(call);
   if (Build.isWebApp) {
     if (cacheable)
       throw new Error(
@@ -358,4 +368,69 @@ function prepCall(thecall: GCallType): GCallType {
     }
   }
   return [name, method, args];
+}
+
+// Determine which calls to report to the analytics service.
+type MyFuncData = { event: AnalyticsEvents };
+const ReportAnalyticsG: Partial<
+  Record<
+    keyof GType,
+    MyFuncData | Partial<Record<keyof GType['LibSword'], MyFuncData>>
+  >
+> = {
+  getExtRefHTML: { event: 'bb-verse' },
+  locationVKText: { event: 'bb-verse' },
+  LibSword: {
+    getChapterText: { event: 'bb-chapter-bible' },
+    getChapterTextMulti: { event: 'bb-chapter-bible' },
+    getGenBookChapterText: { event: 'bb-chapter-genbk' },
+    getDictionaryEntry: { event: 'bb-glossary' },
+    getFirstDictionaryEntry: { event: 'bb-glossary' },
+    getVerseText: { event: 'bb-verse' },
+    // getIntroductions: { event: 'bb-introduction' }, Fires for EVERY chapter read, so is useless
+    search: { event: 'bb-search' },
+  },
+};
+function reportAnalytics(call: GCallType) {
+  let info: AnalyticsInfo | undefined;
+  let event: AnalyticsEvents | undefined;
+
+  const [p, m, args] = call;
+  if (['callBatchSync', 'callBatch'].includes(p) && args) {
+    args[0].forEach((call: GCallType) => {reportAnalytics(call)});
+    return;
+  }
+
+  if (ReportAnalyticsG && p in ReportAnalyticsG) {
+    const ms = ReportAnalyticsG[p];
+    if (ms) {
+      // LibSword methods parameters are all [module(s), target, ...]
+      if (p === 'LibSword' && args) {
+        if (m && m in ms) {
+          ({ event } = (ms as any)[m]);
+          info = {
+            module: args[0] || '',
+            target: args[1] || '',
+          };
+        }
+      } else if (p === 'getExtRefHTML' && 'event' in ms && args) {
+        // getExtRefHTML is [extref, module, ...]
+        ({ event } = ms);
+        info = {
+          module: args[1] || '',
+          target: args[0] || '',
+        };
+      } else if (p === 'locationVKText' && 'event' in ms && args) {
+        // locationVKText is [locationVK, module, ...]
+        ({ event } = ms);
+        const l = args[0] as LocationVKType;
+        info = {
+          module: args[1] || '',
+          target: `${l.book}.${l.chapter}.${l.verse}`,
+        };
+      }
+    }
+  }
+
+  if (event && info) analytics.recordEvent(event, info);
 }

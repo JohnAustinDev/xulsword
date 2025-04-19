@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import React, { useEffect, useState } from 'react';
-import Analytics from '../../../analytics.ts';
+import { Analytics, AnalyticsInfo } from '../../../analytics.ts';
 import { randomID } from '../../../common.ts';
 import log from '../../log.ts';
 import { G } from '../../G.ts';
@@ -60,11 +60,11 @@ export default function WidgetMenulist(
                 Analytics.addInfo(
                   {
                     ...link,
-                    typeLabels: undefined,
                     size: undefined,
                     relurl: undefined,
                     full: undefined,
-                  },
+                    typeLabels: undefined,
+                  } as AnalyticsInfo,
                   anchor,
                 );
                 if (

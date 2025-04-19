@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import { Icon, Intent, Position, OverlayToaster } from '@blueprintjs/core';
 import Subscription from '../../../subscription.ts';
+import analytics from '../../../analytics.ts';
 import { clone, randomID } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
@@ -252,6 +253,7 @@ export default class PrintSettings extends React.Component {
             break;
           }
           case 'print': {
+            analytics.recordEvent('bb-print', printAnalyticInfo());
             if (Build.isElectronApp) {
               const options: Electron.WebContentsPrintOptions = {
                 ...electronOptions,
@@ -301,6 +303,7 @@ export default class PrintSettings extends React.Component {
             break;
           }
           case 'printToPDF': {
+            analytics.recordEvent('bb-print-to-pdf', printAnalyticInfo());
             Subscription.publish.setControllerState(dark);
             G.Window.printToPDF({
               destination: 'prompt-for-file',
@@ -327,6 +330,7 @@ export default class PrintSettings extends React.Component {
             break;
           }
           case 'printPreview': {
+            analytics.recordEvent('bb-print-preview', printAnalyticInfo());
             Subscription.publish.setControllerState(dark);
             G.Window.printToPDF({
               destination: 'iframe',
@@ -914,3 +918,14 @@ export default class PrintSettings extends React.Component {
   }
 }
 PrintSettings.propTypes = propTypes;
+
+// TODO: This does not show what the user is printing!
+function printAnalyticInfo() {
+  const { panels, location } = G.Prefs.getComplexValue(
+    'xulsword',
+  ) as typeof S.prefs.xulsword;
+  return {
+    module: panels[0] || '',
+    target: `${location?.book || 'book?'} ${location?.chapter || 'chapter?'}`,
+  }
+}

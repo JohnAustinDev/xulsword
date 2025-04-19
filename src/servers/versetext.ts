@@ -12,11 +12,8 @@ import type {
   ParamShift,
   TabTypes,
   TextVKType,
-  V11nType,
 } from '../type.ts';
-import type { RefParserOptionsType } from '../refParser.ts';
 import type { HTMLData } from '../clients/htmlData.ts';
-import type RenderPromise from '../clients/renderPromise.ts';
 
 // Return an HTML Scripture reference list representing an extended reference.
 // An extended reference is a textual reference comprising a list of Scripture

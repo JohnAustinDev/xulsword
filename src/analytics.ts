@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 // The Analytics class allows analytics data to be collected during use of the
 // App or WebApp. The class is initialized with a third party tag function
 // that aggregates analytics data. Or when initialized with null, all events
 // are simply logged to the console.
 
-import { clone, drupalSetting, JSON_parse, JSON_stringify } from './common.ts';
+import { drupalSetting, JSON_parse, JSON_stringify } from './common.ts';
 
 // Type of the third party analytics function.
 export type AnalyticsTag = (
@@ -12,19 +13,75 @@ export type AnalyticsTag = (
   info: AnalyticsInfo,
 ) => void;
 
+export type AnalyticsEvents =
+  | 'bb-chapter-bible'
+  | 'bb-chapter-genbk'
+  | 'bb-verse'
+  | 'bb-introduction'
+  | 'bb-glossary'
+  | 'bb-search'
+  | 'bb-print'
+  | 'bb-print-preview'
+  | 'bb-print-to-pdf'
+  | 'download'
+  | 'play-audio'
+  | 'app-install';
+
 // Analytics information to be supplied along with the event.
 export type AnalyticsInfo = {
-  [k: string]: string | boolean | undefined | (string | boolean | undefined)[];
+  module?: string;
+  AudioCode?: string;
+  target?: string;
+  mid?: string;
+  mtype?: string;
+  nid?: string;
+  ntype?: string;
+  ntitle?: string;
+  iso?: string;
+  link?: string;
+  href?: string;
+  typeAttr?: string;
+  framehost?: string;
+  webapp?: boolean;
+  // Multi-chapter downloads
+  chapter1?: number;
+  chapters?: number;
+  // Drupal media
+  field_type?: string[];
+  field_bible_scope?: string;
+  field_script?: string;
+  field_format?: string;
+  // Bible audio
+  field_osis_book?: string;
+  field_chapter?: string;
+  // Genbk audio
+  field_path_order?: string;
+  field_path_name?: string;
+  // JavaME
+  field_series?: string;
+  field_character_set?: string;
+  field_javame_format?: string;
+  // MK
+  version?: string;
+};
+
+export type AnalyticsInfoType = {
+  [k: string]:
+    | boolean
+    | string
+    | number
+    | undefined
+    | (boolean | string | number | undefined)[];
 };
 
 export type TypeOfAnalytics = typeof Analytics;
 
-export default class Analytics {
+export class Analytics {
   private tag: AnalyticsTag | null;
 
   static decodeInfo = (attributeString: string) => {
     const x = JSON_parse(decodeURIComponent(attributeString));
-    const info = (typeof x === 'object' && (x as AnalyticsInfo)) || {};
+    const info = (typeof x === 'object' && (x as AnalyticsInfoType)) || {};
 
     // data-info attributes may also be encoded as key value pairs.
     if (!Object.keys(info).length) {
@@ -41,7 +98,7 @@ export default class Analytics {
     return encodeURIComponent(JSON_stringify(Analytics.validateInfo(info)));
   };
 
-  static validateInfo = (info: AnalyticsInfo) => {
+  static validateInfo = (info: AnalyticsInfoType) => {
     Object.entries(info).forEach((entry) => {
       const [k, v] = entry;
       if (
@@ -79,12 +136,13 @@ export default class Analytics {
   };
 
   // Collect analytics information for an HTML element. Anchor link text and
-  // any element type attribute is recorded, as is any data-info attribute. If
-  // context or data-info contain nid or mid, information for the referenced
-  // node or media item will be included.
+  // any element type attribute are recorded, as are any data-info attributes
+  // of self or ancestors. If data-history-node-id or data-info supply nid or
+  // mid, then information about the referenced node or media item will be
+  // included.
   static elementInfo = (element: HTMLElement) => {
     // element specific info
-    const info: AnalyticsInfo = {};
+    const info: AnalyticsInfoType = {};
     switch (element.localName) {
       case 'a': {
         info.link = element.textContent || '';
@@ -112,7 +170,7 @@ export default class Analytics {
         if (i && typeof i === 'object') {
           Object.entries(i).forEach((entry) => {
             if (!(entry[0] in info) || info[entry[0]] === '') {
-              info[entry[0]] = entry[1] as AnalyticsInfo[string];
+              info[entry[0]] = entry[1] as AnalyticsInfoType[string];
             }
           });
         }
@@ -120,37 +178,12 @@ export default class Analytics {
       elem = elem.parentElement;
     }
 
-    // drupalSettings data associated nid and mid (will not overwrite data-info,
-    // but must happen later because nid and/or mid are required).
-    ['nid', 'mid'].forEach((idkey) => {
-      const entType = idkey.startsWith('n') ? 'node' : 'media';
-      const id = idkey in info ? info[idkey] : '';
-      const ds = drupalSetting(`${entType}.${id}`);
-      if (typeof ds === 'object') {
-        Object.entries(ds).forEach((entry) => {
-          if (!(entry[0] in info) || info[entry[0]] === '_undefined_') {
-            info[entry[0]] = entry[1] as AnalyticsInfo[string];
-          }
-        });
-      }
-    });
-
     // type attribute
     if (element.getAttribute('type')) {
       info.typeAttr = element.getAttribute('type') as string;
     }
 
-    // Web App?
-    if (Build.isWebApp) info.webapp = true;
-
-    // Iframe parent hostname
-    const parentWin = frameElement?.ownerDocument?.defaultView as Window | undefined;
-    if (parentWin) {
-      const { hostname } = parentWin.location;
-      if (hostname !== window.location.hostname) info.hostname = hostname;
-    }
-
-    return Analytics?.validateInfo(info) || {};
+    return Analytics.validateInfo(info) || {};
   };
 
   // A null tag will log hits to the console, instead of reporting them.
@@ -159,13 +192,52 @@ export default class Analytics {
   }
 
   // Record an event triggered by any HTML element.
-  recordElementEvent(name: string, elem: HTMLElement, info?: AnalyticsInfo) {
+  recordElementEvent(
+    name: AnalyticsEvents,
+    elem: HTMLElement,
+    info?: AnalyticsInfo,
+  ) {
     let i = Analytics.elementInfo(elem);
     if (info) i = { ...i, ...info };
     this.recordEvent(name, i);
   }
 
-  recordEvent(name: string, info: AnalyticsInfo) {
+  recordEvent(name: AnalyticsEvents, info: AnalyticsInfoType) {
+    // drupalSettings data lookup (will not overwrite info).
+    Object.entries({
+      AudioCode: 'sword.AudioCode',
+      module: 'sword.module',
+      nid: 'node',
+      mid: 'media',
+    }).forEach((entry) => {
+      const [k, v] = entry;
+      if (k in info && info[k]) {
+        const ds = drupalSetting(`${v}.${info[k]}`);
+        if (typeof ds === 'object') {
+          Object.entries(ds).forEach((entry) => {
+            if (!(entry[0] in info) || info[entry[0]] === '_undefined_') {
+              info[entry[0]] = entry[1] as AnalyticsInfoType[string];
+            }
+          });
+        }
+      }
+    });
+
+    // webapp
+    if (Build.isWebApp) info.webapp = true;
+
+    // framehost
+    const parentWin = frameElement?.ownerDocument?.defaultView as
+      | Window
+      | undefined;
+    if (parentWin) {
+      const { hostname } = parentWin.location;
+      if (hostname !== window.location.hostname) info.framehost = hostname;
+    }
+
+    info = Analytics.validateInfo(info);
+
+    // convert to final form
     Object.entries(info).forEach((entry) => {
       const [k, v] = entry;
       if (Array.isArray(v))
@@ -176,8 +248,20 @@ export default class Analytics {
       else if (typeof v === 'undefined') delete info[k];
       else if (typeof v === 'string' && v === '_undefined_') delete info[k];
     });
+
+    // Send it!
     if (typeof this.tag === 'function') this.tag('event', name, info);
-    // eslint-disable-next-line no-console
-    else console.log('recordEvent: ', name, info);
+    else if (Build.isWebApp || Build.isDevelopment) {
+      // eslint-disable-next-line no-console
+      console.log('recordEvent: ', name, info);
+    }
   }
 }
+
+let tagfunc = null;
+if (typeof (globalThis as any).gtag === 'function')
+  tagfunc = (globalThis as any).gtag as AnalyticsTag;
+
+const analytics = new Analytics(tagfunc);
+
+export default analytics;
