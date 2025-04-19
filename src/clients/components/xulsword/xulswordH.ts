@@ -358,7 +358,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
           };
         }
       }
-      analytics.recordElementEvent('play-audio', target as HTMLElement, info);
+      analytics.recordElementEvent('audio-play', target as HTMLElement, info);
       break;
     }
 

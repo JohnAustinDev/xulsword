@@ -24,7 +24,7 @@ export type AnalyticsEvents =
   | 'bb-print-preview'
   | 'bb-print-to-pdf'
   | 'download'
-  | 'play-audio'
+  | 'audio-play'
   | 'app-install';
 
 // Analytics information to be supplied along with the event.
@@ -242,11 +242,9 @@ export class Analytics {
       const [k, v] = entry;
       if (Array.isArray(v))
         info[k] = v
-          .filter((x) => typeof x === 'string' && x !== '_undefined_')
+          .filter((x) => typeof x !== 'undefined' && x !== '_undefined_')
           .join(', ');
-      else if (typeof v === 'boolean') info[k] = v ? 'true' : 'false';
-      else if (typeof v === 'undefined') delete info[k];
-      else if (typeof v === 'string' && v === '_undefined_') delete info[k];
+      else if (typeof v === 'undefined' || v === '_undefined_') delete info[k];
     });
 
     // Send it!
