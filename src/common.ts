@@ -298,6 +298,28 @@ export function diff<T>(pv1: any, pv2: T, depth = 1): Partial<T> | undefined {
   return difference;
 }
 
+export function drupalSetting(dotkey: string) {
+  const win = window as any;
+  const parentWin = frameElement?.ownerDocument?.defaultView as any;
+  let setting: any;
+  if ('drupalSettings' in win) {
+    setting = win.drupalSettings;
+    dotkey.split('.').forEach((k) => {
+      if (k && setting && k in setting) setting = setting[k];
+      else setting = undefined;
+    });
+  }
+  if (!setting && parentWin && 'drupalSettings' in parentWin) {
+    setting = parentWin.drupalSettings;
+    dotkey.split('.').forEach((k) => {
+      if (k && setting && k in setting) setting = setting[k];
+      else setting = undefined;
+    });
+  }
+
+  return setting;
+}
+
 // Return a reason message if data is invalid, or null if it is valid.
 export function isInvalidWebAppData(
   data: unknown,

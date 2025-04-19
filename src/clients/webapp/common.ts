@@ -1,6 +1,6 @@
 import C from '../../constant.ts';
 import S from '../../defaultPrefs.ts';
-import { clone, hierarchy } from '../../common.ts';
+import { clone, drupalSetting, hierarchy } from '../../common.ts';
 import Analytics from '../../analytics.ts';
 import Prefs from './prefs.ts';
 
@@ -63,19 +63,14 @@ export function getComponentSettings(
   const { id } = component;
   const { reactComponent } = component.dataset;
   if (id && reactComponent) {
-    const win = window as any;
-    const parentWin = frameElement?.ownerDocument?.defaultView as any;
-    let data: ComponentData | undefined;
-    if (win.drupalSettings?.react && id in win.drupalSettings.react)
-      data = win.drupalSettings.react[id];
-    else if (
-      parentWin?.drupalSettings?.react &&
-      id in parentWin.drupalSettings.react
-    )
-      data = parentWin.drupalSettings.react[id];
-    else if (defaultSettings?.react && id in defaultSettings.react)
+    let data = drupalSetting(`react.${id}`);
+    if (
+      typeof data === 'undefined' &&
+      defaultSettings?.react &&
+      id in defaultSettings.react
+    ) {
       data = defaultSettings.react[id];
-
+    }
     if (typeof data !== 'undefined') {
       (data as any).component = reactComponent;
       if (data.component === 'bibleBrowser')

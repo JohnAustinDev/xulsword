@@ -1,6 +1,6 @@
 import React from 'react';
 import { Icon } from '@blueprintjs/core';
-import { clone, JSON_stringify, stringHash } from '../../../common.ts';
+import { clone, stringHash } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
 import RenderPromise from '../../renderPromise.ts';
@@ -352,6 +352,7 @@ export default class Xulsword
               controls
               onEnded={handler}
               onCanPlay={handler}
+              onPlay={handler}
               autoPlay={!!Build.isWebApp}
               src={
                 audio.file

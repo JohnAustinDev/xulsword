@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import C from '../../../constant.ts';
 import RefParser from '../../../refParser.ts';
 import Subscription from '../../../subscription.ts';
@@ -12,6 +13,7 @@ import {
 } from '../../common.tsx';
 import verseKey from '../../verseKey.ts';
 import log from '../../log.ts';
+import analytics from '../../analytics.ts';
 import { chapterChange, verseChange } from '../atext/zversekey.ts';
 import { genbookChange } from '../atext/ztext.ts';
 
@@ -332,6 +334,31 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
             );
         }
       });
+      break;
+    }
+
+    case 'play': {
+      const { file } = state.audio;
+      let info = {};
+      if (file) {
+        if ('key' in file) {
+          const { audioModule, key } = file;
+          info = {
+            AudioCode: audioModule,
+            field_path_name: key,
+            mtype: 'genbk_audio_file',
+          };
+        } else {
+          const { audioModule, book, chapter } = file;
+          info = {
+            AudioCode: audioModule,
+            field_osis_book: book,
+            field_chapter: chapter,
+            mtype: 'bible_audio_file',
+          };
+        }
+      }
+      analytics.recordElementEvent('play-audio', target as HTMLElement, info);
       break;
     }
 
