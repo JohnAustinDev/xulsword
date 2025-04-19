@@ -105,10 +105,10 @@ export class Analytics {
         !/^[A-Za-z0-9_-]+$/.test(k) ||
         (Array.isArray(v) &&
           v.filter(
-            (x) => !['string', 'boolean', 'undefined'].includes(typeof x),
+            (x) => !['string', 'boolean', 'number', 'undefined'].includes(typeof x),
           ).length) ||
         (!Array.isArray(v) &&
-          !['string', 'boolean', 'undefined'].includes(typeof v))
+          !['string', 'boolean', 'number', 'undefined'].includes(typeof v))
       ) {
         delete info[k];
       }
