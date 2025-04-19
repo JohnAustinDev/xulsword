@@ -143,6 +143,13 @@ export default class Analytics {
     // Web App?
     if (Build.isWebApp) info.webapp = true;
 
+    // Iframe parent hostname
+    const parentWin = frameElement?.ownerDocument?.defaultView as Window | undefined;
+    if (parentWin) {
+      const { hostname } = parentWin.location;
+      if (hostname !== window.location.hostname) info.hostname = hostname;
+    }
+
     return Analytics?.validateInfo(info) || {};
   };
 
