@@ -138,36 +138,27 @@ export function popupParentHandler(
           break;
         default:
       }
+      // The delayHandler must be used to delay getPopupHTML, or else web apps
+      // will make dozens of unnecessary server calls each time the user simply
+      // moves the cursor around over a strong's tagged text such as KJV.
       if (data && openPopup && !popupParent) {
-        if (
-          getPopupHTML(data, renderPromise, true) ||
-          renderPromise.waiting()
-        ) {
-          delayHandler(
-            this,
-            (el: HTMLElement, dt: HTMLData, gp: number) => {
-              updateDataAttribute(el, dt);
-              const s: Partial<PopupParentState> = {
-                elemdata: [dt],
-                gap: gp,
-                popupParent: el,
-              };
-              this.setState(s);
-            },
-            [elem, data, gap],
-            targ.type === 'sn'
-              ? C.UI.Popup.strongsOpenDelay
-              : C.UI.Popup.openDelay,
-            'popupDelayTO',
-          );
-        } else {
-          elem.classList.add('empty');
-          log.debug(
-            `Mouseover failed without reported reason: `,
-            targ.type,
-            data,
-          );
-        }
+        delayHandler(
+          this,
+          (el: HTMLElement, dt: HTMLData, gp: number) => {
+            updateDataAttribute(el, dt);
+            const s: Partial<PopupParentState> = {
+              elemdata: [dt],
+              gap: gp,
+              popupParent: el,
+            };
+            this.setState(s);
+          },
+          [elem, data, gap],
+          targ.type === 'sn'
+            ? C.UI.Popup.strongsOpenDelay
+            : C.UI.Popup.openDelay,
+          'popupDelayTO',
+        );
       }
       break;
     }
