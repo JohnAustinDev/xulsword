@@ -220,6 +220,12 @@ export class Analytics {
       return encodeURIComponent(val.toString());
     };
 
+    const replyToUnicode = (encstr: string): string => {
+      return encstr.replace(/\\u([\dA-F]{4})/gi, function(_match, hex) {
+        return String.fromCharCode(parseInt(hex, 16));
+      });
+    }
+
     // framehost
     let host = window.location.hostname;
     const parentWin = frameElement?.ownerDocument?.defaultView as
@@ -245,7 +251,8 @@ export class Analytics {
       ajax.responseType = 'text';
       ajax.onload = () => {
         if (ajax.readyState == ajax.DONE && ajax.status === 200) {
-          resolve(ajax.responseText);
+          // Server response is '"' surrounded \u0022 encoded Unicode!
+          resolve(replyToUnicode(ajax.responseText.replace(/(^"|"$)/g, '')));
         }
         resolve(`Error ${ajax.status}`);
       };
