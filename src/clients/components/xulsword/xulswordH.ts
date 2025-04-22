@@ -2,7 +2,7 @@
 import C from '../../../constant.ts';
 import RefParser from '../../../refParser.ts';
 import Subscription from '../../../subscription.ts';
-import analytics from '../../../analytics.ts';
+import analytics from '../../analytics.ts';
 import { clone, ofClass, randomID, setGlobalPanels } from '../../../common.ts';
 import { G } from '../../G.ts';
 import Commands from '../../commands.ts';
@@ -26,6 +26,7 @@ import type {
   VerseKeyAudioFile,
 } from '../../../type.ts';
 import type S from '../../../defaultPrefs.ts';
+import type { AnalyticsLabelInfo } from '../../../analytics.ts';
 import type Xulsword from './xulsword.tsx';
 import type { XulswordState } from './xulsword.tsx';
 
@@ -339,26 +340,28 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
 
     case 'play': {
       const { file } = state.audio;
-      let info = {};
       if (file) {
+        let info: AnalyticsLabelInfo;
         if ('key' in file) {
           const { audioModule, key } = file;
           info = {
+            action: 'stream',
+            event: 'play-audio',
             AudioCode: audioModule,
-            field_path_name: key,
-            mtype: 'genbk_audio_file',
+            key,
           };
         } else {
           const { audioModule, book, chapter } = file;
           info = {
+            action: 'stream',
+            event: 'play-audio',
             AudioCode: audioModule,
-            field_osis_book: book,
-            field_chapter: chapter,
-            mtype: 'bible_audio_file',
+            book,
+            chapter,
           };
         }
+        analytics.recordElementEvent(info, target as HTMLElement);
       }
-      analytics.recordElementEvent('audio-play', target as HTMLElement, info);
       break;
     }
 

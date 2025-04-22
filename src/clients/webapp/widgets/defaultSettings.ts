@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import type { AnalyticsInfo } from '../../../analytics.ts';
+import type { AnalyticsData } from '../../../analytics.ts';
 import type { OSISBookType } from '../../../type.ts';
 import type C from '../../../constant.ts';
 import type { MenulistProps } from '../../components/libxul/menulist.tsx';
@@ -38,13 +38,14 @@ export type WidgetMenulistData = {
 
 export type FileItem = {
   ntitle: string;
+  mid: number;
   size?: string;
   relurl?: string;
   full?: boolean;
   typeLabels?: { [type: string]: string };
   field_type?: string[];
   field_bible_scope?: string;
-} & AnalyticsInfo;
+}
 
 export type ChaplistVKType = {
   [bk in OSISBookType]?: Array<[chapnum: number, url: string, size: number, mid: string]>;

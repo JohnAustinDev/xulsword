@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import React, { useEffect, useState } from 'react';
-import { Analytics, AnalyticsInfo } from '../../../analytics.ts';
+import Analytics from '../../../analytics.ts';
 import { randomID } from '../../../common.ts';
 import log from '../../log.ts';
 import { G } from '../../G.ts';
@@ -8,6 +8,7 @@ import Menulist from '../../components/libxul/menulist.tsx';
 import { getProps } from '../common.ts';
 
 import type { ChangeEvent } from 'react';
+import type { AnalyticsLabelInfo } from '../../../analytics.ts';
 import type { MenulistProps } from '../../components/libxul/menulist.tsx';
 import type { FileItem, WidgetMenulistData } from './defaultSettings.ts';
 
@@ -50,23 +51,19 @@ export default function WidgetMenulist(
               elem.querySelectorAll('.update_url a, a.update_url'),
             );
             links.forEach((link, x) => {
-              const { relurl, size } = link;
+              const { relurl, size, mid } = link;
               const anchor = a[x] as HTMLElement;
               if (anchor && relurl) {
                 const root = urlroot.replace(/\/$/, '');
                 const rel = relurl.replace(/^\//, '');
                 anchor.setAttribute('href', `${root}/${rel}`);
                 anchor.textContent = optionText(link, false);
-                Analytics.addInfo(
-                  {
-                    ...link,
-                    size: undefined,
-                    relurl: undefined,
-                    full: undefined,
-                    typeLabels: undefined,
-                  } as AnalyticsInfo,
-                  anchor,
-                );
+                const info: AnalyticsLabelInfo = {
+                  action: 'download',
+                  event: 'download',
+                  mid,
+                };
+                Analytics.addInfo(info, anchor);
                 if (
                   typeof size !== 'undefined' &&
                   anchor.parentElement?.tagName === 'SPAN'

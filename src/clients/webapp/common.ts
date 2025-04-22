@@ -1,7 +1,7 @@
 import C from '../../constant.ts';
 import S from '../../defaultPrefs.ts';
 import { clone, drupalSetting, hierarchy } from '../../common.ts';
-import { Analytics } from '../../analytics.ts';
+import Analytics from '../../analytics.ts';
 import Prefs from './prefs.ts';
 
 import type { TreeNodeInfo } from '@blueprintjs/core';
@@ -11,6 +11,7 @@ import type {
   PrefValue,
   TreeNodeInfoPref,
 } from '../../type.ts';
+import type { AnalyticsLabelInfo } from '../../analytics.ts';
 import type {
   SelectORMType,
   SelectORProps,
@@ -413,16 +414,14 @@ function updateAudioDownloadLink(
     }
   }
 
-  Analytics.addInfo(
-    {
-      chapter1: chapter1 === chapter2 ? undefined : chapter1,
-      chapters:
-        chapter1 === chapter2
-          ? undefined
-          : (1 + chapter2 - chapter1),
-    },
-    anchor,
-  );
+  const info: Partial<AnalyticsLabelInfo> = {
+    action: 'download',
+    event: 'download',
+    chapter1: chapter1 === chapter2 ? undefined : chapter1,
+    chapters: chapter1 === chapter2 ? undefined : 1 + chapter2 - chapter1,
+  };
+
+  Analytics.addInfo(info, anchor);
 }
 
 // Update the href of an anchor element by setting or changing the given

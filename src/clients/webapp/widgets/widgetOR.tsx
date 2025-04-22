@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import React, { useState } from 'react';
-import { Analytics } from '../../../analytics.ts';
+import Analytics from '../../../analytics.ts';
 import log from '../../log.ts';
 import {
   createNodeList,
@@ -82,17 +82,10 @@ export default function WidgetOR(wprops: WidgetORProps): React.JSX.Element {
     const [key] = keys;
     const da = data.find((x) => x[1] === key);
     if (da) {
-      const [field_path_order, field_path_name, , , mid] = da;
+      const [, , , , mid] = da;
       const elem = document.getElementById(compid)?.parentElement;
       if (elem) {
-        Analytics.addInfo(
-          {
-            field_path_order,
-            field_path_name,
-            mid,
-          },
-          Analytics.topInfoElement(elem)
-        );
+        Analytics.addInfo({ mid: Number(mid) }, Analytics.topInfoElement(elem));
       }
     }
   };

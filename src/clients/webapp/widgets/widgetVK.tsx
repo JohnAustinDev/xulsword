@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import React, { useState } from 'react';
 import { diff } from '../../../common.ts';
-import { Analytics } from '../../../analytics.ts';
+import Analytics from '../../../analytics.ts';
 import log from '../../log.ts';
 import {
   getProps,
@@ -100,17 +100,10 @@ export default function WidgetVK(wprops: WidgetVKProps): React.JSX.Element {
     const { book, chapter } = selection;
     const chaparray = data && data[book]?.find((ca) => ca[0] === chapter);
     if (chaparray) {
-      const [field_chapter, , , mid] = chaparray;
+      const [, , , mid] = chaparray;
       const elem = document.getElementById(compid)?.parentElement;
       if (elem) {
-        Analytics.addInfo(
-          {
-            field_osis_book: book,
-            field_chapter: field_chapter.toString(),
-            mid,
-          },
-          Analytics.topInfoElement(elem),
-        );
+        Analytics.addInfo({ mid: Number(mid) }, Analytics.topInfoElement(elem));
       }
     }
   };

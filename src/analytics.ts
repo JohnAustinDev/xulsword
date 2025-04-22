@@ -1,116 +1,141 @@
 /* eslint-disable @typescript-eslint/naming-convention */
+import { JSON_parse, JSON_stringify } from './common.ts';
+
+import type logobj from './clients/log.ts';
+
 // The Analytics class allows analytics data to be collected during use of the
 // App or WebApp. The class is initialized with a third party tag function
 // that aggregates analytics data. Or when initialized with null, all events
 // are simply logged to the console.
 
-import { drupalSetting, JSON_parse, JSON_stringify } from './common.ts';
-
 // Type of the third party analytics function.
 export type AnalyticsTag = (
   type: 'event',
   name: string,
-  info: AnalyticsInfo,
+  info: AnalyticsData,
 ) => void;
 
+export type AnalyticsActions =
+  | 'download'
+  | 'stream'
+  | 'view'
+  | 'print'
+  | 'search'
+  | 'install';
+
 export type AnalyticsEvents =
-  | 'bb-chapter-bible'
-  | 'bb-chapter-genbk'
+  | 'bb-chapter'
   | 'bb-verse'
-  | 'bb-introduction'
   | 'bb-glossary'
   | 'bb-search'
   | 'bb-print'
-  | 'bb-print-preview'
-  | 'bb-print-to-pdf'
   | 'download'
-  | 'audio-play'
-  | 'app-install';
+  | 'play-audio'
+  | 'play-video'
+  | 'install-app';
+
+// One of these object types is required to generate a standardized label.
+export type DownloadLinkInfo = {
+  action: 'download';
+  event: 'download';
+  link: string;
+  href: string;
+  nid?: number;
+};
+export type BibleBrowserEventInfo = {
+  action: 'view' | 'print' | 'search';
+  event: 'bb-chapter' | 'bb-verse' | 'bb-search' | 'bb-print' | 'bb-glossary';
+  module: string;
+  target: string;
+};
+export type AnalyticsLabelInfo = {
+  action: AnalyticsActions;
+  event: AnalyticsEvents;
+} & (
+  | DownloadLinkInfo
+  | BibleBrowserEventInfo
+  | {
+      action: 'stream';
+      event: 'play-audio';
+      AudioCode: string;
+      book: string;
+      chapter: number;
+    }
+  | {
+      action: 'stream';
+      event: 'play-audio';
+      AudioCode: string;
+      key: string;
+    }
+  | {
+      action: 'stream';
+      event: 'play-audio';
+      mid: number;
+    }
+  | {
+      action: 'download';
+      event: 'download';
+      mid: number;
+      chapter1?: number;
+      chapters?: number;
+    }
+  | {
+      action: 'stream' | 'install';
+      event: 'play-video' | 'install-app';
+      nid: number;
+    }
+);
 
 // Analytics information to be supplied along with the event.
-export type AnalyticsInfo = {
-  module?: string;
-  AudioCode?: string;
-  target?: string;
-  mid?: string;
-  mtype?: string;
-  nid?: string;
-  ntype?: string;
-  ntitle?: string;
-  iso?: string;
-  link?: string;
-  href?: string;
-  typeAttr?: string;
-  framehost?: string;
-  webapp?: boolean;
-  // Multi-chapter downloads
-  chapter1?: number;
-  chapters?: number;
-  // Drupal media
-  field_type?: string[];
-  field_bible_scope?: string;
-  field_script?: string;
-  field_format?: string;
-  // Bible audio
-  field_osis_book?: string;
-  field_chapter?: string;
-  // Genbk audio
-  field_path_order?: string;
-  field_path_name?: string;
-  // JavaME
-  field_series?: string;
-  field_character_set?: string;
-  field_javame_format?: string;
-  // MK
-  version?: string;
-};
-
-export type AnalyticsInfoType = {
-  [k: string]:
-    | boolean
-    | string
-    | number
-    | undefined
-    | (boolean | string | number | undefined)[];
+export type AnalyticsData = {
+  action: AnalyticsActions;
+  label: string;
 };
 
 export type TypeOfAnalytics = typeof Analytics;
 
-export class Analytics {
+export default class Analytics {
   private tag: AnalyticsTag | null;
 
   static decodeInfo = (attributeString: string) => {
     const x = JSON_parse(decodeURIComponent(attributeString));
-    const info = (typeof x === 'object' && (x as AnalyticsInfoType)) || {};
+    const info = (typeof x === 'object' && (x as AnalyticsLabelInfo)) || null;
+    if (info) {
+      // data-info attributes may also be encoded as key value pairs.
+      if (!Object.keys(info).length) {
+        attributeString.split(/\s*,\s*/).forEach((seg) => {
+          const m = seg.match(/^([A-Za-z0-9_-]+):\s*(.*?)\s*$/);
+          if (m) {
+            const [, k, v] = m;
+            (info as any)[k] =
+              typeof v === 'string' ? decodeURIComponent(v) : v;
+          }
+        });
+      }
 
-    // data-info attributes may also be encoded as key value pairs.
-    if (!Object.keys(info).length) {
-      attributeString.split(/\s*,\s*/).forEach((seg) => {
-        const m = seg.match(/^([A-Za-z0-9_-]+):\s*(.*?)\s*$/);
-        if (m) info[m[1]] = decodeURIComponent(m[2]);
-      });
+      return Analytics.validateInfo(info);
     }
-
-    return Analytics.validateInfo(info);
+    return {};
   };
 
-  static encodeInfo = (info: AnalyticsInfo) => {
+  static encodeInfo = (info: AnalyticsLabelInfo) => {
     return encodeURIComponent(JSON_stringify(Analytics.validateInfo(info)));
   };
 
-  static validateInfo = (info: AnalyticsInfoType) => {
+  static validateInfo = (info: AnalyticsLabelInfo) => {
     Object.entries(info).forEach((entry) => {
       const [k, v] = entry;
       if (
         !/^[A-Za-z0-9_-]+$/.test(k) ||
         (Array.isArray(v) &&
           v.filter(
-            (x) => !['string', 'boolean', 'number', 'undefined'].includes(typeof x),
+            (x) =>
+              !['string', 'boolean', 'number', 'undefined'].includes(typeof x),
           ).length) ||
         (!Array.isArray(v) &&
           !['string', 'boolean', 'number', 'undefined'].includes(typeof v))
       ) {
-        delete info[k];
+        delete (info as any)[k];
       }
     });
 
@@ -118,7 +143,7 @@ export class Analytics {
   };
 
   static addInfo = (
-    info: AnalyticsInfo,
+    info: Record<string, string | number | boolean | undefined>,
     element: HTMLElement,
     replace = false,
   ) => {
@@ -126,7 +151,10 @@ export class Analytics {
       !replace && element.dataset.info
         ? Analytics.decodeInfo(element.dataset.info)
         : {};
-    element.dataset.info = Analytics.encodeInfo({ ...init, ...info });
+    element.dataset.info = Analytics.encodeInfo({
+      ...init,
+      ...info,
+    } as AnalyticsLabelInfo);
   };
 
   static topInfoElement = (element: HTMLElement) => {
@@ -135,23 +163,24 @@ export class Analytics {
     return el || element;
   };
 
-  // Collect analytics information for an HTML element. Anchor link text and
-  // any element type attribute are recorded, as are any data-info attributes
-  // of self or ancestors. If data-history-node-id or data-info supply nid or
-  // mid, then information about the referenced node or media item will be
-  // included.
+  // Collect analytics information for an HTML element. Anchor link text, and
+  // data-history-node-id and data-info attributes of self or ancestors.
   static elementInfo = (element: HTMLElement) => {
     // element specific info
-    const info: AnalyticsInfoType = {};
+    let info = {} as AnalyticsLabelInfo;
     switch (element.localName) {
       case 'a': {
-        info.link = element.textContent || '';
-        info.href = (element as HTMLAnchorElement).href;
+        info = {
+          action: 'download',
+          event: 'download',
+          link: element.textContent || '',
+          href: (element as HTMLAnchorElement).href,
+        };
         break;
       }
     }
 
-    // context node within Drupal page
+    // context node within Drupal page or frame
     let p: HTMLElement | null = element;
     while (p && !p.hasAttribute('data-history-node-id')) p = p.parentElement;
     if (!p && frameElement) {
@@ -159,7 +188,8 @@ export class Analytics {
       while (p && !p.hasAttribute('data-history-node-id')) p = p.parentElement;
     }
     if (p) {
-      info.nid = p.getAttribute('data-history-node-id') || '';
+      (info as DownloadLinkInfo).nid =
+        Number(p.getAttribute('data-history-node-id')) || 0;
     }
 
     // merge data-info attributes of self and ancestors
@@ -169,8 +199,8 @@ export class Analytics {
         const i = Analytics.decodeInfo(elem.dataset.info);
         if (i && typeof i === 'object') {
           Object.entries(i).forEach((entry) => {
-            if (!(entry[0] in info) || info[entry[0]] === '') {
-              info[entry[0]] = entry[1] as AnalyticsInfoType[string];
+            if (!(entry[0] in info) || !(info as any)[entry[0]]) {
+              (info as any)[entry[0]] = entry[1] as any;
             }
           });
         }
@@ -178,88 +208,85 @@ export class Analytics {
       elem = elem.parentElement;
     }
 
-    // type attribute
-    if (element.getAttribute('type')) {
-      info.typeAttr = element.getAttribute('type') as string;
-    }
-
     return Analytics.validateInfo(info) || {};
   };
 
+  static async getLabel(info: AnalyticsLabelInfo): Promise<string[]> {
+    return new Promise((resolve) => {
+      const ajax = new XMLHttpRequest();
+      ajax.open(
+        'GET',
+        '/eventlabel?' +
+          Object.entries(info)
+            .map((en) => `${en[0]}=${encodeURIComponent(en[1])}`)
+            .join('&'),
+      );
+      ajax.responseType = 'text';
+      ajax.onload = () => {
+        if (ajax.readyState == ajax.DONE && ajax.status === 200) {
+          resolve(ajax.responseText.split('++'));
+        }
+        resolve([`Error ${ajax.status}`]);
+      };
+      ajax.send(null);
+    });
+  }
+
+  log: typeof logobj;
+
   // A null tag will log hits to the console, instead of reporting them.
-  constructor(tag: AnalyticsTag | null) {
+  constructor(tag: AnalyticsTag | null, log: typeof logobj) {
     this.tag = tag;
+    this.log = log;
+  }
+
+  setLog(log: typeof logobj) {
+    this.log = log;
   }
 
   // Record an event triggered by any HTML element.
-  recordElementEvent(
-    name: AnalyticsEvents,
-    elem: HTMLElement,
-    info?: AnalyticsInfo,
-  ) {
+  recordElementEvent(info: AnalyticsLabelInfo, elem: HTMLElement) {
     let i = Analytics.elementInfo(elem);
     if (info) i = { ...i, ...info };
-    this.recordEvent(name, i);
+    const { action, event } = info;
+    Analytics.getLabel(i)
+      .then((labels) => {
+        this.recordEvent(action, event, labels);
+      })
+      .catch((er) => {
+        this.log.error(er);
+      });
   }
 
-  recordEvent(name: AnalyticsEvents, info: AnalyticsInfoType) {
-    // drupalSettings data lookup (will not overwrite info).
-    Object.entries({
-      AudioCode: 'sword.AudioCode',
-      module: 'sword.module',
-      nid: 'node',
-      mid: 'media',
-    }).forEach((entry) => {
-      const [k, v] = entry;
-      if (k in info && info[k]) {
-        const ds = drupalSetting(`${v}.${info[k]}`);
-        if (typeof ds === 'object') {
-          Object.entries(ds).forEach((entry) => {
-            if (!(entry[0] in info) || info[entry[0]] === '_undefined_') {
-              info[entry[0]] = entry[1] as AnalyticsInfoType[string];
-            }
-          });
-        }
-      }
-    });
-
+  recordEvent(
+    action: AnalyticsActions,
+    eventName: AnalyticsEvents,
+    labels: string[],
+  ) {
     // webapp
-    if (Build.isWebApp) info.webapp = true;
+    if (Build.isWebApp) labels.push('webapp');
 
     // framehost
     const parentWin = frameElement?.ownerDocument?.defaultView as
       | Window
       | undefined;
     if (parentWin) {
-      const { hostname } = parentWin.location;
-      if (hostname !== window.location.hostname) info.framehost = hostname;
+      const { referrer } = document;
+      if (referrer !== window.location.hostname) labels.push(referrer);
     }
 
-    info = Analytics.validateInfo(info);
-
     // convert to final form
-    Object.entries(info).forEach((entry) => {
-      const [k, v] = entry;
-      if (Array.isArray(v))
-        info[k] = v
-          .filter((x) => typeof x !== 'undefined' && x !== '_undefined_')
-          .join(', ');
-      else if (typeof v === 'undefined' || v === '_undefined_') delete info[k];
-    });
+    const label = labels.join('+');
+    const data: AnalyticsData = {
+      action,
+      label,
+    };
 
     // Send it!
-    if (typeof this.tag === 'function') this.tag('event', name, info);
+    if (typeof this.tag === 'function') this.tag('event', eventName, data);
     else if (Build.isWebApp || Build.isDevelopment) {
       // eslint-disable-next-line no-console
-      console.log('recordEvent: ', name, info);
+      console.log('recordEvent: ', eventName, data);
     }
   }
 }
-
-let tagfunc = null;
-if (typeof (globalThis as any).gtag === 'function')
-  tagfunc = (globalThis as any).gtag as AnalyticsTag;
-
-const analytics = new Analytics(tagfunc);
-
-export default analytics;
