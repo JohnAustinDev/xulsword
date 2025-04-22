@@ -375,7 +375,6 @@ function prepCall(thecall: GCallType): GCallType {
 
 // Determine calls to report to the analytics service.
 type MyFuncData = {
-  action: BibleBrowserEventInfo['action'];
   event: BibleBrowserEventInfo['event'];
 };
 const ReportAnalyticsG: Partial<
@@ -384,17 +383,17 @@ const ReportAnalyticsG: Partial<
     MyFuncData | Partial<Record<keyof GType['LibSword'], MyFuncData>>
   >
 > = {
-  getExtRefHTML: { action: 'view', event: 'bb-verse' },
-  locationVKText: { action: 'view', event: 'bb-verse' },
+  getExtRefHTML: { event: 'bb-verse' },
+  locationVKText: { event: 'bb-verse' },
   LibSword: {
-    getChapterText: { action: 'view', event: 'bb-chapter' },
-    getChapterTextMulti: { action: 'view', event: 'bb-chapter' },
-    getGenBookChapterText: { action: 'view', event: 'bb-chapter' },
-    getDictionaryEntry: { action: 'view', event: 'bb-glossary' },
-    getFirstDictionaryEntry: { action: 'view', event: 'bb-glossary' },
-    getVerseText: { action: 'view', event: 'bb-verse' },
+    getChapterText: { event: 'bb-chapter' },
+    getChapterTextMulti: { event: 'bb-chapter' },
+    getGenBookChapterText: { event: 'bb-chapter' },
+    getDictionaryEntry: { event: 'bb-glossary' },
+    getFirstDictionaryEntry: { event: 'bb-glossary' },
+    getVerseText: { event: 'bb-verse' },
     // getIntroductions: { event: 'bb-introduction' }, Fires for EVERY chapter read, so is useless
-    search: { action: 'search', event: 'bb-search' },
+    search: { event: 'bb-search' },
   },
 };
 function reportAnalytics(call: GCallType) {
@@ -415,7 +414,6 @@ function reportAnalytics(call: GCallType) {
         if (m && m in ms) {
           const { action, event } = (ms as any)[m];
           info = {
-            action,
             event,
             module: args[0] || '',
             target: args[1] || '',
@@ -423,28 +421,26 @@ function reportAnalytics(call: GCallType) {
         }
       } else if (p === 'getExtRefHTML' && 'event' in ms && args) {
         // getExtRefHTML is [extref, module, ...]
-        const { action, event } = ms;
+        const { event } = ms;
         info = {
-          action,
           event,
           module: args[1] || '',
           target: args[0] || '',
         };
       } else if (p === 'locationVKText' && 'event' in ms && args) {
         // locationVKText is [locationVK, module, ...]
-        const { action, event } = ms;
+        const { event } = ms;
         const l = args[0] as LocationVKType;
         info = {
-          action,
           event,
           module: args[1] || '',
           target: `${l.book}.${l.chapter}.${l.verse}`,
         };
       }
       if (info) {
-        const { action, event } = info;
+        const { event } = info;
         Analytics.getLabel(info)
-          .then((labels) => analytics.recordEvent(action, event, labels))
+          .then((labels) => analytics.recordEvent(event, labels))
           .catch((er) => log.error(er));
       }
     }

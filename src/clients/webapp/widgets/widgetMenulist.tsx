@@ -59,7 +59,6 @@ export default function WidgetMenulist(
                 anchor.setAttribute('href', `${root}/${rel}`);
                 anchor.textContent = optionText(link, false);
                 const info: AnalyticsLabelInfo = {
-                  action: 'download',
                   event: 'download',
                   mid,
                 };

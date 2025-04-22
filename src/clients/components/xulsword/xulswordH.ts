@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/naming-convention */
 import C from '../../../constant.ts';
 import RefParser from '../../../refParser.ts';
 import Subscription from '../../../subscription.ts';
@@ -345,7 +344,6 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
         if ('key' in file) {
           const { audioModule, key } = file;
           info = {
-            action: 'stream',
             event: 'play-audio',
             AudioCode: audioModule,
             key,
@@ -353,7 +351,6 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
         } else {
           const { audioModule, book, chapter } = file;
           info = {
-            action: 'stream',
             event: 'play-audio',
             AudioCode: audioModule,
             book,

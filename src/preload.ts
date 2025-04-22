@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/naming-convention */
 import type { LogLevel } from 'electron-log';
 
 // This has nothing to do with G cache preload. This preload is Electron's way

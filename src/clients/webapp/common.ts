@@ -415,7 +415,6 @@ function updateAudioDownloadLink(
   }
 
   const info: Partial<AnalyticsLabelInfo> = {
-    action: 'download',
     event: 'download',
     chapter1: chapter1 === chapter2 ? undefined : chapter1,
     chapters: chapter1 === chapter2 ? undefined : 1 + chapter2 - chapter1,

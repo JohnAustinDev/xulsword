@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/naming-convention */
 import React, { useState } from 'react';
 import { diff } from '../../../common.ts';
 import { Analytics } from '../../../analytics.ts';

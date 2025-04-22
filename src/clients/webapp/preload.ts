@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/naming-convention */
 import { io } from 'socket.io-client';
 import getIPC, { getProcessInfo } from '../../preload.ts';
 
