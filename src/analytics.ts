@@ -216,8 +216,9 @@ export class Analytics {
   // Pass an AnalyticsLabelInfo object to the server which will respond
   // with a complete standardized label for reporting to analytics.
   static async getLabel(info: AnalyticsLabelInfo): Promise<string> {
-    const infoValToString = (val: string | number | boolean): string => {
-      return encodeURIComponent(val.toString());
+    const infoValToString = (val: string | number | boolean | undefined): string => {
+      if (!['string', 'number', 'boolean'].includes(typeof val)) return '';
+      return encodeURIComponent((val as string | number | boolean).toString());
     };
 
     const replyToUnicode = (encstr: string): string => {
