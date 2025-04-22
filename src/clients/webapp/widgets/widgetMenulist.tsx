@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import React, { useEffect, useState } from 'react';
-import Analytics from '../../../analytics.ts';
+import { Analytics } from '../../../analytics.ts';
 import { randomID } from '../../../common.ts';
 import log from '../../log.ts';
 import { G } from '../../G.ts';

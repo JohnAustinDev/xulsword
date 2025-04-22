@@ -1,6 +1,5 @@
 import C from '../constant.ts';
-import Analytics from '../analytics.ts';
-import analytics from './analytics.ts';
+import analytics, { Analytics } from '../analytics.ts';
 import {
   JSON_stringify,
   GCacheKey,

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/naming-convention */
 import { JSON_parse, JSON_stringify } from './common.ts';
 
 import type logobj from './clients/log.ts';
@@ -94,7 +93,7 @@ export type AnalyticsData = {
 
 export type TypeOfAnalytics = typeof Analytics;
 
-export default class Analytics {
+export class Analytics {
   private tag: AnalyticsTag | null;
 
   static decodeInfo = (attributeString: string) => {
@@ -232,16 +231,9 @@ export default class Analytics {
     });
   }
 
-  log: typeof logobj;
-
   // A null tag will log hits to the console, instead of reporting them.
-  constructor(tag: AnalyticsTag | null, log: typeof logobj) {
+  constructor(tag: AnalyticsTag | null) {
     this.tag = tag;
-    this.log = log;
-  }
-
-  setLog(log: typeof logobj) {
-    this.log = log;
   }
 
   // Record an event triggered by any HTML element.
@@ -254,7 +246,8 @@ export default class Analytics {
         this.recordEvent(action, event, labels);
       })
       .catch((er) => {
-        this.log.error(er);
+        // eslint-disable-next-line no-console
+        console.log(er);
       });
   }
 
@@ -290,3 +283,11 @@ export default class Analytics {
     }
   }
 }
+
+let tagfunc = null;
+if (typeof (globalThis as any).gtag === 'function')
+  tagfunc = (globalThis as any).gtag as AnalyticsTag;
+
+const analytics = new Analytics(tagfunc);
+
+export default analytics;

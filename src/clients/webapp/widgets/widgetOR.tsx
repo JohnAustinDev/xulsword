@@ -1,6 +1,5 @@
-/* eslint-disable @typescript-eslint/naming-convention */
 import React, { useState } from 'react';
-import Analytics from '../../../analytics.ts';
+import { Analytics } from '../../../analytics.ts';
 import log from '../../log.ts';
 import {
   createNodeList,

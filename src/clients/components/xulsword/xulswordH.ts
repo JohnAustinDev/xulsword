@@ -2,7 +2,7 @@
 import C from '../../../constant.ts';
 import RefParser from '../../../refParser.ts';
 import Subscription from '../../../subscription.ts';
-import analytics from '../../analytics.ts';
+import analytics from '../../../analytics.ts';
 import { clone, ofClass, randomID, setGlobalPanels } from '../../../common.ts';
 import { G } from '../../G.ts';
 import Commands from '../../commands.ts';
