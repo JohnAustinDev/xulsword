@@ -86,6 +86,7 @@ export type AnalyticsLabelInfo = {
   | {
       event: 'play-video' | 'install-app';
       nid: number | string;
+      type: 'android' | 'ios' | 'kinescope' | 'youtube' | 'vimeo' | string;
     }
 );
 
@@ -295,7 +296,7 @@ export class Analytics {
 
     // Send it!
     if (typeof this.tag === 'function') this.tag('event', event, data);
-    else if (Build.isWebApp || Build.isDevelopment) {
+    else if (Build.isDevelopment) {
       // eslint-disable-next-line no-console
       console.log('recordEvent: ', event, data);
     }
