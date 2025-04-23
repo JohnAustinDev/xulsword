@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/naming-convention */
 import { JSON_parse, JSON_stringify } from './common.ts';
 
 // The Analytics class allows analytics data to be collected during use of the
@@ -8,15 +7,15 @@ import { JSON_parse, JSON_stringify } from './common.ts';
 
 // Each event is assigned an action.
 const analyticsEventActionMap = {
-  'bb-chapter': 'view',
-  'bb-verse': 'view',
-  'bb-glossary': 'view',
-  'bb-search': 'search',
-  'bb-print': 'print',
+  chapter: 'view',
+  verse: 'view',
+  glossary: 'view',
+  search: 'search',
+  print: 'print',
   download: 'download',
-  'play-audio': 'stream',
-  'play-video': 'stream',
-  'install-app': 'click',
+  playAudio: 'stream',
+  playVideo: 'stream',
+  installApp: 'click',
 } as const;
 
 // This is the type of expected globalThis analytics aggregation function.
@@ -45,17 +44,23 @@ type AnalyticsActions = (typeof analyticsEventActionMap)[AnalyticsEvents];
 // label. The info is sent to the server which will respond with an informative
 // label. Since events happen absolutely everywhere, varied and different data
 // is available at the source of the event, thus relying on the all knowing
-// server is the easiest way to produce complete and standardized labels.
+// server is the best way to produce complete and standardized labels.
 export type DownloadLinkInfo = {
-  event: 'download';
+  event: keyof Pick<typeof analyticsEventActionMap, 'download'>;
   link: string;
   href: string;
   nid: number | string;
 };
 export type BibleBrowserEventInfo = {
-  event: 'bb-chapter' | 'bb-verse' | 'bb-search' | 'bb-print' | 'bb-glossary';
+  event: keyof Pick<
+    typeof analyticsEventActionMap,
+    'chapter' | 'verse' | 'search' | 'print' | 'glossary'
+  >;
   module: string;
-  target: string;
+  locationvk?: string;
+  locationky?: string;
+  extref?: string;
+  searchtxt?: string;
 };
 export type AnalyticsLabelInfo = {
   event: AnalyticsEvents;
@@ -63,28 +68,31 @@ export type AnalyticsLabelInfo = {
   | DownloadLinkInfo
   | BibleBrowserEventInfo
   | {
-      event: 'play-audio';
+      event: keyof Pick<typeof analyticsEventActionMap, 'playAudio'>;
       AudioCode: string;
       book: string;
       chapter: number | string;
     }
   | {
-      event: 'play-audio';
+      event: keyof Pick<typeof analyticsEventActionMap, 'playAudio'>;
       AudioCode: string;
-      key: string;
+      locationky: string;
     }
   | {
-      event: 'play-audio';
+      event: keyof Pick<typeof analyticsEventActionMap, 'playAudio'>;
       mid: number | string;
     }
   | {
-      event: 'download';
+      event: keyof Pick<typeof analyticsEventActionMap, 'download'>;
       mid: number;
       chapter1?: number | string;
       chapters?: number | string;
     }
   | {
-      event: 'play-video' | 'install-app';
+      event: keyof Pick<
+        typeof analyticsEventActionMap,
+        'playVideo' | 'installApp'
+      >;
       nid: number | string;
       type: 'android' | 'ios' | 'kinescope' | 'youtube' | 'vimeo' | string;
     }
@@ -97,23 +105,22 @@ export class Analytics {
   // pairs like data-info="mid: 1234, chapter1: 8".
   static decodeInfo = (attributeString: string) => {
     const x = JSON_parse(decodeURIComponent(attributeString));
-    const info =
+    let info =
       (typeof x === 'object' && (x as Partial<AnalyticsLabelInfo>)) || null;
-    if (info) {
+    if (!info || !Object.keys(info).length) {
+      info = {};
       // data-info attributes may also be encoded as key value pairs.
-      if (!Object.keys(info).length) {
-        attributeString.split(/\s*,\s*/).forEach((seg) => {
-          const m = seg.match(/^([A-Za-z0-9_-]+):\s*(.*?)\s*$/);
-          if (m) {
-            const [, k, v] = m;
-            (info as any)[k] = decodeURIComponent(v);
-          }
-        });
-      }
+      attributeString.split(/\s*,\s*/).forEach((seg) => {
+        const m = seg.match(/^([A-Za-z0-9_-]+):\s*(.*?)\s*$/);
+        if (m) {
+          const [, k, v] = m;
+          (info as any)[k] = decodeURIComponent(v);
+        }
+      });
 
       return Analytics.validateInfo(info);
     }
-    return {};
+    return info;
   };
 
   static encodeInfo = (info: Partial<AnalyticsLabelInfo>) => {
@@ -217,28 +224,38 @@ export class Analytics {
   // Pass an AnalyticsLabelInfo object to the server which will respond
   // with a complete standardized label for reporting to analytics.
   static async getLabel(info: AnalyticsLabelInfo): Promise<string> {
-    const infoValToString = (val: string | number | boolean | undefined): string => {
+    const infoValToString = (
+      val: string | number | boolean | undefined,
+    ): string => {
       if (!['string', 'number', 'boolean'].includes(typeof val)) return '';
       return encodeURIComponent((val as string | number | boolean).toString());
     };
 
     const replyToUnicode = (encstr: string): string => {
-      return encstr.replace(/\\u([\dA-F]{4})/gi, function(_match, hex) {
+      return encstr.replace(/\\u([\dA-F]{4})/gi, function (_match, hex) {
         return String.fromCharCode(parseInt(hex, 16));
       });
-    }
-
+    };
+    const { event } = info;
     // framehost
     let host = window.location.hostname;
     const parentWin = frameElement?.ownerDocument?.defaultView as
       | Window
       | undefined;
-    if (parentWin) ({ referrer: host } = document);
+    if (parentWin) {
+      ({ referrer: host } = document);
+      host = host.replace(/^https?:\/\/([^:/]+).*?$/, '$1');
+    }
 
-    const allinfo: AnalyticsLabelInfo & { webapp?: boolean; host?: string } = {
+    const allinfo: AnalyticsLabelInfo & {
+      action: AnalyticsActions;
+      webapp?: boolean;
+      host?: string;
+    } = {
       ...info,
+      action: analyticsEventActionMap[event],
       webapp: Build.isWebApp,
-      host
+      host,
     };
 
     return new Promise((resolve) => {
@@ -298,7 +315,7 @@ export class Analytics {
     if (typeof this.tag === 'function') this.tag('event', event, data);
     else if (Build.isDevelopment) {
       // eslint-disable-next-line no-console
-      console.log('recordEvent: ', event, data);
+      console.log('recordEvent: ', event, data, `length=${data.label.length}`);
     }
   }
 }

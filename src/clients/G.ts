@@ -376,6 +376,7 @@ function prepCall(thecall: GCallType): GCallType {
 // Determine calls to report to the analytics service.
 type MyFuncData = {
   event: BibleBrowserEventInfo['event'];
+  targ: keyof BibleBrowserEventInfo;
 };
 const ReportAnalyticsG: Partial<
   Record<
@@ -383,17 +384,17 @@ const ReportAnalyticsG: Partial<
     MyFuncData | Partial<Record<keyof GType['LibSword'], MyFuncData>>
   >
 > = {
-  getExtRefHTML: { event: 'bb-verse' },
-  locationVKText: { event: 'bb-verse' },
+  getExtRefHTML: { event: 'verse', targ: 'extref' },
+  locationVKText: { event: 'verse', targ: 'locationvk'},
   LibSword: {
-    getChapterText: { event: 'bb-chapter' },
-    getChapterTextMulti: { event: 'bb-chapter' },
-    getGenBookChapterText: { event: 'bb-chapter' },
-    getDictionaryEntry: { event: 'bb-glossary' },
-    getFirstDictionaryEntry: { event: 'bb-glossary' },
-    getVerseText: { event: 'bb-verse' },
-    // getIntroductions: { event: 'bb-introduction' }, Fires for EVERY chapter read, so is useless
-    search: { event: 'bb-search' },
+    getChapterText: { event: 'chapter', targ: 'locationvk' },
+    getChapterTextMulti: { event: 'chapter', targ: 'locationvk' },
+    getGenBookChapterText: { event: 'chapter' , targ: 'locationky'},
+    getDictionaryEntry: { event: 'glossary', targ: 'locationky' },
+    getFirstDictionaryEntry: { event: 'glossary', targ: 'locationky' },
+    getVerseText: { event: 'verse', targ: 'locationvk' },
+    // getIntroductions: { event: 'introduction' }, Fires for EVERY chapter read, so is useless
+    search: { event: 'search', targ: 'searchtxt' },
   },
 };
 function reportAnalytics(call: GCallType) {
@@ -412,29 +413,31 @@ function reportAnalytics(call: GCallType) {
       // LibSword methods parameters are all [module(s), target, ...]
       if (p === 'LibSword' && args) {
         if (m && m in ms) {
-          const { action, event } = (ms as any)[m];
+          const { event, targ } = (ms as any)[m];
+          const mod = Array.isArray(args[0]) ? args[0][0] : args[0];
+          const targv = Array.isArray(args[1]) ? args[1][0] : args[1];
           info = {
             event,
-            module: args[0] || '',
-            target: args[1] || '',
+            module: mod || '',
+            [targ]: targv || '',
           };
         }
       } else if (p === 'getExtRefHTML' && 'event' in ms && args) {
         // getExtRefHTML is [extref, module, ...]
-        const { event } = ms;
+        const { event, targ } = ms;
         info = {
           event,
           module: args[1] || '',
-          target: args[0] || '',
+          [targ]: args[0] || '',
         };
       } else if (p === 'locationVKText' && 'event' in ms && args) {
         // locationVKText is [locationVK, module, ...]
-        const { event } = ms;
+        const { event, targ } = ms;
         const l = args[0] as LocationVKType;
         info = {
           event,
           module: args[1] || '',
-          target: `${l.book}.${l.chapter}.${l.verse}`,
+          [targ]: `${l.book}.${l.chapter}.${l.verse}`,
         };
       }
       if (info) {

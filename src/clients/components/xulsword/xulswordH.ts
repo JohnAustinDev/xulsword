@@ -344,14 +344,14 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
         if ('key' in file) {
           const { audioModule, key } = file;
           info = {
-            event: 'play-audio',
+            event: 'playAudio',
             AudioCode: audioModule,
-            key,
+            locationky: key,
           };
         } else {
           const { audioModule, book, chapter } = file;
           info = {
-            event: 'play-audio',
+            event: 'playAudio',
             AudioCode: audioModule,
             book,
             chapter,

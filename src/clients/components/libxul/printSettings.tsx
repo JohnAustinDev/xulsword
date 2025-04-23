@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import { Icon, Intent, Position, OverlayToaster } from '@blueprintjs/core';
 import Subscription from '../../../subscription.ts';
-import analytics from '../../../analytics.ts';
+import analytics, { Analytics } from '../../../analytics.ts';
 import { clone, randomID } from '../../../common.ts';
 import C from '../../../constant.ts';
 import { G, GI } from '../../G.ts';
@@ -13,6 +13,7 @@ import {
   rootRenderPromise,
   setStatePref,
 } from '../../common.tsx';
+import log from '../../log.ts';
 import { Hbox, Vbox } from './boxes.tsx';
 import Button from './button.tsx';
 import Spacer from './spacer.tsx';
@@ -253,7 +254,9 @@ export default class PrintSettings extends React.Component {
             break;
           }
           case 'print': {
-            analytics.recordEvent('bb-print', printAnalyticInfo());
+            getAnalyticPrintLabel()
+              .then((label) => analytics.recordEvent('print', label))
+              .catch((er) => log.error(er));
             if (Build.isElectronApp) {
               const options: Electron.WebContentsPrintOptions = {
                 ...electronOptions,
@@ -303,7 +306,9 @@ export default class PrintSettings extends React.Component {
             break;
           }
           case 'printToPDF': {
-            analytics.recordEvent('bb-print-to-pdf', printAnalyticInfo());
+            getAnalyticPrintLabel()
+              .then((label) => analytics.recordEvent('print', label))
+              .catch((er) => log.error(er));
             Subscription.publish.setControllerState(dark);
             G.Window.printToPDF({
               destination: 'prompt-for-file',
@@ -330,7 +335,9 @@ export default class PrintSettings extends React.Component {
             break;
           }
           case 'printPreview': {
-            analytics.recordEvent('bb-print-preview', printAnalyticInfo());
+            getAnalyticPrintLabel()
+              .then((label) => analytics.recordEvent('print', label))
+              .catch((er) => log.error(er));
             Subscription.publish.setControllerState(dark);
             G.Window.printToPDF({
               destination: 'iframe',
@@ -920,12 +927,13 @@ export default class PrintSettings extends React.Component {
 PrintSettings.propTypes = propTypes;
 
 // TODO: This does not show what the user is printing!
-function printAnalyticInfo() {
+async function getAnalyticPrintLabel() {
   const { panels, location } = G.Prefs.getComplexValue(
     'xulsword',
   ) as typeof S.prefs.xulsword;
-  return {
+  return Analytics.getLabel({
+    event: 'print',
     module: panels[0] || '',
-    target: `${location?.book || 'book?'} ${location?.chapter || 'chapter?'}`,
-  }
+    locationvk: `${location?.book || 'book?'} ${location?.chapter || 'chapter?'}`,
+  });
 }
