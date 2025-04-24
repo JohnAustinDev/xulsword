@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import { JSON_parse, JSON_stringify } from './common.ts';
 
 // The Analytics class allows analytics data to be collected during use of the
@@ -280,8 +281,15 @@ export class Analytics {
   }
 
   // A null tag will log hits to the console, instead of reporting them.
-  constructor(tag: AnalyticsTag | null) {
+  constructor(tag: AnalyticsTag | null, measurementID = '') {
     this.tag = tag;
+
+    // GT will not send data to GA from a third-party iframe without this:
+    if (tag && measurementID) {
+      (tag as any)('config', measurementID, {
+        cookie_flags: 'SameSite=None;Secure',
+      });
+    }
   }
 
   // Record an event triggered by any HTML element.
@@ -324,6 +332,11 @@ let tagfunc = null;
 if (typeof (globalThis as any).gtag === 'function')
   tagfunc = (globalThis as any).gtag as AnalyticsTag;
 
-const analytics = new Analytics(tagfunc);
+let MeasurementID = '';
+if (typeof (globalThis as any).MeasurementID === 'string') {
+  ({ MeasurementID } = globalThis as any);
+}
+
+const analytics = new Analytics(tagfunc, MeasurementID);
 
 export default analytics;
