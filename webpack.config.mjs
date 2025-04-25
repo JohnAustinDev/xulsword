@@ -101,7 +101,6 @@ const defaultEnvironment = {
   SERVER_CRT_PEM: '',
   WEBAPP_MAX_CACHE_RAMMB: 250,
   WEBAPP_SEARCH_BAN: 2000,
-  WEBAPP_MAX_LOG_SIZE: 5000000,
   LOGLEVEL: 'error',
 };
 const env = (k) =>

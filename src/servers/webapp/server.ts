@@ -10,7 +10,6 @@ import i18nBackendMain from 'i18next-fs-backend';
 import https from 'https';
 import http from 'http';
 import fs from 'fs';
-import path from 'path';
 import {
   JSON_parse,
   JSON_stringify,
@@ -37,33 +36,11 @@ const isInvalidWebAppDataLogged = (data: unknown, depth = 0) => {
   return isInvalidWebAppData(data, depth, log);
 };
 
-const logfile = Dirs.LogDir.append(`access.log`);
+const logfile = Dirs.LogDir.append(`xulsword.log`);
 log.transports.console.level = C.LogLevel;
 log.transports.file.level = C.LogLevel;
 log.transports.file.sync = false;
-log.transports.file.maxSize =
-  Number(process.env.WEBAPP_MAX_LOG_SIZE) || 5000000;
-log.transports.file.archiveLog = (file) => {
-  const filename = file.toString();
-  const info = path.parse(filename);
-  let num = 0;
-  const files = fs.readdirSync(info.dir, { encoding: 'utf-8' });
-  const re = new RegExp(`${info.name}${info.ext}\\.(\\d+)$`);
-  files.forEach((f) => {
-    const m = f.match(re);
-    if (m && Number(m[1]) > num) num = Number(m[1]);
-  });
-  num += 1;
-  try {
-    fs.renameSync(
-      filename,
-      path.join(info.dir, info.name + info.ext + `.${num}`),
-    );
-  } catch (e) {
-    // eslint-disable-next-line no-console
-    console.warn('Error rotating log: ', e);
-  }
-};
+log.transports.file.maxSize = 0;
 log.transports.file.resolvePath = () => logfile.path;
 
 LibSword.init();
