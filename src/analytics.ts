@@ -285,10 +285,8 @@ export class Analytics {
     this.tag = tag;
 
     // GT will not send data to GA from a third-party iframe without this:
-    if (tag && measurementID) {
-      (tag as any)('config', measurementID, {
-        cookie_flags: 'SameSite=None;Secure',
-      });
+    if (tag) {
+      (tag as any)("set", "cookie_flags", "SameSite=None;Secure");
     }
   }
 
@@ -332,11 +330,6 @@ let tagfunc = null;
 if (typeof (globalThis as any).gtag === 'function')
   tagfunc = (globalThis as any).gtag as AnalyticsTag;
 
-let MeasurementID = '';
-if (typeof (globalThis as any).MeasurementID === 'string') {
-  ({ MeasurementID } = globalThis as any);
-}
-
-const analytics = new Analytics(tagfunc, MeasurementID);
+const analytics = new Analytics(tagfunc);
 
 export default analytics;
