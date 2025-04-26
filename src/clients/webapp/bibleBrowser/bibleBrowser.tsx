@@ -113,10 +113,11 @@ socket.on('connect', () => {
         ).length;
       if (numPanels > maxPanels) numPanels = maxPanels;
 
-      // Never have locale of user pref global.locale overwrite settings. This
-      // allows locale to be set by the server, since the user can't change
-      // locale without changing the URL.
+      // Never let user pref global.locale or place overwrite settings. This
+      // insures they will be set by the server. The user can't change locale
+      // without changing the URL, and place also can't be changed by the user.
       if (applyUserPrefs === 'after') {
+        Prefs.setComplexValue('xulsword.place', settings.prefs.xulsword.place);
         Prefs.setCharPref('global.locale', settings.prefs.global.locale);
       }
 
