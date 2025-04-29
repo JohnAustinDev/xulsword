@@ -8,7 +8,7 @@ import Menulist from '../../components/libxul/menulist.tsx';
 import { getProps } from '../common.ts';
 
 import type { ChangeEvent } from 'react';
-import type { AnalyticsLabelInfo } from '../../../analytics.ts';
+import type { AnalyticsInfo } from '../../../analytics.ts';
 import type { MenulistProps } from '../../components/libxul/menulist.tsx';
 import type { FileItem, WidgetMenulistData } from './defaultSettings.ts';
 
@@ -58,7 +58,7 @@ export default function WidgetMenulist(
                 const rel = relurl.replace(/^\//, '');
                 anchor.setAttribute('href', `${root}/${rel}`);
                 anchor.textContent = optionText(link, false);
-                const info: AnalyticsLabelInfo = {
+                const info: AnalyticsInfo = {
                   event: 'download',
                   mid,
                 };

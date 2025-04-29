@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/naming-convention */
 import { JSON_parse, JSON_stringify } from './common.ts';
 
 // The Analytics class allows analytics data to be collected during use of the
@@ -23,25 +22,30 @@ const analyticsEventActionMap = {
 export type AnalyticsTag = (
   type: 'event',
   name: AnalyticsEvents,
-  info: AnalyticsData,
+  info: AnalyticsObject,
 ) => void;
 
-// AnalyticsData is the data that must be supplied when recording any event
+// AnalyticsObject is the data that must be supplied when recording any event
 // using the globalThis analytics aggregation function. If using GTM and Google
 // Analytics for instance, a tag for each event in AnalyticsEvents must be
-// created and variables for each key of AnalyticsData must be created and
+// created and variables for each key of AnalyticsObject must be created and
 // assigned as a parameter to each tag.
-export type AnalyticsData = {
+export type AnalyticsObject = {
   event: AnalyticsEvents;
   action: AnalyticsActions;
-  label: string;
+  [eventParam: string]: string | number | boolean;
 };
 
 export type AnalyticsEvents = keyof typeof analyticsEventActionMap;
 
 type AnalyticsActions = (typeof analyticsEventActionMap)[AnalyticsEvents];
 
-// One of these AnalyticsLabelInfo types is required to generate a standardized
+export type AnalyticsInfoFinal = AnalyticsInfo & {
+  origin: string;
+  webapp: boolean;
+}
+
+// One of these AnalyticsInfo types is required to generate a standardized
 // label. The info is sent to the server which will respond with an informative
 // label. Since events happen absolutely everywhere, varied and different data
 // is available at the source of the event, thus relying on the all knowing
@@ -49,7 +53,7 @@ type AnalyticsActions = (typeof analyticsEventActionMap)[AnalyticsEvents];
 export type DownloadLinkInfo = {
   event: keyof Pick<typeof analyticsEventActionMap, 'download'>;
   link: string;
-  href: string;
+  url: string;
   nid: number | string;
 };
 export type BibleBrowserEventInfo = {
@@ -63,7 +67,7 @@ export type BibleBrowserEventInfo = {
   extref?: string;
   searchtxt?: string;
 };
-export type AnalyticsLabelInfo = {
+export type AnalyticsInfo = {
   event: AnalyticsEvents;
 } & (
   | DownloadLinkInfo
@@ -96,6 +100,7 @@ export type AnalyticsLabelInfo = {
       >;
       nid: number | string;
       type: 'android' | 'ios' | 'kinescope' | 'youtube' | 'vimeo' | string;
+      url?: string;
     }
 );
 
@@ -106,8 +111,7 @@ export class Analytics {
   // pairs like data-info="mid: 1234, chapter1: 8".
   static decodeInfo = (attributeString: string) => {
     const x = JSON_parse(decodeURIComponent(attributeString));
-    let info =
-      (typeof x === 'object' && (x as Partial<AnalyticsLabelInfo>)) || null;
+    let info = (typeof x === 'object' && (x as Partial<AnalyticsInfo>)) || null;
     if (!info || !Object.keys(info).length) {
       info = {};
       // data-info attributes may also be encoded as key value pairs.
@@ -124,12 +128,12 @@ export class Analytics {
     return info;
   };
 
-  static encodeInfo = (info: Partial<AnalyticsLabelInfo>) => {
+  static encodeInfo = (info: Partial<AnalyticsInfo>) => {
     return encodeURIComponent(JSON_stringify(Analytics.validateInfo(info)));
   };
 
   // Remove any info that is not an expected type.
-  static validateInfo = (info: Partial<AnalyticsLabelInfo>) => {
+  static validateInfo = (info: Partial<AnalyticsInfo>) => {
     Object.entries(info).forEach((entry) => {
       const [k, v] = entry;
       if (
@@ -151,7 +155,7 @@ export class Analytics {
 
   // Add to (or replace) the data-info attribute of an element.
   static addInfo = (
-    info: Partial<AnalyticsLabelInfo>,
+    info: Partial<AnalyticsInfo>,
     element: HTMLElement,
     replace = false,
   ) => {
@@ -162,7 +166,7 @@ export class Analytics {
     element.dataset.info = Analytics.encodeInfo({
       ...init,
       ...info,
-    } as Partial<AnalyticsLabelInfo>);
+    } as Partial<AnalyticsInfo>);
   };
 
   // Find the top level element associated with a nested element's data. Since
@@ -179,13 +183,18 @@ export class Analytics {
   // data-history-node-id and data-info attributes of self or ancestors.
   static elementInfo = (element: HTMLElement) => {
     // element specific info
-    let info = {} as Partial<AnalyticsLabelInfo>;
+    let info = {} as Partial<AnalyticsInfo>;
     switch (element.localName) {
       case 'a': {
         info = {
-          event: 'download',
           link: element.textContent || '',
-          href: (element as HTMLAnchorElement).href,
+          url: (element as HTMLAnchorElement).href,
+        };
+        break;
+      }
+      case 'iframe': {
+        info = {
+          url: (element as HTMLIFrameElement).src,
         };
         break;
       }
@@ -222,9 +231,9 @@ export class Analytics {
     return Analytics.validateInfo(info) || {};
   };
 
-  // Pass an AnalyticsLabelInfo object to the server which will respond
-  // with a complete standardized label for reporting to analytics.
-  static async getLabel(info: AnalyticsLabelInfo): Promise<string> {
+  // Send an AnalyticsInfo object to the server which will respond
+  // with a complete analytics object to report.
+  static async getAnalytics(info: AnalyticsInfo): Promise<AnalyticsObject> {
     const infoValToString = (
       val: string | number | boolean | undefined,
     ): string => {
@@ -239,24 +248,14 @@ export class Analytics {
     };
     const { event } = info;
     // framehost
-    let host = window.location.hostname;
-    const parentWin = frameElement?.ownerDocument?.defaultView as
-      | Window
-      | undefined;
-    if (parentWin) {
-      ({ referrer: host } = document);
-      host = host.replace(/^https?:\/\/([^:/]+).*?$/, '$1');
-    }
+    const origins = window.location.ancestorOrigins;
+    const origin = origins[origins.length - 1];
 
-    const allinfo: AnalyticsLabelInfo & {
-      action: AnalyticsActions;
-      webapp?: boolean;
-      host?: string;
-    } = {
+    const send: AnalyticsInfoFinal & { action: AnalyticsActions } = {
       ...info,
       action: analyticsEventActionMap[event],
       webapp: Build.isWebApp,
-      host,
+      origin,
     };
 
     return new Promise((resolve) => {
@@ -264,7 +263,7 @@ export class Analytics {
       ajax.open(
         'GET',
         '/eventlabel?' +
-          Object.entries(allinfo)
+          Object.entries(send)
             .map((en) => `${en[0]}=${infoValToString(en[1])}`)
             .join('&'),
       );
@@ -272,34 +271,42 @@ export class Analytics {
       ajax.onload = () => {
         if (ajax.readyState == ajax.DONE && ajax.status === 200) {
           // Server response is '"' surrounded \u0022 encoded Unicode!
-          resolve(replyToUnicode(ajax.responseText.replace(/(^"|"$)/g, '')));
+          const obj = JSON_parse(
+            replyToUnicode(ajax.responseText.replace(/(^"|"$)/g, '')),
+          ) as AnalyticsObject;
+          resolve({ ...obj, event, action: analyticsEventActionMap[event] });
+        } else {
+          resolve({
+            event,
+            action: analyticsEventActionMap[event],
+            error: ajax.status,
+          });
         }
-        resolve(`Error ${ajax.status}`);
       };
       ajax.send(null);
     });
   }
 
   // A null tag will log hits to the console, instead of reporting them.
-  constructor(tag: AnalyticsTag | null, measurementID = '') {
+  constructor(tag: AnalyticsTag | null) {
     this.tag = tag;
 
     // GT will not send data to GA from a third-party iframe without this:
     if (tag) {
-      (tag as any)("set", "cookie_flags", "SameSite=None;Secure");
+      (tag as any)('set', 'cookie_flags', 'SameSite=None;Secure');
     }
   }
 
   // Record an event triggered by any HTML element.
-  recordElementEvent(info: Partial<AnalyticsLabelInfo>, elem: HTMLElement) {
+  recordElementEvent(info: Partial<AnalyticsInfo>, elem: HTMLElement) {
     let i = Analytics.elementInfo(elem);
-    if (info) i = { ...i, ...info } as AnalyticsLabelInfo;
+    if (info) i = { ...i, ...info } as AnalyticsInfo;
     // The combination of the element's attribute info ('i') and 'info' must be
-    // a complete AnalyticsLabelInfo object or an error may result during
-    // getLabel. But object completeness is not checked here.
-    const fullInfo = i as AnalyticsLabelInfo;
+    // a complete AnalyticsInfo object or an error may result during
+    // getAnalytics. But object completeness is not checked here.
+    const fullInfo = i as AnalyticsInfo;
     const { event } = fullInfo;
-    Analytics.getLabel(fullInfo)
+    Analytics.getAnalytics(fullInfo)
       .then((label) => {
         this.recordEvent(event, label);
       })
@@ -309,19 +316,12 @@ export class Analytics {
       });
   }
 
-  recordEvent(event: AnalyticsEvents, label: string) {
-    // convert to final form
-    const data: AnalyticsData = {
-      event,
-      action: analyticsEventActionMap[event],
-      label,
-    };
-
+  recordEvent(event: AnalyticsEvents, analytics: AnalyticsObject) {
     // Send it!
-    if (typeof this.tag === 'function') this.tag('event', event, data);
+    if (typeof this.tag === 'function') this.tag('event', event, analytics);
     else if (Build.isDevelopment) {
       // eslint-disable-next-line no-console
-      console.log('recordEvent: ', event, data, `length=${data.label.length}`);
+      console.log('recordEvent: ', event, analytics);
     }
   }
 }

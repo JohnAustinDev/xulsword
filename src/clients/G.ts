@@ -16,7 +16,7 @@ import log from './log.ts';
 import CookiePrefs from './webapp/prefs.ts';
 
 import type {
-  AnalyticsLabelInfo,
+  AnalyticsInfo,
   BibleBrowserEventInfo,
 } from '../analytics.ts';
 import type Viewport from './webapp/viewport.ts';
@@ -409,7 +409,7 @@ function reportAnalytics(call: GCallType) {
   if (ReportAnalyticsG && p in ReportAnalyticsG) {
     const ms = ReportAnalyticsG[p];
     if (ms) {
-      let info: AnalyticsLabelInfo | undefined;
+      let info: AnalyticsInfo | undefined;
       // LibSword methods parameters are all [module(s), target, ...]
       if (p === 'LibSword' && args) {
         if (m && m in ms) {
@@ -442,8 +442,8 @@ function reportAnalytics(call: GCallType) {
       }
       if (info) {
         const { event } = info;
-        Analytics.getLabel(info)
-          .then((labels) => analytics.recordEvent(event, labels))
+        Analytics.getAnalytics(info)
+          .then((result) => analytics.recordEvent(event, result))
           .catch((er) => log.error(er));
       }
     }

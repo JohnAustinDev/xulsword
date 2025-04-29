@@ -25,7 +25,7 @@ import type {
   VerseKeyAudioFile,
 } from '../../../type.ts';
 import type S from '../../../defaultPrefs.ts';
-import type { AnalyticsLabelInfo } from '../../../analytics.ts';
+import type { AnalyticsInfo } from '../../../analytics.ts';
 import type Xulsword from './xulsword.tsx';
 import type { XulswordState } from './xulsword.tsx';
 
@@ -340,7 +340,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
     case 'play': {
       const { file } = state.audio;
       if (file) {
-        let info: AnalyticsLabelInfo;
+        let info: AnalyticsInfo;
         if ('key' in file) {
           const { audioModule, key } = file;
           info = {

@@ -255,7 +255,7 @@ export default class PrintSettings extends React.Component {
           }
           case 'print': {
             getAnalyticPrintLabel()
-              .then((label) => analytics.recordEvent('print', label))
+              .then((result) => analytics.recordEvent('print', result))
               .catch((er) => log.error(er));
             if (Build.isElectronApp) {
               const options: Electron.WebContentsPrintOptions = {
@@ -307,7 +307,7 @@ export default class PrintSettings extends React.Component {
           }
           case 'printToPDF': {
             getAnalyticPrintLabel()
-              .then((label) => analytics.recordEvent('print', label))
+              .then((result) => analytics.recordEvent('print', result))
               .catch((er) => log.error(er));
             Subscription.publish.setControllerState(dark);
             G.Window.printToPDF({
@@ -336,7 +336,7 @@ export default class PrintSettings extends React.Component {
           }
           case 'printPreview': {
             getAnalyticPrintLabel()
-              .then((label) => analytics.recordEvent('print', label))
+              .then((result) => analytics.recordEvent('print', result))
               .catch((er) => log.error(er));
             Subscription.publish.setControllerState(dark);
             G.Window.printToPDF({
@@ -931,7 +931,8 @@ async function getAnalyticPrintLabel() {
   const { panels, location } = G.Prefs.getComplexValue(
     'xulsword',
   ) as typeof S.prefs.xulsword;
-  return Analytics.getLabel({
+
+  return Analytics.getAnalytics({
     event: 'print',
     module: panels[0] || '',
     locationvk: `${location?.book || 'book?'} ${location?.chapter || 'chapter?'}`,

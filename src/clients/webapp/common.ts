@@ -11,7 +11,7 @@ import type {
   PrefValue,
   TreeNodeInfoPref,
 } from '../../type.ts';
-import type { AnalyticsLabelInfo } from '../../analytics.ts';
+import type { AnalyticsInfo } from '../../analytics.ts';
 import type {
   SelectORMType,
   SelectORProps,
@@ -414,7 +414,7 @@ function updateAudioDownloadLink(
     }
   }
 
-  const info: Partial<AnalyticsLabelInfo> = {
+  const info: Partial<AnalyticsInfo> = {
     event: 'download',
     chapter1: chapter1 === chapter2 ? undefined : chapter1,
     chapters: chapter1 === chapter2 ? undefined : 1 + chapter2 - chapter1,
